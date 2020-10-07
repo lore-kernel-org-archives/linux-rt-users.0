@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D400C4727E
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D512C47420
 	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CED6520870
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2654020B1F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728048AbgJGI5H (ORCPT
+        id S1728051AbgJGI5I (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 7 Oct 2020 04:57:07 -0400
-Received: from mx2.suse.de ([195.135.220.15]:57620 "EHLO mx2.suse.de"
+        Wed, 7 Oct 2020 04:57:08 -0400
+Received: from mx2.suse.de ([195.135.220.15]:57608 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728031AbgJGI5E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 7 Oct 2020 04:57:04 -0400
+        id S1728020AbgJGI5C (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 7 Oct 2020 04:57:02 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id EE3C4B2A3;
-        Wed,  7 Oct 2020 08:57:02 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 66160B17D;
+        Wed,  7 Oct 2020 08:57:01 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 16/18] ssdd: Streamline usage and man page
-Date:   Wed,  7 Oct 2020 10:56:51 +0200
-Message-Id: <20201007085653.11961-17-dwagner@suse.de>
+Subject: [rt-tests v2 12/18] queuelat: Streamline usage and man page
+Date:   Wed,  7 Oct 2020 10:56:47 +0200
+Message-Id: <20201007085653.11961-13-dwagner@suse.de>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201007085653.11961-1-dwagner@suse.de>
 References: <20201007085653.11961-1-dwagner@suse.de>
@@ -42,137 +42,228 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/ssdd/ssdd.8 | 35 +++++++++++++++++-----------------
- src/ssdd/ssdd.c | 50 +++++++++++++++++++++++++++----------------------
- 2 files changed, 45 insertions(+), 40 deletions(-)
+ src/queuelat/queuelat.8 | 41 +++++++----------
+ src/queuelat/queuelat.c | 99 +++++++++++++++++++----------------------
+ 2 files changed, 62 insertions(+), 78 deletions(-)
 
-diff --git a/src/ssdd/ssdd.8 b/src/ssdd/ssdd.8
-index 99f30145d079..5c29d0abb732 100644
---- a/src/ssdd/ssdd.8
-+++ b/src/ssdd/ssdd.8
-@@ -1,31 +1,30 @@
--.TH SSDD 8 "June 13, 2019"
-+.TH SSDD 8 "September 19, 2020"
+diff --git a/src/queuelat/queuelat.8 b/src/queuelat/queuelat.8
+index f67a0bb7556e..2f99e703c990 100644
+--- a/src/queuelat/queuelat.8
++++ b/src/queuelat/queuelat.8
+@@ -15,9 +15,8 @@
  .SH NAME
- ssdd \- have a tracer do a bunch of PTRACE_SINGLESTEPs
+ queuelat \- Queue latency test program
  .SH SYNOPSIS
--.B ssdd
--.RI "<options>"
-+.LP
-+ssdd [-f|--forks NUM] [-h|--help] [-i|--iters NUM]
- .SH DESCRIPTION
--Have a tracer do a bunch of PTRACE_SINGLESTEPs against
--a tracee as fast as possible.  Create several of these
--tracer/tracee pairs and see if they can be made to
--interfere with each other.
--The tracer waits on each PTRACE_SINGLESTEP with a waitpid(2)
--and checks that waitpid's return values for correctness.
-+Have a tracer do a bunch of PTRACE_SINGLESTEPs against a tracee as
-+fast as possible. Create several of these tracer/tracee pairs and
-+see if they can be made to interfere with each other. The tracer
-+waits on each PTRACE_SINGLESTEP with a waitpid(2) and checks that
-+waitpid's return values for correctness.
- .SH OPTIONS
--.B \-f, \-\-forks
--number of tracer/tracee pairs to fork off.
--Default is 10.
--.br
- .TP
--.B \-i, \-\-iters
--number of PTRACE_SINGLESTEP iterations to
--do before declaring success, for each tracer/
--tracee pair set up. Default is 10,000.
-+.B \-f, \-\-forks=NUM
-+number of tracer/tracee pairs to fork off.
- .br
-+Default is 10.
- .TP
- .B \-h, \-\-help
- Display usage
+-.B queuelat
+-.RI "[\-h] [\-m " max-queue-len "] [\-c " cycles-per-packet "] [\-p " mpps "] [\-f " tsc-freq "] [\-t " timeout "] \
 -
++.LP
++queuelat [-c|--cycles N] [-f|--freq F] [-h|--help] [-m|--max-len LEN] [-p|--packets F] [-q|--queue-len N] [-t|--timeout TIME]
+ .SH DESCRIPTION
+ queuelat simulates a network queue checking for latency
+ violations in packet processing.
+@@ -25,36 +24,26 @@ violations in packet processing.
+ .SH OPTIONS
+ A summary of options is included below.
+ .TP
+-.B \-h
+-Show help
+-.br
++.B \-c, \-\-cycles=N
++Estimated number of cycles it takes to process one packet. This value should come from the envisioned packet forwarding application being simulated.
+ .TP
+-.B \-m max-queue-len
+-Maximum allowed latency, in nanoseconds. If latency to process
+-.br
+-any packet exceeds this value, the program quits,
+-writing
+-.br
+-a message to the trace buffer.
++.B \-f, \-\-freq=F
++TSC frequency in MHz.
+ .TP
+-.B \-c cycles-per-packet
+-Estimated number of cycles it takes to process one packet.
+-.br
+-This value should come from the envisioned packet
+-.br
+-forwarding application being simulated.
++.B \-h, \-\-help
++Show help
+ .TP
+-.B \-p mpps
++.B \-m, \-\-max-len=N
++Maximum allowed latency, in nanoseconds. If latency to process any packet exceeds this value, the program quits, writing a message to the trace buffer.
 +.TP
-+.B \-i, \-\-iters=NUM
-+number of PTRACE_SINGLESTEP iterations to do before declaring
-+success, for each tracer tracee pair set up.
-+.br
-+Default is 10,000.
++.B \-p, \-\-packets=F
+ Million packets per second that arrive for processing.
+ .TP
+-.B \-f tsc-freq-mhz
+-TSC frequency in MHz.
++.B \-q, \-\-queue-len=N
++Minimum queue length to print in the trace
+ .TP
+-.B \-t timeout
++.B \-t, \-\-timeout=TIME
+ Timeout in seconds to quit the program.
+-.TP
+-.B \-q min_queue_len_to_print_trace
+-Minimum queue length to print in the trace
+ 
  .SH AUTHOR
- ssdd was written by Joe Korty <joe.korty@concurrent-rt.com>
- .PP
-diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-index f165da96e23a..66d6009dc572 100644
---- a/src/ssdd/ssdd.c
-+++ b/src/ssdd/ssdd.c
-@@ -68,13 +68,16 @@ static int got_sigchld;
+ queuelat was written by Marcelo Tosatti <mtosatti@redhat.com>
+diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
+index 2b9118d8a8a5..661e48db88ac 100644
+--- a/src/queuelat/queuelat.c
++++ b/src/queuelat/queuelat.c
+@@ -16,6 +16,7 @@
+ #include <unistd.h>
+ #include <signal.h>
+ #include <time.h>
++#include <getopt.h>
  
- enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP };
+ #include "rt-utils.h"
  
--static void usage()
-+static void usage(int error)
+@@ -560,17 +561,20 @@ int calculate_nr_packets_drain_per_block(void)
+ 	return nr_packets_drain_per_block;
+ }
+ 
+-
+-void print_help(void)
++static void print_help(int error)
  {
--	printf("ssdd <options>\n");
--	printf("\t-f --forks=<number of forks>\n");
--	printf("\t-i --iters=<number of iterations>\n");
--	printf("\t-h --help\n");
--	exit(0);
-+	printf("ssdd V %1.2f\n", VERSION);
+-	printf("usage: queuelat [options]\n");
+-	printf("-h show this help menu\n");
+-	printf("-m max-queue-len (maximum latency allowed, in nanoseconds) (int)\n");
+-	printf("-c cycles-per-packet (number of cycles to process one packet (int)\n");
+-	printf("-p million-packet-per-sec (million packets per second) (float)\n");
+-	printf("-f tsc-freq-mhz (TSC frequency in MHz) (float)\n");
+-	printf("-t timeout (timeout, in seconds) (int)\n");
+-	printf("-q min_queue_len_to_print_trace (int)\n");
++	printf("queuelat V %1.2f\n", VERSION);
 +	printf("Usage:\n"
-+	       "ssdd <options>\n\n"
-+	       "-f       --forks=NUM       number of forks\n"
-+	       "-h       --help            print this message\n"
-+	       "-i       --iters=NUM       number of iterations\n"
++	       "queuelat <options>\n\n"
++	       "-c N     --cycles N        number of cycles to process one packet (int)\n"
++	       "-f F     --freq F          TSC frequency in MHz (float)\n"
++	       "-h       --help            show this help menu\n"
++	       "-m LEN   --max-len LEN     maximum latency allowed, in nanoseconds (int)\n"
++	       "-p F     --packets F       million packets per second (float)\n"
++	       "-q N     --queue-len N     minimum queue len to print trace (int)\n"
++	       "-t TIME  --timeout TIME    timeout, in seconds (int)\n"
 +	       );
 +	exit(error);
  }
  
- static int do_wait(pid_t *wait_pid, int *ret_sig)
-@@ -292,27 +295,30 @@ int main(int argc, char **argv)
- 		int option_index = 0;
+ int main(int argc, char **argv)
+@@ -584,61 +588,59 @@ int main(int argc, char **argv)
+ 	char *tvalue = NULL;
+ 	char *qvalue = NULL;
+ 	int index;
+-	int c;
+-
+-	install_signals();
  
- 		static struct option long_options[] = {
--			{"forks", required_argument, NULL, OPT_NFORKS},
--			{"iters", required_argument, NULL, OPT_NITERS},
--			{"help", no_argument, NULL, OPT_HELP},
-+			{"forks",		required_argument,	NULL, OPT_NFORKS},
-+			{"help",		no_argument,		NULL, OPT_HELP},
-+			{"iters",		required_argument,	NULL, OPT_NITERS},
- 			{NULL, 0, NULL, 0},
- 		};
--		int c = getopt_long(argc, argv, "f:i:h", long_options, &option_index);
-+		int c = getopt_long(argc, argv, "f:hi:", long_options, &option_index);
- 		if (c == -1)
+ 	opterr = 0;
+ 
+-	while ((c = getopt (argc, argv, "m:c:p:f:t:q:h")) != -1)
+-		switch (c)
+-		{
+-		case 'm':
+-			mvalue = optarg;
++	for (;;) {
++		static struct option options[] = {
++			{"cycles",	required_argument,	NULL, 'c'},
++			{"freq",	required_argument,	NULL, 'f'},
++			{"help",	no_argument,		NULL, 'h'},
++			{"max-len",	required_argument,	NULL, 'm'},
++			{"packets",	required_argument,	NULL, 'p'},
++			{"queue-len",	required_argument,	NULL, 'q'},
++			{"timeout",	required_argument,	NULL, 't'},
++			{NULL, 0, NULL, 0}
++		};
++		int c = getopt_long(argc, argv, "c:f:hm:p:q:t:", options, NULL);
++		if (c == -1)
  			break;
- 		switch(c) {
--			case 'f':
--			case OPT_NFORKS:
--				nforks = atoi(optarg);
--				break;
--			case 'i':
--			case OPT_NITERS:
--				nsteps = atoi(optarg);
--				break;
--			case 'h':
--			case OPT_HELP:
--				usage();
--				break;
-+		case 'f':
-+		case OPT_NFORKS:
-+			nforks = atoi(optarg);
-+			break;
++		switch (c) {
+ 		case 'c':
+ 			cvalue = optarg;
+ 			break;
+-		case 'p':
+-			pvalue = optarg;
+-			break;
+ 		case 'f':
+ 			fvalue = optarg;
+ 			break;
+-		case 't':
+-			tvalue = optarg;
++		case '?':
 +		case 'h':
-+		case OPT_HELP:
-+			usage(0);
++			print_help(0);
 +			break;
-+		case 'i':
-+		case OPT_NITERS:
-+			nsteps = atoi(optarg);
++		case 'm':
++			mvalue = optarg;
 +			break;
-+		default:
-+			usage(1);
++		case 'p':
++			pvalue = optarg;
+ 			break;
+ 		case 'q':
+ 			qvalue = optarg;
+ 			break;
+-		case 'h':
+-			print_help();
+-			return 0;
+-		case '?':
+-			if (optopt == 'm' || optopt == 'c' || optopt == 'p' ||
+-			    optopt == 'f' || optopt == 't' || optopt == 'q') {
+-				printf ("Option -%c requires an argument.\n", optopt);
+-			} else if (isprint (optopt)) {
+-				printf ("Unknown option `-%c'.\n", optopt);
+-				print_help();
+-				return 1;
+-			} else {
+-				printf ( "Unknown option character `\\x%x'.\n", optopt);
+-				print_help();
+-				return 1;
+-			}
++		case 't':
++			tvalue = optarg;
+ 			break;
+ 		default:
+-			abort ();
++			print_help(1);
 +			break;
  		}
++	}
+ 
+-	if (mvalue == NULL || cvalue == NULL || pvalue == NULL ||
+-	    fvalue == NULL) {
+-		printf("options -m, -c, -p and -f are required.\n");
+-		printf("usage: %s -m maxlatency -c cycles_per_packet -p mpps(million-packet-per-sec) -f tsc_freq_mhz [-t timeout (in secs)] [-q min_queue_len_to_print_trace]\n", argv[0]);
+-		return 1;
++	if (mvalue == NULL || cvalue == NULL || pvalue == NULL || fvalue == NULL) {
++		printf("options -m, -c, -p and -f are required\n");
++		exit(1);
  	}
  
++	install_signals();
++
+ 	maxlatency = atoi(mvalue);
+         cycles_per_packet = atoi(cvalue);
+         mpps = atof(pvalue);
+@@ -654,13 +656,6 @@ int main(int argc, char **argv)
+ 		min_queue_size_to_print = atoi(qvalue);
+ 	}
+ 
+-	if (optind != argc) {
+-		for (index = optind; index < argc; index++) {
+-			printf ("Error, non-option argument %s\n", argv[index]);
+-		}
+-		return 1;
+-	}
+-
+ 	convert_to_ghz(tsc_freq_mhz);
+ 
+ 	max_queue_len_f = maxlatency / (cycles_per_packet*cycles_to_ns);
 -- 
 2.28.0
 
