@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65BCCC4741F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 73E43C4727F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 153BE212CC
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2972420870
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728032AbgJGI5D (ORCPT
+        id S1728042AbgJGI5F (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 7 Oct 2020 04:57:03 -0400
+        Wed, 7 Oct 2020 04:57:05 -0400
 Received: from mx2.suse.de ([195.135.220.15]:57594 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727961AbgJGI5A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 7 Oct 2020 04:57:00 -0400
+        id S1728028AbgJGI5E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 7 Oct 2020 04:57:04 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id AAA26B163;
-        Wed,  7 Oct 2020 08:56:58 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 94AD1B28E;
+        Wed,  7 Oct 2020 08:57:02 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 05/18] deadline_test: Streamline usage output and man page
-Date:   Wed,  7 Oct 2020 10:56:40 +0200
-Message-Id: <20201007085653.11961-6-dwagner@suse.de>
+Subject: [rt-tests v2 15/18] sigwaittest: Streamline usage and man page
+Date:   Wed,  7 Oct 2020 10:56:50 +0200
+Message-Id: <20201007085653.11961-16-dwagner@suse.de>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201007085653.11961-1-dwagner@suse.de>
 References: <20201007085653.11961-1-dwagner@suse.de>
@@ -42,147 +42,159 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sched_deadline/deadline_test.8 | 37 ++++++++++++-----------
- src/sched_deadline/deadline_test.c | 47 +++++++++++++++---------------
- 2 files changed, 41 insertions(+), 43 deletions(-)
+ src/sigwaittest/sigwaittest.8 |  4 +-
+ src/sigwaittest/sigwaittest.c | 76 +++++++++++++++++++----------------
+ 2 files changed, 44 insertions(+), 36 deletions(-)
 
-diff --git a/src/sched_deadline/deadline_test.8 b/src/sched_deadline/deadline_test.8
-index 5dc99c0bfc63..8f32c5b6feb6 100644
---- a/src/sched_deadline/deadline_test.8
-+++ b/src/sched_deadline/deadline_test.8
-@@ -19,45 +19,44 @@ deadline_test \- High resolution test program
- This program is used to test the deadline scheduler (SCHED_DEADLINE tasks)
- .SH SYNOPSIS
- .B deadline_test
--.RI "[ \-hb ] [ \-r prio ] [ \-c cpulist ] [ \-i interval ] [ \-p percent ] [ \-P percent ] [ \-t threads ] [ \-s step[us) ]"
--
-+.RI "[ \-hb ] [ \-c CPUSET ] [ \-i INTV ] [ \-p PERCENT ] [ \-P PERCENT ] \
-+[ \-r PRIO ]  [ \-s STEP ] [ \-t NUM ]"
- .SH OPTIONS
- .TP
--.B \-h
--Show this help menu
--.br
--.TP
- .B \-b
- Bind on the last cpu. (shortcut for -c <lastcpu>)
+diff --git a/src/sigwaittest/sigwaittest.8 b/src/sigwaittest/sigwaittest.8
+index 2be9c03d05ca..a2dc1bc080a3 100644
+--- a/src/sigwaittest/sigwaittest.8
++++ b/src/sigwaittest/sigwaittest.8
+@@ -4,7 +4,7 @@
+ \fBsigwaittest\fR \- Start two threads or fork two processes and measure the latency between sending and receiving a signal
+ .SH "SYNTAX"
+ .LP
+-sigwaittest [-a|-a PROC] [-b USEC] [-d DIST] [-f] [-i INTV] [-l loops] [-p PRIO] [-t|-t NUM]
++sigwaittest [-a|--affinity PROC] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-t|--threads [NUM]]
  .br
- .TP
--.B \-r prio
--Add an RT task with given prio to stress system
-+.B \-c CPUSET
-+Comma/hyphen separated list of CPUs to run deadline tasks on
+ .SH "DESCRIPTION"
+ .LP
+@@ -26,7 +26,7 @@ Specify a length for the test run.
  .br
+ Append 'm', 'h', or 'd' to specify minutes, hours or days.
  .TP
--.B \-c cpulist
--Comma/hyphen separated list of CPUs to run deadline tasks on
-+.B \-h
-+Show this help menu
- .br
+-.B \-f, \-\-fork
++.B \-f, \-\-fork[=OPT]
+ Instead of creating threads (which is the default), fork new processes
  .TP
--.B \-i interval
-+.B \-i INTV
- The shortest deadline for the tasks
- .br
- .TP
--.B \-p percent
-+.B \-p PERCENT
- The percent of bandwidth to use (1-90%)
- .br
- .TP
--.B \-P percent
--The percent of runtime for execution completion
--              (Default 100%)
-+.B \-P PERCENT
-+The percent of runtime for execution completion (default 100%)
- .br
- .TP
--.B \-t threads
--The number of threads to run as deadline (default 1)
-+.B \-r PRIO
-+Add an RT task with given prio to stress system
- .br
- .TP
--.B \-s step(us)
--The amount to increase the deadline for each task (default 500us)
-+.B \-s STEP
-+The amount to increase the deadline for each task in us (default 500us)
-+.br
-+.TP
-+.B \-t NUM
-+The number of threads to run as deadline (default 1)
- .br
- .SH AUTHOR
- Deadline test was written by Steven Rostedt <rostedt@goodmis.org>
-diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-index 4cef2609912e..060ac896aef2 100644
---- a/src/sched_deadline/deadline_test.c
-+++ b/src/sched_deadline/deadline_test.c
-@@ -46,33 +46,30 @@
+ .B \-i, \-\-interval=INTV
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index e7393f791519..12b55e901ce5 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -206,28 +206,30 @@ void *semathread(void *param)
+ }
  
- /**
-  * usage - show the usage of the program and exit.
-- * @argv: The program passed in args
-+ * @error: Exit error code to be used
-  *
-- * This is defined here to show people looking at this code how
-+ * This is defined here to show peoplde looking at this code how
-  * to use this program as well. 
-  */
--static void usage(char **argv)
-+static void usage(int error)
+ 
+-static void display_help(void)
++static void display_help(int error)
  {
--	char *arg = argv[0];
--	char *p = arg+strlen(arg);
--
--	while (p >= arg && *p != '/')
--		p--;
--	p++;
--
--	printf("usage: %s [options]\n"
--	       " -h - Show this help menu\n"
--	       " -b - Bind on the last cpu. (shortcut for -c <lastcpu>)\n"
--	       " -r prio - Add an RT task with given prio to stress system\n"
--	       " -c cpulist - Comma/hyphen separated list of CPUs to run deadline tasks on\n"
--	       " -i interval - The shortest deadline for the tasks\n"
--	       " -p percent - The percent of bandwidth to use (1-90%%)\n"
--	       " -P percent - The percent of runtime for execution completion\n"
--	       "              (Default 100%%)\n"
--	       " -t threads - The number of threads to run as deadline (default 1)\n"
--	       " -s step(us) - The amount to increase the deadline for each task (default 500us)\n"
--	       "\n", p);
--	exit(-1);
-+	printf("deadline_test V %1.2f\n", VERSION);
+ 	printf("sigwaittest V %1.2f\n", VERSION);
+-	puts("Usage: sigwaittest <options>");
+-	puts("Function: test sigwait() latency");
+-	puts(
+-	"Options:\n"
+-	"-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
+-	"                           with NUM pin all threads to the processor NUM\n"
+-	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+-	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+-	"-f       --fork            fork new processes instead of creating threads\n"
+-	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+-	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+-	"-D       --duration=TIME   specify a length for the test run.\n"
+-	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+-	"-p PRIO  --prio=PRIO       priority\n"
+-	"-t       --threads         one thread per available processor\n"
+-	"-t [NUM] --threads=NUM     number of threads:\n"
+-	"                           without NUM, threads = max_cpus\n"
+-	"                           without -t default = 1\n");
+-	exit(1);
 +	printf("Usage:\n"
-+	       "deadline_test <options>\n"
-+	       "-b                         Bind on the last cpu. (shortcut for -c <lastcpu>)\n"
-+	       "-c CPUSET                  Comma/hyphen separated list of CPUs to run deadline\n"
-+	       "                           tasks on\n"
-+	       "-h                         Show this help menu\n"
-+	       "-i INTV                    The shortest deadline for the tasks\n"
-+	       "-p PERCENT                 The percent of bandwidth to use (1-90%%)\n"
-+	       "-P PERCENT                 The percent of runtime for execution completion\n"
-+	       "                           (default 100%%)\n"
-+	       "-r PRIO                    Add an RT task with given prio to stress system\n"
-+	       "-s STEP                    The amount to increase the deadline for each task in us\n"
-+	       "                           (default 500us)\n"
-+	       "-t NUM                     The number of threads to run as deadline (default 1)\n"
++	       "sigwaittest <options>\n\n"
++	       "Function: test sigwait() latency\n\n"
++	       "Available options:\n"
++	       "-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
++	       "                           with NUM pin all threads to the processor NUM\n"
++	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
++	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
++	       "-D       --duration=TIME   specify a length for the test run.\n"
++	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
++	       "                           days.\n"
++	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
++	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
++	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	       "-p PRIO  --prio=PRIO       priority\n"
++	       "-t       --threads         one thread per available processor\n"
++	       "-t [NUM] --threads=NUM     number of threads:\n"
++	       "                           without NUM, threads = max_cpus\n"
++	       "                           without -t default = 1\n"
 +	       );
 +	exit(error);
  }
  
- #define _STR(x) #x
-@@ -1753,8 +1750,10 @@ int main (int argc, char **argv)
- 			rt_task = atoi(optarg);
+ 
+@@ -250,19 +252,19 @@ static void process_options (int argc, char *argv[])
+ 		int option_index = 0;
+ 		/** Options for getopt */
+ 		static struct option long_options[] = {
+-			{"affinity", optional_argument, NULL, 'a'},
+-			{"breaktrace", required_argument, NULL, 'b'},
+-			{"distance", required_argument, NULL, 'd'},
+-			{"fork", optional_argument, NULL, 'f'},
+-			{"interval", required_argument, NULL, 'i'},
+-			{"loops", required_argument, NULL, 'l'},
+-			{"duration", required_argument, NULL, 'D'},
+-			{"priority", required_argument, NULL, 'p'},
+-			{"threads", optional_argument, NULL, 't'},
+-			{"help", no_argument, NULL, '?'},
++			{"affinity",		optional_argument,	NULL, 'a'},
++			{"breaktrace",		required_argument,	NULL, 'b'},
++			{"distance",		required_argument,	NULL, 'd'},
++			{"duration",		required_argument,	NULL, 'D'},
++			{"fork",		optional_argument,	NULL, 'f'},
++			{"help",		no_argument,		NULL, 'h'},
++			{"interval",		required_argument,	NULL, 'i'},
++			{"loops",		required_argument,	NULL, 'l'},
++			{"priority",		required_argument,	NULL, 'p'},
++			{"threads",		optional_argument,	NULL, 't'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:t::",
++		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:t::",
+ 			long_options, &option_index);
+ 		if (c == -1)
  			break;
- 		case 'h':
-+			usage(0);
+@@ -280,6 +282,7 @@ static void process_options (int argc, char *argv[])
+ 			break;
+ 		case 'b': thistracelimit = atoi(optarg); break;
+ 		case 'd': distance = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'f':
+ 			if (optarg != NULL) {
+ 				wasforked = 1;
+@@ -291,9 +294,12 @@ static void process_options (int argc, char *argv[])
+ 			} else
+ 				mustfork = 1;
+ 			break;
++		case '?':
++		case 'h':
++			display_help(0);
 +			break;
- 		default:
--			usage(argv);
-+			usage(1);
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
+-		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 't':
+ 			if (optarg != NULL)
+@@ -303,7 +309,9 @@ static void process_options (int argc, char *argv[])
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
+-		case '?': error = 1; break;
++		default:
++			display_help(1);
++			break;
  		}
  	}
+ 
+@@ -331,7 +339,7 @@ static void process_options (int argc, char *argv[])
+ 		tracelimit = thistracelimit;
+ 	}
+ 	if (error)
+-		display_help ();
++		display_help (error);
+ }
+ 
  
 -- 
 2.28.0
