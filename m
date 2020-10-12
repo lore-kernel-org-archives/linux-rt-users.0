@@ -2,174 +2,167 @@ Return-Path: <SRS0=LljW=DT=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 19D85C433DF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Oct 2020 14:03:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D908C433DF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Oct 2020 16:46:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D4941206F4
-	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Oct 2020 14:03:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1E5C12076D
+	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Oct 2020 16:46:00 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I+p1N+8o"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="r6nJb6mV";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="fAr5FcJK"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2403766AbgJLOD3 (ORCPT
+        id S2403868AbgJLQp5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 12 Oct 2020 10:03:29 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:28666 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1730686AbgJLNgd (ORCPT
+        Mon, 12 Oct 2020 12:45:57 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:46226 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2390541AbgJLQp5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 12 Oct 2020 09:36:33 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1602509787;
+        Mon, 12 Oct 2020 12:45:57 -0400
+Date:   Mon, 12 Oct 2020 18:45:53 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1602521155;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=XQhfwSvFTC00iWK+doexcB4MO8bFgyxrd5Ornf8S0lM=;
-        b=I+p1N+8oaXMI04Mc9+TPdBlH/Hx2eVdFxGlru/XpcM360KrAWrRTMkYEzOxziYCiFiH0El
-        ULt3zkSvzCNRsWvtQff30TmHomzKVZJ9sL+Mgc1wALJ4NvDNlv1Sofmrda329EpxmvFUW7
-        RvtY+oBjl6faK9OWHlhzTU5dPjY4aTo=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-10-dBQMTsoGPpyC4ET2IalxoA-1; Mon, 12 Oct 2020 09:36:25 -0400
-X-MC-Unique: dBQMTsoGPpyC4ET2IalxoA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1056391470C;
-        Mon, 12 Oct 2020 13:36:24 +0000 (UTC)
-Received: from [10.36.112.220] (ovpn-112-220.ams2.redhat.com [10.36.112.220])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 835AC55789;
-        Mon, 12 Oct 2020 13:36:16 +0000 (UTC)
-From:   "Eelco Chaudron" <echaudro@redhat.com>
-To:     "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>
-Cc:     "Juri Lelli" <juri.lelli@redhat.com>, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        bristot@redhat.com, williams@redhat.com, atheurer@redhat.com
-Subject: Re: [PATCH 5.9 RT] net: openvswitch: Fix using smp_processor_id() in
- preemptible code
-Date:   Mon, 12 Oct 2020 15:36:14 +0200
-Message-ID: <EB6A6F4F-4778-41D3-B314-4587DE7A7658@redhat.com>
-In-Reply-To: <20201012082129.ocod2dlftwais65a@linutronix.de>
-References: <20201009124759.592550-1-juri.lelli@redhat.com>
- <20201009154116.a4fcrrm7flxonidd@linutronix.de>
- <65BBD0B4-2A74-421A-BF81-357CD5F84747@redhat.com>
- <20201012082129.ocod2dlftwais65a@linutronix.de>
+        bh=Mw0frYjEmcHy+lH8fPEzgAzJHGlzJuO9p7Ascemyq/w=;
+        b=r6nJb6mVGzNtSCCau9CHqK1EcFwlaoiWjGI6MoHFQV8nBsOIngm9C7rLQa/QzksrZj0Ud9
+        GLYv/4eeytJQK0gCpM3mSwmuxtpjTFKnu9Kkmk1fbByJH98yPPR49HenmrHltl7yVk4yvr
+        lYrOHTWUo2aKxrkPIJe4zCmT6XAelfayfNvLEmV0k6S1MRhVODVn1wNeIJs7NSHTTXfoql
+        4Req1DjUan3zts+TStoGUC9p9RW2USsuL3ZPZ3CYrHVk18uwkr0wWuwUv1b/UVMdxjI1be
+        0OWt3Lbghjo4IT4PH+wsD7Vmydkzqkkg0KURJseOxWPqBml5agG0ZiWHyJWmjg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1602521155;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=Mw0frYjEmcHy+lH8fPEzgAzJHGlzJuO9p7Ascemyq/w=;
+        b=fAr5FcJKsAqePv/01EfutuKixjyghotjPEhnnb7UEv8ifeRDe9FqypZ5iz9TAWtiZu+irM
+        1MLGREPg1O0mkjCQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mike Galbraith <efault@gmx.de>
+Cc:     tglx@linutronix.de, linux-rt-users@vger.kernel.org,
+        lkml <linux-kernel@vger.kernel.org>
+Subject: Re: [RT] 5.9-rt14  softirq_ctrl.lock vs listening_hash[i].lock
+ lockdep splat
+Message-ID: <20201012164553.kkk7aaeyb3y4wvyh@linutronix.de>
+References: <12d6f9879a97cd56c09fb53dee343cbb14f7f1f7.camel@gmx.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <12d6f9879a97cd56c09fb53dee343cbb14f7f1f7.camel@gmx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2020-10-10 06:31:57 [+0200], Mike Galbraith wrote:
 
+so this then. Do you have more of these?
 
-On 12 Oct 2020, at 10:21, Sebastian Andrzej Siewior wrote:
+----------->8--------------------
+Subject: [PATCH] tcp: Remove superfluous BH-disable around listening_hash
 
-> On 2020-10-12 10:14:42 [+0200], Eelco Chaudron wrote:
->>
->>
->> On 9 Oct 2020, at 17:41, Sebastian Andrzej Siewior wrote:
->>
->>> On 2020-10-09 14:47:59 [+0200], Juri Lelli wrote:
->>>> This happens because openvswitch/flow_table::flow_lookup() accesses
->>>> per-cpu data while being preemptible (and migratable).
->>>>
->>>> Fix it by adding get/put_cpu_light(), so that, even if preempted, 
->>>> the
->>>> task executing this code is not migrated (operation is also guarded
->>>> by
->>>> ovs_mutex mutex).
->>>
->>> This warning is not limited to PREEMPT_RT it also present upstream 
->>> since
->>> commit
->>>    eac87c413bf97 ("net: openvswitch: reorder masks array based on
->>> usage")
->>>
->>> You should be able to reproduce it there, too.
->>> The path ovs_flow_tbl_lookup() -> flow_lookup() is guarded by 
->>> ovs_lock()
->>> I can't say that this true for
->>>    ovs_vport_receive() -> ovs_dp_process_packet() ->
->>>    ovs_flow_tbl_lookup_stats() -> flow_lookup()
->>>
->>> (means I don't know but it looks like coming from NAPI).
->>>
->>> Which means u64_stats_update_begin() could have two writers. This 
->>> must
->>> not happen.
->>> There are two reader which do u64_stats_fetch_begin_irq(). Disabling
->>> interrupts makes no sense since they perform cross-CPU access.
->>>
->>> -> You need to ensure that there is only one writer at a time.
->>>
->>> If mask_array gains a spinlock_t for writer protection then you can
->>> acquire the lock prio grabbing ->masks_usage_cntr. But as of now 
->>> there
->>> is one `ma->syncp'.
->>
->> I’m not too familiar with the RT kernel, but in the none RT kernel, 
->> this
->> function is called in run to completion parts only, hence does not 
->> need a
->> lock. Actually, this was designed in such a way that it does not need 
->> a lock
->> at all.
->
-> _no_ As explained above, this is not RT specific.
-> What guaranties that you don't have two flow_lookup() invocations on 
-> the
-> same CPU? You are using u64_stats_update_begin() which must not be
-> preempted. This means even if preemption is disabled you must not have
-> another invocation in BH context. This is due to the
-> write_seqcount_begin() in u64_stats_update_begin().
-> If preemption / CPU migration is not a problem in the above part, you
-> can use annotation to disable the warning that led to the warning. But
-> the u64_stats invocation looks still problematic.
->
->> So maybe this needs a get_cpu() instead of the light variant in the 
->> RT case?
+Commit
+   9652dc2eb9e40 ("tcp: relax listening_hash operations")
 
-Hi Sebastian,
+removed the need to disable bottom half while acquiring
+listening_hash.lock. There are still two callers left which disable
+bottom half before the lock is acquired.
 
-I was not reading the splat correctly and thought it was from the NAPI 
-path but it looks like it's from the netlink part. I think this could be 
-fixed with the following patch, so both paths, NAPI, and netlink become 
-non-preemptive:
+Drop local_bh_disable() around __inet_hash() which acquires
+listening_hash->lock, invoke inet_ehash_nolisten() with disabled BH.
+inet_unhash() conditionally acquires listening_hash->lock.
 
---- a/net/openvswitch/flow_table.c
-+++ b/net/openvswitch/flow_table.c
-@@ -850,9 +850,14 @@ struct sw_flow *ovs_flow_tbl_lookup(struct 
-flow_table *tbl,
-         struct mask_array *ma = rcu_dereference_ovsl(tbl->mask_array);
-         u32 __always_unused n_mask_hit;
-         u32 __always_unused n_cache_hit;
-+       struct sw_flow *flow;
-         u32 index = 0;
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ net/ipv4/inet_hashtables.c  | 19 ++++++++++++-------
+ net/ipv6/inet6_hashtables.c |  5 +----
+ 2 files changed, 13 insertions(+), 11 deletions(-)
 
--       return flow_lookup(tbl, ti, ma, key, &n_mask_hit, &n_cache_hit, 
-&index);
-+       preempt_disable();
-+       flow = flow_lookup(tbl, ti, ma, key, &n_mask_hit, &n_cache_hit, 
-&index);
-+       preempt_enable();
-+
-+       return flow;
-  }
-
-  struct sw_flow *ovs_flow_tbl_lookup_exact(struct flow_table *tbl,
-
-Note that choosing to do this in ovs_flow_tbl_lookup() and not 
-flow_lookup() allows the fast-path, through NAPI, not having to call 
-preempt_disable().
-
-Any comments? If not I can sent a proper patch trough netdev.
-
-//Eelco
+diff --git a/net/ipv4/inet_hashtables.c b/net/ipv4/inet_hashtables.c
+index 239e54474b653..fcb105cbb5465 100644
+--- a/net/ipv4/inet_hashtables.c
++++ b/net/ipv4/inet_hashtables.c
+@@ -585,7 +585,9 @@ int __inet_hash(struct sock *sk, struct sock *osk)
+ 	int err = 0;
+ 
+ 	if (sk->sk_state != TCP_LISTEN) {
++		local_bh_disable();
+ 		inet_ehash_nolisten(sk, osk);
++		local_bh_enable();
+ 		return 0;
+ 	}
+ 	WARN_ON(!sk_unhashed(sk));
+@@ -617,11 +619,8 @@ int inet_hash(struct sock *sk)
+ {
+ 	int err = 0;
+ 
+-	if (sk->sk_state != TCP_CLOSE) {
+-		local_bh_disable();
++	if (sk->sk_state != TCP_CLOSE)
+ 		err = __inet_hash(sk, NULL);
+-		local_bh_enable();
+-	}
+ 
+ 	return err;
+ }
+@@ -632,17 +631,20 @@ void inet_unhash(struct sock *sk)
+ 	struct inet_hashinfo *hashinfo = sk->sk_prot->h.hashinfo;
+ 	struct inet_listen_hashbucket *ilb = NULL;
+ 	spinlock_t *lock;
++	bool state_listen;
+ 
+ 	if (sk_unhashed(sk))
+ 		return;
+ 
+ 	if (sk->sk_state == TCP_LISTEN) {
++		state_listen = true;
+ 		ilb = &hashinfo->listening_hash[inet_sk_listen_hashfn(sk)];
+-		lock = &ilb->lock;
++		spin_lock(&ilb->lock);
+ 	} else {
++		state_listen = false;
+ 		lock = inet_ehash_lockp(hashinfo, sk->sk_hash);
++		spin_lock_bh(lock);
+ 	}
+-	spin_lock_bh(lock);
+ 	if (sk_unhashed(sk))
+ 		goto unlock;
+ 
+@@ -655,7 +657,10 @@ void inet_unhash(struct sock *sk)
+ 	__sk_nulls_del_node_init_rcu(sk);
+ 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
+ unlock:
+-	spin_unlock_bh(lock);
++	if (state_listen)
++		spin_unlock(&ilb->lock);
++	else
++		spin_unlock_bh(lock);
+ }
+ EXPORT_SYMBOL_GPL(inet_unhash);
+ 
+diff --git a/net/ipv6/inet6_hashtables.c b/net/ipv6/inet6_hashtables.c
+index 2d3add9e61162..50fd17cbf3ec7 100644
+--- a/net/ipv6/inet6_hashtables.c
++++ b/net/ipv6/inet6_hashtables.c
+@@ -335,11 +335,8 @@ int inet6_hash(struct sock *sk)
+ {
+ 	int err = 0;
+ 
+-	if (sk->sk_state != TCP_CLOSE) {
+-		local_bh_disable();
++	if (sk->sk_state != TCP_CLOSE)
+ 		err = __inet_hash(sk, NULL);
+-		local_bh_enable();
+-	}
+ 
+ 	return err;
+ }
+-- 
+2.28.0
 
