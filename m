@@ -1,166 +1,483 @@
-Return-Path: <SRS0=TBiY=D4=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=0dn7=D5=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-3.5 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F4B3C388F9
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Oct 2020 17:59:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5AE60C388F9
+	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Oct 2020 05:22:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 209AF223BF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Oct 2020 17:59:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C39582245D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Oct 2020 05:22:01 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="em9K3RLA"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391710AbgJUR7O (ORCPT
+        id S2507892AbgJVFV7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 21 Oct 2020 13:59:14 -0400
-Received: from sleepmap.de ([85.10.206.218]:54770 "EHLO mail.sleepmap.de"
+        Thu, 22 Oct 2020 01:21:59 -0400
+Received: from mout.gmx.net ([212.227.15.18]:44317 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2391484AbgJUR7O (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Oct 2020 13:59:14 -0400
-X-Greylist: delayed 490 seconds by postgrey-1.27 at vger.kernel.org; Wed, 21 Oct 2020 13:59:12 EDT
-Date:   Wed, 21 Oct 2020 19:50:59 +0200
-From:   David Runge <dave@sleepmap.de>
-To:     linux-rt-users@vger.kernel.org
-Subject: 5.9.1-rt18: issues with Firewire card on AMD hardware
-Message-ID: <20201021175059.GA4989@hmbx>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="sdtB3X0nJg68CQEu"
-Content-Disposition: inline
+        id S2394874AbgJVFV6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 22 Oct 2020 01:21:58 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1603344074;
+        bh=OUY2ImxDM9jpJgN4xrCrjhOFB9ieGb/A1sz8OncTSBk=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=em9K3RLAM4d9JMWRQhc2+P8mS4wD/OW08ZzUI29dxsIYEvYcmqgpyPGDh46P/3ttm
+         6HeNKpSE3W9p+9CwSjHuO9T2ruR7viwXnTWmlpFyRpZJy1wQOgSZJcLl4rzC9wcOHq
+         Z2MKciGdYxCDKixQ9D8pLSozKTb3GuRhcM1awTEw=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.simpson.net ([185.221.150.153]) by mail.gmx.com (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MAOJV-1kgme12MrD-00BuQJ; Thu, 22
+ Oct 2020 07:21:14 +0200
+Message-ID: <1236de05e704f0a0b28dc0ad75f9ad4d81b7a057.camel@gmx.de>
+Subject: ltp or kvm triggerable lockdep alloc_pid()  deadlock gripe
+From:   Mike Galbraith <efault@gmx.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Date:   Thu, 22 Oct 2020 07:21:13 +0200
+In-Reply-To: <20201021125324.ualpvrxvzyie6d7d@linutronix.de>
+References: <20201021125324.ualpvrxvzyie6d7d@linutronix.de>
+Content-Type: multipart/mixed; boundary="=-jR9nJwzMMaK2NlaX8V5c"
+User-Agent: Evolution 3.34.4 
+MIME-Version: 1.0
+X-Provags-ID: V03:K1:wgwfm9AmkqfHfuivU4eiHxBBqHt8DPCQMybnOOG5UEJl1yuvxyS
+ q82LpYd080cvcwODJWYb61h9AZOCtltg4Rd1swNMPtn91VaPtN/xbzDuHTd2syMe9kej+O9
+ apDt2v+D4CSWqlt32F7AKH1CRycoht08Cc8rAHfZD/ow635OpvwCvzhWjNEwuD5Q9B7wOeL
+ h4zQsAp2nKXuB31dwqtLA==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:+N5itO8kSwQ=:uhojKN9nQUGbxHOfw46vUb
+ oQMDjF+JF5mSSaBRJ7qhFuD+zGjeqPvH4IEceRTc5cjZdRxEwMQ4X1wzrkYj2Rx4qFa/76scT
+ 8PzaoUKu4G+tQLPqh87dg8p9du15ywm06eVvOJ8MLWspgleQO3Jz/juMtBHCd1thYD6ZugYSc
+ UIESVCPwe8QjyRMsfzA6XvriAsPpF1pVtz3SwqWC9sjkIlhPJ45LMIVzcGJfwJtm6rHWxy/jU
+ zsJmprm/v7waBhXvROLdj38rTPPzlAeaHduZteraWc/cR0/CIpfq2LNZlBs6L9+7SHwIrzDEF
+ 3yzGtEvfG/HHLoznTO9YJwoZET244X3A/s0D5H8kCpPkjl7gpYb4cGC72V996dHRlNyLHUi/E
+ CqHl0UxIVqdYtmx3ftXXaqmBDobubWWSVog/Fac9EoZkG+ZRRc3h3V/eunUAO5NlII5fcIbnW
+ tlcVakCBsmrJg0XvwyBS//BRUbL7D71VoBHmpzXJ2ISnmuYhk7PCKaCTfIij7KDcK0Mb0ciQ3
+ Ck9K8FPgG5T5jARKFZvl3G+BVtj08XFwyTE8WnHjnDnwgqHsQ8HIGUgqLJKSeTr3tTzHRkHb+
+ UTw9SVD2u2ZGXDNSTnitOaMdrd+DLMSWmA2lL2jOhq1PGX/Dop0ROkywIyaB6y9IbPdlUGpDI
+ LI/oaKWWRFzM4KlJ2cWvN7X745Dodz9tuzeUDfwbbKc9+5AMzZKOrXE8o0eCF34X9P70Dn37A
+ RGD3a2PgajQTaIHD4vf1osCX2g3cC9FNyg/7Al7P0h7AlpZIUK1QlCI9gpqM3NK8O3WnvpPfd
+ PbZMCyU+kBCVw5h4v1z++9gGXI7UT9tu5WAa963mmghA+q17DKY7h4hisfBL2p0beuS+vvRV8
+ eV4BmnfgubKZVCwKVkAQ==
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
---sdtB3X0nJg68CQEu
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
+--=-jR9nJwzMMaK2NlaX8V5c
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: quoted-printable
-Subject: 5.9.1-rt18: issues with Firewire card on AMD hardware
 
-Hi!
+Greetings,
 
-I'm currently trying to get the latest linux-rt kernel (v5.9.1-rt18) to
-work on my AMD hardware. I'm providing the kernel as a prebuilt binary
-to the Arch Linux community, as we do not have that specific kernel in
-the repositories (yet).
+The gripe below is repeatable in two ways here, boot with nomodeset so
+nouveau doesn't steal the lockdep show when I then fire up one of my
+(oink) full distro VM's, or from an ltp directory ./runltp -f cpuset
+with the attached subset of controllers file placed in ./runtest dir.
 
-I'm facing issues in regards to hardware discovery and crashes, which I
-do not get on the vanilla kernel (now at 5.9.1) on Arch Linux.
+Method2 may lead to a real deal deadlock, I've got a crashdump of one,
+stack traces of uninterruptible sleepers attached.
 
-I have a PCIe Firewire card that I use for an external audio interface
-(RME Fireface800):
+[  154.927302] =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+[  154.927303] WARNING: possible circular locking dependency detected
+[  154.927304] 5.9.1-rt18-rt #5 Tainted: G S          E
+[  154.927305] ------------------------------------------------------
+[  154.927306] cpuset_inherit_/4992 is trying to acquire lock:
+[  154.927307] ffff9d334c5e64d8 (&s->seqcount){+.+.}-{0:0}, at: __slab_all=
+oc.isra.87+0xad/0xc0
+[  154.927317]
+               but task is already holding lock:
+[  154.927317] ffffffffac4052d0 (pidmap_lock){+.+.}-{2:2}, at: alloc_pid+0=
+x1fb/0x510
+[  154.927324]
+               which lock already depends on the new lock.
 
-05:00.0 FireWire (IEEE 1394): Texas Instruments XIO2213A/B/XIO2221
-IEEE-1394b OHCI Controller [Cheetah Express] (rev 01)
+[  154.927324]
+               the existing dependency chain (in reverse order) is:
+[  154.927325]
+               -> #1 (pidmap_lock){+.+.}-{2:2}:
+[  154.927328]        lock_acquire+0x92/0x410
+[  154.927331]        rt_spin_lock+0x2b/0xc0
+[  154.927335]        free_pid+0x27/0xc0
+[  154.927338]        release_task+0x34a/0x640
+[  154.927340]        do_exit+0x6e9/0xcf0
+[  154.927342]        kthread+0x11c/0x190
+[  154.927344]        ret_from_fork+0x1f/0x30
+[  154.927347]
+               -> #0 (&s->seqcount){+.+.}-{0:0}:
+[  154.927350]        validate_chain+0x981/0x1250
+[  154.927352]        __lock_acquire+0x86f/0xbd0
+[  154.927354]        lock_acquire+0x92/0x410
+[  154.927356]        ___slab_alloc+0x71b/0x820
+[  154.927358]        __slab_alloc.isra.87+0xad/0xc0
+[  154.927359]        kmem_cache_alloc+0x700/0x8c0
+[  154.927361]        radix_tree_node_alloc.constprop.22+0xa2/0xf0
+[  154.927365]        idr_get_free+0x207/0x2b0
+[  154.927367]        idr_alloc_u32+0x54/0xa0
+[  154.927369]        idr_alloc_cyclic+0x4f/0xa0
+[  154.927370]        alloc_pid+0x22b/0x510
+[  154.927372]        copy_process+0xeb5/0x1de0
+[  154.927375]        _do_fork+0x52/0x750
+[  154.927377]        __do_sys_clone+0x64/0x70
+[  154.927379]        do_syscall_64+0x33/0x40
+[  154.927382]        entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  154.927384]
+               other info that might help us debug this:
 
-Unfortunately the card does not show up anymore and instead I run into a
-bug:
+[  154.927384]  Possible unsafe locking scenario:
 
-Oct 21 19:08:03 hmbx kernel: ------------[ cut here ]------------
-Oct 21 19:08:03 hmbx kernel: DEBUG_LOCKS_WARN_ON(val > preempt_count())
-Oct 21 19:08:03 hmbx kernel: WARNING: CPU: 19 PID: 0 at
-kernel/sched/core.c:4763 preempt_count_sub+0x5a/0x90
-Oct 21 19:08:03 hmbx kernel: Modules linked in: crypto_user ip_tables
-x_tables dm_crypt encrypted_keys trusted tpm hid_logitech_hidpp
-hid_logitech_dj sd_mod hid_generic usbhid hid amdgpu gpu_sched ttm
-drm_kms_helper syscopyarea sysfillrect sysimgblt fb_sys_fops
-crct10dif_pclmul cec ahci r8169 crc32_pclmul ghash_clmuln
-i_intel libahci realtek aesni_intel mdio_devres crypto_simd dm_mod btrfs
-of_mdio firewire_ohci blake2b_generic drm libcrc32c cryptd libata ccp
-xhci_pci fixed_phy crc32c_generic ehci_pci igb glue_helper firewire_core
-crc32c_intel agpgart rng_core crc_itu_t scsi_mod xhci_hcd xor dca libphy
-ehci_hcd i2c_algo_bit wmi raid
-6_pq
-Oct 21 19:08:03 hmbx kernel: CPU: 19 PID: 0 Comm: swapper/19 Tainted: G
-W         5.9.1-rt18-1-rt #1
-Oct 21 19:08:03 hmbx kernel: Hardware name: System manufacturer System
-Product Name/Pro WS X570-ACE, BIOS 1302 01/20/2020
-Oct 21 19:08:03 hmbx kernel: RIP: 0010:preempt_count_sub+0x5a/0x90
-Oct 21 19:08:03 hmbx kernel: Code: 2d d5 62 c3 e8 a7 2d 8c 00 85 c0 74
-f6 8b 15 55 77 50 01 85 d2 75 ec 48 c7 c6 df 5c 30 9e 48 c7 c7 ea e9 2e
-9e e8 ab ee fc ff <0f> 0b c3 84 c0 75 c9 e8 7a 2d 8c 00 85 c0 74 c9 8b
-05 28 77 50 01
-Oct 21 19:08:03 hmbx kernel: RSP: 0018:ffff9304401e7dc0 EFLAGS: 00010082
-Oct 21 19:08:03 hmbx kernel: RAX: 0000000000000000 RBX: ffff90e257e53f00
-RCX: 0000000000000000
-Oct 21 19:08:03 hmbx kernel: RDX: 0000000000000001 RSI: ffffffff9e313727
-RDI: 00000000ffffffff
-Oct 21 19:08:03 hmbx kernel: RBP: ffff9304401e7df8 R08: ffffffff9ed443e0
-R09: 0000000000000001
-Oct 21 19:08:03 hmbx kernel: R10: ffff9304401e7ce8 R11: 3fffffffffffffff
-R12: 0000000000000001
-Oct 21 19:08:03 hmbx kernel: R13: 0000000000000000 R14: 0000000000000000
-R15: 0000000000000000
-Oct 21 19:08:03 hmbx kernel: FS:  0000000000000000(0000)
-GS:ffff90e25eec0000(0000) knlGS:0000000000000000
-Oct 21 19:08:03 hmbx kernel: CS:  0010 DS: 0000 ES: 0000 CR0:
-0000000080050033
-Oct 21 19:08:03 hmbx kernel: CR2: 00007f085fb38c20 CR3: 0000000fb829c000
-CR4: 0000000000350ee0
-Oct 21 19:08:03 hmbx kernel: Call Trace:
-Oct 21 19:08:03 hmbx kernel:  irq_exit_rcu+0x28/0xe0
-Oct 21 19:08:03 hmbx kernel:  sysvec_call_function_single+0x47/0xe0
-Oct 21 19:08:03 hmbx kernel:  asm_sysvec_call_function_single+0x12/0x20
-Oct 21 19:08:03 hmbx kernel: RIP: 0010:cpuidle_enter_state+0xd9/0x440
-Oct 21 19:08:03 hmbx kernel: Code: 95 ff 49 89 c5 8b 05 6e ad e2 00 85
-c0 0f 8f f1 01 00 00 31 ff e8 c7 26 95 ff 45 84 f6 0f 85 9f 01 00 00 fb
-66 0f 1f 44 00 00 <45> 85 e4 0f 88 de 00 00 00 49 63 d4 4d 29 fd 48 8d
-04 52 48 8d 04
-Oct 21 19:08:03 hmbx kernel: RSP: 0018:ffff9304401e7ea0 EFLAGS: 00000246
-Oct 21 19:08:03 hmbx kernel: RAX: ffff90e25eec0000 RBX: ffff90e240dc7400
-RCX: 000000000000001f
-Oct 21 19:08:03 hmbx kernel: RDX: 0000000000000001 RSI: ffffffff9e313727
-RDI: ffffffff9e340fb6
-Oct 21 19:08:03 hmbx kernel: RBP: ffffffff9e745bc0 R08: 0000000000000002
-R09: 0000000000000020
-Oct 21 19:08:03 hmbx kernel: R10: 0000000000000165 R11: 0000000000006045
-R12: 0000000000000002
-Oct 21 19:08:03 hmbx kernel: R13: 0000000398671b89 R14: 0000000000000000
-R15: 00000003986701bf
-Oct 21 19:08:03 hmbx kernel:  cpuidle_enter+0x29/0x40
-Oct 21 19:08:03 hmbx kernel:  do_idle+0x232/0x2d0
-Oct 21 19:08:03 hmbx kernel:  cpu_startup_entry+0x19/0x20
-Oct 21 19:08:03 hmbx kernel:  secondary_startup_64+0xb6/0xc0
-Oct 21 19:08:03 hmbx kernel: ---[ end trace 0000000000000002 ]---
+[  154.927385]        CPU0                    CPU1
+[  154.927386]        ----                    ----
+[  154.927386]   lock(pidmap_lock);
+[  154.927388]                                lock(&s->seqcount);
+[  154.927389]                                lock(pidmap_lock);
+[  154.927391]   lock(&s->seqcount);
+[  154.927392]
+                *** DEADLOCK ***
 
-I have the kernel log and lspci output (from the working vanilla kernel)
-here: https://pkgbuild.com/~dvzrv/bugs/linux-rt-5.9.1.18/
+[  154.927393] 4 locks held by cpuset_inherit_/4992:
+[  154.927394]  #0: ffff9d33decea5b0 ((lock).lock){+.+.}-{2:2}, at: __radi=
+x_tree_preload+0x52/0x3b0
+[  154.927399]  #1: ffffffffac598fa0 (rcu_read_lock){....}-{1:2}, at: rt_s=
+pin_lock+0x5/0xc0
+[  154.927405]  #2: ffffffffac4052d0 (pidmap_lock){+.+.}-{2:2}, at: alloc_=
+pid+0x1fb/0x510
+[  154.927409]  #3: ffffffffac598fa0 (rcu_read_lock){....}-{1:2}, at: rt_s=
+pin_lock+0x5/0xc0
+[  154.927414]
+               stack backtrace:
+[  154.927416] CPU: 3 PID: 4992 Comm: cpuset_inherit_ Kdump: loaded Tainte=
+d: G S          E     5.9.1-rt18-rt #5
+[  154.927418] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09=
+/23/2013
+[  154.927419] Call Trace:
+[  154.927422]  dump_stack+0x77/0x9b
+[  154.927425]  check_noncircular+0x148/0x160
+[  154.927432]  ? validate_chain+0x981/0x1250
+[  154.927435]  validate_chain+0x981/0x1250
+[  154.927441]  __lock_acquire+0x86f/0xbd0
+[  154.927446]  lock_acquire+0x92/0x410
+[  154.927449]  ? __slab_alloc.isra.87+0xad/0xc0
+[  154.927452]  ? kmem_cache_alloc+0x648/0x8c0
+[  154.927453]  ? lock_acquire+0x92/0x410
+[  154.927458]  ___slab_alloc+0x71b/0x820
+[  154.927460]  ? __slab_alloc.isra.87+0xad/0xc0
+[  154.927463]  ? radix_tree_node_alloc.constprop.22+0xa2/0xf0
+[  154.927468]  ? __slab_alloc.isra.87+0x83/0xc0
+[  154.927472]  ? radix_tree_node_alloc.constprop.22+0xa2/0xf0
+[  154.927474]  ? __slab_alloc.isra.87+0xad/0xc0
+[  154.927476]  __slab_alloc.isra.87+0xad/0xc0
+[  154.927480]  ? radix_tree_node_alloc.constprop.22+0xa2/0xf0
+[  154.927482]  kmem_cache_alloc+0x700/0x8c0
+[  154.927487]  radix_tree_node_alloc.constprop.22+0xa2/0xf0
+[  154.927491]  idr_get_free+0x207/0x2b0
+[  154.927495]  idr_alloc_u32+0x54/0xa0
+[  154.927500]  idr_alloc_cyclic+0x4f/0xa0
+[  154.927503]  alloc_pid+0x22b/0x510
+[  154.927506]  ? copy_thread+0x88/0x200
+[  154.927512]  copy_process+0xeb5/0x1de0
+[  154.927520]  _do_fork+0x52/0x750
+[  154.927523]  ? lock_acquire+0x92/0x410
+[  154.927525]  ? __might_fault+0x3e/0x90
+[  154.927530]  ? find_held_lock+0x2d/0x90
+[  154.927535]  __do_sys_clone+0x64/0x70
+[  154.927541]  do_syscall_64+0x33/0x40
+[  154.927544]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  154.927546] RIP: 0033:0x7f0b357356e3
+[  154.927548] Code: db 45 85 ed 0f 85 ad 01 00 00 64 4c 8b 04 25 10 00 00=
+ 00 31 d2 4d 8d 90 d0 02 00 00 31 f6 bf 11 00 20 01 b8 38 00 00 00 0f 05 <=
+48> 3d 00 f0 ff ff 0f 87 f1 00 00 00 85 c0 41 89 c4 0f 85 fe 00 00
+[  154.927550] RSP: 002b:00007ffdfd6d15f0 EFLAGS: 00000246 ORIG_RAX: 00000=
+00000000038
+[  154.927552] RAX: ffffffffffffffda RBX: 0000000000000000 RCX: 00007f0b35=
+7356e3
+[  154.927554] RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000001=
+200011
+[  154.927555] RBP: 00007ffdfd6d1620 R08: 00007f0b36052b80 R09: 0000000000=
+000072
+[  154.927556] R10: 00007f0b36052e50 R11: 0000000000000246 R12: 0000000000=
+000000
+[  154.927557] R13: 0000000000000000 R14: 0000000000000000 R15: 00005614ef=
+57ecf0
 
-Any pointers or help would be much appreciated! If you need more
-information, just ask! :)
+--=-jR9nJwzMMaK2NlaX8V5c
+Content-Disposition: attachment; filename="cpuset"
+Content-Type: text/plain; name="cpuset"; charset="ISO-8859-15"
+Content-Transfer-Encoding: base64
 
-Best,
-David
+I0RFU0NSSVBUSU9OOlJlc291cmNlIE1hbmFnZW1lbnQgdGVzdGluZwoKY3B1c2V0X2Jhc2Vfb3Bz
+CWNwdXNldF9iYXNlX29wc190ZXN0c2V0LnNoCmNwdXNldF9pbmhlcml0CWNwdXNldF9pbmhlcml0
+X3Rlc3RzZXQuc2gKY3B1c2V0X2V4Y2x1c2l2ZQljcHVzZXRfZXhjbHVzaXZlX3Rlc3Quc2gKY3B1
+c2V0X2hpZXJhcmNoeQljcHVzZXRfaGllcmFyY2h5X3Rlc3Quc2gKY3B1c2V0X3N5c2NhbGwJY3B1
+c2V0X3N5c2NhbGxfdGVzdHNldC5zaApjcHVzZXRfc2NoZWRfZG9tYWlucwljcHVzZXRfc2NoZWRf
+ZG9tYWluc190ZXN0LnNoCmNwdXNldF9sb2FkX2JhbGFuY2UJY3B1c2V0X2xvYWRfYmFsYW5jZV90
+ZXN0LnNoCmNwdXNldF9ob3RwbHVnCWNwdXNldF9ob3RwbHVnX3Rlc3Quc2gKY3B1c2V0X21lbW9y
+eQljcHVzZXRfbWVtb3J5X3Rlc3RzZXQuc2gKY3B1c2V0X21lbW9yeV9wcmVzc3VyZQljcHVzZXRf
+bWVtb3J5X3ByZXNzdXJlX3Rlc3RzZXQuc2gKY3B1c2V0X21lbW9yeV9zcHJlYWQJY3B1c2V0X21l
+bW9yeV9zcHJlYWRfdGVzdHNldC5zaAoKY3B1c2V0X3JlZ3Jlc3Npb25fdGVzdCBjcHVzZXRfcmVn
+cmVzc2lvbl90ZXN0LnNoCgo=
 
-P.S.: I was trying the 5.6.x series of realtime kernels on this machine
-as well, but although the hardware gets initialized properly (at least
-without crashes) my system completely freezes as soon as I start jackd
-on the firewire interface (this does not happen with a non-rt kernel).
 
---=20
-https://sleepmap.de
+--=-jR9nJwzMMaK2NlaX8V5c
+Content-Disposition: attachment; filename="deadlock-log"
+Content-Type: text/plain; name="deadlock-log"; charset="ISO-8859-15"
+Content-Transfer-Encoding: base64
 
---sdtB3X0nJg68CQEu
-Content-Type: application/pgp-signature; name="signature.asc"
+ICAgICAgMSAgICAgIDAgICAyICBmZmZmYTA5Yzg3ZmQwMDAwICBVTiAgIDAuMSAgMjIxMDMyICAg
+OTM2OCAgc3lzdGVtZAogICAgNjI3ICAgICAgMSAgIDAgIGZmZmZhMDlmNzMzYzAwMDAgIFVOICAg
+MC4wICAgNjgzOTIgICA3MDA0ICBzeXN0ZW1kLXVkZXZkCiAgIDMzMjIgICAzMjQ3ICAgNyAgZmZm
+ZmEwOWY1MTIwNTFjMCAgVU4gICAwLjAgIDE2NzYyNCAgIDI3MzIgIGdwZy1hZ2VudAogICAzODQx
+ICAgMzQ2OCAgIDIgIGZmZmZhMDlmMzIyNTAwMDAgIFVOICAgMC4xICAgMTk5MTIgICA5ODI4ICBi
+YXNoCiAgIDQyMDkgICAzNDY4ICAgMiAgZmZmZmEwOWRkMDcwZDFjMCAgVU4gICAwLjEgICAxOTkx
+MiAgIDk3OTYgIGJhc2gKICAgNDg0NSAgIDMzMzUgICAzICBmZmZmYTA5ZjJmZmUxYjQwICBVTiAg
+IDAuMSAgMjY4MTcyICAyNDg4MCAgZmlsZS5zbwogICA0ODQ2ICAgMzMzNSAgIDUgIGZmZmZhMDlm
+MmQ0MTgwMDAgIFVOICAgMC4xICAyNjgxNzIgIDI0ODgwICBmaWxlLnNvCiAgIDU2NTcgICAgICAx
+ICAgMyAgZmZmZmEwOWYyMjJlMzY4MCAgVU4gICAxLjUgMjg4NDYwNCAyNjAyNDggIFRocmVhZCAo
+cG9vbGVkKQogICA2NzE2ICAgNTc5NyAgIDMgIGZmZmZhMDlmMzBkYTFiNDAgIFVOICAgMC4wICAg
+MTQxMjggICA0MTY4ICBjcHVzZXRfaG90cGx1Z18KICAgNjc0MyAgICAgIDEgICAzICBmZmZmYTA5
+ZjU0MTUxYjQwICBVTiAgIDAuMSAgNTc0ODY0ICAxODUzMiAgcG9vbC0vdXNyL2xpYi94CiAgIDY3
+NDQgICAgICAxICAgNCAgZmZmZmEwOWYzNTdmOWI0MCAgVU4gICAwLjAgIDQ4OTUxNiAgIDYwOTYg
+IHBvb2wtL3Vzci9saWIveApQSUQ6IDEgICAgICBUQVNLOiBmZmZmYTA5Yzg3ZmQwMDAwICBDUFU6
+IDIgICBDT01NQU5EOiAic3lzdGVtZCIKICMwIFtmZmZmYmZiYjAwMDMzYzUwXSBfX3NjaGVkdWxl
+KzgzNyBhdCBmZmZmZmZmZmE1OWIxNWY1CiAjMSBbZmZmZmJmYmIwMDAzM2NkOF0gc2NoZWR1bGUr
+ODYgYXQgZmZmZmZmZmZhNTliMWQ5NgogIzIgW2ZmZmZiZmJiMDAwMzNjZThdIF9fcnRfbXV0ZXhf
+c2xvd2xvY2srNTYgYXQgZmZmZmZmZmZhNTliMzg2OAogIzMgW2ZmZmZiZmJiMDAwMzNkMzBdIHJ0
+X211dGV4X3Nsb3dsb2NrX2xvY2tlZCsyMDcgYXQgZmZmZmZmZmZhNTliM2FiZgogIzQgW2ZmZmZi
+ZmJiMDAwMzNkODhdIHJ0X211dGV4X3Nsb3dsb2NrLmNvbnN0cHJvcC4zMCs5MCBhdCBmZmZmZmZm
+ZmE1OWIzZDNhCiAjNSBbZmZmZmJmYmIwMDAzM2UwMF0gcHJvY19jZ3JvdXBfc2hvdys3NCBhdCBm
+ZmZmZmZmZmE1MTg0YTdhCiAjNiBbZmZmZmJmYmIwMDAzM2U0OF0gcHJvY19zaW5nbGVfc2hvdys4
+NCBhdCBmZmZmZmZmZmE1M2NkNTI0CiAjNyBbZmZmZmJmYmIwMDAzM2U4MF0gc2VxX3JlYWQrMjA2
+IGF0IGZmZmZmZmZmYTUzNGMzMGUKICM4IFtmZmZmYmZiYjAwMDMzZWQ4XSB2ZnNfcmVhZCsyMDkg
+YXQgZmZmZmZmZmZhNTMxZDI4MQogIzkgW2ZmZmZiZmJiMDAwMzNmMDhdIGtzeXNfcmVhZCsxMzUg
+YXQgZmZmZmZmZmZhNTMxZDYzNwojMTAgW2ZmZmZiZmJiMDAwMzNmNDBdIGRvX3N5c2NhbGxfNjQr
+NTEgYXQgZmZmZmZmZmZhNTlhMzVjMwojMTEgW2ZmZmZiZmJiMDAwMzNmNTBdIGVudHJ5X1NZU0NB
+TExfNjRfYWZ0ZXJfaHdmcmFtZSs2OCBhdCBmZmZmZmZmZmE1YTAwMDhjCiAgICBSSVA6IDAwMDA3
+ZjFiYjk3ZGQxZDggIFJTUDogMDAwMDdmZmQ1ZjQyNGFjMCAgUkZMQUdTOiAwMDAwMDI0NgogICAg
+UkFYOiBmZmZmZmZmZmZmZmZmZmRhICBSQlg6IDAwMDA1NWUzYjEyMjRjYzAgIFJDWDogMDAwMDdm
+MWJiOTdkZDFkOAogICAgUkRYOiAwMDAwMDAwMDAwMDAwNDAwICBSU0k6IDAwMDA1NWUzYjEyMjRj
+YzAgIFJESTogMDAwMDAwMDAwMDAwMDA1NQogICAgUkJQOiAwMDAwMDAwMDAwMDAwNDAwICAgUjg6
+IDAwMDAwMDAwMDAwMDAwMDAgICBSOTogMDAwMDAwMDAwMDAwMDAwMAogICAgUjEwOiAwMDAwN2Yx
+YmJiMWY5OTQwICBSMTE6IDAwMDAwMDAwMDAwMDAyNDYgIFIxMjogMDAwMDdmMWJiOWFhNTdhMAog
+ICAgUjEzOiAwMDAwN2YxYmI5YWE2MmUwICBSMTQ6IDAwMDAwMDAwMDAwMDAwMDAgIFIxNTogMDAw
+MDU1ZTNiMTM3N2YyMAogICAgT1JJR19SQVg6IDAwMDAwMDAwMDAwMDAwMDAgIENTOiAwMDMzICBT
+UzogMDAyYgpQSUQ6IDYyNyAgICBUQVNLOiBmZmZmYTA5ZjczM2MwMDAwICBDUFU6IDAgICBDT01N
+QU5EOiAic3lzdGVtZC11ZGV2ZCIKICMwIFtmZmZmYmZiYjAwYjZmYzM4XSBfX3NjaGVkdWxlKzgz
+NyBhdCBmZmZmZmZmZmE1OWIxNWY1CiAjMSBbZmZmZmJmYmIwMGI2ZmNjMF0gc2NoZWR1bGUrODYg
+YXQgZmZmZmZmZmZhNTliMWQ5NgogIzIgW2ZmZmZiZmJiMDBiNmZjYzhdIHBlcmNwdV9yd3NlbV93
+YWl0KzE4MSBhdCBmZmZmZmZmZmE1MTAxYjc1CiAjMyBbZmZmZmJmYmIwMGI2ZmQyOF0gX19wZXJj
+cHVfZG93bl9yZWFkKzExNCBhdCBmZmZmZmZmZmE1MTAxZWMyCiAjNCBbZmZmZmJmYmIwMGI2ZmQ0
+MF0gY2dyb3VwX2Nhbl9mb3JrKzEzMjEgYXQgZmZmZmZmZmZhNTE4NWU2OQogIzUgW2ZmZmZiZmJi
+MDBiNmZkODhdIGNvcHlfcHJvY2Vzcys0NDU3IGF0IGZmZmZmZmZmYTUwOGFhYjkKICM2IFtmZmZm
+YmZiYjAwYjZmZTMwXSBfZG9fZm9yays4MiBhdCBmZmZmZmZmZmE1MDhiODgyCiAjNyBbZmZmZmJm
+YmIwMGI2ZmVkMF0gX19kb19zeXNfY2xvbmUrMTAwIGF0IGZmZmZmZmZmYTUwOGMwNTQKICM4IFtm
+ZmZmYmZiYjAwYjZmZjQwXSBkb19zeXNjYWxsXzY0KzUxIGF0IGZmZmZmZmZmYTU5YTM1YzMKICM5
+IFtmZmZmYmZiYjAwYjZmZjUwXSBlbnRyeV9TWVNDQUxMXzY0X2FmdGVyX2h3ZnJhbWUrNjggYXQg
+ZmZmZmZmZmZhNWEwMDA4YwogICAgUklQOiAwMDAwN2ZhNjI2MTI4NmUzICBSU1A6IDAwMDA3ZmZj
+MGExNmRhZjAgIFJGTEFHUzogMDAwMDAyNDYKICAgIFJBWDogZmZmZmZmZmZmZmZmZmZkYSAgUkJY
+OiAwMDAwN2ZmYzBhMTZkYWYwICBSQ1g6IDAwMDA3ZmE2MjYxMjg2ZTMKICAgIFJEWDogMDAwMDAw
+MDAwMDAwMDAwMCAgUlNJOiAwMDAwMDAwMDAwMDAwMDAwICBSREk6IDAwMDAwMDAwMDEyMDAwMTEK
+ICAgIFJCUDogMDAwMDdmZmMwYTE2ZGI0MCAgIFI4OiAwMDAwN2ZhNjI3MmNmZDQwICAgUjk6IDAw
+MDAwMDAwMDAwMDAwMDEKICAgIFIxMDogMDAwMDdmYTYyNzJkMDAxMCAgUjExOiAwMDAwMDAwMDAw
+MDAwMjQ2ICBSMTI6IDAwMDAwMDAwMDAwMDAwMDAKICAgIFIxMzogMDAwMDAwMDAwMDAwMDAwMCAg
+UjE0OiAwMDAwMDAwMDAwMDAwMDAwICBSMTU6IDAwMDA1NTdhM2Q0YTlhMTAKICAgIE9SSUdfUkFY
+OiAwMDAwMDAwMDAwMDAwMDM4ICBDUzogMDAzMyAgU1M6IDAwMmIKUElEOiAzMzIyICAgVEFTSzog
+ZmZmZmEwOWY1MTIwNTFjMCAgQ1BVOiA3ICAgQ09NTUFORDogImdwZy1hZ2VudCIKICMwIFtmZmZm
+YmZiYjAwZWY3YzM4XSBfX3NjaGVkdWxlKzgzNyBhdCBmZmZmZmZmZmE1OWIxNWY1CiAjMSBbZmZm
+ZmJmYmIwMGVmN2NjMF0gc2NoZWR1bGUrODYgYXQgZmZmZmZmZmZhNTliMWQ5NgogIzIgW2ZmZmZi
+ZmJiMDBlZjdjYzhdIHBlcmNwdV9yd3NlbV93YWl0KzE4MSBhdCBmZmZmZmZmZmE1MTAxYjc1CiAj
+MyBbZmZmZmJmYmIwMGVmN2QyOF0gX19wZXJjcHVfZG93bl9yZWFkKzExNCBhdCBmZmZmZmZmZmE1
+MTAxZWMyCiAjNCBbZmZmZmJmYmIwMGVmN2Q0MF0gY2dyb3VwX2Nhbl9mb3JrKzEzMjEgYXQgZmZm
+ZmZmZmZhNTE4NWU2OQogIzUgW2ZmZmZiZmJiMDBlZjdkODhdIGNvcHlfcHJvY2Vzcys0NDU3IGF0
+IGZmZmZmZmZmYTUwOGFhYjkKICM2IFtmZmZmYmZiYjAwZWY3ZTMwXSBfZG9fZm9yays4MiBhdCBm
+ZmZmZmZmZmE1MDhiODgyCiAjNyBbZmZmZmJmYmIwMGVmN2VkMF0gX19kb19zeXNfY2xvbmUrMTAw
+IGF0IGZmZmZmZmZmYTUwOGMwNTQKICM4IFtmZmZmYmZiYjAwZWY3ZjQwXSBkb19zeXNjYWxsXzY0
+KzUxIGF0IGZmZmZmZmZmYTU5YTM1YzMKICM5IFtmZmZmYmZiYjAwZWY3ZjUwXSBlbnRyeV9TWVND
+QUxMXzY0X2FmdGVyX2h3ZnJhbWUrNjggYXQgZmZmZmZmZmZhNWEwMDA4YwogICAgUklQOiAwMDAw
+N2Y0MzU1ZWU3ZmIxICBSU1A6IDAwMDA3ZmZkZjMxMzAzNTggIFJGTEFHUzogMDAwMDAyMDIKICAg
+IFJBWDogZmZmZmZmZmZmZmZmZmZkYSAgUkJYOiAwMDAwN2Y0MzU1YmU3NzAwICBSQ1g6IDAwMDA3
+ZjQzNTVlZTdmYjEKICAgIFJEWDogMDAwMDdmNDM1NWJlNzlkMCAgUlNJOiAwMDAwN2Y0MzU1YmU2
+ZmIwICBSREk6IDAwMDAwMDAwMDAzZDBmMDAKICAgIFJCUDogMDAwMDdmZmRmMzEzMDc2MCAgIFI4
+OiAwMDAwN2Y0MzU1YmU3NzAwICAgUjk6IDAwMDA3ZjQzNTViZTc3MDAKICAgIFIxMDogMDAwMDdm
+NDM1NWJlNzlkMCAgUjExOiAwMDAwMDAwMDAwMDAwMjAyICBSMTI6IDAwMDA3ZmZkZjMxMzAzZmUK
+ICAgIFIxMzogMDAwMDdmZmRmMzEzMDNmZiAgUjE0OiAwMDAwNTU2NjdkYTBmOWUwICBSMTU6IDAw
+MDA3ZmZkZjMxMzA3NjAKICAgIE9SSUdfUkFYOiAwMDAwMDAwMDAwMDAwMDM4ICBDUzogMDAzMyAg
+U1M6IDAwMmIKUElEOiAzODQxICAgVEFTSzogZmZmZmEwOWYzMjI1MDAwMCAgQ1BVOiAyICAgQ09N
+TUFORDogImJhc2giCiAjMCBbZmZmZmJmYmIwMmQwZmMzOF0gX19zY2hlZHVsZSs4MzcgYXQgZmZm
+ZmZmZmZhNTliMTVmNQogIzEgW2ZmZmZiZmJiMDJkMGZjYzBdIHNjaGVkdWxlKzg2IGF0IGZmZmZm
+ZmZmYTU5YjFkOTYKICMyIFtmZmZmYmZiYjAyZDBmY2M4XSBwZXJjcHVfcndzZW1fd2FpdCsxODEg
+YXQgZmZmZmZmZmZhNTEwMWI3NQogIzMgW2ZmZmZiZmJiMDJkMGZkMjhdIF9fcGVyY3B1X2Rvd25f
+cmVhZCsxMTQgYXQgZmZmZmZmZmZhNTEwMWVjMgogIzQgW2ZmZmZiZmJiMDJkMGZkNDBdIGNncm91
+cF9jYW5fZm9yaysxMzIxIGF0IGZmZmZmZmZmYTUxODVlNjkKICM1IFtmZmZmYmZiYjAyZDBmZDg4
+XSBjb3B5X3Byb2Nlc3MrNDQ1NyBhdCBmZmZmZmZmZmE1MDhhYWI5CiAjNiBbZmZmZmJmYmIwMmQw
+ZmUzMF0gX2RvX2ZvcmsrODIgYXQgZmZmZmZmZmZhNTA4Yjg4MgogIzcgW2ZmZmZiZmJiMDJkMGZl
+ZDBdIF9fZG9fc3lzX2Nsb25lKzEwMCBhdCBmZmZmZmZmZmE1MDhjMDU0CiAjOCBbZmZmZmJmYmIw
+MmQwZmY0MF0gZG9fc3lzY2FsbF82NCs1MSBhdCBmZmZmZmZmZmE1OWEzNWMzCiAjOSBbZmZmZmJm
+YmIwMmQwZmY1MF0gZW50cnlfU1lTQ0FMTF82NF9hZnRlcl9od2ZyYW1lKzY4IGF0IGZmZmZmZmZm
+YTVhMDAwOGMKICAgIFJJUDogMDAwMDdmMDIzZWFmMzZlMyAgUlNQOiAwMDAwN2ZmZTgwNjk4YTMw
+ICBSRkxBR1M6IDAwMDAwMjQ2CiAgICBSQVg6IGZmZmZmZmZmZmZmZmZmZGEgIFJCWDogMDAwMDAw
+MDAwMDAwMDAwMCAgUkNYOiAwMDAwN2YwMjNlYWYzNmUzCiAgICBSRFg6IDAwMDAwMDAwMDAwMDAw
+MDAgIFJTSTogMDAwMDAwMDAwMDAwMDAwMCAgUkRJOiAwMDAwMDAwMDAxMjAwMDExCiAgICBSQlA6
+IDAwMDA3ZmZlODA2OThhNjAgICBSODogMDAwMDdmMDIzZjQxMGI4MCAgIFI5OiAwMDAwMDAwMDAw
+MDAwMDAwCiAgICBSMTA6IDAwMDA3ZjAyM2Y0MTBlNTAgIFIxMTogMDAwMDAwMDAwMDAwMDI0NiAg
+UjEyOiAwMDAwMDAwMDAwMDAwMDAwCiAgICBSMTM6IDAwMDAwMDAwMDAwMDAwMDAgIFIxNDogMDAw
+MDU2MmNkNGVlNmM5MCAgUjE1OiAwMDAwNTYyY2Q0ZWU2YzkwCiAgICBPUklHX1JBWDogMDAwMDAw
+MDAwMDAwMDAzOCAgQ1M6IDAwMzMgIFNTOiAwMDJiClBJRDogNDIwOSAgIFRBU0s6IGZmZmZhMDlk
+ZDA3MGQxYzAgIENQVTogMiAgIENPTU1BTkQ6ICJiYXNoIgogIzAgW2ZmZmZiZmJiMDM3NmZjMzhd
+IF9fc2NoZWR1bGUrODM3IGF0IGZmZmZmZmZmYTU5YjE1ZjUKICMxIFtmZmZmYmZiYjAzNzZmY2Mw
+XSBzY2hlZHVsZSs4NiBhdCBmZmZmZmZmZmE1OWIxZDk2CiAjMiBbZmZmZmJmYmIwMzc2ZmNjOF0g
+cGVyY3B1X3J3c2VtX3dhaXQrMTgxIGF0IGZmZmZmZmZmYTUxMDFiNzUKICMzIFtmZmZmYmZiYjAz
+NzZmZDI4XSBfX3BlcmNwdV9kb3duX3JlYWQrMTE0IGF0IGZmZmZmZmZmYTUxMDFlYzIKICM0IFtm
+ZmZmYmZiYjAzNzZmZDQwXSBjZ3JvdXBfY2FuX2ZvcmsrMTMyMSBhdCBmZmZmZmZmZmE1MTg1ZTY5
+CiAjNSBbZmZmZmJmYmIwMzc2ZmQ4OF0gY29weV9wcm9jZXNzKzQ0NTcgYXQgZmZmZmZmZmZhNTA4
+YWFiOQogIzYgW2ZmZmZiZmJiMDM3NmZlMzBdIF9kb19mb3JrKzgyIGF0IGZmZmZmZmZmYTUwOGI4
+ODIKICM3IFtmZmZmYmZiYjAzNzZmZWQwXSBfX2RvX3N5c19jbG9uZSsxMDAgYXQgZmZmZmZmZmZh
+NTA4YzA1NAogIzggW2ZmZmZiZmJiMDM3NmZmNDBdIGRvX3N5c2NhbGxfNjQrNTEgYXQgZmZmZmZm
+ZmZhNTlhMzVjMwogIzkgW2ZmZmZiZmJiMDM3NmZmNTBdIGVudHJ5X1NZU0NBTExfNjRfYWZ0ZXJf
+aHdmcmFtZSs2OCBhdCBmZmZmZmZmZmE1YTAwMDhjCiAgICBSSVA6IDAwMDA3ZjgxYTk2NDI2ZTMg
+IFJTUDogMDAwMDdmZmQ5N2U1ZWJjMCAgUkZMQUdTOiAwMDAwMDI0NgogICAgUkFYOiBmZmZmZmZm
+ZmZmZmZmZmRhICBSQlg6IDAwMDAwMDAwMDAwMDAwMDAgIFJDWDogMDAwMDdmODFhOTY0MjZlMwog
+ICAgUkRYOiAwMDAwMDAwMDAwMDAwMDAwICBSU0k6IDAwMDAwMDAwMDAwMDAwMDAgIFJESTogMDAw
+MDAwMDAwMTIwMDAxMQogICAgUkJQOiAwMDAwN2ZmZDk3ZTVlYmYwICAgUjg6IDAwMDA3ZjgxYTlm
+NWZiODAgICBSOTogMDAwMDAwMDAwMDAwMDAwMAogICAgUjEwOiAwMDAwN2Y4MWE5ZjVmZTUwICBS
+MTE6IDAwMDAwMDAwMDAwMDAyNDYgIFIxMjogMDAwMDAwMDAwMDAwMDAwMAogICAgUjEzOiAwMDAw
+MDAwMDAwMDAwMDAwICBSMTQ6IDAwMDA1NWE1NmZjYjljOTAgIFIxNTogMDAwMDU1YTU2ZmNiOWM5
+MAogICAgT1JJR19SQVg6IDAwMDAwMDAwMDAwMDAwMzggIENTOiAwMDMzICBTUzogMDAyYgpQSUQ6
+IDQ4NDUgICBUQVNLOiBmZmZmYTA5ZjJmZmUxYjQwICBDUFU6IDMgICBDT01NQU5EOiAiZmlsZS5z
+byIKICMwIFtmZmZmYmZiYjAzMjIzZDg4XSBfX3NjaGVkdWxlKzgzNyBhdCBmZmZmZmZmZmE1OWIx
+NWY1CiAjMSBbZmZmZmJmYmIwMzIyM2UxMF0gc2NoZWR1bGUrODYgYXQgZmZmZmZmZmZhNTliMWQ5
+NgogIzIgW2ZmZmZiZmJiMDMyMjNlMThdIHBlcmNwdV9yd3NlbV93YWl0KzE4MSBhdCBmZmZmZmZm
+ZmE1MTAxYjc1CiAjMyBbZmZmZmJmYmIwMzIyM2U3OF0gX19wZXJjcHVfZG93bl9yZWFkKzExNCBh
+dCBmZmZmZmZmZmE1MTAxZWMyCiAjNCBbZmZmZmJmYmIwMzIyM2U5MF0gZXhpdF9zaWduYWxzKzcx
+MSBhdCBmZmZmZmZmZmE1MGEyZjI3CiAjNSBbZmZmZmJmYmIwMzIyM2VhOF0gZG9fZXhpdCsyMTYg
+YXQgZmZmZmZmZmZhNTA5M2VmOAogIzYgW2ZmZmZiZmJiMDMyMjNmMTBdIGRvX2dyb3VwX2V4aXQr
+NzEgYXQgZmZmZmZmZmZhNTA5NGJiNwogIzcgW2ZmZmZiZmJiMDMyMjNmMzhdIF9feDY0X3N5c19l
+eGl0X2dyb3VwKzIwIGF0IGZmZmZmZmZmYTUwOTRjMzQKICM4IFtmZmZmYmZiYjAzMjIzZjQwXSBk
+b19zeXNjYWxsXzY0KzUxIGF0IGZmZmZmZmZmYTU5YTM1YzMKICM5IFtmZmZmYmZiYjAzMjIzZjUw
+XSBlbnRyeV9TWVNDQUxMXzY0X2FmdGVyX2h3ZnJhbWUrNjggYXQgZmZmZmZmZmZhNWEwMDA4Ywog
+ICAgUklQOiAwMDAwN2YwY2E2YjIwOTk4ICBSU1A6IDAwMDA3ZmZjNWUxZWVmNDggIFJGTEFHUzog
+MDAwMDAyNDYKICAgIFJBWDogZmZmZmZmZmZmZmZmZmZkYSAgUkJYOiAwMDAwMDAwMDAwMDAwMDAw
+ICBSQ1g6IDAwMDA3ZjBjYTZiMjA5OTgKICAgIFJEWDogMDAwMDAwMDAwMDAwMDAwMCAgUlNJOiAw
+MDAwMDAwMDAwMDAwMDNjICBSREk6IDAwMDAwMDAwMDAwMDAwMDAKICAgIFJCUDogMDAwMDdmMGNh
+NmUwZDUxMCAgIFI4OiAwMDAwMDAwMDAwMDAwMGU3ICAgUjk6IGZmZmZmZmZmZmZmZmZmNjAKICAg
+IFIxMDogMDAwMDdmMGNhNWZkMTBmOCAgUjExOiAwMDAwMDAwMDAwMDAwMjQ2ICBSMTI6IDAwMDA3
+ZjBjYTZlMGQ1MTAKICAgIFIxMzogMDAwMDdmMGNhNmUwZDhjMCAgUjE0OiAwMDAwN2ZmYzVlMWVl
+ZmUwICBSMTU6IDAwMDAwMDAwMDAwMDAwMjAKICAgIE9SSUdfUkFYOiAwMDAwMDAwMDAwMDAwMGU3
+ICBDUzogMDAzMyAgU1M6IDAwMmIKUElEOiA0ODQ2ICAgVEFTSzogZmZmZmEwOWYyZDQxODAwMCAg
+Q1BVOiA1ICAgQ09NTUFORDogImZpbGUuc28iCiAjMCBbZmZmZmJmYmIwMzk2ZmQ4OF0gX19zY2hl
+ZHVsZSs4MzcgYXQgZmZmZmZmZmZhNTliMTVmNQogIzEgW2ZmZmZiZmJiMDM5NmZlMTBdIHNjaGVk
+dWxlKzg2IGF0IGZmZmZmZmZmYTU5YjFkOTYKICMyIFtmZmZmYmZiYjAzOTZmZTE4XSBwZXJjcHVf
+cndzZW1fd2FpdCsxODEgYXQgZmZmZmZmZmZhNTEwMWI3NQogIzMgW2ZmZmZiZmJiMDM5NmZlNzhd
+IF9fcGVyY3B1X2Rvd25fcmVhZCsxMTQgYXQgZmZmZmZmZmZhNTEwMWVjMgogIzQgW2ZmZmZiZmJi
+MDM5NmZlOTBdIGV4aXRfc2lnbmFscys3MTEgYXQgZmZmZmZmZmZhNTBhMmYyNwogIzUgW2ZmZmZi
+ZmJiMDM5NmZlYThdIGRvX2V4aXQrMjE2IGF0IGZmZmZmZmZmYTUwOTNlZjgKICM2IFtmZmZmYmZi
+YjAzOTZmZjEwXSBkb19ncm91cF9leGl0KzcxIGF0IGZmZmZmZmZmYTUwOTRiYjcKICM3IFtmZmZm
+YmZiYjAzOTZmZjM4XSBfX3g2NF9zeXNfZXhpdF9ncm91cCsyMCBhdCBmZmZmZmZmZmE1MDk0YzM0
+CiAjOCBbZmZmZmJmYmIwMzk2ZmY0MF0gZG9fc3lzY2FsbF82NCs1MSBhdCBmZmZmZmZmZmE1OWEz
+NWMzCiAjOSBbZmZmZmJmYmIwMzk2ZmY1MF0gZW50cnlfU1lTQ0FMTF82NF9hZnRlcl9od2ZyYW1l
+KzY4IGF0IGZmZmZmZmZmYTVhMDAwOGMKICAgIFJJUDogMDAwMDdmMGNhNmIyMDk5OCAgUlNQOiAw
+MDAwN2ZmYzVlMWVlZjQ4ICBSRkxBR1M6IDAwMDAwMjQ2CiAgICBSQVg6IGZmZmZmZmZmZmZmZmZm
+ZGEgIFJCWDogMDAwMDAwMDAwMDAwMDAwMCAgUkNYOiAwMDAwN2YwY2E2YjIwOTk4CiAgICBSRFg6
+IDAwMDAwMDAwMDAwMDAwMDAgIFJTSTogMDAwMDAwMDAwMDAwMDAzYyAgUkRJOiAwMDAwMDAwMDAw
+MDAwMDAwCiAgICBSQlA6IDAwMDA3ZjBjYTZlMGQ1MTAgICBSODogMDAwMDAwMDAwMDAwMDBlNyAg
+IFI5OiBmZmZmZmZmZmZmZmZmZjYwCiAgICBSMTA6IDAwMDA3ZjBjYTVmZDEwZjggIFIxMTogMDAw
+MDAwMDAwMDAwMDI0NiAgUjEyOiAwMDAwN2YwY2E2ZTBkNTEwCiAgICBSMTM6IDAwMDA3ZjBjYTZl
+MGQ4YzAgIFIxNDogMDAwMDdmZmM1ZTFlZWZlMCAgUjE1OiAwMDAwMDAwMDAwMDAwMDIwCiAgICBP
+UklHX1JBWDogMDAwMDAwMDAwMDAwMDBlNyAgQ1M6IDAwMzMgIFNTOiAwMDJiClBJRDogNTY1NyAg
+IFRBU0s6IGZmZmZhMDlmMjIyZTM2ODAgIENQVTogMyAgIENPTU1BTkQ6ICJUaHJlYWQgKHBvb2xl
+ZCkiCiAjMCBbZmZmZmJmYmIwM2EwN2RiMF0gX19zY2hlZHVsZSs4MzcgYXQgZmZmZmZmZmZhNTli
+MTVmNQogIzEgW2ZmZmZiZmJiMDNhMDdlMzhdIHNjaGVkdWxlKzg2IGF0IGZmZmZmZmZmYTU5YjFk
+OTYKICMyIFtmZmZmYmZiYjAzYTA3ZTQwXSBwZXJjcHVfcndzZW1fd2FpdCsxODEgYXQgZmZmZmZm
+ZmZhNTEwMWI3NQogIzMgW2ZmZmZiZmJiMDNhMDdlYTBdIF9fcGVyY3B1X2Rvd25fcmVhZCsxMTQg
+YXQgZmZmZmZmZmZhNTEwMWVjMgogIzQgW2ZmZmZiZmJiMDNhMDdlYjhdIGV4aXRfc2lnbmFscys3
+MTEgYXQgZmZmZmZmZmZhNTBhMmYyNwogIzUgW2ZmZmZiZmJiMDNhMDdlZDBdIGRvX2V4aXQrMjE2
+IGF0IGZmZmZmZmZmYTUwOTNlZjgKICM2IFtmZmZmYmZiYjAzYTA3ZjM4XSBfX3g2NF9zeXNfZXhp
+dCsyMyBhdCBmZmZmZmZmZmE1MDk0YjY3CiAjNyBbZmZmZmJmYmIwM2EwN2Y0MF0gZG9fc3lzY2Fs
+bF82NCs1MSBhdCBmZmZmZmZmZmE1OWEzNWMzCiAjOCBbZmZmZmJmYmIwM2EwN2Y1MF0gZW50cnlf
+U1lTQ0FMTF82NF9hZnRlcl9od2ZyYW1lKzY4IGF0IGZmZmZmZmZmYTVhMDAwOGMKICAgIFJJUDog
+MDAwMDdmMWYyZjkyNjViNiAgUlNQOiAwMDAwN2YxZTk1MDU3ZDUwICBSRkxBR1M6IDAwMDAwMjQ2
+CiAgICBSQVg6IGZmZmZmZmZmZmZmZmZmZGEgIFJCWDogMDAwMDdmMWU5NTA1ODcwMCAgUkNYOiAw
+MDAwN2YxZjJmOTI2NWI2CiAgICBSRFg6IDAwMDAwMDAwMDAwMDAwM2MgIFJTSTogMDAwMDdmMWYy
+ZmIzODAxMCAgUkRJOiAwMDAwMDAwMDAwMDAwMDAwCiAgICBSQlA6IDAwMDAwMDAwMDAwMDAwMDAg
+ICBSODogMDAwMDdmMWU4ODAwMjljMCAgIFI5OiAwMDAwMDAwMDAwMDAwMDAwCiAgICBSMTA6IDAw
+MDAwMDAwMDAwMDAwMjAgIFIxMTogMDAwMDAwMDAwMDAwMDI0NiAgUjEyOiAwMDAwN2ZmZDc1ODJm
+MjdlCiAgICBSMTM6IDAwMDA3ZmZkNzU4MmYyN2YgIFIxNDogMDAwMDU1ZmNlMDgxODE4MCAgUjE1
+OiAwMDAwN2ZmZDc1ODJmMzUwCiAgICBPUklHX1JBWDogMDAwMDAwMDAwMDAwMDAzYyAgQ1M6IDAw
+MzMgIFNTOiAwMDJiClBJRDogNjcxNiAgIFRBU0s6IGZmZmZhMDlmMzBkYTFiNDAgIENQVTogMyAg
+IENPTU1BTkQ6ICJjcHVzZXRfaG90cGx1Z18iCiAjMCBbZmZmZmJmYmIwM2FjNzlkOF0gX19zY2hl
+ZHVsZSs4MzcgYXQgZmZmZmZmZmZhNTliMTVmNQogIzEgW2ZmZmZiZmJiMDNhYzdhNjBdIHNjaGVk
+dWxlKzg2IGF0IGZmZmZmZmZmYTU5YjFkOTYKICMyIFtmZmZmYmZiYjAzYWM3YTcwXSBzY2hlZHVs
+ZV90aW1lb3V0KzQ5NSBhdCBmZmZmZmZmZmE1OWI0Y2JmCiAjMyBbZmZmZmJmYmIwM2FjN2IwOF0g
+d2FpdF9mb3JfY29tcGxldGlvbisxNjUgYXQgZmZmZmZmZmZhNTliMmYyNQogIzQgW2ZmZmZiZmJi
+MDNhYzdiNDhdIGFmZmluZV9tb3ZlX3Rhc2srNzA1IGF0IGZmZmZmZmZmYTUwY2MyMzEKICM1IFtm
+ZmZmYmZiYjAzYWM3Yzg4XSBfX3NldF9jcHVzX2FsbG93ZWRfcHRyKzI3NCBhdCBmZmZmZmZmZmE1
+MGNjNTYyCiAjNiBbZmZmZmJmYmIwM2FjN2NjOF0gY3B1c2V0X2F0dGFjaCsxOTUgYXQgZmZmZmZm
+ZmZhNTE4ZGY3MwogIzcgW2ZmZmZiZmJiMDNhYzdkMDBdIGNncm91cF9taWdyYXRlX2V4ZWN1dGUr
+MTEzMyBhdCBmZmZmZmZmZmE1MTgwNzVkCiAjOCBbZmZmZmJmYmIwM2FjN2Q1OF0gY2dyb3VwX2F0
+dGFjaF90YXNrKzUyNCBhdCBmZmZmZmZmZmE1MTgwYWJjCiAjOSBbZmZmZmJmYmIwM2FjN2UyOF0g
+X19jZ3JvdXAxX3Byb2NzX3dyaXRlLmNvbnN0cHJvcC4yMSsyNDMgYXQgZmZmZmZmZmZhNTE4Nzg0
+MwojMTAgW2ZmZmZiZmJiMDNhYzdlNjhdIGNncm91cF9maWxlX3dyaXRlKzEyNiBhdCBmZmZmZmZm
+ZmE1MTdiMDdlCiMxMSBbZmZmZmJmYmIwM2FjN2VhMF0ga2VybmZzX2ZvcF93cml0ZSsyNzUgYXQg
+ZmZmZmZmZmZhNTNlMWMxMwojMTIgW2ZmZmZiZmJiMDNhYzdlZDhdIHZmc193cml0ZSsyNDAgYXQg
+ZmZmZmZmZmZhNTMxZDQ3MAojMTMgW2ZmZmZiZmJiMDNhYzdmMDhdIGtzeXNfd3JpdGUrMTM1IGF0
+IGZmZmZmZmZmYTUzMWQ3MzcKIzE0IFtmZmZmYmZiYjAzYWM3ZjQwXSBkb19zeXNjYWxsXzY0KzUx
+IGF0IGZmZmZmZmZmYTU5YTM1YzMKIzE1IFtmZmZmYmZiYjAzYWM3ZjUwXSBlbnRyeV9TWVNDQUxM
+XzY0X2FmdGVyX2h3ZnJhbWUrNjggYXQgZmZmZmZmZmZhNWEwMDA4YwogICAgUklQOiAwMDAwN2Yw
+MTc2Yjg0MjQ0ICBSU1A6IDAwMDA3ZmZmZmNmN2UyYjggIFJGTEFHUzogMDAwMDAyNDYKICAgIFJB
+WDogZmZmZmZmZmZmZmZmZmZkYSAgUkJYOiAwMDAwMDAwMDAwMDAwMDA1ICBSQ1g6IDAwMDA3ZjAx
+NzZiODQyNDQKICAgIFJEWDogMDAwMDAwMDAwMDAwMDAwNSAgUlNJOiAwMDAwNTViMTUyMDNkODkw
+ICBSREk6IDAwMDAwMDAwMDAwMDAwMDEKICAgIFJCUDogMDAwMDU1YjE1MjAzZDg5MCAgIFI4OiAw
+MDAwMDAwMDAwMDAwMDBhICAgUjk6IDAwMDAwMDAwMDAwMDAwMDAKICAgIFIxMDogMDAwMDAwMDAw
+MDAwMDAwYSAgUjExOiAwMDAwMDAwMDAwMDAwMjQ2ICBSMTI6IDAwMDAwMDAwMDAwMDAwMDUKICAg
+IFIxMzogMDAwMDAwMDAwMDAwMDAwMSAgUjE0OiAwMDAwN2YwMTc2ZTRjNWEwICBSMTU6IDAwMDAw
+MDAwMDAwMDAwMDUKICAgIE9SSUdfUkFYOiAwMDAwMDAwMDAwMDAwMDAxICBDUzogMDAzMyAgU1M6
+IDAwMmIKUElEOiA2NzQzICAgVEFTSzogZmZmZmEwOWY1NDE1MWI0MCAgQ1BVOiAzICAgQ09NTUFO
+RDogInBvb2wtL3Vzci9saWIveCIKICMwIFtmZmZmYmZiYjA4NjU3ZGIwXSBfX3NjaGVkdWxlKzgz
+NyBhdCBmZmZmZmZmZmE1OWIxNWY1CiAjMSBbZmZmZmJmYmIwODY1N2UzOF0gc2NoZWR1bGUrODYg
+YXQgZmZmZmZmZmZhNTliMWQ5NgogIzIgW2ZmZmZiZmJiMDg2NTdlNDBdIHBlcmNwdV9yd3NlbV93
+YWl0KzE4MSBhdCBmZmZmZmZmZmE1MTAxYjc1CiAjMyBbZmZmZmJmYmIwODY1N2VhMF0gX19wZXJj
+cHVfZG93bl9yZWFkKzExNCBhdCBmZmZmZmZmZmE1MTAxZWMyCiAjNCBbZmZmZmJmYmIwODY1N2Vi
+OF0gZXhpdF9zaWduYWxzKzcxMSBhdCBmZmZmZmZmZmE1MGEyZjI3CiAjNSBbZmZmZmJmYmIwODY1
+N2VkMF0gZG9fZXhpdCsyMTYgYXQgZmZmZmZmZmZhNTA5M2VmOAogIzYgW2ZmZmZiZmJiMDg2NTdm
+MzhdIF9feDY0X3N5c19leGl0KzIzIGF0IGZmZmZmZmZmYTUwOTRiNjcKICM3IFtmZmZmYmZiYjA4
+NjU3ZjQwXSBkb19zeXNjYWxsXzY0KzUxIGF0IGZmZmZmZmZmYTU5YTM1YzMKICM4IFtmZmZmYmZi
+YjA4NjU3ZjUwXSBlbnRyeV9TWVNDQUxMXzY0X2FmdGVyX2h3ZnJhbWUrNjggYXQgZmZmZmZmZmZh
+NWEwMDA4YwogICAgUklQOiAwMDAwN2YwMTc2ZDZiNWI2ICBSU1A6IDAwMDA3ZjAxNWQ1NDBkZDAg
+IFJGTEFHUzogMDAwMDAyNDYKICAgIFJBWDogZmZmZmZmZmZmZmZmZmZkYSAgUkJYOiAwMDAwN2Yw
+MTVkNTQxNzAwICBSQ1g6IDAwMDA3ZjAxNzZkNmI1YjYKICAgIFJEWDogMDAwMDAwMDAwMDAwMDAz
+YyAgUlNJOiAwMDAwN2YwMTc2ZjdkMDEwICBSREk6IDAwMDAwMDAwMDAwMDAwMDAKICAgIFJCUDog
+MDAwMDAwMDAwMDAwMDAwMCAgIFI4OiAwMDAwN2YwMTUwMDAwOGMwICAgUjk6IDAwMDAwMDAwMDAw
+MDAwMDQKICAgIFIxMDogMDAwMDU1ZWU2NWYxODVkMCAgUjExOiAwMDAwMDAwMDAwMDAwMjQ2ICBS
+MTI6IDAwMDA3ZmZjNzFlZWY1NmUKICAgIFIxMzogMDAwMDdmZmM3MWVlZjU2ZiAgUjE0OiAwMDAw
+N2YwMTY0MDAzOGYwICBSMTU6IDAwMDA3ZmZjNzFlZWY2MDAKICAgIE9SSUdfUkFYOiAwMDAwMDAw
+MDAwMDAwMDNjICBDUzogMDAzMyAgU1M6IDAwMmIKUElEOiA2NzQ0ICAgVEFTSzogZmZmZmEwOWYz
+NTdmOWI0MCAgQ1BVOiA0ICAgQ09NTUFORDogInBvb2wtL3Vzci9saWIveCIKICMwIFtmZmZmYmZi
+YjA4NjVmZGIwXSBfX3NjaGVkdWxlKzgzNyBhdCBmZmZmZmZmZmE1OWIxNWY1CiAjMSBbZmZmZmJm
+YmIwODY1ZmUzOF0gc2NoZWR1bGUrODYgYXQgZmZmZmZmZmZhNTliMWQ5NgogIzIgW2ZmZmZiZmJi
+MDg2NWZlNDBdIHBlcmNwdV9yd3NlbV93YWl0KzE4MSBhdCBmZmZmZmZmZmE1MTAxYjc1CiAjMyBb
+ZmZmZmJmYmIwODY1ZmVhMF0gX19wZXJjcHVfZG93bl9yZWFkKzExNCBhdCBmZmZmZmZmZmE1MTAx
+ZWMyCiAjNCBbZmZmZmJmYmIwODY1ZmViOF0gZXhpdF9zaWduYWxzKzcxMSBhdCBmZmZmZmZmZmE1
+MGEyZjI3CiAjNSBbZmZmZmJmYmIwODY1ZmVkMF0gZG9fZXhpdCsyMTYgYXQgZmZmZmZmZmZhNTA5
+M2VmOAogIzYgW2ZmZmZiZmJiMDg2NWZmMzhdIF9feDY0X3N5c19leGl0KzIzIGF0IGZmZmZmZmZm
+YTUwOTRiNjcKICM3IFtmZmZmYmZiYjA4NjVmZjQwXSBkb19zeXNjYWxsXzY0KzUxIGF0IGZmZmZm
+ZmZmYTU5YTM1YzMKICM4IFtmZmZmYmZiYjA4NjVmZjUwXSBlbnRyeV9TWVNDQUxMXzY0X2FmdGVy
+X2h3ZnJhbWUrNjggYXQgZmZmZmZmZmZhNWEwMDA4YwogICAgUklQOiAwMDAwN2ZmNDliMGM4NWI2
+ICBSU1A6IDAwMDA3ZmY0OTNmZmVkZDAgIFJGTEFHUzogMDAwMDAyNDYKICAgIFJBWDogZmZmZmZm
+ZmZmZmZmZmZkYSAgUkJYOiAwMDAwN2ZmNDkzZmZmNzAwICBSQ1g6IDAwMDA3ZmY0OWIwYzg1YjYK
+ICAgIFJEWDogMDAwMDAwMDAwMDAwMDAzYyAgUlNJOiAwMDAwN2ZmNDliMmRhMDEwICBSREk6IDAw
+MDAwMDAwMDAwMDAwMDAKICAgIFJCUDogMDAwMDAwMDAwMDAwMDAwMCAgIFI4OiAwMDAwN2ZmNDg4
+MDAxNjAwICAgUjk6IDAwMDAwMDAwMDAwMDAwMDAKICAgIFIxMDogMDAwMDAwMDAwMDAwMDA1MCAg
+UjExOiAwMDAwMDAwMDAwMDAwMjQ2ICBSMTI6IDAwMDA3ZmZkYzg4YzgxN2UKICAgIFIxMzogMDAw
+MDdmZmRjODhjODE3ZiAgUjE0OiAwMDAwN2ZmNDhjMDA2OWUwICBSMTU6IDAwMDA3ZmZkYzg4Yzgy
+MTAKICAgIE9SSUdfUkFYOiAwMDAwMDAwMDAwMDAwMDNjICBDUzogMDAzMyAgU1M6IDAwMmIK
 
------BEGIN PGP SIGNATURE-----
 
-iQIzBAABCAAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAl+QdQMACgkQVMKPT/Wh
-qUkC8Q/+Ju1aMkLEoxPD9z3HTbyBeug8jRyyLfIzN+YMFic3d/dc88ukBPHOxRJM
-i0gERK9a3TYzRizOKSvJUGI6zf0JE75AIwRE09IQzRh9Bf8jpHq0f2k+qsCNgmIP
-5613gtuz2e8zvg1EHniZ1b3WDuPMWXr6j489jEoQ6NsEacVy2l8a0dB+tU21cgRR
-99chQx38J58P3HcIFtjGH/w6HQwIVKITXeTb32rduCVpWJHlDVf2BwQK4rgxo8PW
-7EgF9ApzlRQXCvB6c8zZ8TnJx/kvOYldzDPeBKs2N0eqnSp8BN1XBWIN9BdISvqh
-dgGEXaVsoXupJpNCaROKd00qmZBEf9sh4v1Fp31sI5jexj0gQABTtmv2o751XuVi
-NZ8btMFw2L+I3xVJikYsjISiTnG5tZZX0kMity/19WaPT6b9Ys7xe3ToqC0FPe0I
-4W9xBHZ9M5itTKnXAeNoxGP75qqAyETZHJyjGKpvE9mu3fw8VTDEIewnJxjU3ukc
-/ktecK5YnaTW4T7W7BJZyppQunq1gdWLbwQsPbLr4v5Lq7KSK5muCHrLeeNO88QW
-aV5wn7bqHWqIdYm5dxdyEFk3wszxrF1PCr5uwQINBMZoYXR+znIyqhpoFQN8PYaj
-FmAXWoV3AxIzt/rCYgJYt68x/Q10olusrHzXchYo41ciWLhMNUQ=
-=S3ch
------END PGP SIGNATURE-----
+--=-jR9nJwzMMaK2NlaX8V5c--
 
---sdtB3X0nJg68CQEu--
