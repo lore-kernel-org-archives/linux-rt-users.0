@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1A14C388F9
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:57:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49B07C388F9
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:59:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 69D9C20EDD
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:57:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CEF1220EDD
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:59:23 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="N6IWidsw"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="B2nUCWfZ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1751716AbgJWS50 (ORCPT
+        id S1751965AbgJWS7X (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 14:57:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43322 "EHLO
+        Fri, 23 Oct 2020 14:59:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43648 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S374707AbgJWS5Z (ORCPT
+        with ESMTP id S1751953AbgJWS7X (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 14:57:25 -0400
-Received: from mail-qk1-x741.google.com (mail-qk1-x741.google.com [IPv6:2607:f8b0:4864:20::741])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 82B53C0613CE
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:57:25 -0700 (PDT)
-Received: by mail-qk1-x741.google.com with SMTP id k9so2165826qki.6
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:57:25 -0700 (PDT)
+        Fri, 23 Oct 2020 14:59:23 -0400
+Received: from mail-qk1-x742.google.com (mail-qk1-x742.google.com [IPv6:2607:f8b0:4864:20::742])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A72ABC0613CE
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:59:21 -0700 (PDT)
+Received: by mail-qk1-x742.google.com with SMTP id v200so2183342qka.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:59:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=GG/H40HFyHzrR8Bc2ec3eesFhTzw/xRFfgRtjE9fKJM=;
-        b=N6IWidsw6dboaLsnI80DXihKY7+8wPwnPh9G4zMZljo+cPz3F2KatmN2y2I8STQsAW
-         hPmmA3EP3MJG6ljoKcaJgLYpbwRNLOvARiuUSo+b04cYSrYn31sB8RkzHE3QzqQOOwM0
-         jHzGD75kT2SM6WdTqylM+1yG2YVGPfRykIa+GhykVoQh6OaNNJVAWP4Y6paI9dPt0t2K
-         Wv35dcpmlV6yf0TqBsN82wIsDwPmmQi9RCRzYks03XQJtCaDHMWLonCZ/bRM5O51VvWb
-         hmVtF+X4RLsAWI7jqrzJ5kaoEUpIOQ7N6LZ4We/JFnzYQvzlSRBw+cnoRO2EPRj1wQkw
-         6lqg==
+        bh=Z92Ii/p1zU2nwb7ed3zeQDzVX0tKdJQU2ge0oh/UU1U=;
+        b=B2nUCWfZq4h8Fx6dsbsPJPxGDDPU1d9hwKlCXZHGRwaVo5FUIxvH+gQAwv+W8OQDBD
+         e11r597XpCQ/O3fp34csZUXp8RTPaw5t8mv7MW+1MPLQmDm68Z66tIEowIZpYRhy+64v
+         GKH7ndxa6ez7SB8Z28Ex+wl9VdqtW+xN2ep7GmLWEyvX9S3BMf0HWy+d7kVDm7SCBlhb
+         yqnQd1I9bMYPwojWFkwfd7lvuEBisFdqpgi1UN0Yd+b4QibxIMk9+l7N14S4ExMWVm88
+         dxrYQpJWFgI4WJvqbHcVmIAv6V5oFP0Sg4CRnTfU57RQF9xq1lloue2VPPMhaHdggGkt
+         O16w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=GG/H40HFyHzrR8Bc2ec3eesFhTzw/xRFfgRtjE9fKJM=;
-        b=k3c1mwEEseqyfUVkYTsyyL4klI3rwfwrnLcVMs2upNWAR9cgAbKYZUgX7L8D81VkdV
-         UwtKKka2i4QvjrdjGuCsrpKn84JVhB4aIsc0QytAEu5+NZxSjy5arE8mgBzC84TDlgr+
-         V1qD+6CDek1zEShd7tbCIwJZV3RIWEqLTcmRlAkGqzUuRsLjt5zZD0flBCtU4b4b/LQ1
-         HVxlegLqC5rBljexvuq0TWBt6Vt01HJABYPJMAQxMYMfwf/zkJwB2m5ld177Yq3ElkCr
-         B9vnQcWb8luj+m5DxGSZ49FzHtr5QcjQKHsrscqoYORHeppa6DgAZABZfVL1S28IZzXo
-         eoTA==
-X-Gm-Message-State: AOAM530RTtqalEIFV1xag8UQ3al4zyAANXaJDazFXNv6hnSqCeQPgbEy
-        GJ1Nbj64IZzZUb9gIazyix8=
-X-Google-Smtp-Source: ABdhPJwZAORgo/+29asPluHJVfQhFE/aYJiUyWVj27+OKH8rGWmX9nzYnwOAVqGlDNY3wwLPZzfd/A==
-X-Received: by 2002:a37:46d0:: with SMTP id t199mr3555073qka.308.1603479444726;
-        Fri, 23 Oct 2020 11:57:24 -0700 (PDT)
+        bh=Z92Ii/p1zU2nwb7ed3zeQDzVX0tKdJQU2ge0oh/UU1U=;
+        b=Pv5muzAcbdmiAvtRetZF0OGgdigGeRJvhAIV/zkO9qT5itkKDUCEQXrtDYI6RyUL1A
+         CwU3sYKekx/RZ43h29WI7SLUYBKKprrI66Vrhf9+zFtvQAa+lI1CHg/YaFAqpsANG7p3
+         lb3fsDeIjiL2oF7ewGKgDcJZW6GdGpT37hGXf+9vTKJSBrCvXXAWUeTQLHVnymjvq6Lw
+         c4QOWLuucya5WOG35Tq2U7yOq/t+5wzCXTdUwQyEaBGhK2zQLi/0FVBZYgw7ZH5Xb6yn
+         xKMliecGIbVOaut17gT6IUY7eFu4m3t4kVUT9ij+LXJ0/zpCLHKmNeoapJxS8I+c4a+N
+         OvIw==
+X-Gm-Message-State: AOAM533DlDrE+fEFDqcfC4bYmykkzE7l3zvWijSJkY5DVKJ26Z/cBTLL
+        z2GSij1lmtGMPR+owO5eTXsIvLZTJjWnfA==
+X-Google-Smtp-Source: ABdhPJw2rbddvPUJsnT0hjT2ZnnS+ZoL4F4d/QVDns4RE6uh+JPu7IpzgD8j2f8ivCajrN/Tr8kVKQ==
+X-Received: by 2002:ae9:f501:: with SMTP id o1mr3456772qkg.133.1603479560887;
+        Fri, 23 Oct 2020 11:59:20 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id l125sm1396432qke.23.2020.10.23.11.57.24
+        by smtp.gmail.com with ESMTPSA id z26sm1531030qtb.85.2020.10.23.11.59.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2020 11:57:24 -0700 (PDT)
+        Fri, 23 Oct 2020 11:59:20 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 23 Oct 2020 14:57:23 -0400 (EDT)
+Date:   Fri, 23 Oct 2020 14:59:19 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 16/18] ssdd: Streamline usage and man page
-In-Reply-To: <20201007085653.11961-17-dwagner@suse.de>
-Message-ID: <b6a0d556-a4b5-d9c2-e6a9-f3f69bf87961@redhat.com>
-References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-17-dwagner@suse.de>
+Subject: Re: [rt-tests v2 17/18] svsematest: Streamline usage and man page
+In-Reply-To: <20201007085653.11961-18-dwagner@suse.de>
+Message-ID: <b64cb59b-8d6f-3743-fc-9ab4c17376a7@redhat.com>
+References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-18-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -81,136 +81,176 @@ On Wed, 7 Oct 2020, Daniel Wagner wrote:
 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/ssdd/ssdd.8 | 35 +++++++++++++++++-----------------
->  src/ssdd/ssdd.c | 50 +++++++++++++++++++++++++++----------------------
->  2 files changed, 45 insertions(+), 40 deletions(-)
+>  src/svsematest/svsematest.8 |  6 +--
+>  src/svsematest/svsematest.c | 83 +++++++++++++++++++------------------
+>  2 files changed, 46 insertions(+), 43 deletions(-)
 > 
-> diff --git a/src/ssdd/ssdd.8 b/src/ssdd/ssdd.8
-> index 99f30145d079..5c29d0abb732 100644
-> --- a/src/ssdd/ssdd.8
-> +++ b/src/ssdd/ssdd.8
-> @@ -1,31 +1,30 @@
-> -.TH SSDD 8 "June 13, 2019"
-> +.TH SSDD 8 "September 19, 2020"
->  .SH NAME
->  ssdd \- have a tracer do a bunch of PTRACE_SINGLESTEPs
->  .SH SYNOPSIS
-> -.B ssdd
-> -.RI "<options>"
-> +.LP
-> +ssdd [-f|--forks NUM] [-h|--help] [-i|--iters NUM]
->  .SH DESCRIPTION
-> -Have a tracer do a bunch of PTRACE_SINGLESTEPs against
-> -a tracee as fast as possible.  Create several of these
-> -tracer/tracee pairs and see if they can be made to
-> -interfere with each other.
-> -The tracer waits on each PTRACE_SINGLESTEP with a waitpid(2)
-> -and checks that waitpid's return values for correctness.
-> +Have a tracer do a bunch of PTRACE_SINGLESTEPs against a tracee as
-> +fast as possible. Create several of these tracer/tracee pairs and
-> +see if they can be made to interfere with each other. The tracer
-> +waits on each PTRACE_SINGLESTEP with a waitpid(2) and checks that
-> +waitpid's return values for correctness.
->  .SH OPTIONS
-> -.B \-f, \-\-forks
-> -number of tracer/tracee pairs to fork off.
-> -Default is 10.
-> -.br
->  .TP
-> -.B \-i, \-\-iters
-> -number of PTRACE_SINGLESTEP iterations to
-> -do before declaring success, for each tracer/
-> -tracee pair set up. Default is 10,000.
-> +.B \-f, \-\-forks=NUM
-> +number of tracer/tracee pairs to fork off.
+> diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
+> index 98322c105803..5fcb96149bdd 100644
+> --- a/src/svsematest/svsematest.8
+> +++ b/src/svsematest/svsematest.8
+> @@ -4,15 +4,15 @@
+>  \fBsvsematest\fR \- Start two threads or fork two processes and measure the latency of SYSV semaphores
+>  .SH "SYNTAX"
+>  .LP
+> -svsematest [-a|-a PROC] [-b USEC] [-d DIST] [-f] [-i INTV] [-l loops] [-p PRIO] [-t|-t NUM]
+> +svsematest [-a|--affinity NUM] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-S|--smp] [-t|--threads [NUM]]
 >  .br
-> +Default is 10.
+>  .SH "DESCRIPTION"
+>  .LP
+>  The program \fBsvsematest\fR starts two threads or, optionally, forks two processes that are synchronized via SYSV semaphores and measures the latency between releasing a semaphore on one side and getting it on the other side.
+>  .SH "OPTIONS"
 >  .TP
->  .B \-h, \-\-help
->  Display usage
-> -
-> +.TP
-> +.B \-i, \-\-iters=NUM
-> +number of PTRACE_SINGLESTEP iterations to do before declaring
-> +success, for each tracer tracee pair set up.
-> +.br
-> +Default is 10,000.
->  .SH AUTHOR
->  ssdd was written by Joe Korty <joe.korty@concurrent-rt.com>
->  .PP
-> diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-> index f165da96e23a..66d6009dc572 100644
-> --- a/src/ssdd/ssdd.c
-> +++ b/src/ssdd/ssdd.c
-> @@ -68,13 +68,16 @@ static int got_sigchld;
+> -.B \-a, \-\-affinity[=PROC]
+> -Run on processor number PROC. If PROC is not specified, run on current processor.
+> +.B \-a, \-\-affinity[=NUM]
+> +Run on processor number NUM. If PROC is not specified, run on current processor.
+>  .TP
+>  .B \-b, \-\-breaktrace=USEC
+>  Send break trace command when latency > USEC. This is a debugging option to control the latency tracer in the realtime preemption patch.
+> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+> index 607b397bf39e..7412168bd98a 100644
+> --- a/src/svsematest/svsematest.c
+> +++ b/src/svsematest/svsematest.c
+> @@ -218,33 +218,34 @@ union semun {
+>  };
 >  
->  enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP };
 >  
-> -static void usage()
-> +static void usage(int error)
+> -static void display_help(void)
+> +static void display_help(int error)
 >  {
-> -	printf("ssdd <options>\n");
-> -	printf("\t-f --forks=<number of forks>\n");
-> -	printf("\t-i --iters=<number of iterations>\n");
-> -	printf("\t-h --help\n");
-> -	exit(0);
-> +	printf("ssdd V %1.2f\n", VERSION);
+>  	printf("svsematest V %1.2f\n", VERSION);
+> -	puts("Usage: svsematest <options>");
+> -	puts("Function: test SYSV semaphore latency");
+> -	puts(
+> -	"Options:\n"
+> -	"-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
+> -	"                           with NUM pin all threads to the processor NUM\n"
+> -	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+> -	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+> -	"-f       --fork            fork new processes instead of creating threads\n"
+> -	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+> -	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> -	"-D       --duration=TIME   specify a length for the test run.\n"
+> -	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+> -	"-p PRIO  --prio=PRIO       priority\n"
+> -	"-S       --smp             SMP testing: options -a -t and same priority\n"
+> -        "                           of all threads\n"
+> -	"-t       --threads         one thread per available processor\n"
+> -	"-t [NUM] --threads=NUM     number of threads:\n"
+> -	"                           without NUM, threads = max_cpus\n"
+> -	"                           without -t default = 1\n");
+> -	exit(1);
 > +	printf("Usage:\n"
-> +	       "ssdd <options>\n\n"
-> +	       "-f       --forks=NUM       number of forks\n"
-> +	       "-h       --help            print this message\n"
-> +	       "-i       --iters=NUM       number of iterations\n"
+> +	       "svsematest <options>\n\n"
+> +	       "Function: test SYSV semaphore latency\n\n"
+> +	       "Avaiable options:\n"
+> +	       "-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
+> +	       "                           with NUM pin all threads to the processor NUM\n"
+> +	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+> +	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+> +	       "-D       --duration=TIME   specify a length for the test run.\n"
+> +	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
+> +	       "                           days.\n"
+> +	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
+> +	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+> +	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +	       "-p PRIO  --prio=PRIO       priority\n"
+> +	       "-S       --smp             SMP testing: options -a -t and same priority\n"
+> +	       "                           of all threads\n"
+> +	       "-t       --threads         one thread per available processor\n"
+> +	       "-t [NUM] --threads[=NUM]   number of threads:\n"
+> +	       "                           without NUM, threads = max_cpus\n"
+> +	       "                           without -t default = 1\n"
 > +	       );
 > +	exit(error);
 >  }
 >  
->  static int do_wait(pid_t *wait_pid, int *ret_sig)
-> @@ -292,27 +295,30 @@ int main(int argc, char **argv)
->  		int option_index = 0;
+> -
+>  static int setaffinity = AFFINITY_UNSPECIFIED;
+>  static int affinity;
+>  static int priority;
+> @@ -256,7 +257,7 @@ static int distance = 500;
+>  static int smp;
+>  static int sameprio;
 >  
+> -static void process_options (int argc, char *argv[])
+> +static void process_options(int argc, char *argv[])
+>  {
+>  	int error = 0;
+>  	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
+> @@ -266,20 +267,20 @@ static void process_options (int argc, char *argv[])
+>  		int option_index = 0;
+>  		/** Options for getopt */
 >  		static struct option long_options[] = {
-> -			{"forks", required_argument, NULL, OPT_NFORKS},
-> -			{"iters", required_argument, NULL, OPT_NITERS},
-> -			{"help", no_argument, NULL, OPT_HELP},
-> +			{"forks",		required_argument,	NULL, OPT_NFORKS},
-> +			{"help",		no_argument,		NULL, OPT_HELP},
-> +			{"iters",		required_argument,	NULL, OPT_NITERS},
->  			{NULL, 0, NULL, 0},
+> -			{"affinity", optional_argument, NULL, 'a'},
+> -			{"breaktrace", required_argument, NULL, 'b'},
+> -			{"distance", required_argument, NULL, 'd'},
+> -			{"fork", optional_argument, NULL, 'f'},
+> -			{"interval", required_argument, NULL, 'i'},
+> -			{"loops", required_argument, NULL, 'l'},
+> -			{"duration", required_argument, NULL, 'D'},
+> -			{"priority", required_argument, NULL, 'p'},
+> -			{"smp", no_argument, NULL, 'S'},
+> -			{"threads", optional_argument, NULL, 't'},
+> -			{"help", no_argument, NULL, '?'},
+> +			{"affinity",		optional_argument,	NULL, 'a'},
+> +			{"breaktrace",		required_argument,	NULL, 'b'},
+> +			{"distance",		required_argument,	NULL, 'd'},
+> +			{"duration",		required_argument,	NULL, 'D'},
+> +			{"fork",		optional_argument,	NULL, 'f'},
+> +			{"help",		no_argument,		NULL, 'h'},
+> +			{"interval",		required_argument,	NULL, 'i'},
+> +			{"loops",		required_argument,	NULL, 'l'},
+> +			{"priority",		required_argument,	NULL, 'p'},
+> +			{"smp",			no_argument,		NULL, 'S'},
+> +			{"threads",		optional_argument,	NULL, 't'},
+>  			{NULL, 0, NULL, 0}
 >  		};
-> -		int c = getopt_long(argc, argv, "f:i:h", long_options, &option_index);
-> +		int c = getopt_long(argc, argv, "f:hi:", long_options, &option_index);
+> -		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:St::h",
+> +		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:St::",
+>  			long_options, &option_index);
 >  		if (c == -1)
 >  			break;
->  		switch(c) {
-> -			case 'f':
-> -			case OPT_NFORKS:
-> -				nforks = atoi(optarg);
-> -				break;
-> -			case 'i':
-> -			case OPT_NITERS:
-> -				nsteps = atoi(optarg);
-> -				break;
-> -			case 'h':
-> -			case OPT_HELP:
-> -				usage();
-> -				break;
-> +		case 'f':
-> +		case OPT_NFORKS:
-> +			nforks = atoi(optarg);
-> +			break;
-> +		case 'h':
-> +		case OPT_HELP:
-> +			usage(0);
-> +			break;
-> +		case 'i':
-> +		case OPT_NITERS:
-> +			nsteps = atoi(optarg);
-> +			break;
+> @@ -301,6 +302,7 @@ static void process_options (int argc, char *argv[])
+>  			break;
+>  		case 'b': thistracelimit = atoi(optarg); break;
+>  		case 'd': distance = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'f':
+>  			if (optarg != NULL) {
+>  				wasforked = 1;
+> @@ -312,9 +314,9 @@ static void process_options (int argc, char *argv[])
+>  			} else
+>  				mustfork = 1;
+>  			break;
+> +		case 'h': display_help(0); break;
+>  		case 'i': interval = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> -		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 'S':
+>  			smp = 1;
+> @@ -333,8 +335,9 @@ static void process_options (int argc, char *argv[])
+>  			else
+>  				num_threads = max_cpus;
+>  			break;
+> -		case 'h': error = 1; break;
+> -		case '?': error = 1; break;
 > +		default:
-> +			usage(1);
+> +			display_help(1);
 > +			break;
 >  		}
 >  	}
+>  
+> @@ -365,7 +368,7 @@ static void process_options (int argc, char *argv[])
+>  		tracelimit = thistracelimit;
+>  	}
+>  	if (error)
+> -		display_help ();
+> +		display_help(error);
+>  }
+>  
 >  
 > -- 
 > 2.28.0
