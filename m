@@ -7,68 +7,69 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 92BB0C55178
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:40:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A0778C55178
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:47:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 332A720BED
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:40:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3C7B320E65
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:47:56 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="e3s/WtOD"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QpSgU2Wu"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1750781AbgJWSkb (ORCPT
+        id S465902AbgJWSrz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 14:40:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40702 "EHLO
+        Fri, 23 Oct 2020 14:47:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41834 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750748AbgJWSkb (ORCPT
+        with ESMTP id S462467AbgJWSrz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 14:40:31 -0400
-Received: from mail-qk1-x72e.google.com (mail-qk1-x72e.google.com [IPv6:2607:f8b0:4864:20::72e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A99B4C0613CE
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:40:29 -0700 (PDT)
-Received: by mail-qk1-x72e.google.com with SMTP id 140so2119050qko.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:40:29 -0700 (PDT)
+        Fri, 23 Oct 2020 14:47:55 -0400
+Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5F38FC0613CE
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:47:55 -0700 (PDT)
+Received: by mail-qk1-x736.google.com with SMTP id 188so2110785qkk.12
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:47:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=hOFKreiTphtxIfVzZgm5ClVfGZsyLIPpTC4PVvop2as=;
-        b=e3s/WtODzuF6vlAOmZygR2ZaY6srcKPPLrfchaFNq3FHc+khZdOqZl4jSK5K04M8sS
-         7CQJoYjlVb865lmmGCNYxQjPuLT7vlKiEtrlLByIEtcvMb7XZRIaCvkGe/go+mzO4dqa
-         TDDUx33J37LWFtyEI3ENuKLr3KUUYRbW54DmdJNxUyLcHgyt/98cx0ZSNRBAMs1LlZ9A
-         wBG1PFLJhH113L2bvalXkTiWG45Rry8t78h+LFI251R7ASK8bMhg+Ie4NcGrzVQG8rzl
-         SywV97xGdhKn2Cl9OuEsOjZQasczXa5ei1xqCfbgzB64c4eyD2V0+FwhAfcNIjXTP0o+
-         fJCA==
+        bh=liAaHnnQC1McxI4ECLhC2Qz6+0iuzIre5AqZYgSvWWU=;
+        b=QpSgU2WuRIiW06dUF/Tz5/+Z1LOF/tuKNVd21pC1RFnyf4hdc+/2nIrFqG9t9rBVKX
+         ji3VY61PB060snGqBf5NWkOKKTUDeeQMj15NP3tjxpSQaaqos4EDIkMhWKCaPpV1yIar
+         RPC3au5EcQJXagy11LHgyqMXcgqN1RpP1WZ2e3OsM6N0f7iMIFKwZw8vEyBEufGWgqXa
+         tlxBROis73Ark4mtJs2CwIoO0O6fRiZ1YKDXBgNBr5YDu+0NRIn9VtNyszaQeLViw7JS
+         ZIwMgZ1vUoEgswsLPdbWIoXwjlbdz39YimX+Gpmt9Jn4duC+/gLvnAanJ5yU9hOrkToL
+         morA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=hOFKreiTphtxIfVzZgm5ClVfGZsyLIPpTC4PVvop2as=;
-        b=Jflu3Zi4cZF+yhEc5dIEzU2GeG3nlpswbaZVyl06Z6aSGI5jWPaFBSboViS1llMHzX
-         JYRWSfX1hUpRwij2NQw5BEMrzmzRKz6appAjMsfbfZgKNnBndtQOV0H3O8iOKA9bDr+p
-         JcWIKVaKUdYOkJxrNfzjVIi7oeuu/OgfQn2uM4iHOBWAQ0UiYdHJdgQuqFGsJjZ3CJBu
-         J8+J/c6rSZAUXLlP+oy8c9CrSwfZAcxDSUaGngehieQ9kzeu9hbpIWE23nzd09zLAZDZ
-         JJqnUpIPRJlPfxT65Vxbkv30Yqo0tii5MCZ+fh4Xre7d8rhxbaNVWXCW/YFDXJ8Lmm94
-         LpjQ==
-X-Gm-Message-State: AOAM533dumFxO9bvRKPmniX2VkwTMKEIybI1WPufGv2kfzvb9vwb5Yc9
-        pzfmCA8Asjf4y3eA7DhJiAA=
-X-Google-Smtp-Source: ABdhPJyCwKNL1Di8O4NP5Wetb0nSZok0gtlV3UpTaxYg2CiuzMo/yFFzrE41oB+x6n5Un8WxMVlFrQ==
-X-Received: by 2002:ae9:eb0e:: with SMTP id b14mr3737676qkg.39.1603478428780;
-        Fri, 23 Oct 2020 11:40:28 -0700 (PDT)
+        bh=liAaHnnQC1McxI4ECLhC2Qz6+0iuzIre5AqZYgSvWWU=;
+        b=jclqeqaD0qbQFSJB+atpcK1GLIYVhJ/9n9rx4H7S3zHvr2oBn8MlajVma+qXvHAwz1
+         wkJ/InNW7s85d3vtP00/XiE902g19Zlx3qP74VTTpWCyJXePm9NVmHLgFrhEoK3QTjmM
+         GW1WFZ3qtno/9uNrYZJH39KQ8pY+VJLRmL+1p4e2zyETp/brFoawEBcttnS1zjexd7hX
+         CBKfEdhB/lLIEXJDhb2zdf9wvV8n3asCUcesuxIVAH/qWS3ygKCAFUYFR3k8/5TiUfEK
+         OPgla0+k/S7wUOBNPKKnMV/0e+UTT+QpklQMg4AK/64SfYJwpswLxRex/3Po6m4978NW
+         De+A==
+X-Gm-Message-State: AOAM531UkIfqip2wBGdvfbb2bG16XnqT6fF88fUezspR65UAVWML0JIG
+        UvADfOrjDLq0o+gNfR0IBgU=
+X-Google-Smtp-Source: ABdhPJznYb6Q95V4tAwtpVC3mk9knuHbK2RS8Q7X3I9aX8tiFSMlhSGu6KlXXClyeCa/ZPOYt+rx8A==
+X-Received: by 2002:a37:2795:: with SMTP id n143mr3726439qkn.321.1603478874484;
+        Fri, 23 Oct 2020 11:47:54 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id c206sm1315696qkg.106.2020.10.23.11.40.27
+        by smtp.gmail.com with ESMTPSA id f22sm1403747qtf.4.2020.10.23.11.47.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2020 11:40:28 -0700 (PDT)
+        Fri, 23 Oct 2020 11:47:53 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 23 Oct 2020 14:40:27 -0400 (EDT)
+Date:   Fri, 23 Oct 2020 14:47:52 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 12/18] queuelat: Streamline usage and man page
-In-Reply-To: <20201007085653.11961-13-dwagner@suse.de>
-Message-ID: <10cde065-80c5-b5b-25b8-faaa6bfa8ed3@redhat.com>
-References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-13-dwagner@suse.de>
+Subject: Re: [rt-tests v2 13/18] rt-migrate-test: Streamline usage and man
+ page
+In-Reply-To: <20201007085653.11961-14-dwagner@suse.de>
+Message-ID: <5a5eb6ec-aa76-dcba-43bd-1fc3822a1ea7@redhat.com>
+References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-14-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -81,228 +82,206 @@ On Wed, 7 Oct 2020, Daniel Wagner wrote:
 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/queuelat/queuelat.8 | 41 +++++++----------
->  src/queuelat/queuelat.c | 99 +++++++++++++++++++----------------------
->  2 files changed, 62 insertions(+), 78 deletions(-)
+>  src/rt-migrate-test/rt-migrate-test.8 | 41 +++++++-------
+>  src/rt-migrate-test/rt-migrate-test.c | 82 +++++++++++++--------------
+>  2 files changed, 59 insertions(+), 64 deletions(-)
 > 
-> diff --git a/src/queuelat/queuelat.8 b/src/queuelat/queuelat.8
-> index f67a0bb7556e..2f99e703c990 100644
-> --- a/src/queuelat/queuelat.8
-> +++ b/src/queuelat/queuelat.8
-> @@ -15,9 +15,8 @@
+> diff --git a/src/rt-migrate-test/rt-migrate-test.8 b/src/rt-migrate-test/rt-migrate-test.8
+> index b9c07f1ed80a..5bbacb5333b8 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.8
+> +++ b/src/rt-migrate-test/rt-migrate-test.8
+> @@ -1,11 +1,11 @@
+>  .\"
+> -.TH RT-MIGRATE-TEST 8 "April 21, 2016"
+> +.TH RT-MIGRATE-TEST 8 "September 18, 2020"
+>  .\" Please adjust this date whenever editing this manpage
 >  .SH NAME
->  queuelat \- Queue latency test program
+>  rt-migrate-test \- real-time task migration program
 >  .SH SYNOPSIS
-> -.B queuelat
-> -.RI "[\-h] [\-m " max-queue-len "] [\-c " cycles-per-packet "] [\-p " mpps "] [\-f " tsc-freq "] [\-t " timeout "] \
-> -
+> -.B rt-migrate-test 
+> -.RI "[\-ceh] [\-p prio] [\-r time] [\-s time] [\-m time] [\-l loops] [nr_tasks]
 > +.LP
-> +queuelat [-c|--cycles N] [-f|--freq F] [-h|--help] [-m|--max-len LEN] [-p|--packets F] [-q|--queue-len N] [-t|--timeout TIME]
+> +rt-migrate-test [-c|--check] [-D|--duration TIME] [-e|--equal] [-h|--help] [-l|--loops LOOPS] [-m|--maxerr TIME] [-p|--prio PRIO] [-r|--run-time TIME] [-s|--sleep-time TIME] [NR_TASKS]
 >  .SH DESCRIPTION
->  queuelat simulates a network queue checking for latency
->  violations in packet processing.
-> @@ -25,36 +24,26 @@ violations in packet processing.
+>  Test real-time multiprocessor scheduling of tasks to ensure the highest priority tasks are running on all available CPUs
 >  .SH OPTIONS
->  A summary of options is included below.
+> @@ -15,44 +15,43 @@ This program follows the usual GNU command line syntax, with long options starti
+>  In the summary of options, a value in brackets (), indicates a default value
+>  .br
 >  .TP
-> -.B \-h
-> -Show help
-> -.br
-> +.B \-c, \-\-cycles=N
-> +Estimated number of cycles it takes to process one packet. This value should come from the envisioned packet forwarding application being simulated.
->  .TP
-> -.B \-m max-queue-len
-> -Maximum allowed latency, in nanoseconds. If latency to process
-> -.br
-> -any packet exceeds this value, the program quits,
-> -writing
-> -.br
-> -a message to the trace buffer.
-> +.B \-f, \-\-freq=F
-> +TSC frequency in MHz.
->  .TP
-> -.B \-c cycles-per-packet
-> -Estimated number of cycles it takes to process one packet.
-> -.br
-> -This value should come from the envisioned packet
-> -.br
-> -forwarding application being simulated.
-> +.B \-h, \-\-help
-> +Show help
->  .TP
-> -.B \-p mpps
-> +.B \-m, \-\-max-len=N
-> +Maximum allowed latency, in nanoseconds. If latency to process any packet exceeds this value, the program quits, writing a message to the trace buffer.
+> +.B \-c, \-\-check
+> +Stop if lower prio task is quicker than higher (off)
 > +.TP
-> +.B \-p, \-\-packets=F
->  Million packets per second that arrive for processing.
+>  .B \-D, \-\-duration=TIME
+>  Specify a length for the test run.
+>  .br
+>  Append 'm', 'h', or 'd' to specify minutes, hours or days.
 >  .TP
-> -.B \-f tsc-freq-mhz
-> -TSC frequency in MHz.
-> +.B \-q, \-\-queue-len=N
-> +Minimum queue length to print in the trace
+> -.B \-p, \-\-prio=prio
+> -base priority to start RT tasks with (2)
+> +.B \-e, \-\-equal
+> +Use equal prio for #CPU-1 tasks (requires > 2 CPUS)
+>  .br
 >  .TP
-> -.B \-t timeout
-> +.B \-t, \-\-timeout=TIME
->  Timeout in seconds to quit the program.
+> -.B \-r, \-\-run\-time=time
+> -Run time (ms) to busy loop the threads (20)
+> +.B \-h, \-\-help
+> +Display usage
+>  .br
+>  .TP
+> -.B \-s, \-\-sleep\-time=time
+> -Sleep time (ms) between intervals (100)
+> +.B \-l \-\-loops=LOOPS
+> +Number of iterations to run (50)
+>  .br
+>  .TP
+> -.B \-m, \-\-maxerr=time
+> +.B \-m, \-\-maxerr=TIME
+>  Max allowed error (microsecs)
+>  .br
+>  .TP
+> -.B \-l \-\-loops=loops
+> -Number of iterations to run (50)
+> -.br
 > -.TP
-> -.B \-q min_queue_len_to_print_trace
-> -Minimum queue length to print in the trace
->  
+> -.B \-e
+> -Use equal prio for #CPU-1 tasks (requires > 2 CPUS)
+> +.B \-p, \-\-prio=PRIO
+> +base priority to start RT tasks with (2)
+>  .br
+>  .TP
+> -.B \-c, \-\-check
+> -Stop if lower prio task is quicker than higher (off)
+> +.B \-r, \-\-run\-time=TIME
+> +Run time (ms) to busy loop the threads (20)
+>  .br
+>  .TP
+> -.B \-h, \-\-help
+> -Display usage
+> +.B \-s, \-\-sleep\-time=TIME
+> +Sleep time (ms) between intervals (100)
+>  .br
+>  .TP
+> -.B [nr\-tasks]
+> +.B [NR_TASKS]
+>  number of tasks to run (number of cpus + 1)
+>  .br
 >  .SH AUTHOR
->  queuelat was written by Marcelo Tosatti <mtosatti@redhat.com>
-> diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
-> index 2b9118d8a8a5..661e48db88ac 100644
-> --- a/src/queuelat/queuelat.c
-> +++ b/src/queuelat/queuelat.c
-> @@ -16,6 +16,7 @@
->  #include <unistd.h>
->  #include <signal.h>
->  #include <time.h>
-> +#include <getopt.h>
->  
->  #include "rt-utils.h"
->  
-> @@ -560,17 +561,20 @@ int calculate_nr_packets_drain_per_block(void)
->  	return nr_packets_drain_per_block;
+> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+> index 4863238edeb4..68824606faf1 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.c
+> +++ b/src/rt-migrate-test/rt-migrate-test.c
+> @@ -146,71 +146,67 @@ static void print_progress_bar(int percent)
+>  	fflush(stderr);
 >  }
 >  
-> -
-> -void print_help(void)
-> +static void print_help(int error)
+> -static void usage(char **argv)
+> +static void usage(int error)
 >  {
-> -	printf("usage: queuelat [options]\n");
-> -	printf("-h show this help menu\n");
-> -	printf("-m max-queue-len (maximum latency allowed, in nanoseconds) (int)\n");
-> -	printf("-c cycles-per-packet (number of cycles to process one packet (int)\n");
-> -	printf("-p million-packet-per-sec (million packets per second) (float)\n");
-> -	printf("-f tsc-freq-mhz (TSC frequency in MHz) (float)\n");
-> -	printf("-t timeout (timeout, in seconds) (int)\n");
-> -	printf("-q min_queue_len_to_print_trace (int)\n");
-> +	printf("queuelat V %1.2f\n", VERSION);
-> +	printf("Usage:\n"
-> +	       "queuelat <options>\n\n"
-> +	       "-c N     --cycles N        number of cycles to process one packet (int)\n"
-> +	       "-f F     --freq F          TSC frequency in MHz (float)\n"
-> +	       "-h       --help            show this help menu\n"
-> +	       "-m LEN   --max-len LEN     maximum latency allowed, in nanoseconds (int)\n"
-> +	       "-p F     --packets F       million packets per second (float)\n"
-> +	       "-q N     --queue-len N     minimum queue len to print trace (int)\n"
-> +	       "-t TIME  --timeout TIME    timeout, in seconds (int)\n"
+> -	char *arg = argv[0];
+> -	char *p = arg+strlen(arg);
+> -
+> -	while (p >= arg && *p != '/')
+> -		p--;
+> -	p++;
+> -
+> -	printf("%s %1.2f\n", p, VERSION);
+> +	printf("rt-migrate-test %1.2f\n", VERSION);
+>  	printf("Usage:\n"
+> -	       "%s <options> nr_tasks\n\n"
+> -	       "-p prio --prio  prio        base priority to start RT tasks with (2)\n"
+> -	       "-r time --run-time time     Run time (ms) to busy loop the threads (20)\n"
+> -	       "-s time --sleep-time time   Sleep time (ms) between intervals (100)\n"
+> -	       "-m time --maxerr time       Max allowed error (microsecs)\n"
+> -	       "-l loops --loops loops      Number of iterations to run (50)\n"
+> -	       "-D       --duration=TIME    specify a length for the test run.\n"
+> -	       "                            Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+> -	       "-e                          Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
+> -	       "-c    --check               Stop if lower prio task is quicker than higher (off)\n"
+> -	       "-h    --help\n"
+> -	       "  () above are defaults \n",
+> -		p);
+> -	exit(0);
+> +	       "rt-migrate-test <options> [NR_TASKS]\n\n"
+> +	       "-c       --check           Stop if lower prio task is quicker than higher (off)\n"
+> +	       "-D TIME  --duration=TIME   Specify a length for the test run.\n"
+> +	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
+> +	       "                           days.\n"
+> +	       "-e       --equal           Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
+> +	       "-h       --help            Print this help message\n"
+> +	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
+> +	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
+> +	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
+> +	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
+> +	       "-s TIME  --sleep-time=TIME Sleep time (ms) between intervals (100)\n\n"
+> +	       "  () above are defaults \n"
 > +	       );
 > +	exit(error);
 >  }
 >  
->  int main(int argc, char **argv)
-> @@ -584,61 +588,59 @@ int main(int argc, char **argv)
->  	char *tvalue = NULL;
->  	char *qvalue = NULL;
->  	int index;
-> -	int c;
-> -
-> -	install_signals();
->  
->  	opterr = 0;
->  
-> -	while ((c = getopt (argc, argv, "m:c:p:f:t:q:h")) != -1)
-> -		switch (c)
-> -		{
-> -		case 'm':
-> -			mvalue = optarg;
-> +	for (;;) {
-> +		static struct option options[] = {
-> +			{"cycles",	required_argument,	NULL, 'c'},
-> +			{"freq",	required_argument,	NULL, 'f'},
+> -static void parse_options (int argc, char *argv[])
+> +static void parse_options(int argc, char *argv[])
+>  {
+>  	for (;;) {
+>  		int option_index = 0;
+>  		/** Options for getopt */
+>  		static struct option long_options[] = {
+> -			{"prio", required_argument, NULL, 'p'},
+> -			{"run-time", required_argument, NULL, 'r'},
+> -			{"sleep-time", required_argument, NULL, 's'},
+> -			{"maxerr", required_argument, NULL, 'm'},
+> -			{"loops", required_argument, NULL, 'l'},
+> -			{"duration", required_argument, NULL, 'D'},
+> -			{"check", no_argument, NULL, 'c'},
+> -			{"help", no_argument, NULL, '?'},
+> +			{"check",	no_argument,		NULL, 'c'},
+> +			{"duration",	required_argument,	NULL, 'D'},
+> +			{"equal",	no_argument,		NULL, 'e'},
 > +			{"help",	no_argument,		NULL, 'h'},
-> +			{"max-len",	required_argument,	NULL, 'm'},
-> +			{"packets",	required_argument,	NULL, 'p'},
-> +			{"queue-len",	required_argument,	NULL, 'q'},
-> +			{"timeout",	required_argument,	NULL, 't'},
-> +			{NULL, 0, NULL, 0}
-> +		};
-> +		int c = getopt_long(argc, argv, "c:f:hm:p:q:t:", options, NULL);
-> +		if (c == -1)
+> +			{"loops",	required_argument,	NULL, 'l'},
+> +			{"maxerr",	required_argument,	NULL, 'm'},
+> +			{"prio",	required_argument,	NULL, 'p'},
+> +			{"run-time",	required_argument,	NULL, 'r'},
+> +			{"sleep-time",	required_argument,	NULL, 's'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "p:r:s:m:l:D:ech",
+> +		int c = getopt_long(argc, argv, "cD:ehl:m:p:r:s:",
+>  			long_options, &option_index);
+>  		if (c == -1)
 >  			break;
-> +		switch (c) {
->  		case 'c':
->  			cvalue = optarg;
->  			break;
-> -		case 'p':
-> -			pvalue = optarg;
+>  		switch (c) {
+> -		case 'p': prio_start = atoi(optarg); break;
+> -		case 'r':
+> -			run_interval = atoi(optarg);
 > -			break;
->  		case 'f':
->  			fvalue = optarg;
+> -		case 's': interval = atoi(optarg); break;
+> -		case 'l': nr_runs = atoi(optarg); break;
+> +		case 'c': check = 1; break;
+>  		case 'D': duration = parse_time_string(optarg); break;
+> -		case 'm': max_err = usec2nano(atoi(optarg)); break;
+>  		case 'e': equal = 1; break;
+> -		case 'c': check = 1; break;
+>  		case '?':
+>  		case 'h':
+> -			usage(argv);
+> +			usage(0);
 >  			break;
-> -		case 't':
-> -			tvalue = optarg;
-> +		case '?':
-> +		case 'h':
-> +			print_help(0);
+> +		case 'l': nr_runs = atoi(optarg); break;
+> +		case 'm': max_err = usec2nano(atoi(optarg)); break;
+> +		case 'p': prio_start = atoi(optarg); break;
+> +		case 'r':
+> +			run_interval = atoi(optarg);
 > +			break;
-> +		case 'm':
-> +			mvalue = optarg;
-> +			break;
-> +		case 'p':
-> +			pvalue = optarg;
->  			break;
->  		case 'q':
->  			qvalue = optarg;
->  			break;
-> -		case 'h':
-> -			print_help();
-> -			return 0;
-> -		case '?':
-> -			if (optopt == 'm' || optopt == 'c' || optopt == 'p' ||
-> -			    optopt == 'f' || optopt == 't' || optopt == 'q') {
-> -				printf ("Option -%c requires an argument.\n", optopt);
-> -			} else if (isprint (optopt)) {
-> -				printf ("Unknown option `-%c'.\n", optopt);
-> -				print_help();
-> -				return 1;
-> -			} else {
-> -				printf ( "Unknown option character `\\x%x'.\n", optopt);
-> -				print_help();
-> -				return 1;
-> -			}
-> +		case 't':
-> +			tvalue = optarg;
->  			break;
->  		default:
-> -			abort ();
-> +			print_help(1);
-> +			break;
+> +		case 's': interval = atoi(optarg); break;
+> +		default:
+> +			usage(1);
 >  		}
-> +	}
->  
-> -	if (mvalue == NULL || cvalue == NULL || pvalue == NULL ||
-> -	    fvalue == NULL) {
-> -		printf("options -m, -c, -p and -f are required.\n");
-> -		printf("usage: %s -m maxlatency -c cycles_per_packet -p mpps(million-packet-per-sec) -f tsc_freq_mhz [-t timeout (in secs)] [-q min_queue_len_to_print_trace]\n", argv[0]);
-> -		return 1;
-> +	if (mvalue == NULL || cvalue == NULL || pvalue == NULL || fvalue == NULL) {
-> +		printf("options -m, -c, -p and -f are required\n");
-> +		exit(1);
 >  	}
->  
-> +	install_signals();
-> +
->  	maxlatency = atoi(mvalue);
->          cycles_per_packet = atoi(cvalue);
->          mpps = atof(pvalue);
-> @@ -654,13 +656,6 @@ int main(int argc, char **argv)
->  		min_queue_size_to_print = atoi(qvalue);
->  	}
->  
-> -	if (optind != argc) {
-> -		for (index = optind; index < argc; index++) {
-> -			printf ("Error, non-option argument %s\n", argv[index]);
-> -		}
-> -		return 1;
-> -	}
 > -
->  	convert_to_ghz(tsc_freq_mhz);
+>  }
 >  
->  	max_queue_len_f = maxlatency / (cycles_per_packet*cycles_to_ns);
+>  static unsigned long long get_time(void)
 > -- 
 > 2.28.0
 > 
