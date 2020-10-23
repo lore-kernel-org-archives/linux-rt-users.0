@@ -6,76 +6,62 @@ X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1DDFC388F9
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:08:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BEB5C388F9
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:21:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7AE842225F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:08:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AC4542225F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:21:37 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QP+twfJL";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="M7XJWuQj"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="X43iKc+A"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S462786AbgJWLIs (ORCPT
+        id S462867AbgJWLVe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 07:08:48 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:53158 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S462703AbgJWLIr (ORCPT
+        Fri, 23 Oct 2020 07:21:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56706 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S462851AbgJWLVe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 07:08:47 -0400
-Date:   Fri, 23 Oct 2020 13:08:44 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1603451325;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=PAuxEhB/nJhk5VPc65JV893RicI0kuvbtn6fWhCVzIc=;
-        b=QP+twfJLJ/w0D9rCRchyrX5YD/83Bv62jT32mgbFl0imPquXx13nZggCeRuC1e2pbJ97IS
-        9CBTpRqC/UsLXbwRCdgaXRxMzA/khAa9xUCs8fsoEOQp/7J7cKwExGsFWwFF7pBRYgt+mD
-        JepZySf39/XoBncGt1hN33Z70SpYkHooUUc43bC2BV9sKfgNkevOUB793vaakT3nMIu43y
-        jtbe9csxfM9KBOK17F8MgU+M7QCH5ZX/JEYZzbTNpifFSvaDAQ5AuctziZNiejKqh3YNav
-        hTLkOIzoVMdW1tiFtB9bEibLk9PV6wuKEA/DA21vEtZuqHAnLlDl2ZYX6G13UA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1603451325;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=PAuxEhB/nJhk5VPc65JV893RicI0kuvbtn6fWhCVzIc=;
-        b=M7XJWuQjtTyl1Np9xOBVKtEBC3SvZyVe35H3XvNw7zgxptNAY3dKJYV878OC0Rvk5tAD3G
-        vABVz3G9iUBxFhBQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     John Ogness <john.ogness@linutronix.de>
-Cc:     Mike Galbraith <efault@gmx.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: printk: add pr_flush()
-Message-ID: <20201023110844.i44l2xa4qdhhdtoj@linutronix.de>
-References: <15cd3dc322eb1485fe1e67df465febdc6ad389d8.camel@gmx.de>
- <20201022141529.zvwafoqglnhyklj5@linutronix.de>
- <43c56d9bd7c5d0b7c455a5ba3c00080b1600b718.camel@gmx.de>
- <c2965ef22b5e95db0d9e214efb6f653628549579.camel@gmx.de>
- <20201022145214.a5sm66naswycezae@linutronix.de>
- <877drhmmma.fsf@jogness.linutronix.de>
+        Fri, 23 Oct 2020 07:21:34 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1C047C0613CE;
+        Fri, 23 Oct 2020 04:21:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=VTzREImgBpc2Ef+UDWW8JBTMD/ctCUwWEOpMdvOHXqw=; b=X43iKc+ANUZlHkD3jHcDE7LMAK
+        29HfAqHQgjl0jLBRr9wIcXH9+3KsrMlz4nCy7arZRXqQq44KQKMhNDsqeMTECzj08Q+ja+bcwdNnt
+        qTOl8mBnORqZIr8XockcIMM6bVYKrbSsUqLDOa+0Fh3V6HTHT48nvlrALvvbPqftX9Lmq48cIcjTQ
+        IXqmCUTHgzYzJCZ/h9SlHMFjQPNPdjD1GnFB4bcdmwJa/LoIEJmF13PLbzJ/w36xcRKfEKVb3Uu3t
+        qhSxBMGaQdapFp1w77gTkgDkn1nevkPy7MKyTROSbrwjCfO12K96FQ4s4NujxN4z8J+aETAwzxVUC
+        V8XjpX4Q==;
+Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1kVv8U-0006MT-Km; Fri, 23 Oct 2020 11:21:30 +0000
+Date:   Fri, 23 Oct 2020 12:21:30 +0100
+From:   Christoph Hellwig <hch@infradead.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
+        Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Daniel Wagner <dwagner@suse.de>
+Subject: Re: [PATCH RFC] blk-mq: Don't IPI requests on PREEMPT_RT
+Message-ID: <20201023112130.GA23790@infradead.org>
+References: <20201021175059.GA4989@hmbx>
+ <20201023110400.bx3uzsb7xy5jtsea@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <877drhmmma.fsf@jogness.linutronix.de>
+In-Reply-To: <20201023110400.bx3uzsb7xy5jtsea@linutronix.de>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-10-23 09:29:41 [+0206], John Ogness wrote:
-> Hi Sebastian,
-Hi,
+> -	if (!IS_ENABLED(CONFIG_SMP) ||
+> +	if (!IS_ENABLED(CONFIG_SMP) || IS_ENABLED(CONFIG_PREEMPT_RT) ||
+>  	    !test_bit(QUEUE_FLAG_SAME_COMP, &rq->q->queue_flags))
 
-> The "printk: add pr_flush()" patch should be removed from PREEMPT_RT
-> until this issue is resolved. I am getting several independent bug
-> reports of reboot problems.
-> 
-> Note that on crash situations the full ringbuffer should still be
-> printed. pr_flush() was only responsible for non-crash scenarios.
-
-oki, dropping.
-
-> John Ogness
-
-Sebastian
+This needs a big fat comment explaining your rationale.  And probably
+a separate if statement to make it obvious as well.
