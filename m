@@ -7,60 +7,60 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C8709C4363A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:18:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 73538C4363A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:23:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 501662192A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:18:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1564B2192A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 18:23:23 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="auYJXZbk"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OVSWjuEc"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S464893AbgJWSSJ (ORCPT
+        id S1754639AbgJWSXW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 14:18:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37148 "EHLO
+        Fri, 23 Oct 2020 14:23:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37982 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S373222AbgJWSSI (ORCPT
+        with ESMTP id S1754637AbgJWSXW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 14:18:08 -0400
-Received: from mail-qk1-x734.google.com (mail-qk1-x734.google.com [IPv6:2607:f8b0:4864:20::734])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 94BDBC0613CE
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:18:08 -0700 (PDT)
-Received: by mail-qk1-x734.google.com with SMTP id v200so2057170qka.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:18:08 -0700 (PDT)
+        Fri, 23 Oct 2020 14:23:22 -0400
+Received: from mail-qt1-x832.google.com (mail-qt1-x832.google.com [IPv6:2607:f8b0:4864:20::832])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 65CE3C0613CE
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:23:22 -0700 (PDT)
+Received: by mail-qt1-x832.google.com with SMTP id c5so1688054qtw.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 11:23:22 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
         bh=xfiJbq1NrBSiVK6svqN9F6cgltZrByrVcLeEtOFSC2s=;
-        b=auYJXZbkVVwZnmDtNqSXV2ME5mAj2isInXKCYZUYGe4Ma2dStMu/ovbpmXgTWwdgj/
-         gDNGvI6YGh7tE6xVbN+xRTddfugWQVDaG4AmVHgkxirody/a1NviogrR0lxKIa9M76XK
-         +VfLP8D1MgCvvyZKg3qGp72siEl/6OwNF9eowC6jk6hw348KzG2b9OSss1dahmLDFgri
-         q+tIiuvKGdO0lfWDwkppepJDKAw1xMktjAfZVZdUzhjtlZqBj1R764KHtYbXQLPck+C2
-         WG51de6Qzm5ZnyswdO1zJFmiJeOvNcAlGQnxYJr/3yDdIj/d7e0NxR5MKONZcUpHfMel
-         M3qQ==
+        b=OVSWjuEcqltEmOKmk4+0G4eXuk2blfKwmco+97BpLPE68aabiSWqsday7eckT56zmQ
+         mh5aiwupD2xnmJGi3vlvLprR1ToGeuz1WsazgU1V8mJctnPmgJzhGWUFryau0LGo2SHP
+         nQShRiRmhWq1sTN2w478q8zpYAjNtlGtZ24pmvA2zqNeoyjypGdFoQ2B888JHnZiWks7
+         wxzTicMtW+nFyKU2/wmZlNMoD6GHOvb0ABXD1qfxnZZB88FN9qR5NhXngA//7PbQj6bO
+         UriwgFQ1J/c6v7n8Db3/NZth5tgafx6+6tV4DKRvn7HJoUqv/+4p6F3XF7Ym90m+pQhN
+         vfdw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
         bh=xfiJbq1NrBSiVK6svqN9F6cgltZrByrVcLeEtOFSC2s=;
-        b=DEBtUNcW1TlMS4FFpOICLr21fs+YcLoud4fWAfFGTmNG53/R56b1aq+cP55NNaM7nM
-         +RPvLsJ2MqP6ubBEp257v8hwUo7YAkLFwJuSYpZVMoBPEzsn3tqjTyc0w/Jp3Z0otupj
-         /YMsezitsI5KexWxtmXZVw5x0FlY1dmtnKmKZIGGjBw3+VWhB63NAU+DdhFdDlbsUA+y
-         gTcdHN+U0wPBt/7lc6bonCic/AqkfTLZ+jaAYYV7BMS/l7AOlNcDy87fTuEV5KaYDctC
-         ZwHabQLZ5yKmdTbYfQInsilKc4FB5w1nrBLUnEmm+XFvenx4WVS+b5C7fcZ1eEEKOjeZ
-         YGtw==
-X-Gm-Message-State: AOAM531cVt5r43LDflkC/8xInDj5hTvoikkPw8TK5BSk21cQwsdljF26
-        czS81Zxacd9E3wugyUr+vNI=
-X-Google-Smtp-Source: ABdhPJw8/Ry9mA8dyGtVHMzu8OpnpvzzLI8u/4VRmSrHQPCRN/psBwzKv/6nuHpjCEsaCkqerS8Jng==
-X-Received: by 2002:a05:620a:2054:: with SMTP id d20mr3310069qka.175.1603477087728;
-        Fri, 23 Oct 2020 11:18:07 -0700 (PDT)
+        b=HqMW7DwO1iRgIipJ7IePAVrJcDZkcVm/xhDDPMbS+5abAhhSz/BX3fH25X9RC/Hkex
+         xCqvy54GxwfZ/h5GbKou/BLiUZaeB8Sr7Q+sn6tnIWkimleH1I4/clc4N1Vaew/Zjlf1
+         rJK/9ekmHR1PEfEgM2CW+exhCyFIAYxjSYm5qydb2Np4ztTpFeC5MV4YyM+uUY0S6U+5
+         /nX34AJT/479DYkbkMPArPsyxq6e7mgMeF8YouOYrUHsY4gtE3GOouKNzYoSRQYOg5f7
+         iulV8u9/+UeD/cGjisQlLsMdJeY5YtFtuYP2ZFOIazGfOYZLUKMfhVwLY56M1IffAuAI
+         dSDA==
+X-Gm-Message-State: AOAM533RE7yKViQE3sC0/cPycg95ajQNq3cg17HEOPJwHurvt/gvT6ex
+        dAQeqCUEZ/BN2t4p7TR8z6c=
+X-Google-Smtp-Source: ABdhPJy61Fxg8GKgLab5BVvd60qKowNW9OtpoQz4dgQdklgPiwOHiKCGN7TeXgfxeGztfIkLuZt7qQ==
+X-Received: by 2002:ac8:1a6f:: with SMTP id q44mr3556576qtk.136.1603477401396;
+        Fri, 23 Oct 2020 11:23:21 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id 64sm723316qtc.92.2020.10.23.11.18.06
+        by smtp.gmail.com with ESMTPSA id 6sm1321413qks.51.2020.10.23.11.23.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2020 11:18:07 -0700 (PDT)
+        Fri, 23 Oct 2020 11:23:20 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 23 Oct 2020 14:18:06 -0400 (EDT)
+Date:   Fri, 23 Oct 2020 14:23:20 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
@@ -68,7 +68,7 @@ cc:     Clark Williams <williams@redhat.com>,
 Subject: Re: [rt-tests v2 10/18] pmqtest: Streamline usage output and man
  page
 In-Reply-To: <20201007085653.11961-11-dwagner@suse.de>
-Message-ID: <d997e444-3220-7c24-369-9290a5f45128@redhat.com>
+Message-ID: <5fb5c622-7765-a71-bde3-8a1273ac1a4@redhat.com>
 References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-11-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
