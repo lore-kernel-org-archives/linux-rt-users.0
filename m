@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 940E6C4363A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 17:26:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5F61EC4363A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 17:33:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2E68821527
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 17:26:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 03EED21527
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 17:33:44 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AY8imOM+"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LyW1NWaZ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1751820AbgJWR0A (ORCPT
+        id S461642AbgJWRdo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 13:26:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57282 "EHLO
+        Fri, 23 Oct 2020 13:33:44 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58466 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S461030AbgJWR0A (ORCPT
+        with ESMTP id S461616AbgJWRdo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 13:26:00 -0400
-Received: from mail-qk1-x741.google.com (mail-qk1-x741.google.com [IPv6:2607:f8b0:4864:20::741])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AC70CC0613CE
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 10:25:58 -0700 (PDT)
-Received: by mail-qk1-x741.google.com with SMTP id v200so1890520qka.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 10:25:58 -0700 (PDT)
+        Fri, 23 Oct 2020 13:33:44 -0400
+Received: from mail-qt1-x841.google.com (mail-qt1-x841.google.com [IPv6:2607:f8b0:4864:20::841])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 49B45C0613CE
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 10:33:44 -0700 (PDT)
+Received: by mail-qt1-x841.google.com with SMTP id r8so1530493qtp.13
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 10:33:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=gMBg1cJukyddbJcrxLUSWaK/97H+EF9S1vbjeUGSrls=;
-        b=AY8imOM+593pV/wNbIPyggqgPtjZ8z4/Qz8Yy7XSN8hyqi3q6r2n6Kd3MXjFcb9SK6
-         sF+bBqEl9l0DzcMblHasM6eDqhA7ife4lP1ME1S6zlbthpBwFs1TQNPXe3oULEehtm2O
-         PzwyllQl840OVbWkibBkH0ALnviRBRUEVF+6GE2ng5E2ehmVp+fO4or8CD4ZiQfGeuEh
-         v002P3FcQ6hDU5AFB0GYZ4jbDark6AvwVs7pth6YnkDL5oMO+W1jTpIC0lW+FLq584uQ
-         OgQZJdrWRydB59aPKxsITUwuwYZLIBeX5h3U7vzq7XR5ympLBY9LkDhYIWB/+vejdoK+
-         ZBvQ==
+        bh=K67JeOxR95x4o1WyP3Jt9pfMzO8v2V1BJTfFbyuTLgY=;
+        b=LyW1NWaZudGem2WznT/QYijkOCSeQyWW0CVhdebf9ntnvCIEObG2CJTLQBGJHdrJxu
+         AlIbb3CAN4ICPkvlMVFgzbFXuudzOZ8CHPlm8Zrc+Xq+vjbSImd+YcmHVHKPn5FDY8J2
+         d2CTui6c0ISRP6zsENPj1D6Kk6kcZ/P/bnzwZQVuUqu84/zejYsXRHxOpHemgngjQTg/
+         X8eMvkRS849LgUfDjFfiPKgRV26++15mIs0O+ZmtgB8cu5xKzsGLiaEiRhFiEn620/Ol
+         9OiiOGMZCKj8QhA+JF8P8YS/3x1q9oWbsVyetg3Nz/Ikh9l+xlQv/lJo7eXHTS8EClLR
+         +qPg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=gMBg1cJukyddbJcrxLUSWaK/97H+EF9S1vbjeUGSrls=;
-        b=pqbIIEAqMH/zF4ZPn2ps0t90TkIhICBj8Z4pKPjnv1I1q5IUT0PeaZBXoPKAkX6knl
-         neafvrV2icLm8KODh1xPYJ9um83Z5yJxL1JAuws/vqTfFM6aN4KM6isDnAQrVVZUSgDK
-         DYgiJ9/Y0izoZlE7jQDsa7enaIr3xavGZP7tHwh8ShM5zj0Dm0vgRyCl9nnooLFKt+NG
-         TvaWT/wurZW7FdMyjWsKb+jgQ6lQz6HvEsGb3l/Uw7aC6JjVhIYUPID1gpMBXP8yblGL
-         aTg9XtqE3KDlcL+crod9X5TrryRnFyo0g3DtL/5b+qrZId/HPM3NcfWTWE/f1/yYteCM
-         qgeA==
-X-Gm-Message-State: AOAM533lzVRXRDJaMpenscJl6luW3vi890bwiof2tlGDBDvDhxxKZv8X
-        Zz21pAcwyH7VS34AO0gWb6U=
-X-Google-Smtp-Source: ABdhPJwcOV/0VstXuWdHwwpDJbTxpfjindOIhtWR52IkwF9mxr8LJRHn27kM7Uk35oFVoqY9ryBPHQ==
-X-Received: by 2002:a37:686:: with SMTP id 128mr3085336qkg.421.1603473957934;
-        Fri, 23 Oct 2020 10:25:57 -0700 (PDT)
+        bh=K67JeOxR95x4o1WyP3Jt9pfMzO8v2V1BJTfFbyuTLgY=;
+        b=ci5YUAykp9HSYjMr2+qw7tztLyFrjbUjqxe2SNuiEgbwjbO263lFAEdJHkuVp+iBcE
+         qSWTC4vexCPAxjBEPAG9lPbefy6jYYDwkAcrwfNA/gpc6mB483EEp6WqNhzqmjC8sBZW
+         aL/1wIwmjnx6XxHNud7if+3lsIveYOQo6UGbKqMJwr6SqvBwwj6FTmu5r0CmSBxIFqXZ
+         BabAG+AXnzRzgz0FcLcEFJmyxSBVHK3UODFtnPsCjcnztOYXSnsky/Ojm7PQNX4rbPWN
+         fMgdosiJqGnp/qY8TOe5QB/vnNza6pRAdn7QV9hIQWC1MoE3QciE9jY346Wf5XNFyIJr
+         NM2A==
+X-Gm-Message-State: AOAM532+E58UWPh6KkV6xviTJqBB/mYjo4PVTyFtC16773QGfwyZBPUi
+        HiMKalX7dUZMo771Ovh0azA=
+X-Google-Smtp-Source: ABdhPJxMFFkbYW5HXkcHTfFy4nUCtib3ADb13BfkPFp6MfJEYQ8DJ+Qu8UNcOmnnmHsbWU3a9P5+Bw==
+X-Received: by 2002:ac8:71cc:: with SMTP id i12mr3287696qtp.262.1603474423578;
+        Fri, 23 Oct 2020 10:33:43 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id g2sm1304929qts.8.2020.10.23.10.25.57
+        by smtp.gmail.com with ESMTPSA id z66sm1179062qkb.50.2020.10.23.10.33.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2020 10:25:57 -0700 (PDT)
+        Fri, 23 Oct 2020 10:33:43 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 23 Oct 2020 13:25:56 -0400 (EDT)
+Date:   Fri, 23 Oct 2020 13:33:42 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 07/18] oslat: Use string parser utilies
-In-Reply-To: <20201007085653.11961-8-dwagner@suse.de>
-Message-ID: <7caa4ef3-3348-26f6-1822-47090b1c989@redhat.com>
-References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-8-dwagner@suse.de>
+Subject: Re: [rt-tests v2 08/18] pip_stress: Add command line parser
+In-Reply-To: <20201007085653.11961-9-dwagner@suse.de>
+Message-ID: <6b9b3b38-f2e3-ed6e-8d3b-61c08387b69c@redhat.com>
+References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-9-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -79,115 +79,74 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Wed, 7 Oct 2020, Daniel Wagner wrote:
 
-> Use available parse_time_string() instead locally implemented
-> version. While at it move the mem parser helper to the global utility
-> header.
+> Add a default command line parser to print at least the current
+> version.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/oslat/oslat.c | 67 ++---------------------------------------------
->  1 file changed, 2 insertions(+), 65 deletions(-)
+>  src/pi_tests/pip_stress.c | 34 +++++++++++++++++++++++++++++-----
+>  1 file changed, 29 insertions(+), 5 deletions(-)
 > 
-> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-> index fafbdd694326..9df1a58f640d 100644
-> --- a/src/oslat/oslat.c
-> +++ b/src/oslat/oslat.c
-> @@ -570,69 +570,6 @@ static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
->  	return n_cores;
->  }
+> diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
+> index c9dbd992e15d..74cf53dcfa7a 100644
+> --- a/src/pi_tests/pip_stress.c
+> +++ b/src/pi_tests/pip_stress.c
+> @@ -67,12 +67,17 @@ struct State *statep;
+>  const int policy = SCHED_FIFO;
+>  const int prio_min;	/* Initialized for the minimum priority of policy */
 >  
-> -static int parse_runtime(const char *str)
-> -{
-> -	char *endptr;
-> -	int v = strtol(str, &endptr, 10);
-> -
-> -	if (!*endptr)
-> -		return v;
-> -
-> -	switch (*endptr) {
-> -	case 'd':
-> -	case 'D':
-> -		/* Days */
-> -		v *= 24;
-> -	case 'h':
-> -	case 'H':
-> -		/* Hours */
-> -		v *= 60;
-> -	case 'm':
-> -	case 'M':
-> -		/* Minutes */
-> -		v *= 60;
-> -	case 's':
-> -	case 'S':
-> -		/* Seconds */
-> -		break;
-> -	default:
-> -		printf("Unknown runtime suffix: %s\n", endptr);
-> -		v = 0;
-> -		break;
-> -	}
-> -
-> -	return v;
-> -}
-> -
-> -static int parse_mem_size(char *str, uint64_t *val)
-> -{
-> -	char *endptr;
-> -	int v = strtol(str, &endptr, 10);
-> -
-> -	if (!*endptr)
-> -		return v;
-> -
-> -	switch (*endptr) {
-> -	case 'g':
-> -	case 'G':
-> -		v *= 1024;
-> -	case 'm':
-> -	case 'M':
-> -		v *= 1024;
-> -	case 'k':
-> -	case 'K':
-> -		v *= 1024;
-> -	case 'b':
-> -	case 'B':
-> -		break;
-> -	default:
-> -		return -1;
-> -	}
-> -
-> -	*val = v;
-> -
-> -	return 0;
-> -}
+> -struct option long_options[] = {
+> -    { "usleep", required_argument, 0, 0 },
+> -    { 0,        0,                 0, 0 },
+> -};
+> +static void usage(int error)
+> +{
+> +	printf("pip_stress V %1.2f\n", VERSION);
+> +	printf("Usage:\n"
+> +	       "pip_stress <options>\n"\
+> +	       "-h	--help                  Show this help menu.\n"
+> +	       );
+> +	exit(error);
+> +}
 >  
->  static int workload_select(char *name)
+> -int main(void)
+> +int main(int argc, char *argv[])
 >  {
-> @@ -700,7 +637,7 @@ static void parse_options(int argc, char *argv[])
->  			}
->  			break;
->  		case 'D':
-> -			g.runtime = parse_runtime(optarg);
-> +			g.runtime = parse_time_string(optarg);
->  			if (!g.runtime) {
->  				printf("Illegal runtime: %s\n", optarg);
->  				exit(1);
-> @@ -734,7 +671,7 @@ static void parse_options(int argc, char *argv[])
->  			}
->  			break;
->  		case 'm':
-> -			if (parse_mem_size(optarg, &g.workload_mem_size)) {
-> +			if (parse_mem_string(optarg, &g.workload_mem_size)) {
->  				printf("Unknown workload memory size '%s'.\n\n", optarg);
->  				exit(1);
->  			}
+>  	void *mptr;	/* memory pointer */
+>  	pid_t pid1, pid2;
+> @@ -80,6 +85,25 @@ int main(void)
+>  	int res;
+>  	int *minimum_priority = (int*)&prio_min;
+>  
+> +	for (;;) {
+> +		struct option long_options[] = {
+> +			{ "help",	no_argument,		NULL,	'h' },
+> +			{ NULL,		0,			NULL,	0 },
+> +		};
+> +
+> +		int c = getopt_long(argc, argv, "s:h", long_options, NULL);
+> +		if (c == -1)
+> +			break;
+> +		switch (c) {
+> +		case 'h':
+> +			usage(0);
+> +			break;
+> +		default:
+> +			usage(1);
+> +			break;
+> +		};
+> +	}
+> +
+>  	*minimum_priority = sched_get_priority_min(policy);
+>  
+>  	if (check_privs())
 > -- 
 > 2.28.0
 > 
 > 
 
-This one is pending either your changes that I requested to the first 
-patch, or an argument as to why I should accept the first patch.
+Uglifying my beautiful program in the name conformity?
 
-Cheers!
+Ugh, ok fine
 
-John
+Signed-off-by: John Kacur <jkacur@redhat.com>
