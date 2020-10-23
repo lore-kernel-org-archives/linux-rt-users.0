@@ -2,103 +2,80 @@ Return-Path: <SRS0=2Uay=D6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23704C55179
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:04:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1DDFC388F9
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:08:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C14C821D43
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:04:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7AE842225F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 11:08:49 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="VU/I/Bg0";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="UnEzQ4M/"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QP+twfJL";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="M7XJWuQj"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S462706AbgJWLEE (ORCPT
+        id S462786AbgJWLIs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 07:04:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54026 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S462548AbgJWLED (ORCPT
+        Fri, 23 Oct 2020 07:08:48 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:53158 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S462703AbgJWLIr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 07:04:03 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A242C0613CE;
-        Fri, 23 Oct 2020 04:04:03 -0700 (PDT)
-Date:   Fri, 23 Oct 2020 13:04:00 +0200
+        Fri, 23 Oct 2020 07:08:47 -0400
+Date:   Fri, 23 Oct 2020 13:08:44 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1603451041;
+        s=2020; t=1603451325;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=j1o05ovjntirIj7cvm7bSPa5eySCqPWLuUvFBBxTkcA=;
-        b=VU/I/Bg0fjftmhfkNoiTI5iQAkWt1oroH4F41nG/CTl2uJHdNhPckdnBQqbVas1E1ON0pK
-        yWtYg+1sxh8pnuRX09q7grhMA5ExKHvEq4tUlD5e4PmTGZD8eILAiC50zsA2xoekbuC7GI
-        V7Et6fYnqpFWlxEW8NaEqob68BlhofnBfRLmNmF9Vgd4t2YrRsDVn9saDXGfeMGxf6PvL9
-        HcBqVwWt7NPl1ot8NBdkEbY9q7Ah/hgACZz+zThD4LBIcE5pNr69pdBISg+FwQp/IplXRh
-        u0UcS7rrdehouC3VUYfoOc3rjBpHD9hmVL6CFsG1G8xBvaXus7B2u+obpb2uUQ==
+        bh=PAuxEhB/nJhk5VPc65JV893RicI0kuvbtn6fWhCVzIc=;
+        b=QP+twfJLJ/w0D9rCRchyrX5YD/83Bv62jT32mgbFl0imPquXx13nZggCeRuC1e2pbJ97IS
+        9CBTpRqC/UsLXbwRCdgaXRxMzA/khAa9xUCs8fsoEOQp/7J7cKwExGsFWwFF7pBRYgt+mD
+        JepZySf39/XoBncGt1hN33Z70SpYkHooUUc43bC2BV9sKfgNkevOUB793vaakT3nMIu43y
+        jtbe9csxfM9KBOK17F8MgU+M7QCH5ZX/JEYZzbTNpifFSvaDAQ5AuctziZNiejKqh3YNav
+        hTLkOIzoVMdW1tiFtB9bEibLk9PV6wuKEA/DA21vEtZuqHAnLlDl2ZYX6G13UA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1603451041;
+        s=2020e; t=1603451325;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=j1o05ovjntirIj7cvm7bSPa5eySCqPWLuUvFBBxTkcA=;
-        b=UnEzQ4M/+js0ciQkn+pulvrti1+fg2aEU1ycvfsSoEgkxQxIRZJkVTxbb25CBaUFmUS6MF
-        hm4LzqNXplO2z+DQ==
+        bh=PAuxEhB/nJhk5VPc65JV893RicI0kuvbtn6fWhCVzIc=;
+        b=M7XJWuQjtTyl1Np9xOBVKtEBC3SvZyVe35H3XvNw7zgxptNAY3dKJYV878OC0Rvk5tAD3G
+        vABVz3G9iUBxFhBQ==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     David Runge <dave@sleepmap.de>
-Cc:     linux-rt-users@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH RFC] blk-mq: Don't IPI requests on PREEMPT_RT
-Message-ID: <20201023110400.bx3uzsb7xy5jtsea@linutronix.de>
-References: <20201021175059.GA4989@hmbx>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     Mike Galbraith <efault@gmx.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: printk: add pr_flush()
+Message-ID: <20201023110844.i44l2xa4qdhhdtoj@linutronix.de>
+References: <15cd3dc322eb1485fe1e67df465febdc6ad389d8.camel@gmx.de>
+ <20201022141529.zvwafoqglnhyklj5@linutronix.de>
+ <43c56d9bd7c5d0b7c455a5ba3c00080b1600b718.camel@gmx.de>
+ <c2965ef22b5e95db0d9e214efb6f653628549579.camel@gmx.de>
+ <20201022145214.a5sm66naswycezae@linutronix.de>
+ <877drhmmma.fsf@jogness.linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20201021175059.GA4989@hmbx>
+In-Reply-To: <877drhmmma.fsf@jogness.linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-blk_mq_complete_request_remote() will dispatch request completion to
-another CPU via IPI if the CPU belongs to a different cache domain.
+On 2020-10-23 09:29:41 [+0206], John Ogness wrote:
+> Hi Sebastian,
+Hi,
 
-This breaks on PREEMPT_RT because the IPI function will complete the
-request in IRQ context which includes acquiring spinlock_t typed locks.
-Completing the IPI request in softirq on the remote CPU is probably less
-efficient because it would require to wake ksoftirqd for this task
-(which runs at SCHED_OTHER).
+> The "printk: add pr_flush()" patch should be removed from PREEMPT_RT
+> until this issue is resolved. I am getting several independent bug
+> reports of reboot problems.
+> 
+> Note that on crash situations the full ringbuffer should still be
+> printed. pr_flush() was only responsible for non-crash scenarios.
 
-Ignoring the IPI request and completing the request locally is probably
-the best option. It be completed either in the IRQ-thread or at the end
-of the routine in softirq context.
+oki, dropping.
 
-Let blk_mq_complete_need_ipi() return that there is no need for IPI on
-PREEMPT_RT.
+> John Ogness
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- block/blk-mq.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index e37aa31332b70..99d2fb51e0e84 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -647,7 +647,7 @@ static inline bool blk_mq_complete_need_ipi(struct request *rq)
- {
- 	int cpu = raw_smp_processor_id();
- 
--	if (!IS_ENABLED(CONFIG_SMP) ||
-+	if (!IS_ENABLED(CONFIG_SMP) || IS_ENABLED(CONFIG_PREEMPT_RT) ||
- 	    !test_bit(QUEUE_FLAG_SAME_COMP, &rq->q->queue_flags))
- 		return false;
- 
--- 
-2.28.0
-
+Sebastian
