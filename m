@@ -2,74 +2,74 @@ Return-Path: <SRS0=2Uay=D6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 544E8C4363A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 14:53:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B519C388F9
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 15:46:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F0C3921D47
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 14:53:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E7FCD21D47
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Oct 2020 15:46:57 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mgY70Wmy"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DQ/yxutk"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S460908AbgJWOxE (ORCPT
+        id S463528AbgJWPq5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Oct 2020 10:53:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33274 "EHLO
+        Fri, 23 Oct 2020 11:46:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41610 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S460728AbgJWOxE (ORCPT
+        with ESMTP id S463481AbgJWPq4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Oct 2020 10:53:04 -0400
-Received: from mail-qt1-x841.google.com (mail-qt1-x841.google.com [IPv6:2607:f8b0:4864:20::841])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 663AAC0613CE
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 07:53:04 -0700 (PDT)
-Received: by mail-qt1-x841.google.com with SMTP id z33so1108631qth.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 07:53:04 -0700 (PDT)
+        Fri, 23 Oct 2020 11:46:56 -0400
+Received: from mail-qk1-x744.google.com (mail-qk1-x744.google.com [IPv6:2607:f8b0:4864:20::744])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9B2A4C0613CE
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 08:46:56 -0700 (PDT)
+Received: by mail-qk1-x744.google.com with SMTP id x20so1554109qkn.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Oct 2020 08:46:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=x4A9ocG508M69K4fQGaio5lofZPo3G6FtPlrzNa6shs=;
-        b=mgY70WmyQrRaS2m/Zf/CzeB3w4bNAIU+OeSwAX+lYKtpfLE4NZf8l1W2qYjdwKvQ5V
-         0Jwd55ELZqYPv6IA+jKq9TZMjtVrKHEI+0j3TKE4nuBwhQX1upGQrAz+B/20o6fbfW6z
-         BTteWxvLVG88lYJai/4SqYnd60romyIfUT5D0vDP8DFbnNGALnGl2rwEoQFDgMO2y7gD
-         LsU2QB4ym/U31rmCMZTtNsxGBdiQcjszY6Zeju0uIsyikdbyZzgIZA9/4FNFUhfKJpeX
-         mbgGIvBqyK6ovkQpS68J0fb90suD2Y444qufUh7I/JEVWOTkxeDCbpq+nN6XV5ot6arR
-         dNgg==
+        bh=RnY+i28k8uij5jlnlXO2M+ChnBVcCRfqS5QqQ2IiDlM=;
+        b=DQ/yxutkdsUV3Q/4wxcAzO2GSun2Vf11GVL4pJMplQKfyzqUooxgPDyP5CwpkcQUrZ
+         dCsuVmYR9+HqRI4iYdmfXH7gKVK2UgrFtSvkUt2lCnydBp+s37WVDdMnXmFe7Idsoy4b
+         GIKliZtvazqQcWcf0vfQEKWbqQPShZy4RVCbImWW6GCjVZWRZAmJuy4nFKr74JvnSkt0
+         JLUwnN9EgL7GhchAhaCEjHPI026OaFhKrB/Qj3KxktRvgHg9Fi1sE8XepwcFVP7KreOi
+         DyJAOOtWGCXU2pb77jDIjg3K0Sq9XG7P28x+BXww9nuMK7OMaqL+6kz86Sw4CqziOke/
+         UVeA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=x4A9ocG508M69K4fQGaio5lofZPo3G6FtPlrzNa6shs=;
-        b=b/f0+gl4bEDcRILhy91kGyiQ0huVfvyiYNzSwmztPJDV0sCTUW2T2rZng+gEWEXFNk
-         Az1n0en8rqso5VO8udcAq2w3dCxcDk/CweL9UWvh/kQFHFsn9Di28zL9Rymp3X3UodnG
-         mFhxrbu9vNmhBdHv7WGsgNdhi3tXyVOALxz4kap0116oHYWrOO43AqwPZIrEOCCBjBY9
-         0e620HfAZkbw82osAuJzLN7JeT3DoeJcY88KcvwXM2kPFBYxl2ZvaoHz4pkmR6zkqcW/
-         zTHi//A3K/arbou2b9ZtkVC50OQ3fKciY+wmZGB3q5ybk7gSgREUeNt23xQ+lW/kasA0
-         y9Fw==
-X-Gm-Message-State: AOAM532SxCNZfa/25rZSrUsoc3pNHW2bRhKOsVkwVhZrh7mOY9NSaa2I
-        vuclGwP3+iQ9yS4wy832UsfkteGRxihihA==
-X-Google-Smtp-Source: ABdhPJzk3MzCGbl2yWWC7kE8fIODx/oxE2IYgBfB+rSLsf49vionohVUIhbHwy9HxCz9OU9Trq3dQQ==
-X-Received: by 2002:ac8:5816:: with SMTP id g22mr2311338qtg.316.1603464783586;
-        Fri, 23 Oct 2020 07:53:03 -0700 (PDT)
+        bh=RnY+i28k8uij5jlnlXO2M+ChnBVcCRfqS5QqQ2IiDlM=;
+        b=OMtRi0zixGxd+RKTf2XcevzgGGSmCdiBlSzLHhe0LhNeaxh4yTLoh7YhpYCone/foM
+         nFCd++YgG7TvOBwgNbrsbfK3DVqx3VFNw+vrXtJx2Xe0ZeD5KO9xir4RlwewnKEC0M5v
+         W1hZQAdY+BzFVgBiUmgRm+k5asyxCjzLi4tVVCrFJfvdNJvr5vsz7IUwsac6QypCAnLM
+         L0/Hz1fPVmwdQU6WA16E6oV7/us3yFRjSGLjNzJ0FXZfa/vvcjbiJFwd9qdTJVt39CZd
+         q5oxxdL8NOl+7fjylShqYgxXUMV84TvUB6hv6nt7RPQwRUpL3HCNiOy8AhvSysD672+W
+         Rb5w==
+X-Gm-Message-State: AOAM530kE3yRe4KdC9LRZl7rYgEkT8kq/yotH3ahf7HEFgZ5dYpeLUo+
+        Z+1HXKN11gz8jYBsR7ry6Mw=
+X-Google-Smtp-Source: ABdhPJwGH2TWfB6iobWBybQjO9HbNcvqey8oWFY+/UCwYB67nhktH/bslTNSZGzYD2vWAZoHzZuC3w==
+X-Received: by 2002:a05:620a:12a6:: with SMTP id x6mr3026273qki.189.1603468015785;
+        Fri, 23 Oct 2020 08:46:55 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id q19sm566526qkq.129.2020.10.23.07.53.02
+        by smtp.gmail.com with ESMTPSA id s2sm666603qtn.39.2020.10.23.08.46.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2020 07:53:02 -0700 (PDT)
+        Fri, 23 Oct 2020 08:46:55 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 23 Oct 2020 10:52:54 -0400 (EDT)
+Date:   Fri, 23 Oct 2020 11:46:54 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Peter Xu <peterx@redhat.com>
-cc:     linux-rt-users@vger.kernel.org,
-        Clark Williams <williams@redhat.com>,
-        Randy Witt <randy.e.witt@linux.intel.com>
-Subject: Re: [PATCH] rt-tests: oslat: Allow build for not supported archs
-In-Reply-To: <20201001184726.82245-1-peterx@redhat.com>
-Message-ID: <e4f9bdc7-dbe8-b45a-ec9d-65e34bbdbf42@redhat.com>
-References: <20201001184726.82245-1-peterx@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [rt-tests v2 01/18] rt-util: Move parse_cpumask from
+ cyclictest
+In-Reply-To: <20201007085653.11961-2-dwagner@suse.de>
+Message-ID: <9afc7214-c957-e86-1ee9-6ed2435b6fa8@redhat.com>
+References: <20201007085653.11961-1-dwagner@suse.de> <20201007085653.11961-2-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -78,53 +78,271 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Thu, 1 Oct 2020, Peter Xu wrote:
+On Wed, 7 Oct 2020, Daniel Wagner wrote:
 
-> Now rt-tests won't build for archs other than x86/i386/ppc64 after oslat is
-> merged.  Instead of failing the build, let's make it pass.  However, whenever
-> oslat is executed, instead of running the real program, dump an error message,
-> so that people can try to implement the frc() function for it when there's a
-> real need for the new arch.
+> In order to be reuse the cpumask parsing code, move it to libary.
+> Several tools implement their own version of this. Let's use one
+> global one instead.
 > 
-> Signed-off-by: Peter Xu <peterx@redhat.com>
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
+>  Makefile                    | 12 +++---
+>  src/cyclictest/cyclictest.c | 68 +++++++--------------------------
+>  src/include/rt-utils.h      |  3 ++
+>  src/lib/rt-utils.c          | 76 +++++++++++++++++++++++++++++++++++++
+>  4 files changed, 98 insertions(+), 61 deletions(-)
 > 
-> Just in case this got lost - I'm posting as a formal patch.  Please feel free
-> to comment here directly.
-> ---
->  src/oslat/oslat.c | 10 +++++++++-
->  1 file changed, 9 insertions(+), 1 deletion(-)
-> 
-> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-> index f1a82f2..a8b6155 100644
-> --- a/src/oslat/oslat.c
-> +++ b/src/oslat/oslat.c
-> @@ -69,7 +69,9 @@ static inline void frc(uint64_t *pval)
->  	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
->  }
->  # else
-> -#  error Need frc() for this platform.
-> +#  define relax()          do { } while (0)
-> +#  define frc(x)
-> +#  define FRC_MISSING
->  # endif
->  #else
->  # error Need to add support for this compiler.
-> @@ -810,6 +812,12 @@ int main(int argc, char *argv[])
->  	int i, n_cores;
->  	cpu_set_t cpu_set;
+> diff --git a/Makefile b/Makefile
+> index c3ebbd7b2a2e..3627084437c1 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -20,9 +20,14 @@ sources = cyclictest.c \
+>  	  ssdd.c \
+>  	  oslat.c
 >  
-> +#ifdef FRC_MISSING
-> +	printf("This architecture is not yet supported. "
-> +	       "Please implement frc() function first for %s.\n", argv[0]);
-> +	return 0;
-> +#endif
+> +# You have to have libnuma installed, which is fine to do even if you are
+> +# running on non-numa machines
+> +CFLAGS += -DNUMA
+> +NUMA_LIBS = -lnuma
 > +
->  	CPU_ZERO(&cpu_set);
+>  TARGETS = $(sources:.c=)
+>  LIBS	= -lrt -lpthread
+> -RTTESTLIB = -lrttest -L$(OBJDIR)
+> +RTTESTLIB = -lrttest -L$(OBJDIR) $(NUMA_LIBS)
+
+Currently only cyclictest was compiled with NUMA_LIBS, this change will 
+compile everything with NUMA_LIBS. I checked the size of the programs, and 
+they don't grow that much with this change, but they are small programs to
+begin with, do we want to keep this functionality separate?
+
+ 
+>  EXTRA_LIBS ?= -ldl	# for get_cpu
+>  DESTDIR	?=
+>  prefix  ?= /usr/local
+> @@ -79,11 +84,6 @@ ostype := $(lastword $(subst -, ,$(dumpmachine)))
+>  machinetype := $(shell echo $(dumpmachine)| \
+>      sed -e 's/-.*//' -e 's/i.86/i386/' -e 's/mips.*/mips/' -e 's/ppc.*/powerpc/')
 >  
->  	g.app_name = argv[0];
+> -# You have to have libnuma installed, which is fine to do even if you are
+> -# running on non-numa machines
+> -CFLAGS += -DNUMA
+> -NUMA_LIBS = -lnuma
+> -
+>  include src/arch/android/Makefile
+>  
+>  VPATH	= src/cyclictest:
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index b41d42f13f24..02cb92813fb7 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -908,11 +908,6 @@ static int clocksources[] = {
+>  	CLOCK_REALTIME,
+>  };
+>  
+> -static unsigned int is_cpumask_zero(const struct bitmask *mask)
+> -{
+> -	return (rt_numa_bitmask_count(mask) == 0);
+> -}
+> -
+>  /* Get available cpus according to getaffinity or according to the
+>   * intersection of getaffinity and the user specified affinity
+>   * in the case of AFFINITY_SPECIFIED, the function has to be called
+> @@ -997,52 +992,6 @@ static int cpu_for_thread_ua(int thread_num, int max_cpus)
+>  	return 0;
+>  }
+>  
+> -
+> -/* After this function is called, affinity_mask is the intersection of the user
+> - * supplied affinity mask and the affinity mask from the run time environment */
+> -static void use_current_cpuset(const int max_cpus)
+> -{
+> -	int i;
+> -	pid_t pid;
+> -	struct bitmask *curmask;
+> -
+> -	pid = getpid();
+> -
+> -	curmask = numa_allocate_cpumask();
+> -	numa_sched_getaffinity(pid, curmask);
+> -
+> -	/* Clear bits that are not set in both the cpuset from the environment,
+> -	 * and in the user specified affinity for cyclictest */
+> -	for (i=0; i < max_cpus; i++) {
+> -		if ((!rt_numa_bitmask_isbitset(affinity_mask, i)) || (!rt_numa_bitmask_isbitset(curmask, i))) {
+> -			numa_bitmask_clearbit(affinity_mask, i);
+> -		}
+> -	}
+> -
+> -	numa_bitmask_free(curmask);
+> -}
+> -
+> -static void parse_cpumask(const char *option, const int max_cpus)
+> -{
+> -	affinity_mask = rt_numa_parse_cpustring(option, max_cpus);
+> -	if (affinity_mask) {
+> -		if (is_cpumask_zero(affinity_mask)) {
+> -			rt_bitmask_free(affinity_mask);
+> -			affinity_mask = NULL;
+> -		} else {
+> -			use_current_cpuset(max_cpus);
+> -		}
+> -
+> -	}
+> -	if (!affinity_mask)
+> -		display_help(1);
+> -
+> -	if (verbose) {
+> -		printf("%s: Using %u cpus.\n", __func__,
+> -			rt_numa_bitmask_count(affinity_mask));
+> -	}
+> -}
+> -
+>  static void handlepolicy(char *polname)
+>  {
+>  	if (strncasecmp(polname, "other", 5) == 0)
+> @@ -1176,15 +1125,24 @@ static void process_options (int argc, char *argv[], int max_cpus)
+>  			if (smp)
+>  				break;
+>  			numa_initialize();
+> -			if (optarg != NULL) {
+> -				parse_cpumask(optarg, max_cpus);
+> +			if (optarg) {
+> +				parse_cpumask(optarg, max_cpus, &affinity_mask);
+>  				setaffinity = AFFINITY_SPECIFIED;
+> -			} else if (optind<argc && (atoi(argv[optind]) || argv[optind][0] == '0' || argv[optind][0] == '!')) {
+> -				parse_cpumask(argv[optind], max_cpus);
+> +			} else if (optind < argc &&
+> +				   (atoi(argv[optind]) ||
+> +				    argv[optind][0] == '0' ||
+> +				    argv[optind][0] == '!')) {
+> +				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
+>  				setaffinity = AFFINITY_SPECIFIED;
+>  			} else {
+>  				setaffinity = AFFINITY_USEALL;
+>  			}
+> +
+> +			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
+> +				display_help(1);
+> +			if (verbose)
+> +				printf("Using %u cpus.\n",
+> +					numa_bitmask_weight(affinity_mask));
+>  			break;
+>  		case 'A':
+>  		case OPT_ALIGNED:
+> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+> index 4ed1cbc53ece..3b97655a20f2 100644
+> --- a/src/include/rt-utils.h
+> +++ b/src/include/rt-utils.h
+> @@ -3,6 +3,7 @@
+>  #define __RT_UTILS_H
+>  
+>  #include <stdint.h>
+> +#include <numa.h>
+>  
+>  #define _STR(x) #x
+>  #define STR(x) _STR(x)
+> @@ -28,6 +29,8 @@ uint32_t string_to_policy(const char *str);
+>  pid_t gettid(void);
+>  
+>  int parse_time_string(char *val);
+> +int parse_mem_string(char *str, uint64_t *val);
+> +int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask);
+>  
+>  void enable_trace_mark(void);
+>  void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
+> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+> index f786588706cd..302b91388df5 100644
+> --- a/src/lib/rt-utils.c
+> +++ b/src/lib/rt-utils.c
+> @@ -362,6 +362,82 @@ int parse_time_string(char *val)
+>  	return t;
+>  }
+>  
+> +int parse_mem_string(char *str, uint64_t *val)
+> +{
+> +	char *endptr;
+> +	int v = strtol(str, &endptr, 10);
+> +
+> +	if (!*endptr)
+> +		return v;
+> +
+> +	switch (*endptr) {
+> +	case 'g':
+> +	case 'G':
+> +		v *= 1024;
+> +	case 'm':
+> +	case 'M':
+> +		v *= 1024;
+> +	case 'k':
+> +	case 'K':
+> +		v *= 1024;
+> +	case 'b':
+> +	case 'B':
+> +		break;
+> +	default:
+> +		return -1;
+> +	}
+> +
+> +	*val = v;
+> +
+> +	return 0;
+> +}
+> +
+> +/*
+> + * After this function is called, affinity_mask is the intersection of
+> + * the user supplied affinity mask and the affinity mask from the run
+> + * time environment
+> + */
+> +static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
+> +{
+> +	struct bitmask *curmask;
+> +	int i;
+> +
+> +	curmask = numa_allocate_cpumask();
+> +	numa_sched_getaffinity(getpid(), curmask);
+> +
+> +	/*
+> +	 * Clear bits that are not set in both the cpuset from the
+> +	 * environment, and in the user specified affinity.
+> +	 */
+> +	for (i = 0; i < max_cpus; i++) {
+> +		if ((!numa_bitmask_isbitset(cpumask, i)) ||
+> +		    (!numa_bitmask_isbitset(curmask, i)))
+> +			numa_bitmask_clearbit(cpumask, i);
+> +	}
+> +
+> +	numa_bitmask_free(curmask);
+> +}
+> +
+> +int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask)
+> +{
+> +	struct bitmask *mask;
+> +
+> +	mask = numa_parse_cpustring_all(str);
+> +	if (!mask)
+> +		return -ENOMEM;
+> +
+> +	if (numa_bitmask_weight(mask) == 0) {
+> +		numa_bitmask_free(mask);
+> +		*cpumask = NULL;
+> +		return 0;
+> +	}
+> +
+> +	use_current_cpuset(max_cpus, mask);
+> +	*cpumask = mask;
+> +
+> +	return 0;
+> +}
+> +
+>  void open_tracemark_fd(void)
+>  {
+>  	char path[MAX_PATH];
 > -- 
-> 2.26.2
+> 2.28.0
 > 
 > 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+
+This is a good idea, I'd just prefer to keep the libraries separate for 
+now.
+
+John
