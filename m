@@ -2,107 +2,94 @@ Return-Path: <SRS0=SXCv=EB=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BCB63C2D0A3
-	for <linux-rt-users@archiver.kernel.org>; Mon, 26 Oct 2020 17:31:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE9D7C4363A
+	for <linux-rt-users@archiver.kernel.org>; Mon, 26 Oct 2020 18:34:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8682B2225C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 26 Oct 2020 17:31:15 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="VUw+KyhQ";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="90VFu1I1"
+	by mail.kernel.org (Postfix) with ESMTP id 972AF2224E
+	for <linux-rt-users@archiver.kernel.org>; Mon, 26 Oct 2020 18:34:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1787847AbgJZRbL (ORCPT
+        id S1789893AbgJZSe2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 26 Oct 2020 13:31:11 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:41334 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1776217AbgJZRbL (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 26 Oct 2020 13:31:11 -0400
-Date:   Mon, 26 Oct 2020 18:31:07 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1603733468;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=QV3FYqGCsnxmOC4xUQgDmTFEdUZLKcpDfcLiTasvEd0=;
-        b=VUw+KyhQar04G1nUAnp4mxqdbZxdgyUKKHgbosjtFoqg2KpLg6wFzQWd5L3KOV8CIVZvOS
-        cKfUghHftMO6Se7ySFUCEZ2CSVgw4oIt6Bs3WP0EuzuJOYiiPs+i430dBIPjR5iN41Ozu2
-        i8Cv1yS0mfuayUiuBYBCJxbsXBeGtGIE20/gMMvF0Msf5znyRj/NWe3GIOIAJmYwMVLW7W
-        MCe/eFlxx1lxElApQKBc7m1X3rkSNo+RD6gAyquX9AXumJN89DpQ33zwqnbs+KqLIuf/5X
-        fTU0dIscTSlMw1Rj2go3p+O7LjADXRZeS3P3N6x3whdTh2gyVZw/tx1owseU3g==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1603733468;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=QV3FYqGCsnxmOC4xUQgDmTFEdUZLKcpDfcLiTasvEd0=;
-        b=90VFu1I1B4FyN+ygRu0tkuV7Jcqu3Wz9LoJhFUXVq7dFYHgu86pTpxH9cWi0FUtcZYSzV2
-        s96/F1HZPHh1riAw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Hillf Danton <hdanton@sina.com>
-Cc:     Mike Galbraith <efault@gmx.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ben Skeggs <bskeggs@redhat.com>
-Subject: Re: kvm+nouveau induced lockdep  gripe
-Message-ID: <20201026173107.quylcy6fgjvrqat6@linutronix.de>
-References: <20201021125324.ualpvrxvzyie6d7d@linutronix.de>
- <a23a826af7c108ea5651e73b8fbae5e653f16e86.camel@gmx.de>
- <20201023090108.5lunh4vqfpkllmap@linutronix.de>
- <20201024022236.19608-1-hdanton@sina.com>
- <20201024050000.8104-1-hdanton@sina.com>
+        Mon, 26 Oct 2020 14:34:28 -0400
+Received: from mail.monom.org ([188.138.9.77]:51252 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1789818AbgJZSe2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Oct 2020 14:34:28 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id BC18450058D;
+        Mon, 26 Oct 2020 19:34:25 +0100 (CET)
+Received: from localhost (unknown [94.31.100.251])
+        by mail.monom.org (Postfix) with ESMTPSA id 85C2550032F;
+        Mon, 26 Oct 2020 19:34:25 +0100 (CET)
+Date:   Mon, 26 Oct 2020 19:34:25 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     Daniel Wagner <dwagner@suse.de>,
+        Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [rt-tests v2 01/18] rt-util: Move parse_cpumask from cyclictest
+Message-ID: <20201026183425.wxdl3vaoutsrk3bw@beryllium.lan>
+References: <20201007085653.11961-1-dwagner@suse.de>
+ <20201007085653.11961-2-dwagner@suse.de>
+ <9afc7214-c957-e86-1ee9-6ed2435b6fa8@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20201024050000.8104-1-hdanton@sina.com>
+In-Reply-To: <9afc7214-c957-e86-1ee9-6ed2435b6fa8@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-10-24 13:00:00 [+0800], Hillf Danton wrote:
+Hi John,
+
+On Fri, Oct 23, 2020 at 11:46:54AM -0400, John Kacur wrote:
+> >  TARGETS = $(sources:.c=)
+> >  LIBS	= -lrt -lpthread
+> > -RTTESTLIB = -lrttest -L$(OBJDIR)
+> > +RTTESTLIB = -lrttest -L$(OBJDIR) $(NUMA_LIBS)
 > 
-> Hmm...curious how that word went into your mind. And when?
-> > [   30.457363]
-> >                other info that might help us debug this:
-> > [   30.457369]  Possible unsafe locking scenario:
-> > 
-> > [   30.457375]        CPU0
-> > [   30.457378]        ----
-> > [   30.457381]   lock(&mgr->vm_lock);
-> > [   30.457386]   <Interrupt>
-> > [   30.457389]     lock(&mgr->vm_lock);
-> > [   30.457394]
-> >                 *** DEADLOCK ***
-> > 
-> > <snips 999 lockdep lines and zillion ATOMIC_SLEEP gripes>
+> Currently only cyclictest was compiled with NUMA_LIBS, this change will 
+> compile everything with NUMA_LIBS. I checked the size of the programs, and 
+> they don't grow that much with this change, but they are small programs to
+> begin with, do we want to keep this functionality separate?
 
-The backtrace contained the "normal" vm_lock. What should follow is the
-backtrace of the in-softirq usage.
+My thinking is, that the most important program for testing seems to be
+cyclictest. Everyone will run cyclictest on the target platform. Thus
+libnuma will be available. So there wont be any new unresolved
+dependencies.
 
-> 
-> Dunno if blocking softint is a right cure.
-> 
-> --- a/drivers/gpu/drm/drm_vma_manager.c
-> +++ b/drivers/gpu/drm/drm_vma_manager.c
-> @@ -229,6 +229,7 @@ EXPORT_SYMBOL(drm_vma_offset_add);
->  void drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
->  			   struct drm_vma_offset_node *node)
->  {
-> +	local_bh_disable();
+I traded the size increase for simplification in the code base and build
+setup. Looking at the actual increase (x86_64, stripped) is not too bad:
 
-There is write_lock_bh(). However changing only one will produce the
-same backtrace somewhere else unless all other users already run BH
-disabled region.
 
->  	write_lock(&mgr->vm_lock);
->  
->  	if (drm_mm_node_allocated(&node->vm_node)) {
+program                 old      new     diff
+---------------------------------------------------
+cyclicdeadline          35488    35552     64 0.18%
+cyclictest              57632    57632      0 0.0%
+deadline_test           43712    43776     64 0.15%
+hackbench               19168    19168      0 0.0%
+oslat                   36040    36072     32 0.089%
+pip_stress              27296    27360     64 0.23%
+pi_stress               44296    48456   4160 9.4%
+pmqtest                 31864    31928     64 0.2%
+ptsematest              31752    31816     64 0.2%
+queuelat                14600    14600      0 0.0%
+rt-migrate-test         31696    31728     32 0.1%
+signaltest              31712    31776     64 0.2%
+sigwaittest             31792    31856     64 0.2%
+ssdd                    14744    14744      0 0.0%
+svsematest              31856    31920     64 0.2%
 
-Sebastian
+
+pi_stress is a bit odd though. Not sure what's happening there. Will
+look into it.
+
+So I would prefer to go this route and makes things simpler in the code
+base.
+
+Thanks,
+Daniel
