@@ -2,134 +2,82 @@ Return-Path: <SRS0=5J30=EC=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33298C55179
-	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 09:00:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD0B7C55179
+	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 09:26:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B43BF2225C
-	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 09:00:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5D1EF22281
+	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 09:26:15 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="2d+JeKFm";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Al+1deZf"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="oh+afw45"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2895230AbgJ0JAX (ORCPT
+        id S2509884AbgJ0J0M (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 27 Oct 2020 05:00:23 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:45734 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2406413AbgJ0JAX (ORCPT
+        Tue, 27 Oct 2020 05:26:12 -0400
+Received: from casper.infradead.org ([90.155.50.34]:35536 "EHLO
+        casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2408154AbgJ0J0M (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 27 Oct 2020 05:00:23 -0400
-Date:   Tue, 27 Oct 2020 10:00:19 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1603789221;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=FhFXv1BRUKRnsS9ExGJBDAdxNamEG0cPUveqq9dD0aQ=;
-        b=2d+JeKFmrjaKpZBSJEHmG2kCauwy3OgCERQ1hpndwsYke2PmzCfR4pPbwcH+IeJj7B5bE8
-        Hbbo5sODvHRyaqtMM4be11LjmOzNN+Jou/slTP8Sb5EUz3vAL4Qfb1ZRcPVfFKMBqxZX1Z
-        haLHmB1KEMQBpOD2mxHAoj3UKKYZsUD/s9hEZwvAbk4Wkm2NLAopZciYCeaYYI3KhfhP8T
-        9Vj+fVYsDKGKjYtTpWWLvp63PyvMMdXzblors7Scx6bnbkouFA+wjLSD9khZAW6CU98DVZ
-        Ulw+O79TmwzjyHIq4kwCGqq0u1sBeQuZC1EUwxKoe1Nptcv++eeQdn8FITPmWw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1603789221;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=FhFXv1BRUKRnsS9ExGJBDAdxNamEG0cPUveqq9dD0aQ=;
-        b=Al+1deZf1TJ9yM8BZB1nWmTwGerGXKo3tMU81KhDWg+V/rfJ0VkuEmVB49EHuG4s6eDdmj
-        rEuAPwBb+6f2k1Bw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mike Galbraith <efault@gmx.de>
-Cc:     Hillf Danton <hdanton@sina.com>,
+        Tue, 27 Oct 2020 05:26:12 -0400
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=yDef0E0ogyumLmwur5x/EcaGFcvkhEhAdEIyOx5drxw=; b=oh+afw45nKJhGAxhCkE1Io5JaB
+        bwEL31fHPHEV1IATRu9i8Brtcghq3XNFR3eGH0nlXyJeot/sQifCmu8ZOtKvNdCow9ip64Qz67PXY
+        DykwhhsrEbAQ/kNbHNe2mWcORhf3NE0DTaTUkcNOvck1CcbJOP0JViHFj0+YlwVLN5FZlhCc/lt9y
+        LPzi6GLoRz6eBLgCV+suyi+p8EBBTX005Ji4CL3DVsMyCepRe7xaWYRj0rdWzx8m4YV2qucPMaYyu
+        8L6lZA2c0NklC3PbSeUXfAUok/j8SXVIZdqrvfw5A35UlxV7NZRpVPKVYJlx1XbO2gEG3QFVuRFl9
+        0TgfBfBQ==;
+Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1kXLF0-0005eo-8Y; Tue, 27 Oct 2020 09:26:06 +0000
+Date:   Tue, 27 Oct 2020 09:26:06 +0000
+From:   Christoph Hellwig <hch@infradead.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Christoph Hellwig <hch@infradead.org>,
+        David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
+        Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ben Skeggs <bskeggs@redhat.com>
-Subject: Re: kvm+nouveau induced lockdep  gripe
-Message-ID: <20201027090019.3vteojm43ljqqe33@linutronix.de>
-References: <20201021125324.ualpvrxvzyie6d7d@linutronix.de>
- <a23a826af7c108ea5651e73b8fbae5e653f16e86.camel@gmx.de>
- <20201023090108.5lunh4vqfpkllmap@linutronix.de>
- <20201024022236.19608-1-hdanton@sina.com>
- <20201024050000.8104-1-hdanton@sina.com>
- <20201026173107.quylcy6fgjvrqat6@linutronix.de>
- <431e81699f2310eabfe5af0a3de400ab99d9323b.camel@gmx.de>
- <20201026195308.wsbk7xy57wuzfbao@linutronix.de>
- <0dfae65db2f0d3ef603c1db34f37cee63f7f41f4.camel@gmx.de>
+        Daniel Wagner <dwagner@suse.de>
+Subject: Re: [PATCH RFC] blk-mq: Don't IPI requests on PREEMPT_RT
+Message-ID: <20201027092606.GA20805@infradead.org>
+References: <20201021175059.GA4989@hmbx>
+ <20201023110400.bx3uzsb7xy5jtsea@linutronix.de>
+ <20201023112130.GA23790@infradead.org>
+ <20201023135219.mzzl76eqqy6tqwhe@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <0dfae65db2f0d3ef603c1db34f37cee63f7f41f4.camel@gmx.de>
+In-Reply-To: <20201023135219.mzzl76eqqy6tqwhe@linutronix.de>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-10-27 07:03:38 [+0100], Mike Galbraith wrote:
-> On Mon, 2020-10-26 at 20:53 +0100, Sebastian Andrzej Siewior wrote:
-> >
-> > Could you try this, please?
+On Fri, Oct 23, 2020 at 03:52:19PM +0200, Sebastian Andrzej Siewior wrote:
+> On 2020-10-23 12:21:30 [+0100], Christoph Hellwig wrote:
+> > > -	if (!IS_ENABLED(CONFIG_SMP) ||
+> > > +	if (!IS_ENABLED(CONFIG_SMP) || IS_ENABLED(CONFIG_PREEMPT_RT) ||
+> > >  	    !test_bit(QUEUE_FLAG_SAME_COMP, &rq->q->queue_flags))
+> > 
+> > This needs a big fat comment explaining your rationale.  And probably
+> > a separate if statement to make it obvious as well.
 > 
-> Nogo, first call of sched_setscheduler() is via kthread_create().  I
-> confirmed that nuking that (gratuitous user foot saving override) call
-> on top of moving sched_set_fifo() does shut it up, but that won't fly.
+> Okay.
+> How much difference does it make between completing in-softirq vs
+> in-IPI?
 
-mkay. but this then, too. Let me try if I can figure out when this
-broke.
+For normal non-RT builds?  This introduces another context switch, which
+for the latencies we are aiming for is noticable.
 
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 3edaa380dc7b4..64d6afb127239 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -244,6 +244,7 @@ EXPORT_SYMBOL_GPL(kthread_parkme);
- static int kthread(void *_create)
- {
- 	/* Copy data: it's on kthread's stack */
-+	static const struct sched_param param = { .sched_priority = 0 };
- 	struct kthread_create_info *create = _create;
- 	int (*threadfn)(void *data) = create->threadfn;
- 	void *data = create->data;
-@@ -273,6 +274,13 @@ static int kthread(void *_create)
- 	init_completion(&self->parked);
- 	current->vfork_done = &self->exited;
- 
-+	/*
-+	 * root may have changed our (kthreadd's) priority or CPU mask.
-+	 * The kernel thread should not inherit these properties.
-+	 */
-+	sched_setscheduler_nocheck(current, SCHED_NORMAL, &param);
-+	set_cpus_allowed_ptr(current, housekeeping_cpumask(HK_FLAG_KTHREAD));
-+
- 	/* OK, tell user we're spawned, wait for stop or wakeup */
- 	__set_current_state(TASK_UNINTERRUPTIBLE);
- 	create->result = current;
-@@ -370,7 +378,6 @@ struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
- 	}
- 	task = create->result;
- 	if (!IS_ERR(task)) {
--		static const struct sched_param param = { .sched_priority = 0 };
- 		char name[TASK_COMM_LEN];
- 
- 		/*
-@@ -379,13 +386,6 @@ struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
- 		 */
- 		vsnprintf(name, sizeof(name), namefmt, args);
- 		set_task_comm(task, name);
--		/*
--		 * root may have changed our (kthreadd's) priority or CPU mask.
--		 * The kernel thread should not inherit these properties.
--		 */
--		sched_setscheduler_nocheck(task, SCHED_NORMAL, &param);
--		set_cpus_allowed_ptr(task,
--				     housekeeping_cpumask(HK_FLAG_KTHREAD));
- 	}
- 	kfree(create);
- 	return task;
+> I'm asking because acquiring a spinlock_t in an IPI shouldn't be
+> done (as per Documentation/locking/locktypes.rst). We don't have
+> anything in lockdep that will complain here on !RT and we the above we
+> avoid the case on RT.
 
-Sebastian
+At least for NVMe we aren't taking locks, but with the number of drivers
