@@ -2,91 +2,69 @@ Return-Path: <SRS0=5J30=EC=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 44964C55178
-	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 17:59:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 089B0C388F9
+	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 20:23:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E2AF421556
-	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 17:59:26 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="npuz5bBu";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="LcxebdN0"
+	by mail.kernel.org (Postfix) with ESMTP id C5E8C2072D
+	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Oct 2020 20:23:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1823662AbgJ0R70 (ORCPT
+        id S1831349AbgJ0UXv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 27 Oct 2020 13:59:26 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:48178 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1823648AbgJ0R7Y (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 27 Oct 2020 13:59:24 -0400
-Date:   Tue, 27 Oct 2020 18:59:20 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1603821563;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=2YW3/NPOF7xoOmIn/XQxXTt+kGRGSQ42qcp9fBVrIJk=;
-        b=npuz5bBuIFtgaJkz2yZDJqvqxLRL2LxwJj1bT1HOHH9zo+BtG80cW47qVn/vciZrJ5p7Qq
-        1RegbSGjpMqqrID6s5D7zPyPsOyf62iW2VLvZuun0QqxkOM5MtKLZ3+ICo/G5TEj7RhcHF
-        tLVSo7VYjbFq6Y2ZTnzTzLJRSkLANVe9mGA/it/7pevqf2shFJgqWOspI37lEifmB19rKv
-        4Bs3el3Vpjv8H/2Lek6zdP+Il16Fbj6QjnKVqVe+85HiahOH5i6SGJtypiia/ZgG5WFFY+
-        ZpZCzLUnfNEyvffDKZeEtsGNg3/bB7hRc5wjPUoQGwEvc6EWIgkOVbUANNIbrA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1603821563;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=2YW3/NPOF7xoOmIn/XQxXTt+kGRGSQ42qcp9fBVrIJk=;
-        b=LcxebdN0zE4/+u9RlIK5b3xel6TFXwAj09aw3buCO7iKRwRoG1f55H2rxIBaXqNyaPtgDB
-        P1/Jy31B2lRgt/Dw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Christoph Hellwig <hch@infradead.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
-        Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Daniel Wagner <dwagner@suse.de>
-Subject: Re: [PATCH RFC] blk-mq: Don't IPI requests on PREEMPT_RT
-Message-ID: <20201027175920.otcm2ox7vxce5k3c@linutronix.de>
-References: <20201021175059.GA4989@hmbx>
- <20201023110400.bx3uzsb7xy5jtsea@linutronix.de>
- <20201023112130.GA23790@infradead.org>
- <20201023135219.mzzl76eqqy6tqwhe@linutronix.de>
- <20201027092606.GA20805@infradead.org>
- <20201027101102.cvczdb3mkvtoguo5@linutronix.de>
- <20201027160742.GA19073@infradead.org>
- <87eelj1tx0.fsf@nanos.tec.linutronix.de>
- <20201027172309.GA15004@infradead.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20201027172309.GA15004@infradead.org>
+        Tue, 27 Oct 2020 16:23:51 -0400
+Received: from mail.kernel.org ([198.145.29.99]:39236 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1831346AbgJ0UXu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 27 Oct 2020 16:23:50 -0400
+Received: from localhost (173-25-40-8.client.mchsi.com [173.25.40.8])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 23E8220719;
+        Tue, 27 Oct 2020 20:23:50 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.14.202-rt97
+Date:   Tue, 27 Oct 2020 20:22:58 -0000
+Message-ID: <160383017862.452531.12788303951108967689@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-10-27 17:23:09 [+0000], Christoph Hellwig wrote:
-> On Tue, Oct 27, 2020 at 06:05:15PM +0100, Thomas Gleixner wrote:
-> > > Is there a way to raise a softirq and preferably place it on a given
-> > > CPU without our IPI dance?  That should be a win-win situation for
-> > > everyone.
-> > 
-> > Not really. Softirq pending bits are strictly per cpu and we don't have
-> > locking or atomics to set them remotely. Even if we had that, then you'd
-> > still need a mechanism to make sure that the remote CPU actually
-> > processes them. So you'd still need an IPI of some sorts.
-> 
-> Ok.  I was hoping we could hide this in core code somehow, especially
-> a peterz didn't like the use of smp_call_function_single_async in the
-> blk-mq completion code very much.
-> 
-> Sebastian, would this solve your preempt-rt and lockdep issues?
+Hello RT-list!
 
-second. I'm cooking something.
+I'm pleased to announce the 4.14.202-rt97 stable release.
 
-Sebastian
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.14-rt
+  Head SHA1: 55b07213576aa053c62507c97f194df13c25c155
+
+Or to build 4.14.202-rt97 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.202.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.202-rt97.patch.xz
+
+
+You can also build from 4.14.198-rt96 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.198-rt96-rt97.patch.xz
+
+Enjoy!
+Clark
