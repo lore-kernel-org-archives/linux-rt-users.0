@@ -7,66 +7,66 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 64E65C4363A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:41:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 64500C56201
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:41:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0D05A20796
+	by mail.kernel.org (Postfix) with ESMTP id F2D0120790
 	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:41:21 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SA/Ynozi"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Tn2n4dw3"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726083AbgJ2RlU (ORCPT
+        id S1727277AbgJ2RlV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Oct 2020 13:41:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39002 "EHLO
+        Thu, 29 Oct 2020 13:41:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39006 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727277AbgJ2RlT (ORCPT
+        with ESMTP id S1727157AbgJ2RlU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Oct 2020 13:41:19 -0400
-Received: from mail-qv1-xf43.google.com (mail-qv1-xf43.google.com [IPv6:2607:f8b0:4864:20::f43])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4DDE2C0613CF
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:41:19 -0700 (PDT)
-Received: by mail-qv1-xf43.google.com with SMTP id 63so1674661qva.7
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:41:19 -0700 (PDT)
+        Thu, 29 Oct 2020 13:41:20 -0400
+Received: from mail-qk1-x742.google.com (mail-qk1-x742.google.com [IPv6:2607:f8b0:4864:20::742])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8E251C0613CF
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:41:20 -0700 (PDT)
+Received: by mail-qk1-x742.google.com with SMTP id b18so2638111qkc.9
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:41:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=7jzHq9bPBFbNPcWdQmAQy1FpY+UgbdjuV27KpQTUWq8=;
-        b=SA/YnozinHRS+q3Ivsz2Xh/nRGUK6kP6k5Yhv3OghVRKXwOLRL5YIOvjrKCTOqsHFf
-         NLCgsvbrObQ+9vVLOHapGOQvrd7sJ2lLjtRmBl1SUHkIiVmhQrYiDFDrlfFI3nIbDa2L
-         hyDPenw56Gp6GMHPe1O6FhRDnPhmv3Elz17huGp++ni7GDgUYsDcE+fnl9R9RnHGyMws
-         Zm4QWxIT0DxOwYQ4rFwzzvUgy2Xj1d9zg4o68Oxpimr4rCBwKWZBKZ6ZuxzbCFujOOHw
-         o0XGSlLIu0VrcGggjMoGzn5vLGE3JFODaNsewhoIiM+Mt9gfjq/9uPW/dmT8YBCrXVVd
-         gx4Q==
+        bh=Mi+/N2uCj4XVGJnBMRNdtlMByj5z3SKzYsNwhngjxnI=;
+        b=Tn2n4dw3G5GnUi5KF69Hob8kYzQnraaPenjfc9KP/s7tNccU6uSviUdPGizM0V+Tm0
+         dsLjr9QdG3tQZi82HCCdZ9czEceHHdbk3QlSrlUDYCodrl7RwuiP1ihgPIhOQmcLKTY9
+         1ub8fKwCunfKn8M8ZWkWDCtsvPVx3kAmHo/yDearJUVSGHtpDODLvGUMo7yqbx3nOjVM
+         /cNojcSvt//g8+aJ0GouaD5PoJONvfirn745CUlb3vC+aS52OPS3XrwW488QvhFrd+1U
+         Ivg7vmcVZV1YWenP6DVsQEfgL0uLBE8slkB8A3Evue8oVDui00lpUB1H4XKP0km5elH/
+         FBUw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=7jzHq9bPBFbNPcWdQmAQy1FpY+UgbdjuV27KpQTUWq8=;
-        b=T8NM3HAA7J8B1ngidiEmGqOGVtnjy7w7xM6/u+QZkHkj+ihYkBN7y7zRiOwTxx5xOh
-         dXeT8F0lgXq4/wpfLnLvM6WrQlIyRBuhtbGDKdGl9JC6PbVZpQB7xT+HmpaktUCTmlWM
-         7WEepCjVRplgiAfSzOXDiSUY1CgwONKaPmjJdoNUJu+x49INLO3ONGHHholZYqNaVe9B
-         x0gLgzDXdolRNoaLlV490vXO6YJy2i8W3Lf3E+Y4UmjHx9cnOBHhoRIoBLLm6MyTBOL1
-         XqFlGtCOGz3kr+n8p0GFIXZPuPYgPAIQnMu7LsBduqEF9DDn17rZi5VAHErM2egotU11
-         9hdQ==
-X-Gm-Message-State: AOAM532Y2ARj8mlVcy7y2G96qWJ4jyik+e0oAMwgP/zjbzBl2m4kX0eP
-        Z67qhctVf56X+brMCVg52ACy7Yix7u+hVA==
-X-Google-Smtp-Source: ABdhPJzJ/aZGL5GdDQb2Yu2Zjt1vu/76xYTUpE2YsZ2Cpn4W2Ru6MYHcKevGnChRhkxV8SZXV9P5Yg==
-X-Received: by 2002:a0c:f38b:: with SMTP id i11mr5502510qvk.41.1603993278335;
-        Thu, 29 Oct 2020 10:41:18 -0700 (PDT)
+        bh=Mi+/N2uCj4XVGJnBMRNdtlMByj5z3SKzYsNwhngjxnI=;
+        b=UjL/N95HqxgPBQwJip7gwv4+fSHXqtTO57ydAOVsOoFjJ7kTNOjbpHsvHR+qPrJtWG
+         M/uYWJTI/panNv4t1ybem5QvbzgcTp/SpqRu6qZP9Xjuw+XM+JDU5gHazqqYrmYOajG2
+         e+ynwuVYufuY2zTXlIpi9PAYKj0EKt9WJTq0jYGf+wkjAM7GvEojT4RaIl7P7SERNzGS
+         slxjOlEgdyHz9pEEN/hNRZxkfAbKiGjZqm55SlmSS3ktbQmYQpf5zJ6bfAGNjdBFgTqX
+         Z25LQGUSoXpBdwEmyLRLjFX8EYZ6OCLD6CSqIdqUJSlVOkU/ATjjEUBoxbdWeqI3MDhR
+         fHjQ==
+X-Gm-Message-State: AOAM532zweDkFLM+2nu4XENQbi5b5DwtmKUE/HawfpXxTDzxOzf7MUGJ
+        xagBS+QHJxP68PvsRku45SFKGIc2ukzQvA==
+X-Google-Smtp-Source: ABdhPJyrNVpDEc966OySphMNRWxhA7lEgxh+YMaJGiDUHlvSF5jLhN0jcC0gwCOTiM+t4ukK5A2Ctg==
+X-Received: by 2002:a05:620a:99d:: with SMTP id x29mr4959766qkx.415.1603993279678;
+        Thu, 29 Oct 2020 10:41:19 -0700 (PDT)
 Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id z13sm1472460qkl.2.2020.10.29.10.41.17
+        by smtp.gmail.com with ESMTPSA id z13sm1472460qkl.2.2020.10.29.10.41.18
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 29 Oct 2020 10:41:17 -0700 (PDT)
+        Thu, 29 Oct 2020 10:41:18 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 06/16] rt-tests: pip_stress.c: Remove unnecessary brackets
-Date:   Thu, 29 Oct 2020 13:40:47 -0400
-Message-Id: <20201029174057.20033-7-jkacur@redhat.com>
+Subject: [PATCH 07/16] rt-tests: pmqtest.c: Fix spacing around parentheses
+Date:   Thu, 29 Oct 2020 13:40:48 -0400
+Message-Id: <20201029174057.20033-8-jkacur@redhat.com>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20201029174057.20033-1-jkacur@redhat.com>
 References: <20201029174057.20033-1-jkacur@redhat.com>
@@ -76,39 +76,130 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Remove unnecessary brackets as suggested by checkpatch.pl
+Fix spacing around parentheses as suggestsed by checkpatch.pl
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/pi_tests/pip_stress.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ src/pmqtest/pmqtest.c | 29 ++++++++++++++---------------
+ 1 file changed, 14 insertions(+), 15 deletions(-)
 
-diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
-index 74cf53dcfa7a..4583aa40a6b8 100644
---- a/src/pi_tests/pip_stress.c
-+++ b/src/pi_tests/pip_stress.c
-@@ -216,9 +216,8 @@ void high(pid_t pid)
- 	Pthread_mutex_lock(resource);
- 	Pthread_mutex_lock(statep->mutex);
- 		statep->high_owns_resource = 1;
--		if (!statep->low_owns_resource || !statep->medium_started) {
-+		if (!statep->low_owns_resource || !statep->medium_started)
- 			statep->inversion = 0;
--		}
- 	Pthread_mutex_unlock(statep->mutex);
- 	Pthread_mutex_unlock(resource);
- 	kill(pid, SIGKILL);	/* kill the medium thread */
-@@ -228,9 +227,8 @@ void high(pid_t pid)
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 938dc8d93c3f..a1e487b85d2c 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -83,7 +83,7 @@ void *pmqthread(void *param)
+ 	if (par->cpu != -1) {
+ 		CPU_ZERO(&mask);
+ 		CPU_SET(par->cpu, &mask);
+-		if(sched_setaffinity(0, sizeof(mask), &mask) == -1)
++		if (sched_setaffinity(0, sizeof(mask), &mask) == -1)
+ 			fprintf(stderr,	"WARNING: Could not set CPU affinity "
+ 				"to CPU #%d\n", par->cpu);
+ 	} else
+@@ -97,7 +97,7 @@ void *pmqthread(void *param)
+ 			/* Optionally force receiver timeout */
+ 			if (par->forcetimeout) {
+ 				struct timespec senddelay;
+-				
++
+ 				senddelay.tv_sec = par->forcetimeout;
+ 				senddelay.tv_nsec = 0;
+ 				clock_nanosleep(CLOCK_MONOTONIC, 0, &senddelay, NULL);
+@@ -110,7 +110,7 @@ void *pmqthread(void *param)
+ 				par->shutdown = 1;
+ 			}
+ 			par->samples++;
+-			if(par->max_cycles && par->samples >= par->max_cycles)
++			if (par->max_cycles && par->samples >= par->max_cycles)
+ 				par->shutdown = 1;
+ 			if (mustgetcpu)
+ 				par->cpu = get_cpu();
+@@ -118,17 +118,17 @@ void *pmqthread(void *param)
+ 			if (par->timeout) {
+ 				clock_gettime(CLOCK_REALTIME, &ts);
+ 				ts.tv_sec += par->timeout;
+-	
++
+ 				if (mq_timedreceive(par->syncmq, par->recvsyncmsg, MSG_SIZE, NULL, &ts)
+ 				    != strlen(syncmsg)) {
+ 					fprintf(stderr, "could not receive sync message\n");
+-					par->shutdown = 1;				
++					par->shutdown = 1;
+ 				}
+-			} 
++			}
+ 			if (mq_receive(par->syncmq, par->recvsyncmsg, MSG_SIZE, NULL) !=
+ 			    strlen(syncmsg)) {
+ 				perror("could not receive sync message");
+-				par->shutdown = 1;				
++				par->shutdown = 1;
+ 			}
+ 			if (!par->shutdown && strcmp(syncmsg, par->recvsyncmsg)) {
+ 				fprintf(stderr, "ERROR: Sync message mismatch detected\n");
+@@ -156,8 +156,7 @@ void *pmqthread(void *param)
+ 						}
+ 					} else
+ 						break;
+-				}
+-				while (1);
++				} while (1);
+ 			} else {
+ 				if (mq_receive(par->testmq, par->recvtestmsg, MSG_SIZE, NULL) !=
+ 				    strlen(testmsg)) {
+@@ -261,7 +260,7 @@ static int sameprio;
+ static int timeout;
+ static int forcetimeout;
  
- 	if (statep->inversion)
- 		printf("Successfully used priority inheritance to handle an inversion\n");
--	else {
-+	else
- 		printf("No inversion incurred\n");
--	}
- 	Pthread_mutex_unlock(statep->mutex);
+-static void process_options (int argc, char *argv[])
++static void process_options(int argc, char *argv[])
+ {
+ 	int error = 0;
+ 	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
+@@ -297,7 +296,7 @@ static void process_options (int argc, char *argv[])
+ 			if (optarg != NULL) {
+ 				affinity = atoi(optarg);
+ 				setaffinity = AFFINITY_SPECIFIED;
+-			} else if (optind<argc && atoi(argv[optind])) {
++			} else if (optind < argc && atoi(argv[optind])) {
+ 				affinity = atoi(argv[optind]);
+ 				setaffinity = AFFINITY_SPECIFIED;
+ 			} else {
+@@ -325,7 +324,7 @@ static void process_options (int argc, char *argv[])
+ 			}
+ 			if (optarg != NULL)
+ 				num_threads = atoi(optarg);
+-			else if (optind<argc && atoi(argv[optind]))
++			else if (optind < argc && atoi(argv[optind]))
+ 				num_threads = atoi(argv[optind]);
+ 			else
+ 				num_threads = max_cpus;
+@@ -366,7 +365,7 @@ static void process_options (int argc, char *argv[])
+ 		sameprio = 1;
+ 
+ 	if (error)
+-		display_help (error);
++		display_help(error);
  }
  
+ 
+@@ -523,7 +522,7 @@ int main(int argc, char *argv[])
+ 			if (minsamples < 1)
+ 				printf("Collecting ...\n\033[1A");
+ 		}
+-		
++
+ 		fflush(NULL);
+ 
+ 		oldsamples = 0;
+@@ -564,7 +563,7 @@ int main(int argc, char *argv[])
+ 		mq_unlink(mqname);
+ 	}
+ 
+-	nomem:
++nomem:
+ 
+ 	return 0;
+ }
 -- 
 2.26.2
 
