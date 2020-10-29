@@ -6,66 +6,73 @@ X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25EEEC55179
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 14:05:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 88EE9C4363A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 14:56:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B85D820825
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 14:05:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1A5A12072D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 14:56:30 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="b35ci6In"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="R3B+yhJs";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="c0OiIKIV"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726212AbgJ2OFk (ORCPT
+        id S1727910AbgJ2O41 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Oct 2020 10:05:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33226 "EHLO
+        Thu, 29 Oct 2020 10:56:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41120 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726044AbgJ2OFk (ORCPT
+        with ESMTP id S1727856AbgJ2O40 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Oct 2020 10:05:40 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4A1B2C0613D3;
-        Thu, 29 Oct 2020 07:05:40 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=QFX/rG1nfZIO6l4gly+0bHosD8oEdLcUGfNyFPDeo2s=; b=b35ci6InfXu1GLmFPpVcMezq0t
-        ngEwd6LKqAH04tvmf/uby22B13TxPisuejy+HoRD1GK0154yp/JZnQkum0Qw44N6IapT6WrhngL0E
-        fdOHcJfJpb9ea4uvQg3Aggs8s8+6uYSAhBpmNXF+R6+6TTdb/o6ugVie9c/EmBhdetzSAN4BTt+K/
-        Ck9fPhw1BiqPr54xjrNlR/msky9ij4cjqUH2Q9LJw4yjVA6eeP0JOvjcxBzBDujEldGcYdYFGfetA
-        FafwISEqui2jmvffxC2QshrHbl0fiZkJCzdr0ZekujAxZYQGxXlYBCk1AwL1c931+06NCsxIpS+1H
-        E4l+d6oQ==;
-Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1kY8Ya-0001mV-AN; Thu, 29 Oct 2020 14:05:36 +0000
-Date:   Thu, 29 Oct 2020 14:05:36 +0000
-From:   Christoph Hellwig <hch@infradead.org>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        Thu, 29 Oct 2020 10:56:26 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B94E0C0613CF;
+        Thu, 29 Oct 2020 07:56:26 -0700 (PDT)
+Date:   Thu, 29 Oct 2020 15:56:23 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1603983385;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ppJelXitr+gl2oZ8i2m3v3k6fNoZDDu0mMJEWxPaA9g=;
+        b=R3B+yhJsl4kVrj+NRIoVOC6qm8HDHh9+JlmNjMWLRzVcxLOmM2vcX/h3Uh0LCAUZRJ+zb0
+        G8schHrKCns30OQ++yJblTjmGKJmb3t9WZq4lNgJu79S6C35MetpAbEDZcPNXqUy9sC1Te
+        avwvRhl2x5fLbsgIqzGSKb8EWx94jgmH0LEzOhA3qNJEbmLwWx1jvNFxVuLTk+ef71RihR
+        p8HEdXiq4HNC1+TQVWQsAVc62R9TpwMdGFNWobMNnmhkdOEaYp/W08H6sYWnkx64IKQEoo
+        AOoRvp0oRqYJqiQyuk1qzcR7jSiV7/Xr8nIQq1D42x6/WJUIImVECkWgk9GSIw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1603983385;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ppJelXitr+gl2oZ8i2m3v3k6fNoZDDu0mMJEWxPaA9g=;
+        b=c0OiIKIV3inkPlqsAHgJAM+6KyYlRUlT2t3Zsl2Gs1aI+yrJvQIX+0H94jbOPibFqe+dzL
+        oDD/O8kJGNKi3KAQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Christoph Hellwig <hch@infradead.org>
+Cc:     linux-block@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
         Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org,
         Peter Zijlstra <peterz@infradead.org>,
         Daniel Wagner <dwagner@suse.de>, Mike Galbraith <efault@gmx.de>
 Subject: Re: [PATCH 3/3] blk-mq: Use llist_head for blk_cpu_done
-Message-ID: <20201029140536.GA6376@infradead.org>
+Message-ID: <20201029145623.3zry7o6nh6ks5tjj@linutronix.de>
 References: <20201028065616.GA24449@infradead.org>
  <20201028141251.3608598-1-bigeasy@linutronix.de>
  <20201028141251.3608598-3-bigeasy@linutronix.de>
  <20201029131212.dsulzvsb6pahahbs@linutronix.de>
+ <20201029140536.GA6376@infradead.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20201029131212.dsulzvsb6pahahbs@linutronix.de>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <20201029140536.GA6376@infradead.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Oct 29, 2020 at 02:12:12PM +0100, Sebastian Andrzej Siewior wrote:
-> Are there many drivers completing the SCSI requests in preemtible
-> context? In this case it would be more efficient to complete the request
-> directly (usb_stor_control_thread() goes to sleep after that anyway and
-> there is only one request at a time).
+On 2020-10-29 14:05:36 [+0000], Christoph Hellwig wrote:
+> Well, usb-storage obviously seems to do it, and the block layer
+> does not prohibit it.
 
-Well, usb-storage obviously seems to do it, and the block layer
-does not prohibit it.
+Also loop, nvme-tcp and then I stopped looking.
+Any objections about adding local_bh_disable() around it?
+
+Sebastian
