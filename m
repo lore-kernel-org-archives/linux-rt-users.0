@@ -2,78 +2,111 @@ Return-Path: <SRS0=4gYA=EE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E9B8C2D0A3
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 14:57:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 439D9C63777
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 15:37:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BB1F62087D
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 14:57:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2A32120747
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 15:37:40 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="bTYuNixG"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WK+M60qv"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727708AbgJ2O5r (ORCPT
+        id S1728135AbgJ2PfZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Oct 2020 10:57:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41330 "EHLO
+        Thu, 29 Oct 2020 11:35:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47032 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725782AbgJ2O5r (ORCPT
+        with ESMTP id S1728211AbgJ2PeJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Oct 2020 10:57:47 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 565CAC0613CF;
-        Thu, 29 Oct 2020 07:57:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=gaixN9Bvdo5h62VzxGq1fbBr5CvrRZrgy2xdLXcGzLE=; b=bTYuNixGSW2EZao7BIhpVMoBkg
-        Fnfsb0miEeUi3RCG985nAhHBTRXcZ5zUyXS69dio+GuELyGkENctUrl4Si3aPWCXxI9R681ZfZjUb
-        FfnzHqlfL6psaiXl1i+23BNkSEYxmg9iFWriVvp4QfG3iorYGmwxddxjuoFqNQg8LkBZ20KWgGzCR
-        3VPByv+8ikppMJVye3Zvksowg+Q87VfPAephQ4TPxKsSRUGsqEvKk1gLB+rt2laTKdVPwKewgXJQQ
-        YCe4CkT2Bs/wAVsrqwBh/Cz6SUFnogZTvBB+LW6NHCdfQhfTtoDN4CdsdkGj82up76AVXl5Jlzpld
-        rE/iUJJg==;
-Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1kY9N2-00056S-3U; Thu, 29 Oct 2020 14:57:44 +0000
-Date:   Thu, 29 Oct 2020 14:57:43 +0000
-From:   Christoph Hellwig <hch@infradead.org>
+        Thu, 29 Oct 2020 11:34:09 -0400
+Received: from mail-il1-x134.google.com (mail-il1-x134.google.com [IPv6:2607:f8b0:4864:20::134])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 78752C0613CF
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 08:34:08 -0700 (PDT)
+Received: by mail-il1-x134.google.com with SMTP id v18so3488316ilg.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 08:34:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=AzutPoQ0px8X21Z+Eg60d/SORzFzJi/gHbrphVcMVj0=;
+        b=WK+M60qvhj1slz3T/kz5B/28jOkLkoijJGsn1ZhAyeolLwcUFd1Ff/du4NdYCZodIj
+         NKDUnMMiaxwMCJSJ1rjgcYk5IpCMzIGy4gHd6xiUrt+6Rk6vGZWpjjrzJdUfpwprLSRF
+         MnC7rVHgTWu+YyuoapkhmzG3kNxEUHdCUfukpwv99emVmVYl0WfdF9rFa4JTC5uItl2T
+         rB0PhiwrHID70NPABQADatgNt/ya+7865waYP2fQFJK3QLoXmMACZy8Wb47P2FMDFb8l
+         G7J6FAB4Hnnde0w/D0KGe+HkF2oidqs3DfSFGRdbelT12T+bYTPpUSWbogCfsRli7CZ4
+         hg1g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=AzutPoQ0px8X21Z+Eg60d/SORzFzJi/gHbrphVcMVj0=;
+        b=rde5nCzuolSkOey2Bv3Qy06AU5komwVUJHmBK9FY4+/DiitnxSiFILcpqufx04+ZO/
+         JKxPoJ1X4d3u3IyCaiUl0BRjLoPjW9Ju2PhFWyAKTCWIit9lrxFpjIqSVDta0d36ZetW
+         qzFAomPH9cQBT5eERb06nZ+4pHOdNDBgl9VJfOF//YHku4lynz1lxCIIsfNx1wnWiqOS
+         MrFSXieWa6T2oVeoFR6zZmS2F95RRfpvne5UF7nBwsM5RGMYX+pptnW2CSmigDVZp8ui
+         tP/QTgiNtMWD95mGv8G7UvPHzJa5ROb0nvPJt4oCRhsRUpSHDFYGWN8sk34R9O9FNn/K
+         WNnQ==
+X-Gm-Message-State: AOAM530FLyea1Bc9uquvVl47Z/uBPZiU2xR3Py95ciBdN3TIJJKaHeSy
+        19BarsUIxxUcIHw8mokFUBioq2uCPicd/g==
+X-Google-Smtp-Source: ABdhPJyDfO5IEpSpiP4sRREp3c5Sm6c0+zkDgtDsjA5ARkcGltG+pAnoGOtSX3zG91e3T0GGqpCM3A==
+X-Received: by 2002:a92:8406:: with SMTP id l6mr3254029ild.12.1603985647565;
+        Thu, 29 Oct 2020 08:34:07 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
+        by smtp.gmail.com with ESMTPSA id p15sm2230158ioh.27.2020.10.29.08.34.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 29 Oct 2020 08:34:06 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+Date:   Thu, 29 Oct 2020 11:33:57 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
-        Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Daniel Wagner <dwagner@suse.de>,
-        Mike Galbraith <efault@gmx.de>,
-        Sagi Grimberg <sagi@grimberg.me>
-Subject: Re: [PATCH 3/3] blk-mq: Use llist_head for blk_cpu_done
-Message-ID: <20201029145743.GA19379@infradead.org>
-References: <20201028065616.GA24449@infradead.org>
- <20201028141251.3608598-1-bigeasy@linutronix.de>
- <20201028141251.3608598-3-bigeasy@linutronix.de>
- <20201029131212.dsulzvsb6pahahbs@linutronix.de>
- <20201029140536.GA6376@infradead.org>
- <20201029145623.3zry7o6nh6ks5tjj@linutronix.de>
+cc:     dieter@bieler.li, linux-rt-users@vger.kernel.org
+Subject: Re: Error-Report rt-tests
+In-Reply-To: <20201028164059.m7ygqaikxqox6res@linutronix.de>
+Message-ID: <3cb8be1a-3e69-dbcc-363-30c1a15e3afd@redhat.com>
+References: <006101d6ab85$88d32f70$9a798e50$@bieler.li> <007501d6ab85$f3369910$d9a3cb30$@bieler.li> <20201028164059.m7ygqaikxqox6res@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20201029145623.3zry7o6nh6ks5tjj@linutronix.de>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Oct 29, 2020 at 03:56:23PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2020-10-29 14:05:36 [+0000], Christoph Hellwig wrote:
-> > Well, usb-storage obviously seems to do it, and the block layer
-> > does not prohibit it.
+
+
+On Wed, 28 Oct 2020, Sebastian Andrzej Siewior wrote:
+
+> On 2020-10-26 11:51:24 [+0100], dieter@bieler.li wrote:
+> > 
+> > Hello,
+> Hi,
 > 
-> Also loop, nvme-tcp and then I stopped looking.
-> Any objections about adding local_bh_disable() around it?
+> > I tried to compile the rt-tests-1.9 on my system:
+> > Kernel - 5.4.70-rt40
+> > Gcc : gcc cc (Ubuntu 10.2.0-5ubuntu1~20.04) 10.2.0
+> 
+> is this by any chance 32bit? Say i386/i686 or so?
+> 
+> > Error message:
+> > 
+> > 'bld/cyclictest.o: `stderr@@GLIBC_2.2.5' can not be used when making a
+> > shared object;
+> > recompile with -fPIC
+> > 
+> > Any idea ?
+> 
+> If so, please try
+> 	make clean
+> 	make CFLAGS=-fPIC
+> 
+> > Thanks
+> > Dieter Bieler
+> 
+> Sebastian
+> 
 
-To me it seems like the whole IPI plus potentially softirq dance is
-a little pointless when completing from process context.
+It's a bit odd because the libraries are static.
+Isn't that quite an old version of glibc as well?
 
-Sagi, any opinion on that from the nvme-tcp POV?
+John
