@@ -2,111 +2,177 @@ Return-Path: <SRS0=4gYA=EE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 542E8C4363A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:03:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4B76BC4363A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:41:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EC65620790
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:03:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D8E082076D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Oct 2020 17:41:14 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cRpc0/MF"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pWfgL2/W"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726370AbgJ2RDp (ORCPT
+        id S1726295AbgJ2RlO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Oct 2020 13:03:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33018 "EHLO
+        Thu, 29 Oct 2020 13:41:14 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38976 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726279AbgJ2RDp (ORCPT
+        with ESMTP id S1725777AbgJ2RlO (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Oct 2020 13:03:45 -0400
-Received: from mail-qk1-x731.google.com (mail-qk1-x731.google.com [IPv6:2607:f8b0:4864:20::731])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3D5FBC0613CF
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:03:45 -0700 (PDT)
-Received: by mail-qk1-x731.google.com with SMTP id r7so2559923qkf.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:03:45 -0700 (PDT)
+        Thu, 29 Oct 2020 13:41:14 -0400
+Received: from mail-qk1-x734.google.com (mail-qk1-x734.google.com [IPv6:2607:f8b0:4864:20::734])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0E45DC0613D2
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:41:14 -0700 (PDT)
+Received: by mail-qk1-x734.google.com with SMTP id r7so2678970qkf.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2020 10:41:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :mime-version;
-        bh=8+LZmTYsS2bcZOvepSCvqWhTFVlBLjE/YXQkbf9rweM=;
-        b=cRpc0/MF7Rr4Zbn90G5iXsD0g4nx8NBIlbA81+cEaVgQoKKoPptiAPrBEbfM+xR33h
-         K5nA3Kemt8MoajqTjWtZnvFIvrB17GjqYyWmpAhh6mVmDuMV5CpU9dhGibu4XbyeWuCc
-         gZK0+UXHhI4RPbMPWozP6yIbNE5a0bglpyTVmXLh69MHMDyWY21u1rtb5/LbVOVz0hQl
-         bW1bCYlJVF8LNkfFMrkJohjHxkqfysIjEyNX4qqC2hWYL+ufQFUmSOIxCBtvjviTq6bN
-         FSN+7OJ92Y/4ojuqdMEzhTYC49hXAPZzH/zH6CyuJactFfkr2xbePpPbNIdL5khCrCm3
-         MfqQ==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=leRIDG02papUstmLrtBLIquBNWjJYmKb/wG67ywkCYw=;
+        b=pWfgL2/W86Lo+VOzxtTgyd5/Od1W759F7mY7xH1sHiTCcccW/Bujlx7lIhjKDn8Xbh
+         QC46Nwb0s09vcUL6qSgur0HJYLQg10Ot7XSZ5NhA4oQPjqNIn9vYFZdGbTuIc4pX5nAJ
+         sOFLdTClnNMbR66bBAjhK67RS/I6BNExBVssAXvGzQwxuieE0iQJ6LIKauPZbrOMkUo6
+         vMnkqv6rzGhXLRi1i/xt/6T9xSHWo52/PRJ5YNq/IlMAQ6MCDvIpqOvPoEmB6sK8S8ll
+         2JylrQaa9i1JQkA2FY7PDnF1bspXD8k+U7aVAoEg3B8+/3WGbVzDw0WJIkBClAcR8H78
+         x/EA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:mime-version;
-        bh=8+LZmTYsS2bcZOvepSCvqWhTFVlBLjE/YXQkbf9rweM=;
-        b=iT2EAGOSVrlzCw6jGp2sQ3M371WwA/FVYUDiK8nLH/bPRKQOS5RIRjtntFKxiuttgB
-         nTQqkMk91nE8RsqqYHjHrwyZ/mBItvb24K5f03FjqQhuEQ2kmaTSWOcsdzKqa8B4+Qlv
-         xuZTAoUIt+zrLasimWHhW1kCsrQUE2sqmeunum9DVUwQWZ8Ffoa9vlOrsT/f6sGNZs9E
-         qEv0QN3NwkZcyvmYFaj/jNn0U5wE3EWmkHsZ3fiUKJ/VHKVHrJFmestN84W2PzN0Rgua
-         36WPuqm/pM/R2iF6/m3WwpLbe9Hd2R+e3WcDvwQ3vRp5/hNG/XCMP4VCFhNmLRKRhW2I
-         sQfw==
-X-Gm-Message-State: AOAM530e6q+lSd3K3kFSn54jzXBt3zh7Jd1PLDB4iXPEEokKed4zGXvT
-        cMgyIHJr4i8jk+wOSdePIsU=
-X-Google-Smtp-Source: ABdhPJw9fjDp7xZM5EZYTN3Ivi3viVT37eNqH5q4n7EjsajBXcIgiSd9ygHMnvC373e91tk/zyckhg==
-X-Received: by 2002:a37:4e8e:: with SMTP id c136mr4422537qkb.462.1603991024508;
-        Thu, 29 Oct 2020 10:03:44 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id 22sm1395082qkg.15.2020.10.29.10.03.43
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :in-reply-to:references:mime-version:content-transfer-encoding;
+        bh=leRIDG02papUstmLrtBLIquBNWjJYmKb/wG67ywkCYw=;
+        b=EvePvL4YYXQTkrTxV0rvwtzK/9h4SNSxZxJdYI22d9wTA6weI5/hLLcrmuCHrEMjd6
+         gDBVK+aqgOkeXwbyvrHKJMyO+u2DB+y7aaZt4M9SqZF0g5/BpWHGJZs2l6HMWBhpd4Jz
+         QB9qKlhX+3CEgAs5rsoMcDnC/JMzbgA4VXlQB9B+O/XEu9ay3mr/A6lNVx0jwV5QNpDA
+         18euOOqVZCs00wF8odzDCLA8bsOpn5pAnhhzdC9WhDs9g6XrHeDSK2qNdqv8GEjSQvSU
+         ihUeindE8U0v4fY2fJCPtmgxGJ9Ccw0MEknpnpAGmjeY7Z+LzfE5Jq6x3sctqGf55BYm
+         NUKQ==
+X-Gm-Message-State: AOAM5303n67PS6Qs6iDEKlvBymIBu/0i5+diCirLntecwH07ixzSFKy1
+        +l/efdmW3k6hYzYJH5c72fvFDWhiif+GAw==
+X-Google-Smtp-Source: ABdhPJyA/pnlxe1y7jn/ku2klMCcgbFN3ESE0TLkMFq0uzRsSADEBKbm2GR2fNx2t7PXGhScGWUlJQ==
+X-Received: by 2002:a37:aa49:: with SMTP id t70mr4749068qke.165.1603993273001;
+        Thu, 29 Oct 2020 10:41:13 -0700 (PDT)
+Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
+        by smtp.gmail.com with ESMTPSA id z13sm1472460qkl.2.2020.10.29.10.41.12
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 29 Oct 2020 10:03:44 -0700 (PDT)
+        Thu, 29 Oct 2020 10:41:12 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Thu, 29 Oct 2020 13:03:43 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-cc:     dieter@bieler.li, linux-rt-users@vger.kernel.org
-Subject: Re: Error-Report rt-tests
-In-Reply-To: <20201029155735.xsiqv6ocqemz6yiu@linutronix.de>
-Message-ID: <bed1ae81-a6e9-c255-60bc-c3f1f49a5ef8@redhat.com>
-References: <006101d6ab85$88d32f70$9a798e50$@bieler.li> <007501d6ab85$f3369910$d9a3cb30$@bieler.li> <20201028164059.m7ygqaikxqox6res@linutronix.de> <3cb8be1a-3e69-dbcc-363-30c1a15e3afd@redhat.com> <20201029155735.xsiqv6ocqemz6yiu@linutronix.de>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH 01/16] rt-tests: remove pi_tests.spec
+Date:   Thu, 29 Oct 2020 13:40:42 -0400
+Message-Id: <20201029174057.20033-2-jkacur@redhat.com>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20201029174057.20033-1-jkacur@redhat.com>
+References: <20201029174057.20033-1-jkacur@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+This is an ancient spec file from way back before this program was
+included in the rt-tests suite. There is no need to keep it around
+anymore.
 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/pi_tests/pi_tests.spec | 81 --------------------------------------
+ 1 file changed, 81 deletions(-)
+ delete mode 100644 src/pi_tests/pi_tests.spec
 
-On Thu, 29 Oct 2020, Sebastian Andrzej Siewior wrote:
+diff --git a/src/pi_tests/pi_tests.spec b/src/pi_tests/pi_tests.spec
+deleted file mode 100644
+index 7526faaadff1..000000000000
+--- a/src/pi_tests/pi_tests.spec
++++ /dev/null
+@@ -1,81 +0,0 @@
+-Summary: Programs used to test Priority Inheritance Mutexes
+-Name: pi_tests
+-Version: 1.17
+-Release: 1%{?dist}
+-License: GPL
+-Group: Development/Tools
+-URL: http://people.redhat.com/~williams/tests
+-Source0: %{name}-%{version}.tar.gz
+-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+-
+-%define mandir usr/share/man
+-
+-%description
+-The pi_tests package contains programs used to test the functionality of 
+-the priority inheritance attribute of POSIX mutexes on the Linux kernel
+-
+-%prep
+-%setup -q
+-
+-%build
+-make all
+-
+-%install
+-rm -rf $RPM_BUILD_ROOT
+-mkdir $RPM_BUILD_ROOT
+-install -D -m 755 classic_pi $RPM_BUILD_ROOT/usr/sbin/classic_pi
+-install -D -m 755 pi_stress $RPM_BUILD_ROOT/usr/sbin/pi_stress
+-install -D -m 644 pi_stress.8 $RPM_BUILD_ROOT/%{mandir}/man8/pi_stress.8
+-gzip $RPM_BUILD_ROOT/%{mandir}/man8/pi_stress.8
+-install -D -m 644 COPYING $RPM_BUILD_ROOT/usr/share/doc/%{name}-%{version}/COPYING
+-install -D -m 644 README $RPM_BUILD_ROOT/usr/share/doc/%{name}-%{version}/README
+-
+-%clean
+-rm -rf $RPM_BUILD_ROOT
+-
+-%files
+-%defattr(-,root,root,-)
+-/usr/sbin/classic_pi
+-/usr/sbin/pi_stress
+-%doc
+-/usr/share/man/man8/pi_stress.8.gz
+-/usr/share/doc/%{name}-%{version}/COPYING
+-/usr/share/doc/%{name}-%{version}/README
+-
+-%changelog
+-* Wed Jan  2 2008 Clark Williams <williams@redhat.com> - 1.17-1
+-- fixed logic error with watchdog_check()
+-
+-* Wed Jul 11 2007 Clark Williams <williams@redhat.com> - 1.16-1
+-- bumped version for packaging in RHEL-RT
+-- added usage() to classic_pi
+-- removed --signal option in pi_stress
+-
+-* Wed Jul 11 2007 Clark Williams <williams@redhat.com> - 1.15-1
+-- added rpmlint target to Makefile
+-- fixed rpmlint complaints in specfile
+-
+-* Wed Dec 12 2006 Clark Williams <williams@redhat.com> - 1.14-1
+-- changed how pi_stress shutdown is handled
+-- fixed dealing with --iterations shutdown
+-
+-* Thu Dec  7 2006 Clark Williams <williams@redhat.com> - 1.13-1
+-- Added README and COPYING files
+-
+-* Wed Dec  6 2006 Clark Williams <williams@redhat.com> - 1.12-1
+-- changed shutdown variable to volatile
+-- bumped version
+-
+-* Mon Dec  4 2006 Clark Williams <williams@redhat.com> - 1.11-1
+-- Modified priorities to be just above minimum (as opposed to just below max)
+-
+-* Thu Nov 30 2006 Clark Williams <williams@redhat.com> - 1.10-1
+-- added timing logic to pi_stress.c
+-- refactored function order in pi_stress.c
+-
+-* Wed Nov 29 2006 Clark Williams <williams@redhat.com> - 1.9-1
+-- added --duration logic to pi_stress.c
+-
+-* Mon Nov 27 2006 Clark Williams <williams@redhat.com> - 1.8-1
+-- Initial packaging.
+-
+-- 
+2.26.2
 
-> On 2020-10-29 11:33:57 [-0400], John Kacur wrote:
-> > 
-> > It's a bit odd because the libraries are static.
-> > Isn't that quite an old version of glibc as well?
-> 
-> It looks like Ubuntu 20.04 / Focal Fossa. The glibc version above is
-> when the symbol was first introduced.
-> 
-> It builds on i386/Debian Sid, just tested. Noticed this however:
-> |~/rt-tests$ make
-> |Traceback (most recent call last):
-> |  File "<string>", line 1, in <module>
-> |ModuleNotFoundError: No module named 'distutils.sysconfig'
-> |make: Nothing to be done for 'all'.
-> |~/rt-tests$ python3 -V
-> |Python 3.8.6
-> 
-> wouldn't it work to just keep "PYLIB  ?=" and the caller passes what he
-> needs?
-> 
-> > John
-> 
-> Sebastian
-> 
-
-Right, ?= in the makefile means if it's not already set, then set it to 
-what comes next. You could just do make PYLIB=""
-in order to skip the python stuff.
-
-On my fedora box if you were to set it by hand it would be
-make PYLIB="/usr/lib/python3.9/site-packages"
-
-John
