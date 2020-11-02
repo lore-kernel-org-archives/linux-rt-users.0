@@ -6,106 +6,101 @@ X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B5F3BC00A89
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 18:04:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EA9FAC00A89
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 18:12:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 78FDF21D91
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 18:04:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9C0F42222B
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 18:12:48 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="cVo3BJKU";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="99By+gzw"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="K+gfwNBh"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726088AbgKBSE5 (ORCPT
+        id S1726114AbgKBSMp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 Nov 2020 13:04:57 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:60382 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725768AbgKBSE4 (ORCPT
+        Mon, 2 Nov 2020 13:12:45 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55828 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725797AbgKBSMp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Nov 2020 13:04:56 -0500
-Date:   Mon, 2 Nov 2020 19:04:53 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1604340294;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8zxe2VpCl+4ulM95gT5m8YzcwkgDVFKpA0yZGoqeNQo=;
-        b=cVo3BJKUHazeFdBR/BN8jHA9sylKi0chB5WAT20tIfDSpTcfh4Ol4mNoEyn6BpKVX+fU/R
-        b8/C5eWNY8EnCgXb0Vq0PTOwnfqUzlvxw890gvDNool9/skmWTevStevQYg4OrGWBV/cdC
-        J/9vOOd1D2ilj8RIf3NCBezLikE/Y1BS/te4tseOdmNjbm0fPOjugNZPbcbZMHnSRLDqzn
-        bpFR31jTAukOjizqlMeFPkrzN2QtW1wxzwv50qJv6t3FnP1Qa71eebamqDxiErqZQDT6Tb
-        yeqM7RqO3VYlAi2AoV1V2ng79QA0Eb3VHQsqf6snOgYQjPlme+ysdT8jhIsQtA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1604340294;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8zxe2VpCl+4ulM95gT5m8YzcwkgDVFKpA0yZGoqeNQo=;
-        b=99By+gzwOC4gm8jydVRMYhV2mLmSq6BkKFx4aNkhS0yr3PyW8aqnE7mHh4UfnhryU/eJIW
-        JOqMWGoLL7/TDBDw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Oleg Nesterov <oleg@redhat.com>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Alexander Fyodorov <halcy@yandex.ru>,
-        Juri Lelli <jlelli@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] ptrace: fix ptrace_unfreeze_traced() race with rt-lock
-Message-ID: <20201102180453.zfifjmpbnsvacr54@linutronix.de>
-References: <20201102155001.GA18313@redhat.com>
- <20201102162514.GA18631@redhat.com>
- <20201102163411.izhdlegaifq544l2@linutronix.de>
- <20201102170132.GA32111@redhat.com>
- <20201102173059.ib4au7ia5vyynn6l@linutronix.de>
- <20201102174130.GA18984@redhat.com>
+        Mon, 2 Nov 2020 13:12:45 -0500
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 473A0C0617A6;
+        Mon,  2 Nov 2020 10:12:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=tzLpJEtqWMoAnuZtioMuRPejBU3helvAx3OnKp5WyT4=; b=K+gfwNBhSTHctxo7GZiCazthuJ
+        i7/UcMkPU6eDSMzvQagAC4kJJ6q8TBj23rOLaAkkxbILe5cwPbOnbIray2do6ta8FtzHrvqznk5lv
+        2Qxfu8C6iW3Es6Mi/wIwYE2yI86zxSCtrB6aEsbbiCJqhvdEXjbjqdWoue3sPVOp/xfN3MyyN0/Jr
+        8Fl1JcFLYsZSthool5iJ3c/2vllWq33UAZs/mJ3S7cFVwhAec8CMwbUD43yebsjy7U1dVABCpkd0l
+        UgdXYrqbAAQJo5WQmJ2nHlALg4VqG7M8jH/x7/TvrJqeRN7Nu/YBcssAwhCQ+Bljm5jMlgdUeWYjV
+        2siQtS2Q==;
+Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat Linux))
+        id 1kZeJq-0004v4-I3; Mon, 02 Nov 2020 18:12:38 +0000
+Date:   Mon, 2 Nov 2020 18:12:38 +0000
+From:   Christoph Hellwig <hch@infradead.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>,
+        Christoph Hellwig <hch@infradead.org>,
+        linux-block@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+        David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Daniel Wagner <dwagner@suse.de>, Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH 3/3] blk-mq: Use llist_head for blk_cpu_done
+Message-ID: <20201102181238.GA17806@infradead.org>
+References: <20201029131212.dsulzvsb6pahahbs@linutronix.de>
+ <20201029140536.GA6376@infradead.org>
+ <20201029145623.3zry7o6nh6ks5tjj@linutronix.de>
+ <20201029145743.GA19379@infradead.org>
+ <d2c15411-5b21-535b-6e07-331ebe22f8c8@grimberg.me>
+ <20201029210103.ocufuvj6i4idf5hj@linutronix.de>
+ <deb40e55-d228-06c8-8719-fc8657a0a19b@grimberg.me>
+ <20201031104108.wjjdiklqrgyqmj54@linutronix.de>
+ <3bbfb5e1-c5d7-8f3b-4b96-6dc02be0550d@kernel.dk>
+ <20201102095533.fxc2xpauzsoju7cm@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20201102174130.GA18984@redhat.com>
+In-Reply-To: <20201102095533.fxc2xpauzsoju7cm@linutronix.de>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by casper.infradead.org. See http://www.infradead.org/rpr.html
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-11-02 18:41:31 [+0100], Oleg Nesterov wrote:
-> Sorry, I don't understand. If it was not clear, let me repeat that I know
-> nothing about kernel-rt.
-
-That is why I said, if you don't want to continue just complain and
-leave it to me. Also, I could explain things if you want me to.
-
-> On 11/02, Sebastian Andrzej Siewior wrote:
-> > On 2020-11-02 18:01:33 [+0100], Oleg Nesterov wrote:
-> >
-> > > So it seems I should send V2 which uses raw_spin_(un)lock_irq().
-> > >
-> > > Or even _irqsave() like ptrace_freeze_traced() does? Although this looks
-> > > confusing, exactly because ptrace_freeze_traced() calls task_is_traced()
-> > > which does raw_spin_lock_irq().
-> >
-> > Urgh. Judging from
-> >  release_task()
-> >  -> write_lock_irq(&tasklist_lock);
-> >  -> ptrace_release_task();
-> >     -> ptrace_unlink();
-> >        -> __ptrace_unlink();
-> >          -> task_is_traced().
-> >
-> > it will break on !RT so irqsave is indeed needed.
+On Mon, Nov 02, 2020 at 10:55:33AM +0100, Sebastian Andrzej Siewior wrote:
+> On 2020-10-31 09:00:49 [-0600], Jens Axboe wrote:
+> > There really aren't any rules for this, and it's perfectly legit to
+> > complete from process context. Maybe you're a kthread driven driver and
+> > that's how you handle completions. The block completion path has always
+> > been hard IRQ safe, but possible to call from anywhere.
 > 
-> Why?
+> I'm not trying to put restrictions and forbidding completions from a
+> kthread. I'm trying to avoid the pointless softirq dance for no added
+> value. We could:
+
+> to not break that assumption you just mentioned and provide 
+> |static inline void blk_mq_complete_request_local(struct request *rq)
+> |{
+> |                 rq->q->mq_ops->complete(rq);
+> |}
 > 
-> task_is_traced() does raw_spin_lock_irq() under ifdef(CONFIG_PREEMPT_RT).
+> so that completion issued from from process context (like those from
+> usb-storage) don't end up waking `ksoftird' (running at SCHED_OTHER)
+> completing the requests but rather performing it right away. The softirq
+> dance makes no sense here.
 
-That is correct. So it is not broken after all.
-So basically ptrace_freeze_traced() is okay but ptrace_unfreeze_traced()
-needs the same treatment.
+Agreed.  But I don't think your above blk_mq_complete_request_local
+is all that useful either as ->complete is defined by the caller,
+so we could just do a direct call.  Basically we should just
+return false from blk_mq_complete_request_remote after updating
+the state when called from process context.  But given that IIRC
+we are not supposed to check what state we are called from
+we'll need a helper just for updating the state instead and
+ensure the driver uses the right helper.  Now of course we might
+have process context callers that still want to bounce to the
+submitting CPU, but in that case we should go directly to a
+workqueue or similar.
 
-task_is_traced() acquires/drops the PI-lock and the inner of
-ptrace_freeze_traced() does the same but needs to be done only for RT.
-
-How much of that do find acceptable with your upstream hat on?
-
-> Oleg.
-
-Sebastian
+Either way doing this properly will probabl involve an audit of all
+drivers, but I think that is worth it.
