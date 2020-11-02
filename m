@@ -2,109 +2,122 @@ Return-Path: <SRS0=ditW=EI=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-11.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F12BAC4742C
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 12:23:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CECCC00A89
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 15:50:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9B511223B0
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 12:23:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3186F22258
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Nov 2020 15:50:13 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="cxJBlz3R";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="WrVe6SPO"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q1qkSN5F"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728444AbgKBMXe (ORCPT
+        id S1726643AbgKBPuM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 Nov 2020 07:23:34 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:58736 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728498AbgKBMXe (ORCPT
+        Mon, 2 Nov 2020 10:50:12 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:30571 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726633AbgKBPuK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Nov 2020 07:23:34 -0500
-Date:   Mon, 2 Nov 2020 13:23:25 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1604319812;
+        Mon, 2 Nov 2020 10:50:10 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1604332209;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=HgwwUY5/F2HnTzAMH5El6bOrIItG+nZNqxWdOrbFQQ8=;
-        b=cxJBlz3RIkKPicwe3sk1tnKoPRoLj2Z8gT2pTQwCbnmc+O7p79jYRfF7ZgEg6NZyxpWPjs
-        NjWuN5ptYZzts+070TJz/Jp/cLSCNLC5/BMXMuvKUVKbmWew63t8KRnkgeXpQK43V5hWw8
-        9N4R/TW8ci39T6Vo2sQwSgtJOPhZqezktAWCGnKFczOoRoX6QTBPCLwpTWXv7645YCDzAw
-        KBMgkKwBjOM9Kx/zMw2JkYyETALtPcxo2yd6q9zevG7bSay0DBhWyZ5baY6YJfuEdoItUl
-        yP8jluEPTtLuhq0bLBnwKl1H59r3iFunNCweWNU+pTHYmI1MM/VdkExPqd1tww==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1604319812;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=HgwwUY5/F2HnTzAMH5El6bOrIItG+nZNqxWdOrbFQQ8=;
-        b=WrVe6SPOSZ7eICRe9EyQuREEZldZxfWwngJC3WfarvCfTLaaA6k7ql7B40deeDsTstltCe
-        CA8KDmGnVExpytCg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mike Galbraith <efault@gmx.de>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 5.10-rt: non-repeatable
- flush_delayed_work()...del_timer_wait_running() ATOMIC_SLEEP splat
-Message-ID: <20201102122325.pre6t4qo7bktrru2@linutronix.de>
-References: <20201030191853.raabwjou753fk4sh@linutronix.de>
- <17f055aad6788c17dbeb522f2cac4f8bb94f759b.camel@gmx.de>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=ZCMXIm1Yw7j8B5CvIsnr4WYnVLHEIx4rsvb/ca7dssY=;
+        b=Q1qkSN5F6G4GQY9nsz4hcYEr58ZGE+QTEpEkYq12neeJzWc6mNMSyX7UA6paZ38ajgLwrL
+        pKd2rm1oS6r2OuEgNfu4jfrhCk0vROqTyFvqSadGBfrtC3GhUhM93eJlXbK3fuhju05J3l
+        ej+AiKPpKB606qkAxRjoF+g0FEPSdfk=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-490-_J5sbszIPSe9HugLW-Angw-1; Mon, 02 Nov 2020 10:50:07 -0500
+X-MC-Unique: _J5sbszIPSe9HugLW-Angw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D4961009E23;
+        Mon,  2 Nov 2020 15:50:06 +0000 (UTC)
+Received: from dhcp-27-174.brq.redhat.com (unknown [10.40.195.8])
+        by smtp.corp.redhat.com (Postfix) with SMTP id 0CC4E6EF73;
+        Mon,  2 Nov 2020 15:50:02 +0000 (UTC)
+Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
+        oleg@redhat.com; Mon,  2 Nov 2020 16:50:05 +0100 (CET)
+Date:   Mon, 2 Nov 2020 16:50:01 +0100
+From:   Oleg Nesterov <oleg@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Cc:     Alexander Fyodorov <halcy@yandex.ru>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org
+Subject: [PATCH] ptrace: fix ptrace_unfreeze_traced() race with rt-lock
+Message-ID: <20201102155001.GA18313@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <17f055aad6788c17dbeb522f2cac4f8bb94f759b.camel@gmx.de>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-11-01 06:23:50 [+0100], Mike Galbraith wrote:
-> Apparently, timer ain't ever supposed to be running when you get there
-> via flush_delayed_work(), but it was.
+The commit 6362e6476cd7 ("ptrace: fix ptrace vs tasklist_lock race")
+changed ptrace_freeze_traced() to take task->saved_state into account,
+but ptrace_unfreeze_traced() has the same problem and needs a similar
+fix: it should check/update both ->state and ->saved_state.
 
-The first hunk will always trigger the warning and not just if the
-slow/wait path is really used. The second part should fix it.
+Reported-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+Fixes: 6362e6476cd7 ("ptrace: fix ptrace vs tasklist_lock race")
+Signed-off-by: Oleg Nesterov <oleg@redhat.com>
+---
+ kernel/ptrace.c | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
 
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 7edc9fba34bbd..696bb88d15db2 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1372,6 +1372,13 @@ int del_timer_sync(struct timer_list *timer)
- 	 */
- 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 3075006d720e..7e004f998233 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -197,8 +197,7 @@ static bool ptrace_freeze_traced(struct task_struct *task)
  
-+	/*
-+	 * Can not be used with disabled interrupts on PREEMPT_RT because
-+	 * del_timer_wait_running() sleeps.
-+	 */
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-+		WARN_ON(irqs_disabled());
-+
- 	do {
- 		ret = try_to_del_timer_sync(timer);
- 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index c71da2a59e127..1ca03051a949f 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -3187,10 +3187,11 @@ EXPORT_SYMBOL_GPL(cancel_work_sync);
-  */
- bool flush_delayed_work(struct delayed_work *dwork)
+ static void ptrace_unfreeze_traced(struct task_struct *task)
  {
--	local_irq_disable();
--	if (del_timer_sync(&dwork->timer))
-+	if (del_timer_sync(&dwork->timer)) {
-+		local_irq_disable();
- 		__queue_work(dwork->cpu, dwork->wq, &dwork->work);
--	local_irq_enable();
-+		local_irq_enable();
-+	}
- 	return flush_work(&dwork->work);
+-	if (task->state != __TASK_TRACED)
+-		return;
++	bool frozen = true;
+ 
+ 	WARN_ON(!task->ptrace || task->parent != current);
+ 
+@@ -207,12 +206,19 @@ static void ptrace_unfreeze_traced(struct task_struct *task)
+ 	 * Recheck state under the lock to close this race.
+ 	 */
+ 	spin_lock_irq(&task->sighand->siglock);
+-	if (task->state == __TASK_TRACED) {
+-		if (__fatal_signal_pending(task))
+-			wake_up_state(task, __TASK_TRACED);
+-		else
+-			task->state = TASK_TRACED;
+-	}
++
++	raw_spin_lock(&task->pi_lock);
++	if (task->state == __TASK_TRACED)
++		task->state = TASK_TRACED;
++	else if (task->saved_state == __TASK_TRACED)
++		task->saved_state = TASK_TRACED;
++	else
++		frozen = false;
++	raw_spin_unlock(&task->pi_lock);
++
++	if (frozen && __fatal_signal_pending(task))
++		wake_up_state(task, __TASK_TRACED);
++
+ 	spin_unlock_irq(&task->sighand->siglock);
  }
- EXPORT_SYMBOL(flush_delayed_work);
+ 
+-- 
+2.25.1.362.g51ebf55
 
-Sebastian
+
