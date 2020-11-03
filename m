@@ -2,80 +2,116 @@ Return-Path: <SRS0=UrLp=EJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
+X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9AC74C388F2
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 00:07:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B9FDC2D0A3
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 11:38:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5C51F22268
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 00:07:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B16B2216C4
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 11:37:59 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ODAH/K+P"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727227AbgKCAHQ (ORCPT
+        id S1728536AbgKCLh7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 Nov 2020 19:07:16 -0500
-Received: from mail.kernel.org ([198.145.29.99]:38542 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725910AbgKCAHP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Nov 2020 19:07:15 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Tue, 3 Nov 2020 06:37:59 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:20614 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1728512AbgKCLh7 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 3 Nov 2020 06:37:59 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1604403477;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=2vIP5e0ifEcHU2LWKix5dpKLX0JnnHF8NJWqpXR4zio=;
+        b=ODAH/K+PMHCsZS7qWdpTs9oUadEO1PNRteCCBEsl2pSVbraP5HhvX0hqzJ9cq7py1JSXYa
+        rNShQvqqPbWteUzw6YXCWeRifz5wV9HcER7VfFZhYBsfCNZ5WFFgXieqrrG1ZdDVgDD7oe
+        17dycdEt8EiHEdy71MzNg3LAwgvgPvk=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-307-df7isMlCMUa62MeR45LGXg-1; Tue, 03 Nov 2020 06:37:54 -0500
+X-MC-Unique: df7isMlCMUa62MeR45LGXg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id C972A21556;
-        Tue,  3 Nov 2020 00:07:14 +0000 (UTC)
-Date:   Mon, 2 Nov 2020 19:07:12 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 16DC01009E27;
+        Tue,  3 Nov 2020 11:37:53 +0000 (UTC)
+Received: from dhcp-27-174.brq.redhat.com (unknown [10.40.195.6])
+        by smtp.corp.redhat.com (Postfix) with SMTP id C81CE5B4B6;
+        Tue,  3 Nov 2020 11:37:50 +0000 (UTC)
+Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
+        oleg@redhat.com; Tue,  3 Nov 2020 12:37:52 +0100 (CET)
+Date:   Tue, 3 Nov 2020 12:37:49 +0100
+From:   Oleg Nesterov <oleg@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [ANNOUNCE] 5.4.74-rt41
-Message-ID: <20201102190712.0aef3a8b@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        Alexander Fyodorov <halcy@yandex.ru>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] ptrace: fix ptrace_unfreeze_traced() race with rt-lock
+Message-ID: <20201103113748.GA23992@redhat.com>
+References: <20201102155001.GA18313@redhat.com>
+ <20201102174241.7llgokeh6cjzb7d3@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20201102174241.7llgokeh6cjzb7d3@linutronix.de>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 11/02, Sebastian Andrzej Siewior wrote:
+>
+> On 2020-11-02 16:50:01 [+0100], Oleg Nesterov wrote:
+> >
+> >  static void ptrace_unfreeze_traced(struct task_struct *task)
+> >  {
+> > -	if (task->state != __TASK_TRACED)
+> > -		return;
+> > +	bool frozen = true;
+>
+> Is this okay for !PREEMPT_RT or is this considered as an important
+> fast-path on !PREEMPT_RT?
 
-Dear RT Folks,
+I do not know how can ptrace_unfreeze_traced() check both ->state and
+->saved_state lockless.
 
-I'm pleased to announce the 5.4.74-rt41 stable release.
+If it is possible then task_is_traced() can avoid pi_lock too?
 
+> >  	WARN_ON(!task->ptrace || task->parent != current);
+> >
+> > @@ -207,12 +206,19 @@ static void ptrace_unfreeze_traced(struct task_struct *task)
+> >  	 * Recheck state under the lock to close this race.
+> >  	 */
+> >  	spin_lock_irq(&task->sighand->siglock);
+> > -	if (task->state == __TASK_TRACED) {
+> > -		if (__fatal_signal_pending(task))
+> > -			wake_up_state(task, __TASK_TRACED);
+> > -		else
+> > -			task->state = TASK_TRACED;
+> > -	}
+> > +
+> > +	raw_spin_lock(&task->pi_lock);
+>
+> I think this got mentioned in the other emails but this requires irqsave
+> because the above (siglock) does not disable interrupts on RT.
 
-This release is just an update to the new stable 5.4.74 version
-and no RT specific changes have been made.
+OK, I'll send V2 in a minute.
 
+> This `saved_state' is only used for RT so it might make sense to avoid
+> the PI-lock on non-RT.
 
-You can get this release via the git tree at:
+The same is true for ptrace_freeze_traced(), we can probably add ifdef's
+but I am not sure this makes sense...
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.4-rt
-  Head SHA1: ececbcd21adb867ae0aa40bef28d1bdb76639bed
-
-
-Or to build 5.4.74-rt41 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.74.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.74-rt41.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+Oleg.
 
