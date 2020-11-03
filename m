@@ -2,47 +2,51 @@ Return-Path: <SRS0=UrLp=EJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0AB39C2D0A3
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 16:45:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C3A5BC2D0A3
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 17:01:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A9FD62064C
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 16:45:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 584722074F
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Nov 2020 17:01:44 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="W8ExDg+V";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Ozu2f61X"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="T4NZ2pKh";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="55XGgogR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728553AbgKCQpt (ORCPT
+        id S1727971AbgKCRBn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Nov 2020 11:45:49 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:43280 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727470AbgKCQpt (ORCPT
+        Tue, 3 Nov 2020 12:01:43 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42942 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727706AbgKCRBn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 Nov 2020 11:45:49 -0500
-Date:   Tue, 3 Nov 2020 17:45:45 +0100
+        Tue, 3 Nov 2020 12:01:43 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2435C0613D1
+        for <linux-rt-users@vger.kernel.org>; Tue,  3 Nov 2020 09:01:43 -0800 (PST)
+Date:   Tue, 3 Nov 2020 18:01:40 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1604421947;
+        s=2020; t=1604422902;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=cHozy6g5LYXQ08RrRgJQLNAo8l13nP3TaZlZgwSotpk=;
-        b=W8ExDg+Vblrt8yH1pzCu2iJeV8QvJkE4hc1SwIWlPb9irenOOl+fBjpbq87sEfEEZCs/KX
-        Sx8Y8pBr3eCvbA93NBn9QsY6Jt30tOHTNe5XioFHe1Vm6Gb2UtZo9vAFYSIsZq8MyUWVrY
-        v3Px+xCKH+1hKfM+luj8Ywz8UL2UTIvdi2Cy0qzMaz0lhtM8l7erkVD0VFBarNfrLfEp8k
-        wPPbFb6aD7gjq39IsIPTy74wgmDdnWnBHWr/qYnVAESmiByBFbPA3PnH1bWJi503+ulVqA
-        P6dkRUKLH2ncw+lYvC/N0/uAw0KsbNdI+Lg013TiLBOV+AJjPOKCJV6j8i8a8g==
+        bh=ePJ8OysAq1ytcO0K6uJS+nC3huuCCUp0jrSWt39vphA=;
+        b=T4NZ2pKhOHG4ChHD/VtN8m1ch9y+/jC98NT/U6Y2J2KNCKFlstNazm9CCSRSODSjk8O0sz
+        AhWElxrMlbdJaztYGQXOvNvrOnXx/Ju8s/JkBSan0FEMQYe4Kus4lBCKOu4WKNgrS2biCQ
+        KvPI7Py0UhX7YluiQoTSlrro9b60ptCZJrU6ZVlyrSQPEZm35V6jGNyLwJ5QzZwlGNv2/s
+        qbiEAODK1JHmnkL31pKDKE/kspdUze1hR3ELUMtz8+vHc+R811yCvSy/xvMrk3Gmm0lBbX
+        REZw+k7NduVOphZtMeRGxQEmMTV/MKeiaQ2CPXzycVv5I7qrfezcNIj1sbIOPA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1604421947;
+        s=2020e; t=1604422902;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=cHozy6g5LYXQ08RrRgJQLNAo8l13nP3TaZlZgwSotpk=;
-        b=Ozu2f61XzUaiCOubLbvLCyNdM48bDv86oaMMkBmerVIJMgP0/lgst06S4EQln4LEDzltRo
-        QmuBMc3rzZNpq/Cg==
+        bh=ePJ8OysAq1ytcO0K6uJS+nC3huuCCUp0jrSWt39vphA=;
+        b=55XGgogRwR1rKumbfTV5wXizQwmnQWv13PrpekjtAUg72Tk5iyQZAiv6kKy03j3GAn+Oxe
+        +peVB0JKzgEXrYAw==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Oleg Nesterov <oleg@redhat.com>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
@@ -51,51 +55,28 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
         Steven Rostedt <rostedt@goodmis.org>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] ptrace: fix ptrace_unfreeze_traced() race with rt-lock
-Message-ID: <20201103164545.l3anns65zp2mxajz@linutronix.de>
+Subject: Re: [PATCH v2] ptrace: fix ptrace_unfreeze_traced() race with rt-lock
+Message-ID: <20201103170140.hnrxoq4cumjlbhj5@linutronix.de>
 References: <20201102155001.GA18313@redhat.com>
- <20201102174241.7llgokeh6cjzb7d3@linutronix.de>
- <20201103113748.GA23992@redhat.com>
+ <20201103113901.GA29800@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20201103113748.GA23992@redhat.com>
+In-Reply-To: <20201103113901.GA29800@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-11-03 12:37:49 [+0100], Oleg Nesterov wrote:
-> On 11/02, Sebastian Andrzej Siewior wrote:
-> >
-> > On 2020-11-02 16:50:01 [+0100], Oleg Nesterov wrote:
-> > >
-> > >  static void ptrace_unfreeze_traced(struct task_struct *task)
-> > >  {
-> > > -	if (task->state != __TASK_TRACED)
-> > > -		return;
-> > > +	bool frozen = true;
-> >
-> > Is this okay for !PREEMPT_RT or is this considered as an important
-> > fast-path on !PREEMPT_RT?
+On 2020-11-03 12:39:01 [+0100], Oleg Nesterov wrote:
+> The commit 6362e6476cd7 ("ptrace: fix ptrace vs tasklist_lock race")
+> changed ptrace_freeze_traced() to take task->saved_state into account,
+> but ptrace_unfreeze_traced() has the same problem and needs a similar
+> fix: it should check/update both ->state and ->saved_state.
 > 
-> I do not know how can ptrace_unfreeze_traced() check both ->state and
-> ->saved_state lockless.
-> 
-> If it is possible then task_is_traced() can avoid pi_lock too?
+> Reported-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+> Fixes: 6362e6476cd7 ("ptrace: fix ptrace vs tasklist_lock race")
+> Signed-off-by: Oleg Nesterov <oleg@redhat.com>
 
-Now we can't. That lock is the only thing that guarantees consistent
-state.
-
-> OK, I'll send V2 in a minute.
-> 
-> > This `saved_state' is only used for RT so it might make sense to avoid
-> > the PI-lock on non-RT.
-> 
-> The same is true for ptrace_freeze_traced(), we can probably add ifdef's
-> but I am not sure this makes sense...
-
-Okay. Then we keep it as it for now.
-
-> Oleg.
+Applied, thank you.
 
 Sebastian
