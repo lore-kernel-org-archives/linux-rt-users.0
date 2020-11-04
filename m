@@ -2,129 +2,140 @@ Return-Path: <SRS0=gcb+=EK=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96AE2C55178
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 19:15:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8256C2D0A3
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 21:55:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4F42F206ED
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 19:15:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 86BC320780
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 21:55:56 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FJ+dUpr9"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731432AbgKDTPe (ORCPT
+        id S1731707AbgKDVzz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Nov 2020 14:15:34 -0500
-Received: from mail-wm1-f66.google.com ([209.85.128.66]:40364 "EHLO
-        mail-wm1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726564AbgKDTPe (ORCPT
+        Wed, 4 Nov 2020 16:55:55 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:42648 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729913AbgKDVzz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Nov 2020 14:15:34 -0500
-Received: by mail-wm1-f66.google.com with SMTP id k18so3364280wmj.5;
-        Wed, 04 Nov 2020 11:15:32 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=7v8XNWb378ZY/CjlNvIn/30UioBbrTjZQwuMGRkG3IQ=;
-        b=EWmns0/p6rhEnpxVmtUx4KY5rW8XtODDRB55Fd5q7SgcHF3xz7otJDvpCHoAqDOLKF
-         swHbrN4ZQUlrbo98SFAZx9RQDB7VdgM0F+dpJQLD4fHUVXTpKDirSDRjN2ewKTqQac2P
-         jHmyAuyBK3ylKJM4LgUxNlP173qIRfmp3UmyhGPlD3vU9PNs4Z+FK7eh19mlLaqtfJPf
-         XNz/nngtLHa8OVa45Tw/4LljEGorm32t2kwt7OnI6jnsE0CxGtD3t3pXyd4LEO6f7ofC
-         FLBMTkXYyqVpUHPL6oCLiVEyUODdBzjr0E0VFLtQ3HsR0Zk74bBapgN7O2KPayBLPpGS
-         LOdA==
-X-Gm-Message-State: AOAM530ZfGKKitBoUYHSQ5cmYJbuyZRl5cLhRi4UTHHG3+leqmQGBGdw
-        uTMwU3rBKHuRHlLlCyNY0Hk=
-X-Google-Smtp-Source: ABdhPJy+GUA1BUDCh53c1vQmUq/aXWgRuLFUU/fJOZ4/aRRtmTCr4ULfvetun6jIKGJqh/QpJQq0wg==
-X-Received: by 2002:a1c:3103:: with SMTP id x3mr6148797wmx.107.1604517331370;
-        Wed, 04 Nov 2020 11:15:31 -0800 (PST)
-Received: from ?IPv6:2601:647:4802:9070:f032:e586:d54c:b9cb? ([2601:647:4802:9070:f032:e586:d54c:b9cb])
-        by smtp.gmail.com with ESMTPSA id n4sm3498536wmi.32.2020.11.04.11.15.28
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 04 Nov 2020 11:15:30 -0800 (PST)
-Subject: Re: [PATCH 3/3] blk-mq: Use llist_head for blk_cpu_done
-To:     Christoph Hellwig <hch@infradead.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Daniel Wagner <dwagner@suse.de>, Mike Galbraith <efault@gmx.de>
-References: <20201029131212.dsulzvsb6pahahbs@linutronix.de>
- <20201029140536.GA6376@infradead.org>
- <20201029145623.3zry7o6nh6ks5tjj@linutronix.de>
- <20201029145743.GA19379@infradead.org>
- <d2c15411-5b21-535b-6e07-331ebe22f8c8@grimberg.me>
- <20201029210103.ocufuvj6i4idf5hj@linutronix.de>
- <deb40e55-d228-06c8-8719-fc8657a0a19b@grimberg.me>
- <20201031104108.wjjdiklqrgyqmj54@linutronix.de>
- <3bbfb5e1-c5d7-8f3b-4b96-6dc02be0550d@kernel.dk>
- <20201102095533.fxc2xpauzsoju7cm@linutronix.de>
- <20201102181238.GA17806@infradead.org>
-From:   Sagi Grimberg <sagi@grimberg.me>
-Message-ID: <75970f9d-7e59-5fba-280a-d0d935fc4d2f@grimberg.me>
-Date:   Wed, 4 Nov 2020 11:15:27 -0800
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        Wed, 4 Nov 2020 16:55:55 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1604526954;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=P4sJ1+ZFRDoRh1U2ROR74/zRv5gNE//jc/8rF+RAwWg=;
+        b=FJ+dUpr9JiWvpZGiF/qgOyH/6/B2g4yE5hsUa8m/qEAbpSryOwXchemOfSOK8XA2wY+NF1
+        rMndB2gmhywtIdET7TMpD0+/EczH4RPWRdDtudDph/xSIeiqobXGYqNqFHuOCRLuqmhF71
+        urWIOjevxETE1QBteUF/TFHdGjZij6Y=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-17-UB1VdKnjNiWU-N4Q_4y_jg-1; Wed, 04 Nov 2020 16:55:52 -0500
+X-MC-Unique: UB1VdKnjNiWU-N4Q_4y_jg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DEFFF10054FF;
+        Wed,  4 Nov 2020 21:55:50 +0000 (UTC)
+Received: from theseus.lan (ovpn-118-74.rdu2.redhat.com [10.10.118.74])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 52C9E5D98F;
+        Wed,  4 Nov 2020 21:55:50 +0000 (UTC)
+Date:   Wed, 4 Nov 2020 15:55:43 -0600
+From:   Clark Williams <williams@redhat.com>
+To:     "Brown, Thomas" <thomas_brown@mentor.com>
+Cc:     <jkacur@redhat.com>, <linux-rt-users@vger.kernel.org>
+Subject: Re: Problems with the priority flag for signaltest and sigwaittest
+Message-ID: <20201104155543.7e4b3668@theseus.lan>
+In-Reply-To: <e2dc04e9-f465-972d-9140-c20dc6adf0bc@mentor.com>
+References: <e2dc04e9-f465-972d-9140-c20dc6adf0bc@mentor.com>
+Organization: Red Hat, Inc
 MIME-Version: 1.0
-In-Reply-To: <20201102181238.GA17806@infradead.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=williams@redhat.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/signed; boundary="Sig_/RkYcGjKqbKAKxU6SVh=oX+G";
+ protocol="application/pgp-signature"; micalg=pgp-sha512
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+--Sig_/RkYcGjKqbKAKxU6SVh=oX+G
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
->>> There really aren't any rules for this, and it's perfectly legit to
->>> complete from process context. Maybe you're a kthread driven driver and
->>> that's how you handle completions. The block completion path has always
->>> been hard IRQ safe, but possible to call from anywhere.
->>
->> I'm not trying to put restrictions and forbidding completions from a
->> kthread. I'm trying to avoid the pointless softirq dance for no added
->> value. We could:
-> 
->> to not break that assumption you just mentioned and provide
->> |static inline void blk_mq_complete_request_local(struct request *rq)
->> |{
->> |                 rq->q->mq_ops->complete(rq);
->> |}
->>
->> so that completion issued from from process context (like those from
->> usb-storage) don't end up waking `ksoftird' (running at SCHED_OTHER)
->> completing the requests but rather performing it right away. The softirq
->> dance makes no sense here.
-> 
-> Agreed.  But I don't think your above blk_mq_complete_request_local
-> is all that useful either as ->complete is defined by the caller,
-> so we could just do a direct call.  Basically we should just
-> return false from blk_mq_complete_request_remote after updating
-> the state when called from process context.
+On Wed, 4 Nov 2020 10:54:23 -0500
+"Brown, Thomas" <thomas_brown@mentor.com> wrote:
 
-Agreed.
+> Hi there,
+>=20
+> We are experiencing issues with the priority flag set for the following=
+=20
+> tests on separate platforms...
+>=20
+> signaltest -p99 -l100000 t4
+>=20
+> |sigwaittest -p80 -t4 -l100000|
+>=20
+> In the first case it appeared when debugging with gdb that a thread was=
+=20
+> not joining or terminating properly and the kernel blows up=20
+> spectacularly with many oops and traces.
+>=20
 
-> But given that IIRC
-> we are not supposed to check what state we are called from
-> we'll need a helper just for updating the state instead and
-> ensure the driver uses the right helper.  Now of course we might
-> have process context callers that still want to bounce to the
-> submitting CPU, but in that case we should go directly to a
-> workqueue or similar.
+What architecture and kernel versions were you running on?
 
-This would mean that it may be suboptimal for nvme-tcp to complete
-requests in softirq context from the network context (determined by
-NIC steering). Because in this case, this would trigger workqueue
-schedule on a per-request basis rather than once per .data_ready
-call like we do today. Is that correct?
+> In the second case it is difficult to retrieve any debug information.
+>=20
 
-It has been observed that completing commands in softirq context
-(network determined cpu) because basically the completion does
-IPI + local complete, not IPI + softirq or IPI + workqueue.
+Were you running kernels and rt-tests binaries that you built or were you
+running distro provided images?=20
 
-> Either way doing this properly will probabl involve an audit of all
-> drivers, but I think that is worth it.
+By "difficult to retrieve any debug information" do you mean that you could=
+n't
+get debugging symbols or that gdb wouldn't show symbolic information?
 
-Agree.
+> Please let me know if there is any insight into these problems or if=20
+> there is a better contact for resolving these issues.
+>=20
+> --=20
+> Kind Regards,
+>=20
+> Thomas Brown
+>=20
+> Linux Developer
+> EPS PBU RT Solution Services
+>=20
+> 411 Leggett Drive
+> Suite 502
+> Kanata, ON, Canada
+> K2K 3C9
+>  =20
+> Tel: 613-963-1016
+> Fax: 613-599-1060
+>=20
+
+
+--=20
+The United States Coast Guard
+Ruining Natural Selection since 1790
+
+--Sig_/RkYcGjKqbKAKxU6SVh=oX+G
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQR0YdLf0YpOOtg8/Kl2UGrcL65k9wUCX6MjXwAKCRB2UGrcL65k
+9+dGAQDTKKhjH82DDbMI5lGgtTqnuQrg1MdOQAWPOjXZyPm1WwD/YgzzulQCzbWm
+CKb4piSBjDH2XDx33SNrzE1ojMMz8Qo=
+=0w3i
+-----END PGP SIGNATURE-----
+
+--Sig_/RkYcGjKqbKAKxU6SVh=oX+G--
+
