@@ -2,170 +2,129 @@ Return-Path: <SRS0=gcb+=EK=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.5 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 88EF1C388F9
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 16:50:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96AE2C55178
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 19:15:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 36D962074B
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 16:50:43 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="JWmfABcV"
+	by mail.kernel.org (Postfix) with ESMTP id 4F42F206ED
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 19:15:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731782AbgKDQul (ORCPT
+        id S1731432AbgKDTPe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Nov 2020 11:50:41 -0500
-Received: from mout.gmx.net ([212.227.15.19]:40677 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1731764AbgKDQuh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Nov 2020 11:50:37 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1604508621;
-        bh=a8xcy7k7OAoCLMxIFLMY6hOiExRZJifNzzJndA+GmOg=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=JWmfABcV59BaobLbCSH/Ii7sY46VaI7tVGY2o/FtObofBnaRvkzoFKpENp48SAeXG
-         tcmuGuo3Ch/sHxxjozD5zOxe3Wt07KkY86watpLWCrbpdwhfkf51uJBhms5z4fvINH
-         hv3+4M7yhmc8S32LIG6M6mmxjkfXQRejX3xmUWXk=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.221.148.80]) by mail.gmx.com (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1Mqb1W-1jwdSu3FhY-00mfL7; Wed, 04
- Nov 2020 17:50:20 +0100
-Message-ID: <3fa8a9a3e447b7216610b01a31310ef1f9f7cd69.camel@gmx.de>
-Subject: Re: [PATCH] futex: Handle transient "ownerless" rtmutex state
- correctly
-From:   Mike Galbraith <efault@gmx.de>
-To:     Thomas Gleixner <tglx@linutronix.de>,
-        Gratian Crisan <gratian.crisan@ni.com>,
-        Peter Zijlstra <peterz@infradead.org>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Brandon Streiff <brandon.streiff@ni.com>,
-        Ingo Molnar <mingo@redhat.com>,
-        Darren Hart <dvhart@infradead.org>,
-        James Minor <james.minor@ni.com>,
+        Wed, 4 Nov 2020 14:15:34 -0500
+Received: from mail-wm1-f66.google.com ([209.85.128.66]:40364 "EHLO
+        mail-wm1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726564AbgKDTPe (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 4 Nov 2020 14:15:34 -0500
+Received: by mail-wm1-f66.google.com with SMTP id k18so3364280wmj.5;
+        Wed, 04 Nov 2020 11:15:32 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=7v8XNWb378ZY/CjlNvIn/30UioBbrTjZQwuMGRkG3IQ=;
+        b=EWmns0/p6rhEnpxVmtUx4KY5rW8XtODDRB55Fd5q7SgcHF3xz7otJDvpCHoAqDOLKF
+         swHbrN4ZQUlrbo98SFAZx9RQDB7VdgM0F+dpJQLD4fHUVXTpKDirSDRjN2ewKTqQac2P
+         jHmyAuyBK3ylKJM4LgUxNlP173qIRfmp3UmyhGPlD3vU9PNs4Z+FK7eh19mlLaqtfJPf
+         XNz/nngtLHa8OVa45Tw/4LljEGorm32t2kwt7OnI6jnsE0CxGtD3t3pXyd4LEO6f7ofC
+         FLBMTkXYyqVpUHPL6oCLiVEyUODdBzjr0E0VFLtQ3HsR0Zk74bBapgN7O2KPayBLPpGS
+         LOdA==
+X-Gm-Message-State: AOAM530ZfGKKitBoUYHSQ5cmYJbuyZRl5cLhRi4UTHHG3+leqmQGBGdw
+        uTMwU3rBKHuRHlLlCyNY0Hk=
+X-Google-Smtp-Source: ABdhPJy+GUA1BUDCh53c1vQmUq/aXWgRuLFUU/fJOZ4/aRRtmTCr4ULfvetun6jIKGJqh/QpJQq0wg==
+X-Received: by 2002:a1c:3103:: with SMTP id x3mr6148797wmx.107.1604517331370;
+        Wed, 04 Nov 2020 11:15:31 -0800 (PST)
+Received: from ?IPv6:2601:647:4802:9070:f032:e586:d54c:b9cb? ([2601:647:4802:9070:f032:e586:d54c:b9cb])
+        by smtp.gmail.com with ESMTPSA id n4sm3498536wmi.32.2020.11.04.11.15.28
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 04 Nov 2020 11:15:30 -0800 (PST)
+Subject: Re: [PATCH 3/3] blk-mq: Use llist_head for blk_cpu_done
+To:     Christoph Hellwig <hch@infradead.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date:   Wed, 04 Nov 2020 17:50:20 +0100
-In-Reply-To: <87sg9pkvf7.fsf@nanos.tec.linutronix.de>
-References: <87a6w6x7bb.fsf@ni.com> <878sbixbk4.fsf@ni.com>
-         <2376f4e71c638aee215a4911e5efed14c5adf56e.camel@gmx.de>
-         <5f536491708682fc3b86cb5b7bc1e05ffa3521e7.camel@gmx.de>
-         <874km5mnbf.fsf@nanos.tec.linutronix.de>
-         <871rh9mkvr.fsf@nanos.tec.linutronix.de>
-         <87v9ell0cn.fsf@nanos.tec.linutronix.de>
-         <a9e88887c027b11596cd7fb96c425011c36e5d29.camel@gmx.de>
-         <87sg9pkvf7.fsf@nanos.tec.linutronix.de>
-Content-Type: text/plain; charset="ISO-8859-15"
-User-Agent: Evolution 3.34.4 
+Cc:     Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        David Runge <dave@sleepmap.de>, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Daniel Wagner <dwagner@suse.de>, Mike Galbraith <efault@gmx.de>
+References: <20201029131212.dsulzvsb6pahahbs@linutronix.de>
+ <20201029140536.GA6376@infradead.org>
+ <20201029145623.3zry7o6nh6ks5tjj@linutronix.de>
+ <20201029145743.GA19379@infradead.org>
+ <d2c15411-5b21-535b-6e07-331ebe22f8c8@grimberg.me>
+ <20201029210103.ocufuvj6i4idf5hj@linutronix.de>
+ <deb40e55-d228-06c8-8719-fc8657a0a19b@grimberg.me>
+ <20201031104108.wjjdiklqrgyqmj54@linutronix.de>
+ <3bbfb5e1-c5d7-8f3b-4b96-6dc02be0550d@kernel.dk>
+ <20201102095533.fxc2xpauzsoju7cm@linutronix.de>
+ <20201102181238.GA17806@infradead.org>
+From:   Sagi Grimberg <sagi@grimberg.me>
+Message-ID: <75970f9d-7e59-5fba-280a-d0d935fc4d2f@grimberg.me>
+Date:   Wed, 4 Nov 2020 11:15:27 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:3Be43IoHgozZduYyg8KHi8muOQYyFkuTJRKr0i/RHPxKSKfSoBf
- m3bTBvVKMjmNhYhf3/3d7S1DDc0rlrHwghYLNkKJDbF8851wFMB1gZPJvbGjycsYhwVJg28
- wtRp+ydPeJFbCVp8u0kiEfAQ/srw4AKlBDbRKO6aIdYC6N7c51590qV0EE5L918oYaWEQW1
- jnC+a4rG8LiGCz2+JUkSg==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:1H9IYpapMlk=:q6FZXjlHWnMei6TxINLLPF
- bpAu6HzneXJvdcb7wW1XXvpwFazNSZOHk0aUFpPJ/IrPyAzLn9vCmxBDtO6KbyMq++xmAoMr8
- c3k4ldRo38tTppJJ5685OgVes3wH7IeLLo7NCHQDknDTffJl2gryIqlpvz7ArN8EHVO/fAf7K
- RQ5nwav0x5/3AeurGEHusPenvdUFDq5jctyTZnKZyzuQ48nXLgZriaeIfvti9vqLvKA0q1JU/
- R8OuXWUPvVxsxuLN6278n7ODqDrupuRG7hQ0rKSOLHI3gxsk7zcXChx1aY+4Jm2AhMxVIngq5
- 7zFsUPhvjd6Zi5J30VcS7ok+3Bmr+vZeSgeqQFx9SiCNKqdFxTmbYFX/FqHk7KmLBR0c2wCDw
- gyRpJ5FN6pLXPQn02wPW3izgqLl71X7HYDDMvpAkFXbb+QojbMTtHv8eagmx1oc4jlkwvHHbn
- qczMlMOOVM0F3OYkqxyQKXc7ynzzOB27dAdpNMd11Kh+jGUMt2Sp1oRAq14tnR0sZjK/2MiWm
- arI647YNbElWmWxtXFSew4uCtoXsdyz8BkD/eBelbQzy36GNJ+BAv4TerQbN2gNVoWxo8L9Gm
- 5qlAqww4OGKal0Zq8YPwCqXDcMnOO4CRVLjbufJOciyHFtDrxuKv0Bvhurwp/zNlu5d+depjH
- YdoZDiPAqah4/Dql8L5Zz5VcdSn9ghB8fMSEpx4Zsmr89YlgVIMh4etDavXA8rh2YLQ2iG37B
- aequYpmWzCNYV5A/AU8a7VraCz2U2aFezD9q2DqSHLBNKlDlgOXsn5cmdt/naH7osQcHOR4Yw
- jXtSFhp5iYZKBlmrA0OiHODX7hT7HfHK86qAPh2Ialt9zodurU93B0N2I1DRdo1JeDt4RAB6U
- xfYQXiPLkzOYD+aKL4og==
+In-Reply-To: <20201102181238.GA17806@infradead.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 2020-11-04 at 16:12 +0100, Thomas Gleixner wrote:
-> From: Mike Galbraith <efault@gmx.de>
 
-Hrmph.  How about a suggested-by, or just take it.  That dinky diag hit
-the mark (not _entirely_ by accident, but..;) is irrelevant, you did
-all of the work to make it a patch.
+>>> There really aren't any rules for this, and it's perfectly legit to
+>>> complete from process context. Maybe you're a kthread driven driver and
+>>> that's how you handle completions. The block completion path has always
+>>> been hard IRQ safe, but possible to call from anywhere.
+>>
+>> I'm not trying to put restrictions and forbidding completions from a
+>> kthread. I'm trying to avoid the pointless softirq dance for no added
+>> value. We could:
+> 
+>> to not break that assumption you just mentioned and provide
+>> |static inline void blk_mq_complete_request_local(struct request *rq)
+>> |{
+>> |                 rq->q->mq_ops->complete(rq);
+>> |}
+>>
+>> so that completion issued from from process context (like those from
+>> usb-storage) don't end up waking `ksoftird' (running at SCHED_OTHER)
+>> completing the requests but rather performing it right away. The softirq
+>> dance makes no sense here.
+> 
+> Agreed.  But I don't think your above blk_mq_complete_request_local
+> is all that useful either as ->complete is defined by the caller,
+> so we could just do a direct call.  Basically we should just
+> return false from blk_mq_complete_request_remote after updating
+> the state when called from process context.
 
-	-Mike
+Agreed.
 
-> Gratian managed to trigger the BUG_ON(!newowner) in fixup_pi_state_owner=
-().
-> This is one possible chain of events leading to this:
->
-> Task Prio       Operation
-> T1   120	lock(F)
-> T2   120	lock(F)   -> blocks (top waiter)
-> T3   50 (RT)	lock(F)   -> boosts T3 and blocks (new top waiter)
-> XX   		timeout/  -> wakes T2
-> 		signal
-> T1   50		unlock(F) -> wakes T3 (rtmutex->owner =3D=3D NULL, waiter bit i=
-s set)
-> T2   120	cleanup   -> try_to_take_mutex() fails because T3 is the top wa=
-iter
->      			     and the lower priority T2 cannot steal the lock.
->      			  -> fixup_pi_state_owner() sees newowner =3D=3D NULL -> BUG_ON(=
-)
->
-> The comment states that this is invalid and rt_mutex_real_owner() must
-> return a non NULL owner when the trylock failed, but in case of a queued
-> and woken up waiter rt_mutex_real_owner() =3D=3D NULL is a valid transie=
-nt
-> state. The higher priority waiter has simply not yet managed to take ove=
-r
-> the rtmutex.
->
-> The BUG_ON() is therefore wrong and this is just another retry condition=
- in
-> fixup_pi_state_owner().
->
-> Drop the locks, so that T3 can make progress, and then try the fixup aga=
-in.
->
-> Gratian provided a great analysis, traces and a reproducer. The analysis=
- is
-> to the point, but it confused the hell out of that tglx dude who had to
-> page in all the futex horrors again. Condensed version is above.
->
-> [ tglx: Wrote comment and changelog ]
->
-> Fixes: c1e2f0eaf015 ("futex: Avoid violating the 10th rule of futex")
-> Reported-by: Gratian Crisan <gratian.crisan@ni.com>
-> Signed-off-by: Mike Galbraith <efault@gmx.de>
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Cc: stable@vger.kernel.org
-> Link: https://lore.kernel.org/r/87a6w6x7bb.fsf@ni.com
-> ---
->  kernel/futex.c |   16 ++++++++++++++--
->  1 file changed, 14 insertions(+), 2 deletions(-)
->
-> --- a/kernel/futex.c
-> +++ b/kernel/futex.c
-> @@ -2380,10 +2380,22 @@ static int fixup_pi_state_owner(u32 __us
->  		}
->
->  		/*
-> -		 * Since we just failed the trylock; there must be an owner.
-> +		 * The trylock just failed, so either there is an owner or
-> +		 * there is a higher priority waiter than this one.
->  		 */
->  		newowner =3D rt_mutex_owner(&pi_state->pi_mutex);
-> -		BUG_ON(!newowner);
-> +		/*
-> +		 * If the higher priority waiter has not yet taken over the
-> +		 * rtmutex then newowner is NULL. We can't return here with
-> +		 * that state because it's inconsistent vs. the user space
-> +		 * state. So drop the locks and try again. It's a valid
-> +		 * situation and not any different from the other retry
-> +		 * conditions.
-> +		 */
-> +		if (unlikely(!newowner)) {
-> +			ret =3D -EAGAIN;
-> +			goto handle_err;
-> +		}
->  	} else {
->  		WARN_ON_ONCE(argowner !=3D current);
->  		if (oldowner =3D=3D current) {
+> But given that IIRC
+> we are not supposed to check what state we are called from
+> we'll need a helper just for updating the state instead and
+> ensure the driver uses the right helper.  Now of course we might
+> have process context callers that still want to bounce to the
+> submitting CPU, but in that case we should go directly to a
+> workqueue or similar.
 
+This would mean that it may be suboptimal for nvme-tcp to complete
+requests in softirq context from the network context (determined by
+NIC steering). Because in this case, this would trigger workqueue
+schedule on a per-request basis rather than once per .data_ready
+call like we do today. Is that correct?
+
+It has been observed that completing commands in softirq context
+(network determined cpu) because basically the completion does
+IPI + local complete, not IPI + softirq or IPI + workqueue.
+
+> Either way doing this properly will probabl involve an audit of all
+> drivers, but I think that is worth it.
+
+Agree.
