@@ -2,52 +2,49 @@ Return-Path: <SRS0=gcb+=EK=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5C81AC388F7
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 10:00:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AC9E4C388F7
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 10:26:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EA3122244C
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 10:00:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 537812065E
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Nov 2020 10:26:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="nhnktz3P";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="82Ck8bCS"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="iAyysEd2";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="aLraScZg"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728052AbgKDKAw (ORCPT
+        id S1729297AbgKDK0R (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Nov 2020 05:00:52 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59540 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726434AbgKDKAv (ORCPT
+        Wed, 4 Nov 2020 05:26:17 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:48404 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726410AbgKDKYy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Nov 2020 05:00:51 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6C04FC0613D3;
-        Wed,  4 Nov 2020 02:00:51 -0800 (PST)
+        Wed, 4 Nov 2020 05:24:54 -0500
 From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1604484049;
+        s=2020; t=1604485493;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Q22pwsM6Tj1e0wp7DHmM0yF6sfQnnx66IYQwrUyKPjs=;
-        b=nhnktz3P0gZM+rjMsMcZ5kltHAUM1F/6Dr0BKbAhD98nRv8KkAk9f5fITxx9tES7cDs7Zo
-        0HVDtox5v/Ax0X/+zpDYO4a+52EFP+79sPTLAdgXaZrrCf0lHxWNCV9KFPN0P3//0CgVJ5
-        0pLWEgWC091auw2dWcqKwSBN3XLoBBNrbL2Y4oLc7DGtIgmehR8AiRj2nvVMiP/moTCzKf
-        CsfhBJztAqM705AR9We4UzIxpOJJSWDDsMhSi3cYWwObOysrOVAGpPXmfoPoi797El2H5l
-        dpUqVrIQF6ynua8arqZz9THL6wHGQd+L/9NNKPNof6IYMt97ratAOInnVCGsDw==
+        bh=QF7gOMWfQDZgYKl8HMctCKSmJoXxRmC5ydZKdzt45/I=;
+        b=iAyysEd2Z5k1ZT91y/zLech4NG6DuvCEWaYRM5oB3PUnOI08agh5Lt8Z1edtUyJIL3WJqa
+        +pP/3rDBuyG9A3wAcad8ZGQK+uYdgpHY1dC/dJkr01QlReTMv48nPaKexn/LGcVlDLLOSF
+        dOYMIt1LcBhltGf0BXnrRgSCxLWFx6RiOODHLKCSofy28/mvYvuGsZry4SiXxy+JvnMl+b
+        sYe+Kq2XdZHrfpXFy4l0uorgezpJbG8WNb5e1iAgN5Ui5WQVFdfG5vwjK+ak/SVDlR5dy+
+        /OMFUDju+zJI+x2tHSc8ajC336KvWvcp8PsSJXWV2EMLlMoh+rnAbxP+aPzA5g==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1604484049;
+        s=2020e; t=1604485493;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Q22pwsM6Tj1e0wp7DHmM0yF6sfQnnx66IYQwrUyKPjs=;
-        b=82Ck8bCSuZedBxpRO91qHX94plmSW0hsbkBVa9zsfns3HU/kYX6O035x5SGqQmTGGqcFfc
-        DUjrle6GW7oODMBQ==
-To:     Gratian Crisan <gratian.crisan@ni.com>,
+        bh=QF7gOMWfQDZgYKl8HMctCKSmJoXxRmC5ydZKdzt45/I=;
+        b=aLraScZgkWsVIFnZXILsnEAOiqFRSIC3DgMrnzRtPqWpbl5PAy0FtBlncddV4j+/KAcnG2
+        pvsU2Sq6YtqYp1Ag==
+To:     Mike Galbraith <efault@gmx.de>,
+        Gratian Crisan <gratian.crisan@ni.com>,
         Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Brandon Streiff <brandon.streiff@ni.com>,
@@ -56,34 +53,37 @@ Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         James Minor <james.minor@ni.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: BUG_ON(!newowner) in fixup_pi_state_owner()
-In-Reply-To: <878sbixbk4.fsf@ni.com>
-References: <87a6w6x7bb.fsf@ni.com> <878sbixbk4.fsf@ni.com>
-Date:   Wed, 04 Nov 2020 11:00:49 +0100
-Message-ID: <877dr1mofi.fsf@nanos.tec.linutronix.de>
+In-Reply-To: <5f536491708682fc3b86cb5b7bc1e05ffa3521e7.camel@gmx.de>
+References: <87a6w6x7bb.fsf@ni.com> <878sbixbk4.fsf@ni.com> <2376f4e71c638aee215a4911e5efed14c5adf56e.camel@gmx.de> <5f536491708682fc3b86cb5b7bc1e05ffa3521e7.camel@gmx.de>
+Date:   Wed, 04 Nov 2020 11:24:52 +0100
+Message-ID: <874km5mnbf.fsf@nanos.tec.linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Nov 03 2020 at 17:31, Gratian Crisan wrote:
-> I apologize for waking up the futex demons (and replying to my own
-> email), but ...
+On Wed, Nov 04 2020 at 08:42, Mike Galbraith wrote:
+> On Wed, 2020-11-04 at 01:56 +0100, Mike Galbraith wrote:
+> --- a/kernel/futex.c
+> +++ b/kernel/futex.c
+> @@ -2383,7 +2383,18 @@ static int fixup_pi_state_owner(u32 __us
+>  		 * Since we just failed the trylock; there must be an owner.
+>  		 */
+>  		newowner = rt_mutex_owner(&pi_state->pi_mutex);
+> -		BUG_ON(!newowner);
+> +
+> +		/*
+> +		 * Why? Because I know what I'm doing with these beasts?  Nope,
+> +		 * but what the hell, a busy restart loop let f_boosted become
+> +		 * owner, so go for it. Box still boots, works, no longer makes
+> +		 * boom with fbomb_v2, and as an added bonus, didn't even blow
+> +		 * futextests all up.  Maybe it'll help... or not, we'll see.
+> +		 */
+> +		if (unlikely(!newowner)) {
+> +			err = -EAGAIN;
+> +			goto handle_err;
 
-I was staring at it already but couldn't wrap my head around it.
+Yes, that cures it, but does not really explain why newowner is
+NULL. Lemme stare more.
 
-> Gratian Crisan writes:
-> I was able to reproduce the BUG_ON(!newowner) in fixup_pi_state_owner()
-> with a 5.10.0-rc1-rt1 kernel (currently testing 5.10.0-rc2-rt4).
->
-> I've captured the reproducer, boot messages, OOPS, full event ftrace
-> dump and some kgdb info here: https://github.com/gratian/traces
->
-> The abbreviated OOPS (w/o the ftrace dump since it's too large to
-> include inline; see link[1]):
-
-Let me start at that then.
-
-Thanks,
-
-        tglx
