@@ -1,71 +1,113 @@
-Return-Path: <SRS0=4Q8Q=EM=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=wP7i=EN=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 98B60C2D0A3
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Nov 2020 21:55:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87803C2D0A3
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Nov 2020 02:07:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 51DC020B1F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Nov 2020 21:55:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 47650221F7
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Nov 2020 02:07:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728725AbgKFVzn (ORCPT
+        id S1728506AbgKGCHb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Nov 2020 16:55:43 -0500
-Received: from mail.kernel.org ([198.145.29.99]:34680 "EHLO mail.kernel.org"
+        Fri, 6 Nov 2020 21:07:31 -0500
+Received: from mail.kernel.org ([198.145.29.99]:49874 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728365AbgKFVzm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Nov 2020 16:55:42 -0500
-Received: from localhost (173-25-40-8.client.mchsi.com [173.25.40.8])
+        id S1728464AbgKGCHa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Nov 2020 21:07:30 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 13C302087E;
-        Fri,  6 Nov 2020 21:55:41 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.9.241-rt156
-Date:   Fri, 06 Nov 2020 21:54:45 -0000
-Message-ID: <160469968555.378872.1033171824400902431@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        by mail.kernel.org (Postfix) with ESMTPSA id E63A0217A0;
+        Sat,  7 Nov 2020 02:07:29 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.94)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1kbDdY-007lwv-I3; Fri, 06 Nov 2020 21:07:28 -0500
+Message-ID: <20201107020728.408229413@goodmis.org>
+User-Agent: quilt/0.66
+Date:   Fri, 06 Nov 2020 21:06:41 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        Mike Galbraith <efault@gmx.de>, stable-rt@vger.kernel.org
+Subject: [PATCH RT 5/6] timers: Dont block on ->expiry_lock for TIMER_IRQSAFE
+References: <20201107020636.598338441@goodmis.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+5.4.74-rt42-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-I'm pleased to announce the 4.9.241-rt156 stable release.
+------------------
 
-You can get this release via the git tree at:
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+PREEMPT_RT does not spin and wait until a running timer completes its
+callback but instead it blocks on a sleeping lock to prevent a deadlock.
 
-  branch: v4.9-rt
-  Head SHA1: a6dd7b8abd36091f06bc6a65e40f41d7dc6a5997
+This blocking can not be done for workqueue's IRQ_SAFE timer which will
+be canceled in an IRQ-off region. It has to happen to in IRQ-off region
+because changing the PENDING bit and clearing the timer must not be
+interrupted to avoid a busy-loop.
 
-Or to build 4.9.241-rt156 directly, the following patches should be applied:
+The callback invocation of IRQSAFE timer is not preempted on PREEMPT_RT
+so there is no need to synchronize on timer_base::expiry_lock.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+Don't acquire the timer_base::expiry_lock for TIMER_IRQSAFE flagged
+timer.
+Add a lockdep annotation to ensure that this function is always invoked
+in preemptible context on PREEMPT_RT.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.241.xz
+Reported-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/time/timer.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.241-rt156.patch.xz
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 89078fd848b9..3e9d7f227a5c 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1289,7 +1289,7 @@ static void del_timer_wait_running(struct timer_list *timer)
+ 	u32 tf;
+ 
+ 	tf = READ_ONCE(timer->flags);
+-	if (!(tf & TIMER_MIGRATING)) {
++	if (!(tf & (TIMER_MIGRATING | TIMER_IRQSAFE))) {
+ 		struct timer_base *base = get_timer_base(tf);
+ 
+ 		/*
+@@ -1373,6 +1373,13 @@ int del_timer_sync(struct timer_list *timer)
+ 	 */
+ 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+ 
++	/*
++	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
++	 * del_timer_wait_running().
++	 */
++	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
++		might_sleep();
++
+ 	do {
+ 		ret = try_to_del_timer_sync(timer);
+ 
+-- 
+2.28.0
 
-
-You can also build from 4.9.240-rt155 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.240-rt155-rt156.patch.xz
-
-Enjoy!
-Clark
 
