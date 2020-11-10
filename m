@@ -2,100 +2,84 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C1BCCC55ABD
-	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Nov 2020 18:00:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 454CDC388F7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Nov 2020 18:05:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5A63C20797
-	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Nov 2020 18:00:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E320020797
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Nov 2020 18:05:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NdA7HbvX";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="pSOmQzQb"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="EDLQvQUt";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="UYohQ7mA"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731050AbgKJSAq (ORCPT
+        id S1729980AbgKJSFV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 10 Nov 2020 13:00:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37230 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730473AbgKJSAo (ORCPT
+        Tue, 10 Nov 2020 13:05:21 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:59972 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726307AbgKJSFV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 10 Nov 2020 13:00:44 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4746CC0613CF
-        for <linux-rt-users@vger.kernel.org>; Tue, 10 Nov 2020 10:00:44 -0800 (PST)
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Tue, 10 Nov 2020 13:05:21 -0500
+Date:   Tue, 10 Nov 2020 19:05:18 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1605031242;
+        s=2020; t=1605031519;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=EvAVc5LLE4/mm7Hhyy1l6FbZMXRceTx8Yg0CKnhlGEM=;
-        b=NdA7HbvXCwhdYC+NFZ9qYBOowSiCTyfz3UWzvpI3m6Fdbq+u74XewfFi4QQqlh/zkBy1Bc
-        6bxdpz8p+sB2lZm8Vwl8/+1nb2Pi7YbIUDSyUbbw/mrzoau21tE4OnAHlDbWliBu8PzgZJ
-        V9ReGqu8FDaZWZeuCb7OJYUSNp3Z/p7Vs1Aan4INKZCMXvJC6agirVBu0w5SUTrXmLaVkk
-        KKLO5nxp93DbiGSxaPPH2Wsp5gBkYZ2iT6h7kgebti1EsdkR0sdGuMGhq2fa/5LUmaIgtd
-        0xyfH8PVgg4Th9d2Fzq5Johoq8ThlQ9IjMawBNsS7t2yjaNLPUkx1Jud4Va+9g==
+        bh=c5kUx/vmnIfAtfqkSPxpHH83jR5Jo7p5HtOWi7vET0Y=;
+        b=EDLQvQUtJqa75L5Nnt82N2On3bFPK4mf3Jjal/PZq7QjeKxxdZZZhdl21aTty1HjUTrDs4
+        1XU/VVIu3oFt9uOdrSwF1xOcA5bCm8jAiQBddu+DjGWK/ohx74IJV06IDTdW9/LQWAvC/T
+        zv2goN7d3zVFjk8tcaWas3oXK3WVhu+BOdIQEnSe3viGQHSE1sbwhOx63REXQyvFyWmhQy
+        w/M6oKrRFSNOoAwbSKlUIfm2sHnTjmRGx/2nU7uj/lsC2qgAR9L563qKVfli8W2NT0a9tI
+        mtxXmb9tuakuemuTW1S3ji0jP0aiaxUskT0IlYv39JdsK3qsL6rd12T7L9QpAw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1605031242;
+        s=2020e; t=1605031519;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=EvAVc5LLE4/mm7Hhyy1l6FbZMXRceTx8Yg0CKnhlGEM=;
-        b=pSOmQzQbfnsdBYTSZLjW2KHjN4COyUzywp9dJmtR6uBC6LX1q+Gd/aUGxNplrqeKbGmg0E
-        9u6YtHKVgU9xf4AA==
-To:     linux-rt-users@vger.kernel.org
-Cc:     John Kacur <jkacur@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH 3/5] signaltest: Don't expect trace interface at /proc
-Date:   Tue, 10 Nov 2020 19:00:34 +0100
-Message-Id: <20201110180036.859080-4-bigeasy@linutronix.de>
-In-Reply-To: <20201110180036.859080-1-bigeasy@linutronix.de>
-References: <20201110180036.859080-1-bigeasy@linutronix.de>
+        bh=c5kUx/vmnIfAtfqkSPxpHH83jR5Jo7p5HtOWi7vET0Y=;
+        b=UYohQ7mATa3j2MBKWIG8rJoK3xwwsHe360VYd6mvfvpeA4XWGWF9NMXEsFJvV3wWwzY1Dw
+        qFbMHx91zlDWLXBg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Daniel Wagner <wagi@monom.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.10-rc2-rt4
+Message-ID: <20201110180518.miuxa25j7lnn7f2q@linutronix.de>
+References: <20201104103809.bhl2iorbwv6xowtw@beryllium.lan>
+ <20201104104617.ueefmpdou4t3t2ce@linutronix.de>
+ <20201104111948.vpykh3ptmysqhmve@beryllium.lan>
+ <20201104124746.74jdsig3dffomv3k@beryllium.lan>
+ <20201104130930.llx56gtqt532h7c7@linutronix.de>
+ <20201104160650.b63zqof74wohgpa2@beryllium.lan>
+ <20201106105447.2lasulgjrbqdhnlh@linutronix.de>
+ <20201106161413.7c65uxenamy474uh@beryllium.lan>
+ <20201109124718.ljf7inok4zakkjed@linutronix.de>
+ <20201109143703.ps7gxhqrirhntilr@beryllium.lan>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20201109143703.ps7gxhqrirhntilr@beryllium.lan>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This was never merged.
+On 2020-11-09 15:37:03 [+0100], Daniel Wagner wrote:
+> > I've been staring at the code of signaltest on Friday and I might need
+> > to stare longer to figure out what it does.
+> 
+> I hear you. Anyway, I gave the current head a run with lazy preemption
+> disabled as you asked for.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- src/signaltest/signaltest.c | 13 -------------
- 1 file changed, 13 deletions(-)
+I just sent a few patches your way regarding signaltest. It should help
+you with tracing. I've been playing with it on a juno box and I didn't
+see anything odd. My max value was below 200us. I added a few tracing
+bits. With sched, signal and hrtimer events you should be able to see
+what delays the RT thread. I didn't see anything odd.
 
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index aceb714d3e9d3..84eb8827faa5e 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -79,19 +79,6 @@ void *signalthread(void *param)
- 	int stopped =3D 0;
- 	int first =3D 1;
-=20
--	if (tracelimit) {
--		system("echo 1 > /proc/sys/kernel/trace_all_cpus");
--		system("echo 1 > /proc/sys/kernel/trace_enabled");
--		system("echo 1 > /proc/sys/kernel/trace_freerunning");
--		system("echo 0 > /proc/sys/kernel/trace_print_at_crash");
--		system("echo 1 > /proc/sys/kernel/trace_user_triggered");
--		system("echo -1 > /proc/sys/kernel/trace_user_trigger_irq");
--		system("echo 0 > /proc/sys/kernel/trace_verbose");
--		system("echo 0 > /proc/sys/kernel/preempt_thresh");
--		system("echo 0 > /proc/sys/kernel/wakeup_timing");
--		system("echo 0 > /proc/sys/kernel/preempt_max_latency");
--	}
--
- 	stat->tid =3D gettid();
-=20
- 	sigemptyset(&sigset);
---=20
-2.29.2
-
+Sebastian
