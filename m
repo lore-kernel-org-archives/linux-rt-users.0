@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58DDCC5517A
-	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Nov 2020 02:32:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B46EC388F7
+	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Nov 2020 02:34:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 16A2A221F1
-	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Nov 2020 02:32:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 05710221F1
+	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Nov 2020 02:34:12 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DLflXGf3"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QCFci7mD"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731713AbgKKCcU (ORCPT
+        id S1732112AbgKKCeM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 10 Nov 2020 21:32:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60662 "EHLO
+        Tue, 10 Nov 2020 21:34:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60946 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731610AbgKKCcU (ORCPT
+        with ESMTP id S1725867AbgKKCeM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 10 Nov 2020 21:32:20 -0500
-Received: from mail-qv1-xf43.google.com (mail-qv1-xf43.google.com [IPv6:2607:f8b0:4864:20::f43])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3F4B5C0613D1
-        for <linux-rt-users@vger.kernel.org>; Tue, 10 Nov 2020 18:32:20 -0800 (PST)
-Received: by mail-qv1-xf43.google.com with SMTP id x13so233253qvk.8
-        for <linux-rt-users@vger.kernel.org>; Tue, 10 Nov 2020 18:32:20 -0800 (PST)
+        Tue, 10 Nov 2020 21:34:12 -0500
+Received: from mail-qk1-x742.google.com (mail-qk1-x742.google.com [IPv6:2607:f8b0:4864:20::742])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8779BC0613D1
+        for <linux-rt-users@vger.kernel.org>; Tue, 10 Nov 2020 18:34:10 -0800 (PST)
+Received: by mail-qk1-x742.google.com with SMTP id d28so405244qka.11
+        for <linux-rt-users@vger.kernel.org>; Tue, 10 Nov 2020 18:34:10 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=MxK9tpLm0xZ2FwXdot5w/Ozxd4AT6TctKJagXsk7ysE=;
-        b=DLflXGf31EIKlPshAKQPn943Sig351mHE1Uil4LBNdbcJX4j++bsg9mddL7yVlv+iC
-         4iqWTQ7tIxzePBeJvJe7FbiDHXJdfcUrKp1alVXjcds13yEP+PuR2pbMXgpqtJSABVJK
-         D5MqcgbINNx+AxmMhisXAuc4m3CMKRTAhDh/fnM/v4yn4i65DnSuAeDGBQGzvuxEY7fL
-         mQf5D5deUk7Gvi13ZkWLjgiq9oOhw+PZ6v7YxC5pNCsZE56trDhf693QVXxfjJvk+UFL
-         i6pxybI3mTPY/IXyTL0Q7fMZM9VotvHOAT71naK3nL/cytAk3+s0esAli4HoBdki4LLU
-         Omdw==
+        bh=WjSU7Ym4Jjw/y5PB8GaAD/acsOISftn1JjCw2ZOWnxU=;
+        b=QCFci7mDrstrI385CF02ytnIX08RhtvAkSzHmJA+WbPkkhfLqLNo2SqlinHH85Fzu8
+         JSJ+qHYFBF2m1xec+lIfL4qJoNP0/GP3u33ZiD3zg3R8FwXKfQyrhqq8gPmUXfRm3u5A
+         kQma27uc3df1cvppi/jMhD82mSXebd9jm7e02fX2yh4pep4obF7cJ05w51ZpIZZNbFUL
+         Vrq5vEXzOUjm87d29iK1kBT+XFILYoZf2K/69Hl4i5eA3SC3LnaTjpoPlwU5SC4f3fSG
+         jPi+/jPm9KUA8cQbw3D4Q4P5xHHJ3l4lk5CExA2MVYkcOezPO1JvhCcGpHi9nNZGF+wq
+         4HHA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=MxK9tpLm0xZ2FwXdot5w/Ozxd4AT6TctKJagXsk7ysE=;
-        b=Zc5Slzy+tdfopKpt3H0HRkIQQyxxbpYnP6ww1xfQx+A8J5fQnOw73EQWqKC6/DDADq
-         u54N99T6PZdCOYap1vjnIqZe/4xeQKrk3K1STmMR1bmg1d60qEsMWEolnnujPZTMFbrr
-         ZR/mk0BTDi5vf5J5pz70Gmn58idADkmPTkvNC4GhtGd5HvmJ/7GMz6gRAcjpSMHgm9Vr
-         dBzcOhUfDHFDB/qBmh6rd3hD09CcJhh1ZiMKC9PAyjB7S3eOqn8wmppahqdrVhXO+4rr
-         /qpYte9BVnIabrFKkiPMkUtnEJflqNZN+BDqirEgUdVv5SH/lwbyM/62KKs6UI2bfmGO
-         6HVw==
-X-Gm-Message-State: AOAM533FOEOZS/ibI8fdeM/HFUlaZyhrkonzmqIIlcNOOWD3wsN6bFfx
-        Mhh4NSWHVZusEcRalZysGLg=
-X-Google-Smtp-Source: ABdhPJzMoZLM/w9dZbUhbZPEc1SwPSE6/IRaVw3rdnFkJoySzzhwdXYK6Vb1/3sY8UO3zgx5KHwiTA==
-X-Received: by 2002:a05:6214:9c4:: with SMTP id dp4mr2396599qvb.44.1605061939537;
-        Tue, 10 Nov 2020 18:32:19 -0800 (PST)
+        bh=WjSU7Ym4Jjw/y5PB8GaAD/acsOISftn1JjCw2ZOWnxU=;
+        b=r9l/8789H5uQXf3jjrNLZwvzGK5ra/vjRHwRCbjmSe6HToT0wVzqECYs+x6oGbcLx3
+         FDmXWp2NS7zczesN1yw/nFk5qOKisLomjFudXhBFbEPOTiQtqKkM8zYWq1s0iG3dGTCb
+         Ax+6cHvycGK5Bkcd5AZJ+1tH9PErdurVqZ1ihtrrV7DYnmeGyuzJaO8Zra/MB/qHTbaf
+         v2/6MbpqNFs7ivQ0q5QlHlr+VZGzvkpaU7mAK7xd+rawJRvDMoOCVtTFr4gcGAQllmdg
+         pEi9ldyz+aiRMKXHa8ABIiz1yzUldo9BpjoMqxEvXsH4lL481oF5gq71mOpZF4IXa+0h
+         +21Q==
+X-Gm-Message-State: AOAM530JC64R2s/CKJZLq1snWcjwoCFr5yawPqhRAqsqoUb09SufoOM/
+        vBWy7V/7MFeCf21CHYi8Q44=
+X-Google-Smtp-Source: ABdhPJxEEsvHZdkFoADxI0L9DqYZyG4Whi53Qnpet5BkS9E57gs1BhYqXgX67cnWaAxlyzcr9FZ+jQ==
+X-Received: by 2002:ae9:dec5:: with SMTP id s188mr23381011qkf.250.1605062049735;
+        Tue, 10 Nov 2020 18:34:09 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-216.dsl.bell.ca. [174.88.120.216])
-        by smtp.gmail.com with ESMTPSA id r16sm800504qta.14.2020.11.10.18.32.18
+        by smtp.gmail.com with ESMTPSA id m5sm778341qtp.51.2020.11.10.18.34.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 10 Nov 2020 18:32:19 -0800 (PST)
+        Tue, 10 Nov 2020 18:34:09 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 10 Nov 2020 21:32:18 -0500 (EST)
+Date:   Tue, 10 Nov 2020 21:34:08 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Kurt Kanzenbach <kurt@linutronix.de>
 cc:     Clark Williams <williams@redhat.com>,
         rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 3/4] rt-tests: cyclictest: Close correct trace fds
-In-Reply-To: <20201107095843.11909-4-kurt@linutronix.de>
-Message-ID: <81ca851f-26cc-f533-02a-a1a823fd7e3f@redhat.com>
-References: <20201107095843.11909-1-kurt@linutronix.de> <20201107095843.11909-4-kurt@linutronix.de>
+Subject: Re: [PATCH 4/4] rt-tests: oslat: Close trace fds
+In-Reply-To: <20201107095843.11909-5-kurt@linutronix.de>
+Message-ID: <70441dce-b973-fc2e-f5c6-b314ec7f91f@redhat.com>
+References: <20201107095843.11909-1-kurt@linutronix.de> <20201107095843.11909-5-kurt@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -79,41 +79,25 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Sat, 7 Nov 2020, Kurt Kanzenbach wrote:
 
-> Remove the last lefotovers from migrating cyclictest to rt-utils.
-> 
-> The rt-utils module is reponsible for handling the tracing code.
+> oslat is also using enable_trace_mark() and never closes the fds. Add it.
 > 
 > Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
 > ---
->  src/cyclictest/cyclictest.c | 8 +-------
->  1 file changed, 1 insertion(+), 7 deletions(-)
+>  src/oslat/oslat.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 34aa9be583f8..0ec0b235dba3 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -283,9 +283,6 @@ enum {
->  	ERROR_NOTFOUND	= -2,
->  };
->  
-> -static int trace_fd     = -1;
-> -static int tracemark_fd = -1;
-> -
->  /*
->   * Raise the soft priority limit up to prio, if that is less than or equal
->   * to the hard limit
-> @@ -2272,10 +2269,7 @@ int main(int argc, char **argv)
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index 918e6733c066..0018c472e0c1 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -871,5 +871,7 @@ int main(int argc, char *argv[])
+>  		g.cpu_list = NULL;
 >  	}
->   out:
->  	/* close any tracer file descriptors */
-> -	if (tracemark_fd >= 0)
-> -		close(tracemark_fd);
-> -	if (trace_fd >= 0)
-> -		close(trace_fd);
-> +	disable_trace_mark();
 >  
->  	/* unlock everything */
->  	if (lockall)
+> +	disable_trace_mark();
+> +
+>  	return 0;
+>  }
 > -- 
 > 2.26.2
 > 
