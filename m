@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36CF3C55ABD
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6A8FC63697
 	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:09:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 023A022255
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:09:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A696122252
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:09:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726591AbgKMVJW (ORCPT
+        id S1726593AbgKMVJX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 13 Nov 2020 16:09:22 -0500
-Received: from mx2.suse.de ([195.135.220.15]:39846 "EHLO mx2.suse.de"
+        Fri, 13 Nov 2020 16:09:23 -0500
+Received: from mx2.suse.de ([195.135.220.15]:39866 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726553AbgKMVJW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1725981AbgKMVJW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 13 Nov 2020 16:09:22 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id AD5A0B01C;
-        Fri, 13 Nov 2020 21:09:20 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 40E12B019;
+        Fri, 13 Nov 2020 21:09:21 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v1 5/6] cyclictest: Use parse_cpumask() from rt-numa.h
-Date:   Fri, 13 Nov 2020 22:09:09 +0100
-Message-Id: <20201113210910.21807-6-dwagner@suse.de>
+Subject: [rt-tests v1 6/6] oslat: Use parse_cpumask() from rt-numa.h
+Date:   Fri, 13 Nov 2020 22:09:10 +0100
+Message-Id: <20201113210910.21807-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201113210910.21807-1-dwagner@suse.de>
 References: <20201113210910.21807-1-dwagner@suse.de>
@@ -40,121 +40,113 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Use the helper funtion from rt-numa.h to parse the cpumask from the
-command line.
+Use the common parse_cpumask() helper and use struct bitmask directly
+instead transforming it into a CPU_SET first.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 70 ++++++++-----------------------------
- 1 file changed, 14 insertions(+), 56 deletions(-)
+ src/oslat/oslat.c | 55 +++++++++++++++--------------------------------
+ 1 file changed, 17 insertions(+), 38 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 46d88ed155c5..f10f064f7a8e 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -36,6 +36,7 @@
- #include "rt_numa.h"
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index b2aa15001be2..5b7e0d5b5d5c 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -42,6 +42,7 @@
+ #include <sys/syscall.h>
  
  #include "rt-utils.h"
 +#include "rt-numa.h"
+ #include "error.h"
  
- #include <bionic.h>
- 
-@@ -905,11 +906,6 @@ static int clocksources[] = {
- 	CLOCK_REALTIME,
- };
- 
--static unsigned int is_cpumask_zero(const struct bitmask *mask)
--{
--	return (rt_numa_bitmask_count(mask) == 0);
--}
--
- /* Get available cpus according to getaffinity or according to the
-  * intersection of getaffinity and the user specified affinity
-  * in the case of AFFINITY_SPECIFIED, the function has to be called
-@@ -976,53 +972,6 @@ static int cpu_for_thread_ua(int thread_num, int max_cpus)
- 	return 0;
+ #ifdef __GNUC__
+@@ -542,37 +543,6 @@ static void usage(int error)
+ 	exit(error);
  }
  
--
--/* After this function is called, affinity_mask is the intersection of the user
-- * supplied affinity mask and the affinity mask from the run time environment
-- */
--static void use_current_cpuset(const int max_cpus)
+-/* TODO: use libnuma? */
+-static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
 -{
--	int i;
--	pid_t pid;
--	struct bitmask *curmask;
+-	struct bitmask *cpu_mask;
+-	int i, n_cores;
 -
--	pid = getpid();
+-	n_cores = sysconf(_SC_NPROCESSORS_CONF);
 -
--	curmask = numa_allocate_cpumask();
--	numa_sched_getaffinity(pid, curmask);
--
--	/* Clear bits that are not set in both the cpuset from the environment,
--	 * and in the user specified affinity for cyclictest
--	 */
--	for (i=0; i < max_cpus; i++) {
--		if ((!rt_numa_bitmask_isbitset(affinity_mask, i)) || (!rt_numa_bitmask_isbitset(curmask, i)))
--			numa_bitmask_clearbit(affinity_mask, i);
+-	if (!cpu_list) {
+-		for (i = 0; i < n_cores; i++)
+-			CPU_SET(i, cpu_set);
+-		return n_cores;
 -	}
 -
--	numa_bitmask_free(curmask);
--}
--
--static void parse_cpumask(const char *option, const int max_cpus)
--{
--	affinity_mask = rt_numa_parse_cpustring(option, max_cpus);
--	if (affinity_mask) {
--		if (is_cpumask_zero(affinity_mask)) {
--			rt_bitmask_free(affinity_mask);
--			affinity_mask = NULL;
--		} else {
--			use_current_cpuset(max_cpus);
+-	cpu_mask = numa_parse_cpustring_all(cpu_list);
+-	if (cpu_mask) {
+-		for (i = 0; i < n_cores; i++) {
+-			if (numa_bitmask_isbitset(cpu_mask, i))
+-				CPU_SET(i, cpu_set);
 -		}
--
+-		numa_bitmask_free(cpu_mask);
+-	} else {
+-		warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
+-		for (i = 0; i < n_cores; i++)
+-			CPU_SET(i, cpu_set);
 -	}
--	if (!affinity_mask)
--		display_help(1);
 -
--	if (verbose) {
--		printf("%s: Using %u cpus.\n", __func__,
--			rt_numa_bitmask_count(affinity_mask));
--	}
+-	return n_cores;
 -}
 -
- static void handlepolicy(char *polname)
+-
+ static int workload_select(char *name)
  {
- 	if (strncasecmp(polname, "other", 5) == 0)
-@@ -1156,15 +1105,24 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 			if (smp)
- 				break;
- 			numa_initialize();
--			if (optarg != NULL) {
--				parse_cpumask(optarg, max_cpus);
-+			if (optarg) {
-+				parse_cpumask(optarg, max_cpus, &affinity_mask);
- 				setaffinity = AFFINITY_SPECIFIED;
--			} else if (optind < argc && (atoi(argv[optind]) || argv[optind][0] == '0' || argv[optind][0] == '!')) {
--				parse_cpumask(argv[optind], max_cpus);
-+			} else if (optind < argc &&
-+				   (atoi(argv[optind]) ||
-+				    argv[optind][0] == '0' ||
-+				    argv[optind][0] == '!')) {
-+				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
- 				setaffinity = AFFINITY_SPECIFIED;
- 			} else {
- 				setaffinity = AFFINITY_USEALL;
- 			}
+ 	int i = 0;
+@@ -745,15 +715,18 @@ int main(int argc, char *argv[])
+ {
+ 	struct thread *threads;
+ 	int i, n_cores;
+-	cpu_set_t cpu_set;
++	struct bitmask *cpu_set = NULL;
++	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+ 
+ #ifdef FRC_MISSING
+ 	printf("This architecture is not yet supported. "
+ 	       "Please implement frc() function first for %s.\n", argv[0]);
+ 	return 0;
+ #endif
+-
+-	CPU_ZERO(&cpu_set);
++	if (numa_available() == -1) {
++		printf("ERROR: Could not initialize libnuma\n");
++		exit(1);
++	}
+ 
+ 	g.app_name = argv[0];
+ 	g.rtprio = 0;
+@@ -768,16 +741,22 @@ int main(int argc, char *argv[])
+ 
+ 	TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
+ 
+-	n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
++	if (!g.cpu_list)
++		g.cpu_list = strdup("all");
++	if (parse_cpumask(g.cpu_list, max_cpus, &cpu_set))
++		exit(1);
++	n_cores = numa_bitmask_weight(cpu_set);
+ 
+-	TEST(threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])));
++	TEST(threads = calloc(1, n_cores * sizeof(threads[0])));
+ 	for (i = 0; i < n_cores; ++i)
+-		if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
++		if (numa_bitmask_isbitset(cpu_set, i) && move_to_core(i) == 0)
+ 			threads[g.n_threads_total++].core_i = i;
+ 
+-	if (CPU_ISSET(0, &cpu_set) && g.rtprio)
++	if (numa_bitmask_isbitset(cpu_set, 0) && g.rtprio)
+ 		printf("WARNING: Running SCHED_FIFO workload on CPU 0 may hang the thread\n");
+ 
++	numa_bitmask_free(cpu_set);
 +
-+			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
-+				display_help(1);
-+			if (verbose)
-+				printf("Using %u cpus.\n",
-+					numa_bitmask_weight(affinity_mask));
- 			break;
- 		case 'A':
- 		case OPT_ALIGNED:
+ 	TEST(move_to_core(g.cpu_main_thread) == 0);
+ 
+ 	signal(SIGALRM, handle_alarm);
 -- 
 2.29.2
 
