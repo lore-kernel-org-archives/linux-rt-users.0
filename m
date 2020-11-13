@@ -2,151 +2,99 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+X-Spam-Status: No, score=-11.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E6A8FC63697
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:09:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E4BDC4742C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:13:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A696122252
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:09:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1CBA022255
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Nov 2020 21:13:10 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="QXCgoK/0"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726593AbgKMVJX (ORCPT
+        id S1726112AbgKMVNJ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 13 Nov 2020 16:09:23 -0500
-Received: from mx2.suse.de ([195.135.220.15]:39866 "EHLO mx2.suse.de"
+        Fri, 13 Nov 2020 16:13:09 -0500
+Received: from mail.kernel.org ([198.145.29.99]:35892 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725981AbgKMVJW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 13 Nov 2020 16:09:22 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 40E12B019;
-        Fri, 13 Nov 2020 21:09:21 +0000 (UTC)
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v1 6/6] oslat: Use parse_cpumask() from rt-numa.h
-Date:   Fri, 13 Nov 2020 22:09:10 +0100
-Message-Id: <20201113210910.21807-7-dwagner@suse.de>
-X-Mailer: git-send-email 2.29.2
-In-Reply-To: <20201113210910.21807-1-dwagner@suse.de>
-References: <20201113210910.21807-1-dwagner@suse.de>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        id S1725981AbgKMVNJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 13 Nov 2020 16:13:09 -0500
+Received: from tzanussi-mobl (c-73-209-127-30.hsd1.il.comcast.net [73.209.127.30])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id DA22A2224D;
+        Fri, 13 Nov 2020 21:13:08 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1605301989;
+        bh=0qdxq/6fCC04zul9EHJiDZamo5I8LwvNNhPLyKyFo10=;
+        h=Subject:From:To:Cc:Date:From;
+        b=QXCgoK/0qDWLYpDIEsazXVCVKl1miwNl3mDx8a3SVyMbLNZfuxhi4T8vW/2GUoI6E
+         8PJSYROvPtKKskRHGxfhMmWc51iDpqyuYRlEbxaSFgE/2yyjMNf2PDAaBYcavtUh9v
+         huOzBpBYi9SnswoFeGtN6k/K4KxyPdlMVoa9ELhM=
+Message-ID: <20e15d1f9c2b1b75faaa84b14109c08aca0b7d69.camel@kernel.org>
+Subject: [PATCH] net: Add missing __raw_write_seqcount_end() and
+ seqcount_release()
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Date:   Fri, 13 Nov 2020 15:13:07 -0600
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Use the common parse_cpumask() helper and use struct bitmask directly
-instead transforming it into a CPU_SET first.
+Hi Sebastian,
 
-Signed-off-by: Daniel Wagner <dwagner@suse.de>
+This patch fixes a problem [1] I saw when backporting 'net: Properly
+annotate the try-lock for the seqlock" from 5.4 to 4.19 which also
+looks like it should apply to -devel.
+
+Thanks,
+
+Tom
+
+[1] https://lore.kernel.org/linux-rt-users/20201110153853.463368981@goodmis.org/T/#m0be3a1290486f3493828dedcf7f06d5fbba092a8 
+
 ---
- src/oslat/oslat.c | 55 +++++++++++++++--------------------------------
- 1 file changed, 17 insertions(+), 38 deletions(-)
 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index b2aa15001be2..5b7e0d5b5d5c 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -42,6 +42,7 @@
- #include <sys/syscall.h>
- 
- #include "rt-utils.h"
-+#include "rt-numa.h"
- #include "error.h"
- 
- #ifdef __GNUC__
-@@ -542,37 +543,6 @@ static void usage(int error)
- 	exit(error);
- }
- 
--/* TODO: use libnuma? */
--static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
--{
--	struct bitmask *cpu_mask;
--	int i, n_cores;
--
--	n_cores = sysconf(_SC_NPROCESSORS_CONF);
--
--	if (!cpu_list) {
--		for (i = 0; i < n_cores; i++)
--			CPU_SET(i, cpu_set);
--		return n_cores;
--	}
--
--	cpu_mask = numa_parse_cpustring_all(cpu_list);
--	if (cpu_mask) {
--		for (i = 0; i < n_cores; i++) {
--			if (numa_bitmask_isbitset(cpu_mask, i))
--				CPU_SET(i, cpu_set);
--		}
--		numa_bitmask_free(cpu_mask);
--	} else {
--		warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
--		for (i = 0; i < n_cores; i++)
--			CPU_SET(i, cpu_set);
--	}
--
--	return n_cores;
--}
--
--
- static int workload_select(char *name)
+The patch ('net: Properly annotate the try-lock for the seqlock") adds
+__raw_write_seqcount_begin() in qdisc_run_begin() but omits the
+corresponding __raw_write_seqcount_end() and seqcount_release() in
+qdisc_run_end().
+
+Add it unconditionally, since qdisc_run_end() is never called unless
+qdisc_run_begin() succeeds, and if it succeeds,
+__raw_write_seqcount_begin() seqcount_acquire() will have been called.
+
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+---
+ include/net/sch_generic.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/include/net/sch_generic.h b/include/net/sch_generic.h
+index 112d2dca8b08..c5ccce4f8f62 100644
+--- a/include/net/sch_generic.h
++++ b/include/net/sch_generic.h
+@@ -192,7 +192,11 @@ static inline bool qdisc_run_begin(struct Qdisc *qdisc)
+ static inline void qdisc_run_end(struct Qdisc *qdisc)
  {
- 	int i = 0;
-@@ -745,15 +715,18 @@ int main(int argc, char *argv[])
- {
- 	struct thread *threads;
- 	int i, n_cores;
--	cpu_set_t cpu_set;
-+	struct bitmask *cpu_set = NULL;
-+	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
- 
- #ifdef FRC_MISSING
- 	printf("This architecture is not yet supported. "
- 	       "Please implement frc() function first for %s.\n", argv[0]);
- 	return 0;
- #endif
--
--	CPU_ZERO(&cpu_set);
-+	if (numa_available() == -1) {
-+		printf("ERROR: Could not initialize libnuma\n");
-+		exit(1);
-+	}
- 
- 	g.app_name = argv[0];
- 	g.rtprio = 0;
-@@ -768,16 +741,22 @@ int main(int argc, char *argv[])
- 
- 	TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
- 
--	n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
-+	if (!g.cpu_list)
-+		g.cpu_list = strdup("all");
-+	if (parse_cpumask(g.cpu_list, max_cpus, &cpu_set))
-+		exit(1);
-+	n_cores = numa_bitmask_weight(cpu_set);
- 
--	TEST(threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])));
-+	TEST(threads = calloc(1, n_cores * sizeof(threads[0])));
- 	for (i = 0; i < n_cores; ++i)
--		if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
-+		if (numa_bitmask_isbitset(cpu_set, i) && move_to_core(i) == 0)
- 			threads[g.n_threads_total++].core_i = i;
- 
--	if (CPU_ISSET(0, &cpu_set) && g.rtprio)
-+	if (numa_bitmask_isbitset(cpu_set, 0) && g.rtprio)
- 		printf("WARNING: Running SCHED_FIFO workload on CPU 0 may hang the thread\n");
- 
-+	numa_bitmask_free(cpu_set);
+ #ifdef CONFIG_PREEMPT_RT
++	seqcount_t *s = &qdisc->running.seqcount;
 +
- 	TEST(move_to_core(g.cpu_main_thread) == 0);
- 
- 	signal(SIGALRM, handle_alarm);
+ 	write_sequnlock(&qdisc->running);
++	__raw_write_seqcount_end(s);
++	seqcount_release(&s->dep_map, 1, _RET_IP_);
+ #else
+ 	write_seqcount_end(&qdisc->running);
+ #endif
 -- 
-2.29.2
+2.17.1
+
 
