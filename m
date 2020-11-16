@@ -2,99 +2,110 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 59A50C5519F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Nov 2020 11:52:40 +0000 (UTC)
-Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ED80F2224B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Nov 2020 11:52:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3EE4EC6369E
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Nov 2020 17:20:34 +0000 (UTC)
+Received: from vger.kernel.org (unknown [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id CF00D207BC
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Nov 2020 17:20:33 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=natalenko.name header.i=@natalenko.name header.b="Efa0jpkA"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="etudEda3";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="MIcUkB/a"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CF00D207BC
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=linutronix.de
+Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=linux-rt-users-owner@vger.kernel.org
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729175AbgKPKdE (ORCPT
+        id S1732727AbgKPRUC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Nov 2020 05:33:04 -0500
-Received: from vulcan.natalenko.name ([104.207.131.136]:43468 "EHLO
-        vulcan.natalenko.name" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728511AbgKPKdE (ORCPT
+        Mon, 16 Nov 2020 12:20:02 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:42438 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1732711AbgKPRUC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Nov 2020 05:33:04 -0500
-Received: from mail.natalenko.name (vulcan.natalenko.name [IPv6:fe80::5400:ff:fe0c:dfa0])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        by vulcan.natalenko.name (Postfix) with ESMTPSA id 6306289DC3C;
-        Mon, 16 Nov 2020 11:32:50 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=natalenko.name;
-        s=dkim-20170712; t=1605522770;
+        Mon, 16 Nov 2020 12:20:02 -0500
+Date:   Mon, 16 Nov 2020 18:19:58 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1605547200;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=+P9yNAjt+158pLr2kX8CBCVf/7cNZa0GYdEZdsOE7AQ=;
-        b=Efa0jpkAOJP11UmUxjE9vPa/dUd7XHXSyAtNPB/kidl4YVnATuwS9NAjXMIIT6iT++3o/X
-        RNGoHnVqeNLlxKSQX/xoiKpKMViuRFnU2qmGiQBHqnFxGB+cwOlMSTQzlLrkNihHTHWrkS
-        mEYpF/UO1ub4F008XrIC8q8+wiHvVQU=
+        bh=d5eIqs+9lW2k53/4xvPilDMYnTDPPLuw+UU8wZcXX98=;
+        b=etudEda3u2kGfRNHd/3MXBZWJ5utxS0EQnYs7tTi3OeWm9C9pgmvPzNaLhAiBD6eBkV3eb
+        1q47+tdKreJdWVHjh24KHVIlvNuQXWQcmtybUhcNHbJlf4su+KvtNBUGy1r7atfud0/iyk
+        ArSXXyfHWxzTKx81AhzZ53JMiw4X1a7vFpfyU65hCLmffT4Lf2oZTpoPfcSv+zMjH2WYaY
+        vl8MEQZ5sF4dINm9e32nMKPcsBsawlFf0jrJf+FBlB9LvSUy88khOqAlsQjsoNq6GIZQ2G
+        i4CkHmgZBi1KMBg4AxHzXpD7bWMRAaXFQJW9TKfm5E7gEoaOTsYTaWTR/raJJQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1605547200;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=d5eIqs+9lW2k53/4xvPilDMYnTDPPLuw+UU8wZcXX98=;
+        b=MIcUkB/a1H9kHrTI0PIcXEBu4agE7keM00zLrpYrw/0G6U5EtuIiRqch6KFQMM1NIRBHBE
+        J4lkUtjFOHw4T7DA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mike Galbraith <efault@gmx.de>
+Cc:     Tom Zanussi <zanussi@kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        stable-rt@vger.kernel.org
+Subject: Re: [PATCH RT 1/5] net: Properly annotate the try-lock for the
+ seqlock
+Message-ID: <20201116171958.2opbksmgbznrjxu2@linutronix.de>
+References: <20201110153853.463368981@goodmis.org>
+ <20201110154024.958923729@goodmis.org>
+ <617eb5e8478df466afa9013b02a2425f7c4c673f.camel@kernel.org>
+ <aa57c01bceaaac362d4da6e25427827fabe4d37a.camel@kernel.org>
+ <6209c8773bb1d361266046323f266526a810f850.camel@gmx.de>
+ <0936e53c297ef3202ce3a48a135053f468c427af.camel@kernel.org>
+ <c09b5a4153cfea8ed181bfb48ade0aafa9dab6fb.camel@gmx.de>
 MIME-Version: 1.0
-Date:   Mon, 16 Nov 2020 11:32:50 +0100
-From:   Oleksandr Natalenko <oleksandr@natalenko.name>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, peterz@infradead.org, rostedt@goodmis.org
-Subject: Re: WARNING at kernel/sched/core.c:2013
- migration_cpu_stop+0x2e3/0x330
-In-Reply-To: <jhjzh3hwq33.mognet@arm.com>
-References: <a1fd0d9c6c8cd90a74879b61467ae48d@natalenko.name>
- <jhj3619y63v.mognet@arm.com>
- <41d6aca71c6a52df8437cdb7b4a1b1c4@natalenko.name>
- <jhjzh3hwq33.mognet@arm.com>
-User-Agent: Roundcube Webmail/1.4.9
-Message-ID: <8a9213a22bec71218b66884b560fa9f9@natalenko.name>
-X-Sender: oleksandr@natalenko.name
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <c09b5a4153cfea8ed181bfb48ade0aafa9dab6fb.camel@gmx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 16.11.2020 11:31, Valentin Schneider wrote:
-> On 16/11/20 10:27, Oleksandr Natalenko wrote:
->> Hi.
-> [...]
->> Not sure whether the check is legitimate, but FWIW I've managed to put 
->> a
->> test task [1] (it spawns a lot of threads and applies affinity) into a
->> permanent unkillable D state here:
->> 
->> ```
->> [<0>] affine_move_task+0x2d3/0x620
->> [<0>] __set_cpus_allowed_ptr+0x164/0x210
->> [<0>] sched_setaffinity+0x21a/0x300
->> [<0>] __x64_sys_sched_setaffinity+0x8c/0xc0
->> [<0>] do_syscall_64+0x33/0x40
->> [<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
->> ```
-> [...]
->> 
->> I'm not positive about this being directly related to the original
->> report, but I think it is still worth mentioning.
->> 
+On 2020-11-15 05:52:33 [+0100], Mike Galbraith wrote:
+> On Sat, 2020-11-14 at 13:24 -0600, Tom Zanussi wrote:
+> > On Sat, 2020-11-14 at 20:00 +0100, Mike Galbraith wrote:
+> >
+> > > __raw_write_seqcount_end() is an integral part of write_sequnlock(),
+> > > but we do seem to be missing a seqcount_release() in 5.4-rt.
+> > >
+> >
+> > Yep, you're right, it's just the missing seqcount_release() - I'll
+> > resubmit with just that.
 > 
-> Aye, thanks, that one should be fixed by:
+> Or just drop the backport, since it adds annotation, while the original
+> was fixing existing annotation.
 > 
-> https://lore.kernel.org/r/20201113112414.2569-1-valentin.schneider@arm.com
+> __raw_write_seqcount_begin() called in 5.4-rt try_write_seqlock() is
+> not annotated, while write_seqcount_begin() called by the 5.9-rt
+> version leads to the broken annotation that the original then fixed.
 
-Great, thanks, I'll pick it up now.
+That is correct.
+I was looking at the 5.4-RT series Steven posted and I was under the
+impression that this patch was correctly missing in previous RT since I
+even added the stable tag.
+As Mike said, the previous RT implementation did not use seqlock
+annotation, they used a spin-lock instead. So the "try_write_seqlock()"
+did the try-lock annotation.
+With the reworked seqcount implementation (v5.6-RT time frame) this was
+solved differently (closer to what upstream does) and the now the
+annotation was wrong and fixed.
 
-> 
->> Thanks.
->> 
->> [1] https://gitlab.com/post-factum/burn_scheduler
+Sorry for that.
 
--- 
-   Oleksandr Natalenko (post-factum)
+> 	-Mike
+
+Sebastian
