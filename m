@@ -2,37 +2,39 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-19.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E366C2D0E4
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D58AC56202
 	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Nov 2020 17:20:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AF031238E6
+	by mail.kernel.org (Postfix) with ESMTP id EBFA324654
 	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Nov 2020 17:20:33 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="03QPdgo3"
+	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="hyVhRArx"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728205AbgKQRTv (ORCPT
+        id S1729014AbgKQRTx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Nov 2020 12:19:51 -0500
-Received: from mail.kernel.org ([198.145.29.99]:58800 "EHLO mail.kernel.org"
+        Tue, 17 Nov 2020 12:19:53 -0500
+Received: from mail.kernel.org ([198.145.29.99]:58830 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726289AbgKQRTv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Nov 2020 12:19:51 -0500
+        id S1726289AbgKQRTw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 17 Nov 2020 12:19:52 -0500
 Received: from localhost.localdomain (c-73-209-127-30.hsd1.il.comcast.net [73.209.127.30])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9C71A238E6;
-        Tue, 17 Nov 2020 17:19:49 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id F098624654;
+        Tue, 17 Nov 2020 17:19:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1605633590;
-        bh=D3rUQgrB9CUpnuLawSq5Q64bmWGHbHkutgQ+4ybYmIM=;
-        h=From:To:Subject:Date:From;
-        b=03QPdgo3Fs9OtCR+ktyOvfhRjC/GJ9BpAXYmdl4JobXL82tZX64Gd4pGpLfRFWMVo
-         da4L7v+hye71/SIiyA8dJbRRKEA/JAn5Wy8u+autTidFnHcaHar6a+s03JMASYjXcT
-         rj25oMOR62bHcU0V126pwExy3gLPEzlqGn0Fo2Rs=
+        s=default; t=1605633592;
+        bh=daJLU3n02mJ6i0JpeUafqSjeQahZMcJAuVKF7BfNorg=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+         References:From;
+        b=hyVhRArxhBJv1lLMLg8aDWsMd+avk0FDIhgJpBPiQwzCrafHBqfbGejiDZ9gAyP38
+         1MHHzFHMseNIb/8M3noYXl8kRMSi95ZCa8mr/9wJnvORzdYmJ4DKfwVvuwX8h8yGg1
+         JmzQVLzGM7O9LOqPrJaKIrXkWUtUPcvJCaHk/cqw=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -44,65 +46,67 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 0/3] Linux v4.19.152-rt66-rc1
-Date:   Tue, 17 Nov 2020 11:19:45 -0600
-Message-Id: <cover.1605633581.git.zanussi@kernel.org>
+Cc:     stable-rt@vger.kernel.org
+Subject: [PATCH RT 1/3] mm/memcontrol: Disable preemption in __mod_memcg_lruvec_state()
+Date:   Tue, 17 Nov 2020 11:19:46 -0600
+Message-Id: <46fc7bbf28dfbafd2f6e87b736458c4ba060728c.1605633581.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.17.1
+In-Reply-To: <cover.1605633581.git.zanussi@kernel.org>
+References: <cover.1605633581.git.zanussi@kernel.org>
+In-Reply-To: <cover.1605633581.git.zanussi@kernel.org>
+References: <cover.1605633581.git.zanussi@kernel.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Dear RT Folks,
+v4.19.152-rt66-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-This is the RT stable review cycle of patch 4.19.152-rt66-rc1.
-
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main
-release on 2020-11-20.
-
-To build 4.19.152-rt66-rc1 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.152.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.152-rt66-rc1.patch.xz
-
-You can also build from 4.19.152-rt65 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.152-rt65-rt66-rc1.patch.xz
+-----------
 
 
-Enjoy,
+[ Upstream commit 74858f0d38a8d3c069a0745ff53ae084c8e7cabb ]
 
--- Tom
+The callers expect disabled preemption/interrupts while invoking
+__mod_memcg_lruvec_state(). This works mainline because a lock of
+somekind is acquired.
 
+Use preempt_disable_rt() where per-CPU variables are accessed and a
+stable pointer is expected. This is also done in __mod_zone_page_state()
+for the same reason.
 
-Oleg Nesterov (1):
-  ptrace: fix ptrace_unfreeze_traced() race with rt-lock
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 
-Sebastian Andrzej Siewior (1):
-  mm/memcontrol: Disable preemption in __mod_memcg_lruvec_state()
+ Conflicts:
+	mm/memcontrol.c
+---
+ include/linux/memcontrol.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Tom Zanussi (1):
-  Linux 4.19.152-rt66-rc1
-
- include/linux/memcontrol.h |  2 ++
- kernel/ptrace.c            | 23 +++++++++++++++--------
- localversion-rt            |  2 +-
- 3 files changed, 18 insertions(+), 9 deletions(-)
-
+diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+index cc6b6532eb56..dbb2c4e27277 100644
+--- a/include/linux/memcontrol.h
++++ b/include/linux/memcontrol.h
+@@ -665,6 +665,7 @@ static inline void __mod_lruvec_state(struct lruvec *lruvec,
+ 
+ 	pn = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
+ 
++	preempt_disable_rt();
+ 	/* Update memcg */
+ 	__mod_memcg_state(pn->memcg, idx, val);
+ 
+@@ -675,6 +676,7 @@ static inline void __mod_lruvec_state(struct lruvec *lruvec,
+ 		x = 0;
+ 	}
+ 	__this_cpu_write(pn->lruvec_stat_cpu->count[idx], x);
++	preempt_enable_rt();
+ }
+ 
+ static inline void mod_lruvec_state(struct lruvec *lruvec,
 -- 
 2.17.1
 
