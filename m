@@ -7,60 +7,60 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D0C8C5519F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 21:11:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EC57DC56201
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 21:17:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CC62C246B0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 21:11:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 89C52246B8
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 21:17:16 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="S0zxLo4A"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fCH1zyYK"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726524AbgKRVKx (ORCPT
+        id S1726666AbgKRVRQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Nov 2020 16:10:53 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44894 "EHLO
+        Wed, 18 Nov 2020 16:17:16 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45900 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726288AbgKRVKw (ORCPT
+        with ESMTP id S1726081AbgKRVRP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Nov 2020 16:10:52 -0500
-Received: from mail-qt1-x843.google.com (mail-qt1-x843.google.com [IPv6:2607:f8b0:4864:20::843])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 851C3C0613D4
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 13:10:51 -0800 (PST)
-Received: by mail-qt1-x843.google.com with SMTP id m65so2747440qte.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 13:10:51 -0800 (PST)
+        Wed, 18 Nov 2020 16:17:15 -0500
+Received: from mail-qk1-x735.google.com (mail-qk1-x735.google.com [IPv6:2607:f8b0:4864:20::735])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AF329C0613D4
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 13:17:15 -0800 (PST)
+Received: by mail-qk1-x735.google.com with SMTP id 199so3316225qkg.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 13:17:15 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=MV2v69Bxp3OePYG5mJneoO4ap9CE4uv1YI1HRbtQyik=;
-        b=S0zxLo4AEh1k/5wX7Z9eWiHOLafChIwCOHIKDgvhyQDfXA86efDQFdJrjaHLCr9NSD
-         qb9zryfnAbnGMCTNyGs3TwMErYe7vAEgVKeuXmdaY/Qx4AOmqLtqFYUznXm5zyPxk0Bt
-         iJGUOiffjIO87LwfoRsxwlLQnO56VDqzOoCvCIWM7eJdv1pipN4mSccLXjpIhIfzRGeY
-         yboRdBBbSBZ69DascIsHq17KwoGZp0TMlxVdzXsLKpU/CRCKVcbO/9EMM2dXg/ceJqMW
-         GLY4K7aD95jPIP5K1q5wqAQ1u4csqPQq68Vw5wuZcY3tWv7fPmRr+xAXRfo7gUCVzFrL
-         500A==
+        bh=ihhC+No8Z48kI7ZScQ9PG9Kv74HH2XnA3kHFNyc9MB4=;
+        b=fCH1zyYKcRNtM9I19433+udZCnvh7dZiyn4AXw7VX6o9HC696arSZK+9Y7wescRttu
+         WMDejphcykhEvc7yblS2tDhC8OK+i/GFJK9Fll5BDxeWXRF16DVL6q7t+NDv18I9MtGB
+         gQyX5BXDrmFm29pvH9yqH6x8JDL6mqaPMLwEWwQtW7hDOJWSTjmJfGGCGprFwtC4Udxc
+         ioeE4Ezt69SibEtq44rw/JHtKlZRUAg3Vav3lFEYAFz7MXN8CCmG97DN/vO88j237fgl
+         9z6dA+8nkHalFrWc+16bpI0bk60kFSUSB8S4nZDCdceInA1+ckLC6pZ22j8O107Iaa0m
+         acpg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=MV2v69Bxp3OePYG5mJneoO4ap9CE4uv1YI1HRbtQyik=;
-        b=MhWXE5EteGpwGxOH0l9n+YMU2p64gBm+AcHxPyQ7O6I1/Rdh7FeDm7WueqvjAUGveh
-         NVTzuYgKn7Gg9xJwQOhQTbUCdZkSHwGyY0PlTLMdEheHlcUkWmchoMSpLJXlGkH9Ei59
-         68BElyi8u+PkPYjqNmvQs6nxTIILW264jmO5yiD/VTTYqqqWkeKFQA80xH+bcfFkqRBW
-         0mSHj8/dwP69bcmoUcy95nttgR3pCMkPEgOeCO4NxjUnHXxlDPzCK7Zmy15XDohlXkMf
-         89l3Mnl5zjPQN0QL3FxTTANHrtOnG5YBN5rg3wdBgL4K+Fb9bnCSVJCsCOxUF6hIlcoX
-         Qsfg==
-X-Gm-Message-State: AOAM531wRaGU8nHdT1n2kPiRqsFNXoFSZQHvMhilPZxhcY9nGO6CXQSr
-        mGUchgYNkE3HMU82k21onyQ=
-X-Google-Smtp-Source: ABdhPJwtBBs9T7d9bD8KgE7kM5xn4esuymSs2ytAvfvIggIcO0KvqHoP0F1u4h+YbJRdkMquVjkn7A==
-X-Received: by 2002:ac8:6953:: with SMTP id n19mr7214489qtr.184.1605733850800;
-        Wed, 18 Nov 2020 13:10:50 -0800 (PST)
+        bh=ihhC+No8Z48kI7ZScQ9PG9Kv74HH2XnA3kHFNyc9MB4=;
+        b=YiHju9+3QKG6vg1E8AzWfJAsRPp34kgdtwtKzAatUHpV5mWVfQ01Qs1bV4iXz4tgz4
+         2miJgfl5eGhho26CMsSJbZTIk/mFR0cAO/jfB0l4FJ4ew2+MVCcpHbnQozWqk1xzEK80
+         FK9KRsrt1chKMi7k3dZO5JOFrbDY2bXCJasWhBt5HnlT1c9GnDRajzFDuwzhyjYwP06A
+         M2r4ETU7hwScHBNrr6Va5CruOgOBoM281Z5aoKi81XAd1SFQCni/Q9XopHEwNk7OEo5k
+         lIGxVc+Go6rZ8jLLKP9vl59BZi1mT9M5qTx/0grv8vhOi2AwAm4kP7/J6efpiA3qvxNA
+         Zp5Q==
+X-Gm-Message-State: AOAM531KIqXZIbQwCojtYy9UWbQKsZ8mLjjs2bX6YIdabu8s9+KaE0rl
+        6MJ5IwOSjifUmus3jtHdzMke0zSEbZLw+w==
+X-Google-Smtp-Source: ABdhPJzQRdTELLzYtUpRefJrqTcWYlKEbWOpa2kO0y1zFSghJG3vCe/LOAaUrnR159/UzMdaURmnOg==
+X-Received: by 2002:a37:793:: with SMTP id 141mr7569610qkh.215.1605734234906;
+        Wed, 18 Nov 2020 13:17:14 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-11-174-88-121-241.dsl.bell.ca. [174.88.121.241])
-        by smtp.gmail.com with ESMTPSA id k4sm8178229qtp.5.2020.11.18.13.10.50
+        by smtp.gmail.com with ESMTPSA id s16sm17782989qkg.5.2020.11.18.13.17.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2020 13:10:50 -0800 (PST)
+        Wed, 18 Nov 2020 13:17:14 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Wed, 18 Nov 2020 16:10:49 -0500 (EST)
+Date:   Wed, 18 Nov 2020 16:17:13 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
@@ -68,7 +68,7 @@ cc:     Clark Williams <williams@redhat.com>,
 Subject: Re: [rt-tests v1 5/6] cyclictest: Use parse_cpumask() from
  rt-numa.h
 In-Reply-To: <20201113210910.21807-6-dwagner@suse.de>
-Message-ID: <72e684d-8580-d84e-9d6f-ab9f52827fc6@redhat.com>
+Message-ID: <72e0e0d-3532-1fbd-a56-c5f28b45cbd9@redhat.com>
 References: <20201113210910.21807-1-dwagner@suse.de> <20201113210910.21807-6-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -199,4 +199,6 @@ On Fri, 13 Nov 2020, Daniel Wagner wrote:
 > 2.29.2
 > 
 > 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+    Fixed a minor spelling mistake in the message.
+    Signed-off-by: John Kacur <jkacur@redhat.com>
+
