@@ -2,73 +2,73 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-10.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D16C1C56201
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 20:59:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C825DC64E7C
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 21:00:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6D811246AA
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 20:59:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 74B1E2467A
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Nov 2020 21:00:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="huB7XrU7"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GoanLaYf"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727265AbgKRU7M (ORCPT
+        id S1727502AbgKRVAH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Nov 2020 15:59:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43092 "EHLO
+        Wed, 18 Nov 2020 16:00:07 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43234 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726938AbgKRU7M (ORCPT
+        with ESMTP id S1726524AbgKRVAG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Nov 2020 15:59:12 -0500
-Received: from mail-qt1-x830.google.com (mail-qt1-x830.google.com [IPv6:2607:f8b0:4864:20::830])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E5A94C0613D4
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 12:59:11 -0800 (PST)
-Received: by mail-qt1-x830.google.com with SMTP id b16so2759364qtb.6
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 12:59:11 -0800 (PST)
+        Wed, 18 Nov 2020 16:00:06 -0500
+Received: from mail-qk1-x744.google.com (mail-qk1-x744.google.com [IPv6:2607:f8b0:4864:20::744])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43631C0613D4
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 13:00:06 -0800 (PST)
+Received: by mail-qk1-x744.google.com with SMTP id y197so3276316qkb.7
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Nov 2020 13:00:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=UDHZm8Ddad+DvuQIzD0sKurLkiInICwju2HsjMjGe2E=;
-        b=huB7XrU7GiGoxf3ZlaefM5NFFhcR4uFeXxLJM3qYc2aA8A+vnnqdfrjaKXzi/FZG47
-         cY0o3R/c0hRG3CU/8cYedz5cUCohmRUDMvHz6p8gykGHpDGl8sDRG6lBcM01bkTU0YYb
-         8kYVriwm539dYSgLJliJtD6r/GsWGUgQyLEAgPWEe/426XScf6KQRjy0quS+yx9Cql9u
-         YE5ipJzvAC5cRcfQjXsc8SbgzX9otKLXyLf+YL/9r40IchvbjP2JVHySmZpaawTpVdGm
-         FXIWGROIszhUMV7nKdlRToXkCKWfHEIMYa7r7Y4hcck77ttljF9mEB4u+XEzuqsX4GCM
-         W/+Q==
+        bh=8vdJVuu0/NsskU3E7Nszd9j9LqmNg/KyhqHmHwcNjeo=;
+        b=GoanLaYfsIVHflIW0+u4AZ0WLJlhA3fSrsOmkuevkp+HVSF+my1oAE/4MTU2IBgcVr
+         PTKYbzxF5AEFtCZgxEImzL20bHIwAG60UppQFT/ossE0h+xYkbwc9aMJF94m4FnWirvB
+         OxwSopWbfrnXJ4L2hLyhFf1DTXAvfNesqhkSNjuOtcEDa09Aez3SAVDlZqucdrscJJwl
+         5/virFKPj0Y4jyBjIXKayRXPFPaaXhXbGtymkAMh89gNVd7QlwoOPJ3F1jO/Vv3lfQyX
+         NUPAvyCD9T1zJG2AINVsMABiUciPXqnucakp2yft5jSq0dAyWrJGeHm6Upcn7K2Ej40X
+         jVvg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=UDHZm8Ddad+DvuQIzD0sKurLkiInICwju2HsjMjGe2E=;
-        b=E7+3nfozOGCqaw/IFFzaewgSknnbddtaPfrFOS33vuMjL6rSBRWO0oC77Skkm61oxa
-         rndHPd0S+DvxrW6gWRGx2Fk4aybuXSrr22XVvuqm0RoyQed9M5EPUYVPnJP4oGmvjo2z
-         rquaCEvDrCTgujb6Ag1E6tMOZvsz1MOeYXZPeI0YhZzLWrEnLsV5zIrkkFZbBWBfYfQO
-         dQVdsuTbWyzj1YjyHq/1GWw7chJU/I2+WenHNUaWPvaY+2dD3shAdrV9OUm3QEz1Ek5I
-         5Cg3igwCi1ZO7nUmiptN0mfmqWxy3FA1KPOpyyGuMFvnCy7THp5HcZ00zjAskpUXRe0s
-         7Ejw==
-X-Gm-Message-State: AOAM53107FNKeCJKxmEvMOdVIjmYEzrqwDpqrtQS2jmzzVOIN6Hml0uh
-        rYL7mr8zrmbRYXsqeyVueUZtfvml+2wrQg==
-X-Google-Smtp-Source: ABdhPJwhCJcsg4PjMuKvT1TxGbKYYQkP2gSh0Oepins/ag131INO8/ye9JjhVmM1IokGMwLn0RBW3Q==
-X-Received: by 2002:aed:3968:: with SMTP id l95mr6888214qte.302.1605733151143;
-        Wed, 18 Nov 2020 12:59:11 -0800 (PST)
+        bh=8vdJVuu0/NsskU3E7Nszd9j9LqmNg/KyhqHmHwcNjeo=;
+        b=aB6J4qvKVQL3Y/WZNWqJwUfvea9JRdGZjbOUQGY8PmgfKeTQwmohAPTCAlnm2vWcxb
+         xmGAAzoJjLzwzH2L2cBAdHuomPL3V4ARpBhUASqiSlFLOkzFj1cC4+kCrjSHv23YLURO
+         AVAtga0G0hY3mWFNOuk2TjXK7Kyr64WB+BiHK2PUvU8fDIMEdeoPPwcL+QOIhHE3NCQZ
+         zABiv0ljW/xst6M2a2iiKlY1zBn7nYUTOWbtVuIQPIh0usAOdmnI/ip+nfkFT/g0637r
+         5vywFJDk+KkznMTKN7bbb6a8++sKMPE3CO003RQHee3uWSZNoeK/OQxlTkW+Th1K+Vae
+         ePHg==
+X-Gm-Message-State: AOAM533LHk+YpdZwEesF1zocrZRkbQ4koWY6Sbt+wf/HS+Rfsd0y+6kS
+        45AzqzdeIw5ZPyf2Pxo60Ak=
+X-Google-Smtp-Source: ABdhPJznC0HT/BNcATX8B42h/X6VSkfWa5yBRZJr//zWBXH8gIwBMwBqHU0tAeP78pDqzkwIgKKwJA==
+X-Received: by 2002:a37:809:: with SMTP id 9mr7003899qki.191.1605733205574;
+        Wed, 18 Nov 2020 13:00:05 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-11-174-88-121-241.dsl.bell.ca. [174.88.121.241])
-        by smtp.gmail.com with ESMTPSA id k15sm17233674qke.75.2020.11.18.12.59.10
+        by smtp.gmail.com with ESMTPSA id n93sm16554456qtd.7.2020.11.18.13.00.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2020 12:59:10 -0800 (PST)
+        Wed, 18 Nov 2020 13:00:05 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Wed, 18 Nov 2020 15:59:02 -0500 (EST)
+Date:   Wed, 18 Nov 2020 16:00:04 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v1 1/6] rt-utils: Introduce parse_mem_string()
-In-Reply-To: <20201113210910.21807-2-dwagner@suse.de>
-Message-ID: <32f855be-6eab-f560-ad5b-6a4041e5f845@redhat.com>
-References: <20201113210910.21807-1-dwagner@suse.de> <20201113210910.21807-2-dwagner@suse.de>
+Subject: Re: [rt-tests v1 2/6] oslat: Use string parser utilies
+In-Reply-To: <20201113210910.21807-3-dwagner@suse.de>
+Message-ID: <7d51cc60-b9ca-63f8-fc5c-4dbacaf8b02a@redhat.com>
+References: <20201113210910.21807-1-dwagner@suse.de> <20201113210910.21807-3-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -79,70 +79,109 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Fri, 13 Nov 2020, Daniel Wagner wrote:
 
-> Add helper to parse common memory prefixes on strings.
+> Use available parse_time_string() instead locally implemented
+> version. While at it move the mem parser helper to the global utility
+> header.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/include/rt-utils.h |  1 +
->  src/lib/rt-utils.c     | 30 ++++++++++++++++++++++++++++++
->  2 files changed, 31 insertions(+)
+>  src/oslat/oslat.c | 67 ++---------------------------------------------
+>  1 file changed, 2 insertions(+), 65 deletions(-)
 > 
-> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index c6fb220cdb0a..39ddbd9eae29 100644
-> --- a/src/include/rt-utils.h
-> +++ b/src/include/rt-utils.h
-> @@ -28,6 +28,7 @@ uint32_t string_to_policy(const char *str);
->  pid_t gettid(void);
->  
->  int parse_time_string(char *val);
-> +int parse_mem_string(char *str, uint64_t *val);
->  
->  void enable_trace_mark(void);
->  void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
-> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-> index a30e1e4ce436..2d68d62cd875 100644
-> --- a/src/lib/rt-utils.c
-> +++ b/src/lib/rt-utils.c
-> @@ -362,6 +362,36 @@ int parse_time_string(char *val)
->  	return t;
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index 0018c472e0c1..b2aa15001be2 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -572,69 +572,6 @@ static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
+>  	return n_cores;
 >  }
 >  
-> +int parse_mem_string(char *str, uint64_t *val)
-> +{
-> +	char *endptr;
-> +	int v = strtol(str, &endptr, 10);
-> +
-> +	if (!*endptr)
-> +		return v;
-> +
-> +	switch (*endptr) {
-> +	case 'g':
-> +	case 'G':
-> +		v *= 1024;
-> +	case 'm':
-> +	case 'M':
-> +		v *= 1024;
-> +	case 'k':
-> +	case 'K':
-> +		v *= 1024;
-> +	case 'b':
-> +	case 'B':
-> +		break;
-> +	default:
-> +		return -1;
-> +	}
-> +
-> +	*val = v;
-> +
-> +	return 0;
-> +}
-> +
->  static void open_tracemark_fd(void)
+> -static int parse_runtime(const char *str)
+> -{
+> -	char *endptr;
+> -	int v = strtol(str, &endptr, 10);
+> -
+> -	if (!*endptr)
+> -		return v;
+> -
+> -	switch (*endptr) {
+> -	case 'd':
+> -	case 'D':
+> -		/* Days */
+> -		v *= 24;
+> -	case 'h':
+> -	case 'H':
+> -		/* Hours */
+> -		v *= 60;
+> -	case 'm':
+> -	case 'M':
+> -		/* Minutes */
+> -		v *= 60;
+> -	case 's':
+> -	case 'S':
+> -		/* Seconds */
+> -		break;
+> -	default:
+> -		printf("Unknown runtime suffix: %s\n", endptr);
+> -		v = 0;
+> -		break;
+> -	}
+> -
+> -	return v;
+> -}
+> -
+> -static int parse_mem_size(char *str, uint64_t *val)
+> -{
+> -	char *endptr;
+> -	int v = strtol(str, &endptr, 10);
+> -
+> -	if (!*endptr)
+> -		return v;
+> -
+> -	switch (*endptr) {
+> -	case 'g':
+> -	case 'G':
+> -		v *= 1024;
+> -	case 'm':
+> -	case 'M':
+> -		v *= 1024;
+> -	case 'k':
+> -	case 'K':
+> -		v *= 1024;
+> -	case 'b':
+> -	case 'B':
+> -		break;
+> -	default:
+> -		return -1;
+> -	}
+> -
+> -	*val = v;
+> -
+> -	return 0;
+> -}
+>  
+>  static int workload_select(char *name)
 >  {
->  	char path[MAX_PATH];
+> @@ -702,7 +639,7 @@ static void parse_options(int argc, char *argv[])
+>  			}
+>  			break;
+>  		case 'D':
+> -			g.runtime = parse_runtime(optarg);
+> +			g.runtime = parse_time_string(optarg);
+>  			if (!g.runtime) {
+>  				printf("Illegal runtime: %s\n", optarg);
+>  				exit(1);
+> @@ -736,7 +673,7 @@ static void parse_options(int argc, char *argv[])
+>  			}
+>  			break;
+>  		case 'm':
+> -			if (parse_mem_size(optarg, &g.workload_mem_size)) {
+> +			if (parse_mem_string(optarg, &g.workload_mem_size)) {
+>  				printf("Unknown workload memory size '%s'.\n\n", optarg);
+>  				exit(1);
+>  			}
 > -- 
 > 2.29.2
 > 
 > 
-
 Signed-off-by: John Kacur <jkacur@redhat.com>
