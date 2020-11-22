@@ -2,108 +2,174 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A275C388F9
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Nov 2020 10:06:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A3B3C5519F
+	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Nov 2020 20:19:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2D0412145D
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Nov 2020 10:06:18 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="YIQ13zk2";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="8k5Oflk1"
+	by mail.kernel.org (Postfix) with ESMTP id 1AD1E20776
+	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Nov 2020 20:19:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727200AbgKUKF6 (ORCPT
+        id S1727398AbgKVUTO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 21 Nov 2020 05:05:58 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:45418 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726520AbgKUKF6 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 21 Nov 2020 05:05:58 -0500
-From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1605953156;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=JSZ309XZNty7p3dVz12Z0RFvyQ3N1nDJ9jtlNvv1rW0=;
-        b=YIQ13zk2fsxnkU6HteadcmRLRinOVjMIYybiU7MKwEPRDplKWLFWVFCCMPgilnc96sAF73
-        ozgpH2x/wzpQqtIS8VcFgD8IfFI34xhW5LF36KRqDVArl1b7DOKOvAKYSnfDj+TZjicvzN
-        TxR6BRtHFmFBLKwyuu+cISLFl7ffZq2m1BgoWw9gzmPmHUQyR47qb2/rBwTKq62zgKgZo0
-        Kb7HvFw2xeXt2weauTLo53jkQoRYzv9NnNazEpqj/kzwnS0j7iioq0jMhCo9QJKWzjXxs2
-        rffk7DKj/3QBPBqc4h8qeh3RlCUf1aFrWkIZDnS2jSACagueRlCtqinyHeFm+A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1605953156;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=JSZ309XZNty7p3dVz12Z0RFvyQ3N1nDJ9jtlNvv1rW0=;
-        b=8k5Oflk1XsMVk+dKBfMquM9oeb1hTb0CMZXacpvVPE2iqkvuXyn0DsDJJStJ+ux4yh6rKp
-        6SXiHe/KfkP7CPDg==
-To:     John Kacur <jkacur@redhat.com>, RT <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        Daniel Wagner <dwagner@suse.de>, John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] rt-tests: Don't compress man pages by default
-In-Reply-To: <20201121051925.24507-1-jkacur@redhat.com>
-References: <20201121051925.24507-1-jkacur@redhat.com>
-Date:   Sat, 21 Nov 2020 11:05:45 +0100
-Message-ID: <87y2ivuirq.fsf@kurt>
+        Sun, 22 Nov 2020 15:19:14 -0500
+Received: from foss.arm.com ([217.140.110.172]:41454 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727307AbgKVUTN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 22 Nov 2020 15:19:13 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id CC22A101E;
+        Sun, 22 Nov 2020 12:19:12 -0800 (PST)
+Received: from e113632-lin.cambridge.arm.com (e113632-lin.cambridge.arm.com [10.1.194.46])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id ECC533F71F;
+        Sun, 22 Nov 2020 12:19:09 -0800 (PST)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     peterz@infradead.org, rostedt@goodmis.org, mhiramat@kernel.org,
+        bristot@redhat.com, jbaron@akamai.com,
+        torvalds@linux-foundation.org, tglx@linutronix.de,
+        mingo@kernel.org, namit@vmware.com, hpa@zytor.com, luto@kernel.org,
+        ard.biesheuvel@linaro.org, jpoimboe@redhat.com,
+        pbonzini@redhat.com, mathieu.desnoyers@efficios.com,
+        linux@rasmusvillemoes.dk,
+        "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Alex Shi <alex.shi@linaro.org>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Vincenzo Frascino <Vincenzo.Frascino@arm.com>
+Subject: [PATCH] notifier: Make atomic_notifiers use raw_spinlock
+Date:   Sun, 22 Nov 2020 20:19:04 +0000
+Message-Id: <20201122201904.30940-1-valentin.schneider@arm.com>
+X-Mailer: git-send-email 2.27.0
 MIME-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-        micalg=pgp-sha512; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
---=-=-=
-Content-Type: text/plain
+Booting a recent PREEMPT_RT kernel (v5.10-rc3-rt7-rebase) on my arm64 Juno
+leads to the idle task blocking on an RT sleeping spinlock down some
+notifier path:
 
-On Sat Nov 21 2020, John Kacur wrote:
-> This patch changes the default behavior of the Makefile to install
-> man pages without compression. This allows distribution build systems to
-> use the kind of compression they wish to use without the Makefile
-> getting in the way.
->
-> It is still possible to compress the man pages using the Makefile, for
-> example
->
-> make MAN_COMPRESSION=gzip
->
-> or
->
-> make MAN_OMPRESSION=bzip2
->
-> Signed-off-by: John Kacur <jkacur@redhat.com>
+  [    1.809101] BUG: scheduling while atomic: swapper/5/0/0x00000002
+  [    1.809116] Modules linked in:
+  [    1.809123] Preemption disabled at:
+  [    1.809125] secondary_start_kernel (arch/arm64/kernel/smp.c:227)
+  [    1.809146] CPU: 5 PID: 0 Comm: swapper/5 Tainted: G        W         5.10.0-rc3-rt7 #168
+  [    1.809153] Hardware name: ARM Juno development board (r0) (DT)
+  [    1.809158] Call trace:
+  [    1.809160] dump_backtrace (arch/arm64/kernel/stacktrace.c:100 (discriminator 1))
+  [    1.809170] show_stack (arch/arm64/kernel/stacktrace.c:198)
+  [    1.809178] dump_stack (lib/dump_stack.c:122)
+  [    1.809188] __schedule_bug (kernel/sched/core.c:4886)
+  [    1.809197] __schedule (./arch/arm64/include/asm/preempt.h:18 kernel/sched/core.c:4913 kernel/sched/core.c:5040)
+  [    1.809204] preempt_schedule_lock (kernel/sched/core.c:5365 (discriminator 1))
+  [    1.809210] rt_spin_lock_slowlock_locked (kernel/locking/rtmutex.c:1072)
+  [    1.809217] rt_spin_lock_slowlock (kernel/locking/rtmutex.c:1110)
+  [    1.809224] rt_spin_lock (./include/linux/rcupdate.h:647 kernel/locking/rtmutex.c:1139)
+  [    1.809231] atomic_notifier_call_chain_robust (kernel/notifier.c:71 kernel/notifier.c:118 kernel/notifier.c:186)
+  [    1.809240] cpu_pm_enter (kernel/cpu_pm.c:39 kernel/cpu_pm.c:93)
+  [    1.809249] psci_enter_idle_state (drivers/cpuidle/cpuidle-psci.c:52 drivers/cpuidle/cpuidle-psci.c:129)
+  [    1.809258] cpuidle_enter_state (drivers/cpuidle/cpuidle.c:238)
+  [    1.809267] cpuidle_enter (drivers/cpuidle/cpuidle.c:353)
+  [    1.809275] do_idle (kernel/sched/idle.c:132 kernel/sched/idle.c:213 kernel/sched/idle.c:273)
+  [    1.809282] cpu_startup_entry (kernel/sched/idle.c:368 (discriminator 1))
+  [    1.809288] secondary_start_kernel (arch/arm64/kernel/smp.c:273)
 
-Yea, that's why I introduced that option in the first place :). Up to
-now I've used MAN_COMPRESSION=none for build systems.
+Two points worth noting:
 
-Acked-by: Kurt Kanzenbach <kurt@linutronix.de>
+1) That this is conceptually the same issue as pointed out in:
+   313c8c16ee62 ("PM / CPU: replace raw_notifier with atomic_notifier")
+2) Only the _robust() variant of atomic_notifier callchains suffer from
+   this
 
-Thanks,
-Kurt
+AFAICT only the cpu_pm_notifier_chain really needs to be changed, but
+singling it out would mean introducing a new (truly) non-blocking API. At
+the same time, callers that are fine with any blocking within the call
+chain should use blocking notifiers, so patching up all atomic_notifier's
+doesn't seem *too* crazy to me.
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
+Fixes: 70d932985757 ("notifier: Fix broken error handling pattern")
+Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+---
+ include/linux/notifier.h |  6 +++---
+ kernel/notifier.c        | 12 ++++++------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
------BEGIN PGP SIGNATURE-----
+diff --git a/include/linux/notifier.h b/include/linux/notifier.h
+index 2fb373a5c1ed..723bc2df6388 100644
+--- a/include/linux/notifier.h
++++ b/include/linux/notifier.h
+@@ -58,7 +58,7 @@ struct notifier_block {
+ };
+ 
+ struct atomic_notifier_head {
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct notifier_block __rcu *head;
+ };
+ 
+@@ -78,7 +78,7 @@ struct srcu_notifier_head {
+ };
+ 
+ #define ATOMIC_INIT_NOTIFIER_HEAD(name) do {	\
+-		spin_lock_init(&(name)->lock);	\
++		raw_spin_lock_init(&(name)->lock);	\
+ 		(name)->head = NULL;		\
+ 	} while (0)
+ #define BLOCKING_INIT_NOTIFIER_HEAD(name) do {	\
+@@ -95,7 +95,7 @@ extern void srcu_init_notifier_head(struct srcu_notifier_head *nh);
+ 		cleanup_srcu_struct(&(name)->srcu);
+ 
+ #define ATOMIC_NOTIFIER_INIT(name) {				\
+-		.lock = __SPIN_LOCK_UNLOCKED(name.lock),	\
++		.lock = __RAW_SPIN_LOCK_UNLOCKED(name.lock),	\
+ 		.head = NULL }
+ #define BLOCKING_NOTIFIER_INIT(name) {				\
+ 		.rwsem = __RWSEM_INITIALIZER((name).rwsem),	\
+diff --git a/kernel/notifier.c b/kernel/notifier.c
+index 1b019cbca594..c20782f07643 100644
+--- a/kernel/notifier.c
++++ b/kernel/notifier.c
+@@ -142,9 +142,9 @@ int atomic_notifier_chain_register(struct atomic_notifier_head *nh,
+ 	unsigned long flags;
+ 	int ret;
+ 
+-	spin_lock_irqsave(&nh->lock, flags);
++	raw_spin_lock_irqsave(&nh->lock, flags);
+ 	ret = notifier_chain_register(&nh->head, n);
+-	spin_unlock_irqrestore(&nh->lock, flags);
++	raw_spin_unlock_irqrestore(&nh->lock, flags);
+ 	return ret;
+ }
+ EXPORT_SYMBOL_GPL(atomic_notifier_chain_register);
+@@ -164,9 +164,9 @@ int atomic_notifier_chain_unregister(struct atomic_notifier_head *nh,
+ 	unsigned long flags;
+ 	int ret;
+ 
+-	spin_lock_irqsave(&nh->lock, flags);
++	raw_spin_lock_irqsave(&nh->lock, flags);
+ 	ret = notifier_chain_unregister(&nh->head, n);
+-	spin_unlock_irqrestore(&nh->lock, flags);
++	raw_spin_unlock_irqrestore(&nh->lock, flags);
+ 	synchronize_rcu();
+ 	return ret;
+ }
+@@ -182,9 +182,9 @@ int atomic_notifier_call_chain_robust(struct atomic_notifier_head *nh,
+ 	 * Musn't use RCU; because then the notifier list can
+ 	 * change between the up and down traversal.
+ 	 */
+-	spin_lock_irqsave(&nh->lock, flags);
++	raw_spin_lock_irqsave(&nh->lock, flags);
+ 	ret = notifier_call_chain_robust(&nh->head, val_up, val_down, v);
+-	spin_unlock_irqrestore(&nh->lock, flags);
++	raw_spin_unlock_irqrestore(&nh->lock, flags);
+ 
+ 	return ret;
+ }
+-- 
+2.27.0
 
-iQIzBAEBCgAdFiEEooWgvezyxHPhdEojeSpbgcuY8KYFAl+45nkACgkQeSpbgcuY
-8KbmOg//WJv77C4xfeoW/YmdOpHR/dMRyzmV+BSRB49VS9AK9Fue8ku/V6hrHDcF
-lfBW156hCwhoJFKWUMh70tkbbHSVNQ9qh07UUMkIkJt9naAFBfesQkMRmhSR5+Cd
-eH9G/d50FhhbmBe597LtwKMbwtOrl8Zshts/NM/ft0LVt5ClW05amPWwY/+sDWgW
-3+ufte6/X9Tund1b5CtR4cVrXD1Gsy8QtzjfOf+Z882a5W/BHaYyPHG/T5vc9cT2
-hhL8jsCkvs8UQci0di9rflFbOjSK6ROcg2xirI/ZGgRiuiIskVUROEPYNnHLvCal
-KoVFhNXYHf0eq05Nj1WUG9ap2lFpv3vApHH2v5R2BPk3latRXqN+xfKSsjemfALu
-A3INrdP6W3250EWsJ6Gw0JZ0Zx7URyBqjzA9qMGDwcx8Ab1M5jh7qK6T0bLsYNBt
-/UtYd0EU8OWO6n5NTzSf9N72pozpWVykFclW51CoyEYeSsVKwia8im+o050X73EV
-jJiUJsofPWNW0l3YJ+DQ9XOzsvWOEpbMXJwihdSrkbIyVzjGq9/w5fb0zhHdBjO9
-1cKvnxldey14g/9jy99zw+UNDa209sHYjREtALwa1+ctU+ExtetlbN0xY8L+quSC
-IxaZZcqlhfK87eqZQ+yL4ueRIlJRPEwDSixPGvyp3/0xZ70Jtf4=
-=gdpX
------END PGP SIGNATURE-----
---=-=-=--
