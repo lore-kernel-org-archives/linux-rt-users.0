@@ -5,61 +5,61 @@ X-Spam-Level:
 X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F6D9C56202
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Nov 2020 13:00:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87702C6379F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Nov 2020 13:00:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 320762074B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Nov 2020 13:00:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 25CB8206D9
+	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Nov 2020 13:00:49 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JwCbmYUF"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZbRVnfUA"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387920AbgKWNAO (ORCPT
+        id S2387675AbgKWNAe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 23 Nov 2020 08:00:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60264 "EHLO
+        Mon, 23 Nov 2020 08:00:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60192 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2388089AbgKWM7Q (ORCPT
+        with ESMTP id S2387668AbgKWM6s (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 23 Nov 2020 07:59:16 -0500
-Received: from mail-ua1-x942.google.com (mail-ua1-x942.google.com [IPv6:2607:f8b0:4864:20::942])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 21E1EC0613CF;
-        Mon, 23 Nov 2020 04:59:12 -0800 (PST)
-Received: by mail-ua1-x942.google.com with SMTP id 103so2302487uai.9;
-        Mon, 23 Nov 2020 04:59:12 -0800 (PST)
+        Mon, 23 Nov 2020 07:58:48 -0500
+Received: from mail-vs1-xe44.google.com (mail-vs1-xe44.google.com [IPv6:2607:f8b0:4864:20::e44])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 66B5AC0613CF;
+        Mon, 23 Nov 2020 04:58:46 -0800 (PST)
+Received: by mail-vs1-xe44.google.com with SMTP id r14so9030008vsa.13;
+        Mon, 23 Nov 2020 04:58:46 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=UBZC3oh3zblyjdeIOfJKrQPEZerRPY4V37fF8XKdWfQ=;
-        b=JwCbmYUFZndqE5USltdqIcZR9zNfa8+6CuI03mxaIoxcLjyCTu964vbGfoegJKs1VN
-         wSfPrAPDzEVYh03a7QIeNq/cWbZlPyrVecPFb8mDtaL2Dm7gynRR48tI2dyygVm5GJPf
-         du1ErgNAmjaVySrZqKmW/qdxDXr0pJBrphTCcU41gEM25uMNuGnv8JayQjyCYCkVj/r2
-         0tYi8vSAUQCLz4AL9hnjUHIqdopPXtlVtBThyEW9PwpLB7To90fEwUu6nyEJWYUJTyus
-         U9v5xq92HiKR6jY6ROitdq6/flzc7JvOLu48L3sQmkToGpt4LvHp5Ie15+mnbOjHri1C
-         xYmw==
+        bh=e1Bdu1f8R9bBNbgeIXBGwkTBiP2EkZW/1Ka6vd1hK2g=;
+        b=ZbRVnfUAwS4Elf8wQZqKbSZX+5D8Btlpq/oxzkrXKUSHf3LXr9yxbicJodM2oc59PW
+         FzvZ1PvK+5ax3wNfJFXHLAFuWyppaSGjzA7Nog2vgYVscPWLSA3waiIEvRfEc70rObIB
+         MjHtPmcbVa71q5bUExpYsbaqQAoGJEHRlHod8bnXsuR4MJoidixNanzyfkGKIisecz6V
+         42purhjVYkJm4vxMffAarXnrkp0T4edfLQZRXeC3t8ug4/52BNhvWD20xpfYmuP8zZKx
+         QMPBqJw7w4MqmK2B4zgWCvN+DEFI0/DFydb4Huyb11D7TrrzI9JxZ9L6bZglk7nAEobJ
+         3rgg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=UBZC3oh3zblyjdeIOfJKrQPEZerRPY4V37fF8XKdWfQ=;
-        b=GGGjYPLKuTpBr/l/9VuyaQ4BmHGiJ5zKQpj4g8UgM9yLi6FogU1gYPnkFvMRd6MswJ
-         n6NROJeFlIJH4MK2HRwQHj+gRZGClCnsqjaP4d+vUoWbfSq0fAZLE8ZATCkHhk59+64b
-         SAfOmfRTO5pi8LSDr/v6xqrmp5v+JKtlpGg3/xvC0bSNBhvNFQEJzfOCWbRKYOG2vjdc
-         VB+EHTJwXcLh8uAWIL7l9HP/jkoBM9nH3etXPjQxfQVLqyUfQyGCfW5ZnPFCSoHCEtBf
-         NdVkjUCEumh1XA6ORC+b0meTT6/P2hi52o3v/v/wT2Qrd7IXHjPNhx0GcrsgK/2c3A0c
-         Fe4w==
-X-Gm-Message-State: AOAM531TkBw3R2nBx2RzCYs+3Rt+b1Z0BNZaKJz1Vwus3o+y/G8t9FAf
-        G6YSQ1QmiTURqKxo6bHHB5M=
-X-Google-Smtp-Source: ABdhPJwaGlM1ICdvxT9KuqDKe/uYK4qIZcNRFjfT3f5ZT7V2/r0NdsMBoN6dS7VNuhuuVkmff1RvOQ==
-X-Received: by 2002:ab0:35c8:: with SMTP id x8mr736382uat.72.1606136351324;
-        Mon, 23 Nov 2020 04:59:11 -0800 (PST)
+        bh=e1Bdu1f8R9bBNbgeIXBGwkTBiP2EkZW/1Ka6vd1hK2g=;
+        b=NiTLoaYoU+c992Mn+LiVk+Jrjt592O0K7n+PhA5O3JVomLyvhOpazgPSUz7alQrHb3
+         5KC3ucEBvvkwJTNsVJC10FzHsEpWWqYuBdGsm9Qhr2aUck69FjXm2J1Rb60mbRTYKPob
+         niWWlIo+MKjKuFx+eduiEAjmD2g4rw6/D2/Z3OII0+GpvE59C2mLmBQj6yUrR0rLZw2x
+         uIpI0ANCzrICkefevOb1JDBrYnF+yTfNW0znGuSBQHuI0G+sWn6p4QB1qbmpIG+7JGkh
+         xoIh/aTXPUHeU5azpYpUye99kEWuNLlnhZRiZscfl+QxE5CB4DJTv60g4nN8wVZjdRGr
+         MbuQ==
+X-Gm-Message-State: AOAM532gYXzN2PZ4xfEdbW3TnOXBVPLaovKlEq5gxKOKmFaxcd2MFHbG
+        MsZcDJeKRBg2dKIkZIhuX/c=
+X-Google-Smtp-Source: ABdhPJzY4tCRQPW2PwqUqym6cBqNT+iGG9NxQKtRz5dJbI0yZQso8iYkf7MMqpFQ5OZF8MGb/YC+ZQ==
+X-Received: by 2002:a67:f2c3:: with SMTP id a3mr17160775vsn.57.1606136325653;
+        Mon, 23 Nov 2020 04:58:45 -0800 (PST)
 Received: from localhost.localdomain ([50.236.19.102])
-        by smtp.gmail.com with ESMTPSA id h16sm1579091uaw.7.2020.11.23.04.59.05
+        by smtp.gmail.com with ESMTPSA id h16sm1579091uaw.7.2020.11.23.04.58.40
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 23 Nov 2020 04:59:10 -0800 (PST)
+        Mon, 23 Nov 2020 04:58:44 -0800 (PST)
 From:   Yafang Shao <laoar.shao@gmail.com>
 To:     mgorman@suse.de, mingo@redhat.com, peterz@infradead.org,
         juri.lelli@redhat.com, vincent.guittot@linaro.org,
@@ -67,9 +67,9 @@ To:     mgorman@suse.de, mingo@redhat.com, peterz@infradead.org,
         bristot@redhat.com
 Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Yafang Shao <laoar.shao@gmail.com>
-Subject: [RFC PATCH v2 4/5] sched: define update_stats_curr_start() as a common helper
-Date:   Mon, 23 Nov 2020 20:58:07 +0800
-Message-Id: <20201123125808.50896-5-laoar.shao@gmail.com>
+Subject: [RFC PATCH v2 1/5] sched: don't include stats.h in sched.h
+Date:   Mon, 23 Nov 2020 20:58:04 +0800
+Message-Id: <20201123125808.50896-2-laoar.shao@gmail.com>
 X-Mailer: git-send-email 2.24.3 (Apple Git-128)
 In-Reply-To: <20201123125808.50896-1-laoar.shao@gmail.com>
 References: <20201123125808.50896-1-laoar.shao@gmail.com>
@@ -79,83 +79,165 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-update_stats_curr_start() is used to update the exec_start when we are
-starting a new run period, which is used by all sched class. So we'd
-better define it as a common helper.
+This patch is a preparation of the followup patches. In the followup
+patches some common helpers will be defined in stats.h, and these common
+helpers require some definitions in sched.h, so let's move stats.h out
+of sched.h.
+
+The source files which require stats.h include it specifically.
 
 Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
 ---
- kernel/sched/fair.c  | 14 +-------------
- kernel/sched/rt.c    |  2 +-
- kernel/sched/sched.h | 12 ++++++++++++
- 3 files changed, 14 insertions(+), 14 deletions(-)
+ kernel/sched/core.c      | 1 +
+ kernel/sched/deadline.c  | 1 +
+ kernel/sched/debug.c     | 1 +
+ kernel/sched/fair.c      | 1 +
+ kernel/sched/idle.c      | 1 +
+ kernel/sched/rt.c        | 2 +-
+ kernel/sched/sched.h     | 6 +++++-
+ kernel/sched/stats.c     | 1 +
+ kernel/sched/stats.h     | 2 ++
+ kernel/sched/stop_task.c | 1 +
+ 10 files changed, 15 insertions(+), 2 deletions(-)
 
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index d2003a7d5ab5..fd76628778f7 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -11,6 +11,7 @@
+ #undef CREATE_TRACE_POINTS
+ 
+ #include "sched.h"
++#include "stats.h"
+ 
+ #include <linux/nospec.h>
+ 
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index f232305dcefe..7a0124f81a4f 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -16,6 +16,7 @@
+  *                    Fabio Checconi <fchecconi@gmail.com>
+  */
+ #include "sched.h"
++#include "stats.h"
+ #include "pelt.h"
+ 
+ struct dl_bandwidth def_dl_bandwidth;
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 2357921580f9..9758aa1bba1e 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -7,6 +7,7 @@
+  * Copyright(C) 2007, Red Hat, Inc., Ingo Molnar
+  */
+ #include "sched.h"
++#include "stats.h"
+ 
+ static DEFINE_SPINLOCK(sched_debug_lock);
+ 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 946b60f586e4..13e803369ced 100644
+index 8917d2d715ef..8ff1daa3d9bb 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -915,18 +915,6 @@ update_stats_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- 	}
- }
- 
--/*
-- * We are picking a new current task - update its stats:
-- */
--static inline void
--update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
--{
--	/*
--	 * We are starting a new run period:
--	 */
--	se->exec_start = rq_clock_task(rq_of(cfs_rq));
--}
--
- /**************************************************
-  * Scheduling class queueing methods:
+@@ -21,6 +21,7 @@
+  *  Copyright (C) 2007 Red Hat, Inc., Peter Zijlstra
   */
-@@ -4255,7 +4243,7 @@ set_next_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
- 		update_load_avg(cfs_rq, se, UPDATE_TG);
- 	}
+ #include "sched.h"
++#include "stats.h"
  
--	update_stats_curr_start(cfs_rq, se);
-+	update_stats_curr_start(rq_of(cfs_rq), se);
- 	cfs_rq->curr = se;
+ /*
+  * Targeted preemption latency for CPU-bound tasks:
+diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
+index 24d0ee26377d..95c02cbca04a 100644
+--- a/kernel/sched/idle.c
++++ b/kernel/sched/idle.c
+@@ -7,6 +7,7 @@
+  *        tasks which are handled in sched/fair.c )
+  */
+ #include "sched.h"
++#include "stats.h"
  
- 	/*
+ #include <trace/events/power.h>
+ 
 diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index af772ac0f32d..3422dd85cfb4 100644
+index 49ec096a8aa1..af772ac0f32d 100644
 --- a/kernel/sched/rt.c
 +++ b/kernel/sched/rt.c
-@@ -1574,7 +1574,7 @@ static void check_preempt_curr_rt(struct rq *rq, struct task_struct *p, int flag
+@@ -4,7 +4,7 @@
+  * policies)
+  */
+ #include "sched.h"
+-
++#include "stats.h"
+ #include "pelt.h"
  
- static inline void set_next_task_rt(struct rq *rq, struct task_struct *p, bool first)
- {
--	p->se.exec_start = rq_clock_task(rq);
-+	update_stats_curr_start(rq, &p->se);
- 
- 	/* The running task is never eligible for pushing */
- 	dequeue_pushable_task(rq, p);
+ int sched_rr_timeslice = RR_TIMESLICE;
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 9a4576ccf3d7..3948112dc31c 100644
+index df80bfcea92e..871544bb9a38 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -2644,4 +2644,16 @@ static inline struct task_struct *task_of(struct sched_entity *se)
- 	return container_of(se, struct task_struct, se);
- }
- 
-+/*
-+ * We are picking a new current task - update its stats:
-+ */
-+static inline void
-+update_stats_curr_start(struct rq *rq, struct sched_entity *se)
-+{
-+	/*
-+	 * We are starting a new run period:
-+	 */
-+	se->exec_start = rq_clock_task(rq);
-+}
+@@ -2,6 +2,9 @@
+ /*
+  * Scheduler internal types and methods:
+  */
++#ifndef _KERNEL_SCHED_SCHED_H
++#define _KERNEL_SCHED_SCHED_H
 +
- #endif	/* _KERNEL_SCHED_SCHED_H */
+ #include <linux/sched.h>
+ 
+ #include <linux/sched/autogroup.h>
+@@ -1538,7 +1541,6 @@ extern void flush_smp_call_function_from_idle(void);
+ static inline void flush_smp_call_function_from_idle(void) { }
+ #endif
+ 
+-#include "stats.h"
+ #include "autogroup.h"
+ 
+ #ifdef CONFIG_CGROUP_SCHED
+@@ -2633,3 +2635,5 @@ static inline bool is_per_cpu_kthread(struct task_struct *p)
+ 
+ void swake_up_all_locked(struct swait_queue_head *q);
+ void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait);
++
++#endif	/* _KERNEL_SCHED_SCHED_H */
+diff --git a/kernel/sched/stats.c b/kernel/sched/stats.c
+index 750fb3c67eed..844bd9dbfbf0 100644
+--- a/kernel/sched/stats.c
++++ b/kernel/sched/stats.c
+@@ -3,6 +3,7 @@
+  * /proc/schedstat implementation
+  */
+ #include "sched.h"
++#include "stats.h"
+ 
+ /*
+  * Current schedstat API version.
+diff --git a/kernel/sched/stats.h b/kernel/sched/stats.h
+index 33d0daf83842..c23b653ffc53 100644
+--- a/kernel/sched/stats.h
++++ b/kernel/sched/stats.h
+@@ -2,6 +2,8 @@
+ 
+ #ifdef CONFIG_SCHEDSTATS
+ 
++#include "sched.h"
++
+ /*
+  * Expects runqueue lock to be held for atomicity of update
+  */
+diff --git a/kernel/sched/stop_task.c b/kernel/sched/stop_task.c
+index ceb5b6b12561..a5d289049388 100644
+--- a/kernel/sched/stop_task.c
++++ b/kernel/sched/stop_task.c
+@@ -8,6 +8,7 @@
+  * See kernel/stop_machine.c
+  */
+ #include "sched.h"
++#include "stats.h"
+ 
+ #ifdef CONFIG_SMP
+ static int
 -- 
 2.18.4
 
