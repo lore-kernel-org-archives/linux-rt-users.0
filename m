@@ -2,83 +2,117 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9D00C6379D
-	for <linux-rt-users@archiver.kernel.org>; Wed, 25 Nov 2020 22:01:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 86781C56202
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Nov 2020 16:36:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 77B9820857
-	for <linux-rt-users@archiver.kernel.org>; Wed, 25 Nov 2020 22:01:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2C18220B80
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Nov 2020 16:36:11 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=kernel.org header.i=@kernel.org header.b="IX/jf+D0"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="IElK7CvE";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="PPilfPvP"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732705AbgKYWB2 (ORCPT
+        id S2391534AbgKZQf4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 25 Nov 2020 17:01:28 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45772 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730523AbgKYWB2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 25 Nov 2020 17:01:28 -0500
-Received: from tzanussi-mobl (c-73-209-127-30.hsd1.il.comcast.net [73.209.127.30])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6597D21534;
-        Wed, 25 Nov 2020 22:01:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1606341687;
-        bh=sBUkv6qi786L57OCh59C1dmrXOqI08em9hztM77X910=;
-        h=Subject:From:To:Date:From;
-        b=IX/jf+D0RZ+Z0Nlqw45aaSzeRdSfRDyY8HFDHyYBt6Yo/QBtj+l5/3/w8VbwdhixF
-         kNnmiHCWVWyFr5WJyD+i3t1TVE1o8xtLZRXv/WC2EneBE6LrDYbMldSLgbxCwxIVtM
-         rsM3wXcCEQHGESulquQ9woWZYHVC8A6et/GQ3EIU=
-Message-ID: <b0be96547c5ed5725084d14028ef0e6511b715f2.camel@kernel.org>
-Subject: [ANNOUNCE] 4.19.160-rt69
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
-Date:   Wed, 25 Nov 2020 16:01:24 -0600
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Thu, 26 Nov 2020 11:35:56 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57564 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2390021AbgKZQf4 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 26 Nov 2020 11:35:56 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0D88AC0613D4
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Nov 2020 08:35:56 -0800 (PST)
+Date:   Thu, 26 Nov 2020 17:35:52 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1606408553;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=QpUtxcBTQzI711Z2ADNYfTHEodwwjxuLJ5r3Sp0Ogic=;
+        b=IElK7CvEfFXu4ijRaNwfWO+ghiico5X+4WpSY+TAFZRHnXRjkJFv2dDikJQnlom1m6brAK
+        xHepRMsY0a3NT8dCoA/mjnmOrEwqwr4uVF+IOZlskfIsjjH0pRawhFS5qeLF1mabdZqB5J
+        j4rJJeMAMXAWknu4grqgn7dARuW4clJHVSE1IsE/142LugZnTTTuWF9W+sVuXU22RUJOpV
+        RtRYli3bc3DWbJMZBiKGfBosBSv6Z95JJmiQtOuqeEEQML8AchRyPpDRcOFhgnCgoBjydJ
+        oIB7S5qGSpnfUCoCyYEh3BKjEBfDbeArRgg7xBSx04/EmSELRNmQ3/Z+avU3Vg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1606408553;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=QpUtxcBTQzI711Z2ADNYfTHEodwwjxuLJ5r3Sp0Ogic=;
+        b=PPilfPvPyCp4cESlj0ZK4ikZSH2i4o0+fo5XFryqyc9f5mM5JKXLBtrg4ieVBIzrj/7FEe
+        b1SZ452hCcwrHPDw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     zqiu2000@126.com
+Cc:     linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+        rostedt@goodmis.org, lcapitulino@redhat.com
+Subject: Re: [PATCH RT] mm/swap: use local lock in deactivate_page()
+Message-ID: <20201126163552.ago5fpy3opi5nb7p@linutronix.de>
+References: <20201125142858.2559-1-zqiu2000@126.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20201125142858.2559-1-zqiu2000@126.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+On 2020-11-25 22:28:58 [+0800], zqiu2000@126.com wrote:
+> From: Zanxiong Qiu <zqiu2000@126.com>
+>=20
+> get_cpu_var() calls preempt_disable(), while on RT kernel,
+> pagevec_lru_move_fn() will call spinlock and might schedule
+> the context out and hence the schedule bug occurred, issue
+> is found on 5.4.70-rt40 and reproducable on 5.4.74-rt41.
+>=20
+=E2=80=A6
 
-I'm pleased to announce the 4.19.160-rt69 stable release.
+> 2154a0abcc9 ("mm: Revert the DEFINE_PER_CPU_PAGEVEC implementation")
+> reverted the lock/unlock_swap_pvec function, however, get_cpu_var()
+> was added back in deactivate_page(), actually, get_locked_var()
+> shall be used instead to avoid preempt_disable() call for RT.
 
-This release is just an update to the new stable 4.19.160
-version and no RT specific changes have been made.
+The commit is
+    32154a0abcc97 ("mm: Revert the DEFINE_PER_CPU_PAGEVEC implementation")
 
-You can get this release via the git tree at:
+the reasoning is correct. deactivate_page() was added in v5.4 and I
+missed that part when I added back the old patches which did not handle
+it :/
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-  branch: v4.19-rt
-  Head SHA1: de0586f55c33891d912bd4ce3e9f76163c4c05a3
+> Signed-off-by: Zanxiong Qiu <zqiu2000@126.com>
+> ---
+>  mm/swap.c | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/mm/swap.c b/mm/swap.c
+> index cdb4f1fa3a48..463cac334fcf 100644
+> --- a/mm/swap.c
+> +++ b/mm/swap.c
+> @@ -666,12 +666,13 @@ void deactivate_file_page(struct page *page)
+>  void deactivate_page(struct page *page)
+>  {
+>  	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
+> -		struct pagevec *pvec =3D &get_cpu_var(lru_deactivate_pvecs);
+> +		struct pagevec *pvec =3D &get_locked_var(swapvec_lock,
+> +							lru_deactivate_pvecs);
+> =20
+>  		get_page(page);
+>  		if (!pagevec_add(pvec, page) || PageCompound(page))
+>  			pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
+> -		put_cpu_var(lru_deactivate_pvecs);
+> +		put_locked_var(swapvec_lock, lru_deactivate_pvecs);
+>  	}
+>  }
+> =20
 
-Or to build 4.19.160-rt69 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.160.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.160-rt69.patch.xz
-
-Enjoy!
-
-   Tom
-
+Sebastian
