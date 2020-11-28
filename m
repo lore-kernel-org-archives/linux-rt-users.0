@@ -2,230 +2,163 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 82A7EC6379D
-	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 03:12:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A2755C83013
+	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 22:06:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 450F322250
-	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 03:12:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6B113208D5
+	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 22:06:39 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QmbkriXe"
+	dkim=pass (1024-bit key) header.d=natalenko.name header.i=@natalenko.name header.b="sqowTDwT"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729422AbgK1DLe (ORCPT
+        id S1732070AbgK1VuS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 27 Nov 2020 22:11:34 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37860 "EHLO
+        Sat, 28 Nov 2020 16:50:18 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43958 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729019AbgK1DJn (ORCPT
+        with ESMTP id S1733094AbgK1TFV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 27 Nov 2020 22:09:43 -0500
-Received: from mail-io1-xd44.google.com (mail-io1-xd44.google.com [IPv6:2607:f8b0:4864:20::d44])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 46B84C0613D1;
-        Fri, 27 Nov 2020 19:09:20 -0800 (PST)
-Received: by mail-io1-xd44.google.com with SMTP id i9so6479718ioo.2;
-        Fri, 27 Nov 2020 19:09:20 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=dbqk6fkQ9N7vOdYQCsQVKy+jkNB2WegUijRwuAKX+1I=;
-        b=QmbkriXetoIAO7mIOUOdfd38AMJXvvcNwuQbnT+Nf5lruzncsaknPJD7Ak6WQYEkya
-         0qprZbf8dvVUkJuPn8uxYflqfmykBQ9NRw1/GwPRv43RbRaCrANluOs7FQlFmtwq+6H1
-         BEEhSxz2Tn0KUoJ5f8yHH5V/DyWNho4NW2nEV3snGTGtQA/L2RYmd8SHpfLmRqWdzt7o
-         iYdGZkz2lP0Xvv8scOmTz9/MohfHND8DxzcNdXAcHLho3x1Mc+4hLvW+3CTa9ET1lDuK
-         aQERoog6kqrKew5qiaacfKQPfnlgpLS9qbYCwFFqS+Za68xg+blqDUSTn+JEn7/lroMF
-         laZQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=dbqk6fkQ9N7vOdYQCsQVKy+jkNB2WegUijRwuAKX+1I=;
-        b=c8GB+V0DZGXq8y2Mu4dzW+khVx1H61V1qurl7dcSd65UtB3TrWJY4YMRQMFlb7maVv
-         Pxe+Y/1WAGDjRI5qzb1wGHvEM6FhxSkrPaiOTMXN+DOi2gcefH6uBLzYPJBcPLBKcHT5
-         d39JUnC0NwhOu3LRH5uolmR9JeRQdmNl1pFXdjEHKjC2Sc+8mg29M2q+hqWRA0ZeUnjZ
-         H939kUQ7tZ6GzjFgBpSEG7L5aiXGF9J599XIEEk3/3wSvywIhUItqAsZJORJUjSxKCLM
-         QFuqC8Y0RkXw1Hh0ca7xRbKHPJ0ON0gJVjRQYd8XgnDWZp46bgT20WzV2dweqA1v2c4q
-         7vBw==
-X-Gm-Message-State: AOAM531fZYNwCzaDGqsMZqzCD0kCroN5Xkp73jKGJFA5a+o24hQELOj2
-        Xl63MVmtghK4IVPDr0LApgeLzedu4HkVlBJDfOg=
-X-Google-Smtp-Source: ABdhPJxGv5y6/ARIkZqD7n0LM/B9ZFgMkoh5jp0GqNCTFao+/cI+XrhX2niyJrrNlMEPcQBpku7sPBltflTjIQsJ2xY=
-X-Received: by 2002:a02:ccbc:: with SMTP id t28mr10016301jap.97.1606532959688;
- Fri, 27 Nov 2020 19:09:19 -0800 (PST)
-MIME-Version: 1.0
-References: <20201127161229.19336-1-laoar.shao@gmail.com>
-In-Reply-To: <20201127161229.19336-1-laoar.shao@gmail.com>
-From:   Yafang Shao <laoar.shao@gmail.com>
-Date:   Sat, 28 Nov 2020 11:08:43 +0800
-Message-ID: <CALOAHbCF67J-NCsqN=ipym6pCRMLJfws9oiEaokOX6_BKx2xZQ@mail.gmail.com>
-Subject: Re: [RFC PATCH v3 0/5] sched: support schedstats for RT sched class
-To:     Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Sat, 28 Nov 2020 14:05:21 -0500
+Received: from vulcan.natalenko.name (vulcan.natalenko.name [IPv6:2001:19f0:6c00:8846:5400:ff:fe0c:dfa0])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8910AC02A1A3;
+        Sat, 28 Nov 2020 06:09:26 -0800 (PST)
+Received: from localhost (home.natalenko.name [151.237.229.131])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by vulcan.natalenko.name (Postfix) with ESMTPSA id 53C758B184D;
+        Sat, 28 Nov 2020 15:09:24 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=natalenko.name;
+        s=dkim-20170712; t=1606572564;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=80LrCKLmbaN4QFAd+vAXkfzcVSLmNqUxi0hyFB1oaKE=;
+        b=sqowTDwTj1W5XbWiqI0623pVVQO38XYLOBRIRNl+gdmzR8jFUrNYeWQWVm54Q+/eAwhGnl
+        5a0Yx0jJ4a5lPrhepGYlGvSmITmWYokq661Wy5yPYSHTmuHS1Pbxqdgy3pS/x9C0eGZFMm
+        pe8RxWxCp5ZqWNgwXgE5NFEcuQ+H7fY=
+Date:   Sat, 28 Nov 2020 15:09:24 +0100
+From:   Oleksandr Natalenko <oleksandr@natalenko.name>
+To:     linux-kernel@vger.kernel.org
+Cc:     linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Benjamin Segall <bsegall@google.com>,
-        Mel Gorman <mgorman@suse.de>, bristot@redhat.com,
-        jun qian <qianjun.kernel@gmail.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+        Mike Galbraith <efault@gmx.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: scheduling while atomic in z3fold
+Message-ID: <20201128140924.iyqr2h52z2olt6zb@spock.localdomain>
+References: <20201128140523.ovmqon5fjetvpby4@spock.localdomain>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20201128140523.ovmqon5fjetvpby4@spock.localdomain>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Sat, Nov 28, 2020 at 12:12 AM Yafang Shao <laoar.shao@gmail.com> wrote:
->
-> We want to measure the latency of RT tasks in our production
-> environment with schedstats facility, but currently schedstats is only
-> supported for fair sched class. This patch enable it for RT sched class
-> as well.
->
-> - Structure
->
-> Before we make schedstats available for RT sched class, we should make
-> struct sched_statistics independent of fair sched class first.
->
->
-> The struct sched_statistics is the schedular statistics of a task_struct
-> or a task_group. So we can move it into struct task_struct and
-> struct task_group to achieve the goal.
->
-> Below is the detailed explaination of the change in the structs.
->
-> The struct before this patch:
->
-> struct task_struct {            |-> struct sched_entity {
->     ...                         |       ...
->     struct sched_entity *se; ---|       struct sched_statistics statistics;
->     struct sched_rt_entity *rt;         ...
->     ...                                 ...
-> };                                  };
->
-> struct task_group {             |--> se[0]->statistics : schedstats of CPU0
->     ...                         |
->  #ifdef CONFIG_FAIR_GROUP_SCHED |
->     struct sched_entity **se; --|--> se[1]->statistics : schedstats of CPU1
->                                 |
->  #endif                         |
->                                 |--> se[N]->statistics : schedstats of CPUn
->
->  #ifdef CONFIG_FAIR_GROUP_SCHED
->     struct sched_rt_entity  **rt_se; (N/A)
->  #endif
->     ...
-> };
->
-> The '**se' in task_group is allocated in the fair sched class, which is
-> hard to be reused by other sched class.
->
-> The struct after this patch:
-> struct task_struct {
->     ...
->     struct sched_statistics statistics;
->     ...
->     struct sched_entity *se;
->     struct sched_rt_entity *rt;
->     ...
-> };
->
-> struct task_group {                    |---> stats[0] : of CPU0
->     ...                                |
->     struct sched_statistics **stats; --|---> stats[1] : of CPU1
->     ...                                |
->                                        |---> stats[n] : of CPUn
->  #ifdef CONFIG_FAIR_GROUP_SCHED
->     struct sched_entity **se;
->  #endif
->  #ifdef CONFIG_RT_GROUP_SCHED
->     struct sched_rt_entity  **rt_se;
->  #endif
->     ...
-> };
->
-> After the patch it is clearly that both of se or rt_se can easily get the
-> sched_statistics by a task_struct or a task_group.
->
-> - Function Interface
->
-> The original prototype of the schedstats helpers are
->
-> update_stats_wait_*(struct cfs_rq *cfs_rq, struct sched_entity *se)
->
-> The cfs_rq in these helpers is used to get the rq_clock, and the se is
-> used to get the struct sched_statistics and the struct task_struct. In
-> order to make these helpers available by all sched classes, we can pass
-> the rq, sched_statistics and task_struct directly.
->
-> Then the new helpers are
->
-> update_stats_wait_*(struct rq *rq, struct task_struct *p,
->                     struct sched_statistics *stats)
->
-> which are independent of fair sched class.
->
-> To avoid vmlinux growing too large or introducing ovehead when
-> !schedstat_enabled(), some new helpers after schedstat_enabled() are also
-> introduced, Suggested by Mel. These helpers are in sched/stats.c,
->
-> __update_stats_wait_*(struct rq *rq, struct task_struct *p,
->                       struct sched_statistics *stats)
->
-> - Implementation
->
-> After we make the struct sched_statistics and the helpers of it
-> independent of fair sched class, we can easily use the schedstats
-> facility for RT sched class.
->
-> The schedstat usage in RT sched class is similar with fair sched class,
-> for example,
->                 fair                            RT
-> enqueue         update_stats_enqueue_fair       update_stats_enqueue_rt
-> dequeue         update_stats_dequeue_fair       update_stats_dequeue_rt
-> put_prev_task   update_stats_wait_start         update_stats_wait_start
-> set_next_task   update_stats_wait_end           update_stats_wait_end
->
-> - Usage
->
-> The user can get the schedstats information in the same way in fair sched
-> class. For example,
->                 fair                            RT
-> task show       /proc/[pid]/sched               /proc/[pid]/sched
-> group show      cpu.stat in cgroup              cpu.stat in cgroup
->
-> The sched:sched_stat_{wait, sleep, iowait, blocked} tracepoints can
-> be used to trace RT tasks as well. sched_stat_runtime can also be
-> supported in the future if it is helpful.
->
-> Yafang Shao (5):
->   sched: don't include stats.h in sched.h
->   sched, fair: use __schedstat_set() in set_next_entity()
->   sched: make struct sched_statistics independent of fair sched class
->   sched: make schedstats helpers independent of fair sched class
->   sched, rt: support schedstats for RT sched class
->
->  include/linux/sched.h    |   3 +-
->  kernel/sched/core.c      |  25 +++--
->  kernel/sched/deadline.c  |   5 +-
->  kernel/sched/debug.c     |  82 +++++++--------
->  kernel/sched/fair.c      | 209 +++++++++++++++------------------------
->  kernel/sched/idle.c      |   1 +
->  kernel/sched/rt.c        | 178 ++++++++++++++++++++++++++++++++-
->  kernel/sched/sched.h     |  13 ++-
->  kernel/sched/stats.c     | 105 ++++++++++++++++++++
->  kernel/sched/stats.h     |  80 +++++++++++++++
->  kernel/sched/stop_task.c |   5 +-
->  11 files changed, 517 insertions(+), 189 deletions(-)
->
-> --
-> 2.18.4
->
+On Sat, Nov 28, 2020 at 03:05:24PM +0100, Oleksandr Natalenko wrote:
+> Hi.
+> 
+> While running v5.10-rc5-rt11 I bumped into the following:
+> 
+> ```
+> BUG: scheduling while atomic: git/18695/0x00000002
+> Preemption disabled at:
+> [<ffffffffbb93fcb3>] z3fold_zpool_malloc+0x463/0x6e0
+> …
+> Call Trace:
+>  dump_stack+0x6d/0x88
+>  __schedule_bug.cold+0x88/0x96
+>  __schedule+0x69e/0x8c0
+>  preempt_schedule_lock+0x51/0x150
+>  rt_spin_lock_slowlock_locked+0x117/0x2c0
+>  rt_spin_lock_slowlock+0x58/0x80
+>  rt_spin_lock+0x2a/0x40
+>  z3fold_zpool_malloc+0x4c1/0x6e0
+>  zswap_frontswap_store+0x39c/0x980
+>  __frontswap_store+0x6e/0xf0
+>  swap_writepage+0x39/0x70
+>  shmem_writepage+0x31b/0x490
+>  pageout+0xf4/0x350
+>  shrink_page_list+0xa28/0xcc0
+>  shrink_inactive_list+0x300/0x690
+>  shrink_lruvec+0x59a/0x770
+>  shrink_node+0x2d6/0x8d0
+>  do_try_to_free_pages+0xda/0x530
+>  try_to_free_pages+0xff/0x260
+>  __alloc_pages_slowpath.constprop.0+0x3d5/0x1230
+>  __alloc_pages_nodemask+0x2f6/0x350
+>  allocate_slab+0x3da/0x660
+>  ___slab_alloc+0x4ff/0x760
+>  __slab_alloc.constprop.0+0x7a/0x100
+>  kmem_cache_alloc+0x27b/0x2c0
+>  __d_alloc+0x22/0x230
+>  d_alloc_parallel+0x67/0x5e0
+>  __lookup_slow+0x5c/0x150
+>  path_lookupat+0x2ea/0x4d0
+>  filename_lookup+0xbf/0x210
+>  vfs_statx.constprop.0+0x4d/0x110
+>  __do_sys_newlstat+0x3d/0x80
+>  do_syscall_64+0x33/0x40
+>  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+> ```
+> 
+> The preemption seems to be disabled here:
+> 
+> ```
+> $ scripts/faddr2line mm/z3fold.o z3fold_zpool_malloc+0x463
+> z3fold_zpool_malloc+0x463/0x6e0:
+> add_to_unbuddied at mm/z3fold.c:645
+> (inlined by) z3fold_alloc at mm/z3fold.c:1195
+> (inlined by) z3fold_zpool_malloc at mm/z3fold.c:1737
+> ```
+> 
+> The call to the rt_spin_lock() seems to be here:
+> 
+> ```
+> $ scripts/faddr2line mm/z3fold.o z3fold_zpool_malloc+0x4c1
+> z3fold_zpool_malloc+0x4c1/0x6e0:
+> add_to_unbuddied at mm/z3fold.c:649
+> (inlined by) z3fold_alloc at mm/z3fold.c:1195
+> (inlined by) z3fold_zpool_malloc at mm/z3fold.c:1737
+> ```
+> 
+> Or, in source code:
+> 
+> ```
+>  639 /* Add to the appropriate unbuddied list */
+>  640 static inline void add_to_unbuddied(struct z3fold_pool *pool,
+>  641                 struct z3fold_header *zhdr)
+>  642 {
+>  643     if (zhdr->first_chunks == 0 || zhdr->last_chunks == 0 ||
+>  644             zhdr->middle_chunks == 0) {
+>  645         struct list_head *unbuddied = get_cpu_ptr(pool->unbuddied);
+>  646
+>  647         int freechunks = num_free_chunks(zhdr);
+>  648         spin_lock(&pool->lock);
+>  649         list_add(&zhdr->buddy, &unbuddied[freechunks]);
+>  650         spin_unlock(&pool->lock);
+>  651         zhdr->cpu = smp_processor_id();
+>  652         put_cpu_ptr(pool->unbuddied);
+>  653     }
+>  654 }
+> ```
+> 
+> Shouldn't the list manipulation be protected with
+> local_lock+this_cpu_ptr instead of get_cpu_ptr+spin_lock?
+> 
+> Thanks.
+> 
+> -- 
+>   Oleksandr Natalenko (post-factum)
 
-Ah, the patch #5 is missed,pls ignore this patchset. I will resend them.
+Forgot to Cc linux-rt-users@, sorry.
 
 -- 
-Thanks
-Yafang
+  Oleksandr Natalenko (post-factum)
