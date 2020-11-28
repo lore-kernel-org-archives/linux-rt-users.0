@@ -2,193 +2,230 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8AB86C3E8C5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Nov 2020 17:00:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 82A7EC6379D
+	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 03:12:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4301920809
-	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Nov 2020 17:00:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 450F322250
+	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 03:12:16 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="sX4HGBbD";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="jaWtljdH"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QmbkriXe"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731552AbgK0RAA (ORCPT
+        id S1729422AbgK1DLe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 27 Nov 2020 12:00:00 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56924 "EHLO
+        Fri, 27 Nov 2020 22:11:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37860 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730675AbgK0RAA (ORCPT
+        with ESMTP id S1729019AbgK1DJn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 27 Nov 2020 12:00:00 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 01202C0613D1;
-        Fri, 27 Nov 2020 09:00:00 -0800 (PST)
-Date:   Fri, 27 Nov 2020 17:59:57 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1606496398;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=RFkjTP9QzRKQlpwVItvBbIws3yHer7rpZ/roaXq7NEM=;
-        b=sX4HGBbDIqvtI8XgQWvXoNXDcfwRCD8FS2nz2xOltQtOxrCopgxPmcHxmIiLZLB7k9d/OK
-        GyD4L3Ym5wHY91QGt00yBANHGDywcMNYcnv19qv4PoHs2nzVp/Czva03V8JwR9X69IhEYE
-        bcTE7bAtZ38W9GsFwMmoHzL4Rur0q61A/HiGRWXy4roGXnh62DvR3mIiiuyR9fL6XMuaeT
-        3RBhm2A6NiohpQ8rX7OsW6StRHXENCEWn1CFBRfppQqfebHeUhVFchyieU+Crv+qAswUj0
-        Y9un1KPRHCHMgsvJVfIX363KQYzD2DKkQc6JE5O/v/Gnjm6TX6rdgVx9/HgOow==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1606496398;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=RFkjTP9QzRKQlpwVItvBbIws3yHer7rpZ/roaXq7NEM=;
-        b=jaWtljdH/F13UlFLr6YQfT9dDv7TL6EwyzTgt1KYTXoehhGKeBv/ZhyW6BfKmbLQQUc+H6
-        jhMAshCp3pKNxkAQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.10-rc5-rt11
-Message-ID: <20201127165957.eukejthckysmjk76@linutronix.de>
+        Fri, 27 Nov 2020 22:09:43 -0500
+Received: from mail-io1-xd44.google.com (mail-io1-xd44.google.com [IPv6:2607:f8b0:4864:20::d44])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 46B84C0613D1;
+        Fri, 27 Nov 2020 19:09:20 -0800 (PST)
+Received: by mail-io1-xd44.google.com with SMTP id i9so6479718ioo.2;
+        Fri, 27 Nov 2020 19:09:20 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=dbqk6fkQ9N7vOdYQCsQVKy+jkNB2WegUijRwuAKX+1I=;
+        b=QmbkriXetoIAO7mIOUOdfd38AMJXvvcNwuQbnT+Nf5lruzncsaknPJD7Ak6WQYEkya
+         0qprZbf8dvVUkJuPn8uxYflqfmykBQ9NRw1/GwPRv43RbRaCrANluOs7FQlFmtwq+6H1
+         BEEhSxz2Tn0KUoJ5f8yHH5V/DyWNho4NW2nEV3snGTGtQA/L2RYmd8SHpfLmRqWdzt7o
+         iYdGZkz2lP0Xvv8scOmTz9/MohfHND8DxzcNdXAcHLho3x1Mc+4hLvW+3CTa9ET1lDuK
+         aQERoog6kqrKew5qiaacfKQPfnlgpLS9qbYCwFFqS+Za68xg+blqDUSTn+JEn7/lroMF
+         laZQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=dbqk6fkQ9N7vOdYQCsQVKy+jkNB2WegUijRwuAKX+1I=;
+        b=c8GB+V0DZGXq8y2Mu4dzW+khVx1H61V1qurl7dcSd65UtB3TrWJY4YMRQMFlb7maVv
+         Pxe+Y/1WAGDjRI5qzb1wGHvEM6FhxSkrPaiOTMXN+DOi2gcefH6uBLzYPJBcPLBKcHT5
+         d39JUnC0NwhOu3LRH5uolmR9JeRQdmNl1pFXdjEHKjC2Sc+8mg29M2q+hqWRA0ZeUnjZ
+         H939kUQ7tZ6GzjFgBpSEG7L5aiXGF9J599XIEEk3/3wSvywIhUItqAsZJORJUjSxKCLM
+         QFuqC8Y0RkXw1Hh0ca7xRbKHPJ0ON0gJVjRQYd8XgnDWZp46bgT20WzV2dweqA1v2c4q
+         7vBw==
+X-Gm-Message-State: AOAM531fZYNwCzaDGqsMZqzCD0kCroN5Xkp73jKGJFA5a+o24hQELOj2
+        Xl63MVmtghK4IVPDr0LApgeLzedu4HkVlBJDfOg=
+X-Google-Smtp-Source: ABdhPJxGv5y6/ARIkZqD7n0LM/B9ZFgMkoh5jp0GqNCTFao+/cI+XrhX2niyJrrNlMEPcQBpku7sPBltflTjIQsJ2xY=
+X-Received: by 2002:a02:ccbc:: with SMTP id t28mr10016301jap.97.1606532959688;
+ Fri, 27 Nov 2020 19:09:19 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+References: <20201127161229.19336-1-laoar.shao@gmail.com>
+In-Reply-To: <20201127161229.19336-1-laoar.shao@gmail.com>
+From:   Yafang Shao <laoar.shao@gmail.com>
+Date:   Sat, 28 Nov 2020 11:08:43 +0800
+Message-ID: <CALOAHbCF67J-NCsqN=ipym6pCRMLJfws9oiEaokOX6_BKx2xZQ@mail.gmail.com>
+Subject: Re: [RFC PATCH v3 0/5] sched: support schedstats for RT sched class
+To:     Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Benjamin Segall <bsegall@google.com>,
+        Mel Gorman <mgorman@suse.de>, bristot@redhat.com,
+        jun qian <qianjun.kernel@gmail.com>
+Cc:     LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+On Sat, Nov 28, 2020 at 12:12 AM Yafang Shao <laoar.shao@gmail.com> wrote:
+>
+> We want to measure the latency of RT tasks in our production
+> environment with schedstats facility, but currently schedstats is only
+> supported for fair sched class. This patch enable it for RT sched class
+> as well.
+>
+> - Structure
+>
+> Before we make schedstats available for RT sched class, we should make
+> struct sched_statistics independent of fair sched class first.
+>
+>
+> The struct sched_statistics is the schedular statistics of a task_struct
+> or a task_group. So we can move it into struct task_struct and
+> struct task_group to achieve the goal.
+>
+> Below is the detailed explaination of the change in the structs.
+>
+> The struct before this patch:
+>
+> struct task_struct {            |-> struct sched_entity {
+>     ...                         |       ...
+>     struct sched_entity *se; ---|       struct sched_statistics statistics;
+>     struct sched_rt_entity *rt;         ...
+>     ...                                 ...
+> };                                  };
+>
+> struct task_group {             |--> se[0]->statistics : schedstats of CPU0
+>     ...                         |
+>  #ifdef CONFIG_FAIR_GROUP_SCHED |
+>     struct sched_entity **se; --|--> se[1]->statistics : schedstats of CPU1
+>                                 |
+>  #endif                         |
+>                                 |--> se[N]->statistics : schedstats of CPUn
+>
+>  #ifdef CONFIG_FAIR_GROUP_SCHED
+>     struct sched_rt_entity  **rt_se; (N/A)
+>  #endif
+>     ...
+> };
+>
+> The '**se' in task_group is allocated in the fair sched class, which is
+> hard to be reused by other sched class.
+>
+> The struct after this patch:
+> struct task_struct {
+>     ...
+>     struct sched_statistics statistics;
+>     ...
+>     struct sched_entity *se;
+>     struct sched_rt_entity *rt;
+>     ...
+> };
+>
+> struct task_group {                    |---> stats[0] : of CPU0
+>     ...                                |
+>     struct sched_statistics **stats; --|---> stats[1] : of CPU1
+>     ...                                |
+>                                        |---> stats[n] : of CPUn
+>  #ifdef CONFIG_FAIR_GROUP_SCHED
+>     struct sched_entity **se;
+>  #endif
+>  #ifdef CONFIG_RT_GROUP_SCHED
+>     struct sched_rt_entity  **rt_se;
+>  #endif
+>     ...
+> };
+>
+> After the patch it is clearly that both of se or rt_se can easily get the
+> sched_statistics by a task_struct or a task_group.
+>
+> - Function Interface
+>
+> The original prototype of the schedstats helpers are
+>
+> update_stats_wait_*(struct cfs_rq *cfs_rq, struct sched_entity *se)
+>
+> The cfs_rq in these helpers is used to get the rq_clock, and the se is
+> used to get the struct sched_statistics and the struct task_struct. In
+> order to make these helpers available by all sched classes, we can pass
+> the rq, sched_statistics and task_struct directly.
+>
+> Then the new helpers are
+>
+> update_stats_wait_*(struct rq *rq, struct task_struct *p,
+>                     struct sched_statistics *stats)
+>
+> which are independent of fair sched class.
+>
+> To avoid vmlinux growing too large or introducing ovehead when
+> !schedstat_enabled(), some new helpers after schedstat_enabled() are also
+> introduced, Suggested by Mel. These helpers are in sched/stats.c,
+>
+> __update_stats_wait_*(struct rq *rq, struct task_struct *p,
+>                       struct sched_statistics *stats)
+>
+> - Implementation
+>
+> After we make the struct sched_statistics and the helpers of it
+> independent of fair sched class, we can easily use the schedstats
+> facility for RT sched class.
+>
+> The schedstat usage in RT sched class is similar with fair sched class,
+> for example,
+>                 fair                            RT
+> enqueue         update_stats_enqueue_fair       update_stats_enqueue_rt
+> dequeue         update_stats_dequeue_fair       update_stats_dequeue_rt
+> put_prev_task   update_stats_wait_start         update_stats_wait_start
+> set_next_task   update_stats_wait_end           update_stats_wait_end
+>
+> - Usage
+>
+> The user can get the schedstats information in the same way in fair sched
+> class. For example,
+>                 fair                            RT
+> task show       /proc/[pid]/sched               /proc/[pid]/sched
+> group show      cpu.stat in cgroup              cpu.stat in cgroup
+>
+> The sched:sched_stat_{wait, sleep, iowait, blocked} tracepoints can
+> be used to trace RT tasks as well. sched_stat_runtime can also be
+> supported in the future if it is helpful.
+>
+> Yafang Shao (5):
+>   sched: don't include stats.h in sched.h
+>   sched, fair: use __schedstat_set() in set_next_entity()
+>   sched: make struct sched_statistics independent of fair sched class
+>   sched: make schedstats helpers independent of fair sched class
+>   sched, rt: support schedstats for RT sched class
+>
+>  include/linux/sched.h    |   3 +-
+>  kernel/sched/core.c      |  25 +++--
+>  kernel/sched/deadline.c  |   5 +-
+>  kernel/sched/debug.c     |  82 +++++++--------
+>  kernel/sched/fair.c      | 209 +++++++++++++++------------------------
+>  kernel/sched/idle.c      |   1 +
+>  kernel/sched/rt.c        | 178 ++++++++++++++++++++++++++++++++-
+>  kernel/sched/sched.h     |  13 ++-
+>  kernel/sched/stats.c     | 105 ++++++++++++++++++++
+>  kernel/sched/stats.h     |  80 +++++++++++++++
+>  kernel/sched/stop_task.c |   5 +-
+>  11 files changed, 517 insertions(+), 189 deletions(-)
+>
+> --
+> 2.18.4
+>
 
-I'm pleased to announce the v5.10-rc5-rt11 patch set. 
+Ah, the patch #5 is missed,pls ignore this patchset. I will resend them.
 
-Changes since v5.10-rc5-rt10:
-
-  - The workaround for the IMX clock driver failure has been replaced
-    with a another patch which was proposed upstream.
-
-  - Tweak the rtmutex patches to build a allnoconfig with RT enabled.
-
-Known issues
-     - It has been pointed out that due to changes to the printk code the
-       internal buffer representation changed. This is only an issue if tools
-       like `crash' are used to extract the printk buffer from a kernel memory
-       image.
-
-The delta patch against v5.10-rc5-rt10 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10-rc5-rt10-rt11.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.10-rc5-rt11
-
-The RT patch against v5.10-rc5 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10-rc5-rt11.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patches-5.10-rc5-rt11.tar.xz
-
-Sebastian
-diff --git a/drivers/clk/imx/Kconfig b/drivers/clk/imx/Kconfig
-index 3b393cb072951..dbacdd70af2e1 100644
---- a/drivers/clk/imx/Kconfig
-+++ b/drivers/clk/imx/Kconfig
-@@ -5,7 +5,7 @@ config MXC_CLK
- 	depends on ARCH_MXC || COMPILE_TEST
- 
- config MXC_CLK_SCU
--	tristate "IMX SCU clock"
-+	tristate
- 	depends on ARCH_MXC || COMPILE_TEST
- 	depends on IMX_SCU && HAVE_ARM_SMCCC
- 
-diff --git a/drivers/clk/imx/Makefile b/drivers/clk/imx/Makefile
-index b8bf9460c91d7..dd6a737d060b4 100644
---- a/drivers/clk/imx/Makefile
-+++ b/drivers/clk/imx/Makefile
-@@ -26,9 +26,9 @@ obj-$(CONFIG_CLK_IMX8MN) += clk-imx8mn.o
- obj-$(CONFIG_CLK_IMX8MP) += clk-imx8mp.o
- obj-$(CONFIG_CLK_IMX8MQ) += clk-imx8mq.o
- 
--obj-$(CONFIG_MXC_CLK_SCU)	+= clk-imx-scu.o
--clk-imx-scu-y			:= clk-scu.o clk-lpcg-scu.o
--obj-$(CONFIG_CLK_IMX8QXP)	+= clk-imx8qxp.o clk-imx8qxp-lpcg.o
-+obj-$(CONFIG_MXC_CLK_SCU) += clk-imx-scu.o clk-imx-lpcg-scu.o
-+clk-imx-scu-$(CONFIG_CLK_IMX8QXP) += clk-scu.o clk-imx8qxp.o
-+clk-imx-lpcg-scu-$(CONFIG_CLK_IMX8QXP) += clk-lpcg-scu.o clk-imx8qxp-lpcg.o
- 
- obj-$(CONFIG_CLK_IMX1)   += clk-imx1.o
- obj-$(CONFIG_CLK_IMX25)  += clk-imx25.o
-diff --git a/drivers/clk/imx/clk-lpcg-scu.c b/drivers/clk/imx/clk-lpcg-scu.c
-index 336dce43da82d..1f0e44f921aee 100644
---- a/drivers/clk/imx/clk-lpcg-scu.c
-+++ b/drivers/clk/imx/clk-lpcg-scu.c
-@@ -115,4 +115,3 @@ struct clk_hw *imx_clk_lpcg_scu(const char *name, const char *parent_name,
- 
- 	return hw;
- }
--EXPORT_SYMBOL_GPL(imx_clk_lpcg_scu);
-diff --git a/drivers/clk/imx/clk-scu.c b/drivers/clk/imx/clk-scu.c
-index 026a33606ae53..b8b2072742a56 100644
---- a/drivers/clk/imx/clk-scu.c
-+++ b/drivers/clk/imx/clk-scu.c
-@@ -9,7 +9,6 @@
- #include <linux/clk-provider.h>
- #include <linux/err.h>
- #include <linux/slab.h>
--#include <linux/module.h>
- 
- #include "clk-scu.h"
- 
-@@ -133,7 +132,6 @@ int imx_clk_scu_init(void)
- {
- 	return imx_scu_get_handle(&ccm_ipc_handle);
- }
--EXPORT_SYMBOL_GPL(imx_clk_scu_init);
- 
- /*
-  * clk_scu_recalc_rate - Get clock rate for a SCU clock
-@@ -389,5 +387,3 @@ struct clk_hw *__imx_clk_scu(const char *name, const char * const *parents,
- 
- 	return hw;
- }
--EXPORT_SYMBOL_GPL(__imx_clk_scu);
--MODULE_LICENSE("GPL");
-diff --git a/include/linux/spinlock_types_up.h b/include/linux/spinlock_types_up.h
-index b0243ba07fb78..d9b371fa13e09 100644
---- a/include/linux/spinlock_types_up.h
-+++ b/include/linux/spinlock_types_up.h
-@@ -1,6 +1,10 @@
- #ifndef __LINUX_SPINLOCK_TYPES_UP_H
- #define __LINUX_SPINLOCK_TYPES_UP_H
- 
-+#if !defined(__LINUX_SPINLOCK_TYPES_H) && !defined(__LINUX_RT_MUTEX_H)
-+# error "please don't include this file directly"
-+#endif
-+
- /*
-  * include/linux/spinlock_types_up.h - spinlock type definitions for UP
-  *
-diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-index c1203c14fee92..b5cd1e278eb58 100644
---- a/kernel/Kconfig.preempt
-+++ b/kernel/Kconfig.preempt
-@@ -65,6 +65,7 @@ config PREEMPT_RT
- 	bool "Fully Preemptible Kernel (Real-Time)"
- 	depends on EXPERT && ARCH_SUPPORTS_RT
- 	select PREEMPTION
-+	select RT_MUTEXES
- 	help
- 	  This option turns the kernel into a real-time kernel by replacing
- 	  various locking primitives (spinlocks, rwlocks, etc.) with
-diff --git a/localversion-rt b/localversion-rt
-index d79dde624aaac..05c35cb580779 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt10
-+-rt11
+-- 
+Thanks
+Yafang
