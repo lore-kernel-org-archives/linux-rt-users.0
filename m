@@ -2,248 +2,164 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B954C8301C
-	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 22:06:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0108FC3E8C5
+	for <linux-rt-users@archiver.kernel.org>; Sun, 29 Nov 2020 06:43:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 41A352224C
-	for <linux-rt-users@archiver.kernel.org>; Sat, 28 Nov 2020 22:06:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 84F5E207BC
+	for <linux-rt-users@archiver.kernel.org>; Sun, 29 Nov 2020 06:43:58 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=natalenko.name header.i=@natalenko.name header.b="k7ihDQwC"
+	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="FPEJN+1j"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731691AbgK1VuR (ORCPT
+        id S1725912AbgK2Gnn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 28 Nov 2020 16:50:17 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35352 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732504AbgK1SH6 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 28 Nov 2020 13:07:58 -0500
-Received: from vulcan.natalenko.name (vulcan.natalenko.name [IPv6:2001:19f0:6c00:8846:5400:ff:fe0c:dfa0])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D49CFC02A1A7;
-        Sat, 28 Nov 2020 06:27:25 -0800 (PST)
-Received: from localhost (home.natalenko.name [151.237.229.131])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        by vulcan.natalenko.name (Postfix) with ESMTPSA id A189A8B18C9;
-        Sat, 28 Nov 2020 15:27:23 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=natalenko.name;
-        s=dkim-20170712; t=1606573643;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=rk41III0tAkUh4u/hIKJEcn4ibWW3TcSORMYy2GTzN8=;
-        b=k7ihDQwCULTU9S/ikzBoxo1P0RtVceKrJkARHROduIcWV2nNClsB0dRBpUryKPk+QZYR7z
-        kMB/UMQqQz3n0IUfkabPbbhnE81kTeAMlEaclWEyzg7dxKAFjnX+Eq5UPEXfdpagu+EcPI
-        0FsVN+B8TZSEAlacTVifrcfQ64gsZ7o=
-Date:   Sat, 28 Nov 2020 15:27:23 +0100
-From:   Oleksandr Natalenko <oleksandr@natalenko.name>
-To:     linux-kernel@vger.kernel.org
+        Sun, 29 Nov 2020 01:43:43 -0500
+Received: from mout.gmx.net ([212.227.17.21]:33173 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725828AbgK2Gnm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 29 Nov 2020 01:43:42 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1606632088;
+        bh=fCWPWMom4CBnkfFlttg3JFbO+85K6yihPMP/Yycb3Mc=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=FPEJN+1jSmXd6xpA9SmN6wsIXPYCa/6dPwz/g97heECAairmWv1SoiCwnEwYSnC4l
+         nZqhCqoUjHtwzaovXHEam7hCL7uSjlccUe3UbxfgG07QlXC+NXMgjg+YTTHjR78gvI
+         XcvAL5lEAHb3B4Rn2vKnM6THBT8B5lL9MVjAxKyM=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.191.218.83]) by mail.gmx.com (mrgmx104
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MjjCF-1kKQ2l0S0x-00lAJD; Sun, 29
+ Nov 2020 07:41:28 +0100
+Message-ID: <15171df044b167351e7f6a688aabd71bade9ae2a.camel@gmx.de>
+Subject: Re: scheduling while atomic in z3fold
+From:   Mike Galbraith <efault@gmx.de>
+To:     Oleksandr Natalenko <oleksandr@natalenko.name>,
+        linux-kernel@vger.kernel.org
 Cc:     linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Mike Galbraith <efault@gmx.de>,
         Thomas Gleixner <tglx@linutronix.de>,
         linux-rt-users@vger.kernel.org
-Subject: Re: scheduling while atomic in z3fold
-Message-ID: <20201128142723.zik6d5skvt3uwu5f@spock.localdomain>
+Date:   Sun, 29 Nov 2020 07:41:26 +0100
+In-Reply-To: <20201128142723.zik6d5skvt3uwu5f@spock.localdomain>
 References: <20201128140523.ovmqon5fjetvpby4@spock.localdomain>
- <20201128140924.iyqr2h52z2olt6zb@spock.localdomain>
+         <20201128140924.iyqr2h52z2olt6zb@spock.localdomain>
+         <20201128142723.zik6d5skvt3uwu5f@spock.localdomain>
+Content-Type: text/plain; charset="ISO-8859-15"
+User-Agent: Evolution 3.34.4 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20201128140924.iyqr2h52z2olt6zb@spock.localdomain>
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:vQVwnfLQ7SUFijawEudOBEUX2bvdX0ddMTBTNZH9SYYoeDo3IsB
+ lxcV+LFrl4+hDqi3ethkrXpsFraWP6fYogvnMRdqTUvD1SwOeIaKfLGZcAknGitv0S6qTAM
+ tjXQpeyfLiCqgrlyohEAruKGwWRF1kmTqFXd5bpEmUJSU4hU6oFZTm1o5lA4C5aERkvEYhk
+ +z9pL4oOaRvGye3ncvwXg==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:803a9b8iOAI=:fMQ3UE+K1ja4qAdVdstH2e
+ fs+VCZbD2lyDg3IEOrdGviXq3sGR5lOQp2lPpV+J5i9xMrtYAbC5F9UuESVG+b9FJHyMT16IB
+ X3FmK2NPIVcPUJG4ox0PYdGLZ+oXkRz7dTGwzECAigUhWNw2qZycK/HewK6UK6PhRdKApzTxG
+ ZbOU+lWv3FVv5aIHpVqJ7+0cqidBbacwmi8ZnUZzn0gyXc7eQX2CVH1Te8r8bRxut2mDBYFvF
+ HA/vttloh/KEkXeJoKBmHfyD+svxFBIisp6jBptah0qi0lsrwmSMupfo4Q9AJTeR2yMUp5ViP
+ ebGcvB6EpPd9C6yGNvDnXz6Pb/jOvNidxxFzMyXhlt7R5B2mAvHzTuWNYLmf0a1SWgXT0X54y
+ mBW6H3jaZRF0uq+ugy1GG6cytAAiI+QXYwRS4udWjlTvRnbYKN+pu8yOc7fxVPApfZeOCkOWV
+ zdsLJFmQXH51GtiAxkCAWKDhoJ7G9Sv/BiFqNzP7Bilcd/F48i4pBaE9ZrTDadGN/jzmg3T1J
+ hgeS/BM4aUYY3/cDdsZ2QxyVUfbeqShMGlikuFtgon59YcZNO+vFidKKbBKofg6lk0W3EnpXt
+ ksCd9Wwy+/Vv8HSKFFkyVaBZs5N/A/+SmCzKXAlBzV4zlONpMg3Nu+zhPCFuuu2UTSIPZbTXh
+ AVazuER1mvdvWP+j7qY+SAK7PJYv2eeK4mLzksWZQ57sTp6ckblkFH3L52JYwFMcYMvYrWo4N
+ 74JRxOtjDbUzNPUXADhmjhmY7XOpUq4lt8FwLcQv+w7eoGzIJtZx8JKeLurjvdSbuYd724oXC
+ w92C/xgcnbPBjnNw+hdBfDmkMzy3RF0TfUBVjpW49T/q94ZhuDOgoVL+skv7crkTiMDm1jGhQ
+ PbeJJuNTlh8rYyhVMcGQ==
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Sat, Nov 28, 2020 at 03:09:24PM +0100, Oleksandr Natalenko wrote:
-> > While running v5.10-rc5-rt11 I bumped into the following:
-> > 
-> > ```
-> > BUG: scheduling while atomic: git/18695/0x00000002
-> > Preemption disabled at:
-> > [<ffffffffbb93fcb3>] z3fold_zpool_malloc+0x463/0x6e0
-> > …
-> > Call Trace:
-> >  dump_stack+0x6d/0x88
-> >  __schedule_bug.cold+0x88/0x96
-> >  __schedule+0x69e/0x8c0
-> >  preempt_schedule_lock+0x51/0x150
-> >  rt_spin_lock_slowlock_locked+0x117/0x2c0
-> >  rt_spin_lock_slowlock+0x58/0x80
-> >  rt_spin_lock+0x2a/0x40
-> >  z3fold_zpool_malloc+0x4c1/0x6e0
-> >  zswap_frontswap_store+0x39c/0x980
-> >  __frontswap_store+0x6e/0xf0
-> >  swap_writepage+0x39/0x70
-> >  shmem_writepage+0x31b/0x490
-> >  pageout+0xf4/0x350
-> >  shrink_page_list+0xa28/0xcc0
-> >  shrink_inactive_list+0x300/0x690
-> >  shrink_lruvec+0x59a/0x770
-> >  shrink_node+0x2d6/0x8d0
-> >  do_try_to_free_pages+0xda/0x530
-> >  try_to_free_pages+0xff/0x260
-> >  __alloc_pages_slowpath.constprop.0+0x3d5/0x1230
-> >  __alloc_pages_nodemask+0x2f6/0x350
-> >  allocate_slab+0x3da/0x660
-> >  ___slab_alloc+0x4ff/0x760
-> >  __slab_alloc.constprop.0+0x7a/0x100
-> >  kmem_cache_alloc+0x27b/0x2c0
-> >  __d_alloc+0x22/0x230
-> >  d_alloc_parallel+0x67/0x5e0
-> >  __lookup_slow+0x5c/0x150
-> >  path_lookupat+0x2ea/0x4d0
-> >  filename_lookup+0xbf/0x210
-> >  vfs_statx.constprop.0+0x4d/0x110
-> >  __do_sys_newlstat+0x3d/0x80
-> >  do_syscall_64+0x33/0x40
-> >  entry_SYSCALL_64_after_hwframe+0x44/0xa9
-> > ```
-> > 
-> > The preemption seems to be disabled here:
-> > 
-> > ```
-> > $ scripts/faddr2line mm/z3fold.o z3fold_zpool_malloc+0x463
-> > z3fold_zpool_malloc+0x463/0x6e0:
-> > add_to_unbuddied at mm/z3fold.c:645
-> > (inlined by) z3fold_alloc at mm/z3fold.c:1195
-> > (inlined by) z3fold_zpool_malloc at mm/z3fold.c:1737
-> > ```
-> > 
-> > The call to the rt_spin_lock() seems to be here:
-> > 
-> > ```
-> > $ scripts/faddr2line mm/z3fold.o z3fold_zpool_malloc+0x4c1
-> > z3fold_zpool_malloc+0x4c1/0x6e0:
-> > add_to_unbuddied at mm/z3fold.c:649
-> > (inlined by) z3fold_alloc at mm/z3fold.c:1195
-> > (inlined by) z3fold_zpool_malloc at mm/z3fold.c:1737
-> > ```
-> > 
-> > Or, in source code:
-> > 
-> > ```
-> >  639 /* Add to the appropriate unbuddied list */
-> >  640 static inline void add_to_unbuddied(struct z3fold_pool *pool,
-> >  641                 struct z3fold_header *zhdr)
-> >  642 {
-> >  643     if (zhdr->first_chunks == 0 || zhdr->last_chunks == 0 ||
-> >  644             zhdr->middle_chunks == 0) {
-> >  645         struct list_head *unbuddied = get_cpu_ptr(pool->unbuddied);
-> >  646
-> >  647         int freechunks = num_free_chunks(zhdr);
-> >  648         spin_lock(&pool->lock);
-> >  649         list_add(&zhdr->buddy, &unbuddied[freechunks]);
-> >  650         spin_unlock(&pool->lock);
-> >  651         zhdr->cpu = smp_processor_id();
-> >  652         put_cpu_ptr(pool->unbuddied);
-> >  653     }
-> >  654 }
-> > ```
-> > 
-> > Shouldn't the list manipulation be protected with
-> > local_lock+this_cpu_ptr instead of get_cpu_ptr+spin_lock?
+On Sat, 2020-11-28 at 15:27 +0100, Oleksandr Natalenko wrote:
+>
+> > > Shouldn't the list manipulation be protected with
+> > > local_lock+this_cpu_ptr instead of get_cpu_ptr+spin_lock?
+>
+> Totally untested:
 
-Totally untested:
+Hrm, the thing doesn't seem to care deeply about preemption being
+disabled, so adding another lock may be overkill.  It looks like you
+could get the job done via migrate_disable()+this_cpu_ptr().
 
-```
-diff --git a/mm/z3fold.c b/mm/z3fold.c
-index 18feaa0bc537..53fcb80c6167 100644
---- a/mm/z3fold.c
+In the case of the list in __z3fold_alloc(), after the unlocked peek,
+it double checks under the existing lock.  There's not a whole lot of
+difference between another cpu a few lines down in the same function
+diddling the list and a preemption doing the same, so why bother?
+
+Ditto add_to_unbuddied().  Flow decisions are being made based on zhdr-
+>first/middle/last_chunks state prior to preemption being disabled as
+the thing sits, so presumably their stability is not dependent thereon,
+while the list is protected by the already existing lock, making the
+preempt_disable() look more incidental than intentional.
+
+Equally untested :)
+
+=2D--
+ mm/z3fold.c |   17 ++++++++++-------
+ 1 file changed, 10 insertions(+), 7 deletions(-)
+
+=2D-- a/mm/z3fold.c
 +++ b/mm/z3fold.c
-@@ -41,6 +41,7 @@
- #include <linux/workqueue.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
-+#include <linux/local_lock.h>
- #include <linux/zpool.h>
- #include <linux/magic.h>
- #include <linux/kmemleak.h>
-@@ -156,6 +157,7 @@ struct z3fold_pool {
- 	const char *name;
- 	spinlock_t lock;
- 	spinlock_t stale_lock;
-+	local_lock_t llock;
- 	struct list_head *unbuddied;
- 	struct list_head lru;
- 	struct list_head stale;
-@@ -642,14 +644,17 @@ static inline void add_to_unbuddied(struct z3fold_pool *pool,
+@@ -642,14 +642,16 @@ static inline void add_to_unbuddied(stru
  {
- 	if (zhdr->first_chunks == 0 || zhdr->last_chunks == 0 ||
- 			zhdr->middle_chunks == 0) {
--		struct list_head *unbuddied = get_cpu_ptr(pool->unbuddied);
+ 	if (zhdr->first_chunks =3D=3D 0 || zhdr->last_chunks =3D=3D 0 ||
+ 			zhdr->middle_chunks =3D=3D 0) {
+-		struct list_head *unbuddied =3D get_cpu_ptr(pool->unbuddied);
+-
 +		struct list_head *unbuddied;
-+		int freechunks;
-+		local_lock(&pool->llock);
-+		unbuddied = *this_cpu_ptr(&pool->unbuddied);
- 
--		int freechunks = num_free_chunks(zhdr);
-+		freechunks = num_free_chunks(zhdr);
+ 		int freechunks =3D num_free_chunks(zhdr);
++
++		migrate_disable();
++		unbuddied =3D this_cpu_ptr(pool->unbuddied);
  		spin_lock(&pool->lock);
  		list_add(&zhdr->buddy, &unbuddied[freechunks]);
  		spin_unlock(&pool->lock);
- 		zhdr->cpu = smp_processor_id();
+ 		zhdr->cpu =3D smp_processor_id();
 -		put_cpu_ptr(pool->unbuddied);
-+		local_unlock(&pool->llock);
++		migrate_enable();
  	}
  }
- 
-@@ -887,7 +892,8 @@ static inline struct z3fold_header *__z3fold_alloc(struct z3fold_pool *pool,
- 
+
+@@ -886,8 +888,9 @@ static inline struct z3fold_header *__z3
+ 	int chunks =3D size_to_chunks(size), i;
+
  lookup:
++	migrate_disable();
  	/* First, try to find an unbuddied z3fold page. */
--	unbuddied = get_cpu_ptr(pool->unbuddied);
-+	local_lock(&pool->llock);
-+	unbuddied = *this_cpu_ptr(&pool->unbuddied);
+-	unbuddied =3D get_cpu_ptr(pool->unbuddied);
++	unbuddied =3D this_cpu_ptr(pool->unbuddied);
  	for_each_unbuddied_list(i, chunks) {
- 		struct list_head *l = &unbuddied[i];
- 
-@@ -905,7 +911,7 @@ static inline struct z3fold_header *__z3fold_alloc(struct z3fold_pool *pool,
+ 		struct list_head *l =3D &unbuddied[i];
+
+@@ -905,7 +908,7 @@ static inline struct z3fold_header *__z3
  		    !z3fold_page_trylock(zhdr)) {
  			spin_unlock(&pool->lock);
- 			zhdr = NULL;
+ 			zhdr =3D NULL;
 -			put_cpu_ptr(pool->unbuddied);
-+			local_unlock(&pool->llock);
++			migrate_enable();
  			if (can_sleep)
  				cond_resched();
  			goto lookup;
-@@ -919,7 +925,7 @@ static inline struct z3fold_header *__z3fold_alloc(struct z3fold_pool *pool,
+@@ -919,7 +922,7 @@ static inline struct z3fold_header *__z3
  		    test_bit(PAGE_CLAIMED, &page->private)) {
  			z3fold_page_unlock(zhdr);
- 			zhdr = NULL;
+ 			zhdr =3D NULL;
 -			put_cpu_ptr(pool->unbuddied);
-+			local_unlock(&pool->llock);
++			migrate_enable();
  			if (can_sleep)
  				cond_resched();
  			goto lookup;
-@@ -934,7 +940,7 @@ static inline struct z3fold_header *__z3fold_alloc(struct z3fold_pool *pool,
+@@ -934,7 +937,7 @@ static inline struct z3fold_header *__z3
  		kref_get(&zhdr->refcount);
  		break;
  	}
 -	put_cpu_ptr(pool->unbuddied);
-+	local_unlock(&pool->llock);
- 
++	migrate_enable();
+
  	if (!zhdr) {
  		int cpu;
-@@ -1005,6 +1011,7 @@ static struct z3fold_pool *z3fold_create_pool(const char *name, gfp_t gfp,
- 		goto out_c;
- 	spin_lock_init(&pool->lock);
- 	spin_lock_init(&pool->stale_lock);
-+	local_lock_init(&pool->llock);
- 	pool->unbuddied = __alloc_percpu(sizeof(struct list_head)*NCHUNKS, 2);
- 	if (!pool->unbuddied)
- 		goto out_pool;
 
-```
-
--- 
-  Oleksandr Natalenko (post-factum)
