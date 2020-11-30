@@ -2,112 +2,139 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 681ABC63777
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Nov 2020 19:11:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B99AC63777
+	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Nov 2020 20:15:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0A3DE206ED
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Nov 2020 19:11:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8B53E207F7
+	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Nov 2020 20:15:08 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="aV8HTBx2"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GXCr+4/m"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728443AbgK3TL3 (ORCPT
+        id S1729918AbgK3UPE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 30 Nov 2020 14:11:29 -0500
-Received: from mout.gmx.net ([212.227.15.18]:35993 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726063AbgK3TL3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Nov 2020 14:11:29 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1606763364;
-        bh=l+UULV6G5zk6dwIWZ5k74YCwsLwFtbtmxgzGJZBYupw=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=aV8HTBx27h3TO/n6lQUtsvpDerHRkVcF6t/CMiLo0OvTRIyEpuAeUmZjYdHKsl5DK
-         Sj1IXkJfjiLuhrFextj/U+ZMVyvMIQl2kbdzPFAkRNFQxwestTUA96D8r3NgQlo5kU
-         48spj5LhC36j57gUBbPLZNxGE/okrOfYdDRTSI1Q=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.221.151.20]) by mail.gmx.com (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MgvrL-1kG0a12szF-00hP23; Mon, 30
- Nov 2020 20:09:24 +0100
-Message-ID: <e1260d25c623f940138230dc2ebaad471c61f116.camel@gmx.de>
-Subject: Re: scheduling while atomic in z3fold
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Oleksandr Natalenko <oleksandr@natalenko.name>,
-        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        Andrew Morton <akpm@linux-foundation.org>,
+        Mon, 30 Nov 2020 15:15:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45182 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729756AbgK3UPE (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 30 Nov 2020 15:15:04 -0500
+Received: from mail-qk1-x744.google.com (mail-qk1-x744.google.com [IPv6:2607:f8b0:4864:20::744])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4D3AEC0613D2;
+        Mon, 30 Nov 2020 12:14:24 -0800 (PST)
+Received: by mail-qk1-x744.google.com with SMTP id y18so12102878qki.11;
+        Mon, 30 Nov 2020 12:14:24 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:date:to:subject:message-id:mime-version
+         :content-disposition;
+        bh=r10ZI/QmPOgFD2tboGgSrSMWUns0LgEeoijRW8kvhCY=;
+        b=GXCr+4/m3b2AIDFPRhdOGfGBFvEiE7zWBu3RLBWirFZy1fcwlRQCK5awt1x5tZ4fOG
+         qEs9HSZmyO/9b89xl/LEXGBRITc0tfLHrl5hjhSjxQAN94+FOthzKta9JQUtK/4swoYO
+         SRVxvC7AOAQ7fTUzXcbEUp0QfYxJUHlis9edJyKXGPNp8Hl5xyzyqbCKWRVcDkYiZDvi
+         ID7eUDIISQxarNWtHfgfxqTnLv0knYFdIrGrJpGYGjZLtAaAfCGAgAITxHbQUT68ewN1
+         Qs33voA81fWwP7r//p/WssgLSMRNwK5fmOOBt81HFIEXl6jAv0VQsYRF3771SyuuG91d
+         osMg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:date:to:subject:message-id
+         :mime-version:content-disposition;
+        bh=r10ZI/QmPOgFD2tboGgSrSMWUns0LgEeoijRW8kvhCY=;
+        b=CBrD9w6eEoozFCHkp9TEhk+ffCWdxr80BH40wd/XoOwfI75slJycgdfc4YAN24R6W6
+         hgbEZDpFLy/MPSMARe5FvgH+bf5LedPQjQJ3M4+Rh0J0cVybmguX1fqzRFiWyDu9QluB
+         p6r+l6d9y0QLNoes7PWq3hl4IlkO5Iv7wCITQgm91Wt/eauhJ47N9hxlRVv2tpuPc77k
+         1iXsdw+hLnT2OCwBFDYvKnzfwSN5uzLcrBQ0QMEAWWwDlRFYpEQeyH2Ser26CnjkHxWU
+         Pvs3CLbjb2O1gf0F8g53Dy9iseYfW4R7YgPlK952ZEE/QYp9+X2nvKmTjpGX9PV45Dmh
+         I6MQ==
+X-Gm-Message-State: AOAM531+dYLvNZpdekWWw9lhXx9sPD7iOh5dp+3z8OcMIWNeSQ2jN7/Q
+        f/+9g/O4zG5LYUDTDnxxLXxyUZs/odfpxA==
+X-Google-Smtp-Source: ABdhPJy3MTYW6Q5hdvuWAPQTFXZzgaUGfwgR5/ojjetkL8g14i238QBunceJIv2nQtJiwqhoXqwtiA==
+X-Received: by 2002:a37:5ac3:: with SMTP id o186mr26129199qkb.389.1606767263500;
+        Mon, 30 Nov 2020 12:14:23 -0800 (PST)
+Received: from lclaudio.dyndns.org ([191.177.185.4])
+        by smtp.gmail.com with ESMTPSA id h13sm18593642qtc.4.2020.11.30.12.14.22
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 30 Nov 2020 12:14:22 -0800 (PST)
+Sender: "Luis Claudio R. Goncalves" <lclaudio00@gmail.com>
+From:   "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+X-Google-Original-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
+        id 573F13C004C; Mon, 30 Nov 2020 17:14:20 -0300 (-03)
+Date:   Mon, 30 Nov 2020 17:14:20 -0300
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users@vger.kernel.org
-Date:   Mon, 30 Nov 2020 20:09:22 +0100
-In-Reply-To: <20201130163214.3zdlppkkd7dnnpzp@linutronix.de>
-References: <f1c39a0504310a97e42b667fc4d458af4a86d97a.camel@gmx.de>
-         <e38055ffe19751ba63f1c9beceae222438bcac59.camel@gmx.de>
-         <20201129112922.db53kmtpu76xxukj@spock.localdomain>
-         <90c4857c53b657147bfb71a281ece9839b0373c2.camel@gmx.de>
-         <20201130132014.mlvxeyiub3fpwyw7@linutronix.de>
-         <856b5cc2a3d4eb673743b52956bf1e60dcdf87a1.camel@gmx.de>
-         <20201130145229.mhbkrfuvyctniaxi@linutronix.de>
-         <05121515e73891ceb9e5caf64b6111fc8ff43fab.camel@gmx.de>
-         <20201130160327.ov32m4rapk4h432a@linutronix.de>
-         <2658a2a26e53826687cd7b22f424e2d3319423dd.camel@gmx.de>
-         <20201130163214.3zdlppkkd7dnnpzp@linutronix.de>
-Content-Type: text/plain; charset="ISO-8859-15"
-User-Agent: Evolution 3.34.4 
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 4.9.246-rt161
+Message-ID: <20201130201420.GF26159@uudg.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:UHx7Dco6B5uW6R576n2ewPuvuV+tW6V41Fpt7zBnZSJ/bz2Z2lW
- U2QH5AW8ISerShQ2TJ/Zlz1X02D6ySHeismj93Cu9cAE+tnejDIge2SbbhcfUvVYAvFWADN
- 5TmfGjsEOJd08o28Ycd1cQtgnAj7Z8O97+PtDZbFPaQaiMUvsxuXGMLc5ri8wt5C3iwPYR/
- ixHNB6/UE1mty/CpeBYKw==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:U/jGnV58I20=:JPpStcYtqIqo7RJ1Ouno4d
- NipNiQmVw4O7aDP437vr3StHctwDZAjgvqX6OBfVuBXm5C1Ntq3YaUZDeTPyROh06CAvQCTgc
- cKk4TUly+MqBeb6L9CXdX0o2dTaeRbC88/0ftx/G/BXkq849vzFmDhVg0k/yCzybT/B5GxXB8
- Sj0rLLaLkURI/3b7WA+iy2OM791Tg6GWYCGaBA5Xg1v2g7qwZXJKSNyoI7xk0G3SkGFsXhOCo
- XkiTMNBS5TQRkIQoNixHKjrrmz7FlEdxJKZTMHZtyWZNpa9erT+Q408w4kjRze5oQQsb6rg9l
- tu6xDGM+uKjn8MJr0EPisjyBTfXblpe+ARxy6YGX0op4P7WXd2LIsvnWmIwTf5rP+7mrBoX70
- +SoxpCoF9783yr70H3T+FTh1YDfwAL5FyNoIh7Psr/TIASOhWe3G0Dn7YERH2fD7k6m078+zF
- qCAUaEtBuNQnrbvvJlZKxGFv8J1MwYu6FdI1WFyVXX7CffkQVh/i4wWiEJ2O9+z7QdHCZfQWW
- His6zNtymcl0WeqHjHxAWraCaG2ct2FFyHuGCUbK9uxKiLMjG5UK+lMNQHJRVtsa38KTWc41Q
- 3jUplEaKyija7vAHVaO1CnL9mEMuYIHZ2vFr02Y5vEdU4Hptq+QpYzdbA/sIRCDtJ5ZVtCHFT
- aFaevY68HlUDDmRVmZjKf+EmM+3OD1mlxoK1NRocsX1QC0NWoFkQuIa8Mk6yRoHs3ln6Idzsj
- hEb9ZHA+2SimGOsG/2rKcATQ0GqfR86PKrJcJ0KnlBiurNkrXkS1UeUsOcMj3Bo1sbCTgEx+1
- 9B0vnFQdzXtPcTkuuftwLvBsBqHNgDmn2uaAPp9Zp/F+B18dW11CKPpk4AqdQDhMMGU1UuFW3
- 2NmAcwwgFhLpMzWbJX6g==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="b5gNqxB1S1yM7hjW"
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 2020-11-30 at 17:32 +0100, Sebastian Andrzej Siewior wrote:
-> On 2020-11-30 17:27:17 [+0100], Mike Galbraith wrote:
-> > > This just passed. It however killed my git-gc task which wasn't done=
-.
-> > > Let me try tomorrow with your config.
-> >
-> > FYI, I tried 5.9-rt (after fixing 5.9.11), it exploded in the same way=
-,
-> > so (as expected) it's not some devel tree oopsie.
->
-> v5.9 has the same missing local-lock init due to merged local-lock
-> upstream. I don't remember when this get_cpu_ptr() came it.
 
-Looks like get_cpu_ptr() arrived in 4.14.
+--b5gNqxB1S1yM7hjW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-I patched up zswap/z3fold in my old 5.1-rt tree (old forward port of
-4.19-rt), turned them on with a script, and it all worked fine, so the
-RT zswap allergy lies somewhere upstream of there it seems.
+Hello RT-list!
 
-If I were to start merging zswap and friends forward, I'd likely
-eventually meet whatever RT is allergic to.  I might try that, but
-won't be the least surprised if it turns into a god awful mess of
-dependencies.
+I'm pleased to announce the 4.9.246-rt161 stable release.
 
-Hopping forward in rt branches first and patching them up will bracket
-the little bugger a lot quicker.
+Note that this is a merge of the upstream stable releases only and no change
+has been made to RT code, as the v4.9 branch is in maintenance mode.
 
-	-Mike
+You can get this release via the git tree at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.9-rt
+  Head SHA1: d15cec657345cf3f0fc3d09b0348ba092027bab0
+  Tag: v4.9.246-rt161
+
+Or to build 4.9.246-rt161 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.246.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.246-rt161.patch.xz
+
+Enjoy!
+Luis
+
+
+--b5gNqxB1S1yM7hjW
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAl/FUpkACgkQ85SkI/jm
+fCYW+A//b4AmbWCZ+HvYXcv6TgioDo2skOguFs0c/4mIonPDDvmmLn8uKYis820d
+2wKczzUEb0ly9oYOlqSoNoBRVyqX+wncN31YmkvVOk+U0Eimk0DuC1YtLJXtoe30
+60hH3O4+wiX96qb6q+CPYtfwNt/nH9v/0qUnajM5DQp2tP7jUY3uQsC8EBDetCan
+DtY8mbZSU86CFWq5BV9uF7pNQC6bRjWc4N1i9h1WgJ5z4+kXSA9rCFp21f3yZfrW
+TUl0BMUgT76tshwVkxWAK8jGql+CfgZXIJCZCzInPf41FVuKHNa6HT7+rGFCH0B/
+LfGoOE4hOFrNtGsjgP1D4W0dFA240ek7qz+Bd21O0IQg7C5C522l6W3gEOPHWeo6
+HbfU6E5/Fmfk82NcYMi7yynUMpM/r0Oc/AAsfY4hGB9WpMpd32ErTDhv9AkgxLVl
+zLipXHwT1yIS9MWZc3WzqiwLOA71mAXnwox2keLno9PCWMrVa8358lXx6Tgy/X0I
+sKP6He8bfSb4xQKX1myxwOrcuK+nHChAsGnMB8iXWPlOUyzsYeGdKpIPm7QeQhM9
+5bCgBe1cf9gKarCcp2968CbdENGcP1+6AQ4tISk0LJS79fzBd2HlVyskBtwRxhYr
+mlL+PGw/HMnv6nWdqPLW6IMZJOkMYjE6eZjPLwrQ+DE8o62jRgk=
+=lQ8j
+-----END PGP SIGNATURE-----
+
+--b5gNqxB1S1yM7hjW--
