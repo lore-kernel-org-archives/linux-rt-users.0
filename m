@@ -7,68 +7,69 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8542DC71156
-	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 07:16:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 11804C64E7A
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 07:18:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 39DBC2087D
-	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 07:16:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 904E72085B
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 07:18:12 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="g/+hTT8A"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Q8t+VDZm"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727805AbgLAHQu (ORCPT
+        id S1727684AbgLAHR5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 1 Dec 2020 02:16:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34820 "EHLO
+        Tue, 1 Dec 2020 02:17:57 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35002 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727684AbgLAHQt (ORCPT
+        with ESMTP id S1727417AbgLAHR4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 1 Dec 2020 02:16:49 -0500
-Received: from mail-io1-xd41.google.com (mail-io1-xd41.google.com [IPv6:2607:f8b0:4864:20::d41])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 97AC0C0613D3
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Nov 2020 23:16:09 -0800 (PST)
-Received: by mail-io1-xd41.google.com with SMTP id d8so580222ioc.13
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Nov 2020 23:16:09 -0800 (PST)
+        Tue, 1 Dec 2020 02:17:56 -0500
+Received: from mail-io1-xd29.google.com (mail-io1-xd29.google.com [IPv6:2607:f8b0:4864:20::d29])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 625CFC0613CF
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Nov 2020 23:17:16 -0800 (PST)
+Received: by mail-io1-xd29.google.com with SMTP id f20so589333ioc.12
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Nov 2020 23:17:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=kktEVHZtzBjeN0/3NFWVzb2nsxyKfokGD+310q9YXXI=;
-        b=g/+hTT8AFOnvuHNQqI44kgDKjejWBDHsvc4aMhLoRkM9SuLRbC3/33MQXQ6rEZiB+N
-         4YTU8MOwmwq910Ik09yVdMBXsmCFMBF5QL+GlGNCuEYGHnQmlNLFK4O903Bey4Ojl3Rl
-         MKih5k1UA7YcQ6UDN6D9Uc6SXZGOssby4PQuZgBPmKcgqEs+DeP71mlgD6a/4KEF4atE
-         isulJXgTsNrGpDr+OomdTcLHVMKoDl/u79erShTd4jyKSETAUgUnoSS5CqFmfMusM+55
-         tk5Ptuq6TJgFKRk8EFQGdp1KtV2uugMKY8pJtsOQH1Wvse0S5oavKZxo2cHy4Mmb4B3k
-         iKmg==
+        bh=ddJ85bJMjPHWkEaSd1PSglwH6pP89+HOWdb8beRGxlQ=;
+        b=Q8t+VDZmpkTcIXAZNCjxRGFUMESdqy0nQbrOzXSNt22DxOEnuAL5gFPYUKaPcvUBIr
+         cn78Ce923HaC4unkE8v9v9J9sNA/PhZ3FJKbZfqrK5MoaNLGY2zU7TE0zAtXSLLR84Q9
+         nN7whdE5h3HQzT39INP++brkWWd7WFGmFTMwpOwHEnM/r+xosO3pg3wYzliiM3ZVigXT
+         /lZkXHVAGJIhur3dY0y5jRHa7qfS519R2OIj9ShaleviP2Y5Ugq3YSG185tit+xbPmFh
+         42Ej0gzb7SqrgCEZmIUTY01uAe9lDG4rkiPlhZNL3+WFuXD3jloahzok9rLqDKNEF6vT
+         B0Kg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=kktEVHZtzBjeN0/3NFWVzb2nsxyKfokGD+310q9YXXI=;
-        b=gKeTht+HrRgjpwH6DwE5Jg4z2BdxZchZ19waPeiMWfIlsBxOHEWtoqnuKMifTQrWfq
-         Nf6TAr0H4yp+/hihhX3LFaZCverT9CoM044fTWKXf8B0DIGuXPQEkBs44j0J7ooVoXZh
-         2Bk5Li6hgjfGuYKWo0pip8WgM3GMsrmWLqZDAzGVFw4Sv3LQLaVtdnjWiiq72CJRUhwa
-         RybLy9m4hTA8OPjpA8XDDpDDYynoupnQ2aYV/PY4PJAMOXC0uYZhPOmpbd65JK0Uh3dd
-         QSAYsIMxLy+wbGw51jTYUCUkfkfl0wpJbTjofWJwcIzt8GevQi0Ng6f16qwTgVryLplX
-         Fecw==
-X-Gm-Message-State: AOAM532ctfGuLpHTPAB9//c9tCgppBBxImZHGcjFD6uZxzNQ3G3sMzcU
-        WpV9dXW+IfGxQL9aR5nPzrp5WcQ9ZaCs6w==
-X-Google-Smtp-Source: ABdhPJyeu9mHi2H92sb4E0tznVvvXX27Pma0DLzbvvhn6Y3wkvI25Kf/zu0e0sSpXDtpR3dTjgKHcA==
-X-Received: by 2002:a02:830f:: with SMTP id v15mr1561453jag.12.1606806969033;
-        Mon, 30 Nov 2020 23:16:09 -0800 (PST)
+        bh=ddJ85bJMjPHWkEaSd1PSglwH6pP89+HOWdb8beRGxlQ=;
+        b=SyUY+JOrhKAiuua5zVjP4pe5wnc4P+tCI/7ZlftEYAf4ws91b+VVx4qAG29HAxFFvm
+         fpJS08FyUJEX2O8240JvbuMyhRcQULSRksbCJAAAzrGTmFOnAHYH9sklhMwPen7OoULg
+         YNLwIt0+2RNNr4PYHluZVrml0eQvmJuSqv9QhdcSByT61Ube5j2ZplsuX1zrxtYpxP3P
+         ez+p+e3OA6L8rpzWdoPP35CPnECVQQUNVLwBJtlNj5wmo1qkjB54C2bee+GdwFjEzeAw
+         YiZICUqYU6j4vEeyvYXOzXGZvsVfUV0HbSAk3X+YpZDfXxxbXCENE+5IfuFa01zEPA+X
+         hR9g==
+X-Gm-Message-State: AOAM533ftnV7GTRhZC/pkp8UVE2JUTCNhj5XfMC7Dk2sHIaef+KSOsOQ
+        wYO5Qm+jrms6MMfm4CdqW8I/YI+fZmLoLw==
+X-Google-Smtp-Source: ABdhPJwo2uhLYS2MVEeaEqeuBt46IvaKWsPmNzNOU/r8uZIz7v1/ZGpIpw+AOXRu/FJspOopz0U63A==
+X-Received: by 2002:a6b:ef0b:: with SMTP id k11mr1396537ioh.210.1606807035797;
+        Mon, 30 Nov 2020 23:17:15 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-11-174-88-121-241.dsl.bell.ca. [174.88.121.241])
-        by smtp.gmail.com with ESMTPSA id o10sm646963ili.82.2020.11.30.23.16.08
+        by smtp.gmail.com with ESMTPSA id a13sm661488ilh.0.2020.11.30.23.17.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 30 Nov 2020 23:16:08 -0800 (PST)
+        Mon, 30 Nov 2020 23:17:15 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 1 Dec 2020 02:16:04 -0500 (EST)
+Date:   Tue, 1 Dec 2020 02:17:11 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v1 11/12] sigwaittest: Add quiet command line option
-In-Reply-To: <20201118190642.16006-12-dwagner@suse.de>
-Message-ID: <a9512176-a2b-c570-1fc8-af62693abf1@redhat.com>
-References: <20201118190642.16006-1-dwagner@suse.de> <20201118190642.16006-12-dwagner@suse.de>
+Subject: Re: [rt-tests v1 12/12] rt-migrate-test: Add quiet command line
+ option
+In-Reply-To: <20201118190642.16006-13-dwagner@suse.de>
+Message-ID: <e1a93c45-14ba-a948-64fb-69da5959f76@redhat.com>
+References: <20201118190642.16006-1-dwagner@suse.de> <20201118190642.16006-13-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -85,84 +86,71 @@ On Wed, 18 Nov 2020, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/sigwaittest/sigwaittest.c | 19 +++++++++++++++----
->  1 file changed, 15 insertions(+), 4 deletions(-)
+>  src/rt-migrate-test/rt-migrate-test.c | 12 +++++++++---
+>  1 file changed, 9 insertions(+), 3 deletions(-)
 > 
-> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-> index d3be2fd9508c..7e287bd2424f 100644
-> --- a/src/sigwaittest/sigwaittest.c
-> +++ b/src/sigwaittest/sigwaittest.c
-> @@ -221,6 +221,7 @@ static void display_help(int error)
->  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
->  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
->  	       "-p PRIO  --prio=PRIO       priority\n"
-> +	       "-q       --quiet           print a summary only on exit\n"
->  	       "-t       --threads         one thread per available processor\n"
->  	       "-t [NUM] --threads=NUM     number of threads:\n"
->  	       "                           without NUM, threads = max_cpus\n"
-> @@ -238,6 +239,7 @@ static int max_cycles;
+> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+> index f1b7e5e4fe8c..9bf716c9178c 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.c
+> +++ b/src/rt-migrate-test/rt-migrate-test.c
+> @@ -98,6 +98,7 @@ static unsigned long long now;
+>  static int done;
+>  static int loop;
 >  static int duration;
->  static int interval = 1000;
->  static int distance = 500;
 > +static int quiet;
 >  
->  static void process_options(int argc, char *argv[])
->  {
-> @@ -258,10 +260,11 @@ static void process_options(int argc, char *argv[])
->  			{"interval",		required_argument,	NULL, 'i'},
->  			{"loops",		required_argument,	NULL, 'l'},
->  			{"priority",		required_argument,	NULL, 'p'},
-> +			{"quiet",		no_argument,		NULL, 'q'},
->  			{"threads",		optional_argument,	NULL, 't'},
+>  static pthread_barrier_t start_barrier;
+>  static pthread_barrier_t end_barrier;
+> @@ -160,6 +161,7 @@ static void usage(int error)
+>  	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
+>  	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
+>  	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
+> +	       "-q       --quiet           print a summary only on exit\n"
+>  	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
+>  	       "-s TIME  --sleep-time=TIME Sleep time (ms) between intervals (100)\n\n"
+>  	       "  () above are defaults \n"
+> @@ -180,11 +182,12 @@ static void parse_options(int argc, char *argv[])
+>  			{"loops",	required_argument,	NULL, 'l'},
+>  			{"maxerr",	required_argument,	NULL, 'm'},
+>  			{"prio",	required_argument,	NULL, 'p'},
+> +			{"quiet",	no_argument,		NULL, 'q'},
+>  			{"run-time",	required_argument,	NULL, 'r'},
+>  			{"sleep-time",	required_argument,	NULL, 's'},
 >  			{NULL, 0, NULL, 0}
 >  		};
-> -		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:t::",
-> +		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:qt::",
+> -		int c = getopt_long(argc, argv, "cD:ehl:m:p:r:s:",
+> +		int c = getopt_long(argc, argv, "cD:ehl:m:p:qr:s:",
 >  			long_options, &option_index);
 >  		if (c == -1)
 >  			break;
-> @@ -298,6 +301,7 @@ static void process_options(int argc, char *argv[])
->  		case 'i': interval = atoi(optarg); break;
->  		case 'l': max_cycles = atoi(optarg); break;
->  		case 'p': priority = atoi(optarg); break;
+> @@ -199,6 +202,7 @@ static void parse_options(int argc, char *argv[])
+>  		case 'l': nr_runs = atoi(optarg); break;
+>  		case 'm': max_err = usec2nano(atoi(optarg)); break;
+>  		case 'p': prio_start = atoi(optarg); break;
 > +		case 'q': quiet = 1; break;
->  		case 't':
->  			if (optarg != NULL)
->  				num_threads = atoi(optarg);
-> @@ -352,6 +356,9 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
->  {
->  	int i;
+>  		case 'r':
+>  			run_interval = atoi(optarg);
+>  			break;
+> @@ -532,7 +536,8 @@ int main (int argc, char **argv)
+>  	intv.tv_sec = nano2sec(INTERVAL);
+>  	intv.tv_nsec = INTERVAL % sec2nano(1);
 >  
-> +	if (quiet)
-> +		return;
-> +
->  	for (i = 0; i < num_threads; i++) {
->  		int receiver_pid, sender_pid;
->  		if (mustfork) {
-> @@ -577,8 +584,9 @@ int main(int argc, char *argv[])
->  			    sender[i].shutdown;
->  
->  		if (receiver[0].samples > oldsamples || mustshutdown) {
-> -			print_stat(stdout, receiver, sender, 0, 0);
-> -			printf("\033[%dA", num_threads*2);
-> +			print_stat(stdout, receiver, sender, 0, quiet);
-> +			if (!quiet)
-> +				printf("\033[%dA", num_threads*2);
->  		}
->  
->  		sigemptyset(&sigset);
-> @@ -593,7 +601,10 @@ int main(int argc, char *argv[])
->  		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
->  	}
->  
-> -	printf("\033[%dB", num_threads*2 + 2);
+> -	print_progress_bar(0);
 > +	if (!quiet)
-> +		printf("\033[%dB", num_threads*2 + 2);
-> +	else
-> +		print_stat(stdout, receiver, sender, 0, 0);
+> +		print_progress_bar(0);
 >  
->  	for (i = 0; i < num_threads; i++) {
->  		receiver[i].shutdown = 1;
+>  	setup_ftrace_marker();
+>  
+> @@ -552,7 +557,8 @@ int main (int argc, char **argv)
+>  
+>  		nanosleep(&intv, NULL);
+>  
+> -		print_progress_bar((loop * 100)/nr_runs);
+> +		if (!quiet)
+> +			print_progress_bar((loop * 100)/nr_runs);
+>  
+>  		end = get_time();
+>  		ftrace_write("Loop %d end now=%lld diff=%lld\n", loop, end, end - now);
 > -- 
 > 2.29.2
 > 
