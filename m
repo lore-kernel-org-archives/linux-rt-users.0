@@ -2,139 +2,141 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B99AC63777
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Nov 2020 20:15:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 873D2C64E7B
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 06:31:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8B53E207F7
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Nov 2020 20:15:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0FA5020757
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 06:31:04 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GXCr+4/m"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OxaciEcR"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729918AbgK3UPE (ORCPT
+        id S1726418AbgLAGbD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 30 Nov 2020 15:15:04 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45182 "EHLO
+        Tue, 1 Dec 2020 01:31:03 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56030 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729756AbgK3UPE (ORCPT
+        with ESMTP id S1725859AbgLAGbD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Nov 2020 15:15:04 -0500
-Received: from mail-qk1-x744.google.com (mail-qk1-x744.google.com [IPv6:2607:f8b0:4864:20::744])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4D3AEC0613D2;
-        Mon, 30 Nov 2020 12:14:24 -0800 (PST)
-Received: by mail-qk1-x744.google.com with SMTP id y18so12102878qki.11;
-        Mon, 30 Nov 2020 12:14:24 -0800 (PST)
+        Tue, 1 Dec 2020 01:31:03 -0500
+Received: from mail-io1-xd35.google.com (mail-io1-xd35.google.com [IPv6:2607:f8b0:4864:20::d35])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 52983C0613CF
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Nov 2020 22:30:23 -0800 (PST)
+Received: by mail-io1-xd35.google.com with SMTP id q137so506610iod.9
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Nov 2020 22:30:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=sender:from:date:to:subject:message-id:mime-version
-         :content-disposition;
-        bh=r10ZI/QmPOgFD2tboGgSrSMWUns0LgEeoijRW8kvhCY=;
-        b=GXCr+4/m3b2AIDFPRhdOGfGBFvEiE7zWBu3RLBWirFZy1fcwlRQCK5awt1x5tZ4fOG
-         qEs9HSZmyO/9b89xl/LEXGBRITc0tfLHrl5hjhSjxQAN94+FOthzKta9JQUtK/4swoYO
-         SRVxvC7AOAQ7fTUzXcbEUp0QfYxJUHlis9edJyKXGPNp8Hl5xyzyqbCKWRVcDkYiZDvi
-         ID7eUDIISQxarNWtHfgfxqTnLv0knYFdIrGrJpGYGjZLtAaAfCGAgAITxHbQUT68ewN1
-         Qs33voA81fWwP7r//p/WssgLSMRNwK5fmOOBt81HFIEXl6jAv0VQsYRF3771SyuuG91d
-         osMg==
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=9pShFYFvombzDS/4Btvc5tAB26TkPKoSotgD1L+VJd0=;
+        b=OxaciEcRJl40oq6OW6kk0OikeUffcJbjicHc0pBq9jql8TQ2nfB1qNCmQ0EB/QvX9C
+         w5c0iTxoCCz+aUlbfb69/5t3UTQEDBeY5Na64DrCN5V0n/+9DaDed1QTO8zEtdxBwaTL
+         kT8sFCi8VQggjg8BcvVs3tJ1JRk2ApB4qS/khgIaiKWnSwDa6LEyEavziGnc39XJ2Rjq
+         GFH9sWKuEEWUAgjvY5UJunUBXSL6hvcYelcxJKN2foNTQMkx6FYFN/vwEMIDEOF2aL41
+         /mvaLB/oX0xsllo1MlJIsId0vhcc9H7j2D6evnyut6AGkvgyNYTZT11GyhXg0wqcsr4V
+         +70g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:date:to:subject:message-id
-         :mime-version:content-disposition;
-        bh=r10ZI/QmPOgFD2tboGgSrSMWUns0LgEeoijRW8kvhCY=;
-        b=CBrD9w6eEoozFCHkp9TEhk+ffCWdxr80BH40wd/XoOwfI75slJycgdfc4YAN24R6W6
-         hgbEZDpFLy/MPSMARe5FvgH+bf5LedPQjQJ3M4+Rh0J0cVybmguX1fqzRFiWyDu9QluB
-         p6r+l6d9y0QLNoes7PWq3hl4IlkO5Iv7wCITQgm91Wt/eauhJ47N9hxlRVv2tpuPc77k
-         1iXsdw+hLnT2OCwBFDYvKnzfwSN5uzLcrBQ0QMEAWWwDlRFYpEQeyH2Ser26CnjkHxWU
-         Pvs3CLbjb2O1gf0F8g53Dy9iseYfW4R7YgPlK952ZEE/QYp9+X2nvKmTjpGX9PV45Dmh
-         I6MQ==
-X-Gm-Message-State: AOAM531+dYLvNZpdekWWw9lhXx9sPD7iOh5dp+3z8OcMIWNeSQ2jN7/Q
-        f/+9g/O4zG5LYUDTDnxxLXxyUZs/odfpxA==
-X-Google-Smtp-Source: ABdhPJy3MTYW6Q5hdvuWAPQTFXZzgaUGfwgR5/ojjetkL8g14i238QBunceJIv2nQtJiwqhoXqwtiA==
-X-Received: by 2002:a37:5ac3:: with SMTP id o186mr26129199qkb.389.1606767263500;
-        Mon, 30 Nov 2020 12:14:23 -0800 (PST)
-Received: from lclaudio.dyndns.org ([191.177.185.4])
-        by smtp.gmail.com with ESMTPSA id h13sm18593642qtc.4.2020.11.30.12.14.22
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=9pShFYFvombzDS/4Btvc5tAB26TkPKoSotgD1L+VJd0=;
+        b=ZSGMLrpKirvjV9NpvQORErpCFO9zHmEe6E11r9yNMH+PL3uCxOAhyRvnv0vu3NjaDu
+         9loio5XcUkit/4IBpYKzohjtuPVkis6OPmdhj0eYl0Z97vWNhPeot/9RkFmhe+ot9np5
+         GAGpBu/cRSj8vbUm6uDloQwpbBBbqwp9nVmgAVJVdAq2LSPh5TGK+OUFYfUIiB1QnkIu
+         566NcM/d1YJxQehop58Mg0VgVaKZ80Yds4S6DJUoyf/GDEYZp54tLr0YnaVqyepedxCf
+         98DFIzKqMHvsIX/jIimWWqgzm0x6Cq04HglXvBMhiMinGMvi5BAYevmlKY0/WO8U/mWJ
+         oiKw==
+X-Gm-Message-State: AOAM533luG8Xfjd7Dv6JZGX5dJNrK7kJmzdeeL4W1gByqaiLNZu1Ns79
+        pyRKUNWyuU4eoArdUVRMNt2uynGBMg5zhw==
+X-Google-Smtp-Source: ABdhPJyABme7RRzeX1CZp4lWbRKYH5fxMyNQvPY9ONoh0661NfKW9cOKSZIrdAbmi/DQe6/SqZRw4w==
+X-Received: by 2002:a05:6602:1305:: with SMTP id h5mr1271911iov.202.1606804222766;
+        Mon, 30 Nov 2020 22:30:22 -0800 (PST)
+Received: from fionn (bras-base-rdwyon0600w-grc-11-174-88-121-241.dsl.bell.ca. [174.88.121.241])
+        by smtp.gmail.com with ESMTPSA id d7sm280172iod.45.2020.11.30.22.30.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 30 Nov 2020 12:14:22 -0800 (PST)
-Sender: "Luis Claudio R. Goncalves" <lclaudio00@gmail.com>
-From:   "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-X-Google-Original-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id 573F13C004C; Mon, 30 Nov 2020 17:14:20 -0300 (-03)
-Date:   Mon, 30 Nov 2020 17:14:20 -0300
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.9.246-rt161
-Message-ID: <20201130201420.GF26159@uudg.org>
+        Mon, 30 Nov 2020 22:30:21 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+Date:   Tue, 1 Dec 2020 01:30:04 -0500 (EST)
+From:   John Kacur <jkacur@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [rt-tests v1 01/12] cyclicdeadline: Remove dead code
+In-Reply-To: <20201118190642.16006-2-dwagner@suse.de>
+Message-ID: <9d9db38c-925b-b5e2-b273-2572f7bb7f3@redhat.com>
+References: <20201118190642.16006-1-dwagner@suse.de> <20201118190642.16006-2-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="b5gNqxB1S1yM7hjW"
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
---b5gNqxB1S1yM7hjW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-Hello RT-list!
+On Wed, 18 Nov 2020, Daniel Wagner wrote:
 
-I'm pleased to announce the 4.9.246-rt161 stable release.
+> my_sprintf() is not used, remove it.
+> 
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  compare.py                          | 12 ++++++++++++
+>  src/sched_deadline/cyclicdeadline.c | 13 -------------
+>  2 files changed, 12 insertions(+), 13 deletions(-)
+>  create mode 100644 compare.py
+> 
+> diff --git a/compare.py b/compare.py
+> new file mode 100644
+> index 000000000000..7fb6ae818a00
+> --- /dev/null
+> +++ b/compare.py
+> @@ -0,0 +1,12 @@
+> +with open('old', 'r') as old:
+> +    with open('new', 'r') as new:
+> +        for ol in old.readlines():
+> +            new.seek(0)
+> +            for nl in new.readlines():
+> +                o = ol.split()
+> +                n = nl.split()
+> +
+> +                if o[8] == n[8]:
+> +                    d = int(n[4]) - int(o[4])
+> +                    p = d/int(o[4]) * 100
+> +                    print('{:20} {:>8} {:>8} {:>6} {:>2.2}%'.format(o[8], o[4], n[4], d, p))
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index a6309ded3c52..e0db9669f676 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -215,19 +215,6 @@ static int my_vsprintf(char *buf, int size, const char *fmt, va_list ap)
+>  	return s - buf;
+>  }
+>  
+> -#if 0
+> -static int my_sprintf(char *buf, int size, const char *fmt, ...)
+> -{
+> -	va_list ap;
+> -	int n;
+> -
+> -	va_start(ap, fmt);
+> -	n = vsnprintf(buf, size, fmt, ap);
+> -	va_end(ap);
+> -	return n;
+> -}
+> -#endif
+> -
+>  static void ftrace_write(char *buf, const char *fmt, ...)
+>  {
+>  	va_list ap;
+> -- 
+> 2.29.2
+> 
+> 
 
-Note that this is a merge of the upstream stable releases only and no change
-has been made to RT code, as the v4.9 branch is in maintenance mode.
+Well, your git version is okay, but the version you posted here has 
+compare.py, which I assume is somekind of internal tooling you created.
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.9-rt
-  Head SHA1: d15cec657345cf3f0fc3d09b0348ba092027bab0
-  Tag: v4.9.246-rt161
-
-Or to build 4.9.246-rt161 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.246.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.246-rt161.patch.xz
-
-Enjoy!
-Luis
-
-
---b5gNqxB1S1yM7hjW
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAl/FUpkACgkQ85SkI/jm
-fCYW+A//b4AmbWCZ+HvYXcv6TgioDo2skOguFs0c/4mIonPDDvmmLn8uKYis820d
-2wKczzUEb0ly9oYOlqSoNoBRVyqX+wncN31YmkvVOk+U0Eimk0DuC1YtLJXtoe30
-60hH3O4+wiX96qb6q+CPYtfwNt/nH9v/0qUnajM5DQp2tP7jUY3uQsC8EBDetCan
-DtY8mbZSU86CFWq5BV9uF7pNQC6bRjWc4N1i9h1WgJ5z4+kXSA9rCFp21f3yZfrW
-TUl0BMUgT76tshwVkxWAK8jGql+CfgZXIJCZCzInPf41FVuKHNa6HT7+rGFCH0B/
-LfGoOE4hOFrNtGsjgP1D4W0dFA240ek7qz+Bd21O0IQg7C5C522l6W3gEOPHWeo6
-HbfU6E5/Fmfk82NcYMi7yynUMpM/r0Oc/AAsfY4hGB9WpMpd32ErTDhv9AkgxLVl
-zLipXHwT1yIS9MWZc3WzqiwLOA71mAXnwox2keLno9PCWMrVa8358lXx6Tgy/X0I
-sKP6He8bfSb4xQKX1myxwOrcuK+nHChAsGnMB8iXWPlOUyzsYeGdKpIPm7QeQhM9
-5bCgBe1cf9gKarCcp2968CbdENGcP1+6AQ4tISk0LJS79fzBd2HlVyskBtwRxhYr
-mlL+PGw/HMnv6nWdqPLW6IMZJOkMYjE6eZjPLwrQ+DE8o62jRgk=
-=lQ8j
------END PGP SIGNATURE-----
-
---b5gNqxB1S1yM7hjW--
+My SOB refers to your git version
+Signed-off-by: John Kacur <jkacur@redhat.com>
