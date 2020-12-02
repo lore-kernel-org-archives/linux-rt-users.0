@@ -2,81 +2,133 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C69E6C64E7A
-	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 15:28:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3FB8FC64E8A
+	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Dec 2020 02:06:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 748742084C
-	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Dec 2020 15:28:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DFE11221F9
+	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Dec 2020 02:06:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390419AbgLAP2F (ORCPT
+        id S1728096AbgLBCGR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 1 Dec 2020 10:28:05 -0500
-Received: from youngberry.canonical.com ([91.189.89.112]:60902 "EHLO
-        youngberry.canonical.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2390298AbgLAP2E (ORCPT
+        Tue, 1 Dec 2020 21:06:17 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41122 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727353AbgLBCGR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 1 Dec 2020 10:28:04 -0500
-Received: from 1.general.cking.uk.vpn ([10.172.193.212])
-        by youngberry.canonical.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
-        (Exim 4.86_2)
-        (envelope-from <colin.king@canonical.com>)
-        id 1kk7Yo-00072f-TW; Tue, 01 Dec 2020 15:27:22 +0000
-To:     linux-rt-users@vger.kernel.org
-From:   Colin Ian King <colin.king@canonical.com>
-Subject: =?UTF-8?Q?RT_long_hang_during_boot_on_ARM64_SynQuacer=e2=84=a2_96Bo?=
- =?UTF-8?Q?ards_Box=2c_v5=2e10-rc6-rt13?=
-Message-ID: <892ffdfa-987a-baf8-c02a-6844fc019adb@canonical.com>
-Date:   Tue, 1 Dec 2020 15:27:22 +0000
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.5.0
+        Tue, 1 Dec 2020 21:06:17 -0500
+Received: from mail-io1-xd43.google.com (mail-io1-xd43.google.com [IPv6:2607:f8b0:4864:20::d43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A7DFC0613D4;
+        Tue,  1 Dec 2020 18:05:31 -0800 (PST)
+Received: by mail-io1-xd43.google.com with SMTP id z136so345300iof.3;
+        Tue, 01 Dec 2020 18:05:31 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=Xn/Qw79sid0CoEVHDkLbIFMzaVFtjxbXx36teEBnLoI=;
+        b=paOIrkW0zg1FoI9vN2C7U4MdtX5+gTwqaIk/ATMhY18+RhWyEayz0NPodug3sfGHRj
+         VFGcGrTVy+xJg8QZGmepTK9MTJfAQ5ONxy6UeoUb8ok8hfrri5riYCh+ojU6ztfLWlS+
+         aacQj8ctDT52HNdoj6qQyWfGyKZd9XDFqDaKCBnLFFgf9OPsU0OZaYv0gOwKUIxwHOvG
+         VAzuE9vveHnQGa08sjXdlLSQ1GOaM3tGzLwRdpzc+6BhYct1AD5nJ4E5F2rIswCG0zn6
+         NvhfMEnzmHBBQ3P/tq5czN3JpRWVYnAek8xrt5x+PLc3Ou5zkoU+cZMPrkEXIAugl5ve
+         nzBQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=Xn/Qw79sid0CoEVHDkLbIFMzaVFtjxbXx36teEBnLoI=;
+        b=SCPsDOLyKaNwm+Ype+lVQp+dlJunS0B4MmY1isJc3UdomVhC97hRNBKD9Bfhmngv8+
+         XhaArogxOlWXZezzCzD740ApM5edl+7E0rS0RdpGN+6Vke7VpdCrUtlH/hJn5ld6Tfhh
+         dzwL/KimySpEyNd32dEIOWflxoaL+h+ixKBM3suf/JTu9PHrMc711ss5xtHlDkSQfVlA
+         Z4p0dDuhU4kS/iUAIsfUxMjTYCWBYnpYRYvi5UZrievJG0SGg4u8kHjnTimVFFWlBPnY
+         LfVVPC/Q6Y6WS3kyxf1lxcIeGM0RaZfEPGF4QK7R1N/jGKHHETJrca6asX2QCKFHOfBR
+         lvxQ==
+X-Gm-Message-State: AOAM5327VlNsL61KAErG18hDM0K5SO0dME/4KBiXlThFD5mBjswN6YJn
+        m475gzTW25/doR99tMTmbV/8O231OIUmH3todx0=
+X-Google-Smtp-Source: ABdhPJxZ32qfJO+y9gnoFEEKoXbNcSkk4dLviSHgqRNEq3YBPypBrkgA+TFyfP8+Yk0TtSZRj7XCRUuEkSeMS5V0STU=
+X-Received: by 2002:a6b:c582:: with SMTP id v124mr175469iof.13.1606874729998;
+ Tue, 01 Dec 2020 18:05:29 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+References: <20201201115416.26515-1-laoar.shao@gmail.com> <20201201115416.26515-5-laoar.shao@gmail.com>
+ <20201201124614.GU3306@suse.de>
+In-Reply-To: <20201201124614.GU3306@suse.de>
+From:   Yafang Shao <laoar.shao@gmail.com>
+Date:   Wed, 2 Dec 2020 10:04:54 +0800
+Message-ID: <CALOAHbD0g=UPFcutNn3Decn4iRSgU4sfewtSKJqUXxBs203YAw@mail.gmail.com>
+Subject: Re: [PATCH 4/6] sched: make schedstats helpers independent of fair
+ sched class
+To:     Mel Gorman <mgorman@suse.de>
+Cc:     Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Benjamin Segall <bsegall@google.com>, bristot@redhat.com,
+        jun qian <qianjun.kernel@gmail.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi there,
+On Tue, Dec 1, 2020 at 8:46 PM Mel Gorman <mgorman@suse.de> wrote:
+>
+> On Tue, Dec 01, 2020 at 07:54:14PM +0800, Yafang Shao wrote:
+> > The original prototype of the schedstats helpers are
+> >
+> > update_stats_wait_*(struct cfs_rq *cfs_rq, struct sched_entity *se)
+> >
+> > The cfs_rq in these helpers is used to get the rq_clock, and the se is
+> > used to get the struct sched_statistics and the struct task_struct. In
+> > order to make these helpers available by all sched classes, we can pass
+> > the rq, sched_statistics and task_struct directly.
+> >
+> > Then the new helpers are
+> >
+> > update_stats_wait_*(struct rq *rq, struct task_struct *p,
+> >                   struct sched_statistics *stats)
+> >
+> > which are independent of fair sched class.
+> >
+> > To avoid vmlinux growing too large or introducing ovehead when
+> > !schedstat_enabled(), some new helpers after schedstat_enabled() are also
+> > introduced, Suggested by Mel. These helpers are in sched/stats.c,
+> >
+> > __update_stats_wait_*(struct rq *rq, struct task_struct *p,
+> >                     struct sched_statistics *stats)
+> >
+> > Cc: Mel Gorman <mgorman@suse.de>
+> > Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
+>
+> Think it's ok, it's mostly code shuffling. I'd have been happier if
+> there was evidence showing a before/after comparison of the sched stats
+> for something simple like "perf bench sched pipe" and a clear statement
+> of no functional change as well as a comparison of the vmlinux files but
+> I think it's ok so;
+>
 
-I've been trying to get the 5.10-rcX RT kernels to boot on an 24 CPU
-ARM64 SynQuacer box.  In single CPU non-SMP mode it boots immediately,
-however with 24 CPUs I get a really long boot delay:
+Thanks for the review, I will do the comparison as you suggested.
 
-Oct 29 17:38:35 synquacer kernel: [    2.197037] evm: security.SMACK64EXEC
-Oct 29 17:38:35 synquacer kernel: [    2.197039] evm:
-security.SMACK64TRANSMUTE
-Oct 29 17:38:35 synquacer kernel: [    2.197042] evm: security.SMACK64MMAP
-Oct 29 17:38:35 synquacer kernel: [    2.197044] evm: security.apparmor
-Oct 29 17:38:35 synquacer kernel: [    2.197046] evm: security.ima
-Oct 29 17:38:35 synquacer kernel: [    2.197048] evm: security.capability
-Oct 29 17:38:35 synquacer kernel: [    2.197051] evm: HMAC attrs: 0x1
-Oct 29 17:38:35 synquacer kernel: [    3.970833] sched: RT throttling
-activated
-Oct 29 17:38:35 synquacer kernel: [ 1850.659285] Freeing unused kernel
-memory: 7168K
-Oct 29 17:38:35 synquacer kernel: [ 1850.807599] Checked W+X mappings:
-passed, no W+X pages found
-etc..
+> Acked-by: Mel Gorman <mgorman@suse.de>
+>
 
-At first I thought it was a complete lockup, but this happens on each
-boot - a 1800+ second boot delay.
+Thanks!
 
-The delay is related to the number of CPUs:
+> I didn't look at the rt.c parts
+>
+> --
+> Mel Gorman
+> SUSE Labs
 
-2 cpus - 507 secs
-4 cpus - 1014 secs
-8 cpus - 1813 secs
-16 cpus -1838 secs
-24 cps - 1850 secs
 
-Any ideas?  I'm going to see if this occurs on earlier kernels next, but
-I was wondering if this is a know issue.
 
-Regards,
-
-Colin
+-- 
+Thanks
+Yafang
