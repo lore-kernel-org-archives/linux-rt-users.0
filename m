@@ -7,56 +7,56 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FA50C4167B
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Dec 2020 18:31:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9B2BC433FE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Dec 2020 18:31:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 181F323C91
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Dec 2020 18:31:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9287D23C92
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Dec 2020 18:31:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730294AbgLISbw (ORCPT
+        id S1732812AbgLISby (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Dec 2020 13:31:52 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45642 "EHLO
+        Wed, 9 Dec 2020 13:31:54 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45650 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728625AbgLISbw (ORCPT
+        with ESMTP id S1728625AbgLISbx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Dec 2020 13:31:52 -0500
-Received: from mail-qt1-x832.google.com (mail-qt1-x832.google.com [IPv6:2607:f8b0:4864:20::832])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 39D17C0613D6
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Dec 2020 10:31:12 -0800 (PST)
-Received: by mail-qt1-x832.google.com with SMTP id f14so1648250qto.12
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Dec 2020 10:31:12 -0800 (PST)
+        Wed, 9 Dec 2020 13:31:53 -0500
+Received: from mail-qv1-xf35.google.com (mail-qv1-xf35.google.com [IPv6:2607:f8b0:4864:20::f35])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7B10CC061793
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Dec 2020 10:31:13 -0800 (PST)
+Received: by mail-qv1-xf35.google.com with SMTP id bd6so1060202qvb.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Dec 2020 10:31:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=TrL65DJWq6+pooL5AeWYhJfhOXAJBr52JULN6G/gtk0=;
-        b=JCjfoeaV9NKxD5qPGAsY7bu0XX/5mI0cbev3+lAnGsKbtJmNxMItH5jXc/pTU53bGF
-         VJmIYQxyEZChAtLPOzLi0iiKTV3r7mTKSaZhOfJWOCuekAojhrmGXOmsD9BabfPXHFXJ
-         Uk5VAzyP7ZpobVNce08a/SuTEFlpI0AH/uXKiJas+Rt0eTmpsoRHaeRVwhOpUVoWVo+N
-         KZJ00ty84/sTL2/fxZo0r/u+j4+wlb33rVBIWuf4RvMgIXq4GCGi8I4BIBPyS/EYcKnB
-         +fOPQgvOMeU299McFvofJnbBf0dnflyUd3AIyrjVSFvWPjLMqopPa/Me195calaiPB5B
-         +dRg==
+        bh=kH//1x/qE3k01KxUgmZjvzMvjbjN/rwQSCxMSt8n5jw=;
+        b=dffp8LILujEc0beNtZ1Ro42zIrodODM1jUGSi1CJB7czG0ak5DJVnNv6CxBhGl3Tp5
+         zk+HifZJID9jT2dz/qTmRrNZycaZ1BIJ0sd+DtnL0LNkDEYBcPplnu3tNbfLct8rI0OP
+         jaYU7TBb/DiJDtBYwvQ1Wpi5F85YZwMLkzilOlQPnJqPxeT4a6dVgJP8NHj1W4hgNZjk
+         jWm/cENsXzZ9lDwDERI/R3D0e4t7YLbibHJh8PnzYnLzBofIu5quW/cv+A105VlGisQk
+         BvIX34t/rahxBEpwi00RU1Ge1K4uYBYZhTxjbupFcYKfUNDdN+VrpVDw43t8o8zmcFN4
+         KQow==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=TrL65DJWq6+pooL5AeWYhJfhOXAJBr52JULN6G/gtk0=;
-        b=qpOqRYKwH63/hra5BGrOzz/CCUPbeHvOGOWT/H0gYRtgnAEPV8WPel+WHOhHvf7tWd
-         BOFReaQ4gewjetu1/M5ZD8AQCLjTTAdm/+1gU6JdqR1rPp+FXxViH5N+6p82Aqo6Oqn4
-         jv7fhKbIu7cCjm8G5IgE/yCpqGS+ccLVbUWAj3TPQKfVlNpiEkxkS061+6otcnMo0nGs
-         g0g3cWke7qX69MKFC29PMe0OBXHNclldCRys8i952AIOiiLCXk/6nr/BIihu3EEACGk9
-         r8aMPl8KZYFBF7WGuxaY8xOvUi7TrJYL3HLj3OK59CQVDiF6r/f7zowgsBb5bo3t73Br
-         idLQ==
-X-Gm-Message-State: AOAM530y72QEx2k/r0NPb4lr3+tTXkA4PywVQix1n0PHL+DFRJQUGqik
-        ZILV/N8HGuOJ0WBB6gNzsZUJxWVmmYmY+w==
-X-Google-Smtp-Source: ABdhPJzVkRrCULoJUM+9BgM8LmuqVCpQqSSdJFir3U1pqFtQXQ2/VGjqDUG6uy6KOJclGnA16rBjmw==
-X-Received: by 2002:a05:622a:d1:: with SMTP id p17mr4629252qtw.233.1607538670858;
-        Wed, 09 Dec 2020 10:31:10 -0800 (PST)
+        bh=kH//1x/qE3k01KxUgmZjvzMvjbjN/rwQSCxMSt8n5jw=;
+        b=Xb8CX4kCzNDE3abwT4gi8EbVeEZplxv7JYF1ZcTgi8vjGzg6zz1ViS+ePF585vJyvx
+         X8JGIX/Dgza+JTedt8l6sv5LGsb5bkWEZ9LhfDV9fPUfjAQcjb5vjs6/h4e6Jpu+nMx7
+         yWkd9IqO16KXFZf4Hc/8WC9h7A5Hs1HOI2fK7SJA0U0ZPvFFFcWgyciKO3UFOQsWTJau
+         Wf/oU+UUWz1fZnKKXyerIiumZ10d/SHA93ULjgfOmjgo8gz4eiW1ZSKQPhNNjisgrPl3
+         NnMs2LFfipcXoIYMKOrZQozscF8jl3m6LHHu5fMPuDA04Sga73XBYa0uNjIbgNiac1GL
+         D53A==
+X-Gm-Message-State: AOAM531lzRDaHj8BhQUGGg1KMvYkvlsG8+SmNUlZ4x2quXYSvTBx9SJR
+        cXweYpQ85OITHcgUAoDs5OsFKHaG63tmZg==
+X-Google-Smtp-Source: ABdhPJyLSaL6HzLQKiCBI7AitQiZrNImSAN614yN3AVI1mqy9wY59LmTcmuZ7TRx8OLNhr34nPDvWw==
+X-Received: by 2002:a0c:b29b:: with SMTP id r27mr4463836qve.50.1607538672411;
+        Wed, 09 Dec 2020 10:31:12 -0800 (PST)
 Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-11-174-88-121-241.dsl.bell.ca. [174.88.121.241])
-        by smtp.gmail.com with ESMTPSA id k41sm1674840qtc.23.2020.12.09.10.31.09
+        by smtp.gmail.com with ESMTPSA id k41sm1674840qtc.23.2020.12.09.10.31.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 09 Dec 2020 10:31:10 -0800 (PST)
+        Wed, 09 Dec 2020 10:31:11 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
@@ -64,9 +64,9 @@ Cc:     Marcelo Tosatti <mtosatti@redhat.com>,
         Daniel Wagner <dwagner@suse.de>,
         Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/3] rt-tests: queuelat: Remove get_cpuinfo_mhz.sh and old Makefile
-Date:   Wed,  9 Dec 2020 13:30:59 -0500
-Message-Id: <20201209183100.16836-2-jkacur@redhat.com>
+Subject: [PATCH 3/3] rt-tests: queuelat: Add a manpage for determine_maximum_mpps.sh
+Date:   Wed,  9 Dec 2020 13:31:00 -0500
+Message-Id: <20201209183100.16836-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20201209183100.16836-1-jkacur@redhat.com>
 References: <20201209183100.16836-1-jkacur@redhat.com>
@@ -76,54 +76,90 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The functionality in get_cpuinfo_mhz.sh has been incorporated into
-determine_maximum_mpps.sh, so it can safely be removed.
-
-The queuelat is built from the rt-tests suite Makefile, and the old
-Makefile in the queuelat directory can be removed.
+Add a manpage for determine_maximum_mpps.sh
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
 diff --git a/Makefile b/Makefile
-index 3b38d21afb3a..d5b14991032d 100644
+index d5b14991032d..fba4546ac50a 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -209,7 +209,6 @@ rebuild:
- install: all install_manpages install_hwlatdetect install_get_cyclictest_snapshot
- 	mkdir -p "$(DESTDIR)$(bindir)"
- 	cp $(TARGETS) "$(DESTDIR)$(bindir)"
--	install src/queuelat/get_cpuinfo_mhz.sh "$(DESTDIR)$(bindir)"
- 	install src/queuelat/determine_maximum_mpps.sh "${DESTDIR}${bindir}"
- 
- .PHONY: install_hwlatdetect
-diff --git a/src/queuelat/Makefile b/src/queuelat/Makefile
-deleted file mode 100644
-index b4d327829b17..000000000000
---- a/src/queuelat/Makefile
-+++ /dev/null
-@@ -1,9 +0,0 @@
--queuelat: queuelat.o
--	cc -o queuelat queuelat.o
--
--queuelat.o: queuelat.c
--	cc -c -Wall queuelat.c
--
--clean:
--	rm queuelat queuelat.o
--          
-diff --git a/src/queuelat/get_cpuinfo_mhz.sh b/src/queuelat/get_cpuinfo_mhz.sh
-deleted file mode 100755
-index 14a2c12c478f..000000000000
---- a/src/queuelat/get_cpuinfo_mhz.sh
-+++ /dev/null
-@@ -1,7 +0,0 @@
--#!/bin/bash
--
--# SPDX-License-Identifier: GPL-2.0-or-later
--# Copyright (C) 2018 Marcelo Tosatti <mtosatti@redhat.com>
--
--mhz=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
--echo "$mhz"
+@@ -52,6 +52,7 @@ MANPAGES = src/cyclictest/cyclictest.8 \
+ 	   src/signaltest/signaltest.8 \
+ 	   src/pi_tests/pip_stress.8 \
+ 	   src/queuelat/queuelat.8 \
++	   src/queuelat/determine_maximum_mpps.8 \
+ 	   src/sched_deadline/deadline_test.8 \
+ 	   src/ssdd/ssdd.8 \
+ 	   src/sched_deadline/cyclicdeadline.8 \
+diff --git a/src/queuelat/determine_maximum_mpps.8 b/src/queuelat/determine_maximum_mpps.8
+new file mode 100644
+index 000000000000..4a28f1a4e34a
+--- /dev/null
++++ b/src/queuelat/determine_maximum_mpps.8
+@@ -0,0 +1,62 @@
++.\"                                      Hey, EMACS: -*- nroff -*-
++.TH DETERMINE_MAXIMUM_MPPS 8 "Dec 4, 2020"
++.\" Please adjust this date whenever revising the manpage.
++.\"
++.\" Some roff macros, for reference:
++.\" .nh        disable hyphenation
++.\" .hy        enable hyphenation
++.\" .ad l      left justify
++.\" .ad b      justify to both left and right margins
++.\" .nf        disable filling
++.\" .fi        enable filling
++.\" .br        insert line break
++.\" .sp <n>    insert n+1 empty lines
++.\" for manpage-specific macros, see man(7)
++.SH NAME
++determine_maximum_mpps \- Determine the maximum mpps the machine can handle
++.SH SYNOPSIS
++.LP
++determine_maximum_mpps [-c cpulist] [-m maxlat] [-n cycles] [-f | -r] [-p priority] [-h]
++.SH DESCRIPTION
++determine_maximum_mpps will find the maximum mpps parameter which can sustain
++.PP
++.RS
++1. 10 consecutive 30 second runs.
++.br
++2. 1 run of 10 minutes.
++.PP
++.RE
++Without violating the latency specified with $MAXLAT (default 20000)
++.PP
++.SH TERMINOLOGY
++mpps : million-packets-per-second
++.br
++.SH OPTIONS
++.TP
++.B \-c cpulist
++List of processors to run on. The default is processor 0
++.TP
++.B \-m maxlat
++Maximum latency in nanoseconds. The default is 20000. if the maximum is exceeded, that run of queuelat quits.
++.TP
++.B \-n cycles
++Extimated number of cycles it takes to process one packet. The default is 300
++.TP
++.B \-f
++Set the scheduling policy to SCHED_FIFO. This is the default if not specified.
++.TP
++.B \-r
++Set the scheduling policy to SCHED_RR.
++.TP
++.B \-p priority
++default priority = 1. Valid numbers are from 1 to 99
++.TP
++.B \-h
++help
++.LP
++.SH AUTHOR
++determine_maximum_mpps was written by
++.br
++Marcelo Tosatti <mtosatti@redhat.com>
++.PP
++This man page was written by John Kacur <jkacur@redhat.com>
 -- 
 2.26.2
 
