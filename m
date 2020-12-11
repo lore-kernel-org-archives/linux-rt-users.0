@@ -2,117 +2,92 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.9 required=3.0 tests=BAYES_50,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0806BC433FE
-	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Dec 2020 22:43:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3915FC4361B
+	for <linux-rt-users@archiver.kernel.org>; Sat, 12 Dec 2020 13:06:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D553223C83
-	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Dec 2020 22:43:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E3F1422C7D
+	for <linux-rt-users@archiver.kernel.org>; Sat, 12 Dec 2020 13:06:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2406100AbgLKVnE (ORCPT
+        id S2407432AbgLLNFh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 11 Dec 2020 16:43:04 -0500
-Received: from mail.kernel.org ([198.145.29.99]:35222 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2392421AbgLKVmM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 11 Dec 2020 16:42:12 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id C735923E1B;
-        Fri, 11 Dec 2020 21:41:31 +0000 (UTC)
-Received: from rostedt by gandalf.local.home with local (Exim 4.94)
-        (envelope-from <rostedt@goodmis.org>)
-        id 1knqAM-000JaR-M1; Fri, 11 Dec 2020 16:41:30 -0500
-Message-ID: <20201211214130.548744193@goodmis.org>
-User-Agent: quilt/0.66
-Date:   Fri, 11 Dec 2020 16:41:06 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
-        syzbot+aa7c2385d46c5eba0b89@syzkaller.appspotmail.com,
-        syzbot+abea4558531bae1ba9fe@syzkaller.appspotmail.com,
-        stable-rt@vger.kernel.org
-Subject: [PATCH RT 3/4] timers: Move clearing of base::timer_running under base::lock
-References: <20201211214103.954245915@goodmis.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+        Sat, 12 Dec 2020 08:05:37 -0500
+Received: from master.hostvps.net ([85.234.128.110]:47362 "EHLO
+        host.sysriacomms.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+        with ESMTP id S2405489AbgLLNF3 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 12 Dec 2020 08:05:29 -0500
+Received: from sysriacomms.com (ec2-3-129-59-77.us-east-2.compute.amazonaws.com [3.129.59.77])
+        by host.sysriacomms.com (Postfix) with ESMTPA id 0C49D32AACC9
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Dec 2020 20:26:36 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 host.sysriacomms.com 0C49D32AACC9
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sysriacomms.com;
+        s=default; t=1607718397;
+        bh=TyDrvEeEFdXlR/MshqaTYzQ7nnR7m/zs1uM19XkvmD0=;
+        h=Reply-To:From:To:Subject:Date:From;
+        b=FjsjK2SbYKesMwjYtlYiY/gMQxmJ7aXOnYXnuPLCiewL+x3SHdESxehXwtH9qxFY1
+         BdYczScyrxuux0azDtoM6ClMfhXAw/znwwd35gW586Cgq1mTOCqzBEyfPCPtttCE9D
+         dOhFDWmwkJatjndHfiSybNHquv0kmk06Pu26CLXE=
+DKIM-Filter: OpenDKIM Filter v2.11.0 host.sysriacomms.com 0C49D32AACC9
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sysriacomms.com;
+        s=default; t=1607718397;
+        bh=TyDrvEeEFdXlR/MshqaTYzQ7nnR7m/zs1uM19XkvmD0=;
+        h=Reply-To:From:To:Subject:Date:From;
+        b=FjsjK2SbYKesMwjYtlYiY/gMQxmJ7aXOnYXnuPLCiewL+x3SHdESxehXwtH9qxFY1
+         BdYczScyrxuux0azDtoM6ClMfhXAw/znwwd35gW586Cgq1mTOCqzBEyfPCPtttCE9D
+         dOhFDWmwkJatjndHfiSybNHquv0kmk06Pu26CLXE=
+Reply-To: moutraore02@syriservas.com
+From:   Moussa <moutraore02@sysriacomms.com>
+To:     linux-rt-users@vger.kernel.org
+Subject: Get Back To Me
+Date:   11 Dec 2020 20:26:49 +0000
+Message-ID: <20201211202649.3B747D49389EFB3E@sysriacomms.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-5.4.82-rt46-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Greeetings from Mali. I am sorry for contacting you like this but=20
+I do have a very urgent matter that I want to discuss with you.=20
+Before I proceed, I want you to keep an open mind while reading=20
+this proposal. My name is Moussa Traore, I am the Personal=20
+Assistant to Mr. Issa Saley Maiga who was the head of the civil=20
+aviation agency in Mali during the tenure of Ibrahim Boubacar=20
+Ke=C3=AFta, the former president of Mali. His tenure was overtaken by=20
+the military during a coup d'etat. I am sure you would have read=20
+about this in your country because it was covered by the=20
+international news agencies worldwide. 
 
-------------------
+Anyway, my boss was also affected by the coup d'etat and he was=20
+arrested along with other high profile politicians. Also, all of=20
+his local assets (bother property and financial assets) were=20
+seized by the Government. Due to this situation, my boss belives=20
+that he is at risk and he is now very scared for the safety of=20
+his family especially his wife and kids. In order to ensure that=20
+his family is taken care of and protected incase anything happens=20
+to him, he has asked me to help him find a foreign investor who=20
+can help him accommodate and manage the finanical assets that he=20
+has in Europe. These assets was secured with the help of a proxy=20
+and it is currently held with an offshore financial bank so it is=20
+safe so secure. Also, the Government of his country do not know=20
+of this asset hence why they are unable to seize it as they have=20
+done his other assets.
 
-From: Thomas Gleixner <tglx@linutronix.de>
+My proposal to you is for you to help us manage these funds, and=20
+invest it in lucrative projects in your country that will yeild=20
+good profits. You also do not have to worry about if this is safe=20
+or not because everything will be handled in a legal and=20
+transparent manner. You will also be handosmely rewarded for your=20
+help if you decide to work with us. If this proposal interests=20
+you, please kindly respond so that I can give you more details. I=20
+hope to hear from you soon.
 
-syzbot reported KCSAN data races vs. timer_base::timer_running being set to
-NULL without holding base::lock in expire_timers().
+Regards,
 
-This looks innocent and most reads are clearly not problematic but for a
-non-RT kernel it's completely irrelevant whether the store happens before
-or after taking the lock. For an RT kernel moving the store under the lock
-requires an extra unlock/lock pair in the case that there is a waiter for
-the timer. But that's not the end of the world and definitely not worth the
-trouble of adding boatloads of comments and annotations to the code. Famous
-last words...
-
-Reported-by: syzbot+aa7c2385d46c5eba0b89@syzkaller.appspotmail.com
-Reported-by: syzbot+abea4558531bae1ba9fe@syzkaller.appspotmail.com
-Link: https://lkml.kernel.org/r/87lfea7gw8.fsf@nanos.tec.linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- kernel/time/timer.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 15b838401af8..86bb218d1df5 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1269,8 +1269,10 @@ static inline void timer_base_unlock_expiry(struct timer_base *base)
- static void timer_sync_wait_running(struct timer_base *base)
- {
- 	if (atomic_read(&base->timer_waiters)) {
-+		raw_spin_unlock_irq(&base->lock);
- 		spin_unlock(&base->expiry_lock);
- 		spin_lock(&base->expiry_lock);
-+		raw_spin_lock_irq(&base->lock);
- 	}
- }
- 
-@@ -1461,14 +1463,14 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
- 		if (timer->flags & TIMER_IRQSAFE) {
- 			raw_spin_unlock(&base->lock);
- 			call_timer_fn(timer, fn, baseclk);
--			base->running_timer = NULL;
- 			raw_spin_lock(&base->lock);
-+			base->running_timer = NULL;
- 		} else {
- 			raw_spin_unlock_irq(&base->lock);
- 			call_timer_fn(timer, fn, baseclk);
-+			raw_spin_lock_irq(&base->lock);
- 			base->running_timer = NULL;
- 			timer_sync_wait_running(base);
--			raw_spin_lock_irq(&base->lock);
- 		}
- 	}
- }
--- 
-2.29.2
-
-
+Moussa.
