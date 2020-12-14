@@ -2,135 +2,77 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_2
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80675C2BB40
-	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 15:25:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10760C4361B
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 23:32:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2C70B22B3B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 15:25:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C393422510
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 23:32:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729926AbgLNPZ1 (ORCPT
+        id S1726410AbgLNXcX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 14 Dec 2020 10:25:27 -0500
-Received: from mail.kernel.org ([198.145.29.99]:54792 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2405383AbgLNPZF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 14 Dec 2020 10:25:05 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id CD59222A99;
-        Mon, 14 Dec 2020 15:24:23 +0000 (UTC)
-Date:   Mon, 14 Dec 2020 10:24:22 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Ming Lei <ming.lei@redhat.com>
-Cc:     Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-        Christoph Hellwig <hch@lst.de>, Ingo Molnar <mingo@redhat.com>,
-        linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] blktrace: fix 'BUG: sleeping function called from
- invalid context' in case of PREEMPT_RT
-Message-ID: <20201214102422.2d84035d@gandalf.local.home>
-In-Reply-To: <20201214022217.1754273-1-ming.lei@redhat.com>
-References: <20201214022217.1754273-1-ming.lei@redhat.com>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        Mon, 14 Dec 2020 18:32:23 -0500
+Received: from relay1-d.mail.gandi.net ([217.70.183.193]:44821 "EHLO
+        relay1-d.mail.gandi.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726407AbgLNXcV (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 14 Dec 2020 18:32:21 -0500
+X-Originating-IP: 193.27.14.10
+Received: from orivej.orivej.org (unknown [193.27.14.10])
+        (Authenticated sender: orivej@orivej.org)
+        by relay1-d.mail.gandi.net (Postfix) with ESMTPSA id C32A6240003;
+        Mon, 14 Dec 2020 23:31:36 +0000 (UTC)
+Date:   Mon, 14 Dec 2020 23:31:34 +0000
+From:   Orivej Desh <c@orivej.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Brian Behlendorf <behlendorf1@llnl.gov>
+Subject: Re: sched: exporting linux-rt migrate_disable for ZFS
+Message-ID: <20201214233134.06f12bbb@orivej.orivej.org>
+In-Reply-To: <20201214123302.w2bem7tlb664jdvx@linutronix.de>
+References: <20201208212841.694b3022@orivej.orivej.org>
+        <20201214123302.w2bem7tlb664jdvx@linutronix.de>
+X-Mailer: Claws Mail 3.99.0 (GTK+ 3.24.23; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 14 Dec 2020 10:22:17 +0800
-Ming Lei <ming.lei@redhat.com> wrote:
-
-> trace_note_tsk() is called by __blk_add_trace(), which is covered by RCU read lock.
-> So in case of PREEMPT_RT, warning of 'BUG: sleeping function called from invalid context'
-> will be triggered because spin lock is converted to rtmutex.
-
-The RCU read_lock() can not be the cause of this issue, because under
-PREEMPT_RT, rcu_read_lock() can be preempted.
-
-What was the full back trace of this problem?
-
+* Sebastian Andrzej Siewior <bigeasy@linutronix.de> [2020-12-14]
+> On 2020-12-08 23:58:27 [+0000], Orivej Desh wrote:
+> > With sched-Add-migrate_disable.patch first released in v5.9-rc8-rt14 [1]
+> > linux-rt defines functions migrate_disable and migrate_enable.
+> > They are used in linux headers in various macros and static inline
+> > functions, and in particular in kmap_atomic and kunmap_atomic.
+> > The latter are needed by ZFS which currently fails to build against
+> > 5.9-rt [2] because these functions are exported with EXPORT_SYMBOL_GPL.
+> > Could you export them with EXPORT_SYMBOL instead?  
 > 
-> Fix the issue by converting running_trace_lock into raw_spin_lock().
-> 
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: linux-kernel@vger.kernel.org
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->  kernel/trace/blktrace.c | 14 +++++++-------
->  1 file changed, 7 insertions(+), 7 deletions(-)
-> 
-> diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
-> index 2c5b3c5317c2..53dc876d669d 100644
-> --- a/kernel/trace/blktrace.c
-> +++ b/kernel/trace/blktrace.c
-> @@ -34,7 +34,7 @@ static struct trace_array *blk_tr;
->  static bool blk_tracer_enabled __read_mostly;
->  
->  static LIST_HEAD(running_trace_list);
-> -static __cacheline_aligned_in_smp DEFINE_SPINLOCK(running_trace_lock);
-> +static __cacheline_aligned_in_smp DEFINE_RAW_SPINLOCK(running_trace_lock);
->  
->  /* Select an alternative, minimalistic output than the original one */
->  #define TRACE_BLK_OPT_CLASSIC	0x1
-> @@ -121,12 +121,12 @@ static void trace_note_tsk(struct task_struct *tsk)
->  	struct blk_trace *bt;
->  
->  	tsk->btrace_seq = blktrace_seq;
-> -	spin_lock_irqsave(&running_trace_lock, flags);
-> +	raw_spin_lock_irqsave(&running_trace_lock, flags);
->  	list_for_each_entry(bt, &running_trace_list, running_list) {
->  		trace_note(bt, tsk->pid, BLK_TN_PROCESS, tsk->comm,
->  			   sizeof(tsk->comm), 0);
->  	}
+> This is out of my jurisdiction, so just a few notes:
+> - v5.9 is out of maintenance. Be careful.
 
-How big is this running_trace_list? May not be something we want raw locks
-around.
+Thanks! I have noticed a bug with usb-storage (using smp_processor_id
+in preemptible code) in 5.9.1-rt20 thas has been fixed in 5.10-rt17.
 
-Please understand that converting locks to raw should be the last resort.
-One should always look at the reason for a spin lock in a preempt disabled
-area and see if there's other means of solving it before simply switch a
-lock to raw, as each raw spinlock makes PREEMPT_RT less real time.
+> - We don't export symbols for out-of-tree modules.
 
--- Steve
-
-
-> -	spin_unlock_irqrestore(&running_trace_lock, flags);
-> +	raw_spin_unlock_irqrestore(&running_trace_lock, flags);
->  }
->  
->  static void trace_note_time(struct blk_trace *bt)
-> @@ -669,9 +669,9 @@ static int __blk_trace_startstop(struct request_queue *q, int start)
->  			blktrace_seq++;
->  			smp_mb();
->  			bt->trace_state = Blktrace_running;
-> -			spin_lock_irq(&running_trace_lock);
-> +			raw_spin_lock_irq(&running_trace_lock);
->  			list_add(&bt->running_list, &running_trace_list);
-> -			spin_unlock_irq(&running_trace_lock);
-> +			raw_spin_unlock_irq(&running_trace_lock);
->  
->  			trace_note_time(bt);
->  			ret = 0;
-> @@ -679,9 +679,9 @@ static int __blk_trace_startstop(struct request_queue *q, int start)
->  	} else {
->  		if (bt->trace_state == Blktrace_running) {
->  			bt->trace_state = Blktrace_stopped;
-> -			spin_lock_irq(&running_trace_lock);
-> +			raw_spin_lock_irq(&running_trace_lock);
->  			list_del_init(&bt->running_list);
-> -			spin_unlock_irq(&running_trace_lock);
-> +			raw_spin_unlock_irq(&running_trace_lock);
->  			relay_flush(bt->rchan);
->  			ret = 0;
->  		}
-
+The issue is that in the vanilla kernel these two functions are
+available as macros that expand into EXPORT_SYMBOL function calls
+(kunmap_atomic_high, etc.). If I am not mistaken the kernel is
+generally supposed to keep the API made available to non-GPL modules
+still available, for example here https://lwn.net/Articles/171838/ :
+"When GPL-only exports were first added to the kernel, they went in
+with the understanding that only new symbols would be tagged
+GPL-only. The current module interface - while always subject to
+change - was not to have symbols withdrawn arbitrarily." The current
+rt patch has this effect: it makes non-GPL API of the vanilla kernel
+GPL-only.
