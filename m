@@ -2,80 +2,69 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 326EBC4361B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 12:34:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 102ECC2BB48
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 14:26:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F2C81206C1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 12:34:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CEE15207B6
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 14:26:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731246AbgLNMdq (ORCPT
+        id S1728267AbgLNOZu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 14 Dec 2020 07:33:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55446 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729389AbgLNMdp (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 14 Dec 2020 07:33:45 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A4853C0613CF;
-        Mon, 14 Dec 2020 04:33:05 -0800 (PST)
-Date:   Mon, 14 Dec 2020 13:33:02 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1607949184;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=wMr4ajE5DsQOqT9/htmdWQwzJ4yGgYvL0YAd9GCqiuE=;
-        b=MOSGk4xT937mdsGYsn25fJlBfnXkCZOtdtkOa7EAl0GUc3obK75n3SQ6RPJC9eWWFeM2od
-        Fkq74XmgXUDtRfj9Q7OPjdE+u3eWJSbVSNW9XA48oxH12BXvIHCSlhclN4utijvKJOo971
-        dRj+XgJokY5BeN6hu4Sniaqe3IppfRTnUcnEC5ku06wPjnY7SpMlkcGWRkVrI3EMBSvAZj
-        0Uf/LbQeWBoNpeW5ig62XSYaBcO+s4lncP4guUjM6gZ/4EA5ioZu3+gQKMW0fBeYHkuwU3
-        Zrfy8Epti/GlPfw9Jk6ghD39MCB7uHNMgkZ5CunCQTvmVZVkt2f80YncpSvwag==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1607949184;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=wMr4ajE5DsQOqT9/htmdWQwzJ4yGgYvL0YAd9GCqiuE=;
-        b=zDw1e0gMt8Q4AzFHk+ckQgAEYyxsvOFuwh7o8BzUdqvELIHz0l5/isjEUQsLAd9D3NMvaM
-        39VH64C7Dgk58iDQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Orivej Desh <c@orivej.org>
+        Mon, 14 Dec 2020 09:25:50 -0500
+Received: from mail.kernel.org ([198.145.29.99]:60848 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2440159AbgLNOXP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 14 Dec 2020 09:23:15 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5AF8522B4B;
+        Mon, 14 Dec 2020 14:22:34 +0000 (UTC)
+Date:   Mon, 14 Dec 2020 09:22:32 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Daniel Wagner <wagi@monom.org>
 Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Brian Behlendorf <behlendorf1@llnl.gov>
-Subject: Re: sched: exporting linux-rt migrate_disable for ZFS
-Message-ID: <20201214123302.w2bem7tlb664jdvx@linutronix.de>
-References: <20201208212841.694b3022@orivej.orivej.org>
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: Re: [ANNOUNCE] 5.4.82-rt45
+Message-ID: <20201214092232.0cb558d7@gandalf.local.home>
+In-Reply-To: <20201211192600.raig3v4mbj526dkx@beryllium.lan>
+References: <20201211142236.1884a443@gandalf.local.home>
+        <20201211192600.raig3v4mbj526dkx@beryllium.lan>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20201208212841.694b3022@orivej.orivej.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-12-08 23:58:27 [+0000], Orivej Desh wrote:
-> Greetings!
-Hi,
+On Fri, 11 Dec 2020 20:26:00 +0100
+Daniel Wagner <wagi@monom.org> wrote:
 
-> With sched-Add-migrate_disable.patch first released in v5.9-rc8-rt14 [1]
-> linux-rt defines functions migrate_disable and migrate_enable.
-> They are used in linux headers in various macros and static inline
-> functions, and in particular in kmap_atomic and kunmap_atomic.
-> The latter are needed by ZFS which currently fails to build against
-> 5.9-rt [2] because these functions are exported with EXPORT_SYMBOL_GPL.
-> Could you export them with EXPORT_SYMBOL instead?
+> On Fri, Dec 11, 2020 at 02:22:36PM -0500, Steven Rostedt wrote:
+> > I'm pleased to announce the 5.4.82-rt45 stable release.
+> > 
+> > [ Note: There's a known issue that still needs to be fixed:
+> >   https://lore.kernel.org/r/20201116172221.25ymeo62tgmzwe4z@linutronix.de
+> >   Will be fixing this next (and seeing if there's anything else needing
+> >   to be backported. ]  
+> 
+> what about
+> 
+>    https://lore.kernel.org/linux-rt-users/20201127135456.8145-1-zqiu2000@126.com/
+> 
+> ?
 
-This is out of my jurisdiction, so just a few notes:
-- v5.9 is out of maintenance. Be careful.
-- We don't export symbols for out-of-tree modules.
+Crap, I forgot about that.
 
-Sebastian
+-- Steve
