@@ -2,92 +2,109 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.9 required=3.0 tests=BAYES_50,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3915FC4361B
-	for <linux-rt-users@archiver.kernel.org>; Sat, 12 Dec 2020 13:06:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EAB86C4361B
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 06:09:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E3F1422C7D
-	for <linux-rt-users@archiver.kernel.org>; Sat, 12 Dec 2020 13:06:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8CFD7229F0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Dec 2020 06:09:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2407432AbgLLNFh (ORCPT
+        id S2391916AbgLNGJy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 12 Dec 2020 08:05:37 -0500
-Received: from master.hostvps.net ([85.234.128.110]:47362 "EHLO
-        host.sysriacomms.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-        with ESMTP id S2405489AbgLLNF3 (ORCPT
+        Mon, 14 Dec 2020 01:09:54 -0500
+Received: from mo-csw1516.securemx.jp ([210.130.202.155]:52948 "EHLO
+        mo-csw.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727666AbgLNGJy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 12 Dec 2020 08:05:29 -0500
-Received: from sysriacomms.com (ec2-3-129-59-77.us-east-2.compute.amazonaws.com [3.129.59.77])
-        by host.sysriacomms.com (Postfix) with ESMTPA id 0C49D32AACC9
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Dec 2020 20:26:36 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 host.sysriacomms.com 0C49D32AACC9
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sysriacomms.com;
-        s=default; t=1607718397;
-        bh=TyDrvEeEFdXlR/MshqaTYzQ7nnR7m/zs1uM19XkvmD0=;
-        h=Reply-To:From:To:Subject:Date:From;
-        b=FjsjK2SbYKesMwjYtlYiY/gMQxmJ7aXOnYXnuPLCiewL+x3SHdESxehXwtH9qxFY1
-         BdYczScyrxuux0azDtoM6ClMfhXAw/znwwd35gW586Cgq1mTOCqzBEyfPCPtttCE9D
-         dOhFDWmwkJatjndHfiSybNHquv0kmk06Pu26CLXE=
-DKIM-Filter: OpenDKIM Filter v2.11.0 host.sysriacomms.com 0C49D32AACC9
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sysriacomms.com;
-        s=default; t=1607718397;
-        bh=TyDrvEeEFdXlR/MshqaTYzQ7nnR7m/zs1uM19XkvmD0=;
-        h=Reply-To:From:To:Subject:Date:From;
-        b=FjsjK2SbYKesMwjYtlYiY/gMQxmJ7aXOnYXnuPLCiewL+x3SHdESxehXwtH9qxFY1
-         BdYczScyrxuux0azDtoM6ClMfhXAw/znwwd35gW586Cgq1mTOCqzBEyfPCPtttCE9D
-         dOhFDWmwkJatjndHfiSybNHquv0kmk06Pu26CLXE=
-Reply-To: moutraore02@syriservas.com
-From:   Moussa <moutraore02@sysriacomms.com>
-To:     linux-rt-users@vger.kernel.org
-Subject: Get Back To Me
-Date:   11 Dec 2020 20:26:49 +0000
-Message-ID: <20201211202649.3B747D49389EFB3E@sysriacomms.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+        Mon, 14 Dec 2020 01:09:54 -0500
+Received: by mo-csw.securemx.jp (mx-mo-csw1516) id 0BE67wbX017540; Mon, 14 Dec 2020 15:07:58 +0900
+X-Iguazu-Qid: 34tKVBJTs7nslYEG8C
+X-Iguazu-QSIG: v=2; s=0; t=1607926077; q=34tKVBJTs7nslYEG8C; m=LRAxgXNrX/mzO1a6jFP2Mf6RSEFZqpRUWrl8/IEP8TU=
+Received: from imx12.toshiba.co.jp (imx12.toshiba.co.jp [61.202.160.132])
+        by relay.securemx.jp (mx-mr1513) id 0BE67vuv032165;
+        Mon, 14 Dec 2020 15:07:57 +0900
+Received: from enc02.toshiba.co.jp ([61.202.160.51])
+        by imx12.toshiba.co.jp  with ESMTP id 0BE67vbv017136;
+        Mon, 14 Dec 2020 15:07:57 +0900 (JST)
+Received: from hop101.toshiba.co.jp ([133.199.85.107])
+        by enc02.toshiba.co.jp  with ESMTP id 0BE67uXi012587;
+        Mon, 14 Dec 2020 15:07:56 +0900
+From:   Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+To:     Colin Ian King <colin.king@canonical.com>
+Cc:     <linux-rt-users@vger.kernel.org>
+Subject: Re: RT kernel testing with stress-ng and scheduling while in atomic bugs.
+References: <b9317e8c-d5d9-e440-6c32-f9c26ad4ef10@canonical.com>
+Date:   Mon, 14 Dec 2020 15:07:54 +0900
+In-Reply-To: <b9317e8c-d5d9-e440-6c32-f9c26ad4ef10@canonical.com> (Colin Ian
+        King's message of "Mon, 7 Dec 2020 12:43:47 +0000")
+X-TSB-HOP: ON
+Message-ID: <878sa03op1.fsf@kokedama.swc.toshiba.co.jp>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Greeetings from Mali. I am sorry for contacting you like this but=20
-I do have a very urgent matter that I want to discuss with you.=20
-Before I proceed, I want you to keep an open mind while reading=20
-this proposal. My name is Moussa Traore, I am the Personal=20
-Assistant to Mr. Issa Saley Maiga who was the head of the civil=20
-aviation agency in Mali during the tenure of Ibrahim Boubacar=20
-Ke=C3=AFta, the former president of Mali. His tenure was overtaken by=20
-the military during a coup d'etat. I am sure you would have read=20
-about this in your country because it was covered by the=20
-international news agencies worldwide. 
+Hi Colin,
 
-Anyway, my boss was also affected by the coup d'etat and he was=20
-arrested along with other high profile politicians. Also, all of=20
-his local assets (bother property and financial assets) were=20
-seized by the Government. Due to this situation, my boss belives=20
-that he is at risk and he is now very scared for the safety of=20
-his family especially his wife and kids. In order to ensure that=20
-his family is taken care of and protected incase anything happens=20
-to him, he has asked me to help him find a foreign investor who=20
-can help him accommodate and manage the finanical assets that he=20
-has in Europe. These assets was secured with the help of a proxy=20
-and it is currently held with an offshore financial bank so it is=20
-safe so secure. Also, the Government of his country do not know=20
-of this asset hence why they are unable to seize it as they have=20
-done his other assets.
+Colin Ian King <colin.king@canonical.com> writes:
 
-My proposal to you is for you to help us manage these funds, and=20
-invest it in lucrative projects in your country that will yeild=20
-good profits. You also do not have to worry about if this is safe=20
-or not because everything will be handled in a legal and=20
-transparent manner. You will also be handosmely rewarded for your=20
-help if you decide to work with us. If this proposal interests=20
-you, please kindly respond so that I can give you more details. I=20
-hope to hear from you soon.
+> Hi,
+>
+> I've recently been exercising the 5.10-rc6 kernel with the latest RT
+> patches from linux-rt-devel (v5.10-rc6-rt13) using stress-ng V0.12.00
+> [1][2] to see rugged the RT kernel is and I'm getting quite a few
+> "scheduling while atomic:" bugs in various stress-tests.
+>
+> While I realize this is a rc6 kernel, I was surprised to be able to trip
+> these issues so easily [3]
+>
+> Questions:
+>
+> 1. Are these issues expected?
+> 2. Is there an official way to report my bug findings?
+> 3. I am keen to debug and fix these issues, have RT folk got some advice
+> on how to start debugging these kind of issues?
+>
+> On an 8 CPU SMP test box stress-ng is hitting these issues on the
+> following stress tests:
+>
+> daemon enosys exec fork fstat madvise prctl pthread session sigpipe vfork
+>
+> ..it seems fork/clone + scheduling is the common feature in the stress
+> tests that is triggering this issue.
+>
+> How to reproduce:
+>
+> git clone https://github.com/ColinIanKing/stress-ng.git
+> cd stress-ng
+> make clean
+> make fast-test-all
 
-Regards,
+I tried to reproduce the failures bug am not getting any errors
+following the above steps.
 
-Moussa.
+    ~/src/stress-ng$ make fast-test-all
+    ...
+    stress-ng: 14:20:53.88 debug: [261118] metrics-check: all stressor
+    metrics validated and sane
+    zombie PASSED
+    240 PASSED
+    0 FAILED
+    7 SKIPPED, bind-mount binderfs cpu-online mlockmany oom-pipe sysinval watchdog
+
+Not sure if the problems you saw were fixed in the interim but I am
+using 5.10.0-rc6-rt14 on a quad core Apollolake system.
+
+Are there any configs that need enabling? I used defconfig + Intel LPSS
+ for platform support + PREEMPT_RT.
+
+Thanks,
+Punit
+
+[...]
