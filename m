@@ -2,71 +2,86 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C4F8C4361B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 14:06:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 12DDBC4361B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 16:09:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E0650224D2
-	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 14:06:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D245E221EA
+	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 16:09:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727536AbgLOOGL (ORCPT
+        id S1730944AbgLOQIl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 15 Dec 2020 09:06:11 -0500
-Received: from mail.kernel.org ([198.145.29.99]:35080 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727200AbgLOOGD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 15 Dec 2020 09:06:03 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E021F224D2;
-        Tue, 15 Dec 2020 14:05:21 +0000 (UTC)
-Date:   Tue, 15 Dec 2020 09:05:20 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Mike Galbraith <efault@gmx.de>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Orivej Desh <c@orivej.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Brian Behlendorf <behlendorf1@llnl.gov>
-Subject: Re: sched: exporting linux-rt migrate_disable for ZFS
-Message-ID: <20201215090520.609b76dc@gandalf.local.home>
-In-Reply-To: <6307cab9d73d88b16e1e87ddb273a7b27d3e51f6.camel@gmx.de>
-References: <20201208212841.694b3022@orivej.orivej.org>
-        <20201214123302.w2bem7tlb664jdvx@linutronix.de>
-        <6307cab9d73d88b16e1e87ddb273a7b27d3e51f6.camel@gmx.de>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        Tue, 15 Dec 2020 11:08:41 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57688 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730871AbgLOQIc (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 15 Dec 2020 11:08:32 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8E501C06179C;
+        Tue, 15 Dec 2020 08:07:52 -0800 (PST)
+Date:   Tue, 15 Dec 2020 17:07:47 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1608048469;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=H9rdCROzryuIuLwWp3pwCnwm0SYlQB5Wa5LJ3x4hebk=;
+        b=zO76aQVIUJs0qnQx+RDHproxUCqJeLbPPm+h49ETNfFooNpkUX+h2WIhcpeeG7Ab2bgjuy
+        nZxHJ7buDzEeGoHPGZt3i7/5pxt7RC8+92Lg0zKk4JwkJ+tYX+rVIyL3pW+dkUJypdsR4p
+        TE177b6upy078ffU7wivXogJ4uQcnC6F5YINauOLHzNLZuqVr29gP9HgTc6MLbVfGddw2a
+        BCFhyAU4fdkT1j39itHVKmyoqR+IjJ8lzV2SjsbGICRjp7im10XglEVhw3SfLTKN13dr2r
+        E+0d3sITKDrr/Q2TYfJS5DFJemz+TIo+7tR7WOwbX+Z0+YBbEkRt8ll39czXYw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1608048469;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=H9rdCROzryuIuLwWp3pwCnwm0SYlQB5Wa5LJ3x4hebk=;
+        b=3IcFz4hwL7hk6yBI9VbfTsbA0RQuk5QGQasTzOpMAaJA7XLlFcCeS1EMc47FRpcSrs+ZxV
+        /to2x1Lnn5ZvfyCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Ming Lei <ming.lei@redhat.com>
+Cc:     Steven Rostedt <rostedt@goodmis.org>, Jens Axboe <axboe@kernel.dk>,
+        linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH] blktrace: fix 'BUG: sleeping function called from
+ invalid context' in case of PREEMPT_RT
+Message-ID: <20201215160747.zzi3jxfy6kv25c2n@linutronix.de>
+References: <20201214022217.1754273-1-ming.lei@redhat.com>
+ <20201214102422.2d84035d@gandalf.local.home>
+ <20201215120604.GB1798021@T590>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20201215120604.GB1798021@T590>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 15 Dec 2020 04:19:23 +0100
-Mike Galbraith <efault@gmx.de> wrote:
-
-> From 859a31c5ec958326dd046f4e41f6fa0db0ce98c3 Mon Sep 17 00:00:00 2001
-> From: Steven Rostedt <srostedt@redhat.com>
-> Date: Mon, 16 Apr 2012 21:51:54 -0400
-> Subject: rt: Make migrate_disable/enable() and __rt_mutex_init non-GPL only
+On 2020-12-15 20:06:04 [+0800], Ming Lei wrote:
 > 
-> Modules that load on the normal vanilla kernel should also load on
-> an -rt kernel as well. This does not mean we condone non-GPL modules,
-> we are only being consistent.
+> [  284.527619] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:968
+> [  284.527626] in_atomic(): 1, irqs_disabled(): 0, pid: 6705, name: mandb
+> [  284.527631] 4 locks held by mandb/6705:
+> [  284.527634]  #0: ffff88853f4f2eb0 (&f->f_pos_lock){+.+.}-{0:0}, at: __fdget_pos+0xaf/0xe0
+> [  284.527662]  #1: ffff8885eb814048 (&sb->s_type->i_mutex_key#13){++++}-{0:0}, at: xfs_ilock+0x17d/0x590 [xfs]
+> [  284.527838]  #2: ffffffffa24d22c0 (rcu_read_lock){....}-{1:2}, at: blk_add_trace_bio+0x0/0x2f0
+> [  284.527859]  #3: ffffffffa22177a0 (running_trace_lock){+.+.}-{2:2}, at: __blk_add_trace+0x9ea/0xdf0
+> [  284.527877] Preemption disabled at:
+> [  284.527886] [<ffffffff9f936743>] get_lock_stats+0x13/0x120
+> [  284.527897] CPU: 53 PID: 6705 Comm: mandb Kdump: loaded Not tainted 4.18.0-259.rt7.24.el8.x86_64+debug #1
+
+4.18?
+I just gave it a try with 5.10-RT and I don't see a splat. Please retest
+with v5.10-RT.
+
 > 
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> Thanks,
+> Ming
 
-Yep,
-
-Back in the day (like in 2005), we said that -rt should strive to work
-wherever vanilla Linux works. Thus, if we add a symbol that replaces a non
-GPL symbol, we need to keep that symbol non GPL.
-
--- Steve
+Sebastian
