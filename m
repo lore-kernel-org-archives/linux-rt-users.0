@@ -2,155 +2,150 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F17F9C2BB40
-	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 03:23:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A00F3C4361B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 12:08:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A298B224DE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 03:23:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 42DEB2228A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Dec 2020 12:08:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727363AbgLODWE (ORCPT
+        id S1727282AbgLOMIP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 14 Dec 2020 22:22:04 -0500
-Received: from mout.gmx.net ([212.227.15.19]:42695 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727517AbgLODV5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 14 Dec 2020 22:21:57 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1608002367;
-        bh=1R3VTzNtmLt4a1ey+tM18AI2OSxI2AuI9oIlNEoUEck=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=O2qngto/NvDxHYjS6dnNq0FqPELy2iatowwl4bnoKqOdx+ClIfoz2kOmO3/mrewco
-         aJ6RaMg1uS7IZaCCZYo895KXn6/P6/2dGhSB0NaoIYnrG9DhfQ8rmeN3oHe+3o4Ln0
-         9967gLaK0RQMAcrojnojamnrxCS74qjiNmw0p7mQ=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.217.61]) by mail.gmx.com (mrgmx004
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MmULr-1kOzZm2y37-00iSJG; Tue, 15
- Dec 2020 04:19:27 +0100
-Message-ID: <6307cab9d73d88b16e1e87ddb273a7b27d3e51f6.camel@gmx.de>
-Subject: Re: sched: exporting linux-rt migrate_disable for ZFS
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Orivej Desh <c@orivej.org>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Brian Behlendorf <behlendorf1@llnl.gov>
-Date:   Tue, 15 Dec 2020 04:19:23 +0100
-In-Reply-To: <20201214123302.w2bem7tlb664jdvx@linutronix.de>
-References: <20201208212841.694b3022@orivej.orivej.org>
-         <20201214123302.w2bem7tlb664jdvx@linutronix.de>
-Content-Type: text/plain; charset="ISO-8859-15"
-User-Agent: Evolution 3.34.4 
+        Tue, 15 Dec 2020 07:08:15 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:51670 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1729131AbgLOMHq (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 15 Dec 2020 07:07:46 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1608033979;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=qjDkcmbhQZPnlV3v+8AItoCkCx+DjDiN278iJThHvaE=;
+        b=IpXVuZ9Kq1nKbBMuNs9z9EvZ7M2x8dijfggX3J1mXGBHN8iFg+necd5Ybul9diuNIQH7NC
+        Gc6sFqyxWzvxO9CmMrA9ifgcN/FanwesyGR1HZVHUPtiGfnNFoyHtkRqtytaGgKut8GkNy
+        tzXnEg/GT3n0G1AVj8gLl9DXlcYQV6A=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-16-Kzy_9hJQOE6RlqIbFNpLMQ-1; Tue, 15 Dec 2020 07:06:15 -0500
+X-MC-Unique: Kzy_9hJQOE6RlqIbFNpLMQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 051C08031FA;
+        Tue, 15 Dec 2020 12:06:14 +0000 (UTC)
+Received: from T590 (ovpn-12-182.pek2.redhat.com [10.72.12.182])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 7687260861;
+        Tue, 15 Dec 2020 12:06:09 +0000 (UTC)
+Date:   Tue, 15 Dec 2020 20:06:04 +0800
+From:   Ming Lei <ming.lei@redhat.com>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+        Christoph Hellwig <hch@lst.de>, Ingo Molnar <mingo@redhat.com>,
+        linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH] blktrace: fix 'BUG: sleeping function called from
+ invalid context' in case of PREEMPT_RT
+Message-ID: <20201215120604.GB1798021@T590>
+References: <20201214022217.1754273-1-ming.lei@redhat.com>
+ <20201214102422.2d84035d@gandalf.local.home>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:yKjNETWY0HsaZY6T2BYLNDCWN9rc7CA0Ir+tsxvYfkwSRIj9we1
- lSqn8le7LxhHY1xMBgpOdVJNzqig9RMDeMeWQr+V0jWj+4C1Y2s366y1qTaWwK26fJaTJ9a
- qkHoHHQckM3ELhtsxYgteIbjhZ3GIdo18d03KkawLBSohNbTrGv3DhADpK5T+0pKHRWRy/x
- zB7p9RX7vgTpx4D1z/DBg==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:okDZ+/oZF+8=:oYnUGi0+EsXs0GblwtEAPy
- 6QauqZKM7GdFYoGaT/JSGLyGsacqVSKNMLSbnum75Eo0L2GEJIxFvFgqUsZTS3+3IV2yjjVad
- S0gBZ7HLwzbnWaN0AOSovdMkBHjQzsbIYP5qb29afRFSCTSOAUhSqH9h/7jBJ9eYRYTI1Yqp0
- n+sRScN8ZP00KphPqzVl6H7xNs9QQmHMDAkp0ohndpF3Fsb/8freO6f5elJUlTwBBitF+k8Sc
- ONLSgnBrYSjIlbXfmJv9xUkGBI4Ur7tahA+sMJFbmBcfiS4oq4GRp+E66mMPU4Og+dTKaWRGO
- YSQGS/8ZzkfqjaRAEqPG3bNeq2ri3ndQqAhOvlpJvh4dWlfeggMLXBtthJNQPVVN84rFDnGyL
- 1FJnqjKohPCxg+nSLDd6cXtFDmmyhA2ODMcST1tCVTdmcn9hsMg929bRLHtRvCt3BJlofhk9i
- ixPu297u5yOXGp4FT2JFVr2QfNx/rGYcRGy6bsIVeUWlIm0lilVykaZ7ZThHsZoTXyw6b1Fml
- 6bKbd3WOClbnOIYydlAfyeh71VnBJ1AECMpPCdtKWSDWRTQ5+LuW9wp36bN6oQR+fNycszbAO
- uCyCs9o66ZnfOLiRZMtVsaWPvJNC97UZ6ioeTgWC0s05UcHqij+9CN8X3CUm0gsA3kkWVMK87
- I6aAwZGtEWtJhdY8eLtotMv4rMSfkRYQPzyaq0S0rQ2FBdIsRfHpNJ72pZkX5hJuTqlzBrtrv
- WFMbOFInQEQm0j8i2G6jRd52Ag/ELPEGT4Ke35nT/yKZOayZ9Bgaw7SjV3E6JBK48G14Q26k0
- IpDZIj97QOHZ318WEo1Mkfd+Z83qkH07GDmJMFdIDSdXVaJbIqYAJqpXAoSoQiYRbuPYAFB6e
- NFnktWKWnrKGtWkhzdYw==
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20201214102422.2d84035d@gandalf.local.home>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 2020-12-14 at 13:33 +0100, Sebastian Andrzej Siewior wrote:
-> On 2020-12-08 23:58:27 [+0000], Orivej Desh wrote:
-> > Greetings!
-> Hi,
->
-> > With sched-Add-migrate_disable.patch first released in v5.9-rc8-rt14 [=
-1]
-> > linux-rt defines functions migrate_disable and migrate_enable.
-> > They are used in linux headers in various macros and static inline
-> > functions, and in particular in kmap_atomic and kunmap_atomic.
-> > The latter are needed by ZFS which currently fails to build against
-> > 5.9-rt [2] because these functions are exported with EXPORT_SYMBOL_GPL=
-.
-> > Could you export them with EXPORT_SYMBOL instead?
->
-> This is out of my jurisdiction, so just a few notes:
-> - v5.9 is out of maintenance. Be careful.
-> - We don't export symbols for out-of-tree modules.
+On Mon, Dec 14, 2020 at 10:24:22AM -0500, Steven Rostedt wrote:
+> On Mon, 14 Dec 2020 10:22:17 +0800
+> Ming Lei <ming.lei@redhat.com> wrote:
+> 
+> > trace_note_tsk() is called by __blk_add_trace(), which is covered by RCU read lock.
+> > So in case of PREEMPT_RT, warning of 'BUG: sleeping function called from invalid context'
+> > will be triggered because spin lock is converted to rtmutex.
+> 
+> The RCU read_lock() can not be the cause of this issue, because under
+> PREEMPT_RT, rcu_read_lock() can be preempted.
 
-Hm, dejavu all over again.  I recall this issue long ago having been
-resolved in favor of exporting via plain EXPORT_SYMBOL.
+OK, got it.
 
-https://lore.kernel.org/linux-rt-users/1321359802.4181.1.camel@frodo/
+> 
+> What was the full back trace of this problem?
 
-=46rom 859a31c5ec958326dd046f4e41f6fa0db0ce98c3 Mon Sep 17 00:00:00 2001
-From: Steven Rostedt <srostedt@redhat.com>
-Date: Mon, 16 Apr 2012 21:51:54 -0400
-Subject: rt: Make migrate_disable/enable() and __rt_mutex_init non-GPL onl=
-y
+[  284.527619] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:968
+[  284.527626] in_atomic(): 1, irqs_disabled(): 0, pid: 6705, name: mandb
+[  284.527631] 4 locks held by mandb/6705:
+[  284.527634]  #0: ffff88853f4f2eb0 (&f->f_pos_lock){+.+.}-{0:0}, at: __fdget_pos+0xaf/0xe0
+[  284.527662]  #1: ffff8885eb814048 (&sb->s_type->i_mutex_key#13){++++}-{0:0}, at: xfs_ilock+0x17d/0x590 [xfs]
+[  284.527838]  #2: ffffffffa24d22c0 (rcu_read_lock){....}-{1:2}, at: blk_add_trace_bio+0x0/0x2f0
+[  284.527859]  #3: ffffffffa22177a0 (running_trace_lock){+.+.}-{2:2}, at: __blk_add_trace+0x9ea/0xdf0
+[  284.527877] Preemption disabled at:
+[  284.527886] [<ffffffff9f936743>] get_lock_stats+0x13/0x120
+[  284.527897] CPU: 53 PID: 6705 Comm: mandb Kdump: loaded Not tainted 4.18.0-259.rt7.24.el8.x86_64+debug #1
+[  284.527901] Hardware name: Lenovo ThinkSystem SR630 -[7X02CTO1WW]-/-[7X02CTO1WW]-, BIOS -[IVE136T-2.10]- 03/22/2019
+[  284.527904] Call Trace:
+[  284.527918]  dump_stack+0x8e/0xd0
+[  284.527934]  ? get_lock_stats+0x13/0x120
+[  284.527944]  ___might_sleep.cold.58+0x54/0x77
+[  284.527964]  rt_spin_lock+0x3e/0x120
+[  284.527969]  ? __blk_add_trace+0x9ea/0xdf0
+[  284.527980]  __blk_add_trace+0x9ea/0xdf0
+[  284.528025]  ? rcu_read_lock_sched_held+0xe0/0xe0
+[  284.528048]  blk_add_trace_bio+0x25d/0x2f0
+[  284.528074]  ? recalibrate_cpu_khz+0x10/0x10
+[  284.528094]  ? blk_add_trace_bio_frontmerge+0x20/0x20
+[  284.528107]  generic_make_request_checks+0x1471/0x1cc0
+[  284.528143]  ? blk_update_request+0x1610/0x1610
+[  284.528172]  ? iomap_readpages_actor+0x4f3/0x900
+[  284.528208]  generic_make_request+0x8e/0xa40
+[  284.528255]  ? direct_make_request+0x2b0/0x2b0
+[  284.528260]  ? iomap_readpage_actor+0xd40/0xd40
+[  284.528267]  ? iomap_readpages+0x20b/0x950
+[  284.528277]  ? bad_range+0x237/0x410
+[  284.528288]  ? trace_event_raw_event_iomap_apply+0x430/0x430
+[  284.528329]  ? submit_bio+0xcb/0x440
+[  284.528338]  submit_bio+0xcb/0x440
+[  284.528358]  ? generic_make_request+0xa40/0xa40
+[  284.528387]  ? rcu_read_lock_bh_held+0x100/0x100
+[  284.528412]  ? iomap_readpage_actor+0xd40/0xd40
+[  284.528422]  iomap_readpages+0x22f/0x950
+[  284.528442]  ? iomap_writepage+0xa0/0xa0
+[  284.528505]  read_pages+0xf8/0x600
+[  284.528535]  ? __alloc_pages_nodemask+0x80d/0xa20
+[  284.528554]  ? read_cache_pages+0x6d0/0x6d0
+[  284.528560]  ? __alloc_pages_slowpath+0x2a10/0x2a10
+[  284.528621]  __do_page_cache_readahead+0x311/0x3c0
+[  284.528663]  ? read_pages+0x600/0x600
+[  284.528712]  ondemand_readahead+0x443/0xc00
+[  284.528717]  ? page_cache_sync_readahead+0x18a/0x3f0
+[  284.528757]  generic_file_buffered_read+0xd65/0x1ee0
+[  284.528850]  ? read_cache_page_gfp+0xa0/0xa0
+[  284.529003]  ? xfs_ilock+0x17d/0x590 [xfs]
+[  284.529009]  ? get_lock_stats+0x18/0x120
+[  284.529018]  ? put_lock_stats.isra.19+0xb/0xa0
+[  284.529045]  ? lock_contended+0xa70/0xa70
+[  284.529069]  ? __down_read_trylock+0x53/0x80
+[  284.529222]  ? xfs_file_buffered_aio_read+0x146/0x4f0 [xfs]
+[  284.529381]  xfs_file_buffered_aio_read+0x151/0x4f0 [xfs]
+[  284.529534]  xfs_file_read_iter+0x2bf/0x740 [xfs]
+[  284.529545]  ? rt_mutex_slowlock_locked+0x262/0x790
+[  284.529572]  new_sync_read+0x39c/0x560
+[  284.529582]  ? mark_held_locks+0xb7/0x120
+[  284.529594]  ? do_iter_readv_writev+0x6e0/0x6e0
+[  284.529660]  ? fsnotify_first_mark+0x150/0x150
+[  284.529717]  vfs_read+0x147/0x350
+[  284.529745]  ksys_read+0xb8/0x170
+[  284.529759]  ? kernel_write+0x130/0x130
+[  284.529809]  do_syscall_64+0x13c/0x670
+[  284.529830]  entry_SYSCALL_64_after_hwframe+0x6a/0xdf
 
-Modules that load on the normal vanilla kernel should also load on
-an -rt kernel as well. This does not mean we condone non-GPL modules,
-we are only being consistent.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-=2D--
- kernel/rtmutex.c | 2 +-
- kernel/sched.c   | 4 ++--
- 2 files changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index a02fbd9f9583..d58db993f5cd 100644
-=2D-- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1282,7 +1282,7 @@ void __rt_mutex_init(struct rt_mutex *lock, const ch=
-ar *name)
-
- 	debug_rt_mutex_init(lock, name);
- }
--EXPORT_SYMBOL_GPL(__rt_mutex_init);
-+EXPORT_SYMBOL(__rt_mutex_init);
-
- /**
-  * rt_mutex_init_proxy_locked - initialize and lock a rt_mutex on behalf =
-of a
-diff --git a/kernel/sched.c b/kernel/sched.c
-index df3048139d1b..ed3433573641 100644
-=2D-- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -4255,7 +4255,7 @@ void migrate_disable(void)
- 	p->migrate_disable =3D 1;
- 	preempt_enable();
- }
--EXPORT_SYMBOL_GPL(migrate_disable);
-+EXPORT_SYMBOL(migrate_disable);
-
- void migrate_enable(void)
- {
-@@ -4307,7 +4307,7 @@ void migrate_enable(void)
- 	unpin_current_cpu();
- 	preempt_enable();
- }
--EXPORT_SYMBOL_GPL(migrate_enable);
-+EXPORT_SYMBOL(migrate_enable);
- #else
- static inline void update_migrate_disable(struct task_struct *p) { }
- #define migrate_disabled_updated(p)		0
-=2D-
-2.29.2
-
+Thanks,
+Ming
 
