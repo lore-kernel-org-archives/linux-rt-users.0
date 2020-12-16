@@ -2,86 +2,96 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CFB9C4361B
-	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Dec 2020 09:40:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8D1CC4361B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Dec 2020 10:14:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3BA2623105
-	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Dec 2020 09:40:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9438A2313C
+	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Dec 2020 10:14:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725890AbgLPJkM (ORCPT
+        id S1726351AbgLPKO6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 16 Dec 2020 04:40:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51844 "EHLO
+        Wed, 16 Dec 2020 05:14:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57228 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725877AbgLPJkM (ORCPT
+        with ESMTP id S1726202AbgLPKO6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 16 Dec 2020 04:40:12 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6F104C0613D6
-        for <linux-rt-users@vger.kernel.org>; Wed, 16 Dec 2020 01:39:32 -0800 (PST)
-Date:   Wed, 16 Dec 2020 10:39:29 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1608111570;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=m9FP44BJMzY6HszezzEwCQo1JwF7Me3G+7bDvlSGFNQ=;
-        b=ZiKqlcp2zVrAh3cApsFOP8K+PCMGY/j3mot/uWeg1xtF5vPuAT1ApKqvpGd6xYkLSLigi7
-        DQz6I8NciJ3EKp1lIoDGJ5/tsYkmg6FGRd59yL6AA1CURJNnpsgPr57jZoRf+1gaUfgh8s
-        tCYey/xdFrVtiGINAFgSfl7Q2c2i0+TpvFzX+UQFfXFYjPcmScWDpczmo+0bOp1oVXwIGi
-        +cK8qU+KoafxhKzDiyUKyxXFMNgqMq4ch/v7jJPI29+I2VwbFyCTEc9h0pghLHm309xF0y
-        /DQPYTPTQRoiJytFevn0NSi+v0xOPlCxVwk1oLhBgu8ezZQV2Ax2+DQ7E0UvAA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1608111570;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=m9FP44BJMzY6HszezzEwCQo1JwF7Me3G+7bDvlSGFNQ=;
-        b=AkrEE0oTYLZ1Jq+eqwj0CchU0ahfOsBQ5+uPb7bxVxVx+YZ74LsrvVmqXs8cJXkGNLWPiC
-        B7qBq5E1RAystsBw==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     Daniel Wagner <dwagner@suse.de>,
-        RT <linux-rt-users@vger.kernel.org>,
-        Marcelo Tosatti <mtosatti@redhat.com>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 1/3] rt-tests: determine_maximum_mpps.sh: Add a menu to
- get user settings.
-Message-ID: <X9nV0RLSY+A3vpF1@lx-t490>
-References: <20201209183100.16836-1-jkacur@redhat.com>
- <20201214093049.pl2guoij4kjw2ifc@beryllium.lan>
- <9b24db5-61d2-9d3c-7f5d-271e6366add2@redhat.com>
+        Wed, 16 Dec 2020 05:14:58 -0500
+Received: from mail-io1-xd2c.google.com (mail-io1-xd2c.google.com [IPv6:2607:f8b0:4864:20::d2c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B622DC061794
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Dec 2020 02:14:17 -0800 (PST)
+Received: by mail-io1-xd2c.google.com with SMTP id n4so23423143iow.12
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Dec 2020 02:14:17 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=cCXjL7d8Hsk4/+cG49z5rXDSYQeFz0z/PeAytG6sqtA=;
+        b=HVWGkivs2IBKb6B5guihT6XAszSkbtPM/u7gy6FzBZIuIFqLtQxzC+xFF1KvoWjsiB
+         gLW6agYCRNSDlQrYXuus404iz9Ow8nYAatepphVlwapp5Hb4iBvksMzWPcXk2g0+YQP7
+         MNqAwbu2Ml7SiOEaoXQo0pHkIgSEPhEmBpzsafv367n7E3oC6buZBRsyPygBS2eWnhLN
+         Z/lQE0FFjmOweuSoDMxaPr/EspmWLUGrNqZ8PS1GhbObLCAtztZOr8YQ6L6YyK6vZiAW
+         iCdB8sVQegzB5zNIQbCu4SVZxnaqWuhDHyPNlRQeADjUsS1ROHkw3f/VeouZMJ89AiE+
+         787g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=cCXjL7d8Hsk4/+cG49z5rXDSYQeFz0z/PeAytG6sqtA=;
+        b=EP72mWN5VDuJ0dF24k56b84oTmLSfLMDuwiIiU+B2tFBwEIjypa2MK6xWYfqz9CHdh
+         MRcyrNSJWH2Bj+nwMBVqI8eMC9++b0PqwIpdSoG1NIV3MuZwDhf+1dj4il9jQiZKNM1N
+         /dIUTkanYb5ETHcjnGorCPS4ek/1F2pvMeTFuFO8dLbvPgsXwJELkkL3N9rwG32lsqjO
+         nj6WudEytNrbJXjHkJTDu2qTEFMVO7CZ/Dw50ykIkvKOxWZg7LOcKX9IQMMFULA2MqVG
+         OPBjVk5j7VTuYFA+3jlaKEaoTYUpUDwRiOdfvvxf33sc1G3IEeEDIDaiIWo72+pitLWw
+         i7Zg==
+X-Gm-Message-State: AOAM531HsPiYBU9D8w6/BYTQDpflU6Gk4Vp96qNJLnN1roS3/8wuwIn4
+        HYwSH0m9suVcGUo73CU00F4Kb1Av2PVOEDp5lnjcQM0BURU=
+X-Google-Smtp-Source: ABdhPJzcnLOUXv+b4uIWEIWk8ynzMdmATNMYT9HTVXO/jafTI/ByavSqIMOqqewp+3vSMSQqKqXEisBwYru5jjTohAo=
+X-Received: by 2002:a02:5581:: with SMTP id e123mr41631857jab.98.1608113656967;
+ Wed, 16 Dec 2020 02:14:16 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <9b24db5-61d2-9d3c-7f5d-271e6366add2@redhat.com>
+References: <2aa26de8-1345-7e46-3628-a97a54e677b5@numalliance.com>
+ <CAKXUXMwihDVrw03JehiVSQADtqwXWDNV_CJT+tzudRPHxLBdyQ@mail.gmail.com> <a5414150-efa6-3502-bd51-fe83ea7750fc@numalliance.com>
+In-Reply-To: <a5414150-efa6-3502-bd51-fe83ea7750fc@numalliance.com>
+From:   Lukas Bulwahn <lukas.bulwahn@gmail.com>
+Date:   Wed, 16 Dec 2020 11:14:06 +0100
+Message-ID: <CAKXUXMwWMUb9pVCsG6CuCJRMVk0vM0u7BV5q=bbiKqQ+3=tYuQ@mail.gmail.com>
+Subject: Re: enabling rt preempt
+To:     Stephane ANCELOT <sancelot@numalliance.com>
+Cc:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Dec 16, 2020 at 01:22:36AM -0500, John Kacur wrote:
-> On Mon, 14 Dec 2020, Daniel Wagner wrote:
-...
-> >
-> > What about long options? Long options are propably a bit harder to
-> > implement in shell but it would be good in my opinion to keep all those
-> > tests commands as close as possible.
-> >
-...
+On Wed, Dec 16, 2020 at 9:39 AM Stephane ANCELOT
+<sancelot@numalliance.com> wrote:
 >
-> Yeah, long options are a PITA in shell script, I think I might just
-> convert the script to python where command line options are a breeze.
 >
+> Le 16/12/2020 =C3=A0 09:36, Lukas Bulwahn a =C3=A9crit :
+> > On Wed, Dec 16, 2020 at 9:31 AM Stephane ANCELOT
+> > <sancelot@numalliance.com> wrote:
+> >> Hi,
+> >>
+> >> I have downloaded latest LTS kernel 5.4 .
+> >>
+> >> For unknown reasons, I dont understand why I can't enable full rt pree=
+mpt,
+> >>
+> > Well, PREEMPT_RT is not available on v5.4 without the PREEMPT_RT patch =
+set.
+> Sorry, I thought it was now part of the mainstream kernel. I have not
+> understand :-\
 
-Just a FYI, it's quite O.K. when using util-linux getopt(1) instead of
-bash's getopts builtin.
+PREEMPT_RT will be part of mainline on Christmas, we simply do not
+know which Christmas yet... maybe on the next one?
 
-thanks,
+If you rely on real-time Linux being in mainline, we can discuss
+off-list which possibilities you have to ensure that that happens.
 
---
-Ahmed S. Darwish
-Linutronix GmbH
+Lukas
