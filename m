@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DCD1C3526C
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75065C2BBD5
 	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 04BEC23B8A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 40E9523B75
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726363AbgLRTgd (ORCPT
+        id S1726365AbgLRTgd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 18 Dec 2020 14:36:33 -0500
-Received: from mx2.suse.de ([195.135.220.15]:34994 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:34982 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726274AbgLRTgd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1726241AbgLRTgd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 18 Dec 2020 14:36:33 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id D7FE6ADB3;
+        by mx2.suse.de (Postfix) with ESMTP id 78B8FAD89;
         Fri, 18 Dec 2020 19:35:51 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC rt-tests v1 3/4] signaltest: Move thread data to struct thread_param
-Date:   Fri, 18 Dec 2020 20:35:39 +0100
-Message-Id: <20201218193540.6168-4-dwagner@suse.de>
+Subject: [RFC rt-tests v1 2/4] cyclictest: Move thread data to struct thread_param
+Date:   Fri, 18 Dec 2020 20:35:38 +0100
+Message-Id: <20201218193540.6168-3-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201218193540.6168-1-dwagner@suse.de>
 References: <20201218193540.6168-1-dwagner@suse.de>
@@ -44,150 +44,132 @@ Group thread realated data such as thread ID to struct thread_param.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/signaltest/signaltest.c | 44 ++++++++++++++++++-------------------
- 1 file changed, 22 insertions(+), 22 deletions(-)
+ src/cyclictest/cyclictest.c | 34 +++++++++++++++++-----------------
+ 1 file changed, 17 insertions(+), 17 deletions(-)
 
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index c34bc994d886..dd5633d5fc51 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -40,6 +40,10 @@
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 9225e52aa982..c0e7600b4740 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -113,6 +113,9 @@ static char *policyname(int policy);
  
  /* Struct to transfer parameters to the thread */
  struct thread_param {
 +	pthread_t thread;
-+	pthread_t tothread;
 +	int threadstarted;
 +	int tid;
- 	int id;
  	int prio;
- 	int signal;
-@@ -47,6 +51,7 @@ struct thread_param {
- 	struct thread_stat *stats;
- 	int bufmsk;
- 	int cpu;
-+	int interrupted;
- };
- 
- /* Struct for statistics */
-@@ -58,11 +63,6 @@ struct thread_stat {
- 	long act;
- 	double avg;
- 	long *values;
+ 	int policy;
+ 	int mode;
+@@ -141,9 +144,6 @@ struct thread_stat {
+ 	long *smis;
+ 	long *hist_array;
+ 	long *outliers;
 -	pthread_t thread;
--	pthread_t tothread;
 -	int threadstarted;
 -	int tid;
--	int interrupted;
- };
- 
- static int shutdown;
-@@ -86,7 +86,7 @@ void *signalthread(void *param)
- 	pthread_t thread;
- 	cpu_set_t mask;
+ 	long reduce;
+ 	long redmax;
+ 	long cycleofmax;
+@@ -530,7 +530,7 @@ static void *timerthread(void *param)
+ 	interval.tv_sec = par->interval / USEC_PER_SEC;
+ 	interval.tv_nsec = (par->interval % USEC_PER_SEC) * 1000;
  
 -	stat->tid = gettid();
 +	par->tid = gettid();
  
- 	if (par->cpu != -1) {
- 		CPU_ZERO(&mask);
-@@ -105,7 +105,7 @@ void *signalthread(void *param)
- 	schedp.sched_priority = par->prio;
- 	sched_setscheduler(0, policy, &schedp);
+ 	sigemptyset(&sigset);
+ 	sigaddset(&sigset, par->signal);
+@@ -539,7 +539,7 @@ static void *timerthread(void *param)
+ 	if (par->mode == MODE_CYCLIC) {
+ 		sigev.sigev_notify = SIGEV_THREAD_ID | SIGEV_SIGNAL;
+ 		sigev.sigev_signo = par->signal;
+-		sigev.sigev_notify_thread_id = stat->tid;
++		sigev.sigev_notify_thread_id = par->tid;
+ 		timer_create(par->clock, &sigev, &timer);
+ 		tspec.it_interval = interval;
+ 	}
+@@ -613,7 +613,7 @@ static void *timerthread(void *param)
+ 		setitimer(ITIMER_REAL, &itimer, NULL);
+ 	}
  
 -	stat->threadstarted++;
 +	par->threadstarted++;
  
- 	clock_gettime(CLOCK_MONOTONIC, &before);
+ 	while (!shutdown) {
  
-@@ -128,7 +128,7 @@ void *signalthread(void *param)
- 
- 		/* Get current time */
- 		clock_gettime(CLOCK_MONOTONIC, &now);
--		pthread_kill(stat->tothread, SIGUSR1);
-+		pthread_kill(par->tothread, SIGUSR1);
- 
- 		/* Skip the first cycle */
- 		if (first) {
-@@ -148,7 +148,7 @@ void *signalthread(void *param)
- 
- 		if (!stopped && tracelimit && !par->id  && (diff > tracelimit)) {
- 			stat->act = diff;
--			stat->interrupted = 1;
-+			par->interrupted = 1;
- 			stopped++;
+@@ -719,7 +719,7 @@ static void *timerthread(void *param)
  			shutdown++;
- 		}
-@@ -167,7 +167,7 @@ void *signalthread(void *param)
+ 			pthread_mutex_lock(&break_thread_id_lock);
+ 			if (break_thread_id == 0) {
+-				break_thread_id = stat->tid;
++				break_thread_id = par->tid;
+ 				tracemark("hit latency threshold (%llu > %d)",
+ 					  (unsigned long long) diff, tracelimit);
+ 				break_thread_value = diff;
+@@ -795,7 +795,7 @@ static void *timerthread(void *param)
+ 	/* switch to normal */
  	schedp.sched_priority = 0;
  	sched_setscheduler(0, SCHED_OTHER, &schedp);
- 
 -	stat->threadstarted = -1;
 +	par->threadstarted = -1;
  
  	return NULL;
  }
-@@ -298,7 +298,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
- 		if (quiet != 1) {
- 			printf("T:%2d (%5d) P:%2d C:%7lu "
- 			       "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n",
--			       index, stat->tid, par->prio,
-+			       index, par->tid, par->prio,
- 			       stat->cycles, stat->min, stat->act,
- 			       stat->cycles ?
- 			       (long)(stat->avg/stat->cycles) : 0, stat->max);
-@@ -389,8 +389,8 @@ int main(int argc, char **argv)
- 		stat[i].min = 1000000;
- 		stat[i].max = -1000000;
- 		stat[i].avg = 0.0;
--		stat[i].threadstarted = 1;
--		status = pthread_create(&stat[i].thread, NULL, signalthread,
-+		par[i].threadstarted = 1;
-+		status = pthread_create(&par[i].thread, NULL, signalthread,
- 					&par[i]);
+@@ -1298,7 +1298,7 @@ static void print_tids(struct thread_param *par[], int nthreads)
+ 
+ 	printf("# Thread Ids:");
+ 	for (i = 0; i < nthreads; i++)
+-		printf(" %05d", par[i]->stats->tid);
++		printf(" %05d", par[i]->tid);
+ 	printf("\n");
+ }
+ 
+@@ -1412,7 +1412,7 @@ static void print_stat(FILE *fp, struct thread_param *par, int index, int verbos
+ 				fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
+ 				        "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld";
+ 
+-			fprintf(fp, fmt, index, stat->tid, par->prio,
++			fprintf(fp, fmt, index, par->tid, par->prio,
+ 				par->interval, stat->cycles, stat->min,
+ 				stat->act, stat->cycles ?
+ 				(long)(stat->avg/stat->cycles) : 0, stat->max);
+@@ -1468,7 +1468,7 @@ static void rstat_print_stat(struct thread_param *par, int index, int verbose, i
+ 				fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
+ 				        "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld";
+ 
+-			dprintf(fd, fmt, index, stat->tid, par->prio,
++			dprintf(fd, fmt, index, par->tid, par->prio,
+ 				par->interval, stat->cycles, stat->min,
+ 				stat->act, stat->cycles ?
+ 				(long)(stat->avg/stat->cycles) : 0, stat->max);
+@@ -1969,9 +1969,9 @@ int main(int argc, char **argv)
+ 		stat->min = 1000000;
+ 		stat->max = 0;
+ 		stat->avg = 0.0;
+-		stat->threadstarted = 1;
+ 		stat->smi_count = 0;
+-		status = pthread_create(&stat->thread, &attr, timerthread, par);
++		par->threadstarted = 1;
++		status = pthread_create(&par->thread, &attr, timerthread, par);
  		if (status)
- 			fatal("failed to create thread %d: %s\n", i,
-@@ -401,18 +401,18 @@ int main(int argc, char **argv)
- 		int allstarted = 1;
+ 			fatal("failed to create thread %d: %s\n", i, strerror(status));
  
- 		for (i = 0; i < num_threads; i++) {
--			if (stat[i].threadstarted != 2)
-+			if (par[i].threadstarted != 2)
- 				allstarted = 0;
- 		}
- 		if (!allstarted)
- 			continue;
- 
- 		for (i = 0; i < num_threads - 1; i++)
--			stat[i].tothread = stat[i+1].thread;
--		stat[i].tothread = stat[0].thread;
-+			par[i].tothread = par[i+1].thread;
-+		par[i].tothread = par[0].thread;
- 		break;
- 	}
--	pthread_kill(stat[0].thread, signum);
-+	pthread_kill(par[0].thread, signum);
- 
- 	while (!shutdown) {
- 		char lavg[256];
-@@ -443,12 +443,12 @@ int main(int argc, char **argv)
+@@ -2041,10 +2041,10 @@ int main(int argc, char **argv)
  	if (quiet)
  		quiet = 2;
  	for (i = 0; i < num_threads; i++) {
--		if (stat[i].threadstarted > 0)
--			pthread_kill(stat[i].thread, SIGUSR1);
--		if (stat[i].interrupted)
-+		if (par[i].threadstarted > 0)
-+			pthread_kill(par[i].thread, SIGUSR1);
-+		if (par[i].interrupted)
- 			printf("Thread %d exceeded trace limit.\n", i);
--		if (stat[i].threadstarted) {
--			pthread_join(stat[i].thread, NULL);
-+		if (par[i].threadstarted) {
-+			pthread_join(par[i].thread, NULL);
- 			print_stat(&par[i], i, 0);
+-		if (statistics[i]->threadstarted > 0)
+-			pthread_kill(statistics[i]->thread, SIGTERM);
+-		if (statistics[i]->threadstarted) {
+-			pthread_join(statistics[i]->thread, NULL);
++		if (parameters[i]->threadstarted > 0)
++			pthread_kill(parameters[i]->thread, SIGTERM);
++		if (parameters[i]->threadstarted) {
++			pthread_join(parameters[i]->thread, NULL);
+ 			if (quiet && !histogram)
+ 				print_stat(stdout, parameters[i], i, 0, 0);
  		}
- 		if (stat[i].values)
 -- 
 2.29.2
 
