@@ -2,35 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 75065C2BBD5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 37388C3526D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 40E9523B75
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0F38B23B75
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726365AbgLRTgd (ORCPT
+        id S1726412AbgLRTge (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Dec 2020 14:36:33 -0500
-Received: from mx2.suse.de ([195.135.220.15]:34982 "EHLO mx2.suse.de"
+        Fri, 18 Dec 2020 14:36:34 -0500
+Received: from mx2.suse.de ([195.135.220.15]:35006 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726241AbgLRTgd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Dec 2020 14:36:33 -0500
+        id S1726240AbgLRTge (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 18 Dec 2020 14:36:34 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 78B8FAD89;
-        Fri, 18 Dec 2020 19:35:51 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 45033ADCA;
+        Fri, 18 Dec 2020 19:35:52 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC rt-tests v1 2/4] cyclictest: Move thread data to struct thread_param
-Date:   Fri, 18 Dec 2020 20:35:38 +0100
-Message-Id: <20201218193540.6168-3-dwagner@suse.de>
+Subject: [RFC rt-tests v1 4/4] cyclictest: Add JSON output feature
+Date:   Fri, 18 Dec 2020 20:35:40 +0100
+Message-Id: <20201218193540.6168-5-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201218193540.6168-1-dwagner@suse.de>
 References: <20201218193540.6168-1-dwagner@suse.de>
@@ -40,136 +40,220 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Group thread realated data such as thread ID to struct thread_param.
+Add --output command line opttion which will store the results into a
+JSON file.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 34 +++++++++++++++++-----------------
- 1 file changed, 17 insertions(+), 17 deletions(-)
+ src/cyclictest/cyclictest.c | 146 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 145 insertions(+), 1 deletion(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 9225e52aa982..c0e7600b4740 100644
+index c0e7600b4740..a93e9ee2426d 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -113,6 +113,9 @@ static char *policyname(int policy);
+@@ -11,6 +11,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdint.h>
++#include <inttypes.h>
+ #include <stdarg.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+@@ -217,6 +218,7 @@ static struct timespec globalt;
  
- /* Struct to transfer parameters to the thread */
- struct thread_param {
-+	pthread_t thread;
-+	int threadstarted;
-+	int tid;
- 	int prio;
- 	int policy;
- 	int mode;
-@@ -141,9 +144,6 @@ struct thread_stat {
- 	long *smis;
- 	long *hist_array;
- 	long *outliers;
--	pthread_t thread;
--	int threadstarted;
--	int tid;
- 	long reduce;
- 	long redmax;
- 	long cycleofmax;
-@@ -530,7 +530,7 @@ static void *timerthread(void *param)
- 	interval.tv_sec = par->interval / USEC_PER_SEC;
- 	interval.tv_nsec = (par->interval % USEC_PER_SEC) * 1000;
+ static char fifopath[MAX_PATH];
+ static char histfile[MAX_PATH];
++static char outfile[MAX_PATH];
  
--	stat->tid = gettid();
-+	par->tid = gettid();
+ static struct thread_param **parameters;
+ static struct thread_stat **statistics;
+@@ -950,7 +952,7 @@ enum option_values {
+ 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
+ 	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+ 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
+-	OPT_TRACEMARK, OPT_POSIX_TIMERS,
++	OPT_TRACEMARK, OPT_POSIX_TIMERS, OPT_OUTPUT
+ };
  
- 	sigemptyset(&sigset);
- 	sigaddset(&sigset, par->signal);
-@@ -539,7 +539,7 @@ static void *timerthread(void *param)
- 	if (par->mode == MODE_CYCLIC) {
- 		sigev.sigev_notify = SIGEV_THREAD_ID | SIGEV_SIGNAL;
- 		sigev.sigev_signo = par->signal;
--		sigev.sigev_notify_thread_id = stat->tid;
-+		sigev.sigev_notify_thread_id = par->tid;
- 		timer_create(par->clock, &sigev, &timer);
- 		tspec.it_interval = interval;
- 	}
-@@ -613,7 +613,7 @@ static void *timerthread(void *param)
- 		setitimer(ITIMER_REAL, &itimer, NULL);
- 	}
- 
--	stat->threadstarted++;
-+	par->threadstarted++;
- 
- 	while (!shutdown) {
- 
-@@ -719,7 +719,7 @@ static void *timerthread(void *param)
- 			shutdown++;
- 			pthread_mutex_lock(&break_thread_id_lock);
- 			if (break_thread_id == 0) {
--				break_thread_id = stat->tid;
-+				break_thread_id = par->tid;
- 				tracemark("hit latency threshold (%llu > %d)",
- 					  (unsigned long long) diff, tracelimit);
- 				break_thread_value = diff;
-@@ -795,7 +795,7 @@ static void *timerthread(void *param)
- 	/* switch to normal */
- 	schedp.sched_priority = 0;
- 	sched_setscheduler(0, SCHED_OTHER, &schedp);
--	stat->threadstarted = -1;
-+	par->threadstarted = -1;
- 
- 	return NULL;
- }
-@@ -1298,7 +1298,7 @@ static void print_tids(struct thread_param *par[], int nthreads)
- 
- 	printf("# Thread Ids:");
- 	for (i = 0; i < nthreads; i++)
--		printf(" %05d", par[i]->stats->tid);
-+		printf(" %05d", par[i]->tid);
- 	printf("\n");
+ /* Process commandline options */
+@@ -1003,6 +1005,7 @@ static void process_options(int argc, char *argv[])
+ 			{"policy",           required_argument, NULL, OPT_POLICY },
+ 			{"help",             no_argument,       NULL, OPT_HELP },
+ 			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
++			{"output",           required_argument, NULL, OPT_OUTPUT },
+ 			{NULL, 0, NULL, 0 },
+ 		};
+ 		int c = getopt_long(argc, argv, "a::A::b:c:d:D:h:H:i:l:MNo:p:mqrRsSt::uvD:x",
+@@ -1059,6 +1062,7 @@ static void process_options(int argc, char *argv[])
+ 		case OPT_HISTFILE:
+ 			use_histfile = 1;
+ 			strncpy(histfile, optarg, strnlen(optarg, MAX_PATH-1));
++			histfile[MAX_PATH-1] = '\0';
+ 			break;
+ 		case 'i':
+ 		case OPT_INTERVAL:
+@@ -1078,6 +1082,10 @@ static void process_options(int argc, char *argv[])
+ 		case 'o':
+ 		case OPT_OSCOPE:
+ 			oscope_reduction = atoi(optarg); break;
++		case OPT_OUTPUT:
++			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
++			outfile[MAX_PATH-1] = '\0';
++			break;
+ 		case 'p':
+ 		case OPT_PRIORITY:
+ 			priority = atoi(optarg);
+@@ -1695,6 +1703,124 @@ static void rstat_setup(void)
+ 	return;
  }
  
-@@ -1412,7 +1412,7 @@ static void print_stat(FILE *fp, struct thread_param *par, int index, int verbos
- 				fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
- 				        "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld";
++struct system_info {
++	char *sysname;
++	char *nodename;
++	char *release;
++	char *version;
++	char *machine;
++};
++
++struct system_info *collect_system_info(void)
++{
++	struct system_info *si;
++	struct utsname buf;
++	int err;
++
++	si = malloc(sizeof(struct system_info));
++	if (!si)
++		err_exit(ENOMEM, "malloc()");
++
++	err = uname(&buf);
++	if (err)
++		err_exit(errno, "Could not retrieve system information");
++
++	si->sysname = strdup(buf.sysname);
++	si->nodename = strdup(buf.nodename);
++	si->release = strdup(buf.release);
++	si->version = strdup(buf.version);
++	si->machine = strdup(buf.machine);
++
++	if (!si->sysname ||
++            !si->nodename ||
++	    !si->release ||
++	    !si->version ||
++	    !si->machine)
++		err_exit(ENOMEM, "Could not copy system information");
++
++	return si;
++}
++
++static char *get_cmdline(int argc, char *argv[])
++{
++	char *cmdline;
++	int len, i;
++
++	len = 0;
++	for (i = 0; i < argc; i++)
++		len += strlen(argv[i]) + 1;
++
++	cmdline = malloc(len);
++	if (!cmdline)
++		err_exit(ENOMEM, "Could not copy cmdline");
++
++	cmdline[0] = '\0';
++	for (i = 0; i < argc;) {
++		cmdline = strcat(cmdline, argv[i]);
++		i++;
++		if (i < argc)
++			cmdline = strcat(cmdline, " ");
++	}
++
++	return cmdline;
++}
++
++void free_system_info(struct system_info *sysinfo)
++{
++	free(sysinfo->sysname);
++	free(sysinfo->nodename);
++	free(sysinfo->release);
++	free(sysinfo->version);
++	free(sysinfo->machine);
++	free(sysinfo);
++}
++
++static void dump_stats(FILE *f, struct system_info *sysinfo,
++		char *cmdline, struct thread_param **par)
++{
++	unsigned int i, j, comma;
++	struct thread_stat *s;
++
++	fprintf(f, "{\n");
++	fprintf(f, "  \"file_version\": 1,\n");
++	fprintf(f, "  \"version:\": \"cyclictest V %1.2f\",\n", VERSION);
++	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
++	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
++	fprintf(f, "  \"cmdline:\": \"%s\",\n", cmdline);
++	fprintf(f, "  \"sysinfo\": {\n");
++	fprintf(f, "    \"sysname\": \"%s\",\n", sysinfo->sysname);
++	fprintf(f, "    \"nodename\": \"%s\",\n", sysinfo->nodename);
++	fprintf(f, "    \"release\": \"%s\",\n", sysinfo->release);
++	fprintf(f, "    \"version\": \"%s\",\n", sysinfo->version);
++	fprintf(f, "    \"machine\": \"%s\"\n", sysinfo->machine);
++	fprintf(f, "  },\n");
++	fprintf(f, "  \"thread\": {\n");
++	for (i = 0; i < num_threads; i++) {
++		fprintf(f, "    \"%u\": {\n", i);
++
++		fprintf(f, "      \"histogram\": {");
++		s = par[i]->stats;
++		for (j = 0, comma = 0; j < histogram; j++) {
++			if (s->hist_array[j] == 0)
++				continue;
++			fprintf(f, "%s", comma ? ",\n" : "\n");
++			fprintf(f, "        \"%u\": %" PRIu64,j, s->hist_array[j]);
++			comma = 1;
++		}
++		if (comma)
++			fprintf(f, "\n");
++		fprintf(f, "      },\n");
++		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
++		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
++		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
++		fprintf(f, "      \"cpu\": %d,\n", par[i]->cpu);
++		fprintf(f, "      \"node\": %d\n", par[i]->node);
++		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
++	}
++	fprintf(f, "  }\n");
++	fprintf(f, "}\n");
++}
  
--			fprintf(fp, fmt, index, stat->tid, par->prio,
-+			fprintf(fp, fmt, index, par->tid, par->prio,
- 				par->interval, stat->cycles, stat->min,
- 				stat->act, stat->cycles ?
- 				(long)(stat->avg/stat->cycles) : 0, stat->max);
-@@ -1468,7 +1468,7 @@ static void rstat_print_stat(struct thread_param *par, int index, int verbose, i
- 				fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
- 				        "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld";
+ int main(int argc, char **argv)
+ {
+@@ -2038,6 +2164,24 @@ int main(int argc, char **argv)
+ 	if (!verbose && !quiet && refresh_on_max)
+ 		printf("\033[%dB", num_threads + 2);
  
--			dprintf(fd, fmt, index, stat->tid, par->prio,
-+			dprintf(fd, fmt, index, par->tid, par->prio,
- 				par->interval, stat->cycles, stat->min,
- 				stat->act, stat->cycles ?
- 				(long)(stat->avg/stat->cycles) : 0, stat->max);
-@@ -1969,9 +1969,9 @@ int main(int argc, char **argv)
- 		stat->min = 1000000;
- 		stat->max = 0;
- 		stat->avg = 0.0;
--		stat->threadstarted = 1;
- 		stat->smi_count = 0;
--		status = pthread_create(&stat->thread, &attr, timerthread, par);
-+		par->threadstarted = 1;
-+		status = pthread_create(&par->thread, &attr, timerthread, par);
- 		if (status)
- 			fatal("failed to create thread %d: %s\n", i, strerror(status));
- 
-@@ -2041,10 +2041,10 @@ int main(int argc, char **argv)
++	if (strlen(outfile) != 0) {
++		FILE *f = fopen(outfile, "w");
++		struct system_info *sysinfo;
++		char *cmdline;
++
++		if (!f)
++			err_exit(errno, "Failed to open output file '%s'", outfile);
++
++		sysinfo = collect_system_info();
++		cmdline = get_cmdline(argc, argv);
++
++		dump_stats(f, sysinfo, cmdline, parameters);
++
++		free(cmdline);
++		free_system_info(sysinfo);
++		fclose(f);
++	}
++
  	if (quiet)
  		quiet = 2;
  	for (i = 0; i < num_threads; i++) {
--		if (statistics[i]->threadstarted > 0)
--			pthread_kill(statistics[i]->thread, SIGTERM);
--		if (statistics[i]->threadstarted) {
--			pthread_join(statistics[i]->thread, NULL);
-+		if (parameters[i]->threadstarted > 0)
-+			pthread_kill(parameters[i]->thread, SIGTERM);
-+		if (parameters[i]->threadstarted) {
-+			pthread_join(parameters[i]->thread, NULL);
- 			if (quiet && !histogram)
- 				print_stat(stdout, parameters[i], i, 0, 0);
- 		}
 -- 
 2.29.2
 
