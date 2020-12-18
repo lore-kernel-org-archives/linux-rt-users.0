@@ -4,33 +4,33 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C8D31C2BBD5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 14:20:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 85CBAC2BBD4
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 14:21:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A215E23AAA
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 14:20:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4211A23AAA
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 14:21:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727860AbgLROUa (ORCPT
+        id S1727896AbgLROVK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Dec 2020 09:20:30 -0500
-Received: from mx2.suse.de ([195.135.220.15]:37650 "EHLO mx2.suse.de"
+        Fri, 18 Dec 2020 09:21:10 -0500
+Received: from mx2.suse.de ([195.135.220.15]:37946 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727823AbgLROU3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Dec 2020 09:20:29 -0500
+        id S1727479AbgLROVJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 18 Dec 2020 09:21:09 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id A0278AF74;
-        Fri, 18 Dec 2020 14:19:47 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id D135CB27B;
+        Fri, 18 Dec 2020 14:19:48 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v1 1/6] cyclictest: Always use libnuma
-Date:   Fri, 18 Dec 2020 15:19:30 +0100
-Message-Id: <20201218141935.24151-2-dwagner@suse.de>
+Subject: [rt-tests v1 5/6] cyclictest: Simplify --smp vs --affinity vs --threads argument logic
+Date:   Fri, 18 Dec 2020 15:19:34 +0100
+Message-Id: <20201218141935.24151-6-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201218141935.24151-1-dwagner@suse.de>
 References: <20201218141935.24151-1-dwagner@suse.de>
@@ -40,140 +40,107 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-libnuma is hard dependency for cyclictest. Thus we can always call
-numa_initialize(). This allows us to remove the global 'numa' variable
-to track if libnuma has been initialized or not.
+Allow each command line only to update one variable and do the final
+decission at the end of the parsing step. With this the order
+of the command line is not important.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 63 +++++++++++++++++--------------------
- src/cyclictest/rt_numa.h    |  2 --
- 2 files changed, 29 insertions(+), 36 deletions(-)
+ src/cyclictest/cyclictest.c | 34 ++++++++--------------------------
+ 1 file changed, 8 insertions(+), 26 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index f38c453f1975..514ed7b20fdb 100644
+index b9b0eb3575e3..a364b4ad203a 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1018,9 +1018,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 			/* smp sets AFFINITY_USEALL in OPT_SMP */
- 			if (smp)
- 				break;
--			if (numa_initialize())
--				fatal("Couldn't initialize libnuma");
--			numa = 1;
+@@ -885,14 +885,13 @@ static int timermode = TIMER_ABSTIME;
+ static int use_system;
+ static int priority;
+ static int policy = SCHED_OTHER;	/* default policy if not specified */
+-static int num_threads = 1;
++static int num_threads = -1;
+ static int max_cycles;
+ static int clocksel = 0;
+ static int quiet;
+ static int interval = DEFAULT_INTERVAL;
+ static int distance = -1;
+ static struct bitmask *affinity_mask = NULL;
+-static int smp = 0;
+ 
+ static int clocksources[] = {
+ 	CLOCK_MONOTONIC,
+@@ -958,7 +957,7 @@ enum option_values {
+ static void process_options(int argc, char *argv[], int max_cpus)
+ {
+ 	int error = 0;
+-	int option_affinity = 0;
++	int smp = 0;
+ 
+ 	for (;;) {
+ 		int option_index = 0;
+@@ -1013,10 +1012,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		switch (c) {
+ 		case 'a':
+ 		case OPT_AFFINITY:
+-			option_affinity = 1;
+-			/* smp sets AFFINITY_USEALL in OPT_SMP */
+-			if (smp)
+-				break;
  			if (optarg) {
  				parse_cpumask(optarg, max_cpus, &affinity_mask);
- 				setaffinity = AFFINITY_SPECIFIED;
-@@ -1126,8 +1123,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 			} else if (optind < argc &&
+@@ -1024,8 +1019,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 				    argv[optind][0] == '0' ||
+ 				    argv[optind][0] == '!')) {
+ 				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
+-			} else {
+-				num_threads = -1;
+ 			}
+ 
+ 			if (verbose)
+@@ -1117,22 +1110,14 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		case OPT_SYSTEM:
  			use_system = MODE_SYS_OFFSET; break;
  		case 'S':
- 		case OPT_SMP: /* SMP testing */
--			if (numa)
--				fatal("numa and smp options are mutually exclusive\n");
- 			smp = 1;
- 			num_threads = -1; /* update after parsing */
- 			setaffinity = AFFINITY_USEALL;
-@@ -1201,16 +1196,17 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 
- 	/* if smp wasn't requested, test for numa automatically */
- 	if (!smp) {
--		if (numa_initialize())
--			fatal("Couldn't initialize libnuma");
--		numa = 1;
- 		if (setaffinity == AFFINITY_UNSPECIFIED)
- 			setaffinity = AFFINITY_USEALL;
+-		case OPT_SMP: /* SMP testing */
+-			smp = 1;
+-			num_threads = -1; /* update after parsing */
+-			break;
++		case OPT_SMP:
++			smp = 1; break;
+ 		case 't':
+ 		case OPT_THREADS:
+-			if (smp) {
+-				warn("-t ignored due to smp mode\n");
+-				break;
+-			}
+ 			if (optarg != NULL)
+ 				num_threads = atoi(optarg);
+ 			else if (optind < argc && atoi(argv[optind]))
+ 				num_threads = atoi(argv[optind]);
+-			else
+-				num_threads = -1; /* update after parsing */
+ 			break;
+ 		case OPT_TRIGGER:
+ 			trigger = atoi(optarg);
+@@ -1188,13 +1173,10 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		use_nanosleep = MODE_CLOCK_NANOSLEEP;
  	}
  
--	if (option_affinity) {
--		if (smp)
--			warn("-a ignored due to smp mode\n");
-+	if (option_affinity && smp) {
-+		warn("-a ignored due to smp mode\n");
-+		if (affinity_mask) {
-+			numa_bitmask_free(affinity_mask);
-+			affinity_mask = NULL;
-+		}
-+		setaffinity = AFFINITY_USEALL;
- 	}
+-	if (option_affinity && smp) {
+-		warn("-a ignored due to smp mode\n");
+-		if (affinity_mask) {
+-			numa_bitmask_free(affinity_mask);
+-			affinity_mask = NULL;
+-		}
+-	}
++	if (smp && num_threads != -1)
++		warn("--threads overwrites smp mode\n");
++	if (smp && affinity_mask)
++		warn("--affinity overwrites smp mode\n");
  
  	if (smi) {
-@@ -1744,6 +1740,12 @@ int main(int argc, char **argv)
- 	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
- 	int i, ret = -1;
- 	int status;
-+	void *stack;
-+	void *currstk;
-+	size_t stksize;
-+
-+	if (numa_initialize())
-+		fatal("Couldn't initialize libnuma");
- 
- 	process_options(argc, argv, max_cpus);
- 
-@@ -1926,34 +1928,27 @@ int main(int argc, char **argv)
- 		default: cpu = -1;
- 		}
- 
--		node = -1;
--		if (numa) {
--			void *stack;
--			void *currstk;
--			size_t stksize;
-+		/* find the memory node associated with the cpu i */
-+		node = rt_numa_numa_node_of_cpu(cpu);
- 
--			/* find the memory node associated with the cpu i */
--			node = rt_numa_numa_node_of_cpu(cpu);
-+		/* get the stack size set for this thread */
-+		if (pthread_attr_getstack(&attr, &currstk, &stksize))
-+			fatal("failed to get stack size for thread %d\n", i);
- 
--			/* get the stack size set for this thread */
--			if (pthread_attr_getstack(&attr, &currstk, &stksize))
--				fatal("failed to get stack size for thread %d\n", i);
-+		/* if the stack size is zero, set a default */
-+		if (stksize == 0)
-+			stksize = PTHREAD_STACK_MIN * 2;
- 
--			/* if the stack size is zero, set a default */
--			if (stksize == 0)
--				stksize = PTHREAD_STACK_MIN * 2;
-+		/*  allocate memory for a stack on appropriate node */
-+		stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
- 
--			/*  allocate memory for a stack on appropriate node */
--			stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
-+		/* touch the stack pages to pre-fault them in */
-+		memset(stack, 0, stksize);
- 
--			/* touch the stack pages to pre-fault them in */
--			memset(stack, 0, stksize);
--
--			/* set the thread's stack */
--			if (pthread_attr_setstack(&attr, stack, stksize))
--				fatal("failed to set stack addr for thread %d to 0x%x\n",
--				      i, stack+stksize);
--		}
-+		/* set the thread's stack */
-+		if (pthread_attr_setstack(&attr, stack, stksize))
-+			fatal("failed to set stack addr for thread %d to 0x%x\n",
-+				i, stack+stksize);
- 
- 		/* allocate the thread's parameter block  */
- 		parameters[i] = par = threadalloc(sizeof(struct thread_param), node);
-diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
-index 46690941e0a6..8d02f419ed6d 100644
---- a/src/cyclictest/rt_numa.h
-+++ b/src/cyclictest/rt_numa.h
-@@ -13,8 +13,6 @@
- #include "rt-utils.h"
- #include "error.h"
- 
--static int numa = 0;
--
- #include <numa.h>
- 
- static void *
+ 		if (affinity_mask)
 -- 
 2.29.2
 
