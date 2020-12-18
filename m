@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 09AADC3526B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DCD1C3526C
 	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C1FAD23B75
+	by mail.kernel.org (Postfix) with ESMTP id 04BEC23B8A
 	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 19:36:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726353AbgLRTgd (ORCPT
+        id S1726363AbgLRTgd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 18 Dec 2020 14:36:33 -0500
-Received: from mx2.suse.de ([195.135.220.15]:34970 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:34994 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726010AbgLRTgc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Dec 2020 14:36:32 -0500
+        id S1726274AbgLRTgd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 18 Dec 2020 14:36:33 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 15FA3AD4D;
+        by mx2.suse.de (Postfix) with ESMTP id D7FE6ADB3;
         Fri, 18 Dec 2020 19:35:51 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC rt-tests v1 1/4] rt-tests: Rename error.h to rt-error.h
-Date:   Fri, 18 Dec 2020 20:35:37 +0100
-Message-Id: <20201218193540.6168-2-dwagner@suse.de>
+Subject: [RFC rt-tests v1 3/4] signaltest: Move thread data to struct thread_param
+Date:   Fri, 18 Dec 2020 20:35:39 +0100
+Message-Id: <20201218193540.6168-4-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201218193540.6168-1-dwagner@suse.de>
 References: <20201218193540.6168-1-dwagner@suse.de>
@@ -40,208 +40,154 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Avoid confusion with the system header called error.h.
+Group thread realated data such as thread ID to struct thread_param.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c         | 2 +-
- src/include/pip_stress.h            | 5 +++--
- src/include/{error.h => rt-error.h} | 0
- src/lib/error.c                     | 2 +-
- src/lib/rt-numa.c                   | 2 +-
- src/lib/rt-utils.c                  | 3 ++-
- src/oslat/oslat.c                   | 2 +-
- src/pi_tests/pi_stress.c            | 3 +--
- src/pmqtest/pmqtest.c               | 6 +++---
- src/ptsematest/ptsematest.c         | 6 +++---
- src/signaltest/signaltest.c         | 2 +-
- src/sigwaittest/sigwaittest.c       | 2 +-
- src/svsematest/svsematest.c         | 3 ++-
- 13 files changed, 20 insertions(+), 18 deletions(-)
- rename src/include/{error.h => rt-error.h} (100%)
+ src/signaltest/signaltest.c | 44 ++++++++++++++++++-------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 5c738005f778..9225e52aa982 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -36,7 +36,7 @@
- 
- #include "rt-utils.h"
- #include "rt-numa.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #include <bionic.h>
- 
-diff --git a/src/include/pip_stress.h b/src/include/pip_stress.h
-index ee8b545ab117..f03aaf397897 100644
---- a/src/include/pip_stress.h
-+++ b/src/include/pip_stress.h
-@@ -14,8 +14,9 @@
- #include <sys/wait.h>
- #include <signal.h>
- #include <sched.h>
--#include <rt-utils.h>
--#include "error.h"
-+
-+#include "rt-utils.h"
-+#include "rt-error.h"
- 
- void low(pid_t pid);	/* low priority process */
- void medium(void);	/* medium priority process */
-diff --git a/src/include/error.h b/src/include/rt-error.h
-similarity index 100%
-rename from src/include/error.h
-rename to src/include/rt-error.h
-diff --git a/src/lib/error.c b/src/lib/error.c
-index 4434a842da17..616f70b044e0 100644
---- a/src/lib/error.c
-+++ b/src/lib/error.c
-@@ -5,7 +5,7 @@
-  * error routines, similar to those found in
-  * Advanced Programming in the UNIX Environment 2nd ed.
-  */
--#include "error.h"
-+#include "rt-error.h"
- 
- /* Print an error message, plus a message for err and exit with error err */
- void err_exit(int err, char *fmt, ...)
-diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
-index 04f2e9adb4b1..4a0865715141 100644
---- a/src/lib/rt-numa.c
-+++ b/src/lib/rt-numa.c
-@@ -10,7 +10,7 @@
- #include <sched.h>
- #include <pthread.h>
- 
--#include "error.h"
-+#include "rt-error.h"
- #include "rt-numa.h"
- 
- int get_available_cpus(struct bitmask *cpumask)
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 2d68d62cd875..321a11b1172d 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -20,9 +20,10 @@
- #include <sys/stat.h>
- #include <unistd.h>
- #include <sys/syscall.h> /* For SYS_gettid definitions */
-+
- #include "rt-utils.h"
- #include "rt-sched.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #define  TRACEBUFSIZ  1024
- 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 0811079d9f04..9e6f70600830 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -43,7 +43,7 @@
- 
- #include "rt-utils.h"
- #include "rt-numa.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #ifdef __GNUC__
- # define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 538d12c975aa..49f89b7b0136 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -47,8 +47,7 @@
- 
- #include "rt-sched.h"
- #include "rt-utils.h"
--
--#include "error.h"
-+#include "rt-error.h"
- 
- /* test timeout */
- #define TIMEOUT 2
-diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
-index 5f7a24d55db6..349b47741003 100644
---- a/src/pmqtest/pmqtest.c
-+++ b/src/pmqtest/pmqtest.c
-@@ -21,11 +21,11 @@
- #include <linux/unistd.h>
- #include <utmpx.h>
- #include <mqueue.h>
-+#include <pthread.h>
-+
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
--
--#include <pthread.h>
-+#include "rt-error.h"
- 
- #define SYNCMQ_NAME "/syncmsg%d"
- #define TESTMQ_NAME "/testmsg%d"
-diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-index 2e392299fdc4..e41b8af127da 100644
---- a/src/ptsematest/ptsematest.c
-+++ b/src/ptsematest/ptsematest.c
-@@ -19,11 +19,11 @@
- #include <sys/mman.h>
- #include <linux/unistd.h>
- #include <utmpx.h>
-+#include <pthread.h>
-+
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
--
--#include <pthread.h>
-+#include "rt-error.h"
- 
- enum {
- 	AFFINITY_UNSPECIFIED,
 diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index 5427db7f8d85..c34bc994d886 100644
+index c34bc994d886..dd5633d5fc51 100644
 --- a/src/signaltest/signaltest.c
 +++ b/src/signaltest/signaltest.c
-@@ -31,7 +31,7 @@
- #include <sys/time.h>
- #include <sys/mman.h>
+@@ -40,6 +40,10 @@
  
--#include "error.h"
-+#include "rt-error.h"
- #include "rt-utils.h"
- #include "rt-numa.h"
+ /* Struct to transfer parameters to the thread */
+ struct thread_param {
++	pthread_t thread;
++	pthread_t tothread;
++	int threadstarted;
++	int tid;
+ 	int id;
+ 	int prio;
+ 	int signal;
+@@ -47,6 +51,7 @@ struct thread_param {
+ 	struct thread_stat *stats;
+ 	int bufmsk;
+ 	int cpu;
++	int interrupted;
+ };
  
-diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-index 7e287bd2424f..f10c24914d4a 100644
---- a/src/sigwaittest/sigwaittest.c
-+++ b/src/sigwaittest/sigwaittest.c
-@@ -42,7 +42,7 @@
+ /* Struct for statistics */
+@@ -58,11 +63,6 @@ struct thread_stat {
+ 	long act;
+ 	double avg;
+ 	long *values;
+-	pthread_t thread;
+-	pthread_t tothread;
+-	int threadstarted;
+-	int tid;
+-	int interrupted;
+ };
  
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
-+#include "rt-error.h"
+ static int shutdown;
+@@ -86,7 +86,7 @@ void *signalthread(void *param)
+ 	pthread_t thread;
+ 	cpu_set_t mask;
  
- enum {
- 	AFFINITY_UNSPECIFIED,
-diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
-index 7388efb3f488..7a298e0dea8c 100644
---- a/src/svsematest/svsematest.c
-+++ b/src/svsematest/svsematest.c
-@@ -28,9 +28,10 @@
- #include <sys/sem.h>
- #include <sys/time.h>
- #include <sys/mman.h>
-+
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
-+#include "rt-error.h"
+-	stat->tid = gettid();
++	par->tid = gettid();
  
- #define SEM_WAIT_FOR_RECEIVER 0
- #define SEM_WAIT_FOR_SENDER 1
+ 	if (par->cpu != -1) {
+ 		CPU_ZERO(&mask);
+@@ -105,7 +105,7 @@ void *signalthread(void *param)
+ 	schedp.sched_priority = par->prio;
+ 	sched_setscheduler(0, policy, &schedp);
+ 
+-	stat->threadstarted++;
++	par->threadstarted++;
+ 
+ 	clock_gettime(CLOCK_MONOTONIC, &before);
+ 
+@@ -128,7 +128,7 @@ void *signalthread(void *param)
+ 
+ 		/* Get current time */
+ 		clock_gettime(CLOCK_MONOTONIC, &now);
+-		pthread_kill(stat->tothread, SIGUSR1);
++		pthread_kill(par->tothread, SIGUSR1);
+ 
+ 		/* Skip the first cycle */
+ 		if (first) {
+@@ -148,7 +148,7 @@ void *signalthread(void *param)
+ 
+ 		if (!stopped && tracelimit && !par->id  && (diff > tracelimit)) {
+ 			stat->act = diff;
+-			stat->interrupted = 1;
++			par->interrupted = 1;
+ 			stopped++;
+ 			shutdown++;
+ 		}
+@@ -167,7 +167,7 @@ void *signalthread(void *param)
+ 	schedp.sched_priority = 0;
+ 	sched_setscheduler(0, SCHED_OTHER, &schedp);
+ 
+-	stat->threadstarted = -1;
++	par->threadstarted = -1;
+ 
+ 	return NULL;
+ }
+@@ -298,7 +298,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 		if (quiet != 1) {
+ 			printf("T:%2d (%5d) P:%2d C:%7lu "
+ 			       "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n",
+-			       index, stat->tid, par->prio,
++			       index, par->tid, par->prio,
+ 			       stat->cycles, stat->min, stat->act,
+ 			       stat->cycles ?
+ 			       (long)(stat->avg/stat->cycles) : 0, stat->max);
+@@ -389,8 +389,8 @@ int main(int argc, char **argv)
+ 		stat[i].min = 1000000;
+ 		stat[i].max = -1000000;
+ 		stat[i].avg = 0.0;
+-		stat[i].threadstarted = 1;
+-		status = pthread_create(&stat[i].thread, NULL, signalthread,
++		par[i].threadstarted = 1;
++		status = pthread_create(&par[i].thread, NULL, signalthread,
+ 					&par[i]);
+ 		if (status)
+ 			fatal("failed to create thread %d: %s\n", i,
+@@ -401,18 +401,18 @@ int main(int argc, char **argv)
+ 		int allstarted = 1;
+ 
+ 		for (i = 0; i < num_threads; i++) {
+-			if (stat[i].threadstarted != 2)
++			if (par[i].threadstarted != 2)
+ 				allstarted = 0;
+ 		}
+ 		if (!allstarted)
+ 			continue;
+ 
+ 		for (i = 0; i < num_threads - 1; i++)
+-			stat[i].tothread = stat[i+1].thread;
+-		stat[i].tothread = stat[0].thread;
++			par[i].tothread = par[i+1].thread;
++		par[i].tothread = par[0].thread;
+ 		break;
+ 	}
+-	pthread_kill(stat[0].thread, signum);
++	pthread_kill(par[0].thread, signum);
+ 
+ 	while (!shutdown) {
+ 		char lavg[256];
+@@ -443,12 +443,12 @@ int main(int argc, char **argv)
+ 	if (quiet)
+ 		quiet = 2;
+ 	for (i = 0; i < num_threads; i++) {
+-		if (stat[i].threadstarted > 0)
+-			pthread_kill(stat[i].thread, SIGUSR1);
+-		if (stat[i].interrupted)
++		if (par[i].threadstarted > 0)
++			pthread_kill(par[i].thread, SIGUSR1);
++		if (par[i].interrupted)
+ 			printf("Thread %d exceeded trace limit.\n", i);
+-		if (stat[i].threadstarted) {
+-			pthread_join(stat[i].thread, NULL);
++		if (par[i].threadstarted) {
++			pthread_join(par[i].thread, NULL);
+ 			print_stat(&par[i], i, 0);
+ 		}
+ 		if (stat[i].values)
 -- 
 2.29.2
 
