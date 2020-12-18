@@ -4,33 +4,33 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AA4A8C35270
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 16:20:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 61709C2D0E4
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 16:20:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7FE0323B6C
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 16:20:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2937623B6C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 16:20:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731470AbgLRQUR (ORCPT
+        id S1731381AbgLRQUO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Dec 2020 11:20:17 -0500
-Received: from mx2.suse.de ([195.135.220.15]:37368 "EHLO mx2.suse.de"
+        Fri, 18 Dec 2020 11:20:14 -0500
+Received: from mx2.suse.de ([195.135.220.15]:37366 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730986AbgLRQUO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1729109AbgLRQUO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 18 Dec 2020 11:20:14 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 059CEAE05;
-        Fri, 18 Dec 2020 16:18:53 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 166D4ADE2;
+        Fri, 18 Dec 2020 16:18:52 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 v2 08/20] signaltest: Use affinity_mask for stearing thread placement
-Date:   Fri, 18 Dec 2020 17:18:31 +0100
-Message-Id: <20201218161843.1764-9-dwagner@suse.de>
+Subject: [rt-tests v2 v2 05/20] cyclictest: Simplify --smp vs --affinity vs --threads argument logic
+Date:   Fri, 18 Dec 2020 17:18:28 +0100
+Message-Id: <20201218161843.1764-6-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201218161843.1764-1-dwagner@suse.de>
 References: <20201218161843.1764-1-dwagner@suse.de>
@@ -40,125 +40,107 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We don't need an extra variable to track the state if a bitmask is
-available or not. Check directly if the mask is usable.
+Allow each command line only to update one variable and do the final
+decission at the end of the parsing step. With this the order
+of the command line is not important.
 
-Reviewed-by: Daniel Wagner <dwagner@suse.de>
+Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/signaltest/signaltest.c | 44 ++++++++-----------------------------
- 1 file changed, 9 insertions(+), 35 deletions(-)
+ src/cyclictest/cyclictest.c | 34 ++++++++--------------------------
+ 1 file changed, 8 insertions(+), 26 deletions(-)
 
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index b3a82f8c4f65..e19fc9a740a9 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -205,15 +205,13 @@ static int verbose;
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 23243ddfe9d3..a34b2140f940 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -885,14 +885,13 @@ static int timermode = TIMER_ABSTIME;
+ static int use_system;
+ static int priority;
+ static int policy = SCHED_OTHER;	/* default policy if not specified */
+-static int num_threads = 1;
++static int num_threads = -1;
+ static int max_cycles;
+ static int clocksel = 0;
  static int quiet;
- static int lockall;
+ static int interval = DEFAULT_INTERVAL;
+ static int distance = -1;
  static struct bitmask *affinity_mask = NULL;
 -static int smp = 0;
--static int setaffinity = AFFINITY_UNSPECIFIED;
  
- /* Process commandline options */
- static void process_options(int argc, char *argv[], unsigned int max_cpus)
+ static int clocksources[] = {
+ 	CLOCK_MONOTONIC,
+@@ -958,7 +957,7 @@ enum option_values {
+ static void process_options(int argc, char *argv[], int max_cpus)
  {
--	int option_affinity = 0;
  	int error = 0;
- 	int numa = 0;
+-	int option_affinity = 0;
 +	int smp = 0;
  
  	for (;;) {
  		int option_index = 0;
-@@ -238,26 +236,19 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
- 			break;
+@@ -1013,10 +1012,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
  		switch (c) {
  		case 'a':
+ 		case OPT_AFFINITY:
 -			option_affinity = 1;
- 			/* smp sets AFFINITY_USEALL in OPT_SMP */
- 			if (smp)
- 				break;
- 			numa = 1;
+-			/* smp sets AFFINITY_USEALL in OPT_SMP */
+-			if (smp)
+-				break;
  			if (optarg) {
  				parse_cpumask(optarg, max_cpus, &affinity_mask);
--				setaffinity = AFFINITY_SPECIFIED;
  			} else if (optind < argc &&
- 				   (atoi(argv[optind]) ||
+@@ -1024,8 +1019,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
  				    argv[optind][0] == '0' ||
  				    argv[optind][0] == '!')) {
  				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
--				setaffinity = AFFINITY_SPECIFIED;
 -			} else {
--				setaffinity = AFFINITY_USEALL;
+-				num_threads = -1;
  			}
  
--			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
--				display_help(1);
  			if (verbose)
- 				printf("Using %u cpus.\n",
- 					numa_bitmask_weight(affinity_mask));
-@@ -275,7 +266,6 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
- 				fatal("numa and smp options are mutually exclusive\n");
- 			smp = 1;
- 			num_threads = -1; /* update after parsing */
--			setaffinity = AFFINITY_USEALL;
+@@ -1117,22 +1110,14 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		case OPT_SYSTEM:
+ 			use_system = MODE_SYS_OFFSET; break;
+ 		case 'S':
+-		case OPT_SMP: /* SMP testing */
+-			smp = 1;
+-			num_threads = -1; /* update after parsing */
+-			break;
++		case OPT_SMP:
++			smp = 1; break;
+ 		case 't':
+ 		case OPT_THREADS:
+-			if (smp) {
+-				warn("-t ignored due to smp mode\n");
+-				break;
+-			}
+ 			if (optarg != NULL)
+ 				num_threads = atoi(optarg);
+ 			else if (optind < argc && atoi(argv[optind]))
+ 				num_threads = atoi(argv[optind]);
+-			else
+-				num_threads = -1; /* update after parsing */
  			break;
- 		case 't': num_threads = atoi(optarg); break;
- 		case 'v': verbose = 1; break;
-@@ -294,16 +284,8 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
- 	if (num_threads < 2)
- 		error = 1;
+ 		case OPT_TRIGGER:
+ 			trigger = atoi(optarg);
+@@ -1188,13 +1173,10 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		use_nanosleep = MODE_CLOCK_NANOSLEEP;
+ 	}
  
--	/* if smp wasn't requested, test for numa automatically */
--	if (!smp) {
--		if (setaffinity == AFFINITY_UNSPECIFIED)
--			setaffinity = AFFINITY_USEALL;
--	}
--
--	if (option_affinity) {
--		if (smp)
--			warn("-a ignored due to smp mode\n");
--	}
-+	if (smp && affinity_mask)
-+		warn("-a ignored due to smp mode\n");
- 
- 	if (error) {
- 		if (affinity_mask)
-@@ -365,7 +347,7 @@ int main(int argc, char **argv)
- 		}
- 
- 	/* Restrict the main pid to the affinity specified by the user */
--	if (affinity_mask != NULL) {
-+	if (affinity_mask) {
- 		int res;
- 
- 		errno = 0;
-@@ -400,21 +382,13 @@ int main(int argc, char **argv)
- 			par[i].bufmsk = VALBUF_SIZE - 1;
- 		}
- 
--		switch (setaffinity) {
--		case AFFINITY_UNSPECIFIED:
--			cpu = -1;
--			break;
--		case AFFINITY_SPECIFIED:
-+		if (affinity_mask)
- 			cpu = cpu_for_thread_sp(i, max_cpus, affinity_mask);
--			if (verbose)
--				printf("Thread %d using cpu %d.\n", i, cpu);
--			break;
--		case AFFINITY_USEALL:
-+		else
- 			cpu = cpu_for_thread_ua(i, max_cpus);
--			break;
--		default:
--			cpu = -1;
+-	if (option_affinity && smp) {
+-		warn("-a ignored due to smp mode\n");
+-		if (affinity_mask) {
+-			numa_bitmask_free(affinity_mask);
+-			affinity_mask = NULL;
 -		}
-+
-+		if (verbose)
-+			printf("Thread %d using cpu %d.\n", i, cpu);
+-	}
++	if (smp && num_threads != -1)
++		warn("--threads overwrites smp mode\n");
++	if (smp && affinity_mask)
++		warn("--affinity overwrites smp mode\n");
  
- 		par[i].id = i;
- 		par[i].prio = priority;
+ 	if (smi) {
+ 		if (affinity_mask)
 -- 
 2.29.2
 
