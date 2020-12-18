@@ -2,35 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 637D6C2BBD5
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7FE28C3526C
 	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 16:19:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 41FA223B79
+	by mail.kernel.org (Postfix) with ESMTP id 57E5F23B6C
 	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Dec 2020 16:19:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730069AbgLRQTd (ORCPT
+        id S1730041AbgLRQTd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 18 Dec 2020 11:19:33 -0500
-Received: from mx2.suse.de ([195.135.220.15]:36900 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:36888 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729742AbgLRQTd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1729687AbgLRQTd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 18 Dec 2020 11:19:33 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 76656ADD9;
+        by mx2.suse.de (Postfix) with ESMTP id 2F81BADD6;
         Fri, 18 Dec 2020 16:18:51 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 v2 03/20] cyclictest: Use affinity_mask for stearing thread placement
-Date:   Fri, 18 Dec 2020 17:18:26 +0100
-Message-Id: <20201218161843.1764-4-dwagner@suse.de>
+Subject: [rt-tests v2 v2 02/20] cyclictest: Use numa API directly
+Date:   Fri, 18 Dec 2020 17:18:25 +0100
+Message-Id: <20201218161843.1764-3-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20201218161843.1764-1-dwagner@suse.de>
 References: <20201218161843.1764-1-dwagner@suse.de>
@@ -40,112 +40,268 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We don't need an extra variable to track the state if a bitmask is
-available or not. Check directly if the mask is usable.
+There is no need for small libnuma wrappers functions as we always
+use libnuma. Remove them and get rid of rt_numa.h, so there is
+no confusion with rt-numa.h anymore.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 34 +++++++---------------------------
- 1 file changed, 7 insertions(+), 27 deletions(-)
+ src/cyclictest/cyclictest.c | 41 ++++++++--------
+ src/cyclictest/rt_numa.h    | 96 -------------------------------------
+ 2 files changed, 22 insertions(+), 115 deletions(-)
+ delete mode 100644 src/cyclictest/rt_numa.h
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index a5ca764da254..3dafef4e7e5a 100644
+index 514ed7b20fdb..a5ca764da254 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -893,7 +893,6 @@ static int interval = DEFAULT_INTERVAL;
- static int distance = -1;
- static struct bitmask *affinity_mask = NULL;
- static int smp = 0;
--static int setaffinity = AFFINITY_UNSPECIFIED;
+@@ -33,10 +33,10 @@
+ #include <sys/utsname.h>
+ #include <sys/mman.h>
+ #include <sys/syscall.h>
+-#include "rt_numa.h"
  
- static int clocksources[] = {
- 	CLOCK_MONOTONIC,
-@@ -1020,19 +1019,13 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 				break;
- 			if (optarg) {
- 				parse_cpumask(optarg, max_cpus, &affinity_mask);
--				setaffinity = AFFINITY_SPECIFIED;
- 			} else if (optind < argc &&
- 				   (atoi(argv[optind]) ||
- 				    argv[optind][0] == '0' ||
- 				    argv[optind][0] == '!')) {
- 				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
--				setaffinity = AFFINITY_SPECIFIED;
--			} else {
--				setaffinity = AFFINITY_USEALL;
- 			}
+ #include "rt-utils.h"
+ #include "rt-numa.h"
++#include "error.h"
  
--			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
--				display_help(1);
- 			if (verbose)
- 				printf("Using %u cpus.\n",
- 					numa_bitmask_weight(affinity_mask));
-@@ -1125,7 +1118,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 		case OPT_SMP: /* SMP testing */
- 			smp = 1;
- 			num_threads = -1; /* update after parsing */
--			setaffinity = AFFINITY_USEALL;
- 			break;
- 		case 't':
- 		case OPT_THREADS:
-@@ -1194,23 +1186,16 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 		use_nanosleep = MODE_CLOCK_NANOSLEEP;
+ #include <bionic.h>
+ 
+@@ -514,9 +514,9 @@ static void *timerthread(void *param)
+ 
+ 	memset(&stop, 0, sizeof(stop));
+ 
+-	/* if we're running in numa mode, set our memory node */
+-	if (par->node != -1)
+-		rt_numa_set_numa_run_on_node(par->node, par->cpu);
++	if (numa_run_on_node(par->node))
++		warn("Could not set NUMA node %d for thread %d: %s\n",
++				par->node, par->cpu, strerror(errno));
+ 
+ 	if (par->cpu != -1) {
+ 		CPU_ZERO(&mask);
+@@ -1275,7 +1275,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
  	}
- 
--	/* if smp wasn't requested, test for numa automatically */
--	if (!smp) {
--		if (setaffinity == AFFINITY_UNSPECIFIED)
--			setaffinity = AFFINITY_USEALL;
--	}
--
- 	if (option_affinity && smp) {
- 		warn("-a ignored due to smp mode\n");
- 		if (affinity_mask) {
- 			numa_bitmask_free(affinity_mask);
- 			affinity_mask = NULL;
+ 	if (error) {
+ 		if (affinity_mask)
+-			rt_bitmask_free(affinity_mask);
++			numa_bitmask_free(affinity_mask);
+ 		display_help(1);
+ 	}
+ }
+@@ -1929,7 +1929,7 @@ int main(int argc, char **argv)
  		}
--		setaffinity = AFFINITY_USEALL;
- 	}
- 
- 	if (smi) {
--		if (setaffinity == AFFINITY_UNSPECIFIED)
-+		if (affinity_mask)
- 			fatal("SMI counter relies on thread affinity\n");
- 
- 		if (!has_smi_counter())
-@@ -1756,7 +1741,7 @@ int main(int argc, char **argv)
- 		printf("Max CPUs = %d\n", max_cpus);
- 
- 	/* Restrict the main pid to the affinity specified by the user */
--	if (affinity_mask != NULL) {
-+	if (affinity_mask) {
- 		int res;
- 
- 		errno = 0;
-@@ -1915,18 +1900,13 @@ int main(int argc, char **argv)
- 		if (status != 0)
- 			fatal("error from pthread_attr_init for thread %d: %s\n", i, strerror(status));
- 
--		switch (setaffinity) {
--		case AFFINITY_UNSPECIFIED: cpu = -1; break;
--		case AFFINITY_SPECIFIED:
-+		if (affinity_mask)
- 			cpu = cpu_for_thread_sp(i, max_cpus, affinity_mask);
--			if (verbose)
--				printf("Thread %d using cpu %d.\n", i, cpu);
--			break;
--		case AFFINITY_USEALL:
-+		else
- 			cpu = cpu_for_thread_ua(i, max_cpus);
--			break;
--		default: cpu = -1;
--		}
-+
-+		if (verbose)
-+			printf("Thread %d using cpu %d.\n", i, cpu);
  
  		/* find the memory node associated with the cpu i */
- 		node = numa_node_of_cpu(cpu);
+-		node = rt_numa_numa_node_of_cpu(cpu);
++		node = numa_node_of_cpu(cpu);
+ 
+ 		/* get the stack size set for this thread */
+ 		if (pthread_attr_getstack(&attr, &currstk, &stksize))
+@@ -1940,7 +1940,10 @@ int main(int argc, char **argv)
+ 			stksize = PTHREAD_STACK_MIN * 2;
+ 
+ 		/*  allocate memory for a stack on appropriate node */
+-		stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
++		stack = numa_alloc_onnode(stksize, node);
++		if (!stack)
++			fatal("failed to allocate %d bytes on node %d for cpu %d\n",
++				stksize, node, cpu);
+ 
+ 		/* touch the stack pages to pre-fault them in */
+ 		memset(stack, 0, stksize);
+@@ -1951,13 +1954,13 @@ int main(int argc, char **argv)
+ 				i, stack+stksize);
+ 
+ 		/* allocate the thread's parameter block  */
+-		parameters[i] = par = threadalloc(sizeof(struct thread_param), node);
++		parameters[i] = par = numa_alloc_onnode(sizeof(struct thread_param), node);
+ 		if (par == NULL)
+ 			fatal("error allocating thread_param struct for thread %d\n", i);
+ 		memset(par, 0, sizeof(struct thread_param));
+ 
+ 		/* allocate the thread's statistics block */
+-		statistics[i] = stat = threadalloc(sizeof(struct thread_stat), node);
++		statistics[i] = stat = numa_alloc_onnode(sizeof(struct thread_stat), node);
+ 		if (stat == NULL)
+ 			fatal("error allocating thread status struct for thread %d\n", i);
+ 		memset(stat, 0, sizeof(struct thread_stat));
+@@ -1966,8 +1969,8 @@ int main(int argc, char **argv)
+ 		if (histogram) {
+ 			int bufsize = histogram * sizeof(long);
+ 
+-			stat->hist_array = threadalloc(bufsize, node);
+-			stat->outliers = threadalloc(bufsize, node);
++			stat->hist_array = numa_alloc_onnode(bufsize, node);
++			stat->outliers = numa_alloc_onnode(bufsize, node);
+ 			if (stat->hist_array == NULL || stat->outliers == NULL)
+ 				fatal("failed to allocate histogram of size %d on node %d\n",
+ 				      histogram, i);
+@@ -1977,14 +1980,14 @@ int main(int argc, char **argv)
+ 
+ 		if (verbose) {
+ 			int bufsize = VALBUF_SIZE * sizeof(long);
+-			stat->values = threadalloc(bufsize, node);
++			stat->values = numa_alloc_onnode(bufsize, node);
+ 			if (!stat->values)
+ 				goto outall;
+ 			memset(stat->values, 0, bufsize);
+ 			par->bufmsk = VALBUF_SIZE - 1;
+ 			if (smi) {
+ 				int bufsize = VALBUF_SIZE * sizeof(long);
+-				stat->smis = threadalloc(bufsize, node);
++				stat->smis = numa_alloc_onnode(bufsize, node);
+ 				if (!stat->smis)
+ 					goto outall;
+ 				memset(stat->smis, 0, bufsize);
+@@ -2099,7 +2102,7 @@ int main(int argc, char **argv)
+ 				print_stat(stdout, parameters[i], i, 0, 0);
+ 		}
+ 		if (statistics[i]->values)
+-			threadfree(statistics[i]->values, VALBUF_SIZE*sizeof(long), parameters[i]->node);
++			numa_free(statistics[i]->values, VALBUF_SIZE*sizeof(long));
+ 	}
+ 
+ 	if (trigger)
+@@ -2108,8 +2111,8 @@ int main(int argc, char **argv)
+ 	if (histogram) {
+ 		print_hist(parameters, num_threads);
+ 		for (i = 0; i < num_threads; i++) {
+-			threadfree(statistics[i]->hist_array, histogram*sizeof(long), parameters[i]->node);
+-			threadfree(statistics[i]->outliers, histogram*sizeof(long), parameters[i]->node);
++			numa_free(statistics[i]->hist_array, histogram*sizeof(long));
++			numa_free(statistics[i]->outliers, histogram*sizeof(long));
+ 		}
+ 	}
+ 
+@@ -2125,14 +2128,14 @@ int main(int argc, char **argv)
+ 	for (i=0; i < num_threads; i++) {
+ 		if (!statistics[i])
+ 			continue;
+-		threadfree(statistics[i], sizeof(struct thread_stat), parameters[i]->node);
++		numa_free(statistics[i], sizeof(struct thread_stat));
+ 	}
+ 
+  outpar:
+ 	for (i = 0; i < num_threads; i++) {
+ 		if (!parameters[i])
+ 			continue;
+-		threadfree(parameters[i], sizeof(struct thread_param), parameters[i]->node);
++		numa_free(parameters[i], sizeof(struct thread_param));
+ 	}
+  out:
+ 	/* close any tracer file descriptors */
+@@ -2147,7 +2150,7 @@ int main(int argc, char **argv)
+ 		close(latency_target_fd);
+ 
+ 	if (affinity_mask)
+-		rt_bitmask_free(affinity_mask);
++		numa_bitmask_free(affinity_mask);
+ 
+ 	/* Remove running status shared memory file if it exists */
+ 	if (rstat_fd >= 0)
+diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+deleted file mode 100644
+index 8d02f419ed6d..000000000000
+--- a/src/cyclictest/rt_numa.h
++++ /dev/null
+@@ -1,96 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-or-later
+-/*
+- * A numa library for cyclictest.
+- *
+- * (C) 2010 John Kacur <jkacur@redhat.com>
+- * (C) 2010 Clark Williams <williams@redhat.com>
+- *
+- */
+-
+-#ifndef _RT_NUMA_H
+-#define _RT_NUMA_H
+-
+-#include "rt-utils.h"
+-#include "error.h"
+-
+-#include <numa.h>
+-
+-static void *
+-threadalloc(size_t size, int node)
+-{
+-	if (node == -1)
+-		return malloc(size);
+-	return numa_alloc_onnode(size, node);
+-}
+-
+-static void
+-threadfree(void *ptr, size_t size, int node)
+-{
+-	if (node == -1)
+-		free(ptr);
+-	else
+-		numa_free(ptr, size);
+-}
+-
+-static void rt_numa_set_numa_run_on_node(int node, int cpu)
+-{
+-	int res;
+-	res = numa_run_on_node(node);
+-	if (res)
+-		warn("Could not set NUMA node %d for thread %d: %s\n",
+-				node, cpu, strerror(errno));
+-	return;
+-}
+-
+-static void *rt_numa_numa_alloc_onnode(size_t size, int node, int cpu)
+-{
+-	void *stack;
+-	stack = numa_alloc_onnode(size, node);
+-	if (stack == NULL)
+-		fatal("failed to allocate %d bytes on node %d for cpu %d\n",
+-				size, node, cpu);
+-	return stack;
+-}
+-
+-/*
+- * Use new bit mask CPU affinity behavior
+- */
+-static int rt_numa_numa_node_of_cpu(int cpu)
+-{
+-	int node;
+-	node = numa_node_of_cpu(cpu);
+-	if (node == -1)
+-		fatal("invalid cpu passed to numa_node_of_cpu(%d)\n", cpu);
+-	return node;
+-}
+-
+-static inline unsigned int rt_numa_bitmask_isbitset( const struct bitmask *mask,
+-	unsigned long i)
+-{
+-	return numa_bitmask_isbitset(mask,i);
+-}
+-
+-static inline struct bitmask* rt_numa_parse_cpustring(const char* s,
+-	int max_cpus)
+-{
+-	return numa_parse_cpustring_all(s);
+-}
+-
+-static inline void rt_bitmask_free(struct bitmask *mask)
+-{
+-	numa_bitmask_free(mask);
+-}
+-
+-/** Returns number of bits set in mask. */
+-static inline unsigned int rt_numa_bitmask_count(const struct bitmask *mask)
+-{
+-	unsigned int num_bits = 0, i;
+-	for (i = 0; i < mask->size; i++) {
+-		if (rt_numa_bitmask_isbitset(mask, i))
+-			num_bits++;
+-	}
+-	/* Could stash this instead of recomputing every time. */
+-	return num_bits;
+-}
+-
+-#endif	/* _RT_NUMA_H */
 -- 
 2.29.2
 
