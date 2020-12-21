@@ -2,123 +2,222 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.2 required=3.0 tests=BAYES_00,DATE_IN_PAST_03_06,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C78B2C433E0
-	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Dec 2020 05:27:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 50AABC433DB
+	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Dec 2020 20:08:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 887B222CB9
-	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Dec 2020 05:27:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 17D7422C9C
+	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Dec 2020 20:08:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728348AbgLUF1C (ORCPT
+        id S1725953AbgLUUID (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 21 Dec 2020 00:27:02 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43798 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726896AbgLUF1B (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 21 Dec 2020 00:27:01 -0500
-Received: from mail-lf1-x12b.google.com (mail-lf1-x12b.google.com [IPv6:2a00:1450:4864:20::12b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED8C1C0613D3
-        for <linux-rt-users@vger.kernel.org>; Sun, 20 Dec 2020 21:26:20 -0800 (PST)
-Received: by mail-lf1-x12b.google.com with SMTP id o17so20786450lfg.4
-        for <linux-rt-users@vger.kernel.org>; Sun, 20 Dec 2020 21:26:20 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=byrpBCvV2Mo30UL5TxsnH0oAE8+BEWJNL9oAawt1w4c=;
-        b=j6ePJHzo/IUtwD657RPfOjpHBMZjTu1Pc/u+UZ5BhBtEh3bOMskBucXvERewIKlY78
-         y3UA41CydWyccocOO57jR/zlX6kY8bazs33EiTzEuSYYqLby2Cmm0ls8cJmhuyQdDby6
-         NFKCF+sOznfYi/1BgPj1tvP1iutmQouO+mSyijLhY3LzLhqcQxxWr7XIBPrleLDkx+El
-         P53SwFCSuLVuypbucRAuoO1hC34qkHk2/QpTJ15oITS230H9BYts+NcLdZgFFtCesYmN
-         ZsQoKvEbk4z6KkKF37Skwp0RCXR4cTM+Qfn7yLN3VTJ4jdqRbuwUMf/NeIS4UWtUskyQ
-         PzOA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=byrpBCvV2Mo30UL5TxsnH0oAE8+BEWJNL9oAawt1w4c=;
-        b=jVrQaaDOd/ufia/VbsKDIJNER6GuH7aM1+yREJJSLU/PERVwUPbvhpicKyL1wVzlGy
-         tA6A8i1mNkWt0Kqv9JwrhQYIKpkg/0jSC3cM30+gIQw+2jagzs00ZAMJ4XgM/SkHH6f1
-         KZDIEROvACaom8knVLb01K5j5ZbBYg/KvLeAWFKQiMuY/uPjoUDcWFUXpyQlowo8bz46
-         EetQ3ZOrRUyajVFtBYb0FkQQ9gCEtqeADx1xQSVQZOzdg5JbPXhr+qcYwsGuEgCoI2IR
-         avi2mrzWg9UuFF7rXsTynFy+GNvAaNgTMh+nwwu7Je3FaOIl+98uehBI0FZxA2yDg3HN
-         qxDw==
-X-Gm-Message-State: AOAM533EcIMpVmOv8kn//Xl4b38fKaqwp+SUes8QREyKwkLztucrUcbn
-        QXrc7gdFsfEeSSF/ZP3zCXDb4eDJZOOclUMslAa44I8EWaKOZA==
-X-Google-Smtp-Source: ABdhPJxcemPdJ8K9OsJgQ7rHumnM1Rhj0rfHAtaVuwANlOVIJfPcp51KL4VVaTEVitDScRm8ARZ/RoBJW5ZQSnN2ylk=
-X-Received: by 2002:a2e:b8cd:: with SMTP id s13mr5894976ljp.26.1608509348450;
- Sun, 20 Dec 2020 16:09:08 -0800 (PST)
-MIME-Version: 1.0
-References: <CAD56B7dKyiUBQctrrpLYU6XM5cjfXD10E1fFMU5GpAe00g_TZQ@mail.gmail.com>
- <20201218135230.hb25ii2a3sbqrucw@linutronix.de> <CAFzL-7ujcJ4KDbgVoq-N6GRTWfemCA6hfqOzBGwcaDzt=0rGzQ@mail.gmail.com>
- <20201218164919.nklchwwxzzoi36bt@linutronix.de>
-In-Reply-To: <20201218164919.nklchwwxzzoi36bt@linutronix.de>
-From:   Paul Thomas <pthomas8589@gmail.com>
-Date:   Sun, 20 Dec 2020 19:08:57 -0500
-Message-ID: <CAD56B7eRTKdAktuJNSuV4rfYTQCMYMBFuCzwxEzPCtx4R4gwwA@mail.gmail.com>
-Subject: Re: net latency, long wait for softirq_entry
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Alison Chaiken <achaiken@aurora.tech>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        Mon, 21 Dec 2020 15:08:03 -0500
+Received: from mail.kernel.org ([198.145.29.99]:34676 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725820AbgLUUIC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 21 Dec 2020 15:08:02 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 3BBBD22AAA;
+        Mon, 21 Dec 2020 20:07:21 +0000 (UTC)
+Date:   Mon, 21 Dec 2020 15:07:19 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [ANNOUNCE] 5.4.82-rt46
+Message-ID: <20201221150719.2f017239@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Dec 18, 2020 at 11:49 AM Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
->
-> On 2020-12-18 08:18:05 [-0800], Alison Chaiken wrote:
-> > > Having a thread to run the tick-timer would avoid that scenario.
-> > >
-> >
-> > Didn't ktimersoftd used to be such a thread?   It's still not entirely
-> > clear to me at least why it was removed.
->
-> Yes, ktimersoftd was such a thread that is why I am suggesting it. It
-> would be probably just a quick duct tape.
->
-> All of the reasons why it has been introduced disappeared in the
-> previous softirq rework. The NAPI handover works, posixtimer need no
-> additional love and so on (the original motivation to have it).
->
-> The problem, that Paul reported, should also exist for !RT with the
-> `threadirqs' switch (untested but it is the same code).
-> It is worth noting that in his report the latency was increased because
-> the timer-tick woke the ksoftirqd thread. Rightfully you could say that
-> this would not have happen with the timer thread.
-> However, the usb-storage driver (just to pick an easy to trigger
-> scenario for my case) also wakes the ksoftirqd if a transfer completes.
-> If the ethernet interrupt fires before ksoftirqd completes its task then
-> we have the same situation without the involvement of the timer :)
->
-> > -- Alison Chaiken
-> >    Aurora Innovation
->
-> Sebastian
 
-Hi Everyone,
+Dear RT Folks,
 
-Thanks for taking the time to look at this, it's appreciated! For now,
-setting the ksoftirqd priority high on the same core as the interrupt
-seems to greatly improve things, thanks for the suggestion Grygorii.
+I'm pleased to announce the 5.4.82-rt46 stable release.
 
-A few of other notes on items that seem to affect latency in a related
-use case. First, if a sibling thread of an application calls clone
-(e.g. a system() call) then this seems to prevent all the threads of
-the application from being scheduled temporarily. Second, I saw a
-couple of instances where one thread seemed to get migrated to another
-core, alternating with the migration thread (~40 times) and then
-ultimately running on a different core. Using taskset to set the CPU
-affinity of the offending thread helped this. Third, the PHC tx
-timestamping (but not the rx) can cause latency issues (using the macb
-driver), but this is the least investigated of the group.
 
-thanks,
-Paul
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.4-rt
+  Head SHA1: 2cb0daa9d528e36f026b0c60e7eb881d2282462a
+
+
+Or to build 5.4.82-rt46 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.82.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.82-rt46.patch.xz
+
+
+
+You can also build from 5.4.82-rt45 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.82-rt45-rt46.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v5.4.82-rt45:
+
+---
+
+Sebastian Andrzej Siewior (1):
+      Revert "hrtimer: Allow raw wakeups during boot"
+
+Steven Rostedt (VMware) (2):
+      Revert "net: Properly annotate the try-lock for the seqlock"
+      Linux 5.4.82-rt46
+
+Thomas Gleixner (1):
+      timers: Move clearing of base::timer_running under base::lock
+
+Zanxiong Qiu (1):
+      mm/swap: use local lock in deactivate_page()
+
+----
+ include/linux/seqlock.h   |  9 +++++++++
+ include/net/sch_generic.h | 10 +---------
+ kernel/time/hrtimer.c     |  2 +-
+ kernel/time/timer.c       |  6 ++++--
+ localversion-rt           |  2 +-
+ mm/swap.c                 |  5 +++--
+ 6 files changed, 19 insertions(+), 15 deletions(-)
+---------------------------
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index f390293974ea..e5207897c33e 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -489,6 +489,15 @@ static inline void write_seqlock(seqlock_t *sl)
+ 	__raw_write_seqcount_begin(&sl->seqcount);
+ }
+ 
++static inline int try_write_seqlock(seqlock_t *sl)
++{
++	if (spin_trylock(&sl->lock)) {
++		__raw_write_seqcount_begin(&sl->seqcount);
++		return 1;
++	}
++	return 0;
++}
++
+ static inline void write_sequnlock(seqlock_t *sl)
+ {
+ 	__raw_write_seqcount_end(&sl->seqcount);
+diff --git a/include/net/sch_generic.h b/include/net/sch_generic.h
+index 112d2dca8b08..e6afb4b9cede 100644
+--- a/include/net/sch_generic.h
++++ b/include/net/sch_generic.h
+@@ -168,16 +168,8 @@ static inline bool qdisc_run_begin(struct Qdisc *qdisc)
+ 		return false;
+ 	}
+ #ifdef CONFIG_PREEMPT_RT
+-	if (spin_trylock(&qdisc->running.lock)) {
+-		seqcount_t *s = &qdisc->running.seqcount;
+-		/*
+-		 * Variant of write_seqcount_t_begin() telling lockdep that a
+-		 * trylock was attempted.
+-		 */
+-		__raw_write_seqcount_begin(s);
+-		seqcount_acquire(&s->dep_map, 0, 1, _RET_IP_);
++	if (try_write_seqlock(&qdisc->running))
+ 		return true;
+-	}
+ 	return false;
+ #else
+ 	/* Variant of write_seqcount_begin() telling lockdep a trylock
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 41cc1c8530d8..42705a04c808 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1819,7 +1819,7 @@ static void __hrtimer_init_sleeper(struct hrtimer_sleeper *sl,
+ 	 * expiry.
+ 	 */
+ 	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+-		if ((task_is_realtime(current) && !(mode & HRTIMER_MODE_SOFT)) || system_state != SYSTEM_RUNNING)
++		if (task_is_realtime(current) && !(mode & HRTIMER_MODE_SOFT))
+ 			mode |= HRTIMER_MODE_HARD;
+ 	}
+ 
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 15b838401af8..86bb218d1df5 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1269,8 +1269,10 @@ static inline void timer_base_unlock_expiry(struct timer_base *base)
+ static void timer_sync_wait_running(struct timer_base *base)
+ {
+ 	if (atomic_read(&base->timer_waiters)) {
++		raw_spin_unlock_irq(&base->lock);
+ 		spin_unlock(&base->expiry_lock);
+ 		spin_lock(&base->expiry_lock);
++		raw_spin_lock_irq(&base->lock);
+ 	}
+ }
+ 
+@@ -1461,14 +1463,14 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
+ 		if (timer->flags & TIMER_IRQSAFE) {
+ 			raw_spin_unlock(&base->lock);
+ 			call_timer_fn(timer, fn, baseclk);
+-			base->running_timer = NULL;
+ 			raw_spin_lock(&base->lock);
++			base->running_timer = NULL;
+ 		} else {
+ 			raw_spin_unlock_irq(&base->lock);
+ 			call_timer_fn(timer, fn, baseclk);
++			raw_spin_lock_irq(&base->lock);
+ 			base->running_timer = NULL;
+ 			timer_sync_wait_running(base);
+-			raw_spin_lock_irq(&base->lock);
+ 		}
+ 	}
+ }
+diff --git a/localversion-rt b/localversion-rt
+index 38c40b21a885..272158183778 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt45
++-rt46
+diff --git a/mm/swap.c b/mm/swap.c
+index cdb4f1fa3a48..463cac334fcf 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -666,12 +666,13 @@ void deactivate_file_page(struct page *page)
+ void deactivate_page(struct page *page)
+ {
+ 	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
+-		struct pagevec *pvec = &get_cpu_var(lru_deactivate_pvecs);
++		struct pagevec *pvec = &get_locked_var(swapvec_lock,
++							lru_deactivate_pvecs);
+ 
+ 		get_page(page);
+ 		if (!pagevec_add(pvec, page) || PageCompound(page))
+ 			pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
+-		put_cpu_var(lru_deactivate_pvecs);
++		put_locked_var(swapvec_lock, lru_deactivate_pvecs);
+ 	}
+ }
+ 
