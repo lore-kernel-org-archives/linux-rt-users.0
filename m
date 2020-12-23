@@ -2,75 +2,44 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 04BE8C433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Dec 2020 22:09:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 455CFC433E9
+	for <linux-rt-users@archiver.kernel.org>; Wed, 23 Dec 2020 09:24:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A71DF22AAF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Dec 2020 22:09:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0E244224B1
+	for <linux-rt-users@archiver.kernel.org>; Wed, 23 Dec 2020 09:24:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727742AbgLVWIS (ORCPT
+        id S1728194AbgLWJYB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 22 Dec 2020 17:08:18 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53784 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727149AbgLVWIS (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 Dec 2020 17:08:18 -0500
-Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CFE73C0613D6;
-        Tue, 22 Dec 2020 14:07:37 -0800 (PST)
-Received: by mail-qk1-x736.google.com with SMTP id h4so13402499qkk.4;
-        Tue, 22 Dec 2020 14:07:37 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=wVsqnRWq5YVDyYM+9ouMmzNX+6gKBrIxdO9dwgcVlc0=;
-        b=VKJ/hKsV7L80oATwiEzh781xkwXQrn95cwNJzp62RS8cSUtg6xsa6Po8Fs9MQ8AUiA
-         dR7tT3JGUje99Bx6/zM6L5rgtK6+BptIhYLl2/Sg+8cyiYR0Qb8DQAngK/FCbwk/T+pT
-         KGBblgOEWChiWFNvsP3cDHkwTQFXF0wjeP66m3P30fvpdP9vwa//4JeKttj+GjG+ySTr
-         7S3fiibv6xdGRmS0bvoTHnhoJBMUUGjiNzurv2HwDzqeddSWtX1qBO2SOO6YNKYePJU+
-         MSlgKQzscULlI+5AGkVGfgyJf7mU3MJsUA39ZENwgIIURadzH0eCOcDALu+Yw8blCEt3
-         Yaog==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=wVsqnRWq5YVDyYM+9ouMmzNX+6gKBrIxdO9dwgcVlc0=;
-        b=kTV9H9CNng1FdK1LpMO24Wd8huo/pap0240MXFvgXi64omcfldB6WgOFwZohcUz9Sj
-         Nv/Mc249dCii4P9NcKpG0rD3GvqIb0rusBz8H32mSof702lgWe5lD+G24I0L3c5wms+I
-         aYKrL8rVf/BqCndGWk+l1PmSYo8PXpMAtKbJyApnp5M3Gd0R0PRSXyAIywfPKR/jk4mM
-         8M/qNaHznMTGzLEOnsFL+G8FfvKKcpFV5dwSDO8S9I3ELrK/Voc1wXkI02n0oWmESlOA
-         ctlRVn7jGlyXtdELdLA7c3A4CLatPNedqTd/l2X14WxlxGh4xMAZOoO1E2dTXL26abgo
-         MJTA==
-X-Gm-Message-State: AOAM532Kr+4IpaJygh9R6G+2n4WdOFYriprHPLU1CdRcaDRlhOyjqvjm
-        fuLK+tPnxCUhJtisUZOnEvfrqBPEat4OnIqI
-X-Google-Smtp-Source: ABdhPJxlD7C7mj1kU68NXtnVAVmbbVhc3DaEcqcv5NF5KhElG8Q6d1Eie7Eb1gMAZsce75mxvKlNZA==
-X-Received: by 2002:a37:8481:: with SMTP id g123mr23269087qkd.173.1608674856866;
-        Tue, 22 Dec 2020 14:07:36 -0800 (PST)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id l24sm14133716qkl.46.2020.12.22.14.07.35
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 22 Dec 2020 14:07:36 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     lkml <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Wagner <dwagner@suse.de>,
-        Anders Roxell <anders.roxell@linaro.org>,
-        Kurt Kanzenbach <kurt@linutronix.de>,
-        Peter Xu <peterx@redhat.com>,
-        Sebastian Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-1.10
-Date:   Tue, 22 Dec 2020 17:07:24 -0500
-Message-Id: <20201222220724.13052-1-jkacur@redhat.com>
+        Wed, 23 Dec 2020 04:24:01 -0500
+Received: from mga14.intel.com ([192.55.52.115]:59585 "EHLO mga14.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727892AbgLWJYB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 23 Dec 2020 04:24:01 -0500
+IronPort-SDR: mDmE/vYJs4WbdJdTH8mEG/TcWvDGD/mk6SmIVeVDdpP42eru9kni1rvVegxQtmxlu7QEDGdm2o
+ nxH+CnnfGisQ==
+X-IronPort-AV: E=McAfee;i="6000,8403,9843"; a="175213839"
+X-IronPort-AV: E=Sophos;i="5.78,441,1599548400"; 
+   d="scan'208";a="175213839"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Dec 2020 01:23:09 -0800
+IronPort-SDR: UwqtR0eXFn6xgfZfTwQnR+HJDn6Q5zLEszCjEhS2CSoBsSKtpdpb3aKD/NVoJhaDzMtSJ+DeGf
+ oxpTnSlPSPdg==
+X-IronPort-AV: E=Sophos;i="5.78,441,1599548400"; 
+   d="scan'208";a="344978940"
+Received: from rthomas-desk1.sc.intel.com ([10.3.52.142])
+  by fmsmga008-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Dec 2020 01:23:09 -0800
+From:   ramesh.thomas@intel.com
+To:     linux-rt-users@vger.kernel.org
+Cc:     Ramesh Thomas <ramesh.thomas@intel.com>, williams@redhat.com,
+        frederic@kernel.org, bigeasy@linutronix.de
+Subject: [PATCH 0/1] nohz_full state entry failure in preempt_rt and proposed fix
+Date:   Wed, 23 Dec 2020 04:20:34 -0500
+Message-Id: <20201223092034.528782-1-ramesh.thomas@intel.com>
 X-Mailer: git-send-email 2.26.2
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -78,160 +47,87 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT Folks,
+From: Ramesh Thomas <ramesh.thomas@intel.com>
 
-I'm pleased to announce rt-tests-1.10
+Hello,
 
-To download rt-tests:
-using git, clone one of the following
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+This addresses an issue we have been facing with preempt_rt kernels not
+able to enter nohz_full state consistently. Following are my debug
+findings and details of a tool I had devloped that can help reproduce
+the issue. Following patch has a proposed fix or at least a pointer to
+areas worth looking into. We need preempt_rt for determinism and being
+able to use nohz_full along with it is very valuable.
 
-The latest tag is v1.10
-The correct branch is unstable/devel/latest
+Problem:
+Sometimes nohz_full state is never entered even when all necessary
+conditions are met. It is easier to reproduce the issue in preempt_rt
+kernel, however it may not be limited to preempt_rt.
 
-Tarballs are also available here:
-https://kernel.org/pub/linux/utils/rt-tests
+Debug findings and proposed fix:
+Observed that in the failure condition, entry into nohz_full state is
+repeatedly aborted due to the detection of a pending timer event in the
+next period in tick_nohz_next_event(). The issue is not reproduceable if
+tick stoppage is not bailed out here. The skipping of the bailing out
+code is done only if CONFIG_NO_HZ_FULL is defined. Since in nohz_full
+mode, idle state is not entered when ticks are being stopped, aborting
+tick stoppage may not be necessary. It is simpler to let the common code
+that handles reprogramming of the timer at tick_nohz_stop_tick() handle
+the next tick. 
 
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
+Environment to reproduce:
+Used Intel NUCs with 4 cores (Apollo Lake and Tiger Lake). Easier to
+reproduce in embedded platforms. 
 
-Your fixes, development patches, comment and bug reports are always welcome!
+Kernel version:5.10.1-rt19 (This is not a new issue and I have seen it
+in rt kernel version 4.17)
 
-Enjoy!
+Relevant kernel config flags:
+- NO_HZ_FULL=y
+- PREEMPT_RT=y
+- CPU_ISOLATION=y
+- RCU_NOCB_CPU=y
 
-John Kacur
+Relevant kernel boot parameters:
+- isolcpus=nohz,domain,1,3 nohz_full=1,3 rcu_nocbs=1,3 irqaffinity=0
+- cpufreq.off=1 idle=poll cpuidle.off=1
 
-Anders Roxell (1):
-  Makefile: manpages: only add get_cyclictest_snapshot if PYLIB
+Steps to reproduce:
+1. Disable rt throttling assigning 100% scheduler period to rt tasks
+2. Set cpu affinity to one of the nohz_full cpus
+3. Set scheduling policy to sched_fifo with max priority
+4. Wait till "tick_stopped" gets set in /proc/timer_list
+5. Return failure if tick is not stopped in 15 seconds
+6. Run above steps in a loop to stress it. It may take a while to
+reproduce.
 
-Daniel Wagner (36):
-  cyclictest: Use numa library helpers in get_available_cpus()
-  cyclicdeadline: Streamline usage output and man page
-  cyclicdeadline: Add long command line options
-  deadline_test: Streamline usage output and man page
-  oslat: Streamline usage output and man page
-  pip_stress: Add command line parser
-  pi_stress: Streamline usage output and man page
-  pmqtest: Streamline usage output and man page
-  ptsematest: Streamline usage output and man page
-  queuelat: Streamline usage and man page
-  rt-migrate-test: Streamline usage and man page
-  signaltest: Streamline usage and man page
-  sigwaittest: Streamline usage and man page
-  ssdd: Streamline usage and man page
-  svsematest: Streamline usage and man page
-  hackbench: Streamline usage and man page
-  rt-utils: Introduce parse_mem_string()
-  oslat: Use string parser utilies
-  cyclictest: Remove deadcode checking for NUMA
-  rt-numa: Introduce NUMA helpers
-  cyclictest: Use parse_cpumask() from rt-numa.h
-  oslat: Use parse_cpumask() from rt-numa.h
-  rt-numa: Move thread placement code to rt-numa library
-  signaltest: Implement thread placing
-  cyclicdeadline: Remove dead code
-  cyclicdeadline: Use common error handlers
-  cyclicdeadline: Add quiet command line option
-  pmqtest: Move statictic output into print_stat()
-  pmqtest: Add quiet command line option
-  ptsematest: Move statictic output into print_stat()
-  ptsematest: Add quiet command line option
-  svsematest: Move statictic output into print_stat()
-  svsematest: Add quiet command line option
-  sigwaittest: Move statictic output into print_stat()
-  sigwaittest: Add quiet command line option
-  rt-migrate-test: Add quiet command line option
+The above can be done using a tool I had developed as part of a
+framework to assist setting up CPU thread isolation and measuring
+jitter. It can be found at https://github.com/intel/tif
 
-John Kacur (24):
-  rt-tests: makefile: undefine PYLIB if empty
-  rt-tests: queuelat: Remove unused variable 'index'
-  rt-tests: remove pi_tests.spec
-  rt-tests: cyclictest: A few style changes from checkpatch.pl
-  rt-tests: rt-sched.c: Style change
-  rt-tests: rt-utils.c: Correct mix of spaces and tabs in code
-    indentation
-  rt-tests: pi_stress.c: Change unsigned to unsigned int
-  rt-tests: pip_stress.c: Remove unnecessary brackets
-  rt-tests: pmqtest.c: Fix spacing around parentheses
-  rt-tests: ptsematest.c: Fix spacing around parentheses
-  rt-tests: queuelat.c: Fix various style problems
-  rt-tests: rt-migrate-test.c: Fix spacing around parentheses
-  rt-tests: cyclicdeadline.c: Fix spacing around commas
-  rt-tests: deadline_test.c: Fix spacing around commas
-  rt-tests: signaltest.c: Fix various style problems
-  rt-tests: sigwaittest.c: Fix spacing around brackets
-  rt-tests: ssdd.c: Remove unncessary "else"
-  rt-tests: svsematest.c: Fix various style problems
-  rt-tests: Don't compress man pages by default
-  rt-tests: determine_maximum_mpps.sh: Add a menu to get user settings.
-  rt-tests: queuelat: Remove get_cpuinfo_mhz.sh and old Makefile
-  rt-tests: queuelat: Add a manpage for determine_maximum_mpps.sh
-  rt-tests: determine_maximum_mpps.sh: Change the -c option to -a
-  rt-tests: Makefile - update version to v1.10
+Build the tif_test app and run as follows using the included script to
+run it in a loop till the failure is reproduced. 
 
-Kurt Kanzenbach (4):
-  rt-tests: rt-utils: Mark internal functions static
-  rt-tests: rt-utils: Add function to close trace fds
-  rt-tests: cyclictest: Close correct trace fds
-  rt-tests: oslat: Close trace fds
+make test
+./tif_stress.sh
 
-Peter Xu (1):
-  rt-tests: oslat: Allow build for not supported archs
+e.g. output. 
+"Test# 818
+Successfully entered nohz state in 724us
 
-Sebastian Andrzej Siewior (4):
-  cyclictest: Only report the first incident
-  signaltest: Remove drunk code
-  signaltest: Don't expect trace interface at /proc
-  signaltest: Fix break value argument
+Error entering nohz state after 15000102us
+Reproduced NOHZ_FULL failure after 818 tries!!!
+Test elapsed time: 835 seconds"
 
- Makefile                               |  36 ++--
- src/cyclictest/cyclictest.c            | 276 +++++-------------------
- src/hackbench/hackbench.8              |  70 +++---
- src/hackbench/hackbench.c              | 102 +++++----
- src/include/rt-numa.h                  |  21 ++
- src/include/rt-utils.h                 |   2 +
- src/lib/rt-numa.c                      | 135 ++++++++++++
- src/lib/rt-sched.c                     |   2 +-
- src/lib/rt-utils.c                     |  60 +++++-
- src/oslat/oslat.8                      |   2 +-
- src/oslat/oslat.c                      | 210 ++++++------------
- src/pi_tests/pi_stress.8               |  79 ++++---
- src/pi_tests/pi_stress.c               | 152 +++++++------
- src/pi_tests/pi_tests.spec             |  81 -------
- src/pi_tests/pip_stress.c              |  40 +++-
- src/pmqtest/pmqtest.8                  |   8 +-
- src/pmqtest/pmqtest.c                  | 190 ++++++++--------
- src/ptsematest/ptsematest.8            |   8 +-
- src/ptsematest/ptsematest.c            | 167 ++++++++-------
- src/queuelat/Makefile                  |   9 -
- src/queuelat/determine_maximum_mpps.8  |  64 ++++++
- src/queuelat/determine_maximum_mpps.sh |  90 +++++++-
- src/queuelat/get_cpuinfo_mhz.sh        |   7 -
- src/queuelat/queuelat.8                |  41 ++--
- src/queuelat/queuelat.c                | 158 +++++++-------
- src/rt-migrate-test/rt-migrate-test.8  |  41 ++--
- src/rt-migrate-test/rt-migrate-test.c  |  92 ++++----
- src/sched_deadline/cyclicdeadline.8    |  27 +--
- src/sched_deadline/cyclicdeadline.c    | 286 +++++++++++--------------
- src/sched_deadline/deadline_test.8     |  37 ++--
- src/sched_deadline/deadline_test.c     |  72 +++----
- src/signaltest/signaltest.8            |  31 ++-
- src/signaltest/signaltest.c            | 219 ++++++++++++-------
- src/sigwaittest/sigwaittest.8          |   4 +-
- src/sigwaittest/sigwaittest.c          | 212 +++++++++---------
- src/ssdd/ssdd.8                        |  35 ++-
- src/ssdd/ssdd.c                        |  54 ++---
- src/svsematest/svsematest.8            |   9 +-
- src/svsematest/svsematest.c            | 244 ++++++++++-----------
- 39 files changed, 1747 insertions(+), 1626 deletions(-)
- create mode 100644 src/include/rt-numa.h
- create mode 100644 src/lib/rt-numa.c
- delete mode 100644 src/pi_tests/pi_tests.spec
- delete mode 100644 src/queuelat/Makefile
- create mode 100644 src/queuelat/determine_maximum_mpps.8
- delete mode 100755 src/queuelat/get_cpuinfo_mhz.sh
+(PS: The framework has a workaround for the issue which is not used in
+the test. The workaround that helped was, switching CPU affinity in and
+out of the nohz_full CPU giving the scheduler a fresh start)
+
+
+Ramesh Thomas (1):
+  dynticks/preempt_rt: Fix a nohz_full entry failure in preempt_rt
+
+ kernel/time/tick-sched.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
 -- 
 2.26.2
