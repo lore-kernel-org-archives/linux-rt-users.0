@@ -2,108 +2,147 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E7D4C433DB
-	for <linux-rt-users@archiver.kernel.org>; Sat,  9 Jan 2021 17:30:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C5EAC433E0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jan 2021 17:34:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 54BEB2388E
-	for <linux-rt-users@archiver.kernel.org>; Sat,  9 Jan 2021 17:30:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1CCA722BF3
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jan 2021 17:34:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726507AbhAIRaN (ORCPT
+        id S2389605AbhAKRek (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 9 Jan 2021 12:30:13 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55604 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726058AbhAIRaM (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 9 Jan 2021 12:30:12 -0500
-Received: from mail-qk1-x72f.google.com (mail-qk1-x72f.google.com [IPv6:2607:f8b0:4864:20::72f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8928FC061786;
-        Sat,  9 Jan 2021 09:29:32 -0800 (PST)
-Received: by mail-qk1-x72f.google.com with SMTP id 22so11331169qkf.9;
-        Sat, 09 Jan 2021 09:29:32 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:date:to:subject:message-id:mime-version
-         :content-disposition;
-        bh=1hfzwISWtXA71C7w2ZLBFmkhJ8BT32skHS1XPrhqOfc=;
-        b=MtkHjhLm3bK4hOaF5pUl7dfK1l0HUIf5ygtnq+e1sdXmZde4tZljOR7Lc+177wbZFR
-         zSDNdLO0AvXVhw+1ZslZTs+jH/tbg5h5ZGOgZ56L/N0u8eLiTeasAe+dBjclRaLihV1w
-         vU0OdIoB4cTdCDus03CB7xH019YjqbgsUQt5WKrIa9AJE+HWuSOHaSotweuiXaBw7wCN
-         IByvlDqqoJHqdJVznhnZqWey5dolDrKb5tWFBQQmbayYKcN5qoAfKx33MIUeFYobSC34
-         af8Q5jfQYn3of/8l1RUaB3D1nD6pHQdvyem7fFgky5QkzRDR1IDwZJaJDTVJggRzamHG
-         kzaQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:date:to:subject:message-id
-         :mime-version:content-disposition;
-        bh=1hfzwISWtXA71C7w2ZLBFmkhJ8BT32skHS1XPrhqOfc=;
-        b=XTse8e8G3w7qm8n8CyiEs1yVgxlQWCi8PzOaBTggoDFbWh5zLAvQ7t6ZfJQaacUSMr
-         hUodltpiyO5ql4BjdKMFzZCo7zOkwWJtkmoeamWP2kJ6+6/eHeULTOihRoPPuZgDufwZ
-         eg0bxpV8wugeWNpJa/hR7/NksJosoBjOfjBxdi7Ckkmeo5Xea+ZobERCi8XQ42+QEN6X
-         yhyVYkN+fT+1NeUCj1+Hx0DvX+n2ywTeWZO6JMP1AkPvSRhiFec5uQgG+1P74TSV67Uk
-         w4d6B4npkbJs3vLmbN8Kl77Z8uczAQVNY1s5611calTXwa6lYaGgl3q1gZ3TcGJFQ2oS
-         dbAQ==
-X-Gm-Message-State: AOAM532Zi+S4gdkSCBEPyc9EiTtCF26AyBMncOA5FyKb6Xvue8zQWfYI
-        JVRzUHe3HElDNWCMw74AmpNX8wP2AqE=
-X-Google-Smtp-Source: ABdhPJz6KEb4ZQweOgg9yEZdEiQE9MN1z8a81PC22+8PTsRwIcHD5uq1PO5xGv0EIjZN+pIIWToKrA==
-X-Received: by 2002:a37:b083:: with SMTP id z125mr9430346qke.246.1610213371771;
-        Sat, 09 Jan 2021 09:29:31 -0800 (PST)
-Received: from lclaudio.dyndns.org ([191.177.185.4])
-        by smtp.gmail.com with ESMTPSA id o201sm3270749qke.60.2021.01.09.09.29.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 09 Jan 2021 09:29:30 -0800 (PST)
-Sender: "Luis Claudio R. Goncalves" <lclaudio00@gmail.com>
-From:   "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-X-Google-Original-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id 77BF83C0048; Sat,  9 Jan 2021 14:29:27 -0300 (-03)
-Date:   Sat, 9 Jan 2021 14:29:27 -0300
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.9.250-rt165
-Message-ID: <20210109172927.GB387079@uudg.org>
+        Mon, 11 Jan 2021 12:34:40 -0500
+Received: from mx2.suse.de ([195.135.220.15]:50952 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1730788AbhAKRek (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 11 Jan 2021 12:34:40 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id 73A3FAB7A;
+        Mon, 11 Jan 2021 17:33:58 +0000 (UTC)
+From:   Daniel Wagner <dwagner@suse.de>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
+Subject: [RFC v2 0/6] Generate machine-readable output
+Date:   Mon, 11 Jan 2021 18:33:45 +0100
+Message-Id: <20210111173351.4971-1-dwagner@suse.de>
+X-Mailer: git-send-email 2.29.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+changes v2:
+  - Moved the common JSON parts into rt-util.[ch]
+  - Add --output option to signaltest
 
-I'm pleased to announce the 4.9.250-rt165 stable release.
 
-This release is just an update to the new stable v4.9.250 version and
-no RT specific changes have been performed.
+The current output of cyclictest is optimized for humans to read. This
+is all good when working directly with the tools. But for CI
+integration it's a bit of pain. Furthermore, not all rt-tests use the
+same output format.
 
-You can get this release via the git tree at:
+By using some easy to parse existing machine-readable format we can use
+standard libraries to parse the data. For example in jitterdebug there
+is a short Python program[1] to visualize either the histogram[2] or
+all samples[3].
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+The implementation for JSON output for this is very simple. The last
+patch adds a version of jitterdebugs's JSON output, which looks like
 
-  branch: v4.9-rt
-  Head SHA1: fddc3eaab668becf2d42af17db4d1f9ce3e719f1
+{
+  "file_version": 1,
+  "version:": "cyclictest V 1.90",
+  "num_threads": 2,
+  "resolution_in_ns": 0,
+  "cmdline:": "./cyclictest --affinity=1-2 --duration=1s --output=dump.json -h 1000 -p 80",
+  "sysinfo": {
+    "sysname": "Linux",
+    "nodename": "beryllium",
+    "release": "5.9.14-1-default",
+    "version": "#1 SMP Sat Dec 12 06:57:32 UTC 2020 (c648a46)",
+    "machine": "x86_64"
+  },
+  "thread": {
+    "0": {
+      "histogram": {
+        "0": 16,
+        "1": 853,
+        "2": 80,
+        "3": 50,
+        "4": 1
+      },
+      "cycles": 1000,
+      "min": 0,
+      "max": 4,
+      "avg": 1.17,
+      "cpu": 1,
+      "node": 0
+    },
+    "1": {
+      "histogram": {
+        "0": 14,
+        "1": 833,
+        "2": 93,
+        "3": 56,
+        "4": 4
+      },
+      "cycles": 1000,
+      "min": 0,
+      "max": 4,
+      "avg": 1.20,
+      "cpu": 2,
+      "node": 0
+    }
+  }
+}
 
-Or to build 4.9.250-rt165 directly, the following patches should be applied:
+It's just a rough version. I didn't try to make it generic for the
+other rt-tests or make it as plugin as John was suggesting. I'd think
+we could make this feature as compile option, if you want to keep the
+program small. Obviously, we could also make the terminal output a
+compile option, to keep it small.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+Anyway, what do you think about it?
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.250.xz
+Thanks,
+Daniel
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.250-rt165.patch.xz
+[1] https://github.com/igaw/jitterdebugger/blob/master/jitterplot
+[2] https://www.monom.org/data/jitterdebug/jitterplot-hist.png
+[3] https://www.monom.org/data/jitterdebug/jitterplot-samples.png
 
-Enjoy!
-Luis
+Daniel Wagner (6):
+  rt-tests: Rename error.h to rt-error.h
+  cyclictest: Move thread data to struct thread_param
+  signaltest: Move thread data to struct thread_param
+  rt-utils: Add JSON common header output helper
+  cyclictest: Add JSON output feature
+  signaltest: Add JSON output feature
+
+ src/cyclictest/cyclictest.c         |  87 +++++++++++----
+ src/include/pip_stress.h            |   5 +-
+ src/include/{error.h => rt-error.h} |   0
+ src/include/rt-utils.h              |   4 +
+ src/lib/error.c                     |   2 +-
+ src/lib/rt-numa.c                   |   2 +-
+ src/lib/rt-utils.c                  |  61 ++++++++++-
+ src/oslat/oslat.c                   |   2 +-
+ src/pi_tests/pi_stress.c            |   3 +-
+ src/pmqtest/pmqtest.c               |   6 +-
+ src/ptsematest/ptsematest.c         |   6 +-
+ src/signaltest/signaltest.c         | 159 ++++++++++++++++++++--------
+ src/sigwaittest/sigwaittest.c       |   2 +-
+ src/svsematest/svsematest.c         |   3 +-
+ 14 files changed, 263 insertions(+), 79 deletions(-)
+ rename src/include/{error.h => rt-error.h} (100%)
+
+-- 
+2.29.2
 
