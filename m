@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2227C4332D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jan 2021 17:34:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 43ADDC433E0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jan 2021 17:36:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 885C522CAD
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jan 2021 17:34:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 08A6F22A83
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jan 2021 17:36:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389609AbhAKRem (ORCPT
+        id S2389665AbhAKRfW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Jan 2021 12:34:42 -0500
-Received: from mx2.suse.de ([195.135.220.15]:51010 "EHLO mx2.suse.de"
+        Mon, 11 Jan 2021 12:35:22 -0500
+Received: from mx2.suse.de ([195.135.220.15]:51204 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2389493AbhAKRel (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Jan 2021 12:34:41 -0500
+        id S2388070AbhAKRfV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 11 Jan 2021 12:35:21 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id A81EFAE1F;
-        Mon, 11 Jan 2021 17:33:59 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 4B3C7AE63;
+        Mon, 11 Jan 2021 17:34:00 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC v2 4/6] rt-utils: Add JSON common header output helper
-Date:   Mon, 11 Jan 2021 18:33:49 +0100
-Message-Id: <20210111173351.4971-5-dwagner@suse.de>
+Subject: [RFC v2 6/6] signaltest: Add JSON output feature
+Date:   Mon, 11 Jan 2021 18:33:51 +0100
+Message-Id: <20210111173351.4971-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210111173351.4971-1-dwagner@suse.de>
 References: <20210111173351.4971-1-dwagner@suse.de>
@@ -40,101 +40,181 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-rt_write_json writes the common system information header of the
-rt-test currently executed.
+Write the test results as JSON output to a file. This allows to
+simplifies any parsing later on.
 
 Reviewed-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/include/rt-utils.h |  4 +++
- src/lib/rt-utils.c     | 58 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 62 insertions(+)
+ src/signaltest/signaltest.c | 113 +++++++++++++++++++++++++++++-------
+ 1 file changed, 92 insertions(+), 21 deletions(-)
 
-diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-index 39ddbd9eae29..ca9984d7cf35 100644
---- a/src/include/rt-utils.h
-+++ b/src/include/rt-utils.h
-@@ -80,4 +80,8 @@ static inline int64_t calctime(struct timespec t)
- 	return time;
- }
- 
-+void rt_write_json(FILE *f, int argc, char *argv[],
-+		   void (*cb)(FILE *, void *),
-+		   void *data);
-+
- #endif	/* __RT_UTILS.H */
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 321a11b1172d..8fe0b7ed1f63 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -20,6 +20,7 @@
- #include <sys/stat.h>
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index dd5633d5fc51..9f725ef91ad7 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -22,6 +22,7 @@
  #include <unistd.h>
- #include <sys/syscall.h> /* For SYS_gettid definitions */
-+#include <sys/utsname.h>
+ #include <errno.h>
+ #include <sched.h>
++#include <inttypes.h>
  
- #include "rt-utils.h"
- #include "rt-sched.h"
-@@ -482,3 +483,60 @@ void disable_trace_mark(void)
- {
- 	close_tracemark_fd();
+ #include <linux/unistd.h>
+ 
+@@ -205,6 +206,14 @@ static int verbose;
+ static int quiet;
+ static int lockall;
+ static struct bitmask *affinity_mask = NULL;
++static char outfile[MAX_PATH];
++
++enum option_values {
++	OPT_AFFINITY=1, OPT_BREAKTRACE,
++	OPT_DURATION, OPT_HELP, OPT_LOOPS,
++	OPT_MLOCKALL, OPT_OUTPUT, OPT_PRIORITY,
++	OPT_QUIET, OPT_SMP, OPT_THREADS, OPT_VERBOSE
++};
+ 
+ /* Process commandline options */
+ static void process_options(int argc, char *argv[])
+@@ -216,17 +225,18 @@ static void process_options(int argc, char *argv[])
+ 		int option_index = 0;
+ 		/** Options for getopt */
+ 		static struct option long_options[] = {
+-			{"affinity",		optional_argument,	NULL, 'a'},
+-			{"breaktrace",		required_argument,	NULL, 'b'},
+-			{"duration",		required_argument,	NULL, 'D'},
+-			{"help",		no_argument,		NULL, 'h'},
+-			{"loops",		required_argument,	NULL, 'l'},
+-			{"mlockall",		no_argument,		NULL, 'm'},
+-			{"priority",		required_argument,	NULL, 'p'},
+-			{"quiet",		no_argument,		NULL, 'q'},
+-			{"smp",			no_argument,		NULL, 'S'},
+-			{"threads",		required_argument,	NULL, 't'},
+-			{"verbose",		no_argument,		NULL, 'v'},
++			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
++			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
++			{"duration",	required_argument,	NULL, OPT_DURATION},
++			{"help",	no_argument,		NULL, OPT_HELP},
++			{"loops",	required_argument,	NULL, OPT_LOOPS},
++			{"mlockall",	no_argument,		NULL, OPT_MLOCKALL},
++			{"output",	required_argument,	NULL, OPT_OUTPUT},
++			{"priority",	required_argument,	NULL, OPT_PRIORITY},
++			{"quiet",	no_argument,		NULL, OPT_QUIET},
++			{"smp",		no_argument,		NULL, OPT_SMP},
++			{"threads",	required_argument,	NULL, OPT_THREADS},
++			{"verbose",	no_argument,		NULL, OPT_VERBOSE},
+ 			{NULL, 0, NULL, 0}
+ 		};
+ 		int c = getopt_long(argc, argv, "a::b:D:hl:mp:qSt:v",
+@@ -234,6 +244,7 @@ static void process_options(int argc, char *argv[])
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
++		case OPT_AFFINITY:
+ 		case 'a':
+ 			if (optarg) {
+ 				parse_cpumask(optarg, &affinity_mask);
+@@ -248,17 +259,49 @@ static void process_options(int argc, char *argv[])
+ 				printf("Using %u cpus.\n",
+ 					numa_bitmask_weight(affinity_mask));
+ 			break;
+-		case 'b': tracelimit = atoi(optarg); break;
+-		case 'D': duration = parse_time_string(optarg); break;
++		case OPT_BREAKTRACE:
++		case 'b':
++			tracelimit = atoi(optarg);
++			break;
++		case OPT_DURATION:
++		case 'D':
++			duration = parse_time_string(optarg);
++			break;
++		case OPT_HELP:
+ 		case '?':
+-		case 'h': display_help(0); break;
+-		case 'l': max_cycles = atoi(optarg); break;
+-		case 'm': lockall = 1; break;
+-		case 'p': priority = atoi(optarg); break;
+-		case 'q': quiet = 1; break;
+-		case 'S': smp = 1; break;
+-		case 't': num_threads = atoi(optarg); break;
+-		case 'v': verbose = 1; break;
++		case 'h':
++			display_help(0);
++			break;
++		case OPT_LOOPS:
++		case 'l':
++			max_cycles = atoi(optarg);
++			break;
++		case OPT_MLOCKALL:
++		case 'm':
++			lockall = 1;
++			break;
++		case OPT_OUTPUT:
++			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
++			break;
++		case OPT_PRIORITY:
++		case 'p':
++			priority = atoi(optarg);
++			break;
++		case OPT_QUIET:
++		case 'q':
++			quiet = 1;
++			break;
++		case OPT_SMP:
++		case 'S':
++			smp = 1;
++			break;
++		case OPT_THREADS:
++		case 't':
++			num_threads = atoi(optarg);
++			break;
++		case OPT_VERBOSE:
++		case 'v': verbose = 1;
++			break;
+ 		}
+ 	}
+ 
+@@ -312,6 +355,27 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 	}
  }
-+
-+static char *get_cmdline(int argc, char *argv[])
+ 
++static void write_stats(FILE *f, void *data)
 +{
-+	char *cmdline;
-+	int len, i;
++	struct thread_param *par = data;
++	struct thread_stat *s;
++	unsigned int i;
 +
-+	len = 0;
-+	for (i = 0; i < argc; i++)
-+		len += strlen(argv[i]) + 1;
++	fprintf(f, "  \"thread\": {\n");
++	for (i = 0; i < num_threads; i++) {
++		fprintf(f, "    \"%u\": {\n", i);
++		s = &par->stats[i];
++		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
++		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
++		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
++		fprintf(f, "      \"cpu\": %d,\n", par->cpu);
++		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
 +
-+	cmdline = malloc(len);
-+	if (!cmdline)
-+		err_exit(ENOMEM, "Could not copy cmdline");
-+
-+	cmdline[0] = '\0';
-+	for (i = 0; i < argc;) {
-+		cmdline = strcat(cmdline, argv[i]);
-+		i++;
-+		if (i < argc)
-+			cmdline = strcat(cmdline, " ");
 +	}
-+
-+	return cmdline;
++	fprintf(f, "  }\n");
 +}
 +
-+void rt_write_json(FILE *f, int argc, char *argv[],
-+		  void (*cb)(FILE *, void *),
-+		  void *data)
-+{
-+	struct utsname buf;
-+	char *cmdline;
-+
-+	cmdline = get_cmdline(argc, argv);
-+	if (!cmdline)
-+		err_exit(ENOMEM, "get_cmdline()");
-+
-+	if (uname(&buf))
-+		err_exit(errno, "Could not retrieve system information");
-+
-+	fprintf(f, "{\n");
-+	fprintf(f, "  \"file_version\": 1,\n");
-+	fprintf(f, "  \"cmdline:\": \"%s\",\n", cmdline);
-+	fprintf(f, "  \"rt_test_version:\": \"%1.2f\",\n", VERSION);
-+	fprintf(f, "  \"sysinfo\": {\n");
-+	fprintf(f, "    \"sysname\": \"%s\",\n", buf.sysname);
-+	fprintf(f, "    \"nodename\": \"%s\",\n", buf.nodename);
-+	fprintf(f, "    \"release\": \"%s\",\n", buf.release);
-+	fprintf(f, "    \"version\": \"%s\",\n", buf.version);
-+	fprintf(f, "    \"machine\": \"%s\"\n", buf.machine);
-+	fprintf(f, "  },\n");
-+
-+	(cb)(f, data);
-+
-+	fprintf(f, "}\n");
-+
-+	free(cmdline);
-+}
+ int main(int argc, char **argv)
+ {
+ 	sigset_t sigset;
+@@ -454,6 +518,13 @@ int main(int argc, char **argv)
+ 		if (stat[i].values)
+ 			free(stat[i].values);
+ 	}
++	if (strlen(outfile) != 0) {
++		FILE *f = fopen(outfile, "w");
++		if (!f)
++			err_exit(errno, "Failed to open output file '%s'", outfile);
++		rt_write_json(f, argc, argv, write_stats, par);
++		fclose(f);
++	}
+ 	free(stat);
+  outpar:
+ 	free(par);
 -- 
 2.29.2
 
