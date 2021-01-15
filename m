@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F576C433E6
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10AD2C43381
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 274BF221E2
+	by mail.kernel.org (Postfix) with ESMTP id E1DF023A5E
 	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387584AbhAOTLC (ORCPT
+        id S2387777AbhAOTLD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Jan 2021 14:11:02 -0500
-Received: from mx2.suse.de ([195.135.220.15]:43862 "EHLO mx2.suse.de"
+        Fri, 15 Jan 2021 14:11:03 -0500
+Received: from mx2.suse.de ([195.135.220.15]:43848 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1733265AbhAOTLC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1733214AbhAOTLC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 15 Jan 2021 14:11:02 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id EDFE6AEAC;
+        by mx2.suse.de (Postfix) with ESMTP id 0EB96AE91;
         Fri, 15 Jan 2021 19:09:41 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC v3 09/19] cyclicdeadline: Remove unused members in struct thread_stat
-Date:   Fri, 15 Jan 2021 20:09:26 +0100
-Message-Id: <20210115190936.26148-10-dwagner@suse.de>
+Subject: [RFC v3 06/19] signaltest: Move thread data to struct thread_param
+Date:   Fri, 15 Jan 2021 20:09:23 +0100
+Message-Id: <20210115190936.26148-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210115190936.26148-1-dwagner@suse.de>
 References: <20210115190936.26148-1-dwagner@suse.de>
@@ -40,34 +40,154 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Remove all unused members in struct thread_stat.
+Group thread realated data such as thread ID to struct thread_param.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sched_deadline/cyclicdeadline.c | 6 ------
- 1 file changed, 6 deletions(-)
+ src/signaltest/signaltest.c | 44 ++++++++++++++++++-------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
 
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 71cde5781499..77ee8c8e25c7 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -56,16 +56,10 @@ struct thread_stat {
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index c34bc994d886..dd5633d5fc51 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -40,6 +40,10 @@
+ 
+ /* Struct to transfer parameters to the thread */
+ struct thread_param {
++	pthread_t thread;
++	pthread_t tothread;
++	int threadstarted;
++	int tid;
+ 	int id;
+ 	int prio;
+ 	int signal;
+@@ -47,6 +51,7 @@ struct thread_param {
+ 	struct thread_stat *stats;
+ 	int bufmsk;
+ 	int cpu;
++	int interrupted;
+ };
+ 
+ /* Struct for statistics */
+@@ -58,11 +63,6 @@ struct thread_stat {
  	long act;
  	double avg;
  	long *values;
--	long *hist_array;
--	long *outliers;
- 	pthread_t thread;
+-	pthread_t thread;
+-	pthread_t tothread;
 -	int threadstarted;
- 	int tid;
--	long reduce;
- 	long redmax;
- 	long cycleofmax;
--	long hist_overflow;
--	long num_outliers;
+-	int tid;
+-	int interrupted;
  };
  
- struct sched_data {
+ static int shutdown;
+@@ -86,7 +86,7 @@ void *signalthread(void *param)
+ 	pthread_t thread;
+ 	cpu_set_t mask;
+ 
+-	stat->tid = gettid();
++	par->tid = gettid();
+ 
+ 	if (par->cpu != -1) {
+ 		CPU_ZERO(&mask);
+@@ -105,7 +105,7 @@ void *signalthread(void *param)
+ 	schedp.sched_priority = par->prio;
+ 	sched_setscheduler(0, policy, &schedp);
+ 
+-	stat->threadstarted++;
++	par->threadstarted++;
+ 
+ 	clock_gettime(CLOCK_MONOTONIC, &before);
+ 
+@@ -128,7 +128,7 @@ void *signalthread(void *param)
+ 
+ 		/* Get current time */
+ 		clock_gettime(CLOCK_MONOTONIC, &now);
+-		pthread_kill(stat->tothread, SIGUSR1);
++		pthread_kill(par->tothread, SIGUSR1);
+ 
+ 		/* Skip the first cycle */
+ 		if (first) {
+@@ -148,7 +148,7 @@ void *signalthread(void *param)
+ 
+ 		if (!stopped && tracelimit && !par->id  && (diff > tracelimit)) {
+ 			stat->act = diff;
+-			stat->interrupted = 1;
++			par->interrupted = 1;
+ 			stopped++;
+ 			shutdown++;
+ 		}
+@@ -167,7 +167,7 @@ void *signalthread(void *param)
+ 	schedp.sched_priority = 0;
+ 	sched_setscheduler(0, SCHED_OTHER, &schedp);
+ 
+-	stat->threadstarted = -1;
++	par->threadstarted = -1;
+ 
+ 	return NULL;
+ }
+@@ -298,7 +298,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 		if (quiet != 1) {
+ 			printf("T:%2d (%5d) P:%2d C:%7lu "
+ 			       "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n",
+-			       index, stat->tid, par->prio,
++			       index, par->tid, par->prio,
+ 			       stat->cycles, stat->min, stat->act,
+ 			       stat->cycles ?
+ 			       (long)(stat->avg/stat->cycles) : 0, stat->max);
+@@ -389,8 +389,8 @@ int main(int argc, char **argv)
+ 		stat[i].min = 1000000;
+ 		stat[i].max = -1000000;
+ 		stat[i].avg = 0.0;
+-		stat[i].threadstarted = 1;
+-		status = pthread_create(&stat[i].thread, NULL, signalthread,
++		par[i].threadstarted = 1;
++		status = pthread_create(&par[i].thread, NULL, signalthread,
+ 					&par[i]);
+ 		if (status)
+ 			fatal("failed to create thread %d: %s\n", i,
+@@ -401,18 +401,18 @@ int main(int argc, char **argv)
+ 		int allstarted = 1;
+ 
+ 		for (i = 0; i < num_threads; i++) {
+-			if (stat[i].threadstarted != 2)
++			if (par[i].threadstarted != 2)
+ 				allstarted = 0;
+ 		}
+ 		if (!allstarted)
+ 			continue;
+ 
+ 		for (i = 0; i < num_threads - 1; i++)
+-			stat[i].tothread = stat[i+1].thread;
+-		stat[i].tothread = stat[0].thread;
++			par[i].tothread = par[i+1].thread;
++		par[i].tothread = par[0].thread;
+ 		break;
+ 	}
+-	pthread_kill(stat[0].thread, signum);
++	pthread_kill(par[0].thread, signum);
+ 
+ 	while (!shutdown) {
+ 		char lavg[256];
+@@ -443,12 +443,12 @@ int main(int argc, char **argv)
+ 	if (quiet)
+ 		quiet = 2;
+ 	for (i = 0; i < num_threads; i++) {
+-		if (stat[i].threadstarted > 0)
+-			pthread_kill(stat[i].thread, SIGUSR1);
+-		if (stat[i].interrupted)
++		if (par[i].threadstarted > 0)
++			pthread_kill(par[i].thread, SIGUSR1);
++		if (par[i].interrupted)
+ 			printf("Thread %d exceeded trace limit.\n", i);
+-		if (stat[i].threadstarted) {
+-			pthread_join(stat[i].thread, NULL);
++		if (par[i].threadstarted) {
++			pthread_join(par[i].thread, NULL);
+ 			print_stat(&par[i], i, 0);
+ 		}
+ 		if (stat[i].values)
 -- 
 2.29.2
 
