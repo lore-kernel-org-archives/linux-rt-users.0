@@ -2,35 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C9E92C433DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23C86C4332D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A0FCD23A5E
+	by mail.kernel.org (Postfix) with ESMTP id F323423A6C
 	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387813AbhAOTLD (ORCPT
+        id S2387688AbhAOTLE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Jan 2021 14:11:03 -0500
-Received: from mx2.suse.de ([195.135.220.15]:43864 "EHLO mx2.suse.de"
+        Fri, 15 Jan 2021 14:11:04 -0500
+Received: from mx2.suse.de ([195.135.220.15]:43874 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387490AbhAOTLD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Jan 2021 14:11:03 -0500
+        id S2387617AbhAOTLE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 15 Jan 2021 14:11:04 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 952E6AEBE;
-        Fri, 15 Jan 2021 19:09:42 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 8A403AEC3;
+        Fri, 15 Jan 2021 19:09:43 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC v3 11/19] cyclictest: Add JSON output feature
-Date:   Fri, 15 Jan 2021 20:09:28 +0100
-Message-Id: <20210115190936.26148-12-dwagner@suse.de>
+Subject: [RFC v3 14/19] pmqtest: Add JSON output feature
+Date:   Fri, 15 Jan 2021 20:09:31 +0100
+Message-Id: <20210115190936.26148-15-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210115190936.26148-1-dwagner@suse.de>
 References: <20210115190936.26148-1-dwagner@suse.de>
@@ -45,115 +45,219 @@ simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 46 ++++++++++++++++++++++++++++++++++++-
- 1 file changed, 45 insertions(+), 1 deletion(-)
+ src/pmqtest/pmqtest.c | 137 +++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 114 insertions(+), 23 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 245752dae2af..5e88213eeb13 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -11,6 +11,7 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <stdint.h>
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 349b47741003..e1f59836ea07 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -22,6 +22,7 @@
+ #include <utmpx.h>
+ #include <mqueue.h>
+ #include <pthread.h>
 +#include <inttypes.h>
- #include <stdarg.h>
- #include <unistd.h>
- #include <fcntl.h>
-@@ -217,6 +218,7 @@ static struct timespec globalt;
  
- static char fifopath[MAX_PATH];
- static char histfile[MAX_PATH];
-+static char outfile[MAX_PATH];
- 
- static struct thread_param **parameters;
- static struct thread_stat **statistics;
-@@ -838,6 +840,7 @@ static void display_help(int error)
- 	       "			   latency is hit. Useful for low bandwidth.\n"
- 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
- 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+ #include "rt-utils.h"
+ #include "rt-get_cpu.h"
+@@ -231,6 +232,7 @@ static void display_help(int error)
+ 	       "-h       --help            print this help message\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
 +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
- 	       "-p PRIO  --priority=PRIO   priority of highest prio thread\n"
- 	       "	 --policy=NAME     policy of measurement thread, where NAME may be one\n"
- 	       "                           of: other, normal, batch, idle, fifo or rr.\n"
-@@ -945,7 +948,7 @@ enum option_values {
- 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
- 	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
- 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
--	OPT_TRACEMARK, OPT_POSIX_TIMERS,
-+	OPT_TRACEMARK, OPT_POSIX_TIMERS, OPT_OUTPUT
- };
+ 	       "-p PRIO  --prio=PRIO       priority\n"
+ 	       "-q       --quiet           print a summary only on exit\n"
+ 	       "-S       --smp             SMP testing: options -a -t and same priority\n"
+@@ -258,6 +260,14 @@ static int sameprio;
+ static int timeout;
+ static int forcetimeout;
+ static int quiet;
++static char outfile[MAX_PATH];
++
++enum option_value {
++	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
++	OPT_FORCETIMEOUT, OPT_HELP, OPT_INTERVAL, OPT_LOOPS,
++	OPT_OUTPUT, OPT_PRIORITY, OPT_QUIET, OPT_SMP, OPT_THREADS,
++	OPT_TIMEOUT
++};
  
- /* Process commandline options */
-@@ -979,6 +982,7 @@ static void process_options(int argc, char *argv[])
- 			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
- 			{"nsecs",            no_argument,       NULL, OPT_NSECS },
- 			{"oscope",           required_argument, NULL, OPT_OSCOPE },
-+			{"output",           required_argument, NULL, OPT_OUTPUT },
- 			{"priority",         required_argument, NULL, OPT_PRIORITY },
- 			{"quiet",            no_argument,       NULL, OPT_QUIET },
- 			{"priospread",       no_argument,       NULL, OPT_PRIOSPREAD },
-@@ -1073,6 +1077,9 @@ static void process_options(int argc, char *argv[])
- 		case 'o':
- 		case OPT_OSCOPE:
- 			oscope_reduction = atoi(optarg); break;
+ static void process_options(int argc, char *argv[])
+ {
+@@ -268,19 +278,20 @@ static void process_options(int argc, char *argv[])
+ 		int option_index = 0;
+ 		/** Options for getopt */
+ 		static struct option long_options[] = {
+-			{"affinity",		optional_argument,	NULL, 'a'},
+-			{"breaktrace",		required_argument,	NULL, 'b'},
+-			{"distance",		required_argument,	NULL, 'd'},
+-			{"duration",		required_argument,	NULL, 'D'},
+-			{"forcetimeout",	required_argument,	NULL, 'f'},
+-			{"help",		no_argument,		NULL, 'h'},
+-			{"interval",		required_argument,	NULL, 'i'},
+-			{"loops",		required_argument,	NULL, 'l'},
+-			{"priority",		required_argument,	NULL, 'p'},
+-			{"quiet",		no_argument,		NULL, 'q'},
+-			{"smp",			no_argument,		NULL, 'S'},
+-			{"threads",		optional_argument,	NULL, 't'},
+-			{"timeout",		required_argument,	NULL, 'T'},
++			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
++			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
++			{"distance",	required_argument,	NULL, OPT_DISTANCE},
++			{"duration",	required_argument,	NULL, OPT_DURATION},
++			{"forcetimeout",required_argument,	NULL, OPT_FORCETIMEOUT},
++			{"help",	no_argument,		NULL, OPT_HELP},
++			{"interval",	required_argument,	NULL, OPT_INTERVAL},
++			{"loops",	required_argument,	NULL, OPT_LOOPS},
++			{"output",	required_argument,      NULL, OPT_OUTPUT },
++			{"priority",	required_argument,	NULL, OPT_PRIORITY},
++			{"quiet",	no_argument,		NULL, OPT_QUIET},
++			{"smp",		no_argument,		NULL, OPT_SMP},
++			{"threads",	optional_argument,	NULL, OPT_THREADS},
++			{"timeout",	required_argument,	NULL, OPT_TIMEOUT},
+ 			{NULL, 0, NULL, 0}
+ 		};
+ 		int c = getopt_long (argc, argv, "a::b:d:D:f:i:l:p:qSt::T:",
+@@ -288,6 +299,7 @@ static void process_options(int argc, char *argv[])
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
++		case OPT_AFFINITY:
+ 		case 'a':
+ 			if (smp) {
+ 				warn("-a ignored due to --smp\n");
+@@ -303,21 +315,53 @@ static void process_options(int argc, char *argv[])
+ 				setaffinity = AFFINITY_USEALL;
+ 			}
+ 			break;
+-		case 'b': tracelimit = atoi(optarg); break;
+-		case 'd': distance = atoi(optarg); break;
+-		case 'D': duration = parse_time_string(optarg); break;
+-		case 'f': forcetimeout = atoi(optarg); break;
++		case OPT_BREAKTRACE:
++		case 'b':
++			tracelimit = atoi(optarg);
++			break;
++		case OPT_DISTANCE:
++		case 'd':
++			distance = atoi(optarg);
++			break;
++		case OPT_DURATION:
++		case 'D':
++			duration = parse_time_string(optarg);
++			break;
++		case OPT_FORCETIMEOUT:
++		case 'f':
++			forcetimeout = atoi(optarg);
++			break;
++		case OPT_HELP:
+ 		case '?':
+-		case 'h': display_help(0); break;
+-		case 'i': interval = atoi(optarg); break;
+-		case 'l': max_cycles = atoi(optarg); break;
+-		case 'p': priority = atoi(optarg); break;
+-		case 'q': quiet = 1; break;
++		case 'h':
++			display_help(0);
++			break;
++		case OPT_INTERVAL:
++		case 'i':
++			interval = atoi(optarg);
++			break;
++		case OPT_LOOPS:
++		case 'l':
++			max_cycles = atoi(optarg);
++			break;
 +		case OPT_OUTPUT:
 +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
 +			break;
- 		case 'p':
- 		case OPT_PRIORITY:
- 			priority = atoi(optarg);
-@@ -1690,6 +1697,40 @@ static void rstat_setup(void)
- 	return;
++		case OPT_PRIORITY:
++		case 'p':
++			priority = atoi(optarg);
++			break;
++		case OPT_QUIET:
++		case 'q':
++			quiet = 1;
++			break;
++		case OPT_SMP:
+ 		case 'S':
+ 			smp = 1;
+ 			num_threads = max_cpus;
+ 			setaffinity = AFFINITY_USEALL;
+ 			break;
++		case OPT_THREADS:
+ 		case 't':
+ 			if (smp) {
+ 				warn("-t ignored due to --smp\n");
+@@ -330,7 +374,10 @@ static void process_options(int argc, char *argv[])
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
+-		case 'T': timeout = atoi(optarg); break;
++		case OPT_TIMEOUT:
++		case 'T':
++			timeout = atoi(optarg);
++			break;
+ 		default:
+ 			display_help(1);
+ 			break;
+@@ -401,6 +448,42 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
+ 	}
  }
  
++struct params_stats {
++	struct params *receiver;
++	struct params *sender;
++};
++
 +static void write_stats(FILE *f, void *data)
 +{
-+	struct thread_param **par = parameters;
-+	unsigned int i, j, comma;
-+	struct thread_stat *s;
++	struct params_stats *ps = data;
++	struct params *s, *r;
++	unsigned int i;
 +
 +	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
-+	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
 +	fprintf(f, "  \"thread\": {\n");
 +	for (i = 0; i < num_threads; i++) {
++		s = &ps->sender[i];
++		r = &ps->receiver[i];
 +		fprintf(f, "    \"%u\": {\n", i);
-+
-+		fprintf(f, "      \"histogram\": {");
-+		s = par[i]->stats;
-+		for (j = 0, comma = 0; j < histogram; j++) {
-+			if (s->hist_array[j] == 0)
-+				continue;
-+			fprintf(f, "%s", comma ? ",\n" : "\n");
-+			fprintf(f, "        \"%u\": %" PRIu64,j, s->hist_array[j]);
-+			comma = 1;
-+		}
-+		if (comma)
-+			fprintf(f, "\n");
++		fprintf(f, "      \"sender\": {\n");
++		fprintf(f, "        \"cpu\": %d,\n", s->cpu);
++		fprintf(f, "        \"priority\": %d,\n", s->priority);
++		fprintf(f, "        \"samples\": %d,\n", s->samples);
++		fprintf(f, "        \"interval\": %ld\n", r->delay.tv_nsec/1000);
 +		fprintf(f, "      },\n");
-+		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
-+		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
-+		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
-+		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
-+		fprintf(f, "      \"cpu\": %d,\n", par[i]->cpu);
-+		fprintf(f, "      \"node\": %d\n", par[i]->node);
++		fprintf(f, "      \"receiver\": {\n");
++		fprintf(f, "        \"cpu\": %d,\n", r->cpu);
++		fprintf(f, "        \"priority\": %d,\n", r->priority);
++		fprintf(f, "        \"timeoutcount\": %d,\n", r->timeoutcount);
++		fprintf(f, "        \"min\": %d,\n", r->mindiff);
++		fprintf(f, "        \"avg\": %.2f,\n", r->sumdiff/r->samples);
++		fprintf(f, "        \"max\": %d\n", r->maxdiff);
++		fprintf(f, "      }\n");
 +		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
 +	}
 +	fprintf(f, "  }\n");
 +}
- 
- int main(int argc, char **argv)
- {
-@@ -2033,6 +2074,9 @@ int main(int argc, char **argv)
- 	if (!verbose && !quiet && refresh_on_max)
- 		printf("\033[%dB", num_threads + 2);
- 
-+	if (strlen(outfile) != 0)
-+		rt_write_json(outfile, argc, argv, write_stats, NULL);
 +
- 	if (quiet)
- 		quiet = 2;
- 	for (i = 0; i < num_threads; i++) {
+ int main(int argc, char *argv[])
+ {
+ 	int i;
+@@ -562,6 +645,14 @@ int main(int argc, char *argv[])
+ 		mq_unlink(mqname);
+ 	}
+ 
++	if (strlen(outfile) != 0) {
++		struct params_stats ps = {
++			.receiver = receiver,
++			.sender = sender,
++		};
++		rt_write_json(outfile, argc, argv, write_stats, &ps);
++	}
++
+ nomem:
+ 
+ 	return 0;
 -- 
 2.29.2
 
