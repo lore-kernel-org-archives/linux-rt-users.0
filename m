@@ -2,35 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AA9DCC433DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66C4EC433E6
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 82C6423A5E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4295323A6C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jan 2021 19:11:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387814AbhAOTLS (ORCPT
+        id S1733285AbhAOTLS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 15 Jan 2021 14:11:18 -0500
-Received: from mx2.suse.de ([195.135.220.15]:43850 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:43858 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1733221AbhAOTLR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Jan 2021 14:11:17 -0500
+        id S2387460AbhAOTLS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 15 Jan 2021 14:11:18 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id E66F7AEE0;
-        Fri, 15 Jan 2021 19:09:43 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 1ED92AF32;
+        Fri, 15 Jan 2021 19:09:45 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [RFC v3 12/19] signaltest: Add JSON output feature
-Date:   Fri, 15 Jan 2021 20:09:29 +0100
-Message-Id: <20210115190936.26148-13-dwagner@suse.de>
+Subject: [RFC v3 19/19] rt-migrate-test: Add JSON output feature
+Date:   Fri, 15 Jan 2021 20:09:36 +0100
+Message-Id: <20210115190936.26148-20-dwagner@suse.de>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210115190936.26148-1-dwagner@suse.de>
 References: <20210115190936.26148-1-dwagner@suse.de>
@@ -45,172 +45,197 @@ simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/signaltest/signaltest.c | 109 +++++++++++++++++++++++++++++-------
- 1 file changed, 88 insertions(+), 21 deletions(-)
+ src/rt-migrate-test/rt-migrate-test.c | 118 +++++++++++++++++++++-----
+ 1 file changed, 99 insertions(+), 19 deletions(-)
 
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index dd5633d5fc51..340fd55517d4 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -22,6 +22,7 @@
- #include <unistd.h>
+diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+index 9bf716c9178c..9d34b3c7da52 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -19,11 +19,12 @@
+ #include <fcntl.h>
+ #include <signal.h>
+ #include <sys/time.h>
+-#include <linux/unistd.h>
+ #include <sys/syscall.h>
  #include <errno.h>
  #include <sched.h>
+ #include <pthread.h>
 +#include <inttypes.h>
- 
- #include <linux/unistd.h>
- 
-@@ -205,6 +206,14 @@ static int verbose;
- static int quiet;
- static int lockall;
- static struct bitmask *affinity_mask = NULL;
-+static char outfile[MAX_PATH];
 +
-+enum option_values {
-+	OPT_AFFINITY=1, OPT_BREAKTRACE,
-+	OPT_DURATION, OPT_HELP, OPT_LOOPS,
-+	OPT_MLOCKALL, OPT_OUTPUT, OPT_PRIORITY,
-+	OPT_QUIET, OPT_SMP, OPT_THREADS, OPT_VERBOSE
-+};
+ #include "rt-utils.h"
  
- /* Process commandline options */
- static void process_options(int argc, char *argv[])
-@@ -216,17 +225,18 @@ static void process_options(int argc, char *argv[])
+ int nr_tasks;
+@@ -99,6 +100,7 @@ static int done;
+ static int loop;
+ static int duration;
+ static int quiet;
++static char outfile[MAX_PATH];
+ 
+ static pthread_barrier_t start_barrier;
+ static pthread_barrier_t end_barrier;
+@@ -160,6 +162,7 @@ static void usage(int error)
+ 	       "-h       --help            Print this help message\n"
+ 	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
+ 	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
++	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+ 	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
+ 	       "-q       --quiet           print a summary only on exit\n"
+ 	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
+@@ -169,22 +172,29 @@ static void usage(int error)
+ 	exit(error);
+ }
+ 
++enum option_value {
++	OPT_CHECK=1, OPT_DURATION, OPT_EQUAL, OPT_HELP, OPT_LOOPS,
++	OPT_MAXERR, OPT_OUTPUT, OPT_PRIO, OPT_QUIET, OPT_RUN_TIME,
++	OPT_SLEEP_TIME
++};
++
+ static void parse_options(int argc, char *argv[])
+ {
+ 	for (;;) {
  		int option_index = 0;
  		/** Options for getopt */
  		static struct option long_options[] = {
--			{"affinity",		optional_argument,	NULL, 'a'},
--			{"breaktrace",		required_argument,	NULL, 'b'},
--			{"duration",		required_argument,	NULL, 'D'},
--			{"help",		no_argument,		NULL, 'h'},
--			{"loops",		required_argument,	NULL, 'l'},
--			{"mlockall",		no_argument,		NULL, 'm'},
--			{"priority",		required_argument,	NULL, 'p'},
--			{"quiet",		no_argument,		NULL, 'q'},
--			{"smp",			no_argument,		NULL, 'S'},
--			{"threads",		required_argument,	NULL, 't'},
--			{"verbose",		no_argument,		NULL, 'v'},
-+			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
-+			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
+-			{"check",	no_argument,		NULL, 'c'},
+-			{"duration",	required_argument,	NULL, 'D'},
+-			{"equal",	no_argument,		NULL, 'e'},
+-			{"help",	no_argument,		NULL, 'h'},
+-			{"loops",	required_argument,	NULL, 'l'},
+-			{"maxerr",	required_argument,	NULL, 'm'},
+-			{"prio",	required_argument,	NULL, 'p'},
+-			{"quiet",	no_argument,		NULL, 'q'},
+-			{"run-time",	required_argument,	NULL, 'r'},
+-			{"sleep-time",	required_argument,	NULL, 's'},
++			{"check",	no_argument,		NULL, OPT_CHECK},
 +			{"duration",	required_argument,	NULL, OPT_DURATION},
++			{"equal",	no_argument,		NULL, OPT_EQUAL},
 +			{"help",	no_argument,		NULL, OPT_HELP},
 +			{"loops",	required_argument,	NULL, OPT_LOOPS},
-+			{"mlockall",	no_argument,		NULL, OPT_MLOCKALL},
-+			{"output",	required_argument,	NULL, OPT_OUTPUT},
-+			{"priority",	required_argument,	NULL, OPT_PRIORITY},
++			{"maxerr",	required_argument,	NULL, OPT_MAXERR},
++			{"output",	required_argument,      NULL, OPT_OUTPUT },
++			{"prio",	required_argument,	NULL, OPT_PRIO},
 +			{"quiet",	no_argument,		NULL, OPT_QUIET},
-+			{"smp",		no_argument,		NULL, OPT_SMP},
-+			{"threads",	required_argument,	NULL, OPT_THREADS},
-+			{"verbose",	no_argument,		NULL, OPT_VERBOSE},
++			{"run-time",	required_argument,	NULL, OPT_RUN_TIME},
++			{"sleep-time",	required_argument,	NULL, OPT_SLEEP_TIME},
  			{NULL, 0, NULL, 0}
  		};
- 		int c = getopt_long(argc, argv, "a::b:D:hl:mp:qSt:v",
-@@ -234,6 +244,7 @@ static void process_options(int argc, char *argv[])
+ 		int c = getopt_long(argc, argv, "cD:ehl:m:p:qr:s:",
+@@ -192,21 +202,50 @@ static void parse_options(int argc, char *argv[])
  		if (c == -1)
  			break;
  		switch (c) {
-+		case OPT_AFFINITY:
- 		case 'a':
- 			if (optarg) {
- 				parse_cpumask(optarg, &affinity_mask);
-@@ -248,17 +259,49 @@ static void process_options(int argc, char *argv[])
- 				printf("Using %u cpus.\n",
- 					numa_bitmask_weight(affinity_mask));
- 			break;
--		case 'b': tracelimit = atoi(optarg); break;
+-		case 'c': check = 1; break;
 -		case 'D': duration = parse_time_string(optarg); break;
-+		case OPT_BREAKTRACE:
-+		case 'b':
-+			tracelimit = atoi(optarg);
+-		case 'e': equal = 1; break;
++		case OPT_CHECK:
++		case 'c':
++			check = 1;
 +			break;
 +		case OPT_DURATION:
 +		case 'D':
 +			duration = parse_time_string(optarg);
 +			break;
++		case OPT_EQUAL:
++		case 'e':
++			equal = 1;
++			break;
 +		case OPT_HELP:
  		case '?':
--		case 'h': display_help(0); break;
--		case 'l': max_cycles = atoi(optarg); break;
--		case 'm': lockall = 1; break;
--		case 'p': priority = atoi(optarg); break;
+ 		case 'h':
+ 			usage(0);
+ 			break;
+-		case 'l': nr_runs = atoi(optarg); break;
+-		case 'm': max_err = usec2nano(atoi(optarg)); break;
+-		case 'p': prio_start = atoi(optarg); break;
 -		case 'q': quiet = 1; break;
--		case 'S': smp = 1; break;
--		case 't': num_threads = atoi(optarg); break;
--		case 'v': verbose = 1; break;
-+		case 'h':
-+			display_help(0);
-+			break;
 +		case OPT_LOOPS:
 +		case 'l':
-+			max_cycles = atoi(optarg);
++			nr_runs = atoi(optarg);
 +			break;
-+		case OPT_MLOCKALL:
++		case OPT_MAXERR:
 +		case 'm':
-+			lockall = 1;
++			max_err = usec2nano(atoi(optarg));
 +			break;
 +		case OPT_OUTPUT:
 +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
 +			break;
-+		case OPT_PRIORITY:
++		case OPT_PRIO:
 +		case 'p':
-+			priority = atoi(optarg);
++			prio_start = atoi(optarg);
 +			break;
 +		case OPT_QUIET:
 +		case 'q':
 +			quiet = 1;
 +			break;
-+		case OPT_SMP:
-+		case 'S':
-+			smp = 1;
++		case OPT_RUN_TIME:
+ 		case 'r':
+ 			run_interval = atoi(optarg);
+ 			break;
+-		case 's': interval = atoi(optarg); break;
++		case OPT_SLEEP_TIME:
++		case 's':
++			interval = atoi(optarg);
 +			break;
-+		case OPT_THREADS:
-+		case 't':
-+			num_threads = atoi(optarg);
-+			break;
-+		case OPT_VERBOSE:
-+		case 'v': verbose = 1;
-+			break;
+ 		default:
+ 			usage(1);
  		}
- 	}
- 
-@@ -312,6 +355,27 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+@@ -313,6 +352,44 @@ static void print_results(void)
  	}
  }
  
 +static void write_stats(FILE *f, void *data)
 +{
-+	struct thread_param *par = data;
-+	struct thread_stat *s;
-+	unsigned int i;
++	int i;
++	int t;
++	unsigned long long tasks_max[nr_tasks];
++	unsigned long long tasks_min[nr_tasks];
++	unsigned long long tasks_avg[nr_tasks];
 +
++	memset(tasks_max, 0, sizeof(tasks_max[0])*nr_tasks);
++	memset(tasks_min, 0xff, sizeof(tasks_min[0])*nr_tasks);
++	memset(tasks_avg, 0, sizeof(tasks_avg[0])*nr_tasks);
++
++	for (i=0; i < nr_runs; i++) {
++		for (t=0; t < nr_tasks; t++) {
++			unsigned long long itv = intervals[i][t];
++
++			if (tasks_max[t] < itv)
++				tasks_max[t] = itv;
++			if (tasks_min[t] > itv)
++				tasks_min[t] = itv;
++			tasks_avg[t] += itv;
++		}
++	}
++
++	fprintf(f, "  \"num_threads\": %d,\n", nr_tasks);
 +	fprintf(f, "  \"thread\": {\n");
-+	for (i = 0; i < num_threads; i++) {
++	for (i = 0; i < nr_tasks; i++) {
 +		fprintf(f, "    \"%u\": {\n", i);
-+		s = &par->stats[i];
-+		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
-+		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
-+		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
-+		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
-+		fprintf(f, "      \"cpu\": %d,\n", par->cpu);
-+		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
-+
++		fprintf(f, "      \"prio\": %d,\n", calc_prio(i));
++		fprintf(f, "      \"min\": %lld,\n", nano2usec(tasks_min[i]));
++		fprintf(f, "      \"avg\": %lld,\n", nano2usec(tasks_avg[i]) / nr_runs);
++		fprintf(f, "      \"max\": %lld,\n", nano2usec(tasks_max[i]));
++		fprintf(f, "      \"total\": %lld\n", nano2usec(tasks_avg[i]));
++		fprintf(f, "    }%s\n", i == nr_tasks - 1 ? "" : ",");
 +	}
 +	fprintf(f, "  }\n");
 +}
 +
- int main(int argc, char **argv)
+ static unsigned long busy_loop(unsigned long long start_time)
  {
- 	sigset_t sigset;
-@@ -454,6 +518,9 @@ int main(int argc, char **argv)
- 		if (stat[i].values)
- 			free(stat[i].values);
- 	}
+ 	unsigned long long time;
+@@ -582,6 +659,9 @@ int main (int argc, char **argv)
+ 
+ 	print_results();
+ 
 +	if (strlen(outfile) != 0)
-+		rt_write_json(outfile, argc, argv, write_stats, par);
++		rt_write_json(outfile, argc, argv, write_stats, NULL);
 +
- 	free(stat);
-  outpar:
- 	free(par);
+ 	if (stop) {
+ 		/*
+ 		 * We use this test in bash while loops
 -- 
 2.29.2
 
