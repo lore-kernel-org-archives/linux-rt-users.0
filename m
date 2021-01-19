@@ -2,214 +2,178 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 52070C433E6
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Jan 2021 20:31:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7AEF5C433E0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Jan 2021 14:53:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 12C4A22D2A
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Jan 2021 20:31:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4F09023135
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Jan 2021 14:53:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388988AbhARKkS (ORCPT
+        id S2388973AbhASOxK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Jan 2021 05:40:18 -0500
-Received: from mo-csw-fb1115.securemx.jp ([210.130.202.174]:42076 "EHLO
-        mo-csw-fb.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2388521AbhARJRD (ORCPT
+        Tue, 19 Jan 2021 09:53:10 -0500
+Received: from mx-ginzinger.sigmacloud.services ([185.154.235.147]:41186 "EHLO
+        mx-ginzinger.sigmacloud.services" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S2405160AbhASLEr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Jan 2021 04:17:03 -0500
-X-Greylist: delayed 834 seconds by postgrey-1.27 at vger.kernel.org; Mon, 18 Jan 2021 04:17:02 EST
-Received: by mo-csw-fb.securemx.jp (mx-mo-csw-fb1115) id 10I92sqq013900; Mon, 18 Jan 2021 18:02:54 +0900
-Received: by mo-csw.securemx.jp (mx-mo-csw1116) id 10I90n09027149; Mon, 18 Jan 2021 18:00:49 +0900
-X-Iguazu-Qid: 2wGqsXjpvXBKuhIulU
-X-Iguazu-QSIG: v=2; s=0; t=1610960449; q=2wGqsXjpvXBKuhIulU; m=+Na5srjnQXJHihItUyanulP+p1oAGM70hByVfekN4No=
-Received: from imx12.toshiba.co.jp (imx12.toshiba.co.jp [61.202.160.132])
-        by relay.securemx.jp (mx-mr1111) id 10I90mHu014495;
-        Mon, 18 Jan 2021 18:00:48 +0900
-Received: from enc02.toshiba.co.jp ([61.202.160.51])
-        by imx12.toshiba.co.jp  with ESMTP id 10I90m5J022084;
-        Mon, 18 Jan 2021 18:00:48 +0900 (JST)
-Received: from hop101.toshiba.co.jp ([133.199.85.107])
-        by enc02.toshiba.co.jp  with ESMTP id 10I90lVI007798;
-        Mon, 18 Jan 2021 18:00:48 +0900
-From:   Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-To:     jkacur@redhat.com
-Cc:     binh1.tranhai@toshiba.co.jp,
-        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>,
-        dwagner@suse.de, linux-rt-users@vger.kernel.org
-Subject: Some issues running rteval on arm64, arm and i386
-Date:   Mon, 18 Jan 2021 18:00:46 +0900
-X-TSB-HOP: ON
-Message-ID: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+        Tue, 19 Jan 2021 06:04:47 -0500
+X-Greylist: delayed 379 seconds by postgrey-1.27 at vger.kernel.org; Tue, 19 Jan 2021 06:04:45 EST
+Received: from [31.193.165.228] (port=65101 helo=mx-ginzinger.sigmacloud.services)
+        by mx-ginzinger.sigmacloud.services with esmtps (TLSv1.2:AES256-GCM-SHA384:256)
+        (Exim 4.82_1-5b7a7c0-XX)
+        (envelope-from <Henri.Roosen@ginzinger.com>)
+        id 1l1ohc-0001CG-3C; Tue, 19 Jan 2021 11:57:37 +0100
+Received: from exc1.buero.ginzinger.com (10.1.1.204) by
+ exc1.buero.ginzinger.com (10.1.1.204) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2106.2; Tue, 19 Jan 2021 11:57:36 +0100
+Received: from exc1.buero.ginzinger.com ([fe80::ad39:a353:4517:a5c4]) by
+ exc1.buero.ginzinger.com ([fe80::ad39:a353:4517:a5c4%2]) with mapi id
+ 15.01.2106.002; Tue, 19 Jan 2021 11:57:36 +0100
+X-CTCH-RefID: str=0001.0A782F1A.6006BB21.001A,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+From:   Roosen Henri <Henri.Roosen@ginzinger.com>
+To:     "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+CC:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "williams@redhat.com" <williams@redhat.com>
+Subject: Re: RT kernel v4.14 NULL pointer dereferences
+Thread-Topic: RT kernel v4.14 NULL pointer dereferences
+Thread-Index: AQHWcjJMcwTnsC+ddke4u3BMdVP/nKk71mOAgAAyeoCA86XFAA==
+Date:   Tue, 19 Jan 2021 10:57:36 +0000
+Message-ID: <4265e04810b55bea4f52f3c0c5057b808dcac814.camel@ginzinger.com>
+References: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
+         <20200814115848.w4m2bfqttkid6woi@linutronix.de>
+         <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
+         <20200817111311.zyqjznhferoqqxkh@linutronix.de>
+In-Reply-To: <20200817111311.zyqjznhferoqqxkh@linutronix.de>
+Accept-Language: en-US, de-DE
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [10.2.1.65]
+x-exclaimer-md-original-subject: [NOSIG][NODISC]Re: RT kernel v4.14 NULL
+ pointer dereferences
+x-exclaimer-md-config: 9dd172f7-de2e-4231-b886-ec11f46e03b3
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-=-="
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----A09935177EFAAAC0D01E1BC99ADD3E8E"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
---=-=-=
-Content-Type: text/plain
+This is an S/MIME signed message
 
-Hi John,
+------A09935177EFAAAC0D01E1BC99ADD3E8E
+Content-Language: de-DE
+Content-Type: text/plain; charset="utf-8"
+Content-ID: <35C8265031203749B7609D4DA9C63A54@ginzinger.com>
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
 
-We ran into a few issues when trying to run rteval on arm64, arm and
-i386.
+T24gTW9uLCAyMDIwLTA4LTE3IGF0IDEzOjEzICswMjAwLCBiaWdlYXN5QGxpbnV0cm9uaXguZGUg
+d3JvdGU6DQo+IE9uIDIwMjAtMDgtMTcgMDg6MTI6MzEgWyswMDAwXSwgUm9vc2VuIEhlbnJpIHdy
+b3RlOg0KPiA+ID4gSXMgdGhlIDQuMTQgc2VyaWVzIHRoZSBvbmx5IG9uZSB0aGF0IGlzIGFmZmVj
+dGVkPw0KPiA+IA0KPiA+IE5vLCB1bmZvcnR1bmF0ZWx5IG5vdC4NCj4gPiANCj4gPiBJIGVuZGVk
+IHVwIHRlc3RpbmcgdGhlIHY0LjE0LjE4NC1ydDg0IG9uIHR3byBzeXN0ZW1zIGFuZCB0aGUNCj4g
+PiB2NS40LjQ1LQ0KPiA+IHJ0Mjcgb24gYW5vdGhlciBzeXN0ZW0sIGFsbCBpTVg2US4gT25seSBv
+bmUgb2YgdGhlIHY0LjE0IHN5c3RlbXMgaXMNCj4gPiBzdGlsbCBydW5uaW5nLCB0aGUgb3RoZXIg
+djQuMTQgc3lzdGVtIGR1bXBpbmcgYmFja3RyYWNlcyB1bnRpbA0KPiA+IGV2ZW50dWFsbHkgcmVz
+ZXQsIHRoZSB2NS40IHN5c3RlbSBlbmRsZXNzbHkgZHVtcGluZyBiYWNrdHJhY2VzOg0KPiA+IA0K
+PiA+IHY0LjE0OiBodHRwczovL3Bhc3RlLnVidW50dS5jb20vcC9aZEZZaHM0cGp4Lw0KPiA+IHY1
+LjQ6IGh0dHBzOi8vcGFzdGUudWJ1bnR1LmNvbS9wL3daUENRdjhLalgvDQo+IA0KPiBTbyB0aGUg
+NS40IGhhcyBhbiB1cHRpbWUgb2YgNDUgZGF5cyB1bnRpbCB0aGlzIHN0YXJ0Pw0KPiANCj4gPiBJ
+ZiB0aGUgYmFja3RyYWNlcyBkb24ndCBwb2ludCB0byBhIHJvb3QtY2F1c2UsIGFyZSB0aGVyZSBh
+bnkga2VybmVsDQo+ID4gY29uZmlndXJhdGlvbiBvcHRpb25zIHdoaWNoIGFyZSB1c2VmdWxsIHRv
+IHRyYWNrIHRoaXMgaXNzdWUgZG93bj8NCj4gDQo+IFRoZSA1LjQgaXMgbm90IGNvbXBsZXRlLCBp
+dCBzdGFydGVkIGVhcmxpZXIgYW5kIHRoaXMgbWlnaHQgYmUgYQ0KPiBmb2xsb3ctdXAgcHJvYmxl
+bSAoaXQgc2VlbXMgdG8gb3JpZ2luYXRlIGluIGRpZSgpKS4NCj4gWW91IGNvdWxkIHNlbmQgbWUg
+dGhlIGNvbmZpZywgSSBoYXZlIGFuIGlteDZxIHNvbWV3aGVyZSBzbyBJIG1pZ2h0IGJlDQo+IGFi
+bGUgdG8gdGFrZSBhIGxvb2suIEhvd2V2ZXIgSSB3YW50IHNvcnQgYW5vdGhlciBwcGMgaXNzdWUg
+Zmlyc3QuDQoNClNlYmFzdGlhbiwgZGlkIHlvdSBoYXZlIGEgY2hhbmNlIHRvIGJyaW5nIHVwIGEg
+ZHVyYXRpb24gdGVzdCBvbiB5b3VyDQppbXg2cSBib2FyZD8gQXJlIHRoZXJlIGFueSByZXN1bHRz
+IGZyb20gdGVzdGluZz8NCg0KVGhhbmtzLA0KSGVucmkNCg==
 
-A few of the assumptions in rteval don't hold true on these systems.
+------A09935177EFAAAC0D01E1BC99ADD3E8E
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
 
-    1. On arm64, there is no 'model name' in /proc/cpuinfo. See attached
-       sample output from qemu arm64. I verified the same behaviour on
-       an arm64 board we have as well.
+MIIOFAYJKoZIhvcNAQcCoIIOBTCCDgECAQExDzANBglghkgBZQMEAgEFADALBgkq
+hkiG9w0BBwGgggsYMIIF5jCCA86gAwIBAgIQapvhODv/K2ufAdXZuKdSVjANBgkq
+hkiG9w0BAQwFADCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFu
+Y2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExp
+bWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3Jp
+dHkwHhcNMTMwMTEwMDAwMDAwWhcNMjgwMTA5MjM1OTU5WjCBlzELMAkGA1UEBhMC
+R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
+ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
+U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0EwggEi
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+s55XrCh2dUAWxzgDmNPGGHYh
+UPMleQtMtaDRfTpYPpynMS6n9jR22YRq2tA9NEjk6vW7rN/5sYFLIP1of3l0NKZ6
+fLWfF2VgJ5cijKYy/qlAckY1wgOkUMgzKlWlVJGyK+UlNEQ1/5ErCsHq9x9aU/x1
+KwTdF/LCrT03Rl/FwFrf1XTCwa2QZYL55AqLPikFlgqOtzk06kb2qvGlnHJvijjI
+03BOrNpo+kZGpcHsgyO1/u1OZTaOo8wvEU17VVeP1cHWse9tGKTDyUGg2hJZjrqc
+k39UIm/nKbpDSZ0JsMoIw/JtOOg0JC56VzQgBo7ictReTQE5LFLG3yQK+xS1AgMB
+AAGjggE8MIIBODAfBgNVHSMEGDAWgBS7r34CPfqm8TyEjq3uOJjs2TIy1DAdBgNV
+HQ4EFgQUgq9sjPjF/pZhfOgfPStxSF7Ei8AwDgYDVR0PAQH/BAQDAgGGMBIGA1Ud
+EwEB/wQIMAYBAf8CAQAwEQYDVR0gBAowCDAGBgRVHSAAMEwGA1UdHwRFMEMwQaA/
+oD2GO2h0dHA6Ly9jcmwuY29tb2RvY2EuY29tL0NPTU9ET1JTQUNlcnRpZmljYXRp
+b25BdXRob3JpdHkuY3JsMHEGCCsGAQUFBwEBBGUwYzA7BggrBgEFBQcwAoYvaHR0
+cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPUlNBQWRkVHJ1c3RDQS5jcnQwJAYI
+KwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTANBgkqhkiG9w0BAQwF
+AAOCAgEAeFyygSg0TzzuX1bOn5dW7I+iaxf28/ZJCAbU2C81zd9A/tNx4+jsQgwR
+GiHjZrAYayZrrm78hOx7aEpkfNPQIHGG6Fvq3EzWf/Lvx7/hk6zSPwIal9v5IkDc
+ZoFD7f3iT7PdkHJY9B51csvU50rxpEg1OyOT8fk2zvvPBuM4qQNqbGWlnhMpIMwp
+WZT89RY0wpJO+2V6eXEGGHsROs3njeP9DqqqAJaBa4wBeKOdGCWn1/Jp2oY6dyNm
+NppI4ZNMUH4Tam85S1j6E95u4+1Nuru84OrMIzqvISE2HN/56ebTOWlcrurffade
+2022O/tUU1gb4jfWCcyvB8czm12FgX/y/lRjmDbEA08QJNB2729Y+io1IYO3ztve
+BdvUCIYZojTq/OCR6MvnzS6X72HP0PRLRTiOSEmIDsS5N5w/8IW1Hva5hEFy6fDA
+fd9yI+O+IMMAj1KcL/Zo9jzJ16HO5m60ttl1Enk8MQkz/W3JlHaeI5iKFn4UJu1/
+cP2YHXYPiWf2JyBzsLBrGk1II+3yL8aorYew6CQvdVifC3HtwlSam9V1niiCfOBe
+2C12TdKGu05LWIA3ZkFcWJGaNXOZ6Ggyh/TqvXG5v7zmEVDNXFnHn9tFpMpOUvxh
+csjycBtH0dZ0WrNw6gH+HF8TIhCnH3+zzWuDN0Rk6h9KVkfKehIwggUqMIIEEqAD
+AgECAhEAgK6FAFOiNDdgM5+lyjA8gTANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UE
+BhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2Fs
+Zm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9E
+TyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0Ew
+HhcNMTgwNzE4MDAwMDAwWhcNMjEwNzE3MjM1OTU5WjArMSkwJwYJKoZIhvcNAQkB
+FhpoZW5yaS5yb29zZW5AZ2luemluZ2VyLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
+ggEPADCCAQoCggEBAMmwBmquEWhoUH5WNJe7bQRLBAccBq0ZBVQbLAbJQwN5bg9i
+wSsPG7mveXqXYWpuHhbb7lbs3zFTS4H511nWurRqcvVceVOs5vtsbVMHjfuNmHo8
+WrMCJPFBw64uBUoGdsiwuAvA0CeFpPyA/CsAuvIbmvEF+GxMjaeQhqQ9d5K4z4I6
+w6R3wFtNJiSUMUSdgtnNPDYnUIKILR3mfbSCHWA7Pepe1dh+S9JFWhcoNv1h6D/R
+SAKVdUtC2GS0vt3nk4cEg8Z0s4/OvVDRm2jluvPK+fEeUfGahwHFrk68nYTq3v2P
+dMxHg93+Li+jYAX6R3XXGbdcjZJ3UM5MGEKq+u0CAwEAAaOCAdowggHWMB8GA1Ud
+IwQYMBaAFIKvbIz4xf6WYXzoHz0rcUhexIvAMB0GA1UdDgQWBBQ9s9JCcV1JOI2I
+/oXSyF8VIj2VhTAOBgNVHQ8BAf8EBAMCBaAwDAYDVR0TAQH/BAIwADAdBgNVHSUE
+FjAUBggrBgEFBQcDBAYIKwYBBQUHAwIwRgYDVR0gBD8wPTA7BgwrBgEEAbIxAQIB
+AwUwKzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLm5ldC9DUFMw
+WgYDVR0fBFMwUTBPoE2gS4ZJaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RP
+UlNBQ2xpZW50QXV0aGVudGljYXRpb25hbmRTZWN1cmVFbWFpbENBLmNybDCBiwYI
+KwYBBQUHAQEEfzB9MFUGCCsGAQUFBzAChklodHRwOi8vY3J0LmNvbW9kb2NhLmNv
+bS9DT01PRE9SU0FDbGllbnRBdXRoZW50aWNhdGlvbmFuZFNlY3VyZUVtYWlsQ0Eu
+Y3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21vZG9jYS5jb20wJQYDVR0R
+BB4wHIEaaGVucmkucm9vc2VuQGdpbnppbmdlci5jb20wDQYJKoZIhvcNAQELBQAD
+ggEBAKdv6bSTLlu63Ckq7aibIwJCE0hhs83Z6Jr5G2wWrwVdFB9Dkb6l2NmdGRoq
+qbSz3Remg5qamURXec3XdEBxO1FPMcZJrHKAZuNjYdj1tzYA/rbTdYmVbno1TG5/
+O6rVb7A624UZHoucW+NpfNCrxfQY+BliMbCKJEWqQE0P6vyDenSYa76NLt1699B5
+vyHbYLrJHAjFzHe7BqSkP815C47KpJFXuGYasewJDOpvyINtn6kBlrAIanoVfDFa
+W9aUjUeNjqmcCEN4TpuSZCf1L8oWAjv5oH0R87orEAFZnSVWDIW8i7TMiFtCiF3D
+LYmN6J96LCNCs0iQIFqcnJnkHAkxggLAMIICvAIBATCBrTCBlzELMAkGA1UEBhMC
+R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
+ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
+U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0ECEQCA
+roUAU6I0N2Azn6XKMDyBMA0GCWCGSAFlAwQCAQUAoIHkMBgGCSqGSIb3DQEJAzEL
+BgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIxMDExOTEwNTczOFowLwYJKoZI
+hvcNAQkEMSIEIIsKlpcNbuiOnpWHj2IjzJ1q9Nb3bRYRnwyVFgFquPSQMHkGCSqG
+SIb3DQEJDzFsMGowCwYJYIZIAWUDBAEqMAsGCWCGSAFlAwQBFjALBglghkgBZQME
+AQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFAMAcG
+BSsOAwIHMA0GCCqGSIb3DQMCAgEoMA0GCSqGSIb3DQEBAQUABIIBADw/2FdXmY4n
+v3AT/gyBbsY649evc8HD1vVmGONJg6QU0vuOMuC50OELnPuITlK6WPGEqTls6xnh
+6AQostagaVzjkoXtwPkocDp6vJuga5CZX/yanuBBvVNHzcN9bPDeRDkdnOKqOrMW
+TjqCX28ECO6EvLAjEMxj0O5TQ5CwWG9JyVEXAb3NzpKQQhrg12e7yKGmqpEQnwsC
+nSV1xDAEmat7he7eXtO2mvAi2qx/mGkO0Mjjpgyt61km4R6yA+sm1AYF08lhK1ah
+cOMy9erBGK7BbJFukQmZS43eA5+R+elPaW5rOqhrhOazUq/q9/6AxyIaxHcJ1kCC
+gy30ntIF1PA=
 
-    2. Also, the build target for the kernel on arm64 is "Image" of
-       "bzImage". Rather than use different targets per-architecture it
-       maybe better to drop it all together. Do you see any downsides?
+------A09935177EFAAAC0D01E1BC99ADD3E8E--
 
-The attached patches[1][2] gets things moving with regards to Issues 1
-and 2 locally but I am not sure that's the best solution - especially
-for "cpuinfo".
-
-    3. Both arm and i386 do not provide "numa" nodes in sysfs. This
-       causes rteval to complain "No valid nodes found in
-       /sys/devices/system/node"
-
-       Is this requirement planned to be relaxed - it'll be really
-       useful to be able to use rteval on these architectures.
-
-Thanks,
-Punit
-
-
---=-=-=
-Content-Type: text/plain
-Content-Disposition: attachment; filename=cpuinfo-arm64.txt
-Content-Description: arm64 cpuinfo
-
-processor	: 0
-BogoMIPS	: 125.00
-Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 cpuid
-CPU implementer	: 0x41
-CPU architecture: 8
-CPU variant	: 0x0
-CPU part	: 0xd08
-CPU revision	: 3
-
-processor	: 1
-BogoMIPS	: 125.00
-Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 cpuid
-CPU implementer	: 0x41
-CPU architecture: 8
-CPU variant	: 0x0
-CPU part	: 0xd08
-CPU revision	: 3
-
-processor	: 2
-BogoMIPS	: 125.00
-Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 cpuid
-CPU implementer	: 0x41
-CPU architecture: 8
-CPU variant	: 0x0
-CPU part	: 0xd08
-CPU revision	: 3
-
-processor	: 3
-BogoMIPS	: 125.00
-Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 cpuid
-CPU implementer	: 0x41
-CPU architecture: 8
-CPU variant	: 0x0
-CPU part	: 0xd08
-CPU revision	: 3
-
-
---=-=-=
-Content-Type: text/x-diff
-Content-Disposition: attachment;
- filename=0001-rteval-cyclictest.py-Make-model-name-optional.patch
-Content-Description: Make model name optional
-
-From 684b785cd0d1e75d922200fb93cd83bcd225097e Mon Sep 17 00:00:00 2001
-From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-Date: Mon, 18 Jan 2021 17:51:12 +0900
-Subject: [PATCH 1/2] rteval: cyclictest.py: Make 'model name' optional
-
-Certain architectures such as arm64 don't have a "model name" in
-/proc/cpuinfo. Relax the requirement to include the model name in the
-description to allow running rteval on such machines.
-
-Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
----
- rteval/modules/measurement/cyclictest.py | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index 232bd6b..afe87f7 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -217,13 +217,13 @@ class Cyclictest(rtevalModulePrototype):
-         for core in self.__cpus:
-             self.__cyclicdata[core] = RunData(core, 'core', self.__priority,
-                                               logfnc=self._log)
--            self.__cyclicdata[core].description = info[core]['model name']
-+            self.__cyclicdata[core].description = info[core].get('model name', '')
- 
-         # Create a RunData object for the overall system
-         self.__cyclicdata['system'] = RunData('system',
-                                               'system', self.__priority,
-                                               logfnc=self._log)
--        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0']['model name']
-+        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0'].get('model name', '')
- 
-         if self.__sparse:
-             self._log(Log.DEBUG, "system using %d cpu cores" % self.__numcores)
--- 
-2.29.2
-
-
---=-=-=
-Content-Type: text/x-diff
-Content-Disposition: attachment;
- filename=0002-rteval-cyclictest.py-Make-build-targets-architecture.patch
-Content-Description: Drop kernel build targets
-
-From 8095a27755bcad4542ae98bc3fd80d2ec2ef46fe Mon Sep 17 00:00:00 2001
-From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-Date: Mon, 18 Jan 2021 17:53:52 +0900
-Subject: [PATCH 2/2] rteval: cyclictest.py: Make build targets architecture
- independent
-
-Not all kernel archiectures provide the "bzImage" target, e.g., arm64
-provides "Image" which generates an uncompressed kernel binary.
-
-Instead of going down the path of customizing build targets
-per-architecture, let's drop them altogether. The default kernel
-target should build the kernel and modules on all architectures
-anyways.
-
-Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
----
- rteval/modules/loads/kcompile.py | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index 326f1ae..e747b9f 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -58,7 +58,7 @@ class KBuildJob:
-         else:
-             self.jobs = self.calc_jobs_per_cpu() * len(self.node)
-         self.log(Log.DEBUG, "node %d: jobs == %d" % (int(node), self.jobs))
--        self.runcmd = "%s make O=%s -C %s -j%d bzImage modules" \
-+        self.runcmd = "%s make O=%s -C %s -j%d" \
-                 % (self.binder, self.objdir, self.kdir, self.jobs)
-         self.cleancmd = "%s make O=%s -C %s clean allmodconfig" \
-                 % (self.binder, self.objdir, self.kdir)
--- 
-2.29.2
-
-
---=-=-=--
