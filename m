@@ -6,73 +6,74 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E907C433DB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 15:33:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B0B28C433E0
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 15:42:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E5A5723A1E
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 15:33:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6C7842073C
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 15:42:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1733086AbhAUPcw (ORCPT
+        id S1733191AbhAUPmU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 21 Jan 2021 10:32:52 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37548 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732966AbhAUPaf (ORCPT
+        Thu, 21 Jan 2021 10:42:20 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:48080 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1733121AbhAUPmP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Jan 2021 10:30:35 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5161EC0613ED
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jan 2021 07:29:55 -0800 (PST)
-Date:   Thu, 21 Jan 2021 16:29:53 +0100
+        Thu, 21 Jan 2021 10:42:15 -0500
+Date:   Thu, 21 Jan 2021 16:41:30 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1611242993;
+        s=2020; t=1611243690;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=KCBN6cnBaZhP7IubvFTi7tEzogwzIU6boA/2BHq7Gi4=;
-        b=eEP2SPksKXkHTnlai3v+vhILbyyMX4k7554J8glPZvus3EtZiI8+2n+86u8CAnp0m5tRwg
-        5ndVxCpAR/V3A0BIjD4MsgXI8GEFrj4H5BcEuitc5r77QlE7VUCiEpdTluZv4l8E7MwoWZ
-        QuiBp4cGex65h7KoTCQqMxxYnn+nZMmP9bqH8fyt3P07Nqj04OsaJJKrfTZHggr3XLI2DM
-        qXJYIcYmw6N1t+N2Xp/OPvEd2VM3VomGTEz8BCr1zhpvP6+pFZ2uexX2j0H01qwAxrTApP
-        6osh6t0glo8/Uo0asH2dyGMZWJ1lpsxt81dCxbWBWNLgj1YXXMjUv3/pWcISXw==
+        bh=jsJBtC78TCdgLmtjTWdwNyIjhZYcT0Vs0pdRwNLIrEs=;
+        b=1D+LXvShRN+2+y4/3plqNnWI7AWNGKKEUAv1irNePftMjakKv3pbV+l3Mvto4/fk4ZQA+V
+        jil4MVFCBe8h0Vy4rEsBzfw3X6b6vxrKWWWvmWVzTwxv0bHx8wpKUtcVcCZLMDFyoFSm0Z
+        ML2KfKtOOgdLVn1YjyTsqLe1dIjV0lqm5PUTGhv6nJzBkF1N9moDTkvVbUJldkFgOKnjEZ
+        K148uF8gXrwveYvJw8EnPcPew0wEcs2B9TJSKnt1DAA/+LyDiE4LL2lr82uuW3be0kfST/
+        S8eLq+JUbaGXd+eOth/L32aJiDCMBgMPEju5liXN9Uy1T1qlDe4WQ2YwbhP6GQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1611242993;
+        s=2020e; t=1611243690;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=KCBN6cnBaZhP7IubvFTi7tEzogwzIU6boA/2BHq7Gi4=;
-        b=Tilw5nmQacwGSee2C6bQruDGkqY9VIQrlJedMX6nm3u8wfvPcOtxAEliI7vVjoBAccYKnn
-        lYglJCfOgD1vBtCg==
-From:   "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-To:     Roosen Henri <Henri.Roosen@ginzinger.com>
-Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "williams@redhat.com" <williams@redhat.com>
-Subject: Re: RT kernel v4.14 NULL pointer dereferences
-Message-ID: <20210121152953.jbqsi5d3isaxskoz@linutronix.de>
-References: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
- <20200814115848.w4m2bfqttkid6woi@linutronix.de>
- <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
- <20200817111311.zyqjznhferoqqxkh@linutronix.de>
- <4265e04810b55bea4f52f3c0c5057b808dcac814.camel@ginzinger.com>
+        bh=jsJBtC78TCdgLmtjTWdwNyIjhZYcT0Vs0pdRwNLIrEs=;
+        b=Tvaad29Lt8t3qZQaWiwhMjLZ6jgeHa0yBpxadAhGQAq6we1ttTcmxIjcfr+bHGaipE0Y5w
+        bKlbaFAQQsJSJCBA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Richard Cochran <richardcochran@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: thread_do_softirq in 4.19
+Message-ID: <20210121154130.hlru3m3cw4sgb7ly@linutronix.de>
+References: <20210108144314.GA23597@hoboy.vegasvil.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <4265e04810b55bea4f52f3c0c5057b808dcac814.camel@ginzinger.com>
+In-Reply-To: <20210108144314.GA23597@hoboy.vegasvil.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-01-19 10:57:36 [+0000], Roosen Henri wrote:
-> Sebastian, did you have a chance to bring up a duration test on your
-> imx6q board? Are there any results from testing?
+On 2021-01-08 06:43:14 [-0800], Richard Cochran wrote:
+> Dear list,
+Hello Richard,
 
-I just took your config from the thread and just bootet v5.4.84-rt47.
-For some reason I have no network so I started hackbench in the
-background, redirecting it to dev/null and recording serial showing
-cyclictest.
-I took the v5.4-tree as reported.
+> The function thread_do_softirq() is never used anywhere in
+> v4.19.135-rt60.
+> 
+>    git grep thread_do_softirq
+> 
+>    include/linux/interrupt.h:505:static inline void thread_do_softirq(void) { do_softirq(); }
+>    include/linux/interrupt.h:515:extern void thread_do_softirq(void);
+>    kernel/softirq.c:674:void thread_do_softirq(void)
+> 
+> Is it supposed to be called from somewhere, or is it simply dead code?
+
+Dead code. My guess is, that is around unused since the softirq rework
+around v3.0/v3.2. I just looked at v3.6-RT and it was unused there, too.
+It has been removed it in v5.2-rt1.
 
 > Thanks,
-> Henri
+> Richard
 
 Sebastian
