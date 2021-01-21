@@ -2,96 +2,88 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A52F1C433E0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 17:02:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 65DB0C433E0
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 20:51:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 66D4023A51
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 17:02:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3420123A61
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 20:51:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387461AbhAUPtV (ORCPT
+        id S1726274AbhAUUux (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 21 Jan 2021 10:49:21 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41446 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387566AbhAUPs2 (ORCPT
+        Thu, 21 Jan 2021 15:50:53 -0500
+Received: from jabberwock.ucw.cz ([46.255.230.98]:60694 "EHLO
+        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726067AbhAUUuv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Jan 2021 10:48:28 -0500
-Received: from mail-ed1-x52a.google.com (mail-ed1-x52a.google.com [IPv6:2a00:1450:4864:20::52a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8B3F6C061786
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jan 2021 07:47:47 -0800 (PST)
-Received: by mail-ed1-x52a.google.com with SMTP id s11so3047200edd.5
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jan 2021 07:47:47 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=from:to:subject:date:message-id:mime-version
-         :content-transfer-encoding:thread-index:content-language;
-        bh=Is1OZVE2D476+rxRymb8FFoMpd4LPFxuJ2EMz46a+Pk=;
-        b=H6hV7wjQM6Wi8Ev7Zi85Aa+XFBsXlFX2kKEbjq330CrsND6dUMPgOnylnCOS+yhrsa
-         LTQGosdb8ze0nPq5/gKFWO6jBmhYeNtxaxicNyZvzisJ78MrchUkQTXWf7SfkL1IcE2T
-         F7h+aYa+mP5OKYIE6iYBC8KZomKwFDqmHO+/Ed9SnV7Pdc8f1HP6bALGcT+eUcj8I/h7
-         oZjL+9XxCs7/ojP8mwlMnaryVCTR+DoLeMfBO7h1WcKyxT7S7NN6WC0wLaCP5oxqqID1
-         uC9610EvUKPXtsLVpIcEyySnYs6xHK0O/cBKh9Trgsd9dqI0Esw/TT76kl7QNjsXmhW4
-         UkwQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:subject:date:message-id:mime-version
-         :content-transfer-encoding:thread-index:content-language;
-        bh=Is1OZVE2D476+rxRymb8FFoMpd4LPFxuJ2EMz46a+Pk=;
-        b=L3w7YHZ40ZiV+9fQUZ6ZdYANNDBk6IXBVc4hOUFn80tQixIt5iBVg7YjAVi/MXgC4L
-         8+T0jcomZQH6XyCCVCB10K1GtQEys0ApzEynXE8cIgrVpLSNyt2+UR1MvL4THjpwmuIp
-         B4AgAoq7JVRYjPHQ1suKySBQk1rx3vtskGh6K1kQEJofk4tiQkAb7YAvv5ABTPBLFtQ7
-         lwCvBNI+IzaW1zD+difMgZQWyub+RuBpcVUXoYZiZtcRHcI/1eIIl6Cr/+2XhcJaIB5z
-         oqBiR2ZK/xfHSRqcPWRx+wHaDv4WFA3UayJWA2cy0UZd3P4F5xlNfFb3ClRUToDz5yKk
-         CscA==
-X-Gm-Message-State: AOAM530+u4lHWVSj5B6Tc1ybse7Nxm++UNq03LQEU2Nusz07XxnC+riS
-        1ODOcmpw1rL1/4YqjGvwmPcmYp9sb3A9SQ==
-X-Google-Smtp-Source: ABdhPJwDrhHTb0kV+MDLB086bo7eea41TZhT37nRN34erGsl19Q4QaIY7bR7wsimwoDI4flMefpf3w==
-X-Received: by 2002:a50:fe86:: with SMTP id d6mr11751622edt.80.1611244065879;
-        Thu, 21 Jan 2021 07:47:45 -0800 (PST)
-Received: from LAPTOP43OUQQN0 (dynamic-2a01-0c23-7034-1d00-35a9-97f8-ea49-d607.c23.pool.telefonica.de. [2a01:c23:7034:1d00:35a9:97f8:ea49:d607])
-        by smtp.gmail.com with ESMTPSA id gt18sm2343970ejb.104.2021.01.21.07.47.44
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 21 Jan 2021 07:47:45 -0800 (PST)
-From:   <schwenderjonathan@gmail.com>
-To:     <linux-rt-users@vger.kernel.org>
-Subject: What are managed IRQs?
-Date:   Thu, 21 Jan 2021 16:47:45 +0100
-Message-ID: <013a01d6f00c$c345be90$49d13bb0$@gmail.com>
+        Thu, 21 Jan 2021 15:50:51 -0500
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+        id 3D4BF1C0B94; Thu, 21 Jan 2021 21:50:09 +0100 (CET)
+Date:   Thu, 21 Jan 2021 21:50:08 +0100
+From:   Pavel Machek <pavel@ucw.cz>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.11-rc4-rt1
+Message-ID: <20210121205008.GA7149@duo.ucw.cz>
+References: <20210121134509.bagsesi4vdtwmdky@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain;
-        charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-X-Mailer: Microsoft Outlook 16.0
-Thread-Index: AdbwB+cpfoDhOq4nSsmgV9tbUOb/tg==
-Content-Language: de
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="k1lZvvs/B4yU6o8G"
+Content-Disposition: inline
+In-Reply-To: <20210121134509.bagsesi4vdtwmdky@linutronix.de>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi everyone,
 
-isolcpus has the option `managed_irq`, which supposedly assigns the IRQs to
-housekeeping CPUs if possible. According to the description of isolcpus, the
-affinity of managed IRQs can not be changed via /proc/irq.
-I've searched the kernel documentation and the kernel source code for 
-more information about managed IRQs / managed interrupts, but haven't found 
-any documentation (aside from isolcpus).
+--k1lZvvs/B4yU6o8G
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Specifically, I'm interested in what makes managed IRQs different (as in 
-why can't the affinity be changed via procfs), and
-what kind of IRQs are "managed"? 
+Hi!
 
-Also, I'd like to verify if the cmdline parameter `irqaffinity` 
-affects managed IRQs, or if it only modifies the default affinity for IRQs
-which can be changed via procfs.
+> I'm pleased to announce the v5.11-rc4-rt1 patch set.=20
+>=20
+> Changes since v5.10.8-rt24:
+>=20
+>   - Updated to v5.11-rc4
+>=20
+> Known issues
+>      - kdb/kgdb can easily deadlock.
+>      - kmsg dumpers expecting not to be called in parallel can clobber
+>        their temp buffer.
+>      - netconsole triggers WARN.
 
-Thanks
+I noticed... lot of code using in_interrupt() to decide what to do is
+making it to 5.10-stable at the moment (and I guess that means
+vanilla, too).
 
-Jonathan
+I have recollection that that is not okay thing to do. Am I right?
 
+Examples: 8abec36d1274bbd5ae8f36f3658b9abb3db56c31,
+d68b29584c25dbacd01ed44a3e45abb35353f1de.
+
+Best regards,
+								Pavel
+--=20
+http://www.livejournal.com/~pavelmachek
+
+--k1lZvvs/B4yU6o8G
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCYAnpAAAKCRAw5/Bqldv6
+8oEXAKCk0REAiCLqUG6sjFaegqIjAVHSzwCgvxYakzqW93bmD7FsEQNM+yGja8I=
+=YJrk
+-----END PGP SIGNATURE-----
+
+--k1lZvvs/B4yU6o8G--
