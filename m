@@ -2,84 +2,77 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8D4FC433DB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 13:56:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E907C433DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 15:33:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7AC37239A4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 13:56:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E5A5723A1E
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jan 2021 15:33:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729084AbhAUNzp (ORCPT
+        id S1733086AbhAUPcw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 21 Jan 2021 08:55:45 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43094 "EHLO
+        Thu, 21 Jan 2021 10:32:52 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37548 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729685AbhAUNqu (ORCPT
+        with ESMTP id S1732966AbhAUPaf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Jan 2021 08:46:50 -0500
+        Thu, 21 Jan 2021 10:30:35 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C04DBC061799;
-        Thu, 21 Jan 2021 05:45:11 -0800 (PST)
-Date:   Thu, 21 Jan 2021 14:45:09 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5161EC0613ED
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jan 2021 07:29:55 -0800 (PST)
+Date:   Thu, 21 Jan 2021 16:29:53 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1611236710;
+        s=2020; t=1611242993;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=a8kgjGERZ38JPLnaj3ASvByW6hjRmOwa9piML4ZoDnU=;
-        b=3nI32Xwb5is82sli24LA1343h30R/UpIqOrjEvSUx3dE4tqNdmL7hHgMUCU44BKbJUVv3M
-        wFtrsuXUxRUgxh0dyQaIKbKuobIY9R50Y8qlrO0cl+nL0yLqfr4akWKCvTKPQ86ncC6u0F
-        1vJ9hYs4iClvGumUZ1JDkxVC6q694i9eoz5/oFVtQDmNYyTyGEOnuoelXN8ANHjZq82jIC
-        7IWWKBdcOVpRERcrKQB96YDo9XIJod3rn2rWSVzLNFb1ts5HGQNg5MFRIr30u9tHIbt9fy
-        HlecdcVtXoxxMzYElDfvcwGkwEXXjmsum+xKkaPaZo1+H3dYoi9NesQRY6TZLw==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KCBN6cnBaZhP7IubvFTi7tEzogwzIU6boA/2BHq7Gi4=;
+        b=eEP2SPksKXkHTnlai3v+vhILbyyMX4k7554J8glPZvus3EtZiI8+2n+86u8CAnp0m5tRwg
+        5ndVxCpAR/V3A0BIjD4MsgXI8GEFrj4H5BcEuitc5r77QlE7VUCiEpdTluZv4l8E7MwoWZ
+        QuiBp4cGex65h7KoTCQqMxxYnn+nZMmP9bqH8fyt3P07Nqj04OsaJJKrfTZHggr3XLI2DM
+        qXJYIcYmw6N1t+N2Xp/OPvEd2VM3VomGTEz8BCr1zhpvP6+pFZ2uexX2j0H01qwAxrTApP
+        6osh6t0glo8/Uo0asH2dyGMZWJ1lpsxt81dCxbWBWNLgj1YXXMjUv3/pWcISXw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1611236710;
+        s=2020e; t=1611242993;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=a8kgjGERZ38JPLnaj3ASvByW6hjRmOwa9piML4ZoDnU=;
-        b=J+JVE+jNG9lMGaB/fMBF3JOLHEoOEZkYa+MxI7ZMBff4jCpmkoky19luSBFzZAtGsSeG73
-        LIugs93ao1KX1ECA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.11-rc4-rt1
-Message-ID: <20210121134509.bagsesi4vdtwmdky@linutronix.de>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KCBN6cnBaZhP7IubvFTi7tEzogwzIU6boA/2BHq7Gi4=;
+        b=Tilw5nmQacwGSee2C6bQruDGkqY9VIQrlJedMX6nm3u8wfvPcOtxAEliI7vVjoBAccYKnn
+        lYglJCfOgD1vBtCg==
+From:   "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+To:     Roosen Henri <Henri.Roosen@ginzinger.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "williams@redhat.com" <williams@redhat.com>
+Subject: Re: RT kernel v4.14 NULL pointer dereferences
+Message-ID: <20210121152953.jbqsi5d3isaxskoz@linutronix.de>
+References: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
+ <20200814115848.w4m2bfqttkid6woi@linutronix.de>
+ <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
+ <20200817111311.zyqjznhferoqqxkh@linutronix.de>
+ <4265e04810b55bea4f52f3c0c5057b808dcac814.camel@ginzinger.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+In-Reply-To: <4265e04810b55bea4f52f3c0c5057b808dcac814.camel@ginzinger.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+On 2021-01-19 10:57:36 [+0000], Roosen Henri wrote:
+> Sebastian, did you have a chance to bring up a duration test on your
+> imx6q board? Are there any results from testing?
 
-I'm pleased to announce the v5.11-rc4-rt1 patch set. 
+I just took your config from the thread and just bootet v5.4.84-rt47.
+For some reason I have no network so I started hackbench in the
+background, redirecting it to dev/null and recording serial showing
+cyclictest.
+I took the v5.4-tree as reported.
 
-Changes since v5.10.8-rt24:
-
-  - Updated to v5.11-rc4
-
-Known issues
-     - kdb/kgdb can easily deadlock.
-     - kmsg dumpers expecting not to be called in parallel can clobber
-       their temp buffer.
-     - netconsole triggers WARN.
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.11-rc4-rt1
-
-The RT patch against v5.11-rc4 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patch-5.11-rc4-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patches-5.11-rc4-rt1.tar.xz
+> Thanks,
+> Henri
 
 Sebastian
