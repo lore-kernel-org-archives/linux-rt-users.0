@@ -6,103 +6,77 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BFCFEC433DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 05:33:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35947C433E6
+	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 06:29:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7D58423122
-	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 05:33:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F10CC208C7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 06:29:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726236AbhAVFd3 (ORCPT
+        id S1726952AbhAVG3F (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 22 Jan 2021 00:33:29 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49556 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725854AbhAVFd0 (ORCPT
+        Fri, 22 Jan 2021 01:29:05 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:52242 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726942AbhAVG11 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 22 Jan 2021 00:33:26 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 50262C06174A;
-        Thu, 21 Jan 2021 21:32:46 -0800 (PST)
-Date:   Fri, 22 Jan 2021 06:32:42 +0100
+        Fri, 22 Jan 2021 01:27:27 -0500
+Date:   Fri, 22 Jan 2021 07:26:41 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1611293564;
+        s=2020; t=1611296802;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=dpop0D8s8nOkm9rdOZPW1e/bZ7HTuTOJtdfsGUyL5BI=;
-        b=SglP/ud0Rlh5BIhnLdj41nuNgqK0WNPyKV/f6xkDKtq00Vy6AnrzDNlA+x86vSrnkWFLR4
-        EIKGJoJIIms/LWkwcan8//MRqg6qS9BQYxQMR62uJBKJPaKQmFQFJL1UoCmIC4+QzYLY//
-        NGBasA4LNG++ZhqPkJVf9nm1x97ldRbJ5FTkcohWAOYOHFD0Wr+F0CAuImvLPy4n0dyPSU
-        WY1w8T9itCwc6My6tSayrrTq2bj2uvB0I3q1fGL5OmZqmA13elgHIOB7WOk3+4yx+yiL1A
-        8m0OlC6mvdlId+MePUUU0kd0F0Wqpifi5VSXg9Rv8gTZn7LDLCkymAC39pz8mg==
+        bh=/nuKb3Xq/vrmzwHDMRf1G46C3c3u4CpXthify8simzg=;
+        b=boZnD4MCDx85mN9+Q1mnQceyLXK8UBKrME3EdqH1bOMb+TsXscGn3JNVjX+t3hyAgVkh59
+        vHfyOEQRnUfQBf29Kdj+vsnNhtkcXPNK4BcNo8ZnnyXqJY2g0RmeSSfXkT7X1SoEsqnjuO
+        j8hP6lhfvTvyUwh8EArf/mFxYeXS5hoTqXulAMguiYsLt/ERhSpytPfpsnTjU6fTr9u5pU
+        vmb90QC+HxrMnHh5GYUsj3A96yCqCs7zOtzhulMMGmKx06DJ+cIr9WvaGWVcSG7GcQ64JX
+        /D5ka3dJY68yjdWWD08dhSGweXU/V0rUX9h1Mi/hQiSn+Q+Um5/y6xRqCNdVUg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1611293564;
+        s=2020e; t=1611296802;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=dpop0D8s8nOkm9rdOZPW1e/bZ7HTuTOJtdfsGUyL5BI=;
-        b=UETyxT9V57QK+YQNu16L1bE56S7jPGyUg+nHfMNOapvm47nLZ+8VMWZNGTtHpvEKZO4EOH
-        6s8bixWXRQasSXDw==
+        bh=/nuKb3Xq/vrmzwHDMRf1G46C3c3u4CpXthify8simzg=;
+        b=rd+hkGCHxDzAn2f5ZB+plEONYhS1m1xS3SntQorg90F8+FLSvNlfr5ThQ/B1RqSpG4sNnL
+        Tsr4D0amUlXXm2AQ==
 From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     Pavel Machek <pavel@ucw.cz>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] v5.11-rc4-rt1
-Message-ID: <YApjeinzJWKYNbYb@lx-t490>
-References: <20210121134509.bagsesi4vdtwmdky@linutronix.de>
- <20210121205008.GA7149@duo.ucw.cz>
+To:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+Cc:     jkacur@redhat.com, binh1.tranhai@toshiba.co.jp,
+        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>,
+        dwagner@suse.de, linux-rt-users@vger.kernel.org
+Subject: Re: Some issues running rteval on arm64, arm and i386
+Message-ID: <YApwIRJdMCXcMVbU@lx-t490>
+References: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20210121205008.GA7149@duo.ucw.cz>
+In-Reply-To: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jan 21, 2021 at 09:50:08PM +0100, Pavel Machek wrote:
-> Hi!
+On Mon, Jan 18, 2021 at 06:00:46PM +0900, Punit Agrawal wrote:
 >
-> > I'm pleased to announce the v5.11-rc4-rt1 patch set.
-> >
-> > Changes since v5.10.8-rt24:
-> >
-> >   - Updated to v5.11-rc4
-> >
-> > Known issues
-> >      - kdb/kgdb can easily deadlock.
-> >      - kmsg dumpers expecting not to be called in parallel can clobber
-> >        their temp buffer.
-> >      - netconsole triggers WARN.
+> We ran into a few issues when trying to run rteval on arm64, arm and
+> i386.
 >
-> I noticed... lot of code using in_interrupt() to decide what to do is
-> making it to 5.10-stable at the moment (and I guess that means
-> vanilla, too).
->
-> I have recollection that that is not okay thing to do. Am I right?
+> A few of the assumptions in rteval don't hold true on these systems.
 >
 
-Correct. These macros should not be added to new, non-core, kernel code.
+For some embedded devices, it can be tough to use rteval with it. In
+general, it requires, *on the target*:
 
-There's an on-going effort to clear them already, as in:
+  1. a full development toolchain (GCC, make, flex, bison, etc.)
+  2. a full kernel source tree
+  3. a full Python environment
 
-  - https://lkml.kernel.org/r/20201019100629.419020859@linutronix.de		(merged)
-  - https://lkml.kernel.org/r/20201126132952.2287996-1-bigeasy@linutronix.de	(merged)
-  - https://lkml.kernel.org/r/20210118100955.1761652-1-a.darwish@linutronix.de	(to be merged)
+You can use a combination of stress-ng and cyclictest to properly
+evaluate your preempt_rt system latencies. Just make sure to exclude the
+stress-ng stressors which allocate real-time threads, which can (and do)
+conflict with the cyclictest ones.
 
-> Examples: 8abec36d1274bbd5ae8f36f3658b9abb3db56c31,
-> d68b29584c25dbacd01ed44a3e45abb35353f1de.
->
-
-That's sad.
-
-Maybe it would be wise to let a bot scan lore regularly, and send an
-automatic notification to authors whenever their patches reintroduce
-these macros to non-core kernel code.
-
-Thanks,
+Kind regards,
 
 --
 Ahmed S. Darwish
