@@ -6,67 +6,68 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
 	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F31EC433E6
-	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 23:27:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7B1F5C433E0
+	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 23:32:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0DFB723B51
-	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 23:27:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4AE38239D4
+	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Jan 2021 23:32:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728310AbhAVX1z (ORCPT
+        id S1728163AbhAVXcl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 22 Jan 2021 18:27:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55408 "EHLO
+        Fri, 22 Jan 2021 18:32:41 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56398 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728442AbhAVX1u (ORCPT
+        with ESMTP id S1728236AbhAVXc0 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 22 Jan 2021 18:27:50 -0500
-Received: from mail-qt1-x82b.google.com (mail-qt1-x82b.google.com [IPv6:2607:f8b0:4864:20::82b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A4F50C06178B
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 Jan 2021 15:27:09 -0800 (PST)
-Received: by mail-qt1-x82b.google.com with SMTP id z22so5452413qto.7
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 Jan 2021 15:27:09 -0800 (PST)
+        Fri, 22 Jan 2021 18:32:26 -0500
+Received: from mail-qk1-x731.google.com (mail-qk1-x731.google.com [IPv6:2607:f8b0:4864:20::731])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 18BF6C0613D6
+        for <linux-rt-users@vger.kernel.org>; Fri, 22 Jan 2021 15:31:43 -0800 (PST)
+Received: by mail-qk1-x731.google.com with SMTP id k193so6902150qke.6
+        for <linux-rt-users@vger.kernel.org>; Fri, 22 Jan 2021 15:31:43 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=liafwCAjt92iLA4cLgj5Tjx7sOKTgC3IwoI04FloCKI=;
-        b=iGc0H6d2p8BCYnM9KQwFjiX/uQynQzBAGE3ye7jCy2YsFwTARZCQhl5c3zudx2cOhU
-         Fi2lnBaMCyeDXVeu+kHlxoShLfnxTO5aeU4fCxgIrtaraNIKzCkYaXqCGwQbJ/uHVSwp
-         DDYIF8scxKAGW9tTA+UlygNjW+tWZn6J4lD6vmH81IemXo6RuduKexAhNEsQ/MaZw/Rd
-         ZyRcECbTVgKQfxzkxKu6P44Y8XKgOKs8Fe2ZOIeFuwD4O596CTfwtgsJY1SsuGyQwe+R
-         wRmL5LkkXSfru/ET2EPqdyLNrIHX248U30RyZLq60BGwbkWOoBlLRMjGBOnRMKUa0WKP
-         zKVA==
+        bh=TTbjTNhEWfew04d8Tdmb61dkMfPzSb02b5YV2nSQgLY=;
+        b=oKuTkSwT901rABp5uyp7djMsZVMp+s/WC4CTP5IYGecr0+CaJ5gtKClLR3Jju4b2G1
+         RK7FYokLYgncBqzoKBxOcDPtmH0hiojGxxgIsqcVliZyIiMjyzfOK4adLiRb6IOt/5lA
+         aHYXUZsi/x9mHJi1TCYxs5jaGIP/chd+O9slqLI1XOhu4TWusDBcnmwSlVoD2N/iSGj3
+         1OJwXX8Nj4DcQxXNGm0gyLhRNsBPN651a/mvU4We1Gbkbpl53J11x1B00BrXjyGLvqN4
+         Mi7U4McxOPW5Ine+IjY5Pb+wpS37CP6vUSLUOxe7y2eLB4yTRafoUAirCXeHe1s0T4Qu
+         Mf1Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=liafwCAjt92iLA4cLgj5Tjx7sOKTgC3IwoI04FloCKI=;
-        b=taqRrw/3RoNTPX/XdsxkAHFeMrvotMDFuSXHIZA6262pbuYc5yB8Cp9a/eNBjlCYuP
-         5DEKBNigAUVbbmgJg1vmugAeGGWAdLYWsLVRiiUTUaUpjx7Q+nkCRxZ1e6mXdH1jrfR0
-         vTElliGR+5TYc/c0WKA/BbFklsC03fEf4PP/S0w+Q9NPUO6Env9UL8Vzzo02NktDKzjb
-         Ef15jpiOmXOZTutYFhYRinW9aHCihB+5tOeamJn8n7dkCDXX27N5nRLGXWYe3F2smspx
-         aJG82IFb7itoVGkx/4xyPFl99kC8cqZMcxlx6NRbFqEIIL11JzvcScgfXzLlNbDPjJQe
-         4Jjw==
-X-Gm-Message-State: AOAM530itCF5yaB2XxSMK2hs8qjCgdAaaQH0MWRpa4DUrUKc/G+o33Yu
-        P8nIgsw0jnIhs8Er0viakxs=
-X-Google-Smtp-Source: ABdhPJz1c0lNbmyP08DLXVAhuXWBHtTKk3CBDgr87QyDWupz65hu6/vz63swJ8qLoBvJmx7FMBRk3A==
-X-Received: by 2002:ac8:4c82:: with SMTP id j2mr178599qtv.40.1611358028964;
-        Fri, 22 Jan 2021 15:27:08 -0800 (PST)
+        bh=TTbjTNhEWfew04d8Tdmb61dkMfPzSb02b5YV2nSQgLY=;
+        b=aDIfR7ev5Rtl4qVZ6qpEKG6Vb9c/d3nt1ZdlTb3lqA627WQUnmOtcMOsGxcG1SA2SQ
+         DR4gNZ5Zj7jqi/JXQtpTPICpc1XGSV5S/dQg7tVsEA070TbiLfm0KndMDp7CjE3pERqm
+         JKZWiz3q13nID9j18DaMZDrfIgkggT3XT94A18DF8cxYvMkqmyDGQk4BDzecCdrx+x7M
+         N8E3r/Yda+lJfX38vHAiS+UMY6zFTAup4tUpYX+hy2tSCg1rEojCOl80QYsfUPRt2HuF
+         sW9+AUHF8/0pGzKdVfy3kcsyh2oIf128rsjAVdmO9V43JzgOqDeH8tIg1bmuFnhaXhzt
+         p8zQ==
+X-Gm-Message-State: AOAM532nmvETPobQhRF2tVQs+dqDsql0D0D6eV9lefb7YS38DmDRphwx
+        LhA+R6uAFNQyAQqbuX1O3LE=
+X-Google-Smtp-Source: ABdhPJwMVAm4IgbQVfMBY0aHyxlQh9rXjy9dvBzsdmT5OHBc1Fe6A8i3I3oF4wF3Tb8CWetcO09Z4A==
+X-Received: by 2002:a37:a053:: with SMTP id j80mr7375987qke.198.1611358302369;
+        Fri, 22 Jan 2021 15:31:42 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id n139sm2810992qke.89.2021.01.22.15.27.07
+        by smtp.gmail.com with ESMTPSA id b78sm7348963qkg.29.2021.01.22.15.31.41
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 22 Jan 2021 15:27:08 -0800 (PST)
+        Fri, 22 Jan 2021 15:31:41 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 22 Jan 2021 18:27:00 -0500 (EST)
+Date:   Fri, 22 Jan 2021 18:31:40 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
-To:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-cc:     binh1.tranhai@toshiba.co.jp,
+To:     "Ahmed S. Darwish" <a.darwish@linutronix.de>
+cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
+        binh1.tranhai@toshiba.co.jp,
         Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>,
         dwagner@suse.de, linux-rt-users@vger.kernel.org
 Subject: Re: Some issues running rteval on arm64, arm and i386
-In-Reply-To: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
-Message-ID: <f4fac09b-dd20-3949-87e1-6855b0cec521@redhat.com>
-References: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
+In-Reply-To: <YApwIRJdMCXcMVbU@lx-t490>
+Message-ID: <8b5fcd1f-e78e-744d-836e-d1e4b2d5794@redhat.com>
+References: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp> <YApwIRJdMCXcMVbU@lx-t490>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -75,47 +76,41 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Mon, 18 Jan 2021, Punit Agrawal wrote:
+On Fri, 22 Jan 2021, Ahmed S. Darwish wrote:
 
-> Hi John,
+> On Mon, Jan 18, 2021 at 06:00:46PM +0900, Punit Agrawal wrote:
+> >
+> > We ran into a few issues when trying to run rteval on arm64, arm and
+> > i386.
+> >
+> > A few of the assumptions in rteval don't hold true on these systems.
+> >
 > 
-> We ran into a few issues when trying to run rteval on arm64, arm and
-> i386.
+> For some embedded devices, it can be tough to use rteval with it. In
+> general, it requires, *on the target*:
 > 
-> A few of the assumptions in rteval don't hold true on these systems.
+>   1. a full development toolchain (GCC, make, flex, bison, etc.)
+>   2. a full kernel source tree
+>   3. a full Python environment
 > 
->     1. On arm64, there is no 'model name' in /proc/cpuinfo. See attached
->        sample output from qemu arm64. I verified the same behaviour on
->        an arm64 board we have as well.
+> You can use a combination of stress-ng and cyclictest to properly
+> evaluate your preempt_rt system latencies. Just make sure to exclude the
+> stress-ng stressors which allocate real-time threads, which can (and do)
+> conflict with the cyclictest ones.
 > 
->     2. Also, the build target for the kernel on arm64 is "Image" of
->        "bzImage". Rather than use different targets per-architecture it
->        maybe better to drop it all together. Do you see any downsides?
+> Kind regards,
 > 
-> The attached patches[1][2] gets things moving with regards to Issues 1
-> and 2 locally but I am not sure that's the best solution - especially
-> for "cpuinfo".
-> 
->     3. Both arm and i386 do not provide "numa" nodes in sysfs. This
->        causes rteval to complain "No valid nodes found in
->        /sys/devices/system/node"
-> 
->        Is this requirement planned to be relaxed - it'll be really
->        useful to be able to use rteval on these architectures.
-> 
-> Thanks,
-> Punit
-> 
+> --
+> Ahmed S. Darwish
 > 
 
-In the past we targetted x86_64 only with rteval, but I definitely am 
-interested in patches that would make it work on other architectures where 
-the rt-kernel runs.
+I agree, rteval wasn't designed for the embedded world. The reason for the
+full development tool chain is to compile the kernel as a load, so if you 
+are compiling the kernel on a machine other than the device it is 
+targetted for, then rteval won't work. Also, yes it runs with a python3
+envirnoment, we still maintain a version for python2, but no new 
+development is occuring there.
 
-Could you resend the patches inline in separate mails, as you would when
-sending patches for the linux kernel? The reason for this is it makes it
-easier to comment on the code.
-
-Thanks
+note that rteval can now run stress-ng too, but the default is without it.
 
 John
