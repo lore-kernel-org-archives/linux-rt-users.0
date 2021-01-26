@@ -2,35 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C970C433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 16:39:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 95D25C4361A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 16:39:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5C58322273
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 16:39:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6308123118
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 16:39:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730766AbhAZJXi (ORCPT
+        id S2389620AbhAZJYG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jan 2021 04:23:38 -0500
-Received: from mx2.suse.de ([195.135.220.15]:57504 "EHLO mx2.suse.de"
+        Tue, 26 Jan 2021 04:24:06 -0500
+Received: from mx2.suse.de ([195.135.220.15]:59456 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2389828AbhAZJUL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Jan 2021 04:20:11 -0500
+        id S2390167AbhAZJUb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 26 Jan 2021 04:20:31 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id B4DA6B90F;
-        Tue, 26 Jan 2021 09:19:51 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id E4BCDAC4F;
+        Tue, 26 Jan 2021 09:19:49 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v4 12/12] rt-migrate-test: Add JSON output feature
-Date:   Tue, 26 Jan 2021 10:19:46 +0100
-Message-Id: <20210126091946.1241-13-dwagner@suse.de>
+Subject: [rt-tests v4 06/12] cyclicdeadline: Add JSON output feature
+Date:   Tue, 26 Jan 2021 10:19:40 +0100
+Message-Id: <20210126091946.1241-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210126091946.1241-1-dwagner@suse.de>
 References: <20210126091946.1241-1-dwagner@suse.de>
@@ -45,197 +45,163 @@ simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/rt-migrate-test/rt-migrate-test.c | 118 +++++++++++++++++++++-----
- 1 file changed, 99 insertions(+), 19 deletions(-)
+ src/sched_deadline/cyclicdeadline.c | 72 ++++++++++++++++++++++-------
+ 1 file changed, 56 insertions(+), 16 deletions(-)
 
-diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-index 9bf716c9178c..9d34b3c7da52 100644
---- a/src/rt-migrate-test/rt-migrate-test.c
-+++ b/src/rt-migrate-test/rt-migrate-test.c
-@@ -19,11 +19,12 @@
- #include <fcntl.h>
- #include <signal.h>
- #include <sys/time.h>
--#include <linux/unistd.h>
- #include <sys/syscall.h>
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 71cde5781499..ed3c960d9916 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -18,6 +18,7 @@
  #include <errno.h>
- #include <sched.h>
- #include <pthread.h>
+ #include <signal.h>
+ #include <getopt.h>
 +#include <inttypes.h>
-+
- #include "rt-utils.h"
  
- int nr_tasks;
-@@ -99,6 +100,7 @@ static int done;
- static int loop;
- static int duration;
+ #include <sys/syscall.h>
+ #include <sys/types.h>
+@@ -85,13 +86,11 @@ static pthread_barrier_t barrier;
+ 
+ static int cpu_count;
+ static int all_cpus;
+-
+ static int nr_threads;
+ static int use_nsecs;
+-
+ static int mark_fd;
+-
  static int quiet;
 +static char outfile[MAX_PATH];
  
- static pthread_barrier_t start_barrier;
- static pthread_barrier_t end_barrier;
-@@ -160,6 +162,7 @@ static void usage(int error)
- 	       "-h       --help            Print this help message\n"
- 	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
- 	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
+ static int find_mount(const char *mount, char *debugfs)
+ {
+@@ -603,16 +602,17 @@ static void usage(int error)
+ 	       "                           tasks on. An empty CPUSET runs on all CPUs a deadline\n"
+ 	       "                           task.\n"
+ 	       "                           on CPU 4, and thread #5 on CPU 5.\n"
+-	       "-D TIME     --duration     Specify a length for the test run.\n"
++	       "-D TIME  --duration        Specify a length for the test run.\n"
+ 	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
+ 	       "                           days\n"
+-	       "-h          --help         Show this help menu.\n"
+-	       "-i INTV     --interval     The shortest deadline for the tasks in us\n"
++	       "-h       --help            Show this help menu.\n"
++	       "-i INTV  --interval        The shortest deadline for the tasks in us\n"
+ 	       "                           (default 1000us).\n"
+-	       "-s STEP     --step         The amount to increase the deadline for each task in us\n"
 +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
- 	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
- 	       "-q       --quiet           print a summary only on exit\n"
- 	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
-@@ -169,22 +172,29 @@ static void usage(int error)
++	       "-s STEP  --step            The amount to increase the deadline for each task in us\n"
+ 	       "                           (default 500us).\n"
+-	       "-t NUM      --threads      The number of threads to run as deadline (default 1).\n"
+-	       "-q          --quiet        print a summary only on exit\n"
++	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
++	       "-q       --quiet           print a summary only on exit\n"
+ 	       );
  	exit(error);
  }
- 
-+enum option_value {
-+	OPT_CHECK=1, OPT_DURATION, OPT_EQUAL, OPT_HELP, OPT_LOOPS,
-+	OPT_MAXERR, OPT_OUTPUT, OPT_PRIO, OPT_QUIET, OPT_RUN_TIME,
-+	OPT_SLEEP_TIME
-+};
-+
- static void parse_options(int argc, char *argv[])
- {
- 	for (;;) {
- 		int option_index = 0;
- 		/** Options for getopt */
- 		static struct option long_options[] = {
--			{"check",	no_argument,		NULL, 'c'},
--			{"duration",	required_argument,	NULL, 'D'},
--			{"equal",	no_argument,		NULL, 'e'},
--			{"help",	no_argument,		NULL, 'h'},
--			{"loops",	required_argument,	NULL, 'l'},
--			{"maxerr",	required_argument,	NULL, 'm'},
--			{"prio",	required_argument,	NULL, 'p'},
--			{"quiet",	no_argument,		NULL, 'q'},
--			{"run-time",	required_argument,	NULL, 'r'},
--			{"sleep-time",	required_argument,	NULL, 's'},
-+			{"check",	no_argument,		NULL, OPT_CHECK},
-+			{"duration",	required_argument,	NULL, OPT_DURATION},
-+			{"equal",	no_argument,		NULL, OPT_EQUAL},
-+			{"help",	no_argument,		NULL, OPT_HELP},
-+			{"loops",	required_argument,	NULL, OPT_LOOPS},
-+			{"maxerr",	required_argument,	NULL, OPT_MAXERR},
-+			{"output",	required_argument,      NULL, OPT_OUTPUT },
-+			{"prio",	required_argument,	NULL, OPT_PRIO},
-+			{"quiet",	no_argument,		NULL, OPT_QUIET},
-+			{"run-time",	required_argument,	NULL, OPT_RUN_TIME},
-+			{"sleep-time",	required_argument,	NULL, OPT_SLEEP_TIME},
- 			{NULL, 0, NULL, 0}
- 		};
- 		int c = getopt_long(argc, argv, "cD:ehl:m:p:qr:s:",
-@@ -192,21 +202,50 @@ static void parse_options(int argc, char *argv[])
- 		if (c == -1)
- 			break;
- 		switch (c) {
--		case 'c': check = 1; break;
--		case 'D': duration = parse_time_string(optarg); break;
--		case 'e': equal = 1; break;
-+		case OPT_CHECK:
-+		case 'c':
-+			check = 1;
-+			break;
-+		case OPT_DURATION:
-+		case 'D':
-+			duration = parse_time_string(optarg);
-+			break;
-+		case OPT_EQUAL:
-+		case 'e':
-+			equal = 1;
-+			break;
-+		case OPT_HELP:
- 		case '?':
- 		case 'h':
- 			usage(0);
- 			break;
--		case 'l': nr_runs = atoi(optarg); break;
--		case 'm': max_err = usec2nano(atoi(optarg)); break;
--		case 'p': prio_start = atoi(optarg); break;
--		case 'q': quiet = 1; break;
-+		case OPT_LOOPS:
-+		case 'l':
-+			nr_runs = atoi(optarg);
-+			break;
-+		case OPT_MAXERR:
-+		case 'm':
-+			max_err = usec2nano(atoi(optarg));
-+			break;
-+		case OPT_OUTPUT:
-+			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
-+			break;
-+		case OPT_PRIO:
-+		case 'p':
-+			prio_start = atoi(optarg);
-+			break;
-+		case OPT_QUIET:
-+		case 'q':
-+			quiet = 1;
-+			break;
-+		case OPT_RUN_TIME:
- 		case 'r':
- 			run_interval = atoi(optarg);
- 			break;
--		case 's': interval = atoi(optarg); break;
-+		case OPT_SLEEP_TIME:
-+		case 's':
-+			interval = atoi(optarg);
-+			break;
- 		default:
- 			usage(1);
- 		}
-@@ -313,6 +352,44 @@ static void print_results(void)
+@@ -966,6 +966,32 @@ static void loop(struct sched_data *sched_data, int nr_threads)
  	}
  }
  
 +static void write_stats(FILE *f, void *data)
 +{
-+	int i;
-+	int t;
-+	unsigned long long tasks_max[nr_tasks];
-+	unsigned long long tasks_min[nr_tasks];
-+	unsigned long long tasks_avg[nr_tasks];
++	struct sched_data *sd = data;
++	struct thread_stat *s;
++	unsigned int i;
 +
-+	memset(tasks_max, 0, sizeof(tasks_max[0])*nr_tasks);
-+	memset(tasks_min, 0xff, sizeof(tasks_min[0])*nr_tasks);
-+	memset(tasks_avg, 0, sizeof(tasks_avg[0])*nr_tasks);
-+
-+	for (i=0; i < nr_runs; i++) {
-+		for (t=0; t < nr_tasks; t++) {
-+			unsigned long long itv = intervals[i][t];
-+
-+			if (tasks_max[t] < itv)
-+				tasks_max[t] = itv;
-+			if (tasks_min[t] > itv)
-+				tasks_min[t] = itv;
-+			tasks_avg[t] += itv;
-+		}
-+	}
-+
-+	fprintf(f, "  \"num_threads\": %d,\n", nr_tasks);
++	fprintf(f, "  \"num_threads\": %d,\n", nr_threads);
++	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
 +	fprintf(f, "  \"thread\": {\n");
-+	for (i = 0; i < nr_tasks; i++) {
++	for (i = 0; i < nr_threads; i++) {
++		s = &sd[i].stat;
 +		fprintf(f, "    \"%u\": {\n", i);
-+		fprintf(f, "      \"prio\": %d,\n", calc_prio(i));
-+		fprintf(f, "      \"min\": %lld,\n", nano2usec(tasks_min[i]));
-+		fprintf(f, "      \"avg\": %lld,\n", nano2usec(tasks_avg[i]) / nr_runs);
-+		fprintf(f, "      \"max\": %lld,\n", nano2usec(tasks_max[i]));
-+		fprintf(f, "      \"total\": %lld\n", nano2usec(tasks_avg[i]));
-+		fprintf(f, "    }%s\n", i == nr_tasks - 1 ? "" : ",");
++		fprintf(f, "	 \"cycles\": %" PRIu64 ",\n", s->cycles);
++		fprintf(f, "	 \"min\": %" PRIu64 ",\n", s->min);
++		fprintf(f, "	 \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "	 \"avg\": %.2f\n", s->avg/s->cycles);
++		fprintf(f, "    }%s\n", i == nr_threads - 1 ? "" : ",");
 +	}
 +	fprintf(f, "  }\n");
 +}
 +
- static unsigned long busy_loop(unsigned long long start_time)
++enum options_valud {
++	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
++	OPT_OUTPUT, OPT_STEP, OPT_THREADS, OPT_QUIET
++};
++
+ int main(int argc, char **argv)
  {
- 	unsigned long long time;
-@@ -582,6 +659,9 @@ int main (int argc, char **argv)
+ 	struct sched_data *sched_data;
+@@ -992,19 +1018,21 @@ int main(int argc, char **argv)
  
- 	print_results();
+ 	for (;;) {
+ 		static struct option options[] = {
+-			{ "affinity",	optional_argument,	NULL,	'a' },
+-			{ "duration",	required_argument,	NULL,	'D' },
+-			{ "help",	no_argument,		NULL,	'h' },
+-			{ "interval",	required_argument,	NULL,	'i' },
+-			{ "step",	required_argument,	NULL,	's' },
+-			{ "threads",	required_argument,	NULL,	't' },
+-			{ "quiet",	no_argument,		NULL,	'q' },
++			{ "affinity",	optional_argument,	NULL,	OPT_AFFINITY },
++			{ "duration",	required_argument,	NULL,	OPT_DURATION },
++			{ "help",	no_argument,		NULL,	OPT_HELP },
++			{ "interval",	required_argument,	NULL,	OPT_INTERVAL },
++			{ "output",	required_argument,	NULL,	OPT_OUTPUT },
++			{ "step",	required_argument,	NULL,	OPT_STEP },
++			{ "threads",	required_argument,	NULL,	OPT_THREADS },
++			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
+ 			{ NULL,		0,			NULL,	0   },
+ 		};
+ 		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
++		case OPT_AFFINITY:
+ 		case 'a':
+ 		case 'c':
+ 			if (!nr_threads)
+@@ -1016,21 +1044,30 @@ int main(int argc, char **argv)
+ 			else
+ 				all_cpus = 1;
+ 			break;
++		case OPT_INTERVAL:
+ 		case 'i':
+ 			interval = atoi(optarg);
+ 			break;
++		case OPT_OUTPUT:
++			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
++			break;
++		case OPT_STEP:
+ 		case 's':
+ 			step = atoi(optarg);
+ 			break;
++		case OPT_THREADS:
+ 		case 't':
+ 			nr_threads = atoi(optarg);
+ 			break;
++		case OPT_DURATION:
+ 		case 'D':
+ 			duration = parse_time_string(optarg);
+ 			break;
++		case OPT_QUIET:
+ 		case 'q':
+ 			quiet = 1;
+ 			break;
++		case OPT_HELP:
+ 		case 'h':
+ 			usage(0);
+ 			break;
+@@ -1190,6 +1227,9 @@ int main(int argc, char **argv)
+ 		}
+ 	}
  
 +	if (strlen(outfile) != 0)
-+		rt_write_json(outfile, argc, argv, write_stats, NULL);
++		rt_write_json(outfile, argc, argv, write_stats, sched_data);
 +
- 	if (stop) {
- 		/*
- 		 * We use this test in bash while loops
+ 	if (setcpu_buf)
+ 		free(setcpu_buf);
+ 	free(thread);
 -- 
 2.30.0
 
