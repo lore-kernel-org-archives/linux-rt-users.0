@@ -2,88 +2,103 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 484F9C433DB
-	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Jan 2021 02:07:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F2480C433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 04:57:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0B454229F0
-	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Jan 2021 02:07:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AE07C22DD6
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 04:57:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726459AbhAXCHN (ORCPT
+        id S1727216AbhAZE4l (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 23 Jan 2021 21:07:13 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:20695 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726375AbhAXCHN (ORCPT
+        Mon, 25 Jan 2021 23:56:41 -0500
+Received: from mo-csw1114.securemx.jp ([210.130.202.156]:59914 "EHLO
+        mo-csw.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727847AbhAZBnb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 23 Jan 2021 21:07:13 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1611453947;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=A5UmVTKDoiYfNesNyr3QYPvSARjlxC2oxETHoO/83GM=;
-        b=SODJFdSgHWw8uLJdHMdjLeWrvt6G8bqKkDp5J9yn2BuGU1MW+PEMssqw3ISZJ+JEnLhAt4
-        gUwYiuZLADdujU4apEQ55rQV61JZeMMT875FUz+4TPjn91VqsP7DV1NZSc+bhNwZS02IAp
-        D5/6fJK0EjJgdNUd3a0i5c/sphmpfq8=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-142-fh6r8fQLMiW2jwocOhevgQ-1; Sat, 23 Jan 2021 21:05:44 -0500
-X-MC-Unique: fh6r8fQLMiW2jwocOhevgQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1567D801817;
-        Sun, 24 Jan 2021 02:05:43 +0000 (UTC)
-Received: from lclaudio.dyndns.org (ovpn-112-57.rdu2.redhat.com [10.10.112.57])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CF905C260;
-        Sun, 24 Jan 2021 02:05:42 +0000 (UTC)
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id 479003C00CE; Sat, 23 Jan 2021 23:05:40 -0300 (-03)
-Date:   Sat, 23 Jan 2021 23:05:40 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.9.253-rt168
-Message-ID: <20210124020540.GA83189@uudg.org>
+        Mon, 25 Jan 2021 20:43:31 -0500
+Received: by mo-csw.securemx.jp (mx-mo-csw1114) id 10Q1eTcV026805; Tue, 26 Jan 2021 10:40:29 +0900
+X-Iguazu-Qid: 2wGqhgW4xAMwUt1EF4
+X-Iguazu-QSIG: v=2; s=0; t=1611625229; q=2wGqhgW4xAMwUt1EF4; m=PGZcsDCdCzsU0ZWL83DLBcJYzsv2YtuEunCvIvUtXXQ=
+Received: from imx12.toshiba.co.jp (imx12.toshiba.co.jp [61.202.160.132])
+        by relay.securemx.jp (mx-mr1111) id 10Q1eSdN015274;
+        Tue, 26 Jan 2021 10:40:28 +0900
+Received: from enc02.toshiba.co.jp ([61.202.160.51])
+        by imx12.toshiba.co.jp  with ESMTP id 10Q1eSfs003736;
+        Tue, 26 Jan 2021 10:40:28 +0900 (JST)
+Received: from hop101.toshiba.co.jp ([133.199.85.107])
+        by enc02.toshiba.co.jp  with ESMTP id 10Q1eSex013993;
+        Tue, 26 Jan 2021 10:40:28 +0900
+From:   Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+        binh1.tranhai@toshiba.co.jp,
+        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>,
+        dwagner@suse.de, linux-rt-users@vger.kernel.org
+Subject: Re: Some issues running rteval on arm64, arm and i386
+References: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
+        <YApwIRJdMCXcMVbU@lx-t490>
+        <8b5fcd1f-e78e-744d-836e-d1e4b2d5794@redhat.com>
+Date:   Tue, 26 Jan 2021 10:40:27 +0900
+In-Reply-To: <8b5fcd1f-e78e-744d-836e-d1e4b2d5794@redhat.com> (John Kacur's
+        message of "Fri, 22 Jan 2021 18:31:40 -0500 (EST)")
+X-TSB-HOP: ON
+Message-ID: <8735yozd9w.fsf@kokedama.swc.toshiba.co.jp>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Hi John, Ahmed,
 
-I'm pleased to announce the 4.9.253-rt168 stable release.
+John Kacur <jkacur@redhat.com> writes:
 
-You can get this release via the git tree at:
+> On Fri, 22 Jan 2021, Ahmed S. Darwish wrote:
+>
+>> On Mon, Jan 18, 2021 at 06:00:46PM +0900, Punit Agrawal wrote:
+>> >
+>> > We ran into a few issues when trying to run rteval on arm64, arm and
+>> > i386.
+>> >
+>> > A few of the assumptions in rteval don't hold true on these systems.
+>> >
+>> 
+>> For some embedded devices, it can be tough to use rteval with it. In
+>> general, it requires, *on the target*:
+>> 
+>>   1. a full development toolchain (GCC, make, flex, bison, etc.)
+>>   2. a full kernel source tree
+>>   3. a full Python environment
+>> 
+>> You can use a combination of stress-ng and cyclictest to properly
+>> evaluate your preempt_rt system latencies. Just make sure to exclude the
+>> stress-ng stressors which allocate real-time threads, which can (and do)
+>> conflict with the cyclictest ones.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+[...]
 
-  branch: v4.9-rt
-  Head SHA1: 39c70c2a2244ca70ab61d2442b3c4136ed40d8ee
+> I agree, rteval wasn't designed for the embedded world. The reason for the
+> full development tool chain is to compile the kernel as a load, so if you 
+> are compiling the kernel on a machine other than the device it is 
+> targetted for, then rteval won't work. Also, yes it runs with a python3
+> envirnoment, we still maintain a version for python2, but no new 
+> development is occuring there.
+>
+> note that rteval can now run stress-ng too, but the default is without it.
 
-Or to build 4.9.253-rt168 directly, the following patches should be applied:
+Thanks for your comments.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+Fortunately, the device filesystems can provide the dependencies
+(toolchain, python3, etc.) of rteval. But I'll keep in mind alternative
+ways to evaluate the system latencies when we can't.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.253.xz
+Thanks,
+Punit
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.253-rt168.patch.xz
-
-Enjoy!
-Luis
+[...]
 
