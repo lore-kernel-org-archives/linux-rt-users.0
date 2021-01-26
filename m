@@ -7,66 +7,67 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0CC99C433DB
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 18:44:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CFCFC433E0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 18:44:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CDDAB22B3B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 18:44:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DD5FB22A84
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 18:44:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390604AbhAZRTb (ORCPT
+        id S2390594AbhAZRT1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jan 2021 12:19:31 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54724 "EHLO
+        Tue, 26 Jan 2021 12:19:27 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54348 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729431AbhAZGad (ORCPT
+        with ESMTP id S1730192AbhAZG2r (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Jan 2021 01:30:33 -0500
-Received: from mail-qk1-x729.google.com (mail-qk1-x729.google.com [IPv6:2607:f8b0:4864:20::729])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1F3F2C061573
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:29:52 -0800 (PST)
-Received: by mail-qk1-x729.google.com with SMTP id k193so14995738qke.6
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:29:52 -0800 (PST)
+        Tue, 26 Jan 2021 01:28:47 -0500
+Received: from mail-qv1-xf34.google.com (mail-qv1-xf34.google.com [IPv6:2607:f8b0:4864:20::f34])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 24922C06174A
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:28:05 -0800 (PST)
+Received: by mail-qv1-xf34.google.com with SMTP id a1so7381755qvd.13
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:28:05 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=c9uNPgCLCbY+/N1hyKSq6kmxKghp7gmq6MEOfDgm50w=;
-        b=sXcdYWVlzE+L//OmEP4c1Fffy4NXqU9WTGOEENg9VDY1HMfgZRMLNx2hSAwU+AWC26
-         XPQCinx8klFjl8eEViDuPQIZOw0oSzdzHOBt0pQ6oTFwRzY/mLw9tSKIpmXIVASSiZbD
-         FEm/Wtd/fYp9NrQfsjyONpeFA7eE97wUKNSpFOcKKnBdfCEyikx+ZHi1nJsVwATfv4PJ
-         /EALXEMG86Vd0MqUEKD8JYBBCPMcznr4XbQaL6/tzwnwthykRoQZ/UZKsC2NDyCxjbaa
-         NGkxA5k02Quf2Vab7ZDalCRC5sa2F9Qnu3WrTo1IoAlrXjLDdw2HA/w2e00ykyPuLcpi
-         4fKA==
+        bh=QtsRYwtAnBDQnrLE4iDEJlMtV6KIPECR8VSA4TovxQ4=;
+        b=vU+mx6Yh5bkIK/c/CLWG7WvSceCZ8sXS7gD3PfNPCXeAtnJ5oDRVzJeTlCuUGsVKpo
+         BdhgQo1xatjiAWmI6WqwxFUqBRqClsWexbFnRnzc0KKn7VRQuoInQ1Xo+B4oIJdSH1HY
+         r0OUc+3mDI04iWxTLhlruTAwFvis1OdIcTAU3AzTIrPbwI0MzKwttslBxuwnzIBKeKx7
+         +zPubiQthflehC9ZxRSIlHJKaKFGSi7rtc2/WYJoZKwjEz+vTh0sBKvBloNRSfS6k942
+         wuVF/fFfiMkmwXSyZ3oTmGIidXDZucX9kLLCEwgz3ZpR6wf5GNjggH1I6BHo/uKCzS0x
+         yJzg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=c9uNPgCLCbY+/N1hyKSq6kmxKghp7gmq6MEOfDgm50w=;
-        b=oLjYMQywBSg8yQE0u/AzJf3qDItghR4TuSuNW4gHCrReKGFNiI/YEQRpIjrAaJTmi7
-         J/UYg3OaMzXIqYMHt4qPgN/YIxY7gkjLjXhZ0E2ACfEk+QLrJeIGvgLqZaqBeKe2DIJP
-         LnGDxbdcJBG8nfG9w3zLeHS0pnej7xHLSoIAN/+bSsXCcIfMbdbImvZVFgb3G1uklNaP
-         yKbs0+Hl0vYs/DcFdC2PhvUAf2UfDAPImz0bsmZ0qwweSUxDvWousTf+EteiUHpsRxIO
-         daavh9GjzcimYnZyyMcYT71B0GEtj8pKHofRI6K9SUJq0cESR2wd/jDqA4LmQ+z9JJnD
-         5Ltw==
-X-Gm-Message-State: AOAM530OZ73y1l2jJfhixFx+eDz9HfApr2DaCrKSSnhFRRjFfH3MkwCL
-        5ay3V//esCfLc+X+RrsG7/0=
-X-Google-Smtp-Source: ABdhPJyKMFcTnN1UNLDbcAhE3Jmw0XfRXtJiWW+fR3u3LG4cpmERmslFimG4qCVCkUHzWb/H1DfdOQ==
-X-Received: by 2002:a37:be04:: with SMTP id o4mr4396044qkf.336.1611642591437;
-        Mon, 25 Jan 2021 22:29:51 -0800 (PST)
+        bh=QtsRYwtAnBDQnrLE4iDEJlMtV6KIPECR8VSA4TovxQ4=;
+        b=LjpX6t5TinX7fKXMZW+RW2aBELA55d/WT3ESyIumHPi1lam0B8YRe0a4sT59KgGgsH
+         C5bLqR5MlybyYuTIggQPjd2ay9G75kllOhXo9JkmAR0avSKKUFkt4JPqnkYHuzAivIAR
+         nmUVogBLnniQcGNNGw3wCuG2n1/ldZ+svsjxECGade3xI8WHoRKjw/3+wOTDg75kAkZa
+         gz+IkZcmWOMHHrxYeZ+iR1tEJLOBN6CLcxEbLJfvqDcgx7BZvylDhFEZMDQpcwLhNCHH
+         TQIYSEVZeBtKc+SYSZ62zwbUU6D0JKKiFJM9RUwnAx83NjHXMIzwuPCAN3PbEjVWCmvx
+         ziEA==
+X-Gm-Message-State: AOAM5307Klp1bSJG0HB+BXYbd2meyf7OxgyrC5gQaFzdjxQ+AUCUDXQ+
+        CVV9O6JBmLfYkPpLtvOR7T96BgmHIzE/Sg==
+X-Google-Smtp-Source: ABdhPJwRljpyVhBYSUZY80hgb982U8JhuOjhJlh93QdDSMt3FUyJbbB145LlStAQuoTPnrACPNWY3Q==
+X-Received: by 2002:a0c:8f09:: with SMTP id z9mr4176297qvd.25.1611642484321;
+        Mon, 25 Jan 2021 22:28:04 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id q6sm13419224qkd.41.2021.01.25.22.29.50
+        by smtp.gmail.com with ESMTPSA id a9sm13519174qkk.39.2021.01.25.22.28.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 25 Jan 2021 22:29:51 -0800 (PST)
+        Mon, 25 Jan 2021 22:28:03 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 26 Jan 2021 01:29:50 -0500 (EST)
+Date:   Tue, 26 Jan 2021 01:28:02 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 v2 07/20] signaltest: Always use libnuma
-In-Reply-To: <20201218161843.1764-8-dwagner@suse.de>
-Message-ID: <db225991-c58d-3c2a-ce85-23bc95a0c14b@redhat.com>
-References: <20201218161843.1764-1-dwagner@suse.de> <20201218161843.1764-8-dwagner@suse.de>
+Subject: Re: [rt-tests v2 v2 06/20] cyclictest: Move verbose message into
+ main
+In-Reply-To: <20201218161843.1764-7-dwagner@suse.de>
+Message-ID: <654149f9-ed10-7d5-b51d-d618c41c24d7@redhat.com>
+References: <20201218161843.1764-1-dwagner@suse.de> <20201218161843.1764-7-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -77,64 +78,40 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Fri, 18 Dec 2020, Daniel Wagner wrote:
 
-> libnuma is hard dependency for signaltest. Thus we can always call
-> numa_initialize(). This allows us to remove the global 'numa' variable
-> to track if libnuma has been initialized or not.
+> By moving the verbose message down we print the message with the final
+> affinity_mask. This also handles the case where the bitmask is not set.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/signaltest/signaltest.c | 10 ++++------
->  1 file changed, 4 insertions(+), 6 deletions(-)
+>  src/cyclictest/cyclictest.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
 > 
-> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index 918d2ab98f6e..b3a82f8c4f65 100644
-> --- a/src/signaltest/signaltest.c
-> +++ b/src/signaltest/signaltest.c
-> @@ -206,7 +206,6 @@ static int quiet;
->  static int lockall;
->  static struct bitmask *affinity_mask = NULL;
->  static int smp = 0;
-> -static int numa = 0;
->  static int setaffinity = AFFINITY_UNSPECIFIED;
->  
->  /* Process commandline options */
-> @@ -214,6 +213,7 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  {
->  	int option_affinity = 0;
->  	int error = 0;
-> +	int numa = 0;
->  
->  	for (;;) {
->  		int option_index = 0;
-> @@ -242,8 +242,6 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  			/* smp sets AFFINITY_USEALL in OPT_SMP */
->  			if (smp)
->  				break;
-> -			if (numa_initialize())
-> -				fatal("Couldn't initialize libnuma");
->  			numa = 1;
->  			if (optarg) {
->  				parse_cpumask(optarg, max_cpus, &affinity_mask);
-> @@ -298,9 +296,6 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  
->  	/* if smp wasn't requested, test for numa automatically */
->  	if (!smp) {
-> -		if (numa_initialize())
-> -			fatal("Couldn't initialize libnuma");
-> -		numa = 1;
->  		if (setaffinity == AFFINITY_UNSPECIFIED)
->  			setaffinity = AFFINITY_USEALL;
->  	}
-> @@ -354,6 +349,9 @@ int main(int argc, char **argv)
->  	int status, cpu;
->  	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
->  
-> +	if (numa_initialize())
-> +		fatal("Couldn't initialize libnuma");
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index a34b2140f940..7e84c25f7070 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1020,10 +1020,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  				    argv[optind][0] == '!')) {
+>  				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
+>  			}
+> -
+> -			if (verbose)
+> -				printf("Using %u cpus.\n",
+> -					numa_bitmask_weight(affinity_mask));
+>  			break;
+>  		case 'A':
+>  		case OPT_ALIGNED:
+> @@ -1732,6 +1728,10 @@ int main(int argc, char **argv)
+>  		res = numa_sched_setaffinity(getpid(), affinity_mask);
+>  		if (res != 0)
+>  			warn("Couldn't setaffinity in main thread: %s\n", strerror(errno));
 > +
->  	process_options(argc, argv, max_cpus);
+> +		if (verbose)
+> +			printf("Using %u cpus.\n",
+> +				numa_bitmask_weight(affinity_mask));
+>  	}
 >  
->  	if (check_privs())
+>  	if (trigger) {
 > -- 
 > 2.29.2
 > 
