@@ -2,104 +2,163 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2870C433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 17:19:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C9F52C4332B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 17:20:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7CFEA2083E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 17:19:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 936E223108
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 17:20:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390542AbhAZRTM (ORCPT
+        id S2390723AbhAZRUK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jan 2021 12:19:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50414 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728568AbhAZGK2 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Jan 2021 01:10:28 -0500
-Received: from mail-qk1-x735.google.com (mail-qk1-x735.google.com [IPv6:2607:f8b0:4864:20::735])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6745CC06178C
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:09:09 -0800 (PST)
-Received: by mail-qk1-x735.google.com with SMTP id 19so15002426qkh.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:09:09 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :mime-version;
-        bh=4LfEUjE3wq0de8wiOdmHoknwON9JqQEacrKOy0WZd54=;
-        b=apP99ChJsgRL8C09bFDJh9R2m8n7LaqZK5pR7kXFJXRBhxrFL3k0FlW4S5xm1/E0am
-         0zkJQ/rlIfTZVsoZwj79IX5rsTcqN9r8sLEZDWdEIfV++KRJsgxsLG5We7r8PonNq1I1
-         iRWGqzdgO5VysJmidn4CeABKEw/ywYH0t8itrx4AGquhhNblA0xxK2SojLDeRlAE56RL
-         ECWFLjIVYJULAJMl1ZF4hrMLvpSedk+UH6me1a7WNFYgWn5xkXzSiWKHKT1PclblD7gm
-         alGokW2+SnZ/2j9UljHC9Ccx7BWHSMddDEa1bOSX0MpLdz5DQW3BpBiKpej9Oju2TMJB
-         1I1A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:mime-version;
-        bh=4LfEUjE3wq0de8wiOdmHoknwON9JqQEacrKOy0WZd54=;
-        b=RgYE/nxuhQ9dmWoXMl4QJvyj+TZBvAFgLcd0yanM9GMwrrKfANOl9Lx4YbtSQ6ibRu
-         Nb+7NT1wNKUgfgqT3jMLaLYCXPGeckgdZ0N3eGPUPgU+5XDMnaH85znf3HaiPVIqFc98
-         1OT22kGb/nNn8UhMQC9mFhm/8ahdFibOcFlcfcEqkBQvLiNYRePGFmM+QXdN67xDmkmo
-         6G/8MfZVE7L119+u/ItSeGQykntjrvHPSim70/fy98mlHhlsv2ji/qS92V13aNtO6OWK
-         6pzaJKe6zxxOmHutCoRuKP1d+BojdJGh+7j9XlF24twrdLTTVsQJxvgh5g4MOVFtwVHp
-         bMHw==
-X-Gm-Message-State: AOAM530X6AbW1XObEjLJmgDqlibg6+XbWQgHoWZeOM44k+VsvjVnwuK0
-        KZfhERpni4eVcMdZX0c6bEI=
-X-Google-Smtp-Source: ABdhPJw510rG8dafZZbZ3k6vwmxCWTxRpNg7YHz5nMYOqaEipcKNPAJPtYyUii1aNV2wV4rOEyKbGw==
-X-Received: by 2002:a37:5b05:: with SMTP id p5mr4308167qkb.277.1611641348630;
-        Mon, 25 Jan 2021 22:09:08 -0800 (PST)
-Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id y66sm2126775qka.17.2021.01.25.22.09.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 25 Jan 2021 22:09:08 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 26 Jan 2021 01:09:07 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-To:     Daniel Wagner <dwagner@suse.de>
-cc:     Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [RFC v3 02/19] ptsematest: Return correct exit code when showing
- help
-In-Reply-To: <20210115190936.26148-3-dwagner@suse.de>
-Message-ID: <5ec8a5ae-1f9b-33b-832c-c26dc78cf0@redhat.com>
-References: <20210115190936.26148-1-dwagner@suse.de> <20210115190936.26148-3-dwagner@suse.de>
+        Tue, 26 Jan 2021 12:20:10 -0500
+Received: from mx2.suse.de ([195.135.220.15]:56138 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2390862AbhAZJPx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 26 Jan 2021 04:15:53 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id D38A0B280;
+        Tue, 26 Jan 2021 09:15:03 +0000 (UTC)
+From:   Daniel Wagner <dwagner@suse.de>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
+Subject: [rt-tests v3 04/16] signaltest: Use affinity_mask for steering thread placement
+Date:   Tue, 26 Jan 2021 10:14:48 +0100
+Message-Id: <20210126091500.31735-5-dwagner@suse.de>
+X-Mailer: git-send-email 2.30.0
+In-Reply-To: <20210126091500.31735-1-dwagner@suse.de>
+References: <20210126091500.31735-1-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+We don't need an extra variable to track the state if a bitmask is
+available or not. Check directly if the mask is usable.
 
+Signed-off-by: Daniel Wagner <dwagner@suse.de>
+---
+ src/signaltest/signaltest.c | 44 ++++++++-----------------------------
+ 1 file changed, 9 insertions(+), 35 deletions(-)
 
-On Fri, 15 Jan 2021, Daniel Wagner wrote:
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index b3a82f8c4f65..e19fc9a740a9 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -205,15 +205,13 @@ static int verbose;
+ static int quiet;
+ static int lockall;
+ static struct bitmask *affinity_mask = NULL;
+-static int smp = 0;
+-static int setaffinity = AFFINITY_UNSPECIFIED;
+ 
+ /* Process commandline options */
+ static void process_options(int argc, char *argv[], unsigned int max_cpus)
+ {
+-	int option_affinity = 0;
+ 	int error = 0;
+ 	int numa = 0;
++	int smp = 0;
+ 
+ 	for (;;) {
+ 		int option_index = 0;
+@@ -238,26 +236,19 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
+ 			break;
+ 		switch (c) {
+ 		case 'a':
+-			option_affinity = 1;
+ 			/* smp sets AFFINITY_USEALL in OPT_SMP */
+ 			if (smp)
+ 				break;
+ 			numa = 1;
+ 			if (optarg) {
+ 				parse_cpumask(optarg, max_cpus, &affinity_mask);
+-				setaffinity = AFFINITY_SPECIFIED;
+ 			} else if (optind < argc &&
+ 				   (atoi(argv[optind]) ||
+ 				    argv[optind][0] == '0' ||
+ 				    argv[optind][0] == '!')) {
+ 				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
+-				setaffinity = AFFINITY_SPECIFIED;
+-			} else {
+-				setaffinity = AFFINITY_USEALL;
+ 			}
+ 
+-			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
+-				display_help(1);
+ 			if (verbose)
+ 				printf("Using %u cpus.\n",
+ 					numa_bitmask_weight(affinity_mask));
+@@ -275,7 +266,6 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
+ 				fatal("numa and smp options are mutually exclusive\n");
+ 			smp = 1;
+ 			num_threads = -1; /* update after parsing */
+-			setaffinity = AFFINITY_USEALL;
+ 			break;
+ 		case 't': num_threads = atoi(optarg); break;
+ 		case 'v': verbose = 1; break;
+@@ -294,16 +284,8 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
+ 	if (num_threads < 2)
+ 		error = 1;
+ 
+-	/* if smp wasn't requested, test for numa automatically */
+-	if (!smp) {
+-		if (setaffinity == AFFINITY_UNSPECIFIED)
+-			setaffinity = AFFINITY_USEALL;
+-	}
+-
+-	if (option_affinity) {
+-		if (smp)
+-			warn("-a ignored due to smp mode\n");
+-	}
++	if (smp && affinity_mask)
++		warn("-a ignored due to smp mode\n");
+ 
+ 	if (error) {
+ 		if (affinity_mask)
+@@ -365,7 +347,7 @@ int main(int argc, char **argv)
+ 		}
+ 
+ 	/* Restrict the main pid to the affinity specified by the user */
+-	if (affinity_mask != NULL) {
++	if (affinity_mask) {
+ 		int res;
+ 
+ 		errno = 0;
+@@ -400,21 +382,13 @@ int main(int argc, char **argv)
+ 			par[i].bufmsk = VALBUF_SIZE - 1;
+ 		}
+ 
+-		switch (setaffinity) {
+-		case AFFINITY_UNSPECIFIED:
+-			cpu = -1;
+-			break;
+-		case AFFINITY_SPECIFIED:
++		if (affinity_mask)
+ 			cpu = cpu_for_thread_sp(i, max_cpus, affinity_mask);
+-			if (verbose)
+-				printf("Thread %d using cpu %d.\n", i, cpu);
+-			break;
+-		case AFFINITY_USEALL:
++		else
+ 			cpu = cpu_for_thread_ua(i, max_cpus);
+-			break;
+-		default:
+-			cpu = -1;
+-		}
++
++		if (verbose)
++			printf("Thread %d using cpu %d.\n", i, cpu);
+ 
+ 		par[i].id = i;
+ 		par[i].prio = priority;
+-- 
+2.30.0
 
-> Instead always return success, use the provided exist code.
-> 
-> Signed-off-by: Daniel Wagner <dwagner@suse.de>
-> ---
->  src/ptsematest/ptsematest.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-> index 2e392299fdc4..f8f075591f4b 100644
-> --- a/src/ptsematest/ptsematest.c
-> +++ b/src/ptsematest/ptsematest.c
-> @@ -164,7 +164,7 @@ static void display_help(int error)
->  	       "                           without NUM, threads = max_cpus\n"
->  	       "                           without -t default = 1\n"
->  	       );
-> -	exit(0);
-> +	exit(error);
->  }
->  
->  
-> -- 
-> 2.29.2
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
