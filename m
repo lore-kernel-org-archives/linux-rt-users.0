@@ -2,103 +2,85 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F2480C433DB
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 04:57:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E5B2C433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 04:58:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AE07C22DD6
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 04:57:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E6F8822D04
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 04:58:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727216AbhAZE4l (ORCPT
+        id S1728779AbhAZE5V (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 25 Jan 2021 23:56:41 -0500
-Received: from mo-csw1114.securemx.jp ([210.130.202.156]:59914 "EHLO
+        Mon, 25 Jan 2021 23:57:21 -0500
+Received: from mo-csw1114.securemx.jp ([210.130.202.156]:33460 "EHLO
         mo-csw.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727847AbhAZBnb (ORCPT
+        with ESMTP id S1731123AbhAZCPN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 25 Jan 2021 20:43:31 -0500
-Received: by mo-csw.securemx.jp (mx-mo-csw1114) id 10Q1eTcV026805; Tue, 26 Jan 2021 10:40:29 +0900
-X-Iguazu-Qid: 2wGqhgW4xAMwUt1EF4
-X-Iguazu-QSIG: v=2; s=0; t=1611625229; q=2wGqhgW4xAMwUt1EF4; m=PGZcsDCdCzsU0ZWL83DLBcJYzsv2YtuEunCvIvUtXXQ=
-Received: from imx12.toshiba.co.jp (imx12.toshiba.co.jp [61.202.160.132])
-        by relay.securemx.jp (mx-mr1111) id 10Q1eSdN015274;
-        Tue, 26 Jan 2021 10:40:28 +0900
-Received: from enc02.toshiba.co.jp ([61.202.160.51])
-        by imx12.toshiba.co.jp  with ESMTP id 10Q1eSfs003736;
-        Tue, 26 Jan 2021 10:40:28 +0900 (JST)
-Received: from hop101.toshiba.co.jp ([133.199.85.107])
-        by enc02.toshiba.co.jp  with ESMTP id 10Q1eSex013993;
-        Tue, 26 Jan 2021 10:40:28 +0900
+        Mon, 25 Jan 2021 21:15:13 -0500
+Received: by mo-csw.securemx.jp (mx-mo-csw1114) id 10Q2D0NS029810; Tue, 26 Jan 2021 11:13:00 +0900
+X-Iguazu-Qid: 2wGqsXjpvkITz1WMGP
+X-Iguazu-QSIG: v=2; s=0; t=1611627180; q=2wGqsXjpvkITz1WMGP; m=vyg8k9zZb0miu6Vn8e+3q+aHkYq6SrsYX3700/l++kk=
+Received: from imx2.toshiba.co.jp (imx2.toshiba.co.jp [106.186.93.51])
+        by relay.securemx.jp (mx-mr1113) id 10Q2Cxq4039282;
+        Tue, 26 Jan 2021 11:12:59 +0900
+Received: from enc01.toshiba.co.jp ([106.186.93.100])
+        by imx2.toshiba.co.jp  with ESMTP id 10Q2CxpA004441;
+        Tue, 26 Jan 2021 11:12:59 +0900 (JST)
+Received: from hop001.toshiba.co.jp ([133.199.164.63])
+        by enc01.toshiba.co.jp  with ESMTP id 10Q2CwwY024233;
+        Tue, 26 Jan 2021 11:12:58 +0900
 From:   Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 To:     John Kacur <jkacur@redhat.com>
-Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        binh1.tranhai@toshiba.co.jp,
-        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>,
-        dwagner@suse.de, linux-rt-users@vger.kernel.org
-Subject: Re: Some issues running rteval on arm64, arm and i386
-References: <877doa1uwx.fsf@kokedama.swc.toshiba.co.jp>
-        <YApwIRJdMCXcMVbU@lx-t490>
-        <8b5fcd1f-e78e-744d-836e-d1e4b2d5794@redhat.com>
-Date:   Tue, 26 Jan 2021 10:40:27 +0900
-In-Reply-To: <8b5fcd1f-e78e-744d-836e-d1e4b2d5794@redhat.com> (John Kacur's
-        message of "Fri, 22 Jan 2021 18:31:40 -0500 (EST)")
+Cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>, dwagner@suse.de,
+        "Ahmed S . Darwish" <a.darwish@linutronix.de>,
+        linux-rt-users@vger.kernel.org, binh1.tranhai@toshiba.co.jp,
+        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>
+Subject: [rteval PATCH 1/2] rteval: cyclictest.py: Make 'model name' optional
+Date:   Tue, 26 Jan 2021 11:12:40 +0900
 X-TSB-HOP: ON
-Message-ID: <8735yozd9w.fsf@kokedama.swc.toshiba.co.jp>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+Message-Id: <20210126021241.112944-2-punit1.agrawal@toshiba.co.jp>
+X-Mailer: git-send-email 2.28.0
+In-Reply-To: <20210126021241.112944-1-punit1.agrawal@toshiba.co.jp>
+References: <20210126021241.112944-1-punit1.agrawal@toshiba.co.jp>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi John, Ahmed,
+Certain architectures such as arm64 don't have a "model name" in
+/proc/cpuinfo. Relax the requirement to include the model name in the
+description to allow running rteval on such machines.
 
-John Kacur <jkacur@redhat.com> writes:
+Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+---
+ rteval/modules/measurement/cyclictest.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-> On Fri, 22 Jan 2021, Ahmed S. Darwish wrote:
->
->> On Mon, Jan 18, 2021 at 06:00:46PM +0900, Punit Agrawal wrote:
->> >
->> > We ran into a few issues when trying to run rteval on arm64, arm and
->> > i386.
->> >
->> > A few of the assumptions in rteval don't hold true on these systems.
->> >
->> 
->> For some embedded devices, it can be tough to use rteval with it. In
->> general, it requires, *on the target*:
->> 
->>   1. a full development toolchain (GCC, make, flex, bison, etc.)
->>   2. a full kernel source tree
->>   3. a full Python environment
->> 
->> You can use a combination of stress-ng and cyclictest to properly
->> evaluate your preempt_rt system latencies. Just make sure to exclude the
->> stress-ng stressors which allocate real-time threads, which can (and do)
->> conflict with the cyclictest ones.
-
-[...]
-
-> I agree, rteval wasn't designed for the embedded world. The reason for the
-> full development tool chain is to compile the kernel as a load, so if you 
-> are compiling the kernel on a machine other than the device it is 
-> targetted for, then rteval won't work. Also, yes it runs with a python3
-> envirnoment, we still maintain a version for python2, but no new 
-> development is occuring there.
->
-> note that rteval can now run stress-ng too, but the default is without it.
-
-Thanks for your comments.
-
-Fortunately, the device filesystems can provide the dependencies
-(toolchain, python3, etc.) of rteval. But I'll keep in mind alternative
-ways to evaluate the system latencies when we can't.
-
-Thanks,
-Punit
-
-[...]
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index 232bd6b..afe87f7 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -217,13 +217,13 @@ class Cyclictest(rtevalModulePrototype):
+         for core in self.__cpus:
+             self.__cyclicdata[core] = RunData(core, 'core', self.__priority,
+                                               logfnc=self._log)
+-            self.__cyclicdata[core].description = info[core]['model name']
++            self.__cyclicdata[core].description = info[core].get('model name', '')
+ 
+         # Create a RunData object for the overall system
+         self.__cyclicdata['system'] = RunData('system',
+                                               'system', self.__priority,
+                                               logfnc=self._log)
+-        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0']['model name']
++        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0'].get('model name', '')
+ 
+         if self.__sparse:
+             self._log(Log.DEBUG, "system using %d cpu cores" % self.__numcores)
+-- 
+2.29.2
 
