@@ -7,67 +7,66 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CFF9BC433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 06:33:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 425EDC433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 06:42:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9873922B3B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 06:33:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0AB0F22B3F
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 06:42:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731902AbhAZGdv (ORCPT
+        id S2388603AbhAZGlq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jan 2021 01:33:51 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55140 "EHLO
+        Tue, 26 Jan 2021 01:41:46 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56928 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727792AbhAZGc3 (ORCPT
+        with ESMTP id S1732736AbhAZGku (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Jan 2021 01:32:29 -0500
-Received: from mail-qt1-x833.google.com (mail-qt1-x833.google.com [IPv6:2607:f8b0:4864:20::833])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6B7E7C061573
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:31:49 -0800 (PST)
-Received: by mail-qt1-x833.google.com with SMTP id e15so11526700qte.9
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:31:49 -0800 (PST)
+        Tue, 26 Jan 2021 01:40:50 -0500
+Received: from mail-qk1-x72e.google.com (mail-qk1-x72e.google.com [IPv6:2607:f8b0:4864:20::72e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 59E78C061573
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:40:10 -0800 (PST)
+Received: by mail-qk1-x72e.google.com with SMTP id u20so6404710qku.7
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 22:40:10 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=4waOzVAcTgLSvlglNNgSpj2hykdr1iX6HnFMXhcYPFA=;
-        b=DjM4SRMs2m18LAZb8gkaeeZSqzRCiOwnbRmPY8Sh21LI0kx4Bai/RQ5WV2/NYeFMEn
-         +ZiYg5ltj+W5ZtAeU39EsfX98Ip6PnfzPILhUK9fSGeb6Vz0VuFlo3aaOOEtUNP+NCqv
-         Anh6WgPvnviyvhfAJ4d6v+llb6YjQkcuEIvHq+ccv5GV8sDm4ZF0YzMK0dqnZiIRyxf7
-         4tNIkFbBw5wzZpNdGKF2a3Kgw82ePuBC42MYEO+ogJJIsO6ocVAKtBqWjkJJxBCUgWP5
-         PKh3SktYTVbWryvG0YGhU9S0zx6xtOy6MKgHf18TYS0Ly0u/OA4Y4fvkPghPjsSa+maF
-         5mwg==
+        bh=npxR5nV58n/SLgjZiy5DOWkJqz6X8Ruh8sY8+ohHCCg=;
+        b=e4N+QoYKeP4/Mwd3tssZj0hXkD6sLPCyjKlYhpWuWuOWyRg+GPJkvrpgB9/b5a6Q+c
+         Z9lNGVxpnS60X0iDM7BeRKrIo+6dRni24hVXrlkKD6ssnxEMp3xFs/zpSCoU+RsyL4mE
+         1NbznFaRumeX5YWKjjpt7heK2iXbcIyMIcq1WBy7cRdWhYu9R2658FYad+9ELnRvAn1x
+         z/pqBANEWHumla4z4B9omS6DfcIluC/4bbprGtMsSfJaMV56laTIGbVvuq2jIa0XCtDk
+         CxLBH34X8OvwhhqKctWlURlINz0HNTQfIB3++1JWBcuO/k2/raQjx4Cd9SmxX+wgFxS6
+         gtzA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=4waOzVAcTgLSvlglNNgSpj2hykdr1iX6HnFMXhcYPFA=;
-        b=qVbCUABUT7yXnfci9R6xaE1/na8wBUKbJYx45szvGD1MpgLm3gcd9XB1qzfEDLo7vN
-         gr3SYa6833girSvSQKTw957Uk8IbfpUMAGCyLHuDWEogyHio7l0nhuu7eIHKUwYtiBKL
-         LAXGOCICSdlAyL9CYILIdvx8X1PMg8rhtnrBKUhFQY+s78Mw6TDwPOQl+mFmOXrIJkju
-         SIZV5lW/kQY/sEw3TgWj9bRTQWb9nSlCA57sKipJQHUwdqBMd0noyLQPbw/Wyxb644T6
-         iZBerSZBKalRW0dPx5Oeo2BKqhzqQlzp1i/Odb/vY3ee8hRUEsVuMoaLWygphbkyN3oo
-         1RBw==
-X-Gm-Message-State: AOAM531U5yOI4mt9l6mIhKn0qisWPZb+UzVv/euVPdN6byrgMAxgtle/
-        ySikyOZc3U4u5Agkv1ZTg80=
-X-Google-Smtp-Source: ABdhPJyT9XNL0KJSQx835ewaGMJm0qAoU3tT3AbBrWppUGvNsZt0b+9tY2nzoX678aqQk+H8fIFEoQ==
-X-Received: by 2002:ac8:7257:: with SMTP id l23mr3819361qtp.264.1611642708606;
-        Mon, 25 Jan 2021 22:31:48 -0800 (PST)
+        bh=npxR5nV58n/SLgjZiy5DOWkJqz6X8Ruh8sY8+ohHCCg=;
+        b=I2kPeDSpmVDc9UcsjmGYFJe+L7/C2sadJqA8CwH3sVhq/DJn9eWT5I2Dj6xFT7SBFz
+         injbZbYi3gDeWcIh86DdlFKjpZsWoGhLNbHjMSVCrGO/0Zsz07ggY58yVIXHRul2LQSI
+         DcwE9xmD/BrOHt4mEaDxxJ3ZE6pmtoNuBzKWiEvwiwkWIEFojMCcA3bffpndwK17LVN2
+         9obP6cxi/MCOono83Y7AB+Tpjf2w2uygGDdEFT6WPOLJ784QMw+cIJk1sozbQii/MyOt
+         RsLH0bs2/7L6qiMVA2msE8fNcPeuNljH/JT57CnkWp9ahLdkEW2eROcYy4rIPJRWe5dS
+         NPxA==
+X-Gm-Message-State: AOAM532886sV1gy1ByzGYCzDh6oBJNFajiXnkeTe9W+PwkT+MG3sqodT
+        Jue4KzndgpXTO32gTRwAy38=
+X-Google-Smtp-Source: ABdhPJztAB7SEe9cx/utVQPwcm4b/ciVrGuO70jYJzPYaXFXymHVSmdfoXYRhTmzWfk5jjM2E8HaQg==
+X-Received: by 2002:a37:617:: with SMTP id 23mr4434175qkg.219.1611643209693;
+        Mon, 25 Jan 2021 22:40:09 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id c17sm13847015qkb.13.2021.01.25.22.31.47
+        by smtp.gmail.com with ESMTPSA id i18sm13630145qkg.66.2021.01.25.22.40.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 25 Jan 2021 22:31:48 -0800 (PST)
+        Mon, 25 Jan 2021 22:40:09 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 26 Jan 2021 01:31:47 -0500 (EST)
+Date:   Tue, 26 Jan 2021 01:40:08 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 v2 08/20] signaltest: Use affinity_mask for stearing
- thread placement
-In-Reply-To: <20201218161843.1764-9-dwagner@suse.de>
-Message-ID: <174fc12b-364-9cfa-dfbe-537083e1acad@redhat.com>
-References: <20201218161843.1764-1-dwagner@suse.de> <20201218161843.1764-9-dwagner@suse.de>
+Subject: Re: [rt-tests v2 v2 14/20] rt-numa: Use error message helpers
+In-Reply-To: <20201218161843.1764-15-dwagner@suse.de>
+Message-ID: <b077fc9-8e4b-caba-82ce-567cae14cf1e@redhat.com>
+References: <20201218161843.1764-1-dwagner@suse.de> <20201218161843.1764-15-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -78,129 +77,37 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Fri, 18 Dec 2020, Daniel Wagner wrote:
 
-> We don't need an extra variable to track the state if a bitmask is
-> available or not. Check directly if the mask is usable.
+> As we have our small error message helpers use them.
 > 
-> Reviewed-by: Daniel Wagner <dwagner@suse.de>
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/signaltest/signaltest.c | 44 ++++++++-----------------------------
->  1 file changed, 9 insertions(+), 35 deletions(-)
+>  src/lib/rt-numa.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
-> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index b3a82f8c4f65..e19fc9a740a9 100644
-> --- a/src/signaltest/signaltest.c
-> +++ b/src/signaltest/signaltest.c
-> @@ -205,15 +205,13 @@ static int verbose;
->  static int quiet;
->  static int lockall;
->  static struct bitmask *affinity_mask = NULL;
-> -static int smp = 0;
-> -static int setaffinity = AFFINITY_UNSPECIFIED;
->  
->  /* Process commandline options */
->  static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  {
-> -	int option_affinity = 0;
->  	int error = 0;
->  	int numa = 0;
-> +	int smp = 0;
->  
->  	for (;;) {
->  		int option_index = 0;
-> @@ -238,26 +236,19 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  			break;
->  		switch (c) {
->  		case 'a':
-> -			option_affinity = 1;
->  			/* smp sets AFFINITY_USEALL in OPT_SMP */
->  			if (smp)
->  				break;
->  			numa = 1;
->  			if (optarg) {
->  				parse_cpumask(optarg, max_cpus, &affinity_mask);
-> -				setaffinity = AFFINITY_SPECIFIED;
->  			} else if (optind < argc &&
->  				   (atoi(argv[optind]) ||
->  				    argv[optind][0] == '0' ||
->  				    argv[optind][0] == '!')) {
->  				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
-> -				setaffinity = AFFINITY_SPECIFIED;
-> -			} else {
-> -				setaffinity = AFFINITY_USEALL;
->  			}
->  
-> -			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
-> -				display_help(1);
->  			if (verbose)
->  				printf("Using %u cpus.\n",
->  					numa_bitmask_weight(affinity_mask));
-> @@ -275,7 +266,6 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  				fatal("numa and smp options are mutually exclusive\n");
->  			smp = 1;
->  			num_threads = -1; /* update after parsing */
-> -			setaffinity = AFFINITY_USEALL;
->  			break;
->  		case 't': num_threads = atoi(optarg); break;
->  		case 'v': verbose = 1; break;
-> @@ -294,16 +284,8 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
->  	if (num_threads < 2)
->  		error = 1;
->  
-> -	/* if smp wasn't requested, test for numa automatically */
-> -	if (!smp) {
-> -		if (setaffinity == AFFINITY_UNSPECIFIED)
-> -			setaffinity = AFFINITY_USEALL;
-> -	}
-> -
-> -	if (option_affinity) {
-> -		if (smp)
-> -			warn("-a ignored due to smp mode\n");
-> -	}
-> +	if (smp && affinity_mask)
-> +		warn("-a ignored due to smp mode\n");
->  
->  	if (error) {
->  		if (affinity_mask)
-> @@ -365,7 +347,7 @@ int main(int argc, char **argv)
+> diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+> index fc7adb4d467a..3a8441d5151c 100644
+> --- a/src/lib/rt-numa.c
+> +++ b/src/lib/rt-numa.c
+> @@ -40,7 +40,7 @@ static int cpu_for_thread_sp(int thread_num, int max_cpus, struct bitmask *cpuma
+>  			cpu++;
 >  		}
+>  	}
+> -	fprintf(stderr, "Bug in cpu mask handling code.\n");
+> +	warn("Bug in cpu mask handling code.\n");
+>  	return 0;
+>  }
 >  
->  	/* Restrict the main pid to the affinity specified by the user */
-> -	if (affinity_mask != NULL) {
-> +	if (affinity_mask) {
->  		int res;
->  
->  		errno = 0;
-> @@ -400,21 +382,13 @@ int main(int argc, char **argv)
->  			par[i].bufmsk = VALBUF_SIZE - 1;
+> @@ -68,7 +68,7 @@ static int cpu_for_thread_ua(int thread_num, int max_cpus)
 >  		}
+>  	}
 >  
-> -		switch (setaffinity) {
-> -		case AFFINITY_UNSPECIFIED:
-> -			cpu = -1;
-> -			break;
-> -		case AFFINITY_SPECIFIED:
-> +		if (affinity_mask)
->  			cpu = cpu_for_thread_sp(i, max_cpus, affinity_mask);
-> -			if (verbose)
-> -				printf("Thread %d using cpu %d.\n", i, cpu);
-> -			break;
-> -		case AFFINITY_USEALL:
-> +		else
->  			cpu = cpu_for_thread_ua(i, max_cpus);
-> -			break;
-> -		default:
-> -			cpu = -1;
-> -		}
-> +
-> +		if (verbose)
-> +			printf("Thread %d using cpu %d.\n", i, cpu);
+> -	fprintf(stderr, "Bug in cpu mask handling code.\n");
+> +	warn("Bug in cpu mask handling code.\n");
+>  	return 0;
+>  }
 >  
->  		par[i].id = i;
->  		par[i].prio = priority;
 > -- 
 > 2.29.2
 > 
 > 
-
-In git you wrote Reviewed by instead of Signed-off-by:
-Why?
+Signed-off-by: John Kacur <jkacur@redhat.com>
