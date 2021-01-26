@@ -2,70 +2,72 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 77726C433DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Jan 2021 03:54:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59192C433DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Jan 2021 03:54:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4103A206B9
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Jan 2021 03:54:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 287BC206B5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Jan 2021 03:54:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237532AbhA0Dxv (ORCPT
+        id S237551AbhA0DyR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jan 2021 22:53:51 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36504 "EHLO
+        Tue, 26 Jan 2021 22:54:17 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43828 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731508AbhAZFFp (ORCPT
+        with ESMTP id S2388268AbhAZFjo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Jan 2021 00:05:45 -0500
-Received: from mail-qt1-x834.google.com (mail-qt1-x834.google.com [IPv6:2607:f8b0:4864:20::834])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1C86DC061574
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 21:05:06 -0800 (PST)
-Received: by mail-qt1-x834.google.com with SMTP id c12so11490071qtv.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 21:05:06 -0800 (PST)
+        Tue, 26 Jan 2021 00:39:44 -0500
+Received: from mail-qv1-xf2f.google.com (mail-qv1-xf2f.google.com [IPv6:2607:f8b0:4864:20::f2f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 69CF5C061756
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 21:39:04 -0800 (PST)
+Received: by mail-qv1-xf2f.google.com with SMTP id j13so2023474qvu.10
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2021 21:39:04 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=FoL7S9YvRnxdz+vYwmu+o2885iQRIbWOlkabul64dP0=;
-        b=lj/NfmEdZjRrsi7XlbA220uwwtXr6bTzSjaIZxWXY6fimORg1Wwvn8WOu96vnqnz9R
-         mtHi8Fm6y+qe6lU05jT2qg+7SdPdker9hmxq4PxNoV5l6v/Q4Ldnhi//pCtnQBTqVsYC
-         6paeBkegMTypizc7K89XiGMSODpgStOVDr5/GUZ4535V82uTjj1iG9BinUXZ+veP5mS+
-         Jrr4D741Z8Do2ESmkX9EaTD5o5kh2LxA6ZEs+m4lGcMm7OlAy1dJ25KwNHBeRaIe+h0q
-         6hDd3dI2xfTMU2VPIaeN5LZrGvRJzM/tcs6A+7XMM5PxOiNqtROS6NmfEr+CQdW/knrT
-         ir6g==
+        bh=CXv0G64tMuC+llg2a1nHA1vLz1Kf2rAQlFKUkMAg+Y4=;
+        b=DgEksh9S6j6s4Q3RYH2dTIkqA5OLIdhwLg7pC+KOY/HQmEFkrJ0nIYlUmiu0GZp+Ad
+         n5QtysMj8xRr5u5Xl3WKARHQEhPTaVhqelnmsGrjRzIRLkUpTHSA2R+je1LYagz5KYsz
+         fVbGDNKDIsJS1wT12W0v2eT20rriLyv56jDsut6emf3tD7Q2zW3qxU18ViMxx1yzpSeZ
+         2Bzo3AG3DhhygWXexHySHm+U1pxUGiAb+ta8aEenaXPD1iZ+MV0zXc1kjrN1e/BzIUVo
+         BadXKY55Bx7e6m9rmiBC69IokeDgiIobcdBnpDTYOCiUpF9Z3f586z5br+MeQoXBiAbM
+         ihRw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=FoL7S9YvRnxdz+vYwmu+o2885iQRIbWOlkabul64dP0=;
-        b=KB+ES+06EtOixL0EeMg2Rqu10UBaGX3pnrRcbwKdiy64hcxgxpKmPYNjnjZJ15+5vg
-         6TYebeg3XzmZTbAq0Zl7nuUYyMWDy0qgppYZcPe936ntnyODh0rjhiddIjFrAdfdOQUu
-         akFmTjaAsuOtES0oiKUpqGOjbuQmpXQGrqeJXmqfiQX+1QGkzzCQriztc5nZGjuVfGi7
-         hpeTqh5zZNOfaNwICdA5ugXDWeJ/D8dsuzhJDP1IK/or5HKM3jWedzI70DZFPAasbkki
-         XLwHGM7ZDDgjqf2/izkPx1vqMTg7m6DEwcg8f71XtzTrDiH38V6OeBDwjKFTRpiocyKS
-         niUg==
-X-Gm-Message-State: AOAM531n7ssfBCjhjXStuB4ogv8SQvwWOytfI8/tcS9juo+IYQ1g/EXX
-        1uq84obVT3PN9Ejg33u/bF0=
-X-Google-Smtp-Source: ABdhPJx8X2Ijn0kg//gaZwjBWeDyOm47uPms132Et5HKwxPChhOSiRyErPI//8nP74E7t85BH7XxRw==
-X-Received: by 2002:ac8:66cb:: with SMTP id m11mr3792308qtp.378.1611637505284;
-        Mon, 25 Jan 2021 21:05:05 -0800 (PST)
+        bh=CXv0G64tMuC+llg2a1nHA1vLz1Kf2rAQlFKUkMAg+Y4=;
+        b=YQFruZg6DjqQJ/F2Ck2NIpzwV0c/voGlII+6P1lLWnCQUkUjEX1UOnIDxOfE3u8dvs
+         wuyy4L6ZC0a/wdaMC+81ZkKPJXyhEG00hcNEvck0LtMGuNI3Hc2GFSrIU5gx6R9Rmgzd
+         x0xcO+84WiqOQa1SJV9tM6+e+rrkGvGBvGL0Jy5r/YqPva6byJGxBgoXxkUVK9/fwTdO
+         vErHxO5xYduwBbNeQdibO8Jx5Syr4eT4ENremFmiuYqkwubIrqZUJ7aZm1Bg4s/u0O0h
+         YsMml+sLU9NeXx/QCpJ94X5Dy9N6m26Qg20zzx11sg5tXG3YgPG2JQo7mbOiFzR7j+/v
+         HzlA==
+X-Gm-Message-State: AOAM5316xsZZuHt5lno4T2ErW3kMiIVRl2e66Bza+fATMP702HDV0zXI
+        yNZ2URzQvu71S/J0nqaqIbM=
+X-Google-Smtp-Source: ABdhPJxI/o2Y5km26InMXfUj5hhcvGWE9T0zNBdnksQtuPxa2OKNMVPI1nLtGIhiD2DG5bzW3J1oWQ==
+X-Received: by 2002:a0c:ef87:: with SMTP id w7mr4087915qvr.44.1611639543652;
+        Mon, 25 Jan 2021 21:39:03 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id t68sm13629790qkd.35.2021.01.25.21.05.04
+        by smtp.gmail.com with ESMTPSA id r17sm12497447qta.78.2021.01.25.21.39.02
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 25 Jan 2021 21:05:04 -0800 (PST)
+        Mon, 25 Jan 2021 21:39:03 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 26 Jan 2021 00:04:56 -0500 (EST)
+Date:   Tue, 26 Jan 2021 00:39:02 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 v2 00/20] rt-numa.h cleanups
-In-Reply-To: <20201218161843.1764-1-dwagner@suse.de>
-Message-ID: <47fed8-c9dd-83ba-87bd-8c527e475912@redhat.com>
-References: <20201218161843.1764-1-dwagner@suse.de>
+Subject: Re: [rt-tests v1 3/6] cyclictest: Use affinity_mask for stearing
+ thread placement
+In-Reply-To: <20201218141935.24151-4-dwagner@suse.de>
+Message-ID: <2b7c33f3-6249-5ef4-94a3-957cb8cbb3bd@redhat.com>
+References: <20201218141935.24151-1-dwagner@suse.de> <20201218141935.24151-4-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -76,87 +78,111 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Fri, 18 Dec 2020, Daniel Wagner wrote:
 
-> This series cleans up the rt-numa.h header.
+> We don't need an extra variable to track the state if a bitmask is
+> available or not. Check directly if the mask is usable.
 > 
-> As we have a hard dependency on libnuma we can simplify the code in
-> cyclictest. This allows remove all the small helpers in rt_numa.h. And
-> with this we can remove the header and reduce the confusion with
-> rt-numa.h
-
-I'm not entirely convinced. The code has been moving in this direction,
-but I don't know what motivation there is for libnuma people to provide 
-libnuma on architectures without numa. This is what the code used to do, 
-it wrapped these calls in a way that we could call them whether numa was 
-available or not. On Fedora there is no libnuma (numactl) for arm 
-processors currently afaik as an example. But, there are a lot of good 
-changes here and I  want the code to go forward, so there is no point 
-holding on to functionality that we largely got rid of, but if in the
-future we have arches that won't work on some distributions,
-we may be forced to reimpliment the numa wrappers.
-
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  src/cyclictest/cyclictest.c | 28 ++++------------------------
+>  1 file changed, 4 insertions(+), 24 deletions(-)
 > 
-> While at it, I simplified the --smp vs --affinity vs --threads
-> logic. There is no need for additional variables to keep state. With
-> this we also make --affinity to behave as with the rest of
-> rt-tests. That is a plan -a will be the same as with -S. There is no
-> need for -S anymore but I think we should leave it in place for
-> backwards compatibility. I suspect, there must be a lot of muscle
-> memory out there :)
-
-This is really good. Note, the first step that got us here, was the code
-that just detected whether numa was available and used it automatically
-if it was, unless smp was specified. Believe it or not though, some of
-the motivation for that was to reduce the alphabet soup of options on
-cyclictest. If -S is no longer needed, it should be removed, people can
-learn new muscle memory. (I'm typing this on a Canadian (English layout)
-keyboard after using a German keyboard for 13+ years.)
-
-
-> 
-> Since signaltest has the same code as cyclictest, cleanup this tool as
-> well.
-> 
-> With all those cleanups in cyclictest and signaltest, rt-numa.h
-> contains only a three functions. The final part of the series is to
-> remove unnecessary function arguments (max_cpus). This also fixes the
-> theoretical problem that a sparse cpumask would not be handled
-> correctly.
-> 
-> changes v2:
->   - added more cleanup patches (7-20)
-> 
-> Daniel Wagner (20):
->   cyclictest: Always use libnuma
->   cyclictest: Use numa API directly
->   cyclictest: Use affinity_mask for stearing thread placement
->   cyclictest: Mimik --smp behavior with --affinity
->   cyclictest: Simplify --smp vs --affinity vs --threads argument logic
->   cyclictest: Move verbose message into main
->   signaltest: Always use libnuma
->   signaltest: Use affinity_mask for stearing thread placement
->   signaltest:  Simplify --smp vs --affinity vs --threads argument logic
->   rt-numa: Remove unused definitions and numa_initialize()
->   rt-numa: Add generic cpu_for_thread() helper
->   rt-numa: Use mask size for iterator limit
->   rt-numa: Remove max_cpus argument from parse_cpusmask
->   rt-numa: Use error message helpers
->   signaltest: Remove unused max_cpus argument from process_options
->   cyclictest: Remove unused max_cpus argument from process_options
->   rt-numa: Use CPU_SETSIZE as upper loop limit
->   rt-numa: Remove used max_cpus argument from cpu_for_thread()
->   cyclictest: Remove max cpus used verbose information
->   cyclictest: Remove unecessary local variable
-> 
->  src/cyclictest/cyclictest.c | 177 +++++++++++++-----------------------
->  src/cyclictest/rt_numa.h    |  98 --------------------
->  src/include/rt-numa.h       |  13 +--
->  src/lib/rt-numa.c           |  44 ++++-----
->  src/oslat/oslat.c           |   3 +-
->  src/signaltest/signaltest.c |  80 ++++------------
->  6 files changed, 101 insertions(+), 314 deletions(-)
->  delete mode 100644 src/cyclictest/rt_numa.h
-> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index a5ca764da254..0e6519125c2f 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -893,7 +893,6 @@ static int interval = DEFAULT_INTERVAL;
+>  static int distance = -1;
+>  static struct bitmask *affinity_mask = NULL;
+>  static int smp = 0;
+> -static int setaffinity = AFFINITY_UNSPECIFIED;
+>  
+>  static int clocksources[] = {
+>  	CLOCK_MONOTONIC,
+> @@ -1020,19 +1019,13 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  				break;
+>  			if (optarg) {
+>  				parse_cpumask(optarg, max_cpus, &affinity_mask);
+> -				setaffinity = AFFINITY_SPECIFIED;
+>  			} else if (optind < argc &&
+>  				   (atoi(argv[optind]) ||
+>  				    argv[optind][0] == '0' ||
+>  				    argv[optind][0] == '!')) {
+>  				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
+> -				setaffinity = AFFINITY_SPECIFIED;
+> -			} else {
+> -				setaffinity = AFFINITY_USEALL;
+>  			}
+>  
+> -			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
+> -				display_help(1);
+>  			if (verbose)
+>  				printf("Using %u cpus.\n",
+>  					numa_bitmask_weight(affinity_mask));
+> @@ -1125,7 +1118,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  		case OPT_SMP: /* SMP testing */
+>  			smp = 1;
+>  			num_threads = -1; /* update after parsing */
+> -			setaffinity = AFFINITY_USEALL;
+>  			break;
+>  		case 't':
+>  		case OPT_THREADS:
+> @@ -1194,23 +1186,16 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  		use_nanosleep = MODE_CLOCK_NANOSLEEP;
+>  	}
+>  
+> -	/* if smp wasn't requested, test for numa automatically */
+> -	if (!smp) {
+> -		if (setaffinity == AFFINITY_UNSPECIFIED)
+> -			setaffinity = AFFINITY_USEALL;
+> -	}
+> -
+>  	if (option_affinity && smp) {
+>  		warn("-a ignored due to smp mode\n");
+>  		if (affinity_mask) {
+>  			numa_bitmask_free(affinity_mask);
+>  			affinity_mask = NULL;
+>  		}
+> -		setaffinity = AFFINITY_USEALL;
+>  	}
+>  
+>  	if (smi) {
+> -		if (setaffinity == AFFINITY_UNSPECIFIED)
+> +		if (affinity_mask)
+>  			fatal("SMI counter relies on thread affinity\n");
+>  
+>  		if (!has_smi_counter())
+> @@ -1756,7 +1741,7 @@ int main(int argc, char **argv)
+>  		printf("Max CPUs = %d\n", max_cpus);
+>  
+>  	/* Restrict the main pid to the affinity specified by the user */
+> -	if (affinity_mask != NULL) {
+> +	if (affinity_mask) {
+>  		int res;
+>  
+>  		errno = 0;
+> @@ -1915,17 +1900,12 @@ int main(int argc, char **argv)
+>  		if (status != 0)
+>  			fatal("error from pthread_attr_init for thread %d: %s\n", i, strerror(status));
+>  
+> -		switch (setaffinity) {
+> -		case AFFINITY_UNSPECIFIED: cpu = -1; break;
+> -		case AFFINITY_SPECIFIED:
+> +		if (affinity_mask) {
+>  			cpu = cpu_for_thread_sp(i, max_cpus, affinity_mask);
+>  			if (verbose)
+>  				printf("Thread %d using cpu %d.\n", i, cpu);
+> -			break;
+> -		case AFFINITY_USEALL:
+> +		} else {
+>  			cpu = cpu_for_thread_ua(i, max_cpus);
+> -			break;
+> -		default: cpu = -1;
+>  		}
+>  
+>  		/* find the memory node associated with the cpu i */
 > -- 
 > 2.29.2
 > 
 > 
+-Fixed spelling of "steering"
+Signed-off-by: John Kacur <jkacur@redhat.com>
