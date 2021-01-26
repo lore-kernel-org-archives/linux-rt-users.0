@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 98B60C433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 09:25:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 984CBC433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 09:26:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 50E7023104
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 09:25:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 48CF52310E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jan 2021 09:26:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390896AbhAZJYp (ORCPT
+        id S2391012AbhAZJZu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jan 2021 04:24:45 -0500
-Received: from mx2.suse.de ([195.135.220.15]:59490 "EHLO mx2.suse.de"
+        Tue, 26 Jan 2021 04:25:50 -0500
+Received: from mx2.suse.de ([195.135.220.15]:59466 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2390194AbhAZJUc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S2390175AbhAZJUc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 26 Jan 2021 04:20:32 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id CF72CB8F1;
+        by mx2.suse.de (Postfix) with ESMTP id 3A33BB81E;
         Tue, 26 Jan 2021 09:19:50 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v4 09/12] sigwaittest: Add JSON output feature
-Date:   Tue, 26 Jan 2021 10:19:43 +0100
-Message-Id: <20210126091946.1241-10-dwagner@suse.de>
+Subject: [rt-tests v4 07/12] pmqtest: Add JSON output feature
+Date:   Tue, 26 Jan 2021 10:19:41 +0100
+Message-Id: <20210126091946.1241-8-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210126091946.1241-1-dwagner@suse.de>
 References: <20210126091946.1241-1-dwagner@suse.de>
@@ -45,44 +45,45 @@ simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sigwaittest/sigwaittest.c | 117 ++++++++++++++++++++++++++++------
- 1 file changed, 99 insertions(+), 18 deletions(-)
+ src/pmqtest/pmqtest.c | 137 +++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 114 insertions(+), 23 deletions(-)
 
-diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-index f10c24914d4a..0cdf30a6a769 100644
---- a/src/sigwaittest/sigwaittest.c
-+++ b/src/sigwaittest/sigwaittest.c
-@@ -39,6 +39,7 @@
- #include <linux/unistd.h>
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 349b47741003..e1f59836ea07 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -22,6 +22,7 @@
  #include <utmpx.h>
+ #include <mqueue.h>
  #include <pthread.h>
 +#include <inttypes.h>
  
  #include "rt-utils.h"
  #include "rt-get_cpu.h"
-@@ -220,6 +221,7 @@ static void display_help(int error)
- 	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
+@@ -231,6 +232,7 @@ static void display_help(int error)
+ 	       "-h       --help            print this help message\n"
  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
 +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
  	       "-p PRIO  --prio=PRIO       priority\n"
  	       "-q       --quiet           print a summary only on exit\n"
- 	       "-t       --threads         one thread per available processor\n"
-@@ -240,6 +242,13 @@ static int duration;
- static int interval = 1000;
- static int distance = 500;
+ 	       "-S       --smp             SMP testing: options -a -t and same priority\n"
+@@ -258,6 +260,14 @@ static int sameprio;
+ static int timeout;
+ static int forcetimeout;
  static int quiet;
 +static char outfile[MAX_PATH];
 +
 +enum option_value {
 +	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
-+	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT,
-+	OPT_PRIORITY, OPT_QUIET, OPT_THREADS
++	OPT_FORCETIMEOUT, OPT_HELP, OPT_INTERVAL, OPT_LOOPS,
++	OPT_OUTPUT, OPT_PRIORITY, OPT_QUIET, OPT_SMP, OPT_THREADS,
++	OPT_TIMEOUT
 +};
  
  static void process_options(int argc, char *argv[])
  {
-@@ -251,17 +260,18 @@ static void process_options(int argc, char *argv[])
+@@ -268,19 +278,20 @@ static void process_options(int argc, char *argv[])
  		int option_index = 0;
  		/** Options for getopt */
  		static struct option long_options[] = {
@@ -90,46 +91,51 @@ index f10c24914d4a..0cdf30a6a769 100644
 -			{"breaktrace",		required_argument,	NULL, 'b'},
 -			{"distance",		required_argument,	NULL, 'd'},
 -			{"duration",		required_argument,	NULL, 'D'},
--			{"fork",		optional_argument,	NULL, 'f'},
+-			{"forcetimeout",	required_argument,	NULL, 'f'},
 -			{"help",		no_argument,		NULL, 'h'},
 -			{"interval",		required_argument,	NULL, 'i'},
 -			{"loops",		required_argument,	NULL, 'l'},
 -			{"priority",		required_argument,	NULL, 'p'},
 -			{"quiet",		no_argument,		NULL, 'q'},
+-			{"smp",			no_argument,		NULL, 'S'},
 -			{"threads",		optional_argument,	NULL, 't'},
+-			{"timeout",		required_argument,	NULL, 'T'},
 +			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
 +			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
 +			{"distance",	required_argument,	NULL, OPT_DISTANCE},
 +			{"duration",	required_argument,	NULL, OPT_DURATION},
-+			{"fork",	optional_argument,	NULL, OPT_FORK},
++			{"forcetimeout",required_argument,	NULL, OPT_FORCETIMEOUT},
 +			{"help",	no_argument,		NULL, OPT_HELP},
 +			{"interval",	required_argument,	NULL, OPT_INTERVAL},
 +			{"loops",	required_argument,	NULL, OPT_LOOPS},
 +			{"output",	required_argument,      NULL, OPT_OUTPUT },
 +			{"priority",	required_argument,	NULL, OPT_PRIORITY},
 +			{"quiet",	no_argument,		NULL, OPT_QUIET},
++			{"smp",		no_argument,		NULL, OPT_SMP},
 +			{"threads",	optional_argument,	NULL, OPT_THREADS},
++			{"timeout",	required_argument,	NULL, OPT_TIMEOUT},
  			{NULL, 0, NULL, 0}
  		};
- 		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:qt::",
-@@ -269,6 +279,7 @@ static void process_options(int argc, char *argv[])
+ 		int c = getopt_long (argc, argv, "a::b:d:D:f:i:l:p:qSt::T:",
+@@ -288,6 +299,7 @@ static void process_options(int argc, char *argv[])
  		if (c == -1)
  			break;
  		switch (c) {
 +		case OPT_AFFINITY:
  		case 'a':
- 			if (optarg != NULL) {
- 				affinity = atoi(optarg);
-@@ -280,9 +291,19 @@ static void process_options(int argc, char *argv[])
+ 			if (smp) {
+ 				warn("-a ignored due to --smp\n");
+@@ -303,21 +315,53 @@ static void process_options(int argc, char *argv[])
  				setaffinity = AFFINITY_USEALL;
  			}
  			break;
--		case 'b': thistracelimit = atoi(optarg); break;
+-		case 'b': tracelimit = atoi(optarg); break;
 -		case 'd': distance = atoi(optarg); break;
 -		case 'D': duration = parse_time_string(optarg); break;
+-		case 'f': forcetimeout = atoi(optarg); break;
 +		case OPT_BREAKTRACE:
 +		case 'b':
-+			thistracelimit = atoi(optarg);
++			tracelimit = atoi(optarg);
 +			break;
 +		case OPT_DISTANCE:
 +		case 'd':
@@ -139,23 +145,20 @@ index f10c24914d4a..0cdf30a6a769 100644
 +		case 'D':
 +			duration = parse_time_string(optarg);
 +			break;
-+		case OPT_FORK:
- 		case 'f':
- 			if (optarg != NULL) {
- 				wasforked = 1;
-@@ -294,14 +315,31 @@ static void process_options(int argc, char *argv[])
- 			} else
- 				mustfork = 1;
- 			break;
++		case OPT_FORCETIMEOUT:
++		case 'f':
++			forcetimeout = atoi(optarg);
++			break;
 +		case OPT_HELP:
  		case '?':
- 		case 'h':
- 			display_help(0);
- 			break;
+-		case 'h': display_help(0); break;
 -		case 'i': interval = atoi(optarg); break;
 -		case 'l': max_cycles = atoi(optarg); break;
 -		case 'p': priority = atoi(optarg); break;
 -		case 'q': quiet = 1; break;
++		case 'h':
++			display_help(0);
++			break;
 +		case OPT_INTERVAL:
 +		case 'i':
 +			interval = atoi(optarg);
@@ -175,11 +178,29 @@ index f10c24914d4a..0cdf30a6a769 100644
 +		case 'q':
 +			quiet = 1;
 +			break;
++		case OPT_SMP:
+ 		case 'S':
+ 			smp = 1;
+ 			num_threads = max_cpus;
+ 			setaffinity = AFFINITY_USEALL;
+ 			break;
 +		case OPT_THREADS:
  		case 't':
- 			if (optarg != NULL)
- 				num_threads = atoi(optarg);
-@@ -388,6 +426,41 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
+ 			if (smp) {
+ 				warn("-t ignored due to --smp\n");
+@@ -330,7 +374,10 @@ static void process_options(int argc, char *argv[])
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
+-		case 'T': timeout = atoi(optarg); break;
++		case OPT_TIMEOUT:
++		case 'T':
++			timeout = atoi(optarg);
++			break;
+ 		default:
+ 			display_help(1);
+ 			break;
+@@ -401,6 +448,42 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
  	}
  }
  
@@ -209,6 +230,7 @@ index f10c24914d4a..0cdf30a6a769 100644
 +		fprintf(f, "      \"receiver\": {\n");
 +		fprintf(f, "        \"cpu\": %d,\n", r->cpu);
 +		fprintf(f, "        \"priority\": %d,\n", r->priority);
++		fprintf(f, "        \"timeoutcount\": %d,\n", r->timeoutcount);
 +		fprintf(f, "        \"min\": %d,\n", r->mindiff);
 +		fprintf(f, "        \"avg\": %.2f,\n", r->sumdiff/r->samples);
 +		fprintf(f, "        \"max\": %d\n", r->maxdiff);
@@ -220,9 +242,9 @@ index f10c24914d4a..0cdf30a6a769 100644
 +
  int main(int argc, char *argv[])
  {
- 	int i, totalsize = 0;
-@@ -627,6 +700,14 @@ int main(int argc, char *argv[])
- 		}
+ 	int i;
+@@ -562,6 +645,14 @@ int main(int argc, char *argv[])
+ 		mq_unlink(mqname);
  	}
  
 +	if (strlen(outfile) != 0) {
@@ -234,8 +256,8 @@ index f10c24914d4a..0cdf30a6a769 100644
 +	}
 +
  nomem:
- 	if (mustfork) {
- 		munmap(param, totalsize);
+ 
+ 	return 0;
 -- 
 2.30.0
 
