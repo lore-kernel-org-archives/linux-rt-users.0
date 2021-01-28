@@ -2,177 +2,126 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A1B89C433E0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jan 2021 11:31:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 871D9C433E0
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jan 2021 21:42:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 38F1864DDA
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jan 2021 11:31:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B9B264DEB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jan 2021 21:42:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231140AbhA1LbU (ORCPT
+        id S229757AbhA1Vma (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Jan 2021 06:31:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32960 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229900AbhA1LbS (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Jan 2021 06:31:18 -0500
-Received: from mail-il1-x132.google.com (mail-il1-x132.google.com [IPv6:2607:f8b0:4864:20::132])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D3F4DC061573
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Jan 2021 03:30:38 -0800 (PST)
-Received: by mail-il1-x132.google.com with SMTP id g7so3796307iln.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Jan 2021 03:30:38 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=hUJKEa/UipfXfvv2BusVyq3vW6TupjBeW8m9vWaIqTo=;
-        b=q0U7Ia/G4v9Iuo34xskyGWhmO5n8uHYAigBcQqNCpdZ8HagzWhMNSi8/IjYuQPRmpj
-         HFoYNTiOl1fghl0970rPC43TSe2CkUuqhfQFyGv5T9Bts8FJPlUjmSK+sfTJU0RfnqJk
-         bribUGKdvdmO/Jz1wuGP2vuxnGtuzh2i4xg8RPdQg3pAdNNhRSdVsds6avBGGdwW4/DC
-         3zkEsh/CfsaH2Zz8tm5GzOJpxz+VAIePZvAsTcHOJ9s1z9mOnRqSDm4E2dykiIMnpC3Z
-         HSR5hwYQce51FCLKX/kdK6FIO6bQ7Ll1ZNNPLAg3vOz7IL+mBin8CpeZaLTAcEQHpuGf
-         t6Mg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=hUJKEa/UipfXfvv2BusVyq3vW6TupjBeW8m9vWaIqTo=;
-        b=l4D9UV+4eZsBKYtAjkU5LPggjVtl/IR5FsqYEbYidlS8hyNonfOjvQ5ZL+zz7pgfY7
-         amjgMQayeRKmrAGP/xfzjrTMHFAoFrwCaQBdU3joPzS6EzUWc+gFSoUzztlPHPXyA1AP
-         cQNEStpAc4V5/qjQeLAlPJPekjefE6zLrc+fNrYaC5ScmhllY/blVbavAXFar1WP4QJF
-         Cdb80ZGUH5l+EYxaHqOBCg3gJan9Kcel26uB3T2XFL9uufuHmxQRYRzL6k4YoUdKroLe
-         ocIluoEdsJgaJVM81u8SUU8QgCqUrRwr7L/bWctQ5KSm69at4erbrfPX9yW1tZTCXHV9
-         JtkA==
-X-Gm-Message-State: AOAM533ZSe2NNGbqqsmJexdWguO1oWzBSQF4JNQsZpVRqZSy70MnkA4U
-        ulxO9MkqPiC/JG+7iAgLJNLq51AJal341DIPWcqVoX2GWFo=
-X-Google-Smtp-Source: ABdhPJx35c+rqzd6wNn0MOdxQlDNncmn3dBWOateICgT07XS/lgFb2f6ZNQaxpHvcXDbgJd0fu3BMdrXNgt8ZxOwPoQ=
-X-Received: by 2002:a92:c7b0:: with SMTP id f16mr5537674ilk.162.1611833438113;
- Thu, 28 Jan 2021 03:30:38 -0800 (PST)
-MIME-Version: 1.0
-References: <4fddc141-d24d-f63f-5c81-cfbfb08af442@189.cn>
-In-Reply-To: <4fddc141-d24d-f63f-5c81-cfbfb08af442@189.cn>
-From:   Daniel Vacek <neelx.g@gmail.com>
-Date:   Thu, 28 Jan 2021 12:30:25 +0100
-Message-ID: <CAA7rmPGYFV1k0XmxJ3QQYJB+xK2XWdP_eY8poEoo_G6cHNN9Jw@mail.gmail.com>
-Subject: Re: preempt_disable causes big latency
-To:     "chensong_2000@189.cn" <chensong_2000@189.cn>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+        Thu, 28 Jan 2021 16:42:30 -0500
+Received: from sleepmap.de ([85.10.206.218]:43880 "EHLO mail.sleepmap.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229658AbhA1Vm2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 28 Jan 2021 16:42:28 -0500
+Date:   Thu, 28 Jan 2021 22:41:45 +0100
+From:   David Runge <dave@sleepmap.de>
+To:     "Ahmed S. Darwish" <a.darwish@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org,
+        linux1394-devel@lists.sourceforge.net
+Subject: Re: firewire-ohci fails to initialize Texas Instruments
+ XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
+ 5.10.8-rt24]
+Message-ID: <YBMvmU+kp11f7+wF@hmbx>
+References: <YAwPoaUZ1gTD5y+k@hmbx>
+ <YBJZk9/77+E0TRk4@lx-t490>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="xQ9xaHb/SmmtzFh5"
+Content-Disposition: inline
+In-Reply-To: <YBJZk9/77+E0TRk4@lx-t490>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Song,
 
-On Thu, Jan 28, 2021 at 10:12 AM chensong_2000@189.cn
-<chensong_2000@189.cn> wrote:
-> Dear experts,
->
-> When i was running cyclictest with ltp(kernel 4.19.90 rt, arch64),
-> cyclictest got a big latecy(more than 10ms), the ftrace log shows that
-> modprobe called preempt_disable for a long time, which stops cyclictest
-> being switched.
+--xQ9xaHb/SmmtzFh5
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+Date: Thu, 28 Jan 2021 22:41:45 +0100
+From: David Runge <dave@sleepmap.de>
+To: "Ahmed S. Darwish" <a.darwish@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org, linux1394-devel@lists.sourceforge.net
+Subject: Re: firewire-ohci fails to initialize Texas Instruments
+ XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
+ 5.10.8-rt24]
 
-This works as designed. Running a latency sensitive application has
-some inherent rules. You need to stick to that rules, otherwise
-excessive latencies are to be expected. The best documentation (I
-believe) you can find on
-https://wiki.linuxfoundation.org/realtime/start (ex.
-https://rt.wiki.kernel.org/).
-
-In short, running modprobe (loading kernel modules in general) is not
-allowed. For a production system, you are supposed to set up the
-machine first (loading the modules during boot or before starting the
-application). The application itself is bound to allowed operations
-only, otherwise it has to expect blocking and unbounded latencies.
-
-> here is a piece of log:
->
-> modprobe-4551    0...10   712.754529: preempt_disable:
-> caller=0xffff0001019900c8 parent=0xffff0001019900c8
+On 2021-01-28 07:28:35 (+0100), Ahmed S. Darwish wrote:
+> On Sat, Jan 23, 2021 at 12:59:29PM +0100, David Runge wrote:
 > ...
-> modprobe-4551    0d..10   712.754589: irq_disable: caller=el1_irq+0x7c
-> parent=0xffff0001019900dc
-> modprobe-4551    0d.h10   712.754590: irq_handler_entry:    irq=2
-> name=arch_timer
-> modprobe-4551    0d.h20   712.754591: hrtimer_cancel:
-> hrtimer=0xffff8020f4983d98
-> modprobe-4551    0d.h10   712.754591: hrtimer_expire_entry:
-> hrtimer=0xffff8020f4983d98 now=712720218245 function=hrtimer_wakeup/0x0
-> modprobe-4551    0d.h20   712.754592: sched_waking: comm=cyclictest
-> pid=2212 prio=9 target_cpu=000
-> modprobe-4551    0dNh30   712.754593: sched_wakeup: cyclictest:2212 [9]
-> success=1 CPU:000
-> modprobe-4551    0dNh10   712.754594: hrtimer_expire_exit:
-> hrtimer=0xffff8020f4983d98
-> modprobe-4551    0dNh10   712.754594: irq_handler_exit:     irq=2
-> ret=handled
+> Can you please send the full kernel log, with boot parameter
+> "firewire_ohci.debug=3D-1", for mainline v5.4.91 vs. v5.4.91-rt50?
 
-Again, this is perfectly valid.
+kernel log for mainline:
+https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.4.91-kernel.log
 
-> Further i found
-> preemptirq_delay_test(kernel/trace/preemptirq_delay_test.c) can
-> reproduce it easily and got the similar ftrace log.
+kernel log for rt (no dice :-/):
+https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.4.91.50.arch1-kernel.log
 
-You can find endless ways how to introduce latency to the system.
-That's why some operations are not allowed. For more details see the
-mentioned documentation. ^^
+> Please also make sure to use the exact same defconfig for both, except
+> with CONFIG_PREEMPT_RT=3Dy for the -rt kenrel of course.
 
-> The root cause i found is in el1_irq, it checks preempt count and
-> TIF_NEED_RESCHED before it goes through the path el1_preempt,
-> preempt_disable just stops it happening.
+config diff:
+https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.4.91-lts_changed_vs_rt-lts=
+=2Epatch
 
-As it should.
+> This will help in comparing apples to apples, as you were posting the
+> results of different base kernels (vs. the -rt versions), and different
+> defconfigs (vs. -rt) within such kernels.
 
-> Then i came up an idea and did an experiment,  call
-> preempt_count_set(0); and set_tsk_need_resched(task); in hrtimer_wakeup
-> to meet the expectation in order to reschdule.
+The configuration for the 5.4.91 stock kernel has not been updated since
+the 5.4.83, which is maybe a bit misleading.
+Generally I enable anything that I can in the config for the realtime
+kernel. However, some settings of course get switched off, as they are
+not compatible.
+The diff above is for a custom version I just made, just to make sure
+and clear things out.
 
-Sounds like demolishing the pillars of the bridge, yet still expecting
-it not to fall. This will break your system for sure.
+> Good luck,
 
-> static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer)
-> {
->      struct hrtimer_sleeper *t =
->          container_of(timer, struct hrtimer_sleeper, timer);
->      struct task_struct *task = t->task;
->
->      t->task = NULL;
->      if (task)
->          wake_up_process(task);
->
->      if(preempt_count())
->          preempt_count_set(0);
->      set_tsk_need_resched(task);
->
->      return HRTIMER_NORESTART;
-> }
->
-> but, failed, system froze, no panic information.
+Thanks, seems it's needed!
 
-Not surprised.
+> P.S. Since this maybe is a timing issue, and ohci bus reset handling
+> occurs at SCHED_OTHER workqueu context, were you by any chance running
+> unreasonably-intensive realtime workloads by the time the driver was
+> loaded?
 
-> Is there anyone having the same problem? i would appreciate it if you
-> could share me some information in this case, many thanks.
+Not that I am aware of. The driver neither initializes the device during
+boot nor when later reloading.
+There are no intense services running. The system is fairly
+multi-purpose, so most things are started on demand.
 
-Simply, no modprobe while running the cyclictest. The cyclictest is
-supposed to be running on a machine as if the machine was in
-production and definitely not tortured by arbitrary synthetic tests
-(unless the test simulates a real world scenario which actually can
-happen in production).
-Again, all the modules should be preloaded before running cyclictest
-or the production application.
+Thanks!
 
-Realtime system is a fragile beast and you have to handle it with special care.
+David
 
-Have a nice day,
-Daniel
+--=20
+https://sleepmap.de
 
-> BR
->
-> Song Chen
+--xQ9xaHb/SmmtzFh5
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCAAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAmATL5kACgkQVMKPT/Wh
+qUkPdBAAgK7/YwFvPgqG7uJ2jOMC49R1nPfs5VdJwgZ8Ue+ltq5ihY85F5GHHmub
+rCbtSGTHSANjpYk8ZfniQcehzemHB9KMKroSSnst5einTQC7jIZ8DDHytRPyoDPZ
+a7USfJ3cs4H6JryopqTY5q3hzapwMLX4b2H9WFIUe/KoNYvY9oEXZDY4y8wapnlv
+JW7nSviV1guat1FNhf7PwpgCD4y2zCAEVHlV2jED0PqG7YlsMJVcxI8e9CZBvExQ
+vFMbhhlpdcM0JUissUcKyqk1Jo4PK347ZBROOT12LcdcS5BCkyT/HzMOZaBNb0J/
+KbKsoUMVdGPa9gmWyHv5a8CYhVA8WECwGBat7fn9k/nkNA2qUcTe/zlZBG0jljqT
+UwNvKjWjTWS6pFqSt0C6AqzPvh3rN1PKwnFUjqGvUFcuykL+ULpCbW6u7uR4cPNW
+PWsBP7Qw3zhum9dwCg6d4P6//55cAZ0oK9xrdlfnoiHYsJhQ8CAvdcOy8CUkHSDj
+tRdQs5kfnsiYxDlmLAvSGgE08n2n372qOjsD4Uy2ohKN/jMp9G9VSDRAnnEPMXAm
+I3AI8vS5cu07EwuPmab9HQ/Wbmi2WyWk3pFCciGKBQQIFDcfcb0HqhRZfmJV8Ecb
+9KrqAWRo3+wVeYvlfHMTXeyJarOQWINFeK9yFTlygRNG+28gP48=
+=qjyt
+-----END PGP SIGNATURE-----
+
+--xQ9xaHb/SmmtzFh5--
