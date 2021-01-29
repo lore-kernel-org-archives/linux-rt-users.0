@@ -2,126 +2,178 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=BAYES_00,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 871D9C433E0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jan 2021 21:42:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 563A4C433DB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Jan 2021 03:55:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3B9B264DEB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jan 2021 21:42:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 139B760235
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Jan 2021 03:55:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229757AbhA1Vma (ORCPT
+        id S229885AbhA2Dz5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Jan 2021 16:42:30 -0500
-Received: from sleepmap.de ([85.10.206.218]:43880 "EHLO mail.sleepmap.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229658AbhA1Vm2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Jan 2021 16:42:28 -0500
-Date:   Thu, 28 Jan 2021 22:41:45 +0100
-From:   David Runge <dave@sleepmap.de>
-To:     "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org,
-        linux1394-devel@lists.sourceforge.net
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
-Message-ID: <YBMvmU+kp11f7+wF@hmbx>
-References: <YAwPoaUZ1gTD5y+k@hmbx>
- <YBJZk9/77+E0TRk4@lx-t490>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="xQ9xaHb/SmmtzFh5"
-Content-Disposition: inline
-In-Reply-To: <YBJZk9/77+E0TRk4@lx-t490>
+        Thu, 28 Jan 2021 22:55:57 -0500
+Received: from ptr.189.cn ([183.61.185.101]:10949 "EHLO 189.cn"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S229757AbhA2Dz5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 28 Jan 2021 22:55:57 -0500
+HMM_SOURCE_IP: 10.64.10.45:46820.1270063813
+HMM_ATTACHE_NUM: 0000
+HMM_SOURCE_TYPE: SMTP
+Received: from clientip-123.150.8.42 (unknown [10.64.10.45])
+        by 189.cn (HERMES) with SMTP id 14B3C100996;
+        Fri, 29 Jan 2021 11:52:46 +0800 (CST)
+Received: from  ([10.64.8.34])
+        by gateway-151646-dep-54888d799-vh9dt with ESMTP id e4eaa99d2f014bbfa9f8cb65cf5677cc for linux-rt-users@vger.kernel.org;
+        Fri Jan 29 11:52:47 2021
+X-Transaction-ID: e4eaa99d2f014bbfa9f8cb65cf5677cc
+X-filter-score: 
+X-Real-From: chensong_2000@189.cn
+X-Receive-IP: 10.64.8.34
+X-MEDUSA-Status: 0
+Sender: chensong_2000@189.cn
+Subject: Re: preempt_disable causes big latency
+To:     Daniel Vacek <neelx.g@gmail.com>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
+References: <4fddc141-d24d-f63f-5c81-cfbfb08af442@189.cn>
+ <CAA7rmPGYFV1k0XmxJ3QQYJB+xK2XWdP_eY8poEoo_G6cHNN9Jw@mail.gmail.com>
+From:   "chensong_2000@189.cn" <chensong_2000@189.cn>
+Message-ID: <884a3f62-29d0-8727-7cfc-2e548cfa3062@189.cn>
+Date:   Fri, 29 Jan 2021 11:52:51 +0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
+MIME-Version: 1.0
+In-Reply-To: <CAA7rmPGYFV1k0XmxJ3QQYJB+xK2XWdP_eY8poEoo_G6cHNN9Jw@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Daniel,
 
---xQ9xaHb/SmmtzFh5
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Thu, 28 Jan 2021 22:41:45 +0100
-From: David Runge <dave@sleepmap.de>
-To: "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org, linux1394-devel@lists.sourceforge.net
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
+Thanks a lot for your kind explanation and vivid metaphors, it helps me 
+have better understanding about preempt rt with the docs linked below.
 
-On 2021-01-28 07:28:35 (+0100), Ahmed S. Darwish wrote:
-> On Sat, Jan 23, 2021 at 12:59:29PM +0100, David Runge wrote:
-> ...
-> Can you please send the full kernel log, with boot parameter
-> "firewire_ohci.debug=3D-1", for mainline v5.4.91 vs. v5.4.91-rt50?
+Like you said, Realtime system is a fragile beast, we have a lot of work 
+ahead to make it more robust and have better fault-tolerant.
 
-kernel log for mainline:
-https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.4.91-kernel.log
+Thanks again and best regards,
 
-kernel log for rt (no dice :-/):
-https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.4.91.50.arch1-kernel.log
+Song
 
-> Please also make sure to use the exact same defconfig for both, except
-> with CONFIG_PREEMPT_RT=3Dy for the -rt kenrel of course.
-
-config diff:
-https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.4.91-lts_changed_vs_rt-lts=
-=2Epatch
-
-> This will help in comparing apples to apples, as you were posting the
-> results of different base kernels (vs. the -rt versions), and different
-> defconfigs (vs. -rt) within such kernels.
-
-The configuration for the 5.4.91 stock kernel has not been updated since
-the 5.4.83, which is maybe a bit misleading.
-Generally I enable anything that I can in the config for the realtime
-kernel. However, some settings of course get switched off, as they are
-not compatible.
-The diff above is for a custom version I just made, just to make sure
-and clear things out.
-
-> Good luck,
-
-Thanks, seems it's needed!
-
-> P.S. Since this maybe is a timing issue, and ohci bus reset handling
-> occurs at SCHED_OTHER workqueu context, were you by any chance running
-> unreasonably-intensive realtime workloads by the time the driver was
-> loaded?
-
-Not that I am aware of. The driver neither initializes the device during
-boot nor when later reloading.
-There are no intense services running. The system is fairly
-multi-purpose, so most things are started on demand.
-
-Thanks!
-
-David
-
---=20
-https://sleepmap.de
-
---xQ9xaHb/SmmtzFh5
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAmATL5kACgkQVMKPT/Wh
-qUkPdBAAgK7/YwFvPgqG7uJ2jOMC49R1nPfs5VdJwgZ8Ue+ltq5ihY85F5GHHmub
-rCbtSGTHSANjpYk8ZfniQcehzemHB9KMKroSSnst5einTQC7jIZ8DDHytRPyoDPZ
-a7USfJ3cs4H6JryopqTY5q3hzapwMLX4b2H9WFIUe/KoNYvY9oEXZDY4y8wapnlv
-JW7nSviV1guat1FNhf7PwpgCD4y2zCAEVHlV2jED0PqG7YlsMJVcxI8e9CZBvExQ
-vFMbhhlpdcM0JUissUcKyqk1Jo4PK347ZBROOT12LcdcS5BCkyT/HzMOZaBNb0J/
-KbKsoUMVdGPa9gmWyHv5a8CYhVA8WECwGBat7fn9k/nkNA2qUcTe/zlZBG0jljqT
-UwNvKjWjTWS6pFqSt0C6AqzPvh3rN1PKwnFUjqGvUFcuykL+ULpCbW6u7uR4cPNW
-PWsBP7Qw3zhum9dwCg6d4P6//55cAZ0oK9xrdlfnoiHYsJhQ8CAvdcOy8CUkHSDj
-tRdQs5kfnsiYxDlmLAvSGgE08n2n372qOjsD4Uy2ohKN/jMp9G9VSDRAnnEPMXAm
-I3AI8vS5cu07EwuPmab9HQ/Wbmi2WyWk3pFCciGKBQQIFDcfcb0HqhRZfmJV8Ecb
-9KrqAWRo3+wVeYvlfHMTXeyJarOQWINFeK9yFTlygRNG+28gP48=
-=qjyt
------END PGP SIGNATURE-----
-
---xQ9xaHb/SmmtzFh5--
+在 2021/1/28 下午7:30, Daniel Vacek 写道:
+> Hi Song,
+> 
+> On Thu, Jan 28, 2021 at 10:12 AM chensong_2000@189.cn
+> <chensong_2000@189.cn> wrote:
+>> Dear experts,
+>>
+>> When i was running cyclictest with ltp(kernel 4.19.90 rt, arch64),
+>> cyclictest got a big latecy(more than 10ms), the ftrace log shows that
+>> modprobe called preempt_disable for a long time, which stops cyclictest
+>> being switched.
+> 
+> This works as designed. Running a latency sensitive application has
+> some inherent rules. You need to stick to that rules, otherwise
+> excessive latencies are to be expected. The best documentation (I
+> believe) you can find on
+> https://wiki.linuxfoundation.org/realtime/start (ex.
+> https://rt.wiki.kernel.org/).
+> 
+> In short, running modprobe (loading kernel modules in general) is not
+> allowed. For a production system, you are supposed to set up the
+> machine first (loading the modules during boot or before starting the
+> application). The application itself is bound to allowed operations
+> only, otherwise it has to expect blocking and unbounded latencies.
+> 
+>> here is a piece of log:
+>>
+>> modprobe-4551    0...10   712.754529: preempt_disable:
+>> caller=0xffff0001019900c8 parent=0xffff0001019900c8
+>> ...
+>> modprobe-4551    0d..10   712.754589: irq_disable: caller=el1_irq+0x7c
+>> parent=0xffff0001019900dc
+>> modprobe-4551    0d.h10   712.754590: irq_handler_entry:    irq=2
+>> name=arch_timer
+>> modprobe-4551    0d.h20   712.754591: hrtimer_cancel:
+>> hrtimer=0xffff8020f4983d98
+>> modprobe-4551    0d.h10   712.754591: hrtimer_expire_entry:
+>> hrtimer=0xffff8020f4983d98 now=712720218245 function=hrtimer_wakeup/0x0
+>> modprobe-4551    0d.h20   712.754592: sched_waking: comm=cyclictest
+>> pid=2212 prio=9 target_cpu=000
+>> modprobe-4551    0dNh30   712.754593: sched_wakeup: cyclictest:2212 [9]
+>> success=1 CPU:000
+>> modprobe-4551    0dNh10   712.754594: hrtimer_expire_exit:
+>> hrtimer=0xffff8020f4983d98
+>> modprobe-4551    0dNh10   712.754594: irq_handler_exit:     irq=2
+>> ret=handled
+> 
+> Again, this is perfectly valid.
+> 
+>> Further i found
+>> preemptirq_delay_test(kernel/trace/preemptirq_delay_test.c) can
+>> reproduce it easily and got the similar ftrace log.
+> 
+> You can find endless ways how to introduce latency to the system.
+> That's why some operations are not allowed. For more details see the
+> mentioned documentation. ^^
+> 
+>> The root cause i found is in el1_irq, it checks preempt count and
+>> TIF_NEED_RESCHED before it goes through the path el1_preempt,
+>> preempt_disable just stops it happening.
+> 
+> As it should.
+> 
+>> Then i came up an idea and did an experiment,  call
+>> preempt_count_set(0); and set_tsk_need_resched(task); in hrtimer_wakeup
+>> to meet the expectation in order to reschdule.
+> 
+> Sounds like demolishing the pillars of the bridge, yet still expecting
+> it not to fall. This will break your system for sure.
+> 
+>> static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer)
+>> {
+>>       struct hrtimer_sleeper *t =
+>>           container_of(timer, struct hrtimer_sleeper, timer);
+>>       struct task_struct *task = t->task;
+>>
+>>       t->task = NULL;
+>>       if (task)
+>>           wake_up_process(task);
+>>
+>>       if(preempt_count())
+>>           preempt_count_set(0);
+>>       set_tsk_need_resched(task);
+>>
+>>       return HRTIMER_NORESTART;
+>> }
+>>
+>> but, failed, system froze, no panic information.
+> 
+> Not surprised.
+> 
+>> Is there anyone having the same problem? i would appreciate it if you
+>> could share me some information in this case, many thanks.
+> 
+> Simply, no modprobe while running the cyclictest. The cyclictest is
+> supposed to be running on a machine as if the machine was in
+> production and definitely not tortured by arbitrary synthetic tests
+> (unless the test simulates a real world scenario which actually can
+> happen in production).
+> Again, all the modules should be preloaded before running cyclictest
+> or the production application.
+> 
+> Realtime system is a fragile beast and you have to handle it with special care.
+> 
+> Have a nice day,
+> Daniel
+> 
+>> BR
+>>
+>> Song Chen
+> 
