@@ -2,122 +2,82 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33A23C433E6
-	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Feb 2021 12:30:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6149AC433E0
+	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Feb 2021 16:19:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EDF0164E8B
-	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Feb 2021 12:30:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 22B3564E87
+	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Feb 2021 16:19:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231669AbhBHMa3 (ORCPT
+        id S233337AbhBHQT1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 8 Feb 2021 07:30:29 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:36488 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230248AbhBHMaB (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 8 Feb 2021 07:30:01 -0500
-Date:   Mon, 8 Feb 2021 13:29:18 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1612787359;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=33y8fMyhqemoPBBvUbcbiP0bZu+iLif9tpMhfAgz2l4=;
-        b=QRM6lnF3yx8hwXK7MAcSd2EdMqFPEH2VZjZuijEKY+o/onzbxUl3oxjXzhpcm65wSGq3sq
-        54tlhucOm0fr1hZiunBnPCToxs3shZQOcNCzufq3I1ff1grWQT4kqy19eMYmRQ4EVqc19q
-        DIFDvVyKu/o1hm1og6Y64idhQpp+snmR+X8TJT2phmPxHov+Gis0b/BZ/y8tzTWpa8XlUN
-        u9iMLdSlZgjEkQYnqjxKeDAYfEUdmd+XJORH+B9wUFgOWQ4vW5afE/1Qzw2xBviJ6cdizq
-        8mautBA9I+deMAhW7QZFWP+56H5QI1p8kCR9xy9oTwdP/enKq2/toUaB8FfSLw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1612787359;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=33y8fMyhqemoPBBvUbcbiP0bZu+iLif9tpMhfAgz2l4=;
-        b=mm/LoDEkeADXa436tPNvSStrgupcoG/OOnYjnYa8RubVQ2uTYepG4MdsQWNA0cQuykZaiT
-        H0A+iMtTMh7zMbCQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "angelo@kernel-space.org" <angelo@kernel-space.org>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: arm64: imx8qxp: irq 464: nobody cared (try booting with the
- "irqpoll" option)
-Message-ID: <20210208122918.wyvto62kwyevfkyx@linutronix.de>
-References: <da64238e-dc1e-c479-44e2-0ea18d9577b8@kernel-space.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <da64238e-dc1e-c479-44e2-0ea18d9577b8@kernel-space.org>
+        Mon, 8 Feb 2021 11:19:27 -0500
+Received: from mail.kernel.org ([198.145.29.99]:49126 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S232605AbhBHQTP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 8 Feb 2021 11:19:15 -0500
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 900E064EA1;
+        Mon,  8 Feb 2021 16:18:33 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1612801114;
+        bh=q8Wz1u2c1qWDv9pAcYBZRdY6dda4M4xtYNaWJPa0vZw=;
+        h=Subject:From:To:Date:From;
+        b=ovGCywDoEmpLqnQolMQPpYTcXz93pDS6OA0tt/SBHSC1oBXdsr3UD7kM0EL2ZYvLs
+         wtTAI2Vq6WYBtenhPJ8TSOagFtSdwNtbo5JsBJi73CAhgQprvqVyHniTvNaOkMvW6x
+         tXzG17n+T1rc3gL0lgO/UVzAd857ldoqdHJqNzug8Q/FLpoSzLctLT81q/H8Pt59Q/
+         B2XTSkXd1q51PyQ1H/hWEQHSOVfVLIi2+WpkkA34SWzMjYsPzKJrgVdpQOfN0/l4DA
+         QwbndfNkO/RJovNLh/Ppbb1VrNVKfN63TRZo68MtumojLrtTofdYPjRBQ5ZpTMCT64
+         GqRxFpHxCFm6w==
+Message-ID: <78a65c1c8cc1b6fbc739a91a5dfdd84be795ed1a.camel@kernel.org>
+Subject: [ANNOUNCE] 4.19.173-rt72
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
+Date:   Mon, 08 Feb 2021 10:18:32 -0600
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-02-05 11:15:13 [+0100], angelo@kernel-space.org wrote:
-> Hi all,
-Hi,
+Hello RT Folks!
 
-> applied patch-5.4.70-rt40 over linux-imx from nxp
-> (imx_5.4.70_2.3.0), this since imx8qxp-mek board seems not
-> totally supported in mainline stable 5.4.
->=20
-> The patch applies properly, but at boot, at 50% of the cases,
-> i get:
->=20
-=E2=80=A6
-> [    2.231799] 003: imx-lpi2c 37230000.i2c: using scl,sda for recovery
-> [    2.232464] 003: pca953x 16-0020: using no AI
-> [    2.517161] 000: irq 464: nobody cared (try booting with the
-> "irqpoll" option)
-> [    2.517170] 000: CPU: 0 PID: 0 Comm: swapper/0 Not tainted
-> 5.4.70-rt40-00116-gc1de1cbc567a-dirty #51
-> [    2.517176] 000: Hardware name: Freescale i.MX8QXP MEK (DT)
-> [    2.517181] 000: Call trace:
-=E2=80=A6
-> [    2.517233] 000:  handle_edge_irq+0xbc/0x200
-> [    2.517238] 000:  generic_handle_irq+0x24/0x38
-> [    2.517244] 000:  imx_intmux_irq_handler+0xac/0x140
-> [    2.517252] 000:  generic_handle_irq+0x24/0x38
-> [    2.517259] 000:  __handle_domain_irq+0x90/0x100
-> [    2.517267] 000:  gic_handle_irq+0x5c/0x14c
-> [    2.517272] 000:  el1_irq+0xb8/0x180
-> [    2.517277] 000:  arch_cpu_idle+0x1c/0x30
-> [    2.517284] 000:  default_idle_call+0x20/0x48
-> [    2.517291] 000:  do_idle+0x248/0x288
-> [    2.517297] 000:  cpu_startup_entry+0x24/0x78
-> [    2.517303] 000:  rest_init+0xd4/0xe0
-> [    2.517308] 000:  arch_call_rest_init+0xc/0x14
-> [    2.517316] 000:  start_kernel+0x414/0x448
-> [    2.517322] 000: handlers:
-> [    2.517331] 000: [<00000000206db772>] irq_default_primary_handler
-> threaded [<00000000ffd05448>] lpi2c_imx_isr
-> [    2.517341] 000: Disabling IRQ #464
->=20
-> I know nxp related issues are probably now welcome here,
-> but if some chance/hint to have rt working, welcome.
+I'm pleased to announce the 4.19.173-rt72 stable release.
 
-=46rom the backtrace it looks like the IRQ #464 is handled by
-lpi2c_imx_isr(), returns always with IRQ_NONE but the IRQ fires again
-and again.
-It appears that IRQ-masking is not working properly but then the
-stacktrace says handle_edge_irq() and I have my doubts if it is really
-an EDGE interrupt.
-Looking at lpi2c_imx_isr() in v5.11, it returns always with IRQ_HANDLED
-looks like different code between your BSP and upstream. Also always
-returning IRQ_HANDLED will duct tape the problem if the driver is
-handling / acking the interrupt
+This release is just an update to the new stable 4.19.173
+version and no RT specific changes have been made.
 
-You should see something a big number of interrupts (in
-/proc/interrupts) for the #464 interrupt.
-I suggest to update something more recent like v5.10 without the FSL
-bsp if possible.
+You can get this release via the git tree at:
 
-> Regards,
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Sebastian
+  branch: v4.19-rt
+  Head SHA1: 0f716c5aef71ce6891b78818ba2a8a59d95ac053
+
+Or to build 4.19.173-rt72 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.173.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.173-rt72.patch.xz
+
+Enjoy!
+
+   Tom
+
