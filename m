@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5EAADC433DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 023C0C433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3368A64EDA
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C8A4464EDA
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232364AbhBJRxR (ORCPT
+        id S233033AbhBJRxW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 12:53:17 -0500
-Received: from mx2.suse.de ([195.135.220.15]:37662 "EHLO mx2.suse.de"
+        Wed, 10 Feb 2021 12:53:22 -0500
+Received: from mx2.suse.de ([195.135.220.15]:37664 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233358AbhBJRxB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S233281AbhBJRxB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 10 Feb 2021 12:53:01 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id B11CFAE04;
+        by mx2.suse.de (Postfix) with ESMTP id 65799ADF0;
         Wed, 10 Feb 2021 17:51:22 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v5 06/13] cyclicdeadline: Add JSON output feature
-Date:   Wed, 10 Feb 2021 18:51:11 +0100
-Message-Id: <20210210175118.19709-7-dwagner@suse.de>
+Subject: [PATCH rt-tests v5 05/13] signaltest: Add JSON output feature
+Date:   Wed, 10 Feb 2021 18:51:10 +0100
+Message-Id: <20210210175118.19709-6-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210210175118.19709-1-dwagner@suse.de>
 References: <20210210175118.19709-1-dwagner@suse.de>
@@ -45,163 +45,172 @@ simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sched_deadline/cyclicdeadline.c | 72 ++++++++++++++++++++++-------
- 1 file changed, 56 insertions(+), 16 deletions(-)
+ src/signaltest/signaltest.c | 109 +++++++++++++++++++++++++++++-------
+ 1 file changed, 88 insertions(+), 21 deletions(-)
 
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 71cde5781499..ed3c960d9916 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -18,6 +18,7 @@
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index dd5633d5fc51..09039b299367 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -22,6 +22,7 @@
+ #include <unistd.h>
  #include <errno.h>
- #include <signal.h>
- #include <getopt.h>
+ #include <sched.h>
 +#include <inttypes.h>
  
- #include <sys/syscall.h>
- #include <sys/types.h>
-@@ -85,13 +86,11 @@ static pthread_barrier_t barrier;
+ #include <linux/unistd.h>
  
- static int cpu_count;
- static int all_cpus;
--
- static int nr_threads;
- static int use_nsecs;
--
- static int mark_fd;
--
+@@ -205,6 +206,14 @@ static int verbose;
  static int quiet;
+ static int lockall;
+ static struct bitmask *affinity_mask = NULL;
 +static char outfile[MAX_PATH];
- 
- static int find_mount(const char *mount, char *debugfs)
- {
-@@ -603,16 +602,17 @@ static void usage(int error)
- 	       "                           tasks on. An empty CPUSET runs on all CPUs a deadline\n"
- 	       "                           task.\n"
- 	       "                           on CPU 4, and thread #5 on CPU 5.\n"
--	       "-D TIME     --duration     Specify a length for the test run.\n"
-+	       "-D TIME  --duration        Specify a length for the test run.\n"
- 	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
- 	       "                           days\n"
--	       "-h          --help         Show this help menu.\n"
--	       "-i INTV     --interval     The shortest deadline for the tasks in us\n"
-+	       "-h       --help            Show this help menu.\n"
-+	       "-i INTV  --interval        The shortest deadline for the tasks in us\n"
- 	       "                           (default 1000us).\n"
--	       "-s STEP     --step         The amount to increase the deadline for each task in us\n"
-+	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
-+	       "-s STEP  --step            The amount to increase the deadline for each task in us\n"
- 	       "                           (default 500us).\n"
--	       "-t NUM      --threads      The number of threads to run as deadline (default 1).\n"
--	       "-q          --quiet        print a summary only on exit\n"
-+	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
-+	       "-q       --quiet           print a summary only on exit\n"
- 	       );
- 	exit(error);
- }
-@@ -966,6 +966,32 @@ static void loop(struct sched_data *sched_data, int nr_threads)
- 	}
- }
- 
-+static void write_stats(FILE *f, void *data)
-+{
-+	struct sched_data *sd = data;
-+	struct thread_stat *s;
-+	unsigned int i;
 +
-+	fprintf(f, "  \"num_threads\": %d,\n", nr_threads);
-+	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
-+	fprintf(f, "  \"thread\": {\n");
-+	for (i = 0; i < nr_threads; i++) {
-+		s = &sd[i].stat;
-+		fprintf(f, "    \"%u\": {\n", i);
-+		fprintf(f, "	 \"cycles\": %" PRIu64 ",\n", s->cycles);
-+		fprintf(f, "	 \"min\": %" PRIu64 ",\n", s->min);
-+		fprintf(f, "	 \"max\": %" PRIu64 ",\n", s->max);
-+		fprintf(f, "	 \"avg\": %.2f\n", s->avg/s->cycles);
-+		fprintf(f, "    }%s\n", i == nr_threads - 1 ? "" : ",");
-+	}
-+	fprintf(f, "  }\n");
-+}
-+
-+enum options_valud {
-+	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
-+	OPT_OUTPUT, OPT_STEP, OPT_THREADS, OPT_QUIET
++enum option_values {
++	OPT_AFFINITY=1, OPT_BREAKTRACE,
++	OPT_DURATION, OPT_HELP, OPT_LOOPS,
++	OPT_MLOCKALL, OPT_OUTPUT, OPT_PRIORITY,
++	OPT_QUIET, OPT_SMP, OPT_THREADS, OPT_VERBOSE
 +};
-+
- int main(int argc, char **argv)
- {
- 	struct sched_data *sched_data;
-@@ -992,19 +1018,21 @@ int main(int argc, char **argv)
  
- 	for (;;) {
- 		static struct option options[] = {
--			{ "affinity",	optional_argument,	NULL,	'a' },
--			{ "duration",	required_argument,	NULL,	'D' },
--			{ "help",	no_argument,		NULL,	'h' },
--			{ "interval",	required_argument,	NULL,	'i' },
--			{ "step",	required_argument,	NULL,	's' },
--			{ "threads",	required_argument,	NULL,	't' },
--			{ "quiet",	no_argument,		NULL,	'q' },
-+			{ "affinity",	optional_argument,	NULL,	OPT_AFFINITY },
-+			{ "duration",	required_argument,	NULL,	OPT_DURATION },
-+			{ "help",	no_argument,		NULL,	OPT_HELP },
-+			{ "interval",	required_argument,	NULL,	OPT_INTERVAL },
-+			{ "output",	required_argument,	NULL,	OPT_OUTPUT },
-+			{ "step",	required_argument,	NULL,	OPT_STEP },
-+			{ "threads",	required_argument,	NULL,	OPT_THREADS },
-+			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
- 			{ NULL,		0,			NULL,	0   },
+ /* Process commandline options */
+ static void process_options(int argc, char *argv[])
+@@ -216,17 +225,18 @@ static void process_options(int argc, char *argv[])
+ 		int option_index = 0;
+ 		/** Options for getopt */
+ 		static struct option long_options[] = {
+-			{"affinity",		optional_argument,	NULL, 'a'},
+-			{"breaktrace",		required_argument,	NULL, 'b'},
+-			{"duration",		required_argument,	NULL, 'D'},
+-			{"help",		no_argument,		NULL, 'h'},
+-			{"loops",		required_argument,	NULL, 'l'},
+-			{"mlockall",		no_argument,		NULL, 'm'},
+-			{"priority",		required_argument,	NULL, 'p'},
+-			{"quiet",		no_argument,		NULL, 'q'},
+-			{"smp",			no_argument,		NULL, 'S'},
+-			{"threads",		required_argument,	NULL, 't'},
+-			{"verbose",		no_argument,		NULL, 'v'},
++			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
++			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
++			{"duration",	required_argument,	NULL, OPT_DURATION},
++			{"help",	no_argument,		NULL, OPT_HELP},
++			{"loops",	required_argument,	NULL, OPT_LOOPS},
++			{"mlockall",	no_argument,		NULL, OPT_MLOCKALL},
++			{"output",	required_argument,	NULL, OPT_OUTPUT},
++			{"priority",	required_argument,	NULL, OPT_PRIORITY},
++			{"quiet",	no_argument,		NULL, OPT_QUIET},
++			{"smp",		no_argument,		NULL, OPT_SMP},
++			{"threads",	required_argument,	NULL, OPT_THREADS},
++			{"verbose",	no_argument,		NULL, OPT_VERBOSE},
+ 			{NULL, 0, NULL, 0}
  		};
- 		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
+ 		int c = getopt_long(argc, argv, "a::b:D:hl:mp:qSt:v",
+@@ -234,6 +244,7 @@ static void process_options(int argc, char *argv[])
  		if (c == -1)
  			break;
  		switch (c) {
 +		case OPT_AFFINITY:
  		case 'a':
- 		case 'c':
- 			if (!nr_threads)
-@@ -1016,21 +1044,30 @@ int main(int argc, char **argv)
- 			else
- 				all_cpus = 1;
+ 			if (optarg) {
+ 				parse_cpumask(optarg, &affinity_mask);
+@@ -248,17 +259,49 @@ static void process_options(int argc, char *argv[])
+ 				printf("Using %u cpus.\n",
+ 					numa_bitmask_weight(affinity_mask));
  			break;
-+		case OPT_INTERVAL:
- 		case 'i':
- 			interval = atoi(optarg);
- 			break;
+-		case 'b': tracelimit = atoi(optarg); break;
+-		case 'D': duration = parse_time_string(optarg); break;
++		case OPT_BREAKTRACE:
++		case 'b':
++			tracelimit = atoi(optarg);
++			break;
++		case OPT_DURATION:
++		case 'D':
++			duration = parse_time_string(optarg);
++			break;
++		case OPT_HELP:
+ 		case '?':
+-		case 'h': display_help(0); break;
+-		case 'l': max_cycles = atoi(optarg); break;
+-		case 'm': lockall = 1; break;
+-		case 'p': priority = atoi(optarg); break;
+-		case 'q': quiet = 1; break;
+-		case 'S': smp = 1; break;
+-		case 't': num_threads = atoi(optarg); break;
+-		case 'v': verbose = 1; break;
++		case 'h':
++			display_help(0);
++			break;
++		case OPT_LOOPS:
++		case 'l':
++			max_cycles = atoi(optarg);
++			break;
++		case OPT_MLOCKALL:
++		case 'm':
++			lockall = 1;
++			break;
 +		case OPT_OUTPUT:
 +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
 +			break;
-+		case OPT_STEP:
- 		case 's':
- 			step = atoi(optarg);
- 			break;
-+		case OPT_THREADS:
- 		case 't':
- 			nr_threads = atoi(optarg);
- 			break;
-+		case OPT_DURATION:
- 		case 'D':
- 			duration = parse_time_string(optarg);
- 			break;
++		case OPT_PRIORITY:
++		case 'p':
++			priority = atoi(optarg);
++			break;
 +		case OPT_QUIET:
- 		case 'q':
- 			quiet = 1;
- 			break;
-+		case OPT_HELP:
- 		case 'h':
- 			usage(0);
- 			break;
-@@ -1190,6 +1227,9 @@ int main(int argc, char **argv)
++		case 'q':
++			quiet = 1;
++			break;
++		case OPT_SMP:
++		case 'S':
++			smp = 1;
++			break;
++		case OPT_THREADS:
++		case 't':
++			num_threads = atoi(optarg);
++			break;
++		case OPT_VERBOSE:
++		case 'v': verbose = 1;
++			break;
  		}
  	}
  
-+	if (strlen(outfile) != 0)
-+		rt_write_json(outfile, argc, argv, write_stats, sched_data);
+@@ -312,6 +355,27 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 	}
+ }
+ 
++static void write_stats(FILE *f, void *data)
++{
++	struct thread_param *par = data;
++	struct thread_stat *s;
++	unsigned int i;
 +
- 	if (setcpu_buf)
- 		free(setcpu_buf);
- 	free(thread);
++	fprintf(f, "  \"thread\": {\n");
++	for (i = 0; i < num_threads; i++) {
++		fprintf(f, "    \"%u\": {\n", i);
++		s = &par->stats[i];
++		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
++		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
++		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
++		fprintf(f, "      \"cpu\": %d\n", par->cpu);
++		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
++
++	}
++	fprintf(f, "  }\n");
++}
++
+ int main(int argc, char **argv)
+ {
+ 	sigset_t sigset;
+@@ -454,6 +518,9 @@ int main(int argc, char **argv)
+ 		if (stat[i].values)
+ 			free(stat[i].values);
+ 	}
++	if (strlen(outfile) != 0)
++		rt_write_json(outfile, argc, argv, write_stats, par);
++
+ 	free(stat);
+  outpar:
+ 	free(par);
 -- 
 2.30.0
 
