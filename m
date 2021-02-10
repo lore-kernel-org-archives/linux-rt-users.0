@@ -2,136 +2,308 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.9 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 01FCAC433DB
-	for <linux-rt-users@archiver.kernel.org>; Tue,  9 Feb 2021 23:26:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C0042C433E6
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:35:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C0EE664E3C
-	for <linux-rt-users@archiver.kernel.org>; Tue,  9 Feb 2021 23:26:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9159A64D73
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:35:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233812AbhBIXZ2 (ORCPT
+        id S231307AbhBJNfn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 9 Feb 2021 18:25:28 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57222 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234179AbhBIWQ6 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Feb 2021 17:16:58 -0500
-Received: from mail.kernel-space.org (unknown [IPv6:2a01:4f8:c2c:5a84::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BE321C061223
-        for <linux-rt-users@vger.kernel.org>; Tue,  9 Feb 2021 11:09:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel-space.org;
-        s=20190913; t=1612897749;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=dbF9KKCJr0F9zd5WfkSXKv1fXPCjyclgA92gL1bfBxk=;
-        b=o4En/HH6rKgKGogShnTqxTr6SBndocO8+sE1EyGUdQyV/x5+cwYb4QGa0EDgkoQYKiDDYc
-        vtQECgRzh2oygjMA6CJPmTcIwD1wjWp++z77dXXE8D3LBZjnXwtG7BdZCSqy73WOsSB2b5
-        lDKa1wZ6KCIqT3GiEwTaxSKFbY20BMU=
-Received: from [192.168.0.2] (host-82-54-239-193.retail.telecomitalia.it [82.54.239.193])
-        by sysam.it (OpenSMTPD) with ESMTPSA id 3e16cf15 (TLSv1.3:TLS_AES_256_GCM_SHA384:256:NO);
-        Tue, 9 Feb 2021 19:09:09 +0000 (UTC)
-Message-ID: <d2d772dc-57f0-39f0-abec-caa8297d3e32@kernel-space.org>
-Date:   Tue, 9 Feb 2021 20:08:53 +0100
+        Wed, 10 Feb 2021 08:35:43 -0500
+Received: from mx2.suse.de ([195.135.220.15]:50086 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229818AbhBJNfi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Feb 2021 08:35:38 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id 10EB4AC97;
+        Wed, 10 Feb 2021 13:34:55 +0000 (UTC)
+From:   Daniel Wagner <dwagner@suse.de>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
+Subject: [PATCH rt-tests v4 01/16] cyclictest: Use numa API directly
+Date:   Wed, 10 Feb 2021 14:34:35 +0100
+Message-Id: <20210210133450.6991-2-dwagner@suse.de>
+X-Mailer: git-send-email 2.30.0
+In-Reply-To: <20210210133450.6991-1-dwagner@suse.de>
+References: <20210210133450.6991-1-dwagner@suse.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:86.0) Gecko/20100101
- Thunderbird/86.0
-Subject: Re: arm64: imx8qxp: irq 464: nobody cared (try booting with the
- "irqpoll" option)
-Content-Language: en-US
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org
-References: <da64238e-dc1e-c479-44e2-0ea18d9577b8@kernel-space.org>
- <20210208122918.wyvto62kwyevfkyx@linutronix.de>
-From:   "angelo@kernel-space.org" <angelo@kernel-space.org>
-In-Reply-To: <20210208122918.wyvto62kwyevfkyx@linutronix.de>
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+There is no need for small libnuma wrappers functions as we always
+use libnuma. Remove them and get rid of rt_numa.h, so there is
+no confusion with rt-numa.h anymore.
 
-On 08/02/21 1:29 PM, Sebastian Andrzej Siewior wrote:
-> On 2021-02-05 11:15:13 [+0100], angelo@kernel-space.org wrote:
->> Hi all,
-> Hi,
-> 
->> applied patch-5.4.70-rt40 over linux-imx from nxp
->> (imx_5.4.70_2.3.0), this since imx8qxp-mek board seems not
->> totally supported in mainline stable 5.4.
->>
->> The patch applies properly, but at boot, at 50% of the cases,
->> i get:
->>
-> …
->> [    2.231799] 003: imx-lpi2c 37230000.i2c: using scl,sda for recovery
->> [    2.232464] 003: pca953x 16-0020: using no AI
->> [    2.517161] 000: irq 464: nobody cared (try booting with the
->> "irqpoll" option)
->> [    2.517170] 000: CPU: 0 PID: 0 Comm: swapper/0 Not tainted
->> 5.4.70-rt40-00116-gc1de1cbc567a-dirty #51
->> [    2.517176] 000: Hardware name: Freescale i.MX8QXP MEK (DT)
->> [    2.517181] 000: Call trace:
-> …
->> [    2.517233] 000:  handle_edge_irq+0xbc/0x200
->> [    2.517238] 000:  generic_handle_irq+0x24/0x38
->> [    2.517244] 000:  imx_intmux_irq_handler+0xac/0x140
->> [    2.517252] 000:  generic_handle_irq+0x24/0x38
->> [    2.517259] 000:  __handle_domain_irq+0x90/0x100
->> [    2.517267] 000:  gic_handle_irq+0x5c/0x14c
->> [    2.517272] 000:  el1_irq+0xb8/0x180
->> [    2.517277] 000:  arch_cpu_idle+0x1c/0x30
->> [    2.517284] 000:  default_idle_call+0x20/0x48
->> [    2.517291] 000:  do_idle+0x248/0x288
->> [    2.517297] 000:  cpu_startup_entry+0x24/0x78
->> [    2.517303] 000:  rest_init+0xd4/0xe0
->> [    2.517308] 000:  arch_call_rest_init+0xc/0x14
->> [    2.517316] 000:  start_kernel+0x414/0x448
->> [    2.517322] 000: handlers:
->> [    2.517331] 000: [<00000000206db772>] irq_default_primary_handler
->> threaded [<00000000ffd05448>] lpi2c_imx_isr
->> [    2.517341] 000: Disabling IRQ #464
->>
->> I know nxp related issues are probably now welcome here,
->> but if some chance/hint to have rt working, welcome.
-> 
-> From the backtrace it looks like the IRQ #464 is handled by
-> lpi2c_imx_isr(), returns always with IRQ_NONE but the IRQ fires again
-> and again.
-> It appears that IRQ-masking is not working properly but then the
-> stacktrace says handle_edge_irq() and I have my doubts if it is really
-> an EDGE interrupt.
-> Looking at lpi2c_imx_isr() in v5.11, it returns always with IRQ_HANDLED
-> looks like different code between your BSP and upstream. Also always
-> returning IRQ_HANDLED will duct tape the problem if the driver is
-> handling / acking the interrupt
-> 
-> You should see something a big number of interrupts (in
-> /proc/interrupts) for the #464 interrupt.
-> I suggest to update something more recent like v5.10 without the FSL
-> bsp if possible.
-> 
->> Regards,
-> 
-> Sebastian
-> 
+Signed-off-by: Daniel Wagner <dwagner@suse.de>
+---
+ src/cyclictest/cyclictest.c | 43 +++++++++--------
+ src/cyclictest/rt_numa.h    | 96 -------------------------------------
+ 2 files changed, 24 insertions(+), 115 deletions(-)
+ delete mode 100644 src/cyclictest/rt_numa.h
 
-I finally found a solution, replacing drivers/irqchip/irq-imx-intmux.c
-code with mainline. It seems quite reliable, i cannot replicate
-the issue anymore. Any comment is welcome.
-
-
-Regards,
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 99846e78526f..6009ff2a83bc 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -33,10 +33,10 @@
+ #include <sys/utsname.h>
+ #include <sys/mman.h>
+ #include <sys/syscall.h>
+-#include "rt_numa.h"
+ 
+ #include "rt-utils.h"
+ #include "rt-numa.h"
++#include "error.h"
+ 
+ #include <bionic.h>
+ 
+@@ -514,9 +514,9 @@ static void *timerthread(void *param)
+ 
+ 	memset(&stop, 0, sizeof(stop));
+ 
+-	/* if we're running in numa mode, set our memory node */
+-	if (par->node != -1)
+-		rt_numa_set_numa_run_on_node(par->node, par->cpu);
++	if (numa_run_on_node(par->node))
++		warn("Could not set NUMA node %d for thread %d: %s\n",
++				par->node, par->cpu, strerror(errno));
+ 
+ 	if (par->cpu != -1) {
+ 		CPU_ZERO(&mask);
+@@ -1251,7 +1251,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 	}
+ 	if (error) {
+ 		if (affinity_mask)
+-			rt_bitmask_free(affinity_mask);
++			numa_bitmask_free(affinity_mask);
+ 		display_help(1);
+ 	}
+ }
+@@ -1907,7 +1907,9 @@ int main(int argc, char **argv)
+ 			printf("Thread %d using cpu %d.\n", i, cpu);
+ 
+ 		/* find the memory node associated with the cpu i */
+-		node = rt_numa_numa_node_of_cpu(cpu);
++		node = numa_node_of_cpu(cpu);
++		if (node == -1)
++			fatal("Invalid NUMA node selected via affinity mask\n");
+ 
+ 		/* get the stack size set for this thread */
+ 		if (pthread_attr_getstack(&attr, &currstk, &stksize))
+@@ -1918,7 +1920,10 @@ int main(int argc, char **argv)
+ 			stksize = PTHREAD_STACK_MIN * 2;
+ 
+ 		/*  allocate memory for a stack on appropriate node */
+-		stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
++		stack = numa_alloc_onnode(stksize, node);
++		if (!stack)
++			fatal("failed to allocate %d bytes on node %d for cpu %d\n",
++				stksize, node, cpu);
+ 
+ 		/* touch the stack pages to pre-fault them in */
+ 		memset(stack, 0, stksize);
+@@ -1929,13 +1934,13 @@ int main(int argc, char **argv)
+ 				i, stack+stksize);
+ 
+ 		/* allocate the thread's parameter block  */
+-		parameters[i] = par = threadalloc(sizeof(struct thread_param), node);
++		parameters[i] = par = numa_alloc_onnode(sizeof(struct thread_param), node);
+ 		if (par == NULL)
+ 			fatal("error allocating thread_param struct for thread %d\n", i);
+ 		memset(par, 0, sizeof(struct thread_param));
+ 
+ 		/* allocate the thread's statistics block */
+-		statistics[i] = stat = threadalloc(sizeof(struct thread_stat), node);
++		statistics[i] = stat = numa_alloc_onnode(sizeof(struct thread_stat), node);
+ 		if (stat == NULL)
+ 			fatal("error allocating thread status struct for thread %d\n", i);
+ 		memset(stat, 0, sizeof(struct thread_stat));
+@@ -1944,8 +1949,8 @@ int main(int argc, char **argv)
+ 		if (histogram) {
+ 			int bufsize = histogram * sizeof(long);
+ 
+-			stat->hist_array = threadalloc(bufsize, node);
+-			stat->outliers = threadalloc(bufsize, node);
++			stat->hist_array = numa_alloc_onnode(bufsize, node);
++			stat->outliers = numa_alloc_onnode(bufsize, node);
+ 			if (stat->hist_array == NULL || stat->outliers == NULL)
+ 				fatal("failed to allocate histogram of size %d on node %d\n",
+ 				      histogram, i);
+@@ -1955,14 +1960,14 @@ int main(int argc, char **argv)
+ 
+ 		if (verbose) {
+ 			int bufsize = VALBUF_SIZE * sizeof(long);
+-			stat->values = threadalloc(bufsize, node);
++			stat->values = numa_alloc_onnode(bufsize, node);
+ 			if (!stat->values)
+ 				goto outall;
+ 			memset(stat->values, 0, bufsize);
+ 			par->bufmsk = VALBUF_SIZE - 1;
+ 			if (smi) {
+ 				int bufsize = VALBUF_SIZE * sizeof(long);
+-				stat->smis = threadalloc(bufsize, node);
++				stat->smis = numa_alloc_onnode(bufsize, node);
+ 				if (!stat->smis)
+ 					goto outall;
+ 				memset(stat->smis, 0, bufsize);
+@@ -2077,7 +2082,7 @@ int main(int argc, char **argv)
+ 				print_stat(stdout, parameters[i], i, 0, 0);
+ 		}
+ 		if (statistics[i]->values)
+-			threadfree(statistics[i]->values, VALBUF_SIZE*sizeof(long), parameters[i]->node);
++			numa_free(statistics[i]->values, VALBUF_SIZE*sizeof(long));
+ 	}
+ 
+ 	if (trigger)
+@@ -2086,8 +2091,8 @@ int main(int argc, char **argv)
+ 	if (histogram) {
+ 		print_hist(parameters, num_threads);
+ 		for (i = 0; i < num_threads; i++) {
+-			threadfree(statistics[i]->hist_array, histogram*sizeof(long), parameters[i]->node);
+-			threadfree(statistics[i]->outliers, histogram*sizeof(long), parameters[i]->node);
++			numa_free(statistics[i]->hist_array, histogram*sizeof(long));
++			numa_free(statistics[i]->outliers, histogram*sizeof(long));
+ 		}
+ 	}
+ 
+@@ -2103,14 +2108,14 @@ int main(int argc, char **argv)
+ 	for (i=0; i < num_threads; i++) {
+ 		if (!statistics[i])
+ 			continue;
+-		threadfree(statistics[i], sizeof(struct thread_stat), parameters[i]->node);
++		numa_free(statistics[i], sizeof(struct thread_stat));
+ 	}
+ 
+  outpar:
+ 	for (i = 0; i < num_threads; i++) {
+ 		if (!parameters[i])
+ 			continue;
+-		threadfree(parameters[i], sizeof(struct thread_param), parameters[i]->node);
++		numa_free(parameters[i], sizeof(struct thread_param));
+ 	}
+  out:
+ 	/* close any tracer file descriptors */
+@@ -2125,7 +2130,7 @@ int main(int argc, char **argv)
+ 		close(latency_target_fd);
+ 
+ 	if (affinity_mask)
+-		rt_bitmask_free(affinity_mask);
++		numa_bitmask_free(affinity_mask);
+ 
+ 	/* Remove running status shared memory file if it exists */
+ 	if (rstat_fd >= 0)
+diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+deleted file mode 100644
+index 8d02f419ed6d..000000000000
+--- a/src/cyclictest/rt_numa.h
++++ /dev/null
+@@ -1,96 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-or-later
+-/*
+- * A numa library for cyclictest.
+- *
+- * (C) 2010 John Kacur <jkacur@redhat.com>
+- * (C) 2010 Clark Williams <williams@redhat.com>
+- *
+- */
+-
+-#ifndef _RT_NUMA_H
+-#define _RT_NUMA_H
+-
+-#include "rt-utils.h"
+-#include "error.h"
+-
+-#include <numa.h>
+-
+-static void *
+-threadalloc(size_t size, int node)
+-{
+-	if (node == -1)
+-		return malloc(size);
+-	return numa_alloc_onnode(size, node);
+-}
+-
+-static void
+-threadfree(void *ptr, size_t size, int node)
+-{
+-	if (node == -1)
+-		free(ptr);
+-	else
+-		numa_free(ptr, size);
+-}
+-
+-static void rt_numa_set_numa_run_on_node(int node, int cpu)
+-{
+-	int res;
+-	res = numa_run_on_node(node);
+-	if (res)
+-		warn("Could not set NUMA node %d for thread %d: %s\n",
+-				node, cpu, strerror(errno));
+-	return;
+-}
+-
+-static void *rt_numa_numa_alloc_onnode(size_t size, int node, int cpu)
+-{
+-	void *stack;
+-	stack = numa_alloc_onnode(size, node);
+-	if (stack == NULL)
+-		fatal("failed to allocate %d bytes on node %d for cpu %d\n",
+-				size, node, cpu);
+-	return stack;
+-}
+-
+-/*
+- * Use new bit mask CPU affinity behavior
+- */
+-static int rt_numa_numa_node_of_cpu(int cpu)
+-{
+-	int node;
+-	node = numa_node_of_cpu(cpu);
+-	if (node == -1)
+-		fatal("invalid cpu passed to numa_node_of_cpu(%d)\n", cpu);
+-	return node;
+-}
+-
+-static inline unsigned int rt_numa_bitmask_isbitset( const struct bitmask *mask,
+-	unsigned long i)
+-{
+-	return numa_bitmask_isbitset(mask,i);
+-}
+-
+-static inline struct bitmask* rt_numa_parse_cpustring(const char* s,
+-	int max_cpus)
+-{
+-	return numa_parse_cpustring_all(s);
+-}
+-
+-static inline void rt_bitmask_free(struct bitmask *mask)
+-{
+-	numa_bitmask_free(mask);
+-}
+-
+-/** Returns number of bits set in mask. */
+-static inline unsigned int rt_numa_bitmask_count(const struct bitmask *mask)
+-{
+-	unsigned int num_bits = 0, i;
+-	for (i = 0; i < mask->size; i++) {
+-		if (rt_numa_bitmask_isbitset(mask, i))
+-			num_bits++;
+-	}
+-	/* Could stash this instead of recomputing every time. */
+-	return num_bits;
+-}
+-
+-#endif	/* _RT_NUMA_H */
 -- 
-Angelo Dureghello
-+++ kernelspace +++
-+E: angelo@kernel-space.org
+2.30.0
 
