@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C6C38C433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:37:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B9D9C433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:37:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A22A064E77
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:37:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E75E564E77
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:37:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231668AbhBJNhN (ORCPT
+        id S231708AbhBJNhQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 08:37:13 -0500
-Received: from mx2.suse.de ([195.135.220.15]:50640 "EHLO mx2.suse.de"
+        Wed, 10 Feb 2021 08:37:16 -0500
+Received: from mx2.suse.de ([195.135.220.15]:50630 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231520AbhBJNgX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S231481AbhBJNgX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 10 Feb 2021 08:36:23 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 14A99B07D;
-        Wed, 10 Feb 2021 13:34:59 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 801B2B023;
+        Wed, 10 Feb 2021 13:34:57 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v4 14/16] cyclictest: Remove max cpus used verbose information
-Date:   Wed, 10 Feb 2021 14:34:48 +0100
-Message-Id: <20210210133450.6991-15-dwagner@suse.de>
+Subject: [PATCH rt-tests v4 09/16] rt-numa: Remove max_cpus argument from parse_cpusmask
+Date:   Wed, 10 Feb 2021 14:34:43 +0100
+Message-Id: <20210210133450.6991-10-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210210133450.6991-1-dwagner@suse.de>
 References: <20210210133450.6991-1-dwagner@suse.de>
@@ -40,51 +40,119 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Since we always print the thread placement in verbose mode now, there
-is no need to print the max_cpus anymore. With the last of max_cpus
-gone, we can also remove the sysconf() call.
+Remove usused max_cpus argument from parse_cpumask().
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 11 -----------
- 1 file changed, 11 deletions(-)
+ src/cyclictest/cyclictest.c | 4 ++--
+ src/include/rt-numa.h       | 2 +-
+ src/lib/rt-numa.c           | 6 +++---
+ src/oslat/oslat.c           | 3 +--
+ src/signaltest/signaltest.c | 4 ++--
+ 5 files changed, 9 insertions(+), 10 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 7a0501031857..8356786a80bb 100644
+index 4e30abbe6035..acd456bd4c4d 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1697,8 +1697,6 @@ int main(int argc, char **argv)
- 	int signum = SIGALRM;
- 	int mode;
- 	int cpu;
--	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
--	int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
- 	int i, ret = -1;
- 	int status;
- 	void *stack;
-@@ -1713,11 +1711,6 @@ int main(int argc, char **argv)
- 	if (check_privs())
- 		exit(EXIT_FAILURE);
+@@ -1008,12 +1008,12 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		case 'a':
+ 		case OPT_AFFINITY:
+ 			if (optarg) {
+-				parse_cpumask(optarg, max_cpus, &affinity_mask);
++				parse_cpumask(optarg, &affinity_mask);
+ 			} else if (optind < argc &&
+ 				   (atoi(argv[optind]) ||
+ 				    argv[optind][0] == '0' ||
+ 				    argv[optind][0] == '!')) {
+-				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
++				parse_cpumask(argv[optind], &affinity_mask);
+ 			}
+ 			break;
+ 		case 'A':
+diff --git a/src/include/rt-numa.h b/src/include/rt-numa.h
+index 189da3a804e1..446ce54a6ba2 100644
+--- a/src/include/rt-numa.h
++++ b/src/include/rt-numa.h
+@@ -7,6 +7,6 @@
+ int get_available_cpus(struct bitmask *cpumask);
+ int cpu_for_thread(int thread_num, int max_cpus, struct bitmask *cpumask);
  
--	if (verbose) {
--		printf("Max CPUs = %d\n", max_cpus);
--		printf("Online CPUs = %d\n", online_cpus);
--	}
--
- 	/* Restrict the main pid to the affinity specified by the user */
- 	if (affinity_mask) {
- 		int res;
-@@ -1726,10 +1719,6 @@ int main(int argc, char **argv)
- 		res = numa_sched_setaffinity(getpid(), affinity_mask);
- 		if (res != 0)
- 			warn("Couldn't setaffinity in main thread: %s\n", strerror(errno));
--
--		if (verbose)
--			printf("Using %u cpus.\n",
--				numa_bitmask_weight(affinity_mask));
+-int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask);
++int parse_cpumask(char *str, struct bitmask **cpumask);
+ 
+ #endif
+diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+index b1bbb8c8052c..3a8441d5151c 100644
+--- a/src/lib/rt-numa.c
++++ b/src/lib/rt-numa.c
+@@ -85,7 +85,7 @@ int cpu_for_thread(int thread_num, int max_cpus, struct bitmask *cpumask)
+  * the user supplied affinity mask and the affinity mask from the run
+  * time environment
+  */
+-static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
++static void use_current_cpuset(struct bitmask *cpumask)
+ {
+ 	struct bitmask *curmask;
+ 	int i;
+@@ -106,7 +106,7 @@ static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
+ 	numa_bitmask_free(curmask);
+ }
+ 
+-int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask)
++int parse_cpumask(char *str, struct bitmask **cpumask)
+ {
+ 	struct bitmask *mask;
+ 
+@@ -120,7 +120,7 @@ int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask)
+ 		return 0;
  	}
  
- 	if (trigger) {
+-	use_current_cpuset(max_cpus, mask);
++	use_current_cpuset(mask);
+ 	*cpumask = mask;
+ 
+ 	return 0;
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 5b7e0d5b5d5c..0811079d9f04 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -716,7 +716,6 @@ int main(int argc, char *argv[])
+ 	struct thread *threads;
+ 	int i, n_cores;
+ 	struct bitmask *cpu_set = NULL;
+-	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+ 
+ #ifdef FRC_MISSING
+ 	printf("This architecture is not yet supported. "
+@@ -743,7 +742,7 @@ int main(int argc, char *argv[])
+ 
+ 	if (!g.cpu_list)
+ 		g.cpu_list = strdup("all");
+-	if (parse_cpumask(g.cpu_list, max_cpus, &cpu_set))
++	if (parse_cpumask(g.cpu_list, &cpu_set))
+ 		exit(1);
+ 	n_cores = numa_bitmask_weight(cpu_set);
+ 
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index 2ea5e6b58946..0d189483753d 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -236,12 +236,12 @@ static void process_options(int argc, char *argv[], unsigned int max_cpus)
+ 		switch (c) {
+ 		case 'a':
+ 			if (optarg) {
+-				parse_cpumask(optarg, max_cpus, &affinity_mask);
++				parse_cpumask(optarg, &affinity_mask);
+ 			} else if (optind < argc &&
+ 				   (atoi(argv[optind]) ||
+ 				    argv[optind][0] == '0' ||
+ 				    argv[optind][0] == '!')) {
+-				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
++				parse_cpumask(argv[optind], &affinity_mask);
+ 			}
+ 
+ 			if (verbose)
 -- 
 2.30.0
 
