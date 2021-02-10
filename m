@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2DB2C433E6
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5EAADC433DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 87C7164EEB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3368A64EDA
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233439AbhBJRwq (ORCPT
+        id S232364AbhBJRxR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 12:52:46 -0500
-Received: from mx2.suse.de ([195.135.220.15]:37072 "EHLO mx2.suse.de"
+        Wed, 10 Feb 2021 12:53:17 -0500
+Received: from mx2.suse.de ([195.135.220.15]:37662 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233277AbhBJRwD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Feb 2021 12:52:03 -0500
+        id S233358AbhBJRxB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Feb 2021 12:53:01 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id C24FCAD6A;
-        Wed, 10 Feb 2021 17:51:21 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id B11CFAE04;
+        Wed, 10 Feb 2021 17:51:22 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v5 03/13] rt-utils: Add JSON common header output helper
-Date:   Wed, 10 Feb 2021 18:51:08 +0100
-Message-Id: <20210210175118.19709-4-dwagner@suse.de>
+Subject: [PATCH rt-tests v5 06/13] cyclicdeadline: Add JSON output feature
+Date:   Wed, 10 Feb 2021 18:51:11 +0100
+Message-Id: <20210210175118.19709-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210210175118.19709-1-dwagner@suse.de>
 References: <20210210175118.19709-1-dwagner@suse.de>
@@ -40,139 +40,168 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-rt_write_json writes the common system information header of the
-rt-test currently executed.
+Write the test results as JSON output to a file. This allows to
+simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/include/rt-utils.h |  4 ++
- src/lib/rt-utils.c     | 96 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 100 insertions(+)
+ src/sched_deadline/cyclicdeadline.c | 72 ++++++++++++++++++++++-------
+ 1 file changed, 56 insertions(+), 16 deletions(-)
 
-diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-index 39ddbd9eae29..36af92b170df 100644
---- a/src/include/rt-utils.h
-+++ b/src/include/rt-utils.h
-@@ -80,4 +80,8 @@ static inline int64_t calctime(struct timespec t)
- 	return time;
- }
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 71cde5781499..ed3c960d9916 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -18,6 +18,7 @@
+ #include <errno.h>
+ #include <signal.h>
+ #include <getopt.h>
++#include <inttypes.h>
  
-+void rt_write_json(const char *filename, int argc, char *argv[],
-+		   void (*cb)(FILE *, void *),
-+		   void *data);
-+
- #endif	/* __RT_UTILS.H */
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 321a11b1172d..00907c573d6a 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -20,6 +20,9 @@
- #include <sys/stat.h>
- #include <unistd.h>
- #include <sys/syscall.h> /* For SYS_gettid definitions */
-+#include <sys/utsname.h>
-+#include <time.h>
-+#include <sys/time.h>
+ #include <sys/syscall.h>
+ #include <sys/types.h>
+@@ -85,13 +86,11 @@ static pthread_barrier_t barrier;
  
- #include "rt-utils.h"
- #include "rt-sched.h"
-@@ -482,3 +485,96 @@ void disable_trace_mark(void)
+ static int cpu_count;
+ static int all_cpus;
+-
+ static int nr_threads;
+ static int use_nsecs;
+-
+ static int mark_fd;
+-
+ static int quiet;
++static char outfile[MAX_PATH];
+ 
+ static int find_mount(const char *mount, char *debugfs)
  {
- 	close_tracemark_fd();
+@@ -603,16 +602,17 @@ static void usage(int error)
+ 	       "                           tasks on. An empty CPUSET runs on all CPUs a deadline\n"
+ 	       "                           task.\n"
+ 	       "                           on CPU 4, and thread #5 on CPU 5.\n"
+-	       "-D TIME     --duration     Specify a length for the test run.\n"
++	       "-D TIME  --duration        Specify a length for the test run.\n"
+ 	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
+ 	       "                           days\n"
+-	       "-h          --help         Show this help menu.\n"
+-	       "-i INTV     --interval     The shortest deadline for the tasks in us\n"
++	       "-h       --help            Show this help menu.\n"
++	       "-i INTV  --interval        The shortest deadline for the tasks in us\n"
+ 	       "                           (default 1000us).\n"
+-	       "-s STEP     --step         The amount to increase the deadline for each task in us\n"
++	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
++	       "-s STEP  --step            The amount to increase the deadline for each task in us\n"
+ 	       "                           (default 500us).\n"
+-	       "-t NUM      --threads      The number of threads to run as deadline (default 1).\n"
+-	       "-q          --quiet        print a summary only on exit\n"
++	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
++	       "-q       --quiet           print a summary only on exit\n"
+ 	       );
+ 	exit(error);
  }
-+
-+static char *get_cmdline(int argc, char *argv[])
+@@ -966,6 +966,32 @@ static void loop(struct sched_data *sched_data, int nr_threads)
+ 	}
+ }
+ 
++static void write_stats(FILE *f, void *data)
 +{
-+	char *cmdline;
-+	int len, i;
++	struct sched_data *sd = data;
++	struct thread_stat *s;
++	unsigned int i;
 +
-+	len = 0;
-+	for (i = 0; i < argc; i++)
-+		len += strlen(argv[i]) + 1;
-+
-+	cmdline = malloc(len);
-+	if (!cmdline)
-+		err_exit(ENOMEM, "Could not copy cmdline");
-+
-+	memset(cmdline, 0, len);
-+	for (i = 0; i < argc;) {
-+		cmdline = strcat(cmdline, argv[i]);
-+		i++;
-+		if (i < argc)
-+			cmdline = strcat(cmdline, " ");
++	fprintf(f, "  \"num_threads\": %d,\n", nr_threads);
++	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
++	fprintf(f, "  \"thread\": {\n");
++	for (i = 0; i < nr_threads; i++) {
++		s = &sd[i].stat;
++		fprintf(f, "    \"%u\": {\n", i);
++		fprintf(f, "	 \"cycles\": %" PRIu64 ",\n", s->cycles);
++		fprintf(f, "	 \"min\": %" PRIu64 ",\n", s->min);
++		fprintf(f, "	 \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "	 \"avg\": %.2f\n", s->avg/s->cycles);
++		fprintf(f, "    }%s\n", i == nr_threads - 1 ? "" : ",");
 +	}
-+
-+	return cmdline;
++	fprintf(f, "  }\n");
 +}
 +
-+void rt_write_json(const char *filename, int argc, char *argv[],
-+		  void (*cb)(FILE *, void *),
-+		  void *data)
-+{
-+	unsigned char buf[1];
-+	struct utsname uts;
-+	struct timeval tv;
-+	char tsbuf[64];
-+	struct tm *tm;
-+	char *cmdline;
-+	FILE *f, *s;
-+	time_t t;
-+	size_t n;
-+	int rt = 0;
++enum options_valud {
++	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
++	OPT_OUTPUT, OPT_STEP, OPT_THREADS, OPT_QUIET
++};
 +
-+	if (!filename || !strcmp("-", filename)) {
-+		f = stdout;
-+	} else {
-+		f = fopen(filename, "w");
-+		if (!f)
-+			err_exit(errno, "Failed to open '%s'\n", filename);
-+	}
+ int main(int argc, char **argv)
+ {
+ 	struct sched_data *sched_data;
+@@ -992,19 +1018,21 @@ int main(int argc, char **argv)
+ 
+ 	for (;;) {
+ 		static struct option options[] = {
+-			{ "affinity",	optional_argument,	NULL,	'a' },
+-			{ "duration",	required_argument,	NULL,	'D' },
+-			{ "help",	no_argument,		NULL,	'h' },
+-			{ "interval",	required_argument,	NULL,	'i' },
+-			{ "step",	required_argument,	NULL,	's' },
+-			{ "threads",	required_argument,	NULL,	't' },
+-			{ "quiet",	no_argument,		NULL,	'q' },
++			{ "affinity",	optional_argument,	NULL,	OPT_AFFINITY },
++			{ "duration",	required_argument,	NULL,	OPT_DURATION },
++			{ "help",	no_argument,		NULL,	OPT_HELP },
++			{ "interval",	required_argument,	NULL,	OPT_INTERVAL },
++			{ "output",	required_argument,	NULL,	OPT_OUTPUT },
++			{ "step",	required_argument,	NULL,	OPT_STEP },
++			{ "threads",	required_argument,	NULL,	OPT_THREADS },
++			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
+ 			{ NULL,		0,			NULL,	0   },
+ 		};
+ 		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
++		case OPT_AFFINITY:
+ 		case 'a':
+ 		case 'c':
+ 			if (!nr_threads)
+@@ -1016,21 +1044,30 @@ int main(int argc, char **argv)
+ 			else
+ 				all_cpus = 1;
+ 			break;
++		case OPT_INTERVAL:
+ 		case 'i':
+ 			interval = atoi(optarg);
+ 			break;
++		case OPT_OUTPUT:
++			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
++			break;
++		case OPT_STEP:
+ 		case 's':
+ 			step = atoi(optarg);
+ 			break;
++		case OPT_THREADS:
+ 		case 't':
+ 			nr_threads = atoi(optarg);
+ 			break;
++		case OPT_DURATION:
+ 		case 'D':
+ 			duration = parse_time_string(optarg);
+ 			break;
++		case OPT_QUIET:
+ 		case 'q':
+ 			quiet = 1;
+ 			break;
++		case OPT_HELP:
+ 		case 'h':
+ 			usage(0);
+ 			break;
+@@ -1190,6 +1227,9 @@ int main(int argc, char **argv)
+ 		}
+ 	}
+ 
++	if (strlen(outfile) != 0)
++		rt_write_json(outfile, argc, argv, write_stats, sched_data);
 +
-+	cmdline = get_cmdline(argc, argv);
-+	if (!cmdline)
-+		err_exit(ENOMEM, "get_cmdline()");
-+
-+
-+	gettimeofday(&tv, NULL);
-+	t = tv.tv_sec;
-+	tm = localtime(&t);
-+	/* RFC 2822-compliant date format */
-+	strftime(tsbuf, sizeof(tsbuf), "%a, %d %b %Y %T %z", tm);
-+
-+	s = fopen("/sys/kernel/realtime", "r");
-+	if (s) {
-+		n = fread(buf, 1, 1, s);
-+		if (n == 1 && buf[0] == '1')
-+			rt = 1;
-+		fclose(s);
-+	}
-+
-+	if (uname(&uts))
-+		err_exit(errno, "Could not retrieve system information");
-+
-+	fprintf(f, "{\n");
-+	fprintf(f, "  \"file_version\": 1,\n");
-+	fprintf(f, "  \"cmdline:\": \"%s\",\n", cmdline);
-+	fprintf(f, "  \"rt_test_version:\": \"%1.2f\",\n", VERSION);
-+	fprintf(f, "  \"finished\": \"%s\",\n", tsbuf);
-+	fprintf(f, "  \"sysinfo\": {\n");
-+	fprintf(f, "    \"sysname\": \"%s\",\n", uts.sysname);
-+	fprintf(f, "    \"nodename\": \"%s\",\n", uts.nodename);
-+	fprintf(f, "    \"release\": \"%s\",\n", uts.release);
-+	fprintf(f, "    \"version\": \"%s\",\n", uts.version);
-+	fprintf(f, "    \"machine\": \"%s\",\n", uts.machine);
-+	fprintf(f, "    \"realtime\": %d\n", rt);
-+	fprintf(f, "  },\n");
-+
-+	(cb)(f, data);
-+
-+	fprintf(f, "}\n");
-+
-+	free(cmdline);
-+
-+	if (!filename || strcmp("-", filename))
-+		fclose(f);
-+}
+ 	if (setcpu_buf)
+ 		free(setcpu_buf);
+ 	free(thread);
 -- 
 2.30.0
 
