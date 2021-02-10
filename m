@@ -2,282 +2,148 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 21431C433DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:37:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8FB2C433E9
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 16:09:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DC9F964E77
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 13:37:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6ABB064E76
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 16:09:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231691AbhBJNh3 (ORCPT
+        id S231897AbhBJQJT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 08:37:29 -0500
-Received: from mx2.suse.de ([195.135.220.15]:50914 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231650AbhBJNhH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Feb 2021 08:37:07 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id B061EB0B3;
-        Wed, 10 Feb 2021 13:34:59 +0000 (UTC)
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v4 16/16] rt-tests: Rename error.h to rt-error.h
-Date:   Wed, 10 Feb 2021 14:34:50 +0100
-Message-Id: <20210210133450.6991-17-dwagner@suse.de>
-X-Mailer: git-send-email 2.30.0
-In-Reply-To: <20210210133450.6991-1-dwagner@suse.de>
-References: <20210210133450.6991-1-dwagner@suse.de>
+        Wed, 10 Feb 2021 11:09:19 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:24620 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S231645AbhBJQJQ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Feb 2021 11:09:16 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1612973270;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=guOXexYS9u4o0awA0xpjdlMNG9ohNS8eKBBFeg8i4yE=;
+        b=OZqSBdjky4oZynmL3LUylU+Jrlb1Pse95W//uv71FUBelNHDUJ2xp2aVhPEqQbQUyMM5aV
+        eL/f/QvzmfqybmukwehBquWrxMZdIbySQqUZ2qIl7nM2W/Lbu6/vn1jmFlT1X/h696CnHT
+        LzJ8CpeoCTsdnQiLnlRQ2I4z/6652ao=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-175-LfQOoliROiOfyAJdvoGvcA-1; Wed, 10 Feb 2021 11:07:48 -0500
+X-MC-Unique: LfQOoliROiOfyAJdvoGvcA-1
+Received: by mail-qk1-f199.google.com with SMTP id 124so1926276qkg.6
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Feb 2021 08:07:48 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=guOXexYS9u4o0awA0xpjdlMNG9ohNS8eKBBFeg8i4yE=;
+        b=fVy4V2lHcZ1AOj1jk7404M7ckWbU7r45kjqWiuIjGyycImNf/Uq35MkjmN5Lsmj0jM
+         y5ESvuyNP8sBfAzXmlIMcy5yfCIPk/7jxNsKNts+81y140zlmsn78hI2sgzPLCqPYUun
+         NhQz+fNj/6rEFPjR01KLAL4b7OB5m2qMFYORmJX4VMnrZHqrtcFB4UHZRPjDY86+yroE
+         3R64xk+FBNFtzFPoeogwD1Wcy686ENoPFxuSUlDRg0Cl4OBH4hC0MFCKuO2/MaJOJVAv
+         /gH7E8Z3vAudFAaAgpi2OGwafP37i4pJ702tc507FpAevyeVTvbt+ZT8bXQZS+R2PpO0
+         FSUA==
+X-Gm-Message-State: AOAM5335Ubfym68NLQND2sVzF83PV98ylXxc9PImXF7/9pIl6cApC4Wy
+        w5j+XUHC+wVPAVUh0QcwdI6Vs3N41v1IDauICnM51jrbDhPRRTsqRcyIz5diguZrWL7L/G6AcCp
+        RaszWsaN8JFsQjMdcs3Wn7hpxJmQ=
+X-Received: by 2002:ad4:4047:: with SMTP id r7mr3329119qvp.0.1612973267429;
+        Wed, 10 Feb 2021 08:07:47 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJxf22BUQDS9j/U9Xgj/FOGL+5pOgaPV3DraTn578EB8YqI+xIMJyDXGh7i9tDmBR9SoK019YA==
+X-Received: by 2002:ad4:4047:: with SMTP id r7mr3329101qvp.0.1612973267185;
+        Wed, 10 Feb 2021 08:07:47 -0800 (PST)
+Received: from xz-x1 (bras-vprn-toroon474qw-lp130-20-174-93-89-182.dsl.bell.ca. [174.93.89.182])
+        by smtp.gmail.com with ESMTPSA id t6sm1734086qkd.127.2021.02.10.08.07.45
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 10 Feb 2021 08:07:46 -0800 (PST)
+Date:   Wed, 10 Feb 2021 11:07:45 -0500
+From:   Peter Xu <peterx@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
+        psahoo@redhat.com
+Subject: Re: [rt-tests v1 6/6] oslat: Use parse_cpumask() from rt-numa.h
+Message-ID: <20210210160745.GH103365@xz-x1>
+References: <20201113210910.21807-1-dwagner@suse.de>
+ <20201113210910.21807-7-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20201113210910.21807-7-dwagner@suse.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Avoid confusion with the system header called error.h.
+On Fri, Nov 13, 2020 at 10:09:10PM +0100, Daniel Wagner wrote:
+> Use the common parse_cpumask() helper and use struct bitmask directly
+> instead transforming it into a CPU_SET first.
+> 
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
 
-Signed-off-by: Daniel Wagner <dwagner@suse.de>
----
- Makefile                            | 2 +-
- src/cyclictest/cyclictest.c         | 2 +-
- src/include/pip_stress.h            | 5 +++--
- src/include/{error.h => rt-error.h} | 0
- src/lib/{error.c => rt-error.c}     | 2 +-
- src/lib/rt-numa.c                   | 2 +-
- src/lib/rt-utils.c                  | 3 ++-
- src/oslat/oslat.c                   | 2 +-
- src/pi_tests/pi_stress.c            | 3 +--
- src/pmqtest/pmqtest.c               | 6 +++---
- src/ptsematest/ptsematest.c         | 6 +++---
- src/sched_deadline/cyclicdeadline.c | 6 +++---
- src/signaltest/signaltest.c         | 2 +-
- src/sigwaittest/sigwaittest.c       | 2 +-
- src/svsematest/svsematest.c         | 3 ++-
- 15 files changed, 24 insertions(+), 22 deletions(-)
- rename src/include/{error.h => rt-error.h} (100%)
- rename src/lib/{error.c => rt-error.c} (98%)
+Hi, Daniel,
 
-diff --git a/Makefile b/Makefile
-index 636f1914a777..b17ac0957adc 100644
---- a/Makefile
-+++ b/Makefile
-@@ -177,7 +177,7 @@ oslat: $(OBJDIR)/oslat.o $(OBJDIR)/librttest.a $(OBJDIR)/librttestnuma.a
- %.8.bz2: %.8
- 	bzip2 -c $< > $@
- 
--LIBOBJS =$(addprefix $(OBJDIR)/,error.o rt-get_cpu.o rt-sched.o rt-utils.o)
-+LIBOBJS =$(addprefix $(OBJDIR)/,rt-error.o rt-get_cpu.o rt-sched.o rt-utils.o)
- $(OBJDIR)/librttest.a: $(LIBOBJS)
- 	$(AR) rcs $@ $^
- 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index f912bcf82def..c4b2369bee6b 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -36,7 +36,7 @@
- 
- #include "rt-utils.h"
- #include "rt-numa.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #include <bionic.h>
- 
-diff --git a/src/include/pip_stress.h b/src/include/pip_stress.h
-index ee8b545ab117..f03aaf397897 100644
---- a/src/include/pip_stress.h
-+++ b/src/include/pip_stress.h
-@@ -14,8 +14,9 @@
- #include <sys/wait.h>
- #include <signal.h>
- #include <sched.h>
--#include <rt-utils.h>
--#include "error.h"
-+
-+#include "rt-utils.h"
-+#include "rt-error.h"
- 
- void low(pid_t pid);	/* low priority process */
- void medium(void);	/* medium priority process */
-diff --git a/src/include/error.h b/src/include/rt-error.h
-similarity index 100%
-rename from src/include/error.h
-rename to src/include/rt-error.h
-diff --git a/src/lib/error.c b/src/lib/rt-error.c
-similarity index 98%
-rename from src/lib/error.c
-rename to src/lib/rt-error.c
-index 4434a842da17..616f70b044e0 100644
---- a/src/lib/error.c
-+++ b/src/lib/rt-error.c
-@@ -5,7 +5,7 @@
-  * error routines, similar to those found in
-  * Advanced Programming in the UNIX Environment 2nd ed.
-  */
--#include "error.h"
-+#include "rt-error.h"
- 
- /* Print an error message, plus a message for err and exit with error err */
- void err_exit(int err, char *fmt, ...)
-diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
-index 04f2e9adb4b1..4a0865715141 100644
---- a/src/lib/rt-numa.c
-+++ b/src/lib/rt-numa.c
-@@ -10,7 +10,7 @@
- #include <sched.h>
- #include <pthread.h>
- 
--#include "error.h"
-+#include "rt-error.h"
- #include "rt-numa.h"
- 
- int get_available_cpus(struct bitmask *cpumask)
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 2d68d62cd875..321a11b1172d 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -20,9 +20,10 @@
- #include <sys/stat.h>
- #include <unistd.h>
- #include <sys/syscall.h> /* For SYS_gettid definitions */
-+
- #include "rt-utils.h"
- #include "rt-sched.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #define  TRACEBUFSIZ  1024
- 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 0811079d9f04..9e6f70600830 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -43,7 +43,7 @@
- 
- #include "rt-utils.h"
- #include "rt-numa.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #ifdef __GNUC__
- # define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 538d12c975aa..49f89b7b0136 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -47,8 +47,7 @@
- 
- #include "rt-sched.h"
- #include "rt-utils.h"
--
--#include "error.h"
-+#include "rt-error.h"
- 
- /* test timeout */
- #define TIMEOUT 2
-diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
-index 5f7a24d55db6..349b47741003 100644
---- a/src/pmqtest/pmqtest.c
-+++ b/src/pmqtest/pmqtest.c
-@@ -21,11 +21,11 @@
- #include <linux/unistd.h>
- #include <utmpx.h>
- #include <mqueue.h>
-+#include <pthread.h>
-+
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
--
--#include <pthread.h>
-+#include "rt-error.h"
- 
- #define SYNCMQ_NAME "/syncmsg%d"
- #define TESTMQ_NAME "/testmsg%d"
-diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-index f8f075591f4b..7d4ca97773d6 100644
---- a/src/ptsematest/ptsematest.c
-+++ b/src/ptsematest/ptsematest.c
-@@ -19,11 +19,11 @@
- #include <sys/mman.h>
- #include <linux/unistd.h>
- #include <utmpx.h>
-+#include <pthread.h>
-+
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
--
--#include <pthread.h>
-+#include "rt-error.h"
- 
- enum {
- 	AFFINITY_UNSPECIFIED,
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 6dcfd6074085..71cde5781499 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -30,9 +30,9 @@
- #include <linux/unistd.h>
- #include <linux/magic.h>
- 
--#include <rt-utils.h>
--#include <rt-sched.h>
--#include <error.h>
-+#include "rt-utils.h"
-+#include "rt-sched.h"
-+#include "rt-error.h"
- 
- #define _STR(x) #x
- #define STR(x) _STR(x)
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index 5427db7f8d85..c34bc994d886 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -31,7 +31,7 @@
- #include <sys/time.h>
- #include <sys/mman.h>
- 
--#include "error.h"
-+#include "rt-error.h"
- #include "rt-utils.h"
- #include "rt-numa.h"
- 
-diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-index 7e287bd2424f..f10c24914d4a 100644
---- a/src/sigwaittest/sigwaittest.c
-+++ b/src/sigwaittest/sigwaittest.c
-@@ -42,7 +42,7 @@
- 
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- enum {
- 	AFFINITY_UNSPECIFIED,
-diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
-index 7388efb3f488..7a298e0dea8c 100644
---- a/src/svsematest/svsematest.c
-+++ b/src/svsematest/svsematest.c
-@@ -28,9 +28,10 @@
- #include <sys/sem.h>
- #include <sys/time.h>
- #include <sys/mman.h>
-+
- #include "rt-utils.h"
- #include "rt-get_cpu.h"
--#include "error.h"
-+#include "rt-error.h"
- 
- #define SEM_WAIT_FOR_RECEIVER 0
- #define SEM_WAIT_FOR_SENDER 1
+This seems to have broken oslat with --cpu-list...
+
+xz-x1:rt-tests [master]$ sudo ./oslat -c 1-2
+Total runtime:          1 seconds
+Thread priority:        default
+CPU list:               1-2
+CPU for main thread:    0
+Workload:               no
+Workload mem:           0 (KiB)
+Preheat cores:          1
+
+Pre-heat for 1 seconds...
+Test starts...
+Test completed.
+
+        Core:    1
+    CPU Freq:    2114 (Mhz)
+    001 (us):    49979990
+    002 (us):    471
+    003 (us):    53
+    004 (us):    9
+    005 (us):    16
+    006 (us):    14
+    007 (us):    4
+    008 (us):    4
+    009 (us):    1
+    010 (us):    1
+    011 (us):    0
+    012 (us):    0
+    013 (us):    2
+    014 (us):    59
+    015 (us):    11
+    016 (us):    173
+    017 (us):    12
+    018 (us):    25
+    019 (us):    112
+    020 (us):    10
+    021 (us):    66
+    022 (us):    7
+    023 (us):    13
+    024 (us):    16
+    025 (us):    7
+    026 (us):    18
+    027 (us):    13
+    028 (us):    7
+    029 (us):    3
+    030 (us):    3
+    031 (us):    0
+    032 (us):    5 (including overflows)
+     Minimum:    1 (us)
+     Average:    1.000 (us)
+     Maximum:    82 (us)
+     Max-Min:    81 (us)
+    Duration:    0.995 (sec)
+
+Reported-by: Pradipta Kumar Sahoo <psahoo@redhat.com>
+
+Thanks,
+
 -- 
-2.30.0
+Peter Xu
 
