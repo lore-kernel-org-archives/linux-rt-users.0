@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 023C0C433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CDCD2C433DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C8A4464EDA
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A63AD64EDA
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233033AbhBJRxW (ORCPT
+        id S233358AbhBJRxZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 12:53:22 -0500
-Received: from mx2.suse.de ([195.135.220.15]:37664 "EHLO mx2.suse.de"
+        Wed, 10 Feb 2021 12:53:25 -0500
+Received: from mx2.suse.de ([195.135.220.15]:37694 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233281AbhBJRxB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S233369AbhBJRxB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 10 Feb 2021 12:53:01 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 65799ADF0;
-        Wed, 10 Feb 2021 17:51:22 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 0C7F2AE05;
+        Wed, 10 Feb 2021 17:51:23 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v5 05/13] signaltest: Add JSON output feature
-Date:   Wed, 10 Feb 2021 18:51:10 +0100
-Message-Id: <20210210175118.19709-6-dwagner@suse.de>
+Subject: [PATCH rt-tests v5 07/13] pmqtest: Add JSON output feature
+Date:   Wed, 10 Feb 2021 18:51:12 +0100
+Message-Id: <20210210175118.19709-8-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210210175118.19709-1-dwagner@suse.de>
 References: <20210210175118.19709-1-dwagner@suse.de>
@@ -45,108 +45,127 @@ simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/signaltest/signaltest.c | 109 +++++++++++++++++++++++++++++-------
- 1 file changed, 88 insertions(+), 21 deletions(-)
+ src/pmqtest/pmqtest.c | 137 +++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 114 insertions(+), 23 deletions(-)
 
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index dd5633d5fc51..09039b299367 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 349b47741003..e1f59836ea07 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
 @@ -22,6 +22,7 @@
- #include <unistd.h>
- #include <errno.h>
- #include <sched.h>
+ #include <utmpx.h>
+ #include <mqueue.h>
+ #include <pthread.h>
 +#include <inttypes.h>
  
- #include <linux/unistd.h>
- 
-@@ -205,6 +206,14 @@ static int verbose;
+ #include "rt-utils.h"
+ #include "rt-get_cpu.h"
+@@ -231,6 +232,7 @@ static void display_help(int error)
+ 	       "-h       --help            print this help message\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+ 	       "-p PRIO  --prio=PRIO       priority\n"
+ 	       "-q       --quiet           print a summary only on exit\n"
+ 	       "-S       --smp             SMP testing: options -a -t and same priority\n"
+@@ -258,6 +260,14 @@ static int sameprio;
+ static int timeout;
+ static int forcetimeout;
  static int quiet;
- static int lockall;
- static struct bitmask *affinity_mask = NULL;
 +static char outfile[MAX_PATH];
 +
-+enum option_values {
-+	OPT_AFFINITY=1, OPT_BREAKTRACE,
-+	OPT_DURATION, OPT_HELP, OPT_LOOPS,
-+	OPT_MLOCKALL, OPT_OUTPUT, OPT_PRIORITY,
-+	OPT_QUIET, OPT_SMP, OPT_THREADS, OPT_VERBOSE
++enum option_value {
++	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
++	OPT_FORCETIMEOUT, OPT_HELP, OPT_INTERVAL, OPT_LOOPS,
++	OPT_OUTPUT, OPT_PRIORITY, OPT_QUIET, OPT_SMP, OPT_THREADS,
++	OPT_TIMEOUT
 +};
  
- /* Process commandline options */
  static void process_options(int argc, char *argv[])
-@@ -216,17 +225,18 @@ static void process_options(int argc, char *argv[])
+ {
+@@ -268,19 +278,20 @@ static void process_options(int argc, char *argv[])
  		int option_index = 0;
  		/** Options for getopt */
  		static struct option long_options[] = {
 -			{"affinity",		optional_argument,	NULL, 'a'},
 -			{"breaktrace",		required_argument,	NULL, 'b'},
+-			{"distance",		required_argument,	NULL, 'd'},
 -			{"duration",		required_argument,	NULL, 'D'},
+-			{"forcetimeout",	required_argument,	NULL, 'f'},
 -			{"help",		no_argument,		NULL, 'h'},
+-			{"interval",		required_argument,	NULL, 'i'},
 -			{"loops",		required_argument,	NULL, 'l'},
--			{"mlockall",		no_argument,		NULL, 'm'},
 -			{"priority",		required_argument,	NULL, 'p'},
 -			{"quiet",		no_argument,		NULL, 'q'},
 -			{"smp",			no_argument,		NULL, 'S'},
--			{"threads",		required_argument,	NULL, 't'},
--			{"verbose",		no_argument,		NULL, 'v'},
+-			{"threads",		optional_argument,	NULL, 't'},
+-			{"timeout",		required_argument,	NULL, 'T'},
 +			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
 +			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
++			{"distance",	required_argument,	NULL, OPT_DISTANCE},
 +			{"duration",	required_argument,	NULL, OPT_DURATION},
++			{"forcetimeout",required_argument,	NULL, OPT_FORCETIMEOUT},
 +			{"help",	no_argument,		NULL, OPT_HELP},
++			{"interval",	required_argument,	NULL, OPT_INTERVAL},
 +			{"loops",	required_argument,	NULL, OPT_LOOPS},
-+			{"mlockall",	no_argument,		NULL, OPT_MLOCKALL},
-+			{"output",	required_argument,	NULL, OPT_OUTPUT},
++			{"output",	required_argument,      NULL, OPT_OUTPUT },
 +			{"priority",	required_argument,	NULL, OPT_PRIORITY},
 +			{"quiet",	no_argument,		NULL, OPT_QUIET},
 +			{"smp",		no_argument,		NULL, OPT_SMP},
-+			{"threads",	required_argument,	NULL, OPT_THREADS},
-+			{"verbose",	no_argument,		NULL, OPT_VERBOSE},
++			{"threads",	optional_argument,	NULL, OPT_THREADS},
++			{"timeout",	required_argument,	NULL, OPT_TIMEOUT},
  			{NULL, 0, NULL, 0}
  		};
- 		int c = getopt_long(argc, argv, "a::b:D:hl:mp:qSt:v",
-@@ -234,6 +244,7 @@ static void process_options(int argc, char *argv[])
+ 		int c = getopt_long (argc, argv, "a::b:d:D:f:i:l:p:qSt::T:",
+@@ -288,6 +299,7 @@ static void process_options(int argc, char *argv[])
  		if (c == -1)
  			break;
  		switch (c) {
 +		case OPT_AFFINITY:
  		case 'a':
- 			if (optarg) {
- 				parse_cpumask(optarg, &affinity_mask);
-@@ -248,17 +259,49 @@ static void process_options(int argc, char *argv[])
- 				printf("Using %u cpus.\n",
- 					numa_bitmask_weight(affinity_mask));
+ 			if (smp) {
+ 				warn("-a ignored due to --smp\n");
+@@ -303,21 +315,53 @@ static void process_options(int argc, char *argv[])
+ 				setaffinity = AFFINITY_USEALL;
+ 			}
  			break;
 -		case 'b': tracelimit = atoi(optarg); break;
+-		case 'd': distance = atoi(optarg); break;
 -		case 'D': duration = parse_time_string(optarg); break;
+-		case 'f': forcetimeout = atoi(optarg); break;
 +		case OPT_BREAKTRACE:
 +		case 'b':
 +			tracelimit = atoi(optarg);
++			break;
++		case OPT_DISTANCE:
++		case 'd':
++			distance = atoi(optarg);
 +			break;
 +		case OPT_DURATION:
 +		case 'D':
 +			duration = parse_time_string(optarg);
 +			break;
++		case OPT_FORCETIMEOUT:
++		case 'f':
++			forcetimeout = atoi(optarg);
++			break;
 +		case OPT_HELP:
  		case '?':
 -		case 'h': display_help(0); break;
+-		case 'i': interval = atoi(optarg); break;
 -		case 'l': max_cycles = atoi(optarg); break;
--		case 'm': lockall = 1; break;
 -		case 'p': priority = atoi(optarg); break;
 -		case 'q': quiet = 1; break;
--		case 'S': smp = 1; break;
--		case 't': num_threads = atoi(optarg); break;
--		case 'v': verbose = 1; break;
 +		case 'h':
 +			display_help(0);
++			break;
++		case OPT_INTERVAL:
++		case 'i':
++			interval = atoi(optarg);
 +			break;
 +		case OPT_LOOPS:
 +		case 'l':
 +			max_cycles = atoi(optarg);
-+			break;
-+		case OPT_MLOCKALL:
-+		case 'm':
-+			lockall = 1;
 +			break;
 +		case OPT_OUTPUT:
 +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
@@ -160,57 +179,85 @@ index dd5633d5fc51..09039b299367 100644
 +			quiet = 1;
 +			break;
 +		case OPT_SMP:
-+		case 'S':
-+			smp = 1;
-+			break;
+ 		case 'S':
+ 			smp = 1;
+ 			num_threads = max_cpus;
+ 			setaffinity = AFFINITY_USEALL;
+ 			break;
 +		case OPT_THREADS:
-+		case 't':
-+			num_threads = atoi(optarg);
+ 		case 't':
+ 			if (smp) {
+ 				warn("-t ignored due to --smp\n");
+@@ -330,7 +374,10 @@ static void process_options(int argc, char *argv[])
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
+-		case 'T': timeout = atoi(optarg); break;
++		case OPT_TIMEOUT:
++		case 'T':
++			timeout = atoi(optarg);
 +			break;
-+		case OPT_VERBOSE:
-+		case 'v': verbose = 1;
-+			break;
- 		}
- 	}
- 
-@@ -312,6 +355,27 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 		default:
+ 			display_help(1);
+ 			break;
+@@ -401,6 +448,42 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
  	}
  }
  
++struct params_stats {
++	struct params *receiver;
++	struct params *sender;
++};
++
 +static void write_stats(FILE *f, void *data)
 +{
-+	struct thread_param *par = data;
-+	struct thread_stat *s;
++	struct params_stats *ps = data;
++	struct params *s, *r;
 +	unsigned int i;
 +
++	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
 +	fprintf(f, "  \"thread\": {\n");
 +	for (i = 0; i < num_threads; i++) {
++		s = &ps->sender[i];
++		r = &ps->receiver[i];
 +		fprintf(f, "    \"%u\": {\n", i);
-+		s = &par->stats[i];
-+		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
-+		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
-+		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
-+		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
-+		fprintf(f, "      \"cpu\": %d\n", par->cpu);
++		fprintf(f, "      \"sender\": {\n");
++		fprintf(f, "        \"cpu\": %d,\n", s->cpu);
++		fprintf(f, "        \"priority\": %d,\n", s->priority);
++		fprintf(f, "        \"samples\": %d,\n", s->samples);
++		fprintf(f, "        \"interval\": %ld\n", r->delay.tv_nsec/1000);
++		fprintf(f, "      },\n");
++		fprintf(f, "      \"receiver\": {\n");
++		fprintf(f, "        \"cpu\": %d,\n", r->cpu);
++		fprintf(f, "        \"priority\": %d,\n", r->priority);
++		fprintf(f, "        \"timeoutcount\": %d,\n", r->timeoutcount);
++		fprintf(f, "        \"min\": %d,\n", r->mindiff);
++		fprintf(f, "        \"avg\": %.2f,\n", r->sumdiff/r->samples);
++		fprintf(f, "        \"max\": %d\n", r->maxdiff);
++		fprintf(f, "      }\n");
 +		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
-+
 +	}
 +	fprintf(f, "  }\n");
 +}
 +
- int main(int argc, char **argv)
+ int main(int argc, char *argv[])
  {
- 	sigset_t sigset;
-@@ -454,6 +518,9 @@ int main(int argc, char **argv)
- 		if (stat[i].values)
- 			free(stat[i].values);
+ 	int i;
+@@ -562,6 +645,14 @@ int main(int argc, char *argv[])
+ 		mq_unlink(mqname);
  	}
-+	if (strlen(outfile) != 0)
-+		rt_write_json(outfile, argc, argv, write_stats, par);
+ 
++	if (strlen(outfile) != 0) {
++		struct params_stats ps = {
++			.receiver = receiver,
++			.sender = sender,
++		};
++		rt_write_json(outfile, argc, argv, write_stats, &ps);
++	}
 +
- 	free(stat);
-  outpar:
- 	free(par);
+ nomem:
+ 
+ 	return 0;
 -- 
 2.30.0
 
