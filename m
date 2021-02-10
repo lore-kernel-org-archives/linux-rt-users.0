@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBA69C433E9
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C2DB2C433E6
 	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A967764ED4
+	by mail.kernel.org (Postfix) with ESMTP id 87C7164EEB
 	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 17:53:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233454AbhBJRws (ORCPT
+        id S233439AbhBJRwq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 12:52:48 -0500
-Received: from mx2.suse.de ([195.135.220.15]:37084 "EHLO mx2.suse.de"
+        Wed, 10 Feb 2021 12:52:46 -0500
+Received: from mx2.suse.de ([195.135.220.15]:37072 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233281AbhBJRwE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Feb 2021 12:52:04 -0500
+        id S233277AbhBJRwD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Feb 2021 12:52:03 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 1BF84ADE1;
-        Wed, 10 Feb 2021 17:51:22 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id C24FCAD6A;
+        Wed, 10 Feb 2021 17:51:21 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v5 04/13] cyclictest: Add JSON output feature
-Date:   Wed, 10 Feb 2021 18:51:09 +0100
-Message-Id: <20210210175118.19709-5-dwagner@suse.de>
+Subject: [PATCH rt-tests v5 03/13] rt-utils: Add JSON common header output helper
+Date:   Wed, 10 Feb 2021 18:51:08 +0100
+Message-Id: <20210210175118.19709-4-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.0
 In-Reply-To: <20210210175118.19709-1-dwagner@suse.de>
 References: <20210210175118.19709-1-dwagner@suse.de>
@@ -40,120 +40,139 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Write the test results as JSON output to a file. This allows to
-simplifies any parsing later on.
+rt_write_json writes the common system information header of the
+rt-test currently executed.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 46 ++++++++++++++++++++++++++++++++++++-
- 1 file changed, 45 insertions(+), 1 deletion(-)
+ src/include/rt-utils.h |  4 ++
+ src/lib/rt-utils.c     | 96 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 100 insertions(+)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 7c45732c1553..3d0cf3f84b69 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -11,6 +11,7 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <stdint.h>
-+#include <inttypes.h>
- #include <stdarg.h>
- #include <unistd.h>
- #include <fcntl.h>
-@@ -217,6 +218,7 @@ static struct timespec globalt;
- 
- static char fifopath[MAX_PATH];
- static char histfile[MAX_PATH];
-+static char outfile[MAX_PATH];
- 
- static struct thread_param **parameters;
- static struct thread_stat **statistics;
-@@ -838,6 +840,7 @@ static void display_help(int error)
- 	       "			   latency is hit. Useful for low bandwidth.\n"
- 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
- 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
-+	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
- 	       "-p PRIO  --priority=PRIO   priority of highest prio thread\n"
- 	       "	 --policy=NAME     policy of measurement thread, where NAME may be one\n"
- 	       "                           of: other, normal, batch, idle, fifo or rr.\n"
-@@ -945,7 +948,7 @@ enum option_values {
- 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
- 	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
- 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
--	OPT_TRACEMARK, OPT_POSIX_TIMERS,
-+	OPT_TRACEMARK, OPT_POSIX_TIMERS, OPT_OUTPUT
- };
- 
- /* Process commandline options */
-@@ -979,6 +982,7 @@ static void process_options(int argc, char *argv[])
- 			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
- 			{"nsecs",            no_argument,       NULL, OPT_NSECS },
- 			{"oscope",           required_argument, NULL, OPT_OSCOPE },
-+			{"output",           required_argument, NULL, OPT_OUTPUT },
- 			{"priority",         required_argument, NULL, OPT_PRIORITY },
- 			{"quiet",            no_argument,       NULL, OPT_QUIET },
- 			{"priospread",       no_argument,       NULL, OPT_PRIOSPREAD },
-@@ -1073,6 +1077,9 @@ static void process_options(int argc, char *argv[])
- 		case 'o':
- 		case OPT_OSCOPE:
- 			oscope_reduction = atoi(optarg); break;
-+		case OPT_OUTPUT:
-+			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
-+			break;
- 		case 'p':
- 		case OPT_PRIORITY:
- 			priority = atoi(optarg);
-@@ -1690,6 +1697,40 @@ static void rstat_setup(void)
- 	return;
+diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+index 39ddbd9eae29..36af92b170df 100644
+--- a/src/include/rt-utils.h
++++ b/src/include/rt-utils.h
+@@ -80,4 +80,8 @@ static inline int64_t calctime(struct timespec t)
+ 	return time;
  }
  
-+static void write_stats(FILE *f, void *data)
-+{
-+	struct thread_param **par = parameters;
-+	unsigned int i, j, comma;
-+	struct thread_stat *s;
++void rt_write_json(const char *filename, int argc, char *argv[],
++		   void (*cb)(FILE *, void *),
++		   void *data);
 +
-+	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
-+	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
-+	fprintf(f, "  \"thread\": {\n");
-+	for (i = 0; i < num_threads; i++) {
-+		fprintf(f, "    \"%u\": {\n", i);
-+
-+		fprintf(f, "      \"histogram\": {");
-+		s = par[i]->stats;
-+		for (j = 0, comma = 0; j < histogram; j++) {
-+			if (s->hist_array[j] == 0)
-+				continue;
-+			fprintf(f, "%s", comma ? ",\n" : "\n");
-+			fprintf(f, "        \"%u\": %" PRIu64,j, s->hist_array[j]);
-+			comma = 1;
-+		}
-+		if (comma)
-+			fprintf(f, "\n");
-+		fprintf(f, "      },\n");
-+		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
-+		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
-+		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
-+		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
-+		fprintf(f, "      \"cpu\": %d,\n", par[i]->cpu);
-+		fprintf(f, "      \"node\": %d\n", par[i]->node);
-+		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
-+	}
-+	fprintf(f, "  }\n");
-+}
+ #endif	/* __RT_UTILS.H */
+diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+index 321a11b1172d..00907c573d6a 100644
+--- a/src/lib/rt-utils.c
++++ b/src/lib/rt-utils.c
+@@ -20,6 +20,9 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ #include <sys/syscall.h> /* For SYS_gettid definitions */
++#include <sys/utsname.h>
++#include <time.h>
++#include <sys/time.h>
  
- int main(int argc, char **argv)
+ #include "rt-utils.h"
+ #include "rt-sched.h"
+@@ -482,3 +485,96 @@ void disable_trace_mark(void)
  {
-@@ -2035,6 +2076,9 @@ int main(int argc, char **argv)
- 	if (!verbose && !quiet && refresh_on_max)
- 		printf("\033[%dB", num_threads + 2);
- 
-+	if (strlen(outfile) != 0)
-+		rt_write_json(outfile, argc, argv, write_stats, NULL);
+ 	close_tracemark_fd();
+ }
 +
- 	if (quiet)
- 		quiet = 2;
- 	for (i = 0; i < num_threads; i++) {
++static char *get_cmdline(int argc, char *argv[])
++{
++	char *cmdline;
++	int len, i;
++
++	len = 0;
++	for (i = 0; i < argc; i++)
++		len += strlen(argv[i]) + 1;
++
++	cmdline = malloc(len);
++	if (!cmdline)
++		err_exit(ENOMEM, "Could not copy cmdline");
++
++	memset(cmdline, 0, len);
++	for (i = 0; i < argc;) {
++		cmdline = strcat(cmdline, argv[i]);
++		i++;
++		if (i < argc)
++			cmdline = strcat(cmdline, " ");
++	}
++
++	return cmdline;
++}
++
++void rt_write_json(const char *filename, int argc, char *argv[],
++		  void (*cb)(FILE *, void *),
++		  void *data)
++{
++	unsigned char buf[1];
++	struct utsname uts;
++	struct timeval tv;
++	char tsbuf[64];
++	struct tm *tm;
++	char *cmdline;
++	FILE *f, *s;
++	time_t t;
++	size_t n;
++	int rt = 0;
++
++	if (!filename || !strcmp("-", filename)) {
++		f = stdout;
++	} else {
++		f = fopen(filename, "w");
++		if (!f)
++			err_exit(errno, "Failed to open '%s'\n", filename);
++	}
++
++	cmdline = get_cmdline(argc, argv);
++	if (!cmdline)
++		err_exit(ENOMEM, "get_cmdline()");
++
++
++	gettimeofday(&tv, NULL);
++	t = tv.tv_sec;
++	tm = localtime(&t);
++	/* RFC 2822-compliant date format */
++	strftime(tsbuf, sizeof(tsbuf), "%a, %d %b %Y %T %z", tm);
++
++	s = fopen("/sys/kernel/realtime", "r");
++	if (s) {
++		n = fread(buf, 1, 1, s);
++		if (n == 1 && buf[0] == '1')
++			rt = 1;
++		fclose(s);
++	}
++
++	if (uname(&uts))
++		err_exit(errno, "Could not retrieve system information");
++
++	fprintf(f, "{\n");
++	fprintf(f, "  \"file_version\": 1,\n");
++	fprintf(f, "  \"cmdline:\": \"%s\",\n", cmdline);
++	fprintf(f, "  \"rt_test_version:\": \"%1.2f\",\n", VERSION);
++	fprintf(f, "  \"finished\": \"%s\",\n", tsbuf);
++	fprintf(f, "  \"sysinfo\": {\n");
++	fprintf(f, "    \"sysname\": \"%s\",\n", uts.sysname);
++	fprintf(f, "    \"nodename\": \"%s\",\n", uts.nodename);
++	fprintf(f, "    \"release\": \"%s\",\n", uts.release);
++	fprintf(f, "    \"version\": \"%s\",\n", uts.version);
++	fprintf(f, "    \"machine\": \"%s\",\n", uts.machine);
++	fprintf(f, "    \"realtime\": %d\n", rt);
++	fprintf(f, "  },\n");
++
++	(cb)(f, data);
++
++	fprintf(f, "}\n");
++
++	free(cmdline);
++
++	if (!filename || strcmp("-", filename))
++		fclose(f);
++}
 -- 
 2.30.0
 
