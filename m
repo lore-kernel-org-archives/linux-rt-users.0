@@ -2,105 +2,117 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CE9BC433E6
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 19:27:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 50B41C433DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Feb 2021 04:27:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E0CC064E7A
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Feb 2021 19:27:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0D43764DE2
+	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Feb 2021 04:27:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234658AbhBJT1j (ORCPT
+        id S229592AbhBKE1I (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Feb 2021 14:27:39 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:49028 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S234654AbhBJT1d (ORCPT
+        Wed, 10 Feb 2021 23:27:08 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52570 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229452AbhBKE1H (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Feb 2021 14:27:33 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1612985167;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=H6BTB+51K0hJrhlPMWpQWtLXCx809PnPdYJK6Un+q1w=;
-        b=aYvzS3xpHcW4QJrCKwnwXHYS50wTRGfbWw1nF/fGamIlT8F5wQaSP3XukNYa6/ITAap0ri
-        iiTLvzhqL1UiKc1F25MDTeb0M5cvO+FdZ4v8QJOfJw6tKWg70qCptnNjA8mOIbrknS26AQ
-        ayEMmuCd4o8E9JvMuRP6JHetPH4E7cU=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-350-spCuCJy6MdakVsYtdCGilw-1; Wed, 10 Feb 2021 14:26:06 -0500
-X-MC-Unique: spCuCJy6MdakVsYtdCGilw-1
-Received: by mail-qt1-f200.google.com with SMTP id f5so2393771qtf.15
-        for <linux-rt-users@vger.kernel.org>; Wed, 10 Feb 2021 11:26:06 -0800 (PST)
+        Wed, 10 Feb 2021 23:27:07 -0500
+Received: from mail-qt1-x833.google.com (mail-qt1-x833.google.com [IPv6:2607:f8b0:4864:20::833])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0E174C061574
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Feb 2021 20:26:27 -0800 (PST)
+Received: by mail-qt1-x833.google.com with SMTP id c5so3351361qth.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Feb 2021 20:26:26 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=+WPMH9cgjWuxpbmSzfebBy7LZncLZm7qmy2suqXS63w=;
+        b=Gf8kuJPjLINOnQydgDwMuB4dlTA+M6PCoNrI8HjYKhDQb6rrcXn0LhaN9FJfYUB7st
+         2jSziwE4vUo62EkNytFD5AeA2nLGWirBQmde6FxnLkvGrxCVPy7q9qhlD+2xpWrOV9rm
+         Z5X/Jgke2tOIG4Yp4hu+KOlXxjdNNePjB8nAT8IGmViA6MFA8y9KVeWqYmiEl8jRYN87
+         luVxtw2oOYxptrjeRmpxOwX1Ru8U3SS3iSgxbnvY5i2/SnFBUOTqAjj+cNAG+oj20cnd
+         sj/Cb/BYlKczbpGrp5MiXzxdcC3S9EFl3+lqHWPdXHWYcM9FJQCPnwqiuOOZjv2o7klM
+         j4mw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=H6BTB+51K0hJrhlPMWpQWtLXCx809PnPdYJK6Un+q1w=;
-        b=af/k+QUkzjgJOnGFqYju3vvemhWZ0jqjxU5PHI/An44VRC33/YHPcWdRSBGBsTAVu2
-         gPyVcFAe7HFTovehvr1qJ3f2FjTX4vIQD8iCxbCo4bUPdW4fnfCliiRlYtlCSOLeH+zX
-         M6eAq52BwTRoXdZd+kOu1Ua9hhtyBYg7yeBVOTAbs5wcfzBH2e/LvJX54RfmAbTzzcue
-         GuQlvav897jFPowlAGwfTZ1IExi31j4pFuF+BHLizUvXkqRORfGGaRRjCH2PrhEdaENX
-         wSBOqpau5uA73Ch1MyDqkghiT24ghF7jZcw5t7QQtCJ6rQiwsy8f/uNIMJ718aEceoXY
-         /vyA==
-X-Gm-Message-State: AOAM531GrQ+dLolDRcYevhcCb/NtkXjz60IS96kZOpw99k6HTSZp1SZS
-        oW18mOT9L2qBjtZuTotM1tpUINydxTN/PEK7UD1d/sOpdIIRWXCq3qX1hifdUVidk2NyZojNPW5
-        tXLznvcG/05e8AYgcoe4lPr8dSjY=
-X-Received: by 2002:a37:4114:: with SMTP id o20mr5028762qka.184.1612985165650;
-        Wed, 10 Feb 2021 11:26:05 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyYat/Q+bM3tnsjFspTmiKKEDZ1hfLZr6Xztot4CwpAlOjLjYoMyCWSe3UlT+UBAV8zS1PctA==
-X-Received: by 2002:a37:4114:: with SMTP id o20mr5028752qka.184.1612985165458;
-        Wed, 10 Feb 2021 11:26:05 -0800 (PST)
-Received: from xz-x1 (bras-vprn-toroon474qw-lp130-20-174-93-89-182.dsl.bell.ca. [174.93.89.182])
-        by smtp.gmail.com with ESMTPSA id v135sm2230448qka.98.2021.02.10.11.26.04
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=+WPMH9cgjWuxpbmSzfebBy7LZncLZm7qmy2suqXS63w=;
+        b=XcZg7bY2+N6dG5OMb5WjwBwUpXjNSl3Rluwf8hXdd7lTFRG4SEHdvz+fj+EqsdQqwP
+         U9ZdtWKiwSWOBeEy32lgmIfkZHVGoYN48qeTCaIw0ZxEk0F8LLY2MUKHKWpZFauLNwJV
+         Kd/0DgFXE8dRPjFzGNvOJ3ZPnpXrsrW1Rorgo0k8WoRFNj8LLHBKypdr6CeIBjQm0YwX
+         KHhfRUtHdX7mmLvhiQWRZ4iW7Mg5zW1OuJKPHtis9nYvWSliMRChSp41qPF5P9y/Bgyy
+         s9Z1iAvTiTKtKh+I/iJRccQ5bUEDm52DHebxBDc3lrlu8CmjcqarSGdK3EhK22hSixBs
+         7Osg==
+X-Gm-Message-State: AOAM5318Xzn1nurG2bF0KzsCEFRIkwt8RrPJQGrsOc16846DKMcZrlbA
+        qz3HyMmSc84jNbaJzUKovp2tpRtMWItZsA==
+X-Google-Smtp-Source: ABdhPJxeAaBe2kpwuJC6hO/Rn+GXel0qiz0+2gK7IpsHiw/xTNOxgT5TvCCHcOM04ok0kqMEtyeomw==
+X-Received: by 2002:aed:3103:: with SMTP id 3mr5990542qtg.120.1613017585906;
+        Wed, 10 Feb 2021 20:26:25 -0800 (PST)
+Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
+        by smtp.gmail.com with ESMTPSA id s136sm2954114qka.106.2021.02.10.20.26.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 10 Feb 2021 11:26:05 -0800 (PST)
-Date:   Wed, 10 Feb 2021 14:26:03 -0500
-From:   Peter Xu <peterx@redhat.com>
-To:     Daniel Wagner <dwagner@suse.de>
-Cc:     John Kacur <jkacur@redhat.com>,
+        Wed, 10 Feb 2021 20:26:25 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Daniel Wagner <dwagner@suse.de>,
         Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests 1/2] oslat: Print version string
-Message-ID: <20210210192603.GT103365@xz-x1>
-References: <20210210165407.9770-1-dwagner@suse.de>
- <20210210165407.9770-2-dwagner@suse.de>
- <9c2916d8-14ab-3465-97fa-2a9b52c83b1e@redhat.com>
- <20210210173353.pqeu2sm33qs7hjna@beryllium.lan>
- <20210210175302.GP103365@xz-x1>
- <20210210181504.z6ckihv5zghexrne@beryllium.lan>
+        John Kacur <jkacur@redhat.com>,
+        Pradipta Kumar Sahoo <psahoo@redhat.com>,
+        "Reported-by : Peter Xu" <peterx@redhat.com>
+Subject: [PATCH 1/2] rt-tests: oslat: print version string
+Date:   Wed, 10 Feb 2021 23:26:15 -0500
+Message-Id: <20210211042615.27231-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.26.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20210210181504.z6ckihv5zghexrne@beryllium.lan>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Feb 10, 2021 at 07:15:04PM +0100, Daniel Wagner wrote:
-> > It's great idea to have JSON format for all the tools.  However I just don't
-> > see why "-v"/"--version" is related to your machine readable output work.
-> > Could you exlaborate?  Thanks,
-> 
-> I've added long options support to many rt-tests in the mentioned
-> series. I would like to base this fix on top of this work.
+During the streamlining of the command line options something went awry
+with the version. The author of oslat wishes to always print the version
+string. This allows us to just exit in the case of -v
 
-My opinion probably don't even matter here... but I tend to agree with John
-that the fix and your work is separated.  If there's must a rebase, it would be
-better to rebase the big series upon the fix rather than the other way round,
-simply because a fix is normally more important than a new feature (if not
-talking about this "-v" thing, the other --cpu-list issue should be important).
+Fixes e411219d27b1
 
-Appreciate all the refactoring works on oslat happened and ongoing, it would
-just be even nicer if the touched code path can be smoked so we don't miss
-anything important.
+Reported-by: Pradipta Kumar Sahoo <psahoo@redhat.com>
+Reported-by: Reported-by: Peter Xu <peterx@redhat.com>
 
-Thanks again.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/oslat/oslat.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 5b7e0d5b5d5c..639381e75bc6 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -657,8 +657,8 @@ static void parse_options(int argc, char *argv[])
+ 			break;
+ 		case 'v':
+ 			/*
+-			 * Because we always dump the version even before parsing options,
+-			 * what we need to do is to quit..
++			 * We always print the version before parsing options
++			 * so just exit
+ 			 */
+ 			exit(0);
+ 			break;
+@@ -736,7 +736,7 @@ int main(int argc, char *argv[])
+ 	g.workload_mem_size = WORKLOAD_MEM_SIZE;
+ 	/* Run the main thread on cpu0 by default */
+ 	g.cpu_main_thread = 0;
+-
++	printf("oslat V %1.2f\n", VERSION);
+ 	parse_options(argc, argv);
+ 
+ 	TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
 -- 
-Peter Xu
+2.26.2
 
