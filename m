@@ -2,134 +2,117 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E24B3C4332D
-	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Feb 2021 15:30:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 91A3AC433DB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Feb 2021 17:30:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AF76B64E9C
-	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Feb 2021 15:30:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 636B464EAA
+	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Feb 2021 17:30:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230491AbhBKPaS (ORCPT
+        id S231654AbhBLRaQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 11 Feb 2021 10:30:18 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:41445 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230027AbhBKP0W (ORCPT
+        Fri, 12 Feb 2021 12:30:16 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48364 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231628AbhBLRaD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 11 Feb 2021 10:26:22 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1613057096;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=VSWWjtdxhSAfYfxUswD5NQDGP3rDQRjmJatB2pM4EhE=;
-        b=OTxliobqva3thvlJl36C00f7JwaKlzotA6DEvN0Ee5r0fy8ApG68iGusQ+IyhtfpxVpt4f
-        HuaFa+1ihNse71goLviA90plRF2cVq2a4vAHdrTe4yTKG/+FJn8wF4GmT0ut/h2JvkvJvK
-        LenGIgJk9UkAbFNc04UGRUM4bk0SUVM=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-583-uwZAz6PAPFSObnLvKmRpsg-1; Thu, 11 Feb 2021 10:24:54 -0500
-X-MC-Unique: uwZAz6PAPFSObnLvKmRpsg-1
-Received: by mail-qt1-f200.google.com with SMTP id d11so4409869qth.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 11 Feb 2021 07:24:54 -0800 (PST)
+        Fri, 12 Feb 2021 12:30:03 -0500
+Received: from mail-qt1-x836.google.com (mail-qt1-x836.google.com [IPv6:2607:f8b0:4864:20::836])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED28AC061574
+        for <linux-rt-users@vger.kernel.org>; Fri, 12 Feb 2021 09:29:23 -0800 (PST)
+Received: by mail-qt1-x836.google.com with SMTP id c5so166157qth.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 12 Feb 2021 09:29:23 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=WSxGEZeNNcHz1m+Eii3sxLwgP4B+rh0OCkChvsFi5oE=;
+        b=UFJasSuNDbakMQLh6d2HLnfd2PNc633XLLgJAG0GrLDrdE8suMGfJGry9L/3f+75pb
+         ARnzZbPz9K1+YbhzVOUNHBJG42vRJQiGemtisHJ5MYCjVrT/UKZAe+mbUAZaxuYbtnjj
+         iNzzTcUKZ/nG+RenThXkKsPYUbrXj8Z2rcBrfP3zQJklSbWESBgMWHhnO1E9hT6yc06N
+         Trn7k4fbqbZLfbXYlbOSOkUov/0UrZTXFNHpVAl9xOH0ZgOSyvqvbfKEjLIYkx+28rqz
+         62KmDYYVDTyYEvRtCSrT4PkSLGoNUl89YMXvlvyWBhBH0NbKHBjtdKKx+759KFDsU6iG
+         3dGw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=VSWWjtdxhSAfYfxUswD5NQDGP3rDQRjmJatB2pM4EhE=;
-        b=pKTnZ8fgeD2Toi2j7mz785uy+C/7YzPJUEmIsJzBD81ikMUJKqiRgO6ZTYMR+f9vc5
-         F8uojAUhRFhL9rdXnInAp1d0bcJ2LEu1HOkSFJsw9AG0H5jwAs1h6cu3++ASBxd/iYKj
-         KVMSxfbzFeXErnYy//CIZhZB747k3Kk6Mr8KI0wUKb4XmbWlR4i/c0ipwRByLOj/GQeh
-         YdJAkatiHWuCuTb3j7cZqNsZZZD4FZgzCUCsIKGlJxgLGadUiHlDoLeYYgEW2ip8IDbF
-         r+zjKJZmVfHgVpcxGiJL4B7ypgz2yVMFHGs8oKd3avkaRzi0O1MCnYCvFqGEKSDEwOGQ
-         sUIQ==
-X-Gm-Message-State: AOAM531AF7qOVJM7xcQ7KQ9yP0ghwmORwOa2W41fgUtCpKc7ZZO4XvYx
-        25ZLv3gAX0mccm+CMQSD9kTMt935KxlyTVtCUNRGcqUncwjV3Y/V247nP7Qd6GfjKOE6gZFa+8q
-        6S+O2oAZuLkm8UVW2p/G7RZXPh5Q=
-X-Received: by 2002:a05:620a:1477:: with SMTP id j23mr8709291qkl.462.1613057093736;
-        Thu, 11 Feb 2021 07:24:53 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyW3E4xezNabDasjaXdKXo3aNeNLNMr49Sq5T+ZQxYRpWM8U4Zo0eV4fHuNGFZRRUAMy1c+xQ==
-X-Received: by 2002:a05:620a:1477:: with SMTP id j23mr8709262qkl.462.1613057093461;
-        Thu, 11 Feb 2021 07:24:53 -0800 (PST)
-Received: from xz-x1 (bras-vprn-toroon474qw-lp130-20-174-93-89-182.dsl.bell.ca. [174.93.89.182])
-        by smtp.gmail.com with ESMTPSA id h6sm4152227qkf.96.2021.02.11.07.24.52
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=WSxGEZeNNcHz1m+Eii3sxLwgP4B+rh0OCkChvsFi5oE=;
+        b=fkXFvD4ngHtBzs6I2puZexgZWxo0PwJAfsDmL/lsohzqto0Yie2yMd/TV78jCJVC6k
+         iWoD5LTmGWXr0keMAyYdPl6kjD2TH4iPRlVj8Jr0vJL4EAi75tcSeByw02JDY/dtiJkv
+         aGu44llYWlLonj+1k6p7C41Kr0JN4k1fmNqFvo622SwSXO7M9ip9ViSOseH3z4IbHSnU
+         lQeI0Isp7dvBfA3EaJ8XRaHoBOvQJlHWoNOS+huGzKb16gF1umQQrExcfcJ0PFeqipHd
+         H69MUweIMvGQLRdKqiZ1RVyhUAIYzAS/3FdHgzE3KezDM6o6doZz/di/kji4/JIMjJtZ
+         82yA==
+X-Gm-Message-State: AOAM531x2+gjjCvy1j3ktyj7UQhAzW/fKdcivivlCxR2IiD5heYZ8kAV
+        /7+2unVecEB1H1XVZVqaI+VrEk14hWCrXw==
+X-Google-Smtp-Source: ABdhPJxZ52LZpn9i3pNn1lYfQ2dZdb4bmM66yE7XZhvlbeiYzwhMfMsed2dkw3lpQ5d8cCl5xHMOgw==
+X-Received: by 2002:aed:38a2:: with SMTP id k31mr3516403qte.187.1613150962784;
+        Fri, 12 Feb 2021 09:29:22 -0800 (PST)
+Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
+        by smtp.gmail.com with ESMTPSA id g20sm5910833qtq.35.2021.02.12.09.29.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Feb 2021 07:24:53 -0800 (PST)
-Date:   Thu, 11 Feb 2021 10:24:51 -0500
-From:   Peter Xu <peterx@redhat.com>
-To:     John Kacur <jkacur@redhat.com>
+        Fri, 12 Feb 2021 09:29:22 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Daniel Wagner <dwagner@suse.de>,
         Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests 2/2] oslat: Use cpuset size as upper bound
-Message-ID: <20210211152451.GB142818@xz-x1>
-References: <20210210165407.9770-1-dwagner@suse.de>
- <20210210165407.9770-3-dwagner@suse.de>
- <fe39aaf5-57f5-c36a-70ea-af212318ea@redhat.com>
+        Peter Xu <peterx@redhat.com>,
+        Pradipta Kumar Sahoo <psahoo@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: oslat: Allocate memory for cpu_set
+Date:   Fri, 12 Feb 2021 12:29:13 -0500
+Message-Id: <20210212172913.10843-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.26.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <fe39aaf5-57f5-c36a-70ea-af212318ea@redhat.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Feb 10, 2021 at 11:28:16PM -0500, John Kacur wrote:
-> 
-> 
-> On Wed, 10 Feb 2021, Daniel Wagner wrote:
-> 
-> > To assign the threads to the correct CPU we need to use the cpuset
-> > size as upper bound for the loop and not the number of threads.
-> > 
-> > Fixes: 85b0763dacd9 ("oslat: Use parse_cpumask() from rt-numa.h")
-> > Reported-by: Peter Xu <peterx@redhat.com>
-> > Signed-off-by: Daniel Wagner <dwagner@suse.de>
-> > ---
-> >  src/oslat/oslat.c | 7 +++++--
-> >  1 file changed, 5 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-> > index d3f659b218b0..62b82098419a 100644
-> > --- a/src/oslat/oslat.c
-> > +++ b/src/oslat/oslat.c
-> > @@ -742,9 +742,12 @@ int main(int argc, char *argv[])
-> >  	n_cores = numa_bitmask_weight(cpu_set);
-> >  
-> >  	TEST(threads = calloc(1, n_cores * sizeof(threads[0])));
-> > -	for (i = 0; i < n_cores; ++i)
-> > -		if (numa_bitmask_isbitset(cpu_set, i) && move_to_core(i) == 0)
-> > +	for (i = 0; n_cores && i < cpu_set->size; i++) {
-> > +		if (numa_bitmask_isbitset(cpu_set, i) && move_to_core(i) == 0) {
-> >  			threads[g.n_threads_total++].core_i = i;
-> > +			n_cores--;
-> > +		}
-> > +	}
-> >  
-> >  	if (numa_bitmask_isbitset(cpu_set, 0) && g.rtprio)
-> >  		printf("WARNING: Running SCHED_FIFO workload on CPU 0 may hang the thread\n");
-> > -- 
-> > 2.30.0
-> > 
-> > 
-> 
-> This looks okay, but we are waiting for Pradipta's testing to confirm 
-> before I push it.
+- cpu_set is a pointer to a bitmask struct
+Memory needs to be allocated for the struct, so call
+numa_allocate_cpumask()
 
-After the reporter's confirmation there seems to have two issues.  Daniel's
-patch should be a valid fix of at least one of the problem.  The other problem
-is still under investigation and I think it's not affecting the upstream
-branch.  So I think we don't need to wait for that anymore:
+- use rt-tests fatal to exit on error conditions
 
-Reviewed-by: Peter Xu <peterx@redhat.com>
-Tested-by: Peter Xu <peterx@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/oslat/oslat.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-Thanks,
-
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 2fe550b3ee12..2a3be393a268 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -727,6 +727,10 @@ int main(int argc, char *argv[])
+ 		exit(1);
+ 	}
+ 
++	cpu_set = numa_allocate_cpumask();
++	if (!cpu_set)
++		fatal("oslat: Could not allocate cpumask\n");
++
+ 	g.app_name = argv[0];
+ 	g.rtprio = 0;
+ 	g.bucket_size = BUCKET_SIZE;
+@@ -742,8 +746,9 @@ int main(int argc, char *argv[])
+ 
+ 	if (!g.cpu_list)
+ 		g.cpu_list = strdup("all");
+-	if (parse_cpumask(g.cpu_list, max_cpus, &cpu_set))
+-		exit(1);
++
++	if (parse_cpumask(g.cpu_list, max_cpus, &cpu_set) != 0)
++		fatal("oslat: parse_cpumask failed.\n");
+ 	n_cores = numa_bitmask_weight(cpu_set);
+ 
+ 	TEST(threads = calloc(1, n_cores * sizeof(threads[0])));
 -- 
-Peter Xu
+2.26.2
 
