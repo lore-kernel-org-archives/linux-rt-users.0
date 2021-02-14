@@ -2,97 +2,107 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B4A1C433DB
-	for <linux-rt-users@archiver.kernel.org>; Sun, 14 Feb 2021 10:55:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F65C433E0
+	for <linux-rt-users@archiver.kernel.org>; Sun, 14 Feb 2021 19:17:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BE29064DCF
-	for <linux-rt-users@archiver.kernel.org>; Sun, 14 Feb 2021 10:55:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 54B0C64D79
+	for <linux-rt-users@archiver.kernel.org>; Sun, 14 Feb 2021 19:17:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229575AbhBNKzM (ORCPT
+        id S229772AbhBNTQr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 14 Feb 2021 05:55:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40540 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229528AbhBNKzL (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 14 Feb 2021 05:55:11 -0500
-Received: from mail-ed1-x533.google.com (mail-ed1-x533.google.com [IPv6:2a00:1450:4864:20::533])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DE3ECC061574
-        for <linux-rt-users@vger.kernel.org>; Sun, 14 Feb 2021 02:54:30 -0800 (PST)
-Received: by mail-ed1-x533.google.com with SMTP id v9so482396edw.8
-        for <linux-rt-users@vger.kernel.org>; Sun, 14 Feb 2021 02:54:30 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-transfer-encoding:content-language;
-        bh=Kn95G9AuSOwdZHAPSyMf3TGTT2qULheHnyNZZezePeE=;
-        b=fi+rFHiQVWRu4jFPGRE2oE0fde0rxh9PszJxVY2Qe76vasWOXP3ysBatuGy3zhcNE/
-         vtIXrJTMecj/JVAdD/wFsUj+j4O7z31h6Tnpwnk5lFU2bi5vBNs0pTaGQbU7U4zuNH+x
-         eHretZ3fzq2J6JBV2Izl7BdGwkEqALiz0Gk9+sXF/DT76lX+BoLw53fgAXXZgQtqprKz
-         f2xvU+mNjsTijQ2lMsJYgGDCmXdLWMXcW4fAj3rkb3ghPM5iqgk1PBjSg2T1eVoJI5Ub
-         +MgKWEadGz+S9qMEe7qxJ+lMY69B1YYDygDh82sWgurm24d86mYwtXB9zm2KX+d1PeCl
-         AKAg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-transfer-encoding
-         :content-language;
-        bh=Kn95G9AuSOwdZHAPSyMf3TGTT2qULheHnyNZZezePeE=;
-        b=pvl/W0eKGooWsSludVUK6lpxWDnkIZoxS/tXS5CKI2ImPvAbtFBtEF0xlXmFtXIN7V
-         NLfrqSjWTR6cwrfoxoE0BrGi/OgJHLpD1kRGCAKkV8dGHPalYbIrTo3Al0mt5cuC+JSs
-         zuBxyXdApReJ5AbNbmlL/Es6104Aqp/QoSz0F+/uZVADDOSnIKR0KBs40OQQMri4pdJQ
-         +vUG8HrwuWwFEk5HSQv/u5VXUulXThO4NkVNHC8dcc63Zpr3rPdrj3WUG+SIXSgwovsJ
-         gtcJbb/+S2ZFF5lAhj2jS8KEiKbevgw4xVY7Yqnkh0Rir9AV9ZfDJY9dqmRrq5ljWsJf
-         DLhg==
-X-Gm-Message-State: AOAM532esOOeqK+tZ4z76rfuUWoNUQmTQPymW5XAG0lgtOX99wIPbwpo
-        pvsoaTliHDxhFmcjR7o6TnA/+aajH+c0GA==
-X-Google-Smtp-Source: ABdhPJy16THYDD5wICeGbequHwzNK+wZwJN6O5CnB3puSgRgaTJ/p5E+odPULs4XRZ10RwvqvlupFw==
-X-Received: by 2002:a05:6402:1c0f:: with SMTP id ck15mr10655779edb.16.1613300068860;
-        Sun, 14 Feb 2021 02:54:28 -0800 (PST)
-Received: from localhost.localdomain (dynamic-2a01-0c23-6c7f-b900-0e3a-d793-89f9-ec3f.c23.pool.telefonica.de. [2a01:c23:6c7f:b900:e3a:d793:89f9:ec3f])
-        by smtp.gmail.com with ESMTPSA id k2sm8879763ejp.6.2021.02.14.02.54.27
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 14 Feb 2021 02:54:28 -0800 (PST)
-Subject: v5.10.14-rt28 fails to build without CONFIG_SMP
+        Sun, 14 Feb 2021 14:16:47 -0500
+Received: from sleepmap.de ([85.10.206.218]:57382 "EHLO mail.sleepmap.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229642AbhBNTQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 14 Feb 2021 14:16:45 -0500
+Date:   Sun, 14 Feb 2021 20:16:02 +0100
+From:   David Runge <dave@sleepmap.de>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org
-References: <20210209180601.hbjpgfcntgsjirbk@linutronix.de>
-From:   Jonathan Schwender <schwenderjonathan@gmail.com>
-Message-ID: <ae545d99-66ec-ef32-604e-ee5caee8ece5@gmail.com>
-Date:   Sun, 14 Feb 2021 11:54:27 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.7.0
-MIME-Version: 1.0
-In-Reply-To: <20210209180601.hbjpgfcntgsjirbk@linutronix.de>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Language: en-US
+Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+        linux-rt-users@vger.kernel.org,
+        linux1394-devel@lists.sourceforge.net,
+        Stefan Richter <stefanr@s5r6.in-berlin.de>
+Subject: Re: firewire-ohci fails to initialize Texas Instruments
+ XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
+ 5.10.8-rt24]
+Message-ID: <YCl28sXo7LEyCK8y@hmbx>
+References: <YBVG/PG7syFIUBno@hmbx>
+ <20210201083441.ocucdvdrv37goz2s@linutronix.de>
+ <20210205112638.xuduvuefy3auycht@linutronix.de>
+ <YB3TLNN39/XhUyUY@hmbx>
+ <YB+5tdIpbTfnDnIi@hmbx>
+ <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="Mqi9MYJz3uQEOHHo"
+Content-Disposition: inline
+In-Reply-To: <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Sebastian,
 
-It seems that commit 17cfc9697f5574e4b523c21fca160aac5a3ac6dc "softirq: 
-Update the WIP"
-breaks builds without CONFIG_SMP, due to unresolved references to 
-tasklet_unlock and tasklet_unlock_wait in softirq.c
+--Mqi9MYJz3uQEOHHo
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+Date: Sun, 14 Feb 2021 20:16:02 +0100
+From: David Runge <dave@sleepmap.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+	linux-rt-users@vger.kernel.org,
+	linux1394-devel@lists.sourceforge.net,
+	Stefan Richter <stefanr@s5r6.in-berlin.de>
+Subject: Re: firewire-ohci fails to initialize Texas Instruments
+ XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
+ 5.10.8-rt24]
 
-In include/linux/interrupt.h the functions are declared if either 
-CONFIG_SMP or CONFIG_PREEMPT_RT are defined.
+On 2021-02-08 10:19:40 (+0100), Sebastian Andrzej Siewior wrote:
+> On 2021-02-07 10:58:13 [+0100], David Runge wrote:
+> > With 5.10.12-rt26 the controller still does not initialize at all
+> > though (/dev/fw0 does not appear):
+> > https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.10.12-rt26-kernel.log
+>=20
+> So it is either config or chipset specific. Did you posted a link to
+> your .config?
 
-However, in softirq.c the functions are now only in an #ifdef CONFIG_SMP 
-block.
+The current config can be found on the AUR [1].
 
+The equivalent mainline kernel config (note, that it states it is for
+5.10.13, but is actually used for 5.10.14 as well) where initialization
+of the controller works (but the initialization of a connected device
+does not, when using threadirqs) is here [2].
 
-Regards
+[1] https://aur.archlinux.org/cgit/aur.git/tree/config?h=3Dlinux-rt
+[2] https://github.com/archlinux/svntogit-packages/blob/37abf96cac628b7f516=
+c266a8c0288671ed96a2a/trunk/config
 
-Jonathan Schwender
+--=20
+https://sleepmap.de
 
+--Mqi9MYJz3uQEOHHo
+Content-Type: application/pgp-signature; name="signature.asc"
 
+-----BEGIN PGP SIGNATURE-----
 
+iQIzBAABCAAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAmApdvIACgkQVMKPT/Wh
+qUnwEQ//bOuHmMpCFozboLHry/nVr2hmB4jYIoY/mZCbLsb7GRo5I9yb3za8wpx5
+LTElB5oBh0Lseb8PgIBxyertDAo0Axg2ZdMaURg08C4ZMTCtPe6gkh8EVzvoCBH4
+0R0g0LRnAR8/D8khTANeZKA2BoSCIjMBuLZ1iGoX5aWn8hOqImvYk2CXIftVvtM6
+rvtzxp9cKEahBsPNvJvGgKUpwEAzEj4eMvJb7GPnp95ZeDyyLfji61NXZpsVhB2x
+9xO/3mAB0tXQbgszuXQB2F+rRReciVkVVvGm/D66CzMJlmNGqgsAuR8IjGblOtga
+nBYP1SeDMrVU/tbXVb99whF+dGmD/8i208lLEJyl7QQy/xmDPEXzp+qfqBHbN4kZ
+OA4A6P/RqTksYwPGEb+Eq9r5O6lo5a4ZAqn7xr9PaVhCWmmwvDnE9nTEX88P+/Xb
+bKyVKHeX6271XX3xtt/N6rhQDKEAfQNKvM9KsdZYU55X/QwkecOsGqpbZvGXprlt
+5idIbnwYaaYMzGlmRCNZvBb5gIn5ssjV2pAQIK0ZVd2FgswJirFD9tb3xKEY+iEc
+scKJsytRUnT1WUDTqdBo2GwXnUIroYHXnIvJq7wWhC1yxv+PlebWU/zzDVeJkqZY
+sz6uC2nY4CswTlU5x0t+IgeIijFTxk/stO6SierBZ/oIWFQRIwc=
+=2WFy
+-----END PGP SIGNATURE-----
+
+--Mqi9MYJz3uQEOHHo--
