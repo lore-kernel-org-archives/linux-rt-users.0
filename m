@@ -2,107 +2,167 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F65C433E0
-	for <linux-rt-users@archiver.kernel.org>; Sun, 14 Feb 2021 19:17:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C806C433DB
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Feb 2021 04:09:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 54B0C64D79
-	for <linux-rt-users@archiver.kernel.org>; Sun, 14 Feb 2021 19:17:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4F90464E56
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Feb 2021 04:09:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229772AbhBNTQr (ORCPT
+        id S229875AbhBOEJO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 14 Feb 2021 14:16:47 -0500
-Received: from sleepmap.de ([85.10.206.218]:57382 "EHLO mail.sleepmap.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229642AbhBNTQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 14 Feb 2021 14:16:45 -0500
-Date:   Sun, 14 Feb 2021 20:16:02 +0100
-From:   David Runge <dave@sleepmap.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        linux-rt-users@vger.kernel.org,
-        linux1394-devel@lists.sourceforge.net,
-        Stefan Richter <stefanr@s5r6.in-berlin.de>
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
-Message-ID: <YCl28sXo7LEyCK8y@hmbx>
-References: <YBVG/PG7syFIUBno@hmbx>
- <20210201083441.ocucdvdrv37goz2s@linutronix.de>
- <20210205112638.xuduvuefy3auycht@linutronix.de>
- <YB3TLNN39/XhUyUY@hmbx>
- <YB+5tdIpbTfnDnIi@hmbx>
- <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="Mqi9MYJz3uQEOHHo"
-Content-Disposition: inline
-In-Reply-To: <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
+        Sun, 14 Feb 2021 23:09:14 -0500
+Received: from mo-csw1515.securemx.jp ([210.130.202.154]:58814 "EHLO
+        mo-csw.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229870AbhBOEJN (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 14 Feb 2021 23:09:13 -0500
+Received: by mo-csw.securemx.jp (mx-mo-csw1515) id 11F46vcW021035; Mon, 15 Feb 2021 13:06:57 +0900
+X-Iguazu-Qid: 34tKHZCCJBPwyzOvMx
+X-Iguazu-QSIG: v=2; s=0; t=1613362016; q=34tKHZCCJBPwyzOvMx; m=xHyuVyAvyJTpM4LSmIt4loXgpX3GNKQB5L+bZRonYhk=
+Received: from imx2.toshiba.co.jp (imx2.toshiba.co.jp [106.186.93.51])
+        by relay.securemx.jp (mx-mr1510) id 11F46urp005842;
+        Mon, 15 Feb 2021 13:06:56 +0900
+Received: from enc01.toshiba.co.jp ([106.186.93.100])
+        by imx2.toshiba.co.jp  with ESMTP id 11F46u6c013156;
+        Mon, 15 Feb 2021 13:06:56 +0900 (JST)
+Received: from hop001.toshiba.co.jp ([133.199.164.63])
+        by enc01.toshiba.co.jp  with ESMTP id 11F46tq1009308;
+        Mon, 15 Feb 2021 13:06:55 +0900
+From:   Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+To:     Daniel Wagner <dwagner@suse.de>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH rt-tests v4 03/16] cyclictest: Simplify --smp vs --affinity vs --threads argument logic
+References: <20210210133450.6991-1-dwagner@suse.de>
+        <20210210133450.6991-4-dwagner@suse.de>
+Date:   Mon, 15 Feb 2021 13:06:52 +0900
+In-Reply-To: <20210210133450.6991-4-dwagner@suse.de> (Daniel Wagner's message
+        of "Wed, 10 Feb 2021 14:34:37 +0100")
+X-TSB-HOP: ON
+Message-ID: <877dnax9cz.fsf@kokedama.swc.toshiba.co.jp>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.3 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Daniel,
 
---Mqi9MYJz3uQEOHHo
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Sun, 14 Feb 2021 20:16:02 +0100
-From: David Runge <dave@sleepmap.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	linux1394-devel@lists.sourceforge.net,
-	Stefan Richter <stefanr@s5r6.in-berlin.de>
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
+Spotted one typo below while browsing through the patches.
 
-On 2021-02-08 10:19:40 (+0100), Sebastian Andrzej Siewior wrote:
-> On 2021-02-07 10:58:13 [+0100], David Runge wrote:
-> > With 5.10.12-rt26 the controller still does not initialize at all
-> > though (/dev/fw0 does not appear):
-> > https://pkgbuild.com/~dvzrv/bugs/2021/01/linux-5.10.12-rt26-kernel.log
->=20
-> So it is either config or chipset specific. Did you posted a link to
-> your .config?
+Daniel Wagner <dwagner@suse.de> writes:
 
-The current config can be found on the AUR [1].
+> Allow each command line only to update one variable and do the final
+> decission at the end of the parsing step. With this the order
+  ^
+  decision
 
-The equivalent mainline kernel config (note, that it states it is for
-5.10.13, but is actually used for 5.10.14 as well) where initialization
-of the controller works (but the initialization of a connected device
-does not, when using threadirqs) is here [2].
+Regards,
+Punit
 
-[1] https://aur.archlinux.org/cgit/aur.git/tree/config?h=3Dlinux-rt
-[2] https://github.com/archlinux/svntogit-packages/blob/37abf96cac628b7f516=
-c266a8c0288671ed96a2a/trunk/config
-
---=20
-https://sleepmap.de
-
---Mqi9MYJz3uQEOHHo
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAmApdvIACgkQVMKPT/Wh
-qUnwEQ//bOuHmMpCFozboLHry/nVr2hmB4jYIoY/mZCbLsb7GRo5I9yb3za8wpx5
-LTElB5oBh0Lseb8PgIBxyertDAo0Axg2ZdMaURg08C4ZMTCtPe6gkh8EVzvoCBH4
-0R0g0LRnAR8/D8khTANeZKA2BoSCIjMBuLZ1iGoX5aWn8hOqImvYk2CXIftVvtM6
-rvtzxp9cKEahBsPNvJvGgKUpwEAzEj4eMvJb7GPnp95ZeDyyLfji61NXZpsVhB2x
-9xO/3mAB0tXQbgszuXQB2F+rRReciVkVVvGm/D66CzMJlmNGqgsAuR8IjGblOtga
-nBYP1SeDMrVU/tbXVb99whF+dGmD/8i208lLEJyl7QQy/xmDPEXzp+qfqBHbN4kZ
-OA4A6P/RqTksYwPGEb+Eq9r5O6lo5a4ZAqn7xr9PaVhCWmmwvDnE9nTEX88P+/Xb
-bKyVKHeX6271XX3xtt/N6rhQDKEAfQNKvM9KsdZYU55X/QwkecOsGqpbZvGXprlt
-5idIbnwYaaYMzGlmRCNZvBb5gIn5ssjV2pAQIK0ZVd2FgswJirFD9tb3xKEY+iEc
-scKJsytRUnT1WUDTqdBo2GwXnUIroYHXnIvJq7wWhC1yxv+PlebWU/zzDVeJkqZY
-sz6uC2nY4CswTlU5x0t+IgeIijFTxk/stO6SierBZ/oIWFQRIwc=
-=2WFy
------END PGP SIGNATURE-----
-
---Mqi9MYJz3uQEOHHo--
+> of the command line is not important.
+>
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  src/cyclictest/cyclictest.c | 34 ++++++++--------------------------
+>  1 file changed, 8 insertions(+), 26 deletions(-)
+>
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 4c02f067fbad..b5cca3ae166b 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -880,14 +880,13 @@ static int timermode = TIMER_ABSTIME;
+>  static int use_system;
+>  static int priority;
+>  static int policy = SCHED_OTHER;	/* default policy if not specified */
+> -static int num_threads = 1;
+> +static int num_threads = -1;
+>  static int max_cycles;
+>  static int clocksel = 0;
+>  static int quiet;
+>  static int interval = DEFAULT_INTERVAL;
+>  static int distance = -1;
+>  static struct bitmask *affinity_mask = NULL;
+> -static int smp = 0;
+>  
+>  static int clocksources[] = {
+>  	CLOCK_MONOTONIC,
+> @@ -953,7 +952,7 @@ enum option_values {
+>  static void process_options(int argc, char *argv[], int max_cpus)
+>  {
+>  	int error = 0;
+> -	int option_affinity = 0;
+> +	int smp = 0;
+>  
+>  	for (;;) {
+>  		int option_index = 0;
+> @@ -1008,10 +1007,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  		switch (c) {
+>  		case 'a':
+>  		case OPT_AFFINITY:
+> -			option_affinity = 1;
+> -			/* smp sets AFFINITY_USEALL in OPT_SMP */
+> -			if (smp)
+> -				break;
+>  			if (optarg) {
+>  				parse_cpumask(optarg, max_cpus, &affinity_mask);
+>  			} else if (optind < argc &&
+> @@ -1019,8 +1014,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  				    argv[optind][0] == '0' ||
+>  				    argv[optind][0] == '!')) {
+>  				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
+> -			} else {
+> -				num_threads = -1;
+>  			}
+>  			break;
+>  		case 'A':
+> @@ -1108,22 +1101,14 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  		case OPT_SYSTEM:
+>  			use_system = MODE_SYS_OFFSET; break;
+>  		case 'S':
+> -		case OPT_SMP: /* SMP testing */
+> -			smp = 1;
+> -			num_threads = -1; /* update after parsing */
+> -			break;
+> +		case OPT_SMP:
+> +			smp = 1; break;
+>  		case 't':
+>  		case OPT_THREADS:
+> -			if (smp) {
+> -				warn("-t ignored due to smp mode\n");
+> -				break;
+> -			}
+>  			if (optarg != NULL)
+>  				num_threads = atoi(optarg);
+>  			else if (optind < argc && atoi(argv[optind]))
+>  				num_threads = atoi(argv[optind]);
+> -			else
+> -				num_threads = -1; /* update after parsing */
+>  			break;
+>  		case OPT_TRIGGER:
+>  			trigger = atoi(optarg);
+> @@ -1179,13 +1164,10 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  		use_nanosleep = MODE_CLOCK_NANOSLEEP;
+>  	}
+>  
+> -	if (option_affinity && smp) {
+> -		warn("-a ignored due to smp mode\n");
+> -		if (affinity_mask) {
+> -			numa_bitmask_free(affinity_mask);
+> -			affinity_mask = NULL;
+> -		}
+> -	}
+> +	if (smp && num_threads != -1)
+> +		warn("--threads overwrites smp mode\n");
+> +	if (smp && affinity_mask)
+> +		warn("--affinity overwrites smp mode\n");
+>  
+>  	if (smi) {
+>  		if (affinity_mask)
