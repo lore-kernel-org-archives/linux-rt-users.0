@@ -2,525 +2,359 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 90A64C433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Feb 2021 17:13:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D727C433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:50:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 65A2364E07
-	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Feb 2021 17:13:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D10F664DF3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:50:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231159AbhBPRNE (ORCPT
+        id S229796AbhBQDt6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Feb 2021 12:13:04 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:40342 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229812AbhBPRM6 (ORCPT
+        Tue, 16 Feb 2021 22:49:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53340 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229544AbhBQDt6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Feb 2021 12:12:58 -0500
-Date:   Tue, 16 Feb 2021 18:12:13 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1613495534;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=xgUFOP38zzoo7uQGFvxcG06DJ4CUwIGShBVYNqohZFI=;
-        b=2caLcZveimD80dIUvu0jyroU1mIK8CrSnMa1QT5z6mkwmDZt+LZ63L3Yrqwgfg/mNrFF0k
-        58jtQtbBRm3wxBlbTZTnnjuiGnCPhEdMYpxPWRozuc+rG9OkksFCNVDT+Z68cRp43gzm1A
-        N2m6ktfJc+t43lgUuO4qzy8qbKCSJ+qTNZADGvKxCGvBZNCtgZTGFzFUzroavMCJLJ+IF0
-        CALaPyF6xWmTL8orEM6Ilvr7JHYFEXHKEMMH8JvsT8F+amEZj1LLQ7a+NYl8V9XiJFgdb/
-        tQ0+20WjdNQE0/mkjuwS3AsDar8yq4BapYvxl94j4iIb0TD2F7BhsJqixiKe7A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1613495534;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=xgUFOP38zzoo7uQGFvxcG06DJ4CUwIGShBVYNqohZFI=;
-        b=al5hreXtv2IkCuy7pGBJeJNl/vcAjJumBL6P0G84GnttTVqozEgRrSP6FC1vnUr03JLYSi
-        sth1eMToYJqoX1Dw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.11-rt5
-Message-ID: <20210216171213.r32ugl2a5ffjw3fz@linutronix.de>
+        Tue, 16 Feb 2021 22:49:58 -0500
+Received: from mail-qv1-xf29.google.com (mail-qv1-xf29.google.com [IPv6:2607:f8b0:4864:20::f29])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1ED51C06174A
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:49:18 -0800 (PST)
+Received: by mail-qv1-xf29.google.com with SMTP id e9so5724421qvy.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:49:18 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=JsNcQG4bJSH7CIEMfItZQgCTmdgTO/MFfdpQEgKOLEU=;
+        b=jDwKz4lLpJULySKiXEAIUyIUxjSZ6pNC4HwTZ1RnsR0WCT8mIvbNaGJ60KZGInTtSl
+         pNOO/TCMNi+ANZCdU5LOUSLYokMeHVvVnX1QSz8LTxEK33eiVUZ5Os8/+U9KH8E0FUPA
+         OK06uAGkQluJ6H3j4ODUzGGFsTGDOwoPJlUiMgZqpojjFtQAhEBWrJudq8pPK5nNiPNK
+         c9i5KPxCtneymd0H9qUg+cbwiAzC9lXDL638XRJAYBqprBkKBNjK2q9nEQyk9gpS2wDM
+         uuGANpglUZjPvGlnBzww6LmHGaHSKi4Wcvf3rO34qYZxEj9/S/hd//sixjZEMm0FxlM4
+         p47w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=JsNcQG4bJSH7CIEMfItZQgCTmdgTO/MFfdpQEgKOLEU=;
+        b=XTE7I+6TN7e7a9PUKVXJny08tSSmhPhYaHC3rnvMIPu9WEi+nyFuJtrNUPxsRTAiAA
+         eZq14uvTBXGCTzz4++kQ4kEED9G+kfy+evQF7//EH360ZVkGTjtZK5PosNVH5nWFmOiq
+         ncoXYzq+nEKMjQet30lCltuqCQKqTKZWSrDrjF78hChu4kKFcBDniF26Xk/NN6Ea3f4+
+         AKYu01DFg87JiCu/Fj2nvpbbTq58eVXR6x4kQb7spIJpjJo8/RxSEudv9l3FnLeKy4Mh
+         TwGh4VENcgS0bKrrUZpohT2uxEGuxKYX+dRz9PWQfJufcZ5ucE3KgpMeDumK136CweIY
+         EqOQ==
+X-Gm-Message-State: AOAM531D2ZZ5PtO9ilBfKdASgvh1289YQXtyK9dWwbY0Xg/Js+VgFNnv
+        rltMHMJx6TpkYiHxMOUNBi4=
+X-Google-Smtp-Source: ABdhPJzQ7dSqB/JVMfyTX60zI+DK87hQmxvcrnrq6a/rNmdR/WhkDsHNNRbRtIYHDZSw3gwCu8ozNg==
+X-Received: by 2002:a0c:e5c9:: with SMTP id u9mr880996qvm.55.1613533757349;
+        Tue, 16 Feb 2021 19:49:17 -0800 (PST)
+Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
+        by smtp.gmail.com with ESMTPSA id m5sm444049qtu.41.2021.02.16.19.49.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 16 Feb 2021 19:49:16 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+Date:   Tue, 16 Feb 2021 22:49:08 -0500 (EST)
+From:   John Kacur <jkacur@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH rt-tests v4 01/16] cyclictest: Use numa API directly
+In-Reply-To: <20210210133450.6991-2-dwagner@suse.de>
+Message-ID: <f5c68cb9-ff9-817a-565d-92cea25782d@redhat.com>
+References: <20210210133450.6991-1-dwagner@suse.de> <20210210133450.6991-2-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
 
-I'm pleased to announce the v5.11-rt5 patch set. 
 
-Changes since v5.11-rt4:
+On Wed, 10 Feb 2021, Daniel Wagner wrote:
 
-  - Lazy preemption fix for 64bit PowerPC. It was broken since
-    v5.9-rc2-rt1. Reported by John Ogness.
+> There is no need for small libnuma wrappers functions as we always
+> use libnuma. Remove them and get rid of rt_numa.h, so there is
+> no confusion with rt-numa.h anymore.
+> 
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  src/cyclictest/cyclictest.c | 43 +++++++++--------
+>  src/cyclictest/rt_numa.h    | 96 -------------------------------------
+>  2 files changed, 24 insertions(+), 115 deletions(-)
+>  delete mode 100644 src/cyclictest/rt_numa.h
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 99846e78526f..6009ff2a83bc 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -33,10 +33,10 @@
+>  #include <sys/utsname.h>
+>  #include <sys/mman.h>
+>  #include <sys/syscall.h>
+> -#include "rt_numa.h"
+>  
+>  #include "rt-utils.h"
+>  #include "rt-numa.h"
+> +#include "error.h"
+>  
+>  #include <bionic.h>
+>  
+> @@ -514,9 +514,9 @@ static void *timerthread(void *param)
+>  
+>  	memset(&stop, 0, sizeof(stop));
+>  
+> -	/* if we're running in numa mode, set our memory node */
+> -	if (par->node != -1)
+> -		rt_numa_set_numa_run_on_node(par->node, par->cpu);
+> +	if (numa_run_on_node(par->node))
+> +		warn("Could not set NUMA node %d for thread %d: %s\n",
+> +				par->node, par->cpu, strerror(errno));
+>  
+>  	if (par->cpu != -1) {
+>  		CPU_ZERO(&mask);
+> @@ -1251,7 +1251,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
+>  	}
+>  	if (error) {
+>  		if (affinity_mask)
+> -			rt_bitmask_free(affinity_mask);
+> +			numa_bitmask_free(affinity_mask);
+>  		display_help(1);
+>  	}
+>  }
+> @@ -1907,7 +1907,9 @@ int main(int argc, char **argv)
+>  			printf("Thread %d using cpu %d.\n", i, cpu);
+>  
+>  		/* find the memory node associated with the cpu i */
+> -		node = rt_numa_numa_node_of_cpu(cpu);
+> +		node = numa_node_of_cpu(cpu);
+> +		if (node == -1)
+> +			fatal("Invalid NUMA node selected via affinity mask\n");
+>  
+>  		/* get the stack size set for this thread */
+>  		if (pthread_attr_getstack(&attr, &currstk, &stksize))
+> @@ -1918,7 +1920,10 @@ int main(int argc, char **argv)
+>  			stksize = PTHREAD_STACK_MIN * 2;
+>  
+>  		/*  allocate memory for a stack on appropriate node */
+> -		stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
+> +		stack = numa_alloc_onnode(stksize, node);
+> +		if (!stack)
+> +			fatal("failed to allocate %d bytes on node %d for cpu %d\n",
+> +				stksize, node, cpu);
+>  
+>  		/* touch the stack pages to pre-fault them in */
+>  		memset(stack, 0, stksize);
+> @@ -1929,13 +1934,13 @@ int main(int argc, char **argv)
+>  				i, stack+stksize);
+>  
+>  		/* allocate the thread's parameter block  */
+> -		parameters[i] = par = threadalloc(sizeof(struct thread_param), node);
+> +		parameters[i] = par = numa_alloc_onnode(sizeof(struct thread_param), node);
+>  		if (par == NULL)
+>  			fatal("error allocating thread_param struct for thread %d\n", i);
+>  		memset(par, 0, sizeof(struct thread_param));
+>  
+>  		/* allocate the thread's statistics block */
+> -		statistics[i] = stat = threadalloc(sizeof(struct thread_stat), node);
+> +		statistics[i] = stat = numa_alloc_onnode(sizeof(struct thread_stat), node);
+>  		if (stat == NULL)
+>  			fatal("error allocating thread status struct for thread %d\n", i);
+>  		memset(stat, 0, sizeof(struct thread_stat));
+> @@ -1944,8 +1949,8 @@ int main(int argc, char **argv)
+>  		if (histogram) {
+>  			int bufsize = histogram * sizeof(long);
+>  
+> -			stat->hist_array = threadalloc(bufsize, node);
+> -			stat->outliers = threadalloc(bufsize, node);
+> +			stat->hist_array = numa_alloc_onnode(bufsize, node);
+> +			stat->outliers = numa_alloc_onnode(bufsize, node);
+>  			if (stat->hist_array == NULL || stat->outliers == NULL)
+>  				fatal("failed to allocate histogram of size %d on node %d\n",
+>  				      histogram, i);
+> @@ -1955,14 +1960,14 @@ int main(int argc, char **argv)
+>  
+>  		if (verbose) {
+>  			int bufsize = VALBUF_SIZE * sizeof(long);
+> -			stat->values = threadalloc(bufsize, node);
+> +			stat->values = numa_alloc_onnode(bufsize, node);
+>  			if (!stat->values)
+>  				goto outall;
+>  			memset(stat->values, 0, bufsize);
+>  			par->bufmsk = VALBUF_SIZE - 1;
+>  			if (smi) {
+>  				int bufsize = VALBUF_SIZE * sizeof(long);
+> -				stat->smis = threadalloc(bufsize, node);
+> +				stat->smis = numa_alloc_onnode(bufsize, node);
+>  				if (!stat->smis)
+>  					goto outall;
+>  				memset(stat->smis, 0, bufsize);
+> @@ -2077,7 +2082,7 @@ int main(int argc, char **argv)
+>  				print_stat(stdout, parameters[i], i, 0, 0);
+>  		}
+>  		if (statistics[i]->values)
+> -			threadfree(statistics[i]->values, VALBUF_SIZE*sizeof(long), parameters[i]->node);
+> +			numa_free(statistics[i]->values, VALBUF_SIZE*sizeof(long));
+>  	}
+>  
+>  	if (trigger)
+> @@ -2086,8 +2091,8 @@ int main(int argc, char **argv)
+>  	if (histogram) {
+>  		print_hist(parameters, num_threads);
+>  		for (i = 0; i < num_threads; i++) {
+> -			threadfree(statistics[i]->hist_array, histogram*sizeof(long), parameters[i]->node);
+> -			threadfree(statistics[i]->outliers, histogram*sizeof(long), parameters[i]->node);
+> +			numa_free(statistics[i]->hist_array, histogram*sizeof(long));
+> +			numa_free(statistics[i]->outliers, histogram*sizeof(long));
+>  		}
+>  	}
+>  
+> @@ -2103,14 +2108,14 @@ int main(int argc, char **argv)
+>  	for (i=0; i < num_threads; i++) {
+>  		if (!statistics[i])
+>  			continue;
+> -		threadfree(statistics[i], sizeof(struct thread_stat), parameters[i]->node);
+> +		numa_free(statistics[i], sizeof(struct thread_stat));
+>  	}
+>  
+>   outpar:
+>  	for (i = 0; i < num_threads; i++) {
+>  		if (!parameters[i])
+>  			continue;
+> -		threadfree(parameters[i], sizeof(struct thread_param), parameters[i]->node);
+> +		numa_free(parameters[i], sizeof(struct thread_param));
+>  	}
+>   out:
+>  	/* close any tracer file descriptors */
+> @@ -2125,7 +2130,7 @@ int main(int argc, char **argv)
+>  		close(latency_target_fd);
+>  
+>  	if (affinity_mask)
+> -		rt_bitmask_free(affinity_mask);
+> +		numa_bitmask_free(affinity_mask);
+>  
+>  	/* Remove running status shared memory file if it exists */
+>  	if (rstat_fd >= 0)
+> diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+> deleted file mode 100644
+> index 8d02f419ed6d..000000000000
+> --- a/src/cyclictest/rt_numa.h
+> +++ /dev/null
+> @@ -1,96 +0,0 @@
+> -// SPDX-License-Identifier: GPL-2.0-or-later
+> -/*
+> - * A numa library for cyclictest.
+> - *
+> - * (C) 2010 John Kacur <jkacur@redhat.com>
+> - * (C) 2010 Clark Williams <williams@redhat.com>
+> - *
+> - */
+> -
+> -#ifndef _RT_NUMA_H
+> -#define _RT_NUMA_H
+> -
+> -#include "rt-utils.h"
+> -#include "error.h"
+> -
+> -#include <numa.h>
+> -
+> -static void *
+> -threadalloc(size_t size, int node)
+> -{
+> -	if (node == -1)
+> -		return malloc(size);
+> -	return numa_alloc_onnode(size, node);
+> -}
+> -
+> -static void
+> -threadfree(void *ptr, size_t size, int node)
+> -{
+> -	if (node == -1)
+> -		free(ptr);
+> -	else
+> -		numa_free(ptr, size);
+> -}
+> -
+> -static void rt_numa_set_numa_run_on_node(int node, int cpu)
+> -{
+> -	int res;
+> -	res = numa_run_on_node(node);
+> -	if (res)
+> -		warn("Could not set NUMA node %d for thread %d: %s\n",
+> -				node, cpu, strerror(errno));
+> -	return;
+> -}
+> -
+> -static void *rt_numa_numa_alloc_onnode(size_t size, int node, int cpu)
+> -{
+> -	void *stack;
+> -	stack = numa_alloc_onnode(size, node);
+> -	if (stack == NULL)
+> -		fatal("failed to allocate %d bytes on node %d for cpu %d\n",
+> -				size, node, cpu);
+> -	return stack;
+> -}
+> -
+> -/*
+> - * Use new bit mask CPU affinity behavior
+> - */
+> -static int rt_numa_numa_node_of_cpu(int cpu)
+> -{
+> -	int node;
+> -	node = numa_node_of_cpu(cpu);
+> -	if (node == -1)
+> -		fatal("invalid cpu passed to numa_node_of_cpu(%d)\n", cpu);
+> -	return node;
+> -}
+> -
+> -static inline unsigned int rt_numa_bitmask_isbitset( const struct bitmask *mask,
+> -	unsigned long i)
+> -{
+> -	return numa_bitmask_isbitset(mask,i);
+> -}
+> -
+> -static inline struct bitmask* rt_numa_parse_cpustring(const char* s,
+> -	int max_cpus)
+> -{
+> -	return numa_parse_cpustring_all(s);
+> -}
+> -
+> -static inline void rt_bitmask_free(struct bitmask *mask)
+> -{
+> -	numa_bitmask_free(mask);
+> -}
+> -
+> -/** Returns number of bits set in mask. */
+> -static inline unsigned int rt_numa_bitmask_count(const struct bitmask *mask)
+> -{
+> -	unsigned int num_bits = 0, i;
+> -	for (i = 0; i < mask->size; i++) {
+> -		if (rt_numa_bitmask_isbitset(mask, i))
+> -			num_bits++;
+> -	}
+> -	/* Could stash this instead of recomputing every time. */
+> -	return num_bits;
+> -}
+> -
+> -#endif	/* _RT_NUMA_H */
+> -- 
+> 2.30.0
+> 
+> 
 
-  - Two patches for chelsio/cxgb network driver to avoid
-    tasklet_disable() usage in atomic context on !RT.
+I don't want to do this right now until we figure out the future of 
+rt_numa.h
 
-  - Due to recent softirq rework it was not possible to compile a kernel
-    with RT && !SMP. Reported by Jonathan Schwender, patch by Christian
-    Eggers.
+Using rt_numa.h is not harmful, and in fact using the numa api directly
+increases the code size in cyclictest.
 
-  - Update the block-mq patches to the version, that has been staged for
-    upstream.
+We can revisit this later, but I don't want it to hold up the JSON stuff 
+anymore.
 
-Known issues
-     - kdb/kgdb can easily deadlock.
-     - kmsg dumpers expecting not to be called in parallel can clobber
-       their temp buffer.
-     - netconsole triggers WARN.
+Thanks
 
-The delta patch against v5.11-rt4 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/incr/patch-5.11-rt4-rt5.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.11-rt5
-
-The RT patch against v5.11 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patch-5.11-rt5.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patches-5.11-rt5.tar.xz
-
-Sebastian
-
-diff --git a/arch/powerpc/kernel/syscall_64.c b/arch/powerpc/kernel/syscall_64.c
-index b304c68dbcf50..092c014b0653e 100644
---- a/arch/powerpc/kernel/syscall_64.c
-+++ b/arch/powerpc/kernel/syscall_64.c
-@@ -401,7 +401,8 @@ notrace unsigned long interrupt_exit_kernel_prepare(struct pt_regs *regs, unsign
- 				if (preempt_count() == 0)
- 					preempt_schedule_irq();
- 			} else if (unlikely(*ti_flagsp & _TIF_NEED_RESCHED_LAZY)) {
--				if (current_thread_info()->preempt_lazy_count == 0)
-+				if ((preempt_count() == 0) &&
-+				    (current_thread_info()->preempt_lazy_count == 0))
- 					preempt_schedule_irq();
- 			}
- 		}
-diff --git a/drivers/net/ethernet/chelsio/cxgb/common.h b/drivers/net/ethernet/chelsio/cxgb/common.h
-index 6475060649e90..0321be77366c4 100644
---- a/drivers/net/ethernet/chelsio/cxgb/common.h
-+++ b/drivers/net/ethernet/chelsio/cxgb/common.h
-@@ -238,7 +238,6 @@ struct adapter {
- 	int msg_enable;
- 	u32 mmio_len;
- 
--	struct work_struct ext_intr_handler_task;
- 	struct adapter_params params;
- 
- 	/* Terminator modules. */
-@@ -257,6 +256,7 @@ struct adapter {
- 
- 	/* guards async operations */
- 	spinlock_t async_lock ____cacheline_aligned;
-+	u32 pending_thread_intr;
- 	u32 slow_intr_mask;
- 	int t1powersave;
- };
-@@ -334,8 +334,7 @@ void t1_interrupts_enable(adapter_t *adapter);
- void t1_interrupts_disable(adapter_t *adapter);
- void t1_interrupts_clear(adapter_t *adapter);
- int t1_elmer0_ext_intr_handler(adapter_t *adapter);
--void t1_elmer0_ext_intr(adapter_t *adapter);
--int t1_slow_intr_handler(adapter_t *adapter);
-+irqreturn_t t1_slow_intr_handler(adapter_t *adapter);
- 
- int t1_link_start(struct cphy *phy, struct cmac *mac, struct link_config *lc);
- const struct board_info *t1_get_board_info(unsigned int board_id);
-@@ -347,7 +346,6 @@ int t1_get_board_rev(adapter_t *adapter, const struct board_info *bi,
- int t1_init_hw_modules(adapter_t *adapter);
- int t1_init_sw_modules(adapter_t *adapter, const struct board_info *bi);
- void t1_free_sw_modules(adapter_t *adapter);
--void t1_fatal_err(adapter_t *adapter);
- void t1_link_changed(adapter_t *adapter, int port_id);
- void t1_link_negotiated(adapter_t *adapter, int port_id, int link_stat,
- 			    int speed, int duplex, int pause);
-diff --git a/drivers/net/ethernet/chelsio/cxgb/cxgb2.c b/drivers/net/ethernet/chelsio/cxgb/cxgb2.c
-index 0e4a0f413960a..512da98019c66 100644
---- a/drivers/net/ethernet/chelsio/cxgb/cxgb2.c
-+++ b/drivers/net/ethernet/chelsio/cxgb/cxgb2.c
-@@ -211,9 +211,10 @@ static int cxgb_up(struct adapter *adapter)
- 	t1_interrupts_clear(adapter);
- 
- 	adapter->params.has_msi = !disable_msi && !pci_enable_msi(adapter->pdev);
--	err = request_irq(adapter->pdev->irq, t1_interrupt,
--			  adapter->params.has_msi ? 0 : IRQF_SHARED,
--			  adapter->name, adapter);
-+	err = request_threaded_irq(adapter->pdev->irq, t1_interrupt,
-+				   t1_interrupt_thread,
-+				   adapter->params.has_msi ? 0 : IRQF_SHARED,
-+				   adapter->name, adapter);
- 	if (err) {
- 		if (adapter->params.has_msi)
- 			pci_disable_msi(adapter->pdev);
-@@ -916,51 +917,6 @@ static void mac_stats_task(struct work_struct *work)
- 	spin_unlock(&adapter->work_lock);
- }
- 
--/*
-- * Processes elmer0 external interrupts in process context.
-- */
--static void ext_intr_task(struct work_struct *work)
--{
--	struct adapter *adapter =
--		container_of(work, struct adapter, ext_intr_handler_task);
--
--	t1_elmer0_ext_intr_handler(adapter);
--
--	/* Now reenable external interrupts */
--	spin_lock_irq(&adapter->async_lock);
--	adapter->slow_intr_mask |= F_PL_INTR_EXT;
--	writel(F_PL_INTR_EXT, adapter->regs + A_PL_CAUSE);
--	writel(adapter->slow_intr_mask | F_PL_INTR_SGE_DATA,
--		   adapter->regs + A_PL_ENABLE);
--	spin_unlock_irq(&adapter->async_lock);
--}
--
--/*
-- * Interrupt-context handler for elmer0 external interrupts.
-- */
--void t1_elmer0_ext_intr(struct adapter *adapter)
--{
--	/*
--	 * Schedule a task to handle external interrupts as we require
--	 * a process context.  We disable EXT interrupts in the interim
--	 * and let the task reenable them when it's done.
--	 */
--	adapter->slow_intr_mask &= ~F_PL_INTR_EXT;
--	writel(adapter->slow_intr_mask | F_PL_INTR_SGE_DATA,
--		   adapter->regs + A_PL_ENABLE);
--	schedule_work(&adapter->ext_intr_handler_task);
--}
--
--void t1_fatal_err(struct adapter *adapter)
--{
--	if (adapter->flags & FULL_INIT_DONE) {
--		t1_sge_stop(adapter->sge);
--		t1_interrupts_disable(adapter);
--	}
--	pr_alert("%s: encountered fatal error, operation suspended\n",
--		 adapter->name);
--}
--
- static const struct net_device_ops cxgb_netdev_ops = {
- 	.ndo_open		= cxgb_open,
- 	.ndo_stop		= cxgb_close,
-@@ -1062,8 +1018,6 @@ static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
- 			spin_lock_init(&adapter->async_lock);
- 			spin_lock_init(&adapter->mac_lock);
- 
--			INIT_WORK(&adapter->ext_intr_handler_task,
--				  ext_intr_task);
- 			INIT_DELAYED_WORK(&adapter->stats_update_task,
- 					  mac_stats_task);
- 
-diff --git a/drivers/net/ethernet/chelsio/cxgb/sge.c b/drivers/net/ethernet/chelsio/cxgb/sge.c
-index 2d9c2b5a690a3..cda01f22c71c8 100644
---- a/drivers/net/ethernet/chelsio/cxgb/sge.c
-+++ b/drivers/net/ethernet/chelsio/cxgb/sge.c
-@@ -940,10 +940,11 @@ void t1_sge_intr_clear(struct sge *sge)
- /*
-  * SGE 'Error' interrupt handler
-  */
--int t1_sge_intr_error_handler(struct sge *sge)
-+bool t1_sge_intr_error_handler(struct sge *sge)
- {
- 	struct adapter *adapter = sge->adapter;
- 	u32 cause = readl(adapter->regs + A_SG_INT_CAUSE);
-+	bool wake = false;
- 
- 	if (adapter->port[0].dev->hw_features & NETIF_F_TSO)
- 		cause &= ~F_PACKET_TOO_BIG;
-@@ -967,11 +968,14 @@ int t1_sge_intr_error_handler(struct sge *sge)
- 		sge->stats.pkt_mismatch++;
- 		pr_alert("%s: SGE packet mismatch\n", adapter->name);
- 	}
--	if (cause & SGE_INT_FATAL)
--		t1_fatal_err(adapter);
-+	if (cause & SGE_INT_FATAL) {
-+		t1_interrupts_disable(adapter);
-+		adapter->pending_thread_intr |= F_PL_INTR_SGE_ERR;
-+		wake = true;
-+	}
- 
- 	writel(cause, adapter->regs + A_SG_INT_CAUSE);
--	return 0;
-+	return wake;
- }
- 
- const struct sge_intr_counts *t1_sge_get_intr_counts(const struct sge *sge)
-@@ -1619,11 +1623,46 @@ int t1_poll(struct napi_struct *napi, int budget)
- 	return work_done;
- }
- 
-+irqreturn_t t1_interrupt_thread(int irq, void *data)
-+{
-+	struct adapter *adapter = data;
-+	u32 pending_thread_intr;
-+
-+	spin_lock_irq(&adapter->async_lock);
-+	pending_thread_intr = adapter->pending_thread_intr;
-+	adapter->pending_thread_intr = 0;
-+	spin_unlock_irq(&adapter->async_lock);
-+
-+	if (!pending_thread_intr)
-+		return IRQ_NONE;
-+
-+	if (pending_thread_intr & F_PL_INTR_EXT)
-+		t1_elmer0_ext_intr_handler(adapter);
-+
-+	/* This error is fatal, interrupts remain off */
-+	if (pending_thread_intr & F_PL_INTR_SGE_ERR) {
-+		pr_alert("%s: encountered fatal error, operation suspended\n",
-+			 adapter->name);
-+		t1_sge_stop(adapter->sge);
-+		return IRQ_HANDLED;
-+	}
-+
-+	spin_lock_irq(&adapter->async_lock);
-+	adapter->slow_intr_mask |= F_PL_INTR_EXT;
-+
-+	writel(F_PL_INTR_EXT, adapter->regs + A_PL_CAUSE);
-+	writel(adapter->slow_intr_mask | F_PL_INTR_SGE_DATA,
-+	       adapter->regs + A_PL_ENABLE);
-+	spin_unlock_irq(&adapter->async_lock);
-+
-+	return IRQ_HANDLED;
-+}
-+
- irqreturn_t t1_interrupt(int irq, void *data)
- {
- 	struct adapter *adapter = data;
- 	struct sge *sge = adapter->sge;
--	int handled;
-+	irqreturn_t handled;
- 
- 	if (likely(responses_pending(adapter))) {
- 		writel(F_PL_INTR_SGE_DATA, adapter->regs + A_PL_CAUSE);
-@@ -1645,10 +1684,10 @@ irqreturn_t t1_interrupt(int irq, void *data)
- 	handled = t1_slow_intr_handler(adapter);
- 	spin_unlock(&adapter->async_lock);
- 
--	if (!handled)
-+	if (handled == IRQ_NONE)
- 		sge->stats.unhandled_irqs++;
- 
--	return IRQ_RETVAL(handled != 0);
-+	return handled;
- }
- 
- /*
-diff --git a/drivers/net/ethernet/chelsio/cxgb/sge.h b/drivers/net/ethernet/chelsio/cxgb/sge.h
-index a1ba591b34312..716705b96f265 100644
---- a/drivers/net/ethernet/chelsio/cxgb/sge.h
-+++ b/drivers/net/ethernet/chelsio/cxgb/sge.h
-@@ -74,6 +74,7 @@ struct sge *t1_sge_create(struct adapter *, struct sge_params *);
- int t1_sge_configure(struct sge *, struct sge_params *);
- int t1_sge_set_coalesce_params(struct sge *, struct sge_params *);
- void t1_sge_destroy(struct sge *);
-+irqreturn_t t1_interrupt_thread(int irq, void *data);
- irqreturn_t t1_interrupt(int irq, void *cookie);
- int t1_poll(struct napi_struct *, int);
- 
-@@ -81,7 +82,7 @@ netdev_tx_t t1_start_xmit(struct sk_buff *skb, struct net_device *dev);
- void t1_vlan_mode(struct adapter *adapter, netdev_features_t features);
- void t1_sge_start(struct sge *);
- void t1_sge_stop(struct sge *);
--int t1_sge_intr_error_handler(struct sge *);
-+bool t1_sge_intr_error_handler(struct sge *sge);
- void t1_sge_intr_enable(struct sge *);
- void t1_sge_intr_disable(struct sge *);
- void t1_sge_intr_clear(struct sge *);
-diff --git a/drivers/net/ethernet/chelsio/cxgb/subr.c b/drivers/net/ethernet/chelsio/cxgb/subr.c
-index ea0f8741d7cfd..310add28fcf59 100644
---- a/drivers/net/ethernet/chelsio/cxgb/subr.c
-+++ b/drivers/net/ethernet/chelsio/cxgb/subr.c
-@@ -170,7 +170,7 @@ void t1_link_changed(adapter_t *adapter, int port_id)
- 	t1_link_negotiated(adapter, port_id, link_ok, speed, duplex, fc);
- }
- 
--static int t1_pci_intr_handler(adapter_t *adapter)
-+static bool t1_pci_intr_handler(adapter_t *adapter)
- {
- 	u32 pcix_cause;
- 
-@@ -179,9 +179,13 @@ static int t1_pci_intr_handler(adapter_t *adapter)
- 	if (pcix_cause) {
- 		pci_write_config_dword(adapter->pdev, A_PCICFG_INTR_CAUSE,
- 				       pcix_cause);
--		t1_fatal_err(adapter);    /* PCI errors are fatal */
-+		/* PCI errors are fatal */
-+		t1_interrupts_disable(adapter);
-+		adapter->pending_thread_intr |= F_PL_INTR_SGE_ERR;
-+		pr_alert("%s: PCI error encountered.\n", adapter->name);
-+		return true;
- 	}
--	return 0;
-+	return false;
- }
- 
- #ifdef CONFIG_CHELSIO_T1_1G
-@@ -210,13 +214,16 @@ static int fpga_phy_intr_handler(adapter_t *adapter)
- /*
-  * Slow path interrupt handler for FPGAs.
-  */
--static int fpga_slow_intr(adapter_t *adapter)
-+static irqreturn_t fpga_slow_intr(adapter_t *adapter)
- {
- 	u32 cause = readl(adapter->regs + A_PL_CAUSE);
-+	irqreturn_t ret = IRQ_NONE;
- 
- 	cause &= ~F_PL_INTR_SGE_DATA;
--	if (cause & F_PL_INTR_SGE_ERR)
--		t1_sge_intr_error_handler(adapter->sge);
-+	if (cause & F_PL_INTR_SGE_ERR) {
-+		if (t1_sge_intr_error_handler(adapter->sge))
-+			ret = IRQ_WAKE_THREAD;
-+	}
- 
- 	if (cause & FPGA_PCIX_INTERRUPT_GMAC)
- 		fpga_phy_intr_handler(adapter);
-@@ -231,14 +238,19 @@ static int fpga_slow_intr(adapter_t *adapter)
- 		/* Clear TP interrupt */
- 		writel(tp_cause, adapter->regs + FPGA_TP_ADDR_INTERRUPT_CAUSE);
- 	}
--	if (cause & FPGA_PCIX_INTERRUPT_PCIX)
--		t1_pci_intr_handler(adapter);
-+	if (cause & FPGA_PCIX_INTERRUPT_PCIX) {
-+		if (t1_pci_intr_handler(adapter))
-+			ret = IRQ_WAKE_THREAD;
-+	}
- 
- 	/* Clear the interrupts just processed. */
- 	if (cause)
- 		writel(cause, adapter->regs + A_PL_CAUSE);
- 
--	return cause != 0;
-+	if (ret != IRQ_NONE)
-+		return ret;
-+
-+	return cause == 0 ? IRQ_NONE : IRQ_HANDLED;
- }
- #endif
- 
-@@ -842,31 +854,45 @@ void t1_interrupts_clear(adapter_t* adapter)
- /*
-  * Slow path interrupt handler for ASICs.
-  */
--static int asic_slow_intr(adapter_t *adapter)
-+static irqreturn_t asic_slow_intr(adapter_t *adapter)
- {
- 	u32 cause = readl(adapter->regs + A_PL_CAUSE);
-+	irqreturn_t ret = IRQ_HANDLED;
- 
- 	cause &= adapter->slow_intr_mask;
- 	if (!cause)
--		return 0;
--	if (cause & F_PL_INTR_SGE_ERR)
--		t1_sge_intr_error_handler(adapter->sge);
-+		return IRQ_NONE;
-+	if (cause & F_PL_INTR_SGE_ERR) {
-+		if (t1_sge_intr_error_handler(adapter->sge))
-+			ret = IRQ_WAKE_THREAD;
-+	}
- 	if (cause & F_PL_INTR_TP)
- 		t1_tp_intr_handler(adapter->tp);
- 	if (cause & F_PL_INTR_ESPI)
- 		t1_espi_intr_handler(adapter->espi);
--	if (cause & F_PL_INTR_PCIX)
--		t1_pci_intr_handler(adapter);
--	if (cause & F_PL_INTR_EXT)
--		t1_elmer0_ext_intr(adapter);
-+	if (cause & F_PL_INTR_PCIX) {
-+		if (t1_pci_intr_handler(adapter))
-+			ret = IRQ_WAKE_THREAD;
-+	}
-+	if (cause & F_PL_INTR_EXT) {
-+		/* Wake the threaded interrupt to handle external interrupts as
-+		 * we require a process context. We disable EXT interrupts in
-+		 * the interim and let the thread reenable them when it's done.
-+		 */
-+		adapter->pending_thread_intr |= F_PL_INTR_EXT;
-+		adapter->slow_intr_mask &= ~F_PL_INTR_EXT;
-+		writel(adapter->slow_intr_mask | F_PL_INTR_SGE_DATA,
-+		       adapter->regs + A_PL_ENABLE);
-+		ret = IRQ_WAKE_THREAD;
-+	}
- 
- 	/* Clear the interrupts just processed. */
- 	writel(cause, adapter->regs + A_PL_CAUSE);
- 	readl(adapter->regs + A_PL_CAUSE); /* flush writes */
--	return 1;
-+	return ret;
- }
- 
--int t1_slow_intr_handler(adapter_t *adapter)
-+irqreturn_t t1_slow_intr_handler(adapter_t *adapter)
- {
- #ifdef CONFIG_CHELSIO_T1_1G
- 	if (!t1_is_asic(adapter))
-diff --git a/kernel/smp.c b/kernel/smp.c
-index 1b6070bf97bb0..01e9d01d1866e 100644
---- a/kernel/smp.c
-+++ b/kernel/smp.c
-@@ -14,6 +14,7 @@
- #include <linux/export.h>
- #include <linux/percpu.h>
- #include <linux/init.h>
-+#include <linux/interrupt.h>
- #include <linux/gfp.h>
- #include <linux/smp.h>
- #include <linux/cpu.h>
-@@ -449,6 +450,19 @@ void flush_smp_call_function_from_idle(void)
- 
- 	local_irq_save(flags);
- 	flush_smp_call_function_queue(true);
-+
-+	if (local_softirq_pending()) {
-+
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT)) {
-+			do_softirq();
-+		} else {
-+			struct task_struct *ksoftirqd = this_cpu_ksoftirqd();
-+
-+			if (ksoftirqd && ksoftirqd->state != TASK_RUNNING)
-+				wake_up_process(ksoftirqd);
-+		}
-+	}
-+
- 	local_irq_restore(flags);
- }
- 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 8f4c141b20c05..a9b66aa086366 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -867,7 +867,7 @@ void tasklet_kill(struct tasklet_struct *t)
- }
- EXPORT_SYMBOL(tasklet_kill);
- 
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
- void tasklet_unlock(struct tasklet_struct *t)
- {
- 	smp_mb__before_atomic();
-diff --git a/localversion-rt b/localversion-rt
-index ad3da1bcab7e8..0efe7ba1930e1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt4
-+-rt5
+John
