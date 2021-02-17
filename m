@@ -7,66 +7,66 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AE83C433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 921A2C433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 014BA64DF3
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 61D9064DF3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230407AbhBQDwO (ORCPT
+        id S230446AbhBQDwe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Feb 2021 22:52:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53828 "EHLO
+        Tue, 16 Feb 2021 22:52:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53894 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229544AbhBQDwM (ORCPT
+        with ESMTP id S230422AbhBQDwa (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Feb 2021 22:52:12 -0500
-Received: from mail-qk1-x730.google.com (mail-qk1-x730.google.com [IPv6:2607:f8b0:4864:20::730])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BF880C061756
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:31 -0800 (PST)
-Received: by mail-qk1-x730.google.com with SMTP id t62so11626247qke.7
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:31 -0800 (PST)
+        Tue, 16 Feb 2021 22:52:30 -0500
+Received: from mail-qt1-x82f.google.com (mail-qt1-x82f.google.com [IPv6:2607:f8b0:4864:20::82f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F7F1C061786
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:50 -0800 (PST)
+Received: by mail-qt1-x82f.google.com with SMTP id b24so8626096qtp.13
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:50 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=tgjlppM0xLYpIkXnoE5qSOjnhaXUdiXsMCStthpQF3I=;
-        b=Ja1CSxdiFGXcvJk1rxcjOgnLMkixV0WU6zVyVQQL1/BHcpKSA7t3TBPJzbkNzFTth6
-         YBA3M6HYgI7nd1A55/GpsehB8WBklGZMMzMZ9b/lwrDFqo0nCHXhS036Z7slz/NrtYP0
-         I7uFK6cU11m7gas0WDIfnXGE/3YRyqhNeRJIHyYuuk5vvRtIGtjJ2KdJWrtzut7mrSYa
-         xLKPf5szoTRo+FwjWOlW01USwljIfK9CWSPx1kVjfxdFosEnCGCDwYJyMZSrBn8f4b7B
-         8hfXQioet+IJRT0/mMB0LWGuNBKWvA0G7rx41PScwoznQVXUostJHMF9ieDQ4oEXuAI+
-         zb7A==
+        bh=kbww64dD6zLb48YXM/mXLh6tOnS1bFQTeqYrXXP/img=;
+        b=l1/fMA/mc00V05zaCoo+pe3au1MXu/FCN8jAcMKsOC2/iRwZ1Anl9p+U0ftf6sE6iP
+         JmziN98eH+QEkSCTXISYwilVWqRQ0vvSt0bJHle1Vf/yB/G3nc9fRK6InYok+tiog/ol
+         /7ij2IEgMoMjuvE8ZPmLqw3oowV9wX4vq5cNqpS92yL1URoFY6NgPYDUZwp+dZ3Qig93
+         akpXoI1FweykjWXeU5BwQGAiPcWVYB2X5YiF+IGa7eFt+MrMif9pk4pjlR3WjkM8qMxX
+         hFnVqISYJYL1aFx+VSbX878Tg3pV7D0Z9OlXypcY+pYaMI/fXFanKu91mkKmLdV9IDS8
+         fHFw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=tgjlppM0xLYpIkXnoE5qSOjnhaXUdiXsMCStthpQF3I=;
-        b=i5TQ2m0+vGz926ylAq7C+wyHs7y62TNcdgLGJPdb5lno6jyy0fhGu69Tg7gaagkFLX
-         o8qeHr0Wfk99BcDK3hh8PVvcml9OgDRsvp4Q7WlQefYHH1cP9hsl0fuJfaeeUGfqYGuL
-         61QAC3pmmAW6VgNMnHUfijlsySzpl7v46OAKYU9RSxOfjLbwCz+ZBHjqMEgCl2MvlQAd
-         SSdS7ZtyLzl59jkJrHBzieKacEm7SnkyDoyzArRRQb9UE4jM6c7rm0lPL6S76bTHImco
-         dQm2yio/5Bx29ADJ2/4l9pcvKSBcjv3gkRjv5GdVyxqRv5U/dwDtu3Sah4M3EpUG+b53
-         +TKQ==
-X-Gm-Message-State: AOAM531QnkcKX93XoaFN0Vgiz/ygTkqKwz7K8XXBHwJXJ1G5p9WQImba
-        PhZoocc24RXeKtE3EX7G/48=
-X-Google-Smtp-Source: ABdhPJz/JRHvmO3nK9qW73ldoUrQ1Yk+Kg6Ocxop7Rm+iuYh1Lw+a8JQoeKXadsSsdhYRWxMALOI8w==
-X-Received: by 2002:a37:b181:: with SMTP id a123mr23279293qkf.179.1613533891063;
-        Tue, 16 Feb 2021 19:51:31 -0800 (PST)
+        bh=kbww64dD6zLb48YXM/mXLh6tOnS1bFQTeqYrXXP/img=;
+        b=hEDwGsYhzr7c3GhQ71HicNfGYPKJn/5qIvEIZnCCVE9TtEcdwfIR8sAvW9Vyf3JNFm
+         ykSuARe+9/xeKKDym23pcqFcYGcYs1w37v6Zu8+t2Kpllpr3W6dUfhBMtnuByoo/tKN1
+         yKHXg/FjUvSffRcGpUWRQMnynxuOHFjMbaABLaqCiNuhpal3Hwyu9GgzklExd9jhkWGs
+         /ZO9tS/v1XdzO5XQ2V+uTuMIfTgQPWmv7dyiPEHwHzGpKRBZkP4G3awiN25MqwI59i/L
+         jW3+Gt1aPtIIFTOPYkdHL8T9SIxdP3JB8ZwcLiuOaRDYAUW9pOoEByvavZuIQeIf4O8Y
+         gEnQ==
+X-Gm-Message-State: AOAM531zXRqO/dNn8z1I43oQYCJPzjnze9MD1U5U4bgrjURr30UXAVzc
+        l8GZywShsVSI/c9XEEGL2X0=
+X-Google-Smtp-Source: ABdhPJzhr+M1p3Y4K9JWCE5YUWm4qcI2u/lPHo77/ZgHqUbTVFY8H+vXXVHkBQAfu8tvmZkFjDLtAw==
+X-Received: by 2002:ac8:70cc:: with SMTP id g12mr14666401qtp.164.1613533909918;
+        Tue, 16 Feb 2021 19:51:49 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id k8sm784042qkk.81.2021.02.16.19.51.30
+        by smtp.gmail.com with ESMTPSA id u4sm822655qkc.42.2021.02.16.19.51.49
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Feb 2021 19:51:30 -0800 (PST)
+        Tue, 16 Feb 2021 19:51:49 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 16 Feb 2021 22:51:30 -0500 (EST)
+Date:   Tue, 16 Feb 2021 22:51:48 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v5 08/13] ptsematest: Add JSON output feature
-In-Reply-To: <20210210175118.19709-9-dwagner@suse.de>
-Message-ID: <441b9815-21e5-6ec1-2f67-45fbd5981e2b@redhat.com>
-References: <20210210175118.19709-1-dwagner@suse.de> <20210210175118.19709-9-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v5 10/13] svsematest: Add JSON output feature
+In-Reply-To: <20210210175118.19709-11-dwagner@suse.de>
+Message-ID: <bb99fd9b-5aa8-52e-37ee-d4c7283c302e@redhat.com>
+References: <20210210175118.19709-1-dwagner@suse.de> <20210210175118.19709-11-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -82,30 +82,30 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/ptsematest/ptsematest.c | 120 ++++++++++++++++++++++++++++++------
->  1 file changed, 101 insertions(+), 19 deletions(-)
+>  src/svsematest/svsematest.c | 124 ++++++++++++++++++++++++++++++------
+>  1 file changed, 104 insertions(+), 20 deletions(-)
 > 
-> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-> index 7d4ca97773d6..2755bfde5210 100644
-> --- a/src/ptsematest/ptsematest.c
-> +++ b/src/ptsematest/ptsematest.c
+> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+> index 7a298e0dea8c..23f84bcbd3dc 100644
+> --- a/src/svsematest/svsematest.c
+> +++ b/src/svsematest/svsematest.c
 > @@ -20,6 +20,7 @@
->  #include <linux/unistd.h>
+>  #include <string.h>
+>  #include <time.h>
 >  #include <utmpx.h>
->  #include <pthread.h>
 > +#include <inttypes.h>
 >  
->  #include "rt-utils.h"
->  #include "rt-get_cpu.h"
-> @@ -155,6 +156,7 @@ static void display_help(int error)
->  	       "                           days.\n"
+>  #include <linux/unistd.h>
+>  
+> @@ -233,6 +234,7 @@ static void display_help(int error)
+>  	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
 >  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
 >  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
 > +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
 >  	       "-p PRIO  --prio=PRIO       priority\n"
->  	       "-q       --quiet           print a summary only on exit\n"
 >  	       "-S       --smp             SMP testing: options -a -t and same priority\n"
-> @@ -180,6 +182,13 @@ static int distance = 500;
+>  	       "                           of all threads\n"
+> @@ -255,6 +257,13 @@ static int distance = 500;
 >  static int smp;
 >  static int sameprio;
 >  static int quiet;
@@ -113,43 +113,45 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 > +
 > +enum option_value {
 > +	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
-> +	OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT, OPT_PRIORITY,
-> +	OPT_QUIET, OPT_SMP, OPT_THREADS
+> +	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT,
+> +	OPT_PRIORITY, OPT_QUIET, OPT_SMP, OPT_THREADS
 > +};
 >  
 >  static void process_options(int argc, char *argv[])
 >  {
-> @@ -190,17 +199,18 @@ static void process_options(int argc, char *argv[])
+> @@ -266,18 +275,19 @@ static void process_options(int argc, char *argv[])
 >  		int option_index = 0;
 >  		/** Options for getopt */
 >  		static struct option long_options[] = {
-> -			{"affinity",	optional_argument,	NULL, 'a'},
-> -			{"breaktrace",	required_argument,	NULL, 'b'},
-> -			{"distance",	required_argument,	NULL, 'd'},
-> -			{"duration",	required_argument,	NULL, 'D'},
-> -			{"help",	no_argument,		NULL, 'h'},
-> -			{"interval",	required_argument,	NULL, 'i'},
-> -			{"loops",	required_argument,	NULL, 'l'},
-> -			{"priority",	required_argument,	NULL, 'p'},
-> -			{"quiet",	no_argument	,	NULL, 'q'},
-> -			{"smp",		no_argument,		NULL, 'S'},
-> -			{"threads",	optional_argument,	NULL, 't'},
+> -			{"affinity",		optional_argument,	NULL, 'a'},
+> -			{"breaktrace",		required_argument,	NULL, 'b'},
+> -			{"distance",		required_argument,	NULL, 'd'},
+> -			{"duration",		required_argument,	NULL, 'D'},
+> -			{"fork",		optional_argument,	NULL, 'f'},
+> -			{"help",		no_argument,		NULL, 'h'},
+> -			{"interval",		required_argument,	NULL, 'i'},
+> -			{"loops",		required_argument,	NULL, 'l'},
+> -			{"priority",		required_argument,	NULL, 'p'},
+> -			{"quiet",		no_argument,		NULL, 'q'},
+> -			{"smp",			no_argument,		NULL, 'S'},
+> -			{"threads",		optional_argument,	NULL, 't'},
 > +			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
 > +			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
 > +			{"distance",	required_argument,	NULL, OPT_DISTANCE},
 > +			{"duration",	required_argument,	NULL, OPT_DURATION},
+> +			{"fork",	optional_argument,	NULL, OPT_FORK},
 > +			{"help",	no_argument,		NULL, OPT_HELP},
 > +			{"interval",	required_argument,	NULL, OPT_INTERVAL},
 > +			{"loops",	required_argument,	NULL, OPT_LOOPS},
-> +			{"output",	required_argument,      NULL, OPT_OUTPUT },
+> +			{"output",	required_argument,      NULL, OPT_OUTPUT},
 > +			{"priority",	required_argument,	NULL, OPT_PRIORITY},
-> +			{"quiet",	no_argument	,	NULL, OPT_QUIET},
+> +			{"quiet",	no_argument,		NULL, OPT_QUIET},
 > +			{"smp",		no_argument,		NULL, OPT_SMP},
 > +			{"threads",	optional_argument,	NULL, OPT_THREADS},
 >  			{NULL, 0, NULL, 0}
 >  		};
->  		int c = getopt_long (argc, argv, "a::b:d:i:l:D:p:qSt::h",
-> @@ -208,6 +218,7 @@ static void process_options(int argc, char *argv[])
+>  		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:qSt::",
+> @@ -285,6 +295,7 @@ static void process_options(int argc, char *argv[])
 >  		if (c == -1)
 >  			break;
 >  		switch (c) {
@@ -157,17 +159,16 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 >  		case 'a':
 >  			if (smp) {
 >  				warn("-a ignored due to --smp\n");
-> @@ -223,20 +234,49 @@ static void process_options(int argc, char *argv[])
+> @@ -300,9 +311,19 @@ static void process_options(int argc, char *argv[])
 >  				setaffinity = AFFINITY_USEALL;
 >  			}
 >  			break;
-> -		case 'b': tracelimit = atoi(optarg); break;
+> -		case 'b': thistracelimit = atoi(optarg); break;
 > -		case 'd': distance = atoi(optarg); break;
 > -		case 'D': duration = parse_time_string(optarg); break;
-> -		case 'i': interval = atoi(optarg); break;
 > +		case OPT_BREAKTRACE:
 > +		case 'b':
-> +			tracelimit = atoi(optarg);
+> +			thistracelimit = atoi(optarg);
 > +			break;
 > +		case OPT_DISTANCE:
 > +		case 'd':
@@ -177,18 +178,26 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 > +		case 'D':
 > +			duration = parse_time_string(optarg);
 > +			break;
-> +		case OPT_INTERVAL:
-> +		case 'i':
-> +			interval = atoi(optarg);
-> +			break;
-> +		case OPT_HELP:
->  		case '?':
+> +		case OPT_FORK:
+>  		case 'f':
+>  			if (optarg != NULL) {
+>  				wasforked = 1;
+> @@ -314,16 +335,36 @@ static void process_options(int argc, char *argv[])
+>  			} else
+>  				mustfork = 1;
+>  			break;
 > -		case 'h': display_help(0); break;
+> -		case 'i': interval = atoi(optarg); break;
 > -		case 'l': max_cycles = atoi(optarg); break;
 > -		case 'p': priority = atoi(optarg); break;
 > -		case 'q': quiet = 1; break;
+> +		case OPT_HELP:
 > +		case 'h':
 > +			display_help(0);
+> +			break;
+> +		case OPT_INTERVAL:
+> +		case 'i':
+> +			interval = atoi(optarg);
 > +			break;
 > +		case OPT_LOOPS:
 > +		case 'l':
@@ -215,8 +224,8 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 >  		case 't':
 >  			if (smp) {
 >  				warn("-t ignored due to --smp\n");
-> @@ -316,6 +356,40 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
->  	}
+> @@ -380,6 +421,41 @@ static void sighand(int sig)
+>  	mustshutdown = 1;
 >  }
 >  
 > +struct params_stats {
@@ -253,11 +262,12 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 > +	}
 > +	fprintf(f, "  }\n");
 > +}
->  
->  int main(int argc, char *argv[])
+> +
+>  static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
+>  		       int verbose, int quiet)
 >  {
-> @@ -439,6 +513,14 @@ int main(int argc, char *argv[])
->  		pthread_mutex_destroy(&syncmutex[i]);
+> @@ -696,6 +772,14 @@ int main(int argc, char *argv[])
+>  		}
 >  	}
 >  
 > +	if (strlen(outfile) != 0) {
@@ -268,9 +278,9 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 > +		rt_write_json(outfile, argc, argv, write_stats, &ps);
 > +	}
 > +
->  nomem:
->  
->  	return 0;
+>  nosem:
+>  	for (i = 0; i < num_threads; i++)
+>  		semctl(receiver[i].semid, -1, IPC_RMID);
 > -- 
 > 2.30.0
 > 
