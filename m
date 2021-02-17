@@ -4,70 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C41DFC433DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:51:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 64A5AC433DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9264664D9F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:51:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2F60664DF3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230223AbhBQDvw (ORCPT
+        id S230378AbhBQDwA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Feb 2021 22:51:52 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53748 "EHLO
+        Tue, 16 Feb 2021 22:52:00 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53712 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229544AbhBQDvu (ORCPT
+        with ESMTP id S229544AbhBQDv5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Feb 2021 22:51:50 -0500
-Received: from mail-qt1-x831.google.com (mail-qt1-x831.google.com [IPv6:2607:f8b0:4864:20::831])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A4529C0613D6
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:10 -0800 (PST)
-Received: by mail-qt1-x831.google.com with SMTP id h16so8629395qth.11
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:10 -0800 (PST)
+        Tue, 16 Feb 2021 22:51:57 -0500
+Received: from mail-qv1-xf2a.google.com (mail-qv1-xf2a.google.com [IPv6:2607:f8b0:4864:20::f2a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 22CC7C06174A
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:42 -0800 (PST)
+Received: by mail-qv1-xf2a.google.com with SMTP id a1so5694951qvd.13
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:51:42 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=HMqd63wNeBy65lDsbU5wCvTEfZtYlYGmI9Qufi15rYU=;
-        b=ME/iOZjkybthQssg+xtphgSnanzCpdSHiPFqX5r6cOHfJ7q0X2+3Y1FMm1eeaaGcmM
-         dWFxTbaMX92+PZ8gVAAQuoGvTozo4XYXUYls20L5zfrKfMdU/T19Zvavc8oWJeedau/D
-         +cgd+lFQ9LqBzTbEgB9UkkwPBq3M+YoOEuS8pmwvIv1T/QoTAadk4f9u+FD08/X542Cd
-         tf4VxJsAcdxk9072LZV3oPF7nu2kSxbKf1OFvDVlxKy0u/BwYNgTqY8GTWHL9vjxjf7s
-         6/pqwOxFli/9bOt8JMlSbDqpXb1m2CKN0n/To6MvO8Lx98AwF4YQaykb8NEY2yuGzmcF
-         syXw==
+        bh=EmK5S6xNyn3XjiycPyXrVcbDyUKJbXBMvbPWglyJ9XY=;
+        b=XiTXivJGE3dZswkTN1q6BgRa8t0pdJR+1RDWxHumy06JwAilVjZBKWJ8tccQ7+/3Ti
+         MKrqyUnR+Xk3oQxOh+r2o0kLgqtMeVgd9gu7FgyDsiJ5Z3owwbx+1nYIk+zu2U38xh+L
+         7Oz2nWexqHU+gSU+2Vjeg8EjtUErwDWM6ekDG3luEa1KKqG0rJ5DHxmGJjJTWMh4OFsC
+         8F3NcYUFA2n6BBjxCQ6AtDr/pARjRUrpTuvArt7MXCs6Kb05OmmdTSQl9i7cfq3xa/DX
+         zxnE6A6RnrIPMHSR7SPJIXSFl861XLjUtXp9kNICzOJ25eb/H5U4fy9nDaYSvY/IFawG
+         wwQw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=HMqd63wNeBy65lDsbU5wCvTEfZtYlYGmI9Qufi15rYU=;
-        b=HUgLxy0t7FXfChCjcrTjNoEc/GTk2cbKlCDowuR8A4uo5bp57bfahE8VfeC8xHvj8Z
-         0iLSkZFLFyUY4wcvq4O/+0KWeE23IkdcQIRv7sxr4TZp0EzuF8rWAoCgMHnj8/Rs7Noo
-         TSpx4+D4AFEvt58GZzRvvxX1PGbvggVvc8stkHjlxfrXytAgSSf963AhMNMnDLzdvqXF
-         bkXV3KbvB0muiFWKxgArY779RXwwzr+ryUTkN6JV0StKjdfz4YcTijKS3pdV779EvT06
-         K7us2uCb9cTaVrPpXbnBTjTBuebjvkvHlIu64735hQwDo3uMGr0w/4ezyiEyy9ywnBlf
-         4gtQ==
-X-Gm-Message-State: AOAM530wakL8KN7teN2/C+YmB3dbepKEcgY2qPu+/EcQWwT2MzOH0cDa
-        B0eeEUpLEf2zl0dgnQHXWGU=
-X-Google-Smtp-Source: ABdhPJzAydpuPITzh5b6KCawTwwRwGnNRGrksRtTuui4QCxJ/hoduV9T7LkmyBb04KYbpcGaVjGnmg==
-X-Received: by 2002:ac8:7512:: with SMTP id u18mr21251199qtq.290.1613533869852;
-        Tue, 16 Feb 2021 19:51:09 -0800 (PST)
+        bh=EmK5S6xNyn3XjiycPyXrVcbDyUKJbXBMvbPWglyJ9XY=;
+        b=qc0WeCK7xyinKaMZCCadOrEqTlV4m/jRJpvai1Sl4yORmD81OGWdv7+aUMbuiXZaJV
+         QvDTz7C/Dt/kDo/+HK1DKHF3xHwrgrOS7Nxy/aX5l0Nmtyk9nMO8/lH7aEEAsqEsviSi
+         7QaozvvX3dv6DVP8pavPJuy/pyVcLgFHKdVttYJwgJkDB/u8WQZzR70dkwMHGxfVWTsC
+         nr0K/fuImPHxgrKeRWLl8UMyQRb77VCbTLtxxxoVZUwhtwImNY8aFala0QfcI0dLD8zl
+         eO/hHPCBLMhGlvSPUhXk8RQXRox3Dm5KQOHvDHcktRI8QHa4/k5k58ReRsy2o50PyjiC
+         6jUg==
+X-Gm-Message-State: AOAM532qej0i1JtvsYkWMAzunennww1Gl71F/Z+8aR7v/XdDpqBGAWwS
+        v4U7LgZkdzuev54hUsGowFPaSH31N8Fkcg==
+X-Google-Smtp-Source: ABdhPJyefLvLXIe7OyMrTDulPyKsxAE52e0lN8V2QAOSUwlPXWF6zYkTXlwZOrX/Y4fZXfTS9gKRvg==
+X-Received: by 2002:ad4:5846:: with SMTP id de6mr885153qvb.57.1613533901372;
+        Tue, 16 Feb 2021 19:51:41 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id u27sm810266qku.82.2021.02.16.19.51.09
+        by smtp.gmail.com with ESMTPSA id m5sm810397qkf.55.2021.02.16.19.51.40
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Feb 2021 19:51:09 -0800 (PST)
+        Tue, 16 Feb 2021 19:51:41 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 16 Feb 2021 22:51:08 -0500 (EST)
+Date:   Tue, 16 Feb 2021 22:51:40 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v5 06/13] cyclicdeadline: Add JSON output
- feature
-In-Reply-To: <20210210175118.19709-7-dwagner@suse.de>
-Message-ID: <5d53d1f-1db9-90d9-2eea-6b4ebd164d@redhat.com>
-References: <20210210175118.19709-1-dwagner@suse.de> <20210210175118.19709-7-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v5 09/13] sigwaittest: Add JSON output feature
+In-Reply-To: <20210210175118.19709-10-dwagner@suse.de>
+Message-ID: <c68f3a68-696-f5ad-218d-c34372314a2@redhat.com>
+References: <20210210175118.19709-1-dwagner@suse.de> <20210210175118.19709-10-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -83,166 +82,213 @@ On Wed, 10 Feb 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/sched_deadline/cyclicdeadline.c | 72 ++++++++++++++++++++++-------
->  1 file changed, 56 insertions(+), 16 deletions(-)
+>  src/signaltest/signaltest.c   |   1 +
+>  src/sigwaittest/sigwaittest.c | 117 ++++++++++++++++++++++++++++------
+>  2 files changed, 100 insertions(+), 18 deletions(-)
 > 
-> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index 71cde5781499..ed3c960d9916 100644
-> --- a/src/sched_deadline/cyclicdeadline.c
-> +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -18,6 +18,7 @@
->  #include <errno.h>
->  #include <signal.h>
->  #include <getopt.h>
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index 09039b299367..b1a71efdf42f 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -361,6 +361,7 @@ static void write_stats(FILE *f, void *data)
+>  	struct thread_stat *s;
+>  	unsigned int i;
+>  
+> +	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
+>  	fprintf(f, "  \"thread\": {\n");
+>  	for (i = 0; i < num_threads; i++) {
+>  		fprintf(f, "    \"%u\": {\n", i);
+> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+> index f10c24914d4a..0cdf30a6a769 100644
+> --- a/src/sigwaittest/sigwaittest.c
+> +++ b/src/sigwaittest/sigwaittest.c
+> @@ -39,6 +39,7 @@
+>  #include <linux/unistd.h>
+>  #include <utmpx.h>
+>  #include <pthread.h>
 > +#include <inttypes.h>
 >  
->  #include <sys/syscall.h>
->  #include <sys/types.h>
-> @@ -85,13 +86,11 @@ static pthread_barrier_t barrier;
->  
->  static int cpu_count;
->  static int all_cpus;
-> -
->  static int nr_threads;
->  static int use_nsecs;
-> -
->  static int mark_fd;
-> -
+>  #include "rt-utils.h"
+>  #include "rt-get_cpu.h"
+> @@ -220,6 +221,7 @@ static void display_help(int error)
+>  	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
+>  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+>  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+>  	       "-p PRIO  --prio=PRIO       priority\n"
+>  	       "-q       --quiet           print a summary only on exit\n"
+>  	       "-t       --threads         one thread per available processor\n"
+> @@ -240,6 +242,13 @@ static int duration;
+>  static int interval = 1000;
+>  static int distance = 500;
 >  static int quiet;
 > +static char outfile[MAX_PATH];
->  
->  static int find_mount(const char *mount, char *debugfs)
->  {
-> @@ -603,16 +602,17 @@ static void usage(int error)
->  	       "                           tasks on. An empty CPUSET runs on all CPUs a deadline\n"
->  	       "                           task.\n"
->  	       "                           on CPU 4, and thread #5 on CPU 5.\n"
-> -	       "-D TIME     --duration     Specify a length for the test run.\n"
-> +	       "-D TIME  --duration        Specify a length for the test run.\n"
->  	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
->  	       "                           days\n"
-> -	       "-h          --help         Show this help menu.\n"
-> -	       "-i INTV     --interval     The shortest deadline for the tasks in us\n"
-> +	       "-h       --help            Show this help menu.\n"
-> +	       "-i INTV  --interval        The shortest deadline for the tasks in us\n"
->  	       "                           (default 1000us).\n"
-> -	       "-s STEP     --step         The amount to increase the deadline for each task in us\n"
-> +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
-> +	       "-s STEP  --step            The amount to increase the deadline for each task in us\n"
->  	       "                           (default 500us).\n"
-> -	       "-t NUM      --threads      The number of threads to run as deadline (default 1).\n"
-> -	       "-q          --quiet        print a summary only on exit\n"
-> +	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
-> +	       "-q       --quiet           print a summary only on exit\n"
->  	       );
->  	exit(error);
->  }
-> @@ -966,6 +966,32 @@ static void loop(struct sched_data *sched_data, int nr_threads)
->  	}
->  }
->  
-> +static void write_stats(FILE *f, void *data)
-> +{
-> +	struct sched_data *sd = data;
-> +	struct thread_stat *s;
-> +	unsigned int i;
 > +
-> +	fprintf(f, "  \"num_threads\": %d,\n", nr_threads);
-> +	fprintf(f, "  \"resolution_in_ns\": %u,\n", use_nsecs);
-> +	fprintf(f, "  \"thread\": {\n");
-> +	for (i = 0; i < nr_threads; i++) {
-> +		s = &sd[i].stat;
-> +		fprintf(f, "    \"%u\": {\n", i);
-> +		fprintf(f, "	 \"cycles\": %" PRIu64 ",\n", s->cycles);
-> +		fprintf(f, "	 \"min\": %" PRIu64 ",\n", s->min);
-> +		fprintf(f, "	 \"max\": %" PRIu64 ",\n", s->max);
-> +		fprintf(f, "	 \"avg\": %.2f\n", s->avg/s->cycles);
-> +		fprintf(f, "    }%s\n", i == nr_threads - 1 ? "" : ",");
-> +	}
-> +	fprintf(f, "  }\n");
-> +}
-> +
-> +enum options_valud {
-> +	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
-> +	OPT_OUTPUT, OPT_STEP, OPT_THREADS, OPT_QUIET
+> +enum option_value {
+> +	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
+> +	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT,
+> +	OPT_PRIORITY, OPT_QUIET, OPT_THREADS
 > +};
-> +
->  int main(int argc, char **argv)
->  {
->  	struct sched_data *sched_data;
-> @@ -992,19 +1018,21 @@ int main(int argc, char **argv)
 >  
->  	for (;;) {
->  		static struct option options[] = {
-> -			{ "affinity",	optional_argument,	NULL,	'a' },
-> -			{ "duration",	required_argument,	NULL,	'D' },
-> -			{ "help",	no_argument,		NULL,	'h' },
-> -			{ "interval",	required_argument,	NULL,	'i' },
-> -			{ "step",	required_argument,	NULL,	's' },
-> -			{ "threads",	required_argument,	NULL,	't' },
-> -			{ "quiet",	no_argument,		NULL,	'q' },
-> +			{ "affinity",	optional_argument,	NULL,	OPT_AFFINITY },
-> +			{ "duration",	required_argument,	NULL,	OPT_DURATION },
-> +			{ "help",	no_argument,		NULL,	OPT_HELP },
-> +			{ "interval",	required_argument,	NULL,	OPT_INTERVAL },
-> +			{ "output",	required_argument,	NULL,	OPT_OUTPUT },
-> +			{ "step",	required_argument,	NULL,	OPT_STEP },
-> +			{ "threads",	required_argument,	NULL,	OPT_THREADS },
-> +			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
->  			{ NULL,		0,			NULL,	0   },
+>  static void process_options(int argc, char *argv[])
+>  {
+> @@ -251,17 +260,18 @@ static void process_options(int argc, char *argv[])
+>  		int option_index = 0;
+>  		/** Options for getopt */
+>  		static struct option long_options[] = {
+> -			{"affinity",		optional_argument,	NULL, 'a'},
+> -			{"breaktrace",		required_argument,	NULL, 'b'},
+> -			{"distance",		required_argument,	NULL, 'd'},
+> -			{"duration",		required_argument,	NULL, 'D'},
+> -			{"fork",		optional_argument,	NULL, 'f'},
+> -			{"help",		no_argument,		NULL, 'h'},
+> -			{"interval",		required_argument,	NULL, 'i'},
+> -			{"loops",		required_argument,	NULL, 'l'},
+> -			{"priority",		required_argument,	NULL, 'p'},
+> -			{"quiet",		no_argument,		NULL, 'q'},
+> -			{"threads",		optional_argument,	NULL, 't'},
+> +			{"affinity",	optional_argument,	NULL, OPT_AFFINITY},
+> +			{"breaktrace",	required_argument,	NULL, OPT_BREAKTRACE},
+> +			{"distance",	required_argument,	NULL, OPT_DISTANCE},
+> +			{"duration",	required_argument,	NULL, OPT_DURATION},
+> +			{"fork",	optional_argument,	NULL, OPT_FORK},
+> +			{"help",	no_argument,		NULL, OPT_HELP},
+> +			{"interval",	required_argument,	NULL, OPT_INTERVAL},
+> +			{"loops",	required_argument,	NULL, OPT_LOOPS},
+> +			{"output",	required_argument,      NULL, OPT_OUTPUT },
+> +			{"priority",	required_argument,	NULL, OPT_PRIORITY},
+> +			{"quiet",	no_argument,		NULL, OPT_QUIET},
+> +			{"threads",	optional_argument,	NULL, OPT_THREADS},
+>  			{NULL, 0, NULL, 0}
 >  		};
->  		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
+>  		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:qt::",
+> @@ -269,6 +279,7 @@ static void process_options(int argc, char *argv[])
 >  		if (c == -1)
 >  			break;
 >  		switch (c) {
 > +		case OPT_AFFINITY:
 >  		case 'a':
->  		case 'c':
->  			if (!nr_threads)
-> @@ -1016,21 +1044,30 @@ int main(int argc, char **argv)
->  			else
->  				all_cpus = 1;
+>  			if (optarg != NULL) {
+>  				affinity = atoi(optarg);
+> @@ -280,9 +291,19 @@ static void process_options(int argc, char *argv[])
+>  				setaffinity = AFFINITY_USEALL;
+>  			}
 >  			break;
+> -		case 'b': thistracelimit = atoi(optarg); break;
+> -		case 'd': distance = atoi(optarg); break;
+> -		case 'D': duration = parse_time_string(optarg); break;
+> +		case OPT_BREAKTRACE:
+> +		case 'b':
+> +			thistracelimit = atoi(optarg);
+> +			break;
+> +		case OPT_DISTANCE:
+> +		case 'd':
+> +			distance = atoi(optarg);
+> +			break;
+> +		case OPT_DURATION:
+> +		case 'D':
+> +			duration = parse_time_string(optarg);
+> +			break;
+> +		case OPT_FORK:
+>  		case 'f':
+>  			if (optarg != NULL) {
+>  				wasforked = 1;
+> @@ -294,14 +315,31 @@ static void process_options(int argc, char *argv[])
+>  			} else
+>  				mustfork = 1;
+>  			break;
+> +		case OPT_HELP:
+>  		case '?':
+>  		case 'h':
+>  			display_help(0);
+>  			break;
+> -		case 'i': interval = atoi(optarg); break;
+> -		case 'l': max_cycles = atoi(optarg); break;
+> -		case 'p': priority = atoi(optarg); break;
+> -		case 'q': quiet = 1; break;
 > +		case OPT_INTERVAL:
->  		case 'i':
->  			interval = atoi(optarg);
->  			break;
+> +		case 'i':
+> +			interval = atoi(optarg);
+> +			break;
+> +		case OPT_LOOPS:
+> +		case 'l':
+> +			max_cycles = atoi(optarg);
+> +			break;
 > +		case OPT_OUTPUT:
 > +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
 > +			break;
-> +		case OPT_STEP:
->  		case 's':
->  			step = atoi(optarg);
->  			break;
+> +		case OPT_PRIORITY:
+> +		case 'p':
+> +			priority = atoi(optarg);
+> +			break;
+> +		case OPT_QUIET:
+> +		case 'q':
+> +			quiet = 1;
+> +			break;
 > +		case OPT_THREADS:
 >  		case 't':
->  			nr_threads = atoi(optarg);
->  			break;
-> +		case OPT_DURATION:
->  		case 'D':
->  			duration = parse_time_string(optarg);
->  			break;
-> +		case OPT_QUIET:
->  		case 'q':
->  			quiet = 1;
->  			break;
-> +		case OPT_HELP:
->  		case 'h':
->  			usage(0);
->  			break;
-> @@ -1190,6 +1227,9 @@ int main(int argc, char **argv)
+>  			if (optarg != NULL)
+>  				num_threads = atoi(optarg);
+> @@ -388,6 +426,41 @@ static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
+>  	}
+>  }
+>  
+> +struct params_stats {
+> +	struct params *receiver;
+> +	struct params *sender;
+> +};
+> +
+> +static void write_stats(FILE *f, void *data)
+> +{
+> +	struct params_stats *ps = data;
+> +	struct params *s, *r;
+> +	unsigned int i;
+> +
+> +	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
+> +	fprintf(f, "  \"thread\": {\n");
+> +	for (i = 0; i < num_threads; i++) {
+> +		s = &ps->sender[i];
+> +		r = &ps->receiver[i];
+> +		fprintf(f, "    \"%u\": {\n", i);
+> +		fprintf(f, "      \"sender\": {\n");
+> +		fprintf(f, "        \"cpu\": %d,\n", s->cpu);
+> +		fprintf(f, "        \"priority\": %d,\n", s->priority);
+> +		fprintf(f, "        \"samples\": %d,\n", s->samples);
+> +		fprintf(f, "        \"interval\": %ld\n", r->delay.tv_nsec/1000);
+> +		fprintf(f, "      },\n");
+> +		fprintf(f, "      \"receiver\": {\n");
+> +		fprintf(f, "        \"cpu\": %d,\n", r->cpu);
+> +		fprintf(f, "        \"priority\": %d,\n", r->priority);
+> +		fprintf(f, "        \"min\": %d,\n", r->mindiff);
+> +		fprintf(f, "        \"avg\": %.2f,\n", r->sumdiff/r->samples);
+> +		fprintf(f, "        \"max\": %d\n", r->maxdiff);
+> +		fprintf(f, "      }\n");
+> +		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
+> +	}
+> +	fprintf(f, "  }\n");
+> +}
+> +
+>  int main(int argc, char *argv[])
+>  {
+>  	int i, totalsize = 0;
+> @@ -627,6 +700,14 @@ int main(int argc, char *argv[])
 >  		}
 >  	}
 >  
-> +	if (strlen(outfile) != 0)
-> +		rt_write_json(outfile, argc, argv, write_stats, sched_data);
+> +	if (strlen(outfile) != 0) {
+> +		struct params_stats ps = {
+> +			.receiver = receiver,
+> +			.sender = sender,
+> +		};
+> +		rt_write_json(outfile, argc, argv, write_stats, &ps);
+> +	}
 > +
->  	if (setcpu_buf)
->  		free(setcpu_buf);
->  	free(thread);
+>  nomem:
+>  	if (mustfork) {
+>  		munmap(param, totalsize);
 > -- 
 > 2.30.0
 > 
 > 
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+Doesn't apply
