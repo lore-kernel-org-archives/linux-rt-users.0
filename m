@@ -4,70 +4,70 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9526CC433DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:50:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3528FC433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:51:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 647E964DF3
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:50:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F3F0264DF3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:51:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229907AbhBQDuZ (ORCPT
+        id S230079AbhBQDvA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Feb 2021 22:50:25 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53436 "EHLO
+        Tue, 16 Feb 2021 22:51:00 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53556 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229544AbhBQDuZ (ORCPT
+        with ESMTP id S229544AbhBQDu6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Feb 2021 22:50:25 -0500
-Received: from mail-qv1-xf2c.google.com (mail-qv1-xf2c.google.com [IPv6:2607:f8b0:4864:20::f2c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E48B1C061574
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:49:44 -0800 (PST)
-Received: by mail-qv1-xf2c.google.com with SMTP id 2so5740177qvd.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:49:44 -0800 (PST)
+        Tue, 16 Feb 2021 22:50:58 -0500
+Received: from mail-qk1-x731.google.com (mail-qk1-x731.google.com [IPv6:2607:f8b0:4864:20::731])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2AC19C06174A
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:50:18 -0800 (PST)
+Received: by mail-qk1-x731.google.com with SMTP id h8so11632297qkk.6
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:50:18 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=2+Qxyb7F+F5gYf95maa2V9hutem13f4VOSd3LTSIknQ=;
-        b=q/rdhqYuvuy+adwdf640bAFmWpBTJPKS6ofSfZ2+fGAxItfe0JviL/56miMsRx3t2Z
-         fLYvg8OhmcsjJQu2SLcscJ57qw4zioU9gZ7K/hCDHUxvCIQ/iYyLeKOubJAm6k15BbqT
-         9KtH6tLH5GZnTZ5P9pwOCSPBSwmViQ3bQNB1N6HBt8Z+eonqDYGl5Zc3mvYisDrEkkhz
-         j6QNGEtZgG9/ZyUi0biw3ItlLpyjNjkAUienACwvfyQpIV8G+pPQZGYxdRHrpEzEUHTk
-         As6dinIztMgJFU476zAaxL4yRwfquf1pStLauouNo33To4Uu/0zjyUF94D/b0iWHw9Ip
-         lhnQ==
+        bh=d0ZfkQe7NQ+L5YvP34oMNI/p65HZhBp78ZWzsvyXy3I=;
+        b=idQhRc4/1Ga0ydUyODpWc8ghCe4kEHYwb47+hhQq7Yc9CJZ+NCesm/clHm6r3tFAyq
+         gdQ3WLBtuK8KofZs536s7944pjqSxvnLnb0QMV7brFZup9VCx0b7chvm9hy2SElyN26q
+         F7S1YZfjg2TWPwKiZEgdXDoaPO0OLlHPpkmjl/j7Nkb5oAbbNgJKIg5Bj4rwJp3CC8zx
+         nWBbFKRD8vyFYODhjEWIdDQuxpHL1aEWiaAGedg6ZCyb8ICijMW7RUwFs1I9UllxC6Ye
+         vzVFUwvshrMQfia8qlzsHdp8hR+G0jqII61WqU6U8eAU9umPicIESukNNW69pW4xTfsT
+         v/vQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=2+Qxyb7F+F5gYf95maa2V9hutem13f4VOSd3LTSIknQ=;
-        b=IinWkC7d5SLa8I2zhfKXiWEl4odOvKvXzAnuJzdkYlQbQz1zoPZ0xXt1NBVn+jK/R1
-         13Q2HvXLIofd4HEBLkYYwDUa/QrPDprjDh6sntQNeOxrRVtOLbqQyjArxjrp1VzNWaJ+
-         UBhQwNGAxAW6f8CKe4ixh+gnVtqzxVEc3pvjakSKs/wgCOFa2y6+7BoCXq3SbNlaYaIj
-         FKPDXL8qG8NyA0wA1lNVnyZgXUkoVJVKeY/G4kXxQXxhOiBMfMgB1Y/hy8UvHmuBc72n
-         hvKfKJ1mXI4l93E57G8kzL70D97kPXYBiEC6NGwQYIILpxquSAiBYtEGMsK6ePrt3vnp
-         Y2tw==
-X-Gm-Message-State: AOAM533GAQ7nASBAEKjHLLOAwHT/2DgYr7hBjVvpy6t5r3LckkyA16xw
-        NqYzkDH8DFe/dl/eqj+VkeA=
-X-Google-Smtp-Source: ABdhPJyJ8N5WXsItTnKrICs2JoGhUn8qcsVu3Z2XABkq4fkCWOd83W+UmoPboG63pTGGexVslW7J0A==
-X-Received: by 2002:ad4:45ab:: with SMTP id y11mr22971341qvu.25.1613533784268;
-        Tue, 16 Feb 2021 19:49:44 -0800 (PST)
+        bh=d0ZfkQe7NQ+L5YvP34oMNI/p65HZhBp78ZWzsvyXy3I=;
+        b=TWKhjIASNAYhtKW7sYSQPDJztjs4elp0cHC9ta9LSZ6d4FF/UXU9ffqEntfyE+dXSx
+         TJP12zfDcOpjqHL5GQSZVMETkyl0wvfNbMvTIjrbFHphJL9vk2799AYzql5GsCDoLIHE
+         kYb1OsxnzwbNblTHo1ahi3aWNdZCjxKjTQlfDtf5/gF56bQrXb1kFEJQI8b7cGwTS84J
+         1ohQQ93Mwd+kfzDu0Y6TwBgZ0Cxk8jEskyW5mH2GkN0kCv8aYKwBbumnlgVVMSsF8ddY
+         Vc1S9sfd+rsHsVv09lQ8TQUdrBHtl9a4AF9FfBeww95f2CEsAGxkBrV1ZJHysTyHEGa5
+         U24Q==
+X-Gm-Message-State: AOAM530+JFPRgeEM5pBui0F/x6+gTfW9u2g8+Tbgzdu/3us7wihGPyS8
+        +7PIS7nv+3EyU/bVPXNpKVIzJJz56rw7HQ==
+X-Google-Smtp-Source: ABdhPJxGsrwDvmilScQE7E2tIPwl75LbUTSpIu7YpFsCyL/YoQRdXOVOty4JJZYvYj8HyEZFfPsp7w==
+X-Received: by 2002:a05:620a:15ea:: with SMTP id p10mr17020414qkm.192.1613533817441;
+        Tue, 16 Feb 2021 19:50:17 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id w20sm773512qki.102.2021.02.16.19.49.43
+        by smtp.gmail.com with ESMTPSA id c143sm828604qkg.83.2021.02.16.19.50.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Feb 2021 19:49:44 -0800 (PST)
+        Tue, 16 Feb 2021 19:50:17 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 16 Feb 2021 22:49:43 -0500 (EST)
+Date:   Tue, 16 Feb 2021 22:50:16 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v4 02/16] cyclictest: Mimic --smp behavior with
- --affinity
-In-Reply-To: <20210210133450.6991-3-dwagner@suse.de>
-Message-ID: <2f841a52-b7db-4a52-663f-19f3f928ec7a@redhat.com>
-References: <20210210133450.6991-1-dwagner@suse.de> <20210210133450.6991-3-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v4 16/16] rt-tests: Rename error.h to
+ rt-error.h
+In-Reply-To: <20210210133450.6991-17-dwagner@suse.de>
+Message-ID: <5bc6ef17-105d-27a7-8f56-2caaa8e385f3@redhat.com>
+References: <20210210133450.6991-1-dwagner@suse.de> <20210210133450.6991-17-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -78,42 +78,250 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Wed, 10 Feb 2021, Daniel Wagner wrote:
 
-> Let --affinity without an argument behave in the same way as
-> --smp. Run a thread on each CPU. This makes cyclictest behave as the
-> rest of the rt-tests when --affinity is used.
+> Avoid confusion with the system header called error.h.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/cyclictest/cyclictest.c | 2 ++
->  1 file changed, 2 insertions(+)
+>  Makefile                            | 2 +-
+>  src/cyclictest/cyclictest.c         | 2 +-
+>  src/include/pip_stress.h            | 5 +++--
+>  src/include/{error.h => rt-error.h} | 0
+>  src/lib/{error.c => rt-error.c}     | 2 +-
+>  src/lib/rt-numa.c                   | 2 +-
+>  src/lib/rt-utils.c                  | 3 ++-
+>  src/oslat/oslat.c                   | 2 +-
+>  src/pi_tests/pi_stress.c            | 3 +--
+>  src/pmqtest/pmqtest.c               | 6 +++---
+>  src/ptsematest/ptsematest.c         | 6 +++---
+>  src/sched_deadline/cyclicdeadline.c | 6 +++---
+>  src/signaltest/signaltest.c         | 2 +-
+>  src/sigwaittest/sigwaittest.c       | 2 +-
+>  src/svsematest/svsematest.c         | 3 ++-
+>  15 files changed, 24 insertions(+), 22 deletions(-)
+>  rename src/include/{error.h => rt-error.h} (100%)
+>  rename src/lib/{error.c => rt-error.c} (98%)
 > 
+> diff --git a/Makefile b/Makefile
+> index 636f1914a777..b17ac0957adc 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -177,7 +177,7 @@ oslat: $(OBJDIR)/oslat.o $(OBJDIR)/librttest.a $(OBJDIR)/librttestnuma.a
+>  %.8.bz2: %.8
+>  	bzip2 -c $< > $@
+>  
+> -LIBOBJS =$(addprefix $(OBJDIR)/,error.o rt-get_cpu.o rt-sched.o rt-utils.o)
+> +LIBOBJS =$(addprefix $(OBJDIR)/,rt-error.o rt-get_cpu.o rt-sched.o rt-utils.o)
+>  $(OBJDIR)/librttest.a: $(LIBOBJS)
+>  	$(AR) rcs $@ $^
+>  
 > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 6009ff2a83bc..4c02f067fbad 100644
+> index f912bcf82def..c4b2369bee6b 100644
 > --- a/src/cyclictest/cyclictest.c
 > +++ b/src/cyclictest/cyclictest.c
-> @@ -1019,6 +1019,8 @@ static void process_options(int argc, char *argv[], int max_cpus)
->  				    argv[optind][0] == '0' ||
->  				    argv[optind][0] == '!')) {
->  				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
-> +			} else {
-> +				num_threads = -1;
->  			}
->  			break;
->  		case 'A':
+> @@ -36,7 +36,7 @@
+>  
+>  #include "rt-utils.h"
+>  #include "rt-numa.h"
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  #include <bionic.h>
+>  
+> diff --git a/src/include/pip_stress.h b/src/include/pip_stress.h
+> index ee8b545ab117..f03aaf397897 100644
+> --- a/src/include/pip_stress.h
+> +++ b/src/include/pip_stress.h
+> @@ -14,8 +14,9 @@
+>  #include <sys/wait.h>
+>  #include <signal.h>
+>  #include <sched.h>
+> -#include <rt-utils.h>
+> -#include "error.h"
+> +
+> +#include "rt-utils.h"
+> +#include "rt-error.h"
+>  
+>  void low(pid_t pid);	/* low priority process */
+>  void medium(void);	/* medium priority process */
+> diff --git a/src/include/error.h b/src/include/rt-error.h
+> similarity index 100%
+> rename from src/include/error.h
+> rename to src/include/rt-error.h
+> diff --git a/src/lib/error.c b/src/lib/rt-error.c
+> similarity index 98%
+> rename from src/lib/error.c
+> rename to src/lib/rt-error.c
+> index 4434a842da17..616f70b044e0 100644
+> --- a/src/lib/error.c
+> +++ b/src/lib/rt-error.c
+> @@ -5,7 +5,7 @@
+>   * error routines, similar to those found in
+>   * Advanced Programming in the UNIX Environment 2nd ed.
+>   */
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  /* Print an error message, plus a message for err and exit with error err */
+>  void err_exit(int err, char *fmt, ...)
+> diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+> index 04f2e9adb4b1..4a0865715141 100644
+> --- a/src/lib/rt-numa.c
+> +++ b/src/lib/rt-numa.c
+> @@ -10,7 +10,7 @@
+>  #include <sched.h>
+>  #include <pthread.h>
+>  
+> -#include "error.h"
+> +#include "rt-error.h"
+>  #include "rt-numa.h"
+>  
+>  int get_available_cpus(struct bitmask *cpumask)
+> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+> index 2d68d62cd875..321a11b1172d 100644
+> --- a/src/lib/rt-utils.c
+> +++ b/src/lib/rt-utils.c
+> @@ -20,9 +20,10 @@
+>  #include <sys/stat.h>
+>  #include <unistd.h>
+>  #include <sys/syscall.h> /* For SYS_gettid definitions */
+> +
+>  #include "rt-utils.h"
+>  #include "rt-sched.h"
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  #define  TRACEBUFSIZ  1024
+>  
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index 0811079d9f04..9e6f70600830 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -43,7 +43,7 @@
+>  
+>  #include "rt-utils.h"
+>  #include "rt-numa.h"
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  #ifdef __GNUC__
+>  # define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
+> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+> index 538d12c975aa..49f89b7b0136 100644
+> --- a/src/pi_tests/pi_stress.c
+> +++ b/src/pi_tests/pi_stress.c
+> @@ -47,8 +47,7 @@
+>  
+>  #include "rt-sched.h"
+>  #include "rt-utils.h"
+> -
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  /* test timeout */
+>  #define TIMEOUT 2
+> diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+> index 5f7a24d55db6..349b47741003 100644
+> --- a/src/pmqtest/pmqtest.c
+> +++ b/src/pmqtest/pmqtest.c
+> @@ -21,11 +21,11 @@
+>  #include <linux/unistd.h>
+>  #include <utmpx.h>
+>  #include <mqueue.h>
+> +#include <pthread.h>
+> +
+>  #include "rt-utils.h"
+>  #include "rt-get_cpu.h"
+> -#include "error.h"
+> -
+> -#include <pthread.h>
+> +#include "rt-error.h"
+>  
+>  #define SYNCMQ_NAME "/syncmsg%d"
+>  #define TESTMQ_NAME "/testmsg%d"
+> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+> index f8f075591f4b..7d4ca97773d6 100644
+> --- a/src/ptsematest/ptsematest.c
+> +++ b/src/ptsematest/ptsematest.c
+> @@ -19,11 +19,11 @@
+>  #include <sys/mman.h>
+>  #include <linux/unistd.h>
+>  #include <utmpx.h>
+> +#include <pthread.h>
+> +
+>  #include "rt-utils.h"
+>  #include "rt-get_cpu.h"
+> -#include "error.h"
+> -
+> -#include <pthread.h>
+> +#include "rt-error.h"
+>  
+>  enum {
+>  	AFFINITY_UNSPECIFIED,
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index 6dcfd6074085..71cde5781499 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -30,9 +30,9 @@
+>  #include <linux/unistd.h>
+>  #include <linux/magic.h>
+>  
+> -#include <rt-utils.h>
+> -#include <rt-sched.h>
+> -#include <error.h>
+> +#include "rt-utils.h"
+> +#include "rt-sched.h"
+> +#include "rt-error.h"
+>  
+>  #define _STR(x) #x
+>  #define STR(x) _STR(x)
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index 5427db7f8d85..c34bc994d886 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -31,7 +31,7 @@
+>  #include <sys/time.h>
+>  #include <sys/mman.h>
+>  
+> -#include "error.h"
+> +#include "rt-error.h"
+>  #include "rt-utils.h"
+>  #include "rt-numa.h"
+>  
+> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+> index 7e287bd2424f..f10c24914d4a 100644
+> --- a/src/sigwaittest/sigwaittest.c
+> +++ b/src/sigwaittest/sigwaittest.c
+> @@ -42,7 +42,7 @@
+>  
+>  #include "rt-utils.h"
+>  #include "rt-get_cpu.h"
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  enum {
+>  	AFFINITY_UNSPECIFIED,
+> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+> index 7388efb3f488..7a298e0dea8c 100644
+> --- a/src/svsematest/svsematest.c
+> +++ b/src/svsematest/svsematest.c
+> @@ -28,9 +28,10 @@
+>  #include <sys/sem.h>
+>  #include <sys/time.h>
+>  #include <sys/mman.h>
+> +
+>  #include "rt-utils.h"
+>  #include "rt-get_cpu.h"
+> -#include "error.h"
+> +#include "rt-error.h"
+>  
+>  #define SEM_WAIT_FOR_RECEIVER 0
+>  #define SEM_WAIT_FOR_SENDER 1
 > -- 
 > 2.30.0
 > 
 > 
+   - Fixed a conflict in cyclictest.c
+    - Fixed up rt_numa.h
+    Signed-off-by: John Kacur <jkacur@redhat.com>
 
-This doesn't look right. num_threads = -1 will get the number of cpus 
-after parsing, so that's okay, it should imply use all available cpus,
-and also the priorities of all threads are the same.
 
-As I've explained though, I'm not ready to drop the possibility to compile
-without numa, and then we need to think what this implies to the smp 
-option. I do like the way you are simplifying things here, we maybe able
-to drop smp altogether in the future, or have it just an option that keeps 
-the priorities the same.
-
-Need to look at it more, not applying right now. I want to get the JSON 
-code applied, this stuff is holding it up.
