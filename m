@@ -7,67 +7,66 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2F3E7C433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 27E84C433DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:53:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DE14864DF3
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E5CC664DF3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Feb 2021 03:52:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230473AbhBQDwt (ORCPT
+        id S230417AbhBQDw7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Feb 2021 22:52:49 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53960 "EHLO
+        Tue, 16 Feb 2021 22:52:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53990 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230457AbhBQDwr (ORCPT
+        with ESMTP id S230457AbhBQDwz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Feb 2021 22:52:47 -0500
-Received: from mail-qk1-x735.google.com (mail-qk1-x735.google.com [IPv6:2607:f8b0:4864:20::735])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B67A8C061574
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:52:07 -0800 (PST)
-Received: by mail-qk1-x735.google.com with SMTP id 81so11653050qkf.4
-        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:52:07 -0800 (PST)
+        Tue, 16 Feb 2021 22:52:55 -0500
+Received: from mail-qt1-x830.google.com (mail-qt1-x830.google.com [IPv6:2607:f8b0:4864:20::830])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 94F99C061756
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:52:15 -0800 (PST)
+Received: by mail-qt1-x830.google.com with SMTP id e15so8649961qte.9
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Feb 2021 19:52:15 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=wb1H7P8dbUvy0Kk+fPncv+Z/5kxVloYbJB2QFj5+K7Y=;
-        b=O08/WB7xpNdB0FMEOHRYSWIUsM3siKVhI38xmGVtLKo6tk+qSWaNYsmL26VykR2/lg
-         PQLJ4+m6HsJ9aBWQrTm7DLf0ylkeTPyiMSIKRFN5WTg8zZSQVdcUVCPe02mv/t7KOQ/8
-         nUPt4+52jDx01wRQhhicOK/jTUzGpn7EXswb8yFwqS2K1GFNjs8XduDdEidCtirJwUmD
-         HYq9yqti5G3w20rdd9BIf2upf9lPU8zEfIrYZRnMdRvRz30NkEsRcCjLN58N6xAxdu5Q
-         B0koR6d2Fus/5lFpJHzs1IJ2Rh1RrRkya240wGWJxna+fdAErQtnblqKWiU/a3RRFeHi
-         rZQQ==
+        bh=NuTfhKVAsZ4TgGr1a8LmI73JMMa6qDpWBNT0yf28ZgY=;
+        b=iQDk21VAEpJ4pTFxEgkS3tFW8RjNOf5DN2CJWmKqW/cwizKqljhcCuTv+t5bQQsgm5
+         62bY6W/hOpavvtZMoyRI/RIy6RZN3octqxqrTHsdZgqP9+AiIz8NB4oEqGRo7qGrfjwD
+         G6gsNOQxqpf8Xk1G9jUT9l2e+Rj1iH3CktCOu5SkMNwNFNW0dfmJGsXRoXFfzYX1RGUc
+         VI94Hee+iM0poto6m1B705DIG+AMhbgv0LWYPYsvUEQ7tG171u4y1aFxAMitlrmvOz4u
+         1vYp5swBcXK/cKHz2zusTR4QFF9g5ZmYs+WVshvVqWoY12+t11+5uHw1ZxnYDIuBMLc4
+         QlGw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=wb1H7P8dbUvy0Kk+fPncv+Z/5kxVloYbJB2QFj5+K7Y=;
-        b=NrdNxFcNWecRKPRAm/qZ4YeVctGSbG4KvzvS9eraPI2Ti3biyrM5w+CXcsvU8M9Z7T
-         ETvrUujIHRUkL8ZDbLYUoJ9QcfIdMnKE/m8airL47oQPoD5FQlptk5vxLE1e15VCoF3T
-         Bkjw5+ViAPHjybx8SHrgk0vW1htom6f5NZPwyZhbb6ImYwLPP0s9kyd7glTB04ItkZtg
-         7B4dgxkJIkhmUKEn/Ak8yPOOVL/TLx9+DxCwb2fE/715IIgXNkuhSH8hf9Hb2MPpHRfW
-         hjYOPSTERueq5ZR5Z6QT6dTjWusoXsHhfC5yBI2ljwZwTxRa9r8v3myxXP65Ln6LDIIr
-         ksCw==
-X-Gm-Message-State: AOAM5312E3GPUnUrlx3FM283PKYNANKCvwWBjfg0FUWL8PsT7zxU3rt4
-        hFucFEdhOZOvc4t8iei0Wbgde57Mzh27aA==
-X-Google-Smtp-Source: ABdhPJyo2r5WynhwdUqh4xKkuv4bGl0ShdEKDTW7CjH+j/ZPXIBD/yE2Yz4b60xT9STJ9wb0yUkWXg==
-X-Received: by 2002:a05:620a:2041:: with SMTP id d1mr22617348qka.326.1613533927016;
-        Tue, 16 Feb 2021 19:52:07 -0800 (PST)
+        bh=NuTfhKVAsZ4TgGr1a8LmI73JMMa6qDpWBNT0yf28ZgY=;
+        b=JXp6fFs80THTXN4MwtEufLCg0RHXtmt5Xa5M5C+ES76Lo4/WI3LCrWsGvOGmvI7PBj
+         yhTUQcATC1rOTbFPBzmCYZU7t7H/CEtDWJiwlvDAYGRMhoTb9Nh9exEC0dTPwvzAWiw3
+         PJa4JrciOoqrrjaDGbUuDBxgu34UZ+cwUfR14W22hn0UqEFaMwkGItMiG4UbKLYXWpYw
+         QIHY0uYsrpjasm1tFyY5k53Zh5W0kiNsKAjmI9+GcZxbCQ4aBwWjzlmJ8bZV5cPg9KVG
+         15ePX0tJk63HqqU0qgOlMNu64/1QJCFIo2gsc0hriRovMRx5eDuIOo2Nk3A4spzsAeM9
+         qLgQ==
+X-Gm-Message-State: AOAM533B5fPx3+ZciaVkuSK8cYRiXXH3oh6GSbOI92uz2/InxJVpQiKh
+        CVM8sxhEJck4ccXERpHOjz3NPQeQAjpzGQ==
+X-Google-Smtp-Source: ABdhPJwEJKHie38s/VEse9v2nRE4UcQ7xrk7/Hj65yQ9iXqcfVlJZVNc3ocbLzUlr96u2h6M3aX/Vw==
+X-Received: by 2002:ac8:4754:: with SMTP id k20mr16283733qtp.143.1613533934886;
+        Tue, 16 Feb 2021 19:52:14 -0800 (PST)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id 14sm413942qtx.84.2021.02.16.19.52.06
+        by smtp.gmail.com with ESMTPSA id l32sm410160qtd.95.2021.02.16.19.52.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Feb 2021 19:52:06 -0800 (PST)
+        Tue, 16 Feb 2021 19:52:14 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Tue, 16 Feb 2021 22:52:06 -0500 (EST)
+Date:   Tue, 16 Feb 2021 22:52:13 -0500 (EST)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v5 12/13] rt-migrate-test: Add JSON output
- feature
-In-Reply-To: <20210210175118.19709-13-dwagner@suse.de>
-Message-ID: <662fe996-5e1b-74ae-da14-41ce6d8e050@redhat.com>
-References: <20210210175118.19709-1-dwagner@suse.de> <20210210175118.19709-13-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v5 13/13] oslat: Add quiet command line option
+In-Reply-To: <20210210175118.19709-14-dwagner@suse.de>
+Message-ID: <983a4562-a25f-3b42-66e7-a896d03ff4eb@redhat.com>
+References: <20210210175118.19709-1-dwagner@suse.de> <20210210175118.19709-14-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -78,204 +77,105 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Wed, 10 Feb 2021, Daniel Wagner wrote:
 
-> Write the test results as JSON output to a file. This allows to
-> simplifies any parsing later on.
+> The quiet option is useful for automated test setups where
+> only the final result of the run is interesting.
+> 
+> Furthermore, this makes oslat accept rt-tests standard options.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/rt-migrate-test/rt-migrate-test.c | 120 ++++++++++++++++++++++----
->  1 file changed, 101 insertions(+), 19 deletions(-)
+>  src/oslat/oslat.c | 25 ++++++++++++++++++-------
+>  1 file changed, 18 insertions(+), 7 deletions(-)
 > 
-> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-> index 9bf716c9178c..56b7b66ccdf4 100644
-> --- a/src/rt-migrate-test/rt-migrate-test.c
-> +++ b/src/rt-migrate-test/rt-migrate-test.c
-> @@ -19,11 +19,14 @@
->  #include <fcntl.h>
->  #include <signal.h>
->  #include <sys/time.h>
-> -#include <linux/unistd.h>
->  #include <sys/syscall.h>
->  #include <errno.h>
->  #include <sched.h>
->  #include <pthread.h>
-> +#include <inttypes.h>
-> +
-> +#include <linux/unistd.h>
-> +
->  #include "rt-utils.h"
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index 987f2002985d..0d9afedbdc82 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -171,6 +171,7 @@ struct global {
+>  	uint64_t              workload_mem_size;
+>  	int                   enable_bias;
+>  	uint64_t              bias;
+> +	int                   quiet;
+>  	int                   single_preheat_thread;
+>  	int                   output_omit_zero_buckets;
+>  	char                  outfile[MAX_PATH];
+> @@ -565,6 +566,7 @@ static void usage(int error)
+>  	       "                       Total memory usage will be this value multiplies 2*N,\n"
+>  	       "                       because there will be src/dst buffers for each thread, and\n"
+>  	       "                       N is the number of processors for testing.\n"
+> +	       "-q  --quiet            print a summary only on exit\n"
+>  	       "-s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
+>  	       "                       NOTE: please make sure the CPU frequency on all testing cores\n"
+>  	       "                       are locked before using this parmater.  If you don't know how\n"
+> @@ -598,8 +600,8 @@ enum option_value {
+>  	OPT_BUCKETSIZE=1, OPT_CPU_LIST, OPT_CPU_MAIN_THREAD,
+>  	OPT_DURATION, OPT_RT_PRIO, OPT_HELP, OPT_TRACE_TH,
+>  	OPT_WORKLOAD, OPT_WORKLOAD_MEM, OPT_BIAS, OPT_OUTPUT,
+> -	OPT_SINGLE_PREHEAT, OPT_ZERO_OMIT, OPT_VERSION
+> -
+> +	OPT_QUIET, OPT_SINGLE_PREHEAT, OPT_ZERO_OMIT,
+> +	OPT_VERSION
+>  };
 >  
->  int nr_tasks;
-> @@ -99,6 +102,7 @@ static int done;
->  static int loop;
->  static int duration;
->  static int quiet;
-> +static char outfile[MAX_PATH];
->  
->  static pthread_barrier_t start_barrier;
->  static pthread_barrier_t end_barrier;
-> @@ -160,6 +164,7 @@ static void usage(int error)
->  	       "-h       --help            Print this help message\n"
->  	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
->  	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
-> +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
->  	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
->  	       "-q       --quiet           print a summary only on exit\n"
->  	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
-> @@ -169,22 +174,29 @@ static void usage(int error)
->  	exit(error);
->  }
->  
-> +enum option_value {
-> +	OPT_CHECK=1, OPT_DURATION, OPT_EQUAL, OPT_HELP, OPT_LOOPS,
-> +	OPT_MAXERR, OPT_OUTPUT, OPT_PRIO, OPT_QUIET, OPT_RUN_TIME,
-> +	OPT_SLEEP_TIME
-> +};
-> +
->  static void parse_options(int argc, char *argv[])
->  {
->  	for (;;) {
->  		int option_index = 0;
->  		/** Options for getopt */
->  		static struct option long_options[] = {
-> -			{"check",	no_argument,		NULL, 'c'},
-> -			{"duration",	required_argument,	NULL, 'D'},
-> -			{"equal",	no_argument,		NULL, 'e'},
-> -			{"help",	no_argument,		NULL, 'h'},
-> -			{"loops",	required_argument,	NULL, 'l'},
-> -			{"maxerr",	required_argument,	NULL, 'm'},
-> -			{"prio",	required_argument,	NULL, 'p'},
-> -			{"quiet",	no_argument,		NULL, 'q'},
-> -			{"run-time",	required_argument,	NULL, 'r'},
-> -			{"sleep-time",	required_argument,	NULL, 's'},
-> +			{"check",	no_argument,		NULL, OPT_CHECK},
-> +			{"duration",	required_argument,	NULL, OPT_DURATION},
-> +			{"equal",	no_argument,		NULL, OPT_EQUAL},
-> +			{"help",	no_argument,		NULL, OPT_HELP},
-> +			{"loops",	required_argument,	NULL, OPT_LOOPS},
-> +			{"maxerr",	required_argument,	NULL, OPT_MAXERR},
-> +			{"output",	required_argument,      NULL, OPT_OUTPUT },
-> +			{"prio",	required_argument,	NULL, OPT_PRIO},
-> +			{"quiet",	no_argument,		NULL, OPT_QUIET},
-> +			{"run-time",	required_argument,	NULL, OPT_RUN_TIME},
-> +			{"sleep-time",	required_argument,	NULL, OPT_SLEEP_TIME},
->  			{NULL, 0, NULL, 0}
+>  /* Process commandline options */
+> @@ -618,13 +620,14 @@ static void parse_options(int argc, char *argv[])
+>  			{ "workload",	required_argument,	NULL, OPT_WORKLOAD },
+>  			{ "workload-mem", required_argument,	NULL, OPT_WORKLOAD_MEM },
+>  			{ "bias",	no_argument,		NULL, OPT_BIAS },
+> +			{ "quiet",	no_argument,		NULL, OPT_QUIET },
+>  			{ "single-preheat", no_argument,	NULL, OPT_SINGLE_PREHEAT },
+>  			{ "output",	required_argument,      NULL, OPT_OUTPUT },
+>  			{ "zero-omit",	no_argument,		NULL, OPT_ZERO_OMIT },
+>  			{ "version",	no_argument,		NULL, OPT_VERSION },
+>  			{ NULL, 0, NULL, 0 },
 >  		};
->  		int c = getopt_long(argc, argv, "cD:ehl:m:p:qr:s:",
-> @@ -192,21 +204,50 @@ static void parse_options(int argc, char *argv[])
->  		if (c == -1)
+> -		int i, c = getopt_long(argc, argv, "b:Bc:C:D:f:hm:sw:T:vz",
+> +		int i, c = getopt_long(argc, argv, "b:Bc:C:D:f:hm:qsw:T:vz",
+>  				       options, &option_index);
+>  		long ncores;
+>  
+> @@ -707,6 +710,10 @@ static void parse_options(int argc, char *argv[])
+>  				exit(1);
+>  			}
 >  			break;
->  		switch (c) {
-> -		case 'c': check = 1; break;
-> -		case 'D': duration = parse_time_string(optarg); break;
-> -		case 'e': equal = 1; break;
-> +		case OPT_CHECK:
-> +		case 'c':
-> +			check = 1;
-> +			break;
-> +		case OPT_DURATION:
-> +		case 'D':
-> +			duration = parse_time_string(optarg);
-> +			break;
-> +		case OPT_EQUAL:
-> +		case 'e':
-> +			equal = 1;
-> +			break;
-> +		case OPT_HELP:
->  		case '?':
->  		case 'h':
->  			usage(0);
->  			break;
-> -		case 'l': nr_runs = atoi(optarg); break;
-> -		case 'm': max_err = usec2nano(atoi(optarg)); break;
-> -		case 'p': prio_start = atoi(optarg); break;
-> -		case 'q': quiet = 1; break;
-> +		case OPT_LOOPS:
-> +		case 'l':
-> +			nr_runs = atoi(optarg);
-> +			break;
-> +		case OPT_MAXERR:
-> +		case 'm':
-> +			max_err = usec2nano(atoi(optarg));
-> +			break;
-> +		case OPT_OUTPUT:
-> +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
-> +			break;
-> +		case OPT_PRIO:
-> +		case 'p':
-> +			prio_start = atoi(optarg);
-> +			break;
 > +		case OPT_QUIET:
 > +		case 'q':
-> +			quiet = 1;
+> +			g.quiet = 1;
 > +			break;
-> +		case OPT_RUN_TIME:
->  		case 'r':
->  			run_interval = atoi(optarg);
->  			break;
-> -		case 's': interval = atoi(optarg); break;
-> +		case OPT_SLEEP_TIME:
-> +		case 's':
-> +			interval = atoi(optarg);
-> +			break;
->  		default:
->  			usage(1);
->  		}
-> @@ -313,6 +354,44 @@ static void print_results(void)
->  	}
->  }
+>  		case OPT_SINGLE_PREHEAT:
+>  		case 's':
+>  			/*
+> @@ -825,9 +832,11 @@ int main(int argc, char *argv[])
+>  	signal(SIGINT, handle_alarm);
+>  	signal(SIGTERM, handle_alarm);
 >  
-> +static void write_stats(FILE *f, void *data)
-> +{
-> +	int i;
-> +	int t;
-> +	unsigned long long tasks_max[nr_tasks];
-> +	unsigned long long tasks_min[nr_tasks];
-> +	unsigned long long tasks_avg[nr_tasks];
-> +
-> +	memset(tasks_max, 0, sizeof(tasks_max[0])*nr_tasks);
-> +	memset(tasks_min, 0xff, sizeof(tasks_min[0])*nr_tasks);
-> +	memset(tasks_avg, 0, sizeof(tasks_avg[0])*nr_tasks);
-> +
-> +	for (i=0; i < nr_runs; i++) {
-> +		for (t=0; t < nr_tasks; t++) {
-> +			unsigned long long itv = intervals[i][t];
-> +
-> +			if (tasks_max[t] < itv)
-> +				tasks_max[t] = itv;
-> +			if (tasks_min[t] > itv)
-> +				tasks_min[t] = itv;
-> +			tasks_avg[t] += itv;
-> +		}
-> +	}
-> +
-> +	fprintf(f, "  \"num_threads\": %d,\n", nr_tasks);
-> +	fprintf(f, "  \"thread\": {\n");
-> +	for (i = 0; i < nr_tasks; i++) {
-> +		fprintf(f, "    \"%u\": {\n", i);
-> +		fprintf(f, "      \"prio\": %d,\n", calc_prio(i));
-> +		fprintf(f, "      \"min\": %lld,\n", nano2usec(tasks_min[i]));
-> +		fprintf(f, "      \"avg\": %lld,\n", nano2usec(tasks_avg[i]) / nr_runs);
-> +		fprintf(f, "      \"max\": %lld,\n", nano2usec(tasks_max[i]));
-> +		fprintf(f, "      \"total\": %lld\n", nano2usec(tasks_avg[i]));
-> +		fprintf(f, "    }%s\n", i == nr_tasks - 1 ? "" : ",");
-> +	}
-> +	fprintf(f, "  }\n");
-> +}
-> +
->  static unsigned long busy_loop(unsigned long long start_time)
->  {
->  	unsigned long long time;
-> @@ -582,6 +661,9 @@ int main (int argc, char **argv)
+> -	dump_globals();
+> +	if (!g.quiet)
+> +		dump_globals();
 >  
->  	print_results();
+> -	printf("Pre-heat for 1 seconds...\n");
+> +	if (!g.quiet)
+> +		printf("Pre-heat for 1 seconds...\n");
+>  	if (g.single_preheat_thread)
+>  		g.n_threads = 1;
+>  	else
+> @@ -835,12 +844,14 @@ int main(int argc, char *argv[])
+>  	run_expt(threads, 1);
+>  	record_bias(threads);
 >  
-> +	if (strlen(outfile) != 0)
-> +		rt_write_json(outfile, argc, argv, write_stats, NULL);
-> +
->  	if (stop) {
->  		/*
->  		 * We use this test in bash while loops
+> -	printf("Test starts...\n");
+> +	if (!g.quiet)
+> +		printf("Test starts...\n");
+>  	/* Reset n_threads to always run on all the cores */
+>  	g.n_threads = g.n_threads_total;
+>  	run_expt(threads, g.runtime);
+>  
+> -	printf("Test completed.\n\n");
+> +	if (!g.quiet)
+> +		printf("Test completed.\n\n");
+>  
+>  	write_summary(threads);
+>  
 > -- 
 > 2.30.0
 > 
