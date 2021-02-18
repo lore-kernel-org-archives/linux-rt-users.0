@@ -4,85 +4,74 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 450F3C433E0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 491FCC433E6
 	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:56:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 20CA164EBD
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:56:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EA6A664E85
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:56:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232852AbhBRP4a (ORCPT
+        id S232647AbhBRP4X (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 18 Feb 2021 10:56:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48524 "EHLO
+        Thu, 18 Feb 2021 10:56:23 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38266 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229871AbhBROmH (ORCPT
+        with ESMTP id S230213AbhBRNxz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 Feb 2021 09:42:07 -0500
+        Thu, 18 Feb 2021 08:53:55 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 671C8C061574
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Feb 2021 06:41:07 -0800 (PST)
-Date:   Thu, 18 Feb 2021 15:41:04 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 05CE6C061574
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Feb 2021 05:52:57 -0800 (PST)
+Date:   Thu, 18 Feb 2021 14:52:55 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1613659265;
+        s=2020; t=1613656376;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=vvlcmK/q8BcjSaVPU41LnT2BVlukwuU8d3x6yFlswnY=;
-        b=BzmKXpBQdpme/ThIFks5GwQO9B5xoYfld53FQ3a0NnotQkKjlmn2yNZ0pAIwwPyr9pX3oe
-        UYqZnoZVLovNU2BR8wnUcCY9+gUNIsdzbAHQeNVwynPHg7cyoJ9MZpaSZ8NTj6q4I60vYG
-        YKQaZI+54fexVfbX0Yro8miwDHydHM+HGZhnrsWg4IY1cvFy1r87cIXMYscPhe+kovnBEs
-        uRt8RKiVmMIeQqc6yBpV8CRN758zfGprLbUxZ10lVmrRv6+zA2B2HuaMmkjMIzazKZdNlz
-        lz9VSxGLDRRb7nkgelfxcLTvn3PPFc2PLkdoQpjfLU+Akrwc4Vf/Ujg2oajZUQ==
+        bh=5rwZDZq6JbhLzfcsph/UV/R7B6qr3B24wf7pRxdhoa4=;
+        b=W8QuaMvSV95vmOcj07/QCLFT84jV4SajjlukLbCJCTyh8/wVcFQeC9f3xUx17r7TsgpxCh
+        /M0iksfk7w95WJrxsTMSwD0o3zPA+kdaMrsMXlUhc0t0xEUDTtMRLu+7I+07x03wMRFfa5
+        LWWIyIswaUPxoNmDbVuw8UbiQ0sRVf4MyoO+OIF0C9JvVsVvTVBX3cbDF9GOIzHiQ26YpY
+        aSGQM5TuIX0Y/ZAIwhmj8ug6vlghRRUJPCz8l8K446Q6CLxQcTmAYlg1dyGd15Bzs8shCI
+        uRCsGvodwh31hY+kC1plJnECrxIo8MrVEruK7VUIqTsluiz9/JBVYPSDwBaO1g==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1613659265;
+        s=2020e; t=1613656376;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=vvlcmK/q8BcjSaVPU41LnT2BVlukwuU8d3x6yFlswnY=;
-        b=hgpptCaCfdjwjH4c1e5VqvQay9ovU+753m55ns+eSLDRZCt4Bn1pLoNUDWUTcRRYRf83Sc
-        BqukidWJ2sDjJwDQ==
+        bh=5rwZDZq6JbhLzfcsph/UV/R7B6qr3B24wf7pRxdhoa4=;
+        b=UQW38D2E1190xXZP801OwilOeK8JgBbv1b2c3DgkQNNGtwUKz2tP4ybwL7xUuMaBqjc+RH
+        QdouAkKrlYsZEIAA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Udo van den Heuvel <udovdh@xs4all.nl>
-Cc:     RT <linux-rt-users@vger.kernel.org>
-Subject: Re: rcu_preempt detected stalls [5.9.1-rt]
-Message-ID: <20210218144104.rfpcpzp6rhvks5vj@linutronix.de>
-References: <47623850-fb85-aac0-9d44-85d7914a321f@xs4all.nl>
+To:     "angelo@kernel-space.org" <angelo@kernel-space.org>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: arm64: imx8qxp: irq 464: nobody cared (try booting with the
+ "irqpoll" option)
+Message-ID: <20210218135255.yucnl4xi6x7uqctg@linutronix.de>
+References: <da64238e-dc1e-c479-44e2-0ea18d9577b8@kernel-space.org>
+ <20210208122918.wyvto62kwyevfkyx@linutronix.de>
+ <d2d772dc-57f0-39f0-abec-caa8297d3e32@kernel-space.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <47623850-fb85-aac0-9d44-85d7914a321f@xs4all.nl>
+In-Reply-To: <d2d772dc-57f0-39f0-abec-caa8297d3e32@kernel-space.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-01-31 10:13:30 [+0100], Udo van den Heuvel wrote:
-> Hello,
-Hi,
+On 2021-02-09 20:08:53 [+0100], angelo@kernel-space.org wrote:
+> I finally found a solution, replacing drivers/irqchip/irq-imx-intmux.c
+> code with mainline. It seems quite reliable, i cannot replicate
+> the issue anymore. Any comment is welcome.
 
-> Found these loggings in journal, what happened here?
+so this uses a raw_spinlock_t and switched to a level handler. This
+looks *way* better.
 
-09:20:24 RCU stalled on CPU0. 
-09:21:08 Networking was not able to send packets.
+You could ping the people in charge of the vendor tree and ask them if
+they could please please fix their broken driver.
 
-The RCU part indicates that something is blocking the CPU. The network
-part might be related (it is not bound to a CPU but if the IRQ-thread is
-blocked then packets won't be sent/acked).
-
-09:21:19 systemd's watchdog killed tor because it was not responding.
-
-Most of tor's threads were waiting in pthread_cond_wait().
-One thread was in getsockopt(sock, SOL_TCP, TCP_INFO, ,,). This could
-block/sleep in lock_sock_fast() but shouldn't since all threads were
-idle. Unless a packet would be received at that time. tor does not
-changes its priority so everything should run at SCHED_OTHER.
-
-tor got killed in the end and you did not attach any more rcu warnings
-so it appears that CPU0 is no longer blocked. I don't know what blocked
-the CPU for the time.
-
-> Kind regards,
-> Udo
+> Regards,
 
 Sebastian
