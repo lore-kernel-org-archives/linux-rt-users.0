@@ -2,68 +2,72 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.3 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38EB6C433E6
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:57:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D108C433E0
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:57:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DA4E764E3E
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:57:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2527C64E85
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Feb 2021 15:57:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232869AbhBRP4v (ORCPT
+        id S232874AbhBRP5M (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 18 Feb 2021 10:56:51 -0500
-Received: from lb3-smtp-cloud7.xs4all.net ([194.109.24.31]:50963 "EHLO
-        lb3-smtp-cloud7.xs4all.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230074AbhBROul (ORCPT
+        Thu, 18 Feb 2021 10:57:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51822 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231661AbhBRO5S (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 Feb 2021 09:50:41 -0500
-Received: from cust-57f2be97 ([IPv6:fc0c:c196:c6c4:fdf1:aa47:ab6:e251:d2a8])
-        by smtp-cloud7.xs4all.net with ESMTPSA
-        id CkaDlOJJw5126CkaElmWFj; Thu, 18 Feb 2021 15:47:11 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=xs4all.nl; s=s2;
-        t=1613659631; bh=ob5nB1Gnrx5P2p/SsJpYVYnPyu7QJYTf5zK6EWEay8o=;
-        h=Subject:To:From:Message-ID:Date:MIME-Version:Content-Type:From:
-         Subject;
-        b=tc7Iomi1IkcgTBUCz3JsKAJequzWSowmVyDYTMJs4tm6ggloZLzAZIXGixJ43bc9V
-         dm2WCEiHzEI4FQgBDbaq9K7VLj2mOrCrnd1AcNpPTe9gel5uVCoyrxy5nNOjCBJMKF
-         io0SitH+ZO6dGQ64wqiMDKVI6NJeeSFiFs4HLtWWot3Cg3d4s9idXo4sFtoyjBYI75
-         N4QqA8NvwAAoSk4dGoxnYEuEZdVyREO3yYlvjzU3Y8kBByUrCgwrTXJOWZp5wSJtqH
-         AVQRaRB2uFcCde2UZxfDPrN9F7oHofpyQpyH0zkzWL7nUdWhFKXAfvGDlRB1q4RR6U
-         bvoBIXJMvSNiQ==
-Subject: Re: rcu_preempt detected stalls [5.9.1-rt]
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Thu, 18 Feb 2021 09:57:18 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BCDA8C061574
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Feb 2021 06:56:34 -0800 (PST)
+Date:   Thu, 18 Feb 2021 15:56:31 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1613660192;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=+vanZ5/HCqWqz2RCATQaJvIEXpYBpGkC/CkCeRrL/xE=;
+        b=WRXO/e1WY9Op0btFIXR+4n8dW/XiIK8tZKVAXXl4yflysdVx7Kj/PhpiY23TyKx+8NBMXo
+        7VGHdciZMV75coB/FY63U8qEFQbT6mNsYvsFK9f5+nl2rK6XzygTAByuNC7PkHFqX5EPdz
+        RbN8p0Aeued/1Wp7bVWZV2iN/yzDDG0l/lIhXM3/M5DFjM3RleZ/4xX3EiNuRatAsfKKEe
+        WBnLmQ7DQc8ElipuBmKZ7PvwGV/62oxiPIjEb3OVUDtxhUYi9Jy2zd1pBcII05Wzgi5yMd
+        cFHT5DosgZYsfV1b+/izfmC7We45Y2TuaaebgB97Q4vsxhVpOrsPdoZY8OxQfw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1613660192;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=+vanZ5/HCqWqz2RCATQaJvIEXpYBpGkC/CkCeRrL/xE=;
+        b=2mdqrSH31oKAUYov5trHg3aG+8CGjrklXMv+TqCUA9S5K37FXe8SMZTNm+GA1b4xYS+hlr
+        JSFvtUv7GZVE9hCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Udo van den Heuvel <udovdh@xs4all.nl>
 Cc:     RT <linux-rt-users@vger.kernel.org>
+Subject: Re: rcu_preempt detected stalls [5.9.1-rt]
+Message-ID: <20210218145631.kiwwk6qhoatlkqde@linutronix.de>
 References: <47623850-fb85-aac0-9d44-85d7914a321f@xs4all.nl>
  <20210218144104.rfpcpzp6rhvks5vj@linutronix.de>
  <20210218144334.fnohryfmztsywxly@linutronix.de>
-From:   Udo van den Heuvel <udovdh@xs4all.nl>
-Organization: hierzo
-Message-ID: <a625ec08-730b-d09e-28f4-ba11febe6493@xs4all.nl>
-Date:   Thu, 18 Feb 2021 15:47:09 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.7.0
+ <a625ec08-730b-d09e-28f4-ba11febe6493@xs4all.nl>
 MIME-Version: 1.0
-In-Reply-To: <20210218144334.fnohryfmztsywxly@linutronix.de>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-CMAE-Envelope: MS4xfBg9rDqpbQaMNCk5rnt0nsLn760a03xNF/lNopJFbJLkuWKP+4Ok9NtrnwHq1ItSnnqnT0gwSUfzI9463+jqvVt062Duteij575tK0MRwaEJHPdoev6h
- qfXw0x/i2zrmi4rokjvBbBL4da0MInJbjDkX6grs9Um5zPZZQ/+12lPQMzlRTP33kfXDffBfGK8z3DaI6CkuKkzEt7tznsVpzZGxjcnlUOlhxOL04CJCIwMp
- I9Rz4yL2u/TNb1wKWjnomsmmiI0E8GEtV16BMM/3woEqo947efUxAY3onxtzHk75
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <a625ec08-730b-d09e-28f4-ba11febe6493@xs4all.nl>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 18-02-2021 15:43, Sebastian Andrzej Siewior wrote:
-> I just remembered that you had a box named vuurmuur running ntpsec.
-> There was something I didn't fully debug but I had some hints where to
-> look. Any chance that box has also ntpsec running?
+On 2021-02-18 15:47:09 [+0100], Udo van den Heuvel wrote:
+> 100% yes.
 
-100% yes.
+So I guess I should look into this then=E2=80=A6
 
-Udo
+> Udo
 
+Sebastian
