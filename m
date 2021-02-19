@@ -6,46 +6,54 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C28DAC433DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:16:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5FD6CC433DB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:21:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9E40E64D92
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:16:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0F41564E44
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:21:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230121AbhBSQQr (ORCPT
+        id S229767AbhBSQVC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 19 Feb 2021 11:16:47 -0500
-Received: from mx2.suse.de ([195.135.220.15]:47538 "EHLO mx2.suse.de"
+        Fri, 19 Feb 2021 11:21:02 -0500
+Received: from mx2.suse.de ([195.135.220.15]:49046 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230110AbhBSQQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 19 Feb 2021 11:16:45 -0500
+        id S229734AbhBSQVB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 19 Feb 2021 11:21:01 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id C9216AC6E;
-        Fri, 19 Feb 2021 16:16:02 +0000 (UTC)
-Date:   Fri, 19 Feb 2021 17:16:02 +0100
+        by mx2.suse.de (Postfix) with ESMTP id 17DE5AC6E;
+        Fri, 19 Feb 2021 16:20:20 +0000 (UTC)
+Date:   Fri, 19 Feb 2021 17:20:19 +0100
 From:   Daniel Wagner <dwagner@suse.de>
-To:     Christian Eggers <ceggers@arri.de>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>,
+To:     Peter Xu <peterx@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org,
         Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 v2 01/20] cyclictest: Always use libnuma
-Message-ID: <20210219161602.j7w6gwk7rao5u3ek@beryllium.lan>
-References: <20201218161843.1764-1-dwagner@suse.de>
- <20210219145422.lvodigbgtymr5ajc@beryllium.lan>
- <20210219151717.4cqc6lhrsocebw3p@linutronix.de>
- <2570027.mvXUDI8C0e@n95hx1g2>
+        John Kacur <jkacur@redhat.com>,
+        Pradipta Kumar Sahoo <psahoo@redhat.com>,
+        Mike Stowell <mstowell@redhat.com>
+Subject: Re: [PATCH] oslat: Fix --cpu-list won't allow to schedule on all
+ possible cores
+Message-ID: <20210219162019.giw2yy25vjuzc56f@beryllium.lan>
+References: <20210218192729.116427-1-peterx@redhat.com>
+ <20210219081611.xsugonlz7dl4zhvx@beryllium.lan>
+ <20210219152417.GE6669@xz-x1>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <2570027.mvXUDI8C0e@n95hx1g2>
+In-Reply-To: <20210219152417.GE6669@xz-x1>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Feb 19, 2021 at 04:21:46PM +0100, Christian Eggers wrote:
-> CONFIG_NUMA is not available on ARM32:
+On Fri, Feb 19, 2021 at 10:24:17AM -0500, Peter Xu wrote:
+> Yes I explicitly avoided touching parse_cpumask because I don't want to change
+> behavior of other tools if I'm not confident with that.  Would above two
+> patches fix oslat too (which I didn't check)?  If so, I'll be fine to have this
+> patch dropped.  Otherwise I tend to prefer fixing oslat first.  We can further
+> rework the common code, but if existing tools are fine, then I don't think it's
+> a bugfix, so no need to rush.  While I'll count this patch as a real bugfix, so
+> I'd hope we could consider merging it earlier.
 
-libnuma is not happy if the kernel doesn't have the config
-option. Well, in this case we just revert the patch I suppose.
+As I said, I would really appreciated if all tools behave the same
+way. Having oslat be special is going to be pain in the long run. Just
+update parse_cpumask, it's not that difficult :)
