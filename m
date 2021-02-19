@@ -2,123 +2,115 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E7A9C433E9
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:40:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB852C433E6
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:41:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0382B64EAF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:40:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9B7EA64E60
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 16:41:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229913AbhBSQko (ORCPT
+        id S230186AbhBSQlE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 19 Feb 2021 11:40:44 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43260 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230174AbhBSQkj (ORCPT
+        Fri, 19 Feb 2021 11:41:04 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:36647 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229947AbhBSQlA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 19 Feb 2021 11:40:39 -0500
-Received: from mail-qt1-x836.google.com (mail-qt1-x836.google.com [IPv6:2607:f8b0:4864:20::836])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 740E2C061574
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 08:39:59 -0800 (PST)
-Received: by mail-qt1-x836.google.com with SMTP id z6so3794877qts.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 08:39:59 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :mime-version;
-        bh=sht7JQee7p8IAhhZyx41Qdaglmcmlo7v9coc/wZ3pXI=;
-        b=svQTl9kfPrTUTkm9+3jU/k7F/F+4+RNnoQ0YYKQN1aEXR++wLRARCU8doDLvjFEekQ
-         Yzv1/TcOm8VDkhhVX0+MiW/i11GOlfcyh9B/FdhqiCfvEDKSIJ6VvdqZ8A0CIM/xVF/P
-         LJC224W2fz82I1Udr3xZVEbzD3Hk3nkr+DBPbqFOz5CApqG+dDbnGWhMqARbXOP92I9+
-         UMELofmiUQH0Pt61HT9bVGHZ24nyGNYmkbFIWheA/eoUxydZz9sqdiIOcion4GJ0lzG0
-         5MWZhfs/Fu8l80Crse0IbmKT1vT/e9wApodued8ZzGv4a/Escr83p3uODFtO5aEEK3Yj
-         DPUA==
+        Fri, 19 Feb 2021 11:41:00 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1613752774;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=wfduUC+PAUbNGKV9ed1nYdOucl4vC6YthALNnfO4m7o=;
+        b=SROdWD9M6lKva4KWDvp0jqMSboixMwzBefm4DouNA649B61x3wJbh34KwRrIYA2jAfQmTE
+        G/gVylP1lMDqqLMCoHKScfmlq6oykIztsDVV+EZMO2285wsNEkI3wCKXNo5v6jF+8foSC5
+        Cs4OMU/HAaTJwzfXnUIKAV4j44Ourpw=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-36-RNcSMBw6Pa265wTED0UB-A-1; Fri, 19 Feb 2021 11:39:32 -0500
+X-MC-Unique: RNcSMBw6Pa265wTED0UB-A-1
+Received: by mail-qv1-f69.google.com with SMTP id j6so3519548qvo.11
+        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 08:39:32 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:mime-version;
-        bh=sht7JQee7p8IAhhZyx41Qdaglmcmlo7v9coc/wZ3pXI=;
-        b=YLoPyDiVWgjpsYidCsDSDiWbhxTKfztGZLk0kWDUCNA4jKK8cKE/n2a5IxYrraH3qI
-         s5uJ7ALcEVUCjb1TVcj2i7JSeluODTDVUND9KSp4CK4EJmzpYJtnxHNy9m6GzXb3/d2E
-         cEROsCgDan2UP00DQJmczIjbHHGwdVPEYMHjWUOIq/Iq0nvF0zUgTz63y+KPy3RmgajU
-         R/KPTkjDIsMlt79AWvEHR9Sd5klT6LCoFUm/yOw52YSAxsTsfRriXMaZEWV4iHBscP5a
-         DoRRtPiXsCipanp+Pp+k51WF2/XTcSpgexRsuauzQH5eW557UUwIDlmCrzic9078ENqC
-         TJdw==
-X-Gm-Message-State: AOAM5301ACUUNn/KiInS3M1UBRmU5nUQaOKxALGlwyhwBNAzpbri6K7v
-        LqrNs1K8I6oxre2dZW7wA6sglC6ABHa6MoWD
-X-Google-Smtp-Source: ABdhPJzaHzVwNFWBo0yC/ttXe1Je0ehgJOT+OR7MNyXwxxjDfv52h25VkaJU6y9aXxzvbR/EiN62gg==
-X-Received: by 2002:a05:622a:42:: with SMTP id y2mr9478086qtw.186.1613752798709;
-        Fri, 19 Feb 2021 08:39:58 -0800 (PST)
-Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id k8sm6602095qkk.81.2021.02.19.08.39.57
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=wfduUC+PAUbNGKV9ed1nYdOucl4vC6YthALNnfO4m7o=;
+        b=oo/5sBR3zJB9z7y6SlID5jjEFiypwAlnoGm95ZGA+ZPXnAPxMqcpYfuYPksxlkMr06
+         UTJ6iGWSUe2rJWzZmtJAdlXTzVd1nmGv+gxiRI/H88EzGKJB0W8TDBOUhM0PzGekeXcM
+         v6kxTkpmL+PwkwXizOkYvWqEm0Aq1eM7CXwnwOpiKKi4KiRhXpMDNNO1nlpNsy2mQddN
+         /l51YTV9YEAKfppjT3hf0SgFaQVey4tU9KBjU3mbdiBLGTQKC62Leb3NqevZYgwm+4rl
+         J5wKHnr7tx4n0ksFODb1f/DYzBfKglRJQJFdbZPEfo6jL0n0biYOpycQWb84Hs8ypojA
+         eZnQ==
+X-Gm-Message-State: AOAM533mHIenzpZogAIF/iEqgJpg4xkJUOjeEskZrquaAjMYkqUaE86N
+        AUwPMeBPIJPgTlF7s3uoHgeY+DTk6qZEgb8FqxRFjsPitPdq0EpTS6QC0/RmtdH3grPD8dxnDsc
+        UqSwn+MWl94FTh2l1nKAypZyW5aQ=
+X-Received: by 2002:a0c:c193:: with SMTP id n19mr2265553qvh.3.1613752772287;
+        Fri, 19 Feb 2021 08:39:32 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJzNDdWBPvA3RSAa0bkwaYUTBE5SrYfW70K03Ng/P1+fMil7EAjy1o1Z14CX8rRiLyAoHvRCMg==
+X-Received: by 2002:a0c:c193:: with SMTP id n19mr2265535qvh.3.1613752772117;
+        Fri, 19 Feb 2021 08:39:32 -0800 (PST)
+Received: from xz-x1 (bras-vprn-toroon474qw-lp130-25-174-95-95-253.dsl.bell.ca. [174.95.95.253])
+        by smtp.gmail.com with ESMTPSA id z28sm6789773qkj.72.2021.02.19.08.39.31
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Feb 2021 08:39:58 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 19 Feb 2021 11:39:57 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-To:     Christian Eggers <ceggers@arri.de>
-cc:     Daniel Wagner <dwagner@suse.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>,
+        Fri, 19 Feb 2021 08:39:31 -0800 (PST)
+Date:   Fri, 19 Feb 2021 11:39:30 -0500
+From:   Peter Xu <peterx@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+Cc:     linux-rt-users@vger.kernel.org,
         Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests v2 v2 01/20] cyclictest: Always use libnuma
-In-Reply-To: <4628381.31r3eYUQgx@n95hx1g2>
-Message-ID: <5c58b78a-7f63-88f3-2c3e-1c99e4b15890@redhat.com>
-References: <20201218161843.1764-1-dwagner@suse.de> <20210219161602.j7w6gwk7rao5u3ek@beryllium.lan> <f06c535-f340-4b51-2c0-369d88d39236@redhat.com> <4628381.31r3eYUQgx@n95hx1g2>
+        John Kacur <jkacur@redhat.com>,
+        Pradipta Kumar Sahoo <psahoo@redhat.com>,
+        Mike Stowell <mstowell@redhat.com>
+Subject: Re: [PATCH] oslat: Fix --cpu-list won't allow to schedule on all
+ possible cores
+Message-ID: <20210219163930.GG6669@xz-x1>
+References: <20210218192729.116427-1-peterx@redhat.com>
+ <20210219081611.xsugonlz7dl4zhvx@beryllium.lan>
+ <20210219152417.GE6669@xz-x1>
+ <20210219162019.giw2yy25vjuzc56f@beryllium.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20210219162019.giw2yy25vjuzc56f@beryllium.lan>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Daniel,
 
-
-On Fri, 19 Feb 2021, Christian Eggers wrote:
-
-> On Friday, 19 February 2021, 17:21:21 CET, John Kacur wrote:
-> > 
-> > On Fri, 19 Feb 2021, Daniel Wagner wrote:
-> > 
-> > > On Fri, Feb 19, 2021 at 04:21:46PM +0100, Christian Eggers wrote:
-> > > > CONFIG_NUMA is not available on ARM32:
-> > > 
-> > > libnuma is not happy if the kernel doesn't have the config
-> > > option. Well, in this case we just revert the patch I suppose.
-> > > 
-> > 
-> > Yeah, I'm not happy with this.
-> > To be sure Daniel did a lot of good work cleaning-up some of the numa 
-> > calls and cleaning up the somewhat artificial smp / numa divide.
-> > 
-> > That work needs to continue, but I want the ability to build cyclictest
-> > without NUMA, and that also means we need the small helpers.
+On Fri, Feb 19, 2021 at 05:20:19PM +0100, Daniel Wagner wrote:
+> On Fri, Feb 19, 2021 at 10:24:17AM -0500, Peter Xu wrote:
+> > Yes I explicitly avoided touching parse_cpumask because I don't want to change
+> > behavior of other tools if I'm not confident with that.  Would above two
+> > patches fix oslat too (which I didn't check)?  If so, I'll be fine to have this
+> > patch dropped.  Otherwise I tend to prefer fixing oslat first.  We can further
+> > rework the common code, but if existing tools are fine, then I don't think it's
+> > a bugfix, so no need to rush.  While I'll count this patch as a real bugfix, so
+> > I'd hope we could consider merging it earlier.
 > 
-> Just for clarification: Does this mean that cyclictest shall link against
-> libnuma (libnuma can be built on ARM without problems), but not call it
-> functions at runtime?
-> 
-> From the numa.h:
-> 
-> /* NUMA support available. If this returns a negative value all other function
->    in this library are undefined. */
-> int numa_available(void);
-> 
-> regards,
-> Christian
+> As I said, I would really appreciated if all tools behave the same
+> way. Having oslat be special is going to be pain in the long run. Just
+> update parse_cpumask, it's not that difficult :)
 
-We used to be able to build cyclictest without libnuma.
-The small helpers that wrapped the calls to numa contained versions
-without numa calls. Most people did have libnuma, so we were requiring 
-libnuma say on x86_64.
+Oslat is broken now after the numa rework.  Frankly I'm surprised it's broken
+so quickly with just a few commits and actually with no new feature at all but
+pure cleanups.  Again I still appreciate all your work on this but I don't
+really appreciate a lot for having it broken..
 
-I think at some point before Daniel starting removing the wrappers this
-support was broken.
+Now I tried to fix it but it seems you don't really like my fix.
 
-So, I mean the ability to build cyclitest without libnuma at least
-on some architectures.
+Would you propose yours instead?  I would be more than glad if your version is
+better then I'm happy to drop mine.  Otherwise I'll still prefer to have this
+patch merged to unbreak it first.
 
-John
+Thanks,
+
+-- 
+Peter Xu
+
