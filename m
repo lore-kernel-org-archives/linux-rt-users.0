@@ -7,56 +7,56 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26911C433DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:48:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DC1CC433E6
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:49:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DBAB964E92
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:48:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E697164E92
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:48:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229763AbhBSSs6 (ORCPT
+        id S229808AbhBSSs7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 19 Feb 2021 13:48:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42486 "EHLO
+        Fri, 19 Feb 2021 13:48:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42488 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229555AbhBSSs5 (ORCPT
+        with ESMTP id S229658AbhBSSs6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 19 Feb 2021 13:48:57 -0500
-Received: from mail-qk1-x72d.google.com (mail-qk1-x72d.google.com [IPv6:2607:f8b0:4864:20::72d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3E3FBC061756
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 10:48:17 -0800 (PST)
-Received: by mail-qk1-x72d.google.com with SMTP id m144so6484743qke.10
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 10:48:17 -0800 (PST)
+        Fri, 19 Feb 2021 13:48:58 -0500
+Received: from mail-qk1-x72e.google.com (mail-qk1-x72e.google.com [IPv6:2607:f8b0:4864:20::72e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0C2F0C061786
+        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 10:48:18 -0800 (PST)
+Received: by mail-qk1-x72e.google.com with SMTP id w19so6470318qki.13
+        for <linux-rt-users@vger.kernel.org>; Fri, 19 Feb 2021 10:48:18 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=RgnhYIQMPQxwiAAU1IQs8Oj0PgY8gIQvuDFaFx9DTuc=;
-        b=o8QzdDGGR/qBv5aqw9JvjNoG6FZcHKAarbwIekKfnS3mg9GCfxfZFIpw3M8Req/G8L
-         ZWcQIlnCUc+92/NZCHit5Abw0wTW5/7bFqhXPU/clJ7MkzRTuAa3R6WN2M/Srv42ob12
-         xSRUNv+rRMQBfpUQv/FaJRLHTGbipH9AlQqUalpwk2xK3VFxkpt118fADygXqtoqzCcE
-         eoiHuFd5CDjj6cKvOYqIYhoHMeklMFu9bAsIPe4X8SCx4521GHfVl/RtE0KXKfJgKXoX
-         yLjodarFXYsGvD5O0D9kdalT42Q+FOtT2GGLRX0A74g/arwRURqtfTtfqL/8ebMur8MW
-         hdUQ==
+        bh=I9oaEFLK9ItedpdRdsl1/lWXoR4qNWVepHhW4k1saQ8=;
+        b=s/BY5t/rWiC3/sDAu/5iJBDK+8FY6E/6JxLtxOlSOxwB9J1WzYdb+KEaDwaexMdDwo
+         W/E4poB5UuYbMbJGGHf459Dxe/0GeObVxIkeiAlonvp8knXJQLj6TYdKe4w7HKvcS6a0
+         MOWOuPxC44fGnWZ3dLjVsT8mxxnFbjlNoSrcp8QBsB2GUq05XngT1duwVLoluX6m+XqN
+         GjVHkTF4lwsVgRzl6yGMXkDF/8SL1vozle7ymb/nQJDxj0m/bvPi//6hnQKuytJ2bv/g
+         JUUenXY0GGDxXNoAgQsgtp97FMwHdI2CCYy3f5+OfpTd+gS4BPVcLboVrzFKkME/nPn0
+         hpLQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=RgnhYIQMPQxwiAAU1IQs8Oj0PgY8gIQvuDFaFx9DTuc=;
-        b=AyUVkfhw/Gz9OMalyqiDo8qPNKIMiIBRQV8+bwohmy8Zpf8mSes01E4tmLahz7tIrl
-         +PmQKx3L+fopy3BgEyESZjht+kCwCgne+FRW08/VhgggBG+b07dlWfJHyERWWAOH6A7Q
-         iCpKzoEXVhf3L+vPx1O80SEgp7JFHJkIwn+PaLlfgVH5rQDrCQ9eG5uAx651wCWPGmoh
-         szPvxcxq2n3Mlur1CqtpitXwouQdmRMug6Kph1uWEzhPnSAPvRAAE9Q7c3orf62W/seg
-         9HsFo35eP+dcWcM28laK6a1WrhP6Rnh8ihfrTQJ4na3JyvZj/EhXlRH3yCAxDeZwXJjT
-         /KRA==
-X-Gm-Message-State: AOAM531Lhsy1CBU8iG/u/hMoJ3frDDYiztcJ9QFkGZ3bnVwzOOb1dAaS
-        2btvmUPbA8ayJxKLlKZvg1Ovv/zvq1vtFBgN
-X-Google-Smtp-Source: ABdhPJwxNxA9X5YnepSWz4IUdi2fkPUpNZGw2hVmIelOgb0CHcmN87OdXzWoQKo2L9KPkuX3QB3z1Q==
-X-Received: by 2002:a37:9a84:: with SMTP id c126mr10533515qke.399.1613760496274;
-        Fri, 19 Feb 2021 10:48:16 -0800 (PST)
+        bh=I9oaEFLK9ItedpdRdsl1/lWXoR4qNWVepHhW4k1saQ8=;
+        b=aWQ1vTU5YL2tIdDncSV8e5aLLwniTe4Hdlarl6g/suG5c0iNbW8FPPO4rgFUh/Kq33
+         05O6xe/0GfHSP3xnutqLhwPrjcT/f7qW59QaXq/WIbqusUJMVmYiWRCVq1e3m6FiF9u0
+         DZLIR+sImhxWvUZz+JFoVVD/lY3YpPHM4WCWHIesoLkHi/IvUO3ci2uJLkdw0/cj0I7U
+         t2COKTenHLVX67ZNgVKXrFZ7gOQ7nULaVUk8mNjI9kqHX4jYb9+l4LhHWbC2nlDowUiE
+         lTloueXx7JrKj+hDw3prr+pjYedlI8qvcrivWJ8sYCTwv3IMUhiqJvLtRK2NIh4iEGsR
+         CpKg==
+X-Gm-Message-State: AOAM530xwFmNQ7dqLJ2R6MIpDvDIpf2hm2vQNqeKyc0aLZ5hriwwr+31
+        rTc7gaV7cXI/aO9GilskJbvWHxKMENIL2fKK
+X-Google-Smtp-Source: ABdhPJwTvZGTqUPEQlPnasfUKJMpJ4KzKuqnQjsTav1fZDNxglp+hmzFmRPxFeFeyvJ8sKbIjKXrQQ==
+X-Received: by 2002:a37:9c48:: with SMTP id f69mr11132134qke.114.1613760497138;
+        Fri, 19 Feb 2021 10:48:17 -0800 (PST)
 Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id s136sm6831647qka.106.2021.02.19.10.48.15
+        by smtp.gmail.com with ESMTPSA id s136sm6831647qka.106.2021.02.19.10.48.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 19 Feb 2021 10:48:15 -0800 (PST)
+        Fri, 19 Feb 2021 10:48:16 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>,
@@ -66,9 +66,9 @@ Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Clark Williams <williams@redhat.com>,
         Christian Eggers <ceggers@arri.de>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/3] Revert "cyclictest: Use affinity_mask for steering thread placement"
-Date:   Fri, 19 Feb 2021 13:47:59 -0500
-Message-Id: <20210219184801.13905-2-jkacur@redhat.com>
+Subject: [PATCH 2/3] Revert "cyclictest: Always use libnuma"
+Date:   Fri, 19 Feb 2021 13:48:00 -0500
+Message-Id: <20210219184801.13905-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20210219184801.13905-1-jkacur@redhat.com>
 References: <20210219184801.13905-1-jkacur@redhat.com>
@@ -78,120 +78,140 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This reverts commit 8305e65092deeaf900366c6250d4b319f6c274b6.
+This reverts commit 512d2b74561d5bdab15cacb7b1931cd0aa01d6b5.
 
-Reverting to put back the code that allows us to run on machines
-without libnuma.
-
-However, there were some ideas in this patch that were not directly
-related to that and could be revisited.
+libnuma is a buildtime requirement but not a runtime environment
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.c | 38 ++++++++++++++++++++++++++++++-------
- 1 file changed, 31 insertions(+), 7 deletions(-)
+ src/cyclictest/cyclictest.c | 63 ++++++++++++++++++++-----------------
+ src/cyclictest/rt_numa.h    |  2 ++
+ 2 files changed, 36 insertions(+), 29 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index c3d45f3ae31b..e2753db39c02 100644
+index e2753db39c02..3e31937f7088 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -892,6 +892,7 @@ static int interval = DEFAULT_INTERVAL;
- static int distance = -1;
- static struct bitmask *affinity_mask = NULL;
- static int smp = 0;
-+static int setaffinity = AFFINITY_UNSPECIFIED;
- 
- static int clocksources[] = {
- 	CLOCK_MONOTONIC,
-@@ -1019,12 +1020,22 @@ static void process_options(int argc, char *argv[], int max_cpus)
+@@ -1018,6 +1018,9 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 			/* smp sets AFFINITY_USEALL in OPT_SMP */
+ 			if (smp)
  				break;
++			if (numa_initialize())
++				fatal("Couldn't initialize libnuma");
++			numa = 1;
  			if (optarg) {
  				parse_cpumask(optarg, max_cpus, &affinity_mask);
-+				setaffinity = AFFINITY_SPECIFIED;
- 			} else if (optind < argc &&
- 				   (atoi(argv[optind]) ||
- 				    argv[optind][0] == '0' ||
- 				    argv[optind][0] == '!')) {
- 				parse_cpumask(argv[optind], max_cpus, &affinity_mask);
-+				setaffinity = AFFINITY_SPECIFIED;
-+			} else {
-+				setaffinity = AFFINITY_USEALL;
- 			}
-+
-+			if (setaffinity == AFFINITY_SPECIFIED && !affinity_mask)
-+				display_help(1);
-+			if (verbose)
-+				printf("Using %u cpus.\n",
-+					numa_bitmask_weight(affinity_mask));
- 			break;
- 		case 'A':
- 		case OPT_ALIGNED:
-@@ -1117,6 +1128,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 				setaffinity = AFFINITY_SPECIFIED;
+@@ -1126,6 +1129,8 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 			use_system = MODE_SYS_OFFSET; break;
+ 		case 'S':
  		case OPT_SMP: /* SMP testing */
++			if (numa)
++				fatal("numa and smp options are mutually exclusive\n");
  			smp = 1;
  			num_threads = -1; /* update after parsing */
-+			setaffinity = AFFINITY_USEALL;
- 			break;
- 		case 't':
- 		case OPT_THREADS:
-@@ -1185,16 +1197,23 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 		use_nanosleep = MODE_CLOCK_NANOSLEEP;
+ 			setaffinity = AFFINITY_USEALL;
+@@ -1199,17 +1204,16 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 
+ 	/* if smp wasn't requested, test for numa automatically */
+ 	if (!smp) {
++		if (numa_initialize())
++			fatal("Couldn't initialize libnuma");
++		numa = 1;
+ 		if (setaffinity == AFFINITY_UNSPECIFIED)
+ 			setaffinity = AFFINITY_USEALL;
  	}
  
-+	/* if smp wasn't requested, test for numa automatically */
-+	if (!smp) {
-+		if (setaffinity == AFFINITY_UNSPECIFIED)
-+			setaffinity = AFFINITY_USEALL;
-+	}
-+
- 	if (option_affinity && smp) {
- 		warn("-a ignored due to smp mode\n");
- 		if (affinity_mask) {
- 			numa_bitmask_free(affinity_mask);
- 			affinity_mask = NULL;
- 		}
-+		setaffinity = AFFINITY_USEALL;
+-	if (option_affinity && smp) {
+-		warn("-a ignored due to smp mode\n");
+-		if (affinity_mask) {
+-			numa_bitmask_free(affinity_mask);
+-			affinity_mask = NULL;
+-		}
+-		setaffinity = AFFINITY_USEALL;
++	if (option_affinity) {
++		if (smp)
++			warn("-a ignored due to smp mode\n");
  	}
  
  	if (smi) {
--		if (affinity_mask)
-+		if (setaffinity == AFFINITY_UNSPECIFIED)
- 			fatal("SMI counter relies on thread affinity\n");
- 
- 		if (!has_smi_counter())
-@@ -1777,7 +1796,7 @@ int main(int argc, char **argv)
- 	}
- 
- 	/* Restrict the main pid to the affinity specified by the user */
--	if (affinity_mask) {
-+	if (affinity_mask != NULL) {
- 		int res;
- 
- 		errno = 0;
-@@ -1940,13 +1959,18 @@ int main(int argc, char **argv)
- 		if (status != 0)
- 			fatal("error from pthread_attr_init for thread %d: %s\n", i, strerror(status));
- 
--		if (affinity_mask)
-+		switch (setaffinity) {
-+		case AFFINITY_UNSPECIFIED: cpu = -1; break;
-+		case AFFINITY_SPECIFIED:
- 			cpu = cpu_for_thread_sp(i, max_cpus, affinity_mask);
--		else
-+			if (verbose)
-+				printf("Thread %d using cpu %d.\n", i, cpu);
-+			break;
-+		case AFFINITY_USEALL:
- 			cpu = cpu_for_thread_ua(i, max_cpus);
+@@ -1778,12 +1782,6 @@ int main(int argc, char **argv)
+ 	int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+ 	int i, ret = -1;
+ 	int status;
+-	void *stack;
+-	void *currstk;
+-	size_t stksize;
 -
--		if (verbose)
--			printf("Thread %d using cpu %d.\n", i, cpu);
-+			break;
-+		default: cpu = -1;
+-	if (numa_initialize())
+-		fatal("Couldn't initialize libnuma");
+ 
+ 	process_options(argc, argv, max_cpus);
+ 
+@@ -1972,27 +1970,34 @@ int main(int argc, char **argv)
+ 		default: cpu = -1;
+ 		}
+ 
+-		/* find the memory node associated with the cpu i */
+-		node = rt_numa_numa_node_of_cpu(cpu);
++		node = -1;
++		if (numa) {
++			void *stack;
++			void *currstk;
++			size_t stksize;
+ 
+-		/* get the stack size set for this thread */
+-		if (pthread_attr_getstack(&attr, &currstk, &stksize))
+-			fatal("failed to get stack size for thread %d\n", i);
++			/* find the memory node associated with the cpu i */
++			node = rt_numa_numa_node_of_cpu(cpu);
+ 
+-		/* if the stack size is zero, set a default */
+-		if (stksize == 0)
+-			stksize = PTHREAD_STACK_MIN * 2;
++			/* get the stack size set for this thread */
++			if (pthread_attr_getstack(&attr, &currstk, &stksize))
++				fatal("failed to get stack size for thread %d\n", i);
+ 
+-		/*  allocate memory for a stack on appropriate node */
+-		stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
++			/* if the stack size is zero, set a default */
++			if (stksize == 0)
++				stksize = PTHREAD_STACK_MIN * 2;
+ 
+-		/* touch the stack pages to pre-fault them in */
+-		memset(stack, 0, stksize);
++			/*  allocate memory for a stack on appropriate node */
++			stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
+ 
+-		/* set the thread's stack */
+-		if (pthread_attr_setstack(&attr, stack, stksize))
+-			fatal("failed to set stack addr for thread %d to 0x%x\n",
+-				i, stack+stksize);
++			/* touch the stack pages to pre-fault them in */
++			memset(stack, 0, stksize);
++
++			/* set the thread's stack */
++			if (pthread_attr_setstack(&attr, stack, stksize))
++				fatal("failed to set stack addr for thread %d to 0x%x\n",
++				      i, stack+stksize);
 +		}
  
- 		/* find the memory node associated with the cpu i */
- 		node = rt_numa_numa_node_of_cpu(cpu);
+ 		/* allocate the thread's parameter block  */
+ 		parameters[i] = par = threadalloc(sizeof(struct thread_param), node);
+diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+index 87f5d3b66458..4cbd979c21e8 100644
+--- a/src/cyclictest/rt_numa.h
++++ b/src/cyclictest/rt_numa.h
+@@ -13,6 +13,8 @@
+ #include "rt-utils.h"
+ #include "rt-error.h"
+ 
++static int numa = 0;
++
+ #include <numa.h>
+ 
+ static void *
 -- 
 2.26.2
 
