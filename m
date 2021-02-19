@@ -4,48 +4,51 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A450C433DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:39:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D438C433DB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:40:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3F18164E54
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:39:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EA1FA64DFD
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Feb 2021 18:40:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229649AbhBSSja (ORCPT
+        id S229845AbhBSSkC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 19 Feb 2021 13:39:30 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:60084 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229587AbhBSSj2 (ORCPT
+        Fri, 19 Feb 2021 13:40:02 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40544 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229874AbhBSSjt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 19 Feb 2021 13:39:28 -0500
-Date:   Fri, 19 Feb 2021 19:38:41 +0100
+        Fri, 19 Feb 2021 13:39:49 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 57D21C061756;
+        Fri, 19 Feb 2021 10:39:09 -0800 (PST)
+Date:   Fri, 19 Feb 2021 19:39:06 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1613759923;
+        s=2020; t=1613759947;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=yb2wb0IRqJhBYDS2lG/yl/eNphx6yS/FLLqjc3s/9QE=;
-        b=14BWR8UgO93I4sinrhGrzOJ4jkydKN5J4+VeEAyHI7HxxCx2nQ8NxqyYpmSQQ8a4BwLpJK
-        oQn44a0fZBEOFABiC9XkYluDh9OaBqbG3Du3WvSitdgM1J0ZdXHr4iBcTSRs/09/ki02KP
-        NmqAsze3bbc9EndjYDAqHEChsWqsDAOz3rJ8XDa1z9bSkOoEnXQ8EEpcRnKrwq1Tk9bKNU
-        ro234fO9YYGvpbVp4xWhnUf+Twu/1nJzhmvQB+NnxWQPRjaaEF6V6+hIMH2s54mp+U0EsX
-        ywNU7+OfxMdc2gk1SyBtDseOJolC+T1gwxuCSCh33IHjv2WdosoZHB1eGbAMiA==
+        bh=FN9KTm8kqJgr6sr8vQcLr+IF24JYwI4nL3B0B39sbpM=;
+        b=a9Np/vbED3Qii9CZx11G5bfauI9Az45+Jm8VR8wCU2Kc+iwcqYN/vyOnQU2oAvvS/6LC01
+        SR2VCg/3Hd5KPYTAC0S2HVCvvVKRtfd9VETYxGzwBoVNxKIgfjb3xxKZfGa6ofULawZhbP
+        09h1l05g3q++cT0k+cMkxJlAHfgaxLmoXRAdycVPySigMKZ4G4dn0PgmOu0Dr9lwv+gdNs
+        GqC4eRdsdjvS22AFR4CsOsMY+3HN7AN1ISJ4uKQHBnMpqG5Kob3Mf04NOzBWBkHhMg/TBV
+        DyES6TnerAqKSSpm6IRgsVw1Y/U13/yx+Sp4nQ9iaZlaj0rue79CqtUrdC/LNg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1613759923;
+        s=2020e; t=1613759947;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=yb2wb0IRqJhBYDS2lG/yl/eNphx6yS/FLLqjc3s/9QE=;
-        b=eclwYUvQgbkJVen9s6tYZ/ERcNPbDnRF9bKFcoU9lUovL1GivL++waU9dKmaSZBVgGaMkz
-        Iywg/FnFFUvzyNCg==
+        bh=FN9KTm8kqJgr6sr8vQcLr+IF24JYwI4nL3B0B39sbpM=;
+        b=1QVvPQDk+nL/7udDp44PGV4/9zvRCuJzqRGCzHsXzfyj3ehbdaYN19ZpA+yjDlxs35whJK
+        tUEuift52C+foRCg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Thomas Gleixner <tglx@linutronix.de>
 Cc:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.10.17-rt32
-Message-ID: <20210219183841.2h4yszbb4xm5jspu@linutronix.de>
+Subject: [ANNOUNCE] v5.11-rt7
+Message-ID: <20210219183906.jnarg5uyyhmbtelh@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
@@ -55,13 +58,13 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Dear RT folks!
 
-I'm pleased to announce the v5.10.17-rt32 patch set. 
+I'm pleased to announce the v5.11-rt7 patch set. 
 
-Changes since v5.10.17-rt31:
+Changes since v5.11-rt6:
 
-  - Due to tracing rework, the 'L' marker (for need resched lazy) got
-    lost and is now back.
-
+  - PowerPC could fail to compile due to an unused variable which is
+    only visible with PREEMPT_RT enabled.
+ 
   - Update John printk patch.
     With the update I can strike
       kmsg dumpers expecting not to be called in parallel can clobber
@@ -73,21 +76,21 @@ Known issues
      - kdb/kgdb can easily deadlock.
      - netconsole triggers WARN.
 
-The delta patch against v5.10.17-rt31 is appended below and can be found here:
+The delta patch against v5.11-rt6 is appended below and can be found here:
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.17-rt31-rt32.patch.xz
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/incr/patch-5.11-rt6-rt7.patch.xz
 
 You can get this release via the git tree at:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.10.17-rt32
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.11-rt7
 
-The RT patch against v5.10.17 can be found here:
+The RT patch against v5.11 can be found here:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.17-rt32.patch.xz
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patch-5.11-rt7.patch.xz
 
 The split quilt queue is available at:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patches-5.10.17-rt32.tar.xz
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patches-5.11-rt7.tar.xz
 
 Sebastian
 
@@ -132,6 +135,26 @@ index 532f226377831..1ef55f4b389a2 100644
  				     oops_data, oops_data_sz, &text_len);
  		err_type = ERR_TYPE_KERNEL_PANIC;
  		oops_hdr->version = cpu_to_be16(OOPS_HDR_VERSION);
+diff --git a/arch/powerpc/mm/mem.c b/arch/powerpc/mm/mem.c
+index afab328d08874..d6c3f0b79f1d1 100644
+--- a/arch/powerpc/mm/mem.c
++++ b/arch/powerpc/mm/mem.c
+@@ -54,7 +54,6 @@
+ 
+ #include <mm/mmu_decl.h>
+ 
+-static DEFINE_MUTEX(linear_mapping_mutex);
+ unsigned long long memory_limit;
+ bool init_mem_is_free;
+ 
+@@ -72,6 +71,7 @@ pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
+ EXPORT_SYMBOL(phys_mem_access_prot);
+ 
+ #ifdef CONFIG_MEMORY_HOTPLUG
++static DEFINE_MUTEX(linear_mapping_mutex);
+ 
+ #ifdef CONFIG_NUMA
+ int memory_add_physaddr_to_nid(u64 start)
 diff --git a/arch/powerpc/platforms/powernv/opal-kmsg.c b/arch/powerpc/platforms/powernv/opal-kmsg.c
 index 6c3bc4b4da983..ec862846bc82c 100644
 --- a/arch/powerpc/platforms/powernv/opal-kmsg.c
@@ -147,7 +170,7 @@ index 6c3bc4b4da983..ec862846bc82c 100644
  	/*
  	 * Outside of a panic context the pollers will continue to run,
 diff --git a/arch/powerpc/xmon/xmon.c b/arch/powerpc/xmon/xmon.c
-index 5559edf36756c..d62b8e053d4c8 100644
+index dcd817ca2edfd..f51367a3b2318 100644
 --- a/arch/powerpc/xmon/xmon.c
 +++ b/arch/powerpc/xmon/xmon.c
 @@ -3005,7 +3005,7 @@ print_address(unsigned long addr)
@@ -172,16 +195,17 @@ index 5559edf36756c..d62b8e053d4c8 100644
  		printf("%s", buf);
  	}
 diff --git a/arch/um/kernel/kmsg_dump.c b/arch/um/kernel/kmsg_dump.c
-index e4abac6c9727c..173999422ed84 100644
+index 6516ef1f82745..deab9b56b51fd 100644
 --- a/arch/um/kernel/kmsg_dump.c
 +++ b/arch/um/kernel/kmsg_dump.c
-@@ -1,15 +1,19 @@
+@@ -1,5 +1,6 @@
  // SPDX-License-Identifier: GPL-2.0
  #include <linux/kmsg_dump.h>
 +#include <linux/spinlock.h>
  #include <linux/console.h>
+ #include <linux/string.h>
  #include <shared/init.h>
- #include <shared/kern.h>
+@@ -7,10 +8,13 @@
  #include <os.h>
  
  static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
@@ -196,7 +220,7 @@ index e4abac6c9727c..173999422ed84 100644
  	size_t len = 0;
  
  	/* only dump kmsg when no console is available */
-@@ -24,11 +28,16 @@ static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
+@@ -29,11 +33,16 @@ static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
  	if (con)
  		return;
  
@@ -215,10 +239,10 @@ index e4abac6c9727c..173999422ed84 100644
  
  static struct kmsg_dumper kmsg_dumper = {
 diff --git a/drivers/hv/vmbus_drv.c b/drivers/hv/vmbus_drv.c
-index a4769419828dd..d0763ea99ded4 100644
+index ae50f69a3eaf7..e25ffe09400aa 100644
 --- a/drivers/hv/vmbus_drv.c
 +++ b/drivers/hv/vmbus_drv.c
-@@ -1362,7 +1362,8 @@ static void vmbus_isr(void)
+@@ -1365,7 +1365,8 @@ static void vmbus_isr(void)
   * buffer and call into Hyper-V to transfer the data.
   */
  static void hv_kmsg_dump(struct kmsg_dumper *dumper,
@@ -228,7 +252,7 @@ index a4769419828dd..d0763ea99ded4 100644
  {
  	size_t bytes_written;
  	phys_addr_t panic_pa;
-@@ -1377,7 +1378,7 @@ static void hv_kmsg_dump(struct kmsg_dumper *dumper,
+@@ -1380,7 +1381,7 @@ static void hv_kmsg_dump(struct kmsg_dumper *dumper,
  	 * Write dump contents to the page. No need to synchronize; panic should
  	 * be single-threaded.
  	 */
@@ -261,7 +285,7 @@ index 774970bfcf859..6bc2c728adb73 100644
  
  	if (reason != KMSG_DUMP_OOPS) {
 diff --git a/fs/pstore/platform.c b/fs/pstore/platform.c
-index 36714df37d5d8..a939559b0c9a7 100644
+index 32f64abc277c3..7906d0a2fb8ab 100644
 --- a/fs/pstore/platform.c
 +++ b/fs/pstore/platform.c
 @@ -383,7 +383,8 @@ void pstore_record_init(struct pstore_record *record,
@@ -434,7 +458,7 @@ index 930ac1b25ec7c..dbf1d126ac5e1 100644
  			skip--;
  			continue;
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 15ea9139538f5..f56fd2e34cc73 100644
+index 58401eda45530..a5fc854977bb1 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
 @@ -371,7 +371,9 @@ static struct latched_seq clear_seq = {
@@ -466,7 +490,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  {
  	unsigned int seq;
  	unsigned int idx;
-@@ -718,9 +720,9 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
+@@ -717,9 +719,9 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
  			goto out;
  	}
  
@@ -478,7 +502,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  		ret = -EPIPE;
  		goto out;
  	}
-@@ -791,6 +793,7 @@ static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
+@@ -790,6 +792,7 @@ static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
  static __poll_t devkmsg_poll(struct file *file, poll_table *wait)
  {
  	struct devkmsg_user *user = file->private_data;
@@ -486,7 +510,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  	__poll_t ret = 0;
  
  	if (!user)
-@@ -798,9 +801,9 @@ static __poll_t devkmsg_poll(struct file *file, poll_table *wait)
+@@ -797,9 +800,9 @@ static __poll_t devkmsg_poll(struct file *file, poll_table *wait)
  
  	poll_wait(file, &log_wait, wait);
  
@@ -498,7 +522,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  			ret = EPOLLIN|EPOLLRDNORM|EPOLLERR|EPOLLPRI;
  		else
  			ret = EPOLLIN|EPOLLRDNORM;
-@@ -1390,6 +1393,50 @@ static size_t get_record_print_text_size(struct printk_info *info,
+@@ -1389,6 +1392,50 @@ static size_t get_record_print_text_size(struct printk_info *info,
  	return ((prefix_len * line_count) + info->text_len + 1);
  }
  
@@ -549,7 +573,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  static int syslog_print(char __user *buf, int size)
  {
  	struct printk_info info;
-@@ -1461,10 +1508,7 @@ static int syslog_print(char __user *buf, int size)
+@@ -1460,10 +1507,7 @@ static int syslog_print(char __user *buf, int size)
  static int syslog_print_all(char __user *buf, int size, bool clear)
  {
  	struct printk_info info;
@@ -560,7 +584,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  	char *text;
  	int len = 0;
  	u64 seq;
-@@ -1475,28 +1519,12 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
+@@ -1474,28 +1518,12 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
  		return -ENOMEM;
  
  	time = printk_time;
@@ -591,7 +615,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  
  	prb_rec_init_rd(&r, &info, text, CONSOLE_LOG_MAX);
  
-@@ -1537,12 +1565,24 @@ static void syslog_clear(void)
+@@ -1536,12 +1564,24 @@ static void syslog_clear(void)
  	spin_unlock_irq(&syslog_lock);
  }
  
@@ -617,7 +641,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  
  	error = check_syslog_permissions(type, source);
  	if (error)
-@@ -1561,13 +1601,8 @@ int do_syslog(int type, char __user *buf, int len, int source)
+@@ -1560,13 +1600,8 @@ int do_syslog(int type, char __user *buf, int len, int source)
  		if (!access_ok(buf, len))
  			return -EFAULT;
  
@@ -632,7 +656,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  		if (error)
  			return error;
  		error = syslog_print(buf, len);
-@@ -1616,9 +1651,14 @@ int do_syslog(int type, char __user *buf, int len, int source)
+@@ -1615,9 +1650,14 @@ int do_syslog(int type, char __user *buf, int len, int source)
  	/* Number of chars in the log buffer */
  	case SYSLOG_ACTION_SIZE_UNREAD:
  		spin_lock_irq(&syslog_lock);
@@ -649,7 +673,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  			syslog_partial = 0;
  		}
  		if (source == SYSLOG_FROM_PROC) {
-@@ -1630,7 +1670,6 @@ int do_syslog(int type, char __user *buf, int len, int source)
+@@ -1629,7 +1669,6 @@ int do_syslog(int type, char __user *buf, int len, int source)
  			error = prb_next_seq(prb) - syslog_seq;
  		} else {
  			bool time = syslog_partial ? syslog_time : printk_time;
@@ -657,7 +681,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  			unsigned int line_count;
  			u64 seq;
  
-@@ -1711,17 +1750,6 @@ static bool call_sync_console_driver(struct console *con, const char *text, size
+@@ -1710,17 +1749,6 @@ static bool call_sync_console_driver(struct console *con, const char *text, size
  	return true;
  }
  
@@ -675,7 +699,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  static bool have_atomic_console(void)
  {
  	struct console *con;
-@@ -1769,14 +1797,6 @@ static void print_sync_until(struct console *con, u64 seq)
+@@ -1768,14 +1796,6 @@ static void print_sync_until(struct console *con, u64 seq)
  	unsigned int flags;
  	u64 printk_seq;
  
@@ -690,7 +714,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  	console_atomic_lock(&flags);
  	for (;;) {
  		printk_seq = atomic64_read(&con->printk_seq);
-@@ -2041,8 +2061,14 @@ static int vprintk_store(int facility, int level,
+@@ -2040,8 +2060,14 @@ static int vprintk_store(int facility, int level,
  	ret = text_len + trunc_msg_len;
  out:
  	/* only the kernel may perform synchronous printing */
@@ -707,7 +731,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  
  	printk_exit_irqrestore(irqflags);
  	return ret;
-@@ -2267,21 +2293,15 @@ static void console_try_thread(struct console *con)
+@@ -2266,21 +2292,15 @@ static void console_try_thread(struct console *con)
  	 * The printing threads have not been started yet. If this console
  	 * can print synchronously, print all unprinted messages.
  	 */
@@ -729,7 +753,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  #define console_try_thread(con)
  
  #endif /* CONFIG_PRINTK */
-@@ -3191,6 +3211,7 @@ EXPORT_SYMBOL_GPL(kmsg_dump_reason_str);
+@@ -3195,6 +3215,7 @@ EXPORT_SYMBOL_GPL(kmsg_dump_reason_str);
   */
  void kmsg_dump(enum kmsg_dump_reason reason)
  {
@@ -737,7 +761,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  	struct kmsg_dumper *dumper;
  
  	if (!oops_in_progress) {
-@@ -3214,7 +3235,6 @@ void kmsg_dump(enum kmsg_dump_reason reason)
+@@ -3218,7 +3239,6 @@ void kmsg_dump(enum kmsg_dump_reason reason)
  	rcu_read_lock();
  	list_for_each_entry_rcu(dumper, &dump_list, list) {
  		enum kmsg_dump_reason max_reason = dumper->max_reason;
@@ -745,7 +769,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  
  		/*
  		 * If client has not provided a specific max_reason, default
-@@ -3227,25 +3247,19 @@ void kmsg_dump(enum kmsg_dump_reason reason)
+@@ -3231,25 +3251,19 @@ void kmsg_dump(enum kmsg_dump_reason reason)
  		if (reason > max_reason)
  			continue;
  
@@ -778,7 +802,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
   * @syslog: include the "<4>" prefixes
   * @line: buffer to copy the line to
   * @size: maximum size of the buffer
-@@ -3259,11 +3273,9 @@ void kmsg_dump(enum kmsg_dump_reason reason)
+@@ -3263,11 +3277,9 @@ void kmsg_dump(enum kmsg_dump_reason reason)
   *
   * A return value of FALSE indicates that there are no more records to
   * read.
@@ -792,7 +816,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  {
  	struct printk_info info;
  	unsigned int line_count;
-@@ -3273,16 +3285,16 @@ bool kmsg_dump_get_line_nolock(struct kmsg_dumper *dumper, bool syslog,
+@@ -3277,16 +3289,16 @@ bool kmsg_dump_get_line_nolock(struct kmsg_dumper *dumper, bool syslog,
  
  	prb_rec_init_rd(&r, &info, line, size);
  
@@ -812,7 +836,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  					 &info, &line_count)) {
  			goto out;
  		}
-@@ -3291,41 +3303,18 @@ bool kmsg_dump_get_line_nolock(struct kmsg_dumper *dumper, bool syslog,
+@@ -3295,41 +3307,18 @@ bool kmsg_dump_get_line_nolock(struct kmsg_dumper *dumper, bool syslog,
  
  	}
  
@@ -856,7 +880,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
   * @syslog: include the "<4>" prefixes
   * @buf: buffer to copy the line to
   * @size: maximum size of the buffer
-@@ -3342,11 +3331,10 @@ EXPORT_SYMBOL_GPL(kmsg_dump_get_line);
+@@ -3346,11 +3335,10 @@ EXPORT_SYMBOL_GPL(kmsg_dump_get_line);
   * A return value of FALSE indicates that there are no more records to
   * read.
   */
@@ -869,7 +893,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  	struct printk_record r;
  	u64 seq;
  	u64 next_seq;
-@@ -3354,49 +3342,40 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
+@@ -3358,49 +3346,40 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
  	bool ret = false;
  	bool time = printk_time;
  
@@ -934,7 +958,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  			break;
  
  		len += record_print_text(&r, syslog, time);
-@@ -3405,7 +3384,7 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
+@@ -3409,7 +3388,7 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
  		prb_rec_init_rd(&r, &info, buf + len, size - len);
  	}
  
@@ -943,7 +967,7 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  	ret = true;
  out:
  	if (len_out)
-@@ -3414,33 +3393,18 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
+@@ -3418,33 +3397,18 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
  }
  EXPORT_SYMBOL_GPL(kmsg_dump_get_buffer);
  
@@ -981,26 +1005,10 @@ index 15ea9139538f5..f56fd2e34cc73 100644
  }
  EXPORT_SYMBOL_GPL(kmsg_dump_rewind);
  
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index e47bbb00e5438..24166ab833048 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2606,6 +2606,11 @@ unsigned int tracing_gen_ctx_irq_test(unsigned int irqs_status)
- 	if (test_preempt_need_resched())
- 		trace_flags |= TRACE_FLAG_PREEMPT_RESCHED;
- 
-+#ifdef CONFIG_PREEMPT_LAZY
-+	if (need_resched_lazy())
-+		trace_flags |= TRACE_FLAG_NEED_RESCHED_LAZY;
-+#endif
-+
- 	return (pc & 0xff) |
- 		(migration_disable_value() & 0xff) << 8 |
- 		(preempt_lazy_count() & 0xff) << 16 |
 diff --git a/localversion-rt b/localversion-rt
-index a68b4337d4ce1..ce6a482618d5a 100644
+index 8fc605d806670..045478966e9f1 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt31
-+-rt32
+--rt6
++-rt7
