@@ -6,84 +6,86 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33BF6C433DB
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 10:15:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0169FC433E9
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 13:45:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A184464E25
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 10:15:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A588F64E83
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 13:45:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230491AbhBVKPb (ORCPT
+        id S231239AbhBVNpZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 22 Feb 2021 05:15:31 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60666 "EHLO
+        Mon, 22 Feb 2021 08:45:25 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48938 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231127AbhBVKOl (ORCPT
+        with ESMTP id S231341AbhBVNn3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 Feb 2021 05:14:41 -0500
+        Mon, 22 Feb 2021 08:43:29 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DCA01C061786
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 02:14:00 -0800 (PST)
-Date:   Mon, 22 Feb 2021 11:13:58 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D4E73C061793
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 05:41:17 -0800 (PST)
+Date:   Mon, 22 Feb 2021 14:41:15 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1613988839;
+        s=2020; t=1614001276;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=g1FhF8KlR+JaQg0qnIxhyjFdWHf7x04D7JO7o5ul/qA=;
-        b=MEuYaBCHIe2yehlZXrIYZ7OJiVZzMU4qGUF1RM3VLobQ007kg2+T1cR98JxmR26sVc6HAO
-        /kyApDPe1c3rQgPaMTkG06dmuBZCtOH+udY/rxEPlcEZgQtpKRJqlMwmrKySYqwzwVVULA
-        dkS0sIDECYOWTjki7tAF7WbYhD6M1fuI4rYv8K6YxAnBZrQALCA+Ef2MzJEXVVvEGp/vvn
-        vBMuOSJamk6FQoreRRwVMTn0KYYjflvtTIa867diyI+x+8g6zU76g3BzeDV9qNARe221ZB
-        /YpbCrI3W1Qub/yKWm+NfhRJf7pzvxnCOaabCF57a26Bvh0TPVAQVXPqMZEZDg==
+        bh=XSyCI6ylSKkHhPSprKBzulW3xfHdDkiezgdIZTsdYFU=;
+        b=fQbK4wb43PgsM17c3xOxBdDuqe21TF5OuLC/NAF7Tk9Fs7r2j09GU/cqxk9EGCJojZtlHL
+        rciPew3VcG7R7GI4age858pqVUYhTsL/SVq60Mzdskwh1ETJF743JipvhHOpfOnqkyHob4
+        mE6bWh9skI1nlmNWR1uwU/1us5mA4LL0ppzYorfAsiwqhfeY3x5G+brPZ44cW5TaQfnHuO
+        eSCajLNWwnBoskRvDY0GSGedIa60hyKojWNv9GCp5l/wxpBSbhElUlKhKKVKBHyPkBIATa
+        N9XFjBaHrMsyfnb5Ew+6f37omPkjeqDdJV0/B7Q9pCkQA16hAbQ1KWwJrYXFiA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1613988839;
+        s=2020e; t=1614001276;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=g1FhF8KlR+JaQg0qnIxhyjFdWHf7x04D7JO7o5ul/qA=;
-        b=a0TlWEtfZvW6UHZQ3SLsh14o3U1WFj0ClbutD9QrJ7iKbldH8vXwkItsXHNLV1ICfS+d6P
-        wTttyaWC1c2U0hBw==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     =?utf-8?B?6bmP6bKy?= <kunpeng0891@gmail.com>
+        bh=XSyCI6ylSKkHhPSprKBzulW3xfHdDkiezgdIZTsdYFU=;
+        b=dgKrQjWCSkdOHeeeCGqc9LFxAi+DoifXFOe4+gBBCW5HQledKdghy4eXsBam0ZnW/PRZaT
+        8t6lePmifJDzSiDQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Dipen Patel <dipenp@nvidia.com>
 Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: Question about rt-patch use in arm64 kvm host and guest o
-Message-ID: <YDOD5om6XVA4gbmp@lx-t490>
-References: <CAJa5FiHcaG7EB3eAD17w_6GhZm0yqvD0Ev3DvJAU7meOG6C--g@mail.gmail.com>
- <YDNsojcMWpa2Ynsi@lx-t490>
- <CAJa5FiExdgUfpXMje0cAe_KH+0M53MunejedM1bzEKh5xnt93g@mail.gmail.com>
+Subject: Re: sync system call failure
+Message-ID: <20210222134115.pjeiszuskg5kk23n@linutronix.de>
+References: <6ed96c7e-aa40-e8d9-6330-85dc84514a81@nvidia.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAJa5FiExdgUfpXMje0cAe_KH+0M53MunejedM1bzEKh5xnt93g@mail.gmail.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <6ed96c7e-aa40-e8d9-6330-85dc84514a81@nvidia.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Feb 22, 2021 at 05:29:47PM +0800, 鹏鲲 wrote:
->
-> I have read this article carefully before, but this article focuses on
-> the x86 system.
->
+On 2021-02-21 17:46:25 [-0800], Dipen Patel wrote:
+> Hi,
+Hi,
 
-Most of the details in that article are not x86-specific.
+> I encountered below crash during the sync system call possibly coming
+> from the stress threads spawned because of the --io options which does
+=E2=80=A6
 
-> I don't know if anyone has used rt-patch successfully on arm64 kvm? Or
-> have a lot of problems with arm64 kvm?
->
+> Platform:
+> Nvidia Jetson AGX XAVIER, with 32GB eMMC 5.1 and 256 bit 32GB LPDDR4 RAM.
+>=20
+> Kernel:
+> 4.9.201-rt134
+=E2=80=A6
+> Call stack:
+>=20
+> [ 1813.814464] INFO: task stress blocked for more than 120 seconds.
+> [ 1813.814610]       Not tainted 4.9.201-rt134 #2
 
-Maybe someone on the list can jump-in and provide their experience.
+This is not a crash. It is simply an information that a task was blocked
+for quite some time (as it says).
+The important information would be:
+- does it recover
+  - does the time in seconds always increase or does it also drop
+  - does the message disappear if stress terminates.
 
-In general though, you will have to try things by yourself. Properly
-configure both the host and guest kernels for preempt_rt, monitor
-VMexits through "perf kvm" and try to minimize them, run cyclictest
-inside and outside of the guest, and see how things goes...
+- does it occur on v5.11-RT.
 
-And if this is an embedded device, you can also try Jailhouse.
-
-Good luck,
-
---
-Ahmed S. Darwish
+Sebastian
