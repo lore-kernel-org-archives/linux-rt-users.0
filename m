@@ -2,108 +2,88 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F12DDC433E6
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 09:30:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 33BF6C433DB
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 10:15:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C17A9601FE
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 09:30:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A184464E25
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Feb 2021 10:15:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230135AbhBVJao (ORCPT
+        id S230491AbhBVKPb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 22 Feb 2021 04:30:44 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51224 "EHLO
+        Mon, 22 Feb 2021 05:15:31 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60666 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230237AbhBVJaj (ORCPT
+        with ESMTP id S231127AbhBVKOl (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 Feb 2021 04:30:39 -0500
-Received: from mail-yb1-xb44.google.com (mail-yb1-xb44.google.com [IPv6:2607:f8b0:4864:20::b44])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1D379C061786
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 01:29:59 -0800 (PST)
-Received: by mail-yb1-xb44.google.com with SMTP id m9so12224377ybk.8
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 01:29:59 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :content-transfer-encoding;
-        bh=S7LR7QTgjCjjd77SprX+Hy7IecT2TgF9U9HQcfBxvLc=;
-        b=tHO36Wm9C1cFyAK5zEAYp1EqppbLZnW9wq+VCXVMIj03/YKR1hAonFJ+xpMHlnBp/H
-         lBp/kS85gPevtXEPxLmWzMr1w3WloEfIlQDBdCQ0NxvnbSeAA1XSmuM1vbvNoNmCt+hU
-         diVxUGsRj11Ico2QyY2NGxgV6MxPD6sRn1HLcm7cy2LonNt/w+a2R7//CLQIBzxlnBxX
-         6ALsFbgBVi3b12341vliRVGosnikw/eTeHWprTKmBdkx/B0SPFPwoR580Ew8YnJoRRU4
-         j/5pBZrqyn4okwXGCvP2cEuZYDFvWlR/zRI5cv+IpBYE9pwqjhHo56CTG2ilkl73HWlY
-         Syow==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:content-transfer-encoding;
-        bh=S7LR7QTgjCjjd77SprX+Hy7IecT2TgF9U9HQcfBxvLc=;
-        b=pDM2IQyGIn2LWJ0bYkaQ+NPYUU9qG4UuiRwpdSZgRE07lCLp0BYeAO9vFoX5zSREkt
-         BjYu5hlVSgvroOgNalKiuZv0SKvp/WXLa1Cs/ThGvQhmXUZQHyevi8AoEvCI+pCLbzft
-         2h8pfyMrnvv9yS85ffPwIaKAwM/c+lEyGkonq6b7O7tJI9IXe18Fk4Mf1t5JmZEmAgNh
-         SagwWZfsDQXKEHbUuWMTkG2bXCNTlvGSQFaQ31YTqNRSG4/mFON53H9lEKvFWXe/aM8Z
-         GSuin9H6qy/mwexoU/SKykl2l+FQ+99qbSV1FKs3BJ2mDLObBebxVGTyXLyGghE9j1oy
-         Gvew==
-X-Gm-Message-State: AOAM532xqpQ0z+9ZN+b6pNrqcpHPv13+kTKgH6R+WlTU6cmyudcpadzh
-        AcPomI/nrizHGPslo3gtAjKtzLXXT46lYW5YVhN9UKD+AN6YCA==
-X-Google-Smtp-Source: ABdhPJwPwE6Kn5adUkZEMAJyRIPcMVmgsraSAOCc5/7h1J5oKT+tv2/RTT1yoSwyMPKZNain0hUKPrN8jZi5OucQhDY=
-X-Received: by 2002:a25:31c2:: with SMTP id x185mr30278969ybx.93.1613986198479;
- Mon, 22 Feb 2021 01:29:58 -0800 (PST)
-MIME-Version: 1.0
+        Mon, 22 Feb 2021 05:14:41 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DCA01C061786
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 02:14:00 -0800 (PST)
+Date:   Mon, 22 Feb 2021 11:13:58 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1613988839;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=g1FhF8KlR+JaQg0qnIxhyjFdWHf7x04D7JO7o5ul/qA=;
+        b=MEuYaBCHIe2yehlZXrIYZ7OJiVZzMU4qGUF1RM3VLobQ007kg2+T1cR98JxmR26sVc6HAO
+        /kyApDPe1c3rQgPaMTkG06dmuBZCtOH+udY/rxEPlcEZgQtpKRJqlMwmrKySYqwzwVVULA
+        dkS0sIDECYOWTjki7tAF7WbYhD6M1fuI4rYv8K6YxAnBZrQALCA+Ef2MzJEXVVvEGp/vvn
+        vBMuOSJamk6FQoreRRwVMTn0KYYjflvtTIa867diyI+x+8g6zU76g3BzeDV9qNARe221ZB
+        /YpbCrI3W1Qub/yKWm+NfhRJf7pzvxnCOaabCF57a26Bvh0TPVAQVXPqMZEZDg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1613988839;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=g1FhF8KlR+JaQg0qnIxhyjFdWHf7x04D7JO7o5ul/qA=;
+        b=a0TlWEtfZvW6UHZQ3SLsh14o3U1WFj0ClbutD9QrJ7iKbldH8vXwkItsXHNLV1ICfS+d6P
+        wTttyaWC1c2U0hBw==
+From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
+To:     =?utf-8?B?6bmP6bKy?= <kunpeng0891@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: Question about rt-patch use in arm64 kvm host and guest o
+Message-ID: <YDOD5om6XVA4gbmp@lx-t490>
 References: <CAJa5FiHcaG7EB3eAD17w_6GhZm0yqvD0Ev3DvJAU7meOG6C--g@mail.gmail.com>
  <YDNsojcMWpa2Ynsi@lx-t490>
-In-Reply-To: <YDNsojcMWpa2Ynsi@lx-t490>
-From:   =?UTF-8?B?6bmP6bKy?= <kunpeng0891@gmail.com>
-Date:   Mon, 22 Feb 2021 17:29:47 +0800
-Message-ID: <CAJa5FiExdgUfpXMje0cAe_KH+0M53MunejedM1bzEKh5xnt93g@mail.gmail.com>
-Subject: Re: Question about rt-patch use in arm64 kvm host and guest o
-To:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+ <CAJa5FiExdgUfpXMje0cAe_KH+0M53MunejedM1bzEKh5xnt93g@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAJa5FiExdgUfpXMje0cAe_KH+0M53MunejedM1bzEKh5xnt93g@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Ahmed S. Darwish <a.darwish@linutronix.de> =E4=BA=8E2021=E5=B9=B42=E6=9C=88=
-22=E6=97=A5=E5=91=A8=E4=B8=80 =E4=B8=8B=E5=8D=884:34=E5=86=99=E9=81=93=EF=
-=BC=9A
+On Mon, Feb 22, 2021 at 05:29:47PM +0800, 鹏鲲 wrote:
 >
-> On Feb 22, 2021, =E9=B9=8F=E9=B2=B2 wrote:
-> > I'm trying to use rt-ptach in arm64 kvm to improve real-time performanc=
-e.
-> > I couldn=E2=80=99t find useful information on the web so I think this m=
-ail
-> > list is the most appropriate place to ask this question.
-> >
-> > Rt-patch can use in arm64 kvm host linux and guest linux ? Where can I
-> > find reference examples?
-> >
+> I have read this article carefully before, but this article focuses on
+> the x86 system.
 >
-> I've read some articles on the topic last year, and the best (by far)
-> was this one:
->
->   Realtime KVM
->   https://lwn.net/Articles/656807
->
-> It written by Bonzini, the KVM maintainer. The includes links/references
-> are also very valuable.
->
-> Good luck,
->
-> --
-> Ahmed S. Darwish
 
-Thank for your reply.
+Most of the details in that article are not x86-specific.
 
-I have read this article carefully before, but this article focuses on
-the x86 system.
-I don't know if anyone has used rt-patch successfully on arm64 kvm? Or
-have a lot of problems with arm64 kvm?
+> I don't know if anyone has used rt-patch successfully on arm64 kvm? Or
+> have a lot of problems with arm64 kvm?
+>
 
-Best,
-Kun
+Maybe someone on the list can jump-in and provide their experience.
+
+In general though, you will have to try things by yourself. Properly
+configure both the host and guest kernels for preempt_rt, monitor
+VMexits through "perf kvm" and try to minimize them, run cyclictest
+inside and outside of the guest, and see how things goes...
+
+And if this is an embedded device, you can also try Jailhouse.
+
+Good luck,
+
+--
+Ahmed S. Darwish
