@@ -8,62 +8,62 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A164FC433DB
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 27C9BC433E6
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 51BF264E4B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D727064D9A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232763AbhBWNzq (ORCPT
+        id S232892AbhBWNzv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 23 Feb 2021 08:55:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49922 "EHLO
+        Tue, 23 Feb 2021 08:55:51 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49926 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232856AbhBWNzi (ORCPT
+        with ESMTP id S232868AbhBWNzi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 23 Feb 2021 08:55:38 -0500
-Received: from mail-ed1-x530.google.com (mail-ed1-x530.google.com [IPv6:2a00:1450:4864:20::530])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A181DC061574
-        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:54:57 -0800 (PST)
-Received: by mail-ed1-x530.google.com with SMTP id n1so25996782edv.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:54:57 -0800 (PST)
+Received: from mail-ej1-x632.google.com (mail-ej1-x632.google.com [IPv6:2a00:1450:4864:20::632])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 895E2C061786
+        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:54:58 -0800 (PST)
+Received: by mail-ej1-x632.google.com with SMTP id k13so32829835ejs.10
+        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:54:58 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=gC9qbpc9HsjVGrCulcPNTEGYs7NJWyDGuJZPeAGtdhw=;
-        b=h8JBVVaW7btt5O4nPBMHnuteeWfNA2Qz/71y8hcSFsBXcPAjacvC0QJ4DdbvnLf6qS
-         nhFQyFtZn9iURppEBkulMUjlh4cooch6mByz7idp02vblyTNHKz0Qs/L5VpZGWNIIqm1
-         GJUqyffC4s/d3jRlLgKq2qNld/z5xGbfSe1mu8K7iTrRbQgGk9BK6B2Ca4KZaDEjuDfI
-         6bTWSHBYhwF56jq7/0DFD10lFF9IQuxnFuKIi9Yzr3qM8jK7GpxQZSUblNDXPZVpJyri
-         mP1j0gs33sGST9HOEKnrhJ6syHcfC6P9Y/OoWzrSjaNIlUdkwHKcgg3KJ5iub1ejM7PY
-         lALQ==
+        bh=cNs41YSSK/W5h6wt2jd73rmLp1dPJSMHUNlRfjJpemI=;
+        b=hHArW20MR3cnJ6/REVxN4XN7Ki4Yr/M6PE5iYnCCsUaa8peQrarS0Usw/eYTZ2m969
+         s4KWv/JbzvmXdjMucYn+6HyjKGX1W639RqpLhGlb9AwVEXzhO/1H285eGVr4yV4OxoFF
+         2Ez65Y1nG1tqjZDtLOvE8X5liZzXs/2LKxWpBYFgR1lX55p0+ISqkNlDekiWNhEkyHWY
+         LwtHvDbKHZNuq4RLWnqf/3NPtynhPkR5U8icoBueQ0O+9r0m2TqszLYnmPjhgSqGe752
+         0GlL1rPbp1Q7xLHjLqiWJa4cSlfhCYoIG3l7jgO8MtgsRALxMO2BP5mDWwfsZ8MKd5Oy
+         +o5A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=gC9qbpc9HsjVGrCulcPNTEGYs7NJWyDGuJZPeAGtdhw=;
-        b=QuPzvCkiTiDS1Bznu6VCOnGbBfEzv7KRqbtyFi+TnmlKLDXfD+5upkGSjqqyHz6x08
-         z1wGnrbY6qMsYBvrTk3+IHQ1JiABjfOodzBWgJPZWuRuWAIyVaayG1/o8Dg6gLrk5M7A
-         M3pVhToP9IvOCGr/uJYi7bCnBiDID+mT4xiZ0mcLH2GXc6GzLeKUYYxl7U4T2Qodi/pw
-         GaBmDmWpobYwN2pOpIkiINWV+t4HfIlPxBvbDjzNf3oJRjm2OXNNtedDi8COpkDCl5xn
-         +qkTblWQpCP9imgUWvIgISvQj5yCHQ7VDN1+TG4XY5+E2zQFpX1DeDax4jCgVVsPZcOW
-         rEkw==
-X-Gm-Message-State: AOAM531FWUJ9V7P6H9ynl55yHY8E6m2LyXZ5A9v4YVic875dxUF3pWW1
-        Ft37tXLP/dHDnOQR25sejP0=
-X-Google-Smtp-Source: ABdhPJwbHFJMKImDfJXncwKSBfX6rsHUUCeLr0x3v/UVkRAG46XtljcaAplBXS5jewM2SZRhIh2bKg==
-X-Received: by 2002:aa7:cb49:: with SMTP id w9mr24634660edt.375.1614088496292;
-        Tue, 23 Feb 2021 05:54:56 -0800 (PST)
+        bh=cNs41YSSK/W5h6wt2jd73rmLp1dPJSMHUNlRfjJpemI=;
+        b=pYsIjiaKQWOzcoyqSKJLYojJc76tBxx3s1BhPTHptonUls36rOzt29gL7qf4ypGave
+         FV4qx0QL5Rw/XhNmKfDgL7dNX6N1L5jbIJoH1ttjqWoEsZ5zKN04QAzkOI9By/fqGPFF
+         3gUFIE35sw0uuASpM/zR02smvYDSZ+vXzQm7tkput0Wbd/uI51muDODND3La261DQ660
+         q0TfeRyzzysjSENhEQXFBJ/Gi9ajbUBj8jNi6UylZro8l+ozP4SDQTePrlypYbHAy07r
+         c39kots+hgnGRoR3RRF/j/h1JjB4aN8oImLI+J/sGQMc+QLqvlNhS98j1ua8C2lks3GG
+         d2ng==
+X-Gm-Message-State: AOAM533K8a8vt9l93hWLOg0IQhahBdmQZXCPEoMhNYMUlQLzkwpx49ZH
+        7FupkNDdcKfQYN2Dtp3gWFk=
+X-Google-Smtp-Source: ABdhPJzhdzAJnajPr6WnQXdEhSOG6XIU/nSJqs/z2kE7PIqtER4J090UGTm7PPtUiBI/G6fHR6QW5w==
+X-Received: by 2002:a17:906:4045:: with SMTP id y5mr26518622ejj.529.1614088497242;
+        Tue, 23 Feb 2021 05:54:57 -0800 (PST)
 Received: from localhost.localdomain (dynamic-2a01-0c23-6883-f900-4d8f-ff61-45e1-6480.c23.pool.telefonica.de. [2a01:c23:6883:f900:4d8f:ff61:45e1:6480])
-        by smtp.gmail.com with ESMTPSA id z13sm14447509edc.73.2021.02.23.05.54.55
+        by smtp.gmail.com with ESMTPSA id z13sm14447509edc.73.2021.02.23.05.54.56
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Feb 2021 05:54:55 -0800 (PST)
+        Tue, 23 Feb 2021 05:54:56 -0800 (PST)
 From:   Jonathan Schwender <schwenderjonathan@gmail.com>
 To:     jkacur@redhat.com, williams@redhat.com
 Cc:     linux-rt-users@vger.kernel.org
-Subject: [PATCH v2 1/2] cyclictest: Move main pid setaffinity handling into a function
-Date:   Tue, 23 Feb 2021 14:54:45 +0100
-Message-Id: <20210223135446.7201-2-schwenderjonathan@gmail.com>
+Subject: [PATCH v2 2/2] cyclictest: Add --mainaffinity=[CPUSET] option.
+Date:   Tue, 23 Feb 2021 14:54:46 +0100
+Message-Id: <20210223135446.7201-3-schwenderjonathan@gmail.com>
 X-Mailer: git-send-email 2.29.2
 In-Reply-To: <20210223135446.7201-1-schwenderjonathan@gmail.com>
 References: <20210223135446.7201-1-schwenderjonathan@gmail.com>
@@ -73,73 +73,83 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Move error handling for setting the affinity of the main pid
-into a separate function.
-This prevents duplicating the code in the next commit,
-where the main thread pid can be restricted to one of
-two bitmasks depending on the passed parameters.
-
-After feedback from John Kacur, the function is now
-located in src/lib/rt-numa.c.
-This allows other tests to reuse this, if they also
-prefer to warn if numa_sched_setaffinity fails.
+This allows the user to specify a separate cpuset for the main pid,
+e.g. on a housekeeping CPU.
+If --mainaffinity is not specified, but --affinity is, then the
+current behaviour is preserved and the main pid is bound
+to the cpuset specified by --affinity
 
 Signed-off-by: Jonathan Schwender <schwenderjonathan@gmail.com>
 ---
- src/cyclictest/cyclictest.c |  8 +-------
- src/include/rt-numa.h       |  2 ++
- src/lib/rt-numa.c           | 11 +++++++++++
- 3 files changed, 14 insertions(+), 7 deletions(-)
+ src/cyclictest/cyclictest.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index c3d45f3..9d8eca8 100644
+index 9d8eca8..3ce934d 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1778,13 +1778,7 @@ int main(int argc, char **argv)
+@@ -836,6 +836,8 @@ static void display_help(int error)
+ 	       "	 --laptop	   Save battery when running cyclictest\n"
+ 	       "			   This will give you poorer realtime results\n"
+ 	       "			   but will not drain your battery so quickly\n"
++	       "         --mainaffinity=[CPUSET]  Run the main thread on CPU #N. This only affects\n"
++	       "                           the main thread and not the measurement threads\n"
+ 	       "-m       --mlockall        lock current and future memory allocations\n"
+ 	       "-M       --refresh_on_max  delay updating the screen until a new max\n"
+ 	       "			   latency is hit. Useful for low bandwidth.\n"
+@@ -891,6 +893,7 @@ static int quiet;
+ static int interval = DEFAULT_INTERVAL;
+ static int distance = -1;
+ static struct bitmask *affinity_mask = NULL;
++static struct bitmask *main_affinity_mask = NULL;
+ static int smp = 0;
+ 
+ static int clocksources[] = {
+@@ -943,7 +946,7 @@ enum option_values {
+ 	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_CLOCK,
+ 	OPT_DISTANCE, OPT_DURATION, OPT_LATENCY,
+ 	OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_HISTFILE,
+-	OPT_INTERVAL, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH,
++	OPT_INTERVAL, OPT_LOOPS, OPT_MAINAFFINITY, OPT_MLOCKALL, OPT_REFRESH,
+ 	OPT_NANOSLEEP, OPT_NSECS, OPT_OSCOPE, OPT_PRIORITY,
+ 	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION,
+ 	OPT_SYSTEM, OPT_SMP, OPT_THREADS, OPT_TRIGGER,
+@@ -980,6 +983,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 			{"interval",         required_argument, NULL, OPT_INTERVAL },
+ 			{"laptop",	     no_argument,	NULL, OPT_LAPTOP },
+ 			{"loops",            required_argument, NULL, OPT_LOOPS },
++			{"mainaffinity",     required_argument, NULL, OPT_MAINAFFINITY},
+ 			{"mlockall",         no_argument,       NULL, OPT_MLOCKALL },
+ 			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
+ 			{"nsecs",            no_argument,       NULL, OPT_NSECS },
+@@ -1071,6 +1075,16 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		case 'l':
+ 		case OPT_LOOPS:
+ 			max_cycles = atoi(optarg); break;
++		case OPT_MAINAFFINITY:
++			if (optarg) {
++				parse_cpumask(optarg, max_cpus, &main_affinity_mask);
++			} else if (optind < argc &&
++			           (atoi(argv[optind]) ||
++			            argv[optind][0] == '0' ||
++			            argv[optind][0] == '!')) {
++				parse_cpumask(argv[optind], max_cpus, &main_affinity_mask);
++			}
++			break;
+ 		case 'm':
+ 		case OPT_MLOCKALL:
+ 			lockall = 1; break;
+@@ -1777,7 +1791,9 @@ int main(int argc, char **argv)
+ 	}
  
  	/* Restrict the main pid to the affinity specified by the user */
- 	if (affinity_mask) {
--		int res;
--
--		errno = 0;
--		res = numa_sched_setaffinity(getpid(), affinity_mask);
--		if (res != 0)
--			warn("Couldn't setaffinity in main thread: %s\n", strerror(errno));
--
-+		try_numa_sched_setaffinity(getpid(), affinity_mask);
+-	if (affinity_mask) {
++	if (main_affinity_mask) {
++		try_numa_sched_setaffinity(getpid(), main_affinity_mask);
++	} else if (affinity_mask) {
+ 		try_numa_sched_setaffinity(getpid(), affinity_mask);
  		if (verbose)
  			printf("Using %u cpus.\n",
- 				numa_bitmask_weight(affinity_mask));
-diff --git a/src/include/rt-numa.h b/src/include/rt-numa.h
-index ca86a45..e9fa312 100644
---- a/src/include/rt-numa.h
-+++ b/src/include/rt-numa.h
-@@ -18,4 +18,6 @@ int cpu_for_thread_ua(int thread_num, int max_cpus);
- 
- int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask);
- 
-+void try_numa_sched_setaffinity(__pid_t pid, struct bitmask *cpumask);
-+
- #endif
-diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
-index dbeaef6..33c80a7 100644
---- a/src/lib/rt-numa.c
-+++ b/src/lib/rt-numa.c
-@@ -133,3 +133,14 @@ int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask)
- 
- 	return 0;
- }
-+
-+void try_numa_sched_setaffinity(__pid_t pid, struct bitmask *cpumask)
-+{
-+	int res;
-+
-+	errno = 0;
-+	res = numa_sched_setaffinity(pid, cpumask);
-+	if (res != 0)
-+		warn("Couldn't setaffinity for thread %d: %s\n", pid,
-+		     strerror(errno));
-+}
 -- 
 2.29.2
 
