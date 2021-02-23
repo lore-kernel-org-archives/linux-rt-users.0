@@ -2,120 +2,105 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA19FC433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6513CC433E0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9624964E61
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 161BA64DDA
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 13:55:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232113AbhBWNzX (ORCPT
+        id S232885AbhBWNzl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 23 Feb 2021 08:55:23 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([63.128.21.124]:44677 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232553AbhBWNzV (ORCPT
+        Tue, 23 Feb 2021 08:55:41 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49916 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232817AbhBWNzh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 23 Feb 2021 08:55:21 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1614088435;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=kwir4Wsil0jK4OKrvTzT1wqhvatcr2vaWyMIyN42ByU=;
-        b=JSh90TEyuqBtV2DIpGKGf1RZi7yhQVTjLMMLhiqu1lusQlPZkl98y5/piN/jnqt08rLbCc
-        vB9mqJk17C2PU4uWpCeQPiwkm0sYUQJAGyr82L5X3/As4c0TEqwYG++Lbsy/ZBIcECvmJG
-        NvONh07PGbCJ3c37Q2Wvl7pj0o1pim8=
-Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
- [209.85.128.70]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-116-10HtXWR3N62sHuntM-s8mQ-1; Tue, 23 Feb 2021 08:53:44 -0500
-X-MC-Unique: 10HtXWR3N62sHuntM-s8mQ-1
-Received: by mail-wm1-f70.google.com with SMTP id r21so684680wmq.7
-        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:53:44 -0800 (PST)
+        Tue, 23 Feb 2021 08:55:37 -0500
+Received: from mail-ed1-x52a.google.com (mail-ed1-x52a.google.com [IPv6:2a00:1450:4864:20::52a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D6BACC06174A
+        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:54:56 -0800 (PST)
+Received: by mail-ed1-x52a.google.com with SMTP id q10so25981603edt.7
+        for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2021 05:54:56 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=31L8CdPXYIf2pBwS3sZHR5MeKJ3Rd53shpL1dvDop5E=;
+        b=PSEn1dEioEOWgmkAsry90RBm7z1/swM31/UGAM3BDGXyx678JwjmFmCZD7P0k0RvAH
+         NhqkhmXjA78o2XYLoFPfkG7GoOKicmPBx1x9o29ppSYdscrskoDArCsJLuVf5JuZtooj
+         friAAnWQJ1Fb2bzMkXWm0VHWIzixZ2ECpsXkE96yPYw2tSke7dTOiSPIjSzyxWXc6S+n
+         2Fbfwv3g0Oc7dpY3HqQmWV0Tt22FC6mTqBKH7GpWYgz2xA0J0K9RGfhrM0ZYdVGo/DLJ
+         jmPVAAjdTxIy6h0dAFKYaxp6sZ6QjKEVC3LUjn4WH4cuD/CqrN39FEpydgTvTRnDVMMo
+         vSzg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:content-transfer-encoding
-         :in-reply-to;
-        bh=kwir4Wsil0jK4OKrvTzT1wqhvatcr2vaWyMIyN42ByU=;
-        b=FeFLEr6EoeKqqsJFKUjmjXbZyfM/ugjyTcDToZvhKVWd5/12Mz57e6dz6dQ6bhhGX4
-         s2382jBAk44FfAlgmEkEeCvDnnmoHqh+V+UIhxxfTF1SqKZQmlqUKLwK/6hI1Ed2gLfA
-         97msbeMaulJIwKHQT28Gws5EODR1UBXVcnzgmG/5rPCNPgAVpJxCaBtVgK2znzwWcVoF
-         dl/LcGTh3nZIDAoAMiyWyBt6hYkEgRuQv+AoRZSrFqDlVNCMJ6+HeYAyBFVBaU6LONte
-         F07Jb0T3JpZR5evx+kswudEzOcJwgqQG2zcvZKWLLzT80k6u22MuWmLsN3c+B34Pyf1R
-         yhAw==
-X-Gm-Message-State: AOAM533qidyrl21ND9ZNo1VvIUoJMK0LFs+Wf/nwc7VCSxcnOJomKou1
-        vQSWKlHu4AxaGu7/VaWLNdW2BYOjtcLGOD4qvD/kzIDIzZ29TnXAvCMdy9Bhi8Bl6d7JSqQWOc6
-        0nj4x00CjKAKuSXWnSiVb97sMeLs=
-X-Received: by 2002:a5d:6281:: with SMTP id k1mr234361wru.405.1614088423228;
-        Tue, 23 Feb 2021 05:53:43 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJwvqa5mYS76mtgwFOwEo0awuiMGbxRj6wFrWqOCDoWYiXdsOnm2PzYL52S+dUZeC9KAg4PB0w==
-X-Received: by 2002:a5d:6281:: with SMTP id k1mr234355wru.405.1614088423062;
-        Tue, 23 Feb 2021 05:53:43 -0800 (PST)
-Received: from localhost.localdomain ([151.29.106.174])
-        by smtp.gmail.com with ESMTPSA id w4sm2749376wmc.13.2021.02.23.05.53.42
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=31L8CdPXYIf2pBwS3sZHR5MeKJ3Rd53shpL1dvDop5E=;
+        b=D4rLgG/pBGMkIXMXt1mLM1Z+yoAnCxppXlJRX4eMeWxQ10xb4IUKbCMCDksisFoD1+
+         MqSRy4Sj8FkGvUEVfQkvRfjp2VlOjoFqtFYRkdPavO9jwAThhi4PELZJpCyuK4LxD6s0
+         Vj2OvibHgbWOu0Swc8CtRaSET6v8bS9fzTtHvwLPSBR4o692NRDDfFZQcJpnzBLcvOBl
+         M0X9Tjj/6w5e0e3Fq6gMG2/Tj6WpM8ts03q474Dhi4W8EyKt4dMWJHiYSBl71T5Kyz9s
+         +JC1Xk8kamxFZ1l4Gaq6YOBx6GemmvFZhkCNfcrUq42pobwKCpm994eaVkzLdRTBZgWC
+         NCyw==
+X-Gm-Message-State: AOAM532iIwaXfOGdR2XDqHYn6TpjaSHZLadLTgbmORD0MhpuCMu99/YR
+        rDB8D+fuNhpEEXVPoqAMAYg=
+X-Google-Smtp-Source: ABdhPJyR5cWv7kJwuXzAcn/cPscvIyp/Zkoz4sePIdj748ze4euFgONpq/1kBvL0hJNKqpGgv7qYQg==
+X-Received: by 2002:a05:6402:3582:: with SMTP id y2mr28163568edc.345.1614088495581;
+        Tue, 23 Feb 2021 05:54:55 -0800 (PST)
+Received: from localhost.localdomain (dynamic-2a01-0c23-6883-f900-4d8f-ff61-45e1-6480.c23.pool.telefonica.de. [2a01:c23:6883:f900:4d8f:ff61:45e1:6480])
+        by smtp.gmail.com with ESMTPSA id z13sm14447509edc.73.2021.02.23.05.54.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Feb 2021 05:53:42 -0800 (PST)
-Date:   Tue, 23 Feb 2021 14:53:40 +0100
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RT v5.11-rt7] WARNING at include/linux/seqlock.h:271
- nft_counter_eval
-Message-ID: <YDUI5M5FQLycOd33@localhost.localdomain>
-References: <YDTdo+jETVr983t6@localhost.localdomain>
- <20210223110015.ybl7feu43wvtjoqu@linutronix.de>
+        Tue, 23 Feb 2021 05:54:55 -0800 (PST)
+From:   Jonathan Schwender <schwenderjonathan@gmail.com>
+To:     jkacur@redhat.com, williams@redhat.com
+Cc:     linux-rt-users@vger.kernel.org
+Subject: [PATCH v2 0/2] rt-tests: cyclictest: Add option to specify main pid affinity
+Date:   Tue, 23 Feb 2021 14:54:44 +0100
+Message-Id: <20210223135446.7201-1-schwenderjonathan@gmail.com>
+X-Mailer: git-send-email 2.29.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20210223110015.ybl7feu43wvtjoqu@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 23/02/21 12:00, Sebastian Andrzej Siewior wrote:
-> On 2021-02-23 11:49:07 [+0100], Juri Lelli wrote:
-> > Hi,
-> Hi,
-> 
-> > I'm seeing the following splat right after boot (or during late boot
-> > phases) with v5.11-rt7 (LOCKDEP enabled).
-> …
-> > [   85.273588] WARNING: CPU: 5 PID: 1416 at include/linux/seqlock.h:271 nft_counter_eval+0x95/0x130 [nft_counter]
-> …
-> > [   85.273713] RIP: 0010:nft_counter_eval+0x95/0x130 [nft_counter]
-> 
-> This is a per-CPU seqcount_t in net/netfilter/nft_counter.c which is
-> only protected by local_bh_disabled(). The warning expects preemption
-> to be disabled which is the case on !RT but not on RT.
-> 
-> Not sure what to do about this. It is doing anything wrong as of now. It
-> is noisy.
+Hi John,
 
-So, I'm a bit confused and I'm very likely missing details (still
-digesting the seqprop_ magic), but write_seqcount_being() has
+Changes in v2:
+I moved the wrapper around numa_sched_setaffinity
+to lib/rt-numa.c and added the pid as a parameter.
+I called it try_numa_sched_setaffinity since it's basically
+just a wrapper, that warns if an error occurs.
+I'm not sure if this is what you had in mind, when you
+suggested moving that section to rt-numa.c
+The code-style should also be consistent now.
 
- if (seqprop_preemptible(s))
-     preempt_disable();
 
-which in this case (no lock associated) is defined to return false, 
-while it should return true on RT (or in some occasions)? Or maybe this
-is what you are saying already.
+This patch adds the option --mainaffinity to specify the affinity of
+the main pid. 
+This is mainly useful if you want to bind the main thread to a 
+different (e.g. housekeeping ) CPU than the measurement threads.
 
-Also, the check for preemption been disabled happens before we can
-actually potentially disable it, no?
+Regards
 
-Thanks for the quick reply!
+Jonathan
 
-Best,
-Juri
+
+Jonathan Schwender (2):
+  cyclictest: Move main pid setaffinity handling into a function
+  cyclictest: Add --mainaffinity=[CPUSET] option.
+
+ src/cyclictest/cyclictest.c | 28 +++++++++++++++++++---------
+ src/include/rt-numa.h       |  2 ++
+ src/lib/rt-numa.c           | 11 +++++++++++
+ 3 files changed, 32 insertions(+), 9 deletions(-)
+
+-- 
+2.29.2
 
