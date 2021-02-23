@@ -6,109 +6,107 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D97B5C433DB
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 14:21:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F2C66C433E0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 14:22:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8424464DE9
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 14:21:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C4F6F64DE7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 14:22:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232975AbhBWOUu (ORCPT
+        id S232908AbhBWOWG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 23 Feb 2021 09:20:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55322 "EHLO
+        Tue, 23 Feb 2021 09:22:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55584 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232313AbhBWOUr (ORCPT
+        with ESMTP id S232533AbhBWOWC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 23 Feb 2021 09:20:47 -0500
+        Tue, 23 Feb 2021 09:22:02 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A35C5C06174A;
-        Tue, 23 Feb 2021 06:20:07 -0800 (PST)
-Date:   Tue, 23 Feb 2021 15:20:02 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8C5E1C061574;
+        Tue, 23 Feb 2021 06:21:21 -0800 (PST)
+Date:   Tue, 23 Feb 2021 15:21:18 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1614090004;
+        s=2020; t=1614090080;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=VzTN7zIIE4/8D9vTZDJiCxOd1/gCyd3XlCjlnumqjY0=;
-        b=TcJLwYrYH2ngitGvAMieIsqEJBU3uQvxle0gB/TyAU4nQv+VjdZJZERTNGOb33iOUkfrYw
-        9bxOaAl96IE04FaGdJSuaUniZkWFzVoEq9JOxaG0r+WI4TlObUf7EWu+hudQElgkias7AB
-        eQa6m6hziHR06h/hJYKlVW6PPuPl0eaWHcdQg9vqhPwUFWoALqki2bww04Tv2gPsvi83ma
-        5NSJNzTJTj+61q9Wexp7ck8fVUUq3bR0uAxtJa7ql6KB9efoSvjv6HjRy84V9w/wfwKUVB
-        H+1/XOJYBzY7cXqd3PrcEz/BG/8OwLV8CEHs+Zawsu0RraA1qXwQprS75wV/2Q==
+        bh=teDU304o4orU9wi3x1wUaMwyYWDTSBXOaHNrx5ClT0w=;
+        b=2ZFBXIkVYYN+nfCFMhN/kFjRVgHW8puY2SXmz4LEKGGgLUncGkXWOrZSwoCghFhYtR+0B+
+        WtPmbg5RS4xdWq4hxg1404dlLYeX8B1nl0sqxT/iSdGPS8B9+EQX6bJrSz60txeX1elHLY
+        UJuc7DdwyciRZtLdZ7N2eL0hXxoiKyZFSWSOa+CpigNZAQxC6YaEfZPpDLl4v/qWuEXt75
+        hQJzYWVPVm0s4qW06fwuBPD49s1CfD4EOueDsOPESr9YTIyMw7koMtkWSNCgwafaW+0GHl
+        qIGWtjJp/HvT7g0wY3dOI9iiT82sEd1QG7g7UFBrvA7otZ+CLf2L64NjiYndRA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1614090004;
+        s=2020e; t=1614090080;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=VzTN7zIIE4/8D9vTZDJiCxOd1/gCyd3XlCjlnumqjY0=;
-        b=AVtug7zRAi97ZP1EOJb4Sdhlh28PpPwHz9v8+sk3UVvbFjN0sJ712qeNCCCnlFzL+uKC2a
-        1E3HBwEwrbXyv6Dw==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
+        bh=teDU304o4orU9wi3x1wUaMwyYWDTSBXOaHNrx5ClT0w=;
+        b=4c33A1S2mV08nn7HeTxSpQILp2jnu0Nz6hii5AhOHt0Qbh5Zt3CCoH3QqXLLwQn84Nitl1
+        HnqJztvf+r2WUzCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Juri Lelli <juri.lelli@redhat.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>
+        "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [RT v5.11-rt7] WARNING at include/linux/seqlock.h:271
  nft_counter_eval
-Message-ID: <YDUPEsdMAMWjmm8Z@lx-t490>
+Message-ID: <20210223142118.u22yhw3ku4ttx5hq@linutronix.de>
 References: <YDTdo+jETVr983t6@localhost.localdomain>
  <20210223110015.ybl7feu43wvtjoqu@linutronix.de>
  <YDUI5M5FQLycOd33@localhost.localdomain>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
 In-Reply-To: <YDUI5M5FQLycOd33@localhost.localdomain>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Feb 23, 2021 at 02:53:40PM +0100, Juri Lelli wrote:
-> On 23/02/21 12:00, Sebastian Andrzej Siewior wrote:
-> > On 2021-02-23 11:49:07 [+0100], Juri Lelli wrote:
-> > > Hi,
-> > Hi,
-> >
-> > > I'm seeing the following splat right after boot (or during late boot
-> > > phases) with v5.11-rt7 (LOCKDEP enabled).
-> > …
-> > > [   85.273588] WARNING: CPU: 5 PID: 1416 at include/linux/seqlock.h:271 nft_counter_eval+0x95/0x130 [nft_counter]
-> > …
-> > > [   85.273713] RIP: 0010:nft_counter_eval+0x95/0x130 [nft_counter]
-> >
-> > This is a per-CPU seqcount_t in net/netfilter/nft_counter.c which is
-> > only protected by local_bh_disabled(). The warning expects preemption
-> > to be disabled which is the case on !RT but not on RT.
-> >
-> > Not sure what to do about this. It is doing anything wrong as of now. It
-> > is noisy.
->
+On 2021-02-23 14:53:40 [+0100], Juri Lelli wrote:
+> 
 > So, I'm a bit confused and I'm very likely missing details (still
 > digesting the seqprop_ magic), but write_seqcount_being() has
->
+> 
 >  if (seqprop_preemptible(s))
 >      preempt_disable();
->
-> which in this case (no lock associated) is defined to return false,
+> 
+> which in this case (no lock associated) is defined to return false, 
+> while it should return true on RT (or in some occasions)? Or maybe this
+> is what you are saying already.
 
-Preemption is disabled if and only if:
+write_seqcount_begin() has seqprop_assert() at the very beginning which
+ends in __seqprop_assert() in your case (seqcount_t). Your warning.
 
-  1. It's a CONFIG_PREEMPT_RT=n system
-  2. There's a lock associated with the sequence counter
-  3. That lock is also preemptible (e.g., a mutex)
 
-In your case, the 3 condititions are OFF. You're on a PREEMPT_RT=y
-kernel and the sequence counter in question has no lock associated.
+> Also, the check for preemption been disabled happens before we can
+> actually potentially disable it, no?
 
-As Sebastian summarized, the error is just "noisy" at this point.
+That seqprop_preemptible() is true for !RT for mutex/ww_mutex locks. On
+RT it is always false since it does lock()+unlock() of the lock that is
+part of the seqcount.
 
-We will of course need to find a (mainline-friendly) way to let the
-lockdep splat go away for -rt kernels. But for now, it's not harmful.
+But back to the original issue: at write_seqcount_begin() preemption is
+disabled !RT implicit by local_bh_disable(). Therefore no warning.
+On RT local_bh_disable() disables BH on the CPUs so locking wise (since
+it is a per-CPU seqcount it should work. Preemption remains enabled so
+we have a warning.
 
-Good luck,
+I have no idea what annotation would be best here. Having a
+local_bh_disable() type of a lock and the seqcount is not part of the data
+structure it protects is less than ideal.
+However, if I understand this correct then this nft_counter_percpu_priv
+exists once per nft rule. The seqcount exists once per-CPU since it is
+unlikely to modify two counters at once on a single CPU :) So there is
+that.
 
---
-Ahmed S. Darwish
+While looking at it, there is nft_counter_reset() which modifies the
+values without a seqcount write lock. This might be okay.
+
+> Thanks for the quick reply!
+> 
+> Best,
+> Juri
+
+Sebastian
