@@ -2,118 +2,134 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EC5DDC433E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 03:14:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 461A1C433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 05:13:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9E9E164E4B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 03:14:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0432064E3F
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Feb 2021 05:13:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230144AbhBWDNy (ORCPT
+        id S231208AbhBWFNU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 22 Feb 2021 22:13:54 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54030 "EHLO
+        Tue, 23 Feb 2021 00:13:20 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51142 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230010AbhBWDNx (ORCPT
+        with ESMTP id S230291AbhBWFNT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 Feb 2021 22:13:53 -0500
-Received: from mail-pg1-x530.google.com (mail-pg1-x530.google.com [IPv6:2607:f8b0:4864:20::530])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 89863C061574
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 19:13:13 -0800 (PST)
-Received: by mail-pg1-x530.google.com with SMTP id e6so1863977pgk.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 19:13:13 -0800 (PST)
+        Tue, 23 Feb 2021 00:13:19 -0500
+Received: from mail-qv1-xf2d.google.com (mail-qv1-xf2d.google.com [IPv6:2607:f8b0:4864:20::f2d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 29829C06174A
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 21:12:39 -0800 (PST)
+Received: by mail-qv1-xf2d.google.com with SMTP id l19so2610838qvz.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2021 21:12:39 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:content-transfer-encoding:in-reply-to
-         :user-agent;
-        bh=vhHsi0uk5ltNxwhJcqtaD77NXzGldSTr71hD7QPJ/7g=;
-        b=vBABbZpKOTDImCMES/3czKrDMP7JwUjGp5pdgtywySVT1IhRjEcK4BbkftRcGa9JHJ
-         IslXD/uadbNVy/nhfxFwf7GEr7EuZvhqixPfXF6CzXGKHaNEXvkXNbgJnb9ZhFI6h6dO
-         C10KcfS6pd4aMvbFGBzDxsxCtFupoc3rlVouAh5Imn9o1BmgPpCgBouEMvV9hEv97UUi
-         sa9g6Tv/gWPYfseVhZ3RvScmKUbfX6rUbCrHO7PTEKkJzswu89osMaMswjvzO3mD4lqU
-         vQQIUIAQkN3609SRoiYu/Mqjz3Dlrk+ReQQrePcuIJHUf7dTa7WGwI0S/fZkq5U4e3gC
-         QH3Q==
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=jJowrZBMR5o/BjZobPEJCMUkXnlm+MeJZzH2affwNz4=;
+        b=Qb/Ox6sTbpF60c6WGx8A3YiJ6jKEiqmQcb1HJNb91Xr4Z8ImeqUhip9topsPEzR4t2
+         p51Y6zQm/IbACr0NBEsvZeVfpUAiVlqXVKHN7uPlgDvSIeFJywu0wuvOMReE2nXiFVmG
+         w3XRTX8JF3uj7dTfvOgSRI76reNrASrC+g6+7qASJgT8+x6Jpd4yCPE1qDQbE61Hwm8M
+         gBxDiIxh/XS6RrUWB3imhcIfIShpcRix+cBq3jay8ykawfwGQ2IeIQH/E3t7NRoty0Z8
+         BAbTuYzoBtEFqbhbA9nzHnS/dnEtJ1+tf8a69VzmLyWfk5vpGD+xDqDczCzIwCkIbhCh
+         0NDw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:content-transfer-encoding
-         :in-reply-to:user-agent;
-        bh=vhHsi0uk5ltNxwhJcqtaD77NXzGldSTr71hD7QPJ/7g=;
-        b=TGUeTydy2j4Gz7jtzOlugbufdwRA2tDnIcbg5kb1TwJ+3nN4dTDhIVWNfOmM5W+3vg
-         rMQJZ1hQAk1CIeZ61bbS7fhCuSlE11P1ViZPFqeYI5CzxWEddmEvownzpRl9to364k8W
-         QK8UqT3Pf10r0aAx+TNZVKmvoBwXxYlUANJ8CrHErWk77EUFupeDuzwR+znYTB48VkhM
-         i3LpOOZTTDWMYETM4Iyit8YkOUH9kFjJcboqsEZa2Pulyq8xWxt/S5EcNijGzcyKquW+
-         w7xT117zBoI4thQPTZBnsVum7beW3wBoYR6l5RFQI+BSHzInfhcYMZudkC61jqo8tWVE
-         HJKA==
-X-Gm-Message-State: AOAM533qm3q3D85GIQV9eTNXOlToxPbpUMxNZs6bEea2OM/LDpX5RjRA
-        olFTnb6Vnhv+b4JDTSpVCvO/mQ==
-X-Google-Smtp-Source: ABdhPJy2NFQglSw2zLxel3x/s8HfJkuvwj3WtwmeyOooz1mH4lPwOsIxVhlgaSEdp57rOklFCQAZ1g==
-X-Received: by 2002:a63:6741:: with SMTP id b62mr14714665pgc.371.1614049993081;
-        Mon, 22 Feb 2021 19:13:13 -0800 (PST)
-Received: from localhost ([122.172.59.240])
-        by smtp.gmail.com with ESMTPSA id q7sm964225pjr.13.2021.02.22.19.13.12
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 22 Feb 2021 19:13:12 -0800 (PST)
-Date:   Tue, 23 Feb 2021 08:43:08 +0530
-From:   Viresh Kumar <viresh.kumar@linaro.org>
-To:     Ran Wang <ran.wang_1@nxp.com>
-Cc:     "Rafael J . Wysocki" <rjw@rjwysocki.net>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Jiafei Pan <jiafei.pan@nxp.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] rt: cpufreq: Fix cpu hotplug hang
-Message-ID: <20210223031308.rjwswy5whejrme43@vireshk-i7>
-References: <20210219084420.23379-1-ran.wang_1@nxp.com>
- <20210222140107.qk2ymlwyyxspluge@linutronix.de>
- <AM6PR04MB5413DB3654A87D50C909004CF1809@AM6PR04MB5413.eurprd04.prod.outlook.com>
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=jJowrZBMR5o/BjZobPEJCMUkXnlm+MeJZzH2affwNz4=;
+        b=iUR6qe3olvf5vdwtoEQ3q+UQcRYJx8NYN7W60308gNWzu3qqFic34We+rtxxWFHRer
+         IoyZhpwzB2Jg2Y7GKkY+k2+Q0+c30pbmaVy3YVuP3NlmMqlnmrdr0xNvHrFnYPWxr7FQ
+         GMSrJEAJ0orb4X06wk3xE+5/Y5lPXxhwAGJSuizsB8OWvbR6Oy6sOWH7qdVhZbBexdzR
+         4UfuOCyesjutb95PpWUPMWx58PO8Sv+qUChAb++Z1slusN1pGkj9YjhzUusr1dN8Ha8N
+         j5fD9tQ6D6QF7tivR5V9kLlB8Q97l9pdOe9QFGaBPfr1jm/Y2TPYsxSA/w5xWcQh4Tex
+         waAw==
+X-Gm-Message-State: AOAM532qcmglzUN4Zt89V8oUpfyGp98OEHdBgWoAAdUrkhkgQs+jh7N1
+        Q7wEgKxNXHh810plsrFFAN4=
+X-Google-Smtp-Source: ABdhPJwsmfgWDDQ7YoeaNQ4SutqDg7Hnd/Hv/wPlH9z7+WQhwKdBwRaLPWJlLfkjgZi6A9fzVbkNbQ==
+X-Received: by 2002:a05:6214:452:: with SMTP id cc18mr24235747qvb.26.1614057157494;
+        Mon, 22 Feb 2021 21:12:37 -0800 (PST)
+Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
+        by smtp.gmail.com with ESMTPSA id d20sm6528015qkb.88.2021.02.22.21.12.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 22 Feb 2021 21:12:37 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+Date:   Tue, 23 Feb 2021 00:12:32 -0500 (EST)
+From:   John Kacur <jkacur@redhat.com>
+To:     Jonathan Schwender <schwenderjonathan@gmail.com>
+cc:     williams@redhat.com, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 1/2] cyclictest: Move main pid setaffinity handling into
+ a function
+In-Reply-To: <20210222152833.8758-3-schwenderjonathan@gmail.com>
+Message-ID: <df363168-378c-d2ff-2fb-477171bbd086@redhat.com>
+References: <20210222152833.8758-1-schwenderjonathan@gmail.com> <20210222152833.8758-3-schwenderjonathan@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <AM6PR04MB5413DB3654A87D50C909004CF1809@AM6PR04MB5413.eurprd04.prod.outlook.com>
-User-Agent: NeoMutt/20180716-391-311a52
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 23-02-21, 02:26, Ran Wang wrote:
-> On Monday, February 22, 2021 10:01 PM, Sebastian Siewior wrote:
-> > On 2021-02-19 16:44:20 [+0800], Ran Wang wrote:
-> > > When selecting PREEMPT_RT, cpufreq_driver->stop_cpu(policy) might got
-> > > stuck due to irq_work_sync() pending for work on lazy_list. That’s
-> > > because lazy_list may have no chance to be served in softirq context
-> > > sometimes. Below is one of scenarios that was captured:
-> > >
-> > > ...
-> > > ret_from_fork
-> > >  kthread
-> > >   smpboot_thread_fn
-> > >    cpuhp_thread_fun
-> > >     cpuhp_invoke_callback: state: 193
-> > >      cpuhp_cpufreq_online
-> > >       cpufreq_online
-> > >        cpufreq_driver->stop_cpu(policy);
-> > >         cpufreq_dbs_governor_stop
-> > >          sugov_stop  // kernel/sched/cpufreq_schedutil.c
-> > >           irq_work_sync(&sg_policy->irq_work);
-> > >
-> > > This is observed on LX2160ARDB (16 A72 cores) with cpufreq governor of
-> > > ‘schedutil’ or ‘ondemand’.
-> > 
-> > While staring at it, why do we invoke schedule_work_on() and
-> > kthread_queue_work() from inside irq_work() instead invoking it directly? It raises an interrupt in which it kicks a user thread.
-> > Couldn't we do it without irq_work?
 
-Because we reach there from scheduler's context, which must be
-hard-irq context..
 
--- 
-viresh
+On Mon, 22 Feb 2021, Jonathan Schwender wrote:
+
+> Move error handling for setting the affinity of the main pid
+> into a separate function.
+> This prevents duplicating the code in the next commit,
+> where the main thread pid can be restricted to one of
+> two bitmasks depending on the passed parameters.
+> 
+> Signed-off-by: Jonathan Schwender <schwenderjonathan@gmail.com>
+> ---
+>  src/cyclictest/cyclictest.c | 18 +++++++++++-------
+>  1 file changed, 11 insertions(+), 7 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index c3d45f3..3cd592d 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1749,6 +1749,16 @@ static void write_stats(FILE *f, void *data)
+>  	fprintf(f, "  }\n");
+>  }
+>  
+> +static void set_main_thread_affinity(struct bitmask* cpumask) {
+> +	int res;
+> +
+> +	errno = 0;
+> +	res = numa_sched_setaffinity(getpid(), cpumask);
+> +	if (res != 0)
+> +		warn("Couldn't setaffinity in main thread: %s\n", strerror(errno));
+> +}
+> +
+> +
+
+Maybe this would be better in src/lib/rt-numa.c ?
+Note your brace style is inconsistent with the rest of the suite.
+We try to follow the linux kernel style, where it makes sense.
+
+>  int main(int argc, char **argv)
+>  {
+>  	sigset_t sigset;
+> @@ -1778,13 +1788,7 @@ int main(int argc, char **argv)
+>  
+>  	/* Restrict the main pid to the affinity specified by the user */
+>  	if (affinity_mask) {
+> -		int res;
+> -
+> -		errno = 0;
+> -		res = numa_sched_setaffinity(getpid(), affinity_mask);
+> -		if (res != 0)
+> -			warn("Couldn't setaffinity in main thread: %s\n", strerror(errno));
+> -
+> +		set_main_thread_affinity(affinity_mask);
+>  		if (verbose)
+>  			printf("Using %u cpus.\n",
+>  				numa_bitmask_weight(affinity_mask));
+> -- 
+> 2.29.2
+> 
+> 
