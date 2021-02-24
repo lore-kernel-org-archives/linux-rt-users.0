@@ -2,85 +2,106 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A38AC433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Feb 2021 02:18:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 43778C433DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Feb 2021 09:26:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D8AB964E85
-	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Feb 2021 02:18:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EB87A64EBB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Feb 2021 09:26:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232317AbhBXCS4 (ORCPT
+        id S234593AbhBXJ0X (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 23 Feb 2021 21:18:56 -0500
-Received: from mo-csw1115.securemx.jp ([210.130.202.157]:50316 "EHLO
-        mo-csw.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229954AbhBXCSz (ORCPT
+        Wed, 24 Feb 2021 04:26:23 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:57056 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234498AbhBXJ0W (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 23 Feb 2021 21:18:55 -0500
-Received: by mo-csw.securemx.jp (mx-mo-csw1115) id 11O2GSE3020206; Wed, 24 Feb 2021 11:16:28 +0900
-X-Iguazu-Qid: 2wGr679RacmOwlrMqD
-X-Iguazu-QSIG: v=2; s=0; t=1614132988; q=2wGr679RacmOwlrMqD; m=oZ2QbQkxlmLWr3HpH/erZTexbYTC2qt5l4hfRuiLREM=
-Received: from imx12-a.toshiba.co.jp (imx12-a.toshiba.co.jp [61.202.160.135])
-        by relay.securemx.jp (mx-mr1111) id 11O2GRCr040595
-        (version=TLSv1.2 cipher=AES128-GCM-SHA256 bits=128 verify=NOT);
-        Wed, 24 Feb 2021 11:16:27 +0900
-Received: from enc02.toshiba.co.jp (enc02.toshiba.co.jp [61.202.160.51])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by imx12-a.toshiba.co.jp (Postfix) with ESMTPS id 5598D1000B1;
-        Wed, 24 Feb 2021 11:16:27 +0900 (JST)
-Received: from hop101.toshiba.co.jp ([133.199.85.107])
-        by enc02.toshiba.co.jp  with ESMTP id 11O2GQ5v008879;
-        Wed, 24 Feb 2021 11:16:27 +0900
-From:   Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>, dwagner@suse.de,
-        "Ahmed S . Darwish" <a.darwish@linutronix.de>,
-        linux-rt-users@vger.kernel.org, binh1.tranhai@toshiba.co.jp,
-        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>
-Subject: [rteval PATCH v2 2/3] rteval: cyclictest.py: Make build targets architecture independent
-Date:   Wed, 24 Feb 2021 11:16:02 +0900
-X-TSB-HOP: ON
-Message-Id: <20210224021603.446274-3-punit1.agrawal@toshiba.co.jp>
-X-Mailer: git-send-email 2.30.0
-In-Reply-To: <20210224021603.446274-1-punit1.agrawal@toshiba.co.jp>
-References: <20210224021603.446274-1-punit1.agrawal@toshiba.co.jp>
+        Wed, 24 Feb 2021 04:26:22 -0500
+From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1614158737;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=X6WmisNVMS76SPBoYhZN61NcpUkQSiltoPAHQi3FsUw=;
+        b=KYUg1OZJ3Txc+crCg7ArtK4Z0nMnwb7D+iGo3q4m17OPBhFlDWky9aMgdlZ2vfxU0mwTYx
+        Q6pGeuCgDky731T1Oc/Vv0TqQxvCq1Vou31SgiGzDeJ2OD2fwm1daoSfwn6xS0qRI399rQ
+        xwXo/3mOCbuSRlL50zyDDn1WjsnwMT48vos9ntioQuijI9DmXVVtVgvi9zEKTq3wC9sEPm
+        Ou4PiVbL+YJcDArl6GNmVIpigdG6y+DSLQjvCQ9pSJ4Hjj2GcxKPJxv0pBE4itCGi8z8n5
+        WuSViri5MnpSxsmbKBoFi7xrduEUqbclq+RFORFXZtRVw5wL4DLrvp+Sh05mbQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1614158737;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=X6WmisNVMS76SPBoYhZN61NcpUkQSiltoPAHQi3FsUw=;
+        b=ZihiragJVo/aq3wUyTmyK1SuODkgHNEZgJnTQtm0KULoteYIhvX8tVoGJodogP2+BoxKZp
+        QvHHdxHPTvkQtwDA==
+To:     John Kacur <jkacur@redhat.com>,
+        RT <linux-rt-users@vger.kernel.org>,
+        Christian Eggers <ceggers@arri.de>
+Cc:     Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 0/2] Fix for machines without numa
+In-Reply-To: <20210222220750.12911-1-jkacur@redhat.com>
+References: <20210222220750.12911-1-jkacur@redhat.com>
+Date:   Wed, 24 Feb 2021 10:25:36 +0100
+Message-ID: <87y2fdzujz.fsf@kurt>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha512; protocol="application/pgp-signature"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Not all kernel archiectures provide the "bzImage" target, e.g., arm64
-provides "Image" which generates an uncompressed kernel binary.
+--=-=-=
+Content-Type: text/plain
 
-Instead of going down the path of customizing build targets
-per-architecture, let's drop them altogether. The default kernel
-target should build the kernel and modules on all architectures
-anyways.
+Hi John,
 
-Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
----
- rteval/modules/loads/kcompile.py | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On Mon Feb 22 2021, John Kacur wrote:
+> Trying to return the code to a state where numa is required at compile
+> time but not at runtime
+>
+> - The first patch should allow cyclictest to run on a machine
+> without numa.
+>
+> - The second patch is a clean-up of some old code
+>
+> The code is pushed in git to branch unstable/devel/no-numa-runtime
+> so that people can test before I integrate the code back in the main
+> branch
 
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index 326f1ae..e747b9f 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -58,7 +58,7 @@ class KBuildJob:
-         else:
-             self.jobs = self.calc_jobs_per_cpu() * len(self.node)
-         self.log(Log.DEBUG, "node %d: jobs == %d" % (int(node), self.jobs))
--        self.runcmd = "%s make O=%s -C %s -j%d bzImage modules" \
-+        self.runcmd = "%s make O=%s -C %s -j%d" \
-                 % (self.binder, self.objdir, self.kdir, self.jobs)
-         self.cleancmd = "%s make O=%s -C %s clean allmodconfig" \
-                 % (self.binder, self.objdir, self.kdir)
--- 
-2.30.0
+arm32 seems to work fine.
 
+Tested-by: Kurt Kanzenbach <kurt@linutronix.de> # arm32
+
+Thanks,
+Kurt
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEooWgvezyxHPhdEojeSpbgcuY8KYFAmA2G5AACgkQeSpbgcuY
+8KZjDQ//dgrPlDaYDgRTY3oIme6CfsGT8zFrR75PPGZPlVon152ZWiGMmR8pUh+z
+/nTH7wAn4veTRmxbHhGZ8OQgzIcS7Eyyz/uZ7djpbgH/cnEuOQTmra/c0S4FAJiy
+uCh5Jr9N3bZYVNBC8lvgHMtAMigX0ZhPiguguMmz7VumWsJo5B6WgSY8KxxW7CzX
+mPrqVhkjOX9XhVBVENkXbh9eNNv5PgfPQyeKDgIw+y5WYg4tGJGizmo8uuhqHpNo
+cbkjMIAkiYMebKKLYcAHWI0Az/12//6L2u22nfYD8XDPOA0HtBCWtrQNPNDgpk5C
+4SOO830AMQpzkqOTxjGZxtb6NwEw0ZRxOrAQfVbQiB7eww+TJC2gnOSlf0jpytTH
+gVXzjNzqLFP9uTNLlS/0b98f5Mgl+MkK8X9Lr4tdFhtmAVHiTYNTuobONMulIcYE
+Mwfl5ZXnWx2Ulpu0DigPM6nYlmkm5Cmt4CSUPC6mCUMGaAzRx3Ka1vHMv8iA1JCu
+sPhgC8lCchGpeJ7XvbAqGrmR6RYVKrAfvwQhfcd7IT34WNZilwGQ51vOG+wYLJrs
+rmKdWwl06PmQj0lHmybtbvLnhoJxCTNohtZNaAgXKkDqG4OSyJxMsf3Dpf4/UJI1
+HiLW72Ma2+8ZhMyflsGGVGjD/X4TgLhLpwhDcaC2Go+gWNcWo3o=
+=zZda
+-----END PGP SIGNATURE-----
+--=-=-=--
