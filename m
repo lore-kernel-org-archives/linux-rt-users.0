@@ -2,108 +2,145 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 84456C433E0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Feb 2021 03:37:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F559C433DB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 26 Feb 2021 08:13:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 32D2564EC4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Feb 2021 03:37:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CF1CA64E28
+	for <linux-rt-users@archiver.kernel.org>; Fri, 26 Feb 2021 08:13:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232469AbhBYDhK (ORCPT
+        id S229541AbhBZINN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 24 Feb 2021 22:37:10 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55028 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229466AbhBYDhI (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 24 Feb 2021 22:37:08 -0500
-Received: from mail-qt1-x829.google.com (mail-qt1-x829.google.com [IPv6:2607:f8b0:4864:20::829])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C89CCC061574
-        for <linux-rt-users@vger.kernel.org>; Wed, 24 Feb 2021 19:36:27 -0800 (PST)
-Received: by mail-qt1-x829.google.com with SMTP id v3so3211254qtw.4
-        for <linux-rt-users@vger.kernel.org>; Wed, 24 Feb 2021 19:36:27 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :mime-version;
-        bh=IrEb0F7OYml+nJPx65LMzHHSMVIxWD1WA63MLd09cbY=;
-        b=GhQF+CNQPyXEGXnDstGk8GL8dNJTi6GculACZ0aowqD5jHK2FCi3/qhyeq3mDZ8aEU
-         xUx8xKtwi2PZn/K9XEu3JvaUSmM8T07RKO2lzErSkpu0gev7GGKsoejIcz2D0/k3tqw0
-         RCebLIOMDjwL5+T9/Un7+GQzmXe/hIj23P8tjPOZzNuQy1+rsjgwyuHS8eod0nYAT46J
-         0UmCTjnPJcFAB5BzjxMPmeXy6lJhlSwgsTkHzXEKsOni5zWi+PBpbWSLlrzictMENJKr
-         sXptcF8L9kA8FGsRaQolqyy38oQMsq/S9PrewOAyDi4n60RUhITLaW+p2M6Wnxg7wLNs
-         5/wQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:mime-version;
-        bh=IrEb0F7OYml+nJPx65LMzHHSMVIxWD1WA63MLd09cbY=;
-        b=PKqcE1WZjd8XkUD6kMmTyA6LviMVyJ/QqOORP8Z1ij9JYfDUKpP/O06XhWp+SfaWqe
-         zbFokEqv00mzCOoS7llQdmG/Nrvbbrsl1/qcziUdkaGl0YIBV41jzXbAnaR1vBJGw+7J
-         PpAAs4aIpk+MNsvFzE8f7RG9Eq3O2y/LqSVOGO9X/R8gXCpZkeBK4ISml+NRskRIDPx8
-         2lmjLMUNr9MxzCsf8cPctL8Zr1lVmUe7DZiuAoqXKqFeu+pzuSbXDFQ5ZavfA7RMIkGW
-         L4sjT/uU6XWwmBoOeOtTralbB5OtPielQKjREmjrHjzzcvyCaUiX739jBXKwctflJyhs
-         Qsbw==
-X-Gm-Message-State: AOAM5329O4+qrxD2GH55EsuJtmUOMYWVgESKyyk6tn/aqVDE1m4Jpcz3
-        4n9krtt9yl6iTCZI0SNBoD4=
-X-Google-Smtp-Source: ABdhPJxggDeqvycth5LA5ls5ONLDLsGmVQymGaxBuo7JMehEbDeesUSGGrBZD0AxQvlUxovN/iicYQ==
-X-Received: by 2002:a05:622a:cf:: with SMTP id p15mr874078qtw.276.1614224186866;
-        Wed, 24 Feb 2021 19:36:26 -0800 (PST)
-Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id m190sm3042625qkc.66.2021.02.24.19.36.25
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 24 Feb 2021 19:36:26 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-Date:   Wed, 24 Feb 2021 22:36:12 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-To:     Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-cc:     RT <linux-rt-users@vger.kernel.org>,
-        Christian Eggers <ceggers@arri.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 0/2] Fix for machines without numa
-In-Reply-To: <87y2fdzujz.fsf@kurt>
-Message-ID: <5ececc53-c7db-422-ba86-2c9c3e957567@redhat.com>
-References: <20210222220750.12911-1-jkacur@redhat.com> <87y2fdzujz.fsf@kurt>
+        Fri, 26 Feb 2021 03:13:13 -0500
+Received: from mailout10.rmx.de ([94.199.88.75]:58144 "EHLO mailout10.rmx.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229482AbhBZINM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 26 Feb 2021 03:13:12 -0500
+X-Greylist: delayed 2045 seconds by postgrey-1.27 at vger.kernel.org; Fri, 26 Feb 2021 03:13:11 EST
+Received: from kdin02.retarus.com (kdin02.dmz1.retloc [172.19.17.49])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mailout10.rmx.de (Postfix) with ESMTPS id 4Dn1jT14D5z31Xg
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2021 08:38:21 +0100 (CET)
+Received: from mta.arri.de (unknown [217.111.95.66])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by kdin02.retarus.com (Postfix) with ESMTPS id 4Dn1jS5Bggz2TRlK
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2021 08:38:20 +0100 (CET)
+Received: from N95HX1G2.arri.de (192.168.54.138) by mta.arri.de
+ (192.168.100.104) with Microsoft SMTP Server (TLS) id 14.3.487.0; Fri, 26 Feb
+ 2021 08:38:20 +0100
+From:   Christian Eggers <ceggers@arri.de>
+To:     <linux-rt-users@vger.kernel.org>
+CC:     Christian Eggers <ceggers@arri.de>
+Subject: [PATCH] all: Fix printf format errors
+Date:   Fri, 26 Feb 2021 08:38:02 +0100
+Message-ID: <20210226073802.9406-1-ceggers@arri.de>
+X-Mailer: git-send-email 2.26.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Content-Type:   text/plain; charset=US-ASCII
+X-Originating-IP: [192.168.54.138]
+X-RMX-ID: 20210226-083820-NfcGSbRpJWgK-0@out02.hq
+X-RMX-SOURCE: 217.111.95.66
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+time_t is "long" or "long long" (depending on the system).  So it should
+be safe to convert it to "long long", in order to get a consistent data
+type on all systems.
 
+Signed-off-by: Christian Eggers <ceggers@arri.de>
+---
+ src/cyclictest/cyclictest.c         | 8 ++++----
+ src/hackbench/hackbench.c           | 2 +-
+ src/sched_deadline/cyclicdeadline.c | 6 +++---
+ src/signaltest/signaltest.c         | 6 +++---
+ 4 files changed, 11 insertions(+), 11 deletions(-)
 
-On Wed, 24 Feb 2021, Kurt Kanzenbach wrote:
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 157047837259..8a7784e645da 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1751,15 +1751,15 @@ static void write_stats(FILE *f, void *data)
+ 			if (s->hist_array[j] == 0)
+ 				continue;
+ 			fprintf(f, "%s", comma ? ",\n" : "\n");
+-			fprintf(f, "        \"%u\": %" PRIu64, j, s->hist_array[j]);
++			fprintf(f, "        \"%u\": %ld", j, s->hist_array[j]);
+ 			comma = 1;
+ 		}
+ 		if (comma)
+ 			fprintf(f, "\n");
+ 		fprintf(f, "      },\n");
+-		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
+-		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
+-		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "      \"cycles\": %lu,\n", s->cycles);
++		fprintf(f, "      \"min\": %ld,\n", s->min);
++		fprintf(f, "      \"max\": %ld,\n", s->max);
+ 		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
+ 		fprintf(f, "      \"cpu\": %d,\n", par[i]->cpu);
+ 		fprintf(f, "      \"node\": %d\n", par[i]->node);
+diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+index 268c23233004..785b9c076256 100644
+--- a/src/hackbench/hackbench.c
++++ b/src/hackbench/hackbench.c
+@@ -505,7 +505,7 @@ int main(int argc, char *argv[])
+ 	/* Print time... */
+ 	if (timer_started) {
+ 		timersub(&stop, &start, &diff);
+-		printf("Time: %lu.%03lu\n", diff.tv_sec, diff.tv_usec/1000);
++		printf("Time: %lld.%03lld\n", (long long)diff.tv_sec, (long long)diff.tv_usec/1000);
+ 	}
+ 	else
+ 		fprintf(stderr, "No measurements available\n");
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index ed3c960d9916..1c66a227f156 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -978,9 +978,9 @@ static void write_stats(FILE *f, void *data)
+ 	for (i = 0; i < nr_threads; i++) {
+ 		s = &sd[i].stat;
+ 		fprintf(f, "    \"%u\": {\n", i);
+-		fprintf(f, "	 \"cycles\": %" PRIu64 ",\n", s->cycles);
+-		fprintf(f, "	 \"min\": %" PRIu64 ",\n", s->min);
+-		fprintf(f, "	 \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "	 \"cycles\": %lu,\n", s->cycles);
++		fprintf(f, "	 \"min\": %ld,\n", s->min);
++		fprintf(f, "	 \"max\": %ld,\n", s->max);
+ 		fprintf(f, "	 \"avg\": %.2f\n", s->avg/s->cycles);
+ 		fprintf(f, "    }%s\n", i == nr_threads - 1 ? "" : ",");
+ 	}
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index b1a7e1db8302..b39e9d2a96d6 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -392,9 +392,9 @@ static void write_stats(FILE *f, void *data)
+ 	for (i = 0; i < num_threads; i++) {
+ 		fprintf(f, "    \"%u\": {\n", i);
+ 		s = &par->stats[i];
+-		fprintf(f, "      \"cycles\": %" PRIu64 ",\n", s->cycles);
+-		fprintf(f, "      \"min\": %" PRIu64 ",\n", s->min);
+-		fprintf(f, "      \"max\": %" PRIu64 ",\n", s->max);
++		fprintf(f, "      \"cycles\": %lu,\n", s->cycles);
++		fprintf(f, "      \"min\": %ld,\n", s->min);
++		fprintf(f, "      \"max\": %ld,\n", s->max);
+ 		fprintf(f, "      \"avg\": %.2f,\n", s->avg/s->cycles);
+ 		fprintf(f, "      \"cpu\": %d\n", par->cpu);
+ 		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
+-- 
+Christian Eggers
+Embedded software developer
 
-> Hi John,
-> 
-> On Mon Feb 22 2021, John Kacur wrote:
-> > Trying to return the code to a state where numa is required at compile
-> > time but not at runtime
-> >
-> > - The first patch should allow cyclictest to run on a machine
-> > without numa.
-> >
-> > - The second patch is a clean-up of some old code
-> >
-> > The code is pushed in git to branch unstable/devel/no-numa-runtime
-> > so that people can test before I integrate the code back in the main
-> > branch
-> 
-> arm32 seems to work fine.
-> 
-> Tested-by: Kurt Kanzenbach <kurt@linutronix.de> # arm32
-> 
-> Thanks,
-> Kurt
-> 
+Arnold & Richter Cine Technik GmbH & Co. Betriebs KG
+Sitz: Muenchen - Registergericht: Amtsgericht Muenchen - Handelsregisternummer: HRA 57918
+Persoenlich haftender Gesellschafter: Arnold & Richter Cine Technik GmbH
+Sitz: Muenchen - Registergericht: Amtsgericht Muenchen - Handelsregisternummer: HRB 54477
+Geschaeftsfuehrer: Dr. Michael Neuhaeuser; Stephan Schenk; Walter Trauninger; Markus Zeiler
 
-Thanks, I added your tested by and merged all the changes into
-unstable/devel/latest
-
-John
