@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D59A0C4332B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B5BB2C433E9
 	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 19:24:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 971A664F69
+	by mail.kernel.org (Postfix) with ESMTP id 7676C64F6A
 	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 19:24:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233837AbhCDTYE (ORCPT
+        id S235413AbhCDTYF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 4 Mar 2021 14:24:04 -0500
-Received: from mx2.suse.de ([195.135.220.15]:51438 "EHLO mx2.suse.de"
+        Thu, 4 Mar 2021 14:24:05 -0500
+Received: from mx2.suse.de ([195.135.220.15]:51452 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235413AbhCDTXr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Mar 2021 14:23:47 -0500
+        id S235473AbhCDTXs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 4 Mar 2021 14:23:48 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 901A6AF54;
-        Thu,  4 Mar 2021 19:22:26 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id B33E9AF78;
+        Thu,  4 Mar 2021 19:22:28 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 06/13] pip_stress: Move test result output to main
-Date:   Thu,  4 Mar 2021 20:22:13 +0100
-Message-Id: <20210304192220.11272-7-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 13/13] ssdd: Add JSON output feature
+Date:   Thu,  4 Mar 2021 20:22:20 +0100
+Message-Id: <20210304192220.11272-14-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210304192220.11272-1-dwagner@suse.de>
 References: <20210304192220.11272-1-dwagner@suse.de>
@@ -40,57 +40,105 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Instead printing the result high() close directly move it to main()
-function to simplify the return code if the test fails.
+Write the test results as JSON output to a file. This allows to
+simplifies any parsing later on.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/pi_tests/pip_stress.c | 15 +++++++--------
- 1 file changed, 7 insertions(+), 8 deletions(-)
+ src/ssdd/ssdd.c | 23 ++++++++++++++++++++++-
+ 1 file changed, 22 insertions(+), 1 deletion(-)
 
-diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
-index 8b91578f9ab8..2c3288984202 100644
---- a/src/pi_tests/pip_stress.c
-+++ b/src/pi_tests/pip_stress.c
-@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
- 		exit(1);
- 	} else if (pid1 != 0) {		/* parent code */
- 		low(pid1);
-+		exit(0);
- 	} else {			/* child code */
- 		pid2 = fork();		/* parent code */
- 		if (pid2 == -1) {
-@@ -155,9 +156,15 @@ int main(int argc, char *argv[])
- 			high(pid2);
- 		} else {			/* child code */
- 			medium();
-+			exit(0);
- 		}
- 	}
+diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
+index 50bec824b2e8..7a2a5efb783f 100644
+--- a/src/ssdd/ssdd.c
++++ b/src/ssdd/ssdd.c
+@@ -36,6 +36,8 @@
+ #include <sys/wait.h>
+ #include <sys/ptrace.h>
  
-+	if (statep->inversion)
-+		printf("Successfully used priority inheritance to handle an inversion\n");
-+	else
-+		printf("No inversion incurred\n");
++#include "rt-utils.h"
 +
+ /* do_wait return values */
+ #define STATE_EXITED	1
+ #define STATE_STOPPED	2
+@@ -65,10 +67,11 @@ static const char *get_state_name(int state)
+ #define unused __attribute__((unused))
+ 
+ static int quiet;
++static char outfile[MAX_PATH];
+ 
+ static int got_sigchld;
+ 
+-enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_QUIET };
++enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_OUTPUT, OPT_QUIET };
+ 
+ static void usage(int error)
+ {
+@@ -77,6 +80,7 @@ static void usage(int error)
+ 	       "ssdd <options>\n\n"
+ 	       "-f       --forks=NUM       number of forks\n"
+ 	       "-h       --help            print this message\n"
++	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+ 	       "-q       --quiet           suppress running output\n"
+ 	       "-i       --iters=NUM       number of iterations\n"
+ 	       );
+@@ -287,6 +291,13 @@ static int forktests(int testid)
  	exit(0);
  }
  
-@@ -222,14 +229,6 @@ void high(pid_t pid)
- 	Pthread_mutex_unlock(resource);
- 	kill(pid, SIGKILL);	/* kill the medium thread */
- 	waitpid(pid, &status, 0);
--
--	Pthread_mutex_lock(statep->mutex);
--
--	if (statep->inversion)
--		printf("Successfully used priority inheritance to handle an inversion\n");
--	else
--		printf("No inversion incurred\n");
--	Pthread_mutex_unlock(statep->mutex);
- }
++static void write_stats(FILE *f, void *data)
++{
++	int *error = data;
++
++	fprintf(f, "  \"success\": %d\n", !*error);
++}
++
+ int main(int argc, char **argv)
+ {
+ 	int i, ret_sig, status;
+@@ -295,12 +306,14 @@ int main(int argc, char **argv)
  
- /* mmap a page of anonymous shared memory */
+ 	setbuf(stdout, NULL);
+ 
++	rt_init(argc, argv);
+ 	for (;;) {
+ 		int option_index = 0;
+ 
+ 		static struct option long_options[] = {
+ 			{"forks",		required_argument,	NULL, OPT_NFORKS},
+ 			{"help",		no_argument,		NULL, OPT_HELP},
++			{"output",		required_argument,	NULL, OPT_OUTPUT},
+ 			{"quiet",		no_argument,		NULL, OPT_QUIET},
+ 			{"iters",		required_argument,	NULL, OPT_NITERS},
+ 			{NULL, 0, NULL, 0},
+@@ -317,6 +330,9 @@ int main(int argc, char **argv)
+ 		case OPT_HELP:
+ 			usage(0);
+ 			break;
++		case OPT_OUTPUT:
++			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
++			break;
+ 		case OPT_QUIET:
+ 		case 'q':
+ 			quiet = 1;
+@@ -348,6 +364,7 @@ int main(int argc, char **argv)
+ 			forktests(i);
+ 	}
+ 
++	rt_test_start();
+ 	for (i = 0; i < nforks; i++) {
+ 		status = do_wait(&wait_pid, &ret_sig);
+ 		if (status != STATE_EXITED) {
+@@ -363,5 +380,9 @@ int main(int argc, char **argv)
+ 	printf("%s.\n", error ?
+ 		"One or more tests FAILED" :
+ 		"All tests PASSED");
++
++	if (strlen(outfile) != 0)
++		rt_write_json(outfile, write_stats, &error);
++
+ 	exit(error);
+ }
 -- 
 2.30.1
 
