@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1AF1C43381
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F2ECBC4332E
 	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 19:24:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B4DE264F70
+	by mail.kernel.org (Postfix) with ESMTP id CC42864F72
 	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 19:24:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235473AbhCDTYG (ORCPT
+        id S235457AbhCDTYG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Thu, 4 Mar 2021 14:24:06 -0500
-Received: from mx2.suse.de ([195.135.220.15]:51444 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:51448 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235456AbhCDTXr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Mar 2021 14:23:47 -0500
+        id S235470AbhCDTXs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 4 Mar 2021 14:23:48 -0500
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id C66FCAF74;
-        Thu,  4 Mar 2021 19:22:27 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 684C9AF77;
+        Thu,  4 Mar 2021 19:22:28 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 10/13] pi_stress: Prepare command line parser for long options only
-Date:   Thu,  4 Mar 2021 20:22:17 +0100
-Message-Id: <20210304192220.11272-11-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 12/13] ssdd: Add quiet command line option
+Date:   Thu,  4 Mar 2021 20:22:19 +0100
+Message-Id: <20210304192220.11272-13-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.1
 In-Reply-To: <20210304192220.11272-1-dwagner@suse.de>
 References: <20210304192220.11272-1-dwagner@suse.de>
@@ -40,125 +40,101 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Introduce option value enums in order to be able to parse long options
-only.
+The quiet option is useful for automated test setups where
+only the final result of the run is interesting.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/pi_tests/pi_stress.c | 45 ++++++++++++++++++++++++++++------------
- 1 file changed, 32 insertions(+), 13 deletions(-)
+ src/ssdd/ssdd.c | 29 ++++++++++++++++++++---------
+ 1 file changed, 20 insertions(+), 9 deletions(-)
 
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 49f89b7b0136..73f0e6a402e3 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -1274,23 +1274,29 @@ int process_sched_line(const char *arg)
- 	return retval;
+diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
+index 9fa61f39f6e3..50bec824b2e8 100644
+--- a/src/ssdd/ssdd.c
++++ b/src/ssdd/ssdd.c
+@@ -64,9 +64,11 @@ static const char *get_state_name(int state)
+ 
+ #define unused __attribute__((unused))
+ 
++static int quiet;
++
+ static int got_sigchld;
+ 
+-enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP };
++enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_QUIET };
+ 
+ static void usage(int error)
+ {
+@@ -75,6 +77,7 @@ static void usage(int error)
+ 	       "ssdd <options>\n\n"
+ 	       "-f       --forks=NUM       number of forks\n"
+ 	       "-h       --help            print this message\n"
++	       "-q       --quiet           suppress running output\n"
+ 	       "-i       --iters=NUM       number of iterations\n"
+ 	       );
+ 	exit(error);
+@@ -176,7 +179,8 @@ static int forktests(int testid)
+ 	if (!child)
+ 		child_process();
+ 
+-	printf("forktest#%d/%d/%d: STARTING\n", testid, parent, child);
++	if (!quiet)
++		printf("forktest#%d/%d/%d: STARTING\n", testid, parent, child);
+ 
+ 	act.sa_sigaction = sigchld;
+ 	sigemptyset(&act.sa_mask);
+@@ -278,8 +282,8 @@ static int forktests(int testid)
+ 	/* There is no need for the tracer to kill the tracee. It will
+ 	 * automatically exit when its owner, ie, us, exits.
+ 	 */
+-
+-	printf("forktest#%d/%d: EXITING, no error\n", testid, parent);
++	if (!quiet)
++		printf("forktest#%d/%d: EXITING, no error\n", testid, parent);
+ 	exit(0);
  }
  
-+enum option_values {
-+	OPT_DEBUG=1, OPT_DURATION, OPT_GROUPS, OPT_HELP, OPT_INVERSIONS,
-+	OPT_MLOCKALL, OPT_PROMPT, OPT_QUIET, OPT_RR, OPT_SCHED,
-+	OPT_UNIPROCESSOR, OPT_VERBOSE, OPT_VERSION,
-+};
-+
- void process_command_line(int argc, char **argv)
- {
- 	for (;;) {
- 		struct option options[] = {
--			{"debug",		no_argument,		NULL, 'd'},
--			{"duration",		required_argument,	NULL, 'D'},
--			{"groups",		required_argument,	NULL, 'g'},
--			{"help",		no_argument,		NULL, 'h'},
--			{"inversions",		required_argument,	NULL, 'i'},
--			{"mlockall",		no_argument,		NULL, 'm'},
--			{"prompt",		no_argument,		NULL, 'p'},
--			{"quiet",		no_argument,		NULL, 'q'},
--			{"rr",			no_argument,		NULL, 'r'},
--			{"sched",		required_argument,	NULL, 's'},
--			{"uniprocessor",	no_argument,		NULL, 'u'},
--			{"verbose",		no_argument,		NULL, 'v'},
--			{"version",		no_argument,		NULL, 'V'},
-+			{"debug",		no_argument,		NULL, OPT_DEBUG},
-+			{"duration",		required_argument,	NULL, OPT_DURATION},
-+			{"groups",		required_argument,	NULL, OPT_GROUPS},
-+			{"help",		no_argument,		NULL, OPT_HELP},
-+			{"inversions",		required_argument,	NULL, OPT_INVERSIONS},
-+			{"mlockall",		no_argument,		NULL, OPT_MLOCKALL},
-+			{"prompt",		no_argument,		NULL, OPT_PROMPT},
+@@ -297,10 +301,11 @@ int main(int argc, char **argv)
+ 		static struct option long_options[] = {
+ 			{"forks",		required_argument,	NULL, OPT_NFORKS},
+ 			{"help",		no_argument,		NULL, OPT_HELP},
 +			{"quiet",		no_argument,		NULL, OPT_QUIET},
-+			{"rr",			no_argument,		NULL, OPT_RR},
-+			{"sched",		required_argument,	NULL, OPT_SCHED},
-+			{"uniprocessor",	no_argument,		NULL, OPT_UNIPROCESSOR},
-+			{"verbose",		no_argument,		NULL, OPT_VERBOSE},
-+			{"version",		no_argument,		NULL, OPT_VERSION},
+ 			{"iters",		required_argument,	NULL, OPT_NITERS},
  			{NULL, 0, NULL, 0},
  		};
- 
-@@ -1298,12 +1304,15 @@ void process_command_line(int argc, char **argv)
+-		int c = getopt_long(argc, argv, "f:hi:", long_options, &option_index);
++		int c = getopt_long(argc, argv, "f:hqi:", long_options, &option_index);
  		if (c == -1)
  			break;
- 		switch (c) {
-+		case OPT_DEBUG:
- 		case 'd':
- 			debugging = 1;
- 			break;
-+		case OPT_DURATION:
- 		case 'D':
- 			duration = parse_time_string(optarg);
- 			break;
-+		case OPT_GROUPS:
- 		case 'g':
- 			ngroups = strtol(optarg, NULL, 10);
- 			if (ngroups > num_processors) {
-@@ -1314,37 +1323,47 @@ void process_command_line(int argc, char **argv)
- 			}
- 			pi_info("number of groups set to %d\n", ngroups);
- 			break;
-+		case OPT_HELP:
- 		case 'h':
+ 		switch(c) {
+@@ -312,6 +317,10 @@ int main(int argc, char **argv)
+ 		case OPT_HELP:
  			usage(0);
  			break;
-+		case OPT_INVERSIONS:
- 		case 'i':
- 			inversions = strtol(optarg, NULL, 10);
- 			pi_info("doing %d inversion per group\n", inversions);
- 			break;
-+		case OPT_MLOCKALL:
- 		case 'm':
- 			lockall = 1;
- 			break;
-+		case OPT_PROMPT:
- 		case 'p':
- 			prompt = 1;
- 			break;
 +		case OPT_QUIET:
- 		case 'q':
- 			verbose = 0;
- 			quiet = 1;
- 			break;
-+		case OPT_RR:
- 		case 'r':
- 			policy = SCHED_RR;
- 			break;
-+		case OPT_SCHED:
- 		case 's':
- 			if (process_sched_line(optarg))
- 				pi_error("ignoring invalid options '%s'\n", optarg);
- 			break;
-+		case OPT_UNIPROCESSOR:
- 		case 'u':
- 			uniprocessor = 1;
- 			break;
-+		case OPT_VERBOSE:
- 		case 'v':
- 			verbose = 1;
- 			quiet = 0;
- 			break;
-+		case OPT_VERSION:
- 		case 'V':
- 			printf("pi_stress v%1.2f ", VERSION);
- 			exit(0);
++		case 'q':
++			quiet = 1;
++			break;
+ 		case 'i':
+ 		case OPT_NITERS:
+ 			nsteps = atoi(optarg);
+@@ -322,10 +331,12 @@ int main(int argc, char **argv)
+ 		}
+ 	}
+ 
+-	printf("#main : %d\n", getpid());
+-	printf("#forks: %d\n", nforks);
+-	printf("#steps: %d\n", nsteps);
+-	printf("\n");
++	if (!quiet) {
++		printf("#main : %d\n", getpid());
++		printf("#forks: %d\n", nforks);
++		printf("#steps: %d\n", nsteps);
++		printf("\n");
++	}
+ 
+ 	for (i = 0; i < nforks; i++) {
+ 		child = fork();
 -- 
 2.30.1
 
