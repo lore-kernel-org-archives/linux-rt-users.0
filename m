@@ -2,142 +2,375 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 60D5EC4332B
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 15:50:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D8C5EC43331
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 19:24:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 463AB60230
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 15:50:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B3C9E64F60
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Mar 2021 19:24:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235696AbhCDPtm (ORCPT
+        id S233786AbhCDTXd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 4 Mar 2021 10:49:42 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51644 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235691AbhCDPtd (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Mar 2021 10:49:33 -0500
-Received: from mail-qk1-x735.google.com (mail-qk1-x735.google.com [IPv6:2607:f8b0:4864:20::735])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AF15AC061760
-        for <linux-rt-users@vger.kernel.org>; Thu,  4 Mar 2021 07:48:52 -0800 (PST)
-Received: by mail-qk1-x735.google.com with SMTP id d20so27223505qkc.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Mar 2021 07:48:52 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :mime-version;
-        bh=4ZGEAjOAynqUKM0BY8AhhziUTRbrwYg3kFODoyA8e38=;
-        b=TNpr+jirPdoGG48KBijZXB6WAaY/Z7vcgjSh5UGBXHCrF52wdhh0+75IbUpxgSsqgP
-         zLQod63benjqofooF9syTEMcYiZb1HzvUGZOWMJ7Ak1hecmnbrPC5wkV53owSVunVqCx
-         d6gvHngea0htM/73BQWa45U26i6dGPN/sZxf4yEQNAF9aRIJujxOOjy2WQdZbH8kMybz
-         4xl1Upo+2kEYIIF0OkEwl7Jo1JRzp5DAmAPVe8VofV1k0c+JVyx+GEtuaMJMe1lHdEz0
-         GELJQ5zJTP2AMj/mwQNXPsi/BpK0Bpf935Mw1u0/8iDeWSyiJUk09rUmk8nS5nQ/Wp3I
-         LJJw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:mime-version;
-        bh=4ZGEAjOAynqUKM0BY8AhhziUTRbrwYg3kFODoyA8e38=;
-        b=n3wbZMicwCCNWAVPApMq/aV92KDmL2pWe/0TuKW0WBRoEcn1MirOHxuKMUMLeiPSFW
-         GmDD9y0iI4GElgVcTDQMZOJEsoockYbYt3i1zie4dJ7Gi6q132/4aKJ7ahkGWY4u/Akq
-         YPUpdBhwjMLjG3vnqW0EgZdYnGy1aMsznBo7irjh2Z8MG63WpxZxio39xXVRgBUj8PZE
-         jdnT6MY0Yi7V8ffyCXN1F/5KHbaGS0jWskbDlTx/g2/U1mU17B51zM/iu6eQ0DueahPi
-         yly/08agJ0eJZDY9e0IfiO7PjGseJR5NGTeIc9rKIpSxezFrjoEHS7F++h39xCaQ1xjN
-         08Lg==
-X-Gm-Message-State: AOAM531084AGxaK5TnsI0JlU5hmPHIwmjkOkrjIr4/1dYkKjgB8uB4ry
-        Bg5HJ45anyAW25m71y6F2hg=
-X-Google-Smtp-Source: ABdhPJx8FXVVBTJSwq7FNLhYAiuOap0151ADE0ImHJAIq82cxihd5dmuQuPvJmfkqHWPFAU6ouwI7w==
-X-Received: by 2002:ae9:f719:: with SMTP id s25mr4613958qkg.42.1614872931961;
-        Thu, 04 Mar 2021 07:48:51 -0800 (PST)
-Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
-        by smtp.gmail.com with ESMTPSA id j20sm20352915qtl.36.2021.03.04.07.48.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Mar 2021 07:48:51 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-Date:   Thu, 4 Mar 2021 10:48:44 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-To:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-cc:     dwagner@suse.de, "Ahmed S . Darwish" <a.darwish@linutronix.de>,
-        linux-rt-users@vger.kernel.org, binh1.tranhai@toshiba.co.jp,
-        Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>
-Subject: Re: [rteval PATCH v2 2/3] rteval: cyclictest.py: Make build targets
- architecture independent
-In-Reply-To: <87im67tno4.fsf@kokedama.swc.toshiba.co.jp>
-Message-ID: <3d6cee93-577b-d06e-b440-d8c97615a544@redhat.com>
-References: <20210224021603.446274-1-punit1.agrawal@toshiba.co.jp> <20210224021603.446274-3-punit1.agrawal@toshiba.co.jp> <43eaa8bb-26a-112c-8c13-38fe882dbbb@redhat.com> <87im67tno4.fsf@kokedama.swc.toshiba.co.jp>
+        Thu, 4 Mar 2021 14:23:33 -0500
+Received: from mx2.suse.de ([195.135.220.15]:51246 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S234559AbhCDTXH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 4 Mar 2021 14:23:07 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+        by mx2.suse.de (Postfix) with ESMTP id EDD87AF32;
+        Thu,  4 Mar 2021 19:22:25 +0000 (UTC)
+From:   Daniel Wagner <dwagner@suse.de>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
+Subject: [PATCH rt-tests v1 04/13] rt_util: Copy command line before getopt_long() is called
+Date:   Thu,  4 Mar 2021 20:22:11 +0100
+Message-Id: <20210304192220.11272-5-dwagner@suse.de>
+X-Mailer: git-send-email 2.30.1
+In-Reply-To: <20210304192220.11272-1-dwagner@suse.de>
+References: <20210304192220.11272-1-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+By default, getopt_long() permutes the contents of argv as it scans,
+so that eventually all the nonoptions are at the end. This is
+confusing in the JSON output, thus copy the command line before we
+call getopt_long().
 
+Introduce a rt_init() which copies the command line. This makes also
+rt_write_json() function arguments a bit cleaner.
 
-On Thu, 4 Mar 2021, Punit Agrawal wrote:
+Signed-off-by: Daniel Wagner <dwagner@suse.de>
+---
+ src/cyclictest/cyclictest.c           |  3 +-
+ src/include/rt-utils.h                |  7 +++--
+ src/lib/rt-utils.c                    | 45 ++++++++++++---------------
+ src/oslat/oslat.c                     |  5 +--
+ src/pmqtest/pmqtest.c                 |  3 +-
+ src/ptsematest/ptsematest.c           |  3 +-
+ src/rt-migrate-test/rt-migrate-test.c |  3 +-
+ src/sched_deadline/cyclicdeadline.c   |  4 ++-
+ src/signaltest/signaltest.c           |  3 +-
+ src/sigwaittest/sigwaittest.c         |  3 +-
+ src/svsematest/svsematest.c           |  3 +-
+ 11 files changed, 44 insertions(+), 38 deletions(-)
 
-> John Kacur <jkacur@redhat.com> writes:
-> 
-> > On Wed, 24 Feb 2021, Punit Agrawal wrote:
-> >
-> >> Not all kernel archiectures provide the "bzImage" target, e.g., arm64
-> >> provides "Image" which generates an uncompressed kernel binary.
-> >> 
-> >> Instead of going down the path of customizing build targets
-> >> per-architecture, let's drop them altogether. The default kernel
-> >> target should build the kernel and modules on all architectures
-> >> anyways.
-> >> 
-> >> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-> >> ---
-> >>  rteval/modules/loads/kcompile.py | 2 +-
-> >>  1 file changed, 1 insertion(+), 1 deletion(-)
-> >> 
-> >> diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-> >> index 326f1ae..e747b9f 100644
-> >> --- a/rteval/modules/loads/kcompile.py
-> >> +++ b/rteval/modules/loads/kcompile.py
-> >> @@ -58,7 +58,7 @@ class KBuildJob:
-> >>          else:
-> >>              self.jobs = self.calc_jobs_per_cpu() * len(self.node)
-> >>          self.log(Log.DEBUG, "node %d: jobs == %d" % (int(node), self.jobs))
-> >> -        self.runcmd = "%s make O=%s -C %s -j%d bzImage modules" \
-> >> +        self.runcmd = "%s make O=%s -C %s -j%d" \
-> >>                  % (self.binder, self.objdir, self.kdir, self.jobs)
-> >>          self.cleancmd = "%s make O=%s -C %s clean allmodconfig" \
-> >>                  % (self.binder, self.objdir, self.kdir)
-> >> -- 
-> >> 2.30.0
-> >> 
-> >> 
-> >
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> 
-> Hi John,
-> 
-> Thanks for picking up this patch.
-> 
-> Just wanted to make sure about the status of the other 2 patches in the
-> set - 1/3 and 3/3, I am assuming they're on your TODO but haven't had a
-> chance to confirm yet.
-> 
-> Let me know if that's not the case for some reason.
-> 
-> Thanks,
-> Punit
-> 
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index c43dd7cbbd64..3f3b91bab53b 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1778,6 +1778,7 @@ int main(int argc, char **argv)
+ 	int i, ret = -1;
+ 	int status;
+ 
++	rt_init(argc, argv);
+ 	process_options(argc, argv, max_cpus);
+ 
+ 	if (check_privs())
+@@ -2133,7 +2134,7 @@ int main(int argc, char **argv)
+ 		printf("\033[%dB", num_threads + 2);
+ 
+ 	if (strlen(outfile) != 0)
+-		rt_write_json(outfile, argc, argv, write_stats, NULL);
++		rt_write_json(outfile, write_stats, NULL);
+ 
+ 	if (quiet)
+ 		quiet = 2;
+diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+index 36af92b170df..11d69ea7e49a 100644
+--- a/src/include/rt-utils.h
++++ b/src/include/rt-utils.h
+@@ -80,8 +80,9 @@ static inline int64_t calctime(struct timespec t)
+ 	return time;
+ }
+ 
+-void rt_write_json(const char *filename, int argc, char *argv[],
+-		   void (*cb)(FILE *, void *),
+-		   void *data);
++void rt_init(int argc, char *argv[]);
++
++void rt_write_json(const char *filename,
++		   void (*cb)(FILE *, void *), void *data);
+ 
+ #endif	/* __RT_UTILS.H */
+diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+index 00907c573d6a..9c9d0dee3255 100644
+--- a/src/lib/rt-utils.c
++++ b/src/lib/rt-utils.c
+@@ -29,12 +29,14 @@
+ #include "rt-error.h"
+ 
+ #define  TRACEBUFSIZ  1024
++#define  MAX_COMMAND_LINE 4096
+ 
+ static char debugfileprefix[MAX_PATH];
+ static char *fileprefix;
+ static int trace_fd = -1;
+ static int tracemark_fd = -1;
+ static __thread char tracebuf[TRACEBUFSIZ];
++static char cmdline[MAX_COMMAND_LINE];
+ 
+ /*
+  * Finds the tracing directory in a mounted debugfs
+@@ -486,40 +488,40 @@ void disable_trace_mark(void)
+ 	close_tracemark_fd();
+ }
+ 
+-static char *get_cmdline(int argc, char *argv[])
++void rt_init(int argc, char *argv[])
+ {
+-	char *cmdline;
++	int offset = 0;
+ 	int len, i;
+ 
+-	len = 0;
+-	for (i = 0; i < argc; i++)
+-		len += strlen(argv[i]) + 1;
++	cmdline[0] = '\0';
+ 
+-	cmdline = malloc(len);
+-	if (!cmdline)
+-		err_exit(ENOMEM, "Could not copy cmdline");
+-
+-	memset(cmdline, 0, len);
++	/*
++	 * getopt_long() permutes the contents of argv as it scans, so
++	 * that eventually all the nonoptions are at the end. Make a
++	 * copy before calling getopt_long().
++	 */
+ 	for (i = 0; i < argc;) {
+-		cmdline = strcat(cmdline, argv[i]);
++		len = strlen(argv[i]);
++		if (offset + len + 1 >= MAX_COMMAND_LINE)
++			break;
++
++		strcat(cmdline, argv[i]);
+ 		i++;
+ 		if (i < argc)
+-			cmdline = strcat(cmdline, " ");
+-	}
++			strcat(cmdline, " ");
+ 
+-	return cmdline;
++		offset += len + 1;
++	}
+ }
+ 
+-void rt_write_json(const char *filename, int argc, char *argv[],
+-		  void (*cb)(FILE *, void *),
+-		  void *data)
++void rt_write_json(const char *filename,
++		   void (*cb)(FILE *, void *), void *data)
+ {
+ 	unsigned char buf[1];
+ 	struct utsname uts;
+ 	struct timeval tv;
+ 	char tsbuf[64];
+ 	struct tm *tm;
+-	char *cmdline;
+ 	FILE *f, *s;
+ 	time_t t;
+ 	size_t n;
+@@ -533,11 +535,6 @@ void rt_write_json(const char *filename, int argc, char *argv[],
+ 			err_exit(errno, "Failed to open '%s'\n", filename);
+ 	}
+ 
+-	cmdline = get_cmdline(argc, argv);
+-	if (!cmdline)
+-		err_exit(ENOMEM, "get_cmdline()");
+-
+-
+ 	gettimeofday(&tv, NULL);
+ 	t = tv.tv_sec;
+ 	tm = localtime(&t);
+@@ -573,8 +570,6 @@ void rt_write_json(const char *filename, int argc, char *argv[],
+ 
+ 	fprintf(f, "}\n");
+ 
+-	free(cmdline);
+-
+ 	if (!filename || strcmp("-", filename))
+ 		fclose(f);
+ }
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 465a694cdd1d..ac54d05697ef 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -796,6 +796,8 @@ int main(int argc, char *argv[])
+ 		exit(1);
+ 	}
+ 
++	rt_init(argc, argv);
++
+ 	g.app_name = argv[0];
+ 	g.rtprio = 0;
+ 	g.bucket_size = BUCKET_SIZE;
+@@ -860,8 +862,7 @@ int main(int argc, char *argv[])
+ 	write_summary(threads);
+ 
+ 	if (strlen(g.outfile) != 0)
+-		rt_write_json(g.outfile, argc, argv,
+-			write_summary_json, threads);
++		rt_write_json(g.outfile, write_summary_json, threads);
+ 
+ 	if (g.cpu_list) {
+ 		free(g.cpu_list);
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index e1f59836ea07..f96b3d0bf400 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -502,6 +502,7 @@ int main(int argc, char *argv[])
+ 	mqstat.mq_msgsize = 8;
+ 	mqstat.mq_flags = 0;
+ 
++	rt_init(argc, argv);
+ 	process_options(argc, argv);
+ 
+ 	if (check_privs())
+@@ -650,7 +651,7 @@ int main(int argc, char *argv[])
+ 			.receiver = receiver,
+ 			.sender = sender,
+ 		};
+-		rt_write_json(outfile, argc, argv, write_stats, &ps);
++		rt_write_json(outfile, write_stats, &ps);
+ 	}
+ 
+ nomem:
+diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+index 2755bfde5210..a32bfc1698f0 100644
+--- a/src/ptsematest/ptsematest.c
++++ b/src/ptsematest/ptsematest.c
+@@ -401,6 +401,7 @@ int main(int argc, char *argv[])
+ 	sigset_t sigset;
+ 	struct timespec maindelay;
+ 
++	rt_init(argc, argv);
+ 	process_options(argc, argv);
+ 
+ 	if (check_privs())
+@@ -518,7 +519,7 @@ int main(int argc, char *argv[])
+ 			.receiver = receiver,
+ 			.sender = sender,
+ 		};
+-		rt_write_json(outfile, argc, argv, write_stats, &ps);
++		rt_write_json(outfile, write_stats, &ps);
+ 	}
+ 
+ nomem:
+diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+index 56b7b66ccdf4..cdfbfafb200b 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -535,6 +535,7 @@ int main (int argc, char **argv)
+ 	struct timespec intv;
+ 	struct sched_param param;
+ 
++	rt_init(argc, argv);
+ 	parse_options(argc, argv);
+ 
+ 	signal(SIGINT, stop_log);
+@@ -662,7 +663,7 @@ int main (int argc, char **argv)
+ 	print_results();
+ 
+ 	if (strlen(outfile) != 0)
+-		rt_write_json(outfile, argc, argv, write_stats, NULL);
++		rt_write_json(outfile, write_stats, NULL);
+ 
+ 	if (stop) {
+ 		/*
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index d7aa9bb5d269..e6811838b62d 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -1009,6 +1009,8 @@ int main(int argc, char **argv)
+ 	int i;
+ 	int c;
+ 
++	rt_init(argc, argv);
++
+ 	cpu_count = sysconf(_SC_NPROCESSORS_CONF);
+ 	if (cpu_count < 1)
+ 		err_quit("Can not calculate number of CPUS\n");
+@@ -1225,7 +1227,7 @@ int main(int argc, char **argv)
+ 	}
+ 
+ 	if (strlen(outfile) != 0)
+-		rt_write_json(outfile, argc, argv, write_stats, sched_data);
++		rt_write_json(outfile, write_stats, sched_data);
+ 
+ 	if (setcpu_buf)
+ 		free(setcpu_buf);
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index e2ffc0bb8693..6abf38b7821c 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -414,6 +414,7 @@ int main(int argc, char **argv)
+ 	int status, cpu;
+ 	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+ 
++	rt_init(argc, argv);
+ 	process_options(argc, argv, max_cpus);
+ 
+ 	if (check_privs())
+@@ -557,7 +558,7 @@ int main(int argc, char **argv)
+ 			free(stat[i].values);
+ 	}
+ 	if (strlen(outfile) != 0)
+-		rt_write_json(outfile, argc, argv, write_stats, par);
++		rt_write_json(outfile, write_stats, par);
+ 
+ 	free(stat);
+  outpar:
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index 0cdf30a6a769..142419f9e315 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -473,6 +473,7 @@ int main(int argc, char *argv[])
+ 	char f_opt[14];
+ 	struct timespec launchdelay, maindelay;
+ 
++	rt_init(argc, argv);
+ 	process_options(argc, argv);
+ 
+ 	if (check_privs())
+@@ -705,7 +706,7 @@ int main(int argc, char *argv[])
+ 			.receiver = receiver,
+ 			.sender = sender,
+ 		};
+-		rt_write_json(outfile, argc, argv, write_stats, &ps);
++		rt_write_json(outfile, write_stats, &ps);
+ 	}
+ 
+ nomem:
+diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+index 23f84bcbd3dc..7c9d21edbab2 100644
+--- a/src/svsematest/svsematest.c
++++ b/src/svsematest/svsematest.c
+@@ -514,6 +514,7 @@ int main(int argc, char *argv[])
+ 	if (myfile == NULL)
+ 		myfile = argv[0];
+ 
++	rt_init(argc, argv);
+ 	process_options(argc, argv);
+ 
+ 	if (check_privs())
+@@ -777,7 +778,7 @@ int main(int argc, char *argv[])
+ 			.receiver = receiver,
+ 			.sender = sender,
+ 		};
+-		rt_write_json(outfile, argc, argv, write_stats, &ps);
++		rt_write_json(outfile, write_stats, &ps);
+ 	}
+ 
+ nosem:
+-- 
+2.30.1
 
-Yes, they are on my TODO list, I will get to them.
-I will probably take the patch that deal with the model name, after I 
-convince myself that it won't break anything else.
-
-I don't really like the idea of a fake NUMA node to deal with rteval
-on non-NUMA machines, but I am open to ideas to get rteval working
-on such machines. On my list to give you feedback.
-
-Thanks
-
-John
