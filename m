@@ -4,48 +4,51 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF4EFC433E6
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CE201C433E9
 	for <linux-rt-users@archiver.kernel.org>; Tue,  9 Mar 2021 20:40:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 88F7B652C9
+	by mail.kernel.org (Postfix) with ESMTP id AC37D652CC
 	for <linux-rt-users@archiver.kernel.org>; Tue,  9 Mar 2021 20:40:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231828AbhCIUkQ (ORCPT
+        id S231634AbhCIUkP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 9 Mar 2021 15:40:16 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:55268 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231804AbhCIUj6 (ORCPT
+        Tue, 9 Mar 2021 15:40:15 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54522 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231790AbhCIUjz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Mar 2021 15:39:58 -0500
-Date:   Tue, 9 Mar 2021 21:39:56 +0100
+        Tue, 9 Mar 2021 15:39:55 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CBEB7C06174A;
+        Tue,  9 Mar 2021 12:39:54 -0800 (PST)
+Date:   Tue, 9 Mar 2021 21:39:50 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1615322397;
+        s=2020; t=1615322392;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=3Xmr7Bhm0yYCHVKJX9GMtPw2hz01AiXv05IR/hPgmaU=;
-        b=XSOmexd5PnwwcdDTHsdnG6UIp+m9ICNnwmCxtVDvuMuJYWIb8amjFibDOUGdmUKlChSUb3
-        ql/8qfc/qV7Lm52QP5upOOQD7sbC2o+9Xc4oZxee8KDVzdR1XTiYfrtA7IIz/Jij2dojRl
-        whsLNxI24cGs1DBky4x/W46hU08u4FqzQGdsOOS9FGThx1MR2kRdLWMhltI18TNsriI903
-        TgP9x2CglwAg2GMwc1tc8DMCsAEa0VQ67PRlGi8j1Um1v1pYdnqyviF4o3Fx+HSEwa39B7
-        LTWsozGXmsVuGbes3z5uCG0kP1Ukom3+73eySbXRBt/hAB5VY2fVq4Ud5M8T6w==
+        bh=OKNd7/rxYhsQelqiJwdxJxn//ZZydN8JASiDCTZZB7g=;
+        b=Jnp3fZr6v+apcHPh8jxqPomCAnAFzcx78KT2LQ4ZRCwQnceg4aaRBwLfRNsdmf3jH6kJN0
+        G3p7dYSooSoxOoFnhQmbXNaLzK/DGuGJoFnXCOFCb8Z1dz7bJKCb6L8NSnl/WQDX7WnkZo
+        0PjR8Lids7pbcG74xe0y0mYBgQ3gzFyIN1ankq3LCxas9GoEuz/s78AlHX0iSq/nwbR2KH
+        6yPMnMolfKyCf2SA/Rx5ns0wQuzbz2iNmAq211e3eYU267O9Q+rrg+jHBNM73AdVnG3Olj
+        Egv986JIsuDStnZwhMFdtGSR1EVulwt67KUpRFGlb8vGZ93F+f/ofKt0CKFlHQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1615322397;
+        s=2020e; t=1615322392;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=3Xmr7Bhm0yYCHVKJX9GMtPw2hz01AiXv05IR/hPgmaU=;
-        b=uxvAFBor5NSvzfxQoajagsFkWhQoR0TF7qmu+owkEQ5a3Db/LUQ2v35zvedsHq273KY4uI
-        FdhGaE3ownLQmLDQ==
+        bh=OKNd7/rxYhsQelqiJwdxJxn//ZZydN8JASiDCTZZB7g=;
+        b=/mOgnauX/la44fyehgxzWPGwcy2MTcg6zb6AjRq8lfUvRb0reOymdtyT2i8hA5qUzn8xJc
+        mdMN8pEbC/jLRnAg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Thomas Gleixner <tglx@linutronix.de>
 Cc:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.11.4-rt11
-Message-ID: <20210309203956.lt5sp3l633xx5nl5@linutronix.de>
+Subject: [ANNOUNCE] v5.10.21-rt34
+Message-ID: <20210309203950.33ikot2ddvoj7gmo@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
@@ -55,9 +58,14 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Dear RT folks!
 
-I'm pleased to announce the v5.11.4-rt11 patch set. 
+I'm pleased to announce the v5.10.21-rt34 patch set.
 
-Changes since v5.11.4-rt10:
+Changes since v5.10.21-rt33:
+
+  - The alloc/free tracker sysfs file uses one PAGE size for
+    collecting the results. If it runs out of space it reallocates
+    more memory with disabled interrupts. The reallocation is now
+    forbidden on PREEMPT_RT.
 
   - Update the softirq/tasklet patches to the latest version posted to
     the list.
@@ -66,29 +74,29 @@ Known issues
      - kdb/kgdb can easily deadlock.
      - netconsole triggers WARN.
 
-The delta patch against v5.11.4-rt10 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/incr/patch-5.11.4-rt10-rt11.patch.xz
+The delta patch against v5.10.21-rt33 is appended below and can be found here:
+
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.21-rt33-rt34.patch.xz
 
 You can get this release via the git tree at:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.11.4-rt11
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.10.21-rt34
 
-The RT patch against v5.11.4 can be found here:
+The RT patch against v5.10.21 can be found here:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patch-5.11.4-rt11.patch.xz
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.21-rt34.patch.xz
 
 The split quilt queue is available at:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.11/older/patches-5.11.4-rt11.tar.xz
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patches-5.10.21-rt34.tar.xz
 
 Sebastian
 
 diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index ed6e49bceff1a..272ffd12cf756 100644
+index 2725c6ad10af6..7545a2f18560a 100644
 --- a/include/linux/interrupt.h
 +++ b/include/linux/interrupt.h
-@@ -672,6 +672,7 @@ static inline int tasklet_trylock(struct tasklet_struct *t)
+@@ -663,6 +663,7 @@ static inline int tasklet_trylock(struct tasklet_struct *t)
  void tasklet_unlock(struct tasklet_struct *t);
  void tasklet_unlock_wait(struct tasklet_struct *t);
  void tasklet_unlock_spin_wait(struct tasklet_struct *t);
@@ -96,7 +104,7 @@ index ed6e49bceff1a..272ffd12cf756 100644
  #else
  static inline int tasklet_trylock(struct tasklet_struct *t) { return 1; }
  static inline void tasklet_unlock(struct tasklet_struct *t) { }
-@@ -702,8 +703,8 @@ static inline void tasklet_disable_nosync(struct tasklet_struct *t)
+@@ -693,8 +694,8 @@ static inline void tasklet_disable_nosync(struct tasklet_struct *t)
  }
  
  /*
@@ -108,7 +116,7 @@ index ed6e49bceff1a..272ffd12cf756 100644
  static inline void tasklet_disable_in_atomic(struct tasklet_struct *t)
  {
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index a9b66aa086366..27551db2b3ccc 100644
+index f0074f1344402..c9adc5c462485 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
 @@ -830,8 +830,8 @@ EXPORT_SYMBOL(tasklet_init);
@@ -123,9 +131,23 @@ index a9b66aa086366..27551db2b3ccc 100644
  void tasklet_unlock_spin_wait(struct tasklet_struct *t)
  {
 diff --git a/localversion-rt b/localversion-rt
-index d79dde624aaac..05c35cb580779 100644
+index e1d8362520178..21988f9ad53f1 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt10
-+-rt11
+--rt33
++-rt34
+diff --git a/mm/slub.c b/mm/slub.c
+index 32a87e0038776..15690db5223e7 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -4697,6 +4697,9 @@ static int alloc_loc_track(struct loc_track *t, unsigned long max, gfp_t flags)
+ 	struct location *l;
+ 	int order;
+ 
++	if (IS_ENABLED(CONFIG_PREEMPT_RT) && flags == GFP_ATOMIC)
++		return 0;
++
+ 	order = get_order(sizeof(struct location) * max);
+ 
+ 	l = (void *)__get_free_pages(flags, order);
