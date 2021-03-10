@@ -2,152 +2,167 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE201C433E9
-	for <linux-rt-users@archiver.kernel.org>; Tue,  9 Mar 2021 20:40:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C0C0C433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Mar 2021 18:16:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AC37D652CC
-	for <linux-rt-users@archiver.kernel.org>; Tue,  9 Mar 2021 20:40:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C9A5364FB3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Mar 2021 18:16:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231634AbhCIUkP (ORCPT
+        id S232901AbhCJSP4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 9 Mar 2021 15:40:15 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54522 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231790AbhCIUjz (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Mar 2021 15:39:55 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CBEB7C06174A;
-        Tue,  9 Mar 2021 12:39:54 -0800 (PST)
-Date:   Tue, 9 Mar 2021 21:39:50 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1615322392;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=OKNd7/rxYhsQelqiJwdxJxn//ZZydN8JASiDCTZZB7g=;
-        b=Jnp3fZr6v+apcHPh8jxqPomCAnAFzcx78KT2LQ4ZRCwQnceg4aaRBwLfRNsdmf3jH6kJN0
-        G3p7dYSooSoxOoFnhQmbXNaLzK/DGuGJoFnXCOFCb8Z1dz7bJKCb6L8NSnl/WQDX7WnkZo
-        0PjR8Lids7pbcG74xe0y0mYBgQ3gzFyIN1ankq3LCxas9GoEuz/s78AlHX0iSq/nwbR2KH
-        6yPMnMolfKyCf2SA/Rx5ns0wQuzbz2iNmAq211e3eYU267O9Q+rrg+jHBNM73AdVnG3Olj
-        Egv986JIsuDStnZwhMFdtGSR1EVulwt67KUpRFGlb8vGZ93F+f/ofKt0CKFlHQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1615322392;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=OKNd7/rxYhsQelqiJwdxJxn//ZZydN8JASiDCTZZB7g=;
-        b=/mOgnauX/la44fyehgxzWPGwcy2MTcg6zb6AjRq8lfUvRb0reOymdtyT2i8hA5qUzn8xJc
-        mdMN8pEbC/jLRnAg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.10.21-rt34
-Message-ID: <20210309203950.33ikot2ddvoj7gmo@linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+        Wed, 10 Mar 2021 13:15:56 -0500
+Received: from sleepmap.de ([85.10.206.218]:42070 "EHLO mail.sleepmap.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S233622AbhCJSP2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Mar 2021 13:15:28 -0500
+Date:   Wed, 10 Mar 2021 19:15:20 +0100
+From:   David Runge <dave@sleepmap.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+        linux-rt-users@vger.kernel.org,
+        linux1394-devel@lists.sourceforge.net,
+        Stefan Richter <stefanr@s5r6.in-berlin.de>
+Subject: Re: firewire-ohci fails to initialize Texas Instruments
+ XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
+ 5.10.8-rt24]
+Message-ID: <YEkMvjJt/Vu9Jbgu@hmbx>
+References: <YBVG/PG7syFIUBno@hmbx>
+ <20210201083441.ocucdvdrv37goz2s@linutronix.de>
+ <20210205112638.xuduvuefy3auycht@linutronix.de>
+ <YB3TLNN39/XhUyUY@hmbx>
+ <YB+5tdIpbTfnDnIi@hmbx>
+ <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
+ <YCl28sXo7LEyCK8y@hmbx>
+ <20210218083849.iitcrhdgv2oajfhv@linutronix.de>
+ <20210218092751.ahn262llcpp2loz7@linutronix.de>
+ <20210308141210.yoa37dsc26p4jsim@linutronix.de>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="6msKiO1TDZjGbyAt"
 Content-Disposition: inline
+In-Reply-To: <20210308141210.yoa37dsc26p4jsim@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
 
-I'm pleased to announce the v5.10.21-rt34 patch set.
+--6msKiO1TDZjGbyAt
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 10 Mar 2021 19:15:20 +0100
+From: David Runge <dave@sleepmap.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+	linux-rt-users@vger.kernel.org,
+	linux1394-devel@lists.sourceforge.net,
+	Stefan Richter <stefanr@s5r6.in-berlin.de>
+Subject: Re: firewire-ohci fails to initialize Texas Instruments
+ XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
+ 5.10.8-rt24]
 
-Changes since v5.10.21-rt33:
+On 2021-03-08 15:12:10 (+0100), Sebastian Andrzej Siewior wrote:
+> On 2021-02-18 10:27:51 [+0100], To David Runge wrote:
+> > On 2021-02-18 09:38:49 [+0100], To David Runge wrote:
+> > > On 2021-02-14 20:16:02 [+0100], David Runge wrote:
+> > > > The current config can be found on the AUR [1].
+> > >=20
+> > > So this did make a difference.=20
+> >=20
+> > made _no_ difference. Sorry for the confusion.
+>=20
+> David, did you had a chance to test the patch?
 
-  - The alloc/free tracker sysfs file uses one PAGE size for
-    collecting the results. If it runs out of space it reallocates
-    more memory with disabled interrupts. The reallocation is now
-    forbidden on PREEMPT_RT.
+Hey Sebastian,
 
-  - Update the softirq/tasklet patches to the latest version posted to
-    the list.
+sorry for the long delay! I got busy with other packaging/
+infrastructure things and nearly forgot about this one.
 
-Known issues
-     - kdb/kgdb can easily deadlock.
-     - netconsole triggers WARN.
+I have now tested with 5.11.2-rt9 with and without your proposed patch.
 
-The delta patch against v5.10.21-rt33 is appended below and can be found here:
+Without the patch [1], the behavior is as before, only the parent device
+node of the controller (/dev/fw0) is created, but the attached audio
+interface is not recognized.
 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.21-rt33-rt34.patch.xz
+With the patch applied [2], things get a little more exciting, as now
+both the parent and the child node are created (so both /dev/fw0 and
+/dev/fw1 show up).
 
-You can get this release via the git tree at:
+However, starting jackd on the interface leads to a zombification of the
+jackd process and the process never exits:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.10.21-rt34
+```
+Starting JACK server using fw-fireface800-48000.conf profile...
+no message buffer overruns
+no message buffer overruns
+no message buffer overruns
+jackdmp 1.9.17
+Copyright 2001-2005 Paul Davis and others.
+Copyright 2004-2016 Grame.
+Copyright 2016-2021 Filipe Coelho.
+jackdmp comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions; see the file COPYING for details
+JACK server starting in realtime mode with priority 80
+self-connect-mode is "Don't restrict self connect requests"
+1615399142007837:  (ffado.cpp)[  92] ffado_streaming_init: libffado
+2.4.4 built Nov 12 2020 17:24:24
+jack@fw-fireface800-48000.service: start operation timed out.
+Terminating.
+jack@fw-fireface800-48000.service: State 'stop-sigterm' timed out.
+Killing.
+jack@fw-fireface800-48000.service: Killing process 1813 (jackd) with
+signal SIGKILL.
+jack@fw-fireface800-48000.service: Killing process 2021 (FW_ARMSTD) with
+signal SIGKILL.
+jack@fw-fireface800-48000.service: Processes still around after SIGKILL.
+Ignoring.
+jack@fw-fireface800-48000.service: State 'final-sigterm' timed out.
+Killing.
+jack@fw-fireface800-48000.service: Killing process 1813 (jackd) with
+signal SIGKILL.
+jack@fw-fireface800-48000.service: Processes still around after final
+SIGKILL. Entering failed mode.
+jack@fw-fireface800-48000.service: Failed with result 'timeout'.
+jack@fw-fireface800-48000.service: Unit process 1813 (jackd) remains
+running after unit stopped.
+Failed to start JACK server using fw-fireface800-48000.conf profile.
+```
 
-The RT patch against v5.10.21 can be found here:
+If I can provide more info, please let me know!
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.21-rt34.patch.xz
+Best,
+David
 
-The split quilt queue is available at:
+[1] https://pkgbuild.com/~dvzrv/bugs/2021/03/linux-5.11.2-rt9-kernel.log
+[2] https://pkgbuild.com/~dvzrv/bugs/2021/03/linux-5.11.2-rt9-kernel_firewi=
+re_ohci_patch.log
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patches-5.10.21-rt34.tar.xz
+--=20
+https://sleepmap.de
 
-Sebastian
+--6msKiO1TDZjGbyAt
+Content-Type: application/pgp-signature; name="signature.asc"
 
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index 2725c6ad10af6..7545a2f18560a 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -663,6 +663,7 @@ static inline int tasklet_trylock(struct tasklet_struct *t)
- void tasklet_unlock(struct tasklet_struct *t);
- void tasklet_unlock_wait(struct tasklet_struct *t);
- void tasklet_unlock_spin_wait(struct tasklet_struct *t);
-+
- #else
- static inline int tasklet_trylock(struct tasklet_struct *t) { return 1; }
- static inline void tasklet_unlock(struct tasklet_struct *t) { }
-@@ -693,8 +694,8 @@ static inline void tasklet_disable_nosync(struct tasklet_struct *t)
- }
- 
- /*
-- * Do not use in new code. There is no real reason to invoke this from
-- * atomic contexts.
-+ * Do not use in new code. Disabling tasklets from atomic contexts is
-+ * error prone and should be avoided.
-  */
- static inline void tasklet_disable_in_atomic(struct tasklet_struct *t)
- {
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index f0074f1344402..c9adc5c462485 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -830,8 +830,8 @@ EXPORT_SYMBOL(tasklet_init);
- 
- #if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
- /*
-- * Do not use in new code. There is no real reason to invoke this from
-- * atomic contexts.
-+ * Do not use in new code. Waiting for tasklets from atomic contexts is
-+ * error prone and should be avoided.
-  */
- void tasklet_unlock_spin_wait(struct tasklet_struct *t)
- {
-diff --git a/localversion-rt b/localversion-rt
-index e1d8362520178..21988f9ad53f1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt33
-+-rt34
-diff --git a/mm/slub.c b/mm/slub.c
-index 32a87e0038776..15690db5223e7 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -4697,6 +4697,9 @@ static int alloc_loc_track(struct loc_track *t, unsigned long max, gfp_t flags)
- 	struct location *l;
- 	int order;
- 
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT) && flags == GFP_ATOMIC)
-+		return 0;
-+
- 	order = get_order(sizeof(struct location) * max);
- 
- 	l = (void *)__get_free_pages(flags, order);
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCAAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAmBJDLkACgkQVMKPT/Wh
+qUkwOQ//Uklo50mVmPxwAoqKv4lb47p5V8M74mGO8SmaH519nGWoeep43rL8V8sO
+dvcRHTzTHHgCivdrgsxrDzKbrMy5FuQvJgMlypx0LQi6gjboyXYiVvcOCVXn+Q3U
+hAnnt8g1AgR7UG9qcY0ehjsWu/hKlztQbZwR9by+WLOKhkFb2UGOHK2Ksbydhu6/
+rOcenjb1X2r4+lB0IpBtyf270IlbCHD1WYG2RJR57MPcTRB/9aL+MdfGeCtucuZa
+gsblnu1O2m71MlNjbF86D5Yt3gHX+GLxQl+d+cT61YncVqWUG9ikSkkDARL+Pwbn
+TulhADSiZy8ddcQhS6hRm0uQSF/7RY05WSiSKn7EUY1nl8ig8+6KMUMqCmr1la/t
+mdgcUx2pnM25VsbLHm+8Pt8nyJziU75ozlbgMEIn5tJpTO14ZEJej27KYVvHENsM
+fQcpoiwYp61aFZvPlGUI4aLgCxbLarVGHfA8ZohthgpcjgY1X/4AhSFGFOxx6BG0
+4YqO+cFzF1Q/AKfTtJ+IfMNBNcXoRjOYodTgZjrK49mdFE57765nBWS0CB0dUsNw
+GjGqhk34BXOtEGNW+5eOL9RaSutohFjpZA+FwJgSkBDmweN0SIOBW6aoHjo+DcCL
+/h4iCUdv2jQmqRGWcRn2zgHmTGrBCTR6HtGs5AFABfEfNRrgsEw=
+=mDUN
+-----END PGP SIGNATURE-----
+
+--6msKiO1TDZjGbyAt--
