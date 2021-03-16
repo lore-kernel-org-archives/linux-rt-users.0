@@ -2,78 +2,71 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25F28C433E6
-	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Mar 2021 06:21:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C201C433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Mar 2021 08:19:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E806E6520E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Mar 2021 06:21:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4ACA564FF5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Mar 2021 08:19:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230160AbhCPGU5 (ORCPT
+        id S234335AbhCPISy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Mar 2021 02:20:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59168 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229775AbhCPGUx (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Mar 2021 02:20:53 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F188DC06174A
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 Mar 2021 23:20:52 -0700 (PDT)
-Date:   Tue, 16 Mar 2021 07:20:49 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1615875651;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=/hIBek1N3k8EqKVz6XxrREeOuq3mMKmc03fNU3uicUk=;
-        b=b5zBSz11xpOUJwYX8jZ8sHipVZ8yCPpbVo+s3q3nL74kyDNzxvm7Pj6oW9orTloVx8egYt
-        ITXk6NyH+H0eZm0NovAe9VA4GJEmb64a9wgsS0BeCXNi/lT4uOsHHO53wVkcFwa0OpAoY8
-        2vKYZRNI2B0l/SfYxJiwTHZVDhPlS6n4qGj+iLfTUROWWjYed6DNj9U1sjGVPQ2SI1VyLA
-        pDBUxGsdoStfB/kbeUFp+yVTqcLSJouytkckwWheX2xtRGDbfJkdB9KrASgHx1VTvhKHRM
-        c4wNelAxOTl4MvehbHsKfW7pj0deCbn/aOTAI7mj3s+HjylA1DJdHBir/MRBNQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1615875651;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=/hIBek1N3k8EqKVz6XxrREeOuq3mMKmc03fNU3uicUk=;
-        b=EOERk49pz32dh3i8xTrlNhjxar+HVko+BNP8+Gl2oTsIvAZ6O+r6qfg/YPNEKM7nxg57q8
-        cvtukprUMz9Cq/Dw==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     Pintu Agarwal <pintu.ping@gmail.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: about preempt-rt patches
-Message-ID: <YFBOQdCxc9QyBk2Z@lx-t490>
-References: <CAOuPNLjoAST=rQ4NmGkVjqxi3iNqPg2MmqjCdr6=8smUwryX8A@mail.gmail.com>
+        Tue, 16 Mar 2021 04:18:54 -0400
+Received: from mail.monom.org ([188.138.9.77]:54186 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S234358AbhCPIS3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 16 Mar 2021 04:18:29 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 8DF4D500328;
+        Tue, 16 Mar 2021 09:18:26 +0100 (CET)
+Received: from localhost (unknown [94.31.96.195])
+        by mail.monom.org (Postfix) with ESMTPSA id 543B1500182;
+        Tue, 16 Mar 2021 09:18:26 +0100 (CET)
+Date:   Tue, 16 Mar 2021 09:18:26 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     Peter Xu <peterx@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Wagner <dwagner@suse.de>
+Subject: Re: [PATCH] rt-tests: Drop use_current_cpuset() check
+Message-ID: <20210316081826.bthxqja6shbcp36j@beryllium.lan>
+References: <20210315193707.359702-1-peterx@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAOuPNLjoAST=rQ4NmGkVjqxi3iNqPg2MmqjCdr6=8smUwryX8A@mail.gmail.com>
+In-Reply-To: <20210315193707.359702-1-peterx@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Mar 15, 2021, Pintu Agarwal wrote:
->
-> I just wanted to know if this is the right list for posting
-> changes/discussions related to preempt-rt patch set and linux-rt in
-> general.
->
+Hi Peter,
 
-Yes, this is the right list.
+On Mon, Mar 15, 2021 at 03:37:07PM -0400, Peter Xu wrote:
+> CPU list should allow to be any list rather than only the cores that are
+> allowed to schedule for the current process.
 
-In the future, don't waste people's time by asking questions like this.
-Just check the mailing list's archive and its meta pages:
+See commit aaa57168dfd3 ("rt-tests: cyclictest: Only run on runtime
+affinity and user supplied affinity")
 
-    https://lore.kernel.org/linux-rt-users
-    https://wiki.linuxfoundation.org/realtime/communication/mailinglists
+> Before this patch, cyclictest will fail with below condition:
+> 
+> $ taskset -pc $$
+> pid 2316's current affinity list: 0,2,4,6,8
+> $ sudo cyclictest -m -N -p 1 -a 1,3,5,7 -t 4
+> WARN: Couldn't setaffinity in main thread: Invalid argument
+> 
+> After this patch, it'll be allowed to run.
 
-Good luck,
+As John writes in the commit above message I think cyclictest should
+honor to the runtime settings. The warning above could be extended and
+telling you what's the problem is.
 
---
-Ahmed S. Darwish
+Your commit message should contain the argument why it's better not to
+check the environment settings. So the question is what is the least
+surprise for the user?
+
+Thanks,
+Daniel
