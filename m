@@ -2,59 +2,90 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.0 required=3.0 tests=BAYES_50,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37D12C4332D
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Mar 2021 17:21:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59456C4332D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Mar 2021 06:44:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0F3A564E0F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Mar 2021 17:21:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 26ACF64F69
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Mar 2021 06:44:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231982AbhCQRVY (ORCPT
+        id S234041AbhCSGoQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 17 Mar 2021 13:21:24 -0400
-Received: from mx2.suse.de ([195.135.220.15]:49082 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232388AbhCQRUL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 Mar 2021 13:20:11 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 11F81ACA8;
-        Wed, 17 Mar 2021 17:20:10 +0000 (UTC)
-Date:   Wed, 17 Mar 2021 18:20:09 +0100
-From:   Daniel Wagner <dwagner@suse.de>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     Peter Xu <peterx@redhat.com>, Daniel Wagner <wagi@monom.org>,
-        linux-rt-users@vger.kernel.org,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] rt-tests: Drop use_current_cpuset() check
-Message-ID: <20210317172009.w4cbk5ypi2wtdev3@beryllium.lan>
-References: <20210315193707.359702-1-peterx@redhat.com>
- <20210316081826.bthxqja6shbcp36j@beryllium.lan>
- <20210316200705.GC395976@xz-x1>
- <20210317074903.5lskayjwylnvuhks@beryllium.lan>
- <20210317125147.GH395976@xz-x1>
- <7882bec5-be12-267f-94c1-3b7c21193686@redhat.com>
- <20210317152100.GL395976@xz-x1>
- <dab375fb-b2df-fd6c-3931-cd24d4fa26a@redhat.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <dab375fb-b2df-fd6c-3931-cd24d4fa26a@redhat.com>
+        Fri, 19 Mar 2021 02:44:16 -0400
+Received: from elcelearning.net ([213.229.86.18]:35552 "EHLO
+        host.secservnett.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+        with ESMTP id S233953AbhCSGoB (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 19 Mar 2021 02:44:01 -0400
+Received: from secservnett.com (ec2-3-14-131-102.us-east-2.compute.amazonaws.com [3.14.131.102])
+        by host.secservnett.com (Postfix) with ESMTPA id 4F88A2812AAE
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Mar 2021 15:43:39 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 host.secservnett.com 4F88A2812AAE
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=secservnett.com;
+        s=default; t=1616082220;
+        bh=SzZho7iX500NWujrxe0OF9Q1+ri/Wiu7SIarQ/92wfM=;
+        h=Reply-To:From:To:Subject:Date:From;
+        b=AWMQkrzoIwMBzC5lK632OP1FpPmJGDdrq8LvTWLlEJZN2QyDkwg0R3B8/7QOarfBa
+         n2MLW9Q8hj9A1pT16WaB96Pjm20oW/De3LEDd7rXqy53S/ld+88sUpa3vBnH33/b6z
+         /mars1LY8ROMgHtSz3bVZiL6hIWLtq2+bnkusBhE=
+DKIM-Filter: OpenDKIM Filter v2.11.0 host.secservnett.com 4F88A2812AAE
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=secservnett.com;
+        s=default; t=1616082220;
+        bh=SzZho7iX500NWujrxe0OF9Q1+ri/Wiu7SIarQ/92wfM=;
+        h=Reply-To:From:To:Subject:Date:From;
+        b=AWMQkrzoIwMBzC5lK632OP1FpPmJGDdrq8LvTWLlEJZN2QyDkwg0R3B8/7QOarfBa
+         n2MLW9Q8hj9A1pT16WaB96Pjm20oW/De3LEDd7rXqy53S/ld+88sUpa3vBnH33/b6z
+         /mars1LY8ROMgHtSz3bVZiL6hIWLtq2+bnkusBhE=
+Reply-To: muhammadfaraz02@securesvsmail.com
+From:   M Faraz <muhammadfaraz02@secservnett.com>
+To:     linux-rt-users@vger.kernel.org
+Subject: Partnership
+Date:   18 Mar 2021 23:43:38 +0800
+Message-ID: <20210318234338.131EDFB42F2B7B20@secservnett.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Mar 17, 2021 at 11:47:51AM -0400, John Kacur wrote:
-> > > Does that make sense to everyone?
-> > 
-> > Sure thing on my side.  No bug reported so far this time, so I'll wait at least
-> > until then :) I just don't know why it's not hit just like oslat since I don't
-> > see a difference.  When I fixed the oslat thing, I thought cyclictest didn't
-> > have such issue for some reason so I didn't consider to touch it at all.  But
-> > when yesterday I rerun some tests I see this issue on rhel8, hence this patch.
+Hello there,
 
-Don't let me stop you ripping out the code. I am not agreeing with the
-reasoning why it should go but it's a detail I don't care.
+Good day. I sent you an email a few days ago but I did not=20
+receive a reply. I am not sure if you got that email or not. I am=20
+Muhammad Faraz. I got your contact from an online business=20
+directory and I am contacting you because I have a proposition=20
+that could be of great interest to you. I want you to keep an=20
+open mind while reading this proposal. I represent the interest=20
+of my brother in-law who was a former minister in the Syrian=20
+Government. As you probably know, there is a lot of crisis going=20
+on currently in that part of the world and my brother in-law has=20
+been one of the few people to publicly oppose the Government's=20
+policy on this senseless war and killings of innocent citizens=20
+and have been trying to advocate for a more peaceful and=20
+prosperous country. Unfortunately, his unwavering support for the=20
+rebels who are fighting to put an end to the war has caused him=20
+to fall out with the ruling party and he now has reasons to be=20
+believe that his life is at risk. In order to ensure that his=20
+family is taken care of and protected incase anything happens to=20
+him, he has asked me to help him find a foreign partner with good=20
+business acumen that can help him secure and invest his assets=20
+that he has in Europe. This is why I have contacted you. I=20
+searched online and saw your profile so I thought you would be=20
+interested in this opportunity.
+
+Do you have investment ideas or business projects that these=20
+funds can be invested into? Please note that he wants this done=20
+very discretely and I will be acting as his eyes and ears during=20
+the course of this transaction. He is also prepared to compensate=20
+you very much for your efforts so this would be worth your time.=20
+If this proposal interests you, kindly respond so that I can give=20
+you more details.
+
+Regards,
+
+Muhammad.
