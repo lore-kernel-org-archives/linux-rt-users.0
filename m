@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BCCB3C433E8
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 01D47C433EB
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 91D296193B
+	by mail.kernel.org (Postfix) with ESMTP id D148061946
 	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229962AbhCTSjH (ORCPT
+        id S229973AbhCTSjI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 20 Mar 2021 14:39:07 -0400
-Received: from mx2.suse.de ([195.135.220.15]:51868 "EHLO mx2.suse.de"
+        Sat, 20 Mar 2021 14:39:08 -0400
+Received: from mx2.suse.de ([195.135.220.15]:51888 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229791AbhCTSie (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 20 Mar 2021 14:38:34 -0400
+        id S229886AbhCTSih (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 20 Mar 2021 14:38:37 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id F40C2AD6D;
-        Sat, 20 Mar 2021 18:38:32 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 9E5FAAD6D;
+        Sat, 20 Mar 2021 18:38:36 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v3 05/33] cyclictest: Initialize rt-util
-Date:   Sat, 20 Mar 2021 19:38:01 +0100
-Message-Id: <20210320183829.1318-6-dwagner@suse.de>
+Subject: [PATCH rt-tests v3 17/33] oslat: Record start of test execution
+Date:   Sat, 20 Mar 2021 19:38:13 +0100
+Message-Id: <20210320183829.1318-18-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210320183829.1318-1-dwagner@suse.de>
 References: <20210320183829.1318-1-dwagner@suse.de>
@@ -40,25 +40,25 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Allow rt-util make a copy of the command line.
+Use rt_test_start() to record a timestamp when the test starts.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/cyclictest/cyclictest.c | 1 +
+ src/oslat/oslat.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index c43dd7cbbd64..e817af217952 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1778,6 +1778,7 @@ int main(int argc, char **argv)
- 	int i, ret = -1;
- 	int status;
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index ac54d05697ef..2f02f5399405 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -854,6 +854,7 @@ int main(int argc, char *argv[])
+ 		printf("Test starts...\n");
+ 	/* Reset n_threads to always run on all the cores */
+ 	g.n_threads = g.n_threads_total;
++	rt_test_start();
+ 	run_expt(threads, g.runtime);
  
-+	rt_init(argc, argv);
- 	process_options(argc, argv, max_cpus);
- 
- 	if (check_privs())
+ 	if (!g.quiet)
 -- 
 2.30.2
 
