@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D3D34C4345A
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16E4BC433ED
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B04AC61944
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E6A1161944
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230009AbhCTSjN (ORCPT
+        id S229972AbhCTSjH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 20 Mar 2021 14:39:13 -0400
-Received: from mx2.suse.de ([195.135.220.15]:51976 "EHLO mx2.suse.de"
+        Sat, 20 Mar 2021 14:39:07 -0400
+Received: from mx2.suse.de ([195.135.220.15]:51898 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229931AbhCTSil (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 20 Mar 2021 14:38:41 -0400
+        id S229894AbhCTSih (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 20 Mar 2021 14:38:37 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 745E6AD8A;
-        Sat, 20 Mar 2021 18:38:40 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id E6235AD8A;
+        Sat, 20 Mar 2021 18:38:36 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v3 30/33] pi_stress: Prepare command line parser for long options only
-Date:   Sat, 20 Mar 2021 19:38:26 +0100
-Message-Id: <20210320183829.1318-31-dwagner@suse.de>
+Subject: [PATCH rt-tests v3 18/33] pmqtest: Record start of test execution
+Date:   Sat, 20 Mar 2021 19:38:14 +0100
+Message-Id: <20210320183829.1318-19-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210320183829.1318-1-dwagner@suse.de>
 References: <20210320183829.1318-1-dwagner@suse.de>
@@ -40,125 +40,25 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Introduce option value enums in order to be able to parse long options
-only.
+Use rt_test_start() to record a timestamp when the test starts.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/pi_tests/pi_stress.c | 45 ++++++++++++++++++++++++++++------------
- 1 file changed, 32 insertions(+), 13 deletions(-)
+ src/pmqtest/pmqtest.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 49f89b7b0136..73f0e6a402e3 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -1274,23 +1274,29 @@ int process_sched_line(const char *arg)
- 	return retval;
- }
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index f96b3d0bf400..adf72c10ce83 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -583,6 +583,7 @@ int main(int argc, char *argv[])
+ 	sigemptyset(&sigset);
+ 	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
  
-+enum option_values {
-+	OPT_DEBUG=1, OPT_DURATION, OPT_GROUPS, OPT_HELP, OPT_INVERSIONS,
-+	OPT_MLOCKALL, OPT_PROMPT, OPT_QUIET, OPT_RR, OPT_SCHED,
-+	OPT_UNIPROCESSOR, OPT_VERBOSE, OPT_VERSION,
-+};
-+
- void process_command_line(int argc, char **argv)
- {
- 	for (;;) {
- 		struct option options[] = {
--			{"debug",		no_argument,		NULL, 'd'},
--			{"duration",		required_argument,	NULL, 'D'},
--			{"groups",		required_argument,	NULL, 'g'},
--			{"help",		no_argument,		NULL, 'h'},
--			{"inversions",		required_argument,	NULL, 'i'},
--			{"mlockall",		no_argument,		NULL, 'm'},
--			{"prompt",		no_argument,		NULL, 'p'},
--			{"quiet",		no_argument,		NULL, 'q'},
--			{"rr",			no_argument,		NULL, 'r'},
--			{"sched",		required_argument,	NULL, 's'},
--			{"uniprocessor",	no_argument,		NULL, 'u'},
--			{"verbose",		no_argument,		NULL, 'v'},
--			{"version",		no_argument,		NULL, 'V'},
-+			{"debug",		no_argument,		NULL, OPT_DEBUG},
-+			{"duration",		required_argument,	NULL, OPT_DURATION},
-+			{"groups",		required_argument,	NULL, OPT_GROUPS},
-+			{"help",		no_argument,		NULL, OPT_HELP},
-+			{"inversions",		required_argument,	NULL, OPT_INVERSIONS},
-+			{"mlockall",		no_argument,		NULL, OPT_MLOCKALL},
-+			{"prompt",		no_argument,		NULL, OPT_PROMPT},
-+			{"quiet",		no_argument,		NULL, OPT_QUIET},
-+			{"rr",			no_argument,		NULL, OPT_RR},
-+			{"sched",		required_argument,	NULL, OPT_SCHED},
-+			{"uniprocessor",	no_argument,		NULL, OPT_UNIPROCESSOR},
-+			{"verbose",		no_argument,		NULL, OPT_VERBOSE},
-+			{"version",		no_argument,		NULL, OPT_VERSION},
- 			{NULL, 0, NULL, 0},
- 		};
- 
-@@ -1298,12 +1304,15 @@ void process_command_line(int argc, char **argv)
- 		if (c == -1)
- 			break;
- 		switch (c) {
-+		case OPT_DEBUG:
- 		case 'd':
- 			debugging = 1;
- 			break;
-+		case OPT_DURATION:
- 		case 'D':
- 			duration = parse_time_string(optarg);
- 			break;
-+		case OPT_GROUPS:
- 		case 'g':
- 			ngroups = strtol(optarg, NULL, 10);
- 			if (ngroups > num_processors) {
-@@ -1314,37 +1323,47 @@ void process_command_line(int argc, char **argv)
- 			}
- 			pi_info("number of groups set to %d\n", ngroups);
- 			break;
-+		case OPT_HELP:
- 		case 'h':
- 			usage(0);
- 			break;
-+		case OPT_INVERSIONS:
- 		case 'i':
- 			inversions = strtol(optarg, NULL, 10);
- 			pi_info("doing %d inversion per group\n", inversions);
- 			break;
-+		case OPT_MLOCKALL:
- 		case 'm':
- 			lockall = 1;
- 			break;
-+		case OPT_PROMPT:
- 		case 'p':
- 			prompt = 1;
- 			break;
-+		case OPT_QUIET:
- 		case 'q':
- 			verbose = 0;
- 			quiet = 1;
- 			break;
-+		case OPT_RR:
- 		case 'r':
- 			policy = SCHED_RR;
- 			break;
-+		case OPT_SCHED:
- 		case 's':
- 			if (process_sched_line(optarg))
- 				pi_error("ignoring invalid options '%s'\n", optarg);
- 			break;
-+		case OPT_UNIPROCESSOR:
- 		case 'u':
- 			uniprocessor = 1;
- 			break;
-+		case OPT_VERBOSE:
- 		case 'v':
- 			verbose = 1;
- 			quiet = 0;
- 			break;
-+		case OPT_VERSION:
- 		case 'V':
- 			printf("pi_stress v%1.2f ", VERSION);
- 			exit(0);
++	rt_test_start();
+ 	do {
+ 		int newsamples = 0, newtimeoutcount = 0;
+ 		int minsamples = INT_MAX;
 -- 
 2.30.2
 
