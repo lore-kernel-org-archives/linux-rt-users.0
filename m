@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A805AC433E5
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E7B79C433F7
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7C3D361932
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B425C61930
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229952AbhCTSjF (ORCPT
+        id S229987AbhCTSjK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 20 Mar 2021 14:39:05 -0400
-Received: from mx2.suse.de ([195.135.220.15]:51926 "EHLO mx2.suse.de"
+        Sat, 20 Mar 2021 14:39:10 -0400
+Received: from mx2.suse.de ([195.135.220.15]:51940 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229854AbhCTSif (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 20 Mar 2021 14:38:35 -0400
+        id S229901AbhCTSii (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 20 Mar 2021 14:38:38 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 7D121AAB8;
-        Sat, 20 Mar 2021 18:38:34 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id C89D7AC82;
+        Sat, 20 Mar 2021 18:38:37 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v3 10/33] cyclicdeadline: Initialize rt-util
-Date:   Sat, 20 Mar 2021 19:38:06 +0100
-Message-Id: <20210320183829.1318-11-dwagner@suse.de>
+Subject: [PATCH rt-tests v3 21/33] cyclicdeadline: Record start of test execution
+Date:   Sat, 20 Mar 2021 19:38:17 +0100
+Message-Id: <20210320183829.1318-22-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210320183829.1318-1-dwagner@suse.de>
 References: <20210320183829.1318-1-dwagner@suse.de>
@@ -40,26 +40,25 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Allow rt-util make a copy of the command line.
+Use rt_test_start() to record a timestamp when the test starts.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sched_deadline/cyclicdeadline.c | 2 ++
- 1 file changed, 2 insertions(+)
+ src/sched_deadline/cyclicdeadline.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index d7aa9bb5d269..13a1812c13b3 100644
+index e6811838b62d..a649e5a0fe5e 100644
 --- a/src/sched_deadline/cyclicdeadline.c
 +++ b/src/sched_deadline/cyclicdeadline.c
-@@ -1009,6 +1009,8 @@ int main(int argc, char **argv)
- 	int i;
- 	int c;
+@@ -1213,6 +1213,7 @@ int main(int argc, char **argv)
+ 	if (duration)
+ 		alarm(duration);
  
-+	rt_init(argc, argv);
-+
- 	cpu_count = sysconf(_SC_NPROCESSORS_CONF);
- 	if (cpu_count < 1)
- 		err_quit("Can not calculate number of CPUS\n");
++	rt_test_start();
+ 	loop(sched_data, nr_threads);
+ 
+ 	for (i = 0; i < nr_threads; i++) {
 -- 
 2.30.2
 
