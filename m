@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 60199C433C1
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C494CC433EA
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 460C861949
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A6F4D61946
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Mar 2021 18:39:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229993AbhCTSjK (ORCPT
+        id S229835AbhCTSjH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 20 Mar 2021 14:39:10 -0400
-Received: from mx2.suse.de ([195.135.220.15]:51976 "EHLO mx2.suse.de"
+        Sat, 20 Mar 2021 14:39:07 -0400
+Received: from mx2.suse.de ([195.135.220.15]:51878 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229905AbhCTSij (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 20 Mar 2021 14:38:39 -0400
+        id S229817AbhCTSie (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 20 Mar 2021 14:38:34 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id B1F44ACC6;
-        Sat, 20 Mar 2021 18:38:38 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 48622AD79;
+        Sat, 20 Mar 2021 18:38:33 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v3 24/33] svsematest: Record start of test execution
-Date:   Sat, 20 Mar 2021 19:38:20 +0100
-Message-Id: <20210320183829.1318-25-dwagner@suse.de>
+Subject: [PATCH rt-tests v3 06/33] oslat: Initialize rt-util
+Date:   Sat, 20 Mar 2021 19:38:02 +0100
+Message-Id: <20210320183829.1318-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210320183829.1318-1-dwagner@suse.de>
 References: <20210320183829.1318-1-dwagner@suse.de>
@@ -40,25 +40,26 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Use rt_test_start() to record a timestamp when the test starts.
+Allow rt-util make a copy of the command line.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/svsematest/svsematest.c | 1 +
- 1 file changed, 1 insertion(+)
+ src/oslat/oslat.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
-index 7c9d21edbab2..7533b1b569cc 100644
---- a/src/svsematest/svsematest.c
-+++ b/src/svsematest/svsematest.c
-@@ -724,6 +724,7 @@ int main(int argc, char *argv[])
- 			    &sender[i]);
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 465a694cdd1d..da7b25d48384 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -796,6 +796,8 @@ int main(int argc, char *argv[])
+ 		exit(1);
  	}
  
-+	rt_test_start();
- 	while (!mustshutdown) {
- 		for (i = 0; i < num_threads; i++)
- 			mustshutdown |= receiver[i].shutdown |
++	rt_init(argc, argv);
++
+ 	g.app_name = argv[0];
+ 	g.rtprio = 0;
+ 	g.bucket_size = BUCKET_SIZE;
 -- 
 2.30.2
 
