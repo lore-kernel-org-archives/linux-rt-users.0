@@ -2,88 +2,151 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CAC82C433C1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Mar 2021 04:17:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E4B2C433E2
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Mar 2021 15:51:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A024461969
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Mar 2021 04:17:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 661E2619A9
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Mar 2021 15:51:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229614AbhCVEOy (ORCPT
+        id S230229AbhCVPul (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 22 Mar 2021 00:14:54 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:57516 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229455AbhCVEOa (ORCPT
+        Mon, 22 Mar 2021 11:50:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38806 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229482AbhCVPu0 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 Mar 2021 00:14:30 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1616386470;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=a4v4LZd/KuNB4nVBOBAV0fJoffXp/cjO8///uHfP+rY=;
-        b=e65cgInzjXayAgophjEVWVUy8cWZMeZKTDsSeMEzo77I7p+RbMAxO/tglimu7vo8arhm90
-        KM9Uhas1QX1thyPHLCsWeL0J/NQkHQ6EyoI58dkD9tpaVyracoPpKRzqEi+3Q/m4GTF4HB
-        ZznfDGGP8gIkLhXjkcUsjTHuhdgx6DA=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-429-Tr9bnYNBMRihkF_mIxSP9A-1; Mon, 22 Mar 2021 00:14:25 -0400
-X-MC-Unique: Tr9bnYNBMRihkF_mIxSP9A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2BCFE1084C95;
-        Mon, 22 Mar 2021 04:14:24 +0000 (UTC)
-Received: from lclaudio.dyndns.org (ovpn-117-44.rdu2.redhat.com [10.10.117.44])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 758F6100AE42;
-        Mon, 22 Mar 2021 04:14:23 +0000 (UTC)
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id A7BEC3C1752; Mon, 22 Mar 2021 01:14:21 -0300 (-03)
-Date:   Mon, 22 Mar 2021 01:14:21 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.9.260-rt174
-Message-ID: <161638639759.450582.3060675159400489865@localhost.localdomain>
+        Mon, 22 Mar 2021 11:50:26 -0400
+Received: from mail-qt1-x82e.google.com (mail-qt1-x82e.google.com [IPv6:2607:f8b0:4864:20::82e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED80BC061574
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Mar 2021 08:50:25 -0700 (PDT)
+Received: by mail-qt1-x82e.google.com with SMTP id l13so12640410qtu.9
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Mar 2021 08:50:25 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=Ae0gLiv4DvfDsc5UvHvmSZ9ZeIJF8+gRsXqf0px48BQ=;
+        b=pPMriVj0xOQYl9d/Hed1OaNgFR3wCGbioHUz2Fu9hL/xPgLZOMQKfqBvq8uDI/zNEc
+         3GHtuKW/ckFU6e2Ru6XAN9qjkIjDaRZBRukO3i7YIIKzA5V9f87665sI6+ZXIqktQo8y
+         3T/NQOAYImhBgd0iuN1dFZm9QhBlj2TSc1l3Syipyy9TmzADJGaEs+WMeVOXqHRhY1x0
+         ouD2POKBfJAfXiSCj4/UNZQN7qckEEn8wJsyrZSVzSF2i2jGRPDVd9/REn8aNS8GLFbu
+         R/yF8sIIk12+h+Q/03k35p762OeKx92WEBFgmvE/wVnun0FP1E0e1EKc4AJjy40nx2hd
+         alWw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=Ae0gLiv4DvfDsc5UvHvmSZ9ZeIJF8+gRsXqf0px48BQ=;
+        b=WxEiVGdHw4XQMzDIc12cmhWOQlGAg+4tjpq9bY1v//tnUDkawBHXX85n31tlFVXm1e
+         4jvsytQkONgMKUraXpwOa+8Jm+i8VhV5liYw0Vxhg39qDvYWJgWms/lUn7B9lL+24XCF
+         +/B/qGSze/+phy1B1IVmy61cz0l/Ao8Wx1vdV4+8f+S3iBpJkG67ZtNWwbF5wpoi7wdK
+         ezdD23xJNM2BwQQ+Oxrfak2GjOylnczh3j64ktw0wL88jxUgK8AHJFSYPYU+Yiys7mai
+         lVEY7t/RRL1FggUIdy8V9MP5qhmUpON1xCyerBkjkjNmHvGPiVDYt1sF7xHGtVuER+mh
+         gkxg==
+X-Gm-Message-State: AOAM5323mAdU33yhklvmAvJN6wbZBPbU/HVJPrKtYgbK2vupdK0oVjpP
+        khUanOj89+Sn/gKEcwtjISY=
+X-Google-Smtp-Source: ABdhPJy3azZdLterrvoR6tEqC31ImT2+pIADKmRdaQkNhi02ghbP0kwQnSsc9OzCtITpgftZlyO1CQ==
+X-Received: by 2002:a05:622a:1192:: with SMTP id m18mr480435qtk.27.1616428225208;
+        Mon, 22 Mar 2021 08:50:25 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-29.dsl.bell.ca. [184.147.140.29])
+        by smtp.gmail.com with ESMTPSA id o36sm8200637qtd.89.2021.03.22.08.50.24
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 22 Mar 2021 08:50:24 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+Date:   Mon, 22 Mar 2021 11:50:18 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH rt-tests v3 00/33] JSON cleanups and more tests updated
+In-Reply-To: <20210320183829.1318-1-dwagner@suse.de>
+Message-ID: <535838-37b6-d43c-b147-cb4c5528c4ff@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
 
-I'm pleased to announce the 4.9.260-rt174 stable release.
 
-You can get this release via the git tree at:
+On Sat, 20 Mar 2021, Daniel Wagner wrote:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> v3:
+>   - rebase
+>   - two patches splitted into per test program change
+>   - commit messsage added
+>   
+> v2:
+>   - added 'return_code' to the common section of the JSON output
+>   - dropped 'inversion' as we have 'return_code' in pip_stress
+>   - dropped 'success' as we have 'return code in ssdd
+> 
+> All patches are also available at:
+> 
+>   https://github.com/igaw/rt-tests/tree/json-output-2021-03-20
+> 
+> Daniel Wagner (33):
+>   cyclictest: Remove unused include header
+>   cyclicdeadline: Remove unused include header
+>   signaltest: Add missing --output usage info
+>   rt-util: Add rt_init function
+>   cyclictest: Initialize rt-util
+>   oslat: Initialize rt-util
+>   pmqtest: Initialize rt-util
+>   ptsematest: Initialize rt-util
+>   rt-migrate-test: Initialize rt-util
+>   cyclicdeadline: Initialize rt-util
+>   signaltest: Initialize rt-util
+>   sigwaittest: Initialize rt-util
+>   svematest: Initialize rt-util
+>   rt-util: Remove superfluous arguments from rt_write_json
+>   rt-util: Introduce rt_test_start()
+>   cyclictest: Record start of test execution
+>   oslat: Record start of test execution
+>   pmqtest: Record start of test execution
+>   ptesematest: Record start of test execution
+>   rt-migrate-test: Record start of test execution
+>   cyclicdeadline: Record start of test execution
+>   signaltest: Record start of test execution
+>   sigwaittest: Record start of test execution
+>   svsematest: Record start of test execution
+>   rt-util: Add return_code to common section of JSON output
+>   pip_stress: Move test result output to main
+>   pip_stress: Return failure code if test fails
+>   pip_stress: Prepare arg parser to accept only long options
+>   pip_stress: Add JSON output feature
+>   pi_stress: Prepare command line parser for long options only
+>   pi_stress: Add JSON output feature
+>   ssdd: Add quiet command line option
+>   ssdd: Add JSON output feature
+> 
+>  src/cyclictest/cyclictest.c           |  5 +-
+>  src/include/rt-utils.h                |  6 +-
+>  src/lib/rt-utils.c                    | 85 ++++++++++++++++-----------
+>  src/oslat/oslat.c                     |  6 +-
+>  src/pi_tests/pi_stress.c              | 65 ++++++++++++++++----
+>  src/pi_tests/pip_stress.c             | 40 +++++++++----
+>  src/pmqtest/pmqtest.c                 |  4 +-
+>  src/ptsematest/ptsematest.c           |  4 +-
+>  src/rt-migrate-test/rt-migrate-test.c |  4 +-
+>  src/sched_deadline/cyclicdeadline.c   |  6 +-
+>  src/signaltest/signaltest.c           |  5 +-
+>  src/sigwaittest/sigwaittest.c         |  4 +-
+>  src/ssdd/ssdd.c                       | 43 +++++++++++---
+>  src/svsematest/svsematest.c           |  4 +-
+>  14 files changed, 199 insertions(+), 82 deletions(-)
+> 
+> -- 
+> 2.30.2
+> 
+> 
 
-  branch: v4.9-rt
-  Head SHA1: a1ce8735f60285bcf3df3ab01e1ea2588e90c540
+Thanks Daniel! On this right away.
 
-Or to build 4.9.260-rt174 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.260.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.260-rt174.patch.xz
-
-Enjoy!
-Luis
-
+John
