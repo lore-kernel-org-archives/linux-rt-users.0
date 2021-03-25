@@ -2,124 +2,103 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9CC5C433C1
-	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Mar 2021 12:55:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30A72C433C1
+	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Mar 2021 20:19:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9D65F619BF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Mar 2021 12:55:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id ECA9161A3D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Mar 2021 20:19:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230005AbhCYMzG (ORCPT
+        id S230241AbhCYUSq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 25 Mar 2021 08:55:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58600 "EHLO
+        Thu, 25 Mar 2021 16:18:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42528 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229666AbhCYMzA (ORCPT
+        with ESMTP id S230396AbhCYUSl (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 25 Mar 2021 08:55:00 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 36D07C06174A
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Mar 2021 05:55:00 -0700 (PDT)
-Date:   Thu, 25 Mar 2021 13:54:56 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1616676898;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=8+SlQpbMOqeNKi8QrDDkQSKNpGU6phFDn1bHduu0Vgs=;
-        b=Y2KVm9f4ORXWXiUIwNs1MmqRb8h1fyAZGDX/eFMvN4YWASV4jQut5o3cqIdPQBX3lvB8RY
-        kvO9rIKk1b6n3dDKtgwiXRMFONbg3K1xf1afVxnBxXcCLOcyVLehMUk7WC06H0ecOOQIAi
-        aQecQgN8jUdTdOO88ZHAHvMy/9YcSH4fg1wHnsLcSgn0rDXwsZklq9GqlgSuC2JtCoVZL6
-        jE5yqpeQ6dkJhm8FQiybF7E/hCMBAidzqN0qbf7pQ7vly32rXkPvViVMpFM5H8IHKvpQuK
-        vnnFvAj1mwecI31fAfn/E0iHRXHyRjeuoM9gHPUWlp0rCByXJhMwOFg/JFVqjA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1616676898;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=8+SlQpbMOqeNKi8QrDDkQSKNpGU6phFDn1bHduu0Vgs=;
-        b=HA20Egyx5Gx57W45gjWn7zpf1dYeNipyB6xODM7CrZVXYcSd776DerKgaumH1Ru+4RNbOc
-        g2dFkDZQFI2VccCA==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     jack@madeinspaceeurope.com
+        Thu, 25 Mar 2021 16:18:41 -0400
+Received: from mail-ej1-x62e.google.com (mail-ej1-x62e.google.com [IPv6:2a00:1450:4864:20::62e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 16D19C06174A
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Mar 2021 13:18:41 -0700 (PDT)
+Received: by mail-ej1-x62e.google.com with SMTP id jy13so5035786ejc.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Mar 2021 13:18:41 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=eaHBsmSjc0LhjW14QjxAma7W51tMV92cZlIPC32xDFg=;
+        b=hrJWia4GuHJ5koVjUOi+wx1d6MVXEPPWfNJw7zfI9XOmZN97fPIQCONGOUcKfMgQIk
+         96yO7m+naNnLiPgO9kmRzkf7C8ZSy4nuyqN8KGyWxymHelSz+xBZ8Ul35sJBspqfbvhL
+         WUNyH8KLyJJICOKBYcJ1KDim9NJozQ4gv7fUQ52g/WI+mnoOZvtUml/G6ZYZsutT0dHd
+         MHLaJgwGaUAwJdTUd1BfqviNFsiB0OrwiHlLs+wEuic7A4WR5xqVncKECd7cs0/+cIg3
+         nA/6xtozKOTJ3WGOZINVqgUk/U3tAsupEF10Uz1FHIjl2jKdqsz3Kr1PHpWYz8lQrFDd
+         w0ow==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=eaHBsmSjc0LhjW14QjxAma7W51tMV92cZlIPC32xDFg=;
+        b=pKxMfbizCa4St5FKRg4CgD9bYnxTcnUS+qF29PQ+OAjF1d/tnm0P5NwYkk8xizpTJ/
+         vGJ6eAenA4SYZEaoArwJNVUOc0Wjhoia8bWwH+ediCFUhKaL4f8obLN2Ks6LxPT/JTt7
+         azOb8bBiGnrK1o0ct614yyvFFiKA3XUiGUpSEwYVIOYlcK3ux1aTS+1vsRqR/Q/yhmls
+         rHP0mQimbxKzF2h20lcsU7GLfcKhHHoEGtfjPTMsRYfqi0AcbHR27MNUe2XJXj7FgpYX
+         8EZKT9AJw/T03nQcz/TrDxjBeUCx0IwpfrcIgRXIAkHAgz7hbuc9Cnd8txzBAkMs4WVr
+         22fQ==
+X-Gm-Message-State: AOAM530MLS4r23uqD7UApROAL5FqwZpJ0pBUxvG+gpgluV0YyJbf7IdN
+        0zfG8fdh+LIKQ65SUrmLzxeSJBG8Fe71+Q==
+X-Google-Smtp-Source: ABdhPJzjOGtDggA4boSwr1FgAe5pS61sNwq/GxinPJo4yTo23iZseJaUlnBiJpxlIUW3rSgQde/r3w==
+X-Received: by 2002:a17:906:4cd9:: with SMTP id q25mr11390938ejt.187.1616703519772;
+        Thu, 25 Mar 2021 13:18:39 -0700 (PDT)
+Received: from localhost.localdomain (dynamic-2a01-0c23-6c47-0000-17ef-d1e1-78a0-d19c.c23.pool.telefonica.de. [2a01:c23:6c47:0:17ef:d1e1:78a0:d19c])
+        by smtp.gmail.com with ESMTPSA id a22sm3135406edu.14.2021.03.25.13.18.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 25 Mar 2021 13:18:39 -0700 (PDT)
+From:   Jonathan Schwender <schwenderjonathan@gmail.com>
+To:     jkacur@redhat.com, williams@redhat.com
 Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: Application of standard kernel patch and then RT patch with
- Petalinux
-Message-ID: <YFyIIB/B2XbY7khU@lx-t490>
-References: <dd27ce028fb9b2423ec99985c290b19b30083b34.camel@madeinspaceeurope.com>
+Subject: [PATCH v3 0/2] rt-tests: cyclictest: Add option to specify main pid affinity
+Date:   Thu, 25 Mar 2021 21:18:35 +0100
+Message-Id: <cover.1616702706.git.schwenderjonathan@gmail.com>
+X-Mailer: git-send-email 2.30.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <dd27ce028fb9b2423ec99985c290b19b30083b34.camel@madeinspaceeurope.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Jack,
+Hi John,
 
-On Mar 25, 2021, Jack wrote:
->
-> I am having problems applying kernel patches in the context of a Xilinx
-> Petalinux project (Yocto-based).
->
-> Xilinx provides a 5.4.0 kernel, according to make kernelconfig, though
-> how this corresponds to the upstream 5.4.0 kernel, I'm not sure.
->
+Changes in v3:
+Rebased onto latest commit 95066b1a1a0a ("cyclicdeadline.c: Fix printf format specifier")
+in unstable/devel/latest.
 
-What Xilinx provides in its linux-xlnx tree is quite different from the
-mainline v5.4 kernel. You can see all the differences by diffing against
-219d54332a09 ("Linux 5.4").
 
-> My understanding is that, in order to apply the latest 5.4 rt patch
-> (106-rt54), I have to apply the upstream 106 patch first. Is this
-> correct?
->
+This patch adds the option --mainaffinity to specify the affinity of
+the main pid.
+This is mainly useful if you want to bind the main thread to a
+different (e.g. housekeeping ) CPU than the measurement threads.
 
-No, it doesn't work out that way, especially that the Xilinx kernel is
-quite different at core kernel components.
+Some numbers on potential latency benefits are linked in the
+v1 thread at https://lore.kernel.org/linux-rt-users/dd40b81d-7099-7740-c2ad-64b49e582234@gmail.com/
 
-The RT kernel releases are meant to be taken as a whole, by picking one
-of the stable versions shown at:
+Regards
 
-  https://wiki.linuxfoundation.org/realtime/preempt_rt_versions
+Jonathan
 
-> When applying the patches using petalinux-config -c kernel, the
-> upstream patch appears to be accepted, but the rt patch is not. I get
-> the sequence of errors below, picked out in red.
->
 
-FYI, in general, it's advised to separate kernel development from
-"integration" development (e.g. yocto, peta linux, etc.)
+Jonathan Schwender (2):
+  cyclictest: Move main pid setaffinity handling into a function
+  cyclictest: Add --mainaffinity=[CPUSET] option.
 
-> I am not familiar enough with the kernel, or the Petalinux tools, to
-> get a handle on the problem. The log file mentioned at the bottom does
-> not exist following the completion of the command.
->
-> Is anyone able to help with this?
+ src/cyclictest/cyclictest.c | 28 +++++++++++++++++++---------
+ src/include/rt-numa.h       |  2 ++
+ src/lib/rt-numa.c           | 11 +++++++++++
+ 3 files changed, 32 insertions(+), 9 deletions(-)
 
-Unfortunately, if you're going to do RT things on top of an SoC kernel,
-you're on your own — and some kernel development expertise will be
-needed.
+-- 
+2.30.2
 
-There are only two sane ways out:
-
-1) Clone one of the stable RT kenrels trees (e.g., v5.4.106-rt45), then
-*carefully* pull in what you need from the Xilinx kernel tree. Then do
-proper stress and latency tests to make sure that everything is still in
-line.
-
-2) Ask a supplier with sufficient embedded/kernel/RT expertise to do it
-for you.
-
-Good luck,
-
---
-Ahmed S. Darwish
-Linutronix GmbH
