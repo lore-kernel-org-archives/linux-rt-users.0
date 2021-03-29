@@ -2,320 +2,181 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EBB3C433DB
-	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Mar 2021 10:14:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 674FAC433C1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Mar 2021 02:51:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4C1F761A0D
-	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Mar 2021 10:14:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3768C6193A
+	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Mar 2021 02:51:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231571AbhC0KO1 (ORCPT
+        id S230204AbhC2Cuo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 27 Mar 2021 06:14:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51260 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231587AbhC0KOY (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 27 Mar 2021 06:14:24 -0400
-Received: from mail-qv1-xf2a.google.com (mail-qv1-xf2a.google.com [IPv6:2607:f8b0:4864:20::f2a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C4903C0613B1;
-        Sat, 27 Mar 2021 03:14:23 -0700 (PDT)
-Received: by mail-qv1-xf2a.google.com with SMTP id dc12so4244614qvb.4;
-        Sat, 27 Mar 2021 03:14:23 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=Yf69iFiJtCw/IzfPF2Ay7ufynUhDqTGUs6lw9ppor50=;
-        b=VNPAm/hv1sPuVF0s2HCiYGrcGEqEZq+BZpiMZ6iWXKzuIy0/aXpLpEsY30F17j2PvO
-         Lara+5WPGiBY8lYZzVhiUfofqWARxzOGhzEXC826O/pSrfSFJ0ly3GWPIaBrclUIR2+C
-         gEYCgxz8szp4u+9NTXFjulF4qtElToVaB5eoXs4lScxBZTvsQHoZpwcKbm7VboXi0L2k
-         M4zezh6xJxdMl4bXRj28CuEko3bbZUimaLS4d4YBgTgFHvshavsGTkZZ7kQLlJfxJ92+
-         0yLOwMUUYfRROmLqdSZwhNQmcCXmRPbpqUftmMce+ShkdSka7snpqKf2uUAFA7ATEmOA
-         1Scg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=Yf69iFiJtCw/IzfPF2Ay7ufynUhDqTGUs6lw9ppor50=;
-        b=loXY7E53azjmZEnHSS/61+BGXy+IrJkKKi0L+If4SF7AjpxLKTn0bDLVLztitlgfGi
-         H1iCVynSsG1eqATrfyBl3bl5no6tByXg+7e1T4khW6oHSSlzKHuXfGROOsvn/+tSaMYp
-         Aw/Fac+X0h59TgYo61STWlv0dOyMSqDbnun9lwV/7XHRZ7BWpXjsCjrP2gm17NtWU1AA
-         T9rGV2gIobCzbfQJMP6CuRucNk6K23gdVXYMP23eH8Sz7sM497Hb7jmk1QxIC4PjNAYm
-         aKfIrd01lC+josXMWsAHFsNWi1m6QIAkm+gcBuldRCE8PbCNspj/+uBYGN1FrUXtUyNH
-         pWfg==
-X-Gm-Message-State: AOAM533pXvOnT3ccx/jJBj5Y5yKlgI9fv5w548TZXc5//mqtDlcnD7li
-        gQdz/gVKw/7ebLle4RuLuJU=
-X-Google-Smtp-Source: ABdhPJxXo15+vU3cx2WoCYzeyEiTjTA8LG6/Hz6F1CSuTpGEa+69Xc6PkqQlBHmKlk0NGXYcBLCb3g==
-X-Received: by 2002:ad4:5887:: with SMTP id dz7mr17658183qvb.12.1616840063059;
-        Sat, 27 Mar 2021 03:14:23 -0700 (PDT)
-Received: from localhost.localdomain ([50.236.19.102])
-        by smtp.gmail.com with ESMTPSA id d14sm7404053qtr.55.2021.03.27.03.14.17
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Sat, 27 Mar 2021 03:14:22 -0700 (PDT)
-From:   Yafang Shao <laoar.shao@gmail.com>
-To:     mgorman@suse.de, mingo@redhat.com, peterz@infradead.org,
-        juri.lelli@redhat.com, vincent.guittot@linaro.org,
-        dietmar.eggemann@arm.com, rostedt@goodmis.org, bsegall@google.com,
-        bristot@redhat.com
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Yafang Shao <laoar.shao@gmail.com>,
-        kernel test robot <lkp@intel.com>
-Subject: [PATCH v2 6/6] sched, rt: support schedstats for RT sched class
-Date:   Sat, 27 Mar 2021 18:12:53 +0800
-Message-Id: <20210327101254.56872-7-laoar.shao@gmail.com>
-X-Mailer: git-send-email 2.24.3 (Apple Git-128)
-In-Reply-To: <20210327101254.56872-1-laoar.shao@gmail.com>
-References: <20210327101254.56872-1-laoar.shao@gmail.com>
+        Sun, 28 Mar 2021 22:50:44 -0400
+Received: from mail-eopbgr20083.outbound.protection.outlook.com ([40.107.2.83]:31126
+        "EHLO EUR02-VE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S229645AbhC2Cui (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 28 Mar 2021 22:50:38 -0400
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=H8Zoq158uDN3Ljp0yPRroZTvz3KND9rLmILD2MdOvnPOLuPUl35e9zs6cV5NEDgGLguyl4DaBITFCoUp5wqa6BykP6uRwSZr3yAnwLDTuwu68I6GVDHqHODQmLZczVWHWgZdv+sQkwgfCO7Dv+IiyLmOXYDijOKqoFJ9o+ouASE9VrGGt6ssXSCsCrTHCtBqPLnuel7NcIyfh21DH4j1oV+KeSHa/Q49RakmdR4PNoIS64FF0biQ48HUdKoi29J7a0eplZmhr0Mz1Lm5aH6IZMSR2rbfVmPyGz9koY1w5DDOMnJea4eFOm4839QgLdBHrdTRrkrVxXmE6ZVBnzbDQQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=uo7xW/6iNUMkE0P1KBeI2xw91KPLHJQmTJY2lqHiKPs=;
+ b=OQpKUtNigQhYEZ5L39rQlyn3gJkopyvN+V0GBwEgNrrSuqPw94Dz4c5xjZNimNlYiOPShwk2ccHuZaZs8xXQLrGIHUWXzYr7e64Rc3Ea0lTZ6xbYW/xqPFlQVL5IMav28xxGkOsDxdmIsIq92yww+R4htKkAkkiKfImst5/mfZ8m5vWhUdBPNIdUDD58O+2SMYuMmrr2CaNefRlNmbWY+WZSVV8wlgz36nnXmPgN2Q/CTmEjxYHwY0Sc1uzfDfGt7QpMKqCGalZMGDXMTM/i+ssUUVnVUzPi3zBUC8ht4n6T76fAsieiJT61KkzG4yDwK8wcawUJPuJ9lZMpfKwtlg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nxp.com; dmarc=pass action=none header.from=nxp.com; dkim=pass
+ header.d=nxp.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nxp.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=uo7xW/6iNUMkE0P1KBeI2xw91KPLHJQmTJY2lqHiKPs=;
+ b=TJP8DItm/96r7y3/wHexBiv1GHRn5Yu/ZlAoeL/j3UFZvZkG1qbZQ8S/qWz4gXQcpPuI4en8pLrBsuZ9WjN0Qx3sAfDEu7NbhqEH6KkG1FOcYV2879hx+qUeypL8/xBfjHTq+6yEVchSPKkxNfkNOMQcTeYYdIVGaW+QKKIl7l0=
+Authentication-Results: redhat.com; dkim=none (message not signed)
+ header.d=none;redhat.com; dmarc=none action=none header.from=nxp.com;
+Received: from AM0PR04MB4772.eurprd04.prod.outlook.com (2603:10a6:208:c2::17)
+ by AM8PR04MB7234.eurprd04.prod.outlook.com (2603:10a6:20b:1dd::9) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3977.26; Mon, 29 Mar
+ 2021 02:50:35 +0000
+Received: from AM0PR04MB4772.eurprd04.prod.outlook.com
+ ([fe80::ddd5:6125:75c8:e3c0]) by AM0PR04MB4772.eurprd04.prod.outlook.com
+ ([fe80::ddd5:6125:75c8:e3c0%7]) with mapi id 15.20.3977.033; Mon, 29 Mar 2021
+ 02:50:35 +0000
+From:   Jiafei Pan <Jiafei.Pan@nxp.com>
+To:     williams@redhat.com, jkacur@redhat.com
+Cc:     linux-rt-users@vger.kernel.org, jiafei.pan@nxp.com,
+        Jiafei Pan <Jiafei.Pan@nxp.com>
+Subject: [PATCH v2] rt-tests: pi_stress: fix testing threads' smp affinity
+Date:   Mon, 29 Mar 2021 11:00:15 +0800
+Message-Id: <20210329030015.7697-1-Jiafei.Pan@nxp.com>
+X-Mailer: git-send-email 2.17.1
+Content-Type: text/plain
+X-Originating-IP: [119.31.174.73]
+X-ClientProxiedBy: HK2PR02CA0153.apcprd02.prod.outlook.com
+ (2603:1096:201:1f::13) To AM0PR04MB4772.eurprd04.prod.outlook.com
+ (2603:10a6:208:c2::17)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-MS-Exchange-MessageSentRepresentingType: 1
+Received: from localhost.localdomain (119.31.174.73) by HK2PR02CA0153.apcprd02.prod.outlook.com (2603:1096:201:1f::13) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3977.24 via Frontend Transport; Mon, 29 Mar 2021 02:50:33 +0000
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-HT: Tenant
+X-MS-Office365-Filtering-Correlation-Id: 68d2c100-fc4b-4347-9936-08d8f25d6d62
+X-MS-TrafficTypeDiagnostic: AM8PR04MB7234:
+X-MS-Exchange-Transport-Forked: True
+X-Microsoft-Antispam-PRVS: <AM8PR04MB72345A6C872257CB2B733DE08A7E9@AM8PR04MB7234.eurprd04.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:6430;
+X-MS-Exchange-SenderADCheck: 1
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: 8Z/scEv43zgAj7txn8B1jKJcBGLj7qk3KuSafD8+JDD2BT2HJ4hQ/A4ZotpVEWztlhAXckJSMVIssXOfQrxT+OZo5Ruuh2pn+kItGKstDdCeA9sQxjAb8YciZ5faZi21/pzmmAnguQO9+vz0OQBd8I2I9Y3Mhj5s2UU6Mqq4ENeVyFfZ0eUYf+FcIYkMLNdQALBC1/lFJzlZrQCYYwIEgMZkSooXotIz0FTHAPTaFSKRz2SOwmvNUUgzOavG1w6oP34VKpVkpeCmALGCK9E9EOGzn5CUtxosaMGC83YUjlOVlHA5j/1fbxNGczz+mC0hv3ZTsL0qqFHRGWIG8OYDrlNwR1mqaaE+dZD/IVbkxdO48r041OafpJLE3KOGfNg5skcQuMXBnU2ojuHMerUXT5siPrsUvsU2oq2cMqocPq5rdbvNVOJXC/ldWvpUm4y2guou2KOPFaKykCKGoes41nrYBkn0BoLgGWiDFSW2voPAhVnZvImhOk4+6c9dNXkuCZCbcU51rOIeWTqL1ISxoE3wV55KwzH5BrdOSAudu5EdtFpFAcmA9G0ybAWSPfanDhgUcsAIAtJZamGF6Rlr9kahbSrydPpnZNwvNGcMrfc9S5OCSeOz3Ownnk6gCDA99Rw9jHVeYSiWnrnPqQXa5jWMsc1emAxZWYncm6CqxBIVE20TqYJIqMoMaOjHkA/t
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB4772.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(376002)(39850400004)(396003)(366004)(346002)(136003)(1076003)(956004)(2616005)(6486002)(52116002)(5660300002)(6506007)(4326008)(86362001)(26005)(16526019)(316002)(186003)(478600001)(36756003)(66476007)(66946007)(66556008)(8676002)(8936002)(6512007)(83380400001)(69590400012)(6666004)(2906002)(38100700001);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData: =?us-ascii?Q?l1XE5AE/3wKB0gCIKdGgyoqxtBfNSlrgmPCCcW55h6vX8mcm60J97jV85ee4?=
+ =?us-ascii?Q?K3j3GV99vJO4GKyJ6p+8CowgHFjb7NF59G/n9fjLux9ozszMsXuzZP//WuhR?=
+ =?us-ascii?Q?FwPzFQb34iUM9/cLlSunbhcpA8QVVTawogf3uF6TO8pXk3OEuR3p6ciwG96d?=
+ =?us-ascii?Q?fbn+XHGHmfgu5pnnXD9IxRoJBmfV5uAp2BfFn4IZZh7acSwFPZ3MIs0asXBD?=
+ =?us-ascii?Q?Im/6GqI4pMi7k7d74VlSi7vUCZH+pwDooncT5gklS9IYb7aIScdxYNxd5JQ6?=
+ =?us-ascii?Q?egS9V0gr6uyxLxQyI++gc68D1eGgnCgKTHcZPkciwgr2LEF3ZQV95DoPy9hp?=
+ =?us-ascii?Q?Ixq7t+GBu/xPFNTZAEqGB5Xac6GYfnwOrKxbx5i/YKdaANAGZ62rf4x/CnTF?=
+ =?us-ascii?Q?G8w/tyXDjELuw8B/UuQXKVDJOMsDZ1LfYVOlX8pQ9ilJo/kW/B2/QIM2V63H?=
+ =?us-ascii?Q?+UiST740J7UKKE7Ixd0Xw6WnYkYk0+N5jjsGV9kgNo+tzGeP2fN8wGvMTw76?=
+ =?us-ascii?Q?/YTDpTVD7mH+PSTjSuYNNz8fULsxSZ1NhZXW784OnvOToAxPtIPQyU1DAwxs?=
+ =?us-ascii?Q?5CjTUYgRN/eOlV61pbAG6xPAEyQSosAl5HnWAKHt8jM1gTXxfDvb858iIAtA?=
+ =?us-ascii?Q?xeuzLUqM2zHuXOA5wZGp0+a0FWxn1OLuWXVtj+Sv4+uxCTgkldy50STPt1kk?=
+ =?us-ascii?Q?ovGqvk3wkJa1DSNJLCNfCY+9O5W+xxXfl9ouFrJPZBNx2CCBqFHhfT7Vfs7A?=
+ =?us-ascii?Q?dkBLJpIlly0h0OWso2kM05u+wEYUaF5ENBsOHc3u2MxK5za5EBmCNg/3zirt?=
+ =?us-ascii?Q?HzWD93Rf9GeqKrDefFxDbsqQQpNhMN/dnKGfaGvacza1VZm9zUikk0DNWx5C?=
+ =?us-ascii?Q?aFMxF7oWL/kP7pBtZ65kIHKdkaAUG/SVMPOeLIsigsykoa+Y+UB9JI8HdVeV?=
+ =?us-ascii?Q?k/CMVA9zlU5DID1/ts3cuOybDbYcF2UJ/X1CibWQwggrv0HviMZa8EARXW4Z?=
+ =?us-ascii?Q?ure3c8EAgeQrpE6ulNAWUmD+dlGq9B0s9i847rQW5IJXoIYi1UgtoM65x1wa?=
+ =?us-ascii?Q?9v+J1Xku8FiSA9XyOp7WA+tzEiV2FsLrMVP2IGyHy1xHTwmMyK898rqI3JcI?=
+ =?us-ascii?Q?tBfGLBeTPLxRW7fwgkr5xmjmMxiJrei/2xDoCvPDVfIuv6BbQ+zyi7dvypai?=
+ =?us-ascii?Q?3P/SO9AHqidWs91NHnHXfFgHjB3PM6p95L+GQd7dIt4cnIF8lqwVj/2iw/aH?=
+ =?us-ascii?Q?rLaF07Sl7d8JhdCPWHOrtexbjKRQKpu8eM1O5S6n/Rv56Qpr20bDRTWJVq6v?=
+ =?us-ascii?Q?Xxa/8t1fGN7a1Cf+ibcuC1qd?=
+X-OriginatorOrg: nxp.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 68d2c100-fc4b-4347-9936-08d8f25d6d62
+X-MS-Exchange-CrossTenant-AuthSource: AM0PR04MB4772.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 29 Mar 2021 02:50:35.5812
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: fAJ+paqSUDWwgvZ+MWMm3W1YD383dqtqjIEL6mhdoqPgz4/Xf7Yjxs1uFMelIPdWpScl/Psm4A+IDuYXx11tSQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM8PR04MB7234
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We want to measure the latency of RT tasks in our production
-environment with schedstats facility, but currently schedstats is only
-supported for fair sched class. This patch enable it for RT sched class
-as well.
+This patch include the following modifications:
+1. Make sure test threads and admin threads don't run on the same CPU
+   Core if uniprocessor is not set or not on single Core platform to
+   avoid starvation of admin threads.
+2. Force to use SCHED_RR if more than one Group running on a CPU
+   Core to avoid test failure because threads in different Groups
+   are using the same priority, SCHED_FIFO which is default policy
+   and it maybe trigger deadlock of testing threads.
 
-After we make the struct sched_statistics and the helpers of it
-independent of fair sched class, we can easily use the schedstats
-facility for RT sched class.
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
 
-The schedstat usage in RT sched class is similar with fair sched class,
-for example,
-                fair                            RT
-enqueue         update_stats_enqueue_fair       update_stats_enqueue_rt
-dequeue         update_stats_dequeue_fair       update_stats_dequeue_rt
-put_prev_task   update_stats_wait_start         update_stats_wait_start
-set_next_task   update_stats_wait_end           update_stats_wait_end
+Changes for v2:
+	fix some typo.
 
-The user can get the schedstats information in the same way in fair sched
-class. For example,
-                    Interface File
-  task schedstats : /proc/[pid]/sched
-  group schedstats: /proc/sched_debug
-
-The sched:sched_stat_{wait, sleep, iowait, blocked} tracepoints can
-be used to trace RT tasks as well. The output of these tracepoints for a
-RT tasks as follows,
-
-- blocked & iowait
-    kworker/48:1-442     [048] d...   539.830872: sched_stat_iowait: comm=stress pid=10461 delay=158242 [ns]
-    kworker/48:1-442     [048] d...   539.830872: sched_stat_blocked: comm=stress pid=10461 delay=158242 [ns]
-
-- wait
-          stress-10460   [001] dN..   813.965304: sched_stat_wait: comm=stress pid=10462 delay=99997536 [ns]
-          stress-10462   [001] d.h.   813.966300: sched_stat_runtime: comm=stress pid=10462 runtime=993812 [ns] vruntime=0 [ns]
-          [...]
-          stress-10462   [001] d.h.   814.065300: sched_stat_runtime: comm=stress pid=10462 runtime=994484 [ns] vruntime=0 [ns]
-          [ totally 100 times of sched_stat_runtime for pid 10462]
-          [ The delay of pid 10462 is the sum of above runtime ]
-          stress-10462   [001] dN..   814.065307: sched_stat_wait: comm=stress pid=10460 delay=100001089 [ns]
-          stress-10460   [001] d.h.   814.066299: sched_stat_runtime: comm=stress pid=10460 runtime=991934 [ns] vruntime=0 [ns]
-
-- sleep
-           sleep-15582   [041] dN..  1732.814348: sched_stat_sleep: comm=sleep.sh pid=15474 delay=1001223130 [ns]
-           sleep-15584   [041] dN..  1733.815908: sched_stat_sleep: comm=sleep.sh pid=15474 delay=1001238954 [ns]
-           [ In sleep.sh, it sleeps 1 sec each time. ]
-
-[lkp@intel.com: reported build failure in prev version]
-
-Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
-Cc: kernel test robot <lkp@intel.com>
 ---
- kernel/sched/rt.c | 137 ++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 137 insertions(+)
+ src/pi_tests/pi_stress.c | 23 +++++++++++++++++++----
+ 1 file changed, 19 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index ae5282484710..e5f706ffcdbc 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -1273,6 +1273,125 @@ static void __delist_rt_entity(struct sched_rt_entity *rt_se, struct rt_prio_arr
- 	rt_se->on_list = 0;
- }
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index 49f89b7..e8925e3 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -237,6 +237,13 @@ int main(int argc, char **argv)
+ 	/* process command line arguments */
+ 	process_command_line(argc, argv);
  
-+#ifdef CONFIG_RT_GROUP_SCHED
-+static inline void
-+__schedstats_from_sched_rt_entity(struct sched_rt_entity *rt_se,
-+				  struct sched_statistics **stats)
-+{
-+	struct task_struct *p;
-+	struct task_group *tg;
-+	struct rt_rq *rt_rq;
-+	int cpu;
-+
-+	if (rt_entity_is_task(rt_se)) {
-+		p = rt_task_of(rt_se);
-+		*stats = &p->stats;
-+	} else {
-+		rt_rq = group_rt_rq(rt_se);
-+		tg = rt_rq->tg;
-+		cpu = cpu_of(rq_of_rt_rq(rt_rq));
-+		*stats = tg->stats[cpu];
++	if (ngroups > (num_processors - 1)) {
++		printf("Warning: Administor thread will run on one CPU Core, and test thread Groups should run on the other CPU Cores,\n");
++		printf("\t it will run more than one Group on one Core and force to use SCHED_RR policy because\n");
++		printf("\t (groups > num_of_processors -1), or please change number of groups to be lower than processor numbers %ld \n", num_processors);
++		policy = SCHED_RR;
 +	}
-+}
 +
-+#else
-+
-+static inline void
-+__schedstats_from_sched_rt_entity(struct sched_rt_entity *rt_se,
-+				  struct sched_statistics **stats)
-+{
-+	struct task_struct *p;
-+
-+	p = rt_task_of(rt_se);
-+	*stats = &p->stats;
-+}
-+#endif
-+
-+static inline void
-+update_stats_wait_start_rt(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se)
-+{
-+	struct sched_statistics *stats = NULL;
-+	struct task_struct *p = NULL;
-+
-+	if (!schedstat_enabled())
-+		return;
-+
-+	if (rt_entity_is_task(rt_se))
-+		p = rt_task_of(rt_se);
-+
-+	__schedstats_from_sched_rt_entity(rt_se, &stats);
-+
-+	__update_stats_wait_start(rq_of_rt_rq(rt_rq), p, stats);
-+}
-+
-+static inline void
-+update_stats_enqueue_sleeper_rt(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se)
-+{
-+	struct sched_statistics *stats = NULL;
-+	struct task_struct *p = NULL;
-+
-+	if (!schedstat_enabled())
-+		return;
-+
-+	if (rt_entity_is_task(rt_se))
-+		p = rt_task_of(rt_se);
-+
-+	__schedstats_from_sched_rt_entity(rt_se, &stats);
-+
-+	__update_stats_enqueue_sleeper(rq_of_rt_rq(rt_rq), p, stats);
-+}
-+
-+static inline void
-+update_stats_enqueue_rt(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se,
-+			int flags)
-+{
-+	if (!schedstat_enabled())
-+		return;
-+
-+	if (flags & ENQUEUE_WAKEUP)
-+		update_stats_enqueue_sleeper_rt(rt_rq, rt_se);
-+}
-+
-+static inline void
-+update_stats_wait_end_rt(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se)
-+{
-+	struct sched_statistics *stats = NULL;
-+	struct task_struct *p = NULL;
-+
-+	if (!schedstat_enabled())
-+		return;
-+
-+	if (rt_entity_is_task(rt_se))
-+		p = rt_task_of(rt_se);
-+
-+	__schedstats_from_sched_rt_entity(rt_se, &stats);
-+
-+	__update_stats_wait_end(rq_of_rt_rq(rt_rq), p, stats);
-+}
-+
-+static inline void
-+update_stats_dequeue_rt(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se,
-+			int flags)
-+{
-+	struct task_struct *p = NULL;
-+
-+	if (!schedstat_enabled())
-+		return;
-+
-+	if (rt_entity_is_task(rt_se))
-+		p = rt_task_of(rt_se);
-+
-+	if ((flags & DEQUEUE_SLEEP) && p) {
-+		if (p->state & TASK_INTERRUPTIBLE)
-+			__schedstat_set(p->stats.sleep_start,
-+					rq_clock(rq_of_rt_rq(rt_rq)));
-+
-+		if (p->state & TASK_UNINTERRUPTIBLE)
-+			__schedstat_set(p->stats.block_start,
-+					rq_clock(rq_of_rt_rq(rt_rq)));
-+	}
-+}
-+
- static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
- {
- 	struct rt_rq *rt_rq = rt_rq_of_se(rt_se);
-@@ -1346,6 +1465,8 @@ static void enqueue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
- {
- 	struct rq *rq = rq_of_rt_se(rt_se);
+ 	/* set default sched attributes */
+ 	setup_sched_config(policy);
  
-+	update_stats_enqueue_rt(rt_rq_of_se(rt_se), rt_se, flags);
-+
- 	dequeue_rt_stack(rt_se, flags);
- 	for_each_sched_rt_entity(rt_se)
- 		__enqueue_rt_entity(rt_se, flags);
-@@ -1356,6 +1477,8 @@ static void dequeue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
- {
- 	struct rq *rq = rq_of_rt_se(rt_se);
+@@ -285,9 +292,17 @@ int main(int argc, char **argv)
+ 			break;
+ 	for (i = 0; i < ngroups; i++) {
+ 		groups[i].id = i;
+-		groups[i].cpu = core++;
+-		if (core >= num_processors)
+-			core = 0;
++		if (num_processors == 1 || uniprocessor) {
++			groups[i].cpu = 0;
++		} else {
++			groups[i].cpu = core;
++			/* Find next non-admin Core */
++			do {
++				core++;
++				if (core >= num_processors)
++					core = 0;
++			} while (CPU_ISSET(core, &admin_cpu_mask));
++		}
+ 		if (create_group(&groups[i]) != SUCCESS)
+ 			return FAILURE;
+ 	}
+@@ -1143,7 +1158,7 @@ int create_group(struct group_parameters *group)
+ 	CPU_ZERO(&mask);
+ 	CPU_SET(group->cpu, &mask);
  
-+	update_stats_dequeue_rt(rt_rq_of_se(rt_se), rt_se, flags);
-+
- 	dequeue_rt_stack(rt_se, flags);
+-	pi_debug("group %d bound to cpu %ld\n", group->id, group->cpu);
++	printf("group %d bound to cpu %ld\n", group->id, group->cpu);
  
- 	for_each_sched_rt_entity(rt_se) {
-@@ -1378,6 +1501,9 @@ enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
- 	if (flags & ENQUEUE_WAKEUP)
- 		rt_se->timeout = 0;
- 
-+	check_schedstat_required();
-+	update_stats_wait_start_rt(rt_rq_of_se(rt_se), rt_se);
-+
- 	enqueue_rt_entity(rt_se, flags);
- 
- 	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
-@@ -1578,7 +1704,12 @@ static void check_preempt_curr_rt(struct rq *rq, struct task_struct *p, int flag
- 
- static inline void set_next_task_rt(struct rq *rq, struct task_struct *p, bool first)
- {
-+	struct sched_rt_entity *rt_se = &p->rt;
-+	struct rt_rq *rt_rq = &rq->rt;
-+
- 	p->se.exec_start = rq_clock_task(rq);
-+	if (on_rt_rq(&p->rt))
-+		update_stats_wait_end_rt(rt_rq, rt_se);
- 
- 	/* The running task is never eligible for pushing */
- 	dequeue_pushable_task(rq, p);
-@@ -1642,6 +1773,12 @@ static struct task_struct *pick_next_task_rt(struct rq *rq)
- 
- static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
- {
-+	struct sched_rt_entity *rt_se = &p->rt;
-+	struct rt_rq *rt_rq = &rq->rt;
-+
-+	if (on_rt_rq(&p->rt))
-+		update_stats_wait_start_rt(rt_rq, rt_se);
-+
- 	update_curr_rt(rq);
- 
- 	update_rt_rq_load_avg(rq_clock_pelt(rq), rq, 1);
+ 	/* start the low priority thread */
+ 	pi_debug("creating low priority thread\n");
 -- 
-2.18.2
+2.17.1
 
