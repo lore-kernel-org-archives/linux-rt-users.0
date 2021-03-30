@@ -2,203 +2,206 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4AA64C433DB
-	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Mar 2021 05:25:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1D17C433DB
+	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Mar 2021 18:53:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 02C6D6192F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Mar 2021 05:25:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 71E566192C
+	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Mar 2021 18:53:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231158AbhC3FYn (ORCPT
+        id S232934AbhC3Sw2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 30 Mar 2021 01:24:43 -0400
-Received: from mail-eopbgr70080.outbound.protection.outlook.com ([40.107.7.80]:7297
-        "EHLO EUR04-HE1-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S231192AbhC3FYP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 30 Mar 2021 01:24:15 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=UnRZT0aX2ZF3oc+kWVxbXJpl5KZy6YdP4D6izFix9YBAJo6Qi4Qg7rE/mF3dOItc2i+g8SOYdZQcNfMzDoWffBx9a0TRTeLDkfErJb/J60K+ivA45xfg254zmvTitmzNzBTjkNzELf9rB+hub7hSaa/S90YoamnvxiPslkfFbObMuC2Z7olFG8d5r6rlvLUxohBuLpINIcKuuJvS7o374yAAZWHZ3pL2OxABHwr20IX7OLKe0dyW6BhklsIvGZz1COcH9ep5j3lNcK5Vgf/SL6rvmm8Iyv4B+4imUnY3neakiflOUzbUQJ6o2nJ1yPT/yovUrtKhxOFZFLCPqhFHfw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=cgLegZCyD3CyDL3suTIRoWMA+WPzStpsq862LSqWjXA=;
- b=YsQNFdyYgCQaXulDrtmfJlJteLG+a+/IbsBBh2wmlLYTlN8DNXDbTC3BLuXtscWJDd5TutVQg4fHNQshyaShy/h5oYNK/hemzPt1S/mZ8DlWQPhrEOKTjBZtv2qNMviAaXd5/M3X4KhOoRPLKKH9PSZKroEmngrHIZEEfuINecWuyapPM9BQEbRtuhmFOefi9NU4RMjhgnvDQ4G/IOVn5UbONGy3ONYxFKYILgkchHhEg9lDMgX8irFf8cmQ97NqQPkgD9xDvewbdAZ0LhvR4exywCBOE1TZAsicsQRw7xrL7HOuIod0jrjzawNh68llmYfrzExGNm5xAh1AfEGnWw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=nxp.com; dmarc=pass action=none header.from=nxp.com; dkim=pass
- header.d=nxp.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nxp.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=cgLegZCyD3CyDL3suTIRoWMA+WPzStpsq862LSqWjXA=;
- b=WtUrOMBdYJ6oDrOBSGfWuKnbuveXao9L2/6FB65kG9TzLLlHIBhyKSzhsaFw0NJ7KNretAKeLXNGNiI/LqdxuWSBm1Sod19/qvzr+lUmpBGL4I8aDAKmZOxXu/yvGjBwlIKLgNwfARk//mubMSegYxv1/q/EQwlx3XrhyFFmCkg=
-Received: from AM6PR04MB5413.eurprd04.prod.outlook.com (2603:10a6:20b:96::28)
- by AS8PR04MB7879.eurprd04.prod.outlook.com (2603:10a6:20b:2a4::19) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3977.25; Tue, 30 Mar
- 2021 05:24:13 +0000
-Received: from AM6PR04MB5413.eurprd04.prod.outlook.com
- ([fe80::397c:7653:9a9b:a577]) by AM6PR04MB5413.eurprd04.prod.outlook.com
- ([fe80::397c:7653:9a9b:a577%4]) with mapi id 15.20.3977.033; Tue, 30 Mar 2021
- 05:24:13 +0000
-From:   Ran Wang <ran.wang_1@nxp.com>
-To:     Viresh Kumar <viresh.kumar@linaro.org>
-CC:     Sebastian Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Jiafei Pan <jiafei.pan@nxp.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        "Rafael J . Wysocki" <rjw@rjwysocki.net>
-Subject: RE: [PATCH v2] rt: cpufreq: Fix cpu hotplug hang
-Thread-Topic: [PATCH v2] rt: cpufreq: Fix cpu hotplug hang
-Thread-Index: AQHXJRH5jNkqQNzTc0CKkEQYgBe0fKqb9QcAgAAGTKA=
-Date:   Tue, 30 Mar 2021 05:24:13 +0000
-Message-ID: <AM6PR04MB5413B90D5F6F75D2186180A0F17D9@AM6PR04MB5413.eurprd04.prod.outlook.com>
-References: <20210330031513.17903-1-ran.wang_1@nxp.com>
- <20210330044602.gtouftuzklm4sdnr@vireshk-i7>
-In-Reply-To: <20210330044602.gtouftuzklm4sdnr@vireshk-i7>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: linaro.org; dkim=none (message not signed)
- header.d=none;linaro.org; dmarc=none action=none header.from=nxp.com;
-x-originating-ip: [119.31.174.73]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: 039f1a90-8bc2-41db-a62c-08d8f33c0e12
-x-ms-traffictypediagnostic: AS8PR04MB7879:
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <AS8PR04MB78795F41D9EB3918F5BB0C85F17D9@AS8PR04MB7879.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:7219;
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: Cw5VP5tP7WQm3pZZj/xspQWkTptdp3ZQHsFSOql+ErZEleVRrBJzZM1DtnPla3czeVE1TPPZe/Hu8iCxDpK/+VZVm56vbbeIb9uoyIAitoFQG3yvxOeumJpZeaZBXPaxCB6I7sfZHHs+iGtDxWBk8lc2MS7v02gkHLceHldfOR38i2bwcjpjqDsl/iEA8+3R+9z/5pf1hI7+/JqIdyDVWpQD7vN+6V84EQoa3ASV8m7An9zeAw9okDXfnPGZOq9bWUnqGqwGd0DHAUNQpUC5I/gTOlbbxlrRBqncncfrKKd4eDMTmQeL//t2JHkzdMyHRoc1hoqLNL6srnyCETdwlrV3hKvJOAHT0dZ6cCN+uKh4UU8fBGrDpPBvl2XzQ6EJ5O8wF9LzuGFS1hqwVSmuBZB99PnVBf6DLQthg4/v1AlqX1dthPgc85ANYJgNWtOeolUmtyShy8ns80ndsDyjPznPLebURZRAtev8rPlMUF5xe6speSnbdD6MME/IHm8cw3rMqfkKdRWAOgG9hi/Id7TMJ7/HE8tTAFWok1g73y0lK9NGdf3f9+dUrCnl5ix/K4WXeFYoxZNpvxH3Rf97HzFiGpxGtL7ZX/7RdHuzxScux0uUurOo59fC7C1f6au7WfIkCYDIYaTL2L79EqkpUrtmdXSyjo0MixhHgbQmN0Q=
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM6PR04MB5413.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(376002)(346002)(366004)(396003)(136003)(39860400002)(9686003)(71200400001)(52536014)(55016002)(4326008)(6916009)(66556008)(5660300002)(6506007)(7696005)(53546011)(33656002)(8676002)(66446008)(8936002)(86362001)(316002)(2906002)(54906003)(64756008)(83380400001)(66946007)(76116006)(66476007)(38100700001)(186003)(478600001)(26005);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata: =?utf-8?B?MDBoWVFvMTZUa3ZqRW9sdlAvSHRZM0JPbEtUbnJ6WWVqSHhqT0xLQ0I2T0ta?=
- =?utf-8?B?MlJNbE42c1dxTEdLekNuQUIrL3RSRW1TcEUxNXVMWDVXSHZuWlZmai9rTnVG?=
- =?utf-8?B?cmJTdWRveFR1T0VXYkZwL2RRY3FsNTVCV3lLMEFBL2xzRitPZStxQ0ZlTmV5?=
- =?utf-8?B?QlBVdDF6ZnBsSXRSUDFtMGxieU96S3ZCdmVzSWVWMVZ0U1VzT2RkTFNJZkln?=
- =?utf-8?B?dG03eDN5d3NWVytDTE92Tmt2L3N6YzlBQ1pnUUk0b0tMSHpiM3hPbCtXWDRk?=
- =?utf-8?B?bXF5VGJCa3BWdHRkK2dHRWRmSW1hMTdjMkk4ZW5kK0Q4cGhzUWp0YWJ6SUlZ?=
- =?utf-8?B?SEhLWXZ4TmFGODBlNXdyWFZUeTdURmJ1T0VvbkNEWW92b0dtR3hlWmJCN3Ny?=
- =?utf-8?B?QXAyVVpoZnZ2eFBCN0lGSTdzdzh6K1RSZHptNncwNkhDMlZQM1RzMFhLcmVP?=
- =?utf-8?B?Z0RVY1RKUjBsdkM1cUJYT1RYZmtzS2Y0MTZFZW83ZDFEVXF6YUtJbFRiMGV0?=
- =?utf-8?B?WllSRVJCYk1JZngxdE8rRlVQWVpZbHhIVmYrcnBqelBBbnR2ekVaR1pJbUtX?=
- =?utf-8?B?VXBIRzc0REZiU1lTWFhzZzd2SEg3TEt3TUZKMzI5V3h6eGtxWjN0NWZraU1a?=
- =?utf-8?B?N3gvUUhlMk1yRlFzK0lseXR3NDBxQTRXZm5HbWlCcGZ2Nm1ZdDFvQjBhbkxD?=
- =?utf-8?B?ekhTaXJ1bS9rL0lHN2pRbG03TS9uTnFSd3UzRFROZFM4akFXOTJaZ3NWK1k3?=
- =?utf-8?B?aEdJTVZwYTZ3anZPQk9jdDJQTlZ1aUkxTWdUOFozdCtJOXhJeEFldGUyd1VC?=
- =?utf-8?B?N0V1b1V6eWgzbituZHVRTjNkY3FLdDZhc2Z6Z2pCazFMc09uTGsvbitVYmxM?=
- =?utf-8?B?ZEZBTGdaVUJnY2FITEt5N2E2YkEvNDRXT2g4SG5GTURMNUlQUUY3Y0oya0p0?=
- =?utf-8?B?ZUJ5cVpESTRrTjBuQkxLcFp2UHdxR081NVpVMTZ2MW5HK0czVEZ0TXpaN2pD?=
- =?utf-8?B?VTdRbzRaK2w3ZTRxcUsrWEJIaVpTZTFsUXlVV3ZFMEpFUTdMcDdOZlBGYm1N?=
- =?utf-8?B?NjdVbU1GTDFHelJPTjN2SnhvUDV5dVEzUTJ1VlEyVWZRR01qWlA3WjEza1FY?=
- =?utf-8?B?aThFMzNXdXFQaUxRUDJzNUc0Z1d1VHZucTROclgxZnFUUjJ2OE1BblBXU1Vt?=
- =?utf-8?B?djRBZTNwZG83L3cwT0ZsclNGNWgwUlhrN1VoWEo2aGN4NitLaVN1OTB2M1Ew?=
- =?utf-8?B?SFRwN25DY2FXWFpTdTFVQjNHZ2g5NTgxdUd0aW9vT0RlNm5JeEsyRDY0dCtY?=
- =?utf-8?B?N1J6K3c0Y2QxRWRwc0FBVkw4Y0VwdE53RzhPNDU0bDMzbjgxaG03U1RmQlJp?=
- =?utf-8?B?YWtRYmNrRTlVRFB1VkJIVlFYdDlLTmhWbEdWYXZvaExVdTlRMWlpQTF0OFpB?=
- =?utf-8?B?RFlwRXhHRC8vYzU0VFhNTUdRVjd3aDJSOFcxazUrNnZXbU1jWkl5amYwNitU?=
- =?utf-8?B?NytBTlU4dERibHc4QkphY3l5dXdtYlFXbi9jY1V5U001R3IxK1NVbGx4d1ZT?=
- =?utf-8?B?RlBKdHNsaWFOWXFwOFJpWjFhUU1LcWg2TnJWazF1enZPTzdPbk9WOWZ0TWpu?=
- =?utf-8?B?NkUxaHhCVHhxbFBRWEMwQXlIaXBzRXZlMklTMWpHcUo5Q3Nrenh6OXdPYWdN?=
- =?utf-8?B?WXJrSU90QStaMFYxV1cxeUhISXl5TUdwRVR2Z1ZKQ2dvb1ptNUZnVFVnZkRG?=
- =?utf-8?Q?ow1Vy1h19RskahtpQOmR96Qd4hprRTeqbl4f2ST?=
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+        Tue, 30 Mar 2021 14:52:28 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:55607 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S231910AbhC3SwF (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 30 Mar 2021 14:52:05 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1617130325;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=yMCpVlMlRD7NcZCE9ewfx3xVfYn50wJwXreF4M6Z7f4=;
+        b=XMD3Ii9OiclANAcMhuISxUB0U2BBtQ3Q3gpK5BdlewpX3LIoSIfj8WJTamsxASKY6fUXFI
+        OZ2eCemD20Yohw+VV6UQHatAPqF+MiQSvwAbRa/RiKc9SF0WOF+sLME1SsYN4x4xTMDqFC
+        BWm9XcH7D8zNz2xiSkBjY0yHiHHrwL0=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-451-YkBKwRlwOwmf23SkhoZNIw-1; Tue, 30 Mar 2021 14:52:02 -0400
+X-MC-Unique: YkBKwRlwOwmf23SkhoZNIw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A0751190B2A1;
+        Tue, 30 Mar 2021 18:52:00 +0000 (UTC)
+Received: from carbon (unknown [10.36.110.5])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 81C1260861;
+        Tue, 30 Mar 2021 18:51:55 +0000 (UTC)
+Date:   Tue, 30 Mar 2021 20:51:54 +0200
+From:   Jesper Dangaard Brouer <brouer@redhat.com>
+To:     Mel Gorman <mgorman@techsingularity.net>
+Cc:     Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Chuck Lever <chuck.lever@oracle.com>,
+        Matthew Wilcox <willy@infradead.org>, brouer@redhat.com
+Subject: Re: [RFC PATCH 0/6] Use local_lock for pcp protection and reduce
+ stat overhead
+Message-ID: <20210330205154.1fe1e479@carbon>
+In-Reply-To: <20210329120648.19040-1-mgorman@techsingularity.net>
+References: <20210329120648.19040-1-mgorman@techsingularity.net>
 MIME-Version: 1.0
-X-OriginatorOrg: nxp.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AM6PR04MB5413.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 039f1a90-8bc2-41db-a62c-08d8f33c0e12
-X-MS-Exchange-CrossTenant-originalarrivaltime: 30 Mar 2021 05:24:13.2215
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: Qme2N4ndV4e4jiL+A0hRj6tW8BCA38ePYzTBv9jcEM+5lDMOmGNsB8BM8aMTvEmpp+kGPn78BqbtYacjlcuV9w==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS8PR04MB7879
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-SGkgS3VtYXIsDQoNCk9uIFR1ZXNkYXksIE1hcmNoIDMwLCAyMDIxIDEyOjQ2IFBNLCBWaXJlc2gg
-S3VtYXIgd3JvdGU6DQo+IA0KPiBPbiAzMC0wMy0yMSwgMTE6MTUsIFJhbiBXYW5nIHdyb3RlOg0K
-PiA+IFdoZW4gc2VsZWN0aW5nIFBSRUVNUFRfUlQsIGNwdWZyZXFfZHJpdmVyLT5zdG9wX2NwdShw
-b2xpY3kpIG1pZ2h0IGdldA0KPiA+IHN0dWNrIGR1ZSB0byBpcnFfd29ya19zeW5jKCkgcGVuZGlu
-ZyBmb3Igd29yayBvbiBsYXp5X2xpc3QsIHdoaWNoIGhhZA0KPiA+IG5vIGNoYW5jZSB0byBiZSBz
-ZXJ2ZWQgaW4gc29mdGlycSBjb250ZXh0IHNvbWV0aW1lcy4NCj4gPg0KPiA+IFRoZSByZWFzb24g
-b2YgbGF6eV9saXN0IHdhcyBub3Qgc2VydmVkIGlzIGJlY2F1c2UgdGhlIG5lYXJlc3QNCj4gPiBh
-Y3RpdmF0ZWQgdGltZXIgbWlnaHQgaGF2ZSBiZWVuIHNldCB0byBleHBpcmUgYWZ0ZXIgbG9uZyB0
-aW1lIChzdWNoIGFzIDEwMCsgc2Vjb25kcykuDQo+ID4gVGhlbiBmdW5jdGlvbiBydW5fbG9jYWxf
-dGltZXJzKCkgd291bGQgbm90IGNhbGwNCj4gPiByYWlzZV9zb2Z0aXJxKFRJTUVSX1NPRlRJUlEp
-IHRvIGhhbmRsZSBlbnF1ZXVlZCBpcnFfd29yay4NCj4gPg0KPiA+IFRoaXMgaXMgb2JzZXJ2ZWQg
-b24gTFgyMTYwQVJEQiBhbmQgTFMxMDg4QVJEQiB3aXRoIGNwdWZyZXEgZ292ZXJub3Igb2YNCj4g
-PiDigJhzY2hlZHV0aWzigJkgb3Ig4oCYb25kZW1hbmTigJkuDQo+ID4NCj4gPiBDb25maWd1cmUg
-cmVsYXRlZCBpcnF3b3JrIHRvIHJ1biBvbiByYXctaXJxIGNvbnRleHQgY291bGQgZml4IHRoaXMg
-aXNzdWUuDQo+ID4NCj4gPiBTaWduZWQtb2ZmLWJ5OiBSYW4gV2FuZyA8cmFuLndhbmdfMUBueHAu
-Y29tPg0KPiA+IC0tLQ0KPiA+IENoYW5nZSBpbiB2MjoNCj4gPiAgLSBVcGRhdGUgY29tbWl0IG1l
-c3NhZ2UgdG8gZXhwbGFpbiByb290IGNhdXNlIG1vcmUgY2xlYXIuDQo+ID4NCj4gPiAgZHJpdmVy
-cy9jcHVmcmVxL2NwdWZyZXFfZ292ZXJub3IuYyB8IDIgKy0NCj4gPiAga2VybmVsL3NjaGVkL2Nw
-dWZyZXFfc2NoZWR1dGlsLmMgICB8IDIgKy0NCj4gPiAgMiBmaWxlcyBjaGFuZ2VkLCAyIGluc2Vy
-dGlvbnMoKyksIDIgZGVsZXRpb25zKC0pDQo+ID4NCj4gPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9j
-cHVmcmVxL2NwdWZyZXFfZ292ZXJub3IuYw0KPiA+IGIvZHJpdmVycy9jcHVmcmVxL2NwdWZyZXFf
-Z292ZXJub3IuYw0KPiA+IGluZGV4IDYzZjdjMjE5MDYyYi4uNzMxYTdiMTQzNGRmIDEwMDY0NA0K
-PiA+IC0tLSBhL2RyaXZlcnMvY3B1ZnJlcS9jcHVmcmVxX2dvdmVybm9yLmMNCj4gPiArKysgYi9k
-cml2ZXJzL2NwdWZyZXEvY3B1ZnJlcV9nb3Zlcm5vci5jDQo+ID4gQEAgLTM2MCw3ICszNjAsNyBA
-QCBzdGF0aWMgc3RydWN0IHBvbGljeV9kYnNfaW5mbyAqYWxsb2NfcG9saWN5X2Ric19pbmZvKHN0
-cnVjdCBjcHVmcmVxX3BvbGljeSAqcG9saQ0KPiA+ICAJcG9saWN5X2Ricy0+cG9saWN5ID0gcG9s
-aWN5Ow0KPiA+ICAJbXV0ZXhfaW5pdCgmcG9saWN5X2Ricy0+dXBkYXRlX211dGV4KTsNCj4gPiAg
-CWF0b21pY19zZXQoJnBvbGljeV9kYnMtPndvcmtfY291bnQsIDApOw0KPiA+IC0JaW5pdF9pcnFf
-d29yaygmcG9saWN5X2Ricy0+aXJxX3dvcmssIGRic19pcnFfd29yayk7DQo+ID4gKwlwb2xpY3lf
-ZGJzLT5pcnFfd29yayA9IElSUV9XT1JLX0lOSVRfSEFSRChkYnNfaXJxX3dvcmspOw0KPiA+ICAJ
-SU5JVF9XT1JLKCZwb2xpY3lfZGJzLT53b3JrLCBkYnNfd29ya19oYW5kbGVyKTsNCj4gPg0KPiA+
-ICAJLyogU2V0IHBvbGljeV9kYnMgZm9yIGFsbCBDUFVzLCBvbmxpbmUrb2ZmbGluZSAqLyBkaWZm
-IC0tZ2l0DQo+ID4gYS9rZXJuZWwvc2NoZWQvY3B1ZnJlcV9zY2hlZHV0aWwuYyBiL2tlcm5lbC9z
-Y2hlZC9jcHVmcmVxX3NjaGVkdXRpbC5jDQo+ID4gaW5kZXggNTBjYmFkODlmN2ZhLi4xZDVhZjg3
-ZWM5MmUgMTAwNjQ0DQo+ID4gLS0tIGEva2VybmVsL3NjaGVkL2NwdWZyZXFfc2NoZWR1dGlsLmMN
-Cj4gPiArKysgYi9rZXJuZWwvc2NoZWQvY3B1ZnJlcV9zY2hlZHV0aWwuYw0KPiA+IEBAIC02MTEs
-NyArNjExLDcgQEAgc3RhdGljIGludCBzdWdvdl9rdGhyZWFkX2NyZWF0ZShzdHJ1Y3QNCj4gPiBz
-dWdvdl9wb2xpY3kgKnNnX3BvbGljeSkNCj4gPg0KPiA+ICAJc2dfcG9saWN5LT50aHJlYWQgPSB0
-aHJlYWQ7DQo+ID4gIAlrdGhyZWFkX2JpbmRfbWFzayh0aHJlYWQsIHBvbGljeS0+cmVsYXRlZF9j
-cHVzKTsNCj4gPiAtCWluaXRfaXJxX3dvcmsoJnNnX3BvbGljeS0+aXJxX3dvcmssIHN1Z292X2ly
-cV93b3JrKTsNCj4gPiArCXNnX3BvbGljeS0+aXJxX3dvcmsgPSBJUlFfV09SS19JTklUX0hBUkQo
-c3Vnb3ZfaXJxX3dvcmspOw0KPiA+ICAJbXV0ZXhfaW5pdCgmc2dfcG9saWN5LT53b3JrX2xvY2sp
-Ow0KPiA+DQo+ID4gIAl3YWtlX3VwX3Byb2Nlc3ModGhyZWFkKTsNCj4gDQo+IFdpbGwgdGhpcyBo
-YXZlIGFueSBpbXBhY3Qgb24gdGhlIG5vbi1wcmVlbXB0LXJ0IGNhc2UgPyBPdGhlcndpc2UsDQoN
-Ck15IHVuZGVyc3RhbmRpbmcgaXMsIGluIG5vbi1wcmVlbXB0LXJ0IGNhc2UsIGl0IHdpbGwgYmUg
-cXVldWVkIHRvIHJhaXNlZF9saXN0IGluc3RlYWQNCmFuZCBjYWxsIGFyY2hfaXJxX3dvcmtfcmFp
-c2UoKSBpbW1lZGlhdGVseSB0byByYWlzZSBhIElQSSB0byBzZXJ2ZS4gU28gdGhhdCBpdCB3b3Vs
-ZCBiZQ0Kc2ltaWxhciB0byB3aGF0IHRoaXMgcGF0Y2ggZG8gaW4gcHJlZW1wdC1ydCBjYXNlLCBz
-ZWUgZnVuY3Rpb24gX19pcnFfd29ya19xdWV1ZV9sb2NhbCgpOg0KDQogNTMgLyogRW5xdWV1ZSBv
-biBjdXJyZW50IENQVSwgd29yayBtdXN0IGFscmVhZHkgYmUgY2xhaW1lZCBhbmQgcHJlZW1wdCBk
-aXNhYmxlZCAqLyAgDQogNTQgc3RhdGljIHZvaWQgX19pcnFfd29ya19xdWV1ZV9sb2NhbChzdHJ1
-Y3QgaXJxX3dvcmsgKndvcmspICAgICAgICAgICAgICAgICAgICAgICAgDQogNTUgeyAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgDQogNTYgICAgICAgICBzdHJ1Y3QgbGxpc3RfaGVhZCAqbGlzdDsgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgDQogNTcgICAgICAg
-ICBib29sIGxhenlfd29yazsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgDQogNTggICAgICAgICBpbnQgd29ya19mbGFnczsgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgDQogNTkgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgDQogNjAgICAgICAgICB3b3JrX2ZsYWdzID0gYXRvbWljX3Jl
-YWQoJndvcmstPm5vZGUuYV9mbGFncyk7ICAgICAgICAgICAgICAgICAgICAgICAgICAgDQogNjEg
-ICAgICAgICBpZiAod29ya19mbGFncyAmIElSUV9XT1JLX0xBWlkpICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgDQogNjIgICAgICAgICAgICAgICAgIGxhenlfd29yayA9
-IHRydWU7ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgDQog
-NjMgICAgICAgICBlbHNlIGlmIChJU19FTkFCTEVEKENPTkZJR19QUkVFTVBUX1JUKSAmJiAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgDQogNjQgICAgICAgICAgICAgICAgICEod29ya19m
-bGFncyAmIElSUV9XT1JLX0hBUkRfSVJRKSkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-IA0KIDY1ICAgICAgICAgICAgICAgICAgICAgICAgIGxhenlfd29yayA9IHRydWU7ICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA0KIDY2ICAgICAgICAgZWxzZSAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIA0KIDY3ICAgICAgICAgICAgICAgICBsYXp5X3dvcmsgPSBmYWxzZTsNCg0KQW5kIEkgaGF2
-ZSB0ZXN0ZWQgb24gbWFpbmxpbmUgYW5kIHJ0IHRyZWUgd2l0aCBDT05GSUdfUFJFRU1QVCBzZWxl
-Y3RlZCwgY291bGRuJ3QgcmVwcm9kdWNlIHN1Y2ggaXNzdWUuDQoNClJlZ2FyZHMsDQpSYW4NCg0K
-PiBBY2tlZC1ieTogVmlyZXNoIEt1bWFyIDx2aXJlc2gua3VtYXJAbGluYXJvLm9yZz4NCj4gDQo+
-IC0tDQo+IHZpcmVzaA0K
+On Mon, 29 Mar 2021 13:06:42 +0100
+Mel Gorman <mgorman@techsingularity.net> wrote:
+
+> This series requires patches in Andrew's tree so the series is also
+> available at
+> 
+> git://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git mm-percpu-local_lock-v1r15
+> 
+> tldr: Jesper and Chuck, it would be nice to verify if this series helps
+> 	the allocation rate of the bulk page allocator. RT people, this
+> 	*partially* addresses some problems PREEMPT_RT has with the page
+> 	allocator but it needs review.
+
+I've run a new micro-benchmark[1] which shows:
+(CPU: Intel(R) Xeon(R) CPU E5-1650 v4 @ 3.60GHz)
+
+BASELINE
+ single_page alloc+put: 194 cycles(tsc) 54.106 ns
+
+LIST variant: time_bulk_page_alloc_free_list: step=bulk size
+
+ Per elem: 200 cycles(tsc) 55.667 ns (step:1)
+ Per elem: 143 cycles(tsc) 39.755 ns (step:2)
+ Per elem: 132 cycles(tsc) 36.758 ns (step:3)
+ Per elem: 128 cycles(tsc) 35.795 ns (step:4)
+ Per elem: 123 cycles(tsc) 34.339 ns (step:8)
+ Per elem: 120 cycles(tsc) 33.396 ns (step:16)
+ Per elem: 118 cycles(tsc) 32.806 ns (step:32)
+ Per elem: 115 cycles(tsc) 32.169 ns (step:64)
+ Per elem: 116 cycles(tsc) 32.258 ns (step:128)
+
+ARRAY variant: time_bulk_page_alloc_free_array: step=bulk size
+
+ Per elem: 195 cycles(tsc) 54.225 ns (step:1)
+ Per elem: 127 cycles(tsc) 35.492 ns (step:2)
+ Per elem: 117 cycles(tsc) 32.643 ns (step:3)
+ Per elem: 111 cycles(tsc) 30.992 ns (step:4)
+ Per elem: 106 cycles(tsc) 29.606 ns (step:8)
+ Per elem: 102 cycles(tsc) 28.532 ns (step:16)
+ Per elem: 99 cycles(tsc) 27.728 ns (step:32)
+ Per elem: 98 cycles(tsc) 27.252 ns (step:64)
+ Per elem: 97 cycles(tsc) 27.090 ns (step:128)
+
+[1] https://github.com/xdp-project/xdp-project/blob/master/areas/mem/page_pool06_alloc_pages_bulk.org#micro-benchmark-page_bench04_bulk-local_lock-v1r15
+
+This should be seen in comparison with the older micro-benchmark[2]
+done on branch mm-bulk-rebase-v5r9.
+
+BASELINE
+ single_page alloc+put: Per elem: 199 cycles(tsc) 55.472 ns
+
+LIST variant: time_bulk_page_alloc_free_list: step=bulk size
+
+ Per elem: 206 cycles(tsc) 57.478 ns (step:1)
+ Per elem: 154 cycles(tsc) 42.861 ns (step:2)
+ Per elem: 145 cycles(tsc) 40.536 ns (step:3)
+ Per elem: 142 cycles(tsc) 39.477 ns (step:4)
+ Per elem: 142 cycles(tsc) 39.610 ns (step:8)
+ Per elem: 137 cycles(tsc) 38.155 ns (step:16)
+ Per elem: 135 cycles(tsc) 37.739 ns (step:32)
+ Per elem: 134 cycles(tsc) 37.282 ns (step:64)
+ Per elem: 133 cycles(tsc) 36.993 ns (step:128)
+
+ARRAY variant: time_bulk_page_alloc_free_array: step=bulk size
+
+ Per elem: 202 cycles(tsc) 56.383 ns (step:1)
+ Per elem: 144 cycles(tsc) 40.047 ns (step:2)
+ Per elem: 134 cycles(tsc) 37.339 ns (step:3)
+ Per elem: 128 cycles(tsc) 35.578 ns (step:4)
+ Per elem: 120 cycles(tsc) 33.592 ns (step:8)
+ Per elem: 116 cycles(tsc) 32.362 ns (step:16)
+ Per elem: 113 cycles(tsc) 31.476 ns (step:32)
+ Per elem: 110 cycles(tsc) 30.633 ns (step:64)
+ Per elem: 110 cycles(tsc) 30.596 ns (step:128)
+
+[2] https://github.com/xdp-project/xdp-project/blob/master/areas/mem/page_pool06_alloc_pages_bulk.org#micro-benchmark-page_bench04_bulk
+
+This new patchset does show some improvements in the micro-benchmark.
+
+
+> The PCP (per-cpu page allocator in page_alloc.c) share locking requirements
+> with vmstat which is inconvenient and causes some issues. Possibly because
+> of that, the PCP list and vmstat share the same per-cpu space meaning that
+> it's possible that vmstat updates dirty cache lines holding per-cpu lists
+> across CPUs unless padding is used. The series splits that structure and
+> separates the locking.
+> 
+> Second, PREEMPT_RT considers the following sequence to be unsafe
+> as documented in Documentation/locking/locktypes.rst
+> 
+>    local_irq_disable();
+>    spin_lock(&lock);
+> 
+> The pcp allocator has this sequence for rmqueue_pcplist (local_irq_save)
+> -> __rmqueue_pcplist -> rmqueue_bulk (spin_lock). This series explicitly  
+> separates the locking requirements for the PCP list (local_lock) and stat
+> updates (irqs disabled). Once that is done, the length of time IRQs are
+> disabled can be reduced and in some cases, IRQ disabling can be replaced
+> with preempt_disable.
+> 
+> After that, it was very obvious that zone_statistics in particular has way
+> too much overhead and leaves IRQs disabled for longer than necessary. It
+> has perfectly accurate counters requiring IRQs be disabled for parallel
+> RMW sequences when inaccurate ones like vm_events would do. The series
+> makes the NUMA statistics (NUMA_HIT and friends) inaccurate counters that
+> only require preempt be disabled.
+> 
+> Finally the bulk page allocator can then do all the stat updates in bulk
+> with IRQs enabled which should improve the efficiency of the bulk page
+> allocator. Technically, this could have been done without the local_lock
+> and vmstat conversion work and the order simply reflects the timing of
+> when different series were implemented.
+> 
+> No performance data is included because despite the overhead of the
+> stats, it's within the noise for most workloads but Jesper and Chuck may
+> observe a significant different with the same tests used for the bulk
+> page allocator. The series is more likely to be interesting to the RT
+> folk in terms of slowing getting the PREEMPT tree into mainline.
+
+I've try to run some longer packet benchmarks later.  A quick test
+showed performance was within same range, and slightly better.  The
+perf report and objdump, did reveal that code layout prefers the label
+"failed:" as the primary code path, which should only be used for
+single page allocs, which is kind of weird. (But as performance is the
+same or slightly better, I will not complain).
+
+
+>  drivers/base/node.c    |  18 +--
+>  include/linux/mmzone.h |  29 +++--
+>  include/linux/vmstat.h |  65 ++++++-----
+>  mm/mempolicy.c         |   2 +-
+>  mm/page_alloc.c        | 173 ++++++++++++++++------------
+>  mm/vmstat.c            | 254 +++++++++++++++--------------------------
+>  6 files changed, 254 insertions(+), 287 deletions(-)
+
+-- 
+Best regards,
+  Jesper Dangaard Brouer
+  MSc.CS, Principal Kernel Engineer at Red Hat
+  LinkedIn: http://www.linkedin.com/in/brouer
+
