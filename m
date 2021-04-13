@@ -2,203 +2,270 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 30C7FC433B4
-	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Apr 2021 21:47:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CC9AC433B4
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Apr 2021 06:27:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 103F86135C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Apr 2021 21:47:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6ED77613B1
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Apr 2021 06:27:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239197AbhDLVrV (ORCPT
+        id S230418AbhDMG1t (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 12 Apr 2021 17:47:21 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:41804 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238172AbhDLVrU (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 12 Apr 2021 17:47:20 -0400
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1618264020;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=O3ghyb2W8BLIZ05yGXW2dF3hyTFm2kpNfuX26M7+CeU=;
-        b=0JND/f36w2AlnIm7iCrU9za65squcC+wrt1Q3PvUa6fd/cgtTG6U+dk5ATJq2PwANl5VU0
-        nCRl1q4YyzBri2+HCWXlYHhS7Ow9z1OobM6ynvLMup6SS6i0Icg4I8/BFmE5uNBH/xY5eH
-        l5GyYhl7/i2Mswr/70UimbZgyBB5qnlcoEFW1MFS1KSk39tlHH2ILhSM5bsjC7uxzr2X0p
-        EMgE1XQprhYKLymJqLHI4JNLbBwvLqLDlV/LMDNjgg6YpcabDdnobIcgIxnq4M9Uj2BhpW
-        e4aGx6QWPmGXSr6ICJr1+B3KJSvQlGF4kW+oo6AoCImjMSR9jcN6ewKfszb0Zw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1618264020;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=O3ghyb2W8BLIZ05yGXW2dF3hyTFm2kpNfuX26M7+CeU=;
-        b=rcxiLqbVMct+y7fFhu/BCqI6vDfyqvCDbScwZAws9tJ0530I3iXq+ap64VCpHHWyCDnewO
-        M0+6US2qb8rZYBCQ==
-To:     Mel Gorman <mgorman@techsingularity.net>,
-        Peter Zijlstra <peterz@infradead.org>
-Cc:     Linux-MM <linux-mm@kvack.org>,
-        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Chuck Lever <chuck.lever@oracle.com>,
-        Jesper Dangaard Brouer <brouer@redhat.com>,
-        Matthew Wilcox <willy@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Michal Hocko <mhocko@kernel.org>,
-        Oscar Salvador <osalvador@suse.de>
-Subject: Re: [PATCH 02/11] mm/page_alloc: Convert per-cpu list protection to local_lock
-In-Reply-To: <20210412115612.GX3697@techsingularity.net>
-References: <20210407202423.16022-1-mgorman@techsingularity.net> <20210407202423.16022-3-mgorman@techsingularity.net> <YG7gV7yAEEjOcQZY@hirez.programming.kicks-ass.net> <20210408174244.GG3697@techsingularity.net> <YG/2scd9ADdrIyCM@hirez.programming.kicks-ass.net> <20210409075939.GJ3697@techsingularity.net> <YHAPOKPTgJcLuDJl@hirez.programming.kicks-ass.net> <20210409133256.GN3697@techsingularity.net> <YHCjK8OOhmxTbKu0@hirez.programming.kicks-ass.net> <20210412115612.GX3697@techsingularity.net>
-Date:   Mon, 12 Apr 2021 23:47:00 +0200
-Message-ID: <87lf9nyy3v.ffs@nanos.tec.linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain
+        Tue, 13 Apr 2021 02:27:49 -0400
+Received: from ptr.189.cn ([183.61.185.104]:11141 "EHLO 189.cn"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S230350AbhDMG1s (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 13 Apr 2021 02:27:48 -0400
+X-Greylist: delayed 439 seconds by postgrey-1.27 at vger.kernel.org; Tue, 13 Apr 2021 02:27:47 EDT
+HMM_SOURCE_IP: 10.64.8.31:47796.1151691861
+HMM_ATTACHE_NUM: 0000
+HMM_SOURCE_TYPE: SMTP
+Received: from clientip-117.136.54.20 (unknown [10.64.8.31])
+        by 189.cn (HERMES) with SMTP id ABEFC100790;
+        Tue, 13 Apr 2021 14:19:39 +0800 (CST)
+Received: from  ([172.27.8.53])
+        by gateway-151646-dep-84df4bfd9c-c55qc with ESMTP id c167afa262294536a60cdc0e11d95260 for linux-rt-users@vger.kernel.org;
+        Tue Apr 13 14:19:45 2021
+X-Transaction-ID: c167afa262294536a60cdc0e11d95260
+X-filter-score: 
+X-Real-From: chensong_2000@189.cn
+X-Receive-IP: 172.27.8.53
+X-MEDUSA-Status: 0
+Sender: chensong_2000@189.cn
+From:   Song Chen <chensong_2000@189.cn>
+To:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        rostedt@goodmis.org, mingo@redhat.com, peterz@infradead.org,
+        juri.lelli@redhat.com, vincent.guittot@linaro.org,
+        dietmar.eggemann@arm.com, bsegall@google.com, mgorman@suse.de,
+        bristot@redhat.com, tglx@linutronix.de, keescook@chromium.org,
+        gregkh@linuxfoundation.org, maz@kernel.org, joe@perches.com,
+        romain.perier@gmail.com, john.garry@huawei.com
+Cc:     Song Chen <chensong_2000@189.cn>
+Subject: [PATCH] kernel:irq:manage: request threaded irq with a specified priority
+Date:   Tue, 13 Apr 2021 14:19:34 +0800
+Message-Id: <1618294774-24370-1-git-send-email-chensong_2000@189.cn>
+X-Mailer: git-send-email 2.7.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Apr 12 2021 at 12:56, Mel Gorman wrote:
-> On Fri, Apr 09, 2021 at 08:55:39PM +0200, Peter Zijlstra wrote:
-> I'll update the changelog and comment accordingly. I'll decide later
-> whether to leave it or move the location of the lock at the end of the
-> series. If the patch is added, it'll either incur the double lookup (not
-> that expensive, might be optimised by the compiler) or come up with a
-> helper that takes the lock and returns the per-cpu structure. The double
-> lookup probably makes more sense initially because there are multiple
-> potential users of a helper that says "pin to CPU, lookup, lock and return
-> a per-cpu structure" for both IRQ-safe and IRQ-unsafe variants with the
-> associated expansion of the local_lock API. It might be better to introduce
-> such a helper with multiple users converted at the same time and there are
-> other local_lock users in preempt-rt that could do with upstreaming first.
+In general, irq handler thread will be assigned a default priority which
+is MAX_RT_PRIO/2, as a result, no one can preempt others.
 
-We had such helpers in RT a while ago but it turned into an helper
-explosion pretty fast. But that was one of the early versions of local
-locks which could not be embedded into a per CPU data structure due to
-raisins (my stupidity).
+Here is the case I found in a real project, an interrupt int_a is
+coming, wakes up its handler handler_a and handler_a wakes up a
+userspace RT process task_a.
 
-But with the more thought out approach of today we can have (+/- the
-obligatory naming bikeshedding):
+However, if another irq handler handler_b which has nothing to do
+with any RT tasks is running when int_a is coming, handler_a can't
+preempt handler_b, as a result, task_a can't be waken up immediately
+as expected until handler_b gives up cpu voluntarily. In this case,
+determinism breaks.
 
---- a/include/linux/local_lock.h
-+++ b/include/linux/local_lock.h
-@@ -51,4 +51,35 @@
- #define local_unlock_irqrestore(lock, flags)			\
- 	__local_unlock_irqrestore(lock, flags)
+Therefore, this patch introduce a new api to give drivers a chance to
+assign expected priorities to their irq handler thread.
+
+Signed-off-by: Song Chen <chensong_2000@189.cn>
+---
+ include/linux/interrupt.h  |  7 +++++
+ include/linux/sched.h      |  1 +
+ include/linux/sched/prio.h |  1 +
+ kernel/irq/manage.c        | 64 +++++++++++++++++++++++++++++++++++++++++++---
+ kernel/sched/core.c        | 11 ++++++++
+ 5 files changed, 80 insertions(+), 4 deletions(-)
+
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 967e257..5ab9169 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -121,6 +121,7 @@ struct irqaction {
+ 	unsigned long		thread_mask;
+ 	const char		*name;
+ 	struct proc_dir_entry	*dir;
++	int prio;
+ } ____cacheline_internodealigned_in_smp;
  
-+/**
-+ * local_lock_get_cpu_ptr - Acquire a per CPU local lock and return
-+ *			    a pointer to the per CPU data which
-+ *			    contains the local lock.
-+ * @pcp:	Per CPU data structure
-+ * @lock:	The local lock member of @pcp
-+ */
-+#define local_lock_get_cpu_ptr(pcp, lock)			\
-+	__local_lock_get_cpu_ptr(pcp, typeof(*(pcp)), lock)
+ extern irqreturn_t no_action(int cpl, void *dev_id);
+@@ -136,6 +137,12 @@ extern irqreturn_t no_action(int cpl, void *dev_id);
+ #define IRQ_NOTCONNECTED	(1U << 31)
+ 
+ extern int __must_check
++request_threaded_irq_with_prio(unsigned int irq, irq_handler_t handler,
++		     irq_handler_t thread_fn,
++		     unsigned long flags, const char *name, void *dev,
++			 int prio);
 +
-+/**
-+ * local_lock_irq_get_cpu_ptr - Acquire a per CPU local lock, disable
-+ *				interrupts and return a pointer to the
-+ *				per CPU data which contains the local lock.
-+ * @pcp:	Per CPU data structure
-+ * @lock:	The local lock member of @pcp
-+ */
-+#define local_lock_irq_get_cpu_ptr(pcp, lock)			\
-+	__local_lock_irq_get_cpu_ptr(pcp, typeof(*(pcp)), lock)
-+
-+/**
-+ * local_lock_irqsave_get_cpu_ptr - Acquire a per CPU local lock, save and
-+ *				    disable interrupts and return a pointer to
-+ *				    the CPU data which contains the local lock.
-+ * @pcp:	Per CPU data structure
-+ * @lock:	The local lock member of @pcp
-+ * @flags:	Storage for interrupt flags
-+ */
-+#define local_lock_irqsave_get_cpu_ptr(pcp, lock, flags)	\
-+	__local_lock_irqsave_get_cpu_ptr(pcp, typeof(*(pcp)), lock, flags)
-+
++extern int __must_check
+ request_threaded_irq(unsigned int irq, irq_handler_t handler,
+ 		     irq_handler_t thread_fn,
+ 		     unsigned long flags, const char *name, void *dev);
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index ef00bb2..50edae9 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1711,6 +1711,7 @@ extern int sched_setscheduler(struct task_struct *, int, const struct sched_para
+ extern int sched_setscheduler_nocheck(struct task_struct *, int, const struct sched_param *);
+ extern void sched_set_fifo(struct task_struct *p);
+ extern void sched_set_fifo_low(struct task_struct *p);
++extern void sched_set_fifo_with_prio(struct task_struct *p, int prio);
+ extern void sched_set_normal(struct task_struct *p, int nice);
+ extern int sched_setattr(struct task_struct *, const struct sched_attr *);
+ extern int sched_setattr_nocheck(struct task_struct *, const struct sched_attr *);
+diff --git a/include/linux/sched/prio.h b/include/linux/sched/prio.h
+index ab83d85..1e1186e 100644
+--- a/include/linux/sched/prio.h
++++ b/include/linux/sched/prio.h
+@@ -15,6 +15,7 @@
+ 
+ #define MAX_RT_PRIO		100
+ 
++#define DEFAULT_RT_PRIO	(MAX_RT_PRIO / 2)
+ #define MAX_PRIO		(MAX_RT_PRIO + NICE_WIDTH)
+ #define DEFAULT_PRIO		(MAX_RT_PRIO + NICE_WIDTH / 2)
+ 
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 21ea370..111b8ce 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -1394,7 +1394,7 @@ setup_irq_thread(struct irqaction *new, unsigned int irq, bool secondary)
+ 	if (IS_ERR(t))
+ 		return PTR_ERR(t);
+ 
+-	sched_set_fifo(t);
++	sched_set_fifo_with_prio(t, new->prio);
+ 
+ 	/*
+ 	 * We keep the reference to the task struct even if
+@@ -2032,7 +2032,7 @@ const void *free_nmi(unsigned int irq, void *dev_id)
+ }
+ 
+ /**
+- *	request_threaded_irq - allocate an interrupt line
++ *	request_threaded_irq_with_prio - allocate an interrupt line
+  *	@irq: Interrupt line to allocate
+  *	@handler: Function to be called when the IRQ occurs.
+  *		  Primary handler for threaded interrupts
+@@ -2043,6 +2043,7 @@ const void *free_nmi(unsigned int irq, void *dev_id)
+  *	@irqflags: Interrupt type flags
+  *	@devname: An ascii name for the claiming device
+  *	@dev_id: A cookie passed back to the handler function
++ *	@prio: priority of the irq handler thread
+  *
+  *	This call allocates interrupt resources and enables the
+  *	interrupt line and IRQ handling. From the point this
+@@ -2067,15 +2068,18 @@ const void *free_nmi(unsigned int irq, void *dev_id)
+  *	If your interrupt is shared you must pass a non NULL dev_id
+  *	as this is required when freeing the interrupt.
+  *
++ *	If you want to assign a priority for your irq handler thread
++ *	instead of default value, you need to supply @prio.
++ *
+  *	Flags:
+  *
+  *	IRQF_SHARED		Interrupt is shared
+  *	IRQF_TRIGGER_*		Specify active edge(s) or level
+  *
+  */
+-int request_threaded_irq(unsigned int irq, irq_handler_t handler,
++int request_threaded_irq_with_prio(unsigned int irq, irq_handler_t handler,
+ 			 irq_handler_t thread_fn, unsigned long irqflags,
+-			 const char *devname, void *dev_id)
++			 const char *devname, void *dev_id, int prio)
+ {
+ 	struct irqaction *action;
+ 	struct irq_desc *desc;
+@@ -2121,6 +2125,7 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
+ 	action->flags = irqflags;
+ 	action->name = devname;
+ 	action->dev_id = dev_id;
++	action->prio = prio;
+ 
+ 	retval = irq_chip_pm_get(&desc->irq_data);
+ 	if (retval < 0) {
+@@ -2157,6 +2162,57 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
  #endif
---- a/include/linux/local_lock_internal.h
-+++ b/include/linux/local_lock_internal.h
-@@ -91,3 +91,33 @@ static inline void local_lock_release(lo
- 		local_lock_release(this_cpu_ptr(lock));		\
- 		local_irq_restore(flags);			\
- 	} while (0)
+ 	return retval;
+ }
++EXPORT_SYMBOL(request_threaded_irq_with_prio);
 +
-+#define __local_lock_get_cpu_ptr(pcp, type, lock)		\
-+	({							\
-+		type *__pcp;					\
-+								\
-+		preempt_disable();				\
-+		__pcp = this_cpu_ptr(pcp);			\
-+		local_lock_acquire(&__pcp->lock);		\
-+		__pcp;						\
-+	})
++/**
++ *	request_threaded_irq - allocate an interrupt line
++ *	@irq: Interrupt line to allocate
++ *	@handler: Function to be called when the IRQ occurs.
++ *		  Primary handler for threaded interrupts
++ *		  If NULL and thread_fn != NULL the default
++ *		  primary handler is installed
++ *	@thread_fn: Function called from the irq handler thread
++ *		    If NULL, no irq thread is created
++ *	@irqflags: Interrupt type flags
++ *	@devname: An ascii name for the claiming device
++ *	@dev_id: A cookie passed back to the handler function
++ *
++ *	This call allocates interrupt resources and enables the
++ *	interrupt line and IRQ handling. From the point this
++ *	call is made your handler function may be invoked. Since
++ *	your handler function must clear any interrupt the board
++ *	raises, you must take care both to initialise your hardware
++ *	and to set up the interrupt handler in the right order.
++ *
++ *	If you want to set up a threaded irq handler for your device
++ *	then you need to supply @handler and @thread_fn. @handler is
++ *	still called in hard interrupt context and has to check
++ *	whether the interrupt originates from the device. If yes it
++ *	needs to disable the interrupt on the device and return
++ *	IRQ_WAKE_THREAD which will wake up the handler thread and run
++ *	@thread_fn. This split handler design is necessary to support
++ *	shared interrupts.
++ *
++ *	Dev_id must be globally unique. Normally the address of the
++ *	device data structure is used as the cookie. Since the handler
++ *	receives this value it makes sense to use it.
++ *
++ *	If your interrupt is shared you must pass a non NULL dev_id
++ *	as this is required when freeing the interrupt.
++ *
++ *	Flags:
++ *
++ *	IRQF_SHARED		Interrupt is shared
++ *	IRQF_TRIGGER_*		Specify active edge(s) or level
++ *
++ */
++int request_threaded_irq(unsigned int irq, irq_handler_t handler,
++			 irq_handler_t thread_fn, unsigned long irqflags,
++			 const char *devname, void *dev_id)
++{
++	return request_threaded_irq_with_prio(irq, handler, thread_fn,
++				irqflags, devname, dev_id, DEFAULT_RT_PRIO);
++}
+ EXPORT_SYMBOL(request_threaded_irq);
+ 
+ /**
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 9819121..7941595 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6439,6 +6439,17 @@ void sched_set_fifo_low(struct task_struct *p)
+ }
+ EXPORT_SYMBOL_GPL(sched_set_fifo_low);
+ 
++/*
++ * For when you want a specific priority.
++ */
++void sched_set_fifo_with_prio(struct task_struct *p, int prio)
++{
++	struct sched_param sp = { .sched_priority =
++		(prio > 0 && prio < MAX_RT_PRIO) ? prio : DEFAULT_RT_PRIO };
++	WARN_ON_ONCE(sched_setscheduler_nocheck(p, SCHED_FIFO, &sp) != 0);
++}
++EXPORT_SYMBOL_GPL(sched_set_fifo_with_prio);
 +
-+#define __local_lock_irq_get_cpu_ptr(pcp, type, lock)		\
-+	({							\
-+		type *__pcp;					\
-+								\
-+		local_irq_disable();				\
-+		__pcp = this_cpu_ptr(pcp);			\
-+		local_lock_acquire(&__pcp->lock);		\
-+		__pcp;						\
-+	})
-+
-+#define __local_lock_irqsave_get_cpu_ptr(pcp, type, lock, flags)\
-+	({							\
-+		type *__pcp;					\
-+								\
-+		local_irq_save(flags);				\
-+		__pcp = this_cpu_ptr(pcp);			\
-+		local_lock_acquire(&__pcp->lock);		\
-+		__pcp;						\
-+	})
+ void sched_set_normal(struct task_struct *p, int nice)
+ {
+ 	struct sched_attr attr = {
+-- 
+2.7.4
 
-
-and RT will then change that to:
-
---- a/include/linux/local_lock_internal.h
-+++ b/include/linux/local_lock_internal.h
-@@ -96,7 +96,7 @@ static inline void local_lock_release(lo
- 	({							\
- 		type *__pcp;					\
- 								\
--		preempt_disable();				\
-+		ll_preempt_disable();				\
- 		__pcp = this_cpu_ptr(pcp);			\
- 		local_lock_acquire(&__pcp->lock);		\
- 		__pcp;						\
-@@ -106,7 +106,7 @@ static inline void local_lock_release(lo
- 	({							\
- 		type *__pcp;					\
- 								\
--		local_irq_disable();				\
-+		ll_local_irq_disable();				\
- 		__pcp = this_cpu_ptr(pcp);			\
- 		local_lock_acquire(&__pcp->lock);		\
- 		__pcp;						\
-@@ -116,7 +116,7 @@ static inline void local_lock_release(lo
- 	({							\
- 		type *__pcp;					\
- 								\
--		local_irq_save(flags);				\
-+		ll_local_irq_save(flags);			\
- 		__pcp = this_cpu_ptr(pcp);			\
- 		local_lock_acquire(&__pcp->lock);		\
- 		__pcp;						\
-
-
-where ll_xxx is defined as xxx for non-RT and on RT all of them
-get mapped to migrate_disable().
-
-Thoughts?
-
-Thanks,
-
-        tglx
