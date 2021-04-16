@@ -2,124 +2,106 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=BAYES_00,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36702C433B4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Apr 2021 15:30:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CA036C433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Apr 2021 04:58:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 099D56101C
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Apr 2021 15:30:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3D76D6113B
+	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Apr 2021 04:58:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233789AbhDOPaZ (ORCPT
+        id S237288AbhDPE6b (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 15 Apr 2021 11:30:25 -0400
-Received: from outbound-smtp11.blacknight.com ([46.22.139.106]:53671 "EHLO
-        outbound-smtp11.blacknight.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233606AbhDOPaX (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 15 Apr 2021 11:30:23 -0400
-Received: from mail.blacknight.com (pemlinmail03.blacknight.ie [81.17.254.16])
-        by outbound-smtp11.blacknight.com (Postfix) with ESMTPS id CA5EE1C429C
-        for <linux-rt-users@vger.kernel.org>; Thu, 15 Apr 2021 16:29:59 +0100 (IST)
-Received: (qmail 1618 invoked from network); 15 Apr 2021 15:29:59 -0000
-Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.22.4])
-  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 15 Apr 2021 15:29:59 -0000
-Date:   Thu, 15 Apr 2021 16:29:58 +0100
-From:   Mel Gorman <mgorman@techsingularity.net>
-To:     Vlastimil Babka <vbabka@suse.cz>
-Cc:     Linux-MM <linux-mm@kvack.org>,
-        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Chuck Lever <chuck.lever@oracle.com>,
-        Jesper Dangaard Brouer <brouer@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 11/11] mm/page_alloc: Embed per_cpu_pages locking within
- the per-cpu structure
-Message-ID: <20210415152958.GL3697@techsingularity.net>
-References: <20210414133931.4555-1-mgorman@techsingularity.net>
- <20210414133931.4555-12-mgorman@techsingularity.net>
- <de5d1dbb-fb56-9660-fadb-6318047305d4@suse.cz>
+        Fri, 16 Apr 2021 00:58:31 -0400
+Received: from ptr.189.cn ([183.61.185.103]:11423 "EHLO 189.cn"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S229555AbhDPE6a (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 16 Apr 2021 00:58:30 -0400
+HMM_SOURCE_IP: 10.64.8.31:18705.380823691
+HMM_ATTACHE_NUM: 0000
+HMM_SOURCE_TYPE: SMTP
+Received: from clientip-14.215.91.1 (unknown [10.64.8.31])
+        by 189.cn (HERMES) with SMTP id 9DB16101C25;
+        Fri, 16 Apr 2021 12:57:48 +0800 (CST)
+Received: from  ([172.27.8.53])
+        by gateway-151646-dep-84df4bfd9c-c55qc with ESMTP id 778ad9260a3d4fc2ac2e7d0a48db4b6f for john.garry@huawei.com;
+        Fri Apr 16 12:57:49 2021
+X-Transaction-ID: 778ad9260a3d4fc2ac2e7d0a48db4b6f
+X-filter-score: 
+X-Real-From: chensong_2000@189.cn
+X-Receive-IP: 172.27.8.53
+X-MEDUSA-Status: 0
+Sender: chensong_2000@189.cn
+Subject: Re: [PATCH] kernel:irq:manage: request threaded irq with a specified
+ priority
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        rostedt@goodmis.org, mingo@redhat.com, peterz@infradead.org,
+        juri.lelli@redhat.com, vincent.guittot@linaro.org,
+        dietmar.eggemann@arm.com, bsegall@google.com, mgorman@suse.de,
+        bristot@redhat.com, keescook@chromium.org,
+        gregkh@linuxfoundation.org, maz@kernel.org, joe@perches.com,
+        romain.perier@gmail.com, john.garry@huawei.com
+References: <1618294774-24370-1-git-send-email-chensong_2000@189.cn>
+ <875z0qzigk.ffs@nanos.tec.linutronix.de>
+From:   chensong <chensong_2000@189.cn>
+Message-ID: <4a355b66-3803-586b-56c7-ce715b5e59cc@189.cn>
+Date:   Fri, 16 Apr 2021 12:57:47 +0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <de5d1dbb-fb56-9660-fadb-6318047305d4@suse.cz>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+In-Reply-To: <875z0qzigk.ffs@nanos.tec.linutronix.de>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Apr 15, 2021 at 04:53:46PM +0200, Vlastimil Babka wrote:
-> On 4/14/21 3:39 PM, Mel Gorman wrote:
-> > struct per_cpu_pages is protected by the pagesets lock but it can be
-> > embedded within struct per_cpu_pages at a minor cost. This is possible
-> > because per-cpu lookups are based on offsets. Paraphrasing an explanation
-> > from Peter Ziljstra
-> > 
-> >   The whole thing relies on:
-> > 
-> >     &per_cpu_ptr(msblk->stream, cpu)->lock == per_cpu_ptr(&msblk->stream->lock, cpu)
-> > 
-> >   Which is true because the lhs:
-> > 
-> >     (local_lock_t *)((zone->per_cpu_pages + per_cpu_offset(cpu)) + offsetof(struct per_cpu_pages, lock))
-> > 
-> >   and the rhs:
-> > 
-> >     (local_lock_t *)((zone->per_cpu_pages + offsetof(struct per_cpu_pages, lock)) + per_cpu_offset(cpu))
-> > 
-> >   are identical, because addition is associative.
-> > 
-> > More details are included in mmzone.h. This embedding is not completely
-> > free for three reasons.
-> > 
-> > 1. As local_lock does not return a per-cpu structure, the PCP has to
-> >    be looked up twice -- first to acquire the lock and again to get the
-> >    PCP pointer.
-> > 
-> > 2. For PREEMPT_RT and CONFIG_DEBUG_LOCK_ALLOC, local_lock is potentially
-> >    a spinlock or has lock-specific tracking. In both cases, it becomes
-> >    necessary to release/acquire different locks when freeing a list of
-> >    pages in free_unref_page_list.
-> 
-> Looks like this pattern could benefit from a local_lock API helper that would do
-> the right thing? It probably couldn't optimize much the CONFIG_PREEMPT_RT case
-> which would need to be unlock/lock in any case, but CONFIG_DEBUG_LOCK_ALLOC
-> could perhaps just keep the IRQ's disabled and just note the change of what's
-> acquired?
-> 
 
-A helper could potentially be used but right now, there is only one
-call-site that needs this type of care so it may be overkill. A helper
-was proposed that can lookup and lock a per-cpu structure which is
-generally useful but does not suit the case where different locks need
-to be acquired.
 
-> > 3. For most kernel configurations, local_lock_t is empty and no storage is
-> >    required. By embedding the lock, the memory consumption on PREEMPT_RT
-> >    and CONFIG_DEBUG_LOCK_ALLOC is higher.
+On 2021/4/13 下午4:39, Thomas Gleixner wrote:
+> On Tue, Apr 13 2021 at 14:19, Song Chen wrote:
+>> In general, irq handler thread will be assigned a default priority which
+>> is MAX_RT_PRIO/2, as a result, no one can preempt others.
+>>
+>> Here is the case I found in a real project, an interrupt int_a is
+>> coming, wakes up its handler handler_a and handler_a wakes up a
+>> userspace RT process task_a.
+>>
+>> However, if another irq handler handler_b which has nothing to do
+>> with any RT tasks is running when int_a is coming, handler_a can't
+>> preempt handler_b, as a result, task_a can't be waken up immediately
+>> as expected until handler_b gives up cpu voluntarily. In this case,
+>> determinism breaks.
 > 
-> But I wonder, is there really a benefit to this increased complexity? Before the
-> patch we had "pagesets" - a local_lock that protects all zones' pcplists. Now
-> each zone's pcplists have own local_lock. On !PREEMPT_RT we will never take the
-> locks of multiple zones from the same CPU in parallel, because we use
-> local_lock_irqsave(). Can that parallelism happen on PREEMPT_RT, because that
-> could perhaps justify the change?
+> It breaks because the system designer failed to assign proper priorities
+> to the irq threads int_a, int_b and to the user space process task_a.
+
+yes, it's designers' responsibility to assign proper priorities, but 
+kernel is also obliged to provide interfaces for those designers.
+
+chrt can help designers in this case, however, the truth is lot of 
+customers are not familiar with it. what's more, chrt can also apply to 
+userspace rt task, but userspace also has sched_setscheduler to assgin 
+proper priority inside code like cyclictest, why can't driver writers 
+have another choice?
+
+Further, what if irq handlear thread has to run on the expected priority 
+at the very beginning? This patch helps.
+
+BR
+
+Song
+
 > 
-
-I don't think PREEMPT_RT gets additional parallelism because it's still
-a per-cpu structure that is being protected. The difference is whether
-we are protecting the CPU-N index for all per_cpu_pages or just one.
-The patch exists because it was asked why the lock was not embedded within
-the structure it's protecting. I initially thought that was unsafe and
-I was wrong as explained in the changelog. But now that I find it *can*
-be done but it's a bit ugly so I put it at the end of the series so it
-can be dropped if necessary.
-
--- 
-Mel Gorman
-SUSE Labs
+> That's not solvable at the kernel level.
+> 
+> Thanks,
+> 
+>          tglx
+> 
+> 
