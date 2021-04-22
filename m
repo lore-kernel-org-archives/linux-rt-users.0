@@ -2,105 +2,159 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7ED54C433B4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Apr 2021 04:04:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E531C433B4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Apr 2021 11:14:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4F64A6142B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Apr 2021 04:04:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 17D8B6144A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Apr 2021 11:14:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229678AbhDVEEs convert rfc822-to-8bit (ORCPT
+        id S236019AbhDVLP3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 22 Apr 2021 00:04:48 -0400
-Received: from esa3.mentor.iphmx.com ([68.232.137.180]:62298 "EHLO
-        esa3.mentor.iphmx.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229441AbhDVEEr (ORCPT
+        Thu, 22 Apr 2021 07:15:29 -0400
+Received: from outbound-smtp11.blacknight.com ([46.22.139.106]:53073 "EHLO
+        outbound-smtp11.blacknight.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S235634AbhDVLP2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Apr 2021 00:04:47 -0400
-IronPort-SDR: qyCgpIKDDsvv9piarnWHWxQqpTgPyjNlk5tmUcwxVN5DAWfrOdgygjLgkDUXTZ3x2toH1mTo1W
- nrilSuAEdAcmjFwGzu2DrPT7ue05D7SY39nNQ6fQzmZx4n6Sr71R+14Zkp4dYhC2WT5uDONcdc
- Vd2dpZnA4Lzjg4VsYgdN8dhgoiAjAvCD8WrLs76okGCpFTG0HGrth/7Qndfjkcl+9owMEeCnaJ
- tDATi2UXA1acO3caQK5QLCLys8doEMV2hp4dZAq5iJcdKIU9/VxiMklRLQQvbgd7sye1LNi4Jt
- FjQ=
-X-IronPort-AV: E=Sophos;i="5.82,241,1613462400"; 
-   d="scan'208";a="60405817"
-Received: from orw-gwy-02-in.mentorg.com ([192.94.38.167])
-  by esa3.mentor.iphmx.com with ESMTP; 21 Apr 2021 20:04:10 -0800
-IronPort-SDR: DTzJVoCAzI9ab4nnXsW0ahA9P6IHnhL1kKYX95vmW/blweGYPodC4FrajPDT75KFJxd0yBviVh
- tKOTp8nYp+AoIMyO7loVydhghvDOQZVPnfzBC8TG/jRVgvRE6f/8P64mKXtNM5UZt9nKPWHgO0
- SVyG0PBcozPrkxXy0K4Vep1aqCsHhcXKdrg8NuEjKY8ZOHo0Jd1xJYfMWfWtLPOcbxNgry41rH
- 5bQo2A6NaE/T6LpyhDzO5GZ9sz2rNsM3F5dLVBmwc1OBMgI6JD8ZjNiwtL5atVIUWD/VY2WjsT
- YUY=
-From:   "Deety, Venkata Sai Ganesh" <VenkataSaiGanesh_Deety@mentor.com>
-To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-CC:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "Krishnakar, Srikanth" <Srikanth_Krishnakar@mentor.com>
-Subject: Blank screen after multiple reboots
-Thread-Topic: Blank screen after multiple reboots
-Thread-Index: Adc3LINk4txB0QumT72XX4ytQCXl6A==
-Date:   Thu, 22 Apr 2021 04:04:07 +0000
-Message-ID: <ddbbf9ee49e34e0883370695177e6bc0@svr-orw-mbx-02.mgc.mentorg.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-exchange-transport-fromentityheader: Hosted
-x-originating-ip: [147.34.91.1]
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+        Thu, 22 Apr 2021 07:15:28 -0400
+Received: from mail.blacknight.com (pemlinmail03.blacknight.ie [81.17.254.16])
+        by outbound-smtp11.blacknight.com (Postfix) with ESMTPS id DC9681C3A43
+        for <linux-rt-users@vger.kernel.org>; Thu, 22 Apr 2021 12:14:51 +0100 (IST)
+Received: (qmail 9083 invoked from network); 22 Apr 2021 11:14:51 -0000
+Received: from unknown (HELO stampy.112glenside.lan) (mgorman@techsingularity.net@[84.203.17.248])
+  by 81.17.254.9 with ESMTPA; 22 Apr 2021 11:14:51 -0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     Chuck Lever <chuck.lever@oracle.com>,
+        Jesper Dangaard Brouer <brouer@redhat.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Mel Gorman <mgorman@techsingularity.net>
+Subject: [PATCH 0/9 v5] Use local_lock for pcp protection and reduce stat overhead
+Date:   Thu, 22 Apr 2021 12:14:32 +0100
+Message-Id: <20210422111441.24318-1-mgorman@techsingularity.net>
+X-Mailer: git-send-email 2.26.2
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+Changelog since v4
+o Dropped local_lock embed patch due to complexity
+o Fix !NUMA build
+o Avoid adding pages with mt >= MIGRATE_PCPTYPES to non-existant per-cpu list
 
-We are facing below issue:
-Upon multiple reboots(~300) each with a duration of 15 seconds, display gets blank(stuck) and below crash is observed during boot with 4.19.165-cip41-rt18 kernel.
-With non-RT kernel (4.19.165-cip41) no such blank screen/crash is observed when tested for more than 5000+ reboots
+Changelog since v3
+o Preserve NUMA_* counters after CPU hotplug
+o Drop "mm/page_alloc: Remove duplicate checks if migratetype should be isolated"
+o Add micro-optimisation tracking PFN during free_unref_page_list
+o Add Acks
 
-Pre-condition: GNOME(3.30.2) is installed.
-Hardware: Intel(R) Core(TM) i3-6102E
-Graphics: Intel(R) HD Graphics 530 (Skylake GT2)
-Kernel: 4.19.165-cip41-rt18
+Changelog since v2
+o Fix zonestats initialisation
+o Merged memory hotplug fix separately
+o Embed local_lock within per_cpu_pages
 
-[    6.917341] ------------[ cut here ]------------
-[    6.917359] WARNING: CPU: 2 PID: 486 at kernel/softirq.c:1025 tasklet_action_common.isra.17.cold.25+0xc/0x4d
-[    6.917361] Modules linked in: acpi_cpufreq(E+) mei_me(E+) mei(E) intel_pch_thermal(E+) i915(E+) drm_kms_helper(E) drm(E) fb_sys_fops(E) video(E) syscopyarea(E) pcc_cpufreq(E) sysfillrect(E) xt_recent(E) sysimgblt(E) acpi_pad(E) button(E) ip6t_REJECT(E) nf_reject_ipv6(E) xt_hl(E) ip6_tables(E) ip6t_rt(E) ipt_REJECT(E) nf_reject_ipv4(E) xt_comment(E) nft_limit(E) xt_limit(E) xt_addrtype(E) xt_tcpudp(E) xt_conntrack(E) nft_compat(E) nft_counter(E) nf_conntrack_netbios_ns(E) nf_conntrack_broadcast(E) nf_nat_ftp(E) nf_nat(E) nf_conntrack_ftp(E) nf_conntrack(E) nf_defrag_ipv6(E) nf_defrag_ipv4(E) nf_tables(E) nfnetlink(E) nvram(E) ipc4x7e_wdt(OE) ip_tables(E) x_tables(E) ext4(E) crc16(E) mbcache(E) jbd2(E) fscrypto(E) raid10(E) raid456(E) async_raid6_recov(E) async_memcpy(E) async_pq(E) async_xor(E) async_tx(E)
-[    6.917409]  libcrc32c(E) crc32c_generic(E) xor(E) hid_generic(E) usbhid(E) hid(E) raid6_pq(E) raid1(E) raid0(E) multipath(E) linear(E) md_mod(E) sd_mod(E) ahci(E) libahci(E) libata(E) xhci_pci(E) igb(E) xhci_hcd(E) i2c_algo_bit(E) crc32c_intel(E) dca(E) e1000e(E) scsi_mod(E) i2c_i801(E) usbcore(E) psmouse(E)
-[    6.917445] CPU: 2 PID: 486 Comm: irq/138-i915 Tainted: G           OE     4.19.165-cip41-rt18+ind1 #1
-[    6.917447] Hardware name: SIEMENS AG SIMATIC IPC427E/A5E41334516, BIOS V21.01.12 10/23/2019
-[    6.917453] RIP: 0010:tasklet_action_common.isra.17.cold.25+0xc/0x4d
-[    6.917456] Code: c1 83 af e8 9a 3d 06 00 0f 0b e9 50 f2 ff ff 48 c7 c7 50 c1 83 af e8 87 3d 06 00 0f 0b c3 48 c7 c7 50 c1 83 af e8 78 3d 06 00 <0f> 0b e9 03 f7 ff ff 48 8b 75 08 48 c7 c7 5f 08 85 af e8 61 3d 06
-[    6.917458] RSP: 0018:ffffb96c81cdfe18 EFLAGS: 00010246
-[    6.917461] RAX: 0000000000000024 RBX: ffff9923f3a32380 RCX: 0000000000000000
-[    6.917463] RDX: 0000000000000000 RSI: ffffffffaf883597 RDI: 00000000ffffffff
-[    6.917464] RBP: ffff9923f3a32378 R08: 0000000000000034 R09: 0000000000000003
-[    6.917465] R10: 0000000000000000 R11: 0000000000000001 R12: 00000000000f4240
-[    6.917467] R13: 0000000000000000 R14: ffff9923f3a34378 R15: 0000000000000000
-[    6.917469] FS:  0000000000000000(0000) GS:ffff9923f5b00000(0000) knlGS:0000000000000000
-[    6.917471] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[    6.917473] CR2: 000055a22e33c290 CR3: 00000001ec00e002 CR4: 00000000003606e0
-[    6.917475] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[    6.917476] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-[    6.917477] Call Trace:
-[    6.917488]  do_current_softirqs+0x223/0x3f0
-[    6.917496]  ? irq_finalize_oneshot.part.47+0xf0/0xf0
-[    6.917501]  __local_bh_enable+0x55/0x60
-[    6.917506]  irq_forced_thread_fn+0x5e/0x80
-[    6.917511]  irq_thread+0xdd/0x180
-[    6.917516]  ? wake_threads_waitq+0x30/0x30
-[    6.917522]  ? irq_thread_check_affinity+0xc0/0xc0
-[    6.917527]  kthread+0x159/0x170
-[    6.917531]  ? kthread_create_worker_on_cpu+0x70/0x70
-[    6.917535]  ret_from_fork+0x35/0x40
-[    6.917542] ---[ end trace 0000000000000002 ]---
+This series requires patches in Andrew's tree so for convenience, it's
+also available at
 
-Can you please guide us regarding what might be causing this issue and how to fix it. Thank You.
+git://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git mm-percpu-local_lock-v5r2
 
-Best Regards,
-VenkataSaiGanesh D
+The PCP (per-cpu page allocator in page_alloc.c) shares locking
+requirements with vmstat and the zone lock which is inconvenient and
+causes some issues. For example, the PCP list and vmstat share the
+same per-cpu space meaning that it's possible that vmstat updates dirty
+cache lines holding per-cpu lists across CPUs unless padding is used.
+Second, PREEMPT_RT does not want to disable IRQs for too long in the
+page allocator.
+
+This series splits the locking requirements and uses locks types more
+suitable for PREEMPT_RT, reduces the time when special locking is required
+for stats and reduces the time when IRQs need to be disabled on !PREEMPT_RT
+kernels.
+
+Why local_lock? PREEMPT_RT considers the following sequence to be unsafe
+as documented in Documentation/locking/locktypes.rst
+
+   local_irq_disable();
+   spin_lock(&lock);
+
+The pcp allocator has this sequence for rmqueue_pcplist (local_irq_save)
+-> __rmqueue_pcplist -> rmqueue_bulk (spin_lock). While it's possible to
+separate this out, it generally means there are points where we enable
+IRQs and reenable them again immediately. To prevent a migration and the
+per-cpu pointer going stale, migrate_disable is also needed. That is a
+custom lock that is similar, but worse, than local_lock. Furthermore,
+on PREEMPT_RT, it's undesirable to leave IRQs disabled for too long.
+By converting to local_lock which disables migration on PREEMPT_RT, the
+locking requirements can be separated and start moving the protections
+for PCP, stats and the zone lock to PREEMPT_RT-safe equivalent locking. As
+a bonus, local_lock also means that PROVE_LOCKING does something useful.
+
+After that, it's obvious that zone_statistics incurs too much overhead
+and leaves IRQs disabled for longer than necessary on !PREEMPT_RT
+kernels. zone_statistics uses perfectly accurate counters requiring IRQs
+be disabled for parallel RMW sequences when inaccurate ones like vm_events
+would do. The series makes the NUMA statistics (NUMA_HIT and friends)
+inaccurate counters that then require no special protection on !PREEMPT_RT.
+
+The bulk page allocator can then do stat updates in bulk with IRQs enabled
+which should improve the efficiency.  Technically, this could have been
+done without the local_lock and vmstat conversion work and the order
+simply reflects the timing of when different series were implemented.
+
+Finally, there are places where we conflate IRQs being disabled for the
+PCP with the IRQ-safe zone spinlock. The remainder of the series reduces
+the scope of what is protected by disabled IRQs on !PREEMPT_RT kernels.
+By the end of the series, page_alloc.c does not call local_irq_save so
+the locking scope is a bit clearer. The one exception is that modifying
+NR_FREE_PAGES still happens in places where it's known the IRQs are
+disabled as it's harmless for PREEMPT_RT and would be expensive to split
+the locking there.
+
+No performance data is included because despite the overhead of the stats,
+it's within the noise for most workloads on !PREEMPT_RT. However, Jesper
+Dangaard Brouer ran a page allocation microbenchmark on a E5-1650 v4 @
+3.60GHz CPU on the first version of this series. Focusing on the array
+variant of the bulk page allocator reveals the following.
+
+(CPU: Intel(R) Xeon(R) CPU E5-1650 v4 @ 3.60GHz)
+ARRAY variant: time_bulk_page_alloc_free_array: step=bulk size
+
+         Baseline        Patched
+ 1       56.383          54.225 (+3.83%)
+ 2       40.047          35.492 (+11.38%)
+ 3       37.339          32.643 (+12.58%)
+ 4       35.578          30.992 (+12.89%)
+ 8       33.592          29.606 (+11.87%)
+ 16      32.362          28.532 (+11.85%)
+ 32      31.476          27.728 (+11.91%)
+ 64      30.633          27.252 (+11.04%)
+ 128     30.596          27.090 (+11.46%)
+
+While this is a positive outcome, the series is more likely to be
+interesting to the RT people in terms of getting parts of the PREEMPT_RT
+tree into mainline.
+
+ drivers/base/node.c    |  18 +--
+ include/linux/mmzone.h |  31 +++--
+ include/linux/vmstat.h |  65 ++++++-----
+ mm/mempolicy.c         |   2 +-
+ mm/page_alloc.c        | 255 ++++++++++++++++++++++++-----------------
+ mm/vmstat.c            | 255 ++++++++++++++++-------------------------
+ 6 files changed, 323 insertions(+), 303 deletions(-)
+
+-- 
+2.26.2
 
