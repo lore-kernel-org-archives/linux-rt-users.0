@@ -2,293 +2,94 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-11.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E33DC433B4
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 16:16:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C77A3C433B4
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 23:28:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B2DB461418
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 16:16:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A358261448
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 23:28:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240344AbhD1QQp (ORCPT
+        id S230294AbhD1X3Q (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 28 Apr 2021 12:16:45 -0400
-Received: from mail.kernel.org ([198.145.29.99]:60524 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S239890AbhD1QQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 28 Apr 2021 12:16:45 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 24E8A61420;
-        Wed, 28 Apr 2021 16:16:00 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.19.189-rt78
-Date:   Wed, 28 Apr 2021 16:14:53 -0000
-Message-ID: <161962649367.296555.2478963021739615566@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Wed, 28 Apr 2021 19:29:16 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:40319 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229762AbhD1X3Q (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 28 Apr 2021 19:29:16 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1619652510;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=MuW0xYh/Nimc7uonYeav+hC40VrHc8klYXZp4hIjqOY=;
+        b=XqDbt8BjlL8BT8bDQabvq9+HrnIXmYANePX1ye15jYKMckWq237Rd4kK09oHa0Ei/uu2N2
+        I8VsjXjUklzlLAXotvpeUf2BiqTZKogKeEOyQ2ZroquNiF5btC8FKrkJtPHmUYrZVs4PM5
+        Z5M7iclunHH4gMu/lNAj8VEZ1ZsKN3k=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-440-G1Uom4KsO9CYVasR7DM-oQ-1; Wed, 28 Apr 2021 19:28:26 -0400
+X-MC-Unique: G1Uom4KsO9CYVasR7DM-oQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CBA93CC621;
+        Wed, 28 Apr 2021 23:28:24 +0000 (UTC)
+Received: from p1g2.redhat.com (ovpn-114-20.rdu2.redhat.com [10.10.114.20])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id B2A2361094;
+        Wed, 28 Apr 2021 23:28:22 +0000 (UTC)
+From:   Scott Wood <swood@redhat.com>
+To:     Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>
+Cc:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
+        Mel Gorman <mgorman@suse.de>,
+        Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH v2 0/3] newidle_balance() PREEMPT_RT latency mitigations
+Date:   Wed, 28 Apr 2021 18:28:18 -0500
+Message-Id: <20210428232821.2506201-1-swood@redhat.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+These patches mitigate latency caused by newidle_balance() on large
+systems when PREEMPT_RT is enabled, by enabling interrupts when the lock
+is dropped, and exiting early at various points if an RT task is runnable
+on the current CPU.
 
-I'm pleased to announce the 4.19.189-rt78 stable release.
+On a system with 128 CPUs, these patches dropped latency (as measured by
+a 12 hour rteval run) from 1045us to 317us (when applied to
+5.12.0-rc3-rt3).
 
-You can get this release via the git tree at:
+I tried a couple scheduler benchmarks (perf bench sched pipe, and
+sysbench threads) to try to determine whether the overhead is measurable
+on non-RT, but the results varied widely enough (with or without the patches)
+that I couldn't draw any conclusions from them.  So at least for now, I
+limited the balance callback change to when PREEMPT_RT is enabled.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Link to v1 RFC patches:
+https://lore.kernel.org/lkml/20200428050242.17717-1-swood@redhat.com/
 
-  branch: v4.19-rt
-  Head SHA1: 6ea1aced383f7781d0a1962777bd569cde0704f5
+Scott Wood (3):
+  sched/fair: Call newidle_balance() from balance_callback on PREEMPT_RT
+  sched/fair: Enable interrupts when dropping lock in newidle_balance()
+  sched/fair: break out of newidle balancing if an RT task appears
 
-Or to build 4.19.189-rt78 directly, the following patches should be applied:
+ kernel/sched/fair.c  | 66 ++++++++++++++++++++++++++++++++++++++------
+ kernel/sched/sched.h |  6 ++++
+ 2 files changed, 64 insertions(+), 8 deletions(-)
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+-- 
+2.27.0
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.189.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.189-rt78.patch.xz
-
-
-You can also build from 4.19.188-rt77 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.188-rt77-rt78.patch.xz
-
-Enjoy!
-Clark
-
-Changes from v4.19.188-rt77:
----
-
-Alexander Aring (7):
-      net: ieee802154: stop dump llsec keys for monitors
-      net: ieee802154: stop dump llsec devs for monitors
-      net: ieee802154: forbid monitor for add llsec dev
-      net: ieee802154: stop dump llsec devkeys for monitors
-      net: ieee802154: forbid monitor for add llsec devkey
-      net: ieee802154: stop dump llsec seclevels for monitors
-      net: ieee802154: forbid monitor for add llsec seclevel
-
-Alexander Shiyan (1):
-      ASoC: fsl_esai: Fix TDM slot setup for I2S mode
-
-Ali Saidi (1):
-      locking/qrwlock: Fix ordering in queued_write_lock_slowpath()
-
-Andy Shevchenko (1):
-      dmaengine: dw: Make it dependent to HAS_IOMEM
-
-Arnd Bergmann (2):
-      ARM: keystone: fix integer overflow warning
-      Input: i8042 - fix Pegatron C15B ID entry
-
-Caleb Connolly (1):
-      Input: s6sy761 - fix coordinate read bit shift
-
-Christophe JAILLET (1):
-      net: davicom: Fix regulator not turned off on failed probe
-
-Clark Williams (2):
-      Merge tag 'v4.19.189' into v4.19-rt
-      Linux 4.19.189-rt78
-
-Eric Dumazet (1):
-      netfilter: nft_limit: avoid possible divide error in nft_limit_init
-
-Fabian Vogt (1):
-      Input: nspire-keypad - enable interrupts only when opened
-
-Fredrik Strupe (1):
-      ARM: 9071/1: uprobes: Don't hook on thumb instructions
-
-Greg Kroah-Hartman (1):
-      Linux 4.19.189
-
-Guenter Roeck (1):
-      pcnet32: Use pci_resource_len to validate PCI resource
-
-Hristo Venev (2):
-      net: sit: Unregister catch-all devices
-      net: ip6_tunnel: Unregister catch-all devices
-
-Jaegeuk Kim (1):
-      dm verity fec: fix misaligned RS roots IO
-
-Jason Xing (1):
-      i40e: fix the panic when running bpf in xdpdrv mode
-
-Jia-Ju Bai (1):
-      HID: alps: fix error return code in alps_input_configured()
-
-Jiapeng Zhong (1):
-      HID: wacom: Assign boolean values to a bool variable
-
-Johan Hovold (1):
-      net: hso: fix NULL-deref on disconnect regression
-
-John Paul Adrian Glaubitz (1):
-      ia64: tools: remove duplicate definition of ia64_mf() on ia64
-
-Jolly Shah (1):
-      scsi: libsas: Reset num_scatter if libata marks qc as NODATA
-
-Kan Liang (1):
-      perf/x86/intel/uncore: Remove uncore extra PCI dev HSWEP_PCI_PCU_3
-
-Lijun Pan (3):
-      ibmvnic: avoid calling napi_disable() twice
-      ibmvnic: remove duplicate napi_schedule call in do_reset function
-      ibmvnic: remove duplicate napi_schedule call in open function
-
-Linus Torvalds (2):
-      readdir: make sure to verify directory entry for legacy interfaces too
-      gup: document and work around "COW can break either way" issue
-
-Martin Wilck (1):
-      scsi: scsi_transport_srp: Don't block target in SRP_PORT_LOST state
-
-Matti Vaittinen (1):
-      gpio: sysfs: Obey valid_mask
-
-Michael Brown (1):
-      xen-netback: Check for hotplug-status existence before watching
-
-Mike Galbraith (1):
-      x86/crash: Fix crash_setup_memmap_entries() out-of-bounds access
-
-Nathan Chancellor (1):
-      arm64: alternatives: Move length validation in alternative_{insn, endif}
-
-Oliver Neukum (1):
-      USB: CDC-ACM: fix poison/unpoison imbalance
-
-Or Cohen (1):
-      net/sctp: fix race condition in sctp_destroy_sock
-
-Pablo Neira Ayuso (1):
-      netfilter: conntrack: do not print icmpv6 as unknown via /proc
-
-Pali Rohár (1):
-      net: phy: marvell: fix detection of PHY on Topaz switches
-
-Peter Collingbourne (1):
-      arm64: fix inline asm in load_unaligned_zeropad()
-
-Phillip Potter (1):
-      net: geneve: check skb is large enough for IPv4/IPv6 header
-
-Ping Cheng (1):
-      HID: wacom: set EV_KEY and EV_ABS only for non-HID_GENERIC type of devices
-
-Randy Dunlap (1):
-      ia64: fix discontig.c section mismatches
-
-Rob Clark (1):
-      drm/msm: Fix a5xx/a6xx timestamps
-
-Russell King (1):
-      ARM: footbridge: fix PCI interrupt mapping
-
-Seevalamuthu Mariappan (1):
-      mac80211: clear sta->fast_rx when STA removed from 4-addr VLAN
-
-Shou-Chieh Hsu (1):
-      HID: google: add don USB id
-
-Tetsuo Handa (1):
-      lockdep: Add a missing initialization hint to the "INFO: Trying to register non-static key" message
-
-Tong Zhu (1):
-      neighbour: Disregard DEAD dst in neigh_update
-
-Tony Lindgren (3):
-      ARM: dts: Drop duplicate sha2md5_fck to fix clk_disable race
-      ARM: dts: Fix moving mmc devices with aliases for omap4 & 5
-      ARM: dts: Fix swapped mmc order for omap3
-
-Vasily Gorbik (1):
-      s390/entry: save the caller of psw_idle
-
-Wan Jiabing (1):
-      cavium/liquidio: Fix duplicate argument
-
-Wang Qing (1):
-      arc: kernel: Return -EFAULT if copy_to_user() fails
-
-Yuanyuan Zhong (1):
-      pinctrl: lewisburg: Update number of pins in community
----
-Makefile                                           |  2 +-
- arch/arc/kernel/signal.c                           |  4 +-
- arch/arm/boot/dts/omap3.dtsi                       |  3 ++
- arch/arm/boot/dts/omap4.dtsi                       |  5 ++
- arch/arm/boot/dts/omap44xx-clocks.dtsi             |  8 ---
- arch/arm/boot/dts/omap5.dtsi                       |  5 ++
- arch/arm/mach-footbridge/cats-pci.c                |  4 +-
- arch/arm/mach-footbridge/ebsa285-pci.c             |  4 +-
- arch/arm/mach-footbridge/netwinder-pci.c           |  2 +-
- arch/arm/mach-footbridge/personal-pci.c            |  5 +-
- arch/arm/mach-keystone/keystone.c                  |  4 +-
- arch/arm/probes/uprobes/core.c                     |  4 +-
- arch/arm64/include/asm/alternative.h               |  8 +--
- arch/arm64/include/asm/word-at-a-time.h            | 10 ++--
- arch/ia64/mm/discontig.c                           |  6 +--
- arch/s390/kernel/entry.S                           |  1 +
- arch/x86/events/intel/uncore_snbep.c               | 61 +++++++++-------------
- arch/x86/kernel/crash.c                            |  2 +-
- drivers/dma/dw/Kconfig                             |  2 +
- drivers/gpio/gpiolib-sysfs.c                       |  8 +++
- drivers/gpu/drm/msm/adreno/a5xx_gpu.c              |  4 +-
- drivers/gpu/drm/msm/adreno/a6xx_gpu.c              |  4 +-
- drivers/hid/hid-alps.c                             |  1 +
- drivers/hid/hid-google-hammer.c                    |  2 +
- drivers/hid/hid-ids.h                              |  1 +
- drivers/hid/wacom_wac.c                            |  8 ++-
- drivers/input/keyboard/nspire-keypad.c             | 56 +++++++++++---------
- drivers/input/serio/i8042-x86ia64io.h              |  1 +
- drivers/input/touchscreen/s6sy761.c                |  4 +-
- drivers/md/dm-verity-fec.c                         | 11 ++--
- drivers/md/dm-verity-fec.h                         |  1 +
- drivers/net/dsa/mv88e6xxx/chip.c                   | 30 +++++------
- drivers/net/ethernet/amd/pcnet32.c                 |  5 +-
- drivers/net/ethernet/cavium/liquidio/cn66xx_regs.h |  2 +-
- drivers/net/ethernet/davicom/dm9000.c              |  6 ++-
- drivers/net/ethernet/ibm/ibmvnic.c                 | 14 +----
- drivers/net/ethernet/intel/i40e/i40e_main.c        |  6 +++
- drivers/net/geneve.c                               |  6 +++
- drivers/net/phy/marvell.c                          | 28 ++++++++--
- drivers/net/usb/hso.c                              |  2 +-
- drivers/net/xen-netback/xenbus.c                   | 12 +++--
- drivers/pinctrl/intel/pinctrl-lewisburg.c          |  6 +--
- drivers/scsi/libsas/sas_ata.c                      |  9 ++--
- drivers/scsi/scsi_transport_srp.c                  |  2 +-
- drivers/usb/class/cdc-acm.c                        |  3 +-
- fs/readdir.c                                       |  6 +++
- include/linux/marvell_phy.h                        |  5 +-
- kernel/locking/lockdep.c                           |  3 +-
- kernel/locking/qrwlock.c                           |  7 +--
- localversion-rt                                    |  2 +-
- mm/gup.c                                           | 44 +++++++++++++---
- mm/huge_memory.c                                   |  7 ++-
- net/core/neighbour.c                               |  2 +-
- net/ieee802154/nl802154.c                          | 29 ++++++++++
- net/ipv6/ip6_tunnel.c                              | 10 ++++
- net/ipv6/sit.c                                     |  4 +-
- net/mac80211/cfg.c                                 |  4 +-
- net/netfilter/nf_conntrack_standalone.c            |  1 +
- net/netfilter/nft_limit.c                          |  4 +-
- net/sctp/socket.c                                  | 13 ++---
- sound/soc/fsl/fsl_esai.c                           |  8 +--
- tools/arch/ia64/include/asm/barrier.h              |  3 --
- 62 files changed, 325 insertions(+), 199 deletions(-)
