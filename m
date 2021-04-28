@@ -3,112 +3,292 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E1DAC433B4
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 07:11:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E33DC433B4
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 16:16:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E3CD7613D9
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 07:11:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B2DB461418
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 16:16:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230317AbhD1HMk (ORCPT
+        id S240344AbhD1QQp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 28 Apr 2021 03:12:40 -0400
-Received: from mail.monom.org ([188.138.9.77]:40714 "EHLO mail.monom.org"
+        Wed, 28 Apr 2021 12:16:45 -0400
+Received: from mail.kernel.org ([198.145.29.99]:60524 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231600AbhD1HMj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 28 Apr 2021 03:12:39 -0400
-Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id EB62F50056B;
-        Wed, 28 Apr 2021 09:11:53 +0200 (CEST)
-Received: from localhost (unknown [94.31.99.148])
-        by mail.monom.org (Postfix) with ESMTPSA id 9BE5B50022D;
-        Wed, 28 Apr 2021 09:11:53 +0200 (CEST)
-Date:   Wed, 28 Apr 2021 09:11:53 +0200
-From:   Daniel Wagner <wagi@monom.org>
-To:     "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Cc:     Joe Korty <joe.korty@concurrent-rt.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        id S239890AbhD1QQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 28 Apr 2021 12:16:45 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 24E8A61420;
+        Wed, 28 Apr 2021 16:16:00 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.19.189-rt78
+Date:   Wed, 28 Apr 2021 16:14:53 -0000
+Message-ID: <161962649367.296555.2478963021739615566@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] 4.9.263-rt177: Balance local_irq_{disable,enable} in
- irq_forced_thread_fn
-Message-ID: <20210428071153.meilcgaarpznqndv@beryllium.lan>
-References: <20210427221009.GA23708@zipoli.concurrrent-rt.com>
- <YIiUjUo0PqJh+782@uudg.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <YIiUjUo0PqJh+782@uudg.org>
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+Hello RT-list!
 
-On Tue, Apr 27, 2021 at 07:47:41PM -0300, Luis Claudio R. Goncalves wrote:
-> On Tue, Apr 27, 2021 at 06:10:09PM -0400, Joe Korty wrote:
-> > Balance local_irq_{disable,enable} usage in irq_forced_thread_fn
-> > 
-> > Re: 0152-genirq-Allow-disabling-of-softirq-processing-in-irq-.patch
-> > 
-> > In 4.9.263-rt177, irq_forced_thread_fn has potentially unbalanced calls to
-> > local_irq_disable ... local_irq_enable.  This is probably not intentional.
-> > 
-> > I am not absolutely sure what the proper fix is.  Attached is an example
-> > of what that might look like.
-> > 
-> > [ Issue detected via compiler warning, using a sufficiently advanced gcc ]
-> > 
-> > Signed-off-by: Joe Korty <joe.korty@concurrent-rt.com>
-> 
-> Joe, I fell a bit behind on v4.9-rt and intend to get up to date this
-> weekend. I am now satisfied with my current backport of the futex changes
-> from v4.9.264 and my 96h of pi_stress testing.
-> 
-> Your patch makes sense, taking v4.19-rt as reference, but I will wait
-> for comments from the wise people you listed on the Cc: before taking
-> action.
+I'm pleased to announce the 4.19.189-rt78 stable release.
 
-I had to resolve the same merge conflict in v4.4-rt. The fix from Joe
-resolve to the same solution I've done in v4.4-rt
+You can get this release via the git tree at:
 
-> 
-> Best regards,
-> Luis
-> 
-> > 
-> > Index: b/kernel/irq/manage.c
-> > ===================================================================
-> > --- a/kernel/irq/manage.c
-> > +++ b/kernel/irq/manage.c
-> > @@ -1035,6 +1035,9 @@ irq_forced_thread_fn(struct irq_desc *de
-> >  		atomic_inc(&desc->threads_handled);
-> >  
-> >  	irq_finalize_oneshot(desc, action);
-> > +
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Nit there is no new line here in upstream, dd652c6ab49b ("genirq:
-Disable interrupts for force threaded handlers")
+  branch: v4.19-rt
+  Head SHA1: 6ea1aced383f7781d0a1962777bd569cde0704f5
 
-> > +	if (!IS_ENABLED(CONFIG_PREEMPT_RT_BASE))
-> > +		local_irq_enable();
-> >  	/*
-> >  	 * Interrupts which have real time requirements can be set up
-> >  	 * to avoid softirq processing in the thread handler. This is
-> > @@ -1043,8 +1046,6 @@ irq_forced_thread_fn(struct irq_desc *de
-> >  	if (irq_settings_no_softirq_call(desc))
-> >  		_local_bh_enable();
-> >  	else
-> > -		if (!IS_ENABLED(CONFIG_PREEMPT_RT_BASE))
-> > -			local_irq_enable();
-> >  		local_bh_enable();
-> >  	return ret;
-> >  }
-> ---end quoted text---
+Or to build 4.19.189-rt78 directly, the following patches should be applied:
 
-Thanks,
-Daniel
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.189.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.189-rt78.patch.xz
+
+
+You can also build from 4.19.188-rt77 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.188-rt77-rt78.patch.xz
+
+Enjoy!
+Clark
+
+Changes from v4.19.188-rt77:
+---
+
+Alexander Aring (7):
+      net: ieee802154: stop dump llsec keys for monitors
+      net: ieee802154: stop dump llsec devs for monitors
+      net: ieee802154: forbid monitor for add llsec dev
+      net: ieee802154: stop dump llsec devkeys for monitors
+      net: ieee802154: forbid monitor for add llsec devkey
+      net: ieee802154: stop dump llsec seclevels for monitors
+      net: ieee802154: forbid monitor for add llsec seclevel
+
+Alexander Shiyan (1):
+      ASoC: fsl_esai: Fix TDM slot setup for I2S mode
+
+Ali Saidi (1):
+      locking/qrwlock: Fix ordering in queued_write_lock_slowpath()
+
+Andy Shevchenko (1):
+      dmaengine: dw: Make it dependent to HAS_IOMEM
+
+Arnd Bergmann (2):
+      ARM: keystone: fix integer overflow warning
+      Input: i8042 - fix Pegatron C15B ID entry
+
+Caleb Connolly (1):
+      Input: s6sy761 - fix coordinate read bit shift
+
+Christophe JAILLET (1):
+      net: davicom: Fix regulator not turned off on failed probe
+
+Clark Williams (2):
+      Merge tag 'v4.19.189' into v4.19-rt
+      Linux 4.19.189-rt78
+
+Eric Dumazet (1):
+      netfilter: nft_limit: avoid possible divide error in nft_limit_init
+
+Fabian Vogt (1):
+      Input: nspire-keypad - enable interrupts only when opened
+
+Fredrik Strupe (1):
+      ARM: 9071/1: uprobes: Don't hook on thumb instructions
+
+Greg Kroah-Hartman (1):
+      Linux 4.19.189
+
+Guenter Roeck (1):
+      pcnet32: Use pci_resource_len to validate PCI resource
+
+Hristo Venev (2):
+      net: sit: Unregister catch-all devices
+      net: ip6_tunnel: Unregister catch-all devices
+
+Jaegeuk Kim (1):
+      dm verity fec: fix misaligned RS roots IO
+
+Jason Xing (1):
+      i40e: fix the panic when running bpf in xdpdrv mode
+
+Jia-Ju Bai (1):
+      HID: alps: fix error return code in alps_input_configured()
+
+Jiapeng Zhong (1):
+      HID: wacom: Assign boolean values to a bool variable
+
+Johan Hovold (1):
+      net: hso: fix NULL-deref on disconnect regression
+
+John Paul Adrian Glaubitz (1):
+      ia64: tools: remove duplicate definition of ia64_mf() on ia64
+
+Jolly Shah (1):
+      scsi: libsas: Reset num_scatter if libata marks qc as NODATA
+
+Kan Liang (1):
+      perf/x86/intel/uncore: Remove uncore extra PCI dev HSWEP_PCI_PCU_3
+
+Lijun Pan (3):
+      ibmvnic: avoid calling napi_disable() twice
+      ibmvnic: remove duplicate napi_schedule call in do_reset function
+      ibmvnic: remove duplicate napi_schedule call in open function
+
+Linus Torvalds (2):
+      readdir: make sure to verify directory entry for legacy interfaces too
+      gup: document and work around "COW can break either way" issue
+
+Martin Wilck (1):
+      scsi: scsi_transport_srp: Don't block target in SRP_PORT_LOST state
+
+Matti Vaittinen (1):
+      gpio: sysfs: Obey valid_mask
+
+Michael Brown (1):
+      xen-netback: Check for hotplug-status existence before watching
+
+Mike Galbraith (1):
+      x86/crash: Fix crash_setup_memmap_entries() out-of-bounds access
+
+Nathan Chancellor (1):
+      arm64: alternatives: Move length validation in alternative_{insn, endif}
+
+Oliver Neukum (1):
+      USB: CDC-ACM: fix poison/unpoison imbalance
+
+Or Cohen (1):
+      net/sctp: fix race condition in sctp_destroy_sock
+
+Pablo Neira Ayuso (1):
+      netfilter: conntrack: do not print icmpv6 as unknown via /proc
+
+Pali Rohár (1):
+      net: phy: marvell: fix detection of PHY on Topaz switches
+
+Peter Collingbourne (1):
+      arm64: fix inline asm in load_unaligned_zeropad()
+
+Phillip Potter (1):
+      net: geneve: check skb is large enough for IPv4/IPv6 header
+
+Ping Cheng (1):
+      HID: wacom: set EV_KEY and EV_ABS only for non-HID_GENERIC type of devices
+
+Randy Dunlap (1):
+      ia64: fix discontig.c section mismatches
+
+Rob Clark (1):
+      drm/msm: Fix a5xx/a6xx timestamps
+
+Russell King (1):
+      ARM: footbridge: fix PCI interrupt mapping
+
+Seevalamuthu Mariappan (1):
+      mac80211: clear sta->fast_rx when STA removed from 4-addr VLAN
+
+Shou-Chieh Hsu (1):
+      HID: google: add don USB id
+
+Tetsuo Handa (1):
+      lockdep: Add a missing initialization hint to the "INFO: Trying to register non-static key" message
+
+Tong Zhu (1):
+      neighbour: Disregard DEAD dst in neigh_update
+
+Tony Lindgren (3):
+      ARM: dts: Drop duplicate sha2md5_fck to fix clk_disable race
+      ARM: dts: Fix moving mmc devices with aliases for omap4 & 5
+      ARM: dts: Fix swapped mmc order for omap3
+
+Vasily Gorbik (1):
+      s390/entry: save the caller of psw_idle
+
+Wan Jiabing (1):
+      cavium/liquidio: Fix duplicate argument
+
+Wang Qing (1):
+      arc: kernel: Return -EFAULT if copy_to_user() fails
+
+Yuanyuan Zhong (1):
+      pinctrl: lewisburg: Update number of pins in community
+---
+Makefile                                           |  2 +-
+ arch/arc/kernel/signal.c                           |  4 +-
+ arch/arm/boot/dts/omap3.dtsi                       |  3 ++
+ arch/arm/boot/dts/omap4.dtsi                       |  5 ++
+ arch/arm/boot/dts/omap44xx-clocks.dtsi             |  8 ---
+ arch/arm/boot/dts/omap5.dtsi                       |  5 ++
+ arch/arm/mach-footbridge/cats-pci.c                |  4 +-
+ arch/arm/mach-footbridge/ebsa285-pci.c             |  4 +-
+ arch/arm/mach-footbridge/netwinder-pci.c           |  2 +-
+ arch/arm/mach-footbridge/personal-pci.c            |  5 +-
+ arch/arm/mach-keystone/keystone.c                  |  4 +-
+ arch/arm/probes/uprobes/core.c                     |  4 +-
+ arch/arm64/include/asm/alternative.h               |  8 +--
+ arch/arm64/include/asm/word-at-a-time.h            | 10 ++--
+ arch/ia64/mm/discontig.c                           |  6 +--
+ arch/s390/kernel/entry.S                           |  1 +
+ arch/x86/events/intel/uncore_snbep.c               | 61 +++++++++-------------
+ arch/x86/kernel/crash.c                            |  2 +-
+ drivers/dma/dw/Kconfig                             |  2 +
+ drivers/gpio/gpiolib-sysfs.c                       |  8 +++
+ drivers/gpu/drm/msm/adreno/a5xx_gpu.c              |  4 +-
+ drivers/gpu/drm/msm/adreno/a6xx_gpu.c              |  4 +-
+ drivers/hid/hid-alps.c                             |  1 +
+ drivers/hid/hid-google-hammer.c                    |  2 +
+ drivers/hid/hid-ids.h                              |  1 +
+ drivers/hid/wacom_wac.c                            |  8 ++-
+ drivers/input/keyboard/nspire-keypad.c             | 56 +++++++++++---------
+ drivers/input/serio/i8042-x86ia64io.h              |  1 +
+ drivers/input/touchscreen/s6sy761.c                |  4 +-
+ drivers/md/dm-verity-fec.c                         | 11 ++--
+ drivers/md/dm-verity-fec.h                         |  1 +
+ drivers/net/dsa/mv88e6xxx/chip.c                   | 30 +++++------
+ drivers/net/ethernet/amd/pcnet32.c                 |  5 +-
+ drivers/net/ethernet/cavium/liquidio/cn66xx_regs.h |  2 +-
+ drivers/net/ethernet/davicom/dm9000.c              |  6 ++-
+ drivers/net/ethernet/ibm/ibmvnic.c                 | 14 +----
+ drivers/net/ethernet/intel/i40e/i40e_main.c        |  6 +++
+ drivers/net/geneve.c                               |  6 +++
+ drivers/net/phy/marvell.c                          | 28 ++++++++--
+ drivers/net/usb/hso.c                              |  2 +-
+ drivers/net/xen-netback/xenbus.c                   | 12 +++--
+ drivers/pinctrl/intel/pinctrl-lewisburg.c          |  6 +--
+ drivers/scsi/libsas/sas_ata.c                      |  9 ++--
+ drivers/scsi/scsi_transport_srp.c                  |  2 +-
+ drivers/usb/class/cdc-acm.c                        |  3 +-
+ fs/readdir.c                                       |  6 +++
+ include/linux/marvell_phy.h                        |  5 +-
+ kernel/locking/lockdep.c                           |  3 +-
+ kernel/locking/qrwlock.c                           |  7 +--
+ localversion-rt                                    |  2 +-
+ mm/gup.c                                           | 44 +++++++++++++---
+ mm/huge_memory.c                                   |  7 ++-
+ net/core/neighbour.c                               |  2 +-
+ net/ieee802154/nl802154.c                          | 29 ++++++++++
+ net/ipv6/ip6_tunnel.c                              | 10 ++++
+ net/ipv6/sit.c                                     |  4 +-
+ net/mac80211/cfg.c                                 |  4 +-
+ net/netfilter/nf_conntrack_standalone.c            |  1 +
+ net/netfilter/nft_limit.c                          |  4 +-
+ net/sctp/socket.c                                  | 13 ++---
+ sound/soc/fsl/fsl_esai.c                           |  8 +--
+ tools/arch/ia64/include/asm/barrier.h              |  3 --
+ 62 files changed, 325 insertions(+), 199 deletions(-)
