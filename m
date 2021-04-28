@@ -7,42 +7,42 @@ X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80EA4C433ED
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 23:28:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AD1ADC433B4
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 23:28:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5AE3661446
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 23:28:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8CB5D61446
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Apr 2021 23:28:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231401AbhD1X3U (ORCPT
+        id S231966AbhD1X3Z (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 28 Apr 2021 19:29:20 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:23704 "EHLO
+        Wed, 28 Apr 2021 19:29:25 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:28696 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229624AbhD1X3T (ORCPT
+        by vger.kernel.org with ESMTP id S231874AbhD1X3Y (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 28 Apr 2021 19:29:19 -0400
+        Wed, 28 Apr 2021 19:29:24 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1619652514;
+        s=mimecast20190719; t=1619652519;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=7GRJSxYqohIAi6+ZzHY/JtjImlf9ZaUqAHDwatNr7fQ=;
-        b=aalMFPp/dy8pDrisqVCr6kQBMUfGmm9C4+3GF5uaSgdhdi+SUrGvbK/fgZnU9WYacM/6mO
-        CAzysbDwvgLWkVMhsswr19gW4Omo1L6NHI6HW9MSU3XYADXkqgnml3Cx9wUOD7jmCu4IGS
-        wvNfHQ/j4K/RMA2UkyTWWSQdmFZgX9Q=
+        bh=sMzyc+7EJPbcNw7it8I/GUe42LK9swyChBaCXViQbq0=;
+        b=g/DRUAS978hiWZzymTj4FRwv/YUzJKcj/ijO/IrY0HXlJWrsWEfyq3zL7UmCbvUEqiP6KB
+        wbkvtqq7mv8u+hvYkzw5bd5WMsZbFS81f1q/fpoAGh1ALyFrnvMeQcNfi5kxVR+69v53Lz
+        9po8zYkkzsls5LVkELmYJyiSyLL34iQ=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-366-qwPpvhqmPPWhVErgTeizqQ-1; Wed, 28 Apr 2021 19:28:31 -0400
-X-MC-Unique: qwPpvhqmPPWhVErgTeizqQ-1
+ us-mta-211-mDCBhKW-Of-4Qlf4Hz6Mbg-1; Wed, 28 Apr 2021 19:28:36 -0400
+X-MC-Unique: mDCBhKW-Of-4Qlf4Hz6Mbg-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1705F18B9F49;
-        Wed, 28 Apr 2021 23:28:30 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 174A2100A615;
+        Wed, 28 Apr 2021 23:28:35 +0000 (UTC)
 Received: from p1g2.redhat.com (ovpn-114-20.rdu2.redhat.com [10.10.114.20])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 0FE4861094;
-        Wed, 28 Apr 2021 23:28:24 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 3986770580;
+        Wed, 28 Apr 2021 23:28:30 +0000 (UTC)
 From:   Scott Wood <swood@redhat.com>
 To:     Ingo Molnar <mingo@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
@@ -55,9 +55,9 @@ Cc:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>,
         Scott Wood <swood@redhat.com>
-Subject: [PATCH v2 1/3] sched/fair: Call newidle_balance() from balance_callback on PREEMPT_RT
-Date:   Wed, 28 Apr 2021 18:28:19 -0500
-Message-Id: <20210428232821.2506201-2-swood@redhat.com>
+Subject: [PATCH v2 2/3] sched/fair: Enable interrupts when dropping lock in newidle_balance()
+Date:   Wed, 28 Apr 2021 18:28:20 -0500
+Message-Id: <20210428232821.2506201-3-swood@redhat.com>
 In-Reply-To: <20210428232821.2506201-1-swood@redhat.com>
 References: <20210428232821.2506201-1-swood@redhat.com>
 MIME-Version: 1.0
@@ -67,98 +67,55 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This is required in order to be able to enable interrupts in the next
-patch.  This is limited to PREEMPT_RT to avoid adding potentially
-measurable overhead to the non-RT case (requiring a double switch when
-pulling a task onto a newly idle cpu).
-
-update_misfit_status() is factored out for the PREEMPT_RT case, to ensure
-that the misfit status is kept consistent before dropping the lock.
+When combined with the next patch, which breaks out of rebalancing
+when an RT task is runnable, significant latency reductions are seen
+on systems with many CPUs.
 
 Signed-off-by: Scott Wood <swood@redhat.com>
 ---
-v2: Use a balance callback, and limit to PREEMPT_RT
-
- kernel/sched/fair.c | 34 ++++++++++++++++++++++++++++++----
- 1 file changed, 30 insertions(+), 4 deletions(-)
+ kernel/sched/fair.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 794c2cb945f8..ff369c38a5b5 100644
+index ff369c38a5b5..aa8c87b6aff8 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -5660,6 +5660,9 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+@@ -10521,6 +10521,8 @@ static void nohz_newidle_balance(struct rq *this_rq)
+ 		return;
  
- #ifdef CONFIG_SMP
- 
-+static const bool newidle_balance_in_callback = IS_ENABLED(CONFIG_PREEMPT_RT);
-+static DEFINE_PER_CPU(struct callback_head, rebalance_head);
-+
- /* Working cpumask for: load_balance, load_balance_newidle. */
- DEFINE_PER_CPU(cpumask_var_t, load_balance_mask);
- DEFINE_PER_CPU(cpumask_var_t, select_idle_mask);
-@@ -10549,7 +10552,7 @@ static inline void nohz_newidle_balance(struct rq *this_rq) { }
-  *     0 - failed, no new tasks
-  *   > 0 - success, new (fair) tasks present
-  */
--static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
-+static int do_newidle_balance(struct rq *this_rq, struct rq_flags *rf)
- {
- 	unsigned long next_balance = jiffies + HZ;
- 	int this_cpu = this_rq->cpu;
-@@ -10557,7 +10560,9 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
- 	int pulled_task = 0;
- 	u64 curr_cost = 0;
- 
--	update_misfit_status(NULL, this_rq);
-+	if (!newidle_balance_in_callback)
-+		update_misfit_status(NULL, this_rq);
-+
+ 	raw_spin_unlock(&this_rq->lock);
++	if (newidle_balance_in_callback)
++		local_irq_enable();
  	/*
- 	 * We must set idle_stamp _before_ calling idle_balance(), such that we
- 	 * measure the duration of idle_balance() as idle time.
-@@ -10576,7 +10581,8 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
- 	 * further scheduler activity on it and we're being very careful to
- 	 * re-start the picking loop.
+ 	 * This CPU is going to be idle and blocked load of idle CPUs
+ 	 * need to be updated. Run the ilb locally as it is a good
+@@ -10529,6 +10531,8 @@ static void nohz_newidle_balance(struct rq *this_rq)
  	 */
--	rq_unpin_lock(this_rq, rf);
-+	if (!newidle_balance_in_callback)
-+		rq_unpin_lock(this_rq, rf);
- 
- 	if (this_rq->avg_idle < sysctl_sched_migration_cost ||
- 	    !READ_ONCE(this_rq->rd->overload)) {
-@@ -10655,11 +10661,31 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
- 	if (pulled_task)
- 		this_rq->idle_stamp = 0;
- 
--	rq_repin_lock(this_rq, rf);
-+	if (!newidle_balance_in_callback)
-+		rq_repin_lock(this_rq, rf);
- 
- 	return pulled_task;
+ 	if (!_nohz_idle_balance(this_rq, NOHZ_STATS_KICK, CPU_NEWLY_IDLE))
+ 		kick_ilb(NOHZ_STATS_KICK);
++	if (newidle_balance_in_callback)
++		local_irq_disable();
+ 	raw_spin_lock(&this_rq->lock);
  }
  
-+static void newidle_balance_cb(struct rq *this_rq)
-+{
-+	update_rq_clock(this_rq);
-+	do_newidle_balance(this_rq, NULL);
-+}
-+
-+static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
-+{
-+	if (newidle_balance_in_callback) {
-+		update_misfit_status(NULL, this_rq);
-+		queue_balance_callback(this_rq,
-+				       &per_cpu(rebalance_head, this_rq->cpu),
-+				       newidle_balance_cb);
-+		return 0;
-+	}
-+
-+	return do_newidle_balance(this_rq, rf);
-+}
-+
- /*
-  * run_rebalance_domains is triggered when needed from the scheduler tick.
-  * Also triggered for nohz idle balancing (with nohz_balancing_kick set).
+@@ -10599,6 +10603,8 @@ static int do_newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+ 	}
+ 
+ 	raw_spin_unlock(&this_rq->lock);
++	if (newidle_balance_in_callback)
++		local_irq_enable();
+ 
+ 	update_blocked_averages(this_cpu);
+ 	rcu_read_lock();
+@@ -10636,6 +10642,8 @@ static int do_newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+ 	}
+ 	rcu_read_unlock();
+ 
++	if (newidle_balance_in_callback)
++		local_irq_disable();
+ 	raw_spin_lock(&this_rq->lock);
+ 
+ 	if (curr_cost > this_rq->max_idle_balance_cost)
 -- 
 2.27.0
 
