@@ -2,102 +2,120 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-6.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EFCF1C433ED
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 May 2021 20:40:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9376CC43460
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 May 2021 21:57:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B76D761165
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 May 2021 20:40:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 68C1B611C9
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 May 2021 21:57:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229595AbhECUlj (ORCPT
+        id S229782AbhECV61 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 May 2021 16:41:39 -0400
-Received: from fllv0016.ext.ti.com ([198.47.19.142]:53198 "EHLO
-        fllv0016.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229953AbhECUlQ (ORCPT
+        Mon, 3 May 2021 17:58:27 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:29121 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229767AbhECV60 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 May 2021 16:41:16 -0400
-Received: from lelv0265.itg.ti.com ([10.180.67.224])
-        by fllv0016.ext.ti.com (8.15.2/8.15.2) with ESMTP id 143KdKTO105859;
-        Mon, 3 May 2021 15:39:20 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1620074360;
-        bh=zJSsoRPc7uVygqGOIiFotkTDm64hgrdzUC903fh8uSk=;
-        h=Subject:To:CC:References:From:Date:In-Reply-To;
-        b=w5bgHp/G724ddu/NRQ4+/67LvBtWbb0z++4F9UqiQVvul/U1+vTLQoQPet7Hy+Mad
-         iO7LrKkAZ9rPgJWo34bltZblQFD9ZuCvby3Zj6+cRJ7KXjJWR+XBTOuFbsNcUOXYu1
-         zthsAAnrhjFmXq0IL6/Tf14jb/RuN3IuPzsdWZRU=
-Received: from DLEE113.ent.ti.com (dlee113.ent.ti.com [157.170.170.24])
-        by lelv0265.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 143KdKj8012891
-        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Mon, 3 May 2021 15:39:20 -0500
-Received: from DLEE111.ent.ti.com (157.170.170.22) by DLEE113.ent.ti.com
- (157.170.170.24) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.2176.2; Mon, 3 May
- 2021 15:39:20 -0500
-Received: from fllv0039.itg.ti.com (10.64.41.19) by DLEE111.ent.ti.com
- (157.170.170.22) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.2176.2 via
- Frontend Transport; Mon, 3 May 2021 15:39:20 -0500
-Received: from [10.247.25.23] (ileax41-snat.itg.ti.com [10.172.224.153])
-        by fllv0039.itg.ti.com (8.15.2/8.15.2) with ESMTP id 143KdJNE062416;
-        Mon, 3 May 2021 15:39:20 -0500
-Subject: Re: [ANNOUNCE] 5.10.30-rt37
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-CC:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
+        Mon, 3 May 2021 17:58:26 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1620079052;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=nmvaqsHbI0qIS+u1gFuZv4B9UKhy1ULg1iiDC8R3JJA=;
+        b=ZVpC/56GblNRNpxPCWtSCHV+d8sFIndHxpwblGY+GAKfZ/MFtyTLyq/NHaExa4RhUSkBaa
+        h+/sg1GAsncA4Pfi8xlLDGRQxNFfTx1dEqtt+MDpBzKVdN4Mm/7NYhbe+tFRpnPWzIX75h
+        sCq+duwiUT9Kqzc78nH5ESEjMJP1Ddw=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-32-d5TXcminP5uby09xhuyC4g-1; Mon, 03 May 2021 17:57:28 -0400
+X-MC-Unique: d5TXcminP5uby09xhuyC4g-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D889B8015BA;
+        Mon,  3 May 2021 21:57:26 +0000 (UTC)
+Received: from ovpn-112-143.rdu2.redhat.com (ovpn-112-143.rdu2.redhat.com [10.10.112.143])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 272242DAC5;
+        Mon,  3 May 2021 21:57:25 +0000 (UTC)
+Message-ID: <32a536f5688105df515e6ad9fd12fbcdbd781afb.camel@redhat.com>
+Subject: Re: [PATCH v2 0/3] newidle_balance() PREEMPT_RT latency mitigations
+From:   Scott Wood <swood@redhat.com>
+To:     Mike Galbraith <efault@gmx.de>,
+        Vincent Guittot <vincent.guittot@linaro.org>
+Cc:     Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mel Gorman <mgorman@suse.de>,
+        Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-References: <20210419184731.246fa474@gandalf.local.home>
-From:   "Bajjuri, Praneeth" <praneeth@ti.com>
-Message-ID: <c3b8a530-2ade-5876-5c93-7f83286796b8@ti.com>
-Date:   Mon, 3 May 2021 15:39:19 -0500
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.10.0
+        Thomas Gleixner <tglx@linutronix.de>
+Date:   Mon, 03 May 2021 16:57:24 -0500
+In-Reply-To: <3773421d06bed0beed9971d03e8fa2050a14cc13.camel@gmx.de>
+References: <20210428232821.2506201-1-swood@redhat.com>
+         <CAKfTPtBrJNBg3847R_b8A-1c5rb9Fb5FFNMX+z11QGAiO0ofkw@mail.gmail.com>
+         <7b796a085b0bc638c9df70d3a20718f8d1d776c8.camel@redhat.com>
+         <a46f9b6c719666357e568eadd1d615c05c4171ac.camel@gmx.de>
+         <4170501b7c4f19ba66d870b671dc90ffbf4623d6.camel@redhat.com>
+         <3773421d06bed0beed9971d03e8fa2050a14cc13.camel@gmx.de>
+Organization: Red Hat
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.36.5 (3.36.5-2.fc32) 
 MIME-Version: 1.0
-In-Reply-To: <20210419184731.246fa474@gandalf.local.home>
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Language: en-US
 Content-Transfer-Encoding: 7bit
-X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-
-
-On 4/19/2021 5:47 PM, Steven Rostedt wrote:
-> On Tue, Apr 20, 2021,ycollette.nospam@free.fr  wrote:
->> net/xfrm/xfrm_state.c: In function 'xfrm_state_init':
->> ./include/linux/seqlock.h:178:36: error: initialization of 'seqcount_spinlock_t *' {aka 'struct seqcount_spinlock *'} from incompatible pointer type 'seqcount_t *' {aka 'struct seqcount *'} [-Werror=incompatible-pointer-types]
->>    178 |   seqcount_##lockname##_t *____s = (s);   \
->>        |                                    ^
-> ...
->> net/xfrm/xfrm_state.c:2666:2: note: in expansion of macro 'seqcount_spinlock_init'
->>   2666 |  seqcount_spinlock_init(&net->xfrm.xfrm_state_hash_generation,
->>        |  ^~~~~~~~~~~~~~~~~~~~~~
-> There is a rebase error at:
+On Mon, 2021-05-03 at 20:52 +0200, Mike Galbraith wrote:
+> On Mon, 2021-05-03 at 11:33 -0500, Scott Wood wrote:
+> > On Sun, 2021-05-02 at 05:25 +0200, Mike Galbraith wrote:
+> > > If NEWIDLE balancing migrates one task, how does that manage to
+> > > consume
+> > > a full *millisecond*, and why would that only be a problem for RT?
+> > > 
+> > > 	-Mike
+> > > 
+> > > (rt tasks don't play !rt balancer here, if CPU goes idle, tough titty)
+> > 
+> > Determining which task to pull is apparently taking that long (again,
+> > this is on a 128-cpu system).  RT is singled out because that is the
+> > config that makes significant tradeoffs to keep latencies down (I
+> > expect this would be far from the only possible 1ms+ latency on a
+> > non-RT kernel), and there was concern about the overhead of a double
+> > context switch when pulling a task to a newidle cpu.
 > 
->    247560698349 ("Merge tag 'v5.10.30' into v5.10-rt")
+> What I think has be going on is that you're running a synchronized RT
+> load, many CPUs go idle as a thundering herd, and meet at focal point
+> busiest.  What I was alluding to was that preventing such size scale
+> pile-ups would be way better than poking holes in it for RT to try to
+> sneak through.  If pile-up it is, while not particularly likely, the
+> same should happen with normal tasks, wasting cycles generating heat.
 > 
-> Cherry-pick mainline's commit:
-> 
->    bc8e0adff343 ("net: xfrm: Use sequence counter with associated spinlock")
+> The main issue I see with these patches is that the resulting number is
+> still so gawd awful as to mean "nope, not rt ready", making the whole
+> exercise look a bit like a noop.
 
-Thanks for this fix, Cherry-pick resolved rt stable integration issue 
-that i was seeing.
+It doesn't look like rteval asks cyclictest to synchronize, but
+regardless, how is this "poking holes"?  Making sure interrupts are
+enabled during potentially long-running activities is pretty fundamental
+to PREEMPT_RT.  What specifically is your suggestion?
 
-Is this fix going to be posted for v5.10-rt too ?
+And yes, 317 us is still not a very good number for PREEMPT_RT, but
+progress is progress.  It's hard to address the moderate latency spikes
+if they're obscured by large latency spikes.  One also needs to have
+realistic expectations when it comes to RT on large systems, particularly
+when not isolating the latency-sensitive CPUs.
 
-> 
-> and your compilation issue will be fixed.
+-Scott
+
 
