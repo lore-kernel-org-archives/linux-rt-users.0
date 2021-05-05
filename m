@@ -2,40 +2,66 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FD98C433B4
-	for <linux-rt-users@archiver.kernel.org>; Tue,  4 May 2021 04:08:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 365C9C433B4
+	for <linux-rt-users@archiver.kernel.org>; Wed,  5 May 2021 12:14:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1D9D161186
-	for <linux-rt-users@archiver.kernel.org>; Tue,  4 May 2021 04:08:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0965F61182
+	for <linux-rt-users@archiver.kernel.org>; Wed,  5 May 2021 12:14:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229712AbhEDEJl (ORCPT
+        id S232144AbhEEMPu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 4 May 2021 00:09:41 -0400
-Received: from mout.gmx.net ([212.227.17.20]:40087 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229499AbhEDEJl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 4 May 2021 00:09:41 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1620101273;
-        bh=bsPODiDnk61cWDSdS7mJx99eO8YJm2WKRtfXTCd51KA=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=PkvCdTT+N31nHv2yCTKt2Arwe8CFICf3AgzrLiWiXTFWFgCt8tnbBAqjj7sCSxKf3
-         aEJ7RlFSlifmxdX9ZSwRDUdp/cKSE+WuHr18R1iObQkmiE0hTQJV5hHkPySNWsanGi
-         xmOxwaPAgNCDmKTCGtjRNogFw5K32BExuXFZwWwg=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.146.51.85]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1N2mBQ-1lY6RI36vU-0133gj; Tue, 04
- May 2021 06:07:52 +0200
-Message-ID: <ceac7107048b6620d4b120b8f775b85f7fbee92b.camel@gmx.de>
-Subject: Re: [PATCH v2 0/3] newidle_balance() PREEMPT_RT latency mitigations
-From:   Mike Galbraith <efault@gmx.de>
-To:     Scott Wood <swood@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>
+        Wed, 5 May 2021 08:15:50 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35452 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233601AbhEEMPb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 5 May 2021 08:15:31 -0400
+Received: from mail-lf1-x12a.google.com (mail-lf1-x12a.google.com [IPv6:2a00:1450:4864:20::12a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3E0DCC0612EE
+        for <linux-rt-users@vger.kernel.org>; Wed,  5 May 2021 05:13:38 -0700 (PDT)
+Received: by mail-lf1-x12a.google.com with SMTP id x2so2211075lff.10
+        for <linux-rt-users@vger.kernel.org>; Wed, 05 May 2021 05:13:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=HXTIaMW1B+ItVk6xcLiLxkcpS7F048LG9tJDykqdBpo=;
+        b=YPyoDKuT5sKE1gsWZ58iG0y7sUpGQl34SQ9Azyemyoz30GbFY6bRIecWEf19s1irD2
+         4Q6G3Cca4sregoXOcGyKnnYu7lvx+HVba31aZu/RAvH7Zcd0yX5xn4qiXhJFVTUat7oD
+         3eZmtibFFOOMneIShoL8xcwy/PMFKeXCYbSBtgWCweCwLHjoJhz6kylMjC8ChISwtHA4
+         /hOf1D5ytLV04rIo3RExux1nUhV2ZicRwcYHw1gJPdfAWYM5mJQZ7SpshrGYwzkFf0oZ
+         VEMQi3wPkfcVFkT+6hMk5Jx7eePZcTFGxZp4LbhOq0igCgGuIPD0Rc03eSjvx8Q1D30R
+         FFvw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=HXTIaMW1B+ItVk6xcLiLxkcpS7F048LG9tJDykqdBpo=;
+        b=MYux9lfjtTZl/4mFyREFs9qFEovStpyDbIMt5u81l7VCXT39xmCW2P9uFhV+KdmG6H
+         zL1blOlGflmA2pMrs8v12niFLIFoOlxXXxPlMcWG8RNSMzlPdwcO5IaJOgYILIgm1SCl
+         SYPrnGCri4gnIkmd3x/CSW639SsaH4vU63M7cSWy8bafHbzT0A64ucLraMCq5qPmmRb5
+         ovxy6RH1YskN+5sEEcSZMbcppb1TSPx3lKe+x/Ys3LNW79s4XaS/EoE2JCmf0ewKtCQ2
+         JB1Yqigke/BI6nY0jaZHLUfC5Z5LKUAghJlw5qx5Nc3uwEbLAixeJwBfbsD496khx4lm
+         /Z/Q==
+X-Gm-Message-State: AOAM533nPsg2BmKoNcXbfTRQ+QHhe4YZZuhtf83c1ST3yMyaJnVv2ffN
+        JpR0BoZITP8hLFaMJcJasp2bAxlNjk6f8GDF6WQmdw==
+X-Google-Smtp-Source: ABdhPJyeZhzxIy/1HOMHrOgJy7lgL3GcuZKFVD4UVTBfhjSA4X/DNidzupZSEZ0suZaLyYNTs9Zaqn4VlpD2wIFLr1s=
+X-Received: by 2002:a05:6512:234d:: with SMTP id p13mr1211167lfu.470.1620216816690;
+ Wed, 05 May 2021 05:13:36 -0700 (PDT)
+MIME-Version: 1.0
+References: <20210428232821.2506201-1-swood@redhat.com> <20210428232821.2506201-2-swood@redhat.com>
+In-Reply-To: <20210428232821.2506201-2-swood@redhat.com>
+From:   Vincent Guittot <vincent.guittot@linaro.org>
+Date:   Wed, 5 May 2021 14:13:25 +0200
+Message-ID: <CAKfTPtBrGF72Zf37vPS6r4wy_jKagznBbiqKWpPyMEB_u4wo1g@mail.gmail.com>
+Subject: Re: [PATCH v2 1/3] sched/fair: Call newidle_balance() from
+ balance_callback on PREEMPT_RT
+To:     Scott Wood <swood@redhat.com>
 Cc:     Ingo Molnar <mingo@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
         Dietmar Eggemann <dietmar.eggemann@arm.com>,
@@ -46,112 +72,112 @@ Cc:     Ingo Molnar <mingo@redhat.com>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>
-Date:   Tue, 04 May 2021 06:07:50 +0200
-In-Reply-To: <32a536f5688105df515e6ad9fd12fbcdbd781afb.camel@redhat.com>
-References: <20210428232821.2506201-1-swood@redhat.com>
-         <CAKfTPtBrJNBg3847R_b8A-1c5rb9Fb5FFNMX+z11QGAiO0ofkw@mail.gmail.com>
-         <7b796a085b0bc638c9df70d3a20718f8d1d776c8.camel@redhat.com>
-         <a46f9b6c719666357e568eadd1d615c05c4171ac.camel@gmx.de>
-         <4170501b7c4f19ba66d870b671dc90ffbf4623d6.camel@redhat.com>
-         <3773421d06bed0beed9971d03e8fa2050a14cc13.camel@gmx.de>
-         <32a536f5688105df515e6ad9fd12fbcdbd781afb.camel@redhat.com>
-Content-Type: text/plain; charset="ISO-8859-15"
-User-Agent: Evolution 3.34.4 
-MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:G2a6nqlATNVbHXWopLbE4WMWqfI83qPD0dxtXwZ5CU4kg5byHkO
- S3EkrUsBg0uW5cf47Qwznz+FesQvt/Wge/F4Y/rR9fPWfxzkc4ueL0NHTkllktXgFTyjrgK
- xyqHTC2UbYgXLDh4TuzUzSBUQt15x4F4yB4D+tXpZHMI3OZjcUBO0OhbI7jJl4lDM6pfxm3
- 2BL1uhSXd0C7QT7wVMM8A==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:U+7HGfLjwOk=:GV3ytNAM3yGb/w6PHN2CBf
- iiWPUF7kAqYqX+dLa9egsFrOgcmmO2QNXUko9zrcrPG/Sj7L1D2V197Adk16/Gc6Ky1nhjIwE
- XFp/rS7T+50x0eBGll92U5gx6x0DaDJGa4mTDUTkjU1ye1jXfcj5lVn2oeQI/NV5nel4amC6x
- HXI3nAJOvz8B8cvIw+lRUnZVN3jeKpmwr1p38ILr3oZBynlTcH0aixfe8Ha0T0nJyub2Gy3Zt
- bUhb1mt6Pi2WjoG4ZNgKQprgCAWmGdfRbcaYN7+EZVatgEfty4qWkkqHi1dINA+MACDzzBT0D
- CucY9K/SoG7fv40yUz9Eip149hATUvS2DzKPk1MzEZ2X3kd7slJiLHs5PBRmAp3lkgTXhscxc
- QmyNbnu0mnGDt0uKXgWL7heG5d3FZj/I7mctpzre8THDQZzN9qr29bLC1N1qQDPqO5CpsGK0x
- gdTiwBSVdSkQSDLKviFZvjdQuoGVwD3uluWZcsgFezbzfX09XX3iYa+l36PyiImvzxzfN8X4w
- UewXN/CF1osMfkAUXi59bmN9wRkmyH5r+kYxJiqRN+Tn43iYUcFlcDNs7ODNlTLay6K+k53pr
- 0N3U4rqit5rv9zoSUf6BhH8N3VsvN6pYSiBRRAUuLC3rq5g/N2kCw3etU8LMh+qkSiW9NyHTn
- 7cVlVxP/5Wc+1HVgFa2wo0jg8szLfrWz+SW/bnOXUG5vojiSvhyoEmjeBo9UKznEjimcWjfWS
- F7DDr+EXgizwRIz4hH26eA/WR+TxddIOtsP9qfoJIjPVCA5DKmyoaw/pyOgZ9C4XK+7LN1ryq
- 3y0ghA6gWp/xPkJOjpVq7sKnkWYMQYHrxAwWglU8crkX4uU5qfRJZHW/eh/RJK7gCiFmiTwSM
- 5kdSWIXHk5zCOiSOPhCGh5b764ctEHk/pmXeyNHvpF4XGi4c6SzlF7ROXAVhmn38a8CFdQfnv
- q37IAKDkmFlFq1Rokb5mj7sP93EwMCCgcDQWgd0OFbljBTf23EeCIt8dBGViaR5Ra8cxhnhGB
- H3OAI75eWRQ5dy4c0IiUnudFwZXXnlT5RXfYPypWLie0HyePdjDQItWnfwLmmwBLSE73oraHm
- NRkAvgovqVk5uFKCOt+fO3e5en4Yx459naJGOomJH2f/IfYiOAybxMrXsS1Tfqf7Ya9EjP3mB
- nuYpciY9YmnkZ2ZeR3nZM+mf6+jNlmvQ7kQHpQxIMqlaoIkv8NJ4u+4m/sP/ImrpNFInw=
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 2021-05-03 at 16:57 -0500, Scott Wood wrote:
-> On Mon, 2021-05-03 at 20:52 +0200, Mike Galbraith wrote:
-> > On Mon, 2021-05-03 at 11:33 -0500, Scott Wood wrote:
-> > > On Sun, 2021-05-02 at 05:25 +0200, Mike Galbraith wrote:
-> > > > If NEWIDLE balancing migrates one task, how does that manage to
-> > > > consume
-> > > > a full *millisecond*, and why would that only be a problem for RT?
-> > > >
-> > > > 	-Mike
-> > > >
-> > > > (rt tasks don't play !rt balancer here, if CPU goes idle, tough ti=
-tty)
-> > >
-> > > Determining which task to pull is apparently taking that long (again=
-,
-> > > this is on a 128-cpu system).  RT is singled out because that is the
-> > > config that makes significant tradeoffs to keep latencies down (I
-> > > expect this would be far from the only possible 1ms+ latency on a
-> > > non-RT kernel), and there was concern about the overhead of a double
-> > > context switch when pulling a task to a newidle cpu.
-> >
-> > What I think has be going on is that you're running a synchronized RT
-> > load, many CPUs go idle as a thundering herd, and meet at focal point
-> > busiest.  What I was alluding to was that preventing such size scale
-> > pile-ups would be way better than poking holes in it for RT to try to
-> > sneak through.  If pile-up it is, while not particularly likely, the
-> > same should happen with normal tasks, wasting cycles generating heat.
-> >
-> > The main issue I see with these patches is that the resulting number i=
-s
-> > still so gawd awful as to mean "nope, not rt ready", making the whole
-> > exercise look a bit like a noop.
+On Thu, 29 Apr 2021 at 01:28, Scott Wood <swood@redhat.com> wrote:
 >
-> It doesn't look like rteval asks cyclictest to synchronize, but
-> regardless, how is this "poking holes"?
+> This is required in order to be able to enable interrupts in the next
+> patch.  This is limited to PREEMPT_RT to avoid adding potentially
+> measurable overhead to the non-RT case (requiring a double switch when
+> pulling a task onto a newly idle cpu).
 
-Pulling a single task is taking _a full millisecond_, which I see as a
-mountain of cycles, directly through which you open a path for wakeups.
-That "poking holes" isn't meant to be some kind of crude derogatory
-remark, it's just the way I see what was done.  The mountain still
-stands, you didn't remove it.
+IIUC, only the newidle_balance is a problem and not the idle load
+balance that runs softirq. In this case, why not skipping
+newidle_balance entirely in case of preempt_rt and kick an idle load
+balance instead as you switch to idle thread context anyway
 
->   Making sure interrupts are
-> enabled during potentially long-running activities is pretty fundamental
-> to PREEMPT_RT.  What specifically is your suggestion?
 
-Try to include fair class in any LB improvement if at all possible,
-because that's where most of the real world benefit is to be had.
-
-> And yes, 317 us is still not a very good number for PREEMPT_RT, but
-> progress is progress.  It's hard to address the moderate latency spikes
-> if they're obscured by large latency spikes.  One also needs to have
-> realistic expectations when it comes to RT on large systems, particularl=
-y
-> when not isolating the latency-sensitive CPUs.
-
-Agreed.  But.  Specifically because the result remains intolerable to
-anything remotely sensitive, users running such on their big boxen are
-not going to be doing mixed load, that flat does not work, which is why
-I said the patch set looks a bit like a noop: it excludes the audience
-that stands to gain.. nearly anything.  Big box HPC (acronym includes
-RT) gains absolutely nothing, as does big box general case with its not
-particularly prevalent, but definitely existent RT tasks.  Big box
-users who are NOT running anything they care deeply about do receive
-some love.. but don't care deeply, and certainly don't care more any
-more deeply than general case users do about these collision induced
-latency spikes.
-
-	-Mike
-
+>
+> update_misfit_status() is factored out for the PREEMPT_RT case, to ensure
+> that the misfit status is kept consistent before dropping the lock.
+>
+> Signed-off-by: Scott Wood <swood@redhat.com>
+> ---
+> v2: Use a balance callback, and limit to PREEMPT_RT
+>
+>  kernel/sched/fair.c | 34 ++++++++++++++++++++++++++++++----
+>  1 file changed, 30 insertions(+), 4 deletions(-)
+>
+> diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+> index 794c2cb945f8..ff369c38a5b5 100644
+> --- a/kernel/sched/fair.c
+> +++ b/kernel/sched/fair.c
+> @@ -5660,6 +5660,9 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+>
+>  #ifdef CONFIG_SMP
+>
+> +static const bool newidle_balance_in_callback = IS_ENABLED(CONFIG_PREEMPT_RT);
+> +static DEFINE_PER_CPU(struct callback_head, rebalance_head);
+> +
+>  /* Working cpumask for: load_balance, load_balance_newidle. */
+>  DEFINE_PER_CPU(cpumask_var_t, load_balance_mask);
+>  DEFINE_PER_CPU(cpumask_var_t, select_idle_mask);
+> @@ -10549,7 +10552,7 @@ static inline void nohz_newidle_balance(struct rq *this_rq) { }
+>   *     0 - failed, no new tasks
+>   *   > 0 - success, new (fair) tasks present
+>   */
+> -static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+> +static int do_newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+>  {
+>         unsigned long next_balance = jiffies + HZ;
+>         int this_cpu = this_rq->cpu;
+> @@ -10557,7 +10560,9 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+>         int pulled_task = 0;
+>         u64 curr_cost = 0;
+>
+> -       update_misfit_status(NULL, this_rq);
+> +       if (!newidle_balance_in_callback)
+> +               update_misfit_status(NULL, this_rq);
+> +
+>         /*
+>          * We must set idle_stamp _before_ calling idle_balance(), such that we
+>          * measure the duration of idle_balance() as idle time.
+> @@ -10576,7 +10581,8 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+>          * further scheduler activity on it and we're being very careful to
+>          * re-start the picking loop.
+>          */
+> -       rq_unpin_lock(this_rq, rf);
+> +       if (!newidle_balance_in_callback)
+> +               rq_unpin_lock(this_rq, rf);
+>
+>         if (this_rq->avg_idle < sysctl_sched_migration_cost ||
+>             !READ_ONCE(this_rq->rd->overload)) {
+> @@ -10655,11 +10661,31 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+>         if (pulled_task)
+>                 this_rq->idle_stamp = 0;
+>
+> -       rq_repin_lock(this_rq, rf);
+> +       if (!newidle_balance_in_callback)
+> +               rq_repin_lock(this_rq, rf);
+>
+>         return pulled_task;
+>  }
+>
+> +static void newidle_balance_cb(struct rq *this_rq)
+> +{
+> +       update_rq_clock(this_rq);
+> +       do_newidle_balance(this_rq, NULL);
+> +}
+> +
+> +static int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+> +{
+> +       if (newidle_balance_in_callback) {
+> +               update_misfit_status(NULL, this_rq);
+> +               queue_balance_callback(this_rq,
+> +                                      &per_cpu(rebalance_head, this_rq->cpu),
+> +                                      newidle_balance_cb);
+> +               return 0;
+> +       }
+> +
+> +       return do_newidle_balance(this_rq, rf);
+> +}
+> +
+>  /*
+>   * run_rebalance_domains is triggered when needed from the scheduler tick.
+>   * Also triggered for nohz idle balancing (with nohz_balancing_kick set).
+> --
+> 2.27.0
+>
