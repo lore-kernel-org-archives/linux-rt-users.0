@@ -7,66 +7,66 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0165FC433ED
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:28:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DB1ABC433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:29:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A5D8361451
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:28:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 994A66144F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:29:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238171AbhEGQ3n (ORCPT
+        id S238174AbhEGQaP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:29:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54806 "EHLO
+        Fri, 7 May 2021 12:30:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54934 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238170AbhEGQ3j (ORCPT
+        with ESMTP id S238172AbhEGQaN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:29:39 -0400
-Received: from mail-qv1-xf2f.google.com (mail-qv1-xf2f.google.com [IPv6:2607:f8b0:4864:20::f2f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 63321C061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:28:38 -0700 (PDT)
-Received: by mail-qv1-xf2f.google.com with SMTP id 5so1130997qvk.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:28:38 -0700 (PDT)
+        Fri, 7 May 2021 12:30:13 -0400
+Received: from mail-qk1-x729.google.com (mail-qk1-x729.google.com [IPv6:2607:f8b0:4864:20::729])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6C926C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:29:13 -0700 (PDT)
+Received: by mail-qk1-x729.google.com with SMTP id k127so9020546qkc.6
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:29:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=aBq+YcwG6yCVNLuBcqAThz47g9KTdpaYLMvD4ueq+v4=;
-        b=KZH0fiZJLPwUOQZeZOJb3TX+cfE8DheXFU/Wgfx80HmknP9bfma58LGxjOhPVe4xMI
-         CUL0ao6JurqnccFw+8rxTuNKb/Q6eJ2j/F5AKIEVngXZEnEsczzSTGDfe7YUSCCJ0uKs
-         Lo/nFCmptXK6XN7fyzy8XhNXTyysY98g83GAo3Hm518o2kEn6lsR1mt6FGrbGtdo1PPT
-         MTQWYE4bTlIdd9xfBsfeOGCPzDaLsN9A12vzQk30Nm2OUEfbHEUkYNItk5qMNsTxDxlZ
-         Aw0Gou+Ds8TmwnEejFBJw/ftzgnZUwc0fqUKgmyPrz1Zme3A0y3keUL8gVxZuHY9muKj
-         U/tA==
+        bh=3wKXzBPDQ9Q6u5QB6fHZyRuvfoSMLB9aBR8pZNkxfac=;
+        b=k7A1eNOeTmVGCgds+Ceeqc4uPtanV9ugVmG+cpEnMUv8cDDEWGsL4GvwedLQ7elkqi
+         O06W66kFpCxK8dUF59Tt5n718bQgJcJ0pCKZjD/xCyhbRcOwVaNBuQiMAAVGJlMzHoJz
+         eZcQnqPITSwAf36Tn6nb62rhNOs8fZya19FIEtcV4fuBaJ6+p7ICpckNcEIxHkbJ3JEO
+         kqDtDmfYLgCYbrOJ58gqdopRJ2jW/dKDeY2gzZvXVwsap6apPTE1ZLEgzu2kt/v+nWRy
+         /WUpSyPjcdQlvGSTS+xHnM0tnKuOoHlOCwz6PLYl4NGedtD30hm5Ufk6TEMYm+RSW2KK
+         kjDg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=aBq+YcwG6yCVNLuBcqAThz47g9KTdpaYLMvD4ueq+v4=;
-        b=dlW1xriOPHZfUULhr0E6zhlwdUkA1LdvxW4BM4S3rPP1gZARrX9rnogzuEY+3bVp7N
-         sQowymG34Fz9XQnfOvsBkPyoAIhWLHOpddwr0oJmFhYmhkNqgFP0i8IVgu0hk7D0W0HF
-         u1Nn0KIPWZjise+NC6TGbIa6HDHGSe+PiOb0js8OImvJBqmjnI5PWahAmpSD9T0ffeF/
-         ZaOFuFFZBTNSmtSSt+rLPkYnbILO8qi6o6tHolgEZnW7SWBd7oRPkSk65y+oSxhshxTC
-         D1zoPuupZqPwKWc+H7NkKgaPRw0pjbosgf8kLRL999QKYdNpRXrSfLCSgl1dD9FDiMNw
-         ilbQ==
-X-Gm-Message-State: AOAM531TAFFrXOVYg0m07k5UatHDIuT0Zk2VZ8FAK9yJmPAgB83xNbRf
-        q5LBxl3bb4VxnzqmSNxr/eY=
-X-Google-Smtp-Source: ABdhPJy/2I3KP62OYWEylxMu8inM5ZzwnqJwh5yr5fhKMAmx3GtCxro9BfsN41uUgB1vyV7J9/Jkxg==
-X-Received: by 2002:a0c:bd2b:: with SMTP id m43mr10781816qvg.52.1620404917712;
-        Fri, 07 May 2021 09:28:37 -0700 (PDT)
+        bh=3wKXzBPDQ9Q6u5QB6fHZyRuvfoSMLB9aBR8pZNkxfac=;
+        b=kpD/P/8tnOWw2rtcewUpsVqtoT87SBtOKuBQTQqCv/na6Of6UIS9A9G+PaJHHBz9hc
+         V3w/W9nbH47qOv0ylIT9qMtEud07ZEM1TAbahuPoEZ3XCUHmDwDaOboJhD5p9OSNMT9s
+         1LpLpHpWv7fqTG4SJl7lCAu3b/sbKj5FUWjNHFHXYxRYCML0YQhl0bj1UIJgLFa0vfWC
+         0lRnnWyBr4O9y9hf6QuH8A1bZC6eUTAZfSQrQMW8lde4K9gW6EE9cSm2wL3Ao+pYrnxH
+         QjyGTgdH99fQP753tZDdwW64YEHjS0G+tn7yPzm4nsUxjDGzyefTbQ6C61Qzz9OJG0MA
+         tg/Q==
+X-Gm-Message-State: AOAM5321mFqtis8DJMgAEIeFmjzxaWSgTFS9FWy4jl1OzccczGn0HhTT
+        fPlSe4IS0WMzKUDgcuotgDw=
+X-Google-Smtp-Source: ABdhPJxSjdigGyqX5ecKt9D6rM3Ya+ECuAFv1CXXe5aqSM3sCpxaOYkHqRf3YRPJhZFz1qomst+GvQ==
+X-Received: by 2002:a37:7246:: with SMTP id n67mr9874029qkc.71.1620404952736;
+        Fri, 07 May 2021 09:29:12 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id a20sm5100896qko.36.2021.05.07.09.28.37
+        by smtp.gmail.com with ESMTPSA id o135sm4912330qke.124.2021.05.07.09.29.12
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:28:37 -0700 (PDT)
+        Fri, 07 May 2021 09:29:12 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:28:36 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:29:11 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 05/33] cyclictest: Initialize rt-util
-In-Reply-To: <20210320183829.1318-6-dwagner@suse.de>
-Message-ID: <2757e864-d52d-14e7-9162-3a62f153f21@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-6-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v3 06/33] oslat: Initialize rt-util
+In-Reply-To: <20210320183829.1318-7-dwagner@suse.de>
+Message-ID: <44646c3c-1653-e7e0-7b3f-c8df14f5f4fb@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-7-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -81,23 +81,25 @@ On Sat, 20 Mar 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/cyclictest/cyclictest.c | 1 +
->  1 file changed, 1 insertion(+)
+>  src/oslat/oslat.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index c43dd7cbbd64..e817af217952 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1778,6 +1778,7 @@ int main(int argc, char **argv)
->  	int i, ret = -1;
->  	int status;
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index 465a694cdd1d..da7b25d48384 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -796,6 +796,8 @@ int main(int argc, char *argv[])
+>  		exit(1);
+>  	}
 >  
 > +	rt_init(argc, argv);
->  	process_options(argc, argv, max_cpus);
->  
->  	if (check_privs())
+> +
+>  	g.app_name = argv[0];
+>  	g.rtprio = 0;
+>  	g.bucket_size = BUCKET_SIZE;
 > -- 
 > 2.30.2
 > 
 > 
+
 Signed-off-by: John Kacur <jkacur@redhat.com>
