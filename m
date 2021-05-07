@@ -7,67 +7,66 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 09CCDC433B4
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:58:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93449C433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:59:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B42E76145E
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:58:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4CBC26145E
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:59:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236463AbhEGQ7k (ORCPT
+        id S238453AbhEGRAF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:59:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33326 "EHLO
+        Fri, 7 May 2021 13:00:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33434 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234440AbhEGQ7k (ORCPT
+        with ESMTP id S236002AbhEGRAF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:59:40 -0400
-Received: from mail-qt1-x829.google.com (mail-qt1-x829.google.com [IPv6:2607:f8b0:4864:20::829])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 049B7C061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:58:40 -0700 (PDT)
-Received: by mail-qt1-x829.google.com with SMTP id 1so7107398qtb.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:58:39 -0700 (PDT)
+        Fri, 7 May 2021 13:00:05 -0400
+Received: from mail-qt1-x833.google.com (mail-qt1-x833.google.com [IPv6:2607:f8b0:4864:20::833])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7B548C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:59:05 -0700 (PDT)
+Received: by mail-qt1-x833.google.com with SMTP id p6so7064666qtk.13
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:59:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=b3l28fgXnHvhdkRGE2zINXnD8s/fhUQi1P2vgP0n9ck=;
-        b=kHyLCOUujb9cpCOpeRI6Writs3yEvR67+NyZtqneZhtN5RK0aEW2XExTOKAHRv4G6E
-         U1XjCObqPWEwbBvm3W98FAUaLkb29x2eIMwvghbm4NCYbKU+NV5oE5jfsJJu/orO4cwM
-         +vbbu/rLXRk6+hFL2DHczxQaOk2SsxhxClDg9VeLFAyfeRsw2cvLwV4IDf7TVHUVxdoV
-         oro53x4XR38eoGh++oixgwtkJsFtlBLP6G6Zdz4S/5pjFdSiUKFZcD4uFqxn50sUTtmb
-         V+75CFQF0Xbbki8VJ6HriOF9HkXEe8nIqiJ2sIdnyqpZV54mzU8VDjy6Qc4cN7bT3vE8
-         qlLQ==
+        bh=W1A1LP8orspCsCviu4p3kmsynJbr2s81/yj6HaAQfho=;
+        b=YEscfICaQkR1AzKyfTrlOmPj7I9uVo3mXTulAHOerrdbAof48d+jahXbIvuLYAxXnZ
+         g3DbmmljIsULN2XfWKbXJ0xt6eSgb8inAy49bxpbBBQEL3n6rJQ1iUM+tpD97tW5TPDL
+         DiuUTZYpg8fTIicLsfPkdLs/yYkCmFSnrHaaWp/2atYnoGCC0V6eZP5DAZBXemKGpP8j
+         lP7qsiHM6oN7PkS6oISb4vxHbrVjQgDbr7NECXAdNWDrgvCMPWYsEvsBqcsrfxKAoLjL
+         iL9vnbCqJKouFFdfqk8AINW7YQzqFqZZY33GWw8DfHkzV2PywaCvA6HwJa/ZpCFEMXPk
+         gBPA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=b3l28fgXnHvhdkRGE2zINXnD8s/fhUQi1P2vgP0n9ck=;
-        b=dsFA2k7zW/fBnPPv5x9No1lG6Jh2KLt3AwJm8ewdGsfpB86aO3n6jbhyr7Y82kRpLz
-         NO8Va5HqpTZ3kwy3od1+5zkCkX6bRdytLo13T0GpsGTVpwu+6BlXSizEZ30iDDcEJVht
-         VCXApzCNAz2eMW7+/eQXvdppaw1T8YRvXmcJC3hXtHaQwX48t2bABEa98LHhouOdRY6n
-         R8AuZjgEbIU8Z/eVIPWuQMeToeERbKX7EMxR3zHL3e/5PzbyhWbcb99FdtIv/4xkCCdn
-         yVUX44R4SnOU+9FPOSvSh32CZapRkLSOyGnrLU1JrJXyAfy1rmN4CiYkMuzKR1PHOYe7
-         r9RA==
-X-Gm-Message-State: AOAM532IvppZjCvdnDKzuRYdRr20HqzUZskAxJhuv+Wy82juJgnUFARs
-        hrtXZRpfgJw7/nn/YHMwwio=
-X-Google-Smtp-Source: ABdhPJzMf1BdEAs+WpYuZJbxcr6tQFEVMCbhXP5TpqVBPzEv4iRvFgAps5lKhPLrxUeJn5Pogq7mGw==
-X-Received: by 2002:ac8:570f:: with SMTP id 15mr10127435qtw.309.1620406719277;
-        Fri, 07 May 2021 09:58:39 -0700 (PDT)
+        bh=W1A1LP8orspCsCviu4p3kmsynJbr2s81/yj6HaAQfho=;
+        b=tpZ2tbPn0qW3XM5un6NNKBeOPsnmctdAY6m6TWmjYuLAUpdd5yfmlNhTHZ0fgPhZ4m
+         z6BPsacC/28JOp5+0M9XSimmEG6Rhjn1rnBObHO0tYls6eXQeOq1Caq4Cx85QJSZSNe4
+         8QtG4W70ZJ49/0hJipLm9s8ATUydu9tlc8zhaVy0vscH8arUFtwsS7zELe85bplYfNsE
+         Q437VrMIc23WIRsRmHFOZK5ve49FElLKboRJwS4+QBaQXWnf25lPqrq7QghXCRJPIzND
+         w9JYQPOJ7eY7Deb0IxZxkTyMjGng+IeqLwTYvkVAK15XueaMEDlzA1rOYQ21X4FSPMo2
+         w0Rg==
+X-Gm-Message-State: AOAM532jihIwahnWlkNqs9VG3aH8SUh31s8Tr79hoJM3Tc/FtsAnVeu0
+        JXSNslYFwtGHScRkTqb+xf+xmmHDf4V25g==
+X-Google-Smtp-Source: ABdhPJw+XXhrhOHAqqHZXN+6+ZHA8AiAitQ35DTei1mO4NmQIRuM90hVkl+bXG4MKM5ih+wScizjaQ==
+X-Received: by 2002:ac8:53c7:: with SMTP id c7mr1512401qtq.74.1620406744801;
+        Fri, 07 May 2021 09:59:04 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id m124sm5257610qkc.70.2021.05.07.09.58.38
+        by smtp.gmail.com with ESMTPSA id h19sm5144521qkj.33.2021.05.07.09.59.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:58:39 -0700 (PDT)
+        Fri, 07 May 2021 09:59:04 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:58:38 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:59:03 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 30/33] pi_stress: Prepare command line parser
- for long options only
-In-Reply-To: <20210320183829.1318-31-dwagner@suse.de>
-Message-ID: <3b256f9b-2b62-f56-914e-c8d894271a61@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-31-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v3 31/33] pi_stress: Add JSON output feature
+In-Reply-To: <20210320183829.1318-32-dwagner@suse.de>
+Message-ID: <28158ea-eeca-1ff5-355a-1ba4f54665@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-32-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -78,125 +77,110 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Sat, 20 Mar 2021, Daniel Wagner wrote:
 
-> Introduce option value enums in order to be able to parse long options
-> only.
+> Write the test results as JSON output to a file. This allows to
+> simplifies any parsing later on.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/pi_tests/pi_stress.c | 45 ++++++++++++++++++++++++++++------------
->  1 file changed, 32 insertions(+), 13 deletions(-)
+>  src/pi_tests/pi_stress.c | 22 +++++++++++++++++++++-
+>  1 file changed, 21 insertions(+), 1 deletion(-)
 > 
 > diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-> index 49f89b7b0136..73f0e6a402e3 100644
+> index 73f0e6a402e3..3f93d4aadd53 100644
 > --- a/src/pi_tests/pi_stress.c
 > +++ b/src/pi_tests/pi_stress.c
-> @@ -1274,23 +1274,29 @@ int process_sched_line(const char *arg)
->  	return retval;
->  }
+> @@ -99,6 +99,9 @@ int debugging = 0;
 >  
-> +enum option_values {
-> +	OPT_DEBUG=1, OPT_DURATION, OPT_GROUPS, OPT_HELP, OPT_INVERSIONS,
-> +	OPT_MLOCKALL, OPT_PROMPT, OPT_QUIET, OPT_RR, OPT_SCHED,
-> +	OPT_UNIPROCESSOR, OPT_VERBOSE, OPT_VERSION,
-> +};
+>  int quiet = 0;	/* turn off all prints, default = 0 (off) */
+>  
+> +/* filename for JSON output */
+> +char outfile[MAX_PATH];
 > +
->  void process_command_line(int argc, char **argv)
->  {
->  	for (;;) {
->  		struct option options[] = {
-> -			{"debug",		no_argument,		NULL, 'd'},
-> -			{"duration",		required_argument,	NULL, 'D'},
-> -			{"groups",		required_argument,	NULL, 'g'},
-> -			{"help",		no_argument,		NULL, 'h'},
-> -			{"inversions",		required_argument,	NULL, 'i'},
-> -			{"mlockall",		no_argument,		NULL, 'm'},
-> -			{"prompt",		no_argument,		NULL, 'p'},
-> -			{"quiet",		no_argument,		NULL, 'q'},
-> -			{"rr",			no_argument,		NULL, 'r'},
-> -			{"sched",		required_argument,	NULL, 's'},
-> -			{"uniprocessor",	no_argument,		NULL, 'u'},
-> -			{"verbose",		no_argument,		NULL, 'v'},
-> -			{"version",		no_argument,		NULL, 'V'},
-> +			{"debug",		no_argument,		NULL, OPT_DEBUG},
-> +			{"duration",		required_argument,	NULL, OPT_DURATION},
-> +			{"groups",		required_argument,	NULL, OPT_GROUPS},
-> +			{"help",		no_argument,		NULL, OPT_HELP},
-> +			{"inversions",		required_argument,	NULL, OPT_INVERSIONS},
-> +			{"mlockall",		no_argument,		NULL, OPT_MLOCKALL},
-> +			{"prompt",		no_argument,		NULL, OPT_PROMPT},
-> +			{"quiet",		no_argument,		NULL, OPT_QUIET},
-> +			{"rr",			no_argument,		NULL, OPT_RR},
-> +			{"sched",		required_argument,	NULL, OPT_SCHED},
-> +			{"uniprocessor",	no_argument,		NULL, OPT_UNIPROCESSOR},
-> +			{"verbose",		no_argument,		NULL, OPT_VERBOSE},
-> +			{"version",		no_argument,		NULL, OPT_VERSION},
->  			{NULL, 0, NULL, 0},
->  		};
+>  /* prompt to start test */
+>  int prompt = 0;
 >  
-> @@ -1298,12 +1304,15 @@ void process_command_line(int argc, char **argv)
->  		if (c == -1)
->  			break;
->  		switch (c) {
-> +		case OPT_DEBUG:
->  		case 'd':
->  			debugging = 1;
->  			break;
-> +		case OPT_DURATION:
->  		case 'D':
->  			duration = parse_time_string(optarg);
->  			break;
-> +		case OPT_GROUPS:
->  		case 'g':
->  			ngroups = strtol(optarg, NULL, 10);
->  			if (ngroups > num_processors) {
-> @@ -1314,37 +1323,47 @@ void process_command_line(int argc, char **argv)
->  			}
->  			pi_info("number of groups set to %d\n", ngroups);
->  			break;
-> +		case OPT_HELP:
->  		case 'h':
->  			usage(0);
->  			break;
-> +		case OPT_INVERSIONS:
->  		case 'i':
->  			inversions = strtol(optarg, NULL, 10);
->  			pi_info("doing %d inversion per group\n", inversions);
->  			break;
-> +		case OPT_MLOCKALL:
+> @@ -209,6 +212,7 @@ int create_group(struct group_parameters *group);
+>  unsigned long total_inversions(void);
+>  void banner(void);
+>  void summary(void);
+> +void write_stats(FILE *f, void *data);
+>  void wait_for_termination(void);
+>  int barrier_init(pthread_barrier_t *b, const pthread_barrierattr_t *attr,
+>  		 unsigned int count, const char *name);
+> @@ -235,6 +239,7 @@ int main(int argc, char **argv)
+>  
+>  
+>  	/* process command line arguments */
+> +	rt_init(argc, argv);
+>  	process_command_line(argc, argv);
+>  
+>  	/* set default sched attributes */
+> @@ -299,6 +304,7 @@ int main(int argc, char **argv)
+>  	}
+>  	/* report */
+>  	banner();
+> +	rt_test_start();
+>  	start = time(NULL);
+>  
+>  	/* turn loose the threads */
+> @@ -335,6 +341,10 @@ int main(int argc, char **argv)
+>  		kill(0, SIGTERM);
+>  	finish = time(NULL);
+>  	summary();
+> +
+> +	if (strlen(outfile) != 0)
+> +		rt_write_json(outfile, retval, write_stats, NULL);
+> +
+>  	if (lockall)
+>  		munlockall();
+>  	exit(retval);
+> @@ -983,6 +993,7 @@ void usage(int error)
+>  	       "-h       --help            print this message\n"
+>  	       "-i INV   --inversions=INV  number of inversions per group (default is infinite)\n"
+>  	       "-m       --mlockall        lock current and future memory\n"
+> +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+>  	       "-p       --prompt          prompt before starting the test\n"
+>  	       "-q       --quiet           suppress running output\n"
+>  	       "-r       --rr              use SCHED_RR for test threads [SCHED_FIFO]\n"
+> @@ -1276,7 +1287,7 @@ int process_sched_line(const char *arg)
+>  
+>  enum option_values {
+>  	OPT_DEBUG=1, OPT_DURATION, OPT_GROUPS, OPT_HELP, OPT_INVERSIONS,
+> -	OPT_MLOCKALL, OPT_PROMPT, OPT_QUIET, OPT_RR, OPT_SCHED,
+> +	OPT_MLOCKALL, OPT_OUTPUT, OPT_PROMPT, OPT_QUIET, OPT_RR, OPT_SCHED,
+>  	OPT_UNIPROCESSOR, OPT_VERBOSE, OPT_VERSION,
+>  };
+>  
+> @@ -1290,6 +1301,7 @@ void process_command_line(int argc, char **argv)
+>  			{"help",		no_argument,		NULL, OPT_HELP},
+>  			{"inversions",		required_argument,	NULL, OPT_INVERSIONS},
+>  			{"mlockall",		no_argument,		NULL, OPT_MLOCKALL},
+> +			{"output",		required_argument,	NULL, OPT_OUTPUT},
+>  			{"prompt",		no_argument,		NULL, OPT_PROMPT},
+>  			{"quiet",		no_argument,		NULL, OPT_QUIET},
+>  			{"rr",			no_argument,		NULL, OPT_RR},
+> @@ -1336,6 +1348,9 @@ void process_command_line(int argc, char **argv)
 >  		case 'm':
 >  			lockall = 1;
 >  			break;
-> +		case OPT_PROMPT:
+> +		case OPT_OUTPUT:
+> +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
+> +			break;
+>  		case OPT_PROMPT:
 >  		case 'p':
 >  			prompt = 1;
->  			break;
-> +		case OPT_QUIET:
->  		case 'q':
->  			verbose = 0;
->  			quiet = 1;
->  			break;
-> +		case OPT_RR:
->  		case 'r':
->  			policy = SCHED_RR;
->  			break;
-> +		case OPT_SCHED:
->  		case 's':
->  			if (process_sched_line(optarg))
->  				pi_error("ignoring invalid options '%s'\n", optarg);
->  			break;
-> +		case OPT_UNIPROCESSOR:
->  		case 'u':
->  			uniprocessor = 1;
->  			break;
-> +		case OPT_VERBOSE:
->  		case 'v':
->  			verbose = 1;
->  			quiet = 0;
->  			break;
-> +		case OPT_VERSION:
->  		case 'V':
->  			printf("pi_stress v%1.2f ", VERSION);
->  			exit(0);
+> @@ -1439,6 +1454,11 @@ void summary(void)
+>  	       t->tm_yday, t->tm_hour, t->tm_min, t->tm_sec);
+>  }
+>  
+> +void write_stats(FILE *f, void *data)
+> +{
+> +	fprintf(f, "  \"inversion\": %lu\n", total_inversions());
+> +}
+> +
+>  int
+>  barrier_init(pthread_barrier_t *b, const pthread_barrierattr_t *attr,
+>  	     unsigned int count, const char *name)
 > -- 
 > 2.30.2
 > 
