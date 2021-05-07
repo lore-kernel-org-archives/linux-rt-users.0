@@ -7,66 +7,67 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 72BACC433B4
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:01:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52F3BC433B4
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:17:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 20593600D1
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:01:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 006F761451
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:17:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236424AbhEGQCl (ORCPT
+        id S236123AbhEGQSv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:02:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48838 "EHLO
+        Fri, 7 May 2021 12:18:51 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52368 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236304AbhEGQCk (ORCPT
+        with ESMTP id S235256AbhEGQSu (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:02:40 -0400
-Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4AD64C061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:01:40 -0700 (PDT)
-Received: by mail-qk1-x736.google.com with SMTP id i17so8922146qki.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:01:40 -0700 (PDT)
+        Fri, 7 May 2021 12:18:50 -0400
+Received: from mail-qt1-x829.google.com (mail-qt1-x829.google.com [IPv6:2607:f8b0:4864:20::829])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B52E8C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:17:49 -0700 (PDT)
+Received: by mail-qt1-x829.google.com with SMTP id f8so2804868qth.6
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:17:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=vy/JWIki+BYxIP99howKkp5rcm1LMzux3d/exjF1EgU=;
-        b=RuCOnvocLfNVF+mcajaky5B6fjeIkhvM88ouj/3/77asPVDtT1wbBMOAC4eo6QQRxh
-         JiZF21izT1gGWjFNyUINThLY1lnqeIlrfysz1gDISiYMoFs2LCUMLH0uPSA1wqz/ScyA
-         huf5kNFq7tmK/4od5vs4nMu7x+jLEYDf2N9B4/UrlL5EqHXbp8Tf37v4HAhYdYOyo0es
-         77O1Eplc67HdZwdpVwZ0eborJFPzRJNj489jAz1s/H9fUkoNTjf9NJ+4hN1IWM6cMe2f
-         hKs6H4a0PBupJlXX5MUKyb+k1DwJlG9vZLc32+z8xoHFuphG8fXcAfc36wtTB1I0EbiW
-         gZoA==
+        bh=w3pnbOzOHOzi67BLnu4mx/4n+Q7fZ7nz0cTlspv67Fs=;
+        b=PbWJjWWrNKUQSPhUod1Ig4glJ80NRDDeBJ/fBYNjFzzbxjcKuKnuFqVwZFcElheP2E
+         IL+h8oENpwKXlpGlwuGUyPttDepeus4vZY811tULn/A0179xRddYE3EbeHuc3Zt3xdVR
+         C/eYaCdeOwELnmlMhxh3Ng0Tlc7+MHehKGLaWEJSKAr8dI81TRpic/+ilFF1LiTY6gO8
+         vMVCcFfEqHMj5x+SJ3gA4CpHwFMQzYYekUkfPHuDrkT55LrzCM4tDK7+ox+36UAyQM4L
+         wFUwMU1G0UqvXRHlzbMpADldUd/7j6NB0X63IkiF43UilICHxMnsk9/SjgOWIaeOg3nn
+         dogg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=vy/JWIki+BYxIP99howKkp5rcm1LMzux3d/exjF1EgU=;
-        b=HEAXO3xYvvSmuOWO+7NUJB34kfyfqwFQWxCwZ+NU3rK+SjLxFF13oWhIYP56TszFr+
-         47Ry7N0o84O/pMhksIssOatGoAvB63/VrGxOUGYlensyd/IgOHs4RDhu+OG8SA2Jc2nx
-         dAeUhWr6jhrp/fWyNM/dEloLR6uJAEbUecjD88hUvN8R8ZphIGL/sLwCbBsIT4PJ+S+T
-         6+oMpMtc9u/Y/Q//ivLNbOnjRgyvrLAatacBZzbcBuXP14i5MvEWixGgle4ivQhiI8zC
-         jVzXKXOk0NR+ZaqmRsdNOeoFCcs0onzr9k5xBZdoHp+h1c5P+51hztP+W/O5Ep4/fSsB
-         Xa6w==
-X-Gm-Message-State: AOAM5303kCCNPaT2Ni4YSpjjwl7WCqTe+GDjEYrfx/kY9dwHsu6wiixg
-        VXz5+r9VwDJIKRjZc9KQ42IZOy3URjgO2Q==
-X-Google-Smtp-Source: ABdhPJx+FbwTgT+oV2P+wGZhBc+6LwbfmxA/cNde4FphKSKU0fGR/J+3wR4b+s5VLzTrpbZwWA3PDg==
-X-Received: by 2002:a05:620a:5bd:: with SMTP id q29mr10468492qkq.226.1620403298769;
-        Fri, 07 May 2021 09:01:38 -0700 (PDT)
+        bh=w3pnbOzOHOzi67BLnu4mx/4n+Q7fZ7nz0cTlspv67Fs=;
+        b=tQ4NNLv0lttYkbA7URX8tvzsBG5d6QgmlNqnT06Dnfksdqa0g4v9IUkRN1HoVD+EVY
+         K/eG9pBx9WuBYj/PIcGIzQiGLVUZKMEKNAuxvlxAhOhXZzn28jDBQyQGye1A8EYeIrBI
+         9+ICj7JjfjQtaOsy4kfVBEB2uJEjoGL9go2EYqBreaAxnfTgwau1bU8NR+pCb7uIFgfz
+         O/78smyZvi3FL+inArZi78Yx3hwqdUcGglNN491mqcf3zKvUSMKLpTGbVQVkbwul6BAX
+         c1C46GBflm1CWWBBxkpi3jtpTUyqWKD707tbpUSROkfUFSPo1exWeTnXg7LiJ1xXmi42
+         FiEw==
+X-Gm-Message-State: AOAM533HzJJah/XwPCPJC42eyNTH3397kBs36BDSiJqplt9omajAqN/g
+        bwporhfIj98FAw+CyHHgV489FrooutW8Dg==
+X-Google-Smtp-Source: ABdhPJx4dPuIus6tJqevlGL1LE+cWjcsYvXN04L89ofNCkmENK1XkXzzUreFki4aInt965FHPf/SAw==
+X-Received: by 2002:a05:622a:18a:: with SMTP id s10mr9952714qtw.237.1620404268766;
+        Fri, 07 May 2021 09:17:48 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id 4sm5035404qtc.40.2021.05.07.09.01.37
+        by smtp.gmail.com with ESMTPSA id v10sm5011934qtf.39.2021.05.07.09.17.48
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:01:37 -0700 (PDT)
+        Fri, 07 May 2021 09:17:48 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:01:30 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:17:47 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Jiafei Pan <jiafei.pan@nxp.com>
-cc:     "williams@redhat.com" <williams@redhat.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: RE: [PATCH] rt-tests: pi_stress: fix testing threads' smp affinity
-In-Reply-To: <AS8PR04MB81825DF5E1C40EEED0C2DC2C8A579@AS8PR04MB8182.eurprd04.prod.outlook.com>
-Message-ID: <bc53c555-a9ea-d9b5-e756-959e4f46990@redhat.com>
-References: <20210326094404.18110-1-Jiafei.Pan@nxp.com> <AS8PR04MB81825DF5E1C40EEED0C2DC2C8A579@AS8PR04MB8182.eurprd04.prod.outlook.com>
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH rt-tests v3 01/33] cyclictest: Remove unused include
+ header
+In-Reply-To: <20210320183829.1318-2-dwagner@suse.de>
+Message-ID: <7914c9cc-d91f-76c3-f82b-ab4ec0499d7@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-2-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -75,110 +76,34 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Fri, 7 May 2021, Jiafei Pan wrote:
+On Sat, 20 Mar 2021, Daniel Wagner wrote:
 
-> Any comments? thanks.
+> The header was introduced by 24aaf9619bc2 ("cyclictest: Add JSON
+> output feature") for PRIu64 format specifier. As PRIu64 was removed in
+> commit f6881fc42baa ("cyclictest: Fix printf format specifier") remove
+> the include header again.
 > 
-> Best Regards,
-> Jiafei.
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  src/cyclictest/cyclictest.c | 1 -
+>  1 file changed, 1 deletion(-)
 > 
-> > -----Original Message-----
-> > From: Jiafei Pan <jiafei.pan@nxp.com>
-> > Sent: Friday, March 26, 2021 5:44 PM
-> > To: williams@redhat.com; jkacur@redhat.com
-> > Cc: linux-rt-users@vger.kernel.org; Jiafei Pan <jiafei.pan@nxp.com>; Jiafei
-> > Pan <jiafei.pan@nxp.com>
-> > Subject: [PATCH] rt-tests: pi_stress: fix testing threads' smp affinity
-> > 
-> > This patch includes the following modification:
-> > 1. Make sure test threads and admin threads don't run on the same CPU
-> >    Core if uniprocessor is not set or not on single Core platform to
-> >    avoid starve admin threads.
-
-Doesn't the code already do this? The one exception I can think of is you 
-are allowed one group of threads per online processor, so if you have the 
-maximum number of groups, then one of those groups will run on the same 
-processor as the admin thread. Even in this case though, the admin_thread
-has the highest realtime priority.
-
-> > 2. Force to use SCHED_RR if more than one Groups running one a CPU
-> >    Core to avoid test failure because threads in different Groups
-> >    are using the same priority, SCHED_FIFO which is default policy
-> >    and it maybe trigger deadlock of testing threads.
-
-Like a lot of things in realtime, we give you enough rope to hang 
-yourself. We are trying to create a tool here that purposely triggers 
-deadlocks that are resolved via priority inheritence in order to test 
-priority inheritence, we're not trying to create a robust application that 
-has safeguards to avoid this situation. So, with that in mind, why would 
-we force the teste to use SCHED_RR if the user wants SCHED_FF ?
-
-Trying to understand what you are trying to accomplish here. Is it that 
-you want to get rid of the limitation of only allowing one inversion group 
-per processor? If so, why is this useful?
-
-Thanks
-
-John
-
-> > 
-> > Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-> > ---
-> >  src/pi_tests/pi_stress.c | 23 +++++++++++++++++++----
-> >  1 file changed, 19 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c index
-> > 49f89b7..8795908 100644
-> > --- a/src/pi_tests/pi_stress.c
-> > +++ b/src/pi_tests/pi_stress.c
-> > @@ -237,6 +237,13 @@ int main(int argc, char **argv)
-> >  	/* process command line arguments */
-> >  	process_command_line(argc, argv);
-> > 
-> > +	if (ngroups > (num_processors - 1)) {
-> > +		printf("Warning: One Core will used for administor thread, the other
-> > CPU Core will run test thread,\n");
-> > +		printf("\t it will running more than one Group on one Core (groups >
-> > num_of_processors -1),\n");
-> > +		printf("\t it will force to use SCHED_RR, or change groups number to
-> > be lower than %ld \n", num_processors);
-> > +		policy = SCHED_RR;
-> > +	}
-> > +
-> >  	/* set default sched attributes */
-> >  	setup_sched_config(policy);
-> > 
-> > @@ -285,9 +292,17 @@ int main(int argc, char **argv)
-> >  			break;
-> >  	for (i = 0; i < ngroups; i++) {
-> >  		groups[i].id = i;
-> > -		groups[i].cpu = core++;
-> > -		if (core >= num_processors)
-> > -			core = 0;
-> > +		if (num_processors == 1 || uniprocessor) {
-> > +			groups[i].cpu = 0;
-> > +		} else {
-> > +			groups[i].cpu = core;
-> > +			/* Find next non-admin Core */
-> > +			do {
-> > +				core++;
-> > +				if (core >= num_processors)
-> > +					core = 0;
-> > +			} while (CPU_ISSET(core, &admin_cpu_mask));
-> > +		}
-> >  		if (create_group(&groups[i]) != SUCCESS)
-> >  			return FAILURE;
-> >  	}
-> > @@ -1143,7 +1158,7 @@ int create_group(struct group_parameters *group)
-> >  	CPU_ZERO(&mask);
-> >  	CPU_SET(group->cpu, &mask);
-> > 
-> > -	pi_debug("group %d bound to cpu %ld\n", group->id, group->cpu);
-> > +	printf("group %d bound to cpu %ld\n", group->id, group->cpu);
-> > 
-> >  	/* start the low priority thread */
-> >  	pi_debug("creating low priority thread\n");
-> > --
-> > 2.17.1
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index dca961025433..c43dd7cbbd64 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -11,7 +11,6 @@
+>  #include <stdio.h>
+>  #include <stdlib.h>
+>  #include <stdint.h>
+> -#include <inttypes.h>
+>  #include <stdarg.h>
+>  #include <unistd.h>
+>  #include <fcntl.h>
+> -- 
+> 2.30.2
 > 
 > 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+
+(In fact I pushed this awhile ago)
