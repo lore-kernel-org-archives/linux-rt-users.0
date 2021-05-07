@@ -4,69 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2400DC433B4
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 17:00:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47411C433B4
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 17:07:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DBD6561463
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 17:00:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1281261463
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 17:07:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238462AbhEGRBe (ORCPT
+        id S238494AbhEGRI2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 13:01:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33794 "EHLO
+        Fri, 7 May 2021 13:08:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35320 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237110AbhEGRBa (ORCPT
+        with ESMTP id S235840AbhEGRIZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 13:01:30 -0400
-Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4F85AC061761
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 10:00:29 -0700 (PDT)
-Received: by mail-qk1-x736.google.com with SMTP id q127so9158356qkb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 10:00:29 -0700 (PDT)
+        Fri, 7 May 2021 13:08:25 -0400
+Received: from mail-qv1-xf35.google.com (mail-qv1-xf35.google.com [IPv6:2607:f8b0:4864:20::f35])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 47425C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 10:07:23 -0700 (PDT)
+Received: by mail-qv1-xf35.google.com with SMTP id w9so5118282qvi.13
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 10:07:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=VQwfI+GjP6AJbLNO05C7sBqZjoPPDU8l9CmlX0F9ggQ=;
-        b=goXjakACLAaiaNCDiFkPdOAWkidd28xGcWlv5mABl5uk5gRem76Iq5k9c0+aRKxALm
-         aHYuycLu7/K/MHc8KiXJ1Yd4IE/HvAMnCP05XGncMp4Ri1uRDEWIbywcIHXU9CrvwKMp
-         rMqO4ihXzB98mx7bMwYr0pA2j8G3Nk45vn42nMYZFwq+30o7dHLye/Eu0KM+8U2b465h
-         PydfB4qpo6/6LcxMxfh4UHilAkocLihRnl00alURMBYBFoJKGuAsop9cMxv2pDsgwy1+
-         QZp7J80Qz3vVepLQhFNr8sUljnOdsi6SFDBP9QUQg+A6jvndqyKfUPERKDUdQ+J8U1b1
-         k8jg==
+        bh=93D4hvHw2dBsLwR+vVPTIFHB0H1osdLw2qvZdEEaGF8=;
+        b=q1HmzwRBLe64EKVb83dR35ubQwLCvSSio/JP6CpVCDZXVHSqc4R7Zw8rNHIWZ5llxw
+         YGd2vnO/fGlvn/SEmpRdurvGuvIsTSLisxTNn8fRiEn0+eBco60FUyBe+TsPWN0PmDV/
+         WLw/UbVkgwGhxBfxjLoO8JTjHR0WevVNP+aZ3LwHBEtmHdeQRdNTENdxEEx6MDIF6FiZ
+         4ebSxovq12E1qm9enhke2vFMVy9OcbjHBltBVScyIiSBypFubzrTNnOlyNYVcY7rjXw+
+         GsmC0bi0auZPRcgjBc53j9GDQ8mSPoqH/YIFscVHur74tzjd2RoKkH3hdKdbqNlqGB0n
+         AvHg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=VQwfI+GjP6AJbLNO05C7sBqZjoPPDU8l9CmlX0F9ggQ=;
-        b=WlC0kzW1+eHCZBt8hOG0h6ryH1DegvfDsX3qXuah7OOmwq4xvO2V7CWSsXu3jC7buk
-         xg/9wNjFiRY8I7C53TVuquKqDtb3d3FYqPhNPh8sRCsH/8+B4FiGUA2yso5WWBeqNYpS
-         5fGSw1455l3S1ckTqYg2tvOirFZuEzMtuhljAz3as6UIM9WXSuo4GUuV+BNkL6pbRjX1
-         VpzFTMbCDjSQD+FzueX8vLlwerDfrcQEukHM2nZ0KnbEy5s23BYpZ9pZGoRHKogdF/Sc
-         znfCC1U7AF3dyUafoM255ETF0EvrTVd9rujDJ/rXmylRIrK5EZO8j5hyeQG2NraOaH6k
-         W0Ew==
-X-Gm-Message-State: AOAM530j9l10VUHFxjbMXVHnN35zUU4nn1T5j4ZQST4aw24yVp5GjcLn
-        AGOPesENMTaRdnqSpO+IXjQ=
-X-Google-Smtp-Source: ABdhPJxs6PimPiejzvHFAv6qcfGXPpoH2Jhwf7+ySuEk2zlZwJi0ZYCXxkWul9zxhvjlsqIDY3avEQ==
-X-Received: by 2002:a37:a287:: with SMTP id l129mr1115349qke.481.1620406828612;
-        Fri, 07 May 2021 10:00:28 -0700 (PDT)
+        bh=93D4hvHw2dBsLwR+vVPTIFHB0H1osdLw2qvZdEEaGF8=;
+        b=L2ew17Yk9sVkcgxEo58fyx5Nl/r0H0XPJ7NW5iDlvTvJxwD/AVMUaDU54G6PHDV5Zw
+         1/f0y0w+0AjNju339h+AG8gjaY64kj2eop7cA10rtRmBOFSfjId3FUzpCQU9d+Wl71Uu
+         RDuC7MqFgX0qSaNH1koUENxVGeD0LrD6A2SvC+uslDd9CYaV6S93LnS4HXVX1X54cvxk
+         rFnMUTt6a8xufB/Ryl81LWkwNPB5+bx7JhHdhYrznnRHTwS2UhEn/SDiq0shQaWe6Poa
+         rExK+NOaH5EjTB47pbX+12bcpTYruNPa7TaIourEOykxuRYLBsU3fqAz82s87h5zi9Zw
+         2EQQ==
+X-Gm-Message-State: AOAM5307lFJXcHoGgizR869duk6iOdkFUpYni+xxDOc2Lz77EWo9wgEJ
+        ThvBS2TfvUEroHDO4npzAb8=
+X-Google-Smtp-Source: ABdhPJw8uO08qCf2u+azTvy9TwXSrBUmZThsXTHppZvAFw7mSUWiGVopwV0YKE5U2/kVYXjx0LM9Gg==
+X-Received: by 2002:a0c:e30c:: with SMTP id s12mr11017820qvl.47.1620407242590;
+        Fri, 07 May 2021 10:07:22 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id y29sm5267346qtm.13.2021.05.07.10.00.27
+        by smtp.gmail.com with ESMTPSA id p11sm5236915qkj.3.2021.05.07.10.07.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 10:00:28 -0700 (PDT)
+        Fri, 07 May 2021 10:07:22 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 13:00:27 -0400 (EDT)
+Date:   Fri, 7 May 2021 13:07:21 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Daniel Wagner <dwagner@suse.de>
-cc:     Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 33/33] ssdd: Add JSON output feature
-In-Reply-To: <20210320183829.1318-34-dwagner@suse.de>
-Message-ID: <1fa331bb-3a85-20aa-6cad-33b54657ea17@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-34-dwagner@suse.de>
+To:     Jonathan Schwender <schwenderjonathan@gmail.com>
+cc:     williams@redhat.com, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v3 1/2] cyclictest: Move main pid setaffinity handling
+ into a function
+In-Reply-To: <7204424803922d15bb11bba65bb5672cd76aa20c.1616702706.git.schwenderjonathan@gmail.com>
+Message-ID: <851142bc-eadf-e89-821a-c4bd9fe567b@redhat.com>
+References: <cover.1616702706.git.schwenderjonathan@gmail.com> <7204424803922d15bb11bba65bb5672cd76aa20c.1616702706.git.schwenderjonathan@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -75,95 +75,87 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Sat, 20 Mar 2021, Daniel Wagner wrote:
+On Thu, 25 Mar 2021, Jonathan Schwender wrote:
 
-> Write the test results as JSON output to a file. This allows to
-> simplifies any parsing later on.
+> Move error handling for setting the affinity of the main pid
+> into a separate function.
+> This prevents duplicating the code in the next commit,
+> where the main thread pid can be restricted to one of
+> two bitmasks depending on the passed parameters.
 > 
-> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> After feedback from John Kacur, the function is now
+> located in src/lib/rt-numa.c.
+> This allows other tests to reuse this, if they also
+> prefer to warn if numa_sched_setaffinity fails.
+> 
+> Signed-off-by: Jonathan Schwender <schwenderjonathan@gmail.com>
 > ---
->  src/ssdd/ssdd.c | 16 +++++++++++++++-
->  1 file changed, 15 insertions(+), 1 deletion(-)
+>  src/cyclictest/cyclictest.c |  8 +-------
+>  src/include/rt-numa.h       |  2 ++
+>  src/lib/rt-numa.c           | 11 +++++++++++
+>  3 files changed, 14 insertions(+), 7 deletions(-)
 > 
-> diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-> index 50bec824b2e8..3ead14d0127e 100644
-> --- a/src/ssdd/ssdd.c
-> +++ b/src/ssdd/ssdd.c
-> @@ -36,6 +36,8 @@
->  #include <sys/wait.h>
->  #include <sys/ptrace.h>
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index dca9610..460f6ae 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1791,13 +1791,7 @@ int main(int argc, char **argv)
 >  
-> +#include "rt-utils.h"
+>  	/* Restrict the main pid to the affinity specified by the user */
+>  	if (affinity_mask != NULL) {
+> -		int res;
+> -
+> -		errno = 0;
+> -		res = numa_sched_setaffinity(getpid(), affinity_mask);
+> -		if (res != 0)
+> -			warn("Couldn't setaffinity in main thread: %s\n", strerror(errno));
+> -
+> +		try_numa_sched_setaffinity(getpid(), affinity_mask);
+>  		if (verbose)
+>  			printf("Using %u cpus.\n",
+>  				numa_bitmask_weight(affinity_mask));
+> diff --git a/src/include/rt-numa.h b/src/include/rt-numa.h
+> index ca86a45..e9fa312 100644
+> --- a/src/include/rt-numa.h
+> +++ b/src/include/rt-numa.h
+> @@ -18,4 +18,6 @@ int cpu_for_thread_ua(int thread_num, int max_cpus);
+>  
+>  int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask);
+>  
+> +void try_numa_sched_setaffinity(__pid_t pid, struct bitmask *cpumask);
 > +
->  /* do_wait return values */
->  #define STATE_EXITED	1
->  #define STATE_STOPPED	2
-> @@ -65,10 +67,11 @@ static const char *get_state_name(int state)
->  #define unused __attribute__((unused))
+>  #endif
+> diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+> index babcc63..9a81cfb 100644
+> --- a/src/lib/rt-numa.c
+> +++ b/src/lib/rt-numa.c
+> @@ -138,3 +138,14 @@ int parse_cpumask(char *str, int max_cpus, struct bitmask **cpumask)
 >  
->  static int quiet;
-> +static char outfile[MAX_PATH];
->  
->  static int got_sigchld;
->  
-> -enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_QUIET };
-> +enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_OUTPUT, OPT_QUIET };
->  
->  static void usage(int error)
->  {
-> @@ -77,6 +80,7 @@ static void usage(int error)
->  	       "ssdd <options>\n\n"
->  	       "-f       --forks=NUM       number of forks\n"
->  	       "-h       --help            print this message\n"
-> +	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
->  	       "-q       --quiet           suppress running output\n"
->  	       "-i       --iters=NUM       number of iterations\n"
->  	       );
-> @@ -295,12 +299,14 @@ int main(int argc, char **argv)
->  
->  	setbuf(stdout, NULL);
->  
-> +	rt_init(argc, argv);
->  	for (;;) {
->  		int option_index = 0;
->  
->  		static struct option long_options[] = {
->  			{"forks",		required_argument,	NULL, OPT_NFORKS},
->  			{"help",		no_argument,		NULL, OPT_HELP},
-> +			{"output",		required_argument,	NULL, OPT_OUTPUT},
->  			{"quiet",		no_argument,		NULL, OPT_QUIET},
->  			{"iters",		required_argument,	NULL, OPT_NITERS},
->  			{NULL, 0, NULL, 0},
-> @@ -317,6 +323,9 @@ int main(int argc, char **argv)
->  		case OPT_HELP:
->  			usage(0);
->  			break;
-> +		case OPT_OUTPUT:
-> +			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
-> +			break;
->  		case OPT_QUIET:
->  		case 'q':
->  			quiet = 1;
-> @@ -348,6 +357,7 @@ int main(int argc, char **argv)
->  			forktests(i);
->  	}
->  
-> +	rt_test_start();
->  	for (i = 0; i < nforks; i++) {
->  		status = do_wait(&wait_pid, &ret_sig);
->  		if (status != STATE_EXITED) {
-> @@ -363,5 +373,9 @@ int main(int argc, char **argv)
->  	printf("%s.\n", error ?
->  		"One or more tests FAILED" :
->  		"All tests PASSED");
-> +
-> +	if (strlen(outfile) != 0)
-> +		rt_write_json(outfile, error, NULL, NULL);
-> +
->  	exit(error);
+>  	return 0;
 >  }
+> +
+> +void try_numa_sched_setaffinity(pid_t pid, struct bitmask *cpumask)
+> +{
+> +	int res;
+> +
+> +	errno = 0;
+> +	res = numa_sched_setaffinity(pid, cpumask);
+> +	if (res != 0)
+> +		warn("Couldn't setaffinity for thread %d: %s\n", pid,
+> +		     strerror(errno));
+> +}
 > -- 
 > 2.30.2
 > 
 > 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+
+Yuck. My bad, this is some pretty inelegant error code wrapped around a 
+numa call, I don't think it really warrents trying to make an API out of 
+it. That said, I might need to do this anyway, when I put back code that 
+can run when numa is not available on a target machine.
+
+For now, can you just leave this inline and respin?
+
+Thanks
+
+John Kacur
