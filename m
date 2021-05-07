@@ -7,66 +7,66 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EC1C9C433ED
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:27:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0165FC433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:28:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BA00461424
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:27:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A5D8361451
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:28:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238167AbhEGQ25 (ORCPT
+        id S238171AbhEGQ3n (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:28:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54652 "EHLO
+        Fri, 7 May 2021 12:29:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54806 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238165AbhEGQ24 (ORCPT
+        with ESMTP id S238170AbhEGQ3j (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:28:56 -0400
-Received: from mail-qt1-x836.google.com (mail-qt1-x836.google.com [IPv6:2607:f8b0:4864:20::836])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7D16AC061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:27:55 -0700 (PDT)
-Received: by mail-qt1-x836.google.com with SMTP id j19so6994756qtp.7
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:27:55 -0700 (PDT)
+        Fri, 7 May 2021 12:29:39 -0400
+Received: from mail-qv1-xf2f.google.com (mail-qv1-xf2f.google.com [IPv6:2607:f8b0:4864:20::f2f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 63321C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:28:38 -0700 (PDT)
+Received: by mail-qv1-xf2f.google.com with SMTP id 5so1130997qvk.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:28:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=wgAm4cGeoeuB5w9pzZaBTcRWZMMjhO+JKsm6R78Lz7U=;
-        b=X/qEMzUzjwVuFb8hWlM9wpjGq3Rsomv1hIRpO7fuQWf9/272bQIVuG+V8uQlY9oyaA
-         wwRNU1dLyd7MsK2tVC1200EoVnVVMROqCDFp8HjhKEopww9pu1M7IfnKviEMerJnqJsu
-         rcvhwkHOcZU1cOCs1srmd5vfOcdizvVnXpRSNQoChS5Wb7hb4ORZMMf9V7mh3P9jkNuR
-         R+N6U7WgmlN+M8GX+HIZR2PBnMpOpHT/6l0w8caRFtKLQk/o++00BOJ6QymN4jXmCGKk
-         aI3bGvcC21XKgHdAyMmybWf0uIArGpbb6SgKA4T0S6edfWMtx4ziakWSIBiZ+BfFCdEi
-         elwA==
+        bh=aBq+YcwG6yCVNLuBcqAThz47g9KTdpaYLMvD4ueq+v4=;
+        b=KZH0fiZJLPwUOQZeZOJb3TX+cfE8DheXFU/Wgfx80HmknP9bfma58LGxjOhPVe4xMI
+         CUL0ao6JurqnccFw+8rxTuNKb/Q6eJ2j/F5AKIEVngXZEnEsczzSTGDfe7YUSCCJ0uKs
+         Lo/nFCmptXK6XN7fyzy8XhNXTyysY98g83GAo3Hm518o2kEn6lsR1mt6FGrbGtdo1PPT
+         MTQWYE4bTlIdd9xfBsfeOGCPzDaLsN9A12vzQk30Nm2OUEfbHEUkYNItk5qMNsTxDxlZ
+         Aw0Gou+Ds8TmwnEejFBJw/ftzgnZUwc0fqUKgmyPrz1Zme3A0y3keUL8gVxZuHY9muKj
+         U/tA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=wgAm4cGeoeuB5w9pzZaBTcRWZMMjhO+JKsm6R78Lz7U=;
-        b=cmwWrfzRBv4IBR65+NGnb+87OZLZDYq3MOyv6GSrZA6VVYQCSFxc8DaXtxuk4z/rCQ
-         g2U4n5Dur/D0tTVd6uFfH4LFdZIKppdMwpzA/iTMZUNe7u3NG3YlJatpWqVmyPIEgrDI
-         JQX5RjPGfcNO85Puo4c5HZhjzqUWGNaAZpDRe5MSLU/kjSed5cR2woBlGS8zIehkp4HE
-         +3gBULkkXB92T/bd8enDwwXx53OCfuvKZO7XoU+2BEWGeEQbX6dwTQpiUNIn1lhG02Md
-         GnMVFZvfxRNgpQr9dlGtcYBfH6o0yhzodEC46e2CqaF4xi0X+GB5pp+BUMtsMyQFLpaO
-         pGkg==
-X-Gm-Message-State: AOAM531jr1qVerH+hZs2BhxHDz7IEjFs3JMoLhTxp44nlRKxAnJf3syq
-        5csS7uwkLc3OfLBI33NLEet3AQPLZzhwpw==
-X-Google-Smtp-Source: ABdhPJyMvUfgM8krK3b5m/j7bt+clUdb46UkNW963o3O6SQv1EltL4RL2GPeFZAG8eWygbWiAm/YCA==
-X-Received: by 2002:ac8:7303:: with SMTP id x3mr10354307qto.271.1620404874741;
-        Fri, 07 May 2021 09:27:54 -0700 (PDT)
+        bh=aBq+YcwG6yCVNLuBcqAThz47g9KTdpaYLMvD4ueq+v4=;
+        b=dlW1xriOPHZfUULhr0E6zhlwdUkA1LdvxW4BM4S3rPP1gZARrX9rnogzuEY+3bVp7N
+         sQowymG34Fz9XQnfOvsBkPyoAIhWLHOpddwr0oJmFhYmhkNqgFP0i8IVgu0hk7D0W0HF
+         u1Nn0KIPWZjise+NC6TGbIa6HDHGSe+PiOb0js8OImvJBqmjnI5PWahAmpSD9T0ffeF/
+         ZaOFuFFZBTNSmtSSt+rLPkYnbILO8qi6o6tHolgEZnW7SWBd7oRPkSk65y+oSxhshxTC
+         D1zoPuupZqPwKWc+H7NkKgaPRw0pjbosgf8kLRL999QKYdNpRXrSfLCSgl1dD9FDiMNw
+         ilbQ==
+X-Gm-Message-State: AOAM531TAFFrXOVYg0m07k5UatHDIuT0Zk2VZ8FAK9yJmPAgB83xNbRf
+        q5LBxl3bb4VxnzqmSNxr/eY=
+X-Google-Smtp-Source: ABdhPJy/2I3KP62OYWEylxMu8inM5ZzwnqJwh5yr5fhKMAmx3GtCxro9BfsN41uUgB1vyV7J9/Jkxg==
+X-Received: by 2002:a0c:bd2b:: with SMTP id m43mr10781816qvg.52.1620404917712;
+        Fri, 07 May 2021 09:28:37 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id g64sm5085185qkf.41.2021.05.07.09.27.54
+        by smtp.gmail.com with ESMTPSA id a20sm5100896qko.36.2021.05.07.09.28.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:27:54 -0700 (PDT)
+        Fri, 07 May 2021 09:28:37 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:27:53 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:28:36 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 04/33] rt-util: Add rt_init function
-In-Reply-To: <20210320183829.1318-5-dwagner@suse.de>
-Message-ID: <644e52d1-acdb-dc12-b715-3847c9318027@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-5-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v3 05/33] cyclictest: Initialize rt-util
+In-Reply-To: <20210320183829.1318-6-dwagner@suse.de>
+Message-ID: <2757e864-d52d-14e7-9162-3a62f153f21@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-6-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -77,136 +77,27 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Sat, 20 Mar 2021, Daniel Wagner wrote:
 
-> rt_init() should be called as first in the test program.
-> The main job for this function is to copy the command line
-> before getopt() runs. By default, getopt_long() permutes
-> the contents of argv as it scans, so that eventually all the
-> nonoptions are at the end. This is confusing in the JSON
-> output, thus copy the command line before we call getopt_long().
+> Allow rt-util make a copy of the command line.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/include/rt-utils.h |  2 ++
->  src/lib/rt-utils.c     | 47 +++++++++++++++++++++++++++++++++++-------
->  2 files changed, 42 insertions(+), 7 deletions(-)
+>  src/cyclictest/cyclictest.c | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index 36af92b170df..1dbd3f1dd8e3 100644
-> --- a/src/include/rt-utils.h
-> +++ b/src/include/rt-utils.h
-> @@ -80,6 +80,8 @@ static inline int64_t calctime(struct timespec t)
->  	return time;
->  }
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index c43dd7cbbd64..e817af217952 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1778,6 +1778,7 @@ int main(int argc, char **argv)
+>  	int i, ret = -1;
+>  	int status;
 >  
-> +void rt_init(int argc, char *argv[]);
-> +
->  void rt_write_json(const char *filename, int argc, char *argv[],
->  		   void (*cb)(FILE *, void *),
->  		   void *data);
-> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-> index 00907c573d6a..8f0e0943b137 100644
-> --- a/src/lib/rt-utils.c
-> +++ b/src/lib/rt-utils.c
-> @@ -29,12 +29,15 @@
->  #include "rt-error.h"
+> +	rt_init(argc, argv);
+>  	process_options(argc, argv, max_cpus);
 >  
->  #define  TRACEBUFSIZ  1024
-> +#define  MAX_COMMAND_LINE 4096
->  
->  static char debugfileprefix[MAX_PATH];
->  static char *fileprefix;
->  static int trace_fd = -1;
->  static int tracemark_fd = -1;
->  static __thread char tracebuf[TRACEBUFSIZ];
-> +static char test_cmdline[MAX_COMMAND_LINE];
-> +static int rt_init_run;
->  
->  /*
->   * Finds the tracing directory in a mounted debugfs
-> @@ -486,6 +489,34 @@ void disable_trace_mark(void)
->  	close_tracemark_fd();
->  }
->  
-> +void rt_init(int argc, char *argv[])
-> +{
-> +	int offset = 0;
-> +	int len, i;
-> +
-> +	test_cmdline[0] = '\0';
-> +
-> +	/*
-> +	 * getopt_long() permutes the contents of argv as it scans, so
-> +	 * that eventually all the nonoptions are at the end. Make a
-> +	 * copy before calling getopt_long().
-> +	 */
-> +	for (i = 0; i < argc;) {
-> +		len = strlen(argv[i]);
-> +		if (offset + len + 1 >= MAX_COMMAND_LINE)
-> +			break;
-> +
-> +		strcat(test_cmdline, argv[i]);
-> +		i++;
-> +		if (i < argc)
-> +			strcat(test_cmdline, " ");
-> +
-> +		offset += len + 1;
-> +	}
-> +
-> +	rt_init_run = 1;
-> +}
-> +
->  static char *get_cmdline(int argc, char *argv[])
->  {
->  	char *cmdline;
-> @@ -519,7 +550,7 @@ void rt_write_json(const char *filename, int argc, char *argv[],
->  	struct timeval tv;
->  	char tsbuf[64];
->  	struct tm *tm;
-> -	char *cmdline;
-> +	char *cmdline = NULL;
->  	FILE *f, *s;
->  	time_t t;
->  	size_t n;
-> @@ -533,10 +564,11 @@ void rt_write_json(const char *filename, int argc, char *argv[],
->  			err_exit(errno, "Failed to open '%s'\n", filename);
->  	}
->  
-> -	cmdline = get_cmdline(argc, argv);
-> -	if (!cmdline)
-> -		err_exit(ENOMEM, "get_cmdline()");
-> -
-> +	if (!rt_init_run) {
-> +		cmdline = get_cmdline(argc, argv);
-> +		if (!cmdline)
-> +			err_exit(ENOMEM, "get_cmdline()");
-> +	}
->  
->  	gettimeofday(&tv, NULL);
->  	t = tv.tv_sec;
-> @@ -557,7 +589,7 @@ void rt_write_json(const char *filename, int argc, char *argv[],
->  
->  	fprintf(f, "{\n");
->  	fprintf(f, "  \"file_version\": 1,\n");
-> -	fprintf(f, "  \"cmdline:\": \"%s\",\n", cmdline);
-> +	fprintf(f, "  \"cmdline:\": \"%s\",\n", rt_init_run? test_cmdline : cmdline);
->  	fprintf(f, "  \"rt_test_version:\": \"%1.2f\",\n", VERSION);
->  	fprintf(f, "  \"finished\": \"%s\",\n", tsbuf);
->  	fprintf(f, "  \"sysinfo\": {\n");
-> @@ -573,7 +605,8 @@ void rt_write_json(const char *filename, int argc, char *argv[],
->  
->  	fprintf(f, "}\n");
->  
-> -	free(cmdline);
-> +	if (!rt_init_run)
-> +		free(cmdline);
->  
->  	if (!filename || strcmp("-", filename))
->  		fclose(f);
+>  	if (check_privs())
 > -- 
 > 2.30.2
 > 
 > 
 Signed-off-by: John Kacur <jkacur@redhat.com>
-
-But I don't like the name, it's not initing any test state, it's copying 
-the command line, and the name should reflect that.
