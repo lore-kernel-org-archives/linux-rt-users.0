@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 52F3BC433B4
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:17:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DBBD5C433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:19:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 006F761451
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:17:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9E6FB6144F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:19:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236123AbhEGQSv (ORCPT
+        id S236156AbhEGQU3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:18:51 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52368 "EHLO
+        Fri, 7 May 2021 12:20:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52712 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235256AbhEGQSu (ORCPT
+        with ESMTP id S234749AbhEGQUZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:18:50 -0400
-Received: from mail-qt1-x829.google.com (mail-qt1-x829.google.com [IPv6:2607:f8b0:4864:20::829])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B52E8C061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:17:49 -0700 (PDT)
-Received: by mail-qt1-x829.google.com with SMTP id f8so2804868qth.6
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:17:49 -0700 (PDT)
+        Fri, 7 May 2021 12:20:25 -0400
+Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 89575C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:19:23 -0700 (PDT)
+Received: by mail-qk1-x736.google.com with SMTP id o27so8977453qkj.9
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:19:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=w3pnbOzOHOzi67BLnu4mx/4n+Q7fZ7nz0cTlspv67Fs=;
-        b=PbWJjWWrNKUQSPhUod1Ig4glJ80NRDDeBJ/fBYNjFzzbxjcKuKnuFqVwZFcElheP2E
-         IL+h8oENpwKXlpGlwuGUyPttDepeus4vZY811tULn/A0179xRddYE3EbeHuc3Zt3xdVR
-         C/eYaCdeOwELnmlMhxh3Ng0Tlc7+MHehKGLaWEJSKAr8dI81TRpic/+ilFF1LiTY6gO8
-         vMVCcFfEqHMj5x+SJ3gA4CpHwFMQzYYekUkfPHuDrkT55LrzCM4tDK7+ox+36UAyQM4L
-         wFUwMU1G0UqvXRHlzbMpADldUd/7j6NB0X63IkiF43UilICHxMnsk9/SjgOWIaeOg3nn
-         dogg==
+        bh=XUSmZATSPBjAy7ASD/JsIyY0ftU8wGCxFWz1PB9xzwc=;
+        b=fR56f9MmZkE1QmMUdpXT5R5BssYa3lqmceFQU2h43faC4aITut3v4tvu57YTGT9urX
+         Y7xy4UkLEViFwX9b5X26PkMfaGPNn5kS4TCXDjjpAlCU7nE8lbW2I/UIS0ktjOOBouXV
+         pdZRIAvfBn8ugbJBGWiWCck/lDpMChxEUxDkfVEJmtlKezE0JjzEXGdxAO9xNMu8dLRP
+         8fXmR3ioZroJSVnG2qaAWCeNr0jitoDkT1Z+LitW04kZsPrpkajjNihj3mVXccKha1lf
+         370O/zmolvmPqN+x1zMaNahR3u9dx2PDCLKTanQrTgf+Kd/xhCQt3oTFF1QK7QXgjohE
+         dsOA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=w3pnbOzOHOzi67BLnu4mx/4n+Q7fZ7nz0cTlspv67Fs=;
-        b=tQ4NNLv0lttYkbA7URX8tvzsBG5d6QgmlNqnT06Dnfksdqa0g4v9IUkRN1HoVD+EVY
-         K/eG9pBx9WuBYj/PIcGIzQiGLVUZKMEKNAuxvlxAhOhXZzn28jDBQyQGye1A8EYeIrBI
-         9+ICj7JjfjQtaOsy4kfVBEB2uJEjoGL9go2EYqBreaAxnfTgwau1bU8NR+pCb7uIFgfz
-         O/78smyZvi3FL+inArZi78Yx3hwqdUcGglNN491mqcf3zKvUSMKLpTGbVQVkbwul6BAX
-         c1C46GBflm1CWWBBxkpi3jtpTUyqWKD707tbpUSROkfUFSPo1exWeTnXg7LiJ1xXmi42
-         FiEw==
-X-Gm-Message-State: AOAM533HzJJah/XwPCPJC42eyNTH3397kBs36BDSiJqplt9omajAqN/g
-        bwporhfIj98FAw+CyHHgV489FrooutW8Dg==
-X-Google-Smtp-Source: ABdhPJx4dPuIus6tJqevlGL1LE+cWjcsYvXN04L89ofNCkmENK1XkXzzUreFki4aInt965FHPf/SAw==
-X-Received: by 2002:a05:622a:18a:: with SMTP id s10mr9952714qtw.237.1620404268766;
-        Fri, 07 May 2021 09:17:48 -0700 (PDT)
+        bh=XUSmZATSPBjAy7ASD/JsIyY0ftU8wGCxFWz1PB9xzwc=;
+        b=mm+vx/19zWMjYZ8eGdbeKi7ktz6Jztrglsi1Mo8LpI6k5yO4ooxlevuL1ffUOWBtKL
+         JW5tZVZCbyw8Cm7YlVU9ZTFuw+9c/KWsaf1rc9965yqT7B5DxBzGA4bLkeeLtT5ee+Yk
+         D2O9WMSA62uy5vv09NEyuNQC3v5EiEdOk3mQaid+ux8D3u2jRZPPtijY0JCOGC5q1wNq
+         vvSud9Sq7NiyAWjvDGFXAFiGQ4RIZQF3kDVONAc+76CmgQ417n+iHBHuBFdOXQHKpug4
+         l/6J6o63tuPoiF1xTS3UMaT3M9ZaZZ+wvjZeTzdE8bhHaKrRcEa+guG6U1Btr70n+4EX
+         tKqA==
+X-Gm-Message-State: AOAM531DMfzsVzItdlUR9tXGL389VDwyzWOvF3zs8IBSx+AwEeFrJr5L
+        ovRq7npF3vzG79cQ3FeqrBRmd6LATgIjcg==
+X-Google-Smtp-Source: ABdhPJx1pZqriAkuRirKizzMa7ZeMjr4jke2w+ZpbtQEHHQcmC25o4DtMCT8V/dtIfKdLSpNd8snNg==
+X-Received: by 2002:a37:b702:: with SMTP id h2mr10283136qkf.88.1620404362889;
+        Fri, 07 May 2021 09:19:22 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id v10sm5011934qtf.39.2021.05.07.09.17.48
+        by smtp.gmail.com with ESMTPSA id r65sm5361897qkd.81.2021.05.07.09.19.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:17:48 -0700 (PDT)
+        Fri, 07 May 2021 09:19:22 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:17:47 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:19:21 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 01/33] cyclictest: Remove unused include
+Subject: Re: [PATCH rt-tests v3 02/33] cyclicdeadline: Remove unused include
  header
-In-Reply-To: <20210320183829.1318-2-dwagner@suse.de>
-Message-ID: <7914c9cc-d91f-76c3-f82b-ab4ec0499d7@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-2-dwagner@suse.de>
+In-Reply-To: <20210320183829.1318-3-dwagner@suse.de>
+Message-ID: <aab01f72-30b7-e33e-30f8-7fdd1267395@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-3-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -78,32 +78,30 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Sat, 20 Mar 2021, Daniel Wagner wrote:
 
-> The header was introduced by 24aaf9619bc2 ("cyclictest: Add JSON
-> output feature") for PRIu64 format specifier. As PRIu64 was removed in
-> commit f6881fc42baa ("cyclictest: Fix printf format specifier") remove
-> the include header again.
+> The header was introduced by 68621f3c3322 ("cyclicdeadline: Add JSON
+> output feature")for PRIu64 format specifier. As PRIu64 was removed in
+> commit 51255cc14051 ("cyclicdeadline.c: Fix printf format specifier")
+> remove the include header again.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/cyclictest/cyclictest.c | 1 -
+>  src/sched_deadline/cyclicdeadline.c | 1 -
 >  1 file changed, 1 deletion(-)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index dca961025433..c43dd7cbbd64 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -11,7 +11,6 @@
->  #include <stdio.h>
->  #include <stdlib.h>
->  #include <stdint.h>
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index a02f4e519630..d7aa9bb5d269 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -18,7 +18,6 @@
+>  #include <errno.h>
+>  #include <signal.h>
+>  #include <getopt.h>
 > -#include <inttypes.h>
->  #include <stdarg.h>
->  #include <unistd.h>
->  #include <fcntl.h>
+>  
+>  #include <sys/syscall.h>
+>  #include <sys/types.h>
 > -- 
 > 2.30.2
 > 
 > 
 Signed-off-by: John Kacur <jkacur@redhat.com>
-
-(In fact I pushed this awhile ago)
