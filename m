@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1C86C433ED
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:46:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5A2DFC433B4
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:46:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 925D86145E
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:46:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 188B26145D
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:46:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238375AbhEGQrG (ORCPT
+        id S238392AbhEGQr5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:47:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58770 "EHLO
+        Fri, 7 May 2021 12:47:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58966 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236774AbhEGQrF (ORCPT
+        with ESMTP id S234054AbhEGQr4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:47:05 -0400
-Received: from mail-qk1-x72a.google.com (mail-qk1-x72a.google.com [IPv6:2607:f8b0:4864:20::72a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33E35C061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:46:05 -0700 (PDT)
-Received: by mail-qk1-x72a.google.com with SMTP id i67so9084936qkc.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:46:05 -0700 (PDT)
+        Fri, 7 May 2021 12:47:56 -0400
+Received: from mail-qk1-x72e.google.com (mail-qk1-x72e.google.com [IPv6:2607:f8b0:4864:20::72e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D41A0C061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:46:55 -0700 (PDT)
+Received: by mail-qk1-x72e.google.com with SMTP id i17so9084710qki.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:46:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=FweovsYq6Lk5ph4esUEEb4XVPmmtk64fKs2z/ckZ9J4=;
-        b=uCtwwoB93XYF+rI5X6kQ2L9PmSnXgJ+UKHGs8dsodSM975Rl4jXJ9acprtpAH0J5IY
-         O9pl5E/tvoXF1TdDYOmp/nJSubWK4UxZLmLXqvkfvbBGPjQyjnfGLmYoZb6OVLE5HBS0
-         p1YsZ4o60xImkKqtI8jPgwUORN5GjkQfGAMXByrlIVAEdrgSfzKrKyqLSEuDk4ov6v+H
-         9mBJIC9cZp8HxlDyJp8p8qxH6djdDl5f5mHOPkS8IclA5Rr8b9bNL9NwFfAa84BrnRo7
-         mpm+HAXCv0pp+fK5J/pQOhhht2gv/idaKBQ7S0wycOotXih+Pj9ixhYVhqg8rAVMGWRA
-         Qo6g==
+        bh=plY+aTHMsEYkOSzOLlPHXqAJw9gh7OHc11emLczQ7C0=;
+        b=hzSQQE2d4uNcNBaNyPiQplgEw5MTDVkcNWdtMu0xy7mDEm0nGroKfTSdzmONYpU/rH
+         ZOaVeXSyE68RYw4cebIqTkmciCxsQg6IbyIlUmMSj1GikvoLKLjmEhoRiHWq9fuscitE
+         38M2qAti+7Gm4e888YzUomgLDVOExES9JJbnpIzspbZy39EX2gsUQksF8/fmPebL43hh
+         G5deuQqw7E9NhTuyTR681RITDkfeNUKtdCx/Bhi78RJMBfG5kP2YrK73becfvaRu69bn
+         ET+qKxLBCuifb9ay0rNBo1gt9JZYUmib+WnLdHKMZUMU/4F7p8ags8qShWkB4IyEvq9e
+         0AUg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=FweovsYq6Lk5ph4esUEEb4XVPmmtk64fKs2z/ckZ9J4=;
-        b=BsMZ/9z63XhNSOCf8Et1gafZ7ABvVfsqRMz2u/34aOZck3HgJ3YFVbMEqNErBBiei0
-         RMfrOmcowg/PvUgldBIV8XmOeNCekLcbLV2dn4NAYbH1LEwmryP8qj2a/X3lmMnvrqs0
-         /lVxfDWxT2jh245mDOuN+zBRwanJnnR8sY+M3Uc3EeQMipZHwzIaOMc1VUQzq8ETFxrq
-         OeZ2fRxOXlUAj6chJHTsQhekuJ0JF8bVsE0Y792j/sXhjxnXmySZ3RV8e/Z2zg7j1LEk
-         ygQTJXEqr5bOj10LUHYDVImFxJXgRCnDI8yB8+ctq88VH0iRnIUteJJnHj+FnRJ4N0YU
-         XO1g==
-X-Gm-Message-State: AOAM530IhBkJVdaOYyvex0dsj8JmPW63FHczo6mCs+rDONuousKZnRek
-        uqxYi+thtRe2TY/Upyh9I7Y=
-X-Google-Smtp-Source: ABdhPJxrypWWokloIqhnNBNQj1MyothiFbN/nPBjxh8NIK1LtEobxhOL+PZwMERVlikIkmd3qElSQA==
-X-Received: by 2002:ae9:edd5:: with SMTP id c204mr2293785qkg.176.1620405964530;
-        Fri, 07 May 2021 09:46:04 -0700 (PDT)
+        bh=plY+aTHMsEYkOSzOLlPHXqAJw9gh7OHc11emLczQ7C0=;
+        b=ainWDQDaB5J7zg+DZt4O9mxJ5zdJMkbDQMCgEt+L/nFHeaWKPl64f6hvIV++FyQeVt
+         2uA4q3F58zo8QM4lJvJiKYQEBSLyXkGE3WQrGKQuke7M+SoVc9a5MqLJ0WVsuWiQP2qo
+         Kex78t2c8jjDA3KQ5IxhY1Di6oxXSLv4375KeaMPXVLkUm09ut4KBVxxr2Y7zIK5cY1V
+         CoSM9U0Lui7obOXVNwNzI4zEGe0IOMOdYhRg2Ye3W12Tt7QYAucs4rTPSdW1n39zS8yS
+         IyFGCofOSozu1aLr+45bNmiAFoZQfzvVB4iz5t1JA/jJrCQE96gpAPhMhbk0TtHm8437
+         LTIw==
+X-Gm-Message-State: AOAM530BViTLKonjgQmtkb0/fbZokNoUpfjHQexmm1QnXxrl9mkZJTNV
+        DEVmKC724ipu7qbJGYHBY7k=
+X-Google-Smtp-Source: ABdhPJxuZtgf9OwKFwch1U31398c3jhFtlKYrE9xxTPJt3nf46sfKHm/2g7klh+0BDgoVlixhrIT1g==
+X-Received: by 2002:a37:a90e:: with SMTP id s14mr10618678qke.262.1620406015159;
+        Fri, 07 May 2021 09:46:55 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id l4sm5213341qkd.105.2021.05.07.09.46.04
+        by smtp.gmail.com with ESMTPSA id x18sm28699qtq.40.2021.05.07.09.46.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:46:04 -0700 (PDT)
+        Fri, 07 May 2021 09:46:54 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:46:03 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:46:54 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 23/33] sigwaittest: Record start of test
+Subject: Re: [PATCH rt-tests v3 24/33] svsematest: Record start of test
  execution
-In-Reply-To: <20210320183829.1318-24-dwagner@suse.de>
-Message-ID: <f941ee13-3c5a-d591-3750-e8881bdd4@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-24-dwagner@suse.de>
+In-Reply-To: <20210320183829.1318-25-dwagner@suse.de>
+Message-ID: <546d353a-536d-2331-951c-72832faedd5@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-25-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -82,14 +82,14 @@ On Sat, 20 Mar 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/sigwaittest/sigwaittest.c | 1 +
+>  src/svsematest/svsematest.c | 1 +
 >  1 file changed, 1 insertion(+)
 > 
-> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-> index 142419f9e315..6e8bc7b50d5f 100644
-> --- a/src/sigwaittest/sigwaittest.c
-> +++ b/src/sigwaittest/sigwaittest.c
-> @@ -652,6 +652,7 @@ int main(int argc, char *argv[])
+> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+> index 7c9d21edbab2..7533b1b569cc 100644
+> --- a/src/svsematest/svsematest.c
+> +++ b/src/svsematest/svsematest.c
+> @@ -724,6 +724,7 @@ int main(int argc, char *argv[])
 >  			    &sender[i]);
 >  	}
 >  
@@ -101,4 +101,4 @@ On Sat, 20 Mar 2021, Daniel Wagner wrote:
 > 2.30.2
 > 
 > 
-Signed-off-by: John Kacur@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
