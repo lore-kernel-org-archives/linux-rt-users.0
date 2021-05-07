@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F1F4DC433ED
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:41:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 88944C433B4
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:41:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BFCF260232
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:41:08 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4B5B9613F0
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:41:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238364AbhEGQmH (ORCPT
+        id S236072AbhEGQmq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:42:07 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57662 "EHLO
+        Fri, 7 May 2021 12:42:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57820 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238361AbhEGQmG (ORCPT
+        with ESMTP id S229849AbhEGQmq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:42:06 -0400
-Received: from mail-qv1-xf35.google.com (mail-qv1-xf35.google.com [IPv6:2607:f8b0:4864:20::f35])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BDA0AC061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:41:05 -0700 (PDT)
-Received: by mail-qv1-xf35.google.com with SMTP id j3so5116243qvs.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:41:05 -0700 (PDT)
+        Fri, 7 May 2021 12:42:46 -0400
+Received: from mail-qt1-x82a.google.com (mail-qt1-x82a.google.com [IPv6:2607:f8b0:4864:20::82a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 587BEC061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:41:46 -0700 (PDT)
+Received: by mail-qt1-x82a.google.com with SMTP id y12so7023861qtx.11
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:41:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=QjR9CHStX334fbwzetA4JhP7OKfPG7A+EQPTw7lB/S4=;
-        b=fEK9BiFmcI9GQdd/KLoiSTv2Nuk2hjzUpSHO+WxlhKLeEzZU8xSWJ0cT0PY0r4OF8/
-         27OJ/QsKdBwld5r0M+iPfiysyVChhQjuZHonsFkUM9KBQxFZY44Fw/RABVlHfaMGCabV
-         7Ypkbustl6xirJpl6B8uZJpL/F2i7kFxzSac0r451ykuav9tZZ4zfV2XNnoBJ/2q244s
-         IEVpdZ1cJaRT45tkqtDbzwMlDe9OgzZNa0XTBi24uFpqeiQCR9N7rSabQdwKdhIAKBWN
-         MpnsWaBNEEA/IUvSR3Oj2EGcXhcbrjPNJTDqk9Otsq2EM9XHUFNoVK1Xae9Mq8NUyHrK
-         Rciw==
+        bh=uz3GPJpds26JxoZ4agwYEKCjElOpBivZoGsokU751iw=;
+        b=Za6Mqb92/9m3GTJks0ApuSZlsdT7TkZA6RVTrD+7lqyWYrr4ptpg1NIAq+rbcd9Xma
+         mKardqsMSpUQMu2CXRyj1K+ttXDT+dvjZNftCfROaEnyS0W3Jh3S9V2VO98pDZ1rNiOA
+         o36fLvasgrymemhN3U2kIskPS2K52UYUwfL3A7flThGrMUXpqb4DttoWCQHeJ378G5sQ
+         wdd5JfD4cPWKb45RjiRVSvAcam2BMknqIOywq+3mF0V1G+FG97n5mAPpaMPpNAt/WUOb
+         zqlAx3WzWx96o7XHtPQE8+7x+3J1tH+lqLl1wly9STEhHjUpd9BQo24IChMi/hVZ8O5c
+         3/aw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=QjR9CHStX334fbwzetA4JhP7OKfPG7A+EQPTw7lB/S4=;
-        b=eyyAKtXval5kXnWTzIydWfCwZsk9ccXuO1KQkWda2X1FOTrVnvIbws+Hn8z5jNuRuQ
-         kVOC959Nb5ToWJDNdBW2oJT/ls5iftnkur+vqCPqx8F0SyFR+QKI1P0oCiYX6xaeDpdj
-         2uVsxSOPHGWaJhmA55nGpfCemY2ifR+17KVT7POOITAR5qbcd49IjdFzyQYvhN8qrU47
-         AN4byIzh1Ih31SROsBGxbyWgQ+BzB37vwxAST2yXncYsd2lzynThod7HLNntecUdDydc
-         eg77Q93oCb3fH+IAWY3bAVF387ka3T8x+4ZpU4h1LC8Bdkq+E0/zeEVKXGqbAGaP7ZjW
-         gP/g==
-X-Gm-Message-State: AOAM5324Vi4gRMaZSjgx4GPUA/h0tfnpP3glfniIgOYfyY+Yhm+ajzmE
-        c7pgL2i3TO3SMlYF5GhQdyUUouDL6axpgw==
-X-Google-Smtp-Source: ABdhPJxoBwq023skEPvxoKjRxhX/xQFQRFyR/Kit+PQUWqbfR4qkOOZR8I2vl7Yr+HlJ3b91Aup4kw==
-X-Received: by 2002:a05:6214:a43:: with SMTP id ee3mr10785278qvb.61.1620405665041;
-        Fri, 07 May 2021 09:41:05 -0700 (PDT)
+        bh=uz3GPJpds26JxoZ4agwYEKCjElOpBivZoGsokU751iw=;
+        b=GCMWBLd4G0yDl2cuhhG2ncK+FlJ1TQGNTXsVQ7+VD6+aYA258ti25LWwwX72g6D2ON
+         zdTRcNhqv4/i5gREu19dqrEvfH0wtD+4NqWW0FpkHwZ5mP7lYOZujhIgv1SJum084982
+         1sjGMR7KbPJhOlumPtk4XfSI5wzuYSa37JR6DncoW5Gz+iGT4+aLzVTxJUvvD4JAeDnz
+         xbYnTHuYi0HXa4A4eCmj0YuiMlsG+JDjMThN+dwo7wrNxkWWm7hhif5FWE6m6soD9iY7
+         z6a50oIqQi6HgMDlGpu5I6Es/gGNPwBqopJj06UTgg4veKTt7rB7BRvoDkyI7GWE8jLG
+         vyHA==
+X-Gm-Message-State: AOAM532GEoGGqu0VLbNRtPrhZGV/8mCKk/fq9VFriWbl9Nf//wANtYts
+        pLaKhDM5OjFxLc/Twsik9aU=
+X-Google-Smtp-Source: ABdhPJw345htNn/n27QQzMJQ0XfNX4IC9dyfTyADKclWiDVAkxwxG237s+tYkt8zVb/yH8ib+ctFcQ==
+X-Received: by 2002:ac8:5a16:: with SMTP id n22mr10054663qta.103.1620405705616;
+        Fri, 07 May 2021 09:41:45 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id z4sm5089727qtv.7.2021.05.07.09.41.04
+        by smtp.gmail.com with ESMTPSA id v11sm4841658qtx.79.2021.05.07.09.41.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:41:04 -0700 (PDT)
+        Fri, 07 May 2021 09:41:44 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:41:03 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:41:43 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 16/33] cyclictest: Record start of test
+Subject: Re: [PATCH rt-tests v3 17/33] oslat: Record start of test
  execution
-In-Reply-To: <20210320183829.1318-17-dwagner@suse.de>
-Message-ID: <62c63ad8-34b5-1882-d272-bf8494d08b62@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-17-dwagner@suse.de>
+In-Reply-To: <20210320183829.1318-18-dwagner@suse.de>
+Message-ID: <83af896d-c05-447d-afa7-44e97f789f97@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-18-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -82,23 +82,24 @@ On Sat, 20 Mar 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/cyclictest/cyclictest.c | 1 +
+>  src/oslat/oslat.c | 1 +
 >  1 file changed, 1 insertion(+)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 3f3b91bab53b..033b95a3a19a 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -615,6 +615,7 @@ static void *timerthread(void *param)
->  		setitimer(ITIMER_REAL, &itimer, NULL);
->  	}
->  
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index ac54d05697ef..2f02f5399405 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -854,6 +854,7 @@ int main(int argc, char *argv[])
+>  		printf("Test starts...\n");
+>  	/* Reset n_threads to always run on all the cores */
+>  	g.n_threads = g.n_threads_total;
 > +	rt_test_start();
->  	stat->threadstarted++;
+>  	run_expt(threads, g.runtime);
 >  
->  	while (!shutdown) {
+>  	if (!g.quiet)
 > -- 
 > 2.30.2
 > 
 > 
-Signed-off-by: John Kacaur <jkacur@redhat.com>
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
