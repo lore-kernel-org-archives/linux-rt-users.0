@@ -7,66 +7,67 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87417C433B4
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:40:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F1F4DC433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:41:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 51AB460232
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:40:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BFCF260232
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 May 2021 16:41:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238345AbhEGQlb (ORCPT
+        id S238364AbhEGQmH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 May 2021 12:41:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57484 "EHLO
+        Fri, 7 May 2021 12:42:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57662 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238373AbhEGQlX (ORCPT
+        with ESMTP id S238361AbhEGQmG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 May 2021 12:41:23 -0400
-Received: from mail-qv1-xf34.google.com (mail-qv1-xf34.google.com [IPv6:2607:f8b0:4864:20::f34])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BD563C061574
-        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:40:22 -0700 (PDT)
-Received: by mail-qv1-xf34.google.com with SMTP id q6so5110513qvb.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:40:22 -0700 (PDT)
+        Fri, 7 May 2021 12:42:06 -0400
+Received: from mail-qv1-xf35.google.com (mail-qv1-xf35.google.com [IPv6:2607:f8b0:4864:20::f35])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BDA0AC061574
+        for <linux-rt-users@vger.kernel.org>; Fri,  7 May 2021 09:41:05 -0700 (PDT)
+Received: by mail-qv1-xf35.google.com with SMTP id j3so5116243qvs.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 May 2021 09:41:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=JqHl8XucqgspSBKkpUb95VvNlP7Y5c0RzKxFvF0yQwU=;
-        b=Ml9h0LZD+PicfrPrihOTrT9uVtTyNsiWHuIsQpMZJBMa18FypB6tUOuFGU3IUxz4+m
-         3qoY4nskQXqQr2SZkmct9AIIS4vfs6DhcO4SJaj7io5HVC9wt6AiPNotoLNIKvOXTtmH
-         xDr6ARPCfKkeUc5kqYYjWEO8kZAMiOQj/H0wI/x4Q3eO1Vuhi7OueJU40EJvICrJICni
-         s8G1b3KrJdGiSFv6xPeNu/J2mQlgBYi0x3YbxncZpbN1zU54KsYbMRBmVo/dBp4CwI6I
-         8OWru/RBo+UAW/Ew4uyXxuXG7+j408b4uu2A2DQ51FalyJxYtZ6dg5QzW4pKSeXoIESm
-         vj3Q==
+        bh=QjR9CHStX334fbwzetA4JhP7OKfPG7A+EQPTw7lB/S4=;
+        b=fEK9BiFmcI9GQdd/KLoiSTv2Nuk2hjzUpSHO+WxlhKLeEzZU8xSWJ0cT0PY0r4OF8/
+         27OJ/QsKdBwld5r0M+iPfiysyVChhQjuZHonsFkUM9KBQxFZY44Fw/RABVlHfaMGCabV
+         7Ypkbustl6xirJpl6B8uZJpL/F2i7kFxzSac0r451ykuav9tZZ4zfV2XNnoBJ/2q244s
+         IEVpdZ1cJaRT45tkqtDbzwMlDe9OgzZNa0XTBi24uFpqeiQCR9N7rSabQdwKdhIAKBWN
+         MpnsWaBNEEA/IUvSR3Oj2EGcXhcbrjPNJTDqk9Otsq2EM9XHUFNoVK1Xae9Mq8NUyHrK
+         Rciw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=JqHl8XucqgspSBKkpUb95VvNlP7Y5c0RzKxFvF0yQwU=;
-        b=HqOrfRHWiZ42F7AVqCYR6EgSD+yNuTwQaMgEd6lpRvibV6RFDf9GkX72M3pjLrntAJ
-         YfxX5304sDkxKt4ykEqGTqJpInfBEXw8QC/RbNlNzRnyMjk26YLgrb1/RzcEVO0eIPeE
-         DS2k5tCad7uf1xhsd9BCzI7zTPDWKAdpHFkieci+dxUUsMv5o1T65uWcVe9NY4CdtYc6
-         VtvLuHdsaQ9+yY/T/5j2AM2GcHdfxTHm4EJO2Cwa49XCsHk9ARDZLCWeWSXXzvHmo0yo
-         sSWphy9ffrzwBgtHxZWOd6T3tkVJopMEeBDp0KaUiHomTHI3U7oCsWF99dB1BtxBtLof
-         qx/w==
-X-Gm-Message-State: AOAM5319MXKzGk8MxDUo8UUAvovmlFNUxFHkvxoE3R/1Rom66pjjLTZu
-        QiMv2nTqP3tta+0mzIghvzo=
-X-Google-Smtp-Source: ABdhPJwT9yTHosnWTDQIp+aqgmYxw7Pt2koOwQIVZex///lqMZ5nSb4ZwCn25QPW3GXngWGijy1cBg==
-X-Received: by 2002:a0c:f54e:: with SMTP id p14mr10416487qvm.44.1620405622092;
-        Fri, 07 May 2021 09:40:22 -0700 (PDT)
+        bh=QjR9CHStX334fbwzetA4JhP7OKfPG7A+EQPTw7lB/S4=;
+        b=eyyAKtXval5kXnWTzIydWfCwZsk9ccXuO1KQkWda2X1FOTrVnvIbws+Hn8z5jNuRuQ
+         kVOC959Nb5ToWJDNdBW2oJT/ls5iftnkur+vqCPqx8F0SyFR+QKI1P0oCiYX6xaeDpdj
+         2uVsxSOPHGWaJhmA55nGpfCemY2ifR+17KVT7POOITAR5qbcd49IjdFzyQYvhN8qrU47
+         AN4byIzh1Ih31SROsBGxbyWgQ+BzB37vwxAST2yXncYsd2lzynThod7HLNntecUdDydc
+         eg77Q93oCb3fH+IAWY3bAVF387ka3T8x+4ZpU4h1LC8Bdkq+E0/zeEVKXGqbAGaP7ZjW
+         gP/g==
+X-Gm-Message-State: AOAM5324Vi4gRMaZSjgx4GPUA/h0tfnpP3glfniIgOYfyY+Yhm+ajzmE
+        c7pgL2i3TO3SMlYF5GhQdyUUouDL6axpgw==
+X-Google-Smtp-Source: ABdhPJxoBwq023skEPvxoKjRxhX/xQFQRFyR/Kit+PQUWqbfR4qkOOZR8I2vl7Yr+HlJ3b91Aup4kw==
+X-Received: by 2002:a05:6214:a43:: with SMTP id ee3mr10785278qvb.61.1620405665041;
+        Fri, 07 May 2021 09:41:05 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id y1sm3073132qkp.21.2021.05.07.09.40.21
+        by smtp.gmail.com with ESMTPSA id z4sm5089727qtv.7.2021.05.07.09.41.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 May 2021 09:40:21 -0700 (PDT)
+        Fri, 07 May 2021 09:41:04 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
-Date:   Fri, 7 May 2021 12:40:20 -0400 (EDT)
+Date:   Fri, 7 May 2021 12:41:03 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 15/33] rt-util: Introduce rt_test_start()
-In-Reply-To: <20210320183829.1318-16-dwagner@suse.de>
-Message-ID: <5a3db222-117-ce6c-4b89-ccf717be19c@redhat.com>
-References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-16-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v3 16/33] cyclictest: Record start of test
+ execution
+In-Reply-To: <20210320183829.1318-17-dwagner@suse.de>
+Message-ID: <62c63ad8-34b5-1882-d272-bf8494d08b62@redhat.com>
+References: <20210320183829.1318-1-dwagner@suse.de> <20210320183829.1318-17-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -77,121 +78,27 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Sat, 20 Mar 2021, Daniel Wagner wrote:
 
-> For the JSON output records a timestamp when the test ended.
-> Let's introduce a new API to record a timestamp when the test
-> starts. We could put this into rt_init() but in this case we
-> would meassure also the time test needs to setup or warm up.
+> Use rt_test_start() to record a timestamp when the test starts.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/include/rt-utils.h |  2 ++
->  src/lib/rt-utils.c     | 34 ++++++++++++++++++++++++----------
->  2 files changed, 26 insertions(+), 10 deletions(-)
+>  src/cyclictest/cyclictest.c | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index 115791c55185..42c2772262db 100644
-> --- a/src/include/rt-utils.h
-> +++ b/src/include/rt-utils.h
-> @@ -82,6 +82,8 @@ static inline int64_t calctime(struct timespec t)
->  
->  void rt_init(int argc, char *argv[]);
->  
-> +void rt_test_start(void);
-> +
->  void rt_write_json(const char *filename,
->  		   void (*cb)(FILE *, void *),
->  		   void *data);
-> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-> index f736a3449bf7..efb5d1d9e866 100644
-> --- a/src/lib/rt-utils.c
-> +++ b/src/lib/rt-utils.c
-> @@ -30,6 +30,7 @@
->  
->  #define  TRACEBUFSIZ  1024
->  #define  MAX_COMMAND_LINE 4096
-> +#define  MAX_TS_SIZE 64
->  
->  static char debugfileprefix[MAX_PATH];
->  static char *fileprefix;
-> @@ -37,6 +38,7 @@ static int trace_fd = -1;
->  static int tracemark_fd = -1;
->  static __thread char tracebuf[TRACEBUFSIZ];
->  static char test_cmdline[MAX_COMMAND_LINE];
-> +static char ts_start[MAX_TS_SIZE];
->  
->  /*
->   * Finds the tracing directory in a mounted debugfs
-> @@ -514,17 +516,32 @@ void rt_init(int argc, char *argv[])
->  	}
->  }
->  
-> +static void get_timestamp(char *tsbuf)
-> +{
-> +	struct timeval tv;
-> +	struct tm *tm;
-> +	time_t t;
-> +
-> +	gettimeofday(&tv, NULL);
-> +	t = tv.tv_sec;
-> +	tm = localtime(&t);
-> +	/* RFC 2822-compliant date format */
-> +	strftime(tsbuf, MAX_TS_SIZE, "%a, %d %b %Y %T %z", tm);
-> +}
-> +
-> +void rt_test_start(void)
-> +{
-> +	get_timestamp(ts_start);
-> +}
-> +
->  void rt_write_json(const char *filename,
->  		  void (*cb)(FILE *, void *),
->  		  void *data)
->  {
->  	unsigned char buf[1];
->  	struct utsname uts;
-> -	struct timeval tv;
-> -	char tsbuf[64];
-> -	struct tm *tm;
-> +	char ts_end[MAX_TS_SIZE];
->  	FILE *f, *s;
-> -	time_t t;
->  	size_t n;
->  	int rt = 0;
->  
-> @@ -536,11 +553,7 @@ void rt_write_json(const char *filename,
->  			err_exit(errno, "Failed to open '%s'\n", filename);
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 3f3b91bab53b..033b95a3a19a 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -615,6 +615,7 @@ static void *timerthread(void *param)
+>  		setitimer(ITIMER_REAL, &itimer, NULL);
 >  	}
 >  
-> -	gettimeofday(&tv, NULL);
-> -	t = tv.tv_sec;
-> -	tm = localtime(&t);
-> -	/* RFC 2822-compliant date format */
-> -	strftime(tsbuf, sizeof(tsbuf), "%a, %d %b %Y %T %z", tm);
-> +	get_timestamp(ts_end);
+> +	rt_test_start();
+>  	stat->threadstarted++;
 >  
->  	s = fopen("/sys/kernel/realtime", "r");
->  	if (s) {
-> @@ -557,7 +570,8 @@ void rt_write_json(const char *filename,
->  	fprintf(f, "  \"file_version\": 1,\n");
->  	fprintf(f, "  \"cmdline:\": \"%s\",\n", test_cmdline);
->  	fprintf(f, "  \"rt_test_version:\": \"%1.2f\",\n", VERSION);
-> -	fprintf(f, "  \"finished\": \"%s\",\n", tsbuf);
-> +	fprintf(f, "  \"start_time\": \"%s\",\n", ts_start);
-> +	fprintf(f, "  \"end_time\": \"%s\",\n", ts_end);
->  	fprintf(f, "  \"sysinfo\": {\n");
->  	fprintf(f, "    \"sysname\": \"%s\",\n", uts.sysname);
->  	fprintf(f, "    \"nodename\": \"%s\",\n", uts.nodename);
+>  	while (!shutdown) {
 > -- 
 > 2.30.2
 > 
 > 
-
-I don't really like this. I think it looks "good" in the json output, but
-I don't think it is providing any kind of meaningful data. My fear is that 
-users will try to assign some kind of significance to these numbers in 
-relation to the tests.
-
-I'm letting it in anyway, maybe people will tell me I'm wrong and they 
-like it, but recording my objection for now anyway.
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
+Signed-off-by: John Kacaur <jkacur@redhat.com>
