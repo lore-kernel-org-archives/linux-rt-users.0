@@ -2,75 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.1 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 171EFC433ED
-	for <linux-rt-users@archiver.kernel.org>; Tue, 11 May 2021 07:46:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E56ACC433ED
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 May 2021 16:07:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D060761004
-	for <linux-rt-users@archiver.kernel.org>; Tue, 11 May 2021 07:46:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B8D3E61278
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 May 2021 16:07:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230333AbhEKHr7 (ORCPT
+        id S231916AbhEKQI2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 11 May 2021 03:47:59 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:42348 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230319AbhEKHr6 (ORCPT
+        Tue, 11 May 2021 12:08:28 -0400
+Received: from mail.kernel-space.org ([195.201.34.187]:33196 "EHLO
+        mail.kernel-space.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231126AbhEKQI2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 11 May 2021 03:47:58 -0400
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1620719211;
+        Tue, 11 May 2021 12:08:28 -0400
+X-Greylist: delayed 400 seconds by postgrey-1.27 at vger.kernel.org; Tue, 11 May 2021 12:08:27 EDT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel-space.org;
+        s=20190913; t=1620748838;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=4dtVEhCLda8HUeKzIqG51m4PkcfarQ4Ebl7TLDitKBI=;
-        b=3LourMSF7DsaPAHqr0aaZ6BlkdlbV6LqKjrjyfvqoMLqY1XJGOJUPBcuusaM1rMe9Sut1y
-        zOT9Eue0HmJZpL5QrOZ35cMHp0WfFlkVJ8jLp52OnY8B7OYTbbOBmT+ZQ7BoFvBgVUTE2L
-        Ke+arWRAAVz+z+Lv+9VQFisOOBs3IOuEx3WK9Cx+FvbhqFUJfGoHUqQjkqlfg98JzEOqlU
-        P6EMrY6Yfvw9ldiXeWfvLdKjlrhbKlhcqKtdlCATUvSpUFZ/Qi+tgb1bK2bEhx7w9jgmIT
-        Tu+IBEssamCP/1Xz0Y25r9wMyi2i3kra4FPKERzDVn5Ho0IgwqwkkICi58hyrQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1620719211;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=4dtVEhCLda8HUeKzIqG51m4PkcfarQ4Ebl7TLDitKBI=;
-        b=x+fuvGCbSAp/hR3iIE9JNfwIzdafP9EW9cZnnVgnaAxVLdmLmtEdUT0DxHqi1z9/3XijY8
-        fBCXmu4ZweIM55AA==
-To:     Juri Lelli <juri.lelli@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>, sassmann@redhat.com
-Subject: Re: [RT] Question about i40e threaded irq
-In-Reply-To: <YJofplWBz8dT7xiw@localhost.localdomain>
-References: <YJofplWBz8dT7xiw@localhost.localdomain>
-Date:   Tue, 11 May 2021 09:46:51 +0200
-Message-ID: <875yzphfv8.ffs@nanos.tec.linutronix.de>
+         to:to:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=4e3c4tHCYigd8VMYKgeRZ8N7ZU9EedN5D+Sp++U8z+0=;
+        b=lqNHhh2g8jQLxGz2ZM5eutHuGzscK5sdlJedVtRWqfCCn6bVR+kwr9ZRw9JfIq6a/i4JbK
+        DeO/AMV9OCyspuTj5Cm+GoQLHVsCtlSTV3lC6p9YcLyiAS1ihJZ8zsCQOyqCLPVdKFY5Bh
+        Blg5zTGgNixld1HM4mHlPEbvoZfTniw=
+Received: from [192.168.0.2] (host-79-44-236-134.retail.telecomitalia.it [79.44.236.134])
+        by ziongate (OpenSMTPD) with ESMTPSA id 3ccdcf01 (TLSv1.3:TLS_AES_256_GCM_SHA384:256:NO)
+        for <linux-rt-users@vger.kernel.org>;
+        Tue, 11 May 2021 16:00:38 +0000 (UTC)
+To:     linux-rt-users@vger.kernel.org
+From:   Angelo Dureghello <angelo@kernel-space.org>
+Subject: big rt latencies compared to non rt
+Message-ID: <736a53fb-d80e-3faa-1a66-d40538e0fe26@kernel-space.org>
+Date:   Tue, 11 May 2021 18:00:01 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.9.0
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Content-Language: en-US
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, May 11 2021 at 08:09, Juri Lelli wrote:
-> My understanding is that rps_trigger_softirq() sneaked in while
-> i40e_msix_clean_rings() threaded irq was running and, since the latter is
-> using napi_schedule_irqoff(), the softnet_data poll_list got eventually
-> corrupted.
->
-> Now, doing s/napi_schedule_irqoff/napi_schedule/ in the i40e driver seem
-> to cure the problem. I'm not sure that there isn't a more general
-> solution, though. Is it expected that napi_schedule_irqoff users in RT
-> know what they are doing or do we want/need to fix this in a more
-> general way?
+Hi all,
 
-The straight forward fix it to map napi_schedule_irqoff() to
-napi_schedule() on RT. Fixing this at the driver level is a whack-a-mole
-game.
+i am running some RT tests on imx8qxp.
+Kernel is a imx (nxp) modified kernel, but with
+rt patch (5.4.70) that at least applies properly.
 
-Thanks,
+Linux version 5.4.70-rt40-00120-g3e7dde1168e5-dirty
 
-        tglx
+I am running some histograms by
+
+cyclictest --duration=180 -t=1 -m -Sp99 \
+         -i2000 -h3000 -q > histogram
+
+Average is near 16uS but there are some outside
+values near 40000, as
+
+000009 000000    000000    000000    000000
+000010 000001    000000    000002    000000
+000011 000002    000000    000000    000000
+000012 000023    000006    000008    000004
+000013 001565    001504    002010    001367
+000014 000425    001959    000649    000700
+000015 001447    001917    001129    001415
+000016 034084    026118    040328    032334
+000017 040537    015000    033773    041092  <-----
+000018 005771    009092    007999    007512
+000019 002709    023378    001790    003117
+000020 000167    006238    000109    000136
+000021 000135    002369    000099    000093
+000022 000039    000622    000025    000041
+000023 000153    000123    000026    000023
+000024 000986    000178    000564    000500
+000025 001872    000292    001291    001515
+000026 000049    000269    000112    000081
+000027 000010    000561    000011    000014
+000028 000003    000296    000016    000009
+000029 000005    000035    000014    000002
+000030 000001    000008    000006    000000
+000031 000001    000008    000006    000001
+000032 000011    000002    000004    000000
+
+
+Rest of the histogram is mostly 00000 values.
+
+As far as you may know, is there something i am
+missing for this cpu ?
+
+Thanks a lot,
+
+Regards,
+angelo
+
