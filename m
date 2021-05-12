@@ -7,26 +7,26 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D424BC433B4
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 09:56:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F2E6C43460
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 09:56:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1A7CF613BC
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 09:56:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D6E22611AE
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 09:56:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230401AbhELJ5c (ORCPT
+        id S230202AbhELJ5l (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 12 May 2021 05:57:32 -0400
-Received: from outbound-smtp16.blacknight.com ([46.22.139.233]:47597 "EHLO
-        outbound-smtp16.blacknight.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230407AbhELJ5b (ORCPT
+        Wed, 12 May 2021 05:57:41 -0400
+Received: from outbound-smtp35.blacknight.com ([46.22.139.218]:34415 "EHLO
+        outbound-smtp35.blacknight.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S230118AbhELJ5k (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 May 2021 05:57:31 -0400
+        Wed, 12 May 2021 05:57:40 -0400
 Received: from mail.blacknight.com (pemlinmail01.blacknight.ie [81.17.254.10])
-        by outbound-smtp16.blacknight.com (Postfix) with ESMTPS id D6C261C3833
-        for <linux-rt-users@vger.kernel.org>; Wed, 12 May 2021 10:56:21 +0100 (IST)
-Received: (qmail 30019 invoked from network); 12 May 2021 09:56:21 -0000
+        by outbound-smtp35.blacknight.com (Postfix) with ESMTPS id 129B0187A
+        for <linux-rt-users@vger.kernel.org>; Wed, 12 May 2021 10:56:32 +0100 (IST)
+Received: (qmail 30522 invoked from network); 12 May 2021 09:56:31 -0000
 Received: from unknown (HELO stampy.112glenside.lan) (mgorman@techsingularity.net@[84.203.23.168])
-  by 81.17.254.9 with ESMTPA; 12 May 2021 09:56:21 -0000
+  by 81.17.254.9 with ESMTPA; 12 May 2021 09:56:31 -0000
 From:   Mel Gorman <mgorman@techsingularity.net>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     Chuck Lever <chuck.lever@oracle.com>,
@@ -41,9 +41,9 @@ Cc:     Chuck Lever <chuck.lever@oracle.com>,
         Linux-RT-Users <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>,
         Mel Gorman <mgorman@techsingularity.net>
-Subject: [PATCH 7/9] mm/page_alloc: Explicitly acquire the zone lock in __free_pages_ok
-Date:   Wed, 12 May 2021 10:54:56 +0100
-Message-Id: <20210512095458.30632-8-mgorman@techsingularity.net>
+Subject: [PATCH 8/9] mm/page_alloc: Avoid conflating IRQs disabled with zone->lock
+Date:   Wed, 12 May 2021 10:54:57 +0100
+Message-Id: <20210512095458.30632-9-mgorman@techsingularity.net>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20210512095458.30632-1-mgorman@techsingularity.net>
 References: <20210512095458.30632-1-mgorman@techsingularity.net>
@@ -53,56 +53,165 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-__free_pages_ok() disables IRQs before calling a common helper
-free_one_page() that acquires the zone lock. This is not safe according
-to Documentation/locking/locktypes.rst and in this context, IRQ disabling
-is not protecting a per_cpu_pages structure either or a local_lock would
-be used.
+Historically when freeing pages, free_one_page() assumed that callers
+had IRQs disabled and the zone->lock could be acquired with spin_lock().
+This confuses the scope of what local_lock_irq is protecting and what
+zone->lock is protecting in free_unref_page_list in particular.
 
-This patch explicitly acquires the lock with spin_lock_irqsave instead of
-relying on a helper. This removes the last instance of local_irq_save()
-in page_alloc.c.
+This patch uses spin_lock_irqsave() for the zone->lock in
+free_one_page() instead of relying on callers to have disabled
+IRQs. free_unref_page_commit() is changed to only deal with PCP pages
+protected by the local lock. free_unref_page_list() then first frees
+isolated pages to the buddy lists with free_one_page() and frees the rest
+of the pages to the PCP via free_unref_page_commit(). The end result
+is that free_one_page() is no longer depending on side-effects of
+local_lock to be correct.
 
+Note that this may incur a performance penalty while memory hot-remove
+is running but that is not a common operation.
+
+[lkp@intel.com: Ensure CMA pages get addded to correct pcp list]
 Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
 Acked-by: Vlastimil Babka <vbabka@suse.cz>
 ---
- mm/page_alloc.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ mm/page_alloc.c | 75 ++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 49 insertions(+), 26 deletions(-)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 5879b595b74b..7da70b404f4e 100644
+index 7da70b404f4e..83268f7b3ded 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -1579,21 +1579,21 @@ static void __free_pages_ok(struct page *page, unsigned int order,
- 	unsigned long flags;
- 	int migratetype;
- 	unsigned long pfn = page_to_pfn(page);
-+	struct zone *zone = page_zone(page);
- 
- 	if (!free_pages_prepare(page, order, true, fpi_flags))
- 		return;
- 
- 	migratetype = get_pfnblock_migratetype(page, pfn);
- 
--	/*
--	 * TODO FIX: Disable IRQs before acquiring IRQ-safe zone->lock
--	 * and protect vmstat updates.
--	 */
--	local_irq_save(flags);
+@@ -1490,13 +1490,15 @@ static void free_one_page(struct zone *zone,
+ 				unsigned int order,
+ 				int migratetype, fpi_t fpi_flags)
+ {
+-	spin_lock(&zone->lock);
++	unsigned long flags;
++
 +	spin_lock_irqsave(&zone->lock, flags);
- 	__count_vm_events(PGFREE, 1 << order);
--	free_one_page(page_zone(page), page, pfn, order, migratetype,
--		      fpi_flags);
--	local_irq_restore(flags);
-+	if (unlikely(has_isolate_pageblock(zone) ||
-+		is_migrate_isolate(migratetype))) {
-+		migratetype = get_pfnblock_migratetype(page, pfn);
-+	}
-+	__free_one_page(page, pfn, zone, order, migratetype, fpi_flags);
+ 	if (unlikely(has_isolate_pageblock(zone) ||
+ 		is_migrate_isolate(migratetype))) {
+ 		migratetype = get_pfnblock_migratetype(page, pfn);
+ 	}
+ 	__free_one_page(page, pfn, zone, order, migratetype, fpi_flags);
+-	spin_unlock(&zone->lock);
 +	spin_unlock_irqrestore(&zone->lock, flags);
  }
  
- void __free_pages_core(struct page *page, unsigned int order)
+ static void __meminit __init_single_page(struct page *page, unsigned long pfn,
+@@ -3274,31 +3276,13 @@ static bool free_unref_page_prepare(struct page *page, unsigned long pfn)
+ 	return true;
+ }
+ 
+-static void free_unref_page_commit(struct page *page, unsigned long pfn)
++static void free_unref_page_commit(struct page *page, unsigned long pfn,
++				   int migratetype)
+ {
+ 	struct zone *zone = page_zone(page);
+ 	struct per_cpu_pages *pcp;
+-	int migratetype;
+ 
+-	migratetype = get_pcppage_migratetype(page);
+ 	__count_vm_event(PGFREE);
+-
+-	/*
+-	 * We only track unmovable, reclaimable and movable on pcp lists.
+-	 * Free ISOLATE pages back to the allocator because they are being
+-	 * offlined but treat HIGHATOMIC as movable pages so we can get those
+-	 * areas back if necessary. Otherwise, we may have to free
+-	 * excessively into the page allocator
+-	 */
+-	if (migratetype >= MIGRATE_PCPTYPES) {
+-		if (unlikely(is_migrate_isolate(migratetype))) {
+-			free_one_page(zone, page, pfn, 0, migratetype,
+-				      FPI_NONE);
+-			return;
+-		}
+-		migratetype = MIGRATE_MOVABLE;
+-	}
+-
+ 	pcp = this_cpu_ptr(zone->per_cpu_pageset);
+ 	list_add(&page->lru, &pcp->lists[migratetype]);
+ 	pcp->count++;
+@@ -3313,12 +3297,29 @@ void free_unref_page(struct page *page)
+ {
+ 	unsigned long flags;
+ 	unsigned long pfn = page_to_pfn(page);
++	int migratetype;
+ 
+ 	if (!free_unref_page_prepare(page, pfn))
+ 		return;
+ 
++	/*
++	 * We only track unmovable, reclaimable and movable on pcp lists.
++	 * Place ISOLATE pages on the isolated list because they are being
++	 * offlined but treat HIGHATOMIC as movable pages so we can get those
++	 * areas back if necessary. Otherwise, we may have to free
++	 * excessively into the page allocator
++	 */
++	migratetype = get_pcppage_migratetype(page);
++	if (unlikely(migratetype >= MIGRATE_PCPTYPES)) {
++		if (unlikely(is_migrate_isolate(migratetype))) {
++			free_one_page(page_zone(page), page, pfn, 0, migratetype, FPI_NONE);
++			return;
++		}
++		migratetype = MIGRATE_MOVABLE;
++	}
++
+ 	local_lock_irqsave(&pagesets.lock, flags);
+-	free_unref_page_commit(page, pfn);
++	free_unref_page_commit(page, pfn, migratetype);
+ 	local_unlock_irqrestore(&pagesets.lock, flags);
+ }
+ 
+@@ -3330,22 +3331,44 @@ void free_unref_page_list(struct list_head *list)
+ 	struct page *page, *next;
+ 	unsigned long flags, pfn;
+ 	int batch_count = 0;
++	int migratetype;
+ 
+ 	/* Prepare pages for freeing */
+ 	list_for_each_entry_safe(page, next, list, lru) {
+ 		pfn = page_to_pfn(page);
+ 		if (!free_unref_page_prepare(page, pfn))
+ 			list_del(&page->lru);
++
++		/*
++		 * Free isolated pages directly to the allocator, see
++		 * comment in free_unref_page.
++		 */
++		migratetype = get_pcppage_migratetype(page);
++		if (unlikely(migratetype >= MIGRATE_PCPTYPES)) {
++			if (unlikely(is_migrate_isolate(migratetype))) {
++				list_del(&page->lru);
++				free_one_page(page_zone(page), page, pfn, 0,
++							migratetype, FPI_NONE);
++				continue;
++			}
++
++			/*
++			 * Non-isolated types over MIGRATE_PCPTYPES get added
++			 * to the MIGRATE_MOVABLE pcp list.
++			 */
++			set_pcppage_migratetype(page, MIGRATE_MOVABLE);
++		}
++
+ 		set_page_private(page, pfn);
+ 	}
+ 
+ 	local_lock_irqsave(&pagesets.lock, flags);
+ 	list_for_each_entry_safe(page, next, list, lru) {
+-		unsigned long pfn = page_private(page);
+-
++		pfn = page_private(page);
+ 		set_page_private(page, 0);
++		migratetype = get_pcppage_migratetype(page);
+ 		trace_mm_page_free_batched(page);
+-		free_unref_page_commit(page, pfn);
++		free_unref_page_commit(page, pfn, migratetype);
+ 
+ 		/*
+ 		 * Guard against excessive IRQ disabled times when we get
 -- 
 2.26.2
 
