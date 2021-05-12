@@ -6,51 +6,50 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 781C9C433ED
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 07:30:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A2C36C433B4
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 07:33:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5860C6192B
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 07:30:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 683066147F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 07:33:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230026AbhELHb4 (ORCPT
+        id S229994AbhELHer (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 12 May 2021 03:31:56 -0400
-Received: from mail.monom.org ([188.138.9.77]:37082 "EHLO mail.monom.org"
+        Wed, 12 May 2021 03:34:47 -0400
+Received: from mail.monom.org ([188.138.9.77]:37128 "EHLO mail.monom.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230211AbhELHbu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 May 2021 03:31:50 -0400
+        id S229850AbhELHeq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 12 May 2021 03:34:46 -0400
 Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id 123BC50064E;
-        Wed, 12 May 2021 09:30:41 +0200 (CEST)
+        by filter.mynetwork.local (Postfix) with ESMTP id A6E2250064E;
+        Wed, 12 May 2021 09:33:37 +0200 (CEST)
 Received: from localhost (unknown [94.31.99.148])
-        by mail.monom.org (Postfix) with ESMTPSA id D4DFD5001DD;
-        Wed, 12 May 2021 09:30:40 +0200 (CEST)
-Date:   Wed, 12 May 2021 09:30:40 +0200
+        by mail.monom.org (Postfix) with ESMTPSA id 71E265001DD;
+        Wed, 12 May 2021 09:33:37 +0200 (CEST)
+Date:   Wed, 12 May 2021 09:33:37 +0200
 From:   Daniel Wagner <wagi@monom.org>
 To:     John Kacur <jkacur@redhat.com>
 Cc:     Daniel Wagner <dwagner@suse.de>,
         Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 04/33] rt-util: Add rt_init function
-Message-ID: <20210512073040.dotjq46s3yh5sy3o@beryllium.lan>
+Subject: Re: [PATCH rt-tests v3 15/33] rt-util: Introduce rt_test_start()
+Message-ID: <20210512073337.chen4kllvjgkvypv@beryllium.lan>
 References: <20210320183829.1318-1-dwagner@suse.de>
- <20210320183829.1318-5-dwagner@suse.de>
- <644e52d1-acdb-dc12-b715-3847c9318027@redhat.com>
+ <20210320183829.1318-16-dwagner@suse.de>
+ <5a3db222-117-ce6c-4b89-ccf717be19c@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <644e52d1-acdb-dc12-b715-3847c9318027@redhat.com>
+In-Reply-To: <5a3db222-117-ce6c-4b89-ccf717be19c@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, May 07, 2021 at 12:27:53PM -0400, John Kacur wrote:
-> But I don't like the name, it's not initing any test state, it's copying 
-> the command line, and the name should reflect that.
+On Fri, May 07, 2021 at 12:40:20PM -0400, John Kacur wrote:
+> I don't really like this. I think it looks "good" in the json output, but
+> I don't think it is providing any kind of meaningful data. My fear is that 
+> users will try to assign some kind of significance to these numbers in 
+> relation to the tests.
 
-I went for rt_init() because rt_test_start() code was part of
-it. But without this part we could name it something like:
-
-   rt_{copy|save|store}_{cmdline|args}
-
-What's your preference?
+The idea is that you are able to compare timestamps in the further logs
+and see if anything is out of the ordinary is logged when the test was
+executed.
