@@ -2,100 +2,60 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49D5AC43462
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 23:10:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 363E7C433B4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 May 2021 00:50:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1447F613EE
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 May 2021 23:10:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F3B7461404
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 May 2021 00:50:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1346661AbhELXEE (ORCPT
+        id S240426AbhEMAwE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 12 May 2021 19:04:04 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:54344 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1349051AbhELW3P (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 May 2021 18:29:15 -0400
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1620858482;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=dbExWGmhAxDcnpIgmHu93oDV58dpmOJ47YHdt243Bzg=;
-        b=ybSj//OuakWBcE9PFkav7BwyUiw4YIXlu6sm+YQbs5K5F9vAhiXHxGoRqsjAIIk9Z4Exdu
-        iUSWgfopq4ollgGXfovb/QMhv/93JoH6KqCWKIV2R84J8+BhDv9PecLjEzoBBhyaLnXUqf
-        Ksvtye4YM67a1SEyvy5lsM02RpjGcYQjJackZ7C1Pn68a+B2o8BWnme9OWEwF0WDVlhva9
-        L0TgeLECnUq1VzroBmzZuMKvFIlbTlNZjUM2ihtYvUQC1g/5zgn0iQXTqPpicbflZOCJBs
-        cO2hfNCxT8ts2WWiOkEZsqaBS3PBpPx0uh/Q2f63eIidLS0T0oYuaFO2So2oNQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1620858482;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=dbExWGmhAxDcnpIgmHu93oDV58dpmOJ47YHdt243Bzg=;
-        b=ieszU9eoLPxYgVaGjO90h6D6agB93TQK5gB7qgQ6Dyy4ZeLzKtYjgqHC9nrgPPbzmjncfl
-        86BCJ4FTEN6icrCg==
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        netdev@vger.kernel.org
-Cc:     Juri Lelli <juri.lelli@redhat.com>,
+        Wed, 12 May 2021 20:52:04 -0400
+Received: from mail.kernel.org ([198.145.29.99]:36956 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S240410AbhEMAv5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 12 May 2021 20:51:57 -0400
+Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id C4B58613EB;
+        Thu, 13 May 2021 00:50:47 +0000 (UTC)
+Date:   Wed, 12 May 2021 20:50:46 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        netdev@vger.kernel.org, Juri Lelli <juri.lelli@redhat.com>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
         LKML <linux-kernel@vger.kernel.org>, sassmann@redhat.com,
         "David S. Miller" <davem@davemloft.net>,
         Jakub Kicinski <kuba@kernel.org>, stable-rt@vger.kernel.org
-Subject: Re: [PATCH net-next] net: Treat __napi_schedule_irqoff() as __napi_schedule() on PREEMPT_RT
-In-Reply-To: <20210512214324.hiaiw3e2tzmsygcz@linutronix.de>
-References: <YJofplWBz8dT7xiw@localhost.localdomain> <20210512214324.hiaiw3e2tzmsygcz@linutronix.de>
-Date:   Thu, 13 May 2021 00:28:02 +0200
-Message-ID: <87k0o360zx.ffs@nanos.tec.linutronix.de>
+Subject: Re: [PATCH net-next] net: Treat __napi_schedule_irqoff() as
+ __napi_schedule() on PREEMPT_RT
+Message-ID: <20210512205046.7eabe8fc@oasis.local.home>
+In-Reply-To: <87k0o360zx.ffs@nanos.tec.linutronix.de>
+References: <YJofplWBz8dT7xiw@localhost.localdomain>
+        <20210512214324.hiaiw3e2tzmsygcz@linutronix.de>
+        <87k0o360zx.ffs@nanos.tec.linutronix.de>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, May 12 2021 at 23:43, Sebastian Andrzej Siewior wrote:
-> __napi_schedule_irqoff() is an optimized version of __napi_schedule()
-> which can be used where it is known that interrupts are disabled,
-> e.g. in interrupt-handlers, spin_lock_irq() sections or hrtimer
-> callbacks.
->
-> On PREEMPT_RT enabled kernels this assumptions is not true. Force-
-> threaded interrupt handlers and spinlocks are not disabling interrupts
-> and the NAPI hrtimer callback is forced into softirq context which runs
-> with interrupts enabled as well.
->
-> Chasing all usage sites of __napi_schedule_irqoff() is a whack-a-mole
-> game so make __napi_schedule_irqoff() invoke __napi_schedule() for
-> PREEMPT_RT kernels.
->
-> The callers of ____napi_schedule() in the networking core have been
-> audited and are correct on PREEMPT_RT kernels as well.
->
-> Reported-by: Juri Lelli <juri.lelli@redhat.com>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+On Thu, 13 May 2021 00:28:02 +0200
+Thomas Gleixner <tglx@linutronix.de> wrote:
 
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+> No matter which variant we end up with, this needs to go into all stable
+> RT kernels ASAP.
 
-> ---
-> Alternatively __napi_schedule_irqoff() could be #ifdef'ed out on RT and
-> an inline provided which invokes __napi_schedule().
->
-> This was not chosen as it creates #ifdeffery all over the place and with
-> the proposed solution the code reflects the documentation consistently
-> and in one obvious place.
+Is this in rt-devel already?
 
-Blame me for that decision.
+I'll start pulling in whatever is in there.
 
-No matter which variant we end up with, this needs to go into all stable
-RT kernels ASAP.
-
-Thanks,
-
-        tglx
+-- Steve
