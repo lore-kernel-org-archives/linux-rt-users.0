@@ -2,78 +2,67 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F53FC433ED
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 May 2021 20:20:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D693C433ED
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 May 2021 06:58:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 38A07613DE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 May 2021 20:20:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BFB72613F6
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 May 2021 06:58:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232750AbhEMUVX (ORCPT
+        id S231789AbhENHAB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 May 2021 16:21:23 -0400
-Received: from mail.kernel.org ([198.145.29.99]:44540 "EHLO mail.kernel.org"
+        Fri, 14 May 2021 03:00:01 -0400
+Received: from mail.monom.org ([188.138.9.77]:49560 "EHLO mail.monom.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232710AbhEMUVU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 May 2021 16:21:20 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPS id 71AFB61440;
-        Thu, 13 May 2021 20:20:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1620937210;
-        bh=Uptf5dAiE7HARnD9cJTh9N5kGpyxjkY2cZVavxMejI4=;
-        h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-        b=eN274Za9C+6yNVUF4BGmxONVHT8EGhZd87QXwd46u2C7O/p3nRgqDTorRQ55hgJVy
-         qmK4ICcDNB9BG3dYluLDSHuGKbQWcquiEIB8srd7AI3zpV54TlAC7F7q/toULSpH8v
-         hHpPd0TyqezRtNye40K7nIdhfo/K77iFwunF/2yqjvdy7pFkeoPdaaB7hmLBPWR1Cg
-         1ncKmM7A2XZ+abwAA3WFW5xrjycOMwJRuTsWKN/ClXmUWXuodWucZsuqdGQuTYx+zd
-         zikB9UXWGFLJQn0jITtc3R56LBmN6xb+lWV0a+I5pcA1hBLAdRLUj6ZBUg+EnVotx4
-         b4X9krg7NvIwA==
-Content-Type: text/plain; charset="utf-8"
+        id S231424AbhENHAB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 May 2021 03:00:01 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id E30F05005DA;
+        Fri, 14 May 2021 08:58:48 +0200 (CEST)
+Received: from localhost (unknown [94.31.99.148])
+        by mail.monom.org (Postfix) with ESMTPSA id A48FA500322;
+        Fri, 14 May 2021 08:58:48 +0200 (CEST)
+Date:   Fri, 14 May 2021 08:58:48 +0200
+From:   Daniel Wagner <wagi@monom.org>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     Daniel Wagner <dwagner@suse.de>,
+        Clark Williams <williams@redhat.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH rt-tests v3 27/33] pip_stress: Return failure code if
+ test fails
+Message-ID: <20210514065848.5rexjzwnxpdiqrru@beryllium.lan>
+References: <20210320183829.1318-1-dwagner@suse.de>
+ <20210320183829.1318-28-dwagner@suse.de>
+ <d979f62-e4bc-3f4d-b520-da3ca6e48199@redhat.com>
+ <20210512073554.ocoaqweoibkeyxgx@beryllium.lan>
+ <CANwBOh0+vYu69ab_iuG_492a2JVzkCxn53bdrHQTfQvRTD7G2g@mail.gmail.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH net-next] net: Treat __napi_schedule_irqoff() as
- __napi_schedule() on PREEMPT_RT
-From:   patchwork-bot+netdevbpf@kernel.org
-Message-Id: <162093721042.5649.1489711837264906533.git-patchwork-notify@kernel.org>
-Date:   Thu, 13 May 2021 20:20:10 +0000
-References: <20210512214324.hiaiw3e2tzmsygcz@linutronix.de>
-In-Reply-To: <20210512214324.hiaiw3e2tzmsygcz@linutronix.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     netdev@vger.kernel.org, juri.lelli@redhat.com, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org, rostedt@goodmis.org,
-        linux-kernel@vger.kernel.org, sassmann@redhat.com,
-        davem@davemloft.net, kuba@kernel.org
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CANwBOh0+vYu69ab_iuG_492a2JVzkCxn53bdrHQTfQvRTD7G2g@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello:
+On Thu, May 13, 2021 at 03:27:31PM -0400, John Kacur wrote:
+> I suppose this is a fair question, although another question would be
+> is it useful in the rt-tests suites for other reasons?
+> It could be used as the "engine" of a test that would be similar to
+> pi_stress, with a different kind of mechanism.
 
-This patch was applied to netdev/net-next.git (refs/heads/master):
+If there is clear indication which code is provided as coding example
+and which is a RT test it would already help. I was under the impression
+pi_stress tries to test RT behavior. Maybe moving pi_stress to
+'examples' would already be enough.
 
-On Wed, 12 May 2021 23:43:24 +0200 you wrote:
-> __napi_schedule_irqoff() is an optimized version of __napi_schedule()
-> which can be used where it is known that interrupts are disabled,
-> e.g. in interrupt-handlers, spin_lock_irq() sections or hrtimer
-> callbacks.
-> 
-> On PREEMPT_RT enabled kernels this assumptions is not true. Force-
-> threaded interrupt handlers and spinlocks are not disabling interrupts
-> and the NAPI hrtimer callback is forced into softirq context which runs
-> with interrupts enabled as well.
-> 
-> [...]
+> So then the question would be, is there a value in another pi_stress
+> like test that avoids pthreads?
+>
+> If so, I could work it up into a test.
 
-Here is the summary with links:
-  - [net-next] net: Treat __napi_schedule_irqoff() as __napi_schedule() on PREEMPT_RT
-    https://git.kernel.org/netdev/net-next/c/8380c81d5c4f
-
-You are awesome, thank you!
---
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
-
+I suppose having more RT tests is good thing. IIRC there are more RT
+tests available, e.g. in LTP. So not sure if this is not already covered
+somewhere else.
