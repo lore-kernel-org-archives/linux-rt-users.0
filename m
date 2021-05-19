@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BBD6C43462
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A744C43460
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DDABF611AB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7CEEC611BD
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355536AbhESRLT (ORCPT
+        id S1355545AbhESRLS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 19 May 2021 13:11:19 -0400
-Received: from mx2.suse.de ([195.135.220.15]:43986 "EHLO mx2.suse.de"
+        Wed, 19 May 2021 13:11:18 -0400
+Received: from mx2.suse.de ([195.135.220.15]:43976 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1347430AbhESRLR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 May 2021 13:11:17 -0400
+        id S1355517AbhESRLQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 19 May 2021 13:11:16 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 12EEAB1E1;
-        Wed, 19 May 2021 17:09:57 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 79ACCAEF8;
+        Wed, 19 May 2021 17:09:56 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 17/23] ptsematest: Add --json to man page
-Date:   Wed, 19 May 2021 19:09:39 +0200
-Message-Id: <20210519170945.21941-18-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 15/23] pi_stress: Add --json to man page
+Date:   Wed, 19 May 2021 19:09:37 +0200
+Message-Id: <20210519170945.21941-16-dwagner@suse.de>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210519170945.21941-1-dwagner@suse.de>
 References: <20210519170945.21941-1-dwagner@suse.de>
@@ -44,32 +44,42 @@ Add the newly introduced --json command line to the man page.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/ptsematest/ptsematest.8 | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ src/pi_tests/pi_stress.8 | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
-index a435e7a6221c..57e1658612c0 100644
---- a/src/ptsematest/ptsematest.8
-+++ b/src/ptsematest/ptsematest.8
-@@ -4,7 +4,7 @@
- \fBptsematest\fR \- Start two threads and measure the latency of interprocess communication with POSIX mutex.
- .SH "SYNOPSIS"
- .LP
--ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
-+ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [--json FILENAME] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
- .br
- .SH "DESCRIPTION"
- .LP
-@@ -32,6 +32,9 @@ Print help message.
- .B \-i, \-\-interval=INTV
- Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
- .TP
-+.B \-\-json=FILENAME
-+Write final results into FILENAME, JSON formatted.
-+.TP
- .B \-l, \-\-loops=LOOPS
- Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. ptsematest is stopped once the number of timer intervals has been reached.
- .TP
+diff --git a/src/pi_tests/pi_stress.8 b/src/pi_tests/pi_stress.8
+index c3d7889a5cd5..8c43a1ccf676 100644
+--- a/src/pi_tests/pi_stress.8
++++ b/src/pi_tests/pi_stress.8
+@@ -10,7 +10,7 @@
+ pi_stress \- a stress test for POSIX Priority Inheritance mutexes
+ .\"}}}
+ .\"{{{ Synopsis
+-.\" Usage:  pi_stress [-d] [-D TIME] [-g N] [-h] [-i N ] [-m] [-p] [-q] [-r] [-s OPTS] [-u] [-v] [-V]
++.\" Usage:  pi_stress [-d] [-D TIME] [-g N] [-h] [-i N ] [--json FILENAME ] [-m] [-p] [-q] [-r] [-s OPTS] [-u] [-v] [-V]
+ .SH SYNOPSIS
+ .B pi_stress
+ .RB [ \-d|\-\-debug]
+@@ -20,6 +20,8 @@ pi_stress \- a stress test for POSIX Priority Inheritance mutexes
+ .IR N ]
+ .RB [ \-i|\-\-inversions
+ .IR INV ]
++.RB [ \-\-json
++.IR FILENAME ]
+ .RB [ \-m|\-\-mlockall ]
+ .RB [ \-p|\-\-prompt ]
+ .RB [ \-q|\-\-quiet ]
+@@ -58,6 +60,10 @@ Display a short help message and options.
+ .I N
+ number of inversion conditions. This is the total number of inversions
+ for all inversion groups. Default is \-1 for infinite.
++.IP "\-\-json=FILENAME"
++Write final results into
++.I FILENAME
++, JSON formatted.
+ .IP "\-m|\-\-mlockall"
+ Call mlockall to lock current and future memory allocations and
+ prevent being paged out
 -- 
 2.31.1
 
