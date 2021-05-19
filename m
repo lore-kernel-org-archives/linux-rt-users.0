@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F109DC43619
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BBD6C43462
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D9137610CC
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DDABF611AB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355553AbhESRLT (ORCPT
+        id S1355536AbhESRLT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Wed, 19 May 2021 13:11:19 -0400
-Received: from mx2.suse.de ([195.135.220.15]:43922 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:43986 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1355531AbhESRLR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1347430AbhESRLR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 19 May 2021 13:11:17 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id BFD0EB1DE;
-        Wed, 19 May 2021 17:09:56 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 12EEAB1E1;
+        Wed, 19 May 2021 17:09:57 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 16/23] pmqtest: Add --json to man page
-Date:   Wed, 19 May 2021 19:09:38 +0200
-Message-Id: <20210519170945.21941-17-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 17/23] ptsematest: Add --json to man page
+Date:   Wed, 19 May 2021 19:09:39 +0200
+Message-Id: <20210519170945.21941-18-dwagner@suse.de>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210519170945.21941-1-dwagner@suse.de>
 References: <20210519170945.21941-1-dwagner@suse.de>
@@ -44,23 +44,23 @@ Add the newly introduced --json command line to the man page.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/pmqtest/pmqtest.8 | 5 ++++-
+ src/ptsematest/ptsematest.8 | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
-index 36678d0c5026..4fbcc5c27ce2 100644
---- a/src/pmqtest/pmqtest.8
-+++ b/src/pmqtest/pmqtest.8
+diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
+index a435e7a6221c..57e1658612c0 100644
+--- a/src/ptsematest/ptsematest.8
++++ b/src/ptsematest/ptsematest.8
 @@ -4,7 +4,7 @@
- \fBpmqtest\fR \- Start pairs of threads and measure the latency of interprocess communication with POSIX messages queues
- .SH "SYNTAX"
+ \fBptsematest\fR \- Start two threads and measure the latency of interprocess communication with POSIX mutex.
+ .SH "SYNOPSIS"
  .LP
--pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [-l LOOPS] [-p PRIO] [-q] [-S] [-t|-t NUM]
-+pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [--json FILENAME] [-l LOOPS] [-p PRIO] [-q] [-S] [-t|-t NUM]
+-ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
++ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [--json FILENAME] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
  .br
  .SH "DESCRIPTION"
  .LP
-@@ -35,6 +35,9 @@ Set an artificial delay of the send function to force timeout of the receiver, r
+@@ -32,6 +32,9 @@ Print help message.
  .B \-i, \-\-interval=INTV
  Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
  .TP
@@ -68,7 +68,7 @@ index 36678d0c5026..4fbcc5c27ce2 100644
 +Write final results into FILENAME, JSON formatted.
 +.TP
  .B \-l, \-\-loops=LOOPS
- Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. pmqtest is stopped once the number of timer intervals has been reached.
+ Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. ptsematest is stopped once the number of timer intervals has been reached.
  .TP
 -- 
 2.31.1
