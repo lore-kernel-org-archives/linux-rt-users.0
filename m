@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 100F8C43617
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 92F20C433B4
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E62EB611AB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 71B6E611AB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355534AbhESRLQ (ORCPT
+        id S1355531AbhESRLW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 19 May 2021 13:11:16 -0400
-Received: from mx2.suse.de ([195.135.220.15]:43986 "EHLO mx2.suse.de"
+        Wed, 19 May 2021 13:11:22 -0400
+Received: from mx2.suse.de ([195.135.220.15]:43976 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1347533AbhESRLP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 May 2021 13:11:15 -0400
+        id S1355555AbhESRLS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 19 May 2021 13:11:18 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 06DECB1B4;
-        Wed, 19 May 2021 17:09:55 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 3EDCBB1F0;
+        Wed, 19 May 2021 17:09:58 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 10/23] sigwaittest: Rename command line option --output to --json
-Date:   Wed, 19 May 2021 19:09:32 +0200
-Message-Id: <20210519170945.21941-11-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 21/23] sigwaittest: Add --json to man page
+Date:   Wed, 19 May 2021 19:09:43 +0200
+Message-Id: <20210519170945.21941-22-dwagner@suse.de>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210519170945.21941-1-dwagner@suse.de>
 References: <20210519170945.21941-1-dwagner@suse.de>
@@ -40,88 +40,36 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The initial idea was to have several different output format
-supported but it turns out everyone is happy with JSON, so
-there is no need to add another format.
-
-Thus let's make the command line option more specific and
-rename it to --json.
+Add the newly introduced --json command line to the man page.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sigwaittest/sigwaittest.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ src/sigwaittest/sigwaittest.8 | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-index fda44724dd62..98a740d2cce2 100644
---- a/src/sigwaittest/sigwaittest.c
-+++ b/src/sigwaittest/sigwaittest.c
-@@ -220,8 +220,8 @@ static void display_help(int error)
- 	       "                           days.\n"
- 	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
- 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
-+	       "         --json=FILENAME   write final results into FILENAME, JSON formatted\n"
- 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
--	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
- 	       "-p PRIO  --prio=PRIO       priority\n"
- 	       "-q       --quiet           print a summary only on exit\n"
- 	       "-t       --threads         one thread per available processor\n"
-@@ -242,11 +242,11 @@ static int duration;
- static int interval = 1000;
- static int distance = 500;
- static int quiet;
--static char outfile[MAX_PATH];
-+static char jsonfile[MAX_PATH];
- 
- enum option_value {
- 	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
--	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT,
-+	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_JSON, OPT_LOOPS,
- 	OPT_PRIORITY, OPT_QUIET, OPT_THREADS
- };
- 
-@@ -267,8 +267,8 @@ static void process_options(int argc, char *argv[])
- 			{"fork",	optional_argument,	NULL, OPT_FORK},
- 			{"help",	no_argument,		NULL, OPT_HELP},
- 			{"interval",	required_argument,	NULL, OPT_INTERVAL},
-+			{"json",	required_argument,      NULL, OPT_JSON},
- 			{"loops",	required_argument,	NULL, OPT_LOOPS},
--			{"output",	required_argument,      NULL, OPT_OUTPUT },
- 			{"priority",	required_argument,	NULL, OPT_PRIORITY},
- 			{"quiet",	no_argument,		NULL, OPT_QUIET},
- 			{"threads",	optional_argument,	NULL, OPT_THREADS},
-@@ -324,13 +324,13 @@ static void process_options(int argc, char *argv[])
- 		case 'i':
- 			interval = atoi(optarg);
- 			break;
-+		case OPT_JSON:
-+			strncpy(jsonfile, optarg, strnlen(optarg, MAX_PATH-1));
-+			break;
- 		case OPT_LOOPS:
- 		case 'l':
- 			max_cycles = atoi(optarg);
- 			break;
--		case OPT_OUTPUT:
--			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
--			break;
- 		case OPT_PRIORITY:
- 		case 'p':
- 			priority = atoi(optarg);
-@@ -702,12 +702,12 @@ int main(int argc, char *argv[])
- 		}
- 	}
- 
--	if (strlen(outfile) != 0) {
-+	if (strlen(jsonfile) != 0) {
- 		struct params_stats ps = {
- 			.receiver = receiver,
- 			.sender = sender,
- 		};
--		rt_write_json(outfile, 0, write_stats, &ps);
-+		rt_write_json(jsonfile, 0, write_stats, &ps);
- 	}
- 
- nomem:
+diff --git a/src/sigwaittest/sigwaittest.8 b/src/sigwaittest/sigwaittest.8
+index a2dc1bc080a3..26ad333e2841 100644
+--- a/src/sigwaittest/sigwaittest.8
++++ b/src/sigwaittest/sigwaittest.8
+@@ -4,7 +4,7 @@
+ \fBsigwaittest\fR \- Start two threads or fork two processes and measure the latency between sending and receiving a signal
+ .SH "SYNTAX"
+ .LP
+-sigwaittest [-a|--affinity PROC] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-t|--threads [NUM]]
++sigwaittest [-a|--affinity PROC] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [--json FILENAME] [-l|--loops LOOPS] [-p|--prio PRIO] [-t|--threads [NUM]]
+ .br
+ .SH "DESCRIPTION"
+ .LP
+@@ -32,6 +32,9 @@ Instead of creating threads (which is the default), fork new processes
+ .B \-i, \-\-interval=INTV
+ Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
+ .TP
++.B \-\-json=FILENAME
++Write final results into FILENAME, JSON formatted.
++.TP
+ .B \-l, \-\-loops=LOOPS
+ Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. sigwaittest is stopped once the number of timer intervals has been reached.
+ .TP
 -- 
 2.31.1
 
