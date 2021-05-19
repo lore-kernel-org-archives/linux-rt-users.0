@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D8BAC43461
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC250C43460
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4630161353
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 97E26611AB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:09:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347453AbhESRLO (ORCPT
+        id S1347451AbhESRLN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 19 May 2021 13:11:14 -0400
-Received: from mx2.suse.de ([195.135.220.15]:43894 "EHLO mx2.suse.de"
+        Wed, 19 May 2021 13:11:13 -0400
+Received: from mx2.suse.de ([195.135.220.15]:43882 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1347119AbhESRLN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S242807AbhESRLN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 19 May 2021 13:11:13 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id F3C51B19A;
+        by mx2.suse.de (Postfix) with ESMTP id AC532B195;
         Wed, 19 May 2021 17:09:52 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 03/23] oslat: Rename command line option --output to --json
-Date:   Wed, 19 May 2021 19:09:25 +0200
-Message-Id: <20210519170945.21941-4-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 02/23] cyclictest: Rename command line option --output to --json
+Date:   Wed, 19 May 2021 19:09:24 +0200
+Message-Id: <20210519170945.21941-3-dwagner@suse.de>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210519170945.21941-1-dwagner@suse.de>
 References: <20210519170945.21941-1-dwagner@suse.de>
@@ -49,87 +49,101 @@ rename it to --json.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/oslat/oslat.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ src/cyclictest/cyclictest.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 37d528f0f7ff..32de951f27c0 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -174,7 +174,7 @@ struct global {
- 	int                   quiet;
- 	int                   single_preheat_thread;
- 	int                   output_omit_zero_buckets;
--	char                  outfile[MAX_PATH];
-+	char                  jsonfile[MAX_PATH];
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 59dda1973b1a..a561443fa67b 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -218,7 +218,7 @@ static struct timespec globalt;
  
- 	/* Mutable state. */
- 	volatile enum command cmd;
-@@ -560,6 +560,7 @@ static void usage(int error)
- 	       "-C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
- 	       "-D, --duration         Specify test duration, e.g., 60, 20m, 2H\n"
- 	       "                       (m/M: minutes, h/H: hours, d/D: days)\n"
-+	       "    --json=FILENAME    write final results into FILENAME, JSON formatted\n"
- 	       "-f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
- 	       "-m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
- 	       "                       Total memory usage will be this value multiplies 2*N,\n"
-@@ -570,7 +571,6 @@ static void usage(int error)
- 	       "                       NOTE: please make sure the CPU frequency on all testing cores\n"
- 	       "                       are locked before using this parmater.  If you don't know how\n"
- 	       "                       to lock the freq then please don't use this parameter.\n"
--	       "    --output=FILENAME  write final results into FILENAME, JSON formatted\n"
- 	       "-T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
- 	       "                       print a marker in ftrace and stop ftrace too.\n"
- 	       "-v, --version          Display the version of the software.\n"
-@@ -597,8 +597,8 @@ static int workload_select(char *name)
+ static char fifopath[MAX_PATH];
+ static char histfile[MAX_PATH];
+-static char outfile[MAX_PATH];
++static char jsonfile[MAX_PATH];
  
- enum option_value {
- 	OPT_BUCKETSIZE=1, OPT_CPU_LIST, OPT_CPU_MAIN_THREAD,
--	OPT_DURATION, OPT_RT_PRIO, OPT_HELP, OPT_TRACE_TH,
--	OPT_WORKLOAD, OPT_WORKLOAD_MEM, OPT_BIAS, OPT_OUTPUT,
-+	OPT_DURATION, OPT_JSON, OPT_RT_PRIO, OPT_HELP, OPT_TRACE_TH,
-+	OPT_WORKLOAD, OPT_WORKLOAD_MEM, OPT_BIAS,
- 	OPT_QUIET, OPT_SINGLE_PREHEAT, OPT_ZERO_OMIT,
- 	OPT_VERSION
+ static struct thread_param **parameters;
+ static struct thread_stat **statistics;
+@@ -832,6 +832,7 @@ static void display_help(int error)
+ 	       "-H       --histofall=US    same as -h except with an additional summary column\n"
+ 	       "	 --histfile=<path> dump the latency histogram to <path> instead of stdout\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
++	       "         --json=FILENAME   write final results into FILENAME, JSON formatted\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+ 	       "	 --laptop	   Save battery when running cyclictest\n"
+ 	       "			   This will give you poorer realtime results\n"
+@@ -841,7 +842,6 @@ static void display_help(int error)
+ 	       "			   latency is hit. Useful for low bandwidth.\n"
+ 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
+ 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+-	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+ 	       "-p PRIO  --priority=PRIO   priority of highest prio thread\n"
+ 	       "	 --policy=NAME     policy of measurement thread, where NAME may be one\n"
+ 	       "                           of: other, normal, batch, idle, fifo or rr.\n"
+@@ -944,14 +944,14 @@ enum option_values {
+ 	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_CLOCK,
+ 	OPT_DISTANCE, OPT_DURATION, OPT_LATENCY,
+ 	OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_HISTFILE,
+-	OPT_INTERVAL, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH,
++	OPT_INTERVAL, OPT_JSON, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH,
+ 	OPT_NANOSLEEP, OPT_NSECS, OPT_OSCOPE, OPT_PRIORITY,
+ 	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION,
+ 	OPT_SYSTEM, OPT_SMP, OPT_THREADS, OPT_TRIGGER,
+ 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
+ 	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+ 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
+-	OPT_TRACEMARK, OPT_POSIX_TIMERS, OPT_OUTPUT
++	OPT_TRACEMARK, OPT_POSIX_TIMERS,
  };
-@@ -613,6 +613,7 @@ static void parse_options(int argc, char *argv[])
- 			{ "cpu-list",	required_argument,	NULL, OPT_CPU_LIST },
- 			{ "cpu-main-thread", required_argument, NULL, OPT_CPU_MAIN_THREAD},
- 			{ "duration",	required_argument,	NULL, OPT_DURATION },
-+			{ "json",	required_argument,      NULL, OPT_JSON },
- 			{ "rtprio",	required_argument,	NULL, OPT_RT_PRIO },
- 			{ "help",	no_argument,		NULL, OPT_HELP },
- 			{ "trace-threshold", required_argument,	NULL, OPT_TRACE_TH },
-@@ -621,7 +622,6 @@ static void parse_options(int argc, char *argv[])
- 			{ "bias",	no_argument,		NULL, OPT_BIAS },
- 			{ "quiet",	no_argument,		NULL, OPT_QUIET },
- 			{ "single-preheat", no_argument,	NULL, OPT_SINGLE_PREHEAT },
--			{ "output",	required_argument,      NULL, OPT_OUTPUT },
- 			{ "zero-omit",	no_argument,		NULL, OPT_ZERO_OMIT },
- 			{ "version",	no_argument,		NULL, OPT_VERSION },
- 			{ NULL, 0, NULL, 0 },
-@@ -677,8 +677,8 @@ static void parse_options(int argc, char *argv[])
- 				exit(1);
- 			}
- 			break;
--		case OPT_OUTPUT:
--			strncpy(g.outfile, optarg, strnlen(optarg, MAX_PATH-1));
+ 
+ /* Process commandline options */
+@@ -979,13 +979,13 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 			{"histofall",        required_argument, NULL, OPT_HISTOFALL },
+ 			{"histfile",	     required_argument, NULL, OPT_HISTFILE },
+ 			{"interval",         required_argument, NULL, OPT_INTERVAL },
++			{"json",             required_argument, NULL, OPT_JSON },
+ 			{"laptop",	     no_argument,	NULL, OPT_LAPTOP },
+ 			{"loops",            required_argument, NULL, OPT_LOOPS },
+ 			{"mlockall",         no_argument,       NULL, OPT_MLOCKALL },
+ 			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
+ 			{"nsecs",            no_argument,       NULL, OPT_NSECS },
+ 			{"oscope",           required_argument, NULL, OPT_OSCOPE },
+-			{"output",           required_argument, NULL, OPT_OUTPUT },
+ 			{"priority",         required_argument, NULL, OPT_PRIORITY },
+ 			{"quiet",            no_argument,       NULL, OPT_QUIET },
+ 			{"priospread",       no_argument,       NULL, OPT_PRIOSPREAD },
+@@ -1080,6 +1080,9 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		case 'i':
+ 		case OPT_INTERVAL:
+ 			interval = atoi(optarg); break;
 +		case OPT_JSON:
-+			strncpy(g.jsonfile, optarg, strnlen(optarg, MAX_PATH-1));
- 			break;
- 		case OPT_TRACE_TH:
- 		case 'T':
-@@ -862,8 +862,8 @@ int main(int argc, char *argv[])
++			strncpy(jsonfile, optarg, strnlen(optarg, MAX_PATH-1));
++			break;
+ 		case 'l':
+ 		case OPT_LOOPS:
+ 			max_cycles = atoi(optarg); break;
+@@ -1095,9 +1098,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 		case 'o':
+ 		case OPT_OSCOPE:
+ 			oscope_reduction = atoi(optarg); break;
+-		case OPT_OUTPUT:
+-			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
+-			break;
+ 		case 'p':
+ 		case OPT_PRIORITY:
+ 			priority = atoi(optarg);
+@@ -2134,8 +2134,8 @@ int main(int argc, char **argv)
+ 	if (!verbose && !quiet && refresh_on_max)
+ 		printf("\033[%dB", num_threads + 2);
  
- 	write_summary(threads);
+-	if (strlen(outfile) != 0)
+-		rt_write_json(outfile, ret, write_stats, NULL);
++	if (strlen(jsonfile) != 0)
++		rt_write_json(jsonfile, ret, write_stats, NULL);
  
--	if (strlen(g.outfile) != 0)
--		rt_write_json(g.outfile, 0, write_summary_json, threads);
-+	if (strlen(g.jsonfile) != 0)
-+		rt_write_json(g.jsonfile, 0, write_summary_json, threads);
- 
- 	if (g.cpu_list) {
- 		free(g.cpu_list);
+ 	if (quiet)
+ 		quiet = 2;
 -- 
 2.31.1
 
