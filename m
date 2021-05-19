@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E6343C4360C
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B8E4C43611
 	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C9976611AB
+	by mail.kernel.org (Postfix) with ESMTP id 1545A611AB
 	for <linux-rt-users@archiver.kernel.org>; Wed, 19 May 2021 17:10:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1355555AbhESRLX (ORCPT
+        id S1355564AbhESRLX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Wed, 19 May 2021 13:11:23 -0400
-Received: from mx2.suse.de ([195.135.220.15]:43986 "EHLO mx2.suse.de"
+Received: from mx2.suse.de ([195.135.220.15]:43922 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1355550AbhESRLT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 May 2021 13:11:19 -0400
+        id S1347431AbhESRLS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 19 May 2021 13:11:18 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id CF52EB1F3;
+        by mx2.suse.de (Postfix) with ESMTP id 892A2B1F1;
         Wed, 19 May 2021 17:09:58 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 23/23] svematest: Add --json to man page
-Date:   Wed, 19 May 2021 19:09:45 +0200
-Message-Id: <20210519170945.21941-24-dwagner@suse.de>
+Subject: [PATCH rt-tests v1 22/23] ssdd: Add --json to man page
+Date:   Wed, 19 May 2021 19:09:44 +0200
+Message-Id: <20210519170945.21941-23-dwagner@suse.de>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210519170945.21941-1-dwagner@suse.de>
 References: <20210519170945.21941-1-dwagner@suse.de>
@@ -44,32 +44,32 @@ Add the newly introduced --json command line to the man page.
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/svsematest/svsematest.8 | 5 ++++-
+ src/ssdd/ssdd.8 | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
-index 828f9154e974..93abf55f3d4d 100644
---- a/src/svsematest/svsematest.8
-+++ b/src/svsematest/svsematest.8
-@@ -4,7 +4,7 @@
- \fBsvsematest\fR \- Start two threads or fork two processes and measure the latency of SYSV semaphores
- .SH "SYNTAX"
+diff --git a/src/ssdd/ssdd.8 b/src/ssdd/ssdd.8
+index 5c29d0abb732..a3b9d790dec4 100644
+--- a/src/ssdd/ssdd.8
++++ b/src/ssdd/ssdd.8
+@@ -3,7 +3,7 @@
+ ssdd \- have a tracer do a bunch of PTRACE_SINGLESTEPs
+ .SH SYNOPSIS
  .LP
--svsematest [-a|--affinity NUM] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
-+svsematest [-a|--affinity NUM] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [--json FILENAME] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
+-ssdd [-f|--forks NUM] [-h|--help] [-i|--iters NUM]
++ssdd [-f|--forks NUM] [-h|--help] [-i|--iters NUM] [--json FILENAME]
+ .SH DESCRIPTION
+ Have a tracer do a bunch of PTRACE_SINGLESTEPs against a tracee as
+ fast as possible. Create several of these tracer/tracee pairs and
+@@ -25,6 +25,9 @@ number of PTRACE_SINGLESTEP iterations to do before declaring
+ success, for each tracer tracee pair set up.
  .br
- .SH "DESCRIPTION"
- .LP
-@@ -32,6 +32,9 @@ Instead of creating threads (which is the default), fork new processes
- .B \-i, \-\-interval=INTV
- Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
- .TP
+ Default is 10,000.
++.TP
 +.B \-\-json=FILENAME
 +Write final results into FILENAME, JSON formatted.
-+.TP
- .B \-l, \-\-loops=LOOPS
- Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. svsematest is stopped once the number of timer intervals has been reached.
- .TP
+ .SH AUTHOR
+ ssdd was written by Joe Korty <joe.korty@concurrent-rt.com>
+ .PP
 -- 
 2.31.1
 
