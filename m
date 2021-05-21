@@ -7,65 +7,65 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7CA7AC04FF3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 20:21:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D8A94C04FF3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 20:24:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5C4846135A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 20:21:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BA6F5613EB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 20:24:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230060AbhEUUXE (ORCPT
+        id S229865AbhEUU0U (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 May 2021 16:23:04 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:33274 "EHLO
+        Fri, 21 May 2021 16:26:20 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:31509 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229586AbhEUUXD (ORCPT
+        by vger.kernel.org with ESMTP id S229532AbhEUU0T (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 May 2021 16:23:03 -0400
+        Fri, 21 May 2021 16:26:19 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621628499;
+        s=mimecast20190719; t=1621628695;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
         bh=sJaAaIiLck2SnWIAuYb2+IuH8Cu0sOUOe5SJcpWY064=;
-        b=b57Ys5tyxa2HYbRqh1YFVpnPR2zvYp4h0GB9q2YSprt3DJ3eQZ6hHnvOKB6CbqD7lfCq+I
-        hOtnhTh9h0PQLzjJ1mzYYXKetR/MKxW6x6T0p3VpJcoz+YGhkDOTB5cNhXMCF2qmX5FOf8
-        3I10IdQ4utHQNQe1u0di8YU9xtSzwTU=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-135-38U6fybNOEuoj9wbYzxCsQ-1; Fri, 21 May 2021 16:21:37 -0400
-X-MC-Unique: 38U6fybNOEuoj9wbYzxCsQ-1
-Received: by mail-qt1-f198.google.com with SMTP id x19-20020ac87a930000b02901f6125bcda0so4325029qtr.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 13:21:37 -0700 (PDT)
+        b=eP/GStuRO6PPY3U2F5qVQTulMcMYqvwDr4dY4UiJZrWu1Zi7r2f6EMhzyuvZQzujzygD9f
+        TiVqePxcmjcSWHdPDfNw9ApMj6FPwaVQYSjydDaJSXiD8pSHciwuc+uZbswRAZYFxQ28lv
+        9ghRSopktaK5YzvYLVkRVnaL79UouZs=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-588-MwhsJ9DnM7SmQp3innw13A-1; Fri, 21 May 2021 16:24:54 -0400
+X-MC-Unique: MwhsJ9DnM7SmQp3innw13A-1
+Received: by mail-qt1-f199.google.com with SMTP id b20-20020ac87fd40000b02901e1370c5e12so16436931qtk.17
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 13:24:54 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
         bh=sJaAaIiLck2SnWIAuYb2+IuH8Cu0sOUOe5SJcpWY064=;
-        b=TrjWilwfahlP4Pz4XfHKhFmJYRs34Fh14xfWcr78CFHtSv46G8s6rB3Y9fe54a1yAv
-         m50ydauNK3uE07ehSG/gwQh86CNqaE3HI9XlCxYjzg11G9Ynn/7ACgJby2p9E67dBjFr
-         6/5efp/zIzSN5c6Tegpm6SuQdWFdqp45Gc+yNxEdGZNkRMbvSyc7w+uP5UV95EgTgqfg
-         4GARvYgJou4pUNfQuZfFRhIt3YcCl84JooZQlx5+IKK83Z79f8mfjW4DhxhJDDXm6shI
-         HRvpLDqb6KlHQV4DVCDr1rNP1lyXO/3kO0NlJfHQUUZPftWBACzmrDw0AqSqM8YDvjaC
-         qt6Q==
-X-Gm-Message-State: AOAM5303JuVE6zm88d7wtDqQgoRvQdBvuRQk/fKhqWU4Q1WqFisXXX5p
-        ZBhMVvM1z5kGf7xAB9DCpydsnGP9w6bonrlRGRQ1LrrHHcpRQXQBKxodGVH0IQZwBBFPuhrGZx7
-        T2okVXlwStOskRSYN7bnSWFqPBrg=
-X-Received: by 2002:a05:620a:675:: with SMTP id a21mr14063881qkh.333.1621628497302;
-        Fri, 21 May 2021 13:21:37 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJx1mdwe/9E8YQcC+ygLco37ipIAowxphQCi/vgWWIvv8Lvu2Qs/1DtlImGLtOoINJ3z5pRntA==
-X-Received: by 2002:a05:620a:675:: with SMTP id a21mr14063865qkh.333.1621628497144;
-        Fri, 21 May 2021 13:21:37 -0700 (PDT)
+        b=sKfA6Vo3YkSObX/O3zNIjFB21Xdr7ulE0EmtNIIlJPVujAkP0lIwf6txsNi2tHgZSO
+         nVHj54YDL4zF8O+x5eRSuu9WUj3MLq8L9mMej4vlRDXB85W3UqWiatKj/gQL5HNatWVW
+         gP7bTthoFCmJp4JByjLfdTqVgVla4F07zEg/RqwGyMB5SIcESgRDAioLsDhkeHqRrzxu
+         Nbiw2Z0Tjm3B9UbAJ6Pm2NF0xuakwjYTQyWANuy66szf63lf98vaCNZ90+ucaHWQpDPW
+         5XuOcjTVtXK/nXdlsEiBDXPnkyCC2sk+KsyIOghVGs3Mnt0V8eHWYzFV7RxeVCfmGeG/
+         ODTA==
+X-Gm-Message-State: AOAM5336nXdL6aGstxmRVuKAg9Dj49QoEBsbS3DodPe2YYkJw+qrABTB
+        C07j9pzva4p1zwtoYzt3qRgJHiB1nZc4FDQHWJFkm2MxkgWg93rKii5E1N9kqoPgAH3zAQkPRgO
+        ajWtdl7oAkmL13ZEBwaLUdQbRGmk=
+X-Received: by 2002:a05:620a:12f2:: with SMTP id f18mr14923417qkl.122.1621628694153;
+        Fri, 21 May 2021 13:24:54 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwv+rN2GW0zPqGAqPZjLtzb2HwYARolzPAthTS6h+Z5L4d48JfdyiYHr3Nms8S87Kiq7aRWSg==
+X-Received: by 2002:a05:620a:12f2:: with SMTP id f18mr14923398qkl.122.1621628694002;
+        Fri, 21 May 2021 13:24:54 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id 104sm5195885qta.90.2021.05.21.13.21.36
+        by smtp.gmail.com with ESMTPSA id 7sm6078399qtu.38.2021.05.21.13.24.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 May 2021 13:21:36 -0700 (PDT)
-Date:   Fri, 21 May 2021 16:21:35 -0400 (EDT)
+        Fri, 21 May 2021 13:24:53 -0700 (PDT)
+Date:   Fri, 21 May 2021 16:24:48 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Jonathan Schwender <schwenderjonathan@gmail.com>
 cc:     williams@redhat.com, linux-rt-users@vger.kernel.org
 Subject: Re: [PATCH v4 2/2] cyclictest: Add --mainaffinity=[CPUSET] option.
 In-Reply-To: <20210518083712.8237-3-schwenderjonathan@gmail.com>
-Message-ID: <93e1e1-6569-467d-afbb-d9586c8c1cec@redhat.com>
+Message-ID: <db548620-e1a6-c4cb-3e48-3247865148eb@redhat.com>
 References: <20210518083712.8237-1-schwenderjonathan@gmail.com> <20210518083712.8237-3-schwenderjonathan@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
