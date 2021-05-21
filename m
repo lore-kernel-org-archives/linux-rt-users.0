@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AEE09C04FF3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 21:45:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 364B4C04FF3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 21:47:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 86E96613EC
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 21:45:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0EA18613EA
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 May 2021 21:47:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229519AbhEUVrV (ORCPT
+        id S229503AbhEUVtC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 May 2021 17:47:21 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:58314 "EHLO
+        Fri, 21 May 2021 17:49:02 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:21140 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229457AbhEUVrU (ORCPT
+        by vger.kernel.org with ESMTP id S229457AbhEUVtB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 May 2021 17:47:20 -0400
+        Fri, 21 May 2021 17:49:01 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621633557;
+        s=mimecast20190719; t=1621633657;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=0QdD+crm9TELUPK7FBPLutb7mL1OqUa5rDA4VMiyVgA=;
-        b=g0y9wRSG8CJeXX47gh/w1dKoGQB5V9a6gFCdAqJxvMMeL9fCPIsDKm/jcC+RK6VGTOtFFW
-        jcgQ8DUXk7eba8Q0YXkmZC+5hL2O4PCfAqvhJ9Crb5cRD4mmqmyQCioEC/vPlPQ5yEAieI
-        GiLClGwCzcLmEzT9FujGaeMKY4OyxCQ=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-196-JhpHOuHtNBOxNaz-ajLAUw-1; Fri, 21 May 2021 17:45:55 -0400
-X-MC-Unique: JhpHOuHtNBOxNaz-ajLAUw-1
-Received: by mail-qv1-f72.google.com with SMTP id r11-20020a0cb28b0000b02901c87a178503so18374074qve.22
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 14:45:55 -0700 (PDT)
+        bh=RW8lznhKo3TyxFe6hUyJZ3D//z3sbra3QviHazwc1Rc=;
+        b=KvzlbAJT4++nGb0dG5yc3P7AW+mXT/h6Cl6D6zO0Kbe40z9bArXj/NfKU4bQeDYChXx34b
+        lEKqalLa5Hy+FHrvHugteGZRJm1vHArZZZOb4ge5ChHWj3aswDop03I+Yiv+t92FAUVzSa
+        y3OIEm9ViH3nFYiVD/RSlr3rHKrP4bQ=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-475-_HTjBbllNVWKvgA0ZH-VUg-1; Fri, 21 May 2021 17:47:35 -0400
+X-MC-Unique: _HTjBbllNVWKvgA0ZH-VUg-1
+Received: by mail-qk1-f197.google.com with SMTP id b3-20020a05620a0cc3b02902e9d5ca06f2so9048048qkj.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 14:47:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=0QdD+crm9TELUPK7FBPLutb7mL1OqUa5rDA4VMiyVgA=;
-        b=psYw/SBkDvmA+t//rkZlY9cArYs17MZtKB/ZqQ3JNCBvwHjZq9YX4MFLu27Jimkn+p
-         0MSAb9z+aOSJaCPqQO0OOqVlrfeYYit/Xlukzo+7uawPYTObKV6NyZWckfrYnE+yLrNE
-         QVCSzwpaKJ1IGfaUG8oIC6BIT90DSFjw8RwrS2h0eevRxscQKrpOJf5d9BwOpj/lQH56
-         jv7UkReaumUnarzl9kXmt87lHFNgSaYhSCvQ4ob7B1yBYYTGrYtV+pBZEhqL/xjlJ8TE
-         4M/GyhdTA4RR38Cou3iy38dqzrg+mF5DNtbh3eaiHJKbPZ5dhASKqepqaoXfpsOm6L60
-         uQDw==
-X-Gm-Message-State: AOAM5328IWMPNafmwTJBbXFUobh4Gb4Cx92HB8v/1h5MnibR7T1ecVcd
-        1qAMuS/E3669URJbx+B5kwCLK2seOEtbB7i7Yx/m0NP//VDBrfK8wAULB4cfI/j16MjJvV3wJYx
-        0pVh6/v+K3K9o2AjkPMCL3EjDd4A=
-X-Received: by 2002:a37:e0e:: with SMTP id 14mr2491525qko.374.1621633554878;
-        Fri, 21 May 2021 14:45:54 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJw/uQb9rbjlLkGZd6AZNqnPHxKgJrTlyssvNmiPRK22KGYjQeuzN9gbvSTbwYTdImZwwmwCQA==
-X-Received: by 2002:a37:e0e:: with SMTP id 14mr2491510qko.374.1621633554718;
-        Fri, 21 May 2021 14:45:54 -0700 (PDT)
+        bh=RW8lznhKo3TyxFe6hUyJZ3D//z3sbra3QviHazwc1Rc=;
+        b=Xy+441naLak8o1RiZ23pkmbt1TRdbGOsJOQsiVJXw14OfPevnnu/uMfksTtbElcWDE
+         B9ZNtfSFgbNRD5XslwnR0Ja6kIF6VHVLT2h5rvcPlxlGD16U8QakfYgwAcMchYXHp3lx
+         CmvIrIhOMX0OeBeP/96KFoycYYLkm6RcZ9FHsyhK73/oqVblv/MVtJdHRkCA/+qTJKNN
+         /KJp6IwpypDsYdT4x31f5ZJ+bDwUuqXrEbNmFLX0IeoyM3pHCt9Te0c00YaNaiDsKJFE
+         BdmP/iIGmYAE2yciLjuXrCANI/Ytx+bJzthXdYhiDp1IhfJDZVqH2t3iljJ7Ve42cD00
+         FB+w==
+X-Gm-Message-State: AOAM531fqLbKgEf7+iqcf17j+ibH1j59pRfg1NiokGAsmjpMWN+HmrUJ
+        WNuFhEvOn6AjQ/+llXp4YXN5XZu7F6fmZzbIMJVEOx0kKhWK9d6PRLD/00cn8LosrxNjPvZnF6n
+        de+g91KREF6QKCazghd9/VB+vkV8=
+X-Received: by 2002:a05:622a:413:: with SMTP id n19mr13586921qtx.238.1621633655467;
+        Fri, 21 May 2021 14:47:35 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwLn6Q4bgRP0V0DbaIMyEjLZZ4AE7BD2H2MrsQ1rYmsV1dL4aT2Q6mEGuhkBPbJhsVTCD3PQg==
+X-Received: by 2002:a05:622a:413:: with SMTP id n19mr13586913qtx.238.1621633655309;
+        Fri, 21 May 2021 14:47:35 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id x19sm5251122qts.19.2021.05.21.14.45.53
+        by smtp.gmail.com with ESMTPSA id l65sm5786888qke.7.2021.05.21.14.47.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 May 2021 14:45:54 -0700 (PDT)
-Date:   Fri, 21 May 2021 17:45:53 -0400 (EDT)
+        Fri, 21 May 2021 14:47:35 -0700 (PDT)
+Date:   Fri, 21 May 2021 17:47:33 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v1 06/23] ptsematest: Rename command line option
- --output to --json
-In-Reply-To: <20210519170945.21941-7-dwagner@suse.de>
-Message-ID: <b4b41df1-c217-6054-1852-a8118c174487@redhat.com>
-References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-7-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v1 07/23] rt-migrate-test: Rename command line
+ option --output to --json
+In-Reply-To: <20210519170945.21941-8-dwagner@suse.de>
+Message-ID: <a1f8483-e664-201e-18d4-3ba96536aea@redhat.com>
+References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-8-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -88,82 +88,86 @@ On Wed, 19 May 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/ptsematest/ptsematest.c | 18 +++++++++---------
->  1 file changed, 9 insertions(+), 9 deletions(-)
+>  src/rt-migrate-test/rt-migrate-test.c | 20 ++++++++++----------
+>  1 file changed, 10 insertions(+), 10 deletions(-)
 > 
-> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-> index 70eb79e89635..5822164386de 100644
-> --- a/src/ptsematest/ptsematest.c
-> +++ b/src/ptsematest/ptsematest.c
-> @@ -155,8 +155,8 @@ static void display_help(int error)
->  	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
->  	       "                           days.\n"
->  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
-> +	       "         --json=FILENAME   write final results into FILENAME, JSON formatted\n"
->  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
-> -	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
->  	       "-p PRIO  --prio=PRIO       priority\n"
->  	       "-q       --quiet           print a summary only on exit\n"
->  	       "-S       --smp             SMP testing: options -a -t and same priority\n"
-> @@ -182,11 +182,11 @@ static int distance = 500;
->  static int smp;
->  static int sameprio;
+> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+> index 1e0abdd6c0fa..0c4dabeee249 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.c
+> +++ b/src/rt-migrate-test/rt-migrate-test.c
+> @@ -102,7 +102,7 @@ static int done;
+>  static int loop;
+>  static int duration;
 >  static int quiet;
 > -static char outfile[MAX_PATH];
 > +static char jsonfile[MAX_PATH];
 >  
+>  static pthread_barrier_t start_barrier;
+>  static pthread_barrier_t end_barrier;
+> @@ -162,9 +162,9 @@ static void usage(int error)
+>  	       "                           days.\n"
+>  	       "-e       --equal           Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
+>  	       "-h       --help            Print this help message\n"
+> +	       "         --json=FILENAME   write final results into FILENAME, JSON formatted\n"
+>  	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
+>  	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
+> -	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+>  	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
+>  	       "-q       --quiet           print a summary only on exit\n"
+>  	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
+> @@ -175,8 +175,8 @@ static void usage(int error)
+>  }
+>  
 >  enum option_value {
->  	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
-> -	OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT, OPT_PRIORITY,
-> +	OPT_HELP, OPT_INTERVAL, OPT_JSON, OPT_LOOPS, OPT_PRIORITY,
->  	OPT_QUIET, OPT_SMP, OPT_THREADS
+> -	OPT_CHECK=1, OPT_DURATION, OPT_EQUAL, OPT_HELP, OPT_LOOPS,
+> -	OPT_MAXERR, OPT_OUTPUT, OPT_PRIO, OPT_QUIET, OPT_RUN_TIME,
+> +	OPT_CHECK=1, OPT_DURATION, OPT_EQUAL, OPT_HELP, OPT_JSON,
+> +	OPT_LOOPS, OPT_MAXERR, OPT_PRIO, OPT_QUIET, OPT_RUN_TIME,
+>  	OPT_SLEEP_TIME
 >  };
 >  
-> @@ -205,8 +205,8 @@ static void process_options(int argc, char *argv[])
+> @@ -190,9 +190,9 @@ static void parse_options(int argc, char *argv[])
 >  			{"duration",	required_argument,	NULL, OPT_DURATION},
+>  			{"equal",	no_argument,		NULL, OPT_EQUAL},
 >  			{"help",	no_argument,		NULL, OPT_HELP},
->  			{"interval",	required_argument,	NULL, OPT_INTERVAL},
-> +			{"json",	required_argument,      NULL, OPT_JSON },
+> +			{"json",	required_argument,      NULL, OPT_JSON},
 >  			{"loops",	required_argument,	NULL, OPT_LOOPS},
+>  			{"maxerr",	required_argument,	NULL, OPT_MAXERR},
 > -			{"output",	required_argument,      NULL, OPT_OUTPUT },
->  			{"priority",	required_argument,	NULL, OPT_PRIORITY},
->  			{"quiet",	no_argument	,	NULL, OPT_QUIET},
->  			{"smp",		no_argument,		NULL, OPT_SMP},
-> @@ -250,6 +250,9 @@ static void process_options(int argc, char *argv[])
->  		case 'i':
->  			interval = atoi(optarg);
+>  			{"prio",	required_argument,	NULL, OPT_PRIO},
+>  			{"quiet",	no_argument,		NULL, OPT_QUIET},
+>  			{"run-time",	required_argument,	NULL, OPT_RUN_TIME},
+> @@ -221,6 +221,9 @@ static void parse_options(int argc, char *argv[])
+>  		case 'h':
+>  			usage(0);
 >  			break;
 > +		case OPT_JSON:
 > +			strncpy(jsonfile, optarg, strnlen(optarg, MAX_PATH-1));
 > +			break;
->  		case OPT_HELP:
->  		case '?':
->  		case 'h':
-> @@ -259,9 +262,6 @@ static void process_options(int argc, char *argv[])
+>  		case OPT_LOOPS:
 >  		case 'l':
->  			max_cycles = atoi(optarg);
+>  			nr_runs = atoi(optarg);
+> @@ -229,9 +232,6 @@ static void parse_options(int argc, char *argv[])
+>  		case 'm':
+>  			max_err = usec2nano(atoi(optarg));
 >  			break;
 > -		case OPT_OUTPUT:
 > -			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
 > -			break;
->  		case OPT_PRIORITY:
+>  		case OPT_PRIO:
 >  		case 'p':
->  			priority = atoi(optarg);
-> @@ -515,12 +515,12 @@ int main(int argc, char *argv[])
->  		pthread_mutex_destroy(&syncmutex[i]);
->  	}
+>  			prio_start = atoi(optarg);
+> @@ -663,8 +663,8 @@ int main (int argc, char **argv)
 >  
-> -	if (strlen(outfile) != 0) {
-> +	if (strlen(jsonfile) != 0) {
->  		struct params_stats ps = {
->  			.receiver = receiver,
->  			.sender = sender,
->  		};
-> -		rt_write_json(outfile, 0, write_stats, &ps);
-> +		rt_write_json(jsonfile, 0, write_stats, &ps);
->  	}
+>  	print_results();
 >  
->  nomem:
+> -	if (strlen(outfile) != 0)
+> -		rt_write_json(outfile, check < 0, write_stats, NULL);
+> +	if (strlen(jsonfile) != 0)
+> +		rt_write_json(jsonfile, check < 0, write_stats, NULL);
+>  
+>  	if (stop) {
+>  		/*
 > -- 
 > 2.31.1
 > 
