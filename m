@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F7A3C2B9F2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:43:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A9A2C2B9F2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:44:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6B9D86121E
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:43:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 56B00613DF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:44:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231295AbhEVDo2 (ORCPT
+        id S231259AbhEVDpo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 May 2021 23:44:28 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:24636 "EHLO
+        Fri, 21 May 2021 23:45:44 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:37547 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231258AbhEVDoY (ORCPT
+        by vger.kernel.org with ESMTP id S231253AbhEVDpn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 May 2021 23:44:24 -0400
+        Fri, 21 May 2021 23:45:43 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621654979;
+        s=mimecast20190719; t=1621655047;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=2QyszZa9lQnG4HlKw6Z5MumLTkqm9QfmWhUwkiL49i4=;
-        b=C8NW+u5blDoG2d6Asz0ot3zTe/9tVlbOcao+EU9VMwiGIfQ2jVDAJMqnhOUgbahtvHG/80
-        RqOtxl3gGsra8VY2Vnek7L6pEYQz2MXSySzixJtjePFXUdctu0SBybMFoKoWkb+d8zYvE/
-        dY5bIZI4CUvOknhsLFjd9b3J6zO/dZk=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-516-JhVuUj4hPX-BORRusixp5Q-1; Fri, 21 May 2021 23:42:57 -0400
-X-MC-Unique: JhVuUj4hPX-BORRusixp5Q-1
-Received: by mail-qv1-f72.google.com with SMTP id i14-20020a0cf10e0000b02901eeced6480dso17911919qvl.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:42:57 -0700 (PDT)
+        bh=8MzCbBGu0DjtIvrrxOY/Hba9Rm8p5pHAB6/wuLRFlpc=;
+        b=iz+f9zYoVHkE3oOgyihn30aJJLfhPjmBNKZpLJlFdrPJEl7VeRZlGCNo/HJ/10s9jrUCS+
+        EZ/l7b2bgjt0N1jcWtErySR/G23WdYEJQYGMdSbDmSQh8CIJ1pWrOyYDxSXYqjS6JbblsF
+        6y/WJXLVnWun+KZ6b0chq793xeLhpFY=
+Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
+ [209.85.160.198]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-275-mGctXaSHO9WCRdfeVW3yog-1; Fri, 21 May 2021 23:44:05 -0400
+X-MC-Unique: mGctXaSHO9WCRdfeVW3yog-1
+Received: by mail-qt1-f198.google.com with SMTP id r1-20020ac85c810000b02901fa9798cdb5so11017602qta.8
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:44:05 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=2QyszZa9lQnG4HlKw6Z5MumLTkqm9QfmWhUwkiL49i4=;
-        b=ZGAQhCxdZ1WA1yfI2QHvNqq2KdMMyjaowobGRkslpeyPj013Q1NNfpCCdKfVMpd3Jd
-         EGivZ2+Dbb3g9rL4eM6FUz3v/OZurNT3W/kMn+wL9jVRwNqlT7SAFMjhiDbJ7xatrvYa
-         /8FWbGJc32NAKQLcyPUTARJFI8jd6/A/xAu7VR+Jz2q/dIvlW849qH5bHUkjqHiNmeiM
-         YuOCz2+h5tpbUpqkLYGxizh/FryOTaFBAVhSrIXZOyVE4E4munTVPuWB67aeCDMHttem
-         EkoAIyICe03m2QsKx235nsJyp5X/wKSry6SlppZ7vt9tdzRCh4fmGd/5+Twu0yA9LixA
-         zuTg==
-X-Gm-Message-State: AOAM532pjNut9H3H2wD1zr9jGNXsVrJed3m2GH/xmZxKsufprYR0/JwZ
-        HhYVMkK0kA2E4D21gJqC5pOm/P/DyEDXSnNOEcjHbkorMwbdxt3AM0lSk5Ov5zU4vXcSQNC4Juw
-        LatQvetb8amasi+u0qswK0DSEDpQ=
-X-Received: by 2002:a05:620a:1390:: with SMTP id k16mr17342008qki.99.1621654977409;
-        Fri, 21 May 2021 20:42:57 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzzRMaI5TURX0jq6xeqvK8zdEYmreFPre+MNcB0QGNfXen3Kim3Y7Abm7nYPybyW2peSMHFgg==
-X-Received: by 2002:a05:620a:1390:: with SMTP id k16mr17341999qki.99.1621654977260;
-        Fri, 21 May 2021 20:42:57 -0700 (PDT)
+        bh=8MzCbBGu0DjtIvrrxOY/Hba9Rm8p5pHAB6/wuLRFlpc=;
+        b=ShVqDdRbMI0y51H//VramxNBCuZkFUqwGeqsia6D1PEwL/wKoXsNOKbXWMqPuGIIAA
+         8M4zrBrvxiACcmaou7IH7j5YjNAqfT/bxY9NK5VyA+coKDZ8hORS36IBxFdCUp0Y3ynG
+         OpWoG6OoQ0ikj0Eu1jqRP93yC3s6nRG4TC3pbtaROGyRUD8eedm225UdhRDJ9q/E3dS/
+         QAXuK08UXchhi6C5NI4qf1JXEHp0qUMPXigT61Ar7pxLl0WY8HtrcguN6lgwvOQlnb7B
+         So87oa2R+k7X44KJVf/tZmhrQu0EpUA2s24/DA080hli1hP+r/tYQT9XYgDkNKYkZGQA
+         Cqrw==
+X-Gm-Message-State: AOAM530IsCrqVFIoZmSikxCUjfgvFb1hAuQkrcvMgXJsZ8r4DHM+f+q2
+        Y8PS8Ev1vtwAwfZ59+Rsd9oakLjtwHbfEeuwkqwjF0fJc33AoLf80QHRDFARll9W0Gj9KBQy8xz
+        alZBdewbrDyUc/HVpMNaJB+am0II=
+X-Received: by 2002:ac8:7252:: with SMTP id l18mr15130905qtp.78.1621655045352;
+        Fri, 21 May 2021 20:44:05 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxetyBfvMXabiB3JbwhsnDfvPIolXvhaKnN8tri7SldFrZJKifOJ/2ykm2WWk01b2nx8J9ORA==
+X-Received: by 2002:ac8:7252:: with SMTP id l18mr15130896qtp.78.1621655045187;
+        Fri, 21 May 2021 20:44:05 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id q6sm6290218qkj.78.2021.05.21.20.42.55
+        by smtp.gmail.com with ESMTPSA id x21sm5589133qtr.31.2021.05.21.20.44.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 May 2021 20:42:56 -0700 (PDT)
-Date:   Fri, 21 May 2021 23:42:55 -0400 (EDT)
+        Fri, 21 May 2021 20:44:04 -0700 (PDT)
+Date:   Fri, 21 May 2021 23:44:03 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v1 16/23] pmqtest: Add --json to man page
-In-Reply-To: <20210519170945.21941-17-dwagner@suse.de>
-Message-ID: <f8feae9c-ffbc-1463-a06b-6b45c64de6dd@redhat.com>
-References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-17-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v1 17/23] ptsematest: Add --json to man page
+In-Reply-To: <20210519170945.21941-18-dwagner@suse.de>
+Message-ID: <f05edfb8-7019-92c7-dd67-bfdb155bdad1@redhat.com>
+References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-18-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -82,23 +82,23 @@ On Wed, 19 May 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/pmqtest/pmqtest.8 | 5 ++++-
+>  src/ptsematest/ptsematest.8 | 5 ++++-
 >  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
-> diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
-> index 36678d0c5026..4fbcc5c27ce2 100644
-> --- a/src/pmqtest/pmqtest.8
-> +++ b/src/pmqtest/pmqtest.8
+> diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
+> index a435e7a6221c..57e1658612c0 100644
+> --- a/src/ptsematest/ptsematest.8
+> +++ b/src/ptsematest/ptsematest.8
 > @@ -4,7 +4,7 @@
->  \fBpmqtest\fR \- Start pairs of threads and measure the latency of interprocess communication with POSIX messages queues
->  .SH "SYNTAX"
+>  \fBptsematest\fR \- Start two threads and measure the latency of interprocess communication with POSIX mutex.
+>  .SH "SYNOPSIS"
 >  .LP
-> -pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [-l LOOPS] [-p PRIO] [-q] [-S] [-t|-t NUM]
-> +pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [--json FILENAME] [-l LOOPS] [-p PRIO] [-q] [-S] [-t|-t NUM]
+> -ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
+> +ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [--json FILENAME] [-l|--loops LOOPS] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads [NUM]]
 >  .br
 >  .SH "DESCRIPTION"
 >  .LP
-> @@ -35,6 +35,9 @@ Set an artificial delay of the send function to force timeout of the receiver, r
+> @@ -32,6 +32,9 @@ Print help message.
 >  .B \-i, \-\-interval=INTV
 >  Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
 >  .TP
@@ -106,7 +106,7 @@ On Wed, 19 May 2021, Daniel Wagner wrote:
 > +Write final results into FILENAME, JSON formatted.
 > +.TP
 >  .B \-l, \-\-loops=LOOPS
->  Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. pmqtest is stopped once the number of timer intervals has been reached.
+>  Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. ptsematest is stopped once the number of timer intervals has been reached.
 >  .TP
 > -- 
 > 2.31.1
