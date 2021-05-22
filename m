@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0470FC2B9F2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:34:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B3893C2B9F2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:34:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D15C0613D8
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:34:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8538561073
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:34:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231256AbhEVDfr (ORCPT
+        id S231259AbhEVDfs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 May 2021 23:35:47 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:27832 "EHLO
+        Fri, 21 May 2021 23:35:48 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:25876 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231237AbhEVDfb (ORCPT
+        by vger.kernel.org with ESMTP id S231228AbhEVDfc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 May 2021 23:35:31 -0400
+        Fri, 21 May 2021 23:35:32 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621654388;
+        s=mimecast20190719; t=1621654447;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=wFt7yfu1k8VscDsO8ctsxUy4mh6P+6k24FWI3GsGPMo=;
-        b=c/9ug3JBImuxrqOR5RnrERt3h52AsxP3QJb3mBnQIqjIxKAcMXLJmPUzIM6oLuosFJySVU
-        zOkL8tnrYusClT4gKCyQXukBis9daq4bjbH0VdNlX6doYhxYaTL05zqPP5dmC4HrznJYsc
-        kZ1fZhbt1Q+IevJHhAqdbXMuEzMjvxM=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-224-BqJqRq-HPuu0UAV3_iJxlw-1; Fri, 21 May 2021 23:33:07 -0400
-X-MC-Unique: BqJqRq-HPuu0UAV3_iJxlw-1
-Received: by mail-qt1-f197.google.com with SMTP id o15-20020a05622a138fb02901e0ac29f6b2so17259196qtk.11
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:33:07 -0700 (PDT)
+        bh=quHvIW1ydjQXaSwFUFGoFvWqMXWNdGI5B2kNvDA7fU0=;
+        b=Z0eMkmh3FsdfGN8V88plSDAVbNAGN8BOJVxnrzFzeVdYroWZRx30d91I0yVDO0ZzLB9KFV
+        cG5Sn7l6FTt7X/rjkn7t3GQZapr4wPdMfXyQa4Liqilp0E2QwnPu+sOk6/hKysloSFUBTQ
+        r8Iea+2ZVlStKUCpcKkGTpBYvNo9II4=
+Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
+ [209.85.160.198]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-463-Tcc59s29PyaF6IclAF2qjg-1; Fri, 21 May 2021 23:34:05 -0400
+X-MC-Unique: Tcc59s29PyaF6IclAF2qjg-1
+Received: by mail-qt1-f198.google.com with SMTP id z14-20020ac8710e0000b029020e9ce69225so6599817qto.7
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:34:05 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=wFt7yfu1k8VscDsO8ctsxUy4mh6P+6k24FWI3GsGPMo=;
-        b=qTLXDgH8eBeJ8vY9mtPAS2R1KaGX0Pq72R2WQF1bO2NkaemQEeyx2dHEbTZdEq/RIx
-         OMek28+oRy9Pm7x1XMnro4Z1woG3odXX4UpIoae9qJCbjpAuI6uWlfRh32u8qufZWjVt
-         1YwBN5s7LXvnjv5hG6evxP/XClbfE4G5U0uar623fEYxM1oZVdoSGO2O3sBjtHpq4NIm
-         QALNsmuKSFUTwJTLs42SKua/SZGj9tkHC6KvH7RXR6DjB7L4TQ+kXm5Gm9dQNRt89ePN
-         28Do6BEaa6WcKLkEC31EOE+iZx2Awfl6KwElk8RG7Jz12zuqGQooZkc4dmx0Ke+4roj9
-         IYzw==
-X-Gm-Message-State: AOAM530bfubxrLrV4nUw2Lj5N3vvjAcmkTFy2eiB945Sikygl8MY5OiU
-        XWMCkrVMeCtCHl+wvWWNDue1WSZXC8xqtXxi19ueyPWL1/KBXxRTfbb1HHiKBlxZHN546C2StVq
-        ClTxjOuxV8h9BaDIOF7UuJj3++Tg=
-X-Received: by 2002:ae9:c010:: with SMTP id u16mr16672003qkk.133.1621654386841;
-        Fri, 21 May 2021 20:33:06 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzQ111FTcYXdhogpMFjrP7PUObg45pc0sNg5LS5ulEvwJZWDGl2nRbgRnq6IJx4MgxqKLf00A==
-X-Received: by 2002:ae9:c010:: with SMTP id u16mr16671988qkk.133.1621654386689;
-        Fri, 21 May 2021 20:33:06 -0700 (PDT)
+        bh=quHvIW1ydjQXaSwFUFGoFvWqMXWNdGI5B2kNvDA7fU0=;
+        b=H6td7MZQTfKO3yauTmvDY++xA8F6s8EqXuMk7+dVExz7v9U3nKTN735pj9RjvQs1Oc
+         BgoNR9xhxMOi4+V1NoTjoeDIFuhz9U7EzFafOBXejWiEkqpCJBZiQcYOUKNBvSbZPUKG
+         0REl9KhribTYwvA3SWddd1oC17UBP7k82+i+oHAFO5osa6IKYDHENCaeD3XP7SWB7RvR
+         3hPbYfb6FyGJlHe0LkvA5iV737IfOi0qZ6Qb5pYSgiRa81Kas+MHe35Ts8FdEZHcLdHO
+         k2SklenxGRgql/2mc2fGY+7fhCZX0f5PwYSDA/nvneUCfVdutXD+F25Vuwy16bGVyYDU
+         PhwQ==
+X-Gm-Message-State: AOAM532yswykP4dA29JPWzx75x52pJh7xre9dPnNX6rwhDNuV/MaM7E3
+        G6e4x8wiflLZI38CkM4uWwPjD4zc4WzTTiTSk82YqwL3YT6iKJ+vY92I20WUYAHVB6Sth7rXE68
+        2Yjca+Pq1fr83FyUCs7G7ejiLpPE=
+X-Received: by 2002:ad4:56a8:: with SMTP id bd8mr17258426qvb.9.1621654445430;
+        Fri, 21 May 2021 20:34:05 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxzfaqyVG+6kB8sCfL27/IUE6UzCr9Vcchq0+9XTRiALhz4GCV0oL3Hot+T4raQRQG3taHBzg==
+X-Received: by 2002:ad4:56a8:: with SMTP id bd8mr17258415qvb.9.1621654445264;
+        Fri, 21 May 2021 20:34:05 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id m15sm5749532qtn.47.2021.05.21.20.33.05
+        by smtp.gmail.com with ESMTPSA id z24sm5903742qtm.53.2021.05.21.20.34.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 May 2021 20:33:06 -0700 (PDT)
-Date:   Fri, 21 May 2021 23:33:04 -0400 (EDT)
+        Fri, 21 May 2021 20:34:04 -0700 (PDT)
+Date:   Fri, 21 May 2021 23:34:03 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v1 10/23] sigwaittest: Rename command line option
+Subject: Re: [PATCH rt-tests v1 11/23] ssdd: Rename command line option
  --output to --json
-In-Reply-To: <20210519170945.21941-11-dwagner@suse.de>
-Message-ID: <1bf65194-9ec4-f7b1-f4ee-416d8e91b6ac@redhat.com>
-References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-11-dwagner@suse.de>
+In-Reply-To: <20210519170945.21941-12-dwagner@suse.de>
+Message-ID: <1657d19e-a1a-3fea-2536-3bb9d4ffb086@redhat.com>
+References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-12-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -88,79 +88,67 @@ On Wed, 19 May 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/sigwaittest/sigwaittest.c | 18 +++++++++---------
->  1 file changed, 9 insertions(+), 9 deletions(-)
+>  src/ssdd/ssdd.c | 16 ++++++++--------
+>  1 file changed, 8 insertions(+), 8 deletions(-)
 > 
-> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-> index fda44724dd62..98a740d2cce2 100644
-> --- a/src/sigwaittest/sigwaittest.c
-> +++ b/src/sigwaittest/sigwaittest.c
-> @@ -220,8 +220,8 @@ static void display_help(int error)
->  	       "                           days.\n"
->  	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
->  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
-> +	       "         --json=FILENAME   write final results into FILENAME, JSON formatted\n"
->  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
-> -	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
->  	       "-p PRIO  --prio=PRIO       priority\n"
->  	       "-q       --quiet           print a summary only on exit\n"
->  	       "-t       --threads         one thread per available processor\n"
-> @@ -242,11 +242,11 @@ static int duration;
->  static int interval = 1000;
->  static int distance = 500;
+> diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
+> index 3ead14d0127e..421688c7f47c 100644
+> --- a/src/ssdd/ssdd.c
+> +++ b/src/ssdd/ssdd.c
+> @@ -67,11 +67,11 @@ static const char *get_state_name(int state)
+>  #define unused __attribute__((unused))
+>  
 >  static int quiet;
 > -static char outfile[MAX_PATH];
 > +static char jsonfile[MAX_PATH];
 >  
->  enum option_value {
->  	OPT_AFFINITY=1, OPT_BREAKTRACE, OPT_DISTANCE, OPT_DURATION,
-> -	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_LOOPS, OPT_OUTPUT,
-> +	OPT_FORK, OPT_HELP, OPT_INTERVAL, OPT_JSON, OPT_LOOPS,
->  	OPT_PRIORITY, OPT_QUIET, OPT_THREADS
->  };
+>  static int got_sigchld;
 >  
-> @@ -267,8 +267,8 @@ static void process_options(int argc, char *argv[])
->  			{"fork",	optional_argument,	NULL, OPT_FORK},
->  			{"help",	no_argument,		NULL, OPT_HELP},
->  			{"interval",	required_argument,	NULL, OPT_INTERVAL},
-> +			{"json",	required_argument,      NULL, OPT_JSON},
->  			{"loops",	required_argument,	NULL, OPT_LOOPS},
-> -			{"output",	required_argument,      NULL, OPT_OUTPUT },
->  			{"priority",	required_argument,	NULL, OPT_PRIORITY},
->  			{"quiet",	no_argument,		NULL, OPT_QUIET},
->  			{"threads",	optional_argument,	NULL, OPT_THREADS},
-> @@ -324,13 +324,13 @@ static void process_options(int argc, char *argv[])
->  		case 'i':
->  			interval = atoi(optarg);
->  			break;
-> +		case OPT_JSON:
-> +			strncpy(jsonfile, optarg, strnlen(optarg, MAX_PATH-1));
-> +			break;
->  		case OPT_LOOPS:
->  		case 'l':
->  			max_cycles = atoi(optarg);
+> -enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_OUTPUT, OPT_QUIET };
+> +enum option_value { OPT_NFORKS=1, OPT_NITERS, OPT_HELP, OPT_JSON, OPT_QUIET };
+>  
+>  static void usage(int error)
+>  {
+> @@ -80,7 +80,7 @@ static void usage(int error)
+>  	       "ssdd <options>\n\n"
+>  	       "-f       --forks=NUM       number of forks\n"
+>  	       "-h       --help            print this message\n"
+> -	       "         --output=FILENAME write final results into FILENAME, JSON formatted\n"
+> +	       "         --json=FILENAME   write final results into FILENAME, JSON formatted\n"
+>  	       "-q       --quiet           suppress running output\n"
+>  	       "-i       --iters=NUM       number of iterations\n"
+>  	       );
+> @@ -306,7 +306,7 @@ int main(int argc, char **argv)
+>  		static struct option long_options[] = {
+>  			{"forks",		required_argument,	NULL, OPT_NFORKS},
+>  			{"help",		no_argument,		NULL, OPT_HELP},
+> -			{"output",		required_argument,	NULL, OPT_OUTPUT},
+> +			{"json",		required_argument,	NULL, OPT_JSON},
+>  			{"quiet",		no_argument,		NULL, OPT_QUIET},
+>  			{"iters",		required_argument,	NULL, OPT_NITERS},
+>  			{NULL, 0, NULL, 0},
+> @@ -323,8 +323,8 @@ int main(int argc, char **argv)
+>  		case OPT_HELP:
+>  			usage(0);
 >  			break;
 > -		case OPT_OUTPUT:
 > -			strncpy(outfile, optarg, strnlen(optarg, MAX_PATH-1));
-> -			break;
->  		case OPT_PRIORITY:
->  		case 'p':
->  			priority = atoi(optarg);
-> @@ -702,12 +702,12 @@ int main(int argc, char *argv[])
->  		}
->  	}
+> +		case OPT_JSON:
+> +			strncpy(jsonfile, optarg, strnlen(optarg, MAX_PATH-1));
+>  			break;
+>  		case OPT_QUIET:
+>  		case 'q':
+> @@ -374,8 +374,8 @@ int main(int argc, char **argv)
+>  		"One or more tests FAILED" :
+>  		"All tests PASSED");
 >  
-> -	if (strlen(outfile) != 0) {
-> +	if (strlen(jsonfile) != 0) {
->  		struct params_stats ps = {
->  			.receiver = receiver,
->  			.sender = sender,
->  		};
-> -		rt_write_json(outfile, 0, write_stats, &ps);
-> +		rt_write_json(jsonfile, 0, write_stats, &ps);
->  	}
+> -	if (strlen(outfile) != 0)
+> -		rt_write_json(outfile, error, NULL, NULL);
+> +	if (strlen(jsonfile) != 0)
+> +		rt_write_json(jsonfile, error, NULL, NULL);
 >  
->  nomem:
+>  	exit(error);
+>  }
 > -- 
 > 2.31.1
 > 
