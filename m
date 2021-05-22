@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EB8DC2B9F2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:42:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F7A3C2B9F2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:43:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 51B3E613DF
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:42:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6B9D86121E
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:43:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231290AbhEVDnz (ORCPT
+        id S231295AbhEVDo2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 May 2021 23:43:55 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:32898 "EHLO
+        Fri, 21 May 2021 23:44:28 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:24636 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231256AbhEVDnt (ORCPT
+        by vger.kernel.org with ESMTP id S231258AbhEVDoY (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 May 2021 23:43:49 -0400
+        Fri, 21 May 2021 23:44:24 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621654893;
+        s=mimecast20190719; t=1621654979;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=4dyRYyZeiVSpGb/qhU+6e3CAdLxv2Uw4SfprXSb9QYY=;
-        b=UIk+Z88tThJP9fg7OqFKxrF1v3QQv6S7+9W53YuFhPCTfbPGmybMh04+jMJSNUJWGdmcWY
-        KIluPfcayESrNy8tl+rx8mySDD6DkU0Xh2HrWzFarLfmpyoeF1KObEHBklGhaltRfk8/Ml
-        RXfuE5GNvPH/Bv7rv2CJNHp1BAcAM+o=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-480-Gm4mpb7lNtOcOH8rec331Q-1; Fri, 21 May 2021 23:41:30 -0400
-X-MC-Unique: Gm4mpb7lNtOcOH8rec331Q-1
-Received: by mail-qt1-f198.google.com with SMTP id z9-20020a05622a0609b02901f30a4fcf9bso13286620qta.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:41:30 -0700 (PDT)
+        bh=2QyszZa9lQnG4HlKw6Z5MumLTkqm9QfmWhUwkiL49i4=;
+        b=C8NW+u5blDoG2d6Asz0ot3zTe/9tVlbOcao+EU9VMwiGIfQ2jVDAJMqnhOUgbahtvHG/80
+        RqOtxl3gGsra8VY2Vnek7L6pEYQz2MXSySzixJtjePFXUdctu0SBybMFoKoWkb+d8zYvE/
+        dY5bIZI4CUvOknhsLFjd9b3J6zO/dZk=
+Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
+ [209.85.219.72]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-516-JhVuUj4hPX-BORRusixp5Q-1; Fri, 21 May 2021 23:42:57 -0400
+X-MC-Unique: JhVuUj4hPX-BORRusixp5Q-1
+Received: by mail-qv1-f72.google.com with SMTP id i14-20020a0cf10e0000b02901eeced6480dso17911919qvl.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:42:57 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=4dyRYyZeiVSpGb/qhU+6e3CAdLxv2Uw4SfprXSb9QYY=;
-        b=lEnwmg/32tkapiIgSOkd0sRT8m4FpQ9RU+T+TDdsXetnc3dagswJtHE++l1Ymz0eZ4
-         f2S6wUdBg2TODfp1OFpPQxym/xT0z0mi53D15Cjdha80VhfIqrpRqEnKYShsFGnLWi+y
-         jXI6CUMIpw9meY489ZMS7byMveL5HpVPRlhU/fhgP8Qx+vzTvh3DtcTEQRqoowndFg5h
-         hE5vPzr+08y+h1ayvY/j82+kfoNJvl+m2oAX1kA1NELMh2GagyutMBFIj025v2J/vhHD
-         FsemP0VNt0/xwYJJUpxz4u3EEWxLadEAVxdxy5Tx6Qw31iuhSf4XOTGnd3epuKkDoLU1
-         01bA==
-X-Gm-Message-State: AOAM532Ke4Jgvz2hYXg5g87UAmAuJKT6Y+tvPsTcPSrYg3LkA5u19906
-        9hYWzwr4A94+SQ546MBNZVEj3n2CRMU4veUtOhGPw0PhMLxVABsUtmSpOh+MV7xL0abTkY/SEv3
-        C3lqVKMkLS7dWiR+MVxlCI4PEOQM=
-X-Received: by 2002:a37:8bc7:: with SMTP id n190mr15535517qkd.113.1621654889964;
-        Fri, 21 May 2021 20:41:29 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJykk1EEMQnYHtt7nuUQk8VBF6RHCa2X7o9OmcE4KX8HmfmmGyTIuRj1/MdQcSb1OK1Pag+1NA==
-X-Received: by 2002:a37:8bc7:: with SMTP id n190mr15535510qkd.113.1621654889817;
-        Fri, 21 May 2021 20:41:29 -0700 (PDT)
+        bh=2QyszZa9lQnG4HlKw6Z5MumLTkqm9QfmWhUwkiL49i4=;
+        b=ZGAQhCxdZ1WA1yfI2QHvNqq2KdMMyjaowobGRkslpeyPj013Q1NNfpCCdKfVMpd3Jd
+         EGivZ2+Dbb3g9rL4eM6FUz3v/OZurNT3W/kMn+wL9jVRwNqlT7SAFMjhiDbJ7xatrvYa
+         /8FWbGJc32NAKQLcyPUTARJFI8jd6/A/xAu7VR+Jz2q/dIvlW849qH5bHUkjqHiNmeiM
+         YuOCz2+h5tpbUpqkLYGxizh/FryOTaFBAVhSrIXZOyVE4E4munTVPuWB67aeCDMHttem
+         EkoAIyICe03m2QsKx235nsJyp5X/wKSry6SlppZ7vt9tdzRCh4fmGd/5+Twu0yA9LixA
+         zuTg==
+X-Gm-Message-State: AOAM532pjNut9H3H2wD1zr9jGNXsVrJed3m2GH/xmZxKsufprYR0/JwZ
+        HhYVMkK0kA2E4D21gJqC5pOm/P/DyEDXSnNOEcjHbkorMwbdxt3AM0lSk5Ov5zU4vXcSQNC4Juw
+        LatQvetb8amasi+u0qswK0DSEDpQ=
+X-Received: by 2002:a05:620a:1390:: with SMTP id k16mr17342008qki.99.1621654977409;
+        Fri, 21 May 2021 20:42:57 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzzRMaI5TURX0jq6xeqvK8zdEYmreFPre+MNcB0QGNfXen3Kim3Y7Abm7nYPybyW2peSMHFgg==
+X-Received: by 2002:a05:620a:1390:: with SMTP id k16mr17341999qki.99.1621654977260;
+        Fri, 21 May 2021 20:42:57 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id j22sm6089224qkk.58.2021.05.21.20.41.29
+        by smtp.gmail.com with ESMTPSA id q6sm6290218qkj.78.2021.05.21.20.42.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 May 2021 20:41:29 -0700 (PDT)
-Date:   Fri, 21 May 2021 23:41:28 -0400 (EDT)
+        Fri, 21 May 2021 20:42:56 -0700 (PDT)
+Date:   Fri, 21 May 2021 23:42:55 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v1 15/23] pi_stress: Add --json to man page
-In-Reply-To: <20210519170945.21941-16-dwagner@suse.de>
-Message-ID: <578a55a-e1a0-178f-9b84-c3888fbed6c8@redhat.com>
-References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-16-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v1 16/23] pmqtest: Add --json to man page
+In-Reply-To: <20210519170945.21941-17-dwagner@suse.de>
+Message-ID: <f8feae9c-ffbc-1463-a06b-6b45c64de6dd@redhat.com>
+References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-17-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -82,42 +82,32 @@ On Wed, 19 May 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/pi_tests/pi_stress.8 | 8 +++++++-
->  1 file changed, 7 insertions(+), 1 deletion(-)
+>  src/pmqtest/pmqtest.8 | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
-> diff --git a/src/pi_tests/pi_stress.8 b/src/pi_tests/pi_stress.8
-> index c3d7889a5cd5..8c43a1ccf676 100644
-> --- a/src/pi_tests/pi_stress.8
-> +++ b/src/pi_tests/pi_stress.8
-> @@ -10,7 +10,7 @@
->  pi_stress \- a stress test for POSIX Priority Inheritance mutexes
->  .\"}}}
->  .\"{{{ Synopsis
-> -.\" Usage:  pi_stress [-d] [-D TIME] [-g N] [-h] [-i N ] [-m] [-p] [-q] [-r] [-s OPTS] [-u] [-v] [-V]
-> +.\" Usage:  pi_stress [-d] [-D TIME] [-g N] [-h] [-i N ] [--json FILENAME ] [-m] [-p] [-q] [-r] [-s OPTS] [-u] [-v] [-V]
->  .SH SYNOPSIS
->  .B pi_stress
->  .RB [ \-d|\-\-debug]
-> @@ -20,6 +20,8 @@ pi_stress \- a stress test for POSIX Priority Inheritance mutexes
->  .IR N ]
->  .RB [ \-i|\-\-inversions
->  .IR INV ]
-> +.RB [ \-\-json
-> +.IR FILENAME ]
->  .RB [ \-m|\-\-mlockall ]
->  .RB [ \-p|\-\-prompt ]
->  .RB [ \-q|\-\-quiet ]
-> @@ -58,6 +60,10 @@ Display a short help message and options.
->  .I N
->  number of inversion conditions. This is the total number of inversions
->  for all inversion groups. Default is \-1 for infinite.
-> +.IP "\-\-json=FILENAME"
-> +Write final results into
-> +.I FILENAME
-> +, JSON formatted.
->  .IP "\-m|\-\-mlockall"
->  Call mlockall to lock current and future memory allocations and
->  prevent being paged out
+> diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
+> index 36678d0c5026..4fbcc5c27ce2 100644
+> --- a/src/pmqtest/pmqtest.8
+> +++ b/src/pmqtest/pmqtest.8
+> @@ -4,7 +4,7 @@
+>  \fBpmqtest\fR \- Start pairs of threads and measure the latency of interprocess communication with POSIX messages queues
+>  .SH "SYNTAX"
+>  .LP
+> -pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [-l LOOPS] [-p PRIO] [-q] [-S] [-t|-t NUM]
+> +pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [--json FILENAME] [-l LOOPS] [-p PRIO] [-q] [-S] [-t|-t NUM]
+>  .br
+>  .SH "DESCRIPTION"
+>  .LP
+> @@ -35,6 +35,9 @@ Set an artificial delay of the send function to force timeout of the receiver, r
+>  .B \-i, \-\-interval=INTV
+>  Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
+>  .TP
+> +.B \-\-json=FILENAME
+> +Write final results into FILENAME, JSON formatted.
+> +.TP
+>  .B \-l, \-\-loops=LOOPS
+>  Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. pmqtest is stopped once the number of timer intervals has been reached.
+>  .TP
 > -- 
 > 2.31.1
 > 
