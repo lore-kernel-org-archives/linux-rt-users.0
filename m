@@ -7,68 +7,67 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C6BFC2B9F2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:46:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05C0DC2B9F2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:48:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5273361182
-	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:46:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D565F6121E
+	for <linux-rt-users@archiver.kernel.org>; Sat, 22 May 2021 03:48:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231297AbhEVDsF (ORCPT
+        id S231302AbhEVDtk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 May 2021 23:48:05 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:22790 "EHLO
+        Fri, 21 May 2021 23:49:40 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:59415 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231179AbhEVDsE (ORCPT
+        by vger.kernel.org with ESMTP id S231179AbhEVDtj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 May 2021 23:48:04 -0400
+        Fri, 21 May 2021 23:49:39 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1621655200;
+        s=mimecast20190719; t=1621655295;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Tml1fW+tQaCeGvIyRZiXseAgBUaoCPOXuDIrj3p6dZs=;
-        b=FDhtTakQ+kKcYQ1kq66uDnexx8NMIZNxnuj3i/mesDj0YfIpIqgZ58pvHp+dnjWP9A/JxC
-        IAdX9ndMldud2Aeo4DI2jSuV/P1a6xuS1jgQ/8PSLIi6J7dT6z42MUFOZiGfWIChDbLBRd
-        90wI2Y9YZ28QUA4X3yZSYzAIvFc+mZg=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-61-e4CvE1iPNDibWFmFOwrKuQ-1; Fri, 21 May 2021 23:46:38 -0400
-X-MC-Unique: e4CvE1iPNDibWFmFOwrKuQ-1
-Received: by mail-qk1-f197.google.com with SMTP id d15-20020a05620a136fb02902e9e93c69c8so18762549qkl.23
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:46:38 -0700 (PDT)
+        bh=B2Hs8it/TanmLskcabAQ5X+l1BRnjy2HZAIOjsWik9c=;
+        b=O/CK8Di1PlXoEcJe/bBnARQS25HV+XqJptjW8zs9SAbNYzulqV8jOLejSZoGETzguKUWHK
+        bARVURsmtCuuLT4lsiGtcHHnNR1JvDn7pApMRNC5MIbA3r+IJeHhWpm8i3LJB/3dsmTPgw
+        aYn9e3lzhGYZYsOn8YBPM79JGFWX+Lg=
+Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
+ [209.85.160.197]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-441-8jI_ykhuOwW7rvGiLRTZUQ-1; Fri, 21 May 2021 23:48:13 -0400
+X-MC-Unique: 8jI_ykhuOwW7rvGiLRTZUQ-1
+Received: by mail-qt1-f197.google.com with SMTP id 1-20020aed31010000b029019d1c685840so17351166qtg.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 May 2021 20:48:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=Tml1fW+tQaCeGvIyRZiXseAgBUaoCPOXuDIrj3p6dZs=;
-        b=tqHKy1ysTUte/c6JhML5HMUOODxnzR7wRTt3Ig11WShFBeQvPfRJ1YHADHBXjK3PC2
-         O4B9KFR7HTB1w/+KNiD1hX50qViteekrl/B+XvnPIoi20xUf/dp7RwBtU6DdfgKNtWCU
-         TaKDlPH+l6vF3PF8guspLhLR5+gDscyhM4AYZThQHySiGrAeofO/gptL6+38dKUy63aP
-         NUL8GBa3ufOLBzGB+PnL31WlnoClYi7T1r6wzO9fsO55sc24MxilFk7AFZamBXIOrj6u
-         mYHrOcAMLA4jEXW6BpPDyqkjKpaAKCY1659WVs1m5bC2l3+vMP78LYmhxvW6qwAkhr4Z
-         Pqtw==
-X-Gm-Message-State: AOAM532sFQRUwmibROYzyUrO6byFWhDdFU033WALaNqDwMZcGLhh9b1p
-        bhDYSjhWxHxKC0+IHR/90Lx/oYxX2v3O8Uteu8wxrEEyxtmaO5LNlceUjiMZptakzX8FKy/LZS0
-        HAbKerzu/x78987U6TRw6XtIJufc=
-X-Received: by 2002:ae9:e406:: with SMTP id q6mr15723897qkc.406.1621655198125;
-        Fri, 21 May 2021 20:46:38 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzASHtcDMfQ0ZuMIS0k30ofBaKpcUzzvX1mzKixu0zh4yLnm3jFNs2VnOSwVUcjTlWjdkXLRw==
-X-Received: by 2002:ae9:e406:: with SMTP id q6mr15723887qkc.406.1621655197967;
-        Fri, 21 May 2021 20:46:37 -0700 (PDT)
+        bh=B2Hs8it/TanmLskcabAQ5X+l1BRnjy2HZAIOjsWik9c=;
+        b=OMBpfuoIbmcOXcNqQ8Ie4BmpEmLhFJxIV0DE5TnvcNjs5+sgvS2W2maJCpd2ooctsN
+         Z1g56My/q6Fbnwwq81SoZGHcKZB3ol/oyWZ2hOGPAGFgm9DHbC5Tih4vm0hO3RaVRFWg
+         9GsSfzlYhmPt4r1soYHTDXjHTqRSYaWOr2vk7pn6rmSNgTNpkilSqNUc1uP0AeXTvE70
+         Jp0qR/O3O+4QO1KoritI3veQB3W5hloVCDBZdhI20B7uVGgWjy4Qs5lSnMDdxZWJUBDc
+         +96SRyiVDNLhNHMZ9I6eCxcl7Y9k4/pJ0kYriYNKWG8fw5O2u8FHvOMlbsJTmqWkO8YG
+         GCHQ==
+X-Gm-Message-State: AOAM5312lpeGCYzPEnYQyB3ey+C2tQlRn7smrbyn0O9FTw6Y46NacTaT
+        t/2iMk545B19wl2fcbrbiyWlfKS1p+Rp6ht7FU3KDyTonXW9rHESgVnSuhCE4bzN8Zidr63t5vN
+        W6AhMfmlTmaPHiAVWg9z4GSLhWbo=
+X-Received: by 2002:ac8:45c2:: with SMTP id e2mr15505912qto.138.1621655292481;
+        Fri, 21 May 2021 20:48:12 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwgvoUa+cpV7D2Se03VcKalMqtB/SC74fjZMhgZyarBGEJzLKrW8NAdPoqjAybMiQFsh7PieA==
+X-Received: by 2002:ac8:45c2:: with SMTP id e2mr15505907qto.138.1621655292328;
+        Fri, 21 May 2021 20:48:12 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-133.dsl.bell.ca. [174.88.120.133])
-        by smtp.gmail.com with ESMTPSA id y8sm5970117qtn.61.2021.05.21.20.46.37
+        by smtp.gmail.com with ESMTPSA id 28sm6600315qkr.36.2021.05.21.20.48.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 May 2021 20:46:37 -0700 (PDT)
-Date:   Fri, 21 May 2021 23:46:36 -0400 (EDT)
+        Fri, 21 May 2021 20:48:11 -0700 (PDT)
+Date:   Fri, 21 May 2021 23:48:10 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v1 19/23] cyclicdeadline: Add --json to man
- page
-In-Reply-To: <20210519170945.21941-20-dwagner@suse.de>
-Message-ID: <24b36794-f1d9-709a-9011-912d90644b6f@redhat.com>
-References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-20-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v1 20/23] signaltest: Add --json to man page
+In-Reply-To: <20210519170945.21941-21-dwagner@suse.de>
+Message-ID: <ea99e2f4-9664-bd6f-fae1-226276133be6@redhat.com>
+References: <20210519170945.21941-1-dwagner@suse.de> <20210519170945.21941-21-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -83,31 +82,31 @@ On Wed, 19 May 2021, Daniel Wagner wrote:
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/sched_deadline/cyclicdeadline.8 | 5 ++++-
+>  src/signaltest/signaltest.8 | 5 ++++-
 >  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
-> diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-> index 59b60ca7bd31..1a56ed028d81 100644
-> --- a/src/sched_deadline/cyclicdeadline.8
-> +++ b/src/sched_deadline/cyclicdeadline.8
-> @@ -17,7 +17,7 @@ cyclicdeadline \- This program is used to test the deadline scheduler (SCHED_DEA
->  .PP
+> diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
+> index 5ce119b54461..da818ecdef67 100644
+> --- a/src/signaltest/signaltest.8
+> +++ b/src/signaltest/signaltest.8
+> @@ -5,7 +5,7 @@
+>  signaltest \- signal roundtrip test software
 >  .SH SYNOPSIS
->  .B cyclicdeadline
-> -.RI "[-a [CPUSET]] [-D TIME] [-h]  [-i INTV] [-s STEP] [-t NUM] [-q]"
-> +.RI "[-a [CPUSET]] [-D TIME] [-h]  [-i INTV] [--json FILENAME] [-s STEP] [-t NUM] [-q]"
->  .PP
->  .SH DESCRIPTION
->  .B cyclicdeadline
-> @@ -38,6 +38,9 @@ Show this help menu
->  .B \-i \-\-interval INTV
->  The shortest deadline for the tasks in us. (default 1000us)
+>  .LP
+> -signaltest [ -a|--affinity NUM] [ -b|--backtrace USEC ] [-D|--duration TIME] [-h|--help] [-l|--loops LOOPS ] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads NUM] [-m|--mlockall ] [-v|--verbose ]
+> +signaltest [ -a|--affinity NUM] [ -b|--backtrace USEC ] [-D|--duration TIME] [-h|--help] [--json FILENAME] [-l|--loops LOOPS ] [-p|--prio PRIO] [-q|--quiet] [-S|--smp] [-t|--threads NUM] [-m|--mlockall ] [-v|--verbose ]
+>  .SH OPTIONS
+>  These programs follow the usual GNU command line syntax, with long options
+>  starting with two dashes ('\-\-').
+> @@ -35,6 +35,9 @@ Append 'm', 'h', or 'd' to specify minutes, hours or days.
+>  .br
+>  display usage information
 >  .TP
 > +.B \-\-json=FILENAME
 > +Write final results into FILENAME, JSON formatted.
 > +.TP
->  .B \-s \-\-step STEP
->  The amount to increase the deadline for each task in us. (default 500us)
+>  .B \-l, \-\-loops=LOOPS
+>  Number of loops: default=0 (endless)
 >  .TP
 > -- 
 > 2.31.1
