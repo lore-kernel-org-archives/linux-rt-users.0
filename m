@@ -2,84 +2,127 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=BAYES_00,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 81736C2B9F7
-	for <linux-rt-users@archiver.kernel.org>; Wed, 26 May 2021 07:16:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 45924C2B9F7
+	for <linux-rt-users@archiver.kernel.org>; Wed, 26 May 2021 08:31:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4E8A6610A8
-	for <linux-rt-users@archiver.kernel.org>; Wed, 26 May 2021 07:16:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 18C25613F1
+	for <linux-rt-users@archiver.kernel.org>; Wed, 26 May 2021 08:31:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232827AbhEZHRg (ORCPT
+        id S231871AbhEZIcp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 26 May 2021 03:17:36 -0400
-Received: from ptr.189.cn ([183.61.185.101]:11365 "EHLO 189.cn"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S232617AbhEZHRf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 26 May 2021 03:17:35 -0400
-HMM_SOURCE_IP: 10.64.8.31:33702.2133943001
-HMM_ATTACHE_NUM: 0000
-HMM_SOURCE_TYPE: SMTP
-Received: from clientip-123.150.8.42 (unknown [10.64.8.31])
-        by 189.cn (HERMES) with SMTP id 3E01A1009D5;
-        Wed, 26 May 2021 15:16:00 +0800 (CST)
-Received: from  ([123.150.8.42])
-        by gateway-153622-dep-cc6c69dc5-fn5jv with ESMTP id 1121ca39ac214aa3bcecf776f674b34c for linux-rt-users@vger.kernel.org;
-        Wed May 26 15:16:01 2021
-X-Transaction-ID: 1121ca39ac214aa3bcecf776f674b34c
-X-filter-score: 
-X-Real-From: chensong_2000@189.cn
-X-Receive-IP: 123.150.8.42
-X-MEDUSA-Status: 0
-Sender: chensong_2000@189.cn
-Subject: Re: Network latency on 5.4 and 5.10
-To:     Christoph Mathys <eraserix@gmail.com>
-Cc:     Linux RT Users <linux-rt-users@vger.kernel.org>
-References: <6aa61bb9-0443-6da3-0902-9fe700c24017@gmail.com>
- <7e7394a6-cec6-e3c6-b5a8-e1cb6627a96d@gmail.com>
- <c856e656-24a0-a3ef-d023-197bffd19b4e@189.cn>
- <CALqGcGoHiyeNta5=WBq6txk-ykMBfYof5g3c2Yh+KL8Oii+_sQ@mail.gmail.com>
-From:   "chensong_2000@189.cn" <chensong_2000@189.cn>
-Message-ID: <826566ef-71f6-2f8f-8134-2e5f304a6fd6@189.cn>
-Date:   Wed, 26 May 2021 15:15:47 +0800
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        Wed, 26 May 2021 04:32:45 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:53598 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231410AbhEZIcp (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 26 May 2021 04:32:45 -0400
+Date:   Wed, 26 May 2021 10:31:11 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1622017873;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KeR5qzd3ADxTkDCKp5F4VXJBnJnqoZVfbkukyREk81Q=;
+        b=yfWg/DIhVSrjUAmahLMiUAdJFTXK+2dEY7CupEaURb6C8d0GICy1XYNiSua5yGTRJ344QF
+        ns0DrBJY+gZwDAdRFYW9NvvnE5SLbT+kaiL4blasZ6wTd4asTj9wi5o3bCpsOfJJ27ZAfB
+        HRXMkU45KZLfni57kWemy5D7OUhgoYWIMBtKxnM0YRAlGS0x+7M/xqPqK1peDUbiQCzcTj
+        viNNKWzFZ0dGjnXaQ1V48FF0jVz2FRHjO+olwzocIo3nWA93GUE1qRq35RN9aAaT+4f36f
+        lAa/QPBYKuP7LfieACr0r8VeMdPEy5m2qQZ8aRp5w1oddZyudKUu3KSbGXC7Sw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1622017873;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KeR5qzd3ADxTkDCKp5F4VXJBnJnqoZVfbkukyREk81Q=;
+        b=zNVCxX2jAjqvxOFVk7yo2xtFmTQqncHfeLbO30ukAL9B3SfZV7KHvMXskbVU2ZVDhwBmZT
+        twyHwM8l9FdVl5BA==
+From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
+To:     Dipen Patel <dipenp@nvidia.com>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: Multi pthreaded RT application - mlock doubt
+Message-ID: <YK4HT42yr02J1Gp1@lx-t490>
+References: <896cf71c-f610-961a-9d30-8a82d433e0f6@nvidia.com>
+ <YKymwnknCImO30CU@lx-t490>
+ <95b1b0f8-4957-f9cb-0cf7-82c79d819c38@nvidia.com>
 MIME-Version: 1.0
-In-Reply-To: <CALqGcGoHiyeNta5=WBq6txk-ykMBfYof5g3c2Yh+KL8Oii+_sQ@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <95b1b0f8-4957-f9cb-0cf7-82c79d819c38@nvidia.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-ok, looks enabling all events is enough. many thanks.
+On Tue, May 25, 2021, Dipen Patel wrote:
+...
+> Original example shown in above link uses the
+> prove_thread_stack_use_is_safe same way. I just extended it to call it
+> locally and calculate it locally because of the mutli thread.
 
-BR
+As I said, the example is wrong, and it is not authoritative. It is just
+an old obsolete wiki that no one maintains anymore.
 
-Song
+The same problem exists in the program you posted:
 
-在 2021/5/26 下午2:10, Christoph Mathys 写道:
-> Hi Song,
-> 
->> what's your command to get this log? it seems to have better information
->> than mine.
-> 
-> I just do old-school tracing:
-> 
-> # enable all available events
-> echo 1 > /sys/kernel/debug/tracing/events/enable
-> # start tracing
-> echo 1 > /sys/kernel/debug/tracing/tracing_on
-> 
-> Then I run cyclictest with -b and --tracemark to stop tracing when a
-> latency hits and write a mark to the file.
-> The trace can then be obtained by:
-> cat /sys/kernel/debug/tracing/trace
-> 
-> HTH
-> Christoph
-> 
+> static void prove_thread_stack_use_is_safe(int stacksize)
+> {
+>  	volatile char buffer[stacksize];
+>  	int i;
+>
+>    	for (i = 0; i < stacksize; i += sysconf(_SC_PAGESIZE))
+>    		buffer[i] = i;
+> }
+...
+> static void *my_rt_thread(void *args)
+> {
+...
+> 	int last_majflt = 0, last_minflt = 0;
+...
+>
+>    	getrusage(RUSAGE_SELF, &usage);
+>
+>    	printf("[%d]Pagefaults, Major:%ld, Minor:%ld \n",pthread_self(),
+>    	       usage.ru_majflt - last_majflt,
+>    	       usage.ru_minflt - last_minflt);
+>
+> 	last_majflt = usage.ru_majflt;
+>    	last_minflt = usage.ru_minflt;
+>
+>    	prove_thread_stack_use_is_safe(MY_STACK_SIZE);
+>
+> 	getrusage(RUSAGE_SELF, &usage);
+>
+>    	printf("[%d]After stack usage:Pagefaults, Major:%ld, Minor:%ld \n",pthread_self(),
+>    	       usage.ru_majflt - last_majflt,
+>    	       usage.ru_minflt - last_minflt);
+>
+
+You're just measuring the effect of stack prefaulting, which will
+obviously generate page faults (as expected).
+
+Given your original email in this thread, it seems you're conflicting
+mlockall() with page faults.
+
+mlockall() just forces physical memory pages ** already mapped through
+the process address space ** to be memory-resident; i.e., not getting
+swapped.  Even with MCL_CURRENT| MCL_FUTURE, mlockall() does not prevent
+"demand paging" page faults: it only says that if your process got
+allocated a phsyical memory page, it will not get swapped.
+
+So, technically, the mlockall() effect will start only after
+prove_thread_stack_use_is_safe() gets allocated real/physical memory
+pages by its code which prefauls the stack.
+
+The source of confusion, I guess, is that
+prove_thread_stack_use_is_safe() is horribly named. In its first
+invocation, it does not "prove" anything, it is actually the entity
+prefaulting the thread stack.
+
+Hope this helps,
+
+--
+Ahmed S. Darwish
+Linutronix GmbH
