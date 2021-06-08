@@ -7,34 +7,34 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 93D94C47082
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Jun 2021 04:38:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 507A5C4743D
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Jun 2021 04:38:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 62BDB6124B
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Jun 2021 04:38:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2C33C61263
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Jun 2021 04:38:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229542AbhFHEkh (ORCPT
+        id S229655AbhFHEki (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 8 Jun 2021 00:40:37 -0400
-Received: from mx0a-0064b401.pphosted.com ([205.220.166.238]:10480 "EHLO
+        Tue, 8 Jun 2021 00:40:38 -0400
+Received: from mx0a-0064b401.pphosted.com ([205.220.166.238]:10732 "EHLO
         mx0a-0064b401.pphosted.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229457AbhFHEke (ORCPT
+        by vger.kernel.org with ESMTP id S229462AbhFHEke (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 8 Jun 2021 00:40:34 -0400
 Received: from pps.filterd (m0250810.ppops.net [127.0.0.1])
-        by mx0a-0064b401.pphosted.com (8.16.0.43/8.16.0.43) with SMTP id 1584c15G014935;
+        by mx0a-0064b401.pphosted.com (8.16.0.43/8.16.0.43) with SMTP id 1584c15F014935;
         Mon, 7 Jun 2021 21:38:02 -0700
 Received: from nam12-dm6-obe.outbound.protection.outlook.com (mail-dm6nam12lp2177.outbound.protection.outlook.com [104.47.59.177])
-        by mx0a-0064b401.pphosted.com with ESMTP id 391j7b8m7x-4
+        by mx0a-0064b401.pphosted.com with ESMTP id 391j7b8m7x-3
         (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
         Mon, 07 Jun 2021 21:38:02 -0700
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=VVLAtspecV+CjgWMmZt9N5RmFDbNwIHmMoLX95ErTfsgd5CctSuzM35qozvjEAm6G2txbIoy5A06O8bc/HXWmr5eAJ929fAoHvqQOZbTsTXPzzdsu9f2Ias6LIeqeE32sw8X8aiGpXaXKWNAN6uRNZatBsXV3W3NxgOdZexyWgbPZ0ngqNOgNu4FCka3p5kIGnYgfbpKuB1dSBfuELl0D243mpfi0fMVtxaAOzel5o206aEn5cpK6M9A3/uNCfDwk4cAdrDnkE1cklUNSqmuLZaDd9Bc8krR19YpvuEMfACYFU+/CyIc1pXJWrkWNdB9HhEJlneEylNM49/Q1PCyOA==
+ b=Pvy2lB4qOds/ce0DZRfmkbVyth99C0CW3MJe2wwNG++4Mp/1vl43bOnN85T921dbVCYWpsMhUYe1miAOFU7LfXummKtuP+pd4QRfRU5AuoeJV3w1WmCxJkIyGKUWMtpJqTNLdIea7OCD5bfW/vYf9IppRHzjWJRRYP32ujeXoyWWtGN+abMTVXZzKgpiDt9Xdi1mm3n0v/2ckEVRmSW4IN/nmKrZRXPWXvHR7SleVCGdX/yLq3JezohEkXT4TqWah6z6W7woOm5TC8zbgXjN5QYAaIKYZwKKwX6zlXDnlE3mVFihar70Otq8paDB6eGDhHg0oMufpoC6CbZoRvrOXA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=h6IYIwm38uS/csBlWHE2OHPTENVFzWGKWOBMemxzhMU=;
- b=g27yHkR3u08FRmQZMg/Cqu3jP9fP8mEEhcLu8Vnz0Ka7EdLXc6djXkPwD/iSRywDhuukc2t/q9/cMJ8C5ZkpFK3YQQRORKFbWrQIPzgLAtKq6GT/XmRAISzn8bMVAyYWnAEhh6LCGXGxpLI+Y6wwxbgCyr8yJv+GnaHQfKhPkQ1mk4K2kJhowPKLkk9jCxv1cMWmFdt/dqa22VEV+oQXq1J7dJ+vzFJJNy7VFG5uOp93iqLhoaIlcm2VM2AyfEDp+k2Tc6fkd5PDx8uaV2Ntd7e5UiEEVjDRwu8oQ4uBcCEwE+muxeuAed7GZdpZ3VuDhEYTBL+YDVbCDC0O5bmFxg==
+ bh=Mu/ht2QhqKMdEi9HJHy5gWuGe6JLZQYHZdVFKn1WOWQ=;
+ b=mDvedx1Unr6erRw87s8//TpQ8nAVHvg7OQKh3keEJfcA5MW1UYZ6ONz9pp0sO/ti558O4VFlxqqj9rQaaibg7Rfe0xKyBWXjxgO6B5Tm+OJ8VN66ULAW7z7SLxu45eZsTFhhbgEMBbHKTB/wzOA1sJM1ZF8zL4Q80dsYXEcPApx8pSkKRjrE3rV4fVYhL+dn/kafbtZQ4A1KzH5fatQ4JK96s7W/+MGz4v70C+6xAXjvuiNe8CDQ0PJKlnVQD46viMoXAhcwCNOtQeIYBsQQIwY7lrhY5I/ijYpPBK9WHmdNmIc8SAUgNafMfxMxWuu+5Mv4lbDFDyat9IO8+gtoSw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=windriver.com; dmarc=pass action=none
  header.from=windriver.com; dkim=pass header.d=windriver.com; arc=none
@@ -42,27 +42,27 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=windriversystems.onmicrosoft.com;
  s=selector2-windriversystems-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=h6IYIwm38uS/csBlWHE2OHPTENVFzWGKWOBMemxzhMU=;
- b=nlhkWeMx17QY7QFdNlw/x6LHmvTnfAbItEKB2urGByCyZd2RCT7xLy9hBEMicYfUgRc1+WlJNpKfZtCWgxJYNtju3u6MlZ+37p7zY7D3O3Fytg3F8FiH4c7s6YH5YYFsipNp09tVmdY8jh8ApjQkIeTV/DcISQCyM7BLGRS27mc=
+ bh=Mu/ht2QhqKMdEi9HJHy5gWuGe6JLZQYHZdVFKn1WOWQ=;
+ b=hV99FggQDHv9TxJVzJOvqApcQtunbi5cC0OnR0E//at5Cu8CORBV0vNVEYhC9i/QsAFb9de1EkedNdt2skNIKMbOUEy+26pT7e4v+BI8OrEWzO4K9h70Pd02XIWhmubXWxSv6zu+1t72nIYbk71ucjd+QuQACDsrWPmueYYJmaI=
 Authentication-Results: goodmis.org; dkim=none (message not signed)
  header.d=none;goodmis.org; dmarc=none action=none header.from=windriver.com;
 Received: from DM6PR11MB4545.namprd11.prod.outlook.com (2603:10b6:5:2ae::14)
  by DM6PR11MB2828.namprd11.prod.outlook.com (2603:10b6:5:c6::14) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4195.25; Tue, 8 Jun
- 2021 04:38:00 +0000
+ 2021 04:37:58 +0000
 Received: from DM6PR11MB4545.namprd11.prod.outlook.com
  ([fe80::1caa:f0c2:b584:4aea]) by DM6PR11MB4545.namprd11.prod.outlook.com
  ([fe80::1caa:f0c2:b584:4aea%3]) with mapi id 15.20.4195.030; Tue, 8 Jun 2021
- 04:38:00 +0000
+ 04:37:58 +0000
 From:   Paul Gortmaker <paul.gortmaker@windriver.com>
 To:     Steven Rostedt <rostedt@goodmis.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Peter Zijlstra <peterz@infradead.org>,
         Valentin Schneider <valentin.schneider@arm.com>
-Subject: [PATCH 4/7] sched: Optimize migration_cpu_stop()
-Date:   Tue,  8 Jun 2021 00:37:33 -0400
-Message-Id: <20210608043736.1102914-5-paul.gortmaker@windriver.com>
+Subject: [PATCH 1/7] sched: Fix migration_cpu_stop() requeueing
+Date:   Tue,  8 Jun 2021 00:37:30 -0400
+Message-Id: <20210608043736.1102914-2-paul.gortmaker@windriver.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20210608043736.1102914-1-paul.gortmaker@windriver.com>
 References: <20210608043736.1102914-1-paul.gortmaker@windriver.com>
@@ -74,57 +74,57 @@ X-ClientProxiedBy: YT2PR01CA0006.CANPRD01.PROD.OUTLOOK.COM
  (2603:10b6:5:2ae::14)
 MIME-Version: 1.0
 X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from yow-cube1.wrs.com (128.224.252.2) by YT2PR01CA0006.CANPRD01.PROD.OUTLOOK.COM (2603:10b6:b01:38::11) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4195.27 via Frontend Transport; Tue, 8 Jun 2021 04:37:59 +0000
+Received: from yow-cube1.wrs.com (128.224.252.2) by YT2PR01CA0006.CANPRD01.PROD.OUTLOOK.COM (2603:10b6:b01:38::11) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4195.27 via Frontend Transport; Tue, 8 Jun 2021 04:37:58 +0000
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 42dd5bb1-7d61-444a-fa2c-08d92a373216
+X-MS-Office365-Filtering-Correlation-Id: d992c95b-f7f2-49ab-0622-08d92a373102
 X-MS-TrafficTypeDiagnostic: DM6PR11MB2828:
-X-Microsoft-Antispam-PRVS: <DM6PR11MB282838514B7CE77913B15A2B83379@DM6PR11MB2828.namprd11.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:494;
+X-Microsoft-Antispam-PRVS: <DM6PR11MB282829CB2029ED12E795759D83379@DM6PR11MB2828.namprd11.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:4502;
 X-MS-Exchange-SenderADCheck: 1
 X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: ZcKkyFQ/ZuMQE6SN9do5XMiSmMb4dPd7j5ZW8mi4WPZ7W/0XCVDA3dM8nu3FvizSZ2vy0Vfw/+ECznqVG+eqJqk/4QRkr1mkM9iECoQ7HnAiSXOamTzxPqlsOgyoRMzIL1sGadISc4lup7lNLEUXhFMKiGpJDi/XkIDOHqKZhiLMLNlye5OpnQ3Hu01EV7mCGQ9cpsfF874TTA4fhcrtoKk8vOwlCLCl12K95uAAbW0JLojmst3VvrHmii8AJBnYr0+gJzJgwl/giMlfekWBpnfr+QvHPiVDyUdTKoFrgyTM4ow0wjAAMF3x4PJTVy2rzTdjHwEtdN/szlftApdwNhq/QaqhE0TlhuGdwU7EGHPD+nakhMxocc+xEw69bC2Ly9tbZtLVkLdw3JrGXsAxoQWVy3IO6zS2OZDXQJ6D4w+U9I9qHSzHF5XKwkCmN/pXelGOW1InbAy5CTkSFp8MMJ7MJrT1ieeR2w1M42PsdxkBrUO61wyIEA8ioNIh+eGf4Ka6Xh3bV1fWkHXZgPD0vE2xAts2JjRODa9LOJfSyhxXv/6F5QVCOdeFWpuaCN4FZjobbaaumfumweko6LkCzHRBpQIRgQ9EgDc6+AMdd8HDVFwzpAOwNoVwKLM7PBmrkeqedjmiuZoVDeuU4OcVtQLzP7C3WHSzqeZcF0RrWZKqgEBZ5ssEuLbkKHrfRglyJSaYfBHfCvpen7jAqO7w/hMfYuX349chaY9O+HW0x+FV8toq26tSkVxfwIP3MXT/HJe/e5iIoxTOadnpsQw55baa2+s1GTKhq1rB6ZcnY6A=
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR11MB4545.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(376002)(136003)(346002)(39850400004)(396003)(366004)(316002)(54906003)(38350700002)(1076003)(6506007)(478600001)(26005)(4326008)(36756003)(6486002)(66556008)(966005)(8676002)(110136005)(6512007)(66946007)(5660300002)(86362001)(44832011)(16526019)(83380400001)(2616005)(52116002)(956004)(186003)(38100700002)(8936002)(2906002)(6666004)(66476007)(21314003);DIR:OUT;SFP:1101;
+X-Microsoft-Antispam-Message-Info: 3pShztJ2znM9bk3EWwBmeGUFG0mG2AGMJ//8RiLrSaEnw9RNMaqRB6W5Xt1H3xleJS8uvKRMrx5RRdw4PRBiDaflqz9PkPH7GbhO4pISFWYkxkiZ+ev+JQvrkzDOzBDfnSZUYHg5HGeBSZJqVhMe8lRGNMy0HpTjtIP0SErWHm+fu9RviNKOlpfNwv2hu6TU2xP7rsKRmallRM9oeMqaGB+qye5pTEG6XEwWb2vRK4dTLHp7X1Z/BL2UDSsxBg6EmDlw2thT9PZiX6FqsUPxNcRXUJKaNPimzQDBZgn2A9B//vlgQcHhz4Yu47DfPxJlapQeZww7yqRoHVG8mEcavp9FGtPdmyfiAkje1fcFRrpubiVNlhTrQem3tjhGnxCiXYp0cTkuSi+EpKNmDi/iwn0TKDbQetWUPgM9c9km/IV+BS7x0ZCkHAwWd6GIhZueeCSMvaVZ0gLUszZvUvy/el/O/LEmqX96IWdvzF6S4D5c7z6DChtzrCKSwM2Tksk+Ihw3hPVCcn9fYcQ/fnLO4ogc6Rs2akS2Kku+YSqcry2jTSTHJLBpE+9ZoxcaHkzdpSO4CidA2gwrdO67excap7bJJggqQu2X+5xmx6X7aaFEiVCA/OUsuNIgRrcVHgqwW8QJFgRToQlVoYdW96gIQ550nhBE6jLz2ZNpUtolAX1jhiaDBKWWRQfMQujveMGOVgVIiPc23LkezFL7evWHzSLNoiz0opcz6MuCwum+0h34HpbsWgv351vVniW46DMzs9la8D1sVgJ0rdCL4etsSw==
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR11MB4545.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(376002)(136003)(346002)(39850400004)(396003)(366004)(316002)(54906003)(38350700002)(1076003)(6506007)(478600001)(26005)(4326008)(36756003)(6486002)(66556008)(966005)(8676002)(110136005)(6512007)(66946007)(5660300002)(86362001)(44832011)(16526019)(83380400001)(2616005)(52116002)(956004)(186003)(38100700002)(8936002)(2906002)(6666004)(66476007);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?d3jOCIG5g9TaxG8F7m2V6dMqH0Uze6LB8lSYJs+DlYIIb+k4O+/edBH/zWB2?=
- =?us-ascii?Q?A56aU2THc3pTqRMshIq6ZlJfgio33RRByqkzf1OyWk4dcdS6brkWtem3RHrE?=
- =?us-ascii?Q?EAKTFJF1fzCRflEe5Bddv+Gr1gsqqSmSwNiohcj1e6NXY9Pp2E4UYxLX9cGR?=
- =?us-ascii?Q?bZF3QFB71VuDeYrSM8b7PYCbnK6hp7z7SSP+FaTr6iHW6Odu4mBvSFRcx4Zk?=
- =?us-ascii?Q?JC8YTTgBibkCChA78/KqmNQiqPJUXwOQmZxlvlzR7jfpIvzaiumCigYUCM/c?=
- =?us-ascii?Q?BmjMsYSilWDWk0+apVCgLavSYXhZpx6G7wNeECpJFR29jrOAlSfVXK3KGn1d?=
- =?us-ascii?Q?3zETqPmrJOaDV92fHY859cjrcP94i7ChBF2vttvjDioKdhTv6SpCwpIHVJ//?=
- =?us-ascii?Q?EPm6GenXOGnmwJHweLOA6mf3OLDLRfN237az4NQ7hPo3dPw/QSCDk43T0AO1?=
- =?us-ascii?Q?R2YYx+5cPlqWx7JQAJkqLCjmZAJYdBns2OQzCrQdJYKWoL3hF9XkNV4v4nU/?=
- =?us-ascii?Q?mqjFS0U/vFNCZrbfUqr7PhSUk1rAWhREjP4CXkuHGkmgmCgO0WJlm1EcIi9w?=
- =?us-ascii?Q?+brMGD3lLy1MrrcxCpcKILvKXww2ouARVPyf/SggBY/469QpHsbmNywpcXED?=
- =?us-ascii?Q?MkEypKZ60t5mQdOeamOd9p3whCQtLmoCGbu+x+ZNbYQCbMWxT5y6jAL/RTPs?=
- =?us-ascii?Q?aD8NNyjhD4fBTRoseL2sIQnBhezSbA3Px4sxIIMBKhjlrE1nyLbVOlYyMuhu?=
- =?us-ascii?Q?0wJnIAv5rP4j4HEH2B44ItZs5JZeD3KY6GvI9MPOLHg1SuVGUpkRRH6nCu4/?=
- =?us-ascii?Q?KLjhNB4xmARwPlB58AVZyR/qOgXmsAsi1K1oYw8MYnorD8xsL3S8AxloSDLz?=
- =?us-ascii?Q?Pi//KwctGmyIr8BQagkfjPHAsHRHl66F3F2k2OyGcM93RRcOJOVfeoVSlVno?=
- =?us-ascii?Q?pkkLiE+jNuO9VJAOU+bBSOff1YZP801mQLMV5gxDwn2nQRekDUtJZVlsj2Om?=
- =?us-ascii?Q?m0ci2NYI+Eaeh17xxH719Ymmusm0NOH+kIGc2RWWzeglwsZOYrkGSQ2kRxiC?=
- =?us-ascii?Q?6mZpfA4ltTayBpFADbii95L2p8NA21vaB0NMxnl2bUyhFPL1OdIpLnYEP38e?=
- =?us-ascii?Q?p28wO5GWVr3WP1kvin41g9CzuRCVnOwpli6now7/WDbqw7+qSy4hSX7v31R8?=
- =?us-ascii?Q?u4KZaNSDRehoEFboulKV7XCQliCC7Y3cdr0SmWuN4IWj4JnsMyAlF+/9Ewdw?=
- =?us-ascii?Q?OGxMvSb+STVqFT6jl114GU8kwF4r/8laqwN8QJLGMPOKEFp0koAERtHxdRJn?=
- =?us-ascii?Q?LqUYLhjiku5XVg5B5iwV5oB5?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?YL2yNO01xfbl0SYVmmBvUev4stAd22AuTWwJMabwVwZK7fKNTGcwmKHq15de?=
+ =?us-ascii?Q?pdRreHkthK91QmAvPRcMsi3MCWYCFkEkNfDRpNAUE1DwCOpay+zX5bckIYQm?=
+ =?us-ascii?Q?lP48wHffVTJqTQBeDO7GPQG7i6/Me0IIzKZtOCsjl2/kZicruojmYv1Xe+bE?=
+ =?us-ascii?Q?G/2s4UY/5CsP2J8I0p9+eoC2hZ/p//5pA06OTu8aXKeWGbCvShHjKtCXPdjO?=
+ =?us-ascii?Q?2KU+jas7hByctQRcmBJcR9ru9p4ayD/lHR4ktdu00TPFCZl98NKap7Fsh5Kv?=
+ =?us-ascii?Q?CoUWIgZdqKUITK3VsseJGe8QOOuZjgt+7EpA9ftePzEUdGJi6FCvW6CUZLbr?=
+ =?us-ascii?Q?4RjMIOPPP/7z0WSt/mv9uABfRPBm3oZ6iidPh09fvQUv9hAvfwYDZuyYpnfO?=
+ =?us-ascii?Q?iNfU7b1LOgghOAM3NR8EIcv4PiiAQGwXIHeIq0inXemkaC8/1xGGRIvNXG7S?=
+ =?us-ascii?Q?1wHWb5Z1FsF8JRu6s+qWwLL35+2ddYZvcMvoGmjB460m+P9f6EgIujKZJDLo?=
+ =?us-ascii?Q?CHfzSvC0QFjRuerVwn+KUH/x2PB4aJbfs3b2rgeWa/BW0tq5Q6IgKk/rl7Ls?=
+ =?us-ascii?Q?enfAPCkIdhXqASsj3WaM/J58Bkp/VNdVqtfGmt8HAuH4AZxUKMFBnVQSaMnE?=
+ =?us-ascii?Q?I4bDYztZ0cd2X4HAIovwQMucn13Oi7ushjqS1lzt4r5ox+BpjpXYpkZGttI9?=
+ =?us-ascii?Q?CzRPEUGPxHh+aJE8r81Pohi133ughFqqk85TmGqakJzgMo5IliEszlygs9cN?=
+ =?us-ascii?Q?aVfyNLoSQVPhYhgtYc9oqDP4GxO0LcdvSgdSCOTfg+XH77UGaaEpr/gYmTac?=
+ =?us-ascii?Q?l/Ckf8iCMamD3lgV0mvqZL2ZJDnnyxfOZr+QtteUSu7K1CYC6SnBdEEieB6O?=
+ =?us-ascii?Q?CLcWZxIs79/9Hc4oO2Ix2DQAkyJU6hMJwkcr5lFWm324BeO5OJnYzDv1F0zf?=
+ =?us-ascii?Q?vBXtpvgHk55YuGvq/HqakaELAcATD+XNXvNG6w9Ew29ioeyoyCc60v51o614?=
+ =?us-ascii?Q?3DBIKChvwHRJT87G8I7HkVdilQL8j42cWTlUhdvYaLUi4AD6MfH86FE1itor?=
+ =?us-ascii?Q?lIUY2KmF4nvtPfj95+XDQ/kyiAkWuf/QHFHqiN5nHfnQMDbs1SyFZ/QWUMpL?=
+ =?us-ascii?Q?wyrNYWYsRRRTYzjG9he2UapbOLaZIycW+x+PZ6WLU38N0T+F5/IFT0dCio4Q?=
+ =?us-ascii?Q?aE++B1mrWMs/UYyZu+wpaP+HI5issgj1VcJtvKgvyp58ipOqXozIwMt+Pqho?=
+ =?us-ascii?Q?ykT4lH3Fe4GKLNdmpzFf8EZOoV9jLJGcR+Pxq7wHLdQXbOIcMAEPCjIoyP3O?=
+ =?us-ascii?Q?ahUxprYTBPAMklE2xfCTRkBH?=
 X-OriginatorOrg: windriver.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 42dd5bb1-7d61-444a-fa2c-08d92a373216
+X-MS-Exchange-CrossTenant-Network-Message-Id: d992c95b-f7f2-49ab-0622-08d92a373102
 X-MS-Exchange-CrossTenant-AuthSource: DM6PR11MB4545.namprd11.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 08 Jun 2021 04:38:00.2546
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 08 Jun 2021 04:37:58.4226
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 8ddb2873-a1ad-4a18-ae4e-4644631433be
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: mRJlb+SHrO7GmCPywMONpUAaqujwUFH9KTh0QILX7OogXvNHS9FsM1xBfCcv4q7v9bRyRm0ncDTobeSASvxpDoS9P5mTLWFkWznDQQ4YUkE=
+X-MS-Exchange-CrossTenant-UserPrincipalName: 6qmkKVhlMViHBvtdwFmw3wz5/v5IWhRM7HXu/BHAqg5gc4m07dMUG26wJAtBd00SMiuDknMqwP2dvImhk+LGySoBgLvc+9NZh0mniMrVc9s=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR11MB2828
-X-Proofpoint-GUID: dKOhaqGaQKabT8R1-WXiC-be7ZdeUfD8
-X-Proofpoint-ORIG-GUID: dKOhaqGaQKabT8R1-WXiC-be7ZdeUfD8
+X-Proofpoint-GUID: YwNq0V_5h9ojvjULbrSJNo6D8ksjnvzZ
+X-Proofpoint-ORIG-GUID: YwNq0V_5h9ojvjULbrSJNo6D8ksjnvzZ
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.391,18.0.761
  definitions=2021-06-08_01:2021-06-04,2021-06-08 signatures=0
 X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 phishscore=0
- spamscore=0 mlxlogscore=692 priorityscore=1501 adultscore=0
+ spamscore=0 mlxlogscore=999 priorityscore=1501 adultscore=0
  lowpriorityscore=0 impostorscore=0 suspectscore=0 malwarescore=0
  clxscore=1015 mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.12.0-2104190000 definitions=main-2106080030
@@ -134,54 +134,143 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Peter Zijlstra <peterz@infradead.org>
 
-commit 3f1bc119cd7fc987c8ed25ffb717f99403bb308c upstream.
+commit 8a6edb5257e2a84720fe78cb179eca58ba76126f upstream.
 
-When the purpose of migration_cpu_stop() is to migrate the task to
-'any' valid CPU, don't migrate the task when it's already running on a
-valid CPU.
+When affine_move_task(p) is called on a running task @p, which is not
+otherwise already changing affinity, we'll first set
+p->migration_pending and then do:
+
+	 stop_one_cpu(cpu_of_rq(rq), migration_cpu_stop, &arg);
+
+This then gets us to migration_cpu_stop() running on the CPU that was
+previously running our victim task @p.
+
+If we find that our task is no longer on that runqueue (this can
+happen because of a concurrent migration due to load-balance etc.),
+then we'll end up at the:
+
+	} else if (dest_cpu < 1 || pending) {
+
+branch. Which we'll take because we set pending earlier. Here we first
+check if the task @p has already satisfied the affinity constraints,
+if so we bail early [A]. Otherwise we'll reissue migration_cpu_stop()
+onto the CPU that is now hosting our task @p:
+
+	stop_one_cpu_nowait(cpu_of(rq), migration_cpu_stop,
+			    &pending->arg, &pending->stop_work);
+
+Except, we've never initialized pending->arg, which will be all 0s.
+
+This then results in running migration_cpu_stop() on the next CPU with
+arg->p == NULL, which gives the by now obvious result of fireworks.
+
+The cure is to change affine_move_task() to always use pending->arg,
+furthermore we can use the exact same pattern as the
+SCA_MIGRATE_ENABLE case, since we'll block on the pending->done
+completion anyway, no point in adding yet another completion in
+stop_one_cpu().
+
+This then gives a clear distinction between the two
+migration_cpu_stop() use cases:
+
+  - sched_exec() / migrate_task_to() : arg->pending == NULL
+  - affine_move_task() : arg->pending != NULL;
+
+And we can have it ignore p->migration_pending when !arg->pending. Any
+stop work from sched_exec() / migrate_task_to() is in addition to stop
+works from affine_move_task(), which will be sufficient to issue the
+completion.
 
 Fixes: 6d337eab041d ("sched: Fix migrate_disable() vs set_cpus_allowed_ptr()")
 Cc: stable@kernel.org
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 Reviewed-by: Valentin Schneider <valentin.schneider@arm.com>
-Link: https://lkml.kernel.org/r/20210224131355.569238629@infradead.org
+Link: https://lkml.kernel.org/r/20210224131355.357743989@infradead.org
 Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
- kernel/sched/core.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ kernel/sched/core.c | 39 ++++++++++++++++++++++++++++-----------
+ 1 file changed, 28 insertions(+), 11 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 6880c300c624..9cbe12d8c5bd 100644
+index 3d3aa9db1548..a3dea38f410a 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1972,14 +1972,25 @@ static int migration_cpu_stop(void *data)
- 			complete = true;
- 		}
+@@ -1958,6 +1958,24 @@ static int migration_cpu_stop(void *data)
+ 	rq_lock(rq, &rf);
  
--		if (dest_cpu < 0)
-+		if (dest_cpu < 0) {
-+			if (cpumask_test_cpu(task_cpu(p), &p->cpus_mask))
-+				goto out;
-+
- 			dest_cpu = cpumask_any_distribute(&p->cpus_mask);
-+		}
- 
- 		if (task_on_rq_queued(p))
- 			rq = __migrate_task(rq, &rf, p, dest_cpu);
- 		else
- 			p->wake_cpu = dest_cpu;
- 
+ 	pending = p->migration_pending;
++	if (pending && !arg->pending) {
 +		/*
-+		 * XXX __migrate_task() can fail, at which point we might end
-+		 * up running on a dodgy CPU, AFAICT this can only happen
-+		 * during CPU hotplug, at which point we'll get pushed out
-+		 * anyway, so it's probably not a big deal.
++		 * This happens from sched_exec() and migrate_task_to(),
++		 * neither of them care about pending and just want a task to
++		 * maybe move about.
++		 *
++		 * Even if there is a pending, we can ignore it, since
++		 * affine_move_task() will have it's own stop_work's in flight
++		 * which will manage the completion.
++		 *
++		 * Notably, pending doesn't need to match arg->pending. This can
++		 * happen when tripple concurrent affine_move_task() first sets
++		 * pending, then clears pending and eventually sets another
++		 * pending.
 +		 */
++		pending = NULL;
++	}
 +
- 	} else if (pending) {
- 		/*
- 		 * This happens when we get migrated between migrate_enable()'s
+ 	/*
+ 	 * If task_rq(p) != rq, it cannot be migrated here, because we're
+ 	 * holding rq->lock, if p->on_rq == 0 it cannot get enqueued because
+@@ -2230,10 +2248,6 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
+ 			    int dest_cpu, unsigned int flags)
+ {
+ 	struct set_affinity_pending my_pending = { }, *pending = NULL;
+-	struct migration_arg arg = {
+-		.task = p,
+-		.dest_cpu = dest_cpu,
+-	};
+ 	bool complete = false;
+ 
+ 	/* Can the task run on the task's current CPU? If so, we're done */
+@@ -2271,6 +2285,12 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
+ 			/* Install the request */
+ 			refcount_set(&my_pending.refs, 1);
+ 			init_completion(&my_pending.done);
++			my_pending.arg = (struct migration_arg) {
++				.task = p,
++				.dest_cpu = -1,		/* any */
++				.pending = &my_pending,
++			};
++
+ 			p->migration_pending = &my_pending;
+ 		} else {
+ 			pending = p->migration_pending;
+@@ -2301,12 +2321,6 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
+ 		p->migration_flags &= ~MDF_PUSH;
+ 		task_rq_unlock(rq, p, rf);
+ 
+-		pending->arg = (struct migration_arg) {
+-			.task = p,
+-			.dest_cpu = -1,
+-			.pending = pending,
+-		};
+-
+ 		stop_one_cpu_nowait(cpu_of(rq), migration_cpu_stop,
+ 				    &pending->arg, &pending->stop_work);
+ 
+@@ -2319,8 +2333,11 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
+ 		 * is_migration_disabled(p) checks to the stopper, which will
+ 		 * run on the same CPU as said p.
+ 		 */
++		refcount_inc(&pending->refs); /* pending->{arg,stop_work} */
+ 		task_rq_unlock(rq, p, rf);
+-		stop_one_cpu(cpu_of(rq), migration_cpu_stop, &arg);
++
++		stop_one_cpu_nowait(cpu_of(rq), migration_cpu_stop,
++				    &pending->arg, &pending->stop_work);
+ 
+ 	} else {
+ 
 -- 
 2.25.1
 
