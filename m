@@ -2,118 +2,114 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8D74C48BE8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 20:04:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 657FCC48BE8
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 21:06:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 934C461284
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 20:04:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3A96C61279
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 21:06:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230107AbhFRUGT (ORCPT
+        id S233654AbhFRVIU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Jun 2021 16:06:19 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:58728 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229768AbhFRUGT (ORCPT
+        Fri, 18 Jun 2021 17:08:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50626 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S230437AbhFRVIT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Jun 2021 16:06:19 -0400
+        Fri, 18 Jun 2021 17:08:19 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 028EDC061574;
+        Fri, 18 Jun 2021 14:06:09 -0700 (PDT)
 From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1624046648;
+        s=2020; t=1624050368;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=spgBxNY8WxX/83KFnI0Ha+vRsF2Z9M+7groG436lah8=;
-        b=FTWd92+cvMDXWnc2qdtmQRNmynLAUJF4CfcJR+/fRu5Pfl62RN3UgVVsUPSByQSajE6OYg
-        2ef6uZbRuHiSIV8AdxxvBXI5R6NJIkAVTez3J5HwKbcR6BqaVoQXLOaGXPTIsNrcnWbY/Q
-        8qL3HeI0I1Zrl7TzWyZLbx1by7y6RX1aqpmwe6w7O1bxhKi2RE2tw2xp+gMXHJ+6S9ZL0P
-        6eUQGnY3UdWKC6enQiZ0eR2IyPgrE3B+o62Y3rXAWPN5uoC0OI4ZJeQ1kT3N8QSSQWKICT
-        rAdXEGltjnISuCQkzqxKCRVk8kipxeUN3I2fsJeeTeZ80vHMXrY1aemk7QHMZQ==
+        bh=f83ggUS1oIlNNC9hfEwN+dr34PECUFOQa5KW491Gq9Q=;
+        b=sQ6I40ywzqmBhOJhDOHOjSSkVTUHWAzfyaN0XlR2kZG/MuZEnZJi7rUMwdInWKrU9lfIoe
+        K4GQw+Blm7jSQIaKZbKyVmOm/bAbZ8CMnJEMqwG6p/K8czPjiV/ssmhwvUAM97z7Nv+p31
+        gR8NNzaA80Na+E9CBPpHbKnQMOFhPApHZa2yoeE/oFEWMLJcE6Yc/V19/dAcexJPAt0C6v
+        UMyiDh79OCbMAfLlcce74vTHzLYCNrSt+xObMA/RtYtX6lmLwevvVtt0eyYwUgDzopKN0E
+        gbHcygac6MAapFD96kN5qliiRdIFkJNZCDofQY35baG95S6EmK23zpsd5TYxGw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1624046648;
+        s=2020e; t=1624050368;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=spgBxNY8WxX/83KFnI0Ha+vRsF2Z9M+7groG436lah8=;
-        b=GODC8RqU3yfwJo8JiR3pC8SyE5vP7FD4xjQWhqkIaqnrEEA+Zje7Mj+HWvJB/unFgAH+nO
-        VPgREWt+oWmTA8BQ==
-To:     Rasmus Villemoes <rasmus.villemoes@prevas.dk>,
-        Song Hui <hui.song_1@nxp.com>,
-        Bartosz Golaszewski <bgolaszewski@baylibre.com>
-Cc:     linux-rt-users@vger.kernel.org,
-        LKML <linux-kernel@vger.kernel.org>,
-        Linus Walleij <linus.walleij@linaro.org>,
-        Vladimir Oltean <vladimir.oltean@nxp.com>,
-        "Steven Rostedt \(VMware\)" <rostedt@goodmis.org>,
-        Esben Haabendal <esben@geanix.com>
-Subject: Re: commit 3d5bfbd97163 versus -rt
-In-Reply-To: <5afbc89e-dbc4-3f47-4e61-63a77165aaec@prevas.dk>
-References: <5afbc89e-dbc4-3f47-4e61-63a77165aaec@prevas.dk>
-Date:   Fri, 18 Jun 2021 22:04:07 +0200
-Message-ID: <871r8zey88.ffs@nanos.tec.linutronix.de>
+        bh=f83ggUS1oIlNNC9hfEwN+dr34PECUFOQa5KW491Gq9Q=;
+        b=UaD5FPo27aRlFWQy9e26SNLK8fPIYjj6+T/uvWS7j0LKgtHTXAdJTBOEA8mq8/B3Q/aEs7
+        /8n6jcVHrTnDO4CQ==
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        linux-rt-users@vger.kernel.org, frederic@kernel.org
+Cc:     mtosatti@redhat.com, Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [RFC 1/2] timers: Add pending timer bool in struct timer_base
+In-Reply-To: <20210610125945.558872-1-nsaenzju@redhat.com>
+References: <20210610125945.558872-1-nsaenzju@redhat.com>
+Date:   Fri, 18 Jun 2021 23:06:08 +0200
+Message-ID: <87pmwievcv.ffs@nanos.tec.linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 15 2021 at 14:35, Rasmus Villemoes wrote:
->  [<8016fb80>] (generic_handle_irq) from [<8043e98c>]
-> (mpc8xxx_gpio_irq_cascade+0xac/0xd0)
->  [<8043e8e0>] (mpc8xxx_gpio_irq_cascade) from [<80171c80>]
-> (irq_forced_thread_fn+0x38/0x8c)
->   r5:80e282c0 r4:80deda00
->  [<80171c48>] (irq_forced_thread_fn) from [<80171eb4>]
-> (irq_thread+0x11c/0x238)
-.
-> Reverting commit 3d5bfbd9716318b1ca5c38488aa69f64d38a9aa5 (gpio:
-> mpc8xxx: change the gpio interrupt flags.) makes it go away, as does
-> disabling CONFIG_PREEMPT_RT or simply booting a vanilla v5.10.42 (where
-> that option exists but cannot be selected).
->
-> This seems to be the kind of thing where an -rt expert can immediately
-> see what's wrong and how to fix it. Ideas anyone?
+Nicolas,
 
-Let me explain. The force threaded interrupt code in mainline made the
-wrong assumption that disabling softirqs is sufficient to provide the
-semantics of non-threaded handler invocation. This turned out to be
-wrong and caused people to do fancy workarounds.
+On Thu, Jun 10 2021 at 14:59, Nicolas Saenz Julienne wrote:
 
-See 81e2073c175b ("genirq: Disable interrupts for force threaded
-handlers") for details.
+please always Cc the relevant mailing lists and the maintainers.
+MAINTAINERS exists for a reason.
 
-So people started to remove IRQF_NO_THREAD or local_irq_save/restore
-pairs in drivers.
+> We need to efficiently check whether a timer base has no pending
+> events.
 
-But 3d5bfbd97163 ("gpio: mpc8xxx: change the gpio interrupt flags.") has
-nothing to do with that:
+'We need' is not a technical explanation. That's close to 'I want a pony'.
 
-    "Delete the interrupt IRQF_NO_THREAD flags in order to gpio interrupts
-     can be threaded to allow high-priority processes to preempt."
+Please describe what you are trying to solve and why the existing
+mechanisms are not good enough.
 
-This changelog is blatantly wrong. In mainline forced irq threads have
-always been invoked with softirqs disabled, which obviously makes them
-non-preemptible. And on RT this would have exploded exactly in the way
-you observed.
+See Documentation/process/submitting-patches.rst
 
-The commit predates 81e2073c175b and therefore was obviously never
-tested neither on mainline nor on RT.
+> So introduce a new variable in struct timer_base to do so.
 
-Bartosz, please revert this ASAP.
+The variable solves your problem? Interesting solution.
 
-I'll add a lockdep assert into generic_handle_irq() to make it obvious
-where the problem is. That won't help with completely untested garbage
-of course.
+>  		base->next_expiry = bucket_expiry;
+>  		base->next_expiry_recalc = false;
+> +#ifdef CONFIG_PREEMPT_RT
+> +		base->pending = true;
+> +#endif
 
-81e2073c175b is obviously a problem for demultiplexing drivers which
-make weird assumptions when RT comes into play and I'm not surprised
-that there is some fallout which we need to look at. Especially when
-people start to zap IRQF_NO_THREAD or irq_save/restore pairs blindly.
+What is RT specific about that?
+
+>  		trigger_dyntick_cpu(base, timer);
+>  	}
+>  }
+> @@ -1598,6 +1602,9 @@ static unsigned long __next_timer_interrupt(struct timer_base *base)
+>  	}
+>  
+>  	base->next_expiry_recalc = false;
+> +#ifdef CONFIG_PREEMPT_RT
+> +	base->pending = (next != base->clk + NEXT_TIMER_MAX_DELTA);
+> +#endif
+
+This lacks any information about the semantics of this flag:
+
+  - When is it valid and when not?
+  - What is the valid use case for this flag?
+
+Summary of the supplied information: We need a flag, so we added one.
+
+Sorry that's not sufficient.
 
 Thanks,
 
         tglx
+
+  
 
