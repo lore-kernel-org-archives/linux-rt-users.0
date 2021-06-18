@@ -2,56 +2,53 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 657FCC48BE8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 21:06:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 705C1C48BE8
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 22:47:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3A96C61279
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 21:06:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5321861287
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 22:47:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233654AbhFRVIU (ORCPT
+        id S235045AbhFRWtS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Jun 2021 17:08:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50626 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230437AbhFRVIT (ORCPT
+        Fri, 18 Jun 2021 18:49:18 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:59600 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231455AbhFRWtR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Jun 2021 17:08:19 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 028EDC061574;
-        Fri, 18 Jun 2021 14:06:09 -0700 (PDT)
+        Fri, 18 Jun 2021 18:49:17 -0400
 From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1624050368;
+        s=2020; t=1624056424;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=f83ggUS1oIlNNC9hfEwN+dr34PECUFOQa5KW491Gq9Q=;
-        b=sQ6I40ywzqmBhOJhDOHOjSSkVTUHWAzfyaN0XlR2kZG/MuZEnZJi7rUMwdInWKrU9lfIoe
-        K4GQw+Blm7jSQIaKZbKyVmOm/bAbZ8CMnJEMqwG6p/K8czPjiV/ssmhwvUAM97z7Nv+p31
-        gR8NNzaA80Na+E9CBPpHbKnQMOFhPApHZa2yoeE/oFEWMLJcE6Yc/V19/dAcexJPAt0C6v
-        UMyiDh79OCbMAfLlcce74vTHzLYCNrSt+xObMA/RtYtX6lmLwevvVtt0eyYwUgDzopKN0E
-        gbHcygac6MAapFD96kN5qliiRdIFkJNZCDofQY35baG95S6EmK23zpsd5TYxGw==
+        bh=0dH3VEH9mRkPB+iMMG13Bg8QIpRSqyXaZ7vD6FSJ6Q8=;
+        b=EvgI4ThMXq7mw55btOrbvC5XMqBy+62FBj6X7cCE+sM9qHF5Wd6m8w5uIMNyW7MJt7L482
+        NLiPaCjdEqFPc5cwtS00du/Q5HP9A1dwKB67axQ8Ig6Rs03wsiI7Z1reoTK0+ZNl/KQUze
+        JQFbkUvrS2DeMhw5h5m0wFdopfPKkmFPzsKSlYFzU6XL3m+ilRgeWxJLGmGAPaqVddCMGr
+        Tacf56+DP/cGko2g5hLQDgKxCKN2Y3/+OaQS2XCvXcv4O8otqRtrdl5qinu/QY33qLdd5u
+        8h/GV+3y4JsJKRjt+Y4bPi0sf/mUuPgZMPfm0wSkAtrqYB+gYTfLq0kod+Ghog==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1624050368;
+        s=2020e; t=1624056424;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=f83ggUS1oIlNNC9hfEwN+dr34PECUFOQa5KW491Gq9Q=;
-        b=UaD5FPo27aRlFWQy9e26SNLK8fPIYjj6+T/uvWS7j0LKgtHTXAdJTBOEA8mq8/B3Q/aEs7
-        /8n6jcVHrTnDO4CQ==
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
-        linux-rt-users@vger.kernel.org, frederic@kernel.org
-Cc:     mtosatti@redhat.com, Nicolas Saenz Julienne <nsaenzju@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [RFC 1/2] timers: Add pending timer bool in struct timer_base
-In-Reply-To: <20210610125945.558872-1-nsaenzju@redhat.com>
-References: <20210610125945.558872-1-nsaenzju@redhat.com>
-Date:   Fri, 18 Jun 2021 23:06:08 +0200
-Message-ID: <87pmwievcv.ffs@nanos.tec.linutronix.de>
+        bh=0dH3VEH9mRkPB+iMMG13Bg8QIpRSqyXaZ7vD6FSJ6Q8=;
+        b=J1eYyM5FnvUOfduY5/xCpovdMVbnQQY/6U+oOtSydNL2Txvp6Alw8UltJsFNy9miAWtZlh
+        0lZpGx+w9S7zvbAQ==
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, frederic@kernel.org,
+        mtosatti@redhat.com, LKML <linux-kernel@vger.kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC 2/2] timers: Make sure irq_work is handled when no pending timers
+In-Reply-To: <20210610125945.558872-2-nsaenzju@redhat.com>
+References: <20210610125945.558872-1-nsaenzju@redhat.com> <20210610125945.558872-2-nsaenzju@redhat.com>
+Date:   Sat, 19 Jun 2021 00:47:04 +0200
+Message-ID: <87mtrmeqon.ffs@nanos.tec.linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
@@ -61,55 +58,105 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 Nicolas,
 
 On Thu, Jun 10 2021 at 14:59, Nicolas Saenz Julienne wrote:
+> PREEMPT_RT systems defer most irq_work handling into the timer softirq.
+> This softirq is only triggered when a timer is expired, which adds some
+> delay to the irq_work handling. It's a price PREEMPT_RT systems are
+> willing to pay in exchange for less IRQ noise.
+>
+> This works fine for the majority of systems, but there's a catch. What
+> if no timer is ever armed after an irq_work is queued. This has been
+> observed on nohz_full CPUs while running oslat. The lack of armed timers
+> prevents a pending irq_work to run. Which in turn prevents the nohz code
+> from fully stopping the tick.
+>
+> To avoid this situation introduce new logic in run_local_timers(). The
+> timer softirq will be triggered when an irq_work is pending but no
+> timers have been armed. This situation is only possible in PREEMPT_RT
+> systems, so make the code conditional to it.
 
-please always Cc the relevant mailing lists and the maintainers.
-MAINTAINERS exists for a reason.
+now I can see the problem you are trying to solve, but unfortunately the
+solution is fundamentally wrong.
 
-> We need to efficiently check whether a timer base has no pending
-> events.
+> NOTE: All in all, this is the best I could think of with my limited
+>       timers knowledge. A bigger hammer would be to unanimously trigger
+>       the softirq if irq_work_needs_cpu(). But I get the feeling this is
+>       something we want to avoid.
 
-'We need' is not a technical explanation. That's close to 'I want a pony'.
+Technical decisions based on feelings are not solving anything and they
+result in hard to analyse subtle issues:
 
-Please describe what you are trying to solve and why the existing
-mechanisms are not good enough.
+Q: Assume there is a timer armed to expire 24h from now. What's the
+   difference to no timer being armed?
 
-See Documentation/process/submitting-patches.rst
+A: None.
 
-> So introduce a new variable in struct timer_base to do so.
+   Just because your use case has either no timers armed at all or has
+   timers armed with short expiry is no reason to ignore the really
+   simple and obvious technical facts.
 
-The variable solves your problem? Interesting solution.
+But that aside, you analyzed the problem pretty good, but then you
+stopped short of identifying the root cause and went off to cure the
+symptom.
 
->  		base->next_expiry = bucket_expiry;
->  		base->next_expiry_recalc = false;
-> +#ifdef CONFIG_PREEMPT_RT
-> +		base->pending = true;
-> +#endif
+The irq_work deferring on RT to the timer softirq is the root cause of
+the problem. It's a sloppy hack and I'm well aware of that. So this
+needs to be fixed and not worked around by adding random undocumented
+workarounds into the timer code.
 
-What is RT specific about that?
+Let's take a step back and analyze why this deferring to timer softirq
+context exists on RT.
 
->  		trigger_dyntick_cpu(base, timer);
->  	}
->  }
-> @@ -1598,6 +1602,9 @@ static unsigned long __next_timer_interrupt(struct timer_base *base)
->  	}
->  
->  	base->next_expiry_recalc = false;
-> +#ifdef CONFIG_PREEMPT_RT
-> +	base->pending = (next != base->clk + NEXT_TIMER_MAX_DELTA);
-> +#endif
+ 1) The irq_work callbacks which are deferred on RT cannot be invoked from
+    hard interrupt (IPI) context usually - due to spin_lock usage.
 
-This lacks any information about the semantics of this flag:
+ 2) Such irq_work has to be delegated to some suitable context and the
+    trivial and lazy way out was to just stick into the timer softirq.
 
-  - When is it valid and when not?
-  - What is the valid use case for this flag?
+That hack survived for a long time and while I was aware of it, it was
+not really high on my priority list of cleanups.
 
-Summary of the supplied information: We need a flag, so we added one.
+The real solution is to delegate this to a suitable context which is
+executed independent of any other constraints.
 
-Sorry that's not sufficient.
+There are two solutions:
+
+  1) Create a IRQ_WORK softirq and raise that
+
+  2) Simply delegate it to a workqueue
+
+So now you might rightfully ask why I did not do that back then:
+
+  #1 is not an option because we don't want to proliferate softirqs for
+     various reasons.
+
+  #2 was not feasible because back then queueing work from hard
+     interrupt context was not possible.
+
+So yes, I took the sloppy and easy way out and just glued it onto the
+timer softirqs. Nobody complained so far.
+
+As we since then made work queues RT aware and it's possible to queue
+work from the irq_work IPI context, the obvious solution is to delegate
+this to a work queue.
+
+If we do a proper analysis of the affected irq work callbacks then this
+probably makes a lot of sense independent of RT. There are only a few
+really urgent irq work items which need to be handled immediately in the
+IPI.
+
+RT is special, but as we have demonstrated over time it's not _that_
+special. It just needs a proper analysis and a real good argument why
+something has to be special for RT and does not fit into the common
+case. Or to demonstrate that the common case approach of 'do it right
+away' is pointless or even harmfull.
 
 Thanks,
 
         tglx
+---
+P.S.: I'm not blaming this on you as a newcomer. There are people on
+      your team who should have known better.   
 
-  
+ 
+
 
