@@ -2,161 +2,167 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 705C1C48BE8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 22:47:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D236C48BDF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 23:35:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5321861287
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 22:47:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 33EF761358
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Jun 2021 23:35:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235045AbhFRWtS (ORCPT
+        id S234509AbhFRXiD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Jun 2021 18:49:18 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:59600 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231455AbhFRWtR (ORCPT
+        Fri, 18 Jun 2021 19:38:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55924 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234082AbhFRXiD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Jun 2021 18:49:17 -0400
+        Fri, 18 Jun 2021 19:38:03 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1C977C061574;
+        Fri, 18 Jun 2021 16:35:53 -0700 (PDT)
 From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1624056424;
+        s=2020; t=1624059348;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=0dH3VEH9mRkPB+iMMG13Bg8QIpRSqyXaZ7vD6FSJ6Q8=;
-        b=EvgI4ThMXq7mw55btOrbvC5XMqBy+62FBj6X7cCE+sM9qHF5Wd6m8w5uIMNyW7MJt7L482
-        NLiPaCjdEqFPc5cwtS00du/Q5HP9A1dwKB67axQ8Ig6Rs03wsiI7Z1reoTK0+ZNl/KQUze
-        JQFbkUvrS2DeMhw5h5m0wFdopfPKkmFPzsKSlYFzU6XL3m+ilRgeWxJLGmGAPaqVddCMGr
-        Tacf56+DP/cGko2g5hLQDgKxCKN2Y3/+OaQS2XCvXcv4O8otqRtrdl5qinu/QY33qLdd5u
-        8h/GV+3y4JsJKRjt+Y4bPi0sf/mUuPgZMPfm0wSkAtrqYB+gYTfLq0kod+Ghog==
+        bh=VS1kEFj6NGxOacoKrHgfdHSnLlRh4SbebwWizyJZYAQ=;
+        b=bL9fI3hkWv9PH8dWCaMIiufhxPnkLjnyHYN+0q7OBXHCKUBnaV7eaQPujoorCSKLiD5tMC
+        SIsn56dSt7/b0XVY9FAfyUzt1yUfJDNAjNl5AKgC4E66LM2EaSLNoLmJSEK7uESfsC/ChC
+        MW+wB8Q+XTba+uFDxN9PHw6asAGtfbtBd+5MQd2q0a26FzD7KPZUIIOrhzH54vsc+9gt89
+        eUOcXNIXu5qN13/iQu9JkA6rzVni2sAJgDfF35Ic/BtvYQZyD+sb9+e4Co9R/XjDOOnycX
+        lyV6WuJdKCPOYPe/Z4j5xE0EoA/wWgiA7Huumyi96UjqnJkOZhVpA1p60kF1Ig==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1624056424;
+        s=2020e; t=1624059348;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=0dH3VEH9mRkPB+iMMG13Bg8QIpRSqyXaZ7vD6FSJ6Q8=;
-        b=J1eYyM5FnvUOfduY5/xCpovdMVbnQQY/6U+oOtSydNL2Txvp6Alw8UltJsFNy9miAWtZlh
-        0lZpGx+w9S7zvbAQ==
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, frederic@kernel.org,
-        mtosatti@redhat.com, LKML <linux-kernel@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC 2/2] timers: Make sure irq_work is handled when no pending timers
-In-Reply-To: <20210610125945.558872-2-nsaenzju@redhat.com>
-References: <20210610125945.558872-1-nsaenzju@redhat.com> <20210610125945.558872-2-nsaenzju@redhat.com>
-Date:   Sat, 19 Jun 2021 00:47:04 +0200
-Message-ID: <87mtrmeqon.ffs@nanos.tec.linutronix.de>
+        bh=VS1kEFj6NGxOacoKrHgfdHSnLlRh4SbebwWizyJZYAQ=;
+        b=F9n+R9/XKZUhSghkg/hlUe4kVkioHlAPWvPyVzZnBSojsqQV3DYUgVN8ezqSFokGiAi6wA
+        /9KadsMRKM1MDtAA==
+To:     Juri Lelli <juri.lelli@redhat.com>, bigeasy@linutronix.de
+Cc:     linux-rt-users@vger.kernel.org, peterz@infradead.org,
+        linux-kernel@vger.kernel.org, bristot@redhat.com,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Anna-Maria Behnsen <anna-maria@linutronix.de>
+Subject: Re: [RFC PATCH RT v2 1/2] time/hrtimer: Add PINNED_HARD mode for realtime hrtimers
+In-Reply-To: <20210616071705.166658-2-juri.lelli@redhat.com>
+References: <20210616071705.166658-1-juri.lelli@redhat.com> <20210616071705.166658-2-juri.lelli@redhat.com>
+Date:   Sat, 19 Jun 2021 01:35:47 +0200
+Message-ID: <87k0mqeofg.ffs@nanos.tec.linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Nicolas,
+Juri,
 
-On Thu, Jun 10 2021 at 14:59, Nicolas Saenz Julienne wrote:
-> PREEMPT_RT systems defer most irq_work handling into the timer softirq.
-> This softirq is only triggered when a timer is expired, which adds some
-> delay to the irq_work handling. It's a price PREEMPT_RT systems are
-> willing to pay in exchange for less IRQ noise.
+On Wed, Jun 16 2021 at 09:17, Juri Lelli wrote:
+> While running cyclictest on isolated CPUs with timer_migration enabled,
+> I noticed the following behavior, where CPU0 is one of the housekeeping
+> CPUs and CPU2 is isolated:
 >
-> This works fine for the majority of systems, but there's a catch. What
-> if no timer is ever armed after an irq_work is queued. This has been
-> observed on nohz_full CPUs while running oslat. The lack of armed timers
-> prevents a pending irq_work to run. Which in turn prevents the nohz code
-> from fully stopping the tick.
+>      <idle>-0     [000] ... hrtimer_cancel:       hrtimer=0xffffb4a74be7fe70
+>      <idle>-0     [000] ... hrtimer_expire_entry: hrtimer=0xffffb4a74be7fe70 now=144805770984 function=hrtimer_wakeup/0x0
+>      <idle>-0     [000] ... sched_wakeup:         cyclictest:1171 [4] success=1 CPU:002
+>      <idle>-0     [000] ... hrtimer_expire_exit:  hrtimer=0xffffb4a74be7fe70
+>      <idle>-0     [002] ... sched_switch:         swapper/2:0 [120] R ==> cyclictest:1171 [4]
+>  cyclictest-1171  [002] ... hrtimer_init:         hrtimer=0xffffb4a74be7fe70 clockid=CLOCK_MONOTONIC mode=0x8
+>  cyclictest-1171  [002] ... hrtimer_start:        hrtimer=0xffffb4a74be7fe70 function=hrtimer_wakeup/0x0 ...
+>  cyclictest-1171  [002] ... sched_switch:         cyclictest:1171 [4] S ==> swapper/2:0 [120]
 >
-> To avoid this situation introduce new logic in run_local_timers(). The
-> timer softirq will be triggered when an irq_work is pending but no
-> timers have been armed. This situation is only possible in PREEMPT_RT
-> systems, so make the code conditional to it.
+> While cyclitest was arming the hrtimer while running on isolated CPU2
+> (by means of clock_nanosleep), the hrtimer was then firing on CPU0. This
+> is due to the fact that switch_hrtimer_base(), called at hrtimer enqueue
+> time, will prefer to enqueue the timer on an housekeeping !idle CPU, if
+> the timer is not pinned and timer_migration is enabled.
+>
+> The problem with this is that we are measuring wake up latencies across
+> isolated and !isolated domains, which is against the purpose of
+> configuring the latter.
+>
+> Since PREEMPT_RT already forces HARD mode for hrtimers armed by tasks
+> running with RT policies, it makes sense to also force PINNED mode under
+> the same conditions.
+>
+> This patch implements this behavior, achieving something like the
 
-now I can see the problem you are trying to solve, but unfortunately the
-solution is fundamentally wrong.
+ git grep 'This patch' Documentation/process
 
-> NOTE: All in all, this is the best I could think of with my limited
->       timers knowledge. A bigger hammer would be to unanimously trigger
->       the softirq if irq_work_needs_cpu(). But I get the feeling this is
->       something we want to avoid.
+Also look at the recommended usage of 'We, I' while at it.
 
-Technical decisions based on feelings are not solving anything and they
-result in hard to analyse subtle issues:
+> @@ -55,6 +55,8 @@ enum hrtimer_mode {
+>  	HRTIMER_MODE_ABS_HARD	= HRTIMER_MODE_ABS | HRTIMER_MODE_HARD,
+>  	HRTIMER_MODE_REL_HARD	= HRTIMER_MODE_REL | HRTIMER_MODE_HARD,
+>  
+> +	HRTIMER_MODE_PINNED_HARD = HRTIMER_MODE_PINNED | HRTIMER_MODE_HARD,
+> +
+>  	HRTIMER_MODE_ABS_PINNED_HARD = HRTIMER_MODE_ABS_PINNED | HRTIMER_MODE_HARD,
+>  	HRTIMER_MODE_REL_PINNED_HARD = HRTIMER_MODE_REL_PINNED | HRTIMER_MODE_HARD,
+>  };
+> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+> index 3fa18a01f5b2..f64954d5c8f8 100644
+> --- a/kernel/time/hrtimer.c
+> +++ b/kernel/time/hrtimer.c
+> @@ -1842,7 +1842,7 @@ static void __hrtimer_init_sleeper(struct hrtimer_sleeper *sl,
+>  	 */
+>  	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+>  		if (task_is_realtime(current) && !(mode & HRTIMER_MODE_SOFT))
+> -			mode |= HRTIMER_MODE_HARD;
+> +			mode |= HRTIMER_MODE_PINNED_HARD;
+>  	}
+>  
+>  	__hrtimer_init(&sl->timer, clock_id, mode);
 
-Q: Assume there is a timer armed to expire 24h from now. What's the
-   difference to no timer being armed?
+It makes sense to some extent, but in fact you are curing the symptom.
 
-A: None.
+The root cause is that all of this is semantically ill defined.
 
-   Just because your use case has either no timers armed at all or has
-   timers armed with short expiry is no reason to ignore the really
-   simple and obvious technical facts.
+The underlying problem is get_nohz_timer_target() which is a completely
+broken heuristics trying to predict which CPU is the proper target for
+handling the timer some unspecified time in the future.
 
-But that aside, you analyzed the problem pretty good, but then you
-stopped short of identifying the root cause and went off to cure the
-symptom.
+In hindsight I regret that I even helped to merge that, but hindsight.
+Is get_nohz_timer_target() anything near correct for some unspecified
+reason? You surely know that it's not.
 
-The irq_work deferring on RT to the timer softirq is the root cause of
-the problem. It's a sloppy hack and I'm well aware of that. So this
-needs to be fixed and not worked around by adding random undocumented
-workarounds into the timer code.
+In fact your patch makes it even more semantically undefined simply
+because it is solving the single RT thread per CPU use case which is
+exposed by cyclictest. Is that universaly true for all RT tasks and use
+cases?
 
-Let's take a step back and analyze why this deferring to timer softirq
-context exists on RT.
+The wild west of anything which scratches 'my itch' based on 'my use
+case numbers' in Linux ended many years ago and while RT was always a
+valuable playground for unthinkable ideas we definitely tried hard not
+to accept use case specific hacks wihtout a proper justification that it
+makes sense in general.
 
- 1) The irq_work callbacks which are deferred on RT cannot be invoked from
-    hard interrupt (IPI) context usually - due to spin_lock usage.
+So why are you even trying to sell this to me?
 
- 2) Such irq_work has to be delegated to some suitable context and the
-    trivial and lazy way out was to just stick into the timer softirq.
+get_nohz_timer_target() is broken by definition and while it made some
+sense years ago despite it's heuristic nature, this is something which
+really needs to be cleaned up because it causes more trouble than it
+solves. Tagging every other timer as pinned just to work around that
+underlying nonsense is just wrong.
 
-That hack survived for a long time and while I was aware of it, it was
-not really high on my priority list of cleanups.
-
-The real solution is to delegate this to a suitable context which is
-executed independent of any other constraints.
-
-There are two solutions:
-
-  1) Create a IRQ_WORK softirq and raise that
-
-  2) Simply delegate it to a workqueue
-
-So now you might rightfully ask why I did not do that back then:
-
-  #1 is not an option because we don't want to proliferate softirqs for
-     various reasons.
-
-  #2 was not feasible because back then queueing work from hard
-     interrupt context was not possible.
-
-So yes, I took the sloppy and easy way out and just glued it onto the
-timer softirqs. Nobody complained so far.
-
-As we since then made work queues RT aware and it's possible to queue
-work from the irq_work IPI context, the obvious solution is to delegate
-this to a work queue.
-
-If we do a proper analysis of the affected irq work callbacks then this
-probably makes a lot of sense independent of RT. There are only a few
-really urgent irq work items which need to be handled immediately in the
-IPI.
-
-RT is special, but as we have demonstrated over time it's not _that_
-special. It just needs a proper analysis and a real good argument why
-something has to be special for RT and does not fit into the common
-case. Or to demonstrate that the common case approach of 'do it right
-away' is pointless or even harmfull.
+We have been working on getting rid of this at least for the timer list
+timers (which are admittedly the easier part of the problem) on and off
+for years. I can't find the public links right now, but I'll ask
+Anna-Maria to fill the void. Might take a while as she's AFK for a
+while.
 
 Thanks,
 
         tglx
----
-P.S.: I'm not blaming this on you as a newcomer. There are people on
-      your team who should have known better.   
 
- 
+
+
+
+
+
 
 
