@@ -2,151 +2,75 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 735D5C2B9F4
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 12:33:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CEEEDC2B9F4
+	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 13:44:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5D21360FEA
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 12:33:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B9129610C7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 13:44:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231709AbhFVMgC (ORCPT
+        id S230481AbhFVNqv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 22 Jun 2021 08:36:02 -0400
-Received: from mailout2.secunet.com ([62.96.220.49]:54906 "EHLO
-        mailout2.secunet.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231603AbhFVMgC (ORCPT
+        Tue, 22 Jun 2021 09:46:51 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35212 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229988AbhFVNqn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 Jun 2021 08:36:02 -0400
-Received: from cas-essen-02.secunet.de (unknown [10.53.40.202])
-        by mailout2.secunet.com (Postfix) with ESMTP id 823C5800057;
-        Tue, 22 Jun 2021 14:33:44 +0200 (CEST)
-Received: from mbx-essen-01.secunet.de (10.53.40.197) by
- cas-essen-02.secunet.de (10.53.40.202) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2176.2; Tue, 22 Jun 2021 14:33:44 +0200
-Received: from gauss2.secunet.de (10.182.7.193) by mbx-essen-01.secunet.de
- (10.53.40.197) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2176.2; Tue, 22 Jun
- 2021 14:33:44 +0200
-Received: by gauss2.secunet.de (Postfix, from userid 1000)
-        id D1B3A318045C; Tue, 22 Jun 2021 14:33:43 +0200 (CEST)
-Date:   Tue, 22 Jun 2021 14:33:43 +0200
-From:   Steffen Klassert <steffen.klassert@secunet.com>
-To:     Frederic Weisbecker <frederic@kernel.org>
-CC:     Varad Gautam <varad.gautam@suse.com>,
-        <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        <netdev@vger.kernel.org>, Herbert Xu <herbert@gondor.apana.org.au>,
-        "David S. Miller" <davem@davemloft.net>,
-        Jakub Kicinski <kuba@kernel.org>,
-        Florian Westphal <fw@strlen.de>,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        <stable@vger.kernel.org>
-Subject: Re: [PATCH] xfrm: policy: Restructure RCU-read locking in
- xfrm_sk_policy_lookup
-Message-ID: <20210622123343.GD40979@gauss3.secunet.de>
-References: <20210618141101.18168-1-varad.gautam@suse.com>
- <20210621082949.GX40979@gauss3.secunet.de>
- <f41d40cc-e474-1324-be0a-7beaf580c292@suse.com>
- <20210621110528.GZ40979@gauss3.secunet.de>
- <20210622112159.GC40979@gauss3.secunet.de>
- <20210622115124.GA109262@lothringen>
+        Tue, 22 Jun 2021 09:46:43 -0400
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3FF67C061574;
+        Tue, 22 Jun 2021 06:44:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=3H00gnKd4aNoDsEENeDEJQeV+mVhwSX4UIb1VZLCQi0=; b=JRs4YOFpHY1YWpIp+4Vnp7BfH1
+        Vo7WpAZpqicWzSGYzXna31nBZdnou0FHQo3cS7qrqrmc16nQlvg+K9UW879O7RlIAe6iuBaO6VpRw
+        Slo+yVM974Af063gpQ12zxmBp82nzRk0NK49AJ4AUY8RnUCoxCfa5DU9AyaX2PKNsHoV+RF9vyJus
+        DoSf9bA8LFAOeMMvrbOf5elenpwZPwsSFgcRaaVW5uRJY03aNI+/A5Mc8v8pv3Fe3JR3teaQ1c7UI
+        2wIcU1BjxUqgBXPaMI1kll96nFXQwxrwBzEMi57THg+k84jBDgHMqr9KcjXtu6hwUTdk5+Mw/wnGg
+        BCJvmzlg==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
+        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1lvghN-00Abzm-1V; Tue, 22 Jun 2021 13:44:23 +0000
+Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+        (Client did not present a certificate)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 377B8300223;
+        Tue, 22 Jun 2021 15:44:23 +0200 (CEST)
+Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
+        id 1A15220C169E1; Tue, 22 Jun 2021 15:44:23 +0200 (CEST)
+Date:   Tue, 22 Jun 2021 15:44:23 +0200
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        linux-rt-users@vger.kernel.org, frederic@kernel.org,
+        mtosatti@redhat.com, LKML <linux-kernel@vger.kernel.org>,
+        Jiri Olsa <jolsa@kernel.org>
+Subject: Re: [RFC 2/2] timers: Make sure irq_work is handled when no pending
+ timers
+Message-ID: <YNHpN1h5hEZdt+Au@hirez.programming.kicks-ass.net>
+References: <20210610125945.558872-1-nsaenzju@redhat.com>
+ <20210610125945.558872-2-nsaenzju@redhat.com>
+ <87mtrmeqon.ffs@nanos.tec.linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20210622115124.GA109262@lothringen>
-X-ClientProxiedBy: cas-essen-02.secunet.de (10.53.40.202) To
- mbx-essen-01.secunet.de (10.53.40.197)
-X-EXCLAIMER-MD-CONFIG: 2c86f778-e09b-4440-8b15-867914633a10
+In-Reply-To: <87mtrmeqon.ffs@nanos.tec.linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 22, 2021 at 01:51:24PM +0200, Frederic Weisbecker wrote:
-> On Tue, Jun 22, 2021 at 01:21:59PM +0200, Steffen Klassert wrote:
-> > On Mon, Jun 21, 2021 at 01:05:28PM +0200, Steffen Klassert wrote:
-> > > On Mon, Jun 21, 2021 at 11:11:18AM +0200, Varad Gautam wrote:
-> > > > 
-> > > > Right, I misread the call chain - security_xfrm_policy_lookup does not reach
-> > > > xfrm_policy_lookup, making this patch unnecessary. The bug I have is:
-> > > > 
-> > > > T1, holding hash_resize_mutex and sleeping inside synchronize_rcu:
-> > > > 
-> > > > __schedule
-> > > > schedule
-> > > > schedule_timeout
-> > > > wait_for_completion
-> > > > __wait_rcu_gp
-> > > > synchronize_rcu
-> > > > xfrm_hash_resize
-> > > > 
-> > > > And T2 producing RCU-stalls since it blocked on the mutex:
-> > > > 
-> > > > __schedule
-> > > > schedule
-> > > > __rt_mutex_slowlock
-> > > > rt_mutex_slowlock_locked
-> > > > rt_mutex_slowlock
-> > > > xfrm_policy_lookup_bytype.constprop.77
-> > > 
-> > > Ugh, why does xfrm_policy_lookup_bytype use a mutex? This is called
-> > > in the receive path inside a sofirq.
-> > > 
-> > > The bug was introduced by: 
-> > > 
-> > > commit 77cc278f7b202e4f16f8596837219d02cb090b96
-> > > Author: Ahmed S. Darwish <a.darwish@linutronix.de>
-> > > Date:   Mon Jul 20 17:55:22 2020 +0200
-> > > 
-> > >     xfrm: policy: Use sequence counters with associated lock
-> > > 
-> > >     A sequence counter write side critical section must be protected by some
-> > >     form of locking to serialize writers. If the serialization primitive is
-> > >     not disabling preemption implicitly, preemption has to be explicitly
-> > >     disabled before entering the sequence counter write side critical
-> > >     section.
-> > > 
-> > >     A plain seqcount_t does not contain the information of which lock must
-> > >     be held when entering a write side critical section.
-> > > 
-> > >     Use the new seqcount_spinlock_t and seqcount_mutex_t data types instead,
-> > >     which allow to associate a lock with the sequence counter. This enables
-> > >     lockdep to verify that the lock used for writer serialization is held
-> > >     when the write side critical section is entered.
-> > > 
-> > >     If lockdep is disabled this lock association is compiled out and has
-> > >     neither storage size nor runtime overhead.
-> > > 
-> > >     Signed-off-by: Ahmed S. Darwish <a.darwish@linutronix.de>
-> > >     Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-> > >     Link: https://lkml.kernel.org/r/20200720155530.1173732-17-a.darwish@linutronix.de
-> > > 
-> > > This uses a seqcount_mutex_t for xfrm_policy_hash_generation, that's
-> > > wrong.
-> > 
-> > Varad, can you try to replace the seqcount_mutex_t for xfrm_policy_hash_generation
-> > by a seqcount_spinlock_t? I'm not familiar with that seqcount changes,
-> > but we should not end up with using a mutex in this codepath.
+On Sat, Jun 19, 2021 at 12:47:04AM +0200, Thomas Gleixner wrote:
+> There are two solutions:
 > 
-> Something like this? (beware, untested, also I don't know if the read side
-> should then disable bh, doesn't look necessary for PREEMPT_RT, but I may be
-> missing something...)
+>   1) Create a IRQ_WORK softirq and raise that
+> 
+>   2) Simply delegate it to a workqueue
 
-Looking a bit deeper into this it seems that the problem is that
-xfrm_policy_hash_generation and hash_resize_mutex do not protect
-the same thing.
-
-hash_resize_mutex protects user configuration against a worker thread
-that rebalances the hash buckets. xfrm_policy_hash_generation protects
-user configuration against the data path that runs in softirq.
-
-Finally the following line from xfrm_init() relates these two:
-
-seqcount_mutex_init(&xfrm_policy_hash_generation, &hash_resize_mutex);
-
-That looks a bit odd. This line was also introduced with the above
-mentioned patch.
+IIRC someone was looking to stick the whole thing in a kthread_worker.
+Jiri, was that you?
