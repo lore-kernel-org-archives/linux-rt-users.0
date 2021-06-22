@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-6.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 69C99C2B9F4
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 17:33:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D60DC2B9F4
+	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 17:43:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 476DB61107
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 17:33:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 294276109E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Jun 2021 17:43:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232051AbhFVRfp (ORCPT
+        id S232276AbhFVRpU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 22 Jun 2021 13:35:45 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:39104 "EHLO
+        Tue, 22 Jun 2021 13:45:20 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:39216 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231733AbhFVRfm (ORCPT
+        by vger.kernel.org with ESMTP id S232332AbhFVRpS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 Jun 2021 13:35:42 -0400
+        Tue, 22 Jun 2021 13:45:18 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1624383205;
+        s=mimecast20190719; t=1624383781;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=fprW9and+W4ZesgQO5v/nl41G796IELnfkI2rFtS/Gw=;
-        b=CE4y9crAyzrdrLW9yhwhONvwNwRbvoqfuHy6sU392JzjfFaEJQ1cDdTSbTvrphYiJlh7Sg
-        kbFw98WSLAAOzmXkUW/OGSVOZqbiARuFrEZ4zdgNYk4ivT4FjDP8LPRuFxAVmmqPHm01nK
-        O1l8xDkDvmIfgQM1ekzzgl77XqUkHyc=
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
- [209.85.221.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-277-kWi9ZnX8M_aWTu1ue41f1g-1; Tue, 22 Jun 2021 13:33:24 -0400
-X-MC-Unique: kWi9ZnX8M_aWTu1ue41f1g-1
-Received: by mail-wr1-f69.google.com with SMTP id j2-20020a5d61820000b029011a6a8149b5so9591038wru.14
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 Jun 2021 10:33:24 -0700 (PDT)
+        bh=Li6M8eB7WFoY4AUKWeE2vP5iJVKbyiAFbNV5HezuJLI=;
+        b=cdCM9zmjyEgRgHbbd7PuCO0S5nzI07EifNr+g0fL1wo+pFtmuwEQmZf+IdqloAXwEDCETy
+        oPx4FWbJfYQMUgIz2mO3n+Ygg8KLIXCGEJyUSqbee+/Kt1sLjoFckIGdal8tsEJ0RDMGGK
+        4ACwWTuNSJ3KmppVC4STc1n92uLRipY=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-33-kC_3lpGZMSSb0k_zPkAlxw-1; Tue, 22 Jun 2021 13:43:00 -0400
+X-MC-Unique: kC_3lpGZMSSb0k_zPkAlxw-1
+Received: by mail-wm1-f71.google.com with SMTP id l2-20020a05600c2cc2b02901e28c565271so314984wmc.6
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 Jun 2021 10:42:59 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
          :mime-version:content-disposition:in-reply-to;
-        bh=fprW9and+W4ZesgQO5v/nl41G796IELnfkI2rFtS/Gw=;
-        b=IzTEH4u2X3uja6FTuiePsyDvIUHfJSsjrnMvMTd9MP5LfN1c/R83LYr3Xbq1oYya9r
-         lapRgJF0g7KEK2E+3hiHza1iaNjzEteiRzhOPKHYqN/5S/Du8O1vgO1ShuQ1+Z1poJff
-         pGElvTWoSitZjqv9yLD/bdmYZH2UQ6HNPQHzg0zSKrcBpBfJTCJaWWGQyavxxx1NlBdV
-         se73XBDxHnGLa9Klz279ztsBj6WmH/kKLV89xmgnW5jPpKJDCzBhNt2x35sTop3rNec4
-         GyDcgWSshvyCQGJHSa45hu4YKBp+ZeIoSFxqJ86W/nV2HNSkjyxnMkHFbgEj9/UAW1gT
-         3pjw==
-X-Gm-Message-State: AOAM533NuwOA7TDDUNroBaGNjUTYS3JvABXp30XgANnIu3UfSs1QfrZb
-        iAsXHny0hCP7YFjJ8kEV6/KJRi+eD9iPm5Wgo87SaAQ4xIFXzX/UtF7vc8rio7WbKDiiyffi47N
-        m9j1V3oNZyHcgAy44ZJZ8rRPfGyw=
-X-Received: by 2002:a5d:6485:: with SMTP id o5mr6180819wri.91.1624383203297;
-        Tue, 22 Jun 2021 10:33:23 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxRtw4dO+cTagjehQZeZVMFQsiqbYo/AqhuED3rToW/g+49XMW3/di5iqjgVHrjFvLRVb8IMw==
-X-Received: by 2002:a5d:6485:: with SMTP id o5mr6180808wri.91.1624383203169;
-        Tue, 22 Jun 2021 10:33:23 -0700 (PDT)
+        bh=Li6M8eB7WFoY4AUKWeE2vP5iJVKbyiAFbNV5HezuJLI=;
+        b=RH8bDUFDni3qcO6IuvVDsDGkpGbanu6e0VT+KHWYsk6UivULguWDGOOEiqHdRPBVPG
+         WK5cCGXUQyXuXLrvpCNd/V33ikDsZvLfWFIWp24O54vpfPWB2fYcHAaXYhHd1PkwAUAS
+         pz2Il0P8CrCtYdmYyIa+MiP3vWGTVQmmeRGkd8r0UEBcqaKZU5QZYhpIY37Cs1SFdBdw
+         2eHvfKeihQBiqXdvcMBisyL6qHE7EHCHRyCjghs+u2zWxf/qVgN9xAF1/Trk1pOjlI7N
+         ipY84+JQ4A9mhq4PINfeAReBf3cCkvfnsfkrNgifZdlz4v3MZZ1YfPJFfsSS21v9yIrz
+         g8JA==
+X-Gm-Message-State: AOAM532wW4XXX2Gd9MXTlRcxefeFqvK2lRcfhblsaeK+Fgk2xzvecXp3
+        dLxWeUNkUuC8LZlOIPHE4IFJzfiu2sCkHpzoX4kgfx6naMm52kaIecDT9CzjMZyxAjHml+YxSlN
+        pxn67GhtaiY2QMBT0Y0aLLbjebEA=
+X-Received: by 2002:a1c:ed14:: with SMTP id l20mr5850605wmh.20.1624383778931;
+        Tue, 22 Jun 2021 10:42:58 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzbRc0bStZfinicCTWvb1Utq2odV+ee26gaS8OLQrldd250i3h7Tfqzr6WyZCM+YumzDFhIsA==
+X-Received: by 2002:a1c:ed14:: with SMTP id l20mr5850596wmh.20.1624383778839;
+        Tue, 22 Jun 2021 10:42:58 -0700 (PDT)
 Received: from krava ([5.171.242.79])
-        by smtp.gmail.com with ESMTPSA id v22sm2915055wmh.40.2021.06.22.10.33.21
+        by smtp.gmail.com with ESMTPSA id e15sm32960wrm.60.2021.06.22.10.42.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 22 Jun 2021 10:33:22 -0700 (PDT)
-Date:   Tue, 22 Jun 2021 19:33:19 +0200
+        Tue, 22 Jun 2021 10:42:58 -0700 (PDT)
+Date:   Tue, 22 Jun 2021 19:42:54 +0200
 From:   Jiri Olsa <jolsa@redhat.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
@@ -69,32 +69,39 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Jiri Olsa <jolsa@kernel.org>
 Subject: Re: [RFC 2/2] timers: Make sure irq_work is handled when no pending
  timers
-Message-ID: <YNIe38WaY0lOTEAZ@krava>
+Message-ID: <YNIhHmAekp2sUBCN@krava>
 References: <20210610125945.558872-1-nsaenzju@redhat.com>
  <20210610125945.558872-2-nsaenzju@redhat.com>
  <87mtrmeqon.ffs@nanos.tec.linutronix.de>
  <YNHpN1h5hEZdt+Au@hirez.programming.kicks-ass.net>
+ <YNIe38WaY0lOTEAZ@krava>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <YNHpN1h5hEZdt+Au@hirez.programming.kicks-ass.net>
+In-Reply-To: <YNIe38WaY0lOTEAZ@krava>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 22, 2021 at 03:44:23PM +0200, Peter Zijlstra wrote:
-> On Sat, Jun 19, 2021 at 12:47:04AM +0200, Thomas Gleixner wrote:
-> > There are two solutions:
+On Tue, Jun 22, 2021 at 07:33:23PM +0200, Jiri Olsa wrote:
+> On Tue, Jun 22, 2021 at 03:44:23PM +0200, Peter Zijlstra wrote:
+> > On Sat, Jun 19, 2021 at 12:47:04AM +0200, Thomas Gleixner wrote:
+> > > There are two solutions:
+> > > 
+> > >   1) Create a IRQ_WORK softirq and raise that
+> > > 
+> > >   2) Simply delegate it to a workqueue
 > > 
-> >   1) Create a IRQ_WORK softirq and raise that
+> > IIRC someone was looking to stick the whole thing in a kthread_worker.
+> > Jiri, was that you?
 > > 
-> >   2) Simply delegate it to a workqueue
 > 
-> IIRC someone was looking to stick the whole thing in a kthread_worker.
-> Jiri, was that you?
-> 
+> yep, I still plan on doing that
 
-yep, I still plan on doing that
+hum, IIRC that was actually perf specific change we discussed some
+time ago I should have read the whole thread before answering
+
+I'll check what was my plan to do and get back ;-)
 
 jirka
 
