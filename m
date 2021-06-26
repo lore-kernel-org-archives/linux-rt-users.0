@@ -2,152 +2,129 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AAB78C2B9F4
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Jun 2021 21:34:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8EEF1C49EA6
+	for <linux-rt-users@archiver.kernel.org>; Sat, 26 Jun 2021 06:55:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 855D761921
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Jun 2021 21:34:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6E5F061465
+	for <linux-rt-users@archiver.kernel.org>; Sat, 26 Jun 2021 06:55:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229816AbhFYVhN (ORCPT
+        id S229959AbhFZG6C (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 25 Jun 2021 17:37:13 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39266 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229531AbhFYVhM (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Jun 2021 17:37:12 -0400
-Received: from mail-io1-xd2c.google.com (mail-io1-xd2c.google.com [IPv6:2607:f8b0:4864:20::d2c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33D6CC061574
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jun 2021 14:34:51 -0700 (PDT)
-Received: by mail-io1-xd2c.google.com with SMTP id s19so14179562ioc.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jun 2021 14:34:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=WpVK40GwlNlxs6/N2wwBl7Uu4Iqou5jJOX/CREiXNqI=;
-        b=saTih9ey1PyFEKS9Y1m0q9PQ9+7yw2B31l1+DR9as0KFNhRZnQWT4/Z02b4TDk58HT
-         ZtXiQgaGec2lCezwyKwNg/WLLcErhnoex/2N7typtYWYNtzmu19mEscLylof25yQrir2
-         ikIccJN6XqFDtl606DNMhQsi2+Zp+PR5fIyNzmVV9SlvoAWumvSo5fscjLrwOYcnpiq/
-         DLiWBioZ/usDFFeT4Jh6oiqbj7Kl9LpkVPQTjYJujCIFZpbwYvtCO5Mfaxk2+dOH6llh
-         koeRBMfM5mExkvs02OkXKLnCkPYkU9Z4qmT+2KgjBF5l1STcdR/6KUBuZXuoYOIfsKnc
-         Ry+A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=WpVK40GwlNlxs6/N2wwBl7Uu4Iqou5jJOX/CREiXNqI=;
-        b=rucJC9mAOqhzC98+546d8CKgdmwvMqguHG+V7LLS1Lj9A5rwvoC78L0GhoxVnanY/5
-         x69bcgzXtlg61MeLFYA1RKITvmwr7Ane8P6+CWIS2gnnNyK+zmqL3w0Ue6uIM9kcGUMb
-         F+P9WE3KqXUezdrDn6OHhyCxj0tMSANnNQlEwd89bS9MllkNAwrdlrEPLmy9U0vs8xli
-         cb10MA2aOxuauLUByH3CXEfMnKO7caR10I0s1bwg3fWLmp+TkUmMMynSOljnYqp9SmAO
-         buXUZtdbhvq6agL9sWSiVDH3vnbUJhLyuuzgh9sOd4GEmrU/zflcGnVBzKt3+tzVIker
-         RL2A==
-X-Gm-Message-State: AOAM533DkejbrtHlUt440g5/WrKNPrxQBeymR02q+fQub6P8SOtQaU/t
-        7G3GMdYxBfaeHm2wnK5ZiR8=
-X-Google-Smtp-Source: ABdhPJw4UvjKNw3WQuzpCbj4zYUcVCLgG7gSzz+WlC0uZAIUH+y80qTTc6k7R5qxHQn0V+zODK16sw==
-X-Received: by 2002:a02:5e8a:: with SMTP id h132mr8658951jab.60.1624656890504;
-        Fri, 25 Jun 2021 14:34:50 -0700 (PDT)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-08-184-147-142-18.dsl.bell.ca. [184.147.142.18])
-        by smtp.gmail.com with ESMTPSA id n12sm4006476ile.0.2021.06.25.14.34.49
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 25 Jun 2021 14:34:50 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     tuna-devel@lists.fedorahosted.org,
-        RT <linux-rt-users@vger.kernel.org>
-Cc:     Jiri Kastner <cz172638@gmail.com>,
-        Federico Pellegrin <fede@evolware.org>,
-        Arnaldo Carvalho de Melo <acme@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] tuna-0.16
-Date:   Fri, 25 Jun 2021 17:34:36 -0400
-Message-Id: <20210625213436.16143-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.31.1
+        Sat, 26 Jun 2021 02:58:02 -0400
+Received: from mout.gmx.net ([212.227.15.18]:58683 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229573AbhFZG6B (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 26 Jun 2021 02:58:01 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1624690535;
+        bh=jSpWKAZvfuSmdJcaGlMl2mDrf1PcSKHFOfCTFtzz/zQ=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=XLFGx5PCI+8iwEqeS4Qz3tpkaTRPsW2eH5uMJU8wUAz3/nMnWzXZPn9UPHAwnJ0zI
+         4h3cxwt9nA4TlH6Q5V8AkuhRuvAp1Xh+BjvuigE0Bstca5N163HSiSoytqhdswOkLZ
+         0ALTXFs5McH/KMWW0iAGGmEtQtUMMA1+AIMAAJuk=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.191.216.49]) by mail.gmx.net (mrgmx004
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1Mg6Zw-1lJqvZ1kze-00hfkt; Sat, 26
+ Jun 2021 08:55:35 +0200
+Message-ID: <549a4a5579068b9b1ca7741cb0f4aafbd04f4389.camel@gmx.de>
+Subject: Re: [ANNOUNCE] rt-tests-2.0
+From:   Mike Galbraith <efault@gmx.de>
+To:     John Kacur <jkacur@redhat.com>,
+        RT <linux-rt-users@vger.kernel.org>,
+        lkml <linux-kernel@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        Daniel Wagner <dwagner@suse.de>,
+        Johnathan Schwender <schwenderjonathan@gmail.com>,
+        Peter Xu <peterx@redhat.com>
+Date:   Sat, 26 Jun 2021 08:55:34 +0200
+In-Reply-To: <20210625160801.9283-1-jkacur@redhat.com>
+References: <20210625160801.9283-1-jkacur@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.4 
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:FkFbtuYdaz+FDJba47sWBYnoxlqgSsBlmEuoHqmObWz+xvYRwh+
+ Zw7PqEtC+ft0mugS21RGRksO1FXGIcOTd8D9J1E/dtI6s0Mlh3ajNz6YZlNMy1MJzmFLMfA
+ Nze7Pg9WtpL56yse76R+NTGabCAZAb39FAxerxeBJZE0xMLtd1leU0PKtimqbmbWQFawbmo
+ nykINkWbhQwWwmQuIObDw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:aYdCFY/i/Zs=:1PxWCLq78k6M78YPcef63e
+ b7UYUGzuDiEiozkScndyhqANus+Q981tMDla8M/CzkerL+8l9/I3JD9sxgN/luGFlL5gws0xk
+ Rfk+PTU3W1VSAQS/n07tRWx2yigSeaed0nxjpmyu40ipjFWF5a1jyyBUW2ttahDAItrpxEloo
+ Nxa4L0V6326RKYm7eHAxocRwWqgJSu108Ug7NIs90toSpGSeX7VHOYbBsO3x6v8EqtmsqZegC
+ prZKBnqLL8g4faZttVfaYbc+uTih05Y9WAHHqCX5YfF8JH/1qzcnmt4Yt5LfkHL6AL5u+Ms40
+ MDkUIicm1vda5ZyOq2LwIyMTQSVvEGeXjT5/EFC97vpxRtREwP3O7wO9eTv+6klltXL43GqWL
+ ucrqhGBq2qJPWS+zsbmAg2x243odM4TVSXneP1WfEusQXcIqKZlGj85XGy+st+dHmhGt3QSMf
+ k+4cGzgP/VrQf5v+CIKI7ekBv9szlF6cMJUmIVgrz0wlFznr/fQftkugN2TVPKULBwwWW1+2R
+ 7jsa/pS2LyyIdkW5H/ShAczmFjrY2T6okfenDRyDkcGR2V5gwY7ho04WPfhicMoR/or+FGwTW
+ vox+gk90UPLaHFnHU4K9AqJ8AhtkL+i+4o+VgnUNM5SdghvyCbrFBNjWZA8BeiyJDX2nLrQqH
+ 4g9eTnBk4y+4mAXqOAb25/jaMCKIMQXWAIZila3YM0zHJZOsdYzVGVrVJHj81zZFLdkOsUA9U
+ bKvid8hqYIf3w5MuuJCYdwFPMxWvYpKSrPzQ3Qr34xWVFVSFDxXY+i3jxaO4f4N55q1exNsay
+ +RZIQpLqNUecjF2WzaOrkE1Lp8KZfJvnUZNki4dfmmahQtrGz0zaiKAFEChcE9BJV9nQZYQqV
+ sTOjuXb929Xbdmh7JSGXoY5MNcqaBxevtxdyhIoTEeWdXVZGR8sS/A5C9hFwnSCvwg6jTNaiU
+ SHxpnYi14BZtLASVXmXJZwqSJ0Eeq5YhDIry0XGGge16wtxuXM30sC0CuqHBcrQSyFdb4w+zM
+ je4DxiEw4xGPaXCDx218VEux7O1BGWNySbdEL2mOtx4HtauLwwbTFwbR5hmyDKXsBj2TFw8/r
+ 3+oFbuKOWYdi1JnY82ZT/M+bIADEC+SHIMv
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm pleased to announce tuna-0.16
+On Fri, 2021-06-25 at 12:08 -0400, John Kacur wrote:
+> I'm pleased to announce rt-tests-2.0
 
-Thanks to Federico for coming in and completing the work to fix the gui
-after the port from gtk2 to gtk3. We now have a working tuna gui as well
-as oscilloscope!
+Greetings,
 
-I have renamed the master branch as the main branch and made the main
-branch the default as part of the community's conscious language effort.
+cyclictest seems to have grown an mlock related regression.
 
-Bug reports, testing, patches are always appreaciated.
+homer:..git/rt-tests # ./cyclictest -Smp99
+# /dev/cpu_dma_latency set to 0us
+policy: fifo: loadavg: 1.01 1.04 0.51 1/838 4411
 
-Enjoy!
+T: 0 ( 4404) P:99 I:1000 C:   1536 Min:      1 Act:    1 Avg:    3 Max:   =
+ 3846
+T: 1 ( 4405) P:99 I:1500 C:   1021 Min:      1 Act:    1 Avg:    6 Max:   =
+ 5912
+T: 2 ( 4406) P:99 I:2000 C:    765 Min:      1 Act:    1 Avg:    8 Max:   =
+ 5368
+T: 3 ( 4407) P:99 I:2500 C:    611 Min:      1 Act:    1 Avg:    9 Max:   =
+ 4862
+T: 4 ( 4408) P:99 I:3000 C:    508 Min:      1 Act:    1 Avg:    9 Max:   =
+ 4394
+T: 5 ( 4409) P:99 I:3500 C:    436 Min:      1 Act:    1 Avg:    5 Max:   =
+ 1699
+T: 6 ( 4410) P:99 I:4000 C:    381 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 7 ( 4411) P:99 I:4500 C:    338 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
 
-Clone
-git://git.kernel.org/pub/scm/utils/tuna/tuna.git
-https://git.kernel.org/pub/scm/utils/tuna/tuna.git
-https://kernel.googlesource.com/pub/scm/utils/tuna/tuna.git
+Leave off -m switch...
 
-Branch: main
+homer:..git/rt-tests # ./cyclictest -Sp99
+# /dev/cpu_dma_latency set to 0us
+policy: fifo: loadavg: 1.19 1.02 0.55 1/833 4447
 
-Tag: v0.16
+T: 0 ( 4440) P:99 I:1000 C:   1533 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 1 ( 4441) P:99 I:1500 C:   1022 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 2 ( 4442) P:99 I:2000 C:    766 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 3 ( 4443) P:99 I:2500 C:    613 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 4 ( 4444) P:99 I:3000 C:    511 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 5 ( 4445) P:99 I:3500 C:    438 Min:      1 Act:    1 Avg:    1 Max:   =
+    3
+T: 6 ( 4446) P:99 I:4000 C:    383 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
+T: 7 ( 4447) P:99 I:4500 C:    340 Min:      1 Act:    1 Avg:    1 Max:   =
+    4
 
-Tarballs are also available here:
-https://kernel.org/pub/software/utils/tuna/
+...and v2.0 regression goes away.
 
-Older version tarballs are available here:
-https://kernel.org/pub/software/utils/tuna/older
-
-Federico Pellegrin (21):
-  tuna: multiple fixes for Gtk-3.0 UI interface
-  config: make configuration files consistently text only
-  profileview: disable cursor_changed handler when manipulating list
-  cpuview: a few more improvements for Gtk 3.0
-  tuna_gui: handle destroy handler to prevent error messages on startup
-  tuna: fix mnemonic accelerators for Gtk 3.0
-  profileview: fix text entry retrieval
-  cpuview: improve display of CPUs/Sockets for every CPU/socket number
-  sysfs: correct and improve sorting
-  oscilloscope: complete porting to Gtk 3.0
-  cpuview and util: add missing os import
-  irqview, procview: spins in Gtk 3.0 need to have range defined
-  procview: fix logic of refresh and attributes dialog display
-  tuna_gui: remove unused signal to prevent errors
-  procview: fix another identation error
-  procview: fix perf watch and add handler for errors
-  tuna-cmd: fix command line when inet_diag is present
-  tuna_gui: add command line option to customize GUI refresh time
-  procview: fix thread refresh when using polling mode
-  procview: limit refresh rate in perf mode to refresh_time
-  tuna_gui: add command line option to explicitly disable perf usage
-
-John Kacur (4):
-  tuna: Fix tuna --include option breakage
-  tuna: tuna add gui refresh option to the manpage
-  tuna: Correct allowable ranges in irqview and in procview
-  tuna: release 0.16
-
- docs/tuna.8             | 12 +++++--
- oscilloscope-cmd.py     |  2 +-
- setup.py                |  2 +-
- tuna-cmd.py             | 26 +++++++++++---
- tuna/config.py          |  4 +--
- tuna/gui/commonview.py  | 13 +++----
- tuna/gui/cpuview.py     | 34 +++++++++---------
- tuna/gui/irqview.py     | 12 ++++---
- tuna/gui/procview.py    | 79 ++++++++++++++++++++++++-----------------
- tuna/gui/profileview.py | 19 ++++++----
- tuna/gui/util.py        |  1 +
- tuna/oscilloscope.py    | 41 +++++++++++----------
- tuna/sysfs.py           | 10 +++---
- tuna/tuna.py            | 10 +++---
- tuna/tuna_gui.glade     | 10 +++---
- tuna/tuna_gui.py        | 14 ++++----
- 16 files changed, 170 insertions(+), 119 deletions(-)
+	-Mike
 
