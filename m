@@ -2,115 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 491D7C2B9F4
-	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Jun 2021 14:13:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE6C3C11F64
+	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Jun 2021 20:12:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3233661C76
-	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Jun 2021 14:13:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B1FEC61CC7
+	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Jun 2021 20:12:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232459AbhF1OPk (ORCPT
+        id S236655AbhF1UOg (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 28 Jun 2021 10:15:40 -0400
-Received: from smtp-out1.suse.de ([195.135.220.28]:47302 "EHLO
+        Mon, 28 Jun 2021 16:14:36 -0400
+Received: from smtp-out1.suse.de ([195.135.220.28]:44560 "EHLO
         smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230033AbhF1OPk (ORCPT
+        with ESMTP id S232915AbhF1UOe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 28 Jun 2021 10:15:40 -0400
+        Mon, 28 Jun 2021 16:14:34 -0400
 Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
         (using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by smtp-out1.suse.de (Postfix) with ESMTPS id 036A422498;
-        Mon, 28 Jun 2021 14:13:14 +0000 (UTC)
+        by smtp-out1.suse.de (Postfix) with ESMTPS id 4B6102252F;
+        Mon, 28 Jun 2021 20:12:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1624889594; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=u+mHKq7qTTJCoVp4riFxvnW5aDGyigNAF0z1SpQNLpI=;
-        b=GYeAUuIvOglBswcJ6jcRaESdDDwXafBYYFFe+ILYBN+Ly/PlYlolrovHsmzTmjbVr6wdRa
-        DhmPzXqBVBcfFCyySSwT9QbpCFLMBFORj9OtZwmTrMka/KDp6UwrwZ9NTdjIKwFWNze2fM
-        VB8y1EJd9NSWFNvWzH0HlVAHQrNCIAE=
+        t=1624911127; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+        bh=F6J14A+psIc2n/sLvRo4ypCSPG46yf7b15RbqT+u5R0=;
+        b=eyEHt5HeLTzi27FoTixqny/yWdTH93aCSWtFGexa19zzXp9MFc49oKaZPW/HZW/ze6xR4U
+        15Yay4+7Y/imi3SQddJ8fuhsRDc9LOtvcVpHFH6lt74Ibe9lWBx305uDamz/RDc9gO/TnP
+        VHIfHf+WPL+dDONztFlOsbzjxUrLvbM=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1624889594;
+        s=susede2_ed25519; t=1624911127;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=u+mHKq7qTTJCoVp4riFxvnW5aDGyigNAF0z1SpQNLpI=;
-        b=86swravYrb0sUf0IfviqrwIuMHLhO/tnGiC8S/yaGR8fxMtSKKleUL5bWC9oVJkTs6UbiR
-        OTUo3tla1Cwjn0Cw==
+         mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+        bh=F6J14A+psIc2n/sLvRo4ypCSPG46yf7b15RbqT+u5R0=;
+        b=dvPLGo6oObN07AbsAgD7Jk4dI70M3gq7bb0ADMdpAdJQ6pTZgwM+K+bFJSDgPu/hCN4WWa
+        f1oSqDZbXgx9F5CA==
 Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-        by imap.suse.de (Postfix) with ESMTP id E801811906;
-        Mon, 28 Jun 2021 14:13:13 +0000 (UTC)
+        by imap.suse.de (Postfix) with ESMTP id 32CE611906;
+        Mon, 28 Jun 2021 20:12:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1624889593; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=u+mHKq7qTTJCoVp4riFxvnW5aDGyigNAF0z1SpQNLpI=;
-        b=EkpMQCIuybFAPsF4B72o0VGO/jl85VFH4iNASylyYgw13ytPhj8Lw9DRVNVAwM77XKqD+9
-        J+odxaKWcr60oUWfDM/q/6jRO89sWYsfBLHnJpCth+dhxCP3Fm5vUhExESmkqC9yj0UqQU
-        Z07T9P6WE3JTO5QWz93Ptv3SIip8Blc=
+        t=1624911127; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+        bh=F6J14A+psIc2n/sLvRo4ypCSPG46yf7b15RbqT+u5R0=;
+        b=eyEHt5HeLTzi27FoTixqny/yWdTH93aCSWtFGexa19zzXp9MFc49oKaZPW/HZW/ze6xR4U
+        15Yay4+7Y/imi3SQddJ8fuhsRDc9LOtvcVpHFH6lt74Ibe9lWBx305uDamz/RDc9gO/TnP
+        VHIfHf+WPL+dDONztFlOsbzjxUrLvbM=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1624889593;
+        s=susede2_ed25519; t=1624911127;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=u+mHKq7qTTJCoVp4riFxvnW5aDGyigNAF0z1SpQNLpI=;
-        b=7KdjcoOY1/zsSeaVjSyHo5trgte3+Kv6IjgpfqRI6j8UJ7zRVlDM/GJq9WbrjXPiR5QYjk
-        KjVPaa3XL7eXvsAg==
+         mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+        bh=F6J14A+psIc2n/sLvRo4ypCSPG46yf7b15RbqT+u5R0=;
+        b=dvPLGo6oObN07AbsAgD7Jk4dI70M3gq7bb0ADMdpAdJQ6pTZgwM+K+bFJSDgPu/hCN4WWa
+        f1oSqDZbXgx9F5CA==
 Received: from director2.suse.de ([192.168.254.72])
         by imap3-int with ESMTPSA
-        id SemMOPnY2WAkBAAALh3uQQ
-        (envelope-from <dwagner@suse.de>); Mon, 28 Jun 2021 14:13:13 +0000
-Date:   Mon, 28 Jun 2021 16:13:13 +0200
+        id LPVnCxct2mACLwAALh3uQQ
+        (envelope-from <dwagner@suse.de>); Mon, 28 Jun 2021 20:12:07 +0000
 From:   Daniel Wagner <dwagner@suse.de>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     Daniel Wagner <wagi@monom.org>, Mike Galbraith <efault@gmx.de>,
-        RT <linux-rt-users@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Johnathan Schwender <schwenderjonathan@gmail.com>,
-        Peter Xu <peterx@redhat.com>
-Subject: Re: [ANNOUNCE] rt-tests-2.0
-Message-ID: <20210628141313.3fixpscbdc4ugnld@beryllium.lan>
-References: <20210625160801.9283-1-jkacur@redhat.com>
- <549a4a5579068b9b1ca7741cb0f4aafbd04f4389.camel@gmx.de>
- <1c1966dd51ae6f8ddcd892cba485c332281fbd37.camel@gmx.de>
- <3d6a6c593eed6f5d59209ba2d8db29fadcc72ad7.camel@gmx.de>
- <20210628081135.l7yvya7iaygb23ye@beryllium.lan>
- <f31d9d37-df6d-90b0-8bf9-95156c27e8d@redhat.com>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Mike Galbraith <efault@gmx.de>,
+        Daniel Wagner <dwagner@suse.de>
+Subject: [PATCH rt-tests v1 0/2] Fix for start timestamp
+Date:   Mon, 28 Jun 2021 22:12:01 +0200
+Message-Id: <20210628201203.30974-1-dwagner@suse.de>
+X-Mailer: git-send-email 2.32.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <f31d9d37-df6d-90b0-8bf9-95156c27e8d@redhat.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Jun 28, 2021 at 09:50:25AM -0400, John Kacur wrote:
-> > I'd say the tsbuf access is the one which triggers a pagefault.
-> > 
-> > John, I would suggest to move the rt_test_start() into rt_init() and
-> > take the timestamp at the execution start (as my initial version was). I
-> > think the additional pain in slightly more correct start timestamp
-> > (which is also not defined what it actually means in this context) is
-> > just not worth the effort.
-> > 
-> > Thanks,
-> > Daniel
-> > 
-> 
-> Send me a patch, and I'll have a look. The timerthread()function is
-> sensitive anyway, so it's probably a good idea not to put that kind
-> of thing there.
-> 
-> Note that the the code following the /* Get Current Time */
-> is getting the time, but you probably want something rougher that
-> you can call strftime on?
+As Mike reported, the rt_test_start() was not placed cleverly. Let's
+move the code to rt_init() and avoid any further problems with it.
 
-I think it's just the buffer strftime is writting into it. The page is
-probably not mapped and hence the pagefault in the first access.
+Daniel Wagner (2):
+  rt-utils: Call get_timestmap() in rt_init()
+  rt-utils: Remove empty rt_test_start()
 
-Anyway, I'll send a patch which moves the rt_test_start() into rt_init().
+ src/cyclictest/cyclictest.c           |  1 -
+ src/include/rt-utils.h                |  2 --
+ src/lib/rt-utils.c                    | 29 ++++++++++++---------------
+ src/oslat/oslat.c                     |  1 -
+ src/pi_tests/pi_stress.c              |  1 -
+ src/pmqtest/pmqtest.c                 |  1 -
+ src/ptsematest/ptsematest.c           |  1 -
+ src/rt-migrate-test/rt-migrate-test.c |  1 -
+ src/sched_deadline/cyclicdeadline.c   |  1 -
+ src/signaltest/signaltest.c           |  1 -
+ src/sigwaittest/sigwaittest.c         |  1 -
+ src/ssdd/ssdd.c                       |  1 -
+ src/svsematest/svsematest.c           |  1 -
+ 13 files changed, 13 insertions(+), 29 deletions(-)
+
+-- 
+2.32.0
+
