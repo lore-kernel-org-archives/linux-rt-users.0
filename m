@@ -2,72 +2,74 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 92C0BC11F67
-	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Jun 2021 03:05:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6531C11F67
+	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Jun 2021 03:05:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6B03F61945
-	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Jun 2021 03:05:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 96BFA61945
+	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Jun 2021 03:05:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232734AbhF3DHq (ORCPT
+        id S232417AbhF3DIK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 29 Jun 2021 23:07:46 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:36393 "EHLO
+        Tue, 29 Jun 2021 23:08:10 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:46253 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232417AbhF3DHp (ORCPT
+        by vger.kernel.org with ESMTP id S232067AbhF3DIJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Jun 2021 23:07:45 -0400
+        Tue, 29 Jun 2021 23:08:09 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625022317;
+        s=mimecast20190719; t=1625022340;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=MZax7eQv2aN0KxYkfeYfHLmz5QMDCg4j2HsdMGj3mKw=;
-        b=ArRUUjBQ20spYpmyKgMzR3Pv1IR3GXC9700KPtQfvgUpWDg2uqmX8fKqfbiTpdS+FT6PyE
-        u3SQoZ0xYs8ebHjIEeBJMI35amFOvvTjM7jbfxcBbgnsIqNCs6BZfU4lI0vhEGxkW2aCyO
-        Sp+Agevv4Q+f5rxAzNsqhsRA0ZT5KoE=
+        bh=rxIFx6C3+QRwKG1nZIdSQtYB1eztOHu7LSbWEXAADy0=;
+        b=GFNLuosYhPNIK8/c5zZYK2iyKJuX0y4c8GcxAHGuNlithimbygSBczj18HINI5WXxb3Lzm
+        p8fh9jYPCGIrqwCmlGSe3wmpFuc1d3o2mEIPq9jtKMJiesu+wvVez4Of41EGYQjLM3zy+U
+        kzJuiF8mtfHg1Q8xeRjR4yHWdkH4rys=
 Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
  [209.85.219.72]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-9-0BBypvtSNNiH_Hukgm7uEQ-1; Tue, 29 Jun 2021 23:05:15 -0400
-X-MC-Unique: 0BBypvtSNNiH_Hukgm7uEQ-1
-Received: by mail-qv1-f72.google.com with SMTP id ke6-20020a0562143006b029028b8546bb01so400798qvb.20
-        for <linux-rt-users@vger.kernel.org>; Tue, 29 Jun 2021 20:05:15 -0700 (PDT)
+ us-mta-244-5lFYWWB3NGeRPPs1trXY4Q-1; Tue, 29 Jun 2021 23:05:39 -0400
+X-MC-Unique: 5lFYWWB3NGeRPPs1trXY4Q-1
+Received: by mail-qv1-f72.google.com with SMTP id u40-20020a0cb9280000b0290290c3a9f6f1so451339qvf.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 29 Jun 2021 20:05:39 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=MZax7eQv2aN0KxYkfeYfHLmz5QMDCg4j2HsdMGj3mKw=;
-        b=LfQ3/d7wK5eESPuKhz84QeFhZV3rz6pEswkPJZmc2OqwccTlKsCmmiAywmv+DOWorj
-         63XbM7z+ALX7VbxbNZEtZxr6DjwoaqO+GxZzZgmN27ehUCLi5vvP4L6Z4cwsnSd7j4jZ
-         XLCV8DNjWexNZkaQjYu0CrdPDxXcqcUn7jWIYlkU/EYi9mkcZOoFes74UkPlDSL9vr8u
-         XHCP0meWCSqVECysSJjXs1GGiWhB9fO6z05bGa4k5y0si+BU42oyj1+8bTSAw3JhZJJ3
-         HfyMMs4cTKAeYD4U5OQfdUYe395P8ZAjDBF2NsSoQqzl0/lmv33djgyURyFjop6TmdbN
-         x9Tg==
-X-Gm-Message-State: AOAM530Dbx3/KUmODIUQAYew/4vXiNtiOiEM9SC35elUZWQYga900uG9
-        96wWJ/5jn/Zu0yVU0qrah/RxdoRpmiW5txR7WGf650VhWqKlx1JjxnF6kc6DSAghBQLdOJBAfZA
-        8MAxyJBgo6n9XlRDSKvWo8X3e0HU=
-X-Received: by 2002:a37:bf81:: with SMTP id p123mr35034977qkf.40.1625022314867;
-        Tue, 29 Jun 2021 20:05:14 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyqSO2eFlLv0RTPWn6Hg9GDk+O9z7vIjmc6qx0wRUWhcORZmXbohG7k8gSliatSsPMYWh7ejg==
-X-Received: by 2002:a37:bf81:: with SMTP id p123mr35034962qkf.40.1625022314676;
-        Tue, 29 Jun 2021 20:05:14 -0700 (PDT)
+        bh=rxIFx6C3+QRwKG1nZIdSQtYB1eztOHu7LSbWEXAADy0=;
+        b=MoxAPkLxYRWGs79Fqf/DLOX+FlFe403B0K3iETTTQKbzYWeG8sVb6axdECGKpFbCqF
+         7Lf3lWKGLABmgKkEaEk4//mJci+pNnQZwh8tHFjOUxVbr+QhCOYtjiaSYkewYNLAm3EJ
+         F65kNBVKwlG25pLixT5Q3njiihq8d2rU/CYYFAvRb5+wNCZb6bLnKGe1Xms8jQbFqn9x
+         EwwNbxYVwO9bgz+NumGC8feWrRl1mv+xxLvGNpyrLtgLy7pJpCSx1NPiebY+PRSezosy
+         Vs5SZ02DipCYEVZr6GNTXC5UOSqtbJUNglnLw0/tSaTP+MGbjlS9v18Ij0CS6hJMbJ7W
+         17yA==
+X-Gm-Message-State: AOAM532DxiEvhIHCOhIo0lsYTRmT+v5dDNHwi/PCDdj7fny0WP0DkUi0
+        H9eL5V+kp4LSm8//dlSHcklD0hPnaRaCSR1Cun3CU+ZTk0m/4Xd3ZFCe1UzfL2Bx+n92eAY4kmY
+        Op6ywhny32urrsJBkN2CCP+RgVTo=
+X-Received: by 2002:a37:b85:: with SMTP id 127mr34580798qkl.2.1625022338697;
+        Tue, 29 Jun 2021 20:05:38 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJw057WesQ3/Io6rBk1rpG7YmiOha5HKrs94zlOP7DOpM4RQ3Ge1OB9BTNq3wDBFx2M4tyGatA==
+X-Received: by 2002:a37:b85:: with SMTP id 127mr34580789qkl.2.1625022338570;
+        Tue, 29 Jun 2021 20:05:38 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-156.dsl.bell.ca. [174.88.120.156])
-        by smtp.gmail.com with ESMTPSA id h9sm12698335qkj.66.2021.06.29.20.05.14
+        by smtp.gmail.com with ESMTPSA id p64sm6454395qka.114.2021.06.29.20.05.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 29 Jun 2021 20:05:14 -0700 (PDT)
-Date:   Tue, 29 Jun 2021 23:05:13 -0400 (EDT)
+        Tue, 29 Jun 2021 20:05:38 -0700 (PDT)
+Date:   Tue, 29 Jun 2021 23:05:37 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Daniel Wagner <dwagner@suse.de>
-cc:     Clark Williams <williams@redhat.com>,
+To:     Kurt Kanzenbach <kurt@linutronix.de>
+cc:     Daniel Wagner <dwagner@suse.de>,
+        Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org, Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH rt-tests v1 2/2] rt-utils: Remove empty rt_test_start()
-In-Reply-To: <20210628201203.30974-3-dwagner@suse.de>
-Message-ID: <2899e0da-2feb-9f4e-70c-89f01fdd485f@redhat.com>
-References: <20210628201203.30974-1-dwagner@suse.de> <20210628201203.30974-3-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v1 1/2] rt-utils: Call get_timestmap() in
+ rt_init()
+In-Reply-To: <87r1gl6uhm.fsf@kurt>
+Message-ID: <801072c7-a6c9-ccb0-471-d89d51b2cc3d@redhat.com>
+References: <20210628201203.30974-1-dwagner@suse.de> <20210628201203.30974-2-dwagner@suse.de> <87r1gl6uhm.fsf@kurt>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -76,190 +78,32 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Mon, 28 Jun 2021, Daniel Wagner wrote:
+On Tue, 29 Jun 2021, Kurt Kanzenbach wrote:
 
-> rt_test_start() is unused, remove it.
+> Hi Daniel,
 > 
-> Signed-off-by: Daniel Wagner <dwagner@suse.de>
-> ---
->  src/cyclictest/cyclictest.c           | 1 -
->  src/include/rt-utils.h                | 2 --
->  src/lib/rt-utils.c                    | 4 ----
->  src/oslat/oslat.c                     | 1 -
->  src/pi_tests/pi_stress.c              | 1 -
->  src/pmqtest/pmqtest.c                 | 1 -
->  src/ptsematest/ptsematest.c           | 1 -
->  src/rt-migrate-test/rt-migrate-test.c | 1 -
->  src/sched_deadline/cyclicdeadline.c   | 1 -
->  src/signaltest/signaltest.c           | 1 -
->  src/sigwaittest/sigwaittest.c         | 1 -
->  src/ssdd/ssdd.c                       | 1 -
->  src/svsematest/svsematest.c           | 1 -
->  13 files changed, 17 deletions(-)
+> On Mon Jun 28 2021, Daniel Wagner wrote:
+> > Move the get_timestamp() from rt_test_start() to rt_init(). The idea
+> > of rt_test_start() was to get the start timestamp right before the
+> > 'main loop' for the test starts. At least for cyclictest the
+> > rt_test_start() was placed wrongly so that the first test cycle could
+> > hit the pagefault when strftime() wrote into the tsbuf.
+> >
+> > We don't have an exact semantic description what start test timestamp
+> > means, so the simplest thing to avoid any further problems with it, is
+> > to take the timestamp right at the beginning when the program
+> > starts. Most test programs have a very short setup phase anyway.
+> >
+> > Reported-by: Mike Galbraith <efault@gmx.de>
+> > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index be8285a072b4..a08c91d9f4ca 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -615,7 +615,6 @@ static void *timerthread(void *param)
->  		setitimer(ITIMER_REAL, &itimer, NULL);
->  	}
->  
-> -	rt_test_start();
->  	stat->threadstarted++;
->  
->  	while (!shutdown) {
-> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index f07b57d5f7c1..f6b3fede06f7 100644
-> --- a/src/include/rt-utils.h
-> +++ b/src/include/rt-utils.h
-> @@ -82,8 +82,6 @@ static inline int64_t calctime(struct timespec t)
->  
->  void rt_init(int argc, char *argv[]);
->  
-> -void rt_test_start(void);
-> -
->  void rt_write_json(const char *filename, int return_code,
->  		   void (*cb)(FILE *, void *),
->  		   void *data);
-> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-> index 11f386098867..6c0235d0d2e0 100644
-> --- a/src/lib/rt-utils.c
-> +++ b/src/lib/rt-utils.c
-> @@ -531,10 +531,6 @@ void rt_init(int argc, char *argv[])
->  	get_timestamp(ts_start);
->  }
->  
-> -void rt_test_start(void)
-> -{
-> -}
-> -
->  void rt_write_json(const char *filename, int return_code,
->  		  void (*cb)(FILE *, void *),
->  		  void *data)
-> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-> index 32de951f27c0..6108fede039c 100644
-> --- a/src/oslat/oslat.c
-> +++ b/src/oslat/oslat.c
-> @@ -854,7 +854,6 @@ int main(int argc, char *argv[])
->  		printf("Test starts...\n");
->  	/* Reset n_threads to always run on all the cores */
->  	g.n_threads = g.n_threads_total;
-> -	rt_test_start();
->  	run_expt(threads, g.runtime);
->  
->  	if (!g.quiet)
-> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-> index 7782ea717c55..53c6af15afac 100644
-> --- a/src/pi_tests/pi_stress.c
-> +++ b/src/pi_tests/pi_stress.c
-> @@ -304,7 +304,6 @@ int main(int argc, char **argv)
->  	}
->  	/* report */
->  	banner();
-> -	rt_test_start();
->  	start = time(NULL);
->  
->  	/* turn loose the threads */
-> diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
-> index edda7c69652e..6ad0a92ffb5c 100644
-> --- a/src/pmqtest/pmqtest.c
-> +++ b/src/pmqtest/pmqtest.c
-> @@ -582,7 +582,6 @@ int main(int argc, char *argv[])
->  	sigemptyset(&sigset);
->  	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
->  
-> -	rt_test_start();
->  	do {
->  		int newsamples = 0, newtimeoutcount = 0;
->  		int minsamples = INT_MAX;
-> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-> index 5822164386de..821e58428e6d 100644
-> --- a/src/ptsematest/ptsematest.c
-> +++ b/src/ptsematest/ptsematest.c
-> @@ -468,7 +468,6 @@ int main(int argc, char *argv[])
->  	maindelay.tv_sec = 0;
->  	maindelay.tv_nsec = 50000000; /* 50 ms */
->  
-> -	rt_test_start();
->  	while (!shutdown) {
->  		for (i = 0; i < num_threads; i++)
->  			shutdown |= receiver[i].shutdown | sender[i].shutdown;
-> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-> index 0c4dabeee249..62cc603c983b 100644
-> --- a/src/rt-migrate-test/rt-migrate-test.c
-> +++ b/src/rt-migrate-test/rt-migrate-test.c
-> @@ -621,7 +621,6 @@ int main (int argc, char **argv)
->  
->  	setup_ftrace_marker();
->  
-> -	rt_test_start();
->  	for (loop=0; loop < nr_runs; loop++) {
->  		unsigned long long end;
->  
-> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index 4c81891bbe63..ffefa9e6fecb 100644
-> --- a/src/sched_deadline/cyclicdeadline.c
-> +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -1213,7 +1213,6 @@ int main(int argc, char **argv)
->  	if (duration)
->  		alarm(duration);
->  
-> -	rt_test_start();
->  	loop(sched_data, nr_threads);
->  
->  	for (i = 0; i < nr_threads; i++) {
-> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index 2dd22070cb5d..6e8f6b51b003 100644
-> --- a/src/signaltest/signaltest.c
-> +++ b/src/signaltest/signaltest.c
-> @@ -500,7 +500,6 @@ int main(int argc, char **argv)
->  			      strerror(status));
->  	}
->  
-> -	rt_test_start();
->  	while (!shutdown) {
->  		int allstarted = 1;
->  
-> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-> index 98a740d2cce2..d0d79df940de 100644
-> --- a/src/sigwaittest/sigwaittest.c
-> +++ b/src/sigwaittest/sigwaittest.c
-> @@ -652,7 +652,6 @@ int main(int argc, char *argv[])
->  			    &sender[i]);
->  	}
->  
-> -	rt_test_start();
->  	while (!mustshutdown) {
->  		for (i = 0; i < num_threads; i++)
->  			mustshutdown |= receiver[i].shutdown |
-> diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-> index 421688c7f47c..c5307648a82d 100644
-> --- a/src/ssdd/ssdd.c
-> +++ b/src/ssdd/ssdd.c
-> @@ -357,7 +357,6 @@ int main(int argc, char **argv)
->  			forktests(i);
->  	}
->  
-> -	rt_test_start();
->  	for (i = 0; i < nforks; i++) {
->  		status = do_wait(&wait_pid, &ret_sig);
->  		if (status != STATE_EXITED) {
-> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
-> index 8c55b6b7c48d..22ea7bcb7374 100644
-> --- a/src/svsematest/svsematest.c
-> +++ b/src/svsematest/svsematest.c
-> @@ -724,7 +724,6 @@ int main(int argc, char *argv[])
->  			    &sender[i]);
->  	}
->  
-> -	rt_test_start();
->  	while (!mustshutdown) {
->  		for (i = 0; i < num_threads; i++)
->  			mustshutdown |= receiver[i].shutdown |
-> -- 
-> 2.32.0
+> This fixes the issue for me:
 > 
+> Tested-by: Kurt Kanzenbach <kurt@linutronix.de>
 > 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+> Thanks,
+> Kurt
+> 
+
+thanks, added
 
