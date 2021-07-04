@@ -7,36 +7,37 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2B28C07E95
-	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Jul 2021 20:36:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 03654C07E95
+	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Jul 2021 20:38:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7DD7F613D8
-	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Jul 2021 20:36:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CFC496100C
+	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Jul 2021 20:38:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230127AbhGDUjN (ORCPT
+        id S229731AbhGDUkr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 4 Jul 2021 16:39:13 -0400
-Received: from mail.monom.org ([188.138.9.77]:39748 "EHLO mail.monom.org"
+        Sun, 4 Jul 2021 16:40:47 -0400
+Received: from mail.monom.org ([188.138.9.77]:39764 "EHLO mail.monom.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229731AbhGDUjG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 4 Jul 2021 16:39:06 -0400
+        id S229925AbhGDUjH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 4 Jul 2021 16:39:07 -0400
 Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id D8445500665;
-        Sun,  4 Jul 2021 22:36:28 +0200 (CEST)
+        by filter.mynetwork.local (Postfix) with ESMTP id C458B500609;
+        Sun,  4 Jul 2021 22:36:29 +0200 (CEST)
 Received: from localhost (unknown [94.31.98.41])
-        by mail.monom.org (Postfix) with ESMTPSA id 80896500609;
-        Sun,  4 Jul 2021 22:36:28 +0200 (CEST)
+        by mail.monom.org (Postfix) with ESMTPSA id 7E0DA5006B4;
+        Sun,  4 Jul 2021 22:36:29 +0200 (CEST)
 From:   Daniel Wagner <wagi@monom.org>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH rt-tests v1 1/3] rt-numa: Use sched_getaffinity() instead of pthread_getaffinity_np()
-Date:   Sun,  4 Jul 2021 22:36:19 +0200
-Message-Id: <20210704203621.5612-2-wagi@monom.org>
+Subject: [PATCH rt-tests v1 3/3] cyclicdeadline: Fix buffer allocation
+Date:   Sun,  4 Jul 2021 22:36:21 +0200
+Message-Id: <20210704203621.5612-4-wagi@monom.org>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <20210704203621.5612-1-wagi@monom.org>
 References: <20210704203621.5612-1-wagi@monom.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -44,35 +45,27 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Daniel Wagner <dwagner@suse.de>
 
-pthread_getaffinity_np() prevents static builds as glibc does not
-expose it for this configuration. Instead use sched_getaffinity()
-which is always present and has the exact same semantics.
-
-Fixes: f240656b056b ("rt-tests: cyclictest: Fix -t without a user specified [NUM]")
+gcc complains with "‘sprintf’ output between 2 and 12 bytes" but
+the buffer is only 10 bytes long. Update the buffer size to hold
+the complete range of [-2147483648, 2147483646].
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/lib/rt-numa.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ src/sched_deadline/cyclicdeadline.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
-index babcc634d57e..2d34ae36cc03 100644
---- a/src/lib/rt-numa.c
-+++ b/src/lib/rt-numa.c
-@@ -68,13 +68,11 @@ int cpu_for_thread_sp(int thread_num, int max_cpus, struct bitmask *cpumask)
- int cpu_for_thread_ua(int thread_num, int max_cpus)
- {
- 	int res, num_cpus, i, m, cpu;
--	pthread_t thread;
- 	cpu_set_t cpuset;
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index ffefa9e6fecb..8447424273ee 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -1092,7 +1092,7 @@ int main(int argc, char **argv)
  
--	thread = pthread_self();
- 	CPU_ZERO(&cpuset);
- 
--	res = pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-+	res = sched_getaffinity(0, sizeof(cpu_set_t), &cpuset);
- 	if (res != 0)
- 		fatal("pthread_getaffinity_np failed: %s\n", strerror(res));
- 
+ 	/* Default cpu to use is the last one */
+ 	if (!all_cpus && !setcpu) {
+-		setcpu_buf = malloc(10);
++		setcpu_buf = malloc(12);
+ 		if (!setcpu_buf)
+ 			fatal("malloc");
+ 		sprintf(setcpu_buf, "%d", cpu_count - 1);
 -- 
 2.32.0
