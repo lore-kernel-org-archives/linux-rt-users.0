@@ -2,80 +2,64 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-11.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A9B4C07E95
-	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Jul 2021 22:49:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4B20C07E95
+	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Jul 2021 20:36:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E1479613ED
-	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Jul 2021 22:49:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 90A69613D8
+	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Jul 2021 20:36:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231247AbhGBWwH (ORCPT
+        id S229879AbhGDUjG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 2 Jul 2021 18:52:07 -0400
-Received: from mail.kernel.org ([198.145.29.99]:39832 "EHLO mail.kernel.org"
+        Sun, 4 Jul 2021 16:39:06 -0400
+Received: from mail.monom.org ([188.138.9.77]:39736 "EHLO mail.monom.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230124AbhGBWwH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Jul 2021 18:52:07 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E7E8C6140E;
-        Fri,  2 Jul 2021 22:49:33 +0000 (UTC)
-Date:   Fri, 2 Jul 2021 18:49:32 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [ANNOUNCE] 5.10.47-rt45
-Message-ID: <20210702184932.1681f049@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        id S229549AbhGDUjG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 4 Jul 2021 16:39:06 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 507635005A1;
+        Sun,  4 Jul 2021 22:36:28 +0200 (CEST)
+Received: from localhost (unknown [94.31.98.41])
+        by mail.monom.org (Postfix) with ESMTPSA id 182275002BC;
+        Sun,  4 Jul 2021 22:36:28 +0200 (CEST)
+From:   Daniel Wagner <wagi@monom.org>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
+Subject: [PATCH rt-tests v1 0/3] Fix a few fallouts
+Date:   Sun,  4 Jul 2021 22:36:18 +0200
+Message-Id: <20210704203621.5612-1-wagi@monom.org>
+X-Mailer: git-send-email 2.32.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+From: Daniel Wagner <dwagner@suse.de>
 
-Dear RT Folks,
+Another round of small cleanups and fixes.
 
-I'm pleased to announce the 5.10.47-rt45 stable release.
+The first one fixes static builds for armhf host. Patch two is another
+of the printf format specifier which I got wrong. No idea why we
+didn't see this earlier. Anyway gcc on armhf was not happy. The same
+for the third fix. Why the gcc on armhf complains and not on anything
+else, is dubios to me.
 
+Daniel Wagner (3):
+  rt-numa: Use sched_getaffinity() instead of pthread_getaffinity_np()
+  signaltest: Fix printf format specifier
+  cyclicdeadline: Fix buffer allocation
 
-This release is just an update to the new stable 5.10.47 version
-and no RT specific changes have been made.
+ src/lib/rt-numa.c                   | 4 +---
+ src/sched_deadline/cyclicdeadline.c | 2 +-
+ src/signaltest/signaltest.c         | 6 +++---
+ 3 files changed, 5 insertions(+), 7 deletions(-)
 
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: 4c057b136b69269dbcd4318dd18ff93ddef1a29b
-
-
-Or to build 5.10.47-rt45 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.47.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.47-rt45.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
-
+-- 
+2.32.0
