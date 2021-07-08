@@ -2,95 +2,129 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65DA3C07E95
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Jul 2021 17:45:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C3CACC07E96
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Jul 2021 07:43:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 45E4A61CC9
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Jul 2021 17:45:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9C32B61CE0
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Jul 2021 07:43:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230313AbhGGRrq (ORCPT
+        id S229868AbhGHHpv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 7 Jul 2021 13:47:46 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:29060 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229519AbhGGRrp (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 7 Jul 2021 13:47:45 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625679904;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=4qy9aQHEumAn0rPLbQmdaoN3/7rHyK2IjApUMQu0v0E=;
-        b=dPfe2IdHRwggLON1hk0cnrHfymxnJ5pGAeGtLOfREcEsuoKoGLA+gnV8aMBm2RCByO/xe+
-        7yX4US99W3tLwm0gzdpRrnEn6pio+cOlcvhxDXMhUDP6rAWsOflxd0/e6o/1+TXnKPz33T
-        WzPOsHsSW7etTGhCXo21IgugmZb9Lm8=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-283-hDbwnNZ8P9eE-4AE1TYMgw-1; Wed, 07 Jul 2021 13:45:03 -0400
-X-MC-Unique: hDbwnNZ8P9eE-4AE1TYMgw-1
-Received: by mail-qv1-f72.google.com with SMTP id f12-20020a0562141d2cb02902ba007211abso2166544qvd.12
-        for <linux-rt-users@vger.kernel.org>; Wed, 07 Jul 2021 10:45:03 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=4qy9aQHEumAn0rPLbQmdaoN3/7rHyK2IjApUMQu0v0E=;
-        b=TiID36jWtCXJB81IBi4+Pt48qL/mNji09lEW9lMfIvuuVLKlMFasxt8uFkLRNDq9k9
-         6EK4gWLBznOEEdqU+DX7Z2OmM0+Yji2DbkF3Zjp65+8lzELJQBJzfU4Ndi2H7RgddYru
-         3IGnaF7L3rrJRVaJr71i2psbtcc6AeDk2jNRTrAhhBRYe9PvgDfMQXqLLqi4cCargCqc
-         vMUIN2R0uzGcM3KIISIanPjQQcUe+sbMAIcgOMkzKzRjW2zuIpbTxEFHvzUkcultaLpx
-         26Q48mxtPWbyQ5iNkf3iJ6XyNJq1/X6tC1v5G2Z9wiVdDVOmRj6y79QEyYxLjm1364uv
-         S8Aw==
-X-Gm-Message-State: AOAM531TCMWLZVUDzlPt/3vWIjTV+oSPeVhnVcF0+xaPz6aynb+CpaYr
-        UZic8lbQ4vt1LwtTHVw2G1NrHRAu4EAwOSk6Lu2mpXdVkhZ7GD11jM6f3v1g5EuyxTejKTFuUF9
-        dnfdX4/wEj7fRcrN3PMHHISmW/Wo=
-X-Received: by 2002:ac8:4f51:: with SMTP id i17mr22293606qtw.257.1625679902812;
-        Wed, 07 Jul 2021 10:45:02 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxdrZWDopEu60mpkDtqzdGb49DlvMkP9ePLStNXf2N9sWw5zqDmhpHa5PIZwPZfiGSU7QuZnA==
-X-Received: by 2002:ac8:4f51:: with SMTP id i17mr22293593qtw.257.1625679902612;
-        Wed, 07 Jul 2021 10:45:02 -0700 (PDT)
-Received: from t490s (bras-base-toroon474qw-grc-65-184-144-111-238.dsl.bell.ca. [184.144.111.238])
-        by smtp.gmail.com with ESMTPSA id r10sm1672807qtm.87.2021.07.07.10.45.01
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 07 Jul 2021 10:45:01 -0700 (PDT)
-Date:   Wed, 7 Jul 2021 13:45:01 -0400
-From:   Peter Xu <peterx@redhat.com>
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
-        jkacur@redhat.com
-Subject: Re: [PATCH 2/2] oslat: Don't take trace_threshold into account
- during preheat
-Message-ID: <YOXoHTxdH2kxM95u@t490s>
-References: <20210707084849.304329-1-nsaenzju@redhat.com>
- <20210707084849.304329-2-nsaenzju@redhat.com>
+        Thu, 8 Jul 2021 03:45:51 -0400
+Received: from mail-am6eur05on2071.outbound.protection.outlook.com ([40.107.22.71]:20033
+        "EHLO EUR05-AM6-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S229838AbhGHHpu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Jul 2021 03:45:50 -0400
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=O3w0/aeYpTL1oWmSvCh0sAzZpzi3K+kb4D1P0vNvSE8wL+TgEzyrR8pBJVpuV0SI+alPgQasZaiPfz17b/2SMWcZGj2Aex+P8iOrnjebdMSzHZ5wZacOV3P48NFcAZPcNy2zN8oxBb1i3YDKJ09Po/Htlp5xZez6xSOSwlaxsnwS7ioMhZQe39WJZk5scXPbx7qho4TQCn90TkAt4EsMRUWdtXWtrx9SCfHTGg2JyfilTP2ld+YZb7RWIOWBbMoI08BdirExFx1TxSpmfXbE018W1KLJegVPjzrBM/26+0oCe46VUbBJ8O3jzgOp34rZSJ75vQvW0DlbrjapCt8hew==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=QrN3ALmCKxAteWBM57DuJ6fQV1AVeoVzyQfQmAVhbB4=;
+ b=hCX1j+k/xvkqbMHzk2xMqqUhxixEoRXbSNFKu1YJfxE1n8Z6t4XFu1osSRhUboEoCxL8ncwnq0ueHmC26lCF+v9lTCZcaFe5PxJEmuwLOMR8fZRmTF33xcQTLNCkAhft+5lHSk7qe/ghArm4jkJBjxKb+kR9nWCPz5141q+9ANxaDexOWk3PFDr882Pf7AJ7Jw5vEb/Dwkzoe7mdjW6N13RxYyBz7cZN4FdNbeWeCAeMMkBgplvZDc9X5wyNVbKvwOC2J2f8Fd0doC++5QnycQkC1vr9PWQblj31oiRgRh8QiQbO832Vi6CsCbA+cBghO4pUmAqr+PuWWC8a0265rg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=optimeas.de; dmarc=pass action=none header.from=optimeas.de;
+ dkim=pass header.d=optimeas.de; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=optimeasgmbh.onmicrosoft.com; s=selector2-optimeasgmbh-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=QrN3ALmCKxAteWBM57DuJ6fQV1AVeoVzyQfQmAVhbB4=;
+ b=phxnFKQcfZYKA5fWvJWHHUJ4ThXbLYfVyHcWsTOijRez+d9c5DuhIXH1EubG9Ie+lH2zLDrcnghPwZmVjFoR5kAn2sW132BG4SToJoKETaHU3Nsq3vrQ0fDQPCrckkhzDHYA2fMLZUMSoFUKanir6q5Uuv/q3btP5tF6asOETN4=
+Received: from AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:208:128::16)
+ by AM9PR10MB4546.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:272::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4308.21; Thu, 8 Jul
+ 2021 07:43:07 +0000
+Received: from AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM
+ ([fe80::850b:2ba:d349:c53c]) by AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM
+ ([fe80::850b:2ba:d349:c53c%7]) with mapi id 15.20.4308.023; Thu, 8 Jul 2021
+ 07:43:07 +0000
+From:   Matthias Klein <matthias.klein@optimeas.de>
+To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Working sample 5.10 kernel configuration for an IMX6 board?
+Thread-Topic: Working sample 5.10 kernel configuration for an IMX6 board?
+Thread-Index: AddzzOCsqFtf+wLtSaGNGDf4F5E2SA==
+Date:   Thu, 8 Jul 2021 07:43:06 +0000
+Message-ID: <AM0PR10MB3107F4D6E0F50ECB027C06A199199@AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM>
+Accept-Language: de-DE, en-US
+Content-Language: de-DE
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+authentication-results: vger.kernel.org; dkim=none (message not signed)
+ header.d=none;vger.kernel.org; dmarc=none action=none
+ header.from=optimeas.de;
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: d4bc07a6-e265-40b3-c69e-08d941e406bd
+x-ms-traffictypediagnostic: AM9PR10MB4546:
+x-microsoft-antispam-prvs: <AM9PR10MB45469DC58A5613F8A6F2868A99199@AM9PR10MB4546.EURPRD10.PROD.OUTLOOK.COM>
+x-ms-oob-tlc-oobclassifiers: OLM:6790;
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0;
+x-microsoft-antispam-message-info: N09UhMv3esFpEYqwZn2jHbV2LcnYc6BJYDPKK5ywxYH+3q/GrK9YY9Ib1cc07FD9OCJ5247Uvb28XMHZztY/AgohBpi7rba+9GCi8Xsgac8f7LQvz4s+36syQanmuQOA/foSIwDiyUUhnC1Z8saUfA9vcvg+mMpgzeVoVB9YVpP5wHyEY5KmcqP96B4a9rFGr/fUifUCcRJmDNtlf1BFTaGMGcTILHf2HWa/UXHfk9kmrYQguyMkZ/bn6tGpww1XwhuvXtrq7PAyRPdxXbTUf/Nm8HYLkRNN7ftF6wYD7U+LNkTeTgqz3xp9B0uRsfOe5PsS7Gw96RmIKRdwIu2mjWUPW/KTtyY/+oE5rvQNXI8ur2dB6ArBrm3nsxIWRWakG/ycZ0Ks2VWZvXMbtJqO+v9/cN9OHxAWlTBZ3j/OTALO/4z91zCqMAnWMx8r3g0RRqMAaJ2ERKiqRNRu5Xyi/zX2H2HRrYQYW+KeWGW4UjTJ+TrbhWphQocJd3gp040jWZXR1Ik5qscjlHOnIlOfeUGI9frwuFOVAPkk7Oss1C1NS60MyxDTZSY79T6F/lcq2V9Akx6iHCN0p7ZvT38nl7XHmJLrY6r/VwH2q8xfYuwISY6EZrZgG71hMonBnX5iOAduI06MTUducLCHn+D4Xg==
+x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(376002)(39830400003)(346002)(366004)(396003)(136003)(7696005)(52536014)(66446008)(66946007)(66556008)(44832011)(66476007)(64756008)(8936002)(316002)(76116006)(2906002)(71200400001)(55016002)(8676002)(9686003)(6506007)(122000001)(38100700002)(186003)(5660300002)(478600001)(33656002)(86362001)(6916009)(4744005);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?YF28oWJmNQAfJjJLPHDF9Etg5WCpCxeyaT7CEVbzxdrrrpYlwCE90AfxUNhG?=
+ =?us-ascii?Q?YCA9GbLnYTvSyFpw/eIMFv3XAs6bwOIrRFW5D8wIu9/SnX6/UQALblHl9zGu?=
+ =?us-ascii?Q?pEy3orXTaIULW0WcuEH8BhUUHPe/KP3uamMfEK9ERniKhouMsiMRe8fsRNlq?=
+ =?us-ascii?Q?F5zVh38ld/uNJfbvugE/qBcLW31QBSbJpf+WUS2MatSVlziVNcyqF19HT1o/?=
+ =?us-ascii?Q?1glNDB29wWPmtW62kla+YKwoJnaZTD5/DoWenFIsZ61h6JKTTbnHAqyCLPxC?=
+ =?us-ascii?Q?yofz6bsUyTspwG3eXDLEmJM3usXPzXo+KeYnvkHn4Dfw4aXdemHch967rE3L?=
+ =?us-ascii?Q?PWGQRV4VqYNE+ug1mSl48G1UamktQA9Kfk4x9KnEQM4pv1WBnoxqlOSspayc?=
+ =?us-ascii?Q?o+dPLxG4CERQyx/cakfz308aqBS3uhev2gr0pTSIkU1Mf4op4N/fWyRRNPno?=
+ =?us-ascii?Q?ryhTakhNlR8+T20+p9WKlZYKTAeXWcrvTGjrRRn0QsUlCn+sCNOtnHgzwByY?=
+ =?us-ascii?Q?fIQCph2EiGIiCT8Hnh3NmAn4S78eC4VRA7Q2CxULD4uya0IMc6xQWyDGBXuO?=
+ =?us-ascii?Q?YG2XRxpdEVNJXuZuAKLWtnjy2qObkecdl4ZDadmvubAEitkWEXirPYwTYYKG?=
+ =?us-ascii?Q?/6PvSnzoalo3IOEWiECGed+pTRi64GP0/hATYAz6U+3AUId6rjc8cGgWy4IG?=
+ =?us-ascii?Q?9Ijomv/SnRiHIJAxgL44TWFK/bwgmH1xdkYt+gweixW1v0ts/PuQFS+cCGRx?=
+ =?us-ascii?Q?tYCR6zEHUltW5aTUOMjrlbgvPooEepRMD8x9DzTGs3p/x6uSSYVXIgNxHIKX?=
+ =?us-ascii?Q?Fcin9Oik8Zyc+kmd/WIIJrN6/A+0Mt5//pYcASpo+YfCKSAQrAOZoGkaLbgg?=
+ =?us-ascii?Q?90+L0hR+1n5rZVzncrlT342sVUSEqECaKIxfTWHj751juAaAMy6xOuSOdb7P?=
+ =?us-ascii?Q?zpybOITIHS2gSk9FQvGppBDIYVdAtSbzCCNILa/lhoVd6JAj/Y+5qMTFCsp6?=
+ =?us-ascii?Q?q2dv8m+pjVl044fulDIdUqoTPMMOwQ/fL75ifJ8vqFay4d8Nt6RUYpnfVDFL?=
+ =?us-ascii?Q?VGCWmsTwhre0imagxVkfMV9c9ufY86GYsIPiBCTQ483Tn4BPv3nsJcxeMkXa?=
+ =?us-ascii?Q?Zp0/ncMeFWn/Nwvgjg5VfQiMcXGWPRIsA94x0pOw1jPIwS9wMdeEnG0ttA6B?=
+ =?us-ascii?Q?CZeZAHSMsNF/Q9ytEFssXUvCACczXScA+scBYjAM9DAgf7P9eU/yYLIluOWW?=
+ =?us-ascii?Q?Kq56cUSepq6A6ddsIu0MRoLJo6ZQ9ntSYF3WAETrEN49p5ExkLTFDjVYfe0w?=
+ =?us-ascii?Q?nt+1ltKg+fQrZLPihWIMbtJvXns1jSU+DqPJmHnClOMsk0cd6doei/3KG4m4?=
+ =?us-ascii?Q?9LLyJnqAIklCcv07e3WtJ4L6UzGb?=
+x-ms-exchange-transport-forked: True
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20210707084849.304329-2-nsaenzju@redhat.com>
+X-OriginatorOrg: optimeas.de
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-Network-Message-Id: d4bc07a6-e265-40b3-c69e-08d941e406bd
+X-MS-Exchange-CrossTenant-originalarrivaltime: 08 Jul 2021 07:43:07.0315
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 91b33c5b-e584-4ec0-893c-2a9180ad0602
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: tpEvUtiIIQrSxexZnYvrl2P9MCgZmARQwdNLNHRJkNVADTRMvyxATZTCxutUrWwwFx8Bg92FiY4aAak9KssA+b/kVhsFzZY9FMEVQuyJK5U=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM9PR10MB4546
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Jul 07, 2021 at 10:48:49AM +0200, Nicolas Saenz Julienne wrote:
-> The point of preheat is to make sure CPUs are out of idle and running at
-> max frequency by the time the real test starts. So it's expected to
-> incur into extra latencies we don't really mean to measure. With this in
-> mind, it doesn't make sense to take into account the trace threshold
-> during that run. So don't do it.
-> 
-> Note that this has been observed in practice. The threshold would be hit
-> during preheat but not during the real test.
-> 
-> Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Hello together,
 
-Reviewed-by: Peter Xu <peterx@redhat.com>
+I am trying to get the PREEMPT_RT patch to run on a Ka-Ro TX6U-8033 module =
+(800MHz i.MX6U7).
 
--- 
-Peter Xu
+The kernel boots and basically works. But I have measurements with cyclicte=
+st with maximum latency of up to 2..3 milliseconds with only 100000 runs.
+
+I would like to compare my configuration in a first step with a working IMX=
+6 configuration which has no such outliers.
+
+Can someone send me such a configuration?
+What should be the maximum latency with kernel 5.10?
+
+Many greetings,
+Matthias Klein
 
