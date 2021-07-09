@@ -2,99 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DEBEEC07E99
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 19:28:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C9A49C07E99
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 22:00:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C45EA613CA
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 19:28:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A6E02613E6
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 22:00:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230327AbhGITa4 (ORCPT
+        id S230390AbhGIWDC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 15:30:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43466 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230109AbhGITa4 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 15:30:56 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7CF71C0613DD;
-        Fri,  9 Jul 2021 12:28:12 -0700 (PDT)
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1625858890;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=SnJkV5Eue+q5YG0ekrQ5djRZ/pRdO+saRQkDIqHszro=;
-        b=tyfif7CGd9NFgPoSj8tJTrk3W/Snnx0BIGGKKd335ukMUV8eonIZzHI4YeG1GwyHreDXMo
-        emlPYODwK9YowD3J37QUhnMmMefJ0uIDIzH67rfPEhNQUtOx9OrJlBoAtbQUyU0pBWMm0/
-        /RyC8lbo8aiAMsSXsNWC5I/mHNIeH6rdq2e19IVRSnumrttzTI7AiMZHOzE15WqUoqnI67
-        NWLENNSBfLujTnBEMeNig7lLckSFvrJy4hGpPfESdnndwCsJtT3mYOegyGLHjVd8OF5wdJ
-        dOGRBY1ys/Z19RGB629aiWKmuIK1eKeXx26sOaOe3+xr/2gUymfyHkPqQNks7w==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1625858890;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=SnJkV5Eue+q5YG0ekrQ5djRZ/pRdO+saRQkDIqHszro=;
-        b=SF0R0xXgLXf6E4LieE82EgTOdq/BG/vWxteWTPd0GdhJ0alIsHXObTS+NIlIS/VVBamuOo
-        MmxCaFneTp3NglCw==
-To:     Mike Galbraith <efault@gmx.de>, LKML <linux-kernel@vger.kernel.org>
-Cc:     linux-rt-users@vger.kernel.org,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [rfc/patch] mm/slub: restore/expand unfreeze_partials() local exclusion scope
-In-Reply-To: <8c0e0c486056b5185b58998f2cce62619ed3f05c.camel@gmx.de>
-References: <87tul5p2fa.ffs@nanos.tec.linutronix.de> <8c0e0c486056b5185b58998f2cce62619ed3f05c.camel@gmx.de>
-Date:   Fri, 09 Jul 2021 21:28:10 +0200
-Message-ID: <878s2fnv79.ffs@nanos.tec.linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain
+        Fri, 9 Jul 2021 18:03:02 -0400
+Received: from mail.kernel.org ([198.145.29.99]:50286 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229542AbhGIWDC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 9 Jul 2021 18:03:02 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 60E76613C5;
+        Fri,  9 Jul 2021 22:00:18 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1m1yXh-000CI8-7h; Fri, 09 Jul 2021 18:00:17 -0400
+Message-ID: <20210709215953.122804544@goodmis.org>
+User-Agent: quilt/0.66
+Date:   Fri, 09 Jul 2021 17:59:53 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [PATCH RT 0/8] Linux 5.10.47-rt46-rc1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Jul 09 2021 at 07:21, Mike Galbraith wrote:
-> --- a/mm/slub.c
-> +++ b/mm/slub.c
-> @@ -2497,7 +2497,9 @@ static void put_cpu_partial(struct kmem_
->  				 * partial array is full. Move the existing
->  				 * set to the per node partial list.
->  				 */
-> +				local_lock(&s->cpu_slab->lock);
->  				unfreeze_partials(s);
-> +				local_unlock(&s->cpu_slab->lock);
->  				oldpage = NULL;
->  				pobjects = 0;
->  				pages = 0;
-> @@ -2579,7 +2581,9 @@ static void flush_cpu_slab(struct work_s
->  	if (c->page)
->  		flush_slab(s, c, true);
->  
-> +	local_lock(&s->cpu_slab->lock);
->  	unfreeze_partials(s);
-> +	local_unlock(&s->cpu_slab->lock);
->  }
->  
->  static bool has_cpu_slab(int cpu, struct kmem_cache *s)
-> @@ -2632,8 +2636,11 @@ static int slub_cpu_dead(unsigned int cp
->  	struct kmem_cache *s;
->  
->  	mutex_lock(&slab_mutex);
-> -	list_for_each_entry(s, &slab_caches, list)
-> +	list_for_each_entry(s, &slab_caches, list) {
-> +		local_lock(&s->cpu_slab->lock);
 
-This one is odd. It locks the cpu_slab lock of the CPU which runs this
-callback and then flushes the slab of the dead CPU.
+Dear RT Folks,
 
-Thanks,
+This is the RT stable review cycle of patch 5.10.47-rt46-rc1.
 
-        tglx
+Please scream at me if I messed something up. Please test the patches too.
 
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 7/13/2021.
+
+Enjoy,
+
+-- Steve
+
+
+To build 5.10.47-rt46-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.47.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.47-rt46-rc1.patch.xz
+
+You can also build from 5.10.47-rt45 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.47-rt45-rt46-rc1.patch.xz
+
+
+Changes from 5.10.47-rt45:
+
+---
+
+
+Peter Zijlstra (6):
+      sched: Fix migration_cpu_stop() requeueing
+      sched: Simplify migration_cpu_stop()
+      sched: Collate affine_move_task() stoppers
+      sched: Optimize migration_cpu_stop()
+      sched: Fix affine_move_task() self-concurrency
+      sched: Simplify set_affinity_pending refcounts
+
+Steven Rostedt (VMware) (1):
+      Linux 5.10.47-rt46-rc1
+
+Valentin Schneider (1):
+      sched: Don't defer CPU pick to migration_cpu_stop()
+
+----
+ kernel/sched/core.c | 144 ++++++++++++++++++++++++++--------------------------
+ localversion-rt     |   2 +-
+ 2 files changed, 74 insertions(+), 72 deletions(-)
