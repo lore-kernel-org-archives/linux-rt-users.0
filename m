@@ -8,32 +8,33 @@ X-Spam-Status: No, score=-11.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 66CF1C07E99
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:20:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5100BC07E9C
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:20:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3AB526140F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:20:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3060461363
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:20:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229617AbhGIFXd (ORCPT
+        id S229742AbhGIFXh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 01:23:33 -0400
-Received: from mout.gmx.net ([212.227.17.20]:59597 "EHLO mout.gmx.net"
+        Fri, 9 Jul 2021 01:23:37 -0400
+Received: from mout.gmx.net ([212.227.17.21]:49283 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229583AbhGIFXc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 01:23:32 -0400
+        id S229583AbhGIFXf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 9 Jul 2021 01:23:35 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1625808037;
-        bh=OCW7oljHM6ncvS3+WmeaxtPjxKjop38O0bgGSXlwec4=;
+        s=badeba3b8450; t=1625808049;
+        bh=hFhzOqM1oYZNo+YO+moH8YhnNEBNxzGYyI3kJVIAr+A=;
         h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=dwBZoO71An4asQnnszWWJjKf3TKTGO/GBGxwg/jcaZzBw5A6QiI8sUVlsKek+54Jw
-         EA+v45nFbvfwm4QOcvQgCJ+XHYPOPAdV2cbEfOPeI1aD23b3EfMiSJld+OAUZjhRt4
-         t15bRWHSagrO8n8C+C613/zGGAn12okSNIA2XHbw=
+        b=O4rG9ozpC6hnRXD+/hx1neNcONRhSMRczcqJOdnGfyTY2rt2UOaY/12HBP67vI7Sx
+         h5rGCPm2WMHeEg2U/Ew3fquX8gxDeKZkazaywp7C0lJZG99PYx+yBTJ7uFAIX6EOzD
+         7MRKghFp+lBgApb8ra3jUiBTTYm9XSCRUc5ktBjY=
 X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.217.33]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MybKf-1lFusi0rCX-00yyNh; Fri, 09
- Jul 2021 07:20:37 +0200
-Message-ID: <966f27f7999acb1db8d60e241a73dfde3344345c.camel@gmx.de>
-Subject: [patch] mm/slub: Fix kmem_cache_alloc_bulk() error path
+Received: from homer.fritz.box ([185.191.217.33]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1M3DJl-1m2XMK1Ypp-003baI; Fri, 09
+ Jul 2021 07:20:49 +0200
+Message-ID: <b9b2dbb062bd25d9f6c0b918c3c834bc6964c2d6.camel@gmx.de>
+Subject: [patch] mm/slub: Replace do_slab_free()
+ local_lock_irqsave/restore() calls in PREEMPT_RT scope
 From:   Mike Galbraith <efault@gmx.de>
 To:     Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>
@@ -41,66 +42,73 @@ Cc:     linux-rt-users@vger.kernel.org,
         Mel Gorman <mgorman@techsingularity.net>,
         Vlastimil Babka <vbabka@suse.cz>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date:   Fri, 09 Jul 2021 07:20:36 +0200
+Date:   Fri, 09 Jul 2021 07:20:48 +0200
 In-Reply-To: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
 References: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
 Content-Type: text/plain; charset="UTF-8"
 User-Agent: Evolution 3.34.4 
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Provags-ID: V03:K1:X0SMFsCtIjHy5TeQqmMzGnMgSjxHIdat64X17zv9akVokK2mr5V
- h/fBqIvDm4JgtYTRZinezDexdCg0ynG0BOnxfIqOApbeTFx43rAs5Aa75JVBcy06xq+/+YC
- WN7hyVhRXCWpSDTwuqN43bKkMqtXOPRbfmYfKYSPKhjcJerW/ivq7DkAVHLJB7Qx00r4rex
- HaHUIAuAEXAbUH5RG4SOQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:08dDrrprXM0=:IyqFnAUomg3/CSP/mVFmuk
- qeDV5L2fW2JLDB64tD0EMUXkYxdLOkglkGAIQ07z8P0aPCmqegtwMV/aVNY3gKjsVtsB+W5Gn
- n+a4aStrAEfj/wHsNg5P8hgohvuoRTPFw12Nt4Cb/3OxiZ/vKmcP0jHVoV+2DMiwgJlA0lAPG
- wlU9U+eXx3ofS6Nzx80hAa4cYtBzM2Qx/55Z4kkmQu6HaDhvu2/69MuT5XOaXJaMu9hhIuFEy
- DTIr0phbICTdWGrHLnGXFSURezF6fGtwRF3pTtpNS3LN7xBs1re/CMnrFwYpgz3Dv9zyYKk6V
- pq3vk1EThNJrGV0IdHyA5GLxPMd3IvnWujuad0kNcv+5oO2UqCJvg4202txT2GmsRMN0lDH2e
- sjpxZdxLfplVdzqxyBfbiZQHZgYWFEgo1ziBAf6/A8c6Nuli9o7twqHf9ZW+BU4SAQtFtXtPU
- 3KT6/37cUPMIoA3OV+K8sOJw+FkzZdyEmmEgWHL+iiFFKKISkMnrP4ztm7wOqOSHF1sgeAd0k
- bIAp3t8H+enRvrGgOMHRH0nv4pGEnMzX6zagENBg3ZafPd6md2zgXY2Y2yDOLbebBQAuB01Ow
- 3s2bN0r8f4A5VVQpdLmcdVeRyKgalJ89+ekB/8C489H48g//KPTqIJxtubyK46zLCCMuxCns1
- 1BAN8UPkgZvZnqOletCDjTslQ1SINN5r1VJTl2k2txR3R6ZvgCkmAckLzxrSg0xA4WCFCpSJL
- 5piyJiz8SdgTS3E3pG1w0nIPn8w1JlQ1fEYeHtddZhFap9TekIDfC3IiJb/+43xwJi7NSkwZt
- QkbDxsDSq9uK39mJwpcXtPj/Kp67qYv/Bcp4x1aD+U9OcWBcjdx6NpNG8NKfnP0HpA/TyNHIU
- vfzCM3edPSkRlse1HugPBOokbPyYG/QPFy6GaRX2jA1/SBINtT6PTIb4Rb5gRM0DTaRyYPZxC
- rNKkehFUnqji2QjGoQ4eiq2WAgrf49HU0Pg9DwD29SMcp6VAtJS/adnvPr1GRf4o0eDpY4kJm
- KgdZT45AtLMeBNZl0Ib9nPbXBjiA2gNM8soKmrVWr09TIruYAw1SRYOgVJbRfTl9nNqDt0vhX
- 3DcKqUuk9Cg5uR69JJgzihB8pNbmkkGURZX
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:01p2lwGVKz9WK7vvHBExumLJM56JpWoWlZFtXp4x2rx26ieP5h4
+ 3fDAMYrQbUQvyk9eY+lxfqCxiSUYWu8Zh4ag9V00FGHALFjKoMXIOBsjYfZZ17uGOXwd1Cz
+ 4BjJV01D8dUyk/mSBpmfh61pq0MSDcdZEx8U1qr+gzR5O7QVGwLj0+Oo/Bs/GLeH4DRa/VG
+ rLBnpo0MbLlLUvRXOSl+w==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:6t3MjBR812Y=:j3kXo/h4JNqEhxHGGUVphY
+ v6dDHblihdFW0+HJHzuZaMzNgGsV3aOn5fB9VlrifpgBNgEg7gTKKf8LZOEtmItQzIRQGxu30
+ 7xr4P5+c5daUU3SOPTlrsiydqtNCE/Rm4n77rEcihJZZ23/ZKoyUaFDhiZu2fID9GBL1ZwvVE
+ FScOnLQsEk3ctTdvcQi7lzx6qGHUAjgk2Wr4HKdprkvx3IwdmuuN3T3Yc782E+y27/I19ryKb
+ ZHQVDMqFDxy1RI9T7KKvVKfiyqjeeK3/9Z2MiFQ9elyyvWHAtRKg+M9kk2jiUfBHHMJdXvdpt
+ qPVwPN8Tv6gAXlU1AtT1mn55Hp37ExGLBKggeN8iOhcjtpGzuLEYnBl45cICSB5ReOSywkKhG
+ XXqmCYTthHV9Eu2hawirr8W0dtnjYB4PG7mT6wYCkRsHk22cVMsFM7N2g8xSiQqg1kqw4ljpS
+ znO6Z5VW58HHNIFp7qD6VCejeSoaaugFDX42FVSgMyUpRjJpLQ2ktDrUb1VKL3isHSzki3DYk
+ VNCxOjl+EkZqpXBWv7ttgK1Vo3bnyFjb7HuqsSyKzKsIenimQHySJPwuRLqkYhoEMf/2A/T9K
+ hwj88HA1MHeXer6nuRrtZoeU+cl2gkS7M6ruTc5Xc6AdHktdyO/3a423+aTO+HzelXG9kECSx
+ 4QFY50bA0IWeyrWICwKKFE/sxXOmT8UA5WlvJQh0VZEyTg1Bevxu7vuEfi612WWm51bxeZ1YB
+ u4I0SNvk+YdPeoiarx7HLkU5A2+n7zyral8fff2LGXcnh2G+siqoNNFSMwVKz4UBuf2EexIak
+ 6YOW0/Oc+sCuSdXrLSs5gGtDvoxHXvTRqEA+5mSa86lWqm9b2lRCSDIdPuHiIqbdBwNdpm792
+ GAavdseRWwzQbOKAsCkCrvyQheIT6CXnVb8nKQIQ8J6cFET+JM9/kkuTv80f2H1r9D7nHLt35
+ rJVCK5db0wXED4Vsi14JOOzRN8RkHXNpOhRKtqC1wbG+0puhVcuaKg2RVEhmaMjErWArv6oTF
+ EjFzsMdwATITYmbBjYZbDVVEi3gsX6iy3Be+wfPm+aXuJBSKtNtb+OujxF11BJna37K8l8tMR
+ mKyucrrmIAttdK4atNv9H0HBPuUuxA1HtF+
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
-The kmem_cache_alloc_bulk() error exit path double unlocks cpu_slab->lock
-instead of making the required slub_put_cpu_ptr() call.  Fix that.
-
-Boring details:
-1. 12c69bab1ece ("mm, slub: move disabling/enabling irqs to ___slab_alloc())")
-adds local_irq_enable() above goto error, leaving the one at error: intact.
-2. 2180da7ea70a0 ("mm, slub: use migrate_disable() on PREEMPT_RT") adds
-slub_get/put_cpu_ptr() calls, missing the already broken error path,
-creating unpaired slub_put_cpu_ptr()/slub_put_cpu_ptr() calls.
-3. 340e7c4136c3 ("mm, slub: convert kmem_cpu_slab protection to local_lock")
-converts local_irq_enable() to local_unlock_irq(), culminating in a
-double unlock and unpaired slub_put_cpu_ptr()/slub_put_cpu_ptr().
+IRQ affecting local lock operations are intended for dual RT/!RT scope,
+only affect IRQs in !RT scope.  Replace misplaced do_slab_free() calls
+with plain local_lock()/local_unlock().  Purely cosmetic.
 
 Signed-off-by: Mike Galbraith <efault@gmx.de>
----
- mm/slub.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+=2D--
+ mm/slub.c |    7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
---- a/mm/slub.c
+=2D-- a/mm/slub.c
 +++ b/mm/slub.c
-@@ -3605,7 +3605,7 @@ int kmem_cache_alloc_bulk(struct kmem_ca
- 				slab_want_init_on_alloc(flags, s));
- 	return i;
- error:
--	local_unlock_irq(&s->cpu_slab->lock);
-+	slub_put_cpu_ptr(s->cpu_slab);
- 	slab_post_alloc_hook(s, objcg, flags, i, p, false);
- 	__kmem_cache_free_bulk(s, i, p);
- 	return 0;
+@@ -3362,13 +3362,12 @@ static __always_inline void do_slab_free
+ 		 * we need to take the local_lock. We shouldn't simply defer to
+ 		 * __slab_free() as that wouldn't use the cpu freelist at all.
+ 		 */
+-		unsigned long flags;
+ 		void **freelist;
+
+-		local_lock_irqsave(&s->cpu_slab->lock, flags);
++		local_lock(&s->cpu_slab->lock);
+ 		c =3D this_cpu_ptr(s->cpu_slab);
+ 		if (unlikely(page !=3D c->page)) {
+-			local_unlock_irqrestore(&s->cpu_slab->lock, flags);
++			local_unlock(&s->cpu_slab->lock);
+ 			goto redo;
+ 		}
+ 		tid =3D c->tid;
+@@ -3378,7 +3377,7 @@ static __always_inline void do_slab_free
+ 		c->freelist =3D head;
+ 		c->tid =3D next_tid(tid);
+
+-		local_unlock_irqrestore(&s->cpu_slab->lock, flags);
++		local_unlock(&s->cpu_slab->lock);
+ #endif
+ 		stat(s, FREE_FASTPATH);
+ 	} else
 
