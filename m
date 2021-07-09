@@ -2,104 +2,137 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-19.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-16.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A05CFC07E99
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F1194C07E99
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 17:58:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8456B61182
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DA3E9613C9
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 17:58:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232413AbhGIP5G (ORCPT
+        id S229931AbhGISBl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 11:57:06 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:51981 "EHLO
+        Fri, 9 Jul 2021 14:01:41 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:49038 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232248AbhGIP5E (ORCPT
+        by vger.kernel.org with ESMTP id S229459AbhGISBk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 11:57:04 -0400
+        Fri, 9 Jul 2021 14:01:40 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625846061;
+        s=mimecast20190719; t=1625853536;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=FHSAHonJE4deSZXB4H3BRySsjgmOYM99K6OJla0dYoM=;
-        b=E04QWZFhHqHPTRisSGxOfEpxHtIOlpe5HOnORrERVS8zojELfdnkcYvmMLFeY0Q9D1Z0h0
-        gRSRmpEdh6HeRHfPOVOINPf5kJNK3Yy6S6Ya0MjEXkObUFlNvn4ITdXs3CRGD1zbYPFGck
-        9UGkNm4t5IdCMNGISmvTvN6O4VcG/t4=
-Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
- [209.85.128.70]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-364-NvQztxXYNSyC-yYs9e08cA-1; Fri, 09 Jul 2021 11:54:19 -0400
-X-MC-Unique: NvQztxXYNSyC-yYs9e08cA-1
-Received: by mail-wm1-f70.google.com with SMTP id p6-20020a05600c3586b029020b46124c2eso2334749wmq.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 08:54:19 -0700 (PDT)
+        bh=ULQDsGPh3AHD3SOk9O5mssutYSM3JCboakkU2mBEowA=;
+        b=Dqs3izX6jbhKTyLYWXf33BVbkaQn0VmcmdXHFk2NXJp/7MszuKoRSsoWDIU5fsjAjGFwmD
+        xd9LKbGh2KC0M+1zGoHl2xIMP6MZTzbxKh26k1mYgaf7+OYH0GDDngjuPmET6w3IDSC+jJ
+        ItI1+CVaeYgud5wl4KMBeM7HZj6rtWY=
+Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
+ [209.85.160.200]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-250-_zhfSi8gMSq6liI4FPlozg-1; Fri, 09 Jul 2021 13:58:55 -0400
+X-MC-Unique: _zhfSi8gMSq6liI4FPlozg-1
+Received: by mail-qt1-f200.google.com with SMTP id c18-20020a05622a0592b0290251fb198592so6275154qtb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 10:58:55 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=FHSAHonJE4deSZXB4H3BRySsjgmOYM99K6OJla0dYoM=;
-        b=bHHhKF67Tu/gML862kgu6QJG1Y3EnVXKd1sOVGrg5+u00D2zxgiOpmYJbtOCvTjkP9
-         pjGPA/GYH/s+h5NI7B+U0qF5nbEhnHNVPhQ5scr4tXJdfU5/dtpK0UAuoIlFqhnS2rlK
-         7hFeZq+iJeP7WoM3+RXVuhI0+9lSe6Ws7ShNxx9LgoLbaVh9RKC7+fQ7PJdT6YIwPxPE
-         Uw05YyFhaM6VPnb+SEOHqSFR0ITTEW/CB5S2gMCJjOzYKUmK8Ntk0EMofFfsD6FWGgfD
-         dpu+AiEJE5cmIdGTzKTXZnqEYcVJD0eTiNeRHAbM+ws5dykHCrN9mOja4B/CLP7jwhAv
-         aR3g==
-X-Gm-Message-State: AOAM532y4ydtb2f/LVJWpJXesFsbXoL1IIg5T9yfd3Bva4EaZ+T2KAyw
-        5J2FhIFWq9S43HW0UA/0Cd0kSoAaag09vWa8oNz2+lBxBNN7367PXpAMexLid1F3QcwuGByn0IS
-        85KvZ8mnVvhcFLI4/LXJHPKnfifci55AhwZgIxNa8CVmoU+Ac/Zf/1TGfyH6HZOPnoudB6MbQjj
-        dbGp8=
-X-Received: by 2002:a1c:ed10:: with SMTP id l16mr12635211wmh.8.1625846058631;
-        Fri, 09 Jul 2021 08:54:18 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJykNJ+raj9b37J7ColChA8QDhGboTlfGlTHnnQ589WPe8iMVqTglnr+KSe9Tx/WXmrkG1REaA==
-X-Received: by 2002:a1c:ed10:: with SMTP id l16mr12635190wmh.8.1625846058438;
-        Fri, 09 Jul 2021 08:54:18 -0700 (PDT)
-Received: from vian.redhat.com ([79.116.5.179])
-        by smtp.gmail.com with ESMTPSA id n13sm5094305wms.4.2021.07.09.08.54.18
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=ULQDsGPh3AHD3SOk9O5mssutYSM3JCboakkU2mBEowA=;
+        b=C2gFAWpqQuCJSbLKn89KN1ah7HebH8FLETDjMij0l0/1tk+Ey1pij48ytjUJF7tIU9
+         eR64Bmw4oA8YFaAAQJRfXw7fp+nOkTl+L3KQTiNRUZ3mU25o3rsdkcuxQXEvSGIS/864
+         sKGDkkKsfy3qoZ5sOqJ9FNqK8LnlRgqzaRIZOblbgOvWnOUw5DpewQE4q0In8u0zmctE
+         r8cLF3WvdS9qN5CFkZ8nMBvE5HCceOaXB/vY5bE3j4FzWNVi2aazxw+/mR9c4JZw7THE
+         adGdShdtjYgPXJA52G5HD0af77NPyBIHFj4HpTAB6Jrt0kQf6MnRSWKsD2Ta0Oys2QNy
+         vpqw==
+X-Gm-Message-State: AOAM533fZaKa9Yjh/2nQRKjX8wuHNwvPgf51neSivR0nVatlrvsieKjZ
+        2QfHWX2O2daWJoOKJUwucYgQ9++HyLxwdstAtPpb0NIuLN8NCZwQ8iutp4lzb7Bzn58GBiAFAtO
+        wBj5VkLsi4GIg4k+eO7QtyH9Odss=
+X-Received: by 2002:a37:6314:: with SMTP id x20mr32133068qkb.363.1625853534602;
+        Fri, 09 Jul 2021 10:58:54 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzP3a/LaY5i2GGW1LLPTZC8LjDyE3eq/ZSgzu9FipRTnxgq7Ftvfn6gIHD0+5ZR83eXr1QOxQ==
+X-Received: by 2002:a37:6314:: with SMTP id x20mr32133049qkb.363.1625853534340;
+        Fri, 09 Jul 2021 10:58:54 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-243.dsl.bell.ca. [184.147.141.243])
+        by smtp.gmail.com with ESMTPSA id k125sm2815917qkf.16.2021.07.09.10.58.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Jul 2021 08:54:18 -0700 (PDT)
-From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
-To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
-Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
-Subject: [PATCH 2/2] oslat: Add trace maker prior starting main thread
-Date:   Fri,  9 Jul 2021 17:54:14 +0200
-Message-Id: <20210709155414.610308-2-nsaenzju@redhat.com>
-X-Mailer: git-send-email 2.31.1
-In-Reply-To: <20210709155414.610308-1-nsaenzju@redhat.com>
-References: <20210709155414.610308-1-nsaenzju@redhat.com>
+        Fri, 09 Jul 2021 10:58:53 -0700 (PDT)
+Date:   Fri, 9 Jul 2021 13:58:51 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH rt-tests v2 1/3] rt-numa: Use sched_getaffinity() instead
+ of pthread_getaffinity_np()
+In-Reply-To: <20210708151827.21430-2-dwagner@suse.de>
+Message-ID: <7e1f5d9-43f3-84ea-4c87-725cea71f15@redhat.com>
+References: <20210708151827.21430-1-dwagner@suse.de> <20210708151827.21430-2-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-After a long tracing session it's sometimes hard to find the moment
-oslat started. So leave a message in the trace buffer just before the
-main thread starts.
 
-Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
----
- src/oslat/oslat.c | 4 ++++
- 1 file changed, 4 insertions(+)
 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index d35be57..20bf02b 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -400,6 +400,10 @@ static void *thread_main(void *arg)
- 	while (g.n_threads_running != g.n_threads)
- 		relax();
- 
-+	if (!g.preheat)
-+		tracemark(false, "%s: Starting thread on CPU %d.\n",
-+			  g.app_name, t->core_i);
-+
- 	frc(&t->frc_start);
- 	doit(t);
- 	frc(&t->frc_stop);
--- 
-2.31.1
+On Thu, 8 Jul 2021, Daniel Wagner wrote:
+
+> pthread_getaffinity_np() prevents static builds as glibc does not
+> expose it for this configuration. Instead use sched_getaffinity()
+> which is always present and has the exact same semantics.
+> 
+> Fixes: f240656b056b ("rt-tests: cyclictest: Fix -t without a user specified [NUM]")
+> 
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  src/lib/rt-numa.c | 6 ++----
+>  1 file changed, 2 insertions(+), 4 deletions(-)
+> 
+> diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+> index babcc634d57e..bb0121a65eca 100644
+> --- a/src/lib/rt-numa.c
+> +++ b/src/lib/rt-numa.c
+> @@ -68,15 +68,13 @@ int cpu_for_thread_sp(int thread_num, int max_cpus, struct bitmask *cpumask)
+>  int cpu_for_thread_ua(int thread_num, int max_cpus)
+>  {
+>  	int res, num_cpus, i, m, cpu;
+> -	pthread_t thread;
+>  	cpu_set_t cpuset;
+>  
+> -	thread = pthread_self();
+>  	CPU_ZERO(&cpuset);
+>  
+> -	res = pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
+> +	res = sched_getaffinity(0, sizeof(cpu_set_t), &cpuset);
+>  	if (res != 0)
+> -		fatal("pthread_getaffinity_np failed: %s\n", strerror(res));
+> +		fatal("sched_getaffinity failed: %s\n", strerror(res));
+>  
+>  	num_cpus = CPU_COUNT(&cpuset);
+>  	m = thread_num % num_cpus;
+> -- 
+> 2.32.0
+> 
+> 
+
+It looks okay on the surface but I would like to know where you tested.
+
+Also, in your message you explain that you can't do a static build
+but we never made static builds a requirment for rt-tests. I know from
+your cover letter than you are trying to do something with arm, if this
+is your motivation you should put it in your message. Even if this is your 
+motivation is there a reason we have to have a static build there?
+
+Finally, you put "fixes f240656b056b", it is useful to know where this
+was introduced in trying to figure out whether we can really replace a 
+pthread call with the sched call, but then phrase it that way, because
+as far as I know that commit is not a problem needing fixing, so put
+"pthread_getaffinity_np call introduced in f240656b056b"
+or something like that.
+
+Thanks
+
+John
 
