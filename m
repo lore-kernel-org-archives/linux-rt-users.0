@@ -7,162 +7,99 @@ X-Spam-Status: No, score=-19.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6600EC07E9C
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A05CFC07E99
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4F39E61378
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8456B61182
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232382AbhGIP5D (ORCPT
+        id S232413AbhGIP5G (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 11:57:03 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:44088 "EHLO
+        Fri, 9 Jul 2021 11:57:06 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:51981 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232248AbhGIP5D (ORCPT
+        by vger.kernel.org with ESMTP id S232248AbhGIP5E (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 11:57:03 -0400
+        Fri, 9 Jul 2021 11:57:04 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625846059;
+        s=mimecast20190719; t=1625846061;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=BRUbN9J9L07NYfOeKSnC9Fbrzqk3LLgcvVXVMldcrY8=;
-        b=Shctnz1BQzvCGBrtZF+fuM9jtAk1MBrMBQgjeI75mgSMmoLgWmWz90nUAeZclpRfCILV36
-        hlX4pu4bXywXEpUMUewL++TfmTPOj0BX4iFO/LiZeTU4iuebnQqJrhu5zUjw90JWJWzvXB
-        PyXh3VK9CsZQYnAmfMvqPvF21i3M6dc=
-Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
- [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-559-IaUJYZvRNMC6tZImuaZ5qA-1; Fri, 09 Jul 2021 11:54:18 -0400
-X-MC-Unique: IaUJYZvRNMC6tZImuaZ5qA-1
-Received: by mail-wm1-f69.google.com with SMTP id i3-20020a05600c3543b02902075ed92710so5344082wmq.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 08:54:17 -0700 (PDT)
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=FHSAHonJE4deSZXB4H3BRySsjgmOYM99K6OJla0dYoM=;
+        b=E04QWZFhHqHPTRisSGxOfEpxHtIOlpe5HOnORrERVS8zojELfdnkcYvmMLFeY0Q9D1Z0h0
+        gRSRmpEdh6HeRHfPOVOINPf5kJNK3Yy6S6Ya0MjEXkObUFlNvn4ITdXs3CRGD1zbYPFGck
+        9UGkNm4t5IdCMNGISmvTvN6O4VcG/t4=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-364-NvQztxXYNSyC-yYs9e08cA-1; Fri, 09 Jul 2021 11:54:19 -0400
+X-MC-Unique: NvQztxXYNSyC-yYs9e08cA-1
+Received: by mail-wm1-f70.google.com with SMTP id p6-20020a05600c3586b029020b46124c2eso2334749wmq.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 08:54:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=BRUbN9J9L07NYfOeKSnC9Fbrzqk3LLgcvVXVMldcrY8=;
-        b=udu38MeE8LLlcdncPD5Yei8tQiAtTpkEJ2nVVJ9CXAI/1kCS2+Fkm+Hf+N+VAqx1ip
-         T4SzegT7lGuQ9gi1ZM+d3L9A3EWwropOe90zehhQ4kX5XKnYHSoXu2zrEeMx27ZXkTbg
-         ZmoAd05eZE8f+azWXtSAvUtzvHFpEaHZWyESESB0xnRFxvutz9huA0d6ngLAh5WGLcUw
-         n4eZ3vcaGchNl7WtsTfRFaPKi5giWp2plTFRkWP3ntQDL6uxWl6/dkePxycRxauVoDGz
-         v0UN2xDOpeXiT/BpQIQ/pJi7xNAxw8CcRgkKKvjJqj/OOGCstXV54FL7O5Z5TX7YoMhI
-         vpaQ==
-X-Gm-Message-State: AOAM5312TOgY2c2V04aLTDj0fQ6cYPuY9+LqKzjxARtvRDs9sQVcT9nB
-        c2tuoo0EBgvfqkcfR/lxNwJmcOS3XjKk9PuPVipMFL1Zo7DCD76dIux5GBI3KNcpWfpAATfVd5o
-        rozenTKqfIw7b8P+TERp0+hNiDAY+7W9H+u+3SGVi//ROZD9R4rG37hUdgASlIb9858rodwRa4G
-        BPFRU=
-X-Received: by 2002:a05:600c:4841:: with SMTP id j1mr4825346wmo.88.1625846056803;
-        Fri, 09 Jul 2021 08:54:16 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwlbKA0g53S1WK3mhy1sO/XEmJxSlO5zAT1k7bLM+7hZNuJzg5JpDsWhmKbU5E5UCCnLHY0qg==
-X-Received: by 2002:a05:600c:4841:: with SMTP id j1mr4825326wmo.88.1625846056561;
-        Fri, 09 Jul 2021 08:54:16 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=FHSAHonJE4deSZXB4H3BRySsjgmOYM99K6OJla0dYoM=;
+        b=bHHhKF67Tu/gML862kgu6QJG1Y3EnVXKd1sOVGrg5+u00D2zxgiOpmYJbtOCvTjkP9
+         pjGPA/GYH/s+h5NI7B+U0qF5nbEhnHNVPhQ5scr4tXJdfU5/dtpK0UAuoIlFqhnS2rlK
+         7hFeZq+iJeP7WoM3+RXVuhI0+9lSe6Ws7ShNxx9LgoLbaVh9RKC7+fQ7PJdT6YIwPxPE
+         Uw05YyFhaM6VPnb+SEOHqSFR0ITTEW/CB5S2gMCJjOzYKUmK8Ntk0EMofFfsD6FWGgfD
+         dpu+AiEJE5cmIdGTzKTXZnqEYcVJD0eTiNeRHAbM+ws5dykHCrN9mOja4B/CLP7jwhAv
+         aR3g==
+X-Gm-Message-State: AOAM532y4ydtb2f/LVJWpJXesFsbXoL1IIg5T9yfd3Bva4EaZ+T2KAyw
+        5J2FhIFWq9S43HW0UA/0Cd0kSoAaag09vWa8oNz2+lBxBNN7367PXpAMexLid1F3QcwuGByn0IS
+        85KvZ8mnVvhcFLI4/LXJHPKnfifci55AhwZgIxNa8CVmoU+Ac/Zf/1TGfyH6HZOPnoudB6MbQjj
+        dbGp8=
+X-Received: by 2002:a1c:ed10:: with SMTP id l16mr12635211wmh.8.1625846058631;
+        Fri, 09 Jul 2021 08:54:18 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJykNJ+raj9b37J7ColChA8QDhGboTlfGlTHnnQ589WPe8iMVqTglnr+KSe9Tx/WXmrkG1REaA==
+X-Received: by 2002:a1c:ed10:: with SMTP id l16mr12635190wmh.8.1625846058438;
+        Fri, 09 Jul 2021 08:54:18 -0700 (PDT)
 Received: from vian.redhat.com ([79.116.5.179])
-        by smtp.gmail.com with ESMTPSA id n13sm5094305wms.4.2021.07.09.08.54.16
+        by smtp.gmail.com with ESMTPSA id n13sm5094305wms.4.2021.07.09.08.54.18
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Jul 2021 08:54:16 -0700 (PDT)
+        Fri, 09 Jul 2021 08:54:18 -0700 (PDT)
 From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
 To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
 Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
-Subject: [PATCH 1/2] rt-utils: Add option to avoid stopping tracing in tracemark()
-Date:   Fri,  9 Jul 2021 17:54:13 +0200
-Message-Id: <20210709155414.610308-1-nsaenzju@redhat.com>
+Subject: [PATCH 2/2] oslat: Add trace maker prior starting main thread
+Date:   Fri,  9 Jul 2021 17:54:14 +0200
+Message-Id: <20210709155414.610308-2-nsaenzju@redhat.com>
 X-Mailer: git-send-email 2.31.1
+In-Reply-To: <20210709155414.610308-1-nsaenzju@redhat.com>
+References: <20210709155414.610308-1-nsaenzju@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Not all users of tracemark() might want to stop tracing after printing a
-mark. For example, if leaving a mark during a test. So add an extra
-argument to tracemark() which avoid the stop.
+After a long tracing session it's sometimes hard to find the moment
+oslat started. So leave a message in the trace buffer just before the
+main thread starts.
 
 Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
 ---
- src/cyclictest/cyclictest.c | 3 ++-
- src/include/rt-utils.h      | 2 +-
- src/lib/rt-utils.c          | 6 ++++--
- src/oslat/oslat.c           | 2 +-
- 4 files changed, 8 insertions(+), 5 deletions(-)
+ src/oslat/oslat.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index a08c91d..1f3c5a2 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -12,6 +12,7 @@
- #include <stdlib.h>
- #include <stdint.h>
- #include <stdarg.h>
-+#include <stdbool.h>
- #include <unistd.h>
- #include <fcntl.h>
- #include <getopt.h>
-@@ -722,7 +723,7 @@ static void *timerthread(void *param)
- 			pthread_mutex_lock(&break_thread_id_lock);
- 			if (break_thread_id == 0) {
- 				break_thread_id = stat->tid;
--				tracemark("hit latency threshold (%llu > %d)",
-+				tracemark(true, "hit latency threshold (%llu > %d)",
- 					  (unsigned long long) diff, tracelimit);
- 				break_thread_value = diff;
- 			}
-diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-index f6b3fed..88d285b 100644
---- a/src/include/rt-utils.h
-+++ b/src/include/rt-utils.h
-@@ -31,7 +31,7 @@ int parse_time_string(char *val);
- int parse_mem_string(char *str, uint64_t *val);
- 
- void enable_trace_mark(void);
--void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
-+void tracemark(bool stop, char *fmt, ...) __attribute__((format(printf, 2, 3)));
- void disable_trace_mark(void);
- 
- #define MSEC_PER_SEC		1000
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 6c0235d..d8d1325 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -23,6 +23,7 @@
- #include <sys/utsname.h>
- #include <time.h>
- #include <sys/time.h>
-+#include <stdbool.h>
- 
- #include "rt-utils.h"
- #include "rt-sched.h"
-@@ -458,7 +459,7 @@ static void debugfs_prepare(void)
- 		     "debug fs not mounted");
- }
- 
--void tracemark(char *fmt, ...)
-+void tracemark(bool stop, char *fmt, ...)
- {
- 	va_list ap;
- 	int len;
-@@ -476,7 +477,8 @@ void tracemark(char *fmt, ...)
- 	write(tracemark_fd, tracebuf, len);
- 
- 	/* now stop any trace */
--	write(trace_fd, "0\n", 2);
-+	if (stop)
-+		write(trace_fd, "0\n", 2);
- }
- 
- void enable_trace_mark(void)
 diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 6ff5ba8..d35be57 100644
+index d35be57..20bf02b 100644
 --- a/src/oslat/oslat.c
 +++ b/src/oslat/oslat.c
-@@ -304,7 +304,7 @@ static void insert_bucket(struct thread *t, stamp_t value)
- 	if (!g.preheat && g.trace_threshold && us >= g.trace_threshold) {
- 		char *line = "%s: Trace threshold (%d us) triggered with %u us!\n"
- 		    "Stopping the test.\n";
--		tracemark(line, g.app_name, g.trace_threshold, us);
-+		tracemark(true, line, g.app_name, g.trace_threshold, us);
- 		err_quit(line, g.app_name, g.trace_threshold, us);
- 	}
+@@ -400,6 +400,10 @@ static void *thread_main(void *arg)
+ 	while (g.n_threads_running != g.n_threads)
+ 		relax();
  
++	if (!g.preheat)
++		tracemark(false, "%s: Starting thread on CPU %d.\n",
++			  g.app_name, t->core_i);
++
+ 	frc(&t->frc_start);
+ 	doit(t);
+ 	frc(&t->frc_stop);
 -- 
 2.31.1
 
