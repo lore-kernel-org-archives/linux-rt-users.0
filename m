@@ -7,69 +7,69 @@ X-Spam-Status: No, score=-16.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 44D70C07E9B
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 18:01:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF717C07E99
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 18:02:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2DB9461241
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 18:01:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B9C94613CA
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 18:02:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229535AbhGISEX (ORCPT
+        id S229546AbhGISFc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 14:04:23 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:25053 "EHLO
+        Fri, 9 Jul 2021 14:05:32 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:39116 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229499AbhGISEW (ORCPT
+        by vger.kernel.org with ESMTP id S229491AbhGISFc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 14:04:22 -0400
+        Fri, 9 Jul 2021 14:05:32 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625853698;
+        s=mimecast20190719; t=1625853768;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=bwrAie83gkqnQLmySLjVrHNZkxMVorv7oVtlY1bH3js=;
-        b=hV9y5KetwWkKd1yKGoimDuXCiPwudk8fheMMW/48Wo5wIy4MspVoQS/aefHITyyNSCoazV
-        dmfjFkFIiIudwp/ptXoTCGsrcCPAZQN6/W5Q/d6qPygfNMhhgxfFR2nIXsuoNr+9E2KEm+
-        McKaU5ZiNzTV0bhqodzYl2sVckHtQTY=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-211-8s3g038rNumA4JuZ1kDs5Q-1; Fri, 09 Jul 2021 14:01:37 -0400
-X-MC-Unique: 8s3g038rNumA4JuZ1kDs5Q-1
-Received: by mail-qk1-f198.google.com with SMTP id n77-20020a3740500000b02903b496f6f425so6920387qka.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 11:01:37 -0700 (PDT)
+        bh=RlfhwWj2QfI2s5Xd4fBu8NtzeIfuN9I9l5Qwd6fv5W8=;
+        b=J+y7xFcEegZ/Pceo1S4TJZvUU11/zMbXyfKC4Nbc53T4uR+1Pgx8IjZzjQe542TvbJD8Yt
+        7MjQ3jLKBMDuO8rt8wTOJDZOyid15Ew+WX/xEIeR5NiuXFxGzHxrPLHL9efa4v5SsYhSvu
+        xrHYfERkuDj2Maas30I9Xahz3hc8+YU=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-584-tljaA5YvOQObhue23e12ow-1; Fri, 09 Jul 2021 14:02:47 -0400
+X-MC-Unique: tljaA5YvOQObhue23e12ow-1
+Received: by mail-qv1-f69.google.com with SMTP id q10-20020a056214018ab029027751ec9742so6947092qvr.7
+        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 11:02:46 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=bwrAie83gkqnQLmySLjVrHNZkxMVorv7oVtlY1bH3js=;
-        b=ECCiz4H0WHrp62q1Xjt1LJ75cToAlxvC5Lu5Zyxp1I+P027qZT0HMKim55rYxU/qBv
-         6iNguD3BWFEtQVKm1gd39ALiCmMyKkhTLpM9KyZ6aVTlhvgMqegCUlbvvCn17bAwaxTP
-         m6cvaZbf57E3GsY+Pz8R6t/RgvqOq8e33a62c2bbV7zzklFwPo1x0MWzYU8CLO3N+NWe
-         hZE3A9LexaNAD5ofGSHGtiyg9GLNpwl5EPUVjWpwL7t8OfP/SLL4gnW1M8FHSYjofJ3U
-         CPp9Joy17cqMDimNmXX6xjXdh54/LI4JnIAKK33FVrxM2OELl9ccET3NkA4cYeNP2Dlk
-         looA==
-X-Gm-Message-State: AOAM532TyUOVolYm1aW+oVEl6fM7BrzY9Lsc1oMT3cHeGyxxf3JkmIq4
-        x8eQiY0qd3UkKd0gAaNvkcJyaEOyVOS/4EA+Ikx2KCPwIdDcHYgsl0tJ3PyJdOAAXG4OtpubprT
-        FOKu2D/JA3+ww12kJfZwt0PCfq+s=
-X-Received: by 2002:a05:622a:4f:: with SMTP id y15mr181637qtw.122.1625853696580;
-        Fri, 09 Jul 2021 11:01:36 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwnfbwX6nkZn/ufNVFj+bsrgZLHJCjOf2/MaUHtqTXTB1Xixc2Z1ZES3A+lIB5j2o8cRaks1g==
-X-Received: by 2002:a05:622a:4f:: with SMTP id y15mr181623qtw.122.1625853696427;
-        Fri, 09 Jul 2021 11:01:36 -0700 (PDT)
+        bh=RlfhwWj2QfI2s5Xd4fBu8NtzeIfuN9I9l5Qwd6fv5W8=;
+        b=kRl+1Bkqo7vTxDDtDdWb2/yzksK3cFYWSgBLuRtncNZtfEtDmGmR0IiPVksIKoOIyy
+         woFihRfGCcrsnM6D29qTxqxuUgenSbf8LT3sVVTpKCOPSHN8/siU6eyY8nxI8Z00F5zw
+         4H2IVQs7FzCrrJemphoh6PNw/8baKSRsTVL+I7XJE7oyHn0m+Pp4dEODW9dzc1owUk6e
+         FNtyY2m83Y7liylV/xzIYmmJKX+WgeOXHqSEZjBuLOG8rKu38V5xA+Cp/NALlW+TmsnL
+         zEGoUr9fsl2q+VDYuiqBDd0WHQuAITPDYfeKOBon2WWVFOEt9JbIlYPusm9Dv9OrbDE0
+         C+8Q==
+X-Gm-Message-State: AOAM532+pWQRAR/wTmb+eU5TAEjYKpC6gW9C6aN1sJezRcAMNsyWiHdH
+        AdybNsBNrJ7TckHlgAxGxOCEgAY2S2xq+gpr4yuTGawarGsZHtkbWYQguJgBRB8NtUEvNjEGg/B
+        qhmxA1BYmHjlrBxnIhJx45LR8xEo=
+X-Received: by 2002:a05:620a:4086:: with SMTP id f6mr39995106qko.95.1625853766452;
+        Fri, 09 Jul 2021 11:02:46 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzDJpBY5U/Efxe0JtqecXeSHwYCkRNoVnzJWTQdk5DsArlCN85xYlsEbEVUz9m4LhcrzSgveg==
+X-Received: by 2002:a05:620a:4086:: with SMTP id f6mr39995096qko.95.1625853766325;
+        Fri, 09 Jul 2021 11:02:46 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-243.dsl.bell.ca. [184.147.141.243])
-        by smtp.gmail.com with ESMTPSA id 9sm2816549qkp.14.2021.07.09.11.01.35
+        by smtp.gmail.com with ESMTPSA id s81sm2740454qka.82.2021.07.09.11.02.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Jul 2021 11:01:36 -0700 (PDT)
-Date:   Fri, 9 Jul 2021 14:01:35 -0400 (EDT)
+        Fri, 09 Jul 2021 11:02:46 -0700 (PDT)
+Date:   Fri, 9 Jul 2021 14:02:45 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
 Subject: Re: [PATCH rt-tests v2 3/3] cyclicdeadline: Fix buffer allocation
 In-Reply-To: <20210708151827.21430-4-dwagner@suse.de>
-Message-ID: <64899f-ab54-4a29-73a7-32b79ab6a1e6@redhat.com>
+Message-ID: <ab947e70-821c-5088-20d9-27cb2d71f4a1@redhat.com>
 References: <20210708151827.21430-1-dwagner@suse.de> <20210708151827.21430-4-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463755774-1299145996-1625853695=:10671"
+Content-Type: multipart/mixed; boundary="-1463755774-1102342066-1625853765=:10671"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -77,7 +77,7 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
   This message is in MIME format.  The first part should be readable text,
   while the remaining parts are likely unreadable without MIME-aware tools.
 
----1463755774-1299145996-1625853695=:10671
+---1463755774-1102342066-1625853765=:10671
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8BIT
 
@@ -112,27 +112,5 @@ On Thu, 8 Jul 2021, Daniel Wagner wrote:
 > 
 > 
 Signed-off-by: John Kacur <jkacur@redhat.com>
-
-I applied this but there are others.
-
-git grep PRIu64
-src/oslat/oslat.c:              snprintf(bucket_name, sizeof(bucket_name), 
-"%03"PRIu64
-src/oslat/oslat.c:              putfield(bucket_name, t[i].buckets[j], 
-PRIu64,
-src/oslat/oslat.c:      putfield("Minimum", t[i].minlat, PRIu64, " (us)");
-src/oslat/oslat.c:      putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
-src/oslat/oslat.c:      putfield("Max-Min", t[i].maxlat - t[i].minlat, 
-PRIu64, " (us)");
-src/oslat/oslat.c:              fprintf(f, "      \"min\": %" PRIu64 
-",\n", t[i].minlat);
-src/oslat/oslat.c:              fprintf(f, "      \"max\": %" PRIu64 
-",\n", t[i].maxlat);
-src/oslat/oslat.c:                      fprintf(f, "        \"%" PRIu64 
-"\": %" PRIu64,
-src/oslat/oslat.c:      printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
-src/pi_tests/pi_stress.c:               printf(" runtime %" PRIu64 " 
-deadline %" PRIu64 " period %" PRIu64 "\n",
-
----1463755774-1299145996-1625853695=:10671--
+---1463755774-1102342066-1625853765=:10671--
 
