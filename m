@@ -2,144 +2,105 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A12EC07E96
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Jul 2021 19:51:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66CF1C07E99
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:20:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 21B0B61434
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Jul 2021 19:51:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3AB526140F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:20:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229497AbhGHTyR (ORCPT
+        id S229617AbhGIFXd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Jul 2021 15:54:17 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:27986 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230254AbhGHTyP (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Jul 2021 15:54:15 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625773892;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=1+vii0YHImgoIpHeaIuVKqDTF2st44x70+RC5rAnmXI=;
-        b=NJx+YORLvDI+igGC08+gTRS22PVlQElP1aEL+JsZE1N5u8CGl8EUa02pUp5RhVTsLj/tAG
-        /ZSitRKujlIjth1pPLJblez5yL7LiRF6Omy3l8Q2/Dkn55J65ynAC0UspVdgpmgIkte1wQ
-        eFMk2XQJMED7Gio5Sa/hJKUR5LuoL48=
-Received: from mail-io1-f69.google.com (mail-io1-f69.google.com
- [209.85.166.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-559-VVo7gv4zM3OE39jRCH41tA-1; Thu, 08 Jul 2021 15:51:31 -0400
-X-MC-Unique: VVo7gv4zM3OE39jRCH41tA-1
-Received: by mail-io1-f69.google.com with SMTP id e24-20020a5d8e180000b02904dd8a55bbd7so4833406iod.12
-        for <linux-rt-users@vger.kernel.org>; Thu, 08 Jul 2021 12:51:31 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=1+vii0YHImgoIpHeaIuVKqDTF2st44x70+RC5rAnmXI=;
-        b=cDEg74etKvlxvQu+PXdtPs4M3H+0mm67X4zxH8vsqUiwbyjWuMDB/p1JfVSP1w+pr3
-         31YzC/VNWXYIobuPxACkkTViTGwu4axFCgYbRFLPkuxVZDgb5/gxZYH6WFqNOqyZtDJI
-         Qt3zN9Nat0Gla1ANipIPSIrnUoKJQB37KFC9B4lkfkC0nVRtr5oNep2VTV/IG2F38pYo
-         Ot0P77yZtdn9ze4YkdiXfeef/Kc19Sv2gQ4v/ZlpM17LajgDTV8BIAE4w6laO/9HCevB
-         63QRQN0Em2OQDNY7U0xo2RSzsrBja17GlJLI2D7suxfX7Pk14xrMIc69z4qRcz2YUlgY
-         ppSg==
-X-Gm-Message-State: AOAM53222rhn3eWydQLtYP6ksK3b4xq7pAvwlRLvKVFazuo52e7R5b4I
-        Il+1VFh7nlsiGpkin2hcKhejBo5+PyBfeKe/rX7NMZsyReSU1mbZf+4YapIrN0yvdDElOuP4Crz
-        lDeRSFNuMeIPD1AeINNrU1N2vbOo=
-X-Received: by 2002:a05:6e02:921:: with SMTP id o1mr24752929ilt.57.1625773890521;
-        Thu, 08 Jul 2021 12:51:30 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxvVx1FcdBilivyA1x4Tw6DOwXVsHn9wv6hZGZVtI5a6FcCBtgsHxuB2XNkvtL+BwBSRtT58w==
-X-Received: by 2002:a05:6e02:921:: with SMTP id o1mr24752913ilt.57.1625773890261;
-        Thu, 08 Jul 2021 12:51:30 -0700 (PDT)
-Received: from halaneylaptop (068-184-200-203.res.spectrum.com. [68.184.200.203])
-        by smtp.gmail.com with ESMTPSA id b25sm1718259ios.36.2021.07.08.12.51.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 08 Jul 2021 12:51:29 -0700 (PDT)
-Date:   Thu, 8 Jul 2021 14:51:25 -0500
-From:   Andrew Halaney <ahalaney@redhat.com>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     bigeasy@linutronix.de, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, Chunyu Hu <chuhu@redhat.com>
-Subject: Re: [RT PATCH] locking/rwsem-rt: Remove might_sleep() in __up_read()
-Message-ID: <20210708195125.zxqsxy5bpccgxb2n@halaneylaptop>
-References: <20210406221952.50399-1-ahalaney@redhat.com>
- <20210426164229.mbrsrjpmmhp7ehna@halaneylaptop>
- <877dkoud19.ffs@nanos.tec.linutronix.de>
+        Fri, 9 Jul 2021 01:23:33 -0400
+Received: from mout.gmx.net ([212.227.17.20]:59597 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229583AbhGIFXc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 9 Jul 2021 01:23:32 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1625808037;
+        bh=OCW7oljHM6ncvS3+WmeaxtPjxKjop38O0bgGSXlwec4=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=dwBZoO71An4asQnnszWWJjKf3TKTGO/GBGxwg/jcaZzBw5A6QiI8sUVlsKek+54Jw
+         EA+v45nFbvfwm4QOcvQgCJ+XHYPOPAdV2cbEfOPeI1aD23b3EfMiSJld+OAUZjhRt4
+         t15bRWHSagrO8n8C+C613/zGGAn12okSNIA2XHbw=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.191.217.33]) by mail.gmx.net (mrgmx104
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MybKf-1lFusi0rCX-00yyNh; Fri, 09
+ Jul 2021 07:20:37 +0200
+Message-ID: <966f27f7999acb1db8d60e241a73dfde3344345c.camel@gmx.de>
+Subject: [patch] mm/slub: Fix kmem_cache_alloc_bulk() error path
+From:   Mike Galbraith <efault@gmx.de>
+To:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>
+Cc:     linux-rt-users@vger.kernel.org,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date:   Fri, 09 Jul 2021 07:20:36 +0200
+In-Reply-To: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
+References: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.4 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <877dkoud19.ffs@nanos.tec.linutronix.de>
+Content-Transfer-Encoding: 7bit
+X-Provags-ID: V03:K1:X0SMFsCtIjHy5TeQqmMzGnMgSjxHIdat64X17zv9akVokK2mr5V
+ h/fBqIvDm4JgtYTRZinezDexdCg0ynG0BOnxfIqOApbeTFx43rAs5Aa75JVBcy06xq+/+YC
+ WN7hyVhRXCWpSDTwuqN43bKkMqtXOPRbfmYfKYSPKhjcJerW/ivq7DkAVHLJB7Qx00r4rex
+ HaHUIAuAEXAbUH5RG4SOQ==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:08dDrrprXM0=:IyqFnAUomg3/CSP/mVFmuk
+ qeDV5L2fW2JLDB64tD0EMUXkYxdLOkglkGAIQ07z8P0aPCmqegtwMV/aVNY3gKjsVtsB+W5Gn
+ n+a4aStrAEfj/wHsNg5P8hgohvuoRTPFw12Nt4Cb/3OxiZ/vKmcP0jHVoV+2DMiwgJlA0lAPG
+ wlU9U+eXx3ofS6Nzx80hAa4cYtBzM2Qx/55Z4kkmQu6HaDhvu2/69MuT5XOaXJaMu9hhIuFEy
+ DTIr0phbICTdWGrHLnGXFSURezF6fGtwRF3pTtpNS3LN7xBs1re/CMnrFwYpgz3Dv9zyYKk6V
+ pq3vk1EThNJrGV0IdHyA5GLxPMd3IvnWujuad0kNcv+5oO2UqCJvg4202txT2GmsRMN0lDH2e
+ sjpxZdxLfplVdzqxyBfbiZQHZgYWFEgo1ziBAf6/A8c6Nuli9o7twqHf9ZW+BU4SAQtFtXtPU
+ 3KT6/37cUPMIoA3OV+K8sOJw+FkzZdyEmmEgWHL+iiFFKKISkMnrP4ztm7wOqOSHF1sgeAd0k
+ bIAp3t8H+enRvrGgOMHRH0nv4pGEnMzX6zagENBg3ZafPd6md2zgXY2Y2yDOLbebBQAuB01Ow
+ 3s2bN0r8f4A5VVQpdLmcdVeRyKgalJ89+ekB/8C489H48g//KPTqIJxtubyK46zLCCMuxCns1
+ 1BAN8UPkgZvZnqOletCDjTslQ1SINN5r1VJTl2k2txR3R6ZvgCkmAckLzxrSg0xA4WCFCpSJL
+ 5piyJiz8SdgTS3E3pG1w0nIPn8w1JlQ1fEYeHtddZhFap9TekIDfC3IiJb/+43xwJi7NSkwZt
+ QkbDxsDSq9uK39mJwpcXtPj/Kp67qYv/Bcp4x1aD+U9OcWBcjdx6NpNG8NKfnP0HpA/TyNHIU
+ vfzCM3edPSkRlse1HugPBOokbPyYG/QPFy6GaRX2jA1/SBINtT6PTIb4Rb5gRM0DTaRyYPZxC
+ rNKkehFUnqji2QjGoQ4eiq2WAgrf49HU0Pg9DwD29SMcp6VAtJS/adnvPr1GRf4o0eDpY4kJm
+ KgdZT45AtLMeBNZl0Ib9nPbXBjiA2gNM8soKmrVWr09TIruYAw1SRYOgVJbRfTl9nNqDt0vhX
+ 3DcKqUuk9Cg5uR69JJgzihB8pNbmkkGURZX
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Apr 26, 2021 at 08:16:34PM +0200, Thomas Gleixner wrote:
-> On Mon, Apr 26 2021 at 11:42, Andrew Halaney wrote:
-> > On Tue, Apr 06, 2021 at 05:19:52PM -0500, Andrew Halaney wrote:
-> >> There's no chance of sleeping here, the reader is giving up the
-> >> lock and possibly waking up the writer who is waiting on it.
-> >> 
-> >> Reported-by: Chunyu Hu <chuhu@redhat.com>
-> >> Signed-off-by: Andrew Halaney <ahalaney@redhat.com>
-> >> ---
-> >> Hello,
-> >> 
-> >> I ran into a warning caused by this, and I think the warning is
-> >> incorrect. Please let me know if I'm wrong!
-> >> I'm working off of linux-5.12.y-rt, but this applies cleanly to older
-> >> stable branches as well.
-> >> 
-> >> Thanks,
-> >> Andrew
-> >> 
-> >>  kernel/locking/rwsem-rt.c | 1 -
-> >>  1 file changed, 1 deletion(-)
-> >> 
-> >> diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
-> >> index 274172d5bb3a..b61edc4dcb73 100644
-> >> --- a/kernel/locking/rwsem-rt.c
-> >> +++ b/kernel/locking/rwsem-rt.c
-> >> @@ -198,7 +198,6 @@ void __up_read(struct rw_semaphore *sem)
-> >>  	if (!atomic_dec_and_test(&sem->readers))
-> >>  		return;
-> >>  
-> >> -	might_sleep();
-> >>  	raw_spin_lock_irq(&m->wait_lock);
-> >>  	/*
-> >>  	 * Wake the writer, i.e. the rtmutex owner. It might release the
-> >> -- 
-> >> 2.30.2
-> >
-> > Just a gentle follow up, any feedback?
-> 
-> Looks correct. Will go into the next rt-release.
-> 
-> Thanks,
-> 
->         tglx
-> 
 
-Hi Thomas,
+The kmem_cache_alloc_bulk() error exit path double unlocks cpu_slab->lock
+instead of making the required slub_put_cpu_ptr() call.  Fix that.
 
-I see a new release (v5.13-rt1) was created, and with it rwsem
-was overhauled entirely making this patch pointless for linux-rt-devel.
+Boring details:
+1. 12c69bab1ece ("mm, slub: move disabling/enabling irqs to ___slab_alloc())")
+adds local_irq_enable() above goto error, leaving the one at error: intact.
+2. 2180da7ea70a0 ("mm, slub: use migrate_disable() on PREEMPT_RT") adds
+slub_get/put_cpu_ptr() calls, missing the already broken error path,
+creating unpaired slub_put_cpu_ptr()/slub_put_cpu_ptr() calls.
+3. 340e7c4136c3 ("mm, slub: convert kmem_cpu_slab protection to local_lock")
+converts local_irq_enable() to local_unlock_irq(), culminating in a
+double unlock and unpaired slub_put_cpu_ptr()/slub_put_cpu_ptr().
 
-That being said, it's a little unclear to me how RT only patches
-make their way to the maintained branches over in linux-stable-rt.
-I think it should be applied to:
- v4.9-rt
- v4.14-rt
- v4.19-rt
- v5.4-rt
- v5.10-rt
-to remove the incorrect warning, unless those branches plan to backport
-the latest RT patchset with the new rwsem implementation. Is there a
-proper way for me signal that?
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+---
+ mm/slub.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks,
-Andrew
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -3605,7 +3605,7 @@ int kmem_cache_alloc_bulk(struct kmem_ca
+ 				slab_want_init_on_alloc(flags, s));
+ 	return i;
+ error:
+-	local_unlock_irq(&s->cpu_slab->lock);
++	slub_put_cpu_ptr(s->cpu_slab);
+ 	slab_post_alloc_hook(s, objcg, flags, i, p, false);
+ 	__kmem_cache_free_bulk(s, i, p);
+ 	return 0;
 
