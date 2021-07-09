@@ -2,131 +2,167 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-19.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D544C07E9B
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 13:48:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6600EC07E9C
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2D1ED61376
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 13:48:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4F39E61378
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 15:54:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231756AbhGINvS (ORCPT
+        id S232382AbhGIP5D (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 09:51:18 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:58762 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231682AbhGINvS (ORCPT
+        Fri, 9 Jul 2021 11:57:03 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:44088 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S232248AbhGIP5D (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 09:51:18 -0400
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1625838514;
+        Fri, 9 Jul 2021 11:57:03 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1625846059;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=hVC3cXAhgYnSipbuuxux93KDFOSs/oL3p5xOhmYvtWo=;
-        b=cWB3cxoJSaVuRcaSa8q85BHUo4we2u+X4Z+9zJeJYLSEMt1u/AxV8omDcjeMPkUch38RdB
-        4G/NN+3C6hjxQb+6oNDncQgrSeyTsPL1/2vJheRqMqXoBxygtPHIwSXvAn/Ag9tg6yBR6R
-        lToodPh9HSQwZuY51xCfq55RTDBlS81/4JmgnMF34eeIf+iGtAH0qRBVTFIDC6cK5QSWaB
-        EZJEuwbO9Z6baMalA1qXgCLJtAXzyyYDZr7EwpSM4cdO4sJpdOJ7Uk00+AM45LDT69RzTk
-        xW0DkdYNc82xPlugRnR+Bm+ovk/54C+TomUscxvIGNXFXWD3pvwMwrPEtQQrTA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1625838514;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=hVC3cXAhgYnSipbuuxux93KDFOSs/oL3p5xOhmYvtWo=;
-        b=iDLmk7mU5iLGJJ3gsdnwKgDnHOn+R5VCbr4dfEEIj2KXnaInxLJhwsO6/El4OO/x8CM7d/
-        Shkj7Ql4xt6vHxAg==
-To:     Andrew Halaney <ahalaney@redhat.com>
-Cc:     bigeasy@linutronix.de, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, Chunyu Hu <chuhu@redhat.com>,
-        stable-rt@vger.kernel.org
-Subject: Re: [RT PATCH] locking/rwsem-rt: Remove might_sleep() in __up_read()
-In-Reply-To: <20210708195125.zxqsxy5bpccgxb2n@halaneylaptop>
-References: <20210406221952.50399-1-ahalaney@redhat.com> <20210426164229.mbrsrjpmmhp7ehna@halaneylaptop> <877dkoud19.ffs@nanos.tec.linutronix.de> <20210708195125.zxqsxy5bpccgxb2n@halaneylaptop>
-Date:   Fri, 09 Jul 2021 15:48:33 +0200
-Message-ID: <87bl7boaxa.ffs@nanos.tec.linutronix.de>
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=BRUbN9J9L07NYfOeKSnC9Fbrzqk3LLgcvVXVMldcrY8=;
+        b=Shctnz1BQzvCGBrtZF+fuM9jtAk1MBrMBQgjeI75mgSMmoLgWmWz90nUAeZclpRfCILV36
+        hlX4pu4bXywXEpUMUewL++TfmTPOj0BX4iFO/LiZeTU4iuebnQqJrhu5zUjw90JWJWzvXB
+        PyXh3VK9CsZQYnAmfMvqPvF21i3M6dc=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-559-IaUJYZvRNMC6tZImuaZ5qA-1; Fri, 09 Jul 2021 11:54:18 -0400
+X-MC-Unique: IaUJYZvRNMC6tZImuaZ5qA-1
+Received: by mail-wm1-f69.google.com with SMTP id i3-20020a05600c3543b02902075ed92710so5344082wmq.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 08:54:17 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=BRUbN9J9L07NYfOeKSnC9Fbrzqk3LLgcvVXVMldcrY8=;
+        b=udu38MeE8LLlcdncPD5Yei8tQiAtTpkEJ2nVVJ9CXAI/1kCS2+Fkm+Hf+N+VAqx1ip
+         T4SzegT7lGuQ9gi1ZM+d3L9A3EWwropOe90zehhQ4kX5XKnYHSoXu2zrEeMx27ZXkTbg
+         ZmoAd05eZE8f+azWXtSAvUtzvHFpEaHZWyESESB0xnRFxvutz9huA0d6ngLAh5WGLcUw
+         n4eZ3vcaGchNl7WtsTfRFaPKi5giWp2plTFRkWP3ntQDL6uxWl6/dkePxycRxauVoDGz
+         v0UN2xDOpeXiT/BpQIQ/pJi7xNAxw8CcRgkKKvjJqj/OOGCstXV54FL7O5Z5TX7YoMhI
+         vpaQ==
+X-Gm-Message-State: AOAM5312TOgY2c2V04aLTDj0fQ6cYPuY9+LqKzjxARtvRDs9sQVcT9nB
+        c2tuoo0EBgvfqkcfR/lxNwJmcOS3XjKk9PuPVipMFL1Zo7DCD76dIux5GBI3KNcpWfpAATfVd5o
+        rozenTKqfIw7b8P+TERp0+hNiDAY+7W9H+u+3SGVi//ROZD9R4rG37hUdgASlIb9858rodwRa4G
+        BPFRU=
+X-Received: by 2002:a05:600c:4841:: with SMTP id j1mr4825346wmo.88.1625846056803;
+        Fri, 09 Jul 2021 08:54:16 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwlbKA0g53S1WK3mhy1sO/XEmJxSlO5zAT1k7bLM+7hZNuJzg5JpDsWhmKbU5E5UCCnLHY0qg==
+X-Received: by 2002:a05:600c:4841:: with SMTP id j1mr4825326wmo.88.1625846056561;
+        Fri, 09 Jul 2021 08:54:16 -0700 (PDT)
+Received: from vian.redhat.com ([79.116.5.179])
+        by smtp.gmail.com with ESMTPSA id n13sm5094305wms.4.2021.07.09.08.54.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 09 Jul 2021 08:54:16 -0700 (PDT)
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
+Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
+Subject: [PATCH 1/2] rt-utils: Add option to avoid stopping tracing in tracemark()
+Date:   Fri,  9 Jul 2021 17:54:13 +0200
+Message-Id: <20210709155414.610308-1-nsaenzju@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Andrew,
+Not all users of tracemark() might want to stop tracing after printing a
+mark. For example, if leaving a mark during a test. So add an extra
+argument to tracemark() which avoid the stop.
 
-On Thu, Jul 08 2021 at 14:51, Andrew Halaney wrote:
+Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 3 ++-
+ src/include/rt-utils.h      | 2 +-
+ src/lib/rt-utils.c          | 6 ++++--
+ src/oslat/oslat.c           | 2 +-
+ 4 files changed, 8 insertions(+), 5 deletions(-)
 
-Cc+ stable-rt folks and leave context untrimmed.
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index a08c91d..1f3c5a2 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -12,6 +12,7 @@
+ #include <stdlib.h>
+ #include <stdint.h>
+ #include <stdarg.h>
++#include <stdbool.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <getopt.h>
+@@ -722,7 +723,7 @@ static void *timerthread(void *param)
+ 			pthread_mutex_lock(&break_thread_id_lock);
+ 			if (break_thread_id == 0) {
+ 				break_thread_id = stat->tid;
+-				tracemark("hit latency threshold (%llu > %d)",
++				tracemark(true, "hit latency threshold (%llu > %d)",
+ 					  (unsigned long long) diff, tracelimit);
+ 				break_thread_value = diff;
+ 			}
+diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+index f6b3fed..88d285b 100644
+--- a/src/include/rt-utils.h
++++ b/src/include/rt-utils.h
+@@ -31,7 +31,7 @@ int parse_time_string(char *val);
+ int parse_mem_string(char *str, uint64_t *val);
+ 
+ void enable_trace_mark(void);
+-void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
++void tracemark(bool stop, char *fmt, ...) __attribute__((format(printf, 2, 3)));
+ void disable_trace_mark(void);
+ 
+ #define MSEC_PER_SEC		1000
+diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+index 6c0235d..d8d1325 100644
+--- a/src/lib/rt-utils.c
++++ b/src/lib/rt-utils.c
+@@ -23,6 +23,7 @@
+ #include <sys/utsname.h>
+ #include <time.h>
+ #include <sys/time.h>
++#include <stdbool.h>
+ 
+ #include "rt-utils.h"
+ #include "rt-sched.h"
+@@ -458,7 +459,7 @@ static void debugfs_prepare(void)
+ 		     "debug fs not mounted");
+ }
+ 
+-void tracemark(char *fmt, ...)
++void tracemark(bool stop, char *fmt, ...)
+ {
+ 	va_list ap;
+ 	int len;
+@@ -476,7 +477,8 @@ void tracemark(char *fmt, ...)
+ 	write(tracemark_fd, tracebuf, len);
+ 
+ 	/* now stop any trace */
+-	write(trace_fd, "0\n", 2);
++	if (stop)
++		write(trace_fd, "0\n", 2);
+ }
+ 
+ void enable_trace_mark(void)
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 6ff5ba8..d35be57 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -304,7 +304,7 @@ static void insert_bucket(struct thread *t, stamp_t value)
+ 	if (!g.preheat && g.trace_threshold && us >= g.trace_threshold) {
+ 		char *line = "%s: Trace threshold (%d us) triggered with %u us!\n"
+ 		    "Stopping the test.\n";
+-		tracemark(line, g.app_name, g.trace_threshold, us);
++		tracemark(true, line, g.app_name, g.trace_threshold, us);
+ 		err_quit(line, g.app_name, g.trace_threshold, us);
+ 	}
+ 
+-- 
+2.31.1
 
-> On Mon, Apr 26, 2021 at 08:16:34PM +0200, Thomas Gleixner wrote:
->> On Mon, Apr 26 2021 at 11:42, Andrew Halaney wrote:
->> > On Tue, Apr 06, 2021 at 05:19:52PM -0500, Andrew Halaney wrote:
->> >> There's no chance of sleeping here, the reader is giving up the
->> >> lock and possibly waking up the writer who is waiting on it.
->> >> 
->> >> Reported-by: Chunyu Hu <chuhu@redhat.com>
->> >> Signed-off-by: Andrew Halaney <ahalaney@redhat.com>
->> >> ---
->> >> Hello,
->> >> 
->> >> I ran into a warning caused by this, and I think the warning is
->> >> incorrect. Please let me know if I'm wrong!
->> >> I'm working off of linux-5.12.y-rt, but this applies cleanly to older
->> >> stable branches as well.
->> >>
->> >> Thanks,
->> >> Andrew
->> >> 
->> >>  kernel/locking/rwsem-rt.c | 1 -
->> >>  1 file changed, 1 deletion(-)
->> >> 
->> >> diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
->> >> index 274172d5bb3a..b61edc4dcb73 100644
->> >> --- a/kernel/locking/rwsem-rt.c
->> >> +++ b/kernel/locking/rwsem-rt.c
->> >> @@ -198,7 +198,6 @@ void __up_read(struct rw_semaphore *sem)
->> >>  	if (!atomic_dec_and_test(&sem->readers))
->> >>  		return;
->> >>  
->> >> -	might_sleep();
->> >>  	raw_spin_lock_irq(&m->wait_lock);
->> >>  	/*
->> >>  	 * Wake the writer, i.e. the rtmutex owner. It might release the
->> >> -- 
->> >> 2.30.2
->> >
->> > Just a gentle follow up, any feedback?
->> 
->> Looks correct. Will go into the next rt-release.
->> 
->> Thanks,
->> 
->>         tglx
->> 
->
-> Hi Thomas,
->
-> I see a new release (v5.13-rt1) was created, and with it rwsem
-> was overhauled entirely making this patch pointless for linux-rt-devel.
->
-> That being said, it's a little unclear to me how RT only patches
-> make their way to the maintained branches over in linux-stable-rt.
-> I think it should be applied to:
->  v4.9-rt
->  v4.14-rt
->  v4.19-rt
->  v5.4-rt
->  v5.10-rt
-> to remove the incorrect warning, unless those branches plan to backport
-> the latest RT patchset with the new rwsem implementation. Is there a
-> proper way for me signal that?
-
-See Cc.
-
-Thanks,
-
-        tglx
