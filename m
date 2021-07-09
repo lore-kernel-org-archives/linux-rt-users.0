@@ -7,132 +7,132 @@ X-Spam-Status: No, score=-16.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F1194C07E99
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 17:58:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44D70C07E9B
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 18:01:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DA3E9613C9
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 17:58:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2DB9461241
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 18:01:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229931AbhGISBl (ORCPT
+        id S229535AbhGISEX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 14:01:41 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:49038 "EHLO
+        Fri, 9 Jul 2021 14:04:23 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:25053 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229459AbhGISBk (ORCPT
+        by vger.kernel.org with ESMTP id S229499AbhGISEW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 14:01:40 -0400
+        Fri, 9 Jul 2021 14:04:22 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1625853536;
+        s=mimecast20190719; t=1625853698;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=ULQDsGPh3AHD3SOk9O5mssutYSM3JCboakkU2mBEowA=;
-        b=Dqs3izX6jbhKTyLYWXf33BVbkaQn0VmcmdXHFk2NXJp/7MszuKoRSsoWDIU5fsjAjGFwmD
-        xd9LKbGh2KC0M+1zGoHl2xIMP6MZTzbxKh26k1mYgaf7+OYH0GDDngjuPmET6w3IDSC+jJ
-        ItI1+CVaeYgud5wl4KMBeM7HZj6rtWY=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-250-_zhfSi8gMSq6liI4FPlozg-1; Fri, 09 Jul 2021 13:58:55 -0400
-X-MC-Unique: _zhfSi8gMSq6liI4FPlozg-1
-Received: by mail-qt1-f200.google.com with SMTP id c18-20020a05622a0592b0290251fb198592so6275154qtb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 10:58:55 -0700 (PDT)
+        bh=bwrAie83gkqnQLmySLjVrHNZkxMVorv7oVtlY1bH3js=;
+        b=hV9y5KetwWkKd1yKGoimDuXCiPwudk8fheMMW/48Wo5wIy4MspVoQS/aefHITyyNSCoazV
+        dmfjFkFIiIudwp/ptXoTCGsrcCPAZQN6/W5Q/d6qPygfNMhhgxfFR2nIXsuoNr+9E2KEm+
+        McKaU5ZiNzTV0bhqodzYl2sVckHtQTY=
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-211-8s3g038rNumA4JuZ1kDs5Q-1; Fri, 09 Jul 2021 14:01:37 -0400
+X-MC-Unique: 8s3g038rNumA4JuZ1kDs5Q-1
+Received: by mail-qk1-f198.google.com with SMTP id n77-20020a3740500000b02903b496f6f425so6920387qka.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 09 Jul 2021 11:01:37 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=ULQDsGPh3AHD3SOk9O5mssutYSM3JCboakkU2mBEowA=;
-        b=C2gFAWpqQuCJSbLKn89KN1ah7HebH8FLETDjMij0l0/1tk+Ey1pij48ytjUJF7tIU9
-         eR64Bmw4oA8YFaAAQJRfXw7fp+nOkTl+L3KQTiNRUZ3mU25o3rsdkcuxQXEvSGIS/864
-         sKGDkkKsfy3qoZ5sOqJ9FNqK8LnlRgqzaRIZOblbgOvWnOUw5DpewQE4q0In8u0zmctE
-         r8cLF3WvdS9qN5CFkZ8nMBvE5HCceOaXB/vY5bE3j4FzWNVi2aazxw+/mR9c4JZw7THE
-         adGdShdtjYgPXJA52G5HD0af77NPyBIHFj4HpTAB6Jrt0kQf6MnRSWKsD2Ta0Oys2QNy
-         vpqw==
-X-Gm-Message-State: AOAM533fZaKa9Yjh/2nQRKjX8wuHNwvPgf51neSivR0nVatlrvsieKjZ
-        2QfHWX2O2daWJoOKJUwucYgQ9++HyLxwdstAtPpb0NIuLN8NCZwQ8iutp4lzb7Bzn58GBiAFAtO
-        wBj5VkLsi4GIg4k+eO7QtyH9Odss=
-X-Received: by 2002:a37:6314:: with SMTP id x20mr32133068qkb.363.1625853534602;
-        Fri, 09 Jul 2021 10:58:54 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzP3a/LaY5i2GGW1LLPTZC8LjDyE3eq/ZSgzu9FipRTnxgq7Ftvfn6gIHD0+5ZR83eXr1QOxQ==
-X-Received: by 2002:a37:6314:: with SMTP id x20mr32133049qkb.363.1625853534340;
-        Fri, 09 Jul 2021 10:58:54 -0700 (PDT)
+        bh=bwrAie83gkqnQLmySLjVrHNZkxMVorv7oVtlY1bH3js=;
+        b=ECCiz4H0WHrp62q1Xjt1LJ75cToAlxvC5Lu5Zyxp1I+P027qZT0HMKim55rYxU/qBv
+         6iNguD3BWFEtQVKm1gd39ALiCmMyKkhTLpM9KyZ6aVTlhvgMqegCUlbvvCn17bAwaxTP
+         m6cvaZbf57E3GsY+Pz8R6t/RgvqOq8e33a62c2bbV7zzklFwPo1x0MWzYU8CLO3N+NWe
+         hZE3A9LexaNAD5ofGSHGtiyg9GLNpwl5EPUVjWpwL7t8OfP/SLL4gnW1M8FHSYjofJ3U
+         CPp9Joy17cqMDimNmXX6xjXdh54/LI4JnIAKK33FVrxM2OELl9ccET3NkA4cYeNP2Dlk
+         looA==
+X-Gm-Message-State: AOAM532TyUOVolYm1aW+oVEl6fM7BrzY9Lsc1oMT3cHeGyxxf3JkmIq4
+        x8eQiY0qd3UkKd0gAaNvkcJyaEOyVOS/4EA+Ikx2KCPwIdDcHYgsl0tJ3PyJdOAAXG4OtpubprT
+        FOKu2D/JA3+ww12kJfZwt0PCfq+s=
+X-Received: by 2002:a05:622a:4f:: with SMTP id y15mr181637qtw.122.1625853696580;
+        Fri, 09 Jul 2021 11:01:36 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwnfbwX6nkZn/ufNVFj+bsrgZLHJCjOf2/MaUHtqTXTB1Xixc2Z1ZES3A+lIB5j2o8cRaks1g==
+X-Received: by 2002:a05:622a:4f:: with SMTP id y15mr181623qtw.122.1625853696427;
+        Fri, 09 Jul 2021 11:01:36 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-243.dsl.bell.ca. [184.147.141.243])
-        by smtp.gmail.com with ESMTPSA id k125sm2815917qkf.16.2021.07.09.10.58.53
+        by smtp.gmail.com with ESMTPSA id 9sm2816549qkp.14.2021.07.09.11.01.35
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Jul 2021 10:58:53 -0700 (PDT)
-Date:   Fri, 9 Jul 2021 13:58:51 -0400 (EDT)
+        Fri, 09 Jul 2021 11:01:36 -0700 (PDT)
+Date:   Fri, 9 Jul 2021 14:01:35 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v2 1/3] rt-numa: Use sched_getaffinity() instead
- of pthread_getaffinity_np()
-In-Reply-To: <20210708151827.21430-2-dwagner@suse.de>
-Message-ID: <7e1f5d9-43f3-84ea-4c87-725cea71f15@redhat.com>
-References: <20210708151827.21430-1-dwagner@suse.de> <20210708151827.21430-2-dwagner@suse.de>
+Subject: Re: [PATCH rt-tests v2 3/3] cyclicdeadline: Fix buffer allocation
+In-Reply-To: <20210708151827.21430-4-dwagner@suse.de>
+Message-ID: <64899f-ab54-4a29-73a7-32b79ab6a1e6@redhat.com>
+References: <20210708151827.21430-1-dwagner@suse.de> <20210708151827.21430-4-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/mixed; boundary="-1463755774-1299145996-1625853695=:10671"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+---1463755774-1299145996-1625853695=:10671
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
 
 
 On Thu, 8 Jul 2021, Daniel Wagner wrote:
 
-> pthread_getaffinity_np() prevents static builds as glibc does not
-> expose it for this configuration. Instead use sched_getaffinity()
-> which is always present and has the exact same semantics.
-> 
-> Fixes: f240656b056b ("rt-tests: cyclictest: Fix -t without a user specified [NUM]")
+> gcc complains with "‘sprintf’ output between 2 and 12 bytes" but
+> the buffer is only 10 bytes long. Update the buffer size to hold
+> the complete range of [-2147483648, 2147483646].
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/lib/rt-numa.c | 6 ++----
->  1 file changed, 2 insertions(+), 4 deletions(-)
+>  src/sched_deadline/cyclicdeadline.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
-> index babcc634d57e..bb0121a65eca 100644
-> --- a/src/lib/rt-numa.c
-> +++ b/src/lib/rt-numa.c
-> @@ -68,15 +68,13 @@ int cpu_for_thread_sp(int thread_num, int max_cpus, struct bitmask *cpumask)
->  int cpu_for_thread_ua(int thread_num, int max_cpus)
->  {
->  	int res, num_cpus, i, m, cpu;
-> -	pthread_t thread;
->  	cpu_set_t cpuset;
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index ffefa9e6fecb..8447424273ee 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -1092,7 +1092,7 @@ int main(int argc, char **argv)
 >  
-> -	thread = pthread_self();
->  	CPU_ZERO(&cpuset);
->  
-> -	res = pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-> +	res = sched_getaffinity(0, sizeof(cpu_set_t), &cpuset);
->  	if (res != 0)
-> -		fatal("pthread_getaffinity_np failed: %s\n", strerror(res));
-> +		fatal("sched_getaffinity failed: %s\n", strerror(res));
->  
->  	num_cpus = CPU_COUNT(&cpuset);
->  	m = thread_num % num_cpus;
+>  	/* Default cpu to use is the last one */
+>  	if (!all_cpus && !setcpu) {
+> -		setcpu_buf = malloc(10);
+> +		setcpu_buf = malloc(12);
+>  		if (!setcpu_buf)
+>  			fatal("malloc");
+>  		sprintf(setcpu_buf, "%d", cpu_count - 1);
 > -- 
 > 2.32.0
 > 
 > 
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
-It looks okay on the surface but I would like to know where you tested.
+I applied this but there are others.
 
-Also, in your message you explain that you can't do a static build
-but we never made static builds a requirment for rt-tests. I know from
-your cover letter than you are trying to do something with arm, if this
-is your motivation you should put it in your message. Even if this is your 
-motivation is there a reason we have to have a static build there?
+git grep PRIu64
+src/oslat/oslat.c:              snprintf(bucket_name, sizeof(bucket_name), 
+"%03"PRIu64
+src/oslat/oslat.c:              putfield(bucket_name, t[i].buckets[j], 
+PRIu64,
+src/oslat/oslat.c:      putfield("Minimum", t[i].minlat, PRIu64, " (us)");
+src/oslat/oslat.c:      putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
+src/oslat/oslat.c:      putfield("Max-Min", t[i].maxlat - t[i].minlat, 
+PRIu64, " (us)");
+src/oslat/oslat.c:              fprintf(f, "      \"min\": %" PRIu64 
+",\n", t[i].minlat);
+src/oslat/oslat.c:              fprintf(f, "      \"max\": %" PRIu64 
+",\n", t[i].maxlat);
+src/oslat/oslat.c:                      fprintf(f, "        \"%" PRIu64 
+"\": %" PRIu64,
+src/oslat/oslat.c:      printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
+src/pi_tests/pi_stress.c:               printf(" runtime %" PRIu64 " 
+deadline %" PRIu64 " period %" PRIu64 "\n",
 
-Finally, you put "fixes f240656b056b", it is useful to know where this
-was introduced in trying to figure out whether we can really replace a 
-pthread call with the sched call, but then phrase it that way, because
-as far as I know that commit is not a problem needing fixing, so put
-"pthread_getaffinity_np call introduced in f240656b056b"
-or something like that.
-
-Thanks
-
-John
+---1463755774-1299145996-1625853695=:10671--
 
