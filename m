@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AF010C07E9C
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 22:00:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D055C11F68
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 22:00:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 94EC0613EC
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 22:00:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 23135613E4
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 22:00:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231325AbhGIWDF (ORCPT
+        id S231367AbhGIWDH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 18:03:05 -0400
-Received: from mail.kernel.org ([198.145.29.99]:50430 "EHLO mail.kernel.org"
+        Fri, 9 Jul 2021 18:03:07 -0400
+Received: from mail.kernel.org ([198.145.29.99]:50392 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231183AbhGIWDD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S231244AbhGIWDD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 9 Jul 2021 18:03:03 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 2131F613C2;
+        by mail.kernel.org (Postfix) with ESMTPSA id 791B2613DC;
         Fri,  9 Jul 2021 22:00:19 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@goodmis.org>)
-        id 1m1yXi-000CKx-5i; Fri, 09 Jul 2021 18:00:18 -0400
-Message-ID: <20210709220018.003428207@goodmis.org>
+        id 1m1yXi-000CM4-He; Fri, 09 Jul 2021 18:00:18 -0400
+Message-ID: <20210709220018.381962162@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Fri, 09 Jul 2021 17:59:58 -0400
+Date:   Fri, 09 Jul 2021 18:00:00 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,12 +39,12 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>, stable@kernel.org,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        Will Deacon <will@kernel.org>,
         Valentin Schneider <valentin.schneider@arm.com>,
+        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
         Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH RT 5/8] sched: Fix affine_move_task() self-concurrency
+Subject: [PATCH RT 7/8] sched: Dont defer CPU pick to migration_cpu_stop()
 References: <20210709215953.122804544@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -57,94 +57,98 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Peter Zijlstra <peterz@infradead.org>
+From: Valentin Schneider <valentin.schneider@arm.com>
 
-commit 9e81889c7648d48dd5fe13f41cbc99f3c362484a upstream.
+commit 475ea6c60279e9f2ddf7e4cf2648cd8ae0608361 upstream.
 
-Consider:
+Will reported that the 'XXX __migrate_task() can fail' in migration_cpu_stop()
+can happen, and it *is* sort of a big deal. Looking at it some more, one
+will note there is a glaring hole in the deferred CPU selection:
 
-   sched_setaffinity(p, X);		sched_setaffinity(p, Y);
+  (w/ CONFIG_CPUSET=n, so that the affinity mask passed via taskset doesn't
+  get AND'd with cpu_online_mask)
 
-Then the first will install p->migration_pending = &my_pending; and
-issue stop_one_cpu_nowait(pending); and the second one will read
-p->migration_pending and _also_ issue: stop_one_cpu_nowait(pending),
-the _SAME_ @pending.
+  $ taskset -pc 0-2 $PID
+  # offline CPUs 3-4
+  $ taskset -pc 3-5 $PID
+    `\
+      $PID may stay on 0-2 due to the cpumask_any_distribute() picking an
+      offline CPU and __migrate_task() refusing to do anything due to
+      cpu_is_allowed().
 
-This causes stopper list corruption.
-
-Add set_affinity_pending::stop_pending, to indicate if a stopper is in
-progress.
+set_cpus_allowed_ptr() goes to some length to pick a dest_cpu that matches
+the right constraints vs affinity and the online/active state of the
+CPUs. Reuse that instead of discarding it in the affine_move_task() case.
 
 Fixes: 6d337eab041d ("sched: Fix migrate_disable() vs set_cpus_allowed_ptr()")
-Cc: stable@kernel.org
+Reported-by: Will Deacon <will@kernel.org>
+Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Reviewed-by: Valentin Schneider <valentin.schneider@arm.com>
-Link: https://lkml.kernel.org/r/20210224131355.649146419@infradead.org
+Link: https://lkml.kernel.org/r/20210526205751.842360-2-valentin.schneider@arm.com
 Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 15 ++++++++++++---
- 1 file changed, 12 insertions(+), 3 deletions(-)
+ kernel/sched/core.c | 20 ++++++++++++--------
+ 1 file changed, 12 insertions(+), 8 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 9cbe12d8c5bd..20588a59300d 100644
+index 35d8b80d7cb8..b1e87f304ade 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1900,6 +1900,7 @@ struct migration_arg {
+@@ -1942,7 +1942,6 @@ static int migration_cpu_stop(void *data)
+ 	struct migration_arg *arg = data;
+ 	struct set_affinity_pending *pending = arg->pending;
+ 	struct task_struct *p = arg->task;
+-	int dest_cpu = arg->dest_cpu;
+ 	struct rq *rq = this_rq();
+ 	bool complete = false;
+ 	struct rq_flags rf;
+@@ -1975,19 +1974,15 @@ static int migration_cpu_stop(void *data)
+ 			if (p->migration_pending == pending)
+ 				p->migration_pending = NULL;
+ 			complete = true;
+-		}
  
- struct set_affinity_pending {
- 	refcount_t		refs;
-+	unsigned int		stop_pending;
- 	struct completion	done;
- 	struct cpu_stop_work	stop_work;
- 	struct migration_arg	arg;
-@@ -2018,12 +2019,15 @@ static int migration_cpu_stop(void *data)
- 		 * determine is_migration_disabled() and so have to chase after
- 		 * it.
- 		 */
-+		WARN_ON_ONCE(!pending->stop_pending);
- 		task_rq_unlock(rq, p, &rf);
- 		stop_one_cpu_nowait(task_cpu(p), migration_cpu_stop,
- 				    &pending->arg, &pending->stop_work);
- 		return 0;
+-		if (dest_cpu < 0) {
+ 			if (cpumask_test_cpu(task_cpu(p), &p->cpus_mask))
+ 				goto out;
+-
+-			dest_cpu = cpumask_any_distribute(&p->cpus_mask);
+ 		}
+ 
+ 		if (task_on_rq_queued(p))
+-			rq = __migrate_task(rq, &rf, p, dest_cpu);
++			rq = __migrate_task(rq, &rf, p, arg->dest_cpu);
+ 		else
+-			p->wake_cpu = dest_cpu;
++			p->wake_cpu = arg->dest_cpu;
+ 
+ 		/*
+ 		 * XXX __migrate_task() can fail, at which point we might end
+@@ -2266,7 +2261,7 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
+ 			init_completion(&my_pending.done);
+ 			my_pending.arg = (struct migration_arg) {
+ 				.task = p,
+-				.dest_cpu = -1,		/* any */
++				.dest_cpu = dest_cpu,
+ 				.pending = &my_pending,
+ 			};
+ 
+@@ -2274,6 +2269,15 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
+ 		} else {
+ 			pending = p->migration_pending;
+ 			refcount_inc(&pending->refs);
++			/*
++			 * Affinity has changed, but we've already installed a
++			 * pending. migration_cpu_stop() *must* see this, else
++			 * we risk a completion of the pending despite having a
++			 * task on a disallowed CPU.
++			 *
++			 * Serialized by p->pi_lock, so this is safe.
++			 */
++			pending->arg.dest_cpu = dest_cpu;
+ 		}
  	}
- out:
-+	if (pending)
-+		pending->stop_pending = false;
- 	task_rq_unlock(rq, p, &rf);
- 
- 	if (complete)
-@@ -2219,7 +2223,7 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
- 			    int dest_cpu, unsigned int flags)
- {
- 	struct set_affinity_pending my_pending = { }, *pending = NULL;
--	bool complete = false;
-+	bool stop_pending, complete = false;
- 
- 	/* Can the task run on the task's current CPU? If so, we're done */
- 	if (cpumask_test_cpu(task_cpu(p), &p->cpus_mask)) {
-@@ -2292,14 +2296,19 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
- 		 * anything else we cannot do is_migration_disabled(), punt
- 		 * and have the stopper function handle it all race-free.
- 		 */
-+		stop_pending = pending->stop_pending;
-+		if (!stop_pending)
-+			pending->stop_pending = true;
- 
- 		refcount_inc(&pending->refs); /* pending->{arg,stop_work} */
- 		if (flags & SCA_MIGRATE_ENABLE)
- 			p->migration_flags &= ~MDF_PUSH;
- 		task_rq_unlock(rq, p, rf);
- 
--		stop_one_cpu_nowait(cpu_of(rq), migration_cpu_stop,
--				    &pending->arg, &pending->stop_work);
-+		if (!stop_pending) {
-+			stop_one_cpu_nowait(cpu_of(rq), migration_cpu_stop,
-+					    &pending->arg, &pending->stop_work);
-+		}
- 
- 		if (flags & SCA_MIGRATE_ENABLE)
- 			return 0;
+ 	pending = p->migration_pending;
 -- 
 2.30.2
