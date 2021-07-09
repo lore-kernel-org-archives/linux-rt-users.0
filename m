@@ -2,79 +2,110 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B7C8C07E99
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:25:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 55903C07E99
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 10:19:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ED4236140F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 05:25:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 38CB0613D6
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jul 2021 10:19:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229607AbhGIF2O (ORCPT
+        id S232033AbhGIKVp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Jul 2021 01:28:14 -0400
-Received: from mout.gmx.net ([212.227.17.20]:41035 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229576AbhGIF2N (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Jul 2021 01:28:13 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1625808328;
-        bh=FOeUf08WqLoHmu/8I01nIYShZyGwrXzOQuPTKkKudUQ=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=G8f+CqlAvw4r7W/ycWq09UDhQUtZ7uNyarzwUbOzNcczDdXZ1hCF3lQDNkYIGJGEi
-         DwA22dZvEiIaiu9gv1ySrBlrZCn/OSW483qH9gVcTgXH+6YW7UWAmw+yr4ZlYhNYzZ
-         ErAkW01p7rLg3JXvZA/f8GGWWa146pOQ+636X6i0=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.217.33]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MTiTt-1lc6Sb0oJB-00TzDQ; Fri, 09
- Jul 2021 07:25:28 +0200
-Message-ID: <549a464f75f7613f91cc0a790c323cc1b32c193c.camel@gmx.de>
-Subject: Re: [rfc/patch] mm/slub: restore/expand unfreeze_partials() local
- exclusion scope
-From:   Mike Galbraith <efault@gmx.de>
-To:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>
-Cc:     linux-rt-users@vger.kernel.org,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date:   Fri, 09 Jul 2021 07:25:27 +0200
-In-Reply-To: <8c0e0c486056b5185b58998f2cce62619ed3f05c.camel@gmx.de>
-References: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
-         <8c0e0c486056b5185b58998f2cce62619ed3f05c.camel@gmx.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.34.4 
+        Fri, 9 Jul 2021 06:21:45 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:57422 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232006AbhGIKVp (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 9 Jul 2021 06:21:45 -0400
+Date:   Fri, 9 Jul 2021 12:18:59 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1625825941;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=lLQ/bdoOuCDOI/q2AMTOMyyNAd4a102JNJieThES7oE=;
+        b=v//9zhLtRzR+eyb9Vp7wbNwGkxOS6lqODvmneOQab4Zo9QWY6RCREDiaZ95n09Jp/hGaSf
+        47a2r7jKozTB3PIj9Mx3P/DZ3tYM9J83Svgp7aG+3iU6/iMyhe7au/sNnukAj8YscQY0yb
+        XFcTyiE+sEGmNGd22ZIeJuiEkyep1tFrk7aBQT9eDzfJCQaswKD4DzcxnKAvto6ogRq3ht
+        Kk+2g6iD+bEVCLrNZTBRsF+06b97PO0D9eNZ0JvQx+GllPLSW9Tm6Xd53lvE2EfKSi35AH
+        tG8DaGoxzlwZhli+ExmExrO/jl6mk9S5SIt7YiMn65kCnONFAqoEBuvFs8eDWQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1625825941;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=lLQ/bdoOuCDOI/q2AMTOMyyNAd4a102JNJieThES7oE=;
+        b=wrNVrNGKPHd7agEoCfkAYJkWm000loB9FmRxz6HmQok7gxSEpLAKRvMGvt4BxRXDSQg44A
+        BPtqEjcgeUlsCnCQ==
+From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
+To:     Matthias Klein <matthias.klein@optimeas.de>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: Working sample 5.10 kernel configuration for an IMX6 board?
+Message-ID: <YOgikyyE7WhOP799@lx-t490>
+References: <AM0PR10MB3107F4D6E0F50ECB027C06A199199@AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM>
+ <YOcY3rH7Q0DjyOyj@lx-t490>
+ <AM0PR10MB31078807FE14B686B727CA2A99199@AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Provags-ID: V03:K1:BfNFj66KZL79QjqskSwG5ol5YKT/U0oLW1yIGG/4HniXgk6PLBu
- 9jg5fZUX9f76aCNO2AXcvGooDHwqSkaaRtrjOFQMELoHYKNLuZGFlJxiihA8WATwKmKmlxJ
- Eo9THZf84DKhlc7H+bl/y+xX/Jv9/QFpvwdH7Q2JVOSmzZ/95Z0Dp9a7S3BRK7Gen//lMV0
- Tuzl+1swmUeDRZZ6PYgww==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:BaX6uV6cDng=:RDlLNvEGQbjmuHIQVhUh8p
- D+N4QXIoFBWxuBHGO/a1SbQFkEPqB+yDTGH3REgMnNDujVZm5U/PE/opSvZYtBE5xarvLfKCX
- R9JWyJxd+Q1HNXElCCn2POSmV1S9u/JObp8/kFG+yArY+KL+ELc46LUOb7YJjTYPEXLylmyzB
- 63qNLbA25Gn2BQzDCQ/QcJQ2YOL+G0ObdN2tdhY/1gkFk1Wt/n8g33jrJUk5ve5bMQyr5ASx0
- rplnyUbeB4+mkZRfkTwMFTrMOk03k5YZVjikyCmFPGfePZ/yIl9oVPx4XiT7YCRmN3F4r5/eg
- 5Sm11qPB+uZUHMa4BM9Fom4ae+0zhAtBPDev3U5DqFCPWXUhVVLhYd+CVY8OMyXqF4pKFw+tL
- vRHKbInuzNoxoB47IW8s1Meeie1jgO/OYnIB+GOE5n6ji32fKdv+gkot5Qk5BfLYtltk6ufif
- gazMhyLpF+JOt3fNJkRaDxI76lIKfnapwJDqzhDv0pmrA3lZaXiExu/C2eU31mwtuPTOZ7Huz
- M8AU0Rt/b25myT62wP4jbzFPCOM5Euzq3FDT2qjwMzfNWMrMmckwrgljydXNsQaTsdBrHT6EJ
- D1F2N8JjBLu26bkiqSH/efXI1YlwlkVRQjI+Jhhxec9Xhb6H+KHhKewD08fCS2PMLLiH11dvY
- adXIueGVTCzvsa25RSYhSHdWypFVywb5Y/ao2ixONXdlQzBRb/Ds1/FysqFkPatH8TMwA7eA2
- lhvDdWxeJy58nMR2C/qnAStnCXdveWGFIZv62c3hE5tDrTgt0uQ4l9jElcCLxMYNng8MO1KHF
- sNMjymHe1VhnceitBYlxK82OefnDGg0Bp5p10ybqVuAs+vBATiY17uEi/HRoqvOq4F5z3LTjU
- vbcLqfDVUku2w7bmZLhKsexNabQfLwYHdbPClgv4f5pqtreCzLX7GUwbbwx8IFvxiOVaGOo7y
- 9m38ZV6R8ttx47shBpZiUO6YcKEMlswqG/w7zGrkMm4lRIt+SddMpXb0ijRfufnn9OGAm9C7l
- 9lSWfI5dWayavPPA7KJw3wiF+0gP50iK0BvwlOQdIw1RTahFCepNjwuarLpi2lpJpKZty77fA
- R4hOBQ+1vH4mHK3erxOdoCRB+T76ybihgmN
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <AM0PR10MB31078807FE14B686B727CA2A99199@AM0PR10MB3107.EURPRD10.PROD.OUTLOOK.COM>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 2021-07-09 at 07:21 +0200, Mike Galbraith wrote:
-> Well, bug report in patch for actually.
-                            ^^^form
+On Thu, Jul 08, 2021 at 03:46:14PM +0000, Matthias Klein wrote:
+>
+> The configuration is attached.
+>
 
+I've quickly inspected the .config file resulting from the defconfig
+above.  You should disable the enabled symbols below:
+
+  - CONFIG_PROVE_LOCKING
+  - CONFIG_DEBUG_ALIGN_RODATA
+  - CONFIG_DEBUG_FS_ALLOW_ALL
+  - CONFIG_DEBUG_MISC
+  - CONFIG_DEBUG_PREEMPT
+  - CONFIG_DEBUG_RT_MUTEXES
+  - CONFIG_DEBUG_SPINLOCK
+  - CONFIG_DEBUG_MUTEXES
+  - CONFIG_DEBUG_WW_MUTEX_SLOWPATH
+  - CONFIG_DEBUG_RWSEMS
+  - CONFIG_DEBUG_LOCK_ALLOC
+  - CONFIG_DEBUG_USER
+  - CONFIG_NO_HZ_COMMON
+  - CONFIG_NO_HZ_IDLE
+  - CONFIG_NO_HZ
+
+You also have a lot of CPU frequency governors enabled. Disable all of
+them except the performance governor and make sure that
+CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE=y.
+
+The above, especially disabling CONFIG_PROVE_LOCKING and
+CONFIG_DEBUG_PREEMPT, should really fix your problem.
+
+If you still have issues, play around with disabling CONFIG_CPU_IDLE and
+its governors. Note though that CPU manufacturers sometimes advise
+against doing this.
+
+If the latency is still higher than desired, see if CONFIG_DRM and high
+GPU workloads negatively affects it . On some architectures, latency can
+increase by 100 microseconds or more due to sharing of the Last Level
+Cache and memory bandwidth between the GPU and the CPU.
+
+After all of this, if latency is still higher than the 100->150
+microseconds range, it's possible that the custom code you've added is
+doing shady stuff; e.g., manually disabling interrupts or preemption.
+
+If it aint so, and the latency is still higher than the expected range
+(even with a pure RT release), then you'll need to manually trace the
+kernel and catch the offending call chain.
+
+Good luck,
+
+--
+Ahmed S. Darwish
+Linutronix GmbH
