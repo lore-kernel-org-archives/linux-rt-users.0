@@ -4,40 +4,40 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 70B15C47E48
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 13:33:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6F6CC07E96
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 13:33:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 55654613C7
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 13:33:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A8ABD613C3
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 13:33:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237662AbhGONgP (ORCPT
+        id S237678AbhGONgY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 15 Jul 2021 09:36:15 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51106 "EHLO mail.kernel.org"
+        Thu, 15 Jul 2021 09:36:24 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51174 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230211AbhGONgP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 15 Jul 2021 09:36:15 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id BEF1A613C4;
-        Thu, 15 Jul 2021 13:33:21 +0000 (UTC)
+        id S233957AbhGONgY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 15 Jul 2021 09:36:24 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id B5493613C4;
+        Thu, 15 Jul 2021 13:33:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1626356002;
-        bh=9QwJkNJ0EKcP628qDiVl++4c0qoQ5PnIEsAAlvMgoJE=;
+        s=korg; t=1626356011;
+        bh=IVP/s33scCUhAITuuMBnyFZ3AUfIr+z6Xyu4lroBTN0=;
         h=Subject:To:Cc:From:Date:From;
-        b=O2xa9oEDXAXdtduYUZ6qXCfKldFwhYYUfz4wnaxxHg2sj7hyEuTZGbeTyuG7DA0G9
-         dfRCcSpQFPXNxNn1/Ecm9wA650pyeqk6W0SKimq7nc9jsKznXFvCzHXBuUZiLrGeW/
-         2CwjWoVSSOBYYESowlBlIYiCi1J5tcxhng2d/pR8=
-Subject: FAILED: patch "[PATCH] xfrm: policy: Read seqcount outside of rcu-read side in" failed to apply to 4.19-stable tree
+        b=lV9ctHL82d28Qp827O/fEE3dT82k1w3rZT79D5QOKwfFWa/5HM2XAGoWJy61BtUxw
+         emsh4Kg0+gCYYXp0SfTF7gRmFDg/WhA7vhtFPXFD2/+5wDxlqH61tAuSm8xa4Gjo2m
+         et+VpWN5DU0jtB1RR5LlpdkA1+oaPlrp/mLsUXRg=
+Subject: FAILED: patch "[PATCH] xfrm: policy: Read seqcount outside of rcu-read side in" failed to apply to 4.14-stable tree
 To:     varad.gautam@suse.com, a.darwish@linutronix.de,
         davem@davemloft.net, fw@strlen.de, herbert@gondor.apana.org.au,
         kuba@kernel.org, linux-rt-users@vger.kernel.org,
         steffen.klassert@secunet.com
 Cc:     <stable@vger.kernel.org>
 From:   <gregkh@linuxfoundation.org>
-Date:   Thu, 15 Jul 2021 15:33:20 +0200
-Message-ID: <16263560005972@kroah.com>
+Date:   Thu, 15 Jul 2021 15:33:21 +0200
+Message-ID: <162635600118223@kroah.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ANSI_X3.4-1968
 Content-Transfer-Encoding: 8bit
@@ -46,7 +46,7 @@ List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
-The patch below does not apply to the 4.19-stable tree.
+The patch below does not apply to the 4.14-stable tree.
 If someone wants it applied there, or to any other stable or longterm
 tree, then please email the backport, including the original git commit
 id to <stable@vger.kernel.org>.
