@@ -2,37 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-19.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 55D5AC6377B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 18:53:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D246C636CB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 18:58:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 43433613D1
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 18:53:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 48630613EE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Jul 2021 18:58:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241767AbhGOSz6 (ORCPT
+        id S240527AbhGOTB1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 15 Jul 2021 14:55:58 -0400
-Received: from mail.kernel.org ([198.145.29.99]:59776 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238253AbhGOSzZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 15 Jul 2021 14:55:25 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4CE3A613CA;
-        Thu, 15 Jul 2021 18:52:28 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1626375148;
-        bh=m/i/HMsx2BkqaC2YrJ2TGwZdRfxs3GJ877IyQhux/hQ=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=UV0en/nWTx0RuDZu1yGPOoU1Mdc+KPTgi8jORoapj4ZfFGPycQe5LjoOVhfzrOhcI
-         0zk3gjKr/gVNqvRDmEalSWQj0jubP3F5qW1S4DHjUqjcn+NXya3B2ul5/4HAK5mdr0
-         cubOhNUAwZBIIFPGajRY373bowJatxHo+beftdKQ=
-From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To:     linux-kernel@vger.kernel.org
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        stable@vger.kernel.org, Varad Gautam <varad.gautam@suse.com>,
+        Thu, 15 Jul 2021 15:01:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58300 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S243030AbhGOTAJ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 15 Jul 2021 15:00:09 -0400
+Received: from Chamillionaire.breakpoint.cc (Chamillionaire.breakpoint.cc [IPv6:2a0a:51c0:0:12e:520::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 816B3C05BD38;
+        Thu, 15 Jul 2021 11:54:52 -0700 (PDT)
+Received: from fw by Chamillionaire.breakpoint.cc with local (Exim 4.92)
+        (envelope-from <fw@strlen.de>)
+        id 1m46VT-0007Rr-8F; Thu, 15 Jul 2021 20:54:47 +0200
+Date:   Thu, 15 Jul 2021 20:54:47 +0200
+From:   Florian Westphal <fw@strlen.de>
+To:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc:     linux-kernel@vger.kernel.org, stable@vger.kernel.org,
+        Varad Gautam <varad.gautam@suse.com>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         netdev@vger.kernel.org,
         Steffen Klassert <steffen.klassert@secunet.com>,
@@ -41,117 +39,27 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Jakub Kicinski <kuba@kernel.org>,
         Florian Westphal <fw@strlen.de>,
         "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Subject: [PATCH 5.10 179/215] xfrm: policy: Read seqcount outside of rcu-read side in xfrm_policy_lookup_bytype
-Date:   Thu, 15 Jul 2021 20:39:11 +0200
-Message-Id: <20210715182631.028264823@linuxfoundation.org>
-X-Mailer: git-send-email 2.32.0
-In-Reply-To: <20210715182558.381078833@linuxfoundation.org>
-References: <20210715182558.381078833@linuxfoundation.org>
-User-Agent: quilt/0.66
+Subject: Re: [PATCH 5.4 097/122] xfrm: policy: Read seqcount outside of
+ rcu-read side in xfrm_policy_lookup_bytype
+Message-ID: <20210715185447.GC9904@breakpoint.cc>
+References: <20210715182448.393443551@linuxfoundation.org>
+ <20210715182517.994942248@linuxfoundation.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210715182517.994942248@linuxfoundation.org>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Varad Gautam <varad.gautam@suse.com>
+Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
+> From: Varad Gautam <varad.gautam@suse.com>
+> 
+> commit d7b0408934c749f546b01f2b33d07421a49b6f3e upstream.
 
-commit d7b0408934c749f546b01f2b33d07421a49b6f3e upstream.
+This patch has been reverted in the ipsec tree, the problem was then
+addressed via 2580d3f40022642452dd8422bfb8c22e54cf84bb
+("xfrm: Fix RCU vs hash_resize_mutex lock inversion").
 
-xfrm_policy_lookup_bytype loops on seqcount mutex xfrm_policy_hash_generation
-within an RCU read side critical section. Although ill advised, this is fine if
-the loop is bounded.
-
-xfrm_policy_hash_generation wraps mutex hash_resize_mutex, which is used to
-serialize writers (xfrm_hash_resize, xfrm_hash_rebuild). This is fine too.
-
-On PREEMPT_RT=y, the read_seqcount_begin call within xfrm_policy_lookup_bytype
-emits a mutex lock/unlock for hash_resize_mutex. Mutex locking is fine, since
-RCU read side critical sections are allowed to sleep with PREEMPT_RT.
-
-xfrm_hash_resize can, however, block on synchronize_rcu while holding
-hash_resize_mutex.
-
-This leads to the following situation on PREEMPT_RT, where the writer is
-blocked on RCU grace period expiry, while the reader is blocked on a lock held
-by the writer:
-
-Thead 1 (xfrm_hash_resize)	Thread 2 (xfrm_policy_lookup_bytype)
-
-				rcu_read_lock();
-mutex_lock(&hash_resize_mutex);
-				read_seqcount_begin(&xfrm_policy_hash_generation);
-				mutex_lock(&hash_resize_mutex); // block
-xfrm_bydst_resize();
-synchronize_rcu(); // block
-		<RCU stalls in xfrm_policy_lookup_bytype>
-
-Move the read_seqcount_begin call outside of the RCU read side critical section,
-and do an rcu_read_unlock/retry if we got stale data within the critical section.
-
-On non-PREEMPT_RT, this shortens the time spent within RCU read side critical
-section in case the seqcount needs a retry, and avoids unbounded looping.
-
-Fixes: 77cc278f7b20 ("xfrm: policy: Use sequence counters with associated lock")
-Signed-off-by: Varad Gautam <varad.gautam@suse.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: netdev@vger.kernel.org
-Cc: stable@vger.kernel.org # v4.9
-Cc: Steffen Klassert <steffen.klassert@secunet.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "David S. Miller" <davem@davemloft.net>
-Cc: Jakub Kicinski <kuba@kernel.org>
-Cc: Florian Westphal <fw@strlen.de>
-Cc: "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Signed-off-by: Steffen Klassert <steffen.klassert@secunet.com>
-Acked-by: Ahmed S. Darwish <a.darwish@linutronix.de>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
----
- net/xfrm/xfrm_policy.c |   21 ++++++++++++++-------
- 1 file changed, 14 insertions(+), 7 deletions(-)
-
---- a/net/xfrm/xfrm_policy.c
-+++ b/net/xfrm/xfrm_policy.c
-@@ -2092,12 +2092,15 @@ static struct xfrm_policy *xfrm_policy_l
- 	if (unlikely(!daddr || !saddr))
- 		return NULL;
- 
--	rcu_read_lock();
-  retry:
--	do {
--		sequence = read_seqcount_begin(&xfrm_policy_hash_generation);
--		chain = policy_hash_direct(net, daddr, saddr, family, dir);
--	} while (read_seqcount_retry(&xfrm_policy_hash_generation, sequence));
-+	sequence = read_seqcount_begin(&xfrm_policy_hash_generation);
-+	rcu_read_lock();
-+
-+	chain = policy_hash_direct(net, daddr, saddr, family, dir);
-+	if (read_seqcount_retry(&xfrm_policy_hash_generation, sequence)) {
-+		rcu_read_unlock();
-+		goto retry;
-+	}
- 
- 	ret = NULL;
- 	hlist_for_each_entry_rcu(pol, chain, bydst) {
-@@ -2128,11 +2131,15 @@ static struct xfrm_policy *xfrm_policy_l
- 	}
- 
- skip_inexact:
--	if (read_seqcount_retry(&xfrm_policy_hash_generation, sequence))
-+	if (read_seqcount_retry(&xfrm_policy_hash_generation, sequence)) {
-+		rcu_read_unlock();
- 		goto retry;
-+	}
- 
--	if (ret && !xfrm_pol_hold_rcu(ret))
-+	if (ret && !xfrm_pol_hold_rcu(ret)) {
-+		rcu_read_unlock();
- 		goto retry;
-+	}
- fail:
- 	rcu_read_unlock();
- 
-
-
+AFAICS its not in mainline yet.
