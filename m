@@ -2,106 +2,121 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AD5BFC12002
-	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Jul 2021 04:01:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9EA9BC636C9
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Jul 2021 08:01:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 82039610C7
-	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Jul 2021 04:01:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7E36161181
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Jul 2021 08:01:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229664AbhGSEEm (ORCPT
+        id S235180AbhGSIEb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 19 Jul 2021 00:04:42 -0400
-Received: from mout.gmx.net ([212.227.15.19]:57755 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229512AbhGSEEm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 19 Jul 2021 00:04:42 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1626667299;
-        bh=HCJDDIc8iDe4AoIykd92qO5vSXF85+DD8a8vNQB+A8g=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=cGo4NqQKp7+AFWiGcuyrcHSR27bvHkaj2gecQE2SB1a2UjbW05W2QXrEprXW0y4J0
-         dGzRp2vKu0T+oYyqSQcAr9neYJaMR+Wkgw0FkbZQQXJTcy8CjMWPcFZRC/ZHO6ApgC
-         BmdAEwW4MzhncpjQ8Bm4d3J2867C4oofpXnOZk3w=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.216.243]) by mail.gmx.net (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1Mw9UE-1lDEPv0Rca-00s8YH; Mon, 19
- Jul 2021 06:01:39 +0200
-Message-ID: <00a7c04b109c01a7668abc2a8192a6b889765de5.camel@gmx.de>
-Subject: Re: [patch] v2 mm/slub: restore/expand unfreeze_partials() local
- exclusion scope
-From:   Mike Galbraith <efault@gmx.de>
-To:     Vlastimil Babka <vbabka@suse.cz>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>
-Cc:     linux-rt-users@vger.kernel.org,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date:   Mon, 19 Jul 2021 06:01:38 +0200
-In-Reply-To: <dd10ebb3-7687-6e8d-8984-3dfb9cd0e927@suse.cz>
-References: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
-         <8c0e0c486056b5185b58998f2cce62619ed3f05c.camel@gmx.de>
-         <878s2fnv79.ffs@nanos.tec.linutronix.de>
-         <6c0e20dd84084036d5068e445746c3ed7e82ec4b.camel@gmx.de>
-         <7431ceb9761c566cf2d1f6f263247acd8d38c4b5.camel@gmx.de>
-         <476d147ab6eec386a1e8b8e11cb09708377f8c3e.camel@gmx.de>
-         <dd10ebb3-7687-6e8d-8984-3dfb9cd0e927@suse.cz>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.34.4 
+        Mon, 19 Jul 2021 04:04:31 -0400
+Received: from smtp-out2.suse.de ([195.135.220.29]:46572 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234946AbhGSIEA (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 19 Jul 2021 04:04:00 -0400
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out2.suse.de (Postfix) with ESMTPS id 2DC0F201DB;
+        Mon, 19 Jul 2021 08:00:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1626681626; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=r83aqrTsG19aNdJ/lLU2QHd+GC28h7GfOLHYenMnxyk=;
+        b=UaGw0nKjV+NDW9KNo7yxdh987iCD1yYKleO9YeepG/yUlMe8tyaV9qkym0veN8Kq44azUs
+        5dSe+w94tuA/MGjYMSQk32aUyeOjtUMLkV2QfI7tvbdDoc/nF2Of+RDe9CYSYprGiyKpZW
+        rCXaR8/pH8j/fQRw0p8LrYDmg4ueKwI=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1626681626;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=r83aqrTsG19aNdJ/lLU2QHd+GC28h7GfOLHYenMnxyk=;
+        b=LqGxQEFCWRAcwQ/8JWJy8XcUB4MkydR1URz0v8HaXaZzW8dlqvwTH2N3DO3nKEek0EdpLN
+        8bPY8zbi2ycI3oDg==
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id 1EA1C133D0;
+        Mon, 19 Jul 2021 08:00:26 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap1.suse-dmz.suse.de with ESMTPSA
+        id OmImBxox9WDFBQAAGKfGzw
+        (envelope-from <dwagner@suse.de>); Mon, 19 Jul 2021 08:00:26 +0000
+Date:   Mon, 19 Jul 2021 10:00:25 +0200
+From:   Daniel Wagner <dwagner@suse.de>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH rt-tests v2 1/3] rt-numa: Use sched_getaffinity() instead
+ of pthread_getaffinity_np()
+Message-ID: <20210719080025.rldl2u424payj6v3@beryllium.lan>
+References: <20210708151827.21430-1-dwagner@suse.de>
+ <20210708151827.21430-2-dwagner@suse.de>
+ <7e1f5d9-43f3-84ea-4c87-725cea71f15@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:UkBuBQ5jP2bFLgAIB0WM8jYjER0ZRFI9JiJltyIlE3wLomFEH2i
- Sv/KZr24o4ZDf8yWg9J+OTW3xeW48IJRmJY7hFIR2Qpece0IbgvJ1t9exJqW8gv3Sd4fHjA
- /VIUzo4uRM/O3NJkA+CSr8rJi4HXGRxVyaPCWmise3W9n9bP3232/MK36wjPOTpLkiow1Gb
- w/S4c6y2I2AmEHkqFZB8g==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:CtdQEPmWUWI=:hYCyshGp2oYcnAnuvPJTr+
- QBq0eJ/7MJgQgmmlCoqytu4GZMMbMtm9vjFt4nHUQqTPUpvy/wXS07Ih5ejpFHKJUO44bW9Cz
- xC0fw2GwFMe4Ecl+Ioj+Tks/+jlBRkizUoioI1Ol8zc+F9ozMp1NsmMKpc0RYcsT//w54sl5/
- Bs17QStd9ESQC3YpRYC1VpT2Wzs5Oa62/gs9oV/WSYjI5+h46ch0UxIKbfbIGk6Wjm8BCITFA
- EUtwf0nG5bUOGrEFnCI0Cy0/1H5xdtGrvVPv2g6FWzdEPSkhACLrbEZ7WYTuihX6IzwNMcsyC
- 8R+vliVX43aUPNAibJwdUG9GpS4t59PcmDY/zzQsDGw1B+wjQX5cjbDm4z5RdHPX1U2Q4RzG4
- eaUAfuiduNCVMt04CjVzwVxtAFXp2VAUFeNw+F6GL6N1IEgRzzw7APQiCmShrmuwkts2itNsk
- 2oJiCXzoba/bV4EhNW8+LScWTzwlfju9heSkbh7vM8RY299Bp/gvIepBWD9OwYmznBOgLqboc
- ljlFpfROT6py9A0U0qsw6KtLgXnLatULR3waP2PbvSae7CXEmvhdFg4bUaNj6NjTsmOYY8e1Y
- 2StdaAtRNerjpObVYj6VlN5f3u3gCnN77aN4EKcgih6wLCJIIhlUj2YTk0yD4oQA3ra31jDt2
- hoWUtlyEHfwRz6/YzdO22F3KbQwHdBeC1/sp1QHonIH5x4Hg6KBWzstdF3/mSDniz+y2nLmJw
- nFTEgRjdpNq5k4oV2+LFQYFhLIcWrIxuE+0AUK0MQEV779I8o5g84IgBEB+dNPXIYQJfBO6+/
- c9yMyXK2OfYQEvzNF/RxNRR+21K1jNcJP2i3d9NQsNjUs85JCaanYXrlwCTrnSYA1jqZ3DjrJ
- 4QK+4UwgExBCFaX5BLdTRvSZq0kxCJJQgUwnegp/Z4Vtr++9zypLfGdL/s61HMx82HAOQb6l0
- HERxif3awRCHKeY8hGaifZL/B6IgJ8enTU0wUVfx4pa+1DR46w9Bg2FteVdvw4rOam5zO6FhC
- S2XwiNCT1x+NH+UpH8Yv+Ea6CDX/W5oKIlc7lKqP3JfnTDMYvKrSsiKbrMRTtk7pJDVE0kXir
- ErrY8Vao8FeDrGVGalTwUgxmz4m0WL4vpkm
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <7e1f5d9-43f3-84ea-4c87-725cea71f15@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-(a pox on whomever broke evolution text quoting yet again)
+On Fri, Jul 09, 2021 at 01:58:51PM -0400, John Kacur wrote:
+> It looks okay on the surface but I would like to know where you tested.
 
-On Sun, 2021-07-18 at 23:19 +0200, Vlastimil Babka wrote:
->
-> Hm you mention put_cpu_partial() but your patch handles only the
-> unfreeze_partial() call from that function?
+x86_64 and armv7. FWIW, pthread_getaffinity_np() is a fancy wrapper
+around sched_getaffinity():
 
-Indeed, and that's because when I poked that slub_get_cpu_ptr(), it
-poked me back by real deal deadlocking on boot, so I posted the
-restoration of previously existing exclusion points with the
-unlock/relock to appease lockdep (big hairy wart) bit instead.
+  https://github.com/bminor/glibc/blob/master/nptl/pthread_getaffinity.c#L34
 
->  If I understand the problem
-> correctly, all modifications of cpu_slab->partial has to be protected
-> on RT after the local_lock conversion, thus also the one that
-> put_cpu_partial() does by itself (via this_cpu_cmpxchg).
+> Also, in your message you explain that you can't do a static build
+> but we never made static builds a requirment for rt-tests.
 
-Yup, that's what I concluded too, but box disagreed by not booting when
-I did that, while seemingly being perfectly fine with the one in
-put_cpu_partial() itself.  I figured my slub_get_cpu_ptr() replacement
-had failed due to list_lock/local_lock order woes that I didn't notice
-until after box bricked on me, but despite the unlock/relock in this
-patch, it still manages to be a -ENOBOOT.
+So you are saying static builds are not supported at all?
 
-	-Mike
+> I know from
+> your cover letter than you are trying to do something with arm, if this
+> is your motivation you should put it in your message. Even if this is your 
+> motivation is there a reason we have to have a static build there?
+
+Sure thing, I'll add more to the commit message. I just find it strange
+that you are starting to argue static builds are not supported. This is
+very handy especially since the linker dependency on libnuma. I can drop
+the binary on the target without the need to install libnuma into the
+rootfs. It is not available on all distro for armv7.
+
+Another user of static builds is the LAVA test suite. It ships the
+rt-tests programs as static builds so that the test can run without the
+need to pre populate the rootfs with the correct binary:
+
+  https://github.com/Linaro/test-definitions/tree/master/automated/linux/cyclictest/bin
+  https://github.com/Linaro/test-definitions/blob/master/automated/linux/cyclictest/cyclictest.sh#L41
+
+I am not really a big fan of this either and wont defend it. I am just
+listening existing users.
+
+> Finally, you put "fixes f240656b056b", it is useful to know where this
+> was introduced in trying to figure out whether we can really replace a 
+> pthread call with the sched call, but then phrase it that way, because
+> as far as I know that commit is not a problem needing fixing, so put
+> "pthread_getaffinity_np call introduced in f240656b056b"
+> or something like that.
+
+From my POV it is fixing a bug. If you decide static builds are not
+supported, please say so. This allows me to discuss this issue with the
+LAVA folks.
+
+Thanks,
+Daniel
 
