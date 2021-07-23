@@ -2,99 +2,77 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D74F4C4320A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jul 2021 10:08:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E0CF8C4338F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jul 2021 11:07:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BF9CF60E73
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jul 2021 10:08:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BA31460E75
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jul 2021 11:07:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231408AbhGWJ1u (ORCPT
+        id S231704AbhGWK1M (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Jul 2021 05:27:50 -0400
-Received: from outbound-smtp49.blacknight.com ([46.22.136.233]:34939 "EHLO
-        outbound-smtp49.blacknight.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230008AbhGWJ1t (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Jul 2021 05:27:49 -0400
-Received: from mail.blacknight.com (pemlinmail06.blacknight.ie [81.17.255.152])
-        by outbound-smtp49.blacknight.com (Postfix) with ESMTPS id 12FCEFB308
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jul 2021 11:00:55 +0100 (IST)
-Received: (qmail 9118 invoked from network); 23 Jul 2021 10:00:54 -0000
-Received: from unknown (HELO stampy.112glenside.lan) (mgorman@techsingularity.net@[84.203.17.255])
-  by 81.17.254.9 with ESMTPA; 23 Jul 2021 10:00:54 -0000
-From:   Mel Gorman <mgorman@techsingularity.net>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
-        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Mel Gorman <mgorman@techsingularity.net>
-Subject: [PATCH 1/2] preempt: Provide preempt_*_(no)rt variants
-Date:   Fri, 23 Jul 2021 11:00:33 +0100
-Message-Id: <20210723100034.13353-2-mgorman@techsingularity.net>
-X-Mailer: git-send-email 2.26.2
-In-Reply-To: <20210723100034.13353-1-mgorman@techsingularity.net>
-References: <20210723100034.13353-1-mgorman@techsingularity.net>
+        Fri, 23 Jul 2021 06:27:12 -0400
+Received: from foss.arm.com ([217.140.110.172]:44520 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S230135AbhGWK1L (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 23 Jul 2021 06:27:11 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 8765C106F;
+        Fri, 23 Jul 2021 04:07:44 -0700 (PDT)
+Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 7D96A3F694;
+        Fri, 23 Jul 2021 04:07:42 -0700 (PDT)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     Mark Brown <broonie@kernel.org>
+Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        linux-rt-users@vger.kernel.org, x86@kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        "Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>, Borislav Petkov <bp@alien8.de>,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>
+Subject: Re: [PATCH 3/3] arm64/fpsimd: Fix FPSIMD context handling vs PREEMPT_RT
+In-Reply-To: <20210722183210.GF5258@sirena.org.uk>
+References: <20210722175157.1367122-1-valentin.schneider@arm.com> <20210722175157.1367122-4-valentin.schneider@arm.com> <20210722183210.GF5258@sirena.org.uk>
+Date:   Fri, 23 Jul 2021 12:07:35 +0100
+Message-ID: <875yx1mgp4.mognet@arm.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+On 22/07/21 19:32, Mark Brown wrote:
+> On Thu, Jul 22, 2021 at 06:51:57PM +0100, Valentin Schneider wrote:
+>> Running v5.13-rt1 on my arm64 Juno board triggers:
+>
+> Acked-by: Mark Brown <broonie@kernel.org>
+>
 
-RT needs a few preempt_disable/enable points which are not necessary
-otherwise. Implement variants to avoid #ifdeffery.
+Thanks!
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
----
- include/linux/preempt.h | 18 +++++++++++++++++-
- 1 file changed, 17 insertions(+), 1 deletion(-)
+>> [   11.337654] WARNING: CPU: 4 PID: 1 at arch/arm64/kernel/fpsimd.c:296 task_fpsimd_load (arch/arm64/kernel/fpsimd.c:296 (discriminator 1))
+>> [   11.337692] Modules linked in:
+>> [   11.337705] CPU: 4 PID: 1 Comm: init Not tainted 5.13.0-rt1 #52
+>> [   11.337719] Hardware name: ARM Juno development board (r0) (DT)
+>> [   11.337727] pstate: 40000005 (nZcv daif -PAN -UAO -TCO BTYPE=--)
+>> [   11.337740] pc : task_fpsimd_load (arch/arm64/kernel/fpsimd.c:296 (discriminator 1))
+>> [   11.337755] lr : task_fpsimd_load (arch/arm64/kernel/fpsimd.c:296 (discriminator 3))
+>> [   11.337769] sp : ffff800012f4bdd0
+>> [   11.337775] x29: ffff800012f4bdd0 x28: ffff000800160000 x27: 0000000000000000
+>> [   11.337797] x26: 0000000000000000 x25: 0000000000000000 x24: ffff0008001606f0
+>> [   11.337816] x23: ffff000800160000 x22: ffff000800160700 x21: ffff000800160000
+>
+> For readability it's probably better to not include the entire register
+> contents here - the backtrace ends up about as large as the actual
+> changelog, a good chunk of which is just the register contents.
 
-diff --git a/include/linux/preempt.h b/include/linux/preempt.h
-index 9881eac0698f..3434f4618178 100644
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -184,7 +184,11 @@ do { \
- 	preempt_count_dec(); \
- } while (0)
- 
--#define preempt_enable_no_resched() sched_preempt_enable_no_resched()
-+#ifdef CONFIG_PREEMPT_RT
-+# define preempt_enable_no_resched() sched_preempt_enable_no_resched()
-+#else
-+# define preempt_enable_no_resched() preempt_enable()
-+#endif
- 
- #define preemptible()	(preempt_count() == 0 && !irqs_disabled())
- 
-@@ -278,6 +282,18 @@ do { \
- 		set_preempt_need_resched(); \
- } while (0)
- 
-+#ifdef CONFIG_PREEMPT_RT
-+# define preempt_disable_rt()		preempt_disable()
-+# define preempt_enable_rt()		preempt_enable()
-+# define preempt_disable_nort()		barrier()
-+# define preempt_enable_nort()		barrier()
-+#else
-+# define preempt_disable_rt()		barrier()
-+# define preempt_enable_rt()		barrier()
-+# define preempt_disable_nort()		preempt_disable()
-+# define preempt_enable_nort()		preempt_enable()
-+#endif
-+
- #ifdef CONFIG_PREEMPT_NOTIFIERS
- 
- struct preempt_notifier;
--- 
-2.26.2
-
+Noted.
