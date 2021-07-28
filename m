@@ -2,114 +2,125 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.5 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9DAC9C4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jul 2021 17:00:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A570DC4338F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jul 2021 19:34:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 78BC761039
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jul 2021 17:00:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 89FEE6023D
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jul 2021 19:34:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229716AbhG1RAC (ORCPT
+        id S230375AbhG1TeY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 28 Jul 2021 13:00:02 -0400
-Received: from smtp-out1.suse.de ([195.135.220.28]:59744 "EHLO
-        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229515AbhG1RAC (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 28 Jul 2021 13:00:02 -0400
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out1.suse.de (Postfix) with ESMTPS id 79A672233C;
-        Wed, 28 Jul 2021 16:59:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1627491599; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=YyXW6xUfPTUnUZJ6oH3KvHje/GF1ltuNjbTPg6/jqyE=;
-        b=SLfsEOfTDWgPGZMX9EwLdou2yiJ1cNqMm1JnCc60ppYx4zP58wYCVWVP4AVkMWBzXhKOaQ
-        KgKybCqoTDFIT+NMUy9RpZcjBMq0AG9LFdTPM5EGK+gql7o5p7r6PnUiil5usqMwIWn0N/
-        M1iRWJvLucyPd0P0aNxMLm7aVZwb7yU=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1627491599;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=YyXW6xUfPTUnUZJ6oH3KvHje/GF1ltuNjbTPg6/jqyE=;
-        b=0P3adp+HQmpyIEwwxzYx+Ng1ZQyFD5TrSY6CzwhiO+b13JttT4oetEw/h4adeBSFccPv7C
-        fXF4gUqPAky8tJBw==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4712E13AC2;
-        Wed, 28 Jul 2021 16:59:59 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id VU19EA+NAWEbDgAAMHmgww
-        (envelope-from <vbabka@suse.cz>); Wed, 28 Jul 2021 16:59:59 +0000
-Subject: Re: [rfc/patch] mm/slub: restore/expand unfreeze_partials() local
- exclusion scope
-To:     Mike Galbraith <efault@gmx.de>,
+        Wed, 28 Jul 2021 15:34:24 -0400
+Received: from foss.arm.com ([217.140.110.172]:35262 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229986AbhG1TeX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 28 Jul 2021 15:34:23 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 3B3401FB;
+        Wed, 28 Jul 2021 12:34:21 -0700 (PDT)
+Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id BFA463F66F;
+        Wed, 28 Jul 2021 12:34:18 -0700 (PDT)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     Frederic Weisbecker <frederic@kernel.org>
+Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>
-Cc:     linux-rt-users@vger.kernel.org,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-References: <87tul5p2fa.ffs@nanos.tec.linutronix.de>
- <878s2fnv79.ffs@nanos.tec.linutronix.de>
- <6c0e20dd84084036d5068e445746c3ed7e82ec4b.camel@gmx.de>
- <7431ceb9761c566cf2d1f6f263247acd8d38c4b5.camel@gmx.de>
- <f9935c4c-078c-4b52-5297-64ee22272664@suse.cz>
- <f16b78bd3bb8fecf734017d40274e4c3294554ab.camel@gmx.de>
- <240f104fc6757d8c38fa01342511eda931632d5a.camel@gmx.de>
- <69da2ecd-a797-e264-fbfa-13108dc7a573@suse.cz>
- <84a7bd02cf109c6a5a8c7cc2bfc2898cb98270aa.camel@gmx.de>
- <5be1a703-9a0a-4115-1d69-634e5e8ecefd@suse.cz>
- <bd121f5db01404774dbecc70bd7155f8431d8046.camel@gmx.de>
- <76dedfc3-0497-1776-d006-486b9bfd88da@suse.cz>
- <72a045663bf8f091ae11dd328d5e085541d54fcd.camel@gmx.de>
- <18ca0ce9-3407-61e1-31d6-5c48e80eb5bb@suse.cz>
- <73f032c2-70f1-77b6-9fd2-9aca52fd5b4d@suse.cz>
- <b41fa4f2-8368-f33a-10c2-68554b16eb1e@suse.cz>
- <e3470ab357b48bccfbd1f5133b982178a7d2befb.camel@gmx.de>
- <26c181c9-ec48-09e2-2d73-6fc769a19c76@suse.cz>
- <7970e9c3de5d29b93f692001a3796da1b3df45b4.camel@gmx.de>
-From:   Vlastimil Babka <vbabka@suse.cz>
-Message-ID: <74c71cac-f36a-9c42-2ab1-837c6a068306@suse.cz>
-Date:   Wed, 28 Jul 2021 18:59:24 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.11.0
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        "Paul E. McKenney" <paulmck@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>
+Subject: Re: [PATCH 2/3] rcu/nocb: Check for migratability rather than pure preemptability
+In-Reply-To: <20210727230814.GC283787@lothringen>
+References: <20210721115118.729943-1-valentin.schneider@arm.com> <20210721115118.729943-3-valentin.schneider@arm.com> <20210727230814.GC283787@lothringen>
+Date:   Wed, 28 Jul 2021 20:34:14 +0100
+Message-ID: <87pmv2kzbd.mognet@arm.com>
 MIME-Version: 1.0
-In-Reply-To: <7970e9c3de5d29b93f692001a3796da1b3df45b4.camel@gmx.de>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 7/27/21 6:09 AM, Mike Galbraith wrote:
-> On Mon, 2021-07-26 at 23:26 +0200, Vlastimil Babka wrote:
->> On 7/26/21 7:00 PM, Mike Galbraith wrote:
->>>
->>> Why not do something like the below?...
+On 28/07/21 01:08, Frederic Weisbecker wrote:
+> On Wed, Jul 21, 2021 at 12:51:17PM +0100, Valentin Schneider wrote:
+>> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+>> ---
+>>  kernel/rcu/tree_plugin.h | 3 +--
+>>  1 file changed, 1 insertion(+), 2 deletions(-)
 >>
->> Yep, sounds like a good approach, thanks. Percpu partial is not *the*
->> SLUB fast path, so it should be sufficient without the lockless cmpxchg
->> tricks. Will incorporate in updated series.
+>> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+>> index ad0156b86937..6c3c4100da83 100644
+>> --- a/kernel/rcu/tree_plugin.h
+>> +++ b/kernel/rcu/tree_plugin.h
+>> @@ -70,8 +70,7 @@ static bool rcu_rdp_is_offloaded(struct rcu_data *rdp)
+>>              !(lockdep_is_held(&rcu_state.barrier_mutex) ||
+>>                (IS_ENABLED(CONFIG_HOTPLUG_CPU) && lockdep_is_cpus_held()) ||
+>>                rcu_lockdep_is_held_nocb(rdp) ||
+>> -		  (rdp == this_cpu_ptr(&rcu_data) &&
+>> -		   !(IS_ENABLED(CONFIG_PREEMPT_COUNT) && preemptible())) ||
+>> +		  (rdp == this_cpu_ptr(&rcu_data) && is_pcpu_safe()) ||
+>
+> I fear that won't work. We really need any caller of rcu_rdp_is_offloaded()
+> on the local rdp to have preemption disabled and not just migration disabled,
+> because we must protect against concurrent offloaded state changes.
+>
+> The offloaded state is changed by a workqueue that executes on the target rdp.
+>
+> Here is a practical example where it matters:
+>
+>            CPU 0
+>            -----
+>            // =======> task rcuc running
+>            rcu_core {
+>              rcu_nocb_lock_irqsave(rdp, flags) {
+>                    if (!rcu_segcblist_is_offloaded(rdp->cblist)) {
+>                      // is not offloaded right now, so it's going
+>                        // to just disable IRQs. Oh no wait:
+>            // preemption
+>            // ========> workqueue running
+>            rcu_nocb_rdp_offload();
+>            // ========> task rcuc resume
+>                      local_irq_disable();
+>                    }
+>                }
+>              ....
+>                      rcu_nocb_unlock_irqrestore(rdp, flags) {
+>                    if (rcu_segcblist_is_offloaded(rdp->cblist)) {
+>                        // is offloaded right now so:
+>                        raw_spin_unlock_irqrestore(rdp, flags);
+>
+> And that will explode because that's an impaired unlock on nocb_lock.
 
-The updated series incorporating hopefully all fixes from Mike and
-bigeasy, and rebased to 5.14-rc3 (Thomas told me RT is moving to it), is
-here:
+Harumph, that doesn't look good, thanks for pointing this out.
 
-https://git.kernel.org/pub/scm/linux/kernel/git/vbabka/linux.git/log/?h=slub-local-lock-v3r0
+AFAICT PREEMPT_RT doesn't actually require to disable softirqs here (since
+it forces RCU callbacks on the RCU kthreads), but disabled softirqs seem to
+be a requirement for much of the underlying functions and even some of the
+callbacks (delayed_put_task_struct() ~> vfree() pays close attention to
+in_interrupt() for instance).
 
-I'll post it to linux-mm tomorrow.
+Now, if the offloaded state was (properly) protected by a local_lock, do
+you reckon we could then keep preemption enabled?
+
+From a naive outsider PoV, rdp->nocb_lock looks like a decent candidate,
+but it's a *raw* spinlock (I can't tell right now whether changing this is
+a horrible idea or not), and then there's
+
+81c0b3d724f4 ("rcu/nocb: Avoid ->nocb_lock capture by corresponding CPU")
+
+on top...
