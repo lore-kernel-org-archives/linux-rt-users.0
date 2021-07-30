@@ -2,94 +2,112 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BBFB6C4338F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 20:49:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C965C4320A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9C1C060F48
-	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 20:49:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6848E60FE7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230455AbhG3Uta (ORCPT
+        id S233053AbhG3WSk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Jul 2021 16:49:30 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:58840 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230310AbhG3Ut3 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 30 Jul 2021 16:49:29 -0400
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1627678163;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Uqi2XqGkI8u0LpsGdXDAcsLF+VndL2iSN5iYDs7Vj2E=;
-        b=HS9dY7/0A/gGRrSJkeh/un5zvIV3mG7lRXVGzKipoXN6/ONKyo0q14r7kPGOxKRcfE4qzt
-        UHkclIfsEDYfhnX9dKwF6+FB/EAyJfbJhmbii4akdtLMUDb2UXiS0wAgmRsCKpIrVVLyY8
-        Dx9ulhXvJvyAtCx40H4WBVjuKfGxTl/sdLmGkG24wlWRGaEmsQb3VoenytRP7sHtWS0CNw
-        dmgAQiEIcHv6Tx119T64QiSdMVWzxQRoln89k36gQEyFGlbKRFXLBB+oo5g9x3GDSTsdlL
-        ryU/19aaZO/IlPwAFRExYPPIggOPbgV4gYYj2o/H4nZDdcv2XNMxJXyDXOlYdg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1627678163;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Uqi2XqGkI8u0LpsGdXDAcsLF+VndL2iSN5iYDs7Vj2E=;
-        b=ys5OwQ6pwA6iphMbA2d9rWNeASY9bCQNC9TYiTpQU3om337x2Bj9s67Cs6iebdU0qiaR4E
-        Cg61xH8RY8+t3KBQ==
-To:     Mike Galbraith <efault@gmx.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>
-Subject: Re: v5.14-rc3-rt1 losing wakeups?
-In-Reply-To: <2ae27233ab091d09a7d1e971a47144b40dd51fa0.camel@gmx.de>
-References: <20210730110753.jvli6alm63h5lefy@linutronix.de>
- <2ae27233ab091d09a7d1e971a47144b40dd51fa0.camel@gmx.de>
-Date:   Fri, 30 Jul 2021 22:49:22 +0200
-Message-ID: <87pmuzsf1p.ffs@tglx>
+        Fri, 30 Jul 2021 18:18:40 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51268 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S232376AbhG3WSj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 30 Jul 2021 18:18:39 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 9498B60F94;
+        Fri, 30 Jul 2021 22:18:34 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
+        (envelope-from <rostedt@rostedt.homelinux.com>)
+        id 1m9apt-002V1L-Gs; Fri, 30 Jul 2021 18:18:33 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-trace-devel@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Subject: [PATCH 06/17] libtracefs: Add unit test to test tracefs_sql() where clause
+Date:   Fri, 30 Jul 2021 18:18:13 -0400
+Message-Id: <20210730221824.595597-7-rostedt@goodmis.org>
+X-Mailer: git-send-email 2.30.2
+In-Reply-To: <20210730221824.595597-1-rostedt@goodmis.org>
+References: <20210730221824.595597-1-rostedt@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Mike,
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-On Fri, Jul 30 2021 at 17:21, Mike Galbraith wrote:
-> On Fri, 2021-07-30 at 13:07 +0200, Sebastian Andrzej Siewior wrote:
->> Dear RT folks!
->>
->> I'm pleased to announce the v5.14-rc3-rt1 patch set.
->
-> Damn, I was hoping to figure out wth is going on before the 62 patch
-> version of tglx/rtmutex branch made its way out into the big wide
-> world, but alas, I was too slow.
->
-> I started meeting GUI hangs as soon as I merged the 62 patch series
-> into my 5.13-rt based master tree.  I took tglx/rtmutex (977db8e523f5)
-> back to 5.13-rt to make sure it wasn't some booboo I had made in the
-> rolled forward tree, but the hangs followed the backport, and I just
-> met them in virgin v5.14-rc3-rt1, so unfortunately it wasn't some local
-> booboo, there's a bug lurking.  Maybe a config sensitive one, as what
-> I'm seeing on my box seems unlikely to escape into the wild otherwise.
->
-> First symptom is KDE/Plasma's task manager going comatose.  Notice soon
+Add a test to test filtering of events via the WHERE clause.
 
-KDE/Plasma points at the new fangled rtmutex based ww_mutex from
-Peter. I tried to test the heck out of it...
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ utest/tracefs-utest.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
-Which graphics driver is in use on that machine?
+diff --git a/utest/tracefs-utest.c b/utest/tracefs-utest.c
+index f4e1a6b90a46..645c84c31f0e 100644
+--- a/utest/tracefs-utest.c
++++ b/utest/tracefs-utest.c
+@@ -53,6 +53,13 @@
+ #define SQL_3_EVENT	"wakeup_lat"
+ #define SQL_3_SQL	"select start.pid, end.next_prio as prio, (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) as lat from sched_waking as start join sched_switch as end on start.pid = end.next_pid"
+ 
++#define SQL_4_EVENT	"wakeup_lat_2"
++#define SQL_4_SQL	"select start.pid, end.next_prio as prio, (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) as lat from sched_waking as start join sched_switch as end on start.pid = end.next_pid where (start.prio >= 1 && start.prio < 100) || !(start.pid >= 0 && start.pid <= 1) && end.prev_pid != 0"
++
++#define SQL_5_EVENT	"irq_lat"
++#define SQL_5_SQL	"select end.common_pid as pid, (end.common_timestamp.usecs - start.common_timestamp.usecs) as irq_lat from irq_disable as start join irq_enable as end on start.common_pid = end.common_pid, start.parent_offs == end.parent_offs where start.common_pid != 0"
++#define SQL_5_START	"irq_disable"
++
+ static struct tracefs_instance *test_instance;
+ static struct tep_handle *test_tep;
+ struct test_sample {
+@@ -336,6 +343,7 @@ static void test_instance_trace_sql(struct tracefs_instance *instance)
+ 	struct tracefs_synth *synth;
+ 	struct trace_seq seq;
+ 	struct tep_handle *tep;
++	struct tep_event *event;
+ 	int ret;
+ 
+ 	tep = tracefs_local_events(NULL);
+@@ -364,6 +372,23 @@ static void test_instance_trace_sql(struct tracefs_instance *instance)
+ 	tracefs_synth_free(synth);
+ 	trace_seq_reset(&seq);
+ 
++	synth = tracefs_sql(tep, SQL_4_EVENT, SQL_4_SQL, NULL);
++	CU_TEST(synth != NULL);
++	ret = tracefs_synth_show(&seq, instance, synth);
++	CU_TEST(ret == 0);
++	tracefs_synth_free(synth);
++	trace_seq_reset(&seq);
++
++	event = tep_find_event_by_name(tep, NULL, SQL_5_START);
++	if (event) {
++		synth = tracefs_sql(tep, SQL_5_EVENT, SQL_5_SQL, NULL);
++		CU_TEST(synth != NULL);
++		ret = tracefs_synth_show(&seq, instance, synth);
++		CU_TEST(ret == 0);
++		tracefs_synth_free(synth);
++		trace_seq_reset(&seq);
++	}
++
+ 	tep_free(tep);
+ 	trace_seq_destroy(&seq);
+ }
+-- 
+2.30.2
 
-> been helpful anyway, box at a glance looks fine.  With lockdep enabled,
-> a failing kernel gets so buggered it isn't even able to crashdump.
-
-Ouch.
-
-Thanks,
-
-        tglx
