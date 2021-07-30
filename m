@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23531C19F33
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D424CC19F31
 	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 09A94610A0
+	by mail.kernel.org (Postfix) with ESMTP id BA3B361057
 	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233247AbhG3WSl (ORCPT
+        id S233262AbhG3WSm (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Jul 2021 18:18:41 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51308 "EHLO mail.kernel.org"
+        Fri, 30 Jul 2021 18:18:42 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51306 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232746AbhG3WSk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S232680AbhG3WSk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 30 Jul 2021 18:18:40 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A0FD561052;
+        by mail.kernel.org (Postfix) with ESMTPSA id 9DD6F61042;
         Fri, 30 Jul 2021 22:18:34 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1m9apt-002V18-DX; Fri, 30 Jul 2021 18:18:33 -0400
+        id 1m9apt-002V1Y-KC; Fri, 30 Jul 2021 18:18:33 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,9 +37,9 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH 02/17] tracefs: Add unit tests for tracefs_sql()
-Date:   Fri, 30 Jul 2021 18:18:09 -0400
-Message-Id: <20210730221824.595597-3-rostedt@goodmis.org>
+Subject: [PATCH 10/17] libtracefs: Add a parse_error() helper function to record errors
+Date:   Fri, 30 Jul 2021 18:18:17 -0400
+Message-Id: <20210730221824.595597-11-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210730221824.595597-1-rostedt@goodmis.org>
 References: <20210730221824.595597-1-rostedt@goodmis.org>
@@ -51,81 +51,44 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add basic unit test for tracefs_sql()...
+Add parse_error() that calls into sql_parse_error() with the appropriate
+ap argument. That is, parse_error() takes a normal printf() form and then
+translates it to the vprintf from of sql_parse_error.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- utest/tracefs-utest.c | 43 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
+ src/tracefs-sqlhist.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-diff --git a/utest/tracefs-utest.c b/utest/tracefs-utest.c
-index 2a99217b938a..89bb1cce61f7 100644
---- a/utest/tracefs-utest.c
-+++ b/utest/tracefs-utest.c
-@@ -44,6 +44,12 @@
- #define KRETPROBE_ADDR	"do_sys_openat2"
- #define KRETPROBE_FMT	"ret=$retval"
+diff --git a/src/tracefs-sqlhist.c b/src/tracefs-sqlhist.c
+index 887c2441a39e..c0875d630391 100644
+--- a/src/tracefs-sqlhist.c
++++ b/src/tracefs-sqlhist.c
+@@ -8,6 +8,7 @@
+  */
+ #include <trace-seq.h>
+ #include <stdlib.h>
++#include <stdarg.h>
+ #include <errno.h>
  
-+#define SQL_1_EVENT	"wakeup_1"
-+#define SQL_1_SQL	"select sched_switch.next_pid as woke_pid, sched_waking.common_pid as waking_pid from sched_waking join sched_switch on sched_switch.next_pid = sched_waking.pid"
-+
-+#define SQL_2_EVENT	"wakeup_2"
-+#define SQL_2_SQL	"select woke.next_pid as woke_pid, wake.common_pid as waking_pid from sched_waking as wake join sched_switch as woke on woke.next_pid = wake.pid"
-+
- static struct tracefs_instance *test_instance;
- static struct tep_handle *test_tep;
- struct test_sample {
-@@ -322,6 +328,41 @@ static void test_ftrace_marker(void)
- 	test_instance_ftrace_marker(test_instance);
+ #include "tracefs.h"
+@@ -153,6 +154,16 @@ __hidden void sql_parse_error(struct sqlhist_bison *sb, const char *text,
+ 	trace_seq_destroy(&s);
  }
  
-+static void test_instance_trace_sql(struct tracefs_instance *instance)
++static void parse_error(struct sqlhist_bison *sb, const char *text,
++			const char *fmt, ...)
 +{
-+	struct tracefs_synth *synth;
-+	struct trace_seq seq;
-+	struct tep_handle *tep;
-+	int ret;
++	va_list ap;
 +
-+	tep = tracefs_local_events(NULL);
-+	CU_TEST(tep != NULL);
-+
-+	trace_seq_init(&seq);
-+
-+	synth = tracefs_sql(tep, SQL_1_EVENT, SQL_1_SQL, NULL);
-+	CU_TEST(synth != NULL);
-+	ret = tracefs_synth_show(&seq, instance, synth);
-+	CU_TEST(ret == 0);
-+	tracefs_synth_free(synth);
-+	trace_seq_reset(&seq);
-+
-+	synth = tracefs_sql(tep, SQL_2_EVENT, SQL_2_SQL, NULL);
-+	CU_TEST(synth != NULL);
-+	ret = tracefs_synth_show(&seq, instance, synth);
-+	CU_TEST(ret == 0);
-+	tracefs_synth_free(synth);
-+	trace_seq_reset(&seq);
-+
-+	tep_free(tep);
-+	trace_seq_destroy(&seq);
++	va_start(ap, fmt);
++	sql_parse_error(sb, text, fmt, ap);
++	va_end(ap);
 +}
 +
-+static void test_trace_sql(void)
-+{
-+	test_instance_trace_sql(test_instance);
-+}
-+
- static void test_trace_file(void)
+ static inline unsigned int quick_hash(const char *str)
  {
- 	const char *tmp = get_rand_str();
-@@ -1338,6 +1379,8 @@ void test_tracefs_lib(void)
- 		fprintf(stderr, "Suite \"%s\" cannot be ceated\n", TRACEFS_SUITE);
- 		return;
- 	}
-+	CU_add_test(suite, "trace sql",
-+		    test_trace_sql);
- 	CU_add_test(suite, "tracing file / directory APIs",
- 		    test_trace_file);
- 	CU_add_test(suite, "instance file / directory APIs",
+ 	unsigned int val = 0;
 -- 
 2.30.2
 
