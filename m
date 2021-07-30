@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C965C4320A
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DA45AC432BE
 	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6848E60FE7
+	by mail.kernel.org (Postfix) with ESMTP id C01B06101C
 	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233053AbhG3WSk (ORCPT
+        id S233179AbhG3WSl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Jul 2021 18:18:40 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51268 "EHLO mail.kernel.org"
+        Fri, 30 Jul 2021 18:18:41 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51246 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232376AbhG3WSj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S229604AbhG3WSj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 30 Jul 2021 18:18:39 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9498B60F94;
+        by mail.kernel.org (Postfix) with ESMTPSA id 9080560F13;
         Fri, 30 Jul 2021 22:18:34 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1m9apt-002V1L-Gs; Fri, 30 Jul 2021 18:18:33 -0400
+        id 1m9apt-002V1S-Ic; Fri, 30 Jul 2021 18:18:33 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,9 +37,9 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH 06/17] libtracefs: Add unit test to test tracefs_sql() where clause
-Date:   Fri, 30 Jul 2021 18:18:13 -0400
-Message-Id: <20210730221824.595597-7-rostedt@goodmis.org>
+Subject: [PATCH 08/17] libtracefs: Make parser unique to libtracefs
+Date:   Fri, 30 Jul 2021 18:18:15 -0400
+Message-Id: <20210730221824.595597-9-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210730221824.595597-1-rostedt@goodmis.org>
 References: <20210730221824.595597-1-rostedt@goodmis.org>
@@ -51,63 +51,51 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add a test to test filtering of events via the WHERE clause.
+Add %define api.prefix and defines to have the parser global variables use
+tracefs_* instead of yy*, as without this, if a tool that links to this
+library, and tries to use the synth sql parsing, it may end up using its
+own yyparse() and friends functions.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- utest/tracefs-utest.c | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+ src/sqlhist.y         | 10 ++++++++++
+ src/tracefs-sqlhist.c |  2 +-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/utest/tracefs-utest.c b/utest/tracefs-utest.c
-index f4e1a6b90a46..645c84c31f0e 100644
---- a/utest/tracefs-utest.c
-+++ b/utest/tracefs-utest.c
-@@ -53,6 +53,13 @@
- #define SQL_3_EVENT	"wakeup_lat"
- #define SQL_3_SQL	"select start.pid, end.next_prio as prio, (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) as lat from sched_waking as start join sched_switch as end on start.pid = end.next_pid"
+diff --git a/src/sqlhist.y b/src/sqlhist.y
+index ce9cb58fb3a9..9d03a457ae84 100644
+--- a/src/sqlhist.y
++++ b/src/sqlhist.y
+@@ -30,6 +30,16 @@ extern void yyerror(struct sqlhist_bison *, char *fmt, ...);
+ %}
  
-+#define SQL_4_EVENT	"wakeup_lat_2"
-+#define SQL_4_SQL	"select start.pid, end.next_prio as prio, (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) as lat from sched_waking as start join sched_switch as end on start.pid = end.next_pid where (start.prio >= 1 && start.prio < 100) || !(start.pid >= 0 && start.pid <= 1) && end.prev_pid != 0"
+ %define api.pure
 +
-+#define SQL_5_EVENT	"irq_lat"
-+#define SQL_5_SQL	"select end.common_pid as pid, (end.common_timestamp.usecs - start.common_timestamp.usecs) as irq_lat from irq_disable as start join irq_enable as end on start.common_pid = end.common_pid, start.parent_offs == end.parent_offs where start.common_pid != 0"
-+#define SQL_5_START	"irq_disable"
++/* Change the globals to use tracefs_ prefix */
++%define api.prefix{tracefs_}
++%code provides
++{
++  #define YYSTYPE TRACEFS_STYPE
++  #define yylex tracefs_lex
++  #define yyerror tracefs_error
++}
 +
- static struct tracefs_instance *test_instance;
- static struct tep_handle *test_tep;
- struct test_sample {
-@@ -336,6 +343,7 @@ static void test_instance_trace_sql(struct tracefs_instance *instance)
- 	struct tracefs_synth *synth;
- 	struct trace_seq seq;
- 	struct tep_handle *tep;
-+	struct tep_event *event;
- 	int ret;
+ %lex-param {void *scanner}
+ %parse-param {struct sqlhist_bison *sb}
  
- 	tep = tracefs_local_events(NULL);
-@@ -364,6 +372,23 @@ static void test_instance_trace_sql(struct tracefs_instance *instance)
- 	tracefs_synth_free(synth);
- 	trace_seq_reset(&seq);
+diff --git a/src/tracefs-sqlhist.c b/src/tracefs-sqlhist.c
+index e8f77d60659f..933b3609733b 100644
+--- a/src/tracefs-sqlhist.c
++++ b/src/tracefs-sqlhist.c
+@@ -1021,7 +1021,7 @@ struct tracefs_synth *tracefs_sql(struct tep_handle *tep, const char *name,
+ 		return NULL;
+ 	}
  
-+	synth = tracefs_sql(tep, SQL_4_EVENT, SQL_4_SQL, NULL);
-+	CU_TEST(synth != NULL);
-+	ret = tracefs_synth_show(&seq, instance, synth);
-+	CU_TEST(ret == 0);
-+	tracefs_synth_free(synth);
-+	trace_seq_reset(&seq);
-+
-+	event = tep_find_event_by_name(tep, NULL, SQL_5_START);
-+	if (event) {
-+		synth = tracefs_sql(tep, SQL_5_EVENT, SQL_5_SQL, NULL);
-+		CU_TEST(synth != NULL);
-+		ret = tracefs_synth_show(&seq, instance, synth);
-+		CU_TEST(ret == 0);
-+		tracefs_synth_free(synth);
-+		trace_seq_reset(&seq);
-+	}
-+
- 	tep_free(tep);
- 	trace_seq_destroy(&seq);
- }
+-	ret = yyparse(&sb);
++	ret = tracefs_parse(&sb);
+ 	yylex_destroy(sb.scanner);
+ 
+ 	if (ret)
 -- 
 2.30.2
 
