@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D424CC19F31
-	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E4FFC4320E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BA3B361057
-	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5BC58610A7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jul 2021 22:18:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233262AbhG3WSm (ORCPT
+        id S233420AbhG3WSo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Jul 2021 18:18:42 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51306 "EHLO mail.kernel.org"
+        Fri, 30 Jul 2021 18:18:44 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51316 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232680AbhG3WSk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S232830AbhG3WSk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 30 Jul 2021 18:18:40 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9DD6F61042;
+        by mail.kernel.org (Postfix) with ESMTPSA id AFC5661054;
         Fri, 30 Jul 2021 22:18:34 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1m9apt-002V1Y-KC; Fri, 30 Jul 2021 18:18:33 -0400
+        id 1m9apt-002V1b-L1; Fri, 30 Jul 2021 18:18:33 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,9 +37,9 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH 10/17] libtracefs: Add a parse_error() helper function to record errors
-Date:   Fri, 30 Jul 2021 18:18:17 -0400
-Message-Id: <20210730221824.595597-11-rostedt@goodmis.org>
+Subject: [PATCH 11/17] libtracefs: Add error message when match fields are not FROM and JOIN events
+Date:   Fri, 30 Jul 2021 18:18:18 -0400
+Message-Id: <20210730221824.595597-12-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210730221824.595597-1-rostedt@goodmis.org>
 References: <20210730221824.595597-1-rostedt@goodmis.org>
@@ -51,44 +51,71 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add parse_error() that calls into sql_parse_error() with the appropriate
-ap argument. That is, parse_error() takes a normal printf() form and then
-translates it to the vprintf from of sql_parse_error.
+It is required that the "match" content (the ON portion of the SQL
+sequence) has a field from the FROM event and a field from the JOIN event.
+
+If they do not, then give a better message about what went wrong.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- src/tracefs-sqlhist.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ src/tracefs-sqlhist.c | 32 ++++++++++++++++++++++++++++++--
+ 1 file changed, 30 insertions(+), 2 deletions(-)
 
 diff --git a/src/tracefs-sqlhist.c b/src/tracefs-sqlhist.c
-index 887c2441a39e..c0875d630391 100644
+index c0875d630391..0489657bea03 100644
 --- a/src/tracefs-sqlhist.c
 +++ b/src/tracefs-sqlhist.c
-@@ -8,6 +8,7 @@
-  */
- #include <trace-seq.h>
- #include <stdlib.h>
-+#include <stdarg.h>
- #include <errno.h>
- 
- #include "tracefs.h"
-@@ -153,6 +154,16 @@ __hidden void sql_parse_error(struct sqlhist_bison *sb, const char *text,
- 	trace_seq_destroy(&s);
+@@ -593,6 +593,34 @@ static int update_vars(struct sql_table *table, struct field *event)
+ 	return 0;
  }
  
-+static void parse_error(struct sqlhist_bison *sb, const char *text,
-+			const char *fmt, ...)
++static int match_error(struct sqlhist_bison *sb, struct match *match,
++		       struct field *lmatch, struct field *rmatch)
 +{
-+	va_list ap;
++	struct field *lval = &match->lval->field;
++	struct field *rval = &match->rval->field;
++	struct field *field;
++	struct expr *expr;
 +
-+	va_start(ap, fmt);
-+	sql_parse_error(sb, text, fmt, ap);
-+	va_end(ap);
++	if (lval->system != lmatch->system ||
++	    lval->event != lmatch->event) {
++		expr = match->lval;
++		field = lval;
++	} else {
++		expr = match->rval;
++		field = rval;
++	}
++
++	sb->line_no = expr->line;
++	sb->line_idx = expr->idx;
++
++	parse_error(sb, field->raw,
++		    "'%s' and '%s' must be a field for each event: '%s' and '%s'\n",
++		    lval->raw, rval->raw, sb->table->to->field.raw,
++		    sb->table->from->field.raw);
++
++	return -1;
 +}
 +
- static inline unsigned int quick_hash(const char *str)
+ static int test_match(struct sql_table *table, struct match *match)
  {
- 	unsigned int val = 0;
+ 	struct field *lval, *rval;
+@@ -624,13 +652,13 @@ static int test_match(struct sql_table *table, struct match *match)
+ 		    (rval->event != to->event) ||
+ 		    (lval->system != from->system) ||
+ 		    (lval->event != from->event))
+-			return -1;
++			return match_error(table->sb, match, from, to);
+ 	} else {
+ 		if ((rval->system != from->system) ||
+ 		    (rval->event != from->event) ||
+ 		    (lval->system != to->system) ||
+ 		    (lval->event != to->event))
+-			return -1;
++			return match_error(table->sb, match, to, from);
+ 	}
+ 	return 0;
+ }
 -- 
 2.30.2
 
