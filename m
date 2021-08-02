@@ -2,93 +2,132 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ADBF3C4338F
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Aug 2021 08:41:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9F12C4338F
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Aug 2021 09:12:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8A8C060F36
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Aug 2021 08:41:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 902EF61057
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Aug 2021 09:12:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232799AbhHBIli (ORCPT
+        id S232917AbhHBJMZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 Aug 2021 04:41:38 -0400
-Received: from mout.gmx.net ([212.227.17.20]:45945 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229917AbhHBIli (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Aug 2021 04:41:38 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1627893647;
-        bh=S8Xjk9BlVfspQ9rOgHHKP13Ws7GQo5c0vYJFxqf7KEI=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=Ph8rAEQv8CKTv9fgNQZvQ9O3/4W4p9Igh+elJtNRxYbTnYNqiLQqhuwqjXI936lQC
-         1kq6Z5x5p43qWFvnb1ViciFiekDIjg5G8+FEBA5YJ4Caa/5+kHQ02G+FvxknPnYAgW
-         onKnmHr8bcB573DjtIv0Zhxj65MIHB9iJf6YlL/8=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.221.151.211]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MRmfi-1mcXye42xu-00TAF1; Mon, 02
- Aug 2021 10:40:47 +0200
-Message-ID: <5609f8ed59d5881a5aa7319ee41356a66397e0ed.camel@gmx.de>
-Subject: Re: v5.14-rc3-rt1 losing wakeups?
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
+        Mon, 2 Aug 2021 05:12:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55186 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232838AbhHBJMY (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 2 Aug 2021 05:12:24 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 47BDAC06175F;
+        Mon,  2 Aug 2021 02:12:15 -0700 (PDT)
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1627895533;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=I27DYbxJUYQ+kE3eUIbMjQoSNxzM2tRsRutJFBumFGM=;
+        b=gJ/p0xWPKsw2PEeZp4MuDvRWTc37/hTH7Kj/vjplyRpgHkgn+ba5Ev7xa4i5RgWQdBazyG
+        mPCixscS8mzjnRgoBSWhcWYjVI176nfEfosRZognczOUqu814JlcNl2DDeJsVRFhTso6gc
+        jIvXCJK6JuZTX62HUqnLvLknCT8LMoDUfJxJdBhmvZ+XiwdJ2Jvd5vFTfbNMib8lBlK1MS
+        j4EWCgKd6AW02+XO/N8HhVDKthGAW4/GWntaWou0O8GW2uJndgh0rUaLIJTTeEvKunUWIS
+        Pw7wp8xRruEaR1yhCCX7mIh9Xj2MYDOfmt8R/jfmEnM+g+YLFx+U2/ltM27nxg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1627895533;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=I27DYbxJUYQ+kE3eUIbMjQoSNxzM2tRsRutJFBumFGM=;
+        b=QP1qjqahbDJUX/V3ZNeOch/2JkWRsYHEmaI89cY1yU/Fg/V1wIK8aA5r8chTRedkdftZWJ
+        Q8Zg115yUGt12mCg==
+To:     Mike Galbraith <efault@gmx.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users@vger.kernel.org,
         Steven Rostedt <rostedt@goodmis.org>,
         Peter Zijlstra <peterz@infradead.org>
-Date:   Mon, 02 Aug 2021 10:40:45 +0200
-In-Reply-To: <20210802082545.bykz23s3ouwa4drn@linutronix.de>
+Subject: Re: v5.14-rc3-rt1 losing wakeups?
+In-Reply-To: <ed1d5f9ec17a5b8d758c234562dad47cfc872ed8.camel@gmx.de>
 References: <20210730110753.jvli6alm63h5lefy@linutronix.de>
-         <2ae27233ab091d09a7d1e971a47144b40dd51fa0.camel@gmx.de>
-         <87pmuzsf1p.ffs@tglx>
-         <6fce881efc3d8c24a5172528fe1f46ec2ddc0607.camel@gmx.de>
-         <ed1d5f9ec17a5b8d758c234562dad47cfc872ed8.camel@gmx.de>
-         <20210802070218.5js3exubjxvsicx6@linutronix.de>
-         <edd2f9fd1489e1ff05bf526a3059a1dbb81107df.camel@gmx.de>
-         <20210802082545.bykz23s3ouwa4drn@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.40.3 
+ <2ae27233ab091d09a7d1e971a47144b40dd51fa0.camel@gmx.de>
+ <87pmuzsf1p.ffs@tglx>
+ <6fce881efc3d8c24a5172528fe1f46ec2ddc0607.camel@gmx.de>
+ <ed1d5f9ec17a5b8d758c234562dad47cfc872ed8.camel@gmx.de>
+Date:   Mon, 02 Aug 2021 11:12:12 +0200
+Message-ID: <87k0l42osz.ffs@tglx>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:itZvzHXk3JGEXP95h2LLHeYaLCtpKj75B4rV0gmdV/bVSUhJsTm
- TJH99CDhAHaFCRZf1F3vkzlHU7SYX1CcTZIeiW29dpQmBzArYcrXKWWzpLIWLtmxiosoeux
- xkbeZDRFehbjMXMBggino9JsTGNpAmtiZpvGMWDL6Opz7dgtO0cPUAnzPRdxmxUwb+LfvFG
- I2CGeCHzEIBJmU4hVhj3g==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:wRMyjVW0UtU=:xZHTwNlpyqCjDlC8CJtKgv
- OpeJdymA9GZB6mhD52fGe7OrlvhpN8qxg+4MnwwdgHDh/RFOfuHeFmkPmUbBbWkwDULNQf6d7
- n86JShLSbW7liNXa01vvi3tJQtWsCBVUCBEOvEURFQRU0yHTVJpREC0YTwBNpgr6hPwSP/7n9
- POhW1ExsWfAqEWo+URa+GrdlTIDQ1xIbfYJj+hP+3GDs5FVDxUWnlYNpZZTRfIwG+TjPVibV0
- 5pKoOEi6SldoCraRkz5kim9pWY/dXjC1x5vhCazMq2NBFDMPccd+cr7KwQcfJ3a6ad2vzaOLH
- Djl3Mcz358q2kObYWy8iQtilpmFmkHTACDA+wbQGEBv326JIe9oW/CQ1ge2pfCRi6p5Q6DgkB
- eLGROdfwtE0qMRgYW+1RJ+MEe/mfUReSBzwVru8qFZ9NetEohY6x6ZMH+xNSUWPZ1vtwAOgQs
- PCQO5StnKBnELf17QOaFUeOf1/dCMfqpn5TWJHHCxLqxebEekjVvd9LMbJi/Nxew/q2ZYjuZp
- 9mfeXDFhmaF9q6DFE72Ez8c9+l5KoCFxOyG/jcBofLpHEvn1YvkodhU565sSomCfuH+pPl7W6
- n/TCUxdI5vcWrN2Piagj2y204iThBV7q7jgQFaLqhhSt6MnCXPTSU8oh7gfBzYiguRwjKea0z
- 3tr89O9cLXPm01od7JPLjFDSvRWkj6vz4SF8Jlv64WfpCVb29QyPSxemVYmXjLEFtb0ONLpzq
- jNjALfhVLWCZ3DNwGV0d6/rNxeKRr3cOq1KJNYH7EOTscgX8nNdIKKnvNhABb1nRAZ8BVv+JQ
- GRjP4HYq3MOIwL7nrwABGjmHSGbmbXvsa65vPqH0+9mthzTSRmYu1EAzY6qdaUiKdtTimWLZD
- emHdQLHJkc5Ej6QQQlVNkFZl4jcibqXIJLzbsIIYCPFsU+IkP6u7eorIkz+xaM0CakLpP+YJs
- niE4x7Xg2Pv1QEfYxZeckQUsIt8jGqztQQX267zroZv8xN6P3Apr/RznSV6nVGR4xASFh2kdJ
- CLcy28Y4nYf4qy99Hkandc/b/Mx5+Y3lpyALZTayMJFgQQz8xYPYSmrEhDR0pVgAiI/s5ociP
- 5m2koIJtPXoDIkNjg+vEufxAV2Vdo4v6Uc2
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 2021-08-02 at 10:25 +0200, Sebastian Andrzej Siewior wrote:
+Mike,
+
+On Sun, Aug 01 2021 at 17:14, Mike Galbraith wrote:
+
+> On Sun, 2021-08-01 at 05:36 +0200, Mike Galbraith wrote:
+>> On Fri, 2021-07-30 at 22:49 +0200, Thomas Gleixner wrote:
+>> > >
+>> > > First symptom is KDE/Plasma's task manager going comatose.=C2=A0 Not=
+ice soon
+>> >
+>> > KDE/Plasma points at the new fangled rtmutex based ww_mutex from
+>> > Peter.
+>>
+>> Seems not.=C2=A0 When booting KVM box with nomodeset, there's exactly one
+>> early boot ww_mutex lock/unlock, ancient history at the failure point.
 >
-> Okay. So the ww-mutex bits are not the cure then. All you do is booting
-> KDE/Plasma in kvm with virtio as GPU or did I mix up things?
+> As you've probably already surmised given it isn't the ww_mutex bits,
+> it's the wake_q bits.  Apply the below, 5.14-rt ceases to fail.  Take
+> perfectly healthy 5.13-rt, apply those bits, and it instantly begins
+> failing as 5.14-rt had been.
 
-My VMs are all full on clones of my desktop box, running KDE/Plasma
-desktop, CPUS are setup to mirror my i4790, and they get half of box's
-ram.  VMs are a "mini-me" wart hanging off the side of the real box,
-NFS mounting various spots of the host where the data won't fit its
-64GB virtual disk.  Display is Spice, video is QXL.
+now staring at it makes it pretty obvious. When I picked up Peter's
+patch I thought about it briefly and then ignored my doubts :(
 
-	-Mike
+>  /* RT mutex specific wake_q wrappers */
+> -static __always_inline void rt_mutex_wake_q_add(struct rt_wake_q_head *w=
+qh,
+> +static __always_inline void rt_mutex_wake_q_add(struct rt_mutex_wake_q_h=
+ead *wqh,
+>  						struct rt_mutex_waiter *w)
+>  {
+>  	if (IS_ENABLED(CONFIG_PREEMPT_RT) && w->wake_state !=3D TASK_NORMAL) {
+> -		wake_q_add(&wqh->rt_head, w->task);
+> +		get_task_struct(w->task);
+> +		wqh->rtlock_task =3D w->task;
 
+This is the key. With the original asymmetric version the wake_q_add for
+wake_state !=3D TASK_NORMAL is storing the task unconditionally in
+wqh->rtlock_task.
+
+With that wake_q_add() we end up with the following situation:
+
+Some code, e.g. futex does:
+
+     wake_q_add(..., task)
+
+which links task->wake_q->next is !NULL. Ergo the wake_q_add() in the
+rtmutex code bails out. Same the other way round if the rtmutex side
+queues first then the second - regular wakeup - will not be queued.
+
+There's two ways to fix that:
+
+  1) Go back to my original version
+
+  2) Add another wake_q head to task_struct
+
+#2 is overkill IMO simply because the rtlock wait is not subject to
+multiple wakeups.
+
+Thanks a lot Mike for tracking this down!
+
+Thanks,
+
+        tglx
