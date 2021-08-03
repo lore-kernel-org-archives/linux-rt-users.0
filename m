@@ -7,27 +7,27 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EE805C19F34
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30B50C432BE
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DA35261029
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1C8C2610A2
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237868AbhHCRGt (ORCPT
+        id S237859AbhHCRG5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Aug 2021 13:06:49 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38756 "EHLO mail.kernel.org"
+        Tue, 3 Aug 2021 13:06:57 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38744 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237537AbhHCRGU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S237518AbhHCRGU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 3 Aug 2021 13:06:20 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 0630461176;
+        by mail.kernel.org (Postfix) with ESMTPSA id E1D6F610FF;
         Tue,  3 Aug 2021 17:06:08 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1mAxrj-002uc5-Uj; Tue, 03 Aug 2021 13:06:07 -0400
+        id 1mAxrj-002ubz-T2; Tue, 03 Aug 2021 13:06:07 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,9 +37,9 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH v3 15/22] libtracefs: Add error message for bad filters in SQL statement
-Date:   Tue,  3 Aug 2021 13:05:59 -0400
-Message-Id: <20210803170606.694085-16-rostedt@goodmis.org>
+Subject: [PATCH v3 13/22] libtracefs: Add error message when compare fields fail
+Date:   Tue,  3 Aug 2021 13:05:57 -0400
+Message-Id: <20210803170606.694085-14-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210803170606.694085-1-rostedt@goodmis.org>
 References: <20210803170606.694085-1-rostedt@goodmis.org>
@@ -51,145 +51,69 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-If a filter has a bad event, or incompatibility with the value assigned to
-it, have the error message display it.
+If the processing of comparing fields fail due to not existing or because
+they are not compatible to compare, report a proper error message.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- src/tracefs-sqlhist.c | 80 +++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 74 insertions(+), 6 deletions(-)
+ src/tracefs-sqlhist.c | 36 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
 
 diff --git a/src/tracefs-sqlhist.c b/src/tracefs-sqlhist.c
-index a0d934b4cd68..d7829d4804b1 100644
+index 041d7077c3eb..acd3e0242d65 100644
 --- a/src/tracefs-sqlhist.c
 +++ b/src/tracefs-sqlhist.c
-@@ -879,14 +879,80 @@ static int verify_filter(struct sqlhist_bison *sb, struct filter *filter,
- 	}
+@@ -1029,6 +1029,38 @@ static void selection_error(struct tep_handle *tep,
+ 	test_field_exists(tep, sb, expr);
  }
  
--static int build_filter(struct tracefs_synth *synth,
--			bool start, struct filter *filter, bool *started)
-+static int test_field_exists(struct tep_handle *tep, struct sqlhist_bison *sb,
-+			     struct expr *expr);
-+
-+static void filter_compare_error(struct tep_handle *tep,
-+				 struct sqlhist_bison *sb,
-+				 struct expr *expr)
++static void compare_error(struct tep_handle *tep,
++			    struct sqlhist_bison *sb, struct expr *expr)
 +{
-+	struct field *field = &expr->field;
++	struct compare *compare = &expr->compare;
 +
 +	switch (errno) {
 +	case ENODEV:
 +	case EBADE:
 +		break;
-+	case EINVAL:
-+		parse_error(sb, field->raw, "Invalid compare\n");
-+		break;
 +	default:
-+		parse_error(sb, field->raw, "System error?\n");
++		/* System error */
 +		return;
 +	}
 +
 +	/* ENODEV means that an event or field does not exist */
 +	if (errno == ENODEV) {
-+		if (test_field_exists(tep, sb, expr))
++		if (test_field_exists(tep, sb, compare->lval))
 +			return;
-+		if (test_field_exists(tep, sb, expr))
++		if (test_field_exists(tep, sb, compare->rval))
 +			return;
 +		return;
 +	}
 +
 +	/* fields exist, but values are not compatible */
-+	sb->line_no = expr->line;
-+	sb->line_idx = expr->idx;
++	sb->line_no = compare->lval->line;
++	sb->line_idx = compare->lval->idx;
 +
-+	parse_error(sb, field->raw,
-+		    "Field '%s' is not compatible to be compared with the given value\n",
-+		    field->field);
++	parse_error(sb, compare->lval->field.raw,
++		    "'%s' is not compatible to compare with '%s'\n",
++		    compare->lval->field.raw, compare->rval->field.raw);
 +}
 +
-+static void filter_error(struct tep_handle *tep,
-+			 struct sqlhist_bison *sb, struct expr *expr)
-+{
-+	struct filter *filter = &expr->filter;
-+
-+	sb->line_no = expr->line;
-+	sb->line_idx = expr->idx;
-+
-+	switch (filter->type) {
-+	case FILTER_NOT_GROUP:
-+	case FILTER_GROUP:
-+	case FILTER_OR:
-+	case FILTER_AND:
-+		break;
-+	default:
-+		filter_compare_error(tep, sb, filter->lval);
-+		return;
-+	}
-+
-+	sb->line_no = expr->line;
-+	sb->line_idx = expr->idx;
-+
-+	parse_error(sb, "", "Problem with filter entry?\n");
-+}
-+
-+static int build_filter(struct tep_handle *tep, struct sqlhist_bison *sb,
-+			struct tracefs_synth *synth,
-+			bool start, struct expr *expr, bool *started)
- {
- 	int (*append_filter)(struct tracefs_synth *synth,
- 			     enum tracefs_filter type,
- 			     const char *field,
- 			     enum tracefs_compare compare,
- 			     const char *val);
-+	struct filter *filter = &expr->filter;
- 	enum tracefs_compare cmp;
- 	const char *val;
- 	int and_or = TRACEFS_FILTER_AND;
-@@ -916,7 +982,7 @@ static int build_filter(struct tracefs_synth *synth,
- 				    NULL, 0, NULL);
- 		if (ret < 0)
- 			goto out;
--		ret = build_filter(synth, start, &filter->lval->filter, NULL);
-+		ret = build_filter(tep, sb, synth, start, filter->lval, NULL);
- 		if (ret < 0)
- 			goto out;
- 		ret = append_filter(synth, TRACEFS_FILTER_CLOSE_PAREN,
-@@ -927,14 +993,14 @@ static int build_filter(struct tracefs_synth *synth,
- 		and_or = TRACEFS_FILTER_OR;
- 		/* Fall through */
- 	case FILTER_AND:
--		ret = build_filter(synth, start, &filter->lval->filter, NULL);
-+		ret = build_filter(tep, sb, synth, start, filter->lval, NULL);
- 		if (ret < 0)
- 			goto out;
- 		ret = append_filter(synth, and_or, NULL, 0, NULL);
+ static struct tracefs_synth *build_synth(struct tep_handle *tep,
+ 					 const char *name,
+ 					 struct sql_table *table)
+@@ -1121,8 +1153,10 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
  
- 		if (ret)
- 			goto out;
--		ret = build_filter(synth, start, &filter->rval->filter, NULL);
-+		ret = build_filter(tep, sb, synth, start, filter->rval, NULL);
- 		goto out;
- 	default:
- 		break;
-@@ -968,6 +1034,8 @@ static int build_filter(struct tracefs_synth *synth,
- 	ret = append_filter(synth, TRACEFS_FILTER_COMPARE,
- 			    filter->lval->field.field, cmp, val);
- 
-+	if (ret)
-+		filter_error(tep, sb, expr);
-  out:
- 	if (!ret && started) {
- 		if (*started)
-@@ -1193,7 +1261,7 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
- 		else
- 			started = &started_end;
- 
--		ret = build_filter(synth, start, &expr->filter, started);
-+		ret = build_filter(tep, table->sb, synth, start, expr, started);
- 		if (ret < 0)
+ 		ret = build_compare(synth, start_system, end_system,
+ 				    &expr->compare);
+-		if (ret < 0)
++		if (ret < 0) {
++			compare_error(tep, table->sb, expr);
  			goto free;
++		}
  	}
+ 
+ 	for (expr = table->where; expr; expr = expr->next) {
 -- 
 2.30.2
 
