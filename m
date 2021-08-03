@@ -4,30 +4,30 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0353AC4320E
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 336B3C19F3F
 	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E077A60EB9
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1537260EB9
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237718AbhHCRG2 (ORCPT
+        id S237626AbhHCRG1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Aug 2021 13:06:28 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38774 "EHLO mail.kernel.org"
+        Tue, 3 Aug 2021 13:06:27 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38752 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237557AbhHCRGV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 Aug 2021 13:06:21 -0400
+        id S237531AbhHCRGU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 3 Aug 2021 13:06:20 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3165D611C9;
-        Tue,  3 Aug 2021 17:06:09 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id EFA196112E;
+        Tue,  3 Aug 2021 17:06:08 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1mAxrk-002ucQ-5e; Tue, 03 Aug 2021 13:06:08 -0400
+        id 1mAxrj-002ubt-RE; Tue, 03 Aug 2021 13:06:07 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,9 +37,9 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH v3 22/22] libtracefs: Add CAST(x AS _COUNTER_) syntax to create values in histograms
-Date:   Tue,  3 Aug 2021 13:06:06 -0400
-Message-Id: <20210803170606.694085-23-rostedt@goodmis.org>
+Subject: [PATCH v3 11/22] libtracefs: Add error message when match or init fails from bad events
+Date:   Tue,  3 Aug 2021 13:05:55 -0400
+Message-Id: <20210803170606.694085-12-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210803170606.694085-1-rostedt@goodmis.org>
 References: <20210803170606.694085-1-rostedt@goodmis.org>
@@ -51,218 +51,182 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Use the CAST() command of SQL to define which items in the select should
-be cast as values and not keys. By casting the field as the special value
-_COUNTER_, it will turn the selection item into a value.
-
-For example:
-
-   SELECT common_pid, CAST(bytes_req AS _COUNTER_) FROM kmalloc
-
-Will create:
-
-  echo 'hist:keys=common_pid:vals=bytes_req' > events/kmem/kmalloc/trigger
+If the tracefs_synth_init() or the matching fails due to events that do
+not exist, or if the match fields are not compatible with each other. Add
+an error message that reports this and where the problem is.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- Documentation/libtracefs-sql.txt | 24 ++++++++++++++++++++++++
- include/tracefs-local.h          |  2 ++
- include/tracefs.h                |  3 +++
- src/tracefs-hist.c               | 28 ++++++++++++++++++++++++++--
- src/tracefs-sqlhist.c            | 23 +++++++++++++++++++++++
- 5 files changed, 78 insertions(+), 2 deletions(-)
+ src/tracefs-sqlhist.c | 98 +++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 89 insertions(+), 9 deletions(-)
 
-diff --git a/Documentation/libtracefs-sql.txt b/Documentation/libtracefs-sql.txt
-index b7d5c1b4f658..91c99d7969c3 100644
---- a/Documentation/libtracefs-sql.txt
-+++ b/Documentation/libtracefs-sql.txt
-@@ -238,6 +238,30 @@ name of the process.
- 
- *LOG* or *LOG2* - bucket the key values in a log 2 values (1, 2, 3-4, 5-8, 9-16, 17-32, ...)
- 
-+The above fields are not case sensitive, and "LOG2" works as good as "log".
-+
-+A special CAST to _COUNTER_ or __COUNTER__ will make the field a value and not
-+a key. For example:
-+
-+[source,c]
-+--
-+  SELECT common_pid, CAST(bytes_req AS _COUNTER_) FROM kmalloc
-+--
-+
-+Which will create
-+
-+[source,c]
-+--
-+  echo 'hist:keys=common_pid:vals=bytes_req' > events/kmem/kmalloc/trigger
-+
-+  cat events/kmem/kmalloc/hist
-+
-+{ common_pid:       1812 } hitcount:          1  bytes_req:         32
-+{ common_pid:       9111 } hitcount:          2  bytes_req:        272
-+{ common_pid:       1768 } hitcount:          3  bytes_req:       1112
-+{ common_pid:          0 } hitcount:          4  bytes_req:        512
-+{ common_pid:      18297 } hitcount:         11  bytes_req:       2004
-+--
- 
- RETURN VALUE
- ------------
-diff --git a/include/tracefs-local.h b/include/tracefs-local.h
-index 07d40b2fae4f..684eccffafee 100644
---- a/include/tracefs-local.h
-+++ b/include/tracefs-local.h
-@@ -88,6 +88,8 @@ int trace_append_filter(char **filter, unsigned int *state,
- struct tracefs_synth *synth_init_from(struct tep_handle *tep,
- 				      const char *start_system,
- 				      const char *start_event);
-+
-+#define HIST_COUNTER_TYPE	(TRACEFS_HIST_KEY_MAX + 100)
- int synth_add_start_field(struct tracefs_synth *synth,
- 			  const char *start_field,
- 			  const char *name,
-diff --git a/include/tracefs.h b/include/tracefs.h
-index 219adba4b0ce..17020de0108a 100644
---- a/include/tracefs.h
-+++ b/include/tracefs.h
-@@ -264,6 +264,7 @@ enum tracefs_hist_key_type {
- 	TRACEFS_HIST_KEY_EXECNAME,
- 	TRACEFS_HIST_KEY_LOG,
- 	TRACEFS_HIST_KEY_USECS,
-+	TRACEFS_HIST_KEY_MAX
- };
- 
- enum tracefs_hist_sort_direction {
-@@ -275,6 +276,8 @@ enum tracefs_hist_sort_direction {
- #define TRACEFS_HIST_TIMESTAMP_USECS	"common_timestamp.usecs"
- #define TRACEFS_HIST_CPU		"cpu"
- 
-+#define TRACEFS_HIST_COUNTER		"__COUNTER__"
-+
- #define TRACEFS_HIST_HITCOUNT		"hitcount"
- 
- struct tracefs_hist;
-diff --git a/src/tracefs-hist.c b/src/tracefs-hist.c
-index 344e2525c823..7f9cf3820611 100644
---- a/src/tracefs-hist.c
-+++ b/src/tracefs-hist.c
-@@ -256,7 +256,7 @@ int tracefs_hist_add_key(struct tracefs_hist *hist, const char *key,
- 	bool use_key = false;
- 	char *key_type = NULL;
- 	char **new_list;
--	int ret;
-+	int ret = -1;
- 
- 	switch (type) {
- 	case TRACEFS_HIST_KEY_NORMAL:
-@@ -284,6 +284,9 @@ int tracefs_hist_add_key(struct tracefs_hist *hist, const char *key,
- 	case TRACEFS_HIST_KEY_USECS:
- 		ret = asprintf(&key_type, "%s.usecs", key);
- 		break;
-+	case TRACEFS_HIST_KEY_MAX:
-+		/* error */
-+		break;
- 	}
- 
- 	if (ret < 0)
-@@ -1450,6 +1453,9 @@ tracefs_synth_get_start_hist(struct tracefs_synth *synth)
- 	for (i = 0; keys[i]; i++) {
- 		int type = types ? types[i] : 0;
- 
-+		if (type == HIST_COUNTER_TYPE)
-+			continue;
-+
- 		key = keys[i];
- 
- 		if (i) {
-@@ -1466,7 +1472,25 @@ tracefs_synth_get_start_hist(struct tracefs_synth *synth)
- 		}
- 	}
- 
--	if (hist && synth->start_filter) {
-+	if (!hist)
-+		return NULL;
-+
-+	for (i = 0; keys[i]; i++) {
-+		int type = types ? types[i] : 0;
-+
-+		if (type != HIST_COUNTER_TYPE)
-+			continue;
-+
-+		key = keys[i];
-+
-+		ret = tracefs_hist_add_value(hist, key);
-+		if (ret < 0) {
-+			tracefs_hist_free(hist);
-+			return NULL;
-+		}
-+	}
-+
-+	if (synth->start_filter) {
- 		hist->filter = strdup(synth->start_filter);
- 		if (!hist->filter) {
- 			tracefs_hist_free(hist);
 diff --git a/src/tracefs-sqlhist.c b/src/tracefs-sqlhist.c
-index 621310400959..622467745a94 100644
+index da4668f53ea1..ab190d123800 100644
 --- a/src/tracefs-sqlhist.c
 +++ b/src/tracefs-sqlhist.c
-@@ -1302,6 +1302,17 @@ static int verify_field_type(struct tep_handle *tep,
- 	if (!type)
+@@ -507,6 +507,7 @@ __hidden int table_start(struct sqlhist_bison *sb)
+ }
+ 
+ static int test_event_exists(struct tep_handle *tep,
++			     struct sqlhist_bison *sb,
+ 			     struct expr *expr, struct tep_event **pevent)
+ {
+ 	struct field *field = &expr->field;
+@@ -517,18 +518,30 @@ static int test_event_exists(struct tep_handle *tep,
+ 		field->event = tep_find_event_by_name(tep, system, event);
+ 	if (pevent)
+ 		*pevent = field->event;
+-	return field->event != NULL ? 0 : -1;
++
++	if (field->event)
++		return 0;
++
++	sb->line_no = expr->line;
++	sb->line_idx = expr->idx;
++
++	parse_error(sb, field->raw, "event not found\n");
++	return -1;
+ }
+ 
+-static int test_field_exists(struct expr *expr)
++static int test_field_exists(struct tep_handle *tep,
++			     struct sqlhist_bison *sb,
++			     struct expr *expr)
+ {
+ 	struct field *field = &expr->field;
+ 	struct tep_format_field *tfield;
+ 	char *field_name;
+ 	const char *p;
+ 
+-	if (!field->event)
+-		return -1;
++	if (!field->event) {
++		if (test_event_exists(tep, sb, expr, NULL))
++			return -1;
++	}
+ 
+ 	/* The field could have a conversion */
+ 	p = strchr(field->field, '.');
+@@ -547,7 +560,16 @@ static int test_field_exists(struct expr *expr)
+ 		tfield = tep_find_any_field(field->event, field_name);
+ 	free(field_name);
+ 
+-	return tfield != NULL ? 0 : -1;
++	if (tfield)
++		return 0;
++
++	sb->line_no = expr->line;
++	sb->line_idx = expr->idx;
++
++	parse_error(sb, field->raw,
++		    "Field '%s' not part of event %s\n",
++		    field->field, field->event_name);
++	return -1;
+ }
+ 
+ static int update_vars(struct tep_handle *tep,
+@@ -585,7 +607,7 @@ static int update_vars(struct tep_handle *tep,
+ 	if (!event_field->event_name)
  		return -1;
  
-+	if (!strcmp(type, TRACEFS_HIST_COUNTER) ||
-+	    !strcmp(type, "_COUNTER_")) {
-+		ret = HIST_COUNTER_TYPE;
-+		if (tfield->flags & (TEP_FIELD_IS_STRING | TEP_FIELD_IS_ARRAY)) {
-+			parse_error(sb, field->raw,
-+				    "'%s' is a string, and counters may only be used with numbers\n");
-+			ret = -1;
-+		}
-+		goto out;
-+	}
-+
- 	for (i = 0; type[i]; i++)
- 		type[i] = tolower(type[i]);
+-	if (test_event_exists(tep, expr, &event))
++	if (test_event_exists(tep, sb, expr, &event))
+ 		return -1;
  
-@@ -1341,6 +1352,7 @@ static int verify_field_type(struct tep_handle *tep,
- 			    field->raw, type);
- 		ret = -1;
+ 	if (!event_field->system)
+@@ -651,7 +673,7 @@ static int update_vars(struct tep_handle *tep,
+ 			field->field = store_str(sb, TRACEFS_TIMESTAMP);
+ 		if (!strcmp(field->field, "TIMESTAMP_USECS"))
+ 			field->field = store_str(sb, TRACEFS_TIMESTAMP_USECS);
+-		if (test_field_exists(expr))
++		if (test_field_exists(tep, sb, expr))
+ 			return -1;
  	}
-+ out:
- 	free(type);
+ 
+@@ -941,6 +963,62 @@ static int build_filter(struct tracefs_synth *synth,
  	return ret;
-  fail_type:
-@@ -1368,6 +1380,7 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
- 	const char *end_match;
- 	bool started_start = false;
- 	bool started_end = false;
-+	bool non_val = false;
- 	int ret;
+ }
  
- 	if (!table->from)
-@@ -1449,6 +1462,8 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
- 				type = verify_field_type(tep, table->sb, expr);
- 				if (type < 0)
- 					goto free;
-+				if (type != HIST_COUNTER_TYPE)
-+					non_val = true;
- 				ret = synth_add_start_field(synth,
- 						field->field, field->label,
- 						type);
-@@ -1479,6 +1494,14 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
- 		}
- 	}
- 
-+	if (!non_val && !table->to) {
-+		table->sb->line_no = 0;
-+		table->sb->line_idx = 10;
-+		parse_error(table->sb, "CAST",
-+			    "Not all SELECT items can be of type _COUNTER_\n");
-+		goto free;
++static void *field_match_error(struct tep_handle *tep, struct sqlhist_bison *sb,
++			       struct match *match)
++{
++	switch (errno) {
++	case ENODEV:
++	case EBADE:
++		break;
++	default:
++		/* System error */
++		return NULL;
 +	}
 +
- 	for (expr = table->where; expr; expr = expr->next) {
- 		const char *filter_system = NULL;
- 		const char *filter_event = NULL;
++	/* ENODEV means that an event or field does not exist */
++	if (errno == ENODEV) {
++		if (test_field_exists(tep, sb, match->lval))
++			return NULL;
++		if (test_field_exists(tep, sb, match->rval))
++			return NULL;
++		return NULL;
++	}
++
++	/* fields exist, but values are not compatible */
++	sb->line_no = match->lval->line;
++	sb->line_idx = match->lval->idx;
++
++	parse_error(sb, match->lval->field.raw,
++		    "Field '%s' is not compatible to match field '%s'\n",
++		    match->lval->field.raw, match->rval->field.raw);
++	return NULL;
++}
++
++static void *synth_init_error(struct tep_handle *tep, struct sql_table *table)
++{
++	struct sqlhist_bison *sb = table->sb;
++	struct match *match = table->matches;
++
++	switch (errno) {
++	case ENODEV:
++	case EBADE:
++		break;
++	default:
++		/* System error */
++		return NULL;
++	}
++
++	/* ENODEV could mean that start or end events do not exist */
++	if (errno == ENODEV) {
++		if (test_event_exists(tep, sb, table->from, NULL))
++			return NULL;
++		if (test_event_exists(tep, sb, table->to, NULL))
++			return NULL;
++	}
++
++	return field_match_error(tep, sb, match);
++}
++
+ static struct tracefs_synth *build_synth(struct tep_handle *tep,
+ 					 const char *name,
+ 					 struct sql_table *table)
+@@ -991,7 +1069,7 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
+ 				   start_event, end_system, end_event,
+ 				   start_match, end_match, NULL);
+ 	if (!synth)
+-		return NULL;
++		return synth_init_error(tep, table);
+ 
+ 	for (match = match->next; match; match = match->next) {
+ 		ret = test_match(table, match);
+@@ -1004,8 +1082,10 @@ static struct tracefs_synth *build_synth(struct tep_handle *tep,
+ 		ret = tracefs_synth_add_match_field(synth,
+ 						    start_match,
+ 						    end_match, NULL);
+-		if (ret < 0)
++		if (ret < 0) {
++			field_match_error(tep, table->sb, match);
+ 			goto free;
++		}
+ 	}
+ 
+ 	for (expr = table->selections; expr; expr = expr->next) {
 -- 
 2.30.2
 
