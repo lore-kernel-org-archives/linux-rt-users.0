@@ -2,117 +2,131 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C502CC432BE
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 23:43:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0AF59C4338F
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 23:54:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AA83B61040
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 23:43:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DE10C61050
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 23:54:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233817AbhHCXoE (ORCPT
+        id S234669AbhHCXzB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Aug 2021 19:44:04 -0400
-Received: from mail.kernel.org ([198.145.29.99]:43366 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233439AbhHCXoD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 Aug 2021 19:44:03 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 49D5D60F9C;
-        Tue,  3 Aug 2021 23:43:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1628034232;
-        bh=4z03omJaLgEjwC4YtIY4xE/e1z7gR6ZrX+WOvvye++0=;
-        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
-        b=IsGrhAwhwIGFJ3XRHyDKBzJeP7FNjYsv92rXJHNs2o0S0tJNCxifTwJp03/Kf1V0c
-         zdw2dp2AHtU40wdEnctO4AWiF5HHQnkJHfM2wJIHosIQIXY/d73NuEzhjDCvbZ0ORf
-         e0aPH0rBX5wKlsXr/dpqDOPHr5sdzQoGqdeTAtF887SbBRL8aIQ8kRbcSvYx8uAYGI
-         S3thl3MAZLxbJ/pQF3j0KpHer3VFuXkdUrvB+jYBVhacilldnIoyZ8MuNy8FWXBAGl
-         vC8+5vAhL7G/cktM2NuEeflkbB3KkZzBEwRd9mvwqXZ1Rl/Ctx45w53lfcJ8ZFNbH6
-         DLbCCUYljCZ1w==
-Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
-        id 2179E5C04D4; Tue,  3 Aug 2021 16:43:52 -0700 (PDT)
-Date:   Tue, 3 Aug 2021 16:43:52 -0700
-From:   "Paul E. McKenney" <paulmck@kernel.org>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     linux-kernel@vger.kernel.org, rcu@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH 1/2] rcutorture: Don't disable softirqs with preemption
- disabled when PREEMPT_RT
-Message-ID: <20210803234352.GX4397@paulmck-ThinkPad-P17-Gen-1>
-Reply-To: paulmck@kernel.org
-References: <20210803225437.3612591-1-valentin.schneider@arm.com>
- <20210803225437.3612591-2-valentin.schneider@arm.com>
+        Tue, 3 Aug 2021 19:55:01 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:60438 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233784AbhHCXzB (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 3 Aug 2021 19:55:01 -0400
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1628034888;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=uXPzQ106Gzz/QfQUvV21NZBY82K/Xa1WUotPKxNKs/s=;
+        b=g2tVyGLVgyvvt51y4phFCb4e/IRo+TkCrR0P7rBCXrlqqV0FKAVjAnQJdSyb3vhaHN1GmM
+        JWSCfIw6Z9h71HVqL2Fd4i8fs59RyB65mscfupaiU1TtrZDpqx3291G6iYN3YYjdcB612K
+        kI/o+QLxBFdJZICfP3jZdqsMg89RjInVaGpfpF/JObzZDzA4zvMVZtaCB1dE5rrFiOP1xF
+        Nxv2UQEayZUGtfN2y6y5P/vjiQq5C5KmuFshIrlqWHrLBchL/6WfwSceA6k0dw2XmFQ7jq
+        Ws+K18sAjWTdCQXhV73P9SYp3dTLo8YxiEVUOfXDtxbs8Il6oHwvbssnPGYTBQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1628034888;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=uXPzQ106Gzz/QfQUvV21NZBY82K/Xa1WUotPKxNKs/s=;
+        b=ZHq7Hf3ihfyizoxoVi0V4ONzM+2F6n6diNdxjaMuOUZ9CkkB7CtkKmdUo9JFoivEPz8Nhv
+        K7baBhsWJ/AmalCw==
+To:     Mel Gorman <mgorman@techsingularity.net>,
+        Andrew Morton <akpm@linux-foundation.org>
+Cc:     Ingo Molnar <mingo@kernel.org>, Vlastimil Babka <vbabka@suse.cz>,
+        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 2/2] mm/vmstat: Protect per cpu variables with preempt
+ disable on RT
+In-Reply-To: <20210723100034.13353-3-mgorman@techsingularity.net>
+References: <20210723100034.13353-1-mgorman@techsingularity.net>
+ <20210723100034.13353-3-mgorman@techsingularity.net>
+Date:   Wed, 04 Aug 2021 01:54:47 +0200
+Message-ID: <87czqu2iew.ffs@tglx>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210803225437.3612591-2-valentin.schneider@arm.com>
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Aug 03, 2021 at 11:54:36PM +0100, Valentin Schneider wrote:
-> Running RCU torture with CONFIG_PREEMPT_RT under v5.13-rt1 triggers:
-> 
-> [   10.821700] DEBUG_LOCKS_WARN_ON(this_cpu_read(softirq_ctrl.cnt))
-> [   10.821716] WARNING: CPU: 5 PID: 137 at kernel/softirq.c:173 __local_bh_disable_ip (kernel/softirq.c:173 (discriminator 31))
-> [   10.821739] Modules linked in:
-> [   10.821749] CPU: 5 PID: 137 Comm: rcu_torture_rea Not tainted 5.13.0-rt1-00005-g08bbda29766a #129
-> [   10.821759] Hardware name: ARM Juno development board (r0) (DT)
-> [   10.821765] pstate: 60000005 (nZCv daif -PAN -UAO -TCO BTYPE=--)
-> [   10.821938] Call trace:
-> [   10.821941] __local_bh_disable_ip (kernel/softirq.c:173 (discriminator 31))
-> [   10.821950] rcutorture_one_extend (./include/linux/rcupdate.h:274 ./include/linux/rcupdate.h:737 kernel/rcu/rcutorture.c:1443)
-> [   10.821960] rcu_torture_one_read (kernel/rcu/rcutorture.c:1590 kernel/rcu/rcutorture.c:1638)
-> [   10.821968] rcu_torture_reader (kernel/rcu/rcutorture.c:1730)
-> [   10.821976] kthread (kernel/kthread.c:321)
-> [   10.821986] ret_from_fork (arch/arm64/kernel/entry.S:1005)
-> [   10.821997] irq event stamp: 478635
-> [   10.822001] hardirqs last enabled at (478635): _raw_spin_unlock_irq (./arch/arm64/include/asm/irqflags.h:35 ./include/linux/spinlock_api_smp.h:168 kernel/locking/spinlock.c:202)
-> [   10.822016] hardirqs last disabled at (478634): __schedule (kernel/sched/core.c:5154 (discriminator 1))
-> [   10.822029] softirqs last enabled at (478626): __local_bh_enable_ip (./arch/arm64/include/asm/irqflags.h:85 kernel/softirq.c:262)
-> [   10.822040] softirqs last disabled at (478622): rcutorture_one_extend (./include/linux/bottom_half.h:19 kernel/rcu/rcutorture.c:1441)
-> 
-> Per this warning, softirqs cannot be disabled in a non-preemptible region
-> under CONFIG_PREEMPT_RT. Adjust RCU torture accordingly.
-> 
-> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+Mel!
+
+On Fri, Jul 23 2021 at 11:00, Mel Gorman wrote:
+> From: Ingo Molnar <mingo@elte.hu>
+>
+> Disable preemption on -RT for the vmstat code. On vanila the code runs
+> in IRQ-off regions while on -RT it may not when stats are updated under
+> a local_lock. "preempt_disable" ensures that the same resources is not
+> updated in parallel due to preemption.
+>
+> This patch differs from the preempt-rt version where __count_vm_event and
+> __count_vm_events are also protected. The counters are explicitly "allowed
+> to be to be racy" so there is no need to protect them from preemption. Only
+> the accurate page stats that are updated by a read-modify-write need
+> protection.
+>
+> Signed-off-by: Ingo Molnar <mingo@elte.hu>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
 > ---
->  kernel/rcu/rcutorture.c | 2 ++
->  1 file changed, 2 insertions(+)
-> 
-> diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-> index 6096a7d14342..680f66b65f14 100644
-> --- a/kernel/rcu/rcutorture.c
-> +++ b/kernel/rcu/rcutorture.c
-> @@ -1537,6 +1537,8 @@ rcutorture_extend_mask(int oldmask, struct torture_random_state *trsp)
->  	 * them on non-RT.
->  	 */
->  	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+>  mm/vmstat.c | 12 ++++++++++++
+>  1 file changed, 12 insertions(+)
+>
+> diff --git a/mm/vmstat.c b/mm/vmstat.c
+> index b0534e068166..d06332c221b1 100644
+> --- a/mm/vmstat.c
+> +++ b/mm/vmstat.c
+> @@ -319,6 +319,7 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
+>  	long x;
+>  	long t;
+>  
+> +	preempt_disable_rt();
 
-This depends on some rcutorture patches in -rt that are not yet in
--rcu.  Would -rt be a good place for this one, or are those patches
-now ready for -rcu?
+Yes, this is smart to some extent. But in reality it's a bandaid simply
+because nobody can tell which item of vmstat requires which protection.
 
-							Thanx, Paul
+If you go back in RT history then you will figure out that we were able
+to eliminate _all_ occurences of preempt_disable_rt() except for this
+one.
 
-> +		/* Can't disable bh in atomic context under PREEMPT_RT */
-> +		mask &= ~(RCUTORTURE_RDR_ATOM_BH | RCUTORTURE_RDR_ATOM_RBH);
->  		/*
->  		 * Can't release the outermost rcu lock in an irq disabled
->  		 * section without preemption also being disabled, if irqs
-> -- 
-> 2.25.1
-> 
+Even mm developers are wary about this:
+
+ <tglx> so in vmstat.c there is this magic comment:
+ <tglx>  * For use when we know that interrupts are disabled
+ <tglx>  * or when we know that preemption is disabled and that
+ <tglx>  * particular counter cannot be updated from interrupt context.
+ <tglx> how can I know which counters need what?
+ <mm_expert> I don't think there's a list, one would have to check on counter to counter basis :/ 
+ <tglx> and of course there is nothing which validates that, right?
+ <mm_expert> exactly
+
+Brilliant stuff which prevents you to do any validation on this. Over
+the years there have been several issues where callers had to be fixed
+by analysing bug reports instead of having a proper instrumentation in
+that code which would have told the developer that he got it wrong.
+
+Of course on RT kernels the preempt_disable_rt() will serialize
+everything correctly, but as we have learned over the years just
+slapping _if_rt() or if_not_rt() variants of things around is most of
+the time papering over the underlying problem of badly defined
+protection scopes. Let's not proliferate that. As I said in the above
+IRC conversation:
+
+ <tglx> I fundamentally hate this preempt_disable_rt() muck
+
+Thanks,
+
+        tglx
