@@ -2,83 +2,91 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE70BC432BE
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 12:40:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C864C4320A
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 97C8860F58
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 12:40:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1E51360EB9
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 17:06:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235721AbhHCMkZ (ORCPT
+        id S237540AbhHCRGU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Aug 2021 08:40:25 -0400
-Received: from gateway20.websitewelcome.com ([192.185.47.18]:44816 "EHLO
-        gateway20.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S235998AbhHCMkY (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 Aug 2021 08:40:24 -0400
-Received: from cm12.websitewelcome.com (cm12.websitewelcome.com [100.42.49.8])
-        by gateway20.websitewelcome.com (Postfix) with ESMTP id 40B02401065E8
-        for <linux-rt-users@vger.kernel.org>; Tue,  3 Aug 2021 07:23:45 -0500 (CDT)
-Received: from gator4132.hostgator.com ([192.185.4.144])
-        by cmsmtp with SMTP
-        id AtiImXKAkBvjyAtiImMB16; Tue, 03 Aug 2021 07:40:06 -0500
-X-Authority-Reason: nr=8
-Received: from host-95-239-202-226.retail.telecomitalia.it ([95.239.202.226]:38642 helo=x1.bristot.me)
-        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.94.2)
-        (envelope-from <bristot@kernel.org>)
-        id 1mAtiH-0049qA-RO; Tue, 03 Aug 2021 07:40:06 -0500
-Subject: Re: [PATCH v2 12/21] libtracefs; Add error message for bad selections
- to SQL sequence
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        linux-trace-devel@vger.kernel.org
+        Tue, 3 Aug 2021 13:06:20 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38668 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S237291AbhHCRGU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 3 Aug 2021 13:06:20 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id B5B9760F70;
+        Tue,  3 Aug 2021 17:06:08 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
+        (envelope-from <rostedt@rostedt.homelinux.com>)
+        id 1mAxrj-002ubY-Kq; Tue, 03 Aug 2021 13:06:07 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         Namhyung Kim <namhyung@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>
-References: <20210803042347.679499-1-rostedt@goodmis.org>
- <20210803042347.679499-13-rostedt@goodmis.org>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-Message-ID: <f4fc1e3d-2383-f5d3-3938-0e131bf623cb@kernel.org>
-Date:   Tue, 3 Aug 2021 14:40:00 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.11.0
+        Clark Williams <williams@redhat.com>,
+        "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Subject: [PATCH v3 04/22] libtracefs: Add unit test to test tracefs_sql() compare
+Date:   Tue,  3 Aug 2021 13:05:48 -0400
+Message-Id: <20210803170606.694085-5-rostedt@goodmis.org>
+X-Mailer: git-send-email 2.30.2
+In-Reply-To: <20210803170606.694085-1-rostedt@goodmis.org>
+References: <20210803170606.694085-1-rostedt@goodmis.org>
 MIME-Version: 1.0
-In-Reply-To: <20210803042347.679499-13-rostedt@goodmis.org>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - kernel.org
-X-BWhitelist: no
-X-Source-IP: 95.239.202.226
-X-Source-L: No
-X-Exim-ID: 1mAtiH-0049qA-RO
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: host-95-239-202-226.retail.telecomitalia.it (x1.bristot.me) [95.239.202.226]:38642
-X-Source-Auth: kernel@bristot.me
-X-Email-Count: 8
-X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
-X-Local-Domain: no
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 8/3/21 6:23 AM, Steven Rostedt wrote:
-> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> 
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-there is a ; in the subject... "libtracefs;"
+Add a test to test passing time from sched_waking to sched_switch to
+show wake up latency.
 
--- Daniel
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ utest/tracefs-utest.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/utest/tracefs-utest.c b/utest/tracefs-utest.c
+index 89bb1cce61f7..93bc6f16f99a 100644
+--- a/utest/tracefs-utest.c
++++ b/utest/tracefs-utest.c
+@@ -50,6 +50,9 @@
+ #define SQL_2_EVENT	"wakeup_2"
+ #define SQL_2_SQL	"select woke.next_pid as woke_pid, wake.common_pid as waking_pid from sched_waking as wake join sched_switch as woke on woke.next_pid = wake.pid"
+ 
++#define SQL_3_EVENT	"wakeup_lat"
++#define SQL_3_SQL	"select sched_switch.next_prio as prio, end.prev_prio as pprio, (sched.sched_waking.common_timestamp.usecs - end.TIMESTAMP_USECS) as lat from sched_waking as start join sched_switch as end on start.pid = end.next_pid"
++
+ static struct tracefs_instance *test_instance;
+ static struct tep_handle *test_tep;
+ struct test_sample {
+@@ -354,6 +357,13 @@ static void test_instance_trace_sql(struct tracefs_instance *instance)
+ 	tracefs_synth_free(synth);
+ 	trace_seq_reset(&seq);
+ 
++	synth = tracefs_sql(tep, SQL_3_EVENT, SQL_3_SQL, NULL);
++	CU_TEST(synth != NULL);
++	ret = tracefs_synth_show(&seq, instance, synth);
++	CU_TEST(ret == 0);
++	tracefs_synth_free(synth);
++	trace_seq_reset(&seq);
++
+ 	tep_free(tep);
+ 	trace_seq_destroy(&seq);
+ }
+-- 
+2.30.2
+
