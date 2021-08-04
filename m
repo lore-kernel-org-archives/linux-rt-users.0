@@ -2,136 +2,165 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-7.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A7300C4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:32:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16F9BC4320A
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:42:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8E21C60F43
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:32:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F19B860F58
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:42:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237511AbhHDNcx (ORCPT
+        id S238464AbhHDNmk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Aug 2021 09:32:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41722 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236732AbhHDNcw (ORCPT
+        Wed, 4 Aug 2021 09:42:40 -0400
+Received: from smtp-out2.suse.de ([195.135.220.29]:45570 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S237305AbhHDNmj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Aug 2021 09:32:52 -0400
-Received: from mail-pj1-x1036.google.com (mail-pj1-x1036.google.com [IPv6:2607:f8b0:4864:20::1036])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C5130C0613D5
-        for <linux-rt-users@vger.kernel.org>; Wed,  4 Aug 2021 06:32:39 -0700 (PDT)
-Received: by mail-pj1-x1036.google.com with SMTP id j18-20020a17090aeb12b029017737e6c349so5784892pjz.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 04 Aug 2021 06:32:39 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=85UHwPYLE5ZveQneqV4WLF2MU/xjzX/UPKrCzzHnB14=;
-        b=q2ARy0ItDKIN/bKfZowVKNhSCk1iR23sFUCsXF9F5e2O8S7yQM9vDKyTDAU+cATUeB
-         qcS46CMlVcYBPrL9nXZfr3FhktzUIvdNGGT00a9h9Yz65TDCpYXQqtFYQOi492pI8YU3
-         YjO2iNAJkR0KR4JEA9OJZGM4RfAg00/NNZoplDkoqEhP+7RZkIdnFWEaprwSBMV+Yw3H
-         DryOMHYy/5SjMe1BCeh4DFSh42ZK4Sc+fSRiDk2lYuah2WinVjsJBAPizq8nOcCLAd7T
-         xbn5JiNS8W6g3HCXlqvzmeUeckAh4NGYbS+8zfGS0pgWyj70SFdZHtynbJi65c2ecvH7
-         da9g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=85UHwPYLE5ZveQneqV4WLF2MU/xjzX/UPKrCzzHnB14=;
-        b=N3WcuppGESGiVM8EJp7wX5i8ajk/U/a6kJDUJ6vX4ElmACGcWQvulKfOTmPDYCCuBO
-         1tLWxIys24l9l6HZbFbUUN5jWxg7O4W+He+VIrljiUlSj+7RX3cqKZ79+adNehaCWcDL
-         CGCIJWlMf49+xUJotRXZ+ouGgkQftOu3u7FGh5aeXRwVX2FK4uhEPLALJhh01fdb6H6D
-         X9/J9elyDBGOAq2NrGloYtabR9Aw3izMd+cRX2OzaH9VgS+R+nFDu7ipFXD8bFmlh3Z4
-         bJdmOVwR8sHTsWwsnMni/gg92N6BdKhsowYHgJJ19+taLuCXMq+EgxqaoB47vTHh5l2q
-         wqfw==
-X-Gm-Message-State: AOAM531Os9gZb0B+Aw5D2RJFbYwPXnyFcU2c1w2eiR5u5echgxTN++k8
-        GmN2GkU2G3sp/THHRQKtBZ0cfA==
-X-Google-Smtp-Source: ABdhPJzjzNXBg+QlL6+ONsT+jwbXMjDobWWv90yVRoQxU18drn+IHw5pzpernyaOISh3X6tOFb/NuA==
-X-Received: by 2002:a17:90a:4549:: with SMTP id r9mr28108180pjm.147.1628083959247;
-        Wed, 04 Aug 2021 06:32:39 -0700 (PDT)
-Received: from [192.168.1.116] ([198.8.77.61])
-        by smtp.gmail.com with ESMTPSA id l14sm6249066pjz.19.2021.08.04.06.32.36
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 04 Aug 2021 06:32:38 -0700 (PDT)
-Subject: Re: [ANNOUNCE] v5.14-rc4-rt4
-To:     Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Daniel Wagner <wagi@monom.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        Wed, 4 Aug 2021 09:42:39 -0400
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out2.suse.de (Postfix) with ESMTPS id 133881FDF0;
+        Wed,  4 Aug 2021 13:42:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1628084546; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=cd6QFPd1A0Bmx9XXWp5vLXMioX3R+S1I/iAZz0+5Ls4=;
+        b=NdOwFa031p1tD5wGcSqoW6lXbr5pHOZfdIZigz9+bZarnzU/vrf3eEFouH2Ba9OW1HbnOY
+        r8DG1aqp/N3YT+EbvHuQWY2XJSiC1rxW3IXzezRKHXFaq8aviX/KmS1xZG0dVXkCXMFBeZ
+        BI3stuXS2SyOB4gxGKD2DsYAQzpV14o=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1628084546;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=cd6QFPd1A0Bmx9XXWp5vLXMioX3R+S1I/iAZz0+5Ls4=;
+        b=y05y+n1nHBWU82vDBKoaBOVztk7mSZqow5Jwmq0SvZEKxZ1SaGo8UymlvIFU4odwaBcbWW
+        MCL6IfvwIF+BeuDQ==
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id E150313942;
+        Wed,  4 Aug 2021 13:42:25 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap1.suse-dmz.suse.de with ESMTPSA
+        id dALvNUGZCmFgQQAAGKfGzw
+        (envelope-from <vbabka@suse.cz>); Wed, 04 Aug 2021 13:42:25 +0000
+To:     Mel Gorman <mgorman@techsingularity.net>,
+        Thomas Gleixner <tglx@linutronix.de>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-References: <20210802162750.santic4y6lzcet5c@linutronix.de>
- <20210804082418.fbibprcwtzyt5qax@beryllium.lan>
- <20210804104340.fhdjwn3hruymu3ml@linutronix.de>
- <20210804104803.4nwxi74sa2vwiujd@linutronix.de>
- <20210804110057.chsvt7l5xpw7bo5r@linutronix.de>
- <20210804131731.GG8057@worktop.programming.kicks-ass.net>
-From:   Jens Axboe <axboe@kernel.dk>
-Message-ID: <4f549344-1040-c677-6a6a-53e243c5f364@kernel.dk>
-Date:   Wed, 4 Aug 2021 07:32:35 -0600
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        Peter Zijlstra <peterz@infradead.org>
+References: <20210723100034.13353-1-mgorman@techsingularity.net>
+ <20210723100034.13353-3-mgorman@techsingularity.net> <87czqu2iew.ffs@tglx>
+ <20210804095425.GA6464@techsingularity.net>
+From:   Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 2/2] mm/vmstat: Protect per cpu variables with preempt
+ disable on RT
+Message-ID: <91b2f893-eb6a-d91d-3769-baba8601b0f6@suse.cz>
+Date:   Wed, 4 Aug 2021 15:42:25 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.12.0
 MIME-Version: 1.0
-In-Reply-To: <20210804131731.GG8057@worktop.programming.kicks-ass.net>
-Content-Type: text/plain; charset=utf-8
+In-Reply-To: <20210804095425.GA6464@techsingularity.net>
+Content-Type: text/plain; charset=iso-8859-15
 Content-Language: en-US
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 8/4/21 7:17 AM, Peter Zijlstra wrote:
-> On Wed, Aug 04, 2021 at 01:00:57PM +0200, Sebastian Andrzej Siewior wrote:
->> On 2021-08-04 12:48:05 [+0200], To Daniel Wagner wrote:
->>> On 2021-08-04 12:43:42 [+0200], To Daniel Wagner wrote:
->>>> Odd. Do you have a config for that, please?
->>>
->>> No need.
->>> | [   90.202543] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
->>> | [   90.202549] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 2047, name: iou-wrk-2041
->>> | [   90.202555] CPU: 5 PID: 2047 Comm: iou-wrk-2041 Tainted: G        W         5.14.0-rc4-rt4+ #89
->>> | [   90.202561] Call Trace:
->> …
->>> | [   90.202588]  rt_spin_lock+0x19/0x70
->>> | [   90.202593]  ___slab_alloc+0xcb/0x7d0
->> …
->>> | [   90.202618]  kmem_cache_alloc_trace+0x79/0x1f0
->>> | [   90.202621]  io_wqe_dec_running.isra.0+0x98/0xe0
->>> | [   90.202625]  io_wq_worker_sleeping+0x37/0x50
->>> | [   90.202628]  schedule+0x30/0xd0
->>>
->>> le look.
->>
->> So this is due to commit
->>   685fe7feedb96 ("io-wq: eliminate the need for a manager thread")
->>
->> introduced in the v5.13-rc1 merge window. The call chain is
->>   schedule()
->>    sched_submit_work()
->>     preempt_disable();
->>     io_wq_worker_sleeping()
->>       raw_spin_lock_irq(&worker->wqe->lock);
->>       io_wqe_dec_running(worker);
->>        io_queue_worker_create()
->>         kmalloc(sizeof(*cwd), GFP_ATOMIC);
->>
->> The lock wqe::lock has been turned into a raw_spinlock_t in commit
->>    95da84659226d ("io_wq: Make io_wqe::lock a raw_spinlock_t")
->>
->> after a careful analysis of the code at that time. This commit breaks
->> things. Is this really needed?
+On 8/4/21 11:54 AM, Mel Gorman wrote:
+> On Wed, Aug 04, 2021 at 01:54:47AM +0200, Thomas Gleixner wrote:
+>> 
+>>  <tglx> so in vmstat.c there is this magic comment:
+>>  <tglx>  * For use when we know that interrupts are disabled
+>>  <tglx>  * or when we know that preemption is disabled and that
+>>  <tglx>  * particular counter cannot be updated from interrupt context.
+>>  <tglx> how can I know which counters need what?
+>>  <mm_expert> I don't think there's a list, one would have to check on counter to counter basis :/ 
+>>  <tglx> and of course there is nothing which validates that, right?
+>>  <mm_expert> exactly
+>> 
 > 
-> Urgh, doing allocs from schedule seems really yuck. Can we please not do
-> this?
+> While I'm not "mm_expert", I agree with his/her statements.
 
-Agree, I have an idea of how to get rid of it. Let me experiment a bit...
+Phew, since you do, I can now disclose it was me.
 
--- 
-Jens Axboe
+> Each counter
+> would need to be audited and two question are asked
+> 
+>  o If this counter is inaccurate, does anything break?
+>  o If this counter is inaccurate, does it both increment and decrement
+>    allowing the possibility it goes negative?
+> 
+> The decision on that is looking at the counter and seeing if any
+> functional decision is made based on its value. So two examples;
+> 
+> 	NR_VMSCAN_IMMEDIATE is a node-based counter that only every
+> 	increments and is reported to userspace. No kernel code makes
+> 	any decision based on its value. Therefore it's likely safe to
+> 	move to numa_stat_item instead.
+> 
+> 	Action: move it
+> 
+> 	WORKINGSET_ACTIVATE_FILE is a node-based counter that is used to
+> 	determine if a mem cgroup is potentially congested by looking at
+> 	the ratio of cgroup to node refault rates as well as deciding if
+> 	LRU file pages should be deactivate.  If that value drifts, the
+> 	ratios are miscalculated and could lead to functional oddities
+> 	and therefore must be accurate.
+> 
+> 	Action: leave it alone
+> 
+> I guess it could be further split into state that must be accurate from
+> IRQ and non-IRQ contexts but that probably would be very fragile and
+> offer limited value.
+> 
+>> Brilliant stuff which prevents you to do any validation on this. Over
+>> the years there have been several issues where callers had to be fixed
+>> by analysing bug reports instead of having a proper instrumentation in
+>> that code which would have told the developer that he got it wrong.
+>> 
+> 
+> I'm not sure it could be validated at build-time but I'm just back from
+> holiday and may be lacking imagination.
+
+The idea was not build-time, but runtime (hidden behind lockdep, VM_DEBUG or
+whatnot), i.e.:
+
+<sched_expert> what that code needs is switch(item) { case foo1: case foo2:
+lockdep_assert_irqs_disabled(); break; case bar1: case bar2:
+lockdep_assert_preempt_disabled(); lockdep_assert_no_in_irq(); break; } or
+something along those lines
+
+>> Of course on RT kernels the preempt_disable_rt() will serialize
+>> everything correctly, but as we have learned over the years just
+>> slapping _if_rt() or if_not_rt() variants of things around is most of
+>> the time papering over the underlying problem of badly defined
+>> protection scopes. Let's not proliferate that. As I said in the above
+>> IRC conversation:
+>> 
+>>  <tglx> I fundamentally hate this preempt_disable_rt() muck
+>> 
+> 
+> The issue is that even if this was properly audited and the inaccurate
+> and accurate counters were in the proper enums using the correct APIs, it
+> would still be necessary to protect the accurate counters from updates from
+> IRQ context. Hence, as I write this, I don't think preempt_[dis|en]able_rt
+> would go away and that is why I didn't continue with the series to break
+> out "accurate" stats
+> 
 
