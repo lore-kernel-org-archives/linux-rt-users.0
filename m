@@ -4,107 +4,104 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 60953C4320A
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 12:27:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCAFAC4338F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:17:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4A51D60E8D
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 12:27:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AD76B60F41
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:17:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237352AbhHDM2G (ORCPT
+        id S238395AbhHDNSE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Aug 2021 08:28:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55126 "EHLO
+        Wed, 4 Aug 2021 09:18:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38278 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236758AbhHDM2G (ORCPT
+        with ESMTP id S238410AbhHDNSA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Aug 2021 08:28:06 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7CDDCC0613D5;
-        Wed,  4 Aug 2021 05:27:53 -0700 (PDT)
-Date:   Wed, 4 Aug 2021 14:27:49 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1628080071;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Wge5H3ohVu9KXZ7XjLIwa/xxD3n3Ba0yHl81R3u0frA=;
-        b=MOh7k18uhCf+MgMnNnUIHRYL5O8XUW5VqzJ8lNWxFnJN11YbJBaMGSiiJwiCA7o2e30sLR
-        tMR69cRX1CZL312mDITZuGx/j8EoB14c8PMB1CO23kblozN06AcR0ZcrX070tuTy5ud9Yf
-        mBpAhZBtCLZPK/PVHMNm+gmaevz9hSkwZJzDZATZBx0mv03/6Xr9RkKxgFG7fjXY+c6Pf0
-        HdY0YO2EXNi7hsUUCgGDtCgp+vLzWJBjNub6RZMcL2oWDYfBJsWLlhBoNGGywF2apsxaA1
-        RU3kqSRbChkznr23W6u8imITLNQRX8DLD7oNo4lamfiwfZPz9IgfywWMW+Dr2w==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1628080071;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Wge5H3ohVu9KXZ7XjLIwa/xxD3n3Ba0yHl81R3u0frA=;
-        b=HLf7HfrLeP6rzmVeqro9DbhiKXsH2RvNuNcn93Kb8lcfxBtaEasCaOEARSTvn1rz4bR8UB
-        EI1HBnpOqGOg7oDQ==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     linux-trace-devel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Tom Zanussi <zanussi@kernel.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 17/17] libtracefs: Add man page for tracefs_sql()
-Message-ID: <YQqHxQ5XH/ZN5yUq@lx-t490>
-References: <20210730221824.595597-1-rostedt@goodmis.org>
- <20210730221824.595597-18-rostedt@goodmis.org>
- <YQakDYRnId+bK+ue@lx-t490>
- <20210801182916.689a84a8@rorschach.local.home>
+        Wed, 4 Aug 2021 09:18:00 -0400
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 14FD2C061798;
+        Wed,  4 Aug 2021 06:17:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Transfer-Encoding:
+        Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+        Sender:Reply-To:Content-ID:Content-Description;
+        bh=iwNYQxbkeT/WUynvru+66XF3k8+FZ0WZ7SwdccQvJbo=; b=iVP1SDITQjbQIJsDojge1PhJ1I
+        aif9yAS0kPS4GkpWQKjGU+9cNwMDKpBPMZwAVQF7/vp6T2xVphgtaMtnAEPbaE3hPuoBzhnEm71mV
+        zNl+WmbvkGM7/pdRNBxA7hr5j48g5o0Yc259Aw0hW1TlGu7AzsqCd0+zHG60GoQqw6zYNg/riKPiW
+        KVXYz5oaZOt2blC5uGPf82TtA2FCirF/Nnjd8gB1kcRy9fuLdtyYuYbjGQ3RHf6zD8yOk2SYnvsBd
+        tm/6dEevXr+ayj+1K1mn5gokueV/BSD9CqpN8xkF5BUeo2EGm1LybWC6BSadK49ojbmvNuBiZUBR6
+        73KvAGKw==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=worktop.programming.kicks-ass.net)
+        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1mBGm4-005kY5-BP; Wed, 04 Aug 2021 13:17:32 +0000
+Received: by worktop.programming.kicks-ass.net (Postfix, from userid 1000)
+        id DF6C59862B0; Wed,  4 Aug 2021 15:17:31 +0200 (CEST)
+Date:   Wed, 4 Aug 2021 15:17:31 +0200
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Daniel Wagner <wagi@monom.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Jens Axboe <axboe@kernel.dk>
+Subject: Re: [ANNOUNCE] v5.14-rc4-rt4
+Message-ID: <20210804131731.GG8057@worktop.programming.kicks-ass.net>
+References: <20210802162750.santic4y6lzcet5c@linutronix.de>
+ <20210804082418.fbibprcwtzyt5qax@beryllium.lan>
+ <20210804104340.fhdjwn3hruymu3ml@linutronix.de>
+ <20210804104803.4nwxi74sa2vwiujd@linutronix.de>
+ <20210804110057.chsvt7l5xpw7bo5r@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20210801182916.689a84a8@rorschach.local.home>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20210804110057.chsvt7l5xpw7bo5r@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Sun, Aug 01, 2021, Steven Rostedt wrote:
-> On Sun, 1 Aug 2021 15:39:25 +0200
-> "Ahmed S. Darwish" <a.darwish@linutronix.de> wrote:
->
-> > On Fri, Jul 30, 2021, Steven Rostedt wrote:
-> > > +
-> > > +The SQL format is as follows:
-> > > +
-> > > +*SELECT* <fields> FROM <start-event> JOIN <end-event> ON <matching-fields> WHERE <filter>
-> > > +
-> > > +Note, although the examples show the SQL commands in uppercase, they are not required to
-> > > +be so. That is, you can use "SELECT" or "select" or "sElEct".
-> > > +
-> >
-> > Maybe it would be helpful to mention that, unlike normal SELECT queries,
-> > the JOIN and ON parts above are _not_ optional?
-> >
-> > That is, generic "one event source" queries:
-> >
-> >   SELECT common_pid,msr,val FROM write_msr WHERE msr=72
-> >
-> > are not supported. (I wish they were though ;-))
->
-> Actually, the sql parser should support it, but it will fail on the
-> creation of events. That's because I started trying to make this create
-> normal histograms. The problem is, that it can't really do a 1 to 1 on
-> histograms and selects, so I gave up. But perhaps for the subset it can
-> create, maybe I can still have it do so. That may require changing the
-> API slightly.
->
-> I'm not a big SQL person, so I don't know all the magic and I have no
-> idea how to add the "values" part of the hist trigger.
->
+On Wed, Aug 04, 2021 at 01:00:57PM +0200, Sebastian Andrzej Siewior wrote:
+> On 2021-08-04 12:48:05 [+0200], To Daniel Wagner wrote:
+> > On 2021-08-04 12:43:42 [+0200], To Daniel Wagner wrote:
+> > > Odd. Do you have a config for that, please?
+> > 
+> > No need.
+> > | [   90.202543] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
+> > | [   90.202549] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 2047, name: iou-wrk-2041
+> > | [   90.202555] CPU: 5 PID: 2047 Comm: iou-wrk-2041 Tainted: G        W         5.14.0-rc4-rt4+ #89
+> > | [   90.202561] Call Trace:
+> …
+> > | [   90.202588]  rt_spin_lock+0x19/0x70
+> > | [   90.202593]  ___slab_alloc+0xcb/0x7d0
+> …
+> > | [   90.202618]  kmem_cache_alloc_trace+0x79/0x1f0
+> > | [   90.202621]  io_wqe_dec_running.isra.0+0x98/0xe0
+> > | [   90.202625]  io_wq_worker_sleeping+0x37/0x50
+> > | [   90.202628]  schedule+0x30/0xd0
+> > 
+> > le look.
+> 
+> So this is due to commit
+>   685fe7feedb96 ("io-wq: eliminate the need for a manager thread")
+> 
+> introduced in the v5.13-rc1 merge window. The call chain is
+>   schedule()
+>    sched_submit_work()
+>     preempt_disable();
+>     io_wq_worker_sleeping()
+>       raw_spin_lock_irq(&worker->wqe->lock);
+>       io_wqe_dec_running(worker);
+>        io_queue_worker_create()
+>         kmalloc(sizeof(*cwd), GFP_ATOMIC);
+> 
+> The lock wqe::lock has been turned into a raw_spinlock_t in commit
+>    95da84659226d ("io_wq: Make io_wqe::lock a raw_spinlock_t")
+> 
+> after a careful analysis of the code at that time. This commit breaks
+> things. Is this really needed?
 
-Thanks! I've replied at the v2 thread.
-
-(Discovered after-the-fact that a v3 was already sent, sorry..)
-
---
-Ahmed S. Darwish
-Linutronix GmbH
+Urgh, doing allocs from schedule seems really yuck. Can we please not do
+this?
