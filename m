@@ -2,248 +2,136 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9C3FC4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:23:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A7300C4338F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:32:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AA6A660F94
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:23:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8E21C60F43
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 13:32:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238087AbhHDNYA (ORCPT
+        id S237511AbhHDNcx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Aug 2021 09:24:00 -0400
-Received: from mail.kernel.org ([198.145.29.99]:41758 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S238061AbhHDNX7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Aug 2021 09:23:59 -0400
-Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id D760260F43;
-        Wed,  4 Aug 2021 13:23:40 +0000 (UTC)
-Date:   Wed, 4 Aug 2021 09:23:39 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Cc:     linux-trace-devel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Tom Zanussi <zanussi@kernel.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH v2 00/21] libtracefs: Introducing tracefs_sql() to
- create synthetice events with an SQL line
-Message-ID: <20210804092339.786315cd@oasis.local.home>
-In-Reply-To: <YQqAjBCtd8MnhV1v@lx-t490>
-References: <20210803042347.679499-1-rostedt@goodmis.org>
-        <YQqAjBCtd8MnhV1v@lx-t490>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        Wed, 4 Aug 2021 09:32:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41722 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S236732AbhHDNcw (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 4 Aug 2021 09:32:52 -0400
+Received: from mail-pj1-x1036.google.com (mail-pj1-x1036.google.com [IPv6:2607:f8b0:4864:20::1036])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C5130C0613D5
+        for <linux-rt-users@vger.kernel.org>; Wed,  4 Aug 2021 06:32:39 -0700 (PDT)
+Received: by mail-pj1-x1036.google.com with SMTP id j18-20020a17090aeb12b029017737e6c349so5784892pjz.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 04 Aug 2021 06:32:39 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=85UHwPYLE5ZveQneqV4WLF2MU/xjzX/UPKrCzzHnB14=;
+        b=q2ARy0ItDKIN/bKfZowVKNhSCk1iR23sFUCsXF9F5e2O8S7yQM9vDKyTDAU+cATUeB
+         qcS46CMlVcYBPrL9nXZfr3FhktzUIvdNGGT00a9h9Yz65TDCpYXQqtFYQOi492pI8YU3
+         YjO2iNAJkR0KR4JEA9OJZGM4RfAg00/NNZoplDkoqEhP+7RZkIdnFWEaprwSBMV+Yw3H
+         DryOMHYy/5SjMe1BCeh4DFSh42ZK4Sc+fSRiDk2lYuah2WinVjsJBAPizq8nOcCLAd7T
+         xbn5JiNS8W6g3HCXlqvzmeUeckAh4NGYbS+8zfGS0pgWyj70SFdZHtynbJi65c2ecvH7
+         da9g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=85UHwPYLE5ZveQneqV4WLF2MU/xjzX/UPKrCzzHnB14=;
+        b=N3WcuppGESGiVM8EJp7wX5i8ajk/U/a6kJDUJ6vX4ElmACGcWQvulKfOTmPDYCCuBO
+         1tLWxIys24l9l6HZbFbUUN5jWxg7O4W+He+VIrljiUlSj+7RX3cqKZ79+adNehaCWcDL
+         CGCIJWlMf49+xUJotRXZ+ouGgkQftOu3u7FGh5aeXRwVX2FK4uhEPLALJhh01fdb6H6D
+         X9/J9elyDBGOAq2NrGloYtabR9Aw3izMd+cRX2OzaH9VgS+R+nFDu7ipFXD8bFmlh3Z4
+         bJdmOVwR8sHTsWwsnMni/gg92N6BdKhsowYHgJJ19+taLuCXMq+EgxqaoB47vTHh5l2q
+         wqfw==
+X-Gm-Message-State: AOAM531Os9gZb0B+Aw5D2RJFbYwPXnyFcU2c1w2eiR5u5echgxTN++k8
+        GmN2GkU2G3sp/THHRQKtBZ0cfA==
+X-Google-Smtp-Source: ABdhPJzjzNXBg+QlL6+ONsT+jwbXMjDobWWv90yVRoQxU18drn+IHw5pzpernyaOISh3X6tOFb/NuA==
+X-Received: by 2002:a17:90a:4549:: with SMTP id r9mr28108180pjm.147.1628083959247;
+        Wed, 04 Aug 2021 06:32:39 -0700 (PDT)
+Received: from [192.168.1.116] ([198.8.77.61])
+        by smtp.gmail.com with ESMTPSA id l14sm6249066pjz.19.2021.08.04.06.32.36
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 04 Aug 2021 06:32:38 -0700 (PDT)
+Subject: Re: [ANNOUNCE] v5.14-rc4-rt4
+To:     Peter Zijlstra <peterz@infradead.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Daniel Wagner <wagi@monom.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+References: <20210802162750.santic4y6lzcet5c@linutronix.de>
+ <20210804082418.fbibprcwtzyt5qax@beryllium.lan>
+ <20210804104340.fhdjwn3hruymu3ml@linutronix.de>
+ <20210804104803.4nwxi74sa2vwiujd@linutronix.de>
+ <20210804110057.chsvt7l5xpw7bo5r@linutronix.de>
+ <20210804131731.GG8057@worktop.programming.kicks-ass.net>
+From:   Jens Axboe <axboe@kernel.dk>
+Message-ID: <4f549344-1040-c677-6a6a-53e243c5f364@kernel.dk>
+Date:   Wed, 4 Aug 2021 07:32:35 -0600
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.10.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <20210804131731.GG8057@worktop.programming.kicks-ass.net>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 4 Aug 2021 13:57:00 +0200
-"Ahmed S. Darwish" <a.darwish@linutronix.de> wrote:
-
-
-> Thanks a lot! Actually, I meant going even one step further ;)
+On 8/4/21 7:17 AM, Peter Zijlstra wrote:
+> On Wed, Aug 04, 2021 at 01:00:57PM +0200, Sebastian Andrzej Siewior wrote:
+>> On 2021-08-04 12:48:05 [+0200], To Daniel Wagner wrote:
+>>> On 2021-08-04 12:43:42 [+0200], To Daniel Wagner wrote:
+>>>> Odd. Do you have a config for that, please?
+>>>
+>>> No need.
+>>> | [   90.202543] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
+>>> | [   90.202549] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 2047, name: iou-wrk-2041
+>>> | [   90.202555] CPU: 5 PID: 2047 Comm: iou-wrk-2041 Tainted: G        W         5.14.0-rc4-rt4+ #89
+>>> | [   90.202561] Call Trace:
+>> …
+>>> | [   90.202588]  rt_spin_lock+0x19/0x70
+>>> | [   90.202593]  ___slab_alloc+0xcb/0x7d0
+>> …
+>>> | [   90.202618]  kmem_cache_alloc_trace+0x79/0x1f0
+>>> | [   90.202621]  io_wqe_dec_running.isra.0+0x98/0xe0
+>>> | [   90.202625]  io_wq_worker_sleeping+0x37/0x50
+>>> | [   90.202628]  schedule+0x30/0xd0
+>>>
+>>> le look.
+>>
+>> So this is due to commit
+>>   685fe7feedb96 ("io-wq: eliminate the need for a manager thread")
+>>
+>> introduced in the v5.13-rc1 merge window. The call chain is
+>>   schedule()
+>>    sched_submit_work()
+>>     preempt_disable();
+>>     io_wq_worker_sleeping()
+>>       raw_spin_lock_irq(&worker->wqe->lock);
+>>       io_wqe_dec_running(worker);
+>>        io_queue_worker_create()
+>>         kmalloc(sizeof(*cwd), GFP_ATOMIC);
+>>
+>> The lock wqe::lock has been turned into a raw_spinlock_t in commit
+>>    95da84659226d ("io_wq: Make io_wqe::lock a raw_spinlock_t")
+>>
+>> after a careful analysis of the code at that time. This commit breaks
+>> things. Is this really needed?
 > 
-> I was imagining something like the following:
-> 
-> $ trace-cmd sql-shell		# OR
-> 
-> $ perf tracefs-sql-shell
-> 
->   Welcome to tracefs SQL shell...
-> 
->   > SELECT PNAME(common_pid),msr,val  
->     FROM write_msr
->     WHERE msr=72 OR msr=2096
-> 
->   .-------------------------------------------.
->   | PNAME(common_pid)   |  msr  |    val      |
->   |---------------------|------ |-------------|
->   | qemu-system-x86     | 0x48  | 0           |
->   | qemu-system-x86     | 0x48  | 0           |
->   | qemu-system-x86     | 0x48  | 0           |
->   | kworker/u16:2       | 0x830 | 0x1000008fb |
->   | ....                | ....  | .....       |
->   +-------------------------------------------+
+> Urgh, doing allocs from schedule seems really yuck. Can we please not do
+> this?
 
+Agree, I have an idea of how to get rid of it. Let me experiment a bit...
 
-Well, the above looks more like a normal trace just being processed
-differently. If you want that, I already have this:
-
-  https://lore.kernel.org/linux-trace-devel/20200116104804.5d2f71e2@gandalf.local.home/
-
-Which I created to test the idea of using SQL to create synthetic events.
-
-It simply converts the events in a trace.dat file into a sql format
-file that can be used to read into a SQL database. As the patch shows:
-
- $ trace-cmd sqldump > dump
- $ mysql events < dump
-
-MariaDB [events]> show tables;
-+-----------------------------+
-| Tables_in_events            |
-+-----------------------------+
-| sched_migrate_task          |
-| sched_move_numa             |
-| sched_process_exec          |
-| sched_process_exit          |
-| sched_stat_runtime          |
-| sched_switch                |
-| sched_wake_idle_without_ipi |
-| sched_wakeup                |
-| sched_waking                |
-+-----------------------------+
-9 rows in set (0.001 sec)
-
-MariaDB [events]> select * from sched_move_numa;
-+-------------------+-------------+--------------+----------------------+------------+-------+-------+-------+---------+---------+---------+---------+
-| common_timestamp  | common_type | common_flags | common_preempt_count | common_pid | pid   | tgid  | ngid  | src_cpu | src_nid | dst_cpu | dst_nid |
-+-------------------+-------------+--------------+----------------------+------------+-------+-------+-------+---------+---------+---------+---------+
-| 14943901721165973 |         305 |            0 |                    0 |      27451 | 27451 | 27451 | 27451 |       5 |       1 |      22 |       0 |
-| 14943901722548756 |         305 |            0 |                    0 |       3684 |  3684 |  3684 |  3684 |      23 |       1 |      22 |       0 |
-| 14943901779987828 |         305 |            0 |                    0 |      13693 | 13693 | 13677 | 13693 |       7 |       1 |      22 |       0 |
-+-------------------+-------------+--------------+----------------------+------------+-------+-------+-------+---------+---------+---------+---------+
-3 rows in set (0.001 sec)
-
-I never applied the patch, but perhaps you would be interested in this?
-
-> 
->   > SELECT MAX(end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) AS MaxSystemLatency_us,  
->       PNAME(common_pid)
->     FROM sched_waking AS start JOIN sched_switch AS end
->     ON start.pid = stop.next_pid
-
-
-Now the above would require parsing the histogram data, which is next
-on our agenda. There's two routes we can take with this:
-
- 1) Add a "hist_raw" that shows the raw data from the kernel's
- histogram table. It would still be in ASCII, but will be formatted for
- machine readability and not for humans (like /proc/$$/stat vs /proc/$$/status)
-
- 2) We write another bison parser to parse the current format of the
- histogram output, which looks like this:
-
-  # sqlhist -n lat -e 'SELECT end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) as lat
-         FROM sched_waking as start JOIN sched_switch as end ON start.pid = end.next_pid'
-  # trace-cmd start -e lat -R 'hist:keys=common_pid.execname,lat:sort=lat'
-  # cat /sys/kernel/tracing/events/synthetic/lat/hist
-# event histogram
-#
-# trigger info: hist:keys=common_pid.execname,lat:vals=hitcount:sort=lat:size=2048 [active]
-#
-
-{ common_pid: <idle>          [         0], lat:          2 } hitcount:          9
-{ common_pid: <idle>          [         0], lat:          3 } hitcount:          3
-{ common_pid: kworker/0:0     [     10041], lat:          3 } hitcount:          7
-{ common_pid: kworker/0:0     [     10041], lat:          4 } hitcount:          5
-{ common_pid: <idle>          [         0], lat:          4 } hitcount:          2
-{ common_pid: <idle>          [         0], lat:          5 } hitcount:          9
-{ common_pid: kworker/0:0     [     10041], lat:          5 } hitcount:         14
-{ common_pid: kworker/0:0     [     10041], lat:          6 } hitcount:          5
-{ common_pid: <idle>          [         0], lat:          6 } hitcount:         16
-{ common_pid: <idle>          [         0], lat:          7 } hitcount:         19
-[..]
-{ common_pid: JS Helper       [      1366], lat:         96 } hitcount:          1
-{ common_pid: <idle>          [         0], lat:         97 } hitcount:          1
-{ common_pid: <idle>          [         0], lat:         99 } hitcount:          1
-{ common_pid: <idle>          [         0], lat:        107 } hitcount:          1
-{ common_pid: <idle>          [         0], lat:        108 } hitcount:          3
-{ common_pid: <idle>          [         0], lat:        117 } hitcount:          1
-{ common_pid: <idle>          [         0], lat:        118 } hitcount:          1
-{ common_pid: sendmail        [      1739], lat:        130 } hitcount:          1
-
-Totals:
-    Hits: 2212
-    Entries: 130
-    Dropped: 0
-
-That file is a user space API, and we can write up another bison parser
-to parse out the data.
-
-
-Between the two approaches, #1 is probably the better way, but that
-requires a kernel change, and the feature will not be available in
-older kernels, and not available until we actually implement it.
-
-Approach #2 can be done today and will work for older kernels too. Also,
-if we do #2, it doesn't mean we can't still do #1.
-
-
-> 
->   .-------------------------------------------.
->   | MaxSystemLatency_us | PNAME(common_pid)   |
->   |---------------------|---------------------|
->   | 350                 | cyclictest          |
->   +-------------------------------------------+
-> 
->   > SELECT (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) AS latency,  
->       PNAME(common_pid), PRIO(common_pid)
->     FROM sched_waking AS start JOIN sched_switch AS end
->     ON start.pid = stop.next_pid
->     ORDER BY latency DESC
->     LIMIT 5
-> 
->   .----------------------------------------------------------.
->   | Latency | PNAME(common_pid)           | PRIO(common_pid) |
->   |---------|-----------------------------|------------------|
->   | 829     | cyclictest                  | SCHED_FIFO:98    |
->   | 400     | cyclictest                  | SCHED_FIFO:98    |
->   | 192     | pulseaudio-rt               | SCHED_RR:48      |
->   | 30      | firefox                     | SCHED_OTHER:0:0  |
->   | 10      | kworker/0:0H-events_highpri | SCHED_OTHER:0:-20|
->   +----------------------------------------------------------+
-> 
->   > SELECT (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) as MaxIRQLatency_us  
->     FROM irq_disable as start JOIN irq_enable as end
->     ON start.common_pid = end.common_pid,
->        start.parent_offs == end.parent_offs
->     ORDER BY max_irq_disable
->     LIMIT 1
-> 
->   .------------------.
->   | MaxIRQLatency_us |
->   |------------------|
->   | 37               |
->   +------------------+
-> 
-> And so on....
-> 
-> The idea was that since the community already picked SQL as a
-> higher-level tracing language, why hard-code the SQL language with
-> synthetic events and histograms?
-> 
-> The language can alredy offer something *way more generic*, out of the
-> box, while still covering the desired special cases.
-> 
-> We can support the standard SQL aggregate functions (e.g., MAX(), MIN(),
-> SUM(), COUNT(), DISTINCT(), AVG(), etc.) + some kernel-specific
-> functions (e.g., PROCESS_NAME(), PROCESS_PRIO(), USECS(), etc.) + the
-> standard SQL keyworkds like ORDER BY, LIMIT, DESC, ASC, etc. This would
-> offer some nice friendly competition to BPF tracing, while still being a
-> (relatively) simple *query-only* language.
-> 
-> I'm not sure if you would be OK with this, but I thought a proposal
-> won't hurt :)
-> 
-> I can also write some patches on top of this series if you are OK with
-> the principle in general.
->
-
-I'm not against it, and was thinking of implementing some kind of
- "trace-cmd sql" feature. But before we can get there, we need a way to
- get that information out from the kernel.
-
--- Steve
+-- 
+Jens Axboe
 
