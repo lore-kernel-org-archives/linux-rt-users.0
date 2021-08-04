@@ -2,140 +2,147 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C807C432BE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:39:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1FCDCC432BE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:47:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7F4C160F94
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:39:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 03BE660F14
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:47:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239141AbhHDPj6 (ORCPT
+        id S239217AbhHDPsA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Aug 2021 11:39:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43006 "EHLO
+        Wed, 4 Aug 2021 11:48:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45000 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239064AbhHDPj5 (ORCPT
+        with ESMTP id S239114AbhHDPr7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Aug 2021 11:39:57 -0400
-Received: from mail-pl1-x62c.google.com (mail-pl1-x62c.google.com [IPv6:2607:f8b0:4864:20::62c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4F947C0613D5
-        for <linux-rt-users@vger.kernel.org>; Wed,  4 Aug 2021 08:39:45 -0700 (PDT)
-Received: by mail-pl1-x62c.google.com with SMTP id t3so3400778plg.9
-        for <linux-rt-users@vger.kernel.org>; Wed, 04 Aug 2021 08:39:45 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=YbLaP7zp/TBT+Q7+YqQffDvYzau3V52aHChBMgMbfhI=;
-        b=O9WXF1x4pvMjKxlTU3T4bxsSBX432kH8pc9YOpQ6e8fQ3W9tAgW2ZNiA1vVTaqbXFR
-         QrVLwLQajtIxevyUqGS8cHTvDLITW3qRbYSUy0mivce+ZTkIXQJ7K/7l8u/yb3AXzHtK
-         Dz/4nJykAql2ogjXcVmhNwpd5BCVFPzYxscR80yYU6+SsvR0FeFR6hMt5fkXsofc8s94
-         bTum2C5YLVtLkRQ0K/0gs8yHGMb/wBksx1/1e4ajK+y6u+dz7Q3Ie9Fq2Y+xTqm/Lt7K
-         KCzI5U3NAnO/dOWFOclnYzZRyenKqZAd+YQFD/FzHfKpUwywUvto+K3b0vysaAWrinPi
-         BUUQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=YbLaP7zp/TBT+Q7+YqQffDvYzau3V52aHChBMgMbfhI=;
-        b=rdfxhYPSVcXKOS/NRC2CoNfqujZwRdbNbcZcjXAv3P4e2fjpTn5P0BuBrdwaDQQpjD
-         lLnlr8FpqyDIwQMUXiYAvL2u0Gp3fD0S3JqaRoS+vvP8fSTSJNiJRCn0PVQLVI5MV2sM
-         ZE7jxg/gIe+TnZe618OhZXNj0FzcE1+J+QR89vQm8Zi5NBFwAIAkaRlDA4LCI2l/Sjy0
-         4yP3bJUyLg3KBYEm1BPg4/4CSLNFMeK6UuF+vrKUDbUafpBZQLDZ/OMMt5YIR9TbYK40
-         mzH4mYCRAmoDxDAoSOq9+KYkBQQ179RwrmI93Fk/ZTEIobI0vKvo42MSVx0DfjtMXhz9
-         1NrA==
-X-Gm-Message-State: AOAM5313TbZGDTDS7oesPB4TRfR/A3OEFU32dtM86J+pjmC9v3i1JlBV
-        D3mMhVC/VcTkok1n0ixeLC/spw==
-X-Google-Smtp-Source: ABdhPJzJ4WJ1Q+2KzH0H51gzmk4Pg0T96RDMTv8KoFMK4qpCkO3eDRYnLJ4MvuGElG0swKVF6fN9Hg==
-X-Received: by 2002:a17:902:6bc5:b029:12c:c275:ae10 with SMTP id m5-20020a1709026bc5b029012cc275ae10mr2368835plt.81.1628091584814;
-        Wed, 04 Aug 2021 08:39:44 -0700 (PDT)
-Received: from [192.168.1.116] ([198.8.77.61])
-        by smtp.gmail.com with ESMTPSA id pi14sm6364106pjb.38.2021.08.04.08.39.43
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 04 Aug 2021 08:39:44 -0700 (PDT)
-Subject: Re: [PATCH] io-wq: remove GFP_ATOMIC allocation off schedule out path
-To:     Daniel Wagner <dwagner@suse.de>
-Cc:     io-uring <io-uring@vger.kernel.org>,
+        Wed, 4 Aug 2021 11:47:59 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5639AC0613D5;
+        Wed,  4 Aug 2021 08:47:46 -0700 (PDT)
+Date:   Wed, 4 Aug 2021 17:47:43 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1628092064;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=L8OdJeF6JX172ja4DHg/13gB0TcQV9nvDbrJGCXaKxI=;
+        b=eAJ0WYaBxEx94IoYGhNmJgpLXavP/dbnM4waqvyYkxxDEaZpXaU5Bu9UaIgu/gURL/wq1K
+        FF5Mhaz113Rqt6wD18suN+6rk06HMZrXkfKMH/G+ZPKCNkpNm3FycGTA+asDYSG1lovGuc
+        mRW5nRnEzCvJY3Bx5OheXTFFrbm0f97rev6evqRCp5NqatlxkVVh2dgD3JNRHdkHWiIvpf
+        JfFuCL4VeHoyj4ABaFMukk/HEP8tl0sLYec+94i9lsHZOI6t+k7XUhTFON3G44k0Nv/M9i
+        DcsISUB9DC+u9690yPCZuLCNz8ugL9Up+w8x7WUG3/QWg4F08k/sAqEYip3ipw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1628092064;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=L8OdJeF6JX172ja4DHg/13gB0TcQV9nvDbrJGCXaKxI=;
+        b=hMQgg0lYWq9HDBfvQ1C8h3Lc1r6amaA3itFJgjy5MXMF+3tEHcRWcy4Iav8yuWNnPh6oON
+        s2YQC/j9qyh1utDA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Jens Axboe <axboe@kernel.dk>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Daniel Wagner <wagi@monom.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
         linux-rt-users@vger.kernel.org,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-References: <a673a130-e0e4-5aa8-4165-f35d1262fc6a@kernel.dk>
- <20210804153323.anggq6oto6x7g2rs@beryllium.lan>
-From:   Jens Axboe <axboe@kernel.dk>
-Message-ID: <230f62ec-536b-476f-c59d-347fe7826b09@kernel.dk>
-Date:   Wed, 4 Aug 2021 09:39:42 -0600
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.14-rc4-rt4
+Message-ID: <20210804154743.niogqvnladdkfgi2@linutronix.de>
+References: <20210802162750.santic4y6lzcet5c@linutronix.de>
+ <20210804082418.fbibprcwtzyt5qax@beryllium.lan>
+ <20210804104340.fhdjwn3hruymu3ml@linutronix.de>
+ <20210804104803.4nwxi74sa2vwiujd@linutronix.de>
+ <20210804110057.chsvt7l5xpw7bo5r@linutronix.de>
+ <20210804131731.GG8057@worktop.programming.kicks-ass.net>
+ <4f549344-1040-c677-6a6a-53e243c5f364@kernel.dk>
+ <feebf183-2e33-36b5-4538-62a40b2a58b6@kernel.dk>
+ <20210804153308.oasahcxjmcw7vivo@linutronix.de>
+ <f2d0a028-fe85-28ff-9cea-8ab1d26a15d0@kernel.dk>
 MIME-Version: 1.0
-In-Reply-To: <20210804153323.anggq6oto6x7g2rs@beryllium.lan>
 Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+In-Reply-To: <f2d0a028-fe85-28ff-9cea-8ab1d26a15d0@kernel.dk>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 8/4/21 9:33 AM, Daniel Wagner wrote:
-> On Wed, Aug 04, 2021 at 08:43:43AM -0600, Jens Axboe wrote:
->> Daniel reports that the v5.14-rc4-rt4 kernel throws a BUG when running
->> stress-ng:
->>
->> | [   90.202543] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
->> | [   90.202549] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 2047, name: iou-wrk-2041
->> | [   90.202555] CPU: 5 PID: 2047 Comm: iou-wrk-2041 Tainted: G        W         5.14.0-rc4-rt4+ #89
->> | [   90.202559] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
->> | [   90.202561] Call Trace:
->> | [   90.202577]  dump_stack_lvl+0x34/0x44
->> | [   90.202584]  ___might_sleep.cold+0x87/0x94
->> | [   90.202588]  rt_spin_lock+0x19/0x70
->> | [   90.202593]  ___slab_alloc+0xcb/0x7d0
->> | [   90.202598]  ? newidle_balance.constprop.0+0xf5/0x3b0
->> | [   90.202603]  ? dequeue_entity+0xc3/0x290
->> | [   90.202605]  ? io_wqe_dec_running.isra.0+0x98/0xe0
->> | [   90.202610]  ? pick_next_task_fair+0xb9/0x330
->> | [   90.202612]  ? __schedule+0x670/0x1410
->> | [   90.202615]  ? io_wqe_dec_running.isra.0+0x98/0xe0
->> | [   90.202618]  kmem_cache_alloc_trace+0x79/0x1f0
->> | [   90.202621]  io_wqe_dec_running.isra.0+0x98/0xe0
->> | [   90.202625]  io_wq_worker_sleeping+0x37/0x50
->> | [   90.202628]  schedule+0x30/0xd0
->> | [   90.202630]  schedule_timeout+0x8f/0x1a0
->> | [   90.202634]  ? __bpf_trace_tick_stop+0x10/0x10
->> | [   90.202637]  io_wqe_worker+0xfd/0x320
->> | [   90.202641]  ? finish_task_switch.isra.0+0xd3/0x290
->> | [   90.202644]  ? io_worker_handle_work+0x670/0x670
->> | [   90.202646]  ? io_worker_handle_work+0x670/0x670
->> | [   90.202649]  ret_from_fork+0x22/0x30
->>
->> which is due to the RT kernel not liking a GFP_ATOMIC allocation inside
->> a raw spinlock. Besides that not working on RT, doing any kind of
->> allocation from inside schedule() is kind of nasty and should be avoided
->> if at all possible.
->>
->> This particular path happens when an io-wq worker goes to sleep, and we
->> need a new worker to handle pending work. We currently allocate a small
->> data item to hold the information we need to create a new worker, but we
->> can instead include this data in the io_worker struct itself and just
->> protect it with a single bit lock. We only really need one per worker
->> anyway, as we will have run pending work between to sleep cycles.
->>
->> https://lore.kernel.org/lkml/20210804082418.fbibprcwtzyt5qax@beryllium.lan/
->> Reported-by: Daniel Wagner <dwagner@suse.de>
->> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> 
-> I applied this patch on top of v5.14-rc4-rt4 and with it all looks
-> good.
-> 
-> Tested-by: Daniel Wagner <dwagner@suse.de>
+On 2021-08-04 09:39:30 [-0600], Jens Axboe wrote:
+> I'm confused, the waitqueue locks are always IRQ disabling.
 
-Great, thanks for testing!
+spin_lock_irq() does not disable interrupts on -RT. The patch above
+produces:
 
--- 
-Jens Axboe
+| BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
+| in_atomic(): 0, irqs_disabled(): 1, non_block: 0, pid: 2020, name: iou-wrk-2018
+| 1 lock held by iou-wrk-2018/2020:
+|  #0: ffff888111a47de8 (&hash->wait){+.+.}-{0:0}, at: io_worker_handle_work+0x443/0x630
+| irq event stamp: 10
+| hardirqs last  enabled at (9): [<ffffffff81c47818>] _raw_spin_unlock_irqrestore+0x28/0x70
+| hardirqs last disabled at (10): [<ffffffff81c4769e>] _raw_spin_lock_irq+0x3e/0x40
+| softirqs last  enabled at (0): [<ffffffff81077238>] copy_process+0x8f8/0x2020
+| softirqs last disabled at (0): [<0000000000000000>] 0x0
+| CPU: 5 PID: 2020 Comm: iou-wrk-2018 Tainted: G        W         5.14.0-rc4-rt4+ #97
+| Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
+| Call Trace:
+|  dump_stack_lvl+0x45/0x59
+|  ___might_sleep.cold+0xa6/0xb6
+|  rt_spin_lock+0x35/0xc0
+|  ? io_worker_handle_work+0x443/0x630
+|  io_worker_handle_work+0x443/0x630
+|  io_wqe_worker+0xb4/0x340
+|  ? lockdep_hardirqs_on_prepare+0xd4/0x170
+|  ? _raw_spin_unlock_irqrestore+0x28/0x70
+|  ? _raw_spin_unlock_irqrestore+0x28/0x70
+|  ? io_worker_handle_work+0x630/0x630
+|  ? rt_mutex_slowunlock+0x2ba/0x310
+|  ? io_worker_handle_work+0x630/0x630
+|  ret_from_fork+0x22/0x30
 
+
+But indeed, you are right, my snippet breaks non-RT. So this then maybe:
+
+diff --git a/fs/io-wq.c b/fs/io-wq.c
+index 57d3cdddcdb3e..0b931ac3c83e6 100644
+--- a/fs/io-wq.c
++++ b/fs/io-wq.c
+@@ -384,7 +384,7 @@ static void io_wait_on_hash(struct io_wqe *wqe, unsigned int hash)
+ {
+ 	struct io_wq *wq = wqe->wq;
+ 
+-	spin_lock(&wq->hash->wait.lock);
++	spin_lock_irq(&wq->hash->wait.lock);
+ 	if (list_empty(&wqe->wait.entry)) {
+ 		__add_wait_queue(&wq->hash->wait, &wqe->wait);
+ 		if (!test_bit(hash, &wq->hash->map)) {
+@@ -392,7 +392,7 @@ static void io_wait_on_hash(struct io_wqe *wqe, unsigned int hash)
+ 			list_del_init(&wqe->wait.entry);
+ 		}
+ 	}
+-	spin_unlock(&wq->hash->wait.lock);
++	spin_unlock_irq(&wq->hash->wait.lock);
+ }
+ 
+ static struct io_wq_work *io_get_next_work(struct io_wqe *wqe)
+@@ -430,9 +430,9 @@ static struct io_wq_work *io_get_next_work(struct io_wqe *wqe)
+ 	}
+ 
+ 	if (stall_hash != -1U) {
+-		raw_spin_unlock(&wqe->lock);
++		raw_spin_unlock_irq(&wqe->lock);
+ 		io_wait_on_hash(wqe, stall_hash);
+-		raw_spin_lock(&wqe->lock);
++		raw_spin_lock_irq(&wqe->lock);
+ 	}
+ 
+ 	return NULL;
+
+(this is on-top of the patch you sent earlier and Daniel Cc: me on after
+I checked that the problem/warning still exists).
+
+Sebastian
