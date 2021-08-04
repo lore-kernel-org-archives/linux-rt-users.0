@@ -2,131 +2,127 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0AF59C4338F
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 23:54:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30181C4338F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 02:04:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DE10C61050
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Aug 2021 23:54:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0EDEC60243
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 02:04:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234669AbhHCXzB (ORCPT
+        id S234414AbhHDCEL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Aug 2021 19:55:01 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:60438 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233784AbhHCXzB (ORCPT
+        Tue, 3 Aug 2021 22:04:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55670 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S234230AbhHDCEK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 Aug 2021 19:55:01 -0400
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1628034888;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=uXPzQ106Gzz/QfQUvV21NZBY82K/Xa1WUotPKxNKs/s=;
-        b=g2tVyGLVgyvvt51y4phFCb4e/IRo+TkCrR0P7rBCXrlqqV0FKAVjAnQJdSyb3vhaHN1GmM
-        JWSCfIw6Z9h71HVqL2Fd4i8fs59RyB65mscfupaiU1TtrZDpqx3291G6iYN3YYjdcB612K
-        kI/o+QLxBFdJZICfP3jZdqsMg89RjInVaGpfpF/JObzZDzA4zvMVZtaCB1dE5rrFiOP1xF
-        Nxv2UQEayZUGtfN2y6y5P/vjiQq5C5KmuFshIrlqWHrLBchL/6WfwSceA6k0dw2XmFQ7jq
-        Ws+K18sAjWTdCQXhV73P9SYp3dTLo8YxiEVUOfXDtxbs8Il6oHwvbssnPGYTBQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1628034888;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=uXPzQ106Gzz/QfQUvV21NZBY82K/Xa1WUotPKxNKs/s=;
-        b=ZHq7Hf3ihfyizoxoVi0V4ONzM+2F6n6diNdxjaMuOUZ9CkkB7CtkKmdUo9JFoivEPz8Nhv
-        K7baBhsWJ/AmalCw==
-To:     Mel Gorman <mgorman@techsingularity.net>,
-        Andrew Morton <akpm@linux-foundation.org>
-Cc:     Ingo Molnar <mingo@kernel.org>, Vlastimil Babka <vbabka@suse.cz>,
-        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
-        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 2/2] mm/vmstat: Protect per cpu variables with preempt
- disable on RT
-In-Reply-To: <20210723100034.13353-3-mgorman@techsingularity.net>
-References: <20210723100034.13353-1-mgorman@techsingularity.net>
- <20210723100034.13353-3-mgorman@techsingularity.net>
-Date:   Wed, 04 Aug 2021 01:54:47 +0200
-Message-ID: <87czqu2iew.ffs@tglx>
+        Tue, 3 Aug 2021 22:04:10 -0400
+Received: from mail-wm1-x330.google.com (mail-wm1-x330.google.com [IPv6:2a00:1450:4864:20::330])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D4A83C061764
+        for <linux-rt-users@vger.kernel.org>; Tue,  3 Aug 2021 19:03:57 -0700 (PDT)
+Received: by mail-wm1-x330.google.com with SMTP id m19so298435wms.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Aug 2021 19:03:57 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=rtst-co-kr.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=zBi/4DyBrAJ54JI+6NAqWr7rfcLuXLpDmtkvpW0MEpg=;
+        b=VxDyckCan+nlsyElYFpgIKhlFvfJGmh1LuwKJz4W6++ZOdvSj9BPr5P3TEqAGJR7WT
+         S8V0yyRtbvkPce1pk2NlJIqFRImxTRTF738Az2uxnigUtcFsVzeb5qyk1L3HMViwo7C2
+         wWKZZMGMDFJ3thdVsMyUykfojFTDnQ78QDGSPjROs4482uO0PTuPqDBye2t9IfRWCJTW
+         n2lqMoMrW6HPPrxgRO3r/RFaQsKxtxeLXxoKTIGjo1T64wiWS+ufwnz3Iq3FOt0mZpq2
+         AJaRlbejOeTlxBVy4Ip4RoRD0SwNXa6CEpuIuOk+77s41jFCazDd/OAH3NKGMwHg3LHa
+         1uRw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=zBi/4DyBrAJ54JI+6NAqWr7rfcLuXLpDmtkvpW0MEpg=;
+        b=Vxrw0srMxrtJB9BwzhbF6TkBYMlkqZf6z9wzVMzMYKi/8CzZsLv3r4U+E9miuPTwaC
+         o7GMLP4ozb0Arh2t+DyraFagc/nLCvdRp9U5VaN76onVXoRAAs/OJ7gJ82LOA60p4eyF
+         LxdehDIizncqaUZoY1dorm/hXw8UGau7I9XJM2/Cq2KRLrIIJ97MuBAKNyIRhbYZoo9P
+         a6iGImnDRPNJDiPJoX2U24zq2ABXiZKakcX5RjRJBupt5o5cpqHJpu4roPcy5rWzqYUx
+         MsQRAegKXD6xZsJty2C6aTk5uScY3GNqK66WqW+RG8u0Cdb5bzn31A4Gn6SwtiXjDq2y
+         FbwQ==
+X-Gm-Message-State: AOAM530H2bKNZ7wszSaDAZz88x0ABbxTYHYnx5LLU6itsJnU4YlFN6vt
+        S3p/sM9xMjv4IS8tteou6+2fxlu/v2ZKBHUbXWxjOQ==
+X-Google-Smtp-Source: ABdhPJxY3QjySiiv+DNCAckxM779d1JXngFScYhhyH3gGzgY6c3A8dX9XcgtDZyEc7ALNTMY2deeQ769daP3dbmKuII=
+X-Received: by 2002:a7b:c094:: with SMTP id r20mr24399561wmh.107.1628042636306;
+ Tue, 03 Aug 2021 19:03:56 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain
+References: <CAJk_X9hBB_edByfEvueSyWgKjpYGZbS2rPLPCSpRrPr+icFz_Q@mail.gmail.com>
+ <20210804013252.GA16420@nchen>
+In-Reply-To: <20210804013252.GA16420@nchen>
+From:   Jeaho Hwang <jhhwang@rtst.co.kr>
+Date:   Wed, 4 Aug 2021 11:03:44 +0900
+Message-ID: <CAJk_X9gwa+4CZRemKqW7XZzxd438EQHA-Ngp4MdmPVgHM0Q5fg@mail.gmail.com>
+Subject: Re: Chipidea USB device goes infinite loop due to interrupt while hw_ep_prime
+To:     Peter Chen <peter.chen@kernel.org>
+Cc:     linux-usb@vger.kernel.org,
+        =?UTF-8?B?67OA66y06rSRKEJ5ZW9uIE1vbyBLd2FuZykv7J6Q64+Z7ZmU7JewKUF1dG9tYXRpb24gUGxhdGZvcm0=?=
+         =?UTF-8?B?7Jew6rWs7YyA?= <mkbyeon@lselectric.co.kr>,
+        Linux team <team-linux@rtst.co.kr>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Mel!
-
-On Fri, Jul 23 2021 at 11:00, Mel Gorman wrote:
-> From: Ingo Molnar <mingo@elte.hu>
+Hi. linux-usb and linux-rt experts.
 >
-> Disable preemption on -RT for the vmstat code. On vanila the code runs
-> in IRQ-off regions while on -RT it may not when stats are updated under
-> a local_lock. "preempt_disable" ensures that the same resources is not
-> updated in parallel due to preemption.
+> On 21-08-02 17:35:01, Jeaho Hwang wrote:
+> > Hi.
+> >
+> > We found an infinite loop inside the function hw_ep_set_halt
+> > (drivers/usb/chipidea/udc.c) if a cablle is repeatedly
+> > connnected/disconnected while ping through RNDIS with chipidea USB devi=
+ce.
+> >
+> > Using ftrace tracing, we found that hw_ep_set_halt is called due to err=
+or
+> > return of hw_ep_prime(drivers/usb/chipidea/udc.c:202) which is called f=
+rom
+> > isr_tr_complete_handler -> isr_setup_status_phase -> _ep_queue.
+> >
+> > The comment of function hw_ep_prime says (execute without interruption)=
+ but
+> > timer interrupt is occurred while hw_ep_prime is executing. We believe =
+that
+> > the interrupt causes an error return of hw_ep_prime. We tried to protec=
+t
+> > hw_ep_prime from irqs and then no case of the infinite loop is occurred=
+.
+> >
+> > I want ask if it is appropriate way that turning off irq inside (thread=
+ed)
+> > irq handlers. And should we explicitly turn off irqs before calling
+> > hw_ep_prime?
+> >
 >
-> This patch differs from the preempt-rt version where __count_vm_event and
-> __count_vm_events are also protected. The counters are explicitly "allowed
-> to be to be racy" so there is no need to protect them from preemption. Only
-> the accurate page stats that are updated by a read-modify-write need
-> protection.
+> Jeaho, do you use RT-Linux or standard Linux? The function hw_ep_prime is
+> only called at udc_irq which is registered as top-half irq handlers.
+> Why the timer interrupt is occurred when hw_ep_prime is executing?
+
+We use preempt_RT so timer interrupt could be occurred. Now I found
+out that forced threaded irq handler disables local irq on standard
+linux so It is a linux-rt issue. Then should I make patch which
+disables local irqs during hw_ep_prime for RT kernel and suggest it to
+linux-rt maintainers?
+
+Thanks for a kind answer Peter.
+
 >
-> Signed-off-by: Ingo Molnar <mingo@elte.hu>
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
-> ---
->  mm/vmstat.c | 12 ++++++++++++
->  1 file changed, 12 insertions(+)
+> --
 >
-> diff --git a/mm/vmstat.c b/mm/vmstat.c
-> index b0534e068166..d06332c221b1 100644
-> --- a/mm/vmstat.c
-> +++ b/mm/vmstat.c
-> @@ -319,6 +319,7 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
->  	long x;
->  	long t;
->  
-> +	preempt_disable_rt();
+> Thanks,
+> Peter Chen
+>
 
-Yes, this is smart to some extent. But in reality it's a bandaid simply
-because nobody can tell which item of vmstat requires which protection.
 
-If you go back in RT history then you will figure out that we were able
-to eliminate _all_ occurences of preempt_disable_rt() except for this
-one.
-
-Even mm developers are wary about this:
-
- <tglx> so in vmstat.c there is this magic comment:
- <tglx>  * For use when we know that interrupts are disabled
- <tglx>  * or when we know that preemption is disabled and that
- <tglx>  * particular counter cannot be updated from interrupt context.
- <tglx> how can I know which counters need what?
- <mm_expert> I don't think there's a list, one would have to check on counter to counter basis :/ 
- <tglx> and of course there is nothing which validates that, right?
- <mm_expert> exactly
-
-Brilliant stuff which prevents you to do any validation on this. Over
-the years there have been several issues where callers had to be fixed
-by analysing bug reports instead of having a proper instrumentation in
-that code which would have told the developer that he got it wrong.
-
-Of course on RT kernels the preempt_disable_rt() will serialize
-everything correctly, but as we have learned over the years just
-slapping _if_rt() or if_not_rt() variants of things around is most of
-the time papering over the underlying problem of badly defined
-protection scopes. Let's not proliferate that. As I said in the above
-IRC conversation:
-
- <tglx> I fundamentally hate this preempt_disable_rt() muck
-
-Thanks,
-
-        tglx
+--=20
+=ED=99=A9=EC=9E=AC=ED=98=B8, Jay Hwang, linux team manager of RTst
+010-7242-1593
