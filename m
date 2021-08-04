@@ -2,95 +2,145 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C624C4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 17:02:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B496C432BE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 22:37:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 163D460F22
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 17:02:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3E1B06056B
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 22:37:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239783AbhHDRCQ (ORCPT
+        id S230138AbhHDWh0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Aug 2021 13:02:16 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:37162 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239785AbhHDRCQ (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Aug 2021 13:02:16 -0400
-Date:   Wed, 4 Aug 2021 19:02:00 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1628096522;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=njdHwlZDNfjTmyv+M6Q8FrVV+kOhpgWcui0QMoTuTlY=;
-        b=u8vUlaDJbguz6JokRpafuQNrTWuOJE0ZyBa+x2B1kj+D+vYyxSZQ61UhN3XfL6GE78Grbs
-        CXskFh2Bh5MTTNLOsgKzF1k2hjn58hdbXcUjfcZuThYeyg8tMt/TKKdX6TLUWgSLBHDyms
-        1TwHjOxv7l8LjHsIJnMA+sPhJD9WEF5cIzCetxL0JwCnnapRfaUgANrM4D+Rw/BQUJTbzr
-        2DrUS7nX2XwDqa4/+M3x+i6cGqPTXp3IfYt7QlOJhK8aS+RX3IYvji7KNOKKXxsMZJT3jn
-        7v+ZYJ/K/pVn8HNn714bsbtkCoD+RRVQc2rDGYZVmFAjjMFiPm++BW37LNAagw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1628096522;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=njdHwlZDNfjTmyv+M6Q8FrVV+kOhpgWcui0QMoTuTlY=;
-        b=D9QspVkqfxHyT3Xxinc58/7+zTOYxyTgm6M+Lma++Lh3IO6EfB9cigCyzSvfXZ8EKNLD0A
-        muJGAISFxTvnFSBA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Jens Axboe <axboe@kernel.dk>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Wed, 4 Aug 2021 18:37:26 -0400
+Received: from mail.kernel.org ([198.145.29.99]:59972 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229611AbhHDWh0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 4 Aug 2021 18:37:26 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id D4A4C60F41;
+        Wed,  4 Aug 2021 22:37:12 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1628116632;
+        bh=CZDc3cuXIwg9cgSdNmFX+JqgPpKv7JvIYL0xpPA/LpY=;
+        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
+        b=ZKUVPraVYkfCzKNwBVmOMqZ5pvwwG1NhufBNSrcln+cpyDr3l2dafv/3GPXEfTXSH
+         IrPFtutGDy3ybFQPQGqtKSQeVFLFaUQzRjwGt5Dp/cMUU+aAe0zQFj9/sRyHrBwP/Y
+         eqGNkQYKfL/aT5TnPlWcRwfU9/lwcB1CGREu+t92WOLMxXQwoJZuWalbsquaI8tUKf
+         29ktO/4KqXZGTEpsoyaJOSt0WGMWl5qP4k+ENCNSVWdLX36GEAGZgGyt6YYiWkylTH
+         GWdv3J1o6f9F7eRBjUs0eqHfokzwd3KbGgwihKExwZpAsU0UtUWFojRj9GYjH48uSB
+         J38/ArSapK0oQ==
+Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
+        id 950F85C22D9; Wed,  4 Aug 2021 15:37:12 -0700 (PDT)
+Date:   Wed, 4 Aug 2021 15:37:12 -0700
+From:   "Paul E. McKenney" <paulmck@kernel.org>
+To:     Valentin Schneider <valentin.schneider@arm.com>
+Cc:     linux-kernel@vger.kernel.org, rcu@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Peter Zijlstra <peterz@infradead.org>,
-        Daniel Wagner <wagi@monom.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [ANNOUNCE] v5.14-rc4-rt4
-Message-ID: <20210804170200.tvocf4hodvzz632g@linutronix.de>
-References: <20210804153308.oasahcxjmcw7vivo@linutronix.de>
- <f2d0a028-fe85-28ff-9cea-8ab1d26a15d0@kernel.dk>
- <20210804154743.niogqvnladdkfgi2@linutronix.de>
- <7c946918-ae0d-6195-6a78-b019f9bc1fd3@kernel.dk>
- <20210804155747.cwayhjsdjc4zaubd@linutronix.de>
- <c3fa07d1-a3c4-6775-f419-4875eb41bc88@kernel.dk>
- <20210804122029.6c5c837a@oasis.local.home>
- <4ffb8f7c-085c-f6cc-e308-3f75b24b8e47@kernel.dk>
- <20210804164735.sq6sjejusa37abkw@linutronix.de>
- <71d37a7d-af53-945e-0c49-3cb902487df4@kernel.dk>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Scott Wood <swood@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 1/2] rcutorture: Don't disable softirqs with preemption
+ disabled when PREEMPT_RT
+Message-ID: <20210804223712.GA4397@paulmck-ThinkPad-P17-Gen-1>
+Reply-To: paulmck@kernel.org
+References: <20210803225437.3612591-1-valentin.schneider@arm.com>
+ <20210803225437.3612591-2-valentin.schneider@arm.com>
+ <20210803234352.GX4397@paulmck-ThinkPad-P17-Gen-1>
+ <87v94la4zm.mognet@arm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <71d37a7d-af53-945e-0c49-3cb902487df4@kernel.dk>
+In-Reply-To: <87v94la4zm.mognet@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-04 10:57:11 [-0600], Jens Axboe wrote:
-> > The spin_lock_irq() vs local_irq_disable() + spin_lock() is documented
-> > in Documentation/locking/locktypes.rst.
-> > That said I have no problem by carrying that patch in the RT-patchset
-> > and revisit it later.
+On Wed, Aug 04, 2021 at 11:17:33AM +0100, Valentin Schneider wrote:
 > 
-> Right, I suspect that was added as a pre RT patch dump at some point.
-> It's a newer thing. Is it actually possible to set PREEMPT_RT in the
-> mainline kernel? Looks like it depends on ARCH_SUPPORTS_RT and nobody
-> sets that.
+> +Cc Scott, Sebastian
+> 
+> On 03/08/21 16:43, Paul E. McKenney wrote:
+> > On Tue, Aug 03, 2021 at 11:54:36PM +0100, Valentin Schneider wrote:
+> >> Running RCU torture with CONFIG_PREEMPT_RT under v5.13-rt1 triggers:
+> >>
+> >> [   10.821700] DEBUG_LOCKS_WARN_ON(this_cpu_read(softirq_ctrl.cnt))
+> >> [   10.821716] WARNING: CPU: 5 PID: 137 at kernel/softirq.c:173 __local_bh_disable_ip (kernel/softirq.c:173 (discriminator 31))
+> >> [   10.821739] Modules linked in:
+> >> [   10.821749] CPU: 5 PID: 137 Comm: rcu_torture_rea Not tainted 5.13.0-rt1-00005-g08bbda29766a #129
+> >> [   10.821759] Hardware name: ARM Juno development board (r0) (DT)
+> >> [   10.821765] pstate: 60000005 (nZCv daif -PAN -UAO -TCO BTYPE=--)
+> >> [   10.821938] Call trace:
+> >> [   10.821941] __local_bh_disable_ip (kernel/softirq.c:173 (discriminator 31))
+> >> [   10.821950] rcutorture_one_extend (./include/linux/rcupdate.h:274 ./include/linux/rcupdate.h:737 kernel/rcu/rcutorture.c:1443)
+> >> [   10.821960] rcu_torture_one_read (kernel/rcu/rcutorture.c:1590 kernel/rcu/rcutorture.c:1638)
+> >> [   10.821968] rcu_torture_reader (kernel/rcu/rcutorture.c:1730)
+> >> [   10.821976] kthread (kernel/kthread.c:321)
+> >> [   10.821986] ret_from_fork (arch/arm64/kernel/entry.S:1005)
+> >> [   10.821997] irq event stamp: 478635
+> >> [   10.822001] hardirqs last enabled at (478635): _raw_spin_unlock_irq (./arch/arm64/include/asm/irqflags.h:35 ./include/linux/spinlock_api_smp.h:168 kernel/locking/spinlock.c:202)
+> >> [   10.822016] hardirqs last disabled at (478634): __schedule (kernel/sched/core.c:5154 (discriminator 1))
+> >> [   10.822029] softirqs last enabled at (478626): __local_bh_enable_ip (./arch/arm64/include/asm/irqflags.h:85 kernel/softirq.c:262)
+> >> [   10.822040] softirqs last disabled at (478622): rcutorture_one_extend (./include/linux/bottom_half.h:19 kernel/rcu/rcutorture.c:1441)
+> >>
+> >> Per this warning, softirqs cannot be disabled in a non-preemptible region
+> >> under CONFIG_PREEMPT_RT. Adjust RCU torture accordingly.
+> >>
+> >> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+> >> ---
+> >>  kernel/rcu/rcutorture.c | 2 ++
+> >>  1 file changed, 2 insertions(+)
+> >>
+> >> diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+> >> index 6096a7d14342..680f66b65f14 100644
+> >> --- a/kernel/rcu/rcutorture.c
+> >> +++ b/kernel/rcu/rcutorture.c
+> >> @@ -1537,6 +1537,8 @@ rcutorture_extend_mask(int oldmask, struct torture_random_state *trsp)
+> >>       * them on non-RT.
+> >>       */
+> >>      if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+> >
+> > This depends on some rcutorture patches in -rt that are not yet in
+> > -rcu.  Would -rt be a good place for this one, or are those patches
+> > now ready for -rcu?
+> >
+> 
+> Right, this goes along with
+> 
+>   72d6f4f680bf ("rcutorture: Avoid problematic critical section nesting on RT")
+> 
+> (from v5.13-rt1), which seems to apply cleanly on top of the current
+> mainline. So if we want this to go straight into -rcu, the above needs to
+> go along with it.
 
-Yes. It is upstream now. The documentation and CONFIG_PREEMPT_RT symbol.
-The Kconfig symbol has already users outside of the -RT patch.
+Ah, this one needs to have its changes conditioned on PREEMPT_RT.
+The situations that this patch excludes really can happen in mainline,
+so they still need to be tested in mainline.
 
-You can't enable it yet since we require a few things which are on their
-way.
+It all comes back now.  ;-)
 
-Having the symbol and the documentation helped to convince some people
-:) 
+							Thanx, Paul
 
-> So I agree that just carrying your solution in the RT patchset is fine
-> for now, we can revisit later.
-
-Okay.
-
-Sebastian
+> Thomas et al, any objections?
+> 
+> >                                                       Thanx, Paul
+> >
+> >> +		/* Can't disable bh in atomic context under PREEMPT_RT */
+> >> +		mask &= ~(RCUTORTURE_RDR_ATOM_BH | RCUTORTURE_RDR_ATOM_RBH);
+> >>              /*
+> >>               * Can't release the outermost rcu lock in an irq disabled
+> >>               * section without preemption also being disabled, if irqs
+> >> --
+> >> 2.25.1
+> >>
