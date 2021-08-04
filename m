@@ -3,100 +3,124 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 77B67C4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:33:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8888C4320A
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:33:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5415B60F10
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:33:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A1B276024A
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Aug 2021 15:33:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239086AbhHDPdZ (ORCPT
+        id S239111AbhHDPdi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Aug 2021 11:33:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41444 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239058AbhHDPdY (ORCPT
+        Wed, 4 Aug 2021 11:33:38 -0400
+Received: from smtp-out2.suse.de ([195.135.220.29]:38570 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S239104AbhHDPdh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Aug 2021 11:33:24 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0B924C0613D5;
-        Wed,  4 Aug 2021 08:33:12 -0700 (PDT)
-Date:   Wed, 4 Aug 2021 17:33:08 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1628091189;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+        Wed, 4 Aug 2021 11:33:37 -0400
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out2.suse.de (Postfix) with ESMTPS id CA23E2017C;
+        Wed,  4 Aug 2021 15:33:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1628091203; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=UITlFQfMn5a0ECmudpd6OTfbQkrY3q2ViFmsUd3y0O4=;
-        b=S2FFqwPNBno1O6pWE5QfyQ3X3ppQfvNrqSCCFH2VX42eeZBvQ/QzRF85D0MDEVtcuf1Nyk
-        yJvCOfQsYsO+2xwCe8WrUsjG2LewHgOKUks4mhzid5kTEUFM56GTZgpWKcEyz5wMtkEFVh
-        7C/326YYoNX65TopjIjQA0ijoqNH8UyCbCYwLoYJps2/0cJQr5PZMlRVjWVNZz2w35b5pc
-        IgssKC74H+0BCfqkalCQuAozbBunA/asUsXdGCOxmMXhHlQsfeKp+6YEfN4lOu1ycR5bMW
-        wYy2a/NvjfOGOGXQrn5KAe1g5SiGODJkKndWhDfSwbZy2sSpywFtsR+0+BZogw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1628091189;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+        bh=t1tJavoxRL8YKK5Go9RcDtEqTyvx22b83zd2R6Gnu8U=;
+        b=RmB8ayOZl1h/pidOXlM38S5lgpD8pX2M2IFmCTahhR9dOvPqLhm9MIYV08kJvZwqNvcBhw
+        KvIKB5tndoiZrAtMLMDHNjrJ9ndpnYjkt8pyrdyf/3/Zl3sjDIBdXXEff+ttgGHBRbJO52
+        cuJP9CNnJ51PtobHdx26soQToLgr/Dw=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1628091203;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=UITlFQfMn5a0ECmudpd6OTfbQkrY3q2ViFmsUd3y0O4=;
-        b=6FNL0w5IQx/o71Yw07KRIwB0qY27ffUQoONfH/lx5Kfl23fqgpa2RpeMx61Bv8zsfjx6AW
-        xR+zMUCSSHKL2/Cg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        bh=t1tJavoxRL8YKK5Go9RcDtEqTyvx22b83zd2R6Gnu8U=;
+        b=4SEKEmtyQMijIYzn4DTfJFEh+sIfCgkx/aGXqyKx/gaZtuN4Izbw/6cOzfjqES2eDpe771
+        yxM1YD9gbC6TILBQ==
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id BC18113BD7;
+        Wed,  4 Aug 2021 15:33:23 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap1.suse-dmz.suse.de with ESMTPSA
+        id bBiLLUOzCmH8YgAAGKfGzw
+        (envelope-from <dwagner@suse.de>); Wed, 04 Aug 2021 15:33:23 +0000
+Date:   Wed, 4 Aug 2021 17:33:23 +0200
+From:   Daniel Wagner <dwagner@suse.de>
 To:     Jens Axboe <axboe@kernel.dk>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Daniel Wagner <wagi@monom.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Cc:     io-uring <io-uring@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
         linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] v5.14-rc4-rt4
-Message-ID: <20210804153308.oasahcxjmcw7vivo@linutronix.de>
-References: <20210802162750.santic4y6lzcet5c@linutronix.de>
- <20210804082418.fbibprcwtzyt5qax@beryllium.lan>
- <20210804104340.fhdjwn3hruymu3ml@linutronix.de>
- <20210804104803.4nwxi74sa2vwiujd@linutronix.de>
- <20210804110057.chsvt7l5xpw7bo5r@linutronix.de>
- <20210804131731.GG8057@worktop.programming.kicks-ass.net>
- <4f549344-1040-c677-6a6a-53e243c5f364@kernel.dk>
- <feebf183-2e33-36b5-4538-62a40b2a58b6@kernel.dk>
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] io-wq: remove GFP_ATOMIC allocation off schedule out path
+Message-ID: <20210804153323.anggq6oto6x7g2rs@beryllium.lan>
+References: <a673a130-e0e4-5aa8-4165-f35d1262fc6a@kernel.dk>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <feebf183-2e33-36b5-4538-62a40b2a58b6@kernel.dk>
+In-Reply-To: <a673a130-e0e4-5aa8-4165-f35d1262fc6a@kernel.dk>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-04 08:23:55 [-0600], Jens Axboe wrote:
-> Totally untested, but I think the principle is sound. I'll run it through
-> some testing.
+On Wed, Aug 04, 2021 at 08:43:43AM -0600, Jens Axboe wrote:
+> Daniel reports that the v5.14-rc4-rt4 kernel throws a BUG when running
+> stress-ng:
+> 
+> | [   90.202543] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
+> | [   90.202549] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 2047, name: iou-wrk-2041
+> | [   90.202555] CPU: 5 PID: 2047 Comm: iou-wrk-2041 Tainted: G        W         5.14.0-rc4-rt4+ #89
+> | [   90.202559] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
+> | [   90.202561] Call Trace:
+> | [   90.202577]  dump_stack_lvl+0x34/0x44
+> | [   90.202584]  ___might_sleep.cold+0x87/0x94
+> | [   90.202588]  rt_spin_lock+0x19/0x70
+> | [   90.202593]  ___slab_alloc+0xcb/0x7d0
+> | [   90.202598]  ? newidle_balance.constprop.0+0xf5/0x3b0
+> | [   90.202603]  ? dequeue_entity+0xc3/0x290
+> | [   90.202605]  ? io_wqe_dec_running.isra.0+0x98/0xe0
+> | [   90.202610]  ? pick_next_task_fair+0xb9/0x330
+> | [   90.202612]  ? __schedule+0x670/0x1410
+> | [   90.202615]  ? io_wqe_dec_running.isra.0+0x98/0xe0
+> | [   90.202618]  kmem_cache_alloc_trace+0x79/0x1f0
+> | [   90.202621]  io_wqe_dec_running.isra.0+0x98/0xe0
+> | [   90.202625]  io_wq_worker_sleeping+0x37/0x50
+> | [   90.202628]  schedule+0x30/0xd0
+> | [   90.202630]  schedule_timeout+0x8f/0x1a0
+> | [   90.202634]  ? __bpf_trace_tick_stop+0x10/0x10
+> | [   90.202637]  io_wqe_worker+0xfd/0x320
+> | [   90.202641]  ? finish_task_switch.isra.0+0xd3/0x290
+> | [   90.202644]  ? io_worker_handle_work+0x670/0x670
+> | [   90.202646]  ? io_worker_handle_work+0x670/0x670
+> | [   90.202649]  ret_from_fork+0x22/0x30
+> 
+> which is due to the RT kernel not liking a GFP_ATOMIC allocation inside
+> a raw spinlock. Besides that not working on RT, doing any kind of
+> allocation from inside schedule() is kind of nasty and should be avoided
+> if at all possible.
+> 
+> This particular path happens when an io-wq worker goes to sleep, and we
+> need a new worker to handle pending work. We currently allocate a small
+> data item to hold the information we need to create a new worker, but we
+> can instead include this data in the io_worker struct itself and just
+> protect it with a single bit lock. We only really need one per worker
+> anyway, as we will have run pending work between to sleep cycles.
+> 
+> https://lore.kernel.org/lkml/20210804082418.fbibprcwtzyt5qax@beryllium.lan/
+> Reported-by: Daniel Wagner <dwagner@suse.de>
+> Signed-off-by: Jens Axboe <axboe@kernel.dk>
 
-This is needed:
+I applied this patch on top of v5.14-rc4-rt4 and with it all looks
+good.
 
-diff --git a/fs/io-wq.c b/fs/io-wq.c
-index 1192ee2abd982..77ec6896edaa5 100644
---- a/fs/io-wq.c
-+++ b/fs/io-wq.c
-@@ -428,9 +428,9 @@ static struct io_wq_work *io_get_next_work(struct io_wqe *wqe)
- 	}
- 
- 	if (stall_hash != -1U) {
--		raw_spin_unlock(&wqe->lock);
-+		raw_spin_unlock_irq(&wqe->lock);
- 		io_wait_on_hash(wqe, stall_hash);
--		raw_spin_lock(&wqe->lock);
-+		raw_spin_lock_irq(&wqe->lock);
- 	}
- 
- 	return NULL;
+Tested-by: Daniel Wagner <dwagner@suse.de>
 
-
-otherwise the spinlock_t lock in io_wait_on_hash() is acquired with
-disabled interrupts which is a no-no on -RT.
-With that it all looks good as far as I can tell.
-Thank you.
-
-Sebastian
