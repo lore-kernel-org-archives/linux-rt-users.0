@@ -2,106 +2,100 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+X-Spam-Status: No, score=-10.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E2BDC432BE
-	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Aug 2021 21:08:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90ACDC4338F
+	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Aug 2021 23:22:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 01E8361102
-	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Aug 2021 21:08:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 673BD61104
+	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Aug 2021 23:22:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241742AbhHEVIk (ORCPT
+        id S233570AbhHEXWX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 5 Aug 2021 17:08:40 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58912 "EHLO mail.kernel.org"
+        Thu, 5 Aug 2021 19:22:23 -0400
+Received: from mail.kernel.org ([198.145.29.99]:33132 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S241387AbhHEVIj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 5 Aug 2021 17:08:39 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 71EF260EBC;
-        Thu,  5 Aug 2021 21:08:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1628197704;
-        bh=SRtaowijoG8twAxHHQPP1frqmBFYAiBOGw+39md1RVo=;
-        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
-        b=nHRGhN7ts/aOENkjY13K+SLhMIvNR351kTPTtkF6AnSvp5rr/ExKU5kckq0dKRbpY
-         O6+vZb5T1E5OZ/iJVTPbClsqti5PgCkvIULQYEfLc0ffrXYE6czPD2xZPkOCzDu0SV
-         ehNOYEfQBriqlXvRGwYghWT9mMTFacUzReWgtgHw1jGf1UAvE7bUBwx9WqPmgffoPa
-         i9djO3u2yhnd6R7dbjnJz8WaI/kVG/o44IsEbL2vTumJaocbnWNIcQFwHTL6F6bm2b
-         3+R3xcp+yWN5TVVD8yR9/UpOnGZCf9kcbEu5i/Sb0t0eoF37mJWDuGa9wfdujoTxhR
-         9Ih14r7LrNMmQ==
-Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
-        id 3D48D5C271F; Thu,  5 Aug 2021 14:08:24 -0700 (PDT)
-Date:   Thu, 5 Aug 2021 14:08:24 -0700
-From:   "Paul E. McKenney" <paulmck@kernel.org>
-To:     Juri Lelli <juri.lelli@redhat.com>
-Cc:     josh@joshtriplett.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, peterz@infradead.org,
-        bigeasy@linutronix.de, tglx@linutronix.de, rostedt@goodmis.org,
-        mathieu.desnoyers@efficios.com, jiangshanlai@gmail.com,
-        joel@joelfernandes.org, rcu@vger.kernel.org
-Subject: Re: [PATCH] rcu: Make rcu_normal_after_boot writable on RT
-Message-ID: <20210805210824.GA1203206@paulmck-ThinkPad-P17-Gen-1>
-Reply-To: paulmck@kernel.org
-References: <20210805080123.16320-1-juri.lelli@redhat.com>
- <20210805160337.GI4397@paulmck-ThinkPad-P17-Gen-1>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210805160337.GI4397@paulmck-ThinkPad-P17-Gen-1>
+        id S229626AbhHEXWW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 5 Aug 2021 19:22:22 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 09D3060EB9;
+        Thu,  5 Aug 2021 23:22:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+        s=korg; t=1628205727;
+        bh=i33xhaeVpXGV2BhPzbhlBwQZn8O01SRCEx1xg2D/ogc=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=PTOpokADg1joo1BVq/LCyTP9Dfnys2JPYFddBTo/oM2s9Oq8QuhsyXA1enMA2eGac
+         0x4GIL0nALbQznW9/AXuBTYRAWOBBTmZ1dxdvKyj5e0dgMs+brROUIjE84aqWvlSR8
+         Dddsnpxxa3os65Jvg4JFsDxb4S8YyKSRDuS2cUWc=
+Date:   Thu, 5 Aug 2021 16:22:06 -0700
+From:   Andrew Morton <akpm@linux-foundation.org>
+To:     Mel Gorman <mgorman@techsingularity.net>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH 1/1] mm/vmstat: Protect per cpu variables with preempt
+ disable on RT
+Message-Id: <20210805162206.664dfc8c090f2be5ea313d57@linux-foundation.org>
+In-Reply-To: <20210805160019.1137-2-mgorman@techsingularity.net>
+References: <20210805160019.1137-1-mgorman@techsingularity.net>
+        <20210805160019.1137-2-mgorman@techsingularity.net>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Aug 05, 2021 at 09:03:37AM -0700, Paul E. McKenney wrote:
-> On Thu, Aug 05, 2021 at 10:01:23AM +0200, Juri Lelli wrote:
-> > Certain configurations (e.g., systems that make heavy use of netns)
-> > need to use synchronize_rcu_expedited() to service RCU grace periods
-> > even after boot.
-> > 
-> > Even though synchronize_rcu_expedited() has been traditionally
-> > considered harmful for RT for the heavy use of IPIs, it is perfectly
-> > usable under certain conditions (e.g. nohz_full).
-> > 
-> > Make rcupdate.rcu_normal_after_boot= again writeable on RT, but keep
-> > its default value to 1 (enabled) to avoid regressions. Users who need
-> > synchronize_rcu_expedited() will boot with rcupdate.rcu_normal_after_
-> > boot=0 in the kernel cmdline.
-> > 
-> > Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
+On Thu,  5 Aug 2021 17:00:19 +0100 Mel Gorman <mgorman@techsingularity.net> wrote:
+
+> From: Ingo Molnar <mingo@elte.hu>
 > 
-> Makes sense to me!
+> Disable preemption on -RT for the vmstat code. On vanila the code runs
+> in IRQ-off regions while on -RT it may not when stats are updated under
+> a local_lock. "preempt_disable" ensures that the same resources is not
+> updated in parallel due to preemption.
 > 
-> But would another of the -rt people be willing to give an Acked-by?
-> For example, maybe they would prefer this kernel boot parameter to be
-> exposed only if (!PREEMPT_RT || NO_HZ_FULL).  Or are there !NO_HZ_FULL
-> situations where rcu_normal_after_boot makes sense?
+> This patch differs from the preempt-rt version where __count_vm_event and
+> __count_vm_events are also protected. The counters are explicitly "allowed
+> to be to be racy" so there is no need to protect them from preemption. Only
+> the accurate page stats that are updated by a read-modify-write need
+> protection. This patch also differs in that a preempt_[en|dis]able_rt
+> helper is not used. As vmstat is the only user of the helper, it was
+> suggested that it be open-coded in vmstat.c instead of risking the helper
+> being used in unnecessary contexts.
+> 
+> ...
+>
+> --- a/mm/vmstat.c
+> +++ b/mm/vmstat.c
+> @@ -319,6 +319,16 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
+>  	long x;
+>  	long t;
+>  
+> +	/*
+> +	 * Accurate vmstat updates require a RMW. On !PREEMPT_RT kernels,
+> +	 * atomicity is provided by IRQs being disabled -- either explicitly
+> +	 * or via local_lock_irq. On PREEMPT_RT, local_lock_irq only disables
+> +	 * CPU migrations and preemption potentially corrupts a counter so
+> +	 * disable preemption.
+> +	 */
+> +	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+> +		preempt_disable();
 
-Ah, and this will also need to be reflected in the WARN_ON_ONCE()
-in synchronize_rcu_expedited_wait() in kernel/rcu/tree_exp.h.
+This is so obvious I expect it has been discussed, but...  why not
 
-							Thanx, Paul
+static inline void preempt_disable_if_rt(void)
+{
+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+		preempt_disable();
+}
 
-> > ---
-> >  kernel/rcu/update.c | 2 --
-> >  1 file changed, 2 deletions(-)
-> > 
-> > diff --git a/kernel/rcu/update.c b/kernel/rcu/update.c
-> > index c21b38cc25e9..0fdbf937edac 100644
-> > --- a/kernel/rcu/update.c
-> > +++ b/kernel/rcu/update.c
-> > @@ -57,9 +57,7 @@
-> >  module_param(rcu_expedited, int, 0);
-> >  module_param(rcu_normal, int, 0);
-> >  static int rcu_normal_after_boot = IS_ENABLED(CONFIG_PREEMPT_RT);
-> > -#ifndef CONFIG_PREEMPT_RT
-> >  module_param(rcu_normal_after_boot, int, 0);
-> > -#endif
-> >  #endif /* #ifndef CONFIG_TINY_RCU */
-> >  
-> >  #ifdef CONFIG_DEBUG_LOCK_ALLOC
-> > -- 
-> > 2.31.1
-> > 
+?
+
+
