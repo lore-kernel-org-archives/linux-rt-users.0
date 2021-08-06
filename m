@@ -2,91 +2,66 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06512C4338F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 17:44:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EBD3FC4338F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 18:34:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CCDE56113C
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 17:44:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C66F960F44
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 18:34:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241555AbhHFRo2 (ORCPT
+        id S242928AbhHFSeu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Aug 2021 13:44:28 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35734 "EHLO mail.kernel.org"
+        Fri, 6 Aug 2021 14:34:50 -0400
+Received: from mail.kernel.org ([198.145.29.99]:42570 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231776AbhHFRo1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Aug 2021 13:44:27 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id E1BD96115C;
-        Fri,  6 Aug 2021 17:44:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1628271851;
-        bh=uSuJHg6HLpSIc2RgweeUEidWnwRjqdoYEFwHJKSZkF0=;
-        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
-        b=rFOe6DyQWR6aPGFt0DZnkUKqtant8N5X5tglQZwhMJyn0kxSzByqc7T8s5NC0W2ue
-         6bULkEjc/9DTmB9ibbBT7q8kC5RYDihSOjBxTCbYLRSUwWDlvvBRONEWLc2T4DqcFd
-         XR+VAeTVfXIHYmLi/W9pKw+qIPxzmBSWFxb6lOUgakcyouuz8V9OHQNZ/6Dv6Jnkdd
-         +fFfNzzVAa5ZKCBoPYtn6rR+w4Gmxc06G/lYHVOxgb2QCpbzgKGBVWE8SnPiIOB1Ds
-         iv4uuFZBChOh5vNE0pE1YDVa573PZ8u9RYwWWWFcPAwi7nT16loR/n0HlyvevXiMKD
-         FiX7669EEUA0Q==
-Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
-        id AD7115C0546; Fri,  6 Aug 2021 10:44:11 -0700 (PDT)
-Date:   Fri, 6 Aug 2021 10:44:11 -0700
-From:   "Paul E. McKenney" <paulmck@kernel.org>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Juri Lelli <juri.lelli@redhat.com>, josh@joshtriplett.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        peterz@infradead.org, tglx@linutronix.de, rostedt@goodmis.org,
-        mathieu.desnoyers@efficios.com, jiangshanlai@gmail.com,
-        joel@joelfernandes.org, rcu@vger.kernel.org
-Subject: Re: [PATCH] rcu: Make rcu_normal_after_boot writable on RT
-Message-ID: <20210806174411.GQ4397@paulmck-ThinkPad-P17-Gen-1>
-Reply-To: paulmck@kernel.org
-References: <20210805080123.16320-1-juri.lelli@redhat.com>
- <20210805160337.GI4397@paulmck-ThinkPad-P17-Gen-1>
- <20210806080455.wkhlebgt7howjcrk@linutronix.de>
+        id S230021AbhHFSet (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Aug 2021 14:34:49 -0400
+Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id BAB9060ED6;
+        Fri,  6 Aug 2021 18:34:32 +0000 (UTC)
+Date:   Fri, 6 Aug 2021 14:34:31 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     "Qin\, Chao" <chao.qin@intel.com>, Joe Perches <joe@perches.com>,
+        "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users\@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "bigeasy\@linutronix.de" <bigeasy@linutronix.de>,
+        "tglx\@linutronix.de" <tglx@linutronix.de>,
+        "mgross\@linux.intel.com" <mgross@linux.intel.com>,
+        "Mei\, Paul" <paul.mei@intel.com>, "Li\, Lili" <lili.li@intel.com>
+Subject: Re: [PREEMPT_RT][PATCH] printk: Enhance the condition check of
+ msleep in pr_flush()
+Message-ID: <20210806143431.1ac3b4a5@oasis.local.home>
+In-Reply-To: <20210805121200.59db2104@oasis.local.home>
+References: <20210719022649.3444072-1-chao.qin@intel.com>
+        <ea6c6a2b5482d62038d7d0a1d46b87665051222f.camel@perches.com>
+        <87o8axm6ae.fsf@jogness.linutronix.de>
+        <DM6PR11MB380275B5125531E8EB9D019B92F29@DM6PR11MB3802.namprd11.prod.outlook.com>
+        <87eeb8w08q.fsf@jogness.linutronix.de>
+        <20210805121200.59db2104@oasis.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210806080455.wkhlebgt7howjcrk@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Aug 06, 2021 at 10:04:55AM +0200, Sebastian Andrzej Siewior wrote:
-> On 2021-08-05 09:03:37 [-0700], Paul E. McKenney wrote:
-> > Makes sense to me!
-> > 
-> > But would another of the -rt people be willing to give an Acked-by?
-> > For example, maybe they would prefer this kernel boot parameter to be
-> > exposed only if (!PREEMPT_RT || NO_HZ_FULL).  Or are there !NO_HZ_FULL
-> > situations where rcu_normal_after_boot makes sense?
-> 
-> Julia crafted that "rcu_normal_after_boot = 1" for RT after we had more
-> and more synchronize_rcu_expedited() users popping up. I would like to
-> keep that part (default value) since it good to have for most users.
-> 
-> I don't mind removing CONFIG_PREEMPT_RT part here if there are legitimate
-> use cases for using "rcu_normal_after_boot = 0".
-> Paul suggested initially to restrict that option for PREEMPT_RT and I
-> would follow here Paul's guidance to either remove it or restrict it to
-> NO_HZ_FULL in RT's case (as suggested).
+On Thu, 5 Aug 2021 12:12:00 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-Given what I know now, I suggest the following:
+> I'll add it to my queue for tomorrow.
 
-o	Restrict the option to !PREEMPT_RT unless NO_HZ_FULL.
-	Maybe "!defined(CONFIG_PREEMPT_RT) || defined(CONFIG_NO_HZ_FULL)".
+I'm currently testing 5.10.56-rt48 which only brings the 5.10 rt branch
+up to latest stable. After that is done and pushed out, I'll backport
+this patch and do a 5.10.56-rt49-rc release.
 
-	If there is some non-NO_HZ_FULL PREEMPT_RT configuration that
-	tolerates expedited grace periods, this would need to change.
+Letting you know in case you see the 5.10.56-rt48 and wonder where your
+patch is.
 
-o	Change the permissions from "0" to "0444", if desired.	If you
-	would rather not, I can do this in a follow-up patch.  (No idea
-	why I let such an ugly serviceability issue through, but the
-	previous pair of module_param() instances have the same problem.)
-
-Anything I am missing?
-
-							Thanx, Paul
+-- Steve
