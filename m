@@ -2,130 +2,84 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C961C4338F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 07:50:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7ECE3C4338F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 08:05:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 61F51610FD
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 07:50:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 58F65611CC
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 08:05:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241705AbhHFHu2 (ORCPT
+        id S240523AbhHFIFQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Aug 2021 03:50:28 -0400
-Received: from smtp-out2.suse.de ([195.135.220.29]:35670 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241930AbhHFHuU (ORCPT
+        Fri, 6 Aug 2021 04:05:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54284 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S239010AbhHFIFP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Aug 2021 03:50:20 -0400
-Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id 12FA81FEB1;
-        Fri,  6 Aug 2021 07:50:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1628236204; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        Fri, 6 Aug 2021 04:05:15 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AE57FC061798;
+        Fri,  6 Aug 2021 01:04:59 -0700 (PDT)
+Date:   Fri, 6 Aug 2021 10:04:55 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1628237096;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=6+laCi4KxR5UVLdNnL6puwvywYfdNwxG0t+wvdhSYH8=;
-        b=qq2EMQnh29L5obPz8YFw/w1f8NhcK8RC4DwMtK0HU8cUBRohMfnkNeiVcv5rt0cdHaBmP8
-        c/U03ADuVgVibyy9YrhilRBvLVw7jaJyTq3hb0vxY/dsT086RpXqHXfk/l2Qx6iMuspEGo
-        C/pyta0kFCzohOfDumCANsYItxZZOuE=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1628236204;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        bh=kFh0juNxNei1lKKweLcVBgmk4aRcGgpk3Wk3FpbmvMM=;
+        b=wHCyJ8uN5AoAGUQmTEWvco7IHjI3OCjpbww5it7jlDfF+Re+kHqxucHb0qLxOP3TqbLMC4
+        PZ9G9N7UdvT7KT4i18bokXtMxvxkx96a4D8wbzsyukJ4QX/RyWUIjUFTWXMS1gSr+15MBH
+        oo8tNtSt7eVQ95jAydhCUyU2XIqrwxr+AX7Sa4uvIhGoq4xWXSnAE1v4sdJltN3kBnOxrz
+        PbQ6ZBKQ5P2DMMZ0N3J3rx1Z888Z5EGVk8lEJUunPIRwUlTMidVpssuKX8xhwUB2JXrdEk
+        W1rA2CR1QgSckG47Iy9W3awxqfdV50ax5akz2B24JVw7tHoG66NuDmoGbMf2XA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1628237096;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=6+laCi4KxR5UVLdNnL6puwvywYfdNwxG0t+wvdhSYH8=;
-        b=BJmvFa6xukjL3UBb1FBe2vxD0SyqyqGCPtB4dNBZu6K3we9h1ZTZTHiUhmUO6tQ8w1N/tT
-        w7e737fKM3XzR5AQ==
-Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id E85C213990;
-        Fri,  6 Aug 2021 07:50:03 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap1.suse-dmz.suse.de with ESMTPSA
-        id N88gOKvpDGEcGgAAGKfGzw
-        (envelope-from <vbabka@suse.cz>); Fri, 06 Aug 2021 07:50:03 +0000
-Subject: Re: [PATCH 1/1] mm/vmstat: Protect per cpu variables with preempt
- disable on RT
-To:     Andrew Morton <akpm@linux-foundation.org>,
-        Mel Gorman <mgorman@techsingularity.net>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
-        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-References: <20210805160019.1137-1-mgorman@techsingularity.net>
- <20210805160019.1137-2-mgorman@techsingularity.net>
- <20210805162206.664dfc8c090f2be5ea313d57@linux-foundation.org>
-From:   Vlastimil Babka <vbabka@suse.cz>
-Message-ID: <df1f16f9-1a29-5525-4673-f437fb03dc92@suse.cz>
-Date:   Fri, 6 Aug 2021 09:50:03 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.12.0
+        bh=kFh0juNxNei1lKKweLcVBgmk4aRcGgpk3Wk3FpbmvMM=;
+        b=Pa1+KznjxhxY+X3DkJ0CEekWR3J5AcJSEEYOfdR+hvWpFPsBntCRJ9jB3aL5Faqbtyn08C
+        hIpr6FjMPF71e0Aw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     "Paul E. McKenney" <paulmck@kernel.org>
+Cc:     Juri Lelli <juri.lelli@redhat.com>, josh@joshtriplett.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        peterz@infradead.org, tglx@linutronix.de, rostedt@goodmis.org,
+        mathieu.desnoyers@efficios.com, jiangshanlai@gmail.com,
+        joel@joelfernandes.org, rcu@vger.kernel.org
+Subject: Re: [PATCH] rcu: Make rcu_normal_after_boot writable on RT
+Message-ID: <20210806080455.wkhlebgt7howjcrk@linutronix.de>
+References: <20210805080123.16320-1-juri.lelli@redhat.com>
+ <20210805160337.GI4397@paulmck-ThinkPad-P17-Gen-1>
 MIME-Version: 1.0
-In-Reply-To: <20210805162206.664dfc8c090f2be5ea313d57@linux-foundation.org>
 Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+In-Reply-To: <20210805160337.GI4397@paulmck-ThinkPad-P17-Gen-1>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 8/6/21 1:22 AM, Andrew Morton wrote:
-> On Thu,  5 Aug 2021 17:00:19 +0100 Mel Gorman <mgorman@techsingularity.net> wrote:
+On 2021-08-05 09:03:37 [-0700], Paul E. McKenney wrote:
+> Makes sense to me!
 > 
->> From: Ingo Molnar <mingo@elte.hu>
->> 
->> Disable preemption on -RT for the vmstat code. On vanila the code runs
->> in IRQ-off regions while on -RT it may not when stats are updated under
->> a local_lock. "preempt_disable" ensures that the same resources is not
->> updated in parallel due to preemption.
->> 
->> This patch differs from the preempt-rt version where __count_vm_event and
->> __count_vm_events are also protected. The counters are explicitly "allowed
->> to be to be racy" so there is no need to protect them from preemption. Only
->> the accurate page stats that are updated by a read-modify-write need
->> protection. This patch also differs in that a preempt_[en|dis]able_rt
->> helper is not used. As vmstat is the only user of the helper, it was
->> suggested that it be open-coded in vmstat.c instead of risking the helper
->> being used in unnecessary contexts.
->> 
->> ...
->>
->> --- a/mm/vmstat.c
->> +++ b/mm/vmstat.c
->> @@ -319,6 +319,16 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
->>  	long x;
->>  	long t;
->>  
->> +	/*
->> +	 * Accurate vmstat updates require a RMW. On !PREEMPT_RT kernels,
->> +	 * atomicity is provided by IRQs being disabled -- either explicitly
->> +	 * or via local_lock_irq. On PREEMPT_RT, local_lock_irq only disables
->> +	 * CPU migrations and preemption potentially corrupts a counter so
->> +	 * disable preemption.
->> +	 */
->> +	if (IS_ENABLED(CONFIG_PREEMPT_RT))
->> +		preempt_disable();
-> 
-> This is so obvious I expect it has been discussed, but...  why not
-> 
-> static inline void preempt_disable_if_rt(void)
-> {
-> 	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-> 		preempt_disable();
-> }
+> But would another of the -rt people be willing to give an Acked-by?
+> For example, maybe they would prefer this kernel boot parameter to be
+> exposed only if (!PREEMPT_RT || NO_HZ_FULL).  Or are there !NO_HZ_FULL
+> situations where rcu_normal_after_boot makes sense?
 
-Yeah v1 introduced similar more generic ones in include/linux/preempt.h and
-Thomas didn't like that. I guess it would be more acceptable when confined to
-mm/vmstat.c
+Julia crafted that "rcu_normal_after_boot = 1" for RT after we had more
+and more synchronize_rcu_expedited() users popping up. I would like to
+keep that part (default value) since it good to have for most users.
+
+I don't mind removing CONFIG_PREEMPT_RT part here if there are legitimate
+use cases for using "rcu_normal_after_boot = 0".
+Paul suggested initially to restrict that option for PREEMPT_RT and I
+would follow here Paul's guidance to either remove it or restrict it to
+NO_HZ_FULL in RT's case (as suggested).
+
+> 							Thanx, Paul
+
+Sebastian
