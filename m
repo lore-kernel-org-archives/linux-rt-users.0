@@ -2,119 +2,130 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51CE1C4320A
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 07:41:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C961C4338F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 07:50:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 386AB60F25
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 07:41:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 61F51610FD
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Aug 2021 07:50:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238197AbhHFHl1 (ORCPT
+        id S241705AbhHFHu2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Aug 2021 03:41:27 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:38343 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S237196AbhHFHl0 (ORCPT
+        Fri, 6 Aug 2021 03:50:28 -0400
+Received: from smtp-out2.suse.de ([195.135.220.29]:35670 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S241930AbhHFHuU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Aug 2021 03:41:26 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1628235671;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+        Fri, 6 Aug 2021 03:50:20 -0400
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out2.suse.de (Postfix) with ESMTPS id 12FA81FEB1;
+        Fri,  6 Aug 2021 07:50:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1628236204; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=KQ5uAG6ZB/PH2y+g6j7pYC8+D6CZBF5GiL6FM0n8k9c=;
-        b=QtJeWiuECX8VDujMTog3tuMtHWSaY0eUsOfRnLNVvNtIxvcCtnNRXeDFjSoS677p424YJm
-        10FdzbE+XoPCf5OzPbrWpMtIr5TzPk41Ig8LI74NDcEM/64rhDffxFC9dCke6Yk5DjxlMU
-        TnpPJZton0xmxhtvmRhOAvkiJ0EqF34=
-Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
- [209.85.128.70]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-265-5debX_s2MjaV6TJNjQi_8g-1; Fri, 06 Aug 2021 03:41:09 -0400
-X-MC-Unique: 5debX_s2MjaV6TJNjQi_8g-1
-Received: by mail-wm1-f70.google.com with SMTP id k13-20020a05600c1c8db029025018ac4f7dso2168200wms.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 06 Aug 2021 00:41:09 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=KQ5uAG6ZB/PH2y+g6j7pYC8+D6CZBF5GiL6FM0n8k9c=;
-        b=bVZU0CTZfp6sWgfdWX/QcfFb4HdRDKZMx3kIV/rKfv5fZObacB1UFhGjFAMm+iE1fi
-         2B2KhlWWt67UvUKNAS/Cgeo0jUHBsFNXSv816PEjbryEyP4VQQ6v3tui2Wz4d7wRuyj+
-         FhiA+9fY3NJk658fArNztNvmXxwV9Z0uMbJ1aTcRjXtNh3cOSq3ew0zCxEbxYqPNaS4P
-         OFTC3B0A7YJUr/L7Sy8pZ4A7b0JyI2MN7CJ2AlhmEN1z+NpKXKhjbdTqmGelDjv1ShlS
-         pxJZWMIcqufCr62/9d/EiFux2U5qiLsqAFFiPDwtL4I2qPqTrG/O3m8NS57GtQnLWsIE
-         FHmw==
-X-Gm-Message-State: AOAM5327d16m+ic9BmDoegWvGPlTPAQlJNPN2kkk7YlUhTBeAGEqg6C5
-        VuheKLg9p0JmRgyIpiUU7vYyOPqJrYjDPIQJxOXEYUaHum1RypS7iy8sL2VssGiIm51AXjLVQM2
-        o3rVaaWnYWx8CRLe9FmUDFZe9+xQ=
-X-Received: by 2002:a05:600c:acd:: with SMTP id c13mr1865573wmr.189.1628235668426;
-        Fri, 06 Aug 2021 00:41:08 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxIeNVbyEjFQvuP/nx50mEMfowwJ3pAuJBOT2KcCoGtQAps+DXKwvNw1Otz+500Hn8lnUNw8w==
-X-Received: by 2002:a05:600c:acd:: with SMTP id c13mr1865564wmr.189.1628235668273;
-        Fri, 06 Aug 2021 00:41:08 -0700 (PDT)
-Received: from localhost.localdomain ([151.29.52.108])
-        by smtp.gmail.com with ESMTPSA id l7sm7614019wmj.9.2021.08.06.00.41.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Aug 2021 00:41:07 -0700 (PDT)
-Date:   Fri, 6 Aug 2021 09:41:05 +0200
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     "Paul E. McKenney" <paulmck@kernel.org>
-Cc:     josh@joshtriplett.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, peterz@infradead.org,
-        bigeasy@linutronix.de, tglx@linutronix.de, rostedt@goodmis.org,
-        mathieu.desnoyers@efficios.com, jiangshanlai@gmail.com,
-        joel@joelfernandes.org, rcu@vger.kernel.org
-Subject: Re: [PATCH] rcu: Make rcu_normal_after_boot writable on RT
-Message-ID: <YQznkbdkwE/356Vo@localhost.localdomain>
-References: <20210805080123.16320-1-juri.lelli@redhat.com>
- <20210805160337.GI4397@paulmck-ThinkPad-P17-Gen-1>
- <20210805210824.GA1203206@paulmck-ThinkPad-P17-Gen-1>
+        bh=6+laCi4KxR5UVLdNnL6puwvywYfdNwxG0t+wvdhSYH8=;
+        b=qq2EMQnh29L5obPz8YFw/w1f8NhcK8RC4DwMtK0HU8cUBRohMfnkNeiVcv5rt0cdHaBmP8
+        c/U03ADuVgVibyy9YrhilRBvLVw7jaJyTq3hb0vxY/dsT086RpXqHXfk/l2Qx6iMuspEGo
+        C/pyta0kFCzohOfDumCANsYItxZZOuE=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1628236204;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=6+laCi4KxR5UVLdNnL6puwvywYfdNwxG0t+wvdhSYH8=;
+        b=BJmvFa6xukjL3UBb1FBe2vxD0SyqyqGCPtB4dNBZu6K3we9h1ZTZTHiUhmUO6tQ8w1N/tT
+        w7e737fKM3XzR5AQ==
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id E85C213990;
+        Fri,  6 Aug 2021 07:50:03 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap1.suse-dmz.suse.de with ESMTPSA
+        id N88gOKvpDGEcGgAAGKfGzw
+        (envelope-from <vbabka@suse.cz>); Fri, 06 Aug 2021 07:50:03 +0000
+Subject: Re: [PATCH 1/1] mm/vmstat: Protect per cpu variables with preempt
+ disable on RT
+To:     Andrew Morton <akpm@linux-foundation.org>,
+        Mel Gorman <mgorman@techsingularity.net>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+References: <20210805160019.1137-1-mgorman@techsingularity.net>
+ <20210805160019.1137-2-mgorman@techsingularity.net>
+ <20210805162206.664dfc8c090f2be5ea313d57@linux-foundation.org>
+From:   Vlastimil Babka <vbabka@suse.cz>
+Message-ID: <df1f16f9-1a29-5525-4673-f437fb03dc92@suse.cz>
+Date:   Fri, 6 Aug 2021 09:50:03 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.12.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20210805210824.GA1203206@paulmck-ThinkPad-P17-Gen-1>
+In-Reply-To: <20210805162206.664dfc8c090f2be5ea313d57@linux-foundation.org>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
-
-Thanks for reviewing Paul.
-
-On 05/08/21 14:08, Paul E. McKenney wrote:
-> On Thu, Aug 05, 2021 at 09:03:37AM -0700, Paul E. McKenney wrote:
-> > On Thu, Aug 05, 2021 at 10:01:23AM +0200, Juri Lelli wrote:
-> > > Certain configurations (e.g., systems that make heavy use of netns)
-> > > need to use synchronize_rcu_expedited() to service RCU grace periods
-> > > even after boot.
-> > > 
-> > > Even though synchronize_rcu_expedited() has been traditionally
-> > > considered harmful for RT for the heavy use of IPIs, it is perfectly
-> > > usable under certain conditions (e.g. nohz_full).
-> > > 
-> > > Make rcupdate.rcu_normal_after_boot= again writeable on RT, but keep
-> > > its default value to 1 (enabled) to avoid regressions. Users who need
-> > > synchronize_rcu_expedited() will boot with rcupdate.rcu_normal_after_
-> > > boot=0 in the kernel cmdline.
-> > > 
-> > > Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
-> > 
-> > Makes sense to me!
-> > 
-> > But would another of the -rt people be willing to give an Acked-by?
-> > For example, maybe they would prefer this kernel boot parameter to be
-> > exposed only if (!PREEMPT_RT || NO_HZ_FULL).  Or are there !NO_HZ_FULL
-> > situations where rcu_normal_after_boot makes sense?
+On 8/6/21 1:22 AM, Andrew Morton wrote:
+> On Thu,  5 Aug 2021 17:00:19 +0100 Mel Gorman <mgorman@techsingularity.net> wrote:
 > 
-> Ah, and this will also need to be reflected in the WARN_ON_ONCE()
-> in synchronize_rcu_expedited_wait() in kernel/rcu/tree_exp.h.
+>> From: Ingo Molnar <mingo@elte.hu>
+>> 
+>> Disable preemption on -RT for the vmstat code. On vanila the code runs
+>> in IRQ-off regions while on -RT it may not when stats are updated under
+>> a local_lock. "preempt_disable" ensures that the same resources is not
+>> updated in parallel due to preemption.
+>> 
+>> This patch differs from the preempt-rt version where __count_vm_event and
+>> __count_vm_events are also protected. The counters are explicitly "allowed
+>> to be to be racy" so there is no need to protect them from preemption. Only
+>> the accurate page stats that are updated by a read-modify-write need
+>> protection. This patch also differs in that a preempt_[en|dis]able_rt
+>> helper is not used. As vmstat is the only user of the helper, it was
+>> suggested that it be open-coded in vmstat.c instead of risking the helper
+>> being used in unnecessary contexts.
+>> 
+>> ...
+>>
+>> --- a/mm/vmstat.c
+>> +++ b/mm/vmstat.c
+>> @@ -319,6 +319,16 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
+>>  	long x;
+>>  	long t;
+>>  
+>> +	/*
+>> +	 * Accurate vmstat updates require a RMW. On !PREEMPT_RT kernels,
+>> +	 * atomicity is provided by IRQs being disabled -- either explicitly
+>> +	 * or via local_lock_irq. On PREEMPT_RT, local_lock_irq only disables
+>> +	 * CPU migrations and preemption potentially corrupts a counter so
+>> +	 * disable preemption.
+>> +	 */
+>> +	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+>> +		preempt_disable();
+> 
+> This is so obvious I expect it has been discussed, but...  why not
+> 
+> static inline void preempt_disable_if_rt(void)
+> {
+> 	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+> 		preempt_disable();
+> }
 
-Indeed. Will add the change as soon as I receive indication about your
-first point.
-
-Best,
-Juri
-
+Yeah v1 introduced similar more generic ones in include/linux/preempt.h and
+Thomas didn't like that. I guess it would be more acceptable when confined to
+mm/vmstat.c
