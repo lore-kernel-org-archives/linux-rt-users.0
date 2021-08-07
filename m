@@ -5,27 +5,27 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 34284C432BE
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 00:58:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1608DC4320A
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 00:58:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 12D4D60EE4
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 00:58:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E3404611C3
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 00:58:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229773AbhHGA6u (ORCPT
+        id S229850AbhHGA6x (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Aug 2021 20:58:50 -0400
-Received: from foss.arm.com ([217.140.110.172]:42750 "EHLO foss.arm.com"
+        Fri, 6 Aug 2021 20:58:53 -0400
+Received: from foss.arm.com ([217.140.110.172]:42778 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229758AbhHGA6t (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Aug 2021 20:58:49 -0400
+        id S229758AbhHGA6w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Aug 2021 20:58:52 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id F1D471063;
-        Fri,  6 Aug 2021 17:58:32 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 12ABE113E;
+        Fri,  6 Aug 2021 17:58:36 -0700 (PDT)
 Received: from e113632-lin.cambridge.arm.com (e113632-lin.cambridge.arm.com [10.1.194.46])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id 1C79B3F66F;
-        Fri,  6 Aug 2021 17:58:30 -0700 (PDT)
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id 3353F3F66F;
+        Fri,  6 Aug 2021 17:58:33 -0700 (PDT)
 From:   Valentin Schneider <valentin.schneider@arm.com>
 To:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         rcu@vger.kernel.org, linux-rt-users@vger.kernel.org
@@ -47,9 +47,9 @@ Cc:     Catalin Marinas <catalin.marinas@arm.com>,
         Vincenzo Frascino <vincenzo.frascino@arm.com>,
         Steven Price <steven.price@arm.com>,
         Ard Biesheuvel <ardb@kernel.org>
-Subject: [PATCH v2 1/4] rcutorture: Don't disable softirqs with preemption disabled when PREEMPT_RT
-Date:   Sat,  7 Aug 2021 01:58:04 +0100
-Message-Id: <20210807005807.1083943-2-valentin.schneider@arm.com>
+Subject: [PATCH v2 2/4] sched: Introduce is_pcpu_safe()
+Date:   Sat,  7 Aug 2021 01:58:05 +0100
+Message-Id: <20210807005807.1083943-3-valentin.schneider@arm.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20210807005807.1083943-1-valentin.schneider@arm.com>
 References: <20210807005807.1083943-1-valentin.schneider@arm.com>
@@ -59,48 +59,44 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Running RCU torture with CONFIG_PREEMPT_RT under v5.14-rc4-rt6 triggers:
+Some areas use preempt_disable() + preempt_enable() to safely access
+per-CPU data. The PREEMPT_RT folks have shown this can also be done by
+keeping preemption enabled and instead disabling migration (and acquiring a
+sleepable lock, if relevant).
 
-[    8.755472] DEBUG_LOCKS_WARN_ON(this_cpu_read(softirq_ctrl.cnt))
-[    8.755482] WARNING: CPU: 1 PID: 137 at kernel/softirq.c:172 __local_bh_disable_ip (kernel/softirq.c:172 (discriminator 31))
-[    8.755500] Modules linked in:
-[    8.755506] CPU: 1 PID: 137 Comm: rcu_torture_rea Not tainted 5.14.0-rc4-rt6 #171
-[    8.755514] Hardware name: ARM Juno development board (r0) (DT)
-[    8.755518] pstate: 60000005 (nZCv daif -PAN -UAO -TCO BTYPE=--)
-[    8.755622] Call trace:
-[    8.755624] __local_bh_disable_ip (kernel/softirq.c:172 (discriminator 31))
-[    8.755633] rcutorture_one_extend (kernel/rcu/rcutorture.c:1453)
-[    8.755640] rcu_torture_one_read (kernel/rcu/rcutorture.c:1601 kernel/rcu/rcutorture.c:1645)
-[    8.755645] rcu_torture_reader (kernel/rcu/rcutorture.c:1737)
-[    8.755650] kthread (kernel/kthread.c:327)
-[    8.755656] ret_from_fork (arch/arm64/kernel/entry.S:783)
-[    8.755663] irq event stamp: 11959
-[    8.755666] hardirqs last enabled at (11959): __rcu_read_unlock (kernel/rcu/tree_plugin.h:695 kernel/rcu/tree_plugin.h:451)
-[    8.755675] hardirqs last disabled at (11958): __rcu_read_unlock (kernel/rcu/tree_plugin.h:661 kernel/rcu/tree_plugin.h:451)
-[    8.755683] softirqs last enabled at (11950): __local_bh_enable_ip (./arch/arm64/include/asm/irqflags.h:85 kernel/softirq.c:261)
-[    8.755692] softirqs last disabled at (11942): rcutorture_one_extend (./include/linux/bottom_half.h:19 kernel/rcu/rcutorture.c:1441)
-
-Per this warning, softirqs cannot be disabled in a non-preemptible region
-under CONFIG_PREEMPT_RT. Adjust RCU torture accordingly.
+Introduce a helper which checks whether the current task can safely access
+per-CPU data, IOW if the task's context guarantees the accesses will target
+a single CPU. This accounts for preemption, CPU affinity, and migrate
+disable - note that the CPU affinity check also mandates the presence of
+PF_NO_SETAFFINITY, as otherwise userspace could concurrently render the
+upcoming per-CPU access(es) unsafe.
 
 Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
 ---
- kernel/rcu/rcutorture.c | 2 ++
- 1 file changed, 2 insertions(+)
+ include/linux/sched.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index eecd1caef71d..4f3db1d3170d 100644
---- a/kernel/rcu/rcutorture.c
-+++ b/kernel/rcu/rcutorture.c
-@@ -1548,6 +1548,8 @@ rcutorture_extend_mask(int oldmask, struct torture_random_state *trsp)
- 	 * them on non-RT.
- 	 */
- 	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
-+		/* Can't disable bh in atomic context under PREEMPT_RT */
-+		mask &= ~(RCUTORTURE_RDR_ATOM_BH | RCUTORTURE_RDR_ATOM_RBH);
- 		/*
- 		 * Can't release the outermost rcu lock in an irq disabled
- 		 * section without preemption also being disabled, if irqs
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index debc960f41e3..b77d65f677f6 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1715,6 +1715,16 @@ static inline bool is_percpu_thread(void)
+ #endif
+ }
+ 
++/* Is the current task guaranteed not to be migrated elsewhere? */
++static inline bool is_pcpu_safe(void)
++{
++#ifdef CONFIG_SMP
++	return !preemptible() || is_percpu_thread() || current->migration_disabled;
++#else
++	return true;
++#endif
++}
++
+ /* Per-process atomic flags. */
+ #define PFA_NO_NEW_PRIVS		0	/* May not gain new privileges. */
+ #define PFA_SPREAD_PAGE			1	/* Spread page cache over cpuset */
 -- 
 2.25.1
 
