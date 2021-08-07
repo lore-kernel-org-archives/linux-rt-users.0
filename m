@@ -2,32 +2,40 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 05AB4C4320A
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 00:58:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C7F1DC4320A
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 01:43:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D0194611CB
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 00:58:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A457061186
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 01:43:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229948AbhHGA67 (ORCPT
+        id S229851AbhHGBoA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Aug 2021 20:58:59 -0400
-Received: from foss.arm.com ([217.140.110.172]:42830 "EHLO foss.arm.com"
+        Fri, 6 Aug 2021 21:44:00 -0400
+Received: from mout.gmx.net ([212.227.17.20]:53367 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229758AbhHGA67 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Aug 2021 20:58:59 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 3CCE013D5;
-        Fri,  6 Aug 2021 17:58:42 -0700 (PDT)
-Received: from e113632-lin.cambridge.arm.com (e113632-lin.cambridge.arm.com [10.1.194.46])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id 5FF8D3F66F;
-        Fri,  6 Aug 2021 17:58:39 -0700 (PDT)
-From:   Valentin Schneider <valentin.schneider@arm.com>
-To:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        id S229749AbhHGBn7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Aug 2021 21:43:59 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1628300551;
+        bh=F4bbSXyjHIN1BGUeLpaEx8mOppLBhHGK/+Ms07Fv+wg=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=OTXNBwmrCrz385A/QKCFxzvv8LJBv0Rsmu8brx8RuAzT07gCJLouSwxrgmkAxAI/x
+         Q+vF1I55sfrWvQLTMWp1Q94M0zEAbAzBl38hA2KcgT4cdCWf+eg1qZlW1e1r0aNVUe
+         KzvLqqEWMO0USS+MzbWzjRomQlD8it27LTbe4XA4=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.191.218.160]) by mail.gmx.net (mrgmx104
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MTzb8-1md1uf0mhu-00QxYw; Sat, 07
+ Aug 2021 03:42:31 +0200
+Message-ID: <800ff941e3ec86ea1397cddf8ecea3d4a17c55dc.camel@gmx.de>
+Subject: Re: [PATCH v2 2/4] sched: Introduce is_pcpu_safe()
+From:   Mike Galbraith <efault@gmx.de>
+To:     Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         rcu@vger.kernel.org, linux-rt-users@vger.kernel.org
 Cc:     Catalin Marinas <catalin.marinas@arm.com>,
         Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
@@ -47,76 +55,45 @@ Cc:     Catalin Marinas <catalin.marinas@arm.com>,
         Vincenzo Frascino <vincenzo.frascino@arm.com>,
         Steven Price <steven.price@arm.com>,
         Ard Biesheuvel <ardb@kernel.org>
-Subject: [PATCH v2 4/4] arm64: mm: Make arch_faults_on_old_pte() check for migratability
-Date:   Sat,  7 Aug 2021 01:58:07 +0100
-Message-Id: <20210807005807.1083943-5-valentin.schneider@arm.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20210807005807.1083943-1-valentin.schneider@arm.com>
+Date:   Sat, 07 Aug 2021 03:42:28 +0200
+In-Reply-To: <20210807005807.1083943-3-valentin.schneider@arm.com>
 References: <20210807005807.1083943-1-valentin.schneider@arm.com>
+         <20210807005807.1083943-3-valentin.schneider@arm.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.40.3 
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:7IREJpazqVFoymZlSqnbvmojHa+lnVsdP2PzWl3dtLW58icJX8s
+ JgJUFsj4wgy7wr8QtZUI/vFW4mR9w2E31PuFtRvj7hkcsKmpHUZgA+scftFcijFvvr6DXxh
+ 95RWdUc0BOTY+kBVXigE1yn8ESnjNnRC+WcXS2iXAk0Qp/k2o4R14M2S2Uel3nIcrCyYPcH
+ XAyDuRzL1gjrdlPt16Dow==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:ziS+D4sSvLI=:WbksQVBOYKr+mWLdbgRvMi
+ HkBtpSEWdVSq3U2tMNWKwGchuz1LatjO4v6Tnj1sNFa7sww6eYzp3vy+qwsa5b57HOdHWVjJ6
+ kSlG37cppGDOqg3pVHVY6mYAYbODhmfXgQJfgrLOFdXoD1yi4DpmOtjalpsYDzFmlpgRMSm4S
+ r+gKe+2FpsTlojglASxGW2Jrh4luHMM9E0GUAIsqZJVROb4+0Vq9auqLL3q2D9MGua6JnfTeV
+ nX3xl00+Jt+rqaOvyoR6Dt1n+814Qzjqm/NB00QtxuytXgMduAOq4pM+F9w4wmdJSPcpJOICf
+ rlcMaJbIrPZbRkk6GPApFsdCZFqaQX6NPFWhAV3U+MF6hN11FODtCZmH0DvxSDzKu4cojh4Mh
+ Aar+fH3oK5+kWYD+SukFFq1fgNN77zf09JcC2awznynBa3kZtV2tD7x20fSshH+j15dyZJJfk
+ UOIy99JVZQ0SLf0EpSM25/TZKtWEDqqw537dGpBak8f+NmwJQR3PxDEjFv9SA3HF6PawDwZbV
+ lXbS4OYQktEqi8d12tgUi/GJU67C6lTGKWStFv6VfeIDZiogsFUVAc3CTuVWXo16ZDmbsldCD
+ 8E7xF4znYZQSPGHDgNT6GQ6lQTchYkbI1DQdKHCNv2keYBumzdzfk8WK8zX1a1IdFw1bwnviM
+ l2iL22FIHbyFBB/ilL0p2fytmILNKiTM8pWTTjuWCkAi27AR047x3t1ptbBUobete9E02ViAx
+ BLzEr/fVRfgesFMldr3eTtp8OqRdUb9IKpmCkRSEw2lvv4UIhwEEPMrDCavi1z1UmM2w9miHW
+ MuO5geGOhFQXcafngB++KYKvQOpTEa8cXIOtnV3RgPvWf5GWiiVsQR3RwxUOSt3LcCAHD0aoQ
+ MNWah5vgxZwRp9ulbj8Kh/BU9ZNx4/015EHIsTm9h2yF3KzBdNrSxD/IfJi/Qg1ucr2JL6Fsu
+ d0y4c4JI56h7rbA+W4/FVa6PGpT+VlvoDBvuVZQX51KifTTJ4Sxc3wQUc2Gcxqd6+dQL/XYrq
+ g7W/d4MAHgTQRwGPqcuUySdsnanpv2bAOvthZEcoiGEGtnFsdFlNdyiNvPQqmmh2/qTtnnj8y
+ 4gON1KfzFnu//WSZfsXdTwaXaRCjtJSvloq
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Running v5.13-rt1 on my arm64 Juno board triggers:
+On Sat, 2021-08-07 at 01:58 +0100, Valentin Schneider wrote:
+>
+> +static inline bool is_pcpu_safe(void)
 
-[   30.430643] WARNING: CPU: 4 PID: 1 at arch/arm64/include/asm/pgtable.h:985 do_set_pte (./arch/arm64/include/asm/pgtable.h:985 ./arch/arm64/include/asm/pgtable.h:997 mm/memory.c:3830)
-[   30.430669] Modules linked in:
-[   30.430679] CPU: 4 PID: 1 Comm: init Tainted: G        W         5.13.0-rt1-00002-gcb994ad7c570 #35
-[   30.430690] Hardware name: ARM Juno development board (r0) (DT)
-[   30.430695] pstate: 80000005 (Nzcv daif -PAN -UAO -TCO BTYPE=--)
-[   30.430874] Call trace:
-[   30.430878] do_set_pte (./arch/arm64/include/asm/pgtable.h:985 ./arch/arm64/include/asm/pgtable.h:997 mm/memory.c:3830)
-[   30.430886] filemap_map_pages (mm/filemap.c:3222)
-[   30.430895] __handle_mm_fault (mm/memory.c:4006 mm/memory.c:4020 mm/memory.c:4153 mm/memory.c:4412 mm/memory.c:4547)
-[   30.430904] handle_mm_fault (mm/memory.c:4645)
-[   30.430912] do_page_fault (arch/arm64/mm/fault.c:507 arch/arm64/mm/fault.c:607)
-[   30.430925] do_translation_fault (arch/arm64/mm/fault.c:692)
-[   30.430936] do_mem_abort (arch/arm64/mm/fault.c:821)
-[   30.430946] el0_ia (arch/arm64/kernel/entry-common.c:324)
-[   30.430959] el0_sync_handler (arch/arm64/kernel/entry-common.c:431)
-[   30.430967] el0_sync (arch/arm64/kernel/entry.S:744)
-[   30.430977] irq event stamp: 1228384
-[   30.430981] hardirqs last enabled at (1228383): lock_page_memcg (mm/memcontrol.c:2005 (discriminator 1))
-[   30.430993] hardirqs last disabled at (1228384): el1_dbg (arch/arm64/kernel/entry-common.c:144 arch/arm64/kernel/entry-common.c:234)
-[   30.431007] softirqs last enabled at (1228260): __local_bh_enable_ip (./arch/arm64/include/asm/irqflags.h:85 kernel/softirq.c:262)
-[   30.431022] softirqs last disabled at (1228232): fpsimd_restore_current_state (./include/linux/bottom_half.h:19 arch/arm64/kernel/fpsimd.c:183 arch/arm64/kernel/fpsimd.c:1182)
+Nit: seems odd to avoid spelling it out to save two characters, percpu
+is word like, rolls off the ole tongue better than p-c-p-u.
 
-CONFIG_PREEMPT_RT turns the PTE lock into a sleepable spinlock. Since
-acquiring such a lock also disables migration, any per-CPU access done
-under the lock remains safe even if preemptible.
-
-This affects:
-
-  filemap_map_pages()
-  `\
-    do_set_pte()
-    `\
-      arch_wants_old_prefaulted_pte()
-
-which checks preemptible() to figure out if the output of
-cpu_has_hw_af() (IOW the underlying CPU) will remain stable for the
-subsequent operations. Make it use is_pcpu_safe() instead.
-
-Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
----
- arch/arm64/include/asm/pgtable.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-index f09bf5c02891..767a064bedde 100644
---- a/arch/arm64/include/asm/pgtable.h
-+++ b/arch/arm64/include/asm/pgtable.h
-@@ -995,7 +995,7 @@ static inline void update_mmu_cache(struct vm_area_struct *vma,
-  */
- static inline bool arch_faults_on_old_pte(void)
- {
--	WARN_ON(preemptible());
-+	WARN_ON(!is_pcpu_safe());
- 
- 	return !cpu_has_hw_af();
- }
--- 
-2.25.1
+	-Mike
 
