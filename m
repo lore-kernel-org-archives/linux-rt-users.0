@@ -2,130 +2,71 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F327C4320A
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 08:04:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32D65C4320A
+	for <linux-rt-users@archiver.kernel.org>; Sun,  8 Aug 2021 16:15:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F04C861179
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Aug 2021 08:04:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0B44C60C3E
+	for <linux-rt-users@archiver.kernel.org>; Sun,  8 Aug 2021 16:15:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231584AbhHGIEz (ORCPT
+        id S231503AbhHHQPs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 7 Aug 2021 04:04:55 -0400
-Received: from mail.loongson.cn ([114.242.206.163]:33616 "EHLO loongson.cn"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S231543AbhHGIEz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 7 Aug 2021 04:04:55 -0400
-Received: from ambrosehua-HP-xw6600-Workstation.lan (unknown [125.69.44.6])
-        by mail.loongson.cn (Coremail) with SMTP id AQAAf9DxH0KNPg5h_bEsAA--.26836S2;
-        Sat, 07 Aug 2021 16:04:34 +0800 (CST)
-From:   Huang Pei <huangpei@loongson.cn>
-To:     Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-        ambrosehua@gmail.com
-Cc:     Bibo Mao <maobibo@loongson.cn>, linux-mips@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Jiaxun Yang <jiaxun.yang@flygoat.com>,
-        Li Xuefeng <lixuefeng@loongson.cn>,
-        Yang Tiezhu <yangtiezhu@loongson.cn>,
-        Gao Juxin <gaojuxin@loongson.cn>,
-        Huacai Chen <chenhuacai@loongson.cn>,
-        Jinyang He <hejinyang@loongson.cn>
-Subject: [PATCH] MIPS: simplify copy_user_high_page for MIPS64 w/o cache alias
-Date:   Sat,  7 Aug 2021 16:04:29 +0800
-Message-Id: <20210807080429.3323711-1-huangpei@loongson.cn>
-X-Mailer: git-send-email 2.25.1
+        Sun, 8 Aug 2021 12:15:48 -0400
+Received: from foss.arm.com ([217.140.110.172]:43358 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S230049AbhHHQPp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 8 Aug 2021 12:15:45 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id A4C6E31B;
+        Sun,  8 Aug 2021 09:15:25 -0700 (PDT)
+Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id BF8023F718;
+        Sun,  8 Aug 2021 09:15:22 -0700 (PDT)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org, rcu@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+Cc:     Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        "Paul E. McKenney" <paulmck@kernel.org>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>
+Subject: Re: [PATCH v2 2/4] sched: Introduce is_pcpu_safe()
+In-Reply-To: <800ff941e3ec86ea1397cddf8ecea3d4a17c55dc.camel@gmx.de>
+References: <20210807005807.1083943-1-valentin.schneider@arm.com> <20210807005807.1083943-3-valentin.schneider@arm.com> <800ff941e3ec86ea1397cddf8ecea3d4a17c55dc.camel@gmx.de>
+Date:   Sun, 08 Aug 2021 17:15:20 +0100
+Message-ID: <87a6lrap5z.mognet@arm.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID: AQAAf9DxH0KNPg5h_bEsAA--.26836S2
-X-Coremail-Antispam: 1UD129KBjvJXoW7WF17AF1UKFWUKr1UGr1Dtrb_yoW8ur13pF
-        43Gw45KrWFgrW7C3Z3Xwsrury3Jas2yay8XF47Ka4Y9wnxWFy3XF1fXFW0qF1YqrWkGa15
-        W3yqgay5GF1Du3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-        9KBjDU0xBIdaVrnRJUUU9014x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-        rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-        1l84ACjcxK6xIIjxv20xvE14v26r4j6ryUM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4j
-        6F4UM28EF7xvwVC2z280aVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Cr
-        1j6rxdM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj
-        6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr
-        0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E
-        8cxan2IY04v7MxkIecxEwVAFwVW8ZwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbV
-        WUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF
-        67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42
-        IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWrZr1U
-        MIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIda
-        VFxhVjvjDU0xZFpf9x0JUhdbbUUUUU=
-X-CM-SenderInfo: xkxd0whshlqz5rrqw2lrqou0/
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Borrow from ARM64
+On 07/08/21 03:42, Mike Galbraith wrote:
+> On Sat, 2021-08-07 at 01:58 +0100, Valentin Schneider wrote:
+>>
+>> +static inline bool is_pcpu_safe(void)
+>
+> Nit: seems odd to avoid spelling it out to save two characters, percpu
+> is word like, rolls off the ole tongue better than p-c-p-u.
+>
+>       -Mike
 
-MIPS64 CPU has enough direct mapped memory space to access all
-physical memory. In case of no cache alias, bypass both k*map_atomic
-and k*map_coherent for better real-time performance.
-
-Signed-off-by: Huang Pei <huangpei@loongson.cn>
----
- arch/mips/mm/init.c | 39 ++++++++++++++++++++++++++-------------
- 1 file changed, 26 insertions(+), 13 deletions(-)
-
-diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
-index 19347dc6bbf8..1f5bdd18ae7c 100644
---- a/arch/mips/mm/init.c
-+++ b/arch/mips/mm/init.c
-@@ -171,22 +171,35 @@ void copy_user_highpage(struct page *to, struct page *from,
- {
- 	void *vfrom, *vto;
- 
--	vto = kmap_atomic(to);
--	if (cpu_has_dc_aliases &&
--	    page_mapcount(from) && !Page_dcache_dirty(from)) {
--		vfrom = kmap_coherent(from, vaddr);
-+	if (IS_ENABLED(CONFIG_64BIT) && !cpu_has_dc_aliases) {
-+		vfrom = page_address(from);
-+		vto   = page_address(to);
- 		copy_page(vto, vfrom);
--		kunmap_coherent();
-+		/*
-+		 * even without cache alias, still need to maintain
-+		 * coherence between icache and dcache
-+		 */
-+		if (!cpu_has_ic_fills_f_dc)
-+			flush_data_cache_page((unsigned long)vto);
-+
- 	} else {
--		vfrom = kmap_atomic(from);
--		copy_page(vto, vfrom);
--		kunmap_atomic(vfrom);
-+		vto = kmap_atomic(to);
-+		if (cpu_has_dc_aliases &&
-+				page_mapcount(from) && !Page_dcache_dirty(from)) {
-+			vfrom = kmap_coherent(from, vaddr);
-+			copy_page(vto, vfrom);
-+			kunmap_coherent();
-+		} else {
-+			vfrom = kmap_atomic(from);
-+			copy_page(vto, vfrom);
-+			kunmap_atomic(vfrom);
-+		}
-+		if ((!cpu_has_ic_fills_f_dc) ||
-+				pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
-+			flush_data_cache_page((unsigned long)vto);
-+		kunmap_atomic(vto);
-+		/* Make sure this page is cleared on other CPU's too before using it */
- 	}
--	if ((!cpu_has_ic_fills_f_dc) ||
--	    pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
--		flush_data_cache_page((unsigned long)vto);
--	kunmap_atomic(vto);
--	/* Make sure this page is cleared on other CPU's too before using it */
- 	smp_wmb();
- }
- 
--- 
-2.25.1
-
+True. A quick grep says both versions are used, though "percpu" wins by
+about a factor of 2. I'll tweak that for a v3.
