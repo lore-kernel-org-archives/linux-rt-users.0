@@ -3,31 +3,31 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6031AC432BE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:48:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90AABC04FE3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:48:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 37DFF610FD
-	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:48:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 73AEC610FD
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:48:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233272AbhHJUst (ORCPT
+        id S233498AbhHJUsv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 10 Aug 2021 16:48:49 -0400
-Received: from mail.kernel.org ([198.145.29.99]:44252 "EHLO mail.kernel.org"
+        Tue, 10 Aug 2021 16:48:51 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44272 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230295AbhHJUsr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S231705AbhHJUsr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 10 Aug 2021 16:48:47 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4A7FE61076;
+        by mail.kernel.org (Postfix) with ESMTPSA id 54BA16108F;
         Tue, 10 Aug 2021 20:48:25 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1mDYfg-003hA3-1Q; Tue, 10 Aug 2021 16:48:24 -0400
+        id 1mDYfg-003hAK-7R; Tue, 10 Aug 2021 16:48:24 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,10 +37,12 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH 0/9] libtracefs: APIs to read a trace event hist file
-Date:   Tue, 10 Aug 2021 16:48:09 -0400
-Message-Id: <20210810204818.880714-1-rostedt@goodmis.org>
+Subject: [PATCH 6/9] libtracefs: Add APIs tracefs_hist_data_keys/value_names()
+Date:   Tue, 10 Aug 2021 16:48:15 -0400
+Message-Id: <20210810204818.880714-7-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
+In-Reply-To: <20210810204818.880714-1-rostedt@goodmis.org>
+References: <20210810204818.880714-1-rostedt@goodmis.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
@@ -49,50 +51,71 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-The hist trigger for trace events will create a histogram that can be read
-in the trace event's hist file. The file is human readable ASCII format, but
-that makes it difficult to process in programs. The tracefs_hist_data*()
-functions convert the histogram ASCII format into structures that can be
-processed and converted into tables.
+Add the APIs
 
-This patch series creates an API to read and parse this data into machine
-code readable structures that can then be processed. There's a working
-program in the man page.
+  tracefs_hist_data_key_names()
+  tracefs_hist_data_value_names()
 
-I found the parsing of the hist file to be somewhat trivial where I only
-needed to implement flex to do most of the work and was able to avoid using
-bison. That said, there are still some histograms that can fail to parse.
-Namely, if any key has a comma (,) or a colon (:) in it. This includes exec
-names if there's a program name with a comma or colon. This can be fixed with
-a bit more clever tricks with the lexer, but I'll add those if this becomes
-an issue.
+To get the names of the keys and values respectively.
 
-This series is also in my personal github account here:
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ include/tracefs.h       |  3 +++
+ src/tracefs-hist-data.c | 30 ++++++++++++++++++++++++++++++
+ 2 files changed, 33 insertions(+)
 
-  https://github.com/rostedt/libtracefs/tree/read-hist
-
-Steven Rostedt (VMware) (9):
-  tracefs: Add API tracefs_hist_data_parse()
-  libtracefs: Parse comment for hist data information
-  libtracefs: Change hist_data_key type to flags
-  libtracefs: Add API tracefs_hist_data_read()
-  libtracefs: Add API tracefs_list_dup()
-  libtracefs: Add APIs tracefs_hist_data_keys/value_names()
-  libtracefs: Add API tracefs_hist_data_keys/values() and next_bucket()
-  libtracefs: Have tracefs_hist_bucket_key flags save the type
-  libtracefs: Add man pages for tracefs_hist_data functions
-
- Documentation/libtracefs-hist-data-2.txt |  346 +++++++
- Documentation/libtracefs-hist-data.txt   |  294 ++++++
- include/tracefs.h                        |   54 +
- src/Makefile                             |    7 +
- src/tracefs-hist-data.c                  | 1175 ++++++++++++++++++++++
- src/tracefs-utils.c                      |   26 +
- 6 files changed, 1902 insertions(+)
- create mode 100644 Documentation/libtracefs-hist-data-2.txt
- create mode 100644 Documentation/libtracefs-hist-data.txt
- create mode 100644 src/tracefs-hist-data.c
-
+diff --git a/include/tracefs.h b/include/tracefs.h
+index 6fb66c44afc7..7aa6a3e5673a 100644
+--- a/include/tracefs.h
++++ b/include/tracefs.h
+@@ -428,6 +428,9 @@ struct tracefs_hist_data **tracefs_hist_data_read(struct tracefs_instance *insta
+ void tracefs_hist_data_free(struct tracefs_hist_data *hdata);
+ void tracefs_hist_data_free_list(struct tracefs_hist_data **hdata_list);
+ 
++char **tracefs_hist_data_key_names(struct tracefs_hist_data *hdata);
++char **tracefs_hist_data_value_names(struct tracefs_hist_data *hdata);
++
+ struct tracefs_synth;
+ 
+ /*
+diff --git a/src/tracefs-hist-data.c b/src/tracefs-hist-data.c
+index ab1ae824f59b..c93c27453255 100644
+--- a/src/tracefs-hist-data.c
++++ b/src/tracefs-hist-data.c
+@@ -1093,3 +1093,33 @@ tracefs_hist_data_read(struct tracefs_instance *instance,
+ 	return NULL;
+ }
+ 
++/**
++ * tracefs_hist_data_key_names - return key names
++ * @hdata: The hist data descriptor to get the names from
++ *
++ * Returns a copy of the key names of the keys. The list of keys
++ * will be in the same order as the keys are listed.
++ * Returns NULL on error.
++ *
++ * Must be freed with tracefs_list_free();
++ */
++char **tracefs_hist_data_key_names(struct tracefs_hist_data *hdata)
++{
++	return tracefs_list_dup(hdata->key_names);
++}
++
++/**
++ * tracefs_hist_data_value_names - return value names
++ * @hdata: The hist data descriptor to get the names from
++ *
++ * Returns a copy of the value names of the keys. The list of keys
++ * will be in the same order as the values are listed.
++ * Returns NULL on error.
++ *
++ * Must be freed with tracefs_list_free();
++ */
++char **tracefs_hist_data_value_names(struct tracefs_hist_data *hdata)
++{
++	return tracefs_list_dup(hdata->value_names);
++}
++
 -- 
 2.30.2
 
