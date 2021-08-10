@@ -2,90 +2,109 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
-	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 14A8AC4338F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:33:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13B88C4320A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:48:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E8A7E60F55
-	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:33:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E47E16109E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Aug 2021 20:48:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233315AbhHJUd3 (ORCPT
+        id S233080AbhHJUss (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 10 Aug 2021 16:33:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35994 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233083AbhHJUd2 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 10 Aug 2021 16:33:28 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1821AC0613C1;
-        Tue, 10 Aug 2021 13:33:06 -0700 (PDT)
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1628627582;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=VmNO/6PZX/ukpmKUxgFb784BLjZWMf0I28FYYc/qH+Q=;
-        b=geT0QKa+FGH9C4lt7qI+awsmOAPGEPnuKNhteiIPNmgcQaziJdqJBjQY00zPcEFuZmuBmB
-        oOh5oInajQrBVbX67j2q2iD9BWXDlbwu+g8lE5rVLGMCIErd9No4tCqHdEseYSHugHI1zg
-        zHWyd3cFWnmyd3BVs5lJX5LyVJozvZFjkzQaV/wHC6r+3d7TYpJlg2oG+v1mmVFYWDsD/m
-        yJWjYV/irDIoGlQPhZaJOQK49VMOnb5dU12SyIIcmXk83MxnTdGzx+YuXNArtOFDUHB7qb
-        PYtamAOAZKRt461Vh7cGXI2uzw3URsGPaKwXtzw2i4OBmySXjMRNqhkygKAVAg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1628627582;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=VmNO/6PZX/ukpmKUxgFb784BLjZWMf0I28FYYc/qH+Q=;
-        b=9RUz3+Q/kDOp5LEbghaANWydLhI9VhI74udmE/onDz0uMdyQg6tGx5YzKhMZhoGJCeflAI
-        3S/vPf9bzVldkWCw==
-To:     Valentin Schneider <valentin.schneider@arm.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Cc:     Will Deacon <will@kernel.org>, Mark Rutland <mark.rutland@arm.com>,
-        Marc Zyngier <maz@kernel.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Linus Walleij <linusw@kernel.org>,
-        Bartosz Golaszewski <bgolaszewski@baylibre.com>,
-        linux-gpio@vger.kernel.org
-Subject: Re: [SPLAT 3/3] gpio: dwapb: Sleeping spinlocks down IRQ mapping
-In-Reply-To: <20210810134127.1394269-4-valentin.schneider@arm.com>
-References: <20210810134127.1394269-1-valentin.schneider@arm.com>
- <20210810134127.1394269-4-valentin.schneider@arm.com>
-Date:   Tue, 10 Aug 2021 22:33:01 +0200
-Message-ID: <87v94doxaa.ffs@tglx>
+        Tue, 10 Aug 2021 16:48:48 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44240 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S230181AbhHJUsr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 10 Aug 2021 16:48:47 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 4471361058;
+        Tue, 10 Aug 2021 20:48:25 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
+        (envelope-from <rostedt@rostedt.homelinux.com>)
+        id 1mDYfg-003hAH-6e; Tue, 10 Aug 2021 16:48:24 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-trace-devel@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Subject: [PATCH 5/9] libtracefs: Add API tracefs_list_dup()
+Date:   Tue, 10 Aug 2021 16:48:14 -0400
+Message-Id: <20210810204818.880714-6-rostedt@goodmis.org>
+X-Mailer: git-send-email 2.30.2
+In-Reply-To: <20210810204818.880714-1-rostedt@goodmis.org>
+References: <20210810204818.880714-1-rostedt@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Aug 10 2021 at 14:41, Valentin Schneider wrote:
-> [   11.549824] rt_spin_lock (kernel/locking/rtmutex.c:1641 (discriminator 4) kernel/locking/spinlock_rt.c:30 (discriminator 4) kernel/locking/spinlock_rt.c:36 (discriminator 4) kernel/locking/spinlock_rt.c:44 (discriminator 4)) 
-> [   11.549827] dwapb_irq_ack (drivers/gpio/gpio-dwapb.c:151 drivers/gpio/gpio-dwapb.c:233) gpio_dwapb
-> [   11.549831] __irq_do_set_handler (kernel/irq/chip.c:414 kernel/irq/chip.c:406 kernel/irq/chip.c:1009) 
-> [   11.549833] __irq_set_handler (kernel/irq/internals.h:178 kernel/irq/chip.c:1053) 
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-This is gpio_chip->bgpio_lock which is a regular spinlock. AFAICT this
-lock should merely serializing access to MMIO registers, so it should
-not be a problem to make this lock raw.
+Add an API tracefs_list_dup() that will duplicate an existing list.
 
-Except for the obligatory exception:
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ include/tracefs.h   |  1 +
+ src/tracefs-utils.c | 26 ++++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+)
 
- grgpio_irq_handler() holds that lock from the demultiplexing
- handler and invokes all handlers for the individual GPIOs which have
- interrupts enabled without ever consulting a pending register.
+diff --git a/include/tracefs.h b/include/tracefs.h
+index f1e4ffa0d65f..6fb66c44afc7 100644
+--- a/include/tracefs.h
++++ b/include/tracefs.h
+@@ -67,6 +67,7 @@ void tracefs_list_free(char **list);
+ char **tracefs_list_add(char **list, const char *string);
+ int tracefs_list_size(char **list);
+ int tracefs_list_pop(char **list);
++char **tracefs_list_dup(char **list);
+ 
+ /**
+  * tracefs_trace_on_get_fd - Get a file descriptor of "tracing_on" in given instance
+diff --git a/src/tracefs-utils.c b/src/tracefs-utils.c
+index 63bb413298fe..8c92d6c54ab1 100644
+--- a/src/tracefs-utils.c
++++ b/src/tracefs-utils.c
+@@ -489,3 +489,29 @@ int tracefs_list_size(char **list)
+ 	list--;
+ 	return (int)*(unsigned long *)list;
+ }
++
++/**
++ * tracefs_list_dup - create a duplicate list
++ * @list: The list to duplicate
++ *
++ * Allocates a new list that can be modified and freed separately.
++ *
++ * Returns a new allocated list that must be freed with
++ * tracefs_list_free(), or NULL on error.
++ */
++char **tracefs_list_dup(char **list)
++{
++	char **new = NULL;
++	char **tmp;
++	int i;
++
++	for (i = 0; list[i]; i++) {
++		tmp = tracefs_list_add(new, list[i]);
++		if (!tmp) {
++			free(new);
++			return NULL;
++		}
++		new = tmp;
++	}
++	return new;
++}
+-- 
+2.30.2
 
- That drivers usage of that lock is interesting in general, see
- grgpio_map_irq() for illustration. Quality stuff for mission critical
- systems...
-
- But nevertheless it should just work with a raw lock on RT AFACIT.
-
-Thanks,
-
-        tglx
