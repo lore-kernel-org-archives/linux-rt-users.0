@@ -2,107 +2,111 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+	SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D36F1C4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Aug 2021 17:59:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B1685C4320A
+	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Aug 2021 20:14:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B4C7B60FE6
-	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Aug 2021 17:59:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 923426109F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Aug 2021 20:14:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229916AbhHKSAP convert rfc822-to-8bit (ORCPT
+        id S231855AbhHKUOf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 11 Aug 2021 14:00:15 -0400
-Received: from foss.arm.com ([217.140.110.172]:55588 "EHLO foss.arm.com"
+        Wed, 11 Aug 2021 16:14:35 -0400
+Received: from foss.arm.com ([217.140.110.172]:57698 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229473AbhHKSAO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 11 Aug 2021 14:00:14 -0400
+        id S230487AbhHKUOf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 11 Aug 2021 16:14:35 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 9D346106F;
-        Wed, 11 Aug 2021 10:59:50 -0700 (PDT)
-Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 7FE7B3F40C;
-        Wed, 11 Aug 2021 10:59:49 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 07392D6E;
+        Wed, 11 Aug 2021 13:14:11 -0700 (PDT)
+Received: from e113632-lin.cambridge.arm.com (e113632-lin.cambridge.arm.com [10.1.194.46])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id E75CF3F40C;
+        Wed, 11 Aug 2021 13:14:07 -0700 (PDT)
 From:   Valentin Schneider <valentin.schneider@arm.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
+To:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
         Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
-Subject: Re: [PATCH v2] cpu_pm: Make notifier chain use a raw spinlock
-In-Reply-To: <20210811135240.7zyywd47lpttuuj4@linutronix.de>
-References: <20210811131405.1731576-1-valentin.schneider@arm.com> <20210811135240.7zyywd47lpttuuj4@linutronix.de>
-Date:   Wed, 11 Aug 2021 18:59:43 +0100
-Message-ID: <87bl63981c.mognet@arm.com>
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        "Paul E. McKenney" <paulmck@kernel.org>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Mike Galbraith <efault@gmx.de>
+Subject: [PATCH v3 0/4] rcu, arm64: PREEMPT_RT fixlets
+Date:   Wed, 11 Aug 2021 21:13:50 +0100
+Message-Id: <20210811201354.1976839-1-valentin.schneider@arm.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 11/08/21 15:52, Sebastian Andrzej Siewior wrote:
-> On 2021-08-11 14:14:05 [+0100], Valentin Schneider wrote:
->> Booting a recent PREEMPT_RT kernel (v5.14-rc5-rt8 with the previous version
->> of this fix reverted) on my arm4 Juno leads to the idle task blocking on a
->> sleeping spinlock down some notifier path:
->> 
->> [    5.163034] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:35
-[...]
->> [    5.163294] __secondary_switched (arch/arm64/kernel/head.S:661)
->
-> I would shrink that part above. The important part is that the CPU-idle
-> code runs with disabled interrupts. Then cpu_pm_notify_robust() invokes
-> the notifier which requires to acquire the spinlock_t. On PREEMPT_RT the
-> spinlock_t becomes a sleeping spinlock and must not be acquired with
-> disabled interrupts.
+Hi folks,
 
-Noted, I'll pluck the warning out.
+this is v3 of:
 
->> +/*
->> + * atomic_notifiers use a regular spinlock, but notifications for this chain
->> + * will be issued by the idle task which cannot block.
->
-> Maybe + a few details and make it more explicit
->
->  * atomic_notifiers use a spinlock_t, but notifications for this chain
->  * will be issued by the idle task with disabled interrupts which cannot
->  * block on PREEMPT_RT.
->
-> ?
->
+  https://lore.kernel.org/lkml/20210721115118.729943-1-valentin.schneider@arm.com/
 
-More generally I'd say the idle task is never preemptible (as in
-preempt_count > 0 at all times), so any notification issued by the idle
-task itself cannot block. The fact those are also issued in an IRQ-off
-region just further cements that.
+respun from Frederic and Paul's helpful feedback. Tested atop v5.14-rc5-rt8 with
+the v1 patches reverted. There, commit 
 
-> …
->> @@ -33,10 +45,13 @@ static int cpu_pm_notify(enum cpu_pm_event event)
->>  
->>  static int cpu_pm_notify_robust(enum cpu_pm_event event_up, enum cpu_pm_event event_down)
->>  {
->> +	unsigned long flags;
->>  	int ret;
->>  
->>  	rcu_irq_enter_irqson();
->> -	ret = atomic_notifier_call_chain_robust(&cpu_pm_notifier_chain, event_up, event_down, NULL);
->
-> could we get rid of atomic_notifier_call_chain_robust() now that we have
-> zero users?
->
+  d76e0926d835 ("rcu/nocb: Use the rcuog CPU's ->nocb_timer")
 
-No objections from my end, I'll add that in v3 and see if anyone complains.
+prevents the NOCB offload warning from firing if there are no NOCB CPUs (which
+is sensible). Adding a single NOCB CPU brings the warning back, which patch 3
+fixes.
 
->> +	raw_spin_lock_irqsave(&cpu_pm_notifier.lock, flags);
->> +	ret = raw_notifier_call_chain_robust(&cpu_pm_notifier.chain, event_up, event_down, NULL);
->> +	raw_spin_unlock_irqrestore(&cpu_pm_notifier.lock, flags);
->>  	rcu_irq_exit_irqson();
->>  
->>  	return notifier_to_errno(ret);
->
-> Sebastian
+Revisions
+=========
+
+v2 -> v3
+++++++++
+
+o Rebased and tested against v5.14-rc5-rt8
+o Dropped affinity check from is_pcpu_safe() (Boqun)
+o Renamed is_pcpu_safe() to migratable() (Boqun, Mike)
+
+v1 -> v2
+++++++++
+
+o Rebased and tested against v5.14-rc4-rt6
+o Picked rcutorture patch patch from
+  https://lore.kernel.org/lkml/20210803225437.3612591-2-valentin.schneider@arm.com/
+o Added a local_lock to protect NOCB offload state under PREEMPT_RT (Frederic,
+  Paul)
+
+Valentin Schneider (4):
+  rcutorture: Don't disable softirqs with preemption disabled when
+    PREEMPT_RT
+  sched: Introduce migratable()
+  rcu/nocb: Protect NOCB state via local_lock() under PREEMPT_RT
+  arm64: mm: Make arch_faults_on_old_pte() check for migratability
+
+ arch/arm64/include/asm/pgtable.h |  2 +-
+ include/linux/sched.h            | 10 ++++
+ kernel/rcu/rcutorture.c          |  2 +
+ kernel/rcu/tree.c                |  4 ++
+ kernel/rcu/tree.h                |  4 ++
+ kernel/rcu/tree_plugin.h         | 82 ++++++++++++++++++++++++++++----
+ 6 files changed, 94 insertions(+), 10 deletions(-)
+
+--
+2.25.1
+
