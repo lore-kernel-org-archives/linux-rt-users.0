@@ -5,29 +5,29 @@ X-Spam-Level:
 X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 66519C432BE
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E47A7C43216
 	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 02:17:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4CECC61103
+	by mail.kernel.org (Postfix) with ESMTP id CC8B661107
 	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 02:17:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237936AbhHMCRz (ORCPT
+        id S238078AbhHMCR4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Aug 2021 22:17:55 -0400
-Received: from mail.kernel.org ([198.145.29.99]:44544 "EHLO mail.kernel.org"
+        Thu, 12 Aug 2021 22:17:56 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44556 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237397AbhHMCRw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S237630AbhHMCRw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Thu, 12 Aug 2021 22:17:52 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 34704610A8;
+        by mail.kernel.org (Postfix) with ESMTPSA id 37778610CF;
         Fri, 13 Aug 2021 02:17:26 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1mEMlA-003wVu-Re; Thu, 12 Aug 2021 22:17:24 -0400
+        id 1mEMlA-003wW0-UQ; Thu, 12 Aug 2021 22:17:24 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,9 +37,9 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH 2/7] libtracefs: Add logic to apply actions to synthetic events
-Date:   Thu, 12 Aug 2021 22:16:50 -0400
-Message-Id: <20210813021655.939819-3-rostedt@goodmis.org>
+Subject: [PATCH 5/7] libtracefs: Add API tracefs_synth_save()
+Date:   Thu, 12 Aug 2021 22:16:53 -0400
+Message-Id: <20210813021655.939819-6-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
 In-Reply-To: <20210813021655.939819-1-rostedt@goodmis.org>
 References: <20210813021655.939819-1-rostedt@goodmis.org>
@@ -51,171 +51,176 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add an actions list to tracefs_synth, that if it is not empty then it will
-be used to apply the handlers and actions to be taken. Otherwise the
-default of "onmatch" and "trace" is used.
-
-Currently nothing adds any actions and only the default is supported, but
-this will allow for new handlers (onmax and onchange) as well as new
-actions (snapshot and save).
+Add an API tracefs_synth_save() that will save fields when onmax() or
+onchange() handlers are executed.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/tracefs.h  |  7 +++++
- src/tracefs-hist.c | 76 ++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 81 insertions(+), 2 deletions(-)
+ Documentation/libtracefs-synth2.txt |  9 ++++
+ include/tracefs.h                   |  3 ++
+ src/tracefs-hist.c                  | 73 ++++++++++++++++++++++++++++-
+ 3 files changed, 83 insertions(+), 2 deletions(-)
 
+diff --git a/Documentation/libtracefs-synth2.txt b/Documentation/libtracefs-synth2.txt
+index 194a4e021f62..cfcae7411f58 100644
+--- a/Documentation/libtracefs-synth2.txt
++++ b/Documentation/libtracefs-synth2.txt
+@@ -25,6 +25,9 @@ int tracefs_synth_trace(struct tracefs_synth pass:[*]synth,
+ 			enum tracefs_synth_handler type, const char pass:[*]var);
+ int tracefs_synth_snapshot(struct tracefs_synth pass:[*]synth,
+ 			   enum tracefs_synth_handler type, const char pass:[*]var);
++int tracefs_synth_save(struct tracefs_synth pass:[*]synth,
++		       enum tracefs_synth_handler type, const char pass:[*]var,
++		       char pass:[**]save_fields);
+ --
+ 
+ DESCRIPTION
+@@ -84,6 +87,12 @@ into a "snapshot" buffer, that can be accessed via the "snapshot" file in the
+ top level tracefs directory, or one of the instances.  _var_ changes. _var_ must be one of
+ the _name_ elements used in *tracefs_synth_add_end_field*(3).
+ 
++*tracefs_synth_save*() When the given variable _var_ is either a new max if
++_handler_ is TRACEFS_SYNTH_HANDLE_MAX_ or simpy changed if TRACEFS_SYNTH_HANDLE_CHANGE_
++then saven the given _save_fields_ list. The fields will be stored in the histogram
++"hist" file of the event that can be retrieved with *tracefs_event_file_read*(3).
++_var_ changes. _var_ must be one of the _name_ elements used in *tracefs_synth_add_end_field*(3).
++
+ RETURN VALUE
+ ------------
+ Returns zero on success or -1 on error.
 diff --git a/include/tracefs.h b/include/tracefs.h
-index 90994de97dda..d83c4e33c69a 100644
+index 45a5bb2df2de..25abbdc10ebf 100644
 --- a/include/tracefs.h
 +++ b/include/tracefs.h
-@@ -435,6 +435,13 @@ int tracefs_event_verify_filter(struct tep_event *event, const char *filter,
- #define TRACEFS_TIMESTAMP "common_timestamp"
- #define TRACEFS_TIMESTAMP_USECS "common_timestamp.usecs"
- 
-+enum tracefs_synth_handler {
-+	TRACEFS_SYNTH_HANDLE_NONE	= 0,
-+	TRACEFS_SYNTH_HANDLE_MATCH,
-+	TRACEFS_SYNTH_HANDLE_MAX,
-+	TRACEFS_SYNTH_HANDLE_CHANGE,
-+};
-+
- struct tracefs_synth *tracefs_synth_init(struct tep_handle *tep,
- 					 const char *name,
- 					 const char *start_system,
+@@ -480,6 +480,9 @@ int tracefs_synth_trace(struct tracefs_synth *synth,
+ 			enum tracefs_synth_handler type, const char *field);
+ int tracefs_synth_snapshot(struct tracefs_synth *synth,
+ 			   enum tracefs_synth_handler type, const char *field);
++int tracefs_synth_save(struct tracefs_synth *synth,
++		       enum tracefs_synth_handler type, const char *field,
++		       char **save_fields);
+ bool tracefs_synth_complete(struct tracefs_synth *synth);
+ struct tracefs_hist *tracefs_synth_get_start_hist(struct tracefs_synth *synth);
+ int tracefs_synth_create(struct tracefs_instance *instance,
 diff --git a/src/tracefs-hist.c b/src/tracefs-hist.c
-index 7fffa6cc653d..262db7fbb925 100644
+index 2c9c37b8ec23..003715fa693c 100644
 --- a/src/tracefs-hist.c
 +++ b/src/tracefs-hist.c
-@@ -521,12 +521,25 @@ int tracefs_hist_append_filter(struct tracefs_hist *hist,
- 				   type, field, compare, val);
- }
+@@ -525,6 +525,7 @@ enum action_type {
+ 	ACTION_NONE,
+ 	ACTION_TRACE,
+ 	ACTION_SNAPSHOT,
++	ACTION_SAVE,
+ };
  
-+enum action_type {
-+	ACTION_NONE,
-+	ACTION_TRACE,
-+};
-+
-+struct action {
-+	struct action			*next;
-+	enum action_type		type;
-+	enum tracefs_synth_handler	handler;
-+	char				*handle_field;
-+};
-+
+ struct action {
+@@ -532,6 +533,7 @@ struct action {
+ 	enum action_type		type;
+ 	enum tracefs_synth_handler	handler;
+ 	char				*handle_field;
++	char				*save;
+ };
+ 
  /*
-  * @name: name of the synthetic event
-  * @start_system: system of the starting event
-  * @start_event: the starting event
-  * @end_system: system of the ending event
-  * @end_event: the ending event
-+ * @actions: List of actions to take
-  * @match_names: If a match set is to be a synthetic field, it has a name
-  * @start_match: list of keys in the start event that matches end event
-  * @end_match: list of keys in the end event that matches the start event
-@@ -545,6 +558,8 @@ struct tracefs_synth {
- 	struct tep_handle	*tep;
- 	struct tep_event	*start_event;
- 	struct tep_event	*end_event;
-+	struct action		*actions;
-+	struct action		**next_action;
- 	char			*name;
- 	char			**synthetic_fields;
- 	char			**synthetic_args;
-@@ -575,6 +590,8 @@ struct tracefs_synth {
-  */
- void tracefs_synth_free(struct tracefs_synth *synth)
- {
-+	struct action *action;
+@@ -580,6 +582,13 @@ struct tracefs_synth {
+ 	int			arg_cnt;
+ };
+ 
++static void action_free(struct action *action)
++{
++	free(action->handle_field);
++	free(action->save);
++	free(action);
++}
 +
- 	if (!synth)
- 		return;
+ /**
+  * tracefs_synth_free - free the resources alloced to a synth
+  * @synth: The tracefs_synth descriptor
+@@ -610,8 +619,7 @@ void tracefs_synth_free(struct tracefs_synth *synth)
  
-@@ -590,6 +607,12 @@ void tracefs_synth_free(struct tracefs_synth *synth)
+ 	while ((action = synth->actions)) {
+ 		synth->actions = action->next;
+-		free(action->handle_field);
+-		free(action);
++		action_free(action);
+ 	}
  
- 	tep_unref(synth->tep);
- 
-+	while ((action = synth->actions)) {
-+		synth->actions = action->next;
-+		free(action->handle_field);
-+		free(action);
-+	}
-+
  	free(synth);
+@@ -1445,6 +1453,64 @@ int tracefs_synth_snapshot(struct tracefs_synth *synth,
+ 	return 0;
  }
  
-@@ -750,6 +773,7 @@ synth_init_from(struct tep_handle *tep, const char *start_system,
- 		return NULL;
- 
- 	synth->start_event = start_event;
-+	synth->next_action = &synth->actions;
- 
- 	/* Hold onto a reference to this handler */
- 	tep_ref(tep);
-@@ -1405,13 +1429,61 @@ static char *create_trace(char *hist, struct tracefs_synth *synth)
- 	return append_string(hist, NULL, ")");
- }
- 
-+static char *create_max(char *hist, struct tracefs_synth *synth, char *field)
-+{
-+	hist = append_string(hist, NULL, ":onmax(");
-+	hist = append_string(hist, NULL, field);
-+	return append_string(hist, NULL, ")");
-+}
-+
-+static char *create_change(char *hist, struct tracefs_synth *synth, char *field)
-+{
-+	hist = append_string(hist, NULL, ":onchange(");
-+	hist = append_string(hist, NULL, field);
-+	return append_string(hist, NULL, ")");
-+}
-+
-+static char *create_actions(char *hist, struct tracefs_synth *synth)
++/**
++ * tracefs_synth_save - create a save command to the histogram
++ * @synth: The tracefs_synth descriptor
++ * @type: The type of handler to attach the save action
++ * @max_field: The field for handlers onmax and onchange
++ * @fields: The fields to save for the end variable
++ *
++ * Add the action to save fields for handlers onmax and onchange.
++ *
++ * Returns 0 on succes, -1 on error.
++ */
++int tracefs_synth_save(struct tracefs_synth *synth,
++		       enum tracefs_synth_handler type, const char *max_field,
++		       char **fields)
 +{
 +	struct action *action;
++	char *save;
++	int i;
 +
-+	if (!synth->actions) {
-+		/* Default is "onmatch" and "trace" */
-+		hist = create_onmatch(hist, synth);
-+		return create_trace(hist, synth);
++	if (!synth || !max_field || (type == TRACEFS_SYNTH_HANDLE_MATCH)) {
++		errno = EINVAL;
++		return -1;
 +	}
 +
-+	for (action = synth->actions; action; action = action->next) {
-+		switch (action->handler) {
-+		case TRACEFS_SYNTH_HANDLE_MATCH:
-+			hist = create_onmatch(hist, synth);
-+			break;
-+		case TRACEFS_SYNTH_HANDLE_MAX:
-+			hist = create_max(hist, synth, action->handle_field);
-+			break;
-+		case TRACEFS_SYNTH_HANDLE_CHANGE:
-+			hist = create_change(hist, synth, action->handle_field);
-+			break;
-+		default:
-+			continue;
-+		}
-+		switch (action->type) {
-+		case ACTION_TRACE:
-+			hist = create_trace(hist, synth);
-+			break;
-+		default:
-+			continue;
-+		}
++	action = create_action(type, synth, max_field);
++	if (!action)
++		return -1;
++
++	action->type = ACTION_SAVE;
++	action->handler = type;
++	*synth->next_action = action;
++	synth->next_action = &action->next;
++
++	save = strdup(".save(");
++	if (!save)
++		goto error;
++
++	for (i = 0; fields[i]; i++) {
++		char *delim = i ? "," : NULL;
++
++		if (!trace_verify_event_field(synth->end_event, fields[i], NULL))
++			goto error;
++		save = append_string(save, delim, fields[i]);
 +	}
-+	return hist;
++	save = append_string(save, NULL, ")");
++	if (!save)
++		goto error;
++
++	action->save = save;
++	add_action(synth, action);
++	return 0;
++ error:
++	action_free(action);
++	free(save);
++	return -1;
++	return 0;
 +}
 +
- static char *create_end_hist(struct tracefs_synth *synth)
+ static char *create_synthetic_event(struct tracefs_synth *synth)
  {
- 	char *end_hist;
- 
- 	end_hist = create_hist(synth->end_keys, synth->end_vars);
--	end_hist = create_onmatch(end_hist, synth);
--	return create_trace(end_hist, synth);
-+	return create_actions(end_hist, synth);
- }
- 
- static char *append_filter(char *hist, char *filter, unsigned int parens)
+ 	char *synthetic_event;
+@@ -1596,6 +1662,9 @@ static char *create_actions(char *hist, struct tracefs_synth *synth)
+ 		case ACTION_SNAPSHOT:
+ 			hist = append_string(hist, NULL, ".snapshot()");
+ 			break;
++		case ACTION_SAVE:
++			hist = append_string(hist, NULL, action->save);
++			break;
+ 		default:
+ 			continue;
+ 		}
 -- 
 2.30.2
 
