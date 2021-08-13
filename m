@@ -2,200 +2,453 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 88731C4338F
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Aug 2021 23:54:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 391FAC4338F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 00:20:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 54E216109D
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Aug 2021 23:54:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 17221610CD
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 00:20:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232895AbhHLXwi (ORCPT
+        id S235790AbhHMAVO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Aug 2021 19:52:38 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:49929 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229601AbhHLXwh (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Aug 2021 19:52:37 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1628812331;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=I0q1co3QCNXI9k71znZTqd/y7DjmOu5AvEWFouMuMIM=;
-        b=B2/pJag2+ATnQxpX4WZ/Bu5G06l/UkWRMleHFa5o0oMGJc7lnR+lJrf2pzR2XBniOfX6kB
-        o0nS62Fn0il80V5u06dHwZAVazYLuuTcH+dltQvX7tapBbIocIFzLCQGhNJYJ41RpGi7y9
-        oN1aVRohWik4dk4ukr2oOF7JIxfAbIk=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-59-ZQcsw0DsOZObiJVCrDs6RA-1; Thu, 12 Aug 2021 19:52:09 -0400
-X-MC-Unique: ZQcsw0DsOZObiJVCrDs6RA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0E8B03E741;
-        Thu, 12 Aug 2021 23:52:08 +0000 (UTC)
-Received: from theseus.lan (unknown [10.22.18.73])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 4C155100EBB0;
-        Thu, 12 Aug 2021 23:52:07 +0000 (UTC)
-Date:   Thu, 12 Aug 2021 16:44:40 -0500
-From:   Clark Williams <williams@redhat.com>
-To:     Vlastimil Babka <vbabka@suse.cz>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thu, 12 Aug 2021 20:21:14 -0400
+Received: from mail.kernel.org ([198.145.29.99]:34538 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S235688AbhHMAVM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 12 Aug 2021 20:21:12 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id D2E756101E;
+        Fri, 13 Aug 2021 00:20:45 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1628814045;
+        bh=AhxEQkvh3j/yrIJT4nLVABFILcymRNR0YRvhLKiYo3c=;
+        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
+        b=LegxafWChg3WBP0UI7ETwM58tYyh1Yjl2Qn/KCeV7+W52HIV1+dQPtujbn6nP79Fv
+         AnDCGzXM0xjJWceNctU+K75P0k4PJKL1k90mZmcCIbWEBBG5HWK2zm4I6U0w5axCCt
+         j6YA1uQqxOr8+/GbPHBypXeNEjQNT1at3rmN5DIHgDPAEutTNx6gvwJEjTwkxYffrw
+         eah/879/R32F1HU2ynYMgj5MQcCGjoBUtLwKCq2ghu51pv4XhWLrpaTjBHMiyrShvd
+         y4wWAgPgsbZyLsDxFYFJ7vTusaabfSYFDkLrwKOL+/XsbG/FtMLIueBT/6u3QmhpxY
+         GGDuh6PKfOATw==
+Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
+        id A57945C0531; Thu, 12 Aug 2021 17:20:45 -0700 (PDT)
+Date:   Thu, 12 Aug 2021 17:20:45 -0700
+From:   "Paul E. McKenney" <paulmck@kernel.org>
+To:     Valentin Schneider <valentin.schneider@arm.com>
+Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        RT <linux-rt-users@vger.kernel.org>
-Subject: Re: [ANNOUNCE] v5.14-rc5-rt8
-Message-ID: <20210812164440.0426d8b7@theseus.lan>
-In-Reply-To: <bb98b54c-6d88-2a56-4998-51a304c19e8c@suse.cz>
-References: <20210810163731.2qvfuhenolq2gdlv@linutronix.de>
-        <20210812151803.52f84aaf@theseus.lan>
-        <5f0c793d-5084-4607-8475-209fa7310ba2@suse.cz>
-        <20210812162448.26274298@theseus.lan>
-        <bb98b54c-6d88-2a56-4998-51a304c19e8c@suse.cz>
-Organization: Red Hat, Inc
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH v3 3/4] rcu/nocb: Protect NOCB state via local_lock()
+ under PREEMPT_RT
+Message-ID: <20210813002045.GZ4126399@paulmck-ThinkPad-P17-Gen-1>
+Reply-To: paulmck@kernel.org
+References: <20210811201354.1976839-1-valentin.schneider@arm.com>
+ <20210811201354.1976839-4-valentin.schneider@arm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210811201354.1976839-4-valentin.schneider@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 12 Aug 2021 23:30:29 +0200
-Vlastimil Babka <vbabka@suse.cz> wrote:
-
-> On 8/12/21 11:24 PM, Clark Williams wrote:
-> > On Thu, 12 Aug 2021 22:45:19 +0200
-> > Vlastimil Babka <vbabka@suse.cz> wrote:
-> >   
-> >> On 8/12/21 10:18 PM, Clark Williams wrote:  
-> >>> On Tue, 10 Aug 2021 18:37:31 +0200
-> >>> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> >>>
-> >>> Sebastian, et al,
-> >>>
-> >>> Got the following panic running v5.14-rc5-rt8:
-> >>>
-> >>> Aug 13 06:35:05 oberon kernel: page:000000009ac5dd73 refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1ab3db
-> >>> Aug 13 06:35:05 oberon kernel: flags: 0x17ffffc0000000(node=0|zone=2|lastcpupid=0x1fffff)
-> >>> Aug 13 06:35:05 oberon kernel: raw: 0017ffffc0000000 ffffee1286aceb88 ffffee1287b66288 0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: raw: 0000000000000000 0000000000100000 00000000ffffffff 0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: page dumped because: VM_BUG_ON_PAGE(!PageSlab(page))
-> >>> Aug 13 06:35:05 oberon kernel: ------------[ cut here ]------------
-> >>> Aug 13 06:35:05 oberon kernel: kernel BUG at include/linux/page-flags.h:814!
-> >>> Aug 13 06:35:05 oberon kernel: invalid opcode: 0000 [#1] PREEMPT_RT SMP PTI
-> >>> Aug 13 06:35:05 oberon kernel: CPU: 3 PID: 12345 Comm: hackbench Not tainted 5.14.0-rc5-rt8+ #12
-> >>> Aug 13 06:35:05 oberon kernel: Hardware name:  /NUC5i7RYB, BIOS RYBDWi35.86A.0359.2016.0906.1028 09/06/2016
-> >>> Aug 13 06:35:05 oberon kernel: RIP: 0010:___slab_alloc+0x340/0x940    
-> >>
-> >> Are you able to translate this RIP via addr2line?  
-> > 
-> > $ addr2line -e /data/o/linux-5.14.y-rt/vmlinux ___slab_alloc+0x340/0x940
-> > <snip>/arch/x86/include/asm/processor.h:440  
+On Wed, Aug 11, 2021 at 09:13:53PM +0100, Valentin Schneider wrote:
+> Warning
+> =======
 > 
-> Hm that's not much useful, I'd need the line in mm/slub.c
-> does ./scripts/faddr2line give better output?
-
-Why, yes it does!  :)
-
-$ ./scripts/faddr2line /data/o/linux-5.14.y-rt/vmlinux ___slab_alloc+0x340/0x940
-___slab_alloc+0x340/0x940:
-PageSlabPfmemalloc at include/linux/page-flags.h:814
-(inlined by) pfmemalloc_match at mm/slub.c:2772
-(inlined by) ___slab_alloc at mm/slub.c:2874
-
+> Running v5.13-rt1 on my arm64 Juno board triggers:
 > 
-> >>  
-> >>> Aug 13 06:35:05 oberon kernel: Code: c6 48 0f a3 05 b1 7b 57 03 72 99 c7 85 78 ff ff ff ff ff ff ff 48 8b 7d 88 e9 8d fd ff ff 48 c7 c6 50 5a 7c b0 e>
-> >>> Aug 13 06:35:05 oberon kernel: RSP: 0018:ffffba1c4a8b7ab0 EFLAGS: 00010293
-> >>> Aug 13 06:35:05 oberon kernel: RAX: 0000000000000000 RBX: 0000000000000002 RCX: ffff9bb765118000
-> >>> Aug 13 06:35:05 oberon kernel: RDX: 0000000000000000 RSI: ffffffffaf426050 RDI: 00000000ffffffff
-> >>> Aug 13 06:35:05 oberon kernel: RBP: ffffba1c4a8b7b70 R08: 0000000000000000 R09: 0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffff9bb7410d3600
-> >>> Aug 13 06:35:05 oberon kernel: R13: 0000000000400cc0 R14: 00000000001f7770 R15: ffff9bbe76df7770
-> >>> Aug 13 06:35:05 oberon kernel: FS:  00007f474b1be740(0000) GS:ffff9bbe76c00000(0000) knlGS:0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> >>> Aug 13 06:35:05 oberon kernel: CR2: 00007f60c04bdaf8 CR3: 0000000124f3a003 CR4: 00000000003706e0
-> >>> Aug 13 06:35:05 oberon kernel: Call Trace:
-> >>> Aug 13 06:35:05 oberon kernel:  ? __alloc_skb+0x1db/0x270
-> >>> Aug 13 06:35:05 oberon kernel:  ? __alloc_skb+0x1db/0x270
-> >>> Aug 13 06:35:05 oberon kernel:  ? kmem_cache_alloc_node+0xa4/0x2b0
-> >>> Aug 13 06:35:05 oberon kernel:  kmem_cache_alloc_node+0xa4/0x2b0
-> >>> Aug 13 06:35:05 oberon kernel:  __alloc_skb+0x1db/0x270
-> >>> Aug 13 06:35:05 oberon kernel:  alloc_skb_with_frags+0x64/0x250
-> >>> Aug 13 06:35:05 oberon kernel:  sock_alloc_send_pskb+0x260/0x2b0
-> >>> Aug 13 06:35:05 oberon kernel:  ? bpf_lsm_socket_getpeersec_dgram+0xa/0x10
-> >>> Aug 13 06:35:05 oberon kernel:  unix_stream_sendmsg+0x27c/0x550
-> >>> Aug 13 06:35:05 oberon kernel:  ? unix_seqpacket_recvmsg+0x60/0x60
-> >>> Aug 13 06:35:05 oberon kernel:  sock_sendmsg+0xbd/0xd0
-> >>> Aug 13 06:35:05 oberon kernel:  sock_write_iter+0xb9/0x120
-> >>> Aug 13 06:35:05 oberon kernel:  new_sync_write+0x175/0x200
-> >>> Aug 13 06:35:05 oberon kernel:  vfs_write+0x3c4/0x510
-> >>> Aug 13 06:35:05 oberon kernel:  ksys_write+0xc9/0x110
-> >>> Aug 13 06:35:05 oberon kernel:  do_syscall_64+0x3b/0x90
-> >>> Aug 13 06:35:05 oberon kernel:  entry_SYSCALL_64_after_hwframe+0x44/0xae    
-> >>
-> >> While SLUB RT rewrite is obvious suspect, could be also a boring slab
-> >> misuse (use-after-free etc), wouldn't be the first related to skb's...
-> >> If this reproduces well, could you try booting with slub_debug boot
-> >> param. Could catch the culprit sooner (but also hide the bug,
-> >> unfortunately).  
-> > 
-> > Without 'slub_debug' it panic's consistently. 
-> > 
-> > Adding 'slub_debug' to the boot command line causes odd behavior where load and measurement tasks
-> > run by 'rteval' crash, but (so far) no kernel panic.   
+> [    0.156302] =============================
+> [    0.160416] WARNING: suspicious RCU usage
+> [    0.164529] 5.13.0-rt1 #20 Not tainted
+> [    0.168300] -----------------------------
+> [    0.172409] kernel/rcu/tree_plugin.h:69 Unsafe read of RCU_NOCB offloaded state!
+> [    0.179920]
+> [    0.179920] other info that might help us debug this:
+> [    0.179920]
+> [    0.188037]
+> [    0.188037] rcu_scheduler_active = 1, debug_locks = 1
+> [    0.194677] 3 locks held by rcuc/0/11:
+> [    0.198448] #0: ffff00097ef10cf8 ((softirq_ctrl.lock).lock){+.+.}-{2:2}, at: __local_bh_disable_ip (./include/linux/rcupdate.h:662 kernel/softirq.c:171)
+> [    0.208709] #1: ffff80001205e5f0 (rcu_read_lock){....}-{1:2}, at: rt_spin_lock (kernel/locking/spinlock_rt.c:43 (discriminator 4))
+> [    0.217134] #2: ffff80001205e5f0 (rcu_read_lock){....}-{1:2}, at: __local_bh_disable_ip (kernel/softirq.c:169)
+> [    0.226428]
+> [    0.226428] stack backtrace:
+> [    0.230889] CPU: 0 PID: 11 Comm: rcuc/0 Not tainted 5.13.0-rt1 #20
+> [    0.237100] Hardware name: ARM Juno development board (r0) (DT)
+> [    0.243041] Call trace:
+> [    0.245497] dump_backtrace (arch/arm64/kernel/stacktrace.c:163)
+> [    0.249185] show_stack (arch/arm64/kernel/stacktrace.c:219)
+> [    0.252522] dump_stack (lib/dump_stack.c:122)
+> [    0.255947] lockdep_rcu_suspicious (kernel/locking/lockdep.c:6439)
+> [    0.260328] rcu_rdp_is_offloaded (kernel/rcu/tree_plugin.h:69 kernel/rcu/tree_plugin.h:58)
+> [    0.264537] rcu_core (kernel/rcu/tree.c:2332 kernel/rcu/tree.c:2398 kernel/rcu/tree.c:2777)
+> [    0.267786] rcu_cpu_kthread (./include/linux/bottom_half.h:32 kernel/rcu/tree.c:2876)
+> [    0.271644] smpboot_thread_fn (kernel/smpboot.c:165 (discriminator 3))
+> [    0.275767] kthread (kernel/kthread.c:321)
+> [    0.279013] ret_from_fork (arch/arm64/kernel/entry.S:1005)
 > 
-> Huh. And nothing in dmesg about corrupted slabs with slub_debug?
-
-No, nothing slab related in the log. Typical gnome-shell complaints and a lockdep complaint
-about MAX_LOCKDEP_ENTRIES too low, but nothing really wierd.
+> In this case, this is the RCU core kthread accessing the local CPU's
+> rdp. Before that, rcu_cpu_kthread() invokes local_bh_disable().
 > 
-> >>> Aug 13 06:35:05 oberon kernel: RIP: 0033:0x7f474b3a2877
-> >>> Aug 13 06:35:05 oberon kernel: Code: 75 05 48 83 c4 58 c3 e8 37 4e ff ff 0f 1f 80 00 00 00 00 f3 0f 1e fa 64 8b 04 25 18 00 00 00 85 c0 75 10 b8 01 0>
-> >>> Aug 13 06:35:05 oberon kernel: RSP: 002b:00007ffe5e71e7a8 EFLAGS: 00000246 ORIG_RAX: 0000000000000001
-> >>> Aug 13 06:35:05 oberon kernel: RAX: ffffffffffffffda RBX: 00000000000003e8 RCX: 00007f474b3a2877
-> >>> Aug 13 06:35:05 oberon kernel: RDX: 00000000000003e8 RSI: 00007ffe5e71e7b0 RDI: 0000000000000010
-> >>> Aug 13 06:35:05 oberon kernel: RBP: 00007ffe5e71ebf0 R08: 00007ffe5e71e700 R09: 0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: R10: 0000000000000008 R11: 0000000000000246 R12: 00007ffe5e71e7b0
-> >>> Aug 13 06:35:05 oberon kernel: R13: 0000000000000008 R14: 0000560b46008210 R15: 0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: Modules linked in: uinput rfcomm snd_seq_dummy snd_hrtimer xt_CHECKSUM xt_MASQUERADE xt_conntrack ipt_REJECT nf_nat_tf>
-> >>> Aug 13 06:35:05 oberon kernel:  snd_intel_dspcfg snd_hda_codec mei_hdcp snd_hda_core snd_hwdep cfg80211 snd_seq iTCO_wdt snd_seq_device intel_pmc_bxt>
-> >>> Aug 13 06:35:05 oberon kernel: ---[ end trace 0000000000000002 ]---
-> >>> Aug 13 06:35:05 oberon kernel: RIP: 0010:___slab_alloc+0x340/0x940
-> >>> Aug 13 06:35:05 oberon kernel: Code: c6 48 0f a3 05 b1 7b 57 03 72 99 c7 85 78 ff ff ff ff ff ff ff 48 8b 7d 88 e9 8d fd ff ff 48 c7 c6 50 5a 7c b0 e>
-> >>> Aug 13 06:35:05 oberon kernel: RSP: 0018:ffffba1c4a8b7ab0 EFLAGS: 00010293
-> >>> Aug 13 06:35:05 oberon kernel: RAX: 0000000000000000 RBX: 0000000000000002 RCX: ffff9bb765118000
-> >>> Aug 13 06:35:05 oberon kernel: RDX: 0000000000000000 RSI: ffffffffaf426050 RDI: 00000000ffffffff
-> >>> Aug 13 06:35:05 oberon kernel: RBP: ffffba1c4a8b7b70 R08: 0000000000000000 R09: 0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffff9bb7410d3600
-> >>> Aug 13 06:35:05 oberon kernel: R13: 0000000000400cc0 R14: 00000000001f7770 R15: ffff9bbe76df7770
-> >>> Aug 13 06:35:05 oberon kernel: FS:  00007f474b1be740(0000) GS:ffff9bbe76c00000(0000) knlGS:0000000000000000
-> >>> Aug 13 06:35:05 oberon kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> >>> Aug 13 06:35:05 oberon kernel: CR2: 00007f60c1d901a0 CR3: 0000000124f3a003 CR4: 00000000003706e0
-> >>> Aug 13 06:35:05 oberon kernel: Kernel panic - not syncing:
-> >>>
-> >>> Config is attached. 
-> >>>
-> >>> I was running the rteval script that kicks off parallel kernel builds and hackbench runs as loads and runs cyclictest with a thread on each core:
-> >>>
-> >>> $ sudo rteval --duration=10m
-> >>>
-> >>> Clark
-> >>>     
-> >>  
-> > 
-> >   
+> Under !CONFIG_PREEMPT_RT (and rcutree.use_softirq=0), this ends up
+> incrementing the preempt_count, which satisfies the "local non-preemptible
+> read" of rcu_rdp_is_offloaded().
 > 
+> Under CONFIG_PREEMPT_RT however, this becomes
+> 
+>   local_lock(&softirq_ctrl.lock)
+> 
+> which, under the same config, is migrate_disable() + rt_spin_lock(). As
+> pointed out by Frederic, this is not sufficient to safely access an rdp's
+> offload state, as the RCU core kthread can be preempted by a kworker
+> executing rcu_nocb_rdp_offload() [1].
+> 
+> Introduce a local_lock to serialize an rdp's offload state while the rdp's
+> associated core kthread is executing rcu_core().
+> 
+> rcu_core() preemptability considerations
+> ========================================
+> 
+> As pointed out by Paul [2], keeping rcu_check_quiescent_state() preemptible
+> (which is the case under CONFIG_PREEMPT_RT) requires some consideration.
+> 
+> note_gp_changes() itself runs with irqs off, and enters
+> __note_gp_changes() with rnp->lock held (raw_spinlock), thus is safe vs
+> preemption.
+> 
+> rdp->core_needs_qs *could* change after being read by the RCU core
+> kthread if it then gets preempted. Consider, with
+> CONFIG_RCU_STRICT_GRACE_PERIOD:
+> 
+>   rcuc/x                                   task_foo
+> 
+>     rcu_check_quiescent_state()
+>     `\
+>       rdp->core_needs_qs == true
+> 			     <PREEMPT>
+> 					   rcu_read_unlock()
+> 					   `\
+> 					     rcu_preempt_deferred_qs_irqrestore()
+> 					     `\
+> 					       rcu_report_qs_rdp()
+> 					       `\
+> 						 rdp->core_needs_qs := false;
+> 
+> This would let rcuc/x's rcu_check_quiescent_state() proceed further down to
+> rcu_report_qs_rdp(), but if task_foo's earlier rcu_report_qs_rdp()
+> invocation would have cleared the rdp grpmask from the rnp mask, so
+> rcuc/x's invocation would simply bail.
+> 
+> Since rcu_report_qs_rdp() can be safely invoked, even if rdp->core_needs_qs
+> changed, it appears safe to keep rcu_check_quiescent_state() preemptible.
 
+Another concern...
 
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
+During the preemption of rcu_check_quiescent_state() someone might report
+a quiescent state on behalf of CPU x (perhaps due to its having recently
+been idle) and then the RCU grace-period kthread might start running on
+CPU x, where it might initialize a new grace period in rcu_gp_init().
+It can then invoke __note_gp_changes(), also on CPU x.
 
+If preempted as shown above just after checking >core_needs_qs, the
+->cpu_no_qs.b.norm field will be set by the grace-period kthread, which
+will cause the rcu_check_quiescent_state() function's subsequent check
+of ->cpu_no_qs.b.norm to take an early exit.  So OK here.
+
+On the other hand, if preempted just after the rcu_check_quiescent_state()
+function's check of ->cpu_no_qs.b.norm, the later invocation of
+rcu_report_qs_rdp() should take an early exit due to ->gp_seq mismatch.
+So OK here.
+
+However, this should be added to the commit log.  Might be a big commit
+log, but mass storage is cheap these days.  ;-)
+
+This needs a review of each and every manipulation of ->core_needs_qs
+and ->cpu_no_qs.b.norm.  For example, the preemptions will cause the
+scheduler to invoke RCU's context-switch hooks, which also mess with
+->cpu_no_qs.b.norm.  I can get to that some time next week (or tomorrow,
+if things go better than expected), but it would be good for you (and
+others) to check as well.
+
+Frederic should look this over, but I am taking a quick pass in the
+meantime.  Please see below.
+
+							Thanx, Paul
+
+> [1]: http://lore.kernel.org/r/20210727230814.GC283787@lothringen
+> [2]: http://lore.kernel.org/r/20210729010445.GO4397@paulmck-ThinkPad-P17-Gen-1
+> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+> ---
+>  kernel/rcu/tree.c        |  4 ++
+>  kernel/rcu/tree.h        |  4 ++
+>  kernel/rcu/tree_plugin.h | 82 +++++++++++++++++++++++++++++++++++-----
+>  3 files changed, 81 insertions(+), 9 deletions(-)
+> 
+> diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+> index 51f24ecd94b2..caadfec994f3 100644
+> --- a/kernel/rcu/tree.c
+> +++ b/kernel/rcu/tree.c
+> @@ -87,6 +87,7 @@ static DEFINE_PER_CPU_SHARED_ALIGNED(struct rcu_data, rcu_data) = {
+>  	.dynticks = ATOMIC_INIT(RCU_DYNTICK_CTRL_CTR),
+>  #ifdef CONFIG_RCU_NOCB_CPU
+>  	.cblist.flags = SEGCBLIST_SOFTIRQ_ONLY,
+> +	.nocb_local_lock =  INIT_LOCAL_LOCK(nocb_local_lock),
+>  #endif
+>  };
+>  static struct rcu_state rcu_state = {
+> @@ -2853,10 +2854,12 @@ static void rcu_cpu_kthread(unsigned int cpu)
+>  {
+>  	unsigned int *statusp = this_cpu_ptr(&rcu_data.rcu_cpu_kthread_status);
+>  	char work, *workp = this_cpu_ptr(&rcu_data.rcu_cpu_has_work);
+> +	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+>  	int spincnt;
+>  
+>  	trace_rcu_utilization(TPS("Start CPU kthread@rcu_run"));
+>  	for (spincnt = 0; spincnt < 10; spincnt++) {
+> +		rcu_nocb_local_lock(rdp);
+>  		local_bh_disable();
+>  		*statusp = RCU_KTHREAD_RUNNING;
+>  		local_irq_disable();
+> @@ -2866,6 +2869,7 @@ static void rcu_cpu_kthread(unsigned int cpu)
+>  		if (work)
+>  			rcu_core();
+>  		local_bh_enable();
+> +		rcu_nocb_local_unlock(rdp);
+>  		if (*workp == 0) {
+>  			trace_rcu_utilization(TPS("End CPU kthread@rcu_wait"));
+>  			*statusp = RCU_KTHREAD_WAITING;
+> diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
+> index 305cf6aeb408..aa6831255fec 100644
+> --- a/kernel/rcu/tree.h
+> +++ b/kernel/rcu/tree.h
+> @@ -210,6 +210,8 @@ struct rcu_data {
+>  	struct timer_list nocb_timer;	/* Enforce finite deferral. */
+>  	unsigned long nocb_gp_adv_time;	/* Last call_rcu() CB adv (jiffies). */
+>  
+> +	local_lock_t nocb_local_lock;
+
+Should this go near the beginning of the structure, given that code
+paths taking this lock tend to access ->cpu_no_qs, ->core_needs_qs,
+and so on?
+
+Given that it is used to protect core processing (not just offloaded
+callbacks), might ->core_local_lock be a better name?
+
+Please keep in mind that you can build kernels that offload callbacks
+but that still use softirq for RCU core processing.  And vice versa,
+that is, kernels that use rcuc kthreads but do not offload callbacks.
+
+> +
+>  	/* The following fields are used by call_rcu, hence own cacheline. */
+>  	raw_spinlock_t nocb_bypass_lock ____cacheline_internodealigned_in_smp;
+>  	struct rcu_cblist nocb_bypass;	/* Lock-contention-bypass CB list. */
+> @@ -445,6 +447,8 @@ static void rcu_nocb_unlock(struct rcu_data *rdp);
+>  static void rcu_nocb_unlock_irqrestore(struct rcu_data *rdp,
+>  				       unsigned long flags);
+>  static void rcu_lockdep_assert_cblist_protected(struct rcu_data *rdp);
+> +static void rcu_nocb_local_lock(struct rcu_data *rdp);
+> +static void rcu_nocb_local_unlock(struct rcu_data *rdp);
+>  #ifdef CONFIG_RCU_NOCB_CPU
+>  static void __init rcu_organize_nocb_kthreads(void);
+>  #define rcu_nocb_lock_irqsave(rdp, flags)				\
+> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+> index 0ff5e4fb933e..11c4ff00afde 100644
+> --- a/kernel/rcu/tree_plugin.h
+> +++ b/kernel/rcu/tree_plugin.h
+> @@ -21,6 +21,17 @@ static inline int rcu_lockdep_is_held_nocb(struct rcu_data *rdp)
+>  	return lockdep_is_held(&rdp->nocb_lock);
+>  }
+>  
+> +static inline int rcu_lockdep_is_held_nocb_local(struct rcu_data *rdp)
+> +{
+> +	return lockdep_is_held(
+> +#ifdef CONFIG_PREEMPT_RT
+> +		&rdp->nocb_local_lock.lock
+> +#else
+> +		&rdp->nocb_local_lock
+> +#endif
+
+It would be good if this was abstracted.  Or is this the only place
+in the kernel that needs this #ifdef?  Maybe a lockdep_is_held_rt()
+or lockdep_is_held_local(), as the case may be?
+
+> +	);
+> +}
+> +
+>  static inline bool rcu_current_is_nocb_kthread(struct rcu_data *rdp)
+>  {
+>  	/* Race on early boot between thread creation and assignment */
+> @@ -38,7 +49,10 @@ static inline int rcu_lockdep_is_held_nocb(struct rcu_data *rdp)
+>  {
+>  	return 0;
+>  }
+> -
+> +static inline int rcu_lockdep_is_held_nocb_local(struct rcu_data *rdp)
+> +{
+> +	return 0;
+
+This is backwards of normal lockdep practice, which defaults to locks
+always held.  And that will be what happens once lockdep has detected
+its first deadlock, correct?  At which point, this function and its
+earlier instance will be in conflict.
+
+Or is there some subtle reason why this conflict would be OK?
+
+> +}
+>  static inline bool rcu_current_is_nocb_kthread(struct rcu_data *rdp)
+>  {
+>  	return false;
+> @@ -46,23 +60,44 @@ static inline bool rcu_current_is_nocb_kthread(struct rcu_data *rdp)
+>  
+>  #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
+>  
+> +/*
+> + * Is a local read of the rdp's offloaded state safe and stable?
+> + * See rcu_nocb_local_lock() & family.
+> + */
+> +static inline bool rcu_local_offload_access_safe(struct rcu_data *rdp)
+> +{
+> +	if (!preemptible())
+> +		return true;
+> +
+> +	if (!migratable()) {
+> +		if (!IS_ENABLED(CONFIG_RCU_NOCB))
+
+Do we also need to consult the use_softirq module parameter that controls
+whether or not there are rcuc kthreads?
+
+Actually, if !IS_ENABLED(CONFIG_RCU_NOCB) then rcu_rdp_is_offloaded()
+can simply return false without bothering with the RCU_LOCKDEP_WARN().
+Might be worth getting that out of the way of the RCU_LOCKDEP_WARN()
+condition.  ;-)
+
+> +			return true;
+> +
+> +		return rcu_lockdep_is_held_nocb_local(rdp);
+> +	}
+> +
+> +	return false;
+> +}
+> +
+>  static bool rcu_rdp_is_offloaded(struct rcu_data *rdp)
+>  {
+>  	/*
+> -	 * In order to read the offloaded state of an rdp is a safe
+> -	 * and stable way and prevent from its value to be changed
+> -	 * under us, we must either hold the barrier mutex, the cpu
+> -	 * hotplug lock (read or write) or the nocb lock. Local
+> -	 * non-preemptible reads are also safe. NOCB kthreads and
+> -	 * timers have their own means of synchronization against the
+> -	 * offloaded state updaters.
+> +	 * In order to read the offloaded state of an rdp is a safe and stable
+> +	 * way and prevent from its value to be changed under us, we must either...
+>  	 */
+>  	RCU_LOCKDEP_WARN(
+> +		// ...hold the barrier mutex...
+>  		!(lockdep_is_held(&rcu_state.barrier_mutex) ||
+> +		  // ... the cpu hotplug lock (read or write)...
+>  		  (IS_ENABLED(CONFIG_HOTPLUG_CPU) && lockdep_is_cpus_held()) ||
+> +		  // ... or the NOCB lock.
+>  		  rcu_lockdep_is_held_nocb(rdp) ||
+> +		  // Local reads still require the local state to remain stable
+> +		  // (preemption disabled / local lock held)
+>  		  (rdp == this_cpu_ptr(&rcu_data) &&
+> -		   !(IS_ENABLED(CONFIG_PREEMPT_COUNT) && preemptible())) ||
+> +		   rcu_local_offload_access_safe(rdp)) ||
+> +		  // NOCB kthreads and timers have their own means of synchronization
+> +		  // against the offloaded state updaters.
+>  		  rcu_current_is_nocb_kthread(rdp)),
+>  		"Unsafe read of RCU_NOCB offloaded state"
+>  	);
+> @@ -1629,6 +1664,22 @@ static void rcu_nocb_unlock_irqrestore(struct rcu_data *rdp,
+>  	}
+>  }
+>  
+> +/*
+> + * The invocation of rcu_core() within the RCU core kthreads remains preemptible
+> + * under PREEMPT_RT, thus the offload state of a CPU could change while
+> + * said kthreads are preempted. Prevent this from happening by protecting the
+> + * offload state with a local_lock().
+> + */
+> +static void rcu_nocb_local_lock(struct rcu_data *rdp)
+> +{
+> +	local_lock(&rcu_data.nocb_local_lock);
+> +}
+> +
+> +static void rcu_nocb_local_unlock(struct rcu_data *rdp)
+> +{
+> +	local_unlock(&rcu_data.nocb_local_lock);
+> +}
+> +
+>  /* Lockdep check that ->cblist may be safely accessed. */
+>  static void rcu_lockdep_assert_cblist_protected(struct rcu_data *rdp)
+>  {
+> @@ -2396,6 +2447,7 @@ static int rdp_offload_toggle(struct rcu_data *rdp,
+>  	if (rdp->nocb_cb_sleep)
+>  		rdp->nocb_cb_sleep = false;
+>  	rcu_nocb_unlock_irqrestore(rdp, flags);
+> +	rcu_nocb_local_unlock(rdp);
+>  
+>  	/*
+>  	 * Ignore former value of nocb_cb_sleep and force wake up as it could
+> @@ -2427,6 +2479,7 @@ static long rcu_nocb_rdp_deoffload(void *arg)
+>  
+>  	pr_info("De-offloading %d\n", rdp->cpu);
+>  
+> +	rcu_nocb_local_lock(rdp);
+>  	rcu_nocb_lock_irqsave(rdp, flags);
+>  	/*
+>  	 * Flush once and for all now. This suffices because we are
+> @@ -2509,6 +2562,7 @@ static long rcu_nocb_rdp_offload(void *arg)
+>  	 * Can't use rcu_nocb_lock_irqsave() while we are in
+>  	 * SEGCBLIST_SOFTIRQ_ONLY mode.
+>  	 */
+> +	rcu_nocb_local_lock(rdp);
+>  	raw_spin_lock_irqsave(&rdp->nocb_lock, flags);
+
+These look plausible at first glance, but it would be good for Frederic
+to look at the exact placement of these rcu_nocb_local_lock() and
+rcu_nocb_local_unlock() calls.
+
+>  	/*
+> @@ -2868,6 +2922,16 @@ static void rcu_nocb_unlock_irqrestore(struct rcu_data *rdp,
+>  	local_irq_restore(flags);
+>  }
+>  
+> +/* No ->nocb_local_lock to acquire. */
+> +static void rcu_nocb_local_lock(struct rcu_data *rdp)
+> +{
+> +}
+> +
+> +/* No ->nocb_local_lock to release. */
+> +static void rcu_nocb_local_unlock(struct rcu_data *rdp)
+> +{
+> +}
+> +
+>  /* Lockdep check that ->cblist may be safely accessed. */
+>  static void rcu_lockdep_assert_cblist_protected(struct rcu_data *rdp)
+>  {
+> -- 
+> 2.25.1
+> 
