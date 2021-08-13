@@ -2,32 +2,32 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 213C3C4338F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 02:17:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 29008C432BE
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 02:17:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 0976A61101
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 02:17:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0E352610CC
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Aug 2021 02:17:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238386AbhHMCSD (ORCPT
+        id S238431AbhHMCSG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Aug 2021 22:18:03 -0400
-Received: from mail.kernel.org ([198.145.29.99]:44618 "EHLO mail.kernel.org"
+        Thu, 12 Aug 2021 22:18:06 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44622 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237705AbhHMCRx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S237718AbhHMCRx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Thu, 12 Aug 2021 22:17:53 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3BA46610E9;
+        by mail.kernel.org (Postfix) with ESMTPSA id 43223610FC;
         Fri, 13 Aug 2021 02:17:26 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.94.2)
         (envelope-from <rostedt@rostedt.homelinux.com>)
-        id 1mEMlA-003wVy-TV; Thu, 12 Aug 2021 22:17:24 -0400
+        id 1mEMlA-003wVq-PB; Thu, 12 Aug 2021 22:17:24 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-trace-devel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
@@ -37,13 +37,12 @@ Cc:     linux-kernel@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Subject: [PATCH 4/7] libtracefs: Add API tracefs_synth_snapshot()
-Date:   Thu, 12 Aug 2021 22:16:52 -0400
-Message-Id: <20210813021655.939819-5-rostedt@goodmis.org>
+Subject: [PATCH 0/7] libtracefs: Add handlers 'onmax' and 'onchange' and actions 'snapshot' and 'save'
+Date:   Thu, 12 Aug 2021 22:16:48 -0400
+Message-Id: <20210813021655.939819-1-rostedt@goodmis.org>
 X-Mailer: git-send-email 2.30.2
-In-Reply-To: <20210813021655.939819-1-rostedt@goodmis.org>
-References: <20210813021655.939819-1-rostedt@goodmis.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -51,131 +50,191 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add new API tracefs_synth_snapshot()
+Add the following APIs that now allow to perform 'onmax' and 'onchange'
+handlers with the 'trace', 'snapshot' and 'save' actions for synthetic
+events.
 
-Where this will add "actions" to the synthetic event descriptor and also
-add other features besides "onmatch()" such that the output can be:
+   tracefs_synth_trace()
+   tracefs_synth_snapshot()
+   tracefs_synth_save()
 
-  onmax($lat).trace(latency,$lat):onmax($lat).snapshot
+Also, update the sqlhist tool in the tracefs_sql(3) man page to have more
+features, as well as give it its own man page!
 
-That will trace the latency when it hits a maximum, and also take a
-snapshot of the buffer.
+With the above API sqlhist has been exapanded to customize latency tracing.
 
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- Documentation/libtracefs-synth2.txt | 11 +++++++++-
- include/tracefs.h                   |  2 ++
- src/tracefs-hist.c                  | 34 +++++++++++++++++++++++++++++
- 3 files changed, 46 insertions(+), 1 deletion(-)
+By using the full SQL language, synthetic events can be made and processed.
+For example, using sqlhist along with trace-cmd, wake up latency can be
+recorded by creating a synthetic event by attaching the sched_waking and the
+sched_switch events.
 
-diff --git a/Documentation/libtracefs-synth2.txt b/Documentation/libtracefs-synth2.txt
-index a74e88ec0eda..194a4e021f62 100644
---- a/Documentation/libtracefs-synth2.txt
-+++ b/Documentation/libtracefs-synth2.txt
-@@ -4,7 +4,7 @@ libtracefs(3)
- NAME
- ----
- tracefs_synth_create, tracefs_synth_destroy, tracefs_synth_show,tracefs_synth_complete,
--tracefs_synth_get_start_hist,tracefs_synth_trace - Creation of synthetic events
-+tracefs_synth_get_start_hist,tracefs_synth_trace,tracefs_synth_snapshot - Creation of synthetic events
- 
- SYNOPSIS
- --------
-@@ -23,6 +23,8 @@ struct tracefs_hist pass:[*]tracefs_synth_get_start_hist(struct tracefs_synth pa
- 
- int tracefs_synth_trace(struct tracefs_synth pass:[*]synth,
- 			enum tracefs_synth_handler type, const char pass:[*]var);
-+int tracefs_synth_snapshot(struct tracefs_synth pass:[*]synth,
-+			   enum tracefs_synth_handler type, const char pass:[*]var);
- --
- 
- DESCRIPTION
-@@ -75,6 +77,13 @@ when the given variable _var_ hits a new max for the matching keys. Or
- *TRACEFS_SYNTH_HANDLE_CHANGE* for when the _var_ changes. _var_ must be one of
- the _name_ elements used in *tracefs_synth_add_end_field*(3).
- 
-+*tracefs_synth_snapshot*() When the given variable _var_ is either a new max if
-+_handler_ is TRACEFS_SYNTH_HANDLE_MAX_ or simpy changed if TRACEFS_SYNTH_HANDLE_CHANGE_
-+then take a "snapshot" of the buffer. The snapshot moves the normal "trace" buffer
-+into a "snapshot" buffer, that can be accessed via the "snapshot" file in the
-+top level tracefs directory, or one of the instances.  _var_ changes. _var_ must be one of
-+the _name_ elements used in *tracefs_synth_add_end_field*(3).
-+
- RETURN VALUE
- ------------
- Returns zero on success or -1 on error.
-diff --git a/include/tracefs.h b/include/tracefs.h
-index 2faa564a860f..45a5bb2df2de 100644
---- a/include/tracefs.h
-+++ b/include/tracefs.h
-@@ -478,6 +478,8 @@ int tracefs_synth_append_end_filter(struct tracefs_synth *synth,
- 				    const char *val);
- int tracefs_synth_trace(struct tracefs_synth *synth,
- 			enum tracefs_synth_handler type, const char *field);
-+int tracefs_synth_snapshot(struct tracefs_synth *synth,
-+			   enum tracefs_synth_handler type, const char *field);
- bool tracefs_synth_complete(struct tracefs_synth *synth);
- struct tracefs_hist *tracefs_synth_get_start_hist(struct tracefs_synth *synth);
- int tracefs_synth_create(struct tracefs_instance *instance,
-diff --git a/src/tracefs-hist.c b/src/tracefs-hist.c
-index 562ec65088a9..2c9c37b8ec23 100644
---- a/src/tracefs-hist.c
-+++ b/src/tracefs-hist.c
-@@ -524,6 +524,7 @@ int tracefs_hist_append_filter(struct tracefs_hist *hist,
- enum action_type {
- 	ACTION_NONE,
- 	ACTION_TRACE,
-+	ACTION_SNAPSHOT,
- };
- 
- struct action {
-@@ -1414,6 +1415,36 @@ int tracefs_synth_trace(struct tracefs_synth *synth,
- 	return 0;
- }
- 
-+/**
-+ * tracefs_synth_snapshot - create a snapshot command to the histogram
-+ * @synth: The tracefs_synth descriptor
-+ * @type: The type of handler to attach the snapshot action with
-+ * @field: The field for handlers onmax and onchange
-+ *
-+ * Add the action to do a snapshot for handlers onmax and onchange.
-+ *
-+ * Returns 0 on succes, -1 on error.
-+ */
-+int tracefs_synth_snapshot(struct tracefs_synth *synth,
-+			   enum tracefs_synth_handler type, const char *field)
-+{
-+	struct action *action;
-+
-+	if (!synth || !field || (type == TRACEFS_SYNTH_HANDLE_MATCH)) {
-+		errno = EINVAL;
-+		return -1;
-+	}
-+
-+	action = create_action(type, synth, field);
-+	if (!action)
-+		return -1;
-+
-+	action->type = ACTION_SNAPSHOT;
-+	action->handler = type;
-+	add_action(synth, action);
-+	return 0;
-+}
-+
- static char *create_synthetic_event(struct tracefs_synth *synth)
- {
- 	char *synthetic_event;
-@@ -1562,6 +1593,9 @@ static char *create_actions(char *hist, struct tracefs_synth *synth)
- 		case ACTION_TRACE:
- 			hist = create_trace(hist, synth);
- 			break;
-+		case ACTION_SNAPSHOT:
-+			hist = append_string(hist, NULL, ".snapshot()");
-+			break;
- 		default:
- 			continue;
- 		}
+ # sqlhist -n wakeup_lat -e -T -m lat 'SELECT end.next_comm AS comm, (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) AS lat FROM ' \
+    'sched_waking AS start JOIN sched_switch AS end ON start.pid = end.next_pid WHERE end.next_prio < 100 && end.next_comm == "cyclictest"'
+
+ # trace-cmd start -e all -e wakeup_lat -R stacktrace
+
+ # cyclictest -l 1000 -p80 -i250  -a -t -q -m -d 0 -b 1000 --tracemark
+
+ # trace-cmd show -s | tail -30
+         <idle>-0       [002] dNh4 23454.902246: sched_wakeup: comm=cyclictest pid=12272 prio=120 target_cpu=002
+         <idle>-0       [005] ...1 23454.902246: cpu_idle: state=4294967295 cpu_id=5
+         <idle>-0       [007] d..1 23454.902246: cpu_idle: state=0 cpu_id=7
+         <idle>-0       [002] dNh1 23454.902247: hrtimer_expire_exit: hrtimer=0000000037956dc2
+         <idle>-0       [005] d..1 23454.902248: cpu_idle: state=0 cpu_id=5
+         <idle>-0       [002] dNh1 23454.902248: write_msr: 6e0, value 4866ce957272
+         <idle>-0       [006] ...1 23454.902248: cpu_idle: state=4294967295 cpu_id=6
+         <idle>-0       [002] dNh1 23454.902249: local_timer_exit: vector=236
+         <idle>-0       [006] d..1 23454.902250: cpu_idle: state=0 cpu_id=6
+         <idle>-0       [002] .N.1 23454.902250: cpu_idle: state=4294967295 cpu_id=2
+         <idle>-0       [002] dN.1 23454.902251: rcu_utilization: Start context switch
+         <idle>-0       [002] dN.1 23454.902252: rcu_utilization: End context switch
+         <idle>-0       [001] ...1 23454.902252: cpu_idle: state=4294967295 cpu_id=1
+         <idle>-0       [002] dN.3 23454.902253: prandom_u32: ret=3692516021
+         <idle>-0       [001] d..1 23454.902254: cpu_idle: state=0 cpu_id=1
+         <idle>-0       [002] d..2 23454.902254: sched_switch: prev_comm=swapper/2 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=cyclictest next_pid=12275 next_prio=19
+         <idle>-0       [002] d..4 23454.902256: wakeup_lat: next_comm=cyclictest lat=17
+         <idle>-0       [002] d..5 23454.902258: <stack trace>
+=> trace_event_raw_event_synth
+=> action_trace
+=> event_hist_trigger
+=> event_triggers_call
+=> trace_event_buffer_commit
+=> trace_event_raw_event_sched_switch
+=> __traceiter_sched_switch
+=> __schedule
+=> schedule_idle
+=> do_idle
+=> cpu_startup_entry
+=> secondary_startup_64_no_verify
+
+Here’s the options for sqlhist explained:
+
+-n wakeup_lat
+    Name the synthetic event to use wakeup_lat.
+
+-e
+    Execute the commands that are printed.
+
+-T
+    Perform both a trace action and then a snapshot action (swap the buffer
+    into the static snapshot buffer).
+
+-m lat
+    Trigger the actions whenever lat hits a new maximum value.
+
+Now a breakdown of the SQL statement:
+
+     'SELECT end.next_comm AS comm, (end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) AS lat FROM ' \
+        'sched_waking AS start JOIN sched_switch AS end ON start.pid = end.next_pid WHERE end.next_prio < 100 && end.next_comm == "cyclictest"'
+
+end.next_comm AS comm
+    Save the sched_switch field next_comm and place it into the comm field
+    of the wakeup_lat synthetic event.
+
+(end.TIMESTAMP_USECS - start.TIMESTAMP_USECS) AS lat
+    Take the delta of the time stamps from the sched_switch event and the
+    sched_waking event. As time stamps are usually recorded in nanoseconds,
+    TIMESTAMP would give the full nanosecond time stamp, but here, the
+    TIMESTAMP_USECS will truncate it into microseconds. The value is saved in
+    the variable lat, which will also be recorded in the synthetic event.
+
+FROM sched_waking AS start JOIN sched_switch AS end ON start.pid = end.next_pid
+    Create the synthetic event by joining sched_waking to sched_switch,
+    matching the sched_waking pid field with the sched_switch next_pid field.
+    Also make start an alias for sched_waking and end an alias for sched_switch
+    which then an use start and end as a subsitute for sched_waking and
+    sched_switch respectively through out the rest of the SQL statement.
+
+WHERE end.next_prio < 100 && end.next_comm == "cyclictest"
+    Filter the logic where it executes only if sched_waking next_prio field
+    is less than 100. (Note, in the Kernel, priorities are inverse, and the
+    real-time priorities are represented from 0-100 where 0 is the highest
+    priority). Also only trace when the next_comm (the task scheduling in) of
+    the sched_switch event has the name "cyclictest".
+
+For the trace-cmd(3) command:
+
+       trace-cmd start -e all -e wakeup_lat -R stacktrace
+
+trace-cmd start
+    Enables tracing (does not record to a file).
+
+-e all
+    Enable all events
+
+-e wakeup_lat -R stacktrace
+    have the "wakeup_lat" event (our synthetic event) enable the stacktrace
+    trigger, were for every instance of the "wakeup_lat" event, a kernel stack
+    trace will be recorded in the ring buffer.
+
+After calling cyclictest (a real-time tool to measure wakeup latency), read
+the snapshot buffer.
+
+trace-cmd show -s
+    trace-cmd show reads the kernel ring buffer, and the -s option will read
+    the snapshot buffer instead of the normal one.
+
+     <idle>-0       [002] d..4 23454.902256: wakeup_lat: next_comm=cyclictest lat=17
+
+We see on the "wakeup_lat" event happened on CPU 2, with a wake up latency
+17 microseconds.
+
+This can be extracted into a trace.dat file that trace-cmd(3) can read and
+do further analysis, as well as kernelshark.
+
+        # trace-cmd extract -s
+        # trace-cmd report --cpu 2 | tail -30
+              <idle>-0     [002] 23454.902238: prandom_u32:          ret=1633425088
+              <idle>-0     [002] 23454.902239: sched_wakeup:         cyclictest:12275 [19] CPU:002
+              <idle>-0     [002] 23454.902241: hrtimer_expire_exit:  hrtimer=0xffffbbd68286fe60
+              <idle>-0     [002] 23454.902241: hrtimer_cancel:       hrtimer=0xffffbbd6826efe70
+              <idle>-0     [002] 23454.902242: hrtimer_expire_entry: hrtimer=0xffffbbd6826efe70 now=23455294430750 function=hrtimer_wakeup/0x0
+              <idle>-0     [002] 23454.902243: sched_waking:         comm=cyclictest pid=12272 prio=120 target_cpu=002
+              <idle>-0     [002] 23454.902244: prandom_u32:          ret=1102749734
+              <idle>-0     [002] 23454.902246: sched_wakeup:         cyclictest:12272 [120] CPU:002
+              <idle>-0     [002] 23454.902247: hrtimer_expire_exit:  hrtimer=0xffffbbd6826efe70
+              <idle>-0     [002] 23454.902248: write_msr:            6e0, value 4866ce957272
+              <idle>-0     [002] 23454.902249: local_timer_exit:     vector=236
+              <idle>-0     [002] 23454.902250: cpu_idle:             state=4294967295 cpu_id=2
+              <idle>-0     [002] 23454.902251: rcu_utilization:      Start context switch
+              <idle>-0     [002] 23454.902252: rcu_utilization:      End context switch
+              <idle>-0     [002] 23454.902253: prandom_u32:          ret=3692516021
+              <idle>-0     [002] 23454.902254: sched_switch:         swapper/2:0 [120] R ==> cyclictest:12275 [19]
+              <idle>-0     [002] 23454.902256: wakeup_lat:           next_comm=cyclictest lat=17
+              <idle>-0     [002] 23454.902258: kernel_stack:         <stack trace >
+    => trace_event_raw_event_synth (ffffffff8121a0db)
+    => action_trace (ffffffff8121e9fb)
+    => event_hist_trigger (ffffffff8121ca8d)
+    => event_triggers_call (ffffffff81216c72)
+    => trace_event_buffer_commit (ffffffff811f7618)
+    => trace_event_raw_event_sched_switch (ffffffff8110fda4)
+    => __traceiter_sched_switch (ffffffff8110d449)
+    => __schedule (ffffffff81c02002)
+    => schedule_idle (ffffffff81c02c86)
+    => do_idle (ffffffff8111e898)
+    => cpu_startup_entry (ffffffff8111eba9)
+    => secondary_startup_64_no_verify (ffffffff81000107)
+
+Steven Rostedt (VMware) (7):
+  libtracefs: Move creating of onmatch handler and trace action into
+    helper functions
+  libtracefs: Add logic to apply actions to synthetic events
+  libtracefs: Add API tracefs_synth_trace()
+  libtracefs: Add API tracefs_synth_snapshot()
+  libtracefs: Add API tracefs_synth_save()
+  libtracefs: Update the libtracefs-sql man page for the new
+    tracefs_synth APIs
+  libtracefs: Make a man page for the sqlhist man page example
+
+ Documentation/Makefile                 |  53 +++-
+ Documentation/libtracefs-sql.txt       | 107 +++++++-
+ Documentation/libtracefs-sqlhist.txt.1 | 351 +++++++++++++++++++++++++
+ Documentation/libtracefs-synth2.txt    |  37 ++-
+ include/tracefs.h                      |  14 +
+ src/tracefs-hist.c                     | 304 ++++++++++++++++++++-
+ 6 files changed, 838 insertions(+), 28 deletions(-)
+ create mode 100644 Documentation/libtracefs-sqlhist.txt.1
+
 -- 
 2.30.2
 
