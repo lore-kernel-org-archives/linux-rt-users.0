@@ -2,103 +2,129 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38FB9C4338F
-	for <linux-rt-users@archiver.kernel.org>; Sat, 14 Aug 2021 05:34:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC54BC432BE
+	for <linux-rt-users@archiver.kernel.org>; Sat, 14 Aug 2021 10:30:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1111761028
-	for <linux-rt-users@archiver.kernel.org>; Sat, 14 Aug 2021 05:34:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AD0F560F46
+	for <linux-rt-users@archiver.kernel.org>; Sat, 14 Aug 2021 10:30:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236885AbhHNFea (ORCPT
+        id S237737AbhHNKas (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 14 Aug 2021 01:34:30 -0400
-Received: from mout.gmx.net ([212.227.15.19]:45799 "EHLO mout.gmx.net"
+        Sat, 14 Aug 2021 06:30:48 -0400
+Received: from elvis.franken.de ([193.175.24.41]:60421 "EHLO elvis.franken.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235990AbhHNFea (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 14 Aug 2021 01:34:30 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1628919229;
-        bh=QCh3TzSHNoihXdSnElWn7goBB9nO5/wYtGGhDJybJkY=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=TqA/yB8v+gxbTFeNzUolbyWbGc875fm+Rf+fYkzd1f0XrmPFpH6iPmSCQSxKSOczN
-         njuxJpFua/R7dl9gsZGuLm0KAtKEE+kzY01OEvURim4/cG8395CRXhNnpTOfHWLW+X
-         RjqUzL2qs28guWt88Av1shXa3v7PAkHD0MdOoDg4=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.146.49.95]) by mail.gmx.net (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MvsEn-1n3iOY2CuN-00sxtP; Sat, 14
- Aug 2021 07:33:49 +0200
-Message-ID: <522000b97adcfbc581e7e5ed1afc94519b1388b8.camel@gmx.de>
-Subject: Re: [ANNOUNCE] v5.14-rc5-rt8
-From:   Mike Galbraith <efault@gmx.de>
-To:     Clark Williams <williams@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        LKML <linux-kernel@vger.kernel.org>,
-        RT <linux-rt-users@vger.kernel.org>
-Date:   Sat, 14 Aug 2021 07:33:48 +0200
-In-Reply-To: <8c012c35852e98af99a6b6234a3f57ac27cd980a.camel@gmx.de>
-References: <20210810163731.2qvfuhenolq2gdlv@linutronix.de>
-         <20210812151803.52f84aaf@theseus.lan>
-         <8c012c35852e98af99a6b6234a3f57ac27cd980a.camel@gmx.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.40.3 
+        id S237454AbhHNKar (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 14 Aug 2021 06:30:47 -0400
+Received: from uucp (helo=alpha)
+        by elvis.franken.de with local-bsmtp (Exim 3.36 #1)
+        id 1mEqvf-0000g0-00; Sat, 14 Aug 2021 12:30:15 +0200
+Received: by alpha.franken.de (Postfix, from userid 1000)
+        id D6FA9C07E5; Sat, 14 Aug 2021 12:30:01 +0200 (CEST)
+Date:   Sat, 14 Aug 2021 12:30:01 +0200
+From:   Thomas Bogendoerfer <tsbogend@alpha.franken.de>
+To:     Huang Pei <huangpei@loongson.cn>
+Cc:     ambrosehua@gmail.com, Bibo Mao <maobibo@loongson.cn>,
+        linux-mips@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Jiaxun Yang <jiaxun.yang@flygoat.com>,
+        Li Xuefeng <lixuefeng@loongson.cn>,
+        Yang Tiezhu <yangtiezhu@loongson.cn>,
+        Gao Juxin <gaojuxin@loongson.cn>,
+        Huacai Chen <chenhuacai@loongson.cn>,
+        Jinyang He <hejinyang@loongson.cn>
+Subject: Re: [PATCH] MIPS: simplify copy_user_high_page for MIPS64 w/o cache
+ alias
+Message-ID: <20210814103001.GA5735@alpha.franken.de>
+References: <20210807080429.3323711-1-huangpei@loongson.cn>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:nb19Y8DOaPd4dtyWm1vIibFn/JGG92vLhSbuFTyLCvKTNTjiQH0
- ZhgaPlgmB0PH3DBTykYmPhWfFLby9ku9cLGewV+Ahw0SHgfjAkt4TrnodxVXVpoZNU+7l1n
- RCE/ba72VPzo6x4NyrSuODR1cRR7HLd8FLlh54CzNcJ/r6++/L9w1epGMYOPQabqSN6kGm4
- 8jFPr0V/bvXW/9yCREqJw==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:iYjSEs+Tdgg=:Nfu0kS4HOKQwpzr+bQLOI4
- MAo8PdVR8mofDWRNREmDGb58bIPEki7e8bPbMHzWvSrvbYWCXStK/2rFsMswFWjb5CwMW277G
- 3UNq7g6m63v19EXFgEDQhiGYb//jNRiXA5nvzAhII3sEX4tPuJsokuRCqnLbR4K4gpbcUYL5X
- /H+0Uc4hkBZo5PD7DTM6cAZZMz8Nr52/Ebgpbl/GbWyLsaXxaEPPX9rNEbgUg/M5i/5JnswC4
- MLT7mi47ZZUKbvn3mWP//i6GBUPz88xOBCUiL6iWiJteos6GpHQeg0xtDILGxDpCxGSPgO3oY
- 4R43MRRxhmYVzQ6TIqL2+2ujnP6tAN5PVfwHYJgt+jWJ5S46ErYDsoPJ7e0L7bZVOh3TbJVnY
- XeTdZ2jaGH1ydxYfbUx5BnJp52yXpMNVgJItq+jpE8InbESEWpH/s/GYXtJRhT3Fr0PAfnBnE
- Nxjlouux6JWKad3E7J1HvwiNd+rniJydpHItEeoc3/zedrZJB6NMy5baN5/AC1zoG216t7FyJ
- y+qS4TZrQtQwB7e9VolR8EY59XCGr14+RTCWiG0AdVgPQ9IKFX6LDFG/m6tuWmb7uJm+zUjtI
- bcq77uHcy0R05A/FokCQCba4u2aSHtCP9wvGHo7gkovUJAJxqFaxo1nmdC4hqU99UnE4xAJf5
- l8RmQbc4GGP/rJDJUkOpgdfvG7Isbj5RbZAgckzoxHuSY2P+A4c7KHHqIKqQ7i1EAQ7CU5zDf
- Evy3yoDC8nbXp+U2xu2YOLJ9B3iir61jDBVQVbijgUZmV0MKg8hdNZG8AoL7C5FhqYjBk3II+
- HirtWuwThAovKiRJdYVBi6moi6SZiFZzatJOftymdT5ZuUZzTB9A/JQPyECz83mAfP7cQkfeu
- pqUrtww4tiQQuo65n00Q1z5NloYOyKTLtDhZE/W3QRHNDU2FW7dlANfZObjsL4E8r42vc8ToK
- sRsnRorXSwB3iPuUe3dI85+5F5lEg8eYyg5VMxk1eavOIS5f891W9LHq429BN+m74GPUoFXMo
- TP9hgD22cPBF3Z5lg0A3uethndgMgaSo0nbaM4Ci1khIzJTXkWGzilw4YI+8sJtAYkp99n0hs
- JEJUJWau4kqC3jteWDECGJL4W/nU2kcn1xo
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210807080429.3323711-1-huangpei@loongson.cn>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 2021-08-13 at 12:56 +0200, Mike Galbraith wrote:
-> On Thu, 2021-08-12 at 15:18 -0500, Clark Williams wrote:
-> >
-> > Sebastian, et al,
-> >
-> > Got the following panic running v5.14-rc5-rt8:
-> >
-> > ...
->
-> > Config is attached.
-> >
-> > I was running the rteval script that kicks off parallel kernel builds
-> > and hackbench runs as loads and runs cyclictest with a thread on each
-> > core:
-> >
-> > $ sudo rteval --duration=3D10m
->
-> It took my box more than 10 minutes to explode, but with all those
-> debug options turned on, it did manage to do so in fairly short order.
->
-> Off to build a fixed up 5.13-rt...
+On Sat, Aug 07, 2021 at 04:04:29PM +0800, Huang Pei wrote:
+> Borrow from ARM64
+> 
+> MIPS64 CPU has enough direct mapped memory space to access all
+> physical memory. In case of no cache alias, bypass both k*map_atomic
+> and k*map_coherent for better real-time performance.
+> 
+> Signed-off-by: Huang Pei <huangpei@loongson.cn>
+> ---
+>  arch/mips/mm/init.c | 39 ++++++++++++++++++++++++++-------------
+>  1 file changed, 26 insertions(+), 13 deletions(-)
+> 
+> diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
+> index 19347dc6bbf8..1f5bdd18ae7c 100644
+> --- a/arch/mips/mm/init.c
+> +++ b/arch/mips/mm/init.c
+> @@ -171,22 +171,35 @@ void copy_user_highpage(struct page *to, struct page *from,
+>  {
+>  	void *vfrom, *vto;
+>  
+> -	vto = kmap_atomic(to);
+> -	if (cpu_has_dc_aliases &&
+> -	    page_mapcount(from) && !Page_dcache_dirty(from)) {
+> -		vfrom = kmap_coherent(from, vaddr);
+> +	if (IS_ENABLED(CONFIG_64BIT) && !cpu_has_dc_aliases) {
+> +		vfrom = page_address(from);
+> +		vto   = page_address(to);
+>  		copy_page(vto, vfrom);
+> -		kunmap_coherent();
+> +		/*
+> +		 * even without cache alias, still need to maintain
+> +		 * coherence between icache and dcache
+> +		 */
+> +		if (!cpu_has_ic_fills_f_dc)
+> +			flush_data_cache_page((unsigned long)vto);
+> +
+>  	} else {
+> -		vfrom = kmap_atomic(from);
+> -		copy_page(vto, vfrom);
+> -		kunmap_atomic(vfrom);
+> +		vto = kmap_atomic(to);
+> +		if (cpu_has_dc_aliases &&
+> +				page_mapcount(from) && !Page_dcache_dirty(from)) {
 
-...and it reproduced.  Transplanted 5.12-rt slub seems stable in both
-5.1[34]-rt trees FWIW.
+please fix indentation and place page_mapping() to same column as
+cpu_has_dc_aliases()
 
-	-Mike
+> +			vfrom = kmap_coherent(from, vaddr);
+> +			copy_page(vto, vfrom);
+> +			kunmap_coherent();
+> +		} else {
+> +			vfrom = kmap_atomic(from);
+> +			copy_page(vto, vfrom);
+> +			kunmap_atomic(vfrom);
+> +		}
+> +		if ((!cpu_has_ic_fills_f_dc) ||
+> +				pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
 
+same here
 
+> +			flush_data_cache_page((unsigned long)vto);
+> +		kunmap_atomic(vto);
+> +		/* Make sure this page is cleared on other CPU's too before using it */
+
+this comment should stay in front of the smp_wmb()
+
+>  	}
+> -	if ((!cpu_has_ic_fills_f_dc) ||
+> -	    pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
+> -		flush_data_cache_page((unsigned long)vto);
+> -	kunmap_atomic(vto);
+> -	/* Make sure this page is cleared on other CPU's too before using it */
+>  	smp_wmb();
+
+Thomas.
+
+-- 
+Crap can work. Given enough thrust pigs will fly, but it's not necessarily a
+good idea.                                                [ RFC1925, 2.3 ]
