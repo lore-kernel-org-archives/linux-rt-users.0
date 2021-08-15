@@ -2,36 +2,36 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+X-Spam-Status: No, score=-5.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2BE3C432BE
-	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 03:13:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 88DE1C4338F
+	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 04:17:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9A36E60F51
-	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 03:13:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4AB42600CC
+	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 04:17:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234831AbhHODN5 (ORCPT
+        id S229501AbhHOERr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 14 Aug 2021 23:13:57 -0400
-Received: from mout.gmx.net ([212.227.15.15]:33501 "EHLO mout.gmx.net"
+        Sun, 15 Aug 2021 00:17:47 -0400
+Received: from mout.gmx.net ([212.227.15.18]:59565 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229453AbhHODN4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 14 Aug 2021 23:13:56 -0400
+        id S229452AbhHOERq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 15 Aug 2021 00:17:46 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1628997192;
-        bh=e51c0SCycBJIAAANBaUWBL1Psc1wSIcAuol7HpYOH0Y=;
+        s=badeba3b8450; t=1629001022;
+        bh=28Cm88gB91O+DOo2cXrYee+kaKO5JMPkKnACkSuChu4=;
         h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=BXrJ729V1PeUtoEvIA7aooOtmv46CUyvxPbNbHps3a5sgxw2FVHgzcLwNyEgeEe2d
-         z6KEqS1MsPDIPi60A5euT5fW55UczfXXKNDLZ+guzAqqeIfe/5+DDMW/lsVzBQHT3I
-         58jpgkL3UD72VskQZNnlAFKHW1P/triOsDINwSGg=
+        b=CXer1sPzt2AIwzMLMHXGIwNF6/oDtbpZdLGBCW3YFUyLc4rCaJTsQJ0oFwxh3njky
+         JmhSkDcHNfijoiGF84VqSks9qKnoHvS+5J6OOnlZiBgrEcCEDFqPKW7fFTE3SgxbKg
+         TYYHXE8953fmDGvbHUA17XKGv1iOSz2pmYR85OVk=
 X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
 Received: from homer.fritz.box ([185.146.48.238]) by mail.gmx.net (mrgmx004
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MOA3P-1mQTVB29kX-00Ob8b; Sun, 15
- Aug 2021 05:13:12 +0200
-Message-ID: <0044f090d3919eef03048527f1baa34aec5198a8.camel@gmx.de>
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MNswE-1mQBHC2AkS-00OJOZ; Sun, 15
+ Aug 2021 06:17:02 +0200
+Message-ID: <5dbf6cf9e82ef15ce0febf070608da2d5b128763.camel@gmx.de>
 Subject: Re: [ANNOUNCE] v5.14-rc5-rt8
 From:   Mike Galbraith <efault@gmx.de>
 To:     Vlastimil Babka <vbabka@suse.cz>,
@@ -40,7 +40,7 @@ Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
         RT <linux-rt-users@vger.kernel.org>
-Date:   Sun, 15 Aug 2021 05:13:11 +0200
+Date:   Sun, 15 Aug 2021 06:17:01 +0200
 In-Reply-To: <96ceab8e-4bf9-147a-e931-848676003c3f@suse.cz>
 References: <20210810163731.2qvfuhenolq2gdlv@linutronix.de>
          <20210812151803.52f84aaf@theseus.lan>
@@ -53,52 +53,87 @@ Content-Type: text/plain; charset="UTF-8"
 User-Agent: Evolution 3.40.3 
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:d0d+Y/hFGZGYSxF11c8gaf9/joXkscGwd0hFKjj0pvkVAmfMMAg
- bNr0rumtmMykjNNeyGvhfBQePTbnntT79BIz47VUX24H8KN5EWWYnpHZN0YXKlOIMVrMmFt
- cjNQrpA3l34aY8qPMs5DpmW4WBIj0XCxvpInRt51kFYr8xn2K1GnQ8xwojiOeT7o/K5Dcm4
- Ij4eL61IlizqsiyfXIXoA==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:2PooYY8Xq/g=:mJoCJIw5uS+jm02/czlfYP
- 9RLp6bEgsrepvaHL15KZNnzG66OxIE4EsxHmkx67Oriy8ggnZxU7jJbECBqAAZddgwbNtGuVB
- LjVlW+iHh+S9fXu041in7d6rmvr7tIJ4lD/bfS8pfhn4kBvzOWFQUhgeZ3sOk0Kgv/WbuPgzj
- nIv1JyENs7mL/Xs+rg5aE7ANPPmILoxg25o0EADizu1ZEMbZx4vpEJCNY0zjsUHudroSDcZwP
- PgT8DiQyrAk+yTkYPEHRyh1E4FWUBlusEBBB6cfW/LlmYWfv2JuZ813WkEEDttGNfCfkf7NQF
- p0PNybCANnk/L/7tXsEJx8g7ktsLsCilOgNFZKUB/W3a5gKsGGUKGZINetrSkLxPOQLj4tJQO
- TkqeKgnXPfcADUiVWS54KBJH3xNf1yfv/aZBo01559E4Z0TU7ky1pjk8NPzh+Np+QTjFa2irc
- W1d5wq9lmPnf31ZgpA0QwH7kxQ+EnTir69zDFOnzgHq2sPpIZth1KltPeKxx/FeNhhS4EB9a0
- 6YuOuJeNTrvcbUAxvq9Enob8l40CeDqVxtIwjxdZYF3vOZzl0guqE888jbbXvTeCGOWj5Dayr
- kWCTNRwtfyfx0oQM/+tquIrhHXsgKZCLcXQVOX6V4ysFl15U2mFr7Eh+nL/rvqS9XrB3KiBvj
- OXPmrEFQ4WLHffVBa/FXqlbr2r9wbUJWb7dYTepF/lDytFD4ywSI+ZOKPzUzzqImbS6AiUjn7
- 3QWTQ0pD9N33qVLtt8lWQjTzbg7y/pYBZu94ELtqtC+3Wm2gJlkrhQPOLu38VopbP+QZBkUnB
- VJS8lvFfg+iyfyhGe5/kU8EfKkO9lcOFvGaqOZZVwSX50tnWj3GWBUeT0jGj4bE9B8BMuNAyn
- H32189Mmzks1dn0Y3/TgR8o+K+WRP4e7wm0yVAirHNyyl41d7pUinKFc3uGllb5a/nUxXboci
- dEDmQTSRL0ndAlLa6tMgkcRkw8An/ud4opBGAgIm8RP/vfH4rDADvo7paQ5o+ly4gj+kiqQZw
- 93suI/6dpUvNJ10ZdE7u6Td+JXAlbJLjELuGj6iAqzOcCQ7ROPg5R9FWCf+YlmLrFv+x8Rqrv
- fOou3vdVuUhuWW6fAZIJZTHD1/rXnhBXk9s
+X-Provags-ID: V03:K1:zOks0Z9lu4N4TQjHJJD53Xx17gxenPlj6wnwUl+gsW3D30qhNSO
+ ErovfmyBVvAI2ONYC+X1kt3hSdMs5/y6WAnQN/q7OXYTNKq79pwIi0QfcjzFzk5NQRHJpQX
+ PM3A/fGgmWPuIXEekpw4K3+TPpLkv7UMLQLojc//MbY5yTfG/o/kKaMlFju0KkT5A+IU5ua
+ VAH2LoQ9XwrKhSK3weTnw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:nP1cVzObGqs=:7Ui9MoAU51KEcfRbs8YPRA
+ AoFQzhZ99vY8S8jfP759kmx+/hBdtbTqtqaPkVuNlKpv185YmLSYXVRSSqwkWt7p6gR79MZHH
+ 5/lezqhtdryPdvZs9UVa4xUKiCk4e0EE+4yoooihHcxCV0Sz25ZVuifjmBU5ZnL5yLeTvwsQ4
+ 0EKadMWOrZic0xylEB61gwmPrE8n8scDqmZa4MzqZRfzCEKN12gILpof32V5+YHT2wQFOAgaP
+ NRnkG4yRhCVr4qNOHwthC8+FtmYzs0Z9ZLX3g28SRzjo3rSo0Rxugww88zGXcaK86Np1nSvYG
+ PV7+0E9Ng1+VHpYhWn0m2YqqYO6CyHYiGZteDsS9JdaIxAxQiV0/KQCRWQ1cdpi7gops9ovPp
+ MVTG/6eJj4VUYYi+1wk9ZWpNTL86cl5n3JoLwMCXrVZHeOHlJ/AjkBIvOyMclBWLHCsEjhL30
+ qm9ClweJm0aSV458H7XYLqKM638wlmPJotTgtvUKBMxaCqa6eT9W9XH9F0XNvlTJMNSD7Wsat
+ D3qvq60w5NeiXllQ9NyFIdDV26BGm6X/CGHiVuBl6rZ2uwSQAjvlAIztAhtXJ7fVxpQUF+9Uz
+ ik0mo3oh0jNSE02duoe9pZfNEJyC29pzFr3DTFxWihbuemMhR5IHbYq9uAMNl7OzUlvRLis9A
+ SHeJuNHdxUAm/jhfLxRxmTzzaw71fa8MehwyGIDIO8B1O4KPOfetbkks3iHiGYo8j+XbPGtBa
+ JRNzusZzBK5ri5a/9O4UsyohNEvuHvJbW81RvIGOHJmHzeePCKRu9z8OttJqNopaH1lm5anWl
+ VOGxcvejjParhhsbCmnjfMERPmCLg3H4YTjJMZrGL1w7TQACo8rcTaeGo6wMlukdtYqwQYaI4
+ hxKTBWtyo752getxWEu5ParTjyA6BNIdyWFKYFt9sC0BIb9HOfT1xyVqXuA0ZHg8lLwpANzC/
+ qTsiirJ7Ygilc1oxQUs5upKhbuwo1s4DHk4kqceL19isR+AQcTF1zpsX+TsMxxc6z8dx/L49t
+ WRq2ZKDaLZtfszYd/ruySGoppUyLHHQi2NuKzVmIibI8x5Y48Cv86VQjZ65DAbN5I5PVRsaN0
+ QQyHMzzo/nqC+VHChc4Ilcyg2Caaen4xPZP
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Sat, 2021-08-14 at 21:08 +0200, Vlastimil Babka wrote:
-> On 8/12/21 11:44 PM, Clark Williams wrote:
-> >
-> > $ ./scripts/faddr2line /data/o/linux-5.14.y-rt/vmlinux ___slab_alloc+0=
-x340/0x940
-> > ___slab_alloc+0x340/0x940:
-> > PageSlabPfmemalloc at include/linux/page-flags.h:814
-> > (inlined by) pfmemalloc_match at mm/slub.c:2772
-> > (inlined by) ___slab_alloc at mm/slub.c:2874
 >
 > Aha! That's helpful. Hopefully it's just a small issue where we
 > opportunistically test flags on a page that's protected by the local
 > lock we didn't take yet, and I didn't realize there's the VM_BUG_ON
 > which can trigger if our page went away (which we would have realized
 > after taking the lock).
->
-> So hopefully the below diff with uninspired naming should help?
 
-I bet a nickle it does, shall let box slave away testing that theory
-while its master pedals around the sunny Bavarian countryside.
+Speaking of optimistic peeking perhaps going badly, why is the below
+not true?  There's protection against ->partial going disappearing
+during a preemption... but can't it just as easily appear, so where is
+that protection?
 
-	-Mike
+If the other side of that window is safe, it could use a comment so
+dummies reading this code don't end up asking mm folks why the heck
+they don't just take the darn lock and be done with it instead of tap
+dancing all around thething :)
+
+=2D--
+ mm/slub.c |   14 ++++++--------
+ 1 file changed, 6 insertions(+), 8 deletions(-)
+
+=2D-- a/mm/slub.c
++++ b/mm/slub.c
+@@ -2937,17 +2937,16 @@ static void *___slab_alloc(struct kmem_c
+
+ new_slab:
+
++	/*
++	 * To avoid false negative race with put_cpu_partial() during a
++	 * preemption, we must call slub_percpu_partial() under lock.
++	 */
++	local_lock_irqsave(&s->cpu_slab->lock, flags);
+ 	if (slub_percpu_partial(c)) {
+-		local_lock_irqsave(&s->cpu_slab->lock, flags);
+ 		if (unlikely(c->page)) {
+ 			local_unlock_irqrestore(&s->cpu_slab->lock, flags);
+ 			goto reread_page;
+ 		}
+-		if (unlikely(!slub_percpu_partial(c))) {
+-			local_unlock_irqrestore(&s->cpu_slab->lock, flags);
+-			/* we were preempted and partial list got empty */
+-			goto new_objects;
+-		}
+
+ 		page =3D c->page =3D slub_percpu_partial(c);
+ 		slub_set_percpu_partial(c, page);
+@@ -2955,8 +2954,7 @@ static void *___slab_alloc(struct kmem_c
+ 		stat(s, CPU_PARTIAL_ALLOC);
+ 		goto redo;
+ 	}
+-
+-new_objects:
++	local_unlock_irqrestore(&s->cpu_slab->lock, flags);
+
+ 	freelist =3D get_partial(s, gfpflags, node, &page);
+ 	if (freelist)
 
 
