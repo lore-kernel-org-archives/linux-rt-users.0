@@ -2,90 +2,160 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.4 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4F23C4338F
-	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 09:01:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ABCC7C4338F
+	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 09:36:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 96F1D61042
-	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 09:01:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6E73161057
+	for <linux-rt-users@archiver.kernel.org>; Sun, 15 Aug 2021 09:36:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236803AbhHOJC0 (ORCPT
+        id S233364AbhHOJhE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 15 Aug 2021 05:02:26 -0400
-Received: from mout.gmx.net ([212.227.15.19]:41377 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231194AbhHOJC0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 15 Aug 2021 05:02:26 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1629018102;
-        bh=/emkVCszJef95728u2oytXmySDOEjKWvQTyP7NMKSvQ=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=A1HKfXLEFCGh7ZcsagzBgSa14D6nemb3CjI/HeVR+I3AJepmzBQlF6y2daikxD0FX
-         EUaHQg8XWerklWBE3IT4XpmAkBC7jbK/DDEK+FFCkhwjfw8nZPptHir4pyhSif7cw4
-         6B0dYxhjra9kPCk2XOwlc6ehzZztsaK6nTCj+yL4=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.146.48.238]) by mail.gmx.net (mrgmx004
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1M3DO3-1mEN4t2VyP-003by3; Sun, 15
- Aug 2021 11:01:42 +0200
-Message-ID: <b19fb3316eac7cef314ad16da949d5a4b19d8204.camel@gmx.de>
+        Sun, 15 Aug 2021 05:37:04 -0400
+Received: from smtp-out1.suse.de ([195.135.220.28]:47464 "EHLO
+        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232507AbhHOJhC (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 15 Aug 2021 05:37:02 -0400
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out1.suse.de (Postfix) with ESMTPS id CB3D021F81;
+        Sun, 15 Aug 2021 09:36:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1629020191; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=3Ibukn/K3owQg3BwObGXrD7WX0HnC+FfEGrDOQYj+I0=;
+        b=cMXji56ir5Ie0k7YUF8Gpx6wbA8F/kZvhcfaMVEBde6ZrvzV92MBFqeSz4lmCfOSnp3lyH
+        hPqXfyKy6NQJsYXoODAXvZkMckVKveHpMa3kQTsTwatvJsUqFu3SqIPzIYPWFPhXn5sM3q
+        kY2e6rPfY+PVOdCGpSZanV7+DyDd79o=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1629020191;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=3Ibukn/K3owQg3BwObGXrD7WX0HnC+FfEGrDOQYj+I0=;
+        b=K4N5TtdSnQy3SkG3a2nvFLW/JXrrJq3uHQZAb7bVeAclOj+iHLmJJvh8X7x/rHLOShBrz5
+        NiwGS6Pl67XwVKCg==
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 6ECB513A1C;
+        Sun, 15 Aug 2021 09:36:31 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap2.suse-dmz.suse.de with ESMTPSA
+        id +/7aFx/gGGEDRQAAMHmgww
+        (envelope-from <vbabka@suse.cz>); Sun, 15 Aug 2021 09:36:31 +0000
 Subject: Re: [ANNOUNCE] v5.14-rc5-rt8
-From:   Mike Galbraith <efault@gmx.de>
-To:     Vlastimil Babka <vbabka@suse.cz>,
+To:     Mike Galbraith <efault@gmx.de>,
         Clark Williams <williams@redhat.com>
 Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
         RT <linux-rt-users@vger.kernel.org>
-Date:   Sun, 15 Aug 2021 11:01:41 +0200
-In-Reply-To: <0044f090d3919eef03048527f1baa34aec5198a8.camel@gmx.de>
 References: <20210810163731.2qvfuhenolq2gdlv@linutronix.de>
-         <20210812151803.52f84aaf@theseus.lan>
-         <5f0c793d-5084-4607-8475-209fa7310ba2@suse.cz>
-         <20210812162448.26274298@theseus.lan>
-         <bb98b54c-6d88-2a56-4998-51a304c19e8c@suse.cz>
-         <20210812164440.0426d8b7@theseus.lan>
-         <96ceab8e-4bf9-147a-e931-848676003c3f@suse.cz>
-         <0044f090d3919eef03048527f1baa34aec5198a8.camel@gmx.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.40.3 
+ <20210812151803.52f84aaf@theseus.lan>
+ <5f0c793d-5084-4607-8475-209fa7310ba2@suse.cz>
+ <20210812162448.26274298@theseus.lan>
+ <bb98b54c-6d88-2a56-4998-51a304c19e8c@suse.cz>
+ <20210812164440.0426d8b7@theseus.lan>
+ <96ceab8e-4bf9-147a-e931-848676003c3f@suse.cz>
+ <5dbf6cf9e82ef15ce0febf070608da2d5b128763.camel@gmx.de>
+From:   Vlastimil Babka <vbabka@suse.cz>
+Message-ID: <c92fc2cb-03cd-d6a2-fb4a-7bc33e94e391@suse.cz>
+Date:   Sun, 15 Aug 2021 11:35:53 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.12.0
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:5Gi6hLhFM+53u78DAjGML3rJyP6bw1204G0xdyKQPl1Tlznom+c
- WM9hVdpwKSdQWgtrY7d014I+Kt/YkL+G5xYyr81zwJOKo5NRMzzGN9z3fFEw9gVC0EpLEFs
- fWDdVuIk/qM9Y4yG4oWo2bfWM0LC0EdemLRv2dEN84vMCQp9RGkmdCBfan313p51YZWrlR/
- FvxZANRoW2u8TmF21Yh7w==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:mxUW6sOpuGs=:dBQPLZOqlp8sBr2eWgG5bg
- v2yYwAHZgDeoTMuBaxfiL/IxvGH4K9e3berqJy9Epv7t1daKTw3SQ9Dmh6RX4oE5UlVmqMkZ7
- dbkcT07wKIoNj2WuS+GF43XwcOCkR9V2ziUVCKoySJ2r+oBXOBew/snU//y2bc99YUHQeEezY
- 632632KHdqvhq/P4F9HSpEruK0WEo5KhePU0xdm/PrxliSZxhwBk8HaHanoTHDOgn75Rbhhyv
- NN++1T8423ZwfJlBXtJyBz9yN16WzZ/Wz2ac5wDyr+DxgFsIzSN0l4HCjczEl50r88jRnhaBp
- u+Q2LkC6bh0JsaDSwTVEVC5T6VpJQee5Dw/Uo0hd51UWE1+pufplBMsdEUFcSTMUjMpYGqFys
- 1bQ8HWA0URjkSH3qCXiM26YbWCoRMWR4/w8PMEzbp6912BatDY4e+BKAci93qIl691l26wkIQ
- dpAyH3Z0KTPuD042XcWdUSITMriVCMM9ppicswFfV8KwP+/ZM5lQSDwMCo2OrGgNmWfaaYMye
- vZzEFZYJ6kfn6jrJXHPr/jpjEpcWFXT3M0wvhJ3WBR6duRlLahSx1o8Yxe4TqV8QBi6bC4hnU
- Jn2j7denK5Z27tDXJwPomWeNGKqNhufj+TmND52LAfbYyVtKZjqKCJCW67uymGXm8MIIE5UCw
- kHsZ2JmdLC4WJ8JUpsUCNAimWDZx+dQKhA0FOF8fw4uosLaCZ6YSJDNe9pA3K0ALZ0cQCueu6
- gydNSQ+XTLZpuLeki2blS9X2gr5GX2Vj9smo3U6/Wl8urZGG/GCJOtbVi3za+7Rspk1hN8ghf
- moOdfUHVLcfg/a0zSd3I8fFABrClrtKQy2ocCk04a6dnnSwAonJDrLrzb8ZUONXP6z/RAlKwk
- oJlmG/9toaxJjrI4rWYpH+Q8byH+KsQfSJ/97zhZlJjWf4RaRqU/LDD0LbhPO5xGL8f2ogHsg
- LdQTJP2Ww5RPM6/ZdaF5HoTYHsHiF4SKGKJESK1vP2Ze5mxKZAF4yWVZZxkSzACVq3uMdz1on
- TnwOx1Ay0PsjXS7pob6R+Vd4be0smiwHKNJ9iMT3M1lvX86t6XEj4TcAahNHYZLHGYeof6/Pv
- 9zXfX9hgk8Gl/a9eu6mQoM0hps2WA2O30mK
+In-Reply-To: <5dbf6cf9e82ef15ce0febf070608da2d5b128763.camel@gmx.de>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Sun, 2021-08-15 at 05:13 +0200, Mike Galbraith wrote:
-> >
-> > So hopefully the below diff with uninspired naming should help?
->
-> I bet a nickle it does...
+On 8/15/21 6:17 AM, Mike Galbraith wrote:
+> On Sat, 2021-08-14 at 21:08 +0200, Vlastimil Babka wrote:
+>>
+>> Aha! That's helpful. Hopefully it's just a small issue where we
+>> opportunistically test flags on a page that's protected by the local
+>> lock we didn't take yet, and I didn't realize there's the VM_BUG_ON
+>> which can trigger if our page went away (which we would have realized
+>> after taking the lock).
+> 
+> Speaking of optimistic peeking perhaps going badly, why is the below
+> not true?  There's protection against ->partial going disappearing
+> during a preemption... but can't it just as easily appear, so where is
+> that protection?
 
-And it did.
+If it appears, it appears, we don't care, we just leave it there and
+won't use it.
 
-	-Mike
+> If the other side of that window is safe, it could use a comment so
+> dummies reading this code don't end up asking mm folks why the heck
+> they don't just take the darn lock and be done with it instead of tap
+> dancing all around thething :)
+
+Well, with your patch, ->partial might appear just after the unlock, so
+does that really change anything?
+The point is to avoid the taking the lock if it's almost certain there
+will be nothing to gain.
+
+c->partial appearing is easy to just ignore. c->page appearing, while we
+got our own page, is worse as there can be only one c->page. But it's
+unavoidable, we can't just keep holding the local lock while going to
+the page allocator etc. That's why under retry_load_page: we have to
+deactivate a c->page that appeared under us...
+
+> ---
+>  mm/slub.c |   14 ++++++--------
+>  1 file changed, 6 insertions(+), 8 deletions(-)
+> 
+> --- a/mm/slub.c
+> +++ b/mm/slub.c
+> @@ -2937,17 +2937,16 @@ static void *___slab_alloc(struct kmem_c
+> 
+>  new_slab:
+> 
+> +	/*
+> +	 * To avoid false negative race with put_cpu_partial() during a
+> +	 * preemption, we must call slub_percpu_partial() under lock.
+> +	 */
+> +	local_lock_irqsave(&s->cpu_slab->lock, flags);
+>  	if (slub_percpu_partial(c)) {
+> -		local_lock_irqsave(&s->cpu_slab->lock, flags);
+>  		if (unlikely(c->page)) {
+>  			local_unlock_irqrestore(&s->cpu_slab->lock, flags);
+>  			goto reread_page;
+>  		}
+> -		if (unlikely(!slub_percpu_partial(c))) {
+> -			local_unlock_irqrestore(&s->cpu_slab->lock, flags);
+> -			/* we were preempted and partial list got empty */
+> -			goto new_objects;
+> -		}
+> 
+>  		page = c->page = slub_percpu_partial(c);
+>  		slub_set_percpu_partial(c, page);
+> @@ -2955,8 +2954,7 @@ static void *___slab_alloc(struct kmem_c
+>  		stat(s, CPU_PARTIAL_ALLOC);
+>  		goto redo;
+>  	}
+> -
+> -new_objects:
+> +	local_unlock_irqrestore(&s->cpu_slab->lock, flags);
+> 
+>  	freelist = get_partial(s, gfpflags, node, &page);
+>  	if (freelist)
+> 
+> 
 
