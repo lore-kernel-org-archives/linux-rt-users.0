@@ -2,92 +2,97 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 62A83C4338F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 00:04:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E4A04C432BE
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 07:11:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2CFDA6137B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 00:04:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BB76261AA4
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 07:11:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231764AbhHPAEr (ORCPT
+        id S233692AbhHPHLb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 15 Aug 2021 20:04:47 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:28260 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231379AbhHPAEr (ORCPT
+        Mon, 16 Aug 2021 03:11:31 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47430 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233732AbhHPHLa (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 15 Aug 2021 20:04:47 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1629072256;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=Rmu25CUU86STBotFr+WSVwtzR5YsixqxoaxJJxz5JXM=;
-        b=VRyXOw9xpbYvyuIsWBTM5DZ9wTQP+a0YOBFwbwGNRG7uk8TtMCoz86wPSCueMQr862xKlr
-        ETv5nWqF9o0LRoJw1x+k41T6Wvxkcb/DRmZT2ABW6I6WDrZdqX3t5y7hM3YO0ceQxVD2uT
-        8JVnUasOjvKKnCSTe34E+ZFDMzOuaR0=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-178-qP4RryBOMpW6LPVsefAv9A-1; Sun, 15 Aug 2021 20:04:15 -0400
-X-MC-Unique: qP4RryBOMpW6LPVsefAv9A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 12FB592502;
-        Mon, 16 Aug 2021 00:04:14 +0000 (UTC)
-Received: from lclaudio.dyndns.org (unknown [10.22.33.59])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 80B1C10190A7;
-        Mon, 16 Aug 2021 00:04:13 +0000 (UTC)
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id B11353C0205; Sun, 15 Aug 2021 21:04:11 -0300 (-03)
-Date:   Sun, 15 Aug 2021 21:04:11 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.9.280-rt186
-Message-ID: <YRmre6IJ04c03sXo@uudg.org>
+        Mon, 16 Aug 2021 03:11:30 -0400
+Received: from mail-wr1-x436.google.com (mail-wr1-x436.google.com [IPv6:2a00:1450:4864:20::436])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37AEDC0613C1
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Aug 2021 00:10:59 -0700 (PDT)
+Received: by mail-wr1-x436.google.com with SMTP id k8so3114758wrn.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Aug 2021 00:10:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=rtst-co-kr.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=cbsbtRZejCc4mPnIMVCWz2hc+huf8vDsF/6Wv9wV/v0=;
+        b=NhnqEEjV2m+6v1JyhMCpWBc4c7UBfYDb6vxCaJ4aZwlQSoUetc+iB+Jq9Lj8VqbfGR
+         Fz+vKN/d6Bcio3yVrq/b4CWYLAHD6hqQhmg3B2xXL6ASA1VQDqlQmN+L5COXk7jdo9MX
+         Qii4RWnsVCULQ79UsTz8g5DzyRwpUgz9I996OoO0KKjS2CEWjX6FcpnPU+d7qQNWIFjt
+         JoLC6Qoq4PtPcbqoASKC/dleSevZ3nn3D2qyc1PcZp7kH1aOEbTOhJla6l9ecQAZXjYp
+         /qt8DEWzJKyoyl0XZGLqt8cl3KIgVQ1wYPjRY4XEbcFx6Mfcin3wTq4/UHiiXxYJGXHr
+         fqdQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=cbsbtRZejCc4mPnIMVCWz2hc+huf8vDsF/6Wv9wV/v0=;
+        b=YsinYC97CyQvUKCGo0w0Ra19KgzrPvfFMMpjz2KeoxpNkxiY+wKpdF0+4DMai5XHgc
+         faBKlzAvRTi/5wV61eAHVMM7viigjZNYdWqIRM34jYq+Qfgv+tug+NnyKkwyhKnnPmfJ
+         lzlmjsgv+kJAqpKqteXVl3dIjx1U/Xw7MC72TJ81sDg4fef/sQzYonc4K56rGdcP13uO
+         C+g+KoBZ5Aemgrzw19GuN4VIGk+LmnnE93F+NuhAxghn0he1jISzE0Li+jG2zULGi2Mx
+         qXxM7QdZRwufZ8itItrXJ+Dft6o43Gk8T3yQjOyOcJYuizp1B3t38kpTvoYZ4Xy2x27T
+         vWhA==
+X-Gm-Message-State: AOAM531POwDkhp5iBkhoPJlxWu6t66pHxFrF+vi8QsPAw8+giSRdngqm
+        912CCMn5eBTNyWJbSeZUUZuNShCYB2T0+b6EM5SJAw==
+X-Google-Smtp-Source: ABdhPJwfOoNxjlXg+kHZxykUgcTU9HMx4Imqgavf+bxZm7Zrbp7SRiI5qTRVlASkzaS0yBKAMoESdGFXMG1L06Jl4HQ=
+X-Received: by 2002:adf:9d92:: with SMTP id p18mr16745767wre.20.1629097857627;
+ Mon, 16 Aug 2021 00:10:57 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+References: <20210810060228.GA3326442@ubuntu> <20210816005205.GA3907@nchen> <YRn2GPsT8vB/NF/p@kroah.com>
+In-Reply-To: <YRn2GPsT8vB/NF/p@kroah.com>
+From:   Jeaho Hwang <jhhwang@rtst.co.kr>
+Date:   Mon, 16 Aug 2021 16:10:46 +0900
+Message-ID: <CAJk_X9iiqHJJK3weqRgLVmYGKEhLnfeUv9iATWCk8xfFpTVHPw@mail.gmail.com>
+Subject: Re: [PATCH] usb: chipidea: fix RT issue for udc
+To:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc:     Peter Chen <peter.chen@kernel.org>, linux-usb@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+2021=EB=85=84 8=EC=9B=94 16=EC=9D=BC (=EC=9B=94) =EC=98=A4=ED=9B=84 2:22, G=
+reg Kroah-Hartman <gregkh@linuxfoundation.org>=EB=8B=98=EC=9D=B4 =EC=9E=91=
+=EC=84=B1:
+>
+> On Mon, Aug 16, 2021 at 08:52:06AM +0800, Peter Chen wrote:
+> > On 21-08-10 15:02:28, Jeaho Hwang wrote:
+> > > hw_ep_prime sometimes fails if irq occurs while it rus on RT kernel.
+> > > to prevent local_irq_save should keep the function from irqs.
+> > >
+> > > I am not sure where is the best to submit this patch, between RT and =
+USB
+> > > community so sending to both. thanks.
+> >
+> > Greg, do you have any suggestions about it, the RT kernel schedules the=
+ interrupt
+> > handler (top-half) out which causes the USB hardware atomic sequences a=
+re broken,
+> > these hardware operations needs to be executed within limited time.
+>
+> Try working with the RT developers on this.
 
-I'm pleased to announce the 4.9.280-rt186 stable release.
+Then do you think those kinds of patches should be applied to linux-rt
+instead of mainline?
 
-This release is just an update to the new stable 4.9.280 version and
-no RT specific changes have been made.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.9-rt
-  Head SHA1: 9d437aa0248af3ba6d95be4c188d82206d7c2522
-
-Or to build 4.9.280-rt186 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.280.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.280-rt186.patch.xz
-
-
-Enjoy!
-Luis
-
+--=20
+=ED=99=A9=EC=9E=AC=ED=98=B8, Jay Hwang, linux team manager of RTst
+010-7242-1593
