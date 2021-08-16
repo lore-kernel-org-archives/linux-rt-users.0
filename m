@@ -2,119 +2,77 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham
+X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 30ADAC4338F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 15:31:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE3F1C4338F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 16:56:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1078360F36
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 15:31:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CDC0860F14
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Aug 2021 16:56:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233529AbhHPPb6 (ORCPT
+        id S230472AbhHPQ5G (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Aug 2021 11:31:58 -0400
-Received: from mail.kernel.org ([198.145.29.99]:37000 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229550AbhHPPb5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Aug 2021 11:31:57 -0400
-Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 1F0E560EFF;
-        Mon, 16 Aug 2021 15:31:25 +0000 (UTC)
-Date:   Mon, 16 Aug 2021 11:31:23 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [ANNOUNCE] 5.10.56-rt49
-Message-ID: <20210816113123.36817ecd@oasis.local.home>
-X-Mailer: Claws Mail 3.18.0 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        Mon, 16 Aug 2021 12:57:06 -0400
+Received: from mail-oo1-f54.google.com ([209.85.161.54]:40778 "EHLO
+        mail-oo1-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229795AbhHPQ5G (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 16 Aug 2021 12:57:06 -0400
+Received: by mail-oo1-f54.google.com with SMTP id h7-20020a4ab4470000b0290263c143bcb2so5127944ooo.7;
+        Mon, 16 Aug 2021 09:56:34 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=QWj5yBFiEzeY1CfelaVMGnWQ+sHeOn7aeheMB1RPzdk=;
+        b=n3GtB/h58YLZ7bxALFabQkUEUhqV7Jsf4as2JQN5IkLc9hRXmViSIzk0EYwaJ9mVvI
+         YU/zQNOss0azyTClB6P8k/gO/uoDHw1NWKNpuqfPDntFQ/2N94ojcRxZO6bOHUwjfHRK
+         lf6ylWmCBmrshpQ6/O329CNU8sVGNZlZnr5KSeDNCh7U1FvNL2cApVlZ5k7NrfkAPpYE
+         xJXcPt/LWQRBflvHxF96jy7CvFU6T69GF4TbHoauGLKGLFy3iZ37Gb7h0sZU/p6Ujk92
+         iJ5hi1ZBrRNxg+SrschF6+Id/6NbjFTUXAB7MrORGvKwRXAHvf7hx3Tx5iMyNBtvn/no
+         1MhA==
+X-Gm-Message-State: AOAM532Zf2/gmfZSxWnJrfM2oX53WnKpzaPsFI7KRX+mR8+MenF24K8a
+        FUnRA1sI2fsAkDocpOVxIsZ7Q0YEyB/GMBG1tjz9wTlf
+X-Google-Smtp-Source: ABdhPJwkFYT0il6IQt3hh1IqQ4fqhzZd4rK10QROed0YACI5gyJWavBXRB6qbP4ZP841isi4Q2+d2cTjjvca+4vDyF4=
+X-Received: by 2002:a4a:9c05:: with SMTP id y5mr12121749ooj.2.1629132994078;
+ Mon, 16 Aug 2021 09:56:34 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+References: <20210811201432.1976916-1-valentin.schneider@arm.com> <20210812071339.fm6kt7wugewxo3al@linutronix.de>
+In-Reply-To: <20210812071339.fm6kt7wugewxo3al@linutronix.de>
+From:   "Rafael J. Wysocki" <rafael@kernel.org>
+Date:   Mon, 16 Aug 2021 18:56:23 +0200
+Message-ID: <CAJZ5v0jOWkWEhdKJ31jq02nFWLG9g+X-NyR3jSgcQ5YfM1WcuQ@mail.gmail.com>
+Subject: Re: [PATCH v3 0/2] cpu_pm: cpu_pm_notifier_chain vs PREEMPT_RT
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Valentin Schneider <valentin.schneider@arm.com>
+Cc:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Linux PM <linux-pm@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Ingo Molnar <mingo@kernel.org>,
+        "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Thu, Aug 12, 2021 at 9:13 AM Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+>
+> On 2021-08-11 21:14:30 [+0100], Valentin Schneider wrote:
+> > Hi folks,
+> >
+> > This is v3 of:
+> >
+> >   http://lore.kernel.org/r/20210811131405.1731576-1-valentin.schneider@arm.com
+> >
+> > which addresses cpu_pm's notifier chain not playing nice with PREEMPT_RT.
+>
+> Thank you.
+> Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Dear RT Folks,
-
-I'm pleased to announce the 5.10.56-rt49 stable release.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: f01b4758ad61a01d23ccaa96a65ce774cdcc09ae
-
-
-Or to build 5.10.56-rt49 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.56.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.56-rt49.patch.xz
-
-
-
-You can also build from 5.10.56-rt48 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.56-rt48-rt49.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v5.10.56-rt48:
-
----
-
-Chao Qin (1):
-      printk: Enhance the condition check of msleep in pr_flush()
-
-Steven Rostedt (VMware) (1):
-      Linux 5.10.56-rt49
-
-----
- kernel/printk/printk.c | 4 +++-
- localversion-rt        | 2 +-
- 2 files changed, 4 insertions(+), 2 deletions(-)
----------------------------
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index f56fd2e34cc7..53d90278494b 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -3545,7 +3545,9 @@ bool pr_flush(int timeout_ms, bool reset_on_progress)
- 	u64 diff;
- 	u64 seq;
- 
--	may_sleep = (preemptible() && !in_softirq());
-+	may_sleep = (preemptible() &&
-+		     !in_softirq() &&
-+		     system_state >= SYSTEM_RUNNING);
- 
- 	seq = prb_next_seq(prb);
- 
-diff --git a/localversion-rt b/localversion-rt
-index 24707986c321..4b7dca68a5b4 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt48
-+-rt49
+Both patches applied as 5.15 material, thanks!
