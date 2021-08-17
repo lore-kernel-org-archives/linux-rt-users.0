@@ -7,40 +7,42 @@ X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 42021C4320A
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Aug 2021 15:36:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32F99C4320A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Aug 2021 17:09:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1EC2E60FD7
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Aug 2021 15:36:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 17D2E60FD9
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Aug 2021 17:09:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236140AbhHQPgw (ORCPT
+        id S231740AbhHQRKL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Aug 2021 11:36:52 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:33102 "EHLO
+        Tue, 17 Aug 2021 13:10:11 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:33654 "EHLO
         galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231893AbhHQPgu (ORCPT
+        with ESMTP id S231637AbhHQRKF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Aug 2021 11:36:50 -0400
-Date:   Tue, 17 Aug 2021 17:36:13 +0200
+        Tue, 17 Aug 2021 13:10:05 -0400
+Date:   Tue, 17 Aug 2021 19:09:25 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1629214575;
+        s=2020; t=1629220166;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=lbCgA2enmhNewVF4yvWuDdNewPyqFXG/EN/DoydyHAw=;
-        b=ZIF+gIl7Dqcdkh2AlPk/szyV/ljbbc6P5Zc33T7O2L6wxyj6K6f854zQlzp0Lhf62aneeq
-        vRSSzd0iwyRqCs0CRo2WY8JiTqhxp0mWtlqQ3G9WvAh6ePzkFK8NtkWq3eeGVNzLckdcPg
-        z0/6ghGXlJq3b96KlS6XqAyV6RkITu6va/pithfpxk+trF65V0DqfByIjuKj6K1bd4AGZz
-        WSXlUdRS7kV5Oq2+uyHJwVBQ7QTMXrI+syd9lRMMFHiFlN7vsMYeN3KrDzNaNlEV8DYbth
-        ZvtwyEaeEbKCyQgIXMn37RzIdareNM40OxmnY0OtYR1jKq9FIcK7SrpYwkLgDA==
+        bh=Pua/3tjO7aIRXX12+cyflypDu8x21Lu5L5biSj5T99Q=;
+        b=YD3Vht+o8To9S+hGwb+xNIUKaaST5m0SQIawHWrrnR4/fsCUYmTQBQZ/0ToWgzcOcoCuCN
+        oZWqQi2hODx16ZVD9str+sWpO7fC5hLDCMf5RgSdPI72cFIq1wOMiraZL5AABD4T1HRU/N
+        pP0IAYWgQw9otSDnEaBI5FZOeSgh02Ji241N2gEz3IFQO5fdgNAoojs6wWw3HvtCKD4YTr
+        x3cOfLTYuoNL/uRL4l36/jCvb489Ia9rvzKqeNJzdG1gYdnGAPSFSI4SDbehZtmjl5bRRi
+        RTzBp8PhHhOCuXWaTrAwfkRxP0N+gj+8yOm2rWzjInEq5/7CzgQxkQeto56ApQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1629214575;
+        s=2020e; t=1629220166;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=lbCgA2enmhNewVF4yvWuDdNewPyqFXG/EN/DoydyHAw=;
-        b=gen8UXdF1J1gIaJN2QWJWg0rbkFVNLTMc89v0qICwoAifOaOi0xqfF6KLlF51fIczw7pc+
-        4Ch9KaHOJxAa7BBg==
+        bh=Pua/3tjO7aIRXX12+cyflypDu8x21Lu5L5biSj5T99Q=;
+        b=HpqKGx3k0um5s2EPmjYfPHpbuLBCi0eO6tySgz/NBu6CU/39l03bVrV6GVZbss3RYLU6Or
+        GPzX1T4JuaejwfBA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Valentin Schneider <valentin.schneider@arm.com>
 Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
@@ -64,71 +66,50 @@ Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         Ard Biesheuvel <ardb@kernel.org>,
         Boqun Feng <boqun.feng@gmail.com>,
         Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH v3 3/4] rcu/nocb: Protect NOCB state via local_lock()
- under PREEMPT_RT
-Message-ID: <20210817153613.l5f66czar6pajexo@linutronix.de>
+Subject: Re: [PATCH v3 2/4] sched: Introduce migratable()
+Message-ID: <20210817170925.2jwqvgvmqab2glwu@linutronix.de>
 References: <20210811201354.1976839-1-valentin.schneider@arm.com>
- <20210811201354.1976839-4-valentin.schneider@arm.com>
+ <20210811201354.1976839-3-valentin.schneider@arm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20210811201354.1976839-4-valentin.schneider@arm.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20210811201354.1976839-3-valentin.schneider@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-11 21:13:53 [+0100], Valentin Schneider wrote:
-> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-> index 0ff5e4fb933e..11c4ff00afde 100644
-> --- a/kernel/rcu/tree_plugin.h
-> +++ b/kernel/rcu/tree_plugin.h
-> @@ -21,6 +21,17 @@ static inline int rcu_lockdep_is_held_nocb(struct rcu_data *rdp)
->  	return lockdep_is_held(&rdp->nocb_lock);
+On 2021-08-11 21:13:52 [+0100], Valentin Schneider wrote:
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index debc960f41e3..8ba7b4a7ee69 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -1715,6 +1715,16 @@ static inline bool is_percpu_thread(void)
+>  #endif
 >  }
->  
-> +static inline int rcu_lockdep_is_held_nocb_local(struct rcu_data *rdp)
-> +{
-> +	return lockdep_is_held(
-> +#ifdef CONFIG_PREEMPT_RT
-> +		&rdp->nocb_local_lock.lock
-> +#else
-> +		&rdp->nocb_local_lock
-> +#endif
-> +	);
-> +}
+> =20
+> +/* Is the current task guaranteed to stay on its current CPU? */
+> +static inline bool migratable(void)
 
-Now that I see it and Paul asked for it, please just use !RT version.
-	return lockdep_is_held(&rdp->nocb_local_lock);
-
-and RT will work, too.
-
->  static inline bool rcu_current_is_nocb_kthread(struct rcu_data *rdp)
->  {
->  	/* Race on early boot between thread creation and assignment */
-> @@ -1629,6 +1664,22 @@ static void rcu_nocb_unlock_irqrestore(struct rcu_data *rdp,
->  	}
->  }
->  
-> +/*
-> + * The invocation of rcu_core() within the RCU core kthreads remains preemptible
-> + * under PREEMPT_RT, thus the offload state of a CPU could change while
-> + * said kthreads are preempted. Prevent this from happening by protecting the
-> + * offload state with a local_lock().
-> + */
-> +static void rcu_nocb_local_lock(struct rcu_data *rdp)
-> +{
-> +	local_lock(&rcu_data.nocb_local_lock);
-> +}
-> +
-> +static void rcu_nocb_local_unlock(struct rcu_data *rdp)
-> +{
-> +	local_unlock(&rcu_data.nocb_local_lock);
-> +}
-> +
-Do you need to pass rdp given that it is not used?
-
->  /* Lockdep check that ->cblist may be safely accessed. */
->  static void rcu_lockdep_assert_cblist_protected(struct rcu_data *rdp)
->  {
+I'm going to rename this in my tree to `is_migratable' because of
+|security/keys/trusted-keys/trusted_core.c:45:22: error: =E2=80=98migratabl=
+e=E2=80=99 redeclared as different kind of symbol
+|   45 | static unsigned char migratable;
+|      |                      ^~~~~~~~~~
+|In file included from arch/arm64/include/asm/compat.h:16,
+|                 from arch/arm64/include/asm/stat.h:13,
+|                 from include/linux/stat.h:6,
+|                 from include/linux/sysfs.h:22,
+|                 from include/linux/kobject.h:20,
+|                 from include/linux/of.h:17,
+|                 from include/linux/irqdomain.h:35,
+|                 from include/linux/acpi.h:13,
+|                 from include/linux/tpm.h:21,
+|                 from include/keys/trusted-type.h:12,
+|                 from security/keys/trusted-keys/trusted_core.c:10:
+|include/linux/sched.h:1719:20: note: previous definition of =E2=80=98migra=
+table=E2=80=99 was here
+| 1719 | static inline bool migratable(void)
+|      |                    ^~~~~~~~~~
 
 Sebastian
