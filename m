@@ -4,48 +4,46 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DFC79C4320A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 15:39:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8307DC4320A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 15:47:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B79616101A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 15:39:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 624D7601FE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 15:47:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239944AbhHSPkI (ORCPT
+        id S240508AbhHSPrs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 19 Aug 2021 11:40:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60168 "EHLO
+        Thu, 19 Aug 2021 11:47:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33878 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238460AbhHSPkH (ORCPT
+        with ESMTP id S239440AbhHSPrs (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 19 Aug 2021 11:40:07 -0400
+        Thu, 19 Aug 2021 11:47:48 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1EDBBC061575;
-        Thu, 19 Aug 2021 08:39:31 -0700 (PDT)
-Date:   Thu, 19 Aug 2021 17:39:27 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DBA04C061575;
+        Thu, 19 Aug 2021 08:47:11 -0700 (PDT)
+Date:   Thu, 19 Aug 2021 17:47:08 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1629387569;
+        s=2020; t=1629388030;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=iWpeLWxYnpcuyjwtgPJFLjuLWoaH9JdYuua0wtFLXGs=;
-        b=azrGKy/kV/ay49uaHkTdVVen2UxrL+SvGtelaYSNYUV4Hmb1Q1cvdqLMEp9m6H8MAGMDOF
-        6CNXJpnRNSRR1LEizhKFAXdsl97YHlaobVXVEVHNj24wXqvgYHRJzwsnaXJjL43Hnmx8aQ
-        dP5sU2J2vwiBDLkJpsW2Sk+fWImvseYPd8Yf/+/6fsab512Q+eil1WGqMCAi+ZFRc6hyCV
-        +ViL+A2GKIVlFqLYVpr1qQcOWfA+ijS/yEBnxjW3NgnVHcwRBSD4Vbyb0KyjYnp8DsDZUd
-        mvSf15QhVWzvLa/+Bsj0ttHQkRYHAOLIHLzc88KoE4hClAr7uMDZq7lUqBgk6A==
+        bh=knvNMgwNE+JoC00b3FdTwvHM/vMj7bZxqT5/2z2qfU0=;
+        b=d1x+TFfAk9PbRnNt9Xo6P4pUUZBVP3KykyqJBuxcic3WJQM5OTaIeqSA83cRDP2VuPlbN0
+        Ke1wl7nTloX6oaBXVIpA7OU8b6J7yA/8EjnKQ2KgH+RkU8OetrC0mtbYQ4GCCLYIO6SEtM
+        NBL4x/DsWrPlWQcXpPd011IDMzyPUpeV0u5riOtwkLZFBOx9GPaXkH8HFpAYB8CZbZTmNH
+        WB0dmiMNIRyJ+555P/Shh0BfD9POO7bItfLwzM06OyVNkCnt3smgr+eT38m+q5QkX0wf1S
+        NIybzRjHnNjY2GtJsjpJiDaGU6TaHLk6tzadp6grqDu+P9SxSTDizK3OFL9C5g==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1629387569;
+        s=2020e; t=1629388030;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=iWpeLWxYnpcuyjwtgPJFLjuLWoaH9JdYuua0wtFLXGs=;
-        b=ep66l36foTvFQ3VQw/MJeGJiBCXN3ghfNnsmtNo1DkPCcqNMNfGJ6p8BcJC1m9IPJfriH9
-        /QL629z+BY5x3HAw==
+        bh=knvNMgwNE+JoC00b3FdTwvHM/vMj7bZxqT5/2z2qfU0=;
+        b=rOWUlTZV5PR81FmbofElPlZVdccF+u6kUn4+tce4qslwkHSglLHbG4deW331VGIeuDXqj2
+        SGScwMeLFHavrkBw==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     "Paul E. McKenney" <paulmck@kernel.org>
 Cc:     Valentin Schneider <valentin.schneider@arm.com>,
@@ -71,158 +69,139 @@ Cc:     Valentin Schneider <valentin.schneider@arm.com>,
         Mike Galbraith <efault@gmx.de>, Scott Wood <swood@redhat.com>
 Subject: Re: [PATCH] rcutorture: Avoid problematic critical section nesting
  on RT
-Message-ID: <20210819153927.clqxr4f7qegpflbr@linutronix.de>
+Message-ID: <20210819154708.3efz6jtgwtuhpeds@linutronix.de>
 References: <20210811201354.1976839-1-valentin.schneider@arm.com>
  <20210811201354.1976839-2-valentin.schneider@arm.com>
  <20210817121345.5iyj5epemczn3a52@linutronix.de>
  <20210817131741.evduh4fw7vyv2dzt@linutronix.de>
  <20210817144018.nqssoq475vitrqlv@linutronix.de>
  <20210818224651.GY4126399@paulmck-ThinkPad-P17-Gen-1>
+ <20210819153927.clqxr4f7qegpflbr@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20210818224651.GY4126399@paulmck-ThinkPad-P17-Gen-1>
+In-Reply-To: <20210819153927.clqxr4f7qegpflbr@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-18 15:46:51 [-0700], Paul E. McKenney wrote:
-> > ---
-> > --- a/kernel/rcu/rcutorture.c
-> > +++ b/kernel/rcu/rcutorture.c
-> > @@ -61,10 +61,13 @@ MODULE_AUTHOR("Paul E. McKenney <paulmck
-=E2=80=A6
-> > -	/* Next, remove old protection, irq first due to bh conflict. */
-> > +	/*
-> > +	 * Next, remove old protection, in decreasing order of strength
-> > +	 * to avoid unlock paths that aren't safe in the stronger
-> > +	 * context.  Disable preemption around the ATOM enables in
-> > +	 * case the context was only atomic due to IRQ disabling.
-> > +	 */
-> > +	preempt_disable();
-> >  	if (statesold & RCUTORTURE_RDR_IRQ)
-> >  		local_irq_enable();
-> > -	if (statesold & RCUTORTURE_RDR_BH)
-> > +	if (statesold & RCUTORTURE_RDR_ATOM_BH)
-> >  		local_bh_enable();
-> > +	if (statesold & RCUTORTURE_RDR_ATOM_RBH)
-> > +		rcu_read_unlock_bh();
-> > +	preempt_enable();
->=20
-> The addition of preempt_enable() here prevents rcutorture from covering
-> an important part of the mainline RCU state space, namely when an RCU
-> read-side section ends with just local_irq_enable().  This situation
-> is a challenge for RCU because it must indirectly detect the end of the
-> critical section.
->=20
-> Would it work for RT if the preempt_enable() and preempt_disable()
-> were executed only if either RT on the one hand or statesold has the
-> RCUTORTURE_RDR_ATOM_BH or RCUTORTURE_RDR_ATOM_RBH bit set on the other?
+On 2021-08-19 17:39:29 [+0200], To Paul E. McKenney wrote:
+> up with following which I can explain:
+> 
+> diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+> index 40ef5417d9545..5c8b31b7eff03 100644
+> --- a/kernel/rcu/rcutorture.c
+> +++ b/kernel/rcu/rcutorture.c
+> @@ -1432,28 +1432,34 @@ static void rcutorture_one_extend(int *readstate, int newstate,
+>  	/* First, put new protection in place to avoid critical-section gap. */
+>  	if (statesnew & RCUTORTURE_RDR_BH)
+>  		local_bh_disable();
+> +	if (statesnew & RCUTORTURE_RDR_RBH)
+> +		rcu_read_lock_bh();
+>  	if (statesnew & RCUTORTURE_RDR_IRQ)
+>  		local_irq_disable();
+>  	if (statesnew & RCUTORTURE_RDR_PREEMPT)
+>  		preempt_disable();
+> -	if (statesnew & RCUTORTURE_RDR_RBH)
+> -		rcu_read_lock_bh();
+>  	if (statesnew & RCUTORTURE_RDR_SCHED)
+>  		rcu_read_lock_sched();
+>  	if (statesnew & RCUTORTURE_RDR_RCU)
+>  		idxnew = cur_ops->readlock() << RCUTORTURE_RDR_SHIFT;
 
-Now that I stared at it some more (and it stared briefly back at me) I
-couldn't explain why we need this and that piece of the patch so I came
-up with following which I can explain:
+So the ordering in the enable and disable part regarding BH is
+important. First BH, then preemption or IRQ.
 
-diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index 40ef5417d9545..5c8b31b7eff03 100644
---- a/kernel/rcu/rcutorture.c
-+++ b/kernel/rcu/rcutorture.c
-@@ -1432,28 +1432,34 @@ static void rcutorture_one_extend(int *readstate, i=
-nt newstate,
- 	/* First, put new protection in place to avoid critical-section gap. */
- 	if (statesnew & RCUTORTURE_RDR_BH)
- 		local_bh_disable();
-+	if (statesnew & RCUTORTURE_RDR_RBH)
-+		rcu_read_lock_bh();
- 	if (statesnew & RCUTORTURE_RDR_IRQ)
- 		local_irq_disable();
- 	if (statesnew & RCUTORTURE_RDR_PREEMPT)
- 		preempt_disable();
--	if (statesnew & RCUTORTURE_RDR_RBH)
--		rcu_read_lock_bh();
- 	if (statesnew & RCUTORTURE_RDR_SCHED)
- 		rcu_read_lock_sched();
- 	if (statesnew & RCUTORTURE_RDR_RCU)
- 		idxnew =3D cur_ops->readlock() << RCUTORTURE_RDR_SHIFT;
-=20
--	/* Next, remove old protection, irq first due to bh conflict. */
-+	/*
-+	 * Next, remove old protection, in decreasing order of strength
-+	 * to avoid unlock paths that aren't safe in the stronger
-+	 * context. Namely: BH can not be enabled with disabled interrupts.
-+	 * Additionally PREEMPT_RT requires that BH is enabled in preemptible
-+	 * context.
-+	 */
- 	if (statesold & RCUTORTURE_RDR_IRQ)
- 		local_irq_enable();
--	if (statesold & RCUTORTURE_RDR_BH)
--		local_bh_enable();
- 	if (statesold & RCUTORTURE_RDR_PREEMPT)
- 		preempt_enable();
--	if (statesold & RCUTORTURE_RDR_RBH)
--		rcu_read_unlock_bh();
- 	if (statesold & RCUTORTURE_RDR_SCHED)
- 		rcu_read_unlock_sched();
-+	if (statesold & RCUTORTURE_RDR_BH)
-+		local_bh_enable();
-+	if (statesold & RCUTORTURE_RDR_RBH)
-+		rcu_read_unlock_bh();
- 	if (statesold & RCUTORTURE_RDR_RCU) {
- 		bool lockit =3D !statesnew && !(torture_random(trsp) & 0xffff);
-=20
-@@ -1496,6 +1502,9 @@ rcutorture_extend_mask(int oldmask, struct torture_ra=
-ndom_state *trsp)
- 	int mask =3D rcutorture_extend_mask_max();
- 	unsigned long randmask1 =3D torture_random(trsp) >> 8;
- 	unsigned long randmask2 =3D randmask1 >> 3;
-+	unsigned long preempts =3D RCUTORTURE_RDR_PREEMPT | RCUTORTURE_RDR_SCHED;
-+	unsigned long preempts_irq =3D preempts | RCUTORTURE_RDR_IRQ;
-+	unsigned long bhs =3D RCUTORTURE_RDR_BH | RCUTORTURE_RDR_RBH;
-=20
- 	WARN_ON_ONCE(mask >> RCUTORTURE_RDR_SHIFT);
- 	/* Mostly only one bit (need preemption!), sometimes lots of bits. */
-@@ -1503,11 +1512,37 @@ rcutorture_extend_mask(int oldmask, struct torture_=
-random_state *trsp)
- 		mask =3D mask & randmask2;
- 	else
- 		mask =3D mask & (1 << (randmask2 % RCUTORTURE_RDR_NBITS));
--	/* Can't enable bh w/irq disabled. */
--	if ((mask & RCUTORTURE_RDR_IRQ) &&
--	    ((!(mask & RCUTORTURE_RDR_BH) && (oldmask & RCUTORTURE_RDR_BH)) ||
--	     (!(mask & RCUTORTURE_RDR_RBH) && (oldmask & RCUTORTURE_RDR_RBH))))
--		mask |=3D RCUTORTURE_RDR_BH | RCUTORTURE_RDR_RBH;
-+
-+	/*
-+	 * Can't enable bh w/irq disabled.
-+	 */
-+	if (mask & RCUTORTURE_RDR_IRQ)
-+		mask |=3D oldmask & bhs;
-+
-+	/*
-+	 * Ideally these sequences would be detected in debug builds
-+	 * (regardless of RT), but until then don't stop testing
-+	 * them on non-RT.
-+	 */
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
-+		/*
-+		 * Can't release the outermost rcu lock in an irq disabled
-+		 * section without preemption also being disabled, if irqs
-+		 * had ever been enabled during this RCU critical section
-+		 * (could leak a special flag and delay reporting the qs).
-+		 */
-+		if ((oldmask & RCUTORTURE_RDR_RCU) &&
-+		    (mask & RCUTORTURE_RDR_IRQ) &&
-+		    !(mask & preempts))
-+			mask |=3D RCUTORTURE_RDR_RCU;
-+
-+		/* Can't modify bh in atomic context */
-+		if (oldmask & preempts_irq)
-+			mask &=3D ~bhs;
-+		if ((oldmask | mask) & preempts_irq)
-+			mask |=3D oldmask & bhs;
-+	}
-+
- 	return mask ?: RCUTORTURE_RDR_RCU;
- }
-=20
+> -	/* Next, remove old protection, irq first due to bh conflict. */
+> +	/*
+> +	 * Next, remove old protection, in decreasing order of strength
+> +	 * to avoid unlock paths that aren't safe in the stronger
+> +	 * context. Namely: BH can not be enabled with disabled interrupts.
+> +	 * Additionally PREEMPT_RT requires that BH is enabled in preemptible
+> +	 * context.
+> +	 */
+>  	if (statesold & RCUTORTURE_RDR_IRQ)
+>  		local_irq_enable();
+> -	if (statesold & RCUTORTURE_RDR_BH)
+> -		local_bh_enable();
+>  	if (statesold & RCUTORTURE_RDR_PREEMPT)
+>  		preempt_enable();
+> -	if (statesold & RCUTORTURE_RDR_RBH)
+> -		rcu_read_unlock_bh();
+>  	if (statesold & RCUTORTURE_RDR_SCHED)
+>  		rcu_read_unlock_sched();
+> +	if (statesold & RCUTORTURE_RDR_BH)
+> +		local_bh_enable();
+> +	if (statesold & RCUTORTURE_RDR_RBH)
+> +		rcu_read_unlock_bh();
+>  	if (statesold & RCUTORTURE_RDR_RCU) {
+>  		bool lockit = !statesnew && !(torture_random(trsp) & 0xffff);
+
+The same in the unlock part so that BH is unlocked in preemptible
+context.
+Now if you need bh lock/unlock in atomic context (either with disabled
+IRQs or preemption) then I would dig out the atomic-bh part again and
+make !RT only without the preempt_disable() section around about which
+one you did complain.
+
+> @@ -1496,6 +1502,9 @@ rcutorture_extend_mask(int oldmask, struct torture_random_state *trsp)
+>  	int mask = rcutorture_extend_mask_max();
+>  	unsigned long randmask1 = torture_random(trsp) >> 8;
+>  	unsigned long randmask2 = randmask1 >> 3;
+> +	unsigned long preempts = RCUTORTURE_RDR_PREEMPT | RCUTORTURE_RDR_SCHED;
+> +	unsigned long preempts_irq = preempts | RCUTORTURE_RDR_IRQ;
+> +	unsigned long bhs = RCUTORTURE_RDR_BH | RCUTORTURE_RDR_RBH;
+>  
+>  	WARN_ON_ONCE(mask >> RCUTORTURE_RDR_SHIFT);
+>  	/* Mostly only one bit (need preemption!), sometimes lots of bits. */
+> @@ -1503,11 +1512,37 @@ rcutorture_extend_mask(int oldmask, struct torture_random_state *trsp)
+>  		mask = mask & randmask2;
+>  	else
+>  		mask = mask & (1 << (randmask2 % RCUTORTURE_RDR_NBITS));
+> -	/* Can't enable bh w/irq disabled. */
+> -	if ((mask & RCUTORTURE_RDR_IRQ) &&
+> -	    ((!(mask & RCUTORTURE_RDR_BH) && (oldmask & RCUTORTURE_RDR_BH)) ||
+> -	     (!(mask & RCUTORTURE_RDR_RBH) && (oldmask & RCUTORTURE_RDR_RBH))))
+> -		mask |= RCUTORTURE_RDR_BH | RCUTORTURE_RDR_RBH;
+> +
+> +	/*
+> +	 * Can't enable bh w/irq disabled.
+> +	 */
+> +	if (mask & RCUTORTURE_RDR_IRQ)
+> +		mask |= oldmask & bhs;
+> +
+> +	/*
+> +	 * Ideally these sequences would be detected in debug builds
+> +	 * (regardless of RT), but until then don't stop testing
+> +	 * them on non-RT.
+> +	 */
+> +	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+> +		/*
+> +		 * Can't release the outermost rcu lock in an irq disabled
+> +		 * section without preemption also being disabled, if irqs
+> +		 * had ever been enabled during this RCU critical section
+> +		 * (could leak a special flag and delay reporting the qs).
+> +		 */
+> +		if ((oldmask & RCUTORTURE_RDR_RCU) &&
+> +		    (mask & RCUTORTURE_RDR_IRQ) &&
+> +		    !(mask & preempts))
+> +			mask |= RCUTORTURE_RDR_RCU;
+
+This piece above, I don't understand. I had it running for a while and
+it didn't explode. Let me try TREE01 for 30min without that piece.
+
+> +		/* Can't modify bh in atomic context */
+> +		if (oldmask & preempts_irq)
+> +			mask &= ~bhs;
+> +		if ((oldmask | mask) & preempts_irq)
+> +			mask |= oldmask & bhs;
+
+And this is needed because we can't lock/unlock bh while atomic.
+
+> +	}
+> +
+>  	return mask ?: RCUTORTURE_RDR_RCU;
+>  }
+>  
+
+Sebastian
