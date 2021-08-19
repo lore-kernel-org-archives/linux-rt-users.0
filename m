@@ -6,105 +6,133 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D01EC4338F
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 08:48:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 14D3BC4320A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 15:35:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 84A4961106
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 08:48:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EA303610A6
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Aug 2021 15:35:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237218AbhHSIsm (ORCPT
+        id S240362AbhHSPgT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 19 Aug 2021 04:48:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47990 "EHLO
+        Thu, 19 Aug 2021 11:36:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59284 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232653AbhHSIsk (ORCPT
+        with ESMTP id S238729AbhHSPgT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 19 Aug 2021 04:48:40 -0400
+        Thu, 19 Aug 2021 11:36:19 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8969DC061575;
-        Thu, 19 Aug 2021 01:48:03 -0700 (PDT)
-Date:   Thu, 19 Aug 2021 10:47:59 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B71CCC061756;
+        Thu, 19 Aug 2021 08:35:42 -0700 (PDT)
+Date:   Thu, 19 Aug 2021 17:35:37 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1629362881;
+        s=2020; t=1629387339;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=UGhrbP1M+bRZykm1qw5MiTgXr3U+PK7s8IS34ZgSXfI=;
-        b=trRnakSacqt1GZoA9rmQailL5D5FdiYvG9vn4H4IFSVPUuWLCyGNE3upOx6UzCrekwYQu9
-        z+t5i2jnQFmKNWirRpJGU5BDAHEh9a6ky98KKNDrifqHIPIcTYV1udP+e+DbWwf/SqA6ei
-        CzJbhgveJDyBwI0GQDUOqvq64BNVd1EBJvCrhznR34C+0VwcaY9X7G8TTsBkD/dmIylZgV
-        Y1WnfiDhGzEiCift0C/3zHq+48caOnhzgalo/dsrP0+nLYzapQakn+BzJ3hGaOt1IIQo4X
-        r8c9w4chvjvgNFkOuXSPEoy42tIlwMRlVLGwbpF8UXsddT5EvY40yYqrsXQiUA==
+        bh=iPrswfhW1Ilwsn0guUcI0tUC1c5/UDFDCujLK0mMiEE=;
+        b=Ja5u2LhGeB0TqKkQfPsnxVJUDuy6veXYHEjk30JcbPxnRSMXhbI8qfKN/T4kn9Io9SMuBu
+        A0qOWit45beq7JYzBzKJuyHxFk7Mf11ev4M8cxtVzX39BC5aSdVlu05yZBxQtFO7pfcfQB
+        Cq0DAltD4q4IK6lyiNNF1gze/frHh1tF0Zd52FKcoWy1RNS7ZZ4LClETs5ALwRX8aSJqeb
+        LhxxrpQ/q3qT3F3TDqIWRtjnezyBrmy7Zs+OUqZ8dNPLchsGmFtk06Khdkdn65ghKuvLlD
+        N3cPBxtY7Q6N9FKFA071Ugb3KeEkIarEI42/bE4mfgU6gNqrRNkg0LLAnJHE0w==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1629362881;
+        s=2020e; t=1629387339;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=UGhrbP1M+bRZykm1qw5MiTgXr3U+PK7s8IS34ZgSXfI=;
-        b=JjvGNmfhOeqlCc3FmDvm6MBn+YE/490dRcvw6yXJbnrf28mkeSruEBZAUMfd8+Jm3ZcESc
-        8NxYzP6+dKiU1ZCg==
+        bh=iPrswfhW1Ilwsn0guUcI0tUC1c5/UDFDCujLK0mMiEE=;
+        b=wKe0mK+nyhpcZv0h+r4sNQUVMkb/nO153sUzsVpfaahuTn63171tiz9P1+crD5k4HAWFwk
+        8ExR8kHckc57U+Aw==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Jeaho Hwang <jhhwang@rtst.co.kr>
-Cc:     Peter Chen <peter.chen@kernel.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org,
+To:     "Paul E. McKenney" <paulmck@kernel.org>
+Cc:     Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users@vger.kernel.org, Linux team <team-linux@rtst.co.kr>,
-        =?utf-8?B?67OA66y06rSRKEJ5ZW9uIE1vbyBLd2FuZykv7J6Q64+Z7ZmU7JewKUF1dG9t?=
-         =?utf-8?B?YXRpb24gUGxhdGZvcm3sl7DqtaztjIA=?= 
-        <mkbyeon@lselectric.co.kr>,
-        =?utf-8?B?7LWc6riw7ZmNKENob2kgS2kgSG9uZykv7J6Q64+Z7ZmU7JewKUF1dG9tYXRp?=
-         =?utf-8?B?b24gUGxhdGZvcm3sl7DqtaztjIA=?= 
-        <khchoib@lselectric.co.kr>
-Subject: Re: [PATCH v2] usb: chipidea: local_irq_save/restore added for
- hw_ep_prime
-Message-ID: <20210819084759.stnmit32vs2be46m@linutronix.de>
-References: <20210817095313.GA671484@ubuntu>
- <20210818161752.vu6abfv3e6bfqz23@linutronix.de>
- <CAJk_X9h_GqUyir7oG33pFrLgknj7DZfd6esiKb07w7QWjZqX0g@mail.gmail.com>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Mike Galbraith <efault@gmx.de>, Scott Wood <swood@redhat.com>
+Subject: Re: [PATCH] rcutorture: Avoid problematic critical section nesting
+ on RT
+Message-ID: <20210819153537.4vxr54rjrj7x5tzt@linutronix.de>
+References: <20210811201354.1976839-1-valentin.schneider@arm.com>
+ <20210811201354.1976839-2-valentin.schneider@arm.com>
+ <20210817121345.5iyj5epemczn3a52@linutronix.de>
+ <20210817131741.evduh4fw7vyv2dzt@linutronix.de>
+ <20210817144018.nqssoq475vitrqlv@linutronix.de>
+ <20210818224651.GY4126399@paulmck-ThinkPad-P17-Gen-1>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <CAJk_X9h_GqUyir7oG33pFrLgknj7DZfd6esiKb07w7QWjZqX0g@mail.gmail.com>
+In-Reply-To: <20210818224651.GY4126399@paulmck-ThinkPad-P17-Gen-1>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-19 08:50:27 [+0900], Jeaho Hwang wrote:
-> Without RT, udc_irq runs as a forced threaded irq handler, so it runs
-> without any interruption or preemption. NO similar case is found on
-> non-RT.
-
-I see only a devm_request_irq() so no force-threading here. Booting with
-threadirqs would not lead to the problem since commit
-   81e2073c175b8 ("genirq: Disable interrupts for force threaded handlers")
-
+On 2021-08-18 15:46:51 [-0700], Paul E. McKenney wrote:
 =E2=80=A6
-> > If this function here is sensitive to timing (say the cpu_relax() loop
-> > gets interrupt for 1ms) then it has to be documented as such.
+> > +	/*
+> > +	 * Ideally these sequences would be detected in debug builds
+> > +	 * (regardless of RT), but until then don't stop testing
+> > +	 * them on non-RT.
+> > +	 */
+> > +	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+> > +		/*
+> > +		 * Can't disable bh in atomic context if bh was already
+> > +		 * disabled by another task on the same CPU. Instead of
+> > +		 * attempting to track this, just avoid disabling bh in atomic
+> > +		 * context.
+> > +		 */
+> > +		mask &=3D ~atomic_bhs;
 >=20
-> The controller sets ENDPTSETUPSTAT register if the host sent a setup pack=
-et.
-> yes it is a timing problem. I will document that and resubmit again if
-> you agree that local_irq_save could help from the timing problem.
->=20
-> Thanks for the advice.
+> At some point, we will need to test disabling bh in atomic context,
+> correct?  Or am I missing something here?
 
-If it is really a timing issue in the function as you describe below
-then disabling interrupts would help and it is indeed an RT only issue.
+Ideally there is no disabling bh in atomic context (on RT). Having it
+breaks some fundamental rules how softirq handling and the bh related
+synchronisation is implemented. Given that the softirq handler is
+invoked in thread context and preemption is not disabled as part of
+spin_lock(), rcu_read_lock(), and interrupts are in general not disabled
+in the interrupt handler or spin_lock_irq() there is close to zero
+chance of disabling bh in atomic context on RT.
 
-So you read OP_ENDPTSETUPSTAT, it is 0, all good.
-You write OP_ENDPTPRIME, wait for it to be cleared.
-Then you read OP_ENDPTSETUPSTAT again and if it is 0, all good.
+In reality there is (of course) something that needs to disable bh in
+atomic context and it happens only during boot up (or from idle unless
+I'm mistaken).
+It is required that bh disable and its enable part (later) happens in
+the same context that is if bh has been disabled in preemptible context
+it must not be enabled in atomic context (and vice versa).
 
-And the TWD interrupt could delay say the second read would read 1 and
-it is invalidated. Which looks odd.
-However, it is "okay" if the TWD interrupt happens after the second
-read? Even if the host sends a setup packet, nothing breaks?=20
-Do you have numbers on how long irq-off section is here? It seems to
-depend on how long the HW needs to clear the OP_ENDPTPRIME bits.
+The bottom line is that there must not be a local_bh_disable() in atomic
+context if another (preempted) task already did a local_bh_disable() on
+the same CPU, like in the following scenario on one CPU:
+
+TASK A                      TASK B
+ local_bh_disable();
+ =E2=80=A6 preempted
+                           preempt_disable();
+			   local_bh_disable();
+
+Then this breaks the synchronisation that is otherwise provided by
+local_bh_disable(). Without that preempt_disable() TASK B would block
+(and wait) until TASK A completes its BH section. In atomic context it
+is not possible and therefore not allowed.
 
 Sebastian
