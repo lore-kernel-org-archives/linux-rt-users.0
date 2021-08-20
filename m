@@ -2,76 +2,83 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 21FCBC4338F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 19:02:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58219C4338F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 22:08:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F2F6561102
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 19:02:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2A86C61183
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 22:08:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237305AbhHTTC5 (ORCPT
+        id S232211AbhHTWJW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Aug 2021 15:02:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42656 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235726AbhHTTCy (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Aug 2021 15:02:54 -0400
-Received: from mail-yb1-xb34.google.com (mail-yb1-xb34.google.com [IPv6:2607:f8b0:4864:20::b34])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 82520C061575
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Aug 2021 12:02:15 -0700 (PDT)
-Received: by mail-yb1-xb34.google.com with SMTP id i8so20558864ybt.7
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Aug 2021 12:02:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=aurora.tech; s=google;
-        h=mime-version:from:date:message-id:subject:to:cc;
-        bh=9+o+B6IAFsaudWZB5eaVIpCXEt3MXz5qbAsUHXJ0mT4=;
-        b=ConfS8PBnHrVGcJXL7U4Uo8DEK8G5CtHUbc9lRST0rDwwGNbghyPehk5oAZfQ16f1K
-         f/U+BowC5/TbFswY/FjeagTLSBj+tvujekwPpZYWaZhPtV5V7j7Av5ZAKlFMkupQpht6
-         NbLAabN4zpymd/Q6ks+TnwRRQfMpeLiOQmaIEnGA3NbxoIvd0Tj0dK1VifcVgqHdZ6hA
-         8QzA5O8NXydmJZxRkvbMBQDBVgBN8qNCsoeK85Pxy/StBW1zFhLEwJErYltFqk2Bt+dJ
-         QW5TBvonTdZYmlBWs9bJIbj5dzZZ4TQi/gwrE4Z0TqghVuQTtPwzzEiiD9BZ9YZk+GAm
-         LD9g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to:cc;
-        bh=9+o+B6IAFsaudWZB5eaVIpCXEt3MXz5qbAsUHXJ0mT4=;
-        b=LhhLjJWDe1Q6MvvludE9Q/xVpwVD4Po7npy/U5CGSZ9U3oLg/DJXtEClRV5HKkpAbB
-         4DfA4x9RXWJD+yc04/wTuL+GyAy7xHMh1l0eH2846D4kihovyJ5RX8B48KuzfE6cxrOQ
-         TKRPYxy7M8zeWdz66xqxQcjdksZEq90EM2k9t7TmGnAl/JbeAi5Z3WFlm3asoHtY429c
-         jiD7LrDnxnj7yHWfmTm4EYXDWAOYWzoDt157FzeePv/1gNuF5VVn4mkm48JA4uVYmwFA
-         8GBmCcQmWA6JoY8QJmQtExWIKuzTGe+9snCxxpLzvCU/oblQUzkGIhkwT2rL2crBbzko
-         qr1A==
-X-Gm-Message-State: AOAM532P+cs57ECOJBPLXKN77NtZHmvCF49cQvHVb6wkxsjvhDfiz9d3
-        m2JvupJO/pcVj71p8MXQ1WTmg03Ak5i6h/prc3gXfDmdqK6OnQ==
-X-Google-Smtp-Source: ABdhPJy7q9ZDMUsxB/5Vws6OYNpITvCq7jb9+VrBpE5umqiBPWn5wJx/xALmgNwyv6sJlKx4aSUQgs4RovPzYj1HEXA=
-X-Received: by 2002:a25:40d4:: with SMTP id n203mr26540810yba.372.1629486134794;
- Fri, 20 Aug 2021 12:02:14 -0700 (PDT)
+        Fri, 20 Aug 2021 18:09:22 -0400
+Received: from mail.kernel.org ([198.145.29.99]:36596 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229760AbhHTWJW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 20 Aug 2021 18:09:22 -0400
+Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 1191761181;
+        Fri, 20 Aug 2021 22:08:42 +0000 (UTC)
+Date:   Fri, 20 Aug 2021 18:08:36 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [ANNOUNCE] 5.10.59-rt51
+Message-ID: <20210820180836.1f31bdd9@oasis.local.home>
+X-Mailer: Claws Mail 3.18.0 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-From:   Alison Chaiken <achaiken@aurora.tech>
-Date:   Fri, 20 Aug 2021 12:02:04 -0700
-Message-ID: <CAFzL-7vTPxWeXbd4cUBpJ--CfYj6TiRp1E_BYWHTgzJtUYWCew@mail.gmail.com>
-Subject: Re: Re: Re: [PATCH v2 0/6] sched: support schedstats for RT sched class
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     laoar.shao@gmail.com, Andrew Woods <awoods@aurora.tech>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-In https://lore.kernel.org/linux-rt-users/CALOAHbDZPo65Vc89sVCuYkJ6vr=zD-4ev=JN=j7ZAzKHzRibdA@mail.gmail.com/#t,
-Yafang Shao <laoar.shao@gmail.com> proposed changes to schedstats that
-would add support for RT-relevant schedulers to schedstats.  As far as
-I can tell, these patches were neither merged nor explicitly rejected.
-  Is that correct?    If mainline kernel has not accepted them, is
-there any reason that linux-rt-devel should not?    Perhaps
-linux-rt-devel wants to stop accepting patches that are not part of
-mainline in preference for moving them to staging in anticipation of
-becoming a pure-Kconfig option?
 
-Thanks,
-Alison Chaiken
-Aurora Innovation
+Dear RT Folks,
+
+I'm pleased to announce the 5.10.59-rt51 stable release.
+
+
+This release is just an update to the new stable 5.10.59 version
+and no RT specific changes have been made.
+
+NOTE, 5.10.60 is available, but because I'm aware of an issue with it, I only
+updated to 5.10.59. But that should be resolved by my next push.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: d0faab8436da4ed83de9356fee6dd9b7d8c6c0d4
+
+
+Or to build 5.10.59-rt51 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.59.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.59-rt51.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
