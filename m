@@ -6,43 +6,47 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C4C2C4320A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 06:54:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 916C5C4320A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 07:11:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 13A3961042
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 06:54:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7504860F39
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Aug 2021 07:11:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238406AbhHTGy6 (ORCPT
+        id S238644AbhHTHLy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Aug 2021 02:54:58 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:51596 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231998AbhHTGy6 (ORCPT
+        Fri, 20 Aug 2021 03:11:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46382 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S238617AbhHTHLt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Aug 2021 02:54:58 -0400
-Date:   Fri, 20 Aug 2021 08:54:17 +0200
+        Fri, 20 Aug 2021 03:11:49 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A3B25C061575;
+        Fri, 20 Aug 2021 00:11:11 -0700 (PDT)
+Date:   Fri, 20 Aug 2021 09:11:06 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1629442459;
+        s=2020; t=1629443468;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=9kl53d7aeCxXNv/rQJ1ub0yBMfk8kY80KmepxlFknQA=;
-        b=LwqCXZDyp+gCyYF1YhL6oxCSwnzgeJ5aZtDcgMqWN1ru8uHUMtvohA0tvGJidA4ohBVnqP
-        eilTEI6H4aiNp/tSG1IDvSGkDT5zBePPHi89vo9bNnxtHyyL54V3CPVXG8H3VaxGImj1gB
-        r2PQIAbbYCfxGR5N5tLpjGlD3dKX2DuqXt4qA+U+n0xj+BpoiH+ajTTtkedPv7p0r8kvbh
-        wxwwz/lYrZC41hDzLnqmkMJBcZqZmOiLb+G8QmOEiFevU79ZdvFH+Ja0ID5tEBhXXCYREm
-        WEMghpKX4O1U+6++ZEnV8xfVvaETSUbeB7vsZzthcrYHCYn8DLqxRtHW00IWWA==
+        bh=BhJm6h/KmQ36SxJO/2gjBAj+dUs+SDXHn2zO3h495m8=;
+        b=K2TeM8EuBM8nBOJY3cK0mmmmngi+gUFpDslflP36mdX8vF6pgoqRG+miwU8gOMGdLaUNIb
+        opDcaK7OjKRkcfOTYZUvPYUdwlHdD15sI5R6wjVNm+VX16jtbv+5eg/lwZOjMNb1+d3fvH
+        eLD3i5EskK5qKYvPvVN7J4+vHVVQFSZEF5U5qTN8SC7edfqLiPTZq5ozo6r5msRDeSWhqI
+        VHpB12g7EozTrZjbS6O58orAj2lIGLTQs+vElHJLgifE1RAwdI6J1sQf7arJW5HYKwANSP
+        y6c6SdiQr9yqjQH3DvndDUc1vP6qqbhnhSnIcnJIrUxJ1UG5gKlqWte9f9CVAw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1629442459;
+        s=2020e; t=1629443468;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=9kl53d7aeCxXNv/rQJ1ub0yBMfk8kY80KmepxlFknQA=;
-        b=eWXUgwtMEg6Gb95CGvM3ZDOWK+j2B1+o0ze18G5N6Pj6Yc9kt+bkQ+LkascSx+o8si8jx8
-        gDaZKmg2rzxOQnDA==
+        bh=BhJm6h/KmQ36SxJO/2gjBAj+dUs+SDXHn2zO3h495m8=;
+        b=r213p/vK5C55sdc8OCgcBJE1Gu+stAuR47QxNcv6JNxCqBeemj3Z7vx80HSwMGTE4bwi1N
+        gZ7Zf7SseYDAQKBA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Scott Wood <swood@redhat.com>
-Cc:     Valentin Schneider <valentin.schneider@arm.com>,
+Cc:     paulmck@kernel.org,
+        Valentin Schneider <valentin.schneider@arm.com>,
         linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Catalin Marinas <catalin.marinas@arm.com>,
@@ -51,7 +55,6 @@ Cc:     Valentin Schneider <valentin.schneider@arm.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
-        "Paul E. McKenney" <paulmck@kernel.org>,
         Frederic Weisbecker <frederic@kernel.org>,
         Josh Triplett <josh@joshtriplett.org>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
@@ -66,36 +69,62 @@ Cc:     Valentin Schneider <valentin.schneider@arm.com>,
         Mike Galbraith <efault@gmx.de>
 Subject: Re: [PATCH] rcutorture: Avoid problematic critical section nesting
  on RT
-Message-ID: <20210820065417.epdjfqsn27gmnx4x@linutronix.de>
+Message-ID: <20210820071106.fba7l6ikgo7aa6xm@linutronix.de>
 References: <20210811201354.1976839-1-valentin.schneider@arm.com>
  <20210811201354.1976839-2-valentin.schneider@arm.com>
  <20210817121345.5iyj5epemczn3a52@linutronix.de>
  <20210817131741.evduh4fw7vyv2dzt@linutronix.de>
  <20210817144018.nqssoq475vitrqlv@linutronix.de>
- <20b9051fe47b7068ed3496bd7f5d417b1af69e3a.camel@redhat.com>
+ <20210818224651.GY4126399@paulmck-ThinkPad-P17-Gen-1>
+ <20210819153927.clqxr4f7qegpflbr@linutronix.de>
+ <20210819154708.3efz6jtgwtuhpeds@linutronix.de>
+ <20210819182035.GF4126399@paulmck-ThinkPad-P17-Gen-1>
+ <561ab28b18c31fbc221f4cb0c4df6db9b0538675.camel@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20b9051fe47b7068ed3496bd7f5d417b1af69e3a.camel@redhat.com>
+In-Reply-To: <561ab28b18c31fbc221f4cb0c4df6db9b0538675.camel@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-19 22:23:37 [-0500], Scott Wood wrote:
-> On Tue, 2021-08-17 at 16:40 +0200, Sebastian Andrzej Siewior wrote:
-> > [bigeasy: remove 'preempt_disable(); local_bh_disable(); preempt_enable();
-> >  local_bh_enable();' from the examples because this works on RT now. ]
+On 2021-08-19 23:11:12 [-0500], Scott Wood wrote:
+> On Thu, 2021-08-19 at 11:20 -0700, Paul E. McKenney wrote:
+> > On Thu, Aug 19, 2021 at 05:47:08PM +0200, Sebastian Andrzej Siewior wrote:
+> > > On 2021-08-19 17:39:29 [+0200], To Paul E. McKenney wrote:
+> > > > +	/*
+> > > > +	 * Ideally these sequences would be detected in debug builds
+> > > > +	 * (regardless of RT), but until then don't stop testing
+> > > > +	 * them on non-RT.
+> > > > +	 */
+> > > > +	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+> > > > +		/*
+> > > > +		 * Can't release the outermost rcu lock in an irq disabled
+> > > > +		 * section without preemption also being disabled, if irqs
+> > > > +		 * had ever been enabled during this RCU critical section
+> > > > +		 * (could leak a special flag and delay reporting the qs).
+> > > > +		 */
+> > > > +		if ((oldmask & RCUTORTURE_RDR_RCU) &&
+> > > > +		    (mask & RCUTORTURE_RDR_IRQ) &&
+> > > > +		    !(mask & preempts))
+> > > > +			mask |= RCUTORTURE_RDR_RCU;
+> > > 
+> > > This piece above, I don't understand. I had it running for a while and
+> > > it didn't explode. Let me try TREE01 for 30min without that piece.
+> > 
+> > This might be historical.  There was a time when interrupts being
+> > disabled across rcu_read_unlock() meant that preemption had to have
+> > been disabled across the entire RCU read-side critical section.
+> > 
+> > I am not seeing a purpose for it now, but I could easily be missing
+> > something, especially given my tenuous grasp of RT.
 > 
-> Does it actually work?  If preemption is disabled during local_bh_disable,
-> softirq_ctrl.lock won't be taken.  If you then get preempted between the
-> preempt_enable() and the local_bh_enable(), and another task tries to do
-> local_bh_disable(), won't it successfully get softirq_ctrl.lock, add to
-> softirq_ctrl.cnt, and proceed right into the critical section?
-> 
-> Or am I missing something?
+> Yeah, I think this was to deal with not having the irq work stuff in RT
+> at the time.
 
-No, I mixed it up with migrate_disable/enable. I corrected it while
-redoing it yesterday.
+Good. Thank you for the confirmation. 
+I run (without the hunk above) 2x 6h of TREE01 and 4x 6h of TREE06 and
+it looked good.
 
 > -Scott
 
