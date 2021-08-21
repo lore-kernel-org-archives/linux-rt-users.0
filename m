@@ -2,220 +2,204 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 52842C4338F
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:51:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D111C432BE
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 07:04:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3AC856103B
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:51:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3B31F611CC
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 07:04:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232242AbhHUGvi (ORCPT
+        id S232158AbhHUHEy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 21 Aug 2021 02:51:38 -0400
-Received: from mout.gmx.net ([212.227.17.20]:42115 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232097AbhHUGvi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 21 Aug 2021 02:51:38 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1629528649;
-        bh=05G6QJk9SfdvpRWo9evcUXKBh/DmFJ7gGSE8lbMmVAs=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date;
-        b=YgPOQPTsEh++EIjydktKVMSua2TmVM2HkqAmOfenSTs46jiTsc8Z/X5DaZyppP0Jx
-         LTRwKaw5gGR/aRVEBukj3Tn+IoMnPSqd1MGI2w7msJjo86RTW/QlRkdC1vpl1kf+VT
-         fek49IwP8hMLZ5L+N1p5JuyP+L+MnqWoAPqpDfuU=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.146.51.70]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MI5QF-1mEqY20ptP-00FA1R; Sat, 21
- Aug 2021 08:50:49 +0200
-Message-ID: <dc0cb448d46f465bb0064b1c301cb0b3ab4f8492.camel@gmx.de>
-Subject: [patch] kcsan: Make it RT aware
-From:   Mike Galbraith <efault@gmx.de>
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Date:   Sat, 21 Aug 2021 08:50:48 +0200
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.40.3 
+        Sat, 21 Aug 2021 03:04:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60828 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232005AbhHUHEx (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 21 Aug 2021 03:04:53 -0400
+Received: from mail-wr1-x42e.google.com (mail-wr1-x42e.google.com [IPv6:2a00:1450:4864:20::42e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1582BC061756
+        for <linux-rt-users@vger.kernel.org>; Sat, 21 Aug 2021 00:04:14 -0700 (PDT)
+Received: by mail-wr1-x42e.google.com with SMTP id x12so17350865wrr.11
+        for <linux-rt-users@vger.kernel.org>; Sat, 21 Aug 2021 00:04:13 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=rtst-co-kr.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=WgM87f7rpLd/jbOLyf9WZP12/bowR6IrwwDEu2GtuV8=;
+        b=Pv336bT6BS8zVUAFL8pWU1CGoQdBEw/yAxLORZT8Cj/Ba0BPBttWUz+vdEQINtnec5
+         q2RFdHep9cG1R6MfS7RuAsBAUf71QOvvsylwQVXcszxZWZLGdJfao5uT5J80KXdOtlu9
+         SHtyBk5SWC/eZGBBjo+tV85udJiqv5I8QHTKOfnvsQMkqX7SlRtnfYau5O4uzOrkvo+l
+         rMFJR4MAD1C3+4bzI0SoUQ3gTZd6u6nch6F4B+kxdf2ImkNJD5dIfgb1PX9TFJTZz2vf
+         KbzOGeFnG9Mwqm9PfoEJXDhVxDOelhrZAmwoosSLEOPzfXQGSu5fxkL7R5sg5qkiGjhx
+         WiHg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=WgM87f7rpLd/jbOLyf9WZP12/bowR6IrwwDEu2GtuV8=;
+        b=F5JeVk2ssR/EBk3vRWg3uHynR+Ss9JnKbvM6OgMmTAzPQ3SKF+Th0p4MpAmWXjszxF
+         3nYgAgMRiXsESS5WlWBL8+fqk50dEyhLeaZn5InFyB9cVpsjAzTIF7FZ17RaqWScNDZ1
+         ftmTTvI4WTXf5AX7zX41QBd8YscDiZIvNhCPVv6chW1DzwSyhz9R3E090TGq2tehTIPk
+         HfmiVRO/b0ieviSgECGuyDVx3CkNxx1/dAppUASkHGDV7/B/GO/4esfxB2buAwjg5Xim
+         XtHRdoT+bL9/x6rzsYsF+IWTqOUVPmmRPrV1cBLgFqQH8afuw81aPAy4d82c7LVAaj1w
+         tcrg==
+X-Gm-Message-State: AOAM532MYINS++GUiKVv/8LPo/fuvETpWOtN/oDI1IRAl3IJEI1en1n9
+        gpCdA6dAh9w/q9j9Hz/LxUxuYAZDbsnybWl6ZEWvuA==
+X-Google-Smtp-Source: ABdhPJxcQ/ExlMzakQLKVKtgk8fM+2HQQTzsMvU9f1V4BSUasYqP11DQmXznbj5+lLlT6kQekSR6zYmUaeHXoLJb/44=
+X-Received: by 2002:adf:e7d1:: with SMTP id e17mr2450792wrn.151.1629529452393;
+ Sat, 21 Aug 2021 00:04:12 -0700 (PDT)
 MIME-Version: 1.0
+References: <20210817095313.GA671484@ubuntu> <20210818161752.vu6abfv3e6bfqz23@linutronix.de>
+ <CAJk_X9h_GqUyir7oG33pFrLgknj7DZfd6esiKb07w7QWjZqX0g@mail.gmail.com>
+ <20210819084759.stnmit32vs2be46m@linutronix.de> <CAJk_X9gyWch6Z1=hbe2vvqGu61mdavAU62+6dSka0tZoMzxu5Q@mail.gmail.com>
+ <20210821050511.GA14810@Peter>
+In-Reply-To: <20210821050511.GA14810@Peter>
+From:   Jeaho Hwang <jhhwang@rtst.co.kr>
+Date:   Sat, 21 Aug 2021 16:04:01 +0900
+Message-ID: <CAJk_X9gqBACA3O=4LdY3XJP5UzJe2p4bE72X_jNEHR1Cn=vDNQ@mail.gmail.com>
+Subject: Re: [PATCH v2] usb: chipidea: local_irq_save/restore added for hw_ep_prime
+To:     Peter Chen <peter.chen@kernel.org>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users@vger.kernel.org, Linux team <team-linux@rtst.co.kr>,
+        =?UTF-8?B?67OA66y06rSRKEJ5ZW9uIE1vbyBLd2FuZykv7J6Q64+Z7ZmU7JewKUF1dG9tYXRpb24gUGxhdGZvcm0=?=
+         =?UTF-8?B?7Jew6rWs7YyA?= <mkbyeon@lselectric.co.kr>,
+        =?UTF-8?B?7LWc6riw7ZmNKENob2kgS2kgSG9uZykv7J6Q64+Z7ZmU7JewKUF1dG9tYXRpb24gUGxhdGZvcm3sl7A=?=
+         =?UTF-8?B?6rWs7YyA?= <khchoib@lselectric.co.kr>
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:J+09KFKL4OTurbIauNRnqfZ12KA4r8Pc++J5QmWak0WIszRUQND
- LD+CyyiHy9X3M7keJA1FsJTlThoHlt1jd45SkUoMtVgQ5ZHmD8tKiiByZA6KApSNObS1QoE
- PvWVCJMlSW/DMi4LcaOk1RSkzMWnOcAJJeD1OaTGtz284VUOro/krWOcLc34vaKFDrmBN6d
- SZAgI5y6+71cJEfa+HGnw==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:HBgAGCo3Kls=:1QGQaJvu20+vYZrb+vaO3W
- JOpOETN5ot30fmbGJqm73NsoR1kwvd7m27t6hRSWuhk1JiIpzrG8ZESvlwh1V6oDVW/znz7Pr
- 68ZIEz83w5Wq06zNOj7uM7KrBYgWH2qJ0S1uLwf/DdQ8jN6Iia2PjiBvpRavVO6MJ5sWE/Ak0
- EunvuzjiyCGl33WM5jlIgmiiBirFkANCeOmRznp2o2z6go9JHfWzw1dmDvEFJVgx/rocZVvE/
- aakblh/8LiNyZX0xROFhogNi15s7r0akr/y6QDWGUe8fKAsf0ze8qMRmP3Uf1RHaav2U8PGxQ
- nE1ybS31tVSAw1T7WQLpMHttgW4jozizE2sf2ljjuxJ1N/oKW6dUMSmtm7xtb2qEDoB0dKMPx
- pSYzZFDf/ocznO6Vvw6coB42Y7EIfzxoJer6NHWbCMzIkLJBd1Hgd0Iv8+T0oLXt/dDCrxl6W
- 9R0SK4PXNAtYjNVlxjKs4UTn0N1Orren8hs39ON3yJOzygWZ8clBkjW9Hybc1MGcGFDRV0ji/
- r3+SgS4MDYpRMuTDXTGbSLrVLRMpQmpthUOG288vQRbNZ+iqOO6MIyJ0wfXxCMsdbWxzbQlk/
- e2h9aHLoOEcA/ZuUbXuoaVIlUjFrN2b+uhAwbFNZkoj3dKeXsGio0geXYzTfvhXBCltBEX5e5
- EufAS+9E6c/Eee2B52GCN3NB30stGkFlozUVrW4YLk8OQa8umua5LmzTRDPOm5shRLExRTUc8
- HAip8ORNPDHYiA3GZtCSevlQFvgCYmilSZ41wdjlitiCMpympt1CVFvP5wz8GwifgxGRi5/ET
- ut/onhy8TyN2rcgKAzX/Vq52MUUyjVcYbJM0JpSHe+JwQbXzjYv9eMI1E0wDtRxYYnSPjFCyY
- /50tsqzf56qll973aCXN2WuuLKa0yw6KCh1LokQsJUHdTr6eGJUKHgl8Vc9tFm8XCkaPc6bZE
- 890i9DsP7cOzzgfwVXeZFrZHX27IZcXHUWV/PihdnjMCPVFm2gEJ62VGSXgrSyQfFMc8lR+Ir
- S4B+tvFOZ9lAFp6RbKjC+lezNna3SORSe5mH/7HRzQNlBNcLUdyYWVLUuzLJStK/HUZBsRbNt
- NjFZqnWb9sqYXhAk4nl8sbf3abAXZZgAiph
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+2021=EB=85=84 8=EC=9B=94 21=EC=9D=BC (=ED=86=A0) =EC=98=A4=ED=9B=84 2:05, P=
+eter Chen <peter.chen@kernel.org>=EB=8B=98=EC=9D=B4 =EC=9E=91=EC=84=B1:
+>
+> On 21-08-20 14:15:55, Jeaho Hwang wrote:
+> > 2021=EB=85=84 8=EC=9B=94 19=EC=9D=BC (=EB=AA=A9) =EC=98=A4=ED=9B=84 5:4=
+8, Sebastian Andrzej Siewior
+> > <bigeasy@linutronix.de>=EB=8B=98=EC=9D=B4 =EC=9E=91=EC=84=B1:
+> > >
+> > > On 2021-08-19 08:50:27 [+0900], Jeaho Hwang wrote:
+> > > > Without RT, udc_irq runs as a forced threaded irq handler, so it ru=
+ns
+> > > > without any interruption or preemption. NO similar case is found on
+> > > > non-RT.
+> > >
+> > > I see only a devm_request_irq() so no force-threading here. Booting w=
+ith
+> > > threadirqs would not lead to the problem since commit
+> > >    81e2073c175b8 ("genirq: Disable interrupts for force threaded hand=
+lers")
+> > >
+> >
+> > I was wrong. udc threaded irq handler allows twd interrupt even on
+> > non-RT and with threaded irq.
+> > I believed Chen's comment "The function hw_ep_prime is only called at
+> > udc_irq which is registered as top-half irq handlers. Why the timer
+> > interrupt is occurred when hw_ep_prime is executing?".
+>
+> Hi Jeaho,
+>
+> How could you let udc irq as threaded irq? The chipidea interrupt
+> is registered using devm_request_irq.
+>
 
-Converting report_filterlist_lock to raw_spinlock_t lets RT report
-problem free, but makes allocations in insert_report_filterlist()
-problematic.  Solve that via unlock, allocate, relock and restart.
+HI Peter.
 
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-=2D--
- kernel/kcsan/debugfs.c |   62 +++++++++++++++++++++++++++++++++----------=
-------
- 1 file changed, 43 insertions(+), 19 deletions(-)
+We configured the kernel as "low latency desktop" and added
+"threadirqs" inside the cmdline parameter.
+Then udc irq handler runs as a thread and shows no suspicious working.
+I Hope It will help.
 
-=2D-- a/kernel/kcsan/debugfs.c
-+++ b/kernel/kcsan/debugfs.c
-@@ -53,7 +53,7 @@ static struct {
- 	.sorted		=3D false,
- 	.whitelist	=3D false,	/* default is blacklist */
- };
--static DEFINE_SPINLOCK(report_filterlist_lock);
-+static DEFINE_RAW_SPINLOCK(report_filterlist_lock);
+Thanks.
 
- /*
-  * The microbenchmark allows benchmarking KCSAN core runtime only. To run
-@@ -110,7 +110,7 @@ bool kcsan_skip_report_debugfs(unsigned
- 		return false;
- 	func_addr -=3D offset; /* Get function start */
-
--	spin_lock_irqsave(&report_filterlist_lock, flags);
-+	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
- 	if (report_filterlist.used =3D=3D 0)
- 		goto out;
-
-@@ -127,7 +127,7 @@ bool kcsan_skip_report_debugfs(unsigned
- 		ret =3D !ret;
-
- out:
--	spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
- 	return ret;
- }
-
-@@ -135,9 +135,9 @@ static void set_report_filterlist_whitel
- {
- 	unsigned long flags;
-
--	spin_lock_irqsave(&report_filterlist_lock, flags);
-+	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
- 	report_filterlist.whitelist =3D whitelist;
--	spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
- }
-
- /* Returns 0 on success, error-code otherwise. */
-@@ -146,36 +146,60 @@ static ssize_t insert_report_filterlist(
- 	unsigned long flags;
- 	unsigned long addr =3D kallsyms_lookup_name(func);
- 	ssize_t ret =3D 0;
-+	int is_rt =3D IS_ENABLED(CONFIG_PREEMPT_RT);
-
- 	if (!addr) {
- 		pr_err("could not find function: '%s'\n", func);
- 		return -ENOENT;
- 	}
-
--	spin_lock_irqsave(&report_filterlist_lock, flags);
-+	if (is_rt && !preemptible())
-+		return -ENOMEM;
-+
-+repeat:
-+	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
-
- 	if (report_filterlist.addrs =3D=3D NULL) {
--		/* initial allocation */
--		report_filterlist.addrs =3D
--			kmalloc_array(report_filterlist.size,
-+		unsigned long *array;
-+		if (is_rt)
-+			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+		array =3D kmalloc_array(report_filterlist.size,
- 				      sizeof(unsigned long), GFP_ATOMIC);
--		if (report_filterlist.addrs =3D=3D NULL) {
-+		if (is_rt)
-+			raw_spin_lock_irqsave(&report_filterlist_lock, flags);
-+		if (!array) {
- 			ret =3D -ENOMEM;
- 			goto out;
- 		}
-+		if (is_rt && report_filterlist.addrs !=3D NULL)  {
-+			/* Someone beat us to it, move along to size check. */
-+			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+			kfree(array);
-+			goto repeat;
-+		}
-+		report_filterlist.addrs =3D array;
- 	} else if (report_filterlist.used =3D=3D report_filterlist.size) {
- 		/* resize filterlist */
--		size_t new_size =3D report_filterlist.size * 2;
--		unsigned long *new_addrs =3D
--			krealloc(report_filterlist.addrs,
--				 new_size * sizeof(unsigned long), GFP_ATOMIC);
--
-+		size_t old_size =3D report_filterlist.size;
-+		size_t new_size =3D old_size * 2;
-+		unsigned long *new_addrs;
-+		if (is_rt)
-+			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+		new_addrs =3D krealloc(report_filterlist.addrs,
-+				     new_size * sizeof(unsigned long), GFP_ATOMIC);
-+		if (is_rt)
-+			raw_spin_lock_irqsave(&report_filterlist_lock, flags);
- 		if (new_addrs =3D=3D NULL) {
- 			/* leave filterlist itself untouched */
- 			ret =3D -ENOMEM;
- 			goto out;
- 		}
--
-+		if (is_rt && report_filterlist.size !=3D old_size) {
-+			/* Someone else resized while we were unlocked, recheck. */
-+			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+			kfree(new_addrs);
-+			goto repeat;
-+		}
- 		report_filterlist.size =3D new_size;
- 		report_filterlist.addrs =3D new_addrs;
- 	}
-@@ -186,7 +210,7 @@ static ssize_t insert_report_filterlist(
- 	report_filterlist.sorted =3D false;
-
- out:
--	spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
-
- 	return ret;
- }
-@@ -204,13 +228,13 @@ static int show_info(struct seq_file *fi
- 	}
-
- 	/* show filter functions, and filter type */
--	spin_lock_irqsave(&report_filterlist_lock, flags);
-+	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
- 	seq_printf(file, "\n%s functions: %s\n",
- 		   report_filterlist.whitelist ? "whitelisted" : "blacklisted",
- 		   report_filterlist.used =3D=3D 0 ? "none" : "");
- 	for (i =3D 0; i < report_filterlist.used; ++i)
- 		seq_printf(file, " %ps\n", (void *)report_filterlist.addrs[i]);
--	spin_unlock_irqrestore(&report_filterlist_lock, flags);
-+	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
-
- 	return 0;
- }
+> > We have additional experiments and got the results like below. RNDIS
+> > host was Windows.
+> >
+> > RT, 1ms delay between first ENDPTSETUPSTAT read and priming : error
+> > case occurred
+> > RT, 1ms delay + irq_save : no error case occurred.
+> > non-RT, threaded irq, 1ms delay : no error case occurred even twd
+> > fires inside the function execution.
+>
+> Again, how do you observe it?
+>
+> Peter
+>
+> >
+> > It doesn't seem to be a timing issue. But irq definitely affects
+> > priming on the RT kernel. Do you RT experts have any idea about the
+> > causes?
+> > If isr_tr_complete_handler fails ep priming it calls _ep_set_halt and
+> > goes an infinite loop in hw_ep_set_halt. It was an actual problem we
+> > experienced.
+> > So we protect irqs inside hw_ep_priming not to make error cases and
+> > also add a timeout inside the hw_ep_set_halt loop for a walkaround.
+> > The timeout patch is submitted to linux-usb.
+> > ( https://marc.info/?l=3Dlinux-usb&m=3D162918269024007&w=3D2 )
+> >
+> > We withdrew this patch since we don't know if disabling irq is the
+> > best solution to solve the problem and udc would work fine with
+> > hw_ep_set_halt walkaround even though hw_ep_prime fails.
+> > But we are still trying to find out the cause of this symptom so We'd
+> > so appreciate it if RT or USB experts share some ideas or ways to
+> > report somewhere. Xilinx doesn't provide any support without their
+> > official kernel :(
+> >
+> > Thanks for the discussion Sebastian.
+> >
+> > Jeaho Hwang.
+> >
+> > > =E2=80=A6
+> > > > > If this function here is sensitive to timing (say the cpu_relax()=
+ loop
+> > > > > gets interrupt for 1ms) then it has to be documented as such.
+> > > >
+> > > > The controller sets ENDPTSETUPSTAT register if the host sent a setu=
+p packet.
+> > > > yes it is a timing problem. I will document that and resubmit again=
+ if
+> > > > you agree that local_irq_save could help from the timing problem.
+> > > >
+> > > > Thanks for the advice.
+> > >
+> > > If it is really a timing issue in the function as you describe below
+> > > then disabling interrupts would help and it is indeed an RT only issu=
+e.
+> > >
+> > > So you read OP_ENDPTSETUPSTAT, it is 0, all good.
+> > > You write OP_ENDPTPRIME, wait for it to be cleared.
+> > > Then you read OP_ENDPTSETUPSTAT again and if it is 0, all good.
+> > >
+> > > And the TWD interrupt could delay say the second read would read 1 an=
+d
+> > > it is invalidated. Which looks odd.
+> > > However, it is "okay" if the TWD interrupt happens after the second
+> > > read? Even if the host sends a setup packet, nothing breaks?
+> > > Do you have numbers on how long irq-off section is here? It seems to
+> > > depend on how long the HW needs to clear the OP_ENDPTPRIME bits.
+> > >
+> > > Sebastian
+> >
+> >
+> >
+> > --
+> > =ED=99=A9=EC=9E=AC=ED=98=B8, Jay Hwang, linux team manager of RTst
+> > 010-7242-1593
+>
+> --
+>
+> Thanks,
+> Peter Chen
+>
 
 
+--=20
+=ED=99=A9=EC=9E=AC=ED=98=B8, Jay Hwang, linux team manager of RTst
