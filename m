@@ -8,170 +8,214 @@ X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BDD98C4338F
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:49:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52842C4338F
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:51:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9C84560FF2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:49:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3AC856103B
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:51:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232005AbhHUGto (ORCPT
+        id S232242AbhHUGvi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 21 Aug 2021 02:49:44 -0400
-Received: from mout.gmx.net ([212.227.17.22]:47801 "EHLO mout.gmx.net"
+        Sat, 21 Aug 2021 02:51:38 -0400
+Received: from mout.gmx.net ([212.227.17.20]:42115 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231666AbhHUGto (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 21 Aug 2021 02:49:44 -0400
+        id S232097AbhHUGvi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 21 Aug 2021 02:51:38 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1629528531;
-        bh=3Hi+jZkTgBxxdvwosQIWwN4GaVtWC2NcWXDQ9Hx7BIw=;
+        s=badeba3b8450; t=1629528649;
+        bh=05G6QJk9SfdvpRWo9evcUXKBh/DmFJ7gGSE8lbMmVAs=;
         h=X-UI-Sender-Class:Subject:From:To:Cc:Date;
-        b=HiF+qPlLgofw/m4hn9OJArxIkovEoDaAT9hXZTP+B4tnZbGDlyu69cjvxKyMF4LB0
-         x9XUghkHE+BQF2tQF92bBmwTrC2cV8Y6o82n2K1Dul03jHDso4ipDp3q36qbWthJI0
-         cqI7ESN96AjqOeG3cp06G/P6pFM3/cpbbkSa8ACM=
+        b=YgPOQPTsEh++EIjydktKVMSua2TmVM2HkqAmOfenSTs46jiTsc8Z/X5DaZyppP0Jx
+         LTRwKaw5gGR/aRVEBukj3Tn+IoMnPSqd1MGI2w7msJjo86RTW/QlRkdC1vpl1kf+VT
+         fek49IwP8hMLZ5L+N1p5JuyP+L+MnqWoAPqpDfuU=
 X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
 Received: from homer.fritz.box ([185.146.51.70]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1Mjj87-1mkaxk0ZH1-00lDfO; Sat, 21
- Aug 2021 08:48:51 +0200
-Message-ID: <213cb4097c80dac762f597bbba5540757dc9db71.camel@gmx.de>
-Subject: [patch] kasan: Make it RT aware
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MI5QF-1mEqY20ptP-00FA1R; Sat, 21
+ Aug 2021 08:50:49 +0200
+Message-ID: <dc0cb448d46f465bb0064b1c301cb0b3ab4f8492.camel@gmx.de>
+Subject: [patch] kcsan: Make it RT aware
 From:   Mike Galbraith <efault@gmx.de>
 To:     linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>
-Date:   Sat, 21 Aug 2021 08:48:50 +0200
+Date:   Sat, 21 Aug 2021 08:50:48 +0200
 Content-Type: text/plain; charset="UTF-8"
 User-Agent: Evolution 3.40.3 
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:qSaJlMQhz/lqRNoxbOgmoFKmchnCpB6Nb2q8uTaRpMc0wTK6UrE
- w+6S1z3hJFeZZkP4ePB0uGaE0UIJMRkFi02VAeRa/0QtYaJzzjDiZaFybLEgKAFUEh6tDnt
- 0CvaupNFHWuw02jhwwaw+/U7jGa5a+wQBf9imb9UAKTPQF+Drqc4z4SHqD3pGnaPXxQ409T
- QBKz4/5sFn1NJXoWoN9/A==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:iOB6YCB1wZ0=:BBq8vdk8J8yTs4gyeckKRp
- cYyZ2NUImJHan1a2WoCCSgjXiwmJXbD88BmtoXkfv7or950oe8tGZseuuu4jPQQjp1qBUEDGi
- vg6vJle69FkqUi3wymsJnnhqfZKztFgtdw+CMiPcsE+f3SeOyLBV9qQ2VA4Elut39daieiehO
- 7zG5fhTMbfR4rzrvDQVwAytY5Vh+xSVln7zcZKAin2cUUBWExmtGDQOHrLu/HOphX1wuZaJWg
- i4WKlLt3QEiSlztmetR4UVPMsYkvCrf0gY4ZeSw4kfzviNT1fp3Vpt7ooJFDjo+uEyRCHSlMl
- xXf58b/yIg9Ls7LcokqSv8knTLKwqFIo9/r8t23JXbpAumS4L7mnvKOaerSP0DV1/o+1nr+jA
- DTnlGPNNl5EhI1+W8cIIz/eked480fzwgAcl6wGmGBLgPsZ98M+RLuWDgk9Krpgy8HF1gAlp7
- kX2SZV++lsExtHbe0wFAfnqin+rkPgZaW6YDkJ06eGVqRcP+dUvGRaS2YeHTelX1+UUAkQycL
- DKjHrsVzIAFBPabrlvwWVvr5/dfxYdy1t0IZBuxdRuqswMrqbg0cK0ECXg0cHDcCuSafcucoY
- iE2aaqnidbTYP5T2biIpqIxJd/qmQo9zgu4ggXf1SWrGaayr2oohWliBSIP6+Mh3X/BwO0STx
- yqBHMoQuwuuxFJdeuBjDzRTRu0nvwplm7iUuuFKpNzMReao6/BMeqi/NFv2REknhEsM6e3r12
- eM6wkK1fIdjI4rPBPSYctKzxMewO6EGrZ31HnNmGRfCEP6t0af17lbsHf+3mnamm+pg60HHrg
- oQJ35NVVc/LPay8r3msWH/58nS+mzv0v/UA2Ail0TruTvgwQ9aRdzS9IcK2KlME7MtyGVSEqm
- jWK/dP7bG/J5UDiv5/Tq4XqokbgA0/0gIdoGUpL3SNXuy3YuLXW2tKpLQwtaIzVYbxu6UToDE
- 2x6Jwt6ryJz4FNWv1i7X8pzzKsw5w21Rqbe56Fn+mt4E6+vJ4J808qZLtQwr3zRBD/kwG3a0d
- QI257nM9a27c/sw/axUNRvKSjO526nSAPGAS7plFWttaiZCGFRTWxNxVvZA4wxNzKonc3/e16
- +rviGEM/vEC9u+QRRaPsq/DhSG2RZbufooJ
+X-Provags-ID: V03:K1:J+09KFKL4OTurbIauNRnqfZ12KA4r8Pc++J5QmWak0WIszRUQND
+ LD+CyyiHy9X3M7keJA1FsJTlThoHlt1jd45SkUoMtVgQ5ZHmD8tKiiByZA6KApSNObS1QoE
+ PvWVCJMlSW/DMi4LcaOk1RSkzMWnOcAJJeD1OaTGtz284VUOro/krWOcLc34vaKFDrmBN6d
+ SZAgI5y6+71cJEfa+HGnw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:HBgAGCo3Kls=:1QGQaJvu20+vYZrb+vaO3W
+ JOpOETN5ot30fmbGJqm73NsoR1kwvd7m27t6hRSWuhk1JiIpzrG8ZESvlwh1V6oDVW/znz7Pr
+ 68ZIEz83w5Wq06zNOj7uM7KrBYgWH2qJ0S1uLwf/DdQ8jN6Iia2PjiBvpRavVO6MJ5sWE/Ak0
+ EunvuzjiyCGl33WM5jlIgmiiBirFkANCeOmRznp2o2z6go9JHfWzw1dmDvEFJVgx/rocZVvE/
+ aakblh/8LiNyZX0xROFhogNi15s7r0akr/y6QDWGUe8fKAsf0ze8qMRmP3Uf1RHaav2U8PGxQ
+ nE1ybS31tVSAw1T7WQLpMHttgW4jozizE2sf2ljjuxJ1N/oKW6dUMSmtm7xtb2qEDoB0dKMPx
+ pSYzZFDf/ocznO6Vvw6coB42Y7EIfzxoJer6NHWbCMzIkLJBd1Hgd0Iv8+T0oLXt/dDCrxl6W
+ 9R0SK4PXNAtYjNVlxjKs4UTn0N1Orren8hs39ON3yJOzygWZ8clBkjW9Hybc1MGcGFDRV0ji/
+ r3+SgS4MDYpRMuTDXTGbSLrVLRMpQmpthUOG288vQRbNZ+iqOO6MIyJ0wfXxCMsdbWxzbQlk/
+ e2h9aHLoOEcA/ZuUbXuoaVIlUjFrN2b+uhAwbFNZkoj3dKeXsGio0geXYzTfvhXBCltBEX5e5
+ EufAS+9E6c/Eee2B52GCN3NB30stGkFlozUVrW4YLk8OQa8umua5LmzTRDPOm5shRLExRTUc8
+ HAip8ORNPDHYiA3GZtCSevlQFvgCYmilSZ41wdjlitiCMpympt1CVFvP5wz8GwifgxGRi5/ET
+ ut/onhy8TyN2rcgKAzX/Vq52MUUyjVcYbJM0JpSHe+JwQbXzjYv9eMI1E0wDtRxYYnSPjFCyY
+ /50tsqzf56qll973aCXN2WuuLKa0yw6KCh1LokQsJUHdTr6eGJUKHgl8Vc9tFm8XCkaPc6bZE
+ 890i9DsP7cOzzgfwVXeZFrZHX27IZcXHUWV/PihdnjMCPVFm2gEJ62VGSXgrSyQfFMc8lR+Ir
+ S4B+tvFOZ9lAFp6RbKjC+lezNna3SORSe5mH/7HRzQNlBNcLUdyYWVLUuzLJStK/HUZBsRbNt
+ NjFZqnWb9sqYXhAk4nl8sbf3abAXZZgAiph
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
-Skip preallocation when not possible for RT, and move cache removal
-from IPI, where freeing is not possible for RT, to synchronous work.
+Converting report_filterlist_lock to raw_spinlock_t lets RT report
+problem free, but makes allocations in insert_report_filterlist()
+problematic.  Solve that via unlock, allocate, relock and restart.
 
 Signed-off-by: Mike Galbraith <efault@gmx.de>
 =2D--
- lib/stackdepot.c      |    4 ++--
- mm/kasan/quarantine.c |   49 ++++++++++++++++++++++++++++++++++++++++++++=
-+++++
- 2 files changed, 51 insertions(+), 2 deletions(-)
+ kernel/kcsan/debugfs.c |   62 +++++++++++++++++++++++++++++++++----------=
+------
+ 1 file changed, 43 insertions(+), 19 deletions(-)
 
-=2D-- a/lib/stackdepot.c
-+++ b/lib/stackdepot.c
-@@ -265,7 +265,7 @@ depot_stack_handle_t stack_depot_save(un
- 	struct page *page =3D NULL;
- 	void *prealloc =3D NULL;
- 	unsigned long flags;
--	u32 hash;
-+	u32 hash, may_prealloc =3D !IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible=
-();
+=2D-- a/kernel/kcsan/debugfs.c
++++ b/kernel/kcsan/debugfs.c
+@@ -53,7 +53,7 @@ static struct {
+ 	.sorted		=3D false,
+ 	.whitelist	=3D false,	/* default is blacklist */
+ };
+-static DEFINE_SPINLOCK(report_filterlist_lock);
++static DEFINE_RAW_SPINLOCK(report_filterlist_lock);
 
- 	if (unlikely(nr_entries =3D=3D 0) || stack_depot_disable)
- 		goto fast_exit;
-@@ -291,7 +291,7 @@ depot_stack_handle_t stack_depot_save(un
- 	 * The smp_load_acquire() here pairs with smp_store_release() to
- 	 * |next_slab_inited| in depot_alloc_stack() and init_stack_slab().
- 	 */
--	if (unlikely(!smp_load_acquire(&next_slab_inited))) {
-+	if (unlikely(!smp_load_acquire(&next_slab_inited) && may_prealloc)) {
- 		/*
- 		 * Zero out zone modifiers, as we don't have specific zone
- 		 * requirements. Keep the flags related to allocation in atomic
-=2D-- a/mm/kasan/quarantine.c
-+++ b/mm/kasan/quarantine.c
-@@ -19,6 +19,9 @@
- #include <linux/srcu.h>
- #include <linux/string.h>
- #include <linux/types.h>
-+#include <linux/cpu.h>
-+#include <linux/mutex.h>
-+#include <linux/workqueue.h>
- #include <linux/cpuhotplug.h>
+ /*
+  * The microbenchmark allows benchmarking KCSAN core runtime only. To run
+@@ -110,7 +110,7 @@ bool kcsan_skip_report_debugfs(unsigned
+ 		return false;
+ 	func_addr -=3D offset; /* Get function start */
 
- #include "../slab.h"
-@@ -308,6 +311,48 @@ static void per_cpu_remove_cache(void *a
- 	qlist_free_all(&to_free, cache);
+-	spin_lock_irqsave(&report_filterlist_lock, flags);
++	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
+ 	if (report_filterlist.used =3D=3D 0)
+ 		goto out;
+
+@@ -127,7 +127,7 @@ bool kcsan_skip_report_debugfs(unsigned
+ 		ret =3D !ret;
+
+ out:
+-	spin_unlock_irqrestore(&report_filterlist_lock, flags);
++	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
+ 	return ret;
  }
 
-+#ifdef CONFIG_PREEMPT_RT
-+struct remove_cache_work {
-+	struct work_struct work;
-+	struct kmem_cache *cache;
-+};
-+
-+static DEFINE_MUTEX(remove_caches_lock);
-+static DEFINE_PER_CPU(struct remove_cache_work, remove_cache_work);
-+
-+static void per_cpu_remove_cache_work(struct work_struct *w)
-+{
-+	struct remove_cache_work *rcw;
-+
-+	rcw =3D container_of(w, struct remove_cache_work, work);
-+	per_cpu_remove_cache(rcw->cache);
-+}
-+
-+static void per_cpu_remove_caches_sync(struct kmem_cache *cache)
-+{
-+	struct remove_cache_work *rcw;
-+	unsigned int cpu;
-+
-+	cpus_read_lock();
-+	mutex_lock(&remove_caches_lock);
-+
-+	for_each_online_cpu(cpu) {
-+		rcw =3D &per_cpu(remove_cache_work, cpu);
-+		INIT_WORK(&rcw->work, per_cpu_remove_cache_work);
-+		rcw->cache =3D cache;
-+		schedule_work_on(cpu, &rcw->work);
-+	}
-+
-+	for_each_online_cpu(cpu) {
-+		rcw =3D &per_cpu(remove_cache_work, cpu);
-+		flush_work(&rcw->work);
-+	}
-+
-+	mutex_unlock(&remove_caches_lock);
-+	cpus_read_unlock();
-+}
-+#endif
-+
- /* Free all quarantined objects belonging to cache. */
- void kasan_quarantine_remove_cache(struct kmem_cache *cache)
+@@ -135,9 +135,9 @@ static void set_report_filterlist_whitel
  {
-@@ -321,7 +366,11 @@ void kasan_quarantine_remove_cache(struc
- 	 * achieves the first goal, while synchronize_srcu() achieves the
- 	 * second.
- 	 */
-+#ifndef CONFIG_PREEMPT_RT
- 	on_each_cpu(per_cpu_remove_cache, cache, 1);
-+#else
-+	per_cpu_remove_caches_sync(cache);
-+#endif
+ 	unsigned long flags;
 
- 	raw_spin_lock_irqsave(&quarantine_lock, flags);
- 	for (i =3D 0; i < QUARANTINE_BATCHES; i++) {
+-	spin_lock_irqsave(&report_filterlist_lock, flags);
++	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
+ 	report_filterlist.whitelist =3D whitelist;
+-	spin_unlock_irqrestore(&report_filterlist_lock, flags);
++	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
+ }
+
+ /* Returns 0 on success, error-code otherwise. */
+@@ -146,36 +146,60 @@ static ssize_t insert_report_filterlist(
+ 	unsigned long flags;
+ 	unsigned long addr =3D kallsyms_lookup_name(func);
+ 	ssize_t ret =3D 0;
++	int is_rt =3D IS_ENABLED(CONFIG_PREEMPT_RT);
+
+ 	if (!addr) {
+ 		pr_err("could not find function: '%s'\n", func);
+ 		return -ENOENT;
+ 	}
+
+-	spin_lock_irqsave(&report_filterlist_lock, flags);
++	if (is_rt && !preemptible())
++		return -ENOMEM;
++
++repeat:
++	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
+
+ 	if (report_filterlist.addrs =3D=3D NULL) {
+-		/* initial allocation */
+-		report_filterlist.addrs =3D
+-			kmalloc_array(report_filterlist.size,
++		unsigned long *array;
++		if (is_rt)
++			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
++		array =3D kmalloc_array(report_filterlist.size,
+ 				      sizeof(unsigned long), GFP_ATOMIC);
+-		if (report_filterlist.addrs =3D=3D NULL) {
++		if (is_rt)
++			raw_spin_lock_irqsave(&report_filterlist_lock, flags);
++		if (!array) {
+ 			ret =3D -ENOMEM;
+ 			goto out;
+ 		}
++		if (is_rt && report_filterlist.addrs !=3D NULL)  {
++			/* Someone beat us to it, move along to size check. */
++			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
++			kfree(array);
++			goto repeat;
++		}
++		report_filterlist.addrs =3D array;
+ 	} else if (report_filterlist.used =3D=3D report_filterlist.size) {
+ 		/* resize filterlist */
+-		size_t new_size =3D report_filterlist.size * 2;
+-		unsigned long *new_addrs =3D
+-			krealloc(report_filterlist.addrs,
+-				 new_size * sizeof(unsigned long), GFP_ATOMIC);
+-
++		size_t old_size =3D report_filterlist.size;
++		size_t new_size =3D old_size * 2;
++		unsigned long *new_addrs;
++		if (is_rt)
++			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
++		new_addrs =3D krealloc(report_filterlist.addrs,
++				     new_size * sizeof(unsigned long), GFP_ATOMIC);
++		if (is_rt)
++			raw_spin_lock_irqsave(&report_filterlist_lock, flags);
+ 		if (new_addrs =3D=3D NULL) {
+ 			/* leave filterlist itself untouched */
+ 			ret =3D -ENOMEM;
+ 			goto out;
+ 		}
+-
++		if (is_rt && report_filterlist.size !=3D old_size) {
++			/* Someone else resized while we were unlocked, recheck. */
++			raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
++			kfree(new_addrs);
++			goto repeat;
++		}
+ 		report_filterlist.size =3D new_size;
+ 		report_filterlist.addrs =3D new_addrs;
+ 	}
+@@ -186,7 +210,7 @@ static ssize_t insert_report_filterlist(
+ 	report_filterlist.sorted =3D false;
+
+ out:
+-	spin_unlock_irqrestore(&report_filterlist_lock, flags);
++	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
+
+ 	return ret;
+ }
+@@ -204,13 +228,13 @@ static int show_info(struct seq_file *fi
+ 	}
+
+ 	/* show filter functions, and filter type */
+-	spin_lock_irqsave(&report_filterlist_lock, flags);
++	raw_spin_lock_irqsave(&report_filterlist_lock, flags);
+ 	seq_printf(file, "\n%s functions: %s\n",
+ 		   report_filterlist.whitelist ? "whitelisted" : "blacklisted",
+ 		   report_filterlist.used =3D=3D 0 ? "none" : "");
+ 	for (i =3D 0; i < report_filterlist.used; ++i)
+ 		seq_printf(file, " %ps\n", (void *)report_filterlist.addrs[i]);
+-	spin_unlock_irqrestore(&report_filterlist_lock, flags);
++	raw_spin_unlock_irqrestore(&report_filterlist_lock, flags);
+
+ 	return 0;
+ }
 
 
