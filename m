@@ -2,162 +2,176 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D861C432BE
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 05:05:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BDD98C4338F
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:49:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3FD85611CE
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 05:05:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9C84560FF2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Aug 2021 06:49:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230314AbhHUFF4 (ORCPT
+        id S232005AbhHUGto (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 21 Aug 2021 01:05:56 -0400
-Received: from mail.kernel.org ([198.145.29.99]:56372 "EHLO mail.kernel.org"
+        Sat, 21 Aug 2021 02:49:44 -0400
+Received: from mout.gmx.net ([212.227.17.22]:47801 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230205AbhHUFF4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 21 Aug 2021 01:05:56 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id EDB536113E;
-        Sat, 21 Aug 2021 05:05:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1629522317;
-        bh=CP6bFxfCSRXzuFPiAmcRUPKjPV1ToRSYlZTlKn2rgUw=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=bMx6nrJZCNeawQmaRTV3CnFImNHp4o7rlh7TnGdzIkpSc5xaRP3PoOhXamDmjjEGZ
-         Oxgqvly98eVZUSj1ANg6QgQKlUwSWT4MD8u4ALUTEb9KSPUOvCNy674NCgnEhUDODY
-         TSR8SjheEaDNGlQ5R+JFYtcK4jldDh92HP5ibT7eYRHK8Zxu5yyzfyyfmX8eSxk53w
-         b0E+hKvB/ojl2gW17PYniYC/xg99snjQ28FXS12PJrjJRJ6+z7X/HcXxP/HzaaXM0N
-         pC0XlWSt6Yy01qjthbcxF9nTRyT9tzNH2cvAEbN+8WHJ2w1CZ9hcyAfSi5NC5I9VwM
-         NUhcYdql3XTGA==
-Date:   Sat, 21 Aug 2021 13:05:11 +0800
-From:   Peter Chen <peter.chen@kernel.org>
-To:     Jeaho Hwang <jhhwang@rtst.co.kr>
+        id S231666AbhHUGto (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 21 Aug 2021 02:49:44 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1629528531;
+        bh=3Hi+jZkTgBxxdvwosQIWwN4GaVtWC2NcWXDQ9Hx7BIw=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date;
+        b=HiF+qPlLgofw/m4hn9OJArxIkovEoDaAT9hXZTP+B4tnZbGDlyu69cjvxKyMF4LB0
+         x9XUghkHE+BQF2tQF92bBmwTrC2cV8Y6o82n2K1Dul03jHDso4ipDp3q36qbWthJI0
+         cqI7ESN96AjqOeG3cp06G/P6pFM3/cpbbkSa8ACM=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.146.51.70]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1Mjj87-1mkaxk0ZH1-00lDfO; Sat, 21
+ Aug 2021 08:48:51 +0200
+Message-ID: <213cb4097c80dac762f597bbba5540757dc9db71.camel@gmx.de>
+Subject: [patch] kasan: Make it RT aware
+From:   Mike Galbraith <efault@gmx.de>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users@vger.kernel.org, Linux team <team-linux@rtst.co.kr>,
-        =?utf-8?B?67OA66y06rSRKEJ5ZW9uIE1vbyBLd2FuZykv7J6Q64+Z7ZmU7JewKUF1dG9t?=
-         =?utf-8?B?YXRpb24gUGxhdGZvcm3sl7DqtaztjIA=?= 
-        <mkbyeon@lselectric.co.kr>,
-        =?utf-8?B?7LWc6riw7ZmNKENob2kgS2kgSG9uZykv7J6Q64+Z7ZmU7JewKUF1dG9tYXRp?=
-         =?utf-8?B?b24gUGxhdGZvcm3sl7DqtaztjIA=?= 
-        <khchoib@lselectric.co.kr>
-Subject: Re: [PATCH v2] usb: chipidea: local_irq_save/restore added for
- hw_ep_prime
-Message-ID: <20210821050511.GA14810@Peter>
-References: <20210817095313.GA671484@ubuntu>
- <20210818161752.vu6abfv3e6bfqz23@linutronix.de>
- <CAJk_X9h_GqUyir7oG33pFrLgknj7DZfd6esiKb07w7QWjZqX0g@mail.gmail.com>
- <20210819084759.stnmit32vs2be46m@linutronix.de>
- <CAJk_X9gyWch6Z1=hbe2vvqGu61mdavAU62+6dSka0tZoMzxu5Q@mail.gmail.com>
+        Thomas Gleixner <tglx@linutronix.de>
+Date:   Sat, 21 Aug 2021 08:48:50 +0200
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.40.3 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAJk_X9gyWch6Z1=hbe2vvqGu61mdavAU62+6dSka0tZoMzxu5Q@mail.gmail.com>
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:qSaJlMQhz/lqRNoxbOgmoFKmchnCpB6Nb2q8uTaRpMc0wTK6UrE
+ w+6S1z3hJFeZZkP4ePB0uGaE0UIJMRkFi02VAeRa/0QtYaJzzjDiZaFybLEgKAFUEh6tDnt
+ 0CvaupNFHWuw02jhwwaw+/U7jGa5a+wQBf9imb9UAKTPQF+Drqc4z4SHqD3pGnaPXxQ409T
+ QBKz4/5sFn1NJXoWoN9/A==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:iOB6YCB1wZ0=:BBq8vdk8J8yTs4gyeckKRp
+ cYyZ2NUImJHan1a2WoCCSgjXiwmJXbD88BmtoXkfv7or950oe8tGZseuuu4jPQQjp1qBUEDGi
+ vg6vJle69FkqUi3wymsJnnhqfZKztFgtdw+CMiPcsE+f3SeOyLBV9qQ2VA4Elut39daieiehO
+ 7zG5fhTMbfR4rzrvDQVwAytY5Vh+xSVln7zcZKAin2cUUBWExmtGDQOHrLu/HOphX1wuZaJWg
+ i4WKlLt3QEiSlztmetR4UVPMsYkvCrf0gY4ZeSw4kfzviNT1fp3Vpt7ooJFDjo+uEyRCHSlMl
+ xXf58b/yIg9Ls7LcokqSv8knTLKwqFIo9/r8t23JXbpAumS4L7mnvKOaerSP0DV1/o+1nr+jA
+ DTnlGPNNl5EhI1+W8cIIz/eked480fzwgAcl6wGmGBLgPsZ98M+RLuWDgk9Krpgy8HF1gAlp7
+ kX2SZV++lsExtHbe0wFAfnqin+rkPgZaW6YDkJ06eGVqRcP+dUvGRaS2YeHTelX1+UUAkQycL
+ DKjHrsVzIAFBPabrlvwWVvr5/dfxYdy1t0IZBuxdRuqswMrqbg0cK0ECXg0cHDcCuSafcucoY
+ iE2aaqnidbTYP5T2biIpqIxJd/qmQo9zgu4ggXf1SWrGaayr2oohWliBSIP6+Mh3X/BwO0STx
+ yqBHMoQuwuuxFJdeuBjDzRTRu0nvwplm7iUuuFKpNzMReao6/BMeqi/NFv2REknhEsM6e3r12
+ eM6wkK1fIdjI4rPBPSYctKzxMewO6EGrZ31HnNmGRfCEP6t0af17lbsHf+3mnamm+pg60HHrg
+ oQJ35NVVc/LPay8r3msWH/58nS+mzv0v/UA2Ail0TruTvgwQ9aRdzS9IcK2KlME7MtyGVSEqm
+ jWK/dP7bG/J5UDiv5/Tq4XqokbgA0/0gIdoGUpL3SNXuy3YuLXW2tKpLQwtaIzVYbxu6UToDE
+ 2x6Jwt6ryJz4FNWv1i7X8pzzKsw5w21Rqbe56Fn+mt4E6+vJ4J808qZLtQwr3zRBD/kwG3a0d
+ QI257nM9a27c/sw/axUNRvKSjO526nSAPGAS7plFWttaiZCGFRTWxNxVvZA4wxNzKonc3/e16
+ +rviGEM/vEC9u+QRRaPsq/DhSG2RZbufooJ
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 21-08-20 14:15:55, Jeaho Hwang wrote:
-> 2021년 8월 19일 (목) 오후 5:48, Sebastian Andrzej Siewior
-> <bigeasy@linutronix.de>님이 작성:
-> >
-> > On 2021-08-19 08:50:27 [+0900], Jeaho Hwang wrote:
-> > > Without RT, udc_irq runs as a forced threaded irq handler, so it runs
-> > > without any interruption or preemption. NO similar case is found on
-> > > non-RT.
-> >
-> > I see only a devm_request_irq() so no force-threading here. Booting with
-> > threadirqs would not lead to the problem since commit
-> >    81e2073c175b8 ("genirq: Disable interrupts for force threaded handlers")
-> >
-> 
-> I was wrong. udc threaded irq handler allows twd interrupt even on
-> non-RT and with threaded irq.
-> I believed Chen's comment "The function hw_ep_prime is only called at
-> udc_irq which is registered as top-half irq handlers. Why the timer
-> interrupt is occurred when hw_ep_prime is executing?".
 
-Hi Jeaho,
+Skip preallocation when not possible for RT, and move cache removal
+from IPI, where freeing is not possible for RT, to synchronous work.
 
-How could you let udc irq as threaded irq? The chipidea interrupt
-is registered using devm_request_irq.
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+=2D--
+ lib/stackdepot.c      |    4 ++--
+ mm/kasan/quarantine.c |   49 ++++++++++++++++++++++++++++++++++++++++++++=
++++++
+ 2 files changed, 51 insertions(+), 2 deletions(-)
 
-> We have additional experiments and got the results like below. RNDIS
-> host was Windows.
-> 
-> RT, 1ms delay between first ENDPTSETUPSTAT read and priming : error
-> case occurred
-> RT, 1ms delay + irq_save : no error case occurred.
-> non-RT, threaded irq, 1ms delay : no error case occurred even twd
-> fires inside the function execution.
+=2D-- a/lib/stackdepot.c
++++ b/lib/stackdepot.c
+@@ -265,7 +265,7 @@ depot_stack_handle_t stack_depot_save(un
+ 	struct page *page =3D NULL;
+ 	void *prealloc =3D NULL;
+ 	unsigned long flags;
+-	u32 hash;
++	u32 hash, may_prealloc =3D !IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible=
+();
 
-Again, how do you observe it?
+ 	if (unlikely(nr_entries =3D=3D 0) || stack_depot_disable)
+ 		goto fast_exit;
+@@ -291,7 +291,7 @@ depot_stack_handle_t stack_depot_save(un
+ 	 * The smp_load_acquire() here pairs with smp_store_release() to
+ 	 * |next_slab_inited| in depot_alloc_stack() and init_stack_slab().
+ 	 */
+-	if (unlikely(!smp_load_acquire(&next_slab_inited))) {
++	if (unlikely(!smp_load_acquire(&next_slab_inited) && may_prealloc)) {
+ 		/*
+ 		 * Zero out zone modifiers, as we don't have specific zone
+ 		 * requirements. Keep the flags related to allocation in atomic
+=2D-- a/mm/kasan/quarantine.c
++++ b/mm/kasan/quarantine.c
+@@ -19,6 +19,9 @@
+ #include <linux/srcu.h>
+ #include <linux/string.h>
+ #include <linux/types.h>
++#include <linux/cpu.h>
++#include <linux/mutex.h>
++#include <linux/workqueue.h>
+ #include <linux/cpuhotplug.h>
 
-Peter
+ #include "../slab.h"
+@@ -308,6 +311,48 @@ static void per_cpu_remove_cache(void *a
+ 	qlist_free_all(&to_free, cache);
+ }
 
-> 
-> It doesn't seem to be a timing issue. But irq definitely affects
-> priming on the RT kernel. Do you RT experts have any idea about the
-> causes?
-> If isr_tr_complete_handler fails ep priming it calls _ep_set_halt and
-> goes an infinite loop in hw_ep_set_halt. It was an actual problem we
-> experienced.
-> So we protect irqs inside hw_ep_priming not to make error cases and
-> also add a timeout inside the hw_ep_set_halt loop for a walkaround.
-> The timeout patch is submitted to linux-usb.
-> ( https://marc.info/?l=linux-usb&m=162918269024007&w=2 )
-> 
-> We withdrew this patch since we don't know if disabling irq is the
-> best solution to solve the problem and udc would work fine with
-> hw_ep_set_halt walkaround even though hw_ep_prime fails.
-> But we are still trying to find out the cause of this symptom so We'd
-> so appreciate it if RT or USB experts share some ideas or ways to
-> report somewhere. Xilinx doesn't provide any support without their
-> official kernel :(
-> 
-> Thanks for the discussion Sebastian.
-> 
-> Jeaho Hwang.
-> 
-> > …
-> > > > If this function here is sensitive to timing (say the cpu_relax() loop
-> > > > gets interrupt for 1ms) then it has to be documented as such.
-> > >
-> > > The controller sets ENDPTSETUPSTAT register if the host sent a setup packet.
-> > > yes it is a timing problem. I will document that and resubmit again if
-> > > you agree that local_irq_save could help from the timing problem.
-> > >
-> > > Thanks for the advice.
-> >
-> > If it is really a timing issue in the function as you describe below
-> > then disabling interrupts would help and it is indeed an RT only issue.
-> >
-> > So you read OP_ENDPTSETUPSTAT, it is 0, all good.
-> > You write OP_ENDPTPRIME, wait for it to be cleared.
-> > Then you read OP_ENDPTSETUPSTAT again and if it is 0, all good.
-> >
-> > And the TWD interrupt could delay say the second read would read 1 and
-> > it is invalidated. Which looks odd.
-> > However, it is "okay" if the TWD interrupt happens after the second
-> > read? Even if the host sends a setup packet, nothing breaks?
-> > Do you have numbers on how long irq-off section is here? It seems to
-> > depend on how long the HW needs to clear the OP_ENDPTPRIME bits.
-> >
-> > Sebastian
-> 
-> 
-> 
-> -- 
-> 황재호, Jay Hwang, linux team manager of RTst
-> 010-7242-1593
++#ifdef CONFIG_PREEMPT_RT
++struct remove_cache_work {
++	struct work_struct work;
++	struct kmem_cache *cache;
++};
++
++static DEFINE_MUTEX(remove_caches_lock);
++static DEFINE_PER_CPU(struct remove_cache_work, remove_cache_work);
++
++static void per_cpu_remove_cache_work(struct work_struct *w)
++{
++	struct remove_cache_work *rcw;
++
++	rcw =3D container_of(w, struct remove_cache_work, work);
++	per_cpu_remove_cache(rcw->cache);
++}
++
++static void per_cpu_remove_caches_sync(struct kmem_cache *cache)
++{
++	struct remove_cache_work *rcw;
++	unsigned int cpu;
++
++	cpus_read_lock();
++	mutex_lock(&remove_caches_lock);
++
++	for_each_online_cpu(cpu) {
++		rcw =3D &per_cpu(remove_cache_work, cpu);
++		INIT_WORK(&rcw->work, per_cpu_remove_cache_work);
++		rcw->cache =3D cache;
++		schedule_work_on(cpu, &rcw->work);
++	}
++
++	for_each_online_cpu(cpu) {
++		rcw =3D &per_cpu(remove_cache_work, cpu);
++		flush_work(&rcw->work);
++	}
++
++	mutex_unlock(&remove_caches_lock);
++	cpus_read_unlock();
++}
++#endif
++
+ /* Free all quarantined objects belonging to cache. */
+ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
+ {
+@@ -321,7 +366,11 @@ void kasan_quarantine_remove_cache(struc
+ 	 * achieves the first goal, while synchronize_srcu() achieves the
+ 	 * second.
+ 	 */
++#ifndef CONFIG_PREEMPT_RT
+ 	on_each_cpu(per_cpu_remove_cache, cache, 1);
++#else
++	per_cpu_remove_caches_sync(cache);
++#endif
 
--- 
+ 	raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 	for (i =3D 0; i < QUARANTINE_BATCHES; i++) {
 
-Thanks,
-Peter Chen
 
