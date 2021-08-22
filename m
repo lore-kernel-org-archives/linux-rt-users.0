@@ -2,105 +2,75 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 11AF0C4338F
-	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 06:54:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 17E22C4338F
+	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 16:36:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D63C16125F
-	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 06:54:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E1D40610A5
+	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 16:36:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231592AbhHVGzB (ORCPT
+        id S229802AbhHVQgl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 22 Aug 2021 02:55:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60374 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230436AbhHVGy6 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 22 Aug 2021 02:54:58 -0400
-Received: from mail-il1-x136.google.com (mail-il1-x136.google.com [IPv6:2607:f8b0:4864:20::136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 29A59C061575
-        for <linux-rt-users@vger.kernel.org>; Sat, 21 Aug 2021 23:54:18 -0700 (PDT)
-Received: by mail-il1-x136.google.com with SMTP id v2so13957755ilg.12
-        for <linux-rt-users@vger.kernel.org>; Sat, 21 Aug 2021 23:54:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=bw5MEWjnKdkVXtnKDHViMdISNzvV+RAmBKX/6IZMj5g=;
-        b=jDly84dSEk9CkPqnaFxNmtH1dzzd5pa9i2vsnEjxKlIgbwmOWNz7bxEKwdbj1mr4nn
-         /6IJKVn70xsTlbd7e2kN3BwuR+utOEIgmvoFzrEq0R45VGpKS24fvZ0uKfFG1lvkbrqM
-         6+6ynfk89+6Z/R2C49mWSOryY/hTgEeJUY24tzIEBPpRyPlPuvgSo1GolWo8jHGGxJlv
-         WtjGPjtGanM5A7TfDETpVhchcw2AY/6UBV6DzujWowWEqoP/+kZ3kf9XpOFykK/kesLy
-         0+4LezQjERdBMjKEdZR151cOZ05PcG3JTp5FsMhWU0Onn/QOxJUjRdvK3Ev3LskY8o9t
-         Qung==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=bw5MEWjnKdkVXtnKDHViMdISNzvV+RAmBKX/6IZMj5g=;
-        b=oJY5Q6bqd+VfEgYyYQwI4B+2h+4QASQOLpyYEov7dxYpUnRaAAJLJusFgUdKy+P0sS
-         eCvsgvUCVwj5dpDjiTOVvIB8P2Ta6YxouP2IZC7BSPB8VnPpuaMW6sW3A87fbsWqHiLX
-         nW59Kvw5cssDg+Nba9Eg5iD2q9zIOUNqR0iP0urIYF3SMPC9p+TusTT4pJi+dv+afptr
-         vfwKCBrS7Xgfn6LO1NaJbVDK7UvoGwNsNFjpKJVXfzTscsVesGLglY4d1HMdGYq43Rjn
-         7k+BKK/CXUfWqenEYJzZEUgPHJpV4WluXz+Ln5v9s9JOET+l0fDOW3SEDlVljd0aLCpS
-         Jz8w==
-X-Gm-Message-State: AOAM53240f22KFHU7YacOntg8CiyJnoj4wMQ+ubJwhFsQCzA0RaII9Ed
-        5kp/9JjMdBKBVPW93cXwM97Au0seg1/zTaSORT4=
-X-Google-Smtp-Source: ABdhPJyazD8VLIW+r0xOMOKSL/o/MEnerhCnefaEVN3BNxtT9uNGfgK6UfgE1yeGweu5+S0Emn6vGDc46kBeAx09uB0=
-X-Received: by 2002:a05:6e02:1aa2:: with SMTP id l2mr11174528ilv.168.1629615256918;
- Sat, 21 Aug 2021 23:54:16 -0700 (PDT)
-MIME-Version: 1.0
-References: <CAFzL-7vTPxWeXbd4cUBpJ--CfYj6TiRp1E_BYWHTgzJtUYWCew@mail.gmail.com>
-In-Reply-To: <CAFzL-7vTPxWeXbd4cUBpJ--CfYj6TiRp1E_BYWHTgzJtUYWCew@mail.gmail.com>
-From:   Yafang Shao <laoar.shao@gmail.com>
-Date:   Sun, 22 Aug 2021 14:53:40 +0800
-Message-ID: <CALOAHbD+HwzXJMsmCxdqMyFod6f+a3ka4dW0nPHTcH1xDs9ZwQ@mail.gmail.com>
-Subject: Re: Re: Re: [PATCH v2 0/6] sched: support schedstats for RT sched class
-To:     Alison Chaiken <achaiken@aurora.tech>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Andrew Woods <awoods@aurora.tech>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@redhat.com>
+        Sun, 22 Aug 2021 12:36:41 -0400
+Received: from mout.gmx.net ([212.227.15.18]:51149 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229460AbhHVQgl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 22 Aug 2021 12:36:41 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1629650149;
+        bh=GvelHfGxIVkLHwCywJm2aTZySFriCd8Hy85ax3eiYxI=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=eDwLCgFSG6e1IzUmugjtgBKL9zTGGIRsA7dTgmcdce6nQjJNc2Ud0PRtKfo8//L/5
+         KwpW/KVnDg6w6P0RB1zvrvyqi/6jFn/WQhCqUsXKaapwDV/9MEpCWJhy8oP+X9PMvS
+         ETTp5Dy5QdjuKUnM3idYCUEcCKlDiO2/oWug+TCs=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.146.50.154]) by mail.gmx.net (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MTABZ-1mTYXC2KD9-00UbRa; Sun, 22
+ Aug 2021 18:35:49 +0200
+Message-ID: <34f1e1dadb2c3d19389427303da6ea53e321e726.camel@gmx.de>
+Subject: Re: [patch] kcsan: Make it RT aware
+From:   Mike Galbraith <efault@gmx.de>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Date:   Sun, 22 Aug 2021 18:35:48 +0200
+In-Reply-To: <dc0cb448d46f465bb0064b1c301cb0b3ab4f8492.camel@gmx.de>
+References: <dc0cb448d46f465bb0064b1c301cb0b3ab4f8492.camel@gmx.de>
 Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.40.3 
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Provags-ID: V03:K1:PgST/7K2g7VYk5ZBclV4STy/WWBXhaHwdQh230Aesee3PGf4kFL
+ 12PsETQZ1S5GiXP2Obi+iCezgvCS7iFdulmcPZLImxqm29StPlMrQJdq8QyjxpBRv8dQUPF
+ aoHRr4bNUvzb4sUAPJT6ABCMK149DIY6mG36sHDD8smZDU+ms2DAGdZ6jMPWkZdN5PDxxzT
+ YBKM7g4MBcCrteF7syNGw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:NzHLopz+RCM=:8cqkHWT1WtV/dqJbbm00jF
+ y1F9v6Dks7XBU0OPVzgo1e2LKOdJb+yE1izm2HDtdT9wGjLuyMWGWY+G1pmYmxHf83JlctQ0y
+ NTwPxvgVoWmyPsiuFEQYmOaW6rNIeHojyJt57ABU0yFtCiWT8PVUQ1smlzERG0JlwxErW8pyL
+ ILoMalTp2dFWroXvQsqHRoriF7tW0aqsbvCCpllVD5uxmpoFxX6FKkjFWu5H009giKsPx06jd
+ zzberXLykmtuzumpOosNXRrD8ap+o3oPtpqTm7z2KuCFL4ch2x0gYtzWVvvV0EH54ZSrhV4sh
+ Ye0oAv6rHntdFp4jwyDXeHgmVN77cWDmYNLqgWKqmMkhDrkR26hCKQbjygzQQivVl7bFiSXo/
+ h3oe5iNevY+zubUAr6lvVBJw2LXN5hMHSc6XUj8Pa1cobBzSp2h+txzCMs4h/+WGPxRY7h1s/
+ wuad5/mSKDBa/bmuOdZ/x00tFXyJ9TB43qRC6UPMuyOkCp/e3itdnxoUB+ooIeWXJtR66l5Zb
+ UcdXzBY+K9rolELd7bWv6A+1LcfT/A5wHYIC9x/s4uW47GVk1KFPT+y1jQM5Gb4MyK//WeSK+
+ MmO2jXFwEpbpCsnQBa9fSBwRD8Xfkn2vUctuM3+CuoXmWRZr7DL3ZPdRJXC4Mt5BswM61kD5p
+ KfLRK8ds4KW84VrStq1uVmNZL/6PQ4Ww0y9HDnlg0z6+CoMM5Q7d4cZdgv6XX8ZWNo6COLyyO
+ b/QFYEiVHe7dN5mK+O9StK3q4Ik0OttzDYjv4EczQKVyc+W/bnLKaqb8OSatei7dqPN1AgatN
+ OEnwxvoaR1uqBcMk1ya72/6V4MHVArslx0zYlDVv7GqJ5Wdn0qkeicAEQ7A2+eaY/UTZZBg5n
+ x7cirJfdFAqNVOm636du0oBCrJwrcvGsBq/FrfhCZR1z3RaguX1WLahnhglGN6jordzezvjLN
+ LaBc8Bp6042KHWpdBoCcsRjTpq7lxPj1xYL/4hueuiK8SKuSl/GIu6rQdPgWRYbqG+v0Kb5Dk
+ 8Eh+k6AR4zYaQep5skpY1dOLaOvT774a0sRqsJrWDWEk23eUTSpTNkVNyNcwQjvLwxsltMXMw
+ uSGtH/yCvNYRpTTbOJ2dlsQr49FkXWcKrDE
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Alison,
+On second thought, burn both patches.  Making K[AC]SAN work with RT
+ain't worth the warts.
 
+	-Mike
 
-On Sat, Aug 21, 2021 at 3:02 AM Alison Chaiken <achaiken@aurora.tech> wrote:
->
-> In https://lore.kernel.org/linux-rt-users/CALOAHbDZPo65Vc89sVCuYkJ6vr=zD-4ev=JN=j7ZAzKHzRibdA@mail.gmail.com/#t,
-> Yafang Shao <laoar.shao@gmail.com> proposed changes to schedstats that
-> would add support for RT-relevant schedulers to schedstats.  As far as
-> I can tell, these patches were neither merged nor explicitly rejected.
->   Is that correct?
-
-+ Peter, Ingo
-
-The scheduler maintainer didn't give any feedback on this patchset.
-Maybe they don't have any interest in it or they ignored it.
-
->  If mainline kernel has not accepted them, is
-> there any reason that linux-rt-devel should not?    Perhaps
-> linux-rt-devel wants to stop accepting patches that are not part of
-> mainline in preference for moving them to staging in anticipation of
-> becoming a pure-Kconfig option?
->
-
-I think the best way is to merge this patchset to the mainline kernel first.
-
-This feature can be disabled by setting  kernel.sched_schedstats to 0,
-so I don't think we need to add a new option for RT schedstats.
-
-I will refresh this patchset and resend it again.  Hope the maintainer
-can give some feedback on it.
-
--- 
-Thanks
-Yafang
