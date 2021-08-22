@@ -4,27 +4,27 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 749FEC432BE
-	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 17:31:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E4019C432BE
+	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 18:14:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5037B61261
-	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 17:31:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BEA146125F
+	for <linux-rt-users@archiver.kernel.org>; Sun, 22 Aug 2021 18:14:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230245AbhHVRcC (ORCPT
+        id S231465AbhHVSPG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 22 Aug 2021 13:32:02 -0400
-Received: from foss.arm.com ([217.140.110.172]:45634 "EHLO foss.arm.com"
+        Sun, 22 Aug 2021 14:15:06 -0400
+Received: from foss.arm.com ([217.140.110.172]:45796 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229460AbhHVRcB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 22 Aug 2021 13:32:01 -0400
+        id S230245AbhHVSPF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 22 Aug 2021 14:15:05 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 32E411042;
-        Sun, 22 Aug 2021 10:31:20 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id F299F1042;
+        Sun, 22 Aug 2021 11:14:23 -0700 (PDT)
 Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 335B33F5A1;
-        Sun, 22 Aug 2021 10:31:17 -0700 (PDT)
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id F31053F5A1;
+        Sun, 22 Aug 2021 11:14:20 -0700 (PDT)
 From:   Valentin Schneider <valentin.schneider@arm.com>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
@@ -49,17 +49,17 @@ Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         Boqun Feng <boqun.feng@gmail.com>,
         Mike Galbraith <efault@gmx.de>
 Subject: Re: [PATCH v3 2/4] sched: Introduce migratable()
-In-Reply-To: <20210817144348.kkgoytuz3766jeoz@linutronix.de>
-References: <20210811201354.1976839-1-valentin.schneider@arm.com> <20210811201354.1976839-3-valentin.schneider@arm.com> <20210817144348.kkgoytuz3766jeoz@linutronix.de>
-Date:   Sun, 22 Aug 2021 18:31:11 +0100
-Message-ID: <87h7fh75eo.mognet@arm.com>
+In-Reply-To: <20210817170925.2jwqvgvmqab2glwu@linutronix.de>
+References: <20210811201354.1976839-1-valentin.schneider@arm.com> <20210811201354.1976839-3-valentin.schneider@arm.com> <20210817170925.2jwqvgvmqab2glwu@linutronix.de>
+Date:   Sun, 22 Aug 2021 19:14:18 +0100
+Message-ID: <87czq573et.mognet@arm.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 17/08/21 16:43, Sebastian Andrzej Siewior wrote:
+On 17/08/21 19:09, Sebastian Andrzej Siewior wrote:
 > On 2021-08-11 21:13:52 [+0100], Valentin Schneider wrote:
 >> diff --git a/include/linux/sched.h b/include/linux/sched.h
 >> index debc960f41e3..8ba7b4a7ee69 100644
@@ -71,13 +71,11 @@ On 17/08/21 16:43, Sebastian Andrzej Siewior wrote:
 >>
 >> +/* Is the current task guaranteed to stay on its current CPU? */
 >> +static inline bool migratable(void)
->> +{
->> +#ifdef CONFIG_SMP
->> +	return preemptible() && !current->migration_disabled;
->> +#else
->> +	return true;
 >
-> shouldn't this be false in the UP case?
->
+> I'm going to rename this in my tree to `is_migratable' because of
 
-Yes indeed, forgot to flip that one when inverting the logic.
+<snip>
+
+Thanks for carrying it through, I'll keep that change for the next version.
+
+> Sebastian
