@@ -8,56 +8,56 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49854C432BE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8223FC432BE
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2F56C61184
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6928E613AD
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236880AbhHXLbA (ORCPT
+        id S236858AbhHXLbH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 24 Aug 2021 07:31:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35530 "EHLO
+        Tue, 24 Aug 2021 07:31:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35558 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236850AbhHXLa5 (ORCPT
+        with ESMTP id S236900AbhHXLbB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 24 Aug 2021 07:30:57 -0400
-Received: from mail-pf1-x431.google.com (mail-pf1-x431.google.com [IPv6:2607:f8b0:4864:20::431])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 63F2FC061764;
-        Tue, 24 Aug 2021 04:30:13 -0700 (PDT)
-Received: by mail-pf1-x431.google.com with SMTP id j187so18075482pfg.4;
-        Tue, 24 Aug 2021 04:30:13 -0700 (PDT)
+        Tue, 24 Aug 2021 07:31:01 -0400
+Received: from mail-pg1-x52c.google.com (mail-pg1-x52c.google.com [IPv6:2607:f8b0:4864:20::52c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EBB91C061796;
+        Tue, 24 Aug 2021 04:30:16 -0700 (PDT)
+Received: by mail-pg1-x52c.google.com with SMTP id n18so19498459pgm.12;
+        Tue, 24 Aug 2021 04:30:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=3Z/mcAy0AwiMUi0p/QTC0GnZiW2ukvf/TDSTvscZh4g=;
-        b=fWGzZmB2V5fJVKJv2PVaan7zHWI+8TWC8cTiV5HibtIABww1Hlx1mO9TQRrDWfc//J
-         mIdfg2K6z3SlLu3uMqFYWSpDaCOSZxj9QM3SrmcjmmAmAJgNKY+vJy+hwm2PKeBY1wuG
-         NMDiVtylNkNwtnxDnL80ve950a+9lOlrdKQrJgjBSZujGqNjXNC/W7nZAtFjlx6Z7Mw9
-         A8WVXAosSDWGQPm9UvOqTcHdtMibCIpcXIrM0E0T3n7k3oXAPBwld5e2aKLri+R4kANe
-         vQpW2PxB+7d2cP8JhJlUzATGETU9pYm9s1/bWcMYGXMpMUxZBifcATqzxLdHG7huUmc3
-         FR+Q==
+        bh=4DXvdN5Je/o6na7RsjQfMKd0MSHmdj3a0FLf0NHnXF4=;
+        b=I7nz3ZSdlWOuLXhdOJF5Rx2EBPYnF9BmEI6gv4sNYvnUeRm2nt4sZK9hzxrP70k2ce
+         4/iWIKrJdeE/drPzVX3a95aKmVF6IR7MEJzgTCeVZ5RVlyfFX6EN3I/KFrLjFKiRrWfI
+         uGgYPIpbA3yYFrMsmOG3/TuVecfuHxjQCxCy0MsnDCBKxy5r5s8YpBudpYLnexi+t6DB
+         f07Acbp+GhXSwZZYwbr6ai93Syc6nDXdQc/uS0Y0bIeg1V8zyGDBLxetYPPy6GbZyZB0
+         sHnBphE9U1nECcLG3o/vM1B3jaDcMjAD3WeliGlSydf8HGkmPRmi2Lh6jmcK3gONOKtq
+         G8uA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=3Z/mcAy0AwiMUi0p/QTC0GnZiW2ukvf/TDSTvscZh4g=;
-        b=bPMT2raKPuGO4inuuwarDQNPZoqwSwy34/XYhQLLVpjyo5cAi+blSE3lKxGD2nK2R4
-         On4gnicVhz0qzTd1tM7UzSaKTKWNgcVOraTbrc1iGu7bCo1qDW2VK8188eYXd5G4MxNv
-         gmP0QmFvv2Mjp+9bJJHjaWvMlskTuT/zhPA70L7QLVLXFa8i5GgEcmJmRyc0jOZjR52f
-         MBBRPDBvNgXGbN8JXhZoskrVFJSBN1Zf3+ZwlGwMWhr03cJT1KRSDnY86CBPGWoj86Ig
-         0XWC5pxt/RoKc369BcHs6LKMVUB1MFJ2m1odKx7NPK2eVclwLyDUvonCQajVCuaz/M1y
-         bITg==
-X-Gm-Message-State: AOAM533L0xx80ysDE4ZGENKRCqv3VuQxQypQumpIbAa3sxAS9WIrp7nD
-        43HPT4kzYLPfsXc2BasGWBA=
-X-Google-Smtp-Source: ABdhPJx7q6DYUPXPo7wmC9La9yOcbba+MOoCx3CxVmU4jxXAwbKJcH3XxOsoTgLpqD13zSWrbjsImg==
-X-Received: by 2002:a65:51c8:: with SMTP id i8mr32730434pgq.451.1629804612995;
-        Tue, 24 Aug 2021 04:30:12 -0700 (PDT)
+        bh=4DXvdN5Je/o6na7RsjQfMKd0MSHmdj3a0FLf0NHnXF4=;
+        b=kF6nrHUiC32MwQjjhsGMrFg3jf51L1ox1Sob0LN1mTZoalj+aO2bqCJSqdLuvXAVFY
+         lAL/tkfYE+qlPv7uvTQS+cmfD4dwnp+kqYmOigEQmLohhlxg0x/1nuMZC16YuFCJT9At
+         HtoS0r7sAqxFJb9oFOoLA2m4kR2/s6lRx6j4YouetpFfPKc2d0VCxdajwa5wcmZXB2H3
+         2Jj63oa7jTKOqkD0CN4XQNkQ7t7v5VkTS3zT+fUDSl74XZaHUqNtlbnRMvT4xERSrTfw
+         yg1KNpb6aYJ9I0TOiaig+9oKyX26U0RbBPjEADaWDGMhOLibalnsWRiQ3f1i7K7iJiP2
+         eIsA==
+X-Gm-Message-State: AOAM530wIlzJFnRsYSDbolq3WQe1tqb/p3pcm5jmxm9hwNOAZ7/iTi4m
+        ReznOrKpBtPfaeAxLpsAXL0=
+X-Google-Smtp-Source: ABdhPJyzzTBIL+jiF5xnCWqZrkKm1d6RGJcuN/f5Irydngr6YM57xdtPP4wUqconoQ5HUErbXT0KOA==
+X-Received: by 2002:a65:5a89:: with SMTP id c9mr36569268pgt.274.1629804616302;
+        Tue, 24 Aug 2021 04:30:16 -0700 (PDT)
 Received: from localhost.localdomain ([45.77.24.247])
-        by smtp.gmail.com with ESMTPSA id on15sm2128732pjb.19.2021.08.24.04.30.09
+        by smtp.gmail.com with ESMTPSA id on15sm2128732pjb.19.2021.08.24.04.30.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Aug 2021 04:30:12 -0700 (PDT)
+        Tue, 24 Aug 2021 04:30:15 -0700 (PDT)
 From:   Yafang Shao <laoar.shao@gmail.com>
 To:     mingo@redhat.com, peterz@infradead.org, mgorman@suse.de,
         juri.lelli@redhat.com, vincent.guittot@linaro.org,
@@ -65,9 +65,9 @@ To:     mingo@redhat.com, peterz@infradead.org, mgorman@suse.de,
         bristot@redhat.com, achaiken@aurora.tech
 Cc:     lkp@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org, Yafang Shao <laoar.shao@gmail.com>
-Subject: [PATCH v3 5/7] sched: introduce task block time in schedstats
-Date:   Tue, 24 Aug 2021 11:29:44 +0000
-Message-Id: <20210824112946.9324-6-laoar.shao@gmail.com>
+Subject: [PATCH v3 6/7] sched, rt: support sched_stat_runtime tracepoint for RT sched class
+Date:   Tue, 24 Aug 2021 11:29:45 +0000
+Message-Id: <20210824112946.9324-7-laoar.shao@gmail.com>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20210824112946.9324-1-laoar.shao@gmail.com>
 References: <20210824112946.9324-1-laoar.shao@gmail.com>
@@ -77,73 +77,38 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Currently in schedstats we have sum_sleep_runtime and iowait_sum, but
-there's no metric to show how long the task is in D state.  Once a task in
-D state, it means the task is blocked in the kernel, for example the
-task may be waiting for a mutex. The D state is more frequent than
-iowait, and it is more critital than S state. So it is worth to add a
-metric to measure it.
+The runtime of a RT task has already been there, so we only need to
+add a tracepoint.
+
+One difference between fair task and RT task is that there is no vruntime
+in RT task. To reuse the sched_stat_runtime tracepoint, '0' is passed as
+vruntime for RT task.
+
+The output of this tracepoint for RT task as follows,
+          stress-9748    [039] d.h.   113.519352: sched_stat_runtime: comm=stress pid=9748 runtime=997573 [ns] vruntime=0 [ns]
+          stress-9748    [039] d.h.   113.520352: sched_stat_runtime: comm=stress pid=9748 runtime=997627 [ns] vruntime=0 [ns]
+          stress-9748    [039] d.h.   113.521352: sched_stat_runtime: comm=stress pid=9748 runtime=998203 [ns] vruntime=0 [ns]
 
 Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
 Cc: Mel Gorman <mgorman@suse.de>
 Cc: Alison Chaiken <achaiken@aurora.tech>
 ---
- include/linux/sched.h | 2 ++
- kernel/sched/debug.c  | 6 ++++--
- kernel/sched/stats.c  | 1 +
- 3 files changed, 7 insertions(+), 2 deletions(-)
+ kernel/sched/rt.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 39c29eae1af9..7888ad8384ba 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -502,6 +502,8 @@ struct sched_statistics {
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 95a7c3ad2dc3..5d251112e51c 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -1012,6 +1012,8 @@ static void update_curr_rt(struct rq *rq)
+ 	schedstat_set(curr->stats.exec_max,
+ 		      max(curr->stats.exec_max, delta_exec));
  
- 	u64				block_start;
- 	u64				block_max;
-+	s64				sum_block_runtime;
++	trace_sched_stat_runtime(curr, delta_exec, 0);
 +
- 	u64				exec_max;
- 	u64				slice_max;
+ 	curr->se.sum_exec_runtime += delta_exec;
+ 	account_group_exec_runtime(curr, delta_exec);
  
-diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
-index 705987aed658..5c6bc3f373f0 100644
---- a/kernel/sched/debug.c
-+++ b/kernel/sched/debug.c
-@@ -560,10 +560,11 @@ print_task(struct seq_file *m, struct rq *rq, struct task_struct *p)
- 		(long long)(p->nvcsw + p->nivcsw),
- 		p->prio);
- 
--	SEQ_printf(m, "%9Ld.%06ld %9Ld.%06ld %9Ld.%06ld",
-+	SEQ_printf(m, "%9lld.%06ld %9lld.%06ld %9lld.%06ld %9lld.%06ld",
- 		SPLIT_NS(schedstat_val_or_zero(p->stats.wait_sum)),
- 		SPLIT_NS(p->se.sum_exec_runtime),
--		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_sleep_runtime)));
-+		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_sleep_runtime)),
-+		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_block_runtime)));
- 
- #ifdef CONFIG_NUMA_BALANCING
- 	SEQ_printf(m, " %d %d", task_node(p), task_numa_group_id(p));
-@@ -995,6 +996,7 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
- 		u64 avg_atom, avg_per_cpu;
- 
- 		PN_SCHEDSTAT(sum_sleep_runtime);
-+		PN_SCHEDSTAT(sum_block_runtime);
- 		PN_SCHEDSTAT(wait_start);
- 		PN_SCHEDSTAT(sleep_start);
- 		PN_SCHEDSTAT(block_start);
-diff --git a/kernel/sched/stats.c b/kernel/sched/stats.c
-index b2542f4d3192..21fae41c06f5 100644
---- a/kernel/sched/stats.c
-+++ b/kernel/sched/stats.c
-@@ -82,6 +82,7 @@ void __update_stats_enqueue_sleeper(struct rq *rq, struct task_struct *p,
- 
- 		__schedstat_set(stats->block_start, 0);
- 		__schedstat_add(stats->sum_sleep_runtime, delta);
-+		__schedstat_add(stats->sum_block_runtime, delta);
- 
- 		if (p) {
- 			if (p->in_iowait) {
 -- 
 2.18.2
 
