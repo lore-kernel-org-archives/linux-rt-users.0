@@ -8,56 +8,56 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A989C432BE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49854C432BE
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 04DD76135F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2F56C61184
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236781AbhHXLa5 (ORCPT
+        id S236880AbhHXLbA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 24 Aug 2021 07:30:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35492 "EHLO
+        Tue, 24 Aug 2021 07:31:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35530 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236758AbhHXLav (ORCPT
+        with ESMTP id S236850AbhHXLa5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 24 Aug 2021 07:30:51 -0400
-Received: from mail-pj1-x102a.google.com (mail-pj1-x102a.google.com [IPv6:2607:f8b0:4864:20::102a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 207F1C0613C1;
-        Tue, 24 Aug 2021 04:30:07 -0700 (PDT)
-Received: by mail-pj1-x102a.google.com with SMTP id ot2-20020a17090b3b4200b0019127f8ed87so1789473pjb.1;
-        Tue, 24 Aug 2021 04:30:07 -0700 (PDT)
+        Tue, 24 Aug 2021 07:30:57 -0400
+Received: from mail-pf1-x431.google.com (mail-pf1-x431.google.com [IPv6:2607:f8b0:4864:20::431])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 63F2FC061764;
+        Tue, 24 Aug 2021 04:30:13 -0700 (PDT)
+Received: by mail-pf1-x431.google.com with SMTP id j187so18075482pfg.4;
+        Tue, 24 Aug 2021 04:30:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=loaHRPIeGMQ85RfdiGbBupQ4rNWPYRIhgiocTz7Ohw0=;
-        b=RozjAPdqYcxTPkcccB5tlH5cMKiRP4PA5xEDXzMGAAbo7nfb451s4hEngMgCpqjvsT
-         VIon9/xtLe8mGGwZk0SsYxkuVHBXatdLtQAE3xiMsaRRPu2olzaMXmj6ZOgj8KkLVATr
-         p+iNsFlGszNa+2SOkYlGQBLTJq9qu9Vy9BXjNuTYRZv53GsQsuhAXIK0Ggxnt4CZdCsC
-         ARvBoryVHjGJqn+zBFjOFi2Ob23IKAWtXG3LMqsLPXad+I2S0W0xxKX89lrCFXjvQsA6
-         KyUu1EfcNo1GV6pXzXsrB9VJmX/Pa4x+C+lVKniQqCTq4jHxC08JYVJZEmB9qqIPVRCO
-         QbjA==
+        bh=3Z/mcAy0AwiMUi0p/QTC0GnZiW2ukvf/TDSTvscZh4g=;
+        b=fWGzZmB2V5fJVKJv2PVaan7zHWI+8TWC8cTiV5HibtIABww1Hlx1mO9TQRrDWfc//J
+         mIdfg2K6z3SlLu3uMqFYWSpDaCOSZxj9QM3SrmcjmmAmAJgNKY+vJy+hwm2PKeBY1wuG
+         NMDiVtylNkNwtnxDnL80ve950a+9lOlrdKQrJgjBSZujGqNjXNC/W7nZAtFjlx6Z7Mw9
+         A8WVXAosSDWGQPm9UvOqTcHdtMibCIpcXIrM0E0T3n7k3oXAPBwld5e2aKLri+R4kANe
+         vQpW2PxB+7d2cP8JhJlUzATGETU9pYm9s1/bWcMYGXMpMUxZBifcATqzxLdHG7huUmc3
+         FR+Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=loaHRPIeGMQ85RfdiGbBupQ4rNWPYRIhgiocTz7Ohw0=;
-        b=D+EULhTado7jspa2qny9u89PsQLciq4oyCwZRv+HXiqOV5rhv9wbUpBoNyQ0hpO+FK
-         5kKAGV3JgBlDZbAptzOv/xhuPIRuTS55PTQFFeFbTvtYDdr7OGxL1ScVC7/1QiK8abgM
-         JOuShn6w2Bu8afMd/HxQGVsgzVN834kmVsy5QYmpLDg3UObYHsBMBnLZWoA5zRYXhBSR
-         GyDCumj1fWTVLfuR41he6agnh83JGTii+V05R/nSGX9cjz+ANpAFIOxJHI6JFqx2uGBI
-         6qpsAkuhJ3YkFudMEZe4QmDK8gOe6UadLd1GYfllWz0nJs7f01ya4P6pneLOlpw7SK8Z
-         r1Tw==
-X-Gm-Message-State: AOAM5316yDPdIj9SH5pfdIlCwY/xXD6JMyD3cIs5R1uC6FhK5lJTn4IE
-        GOxDi1aATW2GKg/0V00DqVA=
-X-Google-Smtp-Source: ABdhPJxvjWX46x4kygxVTfwj44zFSHdc78EduREFtGcBVQENQ/1UYhCD8U45UZ3IY2/ReaREQw6+5A==
-X-Received: by 2002:a17:902:a40c:b029:12c:17cf:ab6f with SMTP id p12-20020a170902a40cb029012c17cfab6fmr32665043plq.71.1629804606190;
-        Tue, 24 Aug 2021 04:30:06 -0700 (PDT)
+        bh=3Z/mcAy0AwiMUi0p/QTC0GnZiW2ukvf/TDSTvscZh4g=;
+        b=bPMT2raKPuGO4inuuwarDQNPZoqwSwy34/XYhQLLVpjyo5cAi+blSE3lKxGD2nK2R4
+         On4gnicVhz0qzTd1tM7UzSaKTKWNgcVOraTbrc1iGu7bCo1qDW2VK8188eYXd5G4MxNv
+         gmP0QmFvv2Mjp+9bJJHjaWvMlskTuT/zhPA70L7QLVLXFa8i5GgEcmJmRyc0jOZjR52f
+         MBBRPDBvNgXGbN8JXhZoskrVFJSBN1Zf3+ZwlGwMWhr03cJT1KRSDnY86CBPGWoj86Ig
+         0XWC5pxt/RoKc369BcHs6LKMVUB1MFJ2m1odKx7NPK2eVclwLyDUvonCQajVCuaz/M1y
+         bITg==
+X-Gm-Message-State: AOAM533L0xx80ysDE4ZGENKRCqv3VuQxQypQumpIbAa3sxAS9WIrp7nD
+        43HPT4kzYLPfsXc2BasGWBA=
+X-Google-Smtp-Source: ABdhPJx7q6DYUPXPo7wmC9La9yOcbba+MOoCx3CxVmU4jxXAwbKJcH3XxOsoTgLpqD13zSWrbjsImg==
+X-Received: by 2002:a65:51c8:: with SMTP id i8mr32730434pgq.451.1629804612995;
+        Tue, 24 Aug 2021 04:30:12 -0700 (PDT)
 Received: from localhost.localdomain ([45.77.24.247])
-        by smtp.gmail.com with ESMTPSA id on15sm2128732pjb.19.2021.08.24.04.30.02
+        by smtp.gmail.com with ESMTPSA id on15sm2128732pjb.19.2021.08.24.04.30.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Aug 2021 04:30:05 -0700 (PDT)
+        Tue, 24 Aug 2021 04:30:12 -0700 (PDT)
 From:   Yafang Shao <laoar.shao@gmail.com>
 To:     mingo@redhat.com, peterz@infradead.org, mgorman@suse.de,
         juri.lelli@redhat.com, vincent.guittot@linaro.org,
@@ -65,9 +65,9 @@ To:     mingo@redhat.com, peterz@infradead.org, mgorman@suse.de,
         bristot@redhat.com, achaiken@aurora.tech
 Cc:     lkp@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org, Yafang Shao <laoar.shao@gmail.com>
-Subject: [PATCH v3 3/7] sched: make schedstats helpers independent of fair sched class
-Date:   Tue, 24 Aug 2021 11:29:42 +0000
-Message-Id: <20210824112946.9324-4-laoar.shao@gmail.com>
+Subject: [PATCH v3 5/7] sched: introduce task block time in schedstats
+Date:   Tue, 24 Aug 2021 11:29:44 +0000
+Message-Id: <20210824112946.9324-6-laoar.shao@gmail.com>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20210824112946.9324-1-laoar.shao@gmail.com>
 References: <20210824112946.9324-1-laoar.shao@gmail.com>
@@ -77,476 +77,73 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The original prototype of the schedstats helpers are
-
-update_stats_wait_*(struct cfs_rq *cfs_rq, struct sched_entity *se)
-
-The cfs_rq in these helpers is used to get the rq_clock, and the se is
-used to get the struct sched_statistics and the struct task_struct. In
-order to make these helpers available by all sched classes, we can pass
-the rq, sched_statistics and task_struct directly.
-
-Then the new helpers are
-
-update_stats_wait_*(struct rq *rq, struct task_struct *p,
-                    struct sched_statistics *stats)
-
-which are independent of fair sched class.
-
-To avoid vmlinux growing too large or introducing ovehead when
-!schedstat_enabled(), some new helpers after schedstat_enabled() are also
-introduced, Suggested by Mel. These helpers are in sched/stats.c,
-
-__update_stats_wait_*(struct rq *rq, struct task_struct *p,
-                      struct sched_statistics *stats)
-
-The size of vmlinux as follows,
-                      Before          After
-  Size of vmlinux     826308552       826304640
-The size is a litte smaller as some functions are not inlined again after
-the change.
-
-I also compared the sched performance with 'perf bench sched pipe',
-suggested by Mel. The result as follows,
-                             Before               After
-  kernel.sched_schedstats=0  ~5.6                 ~5.6
-  kernel.sched_schedstats=1  ~5.7                 ~5.7
-[These data is a little difference with the prev version, that is
-because my old test machine is destroyed so I have to use a new
-different test machine.]
-Almost no difference.
-
-No functional change.
-
-[lkp@intel.com: reported build failure in prev version]
+Currently in schedstats we have sum_sleep_runtime and iowait_sum, but
+there's no metric to show how long the task is in D state.  Once a task in
+D state, it means the task is blocked in the kernel, for example the
+task may be waiting for a mutex. The D state is more frequent than
+iowait, and it is more critital than S state. So it is worth to add a
+metric to measure it.
 
 Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
-Acked-by: Mel Gorman <mgorman@suse.de>
-Cc: kernel test robot <lkp@intel.com>
+Cc: Mel Gorman <mgorman@suse.de>
 Cc: Alison Chaiken <achaiken@aurora.tech>
 ---
- kernel/sched/fair.c  | 133 +++++++------------------------------------
- kernel/sched/stats.c | 103 +++++++++++++++++++++++++++++++++
- kernel/sched/stats.h |  34 +++++++++++
- 3 files changed, 156 insertions(+), 114 deletions(-)
+ include/linux/sched.h | 2 ++
+ kernel/sched/debug.c  | 6 ++++--
+ kernel/sched/stats.c  | 1 +
+ 3 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 7cb802431cfe..1324000c78bb 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -902,32 +902,28 @@ static void update_curr_fair(struct rq *rq)
- }
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 39c29eae1af9..7888ad8384ba 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -502,6 +502,8 @@ struct sched_statistics {
  
- static inline void
--update_stats_wait_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
-+update_stats_wait_start_fair(struct cfs_rq *cfs_rq, struct sched_entity *se)
- {
- 	struct sched_statistics *stats = NULL;
--	u64 wait_start, prev_wait_start;
-+	struct task_struct *p = NULL;
+ 	u64				block_start;
+ 	u64				block_max;
++	s64				sum_block_runtime;
++
+ 	u64				exec_max;
+ 	u64				slice_max;
  
- 	if (!schedstat_enabled())
- 		return;
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 705987aed658..5c6bc3f373f0 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -560,10 +560,11 @@ print_task(struct seq_file *m, struct rq *rq, struct task_struct *p)
+ 		(long long)(p->nvcsw + p->nivcsw),
+ 		p->prio);
  
- 	__schedstats_from_sched_entity(se, &stats);
+-	SEQ_printf(m, "%9Ld.%06ld %9Ld.%06ld %9Ld.%06ld",
++	SEQ_printf(m, "%9lld.%06ld %9lld.%06ld %9lld.%06ld %9lld.%06ld",
+ 		SPLIT_NS(schedstat_val_or_zero(p->stats.wait_sum)),
+ 		SPLIT_NS(p->se.sum_exec_runtime),
+-		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_sleep_runtime)));
++		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_sleep_runtime)),
++		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_block_runtime)));
  
--	wait_start = rq_clock(rq_of(cfs_rq));
--	prev_wait_start = schedstat_val(stats->wait_start);
-+	if (entity_is_task(se))
-+		p = task_of(se);
+ #ifdef CONFIG_NUMA_BALANCING
+ 	SEQ_printf(m, " %d %d", task_node(p), task_numa_group_id(p));
+@@ -995,6 +996,7 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
+ 		u64 avg_atom, avg_per_cpu;
  
--	if (entity_is_task(se) && task_on_rq_migrating(task_of(se)) &&
--	    likely(wait_start > prev_wait_start))
--		wait_start -= prev_wait_start;
-+	__update_stats_wait_start(rq_of(cfs_rq), p, stats);
- 
--	__schedstat_set(stats->wait_start, wait_start);
- }
- 
- static inline void
--update_stats_wait_end(struct cfs_rq *cfs_rq, struct sched_entity *se)
-+update_stats_wait_end_fair(struct cfs_rq *cfs_rq, struct sched_entity *se)
- {
- 	struct sched_statistics *stats = NULL;
- 	struct task_struct *p = NULL;
--	u64 delta;
- 
- 	if (!schedstat_enabled())
- 		return;
-@@ -943,105 +939,34 @@ update_stats_wait_end(struct cfs_rq *cfs_rq, struct sched_entity *se)
- 	if (unlikely(!schedstat_val(stats->wait_start)))
- 		return;
- 
--	delta = rq_clock(rq_of(cfs_rq)) - schedstat_val(stats->wait_start);
--
--	if (entity_is_task(se)) {
-+	if (entity_is_task(se))
- 		p = task_of(se);
--		if (task_on_rq_migrating(p)) {
--			/*
--			 * Preserve migrating task's wait time so wait_start
--			 * time stamp can be adjusted to accumulate wait time
--			 * prior to migration.
--			 */
--			__schedstat_set(stats->wait_start, delta);
--			return;
--		}
--		trace_sched_stat_wait(p, delta);
--	}
- 
--	__schedstat_set(stats->wait_max,
--		      max(schedstat_val(stats->wait_max), delta));
--	__schedstat_inc(stats->wait_count);
--	__schedstat_add(stats->wait_sum, delta);
--	__schedstat_set(stats->wait_start, 0);
-+	__update_stats_wait_end(rq_of(cfs_rq), p, stats);
- }
- 
- static inline void
--update_stats_enqueue_sleeper(struct cfs_rq *cfs_rq, struct sched_entity *se)
-+update_stats_enqueue_sleeper_fair(struct cfs_rq *cfs_rq, struct sched_entity *se)
- {
- 	struct sched_statistics *stats = NULL;
- 	struct task_struct *tsk = NULL;
--	u64 sleep_start, block_start;
- 
- 	if (!schedstat_enabled())
- 		return;
- 
- 	__schedstats_from_sched_entity(se, &stats);
- 
--	sleep_start = schedstat_val(stats->sleep_start);
--	block_start = schedstat_val(stats->block_start);
--
- 	if (entity_is_task(se))
- 		tsk = task_of(se);
- 
--	if (sleep_start) {
--		u64 delta = rq_clock(rq_of(cfs_rq)) - sleep_start;
--
--		if ((s64)delta < 0)
--			delta = 0;
--
--		if (unlikely(delta > schedstat_val(stats->sleep_max)))
--			__schedstat_set(stats->sleep_max, delta);
--
--		__schedstat_set(stats->sleep_start, 0);
--		__schedstat_add(stats->sum_sleep_runtime, delta);
--
--		if (tsk) {
--			account_scheduler_latency(tsk, delta >> 10, 1);
--			trace_sched_stat_sleep(tsk, delta);
--		}
--	}
--	if (block_start) {
--		u64 delta = rq_clock(rq_of(cfs_rq)) - block_start;
--
--		if ((s64)delta < 0)
--			delta = 0;
--
--		if (unlikely(delta > schedstat_val(stats->block_max)))
--			__schedstat_set(stats->block_max, delta);
--
--		__schedstat_set(stats->block_start, 0);
--		__schedstat_add(stats->sum_sleep_runtime, delta);
--
--		if (tsk) {
--			if (tsk->in_iowait) {
--				__schedstat_add(stats->iowait_sum, delta);
--				__schedstat_inc(stats->iowait_count);
--				trace_sched_stat_iowait(tsk, delta);
--			}
--
--			trace_sched_stat_blocked(tsk, delta);
--
--			/*
--			 * Blocking time is in units of nanosecs, so shift by
--			 * 20 to get a milliseconds-range estimation of the
--			 * amount of time that the task spent sleeping:
--			 */
--			if (unlikely(prof_on == SLEEP_PROFILING)) {
--				profile_hits(SLEEP_PROFILING,
--						(void *)get_wchan(tsk),
--						delta >> 20);
--			}
--			account_scheduler_latency(tsk, delta >> 10, 0);
--		}
--	}
-+	__update_stats_enqueue_sleeper(rq_of(cfs_rq), tsk, stats);
- }
- 
- /*
-  * Task is being enqueued - update stats:
-  */
- static inline void
--update_stats_enqueue(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
-+update_stats_enqueue_fair(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- {
- 	if (!schedstat_enabled())
- 		return;
-@@ -1051,14 +976,14 @@ update_stats_enqueue(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- 	 * a dequeue/enqueue event is a NOP)
- 	 */
- 	if (se != cfs_rq->curr)
--		update_stats_wait_start(cfs_rq, se);
-+		update_stats_wait_start_fair(cfs_rq, se);
- 
- 	if (flags & ENQUEUE_WAKEUP)
--		update_stats_enqueue_sleeper(cfs_rq, se);
-+		update_stats_enqueue_sleeper_fair(cfs_rq, se);
- }
- 
- static inline void
--update_stats_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
-+update_stats_dequeue_fair(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- {
- 
- 	if (!schedstat_enabled())
-@@ -1069,7 +994,7 @@ update_stats_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- 	 * waiting task:
- 	 */
- 	if (se != cfs_rq->curr)
--		update_stats_wait_end(cfs_rq, se);
-+		update_stats_wait_end_fair(cfs_rq, se);
- 
- 	if ((flags & DEQUEUE_SLEEP) && entity_is_task(se)) {
- 		struct task_struct *tsk = task_of(se);
-@@ -4273,26 +4198,6 @@ place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int initial)
- 
- static void check_enqueue_throttle(struct cfs_rq *cfs_rq);
- 
--static inline void check_schedstat_required(void)
--{
--#ifdef CONFIG_SCHEDSTATS
--	if (schedstat_enabled())
--		return;
--
--	/* Force schedstat enabled if a dependent tracepoint is active */
--	if (trace_sched_stat_wait_enabled()    ||
--			trace_sched_stat_sleep_enabled()   ||
--			trace_sched_stat_iowait_enabled()  ||
--			trace_sched_stat_blocked_enabled() ||
--			trace_sched_stat_runtime_enabled())  {
--		printk_deferred_once("Scheduler tracepoints stat_sleep, stat_iowait, "
--			     "stat_blocked and stat_runtime require the "
--			     "kernel parameter schedstats=enable or "
--			     "kernel.sched_schedstats=1\n");
--	}
--#endif
--}
--
- static inline bool cfs_bandwidth_used(void);
- 
- /*
-@@ -4366,7 +4271,7 @@ enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- 		place_entity(cfs_rq, se, 0);
- 
- 	check_schedstat_required();
--	update_stats_enqueue(cfs_rq, se, flags);
-+	update_stats_enqueue_fair(cfs_rq, se, flags);
- 	check_spread(cfs_rq, se);
- 	if (!curr)
- 		__enqueue_entity(cfs_rq, se);
-@@ -4450,7 +4355,7 @@ dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
- 	update_load_avg(cfs_rq, se, UPDATE_TG);
- 	se_update_runnable(se);
- 
--	update_stats_dequeue(cfs_rq, se, flags);
-+	update_stats_dequeue_fair(cfs_rq, se, flags);
- 
- 	clear_buddies(cfs_rq, se);
- 
-@@ -4537,7 +4442,7 @@ set_next_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
- 		 * a CPU. So account for the time it spent waiting on the
- 		 * runqueue.
- 		 */
--		update_stats_wait_end(cfs_rq, se);
-+		update_stats_wait_end_fair(cfs_rq, se);
- 		__dequeue_entity(cfs_rq, se);
- 		update_load_avg(cfs_rq, se, UPDATE_TG);
- 	}
-@@ -4637,7 +4542,7 @@ static void put_prev_entity(struct cfs_rq *cfs_rq, struct sched_entity *prev)
- 	check_spread(cfs_rq, prev);
- 
- 	if (prev->on_rq) {
--		update_stats_wait_start(cfs_rq, prev);
-+		update_stats_wait_start_fair(cfs_rq, prev);
- 		/* Put 'current' back into the tree. */
- 		__enqueue_entity(cfs_rq, prev);
- 		/* in !on_rq case, update occurred at dequeue */
+ 		PN_SCHEDSTAT(sum_sleep_runtime);
++		PN_SCHEDSTAT(sum_block_runtime);
+ 		PN_SCHEDSTAT(wait_start);
+ 		PN_SCHEDSTAT(sleep_start);
+ 		PN_SCHEDSTAT(block_start);
 diff --git a/kernel/sched/stats.c b/kernel/sched/stats.c
-index 3f93fc3b5648..b2542f4d3192 100644
+index b2542f4d3192..21fae41c06f5 100644
 --- a/kernel/sched/stats.c
 +++ b/kernel/sched/stats.c
-@@ -4,6 +4,109 @@
-  */
- #include "sched.h"
+@@ -82,6 +82,7 @@ void __update_stats_enqueue_sleeper(struct rq *rq, struct task_struct *p,
  
-+void __update_stats_wait_start(struct rq *rq, struct task_struct *p,
-+			       struct sched_statistics *stats)
-+{
-+u64 wait_start, prev_wait_start;
-+
-+	wait_start = rq_clock(rq);
-+	prev_wait_start = schedstat_val(stats->wait_start);
-+
-+	if (p && likely(wait_start > prev_wait_start))
-+		wait_start -= prev_wait_start;
-+
-+	__schedstat_set(stats->wait_start, wait_start);
-+}
-+
-+void __update_stats_wait_end(struct rq *rq, struct task_struct *p,
-+			     struct sched_statistics *stats)
-+{
-+	u64 delta = rq_clock(rq) - schedstat_val(stats->wait_start);
-+
-+	if (p) {
-+		if (task_on_rq_migrating(p)) {
-+			/*
-+			 * Preserve migrating task's wait time so wait_start
-+			 * time stamp can be adjusted to accumulate wait time
-+			 * prior to migration.
-+			 */
-+			__schedstat_set(stats->wait_start, delta);
-+
-+			return;
-+		}
-+
-+		trace_sched_stat_wait(p, delta);
-+	}
-+
-+	__schedstat_set(stats->wait_max,
-+			max(schedstat_val(stats->wait_max), delta));
-+	__schedstat_inc(stats->wait_count);
-+	__schedstat_add(stats->wait_sum, delta);
-+	__schedstat_set(stats->wait_start, 0);
-+}
-+
-+void __update_stats_enqueue_sleeper(struct rq *rq, struct task_struct *p,
-+				    struct sched_statistics *stats)
-+{
-+	u64 sleep_start, block_start;
-+
-+	sleep_start = schedstat_val(stats->sleep_start);
-+	block_start = schedstat_val(stats->block_start);
-+
-+	if (sleep_start) {
-+		u64 delta = rq_clock(rq) - sleep_start;
-+
-+		if ((s64)delta < 0)
-+			delta = 0;
-+
-+		if (unlikely(delta > schedstat_val(stats->sleep_max)))
-+			__schedstat_set(stats->sleep_max, delta);
-+
-+		__schedstat_set(stats->sleep_start, 0);
-+		__schedstat_add(stats->sum_sleep_runtime, delta);
-+
-+		if (p) {
-+			account_scheduler_latency(p, delta >> 10, 1);
-+			trace_sched_stat_sleep(p, delta);
-+		}
-+	}
-+
-+	if (block_start) {
-+		u64 delta = rq_clock(rq) - block_start;
-+
-+		if ((s64)delta < 0)
-+			delta = 0;
-+
-+		if (unlikely(delta > schedstat_val(stats->block_max)))
-+			__schedstat_set(stats->block_max, delta);
-+
-+		__schedstat_set(stats->block_start, 0);
-+		__schedstat_add(stats->sum_sleep_runtime, delta);
-+
-+		if (p) {
-+			if (p->in_iowait) {
-+				__schedstat_add(stats->iowait_sum, delta);
-+				__schedstat_inc(stats->iowait_count);
-+				trace_sched_stat_iowait(p, delta);
-+			}
-+
-+			trace_sched_stat_blocked(p, delta);
-+
-+			/*
-+			 * Blocking time is in units of nanosecs, so shift by
-+			 * 20 to get a milliseconds-range estimation of the
-+			 * amount of time that the task spent sleeping:
-+			 */
-+			if (unlikely(prof_on == SLEEP_PROFILING)) {
-+				profile_hits(SLEEP_PROFILING,
-+					     (void *)get_wchan(p),
-+					     delta >> 20);
-+			}
-+			account_scheduler_latency(p, delta >> 10, 0);
-+		}
-+	}
-+}
-+
- /*
-  * Current schedstat API version.
-  *
-diff --git a/kernel/sched/stats.h b/kernel/sched/stats.h
-index e6905e369c5d..9ecd81b91f26 100644
---- a/kernel/sched/stats.h
-+++ b/kernel/sched/stats.h
-@@ -2,6 +2,8 @@
+ 		__schedstat_set(stats->block_start, 0);
+ 		__schedstat_add(stats->sum_sleep_runtime, delta);
++		__schedstat_add(stats->sum_block_runtime, delta);
  
- #ifdef CONFIG_SCHEDSTATS
- 
-+extern struct static_key_false sched_schedstats;
-+
- /*
-  * Expects runqueue lock to be held for atomicity of update
-  */
-@@ -40,6 +42,33 @@ rq_sched_info_dequeue(struct rq *rq, unsigned long long delta)
- #define   schedstat_val(var)		(var)
- #define   schedstat_val_or_zero(var)	((schedstat_enabled()) ? (var) : 0)
- 
-+void __update_stats_wait_start(struct rq *rq, struct task_struct *p,
-+			       struct sched_statistics *stats);
-+
-+void __update_stats_wait_end(struct rq *rq, struct task_struct *p,
-+			     struct sched_statistics *stats);
-+void __update_stats_enqueue_sleeper(struct rq *rq, struct task_struct *p,
-+				    struct sched_statistics *stats);
-+
-+static inline void
-+check_schedstat_required(void)
-+{
-+	if (schedstat_enabled())
-+		return;
-+
-+	/* Force schedstat enabled if a dependent tracepoint is active */
-+	if (trace_sched_stat_wait_enabled()    ||
-+		trace_sched_stat_sleep_enabled()   ||
-+		trace_sched_stat_iowait_enabled()  ||
-+		trace_sched_stat_blocked_enabled() ||
-+		trace_sched_stat_runtime_enabled())  {
-+		printk_deferred_once("Scheduler tracepoints stat_sleep, stat_iowait, "
-+					"stat_blocked and stat_runtime require the "
-+					"kernel parameter schedstats=enable or "
-+					"kernel.sched_schedstats=1\n");
-+	}
-+}
-+
- #else /* !CONFIG_SCHEDSTATS: */
- 
- static inline void rq_sched_info_arrive  (struct rq *rq, unsigned long long delta) { }
-@@ -55,6 +84,11 @@ static inline void rq_sched_info_depart  (struct rq *rq, unsigned long long delt
- # define   schedstat_val(var)		0
- # define   schedstat_val_or_zero(var)	0
- 
-+# define __update_stats_wait_start(rq, p, stats)       do { } while (0)
-+# define __update_stats_wait_end(rq, p, stats)         do { } while (0)
-+# define __update_stats_enqueue_sleeper(rq, p, stats)  do { } while (0)
-+# define check_schedstat_required()                    do { } while (0)
-+
- #endif /* CONFIG_SCHEDSTATS */
- 
- #if defined(CONFIG_FAIR_GROUP_SCHED) && defined(CONFIG_SCHEDSTATS)
+ 		if (p) {
+ 			if (p->in_iowait) {
 -- 
 2.18.2
 
