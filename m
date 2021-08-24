@@ -2,123 +2,139 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C5BAFC4338F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Aug 2021 20:00:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AFA45C432BE
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:08:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A80DC613A6
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Aug 2021 20:00:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9485361373
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:08:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231891AbhHWUBI (ORCPT
+        id S236627AbhHXLJV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 23 Aug 2021 16:01:08 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:35115 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229622AbhHWUBH (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 23 Aug 2021 16:01:07 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1629748823;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=/rpPS8476jT+j14HYEnQugw58KjCjolM6XDTGzrL7Q8=;
-        b=RtAtCY4WeZAPK5qrsqmqwCcXYWXiZt7GmvxHzzJwJSzDsxyO5xj0Le9nhYvUWmtIWQHOo8
-        3iq4ykP+I5QeoNUhaLlHSzzI1KJqizrQH8wwdEDw8uI5XaclwHp/KK6BrxGaoWhpznoE1h
-        qjbjG+vbNy0/zhmsN2yNr9E3PTLJJ1s=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-6-8uGg5a33MiyiAxjiEOwLyA-1; Mon, 23 Aug 2021 16:00:20 -0400
-X-MC-Unique: 8uGg5a33MiyiAxjiEOwLyA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7D7C41082923;
-        Mon, 23 Aug 2021 20:00:18 +0000 (UTC)
-Received: from theseus (unknown [10.22.17.228])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 15FD369CBC;
-        Mon, 23 Aug 2021 20:00:16 +0000 (UTC)
-Date:   Mon, 23 Aug 2021 15:00:15 -0500
-From:   Clark Williams <williams@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        David Airlie <airlied@linux.ie>,
-        LKML <linux-kernel@vger.kernel.org>,
-        RT <linux-rt-users@vger.kernel.org>,
-        Daniel Vetter <daniel@ffwll.ch>
-Subject: [PATCH PREEMPT_RT] i915: fix PREEMPT_RT locking splats
-Message-ID: <20210823150015.61ebc7d6@theseus>
-Organization: Red Hat, Inc
+        Tue, 24 Aug 2021 07:09:21 -0400
+Received: from mout.gmx.net ([212.227.15.15]:41787 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S236698AbhHXLJJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 24 Aug 2021 07:09:09 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1629803295;
+        bh=/vYG/7FmyblrZg8I14/fEHa5jbxMHo8Sir5J9h4tO9E=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date;
+        b=TaaVm2UnSbaq3gmHa4Wz53HUkN26r8G9XfS10cj54tpQVgqPkvEYi4FK1usEcTTms
+         hEP1guHs4XlP2rNNoShDRsFa75ip/LUY2rEW3GYA0w6CtW6bSo8LmNfsdi5Wus0pFe
+         cubN8xURHQDaFGEztYh6xbEiAZh0TCP12qFjiKDo=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([212.114.172.232]) by mail.gmx.net (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MUGe1-1mS4h33tND-00RIBb; Tue, 24
+ Aug 2021 13:08:14 +0200
+Message-ID: <70cc66840bbd9446061fc40088575565d8d98e37.camel@gmx.de>
+Subject: [patch] mm, zsmalloc: Convert zsmalloc_handle.lock to spinlock_t
+From:   Mike Galbraith <efault@gmx.de>
+To:     linux-rt-users@vger.kernel.org
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Date:   Tue, 24 Aug 2021 13:08:14 +0200
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.40.3 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:H/rxWSAU+XJXDsZAIPfZzjJsN/xsi4HdOpb52URgHsSDhAWIfBb
+ riP9gmmjTrpBDNsia3Rg9meKS3305SCqAlwyywCtZQNC8vmBI+0KCAW1uGy7vUUfPjyhPoU
+ kYG409rD83TYy92lejEQs3RN5kQ9HtOOmaj/hiEqXOnZOjF6Hu5UAry3TwHx5KYy9jSQBcj
+ pBqMJ1+pkVjEZxUSXuo6Q==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:fDx2MKSjy3o=:9o8qhiNL1B4VGE2RQI7HHV
+ qSa058V81osOLXONZKDlFJpD8Bi2RvOgWpFhyc77cYLb+hU7QVx4+PP+W+ZJm6d9n7mr3ByTY
+ 9dJ8wJvGKmlNL1inyTczu88URlmzvbaZM5FY+/DpwRx3lFz/ouPyUee3starIAJQYFqtyMnKx
+ 2NrghRTMi9743lJza1Srr5IAi5SUSwHfwHN4vXr0HKDclO86J1JvHr57vpHHubGc7Fh4+yWUg
+ dUemPLABcRF3+wsEb4rjx4nH6OmjiGD1NnON3NH8uOzR6WsRzwgLf5wOBxXLQy9Hay8wyYLkO
+ vROLW23K5mW/g40KsF/O14mGD45okVqaFG6tnNrRm3NEIot6R4qmggt+NWwjCU1yJyl7Eixve
+ MdDVBfyAChH1Ro+YOPUzC8oomGZwbhidoPLl7zQv23fEOcXzUAmWVZhmtJF72BgxX4ggsNIwv
+ nuS4QEVJw5Vb5MsnvkGjMvqyShDrtSqoqhMrniIb04niZRWrNqG45HXDA1pkrY7de0wX5itoK
+ +ZlMTm7ccXbxgxyxJ0SWF4C88pUQO9pqsDev8tYPbnaz51N7vV1otzDb9JXnP3e7svEFxYs8T
+ SxB8lMx0qhbh2O7HZL2V6T9TpBIzq5zBO0hrhPzEDduNmyYZGXRW9koGn0F7pXhZ4rnx3Dnxv
+ MyzZfnR4tEQ38D6xiwfWd1J69X9ydpsdu/YyDtKF8/QNRV0FJ++l8CRsm+mUetzgj6C8G+36f
+ fmfGwZTvmyedMZyzFmygD0ffQYg32nFnZFu2mdfi+VHYdC6AJ3mNs/6GRPmM3JcRCK/5XME2r
+ KW0PoPto9u7CviAAYEUMbHc8ZDXtKMn3dm8doY6xBS0R+sLbPYJI0D8zJfOhD6Kt65O7MCHD9
+ rATmBEwAHb7VVV2SivW398zshS14YBqczLCufgpoOjoXmUjBx9cMB4s2/fWsZdyEHm8q/naxO
+ rFyKpG6WkpQAjm+IJwhaTdVc/FA96Hw0394xWNHlP4vVNIpZIWogEOM0K0muvzyIZM3JdgTr5
+ dB2f+n3o1UNTkJe7uBecglGPm+rJpXYAbWoHgQbzAvxu2qR7X+diociQwNJga4Bjj6t5PyAPG
+ lS3nu0mIWplQZjHBlx57lmRMe9Z5qzmMZYL
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Found two separate spots where i915 was throwing "sleeping
-function called from invalid context" when running on a
-PREEMPT_RT kernel. In both cases it was from calling
-local_irq_disable prior to taking a spin_lock. Since spin
-locks are converted to rt_mutex_t on PREEMPT_RT this means
-that we might sleep with interrupts disabled.
 
-Since in both cases the calls were in threaded context on RT
-(irq or ksoftirqd) and in no danger of reentrance, change the
-code to only disable interrupts on non-PREEMPT_RT kernels.
+local_lock_t becoming a synonym of spinlock_t had consequences for the RT
+mods to zsmalloc, which were taking a mutex while holding a local_lock,
+inspiring a lockdep "BUG: Invalid wait context" gripe.
 
-Signed-off-by: Clark Williams <williams@redhat.com>
----
- drivers/gpu/drm/i915/gt/intel_breadcrumbs.c          | 6 ++++--
- drivers/gpu/drm/i915/gt/intel_execlists_submission.c | 6 ++++--
- 2 files changed, 8 insertions(+), 4 deletions(-)
+Converting zsmalloc_handle.lock to a spinlock_t restored lockdep silence.
 
-diff --git a/drivers/gpu/drm/i915/gt/intel_breadcrumbs.c b/drivers/gpu/drm/i915/gt/intel_breadcrumbs.c
-index 38cc42783dfb..b8bf8d6d3c61 100644
---- a/drivers/gpu/drm/i915/gt/intel_breadcrumbs.c
-+++ b/drivers/gpu/drm/i915/gt/intel_breadcrumbs.c
-@@ -318,9 +318,11 @@ void __intel_breadcrumbs_park(struct intel_breadcrumbs *b)
- 	/* Kick the work once more to drain the signalers, and disarm the irq */
- 	irq_work_sync(&b->irq_work);
- 	while (READ_ONCE(b->irq_armed) && !atomic_read(&b->active)) {
--		local_irq_disable();
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			local_irq_disable();
- 		signal_irq_work(&b->irq_work);
--		local_irq_enable();
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			local_irq_enable();
- 		cond_resched();
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+=2D--
+ mm/zsmalloc.c |   12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+=2D-- a/mm/zsmalloc.c
++++ b/mm/zsmalloc.c
+@@ -82,7 +82,7 @@
+
+ struct zsmalloc_handle {
+ 	unsigned long addr;
+-	struct mutex lock;
++	spinlock_t lock;
+ };
+
+ #define ZS_HANDLE_ALLOC_SIZE (sizeof(struct zsmalloc_handle))
+@@ -370,7 +370,7 @@ static unsigned long cache_alloc_handle(
+ 	if (p) {
+ 		struct zsmalloc_handle *zh =3D p;
+
+-		mutex_init(&zh->lock);
++		spin_lock_init(&zh->lock);
  	}
- }
-diff --git a/drivers/gpu/drm/i915/gt/intel_execlists_submission.c b/drivers/gpu/drm/i915/gt/intel_execlists_submission.c
-index fc77592d88a9..0e918831b69f 100644
---- a/drivers/gpu/drm/i915/gt/intel_execlists_submission.c
-+++ b/drivers/gpu/drm/i915/gt/intel_execlists_submission.c
-@@ -1580,9 +1580,11 @@ static void execlists_dequeue(struct intel_engine_cs *engine)
- 
- static void execlists_dequeue_irq(struct intel_engine_cs *engine)
- {
--	local_irq_disable(); /* Suspend interrupts across request submission */
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		local_irq_disable(); /* Suspend interrupts across request submission */
- 	execlists_dequeue(engine);
--	local_irq_enable(); /* flush irq_work (e.g. breadcrumb enabling) */
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		local_irq_enable(); /* flush irq_work (e.g. breadcrumb enabling) */
- }
- 
- static void clear_ports(struct i915_request **ports, int count)
--- 
-2.31.1
+ #endif
+ 	return (unsigned long)p;
+@@ -927,7 +927,7 @@ static inline int testpin_tag(unsigned l
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh =3D zs_get_pure_handle(handle);
 
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
+-	return mutex_is_locked(&zh->lock);
++	return spin_is_locked(&zh->lock);
+ #else
+ 	return bit_spin_is_locked(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+@@ -938,7 +938,7 @@ static inline int trypin_tag(unsigned lo
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh =3D zs_get_pure_handle(handle);
+
+-	return mutex_trylock(&zh->lock);
++	return spin_trylock(&zh->lock);
+ #else
+ 	return bit_spin_trylock(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+@@ -949,7 +949,7 @@ static void pin_tag(unsigned long handle
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh =3D zs_get_pure_handle(handle);
+
+-	return mutex_lock(&zh->lock);
++	return spin_lock(&zh->lock);
+ #else
+ 	bit_spin_lock(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+@@ -960,7 +960,7 @@ static void unpin_tag(unsigned long hand
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh =3D zs_get_pure_handle(handle);
+
+-	return mutex_unlock(&zh->lock);
++	return spin_unlock(&zh->lock);
+ #else
+ 	bit_spin_unlock(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+
 
