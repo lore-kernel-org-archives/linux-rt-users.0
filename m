@@ -8,56 +8,56 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8223FC432BE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C2B55C4338F
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6928E613AD
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id ACD74613A7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Aug 2021 11:30:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236858AbhHXLbH (ORCPT
+        id S236924AbhHXLbJ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 24 Aug 2021 07:31:07 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35558 "EHLO
+        Tue, 24 Aug 2021 07:31:09 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35504 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236900AbhHXLbB (ORCPT
+        with ESMTP id S236786AbhHXLay (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 24 Aug 2021 07:31:01 -0400
-Received: from mail-pg1-x52c.google.com (mail-pg1-x52c.google.com [IPv6:2607:f8b0:4864:20::52c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EBB91C061796;
-        Tue, 24 Aug 2021 04:30:16 -0700 (PDT)
-Received: by mail-pg1-x52c.google.com with SMTP id n18so19498459pgm.12;
-        Tue, 24 Aug 2021 04:30:16 -0700 (PDT)
+        Tue, 24 Aug 2021 07:30:54 -0400
+Received: from mail-pg1-x531.google.com (mail-pg1-x531.google.com [IPv6:2607:f8b0:4864:20::531])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0BA5BC0613CF;
+        Tue, 24 Aug 2021 04:30:10 -0700 (PDT)
+Received: by mail-pg1-x531.google.com with SMTP id r2so19476640pgl.10;
+        Tue, 24 Aug 2021 04:30:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=4DXvdN5Je/o6na7RsjQfMKd0MSHmdj3a0FLf0NHnXF4=;
-        b=I7nz3ZSdlWOuLXhdOJF5Rx2EBPYnF9BmEI6gv4sNYvnUeRm2nt4sZK9hzxrP70k2ce
-         4/iWIKrJdeE/drPzVX3a95aKmVF6IR7MEJzgTCeVZ5RVlyfFX6EN3I/KFrLjFKiRrWfI
-         uGgYPIpbA3yYFrMsmOG3/TuVecfuHxjQCxCy0MsnDCBKxy5r5s8YpBudpYLnexi+t6DB
-         f07Acbp+GhXSwZZYwbr6ai93Syc6nDXdQc/uS0Y0bIeg1V8zyGDBLxetYPPy6GbZyZB0
-         sHnBphE9U1nECcLG3o/vM1B3jaDcMjAD3WeliGlSydf8HGkmPRmi2Lh6jmcK3gONOKtq
-         G8uA==
+        bh=8zm5J1NbSAv3TdiryGrbNnK0wLWnfsAGlTXyiy0Xe10=;
+        b=a2PIZ+La9zU57Y18HTm6bWATO20DaJ6YSqmOX+Y7Z6m6Gtef65SuzOrEd3i9EbJaRo
+         FXBn0yCFYqrg4PkA2HQZpyn6yMtpfMv/ejX67KRnb/3PYgHp9SUQaI+i3iQmdW+4gKrp
+         uhJJI37FdgluSOHX91OmbaxBxfGt/uGxNXA0pOTKW8ajIs3pogYVn4E+zqr+G3orWXCK
+         U1rfw85WdxKJXGHQ9DryjE1Elkvc6q7LgLFHHtB9x/g8nqFFEYLqTQ65kTxRryhsTqL5
+         RkL1+lGqWVA2yuXVm+4A6V5rz8TStFK5mRDjhi4viByTogB/KsxCUDwPEsGOTNKGsqE1
+         ShFg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=4DXvdN5Je/o6na7RsjQfMKd0MSHmdj3a0FLf0NHnXF4=;
-        b=kF6nrHUiC32MwQjjhsGMrFg3jf51L1ox1Sob0LN1mTZoalj+aO2bqCJSqdLuvXAVFY
-         lAL/tkfYE+qlPv7uvTQS+cmfD4dwnp+kqYmOigEQmLohhlxg0x/1nuMZC16YuFCJT9At
-         HtoS0r7sAqxFJb9oFOoLA2m4kR2/s6lRx6j4YouetpFfPKc2d0VCxdajwa5wcmZXB2H3
-         2Jj63oa7jTKOqkD0CN4XQNkQ7t7v5VkTS3zT+fUDSl74XZaHUqNtlbnRMvT4xERSrTfw
-         yg1KNpb6aYJ9I0TOiaig+9oKyX26U0RbBPjEADaWDGMhOLibalnsWRiQ3f1i7K7iJiP2
-         eIsA==
-X-Gm-Message-State: AOAM530wIlzJFnRsYSDbolq3WQe1tqb/p3pcm5jmxm9hwNOAZ7/iTi4m
-        ReznOrKpBtPfaeAxLpsAXL0=
-X-Google-Smtp-Source: ABdhPJyzzTBIL+jiF5xnCWqZrkKm1d6RGJcuN/f5Irydngr6YM57xdtPP4wUqconoQ5HUErbXT0KOA==
-X-Received: by 2002:a65:5a89:: with SMTP id c9mr36569268pgt.274.1629804616302;
-        Tue, 24 Aug 2021 04:30:16 -0700 (PDT)
+        bh=8zm5J1NbSAv3TdiryGrbNnK0wLWnfsAGlTXyiy0Xe10=;
+        b=ZCGf05+DFJBKXLHo/M774OLGHEgfksvlERoYsmE78J1g2JrSQaWcWUS61PkB7kmSCG
+         CUaZ7j+BXmH/w6HC9AxZn4B6oLdSySueUKZGTUSlBESO+foNasdlBtYE/tK8REJqWfGd
+         I2BFKqpZ4NYpdEX4gUqmCgNAKEu4NVbH6CiXQMW2K6W0aC469H7j4/sJ+YNhEPC5uA4I
+         S+UX/Jygzki516xHRCWP9GjsQMaoWos1jvN67KDghV9IJWAMl3fxiXOJELMK0qy1s/JW
+         6PW7Wy9FwIQMzP815CPfW2uI2QL7QjFL0OV7vQ8L91dXXnCdJgCCTT/coSGw0QafwXIW
+         UL3Q==
+X-Gm-Message-State: AOAM532zdElTdUhswdLTEJQ2HMThWPdQRhyB/1BYLjl3GIT1IVU2vRzP
+        WHKKr4Hxyfc2/amRJVLy/Vg=
+X-Google-Smtp-Source: ABdhPJzPJJ+t84WA7ZilqmCYK56gWc6BPMwkORW3LDFBA4mrU0+Plk7hI2aUzOOc2Rm0FfirEBQurQ==
+X-Received: by 2002:aa7:8e4f:0:b0:3ee:27d5:28bc with SMTP id d15-20020aa78e4f000000b003ee27d528bcmr2194660pfr.24.1629804609612;
+        Tue, 24 Aug 2021 04:30:09 -0700 (PDT)
 Received: from localhost.localdomain ([45.77.24.247])
-        by smtp.gmail.com with ESMTPSA id on15sm2128732pjb.19.2021.08.24.04.30.13
+        by smtp.gmail.com with ESMTPSA id on15sm2128732pjb.19.2021.08.24.04.30.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Aug 2021 04:30:15 -0700 (PDT)
+        Tue, 24 Aug 2021 04:30:09 -0700 (PDT)
 From:   Yafang Shao <laoar.shao@gmail.com>
 To:     mingo@redhat.com, peterz@infradead.org, mgorman@suse.de,
         juri.lelli@redhat.com, vincent.guittot@linaro.org,
@@ -65,9 +65,9 @@ To:     mingo@redhat.com, peterz@infradead.org, mgorman@suse.de,
         bristot@redhat.com, achaiken@aurora.tech
 Cc:     lkp@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org, Yafang Shao <laoar.shao@gmail.com>
-Subject: [PATCH v3 6/7] sched, rt: support sched_stat_runtime tracepoint for RT sched class
-Date:   Tue, 24 Aug 2021 11:29:45 +0000
-Message-Id: <20210824112946.9324-7-laoar.shao@gmail.com>
+Subject: [PATCH v3 4/7] sched: make the output of schedstats independent of fair sched class
+Date:   Tue, 24 Aug 2021 11:29:43 +0000
+Message-Id: <20210824112946.9324-5-laoar.shao@gmail.com>
 X-Mailer: git-send-email 2.27.0
 In-Reply-To: <20210824112946.9324-1-laoar.shao@gmail.com>
 References: <20210824112946.9324-1-laoar.shao@gmail.com>
@@ -77,38 +77,127 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The runtime of a RT task has already been there, so we only need to
-add a tracepoint.
-
-One difference between fair task and RT task is that there is no vruntime
-in RT task. To reuse the sched_stat_runtime tracepoint, '0' is passed as
-vruntime for RT task.
-
-The output of this tracepoint for RT task as follows,
-          stress-9748    [039] d.h.   113.519352: sched_stat_runtime: comm=stress pid=9748 runtime=997573 [ns] vruntime=0 [ns]
-          stress-9748    [039] d.h.   113.520352: sched_stat_runtime: comm=stress pid=9748 runtime=997627 [ns] vruntime=0 [ns]
-          stress-9748    [039] d.h.   113.521352: sched_stat_runtime: comm=stress pid=9748 runtime=998203 [ns] vruntime=0 [ns]
+The per cpu stats can be show with /proc/sched_debug, which includes the
+per cpu schedstats of each task group. Currently these per cpu
+schedstats only show for the fair sched class. If we want to support
+other sched classes, we have to make these output independent of fair
+sched class.
 
 Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
 Cc: Mel Gorman <mgorman@suse.de>
 Cc: Alison Chaiken <achaiken@aurora.tech>
 ---
- kernel/sched/rt.c | 2 ++
- 1 file changed, 2 insertions(+)
+ kernel/sched/debug.c | 70 +++++++++++++++++++++++++++++++-------------
+ 1 file changed, 50 insertions(+), 20 deletions(-)
 
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index 95a7c3ad2dc3..5d251112e51c 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -1012,6 +1012,8 @@ static void update_curr_rt(struct rq *rq)
- 	schedstat_set(curr->stats.exec_max,
- 		      max(curr->stats.exec_max, delta_exec));
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 4cfee2aa1a2d..705987aed658 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -442,11 +442,7 @@ static void print_cfs_group_stats(struct seq_file *m, int cpu, struct task_group
+ 	struct sched_entity *se = tg->se[cpu];
  
-+	trace_sched_stat_runtime(curr, delta_exec, 0);
+ #define P(F)		SEQ_printf(m, "  .%-30s: %lld\n",	#F, (long long)F)
+-#define P_SCHEDSTAT(F)	SEQ_printf(m, "  .%-30s: %lld\n",	\
+-		"se->statistics."#F, (long long)schedstat_val(tg->stats[cpu]->F))
+ #define PN(F)		SEQ_printf(m, "  .%-30s: %lld.%06ld\n", #F, SPLIT_NS((long long)F))
+-#define PN_SCHEDSTAT(F)	SEQ_printf(m, "  .%-30s: %lld.%06ld\n", \
+-		"se->statistics."#F, SPLIT_NS((long long)schedstat_val(tg->stats[cpu]->F)))
+ 
+ 	if (!se)
+ 		return;
+@@ -454,20 +450,6 @@ static void print_cfs_group_stats(struct seq_file *m, int cpu, struct task_group
+ 	PN(se->exec_start);
+ 	PN(se->vruntime);
+ 	PN(se->sum_exec_runtime);
+-
+-	if (schedstat_enabled()) {
+-		PN_SCHEDSTAT(wait_start);
+-		PN_SCHEDSTAT(sleep_start);
+-		PN_SCHEDSTAT(block_start);
+-		PN_SCHEDSTAT(sleep_max);
+-		PN_SCHEDSTAT(block_max);
+-		PN_SCHEDSTAT(exec_max);
+-		PN_SCHEDSTAT(slice_max);
+-		PN_SCHEDSTAT(wait_max);
+-		PN_SCHEDSTAT(wait_sum);
+-		P_SCHEDSTAT(wait_count);
+-	}
+-
+ 	P(se->load.weight);
+ #ifdef CONFIG_SMP
+ 	P(se->avg.load_avg);
+@@ -475,13 +457,60 @@ static void print_cfs_group_stats(struct seq_file *m, int cpu, struct task_group
+ 	P(se->avg.runnable_avg);
+ #endif
+ 
+-#undef PN_SCHEDSTAT
+ #undef PN
+-#undef P_SCHEDSTAT
+ #undef P
+ }
+ #endif
+ 
++#if defined(CONFIG_FAIR_GROUP_SCHED) || defined(CONFIG_RT_GROUP_SCHED)
++struct tg_schedstats {
++	struct seq_file *m;
++	int cpu;
++};
 +
- 	curr->se.sum_exec_runtime += delta_exec;
- 	account_group_exec_runtime(curr, delta_exec);
++static int tg_show_schedstats(struct task_group *tg, void *data)
++{
++	struct tg_schedstats *p = data;
++	struct seq_file *m = p->m;
++	int cpu = p->cpu;
++
++#define P_SCHEDSTAT(F)	SEQ_printf(m, "  .%-30s: %lld\n",	\
++		"se->statistics."#F, (long long)schedstat_val(tg->stats[cpu]->F))
++#define PN_SCHEDSTAT(F)	SEQ_printf(m, "  .%-30s: %lld.%06ld\n", \
++		"se->statistics."#F, SPLIT_NS((long long)schedstat_val(tg->stats[cpu]->F)))
++
++	PN_SCHEDSTAT(wait_start);
++	PN_SCHEDSTAT(sleep_start);
++	PN_SCHEDSTAT(block_start);
++	PN_SCHEDSTAT(sleep_max);
++	PN_SCHEDSTAT(block_max);
++	PN_SCHEDSTAT(exec_max);
++	PN_SCHEDSTAT(slice_max);
++	PN_SCHEDSTAT(wait_max);
++	PN_SCHEDSTAT(wait_sum);
++	P_SCHEDSTAT(wait_count);
++
++#undef P_SCHEDSTAT
++#undef PN_SCHEDSTAT
++
++return 0;
++}
++
++static void print_task_group_stats(struct seq_file *m, int cpu)
++{
++	struct tg_schedstats data = {
++		.m = m,
++		.cpu = cpu,
++	};
++
++	if (!schedstat_enabled())
++		return;
++
++	walk_tg_tree(tg_show_schedstats, tg_nop, &data);
++}
++#endif
++
++
+ #ifdef CONFIG_CGROUP_SCHED
+ static DEFINE_SPINLOCK(sched_debug_lock);
+ static char group_path[PATH_MAX];
+@@ -756,6 +785,7 @@ do {									\
+ 	print_cfs_stats(m, cpu);
+ 	print_rt_stats(m, cpu);
+ 	print_dl_stats(m, cpu);
++	print_task_group_stats(m, cpu);
  
+ 	print_rq(m, rq, cpu);
+ 	SEQ_printf(m, "\n");
 -- 
 2.18.2
 
