@@ -2,129 +2,111 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D44C3C432BE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 08:42:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C54F5C432BE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 11:53:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B7A2D60FD7
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 08:42:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A8C4D6102A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 11:53:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240553AbhHZIm4 (ORCPT
+        id S242308AbhHZLya (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 26 Aug 2021 04:42:56 -0400
-Received: from smtp-out1.suse.de ([195.135.220.28]:53762 "EHLO
-        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229652AbhHZIm4 (ORCPT
+        Thu, 26 Aug 2021 07:54:30 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:59974 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233829AbhHZLya (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 26 Aug 2021 04:42:56 -0400
-Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out1.suse.de (Postfix) with ESMTPS id BE8B321E4D;
-        Thu, 26 Aug 2021 08:42:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1629967324; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        Thu, 26 Aug 2021 07:54:30 -0400
+Date:   Thu, 26 Aug 2021 13:53:40 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1629978822;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=EZgR+1O6XWssyOYsYbXTDPR6fPO26fOilqbVed3JReY=;
-        b=C7b5xhZu9EbLS45AEfY/HNfUMROlwapmxOhVCC+ARu92Q3jEst9XMcoqD0gsphRd8ErdmW
-        0CF0aSb5FMeebYZYYDz5xbGHbwwImtvsPLI2crVH7xwUgdgVPAy9AloLWO8yPHQnO31lCf
-        fTetcCO6kwvu3PA7QF83fnLO6coUphQ=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1629967324;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        bh=tzSHXovWOy07GY16PKEq30/8tac2aCHWFtSmVjaSxJ8=;
+        b=N3yHKWZFq4YkcrBx2Rvo0bPOJCoWQ9BWCgRcaoZ8mivSRAoiGL8u6m3whyJT0h12awQH4N
+        N/ihO25lj0ldHDRq1gOwI0vD2RFen9N1w/VfBAyNPTYRnKVFoM+8VnSeakCRGMHWNkSqtO
+        xxTMgFT998JZpxAsM/LIpj58OweKtvdrnBCBuWIfX0zj3LkE5bx/7D2xUFM8UWj6AkF6Z1
+        RkQaDFGuK+oWvPdw68f7BAlK2WgOoZrcXQebJtRr3Llz8h6M2IQ+i5D4deM9fqz5Jw2HP8
+        qGyOVRpM3aEszdBu3gkDBf1A6p+1vQOO/dIuF4m3ZETb7NqQbmrxNiuZ/fmC3g==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1629978822;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=EZgR+1O6XWssyOYsYbXTDPR6fPO26fOilqbVed3JReY=;
-        b=nhYydRLfzI99QvT43QjU1HdPsfHsA5nbAUektEvC8WmDxIsaHtMEBD8VXKpuX4VUy00dja
-        +NcBzIhBpT0l1hAg==
-Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id AED6313A0F;
-        Thu, 26 Aug 2021 08:42:04 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap1.suse-dmz.suse.de with ESMTPSA
-        id /hyjKtxTJ2EFEAAAGKfGzw
-        (envelope-from <dwagner@suse.de>); Thu, 26 Aug 2021 08:42:04 +0000
-Date:   Thu, 26 Aug 2021 10:42:04 +0200
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Pavel Machek <pavel@denx.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+        bh=tzSHXovWOy07GY16PKEq30/8tac2aCHWFtSmVjaSxJ8=;
+        b=v9r7oG4wtsyMDzJKGetxr/jQP6zCIGJuUFUxCvz2WUnPXMS9qtzKa/+S8zC3z4j598C3UV
+        IRIB8EHV/39gipAw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Frederic Weisbecker <frederic@kernel.org>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [ANNOUNCE] 4.4.277-rt224
-Message-ID: <20210826084204.gr7i5vundenqmmnb@carbon.lan>
-References: <162762714720.5121.4789079771844033633@beryllium.lan>
- <20210820104328.GA30359@amd>
- <20210820110716.zmh7te5dvmndssgm@carbon.lan>
- <20210820175301.GA4791@amd>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mike Galbraith <efault@gmx.de>
+Subject: Re: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair
+ in PREEMPT_RT
+Message-ID: <20210826115340.jzm3dicvporgrelp@linutronix.de>
+References: <20210825132754.GA895675@lothringen>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20210820175301.GA4791@amd>
+In-Reply-To: <20210825132754.GA895675@lothringen>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Pavel,
-
-On Fri, Aug 20, 2021 at 07:53:01PM +0200, Pavel Machek wrote:
-> FYI we are on 2 month cycle for -cip-rt, so we are still fine for a
-> while. We had trouble coordinating matching -cip and -rt releases, but
-> we decided to adjust -cip cycle to match -rt, so that should be solved.
-
-Oh, my bad. I was aiming for about a release per month but I didn't
-really pay attention on my own schedule.
-
-> > BTW, as you certainly are aware, the v4.4 kernel is EOL soon. As I
-> > understand the CIP is going to take over the maintenance. So I assume
-> > you are going to care of the -rt version as well?
+On 2021-08-25 15:27:54 [+0200], Frederic Weisbecker wrote:
+> Hi,
 > 
-> We are aware, but I don't think we decided what will happen at that
-> point (and I can't really speak for the project). We plan to maintain
-> -cip and -cip-rt variants till 2027:
+> Ok the patch is gross but at least this lets me start a discussion
+> about the issue.
 > 
-> https://wiki.linuxfoundation.org/civilinfrastructureplatform/start
-
-Understood.
-
-> Taking over -stable and -stable-rt maintainance, too, is something
-> that may make sense (and we probably will be considered), but it is
-> likely CIP Technical Steering Committee's (“TSC”) decision.
+> ---
+> From d9d66d650b3dac8947a34464dd2e0b546a8c6b63 Mon Sep 17 00:00:00 2001
+> From: Frederic Weisbecker <frederic@kernel.org>
+> Date: Wed, 25 Aug 2021 14:24:54 +0200
+> Subject: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair in PREEMPT_RT
 > 
-> https://www.cip-project.org/about/charter
+> The eventpoll lock has been converted to an rwlock some time ago with:
 > 
-> Actually, your input may be important here. If you (or SuSE or someone
-> else) can put some resources into 4.4-rt after February 2022, that
-> would be good to know.
+> 	a218cc491420 (epoll: use rwlock in order to reduce ep_poll
+> 					callback() contention)
+> 
+> Unfortunately this can result in scenarios where a high priority caller
+> of epoll_wait() need to wait for the completion of lower priority wakers.
+> 
+> The typical scenario is:
+> 
+> 1) epoll_wait() waits and sleeps for new events in the ep_poll() loop.
+> 
+> 2) new events arrive in ep_poll_callback(), the waiter is awaken while
+>    ep->lock is read-acquired.
+> 
+> 3) The high priority waiter preempts the waker but it can't acquire the
+>    write lock in epoll_wait() so it blocks waiting for the low prio waker
+>    without priority inheritance.
+> 
+> I guess making readlock writer fair is still not the plan so all I can
+> propose is to make that rwlock build-conditional.
 
-Speaking with my upstream hat on: I don't think this likely to
-happen. The stable-rt maintainers are happy to get rid of the older
-releases as it gets harder over time to keep it alive. That's why we
-stop maintaining the -rt variant as soon the matching stable branch hits
-EOL.
+It is writer fair in a sense that once a writer attempts to acquire the
+lock no new reader are allowed in.
+What you want is that the writer pi-boosts each reader which is what is
+not done (multi reader boost). Long ago there was an attempt to make
+this happen (I think with rwsem) but it turned out to be problematic.
+There was a workaround by only allowing one reader and doing PI as
+usual.
+This was then dropped because multi-reader became a must have thing for
+other reasons and in the meantime the lack of pi-boosting wasn't that
+*problematic* anymore. The problematic user converted in the meantime to
+RCU having the reading side lockless and the writer had a regular lock.
 
-With my SUSE hat on: we maintain our own version of rt on top of our
-SLES kernel. Our v4.4 based kernels (which has significant changes
-compared to the upstream stable v4.4 tree) have entered the long time
-support period (LTTS). So I fear there is little interest from our side
-to keep the upstream v4.4-rt branch alive. Obviously, the CIP project
-could talk to our business people :)
+> Signed-off-by: Frederic Weisbecker <frederic@kernel.org>
 
-Daniel
+Sebastian
