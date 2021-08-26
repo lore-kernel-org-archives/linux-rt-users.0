@@ -2,102 +2,111 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INVALID_DATE_TZ_ABSURD,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2FAB2C4320A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 15:48:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 767BCC432BE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 20:30:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 077586101A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 15:48:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5074C61027
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 20:30:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242960AbhHZPt3 (ORCPT
+        id S243501AbhHZUa4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 26 Aug 2021 11:49:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50192 "EHLO
+        Thu, 26 Aug 2021 16:30:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58974 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232249AbhHZPtY (ORCPT
+        with ESMTP id S229916AbhHZUaz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 26 Aug 2021 11:49:24 -0400
+        Thu, 26 Aug 2021 16:30:55 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 35E16C061757
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Aug 2021 08:48:37 -0700 (PDT)
-Date:   Thu, 26 Aug 2021 17:48:33 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC227C061757;
+        Thu, 26 Aug 2021 13:30:07 -0700 (PDT)
+From:   John Ogness <john.ogness@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1629992914;
+        s=2020; t=1630009805;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=6u6/CYo01EPxvlL4jC1rk+suqEphxdwfzA+OajGJRZA=;
-        b=ybO/tfIsHtNs+aVz/52T748bC+XnBZbVvc0X/FK49j7CVhosmrzkn3To9vYvWzTnaw9i9E
-        bHa5mim1ZT9Gz7c7/qnglgkqDZBzXnRYLhHBMZjOeNFdrBb0I+A32NVd74k5u7JSMgtjRQ
-        PJHJmRdCAesdp3fNQ5k0wny6xP9gO3wZiLb1JYAGci+yuQppBs398bnsYOB8jAcMFNA/bF
-        4yAM5yMYo/fgP8AkXLINxnTH/X3hggrXX/UwYik7F6nSyqIs+tl28GY/LYbUXKmJMqU8yr
-        ZehIJj+M7p82aV9mWli2rfPEakzltPdQ2WuOmAZ27urXER5NfmB2eIuy1Qk+cg==
+        bh=h8UXnJqPBl9bMR7bNHfiVLEP7x645Ey89EezN1ntlwU=;
+        b=VBDa1tFsXe3DqTVCacj049KMyZFprQiq4GNZQNzWOCZRh2mgNzkNX0rQpbNqCcFAJx3bQ/
+        FodfJMXO3kwXbcOm70JewzN3eD33hey2tKLu6ZmYflB54tAunBXxXcagF8S8SucSoMv+X7
+        QnvXDU6T2EsJUtz7+cBI456GbZef4JbcGLz4Yq7/7fLTfqHwmkPW4zrj/wwZm+wwZDIfr9
+        Czlx6bo745bb0Sr2hZhSc1AUK20REbNLHHIj4Fd7noyTbe6c2fKcMmXjIRggq/baAYqcSQ
+        jlnT0Z9iCwkgrdQpcfmAobZYrGmVPJg+C0M2Ixs16TGYtR9JQ3AJ8iPedkCVbA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1629992914;
+        s=2020e; t=1630009805;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=6u6/CYo01EPxvlL4jC1rk+suqEphxdwfzA+OajGJRZA=;
-        b=oq9oWOfcGtJYfnDqMfwDSidMYLGHy9IGL4ykX+9eQ9jwIAt0Y4PMYebR772+am4oDuWYYD
-        TXIu/7VhBg/nv/DQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mike Galbraith <efault@gmx.de>
-Cc:     Vlastimil Babka <vbabka@suse.cz>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [patch] kcsan: Make it RT aware
-Message-ID: <20210826154833.gu45q5hduypwgyce@linutronix.de>
-References: <dc0cb448d46f465bb0064b1c301cb0b3ab4f8492.camel@gmx.de>
- <34f1e1dadb2c3d19389427303da6ea53e321e726.camel@gmx.de>
- <86f35f7c-c545-d870-b36e-5d091799f54c@suse.cz>
- <20210826151827.wvsm7civflz62olx@linutronix.de>
- <f6c40d238a1990a4649ec848a67aae88846505ab.camel@gmx.de>
+        bh=h8UXnJqPBl9bMR7bNHfiVLEP7x645Ey89EezN1ntlwU=;
+        b=lFhSfpUR+uySctN+5nkUrDE69qo5W5DZ2G3nUJtNFcALX+aeVlnapEIcok/XVCRN62Fsmz
+        sif3Vhs4lRee6bDA==
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Frederic Weisbecker <frederic@kernel.org>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mike Galbraith <efault@gmx.de>
+Subject: Re: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair in PREEMPT_RT
+In-Reply-To: <20210826115340.jzm3dicvporgrelp@linutronix.de>
+References: <20210825132754.GA895675@lothringen> <20210826115340.jzm3dicvporgrelp@linutronix.de>
+Date:   Thu, 26 Aug 2021 22:36:04 +0206
+Message-ID: <87v93srltf.fsf@jogness.linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <f6c40d238a1990a4649ec848a67aae88846505ab.camel@gmx.de>
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-08-26 17:42:21 [+0200], Mike Galbraith wrote:
-> On Thu, 2021-08-26 at 17:18 +0200, Sebastian Andrzej Siewior wrote:
-> > On 2021-08-22 19:29:00 [+0200], Vlastimil Babka wrote:
-> > > On 8/22/21 6:35 PM, Mike Galbraith wrote:
-> > > > On second thought, burn both patches.=C2=A0 Making K[AC]SAN work wi=
-th RT
-> > > > ain't worth the warts.
-> > >
-> > > The stackdepot part of kasan patch will be useful at some point.
-> > > slub_debug should eventually switch to stackdepot - it almost did in
-> > > mainline already. I'll try to remember and dig that part up when
-> > > needed.
-> > > Thanks.
-> >
-> > If you want them dropped, sure.
->=20
-> If you think they're worth having, feel free.  The kcsan patch I found
-> especially icky, and changed it like so, avoiding icky config dependent
-> branches while giving myself an ever so tiny excuse for looping ;-)
->=20
-> kcsan: Make it RT aware
->=20
-> Converting report_filterlist_lock to raw_spinlock_t lets RT report
-> problem free, but makes allocations in insert_report_filterlist()
-> problematic.  Solve that by taking the lock after allocation.  That
-> means all configs must check that the situation didn't change while
-> acquiring if we're to avoid ugly config specific branches, but it
-> also removes the need for GFP_ATOMIC allocations.
->=20
-> Signed-off-by: Mike Galbraith <efault@gmx.de>
+On 2021-08-26, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> On 2021-08-25 15:27:54 [+0200], Frederic Weisbecker wrote:
+>> Hi,
+>> 
+>> Ok the patch is gross but at least this lets me start a discussion
+>> about the issue.
+>> 
+>> ---
+>> From d9d66d650b3dac8947a34464dd2e0b546a8c6b63 Mon Sep 17 00:00:00 2001
+>> From: Frederic Weisbecker <frederic@kernel.org>
+>> Date: Wed, 25 Aug 2021 14:24:54 +0200
+>> Subject: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair in PREEMPT_RT
+>> 
+>> The eventpoll lock has been converted to an rwlock some time ago with:
+>> 
+>> 	a218cc491420 (epoll: use rwlock in order to reduce ep_poll
+>> 					callback() contention)
+>> 
+>> Unfortunately this can result in scenarios where a high priority caller
+>> of epoll_wait() need to wait for the completion of lower priority wakers.
+>> 
+>> The typical scenario is:
+>> 
+>> 1) epoll_wait() waits and sleeps for new events in the ep_poll() loop.
+>> 
+>> 2) new events arrive in ep_poll_callback(), the waiter is awaken while
+>>    ep->lock is read-acquired.
+>> 
+>> 3) The high priority waiter preempts the waker but it can't acquire the
+>>    write lock in epoll_wait() so it blocks waiting for the low prio waker
+>>    without priority inheritance.
+>> 
+>> I guess making readlock writer fair is still not the plan so all I can
+>> propose is to make that rwlock build-conditional.
+>
+> It is writer fair in a sense that once a writer attempts to acquire
+> the lock no new reader are allowed in.
+>
+> What you want is that the writer pi-boosts each reader which is what
+> is not done (multi reader boost). Long ago there was an attempt to
+> make this happen (I think with rwsem) but it turned out to be
+> problematic.  There was a workaround by only allowing one reader and
+> doing PI as usual.
 
-I would have to look at this raw lock change now more closely=E2=80=A6
+This patch is essentially forcing that exact workaround for eventpoll.
 
-Sebastian
+John Ogness
