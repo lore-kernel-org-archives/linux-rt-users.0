@@ -2,121 +2,116 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 175BCC4338F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 25 Aug 2021 13:28:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8520C432BE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 01:46:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E931961103
-	for <linux-rt-users@archiver.kernel.org>; Wed, 25 Aug 2021 13:27:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C90EB6101A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Aug 2021 01:46:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240719AbhHYN2m (ORCPT
+        id S235987AbhHZBrF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 25 Aug 2021 09:28:42 -0400
-Received: from mail.kernel.org ([198.145.29.99]:57490 "EHLO mail.kernel.org"
+        Wed, 25 Aug 2021 21:47:05 -0400
+Received: from mail.kernel.org ([198.145.29.99]:34412 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S240616AbhHYN2m (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 25 Aug 2021 09:28:42 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 30CB76112D;
-        Wed, 25 Aug 2021 13:27:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1629898076;
-        bh=dEZWd67W0cCylw8Z3+SFTbYcQCCEGp+ENmvhRLuwVsg=;
-        h=Date:From:To:Cc:Subject:From;
-        b=uAgbwPA4PwK0ajyScRSzJ7Zrajb1hzlh4oqH43QVZ5dfuCWfdDq7tB7RlwDV1EfZ3
-         uQRsrA6omGlg3qIsd0qorGUaCy+i1PkBoRw03r9EBr4VqaSGqqGmlRaEeM9+awQaGT
-         yiGI9kTgJycGKGm2Ih1MoQImgyyPXCh0bWmfSd5W9jJc4JoFU6d9194TCw9haPj3iE
-         e++fUUavamIEM40FfYsPrp66S+maI9W+zJ1H2XAfGR0XKXcs2NTOvw41zLvvERVawH
-         pfM45yj6+FvIyJ9yjF+MHuf6a7XdrxMBWAKBA/3NRKGYgY9VPlMNXWJkCALRpHFLDi
-         PawcEAhFzE/qw==
-Date:   Wed, 25 Aug 2021 15:27:54 +0200
-From:   Frederic Weisbecker <frederic@kernel.org>
-To:     linux-rt-users@vger.kernel.org
-Cc:     linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Mike Galbraith <efault@gmx.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair in
- PREEMPT_RT
-Message-ID: <20210825132754.GA895675@lothringen>
+        id S229514AbhHZBrF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 25 Aug 2021 21:47:05 -0400
+Received: from rorschach.local.home (unknown [24.94.146.150])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 9D07660FDC;
+        Thu, 26 Aug 2021 01:46:17 +0000 (UTC)
+Date:   Wed, 25 Aug 2021 21:45:56 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [ANNOUNCE] 5.10.59-rt52
+Message-ID: <20210825214556.00baf202@rorschach.local.home>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
 
-Ok the patch is gross but at least this lets me start a discussion
-about the issue.
+Dear RT Folks,
+
+I'm pleased to announce the 5.10.59-rt52 stable release.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: da75d2161ca1104184e4f903e2753cd41b90fbc3
+
+
+Or to build 5.10.59-rt52 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.59.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.59-rt52.patch.xz
+
+
+
+You can also build from 5.10.59-rt51 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.59-rt51-rt52.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v5.10.59-rt51:
 
 ---
-From d9d66d650b3dac8947a34464dd2e0b546a8c6b63 Mon Sep 17 00:00:00 2001
-From: Frederic Weisbecker <frederic@kernel.org>
-Date: Wed, 25 Aug 2021 14:24:54 +0200
-Subject: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair in PREEMPT_RT
 
-The eventpoll lock has been converted to an rwlock some time ago with:
+Andrew Halaney (1):
+      locking/rwsem-rt: Remove might_sleep() in __up_read()
 
-	a218cc491420 (epoll: use rwlock in order to reduce ep_poll
-					callback() contention)
+Steven Rostedt (VMware) (1):
+      Linux 5.10.59-rt52
 
-Unfortunately this can result in scenarios where a high priority caller
-of epoll_wait() need to wait for the completion of lower priority wakers.
-
-The typical scenario is:
-
-1) epoll_wait() waits and sleeps for new events in the ep_poll() loop.
-
-2) new events arrive in ep_poll_callback(), the waiter is awaken while
-   ep->lock is read-acquired.
-
-3) The high priority waiter preempts the waker but it can't acquire the
-   write lock in epoll_wait() so it blocks waiting for the low prio waker
-   without priority inheritance.
-
-I guess making readlock writer fair is still not the plan so all I can
-propose is to make that rwlock build-conditional.
-
-Signed-off-by: Frederic Weisbecker <frederic@kernel.org>
----
- fs/eventpoll.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
-
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index 1e596e1d0bba..c1fb4b01ea4f 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -1133,7 +1133,10 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 	unsigned long flags;
- 	int ewake = 0;
+----
+ kernel/locking/rwsem-rt.c | 1 -
+ localversion-rt           | 2 +-
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+---------------------------
+diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
+index 274172d5bb3a..b61edc4dcb73 100644
+--- a/kernel/locking/rwsem-rt.c
++++ b/kernel/locking/rwsem-rt.c
+@@ -198,7 +198,6 @@ void __up_read(struct rw_semaphore *sem)
+ 	if (!atomic_dec_and_test(&sem->readers))
+ 		return;
  
--	read_lock_irqsave(&ep->lock, flags);
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		read_lock_irqsave(&ep->lock, flags);
-+	else
-+		write_lock_irqsave(&ep->lock, flags);
- 
- 	ep_set_busy_poll_napi_id(epi);
- 
-@@ -1197,7 +1200,10 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
- 		pwake++;
- 
- out_unlock:
--	read_unlock_irqrestore(&ep->lock, flags);
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		read_unlock_irqrestore(&ep->lock, flags);
-+	else
-+		write_unlock_irqrestore(&ep->lock, flags);
- 
- 	/* We have to call this outside the lock */
- 	if (pwake)
--- 
-2.25.1
-
+-	might_sleep();
+ 	raw_spin_lock_irq(&m->wait_lock);
+ 	/*
+ 	 * Wake the writer, i.e. the rtmutex owner. It might release the
+diff --git a/localversion-rt b/localversion-rt
+index 75493460c41f..66a5ed8bf3d7 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt51
++-rt52
