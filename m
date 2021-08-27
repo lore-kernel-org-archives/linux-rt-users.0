@@ -6,60 +6,92 @@ X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA091C432BE
-	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 07:31:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6489C432BE
+	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 10:07:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BE97360F92
-	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 07:31:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9134460EBC
+	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 10:07:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244451AbhH0Hck (ORCPT
+        id S244743AbhH0KIf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 27 Aug 2021 03:32:40 -0400
-Received: from mail.nearlyone.de ([46.163.114.145]:34040 "EHLO
-        mail.nearlyone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244198AbhH0Hch (ORCPT
+        Fri, 27 Aug 2021 06:08:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46104 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S244720AbhH0KIe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 27 Aug 2021 03:32:37 -0400
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 7659860B92;
-        Fri, 27 Aug 2021 09:31:47 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1630049508; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         in-reply-to:references; bh=i+Y9JPMVRmKpUMRZlKBsnBA9ZVtGf0gZiw1ulvbySUU=;
-        b=ZdVoBnOKPlIXIA+qe+lazyV2uJwU0UP4krwBcbBpOAdDztqigZ3GmOF+b3EfJInEquPdhn
-        ur3iRUIytCrq62nXGH5MNXjOKClg25meQS7wHyrpnzGVFZHCFn8hueGz89uAF79L1gwIEA
-        +xUMcEbdsSEFzg6gKB4EcPkWg9Cbh13knWk+sTZgTN7qp/+buHu0qaxEYu6N3n8W7SePEN
-        n4j+r8uYUO01/W8sRpaP0a/oXKvmXf9lrYuPltWbuCVeMOW5NLucGz9ZkRNiU9ioaJFoGJ
-        2fAfKUaKAxxl7CykbdDP8KXOkwlXYaObx1HQlBxIzb/HOO68F4JMXIrorYjQZw==
-Date:   Fri, 27 Aug 2021 09:31:45 +0200
-From:   Daniel Wagner <wagi@monom.org>
-To:     Daniel Wagner <dwagner@suse.de>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests v3 1/1] rt-numa: Use sched_getaffinity() instead
- of pthread_getaffinity_np()
-Message-ID: <20210827073145.7crjzoyw3bzago4u@carbon.lan>
-References: <20210719081505.520-1-dwagner@suse.de>
- <20210719081505.520-2-dwagner@suse.de>
+        Fri, 27 Aug 2021 06:08:34 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 31722C061757;
+        Fri, 27 Aug 2021 03:07:46 -0700 (PDT)
+Date:   Fri, 27 Aug 2021 12:07:42 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1630058863;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=Cc35sKISqhF/PZW6jwmgPX34aVtQAZz0l7o2CbMds0g=;
+        b=m5dGI+IUwlgOGfaGgR2DCTWLk64VkjCIW8A4t7B6iHGIX82lrJ+GjzEn4Fn/YxY9RWjCCk
+        VEGtdLSOu0vJBpa3yt+ojONar+M/bInm6xdAXccBfQV1v5tAgFc8h33IEmTliThPfr56iy
+        JMOw0sS/BB3VeCHePkMPAsznN3bq88AmvwzJQHwiu47kWXViMYnHR9EF/weOTvQiuruCK3
+        n9XpMwlmogiWmxDfDR6WEajvUEpxjEWlqRIyQ5/cJSEdJ1SIOrLdmoM2YiSUdwCuzzVyQ0
+        BNoruwT7FVYRx4T8ZQRmGWybeRTU7oUD07DztKZBKKWnG7Xr/tau0v714STcyg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1630058863;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=Cc35sKISqhF/PZW6jwmgPX34aVtQAZz0l7o2CbMds0g=;
+        b=+jEhqma0HMQd8/5g6bJvBkmLV9LPMhsLA6D0T4MdCDfDIVf9CSO9Fs8RhqxoM0cunEPtzr
+        QLLDRenaKYHO8iBw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     Frederic Weisbecker <frederic@kernel.org>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mike Galbraith <efault@gmx.de>
+Subject: Re: [RFC PATCH -RT] epoll: Fix eventpoll read-lock not writer-fair
+ in PREEMPT_RT
+Message-ID: <20210827100742.naifk7js3ukpp3f2@linutronix.de>
+References: <20210825132754.GA895675@lothringen>
+ <20210826115340.jzm3dicvporgrelp@linutronix.de>
+ <87v93srltf.fsf@jogness.linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20210719081505.520-2-dwagner@suse.de>
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <87v93srltf.fsf@jogness.linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Jul 19, 2021 at 10:15:05AM +0200, Daniel Wagner wrote:
-> pthread_getaffinity_np() prevents static builds as glibc does not
-> expose it for this configuration. Instead use sched_getaffinity()
-> directly as pthread_getaffinity_np() is just a fancy glibc wrapper
-> around sched_getaffinity().
-> 
-> Static builds helps in in situation where the rootfs is minimal
-> and does for example not ship libnuma.
-> 
-> The pthread_getaffinity_np call was introduced by commit
-> f240656b056b ("rt-tests: cyclictest: Fix -t without a user specified
-> [NUM]")
+On 2021-08-26 22:36:04 [+0206], John Ogness wrote:
+> On 2021-08-26, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> > On 2021-08-25 15:27:54 [+0200], Frederic Weisbecker wrote:
+=E2=80=A6
+> >> I guess making readlock writer fair is still not the plan so all I can
+> >> propose is to make that rwlock build-conditional.
+=E2=80=A6
+> > It is writer fair in a sense that once a writer attempts to acquire
+> > the lock no new reader are allowed in.
+> >
+> > What you want is that the writer pi-boosts each reader which is what
+> > is not done (multi reader boost). Long ago there was an attempt to
+> > make this happen (I think with rwsem) but it turned out to be
+> > problematic.  There was a workaround by only allowing one reader and
+> > doing PI as usual.
+>=20
+> This patch is essentially forcing that exact workaround for eventpoll.
 
-ping
+Frederic ended the mail with "readlock is not writer fair" so I
+explained that it is and he means something else and this is not not
+coming. I also suggested between the lines that he might try to move
+the reader side to RCU.
+
+> John Ogness
+
+Sebastian
