@@ -7,64 +7,64 @@ X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B0D1AC4320A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 22:03:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 290F4C432BE
+	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 22:03:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 953D260FD8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 22:03:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 13F8860F91
+	for <linux-rt-users@archiver.kernel.org>; Fri, 27 Aug 2021 22:03:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232137AbhH0WDy (ORCPT
+        id S232144AbhH0WDy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 27 Aug 2021 18:03:54 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40454 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40462 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232133AbhH0WDx (ORCPT
+        with ESMTP id S232135AbhH0WDx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 27 Aug 2021 18:03:53 -0400
-Received: from mail-qv1-xf2f.google.com (mail-qv1-xf2f.google.com [IPv6:2607:f8b0:4864:20::f2f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A39FBC0613D9
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Aug 2021 15:03:03 -0700 (PDT)
-Received: by mail-qv1-xf2f.google.com with SMTP id g11so4855682qvd.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Aug 2021 15:03:03 -0700 (PDT)
+Received: from mail-qk1-x731.google.com (mail-qk1-x731.google.com [IPv6:2607:f8b0:4864:20::731])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 42052C06179A
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Aug 2021 15:03:04 -0700 (PDT)
+Received: by mail-qk1-x731.google.com with SMTP id 14so8804948qkc.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Aug 2021 15:03:04 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=Ki5gKanHc/6SrH1KESGFA/4Q+WIhVq9LGnfQW4Yox30=;
-        b=IiHt/e561u7FEOsHFoD8zzIrNGXQPATq1gaFhrZ+nO6wPHHW2ItmQ458sHczqiu3JF
-         dBLNC//4SwGRbO2xWjY191P9x239pILUKHOZSCvblQkxktf4bcV/KhbTmvHJiyhrW8mZ
-         BGC5685L0CeFJyMXudr1z4Jzno1CmQF3ahk1TD9aEYZD+cLEEPbWBkCMNMq4H9qAa2jM
-         AbZYkj9UOQOCEAA8EDZkDeqmLKbon+f31k8J5s9SrcrvsB0s+vhWKo2GG7wdypPfE5aO
-         RgAq87LMeHkkKaJtX4ZLDiYeh3dGD96UnSOeICdzCSKj1192LIq8bpSs9jKuOp9eVAMw
-         lS0A==
+        bh=jWD/iLRg8IOsuY/XgnJcGRTA86lMIig+tN/mK0ghb3c=;
+        b=P6J4SsMUHcn6CcfuvBj51Zgkz4yPHc3aPTpzIAnUL3ElmcDniz+81jN0LOcEDi0pp5
+         ZWjXBifFeVVujLuUF/tlqu3xRcWw4/1ArqKK1mw2mg2UzH60DC1erZ3xNYgHsFCOxu3G
+         7Vnhc9LwltDwULga+Ez+vHHQeu9Lky2G1Wkex09YIxx4p16giOgMQW4OBKy858NB51c0
+         3diT9F9nOzXaGJdxzj9ZR7YwOXTyp7eg26JDxG8iSzF5Vk236NdRgL0891rMQm2c1+sG
+         7oWFzYjJQiTZ+T/2g2bp8ddmqFTk/lq2rlUsfqg6DOKk8iVHdNtQdyRxnAWxqAAb8k2r
+         iIqw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=Ki5gKanHc/6SrH1KESGFA/4Q+WIhVq9LGnfQW4Yox30=;
-        b=WO7FNGKsmktjYwQWE1EY2RqnGwrayJqNIUQ6q44LQTBvECg4DH/firG8ZEICOXraSF
-         IzThs5QPCKptjonj0e6SjKZLJX+CbGD+EMQ0J91sJbHoJpoxhNrG4v96jETCHqenjUtc
-         p6FAL/SCPbhmGkF3s36REW8igg/PJPRtwkg1U4+VUvSAq2tz0Z/CXGlVdNWT0mlL70TJ
-         UJ56/uBhLL1Kk+RgIrsAAIjBtrhI5/0ssZVJ2i5IiIPNv5L1J0xu2sOB6hOxIxGH+E+p
-         70+oPyZ9j8HT76j2WkcT3Zo9GrBQGOIG9O+C1jf01jzvd2o7DGG7DxkqdkipiJyxWkYR
-         X1eA==
-X-Gm-Message-State: AOAM531VFU/LiAR5mrR+lCccg94Z4P4eLMFFg8bLBtrJYjwH0BXUVXqe
-        tv01sqpgjAyK5Kdy92TQh6icJANkryXpnQ==
-X-Google-Smtp-Source: ABdhPJxYGtt45LNTuTn00HZ37W9VR+NPz+LKMthg7YeWpGVI5RFxtTP67BzO4vooAWt5VjEg+Gc9bw==
-X-Received: by 2002:a0c:9c4d:: with SMTP id w13mr10818625qve.43.1630101782771;
-        Fri, 27 Aug 2021 15:03:02 -0700 (PDT)
+        bh=jWD/iLRg8IOsuY/XgnJcGRTA86lMIig+tN/mK0ghb3c=;
+        b=VkIvRUMnq3jnBaRlSQDk2c1gBJPt58YVbvmStBT1pYOFmdJJjKn7N6hq6mLc52roq7
+         1adFydFKYdysLrR0xSszsciWxQ/RWFbYLaWt6aCisyWkjq5qxa9twTKGHLOx99krbNlZ
+         W51HAUfxrkpbCGTUDaaBKnltnDkSYA+VMPVVVnYeKMhXva9PVQJV4gcoD/LmkUfeSTnC
+         NjwUQVIUrFQvEilybkPEeoRN8YH/1rAeK3q9BYAPZ2y4iG5L+9zWfFzqERquwDdGbU6d
+         MUlwROaHljSORJRAKJwPqVnxQcdso/BDllbdPj44pmQW9sl1WP+xee/SC4uaJNRnKk2B
+         PeYQ==
+X-Gm-Message-State: AOAM533nTjppctSG6yGGNbrVwOqwVVOAvBdfcsrqHkf9fuumV98v0Cux
+        sstDnvEUDCjmS9VKfVOmRUjk7uYidEfmKw==
+X-Google-Smtp-Source: ABdhPJy6BYGQFNpq3oJW34Tshnz2gWJIwSb4dnKJfnB5G8dN+08jhyMgfH3io0s7g19gfiOpFNNoag==
+X-Received: by 2002:a05:620a:941:: with SMTP id w1mr10919106qkw.434.1630101783337;
+        Fri, 27 Aug 2021 15:03:03 -0700 (PDT)
 Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
         by smtp.gmail.com with ESMTPSA id t64sm5659209qkd.71.2021.08.27.15.03.02
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 27 Aug 2021 15:03:02 -0700 (PDT)
+        Fri, 27 Aug 2021 15:03:03 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/8] rt-tests: deadline_test: Remove deadcode
-Date:   Fri, 27 Aug 2021 18:02:38 -0400
-Message-Id: <20210827220244.24210-3-jkacur@redhat.com>
+Subject: [PATCH 3/8] rt-tests: ptsematest: Remove deadcode
+Date:   Fri, 27 Aug 2021 18:02:39 -0400
+Message-Id: <20210827220244.24210-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210827220244.24210-1-jkacur@redhat.com>
 References: <20210827220244.24210-1-jkacur@redhat.com>
@@ -74,28 +74,37 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Remove deadcode that was probably accidently left in during development.
+Remove deadcode from ptsematest.c
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/sched_deadline/deadline_test.c | 4 ----
- 1 file changed, 4 deletions(-)
+ src/ptsematest/ptsematest.c | 6 ------
+ 1 file changed, 6 deletions(-)
 
-diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-index e89654d976f2..1763c71486a9 100644
---- a/src/sched_deadline/deadline_test.c
-+++ b/src/sched_deadline/deadline_test.c
-@@ -873,10 +873,6 @@ static void destroy_cpuset(const char *name, int print)
- 			goto again;
- 		fprintf(stderr, "Failed to remove %s\n", path);
- 		perror("rmdir");
--		if (retry++ < 5) {
--			fprintf(stderr, "Trying again\n");
--			goto again;
--		}
- 	}
- }
+diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+index 821e58428e6d..e000c3017081 100644
+--- a/src/ptsematest/ptsematest.c
++++ b/src/ptsematest/ptsematest.c
+@@ -58,7 +58,6 @@ struct params {
+ void *semathread(void *param)
+ {
+ 	int mustgetcpu = 0;
+-	int first = 1;
+ 	struct params *par = param;
+ 	cpu_set_t mask;
+ 	int policy = SCHED_FIFO;
+@@ -92,11 +91,6 @@ void *semathread(void *param)
+ 			if (mustgetcpu)
+ 				par->cpu = get_cpu();
+ 		} else {
+-			/* Receiver */
+-			if (!first) {
+-				pthread_mutex_lock(&syncmutex[par->num]);
+-				first = 1;
+-			}
+ 			pthread_mutex_lock(&testmutex[par->num]);
  
+ 			/* ... Got the lock: End of latency measurement */
 -- 
 2.31.1
 
