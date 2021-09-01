@@ -8,64 +8,64 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0284FC432BE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D55CDC4320E
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id DE1656103A
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BBBA46103D
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242935AbhIAIJo (ORCPT
+        id S242889AbhIAIJt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Sep 2021 04:09:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53098 "EHLO
+        Wed, 1 Sep 2021 04:09:49 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53130 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242858AbhIAIJn (ORCPT
+        with ESMTP id S242858AbhIAIJs (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Sep 2021 04:09:43 -0400
-Received: from mail-pg1-x530.google.com (mail-pg1-x530.google.com [IPv6:2607:f8b0:4864:20::530])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 96DFFC061575
-        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:47 -0700 (PDT)
-Received: by mail-pg1-x530.google.com with SMTP id g184so1970034pgc.6
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:47 -0700 (PDT)
+        Wed, 1 Sep 2021 04:09:48 -0400
+Received: from mail-pj1-x102f.google.com (mail-pj1-x102f.google.com [IPv6:2607:f8b0:4864:20::102f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EDD91C061575
+        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:51 -0700 (PDT)
+Received: by mail-pj1-x102f.google.com with SMTP id l3so1325773pji.5
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:51 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=rKUc7o3bDVU3KcNOAQzsp2ti0XgiYj19Lp1TllMahIk=;
-        b=df2jsUwlkn0K4xJX5xI7auK5mHx5kd0A/5HFClzFJ0DsF2uMUHxTzFScozTKgLmOPW
-         eD0p5CiGysEMIAkJwvLFciwjLLI2AHXNB5ODVyKFyToFNOQ3C0VgMLKVmznO0u4fuYuF
-         c+DQXbUcGZn3K0cR/A4mAE5ZKSwPKIYLGzrwgdF5d7Llq3IrtzTAm+xGAh+HWdUNiSLE
-         voYvEOeVQuz29bEfmfelXYNqBIR2aPaPq78Jp3iFaH2dXZLrX5W2g2C9IqDlLpYJR6ps
-         B6jTp6JHpV2wsClENPwAEMgWvZo3SVNIC2+Lcq0UifZ7RIVaWg+beg3TDF/1jWIvR44V
-         NktA==
+        bh=up77ZZbcePUbHPIu931P2Nm3xBICe9exuO8Iknuq9fg=;
+        b=uqThbocQKxVnADfgx1MuWXQbtD25JGO6N/p/10dbKXgxzpzGlniUsCkNM2jxvfh32B
+         197VXfL7Eyhju4QOUgGw6PwIA3OjhHS6XU1yb/xKuMlIB4WNIfZBx5uUqs+ItKn9vFOo
+         IUFqXQ52wAxdHHk5gu2McHnk/MtN77ry4MEo42BMLCqPjuwGXKHjT2RsW8w3mmbMmzjS
+         gNUoVOYNspAExzcG6LrYMDjMOoXhjTehrFqo1/+e5IOnm5Uou7AybfxqnAVRR1+R/gFo
+         yXFrtjzwEGiMTl51iBbUqE+oqpjdnA97xx6YlLETe0ufoGaU04hcOuTxFSnu3N4q8Zr4
+         NvwA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=rKUc7o3bDVU3KcNOAQzsp2ti0XgiYj19Lp1TllMahIk=;
-        b=edvKTX+k/46n7oDbqICErmufZCz3J2ZbA2F9al1vXsxuFxwDfGpma6GOi+F4TZmgyi
-         VnHWvWsOc1+phIECcNGGno9QtBHT99bEjfJVfUFURNiWSggdWfPAtzPWPNc6qj7di58I
-         wT3WhufFjaGsRMCsERYX3n018WYU6Wqt8J/dzxhk+nozd2O6MjYtnHbZVTJE5JdVpEnl
-         4ssBrZxj5ylWB8gx022Xb7I2tQH8j+djjNuM8VNcgWiYtsL5X2Wbhk1O9Hapa5VrSFyA
-         IURzF4Kh4XAZBwWY2OEddqx97lEUWVwsADtFjg5icGu01ejjsoBu4rHb3/wWxwuCHh8E
-         TY5A==
-X-Gm-Message-State: AOAM530Ty0MjItkVnTWG5MkdJBLHMvX1bKhw5UesPXwDhXo4M/I0/4Ja
-        HD9r7I1KmYPZr8vHQSx0k426dHxhrLo=
-X-Google-Smtp-Source: ABdhPJwFP6mKxed6aoH51ULAH5xRMZvTBwl2wg+OIlG4qWbcN466rJ5S6/6utist7En53AgsaToCCA==
-X-Received: by 2002:a65:4209:: with SMTP id c9mr30963710pgq.399.1630483727023;
-        Wed, 01 Sep 2021 01:08:47 -0700 (PDT)
+        bh=up77ZZbcePUbHPIu931P2Nm3xBICe9exuO8Iknuq9fg=;
+        b=fmXSiz9zfLklrI0HMC1s+qup3EkPPDzni0gcAmRs43SWUUXm5fRuU6tOZ6HBfZ5acx
+         l6Yi2RWAJ5yWv7icCjRmjiExJRaQkNvRHttjk+5ZosvnpnbNXA8Yb880BHeApsbf+Iy8
+         IdO1mAQ+wOexN2DtVaih10vl8zNIud4kh+IBrPxcghP/GLzvIgzF1+vQxoDz7s1GTsWd
+         5csHhDarukeK8jrQ6kD1Sq9dY6sXmVd13KHk5CEDOxFPqQo69JPSoauDNKYHkosrKrFV
+         DuxcBvoXJ6iOlhfMNz9WncP4OIcmEPS0hEs6jASdSv1dA9Th+Af00l5/n0idzVn91xdt
+         dsbQ==
+X-Gm-Message-State: AOAM533x/noP98GSM/lzGXWD8OOudwpQ6jKiO8t6ndO+U63UAdLzkE8o
+        NcvG2nEi4nhXqCV9AsNhpTWgpP8uDIs=
+X-Google-Smtp-Source: ABdhPJzUO/g+cMSHKzYwB6X1WYHfxb+2xyO9SfIQn2ZSvY0BYYouOIyrBS37igYdqUW3u/Fwg2TKiw==
+X-Received: by 2002:a17:90a:4418:: with SMTP id s24mr10503759pjg.222.1630483731530;
+        Wed, 01 Sep 2021 01:08:51 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id ds15sm5038120pjb.19.2021.09.01.01.08.46
+        by smtp.gmail.com with ESMTPSA id g4sm5268254pjt.56.2021.09.01.01.08.50
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 01 Sep 2021 01:08:46 -0700 (PDT)
+        Wed, 01 Sep 2021 01:08:51 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
 To:     jkacur@redhat.com
 Cc:     punit1.agrawal@toshiba.co.jp,
         Punit Agrawal <punitagrawal@gmail.com>,
         linux-rt-users@vger.kernel.org
-Subject: [PATCH 4/5] rteval: hackbench.py: Enable running on a system with low memory
-Date:   Wed,  1 Sep 2021 17:08:15 +0900
-Message-Id: <20210901080816.721731-5-punitagrawal@gmail.com>
+Subject: [PATCH 5/5] rteval: kcompile.py: Gracefully handle missing affinity information
+Date:   Wed,  1 Sep 2021 17:08:16 +0900
+Message-Id: <20210901080816.721731-6-punitagrawal@gmail.com>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <20210901080816.721731-1-punitagrawal@gmail.com>
 References: <20210901080816.721731-1-punitagrawal@gmail.com>
@@ -77,38 +77,47 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
-The hackbench workload refues to run on RockPro64, a hexacore 64bit
-Arm board with 4GB memory, complaining about insufficient memory
-per-core.
+kcompile either sets the affinity of the workload threads to a user
+specified list of cpus (using taskset) or binds the threads to the
+local numa node (using numactl). In the absence of both the following
+hard to parse error is thrown -
 
-On further investigation, it turns out that workload is using an
-arbitrary limit of 0.75 GB/core but will quite happily run on much
-lower lower memory systems.
+    Exception in thread kcompile:
+    Traceback (most recent call last):
+    ...
+      File "...rteval/rteval/modules/loads/kcompile.py", line 55, in __init__
+	self.binder = 'taskset -c %s' % compress_cpulist(cpulist)
+      File "...rteval/rteval/misc.py", line 62, in compress_cpulist
+	if isinstance(cpulist[0], int):
+    TypeError: 'NoneType' object is not subscriptable
 
-Instead of preventing execution, convert the info message to a warning
-when the memory is lower than expected but continue execution. This
-should enable the workload to be used on a wider range of systems.
+Instead, add a warning to report the missing affinity information /
+tools and continue executing the workload with no affinity - relying
+on the affinity settings being set by the kernel.
 
 Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 ---
- rteval/modules/loads/hackbench.py | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ rteval/modules/loads/kcompile.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
-index 3b692070e9d9..ab028c495d8b 100644
---- a/rteval/modules/loads/hackbench.py
-+++ b/rteval/modules/loads/hackbench.py
-@@ -55,9 +55,8 @@ class Hackbench(CommandLineLoad):
-         if ratio >= 0.75:
-             mult = float(self._cfg.setdefault('jobspercore', 2))
+diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
+index d1955c7aee3d..5c83b78525e5 100644
+--- a/rteval/modules/loads/kcompile.py
++++ b/rteval/modules/loads/kcompile.py
+@@ -51,8 +51,12 @@ class KBuildJob:
+             os.mkdir(self.objdir)
+         if os.path.exists('/usr/bin/numactl') and not cpulist:
+             self.binder = 'numactl --cpunodebind %d' % int(self.node)
+-        else:
++        elif cpulist is not None:
+             self.binder = 'taskset -c %s' % compress_cpulist(cpulist)
++        else:
++            self.log(Log.WARN, 'Unable to set job affinity - please install "numactl" or pass "cpulist"')
++            self.log(Log.WARN, 'Running with default OS decided affinity')
++            self.binder = ''
+         if cpulist:
+             self.jobs = self.calc_jobs_per_cpu() * len(cpulist)
          else:
--            self._log(Log.INFO, "Low memory system (%f GB/core)! Not running" % ratio)
-+            self._log(Log.WARN, "Low memory system (%f GB/core)!" % ratio)
-             mult = 0
--            self._donotrun = True
- 
-         sysTop = SysTopology()
-         # get the number of nodes
 -- 
 2.32.0
 
