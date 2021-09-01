@@ -8,64 +8,64 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AA18EC4320E
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 88F2AC432BE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 910B06103D
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6D1706103A
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242899AbhIAIJ2 (ORCPT
+        id S242893AbhIAIJe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Sep 2021 04:09:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53024 "EHLO
+        Wed, 1 Sep 2021 04:09:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53044 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242930AbhIAIJ1 (ORCPT
+        with ESMTP id S242858AbhIAIJc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Sep 2021 04:09:27 -0400
-Received: from mail-pl1-x635.google.com (mail-pl1-x635.google.com [IPv6:2607:f8b0:4864:20::635])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5B8A8C061760
-        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:31 -0700 (PDT)
-Received: by mail-pl1-x635.google.com with SMTP id e1so1009358plt.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:31 -0700 (PDT)
+        Wed, 1 Sep 2021 04:09:32 -0400
+Received: from mail-pj1-x102f.google.com (mail-pj1-x102f.google.com [IPv6:2607:f8b0:4864:20::102f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37033C061575
+        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:36 -0700 (PDT)
+Received: by mail-pj1-x102f.google.com with SMTP id fz10so1379421pjb.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:36 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
+        d=gmail.com; s=20210112;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=ZSIIwNIQw49vPH8yBUD7OMOm1KdPQEIhaPAstn4/1mQ=;
-        b=p5j8KGXvXpHwMzodO037hBHR1l3vSr01shl1tBCIlqoV8Alhf/BPeBgYMUazbF9v/V
-         zcuVfl9kM3g/3oDIPY+qcYgB8NsTDSXiAxZ+zSXQ+Iu/1N2XWC5cp31lj8qQ1AAWhBiN
-         4rZMkf53o5Q+Bs2IUNpmWcJ5zXE9r9vwFaCR4Xr4/IoesCcYMj7HSbo8Rb3tI+DyaCM+
-         XuIAjcAQoLkfVbbJ8kz5E5KEt7+CR551j4yLtV7ckW9WKfECC93nKOHpMQrjEP0mjUQ/
-         0g8KUvMhqHutXHl0l+ro4KsznfgpjrlAj2aQ4ThuTpCKRXewYP73h3dZhU3w80hc08w6
-         LThA==
+        bh=Q/CF16kZJZkQPH0G8TrjahVb86M3Ad+WbMog4tm7yyo=;
+        b=LK6ZqKycoFmBGqPMO4KY80jUv72ubq1HZZmVUkYZ40fg5vWmJzki1BqGHa1YfAAGH3
+         5MyO9Qs133Uli2fStpspHQp7vK4xJw+IqOnvhbbKvI2jqIo14V3oSbm/oiGHrD9BORlP
+         ghAdIpAyKFpArlaQUBf69OGR3pIwDIsy2+T4uvU90su5AqX1GlgjoQVFE51A/6FKEaxo
+         jUh0p877xndto4Af7Jo9M+YaQOo1rZGoykuWQumy25kN7qyWDP4cZUDxomVUdGKF+hY6
+         kcTbvUj8rhnI+uarqLKsSZgSugfZyVTes/WwNoVsVwYlvmC3UH79lRsr/BJkbaF2xYDl
+         5UOQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=ZSIIwNIQw49vPH8yBUD7OMOm1KdPQEIhaPAstn4/1mQ=;
-        b=KQ644dZa/oz9bGZRZyoAqPFaBS+qPY+sM890H6zlxmTduQKvANJQZsoRT9/iLrgELF
-         EyBVFbDWcdbrGIMKHHJJsGQe7KJVVQjRVaX6f+kUOJssUNuQEtXTOziNWwB0xPR7mrQs
-         Tfa1w9HqztgDgLka43jHYzppqyIeB9Mrdfoh3QZ21zUP6R+PbgWr8YR6JshipJw88waE
-         1N5SXQsOEUzsqEDjLBtDCuAjFHsqAhPLLZKlckgQvQmA8J1W9OK+cySq26itrZjPDdr3
-         Je2W9QZuZ3OAaggISp3M0FiJLPf4qrjKfgIDpq/2OVIiw1LvOrQIZirgYBB1E00f7rk4
-         kYCg==
-X-Gm-Message-State: AOAM532Nd/bu6Mya9nhRhq8/CQa9gm9POHC/2yKonFPfRfmClDaYZDkJ
-        xA0VM34SHWB18MHHUs5Dvgo=
-X-Google-Smtp-Source: ABdhPJymg2Ggn0xtyM5dgPbYOwsLu9Zw5kUSMlLIRC6H0Zlly3lCIK0MhBQcj1FA2PL8eMncZlfXbA==
-X-Received: by 2002:a17:902:9a8e:b0:12d:cb3c:c4d7 with SMTP id w14-20020a1709029a8e00b0012dcb3cc4d7mr8554832plp.18.1630483710835;
-        Wed, 01 Sep 2021 01:08:30 -0700 (PDT)
+        bh=Q/CF16kZJZkQPH0G8TrjahVb86M3Ad+WbMog4tm7yyo=;
+        b=nHqrhGQI0oVbd+Jb9JUEk3LNuxPIb4iiMS9ykA/bkjNPvgntDS44AlCsaLYt5+weZw
+         QwtUkwOs8FN/mo5Bf0aw0SuWSf87Hg6fKm9tibal8G+Te3ihGFiczZm6UcZFVHNMzw1T
+         Aj/oWaFA5LibHmCPC4CE2Q33sEyXsW1AFW5LHx13rGbMdVSewvuXBnrww82iNsbpbUhY
+         KCK2g1bdi4G+0VbXrK8pqNxvVjkuQl2mG+j1nL/6nQ4YnIdgzsXs3C8macVAgSnXwJU0
+         WrMADga/bGCBbg9o0baCrOZ3eKUZM0rJ0KT7RSM+tdI5P5R6QIlEnI1+3G71/AMxhP5i
+         905A==
+X-Gm-Message-State: AOAM533f5p7Th3cb/GCBe0YB/gySBjiCDlV4XXYI79zqyySdivjE5gHp
+        i/enifKAxOHMtwc6gvLObQaSB8bG7pY=
+X-Google-Smtp-Source: ABdhPJxhZAGvw9bHJHzqHxS3nT3SKt9PqM5KUtwKir1H3LkjmeucESAbihjPf/xkJP6O1y8PJgH9XQ==
+X-Received: by 2002:a17:90a:bc8d:: with SMTP id x13mr10402958pjr.66.1630483715729;
+        Wed, 01 Sep 2021 01:08:35 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id c15sm19671363pfl.181.2021.09.01.01.08.30
+        by smtp.gmail.com with ESMTPSA id y12sm22650055pgl.65.2021.09.01.01.08.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 01 Sep 2021 01:08:30 -0700 (PDT)
+        Wed, 01 Sep 2021 01:08:35 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
 To:     jkacur@redhat.com
 Cc:     punit1.agrawal@toshiba.co.jp,
         Punit Agrawal <punitagrawal@gmail.com>,
         linux-rt-users@vger.kernel.org
-Subject: [PATCH 1/5] rteval: systopology.py: Add support for systems that don't have Numa
-Date:   Wed,  1 Sep 2021 17:08:12 +0900
-Message-Id: <20210901080816.721731-2-punitagrawal@gmail.com>
+Subject: [PATCH 2/5] rteval: cyclictest.py: Update logic to get core description
+Date:   Wed,  1 Sep 2021 17:08:13 +0900
+Message-Id: <20210901080816.721731-3-punitagrawal@gmail.com>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <20210901080816.721731-1-punitagrawal@gmail.com>
 References: <20210901080816.721731-1-punitagrawal@gmail.com>
@@ -77,77 +77,90 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
-Certain systems such as Arm v7 do not have support for Numa nodes,
-i.e., "/sys/devices/system/node*" does not exist. Instead of erroring
-out in this situation, it would be better if rteval could use
-alternate sources to get the system topology and memory information.
+Certain architectures such as arm and arm64 don't have a "model name"
+in /proc/cpuinfo but provide other identifying information such as
+implementer, architecture, variant, part, revision, etc..
 
-Introduce the notion of a fake Numa node (as a class) which is used
-when no numa nodes are found on the system. Other than the
-constructor, it provides the same interface as the existing NumaNode
-class so existing users should work without any changes.
+Add a function 'get_cpumodel()' that takes the per-core dictionary
+constructed from /proc/cpuinfo and uses the available data to
+construct the CPU description. Update the users of "model name" to use
+the newly added function.
 
 Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 ---
- rteval/systopology.py | 38 ++++++++++++++++++++++++++++++++------
- 1 file changed, 32 insertions(+), 6 deletions(-)
+ rteval/misc.py                           | 23 ++++++++++++++++++++++-
+ rteval/modules/measurement/cyclictest.py |  8 +++++---
+ 2 files changed, 27 insertions(+), 4 deletions(-)
 
-diff --git a/rteval/systopology.py b/rteval/systopology.py
-index c61ec1a58514..7ce9a8c4f707 100644
---- a/rteval/systopology.py
-+++ b/rteval/systopology.py
-@@ -191,6 +191,31 @@ class NumaNode:
-         """ return list of cpus for this node """
-         return self.cpus.getcpulist()
+diff --git a/rteval/misc.py b/rteval/misc.py
+index 0dd361ff19fd..537041b53d61 100644
+--- a/rteval/misc.py
++++ b/rteval/misc.py
+@@ -79,6 +79,27 @@ def cpuinfo():
+         info[core][key] = val
+     return info
  
-+class FakeNumaNode(NumaNode):
-+    """class representing a fake NUMA node. The fake NUMA node is used on
-+    systems which don't have NUMA enabled (no
-+    /sys/devices/system/node) such as Arm v7
-+
-+    """
-+
-+    cpupath = '/sys/devices/system/cpu'
-+    mempath = '/proc/meminfo'
-+
-+    def __init__(self):
-+        self.nodeid = 0
-+        self.cpus = CpuList(sysread(FakeNumaNode.cpupath, "possible"))
-+        self.getmeminfo()
-+
-+    def getmeminfo(self):
-+        self.meminfo = {}
-+        for l in open(FakeNumaNode.mempath, "r"):
-+            elements = l.split()
-+            key = elements[0][0:-1]
-+            val = int(elements[1])
-+            if len(elements) == 3 and elements[2] == "kB":
-+                val *= 1024
-+            self.meminfo[key] = val
-+
- #
- # Class to abstract the system topology of numa nodes and cpus
- #
-@@ -238,12 +263,13 @@ class SysTopology:
- 
-     def getinfo(self):
-         nodes = glob.glob(os.path.join(SysTopology.nodepath, 'node[0-9]*'))
--        if not nodes:
--            raise RuntimeError("No valid nodes found in %s!" % SysTopology.nodepath)
--        nodes.sort()
--        for n in nodes:
--            node = int(os.path.basename(n)[4:])
--            self.nodes[node] = NumaNode(n)
-+        if nodes:
-+            nodes.sort()
-+            for n in nodes:
-+                node = int(os.path.basename(n)[4:])
-+                self.nodes[node] = NumaNode(n)
++# Pass the per-core dictionary that is part of the dictionary returned
++# by cpuinfo()
++def get_cpumodel(core_info):
++    desc = core_info.get('model name', '')
++    if not desc:
++        # On Arm (both 32 and 64 bit), 'CPU Implementer' is always
++        # present. Return 'unknown' otherwise
++        if 'CPU implementer' not in core_info:
++            desc = 'unknown'
 +        else:
-+            self.nodes[0] = FakeNumaNode()
++            implementor = core_info.get('CPU implementer', '')
++            architecture = core_info.get('CPU architecture', '')
++            variant = core_info.get('CPU variant', '')
++            part = core_info.get('CPU part', '')
++            revision = core_info.get('CPU revision', '')
++
++            desc = 'Implementor: %s Architecture: %s Variant: %s Part: %s Revision: %s' \
++                % (implementor, architecture, variant, part, revision)
++
++    return desc
++
+ if __name__ == "__main__":
  
-     def getnodes(self):
-         return list(self.nodes.keys())
+     info = cpuinfo()
+@@ -86,4 +107,4 @@ if __name__ == "__main__":
+     for i in idx:
+         print("%s: %s" % (i, info[i]))
+ 
+-    print("0: %s" % (info['0']['model name']))
++    print("0: %s" % (get_cpumodel(info['0'])))
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index b1755d4f4421..11cb45e711dd 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -34,7 +34,7 @@ import math
+ import libxml2
+ from rteval.Log import Log
+ from rteval.modules import rtevalModulePrototype
+-from rteval.misc import expand_cpulist, online_cpus, cpuinfo
++from rteval.misc import expand_cpulist, online_cpus, cpuinfo, get_cpumodel
+ 
+ class RunData:
+     '''class to keep instance data from a cyclictest run'''
+@@ -226,13 +226,15 @@ class Cyclictest(rtevalModulePrototype):
+         for core in self.__cpus:
+             self.__cyclicdata[core] = RunData(core, 'core', self.__priority,
+                                               logfnc=self._log)
+-            self.__cyclicdata[core].description = info[core]['model name']
++            self.__cyclicdata[core].description = get_cpumodel(info[core])
++            if self.__cyclicdata[core].description == 'unknown':
++                self._log(Log.INFO, "Unknown model for core %d" % core)
+ 
+         # Create a RunData object for the overall system
+         self.__cyclicdata['system'] = RunData('system',
+                                               'system', self.__priority,
+                                               logfnc=self._log)
+-        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0']['model name']
++        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + get_cpumodel(info['0'])
+ 
+         if self.__sparse:
+             self._log(Log.DEBUG, "system using %d cpu cores" % self.__numcores)
 -- 
 2.32.0
 
