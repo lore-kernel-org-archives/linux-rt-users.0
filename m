@@ -8,64 +8,64 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 88F2AC432BE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52D7DC432BE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6D1706103A
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3158060238
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242893AbhIAIJe (ORCPT
+        id S242942AbhIAIJk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Sep 2021 04:09:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53044 "EHLO
+        Wed, 1 Sep 2021 04:09:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53074 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242858AbhIAIJc (ORCPT
+        with ESMTP id S242930AbhIAIJi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Sep 2021 04:09:32 -0400
-Received: from mail-pj1-x102f.google.com (mail-pj1-x102f.google.com [IPv6:2607:f8b0:4864:20::102f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37033C061575
-        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:36 -0700 (PDT)
-Received: by mail-pj1-x102f.google.com with SMTP id fz10so1379421pjb.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:36 -0700 (PDT)
+        Wed, 1 Sep 2021 04:09:38 -0400
+Received: from mail-pj1-x1036.google.com (mail-pj1-x1036.google.com [IPv6:2607:f8b0:4864:20::1036])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3F0F9C061575
+        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:42 -0700 (PDT)
+Received: by mail-pj1-x1036.google.com with SMTP id fs6so1330759pjb.4
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
+        d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=Q/CF16kZJZkQPH0G8TrjahVb86M3Ad+WbMog4tm7yyo=;
-        b=LK6ZqKycoFmBGqPMO4KY80jUv72ubq1HZZmVUkYZ40fg5vWmJzki1BqGHa1YfAAGH3
-         5MyO9Qs133Uli2fStpspHQp7vK4xJw+IqOnvhbbKvI2jqIo14V3oSbm/oiGHrD9BORlP
-         ghAdIpAyKFpArlaQUBf69OGR3pIwDIsy2+T4uvU90su5AqX1GlgjoQVFE51A/6FKEaxo
-         jUh0p877xndto4Af7Jo9M+YaQOo1rZGoykuWQumy25kN7qyWDP4cZUDxomVUdGKF+hY6
-         kcTbvUj8rhnI+uarqLKsSZgSugfZyVTes/WwNoVsVwYlvmC3UH79lRsr/BJkbaF2xYDl
-         5UOQ==
+        bh=Rybi66JCEbmTmf201Yas6+ICLL081CrzSpc2UjxumtY=;
+        b=c9xCk35I/XaRHbvVR987tyZR8hmB512ai3lLB4ErrHoKAMd4vY/hSTCDYzU0MyvwkF
+         rWlpr5WzKvloRqD/S508zW18qeJwnW8KbDtloRumZIf8TffuaofWDhiKIEJuosXwEM6/
+         o9+InMRxESfcySsp91oWKFDOSSY834W9mo9Wv3mj12dPJLUAZKBms+pOX2WCkLWXPQ2Q
+         +pMvY/r6bQdIP0fT9JB5UijE0hn1e7V6P2CmjnCTGP6yRAoVPQLn890gKeNilbfv+qzn
+         7NFqiuFVXtSWEBJGWC80Ih6qtN1BNDNUffxrYzhw69mtrltuIkB206gANvXRyNFDcbn5
+         utEA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=Q/CF16kZJZkQPH0G8TrjahVb86M3Ad+WbMog4tm7yyo=;
-        b=nHqrhGQI0oVbd+Jb9JUEk3LNuxPIb4iiMS9ykA/bkjNPvgntDS44AlCsaLYt5+weZw
-         QwtUkwOs8FN/mo5Bf0aw0SuWSf87Hg6fKm9tibal8G+Te3ihGFiczZm6UcZFVHNMzw1T
-         Aj/oWaFA5LibHmCPC4CE2Q33sEyXsW1AFW5LHx13rGbMdVSewvuXBnrww82iNsbpbUhY
-         KCK2g1bdi4G+0VbXrK8pqNxvVjkuQl2mG+j1nL/6nQ4YnIdgzsXs3C8macVAgSnXwJU0
-         WrMADga/bGCBbg9o0baCrOZ3eKUZM0rJ0KT7RSM+tdI5P5R6QIlEnI1+3G71/AMxhP5i
-         905A==
-X-Gm-Message-State: AOAM533f5p7Th3cb/GCBe0YB/gySBjiCDlV4XXYI79zqyySdivjE5gHp
-        i/enifKAxOHMtwc6gvLObQaSB8bG7pY=
-X-Google-Smtp-Source: ABdhPJxhZAGvw9bHJHzqHxS3nT3SKt9PqM5KUtwKir1H3LkjmeucESAbihjPf/xkJP6O1y8PJgH9XQ==
-X-Received: by 2002:a17:90a:bc8d:: with SMTP id x13mr10402958pjr.66.1630483715729;
-        Wed, 01 Sep 2021 01:08:35 -0700 (PDT)
+        bh=Rybi66JCEbmTmf201Yas6+ICLL081CrzSpc2UjxumtY=;
+        b=ZObZzv6dYnMh1eR7YLIEkocuEWoJACXmxusoOFkleuRklktrsFc1Xj0mnCJ5M6+n5M
+         LGArKq7KA2opT0dbKGKyRVy4lwV1TQDiLeddLt/Qhrfg7n7NKmY6q7mI9b3rdK0UOnJi
+         Ho2FIL7oV5JQPJDocd6whc4bmrKUs8F/IQkZUW4/kHCFxgWX1LU3LpMcniDLD1IJXEfB
+         PI5yRgx8y+9GELKtIk4YeMhVsVVSjDOAZPwO6LVVPI4Lzl8FQbnKARWSEvLkPCODebY2
+         FbUyfRWk7z3Go8JiCR2YV5nN0KWTHLoWi/9Gx/o8rzbSVn68vks/zCVuHr5O4SKTHcY1
+         N9WQ==
+X-Gm-Message-State: AOAM532ElUi6KUPHFsManJd2SZGshdKG/6ZY3BOyvvwCG9AAmETGVBJj
+        b6iSGgPI44cLIXzWToFnEDz0wKv9ZSs=
+X-Google-Smtp-Source: ABdhPJwvZCYJI8XFg0e+5vBHxIAd+kYILT6MGTNFfyiJL6NnIWi2Ev3r+vkw0N95U2R99ar0GwyfkQ==
+X-Received: by 2002:a17:902:74c3:b0:132:287a:c052 with SMTP id f3-20020a17090274c300b00132287ac052mr8564609plt.32.1630483721744;
+        Wed, 01 Sep 2021 01:08:41 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id y12sm22650055pgl.65.2021.09.01.01.08.34
+        by smtp.gmail.com with ESMTPSA id j6sm23584735pgq.0.2021.09.01.01.08.40
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 01 Sep 2021 01:08:35 -0700 (PDT)
+        Wed, 01 Sep 2021 01:08:41 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
 To:     jkacur@redhat.com
 Cc:     punit1.agrawal@toshiba.co.jp,
         Punit Agrawal <punitagrawal@gmail.com>,
         linux-rt-users@vger.kernel.org
-Subject: [PATCH 2/5] rteval: cyclictest.py: Update logic to get core description
-Date:   Wed,  1 Sep 2021 17:08:13 +0900
-Message-Id: <20210901080816.721731-3-punitagrawal@gmail.com>
+Subject: [PATCH 3/5] rteval: kernel.py: Add support for kthreads running with deadline policy
+Date:   Wed,  1 Sep 2021 17:08:14 +0900
+Message-Id: <20210901080816.721731-4-punitagrawal@gmail.com>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <20210901080816.721731-1-punitagrawal@gmail.com>
 References: <20210901080816.721731-1-punitagrawal@gmail.com>
@@ -77,90 +77,38 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
-Certain architectures such as arm and arm64 don't have a "model name"
-in /proc/cpuinfo but provide other identifying information such as
-implementer, architecture, variant, part, revision, etc..
+When running rteval on a system with kthreads running with "deadline"
+policy, an exception is encountered when parsing the output of "ps".
 
-Add a function 'get_cpumodel()' that takes the per-core dictionary
-constructed from /proc/cpuinfo and uses the available data to
-construct the CPU description. Update the users of "model name" to use
-the newly added function.
+    [DEBUG] cmd: /usr/bin/ps -eocommand,pid,policy,rtprio,comm
+    Traceback (most recent call last):
+    ...
+      File "...rteval/rteval/sysinfo/kernel.py", line 60, in kernel_get_kthreads
+	ret_kthreads[v[0]] = {'policy' : policies[bytes.decode(v[1])],
+      KeyError: 'DLN'
+
+The kernel uses deadline policy for "schedutil" cpufreq governor
+threads. Fix the crash in rteval by adding support for "deadline" to
+the list of policies.
 
 Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 ---
- rteval/misc.py                           | 23 ++++++++++++++++++++++-
- rteval/modules/measurement/cyclictest.py |  8 +++++---
- 2 files changed, 27 insertions(+), 4 deletions(-)
+ rteval/sysinfo/kernel.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/rteval/misc.py b/rteval/misc.py
-index 0dd361ff19fd..537041b53d61 100644
---- a/rteval/misc.py
-+++ b/rteval/misc.py
-@@ -79,6 +79,27 @@ def cpuinfo():
-         info[core][key] = val
-     return info
+diff --git a/rteval/sysinfo/kernel.py b/rteval/sysinfo/kernel.py
+index 97ad9402b13e..f2e9d72ac2ef 100644
+--- a/rteval/sysinfo/kernel.py
++++ b/rteval/sysinfo/kernel.py
+@@ -44,7 +44,7 @@ class KernelInfo:
  
-+# Pass the per-core dictionary that is part of the dictionary returned
-+# by cpuinfo()
-+def get_cpumodel(core_info):
-+    desc = core_info.get('model name', '')
-+    if not desc:
-+        # On Arm (both 32 and 64 bit), 'CPU Implementer' is always
-+        # present. Return 'unknown' otherwise
-+        if 'CPU implementer' not in core_info:
-+            desc = 'unknown'
-+        else:
-+            implementor = core_info.get('CPU implementer', '')
-+            architecture = core_info.get('CPU architecture', '')
-+            variant = core_info.get('CPU variant', '')
-+            part = core_info.get('CPU part', '')
-+            revision = core_info.get('CPU revision', '')
-+
-+            desc = 'Implementor: %s Architecture: %s Variant: %s Part: %s Revision: %s' \
-+                % (implementor, architecture, variant, part, revision)
-+
-+    return desc
-+
- if __name__ == "__main__":
  
-     info = cpuinfo()
-@@ -86,4 +107,4 @@ if __name__ == "__main__":
-     for i in idx:
-         print("%s: %s" % (i, info[i]))
- 
--    print("0: %s" % (info['0']['model name']))
-+    print("0: %s" % (get_cpumodel(info['0'])))
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index b1755d4f4421..11cb45e711dd 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -34,7 +34,7 @@ import math
- import libxml2
- from rteval.Log import Log
- from rteval.modules import rtevalModulePrototype
--from rteval.misc import expand_cpulist, online_cpus, cpuinfo
-+from rteval.misc import expand_cpulist, online_cpus, cpuinfo, get_cpumodel
- 
- class RunData:
-     '''class to keep instance data from a cyclictest run'''
-@@ -226,13 +226,15 @@ class Cyclictest(rtevalModulePrototype):
-         for core in self.__cpus:
-             self.__cyclicdata[core] = RunData(core, 'core', self.__priority,
-                                               logfnc=self._log)
--            self.__cyclicdata[core].description = info[core]['model name']
-+            self.__cyclicdata[core].description = get_cpumodel(info[core])
-+            if self.__cyclicdata[core].description == 'unknown':
-+                self._log(Log.INFO, "Unknown model for core %d" % core)
- 
-         # Create a RunData object for the overall system
-         self.__cyclicdata['system'] = RunData('system',
-                                               'system', self.__priority,
-                                               logfnc=self._log)
--        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0']['model name']
-+        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + get_cpumodel(info['0'])
- 
-         if self.__sparse:
-             self._log(Log.DEBUG, "system using %d cpu cores" % self.__numcores)
+     def kernel_get_kthreads(self):
+-        policies = {'FF':'fifo', 'RR':'rrobin', 'TS':'other', '?':'unknown'}
++        policies = {'DLN': 'deadline', 'FF':'fifo', 'RR':'rrobin', 'TS':'other', '?':'unknown'}
+         ret_kthreads = {}
+         self.__log(Log.DEBUG, "getting kthread status")
+         cmd = '%s -eocommand,pid,policy,rtprio,comm' % getcmdpath('ps')
 -- 
 2.32.0
 
