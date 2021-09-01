@@ -2,122 +2,292 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D55CDC4320E
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E7E7BC432BE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 13:10:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BBBA46103D
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 08:08:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CC4AC61008
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Sep 2021 13:10:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242889AbhIAIJt (ORCPT
+        id S245735AbhIANLr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Sep 2021 04:09:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53130 "EHLO
+        Wed, 1 Sep 2021 09:11:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38924 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242858AbhIAIJs (ORCPT
+        with ESMTP id S1343710AbhIANLk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Sep 2021 04:09:48 -0400
-Received: from mail-pj1-x102f.google.com (mail-pj1-x102f.google.com [IPv6:2607:f8b0:4864:20::102f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EDD91C061575
-        for <linux-rt-users@vger.kernel.org>; Wed,  1 Sep 2021 01:08:51 -0700 (PDT)
-Received: by mail-pj1-x102f.google.com with SMTP id l3so1325773pji.5
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Sep 2021 01:08:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=up77ZZbcePUbHPIu931P2Nm3xBICe9exuO8Iknuq9fg=;
-        b=uqThbocQKxVnADfgx1MuWXQbtD25JGO6N/p/10dbKXgxzpzGlniUsCkNM2jxvfh32B
-         197VXfL7Eyhju4QOUgGw6PwIA3OjhHS6XU1yb/xKuMlIB4WNIfZBx5uUqs+ItKn9vFOo
-         IUFqXQ52wAxdHHk5gu2McHnk/MtN77ry4MEo42BMLCqPjuwGXKHjT2RsW8w3mmbMmzjS
-         gNUoVOYNspAExzcG6LrYMDjMOoXhjTehrFqo1/+e5IOnm5Uou7AybfxqnAVRR1+R/gFo
-         yXFrtjzwEGiMTl51iBbUqE+oqpjdnA97xx6YlLETe0ufoGaU04hcOuTxFSnu3N4q8Zr4
-         NvwA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=up77ZZbcePUbHPIu931P2Nm3xBICe9exuO8Iknuq9fg=;
-        b=fmXSiz9zfLklrI0HMC1s+qup3EkPPDzni0gcAmRs43SWUUXm5fRuU6tOZ6HBfZ5acx
-         l6Yi2RWAJ5yWv7icCjRmjiExJRaQkNvRHttjk+5ZosvnpnbNXA8Yb880BHeApsbf+Iy8
-         IdO1mAQ+wOexN2DtVaih10vl8zNIud4kh+IBrPxcghP/GLzvIgzF1+vQxoDz7s1GTsWd
-         5csHhDarukeK8jrQ6kD1Sq9dY6sXmVd13KHk5CEDOxFPqQo69JPSoauDNKYHkosrKrFV
-         DuxcBvoXJ6iOlhfMNz9WncP4OIcmEPS0hEs6jASdSv1dA9Th+Af00l5/n0idzVn91xdt
-         dsbQ==
-X-Gm-Message-State: AOAM533x/noP98GSM/lzGXWD8OOudwpQ6jKiO8t6ndO+U63UAdLzkE8o
-        NcvG2nEi4nhXqCV9AsNhpTWgpP8uDIs=
-X-Google-Smtp-Source: ABdhPJzUO/g+cMSHKzYwB6X1WYHfxb+2xyO9SfIQn2ZSvY0BYYouOIyrBS37igYdqUW3u/Fwg2TKiw==
-X-Received: by 2002:a17:90a:4418:: with SMTP id s24mr10503759pjg.222.1630483731530;
-        Wed, 01 Sep 2021 01:08:51 -0700 (PDT)
-Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id g4sm5268254pjt.56.2021.09.01.01.08.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 01 Sep 2021 01:08:51 -0700 (PDT)
-From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     jkacur@redhat.com
-Cc:     punit1.agrawal@toshiba.co.jp,
-        Punit Agrawal <punitagrawal@gmail.com>,
-        linux-rt-users@vger.kernel.org
-Subject: [PATCH 5/5] rteval: kcompile.py: Gracefully handle missing affinity information
-Date:   Wed,  1 Sep 2021 17:08:16 +0900
-Message-Id: <20210901080816.721731-6-punitagrawal@gmail.com>
-X-Mailer: git-send-email 2.32.0
-In-Reply-To: <20210901080816.721731-1-punitagrawal@gmail.com>
-References: <20210901080816.721731-1-punitagrawal@gmail.com>
+        Wed, 1 Sep 2021 09:11:40 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DDD0BC0613D9;
+        Wed,  1 Sep 2021 06:10:42 -0700 (PDT)
+Date:   Wed, 1 Sep 2021 15:10:38 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1630501840;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=3anV4hQHnkObcm4SjLFFqpqzk/b83hbJC8mwLZK5Ipc=;
+        b=RcYA3tU5KeXRH8VIO5jT/Xi6dn5JTmxAZ/sEh+/TiBj5cNXlb5weeOube+DJtRJ5Ba8WdK
+        KSV2KgV12llAQ8sReu0YPgiQ+LOTKOsoRcl7uHQTAGGSGYwf7OrO/mymcC7lr78fxtEyxw
+        b1PR2gH0cLYQTOpzzAJval86ePL5Nd0uqEe0PYVu2Z9MgI5u0Ow4rB0a2ZWswvMv7hbjHz
+        P6GCqZZCt5mHAm4lAxTDItkyffzlHxvUVLqAVbvlZZ1U23qq/QtlAXyzVCKVCtw/F3zAEk
+        amyRy8E4FSaIcEwGkyBwp+SWYBlN53INARl8Ip9nCUxEilXnhf3GXlELKQqxYA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1630501840;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=3anV4hQHnkObcm4SjLFFqpqzk/b83hbJC8mwLZK5Ipc=;
+        b=pEXdxuxyDd54/pg+DTvsT3iDodWWm6N1BOTwSnyEBqcxdbIzq58BkiwXvjWUUumcbJHySG
+        ww8Wg5EHfIdYb+DA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.14-rt16
+Message-ID: <20210901131038.dyjltwgr4xjkujyq@linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+Dear RT folks!
 
-kcompile either sets the affinity of the workload threads to a user
-specified list of cpus (using taskset) or binds the threads to the
-local numa node (using numactl). In the absence of both the following
-hard to parse error is thrown -
+I'm pleased to announce the v5.14-rt16 patch set. 
 
-    Exception in thread kcompile:
-    Traceback (most recent call last):
-    ...
-      File "...rteval/rteval/modules/loads/kcompile.py", line 55, in __init__
-	self.binder = 'taskset -c %s' % compress_cpulist(cpulist)
-      File "...rteval/rteval/misc.py", line 62, in compress_cpulist
-	if isinstance(cpulist[0], int):
-    TypeError: 'NoneType' object is not subscriptable
+Changes since v5.14-rt15:
 
-Instead, add a warning to report the missing affinity information /
-tools and continue executing the workload with no affinity - relying
-on the affinity settings being set by the kernel.
+  - The scheduler related "balance_push()" fix in the previous release
+    had a logic error which has been now corrected. Patch by Thomas
+    Gleixner.
 
-Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
----
- rteval/modules/loads/kcompile.py | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+  - The kcov related warning, reported by Clark Williams, has been
+    addressed.
 
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index d1955c7aee3d..5c83b78525e5 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -51,8 +51,12 @@ class KBuildJob:
-             os.mkdir(self.objdir)
-         if os.path.exists('/usr/bin/numactl') and not cpulist:
-             self.binder = 'numactl --cpunodebind %d' % int(self.node)
--        else:
-+        elif cpulist is not None:
-             self.binder = 'taskset -c %s' % compress_cpulist(cpulist)
-+        else:
-+            self.log(Log.WARN, 'Unable to set job affinity - please install "numactl" or pass "cpulist"')
-+            self.log(Log.WARN, 'Running with default OS decided affinity')
-+            self.binder = ''
-         if cpulist:
-             self.jobs = self.calc_jobs_per_cpu() * len(cpulist)
-         else:
--- 
-2.32.0
+Known issues
+     - netconsole triggers WARN.
 
+     - The "Memory controller" (CONFIG_MEMCG) has been disabled.
+
+     - A RCU and ARM64 warning has been fixed by Valentin Schneider. It is
+       still not clear if the RCU related change is correct.
+
+     - Clark Williams reported issues in i915 (execlists_dequeue_irq())
+
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://https://lkml.kernel.org/r/.kernel.org/lkml/20210810134127.1394269-1-valentin.schneider@arm.com/
+
+The delta patch against v5.14-rt15 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.14/incr/patch-5.14-rt15-rt16.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.14-rt16
+
+The RT patch against v5.14 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.14/older/patch-5.14-rt16.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.14/older/patches-5.14-rt16.tar.xz
+
+Sebastian
+
+diff --git a/Documentation/dev-tools/kcov.rst b/Documentation/dev-tools/kcov.rst
+index d2c4c27e1702d..d83c9ab494275 100644
+--- a/Documentation/dev-tools/kcov.rst
++++ b/Documentation/dev-tools/kcov.rst
+@@ -50,6 +50,7 @@ The following program demonstrates coverage collection from within a test
+     #include <sys/mman.h>
+     #include <unistd.h>
+     #include <fcntl.h>
++    #include <linux/types.h>
+ 
+     #define KCOV_INIT_TRACE			_IOR('c', 1, unsigned long)
+     #define KCOV_ENABLE			_IO('c', 100)
+@@ -177,6 +178,8 @@ Comparison operands collection
+ 	/* Read number of comparisons collected. */
+ 	n = __atomic_load_n(&cover[0], __ATOMIC_RELAXED);
+ 	for (i = 0; i < n; i++) {
++		uint64_t ip;
++
+ 		type = cover[i * KCOV_WORDS_PER_CMP + 1];
+ 		/* arg1 and arg2 - operands of the comparison. */
+ 		arg1 = cover[i * KCOV_WORDS_PER_CMP + 2];
+@@ -251,6 +254,8 @@ selectively from different subsystems.
+ 
+ .. code-block:: c
+ 
++    /* Same includes and defines as above. */
++
+     struct kcov_remote_arg {
+ 	__u32		trace_mode;
+ 	__u32		area_size;
+diff --git a/kernel/kcov.c b/kernel/kcov.c
+index 80bfe71bbe13e..36ca640c4f8e7 100644
+--- a/kernel/kcov.c
++++ b/kernel/kcov.c
+@@ -88,6 +88,7 @@ static struct list_head kcov_remote_areas = LIST_HEAD_INIT(kcov_remote_areas);
+ 
+ struct kcov_percpu_data {
+ 	void			*irq_area;
++	local_lock_t		lock;
+ 
+ 	unsigned int		saved_mode;
+ 	unsigned int		saved_size;
+@@ -96,7 +97,9 @@ struct kcov_percpu_data {
+ 	int			saved_sequence;
+ };
+ 
+-static DEFINE_PER_CPU(struct kcov_percpu_data, kcov_percpu_data);
++static DEFINE_PER_CPU(struct kcov_percpu_data, kcov_percpu_data) = {
++	.lock = INIT_LOCAL_LOCK(lock),
++};
+ 
+ /* Must be called with kcov_remote_lock locked. */
+ static struct kcov_remote *kcov_remote_find(u64 handle)
+@@ -824,7 +827,7 @@ void kcov_remote_start(u64 handle)
+ 	if (!in_task() && !in_serving_softirq())
+ 		return;
+ 
+-	local_irq_save(flags);
++	local_lock_irqsave(&kcov_percpu_data.lock, flags);
+ 
+ 	/*
+ 	 * Check that kcov_remote_start() is not called twice in background
+@@ -832,7 +835,7 @@ void kcov_remote_start(u64 handle)
+ 	 */
+ 	mode = READ_ONCE(t->kcov_mode);
+ 	if (WARN_ON(in_task() && kcov_mode_enabled(mode))) {
+-		local_irq_restore(flags);
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		return;
+ 	}
+ 	/*
+@@ -841,14 +844,15 @@ void kcov_remote_start(u64 handle)
+ 	 * happened while collecting coverage from a background thread.
+ 	 */
+ 	if (WARN_ON(in_serving_softirq() && t->kcov_softirq)) {
+-		local_irq_restore(flags);
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		return;
+ 	}
+ 
+ 	spin_lock(&kcov_remote_lock);
+ 	remote = kcov_remote_find(handle);
+ 	if (!remote) {
+-		spin_unlock_irqrestore(&kcov_remote_lock, flags);
++		spin_unlock(&kcov_remote_lock);
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		return;
+ 	}
+ 	kcov_debug("handle = %llx, context: %s\n", handle,
+@@ -869,19 +873,19 @@ void kcov_remote_start(u64 handle)
+ 		size = CONFIG_KCOV_IRQ_AREA_SIZE;
+ 		area = this_cpu_ptr(&kcov_percpu_data)->irq_area;
+ 	}
+-	spin_unlock_irqrestore(&kcov_remote_lock, flags);
++	spin_unlock(&kcov_remote_lock);
+ 
+ 	/* Can only happen when in_task(). */
+ 	if (!area) {
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		area = vmalloc(size * sizeof(unsigned long));
+ 		if (!area) {
+ 			kcov_put(kcov);
+ 			return;
+ 		}
++		local_lock_irqsave(&kcov_percpu_data.lock, flags);
+ 	}
+ 
+-	local_irq_save(flags);
+-
+ 	/* Reset coverage size. */
+ 	*(u64 *)area = 0;
+ 
+@@ -891,7 +895,7 @@ void kcov_remote_start(u64 handle)
+ 	}
+ 	kcov_start(t, kcov, size, area, mode, sequence);
+ 
+-	local_irq_restore(flags);
++	local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 
+ }
+ EXPORT_SYMBOL(kcov_remote_start);
+@@ -965,12 +969,12 @@ void kcov_remote_stop(void)
+ 	if (!in_task() && !in_serving_softirq())
+ 		return;
+ 
+-	local_irq_save(flags);
++	local_lock_irqsave(&kcov_percpu_data.lock, flags);
+ 
+ 	mode = READ_ONCE(t->kcov_mode);
+ 	barrier();
+ 	if (!kcov_mode_enabled(mode)) {
+-		local_irq_restore(flags);
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		return;
+ 	}
+ 	/*
+@@ -978,12 +982,12 @@ void kcov_remote_stop(void)
+ 	 * actually found the remote handle and started collecting coverage.
+ 	 */
+ 	if (in_serving_softirq() && !t->kcov_softirq) {
+-		local_irq_restore(flags);
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		return;
+ 	}
+ 	/* Make sure that kcov_softirq is only set when in softirq. */
+ 	if (WARN_ON(!in_serving_softirq() && t->kcov_softirq)) {
+-		local_irq_restore(flags);
++		local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 		return;
+ 	}
+ 
+@@ -1013,7 +1017,7 @@ void kcov_remote_stop(void)
+ 		spin_unlock(&kcov_remote_lock);
+ 	}
+ 
+-	local_irq_restore(flags);
++	local_unlock_irqrestore(&kcov_percpu_data.lock, flags);
+ 
+ 	/* Get in kcov_remote_start(). */
+ 	kcov_put(kcov);
+@@ -1034,8 +1038,8 @@ static int __init kcov_init(void)
+ 	int cpu;
+ 
+ 	for_each_possible_cpu(cpu) {
+-		void *area = vmalloc(CONFIG_KCOV_IRQ_AREA_SIZE *
+-				sizeof(unsigned long));
++		void *area = vmalloc_node(CONFIG_KCOV_IRQ_AREA_SIZE *
++				sizeof(unsigned long), cpu_to_node(cpu));
+ 		if (!area)
+ 			return -ENOMEM;
+ 		per_cpu_ptr(&kcov_percpu_data, cpu)->irq_area = area;
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 7ce1935e74540..bb115218bb78b 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -8686,7 +8686,7 @@ static void balance_push(struct rq *rq)
+ 	 * Only active while going offline and when invoked on the outgoing
+ 	 * CPU.
+ 	 */
+-	if (!cpu_dying(rq->cpu) && rq == this_rq())
++	if (!cpu_dying(rq->cpu) || rq != this_rq())
+ 		return;
+ 
+ 	/*
+diff --git a/localversion-rt b/localversion-rt
+index 18777ec0c27d4..1199ebade17b4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt15
++-rt16
