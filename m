@@ -2,115 +2,69 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26BD3C432BE
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Sep 2021 09:25:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 437DBC433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Sep 2021 20:07:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F303E6108B
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Sep 2021 09:25:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1EABC6108B
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Sep 2021 20:07:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S245221AbhIBJ0b (ORCPT
+        id S1345028AbhIBUIS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 2 Sep 2021 05:26:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34790 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245222AbhIBJ02 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 2 Sep 2021 05:26:28 -0400
-Received: from mail-pl1-x62a.google.com (mail-pl1-x62a.google.com [IPv6:2607:f8b0:4864:20::62a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DEA39C061757
-        for <linux-rt-users@vger.kernel.org>; Thu,  2 Sep 2021 02:25:30 -0700 (PDT)
-Received: by mail-pl1-x62a.google.com with SMTP id m17so787772plc.6
-        for <linux-rt-users@vger.kernel.org>; Thu, 02 Sep 2021 02:25:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=ou8rdBL69astMxmi4TEgS7vEMJ4yUlxaB1LdNn1ffeM=;
-        b=Sv7bPAfTz7R8Q3i/dBxbJwtrboTD5qNh10gu2SaB+m9eQC6dgd4ZdRxqkmObUh4RP/
-         lbZ/4j3nhh0mzxT414I8K9c+NQtNNRfR8E2sTkZNNqrMcs1MUmR8uLxySvveNXlhxKxL
-         TySWh791dzUKqMH1XFvQYS210wxrJdAvN+ITDnDnmxTiJnZYf98yM7/6sc7BBxFwO3q9
-         9TEBzv9J68LahM9UxD7jJz7H+cxsoAQRg63TV6ASeRxIloYvqjBEXLokXn51+DhrjD3C
-         1fUXuqLugV/0m3yR78jtjC541uPY4yP5pY3j3W0I4C4x5/ng49f2UbcbTqoTAMyuQ+JV
-         P7Zg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=ou8rdBL69astMxmi4TEgS7vEMJ4yUlxaB1LdNn1ffeM=;
-        b=ftrft36ZZ6ilx0ntX6A0e1mjNzw58j3/m69VlZDdY5l5DsLhRkZxm8vADe8SE2JFdG
-         QHF8dUwrXZB76aXNb/R1ZtLY2NQ1ibAXGh4cjzebbXwhko9mPCwtud7XELoFcwLLiYml
-         gwqMQn3JFxpjUEepUf/tMUqhLCm1roUMiAs209cNwuZ2aVX73Yt8bjXf2ul/hS2ltgQ8
-         +33I3P3oc6ic+Fo9HYU8fdJUWOETPmZggSI0h1jf3sQvKbRahZ9IOS7EoY5OHUsV3OLR
-         ec/BfjhmLnGXldIOmbyqOgjX4neSkfEqRr9DQRfwuO8u1gVMJZakdMpPGFy32P0KS2Kb
-         lPHQ==
-X-Gm-Message-State: AOAM5303GnoBsb4sUB4mpF4KG2CKdXQvMTIuvmfid6m8e4zLtl+cU9ht
-        x8YcbHbHLwmPKkdMYCumEos=
-X-Google-Smtp-Source: ABdhPJzPurg4V/IbZruJ8/j4DGwlmAtFaMfzOA9OHM/KqATfL/8gf/X4zm2ysDj+6UOODJxW/m5z7Q==
-X-Received: by 2002:a17:90b:513:: with SMTP id r19mr2769404pjz.93.1630574730347;
-        Thu, 02 Sep 2021 02:25:30 -0700 (PDT)
-Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id z17sm1641559pfa.125.2021.09.02.02.25.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 02 Sep 2021 02:25:29 -0700 (PDT)
-From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     jkacur@redhat.com
-Cc:     Punit Agrawal <punitagrawal@gmail.com>,
-        linux-rt-users@vger.kernel.org, punit1.agrawal@toshiba.co.jp,
-        Venkata.Pyla@toshiba-tsip.com, dinesh.kumar@toshiba-tsip.com
-Subject: [PATCH 3/3] rteval: misc.py: Sort the list of cpus returned by online_cpus()
-Date:   Thu,  2 Sep 2021 18:24:52 +0900
-Message-Id: <20210902092452.726905-4-punitagrawal@gmail.com>
-X-Mailer: git-send-email 2.32.0
-In-Reply-To: <20210902092452.726905-1-punitagrawal@gmail.com>
-References: <20210902092452.726905-1-punitagrawal@gmail.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        Thu, 2 Sep 2021 16:08:18 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44984 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S233953AbhIBUIR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 2 Sep 2021 16:08:17 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id A0C4D61054;
+        Thu,  2 Sep 2021 20:07:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+        s=korg; t=1630613238;
+        bh=tYscjmV/SE2cy2KDjyzy3g/X52Wea0qDq3fqBKNWuNQ=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=fTN3VPWRc735zfdP8tmfBQ+IoD2+ouXDmfcS1GpRnSsLD6sPWlFA7fwRC9opsgP/l
+         MGJ7XqoniolqgL3JDviY0gMQ43Kb10rOnrLYEhQIyXrHjdXp40ga0iq1g+ZWsXXuqj
+         nuRUi37nOOmbbazpdZTPAbVuFHZmHRrGeIDEv+Z0=
+Date:   Thu, 2 Sep 2021 13:07:18 -0700
+From:   Andrew Morton <akpm@linux-foundation.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Mel Gorman <mgorman@techsingularity.net>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Hugh Dickins <hughd@google.com>, Linux-MM <linux-mm@kvack.org>,
+        Linux-RT-Users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH 1/1] mm/vmstat: Protect per cpu variables with preempt
+ disable on RT
+Message-Id: <20210902130718.2a3f03fc6cf87d190d7c9e34@linux-foundation.org>
+In-Reply-To: <20210831164546.t7b6ksblzhsmm6jr@linutronix.de>
+References: <20210805160019.1137-1-mgorman@techsingularity.net>
+        <20210805160019.1137-2-mgorman@techsingularity.net>
+        <20210831164546.t7b6ksblzhsmm6jr@linutronix.de>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.31; x86_64-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+On Tue, 31 Aug 2021 18:45:46 +0200 Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-online_cpus() returns a list of online cpus in arbitrary order. e.g.,
-on a hexacore system it returns -
+> On 2021-08-05 17:00:19 [+0100], Mel Gorman wrote:
+> >  mm/vmstat.c | 48 ++++++++++++++++++++++++++++++++++++++++++++++++
+> >  1 file changed, 48 insertions(+)
+> 
+> The version in RT also covered the functions
+>   __count_vm_event()
+>   __count_vm_events()
+> 
+> in include/linux/vmstat.h. Were they dropped by mistake or on purpose? 
+> 
 
-    ['5', '3', '1', '4', '2', '0']
-
-Generally this wouldn't be a problem but the cyclictest.py module
-matches the unsorted list with the latencies output by "cyclictest"
-which are ordered by core number. This leads to incorrect reporting of
-per-core latencies in the final report generated by rteval. The issue
-was noticed when comparing the rteval report with cyclictest logs
-(enabled by a recent change).
-
-Fix the inconsistency in core numbering by sorting the list of cpus
-returned by online_cpus(). As the cpus are represented as a string,
-sort with the integer key to avoid issues on systems with large number
-of cores.
-
-Signed-off-by: Punit Agrawal <punitagrawal@gmail.com>
----
- rteval/misc.py | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/rteval/misc.py b/rteval/misc.py
-index 0dd361ff19fd..ec3641e4a013 100644
---- a/rteval/misc.py
-+++ b/rteval/misc.py
-@@ -53,6 +53,7 @@ def online_cpus():
-         for c in glob.glob('/sys/devices/system/cpu/cpu[0-9]*'):
-             num = str(c.replace('/sys/devices/system/cpu/cpu', ''))
-             online_cpus.append(num)
-+    online_cpus.sort(key=int)
-     return online_cpus
- 
- def invert_cpulist(cpulist):
--- 
-2.32.0
-
+?
