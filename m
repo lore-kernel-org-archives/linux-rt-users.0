@@ -7,32 +7,32 @@ X-Spam-Status: No, score=-19.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D8CC7C433FE
-	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Sep 2021 15:15:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 960D1C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Sep 2021 15:15:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C255B6113B
-	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Sep 2021 15:15:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7EC3361132
+	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Sep 2021 15:15:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345069AbhIGPQj (ORCPT
+        id S1345078AbhIGPQk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 7 Sep 2021 11:16:39 -0400
-Received: from mail.kernel.org ([198.145.29.99]:42896 "EHLO mail.kernel.org"
+        Tue, 7 Sep 2021 11:16:40 -0400
+Received: from mail.kernel.org ([198.145.29.99]:42930 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1345061AbhIGPQi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Sep 2021 11:16:38 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4CB8C6112E;
-        Tue,  7 Sep 2021 15:15:31 +0000 (UTC)
+        id S1345070AbhIGPQj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 7 Sep 2021 11:16:39 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 6D1BE61107;
+        Tue,  7 Sep 2021 15:15:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1631027732;
-        bh=KvtCf6stqLiEbq7sySSQ86RmRGkW8yQj4rPuQwmzu+g=;
+        s=k20201202; t=1631027733;
+        bh=Ea6i7nuMuxo3nuep6k3/uS6l/jmabdXQI6pMdAahtL4=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=dL/ThkFhUhJ3Zsr4RbgRl+utBczBn/aXJK2OUdKeyehk05tb5tNl36zcWz2g41c7Q
-         eX/OdvsACvZKzZkDzLR+axdyiIJZg3ekm5gC1O04d1sZWlnNalNxCHnDQo4pfg6pJF
-         u42eqPlxTvW6QNMyJ1vaeLmz106BTjy0QOUdB/cUmM/Da4dpoN93PO/XEio4kCZC3B
-         Z4oYD6N3K9dDzDAXYKFOACpWxb2sk1WFt4C+qUh4S6LVQTtMsPIsAOC/hPRQpumkS4
-         88Su9ZXGaXysp/tH0uLKad1IFaqGdp2uKOLcEkaYeIUJ5bGtngsGo6aHZgVmrFMd6r
-         zuIDRu978cuvQ==
+        b=ffKmvK3wBprZET4qTUhh03G1E3cAf1H157JybTYOQC1b9RvN1zuCmjlk0mLZAbG1G
+         M70zYMMgr+417YC4BSLX4lB6w8hFwZBhQjVQp1Ec/IDE0K3v2gn3j/vyqYhGK2Rkal
+         WZdHkuu5+0EGtL+OH33Eb7ZZ1v3zrEs6RmIFeaMzjYVQK2pAk7wscCO5lfSNO1r1SA
+         Chd34hjt0ForzdkRbWeNXLdc3Qla7HayKJJ1QK4JGP9kbMLrLQIEX8oobHlKi1HueD
+         yFCNM6sUqwhzB0Sj3MZRHEgvbcwwPSSjZ6qEK/WtV1kur+YLzNPFvP/dGiKB6ghF4G
+         tK0JyD3NYMg3A==
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -45,10 +45,11 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
         Tom Zanussi <zanussi@kernel.org>
-Cc:     Andrew Halaney <ahalaney@redhat.com>
-Subject: [PATCH RT 1/3] locking/rwsem-rt: Remove might_sleep() in __up_read()
-Date:   Tue,  7 Sep 2021 10:15:27 -0500
-Message-Id: <863d8c29a4b1b1500f7a90557af8b7fa442afcb7.1631027711.git.zanussi@kernel.org>
+Cc:     Gregor Beck <gbeck@esigma-technology.com>,
+        Gregor Beck <gregor.beck@gmail.com>
+Subject: [PATCH RT 2/3] fscache: fix initialisation of cookie hash table raw spinlocks
+Date:   Tue,  7 Sep 2021 10:15:28 -0500
+Message-Id: <b0d883b82b275ffe9aa0c9e3ca7960377e78c06e.1631027711.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <cover.1631027711.git.zanussi@kernel.org>
 References: <cover.1631027711.git.zanussi@kernel.org>
@@ -58,7 +59,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Andrew Halaney <ahalaney@redhat.com>
+From: Gregor Beck <gbeck@esigma-technology.com>
 
 v5.4.143-rt64-rc2 stable review patch.
 If anyone has any objections, please let me know.
@@ -66,31 +67,31 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit b2ed0a4302faf2bb09e97529dd274233c082689b ]
+The original patch, 602660600bcd ("fscache: initialize cookie hash
+table raw spinlocks"), subtracted 1 from the shift and so still left
+some spinlocks uninitialized.  This fixes that.
 
-There's no chance of sleeping here, the reader is giving up the
-lock and possibly waking up the writer who is waiting on it.
+[zanussi: Added changelog text]
 
-Reported-by: Chunyu Hu <chuhu@redhat.com>
-Signed-off-by: Andrew Halaney <ahalaney@redhat.com>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Gregor Beck <gregor.beck@gmail.com>
+Fixes: 602660600bcd ("fscache: initialize cookie hash table raw spinlocks")
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- kernel/locking/rwsem-rt.c | 1 -
- 1 file changed, 1 deletion(-)
+ fs/fscache/cookie.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
-index 19ea20be3fd7..966946454ced 100644
---- a/kernel/locking/rwsem-rt.c
-+++ b/kernel/locking/rwsem-rt.c
-@@ -200,7 +200,6 @@ void __up_read(struct rw_semaphore *sem)
- 	if (!atomic_dec_and_test(&sem->readers))
- 		return;
+diff --git a/fs/fscache/cookie.c b/fs/fscache/cookie.c
+index 5508d92e3f8f..cba2a226897f 100644
+--- a/fs/fscache/cookie.c
++++ b/fs/fscache/cookie.c
+@@ -963,6 +963,6 @@ void __init fscache_cookie_init(void)
+ {
+ 	int i;
  
--	might_sleep();
- 	raw_spin_lock_irq(&m->wait_lock);
- 	/*
- 	 * Wake the writer, i.e. the rtmutex owner. It might release the
+-	for (i = 0; i < (1 << fscache_cookie_hash_shift) - 1; i++)
++	for (i = 0; i < ARRAY_SIZE(fscache_cookie_hash); i++)
+ 		INIT_HLIST_BL_HEAD(&fscache_cookie_hash[i]);
+ }
 -- 
 2.17.1
 
