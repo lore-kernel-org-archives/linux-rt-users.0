@@ -2,145 +2,184 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 011ADC433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 17:30:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E272FC433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 17:52:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D976E61157
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 17:30:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CB259610A3
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 17:52:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1350207AbhIHRb2 (ORCPT
+        id S233322AbhIHRxL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Sep 2021 13:31:28 -0400
-Received: from sleepmap.de ([85.10.206.218]:41310 "EHLO mail.sleepmap.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S230091AbhIHRb1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Sep 2021 13:31:27 -0400
-Date:   Wed, 8 Sep 2021 19:30:14 +0200
-From:   David Runge <dave@sleepmap.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Kristian Hoegsberg <krh@bitplanet.net>,
-        linux1394-devel@lists.sourceforge.net,
-        linux-rt-users@vger.kernel.org,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
-Message-ID: <YTjzKftQmFtPLYUR@hmbx>
-References: <YB3TLNN39/XhUyUY@hmbx>
- <YB+5tdIpbTfnDnIi@hmbx>
- <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
- <YCl28sXo7LEyCK8y@hmbx>
- <20210218083849.iitcrhdgv2oajfhv@linutronix.de>
- <20210218092751.ahn262llcpp2loz7@linutronix.de>
- <20210308141210.yoa37dsc26p4jsim@linutronix.de>
- <YEkMvjJt/Vu9Jbgu@hmbx>
- <YTfy7pLhWkTOn+aI@hmbx>
- <YTgdLkTs7wEmj8fh@workstation>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="7whbo5xfvtqAAJgT"
+        Wed, 8 Sep 2021 13:53:11 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:56636 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229614AbhIHRxK (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 8 Sep 2021 13:53:10 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631123522;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=iY9Xjx/6YVjPc1i0zKaBCQJEE3D0qOZv//aUvqhg/44=;
+        b=ZSsSSvIXOiqA+2MbJ/wsubKonvL0t2w/13TqcsfIBR+8SItdESvE29FoMlTaKZg7abiOse
+        HqHBs4uHs1L/9zYjwem0uiBT3T1nn4q8MqlcZQZD34PJliLlwxanx2VlH+uaQZYo0slE+H
+        4tu0w3fwH7guaMoaRBsCayLVBpEN3YU=
+Received: from mail-il1-f198.google.com (mail-il1-f198.google.com
+ [209.85.166.198]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-292-2iQuMvdxM7uULx1p0qPrYw-1; Wed, 08 Sep 2021 13:52:00 -0400
+X-MC-Unique: 2iQuMvdxM7uULx1p0qPrYw-1
+Received: by mail-il1-f198.google.com with SMTP id n4-20020a056e021ba400b0022481cdc803so2271732ili.15
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 10:52:00 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:content-transfer-encoding
+         :in-reply-to;
+        bh=iY9Xjx/6YVjPc1i0zKaBCQJEE3D0qOZv//aUvqhg/44=;
+        b=M0RHpkOkrQj7AL+o/pJ1mLnjL4/SuUDGVh6p2ED76orOyN3WQ4iN1uxlkmEshDkftz
+         HIlNK3Vdj3QO2JfEWyRKxmeBvaXkGSPZwOFSTHtvSlIYJ0++Nk7kbT3JKH1Bhh7Kdh5o
+         mbVJGNL+qSg7JZwqKwuhfF/NafAa/r5p3ejf+AMV14vyRLZR8ac+FIf+1LgOY4yGDP8C
+         fORztLFTA1JiQA8m6/cYP/ULUqzWJX4S+L/MvEcZDzvduxMyxzFyQpA8WyncrNDE1dqf
+         GFRsPc0OcfqsNg7MAoiLfJoZyp2ISvlBVM+MqMB1h7UQQRAtLQZfXStCusQJvKnhpecM
+         qtZw==
+X-Gm-Message-State: AOAM531VI1/gjDczT0EJ2iWN+zd7ff9UUdhl7BLjHPb612P/jSLxuw6o
+        VoWPD6arORGPTOMvZoxw9pYiOR1xGAI8NGv2W3YHhzOluHuWk6ZiyXMtll0dm6G42avh36RGkoB
+        oGQwyWSlNqmplmNK+uZ/MGohMRwk=
+X-Received: by 2002:a5e:dc0b:: with SMTP id b11mr876514iok.91.1631123519761;
+        Wed, 08 Sep 2021 10:51:59 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyTiPcS5w+oHoVw8CgXsvy99hJOscZyKOdoFj7t12RAUruIXnAaPwdFH9T6QOtXH6/uMt8+0A==
+X-Received: by 2002:a5e:dc0b:: with SMTP id b11mr876495iok.91.1631123519474;
+        Wed, 08 Sep 2021 10:51:59 -0700 (PDT)
+Received: from t490s ([2607:fea8:56a3:500::ad7f])
+        by smtp.gmail.com with ESMTPSA id o11sm1381416ilf.86.2021.09.08.10.51.58
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 08 Sep 2021 10:51:58 -0700 (PDT)
+Date:   Wed, 8 Sep 2021 13:51:57 -0400
+From:   Peter Xu <peterx@redhat.com>
+To:     nsaenzju@redhat.com
+Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
+        jkacur@redhat.com
+Subject: Re: [PATCH 1/3] oslat: rename cpu_mhz/cpu_hz to timer_mhz/cpu_hz
+Message-ID: <YTj4Pb0peVbzFQQa@t490s>
+References: <20210908100209.118609-1-nsaenzju@redhat.com>
+ <YTjLaZez4azBeYLI@t490s>
+ <dc800f41878a9240cc9b9629ed1a4c1551514fac.camel@redhat.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <YTgdLkTs7wEmj8fh@workstation>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <dc800f41878a9240cc9b9629ed1a4c1551514fac.camel@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Wed, Sep 08, 2021 at 06:30:50PM +0200, nsaenzju@redhat.com wrote:
+> Hi Peter, thanks for having a look at this! And sorry in advance for the long
+> documentation dump.
 
---7whbo5xfvtqAAJgT
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Wed, 8 Sep 2021 19:30:14 +0200
-From: David Runge <dave@sleepmap.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Kristian Hoegsberg <krh@bitplanet.net>,
-	linux1394-devel@lists.sourceforge.net,
-	linux-rt-users@vger.kernel.org,
-	"Ahmed S. Darwish" <a.darwish@linutronix.de>
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
+It's actually great to reference the documents, thanks for that. I'd appreciate
+if you can also add some more explanation into commit message too, may not be
+the full copy-paste of the document though, just with the explicit x86/ppc
+examples to show this is not for arm-only idea?
 
-Hi Takashi,
+Note there's a typo in subject too:
 
-thanks for the prompt and detailed response!
+  oslat: rename cpu_mhz/cpu_hz to timer_mhz/cpu_hz
+                                            ^^^ timer
 
-Unfortunately I lack the knowledge about the driver and its inner
-workings to be able to provide a patch for this issue myself.
-If anyone reading this who is able to suggest a fix, I'd be happy to
-test it!
+> 
+> On Wed, 2021-09-08 at 10:40 -0400, Peter Xu wrote:
+> > Hello, Nicolas,
+> > 
+> > On Wed, Sep 08, 2021 at 12:02:07PM +0200, Nicolas Saenz Julienne wrote:
+> > > 'cpu_mhz' in oslat actually represents the frequency at which the high
+> > > frequency timer we measure with ticks. There is no need for it to match
+> > > the CPU frequency, nor will do on all supported architectures. So rename
+> > > it to 'timer_mhz' in order to better match reality.
+> > 
+> > But right now "cpu_mhz" is indeed the cpu frequency per mhz, isn't it?  As I
+> > believe that's how "time stamp counter" defined on x86. :)
+> 
+> Sadly I don't think this is really the case. In some cases TSC might match
+> CPU's base frequency, but it depends on the processor family and other
+> factors[1]. Also, the same applies for PPC64[2].
+> 
+> My reading is that, in general, we are only safe to assume we're getting a
+> constant monotonically increasing timer unrelated from CPU's actual frequency.
+> 
+> > I don't know what's the corresponding register for aarch64 to read the
+> > processor clock cycles out, I did a quick google and it tells me PMCCNTR, but
+> > I've no solid idea.  Or do you mean for some reason we can't read that info out
+> > from aarch64?
+> 
+> Sadly PMCCNTR isn't available at Exception Level 0 (user-space) and AFAIU we're
+> stuck with CNTVCT_EL0.
 
-On 2021-09-08 11:17:18 (+0900), Takashi Sakamoto wrote:
-> I guess we have issue in the softIRQ context or timer wheel context
-> instead of hwIRQ context, if the OHCI 1394 controller you use has
-> no quirk (I suggest you to give information about the controller).
->=20
-> I'd like you to check it. The firewire-ohci module has 'debug' parameter.
->=20
-> ``
-> $ modinfo firewire-ohci
-> ...
-> parm:           debug:Verbose logging (default =3D 0, AT/AR events =3D 1,=
- self-IDs =3D 2, IRQs =3D 4, busReset events =3D 8, or a combination, or al=
-l =3D -1) (int)
-> ``
+Fair enough.
 
-I am using '-1' (all) in the 2nd link in my previous mail. It appears to
-not show a different output in the kernel logs from when I set it to '5'
-though. There seems to be something wrong...
-I'm adding the options in a .conf file below /etc/modprobe.d/, e.g.:
+Though I still think the name "timer" is vague - timer normally means to me
+that there's a setup+invoke procedure, and there can be overhead.  While all
+these monotonically increasing registers (either real or virtual) should not
+have those, we just read some counter out.
 
-```
-options firewire-ohci debug=3D5
-```
+How about "clock_[m]hz"?  It does not necessarily to be a property of the
+processor, but it's indeed a clock at least in electronics terms.
 
-The only output I get from that is:
+Thanks,
 
-```
-firewire_ohci 0000:05:00.0: enabling device (0000 -> 0002)
-firewire_ohci 0000:05:00.0: added OHCI v1.10 device as card 0, 8 IR + 8 IT =
-contexts, quirks 0x2
-firewire_core 0000:05:00.0: created device fw0: GUID 7856341278563412, S800
-firewire_ohci 0000:05:00.0: isochronous cycle inconsistent
-firewire_core 0000:05:00.0: created device fw1: GUID 000a3500ada83262, S400
-firewire_core 0000:05:00.0: phy config: new root=3Dffc0, gap_count=3D5
-```
+> 
+> Regards,
+> Nicolas
+> 
+> [1] Intel TRM Vol 3B, 17.17 Time Stamp Counter
+> 
+> Processor families increment the time-stamp counter differently:
+> 
+> • For Pentium M processors (family [06H], models [09H, 0DH]); for Pentium 4
+>   processors, Intel Xeon processors (family [0FH], models [00H, 01H, or 02H]);
+>   and for P6 family processors: the time-stamp counter increments with every
+>   internal processor clock cycle. The internal processor clock cycle is
+>   determined by the current core-clock to bus-clock ratio. Intel® SpeedStep®
+>   technology transitions may also impact the processor clock.
+> 
+> • For Pentium 4 processors, Intel Xeon processors (family [0FH], models [03H
+>   and higher]); for Intel Core Solo and Intel Core Duo processors (family [06H],
+>   model [0EH]); for the Intel Xeon processor 5100 series and Intel Core 2 Duo
+>   processors (family [06H], model [0FH]); for Intel Core 2 and Intel Xeon
+>   processors (family [06H], DisplayModel [17H]); for Intel Atom processors
+>   (family [06H], DisplayModel [1CH]): the time-stamp counter increments at a
+>   constant rate. That rate may be set by the maximum core-clock to bus-clock
+>   ratio of the processor or may be set by the maximum resolved frequency at which
+>   the processor is booted. The maximum resolved frequency may differ from the
+>   processor base frequency, see Section 18.7.2 for more detail. On certain
+>   processors, the TSC frequency may not be the same as the frequency in the brand
+>   string. The specific processor configuration determines the behavior. Constant
+>   TSC behavior ensures that the duration of each clock tick is uniform and
+>   supports the use of the TSC as a wall clock timer even if the processor core
+>   changes frequency. This is the architectural behavior moving forward.
+> 
+> The specific processor configuration determines the behavior. Constant TSC
+> behavior ensures that the duration of each clock tick is uniform and supports
+> the use of the TSC as a wall clock timer even if the processor core changes
+> frequency. This is the architectural behavior moving forward.
+> 
+> [2] From __ppc_get_timebase() manpages: The Time Base Register is a 64-bit
+> register provided by Power Architecture processors. It stores a monotonically
+> incremented value that is updated at a system-dependent frequency that may be
+> different from the processor frequency.
+> 
+> Note that glibc's __ppc_get_timebase() and oslat's ppc frc() implementations
+> are the same:
+> https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/powerpc/sys/platform/ppc.h;h=8b0a66de1b93a56e3edf56c31a0c1505d7a8fc08;hb=HEAD#l27
+> 
 
-This is with starting with the audio interface connected and on. I have
-to switch it off and on again to get recognized, but then the driver
-crashes (full kernel log [1])
+-- 
+Peter Xu
 
-[1] https://pkgbuild.com/~dvzrv/bugs/2021/09/linux-5.14.1.19.realtime1-fire=
-wire-ohci-debug-kernel.log
-
-Best,
-David
-
---=20
-https://sleepmap.de
-
---7whbo5xfvtqAAJgT
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCgAdFiEEkb2IFf4AQPp/9daHVMKPT/WhqUkFAmE48yYACgkQVMKPT/Wh
-qUmGNBAAkoh52BI9hO/mESSlPDS7lEiTzI/UWZruXfRft/f5odfm59EqwVWdQr79
-tshPKsvdBYKeavsvQoGVG8SUmqqxKuyBFEB8a6/qF2K4lspUGSRDJVhYGE3HwFCC
-o2OVE0RtObn3CT7ps38l9Zwk7oDKTxxG+8O03mfDMpS2OlwhkBMt/QpKd20G6HEg
-N8QeEYFjnGoUJfahEST8Ew4lFkWJbxQKXM/DnqtW+V/DkVrhzZHyGA4UKLWO0tu3
-+fmskzxYx3O8Cm3s7ONi/FaNJorSC8wd9aHq1O9qId29DeaxY3F8ZtOlmQgoUhCm
-cOffP3rOJk2ZNKRR7Ev7tL7VNtkzZYyKipKhlPurAUwY7DnwnPGgUYcZiObGGeT4
-ZqbLLR0omLvRJDFAKq+5+a70611QEHJ5FJhppnUMJotduWSZJAzbO7uTwuFBijLu
-RW2mQsFugoYONEyOpkrml4HKQCiOvh5rviFBsS109W44BYItkOekoMdM1jSmijK/
-NxeqbdadgluUbnTHHVQW6wvxdyVEzvP2ll5eYm4YqEqINEkR79lmg73TkK63V9oz
-n1wQrXFOeylEmd6Y0M2xdX9EgbwulZWmGQkCbBVd+yihl/PfRzXZfRzt44WTJu8y
-5/zALb61bngeV3g/jYMcm64zGjeGuIqBdbnew9OVALYGTNGkHNw=
-=PJBS
------END PGP SIGNATURE-----
-
---7whbo5xfvtqAAJgT--
