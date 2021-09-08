@@ -2,27 +2,26 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AFC1DC433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 08:23:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 98F78C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 08:36:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8B8126113D
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 08:23:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7CADC61102
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 08:36:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1348124AbhIHIY4 (ORCPT
+        id S1348325AbhIHIhI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Sep 2021 04:24:56 -0400
-Received: from mail.loongson.cn ([114.242.206.163]:47932 "EHLO loongson.cn"
+        Wed, 8 Sep 2021 04:37:08 -0400
+Received: from mail.loongson.cn ([114.242.206.163]:50950 "EHLO loongson.cn"
         rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S240561AbhIHIYx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Sep 2021 04:24:53 -0400
+        id S1348196AbhIHIhH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 8 Sep 2021 04:37:07 -0400
 Received: from localhost.localdomain (unknown [89.187.161.160])
-        by mail.loongson.cn (Coremail) with SMTP id AQAAf9CxdObycjhhWo4BAA--.1985S3;
-        Wed, 08 Sep 2021 16:23:42 +0800 (CST)
+        by mail.loongson.cn (Coremail) with SMTP id AQAAf9CxdObddThhl5ABAA--.1994S2;
+        Wed, 08 Sep 2021 16:35:52 +0800 (CST)
 From:   Huang Pei <huangpei@loongson.cn>
 To:     Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
         ambrosehua@gmail.com
@@ -33,100 +32,36 @@ Cc:     Bibo Mao <maobibo@loongson.cn>, linux-mips@vger.kernel.org,
         Yang Tiezhu <yangtiezhu@loongson.cn>,
         Gao Juxin <gaojuxin@loongson.cn>,
         Huacai Chen <chenhuacai@loongson.cn>,
-        Jinyang He <hejinyang@loongson.cn>
-Subject: [PATCH] MIPS: simplify copy_user_high_page for MIPS64 w/o cache alias
-Date:   Wed,  8 Sep 2021 16:22:24 +0800
-Message-Id: <20210908082224.922157-2-huangpei@loongson.cn>
+        Jinyang He <hejinyang@loongson.cn>,
+        "Maciej W . Rozycki" <macro@orcam.me.uk>
+Subject: [PATCH] MIPS: rework local_t operation on MIPS64
+Date:   Wed,  8 Sep 2021 16:35:30 +0800
+Message-Id: <20210908083531.922785-1-huangpei@loongson.cn>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20210908082224.922157-1-huangpei@loongson.cn>
-References: <20210908082224.922157-1-huangpei@loongson.cn>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID: AQAAf9CxdObycjhhWo4BAA--.1985S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7WF17tF47XFWxGw4xury5XFb_yoW8ZF1rpF
-        47Gw45KrWFgrW7C3ZxX39rur13Jas2yay8XF47Ka4Y9wnIgF13WF1rJFWxXF1YqFWkGa15
-        W3yqgay5WFn8u3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-        9KBjDU0xBIdaVrnRJUUUPj14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-        rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jr4l82xGYIkIc2
-        x26xkF7I0E14v26r4j6ryUM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
-        Y4vE2Ix0cI8IcVAFwI0_Xr0_Ar1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
-        A2z4x0Y4vEx4A2jsIE14v26F4UJVW0owA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_GcCE3s1l
-        e2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E2Ix0cI
-        8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJVW8JwAC
-        jcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka0x
-        kIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AK
-        xVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIYrx
-        kI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v2
-        6r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8Jw
-        CI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfU86wZUUUU
-        U
+X-CM-TRANSID: AQAAf9CxdObddThhl5ABAA--.1994S2
+X-Coremail-Antispam: 1UD129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
+        VFW2AGmfu7bjvjm3AaLaJ3UjIYCTnIWjp_UUUYS7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E
+        6xAIw20EY4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28Cjx
+        kF64kEwVA0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVW5JVW7JwA2z4x0Y4vE2Ix0cI8I
+        cVCY1x0267AKxVWxJVW8Jr1l84ACjcxK6I8E87Iv67AKxVWxJr0_GcWl84ACjcxK6I8E87
+        Iv6xkF7I0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE
+        6c02F40Ex7xfMcIj6xIIjxv20xvE14v26r106r15McIj6I8E87Iv67AKxVWUJVW8JwAm72
+        CE4IkC6x0Yz7v_Jr0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7
+        M4IIrI8v6xkF7I0E8cxan2IY04v7MxkIecxEwVAF-wCF04k20xvY0x0EwIxGrwCFx2IqxV
+        CFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r10
+        6r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxV
+        WUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG
+        6rWUJVWrZr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr
+        0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0pRdcTdUUUUU=
 X-CM-SenderInfo: xkxd0whshlqz5rrqw2lrqou0/
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Borrow from ARM64
++. fix local_t operation on MIPS64 since introduced
 
-MIPS64 CPU has enough direct mapped memory space to access all
-physical memory. In case of no cache alias, bypass both kmap_atomic
-and kmap_coherent for better real-time performance.
++. clean up, inspired by "Maciej W. Rozycki" <macro@orcam.me.uk>
 
-Signed-off-by: Huang Pei <huangpei@loongson.cn>
----
- arch/mips/mm/init.c | 37 +++++++++++++++++++++++++------------
- 1 file changed, 25 insertions(+), 12 deletions(-)
-
-diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
-index 19347dc6bbf8..d9923fd9ed3b 100644
---- a/arch/mips/mm/init.c
-+++ b/arch/mips/mm/init.c
-@@ -171,21 +171,34 @@ void copy_user_highpage(struct page *to, struct page *from,
- {
- 	void *vfrom, *vto;
- 
--	vto = kmap_atomic(to);
--	if (cpu_has_dc_aliases &&
--	    page_mapcount(from) && !Page_dcache_dirty(from)) {
--		vfrom = kmap_coherent(from, vaddr);
-+	if (IS_ENABLED(CONFIG_64BIT) && !cpu_has_dc_aliases) {
-+		vfrom = page_address(from);
-+		vto   = page_address(to);
- 		copy_page(vto, vfrom);
--		kunmap_coherent();
-+		/*
-+		 * even without cache alias, still need to maintain
-+		 * coherence between icache and dcache
-+		 */
-+		if (!cpu_has_ic_fills_f_dc)
-+			flush_data_cache_page((unsigned long)vto);
-+
- 	} else {
--		vfrom = kmap_atomic(from);
--		copy_page(vto, vfrom);
--		kunmap_atomic(vfrom);
-+		vto = kmap_atomic(to);
-+		if (cpu_has_dc_aliases &&
-+		    page_mapcount(from) && !Page_dcache_dirty(from)) {
-+			vfrom = kmap_coherent(from, vaddr);
-+			copy_page(vto, vfrom);
-+			kunmap_coherent();
-+		} else {
-+			vfrom = kmap_atomic(from);
-+			copy_page(vto, vfrom);
-+			kunmap_atomic(vfrom);
-+		}
-+		if ((!cpu_has_ic_fills_f_dc) ||
-+		      pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
-+			flush_data_cache_page((unsigned long)vto);
-+		kunmap_atomic(vto);
- 	}
--	if ((!cpu_has_ic_fills_f_dc) ||
--	    pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
--		flush_data_cache_page((unsigned long)vto);
--	kunmap_atomic(vto);
- 	/* Make sure this page is cleared on other CPU's too before using it */
- 	smp_wmb();
- }
--- 
-2.25.1
 
