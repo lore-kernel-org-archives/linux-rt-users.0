@@ -2,93 +2,97 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B668BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 14:19:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A5C92C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 14:40:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9F8546115B
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 14:19:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 77A7C60FDA
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 14:40:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1348439AbhIHOUX (ORCPT
+        id S1349349AbhIHOly (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Sep 2021 10:20:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57662 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235414AbhIHOUQ (ORCPT
+        Wed, 8 Sep 2021 10:41:54 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:39227 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S231164AbhIHOlx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Sep 2021 10:20:16 -0400
-Received: from mail-pg1-x530.google.com (mail-pg1-x530.google.com [IPv6:2607:f8b0:4864:20::530])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D6193C061575
-        for <linux-rt-users@vger.kernel.org>; Wed,  8 Sep 2021 07:19:08 -0700 (PDT)
-Received: by mail-pg1-x530.google.com with SMTP id k24so2751307pgh.8
-        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 07:19:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:references:date:in-reply-to:message-id
-         :user-agent:mime-version;
-        bh=gI2iMzDEEVMelh1i5+VYRmyPAXYakzN7+DEY6weetzY=;
-        b=eUUmRM8IKB9c8k2XB8wPgXxX2Vi4dWlzqVONlfiYmPZnhpmhTd2YQALB84fgcazBpC
-         bvm8fN9VbClelS++9hKZteqEobZJPlDjn9v3tynYLWWivhI/OHirqMjqCI6NnI3Dsrb9
-         fsR7bcBOjCCvr8o9TCnl3fnzkT3uYH5EE0RhOy1d+mFDUJ7gtGxYq3CX/XRMVA6VmEdD
-         6lFqo0fVfcDge4idFnKRIHUV1QpV/fhiCIVQTpOmI9VmoDmcKAMaTcr82QUb2TPyqiKd
-         2orS59jFerOhR5qGcbn76xszmTwa9h/cP0s5e2zj2v00B8Ye1lPrzPwTO1OKpsRPLLSo
-         bVeA==
+        Wed, 8 Sep 2021 10:41:53 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631112045;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=2Z0PBWopu+3sO7NUdS3G+HCB3x9ygJtSuqYXc07qQLk=;
+        b=AEHYMf6xX8MvgPjRnZSsfscOfVNNq1COy2pmbz3sWErjjDq50Y1POD0GBxh47eId78bzzC
+        SZYjWKei9SlTJ6GV5srusdwa0mxdEdRrqd9ElCZrf5sBC0Ke+VAAiUSvnv0T9e+nWAY2ph
+        oCz7S+G5J2+0TeJp4qRhVfocl4XPbTQ=
+Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
+ [209.85.166.72]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-77-wvGSTVghOp2R0iS0-1opYA-1; Wed, 08 Sep 2021 10:40:43 -0400
+X-MC-Unique: wvGSTVghOp2R0iS0-1opYA-1
+Received: by mail-io1-f72.google.com with SMTP id i26-20020a5e851a000000b005bb55343e9bso1982151ioj.7
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 07:40:43 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
-         :message-id:user-agent:mime-version;
-        bh=gI2iMzDEEVMelh1i5+VYRmyPAXYakzN7+DEY6weetzY=;
-        b=59B6mmI+g02noVwLnKsQOwUxYsaRmn8vJzp9Q3IGelxnP0EinLZ+LgqJS0gZ+WeoJ+
-         RLk0kgt5ytDPj8iDO5QMkJkMPmS4X+ruMTLD8N/LyzaPOomDwNEGqoDaNar0dUPSzzqk
-         MS2XHKqUrAPOipDgL/whQo+bbyDe0hRuYoaWqtNpLUfuo2VM8rUvOpC5XRYXmbY3ecWy
-         GbwolaTN0xYBDYiFijMJnrhpzLKd3o739S25EXNCuGZ+hZjbeNJ7tRhLBvk7ERJX3H2l
-         gnWEx7R07jJzDKOkedGM/jBNqXqJMDtvi2BsM0GiC7Ve+RYkQeY28RcCfopEQHgXM7a4
-         EQ3g==
-X-Gm-Message-State: AOAM530AyAZZdHUK11WiU0zRmQqtLyG+6kFEFy9mPRflGtFFgN4ZIrRd
-        GXlRF0T4JOFaIJm7KM+nR84=
-X-Google-Smtp-Source: ABdhPJynLHwkQenKK9TurmB3C1hpUNpRExQZbpNZfhX+NtmovDDeMdcPNX1LhGl/osEhyP0EBGx6Cw==
-X-Received: by 2002:a62:ab04:0:b0:405:c1c0:543c with SMTP id p4-20020a62ab04000000b00405c1c0543cmr3904322pff.36.1631110748215;
-        Wed, 08 Sep 2021 07:19:08 -0700 (PDT)
-Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id q9sm2694872pfs.40.2021.09.08.07.19.07
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=2Z0PBWopu+3sO7NUdS3G+HCB3x9ygJtSuqYXc07qQLk=;
+        b=qhkPVHVujdDrvJjUYNvt9I9vRg+1B4GccrVkh5R/LHP7MRHI8Q6WhFRC3wpNJBeHKY
+         9RG3Fsvboukd27NsKI4cLcBqWOVNVjJYqKraME/7tuCGdqAJTDomjPXPQfoa5gwUj+h9
+         YIWBnUHO9klPxcEeQYdBhKh/yoTFuMEXqIth3i49jm6ntgWuyT+QYB8ok8hVD6ZH115u
+         ocyVdIMKNpm7L2/IwfJiVE7L8Kj7JNososly310yfEZLRwdNXNHJ2q/pwLTZ6X9kE+Sl
+         A2gzIAPfF7ZNpPpLrD/SPUApW0Jh+OP+FmpdCVs6ygjJRu7rWhGx4Ahtq1oHn/J2vDF3
+         IKdQ==
+X-Gm-Message-State: AOAM532qJQdE9LCL9kblINqnkuf5QRaC8k2pyHAKm9BTBS/WosIPxRIL
+        Inp8D9T9t1oWVaCklRvtQuHikuHajTtnuehoqd0MdsFk8nwnW/2ns1vXfbcJi1pkjUGZ8Ypp8OG
+        2TEv65NGKIwhIiFPDOu5MXh8spTA=
+X-Received: by 2002:a05:6638:14cf:: with SMTP id l15mr4070656jak.8.1631112043245;
+        Wed, 08 Sep 2021 07:40:43 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyQ3CsgbENCyYZWlVzrKw8LOQTM00OVM+rgIkCqD0DXDY4Wkvqsv2cFJidl7OXcBJbBIqucWA==
+X-Received: by 2002:a05:6638:14cf:: with SMTP id l15mr4070641jak.8.1631112043043;
+        Wed, 08 Sep 2021 07:40:43 -0700 (PDT)
+Received: from t490s ([2607:fea8:56a3:500::ad7f])
+        by smtp.gmail.com with ESMTPSA id l1sm723584ilc.65.2021.09.08.07.40.41
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 08 Sep 2021 07:19:07 -0700 (PDT)
-From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     jkacur@redhat.com
-Cc:     linux-rt-users@vger.kernel.org, punit1.agrawal@toshiba.co.jp,
-        Venkata.Pyla@toshiba-tsip.com, dinesh.kumar@toshiba-tsip.com
-Subject: Re: [PATCH 0/3] rteval: Fix issues with cyclictest.py module
-References: <20210902092452.726905-1-punitagrawal@gmail.com>
-Date:   Wed, 08 Sep 2021 23:19:04 +0900
-In-Reply-To: <20210902092452.726905-1-punitagrawal@gmail.com> (Punit Agrawal's
-        message of "Thu, 2 Sep 2021 18:24:49 +0900")
-Message-ID: <87fsufb15z.fsf@stealth>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+        Wed, 08 Sep 2021 07:40:42 -0700 (PDT)
+Date:   Wed, 8 Sep 2021 10:40:41 -0400
+From:   Peter Xu <peterx@redhat.com>
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
+        jkacur@redhat.com
+Subject: Re: [PATCH 1/3] oslat: rename cpu_mhz/cpu_hz to timer_mhz/cpu_hz
+Message-ID: <YTjLaZez4azBeYLI@t490s>
+References: <20210908100209.118609-1-nsaenzju@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20210908100209.118609-1-nsaenzju@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Punit Agrawal <punitagrawal@gmail.com> writes:
+Hello, Nicolas,
 
-[...]
+On Wed, Sep 08, 2021 at 12:02:07PM +0200, Nicolas Saenz Julienne wrote:
+> 'cpu_mhz' in oslat actually represents the frequency at which the high
+> frequency timer we measure with ticks. There is no need for it to match
+> the CPU frequency, nor will do on all supported architectures. So rename
+> it to 'timer_mhz' in order to better match reality.
 
-> The second patch uses the max latencies reported by cyclictest vs only
-> relying on the histogram latencies.
->
-> The third patch fixes the ordering of reported latencies.
+But right now "cpu_mhz" is indeed the cpu frequency per mhz, isn't it?  As I
+believe that's how "time stamp counter" defined on x86. :)
 
-Just realised that the "From" and "Signed-off-by" in patches 2 and 3 are
-messed up. I've fixed it up locally - will wait to see if there is any
-other feedback before resending.
+I don't know what's the corresponding register for aarch64 to read the
+processor clock cycles out, I did a quick google and it tells me PMCCNTR, but
+I've no solid idea.  Or do you mean for some reason we can't read that info out
+from aarch64?
 
 Thanks,
-Punit
 
-[...]
+-- 
+Peter Xu
 
