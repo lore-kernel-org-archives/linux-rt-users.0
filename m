@@ -7,128 +7,162 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20459C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 18:09:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A485C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 18:16:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 02BA761131
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 18:09:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4333D61041
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 18:16:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235768AbhIHSKV (ORCPT
+        id S240945AbhIHSRU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Sep 2021 14:10:21 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:43958 "EHLO
+        Wed, 8 Sep 2021 14:17:20 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:29304 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229689AbhIHSKU (ORCPT
+        by vger.kernel.org with ESMTP id S233322AbhIHSRU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Sep 2021 14:10:20 -0400
+        Wed, 8 Sep 2021 14:17:20 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631124551;
+        s=mimecast20190719; t=1631124971;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=/j4q6wtvqGkwiOTTCvShqHWyOB+pUUWKGgP9RbxGqQE=;
-        b=XUbMpRuOncsRJiJuqzwxQGCff0CJr1/7Zumq14hOXjsEF8M/agilkq0ARd0zYc/ZWLKHB8
-        +kfZiTWjJGsySFI8ji7PRCM+/5tigMqxe6+Cv9zfm6OWIu95vVe2KUQth5GJexb1wTxXcw
-        eOYwg21qJm3axDBF2QMEUEsqnj9RRMc=
-Received: from mail-il1-f199.google.com (mail-il1-f199.google.com
- [209.85.166.199]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-140-ePEMAno4NpigbwybqjgFfA-1; Wed, 08 Sep 2021 14:09:10 -0400
-X-MC-Unique: ePEMAno4NpigbwybqjgFfA-1
-Received: by mail-il1-f199.google.com with SMTP id d4-20020a923604000000b0022a2b065b0aso2332366ila.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 11:09:09 -0700 (PDT)
+        bh=iytigPz3Y85xtbTRaKagrVG/EYermnbNcHKUwuifyxc=;
+        b=fp4WI1LVNn5bE1pQ6XqRu1pUjVoRtsP1USyGgBKoLWIT+mikLOaQNaoBoUF5fE1HnlDBNq
+        WfM7ROv5x2l6gvbAoXCAN6bGvNLfBfqNoNkuCZiXBTUE7f80M3KTRx0TCBN6I+i/iyy0e/
+        6y2u7yW5tVpXkwS1LgL1Bg63dm3lezA=
+Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
+ [209.85.166.72]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-204-0OM4AWnCOg2edkdODtnb4Q-1; Wed, 08 Sep 2021 14:16:10 -0400
+X-MC-Unique: 0OM4AWnCOg2edkdODtnb4Q-1
+Received: by mail-io1-f72.google.com with SMTP id z26-20020a05660200da00b005b86e36a1f4so2445932ioe.15
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 11:16:10 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:message-id:references
          :mime-version:content-disposition:in-reply-to;
-        bh=/j4q6wtvqGkwiOTTCvShqHWyOB+pUUWKGgP9RbxGqQE=;
-        b=Y0KCt01cZMj9QCJr1YRsoOe02mVNF9DOc9vdJebpdWnrhuAE3YJ13EVjFYiLp/L+Rw
-         KBWK1/rt1Krnx0U0h1cP1F8HgnHj6dKfpYR9oDnSU/hiOQX8wpKcu1eRzOOEt+I2V+lp
-         dGn9HOKjTZ+X83FC5dULBCKvxSCp82iFIsgoGllAfblEpIpA0M3Z3+ZyXq64zpdbQwPF
-         1MDUckhELs2EE6xzqGV8MaUP7WB3EuSe0+kkneNEU0I7YWgMUavT1+0NYvpkeitYl0MV
-         Eu5Z0HX9a07d6U1cK62+Yn2JSjQiuQi2EryIwJL0yI9wxhiXOM2d5owWdudKqe5bMzaX
-         y7tQ==
-X-Gm-Message-State: AOAM533pETXqb2MPEqZ9nig8SE3QfX7WELJSy7JMK3vBL2QIkGc/9AM7
-        dzihBplJbokEhovmPuu6bj/EpQ04a9toGmfoue40I/GkMDkqTKEwTjiZsQfzqKKYQCR1PuiGwYL
-        WKo+tPPQ64aIXCY0vsPZOZ70eWzI=
-X-Received: by 2002:a05:6e02:104b:: with SMTP id p11mr892462ilj.21.1631124549038;
-        Wed, 08 Sep 2021 11:09:09 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwd25P78jXeeWeYh6cP8PnIa8Ea5pDmCFKeThEsUh3gP2bsoYMU9o6YgJ06Ul+6nmnOFtaFng==
-X-Received: by 2002:a05:6e02:104b:: with SMTP id p11mr892447ilj.21.1631124548762;
-        Wed, 08 Sep 2021 11:09:08 -0700 (PDT)
+        bh=iytigPz3Y85xtbTRaKagrVG/EYermnbNcHKUwuifyxc=;
+        b=LPkcIcMAgefx7m6NNPxadd1Z5hQuqSdTsUa56ZkFLVhBYoGO5oxu6hqjQArfhgrYqR
+         JYBjrA/hsdHilvY/zV2rUg0IU1K9JX1iO1FlkhWudVv5M13bRlINQ8RE01y/Eqvb16YM
+         OD6mgeJVpob3h/xkxSPEzCUPHa3TyX37F5R6XmFC8YAH+3mde/D/c22QrVLO0v/CEBTS
+         LNxXGGF2SWhUC1GWK1Iz+6Vg/l6Zh8PAuwVvo0wDh8WJAdesvP/7gytBWH9Z/rwd0csB
+         4oAnOSIXFOF/K2wfz7qeThu9bsLuJqvCiR/QHTWkrYzgZXC1d3Z9VlkhQqOEmS+RlKPa
+         evdg==
+X-Gm-Message-State: AOAM5338PBVrSgFfWV/DynM7CFFX/XIQpqvRndJmaPSYRyZH2V9XnI+f
+        1ezLGkoqj20BX3nJFRwZFzL0DTej+Xsv9vlrvR/QsqHAw+Qu+N5MuUmpJ4HP4R9nQzIYQkgWhiF
+        yrndQEDEWWH6Ti+iEq2epJjW4tGU=
+X-Received: by 2002:a05:6602:218d:: with SMTP id b13mr964726iob.143.1631124969382;
+        Wed, 08 Sep 2021 11:16:09 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJy4JTdg56EvQA/Z12cYdV0alaWvc7daalGZZzY9T5Xzx/6jrn4jhT3SLlGdvVXcpqp3QgkIpA==
+X-Received: by 2002:a05:6602:218d:: with SMTP id b13mr964710iob.143.1631124969074;
+        Wed, 08 Sep 2021 11:16:09 -0700 (PDT)
 Received: from t490s ([2607:fea8:56a3:500::ad7f])
-        by smtp.gmail.com with ESMTPSA id c10sm1450998ilq.77.2021.09.08.11.09.07
+        by smtp.gmail.com with ESMTPSA id h1sm1452060iow.12.2021.09.08.11.16.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 08 Sep 2021 11:09:08 -0700 (PDT)
-Date:   Wed, 8 Sep 2021 14:09:06 -0400
+        Wed, 08 Sep 2021 11:16:08 -0700 (PDT)
+Date:   Wed, 8 Sep 2021 14:16:06 -0400
 From:   Peter Xu <peterx@redhat.com>
 To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
         jkacur@redhat.com
-Subject: Re: [PATCH 2/3] oslat: Add aarch64 support
-Message-ID: <YTj8Qgawnh1xPrDJ@t490s>
+Subject: Re: [PATCH 3/3] oslat: Allow for arch specific timer frequency
+ measurements
+Message-ID: <YTj95hq7BzfWsK2v@t490s>
 References: <20210908100209.118609-1-nsaenzju@redhat.com>
- <20210908100209.118609-2-nsaenzju@redhat.com>
+ <20210908100209.118609-3-nsaenzju@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20210908100209.118609-2-nsaenzju@redhat.com>
+In-Reply-To: <20210908100209.118609-3-nsaenzju@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Sep 08, 2021 at 12:02:08PM +0200, Nicolas Saenz Julienne wrote:
-> The callbacks are based on Linux's implementation:
->  - CNTVCT_EL0 provides direct access to the system virtual timer[1].
->  - 'yield' serves as a CPU hint with similar semantics as x86's
->    'pause'[2].
+On Wed, Sep 08, 2021 at 12:02:09PM +0200, Nicolas Saenz Julienne wrote:
+> Some architectures have special purpose registers to query the system
+> timer's frequency. Let's use that when available.
 > 
-> [1] See Linux's '__arch_get_hw_counter()' in arch/arm64/include/asm/vdso/gettimeofday.h
-> [2] See Linux's 1baa82f4803 ("arm64: Implement cpu_relax as yield").
 > Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
 > ---
->  src/oslat/oslat.c | 13 +++++++++++++
->  1 file changed, 13 insertions(+)
+>  src/oslat/oslat.c | 20 +++++++++++++++++++-
+>  1 file changed, 19 insertions(+), 1 deletion(-)
 > 
 > diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-> index a4aa5f1..bd155a6 100644
+> index bd155a6..23ca9b6 100644
 > --- a/src/oslat/oslat.c
 > +++ b/src/oslat/oslat.c
-> @@ -71,6 +71,19 @@ static inline void frc(uint64_t *pval)
+> @@ -51,6 +51,9 @@
+>  # define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
+>  # if defined(__x86_64__)
+>  #  define relax()          __asm__ __volatile__("pause" ::: "memory")
+> +
+> +#define measure_timer_mhz generic_measure_timer_mhz
+> +
+>  static inline void frc(uint64_t *pval)
+>  {
+>  	uint32_t low, high;
+> @@ -61,12 +64,18 @@ static inline void frc(uint64_t *pval)
+>  }
+>  # elif defined(__i386__)
+>  #  define relax()          __asm__ __volatile__("pause" ::: "memory")
+> +
+> +#define measure_timer_mhz generic_measure_timer_mhz
+> +
+>  static inline void frc(uint64_t *pval)
+>  {
+>  	__asm__ __volatile__("rdtsc" : "=A" (*pval));
+>  }
+>  # elif defined(__PPC64__)
+>  #  define relax()          do { } while (0)
+> +
+> +#define measure_timer_mhz generic_measure_timer_mhz
+> +
+>  static inline void frc(uint64_t *pval)
 >  {
 >  	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
->  }
-> +# elif defined(__aarch64__)
-> +#  define relax()          __asm__ __volatile("yield" : : : "memory")
-> +
-> +static inline void frc(uint64_t *pval)
+> @@ -74,6 +83,15 @@ static inline void frc(uint64_t *pval)
+>  # elif defined(__aarch64__)
+>  #  define relax()          __asm__ __volatile("yield" : : : "memory")
+>  
+> +static inline unsigned int measure_timer_mhz(void)
 > +{
+> +	unsigned int val;
 > +
-
-newline to drop?
-
-> +	/*
-> +	 * This isb() is required to prevent that the counter value
-> +	 * is speculated.
-> +	 */
-> +	__asm__ __volatile__("isb; mrs %0, cntvct_el0" : "=r" (*pval));
-
-I saw that commit 27e11a9fe2e2e added two isbs, one before, one after.  Then
-commit 77ec462536a1 replaced the 2nd isb into another magic.  This function
-dropped the 2nd barrier.  Also, the same to compiler barrier "memory" that's
-gone too.
-
-Is it on purpose to drop them?
-
-No experience on arm, so just raise this up.  Thanks,
-
+> +	__asm__ __volatile__("mrs %0, cntfrq_el0" : "=r" (val));
 > +
+> +	return val / 1e6;
 > +}
->  # else
->  #  define relax()          do { } while (0)
->  #  define frc(x)
-> -- 
-> 2.31.1
-> 
+> +
+>  static inline void frc(uint64_t *pval)
+>  {
+>  
+> @@ -257,7 +275,7 @@ static cycles_t __measure_timer_hz(void)
+>  	return (cycles_t) ((e - s) / sec);
+>  }
+>  
+> -static unsigned int measure_timer_mhz(void)
+> +static unsigned int __attribute__((unused)) generic_measure_timer_mhz(void)
+
+This is okay I guess, but does not look nice, as it's marked unused even if
+it's used..
+
+How about for any arch that supports a faster version to read the freq, do:
+
+#define measure_timer_mhz_fast
+unsigned int measure_timer_mhz_fast(void)
+{
+    ...
+}
+
+Then at entry of measure_timer_mhz():
+
+#ifdef measure_timer_mhz_fast
+    return measure_timer_mhz_fast();
+#endif
+
+I'm also wondering the diff between the two methods on arm64 and whether
+there's a huge difference on the numbers.
+
+Thanks,
 
 -- 
 Peter Xu
