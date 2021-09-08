@@ -2,319 +2,171 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-19.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D90A6C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 09:09:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 50897C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 10:02:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BF3026113E
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 09:09:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1B46B60724
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 10:02:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351335AbhIHJKG (ORCPT
+        id S242127AbhIHKDZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Sep 2021 05:10:06 -0400
-Received: from mail.loongson.cn ([114.242.206.163]:59020 "EHLO loongson.cn"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1351239AbhIHJKE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Sep 2021 05:10:04 -0400
-Received: from localhost.localdomain (unknown [89.187.161.160])
-        by mail.loongson.cn (Coremail) with SMTP id AQAAf9Cx5OWIfThh6pUBAA--.2216S4;
-        Wed, 08 Sep 2021 17:08:48 +0800 (CST)
-From:   Huang Pei <huangpei@loongson.cn>
-To:     Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-        ambrosehua@gmail.com
-Cc:     Bibo Mao <maobibo@loongson.cn>, linux-mips@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Jiaxun Yang <jiaxun.yang@flygoat.com>,
-        Li Xuefeng <lixuefeng@loongson.cn>,
-        Yang Tiezhu <yangtiezhu@loongson.cn>,
-        Gao Juxin <gaojuxin@loongson.cn>,
-        Huacai Chen <chenhuacai@loongson.cn>,
-        Jinyang He <hejinyang@loongson.cn>,
-        "Maciej W . Rozycki" <macro@orcam.me.uk>
-Subject: [PATCH 2/2] MIPS: retire "asm/llsc.h"
-Date:   Wed,  8 Sep 2021 17:08:18 +0800
-Message-Id: <20210908090818.923791-3-huangpei@loongson.cn>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20210908090818.923791-1-huangpei@loongson.cn>
-References: <20210908090818.923791-1-huangpei@loongson.cn>
+        Wed, 8 Sep 2021 06:03:25 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:54786 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S231723AbhIHKDZ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 8 Sep 2021 06:03:25 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631095337;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=7np63vMuWkV60dGYkoyZGooYdzdN27SafRW+cIGzbFA=;
+        b=bNIhMGinaPwliNv3eUWki3M7qhI3f+QvgbRfMJVk5H5WF66fbJBXESJ3a0EVLlix3lqAFn
+        il7LKC07+kRi2/TUOfPbf5oRh8WYBGvNBBPRMDzcrNb8KM0+xq/fnO9m3uJwGPVG4sxkVI
+        Xsjoy0+BCYO+RfnV9ZtpT7GDPXEM+hQ=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-18-UU7_5TA5OnyEUUpt-d-bew-1; Wed, 08 Sep 2021 06:02:16 -0400
+X-MC-Unique: UU7_5TA5OnyEUUpt-d-bew-1
+Received: by mail-wm1-f70.google.com with SMTP id f17-20020a05600c155100b002f05f30ff03so836347wmg.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 03:02:16 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=7np63vMuWkV60dGYkoyZGooYdzdN27SafRW+cIGzbFA=;
+        b=Yo2gfKyVUU8xopeT2J4fNe/QTKrtgzOI4oTKnm6wbOd9Lix6JaKpgFXuhI3bYchi2V
+         ONaxyU/auZpmtEhvIWQ1BCx0sA4yM/nZSg1k0v6MFx/BwnwpO55VoGNIBO7JrdSjSWsO
+         NoEgmkxpsJTqSWZo9f6MTujCEtlEmJjBYmIizS0YAcC4COdLLC+4LdwHU7dHrjTu3jg+
+         eDfaUw/FbvU4BB/ns9oixVtA5Ber5iBqbyzNC1KOim00gocQViZ/L4Ja0c3hs12wLhmp
+         lSQ7nLh5+28NE2rKKbeg6ZQjAOkCTm0HfqqB/g3dO/eXn1VNUYYONZBBu3H+W7gHX52U
+         1sDQ==
+X-Gm-Message-State: AOAM5303C1G2kKgfLlNCgUBfD6lF3ztBhkfCoxtqJIK+zaOeTCPCVXpa
+        BKFeawN9BLTzeWFGxIo+VelL6nuxpytRUEzbteTxSAs7wZbfn2o2EGu11jO6z/vJ9Sg4nB+Rxo2
+        IfJW7ijCQhOFs5NdZgzSqTuFDDN0dJ7z//zWcIRvn0u8T4YEMAFvIxT5XKZJFQiThbJZXIpsFgf
+        NnTKg=
+X-Received: by 2002:a5d:424c:: with SMTP id s12mr3086040wrr.8.1631095334803;
+        Wed, 08 Sep 2021 03:02:14 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwD/OynwPP2uVeO/SFdGI1Oc92DXRzE54Gxs8tXramtnZv8IiYznyKC9MS+ckbZCxNdol5v8g==
+X-Received: by 2002:a5d:424c:: with SMTP id s12mr3086009wrr.8.1631095334547;
+        Wed, 08 Sep 2021 03:02:14 -0700 (PDT)
+Received: from vian.redhat.com ([2a0c:5a80:3811:7600:8004:a383:c7c9:7f11])
+        by smtp.gmail.com with ESMTPSA id k16sm1679963wrx.87.2021.09.08.03.02.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 08 Sep 2021 03:02:14 -0700 (PDT)
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
+Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
+Subject: [PATCH 1/3] oslat: rename cpu_mhz/cpu_hz to timer_mhz/cpu_hz
+Date:   Wed,  8 Sep 2021 12:02:07 +0200
+Message-Id: <20210908100209.118609-1-nsaenzju@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID: AQAAf9Cx5OWIfThh6pUBAA--.2216S4
-X-Coremail-Antispam: 1UD129KBjvJXoWxtFyDXw4rJF4rWFyktFWrKrg_yoW3trW5pa
-        nFka1kKayYva4fAas2vF40yr4jvrs5trZFkFyY9ryUA3Z0qFyrXr9akwnYyrykAayvv3WU
-        WFy5WFy5A3ZrA3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-        9KBjDU0xBIdaVrnRJUUUPv14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-        rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jryl82xGYIkIc2
-        x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
-        Y4vE2Ix0cI8IcVAFwI0_Xr0_Ar1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Cr0_Gr1UM2
-        8EF7xvwVC2z280aVAFwI0_Cr1j6rxdM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
-        0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
-        IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0
-        Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kIc2
-        xKxwCY02Avz4vE1syl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2Iq
-        xVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r
-        1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY
-        6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67
-        AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuY
-        vjTRCa0PUUUUU
-X-CM-SenderInfo: xkxd0whshlqz5rrqw2lrqou0/
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-all that "asm/llsc.h" does is just to help inline asm, which can be
-stringifyed from "asm/asm.h"
+'cpu_mhz' in oslat actually represents the frequency at which the high
+frequency timer we measure with ticks. There is no need for it to match
+the CPU frequency, nor will do on all supported architectures. So rename
+it to 'timer_mhz' in order to better match reality.
 
-+. Since "asm/asm.h" has all we need, just stringify it and retire
-   "asm/llsc.h"
-
-+. remove unused header file
-
-Inspired-by:   "Maciej W. Rozycki" <macro@orcam.me.uk>
-Signed-off-by: Huang Pei <huangpei@loongson.cn>
+Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
 ---
- arch/mips/include/asm/asm.h      |  4 ++++
- arch/mips/include/asm/atomic.h   | 10 ++++------
- arch/mips/include/asm/bitops.h   | 24 +++++++++++-------------
- arch/mips/include/asm/cmpxchg.h  |  8 +++-----
- arch/mips/include/asm/kvm_host.h | 12 ++++++------
- 5 files changed, 28 insertions(+), 30 deletions(-)
+ src/oslat/oslat.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/arch/mips/include/asm/asm.h b/arch/mips/include/asm/asm.h
-index f3302b13d3e0..6ffdd4b5e1d0 100644
---- a/arch/mips/include/asm/asm.h
-+++ b/arch/mips/include/asm/asm.h
-@@ -222,6 +222,8 @@ symbol		=	value
- #define LONG_SRLV	srlv
- #define LONG_SRA	sra
- #define LONG_SRAV	srav
-+#define LONG_INS	ins
-+#define LONG_EXT	ext
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 6ff5ba8..a4aa5f1 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -123,7 +123,7 @@ struct thread {
+ 	pthread_t            thread_id;
  
- #ifdef __ASSEMBLY__
- #define LONG		.word
-@@ -249,6 +251,8 @@ symbol		=	value
- #define LONG_SRLV	dsrlv
- #define LONG_SRA	dsra
- #define LONG_SRAV	dsrav
-+#define LONG_INS	dins
-+#define LONG_EXT	dext
+ 	/* NOTE! this is also how many ticks per us */
+-	unsigned int         cpu_mhz;
++	unsigned int         timer_mhz;
+ 	cycles_t             int_total;
+ 	stamp_t              frc_start;
+ 	stamp_t              frc_stop;
+@@ -228,7 +228,7 @@ static int move_to_core(int core_i)
+ 	return sched_setaffinity(0, sizeof(cpus), &cpus);
+ }
  
- #ifdef __ASSEMBLY__
- #define LONG		.dword
-diff --git a/arch/mips/include/asm/atomic.h b/arch/mips/include/asm/atomic.h
-index 95e1f7f3597f..ebeda04cb0e3 100644
---- a/arch/mips/include/asm/atomic.h
-+++ b/arch/mips/include/asm/atomic.h
-@@ -20,9 +20,7 @@
- #include <asm/compiler.h>
- #include <asm/cpu-features.h>
- #include <asm/cmpxchg.h>
--#include <asm/llsc.h>
- #include <asm/sync.h>
--#include <asm/war.h>
+-static cycles_t __measure_cpu_hz(void)
++static cycles_t __measure_timer_hz(void)
+ {
+ 	struct timeval tvs, tve;
+ 	stamp_t s, e;
+@@ -244,13 +244,13 @@ static cycles_t __measure_cpu_hz(void)
+ 	return (cycles_t) ((e - s) / sec);
+ }
  
- #define ATOMIC_OPS(pfx, type)						\
- static __always_inline type arch_##pfx##_read(const pfx##_t *v)		\
-@@ -74,7 +72,7 @@ static __inline__ void arch_##pfx##_##op(type i, pfx##_t * v)		\
- 	"1:	" #ll "	%0, %1		# " #pfx "_" #op "	\n"	\
- 	"	" #asm_op " %0, %2				\n"	\
- 	"	" #sc "	%0, %1					\n"	\
--	"\t" __SC_BEQZ "%0, 1b					\n"	\
-+	"\t" __stringify(SC_BEQZ) "	%0, 1b			\n"	\
- 	"	.set	pop					\n"	\
- 	: "=&r" (temp), "+" GCC_OFF_SMALL_ASM() (v->counter)		\
- 	: "Ir" (i) : __LLSC_CLOBBER);					\
-@@ -104,7 +102,7 @@ arch_##pfx##_##op##_return_relaxed(type i, pfx##_t * v)			\
- 	"1:	" #ll "	%1, %2		# " #pfx "_" #op "_return\n"	\
- 	"	" #asm_op " %0, %1, %3				\n"	\
- 	"	" #sc "	%0, %2					\n"	\
--	"\t" __SC_BEQZ "%0, 1b					\n"	\
-+	"\t" __stringify(SC_BEQZ) "	%0, 1b			\n"	\
- 	"	" #asm_op " %0, %1, %3				\n"	\
- 	"	.set	pop					\n"	\
- 	: "=&r" (result), "=&r" (temp),					\
-@@ -137,7 +135,7 @@ arch_##pfx##_fetch_##op##_relaxed(type i, pfx##_t * v)			\
- 	"1:	" #ll "	%1, %2		# " #pfx "_fetch_" #op "\n"	\
- 	"	" #asm_op " %0, %1, %3				\n"	\
- 	"	" #sc "	%0, %2					\n"	\
--	"\t" __SC_BEQZ "%0, 1b					\n"	\
-+	"\t" __stringify(SC_BEQZ) "	%0, 1b			\n"	\
- 	"	.set	pop					\n"	\
- 	"	move	%0, %1					\n"	\
- 	: "=&r" (result), "=&r" (temp),					\
-@@ -237,7 +235,7 @@ static __inline__ int arch_##pfx##_sub_if_positive(type i, pfx##_t * v)	\
- 	"	.set	push					\n"	\
- 	"	.set	" MIPS_ISA_LEVEL "			\n"	\
- 	"	" #sc "	%1, %2					\n"	\
--	"	" __SC_BEQZ "%1, 1b				\n"	\
-+	"	" __stringify(SC_BEQZ) "	%1, 1b		\n"	\
- 	"2:	" __SYNC(full, loongson3_war) "			\n"	\
- 	"	.set	pop					\n"	\
- 	: "=&r" (result), "=&r" (temp),					\
-diff --git a/arch/mips/include/asm/bitops.h b/arch/mips/include/asm/bitops.h
-index dc2a6234dd3c..3812082b8295 100644
---- a/arch/mips/include/asm/bitops.h
-+++ b/arch/mips/include/asm/bitops.h
-@@ -16,14 +16,12 @@
- #include <linux/bits.h>
- #include <linux/compiler.h>
- #include <linux/types.h>
-+#include <asm/asm.h>
- #include <asm/barrier.h>
- #include <asm/byteorder.h>		/* sigh ... */
- #include <asm/compiler.h>
- #include <asm/cpu-features.h>
--#include <asm/isa-rev.h>
--#include <asm/llsc.h>
- #include <asm/sgidefs.h>
--#include <asm/war.h>
+-static unsigned int measure_cpu_mhz(void)
++static unsigned int measure_timer_mhz(void)
+ {
+ 	cycles_t m, mprev, d;
  
- #define __bit_op(mem, insn, inputs...) do {			\
- 	unsigned long __temp;					\
-@@ -32,10 +30,10 @@
- 	"	.set		push			\n"	\
- 	"	.set		" MIPS_ISA_LEVEL "	\n"	\
- 	"	" __SYNC(full, loongson3_war) "		\n"	\
--	"1:	" __LL		"%0, %1			\n"	\
-+	"1:	" __stringify(LONG_LL)	"	%0, %1	\n"	\
- 	"	" insn		"			\n"	\
--	"	" __SC		"%0, %1			\n"	\
--	"	" __SC_BEQZ	"%0, 1b			\n"	\
-+	"	" __stringify(LONG_SC)	"	%0, %1	\n"	\
-+	"	" __stringify(SC_BEQZ)	"	%0, 1b	\n"	\
- 	"	.set		pop			\n"	\
- 	: "=&r"(__temp), "+" GCC_OFF_SMALL_ASM()(mem)		\
- 	: inputs						\
-@@ -49,10 +47,10 @@
- 	"	.set		push			\n"	\
- 	"	.set		" MIPS_ISA_LEVEL "	\n"	\
- 	"	" __SYNC(full, loongson3_war) "		\n"	\
--	"1:	" __LL		ll_dst ", %2		\n"	\
-+	"1:	" __stringify(LONG_LL) " "	ll_dst ", %2\n"	\
- 	"	" insn		"			\n"	\
--	"	" __SC		"%1, %2			\n"	\
--	"	" __SC_BEQZ	"%1, 1b			\n"	\
-+	"	" __stringify(LONG_SC)	"	%1, %2	\n"	\
-+	"	" __stringify(SC_BEQZ)	"	%1, 1b	\n"	\
- 	"	.set		pop			\n"	\
- 	: "=&r"(__orig), "=&r"(__temp),				\
- 	  "+" GCC_OFF_SMALL_ASM()(mem)				\
-@@ -98,7 +96,7 @@ static inline void set_bit(unsigned long nr, volatile unsigned long *addr)
- 	}
+-	mprev = __measure_cpu_hz();
++	mprev = __measure_timer_hz();
+ 	do {
+-		m = __measure_cpu_hz();
++		m = __measure_timer_hz();
+ 		if (m > mprev)
+ 			d = m - mprev;
+ 		else
+@@ -263,7 +263,7 @@ static unsigned int measure_cpu_mhz(void)
  
- 	if ((MIPS_ISA_REV >= 2) && __builtin_constant_p(bit) && (bit >= 16)) {
--		__bit_op(*m, __INS "%0, %3, %2, 1", "i"(bit), "r"(~0));
-+		__bit_op(*m, __stringify(LONG_INS) " %0, %3, %2, 1", "i"(bit), "r"(~0));
- 		return;
- 	}
+ static void thread_init(struct thread *t)
+ {
+-	t->cpu_mhz = measure_cpu_mhz();
++	t->timer_mhz = measure_timer_mhz();
+ 	t->maxlat = 0;
+ 	t->overflow_sum = 0;
+ 	t->minlat = (uint64_t)-1;
+@@ -288,7 +288,7 @@ static void thread_init(struct thread *t)
  
-@@ -126,7 +124,7 @@ static inline void clear_bit(unsigned long nr, volatile unsigned long *addr)
- 	}
+ static float cycles_to_sec(const struct thread *t, uint64_t cycles)
+ {
+-	return cycles / (t->cpu_mhz * 1e6);
++	return cycles / (t->timer_mhz * 1e6);
+ }
  
- 	if ((MIPS_ISA_REV >= 2) && __builtin_constant_p(bit)) {
--		__bit_op(*m, __INS "%0, $0, %2, 1", "i"(bit));
-+		__bit_op(*m, __stringify(LONG_INS) " %0, $0, %2, 1", "i"(bit));
- 		return;
- 	}
+ static void insert_bucket(struct thread *t, stamp_t value)
+@@ -296,7 +296,7 @@ static void insert_bucket(struct thread *t, stamp_t value)
+ 	int index, us;
+ 	uint64_t extra;
  
-@@ -234,8 +232,8 @@ static inline int test_and_clear_bit(unsigned long nr,
- 		res = __mips_test_and_clear_bit(nr, addr);
- 	} else if ((MIPS_ISA_REV >= 2) && __builtin_constant_p(nr)) {
- 		res = __test_bit_op(*m, "%1",
--				    __EXT "%0, %1, %3, 1;"
--				    __INS "%1, $0, %3, 1",
-+				    __stringify(LONG_EXT) " %0, %1, %3, 1;"
-+				    __stringify(LONG_INS) " %1, $0, %3, 1",
- 				    "i"(bit));
- 	} else {
- 		orig = __test_bit_op(*m, "%0",
-diff --git a/arch/mips/include/asm/cmpxchg.h b/arch/mips/include/asm/cmpxchg.h
-index 0b983800f48b..fbfd5c5667e0 100644
---- a/arch/mips/include/asm/cmpxchg.h
-+++ b/arch/mips/include/asm/cmpxchg.h
-@@ -11,9 +11,7 @@
- #include <linux/bug.h>
- #include <linux/irqflags.h>
- #include <asm/compiler.h>
--#include <asm/llsc.h>
- #include <asm/sync.h>
--#include <asm/war.h>
+-	index = value / t->cpu_mhz;
++	index = value / t->timer_mhz;
+ 	assert(index >= 0);
+ 	us = index + 1;
+ 	assert(us > 0);
+@@ -450,7 +450,7 @@ static void write_summary(struct thread *t)
+ 	calculate(t);
  
- /*
-  * These functions doesn't exist, so if they are called you'll either:
-@@ -48,7 +46,7 @@ extern unsigned long __xchg_called_with_bad_pointer(void)
- 		"	move	$1, %z3				\n"	\
- 		"	.set	" MIPS_ISA_ARCH_LEVEL "		\n"	\
- 		"	" st "	$1, %1				\n"	\
--		"\t" __SC_BEQZ	"$1, 1b				\n"	\
-+		"\t" __stringify(SC_BEQZ)	"	$1, 1b	\n"	\
- 		"	.set	pop				\n"	\
- 		: "=&r" (__ret), "=" GCC_OFF_SMALL_ASM() (*m)		\
- 		: GCC_OFF_SMALL_ASM() (*m), "Jr" (val)			\
-@@ -127,7 +125,7 @@ unsigned long __xchg(volatile void *ptr, unsigned long x, int size)
- 		"	move	$1, %z4				\n"	\
- 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"	\
- 		"	" st "	$1, %1				\n"	\
--		"\t" __SC_BEQZ	"$1, 1b				\n"	\
-+		"\t" __stringify(SC_BEQZ)	"	$1, 1b	\n"	\
- 		"	.set	pop				\n"	\
- 		"2:	" __SYNC(full, loongson3_war) "		\n"	\
- 		: "=&r" (__ret), "=" GCC_OFF_SMALL_ASM() (*m)		\
-@@ -279,7 +277,7 @@ static inline unsigned long __cmpxchg64(volatile void *ptr,
- 	/* Attempt to store new at ptr */
- 	"	scd	%L1, %2				\n"
- 	/* If we failed, loop! */
--	"\t" __SC_BEQZ "%L1, 1b				\n"
-+	"\t" __stringify(SC_BEQZ) "	%L1, 1b		\n"
- 	"	.set	pop				\n"
- 	"2:	" __SYNC(full, loongson3_war) "		\n"
- 	: "=&r"(ret),
-diff --git a/arch/mips/include/asm/kvm_host.h b/arch/mips/include/asm/kvm_host.h
-index 696f6b009377..12202521dfbd 100644
---- a/arch/mips/include/asm/kvm_host.h
-+++ b/arch/mips/include/asm/kvm_host.h
-@@ -379,9 +379,9 @@ static inline void _kvm_atomic_set_c0_guest_reg(unsigned long *reg,
- 		__asm__ __volatile__(
- 		"	.set	push				\n"
- 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"
--		"	" __LL "%0, %1				\n"
-+		"	"__stringify(LONG_LL)	" %0, %1	\n"
- 		"	or	%0, %2				\n"
--		"	" __SC	"%0, %1				\n"
-+		"	"__stringify(LONG_SC)	" %0, %1	\n"
- 		"	.set	pop				\n"
- 		: "=&r" (temp), "+m" (*reg)
- 		: "r" (val));
-@@ -396,9 +396,9 @@ static inline void _kvm_atomic_clear_c0_guest_reg(unsigned long *reg,
- 		__asm__ __volatile__(
- 		"	.set	push				\n"
- 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"
--		"	" __LL "%0, %1				\n"
-+		"	"__stringify(LONG_LL)	" %0, %1	\n"
- 		"	and	%0, %2				\n"
--		"	" __SC	"%0, %1				\n"
-+		"	"__stringify(LONG_SC)	" %0, %1	\n"
- 		"	.set	pop				\n"
- 		: "=&r" (temp), "+m" (*reg)
- 		: "r" (~val));
-@@ -414,10 +414,10 @@ static inline void _kvm_atomic_change_c0_guest_reg(unsigned long *reg,
- 		__asm__ __volatile__(
- 		"	.set	push				\n"
- 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"
--		"	" __LL "%0, %1				\n"
-+		"	"__stringify(LONG_LL) "	%0, %1		\n"
- 		"	and	%0, %2				\n"
- 		"	or	%0, %3				\n"
--		"	" __SC	"%0, %1				\n"
-+		"	"__stringify(LONG_SC) " %0, %1		\n"
- 		"	.set	pop				\n"
- 		: "=&r" (temp), "+m" (*reg)
- 		: "r" (~change), "r" (val & change));
+ 	putfield("Core", t[i].core_i, "d", "");
+-	putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
++	putfield("Timer Freq", t[i].timer_mhz, "u", " (Mhz)");
+ 
+ 	for (j = 0; j < g.bucket_size; j++) {
+ 		if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
+@@ -494,7 +494,7 @@ static void write_summary_json(FILE *f, void *data)
+ 	for (i = 0; i < g.n_threads; ++i) {
+ 		fprintf(f, "    \"%u\": {\n", i);
+ 		fprintf(f, "      \"cpu\": %d,\n", t[i].core_i);
+-		fprintf(f, "      \"freq\": %d,\n", t[i].cpu_mhz);
++		fprintf(f, "      \"freq\": %d,\n", t[i].timer_mhz);
+ 		fprintf(f, "      \"min\": %" PRIu64 ",\n", t[i].minlat);
+ 		fprintf(f, "      \"avg\": %3lf,\n", t[i].average);
+ 		fprintf(f, "      \"max\": %" PRIu64 ",\n", t[i].maxlat);
 -- 
-2.25.1
+2.31.1
 
