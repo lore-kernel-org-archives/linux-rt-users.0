@@ -7,92 +7,148 @@ X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5C92C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 14:40:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05811C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 16:30:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 77A7C60FDA
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 14:40:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DDA5361157
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Sep 2021 16:30:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1349349AbhIHOly (ORCPT
+        id S1348635AbhIHQcE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Sep 2021 10:41:54 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:39227 "EHLO
+        Wed, 8 Sep 2021 12:32:04 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:60043 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231164AbhIHOlx (ORCPT
+        by vger.kernel.org with ESMTP id S234225AbhIHQcD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Sep 2021 10:41:53 -0400
+        Wed, 8 Sep 2021 12:32:03 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631112045;
+        s=mimecast20190719; t=1631118655;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=2Z0PBWopu+3sO7NUdS3G+HCB3x9ygJtSuqYXc07qQLk=;
-        b=AEHYMf6xX8MvgPjRnZSsfscOfVNNq1COy2pmbz3sWErjjDq50Y1POD0GBxh47eId78bzzC
-        SZYjWKei9SlTJ6GV5srusdwa0mxdEdRrqd9ElCZrf5sBC0Ke+VAAiUSvnv0T9e+nWAY2ph
-        oCz7S+G5J2+0TeJp4qRhVfocl4XPbTQ=
-Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
- [209.85.166.72]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-77-wvGSTVghOp2R0iS0-1opYA-1; Wed, 08 Sep 2021 10:40:43 -0400
-X-MC-Unique: wvGSTVghOp2R0iS0-1opYA-1
-Received: by mail-io1-f72.google.com with SMTP id i26-20020a5e851a000000b005bb55343e9bso1982151ioj.7
-        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 07:40:43 -0700 (PDT)
+        bh=FbnjlYMaSLM+PKIhpQ+SMRv7UvBlvYIiKt9yihreJig=;
+        b=eyD4hyDBT7VABOzaJf7ExkxfWGFjcjv4CLcIuH92NKEwqkjJZu+Qy85jbne1b7QqImdx4w
+        EkMLZ9JR7TLkYLtuK15MYzhAYYac3s18LwEngzKYFCVvPAeh17n6iIynRtE05vDRSAiEz7
+        /DOCgfj+d4Qq4203++FHyQmgPIefIFs=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-434-aLPNWCrRMhWC-W84R_00IA-1; Wed, 08 Sep 2021 12:30:54 -0400
+X-MC-Unique: aLPNWCrRMhWC-W84R_00IA-1
+Received: by mail-wm1-f70.google.com with SMTP id m22-20020a7bcb96000000b002f7b840d9dcso1085173wmi.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Sep 2021 09:30:54 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=2Z0PBWopu+3sO7NUdS3G+HCB3x9ygJtSuqYXc07qQLk=;
-        b=qhkPVHVujdDrvJjUYNvt9I9vRg+1B4GccrVkh5R/LHP7MRHI8Q6WhFRC3wpNJBeHKY
-         9RG3Fsvboukd27NsKI4cLcBqWOVNVjJYqKraME/7tuCGdqAJTDomjPXPQfoa5gwUj+h9
-         YIWBnUHO9klPxcEeQYdBhKh/yoTFuMEXqIth3i49jm6ntgWuyT+QYB8ok8hVD6ZH115u
-         ocyVdIMKNpm7L2/IwfJiVE7L8Kj7JNososly310yfEZLRwdNXNHJ2q/pwLTZ6X9kE+Sl
-         A2gzIAPfF7ZNpPpLrD/SPUApW0Jh+OP+FmpdCVs6ygjJRu7rWhGx4Ahtq1oHn/J2vDF3
-         IKdQ==
-X-Gm-Message-State: AOAM532qJQdE9LCL9kblINqnkuf5QRaC8k2pyHAKm9BTBS/WosIPxRIL
-        Inp8D9T9t1oWVaCklRvtQuHikuHajTtnuehoqd0MdsFk8nwnW/2ns1vXfbcJi1pkjUGZ8Ypp8OG
-        2TEv65NGKIwhIiFPDOu5MXh8spTA=
-X-Received: by 2002:a05:6638:14cf:: with SMTP id l15mr4070656jak.8.1631112043245;
-        Wed, 08 Sep 2021 07:40:43 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyQ3CsgbENCyYZWlVzrKw8LOQTM00OVM+rgIkCqD0DXDY4Wkvqsv2cFJidl7OXcBJbBIqucWA==
-X-Received: by 2002:a05:6638:14cf:: with SMTP id l15mr4070641jak.8.1631112043043;
-        Wed, 08 Sep 2021 07:40:43 -0700 (PDT)
-Received: from t490s ([2607:fea8:56a3:500::ad7f])
-        by smtp.gmail.com with ESMTPSA id l1sm723584ilc.65.2021.09.08.07.40.41
+        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
+         :references:user-agent:mime-version:content-transfer-encoding;
+        bh=FbnjlYMaSLM+PKIhpQ+SMRv7UvBlvYIiKt9yihreJig=;
+        b=PA+qM562Qkmlq3c/O9GV6i501KOqHHQmEsPSeq7yAPcwJtb6UrJXWAOY7VOebwqD1/
+         1wQQeXZDvpD5hEXM+D4lJu+CLsdIn1fhKy9Vp442Mpg99LahK8N0OGxDT+IZg25joU/k
+         jqTeMEIPixwDEjW5mwrmbdMz09DBX5nE4ebyzcXQEckCjOnidjoNTT2sYriuTIHWvmJS
+         VJF7ISJH85RLjTgTZPRhFdhz+RHS8rzWorkUuZ5QS9DAqz0553tBVjImPKoTC4gtThmD
+         o5nUUGsUIc+KK7HirEeTofrnGVTGdU7FEgbBjEhXPHvYhLq37VtVtc4EziJbiS96HhKN
+         fKfw==
+X-Gm-Message-State: AOAM530tDY3yTm2YnhyxNgNc5w/SyRs2lrAqoISTz21X430c9WKMrb9H
+        GM+8igm9M3LIEqvh92TIoBHSYatTD3o8FH29bSP5OPKY051PUvGGFAiQ6NnMGktYTdVDS06u7VL
+        FEX7HOzdu8hQyMluyt12WHIU8GTg=
+X-Received: by 2002:adf:e645:: with SMTP id b5mr5187547wrn.34.1631118653060;
+        Wed, 08 Sep 2021 09:30:53 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwy8QCrNh8NxNeXTDnImCvWOB9Ar+LkhIAa3cnViwKLyqrbsS2v/tgTS19pjhKBHuuBZg6N3Q==
+X-Received: by 2002:adf:e645:: with SMTP id b5mr5187522wrn.34.1631118652813;
+        Wed, 08 Sep 2021 09:30:52 -0700 (PDT)
+Received: from ?IPv6:2a0c:5a80:3811:7600:8004:a383:c7c9:7f11? ([2a0c:5a80:3811:7600:8004:a383:c7c9:7f11])
+        by smtp.gmail.com with ESMTPSA id x18sm2939585wmj.36.2021.09.08.09.30.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 08 Sep 2021 07:40:42 -0700 (PDT)
-Date:   Wed, 8 Sep 2021 10:40:41 -0400
-From:   Peter Xu <peterx@redhat.com>
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+        Wed, 08 Sep 2021 09:30:52 -0700 (PDT)
+Message-ID: <dc800f41878a9240cc9b9629ed1a4c1551514fac.camel@redhat.com>
+Subject: Re: [PATCH 1/3] oslat: rename cpu_mhz/cpu_hz to timer_mhz/cpu_hz
+From:   nsaenzju@redhat.com
+To:     Peter Xu <peterx@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
         jkacur@redhat.com
-Subject: Re: [PATCH 1/3] oslat: rename cpu_mhz/cpu_hz to timer_mhz/cpu_hz
-Message-ID: <YTjLaZez4azBeYLI@t490s>
+Date:   Wed, 08 Sep 2021 18:30:50 +0200
+In-Reply-To: <YTjLaZez4azBeYLI@t490s>
 References: <20210908100209.118609-1-nsaenzju@redhat.com>
+         <YTjLaZez4azBeYLI@t490s>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.40.4 (3.40.4-1.fc34) 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20210908100209.118609-1-nsaenzju@redhat.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello, Nicolas,
+Hi Peter, thanks for having a look at this! And sorry in advance for the long
+documentation dump.
 
-On Wed, Sep 08, 2021 at 12:02:07PM +0200, Nicolas Saenz Julienne wrote:
-> 'cpu_mhz' in oslat actually represents the frequency at which the high
-> frequency timer we measure with ticks. There is no need for it to match
-> the CPU frequency, nor will do on all supported architectures. So rename
-> it to 'timer_mhz' in order to better match reality.
+On Wed, 2021-09-08 at 10:40 -0400, Peter Xu wrote:
+> Hello, Nicolas,
+> 
+> On Wed, Sep 08, 2021 at 12:02:07PM +0200, Nicolas Saenz Julienne wrote:
+> > 'cpu_mhz' in oslat actually represents the frequency at which the high
+> > frequency timer we measure with ticks. There is no need for it to match
+> > the CPU frequency, nor will do on all supported architectures. So rename
+> > it to 'timer_mhz' in order to better match reality.
+> 
+> But right now "cpu_mhz" is indeed the cpu frequency per mhz, isn't it?  As I
+> believe that's how "time stamp counter" defined on x86. :)
 
-But right now "cpu_mhz" is indeed the cpu frequency per mhz, isn't it?  As I
-believe that's how "time stamp counter" defined on x86. :)
+Sadly I don't think this is really the case. In some cases TSC might match
+CPU's base frequency, but it depends on the processor family and other
+factors[1]. Also, the same applies for PPC64[2].
 
-I don't know what's the corresponding register for aarch64 to read the
-processor clock cycles out, I did a quick google and it tells me PMCCNTR, but
-I've no solid idea.  Or do you mean for some reason we can't read that info out
-from aarch64?
+My reading is that, in general, we are only safe to assume we're getting a
+constant monotonically increasing timer unrelated from CPU's actual frequency.
 
-Thanks,
+> I don't know what's the corresponding register for aarch64 to read the
+> processor clock cycles out, I did a quick google and it tells me PMCCNTR, but
+> I've no solid idea.  Or do you mean for some reason we can't read that info out
+> from aarch64?
 
--- 
-Peter Xu
+Sadly PMCCNTR isn't available at Exception Level 0 (user-space) and AFAIU we're
+stuck with CNTVCT_EL0.
+
+Regards,
+Nicolas
+
+[1] Intel TRM Vol 3B, 17.17 Time Stamp Counter
+
+Processor families increment the time-stamp counter differently:
+
+• For Pentium M processors (family [06H], models [09H, 0DH]); for Pentium 4
+  processors, Intel Xeon processors (family [0FH], models [00H, 01H, or 02H]);
+  and for P6 family processors: the time-stamp counter increments with every
+  internal processor clock cycle. The internal processor clock cycle is
+  determined by the current core-clock to bus-clock ratio. Intel® SpeedStep®
+  technology transitions may also impact the processor clock.
+
+• For Pentium 4 processors, Intel Xeon processors (family [0FH], models [03H
+  and higher]); for Intel Core Solo and Intel Core Duo processors (family [06H],
+  model [0EH]); for the Intel Xeon processor 5100 series and Intel Core 2 Duo
+  processors (family [06H], model [0FH]); for Intel Core 2 and Intel Xeon
+  processors (family [06H], DisplayModel [17H]); for Intel Atom processors
+  (family [06H], DisplayModel [1CH]): the time-stamp counter increments at a
+  constant rate. That rate may be set by the maximum core-clock to bus-clock
+  ratio of the processor or may be set by the maximum resolved frequency at which
+  the processor is booted. The maximum resolved frequency may differ from the
+  processor base frequency, see Section 18.7.2 for more detail. On certain
+  processors, the TSC frequency may not be the same as the frequency in the brand
+  string. The specific processor configuration determines the behavior. Constant
+  TSC behavior ensures that the duration of each clock tick is uniform and
+  supports the use of the TSC as a wall clock timer even if the processor core
+  changes frequency. This is the architectural behavior moving forward.
+
+The specific processor configuration determines the behavior. Constant TSC
+behavior ensures that the duration of each clock tick is uniform and supports
+the use of the TSC as a wall clock timer even if the processor core changes
+frequency. This is the architectural behavior moving forward.
+
+[2] From __ppc_get_timebase() manpages: The Time Base Register is a 64-bit
+register provided by Power Architecture processors. It stores a monotonically
+incremented value that is updated at a system-dependent frequency that may be
+different from the processor frequency.
+
+Note that glibc's __ppc_get_timebase() and oslat's ppc frc() implementations
+are the same:
+https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/powerpc/sys/platform/ppc.h;h=8b0a66de1b93a56e3edf56c31a0c1505d7a8fc08;hb=HEAD#l27
 
