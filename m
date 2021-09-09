@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B0CEC433FE
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Sep 2021 12:40:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DABA2C4332F
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Sep 2021 12:47:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1ABDC61100
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Sep 2021 12:40:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C05A161059
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Sep 2021 12:47:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1352821AbhIIMlY (ORCPT
+        id S1346662AbhIIMsy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 9 Sep 2021 08:41:24 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:40263 "EHLO
+        Thu, 9 Sep 2021 08:48:54 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:48269 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1352878AbhIIMgO (ORCPT
+        by vger.kernel.org with ESMTP id S1354304AbhIIMmz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 9 Sep 2021 08:36:14 -0400
+        Thu, 9 Sep 2021 08:42:55 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631190899;
+        s=mimecast20190719; t=1631191305;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=3TA+gg4cRpfREavneKcKGs5CSHUMkFwoZczAbXzaZDI=;
-        b=L5NYFFu37GD9q8dBG08AIq7oIK6xM5Vp46RY3nvpxD8X8C44iqO+wpJmM1PlxttSQIluli
-        z05wMle5zG1uXs5y1VvModPJGEL0u6cWBlWnqY/g0UNwQDFvgxEkEu8eGE1fjzjPKNu6G1
-        atFcrQNZDZidRTTSY/sPKskPaSjeBeY=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-311-BZ_VGpx9MIeHV7ZHplyIYg-1; Thu, 09 Sep 2021 08:34:58 -0400
-X-MC-Unique: BZ_VGpx9MIeHV7ZHplyIYg-1
-Received: by mail-qt1-f198.google.com with SMTP id o22-20020ac872d60000b029029817302575so4360188qtp.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 Sep 2021 05:34:58 -0700 (PDT)
+        bh=cLWSslhsEJxg7+ho3qzfZz3KNLLFdpK0/nz67IHkOAE=;
+        b=YCSTkqUis+TX+eldpPaQs+UHQFBWSkyzn8+MPL2UgDrJzVKOtY8Za0aEs5CGD7S8r3PLMh
+        HTOdsIW6e+9Q4E3SozAU5KEysHmvGQq5m3Z861uZfNaighrzdSeTXKFF+o02Rd2YOObLdo
+        NPqTYLdYjbCnqEogYGa0YkDQve4f3BE=
+Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
+ [209.85.166.72]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-328-IkbMFCQpMACw1vOthwOYig-1; Thu, 09 Sep 2021 08:41:44 -0400
+X-MC-Unique: IkbMFCQpMACw1vOthwOYig-1
+Received: by mail-io1-f72.google.com with SMTP id z26-20020a05660200da00b005b86e36a1f4so1732371ioe.15
+        for <linux-rt-users@vger.kernel.org>; Thu, 09 Sep 2021 05:41:44 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=3TA+gg4cRpfREavneKcKGs5CSHUMkFwoZczAbXzaZDI=;
-        b=MNcNi1wKbgYYsW/Hhzseut491PlljT+tucGbYVyMNiew0V8tlLmijSDL7Di+qR0HD6
-         7hMp8tdSw4HuCPcXZipIPPvHWffPSALqcXpfcwXiiaLdcy53tBylckJP+jBg7CUm/y+u
-         G3icK2yNNgeag0v3qijsNVS3rnxiBHLYXHiI0WAsYoZHa9h/p+ypDY8mdgEb3CKoMCw0
-         JkdWxQe0Y7jGKYiQtJcxC4AeVClB5AAPJXrcqcGAhVVO+OenRGkYvxswQaHF2GBIBE3L
-         JY7UiyAADCqPeOoAsIH3FRJrWoZPhaSIHxbX8x3fy4OBuNLpqoHA7uNMYusgRiQis9tK
-         gJXQ==
-X-Gm-Message-State: AOAM531zMeCjDYPmXDL3rN9VNA+CfJsLoRiHdcT3H5JjMZvl+fImguMN
-        Fz420udrLI5Y6X3rXcNzjsxXYoDoN2T+aYcFSAcz58HDy3NPIspFkp4QWlZsDTHhEb+/L05IRUo
-        yH8tb73d5cyQtFk1/QSwexq8ZYjo=
-X-Received: by 2002:a37:aa92:: with SMTP id t140mr2479316qke.164.1631190898100;
-        Thu, 09 Sep 2021 05:34:58 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyPfdlEMrFJONQseTIfYvvUy85stWbYSl06Z1K+VgyQOVXsZrW4oBsKohStuB6od0bbBZXT4Q==
-X-Received: by 2002:a37:aa92:: with SMTP id t140mr2479299qke.164.1631190897891;
-        Thu, 09 Sep 2021 05:34:57 -0700 (PDT)
+        bh=cLWSslhsEJxg7+ho3qzfZz3KNLLFdpK0/nz67IHkOAE=;
+        b=dJ5J39NNMtPa3N1qwSJel25sFHK4y54X6viU/3R9qRk8eSiy8bd6ddlBmdjK2nE9NX
+         qFrI47YgUMf2k4/VFWEaF5FuFTMz9RXGQ4vu08b7JeyzOHlSzTJRDWg1qQtx/tLdoFgq
+         Um3QfMB0VWDCw5Sm8IAYRruRDgM+REmsm80ybmRsYzmVULDJIlq2CYkj5tBbc7B4Xiyc
+         rAP5oQ1geSDnOBRD97XIfoWaxtPZk8fb8n9hYwsVyCgSjnhPo8hcI14oRCPBnwnz9DfC
+         D1PjSooMUdUCcitGI8HRWbyBm0NWY9GyBydRJcbdk2rWZRGmdmar+T9A53HmFgPuG2jo
+         vslw==
+X-Gm-Message-State: AOAM530/NpPGzRXu5WnJHHdJYGMlrbAUT94jT2hHhTPk6RicLnvnrdnO
+        ApkjnzQx1IBoMHcGU93KrjG6+bZ9yqTRDlqbBHEa005s5/6bDHAm/15/7UDeHlh8ZUkVYLE6Rza
+        6cggwPV54At0NStyeeq/a1Li/ncM=
+X-Received: by 2002:a92:d3cf:: with SMTP id c15mr2230902ilh.131.1631191303860;
+        Thu, 09 Sep 2021 05:41:43 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxkME4IlwjJfFIPTXFKnx2CEPNjgTjGjv+X0n5Jw5fwf2IUAlJyXAEhb4y8MWEMip5TGMXUlw==
+X-Received: by 2002:a92:d3cf:: with SMTP id c15mr2230885ilh.131.1631191303609;
+        Thu, 09 Sep 2021 05:41:43 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id s18sm1215984qkj.87.2021.09.09.05.34.57
+        by smtp.gmail.com with ESMTPSA id k7sm825759iok.22.2021.09.09.05.41.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 Sep 2021 05:34:57 -0700 (PDT)
-Date:   Thu, 9 Sep 2021 08:34:56 -0400 (EDT)
+        Thu, 09 Sep 2021 05:41:43 -0700 (PDT)
+Date:   Thu, 9 Sep 2021 08:41:42 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Punit Agrawal <punitagrawal@gmail.com>
 cc:     punit1.agrawal@toshiba.co.jp, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 1/5] rteval: systopology.py: Add support for systems that
- don't have Numa
-In-Reply-To: <20210901080816.721731-2-punitagrawal@gmail.com>
-Message-ID: <b79752f-2af5-cc3f-2738-326d1cfced40@redhat.com>
-References: <20210901080816.721731-1-punitagrawal@gmail.com> <20210901080816.721731-2-punitagrawal@gmail.com>
+Subject: Re: [PATCH 2/5] rteval: cyclictest.py: Update logic to get core
+ description
+In-Reply-To: <20210901080816.721731-3-punitagrawal@gmail.com>
+Message-ID: <633d388d-13d9-6155-e4da-ca135c0df44@redhat.com>
+References: <20210901080816.721731-1-punitagrawal@gmail.com> <20210901080816.721731-3-punitagrawal@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -80,84 +80,108 @@ On Wed, 1 Sep 2021, Punit Agrawal wrote:
 
 > From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 > 
-> Certain systems such as Arm v7 do not have support for Numa nodes,
-> i.e., "/sys/devices/system/node*" does not exist. Instead of erroring
-> out in this situation, it would be better if rteval could use
-> alternate sources to get the system topology and memory information.
+> Certain architectures such as arm and arm64 don't have a "model name"
+> in /proc/cpuinfo but provide other identifying information such as
+> implementer, architecture, variant, part, revision, etc..
 > 
-> Introduce the notion of a fake Numa node (as a class) which is used
-> when no numa nodes are found on the system. Other than the
-> constructor, it provides the same interface as the existing NumaNode
-> class so existing users should work without any changes.
+> Add a function 'get_cpumodel()' that takes the per-core dictionary
+> constructed from /proc/cpuinfo and uses the available data to
+> construct the CPU description. Update the users of "model name" to use
+> the newly added function.
 > 
 > Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 > ---
->  rteval/systopology.py | 38 ++++++++++++++++++++++++++++++++------
->  1 file changed, 32 insertions(+), 6 deletions(-)
+>  rteval/misc.py                           | 23 ++++++++++++++++++++++-
+>  rteval/modules/measurement/cyclictest.py |  8 +++++---
+>  2 files changed, 27 insertions(+), 4 deletions(-)
 > 
-> diff --git a/rteval/systopology.py b/rteval/systopology.py
-> index c61ec1a58514..7ce9a8c4f707 100644
-> --- a/rteval/systopology.py
-> +++ b/rteval/systopology.py
-> @@ -191,6 +191,31 @@ class NumaNode:
->          """ return list of cpus for this node """
->          return self.cpus.getcpulist()
+> diff --git a/rteval/misc.py b/rteval/misc.py
+> index 0dd361ff19fd..537041b53d61 100644
+> --- a/rteval/misc.py
+> +++ b/rteval/misc.py
+> @@ -79,6 +79,27 @@ def cpuinfo():
+>          info[core][key] = val
+>      return info
 >  
-> +class FakeNumaNode(NumaNode):
-> +    """class representing a fake NUMA node. The fake NUMA node is used on
-> +    systems which don't have NUMA enabled (no
-> +    /sys/devices/system/node) such as Arm v7
-> +
-> +    """
-> +
-> +    cpupath = '/sys/devices/system/cpu'
-> +    mempath = '/proc/meminfo'
-> +
-> +    def __init__(self):
-> +        self.nodeid = 0
-> +        self.cpus = CpuList(sysread(FakeNumaNode.cpupath, "possible"))
-> +        self.getmeminfo()
-> +
-> +    def getmeminfo(self):
-> +        self.meminfo = {}
-> +        for l in open(FakeNumaNode.mempath, "r"):
-> +            elements = l.split()
-> +            key = elements[0][0:-1]
-> +            val = int(elements[1])
-> +            if len(elements) == 3 and elements[2] == "kB":
-> +                val *= 1024
-> +            self.meminfo[key] = val
-> +
->  #
->  # Class to abstract the system topology of numa nodes and cpus
->  #
-> @@ -238,12 +263,13 @@ class SysTopology:
->  
->      def getinfo(self):
->          nodes = glob.glob(os.path.join(SysTopology.nodepath, 'node[0-9]*'))
-> -        if not nodes:
-> -            raise RuntimeError("No valid nodes found in %s!" % SysTopology.nodepath)
-> -        nodes.sort()
-> -        for n in nodes:
-> -            node = int(os.path.basename(n)[4:])
-> -            self.nodes[node] = NumaNode(n)
-> +        if nodes:
-> +            nodes.sort()
-> +            for n in nodes:
-> +                node = int(os.path.basename(n)[4:])
-> +                self.nodes[node] = NumaNode(n)
+> +# Pass the per-core dictionary that is part of the dictionary returned
+> +# by cpuinfo()
+> +def get_cpumodel(core_info):
+> +    desc = core_info.get('model name', '')
+> +    if not desc:
+> +        # On Arm (both 32 and 64 bit), 'CPU Implementer' is always
+> +        # present. Return 'unknown' otherwise
+> +        if 'CPU implementer' not in core_info:
+> +            desc = 'unknown'
 > +        else:
-> +            self.nodes[0] = FakeNumaNode()
+> +            implementor = core_info.get('CPU implementer', '')
+> +            architecture = core_info.get('CPU architecture', '')
+> +            variant = core_info.get('CPU variant', '')
+> +            part = core_info.get('CPU part', '')
+> +            revision = core_info.get('CPU revision', '')
+> +
+> +            desc = 'Implementor: %s Architecture: %s Variant: %s Part: %s Revision: %s' \
+> +                % (implementor, architecture, variant, part, revision)
+> +
+> +    return desc
+> +
+>  if __name__ == "__main__":
 >  
->      def getnodes(self):
->          return list(self.nodes.keys())
+>      info = cpuinfo()
+> @@ -86,4 +107,4 @@ if __name__ == "__main__":
+>      for i in idx:
+>          print("%s: %s" % (i, info[i]))
+>  
+> -    print("0: %s" % (info['0']['model name']))
+> +    print("0: %s" % (get_cpumodel(info['0'])))
+> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+> index b1755d4f4421..11cb45e711dd 100644
+> --- a/rteval/modules/measurement/cyclictest.py
+> +++ b/rteval/modules/measurement/cyclictest.py
+> @@ -34,7 +34,7 @@ import math
+>  import libxml2
+>  from rteval.Log import Log
+>  from rteval.modules import rtevalModulePrototype
+> -from rteval.misc import expand_cpulist, online_cpus, cpuinfo
+> +from rteval.misc import expand_cpulist, online_cpus, cpuinfo, get_cpumodel
+>  
+>  class RunData:
+>      '''class to keep instance data from a cyclictest run'''
+> @@ -226,13 +226,15 @@ class Cyclictest(rtevalModulePrototype):
+>          for core in self.__cpus:
+>              self.__cyclicdata[core] = RunData(core, 'core', self.__priority,
+>                                                logfnc=self._log)
+> -            self.__cyclicdata[core].description = info[core]['model name']
+> +            self.__cyclicdata[core].description = get_cpumodel(info[core])
+> +            if self.__cyclicdata[core].description == 'unknown':
+> +                self._log(Log.INFO, "Unknown model for core %d" % core)
+>  
+>          # Create a RunData object for the overall system
+>          self.__cyclicdata['system'] = RunData('system',
+>                                                'system', self.__priority,
+>                                                logfnc=self._log)
+> -        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + info['0']['model name']
+> +        self.__cyclicdata['system'].description = ("(%d cores) " % self.__numcores) + get_cpumodel(info['0'])
+>  
+>          if self.__sparse:
+>              self._log(Log.DEBUG, "system using %d cpu cores" % self.__numcores)
 > -- 
 > 2.32.0
 > 
 > 
 
-This is quite clever. I am just going to rename Fake to Sim as short for 
-simulated, but other than that.
+I like the idea of constructing the 'model name' from other fields in 
+/proc/cpuinfo available for arm.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+There are a number of problems with the implementation.
+This should be written in such away that the local changes in misc.py
+work seamlessly without changes to the code that calls it. The code should 
+also add the 'model name' to every core.
+Finally, a lesser detail, but there is no need when using get to set a 
+default of "" when the default is already None. Just make the code work 
+with None.
+
+I have rewritten this from scratch, attributing the idea to you, I hope 
+that is okay. I will send the patch to the list shortly.
+
+John
 
