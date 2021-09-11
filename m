@@ -2,142 +2,121 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3003C433EF
-	for <linux-rt-users@archiver.kernel.org>; Sat, 11 Sep 2021 09:47:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BE81C433EF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 11 Sep 2021 18:38:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B52F660F24
-	for <linux-rt-users@archiver.kernel.org>; Sat, 11 Sep 2021 09:47:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D40D0611AD
+	for <linux-rt-users@archiver.kernel.org>; Sat, 11 Sep 2021 18:38:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235481AbhIKJsQ (ORCPT
+        id S233454AbhIKSj4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 11 Sep 2021 05:48:16 -0400
-Received: from wout5-smtp.messagingengine.com ([64.147.123.21]:46201 "EHLO
-        wout5-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S235443AbhIKJsQ (ORCPT
+        Sat, 11 Sep 2021 14:39:56 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:30711 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S233411AbhIKSj4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 11 Sep 2021 05:48:16 -0400
-Received: from compute2.internal (compute2.nyi.internal [10.202.2.42])
-        by mailout.west.internal (Postfix) with ESMTP id 049263200939;
-        Sat, 11 Sep 2021 05:47:02 -0400 (EDT)
-Received: from mailfrontend2 ([10.202.2.163])
-  by compute2.internal (MEProxy); Sat, 11 Sep 2021 05:47:03 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sakamocchi.jp;
-         h=date:from:to:cc:subject:message-id:references:mime-version
-        :content-type:in-reply-to; s=fm2; bh=ALRQvkuUO/Bbr8HWamoT1D0i6Bs
-        soUh0UPD6C16R7RM=; b=Mx9m4iQiNLSmqFz0u1UDVRzsfxbaGbBEDdpiZF3NUXe
-        POMSjja8X6PTmEmf+AE+k4bVs24MuAjQjGmtzbwXMMiYOpGMXTQD5v0VolYnwh7O
-        caxvoebN08k6WnmiIfMlezMd89kMImellkHvnQ2ruW1W9iDoq3QYU5IqOQPzIMIo
-        ecpyOE02/LE14/OaMZDlfqy6wxYR3o5sLHatZN0E12Qaz+hVzGWPk5Tw0ouG8BxH
-        qK61ywFL8OPOt06ha7Aj7TeZDZ5+G08Blp4p7ABhmaKc3j4YPs4OmwYNc1iZRImx
-        x3GABp9MsPIsSCcrYN45g/BNsU5u94vN2SgFMxRZBQQ==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-        messagingengine.com; h=cc:content-type:date:from:in-reply-to
-        :message-id:mime-version:references:subject:to:x-me-proxy
-        :x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm3; bh=ALRQvk
-        uUO/Bbr8HWamoT1D0i6BssoUh0UPD6C16R7RM=; b=riCnbQ7oe/OK3Oht+ZDSiM
-        j/5IxZ3UBJcWMV31stWLDVe0PC9RWrWDkZ0l8cc9tcPq/wcOzblX3tkHMrgk/AT9
-        50LrlOnMmNDHQD65ed5rXmF20npInkoRO0Sz+j1y+vXK+mp5VHHVFUHmL+duwPEF
-        EBSVjqyEwVpwK6yOp89REVy8zVhjcjo27sgCpKiIFyO8vggvRJN4F5qiItAh7TgQ
-        1nkn33CG9tQD1Y+LaGZyeZzQ717l/RQcOCTRUAYXChKVfUPZuxIhYobe2b/fHpLA
-        5utguwJV5UCjr8rTco5A1aucbGZWQPEVMxMKgPrgvehjvIJ/BcJyjBH7mEwfTWiA
-        ==
-X-ME-Sender: <xms:Fns8YdV4R001-9xlmdw5YSY0YbC8ITK9MFdknN10EgIUYrSDn_oK-A>
-    <xme:Fns8YdnsT4ArZpPaZhVo4DCh4-6Bf7StEolTzZReiqG4kLaiuTtsuip3p6BhTfnL-
-    6jRF2ZhiQW1rXOcnjA>
-X-ME-Received: <xmr:Fns8YZYmP-7YDl7MFiSvBEAeCdeOZj3K4YRSyNzGWnyH5UuPLIZ2uxGg18AtxafUiivfqM4Y2at1WMKz8SpUlu6P_6Ii7ahxUg>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvtddrudegfedgvddtucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepfffhvffukfhfgggtuggjsehttdertddttddvnecuhfhrohhmpefvrghkrghs
-    hhhiucfurghkrghmohhtohcuoehoqdhtrghkrghshhhisehsrghkrghmohgttghhihdrjh
-    hpqeenucggtffrrghtthgvrhhnpeejgeeifeeuveeufeeigeegjeelvdfgjeegffejgfdv
-    keelhefgtdefteejleekjeenucffohhmrghinhepkhgvrhhnvghlrdhorhhgnecuvehluh
-    hsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomhepohdqthgrkhgrshhh
-    ihesshgrkhgrmhhotggthhhirdhjph
-X-ME-Proxy: <xmx:Fns8YQWeuRjKueuauLxHqBHFKHxqJ7vX63uNRTJFsoUfnaxusTl0bw>
-    <xmx:Fns8YXmK4IlCkLCiekau_SXeeAnATebvvoRV6eyhJT-Yd0owW0E_yA>
-    <xmx:Fns8YddHdoeEIwGQcOPwv8r2_nz3LO0AiNFX8rU8C_svHpXtnb0eQA>
-    <xmx:Fns8YVgxmb3outCvn8Yt3aghEwb9tleaL3Dcr-r0MEkN6DvILWE3Rg>
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Sat,
- 11 Sep 2021 05:47:00 -0400 (EDT)
-Date:   Sat, 11 Sep 2021 18:46:57 +0900
-From:   Takashi Sakamoto <o-takashi@sakamocchi.jp>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     David Runge <dave@sleepmap.de>,
-        linux1394-devel@lists.sourceforge.net,
-        linux-rt-users@vger.kernel.org,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>
-Subject: Re: firewire-ohci fails to initialize Texas Instruments
- XIO2213A/B/XIO2221 based controller on realtime kernels [5.4.91-rt50,
- 5.10.8-rt24]
-Message-ID: <YTx7EVV5vFuhKM5i@workstation>
-Mail-Followup-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        David Runge <dave@sleepmap.de>,
-        linux1394-devel@lists.sourceforge.net,
-        linux-rt-users@vger.kernel.org,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>
-References: <YB+5tdIpbTfnDnIi@hmbx>
- <20210208091940.csuyf7l73n4ofpmz@linutronix.de>
- <YCl28sXo7LEyCK8y@hmbx>
- <20210218083849.iitcrhdgv2oajfhv@linutronix.de>
- <20210218092751.ahn262llcpp2loz7@linutronix.de>
- <20210308141210.yoa37dsc26p4jsim@linutronix.de>
- <YEkMvjJt/Vu9Jbgu@hmbx>
- <YTfy7pLhWkTOn+aI@hmbx>
- <YTgdLkTs7wEmj8fh@workstation>
- <20210910115541.jjf3fovv4v3etvde@linutronix.de>
+        Sat, 11 Sep 2021 14:39:56 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631385523;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=naPfW9D7sOQ+tlBxCtCw2BjX9ch4IOhbQQrh/TDUAYw=;
+        b=TUNGv7p/vamzNUAqD+WFrRt1fDSCYKXM82WtD+IdzGgLUk+ereNkkgxdozDXSgqFNxxfMc
+        TZ5XzmNcmrpmpVDE+yUDclvALxKnj0hstQnu9CDQMjuL4O2YW+jmxCDXUr/WKCVEeITai+
+        VN/HXWUXAO74ljQpLuS07FNQQ8Rh7WY=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-352-EpSKLqmqN0OCj76jSlPcRA-1; Sat, 11 Sep 2021 14:38:39 -0400
+X-MC-Unique: EpSKLqmqN0OCj76jSlPcRA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4921A8145E5;
+        Sat, 11 Sep 2021 18:38:38 +0000 (UTC)
+Received: from lclaudio.dyndns.org (unknown [10.22.32.140])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C78010013C1;
+        Sat, 11 Sep 2021 18:38:37 +0000 (UTC)
+Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
+        id BC4093C0205; Sat, 11 Sep 2021 15:38:35 -0300 (-03)
+Date:   Sat, 11 Sep 2021 15:38:35 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 4.14.246-rt122
+Message-ID: <YTz3q4lJBNvlElks@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="loAnJJOzTgswuIq4"
 Content-Disposition: inline
-In-Reply-To: <20210910115541.jjf3fovv4v3etvde@linutronix.de>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
 
-On Fri, Sep 10, 2021 at 01:55:41PM +0200, Sebastian Andrzej Siewior wrote:
-> On 2021-09-08 11:17:18 [+0900], Takashi Sakamoto wrote:
-> > Hi,
-> Hi,
-> 
-> > According to the log, the task of 'pipewire-media-:2554' is blocked during
-> > 122 seconds by call of 'wait_for_completion()' in code of
-> > 'fw_run_transaction()'. This is odd in two points of transaction service
-> > programmed in Linux FireWire subsystem:
-> > 
-> > 1. The process context should be awakened by softIRQ context, which should
-> >    be scheduled by hwIRQ context for hardware interrupt of OHCI 1394
-> >    controller.
-> > 2. Even if the softIRQ context is not invoked, the process context
-> >    should be awakened by wheel timer context, which is scheduled to finish
-> >    the transaction several jiffies later (originally prepared for the case
-> >    of split-transaction). In the case, the result of transaction is
-> >    'RCODE_CANCELLED'.
-> 
-> 
-> Side note: David is using PREEMPT_RT and his problem can be reduced to
-> plain vanilla with `threadirqs' boot option. Back in February I sent him
-> a patch [0] which inlines the tasklet job as I assumed it is not good
-> reset the IRQ-event in the tasklet/workqueue. It seemed to improve the
-> situtation as it recognized the device attached to the bus but ended
-> then in the same timeout behaviour as now.
-> 
-> [0] https://https://lkml.kernel.org/r/.kernel.org/all/20210218083849.iitcrhdgv2oajfhv@linutronix.de/
+--loAnJJOzTgswuIq4
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Thanks for the side note, and I apologize to follow the thread partially,
-not entire.
+Hello RT-list!
 
-Furthermore, I'd like to correct my misunderstanding about the 2nd point
-since the timer wheel context is scheduled only when the peer of
-transaction transfer ack_pending for the request subaction. Without the
-hwIRQ context, the task is blocked ever anyway.
+I'm pleased to announce the 4.14.246-rt122 stable release.
+
+This release is just an update to the new stable 4.14.246 version and
+no RT specific changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.14-rt
+  Head SHA1: 8e08e266e7c78bf94eadbb72e2683deb4a651904
+
+Or to build 4.14.246-rt122 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.246.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.246-rt122.patch.xz
 
 
-Regards
+Enjoy!
+Luis
 
-Takashi Sakamoto
+
+--loAnJJOzTgswuIq4
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAmE896sACgkQ85SkI/jm
+fCbHXw//YvifQLWLIxKKR+ZcNROIAr3YMVwcdKAMEwxkUlOtYm80tVm7MuVMldQu
+bxApPzexr97n/VVp+4z6tRy9lO46yiUIECFelhiqqcn+TExZUilSAbLooDEt7l0f
+UN7NZxmSJmamRHDoY8CPScARPDKvRBHilC8Eplr4M7uO3jG1obAX6rfMJ2Vo1tMV
+wHjcsKiOumlbynX3CDix1SYEz+KMV9RmWOHUAyCtmnPkYLIpTWlLl295Ms77Ftgn
+8x9zGYubeUTH8b6QWmKTI+WckAvuwcsxyuDhhAbIiAQEEpi/3p6Dm0LU4TJ6xxaL
+ohyIOY7s0A8JeUabtzSIoPQvomrJivabj4c+pMFfR1yXcfEPVElEChcZktx7ugfC
+Aaa5tnECXqZj8/LEVQ0HkjL8Jg6rKe5TYCOjbaDX2SGlrh/PlsxsyBkCVj/nE7Pb
+wLrw2MYn10vmGvVi9hM5Q54ebD8FePmPfWtc5xopqn5Awn/9mjT10m0K75dBOSsf
+fcvH3N6Df3fSfT+TlV+Lgpzo3cpUdBPC2Yj/4ik0FcgqKpZmCaN4M+TsfC+ivHbm
+ixgM//mB2yqyN325qK8V8T5cDNgJWh04PPuoD8RQHILeSNnPwrAYbXN4kZ2CbFfl
+sRGO9BefRswsR0T+F5FltPJe9Hgxy90mjtN6Y/Wih5WO4UlBY4k=
+=rb4j
+-----END PGP SIGNATURE-----
+
+--loAnJJOzTgswuIq4--
+
