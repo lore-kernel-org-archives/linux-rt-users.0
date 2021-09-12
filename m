@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA3E8C433EF
-	for <linux-rt-users@archiver.kernel.org>; Sun, 12 Sep 2021 15:03:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D326BC433EF
+	for <linux-rt-users@archiver.kernel.org>; Sun, 12 Sep 2021 15:39:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BB76361056
-	for <linux-rt-users@archiver.kernel.org>; Sun, 12 Sep 2021 15:03:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9808A61050
+	for <linux-rt-users@archiver.kernel.org>; Sun, 12 Sep 2021 15:39:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232251AbhILPEc (ORCPT
+        id S235435AbhILPlE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 12 Sep 2021 11:04:32 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:55447 "EHLO
+        Sun, 12 Sep 2021 11:41:04 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:28011 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229653AbhILPEb (ORCPT
+        by vger.kernel.org with ESMTP id S229653AbhILPlC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 12 Sep 2021 11:04:31 -0400
+        Sun, 12 Sep 2021 11:41:02 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631458996;
+        s=mimecast20190719; t=1631461188;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=ORjicB+Vghncbm6K6JrlpHDsuSpAskK8pB5qmmeSqzk=;
-        b=aW2HHsCuA5WMEerWvI/V26P8KKBL6CpqGCNUIJ78YGMRZBFB/QaMxZmOb6p1RmrFPAKz4l
-        HolhC3WPNiJTQbkEUy0+V4783QX/1+ZXe8vjipQy+tENjOZrUPYR9DgYC6sFaL0+uhT911
-        ayznNZXH8ACMYqdDtzBocDkZD4Rni7A=
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
- [209.85.219.70]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-415-7G8nWU7cOFu6tHtY3OyLEA-1; Sun, 12 Sep 2021 11:03:15 -0400
-X-MC-Unique: 7G8nWU7cOFu6tHtY3OyLEA-1
-Received: by mail-qv1-f70.google.com with SMTP id h9-20020a05621413a900b0037a2d3eaf8fso54100341qvz.8
-        for <linux-rt-users@vger.kernel.org>; Sun, 12 Sep 2021 08:03:14 -0700 (PDT)
+        bh=94bFwwMcvUg9Zpo+PXDqLp1uGEpcRMD8rxylaMRZJC8=;
+        b=eOEIBouXCPiucgDSAaW7GBvAs6+7IUcZYSZI4wZ7VtUrBCHID1XWu+EExdjmm0NTsbNuME
+        WO++xKawgMQbNigOEV6vLXs7geogumGOaNb1X9NJ7gTOqq2td3sIHpd3YxKL92G6ZG+eTi
+        S050c1ZGIgpKU5v9wKSQlEQCAnW3VtY=
+Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
+ [209.85.160.197]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-365-TdirPJhaPn-Ln_q_4luVpw-1; Sun, 12 Sep 2021 11:39:46 -0400
+X-MC-Unique: TdirPJhaPn-Ln_q_4luVpw-1
+Received: by mail-qt1-f197.google.com with SMTP id n19-20020ac81e13000000b0029f679691eeso53827560qtl.20
+        for <linux-rt-users@vger.kernel.org>; Sun, 12 Sep 2021 08:39:46 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=ORjicB+Vghncbm6K6JrlpHDsuSpAskK8pB5qmmeSqzk=;
-        b=for/nXAajwFNp323EzDbY2LdroT/bAbOG3yQHVdvIj4d+U4SNcWBiULouFueuwsO9O
-         8Zk7RQ+IpoKwnpYi2k+I1ew8V3dbmscdgpVZTJVaTMXWbqUCKEanoT8lzKHjrXEKptc1
-         b4SNENFY388IxJFcwegxMI1q9l2BYFMu2sVnuPHBSZFGk/dRFhlpB0a64BHKuWOmJhB1
-         msQgNYGG95VHan5LsnnCDXtflm+hcPRi1SHu1UbdaJnCMNvcXT0/SqVHtPeUCCqtqfiW
-         WVbBMQPTp9iVlC0Gvel5D69ZddqpWekE0L5xj1HtQ4udall54wzShZMJ8FhtoxiQ8qoR
-         hI4w==
-X-Gm-Message-State: AOAM530kVWw9mzsat682ZfLBK0ZLN2bEN4fR1wzT212uBWUxSSc0KXpJ
-        a3mz5t0wCXRKQmRv4ibKF8fkLaTT5MJRG+le5Ppp/ZOaki7tki5RtYO0nIf78WfaELkzZSVt31C
-        zuxW/NsplSFqeABTsqBqdbXvFEhc=
-X-Received: by 2002:a05:620a:1aaa:: with SMTP id bl42mr6184270qkb.469.1631458994487;
-        Sun, 12 Sep 2021 08:03:14 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzoPa8IOzNRgGWTmmOPnHVwloGyXKyI42cErUnhZT7aRLprO47HEyD8PftCjaQ/tP+kZ7gmyA==
-X-Received: by 2002:a05:620a:1aaa:: with SMTP id bl42mr6184256qkb.469.1631458994317;
-        Sun, 12 Sep 2021 08:03:14 -0700 (PDT)
+        bh=94bFwwMcvUg9Zpo+PXDqLp1uGEpcRMD8rxylaMRZJC8=;
+        b=YbUxN2ZQGyAeT1bc1MWXOtw1BM710vADAORIiBkClKHu9QkTggyi48BF403vYT2vCv
+         0xcU+u4fVI9PFE6fq4SESTtHtvHXX5c67delB6AFndgpS1BW+npOkphur/wWr4ZPoJAG
+         TrXB2hMFDM7dHCabRKen3n2XRQkv2RprOgPoyzqyjYAICcWj2O3i8OFtKitFodqXpDEI
+         5va9WSnOEjWhZ/QQVBi9NH9dd8e2jQ528ewLAHdMlLlK280VDUD1U9EPnr2+PCMnqnQp
+         D/AqsNkl0MKspyeB6rTPbrJZGWZOFOe8hVkwP6O+Mq/4hCXp2O55f4ep2WTeg3h9x9ix
+         CU7w==
+X-Gm-Message-State: AOAM531hFw3FswClgdPMJy8fmyg8My/xbsVC5NN6qk74WtMSpvERUSOm
+        KHfoZEblTGT+kk3TuBhxpuzTVp3tO/01ZxAiue4tgl/ZJm+ZkeUzfyfztkqdXNp23rLXysvTD1U
+        JMx6Z3Y5p9evpMFjZr3bY7IddH4Q=
+X-Received: by 2002:a05:620a:1435:: with SMTP id k21mr6253028qkj.442.1631461186467;
+        Sun, 12 Sep 2021 08:39:46 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJz0BulHVAF5QNHKMeHS3zKCbn0ClIh3QCgD5M/6rAjTlROd6sAvuWQYdqlQZJbU1Ws3PU7BqQ==
+X-Received: by 2002:a05:620a:1435:: with SMTP id k21mr6253011qkj.442.1631461186238;
+        Sun, 12 Sep 2021 08:39:46 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id 9sm3272972qkc.52.2021.09.12.08.03.13
+        by smtp.gmail.com with ESMTPSA id f28sm3400713qkk.10.2021.09.12.08.39.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 12 Sep 2021 08:03:13 -0700 (PDT)
-Date:   Sun, 12 Sep 2021 11:03:12 -0400 (EDT)
+        Sun, 12 Sep 2021 08:39:45 -0700 (PDT)
+Date:   Sun, 12 Sep 2021 11:39:44 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Punit Agrawal <punitagrawal@gmail.com>
 cc:     linux-rt-users@vger.kernel.org, punit1.agrawal@toshiba.co.jp,
         Venkata.Pyla@toshiba-tsip.com, dinesh.kumar@toshiba-tsip.com
-Subject: Re: [PATCH 1/3] rteval: cyclictest.py Enable logging cyclictest
- output
-In-Reply-To: <20210902092452.726905-2-punitagrawal@gmail.com>
-Message-ID: <175ea621-2245-5c79-16e7-feccbc906ed8@redhat.com>
-References: <20210902092452.726905-1-punitagrawal@gmail.com> <20210902092452.726905-2-punitagrawal@gmail.com>
+Subject: Re: [PATCH 3/3] rteval: misc.py: Sort the list of cpus returned by
+ online_cpus()
+In-Reply-To: <20210902092452.726905-4-punitagrawal@gmail.com>
+Message-ID: <6217d13-7491-3a91-a898-37c9bb7c2634@redhat.com>
+References: <20210902092452.726905-1-punitagrawal@gmail.com> <20210902092452.726905-4-punitagrawal@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -81,64 +81,47 @@ On Thu, 2 Sep 2021, Punit Agrawal wrote:
 
 > From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 > 
-> The cyclictest.py module uses a temporary file to store the output
-> from "cyclictest" which is deleted at the end of the run. As the
-> collected log contains more information than what is being reported by
-> rteval it would make sense to persist the logs. It can also be useful
-> to sanity check the results reported by rteval.
+> online_cpus() returns a list of online cpus in arbitrary order. e.g.,
+> on a hexacore system it returns -
 > 
-> With this goal, create a persistent file named
-> "cyclictest.stdout" (instead of a tempfile) to capture the cyclictest
-> logs. The file is stored in the same location as the logs from the
-> other modules.
+>     ['5', '3', '1', '4', '2', '0']
 > 
-> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+> Generally this wouldn't be a problem but the cyclictest.py module
+> matches the unsorted list with the latencies output by "cyclictest"
+> which are ordered by core number. This leads to incorrect reporting of
+> per-core latencies in the final report generated by rteval. The issue
+> was noticed when comparing the rteval report with cyclictest logs
+> (enabled by a recent change).
+> 
+> Fix the inconsistency in core numbering by sorting the list of cpus
+> returned by online_cpus(). As the cpus are represented as a string,
+> sort with the integer key to avoid issues on systems with large number
+> of cores.
+> 
+> Signed-off-by: Punit Agrawal <punitagrawal@gmail.com>
 > ---
->  rteval/modules/measurement/cyclictest.py | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
+>  rteval/misc.py | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-> index b1755d4f4421..0037c3ad07bd 100644
-> --- a/rteval/modules/measurement/cyclictest.py
-> +++ b/rteval/modules/measurement/cyclictest.py
-> @@ -197,6 +197,7 @@ class Cyclictest(rtevalModulePrototype):
->          self.__numanodes = int(self.__cfg.setdefault('numanodes', 0))
->          self.__priority = int(self.__cfg.setdefault('priority', 95))
->          self.__buckets = int(self.__cfg.setdefault('buckets', 2000))
-> +        self.__reportdir = self.__cfg.setdefault('reportdir', os.getcwd())
->          self.__numcores = 0
->          self.__cpus = []
->          self.__cyclicdata = {}
-> @@ -255,6 +256,8 @@ class Cyclictest(rtevalModulePrototype):
->          mounts.close()
->          return ret
+> diff --git a/rteval/misc.py b/rteval/misc.py
+> index 0dd361ff19fd..ec3641e4a013 100644
+> --- a/rteval/misc.py
+> +++ b/rteval/misc.py
+> @@ -53,6 +53,7 @@ def online_cpus():
+>          for c in glob.glob('/sys/devices/system/cpu/cpu[0-9]*'):
+>              num = str(c.replace('/sys/devices/system/cpu/cpu', ''))
+>              online_cpus.append(num)
+> +    online_cpus.sort(key=int)
+>      return online_cpus
 >  
-> +    def _open_logfile(self, name):
-> +        return open(os.path.join(self.__reportdir, "logs", name), 'w+b')
->  
->      def _WorkloadSetup(self):
->          self.__cyclicprocess = None
-> @@ -288,7 +291,7 @@ class Cyclictest(rtevalModulePrototype):
->              self.__cmd.append("--tracemark")
->  
->          # Buffer for cyclictest data written to stdout
-> -        self.__cyclicoutput = tempfile.SpooledTemporaryFile(mode='w+b')
-> +        self.__cyclicoutput = self._open_logfile('cyclictest.stdout')
->  
->  
->      def _WorkloadTask(self):
+>  def invert_cpulist(cpulist):
 > -- 
 > 2.32.0
 > 
 > 
 
-This is the kind of information that is interesting to developers of 
-rteval, but is less interesting to general users who are simply testing 
-whether their machines are capable of being used for realtime performance. 
-For these people, this would just create large files to be deleted.
-
-I would consider this perhaps with a command line flag explaining this is 
-an option for rteval developers.
+Thanks for finding that. I'm wondering if it makes more sense
+to sort it in cyclictest.py?
 
 John
 
