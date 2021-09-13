@@ -7,55 +7,56 @@ X-Spam-Status: No, score=-19.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DCF85C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3FED7C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B8C9A60F11
-	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1DFA860FE6
+	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238043AbhIMIk3 (ORCPT
+        id S238045AbhIMIka (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 13 Sep 2021 04:40:29 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:27175 "EHLO
+        Mon, 13 Sep 2021 04:40:30 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:50307 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S238012AbhIMIk2 (ORCPT
+        by vger.kernel.org with ESMTP id S238026AbhIMIk3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Sep 2021 04:40:28 -0400
+        Mon, 13 Sep 2021 04:40:29 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631522353;
+        s=mimecast20190719; t=1631522354;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=zNADHyJRyF5z79P7UWadu367zvlPvteYzuMxkFDzfQk=;
-        b=AIYl+QI+ukidIcClZoL9X/WzZjforHEOEq1JEaHPzKuORvgLABindvPya6unfTqyusV6+i
-        H5NSrxSX+GwEy4i0Cr9AgmZIpalSdLZXdrj3uJdWnxfypyfCwlpgyKVHc5RWw8qzBR8BXb
-        Oj2tUhSAE44vvaB1RmVWkD9FXQ0SwcI=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-546-VE1C7LjsP9SiYxMYA4z95Q-1; Mon, 13 Sep 2021 04:39:12 -0400
-X-MC-Unique: VE1C7LjsP9SiYxMYA4z95Q-1
-Received: by mail-wr1-f70.google.com with SMTP id c15-20020a5d4ccf000000b0015dff622f39so668459wrt.21
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=6IXzduvzlMfg1+gOh7MT+1zBGqA5W6AByivTY8QlAWY=;
+        b=BKxRbOQF9BtJ7JGW854D8xPVdD/ucUlISSEAC/TXa8wJO2HdVsYGh2USzCgMb0rXjnmffK
+        WA/eG3+8SlTVV/6hI2KyxMKuMYxZ8wKP2E3i7nXlis+6C/Bf+btPyMOnBXi1sqZy1y5Igl
+        2KKhl0x5it3GGiucQNxNS5lNrT/3cpY=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-376-yBu45fE6PausKzqjdv748g-1; Mon, 13 Sep 2021 04:39:12 -0400
+X-MC-Unique: yBu45fE6PausKzqjdv748g-1
+Received: by mail-wm1-f69.google.com with SMTP id w25-20020a1cf6190000b0290252505ddd56so4605462wmc.3
         for <linux-rt-users@vger.kernel.org>; Mon, 13 Sep 2021 01:39:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=zNADHyJRyF5z79P7UWadu367zvlPvteYzuMxkFDzfQk=;
-        b=T31aU9Qg8HVqoSvAY4NZrK9Sr/5xLTTP/Afyy6wOUG3zA6Wp3Vny0yn4u8q50sZgFl
-         uN22CQiIvxbc9bBYAkJcr9Ta5OEnI3tLQ+34E8Ldldf9JogdmlAhuSNQXyeyvtqI8ToA
-         dXpdYwhkHYwMwlyv5HoskQgA3Deg5uocqxYi5k/09fnxKdDPhwDuvepq1zqbOvPT3idX
-         DDlfxO8mGRKz/dm46vW+UTRhMLtM+u/QiuL5gxpkYSEDmQe+d9OsyskL7IUWywFzDfra
-         0mPC86J4lcczqLpzkTVRZzmfQrxTQK0Zqtwf3bOAVX24CFd6u1zp4K/2nLICcioYvmc4
-         QCoQ==
-X-Gm-Message-State: AOAM532qJcBQz0ESbCRazB7E35nDVrOeW9Ah4uEucZlSJNO67JNePROB
-        UqhqspFDu4xITCD6oTzAnnhL2cEvd4y7bmIHjI8oZVxqTyv3EvxwbKl5r3151YVdx36Ha5LRQh9
-        TT/Vr4M3XuHmeG5+4sHfn1bpl/HyM6DWeu1BtS9VDTyXQUk46D7htoMFbNWlO1kZblcbNawcBmm
-        BJw3s=
-X-Received: by 2002:adf:9d45:: with SMTP id o5mr11086538wre.226.1631522350760;
-        Mon, 13 Sep 2021 01:39:10 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwOyP4IVsFeOis3B2RVH3TydvO7GILyNqcaBR3z2fczrsUyo2dv8hzBQTA+LE/VQ7xF5ro/9g==
-X-Received: by 2002:adf:9d45:: with SMTP id o5mr11086516wre.226.1631522350528;
-        Mon, 13 Sep 2021 01:39:10 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=6IXzduvzlMfg1+gOh7MT+1zBGqA5W6AByivTY8QlAWY=;
+        b=ZSKg4CeTOkxnxdqGYrkjj3ZPcsRaCXb7vqEjbg0mplAbbN5TFBYJkR1x+mrwFBwcig
+         yfgnYZd0CarDsD4vrVNpamNG9kC4aJYzoDCPbIjcU1aqU8uorJCPpIEVk0KcTv1Ldgao
+         wrshuGalYzR0QSoFw3y0oVox2ToiNlkJ2upr3j91omXEsiObUL7lH4tACqKDsiy505o0
+         Ar03VyRRcHrZCOmCielU2Fhsr8jnA51/EzPuOG4HRfsuJnPYnb9hgmImdbdP3WyrwEck
+         KKd6V58aEZzikxNl1Jb8ct3S0AhtUUvH4b3hxR2Db+SqLth5gcLnmrFkAeXLQVBMw14B
+         R4oQ==
+X-Gm-Message-State: AOAM533ERvXJua2TU7Ud/b1nPCWiGOgQ1HBkJpir1D4S8pZfXr9/i3JP
+        IbOgakYErJ/1utaHqTIn9M0YiwppUl7mxqxgE3FEszaaI3mL5cz654Gs6oaTKPbn1JzpLmUNP7R
+        sdPxUml/ExHRfYWZzJXR6kvrVHddGdGCsWkPmRsEvt63aHQAYXklPi5u6bOUP6ddAXGpK7NUnow
+        SU6MQ=
+X-Received: by 2002:a7b:c4cd:: with SMTP id g13mr9895028wmk.91.1631522351277;
+        Mon, 13 Sep 2021 01:39:11 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwqvA28pY2d6QIe1fYQaF2wUS0gG3oLL/qZjhU7uDBiQLo3CthYgXLFutu2E8RozLaqSuXNbQ==
+X-Received: by 2002:a7b:c4cd:: with SMTP id g13mr9894999wmk.91.1631522351023;
+        Mon, 13 Sep 2021 01:39:11 -0700 (PDT)
 Received: from vian.redhat.com ([2a0c:5a80:1f0d:6700:7eb9:ffb3:3868:81d7])
         by smtp.gmail.com with ESMTPSA id u8sm6640688wmq.45.2021.09.13.01.39.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
@@ -63,130 +64,63 @@ Received: from vian.redhat.com ([2a0c:5a80:1f0d:6700:7eb9:ffb3:3868:81d7])
 From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
 To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
 Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
-Subject: [PATCH v2 1/3] oslat: Rename cpu_mhz/cpu_hz to counter_mhz/counter_hz
-Date:   Mon, 13 Sep 2021 10:39:06 +0200
-Message-Id: <20210913083908.48408-1-nsaenzju@redhat.com>
+Subject: [PATCH v2 2/3] oslat: Add aarch64 support
+Date:   Mon, 13 Sep 2021 10:39:07 +0200
+Message-Id: <20210913083908.48408-2-nsaenzju@redhat.com>
 X-Mailer: git-send-email 2.31.1
+In-Reply-To: <20210913083908.48408-1-nsaenzju@redhat.com>
+References: <20210913083908.48408-1-nsaenzju@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-'cpu_mhz' in oslat actually represents the frequency at which the high
-frequency counter we measure with ticks. There is no requirement for the
-counter to match the CPU frequency, nor is forced to do so on any of the
-supported architectures[1][2]. So rename it to 'counter_mhz' in order to
-better match reality.
+The callbacks are based on Linux's implementation:
+ - CNTVCT_EL0 provides direct access to the system virtual timer[1].
+ - 'yield' serves as a CPU hint with similar semantics as x86's
+   'pause'[2].
 
-[1] x86_64
-Intel TRM Vol 3B, 17.17 Time Stamp Counter:
-"Constant TSC behavior ensures that the duration of each clock tick is
-uniform and supports the use of the TSC as a wall clock timer even if
-the processor core changes frequency."
+In contrast with the kernel's implementation, there isn't a need for
+isb() after reading CNTVCT_EL0,  this is only needed in-kernel as the
+register read has to be ordered with a subsequent locking operation.
 
-[2] ppc64
-From __ppc_get_timebase() manpages: The Time Base Register is a 64-bit
-register provided by Power Architecture processors. It stores a
-monotonically incremented value that is updated at a system-dependent
-frequency that may be different from the processor frequency. Note that
-glibc's __ppc_get_timebase() and oslat's ppc64 frc() implementations are
-the same.
-
+[1] See Linux's '__arch_get_hw_counter()' in arch/arm64/include/asm/vdso/gettimeofday.h
+[2] See Linux's 1baa82f4803 ("arm64: Implement cpu_relax as yield").
 Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
----
+--
 
 Changes since v1:
- - More complete commit message
- - s/timer/counter/
+ - Code cleanup
+ - Add compiler barriers
 
- src/oslat/oslat.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ src/oslat/oslat.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 6ff5ba8..33cccd3 100644
+index 33cccd3..c90ec1a 100644
 --- a/src/oslat/oslat.c
 +++ b/src/oslat/oslat.c
-@@ -123,7 +123,7 @@ struct thread {
- 	pthread_t            thread_id;
- 
- 	/* NOTE! this is also how many ticks per us */
--	unsigned int         cpu_mhz;
-+	unsigned int         counter_mhz;
- 	cycles_t             int_total;
- 	stamp_t              frc_start;
- 	stamp_t              frc_stop;
-@@ -228,7 +228,7 @@ static int move_to_core(int core_i)
- 	return sched_setaffinity(0, sizeof(cpus), &cpus);
+@@ -71,6 +71,19 @@ static inline void frc(uint64_t *pval)
+ {
+ 	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
  }
- 
--static cycles_t __measure_cpu_hz(void)
-+static cycles_t __measure_counter_hz(void)
- {
- 	struct timeval tvs, tve;
- 	stamp_t s, e;
-@@ -244,13 +244,13 @@ static cycles_t __measure_cpu_hz(void)
- 	return (cycles_t) ((e - s) / sec);
- }
- 
--static unsigned int measure_cpu_mhz(void)
-+static unsigned int measure_counter_mhz(void)
- {
- 	cycles_t m, mprev, d;
- 
--	mprev = __measure_cpu_hz();
-+	mprev = __measure_counter_hz();
- 	do {
--		m = __measure_cpu_hz();
-+		m = __measure_counter_hz();
- 		if (m > mprev)
- 			d = m - mprev;
- 		else
-@@ -263,7 +263,7 @@ static unsigned int measure_cpu_mhz(void)
- 
- static void thread_init(struct thread *t)
- {
--	t->cpu_mhz = measure_cpu_mhz();
-+	t->counter_mhz = measure_counter_mhz();
- 	t->maxlat = 0;
- 	t->overflow_sum = 0;
- 	t->minlat = (uint64_t)-1;
-@@ -288,7 +288,7 @@ static void thread_init(struct thread *t)
- 
- static float cycles_to_sec(const struct thread *t, uint64_t cycles)
- {
--	return cycles / (t->cpu_mhz * 1e6);
-+	return cycles / (t->counter_mhz * 1e6);
- }
- 
- static void insert_bucket(struct thread *t, stamp_t value)
-@@ -296,7 +296,7 @@ static void insert_bucket(struct thread *t, stamp_t value)
- 	int index, us;
- 	uint64_t extra;
- 
--	index = value / t->cpu_mhz;
-+	index = value / t->counter_mhz;
- 	assert(index >= 0);
- 	us = index + 1;
- 	assert(us > 0);
-@@ -450,7 +450,7 @@ static void write_summary(struct thread *t)
- 	calculate(t);
- 
- 	putfield("Core", t[i].core_i, "d", "");
--	putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
-+	putfield("Counter Freq", t[i].counter_mhz, "u", " (Mhz)");
- 
- 	for (j = 0; j < g.bucket_size; j++) {
- 		if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
-@@ -494,7 +494,7 @@ static void write_summary_json(FILE *f, void *data)
- 	for (i = 0; i < g.n_threads; ++i) {
- 		fprintf(f, "    \"%u\": {\n", i);
- 		fprintf(f, "      \"cpu\": %d,\n", t[i].core_i);
--		fprintf(f, "      \"freq\": %d,\n", t[i].cpu_mhz);
-+		fprintf(f, "      \"freq\": %d,\n", t[i].counter_mhz);
- 		fprintf(f, "      \"min\": %" PRIu64 ",\n", t[i].minlat);
- 		fprintf(f, "      \"avg\": %3lf,\n", t[i].average);
- 		fprintf(f, "      \"max\": %" PRIu64 ",\n", t[i].maxlat);
++# elif defined(__aarch64__)
++#  define relax()          __asm__ __volatile("yield" : : : "memory")
++
++static inline void frc(uint64_t *pval)
++{
++	/*
++	 * This isb() is required to prevent that the counter value
++	 * is speculated.
++	 */
++	__asm__ __volatile__("isb" : : : "memory");
++	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (*pval) :: "memory");
++
++}
+ # else
+ #  define relax()          do { } while (0)
+ #  define frc(x)
 -- 
 2.31.1
 
