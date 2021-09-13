@@ -7,66 +7,66 @@ X-Spam-Status: No, score=-19.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3FED7C433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E353CC433FE
 	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1DFA860FE6
+	by mail.kernel.org (Postfix) with ESMTP id C389660FE6
 	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238045AbhIMIka (ORCPT
+        id S238056AbhIMIkb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 13 Sep 2021 04:40:30 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:50307 "EHLO
+        Mon, 13 Sep 2021 04:40:31 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:35853 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S238026AbhIMIk3 (ORCPT
+        by vger.kernel.org with ESMTP id S238048AbhIMIkb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Sep 2021 04:40:29 -0400
+        Mon, 13 Sep 2021 04:40:31 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631522354;
+        s=mimecast20190719; t=1631522355;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=6IXzduvzlMfg1+gOh7MT+1zBGqA5W6AByivTY8QlAWY=;
-        b=BKxRbOQF9BtJ7JGW854D8xPVdD/ucUlISSEAC/TXa8wJO2HdVsYGh2USzCgMb0rXjnmffK
-        WA/eG3+8SlTVV/6hI2KyxMKuMYxZ8wKP2E3i7nXlis+6C/Bf+btPyMOnBXi1sqZy1y5Igl
-        2KKhl0x5it3GGiucQNxNS5lNrT/3cpY=
-Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
- [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-376-yBu45fE6PausKzqjdv748g-1; Mon, 13 Sep 2021 04:39:12 -0400
-X-MC-Unique: yBu45fE6PausKzqjdv748g-1
-Received: by mail-wm1-f69.google.com with SMTP id w25-20020a1cf6190000b0290252505ddd56so4605462wmc.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Sep 2021 01:39:12 -0700 (PDT)
+        bh=7D0nlJoAiAZyFi9J9J2ZbLL6MAhxCs1NU/7pDXm5Wfk=;
+        b=eP+wPuCcinDfFS+79W6C+I3u8mQTJ9dcy32iEftVzkbH8bTvgodpoA6YITAFLE4ew+D7xy
+        owf46YJXaKUU6tO82J9EcaZHsMBGWg7YHdKW3BsryoJJqW2P1EpCFDUF/ClHWjzr6af1y2
+        QoeLkqZaLEvuv/yDi3FQNer7e24s1dk=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-585-gOm7tdx7MbiDdPsdP8NrDQ-1; Mon, 13 Sep 2021 04:39:13 -0400
+X-MC-Unique: gOm7tdx7MbiDdPsdP8NrDQ-1
+Received: by mail-wr1-f71.google.com with SMTP id c15-20020a5d4ccf000000b0015dff622f39so668476wrt.21
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Sep 2021 01:39:13 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=6IXzduvzlMfg1+gOh7MT+1zBGqA5W6AByivTY8QlAWY=;
-        b=ZSKg4CeTOkxnxdqGYrkjj3ZPcsRaCXb7vqEjbg0mplAbbN5TFBYJkR1x+mrwFBwcig
-         yfgnYZd0CarDsD4vrVNpamNG9kC4aJYzoDCPbIjcU1aqU8uorJCPpIEVk0KcTv1Ldgao
-         wrshuGalYzR0QSoFw3y0oVox2ToiNlkJ2upr3j91omXEsiObUL7lH4tACqKDsiy505o0
-         Ar03VyRRcHrZCOmCielU2Fhsr8jnA51/EzPuOG4HRfsuJnPYnb9hgmImdbdP3WyrwEck
-         KKd6V58aEZzikxNl1Jb8ct3S0AhtUUvH4b3hxR2Db+SqLth5gcLnmrFkAeXLQVBMw14B
-         R4oQ==
-X-Gm-Message-State: AOAM533ERvXJua2TU7Ud/b1nPCWiGOgQ1HBkJpir1D4S8pZfXr9/i3JP
-        IbOgakYErJ/1utaHqTIn9M0YiwppUl7mxqxgE3FEszaaI3mL5cz654Gs6oaTKPbn1JzpLmUNP7R
-        sdPxUml/ExHRfYWZzJXR6kvrVHddGdGCsWkPmRsEvt63aHQAYXklPi5u6bOUP6ddAXGpK7NUnow
-        SU6MQ=
-X-Received: by 2002:a7b:c4cd:: with SMTP id g13mr9895028wmk.91.1631522351277;
-        Mon, 13 Sep 2021 01:39:11 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwqvA28pY2d6QIe1fYQaF2wUS0gG3oLL/qZjhU7uDBiQLo3CthYgXLFutu2E8RozLaqSuXNbQ==
-X-Received: by 2002:a7b:c4cd:: with SMTP id g13mr9894999wmk.91.1631522351023;
-        Mon, 13 Sep 2021 01:39:11 -0700 (PDT)
+        bh=7D0nlJoAiAZyFi9J9J2ZbLL6MAhxCs1NU/7pDXm5Wfk=;
+        b=dWcuUV/xOVQWzr0hAA3dSdF+1nfodn3jtFEouDZ/5+e30G0fxnvQbKk8Yn0gbbhi8l
+         PnEraDXRKUE7mOLyqak5i8yHJvURJHebMHXrzZiG7hPjv6x1ok4nwFYRZiZv/zzjqPGh
+         MF/oAOMyvMSoEt21pLnN6MNHo2fZrOXLsrwr1EfCTcivX0v+LcViaErlaUmpYCGN08+T
+         +DF5rzOsve0Ac2ncjATbk6S49EeFOWE0s7oSMLMRl6C/5D1/XO2Q3Hm+1CYkD8BgOMwB
+         1idNkCKMBjuYedwb+d0Ex/dPVqoF7tVi2RQqXuv2CkA0GIo8umnJ+JxmPcOeNSVSd293
+         s8Gw==
+X-Gm-Message-State: AOAM53257PWHOAV7VbFny5+ANYbuczNj7BZbSbu67o67/dJxGL3LtHuL
+        lCSMqmhVtbfglSSk+FulrQ0ue2T82KS7hx/zIY3VLYe91JFrkKehoY9hKP6n7mkRwHMs8SOIgnZ
+        t8eAFH0wm1AORfgB12ETOyIfLc+JAe/tgu/YMjTdnvSKb/6OeHNL2BFAGpzCMAU0wjD2E9XLXhj
+        hhpW4=
+X-Received: by 2002:a1c:c913:: with SMTP id f19mr9959512wmb.86.1631522352413;
+        Mon, 13 Sep 2021 01:39:12 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJx63M5oHf6YxN6G35h/Bf2q8YOyJ8mg2xDrlC1Bo1laO/EwUyA8CSa7Usp0/CmXOs5g857yWw==
+X-Received: by 2002:a1c:c913:: with SMTP id f19mr9959492wmb.86.1631522352199;
+        Mon, 13 Sep 2021 01:39:12 -0700 (PDT)
 Received: from vian.redhat.com ([2a0c:5a80:1f0d:6700:7eb9:ffb3:3868:81d7])
-        by smtp.gmail.com with ESMTPSA id u8sm6640688wmq.45.2021.09.13.01.39.10
+        by smtp.gmail.com with ESMTPSA id u8sm6640688wmq.45.2021.09.13.01.39.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 13 Sep 2021 01:39:10 -0700 (PDT)
+        Mon, 13 Sep 2021 01:39:11 -0700 (PDT)
 From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
 To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
 Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
-Subject: [PATCH v2 2/3] oslat: Add aarch64 support
-Date:   Mon, 13 Sep 2021 10:39:07 +0200
-Message-Id: <20210913083908.48408-2-nsaenzju@redhat.com>
+Subject: [PATCH v2 3/3] oslat: Allow for arch specific counter frequency measurements
+Date:   Mon, 13 Sep 2021 10:39:08 +0200
+Message-Id: <20210913083908.48408-3-nsaenzju@redhat.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210913083908.48408-1-nsaenzju@redhat.com>
 References: <20210913083908.48408-1-nsaenzju@redhat.com>
@@ -76,51 +76,56 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The callbacks are based on Linux's implementation:
- - CNTVCT_EL0 provides direct access to the system virtual timer[1].
- - 'yield' serves as a CPU hint with similar semantics as x86's
-   'pause'[2].
+Some architectures have special purpose registers to query the system
+counter's frequency. Let's use that when available.
 
-In contrast with the kernel's implementation, there isn't a need for
-isb() after reading CNTVCT_EL0,  this is only needed in-kernel as the
-register read has to be ordered with a subsequent locking operation.
-
-[1] See Linux's '__arch_get_hw_counter()' in arch/arm64/include/asm/vdso/gettimeofday.h
-[2] See Linux's 1baa82f4803 ("arm64: Implement cpu_relax as yield").
 Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
 --
 
 Changes since v1:
- - Code cleanup
- - Add compiler barriers
+ - Use cleaner method to have generic and arch functions to measure
+   couter's freq
 
- src/oslat/oslat.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ src/oslat/oslat.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 33cccd3..c90ec1a 100644
+index c90ec1a..5fce223 100644
 --- a/src/oslat/oslat.c
 +++ b/src/oslat/oslat.c
-@@ -71,6 +71,19 @@ static inline void frc(uint64_t *pval)
- {
- 	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
- }
-+# elif defined(__aarch64__)
-+#  define relax()          __asm__ __volatile("yield" : : : "memory")
-+
-+static inline void frc(uint64_t *pval)
+@@ -74,6 +74,16 @@ static inline void frc(uint64_t *pval)
+ # elif defined(__aarch64__)
+ #  define relax()          __asm__ __volatile("yield" : : : "memory")
+ 
++#define arch_measure_counter_mhz
++static unsigned int measure_counter_mhz(void)
 +{
-+	/*
-+	 * This isb() is required to prevent that the counter value
-+	 * is speculated.
-+	 */
-+	__asm__ __volatile__("isb" : : : "memory");
-+	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (*pval) :: "memory");
++	unsigned int val;
 +
++	__asm__ __volatile__("mrs %0, cntfrq_el0" : "=r" (val));
++
++	return val / 1e6;
 +}
- # else
- #  define relax()          do { } while (0)
- #  define frc(x)
++
+ static inline void frc(uint64_t *pval)
+ {
+ 	/*
+@@ -241,6 +251,7 @@ static int move_to_core(int core_i)
+ 	return sched_setaffinity(0, sizeof(cpus), &cpus);
+ }
+ 
++#ifndef arch_measure_counter_mhz
+ static cycles_t __measure_counter_hz(void)
+ {
+ 	struct timeval tvs, tve;
+@@ -273,6 +284,7 @@ static unsigned int measure_counter_mhz(void)
+ 
+ 	return (unsigned int) (m / 1000000);
+ }
++#endif
+ 
+ static void thread_init(struct thread *t)
+ {
 -- 
 2.31.1
 
