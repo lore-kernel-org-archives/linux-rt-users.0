@@ -2,140 +2,191 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-19.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A6F7C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:06:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DCF85C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5B93160E74
-	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:06:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B8C9A60F11
+	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Sep 2021 08:39:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237797AbhIMIHs (ORCPT
+        id S238043AbhIMIk3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 13 Sep 2021 04:07:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42282 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237648AbhIMIHs (ORCPT
+        Mon, 13 Sep 2021 04:40:29 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:27175 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S238012AbhIMIk2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Sep 2021 04:07:48 -0400
-Received: from mail-pl1-x632.google.com (mail-pl1-x632.google.com [IPv6:2607:f8b0:4864:20::632])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D1533C061574
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Sep 2021 01:06:32 -0700 (PDT)
-Received: by mail-pl1-x632.google.com with SMTP id v1so5266792plo.10
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Sep 2021 01:06:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=uStvqBuFCYC+NF8LCX3rbzNoZPJ2yhAt/xDZ9c8lgn8=;
-        b=WMVZRQj99ZIDQ7Mubip+90ybFhnj5NBKanP/T83AW3CJ8Kb2moILmete2GG+/qH5f3
-         w/yOKV4OZj4iTEdGcmeKI+pwAX0h0LZDbMGnJ9WtVssMqMNKfAhBos/yid4P2cOg6dEQ
-         fbvm1Akkl7BwK9JGltlgD9XGMoBcdtL/DQFqx+aX+qwXpGI2AFJrKFqJ8Mzae1ziZC5u
-         AJmoR/XZ366TUArUBDgLayHspac8nNBtusZY5PQGma6WWM2kaPSKCbhK9GNOA5RQyBKa
-         DHmDNUwQlHDylL2J/gIWZ9NIU9o4JAejW6pY2FZWeNdUklrG5Vuu7YSvudEq51U/gSSa
-         TP7A==
+        Mon, 13 Sep 2021 04:40:28 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631522353;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=zNADHyJRyF5z79P7UWadu367zvlPvteYzuMxkFDzfQk=;
+        b=AIYl+QI+ukidIcClZoL9X/WzZjforHEOEq1JEaHPzKuORvgLABindvPya6unfTqyusV6+i
+        H5NSrxSX+GwEy4i0Cr9AgmZIpalSdLZXdrj3uJdWnxfypyfCwlpgyKVHc5RWw8qzBR8BXb
+        Oj2tUhSAE44vvaB1RmVWkD9FXQ0SwcI=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-546-VE1C7LjsP9SiYxMYA4z95Q-1; Mon, 13 Sep 2021 04:39:12 -0400
+X-MC-Unique: VE1C7LjsP9SiYxMYA4z95Q-1
+Received: by mail-wr1-f70.google.com with SMTP id c15-20020a5d4ccf000000b0015dff622f39so668459wrt.21
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Sep 2021 01:39:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=uStvqBuFCYC+NF8LCX3rbzNoZPJ2yhAt/xDZ9c8lgn8=;
-        b=J+4q0ojt4Y8kNmDMzhcFNACFM3+Gl7FU0O/2+7TU06Ah3sCYzFslxvo+xg4SYEGGix
-         2ObKyCjmJGsaM0Pqy8Dc8ingaO49fzZCew+IFFUtOpncxs6uLQnCcj9mjOcS16Itf/w4
-         B45LZnFk/Z0sCesoMgn2hIGTMBqZmuNfLJmDH+iSuRSe4NDj9owWG2CIyclAsyAAfcx5
-         iygjha8+j+o+gGwrxJ+0upuYE+d0R2tefeyk2agSwXwX5oRDScJ0VNWOdahn4jGnhRzG
-         iSmghzZSHqxoZAuTCKlT+Q7KtbFjR4L97JVhbuBjsy+msKUlI5yaAb5Sb7tJV/YCmJdx
-         jAkw==
-X-Gm-Message-State: AOAM530hNMAA+bJVh0JrEw2zBirioSJRUyV10ApDg95DJWotNwTBMMIh
-        9e9l5i1sPqqs/MwBiZfODp8=
-X-Google-Smtp-Source: ABdhPJwKd0RowGpd1AQR4DihuP0CBRj5rPAj5d4Hvpkq2gA/Duuivn8lC3AFbVqEDX5Ywb7eNteciQ==
-X-Received: by 2002:a17:90a:1c81:: with SMTP id t1mr11617580pjt.170.1631520392257;
-        Mon, 13 Sep 2021 01:06:32 -0700 (PDT)
-Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id j20sm7251783pgb.2.2021.09.13.01.06.31
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=zNADHyJRyF5z79P7UWadu367zvlPvteYzuMxkFDzfQk=;
+        b=T31aU9Qg8HVqoSvAY4NZrK9Sr/5xLTTP/Afyy6wOUG3zA6Wp3Vny0yn4u8q50sZgFl
+         uN22CQiIvxbc9bBYAkJcr9Ta5OEnI3tLQ+34E8Ldldf9JogdmlAhuSNQXyeyvtqI8ToA
+         dXpdYwhkHYwMwlyv5HoskQgA3Deg5uocqxYi5k/09fnxKdDPhwDuvepq1zqbOvPT3idX
+         DDlfxO8mGRKz/dm46vW+UTRhMLtM+u/QiuL5gxpkYSEDmQe+d9OsyskL7IUWywFzDfra
+         0mPC86J4lcczqLpzkTVRZzmfQrxTQK0Zqtwf3bOAVX24CFd6u1zp4K/2nLICcioYvmc4
+         QCoQ==
+X-Gm-Message-State: AOAM532qJcBQz0ESbCRazB7E35nDVrOeW9Ah4uEucZlSJNO67JNePROB
+        UqhqspFDu4xITCD6oTzAnnhL2cEvd4y7bmIHjI8oZVxqTyv3EvxwbKl5r3151YVdx36Ha5LRQh9
+        TT/Vr4M3XuHmeG5+4sHfn1bpl/HyM6DWeu1BtS9VDTyXQUk46D7htoMFbNWlO1kZblcbNawcBmm
+        BJw3s=
+X-Received: by 2002:adf:9d45:: with SMTP id o5mr11086538wre.226.1631522350760;
+        Mon, 13 Sep 2021 01:39:10 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwOyP4IVsFeOis3B2RVH3TydvO7GILyNqcaBR3z2fczrsUyo2dv8hzBQTA+LE/VQ7xF5ro/9g==
+X-Received: by 2002:adf:9d45:: with SMTP id o5mr11086516wre.226.1631522350528;
+        Mon, 13 Sep 2021 01:39:10 -0700 (PDT)
+Received: from vian.redhat.com ([2a0c:5a80:1f0d:6700:7eb9:ffb3:3868:81d7])
+        by smtp.gmail.com with ESMTPSA id u8sm6640688wmq.45.2021.09.13.01.39.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 13 Sep 2021 01:06:31 -0700 (PDT)
-From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     jkacur@redhat.com
-Cc:     linux-rt-users@vger.kernel.org,
-        Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-Subject: [PATCH v2] rteval: services.py: Fix incorrect detection of container environment
-Date:   Mon, 13 Sep 2021 17:06:25 +0900
-Message-Id: <20210913080625.2017964-1-punitagrawal@gmail.com>
-X-Mailer: git-send-email 2.32.0
-In-Reply-To: <d18a85b5-d591-a21b-c7fc-93655f7963c@redhat.com>
-References: <d18a85b5-d591-a21b-c7fc-93655f7963c@redhat.com>
+        Mon, 13 Sep 2021 01:39:10 -0700 (PDT)
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
+Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
+Subject: [PATCH v2 1/3] oslat: Rename cpu_mhz/cpu_hz to counter_mhz/counter_hz
+Date:   Mon, 13 Sep 2021 10:39:06 +0200
+Message-Id: <20210913083908.48408-1-nsaenzju@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+'cpu_mhz' in oslat actually represents the frequency at which the high
+frequency counter we measure with ticks. There is no requirement for the
+counter to match the CPU frequency, nor is forced to do so on any of the
+supported architectures[1][2]. So rename it to 'counter_mhz' in order to
+better match reality.
 
-rteval mistakenly detects that it is running inside a container even
-though it is running directly on the host. On further investigation
-this was found to be due to change in behaviour around byte strings
-and strings when going from python2 to python3.
+[1] x86_64
+Intel TRM Vol 3B, 17.17 Time Stamp Counter:
+"Constant TSC behavior ensures that the duration of each clock tick is
+uniform and supports the use of the TSC as a wall clock timer even if
+the processor core changes frequency."
 
-In python3 process output (stdout, stderr) for processes executed via
-Popen() is retuned as byte strings and byte strings are not equivalent
-to strings, i.e., b'' == '' is False.
+[2] ppc64
+From __ppc_get_timebase() manpages: The Time Base Register is a 64-bit
+register provided by Power Architecture processors. It stores a
+monotonically incremented value that is updated at a system-dependent
+frequency that may be different from the processor frequency. Note that
+glibc's __ppc_get_timebase() and oslat's ppc64 frc() implementations are
+the same.
 
-Update all call sites for Popen() to include "text=True"
-argument - this ensures that the process output is returned as a
-string.
-
-Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
 ---
-v1 -> v2:
-* Update Popen() calls to return strings for process output
----
- rteval/sysinfo/services.py | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/rteval/sysinfo/services.py b/rteval/sysinfo/services.py
-index 06ff5ae9cd0c..283109b9b234 100644
---- a/rteval/sysinfo/services.py
-+++ b/rteval/sysinfo/services.py
-@@ -62,11 +62,11 @@ class SystemServices:
-             if not [1 for p in reject if fnmatch.fnmatch(servicename, p)] \
-                     and os.access(service, os.X_OK):
-                 cmd = '%s -qs "\(^\|\W\)status)" %s' % (getcmdpath('grep'), service)
--                c = subprocess.Popen(cmd, shell=True)
-+                c = subprocess.Popen(cmd, shell=True, text=True)
-                 c.wait()
-                 if c.returncode == 0:
-                     cmd = ['env', '-i', 'LANG="%s"' % os.environ['LANG'], 'PATH="%s"' % os.environ['PATH'], 'TERM="%s"' % os.environ['TERM'], service, 'status']
--                    c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-+                    c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                     c.wait()
-                     if c.returncode == 0 and (c.stdout.read() or c.stderr.read()):
-                         ret_services[servicename] = 'running'
-@@ -81,9 +81,9 @@ class SystemServices:
-         ret_services = {}
-         cmd = '%s list-unit-files -t service --no-legend' % getcmdpath('systemctl')
-         self.__log(Log.DEBUG, "cmd: %s" % cmd)
--        c = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-+        c = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-         for p in c.stdout:
--            # p are lines like "servicename.service status"
-+            # p are lines like b'servicename.service status'
-             v = p.strip().split()
-             ret_services[v[0].split('.')[0]] = v[1]
-         return ret_services
-@@ -91,7 +91,7 @@ class SystemServices:
+Changes since v1:
+ - More complete commit message
+ - s/timer/counter/
+
+ src/oslat/oslat.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 6ff5ba8..33cccd3 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -123,7 +123,7 @@ struct thread {
+ 	pthread_t            thread_id;
  
-     def services_get(self):
-         cmd = [getcmdpath('ps'), '-ocomm=', '1']
--        c = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-+        c = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-         self.__init = c.stdout.read().strip()
-         if self.__init == 'systemd':
-             self.__log(Log.DEBUG, "Using systemd to get services status")
+ 	/* NOTE! this is also how many ticks per us */
+-	unsigned int         cpu_mhz;
++	unsigned int         counter_mhz;
+ 	cycles_t             int_total;
+ 	stamp_t              frc_start;
+ 	stamp_t              frc_stop;
+@@ -228,7 +228,7 @@ static int move_to_core(int core_i)
+ 	return sched_setaffinity(0, sizeof(cpus), &cpus);
+ }
+ 
+-static cycles_t __measure_cpu_hz(void)
++static cycles_t __measure_counter_hz(void)
+ {
+ 	struct timeval tvs, tve;
+ 	stamp_t s, e;
+@@ -244,13 +244,13 @@ static cycles_t __measure_cpu_hz(void)
+ 	return (cycles_t) ((e - s) / sec);
+ }
+ 
+-static unsigned int measure_cpu_mhz(void)
++static unsigned int measure_counter_mhz(void)
+ {
+ 	cycles_t m, mprev, d;
+ 
+-	mprev = __measure_cpu_hz();
++	mprev = __measure_counter_hz();
+ 	do {
+-		m = __measure_cpu_hz();
++		m = __measure_counter_hz();
+ 		if (m > mprev)
+ 			d = m - mprev;
+ 		else
+@@ -263,7 +263,7 @@ static unsigned int measure_cpu_mhz(void)
+ 
+ static void thread_init(struct thread *t)
+ {
+-	t->cpu_mhz = measure_cpu_mhz();
++	t->counter_mhz = measure_counter_mhz();
+ 	t->maxlat = 0;
+ 	t->overflow_sum = 0;
+ 	t->minlat = (uint64_t)-1;
+@@ -288,7 +288,7 @@ static void thread_init(struct thread *t)
+ 
+ static float cycles_to_sec(const struct thread *t, uint64_t cycles)
+ {
+-	return cycles / (t->cpu_mhz * 1e6);
++	return cycles / (t->counter_mhz * 1e6);
+ }
+ 
+ static void insert_bucket(struct thread *t, stamp_t value)
+@@ -296,7 +296,7 @@ static void insert_bucket(struct thread *t, stamp_t value)
+ 	int index, us;
+ 	uint64_t extra;
+ 
+-	index = value / t->cpu_mhz;
++	index = value / t->counter_mhz;
+ 	assert(index >= 0);
+ 	us = index + 1;
+ 	assert(us > 0);
+@@ -450,7 +450,7 @@ static void write_summary(struct thread *t)
+ 	calculate(t);
+ 
+ 	putfield("Core", t[i].core_i, "d", "");
+-	putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
++	putfield("Counter Freq", t[i].counter_mhz, "u", " (Mhz)");
+ 
+ 	for (j = 0; j < g.bucket_size; j++) {
+ 		if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
+@@ -494,7 +494,7 @@ static void write_summary_json(FILE *f, void *data)
+ 	for (i = 0; i < g.n_threads; ++i) {
+ 		fprintf(f, "    \"%u\": {\n", i);
+ 		fprintf(f, "      \"cpu\": %d,\n", t[i].core_i);
+-		fprintf(f, "      \"freq\": %d,\n", t[i].cpu_mhz);
++		fprintf(f, "      \"freq\": %d,\n", t[i].counter_mhz);
+ 		fprintf(f, "      \"min\": %" PRIu64 ",\n", t[i].minlat);
+ 		fprintf(f, "      \"avg\": %3lf,\n", t[i].average);
+ 		fprintf(f, "      \"max\": %" PRIu64 ",\n", t[i].maxlat);
 -- 
-2.32.0
+2.31.1
 
