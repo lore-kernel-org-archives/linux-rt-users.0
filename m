@@ -2,111 +2,108 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-19.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8787C433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 15:37:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 89949C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 17:55:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CC08E60F36
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 15:37:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 728BB60FED
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 17:55:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233969AbhINPjH (ORCPT
+        id S231593AbhINR5J (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Sep 2021 11:39:07 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:35752 "EHLO
+        Tue, 14 Sep 2021 13:57:09 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:60921 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232656AbhINPjH (ORCPT
+        by vger.kernel.org with ESMTP id S229785AbhINR5I (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Sep 2021 11:39:07 -0400
+        Tue, 14 Sep 2021 13:57:08 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631633869;
+        s=mimecast20190719; t=1631642150;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=kEwNNaVZK0asgScZJ8TwVVyP9JiuU8iwMBlOqjwr5d0=;
-        b=KUFt80pohzZmXbB5yCqQa+2uId2BcK6Wmv7qAt+cq4Fh+TarnepGyl962cpQilgSRVTg+P
-        lnlMNNrVD3U+WCyv7I97Ehqjr5VSNJ0RNJRc9lD3tXMg77f0y1Kh1QFreLREjbwWUKT0gO
-        vicsQJxv66xmf/lx7EmkUK3VY49QPWM=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-392-tl7OLN_OPYShpPWPa9qVnA-1; Tue, 14 Sep 2021 11:37:48 -0400
-X-MC-Unique: tl7OLN_OPYShpPWPa9qVnA-1
-Received: by mail-qk1-f197.google.com with SMTP id k9-20020a05620a138900b003d59b580010so46836024qki.18
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 08:37:48 -0700 (PDT)
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=D6a8PYdbTXkGPHIasH6KGmZeNd+m54TqiTxzNp7lUEA=;
+        b=XF/7bEpB3IgYCcuRb4x+Wbla9Hg67B5XLOeHjbDMLh7np/FQ2tp7maU5vYcQ6ykN8E+w8v
+        v9tVkEArT7Q9Prg+xVHsf6FdIQFcuKu2U+g5q+5zfGFxU953AtbmrizGXeIa5jBcZPdROU
+        w1U5bjLhRTd2jWdidzEzbh90a8Cqtto=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-152-NZVM6bBKMzyE6XNvFV9rQA-1; Tue, 14 Sep 2021 13:55:49 -0400
+X-MC-Unique: NZVM6bBKMzyE6XNvFV9rQA-1
+Received: by mail-wr1-f71.google.com with SMTP id g1-20020a5d64e1000000b0015e0b21ef04so2360394wri.17
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 10:55:49 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=kEwNNaVZK0asgScZJ8TwVVyP9JiuU8iwMBlOqjwr5d0=;
-        b=Wt6c98yV2M9m5KMk2JfylwiM+zkPlna3MTtiJ3/Tw5ngo7B1CTSPOO++YJco55RSo7
-         PZv1JeD7Q6oaScKcIV9O4SLOzcXXAWP+QVHygrDPpzYZSIAMkpAEx1XY3kIqdlIEmmEF
-         Hvg9juXgLZwk6oZEeJYhwncK/rRwdM5mHGXbbjMSL+f42BlHpNwyle5gLbAxuSy3QiQs
-         98mbxzqLExOSANBEV/175OXhM11XQM5IUpiQgZFKYvmpVTJtYIill0EWcJbQXffmxVbA
-         TItvmKtc0MT/Up7L2eKF+qUT9GVYWueL3tuVMHi0vr334ZZnGfI6zulTk2bE9UatGWLY
-         wsag==
-X-Gm-Message-State: AOAM531AX8qSwNCu/7FujrP3gnNMzwkwG6CXlhSfFxolDoNpVXZn9yQC
-        lgG4DLLrdxYH9eVuQ56iaIFO85RsbOoTBMdMj1kWs5gB458Q6l9lf8vLLPLM1uk2G0e6uxizELw
-        QPPFbcK66alDQHbk0xA55tqXo1YA=
-X-Received: by 2002:a05:620a:1354:: with SMTP id c20mr5521156qkl.335.1631633867697;
-        Tue, 14 Sep 2021 08:37:47 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwjn2b1sisw8oFTtIUcd5Xjj2iJi9ceTG7aNUgSfVrOqrWDCRVol9opPNAMQFRBa5dXM4kthg==
-X-Received: by 2002:a05:620a:1354:: with SMTP id c20mr5521135qkl.335.1631633867521;
-        Tue, 14 Sep 2021 08:37:47 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id n5sm6263455qtp.35.2021.09.14.08.37.46
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=D6a8PYdbTXkGPHIasH6KGmZeNd+m54TqiTxzNp7lUEA=;
+        b=CADLXg6gdUv7t40sq01eWGl/NArhMjRjhfSWT/uLDAtRP9488pYtjEsXILfABZLcXI
+         YVC1zEVcWzzutBGq6FPSunLezBVsLEYTofqkmAxN/ptYVhDaGPbWxX/OCefJTOqOVJXU
+         GvPpZ/8Z2gtD5Hs/AKLuN563UfQwaWfiSoQOrpo94arqglHvFXsO7UmHxsRZ9hhtn1aa
+         nnsZPKTX7YmKtP8QOrI3q5xplw5ekeKm+pUQ9uOka4Yo33ZcnbPOb+j3yoR7Tn3FGy0K
+         TqLmXJtaRmFz2DE0I2yQWMvUwNn8WH+/a2jTRuHQBZRCtZn2Xy6WMFLDpHRmsS3Fj585
+         7A/g==
+X-Gm-Message-State: AOAM530Cy0KtRpJb6OXcpTZDAA7nX0ZOkSqn1n0tfjjBn59bhnrZZtRu
+        OryfW8JpRh6G/wlc2qfpYVbiG1bkP6TuR44qQ++jQSbWKztG3olgOg9uSolZoW+bLGtBASoSVHm
+        pq2wXHpBzk2hMI1P02ljED6jXWABoqAc+mnPlLmgfcIK4S2iraAs4k3KNnd6lhj/J/viWwAIpyR
+        +tCFI=
+X-Received: by 2002:a7b:c341:: with SMTP id l1mr391360wmj.111.1631642148269;
+        Tue, 14 Sep 2021 10:55:48 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxsZEu0QtxMHakDf2KaKH7PC4Tm7YWUfpHf1+xmDf/O/x7+h6vrXbOoSHZfpuQqeTxAzUwtsQ==
+X-Received: by 2002:a7b:c341:: with SMTP id l1mr391341wmj.111.1631642147965;
+        Tue, 14 Sep 2021 10:55:47 -0700 (PDT)
+Received: from vian.redhat.com ([2a0c:5a80:1d03:b900:c3d1:5974:ce92:3123])
+        by smtp.gmail.com with ESMTPSA id j17sm10919698wrh.67.2021.09.14.10.55.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Sep 2021 08:37:46 -0700 (PDT)
-Date:   Tue, 14 Sep 2021 11:37:45 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     lleshchi@redhat.com
-cc:     williams@redhat.com, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-tests: Add missing option F to optstring
-In-Reply-To: <20210913192951.650464-1-lleshchi@redhat.com>
-Message-ID: <454ee891-e650-35c4-323c-adcc2ddc692e@redhat.com>
-References: <20210913192951.650464-1-lleshchi@redhat.com>
+        Tue, 14 Sep 2021 10:55:47 -0700 (PDT)
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
+Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com,
+        Punit Agrawal <punitagrawal@gmail.com>
+Subject: [PATCH] oslat: Avoid out-of-order memory accesses to precede counter read
+Date:   Tue, 14 Sep 2021 19:55:42 +0200
+Message-Id: <20210914175542.338429-1-nsaenzju@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+In arm64 it's possible for the processor to access memory appearing in
+program order after the read of the counter before the counter has been
+read. This would skew the counter value to a later point than intended.
 
+Fix this my adding an isb() following the counter read instruction.
 
-On Mon, 13 Sep 2021, lleshchi@redhat.com wrote:
+Suggested-by: Punit Agrawal <punitagrawal@gmail.com>
+Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+---
+ src/oslat/oslat.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-> From: Leah Leshchinsky <lleshchi@redhat.com>
-> 
-> The cyclictest help output lists -F as the short version of the
-> --fifo option, yet calling cyclictest -F produces an error"
-> cyclictest: invalid option --'F'".
-> This patch adds -F as a valid argument.
-> 
-> Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index a08c91d..f8f7dbc 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1011,7 +1011,7 @@ static void process_options(int argc, char *argv[], int max_cpus)
->  			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
->  			{NULL, 0, NULL, 0 },
->  		};
-> -		int c = getopt_long(argc, argv, "a::A::b:c:d:D:h:H:i:l:MNo:p:mqrRsSt::uvD:x",
-> +		int c = getopt_long(argc, argv, "a::A::b:c:d:D:F:h:H:i:l:MNo:p:mqrRsSt::uvD:x",
->  				    long_options, &option_index);
->  		if (c == -1)
->  			break;
-> -- 
-> 2.27.0
-> 
-> 
-
-Thanks
-Signed-off-by: John Kacur <jkacur@redhat.com>
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index 5fce223..50ddc81 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -92,6 +92,13 @@ static inline void frc(uint64_t *pval)
+ 	 */
+ 	__asm__ __volatile__("isb" : : : "memory");
+ 	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (*pval) :: "memory");
++	/*
++	 * This isb() is required to prevent the processor from accessing
++	 * memory appearing in program order after the read of the counter
++	 * before the counter has been read. Which would skew the counter value
++	 * to a later point than intended.
++	 */
++	__asm__ __volatile__("isb" : : : "memory");
+ 
+ }
+ # else
+-- 
+2.31.1
 
