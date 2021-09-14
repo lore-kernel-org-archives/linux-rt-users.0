@@ -2,108 +2,92 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-19.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 89949C433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 17:55:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7CD45C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 18:01:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 728BB60FED
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 17:55:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5C65661029
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 18:01:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231593AbhINR5J (ORCPT
+        id S231725AbhINSCc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Sep 2021 13:57:09 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:60921 "EHLO
+        Tue, 14 Sep 2021 14:02:32 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:31572 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229785AbhINR5I (ORCPT
+        by vger.kernel.org with ESMTP id S230092AbhINSC2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Sep 2021 13:57:08 -0400
+        Tue, 14 Sep 2021 14:02:28 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631642150;
+        s=mimecast20190719; t=1631642469;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=D6a8PYdbTXkGPHIasH6KGmZeNd+m54TqiTxzNp7lUEA=;
-        b=XF/7bEpB3IgYCcuRb4x+Wbla9Hg67B5XLOeHjbDMLh7np/FQ2tp7maU5vYcQ6ykN8E+w8v
-        v9tVkEArT7Q9Prg+xVHsf6FdIQFcuKu2U+g5q+5zfGFxU953AtbmrizGXeIa5jBcZPdROU
-        w1U5bjLhRTd2jWdidzEzbh90a8Cqtto=
-Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
- [209.85.221.71]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-152-NZVM6bBKMzyE6XNvFV9rQA-1; Tue, 14 Sep 2021 13:55:49 -0400
-X-MC-Unique: NZVM6bBKMzyE6XNvFV9rQA-1
-Received: by mail-wr1-f71.google.com with SMTP id g1-20020a5d64e1000000b0015e0b21ef04so2360394wri.17
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 10:55:49 -0700 (PDT)
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=3VFDTiYoRlzqKicgJ4/TFx2uKS2MR5n6U8naB6Hc7Vc=;
+        b=ggpiQ9S38VjMGm/H1tBO+8c0gOlywnRDNYTdUtTmBBZKFwbDtsiIJbx2A7kBpXUuNQfzmx
+        LyE8PWiYheiqzcbocvMR4zj0gGtAehjRlWT834gjSk5hv1H2PYLmKOSNKjsTUITRTld7PF
+        Qx8+CrzwdTkR3lGdV9kahB5I4p2Esl0=
+Received: from mail-io1-f71.google.com (mail-io1-f71.google.com
+ [209.85.166.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-497-8EGhwLZoPRuA7mJhMSyByQ-1; Tue, 14 Sep 2021 14:01:08 -0400
+X-MC-Unique: 8EGhwLZoPRuA7mJhMSyByQ-1
+Received: by mail-io1-f71.google.com with SMTP id e18-20020a6b7312000000b005be766a70dbso16889503ioh.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 11:01:08 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=D6a8PYdbTXkGPHIasH6KGmZeNd+m54TqiTxzNp7lUEA=;
-        b=CADLXg6gdUv7t40sq01eWGl/NArhMjRjhfSWT/uLDAtRP9488pYtjEsXILfABZLcXI
-         YVC1zEVcWzzutBGq6FPSunLezBVsLEYTofqkmAxN/ptYVhDaGPbWxX/OCefJTOqOVJXU
-         GvPpZ/8Z2gtD5Hs/AKLuN563UfQwaWfiSoQOrpo94arqglHvFXsO7UmHxsRZ9hhtn1aa
-         nnsZPKTX7YmKtP8QOrI3q5xplw5ekeKm+pUQ9uOka4Yo33ZcnbPOb+j3yoR7Tn3FGy0K
-         TqLmXJtaRmFz2DE0I2yQWMvUwNn8WH+/a2jTRuHQBZRCtZn2Xy6WMFLDpHRmsS3Fj585
-         7A/g==
-X-Gm-Message-State: AOAM530Cy0KtRpJb6OXcpTZDAA7nX0ZOkSqn1n0tfjjBn59bhnrZZtRu
-        OryfW8JpRh6G/wlc2qfpYVbiG1bkP6TuR44qQ++jQSbWKztG3olgOg9uSolZoW+bLGtBASoSVHm
-        pq2wXHpBzk2hMI1P02ljED6jXWABoqAc+mnPlLmgfcIK4S2iraAs4k3KNnd6lhj/J/viWwAIpyR
-        +tCFI=
-X-Received: by 2002:a7b:c341:: with SMTP id l1mr391360wmj.111.1631642148269;
-        Tue, 14 Sep 2021 10:55:48 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxsZEu0QtxMHakDf2KaKH7PC4Tm7YWUfpHf1+xmDf/O/x7+h6vrXbOoSHZfpuQqeTxAzUwtsQ==
-X-Received: by 2002:a7b:c341:: with SMTP id l1mr391341wmj.111.1631642147965;
-        Tue, 14 Sep 2021 10:55:47 -0700 (PDT)
-Received: from vian.redhat.com ([2a0c:5a80:1d03:b900:c3d1:5974:ce92:3123])
-        by smtp.gmail.com with ESMTPSA id j17sm10919698wrh.67.2021.09.14.10.55.47
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=3VFDTiYoRlzqKicgJ4/TFx2uKS2MR5n6U8naB6Hc7Vc=;
+        b=cFHdR0SFHIpd6V5uCuNLlz4EFFsYcaYPX60efrstcS3B/zY6OWUEY8rky5V46EKtR/
+         WyvLIDXyPVbGLQwtuHlR/ShpsZhsZ2ketNXwDeSt87s3BXsWRF0fxCQVTtpNx6TaLw/T
+         +U/smsoyJA4qP8eWuKk/wqXRdUNUzqNiIwJr+o8GpvAdWOpyAlJ5zCBgTU8K5aZ69lU7
+         Q/a47x2K21R0lcDpIi+ALwjTHum4blF4z6E2oJIHXV2X0onsHFHLY+BCNkVYqF2y5g6K
+         omP9fB1nRmMzXa9ih8kxMC0f8fxcmmjLZplT/W56Vw9QIDGi7XdXd/zqEz12LceWHjJG
+         qbBg==
+X-Gm-Message-State: AOAM533HriHiKcWbSp8giJF8mjnNrVcZT/Yvfry7pqZB/6z9wadMorvI
+        x85owAG5BL69myvmoiR4YJE8tl8LbEwKPdgxgorOq7ZYxOPiO5CsATQw0SGzuTxmXW6d8KS9pwZ
+        LeYIfZVw1jt62BW6Rb9ig/0RztqM=
+X-Received: by 2002:a05:6638:14cf:: with SMTP id l15mr15600438jak.8.1631642467564;
+        Tue, 14 Sep 2021 11:01:07 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyNTD3sI+K8LSInPshZeuGeEclDDWRggxV9m08JblPlHnXoPVdbjOI8oGhhX5fWd+8Dq1ETAg==
+X-Received: by 2002:a05:6638:14cf:: with SMTP id l15mr15600422jak.8.1631642467342;
+        Tue, 14 Sep 2021 11:01:07 -0700 (PDT)
+Received: from t490s ([2607:fea8:56a2:9100::d35a])
+        by smtp.gmail.com with ESMTPSA id r13sm7737191ilh.80.2021.09.14.11.01.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Sep 2021 10:55:47 -0700 (PDT)
-From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
-To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
-Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com,
-        Punit Agrawal <punitagrawal@gmail.com>
-Subject: [PATCH] oslat: Avoid out-of-order memory accesses to precede counter read
-Date:   Tue, 14 Sep 2021 19:55:42 +0200
-Message-Id: <20210914175542.338429-1-nsaenzju@redhat.com>
-X-Mailer: git-send-email 2.31.1
+        Tue, 14 Sep 2021 11:01:06 -0700 (PDT)
+Date:   Tue, 14 Sep 2021 14:01:05 -0400
+From:   Peter Xu <peterx@redhat.com>
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
+        jkacur@redhat.com, Punit Agrawal <punitagrawal@gmail.com>
+Subject: Re: [PATCH] oslat: Avoid out-of-order memory accesses to precede
+ counter read
+Message-ID: <YUDjYX7V8L+B8rxH@t490s>
+References: <20210914175542.338429-1-nsaenzju@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20210914175542.338429-1-nsaenzju@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-In arm64 it's possible for the processor to access memory appearing in
-program order after the read of the counter before the counter has been
-read. This would skew the counter value to a later point than intended.
+On Tue, Sep 14, 2021 at 07:55:42PM +0200, Nicolas Saenz Julienne wrote:
+> In arm64 it's possible for the processor to access memory appearing in
+> program order after the read of the counter before the counter has been
+> read. This would skew the counter value to a later point than intended.
+> 
+> Fix this my adding an isb() following the counter read instruction.
+> 
+> Suggested-by: Punit Agrawal <punitagrawal@gmail.com>
+> Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
 
-Fix this my adding an isb() following the counter read instruction.
+Acked-by: Peter Xu <peterx@redhat.com>
 
-Suggested-by: Punit Agrawal <punitagrawal@gmail.com>
-Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
----
- src/oslat/oslat.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 5fce223..50ddc81 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -92,6 +92,13 @@ static inline void frc(uint64_t *pval)
- 	 */
- 	__asm__ __volatile__("isb" : : : "memory");
- 	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (*pval) :: "memory");
-+	/*
-+	 * This isb() is required to prevent the processor from accessing
-+	 * memory appearing in program order after the read of the counter
-+	 * before the counter has been read. Which would skew the counter value
-+	 * to a later point than intended.
-+	 */
-+	__asm__ __volatile__("isb" : : : "memory");
- 
- }
- # else
 -- 
-2.31.1
+Peter Xu
 
