@@ -2,179 +2,110 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,SPF_PASS autolearn=ham
+X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4BD89C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 13:42:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59012C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 13:43:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2B14060FD7
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 13:42:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3EDCF610E6
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 13:43:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233406AbhINNnx (ORCPT
+        id S233441AbhINNoV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Sep 2021 09:43:53 -0400
-Received: from mail-eopbgr1410052.outbound.protection.outlook.com ([40.107.141.52]:12285
-        "EHLO JPN01-OS2-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S233336AbhINNnl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Sep 2021 09:43:41 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=djJPTbJoOUDa94DXMAouN4KT2bFIKBIfrtnHUdpy/OeOpBx4TZLbYX0Q3KyJ/3Kz5hWlu2Rr1rzahI/VNLAMuAxKv+u42QvF4Ql0w4cv4yIYSNFwIlFb9TUlqnT4y1Bo6tSfGdvHGlOAuMCJFdO2+nWblP7i9fovMjUOuVHjkaKbIRI++f4y31NRnRUz6Z/VgDmMQIE0eyjEtKOKw6PkuuBTpILXIrj3zAZHsiv1IbGvgY67D56gEfqDk2k2gOKRYGiRLkNUYw5o6VJe6ItabpcZA+Sgxr2GECLzLemDqB10bUTkC3I84fvzXTa6ssbQEBX6WQ2RNaGu+KnhixH9Hw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901; h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
- bh=2v2pNyGXGJQ+E3RPlO/rChFkeISg0CxsfeDiDDJKZjc=;
- b=Nw65Wb+GIxaihRPaEzg/G9jF9PfLw/HfFDYMusQ5TFyMyXhyfW+4lCvNllTORnybVpl21D3LWAMNRwjaRa9szy4WztmRVMPfIQHrTwQwHMyn+VtdmJ83XrzfOky/k5TrKXbTUcB1QeElCjlYK+ipQNrv3+VduhXmXQtnodTaUTFty8ef2PtKaRQ9mztVFHPnPnovJb0hwssnn7/ZZ46H+1C7LhtlJ+FTJyGo3WT/9DryWscDr94C79fcyahyCDZnO4Egv9Rlca/DZf5wz2KvRUZZjjXGFocmkCCCRS5idSSJYlFzJ4SaV9u4MIb7jSMmwBJ2+14QffrdOKX1vXT6WA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=sord.co.jp; dmarc=pass action=none header.from=sord.co.jp;
- dkim=pass header.d=sord.co.jp; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sordcorp.onmicrosoft.com; s=selector2-sordcorp-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=2v2pNyGXGJQ+E3RPlO/rChFkeISg0CxsfeDiDDJKZjc=;
- b=gB1VuYMeVW4ZcMaByF1qYpaR13ldIVCOHMuAaMYeMkaoHrNOqF6dnWB1+Liby9tCUv3X59ef15kd6lGAQT7zrdaCZFaghC4HJ4D+oBT9PMDlkIXekPhOjC3TmDrRiMmvSwFqO6OJaVhCS3SE0KA/kT6Ab455EFtmh1nqfvUt/OA=
-Authentication-Results: redhat.com; dkim=none (message not signed)
- header.d=none;redhat.com; dmarc=none action=none header.from=sord.co.jp;
-Received: from OSZPR01MB7049.jpnprd01.prod.outlook.com (2603:1096:604:13c::13)
- by OSAPR01MB2195.jpnprd01.prod.outlook.com (2603:1096:603:1a::19) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4500.17; Tue, 14 Sep
- 2021 13:42:22 +0000
-Received: from OSZPR01MB7049.jpnprd01.prod.outlook.com
- ([fe80::94cb:339b:84b3:c330]) by OSZPR01MB7049.jpnprd01.prod.outlook.com
- ([fe80::94cb:339b:84b3:c330%8]) with mapi id 15.20.4500.018; Tue, 14 Sep 2021
- 13:42:22 +0000
-Date:   Tue, 14 Sep 2021 22:42:21 +0900 (JST)
-Message-Id: <20210914.224221.1499603452226149702.atsushi.nemoto@sord.co.jp>
-To:     jkacur@redhat.com
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [rteval PATCH] rteval: stressng.py: Fix arguments for Popen
-From:   Atsushi Nemoto <atsushi.nemoto@sord.co.jp>
-In-Reply-To: <9a5f892-2072-7a99-b4c-9867a4dde27@redhat.com>
-References: <20210806.174641.1741870399325228428.atsushi.nemoto@sord.co.jp>
-        <20210914.134546.1926575477327712294.atsushi.nemoto@sord.co.jp>
-        <9a5f892-2072-7a99-b4c-9867a4dde27@redhat.com>
-X-Mailer: Mew version 6.7 on Emacs 24.5 / Mule 6.0 (HANACHIRUSATO)
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: TY2PR01CA0018.jpnprd01.prod.outlook.com
- (2603:1096:404:a::30) To OSZPR01MB7049.jpnprd01.prod.outlook.com
- (2603:1096:604:13c::13)
+        Tue, 14 Sep 2021 09:44:21 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:41246 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S233379AbhINNoO (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Sep 2021 09:44:14 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1631626976;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=jewliOMoymG5rXVJn02fxoFBXvIvVLdk8M/V9Z5usRQ=;
+        b=CvO8aVNoAWJ48O+56moTWpk+1zJ+8IuByFPOU6Oyd3CWSW0d2abHDr2wfzdITeYDSe/dga
+        a6nM49eYFvlkdKPnK5HamBlv/oh/S/NIBrGVz8VUTwrfgM2WRsMr8wq7XdqUjZLjqmHLfd
+        9267ghif9PZ1XvdGYqMB+i2Su0CmsK4=
+Received: from mail-oi1-f199.google.com (mail-oi1-f199.google.com
+ [209.85.167.199]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-171-Cr7Ko2ZgP_KPSe4qna5GZQ-1; Tue, 14 Sep 2021 09:42:56 -0400
+X-MC-Unique: Cr7Ko2ZgP_KPSe4qna5GZQ-1
+Received: by mail-oi1-f199.google.com with SMTP id 20-20020aca2814000000b002690d9b60aaso8622726oix.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 06:42:55 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to:cc;
+        bh=jewliOMoymG5rXVJn02fxoFBXvIvVLdk8M/V9Z5usRQ=;
+        b=29zdAxH6xf33OZPQSUb/bCDYs5tQRCKKZWrrCQhNM4KRTK21w0RfwzYgG7CxTXtke1
+         gClbSqaxHQYoyPFrWHgqzNDSEU07Tk7O9ChG84dHMW+Rlws2tt4hTYcPB3nl7CC5uAc6
+         Uzahqn3LDk1CW5AaFWhw1A//hQ1WOLdekECJ11Cs2Y7TcON8L2ZqITU7m3FvJaNeDB8Y
+         nUUVQqLC/h39wpejUGgYNCeO6R34XewnyXhekFrmAoMAIOF2GNLTTHEb5XWq4QZwyPhL
+         UBVP9XhpyoyTkqk/WjtaD0V+3YpG+mCa1ZICKb93su1g3ZAs1svoLiZ1GEEchqk3mT5o
+         uQPw==
+X-Gm-Message-State: AOAM532+35a5Y7lLDhGkrgBPWK5acYTnE5MrCF283KQ9RvA0Lmp3zXSH
+        ZKGQ6D0xRkA3QEztGOFxCeDs6y0GL0U0SMFhzpXH8mZpKRSSR4CaZBgiWdGJrAwSBcRSkFqhmYG
+        SHcMfcKPNE5pZ//sNzUPhfjrgFI8ScZ42h8etfXdWo5g=
+X-Received: by 2002:a4a:b502:: with SMTP id r2mr14102828ooo.70.1631626974984;
+        Tue, 14 Sep 2021 06:42:54 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzMIQUlfxqrsC+2bS/iQPITAGVoQjPry2ufHDYgLSd+g2eZ2C36iW//5CotpIeKeoLhwhrTU8SDK9jFyxL97+I=
+X-Received: by 2002:a4a:b502:: with SMTP id r2mr14102813ooo.70.1631626974754;
+ Tue, 14 Sep 2021 06:42:54 -0700 (PDT)
 MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from localhost (61.200.21.62) by TY2PR01CA0018.jpnprd01.prod.outlook.com (2603:1096:404:a::30) with Microsoft SMTP Server (version=TLS1_0, cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA) id 15.20.4500.14 via Frontend Transport; Tue, 14 Sep 2021 13:42:22 +0000
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: f8aa31dc-70ff-4582-872a-08d977857abf
-X-MS-TrafficTypeDiagnostic: OSAPR01MB2195:
-X-MS-Exchange-Transport-Forked: True
-X-Microsoft-Antispam-PRVS: <OSAPR01MB21959640D84C9732015BFCF3BBDA9@OSAPR01MB2195.jpnprd01.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:4941;
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: vu4Bpszvure52wh697m7RiyBpOLFeIP4OXrmGN8r48bhmC2nbrCzB2MZJYTqDa5u7RuAIGs2Mka/FH8bLHz7VqB52Fh6FDiw1bpLwny30TC/D/siQeLRFx2G5MXbfXs9+7oiexg0vKd5caCVlj0vpZ5xq7UQy81AtdHvOKVKf2+KEheiKhoH9OzNmUZJNv2rvdpVbJYRKb6Rhul/5cLUnAWTZjtM54ERbpmjXr2QHl2mWZucbnKvMmrt8hUIhIGRydvS8qGl0OeVLo/t6KYIaSKtdjRvTHQJs0el41KWEYqJABh3b/eflwwN/WwbvzEfzUiTIWFmR2/wO50CekQXkWaHsDv4BS4AY7Hr6qsklO2dCMPyLPRcfaTdpoZed08jBTsNMtik6MwTlmR2w155UGsXsze1P2et0PgrppknNHRhCb/JCUdax7GXk5PWh1uSPbxDfFD7rJudp45V34cl3jmq8hYk4DTXn57Ufconpo29BadravdD6WXUe7GzTlqC05feEdz6Enps8xgZ8uhbXCL9RZM+439qi8BSjE0Nop7ra64kIfbmUEYojv7qRaJCmwdEr1dX0Lie9kSyUh6TYtG5IWxUC2VHTheXDxbfBcCF5GTKMOCeYEu4riyzpClv0zJsD2F3wyIqAfIvHXlDFiiik3wnzrk1w4AFcuIpeHzsM8YwCRWbJ1Fj7e3kbzdvBNxdE9BkD+lqkD/DSqt8ew==
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:OSZPR01MB7049.jpnprd01.prod.outlook.com;PTR:;CAT:NONE;SFS:(346002)(396003)(39850400004)(136003)(366004)(376002)(8936002)(478600001)(2616005)(38350700002)(26005)(52116002)(83380400001)(186003)(38100700002)(44832011)(6486002)(6916009)(6496006)(5660300002)(956004)(8676002)(103116003)(36756003)(2906002)(4326008)(86362001)(66476007)(66556008)(66946007)(316002);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?aV3aa2B3NBkmLRkU8ntnybxlgvKffQzX07LsaTue3MPxjwlLzob7Ax6D2TLp?=
- =?us-ascii?Q?W2MoJ2eamrU5rtE7lKRTqYhMgGuuWpTOBkCmlPENw6p6RDe2lte+/Y+EhURN?=
- =?us-ascii?Q?z/wS2sD58eEHUt42Jtm1iX1T582kNfP+RtZuzNC/7jH23FtPUuxCK60j9ia/?=
- =?us-ascii?Q?PuZG7V0AjHxDuXA1qhfk+zFlNtq0zPSCkGBq4TT7M2fWbsZRmymCZeeaFuoC?=
- =?us-ascii?Q?o/EZA34VftNTluEhqz/7qp3UEFVrkfJ6/WSDAvGxz5VBIlkC/SVeAsPhI7lz?=
- =?us-ascii?Q?PsD8dsg/63Q0+909DYRFc9xt+tOYQjN2b/g34STkCdRjLPoYQ9ZIS7wzxZsC?=
- =?us-ascii?Q?erBgz8ZybZvoOHjdppgdFaTokAQYETI+PG6ptJXm1vo0maABUelgl2ypa9ck?=
- =?us-ascii?Q?PF+5s10ZONCsYnHO9OmY84QWQC/TcllIBTyn/HF8fil/Y+DeTk5PF663Ploe?=
- =?us-ascii?Q?bht5w2H26xiS3G+K0EFl02sT97Qqrb7Qqp+mdve6sBJ+Q3aqWfOQYphvkPoB?=
- =?us-ascii?Q?fZ/6Uq5PcXW7NIxunUOZgR93v3jjzpQ1E5BzPmjwxkQaKeINRODjr9PkDnx7?=
- =?us-ascii?Q?wPoGQjtPUeF9WzxKbFVQnCdOv2e/1k2OCtJBVzfJjn8XsoBW8xJWbqJVaTjh?=
- =?us-ascii?Q?t1qmZtxApkPDvWsz+1Hvw00COtJsV5kydtQWzWOD1k5of9vcbkfY5mSNx5r4?=
- =?us-ascii?Q?+knM16JzjJdfmKOzfI+YNXTFO1JuG6vNaqX70qsdyffKaOT4aT98ly2//AAi?=
- =?us-ascii?Q?lUXPr/PLp3RXrLSVFM5vcn7/49koT5sKKS4WjP/+LHO8AmeHTQl2iDN87KD1?=
- =?us-ascii?Q?ENIoBY5LCxPNEjprPSGOFwcjFf/SYdlX2gcLlKdfvggMfTFcJzsafBSOAPcy?=
- =?us-ascii?Q?hE/thCogj/B+cDGTq5OezWCYE3GaihQx8A7C0RwomVxH/ABCwROiLup8rvvm?=
- =?us-ascii?Q?mgi6hJBtKcc1+NwpnacDk2PrRsZaZv0NjNwG7fzsXVcLwklaTbDSysltY7P9?=
- =?us-ascii?Q?0Y83VOc9JY/MZtTWzqDM7O9/k1EO5yIZ64kJ9sfMVKlJlgexGMGfxUXCPJDg?=
- =?us-ascii?Q?QFrBq5nI48JKEXP5Qm6alA+x6uBkYoIEva3lpXv7sspgbBWtjO5oMpbx2tdk?=
- =?us-ascii?Q?zA7k7NKISn46od3E8ZO0ze8UjmR44+fTjuAm+cfzXpJD1cqN4AB8nvKCfnNe?=
- =?us-ascii?Q?+zKRyMELGa1X5WiAIeOaQsyhXMjaJCrYod0K8oqSK3XWAwi6IsSGnp7ToFVo?=
- =?us-ascii?Q?0d10lvSwf84o24JMQFT0akVSd4oh5AAbbfdBw18Tck+4OZunCXzPQYZj681r?=
- =?us-ascii?Q?8yoMZhcY+uxFLPIrRVVvanI1?=
-X-OriginatorOrg: sord.co.jp
-X-MS-Exchange-CrossTenant-Network-Message-Id: f8aa31dc-70ff-4582-872a-08d977857abf
-X-MS-Exchange-CrossTenant-AuthSource: OSZPR01MB7049.jpnprd01.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 14 Sep 2021 13:42:22.5175
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: cf867293-59a2-46d0-8328-dfdea9397b80
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: AKLq8hsvx/WdRz+W/hoOkf/jQ3pYXpJ9yi68AOBOj8Ol4GxnH7IGQiZbPWA01AoxzJb6G9NpIX3GYg/L2g5YuQ2ZPIcopcfndqDigmPJp+o=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSAPR01MB2195
+From:   Bruno Goncalves <bgoncalv@redhat.com>
+Date:   Tue, 14 Sep 2021 15:42:43 +0200
+Message-ID: <CA+QYu4rSCmGt8Do8_qbi1fyHA8CyuL-vhzTfTKfHVOpyVjYH0A@mail.gmail.com>
+Subject: kernel-rt: BUG: sleeping function called from invalid context at mm/vmalloc.c:2664
+To:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc:     CKI Project <cki-project@redhat.com>,
+        Xiong Zhou <xzhou@redhat.com>,
+        Memory Management <mm-qe@redhat.com>,
+        Juri Lelli <jlelli@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 14 Sep 2021 08:51:02 -0400 (EDT), John Kacur <jkacur@redhat.com> wrote:
-> 
-> 
-> On Tue, 14 Sep 2021, Atsushi Nemoto wrote:
-> 
->> On Fri, 06 Aug 2021 17:46:41 +0900 (JST), Atsushi Nemoto <atsushi.nemoto@sord.co.jp> wrote:
->> > Make each element of self.args contains only one argument.
->> > 
->> > Signed-off-by: Atsushi Nemoto <atsushi.nemoto@sord.co.jp>
->> > ---
->> >  rteval/modules/loads/stressng.py | 6 +++---
->> >  1 file changed, 3 insertions(+), 3 deletions(-)
->> > 
->> > diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
->> > index 926de38..c259554 100644
->> > --- a/rteval/modules/loads/stressng.py
->> > +++ b/rteval/modules/loads/stressng.py
->> > @@ -50,9 +50,9 @@ class Stressng(CommandLineLoad):
->> >          self.args = ['stress-ng']
->> >          self.args.append('--%s' % str(self.cfg.option))
->> >          if self.cfg.arg is not None:
->> > -            self.args.append(self.cfg.arg)
->> > +            self.args.extend(self.cfg.arg.split())
->> >          if self.cfg.timeout is not None:
->> > -            self.args.append('--timeout %s' % str(self.cfg.timeout))
->> > +            self.args.extend(['--timeout', str(self.cfg.timeout)])
->> >  
->> >          systop = SysTopology()
->> >          # get the number of nodes
->> > @@ -74,7 +74,7 @@ class Stressng(CommandLineLoad):
->> >          if self.cpulist:
->> >              for node in nodes:
->> >                  cpulist = ",".join([str(n) for n in cpus[node]])
->> > -                self.args.append('--taskset %s' % cpulist)
->> > +                self.args.extend(['--taskset', cpulist])
->> >  
->> >      def _WorkloadTask(self):
->> >          """ Kick of the workload here """
->> > -- 
->> > 2.11.0
->> 
->> Any comments?
->> 
->> There is an another problem in '--taskset' handling (do not work as
->> expected on multi-node system) so I want to create a patch on top of
->> this fix.
->> 
->> ---
->> Atsushi Nemoto
->> 
-> 
-> You haven't convinced me to apply the first patch - yet anyway, so you can 
-> decide yourself whether to create a version 2 that incorporates your new 
-> idea or whether they belong in to separate commits.
-> 
-> Thanks
-> 
-> John
+Hello,
 
-Thank you, I will send revised patches with a bit more detailed description.
+When testing commit "8a084036f2bc - v5.14.2-rt21" from
+https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
+during "cifsv3.11" test part of xfstests [1] we hit the following
+issue:
 
----
-Atsushi Nemoto
+[13099.772703] BUG: sleeping function called from invalid context at
+mm/vmalloc.c:2664
+[13099.772709] in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid:
+613586, name: cifsd
+[13099.772712] 1 lock held by cifsd/613586:
+[13099.772715]  #0: ffffffffc0eb76d8 (&GlobalMid_Lock){+.+.}-{2:2},
+at: cifs_mid_q_entry_release+0x15/0x110 [cifs]
+[13099.772816] CPU: 7 PID: 613586 Comm: cifsd Not tainted 5.14.2-rt21 #1
+[13099.772820] Hardware name: AMD Pike/Pike, BIOS RPK1506A 09/03/2014
+[13099.772822] Call Trace:
+[13099.772828]  dump_stack_lvl+0x57/0x72
+[13099.772838]  ___might_sleep.cold+0xb6/0xc6
+[13099.772845]  vfree+0x3f/0x50
+[13099.772852]  put_task_stack+0xcf/0x140
+[13099.772858]  __put_task_struct+0x46/0x180
+[13099.772862]  cifs_mid_q_entry_release+0xce/0x110 [cifs]
+[13099.772944]  cifs_demultiplex_thread+0x797/0xcb0 [cifs]
+[13099.773031]  ? mutex_is_locked+0x1/0x20
+[13099.773042]  ? _raw_spin_unlock_irqrestore+0x37/0x40
+[13099.773050]  ? cifs_handle_standard+0x190/0x190 [cifs]
+[13099.773121]  kthread+0x15c/0x180
+[13099.773126]  ? set_kthread_struct+0x40/0x40
+[13099.773134]  ret_from_fork+0x22/0x30
+
+
+So far we've hit this problem just once, more logs can be found at [2].
+
+
+[1] https://gitlab.com/cki-project/kernel-tests/-/tree/main/filesystems/xfs/xfstests
+[2] https://arr-cki-prod-datawarehouse-public.s3.amazonaws.com/index.html?prefix=datawarehouse-public/2021/09/13/369543188/build_x86_64_redhat%3A1584042034/tests/xfstests_cifsv3_11/
+
+Thank you,
+Bruno
+
