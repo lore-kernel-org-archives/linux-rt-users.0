@@ -2,153 +2,132 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AB4D7C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 12:48:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E935DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 12:51:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8674860F58
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 12:48:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CEEA660F58
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Sep 2021 12:51:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232664AbhINMuL (ORCPT
+        id S232804AbhINMwY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Sep 2021 08:50:11 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:42868 "EHLO
+        Tue, 14 Sep 2021 08:52:24 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:22461 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233231AbhINMtj (ORCPT
+        by vger.kernel.org with ESMTP id S232911AbhINMwX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Sep 2021 08:49:39 -0400
+        Tue, 14 Sep 2021 08:52:23 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1631623702;
+        s=mimecast20190719; t=1631623866;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Mn+ygWSH/7UdGRjYA5G3DJPGQr3saXHl9TM2CskrAzc=;
-        b=ge42txkLaS1ro8AfpBDDXzV2uqWeN9bV0aO3Vz8VScDL2or6Hm7eYkPknI1Rd9YHb54pQj
-        SOXHaL41YtBIjFO6ib/ppi3YiL6TR52gG66vYareGNfcPi+wncMXfxmWbKsy8qe67Qz3DW
-        noQ6Rm7CRS2JjAoCE1P+qDkt82bs8PE=
-Received: from mail-il1-f197.google.com (mail-il1-f197.google.com
- [209.85.166.197]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-43-X331zEmFMdqWCP4cMUyoIQ-1; Tue, 14 Sep 2021 08:48:20 -0400
-X-MC-Unique: X331zEmFMdqWCP4cMUyoIQ-1
-Received: by mail-il1-f197.google.com with SMTP id w12-20020a92ad0c000000b00227fc2e6eaeso18434073ilh.4
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 05:48:20 -0700 (PDT)
+        bh=nkfQTHjUNvzgTsUIP8qLv+yfhwcslAXIVnyHLqZOeeU=;
+        b=be5lBNV4xWDPGpJCSzIT976afmAqM9PfSVHjMdzB3i4zq7LXSrAKJg+LoHYZ4eEQPpyHaS
+        OmvOU0tAPKn88HKDlMv6VLa621RVaWbasH34g7ZKn0Zgx1ZoDlyFl+xBuY+HiXvBRHChP1
+        9sEtZhU+ntYGNy73MdgCRHw58VJ5U6c=
+Received: from mail-io1-f71.google.com (mail-io1-f71.google.com
+ [209.85.166.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-280-heGRyIXQMH-jKOZPBGWOtg-1; Tue, 14 Sep 2021 08:51:04 -0400
+X-MC-Unique: heGRyIXQMH-jKOZPBGWOtg-1
+Received: by mail-io1-f71.google.com with SMTP id n8-20020a6b7708000000b005bd491bdb6aso16182773iom.5
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2021 05:51:04 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=Mn+ygWSH/7UdGRjYA5G3DJPGQr3saXHl9TM2CskrAzc=;
-        b=tVRrX/z+7PaIjQ056pVnMkmYjUZ3Yro7ei/X+PPCGLskm3IsIxH6lASkxoFDTf5pvX
-         B1iHEkvi3i+rIGiDXgyIJCa6O5EaldkP+RF+iwRscXFc+0LXEd1PvEGb6Gc5UYWVcgIp
-         /N7iK2SsevfH36E6921Xy4lTM+c5XsG+cJf8/8KsGZuBGrpe7/HAYK2XnHnibAJmnPi2
-         DTRTAFZ9pJGk/X46ROUgDK6uORIbwxG5kAkZ6FrsmNkHs4acrIkH7qLdkn+fm6+VrDHI
-         Z80LdcZQKMc26c1sHp+3HIvjRUQ+1Z5T+scOB9xGxSkVKaoDqBqZFgE0J3lxGYq/blns
-         EeTw==
-X-Gm-Message-State: AOAM533E8mBH+CJ/Um98bjvjVbg3RQBsegSjrjsnS7Omuu9EYz1GHTvz
-        1N5hXJZC+XAB+z7TMi25dJjUt3liNKI2Jz95mbGJGAeynZmJPX/HfGJ0FuFfuTKgdf8Iyu9mTgf
-        dcMAPbfYdH62Q49P8qElQoZhs4/U=
-X-Received: by 2002:a92:8702:: with SMTP id m2mr11552588ild.250.1631623700310;
-        Tue, 14 Sep 2021 05:48:20 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzuqT9fjCr/nPfW3F4r3rrsHQMUf7Yh5bRpEOle+rAfmIT4wZcsd9Sz6OhITP7KB3WDZyhzEw==
-X-Received: by 2002:a92:8702:: with SMTP id m2mr11552578ild.250.1631623700132;
-        Tue, 14 Sep 2021 05:48:20 -0700 (PDT)
+        bh=nkfQTHjUNvzgTsUIP8qLv+yfhwcslAXIVnyHLqZOeeU=;
+        b=0qNHWBCtNTVj5gQNZHwpkx3Pum41iqByPqFAil11JxcvuSsTzgnQjZ/OiV8ZUh537c
+         JVwjPkydcohO7sIyengpNrIJXMSY7hMW4ZaGrAmDuz/ki6nUD/XnGt5VoUWkj/19L7EE
+         DZB4ZPI5JqKdO2sqJRgACVgwp1GOi2ujCerOEbRFgUBleQyJOjqF9NW+M88Hm7nJEHXK
+         VnF/melJ5hkhgbIx0M/0Xgog8fvMveVB/4HECzgTImYIh/ltd5+s9qD4LVKHUjU5/PM/
+         vN67+33E72vLxWD4Jj2mfOG9jZdk2NT7FMXybv8SvS4gnH8lkcpV7T5QC4/ze0LUBEiv
+         ie3A==
+X-Gm-Message-State: AOAM532rhq84epOQUnHx9NuTkMfa0CWbuK8oSJJchWeAQ3VL+1/Q6NMc
+        Qh8VjZ2VWIIqnfQHGkDOGFBcyrFFng6rsUOb4ge1ZGxaysbFTFKL6BztWGC2dpAecDRJmLxUoTW
+        c1LXDhipGjL8TiHvdaVt9vAcgHcs=
+X-Received: by 2002:a92:cb43:: with SMTP id f3mr7498932ilq.261.1631623863971;
+        Tue, 14 Sep 2021 05:51:03 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxQOifWkuc9mL1dcsIl3bKF0aUWScciqnaw6zhzA7m4a5F7kPmR6Ws9AccQ33sm5/UImKFy+g==
+X-Received: by 2002:a92:cb43:: with SMTP id f3mr7498915ilq.261.1631623863777;
+        Tue, 14 Sep 2021 05:51:03 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id m13sm6598777ilh.43.2021.09.14.05.48.19
+        by smtp.gmail.com with ESMTPSA id s12sm2482668ilo.70.2021.09.14.05.51.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Sep 2021 05:48:19 -0700 (PDT)
-Date:   Tue, 14 Sep 2021 08:48:18 -0400 (EDT)
+        Tue, 14 Sep 2021 05:51:03 -0700 (PDT)
+Date:   Tue, 14 Sep 2021 08:51:02 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     nsaenzju@redhat.com
-cc:     Punit Agrawal <punitagrawal@gmail.com>,
-        Peter Xu <peterx@redhat.com>, linux-rt-users@vger.kernel.org,
-        williams@redhat.com
-Subject: Re: [PATCH v2 2/3] oslat: Add aarch64 support
-In-Reply-To: <fe15dafd9a6b6ee0d7f8a9f53e9acb6f4288046f.camel@redhat.com>
-Message-ID: <99d2fe5c-5845-7b63-bb7-ea462103556@redhat.com>
-References: <20210913083908.48408-1-nsaenzju@redhat.com> <20210913083908.48408-2-nsaenzju@redhat.com> <87ee9r9b5e.fsf@stealth> <fe15dafd9a6b6ee0d7f8a9f53e9acb6f4288046f.camel@redhat.com>
+To:     Atsushi Nemoto <atsushi.nemoto@sord.co.jp>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [rteval PATCH] rteval: stressng.py: Fix arguments for Popen
+In-Reply-To: <20210914.134546.1926575477327712294.atsushi.nemoto@sord.co.jp>
+Message-ID: <9a5f892-2072-7a99-b4c-9867a4dde27@redhat.com>
+References: <20210806.174641.1741870399325228428.atsushi.nemoto@sord.co.jp> <20210914.134546.1926575477327712294.atsushi.nemoto@sord.co.jp>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463756286-1234994261-1631623699=:4131"
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
----1463756286-1234994261-1631623699=:4131
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
 
 
+On Tue, 14 Sep 2021, Atsushi Nemoto wrote:
 
-On Tue, 14 Sep 2021, nsaenzju@redhat.com wrote:
-
-> On Tue, 2021-09-14 at 10:52 +0900, Punit Agrawal wrote:
-> > Hi Nicolas,
+> On Fri, 06 Aug 2021 17:46:41 +0900 (JST), Atsushi Nemoto <atsushi.nemoto@sord.co.jp> wrote:
+> > Make each element of self.args contains only one argument.
 > > 
-> > Apologies for the late comment. I just caught up with the thread.
-> 
-> No worries, thanks for the input!
-> 
-> [...]
-> 
-> > > +static inline void frc(uint64_t *pval)
-> > > +{
-> > > +	/*
-> > > +	 * This isb() is required to prevent that the counter value
-> > > +	 * is speculated.
-> > > +	 */
-> > > +	__asm__ __volatile__("isb" : : : "memory");
-> > > +	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (*pval) :: "memory");
-> > > +
+> > Signed-off-by: Atsushi Nemoto <atsushi.nemoto@sord.co.jp>
+> > ---
+> >  rteval/modules/loads/stressng.py | 6 +++---
+> >  1 file changed, 3 insertions(+), 3 deletions(-)
 > > 
-> > Although the isb() ensures completion of instructions before the counter
-> > is read, I think there is still the problem of speculative execution of
-> > instructions after the counter read being moved forward. See the
-> > examples in Arm ARM DDI 0487F.b Section D11.2.2 "The Virtual counter"
-> > 
-> > So from my understanding the problem would be something like below -
-> > 
-> > isb()
-> > ...  <-  speculatively executed instructions from after the counter read
-> > mrs %0, cntvct_el0
-> > 
-> > This would skew the counter value to a later point than what is intended
-> > - a following isb() would address the issue.
+> > diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
+> > index 926de38..c259554 100644
+> > --- a/rteval/modules/loads/stressng.py
+> > +++ b/rteval/modules/loads/stressng.py
+> > @@ -50,9 +50,9 @@ class Stressng(CommandLineLoad):
+> >          self.args = ['stress-ng']
+> >          self.args.append('--%s' % str(self.cfg.option))
+> >          if self.cfg.arg is not None:
+> > -            self.args.append(self.cfg.arg)
+> > +            self.args.extend(self.cfg.arg.split())
+> >          if self.cfg.timeout is not None:
+> > -            self.args.append('--timeout %s' % str(self.cfg.timeout))
+> > +            self.args.extend(['--timeout', str(self.cfg.timeout)])
+> >  
+> >          systop = SysTopology()
+> >          # get the number of nodes
+> > @@ -74,7 +74,7 @@ class Stressng(CommandLineLoad):
+> >          if self.cpulist:
+> >              for node in nodes:
+> >                  cpulist = ",".join([str(n) for n in cpus[node]])
+> > -                self.args.append('--taskset %s' % cpulist)
+> > +                self.args.extend(['--taskset', cpulist])
+> >  
+> >      def _WorkloadTask(self):
+> >          """ Kick of the workload here """
+> > -- 
+> > 2.11.0
 > 
-> For the record, here's what the Arm ARM states:
+> Any comments?
 > 
->   Accesses to memory appearing in program order after the read of the counter
->   are executed before the counter has been read. [...]
+> There is an another problem in '--taskset' handling (do not work as
+> expected on multi-node system) so I want to create a patch on top of
+> this fix.
 > 
->   To ensure that a memory access only occurs after a read of the counter, the
->   following sequence should be used:
-> 
->     MRS Xn, CNTVCT_EL0
->     ISB
->     LDR Xa, [Xb] ; this load will be executed after the timer has been read"
-> 
-> As stated in the commit description, I made sure the program logic can't suffer
-> from this. I hadn't thought of the timing angle though. I doubt we'll see any
-> difference, given we have a 1us granularity, but I don't mind adding it for the
-> sake of correctness.
-> 
-> @John Should I send a v3 of the series or a separate patch adding the extra
-> isb().
-> 
-> -- 
-> Nicolás Sáenz
-> 
+> ---
+> Atsushi Nemoto
 > 
 
-I already integrated and pushed your v2 patch, so you should pull the code 
-from upstream and then create a new patch to add the isb()
+You haven't convinced me to apply the first patch - yet anyway, so you can 
+decide yourself whether to create a version 2 that incorporates your new 
+idea or whether they belong in to separate commits.
 
 Thanks
 
 John
----1463756286-1234994261-1631623699=:4131--
 
