@@ -7,64 +7,64 @@ X-Spam-Status: No, score=-16.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A9112C433FE
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Sep 2021 12:14:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 24DE5C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Sep 2021 12:14:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8A19461216
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Sep 2021 12:14:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0E72861216
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Sep 2021 12:14:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236771AbhIOMQO (ORCPT
+        id S236927AbhIOMQP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 15 Sep 2021 08:16:14 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56376 "EHLO
+        Wed, 15 Sep 2021 08:16:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56380 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236651AbhIOMQO (ORCPT
+        with ESMTP id S236761AbhIOMQO (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 15 Sep 2021 08:16:14 -0400
-Received: from mail-qt1-x82c.google.com (mail-qt1-x82c.google.com [IPv6:2607:f8b0:4864:20::82c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2C697C061574
+Received: from mail-qv1-xf2d.google.com (mail-qv1-xf2d.google.com [IPv6:2607:f8b0:4864:20::f2d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D137EC061574
         for <linux-rt-users@vger.kernel.org>; Wed, 15 Sep 2021 05:14:55 -0700 (PDT)
-Received: by mail-qt1-x82c.google.com with SMTP id u4so2096781qta.2
+Received: by mail-qv1-xf2d.google.com with SMTP id 93so1699830qva.7
         for <linux-rt-users@vger.kernel.org>; Wed, 15 Sep 2021 05:14:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=NHnKb9RgaoS+QS6tyf0vIOKQR3cDGKeF52I9Rw7OVdI=;
-        b=HlUtvC/PkaDUFQ0jm2cYM+8aY36lyH/JrXnxsJClv8WBNzgGuwRQQiAAZ+44SVeVp8
-         crJJxcTB0fmT5T3bSQojxHeJXcGuwV4FyJg68iRC+6pcWqhVdWpDO8SsfumSCZL9OEFD
-         ZGfHH8Imo8aQM5QS1nEEqd4maTKxf0WwmD80lYURw7zy0jY6nQUfdDAk7DZABPMF7NZo
-         W5/5+hFzdxoLX+Mnt10biNFw+VNsHqIXHxKM37+wGuJUgsvYQBos9frGWIOn1cbm90Lx
-         njPr5qpKWsS9ew3vWtCJ73YHipQvWT3rS3MwaZZUafQ1dPSKCCPLeAsFpO9/f1CXIzUu
-         bJnQ==
+        bh=el5F29coJF6fWCFEVyY7xZ06GD++xysH+fSG+s36kCM=;
+        b=Dw30kQctuY81JXVNvZ+NZOXAvQgPgX1El8d27nG5Vz534rKD8sMyBdixpUREhAek3W
+         y4op22pvz2RC4eNMDjYdlOOQdFIQFETNFuydLLGAUVLA/peS+k5KJHG3WCXAHyujPaz5
+         p+PlxBzk2/5NYud/2TK8UIMc6HWG7fy7/crXqeUTz6gjpkwka9vVsQL2/L7EVIc1arZ5
+         /v1p+lWBBrMlanIIj66aMNrlYnZkwQPI+6oWW6wl99Vr1K3o9ouu7DAB0UftlAFFpe3I
+         6YH/yVWs2IFDSOToNLn4nzFvaJPs0mDGkWaBCg1SDTbbi+7BOXVgQa1aAEWCVPNvdj7a
+         G3LA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=NHnKb9RgaoS+QS6tyf0vIOKQR3cDGKeF52I9Rw7OVdI=;
-        b=M0ajT12U+26dLbGY9tZofLnD5E0pPQ1Q8MJONXWLLvWCmbpxvxeOixbLQkbWAk410Z
-         UwUYE/xlzpogAa6HiLbWC/lXQVopm3vl+XN6RyhrWdLC4Gzq8yA19N/YJ6n32t5vLIY1
-         7AJcW7y4oCJasXF8kP3TIE8PitLTtml12e0v3SAJ99wei3+UHQd5QlDSnzXMjcVrMMo7
-         rgYcLwPzN/oCCKN+NKF/Zn4BaeazS4rRekvRB6piaCetfldpc5TuOlj2NpbGcfgGUyni
-         RY+5fkMQMlK8DyHg4D4panxQ8i+fAEU2WjRu/FKeHckbsZBiFuMRkTynljhTRwW84/h2
-         pW7A==
-X-Gm-Message-State: AOAM533/rre4XKeBLJXFsH+MxxAu7j3c8Uw/BIfcx8V+k3VarxZh8fwy
-        x8maZyQAyia2vICVRC6kpX6Z/khnb0M=
-X-Google-Smtp-Source: ABdhPJzE9UeFn5rZWo6p9paAVEvawkG1UrbaxC3tVpkpjWksMKWMBW7tF63xe9PXsvJftBTGpHuC4A==
-X-Received: by 2002:ac8:4684:: with SMTP id g4mr9770413qto.290.1631708094208;
+        bh=el5F29coJF6fWCFEVyY7xZ06GD++xysH+fSG+s36kCM=;
+        b=P3BXAtEkv23jUm+pHnJfZRQo8Kf9Dy2623pNEd7kAMZcqUNnAaLx+m5Cwz6EmSHO80
+         qXgTYVpRkv2c7tp36RsjKdbxCT9QGIecD/Zz5MXPx1TW+5pXXle6cvZd/X62hGXk0/Ey
+         xjxeFBnXMfV5cJjlOwqkANILVD0OhyuIiuv0gg2RGecq4+S/+3yMeRUOcsh1TQuc+leF
+         1i3qYLwRjkJV3eAP0e/d3AYJi+11BX3pf6RpvihXK1Zc0audQ7SDtdMU4dwbMBWlN3SY
+         EkXQHDqr1K9S27ObVfaeU6Hh4wqVFrHtrbw+JJ7GE+oMifpYGxuPbeQgywqFaibFWDj/
+         gRzg==
+X-Gm-Message-State: AOAM530Orf3z/2p6zV2JmX7usbVOOid+t/bm1QvdNFwgCGe3Ct3LqdMp
+        +us2iLoaeXva19HEJEIwir/T7OmK8uE=
+X-Google-Smtp-Source: ABdhPJxzu0eSOrqAUzOwiTnOtzA5IiCtUPfO9IQWWSRgVUednJH8vozYuDbzrAm8kWX0CGt4K2FcGQ==
+X-Received: by 2002:ad4:474a:: with SMTP id c10mr10572658qvx.54.1631708094910;
         Wed, 15 Sep 2021 05:14:54 -0700 (PDT)
 Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id 9sm7768466qtz.83.2021.09.15.05.14.53
+        by smtp.gmail.com with ESMTPSA id 9sm7768466qtz.83.2021.09.15.05.14.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 15 Sep 2021 05:14:53 -0700 (PDT)
+        Wed, 15 Sep 2021 05:14:54 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rteval: Remove mult from hackbench.py
-Date:   Wed, 15 Sep 2021 08:14:31 -0400
-Message-Id: <20210915121432.5472-2-jkacur@redhat.com>
+Subject: [PATCH] rteval: Remove self.__err_sleep
+Date:   Wed, 15 Sep 2021 08:14:32 -0400
+Message-Id: <20210915121432.5472-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20210915121432.5472-1-jkacur@redhat.com>
 References: <20210915121432.5472-1-jkacur@redhat.com>
@@ -74,47 +74,29 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The method for calculating the number of jobs to run for hackbench was
-changed with the following commit.
-commit 67629a1b69ffe72af6bfb3a0d4362ac1920005a7
-
-However, the mult variable which was used to calculate the number of
-jobs using the older method was not removed.
-
-Remove it now and simplify the logic.
+commit 5ed68ae77ec05786aab99fbed35d0347a5d25997
+changed the code to exit gracefully if hackbench failed from memory
+errors. No attempt is made anymore to wait to see if memory pressures
+ease. The variable __err_sleep however was not removed at the time.
+Remove it now, as it is now longer used.
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/modules/loads/hackbench.py | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ rteval/modules/loads/hackbench.py | 1 -
+ 1 file changed, 1 deletion(-)
 
 diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
-index ab028c495d8b..8119d50f626a 100644
+index 8119d50f626a..2fb90c1946a5 100644
 --- a/rteval/modules/loads/hackbench.py
 +++ b/rteval/modules/loads/hackbench.py
-@@ -41,7 +41,6 @@ class Hackbench(CommandLineLoad):
-     def __init__(self, config, logger):
-         CommandLineLoad.__init__(self, "hackbench", config, logger)
+@@ -97,7 +97,6 @@ class Hackbench(CommandLineLoad):
+                      '-l', str(self._cfg.setdefault('loops', '1000')),
+                      '-s', str(self._cfg.setdefault('datasize', '1000'))
+                      ]
+-        self.__err_sleep = 5.0
  
--
-     def _WorkloadSetup(self):
-         'calculate arguments based on input parameters'
-         (mem, units) = self.memsize
-@@ -51,12 +50,10 @@ class Hackbench(CommandLineLoad):
-             mem = mem / 1024.0
-         elif units == 'TB':
-             mem = mem * 1024
-+
-         ratio = float(mem) / float(self.num_cpus)
--        if ratio >= 0.75:
--            mult = float(self._cfg.setdefault('jobspercore', 2))
--        else:
-+        if ratio < 0.75:
-             self._log(Log.WARN, "Low memory system (%f GB/core)!" % ratio)
--            mult = 0
- 
-         sysTop = SysTopology()
-         # get the number of nodes
+     def _WorkloadBuild(self):
+         # Nothing to build, so we're basically ready
 -- 
 2.31.1
 
