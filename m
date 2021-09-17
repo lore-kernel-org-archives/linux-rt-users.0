@@ -2,275 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DEABC4332F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 15:47:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B81AC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 19:08:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4C52E611C8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 15:47:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3C7D2610D1
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 19:08:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344039AbhIQPsz convert rfc822-to-8bit (ORCPT
+        id S240606AbhIQTJV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Sep 2021 11:48:55 -0400
-Received: from us-smtp-delivery-44.mimecast.com ([205.139.111.44]:57215 "EHLO
-        us-smtp-delivery-44.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1344064AbhIQPsN (ORCPT
+        Fri, 17 Sep 2021 15:09:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44268 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229475AbhIQTJV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Sep 2021 11:48:13 -0400
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-42-gz6sUEKPPT6awKFzMmwtQQ-1; Fri, 17 Sep 2021 11:46:48 -0400
-X-MC-Unique: gz6sUEKPPT6awKFzMmwtQQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 94C74801B3D;
-        Fri, 17 Sep 2021 15:46:46 +0000 (UTC)
-Received: from x1.bristot.me.homenet.telecomitalia.it (unknown [10.22.17.200])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id A9AEC5D9C6;
-        Fri, 17 Sep 2021 15:46:43 +0000 (UTC)
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     Jonathan Corbet <corbet@lwn.net>, Kate Carcia <kcarcia@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@kernel.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: [RFC 18/19] rtla: Add rtla timerlat top documentation
-Date:   Fri, 17 Sep 2021 17:44:01 +0200
-Message-Id: <5940f66a0aadf4b8a58b20af99e503e98a12d33d.1631889858.git.bristot@kernel.org>
-In-Reply-To: <cover.1631889858.git.bristot@kernel.org>
-References: <cover.1631889858.git.bristot@kernel.org>
+        Fri, 17 Sep 2021 15:09:21 -0400
+Received: from mail-qk1-x733.google.com (mail-qk1-x733.google.com [IPv6:2607:f8b0:4864:20::733])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2ACFEC061574
+        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 12:07:59 -0700 (PDT)
+Received: by mail-qk1-x733.google.com with SMTP id a66so20644396qkc.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 12:07:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=QBAOHtatBjrL+qqd02++I0diA+3cjXZ1SyPkHIKHZBw=;
+        b=FWeyKd+HonYjA/jY1pwU7NnH/hu1TAULTiI8+xv+LvlkZiQhVp7GAIKkcXKlkN0bU0
+         qIiA7iLipqJehhsXw1vnRCiLHvviALs5L4pTuwnIbiBW6OrAA59KzqMrsGmwCnrc9lsy
+         7DTYhhDqt4i7MUkEDdHgZhp9nXAGecN5ox70RiaIL9KLpQW2BCCW35SCNw7Mou6dZqAE
+         0sNwko4nCSKHSBuHZt9qLMtAR5G4vXvYi1p2TaI1KTsY9fRjNMF5qHCmzKLMtzMdVd8B
+         HXmygLEj7tmsaFo3IKYzcq0CNjM6cnfuu9XxNFHko99jmMT6Jx6Topd8HBYKcia9Vobr
+         H1dw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=QBAOHtatBjrL+qqd02++I0diA+3cjXZ1SyPkHIKHZBw=;
+        b=eXOV+Bm/mHz/2wB8r5JZJS6+BesZcS5wVyw6qgsoIwh7WXBpBrs9ywYsJ0Q5CVb4dC
+         YWidoQRB4LTppBQvSOdSLTWSLnmwabSzfJEK/QUqTLG+fmPb85IZ2gGxg4leg9OQnJ6D
+         3QvE7V6zsxd1cgzCUXsdrqdyLyLQRcgdkBIVK3jOFN12P/wsFFHZAlL5wovcBeO8P6n3
+         0Gr3Dcnirb3yrvwYPwFxTwgDgH9SO2P2Dq4wst04NZ+PCH7xBfrSBe9FcwDsz8+SCaQE
+         AAncbgMRep3M8ZKNqNJyXo1uuvgqnsnF0MvwZsRWHJ2ZuQYC7aAAg9V4ziJRyAVCdCd9
+         HbIA==
+X-Gm-Message-State: AOAM532hWKU53QPr+0xCgCwtig7aGYTuvLG3MT9ovw/GA5rSM/P41oEQ
+        Uyj/vwF9hBkNVTsQcy4O0lnNE3XkAAg=
+X-Google-Smtp-Source: ABdhPJwJz1I0izJ7q6O+forVBe+fMuq9+DqL3fIPzKy3N8C+F2lXTaUhyXM4KjrsGsIMNuFVeagUFw==
+X-Received: by 2002:a37:91c1:: with SMTP id t184mr12020278qkd.129.1631905678110;
+        Fri, 17 Sep 2021 12:07:58 -0700 (PDT)
+Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
+        by smtp.gmail.com with ESMTPSA id j3sm5391472qki.104.2021.09.17.12.07.57
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 17 Sep 2021 12:07:57 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        Daniel Wagner <dwagner@suse.de>, John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: pi_stress: Fix "id" in help
+Date:   Fri, 17 Sep 2021 15:07:40 -0400
+Message-Id: <20210917190740.14957-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
-Authentication-Results: relay.mimecast.com;
-        auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=bristot@kernel.org
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Transfer-Encoding: 8BIT
-Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Man page for rtla timerlat top mode.
+commit 3ef71ab4c40caea1fa70000a2ede0d8df8690c98
+made some changes to the online help and man page
 
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Tom Zanussi <zanussi@kernel.org>
-Cc: Masami Hiramatsu <mhiramat@kernel.org>
-Cc: Juri Lelli <juri.lelli@redhat.com>
-Cc: Clark Williams <williams@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Daniel Bristot de Oliveira <bristot@kernel.org>
-Cc: linux-rt-users@vger.kernel.org
-Cc: linux-trace-devel@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
+The --sched policy=deadline option requires id=[high|med|low]
+Unfortunately the \tid (slash t) got transformed to "tid"
+
+Fix this by replacing with "id" as originally intended.
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- .../rtla/Documentation/rtla-timerlat-top.txt  | 181 ++++++++++++++++++
- 1 file changed, 181 insertions(+)
- create mode 100644 tools/tracing/rtla/Documentation/rtla-timerlat-top.txt
+ src/pi_tests/pi_stress.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/tracing/rtla/Documentation/rtla-timerlat-top.txt b/tools/tracing/rtla/Documentation/rtla-timerlat-top.txt
-new file mode 100644
-index 000000000000..59bc8f2ea6cd
---- /dev/null
-+++ b/tools/tracing/rtla/Documentation/rtla-timerlat-top.txt
-@@ -0,0 +1,181 @@
-+rtla-timerlat-top(1)
-+====================
-+
-+NAME
-+----
-+rtla-timerlat-top - Measures the operating system timer latency
-+
-+SYNOPSIS
-+--------
-+*rtla timerlat top* ['OPTIONS'] ...
-+
-+DESCRIPTION
-+The rtla-timerlat-top(1) mode displays a summary of the periodic output
-+from the timerlat tracer.
-+
-+The timerlat tracer dispatches a kernel thread per-cpu. These threads
-+set a periodic timer to wake themselves up and go back to sleep. After
-+the wakeup, they collect and generate useful information for the
-+debugging of operating system timer latency.
-+
-+The timerlat tracer outputs information in two ways. It periodically
-+prints the timer latency at the timer 'IRQ' handler and the 'Thread' handler.
-+It also provides information for each noise via the osnoise tracepoints
-+that can be seem with the option -T.
-+
-+OPTIONS
-+-------
-+*-h*, *--help*::
-+Print help menu.
-+*-p*, *--period* 'us'::
-+Set the timerlat tracer period in microseconds.
-+*-i*, *--irq* 'us'::
-+Stop trace if the irq latency is higher than the argument in us.
-+*-T*, *--thread* 'us'::
-+Stop trace if the thread latency is higher than the argument in us.
-+*-s*, *--stack* 'us'::
-+Save the stack trace at the IRQ if a thread latency is higher than the
-+argument in us.
-+*-c*, *--cpus* 'cpu-list'::
-+Set the timerlat tracer to run the sample threads in the cpu-list.
-+*-d*, *--duration* 'time[s|m|h|d]'::
-+Set the duration of the session.
-+*-T*, *--trace*['=file']::
-+Save the stopped trace to ['file|timerlat_trace.txt'].
-+*-q*, *--quiet*::
-+Print only a summary at the end of the session.
-+*-P*, *--priority* 'o:prio|r:prio|f:prio|d:runtime:period'::
-+Set scheduling parameters to the timerlat tracer threads, the format to set
-+the priority are:
-+  - 'o:prio' - use SCHED_OTHER with 'prio';
-+  - 'r:prio' - use SCHED_RR with 'prio';
-+  - 'f:prio' - use SCHED_FIFO with 'prio';
-+  - 'd:runtime[us|ms|s]:period[us|ms|s]' - use SCHED_DEADLINE with 'runtime'
-+and 'period' in nanoseconds.
-+
-+EXAMPLE
-+-------
-+
-+In the example below, the timerlat tracer is set to capture the stack trace at
-+the IRQ handler, printing it to the buffer if the *Thread Timer Latency* is
-+higher than _30 us_. It is also set to stop the session if a *Thread Timer
-+Latency* higher than _30 us_ is hit. Finally, it is set to save the trace
-+buffer if the stop condition is hit.
-+
-+-------------------------------------------------------
-+[root@alien ~]# rtla timerlat top -s 30 -t 30 -T
-+                 Timer Latency
-+  0 00:00:59   |          IRQ Timer Latency (us)        |         Thread Timer Latency (us)
-+CPU COUNT      |      cur       min       avg       max |      cur       min       avg       max
-+  0 #58634     |        1         0         1        10 |       11         2        10        23
-+  1 #58634     |        1         0         1         9 |       12         2         9        23
-+  2 #58634     |        0         0         1        11 |       10         2         9        23
-+  3 #58634     |        1         0         1        11 |       11         2         9        24
-+  4 #58634     |        1         0         1        10 |       11         2         9        26
-+  5 #58634     |        1         0         1         8 |       10         2         9        25
-+  6 #58634     |       12         0         1        12 |       30         2        10        30 <--- CPU with spike
-+  7 #58634     |        1         0         1         9 |       11         2         9        23
-+  8 #58633     |        1         0         1         9 |       11         2         9        26
-+  9 #58633     |        1         0         1         9 |       10         2         9        26
-+ 10 #58633     |        1         0         1        13 |       11         2         9        28
-+ 11 #58633     |        1         0         1        13 |       12         2         9        24
-+ 12 #58633     |        1         0         1         8 |       10         2         9        23
-+ 13 #58633     |        1         0         1        10 |       10         2         9        22
-+ 14 #58633     |        1         0         1        18 |       12         2         9        27
-+ 15 #58633     |        1         0         1        10 |       11         2         9        28
-+ 16 #58633     |        0         0         1        11 |        7         2         9        26
-+ 17 #58633     |        1         0         1        13 |       10         2         9        24
-+ 18 #58633     |        1         0         1         9 |       13         2         9        22
-+ 19 #58633     |        1         0         1        10 |       11         2         9        23
-+ 20 #58633     |        1         0         1        12 |       11         2         9        28
-+ 21 #58633     |        1         0         1        14 |       11         2         9        24
-+ 22 #58633     |        1         0         1         8 |       11         2         9        22
-+ 23 #58633     |        1         0         1        10 |       11         2         9        27
-+timerlat hit stop tracing
-+saving trace to timerlat_trace.txt
-+[root@alien bristot]# tail -60 timerlat_trace.txt
-+[...]
-+      timerlat/5-79755   [005] .......   426.271226: #58634 context thread timer_latency     10823 ns
-+              sh-109404  [006] dnLh213   426.271247: #58634 context    irq timer_latency     12505 ns
-+              sh-109404  [006] dNLh313   426.271258: irq_noise: local_timer:236 start 426.271245463 duration 12553 ns
-+              sh-109404  [006] d...313   426.271263: thread_noise:       sh:109404 start 426.271245853 duration 4769 ns
-+      timerlat/6-79756   [006] .......   426.271264: #58634 context thread timer_latency     30328 ns
-+      timerlat/6-79756   [006] ....1..   426.271265: <stack trace>
-+ => timerlat_irq
-+ => __hrtimer_run_queues
-+ => hrtimer_interrupt
-+ => __sysvec_apic_timer_interrupt
-+ => sysvec_apic_timer_interrupt
-+ => asm_sysvec_apic_timer_interrupt
-+ => _raw_spin_unlock_irqrestore			<---- spinlock that disabled interrupt.
-+ => try_to_wake_up
-+ => autoremove_wake_function
-+ => __wake_up_common
-+ => __wake_up_common_lock
-+ => ep_poll_callback
-+ => __wake_up_common
-+ => __wake_up_common_lock
-+ => fsnotify_add_event
-+ => inotify_handle_inode_event
-+ => fsnotify
-+ => __fsnotify_parent
-+ => __fput
-+ => task_work_run
-+ => exit_to_user_mode_prepare
-+ => syscall_exit_to_user_mode
-+ => do_syscall_64
-+ => entry_SYSCALL_64_after_hwframe
-+ => 0x7265000001378c
-+ => 0x10000cea7
-+ => 0x25a00000204a
-+ => 0x12e302d00000000
-+ => 0x19b51010901b6
-+ => 0x283ce00726500
-+ => 0x61ea308872
-+ => 0x00000fe3
-+            bash-109109  [007] d..h...   426.271265: #58634 context    irq timer_latency      1211 ns
-+      timerlat/6-79756   [006] .......   426.271267: timerlat_main: stop tracing hit on cpu 6
-+----------------------------------------
-+
-+In the trace, it is possible the notice that the *IRQ Timer Latency* was
-+already high, accounting *12505 ns*. The IRQ delay was caused by the
-+'bash-109109' process that disabled IRQs in the wake-up path
-+('_try_to_wake_up()' function). The duration of the IRQ handler that woke
-+up the timerlat thread, informed with the *irq_noise* event, was also high
-+and added more *12553 ns* to the Thread latency. Finally, the *thread_noise*
-+added by the currently running thread (including the scheduling overhead)
-+added more *4769 ns*. Summing up these values, the *Thread Timer Latency*
-+accounted for *30328 ns*.
-+
-+The primary reason for this high value is the wake-up path that was hit
-+twice during this case: when the 'bash-109109' was waking up a thread
-+and then when the 'timerlat' thread was awakened. This information can
-+then be used as the starting point of a more fine-grained analysis.
-+
-+Note that timerlat was dispatched without changing timerlat threads' priority.
-+That is generally not needed because the thread has priority FIFO:95 by
-+default, which is a common priority used by real-time kernel developers to
-+analyze scheduling delays.
-+
-+SEE ALSO
-+--------
-+_rtla-timerlat(1)_, _rtla-timerlat-hist(1)_
-+
-+Timerlat tracer documentation: <https://www.kernel.org/doc/html/latest/trace/timerlat-tracer.html>
-+
-+AUTHOR
-+------
-+Written by Daniel Bristot de Oliveira <bristot@kernel.org>
-+
-+REPORTING BUGS
-+--------------
-+Report bugs to <lkml@vger.kernel.org>
-+
-+LICENSE
-+-------
-+rtla is Free Software licensed under the GNU GPLv2
-+
-+COPYING
-+-------
-+Copyright \(C) 2021 Red Hat, Inc. Free use of this software is granted under
-+the terms of the GNU Public License (GPL).
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index 9f4ffa49e926..cba1ad92ac2d 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -996,7 +996,7 @@ void usage(int error)
+ 	       "-q       --quiet           suppress running output\n"
+ 	       "-r       --rr              use SCHED_RR for test threads [SCHED_FIFO]\n"
+ 	       "-s OPTS  --sched OPTS      scheduling options per thread type:\n"
+-	       "   tid=[high|med|low]      select thread\n"
++	       "   id=[high|med|low]      select thread\n"
+ 	       "   ,policy=[fifo,rr]       scheduling class [SCHED_FIFO, SCHED_RR]\n"
+ 	       "     ,priority=N           scheduling priority\n"
+ 	       "   ,policy=[deadline]      scheduling class [DEADLINE]\n"
 -- 
 2.31.1
 
