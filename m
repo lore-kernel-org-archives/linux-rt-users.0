@@ -2,117 +2,140 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE618C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 08:54:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4DA92C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 10:24:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 91E1761056
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 08:54:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1CD3961029
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 10:24:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236380AbhIQIzw (ORCPT
+        id S242253AbhIQKZy convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Sep 2021 04:55:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44062 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245532AbhIQIzo (ORCPT
+        Fri, 17 Sep 2021 06:25:54 -0400
+Received: from mail1.bemta25.messagelabs.com ([195.245.230.5]:36637 "EHLO
+        mail1.bemta25.messagelabs.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S242123AbhIQKZx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Sep 2021 04:55:44 -0400
-Received: from mail-pj1-x1033.google.com (mail-pj1-x1033.google.com [IPv6:2607:f8b0:4864:20::1033])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4743FC061574
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 01:54:23 -0700 (PDT)
-Received: by mail-pj1-x1033.google.com with SMTP id v19so6513565pjh.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 01:54:23 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=Z80GQydzHXzySM8siCRv8E0H7vd7GMKiL8wqyWIgvyc=;
-        b=bIG9MmmMykg8jTD4RtWdivvmYHsK+Q42w2bhVUdGR0oeGaTXSsjwF8QL/tCUsspc79
-         P5RYzRYEqWeFyprsja00zcntUp4x5vy52ZqOsEiTMGJlTRVxznZHUgW6KVqAHbnfqjPE
-         Je9C45MaD2LOXEcfIQNii5w6wuVdC7lmZWdPmGpjxnPoCW5yh0P1t0u/99SDNrwBNdkQ
-         NJ2e+DJYPK0cR72rQRGjjpCYVA+Xk/bCFqRKzz4iIe7OqPuQFcbgzEZCFdOkCkH9vkAl
-         MxKxQS/XNUeY1kPTxIHlhqhP9GX3tunU30h0rkTSZXc8EgLXy2bSMf3rxpk0jCDEzcPI
-         P5sw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=Z80GQydzHXzySM8siCRv8E0H7vd7GMKiL8wqyWIgvyc=;
-        b=gA6ZS3Jk7V5JlF2EpPLiPYjgBzUgANcxWwlq/4lJNYHcRzkWQX11fCuh+Kadky5+VZ
-         aYjS6u1M02mefB/xMDltQcY/gvqcgzOZ/tUAiT9VcmUfNnykKTUYiTsAi0WVEzB6hiXA
-         yyUhyM/n0Wyl/dMmTplzsx15i1orgHpwNYM2T0SO2HF/XX8iMtrqe3LfPVQq9k1IlqSo
-         JIYOkNCPAq4kglutMtpa2y4Y0CZnB5z/yvx7oPPhaAEmjEv2jy1zCn+0fjLaCaPVFE3P
-         6038QFWITwgExeCGmNBxMp0Dr1QosxDXvVpMsSNTKcENb5zL75ikLIKUjou7yaSWWL3E
-         kQSA==
-X-Gm-Message-State: AOAM530v44FX+zbLsQKGuSkHZfFooVdxow0kWaZQFScvttbxHVL/Kpch
-        fGAS0HLFCFHsBKeGkKicyk4=
-X-Google-Smtp-Source: ABdhPJy7BfO0ODqGW/mfGwSRDVkMYC8vX6DrkPLXlfjSkoOYyxaW0awniXncENsCLMAmXZiXRGV/sA==
-X-Received: by 2002:a17:902:64d6:b0:13c:9439:c80 with SMTP id y22-20020a17090264d600b0013c94390c80mr8583876pli.52.1631868862802;
-        Fri, 17 Sep 2021 01:54:22 -0700 (PDT)
-Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id u12sm4789439pjx.31.2021.09.17.01.54.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Sep 2021 01:54:22 -0700 (PDT)
-From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     jkacur@redhat.com
-Cc:     Punit Agrawal <punitagrawal@gmail.com>,
-        linux-rt-users@vger.kernel.org, punit1.agrawal@toshiba.co.jp
-Subject: [PATCH v2 3/3] rteval: cyclictest.py: Sort the list of cpus
-Date:   Fri, 17 Sep 2021 17:53:43 +0900
-Message-Id: <20210917085343.2775300-4-punitagrawal@gmail.com>
-X-Mailer: git-send-email 2.32.0
-In-Reply-To: <20210917085343.2775300-1-punitagrawal@gmail.com>
-References: <20210917085343.2775300-1-punitagrawal@gmail.com>
+        Fri, 17 Sep 2021 06:25:53 -0400
+Received: from [100.112.195.149] (using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256 bits))
+        by server-5.bemta.az-a.eu-west-1.aws.symcld.net id 8E/D2-01625-FDC64416; Fri, 17 Sep 2021 10:24:31 +0000
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprDKsWRWlGSWpSXmKPExsWi1/P8kO69HJd
+  EgzctRhanJ/YwOzB6fN4kF8AYxZqZl5RfkcCaMefFQ9aClUIVPzesYG5gfMPfxcjJISSwklGi
+  Y7Z5FyMXkL2ZUeLtjoNsIAk2AR2JY52TGEFsEQFXiRmP5jKB2MJA9tqXz5gg4l4SvffvsHQxc
+  gDZehLzJ7CAhFkEVCVOnupjBgnzCjhKfGlJAQkzCshK9J04AjadWUBcYtOz76wgtoSAgMSSPe
+  eZIWxRiZeP/7GCtEoIaEgsvewFEZaQ2Le7lw3CNpDYunQfC4QtLzF7xg2oOKdE97/HUON1JBb
+  s/gRla0ssW/gabDyvgKDEyZlPWCYwis5CcsUsJC2zkLTMQtKygJFlFaN5UlFmekZJbmJmjq6h
+  gYGuoaGRrqGlsa6xpV5ilW6iXmqpbnlqcYmuoV5iebFecWVuck6KXl5qySZGYBSlFBxU38H48
+  fUHvUOMkhxMSqK82T4uiUJ8SfkplRmJxRnxRaU5qcWHGGU4OJQkeDWzgXKCRanpqRVpmTnAiI
+  ZJS3DwKInw3skASvMWFyTmFmemQ6ROMRpzTHg5dxEzx8Gj8xYxC7Hk5eelSonzNoNMEgApzSj
+  NgxsESzSXGGWlhHkZGRgYhHgKUotyM0tQ5V8xinMwKgnztoFM4cnMK4Hb9wroFCagU47sdwA5
+  pSQRISXVwKT66ufaBQsWbTKLXfd4s+K9tKPhqx2YXkfu+RreIxBkXXPHroo1akOFfP4N6QmGL
+  xiUuSa/+LDl4J8Yrt0X365dnve2P/iE8v+9iZwyi9ZoXHXItgwMnljmvSolfttkbof1H0/qCS
+  y/wK7T9d3ruImBgXWoxfWKa81dCgxGi57GGtX7B0xIYcjz4rS2y3pkVHabfbZynQW/2mvv3R5
+  NObx/7WN0rSWN1vOfyD1sabZL38tz3am1c8Rce5REHnH2mG367bSI4we7z5XbF/WaWTRt3/Su
+  1U/mXHhpNVuNzPaIh+vevn70sfpzUe8ZV/PS2my3s7Grfm3/a6Nu5Nx/Q8pl0460d7Exv7LSb
+  2fvV2Ipzkg01GIuKk4EAIL8/JCvAwAA
+X-Env-Sender: Walter.Stoll@duagon.com
+X-Msg-Ref: server-19.tower-262.messagelabs.com!1631874270!446826!1
+X-Originating-IP: [46.140.231.194]
+X-SYMC-ESS-Client-Auth: outbound-route-from=pass
+X-StarScan-Received: 
+X-StarScan-Version: 9.81.4; banners=-,-,-
+X-VirusChecked: Checked
+Received: (qmail 32216 invoked from network); 17 Sep 2021 10:24:30 -0000
+Received: from 46-140-231-194.static.upc.ch (HELO chdua14.duagon.ads) (46.140.231.194)
+  by server-19.tower-262.messagelabs.com with ECDHE-RSA-AES256-SHA384 encrypted SMTP; 17 Sep 2021 10:24:30 -0000
+Received: from chdua14.duagon.ads (172.16.90.14) by chdua14.duagon.ads
+ (172.16.90.14) with Microsoft SMTP Server (TLS) id 15.0.1497.23; Fri, 17 Sep
+ 2021 12:24:30 +0200
+Received: from chdua14.duagon.ads ([fe80::4058:63e9:621d:cb5]) by
+ chdua14.duagon.ads ([fe80::4058:63e9:621d:cb5%12]) with mapi id
+ 15.00.1497.023; Fri, 17 Sep 2021 12:24:30 +0200
+From:   Walter Stoll <Walter.Stoll@duagon.com>
+To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: [BUG] kernel/printk: RT-adaption of kmsg_dump breaks mtdoops
+Thread-Topic: [BUG] kernel/printk: RT-adaption of kmsg_dump breaks mtdoops
+Thread-Index: AderrfiLv1XFN2b0R32Idkomc0vbmw==
+Date:   Fri, 17 Sep 2021 10:24:30 +0000
+Message-ID: <c4b1a518b23c4507b3fc725cea005276@chdua14.duagon.ads>
+Accept-Language: en-US, de-CH
+Content-Language: de-DE
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-codetwo-clientsignature-inserted: true
+x-codetwoprocessed: true
+x-ms-exchange-transport-fromentityheader: Hosted
+x-originating-ip: [172.17.0.41]
+x-loop: 1
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+Effect observed
+---------------
 
-online_cpus() returns a list of online cpus in arbitrary order. e.g.,
-on a hexacore system it returns -
+We want to store kernel oops logs on a NAND flash partition by means of the
+MTD Oops/Panic console logger/driver. However, no log is generated.
 
-    ['5', '3', '1', '4', '2', '0']
+We observed the effect with kernel version v5.4.138-rt62. However, we think
+that the most recent kernel exhibits the same behavior because the structure of
+the sources in question (see below) did not change.
 
-Generally this wouldn't be a problem but the cyclictest.py module
-matches the unsorted list with the latencies output by "cyclictest"
-which are ordered by core number. This leads to incorrect reporting of
-per-core latencies in the final report generated by rteval. The issue
-was noticed when comparing the rteval report with cyclictest logs
-(enabled by a recent change).
 
-Fix the inconsistency in core numbering by sorting the list of cpus
-used by cyclictest.py module. As the cpus are represented as a string,
-sort with the integer key to avoid issues on systems with large number
-of cores.
+Root cause
+----------
 
-Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
----
- rteval/modules/measurement/cyclictest.py | 4 ++++
- 1 file changed, 4 insertions(+)
+Further investigations revealed, than the issue is due to the realtime adaption
+of the kmsg_dump() function.
 
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index d3a0b045b9dd..50a734c75047 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -216,6 +216,10 @@ class Cyclictest(rtevalModulePrototype):
-         else:
-             self.__cpus = online_cpus()
+Non realtime version of kmsg_dump():
+https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/kernel/printk/printk.c?h=linux-5.4.y#n3149
+
+Realtime version of kmsg_dump():
+https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/tree/kernel/printk/printk.c?h=v5.4-rt#n2904
+
+In our case, the the mtd_panic_write() function returns with error when the
+kernel panics. As a result, no log is created. Call chain:
+... panic() -> kmsg_dump() -> mtdoops_do_dump() -> mtdoops_write()
+    mtd_panic_write()
+
+Note that within the kmsg_dump() function, a locally create kmsg_dumper object
+is passed to the dumper_local.dump(&dumper_local, reason) call. However the
+callee mtdoops_do_dump() function expects this object being embedded in a
+mtdoops_context object, see
+https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/tree/drivers/mtd/mtdoops.c?h=v5.4-rt#n272
+
+This is obviously not the case, therefore the error. Note that this could even
+led to a security issue.
+
+
+Bug fix proposal
+----------------
+
+We fixed the bug locally by applying the patch below. Note that we did not
+modify the kmsg_dump() function. Instead we modified the mtdoops_do_dump()
+function which seems for us the cleaner way.
+
+
+diff --git a/drivers/mtd/mtdoops.c b/drivers/mtd/mtdoops.c
+index 774970bfcf85..317ecf47fce8 100644
+--- a/drivers/mtd/mtdoops.c
++++ b/drivers/mtd/mtdoops.c
+@@ -269,8 +269,7 @@ static void find_next_position(struct mtdoops_context *cxt)
+ static void mtdoops_do_dump(struct kmsg_dumper *dumper,
+ 			    enum kmsg_dump_reason reason)
+ {
+-	struct mtdoops_context *cxt = container_of(dumper,
+-			struct mtdoops_context, dump);
++	struct mtdoops_context *cxt = &oops_cxt;
  
-+        # Sort the list of cpus to align with the order reported by
-+        # cyclictest
-+        self.__cpus.sort(key=int)
-+
-         # Get the cpuset from the environment
-         cpuset = os.sched_getaffinity(0)
- 
--- 
-2.32.0
+ 	/* Only dump oopses if dump_oops is set */
+ 	if (reason == KMSG_DUMP_OOPS && !dump_oops)
 
