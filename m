@@ -8,63 +8,63 @@ X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 54263C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 08:54:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30275C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 08:54:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3C73961056
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 08:54:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 15F57611C3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 08:54:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236168AbhIQIzb (ORCPT
+        id S245529AbhIQIzi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Sep 2021 04:55:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43982 "EHLO
+        Fri, 17 Sep 2021 04:55:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44032 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233979AbhIQIza (ORCPT
+        with ESMTP id S233979AbhIQIzh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Sep 2021 04:55:30 -0400
-Received: from mail-pg1-x534.google.com (mail-pg1-x534.google.com [IPv6:2607:f8b0:4864:20::534])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D91D9C061574
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 01:54:08 -0700 (PDT)
-Received: by mail-pg1-x534.google.com with SMTP id w8so8995000pgf.5
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 01:54:08 -0700 (PDT)
+        Fri, 17 Sep 2021 04:55:37 -0400
+Received: from mail-pl1-x631.google.com (mail-pl1-x631.google.com [IPv6:2607:f8b0:4864:20::631])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 20623C061574
+        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 01:54:16 -0700 (PDT)
+Received: by mail-pl1-x631.google.com with SMTP id f21so5753073plb.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 01:54:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=YaIH7Nm/eonGJSkkOd0bJYXfLYhwUXgxhxJTOKMhsTQ=;
-        b=bBj1Jf15VCEaW9ONyrIiZXfA21IkZepbSHx2CharcMLHgE52sCCS0M95p5Tpojg1S8
-         S1QMNhk75w5mghT9vFfE54BbohB8WYz0ND1C4cYtlfg6WHRwfxu/YWXUGfNK1TpC3wDU
-         ylRTedcNhRjDz+amcDWFRcVXrzqexd8KCSiknTIlQlquFE4oVvufU3p5pE0bA00n49nv
-         31xARn50Ip/uSX67j528HHdE2VmeH6Txx6kz6SjIQCoMpCdM8//Gba1MyKo7LYO612jm
-         H0boPF+T+v3N7TJ7GQ/FSHk9HEZp7vqOJKOSk4TzwO2XiMnc1hE7PIojq89Bc+CSbipH
-         tUbg==
+        bh=wyDJZf/rqCIT9JNzOExnx8zWrqqyG0KC9OFy7YI3oiM=;
+        b=LN1WRcqQqvr+om9kgM1ozsLXdpA0XBO0unzNOc/VIAOIP0ky68ahfB4AebUwcXjiDg
+         RQghzgAoMQFMZNuSARm774nmH+JWs+YLxULVUjHC2+1FCfi+2DkQ6/+roE1u59U7hft1
+         mVXUAhA6S4S+T9YMIcQhvdYjb4/alBa1zFMbQcJWqNPL++m53SmuVK31tsiIPuDV1A4V
+         vRkIG1pNtoO/+xgFm/rLbkcqHhhys+CsAxGPMQC106aLG9QTntc0Xdy5phme6uXWEs+k
+         P1zAw1wzUsRoUGdT/nTPyU9Og5TrRO2DUu8L8gf6KthwldcpxPWbGoVEXp1UiAHbjRIr
+         71gw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=YaIH7Nm/eonGJSkkOd0bJYXfLYhwUXgxhxJTOKMhsTQ=;
-        b=urL9K6wZeJEcWillyfhD9I1HV8PJtMHJoB5zjKMhJ1tO5wz5bfAyimdvBU1rIXVub9
-         ZGDAQGVN3bHw/M3LMSfMlXiNybwQPwHyeloTmrECaM0cjpe+fknmr6hP//3uRjwjLNO/
-         Z7kcOOLm+0Ml+D/mLwHXIXXsBv+0Xu0zQlKnUF0MlKy8LcWdUlvvcDEj0+7Th1P8IANr
-         ikOGXHOmuoAiGUgvhuFaqB7VuUHiSuaB1iGqyzxkDTiI6XZlYzz0i0TmWAA2YdrrKO2j
-         kMzCTz5AwiDm/tVBpt1k184WYrFKD1uqI7oOP9MSBYXCYwjBp7QL9Wp3kSYNTIdbwKEd
-         353g==
-X-Gm-Message-State: AOAM533uUHjpRbPSKZzPXfOAD8vWIRxRmZ5cnPBsapwHd+wLZdglKQOE
-        PW0MaSCAZJRO//ENDQEV7Us=
-X-Google-Smtp-Source: ABdhPJz5YTWkO2vElCX/mJjrQ2U+VVFTOLgoodMbW5eSKG2gpVd1HwwywYz4Inc7yjDG0zHoUV3IVQ==
-X-Received: by 2002:a62:2f47:0:b0:434:5705:3a83 with SMTP id v68-20020a622f47000000b0043457053a83mr9455103pfv.11.1631868848269;
-        Fri, 17 Sep 2021 01:54:08 -0700 (PDT)
+        bh=wyDJZf/rqCIT9JNzOExnx8zWrqqyG0KC9OFy7YI3oiM=;
+        b=fpPAJDDIaYj2/VmidxIXLIKYBPV3XBcJvnacZta0Z8s4lgV7JAFPHJWbPZQAJLmtJr
+         eXCqpKVyc2RW2mWbV5Moryu16wL8zMH3MtUev/tUZnrtLAombYi2fxP7/MifxoIo1P5k
+         zkG3CajSZB1Fk9VMozVCQJUI6MQnvlUCOuVlBwkK3kaSJg38UqFLeliQtFERxtOgLruy
+         Bx46yHQBdYymuGsxmIz6/dnlRhnhjitFG0i7K3RCMEFNbOInFOgCs+LkMXFv5NpMS5Ma
+         Zh3RxxCPsC62U6BA+ryJRdRZ+FzbXxdh/eUVFL7GgP7uGxnpEcM90BhNlOLqgLXng5+y
+         qdng==
+X-Gm-Message-State: AOAM533v61jU7fOV5kBu+BRbu3ZV+cjHGRi6wrXwNyepB50al/T6pZwR
+        AKNzUeeNzyqZ1nr1rXLlyUQ=
+X-Google-Smtp-Source: ABdhPJxzRWvv1EAdoFWxC7pzYM5N6JTAp+fxYm60YaPZT4eeyA885VOiMoYiJXE2MVf3esGS9q3ePw==
+X-Received: by 2002:a17:90a:bb04:: with SMTP id u4mr10988735pjr.221.1631868855662;
+        Fri, 17 Sep 2021 01:54:15 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id t13sm4956190pjg.25.2021.09.17.01.54.07
+        by smtp.gmail.com with ESMTPSA id q15sm5026634pfl.18.2021.09.17.01.54.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Sep 2021 01:54:07 -0700 (PDT)
+        Fri, 17 Sep 2021 01:54:15 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
 To:     jkacur@redhat.com
 Cc:     Punit Agrawal <punitagrawal@gmail.com>,
         linux-rt-users@vger.kernel.org, punit1.agrawal@toshiba.co.jp
-Subject: [PATCH v2 1/3] rteval: cyclictest.py Enable logging cyclictest output
-Date:   Fri, 17 Sep 2021 17:53:41 +0900
-Message-Id: <20210917085343.2775300-2-punitagrawal@gmail.com>
+Subject: [PATCH v2 2/3] rteval: cyclictest.py Parse max latencies from cyclictest output
+Date:   Fri, 17 Sep 2021 17:53:42 +0900
+Message-Id: <20210917085343.2775300-3-punitagrawal@gmail.com>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <20210917085343.2775300-1-punitagrawal@gmail.com>
 References: <20210917085343.2775300-1-punitagrawal@gmail.com>
@@ -76,55 +76,86 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
-The cyclictest.py module uses a temporary file to store the output
-from "cyclictest" which is deleted at the end of the run. As the
-collected log contains information that can be useful for development
-or debugging, having the ability to persist the logs is useful.
+When collecting a histogram of latencies, "cyclictest" reports the
+maximum latency encountered on each core even if they fall outside the
+configured no. of buckets. This can be useful to understand the worst
+case latencies for the run as well as right sizing the number of
+buckets for the histogram.
 
-With this goal, introduce a configuration option for the cyclictest.py
-module, "savelogs", that can be used to enable persisting the
-cyclictest output to a logfile. As the logs an be quite large, the
-default is to not save them.
+While processing the output of cyclictest, rteval skips the reported
+max latencies and calculates them by capping to the no. of buckets.
+
+Fix rteval by parsing the maximum latencies reported by cyclictest.
 
 Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 ---
- rteval/modules/measurement/cyclictest.py | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ rteval/modules/measurement/cyclictest.py | 31 +++++++++++++++++++-----
+ 1 file changed, 25 insertions(+), 6 deletions(-)
 
 diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index b1755d4f4421..ee1de883d844 100644
+index ee1de883d844..d3a0b045b9dd 100644
 --- a/rteval/modules/measurement/cyclictest.py
 +++ b/rteval/modules/measurement/cyclictest.py
-@@ -197,6 +197,8 @@ class Cyclictest(rtevalModulePrototype):
-         self.__numanodes = int(self.__cfg.setdefault('numanodes', 0))
-         self.__priority = int(self.__cfg.setdefault('priority', 95))
-         self.__buckets = int(self.__cfg.setdefault('buckets', 2000))
-+        self.__reportdir = self.__cfg.setdefault('reportdir', os.getcwd())
-+        self.__save_logs = self.__cfg.setdefault('savelogs', False)
-         self.__numcores = 0
-         self.__cpus = []
-         self.__cyclicdata = {}
-@@ -255,6 +257,8 @@ class Cyclictest(rtevalModulePrototype):
-         mounts.close()
-         return ret
+@@ -67,20 +67,25 @@ class RunData:
+         retval += "mean:       %f\n" % self.__mean
+         return retval
  
-+    def _open_logfile(self, name):
-+        return open(os.path.join(self.__reportdir, "logs", name), 'w+b')
+-    def sample(self, value):
+-        self.__samples[value] += self.__samples.setdefault(value, 0) + 1
++    def update_max(self, value):
+         if value > self.__max:
+             self.__max = value
++
++    def update_min(self, value):
+         if value < self.__min:
+             self.__min = value
++
++    def sample(self, value):
++        self.__samples[value] += self.__samples.setdefault(value, 0) + 1
++        self.update_max(value)
++        self.update_min(value)
+         self.__numsamples += 1
  
-     def _WorkloadSetup(self):
-         self.__cyclicprocess = None
-@@ -288,7 +292,10 @@ class Cyclictest(rtevalModulePrototype):
-             self.__cmd.append("--tracemark")
+     def bucket(self, index, value):
+         self.__samples[index] = self.__samples.setdefault(index, 0) + value
+-        if value and index > self.__max:
+-            self.__max = index
+-        if value and index < self.__min:
+-            self.__min = index
++        if value:
++            self.update_max(index)
++            self.update_min(index)
+         self.__numsamples += value
  
-         # Buffer for cyclictest data written to stdout
--        self.__cyclicoutput = tempfile.SpooledTemporaryFile(mode='w+b')
-+        if self.__save_logs:
-+            self.__cyclicoutput = self._open_logfile('cyclictest.stdout')
-+        else:
-+            self.__cyclicoutput = tempfile.SpooledTemporaryFile(mode='w+b')
+     def reduce(self):
+@@ -332,6 +337,18 @@ class Cyclictest(rtevalModulePrototype):
+         return False
  
  
-     def _WorkloadTask(self):
++    def _parse_max_latencies(self, line):
++        if not line.startswith('# Max Latencies: '):
++            return
++
++        line = line.split(':')[1]
++        vals = [int(x) for x in line.split()]
++
++        for i, core in enumerate(self.__cpus):
++            self.__cyclicdata[core].update_max(vals[i])
++            self.__cyclicdata['system'].update_max(vals[i])
++
++
+     def _WorkloadCleanup(self):
+         if not self.__started:
+             return
+@@ -348,6 +365,8 @@ class Cyclictest(rtevalModulePrototype):
+                 # Catch if cyclictest stopped due to a breaktrace
+                 if line.startswith('# Break value: '):
+                     self.__breaktraceval = int(line.split(':')[1])
++                elif line.startswith('# Max Latencies: '):
++                    self._parse_max_latencies(line)
+                 continue
+ 
+             # Skipping blank lines
 -- 
 2.32.0
 
