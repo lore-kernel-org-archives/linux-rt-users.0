@@ -2,102 +2,91 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B81AC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 19:08:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 43FA8C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Sep 2021 09:18:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3C7D2610D1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Sep 2021 19:08:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 21C1660F56
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Sep 2021 09:18:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240606AbhIQTJV (ORCPT
+        id S233477AbhITJTw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Sep 2021 15:09:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44268 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229475AbhIQTJV (ORCPT
+        Mon, 20 Sep 2021 05:19:52 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:40942 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232495AbhITJTo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Sep 2021 15:09:21 -0400
-Received: from mail-qk1-x733.google.com (mail-qk1-x733.google.com [IPv6:2607:f8b0:4864:20::733])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2ACFEC061574
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 12:07:59 -0700 (PDT)
-Received: by mail-qk1-x733.google.com with SMTP id a66so20644396qkc.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2021 12:07:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=QBAOHtatBjrL+qqd02++I0diA+3cjXZ1SyPkHIKHZBw=;
-        b=FWeyKd+HonYjA/jY1pwU7NnH/hu1TAULTiI8+xv+LvlkZiQhVp7GAIKkcXKlkN0bU0
-         qIiA7iLipqJehhsXw1vnRCiLHvviALs5L4pTuwnIbiBW6OrAA59KzqMrsGmwCnrc9lsy
-         7DTYhhDqt4i7MUkEDdHgZhp9nXAGecN5ox70RiaIL9KLpQW2BCCW35SCNw7Mou6dZqAE
-         0sNwko4nCSKHSBuHZt9qLMtAR5G4vXvYi1p2TaI1KTsY9fRjNMF5qHCmzKLMtzMdVd8B
-         HXmygLEj7tmsaFo3IKYzcq0CNjM6cnfuu9XxNFHko99jmMT6Jx6Topd8HBYKcia9Vobr
-         H1dw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=QBAOHtatBjrL+qqd02++I0diA+3cjXZ1SyPkHIKHZBw=;
-        b=eXOV+Bm/mHz/2wB8r5JZJS6+BesZcS5wVyw6qgsoIwh7WXBpBrs9ywYsJ0Q5CVb4dC
-         YWidoQRB4LTppBQvSOdSLTWSLnmwabSzfJEK/QUqTLG+fmPb85IZ2gGxg4leg9OQnJ6D
-         3QvE7V6zsxd1cgzCUXsdrqdyLyLQRcgdkBIVK3jOFN12P/wsFFHZAlL5wovcBeO8P6n3
-         0Gr3Dcnirb3yrvwYPwFxTwgDgH9SO2P2Dq4wst04NZ+PCH7xBfrSBe9FcwDsz8+SCaQE
-         AAncbgMRep3M8ZKNqNJyXo1uuvgqnsnF0MvwZsRWHJ2ZuQYC7aAAg9V4ziJRyAVCdCd9
-         HbIA==
-X-Gm-Message-State: AOAM532hWKU53QPr+0xCgCwtig7aGYTuvLG3MT9ovw/GA5rSM/P41oEQ
-        Uyj/vwF9hBkNVTsQcy4O0lnNE3XkAAg=
-X-Google-Smtp-Source: ABdhPJwJz1I0izJ7q6O+forVBe+fMuq9+DqL3fIPzKy3N8C+F2lXTaUhyXM4KjrsGsIMNuFVeagUFw==
-X-Received: by 2002:a37:91c1:: with SMTP id t184mr12020278qkd.129.1631905678110;
-        Fri, 17 Sep 2021 12:07:58 -0700 (PDT)
-Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id j3sm5391472qki.104.2021.09.17.12.07.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Sep 2021 12:07:57 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        Daniel Wagner <dwagner@suse.de>, John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests: pi_stress: Fix "id" in help
-Date:   Fri, 17 Sep 2021 15:07:40 -0400
-Message-Id: <20210917190740.14957-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.31.1
+        Mon, 20 Sep 2021 05:19:44 -0400
+Date:   Mon, 20 Sep 2021 11:18:06 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1632129487;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=VkxwER75kXZZpuDwFvfbVzQapA+NV8ir7y2e7aZZKN8=;
+        b=coRFMzbKm9xJ5hFtX9n5QEqSTSLJaUaPcF9IPSwFoh3A+UGDgGGARJbZB0YybsT/T0VUyJ
+        nMuOIvoE+1fxpHyA/u23pXm65T5UpGe3qE3V167Fp90ER+mBkk6guRZ4r1mzVS1vWaixkB
+        6UE9mUsIID2vquzFmU856/T7A3ZRnXTsYNGRwJR3atjzZaoP1QljhapDj1SZxtFXit4Jgm
+        qaLRIUmbrRUoTzXvEe97o3X9hfeKRvgq8sxnmAgCQitAK2zdnxqOiw5lWdOPKt6PYmlJbs
+        zaQr8NaY+cap5+9L0YwLA7mtusT5ejktIIAIGY2pzs2zdsDEnPPvPCM4Wbmq5A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1632129487;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=VkxwER75kXZZpuDwFvfbVzQapA+NV8ir7y2e7aZZKN8=;
+        b=OcEFF/ye7O1+L1BbbOW1isEG6pjYWjEe37LEQlYV014nzQ0TMKDrm533qnmayH51iata6C
+        kfRIleBzu9mb8xAw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Gratian Crisan <gratian.crisan@ni.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: irq thread latency caused by softirq_ctrl.lock contention
+Message-ID: <20210920091806.lgmznb5mkqoyyfkb@linutronix.de>
+References: <87a6kd78n7.fsf@ni.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <87a6kd78n7.fsf@ni.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-commit 3ef71ab4c40caea1fa70000a2ede0d8df8690c98
-made some changes to the online help and man page
+On 2021-09-15 17:59:50 [-0500], Gratian Crisan wrote:
+> Hi guys,
+Hi,
 
-The --sched policy=deadline option requires id=[high|med|low]
-Unfortunately the \tid (slash t) got transformed to "tid"
+=E2=80=A6
+> The 'irq/102-atomicc-248' irq thread is our high priority data
+> acquisition thread. The additional pi boost and context switch seems to
+> account for the main differences I'm seeing versus 4.14-rt. This race +
+> pi boost happens with other lower priority irq threads too but the
+> ksoftirq case is the most common one.
+>=20
+> I would appreciate any thoughts on how/if we could improve this?
 
-Fix this by replacing with "id" as originally intended.
+It appears to be a consequence of the new softirq design/ handling.
+Earlier we could have multiple softirqs running in parallel on a single
+CPU (as in NET_RX and NET_TX).
+With the new design only one softirq can be handled at a time resulting
+in a full synchronisation at local_bh_diable() time by the lock you
+mention in subject.
+In your case it appears that irq/102-atomicc is force-threaded and
+therefore requires to disable BH before its execution. This is just to
+mimic what upstream does in terms of locking and to ensure that BH
+invocation happens after the threaded interrupt ended.
+If there is nothing special about this interrupt handler (in terms of BH
+handling) you could request a threaded handler for the IRQ. The manually
+threaded handler do not disable BH before their invocation.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/pi_tests/pi_stress.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> Thanks,
+>     Gratian
 
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 9f4ffa49e926..cba1ad92ac2d 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -996,7 +996,7 @@ void usage(int error)
- 	       "-q       --quiet           suppress running output\n"
- 	       "-r       --rr              use SCHED_RR for test threads [SCHED_FIFO]\n"
- 	       "-s OPTS  --sched OPTS      scheduling options per thread type:\n"
--	       "   tid=[high|med|low]      select thread\n"
-+	       "   id=[high|med|low]      select thread\n"
- 	       "   ,policy=[fifo,rr]       scheduling class [SCHED_FIFO, SCHED_RR]\n"
- 	       "     ,priority=N           scheduling priority\n"
- 	       "   ,policy=[deadline]      scheduling class [DEADLINE]\n"
--- 
-2.31.1
-
+Sebastian
