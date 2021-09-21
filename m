@@ -2,125 +2,155 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.3 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.7 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1750CC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Sep 2021 18:00:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 78D51C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Sep 2021 21:12:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id EB958611ED
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Sep 2021 18:00:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 60C8F61183
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Sep 2021 21:12:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232124AbhIUSCI (ORCPT
+        id S234848AbhIUVOW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 21 Sep 2021 14:02:08 -0400
-Received: from smtp-out2.suse.de ([195.135.220.29]:36920 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231903AbhIUSCH (ORCPT
+        Tue, 21 Sep 2021 17:14:22 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:51190 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232386AbhIUVOV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Sep 2021 14:02:07 -0400
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id 351871FF03;
-        Tue, 21 Sep 2021 18:00:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1632247238; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        Tue, 21 Sep 2021 17:14:21 -0400
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1632258771;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=CYaWP1FKTUsV2gAS0XYYjwyo9Bf8DdyZWhObLWn/jw8=;
-        b=VRfyMRk/T9URM/a6Ppj0tGTnK8GE9rrePM2p/b4ekwc01Cxl5ZYYfdmklnVb8BsFiOcGCw
-        BzfOEOnROQN2U1ii/GYZSBPKi0zdgPfBZ7Qa/prQ5qItypUADlZGUNJcO7OldpJoOp44JK
-        QUq9USv/7zPcePH1dG6usflxWnFkQRo=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1632247238;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        bh=B/d9ecYh2L4gIWFi5kh23O8/tmeJ+Zy/cOZw1iVbWJ0=;
+        b=aoWeT3TAKrBIFSeky1ZLElvf7XtWUfLAzGXcrkiNVE+lzLHwt49Ll0ytAV2q8aPLgCLmhI
+        qdBtJ3KoCjGNkY//0RlUBSXaGUBGohFQU3Iha3XJtzuCQ4d0qKRVuMiDMhpq7xN697cRFG
+        mdX6yPlwppfpjOdcB2HHKO5XtS5tLrJZiQ5pcQA3xQ24QgpIhqQFtdsjTMKiTHUpmEiWRe
+        SXbvvsm4QuK7Bxr5XCA2hSrEDCQK+STSKIASSH1XXzfVLyMPBWA94am2gt4URR0GApSkBP
+        CLvAgPpxGyNm2bZP1+d2XFkUc+iVy+4JRW0jAj+f89oBvDkQOXuSDwOeV4Q8Vw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1632258771;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=CYaWP1FKTUsV2gAS0XYYjwyo9Bf8DdyZWhObLWn/jw8=;
-        b=r+9DYsUmf9GR/REYQqSWduAic4zAzdLuut4eV/blR4X2P5cQPZM2N9W8CA5JSxR2EMlrnL
-        H8VW+d9zygX/XtCA==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id F151313BE8;
-        Tue, 21 Sep 2021 18:00:37 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id nqNeOsUdSmGpSAAAMHmgww
-        (envelope-from <vbabka@suse.cz>); Tue, 21 Sep 2021 18:00:37 +0000
-Subject: Re: [PATCH 0/6] mm: Remote LRU per-cpu pagevec cache/per-cpu page
- list drain support
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
-        akpm@linux-foundation.org, frederic@kernel.org
-Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        tglx@linutronix.de, cl@linux.com, peterz@infradead.org,
-        juri.lelli@redhat.com, mingo@redhat.com, mtosatti@redhat.com,
-        nilal@redhat.com, mgorman@suse.de, ppandit@redhat.com,
-        williams@redhat.com, bigeasy@linutronix.de,
-        anna-maria@linutronix.de, linux-rt-users@vger.kernel.org
-References: <20210921161323.607817-1-nsaenzju@redhat.com>
-From:   Vlastimil Babka <vbabka@suse.cz>
-Message-ID: <f608b4bf-aa36-b0c4-e748-4f39010f3d06@suse.cz>
-Date:   Tue, 21 Sep 2021 19:59:51 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.12.0
+        bh=B/d9ecYh2L4gIWFi5kh23O8/tmeJ+Zy/cOZw1iVbWJ0=;
+        b=3jjc+7PBcS4ow3JDn4taHqXHsmytqlFtKQZlG67nicGebcHU638avfYfsznAktpZ4wte6s
+        t6czxYYgRKS6L4Dw==
+To:     Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        "Paul E. McKenney" <paulmck@kernel.org>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Mike Galbraith <efault@gmx.de>
+Subject: rcu/tree: Protect rcu_rdp_is_offloaded() invocations on RT
+In-Reply-To: <874kae6n3g.ffs@tglx>
+References: <20210811201354.1976839-1-valentin.schneider@arm.com>
+ <20210811201354.1976839-4-valentin.schneider@arm.com>
+ <874kae6n3g.ffs@tglx>
+Date:   Tue, 21 Sep 2021 23:12:50 +0200
+Message-ID: <87pmt163al.ffs@tglx>
 MIME-Version: 1.0
-In-Reply-To: <20210921161323.607817-1-nsaenzju@redhat.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 9/21/21 6:13 PM, Nicolas Saenz Julienne wrote:
-> This series introduces an alternative locking scheme around mm/swap.c's per-cpu
-> LRU pagevec caches and mm/page_alloc.c's per-cpu page lists which will allow
-> for remote CPUs to drain them. Currently, only a local CPU is permitted to
-> change its per-cpu lists, and it's expected to do so, on-demand, whenever a
-> process demands it (by means of queueing an drain task on the local CPU). Most
-> systems will handle this promptly, but it'll cause problems for NOHZ_FULL CPUs
-> that can't take any sort of interruption without breaking their functional
-> guarantees (latency, bandwidth, etc...). Having a way for these processes to
-> remotely drain the lists themselves will make co-existing with isolated CPUs
-> possible, at the cost of more constraining locks.
-> 
-> Fortunately for non-NOHZ_FULL users, the alternative locking scheme and remote
-> drain code are conditional to a static key which is disabled by default. This
-> guarantees minimal functional or performance regressions. The feature will only
-> be enabled if NOHZ_FULL's initialization process was successful.
-> 
-> This work is based on a previous series by Thomas Gleixner, Anna-Maria
-> Gleixner, and Sebastian Andrzej Siewior[1].
+Valentin reported warnings about suspicious RCU usage on RT kernels. Those
+happen when offloading of RCU callbacks is enabled:
 
-These days the pcplist protection is done by local_lock, which solved
-the RT concerns. Probably a stupid/infeasible idea, but maybe what you
-want to achieve could be more generally solved at the local_lock level?
-That on NOHZ_FULL CPUs, local_locks could have this mode where they
-could synchronize with remote cpus?
+  WARNING: suspicious RCU usage
+  5.13.0-rt1 #20 Not tainted
+  -----------------------------
+  kernel/rcu/tree_plugin.h:69 Unsafe read of RCU_NOCB offloaded state!
 
-> [1] https://patchwork.kernel.org/project/linux-mm/patch/20190424111208.24459-3-bigeasy@linutronix.de/
-> 
-> Nicolas Saenz Julienne (6):
->   mm/swap: Introduce lru_cpu_needs_drain()
->   mm/swap: Introduce alternative per-cpu LRU cache locking
->   mm/swap: Allow remote LRU cache draining
->   mm/page_alloc: Introduce alternative per-cpu list locking
->   mm/page_alloc: Allow remote per-cpu page list draining
->   sched/isolation: Enable 'remote_pcpu_cache_access' on NOHZ_FULL
->     systems
-> 
->  kernel/sched/isolation.c |   9 +-
->  mm/internal.h            |   2 +
->  mm/page_alloc.c          | 111 ++++++++++++++++-----
->  mm/swap.c                | 202 ++++++++++++++++++++++++++++++---------
->  4 files changed, 253 insertions(+), 71 deletions(-)
-> 
+  rcu_rdp_is_offloaded (kernel/rcu/tree_plugin.h:69 kernel/rcu/tree_plugin.h:58)
+  rcu_core (kernel/rcu/tree.c:2332 kernel/rcu/tree.c:2398 kernel/rcu/tree.c:2777)
+  rcu_cpu_kthread (./include/linux/bottom_half.h:32 kernel/rcu/tree.c:2876)
 
+The reason is that rcu_rdp_is_offloaded() is invoked without one of the
+required protections on RT enabled kernels because local_bh_disable() does
+not disable preemption on RT.
+
+Valentin proposed to add a local lock to the code in question, but that's
+suboptimal in several aspects:
+
+  1) local locks add extra code to !RT kernels for no value.
+
+  2) All possible callsites have to audited and amended when affected
+     possible at an outer function level due to lock nesting issues.
+
+  3) As the local lock has to be taken at the outer functions it's required
+     to release and reacquire them in the inner code sections which might
+     voluntary schedule, e.g. rcu_do_batch().
+
+Both callsites of rcu_rdp_is_offloaded() which trigger this check invoke
+rcu_rdp_is_offloaded() in the variable declaration section right at the top
+of the functions. But the actual usage of the result is either within a
+section which provides the required protections or after such a section.
+
+So the obvious solution is to move the invocation into the code sections
+which provide the proper protections, which solves the problem for RT and
+does not have any impact on !RT kernels.
+
+Reported-by: Valentin Schneider <valentin.schneider@arm.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+---
+ kernel/rcu/tree.c |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -2278,13 +2278,13 @@ rcu_report_qs_rdp(struct rcu_data *rdp)
+ {
+ 	unsigned long flags;
+ 	unsigned long mask;
+-	bool needwake = false;
+-	const bool offloaded = rcu_rdp_is_offloaded(rdp);
++	bool offloaded, needwake = false;
+ 	struct rcu_node *rnp;
+ 
+ 	WARN_ON_ONCE(rdp->cpu != smp_processor_id());
+ 	rnp = rdp->mynode;
+ 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
++	offloaded = rcu_rdp_is_offloaded(rdp);
+ 	if (rdp->cpu_no_qs.b.norm || rdp->gp_seq != rnp->gp_seq ||
+ 	    rdp->gpwrap) {
+ 
+@@ -2446,7 +2446,7 @@ static void rcu_do_batch(struct rcu_data
+ 	int div;
+ 	bool __maybe_unused empty;
+ 	unsigned long flags;
+-	const bool offloaded = rcu_rdp_is_offloaded(rdp);
++	bool offloaded;
+ 	struct rcu_head *rhp;
+ 	struct rcu_cblist rcl = RCU_CBLIST_INITIALIZER(rcl);
+ 	long bl, count = 0;
+@@ -2472,6 +2472,7 @@ static void rcu_do_batch(struct rcu_data
+ 	rcu_nocb_lock(rdp);
+ 	WARN_ON_ONCE(cpu_is_offline(smp_processor_id()));
+ 	pending = rcu_segcblist_n_cbs(&rdp->cblist);
++	offloaded = rcu_rdp_is_offloaded(rdp);
+ 	div = READ_ONCE(rcu_divisor);
+ 	div = div < 0 ? 7 : div > sizeof(long) * 8 - 2 ? sizeof(long) * 8 - 2 : div;
+ 	bl = max(rdp->blimit, pending >> div);
