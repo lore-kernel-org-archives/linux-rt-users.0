@@ -2,129 +2,109 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-7.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D921C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Sep 2021 09:50:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 03FACC433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Sep 2021 11:10:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2F9FF61100
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Sep 2021 09:50:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D82F9611C0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Sep 2021 11:10:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234528AbhIVJvm (ORCPT
+        id S235303AbhIVLLq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Sep 2021 05:51:42 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:39004 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S234387AbhIVJvl (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Sep 2021 05:51:41 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1632304211;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=HWU7csjt4Np/ai++4aBlLIWralnkqY/1oQmbIHwv+NI=;
-        b=d5dMTWoT1IsIoBa24qiJLrxRzYkmxqb7a64hxf2Orokpg0+hoOeDF7bDTVUoZC1S15ta36
-        +HbKalklo/7rrMD4gmyyo0ri8PQJlAgwaNOevmN/RHRueJ1RK58m3M8dk+fwtsChnVJW+r
-        L5WTax272SeW6QvavDFDErpm+83AX8k=
-Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
- [209.85.221.71]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-9-7YVswIDONLKKEmHXn65HBw-1; Wed, 22 Sep 2021 05:50:10 -0400
-X-MC-Unique: 7YVswIDONLKKEmHXn65HBw-1
-Received: by mail-wr1-f71.google.com with SMTP id r7-20020a5d6947000000b0015e0f68a63bso1598976wrw.22
-        for <linux-rt-users@vger.kernel.org>; Wed, 22 Sep 2021 02:50:09 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
-         :references:user-agent:mime-version:content-transfer-encoding;
-        bh=HWU7csjt4Np/ai++4aBlLIWralnkqY/1oQmbIHwv+NI=;
-        b=SnKGxUyzSQXlMsgRNxDqiAGnbEBgkkZdIDyzkKVXV8Bk/EEQ5qLt1Sql7jWraeHLD5
-         1UJ5UmraWISiapfFW8Jjs/rTGsEOxZk1CAb+4RrPakMZBVW+TSlorA0+PhFXr1R2pXgR
-         Fo2+NpUsQaSZEbirYcrSBfNdTnXnts3akzVRkgwD6KaT/bzgzVNdOlHv9pXQBmq7POZW
-         cqYuVobpAKt/wUMAdyHf2fNHOBG5qy54OSObRpdOQqwLsyXmHmGn5Y1B3EGYDdEfZOMT
-         p1Md5L6UzII9qBHIRulMSP0f95hdz9FPl8FIz8/Vs6JR+hvpMMZ2sLctzBmThSHmO3bF
-         EDxA==
-X-Gm-Message-State: AOAM530HEDwZ3xmI79xepBOrydmookZRYbOAsSiw90TQ+QmDtHZBEZdj
-        TJH6Jc46gJmsv2Pb6MwH4y/JyGfRcWhaKcJ7tHL+u3VfMYUKevAotygwUpHCrlMIP/WGX9vMBec
-        AOvZWafBvdFdD1Z8fOpxt0b83UfU=
-X-Received: by 2002:a5d:47a3:: with SMTP id 3mr38586421wrb.334.1632304208913;
-        Wed, 22 Sep 2021 02:50:08 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxSdlRuz+OyjwzCgzVR2s/BhfvS6G/FdxXQ7YW/wSm+ya8/shGeXeBe0T4XHcZG3G0y6rx1lQ==
-X-Received: by 2002:a5d:47a3:: with SMTP id 3mr38586391wrb.334.1632304208701;
-        Wed, 22 Sep 2021 02:50:08 -0700 (PDT)
-Received: from ?IPv6:2a0c:5a80:1d03:b900:c3d1:5974:ce92:3123? ([2a0c:5a80:1d03:b900:c3d1:5974:ce92:3123])
-        by smtp.gmail.com with ESMTPSA id f8sm1651573wrx.15.2021.09.22.02.50.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 22 Sep 2021 02:50:08 -0700 (PDT)
-Message-ID: <7c8594d5943f99bc647951269606ae24dd1b37de.camel@redhat.com>
-Subject: Re: [PATCH 2/6] mm/swap: Introduce alternative per-cpu LRU cache
- locking
-From:   nsaenzju@redhat.com
+        Wed, 22 Sep 2021 07:11:46 -0400
+Received: from mail.kernel.org ([198.145.29.99]:33770 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S235293AbhIVLLp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Sep 2021 07:11:45 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 03BBB61050;
+        Wed, 22 Sep 2021 11:10:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1632309014;
+        bh=heL9ashJZjDXOujO0aAimbm/D8yBEukgS7g+p+wZ0ps=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=Y2d16Jyh5F/xzhvIwRlDHLRaVW7DbD3t+EZTg4COyDcZeIBU65zti9fqJZICzEwNo
+         ltFnrILzJ3lCdMkDSq+vCfPWnLTGKrVkmP9GxT8NnOZ5kudw3G4VS6R3YKvYd8koQi
+         nzci3jd+b/s8o2U9DLzMZJ0pCfHbFAxjjvI23BtSCu9txoTjddzX1lg/9tw85YWENo
+         qBCcZWhKiGYS5DVFwyRkqCicyeXvs9FtOExuIyHsY8GbIdiuwtXJcWF++kMGLGUCeq
+         l7d/SHcV4pInDsJri8BalseyYbCjDLbrP6Dvpa0H1SF7uidIb5i6kZZPPRYoEGxxkN
+         hnbyZgXIJ8u/g==
+Date:   Wed, 22 Sep 2021 13:10:12 +0200
+From:   Frederic Weisbecker <frederic@kernel.org>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>, akpm@linux-foundation.org,
-        frederic@kernel.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, tglx@linutronix.de, cl@linux.com,
-        juri.lelli@redhat.com, mingo@redhat.com, mtosatti@redhat.com,
-        nilal@redhat.com, mgorman@suse.de, ppandit@redhat.com,
-        williams@redhat.com, anna-maria@linutronix.de,
-        linux-rt-users@vger.kernel.org
-Date:   Wed, 22 Sep 2021 11:50:07 +0200
-In-Reply-To: <20210922092039.2j6efnkhmfxuzjnx@linutronix.de>
-References: <20210921161323.607817-1-nsaenzju@redhat.com>
-         <20210921161323.607817-3-nsaenzju@redhat.com>
-         <20210921220358.GN4323@worktop.programming.kicks-ass.net>
-         <0ec733daf2daaf8a6f5b1fbf56676b9892d5bf73.camel@redhat.com>
-         <20210922092039.2j6efnkhmfxuzjnx@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.40.4 (3.40.4-1.fc34) 
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        "Paul E. McKenney" <paulmck@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Mike Galbraith <efault@gmx.de>
+Subject: Re: rcu/tree: Protect rcu_rdp_is_offloaded() invocations on RT
+Message-ID: <20210922111012.GA106513@lothringen>
+References: <20210811201354.1976839-1-valentin.schneider@arm.com>
+ <20210811201354.1976839-4-valentin.schneider@arm.com>
+ <874kae6n3g.ffs@tglx>
+ <87pmt163al.ffs@tglx>
+ <20210921234518.GB100318@lothringen>
+ <20210922063208.ltf7sdou4tr5yrnc@linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20210922063208.ltf7sdou4tr5yrnc@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 2021-09-22 at 11:20 +0200, Sebastian Andrzej Siewior wrote:
-> On 2021-09-22 10:47:07 [+0200], nsaenzju@redhat.com wrote:
-> > > *why* use migrate_disable(), that's horrible!
+On Wed, Sep 22, 2021 at 08:32:08AM +0200, Sebastian Andrzej Siewior wrote:
+> On 2021-09-22 01:45:18 [+0200], Frederic Weisbecker wrote:
 > > 
-> > I was trying to be mindful of RT. They don't appreciate people taking spinlocks
-> > just after having disabled preemption.
+> > Also while at it, I'm asking again: traditionally softirqs could assume that
+> > manipulating a local state was safe against !irq_count() code fiddling with
+> > the same state on the same CPU.
 > > 
-> > I think getting local_lock(&locks->local) is my only option then. But it adds
-> > an extra redundant spinlock in the RT+NOHZ_FULL case.
+> > Now with preemptible softirqs, that assumption can be broken anytime. RCU was
+> > fortunate enough to have a warning for that. But who knows how many issues like
+> > this are lurking?
 > 
-> spin_lock() does not disable preemption on PREEMPT_RT. You don't
-> disables preemption on purpose or did I miss that?
+> If "local state" is modified then it is safe as long as it is modified
+> within a local_bh_disable() section. And we are in this section while
+> invoking a forced-threaded interrupt. The special part about RCU is
+> that it is used in_irq() as part of core-code.
 
-Sorry my message wasn't clear. Adding code for context:
+But local_bh_disable() was deemed for protecting from interrupting softirqs,
+not the other way around (softirqs being preempted by other tasks). The latter
+semantic is new and nobody had that in mind until softirqs have been made
+preemptible.
 
-+ static inline void lru_cache_lock(struct lru_cache_locks *locks)
-+ {
-+ 	if (static_branch_unlikely(&remote_pcpu_cache_access)) {
-+ 		/* Avoid migration between this_cpu_ptr() and spin_lock() */
-+ 		migrate_disable();
+For example:
 
-IIUC PeterZ would've preferred that I disable preemption here. And what I meant
-to explain is that, given the spinlock below, I choose migrate_disable() over
-preempt_disable() to cater for RT.
+                             CPU 0
+          -----------------------------------------------
+          SOFTIRQ                            RANDOM TASK
+          ------                             -----------
+          int *X = &per_cpu(CPUX, 0)         int *X = &per_cpu(CPUX, 0)
+          int A, B;                          WRITE_ONCE(*X, 0);
+                                             WRITE_ONCE(*X, 1);
+          A = READ_ONCE(*X);
+          B = READ_ONCE(*X);
 
-+ 		spin_lock(this_cpu_ptr(&locks->spin));
-+ 	} else {
 
-
-So, to make both worlds happy, I think the only option left is using the
-local_lock (at the expense of extra overhead in the RT+NOHZ_FULL case):
-
-+ 	if (static_branch_unlikely(&remote_pcpu_cache_access)) {
-+ 		/* Local lock avoids migration between this_cpu_ptr() and spin_lock() */
-+		local_lock(&locks->local);
-+ 		spin_lock(this_cpu_ptr(&locks->spin));
-+	} else {
-
--- 
-Nicolás Sáenz
-
+We used to have the guarantee that A == B. That's not true anymore. Now
+some new explicit local_bh_disable() should be carefully placed on RANDOM_TASK
+where it wasn't necessary before. RCU is not that special in this regard.
