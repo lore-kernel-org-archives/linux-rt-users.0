@@ -1,227 +1,613 @@
 Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E27FC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Sep 2021 07:19:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B28CBC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Sep 2021 17:53:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 506AB61242
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Sep 2021 07:19:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 984C161261
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Sep 2021 17:53:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244356AbhIXHUo convert rfc822-to-8bit (ORCPT
+        id S1345045AbhIXRy5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 Sep 2021 03:20:44 -0400
-Received: from mo-csw1114.securemx.jp ([210.130.202.156]:60760 "EHLO
-        mo-csw.securemx.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244396AbhIXHUh (ORCPT
+        Fri, 24 Sep 2021 13:54:57 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:43298 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1344909AbhIXRy4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 Sep 2021 03:20:37 -0400
-Received: by mo-csw.securemx.jp (mx-mo-csw1114) id 18O7Iqcl005386; Fri, 24 Sep 2021 16:18:52 +0900
-X-Iguazu-Qid: 2wHHmJkRpwOzUm8gTI
-X-Iguazu-QSIG: v=2; s=0; t=1632467932; q=2wHHmJkRpwOzUm8gTI; m=SWMItt4nIbdFY056vPPaCx8C8WPf8n6jQ5dU1iXAH8s=
-Received: from imx12-a.toshiba.co.jp (imx12-a.toshiba.co.jp [61.202.160.135])
-        by relay.securemx.jp (mx-mr1113) id 18O7IpNH016638
-        (version=TLSv1.2 cipher=AES128-GCM-SHA256 bits=128 verify=NOT);
-        Fri, 24 Sep 2021 16:18:52 +0900
-Received: from enc02.toshiba.co.jp (enc02.toshiba.co.jp [61.202.160.51])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by imx12-a.toshiba.co.jp (Postfix) with ESMTPS id B43BC10012B;
-        Fri, 24 Sep 2021 16:18:51 +0900 (JST)
-Received: from hop101.toshiba.co.jp ([133.199.85.107])
-        by enc02.toshiba.co.jp  with ESMTP id 18O7IpVq012533;
-        Fri, 24 Sep 2021 16:18:51 +0900
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=EctqGTj5YiLsiQS1e4apKQmNVpWk+jfCcn2opRbVMCi+dCBZwkustDo5msItmYFpMT/j+1ddpLHwvtHFp7Oz01Hsl9sHhwyzme8MBg7Gv9BcS5ruwe+uRYQvbMGbYKxZrMO+krMQx2ZDD9dLYlbPrU3XdWB42Jc/JMHNa3zbzVLxnAP1m0pfOERVfh/g8AHoGYdIGoQs+PO8IibmTGRDiGaMDmoLfPqYoP9juaFu7u9IdcYNM06gCkwjWQeftoBeiIVp+0lOIEH3HTL8FEx898oi0Ch3t2C+4wf/0PGr+ZDexAu8Hbe+eMRPZMJ0Eavid5td1ixF/PAJMtEukFWbmg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901; h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
- bh=7cmku+Ig49UoK9s21InPg+4/ojqf00P+Tj6tbZgjVdA=;
- b=cxiXIBMtZTW88Nec30vuk8PHmrwvdjnz1/7c6XSS7jPJJudCPR2JDEqBTArf27lNOko9H5rJJr9P5bZvBDJCwkd31JWyI5kqE8Gk/8n08JZwDIzYiaWHlIcy3iTrTqvVtLAg7irfPq1XbYCswp5s0bHDhoULoZK7jWK+9xv0ZhMO3h7jZyX4x6oLWMHjqlHh9nu6rMq6WC1tHKFruSF42wT2v223FXJ73auEdLgcgP6tVRkOlEK0+hX991h2KXNK+qye8c30bx8VvUEoEV/2OtHgociJVeNKDXWgflb43fVr9yjpVuXKbFVD8JStCqUTxZ2cdeqDO53YPN8yxzMUwQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=toshiba-tsip.com; dmarc=pass action=none
- header.from=toshiba-tsip.com; dkim=pass header.d=toshiba-tsip.com; arc=none
-From:   <Venkata.Pyla@toshiba-tsip.com>
-To:     <jkacur@redhat.com>
-CC:     <punit1.agrawal@toshiba.co.jp>, <daniel.sangorrin@toshiba.co.jp>,
-        <dinesh.kumar@toshiba-tsip.com>, <linux-rt-users@vger.kernel.org>
-Subject: RE: [PATCH] rteval: kcompile.py: Relax the requirement for kernel
- tarball filename
-Thread-Topic: [PATCH] rteval: kcompile.py: Relax the requirement for kernel
- tarball filename
-Thread-Index: AQHXr9W0SxIZJ3eyEEaE/twZp/yQl6uyA28AgAC0hBA=
-Date:   Fri, 24 Sep 2021 07:18:44 +0000
-X-TSB-HOP: ON
-Message-ID: <OSYPR01MB55421382C76DBBDF644DBCE3A4A49@OSYPR01MB5542.jpnprd01.prod.outlook.com>
-References: <20210922171740.8939-1-venkata.pyla@toshiba-tsip.com>
- <f735b9b-3a71-7ccf-fbaa-e6aab76748ff@redhat.com>
-In-Reply-To: <f735b9b-3a71-7ccf-fbaa-e6aab76748ff@redhat.com>
-Accept-Language: en-IN, en-US
-Content-Language: en-US
-authentication-results: redhat.com; dkim=none (message not signed)
- header.d=none;redhat.com; dmarc=none action=none
- header.from=toshiba-tsip.com;
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: ec454548-91e7-4198-17d8-08d97f2b8afa
-x-ms-traffictypediagnostic: OSBPR01MB2375:
-x-ld-processed: f109924e-fb71-4ba0-b2cc-65dcdf6fbe4f,ExtAddr,ExtFwd
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <OSBPR01MB2375C89E6E9376DC2270F482A4A49@OSBPR01MB2375.jpnprd01.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:9508;
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: Q0W4uuuRm8dwcgJL7UAogOQxCv1UCTljgBUZIFXqZqA566GOsZM/2RiBqxsxYpadcTMG1T54167PCgs8DP0B9EwHeY3r/w8wVuTmROZI9WaujiSvjCrhvMLInX7NMwdq/caW9mNuVISb/ZWiy88oPgogVjnQoHwZ/5fpSBAd+V8HxM6keL7ZWgrfbErXZ66OXX0od3glC4ajeVN+7+yAKUYJNWO2fdcpPCq8I5iDceE/1scl6wwQsqalB49pLDreKQTD7TpJeLtKO4FfMQ1WAUbsf4KJxbEj+qtwqAUdCx/MtDDpeU+D0sADOTmik2fUiIcz/VGtjrG0THO2rDjEEwS3nY8KJSN/BwBQFXKiBgaUvI4XQHr8IVv/I89c+Ssp+oETpf12XCtgkv3fQEEXTwbiDgXjszT449BcvRj2aj+PA1E6UhC3QTyawB4rHbmoHBjVSkOR+XhsTAoNnyEARZgJKJTxknGgeUOEstpx5ux+2eJK/Z38aY8wGHS2jhW80m++TgMXMVF32MCFrzRIa7C+obwrO7n3Uek0eIQ4zbPqunDGGCcSD17Qn1JuCGuNWsn7pbY+E6EYyhuglpdDVXsix84GlcJxDNEchVVb2W5NcL23shtMZJdpBxUByDGj/63/05zzxS1UdB8iBCztTwWMZ2vSo2ur7SN0Rd8blDHOyprkh8BfHjrAxT/LUbQcuflfZSuIakXcz3v/kTgHYA==
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:OSYPR01MB5542.jpnprd01.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(366004)(5660300002)(8676002)(122000001)(6916009)(85182001)(316002)(71200400001)(2906002)(38100700002)(26005)(4326008)(55016002)(33656002)(9686003)(7696005)(38070700005)(508600001)(86362001)(6506007)(66446008)(64756008)(66476007)(66556008)(186003)(55236004)(76116006)(83380400001)(66946007)(8936002)(54906003)(52536014);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-2022-jp?B?VFRYWmhhT0IvN2tRdERIYWxZU3lXdVlTZWZmcFEwLzhEdTFrbTlPaVBF?=
- =?iso-2022-jp?B?MW1yUzlMZ0ZDRTFLU0dMM3R3NnpKVUZTZWQ3NW9sbnRManNOWU5OL1Y2?=
- =?iso-2022-jp?B?WWJBRDFUelNZVlFjdWRDTXN6TW1SSWc4SnprZVpUYzhTcUZiTGhQb1pp?=
- =?iso-2022-jp?B?ZlhlSHR0c2dRY3dkbGRFZEM3b1ltenh1Y21MeDdtTVRqak1YTklpZ3VG?=
- =?iso-2022-jp?B?SzA5ZG1ITVArMVdzeEtUKzB6YUVVb0ZDQUpBanQ1Qk9UUHNVQzAvWnNu?=
- =?iso-2022-jp?B?dGMwSVdOLzZLejVzVmdGeWZ1bmt1L2I3ODlPUC9Xb0ZIT1kvcHQ2TmtM?=
- =?iso-2022-jp?B?VkNvTWZ1VjZZZHJIbG5CaTVQbFdPV3EzelVxVy9ja1pFakIzT2xNMTZL?=
- =?iso-2022-jp?B?cHQ0NkF5L2FEbWJ4ODVqM25FNE50YWhwRU44MFFXaXVHTWlseTF2ZnN5?=
- =?iso-2022-jp?B?ZHYrK3pWbE5nYWVIWXFuTGNRSjA5bDVzZk1XK0ZRd1IvYnFINWk4NzV5?=
- =?iso-2022-jp?B?VGhLTWZDY0NaL0htNkFYRHVvcEFJanBxOXVYLytlM215NUJhTXJVWnFh?=
- =?iso-2022-jp?B?RzN3UmdHT3k3cWZiOWVxWXF4cC9SeFp5c0dnY1RESFBxTGZGT3VSYlM5?=
- =?iso-2022-jp?B?TzlBNVFHV05VUHdiRko4VnplMG1lTWdNVVdhMnJwYU81UCs2SldIeVlF?=
- =?iso-2022-jp?B?N1lINXRTWjhDTkUxNEl3eDRvNTFMTTA5bllRYWFvbWJlUUY3aTNsb25u?=
- =?iso-2022-jp?B?dEJnVjNIUzNJSHExNlNuUkN0WXpLcnR3Z2RMTzFmdVVxYm5IZElFdEk3?=
- =?iso-2022-jp?B?ZG1BV3FrYkIxRE1wR09jUndNd3lHV3F3RVZPekUxeXpZUTNYQVdLZUg5?=
- =?iso-2022-jp?B?MEh1T2lXSXJBSzlTOWdLei8rTXZGV2NQT2JmSTNqUXV2WE4vQVdkWlBR?=
- =?iso-2022-jp?B?Y09pS0tkcWQyaC93RXBFSkR4NHBDR1B6c294d1Q0WWh6Q0U4bGhWMXNK?=
- =?iso-2022-jp?B?Z3lGSkNmdkJ0Qlc3NmtVcFI2eW9mZWxGWGVaQVpsYU16QVZubFdLaGFr?=
- =?iso-2022-jp?B?NjdzMFVCT1NIWkNaNmpVeEhuN3h3U3V4b2hEQ3pZV0s2NzU2UytZZXFo?=
- =?iso-2022-jp?B?UVRDdmtrRGV3S1lBODA3emhKTE8rVlhpZFV0bU1MSUVaLytFU05yYmhq?=
- =?iso-2022-jp?B?b3NqL2ljb1I0S2J0VS9mM0pNMXg0QytDN08xOWRVNGh5aHR2TlVVZnFM?=
- =?iso-2022-jp?B?QXhBaWZENXh2QmVIVDI2WnpCc2RzZFpYTHQyTGdxOWxuYTdERjAyQnFx?=
- =?iso-2022-jp?B?UXErdnlUOWtrRWtLNzdQTnB1TDBBNS9zSG1icWs5QmZCdXE1eG1rcFBN?=
- =?iso-2022-jp?B?aEUvVUhMTnFPL1Q4RERGUUpxVTFXcWlLMVRwUllyOTkzb2pzNTZmc3V4?=
- =?iso-2022-jp?B?c2hHZEdxdlBTK1pSTUc5VVdpQ0l5UmZNbXEvQ2Q2UEt3a05WeGowbXV1?=
- =?iso-2022-jp?B?WFljYUZOdlhzbXBGVko5dVZUT1RPSTIrSStsd3puakk0Q2drS080ZFd6?=
- =?iso-2022-jp?B?c0NwbmF0MTZEWmNOWjlpS25vUlRaR01iZUtJb2l1bnFHWC9XbkY1M0lp?=
- =?iso-2022-jp?B?T2I3ZWVPV1JpVSsva0duTGFTR0dabjhvNGdTOC9ORDBBYkFncTdjWEkv?=
- =?iso-2022-jp?B?MVdUcFhxc1gvKzg1ZlFRN3U3M1pKa1lBWjJqYVRKb3owZmVvdUFEdnlL?=
- =?iso-2022-jp?B?R1B3dTFpTnpiSFJLNlBIdnBlTUNCb1RRY2FlRlAzZmlrbXN0aXNwa1Q3?=
- =?iso-2022-jp?B?TEtVUlNMcENRNjVBWnJLaE5SMlVqM1NSWDNSVEVheVBQWGR5QTZPUFFx?=
- =?iso-2022-jp?B?cGk2SmwvM244bXp1TTY2UUpBdGhEeTk4ZlZOVEpxQUN1RHVQQ01hczRI?=
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: 8BIT
+        Fri, 24 Sep 2021 13:54:56 -0400
+Date:   Fri, 24 Sep 2021 19:53:20 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1632506002;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=PxmHsJuyltV4wP6N8LgYNmL4TsHrLx1ulwEY6BjoArc=;
+        b=ZZwHg/DrOCvJixD7jx+RMjsODgB72ODybtD6DLyOEHITFF1WIJiFeHK0+UpRN2H9YW78Ud
+        /QlsGEhxAA1q/p/068pzmEujlE3tArcUjeE5uxQlzAgbfrnzIINkIFfM88Z3Ks0+2+qX9E
+        UHahm9nzcBmszvVixoSrL2zNEvbjvaHyuXMLHSeNY59te5SGKZ8fMaxe96PpnQJ4Wz+mIN
+        +wbAzuSXsaM/COXSP4hux55eZ7tlpW4JmsBpNbssPelKXvrXUKNsykyF5P/H9/m/TtwelM
+        0H5cp8JVKgT/O1PWkraAAdWZ0C/PUW2725KFY8G31y1GuseNqlam+OObd/vIqA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1632506002;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=PxmHsJuyltV4wP6N8LgYNmL4TsHrLx1ulwEY6BjoArc=;
+        b=9KXNvIm5nqrnx4KlWLc9lo7DllYX17kh5FFHtyEAYL7WfX0q+pdU4/VoqkHaivBEFs9ESW
+        pxzau601SItPGXDw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.15-rc2-rt4
+Message-ID: <20210924175320.qgk26g5jqgjhe55i@linutronix.de>
 MIME-Version: 1.0
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: OSYPR01MB5542.jpnprd01.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ec454548-91e7-4198-17d8-08d97f2b8afa
-X-MS-Exchange-CrossTenant-originalarrivaltime: 24 Sep 2021 07:18:44.1155
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f109924e-fb71-4ba0-b2cc-65dcdf6fbe4f
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: xEDodavm1a+yMORa56droM+jcHvYrA/4dqgVSF5Hdg1h2sSmDCAlEM+y2oYZUqMp2fXRLneOWgpgpdCrOvr4uwul99HQ/b9Nv+e9GkqDB3U=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSBPR01MB2375
-X-OriginatorOrg: toshiba-tsip.com
-Received-SPF: Fail (TGXML363.toshiba.local: domain of
- Venkata.Pyla@toshiba-tsip.com does not designate 104.47.93.58 as permitted
- sender) receiver=TGXML363.toshiba.local; client-ip=104.47.93.58;
- helo=JPN01-TY1-obe.outbound.protection.outlook.com;
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi John Kacur,
+Dear RT folks!
 
-Thanks for your time and explaining it.
+I'm pleased to announce the v5.15-rc2-rt4 patch set. 
 
-please see my inline comments.
+Changes since v5.15-rc2-rt3:
 
->-----Original Message-----
->From: John Kacur <jkacur@redhat.com>
->Sent: 24 September 2021 01:01
->To: pyla venkata(ＴＳＩＰ) <Venkata.Pyla@toshiba-tsip.com>
->Cc: agrawal punit(アグラワル プニト □ＳＷＣ◯ＡＣＴ)
-><punit1.agrawal@toshiba.co.jp>; sangorrin daniel(サンゴリン ダニエル □ＳＷＣ◯
->ＡＣＴ) <daniel.sangorrin@toshiba.co.jp>; dinesh kumar(ＴＳＩＰ)
-><dinesh.kumar@toshiba-tsip.com>; linux-rt-users@vger.kernel.org
->Subject: Re: [PATCH] rteval: kcompile.py: Relax the requirement for kernel
->tarball filename
->
->
->
->On Wed, 22 Sep 2021, venkata.pyla@toshiba-tsip.com wrote:
->
->> From: venkata pyla <venkata.pyla@toshiba-tsip.com>
->>
->> The kcompile module includes kernel version when looking for tarballs
->> or source folders. This necessitates periodically bumping the
->> kernel_prefix but also requires the user to provide particular version
->> of the kernel sources when using this workload. As the intent is to
->> generate a compile workload the source version used shouldn't matter.
->>
->> To make life easier both for users and developers, relax the
->> requirement for specific version of kernel sources when using
->> kcompile.
->>
->> Signed-off-by: venkata pyla <venkata.pyla@toshiba-tsip.com>
->> ---
->>  rteval/modules/loads/kcompile.py | 2 +-
->>  1 file changed, 1 insertion(+), 1 deletion(-)
->>
->> diff --git a/rteval/modules/loads/kcompile.py
->> b/rteval/modules/loads/kcompile.py
->> index 8d08a3d..be40a62 100644
->> --- a/rteval/modules/loads/kcompile.py
->> +++ b/rteval/modules/loads/kcompile.py
->> @@ -35,7 +35,7 @@ from rteval.Log import Log  from rteval.misc import
->> expand_cpulist, compress_cpulist  from rteval.systopology import
->> SysTopology
->>
->> -kernel_prefix = "linux-5.13"
->> +kernel_prefix = "linux"
->>
->>  class KBuildJob:
->>      '''Class to manage a build job bound to a particular node'''
->> --
->> 2.20.1
->>
->>
->>
->
->It shouldn't be onerous for a developer to grab the right version of the kernel
->from kernel.org and save it in loadsource
+  - Reformatted a function invocation in SMACK.
 
-IIUC, my intention also same to avoid the hardening the kernel version in the source
-And let users pick the version they want.
+  - Wake ksoftirqd from idle again. A logic bug was introduced in around
+    v5.14-rc3-rt1.
 
-But also, I agree with your point for the comparison purpose, the loads should also be same.
-This needs more discussion and specific to users points of view.
+  - Two explicit atomic.h includes were introduced because ARM failed to
+    compile depending on some options. It appears that this is no longer
+    the case and so the additional includes were dropped again.
+
+  - Additional might_sleep() improvements. Now it splat should be more
+    readable / provide additional details. Patches by Thomas Gleixner.
+
+  - Rework the delayed mm_struct and task stack deallocation. Patches by
+    Thomas Gleixner.
+
+Known issues
+     - netconsole triggers WARN.
+
+     - The "Memory controller" (CONFIG_MEMCG) has been disabled.
+
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://https://lkml.kernel.org/r/.kernel.org/lkml/20210810134127.1394269-1-valentin.schneider@arm.com/
+
+The delta patch against v5.15-rc2-rt3 is appended below and can be found here:
  
->
->As for users, they are probably getting rteval from a distribution.
->In Fedora and rhel we split it out into two packages.
->rteval and rteval-loads. rteval-loads has the correct kernel version.
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/incr/patch-5.15-rc2-rt3-rt4.patch.xz
 
-We are downloading the rteval source manually and so the load sources as well.
-When I use different kernel version then I need to change the rteval source as well which I felt little uncomfortable and so I made this change. 
+You can get this release via the git tree at:
 
->
->The idea behind this is that rteval changes more often than the version of the
->kernel we compile, so the user doesn't have to download a new kernel
->everytime they download a new version of rteval.
->
->You make a good point though that the purpose is to provide a load.
->We have had some discussions in the past about whether making sure everyone
->is using the same load so that we have apples to apples comparisons is
->necessary or not. I might revisit this in the future with some innovations to
->kcompile, but for now this is a NAK.
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.15-rc2-rt4
 
-I agree.
+The RT patch against v5.15-rc2 can be found here:
 
->
->Thank You
->
->John
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patch-5.15-rc2-rt4.patch.xz
 
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patches-5.15-rc2-rt4.tar.xz
+
+Sebastian
+
+diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+index 2776423a587e4..e8696e4a45aa0 100644
+--- a/include/linux/kernel.h
++++ b/include/linux/kernel.h
+@@ -111,8 +111,8 @@ static __always_inline void might_resched(void)
+ #endif /* CONFIG_PREEMPT_* */
+ 
+ #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
+-extern void ___might_sleep(const char *file, int line, int preempt_offset);
+-extern void __might_sleep(const char *file, int line, int preempt_offset);
++extern void __might_resched(const char *file, int line, unsigned int offsets);
++extern void __might_sleep(const char *file, int line);
+ extern void __cant_sleep(const char *file, int line, int preempt_offset);
+ extern void __cant_migrate(const char *file, int line);
+ 
+@@ -129,7 +129,7 @@ extern void __cant_migrate(const char *file, int line);
+  * supposed to.
+  */
+ # define might_sleep() \
+-	do { __might_sleep(__FILE__, __LINE__, 0); might_resched(); } while (0)
++	do { __might_sleep(__FILE__, __LINE__); might_resched(); } while (0)
+ /**
+  * cant_sleep - annotation for functions that cannot sleep
+  *
+@@ -168,10 +168,9 @@ extern void __cant_migrate(const char *file, int line);
+  */
+ # define non_block_end() WARN_ON(current->non_block_count-- == 0)
+ #else
+-  static inline void ___might_sleep(const char *file, int line,
+-				   int preempt_offset) { }
+-  static inline void __might_sleep(const char *file, int line,
+-				   int preempt_offset) { }
++  static inline void __might_resched(const char *file, int line,
++				     unsigned int offsets) { }
++static inline void __might_sleep(const char *file, int line) { }
+ # define might_sleep() do { might_resched(); } while (0)
+ # define cant_sleep() do { } while (0)
+ # define cant_migrate()		do { } while (0)
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index 33c14785c46b2..af308e15f174c 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -3,7 +3,6 @@
+ #define _LINUX_PID_H
+ 
+ #include <linux/rculist.h>
+-#include <linux/atomic.h>
+ #include <linux/wait.h>
+ #include <linux/refcount.h>
+ 
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index cf665d25838cf..dc8158a459859 100644
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -123,16 +123,9 @@
+  */
+ #if !defined(CONFIG_PREEMPT_RT)
+ #define PREEMPT_LOCK_OFFSET		PREEMPT_DISABLE_OFFSET
+-#define PREEMPT_LOCK_RESCHED_OFFSET	PREEMPT_LOCK_OFFSET
+ #else
+ /* Locks on RT do not disable preemption */
+ #define PREEMPT_LOCK_OFFSET		0
+-/*
+- * spin/rw_lock() on RT implies rcu_read_lock(). The might_sleep() check in
+- * cond_resched*lock() has to take that into account because it checks for
+- * preempt_count() + rcu_preempt_depth().
+- */
+-#define PREEMPT_LOCK_RESCHED_OFFSET	1
+ #endif
+ 
+ /*
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 992a1e07a27e8..79852a2ebe5b4 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2161,7 +2161,7 @@ static inline int _cond_resched(void) { return 0; }
+ #endif /* !defined(CONFIG_PREEMPTION) || defined(CONFIG_PREEMPT_DYNAMIC) */
+ 
+ #define cond_resched() ({			\
+-	___might_sleep(__FILE__, __LINE__, 0);	\
++	__might_resched(__FILE__, __LINE__, 0);	\
+ 	_cond_resched();			\
+ })
+ 
+@@ -2169,19 +2169,38 @@ extern int __cond_resched_lock(spinlock_t *lock);
+ extern int __cond_resched_rwlock_read(rwlock_t *lock);
+ extern int __cond_resched_rwlock_write(rwlock_t *lock);
+ 
+-#define cond_resched_lock(lock) ({					\
+-	__might_sleep(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSET);	\
+-	__cond_resched_lock(lock);					\
++#define MIGHT_RESCHED_RCU_SHIFT		8
++#define MIGHT_RESCHED_PREEMPT_MASK	((1U << MIGHT_RESCHED_RCU_SHIFT) - 1)
++
++#ifndef CONFIG_PREEMPT_RT
++/*
++ * Non RT kernels have an elevated preempt count due to the held lock,
++ * but are not allowed to be inside a RCU read side critical section
++ */
++# define PREEMPT_LOCK_RESCHED_OFFSETS	PREEMPT_LOCK_OFFSET
++#else
++/*
++ * spin/rw_lock() on RT implies rcu_read_lock(). The might_sleep() check in
++ * cond_resched*lock() has to take that into account because it checks for
++ * preempt_count() and rcu_preempt_depth().
++ */
++# define PREEMPT_LOCK_RESCHED_OFFSETS	\
++	(PREEMPT_LOCK_OFFSET + (1U << MIGHT_RESCHED_RCU_SHIFT))
++#endif
++
++#define cond_resched_lock(lock) ({						\
++	__might_resched(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSETS);	\
++	__cond_resched_lock(lock);						\
+ })
+ 
+-#define cond_resched_rwlock_read(lock) ({				\
+-	__might_sleep(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSET);	\
+-	__cond_resched_rwlock_read(lock);				\
++#define cond_resched_rwlock_read(lock) ({					\
++	__might_resched(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSETS);	\
++	__cond_resched_rwlock_read(lock);					\
+ })
+ 
+-#define cond_resched_rwlock_write(lock) (	{			\
+-	__might_sleep(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSET);	\
+-	__cond_resched_rwlock_write(lock);				\
++#define cond_resched_rwlock_write(lock) ({					\
++	__might_resched(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSETS);	\
++	__cond_resched_rwlock_write(lock);					\
+ })
+ 
+ static inline void cond_resched_rcu(void)
+diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
+index 11177c36f640d..8358352428d4d 100644
+--- a/include/linux/sched/mm.h
++++ b/include/linux/sched/mm.h
+@@ -51,13 +51,22 @@ static inline void mmdrop(struct mm_struct *mm)
+ 
+ #ifdef CONFIG_PREEMPT_RT
+ extern void __mmdrop_delayed(struct rcu_head *rhp);
+-static inline void mmdrop_delayed(struct mm_struct *mm)
++
++/*
++ * Invoked from finish_task_switch(). Delegates the heavy lifting on RT
++ * kernels via RCU.
++ */
++static inline void mmdrop_sched(struct mm_struct *mm)
+ {
++	/* Provides a full memory barrier. See mmdrop() */
+ 	if (atomic_dec_and_test(&mm->mm_count))
+ 		call_rcu(&mm->delayed_drop, __mmdrop_delayed);
+ }
+ #else
+-# define mmdrop_delayed(mm)    mmdrop(mm)
++static inline void mmdrop_sched(struct mm_struct *mm)
++{
++	mmdrop(mm);
++}
+ #endif
+ 
+ /**
+diff --git a/include/linux/wait.h b/include/linux/wait.h
+index e778131e7c4bd..93dab0e9580f8 100644
+--- a/include/linux/wait.h
++++ b/include/linux/wait.h
+@@ -10,7 +10,6 @@
+ 
+ #include <asm/current.h>
+ #include <uapi/linux/wait.h>
+-#include <linux/atomic.h>
+ 
+ typedef struct wait_queue_entry wait_queue_entry_t;
+ 
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 91a43e57a32eb..acd7aa9700db3 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -60,6 +60,7 @@
+ #include <linux/writeback.h>
+ #include <linux/shm.h>
+ #include <linux/kcov.h>
++#include <linux/kprobes.h>
+ #include <linux/random.h>
+ #include <linux/rcuwait.h>
+ #include <linux/compat.h>
+@@ -168,8 +169,14 @@ static void delayed_put_task_struct(struct rcu_head *rhp)
+ {
+ 	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
+ 
++	kprobe_flush_task(tsk);
+ 	perf_event_delayed_put(tsk);
+ 	trace_sched_process_free(tsk);
++
++	/* RT enabled kernels delay freeing the VMAP'ed task stack */
++	if (IS_ENABLED(CONFIG_PREEMPT_RT))
++		put_task_stack(tsk);
++
+ 	put_task_struct(tsk);
+ }
+ 
+diff --git a/kernel/fork.c b/kernel/fork.c
+index a040f0cfe45d1..1dc9ac795d5eb 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -42,7 +42,6 @@
+ #include <linux/mmu_notifier.h>
+ #include <linux/fs.h>
+ #include <linux/mm.h>
+-#include <linux/kprobes.h>
+ #include <linux/vmacache.h>
+ #include <linux/nsproxy.h>
+ #include <linux/capability.h>
+@@ -290,7 +289,10 @@ static inline void free_thread_stack(struct task_struct *tsk)
+ 			return;
+ 		}
+ 
+-		vfree(tsk->stack);
++		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++			vfree_atomic(tsk->stack);
++		else
++			vfree(tsk->stack);
+ 		return;
+ 	}
+ #endif
+@@ -708,8 +710,8 @@ EXPORT_SYMBOL_GPL(__mmdrop);
+ 
+ #ifdef CONFIG_PREEMPT_RT
+ /*
+- * RCU callback for delayed mm drop. Not strictly rcu, but we don't
+- * want another facility to make this work.
++ * RCU callback for delayed mm drop. Not strictly RCU, but call_rcu() is
++ * by far the least expensive way to do that.
+  */
+ void __mmdrop_delayed(struct rcu_head *rhp)
+ {
+@@ -760,15 +762,6 @@ void __put_task_struct(struct task_struct *tsk)
+ 	WARN_ON(refcount_read(&tsk->usage));
+ 	WARN_ON(tsk == current);
+ 
+-	/*
+-	 * Remove function-return probe instances associated with this
+-	 * task and put them back on the free list.
+-	 */
+-	kprobe_flush_task(tsk);
+-
+-	/* Task is done with its stack. */
+-	put_task_stack(tsk);
+-
+ 	io_uring_free(tsk);
+ 	cgroup_free(tsk);
+ 	task_numa_free(tsk, true);
+diff --git a/kernel/kprobes.c b/kernel/kprobes.c
+index 790a573bbe00c..9a38e7581a5ce 100644
+--- a/kernel/kprobes.c
++++ b/kernel/kprobes.c
+@@ -1250,10 +1250,10 @@ void kprobe_busy_end(void)
+ }
+ 
+ /*
+- * This function is called from finish_task_switch when task tk becomes dead,
+- * so that we can recycle any function-return probe instances associated
+- * with this task. These left over instances represent probed functions
+- * that have been called but will never return.
++ * This function is called from delayed_put_task_struct() when a task is
++ * dead and cleaned up to recycle any function-return probe instances
++ * associated with this task. These left over instances represent probed
++ * functions that have been called but will never return.
+  */
+ void kprobe_flush_task(struct task_struct *tk)
+ {
+diff --git a/kernel/locking/spinlock_rt.c b/kernel/locking/spinlock_rt.c
+index 1d1e85e317385..9e396a09fe0fd 100644
+--- a/kernel/locking/spinlock_rt.c
++++ b/kernel/locking/spinlock_rt.c
+@@ -25,12 +25,15 @@
+ #include "rtmutex.c"
+ 
+ /*
+- * Use ___might_sleep() which skips the state check and take RCU nesting
+- * into account as spin/read/write_lock() can legitimately nest into an RCU
+- * read side critical section:
++ * __might_resched() skips the state check as rtlocks are state
++ * preserving. Take RCU nesting into account as spin/read/write_lock() can
++ * legitimately nest into an RCU read side critical section.
+  */
+-#define rtlock_might_sleep()					\
+-	___might_sleep(__FILE__, __LINE__, rcu_preempt_depth())
++#define RTLOCK_RESCHED_OFFSETS						\
++	(rcu_preempt_depth() << MIGHT_RESCHED_RCU_SHIFT)
++
++#define rtlock_might_resched()						\
++	__might_resched(__FILE__, __LINE__, RTLOCK_RESCHED_OFFSETS)
+ 
+ static __always_inline void rtlock_lock(struct rt_mutex_base *rtm)
+ {
+@@ -40,7 +43,7 @@ static __always_inline void rtlock_lock(struct rt_mutex_base *rtm)
+ 
+ static __always_inline void __rt_spin_lock(spinlock_t *lock)
+ {
+-	rtlock_might_sleep();
++	rtlock_might_resched();
+ 	rtlock_lock(&lock->lock);
+ 	rcu_read_lock();
+ 	migrate_disable();
+@@ -218,7 +221,7 @@ EXPORT_SYMBOL(rt_write_trylock);
+ 
+ void __sched rt_read_lock(rwlock_t *rwlock)
+ {
+-	rtlock_might_sleep();
++	rtlock_might_resched();
+ 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	rwbase_read_lock(&rwlock->rwbase, TASK_RTLOCK_WAIT);
+ 	rcu_read_lock();
+@@ -228,7 +231,7 @@ EXPORT_SYMBOL(rt_read_lock);
+ 
+ void __sched rt_write_lock(rwlock_t *rwlock)
+ {
+-	rtlock_might_sleep();
++	rtlock_might_resched();
+ 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	rwbase_write_lock(&rwlock->rwbase, TASK_RTLOCK_WAIT);
+ 	rcu_read_lock();
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 261508bac047d..1ddd50f2a3d7f 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -4884,18 +4884,22 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+ 	 *   provided by mmdrop(),
+ 	 * - a sync_core for SYNC_CORE.
+ 	 */
+-	/*
+-	 * We use mmdrop_delayed() here so we don't have to do the
+-	 * full __mmdrop() when we are the last user.
+-	 */
++
+ 	if (mm) {
+ 		membarrier_mm_sync_core_before_usermode(mm);
+-		mmdrop_delayed(mm);
++		mmdrop_sched(mm);
+ 	}
+ 	if (unlikely(prev_state == TASK_DEAD)) {
+ 		if (prev->sched_class->task_dead)
+ 			prev->sched_class->task_dead(prev);
+ 
++		/*
++		 * Release VMAP'ed task stack immediate for reuse. On RT
++		 * enabled kernels this is delayed for latency reasons.
++		 */
++		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++			put_task_stack(prev);
++
+ 		put_task_struct_rcu_user(prev);
+ 	}
+ 
+@@ -8855,7 +8859,6 @@ void sched_setnuma(struct task_struct *p, int nid)
+ #endif /* CONFIG_NUMA_BALANCING */
+ 
+ #ifdef CONFIG_HOTPLUG_CPU
+-
+ /*
+  * Ensure that the idle task is using init_mm right before its CPU goes
+  * offline.
+@@ -9545,14 +9548,8 @@ void __init sched_init(void)
+ }
+ 
+ #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
+-static inline int preempt_count_equals(int preempt_offset)
+-{
+-	int nested = preempt_count() + rcu_preempt_depth();
+ 
+-	return (nested == preempt_offset);
+-}
+-
+-void __might_sleep(const char *file, int line, int preempt_offset)
++void __might_sleep(const char *file, int line)
+ {
+ 	unsigned int state = get_current_state();
+ 	/*
+@@ -9566,11 +9563,32 @@ void __might_sleep(const char *file, int line, int preempt_offset)
+ 			(void *)current->task_state_change,
+ 			(void *)current->task_state_change);
+ 
+-	___might_sleep(file, line, preempt_offset);
++	__might_resched(file, line, 0);
+ }
+ EXPORT_SYMBOL(__might_sleep);
+ 
+-void ___might_sleep(const char *file, int line, int preempt_offset)
++static void print_preempt_disable_ip(int preempt_offset, unsigned long ip)
++{
++	if (!IS_ENABLED(CONFIG_DEBUG_PREEMPT))
++		return;
++
++	if (preempt_count() == preempt_offset)
++		return;
++
++	pr_err("Preemption disabled at:");
++	print_ip_sym(KERN_ERR, ip);
++}
++
++static inline bool resched_offsets_ok(unsigned int offsets)
++{
++	unsigned int nested = preempt_count();
++
++	nested += rcu_preempt_depth() << MIGHT_RESCHED_RCU_SHIFT;
++
++	return nested == offsets;
++}
++
++void __might_resched(const char *file, int line, unsigned int offsets)
+ {
+ 	/* Ratelimiting timestamp: */
+ 	static unsigned long prev_jiffy;
+@@ -9580,7 +9598,7 @@ void ___might_sleep(const char *file, int line, int preempt_offset)
+ 	/* WARN_ON_ONCE() by default, no rate limit required: */
+ 	rcu_sleep_check();
+ 
+-	if ((preempt_count_equals(preempt_offset) && !irqs_disabled() &&
++	if ((resched_offsets_ok(offsets) && !irqs_disabled() &&
+ 	     !is_idle_task(current) && !current->non_block_count) ||
+ 	    system_state == SYSTEM_BOOTING || system_state > SYSTEM_RUNNING ||
+ 	    oops_in_progress)
+@@ -9593,29 +9611,33 @@ void ___might_sleep(const char *file, int line, int preempt_offset)
+ 	/* Save this before calling printk(), since that will clobber it: */
+ 	preempt_disable_ip = get_preempt_disable_ip(current);
+ 
+-	printk(KERN_ERR
+-		"BUG: sleeping function called from invalid context at %s:%d\n",
+-			file, line);
+-	printk(KERN_ERR
+-		"in_atomic(): %d, irqs_disabled(): %d, non_block: %d, pid: %d, name: %s\n",
+-			in_atomic(), irqs_disabled(), current->non_block_count,
+-			current->pid, current->comm);
++	pr_err("BUG: sleeping function called from invalid context at %s:%d\n",
++	       file, line);
++	pr_err("in_atomic(): %d, irqs_disabled(): %d, non_block: %d, pid: %d, name: %s\n",
++	       in_atomic(), irqs_disabled(), current->non_block_count,
++	       current->pid, current->comm);
++	pr_err("preempt_count: %x, expected: %x\n", preempt_count(),
++	       offsets & MIGHT_RESCHED_PREEMPT_MASK);
++
++	if (IS_ENABLED(CONFIG_PREEMPT_RCU)) {
++		pr_err("RCU nest depth: %d, expected: %u\n",
++		       rcu_preempt_depth(), offsets >> MIGHT_RESCHED_RCU_SHIFT);
++	}
+ 
+ 	if (task_stack_end_corrupted(current))
+-		printk(KERN_EMERG "Thread overran stack, or stack corrupted\n");
++		pr_emerg("Thread overran stack, or stack corrupted\n");
+ 
+ 	debug_show_held_locks(current);
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(current);
+-	if (IS_ENABLED(CONFIG_DEBUG_PREEMPT)
+-	    && !preempt_count_equals(preempt_offset)) {
+-		pr_err("Preemption disabled at:");
+-		print_ip_sym(KERN_ERR, preempt_disable_ip);
+-	}
++
++	print_preempt_disable_ip(offsets & MIGHT_RESCHED_PREEMPT_MASK,
++				 preempt_disable_ip);
++
+ 	dump_stack();
+ 	add_taint(TAINT_WARN, LOCKDEP_STILL_OK);
+ }
+-EXPORT_SYMBOL(___might_sleep);
++EXPORT_SYMBOL(__might_resched);
+ 
+ void __cant_sleep(const char *file, int line, int preempt_offset)
+ {
+diff --git a/kernel/smp.c b/kernel/smp.c
+index c37cc3ab3ceb3..2364fd9acb09b 100644
+--- a/kernel/smp.c
++++ b/kernel/smp.c
+@@ -701,7 +701,7 @@ void flush_smp_call_function_from_idle(void)
+ 		} else {
+ 			struct task_struct *ksoftirqd = this_cpu_ksoftirqd();
+ 
+-			if (ksoftirqd && task_is_running(ksoftirqd))
++			if (ksoftirqd && !task_is_running(ksoftirqd))
+ 				wake_up_process(ksoftirqd);
+ 		}
+ 	}
+diff --git a/localversion-rt b/localversion-rt
+index 1445cd65885cd..ad3da1bcab7e8 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt3
++-rt4
+diff --git a/mm/memory.c b/mm/memory.c
+index 25fc46e872142..1cd1792c00f2d 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -5255,7 +5255,7 @@ void __might_fault(const char *file, int line)
+ 		return;
+ 	if (pagefault_disabled())
+ 		return;
+-	__might_sleep(file, line, 0);
++	__might_sleep(file, line);
+ #if defined(CONFIG_DEBUG_ATOMIC_SLEEP)
+ 	if (current->mm)
+ 		might_lock_read(&current->mm->mmap_lock);
+diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+index fd9e6b54907ee..95bd604c38199 100644
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -2855,7 +2855,7 @@ static int smack_socket_connect(struct socket *sock, struct sockaddr *sap,
+ 					    SMK_CONNECTING);
+ 		}
+ #ifdef SMACK_IPV6_PORT_LABELING
+-			rc = smk_ipv6_port_check(sock->sk, sip, SMK_CONNECTING);
++		rc = smk_ipv6_port_check(sock->sk, sip, SMK_CONNECTING);
+ #endif
+ 
+ 		return rc;
