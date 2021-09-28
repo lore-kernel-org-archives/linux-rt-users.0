@@ -2,114 +2,106 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CAD5BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Sep 2021 01:47:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9882AC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Sep 2021 08:17:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A7F7B6120C
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Sep 2021 01:47:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7616E611C3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Sep 2021 08:17:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238514AbhI1Bst (ORCPT
+        id S239337AbhI1ITG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 27 Sep 2021 21:48:49 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:30454 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S238479AbhI1Bss (ORCPT
+        Tue, 28 Sep 2021 04:19:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48766 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231342AbhI1ITG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Sep 2021 21:48:48 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1632793629;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=h3DAL6g6GgZUmHorTtFnFN+ym37iFtZRzgp8p+oY6tM=;
-        b=hZAjRTca57b7JmdMaUOb5xsscIaONAqdrgUyTd2qQSYUeGFsEPn7DS6V7yjkhTC5qAAth4
-        JRpk/2opyRl3AJySBgdgvu+oZr4Vw0Lm6LWbXxqlJ3W1nS4NigXXpfiSDO9q1CBgzyt8rV
-        uyXWY9hE3X4W034wk9/vpTPwuaV7U28=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-556-LjOyRARYNNitGP5aheQTjg-1; Mon, 27 Sep 2021 21:47:08 -0400
-X-MC-Unique: LjOyRARYNNitGP5aheQTjg-1
-Received: by mail-qt1-f200.google.com with SMTP id x6-20020ac81206000000b002a6e46bbd0eso40187566qti.12
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Sep 2021 18:47:08 -0700 (PDT)
+        Tue, 28 Sep 2021 04:19:06 -0400
+Received: from mail-pg1-x52f.google.com (mail-pg1-x52f.google.com [IPv6:2607:f8b0:4864:20::52f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 32D42C061575
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Sep 2021 01:17:27 -0700 (PDT)
+Received: by mail-pg1-x52f.google.com with SMTP id n18so20338889pgm.12
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Sep 2021 01:17:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=HCfRIbzKM5B6w8nVb45ohKOpkTn4INQfBvXyLmVvB60=;
+        b=DeJwISpAbKhtiE4uMgVEeDHHWYW6dDONrioYrkoLjsD7OUYf3yPmXO1c7ftNq1eo8n
+         txEx1fkJfap3l8nm+voSZn+LKmhi/1FCr6Pu2HrojHnWcCTwuIgMQVE1N26klmjskPaB
+         HMKTaW0f+XmQlRYlU5TnO3pyBy0DNUgYJc0+NAQeFSwj4OTGuJk39bY4Ils9Tq9yEp6E
+         zSbVBXsZ9f7NNut+VwujERSFVGUih26ylo/ToHT5vWaKjGoz9f7rfFJ27dqKbOkjtzfv
+         ZEhamBsH8GLD2N0ulztQA8XCeqVa2WZMyVpmPwXJpbJ7yHKhxxYaFsN3ObIbMpbH5lhi
+         evXw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=h3DAL6g6GgZUmHorTtFnFN+ym37iFtZRzgp8p+oY6tM=;
-        b=JSZzRSZ4/6AaZ8orWPz+1ELOQN8uz2s3Zd5z1c4Y+5IaKMTnjXBNZa8ybkAQbkE73h
-         NoZpYYP4DxHZLgEcC4wgylMp63Keo2SQ5NgOz/vM/sXqYmQqwhHWPqfCiVDGnfIQdH8v
-         sb/QaegsNGtYop5SInG0N1VSKpZEtfGBR1a5WFwLs/RYpp5FCREfz0Ks1T4JUJA4M062
-         dMan+u2ziGPK+09mzEPCAmOw2Ha5JG55qZtO0uT3xf0z5U5rlgXT8GiKXynt3zr9srPK
-         cbRWZVM4jaJAY3tqdxTkdmqsGwgQkS40fauERWLBz/VuhC+q33ymjgdNirt1mmiE0UJV
-         kReQ==
-X-Gm-Message-State: AOAM533e6NdnDGs3DmgWsCNoEViPEvZAT3iygulVtp/F7qyh0bdDpisg
-        mVVqwm3JG/j7MM/ZULLgwFRwcq1nybZSA7Qs2DLq1p+VA7VsnwHYAzaJg46HnPqmQfI1Gsjf12K
-        dimFuG0UMzqNkvY4gcW0Cecemafw=
-X-Received: by 2002:ac8:5f0a:: with SMTP id x10mr3150226qta.175.1632793627912;
-        Mon, 27 Sep 2021 18:47:07 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzjuNGtctF5yMhB3QkhZSNjf0L9gDshIJ2bnhvC60FHhDpHBKSwbglG0kg5bJIJ7iyNpmxsfA==
-X-Received: by 2002:ac8:5f0a:: with SMTP id x10mr3150217qta.175.1632793627745;
-        Mon, 27 Sep 2021 18:47:07 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id h8sm10697157qkk.11.2021.09.27.18.47.06
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=HCfRIbzKM5B6w8nVb45ohKOpkTn4INQfBvXyLmVvB60=;
+        b=WeUDIk6Y7XJD+tHfIkpFcNYCBXg/5Z1K8CSqg4h8tTGa2R3AeWEo29HfbwTQFgpKC4
+         PZRIhW324AfNfIo16tJx/2x6TSwpUg9qArU3mTj5HenrxMt5J0m9LQf8PBtHM5ujgb1X
+         xZnJjwq0PbSeb0eZe+Df6xfXMWWsAEImTjFAd0nYUD3V0H9D6z5UNKBQ5+KZBev43d7e
+         m3l8xyUe+pflpfVTtxy01sYA6E26B+rydHWi2poivTg1PXPFjc/aaZeox+dSlSI8YHXL
+         vjNZM1FVmNaCGBeInyWKecKk2EVn+c2JpoQBNyTZwFNvqnQydZAH7j3u6vMElv/57Iqz
+         ldPQ==
+X-Gm-Message-State: AOAM532O6GkbS4EVdTHORRUSmh54+6c3GCZamYC/n7Np6d0FtCYRjofT
+        l3vAeaGlbMSss0moQ48ZxCmacl70U7c=
+X-Google-Smtp-Source: ABdhPJy2EJQaFLy0m0dMxmaEAB+4B8P4rJKdyfCG2M5S3kLkKmFrj/dx5FpSDURSPWDPlhAMu3N1cA==
+X-Received: by 2002:a63:dc42:: with SMTP id f2mr3470470pgj.152.1632817046394;
+        Tue, 28 Sep 2021 01:17:26 -0700 (PDT)
+Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
+        by smtp.gmail.com with ESMTPSA id s2sm1627874pjo.24.2021.09.28.01.17.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 27 Sep 2021 18:47:07 -0700 (PDT)
-Date:   Mon, 27 Sep 2021 21:47:06 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Punit Agrawal <punitagrawal@gmail.com>
-cc:     linux-rt-users@vger.kernel.org, punit1.agrawal@toshiba.co.jp
-Subject: Re: [PATCH v2 0/3] rteval: Fix issues with cyclictest.py module
-In-Reply-To: <87k0j15vmw.fsf@stealth>
-Message-ID: <fee20fc-3243-bbc5-898-5aacdd9136f1@redhat.com>
-References: <20210917085343.2775300-1-punitagrawal@gmail.com> <87k0j15vmw.fsf@stealth>
+        Tue, 28 Sep 2021 01:17:25 -0700 (PDT)
+From:   Punit Agrawal <punitagrawal@gmail.com>
+To:     jkacur@redhat.com
+Cc:     linux-rt-users@vger.kernel.org, daniel.sangorrin@toshiba.co.jp,
+        Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
+        Suresh Hegde <suresh1.hegde@toshiba.co.jp>
+Subject: [PATCH] rt-tests: hwlatdetect: Gracefully handle lack of /dev/cpu_dma_latency
+Date:   Tue, 28 Sep 2021 17:17:16 +0900
+Message-Id: <20210928081716.3421463-1-punitagrawal@gmail.com>
+X-Mailer: git-send-email 2.32.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
+On systems where cpu idle is disabled to reduce latencies,
+"/dev/cpu_dma_latency" does not exist and leads to the following
+exception report from python when using hwlatdetect.py -
 
-On Tue, 28 Sep 2021, Punit Agrawal wrote:
+    FileNotFoundError: [Errno 2] No such file or directory: '/dev/cpu_dma_latency
 
-> Hi John,
-> 
-> Punit Agrawal <punitagrawal@gmail.com> writes:
-> 
-> > Hi,
-> >
-> > Here's an updated version of the cyclictest fixes previously posted at
-> > [0]. The changes in this version are to address feedback received on
-> > the previous version.
-> >
-> > v1 -> v2:
-> > * Patch 1: Add an option (default off) to save cyclictest output
-> > * Patch 3: Sort cpus returned by online_cpus() in cyclictest.py module
-> >
-> > All feedback welcome.
-> 
-> Ping!
-> 
-> Perhaps this set slipped through the cracks.
-> 
-> > Thanks,
-> > Punit
-> >
-> > [0] https://lore.kernel.org/all/20210902092452.726905-1-punitagrawal@gmail.com/
-> >
-> > Punit Agrawal (3):
-> >   rteval: cyclictest.py Enable logging cyclictest output
-> >   rteval: cyclictest.py Parse max latencies from cyclictest output
-> >   rteval: cyclictest.py: Sort the list of cpus
-> >
-> >  rteval/modules/measurement/cyclictest.py | 44 ++++++++++++++++++++----
-> >  1 file changed, 37 insertions(+), 7 deletions(-)
-> 
+Update hwlatdetect to check whether the file exists before attemping
+to write values to it.
 
-Thanks for the ping, but I haven't forgotten this, I just haven't had time 
-to go through it properly yet. It's on my TODO list.
+Reported-by: Suresh Hegde <suresh1.hegde@toshiba.co.jp>
+Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+---
+ src/hwlatdetect/hwlatdetect.py | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-Thanks
-
-John
+diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+index 12228f45f852..89537a6e371f 100755
+--- a/src/hwlatdetect/hwlatdetect.py
++++ b/src/hwlatdetect/hwlatdetect.py
+@@ -216,8 +216,11 @@ class Detector(object):
+     # use c_states_on() to close the file descriptor and re-enable c-states
+     #
+     def c_states_off(self):
+-        self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
+-        os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
++        if os.path.exists("/dev/cpu_dma_latency"):
++            self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
++            os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
++        else:
++            self.dma_latency_handle = None
+         debug("c-states disabled")
+ 
+     def c_states_on(self):
+-- 
+2.32.0
 
