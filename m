@@ -2,107 +2,141 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C3E5C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Sep 2021 00:10:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7541C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Sep 2021 00:37:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 673A3613C8
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Sep 2021 00:10:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9CF3B60FBF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Sep 2021 00:37:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243374AbhI2AMG (ORCPT
+        id S243440AbhI2Ai6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Sep 2021 20:12:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46242 "EHLO
+        Tue, 28 Sep 2021 20:38:58 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52154 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240284AbhI2AMG (ORCPT
+        with ESMTP id S242626AbhI2Ai6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Sep 2021 20:12:06 -0400
-Received: from mail-pg1-x533.google.com (mail-pg1-x533.google.com [IPv6:2607:f8b0:4864:20::533])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 59DA4C06161C
-        for <linux-rt-users@vger.kernel.org>; Tue, 28 Sep 2021 17:10:26 -0700 (PDT)
-Received: by mail-pg1-x533.google.com with SMTP id k24so792191pgh.8
-        for <linux-rt-users@vger.kernel.org>; Tue, 28 Sep 2021 17:10:26 -0700 (PDT)
+        Tue, 28 Sep 2021 20:38:58 -0400
+Received: from mail-pl1-x635.google.com (mail-pl1-x635.google.com [IPv6:2607:f8b0:4864:20::635])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6A4DAC06161C
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Sep 2021 17:37:18 -0700 (PDT)
+Received: by mail-pl1-x635.google.com with SMTP id b22so323766pls.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Sep 2021 17:37:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=from:to:cc:subject:references:date:in-reply-to:message-id
-         :user-agent:mime-version;
-        bh=gpao0Q1WCGMxvM1d6E7xygO8ivVWvfb+Ht2f2JCRYmA=;
-        b=dmjgLCRee0FXHS96cvJnvnZGnwhLHXIom97ZHkBiCP2YQzzXpVqU/zaZey+FiRUN+6
-         HG/X09nwD5dAjO4/YOuPgC/5HTnjDTAEFk8kZHzjQdGBvwWym98HPqOKu1WoSdyCgMBA
-         y5KAwDzXw2Kpp+NG8lIqmE80/VOzvcja7lH06nNr3/4Cce+rqbjAFyouu5ymL5Exah6o
-         nNR1EaPf1I458y+fbxG0nOUD89uRnd0kCJy8eeKUflKroYGgd9Q8BUqhyowjzoLV3idN
-         U2BEQ4Quy3XrPCI5VkbavZIwSa7XzWpmoZ8rFpZzl/VhaPdqZ1pXlQqrdtJkqXXsGoPY
-         mo6g==
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=cc32xea/oLt2809F1jdc8aP6vOeuZaKDSplV8wUmg9I=;
+        b=WETh/+qT71WZ8LFfHBSEQlVNqZPt7xfX2Y4xwFB7B39UAYGDdvp4OWZREB6nRVFbCg
+         s7WFiTQsIljEOcIMcrACcLV0irLDH1PBU5oazndYkEhr4SomzT+ZFYsJXafSPTwRYWNP
+         QcKTtKOgpoAF1gTkRVhAcx60eLN+Cy1JMWPc0HQmHMlo1trdtUVyynlkWM/Vl+JRg2ht
+         4cMhiFCP5APJfVHka2Y3Cb9lklA7UB4erBgLPHjwkFlmI1e7SzDfVECd0WwAxYxKVdOt
+         tUmtzwCtfzSHkeKa8qLv+Oe1dOu2X44Di2riDhSWLtiFrbf68UsjmuJx7CDqzB5o3j19
+         q6cA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
-         :message-id:user-agent:mime-version;
-        bh=gpao0Q1WCGMxvM1d6E7xygO8ivVWvfb+Ht2f2JCRYmA=;
-        b=Fi4D97aG/LEFZar62hBIP7dYgiCaywss9mA2fsq9OftmMFfqf/o3ZCIcdXvIiJpurd
-         Ws7Zo1rpWgJ0NNlYzkHL0SbvBuiN6qGKtN5NyDa4mx7WUrUuvOEUjcSOR+/Dc77IVLMe
-         +ZVNbBV8Sw8lGKA8t9fM/yuysQqKaVIvow8SY97jYKSOrQ2iLEA7m6buq0jc3S4NQzXe
-         bSUnGyBlxs/BXCpk8Lgld6bpWpqhCSifrfPD4yBkpRwYV+CIl4dHDWjNs8J1gHfmISNO
-         YvswLrxWMNyR4u16bHo6rsuZsXptMHjgyIdeL9An5dhjtwwbucMkhOJTb72SPjwL+A/9
-         kioA==
-X-Gm-Message-State: AOAM532ssnmDXej3upWsDkcmve4SuKyczP2UBeDwI+aoP8M2Iptlb7pC
-        NCSVmDeQT7pMRRsVX5p34S4=
-X-Google-Smtp-Source: ABdhPJyPo2Tmn8R5+DtrXzBjwLtG4h0KN0ixipAvWuW6WAGYx5xp2l5Tiq/f1tZfLXrou5MgkpKiBA==
-X-Received: by 2002:a63:d40a:: with SMTP id a10mr6990923pgh.7.1632874225682;
-        Tue, 28 Sep 2021 17:10:25 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=cc32xea/oLt2809F1jdc8aP6vOeuZaKDSplV8wUmg9I=;
+        b=uzgpnV16F7KA1/xL9rkf7X+tkFePwln3GCEJsKWzm1YOVkDdIGbPPLcilEvPRJxD1R
+         rK3LWjlFm2XiBPwAiKiR6nx+KWMvhyLCJR+AalPgYp7U54ig+KyTUPTYeUWAIaNsP+wx
+         7/FG4eXPezZsr+YLZstsk6YpEqHfgmLoKnS25kV6+/feygPrHCTMAPmDN+9XSBRh6RcD
+         LVM1wdnuCvIPv9vr1y6KJsbJQFITpOK50wceNyE8hfETDuhQNBuunEYXShdoDW3DomNj
+         Sdw2S6TEhBfYdsZeQlqfZYpOlpjgXCNepqLg2Rta390YK9npDJyfH6jbZWy4IpcIrRnq
+         J3jg==
+X-Gm-Message-State: AOAM531PM2+8j/ocMVRSsYeC4AmG0+hXNc9aXJRhJ2hynuaku7Qrt5J7
+        o4L6N4oKc7L34aKmi+6QA9c=
+X-Google-Smtp-Source: ABdhPJyJa6KdlCZfyfmKYMW1S5DI2E0nUHwmi/WKESj9CSLLpKRXteBJx/qd4/MkP6Bd0iZbLx8L3g==
+X-Received: by 2002:a17:90a:191c:: with SMTP id 28mr3065779pjg.121.1632875837760;
+        Tue, 28 Sep 2021 17:37:17 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id l11sm3373925pjg.22.2021.09.28.17.10.24
+        by smtp.gmail.com with ESMTPSA id d24sm319852pgv.52.2021.09.28.17.37.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Sep 2021 17:10:24 -0700 (PDT)
+        Tue, 28 Sep 2021 17:37:17 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     John Kacur <jkacur@redhat.com>
+To:     jkacur@redhat.com
 Cc:     linux-rt-users@vger.kernel.org, daniel.sangorrin@toshiba.co.jp,
         Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
         Suresh Hegde <suresh.c11@toshiba-tsip.com>
-Subject: Re: [PATCH v2] rt-tests: hwlatdetect: Gracefully handle lack of
- /dev/cpu_dma_latency
-References: <20210928081716.3421463-1-punitagrawal@gmail.com>
-        <20210928085900.3422085-1-punitagrawal@gmail.com>
-        <748d14f-a32e-961-8581-f58be77ca419@redhat.com>
-        <87fsto5nbm.fsf@stealth>
-        <d150ec8a-73ba-53e7-4854-36eb82404c7@redhat.com>
-Date:   Wed, 29 Sep 2021 09:10:21 +0900
-In-Reply-To: <d150ec8a-73ba-53e7-4854-36eb82404c7@redhat.com> (John Kacur's
-        message of "Tue, 28 Sep 2021 19:25:50 -0400 (EDT)")
-Message-ID: <87bl4c5jiq.fsf@stealth>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+Subject: [PATCH v3] rt-tests: hwlatdetect: Gracefully handle lack of /dev/cpu_dma_latency
+Date:   Wed, 29 Sep 2021 09:37:09 +0900
+Message-Id: <20210929003709.3423639-1-punitagrawal@gmail.com>
+X-Mailer: git-send-email 2.32.0
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-John Kacur <jkacur@redhat.com> writes:
+From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
-> On Wed, 29 Sep 2021, Punit Agrawal wrote:
->
+On systems where cpu idle is disabled to reduce latencies,
+"/dev/cpu_dma_latency" does not exist and leads to the following
+exception report from python when using hwlatdetect.py -
 
-[...]
+    FileNotFoundError: [Errno 2] No such file or directory: '/dev/cpu_dma_latency
 
->> > Thanks! I have a couple of nit-picky suggestions.
->> >
->> > If you initialize self.dma_latency_handle = None in the init method of 
->> > class Detector, then you can drop the else part of your check to see if 
->> > the file exists.
->> 
->> I can do that - but then I wonder if there is any harm in initialising
->> the file handle in the init method itself too. That way
->> c_states_[off|on]() can focus on doing their thing after checking the
->> handle is not null.
->
-> I mean I suppose it would work, but I wouldn't consider it great style, 
-> I think of the init as a place for basic declarations and
-> initializations.
+Update hwlatdetect to check whether the file exists before attemping
+to write values to it. Also, make the related debug output conditional
+to c-states support being enabled in the kernel.
 
-I don't have a strong preference here - so I'll go with your suggestion.
+While we are touching this part of the code, also address a couple of
+minor issues in the code such as -
+* correct typos
+* reflow comment to fit 80-char column limit
 
-Thanks.
+Reported-by: Suresh Hegde <suresh.c11@toshiba-tsip.com>
+Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+---
+v2 -> v3:
+* Address issues in comment
+* Initialise self.dma_latency_handle in init()
+* Make debug() statements conditional to /dev/cpu_dma_latency
+---
+ src/hwlatdetect/hwlatdetect.py | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
 
-> Anyway, I'll have a look at whatever way you decide to go.
->
-
-[...]
+diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+index 12228f45f852..56fd2af8641d 100755
+--- a/src/hwlatdetect/hwlatdetect.py
++++ b/src/hwlatdetect/hwlatdetect.py
+@@ -200,6 +200,7 @@ class Detector(object):
+         if os.path.exists('/usr/sbin/rdmsr'):
+             self.have_msr = True
+             self.initsmi = self.getsmicounts()
++        self.dma_latency_handle = None
+ 
+     def getsmicounts(self):
+         counts = []
+@@ -210,20 +211,23 @@ class Detector(object):
+         return counts
+ 
+     # methods for preventing/enabling c-state transitions
+-    # openinging /dev/cpu_dma_latency and writeing a 32-bit zero to that file will prevent
+-    # c-state transitions while the file descriptor is open.
++    #
++    # opening /dev/cpu_dma_latency and writing a 32-bit zero to that file will
++    # prevent c-state transitions while the file descriptor is open.
++    #
+     # use c_states_off() to disable c-state transitions
+     # use c_states_on() to close the file descriptor and re-enable c-states
+     #
+     def c_states_off(self):
+-        self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
+-        os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
+-        debug("c-states disabled")
++        if os.path.exists("/dev/cpu_dma_latency"):
++            self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
++            os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
++            debug("c-states disabled")
+ 
+     def c_states_on(self):
+         if self.dma_latency_handle:
+             os.close(self.dma_latency_handle)
+-        debug("c-states enabled")
++            debug("c-states enabled")
+ 
+     def cleanup(self):
+         raise RuntimeError("must override base method 'cleanup'!")
+-- 
+2.32.0
 
