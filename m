@@ -2,155 +2,115 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1ADCAC433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Sep 2021 22:28:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9408DC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Sep 2021 00:13:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D774F61269
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Sep 2021 22:28:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 777C561528
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Sep 2021 00:13:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1346286AbhI2W35 (ORCPT
+        id S1345040AbhI3APO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Sep 2021 18:29:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41468 "EHLO
+        Wed, 29 Sep 2021 20:15:14 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37422 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233018AbhI2W34 (ORCPT
+        with ESMTP id S231238AbhI3APL (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Sep 2021 18:29:56 -0400
-Received: from mail-pl1-x62a.google.com (mail-pl1-x62a.google.com [IPv6:2607:f8b0:4864:20::62a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2505DC06161C
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Sep 2021 15:28:15 -0700 (PDT)
-Received: by mail-pl1-x62a.google.com with SMTP id b22so2577096pls.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Sep 2021 15:28:15 -0700 (PDT)
+        Wed, 29 Sep 2021 20:15:11 -0400
+Received: from mail-pj1-x102e.google.com (mail-pj1-x102e.google.com [IPv6:2607:f8b0:4864:20::102e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C6784C06161C
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Sep 2021 17:13:29 -0700 (PDT)
+Received: by mail-pj1-x102e.google.com with SMTP id oa12-20020a17090b1bcc00b0019f2d30c08fso3399395pjb.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Sep 2021 17:13:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=from:to:cc:subject:references:date:in-reply-to:message-id
-         :user-agent:mime-version;
-        bh=4z0GIh5JK3wKAj0ORkqbJGgKzM9mwUuFWd6cpi9gVRw=;
-        b=nfacyzx47o08Kln0OnAnHNK7OQ70oJQbnvTv5mzYQXOdw6lroKF3tmmCAZaBrMIoj0
-         IhihCzGkm/y+xXkWHBHL4DduDcDlg/i7V/lrbI1MOa8KDxLwprasqbRdezTJSBRPkCe/
-         G1MV27BL3G7i4LqDXKglrNk5syfEcdU1OUdSy5w8ZDEhL4lUuerY2GZIm87TEr1o08sM
-         c6yQMgL6xJ+yXXuZ5KCwYOstrdPYLXR8mprV3VXsZVkQPcHBBGrD4a4IqiVxGfCp1vX8
-         CAdUJGR0SrtdEGoEWMlYhr//X3FRsmbT5mI/33DBwX+Aw9z5pC7cdgKmq0O/9aU5JLpb
-         kNog==
+         :user-agent:mime-version:content-transfer-encoding;
+        bh=95JsvCzQiPnDRFbySU6C/Kkfi9kUM94rpQI/r+qt14k=;
+        b=n0uX4a+d1zqvxku2qxe047HVIkzuvrY49x0HqAt+BFXZEmzvgrWLA+n3nWc7KpcVRr
+         mVhBenUF++JtA4deODUi/DfWA/lqIZe+I3iwNtyGh+PG2VVz9KmU3YhsQsg3Uqct6Xe/
+         WsSjEbIZyImwlAkSTNoFarEYvWdJy0PdgXNFrCWwhtTAu1RUWF6sS8YKfwLZQdd6/Tft
+         f9IhdD+7GjYtd7suO4qRFPd+oxqJ3i14DtWVS3LY7z8cVXeZgzWMs2sAP9vgPJnxFNUo
+         Cp2u+CaQNMuKW04md6nlmrTrPWN8lLetgybZq1sNhSN5jI9AnZppIH3/PLrt3LHB+E4G
+         4RXA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
-         :message-id:user-agent:mime-version;
-        bh=4z0GIh5JK3wKAj0ORkqbJGgKzM9mwUuFWd6cpi9gVRw=;
-        b=rmNGNkHwQ8IGwJ++peBujWkmJRjwmdQJXmxjINDpxuhU8IbOuqlhDbwxH47v6armKV
-         vxKigVa3MPGTI6Zgc2IsByj8VmwNqe/Brbb7qm18A9M1NLmwjlwMz0aJpTd85X302PbU
-         c0StNCRBpkuNY5FLMx05yjVRi5muR3euNQU0Z1YhIASuruaq3KMUQzyh5VZG36EoVLvR
-         b79MwVDdXnzOeaterP/40im/pSklbXuHN40MYSSSOhSP3pknfSuSogHVI0RNoqiiPLdo
-         +TnbshnOLhS1swvJhI7Q2dOfhfsAz6yMgaCEagR3Y/gtjmWyR4ErVLtYp/E9i2a0qcF7
-         XWDQ==
-X-Gm-Message-State: AOAM531JVRlZr4NojzmB7KVBEGBNMdBFf1jrzybChssZVdXK+c02C78m
-        tDXEC+s3ONOKeLOquhrL7d4=
-X-Google-Smtp-Source: ABdhPJyo8oM+gbwJvWF69w/TAemCWKmH1tTvD2I/fUA480tmhXbu4I4A7oWA7YPmfRF6Xr38SL4blQ==
-X-Received: by 2002:a17:902:708b:b0:13e:1a20:f1b0 with SMTP id z11-20020a170902708b00b0013e1a20f1b0mr825041plk.51.1632954494488;
-        Wed, 29 Sep 2021 15:28:14 -0700 (PDT)
+         :message-id:user-agent:mime-version:content-transfer-encoding;
+        bh=95JsvCzQiPnDRFbySU6C/Kkfi9kUM94rpQI/r+qt14k=;
+        b=wDuWB1WmgBiQf3FJvZR4E/1F/Tg+Z29XYJdIHmdBFAxGUzwf8lr+q+M72l0HJlh54v
+         0NxA2E52cGpUBYamZfNukE/+Y7kDSyaSZG0aWVYQnxv1lz5mQLOJ6UvagH+3n8svh/kA
+         sxjzvTHvO2Gy6gFEuvT6JiefDnKwWfUoF9I4/Z8zmI730XBXQYDQ4odW0Rzt/LTSD/EX
+         cytuOiV5sXOKKUd78IovmKlNB7AiAkQRSVyguEmqEio/g8XaDIW5LRp3FrYU1A2CbyCp
+         XgCXT9d89lz6NZ9cFjHSCDkp+8yUGAxUdq33iTYiYq5y76ABr6S+JLw9sLx37qHR3v9b
+         vzkw==
+X-Gm-Message-State: AOAM533YP1+o63LNca3peX7jvZuzkxL5Ia/tLGVTOhKYlFtATmNsSpdc
+        8BwUOVY/FloL7ouTG/GHDQhgDyIwxFA=
+X-Google-Smtp-Source: ABdhPJzRqkXQz+Vy3PCfd4/29W31OenJEj+1d4Cjvgwy5sAYDRaarVkZTzKqzQRwPrTbBgGsLV4B5w==
+X-Received: by 2002:a17:902:d507:b0:13e:1145:b1cd with SMTP id b7-20020a170902d50700b0013e1145b1cdmr2505957plg.19.1632960809246;
+        Wed, 29 Sep 2021 17:13:29 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id r7sm674235pff.112.2021.09.29.15.28.13
+        by smtp.gmail.com with ESMTPSA id c199sm792149pfb.152.2021.09.29.17.13.28
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 29 Sep 2021 15:28:13 -0700 (PDT)
+        Wed, 29 Sep 2021 17:13:28 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, daniel.sangorrin@toshiba.co.jp,
-        Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
-        Suresh Hegde <suresh.c11@toshiba-tsip.com>
-Subject: Re: [PATCH v3] rt-tests: hwlatdetect: Gracefully handle lack of
- /dev/cpu_dma_latency
-References: <20210929003709.3423639-1-punitagrawal@gmail.com>
-        <8ec5eca-1152-20ab-c25-2625f563773@redhat.com>
-Date:   Thu, 30 Sep 2021 07:28:11 +0900
-In-Reply-To: <8ec5eca-1152-20ab-c25-2625f563773@redhat.com> (John Kacur's
-        message of "Wed, 29 Sep 2021 11:09:57 -0400 (EDT)")
-Message-ID: <874ka3585g.fsf@stealth>
+To:     Pierre FICHEUX <pierre.ficheux@smile.fr>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: Strange problem with PREEMPT_RT
+References: <CAFc1U0sgMtKvcpTWkyjwXsq3Md_Huew7mSye_AratkM63D6K-Q@mail.gmail.com>
+Date:   Thu, 30 Sep 2021 09:13:25 +0900
+In-Reply-To: <CAFc1U0sgMtKvcpTWkyjwXsq3Md_Huew7mSye_AratkM63D6K-Q@mail.gmail.com>
+        (Pierre FICHEUX's message of "Wed, 29 Sep 2021 18:40:35 +0200")
+Message-ID: <87y27e53a2.fsf@stealth>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-John Kacur <jkacur@redhat.com> writes:
+Pierre FICHEUX <pierre.ficheux@smile.fr> writes:
 
-> On Wed, 29 Sep 2021, Punit Agrawal wrote:
+> Hi,
 >
->> From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
->> 
->> On systems where cpu idle is disabled to reduce latencies,
->> "/dev/cpu_dma_latency" does not exist and leads to the following
->> exception report from python when using hwlatdetect.py -
->> 
->>     FileNotFoundError: [Errno 2] No such file or directory: '/dev/cpu_dma_latency
->> 
->> Update hwlatdetect to check whether the file exists before attemping
->> to write values to it. Also, make the related debug output conditional
->> to c-states support being enabled in the kernel.
->> 
->> While we are touching this part of the code, also address a couple of
->> minor issues in the code such as -
->> * correct typos
->> * reflow comment to fit 80-char column limit
->> 
->> Reported-by: Suresh Hegde <suresh.c11@toshiba-tsip.com>
->> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
->> ---
->> v2 -> v3:
->> * Address issues in comment
->> * Initialise self.dma_latency_handle in init()
->> * Make debug() statements conditional to /dev/cpu_dma_latency
->> ---
->>  src/hwlatdetect/hwlatdetect.py | 16 ++++++++++------
->>  1 file changed, 10 insertions(+), 6 deletions(-)
->> 
->> diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
->> index 12228f45f852..56fd2af8641d 100755
->> --- a/src/hwlatdetect/hwlatdetect.py
->> +++ b/src/hwlatdetect/hwlatdetect.py
->> @@ -200,6 +200,7 @@ class Detector(object):
->>          if os.path.exists('/usr/sbin/rdmsr'):
->>              self.have_msr = True
->>              self.initsmi = self.getsmicounts()
->> +        self.dma_latency_handle = None
->>  
->>      def getsmicounts(self):
->>          counts = []
->> @@ -210,20 +211,23 @@ class Detector(object):
->>          return counts
->>  
->>      # methods for preventing/enabling c-state transitions
->> -    # openinging /dev/cpu_dma_latency and writeing a 32-bit zero to that file will prevent
->> -    # c-state transitions while the file descriptor is open.
->> +    #
->> +    # opening /dev/cpu_dma_latency and writing a 32-bit zero to that file will
->> +    # prevent c-state transitions while the file descriptor is open.
->> +    #
->>      # use c_states_off() to disable c-state transitions
->>      # use c_states_on() to close the file descriptor and re-enable c-states
->>      #
->>      def c_states_off(self):
->> -        self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
->> -        os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
->> -        debug("c-states disabled")
->> +        if os.path.exists("/dev/cpu_dma_latency"):
->> +            self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
->> +            os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
->> +            debug("c-states disabled")
->>  
->>      def c_states_on(self):
->>          if self.dma_latency_handle:
->>              os.close(self.dma_latency_handle)
->> -        debug("c-states enabled")
->> +            debug("c-states enabled")
->>  
->>      def cleanup(self):
->>          raise RuntimeError("must override base method 'cleanup'!")
->> -- 
->> 2.32.0
->> 
->> 
+> I have a strange problem on a PREEMPT_RT system.
 >
-> Signed-off-by: John Kacur <jkacur@redhat.com>
+> I have a process with 2 threads,
+>
+> - 1 TR thread (10 ms period) which places 350 KB blocks in a fifo (1
+> block every 10 ms).
+> - 1 non-TR thread (SCHED_OTHER) which reads the block in the fifo and
+> writes it to the disk
+>
+> If I run this on a powerful machine (HP Z4-i9, 14 cores, NVME disk,
+> CentOS 7 with 3.10 PREEMPT_RT kernel, yes that's ooold), the max
+> jitter WITH hackbench remains around 20 to 30 =C2=B5s while the max jitter
+> WITHOUT hackbench goes up to 350 =C2=B5s!
+>
+> -> hackbench -p -g 20 -l 10000000
+>
+> Running the program with  taskset 01 doesn't change anything
+> If I don't write the data to disk it doesn't change anything either.
+>
+> The important jitters appear rather at the beginning (but sometimes also =
+later).
+>
+> Any ideas ?
 
-Thanks for applying the patch!
+Is power management (cpuidle, cpufreq) enabled on the system?
+
+One possible explanation -
+
+The load from the 10ms task, isn't high enough to keep the system at
+high-frequencies or prevent it from going into deeper sleep states. Both
+of these can impact latencies.
+
+With hackbench, the system is sufficiently busy to avoid the going into
+idle.
+
+>
+>
+> thanks by advance
+>
+> --
+> Pierre
