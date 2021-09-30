@@ -2,126 +2,157 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A7596C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Sep 2021 10:53:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 06751C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Sep 2021 13:17:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8329A61994
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Sep 2021 10:53:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DC73161555
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Sep 2021 13:17:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1350175AbhI3KzZ (ORCPT
+        id S1350855AbhI3NTP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 30 Sep 2021 06:55:25 -0400
-Received: from mail.kernel.org ([198.145.29.99]:50964 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1350129AbhI3KzZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 Sep 2021 06:55:25 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4036A6187A;
-        Thu, 30 Sep 2021 10:53:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1632999222;
-        bh=Vp+UOmjo2TAmos1MjthOIfOMHBv+7U04bMTdFcbYhHo=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=opOV9QNmIYkzLfJCVy2HEE20PLjIPp4qY32wypfQjSz3pljfWz965Sohz6o3uXht1
-         1nxFni3apPDtVDpptkXitiHOn//qJsID+We7uqh84mBilEFapzgI4c1uEJER4NYcSU
-         Np16+fwSfmZ2AF1CtJJr19juCj26PkVURrKkEOArtb3flrTTM3V9K1V9WLOCZHTEqe
-         8tlQn/tq1HPuxdbuQ2reM+2BIp++InQE38DgK/D2VRztd/mW3poQUO3NE9ahYSQp9Q
-         5BJSK37ary1nX7f/ntzvQJNmIHAJGVeaG09oKSxpN9bY8ty1vtavee7leHre0yErkQ
-         w0a0UwU+nJCkA==
-Date:   Thu, 30 Sep 2021 12:53:40 +0200
-From:   Frederic Weisbecker <frederic@kernel.org>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org, rcu@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        "Paul E. McKenney" <paulmck@kernel.org>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Steven Price <steven.price@arm.com>,
-        Ard Biesheuvel <ardb@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Mike Galbraith <efault@gmx.de>
-Subject: Re: rcu/tree: Protect rcu_rdp_is_offloaded() invocations on RT
-Message-ID: <20210930105340.GA232241@lothringen>
-References: <20210811201354.1976839-1-valentin.schneider@arm.com>
- <20210811201354.1976839-4-valentin.schneider@arm.com>
- <874kae6n3g.ffs@tglx>
- <87pmt163al.ffs@tglx>
- <87h7e21lqg.mognet@arm.com>
+        Thu, 30 Sep 2021 09:19:15 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:28993 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1350848AbhI3NTO (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 30 Sep 2021 09:19:14 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1633007851;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=nksoUTb9HNJfooe8yi3vZmBprxmLuSi5ma59gHTFWdI=;
+        b=cwDPnf7tWKV4IGhaZDABDMkpXkwUwcchVGcz5lD2MbVtPW5e0wBQ1N+AHqphl7wcVmd/y9
+        A6yg8gNdBC91yLfyERXvhmxRdC/LsTVHPtRGodaAMdUo4wTV3Jl2yIRErWPXyktnAbRZsD
+        ubar9Wc//CUUTN4PnjH3/OI1s/Jd3Vc=
+Received: from mail-lf1-f71.google.com (mail-lf1-f71.google.com
+ [209.85.167.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-16-AsQPEB1QMyC-_KXSGzJxOQ-1; Thu, 30 Sep 2021 09:17:27 -0400
+X-MC-Unique: AsQPEB1QMyC-_KXSGzJxOQ-1
+Received: by mail-lf1-f71.google.com with SMTP id e9-20020ac25469000000b003fcfe6c574fso5545898lfn.23
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Sep 2021 06:17:27 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=nksoUTb9HNJfooe8yi3vZmBprxmLuSi5ma59gHTFWdI=;
+        b=jHDxRd4KjDtLse358zFloYcLWzZOJLgUVbc/Npqs4gTBPooJkkUDfHJExYuK0iLM2G
+         tf6Stua77CiwH61oabXoEBGCALleEvNnh4Xy+ny1SFfshI6A2H92e7kCkKSN/ccB0VUx
+         SZK4ZtS5F5CTAmw4yztebKw/4bVwELWY32TkF1gyU0Gc5MJzQ865Rp/5saNBM8twPeU2
+         pWiGSAhn6WQaEQSA0w/1RJ71Dg09nelISEMUOFx+Gam6ztxW53RMms32gjw5n1MIb7TP
+         095CU8/YFJfcSr/N53Nhw8KcBXkMcMqOICTnkj/YDEXZmQUYyndXIWjYbKC+Id9RSDiH
+         M3CQ==
+X-Gm-Message-State: AOAM533XmdzPUEZbcHL5/7R26nImQLHjoVngvRa6JnN1n/IjiM7oIScp
+        TFZNIVZLPtkaVzzI6X8pd08mcrZcURltl0JVs2BCwr8+V05EAEq9aoi++w0bzzSSz/SZdby3vm8
+        lBnFlQR/PXV6bC7pM0dNGOXzQIaE7VQCGZr0gQDQnmeg=
+X-Received: by 2002:a19:5e0d:: with SMTP id s13mr5873339lfb.174.1633007845779;
+        Thu, 30 Sep 2021 06:17:25 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyei9zEsNTHRvuxGu3DiJMPFk4zu9gftTelAccDHX+jurDGAgCuZ/XAmYEWBHycl/E3aF9lfkbIg4CeuD1l/QA=
+X-Received: by 2002:a19:5e0d:: with SMTP id s13mr5873321lfb.174.1633007845571;
+ Thu, 30 Sep 2021 06:17:25 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <87h7e21lqg.mognet@arm.com>
+References: <CAFc1U0sgMtKvcpTWkyjwXsq3Md_Huew7mSye_AratkM63D6K-Q@mail.gmail.com>
+ <87y27e53a2.fsf@stealth> <CAFc1U0ufOcT14+JpU60Xoe4D_oJoADwwWszPypT6Y=CLDX39dg@mail.gmail.com>
+In-Reply-To: <CAFc1U0ufOcT14+JpU60Xoe4D_oJoADwwWszPypT6Y=CLDX39dg@mail.gmail.com>
+From:   Luis Goncalves <lgoncalv@redhat.com>
+Date:   Thu, 30 Sep 2021 10:17:12 -0300
+Message-ID: <CAD8J--9SeyC7MsmNsNWvXgy9KX1i3hFB4MtCVXcAGK43y3Qp-w@mail.gmail.com>
+Subject: Re: Strange problem with PREEMPT_RT
+To:     Pierre FICHEUX <pierre.ficheux@smile.fr>
+Cc:     Punit Agrawal <punitagrawal@gmail.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Sep 30, 2021 at 10:00:39AM +0100, Valentin Schneider wrote:
+On Thu, Sep 30, 2021 at 5:22 AM Pierre FICHEUX <pierre.ficheux@smile.fr> wr=
+ote:
+>
 > Hi,
-> 
-> On 21/09/21 23:12, Thomas Gleixner wrote:
-> > Valentin reported warnings about suspicious RCU usage on RT kernels. Those
-> > happen when offloading of RCU callbacks is enabled:
-> >
-> >   WARNING: suspicious RCU usage
-> >   5.13.0-rt1 #20 Not tainted
-> >   -----------------------------
-> >   kernel/rcu/tree_plugin.h:69 Unsafe read of RCU_NOCB offloaded state!
-> >
-> >   rcu_rdp_is_offloaded (kernel/rcu/tree_plugin.h:69 kernel/rcu/tree_plugin.h:58)
-> >   rcu_core (kernel/rcu/tree.c:2332 kernel/rcu/tree.c:2398 kernel/rcu/tree.c:2777)
-> >   rcu_cpu_kthread (./include/linux/bottom_half.h:32 kernel/rcu/tree.c:2876)
-> >
-> > The reason is that rcu_rdp_is_offloaded() is invoked without one of the
-> > required protections on RT enabled kernels because local_bh_disable() does
-> > not disable preemption on RT.
-> >
-> > Valentin proposed to add a local lock to the code in question, but that's
-> > suboptimal in several aspects:
-> >
-> >   1) local locks add extra code to !RT kernels for no value.
-> >
-> >   2) All possible callsites have to audited and amended when affected
-> >      possible at an outer function level due to lock nesting issues.
-> >
-> >   3) As the local lock has to be taken at the outer functions it's required
-> >      to release and reacquire them in the inner code sections which might
-> >      voluntary schedule, e.g. rcu_do_batch().
-> >
-> > Both callsites of rcu_rdp_is_offloaded() which trigger this check invoke
-> > rcu_rdp_is_offloaded() in the variable declaration section right at the top
-> > of the functions. But the actual usage of the result is either within a
-> > section which provides the required protections or after such a section.
-> >
-> > So the obvious solution is to move the invocation into the code sections
-> > which provide the proper protections, which solves the problem for RT and
-> > does not have any impact on !RT kernels.
-> >
-> 
-> Thanks for taking a look at this!
-> 
-> My reasoning for adding protection in the outer functions was to prevent
-> impaired unlocks of rcu_nocb_{un}lock_irqsave(), as that too depends on the
-> offload state. Cf. Frederic's writeup:
-> 
->   http://lore.kernel.org/r/20210727230814.GC283787@lothringen
+>
+> Thx a lot for your help (I suspected such a thing).
+>
+> I can see CONFIG_CPU_IDLE=3Dy in the config but as it's an old kernel
+> (3.10) there is no entry such as
+> /sys/devices/system/cpu/cpu?/cpuidle/state?/disable
+>
+> Will take a look further.
 
-I was wrong about that BTW!
-Because rcu_nocb_lock() always require IRQs to be disabled, which of course disables
-preemption, so the offloaded state can't change between
-rcu_nocb_lock[_irqsave]() and rcu_nocb_unlock[_irqrestore]() but anyway there
-were many other issues to fix :-)
+You probably have tuned installed in your system. If so, you could run:
 
+    tuned-adm profile realtime
 
-> 
-> Anywho, I see Frederic has sent a fancy new series, let me go stare at it.
+That should set most of the required and suggested configurations, includin=
+g
+the ones Punit wisely mentioned.
+
+Best regards,
+Luis
+
+>
+> regards
+>
+> Le jeu. 30 sept. 2021 =C3=A0 02:13, Punit Agrawal <punitagrawal@gmail.com=
+> a =C3=A9crit :
+> >
+> > Pierre FICHEUX <pierre.ficheux@smile.fr> writes:
+> >
+> > > Hi,
+> > >
+> > > I have a strange problem on a PREEMPT_RT system.
+> > >
+> > > I have a process with 2 threads,
+> > >
+> > > - 1 TR thread (10 ms period) which places 350 KB blocks in a fifo (1
+> > > block every 10 ms).
+> > > - 1 non-TR thread (SCHED_OTHER) which reads the block in the fifo and
+> > > writes it to the disk
+> > >
+> > > If I run this on a powerful machine (HP Z4-i9, 14 cores, NVME disk,
+> > > CentOS 7 with 3.10 PREEMPT_RT kernel, yes that's ooold), the max
+> > > jitter WITH hackbench remains around 20 to 30 =C2=B5s while the max j=
+itter
+> > > WITHOUT hackbench goes up to 350 =C2=B5s!
+> > >
+> > > -> hackbench -p -g 20 -l 10000000
+> > >
+> > > Running the program with  taskset 01 doesn't change anything
+> > > If I don't write the data to disk it doesn't change anything either.
+> > >
+> > > The important jitters appear rather at the beginning (but sometimes a=
+lso later).
+> > >
+> > > Any ideas ?
+> >
+> > Is power management (cpuidle, cpufreq) enabled on the system?
+> >
+> > One possible explanation -
+> >
+> > The load from the 10ms task, isn't high enough to keep the system at
+> > high-frequencies or prevent it from going into deeper sleep states. Bot=
+h
+> > of these can impact latencies.
+> >
+> > With hackbench, the system is sufficiently busy to avoid the going into
+> > idle.
+> >
+> > >
+> > >
+> > > thanks by advance
+> > >
+> > > --
+> > > Pierre
+>
+>
+>
+> --
+>
+> Pierre FICHEUX -/- CTO Smile ECS, France -\- pierre.ficheux@smile.fr
+>                              http://www.smile.fr
+>                              https://smile.eu/fr/offres/embarque-iot
+> I would love to change the world, but they won't give me the source code
+>
+
