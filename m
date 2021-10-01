@@ -2,72 +2,98 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9B4BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 11:17:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7D53C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 17:29:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 973E861994
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 11:17:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9B1A26187D
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 17:29:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1353081AbhJALTa (ORCPT
+        id S232245AbhJARbj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 1 Oct 2021 07:19:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36940 "EHLO
+        Fri, 1 Oct 2021 13:31:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39902 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230216AbhJALT1 (ORCPT
+        with ESMTP id S231852AbhJARbi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Oct 2021 07:19:27 -0400
-Received: from mail-yb1-xb2a.google.com (mail-yb1-xb2a.google.com [IPv6:2607:f8b0:4864:20::b2a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8A0EFC061775
-        for <linux-rt-users@vger.kernel.org>; Fri,  1 Oct 2021 04:17:43 -0700 (PDT)
-Received: by mail-yb1-xb2a.google.com with SMTP id g6so2594139ybb.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 01 Oct 2021 04:17:43 -0700 (PDT)
+        Fri, 1 Oct 2021 13:31:38 -0400
+Received: from mail-qt1-x82e.google.com (mail-qt1-x82e.google.com [IPv6:2607:f8b0:4864:20::82e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 76ABDC061775
+        for <linux-rt-users@vger.kernel.org>; Fri,  1 Oct 2021 10:29:54 -0700 (PDT)
+Received: by mail-qt1-x82e.google.com with SMTP id m26so9698454qtn.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 01 Oct 2021 10:29:54 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=sergg2GSwSZFaHuoTs/OYVo2E5K1OvZuj8k+iHpnq/g=;
-        b=dzeMSTpC+T/2x8qGmqOfUQJcxZRc9l1HNJdoUykHAcU5aJgLPS1t7aTsKidWl4YP2a
-         RzUnxQaWNsOrxPr/mv1duysxlBcQhqxvjqczPGU1dVq480MYePBQU30TpRQbt1iumqDW
-         Nzu4EABCY/UT3jMdCXQ3U7/lDdTx3MltXwt8pCkkPqBeSalSK9e2pxXwFgmlsObLCj+r
-         39/CKTIDtcWS58blK3Cr76bRXrd0RMd0rfUkq8jb5efK+sYnG/68efAP/nAn5VzLoXn8
-         MwtWscEZZaJk2Tx4YXz+IZebPX3iGQKK1MZJzF9MbwX37CQ/RFCVh2dLyXYSCHvG1NTQ
-         VPSQ==
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=TwwPTW4OXBgxJfCaSjFWRooC75QyLlyJdHUpk9GWS78=;
+        b=hDCVPs0bx7irfVfB7xUQkYkmfYb1trbzkLjkzVd8l9yg0LRiSyXb79FF1PJeZj5D9E
+         mBVMszLfsoFBnIrYNQe5WrSaspuyKa7PIJvRCpQs24N/AGG8GzH12UxJamHhoR+hgNKo
+         QNpS2IlymkHdsvs9FDU61TzVc/vL+FtWCYjlJKqeEe9i0Y4l+/ORULq3TBkAO8+Mo3Qu
+         YeU19/Rlh5BMzto4Urzt+NVKDDKQEmZ8PYUVCPCxQbrrL1hhYtACHl6aHpLg/BBRh9i9
+         yaq/8myqfVKS2WTLhH6vSQoT1Oj277uSa4Ug9MFRNvI+lkzcaFWB+lZkGlmpWn4oaOmr
+         tDVA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=sergg2GSwSZFaHuoTs/OYVo2E5K1OvZuj8k+iHpnq/g=;
-        b=iSEQ6kdneDeSF33OZnF43b6NlTDMHeIv5H0/VKqofw/78QCzTK/nL6ckUKE9IfMqS9
-         ixYD6Tu8WB9lgvGs7eDmPqakt258B5haFEs0TzxG6n4l7mR7HKNCupLFYIHrfVl7OeYn
-         eAJutZ8rJY9FA+AyXk2j7qJI/3mwYhZePrkzjh70mLMSDj55i1qBV7pQdrwW9BYWP7cT
-         IIt3TD1H4O3YGes2I50vhMLuGGsIZtQuQwlCQW2NoH9VIjFSsU5qARlFZ8HoWTcS/opy
-         sYs1Sfwj8ditRetQ25AiQPC0IAkoAFDEiwxJV/VfclnmPuJhqyH54q6/lTQ706rzJhdI
-         Cmvw==
-X-Gm-Message-State: AOAM531DiwBUJV4a9wRX/XPY2rs2o6d5+DMAydSMobqS7V5QWUEz77vE
-        CipczsyxcKgoJ/fmvFZHi54dQZHv7Gshi5KVew90a8/NBxw=
-X-Google-Smtp-Source: ABdhPJwwPLHzXwTKfRjhhYlee5SMa3bcL/OoDn9/6+haR5AXGEwulB6nAIojqDWeQWos8Kwgu6Hevu30u/Up0i3LSss=
-X-Received: by 2002:a25:accb:: with SMTP id x11mr4902245ybd.154.1633087062111;
- Fri, 01 Oct 2021 04:17:42 -0700 (PDT)
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=TwwPTW4OXBgxJfCaSjFWRooC75QyLlyJdHUpk9GWS78=;
+        b=RoCwQWr7vZjP8WRdxIpCiXrMtHtdwSfC8ZtGvV91te33/DPvRGcHDcvQ3zf9uJA/4o
+         1jFH+Uw/b+M597jMKPKU8NRIliqTKQ9s2o3sZ9PeEmxEKe6gvxvVvwrouEjtDBQ+lGLB
+         yxUDAG5g1Oc9tkUVlbE8CoeC/HoAfAs8AetlpmSl3iLOIbZqmhdiewQHjBNwk8PzayOn
+         oa82q7ddBcR4aqko941m3Bh6jiUD1pRlFuKwtK9etfOt2gWV4R2xuFWxDrdJV3KJ+YEQ
+         qAKsY5fmuK3tccWjzBmCJMMRPiH9FBd3FU6nEkUfdMVUh8VB26Jm+mrThD+R7BTtq4n7
+         8KEg==
+X-Gm-Message-State: AOAM533XrztOH8d173i3d5X/KXzKTeQ/kdII6feU3DrrNtY1loYT4TRZ
+        a6Bk7+ODJPiA1a+FSuq3IJpYNovPv2M=
+X-Google-Smtp-Source: ABdhPJw5c2yqJombYCSfD+1k1SI/HPYeNmoTx2vr5dgEF7XIZ1PHu6dqE9u+QiaiEcHaWIyWPLHcyw==
+X-Received: by 2002:ac8:764a:: with SMTP id i10mr13988544qtr.414.1633109393539;
+        Fri, 01 Oct 2021 10:29:53 -0700 (PDT)
+Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
+        by smtp.gmail.com with ESMTPSA id o23sm3741131qtl.74.2021.10.01.10.29.52
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 01 Oct 2021 10:29:53 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Pierre FICHEUX <pierre.ficheux@smile.fr>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Punit Agrawal <punitagrawal@gmail.com>,
+        John Ogness <john.ogness@linutronix.de>,
+        Luis Goncalves <lgoncalv@redhat.com>,
+        Leah Leshchinsky <lleshchi@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/3] rt-tests: Add *.dat to .gitignore
+Date:   Fri,  1 Oct 2021 13:29:35 -0400
+Message-Id: <20211001172937.13060-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
-From:   Lukas Bulwahn <lukas.bulwahn@gmail.com>
-Date:   Fri, 1 Oct 2021 13:17:31 +0200
-Message-ID: <CAKXUXMy39ojQQjEVN+7uucg3et7v14p_AhjPnHkBAOHXxQNegQ@mail.gmail.com>
-Subject: Update on real-time blog post: An update on real-time is overdue
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear all,
+Add *.dat to .gitignore so that files such as trace.dat
+are ignored by git
 
-Last week, somebody pointed out to me that the real-time wiki did not
-see some updates in the last months. So, I wrote a quick blog post on
-the latest stuff that happened (and I have seen):
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ .gitignore | 1 +
+ 1 file changed, 1 insertion(+)
 
-https://wiki.linuxfoundation.org/realtime/rtl/blog#an_update_on_real-time_is_overdue
+diff --git a/.gitignore b/.gitignore
+index a975c4bd28fb..61fb49c874d3 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -10,6 +10,7 @@
+ *.bz2
+ *.xz
+ *.asc
++*.dat
+ tmp
+ patches
+ ChangeLog
+-- 
+2.31.1
 
-Please let me know about any feedback you have on this blog post or if
-there is anything else that should be mentioned.
-
-Best regards,
-
-Lukas
