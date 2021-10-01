@@ -2,61 +2,72 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 763D6C433FE
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 10:50:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9B4BC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 11:17:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 578B861A56
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 10:50:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 973E861994
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Oct 2021 11:17:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1353219AbhJAKw3 (ORCPT
+        id S1353081AbhJALTa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 1 Oct 2021 06:52:29 -0400
-Received: from mail.nearlyone.de ([46.163.114.145]:60284 "EHLO
-        mail.nearlyone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1353212AbhJAKwN (ORCPT
+        Fri, 1 Oct 2021 07:19:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36940 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S230216AbhJALT1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Oct 2021 06:52:13 -0400
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id F209C5E368;
-        Fri,  1 Oct 2021 12:50:13 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1633085416; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         content-transfer-encoding:content-language:in-reply-to:references;
-        bh=FDfzp9LOOb9JVoa9kOAu0GSjBzbTxiybXsypOlrOw6c=;
-        b=eJEsxbTI9NkqOUVvKH5M5w2rfvfH17D5arP00nL5zXjft4O3OW4y5IhX8Hhl9xF8/ac+zk
-        KUh72u1dr13+GxiETnJSdMjUIOj/6hac91PuHICTdtDaBV54qF2A4PVQiXD08fQNtAl7AO
-        VdPCo/eI4sX80vqee6BG0gnCeUUTipWDj8sUhcd5iRJhhzLBODexjUZSV95lijSTwNbw06
-        daBl7OB6oeA10HgpmOuy8KvjDt3ciHdRVx/8c63wA8s2if8qD77KkZCmTm3fk39MICEQ/o
-        0A2yUVS9g2wI+s2ZsJHLymrkzPj7ffOPWgWSNCKjUVQYtuqa2s6BXn32LJXc3g==
-Message-ID: <d799b41b-1ed8-75c2-6b4e-bb6f0f06eef2@monom.org>
-Date:   Fri, 1 Oct 2021 12:50:12 +0200
+        Fri, 1 Oct 2021 07:19:27 -0400
+Received: from mail-yb1-xb2a.google.com (mail-yb1-xb2a.google.com [IPv6:2607:f8b0:4864:20::b2a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8A0EFC061775
+        for <linux-rt-users@vger.kernel.org>; Fri,  1 Oct 2021 04:17:43 -0700 (PDT)
+Received: by mail-yb1-xb2a.google.com with SMTP id g6so2594139ybb.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 01 Oct 2021 04:17:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=sergg2GSwSZFaHuoTs/OYVo2E5K1OvZuj8k+iHpnq/g=;
+        b=dzeMSTpC+T/2x8qGmqOfUQJcxZRc9l1HNJdoUykHAcU5aJgLPS1t7aTsKidWl4YP2a
+         RzUnxQaWNsOrxPr/mv1duysxlBcQhqxvjqczPGU1dVq480MYePBQU30TpRQbt1iumqDW
+         Nzu4EABCY/UT3jMdCXQ3U7/lDdTx3MltXwt8pCkkPqBeSalSK9e2pxXwFgmlsObLCj+r
+         39/CKTIDtcWS58blK3Cr76bRXrd0RMd0rfUkq8jb5efK+sYnG/68efAP/nAn5VzLoXn8
+         MwtWscEZZaJk2Tx4YXz+IZebPX3iGQKK1MZJzF9MbwX37CQ/RFCVh2dLyXYSCHvG1NTQ
+         VPSQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=sergg2GSwSZFaHuoTs/OYVo2E5K1OvZuj8k+iHpnq/g=;
+        b=iSEQ6kdneDeSF33OZnF43b6NlTDMHeIv5H0/VKqofw/78QCzTK/nL6ckUKE9IfMqS9
+         ixYD6Tu8WB9lgvGs7eDmPqakt258B5haFEs0TzxG6n4l7mR7HKNCupLFYIHrfVl7OeYn
+         eAJutZ8rJY9FA+AyXk2j7qJI/3mwYhZePrkzjh70mLMSDj55i1qBV7pQdrwW9BYWP7cT
+         IIt3TD1H4O3YGes2I50vhMLuGGsIZtQuQwlCQW2NoH9VIjFSsU5qARlFZ8HoWTcS/opy
+         sYs1Sfwj8ditRetQ25AiQPC0IAkoAFDEiwxJV/VfclnmPuJhqyH54q6/lTQ706rzJhdI
+         Cmvw==
+X-Gm-Message-State: AOAM531DiwBUJV4a9wRX/XPY2rs2o6d5+DMAydSMobqS7V5QWUEz77vE
+        CipczsyxcKgoJ/fmvFZHi54dQZHv7Gshi5KVew90a8/NBxw=
+X-Google-Smtp-Source: ABdhPJwwPLHzXwTKfRjhhYlee5SMa3bcL/OoDn9/6+haR5AXGEwulB6nAIojqDWeQWos8Kwgu6Hevu30u/Up0i3LSss=
+X-Received: by 2002:a25:accb:: with SMTP id x11mr4902245ybd.154.1633087062111;
+ Fri, 01 Oct 2021 04:17:42 -0700 (PDT)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.1.0
-Subject: Re: [ANNOUNCE] 4.4.285-rt226
-Content-Language: en-US
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
-References: <163307726840.24858.2277036113555626320@beryllium.lan>
- <20211001093927.d4q26bqyeh4s2iik@linutronix.de>
-From:   Daniel Wagner <wagi@monom.org>
-In-Reply-To: <20211001093927.d4q26bqyeh4s2iik@linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-Last-TLS-Session-Version: TLSv1.3
+From:   Lukas Bulwahn <lukas.bulwahn@gmail.com>
+Date:   Fri, 1 Oct 2021 13:17:31 +0200
+Message-ID: <CAKXUXMy39ojQQjEVN+7uucg3et7v14p_AhjPnHkBAOHXxQNegQ@mail.gmail.com>
+Subject: Update on real-time blog post: An update on real-time is overdue
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 01.10.21 11:39, Sebastian Andrzej Siewior wrote:
-> Did you update keyring on korg's side?
->     https://korg.docs.kernel.org/pgpkeys.html
+Dear all,
 
-D'oh! No, I didn't. Thanks for the tip.
+Last week, somebody pointed out to me that the real-time wiki did not
+see some updates in the last months. So, I wrote a quick blog post on
+the latest stuff that happened (and I have seen):
+
+https://wiki.linuxfoundation.org/realtime/rtl/blog#an_update_on_real-time_is_overdue
+
+Please let me know about any feedback you have on this blog post or if
+there is anything else that should be mentioned.
+
+Best regards,
+
+Lukas
