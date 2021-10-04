@@ -2,100 +2,119 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C66E5C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Oct 2021 12:44:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74032C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Oct 2021 12:54:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B430E61373
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Oct 2021 12:44:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5ED2B6139F
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Oct 2021 12:54:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233159AbhJDMqb (ORCPT
+        id S233373AbhJDM4o (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Oct 2021 08:46:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52876 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233208AbhJDMqa (ORCPT
+        Mon, 4 Oct 2021 08:56:44 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:48023 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S233382AbhJDM43 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Oct 2021 08:46:30 -0400
-Received: from mail-qk1-x72d.google.com (mail-qk1-x72d.google.com [IPv6:2607:f8b0:4864:20::72d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 100D2C061745
-        for <linux-rt-users@vger.kernel.org>; Mon,  4 Oct 2021 05:44:42 -0700 (PDT)
-Received: by mail-qk1-x72d.google.com with SMTP id q125so16205898qkd.12
-        for <linux-rt-users@vger.kernel.org>; Mon, 04 Oct 2021 05:44:42 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=mj+VcQtk5Bi7WZo7O2RzcIulntbl6dEWF7nOGbe9wF4=;
-        b=i9MndIswtRpqRpWV0OAp8fJXUZsCI658QipSNIXkcRbh7YlI+U7lplr7gz7GcepJtz
-         3u9PtoYDxax4tASsKAmbVri7JvVFSqhSGBdmRsBlbg2nXA51jQaw63BsJqyUUsCBn1Jv
-         uLG8OeB/j09sT1GNZ3pnyZu1Lag0mFNIu1ichsVfZvM0xmyRvZN7JIghF4rMhvbmuiny
-         dZxobPfeLeyvadBJVwtoscxqcsSVhaDpkiY4a2VGx89mbkfgfNLkQMSHB4dyFVk1D4h7
-         N4INf+WMotA6b1CeuQ/c9S98A74ap4fBz/b9GJOZa8Wzns4RqJwebV+TIxA7rt1jCcHZ
-         tSww==
+        Mon, 4 Oct 2021 08:56:29 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1633352079;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=HDMOTTa6jEEZtotbr1EQGbUHLY12NHeNiVcv6zltgMs=;
+        b=jU2ITTpXN3oKFzUNtBpvdT7pfbbbqVdR+aycL0IVCZWd9TGeRViafJwuylj1vVQNzmJvct
+        9FIo79MEVb104WzrnZC3boiUV+3xrhTm1BTRL4e9fQxfaboFUNo7dZ1L+5xOsPr5iPJ6pj
+        1EiOhZH7w9fKnC7pfOx8bnHM2aFDpZc=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-76-5dL7S0juNzS1UGQWz8YPpQ-1; Mon, 04 Oct 2021 08:54:38 -0400
+X-MC-Unique: 5dL7S0juNzS1UGQWz8YPpQ-1
+Received: by mail-qk1-f199.google.com with SMTP id b189-20020a3799c6000000b0045eb0c29072so5107743qke.12
+        for <linux-rt-users@vger.kernel.org>; Mon, 04 Oct 2021 05:54:38 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=mj+VcQtk5Bi7WZo7O2RzcIulntbl6dEWF7nOGbe9wF4=;
-        b=tyzfjJEqw48HzPFSJY6Lk1n1QdPTkvRhzAQuQ6/A5ShnyxdJ01Y2fg+DNe89QIAKhv
-         jHXK8Q+a0pryuJ9HCQv7xxo64vVDv290NoIK6ElCbML1xiDJ1x0vhh4vzTWSuyE4Ee9e
-         ksYYph6o0yzdOAdHEu3c+P3fR3cVKEDqeWQgqXo/rn9H5z8/dhy/swcxzJsLtuACea8f
-         cLZASaxPX5oYXwcwKCBapg6YZvzx6ZECWvO+pVPI2qmpBZxfANqG596q8lX5OjgOq1SQ
-         Y4nhXgzVV+b174+DD9E2/JFwbobD9Mosm3r1Vl4DM+x4PfS11YluGsy1IqKWMv7tfGNG
-         Hpjw==
-X-Gm-Message-State: AOAM533BkvpQ1pbZAI8A/ZnNgGTuXNPiU9g5H5yGzbH94Xq2ZBjjp0EI
-        YqPZvWhqo14armxxjpwU3t9/PeQFYeg=
-X-Google-Smtp-Source: ABdhPJz8p7irbhdkpHRgSV+wM3GmJpuOxtuH413NiLBkJkhrttv1pDgqBz6F4RwuOVG2FWJ4kE+Vrg==
-X-Received: by 2002:a37:a413:: with SMTP id n19mr9763485qke.461.1633351481083;
-        Mon, 04 Oct 2021 05:44:41 -0700 (PDT)
-Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id d82sm7587440qke.55.2021.10.04.05.44.40
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=HDMOTTa6jEEZtotbr1EQGbUHLY12NHeNiVcv6zltgMs=;
+        b=bJwYksbaHDZmrxqPB1QizuICUtaUvAJQPhZinNbdjZ/9/9W6jIWEMWmG/gRDIir/Ad
+         iNBY85hC38kFXjX+qocwWPexpZJX9SDV1zV7N/xCdv9YVOAI7FROwcWPXTuf+t4oOy8Q
+         tOCPMACCl+M8z1i1LGWb9lnZ6UOk62uxdmOJIbpFJJbic59Vcw+pdLMpesimYeBxTcSV
+         avMVgGUXWMwmhnVeSOzetcBAyzBA0M6L9aNWgNly+apxGMA8RUz2y8dFEfRMFTv2AECs
+         ag+eRzDi4L96GyXI7ZlWadk8cgUMOowCBCyzv8TxjqiYfrrGIQaq7O/B3s76DAEjXriu
+         Pvkg==
+X-Gm-Message-State: AOAM533lQI7+SNTIe/VhV5NJJqVAmj271f696FLwKRrMaPh+/xBlTln3
+        zoKNxD3lTGB3xJiWCgz/j98PT9yT1OZdSOyDBcZ4wPxtHjKFxvcwWM759j/qDCDtLcoQE4Rkqvf
+        M7SJxjzpvBqlqnxoimUI+fIgNqJM=
+X-Received: by 2002:ac8:4117:: with SMTP id q23mr13045219qtl.390.1633352078274;
+        Mon, 04 Oct 2021 05:54:38 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxaHW7afybJ3X1Cr47J9PI1EUVgqjzXp8kfusgSxx+UWcou/2+Nh70np7eeVT0egSY4w9s+cA==
+X-Received: by 2002:ac8:4117:: with SMTP id q23mr13045193qtl.390.1633352078041;
+        Mon, 04 Oct 2021 05:54:38 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
+        by smtp.gmail.com with ESMTPSA id k10sm7748929qkk.124.2021.10.04.05.54.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 04 Oct 2021 05:44:40 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
+        Mon, 04 Oct 2021 05:54:37 -0700 (PDT)
+Date:   Mon, 4 Oct 2021 08:54:36 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Punit Agrawal <punitagrawal@gmail.com>
-Subject: [PATCH] rt-tests: cyclictest: Remove unused 'C' and 'E' options
-Date:   Mon,  4 Oct 2021 08:44:22 -0400
-Message-Id: <20211004124422.5006-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.31.1
+To:     Jack Winch <sunt.un.morcov@gmail.com>
+cc:     Punit Agrawal <punitagrawal@gmail.com>,
+        Pierre FICHEUX <pierre.ficheux@smile.fr>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Clark Williams <williams@redhat.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Strange problem with PREEMPT_RT
+In-Reply-To: <CAFhCfDa5TQaEO_ZZwa0Y4v2Uy-B6=9B767gWw3z036bxz6Wsbw@mail.gmail.com>
+Message-ID: <a37b2bd4-e141-675c-cb4a-164da3bc3358@redhat.com>
+References: <CAFc1U0sgMtKvcpTWkyjwXsq3Md_Huew7mSye_AratkM63D6K-Q@mail.gmail.com> <87y27e53a2.fsf@stealth> <20210930132319.eixnv6rb66ui6x6j@linutronix.de> <CAFc1U0uMuj1PPmxPQTTVqscYsnKfOE+sjtasK9KqadkgaUgLSg@mail.gmail.com> <20210930135145.mdlzzwp64yykixhx@linutronix.de>
+ <CAFc1U0sYdJQWkeLgPjiR1Y1CnafV22zgS4AW0Yf6+h7CO03u+g@mail.gmail.com> <871r554opi.fsf@stealth> <CAFhCfDa5TQaEO_ZZwa0Y4v2Uy-B6=9B767gWw3z036bxz6Wsbw@mail.gmail.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Removing the unused short options 'C' and 'E'.
 
-Suggested-by: Punit Agrawal <punitagrawal@gmail.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/cyclictest/cyclictest.c | 2 --
- 1 file changed, 2 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index cbdc6c11ffe3..2187d98de725 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1071,7 +1071,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 		case 'c':
- 		case OPT_CLOCK:
- 			clocksel = atoi(optarg); break;
--		case 'C':
- 		case OPT_DEFAULT_SYSTEM:
- 			power_management = 1; break;
- 		case 'd':
-@@ -1080,7 +1079,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
- 		case 'D':
- 		case OPT_DURATION:
- 			duration = parse_time_string(optarg); break;
--		case 'E':
- 		case 'F':
- 		case OPT_FIFO:
- 			use_fifo = 1;
--- 
-2.31.1
+On Sun, 3 Oct 2021, Jack Winch wrote:
+
+> Punit Agrawal <punitagrawal@gmail.com> writes:
+> 
+> > > If I remove this default we're going to get a slew of reports from people
+> > > using cyclictest wondering why they aren't getting good realtime
+> > > performance.
+> >
+> > Perhaps, this is a change best done with a major version bump. Not that
+> > it'll stop users queries completely but hopefully more people will pay
+> > attention to the changelog.
+> 
+> Regrettably, I know quite a few RT Linux users who are neither party
+> to this mailing list (due to company IT policy), nor do they pay
+> attention to the changelog.  Even less read the source code of the
+> rt-tests suite of tools.
+> 
+> Regardless of these sorrowful facts, as this is such a fundamental
+> matter, perhaps it would be useful to highlight this behaviour of
+> cyclictest in the tool's documentation - specifically the program's
+> help output, manual page, and related content on the RT Linux wiki.  I
+> see additional information going into the first two forms of
+> documentation as a required step.  However, I believe that adding
+> information on this behaviour to the relevant pages of the RT Linux
+> wiki would also be greatly beneficial.  This is because many
+> developers who are new to RT Linux development, in my experience, tend
+> to make use of the wiki to 'orientate' themselves when first starting
+> out, etc, and the omission of information regarding this behaviour
+> could lead to wrong assessments and conclusions being made when using
+> this tool.
+> 
+> Jack
+> 
+
+Don't worry, I try to keep the help and man pages up-to-date so you don't 
+need to read change logs. If you see any problems with help / man pages
+either report that to the list and cc me, or send me a patch.
+
+Thanks
+
+John Kacur
 
