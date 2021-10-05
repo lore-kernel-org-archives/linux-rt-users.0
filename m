@@ -2,104 +2,126 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EE8BDC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue,  5 Oct 2021 01:40:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D721C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue,  5 Oct 2021 01:51:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BB86861248
-	for <linux-rt-users@archiver.kernel.org>; Tue,  5 Oct 2021 01:40:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 356046128A
+	for <linux-rt-users@archiver.kernel.org>; Tue,  5 Oct 2021 01:51:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230097AbhJEBl4 (ORCPT
+        id S230460AbhJEBxA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Oct 2021 21:41:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36640 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229659AbhJEBlz (ORCPT
+        Mon, 4 Oct 2021 21:53:00 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:27594 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229606AbhJEBw7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Oct 2021 21:41:55 -0400
-Received: from mail-pg1-x534.google.com (mail-pg1-x534.google.com [IPv6:2607:f8b0:4864:20::534])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1DCCFC061745
-        for <linux-rt-users@vger.kernel.org>; Mon,  4 Oct 2021 18:40:06 -0700 (PDT)
-Received: by mail-pg1-x534.google.com with SMTP id r201so12365469pgr.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 04 Oct 2021 18:40:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:references:date:in-reply-to:message-id
-         :user-agent:mime-version;
-        bh=wWW8D8eulD1OtNva8WV1Ud5OIoivthI0zQyOsM5FTD0=;
-        b=nauJDxAmLDwP65fcbNBGQ+ist+sloEop9TF/ZI3ALxWErDcG2gu/kK1Q/lIg7fpEq9
-         fpoQ78FLR65zuhKitet1LbFNqSy3vBDtO1zDYGvZ9Xs7RfnEfCbxwy1ayp1M3GYj41DM
-         izutbusgBllQFp5WFrsAo20pk0cyUzQ3AEGGVFn7TVSGzoZkjHwbXACA+JS4tNmNAeoW
-         kNyG3aapBJjwj3JrLu8vPc3XLTShWQk1zqoOTbaQJC4Ek8orKFlM/eAmxJR/IHe4VFTW
-         cjRTMjHP0QZTuzpA+h2obLBn5Pmimq001T+hkLPb1qJsy95bS0JUKK+3t8wslYrnzYDz
-         HioA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
-         :message-id:user-agent:mime-version;
-        bh=wWW8D8eulD1OtNva8WV1Ud5OIoivthI0zQyOsM5FTD0=;
-        b=VnVPV2ncDXcUvmd1RSPTeROFxRmIosYlTGksmIMm7lOvf9hwu3RlCGrjbtpJR32ewI
-         yiCsIas4BW/CmvHx3YRGmNhgRDC/uK2XtKyHvfkJRaak6fvyHS1R2lbaPcCp2jpfmKm6
-         mUyh519hHyko+HD/rj8KYxyQhCXpf0ftuMTNh1JmSi2KuSlpzCY/zS3Pf2iWStpRgNYg
-         mrw4HPT4PNkozLBpDmJQ0NEklaqw8CpUrMsixR+RG5Bm+evWy5eVXsG37Q/3Mr9Yjb2Y
-         leijSnfr+14EWcPgwBcbDEBJp7Yt/CfsTMMtAjBmfdEcsY2jJwYPc5F0Lezz8/QI0SBJ
-         +UXA==
-X-Gm-Message-State: AOAM530o2k9woEw7WgfyxbNPu2kd/8RfVtQY+ilWRqGTz5L3WxmYWRVf
-        wojtZGrbsiv3dmseZg35AOM=
-X-Google-Smtp-Source: ABdhPJxZGM8eyGul+rNv3gBoUHLn0Hg7ttUstVqsSdZStn2C/xdZqujdiPRMCQo3VmiR9D5/gnBG4g==
-X-Received: by 2002:aa7:96e3:0:b0:44c:83be:19bc with SMTP id i3-20020aa796e3000000b0044c83be19bcmr9850pfq.37.1633398005596;
-        Mon, 04 Oct 2021 18:40:05 -0700 (PDT)
-Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id r130sm7912301pfc.89.2021.10.04.18.40.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 04 Oct 2021 18:40:05 -0700 (PDT)
-From:   Punit Agrawal <punitagrawal@gmail.com>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     RT <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] rt-tests: cyclictest: Remove unused 'C' and 'E' options
-References: <20211004124422.5006-1-jkacur@redhat.com>
-Date:   Tue, 05 Oct 2021 10:40:02 +0900
-In-Reply-To: <20211004124422.5006-1-jkacur@redhat.com> (John Kacur's message
-        of "Mon, 4 Oct 2021 08:44:22 -0400")
-Message-ID: <878rz82qrx.fsf@stealth>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+        Mon, 4 Oct 2021 21:52:59 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1633398669;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=3LQcRwG4XscAS00eRkwfICipH9ymt1VU5AraTgd4k/k=;
+        b=Xms8XSt/0wyzsMM5dhBM9oQk0v1BQmQiXfKkx3AdtXYQtN02iYG53dxXXgYR9PfprobRYe
+        GtpS47qpJaN3DQO/iIUm9xhuqx2rAsZ1NdjTS7T0CvbTMXj03Acr6U+FE7tnxxq+V7gpkV
+        slmZgGFDph4Ww3lB9e3TYnurFyRGOKQ=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-554-SI1TMALqN7qMZpUx6hKNWQ-1; Mon, 04 Oct 2021 21:51:08 -0400
+X-MC-Unique: SI1TMALqN7qMZpUx6hKNWQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A708218D6A2A;
+        Tue,  5 Oct 2021 01:51:07 +0000 (UTC)
+Received: from lclaudio.dyndns.org (unknown [10.22.11.194])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C1729AA38;
+        Tue,  5 Oct 2021 01:51:07 +0000 (UTC)
+Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
+        id 9980A3C0205; Mon,  4 Oct 2021 22:51:05 -0300 (-03)
+Date:   Mon, 4 Oct 2021 22:51:05 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>, stable-rt@vger.kernel.org
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Nitesh Narayan Lal <nilal@redhat.com>,
+        Pei Zhang <pezhang@redhat.com>
+Subject: [RFC RT v5.10] [rt] repair usage of dev_base_lock in netstat_show()
+Message-ID: <YVuviZ3F7MbPvleo@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-John Kacur <jkacur@redhat.com> writes:
+Avoid a possible circular locking dependency by taking the softirq_ctrl.lock
+before taking dev_base_lock in netstat_show(), keeping locking order
+consistent.
 
-> Removing the unused short options 'C' and 'E'.
->
-> Suggested-by: Punit Agrawal <punitagrawal@gmail.com>
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 2 --
->  1 file changed, 2 deletions(-)
->
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index cbdc6c11ffe3..2187d98de725 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1071,7 +1071,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
->  		case 'c':
->  		case OPT_CLOCK:
->  			clocksel = atoi(optarg); break;
-> -		case 'C':
->  		case OPT_DEFAULT_SYSTEM:
->  			power_management = 1; break;
->  		case 'd':
-> @@ -1080,7 +1079,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
->  		case 'D':
->  		case OPT_DURATION:
->  			duration = parse_time_string(optarg); break;
-> -		case 'E':
->  		case 'F':
->  		case OPT_FIFO:
->  			use_fifo = 1;
+Lockdep splat:
 
-LGTM.
+[  106.529733] ======================================================
+[  106.529734] WARNING: possible circular locking dependency detected
+[  106.529734] 5.10.65-rt53+ #1 Tainted: G        W I      
+[  106.529736] ------------------------------------------------------
+[  106.529736] tuned/2760 is trying to acquire lock:
+[  106.529737] ffffa0695ea18220 ((softirq_ctrl.lock).lock){+.+.}-{2:2}, at: __local_bh_disable_ip+0x116/0x2f0
+[  106.529746] 
+               but task is already holding lock:
+[  106.529746] ffffffff844af760 (dev_base_lock){++.+}-{0:0}, at: netstat_show.isra.17+0x4a/0xb0
+[  106.529752] 
+               which lock already depends on the new lock.
+...
+[  106.529825] 
+               other info that might help us debug this:
 
-Thanks for fixing this up.
+[  106.529826]  Possible unsafe locking scenario:
+
+[  106.529826]        CPU0                    CPU1
+[  106.529827]        ----                    ----
+[  106.529827]   lock(dev_base_lock);
+[  106.529828]                                lock((softirq_ctrl.lock).lock);
+[  106.529829]                                lock(dev_base_lock);
+[  106.529829]   lock((softirq_ctrl.lock).lock);
+[  106.529830] 
+                *** DEADLOCK ***
+
+[  106.529831] 6 locks held by tuned/2760:
+[  106.529832]  #0: ffffa062296a6670 (&f->f_pos_lock){+.+.}-{0:0}, at: __fdget_pos+0x4b/0x60
+[  106.529836]  #1: ffffa062223ae310 (&p->lock){+.+.}-{0:0}, at: seq_read_iter+0x56/0x420
+[  106.529839]  #2: ffffa06242ea1ab8 (&of->mutex){+.+.}-{0:0}, at: kernfs_seq_start+0x28/0x90
+[  106.529842]  #3: ffffa06268f52008 (kn->active#285){++++}-{0:0}, at: kernfs_seq_start+0x30/0x90
+[  106.529844]  #4: ffffffff844af760 (dev_base_lock){++.+}-{0:0}, at: netstat_show.isra.17+0x4a/0xb0
+[  106.529848]  #5: ffffffff840c8fa0 (rcu_read_lock){....}-{1:2}, at: rt_read_lock+0x7d/0x1e0
+
+
+Reported-by: Pei Zhang <pezhang@redhat.com>
+Signed-off-by: Nitesh Narayan Lal <nilal@redhat.com>
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+---
+ net/core/net-sysfs.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
+index f6197774048b..7291ca052632 100644
+--- a/net/core/net-sysfs.c
++++ b/net/core/net-sysfs.c
+@@ -625,14 +625,14 @@ static ssize_t netstat_show(const struct device *d,
+ 	WARN_ON(offset > sizeof(struct rtnl_link_stats64) ||
+ 		offset % sizeof(u64) != 0);
+ 
+-	read_lock(&dev_base_lock);
++	read_lock_bh(&dev_base_lock);
+ 	if (dev_isalive(dev)) {
+ 		struct rtnl_link_stats64 temp;
+ 		const struct rtnl_link_stats64 *stats = dev_get_stats(dev, &temp);
+ 
+ 		ret = sprintf(buf, fmt_u64, *(u64 *)(((u8 *)stats) + offset));
+ 	}
+-	read_unlock(&dev_base_lock);
++	read_unlock_bh(&dev_base_lock);
+ 	return ret;
+ }
+ 
+
