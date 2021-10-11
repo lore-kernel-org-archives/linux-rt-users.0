@@ -2,87 +2,83 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CFBB8C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Oct 2021 12:36:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49060C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Oct 2021 14:23:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BA31660F57
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Oct 2021 12:36:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3136660231
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Oct 2021 14:23:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236671AbhJKMiq (ORCPT
+        id S241532AbhJKOZa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Oct 2021 08:38:46 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:35657 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S236667AbhJKMip (ORCPT
+        Mon, 11 Oct 2021 10:25:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41448 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S243619AbhJKOZR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Oct 2021 08:38:45 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1633955805;
+        Mon, 11 Oct 2021 10:25:17 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F1C0EC02B873;
+        Mon, 11 Oct 2021 06:56:12 -0700 (PDT)
+Date:   Mon, 11 Oct 2021 15:56:09 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1633960570;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=UhoDjtVs91AeOEtNbkRqqIG1MWI1FQFYVYnkbzkEOx8=;
-        b=PHK5080Oj2czHSmJOeL2JpNoeA64qFsG14JliE3aj/GUvkGDL/PrSQ9OwonFKURgp61lPB
-        mbYB20Q2p+0R8MCK/LWDqEJOA336gMmAS0MkqUS/M/RNkOzxZ7XmbBbuT/uzGaMerC/Hym
-        0ZvfLI4GVqZ0jqVIMpVW1jgxqNo6l+0=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-501-fIxn8nW4PhmsWJHbZRNO8g-1; Mon, 11 Oct 2021 08:36:42 -0400
-X-MC-Unique: fIxn8nW4PhmsWJHbZRNO8g-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 139E2EC1A5;
-        Mon, 11 Oct 2021 12:36:41 +0000 (UTC)
-Received: from lclaudio.dyndns.org (unknown [10.22.35.95])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 6568819E7E;
-        Mon, 11 Oct 2021 12:36:40 +0000 (UTC)
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id 831063C0205; Mon, 11 Oct 2021 09:36:38 -0300 (-03)
-Date:   Mon, 11 Oct 2021 09:36:38 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=ydfCU8UVBINEvm3NMag8k4T8SSzWV3k4Q87RDLtozsc=;
+        b=ukPUtY6Qx/phgJ6ET3uNJuQZtqzY8Ri7LkyKdqISBltpS2pjlvowGgQpuSfUuBodO12lIw
+        2mIAeMjlRH7zS6eW9xbOaLwY7kjpDmE83fX5M23sFzQOHCjUKoiwr5xjfqL0y2RcAs7bI9
+        ilEnGqfUUHeEtbPHKINg0osK2Inm4LEY6wJFBY5AvbAsMpA6GNsaVCOT2KB4ufqhTgPjtn
+        LyYTZ2EzdHMI9SLZTbK5CRdt/hqkGdjLJMK02m5QqO/9pOJxBrIER8zum7KtHj3iCbt5g1
+        +QOyDCj/wmhZ77nWYseSrgtc7Ke6DcHpZLv3YwOV4ueSZc05IAi/WZOALFEysw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1633960570;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=ydfCU8UVBINEvm3NMag8k4T8SSzWV3k4Q87RDLtozsc=;
+        b=E9u1IpzHA8yh5JfcEWKSh0ByvNBCue2Z4Dqy53MPH6YU7+5UngUy3aWz0VaiIXRCU1luLH
+        EHlTxD0D3knS5vAw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.9.286-rt189
-Message-ID: <YWQv1ue+fucyQFYC@uudg.org>
+        stable-rt@vger.kernel.org, Nitesh Narayan Lal <nilal@redhat.com>,
+        Pei Zhang <pezhang@redhat.com>
+Subject: Re: [RFC RT v5.10] [rt] repair usage of dev_base_lock in
+ netstat_show()
+Message-ID: <20211011135609.22y7hkycbqm52w6d@linutronix.de>
+References: <YVuviZ3F7MbPvleo@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <YVuviZ3F7MbPvleo@uudg.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On 2021-10-04 22:51:05 [-0300], Luis Claudio R. Goncalves wrote:
+> Avoid a possible circular locking dependency by taking the softirq_ctrl.l=
+ock
+> before taking dev_base_lock in netstat_show(), keeping locking order
+> consistent.
+=E2=80=A6
+> [  106.529734] 5.10.65-rt53+ #1 Tainted: G        W I     =20
 
-I'm pleased to announce the 4.9.286-rt189 stable release.
+So looking at 5.15 there are multiple instances of that. Either _all_ of
+them need to disable bh while acquiring dev_base_lock or none of them.
+I've been looking at a few call chains and didn't find one which
+acquired that lock from softirq. This does not mean there isn't one.
 
-This release is just an update to the new stable 4.9.286 version and
-no RT specific changes have been made.
+Tracing this back, I stumbled upon v2.3.6 where a few of those got their
+_bh removed while new ones were added with _bh. So _maybe_ this _bh
+isn't required and nobody noticed. Lockdep would yell if it would
+observe dev_base_lock in softirq and noticed one instance like this one
+in netstat_show() where it is missing. But it didn't happen.
 
-You can get this release via the git tree at:
+So my guess is that the _bh isn't needed.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.9-rt
-  Head SHA1: 73474e89c88797e9cfdf86f744addbfc32a74b9c
-
-Or to build 4.9.286-rt189 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.286.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.286-rt189.patch.xz
-
-
-Enjoy!
-Luis
-
+Sebastian
