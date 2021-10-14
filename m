@@ -2,68 +2,68 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7C3CC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Oct 2021 18:29:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E3E2FC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Oct 2021 18:29:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 980B561037
-	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Oct 2021 18:29:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C49A26105A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Oct 2021 18:29:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230009AbhJNSbK (ORCPT
+        id S230105AbhJNScB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 14 Oct 2021 14:31:10 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:33314 "EHLO
+        Thu, 14 Oct 2021 14:32:01 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:48143 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229819AbhJNSbJ (ORCPT
+        by vger.kernel.org with ESMTP id S230099AbhJNScA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 14 Oct 2021 14:31:09 -0400
+        Thu, 14 Oct 2021 14:32:00 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1634236143;
+        s=mimecast20190719; t=1634236195;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=TMZrMT2D7C7lTlQ0AuLDFZf7pACUKSJygDBGOgykqzs=;
-        b=bT1xDts8UDj4siwr8J5nHDWZebQMMHpTBjrkY+oEkQk8qypg0imJ36h0R5d2od72hZFIfW
-        1AFmBGgZw3M0cwNRUXhsb3el4yGm/k4V8qFoE0DbUWau8CN5pLaHR0Gj3aljAiwbFTuEtB
-        6iI13w3FY6oD02CCwYszRJQezgAvdew=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-235-YW_UNNtNOSaLIdfhGQsASQ-1; Thu, 14 Oct 2021 14:29:02 -0400
-X-MC-Unique: YW_UNNtNOSaLIdfhGQsASQ-1
-Received: by mail-qk1-f197.google.com with SMTP id s20-20020a05620a0bd400b0045e893f2ed8so5094857qki.11
-        for <linux-rt-users@vger.kernel.org>; Thu, 14 Oct 2021 11:29:02 -0700 (PDT)
+        bh=OvzK5OI3gFvWcN3aNc902xgyiVEI301miYW7OX+RCcc=;
+        b=E1HrRWZ2a3Yedqf2oE6lqw2HPBV8ppygpMEfi2V2PKg3XHxL0puDLt5CuUaZ3ApVuEmQS4
+        dDvBvdrLKj+y9YBJU4vpD9fFlgN437u2VN4E42XLFOHOMMwXtZU7/bx7PFeGr5F0qeBSAu
+        nsxmxBlVbkYbd7deLj5wYORRPibuNvE=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-353-fl4R2g-EPA2Bp5UccVlEMw-1; Thu, 14 Oct 2021 14:29:53 -0400
+X-MC-Unique: fl4R2g-EPA2Bp5UccVlEMw-1
+Received: by mail-qv1-f69.google.com with SMTP id q9-20020ad45749000000b00382b7c83aa1so6306617qvx.11
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Oct 2021 11:29:53 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
          :references:mime-version;
-        bh=TMZrMT2D7C7lTlQ0AuLDFZf7pACUKSJygDBGOgykqzs=;
-        b=hci64HsYkN0r0uVP55mpC0KKxrW0cHFSkAhOgib+6EkdrpKhfHux9gOfcagVcBue5G
-         z/RQ8Gy7e7ocde91PfqWaLq1FDmxb2aWXiFK8Hdr9DI8YXjWu7bNy+w6AEvHl23XvCZJ
-         OIzZildw1fb3babCMpRTa29at9kENzg+E/saeKUItAKSjHNeIvMKsTenDDDFO66oZris
-         tCOSu70pxpcbdJGFwpmVAGMgh1VIB+ElXDE8u2Huyax7Tk148Apf6nai2Rh+bxGvPcZp
-         VMMLUtuwGOoQDF1A/eoJXkoE18NLPuQMK3Km2TkCg+1hJ/c2AtEq0CCld0KKWivqy3WB
-         qiPQ==
-X-Gm-Message-State: AOAM530KXju/iLBmL7NB6dk7pyi6lWV8Le4e4ufTtGsJCKNt5LCG/5R1
-        PFtCS1c+OipE3d5oukJcFiiczub/a30wc9fBOfbpWJwYgQBi/xNU40yDYh4XPBv4SOR6MeTvckh
-        waP75NEq2mYIOxNxRZZr9OJO3C1E=
-X-Received: by 2002:ad4:5486:: with SMTP id q6mr7059194qvy.1.1634236142436;
-        Thu, 14 Oct 2021 11:29:02 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyuqSHpM7c0veQYY3BDPKmcyBwcOuDsyHoDZ5xFqAvvTArqPuUCCwAjzhUoCVhiSYXz2vJsvg==
-X-Received: by 2002:ad4:5486:: with SMTP id q6mr7059179qvy.1.1634236142286;
-        Thu, 14 Oct 2021 11:29:02 -0700 (PDT)
+        bh=OvzK5OI3gFvWcN3aNc902xgyiVEI301miYW7OX+RCcc=;
+        b=iuV5kCjTHMXcpZsuX3Q3E/PVtrCevCrOhmjwWMGmhe6cvb8RD18V1czDTy6RHs2x51
+         Ln2ZULKYVO5mfZD7WmJnjoEmahlBU1VlUy6XzkpWlWgmoTL/nHIdLoVhnBiHoiJkdOrN
+         C9lxYl4wAru5rTVZt80AKoxGmeK9n1u/1INs7jSzPVvUotc8eS+9dt7T2WHG+N6EoubP
+         LogwqnFL2jcvIdr0/HSI2yEKYYiMIa+wuaktO7ujJGikFswowmdNPwPmArMxITcyKxWX
+         60QDmINDiPGrBu3FeVKtP2CadlfifYTq2G5xdSd6qwXpLN+Yq4Vg8I2Avw6rRomXZctw
+         HdlA==
+X-Gm-Message-State: AOAM530PSkRjtH4X8cl+3Agv4OlO2p2KNomJgPALWpWZGd1+f5+mUHKP
+        teYv6do7dV5sSxhwbBvkyJBTET9LnKNsAivYRqP29s/LV2yZHUmylaKre0v0l1Jo3PpB1tMXYnX
+        qdZ24mbBm0jSpRPzQTixRHd4Gkh8=
+X-Received: by 2002:a37:ec5:: with SMTP id 188mr6340569qko.440.1634236193510;
+        Thu, 14 Oct 2021 11:29:53 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzXsIoyrnBNyuGPp6PBjs/tNcFMUro7BpZUBa9xlXk3GF3ocqB+ivWP371RLYVz6vhKgcErww==
+X-Received: by 2002:a37:ec5:: with SMTP id 188mr6340558qko.440.1634236193368;
+        Thu, 14 Oct 2021 11:29:53 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id x16sm1689593qtp.56.2021.10.14.11.29.01
+        by smtp.gmail.com with ESMTPSA id u3sm1585034qkj.53.2021.10.14.11.29.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 14 Oct 2021 11:29:01 -0700 (PDT)
-Date:   Thu, 14 Oct 2021 14:29:00 -0400 (EDT)
+        Thu, 14 Oct 2021 11:29:53 -0700 (PDT)
+Date:   Thu, 14 Oct 2021 14:29:51 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Punit Agrawal <punitagrawal@gmail.com>
 cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>, williams@redhat.com,
         linux-rt-users@vger.kernel.org
-Subject: Re: [RFC 2/7] rt-tests: cyclictest: Simplify duplicate initialization
- of "stop"
-In-Reply-To: <20211014071247.4165329-3-punitagrawal@gmail.com>
-Message-ID: <e5d249a3-4ac9-d665-6faa-19e19aee589@redhat.com>
-References: <20211014071247.4165329-1-punitagrawal@gmail.com> <20211014071247.4165329-3-punitagrawal@gmail.com>
+Subject: Re: [RFC 4/7] rt-tests: cyclictest: Drop unnecessary variable
+ "bufsize"
+In-Reply-To: <20211014071247.4165329-5-punitagrawal@gmail.com>
+Message-ID: <d6cff5d3-1a9b-2b92-6a10-65b3b3af7d89@redhat.com>
+References: <20211014071247.4165329-1-punitagrawal@gmail.com> <20211014071247.4165329-5-punitagrawal@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -76,54 +76,29 @@ On Thu, 14 Oct 2021, Punit Agrawal wrote:
 
 > From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 > 
-> The timespec structure "stop" is initialised whether it is used or not
-> as the compiler is not smart enough to figure out that it's use is
-> always guarded by the "duration" variable. As a result, "stop" needs
-> to be initialised whether it's used or not to avoid a compiler
-> warning.
-> 
-> Replace the duplicate memset statements by initializing "stop" using
-> structure initialiser.
+> Two copies of "bufsize", initialised with the same value are declared
+> in enclosed blocks. Remove the redundant declaration.
 > 
 > Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 > ---
->  src/cyclictest/cyclictest.c | 5 +----
->  1 file changed, 1 insertion(+), 4 deletions(-)
+>  src/cyclictest/cyclictest.c | 1 -
+>  1 file changed, 1 deletion(-)
 > 
 > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 0c1e6617e0e1..d06ed01c58f4 100644
+> index 721d242a1da0..9c67a3ce3034 100644
 > --- a/src/cyclictest/cyclictest.c
 > +++ b/src/cyclictest/cyclictest.c
-> @@ -507,7 +507,7 @@ static void *timerthread(void *param)
->  	struct sigevent sigev;
->  	sigset_t sigset;
->  	timer_t timer;
-> -	struct timespec now, next, interval, stop;
-> +	struct timespec now, next, interval, stop = { 0 };
->  	struct itimerval itimer;
->  	struct itimerspec tspec;
->  	struct thread_stat *stat = par->stats;
-> @@ -516,8 +516,6 @@ static void *timerthread(void *param)
->  	pthread_t thread;
->  	unsigned long smi_now, smi_old = 0;
->  
-> -	memset(&stop, 0, sizeof(stop));
-> -
->  	/* if we're running in numa mode, set our memory node */
->  	if (par->node != -1)
->  		rt_numa_set_numa_run_on_node(par->node, par->cpu);
-> @@ -598,7 +596,6 @@ static void *timerthread(void *param)
->  	tsnorm(&next);
->  
->  	if (duration) {
-> -		memset(&stop, 0, sizeof(stop)); /* grrr */
->  		stop = now;
->  		stop.tv_sec += duration;
->  	}
+> @@ -2054,7 +2054,6 @@ int main(int argc, char **argv)
+>  			memset(stat->values, 0, bufsize);
+>  			par->bufmsk = VALBUF_SIZE - 1;
+>  			if (smi) {
+> -				int bufsize = VALBUF_SIZE * sizeof(long);
+>  				stat->smis = threadalloc(bufsize, node);
+>  				if (!stat->smis)
+>  					goto outall;
 > -- 
 > 2.32.0
 > 
 > 
-
-Looks good, I'll sign off on that, just remove the RFC
+NACK: two different scopes, two different variables.
 
