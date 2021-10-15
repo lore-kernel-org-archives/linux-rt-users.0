@@ -2,76 +2,125 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ABA1EC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 08:23:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4ADE3C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 13:08:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 982F661184
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 08:23:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 25BD560F9D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 13:08:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237101AbhJOIZk (ORCPT
+        id S239242AbhJONKJ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Oct 2021 04:25:40 -0400
-Received: from mail.nearlyone.de ([46.163.114.145]:56256 "EHLO
-        mail.nearlyone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237137AbhJOIZI (ORCPT
+        Fri, 15 Oct 2021 09:10:09 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:54613 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S239196AbhJONKI (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Oct 2021 04:25:08 -0400
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 4E79B618BD;
-        Fri, 15 Oct 2021 10:22:57 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1634286178; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         in-reply-to:references; bh=JPgSDG5I9o6xHmpjKVzilCOcZk5995CHFhUH4VgF+es=;
-        b=MKi+05q3WR9dtFTSoKU+qtP5xhgq6ATbzg4W1l6wqsz2d3X75XcTCTDpF6i0yS4VW8NQ41
-        jwd/DtNpf7XTbVXp+5KaoBxI8B6slZF/gXxgXHmyUdSModXmTRJkSFcTOxWkuqpqLkyLzZ
-        TmpfryGQxZgdjgGnkINSYfcwwsbmbAVXvUchpMevHPNjoT7fmxsqUyL4dqiIJ8Ryrm//Tq
-        Hu9/5FxyOaQYo88pZb4hjtpb+7Fn6IBRVSO/wMnbgg8oXzYR9l4ZAQPGL9bHAN8muYrFLV
-        /CQbjn3ekSByMrfwuo8meVEtCQPQW4A3La+7dwHUervaUTwNKrxpSc0RUqfwaw==
-Date:   Fri, 15 Oct 2021 10:22:51 +0200
-From:   Daniel Wagner <wagi@monom.org>
+        Fri, 15 Oct 2021 09:10:08 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1634303282;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=bZ06J7qlL1UbGo2O7Ptb0LzmibUfdwoD4Qf7q+xIQWk=;
+        b=JUYcEpnfsmBQ2Zwsz07JgOxiEw+bv7m+LP3WXscAw7NC07lBWaknKHXAnI9BeEeuN+Tq6z
+        nNSdAXdSw0fRTpDDrVSyLtFYSLHFz3nfeeYuy1EVyK7SsYlzOIIPa67iqaxBKXMzttaA7U
+        oDSKe6Ba+wl2iFMKi3q6wpFDklTYeGw=
+Received: from mail-il1-f197.google.com (mail-il1-f197.google.com
+ [209.85.166.197]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-459-hQa2Q8GvOxm5J5GW5F4o4A-1; Fri, 15 Oct 2021 09:08:00 -0400
+X-MC-Unique: hQa2Q8GvOxm5J5GW5F4o4A-1
+Received: by mail-il1-f197.google.com with SMTP id c11-20020a928e0b000000b0024eb114af51so4125300ild.22
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 06:08:00 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=bZ06J7qlL1UbGo2O7Ptb0LzmibUfdwoD4Qf7q+xIQWk=;
+        b=omXRS9sIbAc+1Vw9ZFumG1xludMnIsHiTobHsEigrryCzkUug6fOAtjm0hWP0QUoOk
+         YDUqGKOrU1RDxNUwEROI7lOGavz6VrARfH2aLAviKU+nMV8dlGCatsJOYcylMjWXddIR
+         BbDUJ5nb+O2vDy4mfzWeYaA26taLIqikQ1WlLNvG/VbeQhm5xzCkdVLD8dBBD/zJv5vr
+         yvIyPizueY1/KHDjo1j9xz97CUM8jf1Km8BzsE7Us2fLXpRGws8Ozv+UuckpQdTCgkEi
+         Dv6BqIoKptZ5sV8hygLvzREcnaQPMEA1fyCKmJdk16bUUxpY5ojBhjeOw7T8UCQXJY7X
+         bptw==
+X-Gm-Message-State: AOAM533m3rOLXePvvh5szVen5qLwPp83ef9o/ks3XhCcmxq+0zuMHQ6y
+        14yJHmdvJMPPeijytbT8UQX61csBE1lh1FKHQGfHx1Hdp+2a4IKpb30EmBQ4//3NUKsp8zz8nq7
+        xyXxXSF9rzof9Z7ugU0dnGIhZiQo=
+X-Received: by 2002:a6b:208:: with SMTP id 8mr3743022ioc.46.1634303280230;
+        Fri, 15 Oct 2021 06:08:00 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzg34YejlcjsncDSCoTZzlXs8BfFiM/v+F1ykKTal1tRPuqEO6euR5QgjFu5LSxlYI31shv3w==
+X-Received: by 2002:a6b:208:: with SMTP id 8mr3742998ioc.46.1634303280008;
+        Fri, 15 Oct 2021 06:08:00 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
+        by smtp.gmail.com with ESMTPSA id e14sm2565994ioe.37.2021.10.15.06.07.58
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 15 Oct 2021 06:07:59 -0700 (PDT)
+Date:   Fri, 15 Oct 2021 09:07:57 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
 To:     Punit Agrawal <punitagrawal@gmail.com>
-Cc:     jkacur@redhat.com, Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
-        williams@redhat.com, linux-rt-users@vger.kernel.org
-Subject: Re: [RFC 7/7] rt-tests: cyclictest: Add support to report standard
- deviation
-Message-ID: <20211015082251.wmyknmgnxjqc3jb4@carbon.lan>
-References: <20211014071247.4165329-1-punitagrawal@gmail.com>
- <20211014071247.4165329-8-punitagrawal@gmail.com>
- <20211014115043.s3zf5p3s7dglvcjb@carbon.lan>
- <87r1cm1zz8.fsf@stealth>
+cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>, williams@redhat.com,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [RFC 4/7] rt-tests: cyclictest: Drop unnecessary variable
+ "bufsize"
+In-Reply-To: <87lf2u1znk.fsf@stealth>
+Message-ID: <f679a887-7257-ee54-c6c9-8330feacdf4@redhat.com>
+References: <20211014071247.4165329-1-punitagrawal@gmail.com> <20211014071247.4165329-5-punitagrawal@gmail.com> <d6cff5d3-1a9b-2b92-6a10-65b3b3af7d89@redhat.com> <87lf2u1znk.fsf@stealth>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <87r1cm1zz8.fsf@stealth>
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Oct 15, 2021 at 04:58:19PM +0900, Punit Agrawal wrote:
-> Sure, I can bump up the version to 1.1 - minor update as it's adding a
-> new field rather than changing existing ones. Or "2" if that is
-> preferred.
 
-I'd say we just increment the number to 2 and don't any semantic meaning
-to the version number. Instead push the compatible checks to the user
-side. I suspect many don't care anyway.
 
-BTW, I've noticed we print the version number wrong. Currently,
-'cyclictest --version' will print 'V 2.20' instead 'V 2.2'. The printf
-formatting string is wrong. Same in the JSON output.  If you don't mind
-you could update this well when you are updating file version
-string. Thanks!
+On Fri, 15 Oct 2021, Punit Agrawal wrote:
 
-> I can look at adding support for standard deviation to the other tools
-> if there's interest once the cyclictest changes have been merged.
+> John Kacur <jkacur@redhat.com> writes:
+> 
+> > On Thu, 14 Oct 2021, Punit Agrawal wrote:
+> >
+> >> From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+> >> 
+> >> Two copies of "bufsize", initialised with the same value are declared
+> >> in enclosed blocks. Remove the redundant declaration.
+> >> 
+> >> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
+> >> ---
+> >>  src/cyclictest/cyclictest.c | 1 -
+> >>  1 file changed, 1 deletion(-)
+> >> 
+> >> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> >> index 721d242a1da0..9c67a3ce3034 100644
+> >> --- a/src/cyclictest/cyclictest.c
+> >> +++ b/src/cyclictest/cyclictest.c
+> >> @@ -2054,7 +2054,6 @@ int main(int argc, char **argv)
+> >>  			memset(stat->values, 0, bufsize);
+> >>  			par->bufmsk = VALBUF_SIZE - 1;
+> >>  			if (smi) {
+> >> -				int bufsize = VALBUF_SIZE * sizeof(long);
+> >>  				stat->smis = threadalloc(bufsize, node);
+> >>  				if (!stat->smis)
+> >>  					goto outall;
+> >> -- 
+> >> 2.32.0
+> >> 
+> >> 
+> > NACK: two different scopes, two different variables.
+> 
+> If they had different values or if the inner scope was not dependent
+> (nested) I would agree.
+> 
+> But no strong opinion - I'll drop this one.
+> 
 
-Yeah, there a couple of tests which quite similar. So you might just
-have to move the newly added code to util.h(?) and add the calls to the
-tests.. It shouldn't be too difficult just a bit of repetitive
-work. Probably a good starting point for an intern :)
+I had another look at this and realize that I am wrong.
+bufsize is just a buffer size passed to threadalloc
+which does the malloc which gives the two different addresses we
+are concerned with. Go ahead and submit this one and I'll sign-off
+on it.
 
-> Thanks for taking a look.
+Thanks
 
-Thanks for contributing!
+John
 
-Daniel
+
+
