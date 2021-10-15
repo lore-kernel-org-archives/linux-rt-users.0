@@ -2,69 +2,69 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 55FF3C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 08:05:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3BAADC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 08:22:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3CE4E61027
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 08:05:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2713E61163
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 08:22:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236646AbhJOIHa (ORCPT
+        id S237019AbhJOIY4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Oct 2021 04:07:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51178 "EHLO
+        Fri, 15 Oct 2021 04:24:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54754 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236614AbhJOIH3 (ORCPT
+        with ESMTP id S236907AbhJOIYo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Oct 2021 04:07:29 -0400
-Received: from mail-pf1-x431.google.com (mail-pf1-x431.google.com [IPv6:2607:f8b0:4864:20::431])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4A2B2C061760
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 01:05:23 -0700 (PDT)
-Received: by mail-pf1-x431.google.com with SMTP id v8so3583865pfu.11
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 01:05:23 -0700 (PDT)
+        Fri, 15 Oct 2021 04:24:44 -0400
+Received: from mail-pg1-x533.google.com (mail-pg1-x533.google.com [IPv6:2607:f8b0:4864:20::533])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7431BC061777
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 01:22:00 -0700 (PDT)
+Received: by mail-pg1-x533.google.com with SMTP id s136so4684048pgs.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 01:22:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=from:to:cc:subject:references:date:in-reply-to:message-id
          :user-agent:mime-version;
-        bh=sLh4Ri9Fy1pgdI+tnEzbxoxa4T/oDJpyU3GLrNySNVM=;
-        b=jvyUZLOqWbOYCO2MHO2ZqVsd+f4hrbgYbq9WKTSwfAXRDWFMKp6ykrzCgabRSsp21k
-         ItSeCSHsSoqt5agHiSgHV0DgswOzDxXKIXUn0VssYlz9SinCgCYD4/7Yvs/6uUszEECP
-         L8N0J5Ep1FVboPj1SBgWSsXqdUnJ83whqEnOnJfegJvvR3Ie64wOa1Pp/uacbFAq4DmX
-         FC/rpHEbifsVHxEiselDv/hbZn14928rkCzCQg+YMgOgd3pD2QnEzDH3yANuCkVVLVJ0
-         7X5+cwR+C18qN0MrGSaYZ1ggmWqgzmyNljQ7IQKWyIQGotUBvIDJA0hOcy8J8Xj6xtMB
-         mBmw==
+        bh=2ov929KePKsPaFPc1VrmABScxzdAPHfHq3b58XUkzC0=;
+        b=dLGh1j4f6rL/il/BB82g+qkyg0eCpYNvmPtNTmENrjcI2PRoOSyQwDECM7dNMJ4vKv
+         wV1Z/CaVtZ5zr2MALYbygxRxw3isq0/l3ZPOis63jXT6ubIMGbXUvF9g9C1E6SSZAjtM
+         RN+MedVTTmfDqImEjw3S+VQ2q/Wt7wIvKrvhWe65HlPnWRtKLbF9mPSa/YaSmUJqGRfj
+         B9h/qnuIUak6kJstHNe95Wweeq4/LvuUL8B8sQXy/+9wJZOD8iLvaHMCwMBmxMIKPVlB
+         O16p12DQs10mz+OcI6zORyNYrcfjSUZkZgo0XMOEdCFDJkT3gV+JOxwE0dKtpEM67dav
+         lGBg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
          :message-id:user-agent:mime-version;
-        bh=sLh4Ri9Fy1pgdI+tnEzbxoxa4T/oDJpyU3GLrNySNVM=;
-        b=YNMxOl9bvOEt4W8hmndIQw1ebuQp9QoVFkK7A/7RRBGAUxWESh3pyavec7sI9LNjBx
-         gWLujacESFqyUJt91mtDFDQYjk1BH45VYoZM6uzZrg+9bdTqq2CBY1EmJlGnMyr5/QdE
-         Gu6oE7eBWXGS15msDQ3okG1POsu8yVlmCAEZdK2Q31KIwq4zBV8PpKpR4Qv0+8HB6e1L
-         e8CkCmpQEcnpNHcBEMmHpRiyGAqhJBtP1mPnMQ1dXn5CXeePN+A/PxEiOH6VBVOi3xq0
-         QOO2x6SIcntwJ3y84irMCBhVTFDpKX4rA8m+rl+UifsDyoZxAwTyA73OPIrVdm47vyzY
-         6ANQ==
-X-Gm-Message-State: AOAM5317D0iQkRAYCfHSGw148NOk/y2V5M053thA+QNi0xJ4wBDJtXpe
-        oC2XV91wb+Ues8a8SGXJpAI=
-X-Google-Smtp-Source: ABdhPJwXnZp7M13BTrt+cktxRHzbOLLwWHQoJ/ivNATqbEo3GcSTCB/BQCOAXgwTfHVUsl9HQUgOOQ==
-X-Received: by 2002:a05:6a00:1312:b0:44c:becf:b329 with SMTP id j18-20020a056a00131200b0044cbecfb329mr10054857pfu.5.1634285122604;
-        Fri, 15 Oct 2021 01:05:22 -0700 (PDT)
+        bh=2ov929KePKsPaFPc1VrmABScxzdAPHfHq3b58XUkzC0=;
+        b=GI6DBLvFgOlFQuB49heaHd97RYxRlgPKmst+84jvgYFX9FkHrP/4yoadlOfyQ0J1MT
+         BPoxDXPhDAOo9YU1x8OcENIIu4xxfqdUNUrz+7hbRHg5+DjyAq5khMyY9rhO/cuHFim5
+         ru2ZndhvHBWJ6ijfjGudkNiHJqpjJi09zjWfyqz62W2PvdcOrshG1qMXuzh/DN3JAUuS
+         LQizKRO0WeMHoTd5PXIOM0qIrUbJT+cFBId+aGgfvF0n7bFPyT2nCPcGNfiRRGZ6EzWQ
+         XnwbKjk8g5LnMf46VUIaj8c4IxWqB2+1ZS9C5YJzTST+PO6Ell/kTKaUied/+IRin9tZ
+         QPag==
+X-Gm-Message-State: AOAM533pnHfPxbmaUNrj64knqmPO5y746sPEsWO3rrqSuOBXtyNHLWXI
+        /dHc5MKGhNvZOMPEnAGRmgw=
+X-Google-Smtp-Source: ABdhPJzz3tb99CJ+2o6v8114Hz1KMNMKs+GIhTRx42aepmja8oYFKByJ2trZqPQuoSNBcVmIykBT3A==
+X-Received: by 2002:a63:bf4a:: with SMTP id i10mr8135505pgo.196.1634286119812;
+        Fri, 15 Oct 2021 01:21:59 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id k14sm4490111pji.45.2021.10.15.01.05.21
+        by smtp.gmail.com with ESMTPSA id oo9sm4771245pjb.53.2021.10.15.01.21.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 15 Oct 2021 01:05:21 -0700 (PDT)
+        Fri, 15 Oct 2021 01:21:58 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
 To:     John Kacur <jkacur@redhat.com>
 Cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>, williams@redhat.com,
         linux-rt-users@vger.kernel.org
-Subject: Re: [RFC 4/7] rt-tests: cyclictest: Drop unnecessary variable
- "bufsize"
+Subject: Re: [RFC 5/7] rt-tests: cyclictest: Move signal handler to avoid
+ function declaration
 References: <20211014071247.4165329-1-punitagrawal@gmail.com>
-        <20211014071247.4165329-5-punitagrawal@gmail.com>
-        <d6cff5d3-1a9b-2b92-6a10-65b3b3af7d89@redhat.com>
-Date:   Fri, 15 Oct 2021 17:05:19 +0900
-In-Reply-To: <d6cff5d3-1a9b-2b92-6a10-65b3b3af7d89@redhat.com> (John Kacur's
-        message of "Thu, 14 Oct 2021 14:29:51 -0400 (EDT)")
-Message-ID: <87lf2u1znk.fsf@stealth>
+        <20211014071247.4165329-6-punitagrawal@gmail.com>
+        <4ddcdfd6-f5cf-757d-7b27-534b1d2665b8@redhat.com>
+Date:   Fri, 15 Oct 2021 17:21:55 +0900
+In-Reply-To: <4ddcdfd6-f5cf-757d-7b27-534b1d2665b8@redhat.com> (John Kacur's
+        message of "Thu, 14 Oct 2021 14:31:13 -0400 (EDT)")
+Message-ID: <87fst21yvw.fsf@stealth>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain
@@ -72,39 +72,136 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi John,
+
 John Kacur <jkacur@redhat.com> writes:
 
 > On Thu, 14 Oct 2021, Punit Agrawal wrote:
 >
 >> From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 >> 
->> Two copies of "bufsize", initialised with the same value are declared
->> in enclosed blocks. Remove the redundant declaration.
->> 
 >> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 >> ---
->>  src/cyclictest/cyclictest.c | 1 -
->>  1 file changed, 1 deletion(-)
+>>  src/cyclictest/cyclictest.c | 78 ++++++++++++++++++-------------------
+>>  1 file changed, 37 insertions(+), 41 deletions(-)
 >> 
 >> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
->> index 721d242a1da0..9c67a3ce3034 100644
+>> index 9c67a3ce3034..48a782fe167d 100644
 >> --- a/src/cyclictest/cyclictest.c
 >> +++ b/src/cyclictest/cyclictest.c
->> @@ -2054,7 +2054,6 @@ int main(int argc, char **argv)
->>  			memset(stat->values, 0, bufsize);
->>  			par->bufmsk = VALBUF_SIZE - 1;
->>  			if (smi) {
->> -				int bufsize = VALBUF_SIZE * sizeof(long);
->>  				stat->smis = threadalloc(bufsize, node);
->>  				if (!stat->smis)
->>  					goto outall;
+>> @@ -220,10 +220,6 @@ static char jsonfile[MAX_PATH];
+>>  static struct thread_param **parameters;
+>>  static struct thread_stat **statistics;
+>>  
+>> -static void print_stat(FILE *fp, struct thread_param *par, int index, int verbose, int quiet);
+>> -static void rstat_print_stat(struct thread_param *par, int index, int verbose, int quiet);
+>> -static void rstat_setup(void);
+>> -
+>>  static int latency_target_fd = -1;
+>>  static int32_t latency_target_value = 0;
+>>  
+>> @@ -1311,43 +1307,6 @@ static int check_timer(void)
+>>  	return (ts.tv_sec != 0 || ts.tv_nsec != 1);
+>>  }
+>>  
+>> -static void sighand(int sig)
+>> -{
+>> -	if (sig == SIGUSR1) {
+>> -		int i;
+>> -		int oldquiet = quiet;
+>> -
+>> -		quiet = 0;
+>> -		fprintf(stderr, "#---------------------------\n");
+>> -		fprintf(stderr, "# cyclictest current status:\n");
+>> -		for (i = 0; i < num_threads; i++)
+>> -			print_stat(stderr, parameters[i], i, 0, 0);
+>> -		fprintf(stderr, "#---------------------------\n");
+>> -		quiet = oldquiet;
+>> -		return;
+>> -	} else if (sig == SIGUSR2) {
+>> -		int i;
+>> -		int oldquiet = quiet;
+>> -
+>> -		if (rstat_fd == -1) {
+>> -			fprintf(stderr, "ERROR: rstat_fd not valid\n");
+>> -			return;
+>> -		}
+>> -		rstat_ftruncate(rstat_fd, 0);
+>> -		quiet = 0;
+>> -		dprintf(rstat_fd, "#---------------------------\n");
+>> -		dprintf(rstat_fd, "# cyclictest current status:\n");
+>> -		for (i = 0; i < num_threads; i++)
+>> -			rstat_print_stat(parameters[i], i, 0, 0);
+>> -		dprintf(rstat_fd, "#---------------------------\n");
+>> -		quiet = oldquiet;
+>> -		return;
+>> -	}
+>> -	shutdown = 1;
+>> -	if (refresh_on_max)
+>> -		pthread_cond_signal(&refresh_on_max_cond);
+>> -}
+>> -
+>>  static void print_tids(struct thread_param *par[], int nthreads)
+>>  {
+>>  	int i;
+>> @@ -1566,6 +1525,43 @@ static void rstat_print_stat(struct thread_param *par, int index, int verbose, i
+>>  }
+>>  
+>>  
+>> +static void sighand(int sig)
+>> +{
+>> +	if (sig == SIGUSR1) {
+>> +		int i;
+>> +		int oldquiet = quiet;
+>> +
+>> +		quiet = 0;
+>> +		fprintf(stderr, "#---------------------------\n");
+>> +		fprintf(stderr, "# cyclictest current status:\n");
+>> +		for (i = 0; i < num_threads; i++)
+>> +			print_stat(stderr, parameters[i], i, 0, 0);
+>> +		fprintf(stderr, "#---------------------------\n");
+>> +		quiet = oldquiet;
+>> +		return;
+>> +	} else if (sig == SIGUSR2) {
+>> +		int i;
+>> +		int oldquiet = quiet;
+>> +
+>> +		if (rstat_fd == -1) {
+>> +			fprintf(stderr, "ERROR: rstat_fd not valid\n");
+>> +			return;
+>> +		}
+>> +		rstat_ftruncate(rstat_fd, 0);
+>> +		quiet = 0;
+>> +		dprintf(rstat_fd, "#---------------------------\n");
+>> +		dprintf(rstat_fd, "# cyclictest current status:\n");
+>> +		for (i = 0; i < num_threads; i++)
+>> +			rstat_print_stat(parameters[i], i, 0, 0);
+>> +		dprintf(rstat_fd, "#---------------------------\n");
+>> +		quiet = oldquiet;
+>> +		return;
+>> +	}
+>> +	shutdown = 1;
+>> +	if (refresh_on_max)
+>> +		pthread_cond_signal(&refresh_on_max_cond);
+>> +}
+>> +
+>>  /*
+>>   * thread that creates a named fifo and hands out run stats when someone
+>>   * reads from the fifo.
 >> -- 
 >> 2.32.0
 >> 
 >> 
-> NACK: two different scopes, two different variables.
+>
+> NACK: What's wrong with function declarations? They allow the freedeom to 
+> put your function where you wish. This patch is unnecessary churn, sorry.
 
-If they had different values or if the inner scope was not dependent
-(nested) I would agree.
+I wasn't implying there's anything wrong with a function
+declaration. They seemed unnecessary and can be easily avoided. But if
+there's a reason to prefer the current placement of the signal handler
+(I couldn't see any obvious pattern), I'll drop the patch.
 
-But no strong opinion - I'll drop this one.
+Thanks for comments on the other patches as well. I'll update the set
+once you've had a chance to go through the rest.
+
+Punit
