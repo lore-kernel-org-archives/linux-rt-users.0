@@ -2,193 +2,107 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26530C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Oct 2021 18:31:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF627C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 07:58:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E8E31611C1
-	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Oct 2021 18:31:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B672260EB4
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Oct 2021 07:58:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230372AbhJNSdY (ORCPT
+        id S234653AbhJOIA3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 14 Oct 2021 14:33:24 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:56303 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230183AbhJNSdW (ORCPT
+        Fri, 15 Oct 2021 04:00:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49558 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232169AbhJOIA3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 14 Oct 2021 14:33:22 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1634236277;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=QhCnltBQ2EJcY91Meb1ukTzFbaAJ62SYie5VmfRVol0=;
-        b=VA+sXJAhTjJJ77M+aTOwiPY00BYEuXuXCM7IzO3sjEu2bN6jzYqwJOxjmWbqah2aDS6TVx
-        2kZ1Se6lyJEcr/7+6FeNAnHzTs36DPOD+9L0rerZ1P7w74zR6G02ZCrBlps7iBpUepmi50
-        BV1tRrcUWq1+UK+BKRvTENINRkpQ3wk=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-102-S_T1kCtiOkOeHfX9ouAfJw-1; Thu, 14 Oct 2021 14:31:15 -0400
-X-MC-Unique: S_T1kCtiOkOeHfX9ouAfJw-1
-Received: by mail-qk1-f198.google.com with SMTP id e22-20020a05620a209600b0045f81b8f89cso5127805qka.5
-        for <linux-rt-users@vger.kernel.org>; Thu, 14 Oct 2021 11:31:15 -0700 (PDT)
+        Fri, 15 Oct 2021 04:00:29 -0400
+Received: from mail-pl1-x62d.google.com (mail-pl1-x62d.google.com [IPv6:2607:f8b0:4864:20::62d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8DD88C061570
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 00:58:23 -0700 (PDT)
+Received: by mail-pl1-x62d.google.com with SMTP id e10so1009265plh.8
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Oct 2021 00:58:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:references:date:in-reply-to:message-id
+         :user-agent:mime-version;
+        bh=xHjbbj3F24apFPGpWbEX8cXvZcQMinWPfOA2OFU/6Uk=;
+        b=asPXvd0dzGYIy1rHBirVW48P8qN+YsW4Zy1uUdNfYLa6Ncpm2aadJZT7Az2jm2ODuG
+         CyegQS0zBqmM7uyWdDICUwMU5B+3UmkEdKF+HnNgYrBTSaKFJ4Pg2DY20KHiP/qjdZK8
+         gLMbpIJoAMOMwy+PN/ltVyvRqj705JnDKVUVMnz7V8JvxzfgKPiSXj9XdaG/4QesnaFn
+         vlGH8cW866CUEGik/0u1nWqEZwzS/QBlzMZgHdclH96C08IQuGCEgDohcNtAR5f38BGx
+         qBGGtWg2DWQIrnVht5o6HQp70+sLGptg+GI7Pw4s0Cmn9V9txdPKFJpbUfRv4C/VyAQT
+         8yng==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=QhCnltBQ2EJcY91Meb1ukTzFbaAJ62SYie5VmfRVol0=;
-        b=xv1hk8jWy+UEBjNJfEYi8uhMxjbsI6uhyUJ4n87o4YFzHH4Gbyh4XliNnyd+dwN+Mb
-         QOsNOx05+suSUuI7lMf3f3yP4P+Dnba/ytMG9SbzzWsfrUVtE/pV06JE9jZ40Cxvk+53
-         gySzPGzDQjngcm04jopH5grhG4W9XZLt94veQiMyqnIbvQ1DloVNwZ4n9UrVo8aCYPRd
-         t3vztjge6CQcIbN6pB1T8uvoZWMBnOXIm0xXitRIrkUVtFfBVsa58Xd3DtgI2bLv+IWo
-         B9iaylBjJcNEdiL3kg5y4OplSLnlLP0Ut4zaQrQ135zQquu4/R7Did1tMeT/LHPAxQSW
-         9bew==
-X-Gm-Message-State: AOAM532GBbicJ0F275cuCe9N+7CHnV2jOrrBz0uk4Bas4R4uixeWCmVA
-        spHLnA4WScn0r0SsvepAl1YcqyWX0gvHamjhyniViBjK/BxqDkNy/Z6Wcne383j4S7RTDXmuCl0
-        8gAPjUHAsMDjknMMJFm2G4Q9uJxM=
-X-Received: by 2002:a05:620a:31a2:: with SMTP id bi34mr6203149qkb.331.1634236275446;
-        Thu, 14 Oct 2021 11:31:15 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzgD7Kw0ojK2chSHmL0IiEpp0a3/yW2pki4fnIKvtvcE1YPQNmMlt5VSGSIH0Nn2+jNPtFDmw==
-X-Received: by 2002:a05:620a:31a2:: with SMTP id bi34mr6203131qkb.331.1634236275245;
-        Thu, 14 Oct 2021 11:31:15 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-99.dsl.bell.ca. [184.147.143.99])
-        by smtp.gmail.com with ESMTPSA id f3sm1853027qko.32.2021.10.14.11.31.14
+        h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
+         :message-id:user-agent:mime-version;
+        bh=xHjbbj3F24apFPGpWbEX8cXvZcQMinWPfOA2OFU/6Uk=;
+        b=HEe9aFRE41sycWixliO887y3xQmENw3ls/oY++p9gTt4XcXy/G/vWU2km74lCKoJjV
+         9jI+wUGWTG3wV6id+mIafauelI2Wc0p1DXgQTgU7WrQIcUYpBB8yeM+01ubn5WT4/ESn
+         TAY1TDc+XAVCmrEj99AallPeUmGEnRKwco1d+5xldDuJRrxdb/o+5OH+FA9abwvlQF/g
+         HOlduUiOhep9EiF0Ic99syw9wQS3PjgzR15yOqpZwa830gbSHuDaXATHW2fyY+oKYDnf
+         BOgftXTxr3A3fJRSP4fAVlypZTznmyFWPKZQQu8OSX5x01YBXGnvR/Y7QtJ6YsD8FcEh
+         elgQ==
+X-Gm-Message-State: AOAM530L12vXBXoB7SzgttNwNAgTOdOxFNP0MyBhiMJwbsYlRYYnseQO
+        Ag6hUtsBStm12q0a35JKBo0=
+X-Google-Smtp-Source: ABdhPJwqtAbsG1PS0AMS79H+AL7e4q+ZH8QA4rMwqMTEIWSrDbkjwDMA/v6oi3FksM6HGGhTvFRV9Q==
+X-Received: by 2002:a17:90a:290b:: with SMTP id g11mr25756844pjd.35.1634284702927;
+        Fri, 15 Oct 2021 00:58:22 -0700 (PDT)
+Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
+        by smtp.gmail.com with ESMTPSA id y3sm4401146pjg.7.2021.10.15.00.58.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 14 Oct 2021 11:31:14 -0700 (PDT)
-Date:   Thu, 14 Oct 2021 14:31:13 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Punit Agrawal <punitagrawal@gmail.com>
-cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>, williams@redhat.com,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [RFC 5/7] rt-tests: cyclictest: Move signal handler to avoid
- function declaration
-In-Reply-To: <20211014071247.4165329-6-punitagrawal@gmail.com>
-Message-ID: <4ddcdfd6-f5cf-757d-7b27-534b1d2665b8@redhat.com>
-References: <20211014071247.4165329-1-punitagrawal@gmail.com> <20211014071247.4165329-6-punitagrawal@gmail.com>
+        Fri, 15 Oct 2021 00:58:22 -0700 (PDT)
+From:   Punit Agrawal <punitagrawal@gmail.com>
+To:     Daniel Wagner <wagi@monom.org>
+Cc:     jkacur@redhat.com, Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
+        williams@redhat.com, linux-rt-users@vger.kernel.org
+Subject: Re: [RFC 7/7] rt-tests: cyclictest: Add support to report standard
+ deviation
+References: <20211014071247.4165329-1-punitagrawal@gmail.com>
+        <20211014071247.4165329-8-punitagrawal@gmail.com>
+        <20211014115043.s3zf5p3s7dglvcjb@carbon.lan>
+Date:   Fri, 15 Oct 2021 16:58:19 +0900
+In-Reply-To: <20211014115043.s3zf5p3s7dglvcjb@carbon.lan> (Daniel Wagner's
+        message of "Thu, 14 Oct 2021 13:50:43 +0200")
+Message-ID: <87r1cm1zz8.fsf@stealth>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Daniel Wagner <wagi@monom.org> writes:
 
+> Hi Punit,
+>
+> On Thu, Oct 14, 2021 at 04:12:47PM +0900, Punit Agrawal wrote:
+>> @@ -1781,6 +1810,7 @@ static void write_stats(FILE *f, void *data)
+>>  		fprintf(f, "      \"min\": %ld,\n", s->min);
+>>  		fprintf(f, "      \"max\": %ld,\n", s->max);
+>>  		fprintf(f, "      \"avg\": %.2f,\n", s->avg);
+>> +		fprintf(f, "      \"stddev\": %.2f,\n", calc_stddev(s));
+>>  		fprintf(f, "      \"cpu\": %d,\n", par[i]->cpu);
+>>  		fprintf(f, "      \"node\": %d\n", par[i]->node);
+>>  		fprintf(f, "    }%s\n", i == num_threads - 1 ? "" : ",");
+>
+> I think in this case you should also increase the version number of the
+> JSON file.
 
-On Thu, 14 Oct 2021, Punit Agrawal wrote:
+Sure, I can bump up the version to 1.1 - minor update as it's adding a
+new field rather than changing existing ones. Or "2" if that is
+preferred.
 
-> From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-> 
-> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-> ---
->  src/cyclictest/cyclictest.c | 78 ++++++++++++++++++-------------------
->  1 file changed, 37 insertions(+), 41 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 9c67a3ce3034..48a782fe167d 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -220,10 +220,6 @@ static char jsonfile[MAX_PATH];
->  static struct thread_param **parameters;
->  static struct thread_stat **statistics;
->  
-> -static void print_stat(FILE *fp, struct thread_param *par, int index, int verbose, int quiet);
-> -static void rstat_print_stat(struct thread_param *par, int index, int verbose, int quiet);
-> -static void rstat_setup(void);
-> -
->  static int latency_target_fd = -1;
->  static int32_t latency_target_value = 0;
->  
-> @@ -1311,43 +1307,6 @@ static int check_timer(void)
->  	return (ts.tv_sec != 0 || ts.tv_nsec != 1);
->  }
->  
-> -static void sighand(int sig)
-> -{
-> -	if (sig == SIGUSR1) {
-> -		int i;
-> -		int oldquiet = quiet;
-> -
-> -		quiet = 0;
-> -		fprintf(stderr, "#---------------------------\n");
-> -		fprintf(stderr, "# cyclictest current status:\n");
-> -		for (i = 0; i < num_threads; i++)
-> -			print_stat(stderr, parameters[i], i, 0, 0);
-> -		fprintf(stderr, "#---------------------------\n");
-> -		quiet = oldquiet;
-> -		return;
-> -	} else if (sig == SIGUSR2) {
-> -		int i;
-> -		int oldquiet = quiet;
-> -
-> -		if (rstat_fd == -1) {
-> -			fprintf(stderr, "ERROR: rstat_fd not valid\n");
-> -			return;
-> -		}
-> -		rstat_ftruncate(rstat_fd, 0);
-> -		quiet = 0;
-> -		dprintf(rstat_fd, "#---------------------------\n");
-> -		dprintf(rstat_fd, "# cyclictest current status:\n");
-> -		for (i = 0; i < num_threads; i++)
-> -			rstat_print_stat(parameters[i], i, 0, 0);
-> -		dprintf(rstat_fd, "#---------------------------\n");
-> -		quiet = oldquiet;
-> -		return;
-> -	}
-> -	shutdown = 1;
-> -	if (refresh_on_max)
-> -		pthread_cond_signal(&refresh_on_max_cond);
-> -}
-> -
->  static void print_tids(struct thread_param *par[], int nthreads)
->  {
->  	int i;
-> @@ -1566,6 +1525,43 @@ static void rstat_print_stat(struct thread_param *par, int index, int verbose, i
->  }
->  
->  
-> +static void sighand(int sig)
-> +{
-> +	if (sig == SIGUSR1) {
-> +		int i;
-> +		int oldquiet = quiet;
-> +
-> +		quiet = 0;
-> +		fprintf(stderr, "#---------------------------\n");
-> +		fprintf(stderr, "# cyclictest current status:\n");
-> +		for (i = 0; i < num_threads; i++)
-> +			print_stat(stderr, parameters[i], i, 0, 0);
-> +		fprintf(stderr, "#---------------------------\n");
-> +		quiet = oldquiet;
-> +		return;
-> +	} else if (sig == SIGUSR2) {
-> +		int i;
-> +		int oldquiet = quiet;
-> +
-> +		if (rstat_fd == -1) {
-> +			fprintf(stderr, "ERROR: rstat_fd not valid\n");
-> +			return;
-> +		}
-> +		rstat_ftruncate(rstat_fd, 0);
-> +		quiet = 0;
-> +		dprintf(rstat_fd, "#---------------------------\n");
-> +		dprintf(rstat_fd, "# cyclictest current status:\n");
-> +		for (i = 0; i < num_threads; i++)
-> +			rstat_print_stat(parameters[i], i, 0, 0);
-> +		dprintf(rstat_fd, "#---------------------------\n");
-> +		quiet = oldquiet;
-> +		return;
-> +	}
-> +	shutdown = 1;
-> +	if (refresh_on_max)
-> +		pthread_cond_signal(&refresh_on_max_cond);
-> +}
-> +
->  /*
->   * thread that creates a named fifo and hands out run stats when someone
->   * reads from the fifo.
-> -- 
-> 2.32.0
-> 
-> 
+Taking a closer look, the rt_write_json() helper, that outputs the
+version, is shared with other tools. Bumping the version will bump it up
+for all of them - would that be OK?
 
-NACK: What's wrong with function declarations? They allow the freedeom to 
-put your function where you wish. This patch is unnecessary churn, sorry.
+> And while at it, I'd love to see the same stats
+> fixes/extension for the other tools, not just cyclictest.
 
+I can look at adding support for standard deviation to the other tools
+if there's interest once the cyclictest changes have been merged.
+
+Thanks for taking a look.
+
+Punit
