@@ -2,64 +2,64 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 682BDC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 05:58:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A00C8C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 05:58:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 50D7860F59
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 05:58:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 78A1960F59
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 05:58:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230114AbhJRGAT (ORCPT
+        id S229847AbhJRGAY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Oct 2021 02:00:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43584 "EHLO
+        Mon, 18 Oct 2021 02:00:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43604 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229533AbhJRGAS (ORCPT
+        with ESMTP id S229533AbhJRGAX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Oct 2021 02:00:18 -0400
-Received: from mail-pl1-x631.google.com (mail-pl1-x631.google.com [IPv6:2607:f8b0:4864:20::631])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2683FC06161C
-        for <linux-rt-users@vger.kernel.org>; Sun, 17 Oct 2021 22:58:08 -0700 (PDT)
-Received: by mail-pl1-x631.google.com with SMTP id n11so10462727plf.4
-        for <linux-rt-users@vger.kernel.org>; Sun, 17 Oct 2021 22:58:08 -0700 (PDT)
+        Mon, 18 Oct 2021 02:00:23 -0400
+Received: from mail-pg1-x52e.google.com (mail-pg1-x52e.google.com [IPv6:2607:f8b0:4864:20::52e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 12CC5C06161C
+        for <linux-rt-users@vger.kernel.org>; Sun, 17 Oct 2021 22:58:13 -0700 (PDT)
+Received: by mail-pg1-x52e.google.com with SMTP id 75so14987929pga.3
+        for <linux-rt-users@vger.kernel.org>; Sun, 17 Oct 2021 22:58:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=7FP8JW57oqCzItTy8go2wIM3cNjDTVvtkbEPwiUoGVY=;
-        b=LMWARDpwMVPvQlWTJGyViFIwcdxS65bqN8sJ9CERCLk5H4RRrw2G3HYBvpSkHg8iPH
-         KuGVD5f3LSrb3QuwObc8k+xisgA99CZI2L5+nx3USBMKTgFfe2z113bpdapu0+6izn/S
-         n/9RqQUc4JLeNAJNtOzuGzUK63vQANymCo6IfZzk4tGBbnWA4+UJVEU1JInVKcVMg4FM
-         9Hmo2LJHXzU3SgKK6E2lA8Aj282myBxA9AglYAnrKD7jCh2zbgMLor4hTGox39COH7MW
-         SS9mSReJL9Jm4LGK61BwpTGC6/SvJinFtnqSg3UHvxY1EIOpToMJWOA5md92A87x4YUx
-         k6NA==
+        bh=qFeyurc1UAgd02tSBqozzJAUrIsfSw86wXAsrBcF5hQ=;
+        b=ct4C9bg0yMDQrEMtR721Ah05aZPoUG+w2DjgW1gzug0cKl/i9dQFLPV8l5cP6yHDFv
+         uIVkQF1fjnDDfmame5WuGf7vAec9PQQ0Y2LJvpQvsbNv+LDciPvaQOpE53CyI5aNyDU6
+         0co4Axt4yPJwOe/cnKt5HvbXwOPK05lKD2apMc8OXQY80WnuT+9KxbcdqVpb5SrWDRuO
+         i8ADsD7xunSGuOzReyPn7Gu3Zmf2XL5eik20El+RhKPlbmxBuLUHMB7sXN9+ezmbFiII
+         SmbCIUtSy1PQynVUEShU1ilUGtPv/35ceDg2tUBxRtgXWXHzoUln8sXTbMWlIGgRnEY7
+         BqcQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=7FP8JW57oqCzItTy8go2wIM3cNjDTVvtkbEPwiUoGVY=;
-        b=1vQwbWaFtrHqUi09vMSDY/GQdFxOlj4azYsdOSJl3kNOojzjvxhD6AmAFn+xMsUY+o
-         2Q7N+BMTR9IhbChzJxubiuYoLCtkJERMHtRhGdz5TMrI8irCRXOXbyPZmr42sXgqy0vZ
-         kKX8x+M7umtXzWszDH/xHUZOvOHpfdenYEza9nTxaLjsj3Sf/P3bk2doLkHgkavh3lP4
-         vVasRBGYfMXXB0sbM35alueH2dIlcpfBwAyorvSKYARCtWRpB73EEEfzUOMuwqI0U5gr
-         qicm8nUDJhddP8ics6zRuEIGLsGq1G9dht4JopdTOjDG5kpZX2Jdb4xqQzkkN6vSxDbV
-         s91A==
-X-Gm-Message-State: AOAM5309E3LdrU2BIPqFRa0YqaTvVIRJJJC5UUGrs7YqNvvtN471yrbg
-        BmHCWOslwYdYlQTOSytZM08=
-X-Google-Smtp-Source: ABdhPJxP8rWDtpGQ6WEkOdDMn8aHcd9QD/Md5OZh+ZVe5dlk864qnMl3eCF0F1CQgVGKkZyCgyAc1Q==
-X-Received: by 2002:a17:90b:34a:: with SMTP id fh10mr45477572pjb.51.1634536687508;
-        Sun, 17 Oct 2021 22:58:07 -0700 (PDT)
+        bh=qFeyurc1UAgd02tSBqozzJAUrIsfSw86wXAsrBcF5hQ=;
+        b=ztpdhVdEz9KkiRGrePw8LDSoMONzoEwBL7VrC+X5b2ImyQnNDwgAzMEKYhZuB23His
+         P7PLlhrUNY82CQO8KqMtzwQ2Xj/kkxwUDoP5o3uDiv/I6JJxC016dt7b0E1ep8X23JR2
+         P4YM1OSC0QK7eqhI3k+OY4/Q6bGYvDiEdP4OmW8Sxus4DNnxnZ9Tud76scH7SkCKNb31
+         HWlutAIQEfjcZzePEgaaMU1x1yxMtDK2kNynL0g2unIBhsXaqtQx0vtVizZe45pr0VZu
+         Wpd/5ixy/FcVLBx7Ba0miXTiZuhAM26olVGFMwAQixw6djM5R36ghY7L82PVcf3RnFGZ
+         Fanw==
+X-Gm-Message-State: AOAM530M84ud8E5XGkRmmJ5RffrPKf3UKCdikXyGQQJ3wm+NVsU4ze+t
+        jOzxIhkB74klQX2wPNqEBlA=
+X-Google-Smtp-Source: ABdhPJzbxrd48ER3wRq4izTi/e/L78ZATAhMUbMfV7M9zwpwir4230sXHpkbeqNzTlT3rdSzuFolfA==
+X-Received: by 2002:a63:4344:: with SMTP id q65mr22149353pga.450.1634536692589;
+        Sun, 17 Oct 2021 22:58:12 -0700 (PDT)
 Received: from localhost (122x211x248x161.ap122.ftth.ucom.ne.jp. [122.211.248.161])
-        by smtp.gmail.com with ESMTPSA id x17sm11521584pfa.209.2021.10.17.22.58.06
+        by smtp.gmail.com with ESMTPSA id w125sm11759181pfc.66.2021.10.17.22.58.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 17 Oct 2021 22:58:07 -0700 (PDT)
+        Sun, 17 Oct 2021 22:58:12 -0700 (PDT)
 From:   Punit Agrawal <punitagrawal@gmail.com>
 To:     jkacur@redhat.com
 Cc:     Punit Agrawal <punitagrawal@gmail.com>,
         linux-rt-users@vger.kernel.org,
         Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-Subject: [PATCH v3 2/4] rteval: cyclictest.py Parse max latencies from cyclictest output
-Date:   Mon, 18 Oct 2021 14:57:34 +0900
-Message-Id: <20211018055736.412576-3-punitagrawal@gmail.com>
+Subject: [PATCH v3 3/4] rteval: cyclictest.py: Sort the list of cpus
+Date:   Mon, 18 Oct 2021 14:57:35 +0900
+Message-Id: <20211018055736.412576-4-punitagrawal@gmail.com>
 X-Mailer: git-send-email 2.33.0
 In-Reply-To: <20211018055736.412576-1-punitagrawal@gmail.com>
 References: <20211018055736.412576-1-punitagrawal@gmail.com>
@@ -71,86 +71,43 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 
-When collecting a histogram of latencies, "cyclictest" reports the
-maximum latency encountered on each core even if they fall outside the
-configured no. of buckets. This can be useful to understand the worst
-case latencies for the run as well as right sizing the number of
-buckets for the histogram.
+online_cpus() returns a list of online cpus in arbitrary order. e.g.,
+on a hexacore system it returns -
 
-While processing the output of cyclictest, rteval skips the reported
-max latencies and calculates them by capping to the no. of buckets.
+    ['5', '3', '1', '4', '2', '0']
 
-Fix rteval by parsing the maximum latencies reported by cyclictest.
+Generally this wouldn't be a problem but the cyclictest.py module
+matches the unsorted list with the latencies output by "cyclictest"
+which are ordered by core number. This leads to incorrect reporting of
+per-core latencies in the final report generated by rteval. The issue
+was noticed when comparing the rteval report with cyclictest logs
+(enabled by a recent change).
+
+Fix the inconsistency in core numbering by sorting the list of cpus
+used by cyclictest.py module. As the cpus are represented as a string,
+sort with the integer key to avoid issues on systems with large number
+of cores.
 
 Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
 ---
- rteval/modules/measurement/cyclictest.py | 31 +++++++++++++++++++-----
- 1 file changed, 25 insertions(+), 6 deletions(-)
+ rteval/modules/measurement/cyclictest.py | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index ee1de883d844..d3a0b045b9dd 100644
+index d3a0b045b9dd..50a734c75047 100644
 --- a/rteval/modules/measurement/cyclictest.py
 +++ b/rteval/modules/measurement/cyclictest.py
-@@ -67,20 +67,25 @@ class RunData:
-         retval += "mean:       %f\n" % self.__mean
-         return retval
+@@ -216,6 +216,10 @@ class Cyclictest(rtevalModulePrototype):
+         else:
+             self.__cpus = online_cpus()
  
--    def sample(self, value):
--        self.__samples[value] += self.__samples.setdefault(value, 0) + 1
-+    def update_max(self, value):
-         if value > self.__max:
-             self.__max = value
++        # Sort the list of cpus to align with the order reported by
++        # cyclictest
++        self.__cpus.sort(key=int)
 +
-+    def update_min(self, value):
-         if value < self.__min:
-             self.__min = value
-+
-+    def sample(self, value):
-+        self.__samples[value] += self.__samples.setdefault(value, 0) + 1
-+        self.update_max(value)
-+        self.update_min(value)
-         self.__numsamples += 1
+         # Get the cpuset from the environment
+         cpuset = os.sched_getaffinity(0)
  
-     def bucket(self, index, value):
-         self.__samples[index] = self.__samples.setdefault(index, 0) + value
--        if value and index > self.__max:
--            self.__max = index
--        if value and index < self.__min:
--            self.__min = index
-+        if value:
-+            self.update_max(index)
-+            self.update_min(index)
-         self.__numsamples += value
- 
-     def reduce(self):
-@@ -332,6 +337,18 @@ class Cyclictest(rtevalModulePrototype):
-         return False
- 
- 
-+    def _parse_max_latencies(self, line):
-+        if not line.startswith('# Max Latencies: '):
-+            return
-+
-+        line = line.split(':')[1]
-+        vals = [int(x) for x in line.split()]
-+
-+        for i, core in enumerate(self.__cpus):
-+            self.__cyclicdata[core].update_max(vals[i])
-+            self.__cyclicdata['system'].update_max(vals[i])
-+
-+
-     def _WorkloadCleanup(self):
-         if not self.__started:
-             return
-@@ -348,6 +365,8 @@ class Cyclictest(rtevalModulePrototype):
-                 # Catch if cyclictest stopped due to a breaktrace
-                 if line.startswith('# Break value: '):
-                     self.__breaktraceval = int(line.split(':')[1])
-+                elif line.startswith('# Max Latencies: '):
-+                    self._parse_max_latencies(line)
-                 continue
- 
-             # Skipping blank lines
 -- 
 2.33.0
 
