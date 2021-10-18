@@ -2,296 +2,529 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1ABFEC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 07:32:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A1539C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 08:47:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id ED1AD60EBB
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 07:32:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 817DE60F02
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 08:47:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230328AbhJRHep (ORCPT
+        id S231332AbhJRItY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Oct 2021 03:34:45 -0400
-Received: from mail.nearlyone.de ([46.163.114.145]:49460 "EHLO
-        mail.nearlyone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229847AbhJRHep (ORCPT
+        Mon, 18 Oct 2021 04:49:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53292 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S230006AbhJRItX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Oct 2021 03:34:45 -0400
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 048FF5E41F;
-        Mon, 18 Oct 2021 09:32:30 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1634542353; h=from:subject:date:message-id:to;
-        bh=htHBl7LTVtrun8Qh6LDU13m6PCVLoGfxzMI00HofErY=;
-        b=KTS3ANkapDNjHuz7EeOzQf1Y9rclX9RhcGHuupJfg7mdMLCphyofjwL3wb6XRKmfz4BlkI
-        RZEy47/1XGyGpt82dpqJNuOEeR47/G04JP6k5RBZiihMZG9DDyjlS0k4nUwpSxqY1sucyt
-        748FlMDbNPBXhhkrv2Q8PbhUB5crqZhuUWi3XIEgmM7/XcpgA5o/ugFlSmHV518LP8jJkM
-        863aFSmCJ6NlQ4l/VvPmTorhldh+nA+LOUc7lR80jn/9Er6rttZpdEz31Re8p24hTQUyZp
-        3pgm+ifnKGGBlSmkQlHvyFsAQy549Iijj5hUjbZkpCnWlktm/L5VKcig0UYICw==
-From:   Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.289-rt227
-Date:   Mon, 18 Oct 2021 07:29:23 -0000
-Message-ID: <163454216364.8829.1868721617239541377@beryllium.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
-X-Last-TLS-Session-Version: TLSv1.3
+        Mon, 18 Oct 2021 04:49:23 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 071BDC06161C;
+        Mon, 18 Oct 2021 01:47:11 -0700 (PDT)
+Date:   Mon, 18 Oct 2021 10:47:07 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1634546828;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=6qEXpASRT/Mdf2JdBoGJ5KAHrs4QH3Dl2IvgDP1C9Ig=;
+        b=wckAzQscC9k8rvScf36KbNkI/fp/a3eIYVEkkeKEReBc57gj0986emb56SxUfVOcn34olS
+        SUR+QHV6VUVOSxfYhEYTPLR4KTCQhfpjR0TjdFXsupcmxabIeLhY4s1WQCY6/s69yDA/q4
+        MqSyn5c0VOlNVqpgpxiq67Q49fvdA0sl4SdXe/2sAtniOI8gkkVK1XWO9gtwq4hW5HrEfd
+        6VuUJXN/qXyTaBqxeq7GrfgGhONxxbMsJqYN0phPMtnNKxu/7tLCkU7JB4vUNFf5fMJrSn
+        g+jzmLZbdqq6cFLGGbRwTV0bJ1XZbjRFPErZtY4aDwjc0oFLCNnl2PpHcFvn7A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1634546828;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=6qEXpASRT/Mdf2JdBoGJ5KAHrs4QH3Dl2IvgDP1C9Ig=;
+        b=DTOylqALIa4c6UMSbySyBMfhW0uXc4L4u/G8gbzpzN+MItW1Rb5IVST3Bupqf0yG3VTUuk
+        dsyP4VK1fgY3PhBg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.15-rc6-rt12
+Message-ID: <20211018084707.gljgxvigefrotvzm@linutronix.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Dear RT folks!
 
-I'm pleased to announce the 4.4.289-rt227 stable release.
-This is just an update the latest stable release. No RT
-specific changes.
+I'm pleased to announce the v5.15-rc6-rt12 patch set. 
+
+Changes since v5.15-rc6-rt11:
+
+  - Remove printk_deferred_*() from workqueue. It was recently added and
+    is no needed due to the printk rework.
+
+  - The net related series which removes seqcount_t from Qdisc has been
+    updated to the version posted upstream for review.
+
+Known issues
+     - netconsole triggers WARN.
+
+     - The "Memory controller" (CONFIG_MEMCG) has been disabled.
+
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+
+The delta patch against v5.15-rc6-rt11 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/incr/patch-5.15-rc6-rt11-rt12.patch.xz
 
 You can get this release via the git tree at:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.15-rc6-rt12
 
-  branch: v4.4-rt
-  Head SHA1: e3a040806a55a1d307693e64f1f9e5fcb0221570
+The RT patch against v5.15-rc6 can be found here:
 
-I've still not resolved the upload issue. I've post my new gpg key but
-havent' heard anything yet. Will write to the helpdesk see if this
-helps.
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patch-5.15-rc6-rt12.patch.xz
 
-Enjoy!
-Daniel
+The split quilt queue is available at:
 
-Changes from v4.4.285-rt226:
----
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patches-5.15-rc6-rt12.tar.xz
 
-Anand K Mistry (1):
-      perf/x86: Reset destroy callback on event init failure
+Sebastian
 
-Andrea Claudi (1):
-      ipvs: check that ip_vs_conn_tab_bits is between 8 and 20
-
-Andy Shevchenko (1):
-      ptp_pch: Load module automatically if ID matches
-
-Anirudh Rayabharam (1):
-      HID: usbhid: free raw_report buffers in usbhid_stop
-
-Aya Levin (1):
-      net/mlx4_en: Don't allow aRFS for encapsulated packets
-
-Baokun Li (1):
-      scsi: iscsi: Adjust iface sysfs attr detection
-
-Carlo Lobrano (1):
-      USB: serial: option: add Telit LN920 compositions
-
-Colin Ian King (1):
-      scsi: virtio_scsi: Fix spelling mistake "Unsupport" -> "Unsupported"
-
-Dan Carpenter (3):
-      usb: gadget: r8a66597: fix a loop in set_feature()
-      usb: musb: tusb6010: uninitialized data in tusb_fifo_write_unaligned()
-      ext2: fix sleeping in atomic bugs on error
-
-Dan Li (1):
-      arm64: Mark __stack_chk_guard as __ro_after_init
-
-Daniel Wagner (2):
-      Merge tag 'v4.4.289' into v4.4-rt
-      Linux 4.4.289-rt227
-
-Eric Dumazet (3):
-      af_unix: fix races in sk_peer_pid and sk_peer_cred accesses
-      net_sched: fix NULL deref in fifo_set_limit()
-      netlink: annotate data races around nlk->bound
-
-F.A.Sulaiman (1):
-      HID: betop: fix slab-out-of-bounds Write in betop_probe
-
-Faizel K B (1):
-      usb: testusb: Fix for showing the connection speed
-
-Greg Kroah-Hartman (5):
-      Linux 4.4.286
-      Revert "arm64: Mark __stack_chk_guard as __ro_after_init"
-      Linux 4.4.287
-      Linux 4.4.288
-      Linux 4.4.289
-
-Guenter Roeck (5):
-      m68k: Double cast io functions to unsigned long
-      compiler.h: Introduce absolute_pointer macro
-      net: i825xx: Use absolute_pointer for memcpy from fixed memory location
-      alpha: Declare virt_to_phys and virt_to_bus parameter as pointer to volatile
-      net: 6pack: Fix tx timeout and slot time
-
-Helge Deller (1):
-      parisc: Use absolute_pointer() to define PAGE0
-
-Igor Matheus Andrade Torrente (1):
-      tty: Fix out-of-bound vmalloc access in imageblit
-
-Jacob Keller (2):
-      e100: fix length calculation in e100_get_regs_len
-      e100: fix buffer overrun in e100_get_regs
-
-Jan Beulich (2):
-      xen/x86: fix PV trap handling on secondary processors
-      xen-netback: correct success/error reporting for the SKB-with-fraglist case
-
-Jeremy Sowden (1):
-      netfilter: ip6_tables: zero-initialize fragment offset
-
-Jiapeng Chong (1):
-      scsi: ses: Fix unsigned comparison with less than zero
-
-Jiri Benc (1):
-      i40e: fix endless loop under rtnl
-
-Johan Hovold (8):
-      net: hso: fix muxed tty registration
-      ipack: ipoctal: fix stack information leak
-      ipack: ipoctal: fix tty registration race
-      ipack: ipoctal: fix tty-registration error handling
-      ipack: ipoctal: fix missing allocation-failure check
-      ipack: ipoctal: fix module reference leak
-      USB: cdc-acm: fix racy tty buffer accesses
-      USB: cdc-acm: fix break reporting
-
-Johannes Berg (1):
-      mac80211: fix use-after-free in CCMP/GCMP RX
-
-Jozsef Kadlecsik (1):
-      netfilter: ipset: Fix oversized kvmalloc() calls
-
-Kate Hsuan (1):
-      libata: Add ATA_HORKAGE_NO_NCQ_ON_ATI for Samsung 860 and 870 SSD.
-
-Krzysztof Kozlowski (2):
-      USB: serial: mos7840: remove duplicated 0xac24 device ID
-      USB: serial: option: remove duplicate USB device ID
-
-Linus Torvalds (6):
-      sparc: avoid stringop-overread errors
-      qnx4: avoid stringop-overread errors
-      spi: Fix tegra20 build with CONFIG_PM=n
-      qnx4: work around gcc false positive warning bug
-      sparc64: fix pci_iounmap() when CONFIG_PCI is not set
-      gup: document and work around "COW can break either way" issue
-
-Lorenzo Stoakes (1):
-      mm: check VMA flags to avoid invalid PROT_NONE NUMA balancing
-
-Max Filippov (1):
-      xtensa: call irqchip_init only when CONFIG_USE_OF is selected
-
-Ming Lei (1):
-      scsi: sd: Free scsi_disk device via put_device()
-
-Mizuho Mori (1):
-      HID: apple: Fix logical maximum and usage maximum of Magic Keyboard JIS
-
-NeilBrown (1):
-      cred: allow get_cred() and put_cred() to be given NULL.
-
-Oleksij Rempel (1):
-      ARM: imx6: disable the GIC CPU interface before calling stby-poweroff sequence
-
-Pavel Skripkin (1):
-      phy: mdio: fix memory leak
-
-Sai Krishna Potthuri (1):
-      EDAC/synopsys: Fix wrong value type assignment for edac_mode
-
-Slark Xiao (1):
-      USB: serial: option: add device id for Foxconn T99W265
-
-Steve French (1):
-      cifs: fix incorrect check for null pointer in header_assemble
-
-Suzuki K Poulose (1):
-      arm64: Extend workaround for erratum 1024718 to all versions of Cortex-A55
-
-Trond Myklebust (1):
-      nfsd4: Handle the NFSv4 READDIR 'dircount' hint being zero
-
-Uwe Brandt (1):
-      USB: serial: cp210x: add ID for GW Instek GDM-834x Digital Multimeter
-
-YueHaibing (1):
-      mac80211: Drop frames from invalid MAC address in ad-hoc mode
-
-Zhihao Cheng (1):
-      blktrace: Fix uaf in blk_trace access after removing by sysfs
-
-yangerkun (1):
-      ext4: fix potential infinite loop in ext4_dx_readdir()
----
-Makefile                                       |  2 +-
- arch/alpha/include/asm/io.h                    |  6 +--
- arch/arm/mach-imx/pm-imx6.c                    |  2 +
- arch/arm64/Kconfig                             |  2 +-
- arch/arm64/mm/proc.S                           |  4 +-
- arch/m68k/include/asm/raw_io.h                 | 20 ++++----
- arch/parisc/include/asm/page.h                 |  2 +-
- arch/sparc/kernel/mdesc.c                      |  3 +-
- arch/sparc/lib/iomap.c                         |  2 +
- arch/x86/kernel/cpu/perf_event.c               |  1 +
- arch/x86/xen/enlighten.c                       | 15 +++---
- arch/xtensa/kernel/irq.c                       |  2 +-
- drivers/ata/libata-core.c                      | 34 ++++++++++++-
- drivers/edac/synopsys_edac.c                   |  2 +-
- drivers/hid/hid-apple.c                        |  7 +++
- drivers/hid/hid-betopff.c                      | 13 +++--
- drivers/hid/usbhid/hid-core.c                  | 13 ++++-
- drivers/ipack/devices/ipoctal.c                | 63 +++++++++++++++++------
- drivers/net/ethernet/i825xx/82596.c            |  2 +-
- drivers/net/ethernet/intel/e100.c              | 22 +++++---
- drivers/net/ethernet/intel/i40e/i40e_main.c    |  2 +-
- drivers/net/ethernet/mellanox/mlx4/en_netdev.c |  3 ++
- drivers/net/hamradio/6pack.c                   |  4 +-
- drivers/net/phy/mdio_bus.c                     |  7 +++
- drivers/net/usb/hso.c                          | 12 ++---
- drivers/net/xen-netback/netback.c              |  2 +-
- drivers/ptp/ptp_pch.c                          |  1 +
- drivers/scsi/scsi_transport_iscsi.c            |  8 +--
- drivers/scsi/sd.c                              |  9 ++--
- drivers/scsi/ses.c                             |  2 +-
- drivers/scsi/virtio_scsi.c                     |  4 +-
- drivers/spi/spi-tegra20-slink.c                |  4 +-
- drivers/tty/vt/vt.c                            | 21 +++++++-
- drivers/usb/class/cdc-acm.c                    |  8 +++
- drivers/usb/gadget/udc/r8a66597-udc.c          |  2 +-
- drivers/usb/musb/tusb6010.c                    |  1 +
- drivers/usb/serial/cp210x.c                    |  1 +
- drivers/usb/serial/mos7840.c                   |  2 -
- drivers/usb/serial/option.c                    | 11 +++-
- fs/cifs/connect.c                              |  5 +-
- fs/ext2/balloc.c                               | 14 +++---
- fs/ext4/dir.c                                  |  6 +--
- fs/nfsd/nfs4xdr.c                              | 19 ++++---
- fs/qnx4/dir.c                                  | 69 +++++++++++++++++++-------
- include/linux/compiler.h                       |  2 +
- include/linux/cred.h                           | 14 ++++--
- include/linux/libata.h                         |  1 +
- include/net/sock.h                             |  2 +
- kernel/trace/blktrace.c                        |  8 +++
- localversion-rt                                |  2 +-
- mm/gup.c                                       | 48 +++++++++++++++---
- mm/huge_memory.c                               | 10 ++--
- mm/memory.c                                    | 12 +++--
- net/core/sock.c                                | 12 +++--
- net/ipv6/netfilter/ip6_tables.c                |  1 +
- net/mac80211/rx.c                              |  3 +-
- net/mac80211/wpa.c                             |  6 +++
- net/netfilter/ipset/ip_set_hash_gen.h          |  4 +-
- net/netfilter/ipvs/ip_vs_conn.c                |  4 ++
- net/netlink/af_netlink.c                       | 14 ++++--
- net/sched/sch_fifo.c                           |  3 ++
- net/unix/af_unix.c                             | 34 ++++++++++---
- tools/usb/testusb.c                            | 14 +++---
- 63 files changed, 455 insertions(+), 173 deletions(-)
+diff --git a/include/net/gen_stats.h b/include/net/gen_stats.h
+index 4578bbf3fc1f5..7aa2b8e1fb298 100644
+--- a/include/net/gen_stats.h
++++ b/include/net/gen_stats.h
+@@ -13,7 +13,7 @@
+  * If no reads can ever occur parallel to writes (e.g. stack-allocated
+  * bstats), then the internal stat values can be written to and read
+  * from directly. Otherwise, use _bstats_set/update() for writes and
+- * __gnet_stats_copy_basic() for reads.
++ * gnet_stats_add_basic() for reads.
+  */
+ struct gnet_stats_basic_sync {
+ 	u64_stats_t bytes;
+@@ -21,19 +21,6 @@ struct gnet_stats_basic_sync {
+ 	struct u64_stats_sync syncp;
+ } __aligned(2 * sizeof(u64));
+ 
+-#ifdef CONFIG_LOCKDEP
+-void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync *b);
+-
+-#else
+-
+-static inline void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync *b)
+-{
+-	u64_stats_set(&b->bytes, 0);
+-	u64_stats_set(&b->packets, 0);
+-	u64_stats_init(&b->syncp);
+-}
+-#endif
+-
+ struct net_rate_estimator;
+ 
+ struct gnet_dump {
+@@ -50,6 +37,7 @@ struct gnet_dump {
+ 	struct tc_stats   tc_stats;
+ };
+ 
++void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync *b);
+ int gnet_stats_start_copy(struct sk_buff *skb, int type, spinlock_t *lock,
+ 			  struct gnet_dump *d, int padattr);
+ 
+@@ -60,24 +48,21 @@ int gnet_stats_start_copy_compat(struct sk_buff *skb, int type,
+ 
+ int gnet_stats_copy_basic(struct gnet_dump *d,
+ 			  struct gnet_stats_basic_sync __percpu *cpu,
+-			  struct gnet_stats_basic_sync *b,
+-			  bool running);
+-void __gnet_stats_copy_basic(struct gnet_stats_basic_sync *bstats,
+-			     struct gnet_stats_basic_sync __percpu *cpu,
+-			     struct gnet_stats_basic_sync *b,
+-			     bool running);
++			  struct gnet_stats_basic_sync *b, bool running);
++void gnet_stats_add_basic(struct gnet_stats_basic_sync *bstats,
++			  struct gnet_stats_basic_sync __percpu *cpu,
++			  struct gnet_stats_basic_sync *b, bool running);
+ int gnet_stats_copy_basic_hw(struct gnet_dump *d,
+ 			     struct gnet_stats_basic_sync __percpu *cpu,
+-			     struct gnet_stats_basic_sync *b,
+-			     bool unning);
++			     struct gnet_stats_basic_sync *b, bool running);
+ int gnet_stats_copy_rate_est(struct gnet_dump *d,
+ 			     struct net_rate_estimator __rcu **ptr);
+ int gnet_stats_copy_queue(struct gnet_dump *d,
+ 			  struct gnet_stats_queue __percpu *cpu_q,
+ 			  struct gnet_stats_queue *q, __u32 qlen);
+-void __gnet_stats_copy_queue(struct gnet_stats_queue *qstats,
+-			     const struct gnet_stats_queue __percpu *cpu_q,
+-			     const struct gnet_stats_queue *q, __u32 qlen);
++void gnet_stats_add_queue(struct gnet_stats_queue *qstats,
++			  const struct gnet_stats_queue __percpu *cpu_q,
++			  const struct gnet_stats_queue *q);
+ int gnet_stats_copy_app(struct gnet_dump *d, void *st, int len);
+ 
+ int gnet_stats_finish_copy(struct gnet_dump *d);
+diff --git a/include/net/sch_generic.h b/include/net/sch_generic.h
+index 023322c8d7c0e..21fd95665ca02 100644
+--- a/include/net/sch_generic.h
++++ b/include/net/sch_generic.h
+@@ -849,22 +849,6 @@ static inline void _bstats_update(struct gnet_stats_basic_sync *bstats,
+ 	u64_stats_update_end(&bstats->syncp);
+ }
+ 
+-static inline void bstats_read_add(struct gnet_stats_basic_sync *bstats,
+-				   __u64 *bytes, __u64 *packets)
+-{
+-	u64 t_bytes, t_packets;
+-	unsigned int start;
+-
+-	do {
+-		start = u64_stats_fetch_begin_irq(&bstats->syncp);
+-		t_bytes = u64_stats_read(&bstats->bytes);
+-		t_packets = u64_stats_read(&bstats->packets);
+-	} while (u64_stats_fetch_retry_irq(&bstats->syncp, start));
+-
+-	*bytes = t_bytes;
+-	*packets = t_packets;
+-}
+-
+ static inline void bstats_update(struct gnet_stats_basic_sync *bstats,
+ 				 const struct sk_buff *skb)
+ {
+@@ -965,10 +949,9 @@ static inline void qdisc_qstats_qlen_backlog(struct Qdisc *sch,  __u32 *qlen,
+ 					     __u32 *backlog)
+ {
+ 	struct gnet_stats_queue qstats = { 0 };
+-	__u32 len = qdisc_qlen_sum(sch);
+ 
+-	__gnet_stats_copy_queue(&qstats, sch->cpu_qstats, &sch->qstats, len);
+-	*qlen = qstats.qlen;
++	gnet_stats_add_queue(&qstats, sch->cpu_qstats, &sch->qstats);
++	*qlen = qstats.qlen + qdisc_qlen(sch);
+ 	*backlog = qstats.backlog;
+ }
+ 
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 1b3eb1e9531f4..a25b9abc918a0 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -4836,9 +4836,7 @@ void show_workqueue_state(void)
+ 				 * drivers that queue work while holding locks
+ 				 * also taken in their write paths.
+ 				 */
+-				printk_deferred_enter();
+ 				show_pwq(pwq);
+-				printk_deferred_exit();
+ 			}
+ 			raw_spin_unlock_irqrestore(&pwq->pool->lock, flags);
+ 			/*
+@@ -4862,7 +4860,6 @@ void show_workqueue_state(void)
+ 		 * queue work while holding locks also taken in their write
+ 		 * paths.
+ 		 */
+-		printk_deferred_enter();
+ 		pr_info("pool %d:", pool->id);
+ 		pr_cont_pool_info(pool);
+ 		pr_cont(" hung=%us workers=%d",
+@@ -4877,7 +4874,6 @@ void show_workqueue_state(void)
+ 			first = false;
+ 		}
+ 		pr_cont("\n");
+-		printk_deferred_exit();
+ 	next_pool:
+ 		raw_spin_unlock_irqrestore(&pool->lock, flags);
+ 		/*
+diff --git a/localversion-rt b/localversion-rt
+index 05c35cb580779..6e44e540b927b 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt11
++-rt12
+diff --git a/net/core/gen_estimator.c b/net/core/gen_estimator.c
+index db5f0a77f4b38..4fcbdd71c59fa 100644
+--- a/net/core/gen_estimator.c
++++ b/net/core/gen_estimator.c
+@@ -66,7 +66,7 @@ static void est_fetch_counters(struct net_rate_estimator *e,
+ 	if (e->stats_lock)
+ 		spin_lock(e->stats_lock);
+ 
+-	__gnet_stats_copy_basic(b, e->cpu_bstats, e->bstats, e->running);
++	gnet_stats_add_basic(b, e->cpu_bstats, e->bstats, e->running);
+ 
+ 	if (e->stats_lock)
+ 		spin_unlock(e->stats_lock);
+diff --git a/net/core/gen_stats.c b/net/core/gen_stats.c
+index b7d8e477897e1..5516ea0d5da0b 100644
+--- a/net/core/gen_stats.c
++++ b/net/core/gen_stats.c
+@@ -114,7 +114,6 @@ gnet_stats_start_copy(struct sk_buff *skb, int type, spinlock_t *lock,
+ }
+ EXPORT_SYMBOL(gnet_stats_start_copy);
+ 
+-#ifdef CONFIG_LOCKDEP
+ /* Must not be inlined, due to u64_stats seqcount_t lockdep key */
+ void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync *b)
+ {
+@@ -123,11 +122,9 @@ void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync *b)
+ 	u64_stats_init(&b->syncp);
+ }
+ EXPORT_SYMBOL(gnet_stats_basic_sync_init);
+-#endif
+ 
+-static void
+-__gnet_stats_copy_basic_cpu(struct gnet_stats_basic_sync *bstats,
+-			    struct gnet_stats_basic_sync __percpu *cpu)
++static void gnet_stats_add_basic_cpu(struct gnet_stats_basic_sync *bstats,
++				     struct gnet_stats_basic_sync __percpu *cpu)
+ {
+ 	u64 t_bytes = 0, t_packets = 0;
+ 	int i;
+@@ -149,20 +146,18 @@ __gnet_stats_copy_basic_cpu(struct gnet_stats_basic_sync *bstats,
+ 	_bstats_update(bstats, t_bytes, t_packets);
+ }
+ 
+-void
+-__gnet_stats_copy_basic(struct gnet_stats_basic_sync *bstats,
+-			struct gnet_stats_basic_sync __percpu *cpu,
+-			struct gnet_stats_basic_sync *b,
+-			bool running)
++void gnet_stats_add_basic(struct gnet_stats_basic_sync *bstats,
++			  struct gnet_stats_basic_sync __percpu *cpu,
++			  struct gnet_stats_basic_sync *b, bool running)
+ {
+ 	unsigned int start;
+-	__u64 bytes = 0;
+-	__u64 packets = 0;
++	u64 bytes = 0;
++	u64 packets = 0;
+ 
+ 	WARN_ON_ONCE((cpu || running) && !in_task());
+ 
+ 	if (cpu) {
+-		__gnet_stats_copy_basic_cpu(bstats, cpu);
++		gnet_stats_add_basic_cpu(bstats, cpu);
+ 		return;
+ 	}
+ 	do {
+@@ -174,7 +169,7 @@ __gnet_stats_copy_basic(struct gnet_stats_basic_sync *bstats,
+ 
+ 	_bstats_update(bstats, bytes, packets);
+ }
+-EXPORT_SYMBOL(__gnet_stats_copy_basic);
++EXPORT_SYMBOL(gnet_stats_add_basic);
+ 
+ static int
+ ___gnet_stats_copy_basic(struct gnet_dump *d,
+@@ -186,7 +181,7 @@ ___gnet_stats_copy_basic(struct gnet_dump *d,
+ 	u64 bstats_bytes, bstats_packets;
+ 
+ 	gnet_stats_basic_sync_init(&bstats);
+-	__gnet_stats_copy_basic(&bstats, cpu, b, running);
++	gnet_stats_add_basic(&bstats, cpu, b, running);
+ 
+ 	bstats_bytes = u64_stats_read(&bstats.bytes);
+ 	bstats_packets = u64_stats_read(&bstats.packets);
+@@ -311,16 +306,15 @@ gnet_stats_copy_rate_est(struct gnet_dump *d,
+ }
+ EXPORT_SYMBOL(gnet_stats_copy_rate_est);
+ 
+-static void
+-__gnet_stats_copy_queue_cpu(struct gnet_stats_queue *qstats,
+-			    const struct gnet_stats_queue __percpu *q)
++static void gnet_stats_add_queue_cpu(struct gnet_stats_queue *qstats,
++				     const struct gnet_stats_queue __percpu *q)
+ {
+ 	int i;
+ 
+ 	for_each_possible_cpu(i) {
+ 		const struct gnet_stats_queue *qcpu = per_cpu_ptr(q, i);
+ 
+-		qstats->qlen = 0;
++		qstats->qlen += qcpu->backlog;
+ 		qstats->backlog += qcpu->backlog;
+ 		qstats->drops += qcpu->drops;
+ 		qstats->requeues += qcpu->requeues;
+@@ -328,13 +322,12 @@ __gnet_stats_copy_queue_cpu(struct gnet_stats_queue *qstats,
+ 	}
+ }
+ 
+-void __gnet_stats_copy_queue(struct gnet_stats_queue *qstats,
+-			     const struct gnet_stats_queue __percpu *cpu,
+-			     const struct gnet_stats_queue *q,
+-			     __u32 qlen)
++void gnet_stats_add_queue(struct gnet_stats_queue *qstats,
++			  const struct gnet_stats_queue __percpu *cpu,
++			  const struct gnet_stats_queue *q)
+ {
+ 	if (cpu) {
+-		__gnet_stats_copy_queue_cpu(qstats, cpu);
++		gnet_stats_add_queue_cpu(qstats, cpu);
+ 	} else {
+ 		qstats->qlen += q->qlen;
+ 		qstats->backlog += q->backlog;
+@@ -342,10 +335,8 @@ void __gnet_stats_copy_queue(struct gnet_stats_queue *qstats,
+ 		qstats->requeues += q->requeues;
+ 		qstats->overlimits += q->overlimits;
+ 	}
+-
+-	qstats->qlen += qlen;
+ }
+-EXPORT_SYMBOL(__gnet_stats_copy_queue);
++EXPORT_SYMBOL(gnet_stats_add_queue);
+ 
+ /**
+  * gnet_stats_copy_queue - copy queue statistics into statistics TLV
+@@ -368,7 +359,8 @@ gnet_stats_copy_queue(struct gnet_dump *d,
+ {
+ 	struct gnet_stats_queue qstats = {0};
+ 
+-	__gnet_stats_copy_queue(&qstats, cpu_q, q, qlen);
++	gnet_stats_add_queue(&qstats, cpu_q, q);
++	qstats.qlen = qlen;
+ 
+ 	if (d->compat_tc_stats) {
+ 		d->tc_stats.drops = qstats.drops;
+diff --git a/net/sched/act_api.c b/net/sched/act_api.c
+index 4133b8ea5a57a..3258da3d5bed5 100644
+--- a/net/sched/act_api.c
++++ b/net/sched/act_api.c
+@@ -1174,7 +1174,7 @@ int tcf_action_copy_stats(struct sk_buff *skb, struct tc_action *p,
+ 		goto errout;
+ 
+ 	if (gnet_stats_copy_basic(&d, p->cpu_bstats,
+-				  &p->tcfa_bstats, false ) < 0 ||
++				  &p->tcfa_bstats, false) < 0 ||
+ 	    gnet_stats_copy_basic_hw(&d, p->cpu_bstats_hw,
+ 				     &p->tcfa_bstats_hw, false) < 0 ||
+ 	    gnet_stats_copy_rate_est(&d, &p->tcfa_rate_est) < 0 ||
+diff --git a/net/sched/sch_htb.c b/net/sched/sch_htb.c
+index 661d5f7faea8d..cf1d45db4e84b 100644
+--- a/net/sched/sch_htb.c
++++ b/net/sched/sch_htb.c
+@@ -1324,10 +1324,12 @@ static void htb_offload_aggregate_stats(struct htb_sched *q,
+ 			if (p != cl)
+ 				continue;
+ 
+-			bstats_read_add(&c->bstats_bias, &bytes, &packets);
+-			if (c->level == 0)
+-				bstats_read_add(&c->leaf.q->bstats,
+-						&bytes, &packets);
++			bytes += u64_stats_read(&c->bstats_bias.bytes);
++			packets += u64_stats_read(&c->bstats_bias.packets);
++			if (c->level == 0) {
++				bytes += u64_stats_read(&c->leaf.q->bstats.bytes);
++				packets += u64_stats_read(&c->leaf.q->bstats.packets);
++			}
+ 		}
+ 	}
+ 	_bstats_update(&cl->bstats, bytes, packets);
+@@ -1354,15 +1356,13 @@ htb_dump_class_stats(struct Qdisc *sch, unsigned long arg, struct gnet_dump *d)
+ 
+ 	if (q->offload) {
+ 		if (!cl->level) {
+-			u64 bytes = 0, packets = 0;
+-
+ 			if (cl->leaf.q)
+ 				cl->bstats = cl->leaf.q->bstats;
+ 			else
+ 				gnet_stats_basic_sync_init(&cl->bstats);
+-
+-			bstats_read_add(&cl->bstats_bias, &bytes, &packets);
+-			_bstats_update(&cl->bstats, bytes, packets);
++			_bstats_update(&cl->bstats,
++				       u64_stats_read(&cl->bstats_bias.bytes),
++				       u64_stats_read(&cl->bstats_bias.packets));
+ 		} else {
+ 			htb_offload_aggregate_stats(q, cl);
+ 		}
+diff --git a/net/sched/sch_mq.c b/net/sched/sch_mq.c
+index 94bc53475a0b6..ad3d7220709e2 100644
+--- a/net/sched/sch_mq.c
++++ b/net/sched/sch_mq.c
+@@ -130,7 +130,6 @@ static int mq_dump(struct Qdisc *sch, struct sk_buff *skb)
+ 	struct net_device *dev = qdisc_dev(sch);
+ 	struct Qdisc *qdisc;
+ 	unsigned int ntx;
+-	__u32 qlen = 0;
+ 
+ 	sch->q.qlen = 0;
+ 	gnet_stats_basic_sync_init(&sch->bstats);
+@@ -145,14 +144,12 @@ static int mq_dump(struct Qdisc *sch, struct sk_buff *skb)
+ 		qdisc = netdev_get_tx_queue(dev, ntx)->qdisc_sleeping;
+ 		spin_lock_bh(qdisc_lock(qdisc));
+ 
+-		qlen = qdisc_qlen_sum(qdisc);
++		gnet_stats_add_basic(&sch->bstats, qdisc->cpu_bstats,
++				     &qdisc->bstats, false);
++		gnet_stats_add_queue(&sch->qstats, qdisc->cpu_qstats,
++				     &qdisc->qstats);
++		sch->q.qlen += qdisc_qlen(qdisc);
+ 
+-		__gnet_stats_copy_basic(&sch->bstats, qdisc->cpu_bstats,
+-					&qdisc->bstats, false);
+-		__gnet_stats_copy_queue(&sch->qstats,
+-					qdisc->cpu_qstats,
+-					&qdisc->qstats, qlen);
+-		sch->q.qlen		+= qlen;
+ 		spin_unlock_bh(qdisc_lock(qdisc));
+ 	}
+ 
+diff --git a/net/sched/sch_mqprio.c b/net/sched/sch_mqprio.c
+index c9dc0cec12b95..5cc86c7cbe826 100644
+--- a/net/sched/sch_mqprio.c
++++ b/net/sched/sch_mqprio.c
+@@ -399,17 +399,14 @@ static int mqprio_dump(struct Qdisc *sch, struct sk_buff *skb)
+ 	 * qdisc totals are added at end.
+ 	 */
+ 	for (ntx = 0; ntx < dev->num_tx_queues; ntx++) {
+-		u32 qlen = qdisc_qlen_sum(qdisc);
+-
+ 		qdisc = netdev_get_tx_queue(dev, ntx)->qdisc_sleeping;
+ 		spin_lock_bh(qdisc_lock(qdisc));
+ 
+-		__gnet_stats_copy_basic(&sch->bstats, qdisc->cpu_bstats,
+-					&qdisc->bstats, false);
+-		__gnet_stats_copy_queue(&sch->qstats,
+-					qdisc->cpu_qstats,
+-					&qdisc->qstats, qlen);
+-		sch->q.qlen		+= qlen;
++		gnet_stats_add_basic(&sch->bstats, qdisc->cpu_bstats,
++				     &qdisc->bstats, false);
++		gnet_stats_add_queue(&sch->qstats, qdisc->cpu_qstats,
++				     &qdisc->qstats);
++		sch->q.qlen += qdisc_qlen(qdisc);
+ 
+ 		spin_unlock_bh(qdisc_lock(qdisc));
+ 	}
+@@ -501,7 +498,7 @@ static int mqprio_dump_class_stats(struct Qdisc *sch, unsigned long cl,
+ {
+ 	if (cl >= TC_H_MIN_PRIORITY) {
+ 		int i;
+-		__u32 qlen = 0;
++		__u32 qlen;
+ 		struct gnet_stats_queue qstats = {0};
+ 		struct gnet_stats_basic_sync bstats;
+ 		struct net_device *dev = qdisc_dev(sch);
+@@ -522,15 +519,15 @@ static int mqprio_dump_class_stats(struct Qdisc *sch, unsigned long cl,
+ 
+ 			spin_lock_bh(qdisc_lock(qdisc));
+ 
+-			qlen = qdisc_qlen_sum(qdisc);
+-			__gnet_stats_copy_basic(&bstats, qdisc->cpu_bstats,
+-						&qdisc->bstats, false);
+-			__gnet_stats_copy_queue(&qstats,
+-						qdisc->cpu_qstats,
+-						&qdisc->qstats,
+-						qlen);
++			gnet_stats_add_basic(&bstats, qdisc->cpu_bstats,
++					     &qdisc->bstats, false);
++			gnet_stats_add_queue(&qstats, qdisc->cpu_qstats,
++					     &qdisc->qstats);
++			sch->q.qlen += qdisc_qlen(qdisc);
++
+ 			spin_unlock_bh(qdisc_lock(qdisc));
+ 		}
++		qlen = qdisc_qlen(sch) + qstats.qlen;
+ 
+ 		/* Reclaim root sleeping lock before completing stats */
+ 		if (d->lock)
