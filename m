@@ -2,86 +2,127 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2FC0C4332F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 19:30:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DE90C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 20:08:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 86C6861357
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 19:30:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0EB9B611EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Oct 2021 20:08:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233726AbhJRTcq (ORCPT
+        id S233443AbhJRULE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Oct 2021 15:32:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33898 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231739AbhJRTcm (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Oct 2021 15:32:42 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 264A1C06161C;
-        Mon, 18 Oct 2021 12:30:30 -0700 (PDT)
-Date:   Mon, 18 Oct 2021 21:30:26 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1634585428;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=gVf1lnK84f1nGo5oiwSWEEPmMlFfpTTxKa0gpOyBnJM=;
-        b=F90/JWvakT4piDdfpKHS9wWIp0/mwpDQCxJbXipB2tyrdDFh2RGb26pvpvlcyIfXFT6FRB
-        pUChGekqWLGAh7E5exAQqz6Bq0WKBY3RWVchukpCeNt8dvij1ZdYAQ8gL3OVTuinfZSGzw
-        sPO/rRTDroKcDhTGi+9gI2oB9tpjMrxEUUMqdR1oPygCLUXFliW76knQxN/ihxtCPC7i1Q
-        OUI5DR8T7GVcbS0MfYK0Y5TM1QT6hpgrsSOwCVi+LE5x/2fvBGgZl0D7luqxQH7B31bXlh
-        87dnVrJYwO6oMmLkbuV7tgsAXh82tzt3c4xWGzjhKwuD3fUEir5YnsrazvyCkQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1634585428;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=gVf1lnK84f1nGo5oiwSWEEPmMlFfpTTxKa0gpOyBnJM=;
-        b=M+CeOvAE6H5BcQhB25mx7vXwRTLuN0bRFDM9c+MwCRi5QTFwGCoySkA3Tc2P30R77A1IRr
-        zn9kTrcBVa61MVAw==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     Daniel Bristot de Oliveira <bristot@kernel.org>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
+        Mon, 18 Oct 2021 16:11:04 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44450 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229941AbhJRULE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 18 Oct 2021 16:11:04 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 621EE6115B;
+        Mon, 18 Oct 2021 20:08:52 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.19.212-rt92
+Date:   Mon, 18 Oct 2021 20:08:16 -0000
+Message-ID: <163458769602.551117.3363510485181296627@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH V3 06/19] rtla: Real-Time Linux Analysis tool
-Message-ID: <YW3LUhMOVWTvQlKh@lx-t490>
-References: <cover.1634574261.git.bristot@kernel.org>
- <65fbb9b508a2c1803bacfe255c1d568eb8f4ba4f.1634574261.git.bristot@kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <65fbb9b508a2c1803bacfe255c1d568eb8f4ba4f.1634574261.git.bristot@kernel.org>
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Oct 18, 2021, Daniel Bristot de Oliveira wrote:
-> --- /dev/null
-> +++ b/tools/tracing/rtla/Makefile
-> @@ -0,0 +1,59 @@
-> +CC	:=	gcc
+Hello RT-list!
 
-Some $(CROSS_COMPILE) for the poor souls who will integrate this into
-embedded distributions?
+I'm pleased to announce the 4.19.212-rt92 stable release.
 
-> +
-> +TRACEFS_HEADERS		:= $$(pkg-config --cflags libtracefs)
-> +
+You can get this release via the git tree at:
 
-ditto. This uses the host's pkg-config unconditionally.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Thanks,
+  branch: v4.19-rt
+  Head SHA1: 5e483063f8915dab2fa7abff54b1a4bbeeb921a9
 
---
-Ahmed S. Darwish
-Linutronix GmbH
+Or to build 4.19.212-rt92 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.212.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.212-rt92.patch.xz
+
+
+You can also build from 4.19.211-rt91 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.211-rt91-rt92.patch.xz
+
+Enjoy!
+Clark
+
+Changes from v4.19.211-rt91:
+---
+
+Al Viro (1):
+      m68k: Handle arrivals of multiple signals correctly
+
+Anand K Mistry (1):
+      perf/x86: Reset destroy callback on event init failure
+
+Clark Williams (2):
+      Merge tag 'v4.19.212' into v4.19-rt
+      Linux 4.19.212-rt92
+
+Colin Ian King (1):
+      scsi: virtio_scsi: Fix spelling mistake "Unsupport" -> "Unsupported"
+
+Florian Fainelli (1):
+      net: phy: bcm7xxx: Fixed indirect MMD operations
+
+Greg Kroah-Hartman (1):
+      Linux 4.19.212
+
+Jeremy Sowden (1):
+      netfilter: ip6_tables: zero-initialize fragment offset
+
+Jiapeng Chong (1):
+      scsi: ses: Fix unsigned comparison with less than zero
+
+MichelleJin (1):
+      mac80211: check return value of rhashtable_init
+
+Mizuho Mori (1):
+      HID: apple: Fix logical maximum and usage maximum of Magic Keyboard JIS
+
+Peter Zijlstra (1):
+      sched: Always inline is_percpu_thread()
+
+Randy Dunlap (1):
+      net: sun: SUNVNET_COMMON should depend on INET
+
+YueHaibing (1):
+      mac80211: Drop frames from invalid MAC address in ad-hoc mode
+
+王贇 (1):
+      net: prevent user from passing illegal stab size
+---
+Makefile                         |  2 +-
+ arch/m68k/kernel/signal.c        | 88 ++++++++++++++++++-------------------
+ arch/x86/events/core.c           |  1 +
+ drivers/hid/hid-apple.c          |  7 +++
+ drivers/net/ethernet/sun/Kconfig |  1 +
+ drivers/net/phy/bcm7xxx.c        | 94 ++++++++++++++++++++++++++++++++++++++++
+ drivers/scsi/ses.c               |  2 +-
+ drivers/scsi/virtio_scsi.c       |  4 +-
+ include/linux/sched.h            |  2 +-
+ include/net/pkt_sched.h          |  1 +
+ localversion-rt                  |  2 +-
+ net/ipv6/netfilter/ip6_tables.c  |  1 +
+ net/mac80211/mesh_pathtbl.c      |  5 ++-
+ net/mac80211/rx.c                |  3 +-
+ net/sched/sch_api.c              |  6 +++
+ 15 files changed, 165 insertions(+), 54 deletions(-)
+---
