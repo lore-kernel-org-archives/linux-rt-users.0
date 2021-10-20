@@ -2,78 +2,77 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 22F45C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Oct 2021 19:18:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5C0C4C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Oct 2021 15:27:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 04FE96137D
-	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Oct 2021 19:18:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 41ACC61371
+	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Oct 2021 15:27:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230432AbhJSTUy (ORCPT
+        id S230106AbhJTPaN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 19 Oct 2021 15:20:54 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47066 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231586AbhJSTUx (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 19 Oct 2021 15:20:53 -0400
-Received: from ms.lwn.net (ms.lwn.net [IPv6:2600:3c01:e000:3a1::42])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 35CE0C061746;
-        Tue, 19 Oct 2021 12:18:40 -0700 (PDT)
-Received: from localhost (unknown [IPv6:2601:281:8300:104d::5f6])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ms.lwn.net (Postfix) with ESMTPSA id 6BCD297D;
-        Tue, 19 Oct 2021 19:18:39 +0000 (UTC)
-DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net 6BCD297D
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=lwn.net; s=20201203;
-        t=1634671119; bh=z7ldVbQnsWAW8Gf9GiVNdED1fjhjWDpnGSCtCasTfCQ=;
-        h=From:To:Cc:Subject:In-Reply-To:References:Date:From;
-        b=eAeQI5bFW2K4zUVa0zD89H/SOlLVtv/+NBCoyOjfx9KaQuMDvl0b3NUv9vr4j4R6O
-         3jR2afECnmqfHLlQJVRC6PGz/P8SlXPG6BevKQXYBYER6j0Oph9XGqlZEdx7CK8XW1
-         A/v62ai9qxoho0O9nhD0FFnqEvfqZPm4dEIakDE8/kTzi/L9STjd32LcqPAQNCtn+j
-         R2Fw7HVZc5OL9OKNdELehDXd3zkFug5lbtTrzxLmsOGpuECsuqBbK3SpeHtFY0vBaD
-         0UG7vGHS+cRvxM8juvFmL4BTRJyLm2Aef/I3RMNtXlRvB23kLh9LwHJdF6Am4eeeTX
-         S+q8GY0CTRUXA==
-From:   Jonathan Corbet <corbet@lwn.net>
-To:     Daniel Bristot de Oliveira <bristot@kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Cc:     Ingo Molnar <mingo@redhat.com>, Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
+        Wed, 20 Oct 2021 11:30:13 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51778 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229570AbhJTPaM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 20 Oct 2021 11:30:12 -0400
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 4D2FD6135F;
+        Wed, 20 Oct 2021 15:27:57 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1634743678;
+        bh=DGupJCcngY6gud3AWyQVz0kudq1TLRwF5ZjDrAjKqYI=;
+        h=Subject:From:To:Date:From;
+        b=kH9CvPH0ebyVGNRD89vDi//W6Qi/08qTuMofP2qNpmLiix2xYJ0HUWlWHypRzDPD6
+         4cLwlOukYxMxfq/TSJlEsZL73/LGEsshF4vi0Xm+kM7dkYd/sTvOh/VN3QqbSJ++M5
+         wmo68d6dBgyR20nPtWGUR+wxGfZAaLVz/rPr/ahFtFhPRBOAEYCtF+fPTN/ngiC/I3
+         9UotsNpj7ZynWYvjYbe7il3d+pp0Brzha9dzAzqWRkELJIoXufq3aBlZxlcC46AWFl
+         8SBjhNrgdvbYNdN4I4aG7FZQjMtv9muxVghdVvxs+WG4Z/2uN2L8pn0FQCvegYe7dw
+         mitXhYKPuBBMQ==
+Message-ID: <1a2d8ac4f940ea8f6ac82cca384a17244062d7da.camel@kernel.org>
+Subject: [ANNOUNCE] 5.4.154-rt65
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@redhat.com>
-Subject: Re: [PATCH V3 13/19] rtla: Add Documentation
-In-Reply-To: <5796a3d5-ae98-9d28-138f-981a06dab34b@kernel.org>
-References: <cover.1634574261.git.bristot@kernel.org>
- <7e205854656f41afe9a35e6390d3e3cbd724706f.1634574261.git.bristot@kernel.org>
- <877deaut3b.fsf@meer.lwn.net>
- <f0c50222-a9a8-d0e5-d705-d9d670467142@kernel.org>
- <20211019092124.6b403ca4@gandalf.local.home>
- <ecf3bfee-8a7a-e3bf-4fba-af9bc479526e@kernel.org>
- <8735oxt4ny.fsf@meer.lwn.net> <20211019113618.02bcdf8b@gandalf.local.home>
- <5796a3d5-ae98-9d28-138f-981a06dab34b@kernel.org>
-Date:   Tue, 19 Oct 2021 13:18:38 -0600
-Message-ID: <87tuhcsu0h.fsf@meer.lwn.net>
-MIME-Version: 1.0
-Content-Type: text/plain
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Date:   Wed, 20 Oct 2021 10:27:56 -0500
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Daniel Bristot de Oliveira <bristot@kernel.org> writes:
+Hello RT Folks!
 
-> Sounds good to me... actually, not only to me, but for all tools on tools I guess.
->
-> Should I start with Documentation/tools/rtla/${rtla_files}.rst?
+I'm pleased to announce the 5.4.154-rt65 stable release.
 
-Sounds good to me.
+This release is just an update to the new stable 5.4.154
+version and no RT specific changes have been made.
 
-Thanks,
+You can get this release via the git tree at:
 
-jon
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.4-rt
+  Head SHA1: 2121f1ec675d1b776ad8595a64815cac975a5c26
+
+Or to build 5.4.154-rt65 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.154.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.154-rt65.patch.xz
+
+Enjoy!
+
+   Tom
+
