@@ -2,154 +2,125 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D7DA2C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Oct 2021 08:27:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CEBB2C433FE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Oct 2021 10:37:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B675F60041
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Oct 2021 08:27:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B9A2360EBB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Oct 2021 10:37:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231321AbhJUI3T (ORCPT
+        id S230117AbhJUKjd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 21 Oct 2021 04:29:19 -0400
-Received: from smtp-out2.suse.de ([195.135.220.29]:50380 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231153AbhJUI3T (ORCPT
+        Thu, 21 Oct 2021 06:39:33 -0400
+Received: from mail-oi1-f172.google.com ([209.85.167.172]:38661 "EHLO
+        mail-oi1-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229567AbhJUKjc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Oct 2021 04:29:19 -0400
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id 896451FDAF;
-        Thu, 21 Oct 2021 08:27:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1634804822; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=kPlvFBknNx5Rvt2Xom4sEyQcQrKjPFKmTkUyWHqk6xs=;
-        b=KE8DuvBMWupszs4XD7dZgx/6DgybMF7vT1ncYk+1VxUd+vpZdA8rakzIVPBZQ3voE9eoit
-        kht8USBQbDCBTK5O5BQWl49IgRMLxpDvaCEcHLxJtFjepm+Q7ByMmVGer/sf50KfBf/SbU
-        uTteXN4ko4Wi15EPLyxxarCMz2Z0WWw=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1634804822;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=kPlvFBknNx5Rvt2Xom4sEyQcQrKjPFKmTkUyWHqk6xs=;
-        b=YNu3+u1JJKpWrmCb605Frq2tQXFIgtwiuWpR91B95MQhsIHSaQKUWODJbs1bLdq+ADZau2
-        I1y+k0O/FZNIeHBQ==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4E10A13BDA;
-        Thu, 21 Oct 2021 08:27:02 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id mPJFElYkcWEpGAAAMHmgww
-        (envelope-from <vbabka@suse.cz>); Thu, 21 Oct 2021 08:27:02 +0000
-Message-ID: <9c6c0840-a37d-c6fb-78a8-f2c49df2380c@suse.cz>
-Date:   Thu, 21 Oct 2021 10:27:01 +0200
+        Thu, 21 Oct 2021 06:39:32 -0400
+Received: by mail-oi1-f172.google.com with SMTP id t4so314764oie.5;
+        Thu, 21 Oct 2021 03:37:17 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=9sP8cYSneVphlIY9Q+l0jG1RUXEMjCrXXjH5paVkikM=;
+        b=uLNXxfDi8GlwRs5bu7vUpBF2+RBByNzpeRMSaHkCHXOZH+MtdxFLNo5ExcJ+1e3iS9
+         pKBpoZGvcoFVfRhLAzjujSBqPWYB6ppftWzgYWEP33GIOs0HPN/wTg18cKIOeaZK0Qny
+         awa3vGiqCPUqoLeeDnkmHN4SBbEvQFq6+G9GCDpymezmC+gnoLmZ/UfddtV17NfqPszy
+         Axth/OcXAbOt/V8jKY2a8k3iEt8pIpw9Uc1TRAytUjZ5HqmcLg7jvLqN1m54B0ejtFaC
+         9Ei5H/j+vwtcyqO9O/NYjHbiC/0GGfP+0zVNyu6NztTtcc07exdrUBfqEOI1Jayzkmqa
+         k0Pw==
+X-Gm-Message-State: AOAM531005WdpGp0llFd7qCYHCNEHqCEb+tW1Xn2a4LfzXMXPnHQ3bdY
+        +NlCyKETDgGmy3YEKLSnxV8oyX9iUpueem4FaEKsAq62
+X-Google-Smtp-Source: ABdhPJx2NTiizHZdxUBOrJTgW+AGytpO7oTgM0NP303TCN0SrSVfFAttVLjkfMbypuS1mdnqEmTJhUmgOmsboQD2aac=
+X-Received: by 2002:a05:6808:1286:: with SMTP id a6mr41002oiw.51.1634812636664;
+ Thu, 21 Oct 2021 03:37:16 -0700 (PDT)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.2.0
-Subject: Re: [RFC 0/3] mm/page_alloc: Remote per-cpu lists drain support
-Content-Language: en-US
-To:     nsaenzju@redhat.com, akpm@linux-foundation.org
-Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        frederic@kernel.org, tglx@linutronix.de, peterz@infradead.org,
-        mtosatti@redhat.com, nilal@redhat.com, mgorman@suse.de,
-        linux-rt-users@vger.kernel.org, cl@linux.com, paulmck@kernel.org,
-        ppandit@redhat.com
-References: <20211008161922.942459-1-nsaenzju@redhat.com>
- <38d28332-6b15-b353-5bcb-f691455c6495@suse.cz>
- <06e96819a964ca4b4ba504d0da71e81d79f3a87b.camel@redhat.com>
-From:   Vlastimil Babka <vbabka@suse.cz>
-In-Reply-To: <06e96819a964ca4b4ba504d0da71e81d79f3a87b.camel@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+References: <20211005155427.1591196-1-john@metanate.com> <CAJZ5v0gPwUQzGBa2VDeC3xAF9zJVm486BC0eue10-urJ8Xz+iw@mail.gmail.com>
+ <20211005181706.66102578.john@metanate.com> <CAJZ5v0iFKYvM+rn68VaAbM4=ZLAQBR_UPzvAuKqVLQuP=ZJPew@mail.gmail.com>
+ <20211006191813.0e097b9f.john@metanate.com>
+In-Reply-To: <20211006191813.0e097b9f.john@metanate.com>
+From:   "Rafael J. Wysocki" <rafael@kernel.org>
+Date:   Thu, 21 Oct 2021 12:37:05 +0200
+Message-ID: <CAJZ5v0hD61=MsVWmoGNJ50a6raGrsME_=7ha=E-Y3AgmuvQsjw@mail.gmail.com>
+Subject: Re: [RFC PATCH RT] PM: runtime: avoid retry loops on RT
+To:     John Keeping <john@metanate.com>
+Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
+        linux-rt-users@vger.kernel.org, Pavel Machek <pavel@ucw.cz>,
+        Len Brown <len.brown@intel.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Linux PM <linux-pm@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 10/13/21 14:50, nsaenzju@redhat.com wrote:
-> Hi Vlastimil, thanks for spending time on this.
-> Also, excuse me if I over explain things.
+On Wed, Oct 6, 2021 at 8:18 PM John Keeping <john@metanate.com> wrote:
+>
+> On Wed, 6 Oct 2021 19:05:50 +0200
+> "Rafael J. Wysocki" <rafael@kernel.org> wrote:
+>
+> > On Tue, Oct 5, 2021 at 7:17 PM John Keeping <john@metanate.com> wrote:
+> > >
+> > > On Tue, 5 Oct 2021 18:38:27 +0200
+> > > "Rafael J. Wysocki" <rafael@kernel.org> wrote:
+> > >
+> > > > On Tue, Oct 5, 2021 at 6:14 PM John Keeping <john@metanate.com> wrote:
+> > > > >
+> > > > > With PREEMPT_RT spin_unlock() is identical to spin_unlock_irq() so there
+> > > > > is no reason to have a special case using the former.  Furthermore,
+> > > > > spin_unlock() enables preemption meaning that a task in RESUMING or
+> > > > > SUSPENDING state may be preempted by a higher priority task running
+> > > > > pm_runtime_get_sync() leading to a livelock.
+> > > > >
+> > > > > Use the non-irq_safe path for all waiting so that the waiting task will
+> > > > > block.
+> > > > >
+> > > > > Note that this changes only the waiting behaviour of irq_safe, other
+> > > > > uses are left unchanged so that the parent device always remains active
+> > > > > in the same way as !RT.
+> > > > >
+> > > > > Signed-off-by: John Keeping <john@metanate.com>
+> > > >
+> > > > So basically, the idea is that the irq_safe flag should have no effect
+> > > > when CONFIG_PREEMPT_RT is set, right?
+> > > >
+> > > > Wouldn't it be cleaner to make it not present at all in that case?
+> > >
+> > > Yes, just replacing pm_runtime_irq_safe() with an empty function would
+> > > also fix it, but I'm not sure if that will have unexpected effects from
+> > > the parent device suspending/resuming, especially in terms of latency
+> > > for handling interrupts.
+> >
+> > Well, the code as is doesn't work with CONFIG_PREEMPT_RT set anyway in general.
+> >
+> > Also this is not just pm_runtime_irq_safe(), but every access to this
+> > flag (and there's more  of them than just the ones changed below).
+> >
+> > What about putting the flag under #ifdef CONFIG_PREEMPT_RT and
+> > providing read/write accessor helpers for it that will be empty in
+> > RT-enabled kernels?
+>
+> That's the other approach I considered, but there are really two things
+> that irq_safe means here:
+>
+> 1) Call the suspend/resume hooks with interrupts disabled
+>
+> 2) Keep the parent device running and make other changes that allow (1)
+>    on non-RT systems (for example in amba_pm_runtime_suspend() leave the
+>    clock prepared when irq_safe is set, but unprepare it otherwise)
+>
+> In the approach of leaving the flag unset on PREEMPT_RT we solve the
+> primary problem which is that (1) is irrelevant on RT, but that would
+> also affect (2) and I'm not sure whether that's desirable or not.
+>
+> It's quite possible the answer is that the other changes don't matter
+> and we should take the simpler approach of just removing irq_safe under
+> CONFIG_PREEMPT_RT.  I'm becoming convinced that this is the right
+> answer, but I'm not confident that I fully understand the wider
+> ramifications.
 
-Hi, thanks for spending time on the explanation :) It was very useful.
-
-...
-
-> 
->> and the "write side" (remote draining) actually doesn't take pagesets.lock,
->> so it's not true that the "lock required to replace ... is held"? The write
->> side uses rcu_replace_pointer(..., mutex_is_locked(&pcpu_drain_mutex))
->> which is a different lock.
-> 
-> The thing 'pagesets.lock' protects against is concurrent access to pcp->lp's
-> content, as opposed to its address. pcp->lp is dereferenced atomically, so no
-> need for locking on that operation.
-> 
-> The drain side never accesses pcp->lp's contents concurrently, it changes
-> pcp->lp's address and makes sure all CPUs are in sync with the new address
-> before clearing the stale data.
-> 
-> Just for the record, I think a better representation of what 'check' in
-> rcu_dereference means is:
-> 
->  * Do an rcu_dereference(), but check that the conditions under which the
->  * dereference will take place are correct.  Typically the conditions
->  * indicate the various locking conditions that should be held at that
->  * point. The check should return true if the conditions are satisfied.
->  * An implicit check for being in an RCU read-side critical section
->  * (rcu_read_lock()) is included.
-> 
-> So for the read side, that is, code reading pcp->lp's address and its contents,
-> the conditions to be met are: being in a RCU critical section, to make sure RCU
-> is keeping track of it, and holding 'pagesets.lock', to avoid concurrently
-> accessing pcp->lp's contents. The later is achieved either by disabling local
-> irqs or disabling migration and getting a per-cpu rt_spinlock. Conveniently
-> these are actions that implicitly delimit an RCU critical section (see [1] and
-> [2]). So the 'pagesets.lock' check fully covers the read side locking/RCU
-> concerns.
-
-Yeah, I wasn't aware of [2] especially. It makes sense that RT locks provide
-the same guarantees for RCU as non-RT.
-
-> On the write side, the drain has to make sure pcp->lp address change is atomic
-> (this is achieved through rcu_replace_pointer()) and that lp->drain is emptied
-> before a happens. So checking for pcpu_drain_mutex being held is good enough.
-> 
->> IOW, synchronize_rcu_expedited() AFAICS has nothing (no rcu_read_lock() to
->> synchronize against? Might accidentally work on !RT thanks to disabled irqs,
->> but not sure about with RT lock semantics of the local_lock...
->>
->> So back to overhead, if I'm correct above we can assume that there would be
->> also rcu_read_lock() in the fast paths.
-> 
-> As I explained above, no need.
-> 
->> The alternative proposed by tglx was IIRC that there would be a spinlock on
->> each cpu, which would be mostly uncontended except when draining. Maybe an
->> uncontended spin lock/unlock would have lower overhead than all of the
->> above? It would be certainly simpler, so I would probably try that first and
->> see if it's acceptable?
-> 
-> You have a point here. I'll provide a performance rundown of both solutions.
-> This one is a bit more complex that's for sure.
-
-Great, thanks!
-
-> Thanks!
-> 
-> [1] See rcu_read_lock()'s description: "synchronize_rcu() wait for regions of
->     code with preemption disabled, including regions of code with interrupts or
->     softirqs disabled."
-> 
-> [2] See kernel/locking/spinlock_rt.c: "The RT [spinlock] substitutions
->     explicitly disable migration and take rcu_read_lock() across the lock held
->     section."
-> 
-
+The initial motivation for adding irq_safe was to allow interrupt
+handlers of some devices to use PM-runtime, but in RT kernels that's
+possible regardless IIUC, so I don't see a reason for having irq_safe
+at all in that case.
