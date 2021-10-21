@@ -2,77 +2,154 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5C0C4C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Oct 2021 15:27:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D7DA2C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Oct 2021 08:27:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 41ACC61371
-	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Oct 2021 15:27:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B675F60041
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Oct 2021 08:27:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230106AbhJTPaN (ORCPT
+        id S231321AbhJUI3T (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 20 Oct 2021 11:30:13 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51778 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229570AbhJTPaM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 20 Oct 2021 11:30:12 -0400
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 4D2FD6135F;
-        Wed, 20 Oct 2021 15:27:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1634743678;
-        bh=DGupJCcngY6gud3AWyQVz0kudq1TLRwF5ZjDrAjKqYI=;
-        h=Subject:From:To:Date:From;
-        b=kH9CvPH0ebyVGNRD89vDi//W6Qi/08qTuMofP2qNpmLiix2xYJ0HUWlWHypRzDPD6
-         4cLwlOukYxMxfq/TSJlEsZL73/LGEsshF4vi0Xm+kM7dkYd/sTvOh/VN3QqbSJ++M5
-         wmo68d6dBgyR20nPtWGUR+wxGfZAaLVz/rPr/ahFtFhPRBOAEYCtF+fPTN/ngiC/I3
-         9UotsNpj7ZynWYvjYbe7il3d+pp0Brzha9dzAzqWRkELJIoXufq3aBlZxlcC46AWFl
-         8SBjhNrgdvbYNdN4I4aG7FZQjMtv9muxVghdVvxs+WG4Z/2uN2L8pn0FQCvegYe7dw
-         mitXhYKPuBBMQ==
-Message-ID: <1a2d8ac4f940ea8f6ac82cca384a17244062d7da.camel@kernel.org>
-Subject: [ANNOUNCE] 5.4.154-rt65
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Wed, 20 Oct 2021 10:27:56 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
+        Thu, 21 Oct 2021 04:29:19 -0400
+Received: from smtp-out2.suse.de ([195.135.220.29]:50380 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231153AbhJUI3T (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 21 Oct 2021 04:29:19 -0400
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out2.suse.de (Postfix) with ESMTPS id 896451FDAF;
+        Thu, 21 Oct 2021 08:27:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1634804822; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=kPlvFBknNx5Rvt2Xom4sEyQcQrKjPFKmTkUyWHqk6xs=;
+        b=KE8DuvBMWupszs4XD7dZgx/6DgybMF7vT1ncYk+1VxUd+vpZdA8rakzIVPBZQ3voE9eoit
+        kht8USBQbDCBTK5O5BQWl49IgRMLxpDvaCEcHLxJtFjepm+Q7ByMmVGer/sf50KfBf/SbU
+        uTteXN4ko4Wi15EPLyxxarCMz2Z0WWw=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1634804822;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=kPlvFBknNx5Rvt2Xom4sEyQcQrKjPFKmTkUyWHqk6xs=;
+        b=YNu3+u1JJKpWrmCb605Frq2tQXFIgtwiuWpR91B95MQhsIHSaQKUWODJbs1bLdq+ADZau2
+        I1y+k0O/FZNIeHBQ==
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4E10A13BDA;
+        Thu, 21 Oct 2021 08:27:02 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap2.suse-dmz.suse.de with ESMTPSA
+        id mPJFElYkcWEpGAAAMHmgww
+        (envelope-from <vbabka@suse.cz>); Thu, 21 Oct 2021 08:27:02 +0000
+Message-ID: <9c6c0840-a37d-c6fb-78a8-f2c49df2380c@suse.cz>
+Date:   Thu, 21 Oct 2021 10:27:01 +0200
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.2.0
+Subject: Re: [RFC 0/3] mm/page_alloc: Remote per-cpu lists drain support
+Content-Language: en-US
+To:     nsaenzju@redhat.com, akpm@linux-foundation.org
+Cc:     linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        frederic@kernel.org, tglx@linutronix.de, peterz@infradead.org,
+        mtosatti@redhat.com, nilal@redhat.com, mgorman@suse.de,
+        linux-rt-users@vger.kernel.org, cl@linux.com, paulmck@kernel.org,
+        ppandit@redhat.com
+References: <20211008161922.942459-1-nsaenzju@redhat.com>
+ <38d28332-6b15-b353-5bcb-f691455c6495@suse.cz>
+ <06e96819a964ca4b4ba504d0da71e81d79f3a87b.camel@redhat.com>
+From:   Vlastimil Babka <vbabka@suse.cz>
+In-Reply-To: <06e96819a964ca4b4ba504d0da71e81d79f3a87b.camel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+On 10/13/21 14:50, nsaenzju@redhat.com wrote:
+> Hi Vlastimil, thanks for spending time on this.
+> Also, excuse me if I over explain things.
 
-I'm pleased to announce the 5.4.154-rt65 stable release.
+Hi, thanks for spending time on the explanation :) It was very useful.
 
-This release is just an update to the new stable 5.4.154
-version and no RT specific changes have been made.
+...
 
-You can get this release via the git tree at:
+> 
+>> and the "write side" (remote draining) actually doesn't take pagesets.lock,
+>> so it's not true that the "lock required to replace ... is held"? The write
+>> side uses rcu_replace_pointer(..., mutex_is_locked(&pcpu_drain_mutex))
+>> which is a different lock.
+> 
+> The thing 'pagesets.lock' protects against is concurrent access to pcp->lp's
+> content, as opposed to its address. pcp->lp is dereferenced atomically, so no
+> need for locking on that operation.
+> 
+> The drain side never accesses pcp->lp's contents concurrently, it changes
+> pcp->lp's address and makes sure all CPUs are in sync with the new address
+> before clearing the stale data.
+> 
+> Just for the record, I think a better representation of what 'check' in
+> rcu_dereference means is:
+> 
+>  * Do an rcu_dereference(), but check that the conditions under which the
+>  * dereference will take place are correct.  Typically the conditions
+>  * indicate the various locking conditions that should be held at that
+>  * point. The check should return true if the conditions are satisfied.
+>  * An implicit check for being in an RCU read-side critical section
+>  * (rcu_read_lock()) is included.
+> 
+> So for the read side, that is, code reading pcp->lp's address and its contents,
+> the conditions to be met are: being in a RCU critical section, to make sure RCU
+> is keeping track of it, and holding 'pagesets.lock', to avoid concurrently
+> accessing pcp->lp's contents. The later is achieved either by disabling local
+> irqs or disabling migration and getting a per-cpu rt_spinlock. Conveniently
+> these are actions that implicitly delimit an RCU critical section (see [1] and
+> [2]). So the 'pagesets.lock' check fully covers the read side locking/RCU
+> concerns.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Yeah, I wasn't aware of [2] especially. It makes sense that RT locks provide
+the same guarantees for RCU as non-RT.
 
-  branch: v5.4-rt
-  Head SHA1: 2121f1ec675d1b776ad8595a64815cac975a5c26
+> On the write side, the drain has to make sure pcp->lp address change is atomic
+> (this is achieved through rcu_replace_pointer()) and that lp->drain is emptied
+> before a happens. So checking for pcpu_drain_mutex being held is good enough.
+> 
+>> IOW, synchronize_rcu_expedited() AFAICS has nothing (no rcu_read_lock() to
+>> synchronize against? Might accidentally work on !RT thanks to disabled irqs,
+>> but not sure about with RT lock semantics of the local_lock...
+>>
+>> So back to overhead, if I'm correct above we can assume that there would be
+>> also rcu_read_lock() in the fast paths.
+> 
+> As I explained above, no need.
+> 
+>> The alternative proposed by tglx was IIRC that there would be a spinlock on
+>> each cpu, which would be mostly uncontended except when draining. Maybe an
+>> uncontended spin lock/unlock would have lower overhead than all of the
+>> above? It would be certainly simpler, so I would probably try that first and
+>> see if it's acceptable?
+> 
+> You have a point here. I'll provide a performance rundown of both solutions.
+> This one is a bit more complex that's for sure.
 
-Or to build 5.4.154-rt65 directly, the following patches should be applied:
+Great, thanks!
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.154.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.154-rt65.patch.xz
-
-Enjoy!
-
-   Tom
+> Thanks!
+> 
+> [1] See rcu_read_lock()'s description: "synchronize_rcu() wait for regions of
+>     code with preemption disabled, including regions of code with interrupts or
+>     softirqs disabled."
+> 
+> [2] See kernel/locking/spinlock_rt.c: "The RT [spinlock] substitutions
+>     explicitly disable migration and take rcu_read_lock() across the lock held
+>     section."
+> 
 
