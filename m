@@ -2,31 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B0AEAC433F5
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Oct 2021 09:10:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9259FC433EF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Oct 2021 09:48:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8FCF46108B
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Oct 2021 09:10:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5AFD760F4F
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Oct 2021 09:48:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230108AbhJWJM3 (ORCPT
+        id S230121AbhJWJup (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 23 Oct 2021 05:12:29 -0400
-Received: from mail.kernel.org ([198.145.29.99]:60190 "EHLO mail.kernel.org"
+        Sat, 23 Oct 2021 05:50:45 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44606 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229818AbhJWJM2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 23 Oct 2021 05:12:28 -0400
+        id S230047AbhJWJuo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 23 Oct 2021 05:50:44 -0400
 Received: from disco-boy.misterjones.org (disco-boy.misterjones.org [51.254.78.96])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9F7866105A;
-        Sat, 23 Oct 2021 09:10:09 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 1885D60EB8;
+        Sat, 23 Oct 2021 09:48:26 +0000 (UTC)
 Received: from sofa.misterjones.org ([185.219.108.64] helo=wait-a-minute.misterjones.org)
         by disco-boy.misterjones.org with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         (Exim 4.94.2)
         (envelope-from <maz@kernel.org>)
-        id 1meD2V-0013hq-8b; Sat, 23 Oct 2021 10:10:07 +0100
-Date:   Sat, 23 Oct 2021 10:10:07 +0100
-Message-ID: <87r1cct8cw.wl-maz@kernel.org>
+        id 1meDdX-0013vT-O6; Sat, 23 Oct 2021 10:48:23 +0100
+Date:   Sat, 23 Oct 2021 10:48:22 +0100
+Message-ID: <87pmrwt6l5.wl-maz@kernel.org>
 From:   Marc Zyngier <maz@kernel.org>
 To:     Valentin Schneider <valentin.schneider@arm.com>
 Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
@@ -36,10 +36,10 @@ Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Ard Biesheuvel <ardb@kernel.org>
-Subject: Re: [PATCH 1/3] irqchip/gic-v3-its: Give the percpu rdist struct its own flags field
-In-Reply-To: <20211022103307.1711619-2-valentin.schneider@arm.com>
+Subject: Re: [PATCH 2/3] irqchip/gic-v3-its: Postpone LPI pending table freeing and memreserve
+In-Reply-To: <20211022103307.1711619-3-valentin.schneider@arm.com>
 References: <20211022103307.1711619-1-valentin.schneider@arm.com>
-        <20211022103307.1711619-2-valentin.schneider@arm.com>
+        <20211022103307.1711619-3-valentin.schneider@arm.com>
 User-Agent: Wanderlust/2.15.9 (Almost Unreal) SEMI-EPG/1.14.7 (Harue)
  FLIM-LB/1.14.9 (=?UTF-8?B?R29qxY0=?=) APEL-LB/10.8 EasyPG/1.0.0 Emacs/27.1
  (x86_64-pc-linux-gnu) MULE/6.0 (HANACHIRUSATO)
@@ -53,48 +53,175 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 22 Oct 2021 11:33:05 +0100,
+On Fri, 22 Oct 2021 11:33:06 +0100,
 Valentin Schneider <valentin.schneider@arm.com> wrote:
 > 
-> Later patches will require tracking some per-rdist status. Reuse the bytes
-> "lost" to padding within the __percpu rdist struct as a flags field, and
-> re-encode ->lpi_enabled within said flags.
+> Memory used by the LPI tables have to be made persistent for kexec to have
+> a chance to work, as explained in [1]. If they have been made persistent
+> and we are booting into a kexec'd kernel, we also need to free the pages
+> that were preemptively allocated by the new kernel for those tables.
 > 
-> No change in functionality intended.
+> Both of those operations currently happen during its_cpu_init(), which
+> happens in a _STARTING (IOW atomic) cpuhp callback for secondary
+> CPUs. efi_mem_reserve_iomem() issues a GFP_ATOMIC allocation, which
+> unfortunately doesn't work under PREEMPT_RT (this ends up grabbing a
+> non-raw spinlock, which can sleep under PREEMPT_RT). Similarly, freeing the
+> pages ends up grabbing a sleepable spinlock.
 > 
+> Since the memreserve is only required by kexec, it doesn't have to be
+> done so early in the secondary boot process. Issue the reservation in a new
+> CPUHP_AP_ONLINE_DYN cpuhp callback, and piggy-back the page freeing on top
+> of it. As kexec issues a machine_shutdown() prior to machine_kexec(), it
+> will be serialized vs a CPU being plugged to life by the hotplug machinery -
+> either the CPU will have been brought up and have had its redistributor's
+> pending table memreserved, or it never went online and will have its table
+> allocated by the new kernel.
+> 
+> [1]: https://lore.kernel.org/lkml/20180921195954.21574-1-marc.zyngier@arm.com/
 > Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
 > ---
->  drivers/irqchip/irq-gic-v3-its.c   | 26 ++++++++++++++------------
->  include/linux/irqchip/arm-gic-v3.h |  2 +-
->  2 files changed, 15 insertions(+), 13 deletions(-)
+>  drivers/irqchip/irq-gic-v3-its.c | 65 ++++++++++++++++++++++++++++++--
+>  1 file changed, 61 insertions(+), 4 deletions(-)
 > 
 > diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
-> index eb0882d15366..a688ed5c21e8 100644
+> index a688ed5c21e8..a6a4af59205e 100644
 > --- a/drivers/irqchip/irq-gic-v3-its.c
 > +++ b/drivers/irqchip/irq-gic-v3-its.c
-> @@ -43,8 +43,10 @@
->  #define ITS_FLAGS_WORKAROUND_CAVIUM_22375	(1ULL << 1)
->  #define ITS_FLAGS_WORKAROUND_CAVIUM_23144	(1ULL << 2)
+> @@ -47,6 +47,8 @@
+>  #define RDISTS_FLAGS_RD_TABLES_PREALLOCATED	(1 << 1)
 >  
-> -#define RDIST_FLAGS_PROPBASE_NEEDS_FLUSHING	(1 << 0)
-> -#define RDIST_FLAGS_RD_TABLES_PREALLOCATED	(1 << 1)
-> +#define RDISTS_FLAGS_PROPBASE_NEEDS_FLUSHING	(1 << 0)
-> +#define RDISTS_FLAGS_RD_TABLES_PREALLOCATED	(1 << 1)
+>  #define RDIST_FLAGS_LPI_ENABLED                 BIT(0)
+> +#define RDIST_FLAGS_PENDTABLE_RESERVED          BIT(1)
+> +#define RDIST_FLAGS_PENDTABLE_PREALLOCATED      BIT(2)
+>  
+>  static u32 lpi_id_bits;
+>  
+> @@ -3065,15 +3067,15 @@ static void its_cpu_init_lpis(void)
+>  		paddr &= GENMASK_ULL(51, 16);
+>  
+>  		WARN_ON(!gic_check_reserved_range(paddr, LPI_PENDBASE_SZ));
+> -		its_free_pending_table(gic_data_rdist()->pend_page);
+> -		gic_data_rdist()->pend_page = NULL;
+> +		gic_data_rdist()->flags |=
+> +			RDIST_FLAGS_PENDTABLE_RESERVED |
+> +			RDIST_FLAGS_PENDTABLE_PREALLOCATED;
+>  
+>  		goto out;
+>  	}
+>  
+>  	pend_page = gic_data_rdist()->pend_page;
+>  	paddr = page_to_phys(pend_page);
+> -	WARN_ON(gic_reserve_range(paddr, LPI_PENDBASE_SZ));
+>  
+>  	/* set PROPBASE */
+>  	val = (gic_rdists->prop_table_pa |
+> @@ -3163,7 +3165,8 @@ static void its_cpu_init_lpis(void)
+>  	gic_data_rdist()->flags |= RDIST_FLAGS_LPI_ENABLED;
+>  	pr_info("GICv3: CPU%d: using %s LPI pending table @%pa\n",
+>  		smp_processor_id(),
+> -		gic_data_rdist()->pend_page ? "allocated" : "reserved",
+> +		gic_data_rdist()->flags & RDIST_FLAGS_PENDTABLE_PREALLOCATED ?
+> +		"reserved" : "allocated",
+>  		&paddr);
+>  }
+>  
+> @@ -5202,6 +5205,39 @@ int its_cpu_init(void)
+>  	return 0;
+>  }
+>  
+> +#ifdef CONFIG_EFI
+
+Why do we need this? I can't see anything that'd be problematic even
+if EFI was disabled.
+
+> +static int its_cpu_memreserve_lpi(unsigned int cpu)
+> +{
+> +	struct page *pend_page = gic_data_rdist()->pend_page;
+> +	phys_addr_t paddr;
 > +
-> +#define RDIST_FLAGS_LPI_ENABLED                 BIT(0)
+> +	/*
+> +	 * If the pending table was pre-programmed, free the memory we
+> +	 * preemptively allocated.
+> +	 */
+> +	if (pend_page &&
+> +	    (gic_data_rdist()->flags & RDIST_FLAGS_PENDTABLE_PREALLOCATED)) {
+> +		its_free_pending_table(gic_data_rdist()->pend_page);
+> +		gic_data_rdist()->pend_page = NULL;
+> +	}
 
-Just to reduce the churn and for me not to misread things (because
-RDIST/RDISTS is pretty confusing), how about leaving the original
-flags as is, and name the per-RD ones like:
+So you set it to NULL and carry on, ending up reserving a 64kB block
+at address 0 if the RESERVED flag isn't set. Can this happen at all?
+If, as I suspect, it cannot happen because the two flags are always
+set at the same time, why do we need two flags?
 
-#define	RD_LOCAL_LPI_ENABLED	BIT(0)
+My gut feeling is that if pend_page is non-NULL and that the RESERVED
+flag is set, you should free the memory and leave the building.
+Otherwise, reserve the memory and set the flag. PREALLOCATED doesn't
+seem to make much sense on a per-CPU basis here.
 
-?
+> +
+> +	/*
+> +	 * Did we already issue a memreserve? This could be via a previous
+> +	 * invocation of this callback, or in a previous life before kexec.
+> +	 */
+> +	if (gic_data_rdist()->flags & RDIST_FLAGS_PENDTABLE_RESERVED)
+> +		return 0;
+> +
+> +	gic_data_rdist()->flags |= RDIST_FLAGS_PENDTABLE_RESERVED;
+> +
+> +	pend_page = gic_data_rdist()->pend_page;
+> +	paddr = page_to_phys(pend_page);
+> +	WARN_ON(gic_reserve_range(paddr, LPI_PENDBASE_SZ));
 
-Or something else that'd be adequately different from the original
-flags?
+Shouldn't the flag setting be moved here and be conditional on the
+reservation success? Yes, you'll get a warning each time the CPU comes
+back, but at least that'd track the state correctly.
 
-Otherwise looks sensible.
+> +
+> +	return 0;
+> +}
+> +#endif
+> +
+>  static const struct of_device_id its_device_id[] = {
+>  	{	.compatible	= "arm,gic-v3-its",	},
+>  	{},
+> @@ -5385,6 +5421,23 @@ static void __init its_acpi_probe(void)
+>  static void __init its_acpi_probe(void) { }
+>  #endif
+>  
+> +static int __init its_lpi_memreserve_init(void)
+> +{
+> +	int state;
+> +
+> +	if (!efi_enabled(EFI_CONFIG_TABLES))
+> +		return 0;
+> +
+> +	state = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN,
+> +				"irqchip/arm/gicv3/memreserve:online",
+> +				its_cpu_memreserve_lpi,
+> +				NULL);
+> +	if (state < 0)
+> +		return state;
+> +
+> +	return 0;
+> +}
+> +
+>  int __init its_init(struct fwnode_handle *handle, struct rdists *rdists,
+>  		    struct irq_domain *parent_domain)
+>  {
+> @@ -5412,6 +5465,10 @@ int __init its_init(struct fwnode_handle *handle, struct rdists *rdists,
+>  	if (err)
+>  		return err;
+>  
+> +	err = its_lpi_memreserve_init();
+> +	if (err)
+> +		return err;
+> +
+>  	list_for_each_entry(its, &its_nodes, entry) {
+>  		has_v4 |= is_v4(its);
+>  		has_v4_1 |= is_v4_1(its);
+
+Thanks,
 
 	M.
 
