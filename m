@@ -2,25 +2,25 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9408DC433EF
-	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Oct 2021 15:51:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38169C433F5
+	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Oct 2021 15:52:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5F3E760F46
-	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Oct 2021 15:51:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1C6AA6052B
+	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Oct 2021 15:52:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231564AbhJXPyT (ORCPT
+        id S231684AbhJXPyf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 24 Oct 2021 11:54:19 -0400
-Received: from foss.arm.com ([217.140.110.172]:38364 "EHLO foss.arm.com"
+        Sun, 24 Oct 2021 11:54:35 -0400
+Received: from foss.arm.com ([217.140.110.172]:38378 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229755AbhJXPyS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 24 Oct 2021 11:54:18 -0400
+        id S229755AbhJXPyf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 24 Oct 2021 11:54:35 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id A2A6AD6E;
-        Sun, 24 Oct 2021 08:51:57 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 69F8BD6E;
+        Sun, 24 Oct 2021 08:52:14 -0700 (PDT)
 Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 6C2C63F5A1;
-        Sun, 24 Oct 2021 08:51:56 -0700 (PDT)
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 33C773F5A1;
+        Sun, 24 Oct 2021 08:52:13 -0700 (PDT)
 From:   Valentin Schneider <valentin.schneider@arm.com>
 To:     Marc Zyngier <maz@kernel.org>
 Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
@@ -30,110 +30,48 @@ Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Ard Biesheuvel <ardb@kernel.org>
-Subject: Re: [PATCH 2/3] irqchip/gic-v3-its: Postpone LPI pending table freeing and memreserve
-In-Reply-To: <87pmrwt6l5.wl-maz@kernel.org>
-References: <20211022103307.1711619-1-valentin.schneider@arm.com> <20211022103307.1711619-3-valentin.schneider@arm.com> <87pmrwt6l5.wl-maz@kernel.org>
-Date:   Sun, 24 Oct 2021 16:51:53 +0100
-Message-ID: <87a6iyju92.mognet@arm.com>
+Subject: Re: [PATCH 3/3] irqchip/gic-v3-its: Limit memreserve cpuhp state lifetime
+In-Reply-To: <87o87gt4at.wl-maz@kernel.org>
+References: <20211022103307.1711619-1-valentin.schneider@arm.com> <20211022103307.1711619-4-valentin.schneider@arm.com> <87o87gt4at.wl-maz@kernel.org>
+Date:   Sun, 24 Oct 2021 16:52:10 +0100
+Message-ID: <878ryiju8l.mognet@arm.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 23/10/21 10:48, Marc Zyngier wrote:
-> On Fri, 22 Oct 2021 11:33:06 +0100,
+On 23/10/21 11:37, Marc Zyngier wrote:
+> On Fri, 22 Oct 2021 11:33:07 +0100,
 > Valentin Schneider <valentin.schneider@arm.com> wrote:
->> @@ -5202,6 +5205,39 @@ int its_cpu_init(void)
->>      return 0;
->>  }
+>> @@ -5234,6 +5243,11 @@ static int its_cpu_memreserve_lpi(unsigned int cpu)
+>>      paddr = page_to_phys(pend_page);
+>>      WARN_ON(gic_reserve_range(paddr, LPI_PENDBASE_SZ));
 >>
->> +#ifdef CONFIG_EFI
+>> +out:
+>> +	/* This only needs to run once per CPU */
+>> +	if (cpumask_equal(&cpus_booted_once_mask, cpu_possible_mask))
+>> +		schedule_work(&rdist_memreserve_cpuhp_cleanup_work);
 >
-> Why do we need this? I can't see anything that'd be problematic even
-> if EFI was disabled.
->
-
-You're right, that's not required.
-
->> +static int its_cpu_memreserve_lpi(unsigned int cpu)
->> +{
->> +	struct page *pend_page = gic_data_rdist()->pend_page;
->> +	phys_addr_t paddr;
->> +
->> +	/*
->> +	 * If the pending table was pre-programmed, free the memory we
->> +	 * preemptively allocated.
->> +	 */
->> +	if (pend_page &&
->> +	    (gic_data_rdist()->flags & RDIST_FLAGS_PENDTABLE_PREALLOCATED)) {
->> +		its_free_pending_table(gic_data_rdist()->pend_page);
->> +		gic_data_rdist()->pend_page = NULL;
->> +	}
->
-> So you set it to NULL and carry on, ending up reserving a 64kB block
-> at address 0 if the RESERVED flag isn't set. Can this happen at all?
-> If, as I suspect, it cannot happen because the two flags are always
-> set at the same time, why do we need two flags?
+> Which makes me wonder. Do we actually need any flag at all if all we
+> need to check is whether the CPU has been through the callback at
+> least once? I have the strong feeling that we are tracking the same
+> state multiple times here.
 >
 
-PREALLOCATED implies RESERVED, but the reverse isn't true.
+Agreed, cf. my reply on 2/3.
 
-> My gut feeling is that if pend_page is non-NULL and that the RESERVED
-> flag is set, you should free the memory and leave the building.
-> Otherwise, reserve the memory and set the flag. PREALLOCATED doesn't
-> seem to make much sense on a per-CPU basis here.
+> Also, could the cpuhp callbacks ever run concurrently? If they could,
+> two CPUs could schedule the cleanup work in parallel, with interesting
+> results.  You'd need a cmpxchg on the cpuhp state in the workfn.
 >
 
-One thing I was concerned about is that this cpuhp callback can be invoked
-more than once on the same CPU, even with the removal in patch 3.
-Consider a system with maxcpus=X on the cmdline; not all secondaries will
-be brought up in smp_init(). You then get to userspace which can issue all
-sorts of hotplug sequences. Let me try to paint a picture:
+So I think the cpuhp callbacks may run concurrently, but at a quick glance
+it seems like we can't get two instances of the same work executing
+concurrently: schedule_work()->queue_work() doesn't re-queue a work if it's already
+pending, and __queue_work() checks a work's previous pool in case it might
+still be running there.
 
-  maxcpus=2
-
-  CPU0                      CPU1                      CPU2
-
-  its_init()                                          <nothing ever happens here>
-  [...]
-  its_cpu_memreserve_lpi()
-    flags |= RESERVED
-  [...]
-  smp_init()
-                            its_cpu_memreserve_lpi()
-                              flags |= RESERVED
-
-                         [.....]
-
-  cpu_down(CPU1, CPUHP_OFFLINE)
-  cpu_up(CPU1, CPUHP_ONLINE)
-
-                            its_cpu_memreserve_lpi()
-                              // pend_page != NULL && (flags & RESERVED) != 0
-                              // we musn't free the memory
-
-Now, my approach clearly isn't great (I also went through the "wait those
-two flags are the same thing" phase, which in hindsight wasn't a good sign).
-What we could do instead is only have a PREALLOCATED flag (or RESERVED; in
-any case just one rather than two) set in its_cpu_init_lpis(), and ensure
-each CPU only ever executes the body of the callback exactly once.
-
-  if (already_booted())
-      return 0;
-
-  if (PREALLOCATED)
-      its_free_pending_table();
-  else
-      gic_reserve_range();
-
-  out:
-    // callback removal faff here
-    return 0;
-
-Unfortunately, the boot CPU will already be present in
-cpus_booted_once_mask when this is first invoked for the BP, so AFAICT we'd
-need some new tracking utility (either a new RDIST_LOCAL flag or a separate
-cpumask).
-
-WDYT?
+Regardless, that's one less thing to worry about if we make the cpuhp
+callback body run at most once on each CPU (only a single CPU will be able
+to queue the removal work).
