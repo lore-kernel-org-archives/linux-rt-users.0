@@ -2,632 +2,125 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 73088C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Oct 2021 09:34:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DD32CC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Oct 2021 09:44:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4F6A960EB1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Oct 2021 09:34:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BD23960FBF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Oct 2021 09:44:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232582AbhJYJhI (ORCPT
+        id S232717AbhJYJq2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 25 Oct 2021 05:37:08 -0400
-Received: from gateway32.websitewelcome.com ([192.185.145.113]:47649 "EHLO
-        gateway32.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S232577AbhJYJhH (ORCPT
+        Mon, 25 Oct 2021 05:46:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59024 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232546AbhJYJq1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 25 Oct 2021 05:37:07 -0400
-X-Greylist: delayed 1447 seconds by postgrey-1.27 at vger.kernel.org; Mon, 25 Oct 2021 05:37:07 EDT
-Received: from cm16.websitewelcome.com (cm16.websitewelcome.com [100.42.49.19])
-        by gateway32.websitewelcome.com (Postfix) with ESMTP id 97489D541B
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Oct 2021 04:10:33 -0500 (CDT)
-Received: from gator4132.hostgator.com ([192.185.4.144])
-        by cmsmtp with SMTP
-        id ew01mzYwstL6eew01mH3Wl; Mon, 25 Oct 2021 04:10:33 -0500
-X-Authority-Reason: nr=8
-Received: from host-79-18-63-114.retail.telecomitalia.it ([79.18.63.114]:60738 helo=[10.0.0.35])
-        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.94.2)
-        (envelope-from <bristot@kernel.org>)
-        id 1mew00-001AOa-54; Mon, 25 Oct 2021 04:10:32 -0500
-Message-ID: <5f1ae99f-a7b2-e25f-800c-4e6e87b936ca@kernel.org>
-Date:   Mon, 25 Oct 2021 11:10:26 +0200
+        Mon, 25 Oct 2021 05:46:27 -0400
+Received: from mail-lf1-x130.google.com (mail-lf1-x130.google.com [IPv6:2a00:1450:4864:20::130])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 71B2DC061745;
+        Mon, 25 Oct 2021 02:44:05 -0700 (PDT)
+Received: by mail-lf1-x130.google.com with SMTP id j21so10060257lfe.0;
+        Mon, 25 Oct 2021 02:44:05 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:from:date:message-id:subject:to:cc;
+        bh=rCGuC9ewYiAfYgiMkd1Yzii2AFCTuDrZolTjPAQg3+c=;
+        b=iU7RJCmXcYEuggBefGylFwYi5nT3nQEIBL9C3howVlfj1yqS/mQxUnMSTQRyeTkPyu
+         LPqeRdAZpTiHUTZq3VCCFdm9ecIXsl51GH1QXpT3b0sVWW6uERkxUj7b53jb8vcVsjp8
+         uA7KiMOOMkYV3j9e4LL0ztkrNMqsO9njfkq9fLbEP7AUzGLt9slLGDhBlArgJ0FgFiKC
+         Dq8ganCs1B4D5lrcUi7Su1DUyd9Xn+/EGaW30TqB1uAVoTQHC3MMPXs0EYbMWPMR4fWu
+         2WJ11Auf+7c5M12yKVuJ50sOsju9Up3tZbQnfKCQSkqNd6XVfQPlJno/VojUAsJoU8HS
+         fTkQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to:cc;
+        bh=rCGuC9ewYiAfYgiMkd1Yzii2AFCTuDrZolTjPAQg3+c=;
+        b=o0kJAWJcTtlsSrnK2Fmg7n9akJTA5A37m0kQ6pDZg20w8vcvSBpho52kKqyRnO1oiF
+         6sfCWUxlwzPG8sDCLOIAZSzZssLK3eBbGMsgmV8rDUNqccNGATD5R9x28vHGz2ORSrKa
+         ZJ8YEcLIZXAAmPZWoa7/GjnvjQRy++eTRFFlBDKdU+Fqnaoj3mCd+D/M/34AfdOX9ixm
+         3nfyyDQ97mmTicS6kqwmQmvqPJWqLlLZHKLXrsT+p8Z7vSujZVoeGgex5QQaO1xWD7ya
+         +XiQmEFDh7ieZbLJRJLQh7eiIs03BQZ2UXagMG4lk3qP+8yUIXARd++oByoXHI0c9olp
+         1nfQ==
+X-Gm-Message-State: AOAM531bsSmZ1tjM3h79FYsWDTTUixZCsgKS6NTIUBePUVU0LAufa5Ui
+        fHNtwMFYq652koFUPKH8YkeO33Y04nX4odKf3shbojcvxAkpcc4f
+X-Google-Smtp-Source: ABdhPJxiSulMEdaSn86bJ2DVKn1Z22IQaRk/25SbQTk1vo51j+dq64XPUf6rN9M1Tul89e3XIL8alSQPdkOtXn73rEA=
+X-Received: by 2002:a05:6512:b29:: with SMTP id w41mr16174240lfu.240.1635155043576;
+ Mon, 25 Oct 2021 02:44:03 -0700 (PDT)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.2.0
-Subject: Re: [PATCH V4 04/19] trace/osnoise: Support a list of trace_array *tr
-Content-Language: en-US
-To:     paulmck@kernel.org, Steven Rostedt <rostedt@goodmis.org>
-Cc:     Ingo Molnar <mingo@redhat.com>, Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-References: <cover.1634820694.git.bristot@kernel.org>
- <d54f5bfa2b2fbd11393c2a69a8b5cbdd808a506d.1634820694.git.bristot@kernel.org>
- <20211022223839.476905ed@rorschach.local.home>
- <20211025032614.GN880162@paulmck-ThinkPad-P17-Gen-1>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <20211025032614.GN880162@paulmck-ThinkPad-P17-Gen-1>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - kernel.org
-X-BWhitelist: no
-X-Source-IP: 79.18.63.114
-X-Source-L: No
-X-Exim-ID: 1mew00-001AOa-54
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: host-79-18-63-114.retail.telecomitalia.it ([10.0.0.35]) [79.18.63.114]:60738
-X-Source-Auth: kernel@bristot.me
-X-Email-Count: 3
-X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
-X-Local-Domain: no
+From:   Ronny Meeus <ronny.meeus@gmail.com>
+Date:   Mon, 25 Oct 2021 11:43:52 +0200
+Message-ID: <CAMJ=MEd9WuGA0MN+n0rGD6T+sgd=yciTmeEW9TjRjNXt+cF=qQ@mail.gmail.com>
+Subject: Unbounded priority inversion while assigning tasks into cgroups.
+To:     linux-kernel@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 10/25/21 05:26, Paul E. McKenney wrote:
-> On Fri, Oct 22, 2021 at 10:38:39PM -0400, Steven Rostedt wrote:
->> On Thu, 21 Oct 2021 14:56:42 +0200
->> Daniel Bristot de Oliveira <bristot@kernel.org> wrote:
->>
->>> osnoise/timerlat were built to run a single instance, and for this,
->>> a single variable is enough to store the current struct trace_array
->>> *tr with information about the tracing instance. This is done via
->>> the *osnoise_trace variable. A trace_array represents a trace instance.
->>>
->>> In preparation to support multiple instances, replace the
->>> *osnoise_trace variable with an RCU protected list of instances.
->>>
->>> The operations that refer to an instance now propagate to all
->>> elements of the list (all instances).
->>>
->>> Also, replace the osnoise_busy variable with a check if the list
->>> has elements (busy).
->>>
->>> No functional change is expected with this patch, i.e., only one
->>> instance is allowed yet.
->>>
->>> Cc: Steven Rostedt <rostedt@goodmis.org>
->>> Cc: Ingo Molnar <mingo@redhat.com>
->>> Cc: Tom Zanussi <zanussi@kernel.org>
->>> Cc: Masami Hiramatsu <mhiramat@kernel.org>
->>> Cc: Juri Lelli <juri.lelli@redhat.com>
->>> Cc: Clark Williams <williams@redhat.com>
->>> Cc: John Kacur <jkacur@redhat.com>
->>> Cc: Peter Zijlstra <peterz@infradead.org>
->>> Cc: Thomas Gleixner <tglx@linutronix.de>
->>> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
->>> Cc: Daniel Bristot de Oliveira <bristot@kernel.org>
->>> Cc: linux-rt-users@vger.kernel.org
->>> Cc: linux-trace-devel@vger.kernel.org
->>> Cc: linux-kernel@vger.kernel.org
->>> Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
->>> ---
->>>  kernel/trace/trace_osnoise.c | 253 +++++++++++++++++++++++++----------
->>>  1 file changed, 184 insertions(+), 69 deletions(-)
->>>
->>> diff --git a/kernel/trace/trace_osnoise.c b/kernel/trace/trace_osnoise.c
->>> index 9b9e6bc889e9..a6d8f514bd7c 100644
->>> --- a/kernel/trace/trace_osnoise.c
->>> +++ b/kernel/trace/trace_osnoise.c
->>> @@ -38,8 +38,6 @@
->>>  #define CREATE_TRACE_POINTS
->>>  #include <trace/events/osnoise.h>
->>>  
->>> -static struct trace_array	*osnoise_trace;
->>> -
->>>  /*
->>>   * Default values.
->>>   */
->>> @@ -50,6 +48,73 @@ static struct trace_array	*osnoise_trace;
->>>  #define DEFAULT_TIMERLAT_PERIOD	1000			/* 1ms */
->>>  #define DEFAULT_TIMERLAT_PRIO	95			/* FIFO 95 */
->>>  
->>> +/*
->>> + * trace_array of the enabled osnoise/timerlat instances.
->>> + */
->>> +struct osnoise_instance {
->>> +	struct list_head	list;
->>> +	struct trace_array	*tr;
->>> +};
->>> +struct list_head osnoise_instances;
->>> +
->>> +static bool osnoise_has_registered_instances(void)
->>> +{
->>> +	return !!list_first_or_null_rcu(&osnoise_instances,
->>> +					struct osnoise_instance,
->>> +					list);
->>> +}
->>> +
->>> +/*
->>> + * osnoise_register_instance - register a new trace instance
->>> + *
->>> + * Register a trace_array *tr in the list of instances running
->>> + * osnoise/timerlat tracers.
->>> + */
->>> +static int osnoise_register_instance(struct trace_array *tr)
->>> +{
->>> +	struct osnoise_instance *inst;
->>> +
->>> +	inst = kmalloc(sizeof(*inst), GFP_KERNEL);
->>> +	if (!inst)
->>> +		return -ENOMEM;
->>> +
->>> +	INIT_LIST_HEAD_RCU(&inst->list);
->>> +	inst->tr = tr;
->>> +	list_add_tail_rcu(&inst->list, &osnoise_instances);
->>> +
->>> +	return 0;
->>> +}
->>> +
->>> +/*
->>> + *  osnoise_unregister_instance - unregister a registered trace instance
->>> + *
->>> + * Remove the trace_array *tr from the list of instances running
->>> + * osnoise/timerlat tracers.
->>> + */
->>> +static void osnoise_unregister_instance(struct trace_array *tr)
->>> +{
->>> +	struct osnoise_instance *inst;
->>> +	int found = 0;
->>> +
->>> +	rcu_read_lock();
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
->>> +		if (inst->tr == tr) {
->>> +			list_del_rcu(&inst->list);
->>
->> Adding to the list requires more than RCU protection, and if this has
->> that protection there's no reason for using rcu to protect here.
->>
->> [ Added Paul to comment about this too ]
-> 
-> Steve has it right.  To see this, suppose that there are two concurrent
-> calls to osnoise_unregister_instance() on elements that are adjacent in
-> the list.  The result will of course be a corrupted list.  All RCU does
-> is coordinate between readers on the one hand and updaters on the other.
-> There must be some non-RCU synchronization between updaters, be this a
-> lock, some lockless synchronization, there being only one task permitted
-> to carry out updates, or whatever.
-> 
-> So what prevents concurrent calls to osnoise_unregister_instance()?  I am
-> not seeing anything preventing this is osnoise_tracer_stop().  Is there
-> some appropriate serialization in the callers of the osnoise_tracer_stop()
-> function?
-> 
-> 							Thanx, Paul
+Hello
 
-Thanks Steven and Paul!
+an unbounded priority inversion is observed when moving tasks into cgroups.
+In my case I'm using the cpu and cpuacct cgroups but the issue is
+independent of this.
 
-The start/stop/reset operations are called from trace "core" operations. So they
-are all protected/serialized by trace_types_lock (by trace/core).
+Kernel version: 4.9.79
+CPU: Dual core Cavium Octeon (MIPS)
+Kernel configured with CONFIG_PREEMPT=y
 
-So, it seems that the way to go is to remove the rcu_read_lock/unlock() from
-unregister, adding a lockdep check to see if trace_types_lock is help as a bonus?
+I have a small application running at RT priority 92.
+Its job is to move high CPU consuming applications into a cgroup when
+the system is under high load.
+Under extreme load conditions (meaning a lot of script processing
+(process clone / exec / exit) and high application load), sometimes
+the application hangs for a long time (can be a couple of seconds but
+also hangs of 2 minutes are observed already).
 
--- Daniel
+Extending the kernel with traces (see below) showed that the
+root-cause of the blocking is the global rwsem
+"cgroup_threadgroup_rwsem".
+While adding a task into the cgroup (__cgroup_procs_write), the write
+lock is taken which will have to wait until all writers and readers
+have completed their critical section which can take very long.
+Especially since there are many of them running at a much lower
+priority and we have also applications running at medium priority
+running with a very high load.
 
-> 
->>> +			found = 1;
->>> +			break;
->>> +		}
->>> +	}
->>> +	rcu_read_unlock();
->>> +
->>> +	if (!found) {
->>> +		WARN("osnoise unregister did not find tr %s\n", tr->name);
->>> +		return;
->>> +	}
->>> +
->>> +	synchronize_rcu();
->>> +	kfree(inst);
->>> +}
->>> +
->>>  /*
->>>   * NMI runtime info.
->>>   */
->>> @@ -248,11 +313,6 @@ static struct osnoise_data {
->>>  #endif
->>>  };
->>>  
->>> -/*
->>> - * Boolean variable used to inform that the tracer is currently sampling.
->>> - */
->>> -static bool osnoise_busy;
->>> -
->>>  #ifdef CONFIG_PREEMPT_RT
->>>  /*
->>>   * Print the osnoise header info.
->>> @@ -315,19 +375,24 @@ static void print_osnoise_headers(struct seq_file *s)
->>>   * osnoise_taint - report an osnoise error.
->>>   */
->>>  #define osnoise_taint(msg) ({							\
->>> -	struct trace_array *tr = osnoise_trace;					\
->>> +	struct osnoise_instance *inst;						\
->>> +	struct trace_buffer *buffer;						\
->>>  										\
->>> -	trace_array_printk_buf(tr->array_buffer.buffer, _THIS_IP_, msg);	\
->>> +	rcu_read_lock();							\
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {		\
->>> +		buffer = inst->tr->array_buffer.buffer;				\
->>> +		trace_array_printk_buf(buffer, _THIS_IP_, msg);			\
->>> +	}									\
->>> +	rcu_read_unlock();							\
->>>  	osnoise_data.tainted = true;						\
->>>  })
->>>  
->>>  /*
->>>   * Record an osnoise_sample into the tracer buffer.
->>>   */
->>> -static void trace_osnoise_sample(struct osnoise_sample *sample)
->>> +static void
->>> +__trace_osnoise_sample(struct osnoise_sample *sample, struct trace_buffer *buffer)
->>>  {
->>> -	struct trace_array *tr = osnoise_trace;
->>> -	struct trace_buffer *buffer = tr->array_buffer.buffer;
->>>  	struct trace_event_call *call = &event_osnoise;
->>>  	struct ring_buffer_event *event;
->>>  	struct osnoise_entry *entry;
->>> @@ -350,6 +415,22 @@ static void trace_osnoise_sample(struct osnoise_sample *sample)
->>>  		trace_buffer_unlock_commit_nostack(buffer, event);
->>>  }
->>>  
->>> +/*
->>> + * Record an osnoise_sample on all osnoise instances.
->>> + */
->>> +static void trace_osnoise_sample(struct osnoise_sample *sample)
->>> +{
->>> +	struct osnoise_instance *inst;
->>> +	struct trace_buffer *buffer;
->>> +
->>> +	rcu_read_lock();
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
->>> +		buffer = inst->tr->array_buffer.buffer;
->>> +		__trace_osnoise_sample(sample, buffer);
->>> +	}
->>> +	rcu_read_unlock();
->>> +}
->>> +
->>>  #ifdef CONFIG_TIMERLAT_TRACER
->>>  /*
->>>   * Print the timerlat header info.
->>> @@ -387,14 +468,10 @@ static void print_timerlat_headers(struct seq_file *s)
->>>  }
->>>  #endif /* CONFIG_PREEMPT_RT */
->>>  
->>> -/*
->>> - * Record an timerlat_sample into the tracer buffer.
->>> - */
->>> -static void trace_timerlat_sample(struct timerlat_sample *sample)
->>> +static void
->>> +__trace_timerlat_sample(struct timerlat_sample *sample, struct trace_buffer *buffer)
->>>  {
->>> -	struct trace_array *tr = osnoise_trace;
->>>  	struct trace_event_call *call = &event_osnoise;
->>> -	struct trace_buffer *buffer = tr->array_buffer.buffer;
->>>  	struct ring_buffer_event *event;
->>>  	struct timerlat_entry *entry;
->>>  
->>> @@ -411,6 +488,22 @@ static void trace_timerlat_sample(struct timerlat_sample *sample)
->>>  		trace_buffer_unlock_commit_nostack(buffer, event);
->>>  }
->>>  
->>> +/*
->>> + * Record an timerlat_sample into the tracer buffer.
->>> + */
->>> +static void trace_timerlat_sample(struct timerlat_sample *sample)
->>> +{
->>> +	struct osnoise_instance *inst;
->>> +	struct trace_buffer *buffer;
->>> +
->>> +	rcu_read_lock();
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
->>> +		buffer = inst->tr->array_buffer.buffer;
->>> +		__trace_timerlat_sample(sample, buffer);
->>> +	}
->>> +	rcu_read_unlock();
->>> +}
->>> +
->>>  #ifdef CONFIG_STACKTRACE
->>>  
->>>  #define	MAX_CALLS	256
->>> @@ -450,29 +543,18 @@ static void timerlat_save_stack(int skip)
->>>  	return;
->>>  
->>>  }
->>> -/*
->>> - * timerlat_dump_stack - dump a stack trace previously saved
->>> - *
->>> - * Dump a saved stack trace into the trace buffer.
->>> - */
->>> -static void timerlat_dump_stack(void)
->>> +
->>> +static void
->>> +__timerlat_dump_stack(struct trace_buffer *buffer, struct trace_stack *fstack, unsigned int size)
->>>  {
->>>  	struct trace_event_call *call = &event_osnoise;
->>> -	struct trace_array *tr = osnoise_trace;
->>> -	struct trace_buffer *buffer = tr->array_buffer.buffer;
->>>  	struct ring_buffer_event *event;
->>> -	struct trace_stack *fstack;
->>>  	struct stack_entry *entry;
->>> -	unsigned int size;
->>> -
->>> -	preempt_disable_notrace();
->>> -	fstack = this_cpu_ptr(&trace_stack);
->>> -	size = fstack->stack_size;
->>>  
->>>  	event = trace_buffer_lock_reserve(buffer, TRACE_STACK, sizeof(*entry) + size,
->>>  					  tracing_gen_ctx());
->>>  	if (!event)
->>> -		goto out;
->>> +		return;
->>>  
->>>  	entry = ring_buffer_event_data(event);
->>>  
->>> @@ -481,8 +563,29 @@ static void timerlat_dump_stack(void)
->>>  
->>>  	if (!call_filter_check_discard(call, entry, buffer, event))
->>>  		trace_buffer_unlock_commit_nostack(buffer, event);
->>> +}
->>>  
->>> -out:
->>> +/*
->>> + * timerlat_dump_stack - dump a stack trace previously saved
->>> + */
->>> +static void timerlat_dump_stack(void)
->>> +{
->>> +	struct osnoise_instance *inst;
->>> +	struct trace_buffer *buffer;
->>> +	struct trace_stack *fstack;
->>> +	unsigned int size;
->>> +
->>> +	preempt_disable_notrace();
->>> +	fstack = this_cpu_ptr(&trace_stack);
->>> +	size = fstack->stack_size;
->>> +
->>> +	rcu_read_lock();
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
->>> +		buffer = inst->tr->array_buffer.buffer;
->>> +		__timerlat_dump_stack(buffer, fstack, size);
->>> +
->>> +	}
->>> +	rcu_read_unlock();
->>>  	preempt_enable_notrace();
->>>  }
->>>  #else
->>> @@ -1077,12 +1180,37 @@ diff_osn_sample_stats(struct osnoise_variables *osn_var, struct osnoise_sample *
->>>   */
->>>  static __always_inline void osnoise_stop_tracing(void)
->>>  {
->>> -	struct trace_array *tr = osnoise_trace;
->>> +	struct osnoise_instance *inst;
->>> +	struct trace_array *tr;
->>> +
->>> +	rcu_read_lock();
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
->>> +		tr = inst->tr;
->>> +		trace_array_printk_buf(tr->array_buffer.buffer, _THIS_IP_,
->>> +				"stop tracing hit on cpu %d\n", smp_processor_id());
->>> +
->>> +		tracer_tracing_off(tr);
->>> +	}
->>> +	rcu_read_unlock();
->>> +}
->>>  
->>> -	trace_array_printk_buf(tr->array_buffer.buffer, _THIS_IP_,
->>> -			"stop tracing hit on cpu %d\n", smp_processor_id());
->>> +/*
->>> + * notify_new_max_latency - Notify a new max latency via fsnotify interface.
->>> + */
->>> +void notify_new_max_latency(u64 latency)
->>> +{
->>> +	struct osnoise_instance *inst;
->>> +	struct trace_array *tr;
->>>  
->>> -	tracer_tracing_off(tr);
->>> +	rcu_read_lock();
->>> +	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
->>> +		tr = inst->tr;
->>> +		if (tr->max_latency < latency) {
->>> +			tr->max_latency = latency;
->>> +			latency_fsnotify(tr);
->>> +		}
->>> +	}
->>> +	rcu_read_unlock();
->>>  }
->>>  
->>>  /*
->>> @@ -1096,7 +1224,6 @@ static __always_inline void osnoise_stop_tracing(void)
->>>  static int run_osnoise(void)
->>>  {
->>>  	struct osnoise_variables *osn_var = this_cpu_osn_var();
->>> -	struct trace_array *tr = osnoise_trace;
->>>  	u64 start, sample, last_sample;
->>>  	u64 last_int_count, int_count;
->>>  	s64 noise = 0, max_noise = 0;
->>> @@ -1231,11 +1358,7 @@ static int run_osnoise(void)
->>>  
->>>  	trace_osnoise_sample(&s);
->>>  
->>> -	/* Keep a running maximum ever recorded osnoise "latency" */
->>> -	if (max_noise > tr->max_latency) {
->>> -		tr->max_latency = max_noise;
->>> -		latency_fsnotify(tr);
->>> -	}
->>> +	notify_new_max_latency(max_noise);
->>>  
->>>  	if (osnoise_data.stop_tracing_total)
->>>  		if (s.noise > osnoise_data.stop_tracing_total)
->>> @@ -1293,7 +1416,6 @@ static int osnoise_main(void *data)
->>>  static enum hrtimer_restart timerlat_irq(struct hrtimer *timer)
->>>  {
->>>  	struct osnoise_variables *osn_var = this_cpu_osn_var();
->>> -	struct trace_array *tr = osnoise_trace;
->>>  	struct timerlat_variables *tlat;
->>>  	struct timerlat_sample s;
->>>  	u64 now;
->>> @@ -1364,11 +1486,7 @@ static enum hrtimer_restart timerlat_irq(struct hrtimer *timer)
->>>  
->>>  	trace_timerlat_sample(&s);
->>>  
->>> -	/* Keep a running maximum ever recorded os noise "latency" */
->>> -	if (diff > tr->max_latency) {
->>> -		tr->max_latency = diff;
->>> -		latency_fsnotify(tr);
->>> -	}
->>> +	notify_new_max_latency(diff);
->>>  
->>>  	if (osnoise_data.stop_tracing)
->>>  		if (time_to_us(diff) >= osnoise_data.stop_tracing)
->>> @@ -1581,7 +1699,7 @@ static void osnoise_hotplug_workfn(struct work_struct *dummy)
->>>  
->>>  	mutex_lock(&trace_types_lock);
->>>  
->>> -	if (!osnoise_busy)
->>> +	if (!osnoise_has_registered_instances())
->>>  		goto out_unlock_trace;
->>>  
->>>  	mutex_lock(&interface_lock);
->>> @@ -1716,11 +1834,10 @@ osnoise_cpus_write(struct file *filp, const char __user *ubuf, size_t count,
->>>  		goto err_free;
->>>  
->>>  	/*
->>> -	 * trace_types_lock is taken to avoid concurrency on start/stop
->>> -	 * and osnoise_busy.
->>> +	 * trace_types_lock is taken to avoid concurrency on start/stop.
->>>  	 */
->>>  	mutex_lock(&trace_types_lock);
->>> -	running = osnoise_busy;
->>> +	running = osnoise_has_registered_instances();
->>>  	if (running)
->>>  		stop_per_cpu_kthreads();
->>>  
->>> @@ -1941,8 +2058,6 @@ static int osnoise_workload_start(void)
->>>  		return retval;
->>>  	}
->>>  
->>> -	osnoise_busy = true;
->>> -
->>>  	return 0;
->>>  }
->>>  
->>> @@ -1951,7 +2066,7 @@ static int osnoise_workload_start(void)
->>>   */
->>>  static void osnoise_workload_stop(void)
->>>  {
->>> -	if (!osnoise_busy)
->>> +	if (osnoise_has_registered_instances())
->>>  		return;
->>>  
->>>  	trace_osnoise_callback_enabled = false;
->>> @@ -1962,28 +2077,28 @@ static void osnoise_workload_stop(void)
->>>  	unhook_irq_events();
->>>  	unhook_softirq_events();
->>>  	unhook_thread_events();
->>> -
->>> -	osnoise_busy = false;
->>>  }
->>>  
->>>  static void osnoise_tracer_start(struct trace_array *tr)
->>>  {
->>>  	int retval;
->>>  
->>> -	if (osnoise_busy)
->>> +	if (osnoise_has_registered_instances())
->>>  		return;
->>>  
->>>  	retval = osnoise_workload_start();
->>>  	if (retval)
->>>  		pr_err(BANNER "Error starting osnoise tracer\n");
->>>  
->>> +	osnoise_register_instance(tr);
->>>  }
->>>  
->>>  static void osnoise_tracer_stop(struct trace_array *tr)
->>>  {
->>> -	if (!osnoise_busy)
->>> +	if (!osnoise_has_registered_instances())
->>>  		return;
->>>  
->>> +	osnoise_unregister_instance(tr);
->>>  	osnoise_workload_stop();
->>>  }
->>>  
->>> @@ -1991,14 +2106,12 @@ static int osnoise_tracer_init(struct trace_array *tr)
->>>  {
->>>  
->>>  	/* Only allow one instance to enable this */
->>> -	if (osnoise_busy)
->>> +	if (osnoise_has_registered_instances())
->>>  		return -EBUSY;
->>>  
->>> -	osnoise_trace = tr;
->>>  	tr->max_latency = 0;
->>>  
->>>  	osnoise_tracer_start(tr);
->>> -
->>>  	return 0;
->>>  }
->>>  
->>> @@ -2022,7 +2135,7 @@ static void timerlat_tracer_start(struct trace_array *tr)
->>>  {
->>>  	int retval;
->>>  
->>> -	if (osnoise_busy)
->>> +	if (osnoise_has_registered_instances())
->>>  		return;
->>>  
->>>  	osnoise_data.timerlat_tracer = 1;
->>> @@ -2031,6 +2144,8 @@ static void timerlat_tracer_start(struct trace_array *tr)
->>>  	if (retval)
->>>  		goto out_err;
->>>  
->>> +	osnoise_register_instance(tr);
->>> +
->>>  	return;
->>>  out_err:
->>>  	pr_err(BANNER "Error starting timerlat tracer\n");
->>> @@ -2040,7 +2155,7 @@ static void timerlat_tracer_stop(struct trace_array *tr)
->>>  {
->>>  	int cpu;
->>>  
->>> -	if (!osnoise_busy)
->>> +	if (!osnoise_has_registered_instances())
->>>  		return;
->>>  
->>>  	for_each_online_cpu(cpu)
->>> @@ -2054,11 +2169,9 @@ static void timerlat_tracer_stop(struct trace_array *tr)
->>>  static int timerlat_tracer_init(struct trace_array *tr)
->>>  {
->>>  	/* Only allow one instance to enable this */
->>> -	if (osnoise_busy)
->>> +	if (osnoise_has_registered_instances())
->>>  		return -EBUSY;
->>>  
->>> -	osnoise_trace = tr;
->>> -
->>>  	tr->max_latency = 0;
->>>  
->>>  	timerlat_tracer_start(tr);
->>> @@ -2105,6 +2218,8 @@ __init static int init_osnoise_tracer(void)
->>>  #endif
->>>  	osnoise_init_hotplug_support();
->>>  
->>> +	INIT_LIST_HEAD_RCU(&osnoise_instances);
->>> +
->>>  	init_tracefs();
->>>  
->>>  	return 0;
->>
+As an initial attempt I tried applying the RT patch but this does not
+resolve the issue.
 
+The second attempt was to replace the cgroup_threadgroup_rwsem by a
+rt_mutex (which offers priority inheritance).
+After this change the issue seems to be resolved.
+A disadvantage of this approach is that all accesses to the critical
+section are serialized on all cores (writes to assign tasks to cgroups
+and reads to create/exec/exit processes).
+
+For the moment I do not see any other alternative to resolve this problem.
+Any advice on the right way forward would be appreciated.
+
+Best regards,
+Ronny
+
+
+Relevant part of the instrumented code of function: __cgroup_procs_write:
+
+trace_cgroup_lock(1000);
+percpu_down_write(&cgroup_threadgroup_rwsem);
+trace_cgroup_lock(2000);
+rcu_read_lock();
+
+A normal trace looks like:
+resource_monito-18855 [001] ....  2685.097016: cgroup_lock: idx=2
+resource_monito-18855 [001] ....  2685.097017: cgroup_lock: idx=1000
+resource_monito-18855 [001] ....  2685.097018: cgroup_lock: idx=2000
+resource_monito-18855 [001] ....  2685.097018: cgroup_lock: idx=101
+
+A trace of a blocked application looks like:
+resource_monito-18855 [001] ....  2689.736364: cgroup_lock: idx=2
+resource_monito-18855 [001] ....  2689.736365: cgroup_lock: idx=1000
+resource_monito-18855 [001] ....  2693.780339: cgroup_lock: idx=2000
+resource_monito-18855 [001] ....  2693.780339: cgroup_lock: idx=101
+
+In the problematic case above, the resource_monitor application was
+blocked for 4s waiting for the write lock on the cgroup.
