@@ -2,113 +2,271 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F3777C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Oct 2021 16:58:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EB79EC433FE
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Oct 2021 18:10:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D2C6F60EDF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Oct 2021 16:58:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CFEA5610A6
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Oct 2021 18:10:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239242AbhJ0RAe (ORCPT
+        id S233992AbhJ0SNK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 27 Oct 2021 13:00:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50282 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237583AbhJ0RA3 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 Oct 2021 13:00:29 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2D0FBC061570;
-        Wed, 27 Oct 2021 09:58:04 -0700 (PDT)
-Date:   Wed, 27 Oct 2021 18:58:00 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1635353881;
+        Wed, 27 Oct 2021 14:13:10 -0400
+Received: from out0.migadu.com ([94.23.1.103]:50212 "EHLO out0.migadu.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S233243AbhJ0SNJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 27 Oct 2021 14:13:09 -0400
+Date:   Thu, 28 Oct 2021 02:11:24 +0800
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+        t=1635358242;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=cQ1rB1AcjIVjMWPHP44TToPBwUXL1inO6k6sho8ftXg=;
-        b=Hb5LaHZYOcGoYmxfrVfwP9krcNrHe2nacFIOhCbyChfRmlBvXtG/UVTjmmunVQmxVNEKLN
-        QYBML3p0QyLAjFxD23Fq9LE6JD8o+jPwaaUWsS8i+Caqwe5ddy9ELeVyVAMY9qfIfKgRM8
-        gs0Xd+0xdpVhDxrepIZVyriHv4JWfxxNVbqSsetTi2y7JYOvKnx8OSfEFuoewSwwYxL7nW
-        12W8usrqAixbbKsL5+zQgw+hx/RZzog4Q9XPZIVfDs1sss0NTKR3DvdIT2fIcz31WdWFZ0
-        1kKivL1iS4SE8ridiiXfAKneZ6VUOcLoTvGanzlhwzjqb+ZYz5rpoom0Z2KZ6A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1635353881;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=cQ1rB1AcjIVjMWPHP44TToPBwUXL1inO6k6sho8ftXg=;
-        b=bMfPOdinfNBQB7CNmuAdfUhCxe2w+G+0ilanxT6DgsidyxRyuO5sKOCiwiAc+sTASGw0w9
-        nx8coU+Rl73gW+AA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Ronny Meeus <ronny.meeus@gmail.com>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: Unbounded priority inversion while assigning tasks into cgroups.
-Message-ID: <20211027165800.md2gxbsku4avqjgt@linutronix.de>
-References: <CAMJ=MEd9WuGA0MN+n0rGD6T+sgd=yciTmeEW9TjRjNXt+cF=qQ@mail.gmail.com>
+        bh=dl3cVaqjWM9LnqfKLc6iTszd6L/h9XviuRFHViQuAbw=;
+        b=tgG6RkNp6EKfIsFPq4s9KQcPeMmN/kDRAcImc8ht4rBU93HXSbgesn1VQbgXiKKEBdT0y4
+        61qomOijayTsUUQ2i0hfkPBMClGnIy5NYugFuvscZ6Tg+BbEH8a4FQkSmUXU3BNsYBWWpC
+        h9x4kIsUP3fhG3hhVhCWPmhfzZmtQ6M=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From:   Tao Zhou <tao.zhou@linux.dev>
+To:     Daniel Bristot de Oliveira <bristot@kernel.org>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Tao Zhou <tao.zhou@linux.dev>
+Subject: Re: [PATCH V6 11/20] rtla/osnoise: Add the hist mode
+Message-ID: <YXmWTOXHYXFduayt@geo.homenetwork>
+References: <cover.1635284863.git.bristot@kernel.org>
+ <fede3c3805cb7a70bd7c8d60ba2c5ce290cc6e1e.1635284863.git.bristot@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAMJ=MEd9WuGA0MN+n0rGD6T+sgd=yciTmeEW9TjRjNXt+cF=qQ@mail.gmail.com>
+In-Reply-To: <fede3c3805cb7a70bd7c8d60ba2c5ce290cc6e1e.1635284863.git.bristot@kernel.org>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: tao.zhou@linux.dev
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-10-25 11:43:52 [+0200], Ronny Meeus wrote:
-> Hello
-Hi,
+On Wed, Oct 27, 2021 at 12:06:22AM +0200, Daniel Bristot de Oliveira wrote:
 
-> an unbounded priority inversion is observed when moving tasks into cgroups.
-> In my case I'm using the cpu and cpuacct cgroups but the issue is
-> independent of this.
+> The rtla osnoise hist tool collects all osnoise:sample_threshold
+> occurrence in a histogram, displaying the results in a user-friendly
+> way. The tool also allows many configurations of the osnoise tracer
+> and the collection of the tracer output.
 > 
-> Kernel version: 4.9.79
-> CPU: Dual core Cavium Octeon (MIPS)
-> Kernel configured with CONFIG_PREEMPT=y
+> Here is one example of the rtla osnoise hist tool output:
+>   ---------- %< ----------
+>  [root@f34 ~]# rtla osnoise hist --bucket-size 10 --entries 100 -c 0-8 -d 1M -r 9000 -P F:1
+>  # RTLA osnoise histogram
+>  # Time unit is microseconds (us)
+>  # Duration:   0 00:01:00
+>  Index   CPU-000   CPU-001   CPU-002   CPU-003   CPU-004   CPU-005   CPU-006   CPU-007   CPU-008
+>  0           430       434       352       455       440       463       467       436       484
+>  10           88        88        92       141       120       100       126       166       100
+>  20           19         7        12        22         8         8        13        13        16
+>  30            6         0         2         0         1         2         2         1         0
+>  50            0         0         0         0         0         0         1         0         0
+>  over:         0         0         0         0         0         0         0         0         0
+>  count:      543       529       458       618       569       573       609       616       600
+>  min:          0         0         0         0         0         0         0         0         0
+>  avg:          0         0         0         0         0         0         0         0         0
+>  max:         30        20        30        20        30        30        50        30        20
+>   ---------- >% ----------
 > 
-> I have a small application running at RT priority 92.
-> Its job is to move high CPU consuming applications into a cgroup when
-> the system is under high load.
-> Under extreme load conditions (meaning a lot of script processing
-> (process clone / exec / exit) and high application load), sometimes
-> the application hangs for a long time (can be a couple of seconds but
-> also hangs of 2 minutes are observed already).
+> Running
+>  - rtla osnoise hist --help
 > 
-> Extending the kernel with traces (see below) showed that the
-> root-cause of the blocking is the global rwsem
-> "cgroup_threadgroup_rwsem".
-> While adding a task into the cgroup (__cgroup_procs_write), the write
-> lock is taken which will have to wait until all writers and readers
-> have completed their critical section which can take very long.
-> Especially since there are many of them running at a much lower
-> priority and we have also applications running at medium priority
-> running with a very high load.
+> provides information about the available options.
 > 
-> As an initial attempt I tried applying the RT patch but this does not
-> resolve the issue.
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Tom Zanussi <zanussi@kernel.org>
+> Cc: Masami Hiramatsu <mhiramat@kernel.org>
+> Cc: Juri Lelli <juri.lelli@redhat.com>
+> Cc: Clark Williams <williams@redhat.com>
+> Cc: John Kacur <jkacur@redhat.com>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Cc: Daniel Bristot de Oliveira <bristot@kernel.org>
+> Cc: linux-rt-users@vger.kernel.org
+> Cc: linux-trace-devel@vger.kernel.org
+> Cc: linux-kernel@vger.kernel.org
+> Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
+> ---
+>  tools/tracing/rtla/src/osnoise.c      |   6 +-
+>  tools/tracing/rtla/src/osnoise.h      |   1 +
+>  tools/tracing/rtla/src/osnoise_hist.c | 793 ++++++++++++++++++++++++++
+>  3 files changed, 799 insertions(+), 1 deletion(-)
+>  create mode 100644 tools/tracing/rtla/src/osnoise_hist.c
 > 
-> The second attempt was to replace the cgroup_threadgroup_rwsem by a
-> rt_mutex (which offers priority inheritance).
-> After this change the issue seems to be resolved.
-> A disadvantage of this approach is that all accesses to the critical
-> section are serialized on all cores (writes to assign tasks to cgroups
-> and reads to create/exec/exit processes).
-> 
-> For the moment I do not see any other alternative to resolve this problem.
-> Any advice on the right way forward would be appreciated.
+> diff --git a/tools/tracing/rtla/src/osnoise.c b/tools/tracing/rtla/src/osnoise.c
+> index b9866dfdda66..6c6358ebf66f 100644
+> --- a/tools/tracing/rtla/src/osnoise.c
+> +++ b/tools/tracing/rtla/src/osnoise.c
+> @@ -790,7 +790,8 @@ static void osnoise_usage(void)
+>  		"  usage: [rtla] osnoise [MODE] ...",
+>  		"",
+>  		"  modes:",
+> -		"     top  - prints the summary from osnoise tracer",
+> +		"     top   - prints the summary from osnoise tracer",
+> +		"     hist  - prints a histogram of osnoise samples",
+>  		"",
+>  		"if no MODE is given, the top mode is called, passing the arguments",
+>  		NULL,
+> @@ -825,6 +826,9 @@ int osnoise_main(int argc, char *argv[])
+>  	} else if (strcmp(argv[1], "top") == 0) {
+>  		osnoise_top_main(argc-1, &argv[1]);
+>  		exit(0);
+> +	} else if (strcmp(argv[1], "hist") == 0) {
+> +		osnoise_hist_main(argc-1, &argv[1]);
+> +		exit(0);
+>  	}
+>  
+>  usage:
+> diff --git a/tools/tracing/rtla/src/osnoise.h b/tools/tracing/rtla/src/osnoise.h
+> index 4882ee275ea0..dbaad7a162a2 100644
+> --- a/tools/tracing/rtla/src/osnoise.h
+> +++ b/tools/tracing/rtla/src/osnoise.h
+> @@ -82,5 +82,6 @@ void osnoise_destroy_tool(struct osnoise_tool *top);
+>  struct osnoise_tool *osnoise_init_tool(char *tool_name);
+>  struct osnoise_tool *osnoise_init_trace_tool(char *tracer);
+>  
+> +int osnoise_hist_main(int argc, char *argv[]);
+>  int osnoise_top_main(int argc, char **argv);
+>  int osnoise_main(int argc, char **argv);
+> diff --git a/tools/tracing/rtla/src/osnoise_hist.c b/tools/tracing/rtla/src/osnoise_hist.c
+> new file mode 100644
+> index 000000000000..c93f30d69795
+> --- /dev/null
+> +++ b/tools/tracing/rtla/src/osnoise_hist.c
+> @@ -0,0 +1,793 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Copyright (C) 2021 Red Hat Inc, Daniel Bristot de Oliveira <bristot@kernel.org>
+> + */
+> +
+> +#include <getopt.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <signal.h>
+> +#include <unistd.h>
+> +#include <errno.h>
+> +#include <stdio.h>
+> +#include <time.h>
+> +
+> +#include "utils.h"
+> +#include "osnoise.h"
+> +
+> +struct osnoise_hist_params {
+> +	char			*cpus;
+> +	char			*monitored_cpus;
+> +	char			*trace_output;
+> +	unsigned long long	runtime;
+> +	unsigned long long	period;
+> +	long long		stop_us;
+> +	long long		stop_total_us;
+> +	int			sleep_time;
+> +	int			duration;
+> +	int			set_sched;
+> +	int			output_divisor;
+> +	struct sched_attr	sched_param;
+> +
+> +	char			no_header;
+> +	char			no_summary;
+> +	char			no_index;
+> +	char			with_zeros;
+> +	int			bucket_size;
+> +	int			entries;
+> +};
+> +
+> +struct osnoise_hist_cpu {
+> +	int			*samples;
+> +	int			*thread;
+> +
+> +	int			count;
+> +	int			thread_count;
+> +
+> +	unsigned long long	min_sample;
+> +	unsigned long long	sum_sample;
+> +	unsigned long long	max_sample;
+> +
+> +	unsigned long long	min_thread;
+> +	unsigned long long	sum_thread;
+> +	unsigned long long	max_thread;
+> +};
+> +
+> +struct osnoise_hist_data {
+> +	struct tracefs_hist	*trace_hist;
+> +	struct osnoise_hist_cpu	*hist;
+> +	int			entries;
+> +	int			bucket_size;
+> +	int			nr_cpus;
+> +};
+> +
+> +/*
+> + * osnoise_free_histogram - free runtime data
+> + */
+> +static void
+> +osnoise_free_histogram(struct osnoise_hist_data *data)
+> +{
+> +	int cpu;
+> +
+> +	/* one histogram for IRQ and one for thread, per CPU */
+> +	for (cpu = 0; cpu < data->nr_cpus; cpu++) {
+> +		if (data->hist[cpu].samples)
+> +			free(data->hist[cpu].samples);
+> +
+> +		if (data->hist[cpu].thread)
+> +			free(data->hist[cpu].thread);
+> +	}
+> +
+> +	/* one set of histograms per CPU */
+> +	if (data->hist)
+> +		free(data->hist);
+> +
+> +	free(data);
+> +}
+> +
+> +/*
+> + * osnoise_alloc_histogram - alloc runtime data
+> + */
+> +static struct osnoise_hist_data
+> +*osnoise_alloc_histogram(int nr_cpus, int entries, int bucket_size)
+> +{
+> +	struct osnoise_hist_data *data;
+> +	int cpu;
+> +
+> +	data = calloc(1, sizeof(*data));
+> +	if (!data)
+> +		return NULL;
+> +
+> +	data->entries = entries;
+> +	data->bucket_size = bucket_size;
+> +	data->nr_cpus = nr_cpus;
+> +
+> +	/* one set of histograms per CPU */
+> +	data->hist = calloc(1, sizeof(*data->hist) * nr_cpus);
+> +	if (!data->hist)
+> +		goto cleanup;
+> +
+> +	/* one histogram for IRQ and one for thread, per cpu */
+> +	for (cpu = 0; cpu < nr_cpus; cpu++) {
+> +		data->hist[cpu].samples = calloc(1, sizeof(*data->hist) * (entries + 1));
 
-From a looking at percpu_rw_semaphore implementation, no new readers are
-allowed as long as there is a writer pending. The writer has
-(unfortunately) to wait until all readers are out. But then I doubt that
-this takes up to two minutes for all existing readers to leave the
-critical section.
-Looking at v4.9.84, at least the RT implementation of rw_semaphore
-allows new readers if a writer is pending. So this could be culprit as
-you would have to wait until all reader are gone and the writer needs to
-grab the lock before another reader shows up. But then this shouldn't be
-the case for the generic implementation and new reader should wait until
-the writer got its chance.
+@samples is a pointer to int and used for int array. The "sizeof(*data->hist)"
+should be "sizeof(int)" or am I totally wrong.
 
-> Best regards,
-> Ronny
+The same in PATCH 13.
 
-Sebastian
+
+
+Thanks,
+Tao
