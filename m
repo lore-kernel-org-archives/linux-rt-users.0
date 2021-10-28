@@ -2,94 +2,104 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 307FCC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 08:46:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 663F3C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 21:30:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 14580610CF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 08:46:59 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4DAD261108
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 21:30:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229934AbhJ1ItZ (ORCPT
+        id S231381AbhJ1VdN convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Oct 2021 04:49:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37430 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229626AbhJ1ItY (ORCPT
+        Thu, 28 Oct 2021 17:33:13 -0400
+Received: from us-smtp-delivery-44.mimecast.com ([207.211.30.44]:31623 "EHLO
+        us-smtp-delivery-44.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S231346AbhJ1VdN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Oct 2021 04:49:24 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 46501C061570;
-        Thu, 28 Oct 2021 01:46:57 -0700 (PDT)
-Date:   Thu, 28 Oct 2021 10:46:54 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1635410815;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8973S67dMEKktlppNBcsVgkRwKXuyLUhRChxtrzBCGk=;
-        b=bcOPNXOmYOgFZ6rppiXsHb+B6+oRRemedMmSyIl/MeQV48Ak4gTxVXTTHPUF5v2qzImW5f
-        /Kbo4kwXDgSJAn/6Qg4NL24X5d+YDDmxIizngE/n6Xr43uK3pe0utb8T8C5ol0tWJV3Bng
-        xN1CV+qnXaBwnFSKep8DEKuF9Sjzttyz3C6KWPcCkXFcM97q40wzmUcMGbvbSnMP3Wl31d
-        kDb07TdbHCT8kPQ11Hk6ypkN+jhp8Szf97aQTMeUn/fLCGljS/Ium/2QVlAoeUJT/UkVZM
-        57umS64+FUQ4gG3ndKKqPK1gVjhe8bql0m/X7M+ccFxfqTv/eESwXvBhesYxAg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1635410815;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8973S67dMEKktlppNBcsVgkRwKXuyLUhRChxtrzBCGk=;
-        b=zw6bzhZTlIXXzGHl/p4caJeewKxOP5dqirHfaz98zGpgWphuYAPUgFIhDYQOW/owFm4OGx
-        G4zqgk6wTHTCURDA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Ronny Meeus <ronny.meeus@gmail.com>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: Unbounded priority inversion while assigning tasks into cgroups.
-Message-ID: <20211028084654.bgtvnibvqnz2o5rh@linutronix.de>
-References: <CAMJ=MEd9WuGA0MN+n0rGD6T+sgd=yciTmeEW9TjRjNXt+cF=qQ@mail.gmail.com>
- <20211027165800.md2gxbsku4avqjgt@linutronix.de>
- <CAMJ=MEfkQ9VaphaNS_qbWMOANo7P6h2Ln6iYg4JLWbWzxp85mA@mail.gmail.com>
+        Thu, 28 Oct 2021 17:33:13 -0400
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-383-w4-jIuYlNyyPbjvm_V_nXQ-1; Thu, 28 Oct 2021 17:30:40 -0400
+X-MC-Unique: w4-jIuYlNyyPbjvm_V_nXQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5096F5B378;
+        Thu, 28 Oct 2021 21:30:38 +0000 (UTC)
+Received: from x1.com (unknown [10.22.32.36])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D3560100EBBE;
+        Thu, 28 Oct 2021 21:29:52 +0000 (UTC)
+From:   Daniel Bristot de Oliveira <bristot@kernel.org>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Daniel Bristot de Oliveira <bristot@kernel.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: [PATCH V7 0/9] osnoise: Support multiple instances (for RTLA)
+Date:   Thu, 28 Oct 2021 23:29:28 +0200
+Message-Id: <cover.1635452903.git.bristot@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAMJ=MEfkQ9VaphaNS_qbWMOANo7P6h2Ln6iYg4JLWbWzxp85mA@mail.gmail.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=bristot@kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: kernel.org
+Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=WINDOWS-1252
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-10-27 22:54:33 [+0200], Ronny Meeus wrote:
-> > From a looking at percpu_rw_semaphore implementation, no new readers are
-> > allowed as long as there is a writer pending. The writer has
-> > (unfortunately) to wait until all readers are out. But then I doubt that
-> > this takes up to two minutes for all existing readers to leave the
-> > critical section.
-> >
-> 
-> The readers can be running at low priority while there can be other threads
-> with a medium priority will consume the complete cpu. So the low prio
-> readers are just waiting to be scheduled and by that also block the high
-> prio thread.
+Currently, osnoise and timerlat run only on a single instance only. To lift
+this limitation, this series adds support for parallel instances of the
+same tracer. For example, making it possible to run one osnoise instance
+for the tracer output and another for a set of tracepoints.
 
-Hmm. So you have say, 5 reads stuck in the RW semaphore while preempted
-be medium tasks and high-prio writer is then stuck on semaphore, waiting
-for the MED tasks to finish so the low-prio threads can leave the
-criticial section?
+This patchset is the kernel dependencies for RTLA. It was
+being sent along with RTLA [1], but we split the kernel and
+user-space patch sets.
 
-> Looking at v4.9.84, at least the RT implementation of rw_semaphore
-> > allows new readers if a writer is pending. So this could be culprit as
-> > you would have to wait until all reader are gone and the writer needs to
-> > grab the lock before another reader shows up. But then this shouldn't be
-> > the case for the generic implementation and new reader should wait until
-> > the writer got its chance.
-> >
-> 
-> So what do you suggest for the v4.9 kernel as a solution? Move to the RT
-> version of the rw_semaphore and hope for the best?
+Steve, feel free to drop the last two if they break anything.
 
-I don't think it will help. Based on what you wrote above it appears
-that the problem is that the readers are preempted and are not leaving
-the critical section soon enough.
+[1] RTLA: An interface for osnoise/timerlat tracers:
+    https://lore.kernel.org/lkml/cover.1635284863.git.bristot@kernel.org/
 
-How many CPUs do you have? Maybe using a rtmutex here and allowing only
-one reader at a time isn't that bad in your case. With one CPU for
-instance, there isn't much space for multiple readers I guess.
+Changes from v6:
+  - Fix compilation problems for the case in which osnoise
+    enabled, but timerlat is not (Steven)
+  - Remove ifdefs from inside functions (Steven)
 
-Sebastian
+Changes that happened while in the RTLA patchset:
+  - Fix comment on start_per_cpu_kthreads() (Steven)
+  - Fix msg log on patch 1
+  - Add comments about the barrier need for trace_nmi_enter/exit
+  - Fix RCU usage in osnoise_unregister_instance() (Steven/Paul)
+  - Add lockdep checks in osnoise_unregister/unregister_instance()
+    (Steven/Paul)
+  - Improve the explanation about the multi instances support (Steven)
+
+Daniel Bristot de Oliveira (9):
+  trace/osnoise: Do not follow tracing_cpumask
+  trace/osnoise: Improve comments about barrier need for NMI callbacks
+  trace/osnoise: Split workload start from the tracer start
+  trace/osnoise: Use start/stop_per_cpu_kthreads() on
+    osnoise_cpus_write()
+  trace/osnoise: Support a list of trace_array *tr
+  trace/osnoise: Remove TIMERLAT ifdefs from inside functions
+  trace/osnoise: Allow multiple instances of the same tracer
+  trace/osnoise: Remove STACKTRACE ifdefs from inside functions
+  trace/osnoise: Remove PREEMPT_RT ifdefs from inside functions
+
+ kernel/trace/trace_osnoise.c | 607 ++++++++++++++++++++++++-----------
+ 1 file changed, 424 insertions(+), 183 deletions(-)
+
+-- 
+2.31.1
+
