@@ -2,76 +2,94 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25CDFC433FE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 02:54:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 307FCC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 08:46:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 021FF610FF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 02:54:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 14580610CF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 08:46:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229705AbhJ1C5P (ORCPT
+        id S229934AbhJ1ItZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 27 Oct 2021 22:57:15 -0400
-Received: from mail.kernel.org ([198.145.29.99]:41744 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229534AbhJ1C5O (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 Oct 2021 22:57:14 -0400
-Received: from rorschach.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E343F60527;
-        Thu, 28 Oct 2021 02:54:46 +0000 (UTC)
-Date:   Wed, 27 Oct 2021 22:54:45 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Daniel Bristot de Oliveira <bristot@kernel.org>
-Cc:     Tao Zhou <tao.zhou@linux.dev>, Ingo Molnar <mingo@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH V6 07/20] rtla: Real-Time Linux Analysis tool
-Message-ID: <20211027225445.0325be0f@rorschach.local.home>
-In-Reply-To: <60dbd3e36ac9489b6aadbc1c3d095608e6c7e4bb.1635284863.git.bristot@kernel.org>
-References: <cover.1635284863.git.bristot@kernel.org>
-        <60dbd3e36ac9489b6aadbc1c3d095608e6c7e4bb.1635284863.git.bristot@kernel.org>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        Thu, 28 Oct 2021 04:49:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37430 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229626AbhJ1ItY (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 28 Oct 2021 04:49:24 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 46501C061570;
+        Thu, 28 Oct 2021 01:46:57 -0700 (PDT)
+Date:   Thu, 28 Oct 2021 10:46:54 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1635410815;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=8973S67dMEKktlppNBcsVgkRwKXuyLUhRChxtrzBCGk=;
+        b=bcOPNXOmYOgFZ6rppiXsHb+B6+oRRemedMmSyIl/MeQV48Ak4gTxVXTTHPUF5v2qzImW5f
+        /Kbo4kwXDgSJAn/6Qg4NL24X5d+YDDmxIizngE/n6Xr43uK3pe0utb8T8C5ol0tWJV3Bng
+        xN1CV+qnXaBwnFSKep8DEKuF9Sjzttyz3C6KWPcCkXFcM97q40wzmUcMGbvbSnMP3Wl31d
+        kDb07TdbHCT8kPQ11Hk6ypkN+jhp8Szf97aQTMeUn/fLCGljS/Ium/2QVlAoeUJT/UkVZM
+        57umS64+FUQ4gG3ndKKqPK1gVjhe8bql0m/X7M+ccFxfqTv/eESwXvBhesYxAg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1635410815;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=8973S67dMEKktlppNBcsVgkRwKXuyLUhRChxtrzBCGk=;
+        b=zw6bzhZTlIXXzGHl/p4caJeewKxOP5dqirHfaz98zGpgWphuYAPUgFIhDYQOW/owFm4OGx
+        G4zqgk6wTHTCURDA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Ronny Meeus <ronny.meeus@gmail.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: Unbounded priority inversion while assigning tasks into cgroups.
+Message-ID: <20211028084654.bgtvnibvqnz2o5rh@linutronix.de>
+References: <CAMJ=MEd9WuGA0MN+n0rGD6T+sgd=yciTmeEW9TjRjNXt+cF=qQ@mail.gmail.com>
+ <20211027165800.md2gxbsku4avqjgt@linutronix.de>
+ <CAMJ=MEfkQ9VaphaNS_qbWMOANo7P6h2Ln6iYg4JLWbWzxp85mA@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CAMJ=MEfkQ9VaphaNS_qbWMOANo7P6h2Ln6iYg4JLWbWzxp85mA@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 27 Oct 2021 00:06:18 +0200
-Daniel Bristot de Oliveira <bristot@kernel.org> wrote:
-
-> The rtla is a meta-tool that includes a set of commands that aims
-> to analyze the real-time properties of Linux. But instead of testing
-> Linux as a black box, rtla leverages kernel tracing capabilities to
-> provide precise information about the properties and root causes of
-> unexpected results.
+On 2021-10-27 22:54:33 [+0200], Ronny Meeus wrote:
+> > From a looking at percpu_rw_semaphore implementation, no new readers are
+> > allowed as long as there is a writer pending. The writer has
+> > (unfortunately) to wait until all readers are out. But then I doubt that
+> > this takes up to two minutes for all existing readers to leave the
+> > critical section.
+> >
 > 
-> rtla --help works and provide information about the available options.
->
+> The readers can be running at low priority while there can be other threads
+> with a medium priority will consume the complete cpu. So the low prio
+> readers are just waiting to be scheduled and by that also block the high
+> prio thread.
 
-BTW,
+Hmm. So you have say, 5 reads stuck in the RW semaphore while preempted
+be medium tasks and high-prio writer is then stuck on semaphore, waiting
+for the MED tasks to finish so the low-prio threads can leave the
+criticial section?
 
-I would break this up into two separate series.
+> Looking at v4.9.84, at least the RT implementation of rw_semaphore
+> > allows new readers if a writer is pending. So this could be culprit as
+> > you would have to wait until all reader are gone and the writer needs to
+> > grab the lock before another reader shows up. But then this shouldn't be
+> > the case for the generic implementation and new reader should wait until
+> > the writer got its chance.
+> >
+> 
+> So what do you suggest for the v4.9 kernel as a solution? Move to the RT
+> version of the rw_semaphore and hope for the best?
 
-One for the kernel changes [ patches 1-6 ] and then one for the tooling
-[ patches 7 - 20 ].
+I don't think it will help. Based on what you wrote above it appears
+that the problem is that the readers are preempted and are not leaving
+the critical section soon enough.
 
-That will make it better for versioning. And you really shouldn't have
-the two mixed together. Just state in the cover letter of the tooling 
-[ Depends on the series at: ...] 
+How many CPUs do you have? Maybe using a rtmutex here and allowing only
+one reader at a time isn't that bad in your case. With one CPU for
+instance, there isn't much space for multiple readers I guess.
 
-And include the lore link.
-
-BTW, you may resend a fixed version of 1-6 ;-)
-
--- Steve
+Sebastian
