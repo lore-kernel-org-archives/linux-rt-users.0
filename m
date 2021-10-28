@@ -2,127 +2,134 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D125C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Oct 2021 23:29:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF4CBC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 02:50:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2A2C261039
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Oct 2021 23:29:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C085D610FF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Oct 2021 02:50:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229469AbhJ0Xbt (ORCPT
+        id S229769AbhJ1CxW convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 27 Oct 2021 19:31:49 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:43781 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229437AbhJ0Xbs (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 Oct 2021 19:31:48 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1635377362;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=HmdBlz+hCAYR8nrU8aYpXT3uzda8UZKTZV1Dk+HW3YY=;
-        b=KwCMts4o7WRVlA9KeLtllIkh3CgrByk0CXXjqj5ZgEGiUUCfv12na7jpYg5FTIgDXKO56g
-        0CGC7GQtsNYyDPt3z2XIfasRkfa3m3/TaxMHgueVvsNuH6zjdkaBmiN78kpVxWMq7baoj8
-        cG7Ecx7/hbE4xJszzE9RAFnOavmu5HM=
-Received: from mail-il1-f200.google.com (mail-il1-f200.google.com
- [209.85.166.200]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-59-gN5ayjbcP4auGnvwLx_lPg-1; Wed, 27 Oct 2021 19:29:21 -0400
-X-MC-Unique: gN5ayjbcP4auGnvwLx_lPg-1
-Received: by mail-il1-f200.google.com with SMTP id r13-20020a92440d000000b002498d6b85c1so2869179ila.5
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 Oct 2021 16:29:21 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=HmdBlz+hCAYR8nrU8aYpXT3uzda8UZKTZV1Dk+HW3YY=;
-        b=DDUq5g6V5I/Wv705QKdMTs86kh/0YtV9Wy7Vel8XCTDY/xJ05faNpl063/Rh7Ohl9p
-         HscaLZzApC34Dk5AE1kMh5lc7NUiYWGgBt5IsVRNS4yQJ7TlLdugx0it6tmC7d5smgqq
-         mT0IP2zAhoRKsTbjxdgWTHDeMDqQzMzuGnd5ub2yHNcla0VfGk60MLbNz8ccKz2mT0qJ
-         NpdlUGOmA0uVwFWZBOt2OHK5hxFPe1LhCC876Od/D4nPJbfi94dNzHicU7yqSvwJamFX
-         XJSTIghaATO1BucFiQ5X1ZfMnlq2OzgyyN4olyy+7Qn+6xWOGozw/ba4RSknvcw4vEFc
-         kPsw==
-X-Gm-Message-State: AOAM532XRbYQlm7y+XKK81tEnaxPw6H4pZUv9wr+Z2IKp/la2ULbBhF1
-        bFWqlk/cR6dPEEpIHUp4DUp+sjdb42HLpbxtl87MEc3KSEoC/Sgldk6v5EC8t2OE/gBdPaJ8Md+
-        I9IfZ8hoc+oEgl24Ri6um5tK7MF8=
-X-Received: by 2002:a92:c983:: with SMTP id y3mr230714iln.24.1635377360491;
-        Wed, 27 Oct 2021 16:29:20 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxGRToja/ZDqz6/zr3aDcMtLmdtLOVF/kDfcgc5+Lghu2UosYPvWYeROJOfVJzB0kFyvzygPw==
-X-Received: by 2002:a92:c983:: with SMTP id y3mr230704iln.24.1635377360351;
-        Wed, 27 Oct 2021 16:29:20 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-08-184-147-142-154.dsl.bell.ca. [184.147.142.154])
-        by smtp.gmail.com with ESMTPSA id k12sm744621ilu.23.2021.10.27.16.29.19
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 27 Oct 2021 16:29:20 -0700 (PDT)
-Date:   Wed, 27 Oct 2021 19:29:18 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Punit Agrawal <punitagrawal@gmail.com>
-cc:     linux-rt-users@vger.kernel.org,
-        Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-Subject: Re: [PATCH v3 4/4] rteval: cyclictest.py: Skip statistics reporting
- in case of an overflow
-In-Reply-To: <20211018055736.412576-5-punitagrawal@gmail.com>
-Message-ID: <616c492a-c710-a8b-ff20-832a2816f14e@redhat.com>
-References: <20211018055736.412576-1-punitagrawal@gmail.com> <20211018055736.412576-5-punitagrawal@gmail.com>
+        Wed, 27 Oct 2021 22:53:22 -0400
+Received: from mail.kernel.org ([198.145.29.99]:40696 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229534AbhJ1CxV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 27 Oct 2021 22:53:21 -0400
+Received: from rorschach.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 4F33B61100;
+        Thu, 28 Oct 2021 02:50:53 +0000 (UTC)
+Date:   Wed, 27 Oct 2021 22:50:51 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Daniel Bristot de Oliveira <bristot@kernel.org>
+Cc:     Tao Zhou <tao.zhou@linux.dev>, Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH V6 06/20] trace/osnoise: Allow multiple instances of the
+ same tracer
+Message-ID: <20211027225051.20ffef90@rorschach.local.home>
+In-Reply-To: <69cbbd98cce2515c84127c8827d733dc87b04823.1635284863.git.bristot@kernel.org>
+References: <cover.1635284863.git.bristot@kernel.org>
+        <69cbbd98cce2515c84127c8827d733dc87b04823.1635284863.git.bristot@kernel.org>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Wed, 27 Oct 2021 00:06:17 +0200
+Daniel Bristot de Oliveira <bristot@kernel.org> wrote:
 
-
-On Mon, 18 Oct 2021, Punit Agrawal wrote:
-
-> From: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-> 
-> The cyclictest.py module recently gained the capability to parse max
-> latency values as reported by cyclictest.
-> 
-> When the max latency exceeds the range of the latency histogram (or in
-> other words, the number of configured buckets), statistics such as
-> mean and standard deviation can not be calculated correctly due to
-> lost samples during measurement.
-> 
-> In the case of lost samples, skip statistics generation and report the
-> max latency warning the user to rerun the measurement.
-> 
-> Signed-off-by: Punit Agrawal <punit1.agrawal@toshiba.co.jp>
-> ---
->  rteval/modules/measurement/cyclictest.py | 10 ++++++++++
->  1 file changed, 10 insertions(+)
-> 
-> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-> index 50a734c75047..7a619dd1c852 100644
-> --- a/rteval/modules/measurement/cyclictest.py
-> +++ b/rteval/modules/measurement/cyclictest.py
-> @@ -67,6 +67,9 @@ class RunData:
->          retval += "mean:       %f\n" % self.__mean
->          return retval
+>  static int osnoise_tracer_init(struct trace_array *tr)
+>  {
+> -
+> -	/* Only allow one instance to enable this */
+> -	if (osnoise_has_registered_instances())
+> +	/*
+> +	 * Only allow osnoise tracer if timerlat tracer is not running
+> +	 * already.
+> +	 */
+> +	if (osnoise_data.timerlat_tracer)
+>  		return -EBUSY;
 >  
-> +    def get_max(self):
-> +        return self.__max
-> +
->      def update_max(self, value):
->          if value > self.__max:
->              self.__max = value
-> @@ -423,6 +426,13 @@ class Cyclictest(rtevalModulePrototype):
->          if abrt:
->              rep_n.addChild(abrt_n)
->  
-> +        # Let the user know if max latency overshot the number of buckets
-> +        if self.__cyclicdata["system"].get_max() > self.__buckets:
-> +            self._log(Log.ERR, "Max latency(%dus) exceeded histogram range(%dus). Skipping statistics" %
-> +                      (self.__cyclicdata["system"].get_max(), self.__buckets))
-> +            self._log(Log.ERR, "Increase number of buckets to avoid lost samples")
-> +            return rep_n
-> +
->          rep_n.addChild(self.__cyclicdata["system"].MakeReport())
->          for thr in self.__cpus:
->              if str(thr) not in self.__cyclicdata:
-> -- 
-> 2.33.0
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
 
+This fails to build when timerlat is not enabled:
+
+/work/git/linux-trace.git/kernel/trace/trace_osnoise.c: In function ‘osnoise_tracer_init’:
+/work/git/linux-trace.git/kernel/trace/trace_osnoise.c:2161:18: error: ‘struct osnoise_data’ has no member named ‘timerlat_tracer’
+ 2161 |  if (osnoise_data.timerlat_tracer)
+      |                  ^
+make[3]: *** [/work/git/linux-trace.git/scripts/Makefile.build:277: kernel/trace/trace_osnoise.o] Error 1
+
+
+Also, I hate all the #ifdef muckery in this file. What you need is:
+
+static struct osnoise_data {
+	u64	sample_period;		/* total sampling period */
+	u64	sample_runtime;		/* active sampling portion of period */
+	u64	stop_tracing;		/* stop trace in the internal operation (loop/irq) */
+	u64	stop_tracing_total;	/* stop trace in the final operation (report/thread) */
+#ifdef CONFIG_TIMERLAT_TRACER
+	u64	timerlat_period;	/* timerlat period */
+	u64	print_stack;		/* print IRQ stack if total > */
+	int	timerlat_tracer;	/* timerlat tracer */
+#endif
+	bool	tainted;		/* infor users and developers about a problem */
+} osnoise_data = {
+	.sample_period			= DEFAULT_SAMPLE_PERIOD,
+	.sample_runtime			= DEFAULT_SAMPLE_RUNTIME,
+	.stop_tracing			= 0,
+	.stop_tracing_total		= 0,
+#ifdef CONFIG_TIMERLAT_TRACER
+	.print_stack			= 0,
+	.timerlat_period		= DEFAULT_TIMERLAT_PERIOD,
+	.timerlat_tracer		= 0,
+#endif
+};
+
+
+#ifdef CONFIG_TIMERLAT_TRACER
+static bool timerlat_enbabled()
+{
+	return osnoise_data.timerlat_tracer;
+}
+static void timerlat_softirq_exit(void)
+{
+	struct timerlat_variables *tlat_var;
+	tlat_var = this_cpu_tmr_var();
+	if (!tlat_var->tracing_thread) {
+		osn_var->softirq.arrival_time = 0;
+		osn_var->softirq.delta_start = 0;
+	}
+}
+#else
+static inline bool timerlat_enbabled()
+{
+	return false;
+}
+static void timerlat_softirq_exit(void) { }
+#endif
+
+Then in places like trace_softirq_exit_callback() you can have:
+
+	if (unlikely(timerlat_enabled())
+		timerlat_softirq_exit();
+
+And this will help in making mistakes like you did with the compile
+failure.
+
+So there should be no #ifdef in any functions (it's fine to wrap
+functions).
+
+-- Steve
