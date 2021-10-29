@@ -2,92 +2,136 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 66A1FC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 16:04:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 657D6C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 16:48:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 42AE0610E5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 16:04:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 41DB761183
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 16:48:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229807AbhJ2QHZ (ORCPT
+        id S229888AbhJ2Qun (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 29 Oct 2021 12:07:25 -0400
-Received: from gateway34.websitewelcome.com ([192.185.149.46]:37155 "EHLO
-        gateway34.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229607AbhJ2QHY (ORCPT
+        Fri, 29 Oct 2021 12:50:43 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:56220 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229607AbhJ2Qum (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 29 Oct 2021 12:07:24 -0400
-Received: from cm14.websitewelcome.com (cm14.websitewelcome.com [100.42.49.7])
-        by gateway34.websitewelcome.com (Postfix) with ESMTP id DF2C427E1D5F
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Oct 2021 11:04:20 -0500 (CDT)
-Received: from gator4132.hostgator.com ([192.185.4.144])
-        by cmsmtp with SMTP
-        id gUMemtS2gIWzGgUMem1f0O; Fri, 29 Oct 2021 11:04:20 -0500
-X-Authority-Reason: nr=8
-Received: from host-79-27-6-113.retail.telecomitalia.it ([79.27.6.113]:40440 helo=[10.0.0.44])
-        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.94.2)
-        (envelope-from <bristot@kernel.org>)
-        id 1mgUMd-001U4B-MR; Fri, 29 Oct 2021 11:04:19 -0500
-Message-ID: <7c4174c7-350d-7922-b82e-862c5fa7477b@kernel.org>
-Date:   Fri, 29 Oct 2021 18:04:15 +0200
+        Fri, 29 Oct 2021 12:50:42 -0400
+Date:   Fri, 29 Oct 2021 18:48:10 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1635526092;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=FidfvpGxCpEED7Y8roiCwv6c14v5UAUT6Pgou9ogbrs=;
+        b=fYbGpxrOCut5U6uufJaSYtOeJJHB54X/Uoo74/kiY+ZRaKn1GukfYhrPZjsauVK+v9A9Ly
+        HUoVWF4nmbUQF0WVT+sHjIkpGSf6xfK9qlo2IpGlko/Hgcv1cktVO06GgByiU7DU7147qy
+        nOS0ky+89c9btDkRsRO9nwqIpPeMys9j3DpxD0ZSLvsYz79ewqfKnqrf3HQo8ctkfs/j5c
+        UaCJkRiCy3OLPRrwEf4wna6HyADGbv/KfFg/caqjTfpDSdnb5H0o4gdyO8yBWZHCoL8i/H
+        ssZIgRhJ+xSerFt9UkV6Oy/eHL0Fc/U5W5+9dOzHMdZV+KSAUM+B0RbT1mHzVQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1635526092;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=FidfvpGxCpEED7Y8roiCwv6c14v5UAUT6Pgou9ogbrs=;
+        b=w0rrlt39fq2XBzQN+BTx1h0qKyEVZk5XSWt/z/cR56I00Uyb3kKSBWUBITJZCsSMfX2a7e
+        spA4FX8OO4RqMpDg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Ronny Meeus <ronny.meeus@gmail.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        cgroups@vger.kernel.org
+Subject: Re: Unbounded priority inversion while assigning tasks into cgroups.
+Message-ID: <20211029164810.gfv6t2ml6oea3dd2@linutronix.de>
+References: <CAMJ=MEd9WuGA0MN+n0rGD6T+sgd=yciTmeEW9TjRjNXt+cF=qQ@mail.gmail.com>
+ <20211027165800.md2gxbsku4avqjgt@linutronix.de>
+ <CAMJ=MEfkQ9VaphaNS_qbWMOANo7P6h2Ln6iYg4JLWbWzxp85mA@mail.gmail.com>
+ <20211028084654.bgtvnibvqnz2o5rh@linutronix.de>
+ <CAMJ=MEez-+0mj2N0rz79eE5gJG2k99Yh+x8vdEG3YK1apiOuzg@mail.gmail.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.2.0
-Subject: Re: [PATCH V6 11/20] rtla/osnoise: Add the hist mode
-Content-Language: en-US
-To:     Steven Rostedt <rostedt@goodmis.org>, Tao Zhou <tao.zhou@linux.dev>
-Cc:     Ingo Molnar <mingo@redhat.com>, Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-References: <cover.1635284863.git.bristot@kernel.org>
- <fede3c3805cb7a70bd7c8d60ba2c5ce290cc6e1e.1635284863.git.bristot@kernel.org>
- <YXmWTOXHYXFduayt@geo.homenetwork>
- <20211027142918.487cd143@gandalf.local.home>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <20211027142918.487cd143@gandalf.local.home>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - kernel.org
-X-BWhitelist: no
-X-Source-IP: 79.27.6.113
-X-Source-L: No
-X-Exim-ID: 1mgUMd-001U4B-MR
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: host-79-27-6-113.retail.telecomitalia.it ([10.0.0.44]) [79.27.6.113]:40440
-X-Source-Auth: kernel@bristot.me
-X-Email-Count: 17
-X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
-X-Local-Domain: no
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CAMJ=MEez-+0mj2N0rz79eE5gJG2k99Yh+x8vdEG3YK1apiOuzg@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 10/27/21 20:29, Steven Rostedt wrote:
-> On Thu, 28 Oct 2021 02:11:24 +0800
-> Tao Zhou <tao.zhou@linux.dev> wrote:
+On 2021-10-29 11:42:25 [+0200], Ronny Meeus wrote:
+> Op do 28 okt. 2021 om 10:46 schreef Sebastian Andrzej Siewior
+> <bigeasy@linutronix.de>:
+> >
+> > On 2021-10-27 22:54:33 [+0200], Ronny Meeus wrote:
+> > > > From a looking at percpu_rw_semaphore implementation, no new readers are
+> > > > allowed as long as there is a writer pending. The writer has
+> > > > (unfortunately) to wait until all readers are out. But then I doubt that
+> > > > this takes up to two minutes for all existing readers to leave the
+> > > > critical section.
+> > > >
+> > >
+> > > The readers can be running at low priority while there can be other threads
+> > > with a medium priority will consume the complete cpu. So the low prio
+> > > readers are just waiting to be scheduled and by that also block the high
+> > > prio thread.
+> >
+> > Hmm. So you have say, 5 reads stuck in the RW semaphore while preempted
+> > be medium tasks and high-prio writer is then stuck on semaphore, waiting
+> > for the MED tasks to finish so the low-prio threads can leave the
+> > criticial section?
 > 
->>> +	/* one histogram for IRQ and one for thread, per cpu */
->>> +	for (cpu = 0; cpu < nr_cpus; cpu++) {
->>> +		data->hist[cpu].samples = calloc(1, sizeof(*data->hist) * (entries + 1));  
->> @samples is a pointer to int and used for int array. The "sizeof(*data->hist)"
->> should be "sizeof(int)" or am I totally wrong.
-> Or standard approach is: 
+> Correct. Note that 1 thread stuck in the read is already sufficient to
+> get into this.
+> Most of the heavy processing is done at medium priority and the
+> background tasks are running at the low priority.
+> Since the background tasks are implemented by scripts, a lot of
+> accesses to the read part are done at low prio.
+
+Yeah, one is enough. My guess would be that it is more visible on the
+small ones because on the bigger ones it is more likely that the thread
+gets migrated to another core.
+
+> > > Looking at v4.9.84, at least the RT implementation of rw_semaphore
+> > > > allows new readers if a writer is pending. So this could be culprit as
+> > > > you would have to wait until all reader are gone and the writer needs to
+> > > > grab the lock before another reader shows up. But then this shouldn't be
+> > > > the case for the generic implementation and new reader should wait until
+> > > > the writer got its chance.
+> > > >
+> > >
+> > > So what do you suggest for the v4.9 kernel as a solution? Move to the RT
+> > > version of the rw_semaphore and hope for the best?
+> >
+> > I don't think it will help. Based on what you wrote above it appears
+> > that the problem is that the readers are preempted and are not leaving
+> > the critical section soon enough.
+> >
+> > How many CPUs do you have? Maybe using a rtmutex here and allowing only
+> > one reader at a time isn't that bad in your case. With one CPU for
+> > instance, there isn't much space for multiple readers I guess.
+> >
 > 
-> 		data->hist[cpu].samples = calloc(1, sizeof(*data->hist->samples) * (entries + 1));
+> The current system has 1 CPU with 2 cores but we have also devices
+> with 14 cores on which the impact will be bigger of course.
+> Note that with the rtmutex solution all accesses (read + write) will
+> be serialized.
 
-Fixed in the next version, thanks!
+So for the 1/2 core it should make no difference if you use an RTmutex
+instead. For the bigger ones it might not be optimal.
 
--- Daniel
+> I wonder why other people do not see this issue since it is present in
+> all kernel versions.
+> And, especially in systems with strict deadlines, I consider this a
+> serious issue.
+
+My guess here is that most people don't use RT priorities and don't see
+this problem _or_ they have enough cores. Or they simply don't use that
+way.
+
+From PREEMPT_RT perspective, rwsem/rwlock used to be single-reader until
+late 3.x or early 4.x series (I don't remember exactly when it changed).
+Boosting multiple readers was tried once but didn't really work. 
+PREEMPT_RT has also this problem where multiple low-prio reader can
+block the high-prio writer but fortunately most critical rwsem users
+moved to RCU so it is not much of problem.
+
+> Ronny
+ 
+Sebastian
