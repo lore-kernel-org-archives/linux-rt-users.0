@@ -2,42 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 523DDC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 16:49:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE9D8C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 19:00:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3A4746115B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 16:49:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8F58D61038
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Oct 2021 19:00:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230176AbhJ2Qvl (ORCPT
+        id S230084AbhJ2TDV convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 29 Oct 2021 12:51:41 -0400
-Received: from gateway20.websitewelcome.com ([192.185.68.24]:38683 "EHLO
-        gateway20.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229837AbhJ2Qvj (ORCPT
+        Fri, 29 Oct 2021 15:03:21 -0400
+Received: from us-smtp-delivery-44.mimecast.com ([205.139.111.44]:24254 "EHLO
+        us-smtp-delivery-44.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S230073AbhJ2TDV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 29 Oct 2021 12:51:39 -0400
-X-Greylist: delayed 1498 seconds by postgrey-1.27 at vger.kernel.org; Fri, 29 Oct 2021 12:51:39 EDT
-Received: from cm13.websitewelcome.com (cm13.websitewelcome.com [100.42.49.6])
-        by gateway20.websitewelcome.com (Postfix) with ESMTP id 5DC19400DC12E
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Oct 2021 11:03:38 -0500 (CDT)
-Received: from gator4132.hostgator.com ([192.185.4.144])
-        by cmsmtp with SMTP
-        id gULym0urWG0jLgULym5J42; Fri, 29 Oct 2021 11:03:38 -0500
-X-Authority-Reason: nr=8
-Received: from host-79-27-6-113.retail.telecomitalia.it ([79.27.6.113]:40438 helo=[10.0.0.44])
-        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.94.2)
-        (envelope-from <bristot@kernel.org>)
-        id 1mgULx-001Sy2-2u; Fri, 29 Oct 2021 11:03:37 -0500
-Message-ID: <8ba373fa-2649-db63-546d-d300b9205947@kernel.org>
-Date:   Fri, 29 Oct 2021 18:03:30 +0200
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.2.0
-Subject: Re: [PATCH V6 09/20] rtla: Add osnoise tool
-Content-Language: en-US
-To:     Tao Zhou <tao.zhou@linux.dev>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Fri, 29 Oct 2021 15:03:21 -0400
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-508-AW6qNnEhMgyS1eYwQiutTw-1; Fri, 29 Oct 2021 15:00:48 -0400
+X-MC-Unique: AW6qNnEhMgyS1eYwQiutTw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7FA341006AA2;
+        Fri, 29 Oct 2021 19:00:46 +0000 (UTC)
+Received: from x1.com (unknown [10.22.10.230])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id A48255D9CA;
+        Fri, 29 Oct 2021 19:00:38 +0000 (UTC)
+From:   Daniel Bristot de Oliveira <bristot@kernel.org>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Daniel Bristot de Oliveira <bristot@kernel.org>,
         Ingo Molnar <mingo@redhat.com>,
         Tom Zanussi <zanussi@kernel.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
@@ -49,110 +42,68 @@ Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
         linux-kernel@vger.kernel.org
-References: <cover.1635284863.git.bristot@kernel.org>
- <a389dec45805f3221fe1a8e86c725ae24d16ec82.1635284863.git.bristot@kernel.org>
- <YXl+krtOjd5CzDRc@geo.homenetwork>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <YXl+krtOjd5CzDRc@geo.homenetwork>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - kernel.org
-X-BWhitelist: no
-X-Source-IP: 79.27.6.113
-X-Source-L: No
-X-Exim-ID: 1mgULx-001Sy2-2u
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: host-79-27-6-113.retail.telecomitalia.it ([10.0.0.44]) [79.27.6.113]:40438
-X-Source-Auth: kernel@bristot.me
-X-Email-Count: 3
-X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
-X-Local-Domain: no
+Subject: [PATCH V8 0/9] tracing/osnoise: Support multiple instances (for RTLA)
+Date:   Fri, 29 Oct 2021 21:00:26 +0200
+Message-Id: <cover.1635533292.git.bristot@kernel.org>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=bristot@kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: kernel.org
+Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=WINDOWS-1252
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 10/27/21 18:30, Tao Zhou wrote:
-> On Wed, Oct 27, 2021 at 12:06:20AM +0200, Daniel Bristot de Oliveira wrote:
-> 
->> +/*
->> + * osnoise_set_cpus - configure osnoise to run on *cpus
->> + *
->> + * "osnoise/cpus" file is used to set the cpus in which osnoise/timerlat
->> + * will run. This function opens this file, saves the current value,
->> + * and set the cpus passed as argument.
->> + */
->> +int osnoise_set_cpus(struct osnoise_context *context, char *cpus)
->> +{
->> +	char *osnoise_cpus = tracefs_get_tracing_file("osnoise/cpus");
->> +	char curr_cpus[1024];
->> +	int retval;
->> +
->> +	context->cpus_fd = open(osnoise_cpus, O_RDWR);
->> +	if (!context->cpus_fd)
->> +		goto out_err;
-> The above check should be "context->cpus_fd < 0".
+Currently, osnoise and timerlat run only on a single instance. To reduce
+this limitation, this series adds support for parallel instances of the
+same tracer. That is, it is possible to run two instances of osnoise
+tracer with different configurations. For example, one for the tracer
+output and another for a set of tracepoints.
 
-Revisited all open/read/write!
+This patchset is the kernel dependencies for RTLA. This patchset was
+being sent along with RTLA [1], but we split the kernel and
+user-space patch sets.
 
->> +	retval = read(context->cpus_fd, &curr_cpus, sizeof(curr_cpus));
->> +	if (!retval)
->> +		goto out_close;
->> +	context->orig_cpus = strdup(curr_cpus);
->> +	if (!context->orig_cpus)
->> +		goto out_err;
-> Need to close ->cpus_fd;
-> 
->   if (!context->orig_cpus)
->     goto out_close;
-> 
->> +	retval = write(context->cpus_fd, cpus, strlen(cpus) + 1);
->> +	if (!retval)
->> +		goto out_err;
-> Same as above. Use "goto out_close" instead.
+[1] RTLA: An interface for osnoise/timerlat tracers:
+    https://lore.kernel.org/lkml/cover.1635284863.git.bristot@kernel.org/
 
-yep! fixed in the next version.
+Changes from v7:
+  - Fix check for print_stack disabled
+  - Fix thread/sofitrq filter when TIMERLAT ifdef is enabled
+    Both fixes for the patches added in the v6.
+Changes from v6:
+  - Fix compilation problems for the case in which osnoise
+    enabled, but timerlat disabled (Steven)
+  - Remove ifdefs from inside functions (Steven)
 
->> +	tracefs_put_tracing_file(osnoise_cpus);
->> +
->> +	return 0;
->> +
->> +out_close:
->> +	close(context->cpus_fd);
->> +	context->cpus_fd = -1;
->> +out_err:
->> +	tracefs_put_tracing_file(osnoise_cpus);
->> +	return 1;
->> +}
->> +
->> +/*
->> + * osnoise_restore_cpus - restore the original "osnoise/cpus"
->> + *
->> + * osnoise_set_cpus() saves the original data for the "osnoise/cpus"
->> + * file. This function restore the original config it was previously
->> + * modified.
->> + */
->> +void osnoise_restore_cpus(struct osnoise_context *context)
->> +{
->> +	int retval;
->> +
->> +	if (!context->orig_cpus)
->> +		return;
->> +
->> +	retval = write(context->cpus_fd, context->orig_cpus, strlen(context->orig_cpus));
-> __osnoise_write_runtime() check "context->cpus_fd == -1".
-> Is it possible here we need to check "context->cpus_fd == -1".
-> 
+Changes that happened while in the RTLA patchset:
+  - Fix comment on start_per_cpu_kthreads() (Steven)
+  - Fix msg log on patch 1
+  - Add comments about the barrier need for trace_nmi_enter/exit
+  - Fix RCU usage in osnoise_unregister_instance() (Steven/Paul)
+  - Add lockdep checks in osnoise_unregister/unregister_instance()
+    (Steven/Paul)
+  - Improve the explanation about the multi instances support (Steven)
 
-So, yeah, this was inconsistent. In some parts I checked the fd, on other I
-checked if the original value was load, so the file was opened. In the next
-version I am checking if the original value was loaded, and then using it to
-define if the fd is open.
 
-Thanks for your review Tao!
--- Daniel
+Daniel Bristot de Oliveira (9):
+  tracing/osnoise: Do not follow tracing_cpumask
+  tracing/osnoise: Improve comments about barrier need for NMI callbacks
+  tracing/osnoise: Split workload start from the tracer start
+  tracing/osnoise: Use start/stop_per_cpu_kthreads() on
+    osnoise_cpus_write()
+  tracing/osnoise: Support a list of trace_array *tr
+  tracing/osnoise: Remove TIMERLAT ifdefs from inside functions
+  tracing/osnoise: Allow multiple instances of the same tracer
+  tracing/osnoise: Remove STACKTRACE ifdefs from inside functions
+  tracing/osnoise: Remove PREEMPT_RT ifdefs from inside functions
+
+ kernel/trace/trace_osnoise.c | 615 ++++++++++++++++++++++++-----------
+ 1 file changed, 434 insertions(+), 181 deletions(-)
+
+-- 
+2.31.1
+
