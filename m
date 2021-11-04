@@ -2,156 +2,175 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A32DC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Nov 2021 16:39:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 19207C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Nov 2021 17:29:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 21EF760F39
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Nov 2021 16:39:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F025F61058
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Nov 2021 17:29:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231243AbhKDQm2 (ORCPT
+        id S233815AbhKDRbt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 4 Nov 2021 12:42:28 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:54177 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230058AbhKDQm1 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Nov 2021 12:42:27 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1636043989;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=WtWxj5bVWIRUkIdmlTWUpr8g05fwqa8qk6FC6Lvym2I=;
-        b=RjpImdNfD1xOfH5tt3Td5HBruAvRSrzPKe486cDGDIZvl9SQxvqJB1qVZeyYOpEsOrEPWB
-        XOeI686T3ogUOQwiMyDnp96OiwYhTKtRxThehjXPT2tQfPw7YaLew+3ppktHKnnrXtsglX
-        34Wr+Mg5Y+g5fD405Et7as3bt2zgQ3c=
-Received: from mail-wr1-f72.google.com (mail-wr1-f72.google.com
- [209.85.221.72]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-155-gduqOEPsMRWWarlfcsFYFw-1; Thu, 04 Nov 2021 12:39:48 -0400
-X-MC-Unique: gduqOEPsMRWWarlfcsFYFw-1
-Received: by mail-wr1-f72.google.com with SMTP id u4-20020a5d4684000000b0017c8c1de97dso1201819wrq.16
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Nov 2021 09:39:47 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
-         :references:user-agent:mime-version:content-transfer-encoding;
-        bh=WtWxj5bVWIRUkIdmlTWUpr8g05fwqa8qk6FC6Lvym2I=;
-        b=ksoo39gwy7q0I7ClqUlA8+g3UTxZ2IccUMc3NW21VA4T0Mi7sraaWv5t9n/+cBwTR6
-         w5A8rQ4pHnoXqzTf0InMFZc066IXgoShcCpBWDJv7CDnDZR9PNrnZA3RW1cIqwj19o3p
-         DMXLzvjOoZ+gog0sePeIzVhp11ipVfd48qVFFsrYSFQBcBIFK/j07BUQuZAjPjdtIzAY
-         UNNtZ3LDqB0w5QN0uDlHF072TpUBymzzQeG5CkE8BSV0+ajhpj+Z9meQ57ii9QmOMPxF
-         ad0X2liEJuw4Z0VmGXO6750VBjQ06ylZh17h3Dnyv0DoG0DLC7HkU/oYY8Z+b6dn4XAO
-         geOQ==
-X-Gm-Message-State: AOAM532mi3aDbZdpeyoSu+QYtL6wuN5GouDH7iqqjhpgiHfK4Ej2n8YY
-        3r+MwhtkUVKLIGheWjKFyMDnp/wywPboYZ6PKVeZ3V8D943jCsoOF4JCIbXtA3JhrgtdGtYTqzE
-        uEsCiT0rODtSikNKGB0rWfX/Pv8U=
-X-Received: by 2002:a1c:27c1:: with SMTP id n184mr24191256wmn.190.1636043985917;
-        Thu, 04 Nov 2021 09:39:45 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyIH+cjej3i1dltEBRmTsfN3a+98KZkYrNCWjyE5e0C19BkFlHpqTrypOIBu2BPOpHV6iXeUQ==
-X-Received: by 2002:a1c:27c1:: with SMTP id n184mr24191228wmn.190.1636043985650;
-        Thu, 04 Nov 2021 09:39:45 -0700 (PDT)
-Received: from ?IPv6:2a0c:5a80:3c10:3400:3c70:6643:6e71:7eae? ([2a0c:5a80:3c10:3400:3c70:6643:6e71:7eae])
-        by smtp.gmail.com with ESMTPSA id u16sm8594883wmc.21.2021.11.04.09.39.44
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Nov 2021 09:39:45 -0700 (PDT)
-Message-ID: <3190fc080138108c189626e22676aaae80b72414.camel@redhat.com>
-Subject: Re: [mm/page_alloc]  5541e53659: BUG:spinlock_bad_magic_on_CPU
-From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
-To:     kernel test robot <oliver.sang@intel.com>
-Cc:     lkp@lists.01.org, lkp@intel.com, akpm@linux-foundation.org,
-        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        frederic@kernel.org, tglx@linutronix.de, peterz@infradead.org,
-        mtosatti@redhat.com, nilal@redhat.com, mgorman@suse.de,
-        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
-        ppandit@redhat.com
-Date:   Thu, 04 Nov 2021 17:39:44 +0100
-In-Reply-To: <20211104143809.GB6499@xsang-OptiPlex-9020>
-References: <20211104143809.GB6499@xsang-OptiPlex-9020>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.0 (3.42.0-1.fc35) 
+        Thu, 4 Nov 2021 13:31:49 -0400
+Received: from mail-eopbgr140053.outbound.protection.outlook.com ([40.107.14.53]:12165
+        "EHLO EUR01-VE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S231709AbhKDRbs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 4 Nov 2021 13:31:48 -0400
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=cuEOzuu6EAnnBpuNCRAmVLy+S2qE8N0tM1Kxyi1QuRwKRuhK2QX7V83l2533Ln7We9EqxNd942qKFSRT806g4kMZc6ChGOSjazYOCh7ylw2tGGB3Kx8bbAHSUq0DtLZlVnrBbzrFlVJKg5ss08G/UHbO4342g+1fHWlF8uHLI6zBMglNvCd9zORl0CfO3C1A4HnybQJc4f13RacyU2qZ7HD4fK5SfyoTGJ/ilgbb/7+piJ6CFaRGhNXFhn6pzhVkMPLxYLjI+CDvsAkmPdy4QgM+bKO2mz8X2WaM8nlsMW7nVfGJ8YZsoSFTU71Z9DezjjiZ2eY1r/806H3IDl8pZw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=Ys9oIi7KrFier2lb7LpERJFhP1zqIaI34BXuJ545Uog=;
+ b=EVhxPtrIqC9QDlNec8huGcrsQz2NV8COXnR1NBDiFTUvu1d/REeVu5c2jV/QI2jB7iO+tNBCfCHqkIbW2mAGvGFHGySWK8ALg6a/AWcOE/24tP30iNhVZacOTI37PBt69detY22n5NEDY9lRbFI6CzXf7vXGDAnEZgAf48zVMd3PIp0JRkBbkeVVyg8ZyU3DphbAINt+c4sjFZl1piJYKW26EYR5WWVnFMn95Zk7X/vP7KqRfX15BYYi9iwkq9NORxIsxbw8xnCF/XeEKUuIfEf5Ijz/PBpS64zWnuzXLt+GIc0aTi0M5E3q5fFnheor3EKpYkc9X/AAjJ+sBFgGIQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=siemens.com; dmarc=pass action=none header.from=siemens.com;
+ dkim=pass header.d=siemens.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=siemens.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Ys9oIi7KrFier2lb7LpERJFhP1zqIaI34BXuJ545Uog=;
+ b=hMyt/1HiVvvXt3pH+pw4o/2PuXjK8vwREkg25u1kP3F4yn6M69X9c+FSCxYj/ludxokC29daV7q82ODg4+CYCPVm5D9A7ARx8L9Pt1vcSOk/nMewFF+6viI5LW7owmhT/u9PlGhayqiTLbvTy0JaZ8ijeY6K+9FRTJcfLEhXVFua+eimIzrPNIjDYtelpkHDQfW6QYVqDBh5ks8/xOrQeQtpWoxee7zRhRXNgg4FSjHDaUGnw7nreBTZ/d2V29Ub+DVNypTWAKh2Yy3NQM+f4DMZMpq886DTBPR4MLD5PgH2X9I+iokuaf200wNfvnaj4hQSN8x5Xt3C71bh9JXc8g==
+Received: from AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:418::19)
+ by AM0PR10MB2644.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:208:128::17) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4669.10; Thu, 4 Nov
+ 2021 17:29:08 +0000
+Received: from AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM
+ ([fe80::6d66:e6b9:219c:48fb]) by AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM
+ ([fe80::6d66:e6b9:219c:48fb%8]) with mapi id 15.20.4669.011; Thu, 4 Nov 2021
+ 17:29:08 +0000
+From:   "Moessbauer, Felix" <felix.moessbauer@siemens.com>
+To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+CC:     "henning.schild@siemens.com" <henning.schild@siemens.com>,
+        "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>,
+        "Schmidt, Adriaan" <adriaan.schmidt@siemens.com>
+Subject: Questions about replacing isolcpus by cgroup-v2
+Thread-Topic: Questions about replacing isolcpus by cgroup-v2
+Thread-Index: AdfRoQau9QpbKiacQpSAjNJcfArMZQ==
+Date:   Thu, 4 Nov 2021 17:29:08 +0000
+Message-ID: <AM9PR10MB48692A964E3106D11AC0FDEE898D9@AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM>
+Accept-Language: en-US
+Content-Language: de-DE
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+msip_labels: MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_Enabled=true;
+ MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_SetDate=2021-11-04T17:29:06Z;
+ MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_Method=Standard;
+ MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_Name=restricted-default;
+ MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_SiteId=38ae3bcd-9579-4fd4-adda-b42e1495d55a;
+ MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_ActionId=955ebe31-eab7-4cc8-8f87-ae0c154ca21c;
+ MSIP_Label_a59b6cd5-d141-4a33-8bf1-0ca04484304f_ContentBits=0
+document_confidentiality: Restricted
+authentication-results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=siemens.com;
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: b5cb1b43-5da5-4e30-f48a-08d99fb89ba9
+x-ms-traffictypediagnostic: AM0PR10MB2644:
+x-ld-processed: 38ae3bcd-9579-4fd4-adda-b42e1495d55a,ExtAddr
+x-microsoft-antispam-prvs: <AM0PR10MB2644DB8808CFF30ABB26FB76898D9@AM0PR10MB2644.EURPRD10.PROD.OUTLOOK.COM>
+x-ms-oob-tlc-oobclassifiers: OLM:10000;
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0;
+x-microsoft-antispam-message-info: /NfbqPxvfTcvV5h4g8KpJ5s24+Tht5oO1jP/2xA2cr+Fd8ZyvfWDpVnHGVbkQ5131HccdX6SYYE5Ruv35nIV1X0JvejRdxZLmXD1DZTSfPYzKrkdRzjr5FvTgX5lqH9aC4HM8f94I9KcC0BZIHeDVXhGXQLkmJQaXN3LPvLxCxm7uoz7bGv/krBkyRA3v5iTJgvvsM+FNMvzhscciABcsduFE18HVVvE4DVFyPrtDbZSqJO9CdSxfhoyAJQm3hHST74ssRgPQ3qn3R9xIq01e8VL0AUffCOsArVURv2m3uSGKxse96kTU4pExrHtSvK24UttWa9pKbfFVi84QEwiiI2lnqGnQPm/43XXEddmTVmKggnptsAbREF8Z/ChzCB/qfswhI+FNWg3+ttwFj8kiShg+pslvLp+wd3SxgqFLDhshhzNtPhicQWea1njxrYZikWXRM8UNiEI6/vR+DOptqRsTUKtvTHoUOQ51vGNPitwpdEqvLfwUTzBZ2tQOWfHxbGGAzNZBeraNRdeVhhjr9uDqhXr5YwBHOPC0l12kuGWldER0EhMH3JZ8NWPjIaU+1Vueqb/vpw9QnfuCw1fkd7fqBAwBiCNtZ8AC0e0ughcRp3XD27gWfFSICibwfpNa3ij5NxqO9op+pIi1SDnX/riKdstYBmOrdZb+6GaDwMwZqDRozz7Ln6vlgFsHftA8zpML8kdKvKOAJh1l6qPhg==
+x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(4636009)(366004)(54906003)(107886003)(55016002)(38070700005)(33656002)(66946007)(316002)(64756008)(66476007)(66446008)(66556008)(76116006)(9686003)(8676002)(52536014)(508600001)(86362001)(38100700002)(7696005)(122000001)(186003)(83380400001)(2906002)(6916009)(6506007)(71200400001)(82960400001)(5660300002)(26005)(4326008)(8936002);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-1?Q?UGGFiSBrkps8w87KhK+TfmS9jxFneiZuZO6omWM3uo9XV35ZLXECCdEGWH?=
+ =?iso-8859-1?Q?1LQ35nLYi2vw4nWQwb+uh6MH/Q7DTvavnn41aeuUeeN6tMaVO3y52IuCGb?=
+ =?iso-8859-1?Q?XMU/kJh7/00UDM4NaduZ/UlVtxbJzLrcKpeFKXBu1T3CAIhPLcsKO8J/or?=
+ =?iso-8859-1?Q?K6liFG4biWMzmW510z/AB6MNClYlbLVnOqVVWiZjs8t2QIuTOsHA7MIS5T?=
+ =?iso-8859-1?Q?rmVOGxDEaaYmnXJAMB7aAKb0VkJrpuvZvpvC/937Yglqgio6TBHFqcqCFC?=
+ =?iso-8859-1?Q?abCNoVPkuFkO2vT6ME8FSKp9QJaZlixxLYwyKDpcHFI1bmEnk8nOj6nEeK?=
+ =?iso-8859-1?Q?OeR3cJcPFCiL8ZgqSFdN0tzDD3uZeekql0N/KUSEXGoqeH+jkT4dwWjrqG?=
+ =?iso-8859-1?Q?ijSKYx3WxlnOgNhLgmZsfdv0+536HIxGWbkVpinuBUB95QL9mYyCZGycZg?=
+ =?iso-8859-1?Q?hMwWVROpBNMRC/AiJ5oRmFnL9lWo1eZE6SknOZVWL3/YX8xTd02mhyW/P5?=
+ =?iso-8859-1?Q?j3vpn3nIXx6Dv++KQ4zQ9Lm+x/0ZQ/v3ZsweYU9aeIr20eT7MGaTU0fJzl?=
+ =?iso-8859-1?Q?NT10qWbREG2xUvtO/fb6kttvtqh+zqz23Li6A280yfhBrgiZnsdb4KS5pv?=
+ =?iso-8859-1?Q?Cb6oje9I/g55nxqh5gj0sQj7WuXk3SGCLjos3mVpyIcpZEhtbq2NlVT0sj?=
+ =?iso-8859-1?Q?BjQtDMtE8m3ztgOGD2e8k8SucQPBnq/GXcCd/E8MUO84K8dWbzT4ial/HK?=
+ =?iso-8859-1?Q?9iDl3bFrTmqlzh4hUveCB4nq30pgPyV1Swapo5oM+48LLxlZJjIbgxAFrm?=
+ =?iso-8859-1?Q?SpazVEPzUSODKjbxmxKgO817aDt1kNK3akI7+3LnCaMtATNow7kkd8k8aS?=
+ =?iso-8859-1?Q?1a0v82UUcV7VMMIJYPd5yDGhUJEo0ME9J/aPWFPEYN8rdgexniliOsaDgd?=
+ =?iso-8859-1?Q?oFR4fyYcLYmdmgmL1UxAskgj6sPnao733NYPI1lg+gtR5D6W2gJfdH+4X0?=
+ =?iso-8859-1?Q?Kwc3HmtLf4ZZmFeCICUszotduLxdz+PhIHdYm6ar1REtp+Tnj4wmeoyG62?=
+ =?iso-8859-1?Q?HLbTmrhbb/Ec8bCBCWkZO0HvWIyZWBQdaG5CLFAHqC0vxLHtQqvSqGBygZ?=
+ =?iso-8859-1?Q?HOGYtNgjCUWOuNaUonrSqcp1Z43xU3e7gLwSac8ETe1h3Lnpd8c1E8Crcj?=
+ =?iso-8859-1?Q?7XYiXYJwZV1pKrPV66zgw1Lu9DOfYqImW/JopqqP9MdcXINNDO3ap8uajf?=
+ =?iso-8859-1?Q?qc6jzm22DRKVeKgUAWLPcV6EIR3w1inxhA8A81hUgNBlvRBFS4a/xXnJ7G?=
+ =?iso-8859-1?Q?+U3U+ReynwaXivOrcJB7MTmVerDx0ekW5ed2gSgoV3RlkXX8BQSgxAQPEc?=
+ =?iso-8859-1?Q?gJ8/VWCzXSp4jb8jxFklSIUt9NKMu699FhjLkAp5SY/kQ/IGQaUsziQaKx?=
+ =?iso-8859-1?Q?ZDSeq4qO8qvhJNbueKMJq3K7Yx7OaxfY+sZ43tsFITikBLaAG5UuGcXAsV?=
+ =?iso-8859-1?Q?Kn1vEkg+8Mx4fVhG3dIGWG9izEFvou832C/mjeTu9qOjb+V+NjZNsG/8Ny?=
+ =?iso-8859-1?Q?XPZ4gbd7WqnqEpB8U3R7l84ksWHp36XgJk1AvzW1ZiKGouTPpQ61hIPba7?=
+ =?iso-8859-1?Q?Vdkt/W8P0UiHVAO1bHjz/3XPGbz9DkU0wqgJa8DNfvAAYovYFydZjk7jNK?=
+ =?iso-8859-1?Q?jh3OvUnfiKvRYQQj6DHKqdr5UQXOJ9cLzmhBybM0/2eIx/MsWjVUT0eaYl?=
+ =?iso-8859-1?Q?/0aA=3D=3D?=
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-OriginatorOrg: siemens.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-Network-Message-Id: b5cb1b43-5da5-4e30-f48a-08d99fb89ba9
+X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Nov 2021 17:29:08.3215
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 38ae3bcd-9579-4fd4-adda-b42e1495d55a
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: WqyImrokCxy+QQxYbQDOCvVAEosgEr8rebqDQqViRlHrXugjQGV5Q/A9/r/Y7Ew+mJ8Apu9CEj9pHTOVBiM/OwT8FptXPWcH7g1yyUIwv8w=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR10MB2644
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 2021-11-04 at 22:38 +0800, kernel test robot wrote:
-> 
-> Greeting,
-> 
-> FYI, we noticed the following commit (built with gcc-9):
-> 
-> commit: 5541e5365954069e4c7b649831c0e41bc9e5e081 ("[PATCH v2 2/3] mm/page_alloc: Convert per-cpu lists' local locks to per-cpu spin locks")
-> url: https://github.com/0day-ci/linux/commits/Nicolas-Saenz-Julienne/mm-page_alloc-Remote-per-cpu-page-list-drain-support/20211104-010825
-> base: https://github.com/hnaz/linux-mm master
-> patch link: https://lore.kernel.org/lkml/20211103170512.2745765-3-nsaenzju@redhat.com
-> 
-> in testcase: boot
-> 
-> on test machine: qemu-system-x86_64 -enable-kvm -cpu SandyBridge -smp 2 -m 16G
-> 
-> caused below changes (please refer to attached dmesg/kmsg for entire log/backtrace):
-> 
-> 
-> +--------------------------------------------+------------+------------+
-> >                                            | 69c421f2b4 | 5541e53659 |
-> +--------------------------------------------+------------+------------+
-> > boot_successes                             | 11         | 0          |
-> > boot_failures                              | 0          | 11         |
-> > BUG:spinlock_bad_magic_on_CPU              | 0          | 11         |
-> > BUG:using_smp_processor_id()in_preemptible | 0          | 11         |
-> +--------------------------------------------+------------+------------+
-> 
-> 
-> If you fix the issue, kindly add following tag
-> Reported-by: kernel test robot <oliver.sang@intel.com>
-> 
-> 
-> [    0.161872][    T0] BUG: spinlock bad magic on CPU#0, swapper/0
-> [    0.162248][    T0]  lock: 0xeb24bef0, .magic: 00000000, .owner: swapper/0, .owner_cpu: 0
-> [    0.162767][    T0] CPU: 0 PID: 0 Comm: swapper Not tainted 5.15.0-rc7-mm1-00437-g5541e5365954 #1
-> [    0.163325][    T0] Call Trace:
-> [ 0.163524][ T0] dump_stack_lvl (lib/dump_stack.c:107 (discriminator 4)) 
-> [ 0.163802][ T0] dump_stack (lib/dump_stack.c:114) 
-> [ 0.164050][ T0] spin_bug (kernel/locking/spinlock_debug.c:70 kernel/locking/spinlock_debug.c:77) 
-> [ 0.164296][ T0] do_raw_spin_unlock (arch/x86/include/asm/atomic.h:29 include/linux/atomic/atomic-instrumented.h:28 include/asm-generic/qspinlock.h:28 kernel/locking/spinlock_debug.c:100 kernel/locking/spinlock_debug.c:140) 
-> [ 0.164624][ T0] _raw_spin_unlock_irqrestore (include/linux/spinlock_api_smp.h:160 kernel/locking/spinlock.c:194) 
-> [ 0.164971][ T0] free_unref_page (include/linux/spinlock.h:423 mm/page_alloc.c:3400) 
-> [ 0.165253][ T0] free_the_page (mm/page_alloc.c:699) 
-> [ 0.165521][ T0] __free_pages (mm/page_alloc.c:5453) 
-> [ 0.165785][ T0] add_highpages_with_active_regions (include/linux/mm.h:2511 arch/x86/mm/init_32.c:416) 
-> [ 0.166179][ T0] set_highmem_pages_init (arch/x86/mm/highmem_32.c:30) 
-> [ 0.166501][ T0] mem_init (arch/x86/mm/init_32.c:749 (discriminator 2)) 
-> [ 0.166749][ T0] start_kernel (init/main.c:842 init/main.c:988) 
-> [ 0.167026][ T0] ? early_idt_handler_common (arch/x86/kernel/head_32.S:417) 
-> [ 0.167369][ T0] i386_start_kernel (arch/x86/kernel/head32.c:57) 
-> [ 0.167662][ T0] startup_32_smp (arch/x86/kernel/head_32.S:328) 
+Dear subscribers,
 
-I did test this with lock debugging enabled, but I somehow missed this stack
-trace. Here's the fix:
+we are currently evaluating how to rework realtime tuning to use cgroup-v2 =
+cpusets instead of the isolcpus kernel parameter.
+Our use-case are realtime applications with rt and non-rt threads. Hereby, =
+the non-rt thread might create additional non-rt threads:
 
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 7dbdab100461..c8964e28aa59 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -6853,6 +6853,7 @@ static void per_cpu_pages_init(struct per_cpu_pages *pcp, struct per_cpu_zonesta
-        pcp->high = BOOT_PAGESET_HIGH;
-        pcp->batch = BOOT_PAGESET_BATCH;
-        pcp->free_factor = 0;
-+       spin_lock_init(&pcp->lock);
- }
- 
- static void __zone_set_pageset_high_and_batch(struct zone *zone, unsigned long high,
-@@ -6902,7 +6903,6 @@ void __meminit setup_zone_pageset(struct zone *zone)
-                struct per_cpu_zonestat *pzstats;
- 
-                pcp = per_cpu_ptr(zone->per_cpu_pageset, cpu);
--               spin_lock_init(&pcp->lock);
-                pzstats = per_cpu_ptr(zone->per_cpu_zonestats, cpu);
-                per_cpu_pages_init(pcp, pzstats);
-        }
+Example (RT CPU=3D1, 4 CPUs):
+- Non-RT Thread (A) with default affinity 0xD (1101b)
+- RT Thread (B) with Affinity 0x2 (0010b, via set_affinity)
 
--- 
-Nicolás Sáenz
+When using pure isolcpus and cgroup-v1, just setting isolcpus=3D1 perfectly=
+ works:
+Thread A gets affinity 0xD, Thread B gets 0x2 and additional threads get a =
+default affinity of 0xD.
+By that, independent of the threads' priorities, we can ensure that nothing=
+ is scheduled on our RT cpu (except from kernel threads, etc...).
 
+During this journey, we discovered the following:
+
+Using cgroup-v2 cpusets and isolcpus together seems to be incompatible:
+When activating the cpuset controller on a cgroup (for the first time), all=
+ default CPU affinities are reset.
+By that, also the default affinity is set to 0xFFFF..., while with isolcpus=
+ we expect it to be (0xFFFF - isolcpus).
+This breaks the example from above, as now the non-RT thread can also be sc=
+heduled on the RT CPU.
+
+When only using cgroup-v2, we can isolate our RT process by placing it in a=
+ cgroup with CPUs=3D0,1 and remove CPU=3D1 from all other cgroups.
+However, we do not know of a strategy to set a default affinity:
+Given the example above, we have no way to ensure that newly created thread=
+s are born with an affinity of just 0x2 (without changing the application).
+
+Finally, isolcpus itself is deprecated since kernel 5.4.
+
+Questions:
+
+1. What is the best strategy to "isolcpus" similar semantics with cgroups-v=
+2?
+2. Is there a way to specify the default affinity (within a cgroup)
+
+We are currently at a point where we would write patches to add a default a=
+ffinity feature to cpusets of cgroupv2.
+But maybe that is not needed or would be the wrong direction, so we wanted =
+to discuss first.
+
+Best regards,
+Felix M=F6=DFbauer
+Siemens AG
