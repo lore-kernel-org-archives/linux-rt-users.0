@@ -2,65 +2,65 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 038D1C43219
-	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Nov 2021 20:42:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 110C9C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Nov 2021 20:42:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E0FD961268
-	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Nov 2021 20:42:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F10876120D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 11 Nov 2021 20:42:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233978AbhKKUp1 (ORCPT
+        id S233994AbhKKUp2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 11 Nov 2021 15:45:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56472 "EHLO
+        Thu, 11 Nov 2021 15:45:28 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56484 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233913AbhKKUp1 (ORCPT
+        with ESMTP id S233902AbhKKUp2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 11 Nov 2021 15:45:27 -0500
-Received: from mail-qk1-x72f.google.com (mail-qk1-x72f.google.com [IPv6:2607:f8b0:4864:20::72f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 61C6CC061766
-        for <linux-rt-users@vger.kernel.org>; Thu, 11 Nov 2021 12:42:37 -0800 (PST)
-Received: by mail-qk1-x72f.google.com with SMTP id 132so7017176qkj.11
-        for <linux-rt-users@vger.kernel.org>; Thu, 11 Nov 2021 12:42:37 -0800 (PST)
+        Thu, 11 Nov 2021 15:45:28 -0500
+Received: from mail-qk1-x72d.google.com (mail-qk1-x72d.google.com [IPv6:2607:f8b0:4864:20::72d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7FEC6C061766
+        for <linux-rt-users@vger.kernel.org>; Thu, 11 Nov 2021 12:42:38 -0800 (PST)
+Received: by mail-qk1-x72d.google.com with SMTP id bq14so7082730qkb.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 11 Nov 2021 12:42:38 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=pGHzahTgacEr4beU7z6aiO2ulmPbTdR6SYDK4UxraAc=;
-        b=AuojSwdb8qAhjb9zPgqGrBe6W5up5iSIPuA7yM9CZWhVfIxYp8D2dmRYaOzdoQkx/k
-         OV4tJcVk9HP+rYAQCpd7/ToEKrWuYMPgP+h0wjkXy2p4cVW9a96lwLYoJfFL/EpmwiKI
-         mEWfFJEE8+jGCCN+aU8mwZTMV3P3zk2DywucYGgj3fXLKFc/CkQpY2gQUENALBS0MBmd
-         FXDuEZpFt3jxeJKL4vlCQDWy96Ff+lTaDPIDrwgRCvchhNmqyNaD9T06XkBtgvQgqbAc
-         LIUjk6jcKdeW4SiZnRnpC7w3O3Oehn3LlJryRQpVRXXmVWu1vsEfFGuMQ6SyuPyObGbw
-         j8Vg==
+        bh=TtCcKyCHqFvL6q1Sn0e8nHQHwA+0l5fm/HiKiwqEjZI=;
+        b=cIyYHtPJmdMoR0dI9bm9jFfLPu4oe3Am+t0ug6ilz4PEEkBJc4ye4oRbis9dKVZsDq
+         XLmQqa2NXaHQvjyvb/FKAEMGS5hWMzSFy0UdkaGz9UAt7G9X1+pBAwXq22BetC9igUDz
+         caQR/2is43J7EqnQRfKmML0qfMFF3R8FBn7kcxgdrpL42xbwE3GPyuehOZas5lpSYyoi
+         7+N1pqTSCceTDKLnUutYRWcFF6BHqxHNCe9kVQUrNzANIsnG/rZ9hDZZegOB5tJb96Ry
+         3vJmFZm79evtTOzxbTFN/VobpwlhSVsZc73IzWRN7gkq6ycnRVZj+Kx7gs8/I2TjA2BU
+         tJQQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=pGHzahTgacEr4beU7z6aiO2ulmPbTdR6SYDK4UxraAc=;
-        b=QuKU0ToLlvuwkFmPCaDslDsxOeH/FL+QZbA3SnY5euVCojxgp9b6Dr8w+2IannQsef
-         DU6EgvaNNRnLUwDT8mT9/FT0pXKj3aI0zckA3umj2Gf+aNdcGq9mAl5+Vp0JsUlUXLKi
-         LGmVvl/qQ9lw5yUQIqgngrQHN3RgJ2nkOCKuxDWRVcDABeVsfXHyf7W/D3/UJx9nEbNm
-         Pe7BBxkdcQZC7SdHUFap9jKoYV88XpOM7JhzHgNGigkR1XuSNCMowIf2qaj7xLZPbrIx
-         0oD33Y/M69qJpzvq9TB2zRsBKe5LoIBAZz31aImK4jagefaj1Tym2tfjQd6YNIDKgxRP
-         kRFQ==
-X-Gm-Message-State: AOAM533Wu+MfGykKx2580SMSEhbzuoRKFp2NKOKiRTMJBKImDOJZv/NN
-        LlXgzsGObvk6Q+PRuiDLmfC8l5eXpyg=
-X-Google-Smtp-Source: ABdhPJwx9J3rerYH3/bJNTJvv7NSRTMddbmkSU7JFbJqL0/QERcmwcAgQMEqd2jhAThDyBtod1uzwQ==
-X-Received: by 2002:a05:620a:4312:: with SMTP id u18mr8414913qko.483.1636663356287;
-        Thu, 11 Nov 2021 12:42:36 -0800 (PST)
+        bh=TtCcKyCHqFvL6q1Sn0e8nHQHwA+0l5fm/HiKiwqEjZI=;
+        b=nP2NWSXY5PPcZuUXfped9F9spr2570Dn3lngcDyTp6DdYMxwi8yKuAapLqMrjO0ipq
+         IpP4akK0nDzkge7eFPUI0R8SpRToKmpqfRHiyP/1QntWbguwnNXdhFgQpfm5qD7bvBMr
+         YuirrF+zrxzuQzg6Nc66ZDavbeqF/xvS942LxJmm5Iwil/zdQdX6AdEyXyPhK86jKg8p
+         4PCYUK4eN64sGpKoSbrOoVD6gIjExXUoZvr5vaEjksX7GOo89N3PQsLIel8/nQsmmVyb
+         FNgXmKD0RsPe7bWwgyIUhs4PkXfxwgcYsqazBTUeEhExiYKjj40BpxNK+tvs19L8l3Bs
+         KEqw==
+X-Gm-Message-State: AOAM530PDAbO8F3ZznVJhm6vNSJdZaWdirApyd3sikZY6doPUrBmdb7C
+        X2XQ7rotPtCbxZaaRiIwnUjWzOQ3UiE=
+X-Google-Smtp-Source: ABdhPJyaAyB9rtK0xsptr2F85zlcIWAOwRM4s7vbRR4pSIOi9nyTb/NiqHN6F4A3/QH4zfKsT8Ymnw==
+X-Received: by 2002:a05:620a:22a5:: with SMTP id p5mr8360743qkh.189.1636663357292;
+        Thu, 11 Nov 2021 12:42:37 -0800 (PST)
 Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-08-184-147-142-154.dsl.bell.ca. [184.147.142.154])
-        by smtp.gmail.com with ESMTPSA id u27sm2282522qtc.58.2021.11.11.12.42.35
+        by smtp.gmail.com with ESMTPSA id u27sm2282522qtc.58.2021.11.11.12.42.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Nov 2021 12:42:36 -0800 (PST)
+        Thu, 11 Nov 2021 12:42:37 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         Leah Leshchinsky <lleshchi@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 13/17] rt-tests: hwlatdetect: Remove unused class Kmod
-Date:   Thu, 11 Nov 2021 15:42:03 -0500
-Message-Id: <20211111204207.10167-13-jkacur@redhat.com>
+Subject: [PATCH 14/17] rt-tests: hwlatdetect: Don't use built-in name str as a variable
+Date:   Thu, 11 Nov 2021 15:42:04 -0500
+Message-Id: <20211111204207.10167-14-jkacur@redhat.com>
 X-Mailer: git-send-email 2.31.1
 In-Reply-To: <20211111204207.10167-1-jkacur@redhat.com>
 References: <20211111204207.10167-1-jkacur@redhat.com>
@@ -70,223 +70,257 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-- Remove class Kmod
-  Kmod was used for loading and unloading of a kernel module, but
-  hwlatdetect uses ftrace now so this class is unneeded.
-- Improve the spacing in the code
+- Don't use built-in name "str" as a variable
+- Add some more docstrings to methods
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/hwlatdetect/hwlatdetect.py | 107 ++++++---------------------------
- 1 file changed, 19 insertions(+), 88 deletions(-)
+ src/hwlatdetect/hwlatdetect.py | 122 +++++++++++++++++----------------
+ 1 file changed, 63 insertions(+), 59 deletions(-)
 
 diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index ea8f2036fe82..c22e5eba25f6 100755
+index c22e5eba25f6..27c2b8a2d138 100755
 --- a/src/hwlatdetect/hwlatdetect.py
 +++ b/src/hwlatdetect/hwlatdetect.py
-@@ -20,14 +20,17 @@ debugging = False
- quiet = False
+@@ -21,14 +21,16 @@ quiet = False
  watch = False
  
-+
- def debug(str):
+ 
+-def debug(str):
++def debug(dstr):
++    """ print debugging string if debugging is on """
      if debugging:
-         print(str)
+-        print(str)
++        print(dstr)
  
-+
- def info(str):
+ 
+-def info(str):
++def info(istr):
++    " print info string if quiet is not on """
      if not quiet:
-         print(str)
+-        print(str)
++        print(istr)
  
-+
+ 
  #
- # Class used to manage mounting and umounting the debugfs
- # filesystem. Note that if an instance of this class mounts
-@@ -78,7 +81,7 @@ class DebugFS:
+@@ -39,7 +41,7 @@ def info(str):
+ # it mounted.
+ #
+ class DebugFS:
+-    '''class to manage mounting/umounting the debugfs'''
++    """ class to manage mounting/umounting the debugfs """
+     def __init__(self):
+         self.premounted = False
+         self.mounted = False
+@@ -53,6 +55,7 @@ class DebugFS:
+                     break
+ 
+     def mount(self, path='/sys/kernel/debug'):
++        """ mount debugfs unless already mounted """
+         if self.premounted or self.mounted:
+             debug("not mounting debugfs")
+             return True
+@@ -65,6 +68,7 @@ class DebugFS:
+         return self.mounted
+ 
+     def umount(self):
++        """ unmount debugfs if not premounted """
+         if self.premounted or not self.mounted:
+             debug("not umounting debugfs")
+             return True
+@@ -76,6 +80,7 @@ class DebugFS:
+         return not self.mounted
+ 
+     def getval(self, item, nonblocking=False):
++        """ get value of mountpoint/item """
+         path = os.path.join(self.mountpoint, item)
+         if nonblocking is False:
              with open(path) as f:
-                 val = f.readline()
-         else:
--            f = os.fdopen(os.open(path, os.O_RDONLY|os.O_NONBLOCK), "r")
-+            f = os.fdopen(os.open(path, os.O_RDONLY | os.O_NONBLOCK), "r")
-             try:
-                 val = f.readline()
-             except OSError as e:
-@@ -104,89 +107,19 @@ class DebugFS:
+@@ -90,21 +95,18 @@ class DebugFS:
+                     val = None
+                 else:
+                     raise
+-            except IOError as e:
+-                if e.errno == errno.EAGAIN:
+-                    val = None
+-                else:
+-                    raise
+             f.close()
+         return val
+ 
+     def putval(self, item, value):
++        """ write value to mountpoint/item """
+         path = os.path.join(self.mountpoint, item)
+         with open(path, "w") as f:
+             f.write(str(value))
+             f.flush()
+ 
      def getpath(self, item):
++        """ get mountpoint/item """
          return os.path.join(self.mountpoint, item)
  
--# Exception class for when tracer is not available
-+
- class DetectorNotAvailable(Exception):
-+    """ Exception class for when tracer is not available """
-+
-     def __init__(self, name, msg):
-         self.args = (name, msg)
-         self.name = name
-         self.msg = msg
  
--#
--# Class used to manage loading and unloading of the
--# hwlat kernel module. Like the debugfs class
--# above, if the module is already loaded, this class will
--# leave it alone when cleaning up.
--#
--class Kmod:
--    ''' class to manage loading and unloading of kernel modules'''
--
--    names = ("hwlat_detector", "smi_detector")
--
--    def __check_builtin(self):
--        for l in open(os.path.join('/lib/modules', os.uname()[2], 'modules.builtin'), "r"):
--            if self.name in l:
--                debug("found %s as builtin" % self.namename)
--                return True
--        return False
--
--    def __find_module(self):
--        debug("looking for module %s" % self.name)
--        path = os.path.join("/lib/modules",
--                            os.uname()[2],
--                            "kernel/drivers/misc")
--        debug("module path: %s" % path)
--        mpath = os.path.join(path, self.name) + ".ko"
--        debug("checking %s" % mpath)
--        if os.path.exists(mpath):
--            return True
--        return False
--
--    def __init__(self, name):
--        if name not in Kmod.names:
--            raise RuntimeError("unsupported module name: %s" % name)
--        if name == "smi_detector":
--            raise RuntimeError("smi_detector module no longer supported!")
--        self.name = name
--        self.preloaded = False
--        self.builtin = False
--
--        # check for builtin
--        if self.__check_builtin():
--            self.builtin = True
--            return
--
--        # now look for already loaded module
--        for l in open('/proc/modules'):
--            field = l.split()
--            if self.name in field[0]:
--                self.preloaded = True
--                debug("using already loaded %s" % self.name)
--                return
--        if not self.__find_module():
--            raise DetectorNotAvailable(name, "module %s does not exist!" % self.name)
--
--    def load(self):
--        if self.builtin:
--            debug("not loading %s (builtin)" % self.name)
--            return True
--        if self.preloaded:
--            debug("not loading %s (already loaded)" % self.name)
--            return True
--        cmd = ['/sbin/modprobe', self.name]
--        return subprocess.call(cmd) == 0
--
--    def unload(self):
--        if self.preloaded or self.builtin:
--            debug("Not unloading %s" % self.name)
--            return True
--        cmd = ['/sbin/modprobe', '-r', self.name]
--        return subprocess.call(cmd) == 0
+@@ -153,12 +155,14 @@ class Detector:
+     # use c_states_on() to close the file descriptor and re-enable c-states
+     #
+     def c_states_off(self):
++        """ disable c-state transitions """
+         if os.path.exists("/dev/cpu_dma_latency"):
+             self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
+             os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
+             debug("c-states disabled")
  
--#
--# base class for detection modules
--#
- class Detector:
--    '''base class for detector modules'''
-+    """ base class for detector modules """
-+
-     def __init__(self):
-         self.type = "unknown"
-         if os.getuid() != 0:
-@@ -195,7 +128,7 @@ class Detector:
-         if not self.debugfs.mount():
-             raise RuntimeError("failed to mount debugfs")
-         self.samples = []
--        self.testduration = 30 # ten seconds
-+        self.testduration = 30  # ten seconds
-         self.have_msr = False
-         self.initsmi = []
-         if os.path.exists('/usr/sbin/rdmsr'):
-@@ -283,11 +216,11 @@ class Detector:
-     @abc.abstractmethod
-     def detect(self):
-         ''' get detector output '''
--#
--# class to handle running the hwlat tracer module of ftrace
--#
-+
-+
- class Tracer(Detector):
--    '''class to wrap access to ftrace hwlat tracer'''
-+    """ Class to handle running the hwlat tracer module of ftrace """
-+
-     __field_translation = {
-         'width'     : "hwlat_detector/width",
-         'window'    : "hwlat_detector/window",
-@@ -298,9 +231,10 @@ class Tracer(Detector):
-     class Sample:
-         'private class for tracer sample data'
-         __slots__ = 'timestamp', 'inner', 'outer'
-+
-         def __init__(self, line):
-             fields = line.split()
--            i,o = fields[6].split('/')
-+            i, o = fields[6].split('/')
-             ts = fields[7][3:]
-             self.timestamp = str(ts)
-             self.inner = int(i)
-@@ -383,7 +317,6 @@ class Tracer(Detector):
-                     f.write("%s\n" % str(s))
-                 print("report saved to %s (%d samples)" % (output, len(self.samples)))
+     def c_states_on(self):
++        """ close the file descriptor and re-enable c-states """
+         if self.dma_latency_handle:
+             os.close(self.dma_latency_handle)
+             debug("c-states enabled")
+@@ -184,6 +188,7 @@ class Detector:
+         ''' output the sample data as a string '''
  
+     def start(self):
++        """ enable the detector """
+         count = 0
+         threshold = int(self.get("threshold"))
+         self.c_states_off()
+@@ -201,6 +206,7 @@ class Detector:
+         debug("detector module enabled (threshold: %d)" % int(self.get("threshold")))
+ 
+     def stop(self):
++        """ disable the detector """
+         count = 0
+         debug("disabling detector module")
+         self.set("enable", 0)
+@@ -244,12 +250,12 @@ class Tracer(Detector):
+             return "ts: %s, inner:%d, outer:%d" % (self.timestamp, self.inner, self.outer)
+ 
+         def display(self):
++            """ convert object to string and print """
+             print(str(self))
+ 
+         def largest(self):
+-            if self.inner > self.outer:
+-                return self.inner
+-            return self.outer
++            """ return largest value of inner or outer """
++            return max(self.inner, self.outer)
+ 
+     def translate(self, field):
+         path = self.debugfs.getpath('tracing')
+@@ -274,7 +280,7 @@ class Tracer(Detector):
+     def get(self, field):
+         if field == "count":
+             return len(self.samples)
+-        elif field == "max":
++        if field == "max":
+             max = 0
+             for values in self.samples:
+                 s = int(values.largest())
+@@ -311,6 +317,7 @@ class Tracer(Detector):
+         return val
+ 
+     def save(self, output=None):
++        """ save samples """
+         if output:
+             with open(output, "w") as f:
+                 for s in self.samples:
+@@ -328,54 +335,51 @@ class Tracer(Detector):
+             raise RuntimeError("Failed to unmount debugfs")
+ 
+ 
+-def seconds(str):
++def seconds(sval):
+     "convert input string to value in seconds"
+-    if str.isdigit():
+-        return int(str)
+-    elif str[-2].isalpha():
+-        raise RuntimeError("illegal suffix for seconds: '%s'" % str[-2:-1])
+-    elif str[-1:] == 's':
+-        return int(str[0:-1])
+-    elif str[-1:] == 'm':
+-        return int(str[0:-1]) * 60
+-    elif str[-1:] == 'h':
+-        return int(str[0:-1]) * 3600
+-    elif str[-1:] == 'd':
+-        return int(str[0:-1]) * 86400
+-    elif str[-1:] == 'w':
+-        return int(str[0:-1]) * 86400 * 7
+-    else:
+-        raise RuntimeError("invalid input for seconds: '%s'" % str)
 -
-     def display(self):
-         for s in self.samples:
-             s.display()
-@@ -414,6 +347,7 @@ def seconds(str):
-     else:
-         raise RuntimeError("invalid input for seconds: '%s'" % str)
- 
+-
+-def milliseconds(str):
++    if sval.isdigit():
++        return int(sval)
++    if sval[-2].isalpha():
++        raise RuntimeError("illegal suffix for seconds: '%s'" % sval[-2:-1])
++    if sval[-1:] == 's':
++        return int(sval[0:-1])
++    if sval[-1:] == 'm':
++        return int(sval[0:-1]) * 60
++    if sval[-1:] == 'h':
++        return int(sval[0:-1]) * 3600
++    if sval[-1:] == 'd':
++        return int(sval[0:-1]) * 86400
++    if sval[-1:] == 'w':
++        return int(sval[0:-1]) * 86400 * 7
++    raise RuntimeError("invalid input for seconds: '%s'" % sval)
 +
- def milliseconds(str):
++
++def milliseconds(sval):
      "convert input string to millsecond value"
-     if str.isdigit():
-@@ -443,9 +377,6 @@ def microseconds(str):
-     else:
-         raise RuntimeError("invalid input for microseconds: '%s'" % str)
+-    if str.isdigit():
+-        return int(str)
+-    elif str[-2:] == 'ms':
+-        return int(str[0:-2])
+-    elif str[-1] == 's':
+-        return int(str[0:-2]) * 1000
+-    elif str[-1] == 'm':
+-        return int(str[0:-1]) * 1000 * 60
+-    elif str[-1] == 'h':
+-        return int(str[0:-1]) * 1000 * 60 * 60
+-    else:
+-        raise RuntimeError("invalid input for milliseconds: %s" % str)
+-
+-
+-def microseconds(str):
++    if sval.isdigit():
++        return int(sval)
++    if sval[-2:] == 'ms':
++        return int(sval[0:-2])
++    if sval[-1] == 's':
++        return int(sval[0:-2]) * 1000
++    if sval[-1] == 'm':
++        return int(sval[0:-1]) * 1000 * 60
++    if sval[-1] == 'h':
++        return int(sval[0:-1]) * 1000 * 60 * 60
++    raise RuntimeError("invalid input for milliseconds: %s" % sval)
++
++
++def microseconds(sval):
+     "convert input string to microsecond value"
+-    if str.isdigit():
+-        return int(str)
+-    elif str[-2:] == 'ms':
+-        return int(str[0:-2]) * 1000
+-    elif str[-2:] == 'us':
+-        return int(str[0:-2])
+-    elif str[-1:] == 's':
+-        return int(str[0:-1]) * 1000 * 1000
+-    else:
+-        raise RuntimeError("invalid input for microseconds: '%s'" % str)
++    if sval.isdigit():
++        return int(sval)
++    if sval[-2:] == 'ms':
++        return int(sval[0:-2]) * 1000
++    if sval[-2:] == 'us':
++        return int(sval[0:-2])
++    if sval[-1:] == 's':
++        return int(sval[0:-1]) * 1000 * 1000
++    raise RuntimeError("invalid input for microseconds: '%s'" % sval)
  
--#
--# main starts here
--#
  
  if __name__ == '__main__':
-     from argparse import ArgumentParser
-@@ -533,7 +464,7 @@ if __name__ == '__main__':
-     if args.duration:
-         detect.testduration = seconds(args.duration)
-     else:
--        detect.testduration = 120 # 2 minutes
-+        detect.testduration = 120  # 2 minutes
-     debug("test duration is %ds" % detect.testduration)
- 
-     if args.watch:
-@@ -569,7 +500,7 @@ if __name__ == '__main__':
-     if detect.have_msr:
-         finishsmi = detect.getsmicounts()
-         total_smis = 0
--        for i,count in enumerate(finishsmi):
-+        for i, count in enumerate(finishsmi):
-             if count > detect.initsmi[i]:
-                 smis = count - detect.initsmi[i]
-                 total_smis += smis
 -- 
 2.31.1
 
