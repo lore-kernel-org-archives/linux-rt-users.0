@@ -2,85 +2,89 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 920A1C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 14:00:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE774C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 14:30:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6D5F460C4D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 14:00:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C66DF60F39
+	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 14:30:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235010AbhKLODk (ORCPT
+        id S235173AbhKLOdS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 12 Nov 2021 09:03:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34500 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235031AbhKLODk (ORCPT
+        Fri, 12 Nov 2021 09:33:18 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:56950 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S235260AbhKLOdO (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 12 Nov 2021 09:03:40 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 724B9C061766
-        for <linux-rt-users@vger.kernel.org>; Fri, 12 Nov 2021 06:00:49 -0800 (PST)
-Date:   Fri, 12 Nov 2021 15:00:45 +0100
+        Fri, 12 Nov 2021 09:33:14 -0500
+Date:   Fri, 12 Nov 2021 15:30:20 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1636725646;
+        s=2020; t=1636727422;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=oWtuQ3MDvaoJvoXITtlII5NNIUu03+plOT4dKAt7Ues=;
-        b=yTLeNFdE14FdP2QHh3LKicrc6cdc1TQmRF/9lUn2OAfLBw+eV6i1bAQWn7hen13xpISTQZ
-        swUnev2FRF+navy54JaT87YupAGEVV7PExIUh4GUVpBp+4ms7v5aXKYnDv3VrS5Ng57lx6
-        Xs+oih1NC0dl2NVO4tS2+aeXMERRptrWsaotw/S/a6gd0v4skflgix1tQzixrlmzdyUR1i
-        LP7dTAxuApPpu09eWedOyF6l9fDbqxRMszK6XdEpFB2vf1jkMBkZjTn5WMbnBFJMhS51CU
-        jehpM0xC6jjnXSeMqxVX6hIt2SuDFiEKF4y2ZQ8j7XVLiZb+LoxyXFTtZUJVkQ==
+        bh=I37K4kE/SSZ3LANG/W6JO2Wx6xJnFVocNggfyhSfs94=;
+        b=Cl7xRPK742yOa0kD8g/tnKjC5kjhUSGi0hioKhVb8n8F/E0HiRtzWx2EP1Q1C8wEXA+nam
+        YwGJi5jX/tfAhMq179EANHDMM245zpl0ZKmdALVUhNw+xi8wpYpJhGtfiAbOLkQPurBiTm
+        tyKY8LxBRD81WtOQuSgoeq0f1xFpqIGCCqnXiE2vik3+ypo5xs9XJxXk3oO04xIA/uCIH/
+        YxGCVWVHTIaN6IQetfL0V8D9sg+0YtDZj5vAdHVebwdzyd0eIm7zGvABsf2KU8dwQoSbaA
+        SfyBE/TEaD3EdC89Aw46YE2m6lzSAUjtniNDuUNDhv4kx3kR3V6glnn43QvaxQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1636725646;
+        s=2020e; t=1636727422;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=oWtuQ3MDvaoJvoXITtlII5NNIUu03+plOT4dKAt7Ues=;
-        b=+5T8TqayRo5CCtlMHGBJ951merLGvWIyFRyn5rG1vTwwEpIES/cWLzJcgwZNRCpdt/n7qS
-        SeEfVQmNTsIo6nAQ==
-From:   'Sebastian Andrzej Siewior' <bigeasy@linutronix.de>
-To:     Chanho Park <chanho61.park@samsung.com>
+        bh=I37K4kE/SSZ3LANG/W6JO2Wx6xJnFVocNggfyhSfs94=;
+        b=Kj3enviRm+Z56LEUQT7WRfoOI1cTuLTPj/9qLbYAiMKzZ4Eh1Qx6G5udDMDHXX3kMFP74f
+        le2LefqeTiJkZSCQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Gylstorff Quirin <quirin.gylstorff@siemens.com>
 Cc:     linux-rt-users@vger.kernel.org,
-        'Thomas Gleixner' <tglx@linutronix.de>
-Subject: Re: hackbench score comparison between 5.10.75-rt47 and 5.14.14-rt21
-Message-ID: <20211112140045.p4bybe4uxy7xwj4i@linutronix.de>
-References: <CGME20211103031549epcas2p34418a4e6218ca93da57a0c373691bd41@epcas2p3.samsung.com>
- <009301d7d061$1a1bbeb0$4e533c10$@samsung.com>
- <20211103091349.m7dvgqpbc2epgbi3@linutronix.de>
- <000001d7d1e6$47eebaf0$d7cc30d0$@samsung.com>
+        "Kiszka, Jan (CT RDA IOT SES-DE)" <jan.kiszka@siemens.com>,
+        SCHILD HENNING Z003BPMR <henning.schild@siemens.com>
+Subject: Re: Questions to CI Testing the RT-Kernel
+Message-ID: <20211112143020.ci72q3yfamjx6pgt@linutronix.de>
+References: <290ce1c2-9298-7b98-1717-771c2602687e@siemens.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <000001d7d1e6$47eebaf0$d7cc30d0$@samsung.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <290ce1c2-9298-7b98-1717-771c2602687e@siemens.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-11-05 10:41:40 [+0900], Chanho Park wrote:
-> Hi,
+On 2021-11-08 11:28:15 [+0100], Gylstorff Quirin wrote:
+> Dear all,
 Hi,
 
-> I checked the same test on my aarch64 target. I'll do more realistic
-> benchmark such as compile bench.
-> 
-> <5.10.73-rt54 aarch64>
-> root@euto-v9-sadk:~# hackbench -l 10000
-> Time: 24.994
-> 
-> <5.15.0-rt17 aarch64 w/o CONFIG_SLUB_CPU_PARTIAL>
-> root@euto-v9-sadk:~# hackbench -l 10000
-> Time: 31.372
-> 
-> <5.15.0-rt17 aarch64 w/ CONFIG_SLUB_CPU_PARTIAL>
-> root@euto-v9-sadk:~# hackbench -l 10000
-> Time: 35.269
+> Our questions are:
+>=20
+> From what I found the RT-Project also uses the combination of cyclictest
+> with hackbench for testing or are there currently any other tests
+> specifically for real-time executed?
+>=20
+> Are there recommended tests that should be added to the CI testing of a
+> RT-Kernel?
 
-The last two are equal, is that on purporse?
-Any feedback on v5.14-rc3-rt1 and v5.14-rc3-rt2? v5.13-rt1 should be
-identical to you 5.10 numbers.
+In general you want to have two categories:
+- A debug run with lots of debug switches enabled like lockdep,
+  debug-objects and what not.
 
-> Best Regards,
-> Chanho Park
+- A "production" run where all of those expensive debug swiches are off.
+  That "sleeping while atomic" is cheap and could remain enabled.
+
+In these two types of config you want to run tests. As mentioned here
+hackbench, stress-ng, =E2=80=A6 is a good start. You want also make sure th=
+at
+you "use" all of your hardware that could be used in "production"
+including disk, i2c, gpio, =E2=80=A6 and what else might be there.
+
+While doing this, you don't want see any warnings in your debug config.
+In your production config you want also to measure the responsibility/
+latency of the system. cyclictest is good and simple but depending on
+your usecase it might also include the latency of IPC communication,
+ping-ping of network communication, etc.
 
 Sebastian
