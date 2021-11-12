@@ -2,104 +2,134 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1AC55C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 16:37:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32582C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 17:55:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F171060F46
-	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 16:37:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 10AF260EBD
+	for <linux-rt-users@archiver.kernel.org>; Fri, 12 Nov 2021 17:55:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235373AbhKLQkB (ORCPT
+        id S235429AbhKLR6g (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 12 Nov 2021 11:40:01 -0500
-Received: from mail.kernel.org ([198.145.29.99]:51982 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233445AbhKLQkA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 12 Nov 2021 11:40:00 -0500
-Received: by mail.kernel.org (Postfix) with ESMTPSA id AF33C601FC;
-        Fri, 12 Nov 2021 16:37:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1636735030;
-        bh=GS153duIpf6p5uzAwTDe6we3+dolhCi2DZKA7ujmHls=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=aGZ37Kgc90dL7lAVMZ2FJ1aXipF8gl6tNM0FuBn7Gm2U2kMosmvrrHAAyNMgYTehJ
-         EWFjhbbiEFWP+TqHuaudpGkZhX39Wm6M4XiBLoDsjRf2egC46nuvNUke+QVJeSLQN6
-         EPKosuM1LxY2H37hDEibXqGGOnEZLxOFWcbC8Oj5vZdT/hLnv6dI/y9w1qabXswwaR
-         hRj0eiDx8GlpnYeSj/HcLHVQApH/Yh1f0eykcdnx6tyC8MxukGzJtvzWqUkVNo1lNt
-         DyoI0FYq9mXvDAM8lKCnNlPQiK8MZ65DHaOseFdM9W35JqVa6iFDAiGbjnHTek07q+
-         bs5/3ws04MoXA==
-Date:   Fri, 12 Nov 2021 17:37:07 +0100
-From:   Frederic Weisbecker <frederic@kernel.org>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     "Moessbauer, Felix" <felix.moessbauer@siemens.com>,
-        cgroups@vger.kernel.org,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "henning.schild@siemens.com" <henning.schild@siemens.com>,
-        "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>,
-        "Schmidt, Adriaan" <adriaan.schmidt@siemens.com>,
-        Zefan Li <lizefan.x@bytedance.com>, Tejun Heo <tj@kernel.org>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Waiman Long <longman@redhat.com>
-Subject: Re: Questions about replacing isolcpus by cgroup-v2
-Message-ID: <20211112163707.GA315388@lothringen>
-References: <AM9PR10MB48692A964E3106D11AC0FDEE898D9@AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM>
- <20211112153656.qkwyvdmb42ze25iw@linutronix.de>
+        Fri, 12 Nov 2021 12:58:36 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60670 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231919AbhKLR6f (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 12 Nov 2021 12:58:35 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 91246C061766;
+        Fri, 12 Nov 2021 09:55:44 -0800 (PST)
+Date:   Fri, 12 Nov 2021 18:55:40 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1636739741;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=QcYZDxEdTseC8UyknnTGMm4qN7M2lOv3FNbjYR8bVJo=;
+        b=FaZEGc3i+CBQJtNRXXc2vz0tpi2onlBTjSgqmfKM8612hhrIPD1ssUkC2w6WBnKoki/CLy
+        2uyYgqi6Ra/WBXJ03+9b1Mxpijek/P6wQWMLIM+cXwGVEfNoZ82EdKr8HWOmAN1ehiy3xv
+        MDcQl58aSRpQ5OwJpbdBMcxQI0MPIHSEXsgyyw6IDFDZgMG9j8SIgwJaMv8OOBX4zNmHxb
+        0eAwThO6BrcRUyAdO8qyJhSKzsn/Wa6PaPHydx+omHwyToLxiVqMRXlHIme/fllz/4zitw
+        o7MlojNV5jkhq5oHAr9sdauHjopuFqVNrJby7WETavO1z+aeyKiaH/H6iTkyyA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1636739741;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=QcYZDxEdTseC8UyknnTGMm4qN7M2lOv3FNbjYR8bVJo=;
+        b=3OYl0et1EV1E9549KF0DWWLOSojIBhEOfe59arGs9mC4fjsUq5BEF2gxDYoaGuFc8lJd0X
+        6zG9br4hV0qdMwAA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.15.2-rt19
+Message-ID: <20211112175540.grp6vgrudiuq66lt@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20211112153656.qkwyvdmb42ze25iw@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Nov 12, 2021 at 04:36:56PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2021-11-04 17:29:08 [+0000], Moessbauer, Felix wrote:
-> > Dear subscribers,
-> Hi,
-> 
-> I Cced cgroups@vger since thus question fits there better.
-> I Cced Frederic in case he has come clues regarding isolcpus and
-> cgroups.
-> 
-> > we are currently evaluating how to rework realtime tuning to use cgroup-v2 cpusets instead of the isolcpus kernel parameter.
-> > Our use-case are realtime applications with rt and non-rt threads. Hereby, the non-rt thread might create additional non-rt threads:
-> > 
-> > Example (RT CPU=1, 4 CPUs):
-> > - Non-RT Thread (A) with default affinity 0xD (1101b)
-> > - RT Thread (B) with Affinity 0x2 (0010b, via set_affinity)
-> > 
-> > When using pure isolcpus and cgroup-v1, just setting isolcpus=1 perfectly works:
-> > Thread A gets affinity 0xD, Thread B gets 0x2 and additional threads get a default affinity of 0xD.
-> > By that, independent of the threads' priorities, we can ensure that nothing is scheduled on our RT cpu (except from kernel threads, etc...).
-> > 
-> > During this journey, we discovered the following:
-> > 
-> > Using cgroup-v2 cpusets and isolcpus together seems to be incompatible:
-> > When activating the cpuset controller on a cgroup (for the first time), all default CPU affinities are reset.
-> > By that, also the default affinity is set to 0xFFFF..., while with isolcpus we expect it to be (0xFFFF - isolcpus).
-> > This breaks the example from above, as now the non-RT thread can also be
-> > scheduled on the RT CPU.
+Dear RT folks!
 
-That sounds buggy from the cpuset-v2 side (adding the maintainers in Cc).
+I'm pleased to announce the v5.15.2-rt19 patch set. 
 
-Also please have a look into "[PATCH v8 0/6] cgroup/cpuset: Add new cpuset
-partition type & empty effecitve cpus":
+Changes since v5.15.2-rt18:
 
-	  https://lore.kernel.org/lkml/20211018143619.205065-1-longman@redhat.com/
+  - Remove an unused variable in mm/ so that the compiler so there is
+    neither a warning from the compiler nor a complaint from the bot.
+    Reported by kernel test robot <lkp@intel.com>.
 
-This stuff adds support for a new "isolated" partition type on cpuset/cgroup-v2
-which should behave just like isolcpus.
+Known issues
+     - netconsole triggers WARN.
 
-> > 
-> > When only using cgroup-v2, we can isolate our RT process by placing it in a cgroup with CPUs=0,1 and remove CPU=1 from all other cgroups.
-> > However, we do not know of a strategy to set a default affinity:
-> > Given the example above, we have no way to ensure that newly created threads are born with an affinity of just 0x2 (without changing the application).
-> > 
-> > Finally, isolcpus itself is deprecated since kernel 5.4.
-> 
-> Where is this the deprecation of isolcpus announced/ written?
+     - The "Memory controller" (CONFIG_MEMCG) has been disabled.
 
-We tried to deprecate it but too many people are still using it. Better pick an
-interface that allows you to change the isolated set at runtime like
-cpuset.sched_load_balance on cpuset/cgroup-v1 or the above patchset on v2.
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
 
-Thanks.
+The delta patch against v5.15.2-rt18 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/incr/patch-5.15.2-rt18-rt19.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.15.2-rt19
+
+The RT patch against v5.15.2 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patch-5.15.2-rt19.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patches-5.15.2-rt19.tar.xz
+
+Sebastian
+
+diff --git a/localversion-rt b/localversion-rt
+index 9e7cd66d9f44f..483ad771f201a 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt18
++-rt19
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index eb714f00c1342..3c5be440ab303 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -1881,7 +1881,7 @@ static void *new_vmap_block(unsigned int order, gfp_t gfp_mask)
+ 	struct vmap_block *vb;
+ 	struct vmap_area *va;
+ 	unsigned long vb_idx;
+-	int node, err, cpu;
++	int node, err;
+ 	void *vaddr;
+ 
+ 	node = numa_node_id();
+@@ -1918,7 +1918,7 @@ static void *new_vmap_block(unsigned int order, gfp_t gfp_mask)
+ 		return ERR_PTR(err);
+ 	}
+ 
+-	cpu = get_cpu_light();
++	get_cpu_light();
+ 	vbq = this_cpu_ptr(&vmap_block_queue);
+ 	spin_lock(&vbq->lock);
+ 	list_add_tail_rcu(&vb->free_list, &vbq->free);
+@@ -1988,7 +1988,6 @@ static void *vb_alloc(unsigned long size, gfp_t gfp_mask)
+ 	struct vmap_block *vb;
+ 	void *vaddr = NULL;
+ 	unsigned int order;
+-	int cpu;
+ 
+ 	BUG_ON(offset_in_page(size));
+ 	BUG_ON(size > PAGE_SIZE*VMAP_MAX_ALLOC);
+@@ -2003,7 +2002,7 @@ static void *vb_alloc(unsigned long size, gfp_t gfp_mask)
+ 	order = get_order(size);
+ 
+ 	rcu_read_lock();
+-	cpu = get_cpu_light();
++	get_cpu_light();
+ 	vbq = this_cpu_ptr(&vmap_block_queue);
+ 	list_for_each_entry_rcu(vb, &vbq->free, free_list) {
+ 		unsigned long pages_off;
