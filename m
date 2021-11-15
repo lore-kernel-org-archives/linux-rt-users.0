@@ -2,75 +2,90 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C5F44C43219
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 19:04:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D4FA1C4332F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 23:36:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AAB9F636D0
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 19:04:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C462261AFF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 23:36:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240720AbhKOTH0 (ORCPT
+        id S1348413AbhKOXjf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 15 Nov 2021 14:07:26 -0500
-Received: from mail.kernel.org ([198.145.29.99]:34350 "EHLO mail.kernel.org"
+        Mon, 15 Nov 2021 18:39:35 -0500
+Received: from mail.kernel.org ([198.145.29.99]:43782 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S243746AbhKOTDs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 15 Nov 2021 14:03:48 -0500
+        id S1353457AbhKOXg7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 15 Nov 2021 18:36:59 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E421461265;
-        Mon, 15 Nov 2021 18:15:31 +0000 (UTC)
-Date:   Mon, 15 Nov 2021 13:15:30 -0500
+        by mail.kernel.org (Postfix) with ESMTPSA id 8127B6323A;
+        Mon, 15 Nov 2021 23:34:03 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.95)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1mmlUA-000otV-Km;
+        Mon, 15 Nov 2021 18:34:02 -0500
+Message-ID: <20211115233402.465081217@goodmis.org>
+User-Agent: quilt/0.66
+Date:   Mon, 15 Nov 2021 18:33:43 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
+To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [ANNOUNCE] 5.10.78-rt55
-Message-ID: <20211115131530.15df8784@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        stable-rt@vger.kernel.org
+Subject: [PATCH RT 4/9] preempt: Move preempt_enable_no_resched() to the RT block
+References: <20211115233339.509057092@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+5.10.78-rt56-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-I'm pleased to announce the 5.10.78-rt55 stable release.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
+preempt_enable_no_resched() should point to preempt_enable() on
+PREEMPT_RT so nobody is playing any preempt tricks and enables
+preemption without checking for the need-resched flag.
 
-This release is just an update to the new stable 5.10.78 version
-and no RT specific changes have been made.
+This was misplaced in v3.14.0-rt1 und remained unnoticed until now.
 
+Point preempt_enable_no_resched() and preempt_enable() on RT.
 
-You can get this release via the git tree at:
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ include/linux/preempt.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: 8790fdcff68cc0e69d19c352d0fd0fba471b7635
-
-
-Or to build 5.10.78-rt55 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.78.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.78-rt55.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
-
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index af39859f02ee..7b5b2ed55531 100644
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -208,12 +208,12 @@ do { \
+ 	preempt_count_dec(); \
+ } while (0)
+ 
+-#ifdef CONFIG_PREEMPT_RT
++#ifndef CONFIG_PREEMPT_RT
+ # define preempt_enable_no_resched() sched_preempt_enable_no_resched()
+-# define preempt_check_resched_rt() preempt_check_resched()
++# define preempt_check_resched_rt() barrier();
+ #else
+ # define preempt_enable_no_resched() preempt_enable()
+-# define preempt_check_resched_rt() barrier();
++# define preempt_check_resched_rt() preempt_check_resched()
+ #endif
+ 
+ #define preemptible()	(preempt_count() == 0 && !irqs_disabled())
+-- 
+2.33.0
