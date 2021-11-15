@@ -2,46 +2,38 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 692D6C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 13:02:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C5F44C43219
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 19:04:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 492E861A8B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 13:02:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AAB9F636D0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Nov 2021 19:04:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231445AbhKONFp (ORCPT
+        id S240720AbhKOTH0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 15 Nov 2021 08:05:45 -0500
-Received: from david.siemens.de ([192.35.17.14]:37908 "EHLO david.siemens.de"
+        Mon, 15 Nov 2021 14:07:26 -0500
+Received: from mail.kernel.org ([198.145.29.99]:34350 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231616AbhKONFi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 15 Nov 2021 08:05:38 -0500
-X-Greylist: delayed 1376 seconds by postgrey-1.27 at vger.kernel.org; Mon, 15 Nov 2021 08:05:37 EST
-Received: from mail2.sbs.de (mail2.sbs.de [192.129.41.66])
-        by david.siemens.de (8.15.2/8.15.2) with ESMTPS id 1AFCdQLZ005296
-        (version=TLSv1.2 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Mon, 15 Nov 2021 13:39:27 +0100
-Received: from md1za8fc.ad001.siemens.net ([139.22.32.21])
-        by mail2.sbs.de (8.15.2/8.15.2) with ESMTP id 1AFCdP2C002472;
-        Mon, 15 Nov 2021 13:39:26 +0100
-Date:   Mon, 15 Nov 2021 13:39:25 +0100
-From:   Henning Schild <henning.schild@siemens.com>
-To:     Frederic Weisbecker <frederic@kernel.org>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        "Moessbauer, Felix" <felix.moessbauer@siemens.com>,
-        cgroups@vger.kernel.org,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>,
-        "Schmidt, Adriaan" <adriaan.schmidt@siemens.com>,
-        Zefan Li <lizefan.x@bytedance.com>, Tejun Heo <tj@kernel.org>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Waiman Long <longman@redhat.com>
-Subject: Re: Questions about replacing isolcpus by cgroup-v2
-Message-ID: <20211115133925.69405147@md1za8fc.ad001.siemens.net>
-In-Reply-To: <20211112163707.GA315388@lothringen>
-References: <AM9PR10MB48692A964E3106D11AC0FDEE898D9@AM9PR10MB4869.EURPRD10.PROD.OUTLOOK.COM>
-        <20211112153656.qkwyvdmb42ze25iw@linutronix.de>
-        <20211112163707.GA315388@lothringen>
-X-Mailer: Claws Mail 3.18.0 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        id S243746AbhKOTDs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 15 Nov 2021 14:03:48 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id E421461265;
+        Mon, 15 Nov 2021 18:15:31 +0000 (UTC)
+Date:   Mon, 15 Nov 2021 13:15:30 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [ANNOUNCE] 5.10.78-rt55
+Message-ID: <20211115131530.15df8784@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -49,79 +41,36 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Am Fri, 12 Nov 2021 17:37:07 +0100
-schrieb Frederic Weisbecker <frederic@kernel.org>:
 
-> On Fri, Nov 12, 2021 at 04:36:56PM +0100, Sebastian Andrzej Siewior
-> wrote:
-> > On 2021-11-04 17:29:08 [+0000], Moessbauer, Felix wrote:  
-> > > Dear subscribers,  
-> > Hi,
-> > 
-> > I Cced cgroups@vger since thus question fits there better.
-> > I Cced Frederic in case he has come clues regarding isolcpus and
-> > cgroups.
-> >   
-> > > we are currently evaluating how to rework realtime tuning to use
-> > > cgroup-v2 cpusets instead of the isolcpus kernel parameter. Our
-> > > use-case are realtime applications with rt and non-rt threads.
-> > > Hereby, the non-rt thread might create additional non-rt threads:
-> > > 
-> > > Example (RT CPU=1, 4 CPUs):
-> > > - Non-RT Thread (A) with default affinity 0xD (1101b)
-> > > - RT Thread (B) with Affinity 0x2 (0010b, via set_affinity)
-> > > 
-> > > When using pure isolcpus and cgroup-v1, just setting isolcpus=1
-> > > perfectly works: Thread A gets affinity 0xD, Thread B gets 0x2
-> > > and additional threads get a default affinity of 0xD. By that,
-> > > independent of the threads' priorities, we can ensure that
-> > > nothing is scheduled on our RT cpu (except from kernel threads,
-> > > etc...).
-> > > 
-> > > During this journey, we discovered the following:
-> > > 
-> > > Using cgroup-v2 cpusets and isolcpus together seems to be
-> > > incompatible: When activating the cpuset controller on a cgroup
-> > > (for the first time), all default CPU affinities are reset. By
-> > > that, also the default affinity is set to 0xFFFF..., while with
-> > > isolcpus we expect it to be (0xFFFF - isolcpus). This breaks the
-> > > example from above, as now the non-RT thread can also be
-> > > scheduled on the RT CPU.  
-> 
-> That sounds buggy from the cpuset-v2 side (adding the maintainers in
-> Cc).
+Dear RT Folks,
 
-We thought the same but ended up saying that it might just be related
-to the deprecation. But regarding that as a bug could help fix it in
-stable kernels and distros. Because the patches will need some time and
-will likely not get backported.
+I'm pleased to announce the 5.10.78-rt55 stable release.
 
-Henning
 
-> Also please have a look into "[PATCH v8 0/6] cgroup/cpuset: Add new
-> cpuset partition type & empty effecitve cpus":
-> 
-> 	  https://lore.kernel.org/lkml/20211018143619.205065-1-longman@redhat.com/
-> 
-> This stuff adds support for a new "isolated" partition type on
-> cpuset/cgroup-v2 which should behave just like isolcpus.
-> 
-> > > 
-> > > When only using cgroup-v2, we can isolate our RT process by
-> > > placing it in a cgroup with CPUs=0,1 and remove CPU=1 from all
-> > > other cgroups. However, we do not know of a strategy to set a
-> > > default affinity: Given the example above, we have no way to
-> > > ensure that newly created threads are born with an affinity of
-> > > just 0x2 (without changing the application).
-> > > 
-> > > Finally, isolcpus itself is deprecated since kernel 5.4.  
-> > 
-> > Where is this the deprecation of isolcpus announced/ written?  
-> 
-> We tried to deprecate it but too many people are still using it.
-> Better pick an interface that allows you to change the isolated set
-> at runtime like cpuset.sched_load_balance on cpuset/cgroup-v1 or the
-> above patchset on v2.
-> 
-> Thanks.
+This release is just an update to the new stable 5.10.78 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: 8790fdcff68cc0e69d19c352d0fd0fba471b7635
+
+
+Or to build 5.10.78-rt55 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.78.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.78-rt55.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
 
