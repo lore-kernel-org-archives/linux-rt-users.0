@@ -2,79 +2,130 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 528F3C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Nov 2021 08:34:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9D94C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Nov 2021 20:18:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2C9A16321B
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Nov 2021 08:34:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C410E61A64
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Nov 2021 20:18:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229808AbhKQIhw (ORCPT
+        id S231429AbhKQUVi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 17 Nov 2021 03:37:52 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:58402 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229716AbhKQIhv (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 Nov 2021 03:37:51 -0500
-Date:   Wed, 17 Nov 2021 09:34:50 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1637138092;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=LmkNgBHietKVu8Mte2YXrWfeDL2G6tqiH2IZ5HuMaQo=;
-        b=mRUTOVzNf7t1sNT3UWDiqwbesA3vtPGtA1rkL6doTGzPLrchC16Cbu5aBXizU3ACaxyX03
-        8jravJiQNio60wp/JEueci1W1XReq8X6WYROtk30/tro/ggocT+Ke09UV8o2onPms/vWCV
-        TTD/SkQXmiQ4BptiosCHBkH/Q78T5ElMGOkvD5oA4daD81l8NUzfa+wjOYgUlSlDU7PMJ0
-        lXnWKP+GbHCw6T4iTFw+AWNjg1TxPnv1o/aR/uA/AyBVrYzs+CLLHAHDS0Rz8TEQJfOte+
-        qJuNAbVf02Sxu3MkPUrQdwuckmyuECmxvUrsCkIo4kJqkCXiaC5ER+n8LRNcXQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1637138092;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=LmkNgBHietKVu8Mte2YXrWfeDL2G6tqiH2IZ5HuMaQo=;
-        b=hv+xK+RYzJAupVxyMrZ7Q+e7GbLjaNeEQdZI5Tu0pK2knXxMtS9DGJ9FbmD7JhXQzJQGNI
-        W6UEZfN4qz5yUOCA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Davidlohr Bueso <dave@stgolabs.net>
-Cc:     martin.petersen@oracle.com, jejb@linux.ibm.com, hare@suse.de,
-        tglx@linutronix.de, linux-scsi@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Davidlohr Bueso <dbueso@suse.de>
-Subject: Re: [PATCH 3/3] scsi/fcoe: Add a local_lock to percpu localport
- statistics
-Message-ID: <20211117083450.ccgbcmgtwmbkqiqy@linutronix.de>
-References: <20211117025956.79616-1-dave@stgolabs.net>
- <20211117025956.79616-4-dave@stgolabs.net>
+        Wed, 17 Nov 2021 15:21:38 -0500
+Received: from dcvr.yhbt.net ([64.71.152.64]:59334 "EHLO dcvr.yhbt.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S239661AbhKQUVc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 17 Nov 2021 15:21:32 -0500
+X-Greylist: delayed 421 seconds by postgrey-1.27 at vger.kernel.org; Wed, 17 Nov 2021 15:21:32 EST
+Received: from localhost (dcvr.yhbt.net [127.0.0.1])
+        by dcvr.yhbt.net (Postfix) with ESMTP id 5FAAC1F953;
+        Wed, 17 Nov 2021 20:11:32 +0000 (UTC)
+Date:   Wed, 17 Nov 2021 20:11:32 +0000
+From:   Eric Wong <e@80x24.org>
+To:     Frederic Weisbecker <frederic@kernel.org>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mike Galbraith <efault@gmx.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Ogness <john.ogness@linutronix.de>,
+        Roman Penyaev <rpenyaev@suse.de>,
+        Davidlohr Bueso <dbueso@suse.de>,
+        Jason Baron <jbaron@akamai.com>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC] How to fix eventpoll rwlock based priority inversion on
+ PREEMPT_RT?
+Message-ID: <20211117201132.M259904@dcvr>
+References: <20211116140252.GA348770@lothringen>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20211117025956.79616-4-dave@stgolabs.net>
+In-Reply-To: <20211116140252.GA348770@lothringen>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-11-16 18:59:56 [-0800], Davidlohr Bueso wrote:
-> Updating the per-CPU lport->stats relies on disabling preemption
-> with get/put_cpu() semantics. However, this is a bit harsh for
-> PREEMPT_RT and by using a local_lock, it can allow the region
-> to be preemptible, guaranteeing CPU locality, without making any
-> difference to the non-RT common case as it will continue to
-> disable preemption.
+Frederic Weisbecker <frederic@kernel.org> wrote:
+> Hi,
+> 
+> I'm iterating again on this topic, this time with the author of
+> the patch Cc'ed.
+> 
+> The following commit:
+> 
+>     a218cc491420 (epoll: use rwlock in order to reduce ep_poll
+>                   callback() contention)
+> 
+> has changed the ep->lock into an rwlock. This can cause priority inversion
+> on PREEMPT_RT. Here is an example:
+> 
+> 
+> 1) High priority task A waits for events on epoll_wait(), nothing shows up so
+>    it goes to sleep for new events in the ep_poll() loop.
+> 
+> 2) Lower prio task B brings new events in ep_poll_callback(), waking up A
+>    while still holding read_lock(ep->lock)
+> 
+> 3) Task A wakes up immediately, tries to grab write_lock(ep->lock) but it has
+>    to wait for task B to release read_lock(ep->lock). Unfortunately there is
+>    no priority inheritance when write_lock() is called on an rwlock that is
+>    already read_lock'ed. So back to task B that may even be preempted by
+>    yet another task before releasing read_lock(ep->lock).
+> 
+> 
+> Now how to solve this? Several possibilities:
+> 
+> == Delay the wake up after releasing the read_lock()? ==
+> 
+> That solves part of the problem only. If another event comes up
+> concurrently we are back to the original issue.
+> 
+> == Make rwlock more fair ? ==
+> 
+> Currently read_lock() only acquires the rtmutex if the lock is already
+> write-held (or write_lock() is waiting to acquire). So if read_lock() happens
+> after write_lock(), fairness is observed but if write_lock() happens after
+> read_lock(), priority inheritance doesn't happen.
+> 
+> I think there has been attempts to solve this by the past but some issues
+> arised (don't know the exact details, comments on rwbase_rt.c bring some clues).
+> 
+> == Convert the rwlock to RCU ? ==
+> 
+> Traditionally, we try to convert rwlocks bringing issues to RCU. I'm not sure the
+> situation fits here because the rwlock is used the other way around:
+> the epoll consumer does the write_lock() and the producers do read_lock(). Then
+> concurrent producers use ad-hoc concurrent list add (see list_add_tail_lockless)
+> to handle racy modifications.
+> 
+> There are also list modifications on both side. There are added from the
+> producers and read and deleted (even re-added sometimes) on the consumer side.
+> 
+> Perhaps RCU could be used with keeping locking on the consumer side...
 
-What about adding a struct u64_stats_sync where the stats are updated.
-You have to use u64_stats_update_begin() at the beginning and the
-matching end function instead the get_cpu()/ local_lock().
-You need just ensure that there is only one writer at a time. Network
-wise it is easy as there are often per-queue stats so one writer at a
-time :)
++CC linux-fsdevel and Mathieu Desnoyers
 
-Looking closer, the current approach appears broken in that regard:
-stats members, such as TxFrames/ TxWords which are incremented in
-bnx2fc_xmit(), are 64bit. Reading/ writing them requires two operations
-on 32bit architectures. But we probably don't care because stats and it
-happens hardly and performance of course. This is the cute part about
-u64_stats_sync, it magically vanishes on 64bit architectures.
+I proposed using wfcqueue many years ago, but ran out of
+time/hardware/funding to work on it:
 
-Sebastian
+  https://yhbt.net/lore/lkml/20130401183118.GA9968@dcvr.yhbt.net/
+
+wfcqueue is used internally by Userspace-RCU, but wfcqueue
+itself doesn't rely on RCU.  I'm not sure if wfcqueue helps
+PREEMPT_RT, but Mathieu + Paul might.
+
+> == Convert to llist ? ==
+> 
+> It's a possibility but some operations like single element deletion may be
+> costly because only llist_add() and llist_del_all() are atomic on llist.
+> !CONFIG_PREEMPT_RT might not be happy about it.
+> 
+> == Consider epoll not PREEMPT_RT friendly? ==
+> 
+> A last resort is to simply consider epoll is not RT-friendly and suggest
+> using more simple alternatives like poll()....
+> 
+> Any thoughts?
