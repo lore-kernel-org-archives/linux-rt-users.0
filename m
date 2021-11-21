@@ -1,169 +1,96 @@
 Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B23CC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Nov 2021 14:41:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4FF40613A3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Nov 2021 14:41:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DA8D1C433F5
+	for <linux-rt-users@archiver.kernel.org>; Sun, 21 Nov 2021 15:37:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236001AbhKSOoj (ORCPT
+        id S238328AbhKUPkx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 19 Nov 2021 09:44:39 -0500
-Received: from mout.gmx.net ([212.227.17.20]:44867 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235994AbhKSOoi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 19 Nov 2021 09:44:38 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1637332886;
-        bh=gprpuNYqUQO8OIsaLrzKaEbvenRTYintoS1tGXrXIx8=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=B7wwTrEqky0POeIZ1spyiPi02LRCDOV5zUwRFNs9lv4QuCo3HKQthTcdSMP71tWBZ
-         Y0v0ifB66+asVKalKg80q4mIrFNXd/7Fg69m2tzQHAzEeG6jpYQrgYaJu3+Ecm7GsJ
-         ZabBKOoLUV2BC42QBvfp/e5pnRyUGyvlx4pdL0eY=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.221.150.31]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1N9dsb-1mZNgJ1vs5-015Ynp; Fri, 19
- Nov 2021 15:41:26 +0100
-Message-ID: <773fd8246a1ec4ef79142d9e31b8ba4163a0d496.camel@gmx.de>
-Subject: [rcf/patch] netpoll: Make it RT friendly
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        RT <linux-rt-users@vger.kernel.org>
-Date:   Fri, 19 Nov 2021 15:41:25 +0100
-In-Reply-To: <20211118163405.adczki7ibk22bw7e@linutronix.de>
-References: <20211118163405.adczki7ibk22bw7e@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.1 
+        Sun, 21 Nov 2021 10:40:53 -0500
+Received: from [40.92.99.98] ([40.92.99.98]:17053 "EHLO
+        JPN01-TYC-obe.outbound.protection.outlook.com"
+        rhost-flags-FAIL-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
+        id S237998AbhKUPkx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 21 Nov 2021 10:40:53 -0500
+X-Greylist: delayed 851 seconds by postgrey-1.27 at vger.kernel.org; Sun, 21 Nov 2021 10:40:52 EST
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=GmfnZdStvB59wEIVXG66oJCJrJhYXL3Fyf/cYKlec0AOllzQ5Gtr5UlQo06b6FD9f+715VeDuOieeadQ74r1y60OTXKbmdzVXnRpanfEPcXZVXHlwLPEbPrFTglULa8DgMptRJvxu02vDvlF8rMFQTEWWnRs0fVRoXscTKmtQmEkv9J55T0Ky0j5yPwpkEJX1B0Qwnlp34nPlS7MBp85EbzhPcB1YTGQdtJOAXmQrGWWq0a2gdlclsnSY4GZhGhNP0l/+Mlse5DUxQc+D2uOWn/oogAF7h4EZ0va43IEOvR4vzumaAqpM0suEG8oCAjDOUG+8Sh+T4BcmLmocrO9JA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=20Uh1byzZ4Tg8DVHO4fALDyxDwAygxHhUvJhGRg5TWg=;
+ b=odzHzfcjqwkmyuVFrwRVYMB5Oxx9048yIh6oG9JzgKRUBhlwwEQz/jW7Evck23+CBhNMEcN/XCcF6HIIN3oBducGtodYtIpUEqwQLw5EVTZErZM5no+b/ay9FWELr53xmRSMY+Eq4JlWbg3gtSHk7km+eD95JR/cthwuXEFraHKrH4tr+OOawA+B+iHoOIqk+HKFJ61Ycasmm0QMXxkcbSDDVhLl8z0tGz3xppvXq8x/wzbIFoaaGvGd8vTZu3ZsC39Hp6r8Uewo/y0U8SzJvggkVJhDuwlrY8rOcxS3U0m/eO0TQNCqrh7W2VfmejuBLK5iYHYTLeIQuwc4Dlm9xw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
+ dkim=none; arc=none
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:11e::14)
+ by TYYP286MB1716.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:fe::10) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4713.21; Sun, 21 Nov
+ 2021 15:23:34 +0000
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2]) by TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2%5]) with mapi id 15.20.4713.024; Sun, 21 Nov 2021
+ 15:23:34 +0000
+From:   Oscar Shiang <oscar0225@livemail.tw>
+To:     linux-rt-users@vger.kernel.org
+Cc:     Oscar Shiang <oscar0225@livemail.tw>
+Subject: [PATCH] rt-tests: cyclictest.8: Remove reference to -n in --system in manpage
+Date:   Sun, 21 Nov 2021 23:23:24 +0800
+Message-ID: <TYCP286MB19132EF284A2822EB8C64055A19E9@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
+X-Mailer: git-send-email 2.25.1
+Content-Transfer-Encoding: 7BIT
+Content-Type:   text/plain; charset=US-ASCII
+X-TMN:  [BP/xJSEG184CpMlCr/PyICm1zD3aSzRu]
+X-ClientProxiedBy: HK2PR02CA0160.apcprd02.prod.outlook.com
+ (2603:1096:201:1f::20) To TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ (2603:1096:400:11e::14)
+X-Microsoft-Original-Message-ID: <20211121152324.633657-1-oscar0225@livemail.tw>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:0lSg2JwzH1lKm0v2RwM4/NELr3hi4Ha30a1II/3jff58Yht5SIs
- Gl0adr7GDnHN1zNwYkVZ6LqgCQfYizQLRo500+DNMqjeByACuDmB77od5OnqpULiBfy0GS0
- pyhXqL5oLwQRwnCDl8VRHWXd+GxjvMF4lTp3Pxv9U4ioFJmJyXxKabOlCRAGPMLVPHEv24E
- K87a/MJksWd4Wqa+FmerQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:4iG0Y9G663k=:20/S1t4zfqhKamEzyLnGYQ
- ZyOMkk9iU3NF/omrIDTRzHGBw9F4u/7vk+F6EWQLTJ/1De9BHlWDcd7+UM1LDIZoPdPRcJOSa
- z6xvBBJT98MAYn72cGY23Nq4e9UiqewLemqSszW415ks4h2mxqyLTXXoeREF0jUo6u3xuKyqs
- 2r1sz9UTJsdtyZmnR2YuAAvO6GvwKlBITD6Nj6i6rRm0v45VrxkQhz+eRXz2X1OeGBm+Sh7Ng
- LppT8RO4JuBDCHLXd0XbyW7/x7RPrBK/Q2PGjlyP1/lP9n/c9Z+kdJljn7lxmqFsOWz/rXjqI
- TnkNKk/+e7rWNF8r9d75Kl0a/Xxic07oM98v40/MNgSgJK0WV9X2S8gnMAyenAHZRojdmHqmX
- U9IxXnUT/ycRqTfkVVoWacagZQlJwBs7IAnF1VborBbIuJ+lnZgLlN8qrVxbnIjOsfU3ZBD1i
- y9PNiTOWfTw0riOlAPuhUX2QhKipLja8uA+4TaSUsKZGvXXQLepPyQCq4c6IpepxmeS/T6Ync
- zG2fVe04iz/sEds9wghFSaIEg2ZMurqkVKEG9ku/iYdpyZrQSZL8FJRR+bS1e+DATIIRfiatL
- vQRVzddB66j2J9o+aVnfcYoTs8JdIfdQI3TwEd6pgsC+CfSV4XCcdVITKl0tGb+IErzKRLk6Z
- 5nrRA9udkzidmHriVHMNNsi6irdKTTk8HuBicRKYx7KdJyvh5HXidTBMyhNmmijzKj/kWhOYh
- dAYFYBNRnOYWh/MpGAtS17+wHmD+O72rA4qTYm+rv5VGAtUk8dlj2GMFrv2OV3ZtbnYvcM1fE
- 9RLmk1bfnDoHGkRIiVHqv1E6zY64Vw5ovHdEVkrUyGwn503tWM7+9UQ8CKpWZl3hktwLiaeL5
- kbl+SfZ7UWquXRBwyy//UhI/1pSN/HGJVX4Og6gzz0cAPHNPwjy0uA5TA4Z/VBSzWUw425FoJ
- 4eyMlgHF99HNLGliTL/CMIXbE3PgvlLuyux2JJVxVySfQBPcy0vOKSQtLwCJHIK6JzQacYgis
- nHeKPylDNRo9sBZKU53ssnSpjrstOSS+RiHKKxR5ajbKqswEPVnesWto8xy7Wdj+0LFPfzOrY
- QSpnUArVrWhwaE=
+X-MS-Exchange-MessageSentRepresentingType: 1
+Received: from localhost (140.116.112.80) by HK2PR02CA0160.apcprd02.prod.outlook.com (2603:1096:201:1f::20) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4713.19 via Frontend Transport; Sun, 21 Nov 2021 15:23:33 +0000
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: eb077742-8f66-4ce5-5e48-08d9ad02e1d3
+X-MS-TrafficTypeDiagnostic: TYYP286MB1716:
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: Cfm5rRdnBPh2HGrPM8E2h5bf2zq/BcoqAJrcXmvuNTXFFbEQ3CmIVacXF7OjIwihggU+mj5aY2TIfpjY88LCev3PKqg8GIsY1lh3WWFiuljzLv647ZhEKDqTTQOyL52OkD/CpjsDwa9jQy5pMFy8QhBSq+p8wIOL02XRi9B/+FPDImA+f6uEiw8NODqFBl84en7D/raevcV1e6ui2fbqV8tHWS5jAFQ/mDyyW45csjxIZzPQSBaTmQBZgXbIiejLzGNZhOCvfiiKmVzHidyCGa6DyyLKUcnQqozAmNxUqKk67BmllsM697cYaOVD0CRc09D0g/vpddQVaRIm2s/GICBMooIvFNDyY8HQ91dlcgpyVSW5bhQcXDH2rMtHBML8eU49EMK1qhV4m1NRu4tg/wMX1B+nb7HnUa9aPZXfxIL2swKrsWB4gk/JilSTjm7IBmwa5+nocTA8zibqYr+0n8GjocJ08/buAS796Knb+8xoiwUZdNSryFC2t1W89BMEhpsgcb5uVio/Yw0wqe6Q4hyj6wlEDPtfeLSYOquwb+4lgGBUDqf2XIUsS+eSSAgA9LKfBV8yQ3k5+96u8w0dNg==
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: T9cd7k2Lao1YLGckibYuKsUox5zPN9rELhmvZ6SySlZuA5QK5X5cV5lGHnilbzElcUX+TUO4hfgVjteokIY1jd97WNpy7CDABZfq9qZRjThu8trjyn07m2l+luo5JGTBfAVAxRScm5G/ZF+g/60Q0jevOyLsiz6l+xra3uQ6GCeWEHCLbfvCYcAdxNnVGGqFb8c/H/OBfGhMB5dRa23HGQa3HyrAaZA6LDrfCdUWs0a55p/ilxPYX8N74BhxIkYMbL10BE6DnkY8VNa51aYeBsQ19RxCQ6HPkssvPnorLO584rad0lJDwg7/sxv2lR3eLlcVuFPEe9UASlsRsXjChsiZ6Ew3NuBLANCp1WgGQ8QSEZ1xua5TvHxHZVGtHph/Mj1SJTQDYgylgf3nlV8GCxxc87AlWXoLQghuZurP9G0S5O5Zti0uZQ4k/kI3+8zgxBhLU04QclCdj+5w4CmUCYfGz/YWXVx4rwyKwA8safpyy64JTO8RQrp760zycuF1wON0iQ0IrAX0kL9YvClgYyyuvw3Z3+8o8shQ/Ps3FIdFNpGcr0Xr61ItQuyZd7Qc3WolKCLQS61QEVnPZlbez/t19dNZW0Q1TH2eoEp0SRU89vMHcjsH+bKw6BLW6D0PnA7JXfemPAREUoXXRAr5dRXvs+FySpVhZQD0107QFiO0U8qvYb+I8TZnkQni16LfcEnVfV8Hb8x2DUVMKl3RQQ==
+X-OriginatorOrg: sct-15-20-3174-20-msonline-outlook-18f16.templateTenant
+X-MS-Exchange-CrossTenant-Network-Message-Id: eb077742-8f66-4ce5-5e48-08d9ad02e1d3
+X-MS-Exchange-CrossTenant-AuthSource: TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 21 Nov 2021 15:23:34.1733
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYYP286MB1716
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 2021-11-18 at 17:34 +0100, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the v5.16-rc1-rt2 patch set.
->
-> Changes since v5.16-rc1-rt1:
->
-> =C2=A0 - Redo the delayed deallocation of the task-stack.
->
-> Known issues
-> =C2=A0=C2=A0=C2=A0=C2=A0 - netconsole triggers WARN.
+clock_nanosleep is default now.
+There is no need to use -s with -n.
 
-The below seems to do the trick for netconsole in master.today-rt.
+Signed-off-by: Oscar Shiang <oscar0225@livemail.tw>
+---
+ src/cyclictest/cyclictest.8 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-netpoll: Make it RT friendly
-
-PREEMPT_RT cannot alloc/free memory when not preemptible, making
-zap_completion_queue() disabling preemption across kfree() an
-issue, as well as disabling IRQs asross __netpoll_send_skb(),
-which leads to zap_completion_queue() and our pesky kfree().
-
-We can let rcu_read_lock_bh() provide local exclusion for RT across
-__netpoll_send_skb() (via softirq_ctrl.lock) instead of disabling
-IRQs, and since zap_completion_queue() replaces sd->completion_queue
-with IRQs disabled and makes a private copy, there's no need to
-keep preemption disabled during traversal/freeing, so put_cpu_var()
-before doing so.  Disable a couple warnings for RT, and we're done.
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-=2D--
- net/core/netpoll.c |   23 +++++++++++++++--------
- 1 file changed, 15 insertions(+), 8 deletions(-)
-
-=2D-- a/net/core/netpoll.c
-+++ b/net/core/netpoll.c
-@@ -252,6 +252,7 @@ static void zap_completion_queue(void)
- 		clist =3D sd->completion_queue;
- 		sd->completion_queue =3D NULL;
- 		local_irq_restore(flags);
-+		put_cpu_var(softnet_data);
-
- 		while (clist !=3D NULL) {
- 			struct sk_buff *skb =3D clist;
-@@ -263,9 +264,8 @@ static void zap_completion_queue(void)
- 				__kfree_skb(skb);
- 			}
- 		}
--	}
--
--	put_cpu_var(softnet_data);
-+	} else
-+		put_cpu_var(softnet_data);
- }
-
- static struct sk_buff *find_skb(struct netpoll *np, int len, int reserve)
-@@ -314,7 +314,8 @@ static netdev_tx_t __netpoll_send_skb(st
- 	/* It is up to the caller to keep npinfo alive. */
- 	struct netpoll_info *npinfo;
-
--	lockdep_assert_irqs_disabled();
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		lockdep_assert_irqs_disabled();
-
- 	dev =3D np->dev;
- 	npinfo =3D rcu_dereference_bh(dev->npinfo);
-@@ -350,7 +351,7 @@ static netdev_tx_t __netpoll_send_skb(st
- 			udelay(USEC_PER_POLL);
- 		}
-
--		WARN_ONCE(!irqs_disabled(),
-+		WARN_ONCE(!IS_ENABLED(CONFIG_PREEMPT_RT) && !irqs_disabled(),
- 			"netpoll_send_skb_on_dev(): %s enabled interrupts in poll (%pS)\n",
- 			dev->name, dev->netdev_ops->ndo_start_xmit);
-
-@@ -365,16 +366,22 @@ static netdev_tx_t __netpoll_send_skb(st
-
- netdev_tx_t netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
- {
--	unsigned long flags;
-+	unsigned long __maybe_unused flags;
- 	netdev_tx_t ret;
-
- 	if (unlikely(!np)) {
- 		dev_kfree_skb_irq(skb);
- 		ret =3D NET_XMIT_DROP;
- 	} else {
--		local_irq_save(flags);
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			local_irq_save(flags);
-+		else
-+			rcu_read_lock_bh();
- 		ret =3D __netpoll_send_skb(np, skb);
--		local_irq_restore(flags);
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			local_irq_restore(flags);
-+		else
-+			rcu_read_unlock_bh();
- 	}
- 	return ret;
- }
-
+diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
+index dcae5b8..1cc72e6 100644
+--- a/src/cyclictest/cyclictest.8
++++ b/src/cyclictest/cyclictest.8
+@@ -137,7 +137,7 @@ Check clock resolution, calling clock_gettime() many times. List of lock_gettime
+ align thread wakeups to the next full second and apply the optional offset.
+ .TP
+ .B \-s, \-\-system
+-Use sys_nanosleep and sys_setitimer instead of posix timers. Note, that \-s can only be used with one thread because itimers are per process and not per thread. \-s in combination with \-n uses the nanosleep syscall and is not restricted to one thread.
++Use sys_nanosleep and sys_setitimer instead of posix timers. Note, that \-s can only be used with one thread because itimers are per process and not per thread. \-s uses the nanosleep syscall and is not restricted to one thread.
+ .TP
+ .B \\-S, \-\-smp
+ Set options for standard testing on SMP systems. Equivalent to using
+-- 
+2.25.1
 
