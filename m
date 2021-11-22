@@ -2,28 +2,28 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C378C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Nov 2021 20:39:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 94565C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Nov 2021 20:39:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239204AbhKVUmQ (ORCPT
+        id S239598AbhKVUmR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 22 Nov 2021 15:42:16 -0500
-Received: from mail.kernel.org ([198.145.29.99]:48170 "EHLO mail.kernel.org"
+        Mon, 22 Nov 2021 15:42:17 -0500
+Received: from mail.kernel.org ([198.145.29.99]:48096 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231978AbhKVUmP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S233268AbhKVUmP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Mon, 22 Nov 2021 15:42:15 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DEC2960FD8;
+        by mail.kernel.org (Postfix) with ESMTPSA id 7F44F60F6E;
         Mon, 22 Nov 2021 20:39:04 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.95)
         (envelope-from <rostedt@goodmis.org>)
-        id 1mpG5g-001r2U-0x;
-        Mon, 22 Nov 2021 15:39:04 -0500
-Message-ID: <20211122203903.858719209@goodmis.org>
+        id 1mpG5f-001r1O-Kp;
+        Mon, 22 Nov 2021 15:39:03 -0500
+Message-ID: <20211122203903.476753856@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Mon, 22 Nov 2021 15:38:50 -0500
+Date:   Mon, 22 Nov 2021 15:38:48 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -33,8 +33,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
-        stable-rt@vger.kernel.org
-Subject: [PATCH RT 03/10] sched: Switch wait_task_inactive to HRTIMER_MODE_REL_HARD
+        stable-rt@vger.kernel.org, Mike Galbraith <efault@gmx.de>
+Subject: [PATCH RT 01/10] mm, zsmalloc: Convert zsmalloc_handle.lock to spinlock_t
 References: <20211122203847.390551309@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -47,45 +47,79 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 
-With PREEMPT_RT enabled all hrtimers callbacks will be invoked in
-softirq mode unless they are explicitly marked as HRTIMER_MODE_HARD.
-During boot kthread_bind() is used for the creation of per-CPU threads
-and then hangs in wait_task_inactive() if the ksoftirqd is not
-yet up and running.
-The hang disappeared since commit
-   26c7295be0c5e ("kthread: Do not preempt current task if it is going to call schedule()")
+local_lock_t becoming a synonym of spinlock_t had consequences for the RT
+mods to zsmalloc, which were taking a mutex while holding a local_lock,
+inspiring a lockdep "BUG: Invalid wait context" gripe.
 
-but enabling function trace on boot reliably leads to the freeze on boot
-behaviour again.
-The timer in wait_task_inactive() can not be directly used by an user
-interface to abuse it and create a mass wake of several tasks at the
-same time which would to long sections with disabled interrupts.
-Therefore it is safe to make the timer HRTIMER_MODE_REL_HARD.
-
-Switch the timer to HRTIMER_MODE_REL_HARD.
+Converting zsmalloc_handle.lock to a spinlock_t restored lockdep silence.
 
 Cc: stable-rt@vger.kernel.org
-Link: https://lkml.kernel.org/r/20210826170408.vm7rlj7odslshwch@linutronix.de
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ mm/zsmalloc.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f638d9420553..54fa3bb1b7c4 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2734,7 +2734,7 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
- 			ktime_t to = NSEC_PER_SEC / HZ;
+diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
+index 277d426c881f..3595c1644135 100644
+--- a/mm/zsmalloc.c
++++ b/mm/zsmalloc.c
+@@ -82,7 +82,7 @@
  
- 			set_current_state(TASK_UNINTERRUPTIBLE);
--			schedule_hrtimeout(&to, HRTIMER_MODE_REL);
-+			schedule_hrtimeout(&to, HRTIMER_MODE_REL_HARD);
- 			continue;
- 		}
+ struct zsmalloc_handle {
+ 	unsigned long addr;
+-	struct mutex lock;
++	spinlock_t lock;
+ };
  
+ #define ZS_HANDLE_ALLOC_SIZE (sizeof(struct zsmalloc_handle))
+@@ -370,7 +370,7 @@ static unsigned long cache_alloc_handle(struct zs_pool *pool, gfp_t gfp)
+ 	if (p) {
+ 		struct zsmalloc_handle *zh = p;
+ 
+-		mutex_init(&zh->lock);
++		spin_lock_init(&zh->lock);
+ 	}
+ #endif
+ 	return (unsigned long)p;
+@@ -930,7 +930,7 @@ static inline int testpin_tag(unsigned long handle)
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
+ 
+-	return mutex_is_locked(&zh->lock);
++	return spin_is_locked(&zh->lock);
+ #else
+ 	return bit_spin_is_locked(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+@@ -941,7 +941,7 @@ static inline int trypin_tag(unsigned long handle)
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
+ 
+-	return mutex_trylock(&zh->lock);
++	return spin_trylock(&zh->lock);
+ #else
+ 	return bit_spin_trylock(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+@@ -952,7 +952,7 @@ static void pin_tag(unsigned long handle) __acquires(bitlock)
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
+ 
+-	return mutex_lock(&zh->lock);
++	return spin_lock(&zh->lock);
+ #else
+ 	bit_spin_lock(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
+@@ -963,7 +963,7 @@ static void unpin_tag(unsigned long handle) __releases(bitlock)
+ #ifdef CONFIG_PREEMPT_RT
+ 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
+ 
+-	return mutex_unlock(&zh->lock);
++	return spin_unlock(&zh->lock);
+ #else
+ 	bit_spin_unlock(HANDLE_PIN_BIT, (unsigned long *)handle);
+ #endif
 -- 
 2.33.0
