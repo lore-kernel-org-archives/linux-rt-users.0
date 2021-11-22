@@ -2,102 +2,90 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C368C433FE
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Nov 2021 20:33:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8C378C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Nov 2021 20:39:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232592AbhKVUgE (ORCPT
+        id S239204AbhKVUmQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 22 Nov 2021 15:36:04 -0500
-Received: from mail.kernel.org ([198.145.29.99]:43908 "EHLO mail.kernel.org"
+        Mon, 22 Nov 2021 15:42:16 -0500
+Received: from mail.kernel.org ([198.145.29.99]:48170 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S231739AbhKVUgD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 Nov 2021 15:36:03 -0500
+        id S231978AbhKVUmP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 22 Nov 2021 15:42:15 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E3B0260FBF;
-        Mon, 22 Nov 2021 20:32:55 +0000 (UTC)
-Date:   Mon, 22 Nov 2021 15:32:54 -0500
+        by mail.kernel.org (Postfix) with ESMTPSA id DEC2960FD8;
+        Mon, 22 Nov 2021 20:39:04 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.95)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1mpG5g-001r2U-0x;
+        Mon, 22 Nov 2021 15:39:04 -0500
+Message-ID: <20211122203903.858719209@goodmis.org>
+User-Agent: quilt/0.66
+Date:   Mon, 22 Nov 2021 15:38:50 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Joe Korty <joe.korty@concurrent-rt.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        Jun Miao <jun.miao@windriver.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 5.10-rt+] drm/i915/gt: transform irq_disable into
- local_lock.
-Message-ID: <20211122153254.1f10e34a@gandalf.local.home>
-In-Reply-To: <20211122195048.GB6166@zipoli.concurrent-rt.com>
-References: <20211007165928.GA43890@zipoli.concurrent-rt.com>
-        <20211007171929.hegwwqelf46skjyw@linutronix.de>
-        <20211009164908.GA21269@zipoli.concurrent-rt.com>
-        <20211116152534.122f8357@gandalf.local.home>
-        <20211116210249.t3f6gw56iaow57mq@linutronix.de>
-        <20211116163924.5d5a2ffd@gandalf.local.home>
-        <20211122195048.GB6166@zipoli.concurrent-rt.com>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+To:     linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        stable-rt@vger.kernel.org
+Subject: [PATCH RT 03/10] sched: Switch wait_task_inactive to HRTIMER_MODE_REL_HARD
+References: <20211122203847.390551309@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 22 Nov 2021 14:50:48 -0500
-Joe Korty <joe.korty@concurrent-rt.com> wrote:
+5.10.78-rt56-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
-> On Tue, Nov 16, 2021 at 04:39:24PM -0500, Steven Rostedt wrote:
-> > On Tue, 16 Nov 2021 22:02:49 +0100
-> > Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> >   
-> > > On 2021-11-16 15:25:34 [-0500], Steven Rostedt wrote:  
-> > > > I'm looking to see what needs to be added to 5.10-rt. Is there a particular
-> > > > fix in one of the 5.x-rt trees (x > 10) that I can pull from? Or is this
-> > > > only an issue with 5.10 and below?    
-> > > 
-> > > I have this:
-> > >   https://lore.kernel.org/all/20211026114100.2593433-1-bigeasy@linutronix.de
-> > > 
-> > > pending vs upstream and I *think* more than just that one (2/9 from the
-> > > series) needs to be backported here. We do have 1/9 differently in 5.10,
-> > > not sure about 4/9.
-> > > I would love more feedback here from people and I tried to motivate Joe
-> > > to provide some. Clark was so nice to test these patches and provide
-> > > feedback. My i915 does not trigger all the code paths I'm touching
-> > > there.
-> > > 
-> > > If you think that 2/9 is obvious enough, please go ahead. If you start
-> > > touching that irq_work area then you might also want to pick
-> > >   810979682ccc9 ("irq_work: Allow irq_work_sync() to sleep if irq_work() no IRQ support.")
-> > >   b4c6f86ec2f64 ("irq_work: Handle some irq_work in a per-CPU thread on PREEMPT_RT")
-> > >   09089db79859c ("irq_work: Also rcuwait for !IRQ_WORK_HARD_IRQ on PREEMPT_RT")
-> > > 
-> > > which made their way into v5.16-rc1.
-> > >  
-> > 
-> > I have a few boxes with i915, that maybe could help in testing.
-> > 
-> > I'll take a look.
-> > 
-> > -- Steve  
-> 
-> Hi Steve, Sebastian,
-> I was on a no-Internet no-News vacation for the past week,
-> that is why I haven't responded.  Sorry.  In any case my
-> test stand suddenly started working, for no reason that I
-> can see, and so, for now, I have not been able to continue
-> my testing.
-> 
-> I will keep poking at it from time to time, see if I can
-> get the issue to come back.
->
+------------------
 
-I just finished testing 5.10-rt-rc2 with Sebastian's patch 2/9. I'll post
-the new rc of it and then release it.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Thanks,
+With PREEMPT_RT enabled all hrtimers callbacks will be invoked in
+softirq mode unless they are explicitly marked as HRTIMER_MODE_HARD.
+During boot kthread_bind() is used for the creation of per-CPU threads
+and then hangs in wait_task_inactive() if the ksoftirqd is not
+yet up and running.
+The hang disappeared since commit
+   26c7295be0c5e ("kthread: Do not preempt current task if it is going to call schedule()")
 
--- Steve
+but enabling function trace on boot reliably leads to the freeze on boot
+behaviour again.
+The timer in wait_task_inactive() can not be directly used by an user
+interface to abuse it and create a mass wake of several tasks at the
+same time which would to long sections with disabled interrupts.
+Therefore it is safe to make the timer HRTIMER_MODE_REL_HARD.
 
+Switch the timer to HRTIMER_MODE_REL_HARD.
+
+Cc: stable-rt@vger.kernel.org
+Link: https://lkml.kernel.org/r/20210826170408.vm7rlj7odslshwch@linutronix.de
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index f638d9420553..54fa3bb1b7c4 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2734,7 +2734,7 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
+ 			ktime_t to = NSEC_PER_SEC / HZ;
+ 
+ 			set_current_state(TASK_UNINTERRUPTIBLE);
+-			schedule_hrtimeout(&to, HRTIMER_MODE_REL);
++			schedule_hrtimeout(&to, HRTIMER_MODE_REL_HARD);
+ 			continue;
+ 		}
+ 
+-- 
+2.33.0
