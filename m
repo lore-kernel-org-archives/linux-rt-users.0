@@ -2,28 +2,28 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BEB27C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Nov 2021 18:03:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 68F78C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Nov 2021 18:03:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1350367AbhKXSGv (ORCPT
+        id S1350453AbhKXSGx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 24 Nov 2021 13:06:51 -0500
-Received: from mail.kernel.org ([198.145.29.99]:56412 "EHLO mail.kernel.org"
+        Wed, 24 Nov 2021 13:06:53 -0500
+Received: from mail.kernel.org ([198.145.29.99]:56362 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1350266AbhKXSGj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 24 Nov 2021 13:06:39 -0500
+        id S1350102AbhKXSGi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 24 Nov 2021 13:06:38 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 243BC61057;
-        Wed, 24 Nov 2021 18:03:29 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 931A96104F;
+        Wed, 24 Nov 2021 18:03:28 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.95)
         (envelope-from <rostedt@goodmis.org>)
-        id 1mpwcC-0027wb-9G;
-        Wed, 24 Nov 2021 13:03:28 -0500
-Message-ID: <20211124180328.118994745@goodmis.org>
+        id 1mpwcB-0027uu-NR;
+        Wed, 24 Nov 2021 13:03:27 -0500
+Message-ID: <20211124180327.553861475@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Wed, 24 Nov 2021 13:03:14 -0500
+Date:   Wed, 24 Nov 2021 13:03:11 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -32,9 +32,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
-        "Peter Zijlstra (Intel)" <peterz@infradead.org>
-Subject: [PATCH RT 11/13] irq_work: Handle some irq_work in a per-CPU thread on PREEMPT_RT
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [PATCH RT 08/13] locking: Drop might_resched() from might_sleep_no_state_check()
 References: <20211124180303.574562279@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -49,302 +48,35 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The irq_work callback is invoked in hard IRQ context. By default all
-callbacks are scheduled for invocation right away (given supported by
-the architecture) except for the ones marked IRQ_WORK_LAZY which are
-delayed until the next timer-tick.
+might_sleep_no_state_check() serves the same purpose as might_sleep()
+except it is used before sleeping locks are acquired and therefore does
+not check task_struct::state because the state is preserved.
 
-While looking over the callbacks, some of them may acquire locks
-(spinlock_t, rwlock_t) which are transformed into sleeping locks on
-PREEMPT_RT and must not be acquired in hard IRQ context.
-Changing the locks into locks which could be acquired in this context
-will lead to other problems such as increased latencies if everything
-in the chain has IRQ-off locks. This will not solve all the issues as
-one callback has been noticed which invoked kref_put() and its callback
-invokes kfree() and this can not be invoked in hardirq context.
+That state is preserved in the locking slow path so we must not schedule
+at the begin of the locking function because the state will be lost and
+not preserved at that time.
 
-Some callbacks are required to be invoked in hardirq context even on
-PREEMPT_RT to work properly. This includes for instance the NO_HZ
-callback which needs to be able to observe the idle context.
-
-The callbacks which require to be run in hardirq have already been
-marked. Use this information to split the callbacks onto the two lists
-on PREEMPT_RT:
-- lazy_list
-  Work items which are not marked with IRQ_WORK_HARD_IRQ will be added
-  to this list. Callbacks on this list will be invoked from a per-CPU
-  thread.
-  The handler here may acquire sleeping locks such as spinlock_t and
-  invoke kfree().
-
-- raised_list
-  Work items which are marked with IRQ_WORK_HARD_IRQ will be added to
-  this list. They will be invoked in hardirq context and must not
-  acquire any sleeping locks.
-
-The wake up of the per-CPU thread occurs from irq_work handler/
-hardirq context. The thread runs with lowest RT priority to ensure it
-runs before any SCHED_OTHER tasks do.
-
-[bigeasy: melt tglx's irq_work_tick_soft() which splits irq_work_tick() into a
-	  hard and soft variant. Collected fixes over time from Steven
-	  Rostedt and Mike Galbraith. Move to per-CPU threads instead of
-	  softirq as suggested by PeterZ.]
+Remove might_resched() from might_sleep_no_state_check() to avoid losing the
+state before it is preserved.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Link: https://lkml.kernel.org/r/20211007092646.uhshe3ut2wkrcfzv@linutronix.de
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/irq_work.h |  16 +++--
- kernel/irq_work.c        | 131 ++++++++++++++++++++++++++++-----------
- kernel/time/timer.c      |   2 -
- 3 files changed, 106 insertions(+), 43 deletions(-)
+ include/linux/kernel.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/irq_work.h b/include/linux/irq_work.h
-index 3c6d3a96bca0..f551ba9c99d4 100644
---- a/include/linux/irq_work.h
-+++ b/include/linux/irq_work.h
-@@ -40,6 +40,16 @@ void init_irq_work(struct irq_work *work, void (*func)(struct irq_work *))
- 		.irqwait = __RCUWAIT_INITIALIZER(irqwait),	\
- }
+diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+index 2cff7554395d..6eb0ab994f4c 100644
+--- a/include/linux/kernel.h
++++ b/include/linux/kernel.h
+@@ -222,7 +222,7 @@ extern void __cant_migrate(const char *file, int line);
+ 	do { __might_sleep(__FILE__, __LINE__, 0); might_resched(); } while (0)
  
-+#define __IRQ_WORK_INIT(_func, _flags) (struct irq_work){	\
-+	.flags = ATOMIC_INIT(_flags),				\
-+	.func = (_func),					\
-+	.irqwait = __RCUWAIT_INITIALIZER(irqwait),		\
-+}
-+
-+#define IRQ_WORK_INIT(_func) __IRQ_WORK_INIT(_func, 0)
-+#define IRQ_WORK_INIT_LAZY(_func) __IRQ_WORK_INIT(_func, IRQ_WORK_LAZY)
-+#define IRQ_WORK_INIT_HARD(_func) __IRQ_WORK_INIT(_func, IRQ_WORK_HARD_IRQ)
-+
- static inline bool irq_work_is_busy(struct irq_work *work)
- {
- 	return atomic_read(&work->flags) & IRQ_WORK_BUSY;
-@@ -63,10 +73,4 @@ static inline void irq_work_run(void) { }
- static inline void irq_work_single(void *arg) { }
- #endif
+ # define might_sleep_no_state_check() \
+-	do { ___might_sleep(__FILE__, __LINE__, 0); might_resched(); } while (0)
++	do { ___might_sleep(__FILE__, __LINE__, 0); } while (0)
  
--#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT)
--void irq_work_tick_soft(void);
--#else
--static inline void irq_work_tick_soft(void) { }
--#endif
--
- #endif /* _LINUX_IRQ_WORK_H */
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index 8969aff790e2..03d09d779ee1 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -18,12 +18,37 @@
- #include <linux/cpu.h>
- #include <linux/notifier.h>
- #include <linux/smp.h>
-+#include <linux/smpboot.h>
- #include <linux/interrupt.h>
- #include <asm/processor.h>
- 
- 
- static DEFINE_PER_CPU(struct llist_head, raised_list);
- static DEFINE_PER_CPU(struct llist_head, lazy_list);
-+static DEFINE_PER_CPU(struct task_struct *, irq_workd);
-+
-+static void wake_irq_workd(void)
-+{
-+	struct task_struct *tsk = __this_cpu_read(irq_workd);
-+
-+	if (!llist_empty(this_cpu_ptr(&lazy_list)) && tsk)
-+		wake_up_process(tsk);
-+}
-+
-+#ifdef CONFIG_SMP
-+static void irq_work_wake(struct irq_work *entry)
-+{
-+	wake_irq_workd();
-+}
-+
-+static DEFINE_PER_CPU(struct irq_work, irq_work_wakeup) =
-+	IRQ_WORK_INIT_HARD(irq_work_wake);
-+#endif
-+
-+static int irq_workd_should_run(unsigned int cpu)
-+{
-+	return !llist_empty(this_cpu_ptr(&lazy_list));
-+}
- 
- /*
-  * Claim the entry so that no one else will poke at it.
-@@ -54,20 +79,28 @@ void __weak arch_irq_work_raise(void)
- static void __irq_work_queue_local(struct irq_work *work)
- {
- 	struct llist_head *list;
--	bool lazy_work, realtime = IS_ENABLED(CONFIG_PREEMPT_RT);
--
--	lazy_work = atomic_read(&work->flags) & IRQ_WORK_LAZY;
--
--	/* If the work is "lazy", handle it from next tick if any */
--	if (lazy_work || (realtime && !(atomic_read(&work->flags) & IRQ_WORK_HARD_IRQ)))
-+	bool rt_lazy_work = false;
-+	bool lazy_work = false;
-+	int work_flags;
-+
-+	work_flags = atomic_read(&work->flags);
-+	if (work_flags & IRQ_WORK_LAZY)
-+		lazy_work = true;
-+	else if (IS_ENABLED(CONFIG_PREEMPT_RT) &&
-+		 !(work_flags & IRQ_WORK_HARD_IRQ))
-+		rt_lazy_work = true;
-+
-+	if (lazy_work || rt_lazy_work)
- 		list = this_cpu_ptr(&lazy_list);
- 	else
- 		list = this_cpu_ptr(&raised_list);
- 
--	if (llist_add(&work->llnode, list)) {
--		if (!lazy_work || tick_nohz_tick_stopped())
--			arch_irq_work_raise();
--	}
-+	if (!llist_add(&work->llnode, list))
-+		return;
-+
-+	/* If the work is "lazy", handle it from next tick if any */
-+	if (!lazy_work || tick_nohz_tick_stopped())
-+		arch_irq_work_raise();
- }
- 
- /* Enqueue the irq work @work on the current CPU */
-@@ -110,15 +143,27 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
- 		/* Arch remote IPI send/receive backend aren't NMI safe */
- 		WARN_ON_ONCE(in_nmi());
- 
--		if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(atomic_read(&work->flags) & IRQ_WORK_HARD_IRQ)) {
--			if (llist_add(&work->llnode, &per_cpu(lazy_list, cpu)))
--				arch_send_call_function_single_ipi(cpu);
--		} else {
--			__smp_call_single_queue(cpu, &work->llnode);
-+		/*
-+		 * On PREEMPT_RT the items which are not marked as
-+		 * IRQ_WORK_HARD_IRQ are added to the lazy list and a HARD work
-+		 * item is used on the remote CPU to wake the thread.
-+		 */
-+		if (IS_ENABLED(CONFIG_PREEMPT_RT) &&
-+		    !(atomic_read(&work->flags) & IRQ_WORK_HARD_IRQ)) {
-+
-+			if (!llist_add(&work->llnode, &per_cpu(lazy_list, cpu)))
-+				goto out;
-+
-+			work = &per_cpu(irq_work_wakeup, cpu);
-+			if (!irq_work_claim(work))
-+				goto out;
- 		}
-+
-+		__smp_call_single_queue(cpu, &work->llnode);
- 	} else {
- 		__irq_work_queue_local(work);
- 	}
-+out:
- 	preempt_enable();
- 
- 	return true;
-@@ -175,12 +220,13 @@ static void irq_work_run_list(struct llist_head *list)
- 	struct irq_work *work, *tmp;
- 	struct llist_node *llnode;
- 
--#ifndef CONFIG_PREEMPT_RT
- 	/*
--	 * nort: On RT IRQ-work may run in SOFTIRQ context.
-+	 * On PREEMPT_RT IRQ-work which is not marked as HARD will be processed
-+	 * in a per-CPU thread in preemptible context. Only the items which are
-+	 * marked as IRQ_WORK_HARD_IRQ will be processed in hardirq context.
- 	 */
--	BUG_ON(!irqs_disabled());
--#endif
-+	BUG_ON(!irqs_disabled() && !IS_ENABLED(CONFIG_PREEMPT_RT));
-+
- 	if (llist_empty(list))
- 		return;
- 
-@@ -196,16 +242,10 @@ static void irq_work_run_list(struct llist_head *list)
- void irq_work_run(void)
- {
- 	irq_work_run_list(this_cpu_ptr(&raised_list));
--	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
--		/*
--		 * NOTE: we raise softirq via IPI for safety,
--		 * and execute in irq_work_tick() to move the
--		 * overhead from hard to soft irq context.
--		 */
--		if (!llist_empty(this_cpu_ptr(&lazy_list)))
--			raise_softirq(TIMER_SOFTIRQ);
--	} else
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		irq_work_run_list(this_cpu_ptr(&lazy_list));
-+	else
-+		wake_irq_workd();
- }
- EXPORT_SYMBOL_GPL(irq_work_run);
- 
-@@ -218,15 +258,10 @@ void irq_work_tick(void)
- 
- 	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		irq_work_run_list(this_cpu_ptr(&lazy_list));
-+	else
-+		wake_irq_workd();
- }
- 
--#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT)
--void irq_work_tick_soft(void)
--{
--	irq_work_run_list(this_cpu_ptr(&lazy_list));
--}
--#endif
--
- /*
-  * Synchronize against the irq_work @entry, ensures the entry is not
-  * currently in use.
-@@ -246,3 +281,29 @@ void irq_work_sync(struct irq_work *work)
- 		cpu_relax();
- }
- EXPORT_SYMBOL_GPL(irq_work_sync);
-+
-+static void run_irq_workd(unsigned int cpu)
-+{
-+	irq_work_run_list(this_cpu_ptr(&lazy_list));
-+}
-+
-+static void irq_workd_setup(unsigned int cpu)
-+{
-+	sched_set_fifo_low(current);
-+}
-+
-+static struct smp_hotplug_thread irqwork_threads = {
-+	.store                  = &irq_workd,
-+	.setup			= irq_workd_setup,
-+	.thread_should_run      = irq_workd_should_run,
-+	.thread_fn              = run_irq_workd,
-+	.thread_comm            = "irq_work/%u",
-+};
-+
-+static __init int irq_work_init_threads(void)
-+{
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-+		BUG_ON(smpboot_register_percpu_thread(&irqwork_threads));
-+	return 0;
-+}
-+early_initcall(irq_work_init_threads);
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index af3daf03c917..cd67ee6d2634 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1767,8 +1767,6 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
- {
- 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
- 
--	irq_work_tick_soft();
--
- 	__run_timers(base);
- 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
- 		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
+ /**
+  * cant_sleep - annotation for functions that cannot sleep
 -- 
 2.33.0
