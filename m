@@ -2,94 +2,143 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E4680C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Nov 2021 21:02:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B12DC433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 24 Nov 2021 21:28:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344604AbhKXVFV (ORCPT
+        id S244503AbhKXVba (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 24 Nov 2021 16:05:21 -0500
-Received: from mwsmtp02oc.mail2world.com ([74.202.142.133]:55625 "EHLO
-        mwsmtp02oc.m2wprod.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1351725AbhKXVFN (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 24 Nov 2021 16:05:13 -0500
-X-Greylist: delayed 1021 seconds by postgrey-1.27 at vger.kernel.org; Wed, 24 Nov 2021 16:05:13 EST
-Received: from mail pickup service by mwsmtp02oc.m2wprod.com with Microsoft SMTPSVC;
-         Wed, 24 Nov 2021 12:47:00 -0800
-Received: from mail pickup service by mwsmtp02oc.mail2world.com with Microsoft SMTPSVC;
-         Wed, 24 Nov 2021 12:46:58 -0800
-auth-sender: gheskett@shentel.net
-Received: from 204.111.64.149 unverified ([204.111.64.149]) by mwsmtp02oc.mail2world.com with Mail2World SMTP Server; 
-        Wed, 24 Nov 2021 12:46:58 -0800
-From:   Gene Heskett <gheskett@shentel.net>
-Organization: none,nada,zip
-To:     linux-rt-users@vger.kernel.org
-Subject: Re: [ANNOUNCE] 5.4.161-rt66
-Date:   Wed, 24 Nov 2021 15:44:58 -0500
-User-Agent: KMail/1.9.10
-References: <5653da59c25a12ec2bb1cac0957571daa0d86e76.camel@kernel.org>
-In-Reply-To: <5653da59c25a12ec2bb1cac0957571daa0d86e76.camel@kernel.org>
-X-KMail-QuotePrefix: > 
+        Wed, 24 Nov 2021 16:31:30 -0500
+Received: from mail.kernel.org ([198.145.29.99]:44570 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S232874AbhKXVb1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 24 Nov 2021 16:31:27 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5CFCE61039;
+        Wed, 24 Nov 2021 21:28:16 +0000 (UTC)
+Date:   Wed, 24 Nov 2021 16:28:14 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Daniel Bristot de Oliveira <bristot@kernel.org>
+Cc:     Tao Zhou <tao.zhou@linux.dev>, Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH V7 01/14] rtla: Real-Time Linux Analysis tool
+Message-ID: <20211124162814.352ad8fd@gandalf.local.home>
+In-Reply-To: <7c776914f3316cf6b5c21ec01b1e4eae497bb510.1635535309.git.bristot@kernel.org>
+References: <cover.1635535309.git.bristot@kernel.org>
+        <7c776914f3316cf6b5c21ec01b1e4eae497bb510.1635535309.git.bristot@kernel.org>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-Message-Id: <202111241544.58834.gheskett@shentel.net>
-X-CTCH-Spam: Unknown
-X-CTCH-RefID: str=0001.0A702F24.619EA44C.0006,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-X-OriginalArrivalTime: 24 Nov 2021 20:46:58.0482 (UTC) FILETIME=[6C941920:01D7E174]
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tuesday 23 November 2021 11:12:42 Tom Zanussi wrote:
+On Fri, 29 Oct 2021 21:26:04 +0200
+Daniel Bristot de Oliveira <bristot@kernel.org> wrote:
 
-> Hello RT Folks!
->
-> I'm pleased to announce the 5.4.161-rt66 stable release.
->
-> This release is just an update to the new stable 5.4.161
-> version and no RT specific changes have been made.
->
-> You can get this release via the git tree at:
->
->   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
->
-Took about an hour to git clone this
-copied a 4.19 preempt-rt .config into its tree, did a make oldconfig 
-taking 99% of the defaults getting rid of some obviously not rpi stuffs.
+> The rtla is a meta-tool that includes a set of commands that aims
+> to analyze the real-time properties of Linux. But instead of testing
+> Linux as a black box, rtla leverages kernel tracing capabilities to
+> provide precise information about the properties and root causes of
+> unexpected results.
+> 
+> rtla --help works and provide information about the available options.
+> 
+> This is just the "main" and the Makefile, no function yet.
+> 
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Tom Zanussi <zanussi@kernel.org>
+> Cc: Masami Hiramatsu <mhiramat@kernel.org>
+> Cc: Juri Lelli <juri.lelli@redhat.com>
+> Cc: Clark Williams <williams@redhat.com>
+> Cc: John Kacur <jkacur@redhat.com>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Cc: Daniel Bristot de Oliveira <bristot@kernel.org>
+> Cc: linux-rt-users@vger.kernel.org
+> Cc: linux-trace-devel@vger.kernel.org
+> Cc: linux-kernel@vger.kernel.org
+> Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
+> ---
+>  tools/tracing/rtla/Makefile   | 76 +++++++++++++++++++++++++++++++++++
+>  tools/tracing/rtla/src/rtla.c | 72 +++++++++++++++++++++++++++++++++
+>  2 files changed, 148 insertions(+)
+>  create mode 100644 tools/tracing/rtla/Makefile
+>  create mode 100644 tools/tracing/rtla/src/rtla.c
+> 
+> diff --git a/tools/tracing/rtla/Makefile b/tools/tracing/rtla/Makefile
+> new file mode 100644
+> index 000000000000..33f154f86519
+> --- /dev/null
+> +++ b/tools/tracing/rtla/Makefile
+> @@ -0,0 +1,76 @@
+> +NAME	:=	rtla
+> +VERSION	:=	0.3
+> +
+> +# From libtracefs:
+> +# Makefiles suck: This macro sets a default value of $(2) for the
+> +# variable named by $(1), unless the variable has been set by
+> +# environment or command line. This is necessary for CC and AR
+> +# because make sets default values, so the simpler ?= approach
+> +# won't work as expected.
+> +define allow-override
+> +  $(if $(or $(findstring environment,$(origin $(1))),\
+> +            $(findstring command line,$(origin $(1)))),,\
+> +    $(eval $(1) = $(2)))
+> +endef
+> +
+> +# Allow setting CC and AR, or setting CROSS_COMPILE as a prefix.
+> +$(call allow-override,CC,$(CROSS_COMPILE)gcc)
+> +$(call allow-override,AR,$(CROSS_COMPILE)ar)
+> +$(call allow-override,STRIP,$(CROSS_COMPILE)strip)
+> +$(call allow-override,PKG_CONFIG,pkg-config)
+> +$(call allow-override,LD_SO_CONF_PATH,/etc/ld.so.conf.d/)
+> +$(call allow-override,LDCONFIG,ldconfig)
+> +
+> +INSTALL	=	install
+> +FOPTS	:=	-flto=auto -ffat-lto-objects -fexceptions -fstack-protector-strong \
+> +		-fasynchronous-unwind-tables -fstack-clash-protection
+> +WOPTS	:= 	-Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -Wno-maybe-uninitialized
+> +
+> +TRACEFS_HEADERS	:= $$($(PKG_CONFIG) --cflags libtracefs)
+> +
+> +CFLAGS	:=	-O -g -DVERSION=\"$(VERSION)\" $(FOPTS) $(MOPTS) $(WOPTS) $(TRACEFS_HEADERS)
+> +LDFLAGS	:=	-ggdb
+> +LIBS	:=	-ltracefs -ltraceevent -lprocps
 
-make exits in a few seconds, reporting:
-In file included from include/linux/compiler.h:48,
-                 from include/linux/stddef.h:4,
-                 from include/linux/posix_types.h:4,
-                 from include/linux/types.h:17,
-                 from include/linux/page-flags.h:8,
-                 from kernel/bounds.c:9:
-include/linux/compiler-gcc.h:94:1: fatal error: linux/compiler-gcc8.h: No 
-such file or directory
- #include gcc_header(__GNUC__)
- ^~~~
-compilation terminated.
+For the -ltracefs and -ltracevent, you could use:
 
-did an updatedb, but on a complete, running nicely rpi4b, no such file 
-anyplace. gcc3.h, gcc4.h yes, totally uptodate raspbian buster system, 
-but running this kernel image:
+   $$($PKG_CONFIG) --libs libtracefs)
 
-pi@rpi4:/media/pi/workspace/new-5.4-rt/linux-stable-rt $ uname -a
-Linux rpi4.coyote.den 4.19.71-rt24-v7l+ #1 SMP PREEMPT RT Thu Feb 6 
-07:09:18 EST 2020 armv7l GNU/Linux
+which would be more robust.
 
-fix?
+-- Steve
 
-Thank you.
-
-Cheers, Gene Heskett.
--- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author, 1940)
-If we desire respect for the law, we must first make the law respectable.
- - Louis D. Brandeis
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+> +
+> +SRC	:=	$(wildcard src/*.c)
+> +HDR	:=	$(wildcard src/*.h)
+> +OBJ	:=	$(SRC:.c=.o)
+> +DIRS	:=	src
+> +FILES	:=	Makefile
+> +CEXT	:=	bz2
+> +TARBALL	:=	$(NAME)-$(VERSION).tar.$(CEXT)
+> +TAROPTS	:=	-cvjf $(TARBALL)
+> +BINDIR	:=	/usr/bin
+> +DATADIR	:=	/usr/share
+> +DOCDIR	:=	$(DATADIR)/doc
+> +MANDIR	:=	$(DATADIR)/man
+> +LICDIR	:=	$(DATADIR)/licenses
+> +
