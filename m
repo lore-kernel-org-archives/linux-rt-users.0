@@ -2,35 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B5D8C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Nov 2021 13:44:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AA004C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Nov 2021 13:47:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1350014AbhKYNrl (ORCPT
+        id S1350403AbhKYNuw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 25 Nov 2021 08:47:41 -0500
-Received: from gateway22.websitewelcome.com ([192.185.47.100]:21669 "EHLO
-        gateway22.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1355235AbhKYNpk (ORCPT
+        Thu, 25 Nov 2021 08:50:52 -0500
+Received: from gateway31.websitewelcome.com ([192.185.144.96]:19067 "EHLO
+        gateway31.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1355408AbhKYNsv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 25 Nov 2021 08:45:40 -0500
-Received: from cm16.websitewelcome.com (cm16.websitewelcome.com [100.42.49.19])
-        by gateway22.websitewelcome.com (Postfix) with ESMTP id D3D88729C
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Nov 2021 07:42:26 -0600 (CST)
+        Thu, 25 Nov 2021 08:48:51 -0500
+Received: from cm13.websitewelcome.com (cm13.websitewelcome.com [100.42.49.6])
+        by gateway31.websitewelcome.com (Postfix) with ESMTP id 28EAB125CD
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Nov 2021 07:45:40 -0600 (CST)
 Received: from gator4132.hostgator.com ([192.185.4.144])
         by cmsmtp with SMTP
-        id qF18mHtg3L3b1qF18mZAk5; Thu, 25 Nov 2021 07:42:26 -0600
+        id qF4FmPcGzHrvkqF4GmAWXg; Thu, 25 Nov 2021 07:45:40 -0600
 X-Authority-Reason: nr=8
-Received: from host-79-34-250-122.business.telecomitalia.it ([79.34.250.122]:43160 helo=[10.0.0.34])
+Received: from host-79-34-250-122.business.telecomitalia.it ([79.34.250.122]:43162 helo=[10.0.0.34])
         by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         (Exim 4.94.2)
         (envelope-from <bristot@kernel.org>)
-        id 1mqF17-00375j-GY; Thu, 25 Nov 2021 07:42:25 -0600
-Message-ID: <e9f35eec-0001-5259-1096-53730179229d@kernel.org>
-Date:   Thu, 25 Nov 2021 14:42:17 +0100
+        id 1mqF4E-003AMJ-E5; Thu, 25 Nov 2021 07:45:38 -0600
+Message-ID: <f815794d-bfb6-3e76-3572-3c1cc059c492@kernel.org>
+Date:   Thu, 25 Nov 2021 14:45:30 +0100
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.3.0
-Subject: Re: [PATCH V7 02/14] rtla: Helper functions for rtla
+Subject: Re: [PATCH V7 05/14] rtla/osnoise: Add the hist mode
 Content-Language: en-US
 To:     Steven Rostedt <rostedt@goodmis.org>
 Cc:     Tao Zhou <tao.zhou@linux.dev>, Ingo Molnar <mingo@redhat.com>,
@@ -45,10 +45,11 @@ Cc:     Tao Zhou <tao.zhou@linux.dev>, Ingo Molnar <mingo@redhat.com>,
         linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
         linux-kernel@vger.kernel.org
 References: <cover.1635535309.git.bristot@kernel.org>
- <1eb27af1d8356d17d1f8a69a362da46ae8594ab0.1635535309.git.bristot@kernel.org>
- <20211124163759.6d118d96@gandalf.local.home>
+ <1d9826696a1e8c3584158c0dd570b8b22db708db.1635535309.git.bristot@kernel.org>
+ <20211124171212.537b43c3@gandalf.local.home>
+ <20211124171503.584c8dd2@gandalf.local.home>
 From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <20211124163759.6d118d96@gandalf.local.home>
+In-Reply-To: <20211124171503.584c8dd2@gandalf.local.home>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
@@ -59,104 +60,48 @@ X-AntiAbuse: Sender Address Domain - kernel.org
 X-BWhitelist: no
 X-Source-IP: 79.34.250.122
 X-Source-L: No
-X-Exim-ID: 1mqF17-00375j-GY
+X-Exim-ID: 1mqF4E-003AMJ-E5
 X-Source: 
 X-Source-Args: 
 X-Source-Dir: 
-X-Source-Sender: host-79-34-250-122.business.telecomitalia.it ([10.0.0.34]) [79.34.250.122]:43160
+X-Source-Sender: host-79-34-250-122.business.telecomitalia.it ([10.0.0.34]) [79.34.250.122]:43162
 X-Source-Auth: kernel@bristot.me
-X-Email-Count: 17
+X-Email-Count: 31
 X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
 X-Local-Domain: no
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 11/24/21 22:37, Steven Rostedt wrote:
-> On Fri, 29 Oct 2021 21:26:05 +0200
-> Daniel Bristot de Oliveira <bristot@kernel.org> wrote:
+On 11/24/21 23:15, Steven Rostedt wrote:
+>>> +	/*
+>>> +	 * Set the size of the bucket.
+>>> +	 */
+>>> +	bucket_size = params->output_divisor * params->bucket_size;
+>>> +	snprintf(buff, sizeof(buff), "duration.buckets=%d", bucket_size);
+>>> +
+>>> +	data->trace_hist = tracefs_hist_alloc(tool->trace.tep, "osnoise", "sample_threshold",
+>>> +			buff, TRACEFS_HIST_KEY_NORMAL);  
+>> FYI, we changed the API (haven't tagged it yet, so we can do that :-) and
+>> the above needs to be:
+>>
+>> 	data->trace_hist = tracefs_hist1d_alloc(tool->trace.tep, "osnoise", "sample_threshold",
+> Or do you think that 1d should be the default, and we have:
 > 
->> +/*
->> + * enable_tracer_by_name - enable a tracer on the given instance
->> + */
->> +int enable_tracer_by_name(struct tracefs_instance *inst, const char *tracer)
->> +{
->> +	enum tracefs_tracers t;
->> +	int retval;
->> +
->> +	t = TRACEFS_TRACER_CUSTOM;
->> +
->> +	debug_msg("enabling %s tracer\n", tracer);
->> +
->> +	retval = tracefs_tracer_set(inst, t, tracer);
+> 	tracefs_hist_alloc()	-- 1d histogram
+> 	tracefs_hist_alloc_2d()	-- 2d histogram
+> 	tracefs_hist_alloc_nd()	-- Nd histogram?
 > 
-> Interesting. We had discussions about having the custom option (which I
-> fought for, for this very reason).
-> 
->> +	if (retval < 0) {
->> +		if (errno == ENODEV)
->> +			err_msg("tracer %s not found!\n", tracer);
->> +
->> +		err_msg("failed to enable the tracer %s\n", tracer);
->> +		return -1;
->> +	}
->> +
->> +	return 0;
->> +}
->> +
->> +/*
->> + * disable_tracer - set nop tracer to the insta
->> + */
->> +void disable_tracer(struct tracefs_instance *inst)
->> +{
->> +	enum tracefs_tracers t = TRACEFS_TRACER_NOP;
->> +	int retval;
->> +
->> +	retval = tracefs_tracer_set(inst, t);
->> +	if (retval < 0)
->> +		err_msg("oops, error disabling tracer\n");
->> +}
->> +
->> +/*
->> + * create_instance - create a trace instance with *instance_name
->> + */
->> +struct tracefs_instance *create_instance(char *instance_name)
->> +{
->> +	return tracefs_instance_create(instance_name);
->> +}
->> +
->> +/*
->> + * destroy_instance - remove a trace instance and free the data
->> + */
->> +void destroy_instance(struct tracefs_instance *inst)
->> +{
->> +	tracefs_instance_destroy(inst);
->> +	tracefs_instance_free(inst);
->> +}
->> +
->> +/*
->> + * save_trace_to_file - save the trace output of the instance to the file
->> + */
->> +int save_trace_to_file(struct tracefs_instance *inst, const char *filename)
->> +{
->> +	const char *file = "trace";
->> +	mode_t mode = 0644;
->> +	char *buffer[4096];
-> 
-> Did you really mean to have buffer be 4096 strings?
-> 
-> Or did you mean:
-> 
-> 	char buffer[4096];
+> ??
 
-I should be "char buffer[4096];" I will fix that.
+IMHO, the function names in your second email sound more intuitive, i.e.,
+tracefs_hist_alloc()/tracefs_hist_alloc_2d()/tracefs_hist_alloc_nd().
 
-(The * is probably a left over from the idea of using a malloc(4096)...)
+> We haven't tagged it yet, so we could change it again (and then your code
+> will work as is).
+
+two birds with a single stone :-)
 
 -- Daniel
-
-
-> (i.e. a single string of 4096 size)?
-> 
 > -- Steve
-> 
+
