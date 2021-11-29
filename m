@@ -2,30 +2,30 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 542E4C4332F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Nov 2021 11:11:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BEDD1C433FE
+	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Nov 2021 11:11:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1377161AbhK2LOU convert rfc822-to-8bit (ORCPT
+        id S1377537AbhK2LOc convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 29 Nov 2021 06:14:20 -0500
-Received: from us-smtp-delivery-44.mimecast.com ([207.211.30.44]:43095 "EHLO
+        Mon, 29 Nov 2021 06:14:32 -0500
+Received: from us-smtp-delivery-44.mimecast.com ([207.211.30.44]:27150 "EHLO
         us-smtp-delivery-44.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1377216AbhK2LMO (ORCPT
+        by vger.kernel.org with ESMTP id S245559AbhK2LMW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 29 Nov 2021 06:12:14 -0500
+        Mon, 29 Nov 2021 06:12:22 -0500
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-139-D-CEX8QyOUWPvKvzjR0AWA-1; Mon, 29 Nov 2021 06:08:53 -0500
-X-MC-Unique: D-CEX8QyOUWPvKvzjR0AWA-1
+ us-mta-463-Sti-x8w-MSiLq1SIuS1ojg-1; Mon, 29 Nov 2021 06:09:01 -0500
+X-MC-Unique: Sti-x8w-MSiLq1SIuS1ojg-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 588181054F93;
-        Mon, 29 Nov 2021 11:08:51 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 73D02760CC;
+        Mon, 29 Nov 2021 11:08:59 +0000 (UTC)
 Received: from x1.com (unknown [10.22.8.188])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 8F4035D9DE;
-        Mon, 29 Nov 2021 11:08:42 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 4C3A45D9DE;
+        Mon, 29 Nov 2021 11:08:55 +0000 (UTC)
 From:   Daniel Bristot de Oliveira <bristot@kernel.org>
 To:     Steven Rostedt <rostedt@goodmis.org>
 Cc:     Tao Zhou <tao.zhou@linux.dev>,
@@ -41,9 +41,9 @@ Cc:     Tao Zhou <tao.zhou@linux.dev>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
         linux-kernel@vger.kernel.org
-Subject: [PATCH V8 05/14] rtla/osnoise: Add the hist mode
-Date:   Mon, 29 Nov 2021 12:07:43 +0100
-Message-Id: <9b4da873da5551fb5bc41946b378f9274ec0b91d.1638182284.git.bristot@kernel.org>
+Subject: [PATCH V8 07/14] rtla/timerlat: Add timerlat hist mode
+Date:   Mon, 29 Nov 2021 12:07:45 +0100
+Message-Id: <eb486340cc983bd8f7f69fe6f99f8d2927fcd296.1638182284.git.bristot@kernel.org>
 In-Reply-To: <cover.1638182284.git.bristot@kernel.org>
 References: <cover.1638182284.git.bristot@kernel.org>
 MIME-Version: 1.0
@@ -58,33 +58,35 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The rtla osnoise hist tool collects all osnoise:sample_threshold
-occurrence in a histogram, displaying the results in a user-friendly
-way. The tool also allows many configurations of the osnoise tracer
-and the collection of the tracer output.
+The rtla hist hist mode displays a histogram of each tracer event
+occurrence, both for IRQ and timer latencies. The tool also allows
+many configurations of the timerlat tracer and the collection of
+the tracer output.
 
-Here is one example of the rtla osnoise hist tool output:
+Here is one example of the rtla timerlat hist mode output:
   ---------- %< ----------
- [root@f34 ~]# rtla osnoise hist --bucket-size 10 --entries 100 -c 0-8 -d 1M -r 9000 -P F:1
- # RTLA osnoise histogram
+ [root@alien ~]# rtla timerlat hist -c 0-3 -d 1M
+ # RTLA timerlat histogram
  # Time unit is microseconds (us)
  # Duration:   0 00:01:00
- Index   CPU-000   CPU-001   CPU-002   CPU-003   CPU-004   CPU-005   CPU-006   CPU-007   CPU-008
- 0           430       434       352       455       440       463       467       436       484
- 10           88        88        92       141       120       100       126       166       100
- 20           19         7        12        22         8         8        13        13        16
- 30            6         0         2         0         1         2         2         1         0
- 50            0         0         0         0         0         0         1         0         0
- over:         0         0         0         0         0         0         0         0         0
- count:      543       529       458       618       569       573       609       616       600
- min:          0         0         0         0         0         0         0         0         0
- avg:          0         0         0         0         0         0         0         0         0
- max:         30        20        30        20        30        30        50        30        20
+ Index   IRQ-000   Thr-000   IRQ-001   Thr-001   IRQ-002   Thr-002   IRQ-003   Thr-003
+ 0         58572         0     59373         0     58691         0     58895         0
+ 1          1422     57021       628     57241      1310     56160      1102     56805
+ 2             6      2931         0      2695         0      3567         4      3031
+ 3             1        40         0        53         0       260         0       142
+ 4             0         7         0         5         0         6         0        17
+ 5             0         2         0         5         0         7         0         4
+ 6             0         0         0         2         0         1         0         1
+ 8             0         0         0         0         0         0         0         1
+ over:         0         0         0         0         0         0         0         0
+ count:    60001     60001     60001     60001     60001     60001     60001     60001
+ min:          0         1         0         1         0         1         0         1
+ avg:          0         1         0         1         0         1         0         1
+ max:          3         5         1         6         1         6         2         8
   ---------- >% ----------
 
 Running
- - rtla osnoise hist --help
-
+ - rtla timerlat hist --help
 provides information about the available options.
 
 Cc: Steven Rostedt <rostedt@goodmis.org>
@@ -103,53 +105,52 @@ Cc: linux-trace-devel@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
 ---
- tools/tracing/rtla/src/osnoise.c      |   6 +-
- tools/tracing/rtla/src/osnoise.h      |   1 +
- tools/tracing/rtla/src/osnoise_hist.c | 799 ++++++++++++++++++++++++++
- 3 files changed, 805 insertions(+), 1 deletion(-)
- create mode 100644 tools/tracing/rtla/src/osnoise_hist.c
+ tools/tracing/rtla/src/timerlat.c      |   6 +-
+ tools/tracing/rtla/src/timerlat.h      |   2 +-
+ tools/tracing/rtla/src/timerlat_hist.c | 820 +++++++++++++++++++++++++
+ 3 files changed, 826 insertions(+), 2 deletions(-)
+ create mode 100644 tools/tracing/rtla/src/timerlat_hist.c
 
-diff --git a/tools/tracing/rtla/src/osnoise.c b/tools/tracing/rtla/src/osnoise.c
-index 7ef686dddc09..d8bde8e45710 100644
---- a/tools/tracing/rtla/src/osnoise.c
-+++ b/tools/tracing/rtla/src/osnoise.c
-@@ -970,7 +970,8 @@ static void osnoise_usage(void)
- 		"  usage: [rtla] osnoise [MODE] ...",
+diff --git a/tools/tracing/rtla/src/timerlat.c b/tools/tracing/rtla/src/timerlat.c
+index 29a51c01b084..97abbf494fee 100644
+--- a/tools/tracing/rtla/src/timerlat.c
++++ b/tools/tracing/rtla/src/timerlat.c
+@@ -25,7 +25,8 @@ static void timerlat_usage(void)
+ 		"  usage: [rtla] timerlat [MODE] ...",
  		"",
  		"  modes:",
--		"     top  - prints the summary from osnoise tracer",
-+		"     top   - prints the summary from osnoise tracer",
-+		"     hist  - prints a histogram of osnoise samples",
+-		"     top  - prints the summary from timerlat tracer",
++		"     top   - prints the summary from timerlat tracer",
++		"     hist  - prints a histogram of timer latencies",
  		"",
  		"if no MODE is given, the top mode is called, passing the arguments",
  		NULL,
-@@ -1005,6 +1006,9 @@ int osnoise_main(int argc, char *argv[])
+@@ -60,6 +61,9 @@ int timerlat_main(int argc, char *argv[])
  	} else if (strcmp(argv[1], "top") == 0) {
- 		osnoise_top_main(argc-1, &argv[1]);
+ 		timerlat_top_main(argc-1, &argv[1]);
  		exit(0);
 +	} else if (strcmp(argv[1], "hist") == 0) {
-+		osnoise_hist_main(argc-1, &argv[1]);
++		timerlat_hist_main(argc-1, &argv[1]);
 +		exit(0);
  	}
  
  usage:
-diff --git a/tools/tracing/rtla/src/osnoise.h b/tools/tracing/rtla/src/osnoise.h
-index e3e8f8359d99..f6c9fe05c744 100644
---- a/tools/tracing/rtla/src/osnoise.h
-+++ b/tools/tracing/rtla/src/osnoise.h
-@@ -91,5 +91,6 @@ void osnoise_destroy_tool(struct osnoise_tool *top);
- struct osnoise_tool *osnoise_init_tool(char *tool_name);
- struct osnoise_tool *osnoise_init_trace_tool(char *tracer);
- 
-+int osnoise_hist_main(int argc, char *argv[]);
- int osnoise_top_main(int argc, char **argv);
- int osnoise_main(int argc, char **argv);
-diff --git a/tools/tracing/rtla/src/osnoise_hist.c b/tools/tracing/rtla/src/osnoise_hist.c
+diff --git a/tools/tracing/rtla/src/timerlat.h b/tools/tracing/rtla/src/timerlat.h
+index 6f9d3925acd0..88561bfd14f3 100644
+--- a/tools/tracing/rtla/src/timerlat.h
++++ b/tools/tracing/rtla/src/timerlat.h
+@@ -1,4 +1,4 @@
+ // SPDX-License-Identifier: GPL-2.0
+-
++int timerlat_hist_main(int argc, char *argv[]);
+ int timerlat_top_main(int argc, char *argv[]);
+ int timerlat_main(int argc, char *argv[]);
+diff --git a/tools/tracing/rtla/src/timerlat_hist.c b/tools/tracing/rtla/src/timerlat_hist.c
 new file mode 100644
-index 000000000000..7dadbbbaf496
+index 000000000000..e1660bc61caf
 --- /dev/null
-+++ b/tools/tracing/rtla/src/osnoise_hist.c
-@@ -0,0 +1,799 @@
++++ b/tools/tracing/rtla/src/timerlat_hist.c
+@@ -0,0 +1,820 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2021 Red Hat Inc, Daniel Bristot de Oliveira <bristot@kernel.org>
@@ -160,27 +161,30 @@ index 000000000000..7dadbbbaf496
 +#include <string.h>
 +#include <signal.h>
 +#include <unistd.h>
-+#include <errno.h>
 +#include <stdio.h>
 +#include <time.h>
 +
 +#include "utils.h"
 +#include "osnoise.h"
++#include "timerlat.h"
 +
-+struct osnoise_hist_params {
++struct timerlat_hist_params {
 +	char			*cpus;
 +	char			*monitored_cpus;
 +	char			*trace_output;
 +	unsigned long long	runtime;
-+	unsigned long long	period;
 +	long long		stop_us;
 +	long long		stop_total_us;
++	long long		timerlat_period_us;
++	long long		print_stack;
 +	int			sleep_time;
++	int			output_divisor;
 +	int			duration;
 +	int			set_sched;
-+	int			output_divisor;
 +	struct sched_attr	sched_param;
 +
++	char			no_irq;
++	char			no_thread;
 +	char			no_header;
 +	char			no_summary;
 +	char			no_index;
@@ -189,36 +193,44 @@ index 000000000000..7dadbbbaf496
 +	int			entries;
 +};
 +
-+struct osnoise_hist_cpu {
-+	int			*samples;
-+	int			count;
++struct timerlat_hist_cpu {
++	int			*irq;
++	int			*thread;
 +
-+	unsigned long long	min_sample;
-+	unsigned long long	sum_sample;
-+	unsigned long long	max_sample;
++	int			irq_count;
++	int			thread_count;
 +
++	unsigned long long	min_irq;
++	unsigned long long	sum_irq;
++	unsigned long long	max_irq;
++
++	unsigned long long	min_thread;
++	unsigned long long	sum_thread;
++	unsigned long long	max_thread;
 +};
 +
-+struct osnoise_hist_data {
-+	struct tracefs_hist	*trace_hist;
-+	struct osnoise_hist_cpu	*hist;
-+	int			entries;
-+	int			bucket_size;
-+	int			nr_cpus;
++struct timerlat_hist_data {
++	struct timerlat_hist_cpu	*hist;
++	int				entries;
++	int				bucket_size;
++	int				nr_cpus;
 +};
 +
 +/*
-+ * osnoise_free_histogram - free runtime data
++ * timerlat_free_histogram - free runtime data
 + */
 +static void
-+osnoise_free_histogram(struct osnoise_hist_data *data)
++timerlat_free_histogram(struct timerlat_hist_data *data)
 +{
 +	int cpu;
 +
 +	/* one histogram for IRQ and one for thread, per CPU */
 +	for (cpu = 0; cpu < data->nr_cpus; cpu++) {
-+		if (data->hist[cpu].samples)
-+			free(data->hist[cpu].samples);
++		if (data->hist[cpu].irq)
++			free(data->hist[cpu].irq);
++
++		if (data->hist[cpu].thread)
++			free(data->hist[cpu].thread);
 +	}
 +
 +	/* one set of histograms per CPU */
@@ -229,12 +241,12 @@ index 000000000000..7dadbbbaf496
 +}
 +
 +/*
-+ * osnoise_alloc_histogram - alloc runtime data
++ * timerlat_alloc_histogram - alloc runtime data
 + */
-+static struct osnoise_hist_data
-+*osnoise_alloc_histogram(int nr_cpus, int entries, int bucket_size)
++static struct timerlat_hist_data
++*timerlat_alloc_histogram(int nr_cpus, int entries, int bucket_size)
 +{
-+	struct osnoise_hist_data *data;
++	struct timerlat_hist_data *data;
 +	int cpu;
 +
 +	data = calloc(1, sizeof(*data));
@@ -245,157 +257,103 @@ index 000000000000..7dadbbbaf496
 +	data->bucket_size = bucket_size;
 +	data->nr_cpus = nr_cpus;
 +
++	/* one set of histograms per CPU */
 +	data->hist = calloc(1, sizeof(*data->hist) * nr_cpus);
 +	if (!data->hist)
 +		goto cleanup;
 +
++	/* one histogram for IRQ and one for thread, per cpu */
 +	for (cpu = 0; cpu < nr_cpus; cpu++) {
-+		data->hist[cpu].samples = calloc(1, sizeof(*data->hist->samples) * (entries + 1));
-+		if (!data->hist[cpu].samples)
++		data->hist[cpu].irq = calloc(1, sizeof(*data->hist->irq) * (entries + 1));
++		if (!data->hist[cpu].irq)
++			goto cleanup;
++		data->hist[cpu].thread = calloc(1, sizeof(*data->hist->thread) * (entries + 1));
++		if (!data->hist[cpu].thread)
 +			goto cleanup;
 +	}
 +
 +	/* set the min to max */
-+	for (cpu = 0; cpu < nr_cpus; cpu++)
-+		data->hist[cpu].min_sample = ~0;
++	for (cpu = 0; cpu < nr_cpus; cpu++) {
++		data->hist[cpu].min_irq = ~0;
++		data->hist[cpu].min_thread = ~0;
++	}
 +
 +	return data;
 +
 +cleanup:
-+	osnoise_free_histogram(data);
++	timerlat_free_histogram(data);
 +	return NULL;
 +}
 +
-+static void osnoise_hist_update_multiple(struct osnoise_tool *tool, int cpu,
-+					 unsigned long long duration, int count)
++/*
++ * timerlat_hist_update - record a new timerlat occurent on cpu, updating data
++ */
++static void
++timerlat_hist_update(struct osnoise_tool *tool, int cpu,
++		     unsigned long long thread,
++		     unsigned long long latency)
 +{
-+	struct osnoise_hist_params *params = tool->params;
-+	struct osnoise_hist_data *data = tool->data;
++	struct timerlat_hist_params *params = tool->params;
++	struct timerlat_hist_data *data = tool->data;
 +	int entries = data->entries;
 +	int bucket;
 +	int *hist;
 +
 +	if (params->output_divisor)
-+		duration = duration / params->output_divisor;
++		latency = latency / params->output_divisor;
 +
 +	if (data->bucket_size)
-+		bucket = duration / data->bucket_size;
++		bucket = latency / data->bucket_size;
 +
-+	hist = data->hist[cpu].samples;
-+	data->hist[cpu].count += count;
-+	update_min(&data->hist[cpu].min_sample, &duration);
-+	update_sum(&data->hist[cpu].sum_sample, &duration);
-+	update_max(&data->hist[cpu].max_sample, &duration);
++	if (!thread) {
++		hist = data->hist[cpu].irq;
++		data->hist[cpu].irq_count++;
++		update_min(&data->hist[cpu].min_irq, &latency);
++		update_sum(&data->hist[cpu].sum_irq, &latency);
++		update_max(&data->hist[cpu].max_irq, &latency);
++	} else {
++		hist = data->hist[cpu].thread;
++		data->hist[cpu].thread_count++;
++		update_min(&data->hist[cpu].min_thread, &latency);
++		update_sum(&data->hist[cpu].sum_thread, &latency);
++		update_max(&data->hist[cpu].max_thread, &latency);
++	}
 +
 +	if (bucket < entries)
-+		hist[bucket] += count;
++		hist[bucket]++;
 +	else
-+		hist[entries] += count;
++		hist[entries]++;
 +}
 +
 +/*
-+ * osnoise_destroy_trace_hist - disable events used to collect histogram
++ * timerlat_hist_handler - this is the handler for timerlat tracer events
 + */
-+static void osnoise_destroy_trace_hist(struct osnoise_tool *tool)
++static int
++timerlat_hist_handler(struct trace_seq *s, struct tep_record *record,
++		     struct tep_event *event, void *data)
 +{
-+	struct osnoise_hist_data *data = tool->data;
++	struct trace_instance *trace = data;
++	unsigned long long thread, latency;
++	struct osnoise_tool *tool;
++	int cpu = record->cpu;
 +
-+	tracefs_hist_pause(tool->trace.inst, data->trace_hist);
-+	tracefs_hist_destroy(tool->trace.inst, data->trace_hist);
-+}
++	tool = container_of(trace, struct osnoise_tool, trace);
 +
-+/*
-+ * osnoise_init_trace_hist - enable events used to collect histogram
-+ */
-+static int osnoise_init_trace_hist(struct osnoise_tool *tool)
-+{
-+	struct osnoise_hist_params *params = tool->params;
-+	struct osnoise_hist_data *data = tool->data;
-+	int bucket_size;
-+	char buff[128];
-+	int retval = 0;
++	tep_get_field_val(s, event, "context", record, &thread, 1);
++	tep_get_field_val(s, event, "timer_latency", record, &latency, 1);
 +
-+	/*
-+	 * Set the size of the bucket.
-+	 */
-+	bucket_size = params->output_divisor * params->bucket_size;
-+	snprintf(buff, sizeof(buff), "duration.buckets=%d", bucket_size);
-+
-+	data->trace_hist = tracefs_hist_alloc(tool->trace.tep, "osnoise", "sample_threshold",
-+			buff, TRACEFS_HIST_KEY_NORMAL);
-+	if (!data->trace_hist)
-+		return 1;
-+
-+	retval = tracefs_hist_add_key(data->trace_hist, "cpu", 0);
-+	if (retval)
-+		goto out_err;
-+
-+	retval = tracefs_hist_start(tool->trace.inst, data->trace_hist);
-+	if (retval)
-+		goto out_err;
++	timerlat_hist_update(tool, cpu, thread, latency);
 +
 +	return 0;
-+
-+out_err:
-+	osnoise_destroy_trace_hist(tool);
-+	return 1;
 +}
 +
 +/*
-+ * osnoise_read_trace_hist - parse histogram file and file osnoise histogram
++ * timerlat_hist_header - print the header of the tracer to the output
 + */
-+static void osnoise_read_trace_hist(struct osnoise_tool *tool)
++static void timerlat_hist_header(struct osnoise_tool *tool)
 +{
-+	struct osnoise_hist_data *data = tool->data;
-+	long long cpu, counter, duration;
-+	char *content, *position;
-+
-+	tracefs_hist_pause(tool->trace.inst, data->trace_hist);
-+
-+	content = tracefs_event_file_read(tool->trace.inst, "osnoise",
-+					  "sample_threshold",
-+					  "hist", NULL);
-+	if (!content)
-+		return;
-+
-+	position = content;
-+	while (true) {
-+		position = strstr(position, "duration: ~");
-+		if (!position)
-+			break;
-+		position += strlen("duration: ~");
-+		duration = get_llong_from_str(position);
-+		if (duration == -1)
-+			err_msg("error reading duration from histogram\n");
-+
-+		position = strstr(position, "cpu:");
-+		if (!position)
-+			break;
-+		position += strlen("cpu: ");
-+		cpu = get_llong_from_str(position);
-+		if (cpu == -1)
-+			err_msg("error reading cpu from histogram\n");
-+
-+		position = strstr(position, "hitcount:");
-+		if (!position)
-+			break;
-+		position += strlen("hitcount: ");
-+		counter = get_llong_from_str(position);
-+		if (counter == -1)
-+			err_msg("error reading counter from histogram\n");
-+
-+		osnoise_hist_update_multiple(tool, cpu, duration, counter);
-+	}
-+	free(content);
-+}
-+
-+/*
-+ * osnoise_hist_header - print the header of the tracer to the output
-+ */
-+static void osnoise_hist_header(struct osnoise_tool *tool)
-+{
-+	struct osnoise_hist_params *params = tool->params;
-+	struct osnoise_hist_data *data = tool->data;
++	struct timerlat_hist_params *params = tool->params;
++	struct timerlat_hist_data *data = tool->data;
 +	struct trace_seq *s = tool->trace.seq;
 +	char duration[26];
 +	int cpu;
@@ -404,7 +362,7 @@ index 000000000000..7dadbbbaf496
 +		return;
 +
 +	get_duration(tool->start_time, duration, sizeof(duration));
-+	trace_seq_printf(s, "# RTLA osnoise histogram\n");
++	trace_seq_printf(s, "# RTLA timerlat histogram\n");
 +	trace_seq_printf(s, "# Time unit is %s (%s)\n",
 +			params->output_divisor == 1 ? "nanoseconds" : "microseconds",
 +			params->output_divisor == 1 ? "ns" : "us");
@@ -418,24 +376,29 @@ index 000000000000..7dadbbbaf496
 +		if (params->cpus && !params->monitored_cpus[cpu])
 +			continue;
 +
-+		if (!data->hist[cpu].count)
++		if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +			continue;
 +
-+		trace_seq_printf(s, "   CPU-%03d", cpu);
++		if (!params->no_irq)
++			trace_seq_printf(s, "   IRQ-%03d", cpu);
++
++		if (!params->no_thread)
++			trace_seq_printf(s, "   Thr-%03d", cpu);
 +	}
 +	trace_seq_printf(s, "\n");
++
 +
 +	trace_seq_do_printf(s);
 +	trace_seq_reset(s);
 +}
 +
 +/*
-+ * osnoise_print_summary - print the summary of the hist data to the output
++ * timerlat_print_summary - print the summary of the hist data to the output
 + */
 +static void
-+osnoise_print_summary(struct osnoise_hist_params *params,
++timerlat_print_summary(struct timerlat_hist_params *params,
 +		       struct trace_instance *trace,
-+		       struct osnoise_hist_data *data)
++		       struct timerlat_hist_data *data)
 +{
 +	int cpu;
 +
@@ -449,10 +412,16 @@ index 000000000000..7dadbbbaf496
 +		if (params->cpus && !params->monitored_cpus[cpu])
 +			continue;
 +
-+		if (!data->hist[cpu].count)
++		if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +			continue;
 +
-+		trace_seq_printf(trace->seq, "%9d ", data->hist[cpu].count);
++		if (!params->no_irq)
++			trace_seq_printf(trace->seq, "%9d ",
++					data->hist[cpu].irq_count);
++
++		if (!params->no_thread)
++			trace_seq_printf(trace->seq, "%9d ",
++					data->hist[cpu].thread_count);
 +	}
 +	trace_seq_printf(trace->seq, "\n");
 +
@@ -463,11 +432,16 @@ index 000000000000..7dadbbbaf496
 +		if (params->cpus && !params->monitored_cpus[cpu])
 +			continue;
 +
-+		if (!data->hist[cpu].count)
++		if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +			continue;
 +
-+		trace_seq_printf(trace->seq, "%9llu ",	data->hist[cpu].min_sample);
++		if (!params->no_irq)
++			trace_seq_printf(trace->seq, "%9llu ",
++					data->hist[cpu].min_irq);
 +
++		if (!params->no_thread)
++			trace_seq_printf(trace->seq, "%9llu ",
++					data->hist[cpu].min_thread);
 +	}
 +	trace_seq_printf(trace->seq, "\n");
 +
@@ -478,14 +452,24 @@ index 000000000000..7dadbbbaf496
 +		if (params->cpus && !params->monitored_cpus[cpu])
 +			continue;
 +
-+		if (!data->hist[cpu].count)
++		if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +			continue;
 +
-+		if (data->hist[cpu].count)
-+			trace_seq_printf(trace->seq, "%9llu ",
-+					data->hist[cpu].sum_sample / data->hist[cpu].count);
-+		else
-+			trace_seq_printf(trace->seq, "        - ");
++		if (!params->no_irq) {
++			if (data->hist[cpu].irq_count)
++				trace_seq_printf(trace->seq, "%9llu ",
++						 data->hist[cpu].sum_irq / data->hist[cpu].irq_count);
++			else
++				trace_seq_printf(trace->seq, "        - ");
++		}
++
++		if (!params->no_thread) {
++			if (data->hist[cpu].thread_count)
++				trace_seq_printf(trace->seq, "%9llu ",
++						data->hist[cpu].sum_thread / data->hist[cpu].thread_count);
++			else
++				trace_seq_printf(trace->seq, "        - ");
++		}
 +	}
 +	trace_seq_printf(trace->seq, "\n");
 +
@@ -496,11 +480,16 @@ index 000000000000..7dadbbbaf496
 +		if (params->cpus && !params->monitored_cpus[cpu])
 +			continue;
 +
-+		if (!data->hist[cpu].count)
++		if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +			continue;
 +
-+		trace_seq_printf(trace->seq, "%9llu ", data->hist[cpu].max_sample);
++		if (!params->no_irq)
++			trace_seq_printf(trace->seq, "%9llu ",
++					data->hist[cpu].max_irq);
 +
++		if (!params->no_thread)
++			trace_seq_printf(trace->seq, "%9llu ",
++					data->hist[cpu].max_thread);
 +	}
 +	trace_seq_printf(trace->seq, "\n");
 +	trace_seq_do_printf(trace->seq);
@@ -508,17 +497,17 @@ index 000000000000..7dadbbbaf496
 +}
 +
 +/*
-+ * osnoise_print_stats - print data for all CPUs
++ * timerlat_print_stats - print data for all CPUs
 + */
 +static void
-+osnoise_print_stats(struct osnoise_hist_params *params, struct osnoise_tool *tool)
++timerlat_print_stats(struct timerlat_hist_params *params, struct osnoise_tool *tool)
 +{
-+	struct osnoise_hist_data *data = tool->data;
++	struct timerlat_hist_data *data = tool->data;
 +	struct trace_instance *trace = &tool->trace;
 +	int bucket, cpu;
 +	int total;
 +
-+	osnoise_hist_header(tool);
++	timerlat_hist_header(tool);
 +
 +	for (bucket = 0; bucket < data->entries; bucket++) {
 +		total = 0;
@@ -531,11 +520,21 @@ index 000000000000..7dadbbbaf496
 +			if (params->cpus && !params->monitored_cpus[cpu])
 +				continue;
 +
-+			if (!data->hist[cpu].count)
++			if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +				continue;
 +
-+			total += data->hist[cpu].samples[bucket];
-+			trace_seq_printf(trace->seq, "%9d ", data->hist[cpu].samples[bucket]);
++			if (!params->no_irq) {
++				total += data->hist[cpu].irq[bucket];
++				trace_seq_printf(trace->seq, "%9d ",
++						data->hist[cpu].irq[bucket]);
++			}
++
++			if (!params->no_thread) {
++				total += data->hist[cpu].thread[bucket];
++				trace_seq_printf(trace->seq, "%9d ",
++						data->hist[cpu].thread[bucket]);
++			}
++
 +		}
 +
 +		if (total == 0 && !params->with_zeros) {
@@ -555,47 +554,55 @@ index 000000000000..7dadbbbaf496
 +		if (params->cpus && !params->monitored_cpus[cpu])
 +			continue;
 +
-+		if (!data->hist[cpu].count)
++		if (!data->hist[cpu].irq_count && !data->hist[cpu].thread_count)
 +			continue;
 +
-+		trace_seq_printf(trace->seq, "%9d ",
-+				 data->hist[cpu].samples[data->entries]);
++		if (!params->no_irq)
++			trace_seq_printf(trace->seq, "%9d ",
++					 data->hist[cpu].irq[data->entries]);
++
++		if (!params->no_thread)
++			trace_seq_printf(trace->seq, "%9d ",
++					 data->hist[cpu].thread[data->entries]);
 +	}
 +	trace_seq_printf(trace->seq, "\n");
 +	trace_seq_do_printf(trace->seq);
 +	trace_seq_reset(trace->seq);
 +
-+	osnoise_print_summary(params, trace, data);
++	timerlat_print_summary(params, trace, data);
 +}
 +
 +/*
-+ * osnoise_hist_usage - prints osnoise hist usage message
++ * timerlat_hist_usage - prints timerlat top usage message
 + */
-+static void osnoise_hist_usage(char *usage)
++static void timerlat_hist_usage(char *usage)
 +{
 +	int i;
 +
-+	static const char * const msg[] = {
++	char *msg[] = {
 +		"",
-+		"  usage: rtla osnoise hist [-h] [-p us] [-r us] [-s us] [-S us] [-T[=file]] \\",
-+		"	  [-c cpu-list] [-P priority] [-b N] [-e N] [--no-header] [--no-summary] \\",
-+		"	  [--no-index] [--with-zeros]",
++		"  usage: [rtla] timerlat hist [-h] [-q] [-p us] [-i us] [-t us] [-s us] [-T[=file]] \\",
++		"         [-c cpu-list] [-P priority] [--no-irq] [--no-thread] [--no-header] [--no-summary] \\",
++		"         [--no-index] [--with-zeros]",
 +		"",
 +		"	  -h/--help: print this menu",
-+		"	  -p/--period us: osnoise period in us",
-+		"	  -r/--runtime us: osnoise runtime in us",
-+		"	  -s/--stop us: stop trace if a single sample is higher than the argument in us",
-+		"	  -S/--stop-total us: stop trace if the total sample is higher than the argument in us",
-+		"	  -c/--cpus cpu-list: list of cpus to run osnoise threads",
-+		"	  -d/--duration time[s|m|h|d]: duration of the session",
-+		"	  -t/--trace[=file]: save the stopped trace to [file|osnoise_trace.txt]",
++		"	  -p/--period us: timerlat period in us",
++		"	  -i/--irq us: stop trace if the irq latency is higher than the argument in us",
++		"	  -T/--thread us: stop trace if the thread latency is higher than the argument in us",
++		"	  -s/--stack us: save the stack trace at the IRQ if a thread latency is higher than the argument in us",
++		"	  -c/--cpus cpus: run the tracer only on the given cpus",
++		"	  -d/--duration time[m|h|d]: duration of the session in seconds",
++		"	  -T/--trace[=file]: save the stopped trace to [file|timerlat_trace.txt]",
++		"	  -n/--nano: display data in nanoseconds",
 +		"	  -b/--bucket-size N: set the histogram bucket size (default 1)",
 +		"	  -e/--entries N: set the number of entries of the histogram (default 256)",
++		"	     --no-irq: ignore IRQ latencies",
++		"	     --no-thread: ignore thread latencies",
 +		"	     --no-header: do not print header",
 +		"	     --no-summary: do not print summary",
 +		"	     --no-index: do not print index",
 +		"	     --with-zeros: print zero only entries",
-+		"	  -P/--priority o:prio|r:prio|f:prio|d:runtime:period: set scheduling parameters",
++		"	  -P/--priority o:prio|r:prio|f:prio|d:runtime:period : set scheduling parameters",
 +		"		o:prio - use SCHED_OTHER with prio",
 +		"		r:prio - use SCHED_RR with prio",
 +		"		f:prio - use SCHED_FIFO with prio",
@@ -607,7 +614,7 @@ index 000000000000..7dadbbbaf496
 +	if (usage)
 +		fprintf(stderr, "%s\n", usage);
 +
-+	fprintf(stderr, "rtla osnoise hist: a per-cpu histogram of the OS noise (version %s)\n",
++	fprintf(stderr, "rtla timerlat hist: a per-cpu histogram of the timer latency (version %s)\n",
 +			VERSION);
 +
 +	for (i = 0; msg[i]; i++)
@@ -616,12 +623,12 @@ index 000000000000..7dadbbbaf496
 +}
 +
 +/*
-+ * osnoise_hist_parse_args - allocs, parse and fill the cmd line parameters
++ * timerlat_hist_parse_args - allocs, parse and fill the cmd line parameters
 + */
-+static struct osnoise_hist_params
-+*osnoise_hist_parse_args(int argc, char *argv[])
++static struct timerlat_hist_params
++*timerlat_hist_parse_args(int argc, char *argv[])
 +{
-+	struct osnoise_hist_params *params;
++	struct timerlat_hist_params *params;
 +	int retval;
 +	int c;
 +
@@ -636,29 +643,32 @@ index 000000000000..7dadbbbaf496
 +
 +	while (1) {
 +		static struct option long_options[] = {
-+			{"bucket-size",		required_argument,	0, 'b'},
-+			{"entries",		required_argument,	0, 'e'},
 +			{"cpus",		required_argument,	0, 'c'},
++			{"bucket-size",		required_argument,	0, 'b'},
 +			{"debug",		no_argument,		0, 'D'},
++			{"entries",		required_argument,	0, 'e'},
 +			{"duration",		required_argument,	0, 'd'},
 +			{"help",		no_argument,		0, 'h'},
++			{"irq",			required_argument,	0, 'i'},
++			{"nano",		no_argument,		0, 'n'},
 +			{"period",		required_argument,	0, 'p'},
 +			{"priority",		required_argument,	0, 'P'},
-+			{"runtime",		required_argument,	0, 'r'},
-+			{"stop",		required_argument,	0, 's'},
-+			{"stop-total",		required_argument,	0, 'S'},
++			{"stack",		required_argument,	0, 's'},
++			{"thread",		required_argument,	0, 'T'},
 +			{"trace",		optional_argument,	0, 't'},
-+			{"no-header",		no_argument,		0, '0'},
-+			{"no-summary",		no_argument,		0, '1'},
-+			{"no-index",		no_argument,		0, '2'},
-+			{"with-zeros",		no_argument,		0, '3'},
++			{"no-irq",		no_argument,		0, '0'},
++			{"no-thread",		no_argument,		0, '1'},
++			{"no-header",		no_argument,		0, '2'},
++			{"no-summary",		no_argument,		0, '3'},
++			{"no-index",		no_argument,		0, '4'},
++			{"with-zeros",		no_argument,		0, '5'},
 +			{0, 0, 0, 0}
 +		};
 +
 +		/* getopt_long stores the option index here. */
 +		int option_index = 0;
 +
-+		c = getopt_long(argc, argv, "c:b:d:e:Dhp:P:r:s:S:t::0123",
++		c = getopt_long(argc, argv, "c:b:d:e:Dhi:np:P:s:t::T:012345",
 +				 long_options, &option_index);
 +
 +		/* detect the end of the options. */
@@ -666,17 +676,17 @@ index 000000000000..7dadbbbaf496
 +			break;
 +
 +		switch (c) {
-+		case 'b':
-+			params->bucket_size = get_llong_from_str(optarg);
-+			if ((params->bucket_size == 0) || (params->bucket_size >= 1000000))
-+				osnoise_hist_usage("Bucket size needs to be > 0 and <= 1000000\n");
-+			break;
 +		case 'c':
 +			retval = parse_cpu_list(optarg, &params->monitored_cpus);
 +			if (retval)
-+				osnoise_hist_usage("\nInvalid -c cpu list\n");
++				timerlat_hist_usage("\nInvalid -c cpu list\n");
 +			params->cpus = optarg;
 +			debug_msg("-c for %s\n", params->cpus);
++			break;
++		case 'b':
++			params->bucket_size = get_llong_from_str(optarg);
++			if ((params->bucket_size == 0) || (params->bucket_size >= 1000000))
++				timerlat_hist_usage("Bucket size needs to be > 0 and <= 1000000\n");
 +			break;
 +		case 'D':
 +			config_debug = 1;
@@ -684,37 +694,38 @@ index 000000000000..7dadbbbaf496
 +		case 'd':
 +			params->duration = parse_seconds_duration(optarg);
 +			if (!params->duration)
-+				osnoise_hist_usage("Invalid -D duration\n");
++				timerlat_hist_usage("Invalid -D duration\n");
 +			break;
 +		case 'e':
 +			params->entries = get_llong_from_str(optarg);
 +			if ((params->entries < 10) || (params->entries > 9999999))
-+				osnoise_hist_usage("Entries must be > 10 and < 9999999\n");
++					timerlat_hist_usage("Entries must be > 10 and < 9999999\n");
 +			break;
 +		case 'h':
 +		case '?':
-+			osnoise_hist_usage(NULL);
++			timerlat_hist_usage(NULL);
++			break;
++		case 'i':
++			params->stop_us = get_llong_from_str(optarg);
++			break;
++		case 'n':
++			params->output_divisor = 1;
 +			break;
 +		case 'p':
-+			params->period = get_llong_from_str(optarg);
-+			if (params->period > 10000000)
-+				osnoise_hist_usage("Period longer than 10 s\n");
++			params->timerlat_period_us = get_llong_from_str(optarg);
++			if (params->timerlat_period_us > 1000000)
++				timerlat_hist_usage("Period longer than 1 s\n");
 +			break;
 +		case 'P':
 +			retval = parse_prio(optarg, &params->sched_param);
 +			if (retval == -1)
-+				osnoise_hist_usage("Invalid -P priority");
++				timerlat_hist_usage("Invalid -P priority");
 +			params->set_sched = 1;
 +			break;
-+		case 'r':
-+			params->runtime = get_llong_from_str(optarg);
-+			if (params->runtime < 100)
-+				osnoise_hist_usage("Runtime shorter than 100 us\n");
-+			break;
 +		case 's':
-+			params->stop_us = get_llong_from_str(optarg);
++			params->print_stack = get_llong_from_str(optarg);
 +			break;
-+		case 'S':
++		case 'T':
 +			params->stop_total_us = get_llong_from_str(optarg);
 +			break;
 +		case 't':
@@ -722,22 +733,28 @@ index 000000000000..7dadbbbaf496
 +				/* skip = */
 +				params->trace_output = &optarg[1];
 +			else
-+				params->trace_output = "osnoise_trace.txt";
++				params->trace_output = "timerlat_trace.txt";
 +			break;
-+		case '0': /* no header */
++		case '0': /* no irq */
++			params->no_irq = 1;
++			break;
++		case '1': /* no thread */
++			params->no_thread = 1;
++			break;
++		case '2': /* no header */
 +			params->no_header = 1;
 +			break;
-+		case '1': /* no summary */
++		case '3': /* no summary */
 +			params->no_summary = 1;
 +			break;
-+		case '2': /* no index */
++		case '4': /* no index */
 +			params->no_index = 1;
 +			break;
-+		case '3': /* with zeros */
++		case '5': /* with zeros */
 +			params->with_zeros = 1;
 +			break;
 +		default:
-+			osnoise_hist_usage("Invalid option");
++			timerlat_hist_usage("Invalid option");
 +		}
 +	}
 +
@@ -746,17 +763,20 @@ index 000000000000..7dadbbbaf496
 +		exit(EXIT_FAILURE);
 +	}
 +
++	if (params->no_irq && params->no_thread)
++		timerlat_hist_usage("no-irq and no-thread set, there is nothing to do here");
++
 +	if (params->no_index && !params->with_zeros)
-+		osnoise_hist_usage("no-index set and with-zeros not set - it does not make sense");
++		timerlat_hist_usage("no-index set with with-zeros is not set - it does not make sense");
 +
 +	return params;
 +}
 +
 +/*
-+ * osnoise_hist_apply_config - apply the hist configs to the initialized tool
++ * timerlat_hist_apply_config - apply the hist configs to the initialized tool
 + */
 +static int
-+osnoise_hist_apply_config(struct osnoise_tool *tool, struct osnoise_hist_params *params)
++timerlat_hist_apply_config(struct osnoise_tool *tool, struct timerlat_hist_params *params)
 +{
 +	int retval;
 +
@@ -767,16 +787,6 @@ index 000000000000..7dadbbbaf496
 +		retval = osnoise_set_cpus(tool->context, params->cpus);
 +		if (retval) {
 +			err_msg("Failed to apply CPUs config\n");
-+			goto out_err;
-+		}
-+	}
-+
-+	if (params->runtime || params->period) {
-+		retval = osnoise_set_runtime_period(tool->context,
-+						    params->runtime,
-+						    params->period);
-+		if (retval) {
-+			err_msg("Failed to set runtime and/or period\n");
 +			goto out_err;
 +		}
 +	}
@@ -797,6 +807,22 @@ index 000000000000..7dadbbbaf496
 +		}
 +	}
 +
++	if (params->timerlat_period_us) {
++		retval = osnoise_set_timerlat_period_us(tool->context, params->timerlat_period_us);
++		if (retval) {
++			err_msg("Failed to set timerlat period\n");
++			goto out_err;
++		}
++	}
++
++	if (params->print_stack) {
++		retval = osnoise_set_print_stack(tool->context, params->print_stack);
++		if (retval) {
++			err_msg("Failed to set print stack\n");
++			goto out_err;
++		}
++	}
++
 +	return 0;
 +
 +out_err:
@@ -804,25 +830,28 @@ index 000000000000..7dadbbbaf496
 +}
 +
 +/*
-+ * osnoise_init_hist - initialize a osnoise hist tool with parameters
++ * timerlat_init_hist - initialize a timerlat hist tool with parameters
 + */
 +static struct osnoise_tool
-+*osnoise_init_hist(struct osnoise_hist_params *params)
++*timerlat_init_hist(struct timerlat_hist_params *params)
 +{
 +	struct osnoise_tool *tool;
 +	int nr_cpus;
 +
 +	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
 +
-+	tool = osnoise_init_tool("osnoise_hist");
++	tool = osnoise_init_tool("timerlat_hist");
 +	if (!tool)
 +		return NULL;
 +
-+	tool->data = osnoise_alloc_histogram(nr_cpus, params->entries, params->bucket_size);
++	tool->data = timerlat_alloc_histogram(nr_cpus, params->entries, params->bucket_size);
 +	if (!tool->data)
 +		goto out_err;
 +
 +	tool->params = params;
++
++	tep_register_event_handler(tool->trace.tep, -1, "ftrace", "timerlat",
++				   timerlat_hist_handler, tool);
 +
 +	return tool;
 +
@@ -838,10 +867,10 @@ index 000000000000..7dadbbbaf496
 +}
 +
 +/*
-+ * osnoise_hist_set_signals - handles the signal to stop the tool
++ * timerlat_hist_set_signals - handles the signal to stop the tool
 + */
 +static void
-+osnoise_hist_set_signals(struct osnoise_hist_params *params)
++timerlat_hist_set_signals(struct timerlat_hist_params *params)
 +{
 +	signal(SIGINT, stop_hist);
 +	if (params->duration) {
@@ -850,53 +879,49 @@ index 000000000000..7dadbbbaf496
 +	}
 +}
 +
-+int osnoise_hist_main(int argc, char *argv[])
++int timerlat_hist_main(int argc, char *argv[])
 +{
-+	struct osnoise_hist_params *params;
++	struct timerlat_hist_params *params;
 +	struct trace_instance *trace;
 +	struct osnoise_tool *record;
 +	struct osnoise_tool *tool;
 +	int return_value = 1;
 +	int retval;
 +
-+	params = osnoise_hist_parse_args(argc, argv);
++	params = timerlat_hist_parse_args(argc, argv);
 +	if (!params)
 +		exit(1);
 +
-+	tool = osnoise_init_hist(params);
++	tool = timerlat_init_hist(params);
 +	if (!tool) {
 +		err_msg("Could not init osnoise hist\n");
 +		goto out_exit;
 +	}
 +
-+	retval = osnoise_hist_apply_config(tool, params);
++	retval = timerlat_hist_apply_config(tool, params);
 +	if (retval) {
 +		err_msg("Could not apply config\n");
-+		goto out_destroy;
++		goto out_hist;
 +	}
 +
 +	trace = &tool->trace;
 +
-+	retval = enable_osnoise(trace);
++	retval = enable_timerlat(trace);
 +	if (retval) {
-+		err_msg("Failed to enable osnoise tracer\n");
-+		goto out_destroy;
++		err_msg("Failed to enable timerlat tracer\n");
++		goto out_hist;
 +	}
 +
-+	retval = osnoise_init_trace_hist(tool);
-+	if (retval)
-+		goto out_destroy;
-+
 +	if (params->set_sched) {
-+		retval = set_comm_sched_attr("osnoise/", &params->sched_param);
++		retval = set_comm_sched_attr("timerlat/", &params->sched_param);
 +		if (retval)
-+			osnoise_hist_usage("Failed to set sched parameters\n");
++			timerlat_hist_usage("Failed to set sched parameters\n");
 +	}
 +
 +	trace_instance_start(trace);
 +
 +	if (params->trace_output) {
-+		record = osnoise_init_trace_tool("osnoise");
++		record = osnoise_init_trace_tool("timerlat");
 +		if (!record) {
 +			err_msg("Failed to enable the trace instance\n");
 +			goto out_hist;
@@ -905,7 +930,7 @@ index 000000000000..7dadbbbaf496
 +	}
 +
 +	tool->start_time = time(NULL);
-+	osnoise_hist_set_signals(params);
++	timerlat_hist_set_signals(params);
 +
 +	while (!stop_tracing) {
 +		sleep(params->sleep_time);
@@ -925,9 +950,7 @@ index 000000000000..7dadbbbaf496
 +			break;
 +	};
 +
-+	osnoise_read_trace_hist(tool);
-+
-+	osnoise_print_stats(params, tool);
++	timerlat_print_stats(params, tool);
 +
 +	return_value = 0;
 +
@@ -940,8 +963,7 @@ index 000000000000..7dadbbbaf496
 +	}
 +
 +out_hist:
-+	osnoise_free_histogram(tool->data);
-+out_destroy:
++	timerlat_free_histogram(tool->data);
 +	osnoise_destroy_tool(tool);
 +	if (params->trace_output)
 +		osnoise_destroy_tool(record);
