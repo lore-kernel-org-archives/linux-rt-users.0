@@ -2,132 +2,212 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 91D20C433EF
-	for <linux-rt-users@archiver.kernel.org>; Sun, 28 Nov 2021 16:24:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C114C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Nov 2021 11:10:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1352779AbhK1Q10 (ORCPT
+        id S1377331AbhK2LNh convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 28 Nov 2021 11:27:26 -0500
-Received: from sender4-op-o15.zoho.com ([136.143.188.15]:17537 "EHLO
-        sender4-op-o15.zoho.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235988AbhK1QZ0 (ORCPT
+        Mon, 29 Nov 2021 06:13:37 -0500
+Received: from us-smtp-delivery-44.mimecast.com ([205.139.111.44]:30225 "EHLO
+        us-smtp-delivery-44.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1377061AbhK2LLh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 28 Nov 2021 11:25:26 -0500
-X-Greylist: delayed 58592 seconds by postgrey-1.27 at vger.kernel.org; Sun, 28 Nov 2021 11:25:26 EST
-ARC-Seal: i=1; a=rsa-sha256; t=1638116509; cv=none; 
-        d=zohomail.com; s=zohoarc; 
-        b=M6xT5h0zClw8DD+dgU9Xl3+v+ePIn06JCTs4rk+XqsFLXbZMzjr0N4hrArHarE2PDP9V9kwQY+ZmJE0rpod6MIQbBVsI5oTNIK7kpu1nFHFlJM137Bc4OpwiW30gm7sQYEldgFqmSs/+fPONHv3Q+2pNFLq0z22sOIO/4ZV9n2s=
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-        t=1638116509; h=Content-Type:Content-Transfer-Encoding:Cc:Date:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:To; 
-        bh=YYeOwx6CNvENJgb27Vn+FmTcemWXvXDoI8iKqqUTwyQ=; 
-        b=m+G2YSLQIL+JbtZWLEcNRau4XYq2B9bENkqxjj5PdTEqwU4hjDd2oRTy3AeC9P7Gm+a2+bvB/WT2p+t5f3mAkg2DFd1L0n6IGaWRj00Y5auFS5lbMC6GxLYPP/jtTUPWuiRVSj7zUhzWkdLo7Pz/WNGX0fwxPI6bIBmsA7BJwlU=
-ARC-Authentication-Results: i=1; mx.zohomail.com;
-        dkim=pass  header.i=szanni.org;
-        spf=pass  smtp.mailfrom=angelo@szanni.org;
-        dmarc=pass header.from=<lkml@szanni.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1638116509;
-        s=zoho; d=szanni.org; i=lkml@szanni.org;
-        h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:In-Reply-To:Content-Type:Content-Transfer-Encoding;
-        bh=YYeOwx6CNvENJgb27Vn+FmTcemWXvXDoI8iKqqUTwyQ=;
-        b=NeOEjEaZGHcT4y9IZXgSxEIQqjmtypIpD4ts4W1nSokthyLL/PJWafG9r3OLTUvz
-        a490hMNHjePMdH8z39+krzkxICIiAM3nZchpkSFn7xZQZjaBx9OHMJMeYFYMSalXLZd
-        uGy3QlemYAxtArAYBuQ6M3teWXCAWZSxPFcTDims=
-Received: from [192.168.0.128] (200.60.135.218 [200.60.135.218]) by mx.zohomail.com
-        with SMTPS id 163811650856923.573649579276434; Sun, 28 Nov 2021 08:21:48 -0800 (PST)
-Message-ID: <3bbacbed-2c52-f37f-070c-adece794e3ef@szanni.org>
-Date:   Sun, 28 Nov 2021 11:24:12 -0500
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.3.1
-Subject: Re: sched: some non-GPL symbols becoming GPL-only with
- CONFIG_PREEMPT_RT enabled
-Content-Language: en-US
-To:     linux-kernel@vger.kernel.org
-Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Mon, 29 Nov 2021 06:11:37 -0500
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-576-4fYRxpcdNzqk5NfYYwgBxg-1; Mon, 29 Nov 2021 06:08:13 -0500
+X-MC-Unique: 4fYRxpcdNzqk5NfYYwgBxg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 83F30760C0;
+        Mon, 29 Nov 2021 11:08:11 +0000 (UTC)
+Received: from x1.com (unknown [10.22.8.188])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 906815D9DE;
+        Mon, 29 Nov 2021 11:07:55 +0000 (UTC)
+From:   Daniel Bristot de Oliveira <bristot@kernel.org>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Tao Zhou <tao.zhou@linux.dev>,
+        Daniel Bristot de Oliveira <bristot@kernel.org>,
         Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
         Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Will Deacon <will@kernel.org>, linux-rt-users@vger.kernel.org,
-        Oleksandr Natalenko <oleksandr@natalenko.name>
-References: <5475c3ab-a53c-8728-98c5-98fd948ff556@szanni.org>
- <2606453.mvXUDI8C0e@natalenko.name>
-From:   Angelo Haller <lkml@szanni.org>
-In-Reply-To: <2606453.mvXUDI8C0e@natalenko.name>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-ZohoMailClient: External
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: [PATCH V8 00/14] RTLA: An interface for osnoise/timerlat tracers
+Date:   Mon, 29 Nov 2021 12:07:38 +0100
+Message-Id: <cover.1638182284.git.bristot@kernel.org>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=bristot@kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: kernel.org
+Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=WINDOWS-1252
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 28/11/2021 04.46, Oleksandr Natalenko wrote:
-> Hello.
-> 
-> On neděle 28. listopadu 2021 1:07:49 CET Angelo Haller wrote:
->> Greetings. I hope I picked the right mailing list, as this issue might
->> be one that affects various subsystems and components:
->>
->> When compiling kernel 5.15 (and 5.16-rc2) with `CONFIG_PREEMPT_RT`
->> enabled, some of the symbols being exported as `EXPORT_SYMBOL` suddenly
->> become `EXPORT_SYMBOL_GPL` through transitive effects.
->>
->> In particular the symbols `migrate_enable` and `migrate_disable` are
->> currently marked as `EXPORT_SYMBOL_GPL` - yet are called from multiple
->> functions that are marked as `EXPORT_SYMBOL`.
->>
->> Here an (incomplete?) listing of call sites I came across:
->>
->> kernel/locking/spinlock_rt.c - rt_spin_unlock()
->> kernel/locking/spinlock_rt.c - rt_read_unlock()
->> kernel/locking/spinlock_rt.c - rt_write_unlock()
->> mm/highmem.c - kunmap_local_indexed()
->>
->> The issue I'm facing in particular is kmap_atomic() calling
->> `migrate_disable` and therefore suddenly becoming GPL-only. This breaks
->> the out-of-tree CDDL licensed module ZFS and has been reported before
->> already [0]. The conversation seemingly going nowhere - or patches at
->> least not being applied upstream. Downstream issue for reference [1].
-> 
-> What about going the other way around and let ZFS be re-licensed under GPL?
-> 
-That would be lovely but is unlikely to ever happen. Numerous people 
-have tried over the years - many, including me, would love for ZFS to be 
-mainlined but unless Oracle decides to re-license the original code this 
-will most likely not happen [3].
+The rtla(1) is a meta-tool that includes a set of commands that
+aims to analyze the real-time properties of Linux. But instead of
+testing Linux as a black box, rtla leverages kernel tracing
+capabilities to provide precise information about the properties
+and root causes of unexpected results.
 
-This is not really the main issue I was trying to highlight though.
-What I was highlighting is the fact that exported symbols change license 
-depending on the kconfig!
-This will randomly stop dkms modules from building depending on my (or 
-my distributions) kconfig. To me as a user this effectively BREAKS user 
-space.
-And yes, I am aware exported symbols are not syscalls but I thought 
-there was at least some type of stability guarantee within the same 
-kernel version. Maybe my thoughts on that matter are incorrect though.
+To start, it presents an interface to the osnoise and timerlat tracers.
+In the future, it will also serve as home to the rtsl [1] and other
+latency/noise tracers.
 
-[3] https://github.com/openzfs/zfs/issues/8314
->> As the original implementation of `migrate_enable` and `migrate_disable`
->> is apparently by Peter Zijlstra [2]. Peter would you be willing to
->> re-license both symbols `migrate_enable` and `migrate_disable` as
->> `EXPORT_SYMBOL`?
->>
->> The bigger issue I'm seeing though is that there is currently no
->> automated test to uncover exported symbols changing their license
->> depending on build configuration? I am not intimately familiar with the
->> API guarantees the kernel gives, but this seems like a violation. There
->> might be other symbols with similar licensing problems.
->>
->> I can open a bugzilla ticket too - if that is preferred.
->>
->> Angelo
->>
->>
->> [0]
->> https://lore.kernel.org/linux-rt-users/20201208212841.694b3022@orivej.orivej
->> .org/T/ [1] https://github.com/openzfs/zfs/issues/11097
->> [2]
->> https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/diff/p
->> atches/0009-sched-Add-migrate_disable.patch?h=v5.9-rc8-rt14-patches&id=9a89b
->> fdb3bc77aecdd0ff8cc69b595541c7b50c4
-> 
-> 
+If you just want to run it, you can download the tarball here:
+  - https://bristot.me/files/rtla/tarball/rtla-0.4.tar.bz2
+
+To compile rtla on fedora you need:
+  $ git clone git://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git
+  $ cd libtraceevent/
+  $ make
+  $ sudo make install
+  $ cd ..
+  $ git clone git://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git
+  $ cd libtracefs/
+  $ make
+  $ sudo make install
+  $ cd ..
+  $ sudo dnf install python3-docutils procps-devel
+  $ cd $rtla_src
+  $ make
+  $ sudo make install
+
+The tracing option (-t) depends some kernel patches that are
+available at [2].
+
+This tool was be discussed at the RT-MC during LPC2021 [3]
+
+[1] rtsl: https://github.com/bristot/rtsl/
+[2] https://lore.kernel.org/lkml/cover.1635533292.git.bristot@kernel.org/
+[3] https://youtu.be/cZUzc0U1jJ4
+
+Changes from V7:
+  - Add README.txt with information about how to compile the tool
+    (Steven)
+  - Use $$($(PKG_CONFIG) --libs libtracefs) to find libtracefs on
+    Makefile (Steven)
+  - Fix *buffer[4096] (using buffer[4096]) on save_trace_to_file()
+    (Steven)
+Changes from v6:
+  - Revisited osnoise option config functions
+  - Properly handles offline CPUs
+  - Some cleanups
+  - Fixed an histogram allocation problem (Tao Zhou)
+  - Revisited open()/read()/write() (Tao Zhou)
+Changes from v5:
+  - Fix retval check in save_trace_to_file() (Tao Zhou)
+  - Fix goto logic in save_trace_to_file() (Tao Zhou)
+  - Removed unused save_trace_pipe_to_file() function
+  - Correctly handle an error on osnoise_set_* functions during
+    "apply config" for all tools (Tao Zhou)
+Changes from v3:
+  - Add cross-compile support (Ahmed S. Darwish)
+  - Move documentation to Documentation/tools/rtla (Jonathan Corbet)
+  - Use .rst format for documentation (Jonathan Corbet)
+  - Use include option from .rst to group common parts of the documentation
+  - Makefile (main and doc) cleanups
+Changes from v2:
+  - Fix the miss conception of the "size" for kernel histograms (Steven/Tom)
+  - Change the --skip-zeros to --with-zeros option as the former is better
+    for humans (and the latter for computers to plot charts).
+  - A lot of checkpatch fixes for the user-space part.
+Changes from v1:
+  - Fixes -t options on osnoise tracers (-t means --trace for all tools now)
+  - Fixes --bucket-size references (not --bucket_size)
+
+Daniel Bristot de Oliveira (14):
+  rtla: Real-Time Linux Analysis tool
+  rtla: Helper functions for rtla
+  rtla: Add osnoise tool
+  rtla/osnoise: Add osnoise top mode
+  rtla/osnoise: Add the hist mode
+  rtla: Add timerlat tool and timelart top mode
+  rtla/timerlat: Add timerlat hist mode
+  rtla: Add Documentation
+  rtla: Add rtla osnoise man page
+  rtla: Add rtla osnoise top documentation
+  rtla: Add rtla osnoise hist documentation
+  rtla: Add rtla timerlat documentation
+  rtla: Add rtla timerlat top documentation
+  rtla: Add rtla timerlat hist documentation
+
+ Documentation/tools/rtla/Makefile             |   41 +
+ Documentation/tools/rtla/common_appendix.rst  |   12 +
+ .../tools/rtla/common_hist_options.rst        |   23 +
+ Documentation/tools/rtla/common_options.rst   |   24 +
+ .../tools/rtla/common_osnoise_description.rst |    8 +
+ .../tools/rtla/common_osnoise_options.rst     |   17 +
+ .../rtla/common_timerlat_description.rst      |   10 +
+ .../tools/rtla/common_timerlat_options.rst    |   16 +
+ .../tools/rtla/common_top_options.rst         |    3 +
+ .../tools/rtla/rtla-osnoise-hist.rst          |   66 ++
+ Documentation/tools/rtla/rtla-osnoise-top.rst |   61 +
+ Documentation/tools/rtla/rtla-osnoise.rst     |   59 +
+ .../tools/rtla/rtla-timerlat-hist.rst         |  106 ++
+ .../tools/rtla/rtla-timerlat-top.rst          |  145 +++
+ Documentation/tools/rtla/rtla-timerlat.rst    |   57 +
+ Documentation/tools/rtla/rtla.rst             |   48 +
+ tools/tracing/rtla/Makefile                   |  102 ++
+ tools/tracing/rtla/README.txt                 |   36 +
+ tools/tracing/rtla/src/osnoise.c              | 1017 +++++++++++++++++
+ tools/tracing/rtla/src/osnoise.h              |   96 ++
+ tools/tracing/rtla/src/osnoise_hist.c         |  799 +++++++++++++
+ tools/tracing/rtla/src/osnoise_top.c          |  577 ++++++++++
+ tools/tracing/rtla/src/rtla.c                 |   87 ++
+ tools/tracing/rtla/src/timerlat.c             |   72 ++
+ tools/tracing/rtla/src/timerlat.h             |    4 +
+ tools/tracing/rtla/src/timerlat_hist.c        |  820 +++++++++++++
+ tools/tracing/rtla/src/timerlat_top.c         |  615 ++++++++++
+ tools/tracing/rtla/src/trace.c                |  192 ++++
+ tools/tracing/rtla/src/trace.h                |   27 +
+ tools/tracing/rtla/src/utils.c                |  433 +++++++
+ tools/tracing/rtla/src/utils.h                |   56 +
+ 31 files changed, 5629 insertions(+)
+ create mode 100644 Documentation/tools/rtla/Makefile
+ create mode 100644 Documentation/tools/rtla/common_appendix.rst
+ create mode 100644 Documentation/tools/rtla/common_hist_options.rst
+ create mode 100644 Documentation/tools/rtla/common_options.rst
+ create mode 100644 Documentation/tools/rtla/common_osnoise_description.rst
+ create mode 100644 Documentation/tools/rtla/common_osnoise_options.rst
+ create mode 100644 Documentation/tools/rtla/common_timerlat_description.rst
+ create mode 100644 Documentation/tools/rtla/common_timerlat_options.rst
+ create mode 100644 Documentation/tools/rtla/common_top_options.rst
+ create mode 100644 Documentation/tools/rtla/rtla-osnoise-hist.rst
+ create mode 100644 Documentation/tools/rtla/rtla-osnoise-top.rst
+ create mode 100644 Documentation/tools/rtla/rtla-osnoise.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat-hist.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat-top.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat.rst
+ create mode 100644 Documentation/tools/rtla/rtla.rst
+ create mode 100644 tools/tracing/rtla/Makefile
+ create mode 100644 tools/tracing/rtla/README.txt
+ create mode 100644 tools/tracing/rtla/src/osnoise.c
+ create mode 100644 tools/tracing/rtla/src/osnoise.h
+ create mode 100644 tools/tracing/rtla/src/osnoise_hist.c
+ create mode 100644 tools/tracing/rtla/src/osnoise_top.c
+ create mode 100644 tools/tracing/rtla/src/rtla.c
+ create mode 100644 tools/tracing/rtla/src/timerlat.c
+ create mode 100644 tools/tracing/rtla/src/timerlat.h
+ create mode 100644 tools/tracing/rtla/src/timerlat_hist.c
+ create mode 100644 tools/tracing/rtla/src/timerlat_top.c
+ create mode 100644 tools/tracing/rtla/src/trace.c
+ create mode 100644 tools/tracing/rtla/src/trace.h
+ create mode 100644 tools/tracing/rtla/src/utils.c
+ create mode 100644 tools/tracing/rtla/src/utils.h
+
+-- 
+2.31.1
+
