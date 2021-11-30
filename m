@@ -2,452 +2,593 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 041F8C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Nov 2021 15:21:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96974C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Nov 2021 15:36:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239899AbhK3PYS (ORCPT
+        id S236394AbhK3PkQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 30 Nov 2021 10:24:18 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38444 "EHLO
+        Tue, 30 Nov 2021 10:40:16 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43638 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245111AbhK3PX3 (ORCPT
+        with ESMTP id S238118AbhK3PkF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 30 Nov 2021 10:23:29 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 485ECC061758;
-        Tue, 30 Nov 2021 07:19:52 -0800 (PST)
-Date:   Tue, 30 Nov 2021 16:19:48 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1638285590;
+        Tue, 30 Nov 2021 10:40:05 -0500
+Received: from out2.migadu.com (out2.migadu.com [IPv6:2001:41d0:2:aacc::])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3787C061574;
+        Tue, 30 Nov 2021 07:36:45 -0800 (PST)
+Date:   Tue, 30 Nov 2021 23:35:42 +0800
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+        t=1638286603;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=huhqqQ6aPlu7OI6jwnrY6vD7d4TkAxnl2p24+pNEuUU=;
-        b=ZC8rgq2G5370za6U5RlfBo2ey0JN5Hty9JhrX4KG8vKvcR44VVPJI7BnIXI999L/EazjDw
-        dIRNTCHFEUeOo0T5jxRUMU5onyW73dRVCsbYWkR6BOfmDTW9iTtfTYHb6mb+FTdJOdmNFf
-        3w7kF3EW457ahUjwIah+V9Eb9gUUsIEa5nVdsNg6K13RG0QodsIFkrRHkCrWxK7RPqFeK7
-        cc/81CUU/2IHuq2yAj+bKANRyw6CsySf+EAVAq5VRECnMnmr4X9T9e7FraUHqaoP+TL7wM
-        DaqEf4TSEBqOHW+L0UgrnUCFY7zAUmDZrRJgRTBMbgx6HU4LXmZ29c1hbAFWFw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1638285590;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=huhqqQ6aPlu7OI6jwnrY6vD7d4TkAxnl2p24+pNEuUU=;
-        b=hrM9KEi5mdPG2k0Nopzi6ObZXOA2J59gbUYsaDneDHJb8i1OeVPsgZKohUVnMMmRRZ7rSL
-        rXdIJzaMlx+B9xBg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.16-rc3-rt6
-Message-ID: <20211130151948.fr3ibct5nmxdigkf@linutronix.de>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=w1Ij5M2h6zsOyJ/iJYNaHxRAyIC26zD6JY58l7LwMAk=;
+        b=ZyMGzVFj+dIqrS3WgilKcp5CHj934oeHcD+xx7kPqyFKoioB22sKAn/QmyzMm4ElPT4pbt
+        Mgm94S/0DTq9axWKrGfjY2wGGyGzBwd2y9aWNAvSdWaUFPyd+EWcgRxH2EZvdcsl7dUsPx
+        kCVrJ7boIPO1BfqoYELrNn8crCMh3fs=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From:   Tao Zhou <tao.zhou@linux.dev>
+To:     Daniel Bristot de Oliveira <bristot@kernel.org>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tao Zhou <tao.zhou@linux.dev>, linux-rt-users@vger.kernel.org,
+        linux-trace-devel@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH V8 03/14] rtla: Add osnoise tool
+Message-ID: <YaZEzvzp5jkRyLEJ@geo.homenetwork>
+References: <cover.1638182284.git.bristot@kernel.org>
+ <ffb7f1b1e8cc42fc8ec52f1a89fdd2ca0d70c36e.1638182284.git.bristot@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <ffb7f1b1e8cc42fc8ec52f1a89fdd2ca0d70c36e.1638182284.git.bristot@kernel.org>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: tao.zhou@linux.dev
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+Hi Daniel,
 
-I'm pleased to announce the v5.16-rc3-rt6 patch set. 
+On Mon, Nov 29, 2021 at 12:07:41PM +0100, Daniel Bristot de Oliveira wrote:
+> +/*
+> + * osnoise_restore_cpus - restore the original "osnoise/cpus"
+> + *
+> + * osnoise_set_cpus() saves the original data for the "osnoise/cpus"
 
-Changes since v5.16-rc3-rt5:
+osnoise_set_cpus() --> osnoise_restore_cpus()
 
-  - ARM64 implemented HAVE_POSIX_CPU_TIMERS_TASK_WORK and it is now
-    possible to enable KVM and PREEMPT_RT. Patch by Nicolas Saenz
-    Julienne
+> + * file. This function restore the original config it was previously
+> + * modified.
+> + */
+> +void osnoise_restore_cpus(struct osnoise_context *context)
+> +{
+> +	int retval;
+> +
+> +	if (!context->orig_cpus)
+> +		return;
+> +
+> +	if (!context->curr_cpus)
+> +		return;
+> +
+> +	/* nothing to do? */
+> +	if (!strcmp(context->orig_cpus, context->curr_cpus))
+> +		goto out_done;
+> +
+> +	retval = write(context->cpus_fd, context->orig_cpus, strlen(context->orig_cpus));
 
-  - Backport two patches from upstream to avoid scheduling ksoftirqd
-    from a workqueue while completing mmc requests.
+'strlen(context->orig_cpus) + 1' for write size;
 
-  - Replace a patch from lockdep series with a suggestion from Peter
-    Zijlstra.
+> +	if (retval < strlen(context->orig_cpus))
 
-  - Don't acquire dev_base_lock with disabled bottom halves to avoid
-    lockdep complaint on PREEMPT_RT. Reported by Pei Zhang and Luis
-    Claudio R. Goncalves.
+Same here. Check 'strlen(context->orig_cpus) + 1'
 
-  - Dress a networking patch regarding inet_listen_hashbucket::lock
-    differently so it looks better.
+> +		err_msg("could not restore original osnoise cpus\n");
+> +
+> +out_done:
+> +	free(context->curr_cpus);
+> +	context->curr_cpus = NULL;
+> +}
+> +
+> +/*
+> + * osnoise_get_runtime - return the original "osnoise/runtime_us" value
+> + *
+> + * It also saves the value to be restored.
+> + */
+> +unsigned long long osnoise_get_runtime(struct osnoise_context *context)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	long long runtime_us;
+> +	char *runtime_path;
+> +	int retval;
+> +
+> +	if (context->runtime_us != OSNOISE_TIME_INIT_VAL)
+> +		return context->runtime_us;
+> +
+> +	if (context->orig_runtime_us != OSNOISE_TIME_INIT_VAL)
+> +		return context->orig_runtime_us;
+> +
+> +	runtime_path = tracefs_get_tracing_file("osnoise/runtime_us");
+> +
+> +	context->runtime_fd = open(runtime_path, O_RDWR);
+> +	if (context->runtime_fd < 0)
+> +		goto out_err;
+> +
+> +	retval = read(context->runtime_fd, &buffer, sizeof(buffer));
+> +	if (retval <= 0)
+> +		goto out_close;
+> +
+> +	runtime_us = get_llong_from_str(buffer);
+> +	if (runtime_us < 0)
+> +		goto out_close;
+> +
+> +	tracefs_put_tracing_file(runtime_path);
+> +
+> +	context->orig_runtime_us = runtime_us;
+> +	return runtime_us;
+> +
+> +out_close:
+> +	close(context->runtime_fd);
+> +	context->runtime_fd = CLOSED_FD;
+> +out_err:
+> +	tracefs_put_tracing_file(runtime_path);
+> +	return 0;
+> +}
+> +/*
+> + * osnoise_get_period - return the original "osnoise/period_us" value
+> + *
+> + * It also saves the value to be restored.
+> + */
+> +unsigned long long osnoise_get_period(struct osnoise_context *context)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	char *period_path;
+> +	long long period_us;
+> +	int retval;
+> +
+> +	if (context->period_us != OSNOISE_TIME_INIT_VAL)
+> +		return context->period_us;
+> +
+> +	if (context->orig_period_us != OSNOISE_TIME_INIT_VAL)
+> +		return context->orig_period_us;
+> +
+> +	period_path = tracefs_get_tracing_file("osnoise/period_us");
+> +
+> +	context->period_fd = open(period_path, O_RDWR);
+> +	if (context->period_fd < 0)
+> +		goto out_err;
+> +
+> +	retval = read(context->period_fd, &buffer, sizeof(buffer));
+> +	if (retval <= 0)
+> +		goto out_close;
+> +
+> +	period_us = get_llong_from_str(buffer);
+> +	if (period_us < 0)
+> +		goto out_close;
+> +
+> +	tracefs_put_tracing_file(period_path);
+> +
+> +	context->orig_period_us = period_us;
+> +	return period_us;
+> +
+> +out_close:
+> +	close(context->period_fd);
+> +	context->period_fd = CLOSED_FD;
+> +out_err:
+> +	tracefs_put_tracing_file(period_path);
+> +	return 0;
+> +}
 
-Known issues
-     - netconsole triggers WARN.
+osnoise_get_period() and osnoise_get_runtime() almost the same.
+Use macro to generate code. Some thing also not sure now. Shame
 
-     - The "Memory controller" (CONFIG_MEMCG) has been disabled.
 
-     - Valentin Schneider reported a few splats on ARM64, see
-          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+#define osnoise_get_period osnoise_get(period)
+#define osnoise_get_runtime osnoise_get(runtime)
 
-The delta patch against v5.16-rc3-rt5 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/incr/patch-5.16-rc3-rt5-rt6.patch.xz
+#define osnoise_get(x)	\
+unsigned long long osnoise_get_##x(struct osnoise_context *context) \ 
+{              \
+	char buffer[BUFF_U64_STR_SIZE];             \
+	char * x##_path;             \ 
+	long long x##_us;            \
+	if (context->x##_us != OSNOISE_TIME_INIT_VAL)                   \
+		return context->x##_us;           \
+	if (context->orig_##x##_us != OSNOISE_TIME_INIT_VAL)            \
+		return context->orig_##x##_us;          \
+	x##_path = tracefs_get_tracing_file("osnoise/x##_us");        \
+	context->x##_fd = open(x##_path, O_RDWR);               \
+	if (context->x##_fd < 0)                        \
+		goto out_err;                 \
+	retval = read(context->x##_fd, &buffer, sizeof(buffer));        \
+	if (retval <= 0)                  \
+		goto out_close;               \
+	x##_us = get_llong_from_str(buffer);            \
+	if (x##_us < 0)                   \
+		goto out_close;               \
+	tracefs_put_tracing_file(x##_path);             \
+	context->orig_##x##_us = x##_us;                \
+	return x##_us;                    \
+out_close:                            \
+	close(context->x##_fd);           \
+	context->x##_fd = CLOSED_FD;                    \
+out_err:                              \
+	tracefs_put_tracing_file(x##_path);             \
+	return 0;                         \
+}
 
-You can get this release via the git tree at:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.16-rc3-rt6
+> +
+> +static int __osnoise_write_runtime(struct osnoise_context *context,
+> +				   unsigned long long runtime)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	int retval;
+> +
+> +	if (context->orig_runtime_us == OSNOISE_TIME_INIT_VAL)
+> +		return -1;
+> +
+> +	snprintf(buffer, sizeof(buffer), "%llu\n", runtime);
+> +
+> +	retval = write(context->runtime_fd, buffer, strlen(buffer) + 1);
+> +	if (retval < (strlen(buffer) + 1))
+> +		return -1;
+> +
+> +	context->runtime_us = runtime;
+> +	return 0;
+> +}
+> +
+> +static int __osnoise_write_period(struct osnoise_context *context,
+> +				  unsigned long long period)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	int retval;
+> +
+> +	if (context->orig_period_us == OSNOISE_TIME_INIT_VAL)
+> +		return -1;
+> +
+> +	snprintf(buffer, sizeof(buffer), "%llu\n", period);
+> +
+> +	retval = write(context->period_fd, buffer, strlen(buffer) + 1);
+> +	if (retval < (strlen(buffer) + 1))
+> +		return -1;
+> +
+> +	context->period_us = period;
+> +	return 0;
+> +}
 
-The RT patch against v5.16-rc3 can be found here:
+__osnoise_write_period() and __osnoise_write_runtime() share
+almost the same code. Macro also use in here. Not sure it is
+right. Shame.
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/older/patch-5.16-rc3-rt6.patch.xz
+#define __osnoise_write(x) \
+static int __osnoise_write_##x(struct osnoise_context *context,    \
+				  unsigned long long period)    \
+{     \
+	char buffer[BUFF_U64_STR_SIZE];     \
+	int retval;     \
+	if (context->orig_##x##_us == OSNOISE_TIME_INIT_VAL)   \
+		return -1;    \
+	snprintf(buffer, sizeof(buffer), "%llu\n", period);    \
+	retval = write(context->x##_fd, buffer, strlen(buffer) + 1);   \
+	if (retval < (strlen(buffer) + 1))    \
+		return -1;    \
+	context->x##_us = period;    \
+	return 0;    \
+}
 
-The split quilt queue is available at:
+#define __osnoise_write_period __osnoise_write(period)
+#define __osnoise_write_runtime __osnoise_write(runtime)
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/older/patches-5.16-rc3-rt6.tar.xz
+> +
+> +/*
+> + * osnoise_set_runtime_period - set osnoise runtime and period
+> + *
+> + * Osnoise's runtime and period are related as runtime <= period.
+> + * Thus, this function saves the original values, and then tries
+> + * to set the runtime and period if they are != 0.
+> + */
+> +int osnoise_set_runtime_period(struct osnoise_context *context,
+> +			       unsigned long long runtime,
+> +			       unsigned long long period)
+> +{
+> +	unsigned long long curr_runtime_us;
+> +	unsigned long long curr_period_us;
+> +	int retval;
+> +
+> +	if (!period && !runtime)
+> +		return 0;
+> +
+> +	curr_runtime_us = osnoise_get_runtime(context);
+> +	curr_period_us = osnoise_get_period(context);
+> +
+> +	/* error getting any value? */
+> +	if (curr_period_us == -1 || curr_runtime_us == -1)
+> +		return -1;
 
-Sebastian
+'curr_period_us' and 'curr_runtime_us' error value should be
+0(OSNOISE_TIME_INIT_VAL).
 
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 6bd4acc2be02f..260866cf53c95 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -89,7 +89,7 @@ config ARM64
- 	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_INT128 if CC_HAS_INT128
- 	select ARCH_SUPPORTS_NUMA_BALANCING
--	select ARCH_SUPPORTS_RT if HAVE_POSIX_CPU_TIMERS_TASK_WORK
-+	select ARCH_SUPPORTS_RT
- 	select ARCH_WANT_COMPAT_IPC_PARSE_VERSION if COMPAT
- 	select ARCH_WANT_DEFAULT_BPF_JIT
- 	select ARCH_WANT_DEFAULT_TOPDOWN_MMAP_LAYOUT
-@@ -216,7 +216,6 @@ config ARM64
- 	select PCI_DOMAINS_GENERIC if PCI
- 	select PCI_ECAM if (ACPI && PCI)
- 	select PCI_SYSCALL if PCI
--	select HAVE_POSIX_CPU_TIMERS_TASK_WORK if !KVM
- 	select POWER_RESET
- 	select POWER_SUPPLY
- 	select SPARSE_IRQ
-diff --git a/drivers/mmc/core/block.c b/drivers/mmc/core/block.c
-index 90e1bcd03b46c..52309b84be888 100644
---- a/drivers/mmc/core/block.c
-+++ b/drivers/mmc/core/block.c
-@@ -2051,7 +2051,8 @@ static void mmc_blk_mq_dec_in_flight(struct mmc_queue *mq, struct request *req)
- 		mmc_put_card(mq->card, &mq->ctx);
- }
- 
--static void mmc_blk_mq_post_req(struct mmc_queue *mq, struct request *req)
-+static void mmc_blk_mq_post_req(struct mmc_queue *mq, struct request *req,
-+				bool can_sleep)
- {
- 	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
- 	struct mmc_request *mrq = &mqrq->brq.mrq;
-@@ -2063,10 +2064,14 @@ static void mmc_blk_mq_post_req(struct mmc_queue *mq, struct request *req)
- 	 * Block layer timeouts race with completions which means the normal
- 	 * completion path cannot be used during recovery.
- 	 */
--	if (mq->in_recovery)
-+	if (mq->in_recovery) {
- 		mmc_blk_mq_complete_rq(mq, req);
--	else if (likely(!blk_should_fake_timeout(req->q)))
--		blk_mq_complete_request(req);
-+	} else if (likely(!blk_should_fake_timeout(req->q))) {
-+		if (can_sleep)
-+			blk_mq_complete_request_direct(req, mmc_blk_mq_complete);
-+		else
-+			blk_mq_complete_request(req);
-+	}
- 
- 	mmc_blk_mq_dec_in_flight(mq, req);
- }
-@@ -2087,7 +2092,7 @@ void mmc_blk_mq_recovery(struct mmc_queue *mq)
- 
- 	mmc_blk_urgent_bkops(mq, mqrq);
- 
--	mmc_blk_mq_post_req(mq, req);
-+	mmc_blk_mq_post_req(mq, req, true);
- }
- 
- static void mmc_blk_mq_complete_prev_req(struct mmc_queue *mq,
-@@ -2106,7 +2111,7 @@ static void mmc_blk_mq_complete_prev_req(struct mmc_queue *mq,
- 	if (prev_req)
- 		*prev_req = mq->complete_req;
- 	else
--		mmc_blk_mq_post_req(mq, mq->complete_req);
-+		mmc_blk_mq_post_req(mq, mq->complete_req, true);
- 
- 	mq->complete_req = NULL;
- 
-@@ -2178,7 +2183,8 @@ static void mmc_blk_mq_req_done(struct mmc_request *mrq)
- 	mq->rw_wait = false;
- 	wake_up(&mq->wait);
- 
--	mmc_blk_mq_post_req(mq, req);
-+	/* context unknown */
-+	mmc_blk_mq_post_req(mq, req, false);
- }
- 
- static bool mmc_blk_rw_wait_cond(struct mmc_queue *mq, int *err)
-@@ -2238,7 +2244,7 @@ static int mmc_blk_mq_issue_rw_rq(struct mmc_queue *mq,
- 	err = mmc_start_request(host, &mqrq->brq.mrq);
- 
- 	if (prev_req)
--		mmc_blk_mq_post_req(mq, prev_req);
-+		mmc_blk_mq_post_req(mq, prev_req, true);
- 
- 	if (err)
- 		mq->rw_wait = false;
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index 2949d9ac74849..131b45dfec674 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -752,6 +752,17 @@ static inline void blk_mq_set_request_complete(struct request *rq)
- 	WRITE_ONCE(rq->state, MQ_RQ_COMPLETE);
- }
- 
-+/*
-+ * Complete the request directly instead of deferring it to softirq or
-+ * completing it another CPU. Useful in preemptible instead of an interrupt.
-+ */
-+static inline void blk_mq_complete_request_direct(struct request *rq,
-+		   void (*complete)(struct request *rq))
-+{
-+	WRITE_ONCE(rq->state, MQ_RQ_COMPLETE);
-+	complete(rq);
-+}
-+
- void blk_mq_start_request(struct request *rq);
- void blk_mq_end_request(struct request *rq, blk_status_t error);
- void __blk_mq_end_request(struct request *rq, blk_status_t error);
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 5e19fe7dda4c5..f89620852774d 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1103,27 +1103,12 @@ static int __sched task_blocks_on_rt_mutex(struct rt_mutex_base *lock,
- 	 * the other will detect the deadlock and return -EDEADLOCK,
- 	 * which is wrong, as the other waiter is not in a deadlock
- 	 * situation.
-+	 *
-+	 * Except for ww_mutex, in that case the chain walk must already deal
-+	 * with spurious cycles, see the comments at [3] and [6].
- 	 */
--	if (owner == task) {
--#if defined(DEBUG_WW_MUTEXES) && defined(CONFIG_DEBUG_LOCKING_API_SELFTESTS)
--		/*
--		 * The lockdep selftest for ww-mutex assumes in a few cases
--		 * the ww_ctx->contending_lock assignment via
--		 * __ww_mutex_check_kill() which does not happen if the rtmutex
--		 * detects the deadlock early.
--		 */
--		if (build_ww_mutex() && ww_ctx) {
--			struct rt_mutex *rtm;
--
--			/* Check whether the waiter should backout immediately */
--			rtm = container_of(lock, struct rt_mutex, rtmutex);
--
--			__ww_mutex_add_waiter(waiter, rtm, ww_ctx);
--			__ww_mutex_check_kill(rtm, waiter, ww_ctx);
--		}
--#endif
-+	if (owner == task && !(build_ww_mutex() && ww_ctx))
- 		return -EDEADLK;
--	}
- 
- 	raw_spin_lock(&task->pi_lock);
- 	waiter->task = task;
-diff --git a/localversion-rt b/localversion-rt
-index 0efe7ba1930e1..8fc605d806670 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt5
-+-rt6
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 8b5cf8ad859b5..ad3cccbfa573b 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -371,12 +371,12 @@ static void list_netdevice(struct net_device *dev)
- 
- 	ASSERT_RTNL();
- 
--	write_lock_bh(&dev_base_lock);
-+	write_lock(&dev_base_lock);
- 	list_add_tail_rcu(&dev->dev_list, &net->dev_base_head);
- 	netdev_name_node_add(net, dev->name_node);
- 	hlist_add_head_rcu(&dev->index_hlist,
- 			   dev_index_hash(net, dev->ifindex));
--	write_unlock_bh(&dev_base_lock);
-+	write_unlock(&dev_base_lock);
- 
- 	dev_base_seq_inc(net);
- }
-@@ -389,11 +389,11 @@ static void unlist_netdevice(struct net_device *dev)
- 	ASSERT_RTNL();
- 
- 	/* Unlink dev from the device chain */
--	write_lock_bh(&dev_base_lock);
-+	write_lock(&dev_base_lock);
- 	list_del_rcu(&dev->dev_list);
- 	netdev_name_node_del(dev->name_node);
- 	hlist_del_rcu(&dev->index_hlist);
--	write_unlock_bh(&dev_base_lock);
-+	write_unlock(&dev_base_lock);
- 
- 	dev_base_seq_inc(dev_net(dev));
- }
-@@ -1272,15 +1272,15 @@ int dev_change_name(struct net_device *dev, const char *newname)
- 
- 	netdev_adjacent_rename_links(dev, oldname);
- 
--	write_lock_bh(&dev_base_lock);
-+	write_lock(&dev_base_lock);
- 	netdev_name_node_del(dev->name_node);
--	write_unlock_bh(&dev_base_lock);
-+	write_unlock(&dev_base_lock);
- 
- 	synchronize_rcu();
- 
--	write_lock_bh(&dev_base_lock);
-+	write_lock(&dev_base_lock);
- 	netdev_name_node_add(net, dev->name_node);
--	write_unlock_bh(&dev_base_lock);
-+	write_unlock(&dev_base_lock);
- 
- 	ret = call_netdevice_notifiers(NETDEV_CHANGENAME, dev);
- 	ret = notifier_to_errno(ret);
-diff --git a/net/core/link_watch.c b/net/core/link_watch.c
-index 1a455847da54f..9599afd0862da 100644
---- a/net/core/link_watch.c
-+++ b/net/core/link_watch.c
-@@ -55,7 +55,7 @@ static void rfc2863_policy(struct net_device *dev)
- 	if (operstate == dev->operstate)
- 		return;
- 
--	write_lock_bh(&dev_base_lock);
-+	write_lock(&dev_base_lock);
- 
- 	switch(dev->link_mode) {
- 	case IF_LINK_MODE_TESTING:
-@@ -74,7 +74,7 @@ static void rfc2863_policy(struct net_device *dev)
- 
- 	dev->operstate = operstate;
- 
--	write_unlock_bh(&dev_base_lock);
-+	write_unlock(&dev_base_lock);
- }
- 
- 
-diff --git a/net/core/rtnetlink.c b/net/core/rtnetlink.c
-index 2af8aeeadadf0..716be2f88cd75 100644
---- a/net/core/rtnetlink.c
-+++ b/net/core/rtnetlink.c
-@@ -842,9 +842,9 @@ static void set_operstate(struct net_device *dev, unsigned char transition)
- 	}
- 
- 	if (dev->operstate != operstate) {
--		write_lock_bh(&dev_base_lock);
-+		write_lock(&dev_base_lock);
- 		dev->operstate = operstate;
--		write_unlock_bh(&dev_base_lock);
-+		write_unlock(&dev_base_lock);
- 		netdev_state_change(dev);
- 	}
- }
-@@ -2779,11 +2779,11 @@ static int do_setlink(const struct sk_buff *skb,
- 	if (tb[IFLA_LINKMODE]) {
- 		unsigned char value = nla_get_u8(tb[IFLA_LINKMODE]);
- 
--		write_lock_bh(&dev_base_lock);
-+		write_lock(&dev_base_lock);
- 		if (dev->link_mode ^ value)
- 			status |= DO_SETLINK_NOTIFY;
- 		dev->link_mode = value;
--		write_unlock_bh(&dev_base_lock);
-+		write_unlock(&dev_base_lock);
- 	}
- 
- 	if (tb[IFLA_VFINFO_LIST]) {
-diff --git a/net/hsr/hsr_device.c b/net/hsr/hsr_device.c
-index 737e4f17e1c6d..e57fdad9ef942 100644
---- a/net/hsr/hsr_device.c
-+++ b/net/hsr/hsr_device.c
-@@ -30,13 +30,13 @@ static bool is_slave_up(struct net_device *dev)
- 
- static void __hsr_set_operstate(struct net_device *dev, int transition)
- {
--	write_lock_bh(&dev_base_lock);
-+	write_lock(&dev_base_lock);
- 	if (dev->operstate != transition) {
- 		dev->operstate = transition;
--		write_unlock_bh(&dev_base_lock);
-+		write_unlock(&dev_base_lock);
- 		netdev_state_change(dev);
- 	} else {
--		write_unlock_bh(&dev_base_lock);
-+		write_unlock(&dev_base_lock);
- 	}
- }
- 
-diff --git a/net/ipv4/inet_hashtables.c b/net/ipv4/inet_hashtables.c
-index e460c84b1f8e4..7bd1e10086f0a 100644
---- a/net/ipv4/inet_hashtables.c
-+++ b/net/ipv4/inet_hashtables.c
-@@ -678,41 +678,47 @@ int inet_hash(struct sock *sk)
- }
- EXPORT_SYMBOL_GPL(inet_hash);
- 
--void inet_unhash(struct sock *sk)
-+static void __inet_unhash(struct sock *sk, struct inet_listen_hashbucket *ilb)
- {
--	struct inet_hashinfo *hashinfo = sk->sk_prot->h.hashinfo;
--	struct inet_listen_hashbucket *ilb = NULL;
--	spinlock_t *lock;
--	bool state_listen;
--
- 	if (sk_unhashed(sk))
- 		return;
- 
--	if (sk->sk_state == TCP_LISTEN) {
--		state_listen = true;
--		ilb = &hashinfo->listening_hash[inet_sk_listen_hashfn(sk)];
--		spin_lock(&ilb->lock);
--	} else {
--		state_listen = false;
--		lock = inet_ehash_lockp(hashinfo, sk->sk_hash);
--		spin_lock_bh(lock);
--	}
--	if (sk_unhashed(sk))
--		goto unlock;
--
- 	if (rcu_access_pointer(sk->sk_reuseport_cb))
- 		reuseport_stop_listen_sock(sk);
- 	if (ilb) {
-+		struct inet_hashinfo *hashinfo = sk->sk_prot->h.hashinfo;
-+
- 		inet_unhash2(hashinfo, sk);
- 		ilb->count--;
- 	}
- 	__sk_nulls_del_node_init_rcu(sk);
- 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
--unlock:
--	if (state_listen)
-+}
-+
-+void inet_unhash(struct sock *sk)
-+{
-+	struct inet_hashinfo *hashinfo = sk->sk_prot->h.hashinfo;
-+
-+	if (sk_unhashed(sk))
-+		return;
-+
-+	if (sk->sk_state == TCP_LISTEN) {
-+		struct inet_listen_hashbucket *ilb;
-+
-+		ilb = &hashinfo->listening_hash[inet_sk_listen_hashfn(sk)];
-+		/* Don't disable bottom halves while acquiring the lock to
-+		 * avoid circular locking dependency on PREEMPT_RT.
-+		 */
-+		spin_lock(&ilb->lock);
-+		__inet_unhash(sk, ilb);
- 		spin_unlock(&ilb->lock);
--	else
-+	} else {
-+		spinlock_t *lock = inet_ehash_lockp(hashinfo, sk->sk_hash);
-+
-+		spin_lock_bh(lock);
-+		__inet_unhash(sk, NULL);
- 		spin_unlock_bh(lock);
-+	}
- }
- EXPORT_SYMBOL_GPL(inet_unhash);
- 
+> +
+> +	if (!period) {
+> +		if (runtime > curr_period_us)
+> +			return -1;
+> +		return __osnoise_write_runtime(context, runtime);
+> +	} else if (!runtime) {
+> +		if (period < curr_runtime_us)
+> +			return -1;
+> +		return __osnoise_write_period(context, period);
+> +	}
+> +
+> +	if (runtime > curr_period_us) {
+> +		retval = __osnoise_write_period(context, period);
+> +		if (retval)
+> +			return -1;
+> +		retval = __osnoise_write_runtime(context, runtime);
+> +		if (retval)
+> +			return -1;
+> +	} else {
+> +		retval = __osnoise_write_runtime(context, runtime);
+> +		if (retval)
+> +			return -1;
+> +		retval = __osnoise_write_period(context, period);
+> +		if (retval)
+> +			return -1;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +/*
+> + * osnoise_get_timerlat_period_us - read and save the original "timerlat_period_us"
+> + */
+> +static long long
+> +osnoise_get_timerlat_period_us(struct osnoise_context *context)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	long long timerlat_period_us;
+> +	char *stop_path;
+> +	int retval;
+> +
+> +	if (context->timerlat_period_us != OSNOISE_TIME_INIT_VAL)
+> +		return context->timerlat_period_us;
+> +
+> +	if (context->orig_timerlat_period_us != OSNOISE_TIME_INIT_VAL)
+> +		return context->orig_timerlat_period_us;
+> +
+> +	stop_path = tracefs_get_tracing_file("osnoise/timerlat_period_us");
+
+Using timerlat_period_path seems to be straightforward.
+
+> +
+> +	context->timerlat_period_us_fd = open(stop_path, O_RDWR);
+> +	if (context->timerlat_period_us_fd < 0)
+> +		goto out_err;
+> +
+> +	retval = read(context->timerlat_period_us_fd, &buffer, sizeof(buffer));
+> +	if (retval <= 0)
+> +		goto out_close;
+> +
+> +	timerlat_period_us = get_llong_from_str(buffer);
+> +	if (timerlat_period_us < 0)
+> +		goto out_close;
+> +
+> +	tracefs_put_tracing_file(stop_path);
+> +
+> +	context->orig_timerlat_period_us = timerlat_period_us;
+> +	return timerlat_period_us;
+> +
+> +out_close:
+> +	close(context->timerlat_period_us_fd);
+> +	context->timerlat_period_us_fd = CLOSED_FD;
+> +out_err:
+> +	tracefs_put_tracing_file(stop_path);
+> +	return -1;
+
+Should return 0 or OSNOISE_TIME_INIT_VAL and the return type
+can be unsigned long long.
+
+> +}
+> +
+> +/*
+> + * osnoise_get_stop_us - read and save the original "stop_tracing_us"
+> + */
+> +static long long
+> +osnoise_get_stop_us(struct osnoise_context *context)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	long long stop_us;
+> +	char *stop_path;
+> +	int retval;
+> +
+> +	if (context->stop_us != OSNOISE_OPTION_INIT_VAL)
+> +		return context->stop_us;
+> +
+> +	if (context->orig_stop_us != OSNOISE_OPTION_INIT_VAL)
+> +		return context->orig_stop_us;
+> +
+> +	stop_path = tracefs_get_tracing_file("osnoise/stop_tracing_us");
+> +
+> +	context->stop_us_fd = open(stop_path, O_RDWR);
+> +	if (context->stop_us_fd < 0)
+> +		goto out_err;
+> +
+> +	retval = read(context->stop_us_fd, &buffer, sizeof(buffer));
+> +	if (retval <= 0)
+> +		goto out_close;
+> +
+> +	stop_us = get_llong_from_str(buffer);
+> +	if (stop_us < 0)
+> +		goto out_close;
+> +
+> +	tracefs_put_tracing_file(stop_path);
+> +
+> +	context->orig_stop_us = stop_us;
+> +	return stop_us;
+> +
+> +out_close:
+> +	close(context->stop_us_fd);
+> +	context->stop_us_fd = CLOSED_FD;
+> +out_err:
+> +	tracefs_put_tracing_file(stop_path);
+> +	return -1;
+
+The same.
+
+> +}
+> +
+> +/*
+> + * osnoise_get_stop_total_us - read and save the original "stop_tracing_total_us"
+> + */
+> +static long long
+> +osnoise_get_stop_total_us(struct osnoise_context *context)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	long long stop_total_us;
+> +	char *stop_path;
+
+Use stop_total_path to differentiate with stop_path used in
+osnoise_get_stop_us().
+
+> +	int retval;
+> +
+> +	if (context->stop_total_us != OSNOISE_OPTION_INIT_VAL)
+> +		return context->stop_total_us;
+> +
+> +	if (context->orig_stop_total_us != OSNOISE_OPTION_INIT_VAL)
+> +		return context->orig_stop_total_us;
+> +
+> +	stop_path = tracefs_get_tracing_file("osnoise/stop_tracing_total_us");
+> +
+> +	context->stop_total_us_fd = open(stop_path, O_RDWR);
+> +	if (context->stop_total_us_fd < 0)
+> +		goto out_err;
+> +
+> +	retval = read(context->stop_total_us_fd, &buffer, sizeof(buffer));
+> +	if (retval <= 0)
+> +		goto out_close;
+> +
+> +	stop_total_us = get_llong_from_str(buffer);
+> +	if (stop_total_us < 0)
+> +		goto out_close;
+> +
+> +	tracefs_put_tracing_file(stop_path);
+> +
+> +	context->orig_stop_total_us = stop_total_us;
+> +	return stop_total_us;
+> +
+> +out_close:
+> +	close(context->stop_total_us_fd);
+> +	context->stop_total_us_fd = CLOSED_FD;
+> +out_err:
+> +	tracefs_put_tracing_file(stop_path);
+> +	return -1;
+
+The same.
+
+> +}
+> +
+> +/*
+> + * osnoise_get_print_stack - read and save the original "print_stack"
+> + */
+> +static long long
+> +osnoise_get_print_stack(struct osnoise_context *context)
+> +{
+> +	char buffer[BUFF_U64_STR_SIZE];
+> +	long long print_stack;
+> +	char *stop_path;
+
+This is print_stack_path.
+
+> +	int retval;
+> +
+> +	if (context->print_stack != OSNOISE_OPTION_INIT_VAL)
+> +		return context->print_stack;
+> +
+> +	if (context->orig_print_stack != OSNOISE_OPTION_INIT_VAL)
+> +		return context->orig_print_stack;
+> +
+> +	stop_path = tracefs_get_tracing_file("osnoise/print_stack");
+> +
+> +	context->print_stack_fd = open(stop_path, O_RDWR);
+> +	if (context->print_stack_fd < 0)
+> +		goto out_err;
+> +
+> +	retval = read(context->print_stack_fd, &buffer, sizeof(buffer));
+> +	if (retval <= 0)
+> +		goto out_close;
+> +
+> +	print_stack = get_llong_from_str(buffer);
+> +	if (print_stack < 0)
+> +		goto out_close;
+> +
+> +	tracefs_put_tracing_file(stop_path);
+> +
+> +	context->orig_print_stack = print_stack;
+> +	return print_stack;
+> +
+> +out_close:
+> +	close(context->print_stack_fd);
+> +	context->print_stack_fd = CLOSED_FD;
+> +out_err:
+> +	tracefs_put_tracing_file(stop_path);
+> +	return -1;
+
+The same.
+
+> +}
+> +/*
+> + * osnoise_context_alloc - alloc an osnoise_context
+> + *
+> + * The osnoise context contains the information of the "osnoise/" configs.
+> + * It is used to set and restore the config.
+> + */
+> +struct osnoise_context *osnoise_context_alloc(void)
+> +{
+> +	struct osnoise_context *context;
+> +
+> +	context = calloc(1, sizeof(*context));
+> +	if (!context)
+> +		goto out_err;
+> +
+> +	context->cpus_fd 		= CLOSED_FD;
+> +	context->runtime_fd		= CLOSED_FD;
+> +	context->period_fd		= CLOSED_FD;
+> +	context->stop_us_fd		= CLOSED_FD;
+> +	context->stop_total_us_fd	= CLOSED_FD;
+> +	context->timerlat_period_us_fd	= CLOSED_FD;
+> +	context->print_stack_fd		= CLOSED_FD;
+> +
+> +	context->orig_stop_us		= OSNOISE_OPTION_INIT_VAL;
+> +	context->stop_us		= OSNOISE_OPTION_INIT_VAL;
+> +
+> +	context->orig_stop_total_us	= OSNOISE_OPTION_INIT_VAL;
+> +	context->stop_total_us		= OSNOISE_OPTION_INIT_VAL;
+> +
+> +	context->orig_print_stack	= OSNOISE_OPTION_INIT_VAL;
+> +	context->print_stack		= OSNOISE_OPTION_INIT_VAL;
+> +
+> +	osnoise_get_context(context);
+> +
+> +	return context;
+> +out_err:
+> +	if (context)
+> +		free(context);
+
+context is NULL here, so no need the check. Just directly return NULL
+when 'if(!context)' is enough.
+
+> +	return NULL;
+> +}
+
+Sorry for my slow and not complete reply.. and leave not sure here.
+
+Thanks,
+Tao
