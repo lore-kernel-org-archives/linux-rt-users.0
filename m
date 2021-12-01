@@ -2,288 +2,117 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A72B2C433FE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Dec 2021 17:34:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E2502C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Dec 2021 20:41:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351929AbhLARhU (ORCPT
+        id S1353001AbhLAUpS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Dec 2021 12:37:20 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:42054 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1351941AbhLARgl (ORCPT
+        Wed, 1 Dec 2021 15:45:18 -0500
+Received: from ams.source.kernel.org ([145.40.68.75]:34008 "EHLO
+        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1352927AbhLAUof (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Dec 2021 12:36:41 -0500
-Date:   Wed, 1 Dec 2021 18:33:16 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1638379997;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=h8UNBLiSkPlhvyZ4mn8yJQzaXY1b8kMQFH4oNN45s+E=;
-        b=H4VTIjikZvnImdeUKXgGKHAWU2ksWjnAhdJpnXC/3WVQLLApGMNOdqED7cVyvSX7dRBoq3
-        hS0wJs3G8O2+eRjr5ofid8n8yiitoK0wdrpKVRWSd6gKaK/oNeDvhte+Zq9wOFmXKLE48w
-        AUTwGoPhLuxN3tWRCkyUgafF+Y9iyrVgn1WfVUxwiBnMoVZy4/E4fEz4jfSUsryG275mUI
-        /rN2SMmdthIzoa2Un2xXWklyYWj/AIeZQ8EFogxb5wEa9RvF808pXINg9Jyj6hROOSMaXG
-        AK7FxyGcJ7274QkpT8/F+9nsA/HbjqfvGl+o1N7CLpeXfP4VMn2faEza215MwQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1638379997;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=h8UNBLiSkPlhvyZ4mn8yJQzaXY1b8kMQFH4oNN45s+E=;
-        b=7nR/OSrof3g7Lepe/dQhkdj4vK4mbpa7dzfH6Grsp7Xp5JK0kJFDhVeOFkqRQtcMVnefOR
-        PDV+SH8+iO5rJpAg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.16-rc3-rt7
-Message-ID: <20211201173316.rm6o67qapqsx2n47@linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+        Wed, 1 Dec 2021 15:44:35 -0500
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 7FF42B81F44;
+        Wed,  1 Dec 2021 20:41:11 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5BDC5C53FAD;
+        Wed,  1 Dec 2021 20:41:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1638391270;
+        bh=UlYUruOIlwj8u4zg5yeiwwNYkTjg6cEKgy3ujpg3buk=;
+        h=From:To:Subject:Date:From;
+        b=RPqnTXCD6HWzptI3Z3FNzyv/5WM0OYBns3P0EvYewRAt3IneXP+3wHfq2nMNnG8cw
+         QYSnooRQEZnQ9PasGTyJ+MvEQ+J25tNAeGE5OgyRuAqQbqbObz7IDPr8BSQwTB0G1X
+         rl0+mTi0LDrYfkLkudHhDQSA/yMaymJMvKDocAkW83b00dCOPuwfluNF9HS4ZWX5qD
+         ObSBc9iAMYsOpIM0OtLHJbX74MvnxPPyD1ciLTEakw/PaxoecZxHUdGcmsj6BiobnA
+         LP+US8iGEq20AjXD5TtlJW1w94VVuSGEiTZPDIA79Y4SiVZLla8dzSb6RVZHIuGkFV
+         Jwpb/Kau/MrhA==
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 0/8] Linux v5.4.161-rt67-rc1
+Date:   Wed,  1 Dec 2021 14:41:00 -0600
+Message-Id: <cover.1638391253.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.17.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+From: Tom Zanussi <zanussi@kernel.org>
 
-I'm pleased to announce the v5.16-rc3-rt7 patch set. 
+Dear RT Folks,
 
-Changes since v5.16-rc3-rt6:
+This is the RT stable review cycle of patch 5.4.161-rt67-rc1.
 
-  - Drop the workaround for the initialisation of the stack canary on
-    x86. It is no longer needed.
+Please scream at me if I messed something up. Please test the patches
+too.
 
-  - Introduce the `ktimers' thread which handles the softirq work of
-    HRTIMER_SOFTIRQ and TIMER_SOFTIRQ. This avoids the wake up of
-    ksoftirqd which then collects all softirqs.
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
 
-Known issues
-     - netconsole triggers WARN.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-     - The "Memory controller" (CONFIG_MEMCG) has been disabled.
+If all goes well, this patch will be converted to the next main
+release on 2021-12-04.
 
-     - Valentin Schneider reported a few splats on ARM64, see
-          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+To build 5.4.161-rt67-rc1 directly, the following patches should be applied:
 
-The delta patch against v5.16-rc3-rt6 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/incr/patch-5.16-rc3-rt6-rt7.patch.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
 
-You can get this release via the git tree at:
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.161.xz
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.16-rc3-rt7
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.161-rt67-rc1.patch.xz
 
-The RT patch against v5.16-rc3 can be found here:
+You can also build from 5.4.161-rt66 by applying the incremental patch:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/older/patch-5.16-rc3-rt7.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.161-rt66-rt67-rc1.patch.xz
 
-The split quilt queue is available at:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/older/patches-5.16-rc3-rt7.tar.xz
+Enjoy,
 
-Sebastian
+-- Tom
 
-diff --git a/arch/x86/include/asm/stackprotector.h b/arch/x86/include/asm/stackprotector.h
-index 2fc22c27df183..24a8d6c4fb185 100644
---- a/arch/x86/include/asm/stackprotector.h
-+++ b/arch/x86/include/asm/stackprotector.h
-@@ -50,7 +50,7 @@
-  */
- static __always_inline void boot_init_stack_canary(void)
- {
--	u64 canary = 0;
-+	u64 canary;
- 	u64 tsc;
- 
- #ifdef CONFIG_X86_64
-@@ -61,14 +61,8 @@ static __always_inline void boot_init_stack_canary(void)
- 	 * of randomness. The TSC only matters for very early init,
- 	 * there it already has some randomness on most systems. Later
- 	 * on during the bootup the random pool has true entropy too.
--	 * For preempt-rt we need to weaken the randomness a bit, as
--	 * we can't call into the random generator from atomic context
--	 * due to locking constraints. We just leave canary
--	 * uninitialized and use the TSC based randomness on top of it.
- 	 */
--#ifndef CONFIG_PREEMPT_RT
- 	get_random_bytes(&canary, sizeof(canary));
--#endif
- 	tsc = rdtsc();
- 	canary += tsc + (tsc << 32UL);
- 	canary &= CANARY_MASK;
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index 1f22a30c09637..9c35024be9422 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -554,6 +554,22 @@ extern void __raise_softirq_irqoff(unsigned int nr);
- extern void raise_softirq_irqoff(unsigned int nr);
- extern void raise_softirq(unsigned int nr);
- 
-+#ifdef CONFIG_PREEMPT_RT
-+extern void raise_timer_softirq(void);
-+extern void raise_hrtimer_softirq(void);
-+
-+#else
-+static inline void raise_timer_softirq(void)
-+{
-+	raise_softirq(TIMER_SOFTIRQ);
-+}
-+
-+static inline void raise_hrtimer_softirq(void)
-+{
-+	raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+}
-+#endif
-+
- DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
- 
- static inline struct task_struct *this_cpu_ksoftirqd(void)
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 322b65d456767..e49fcdea145d8 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -623,6 +623,22 @@ static inline void tick_irq_exit(void)
- #endif
- }
- 
-+static DEFINE_PER_CPU(struct task_struct *, timersd);
-+static DEFINE_PER_CPU(unsigned long, pending_timer_softirq);
-+
-+static unsigned int local_pending_timers(void)
-+{
-+        return __this_cpu_read(pending_timer_softirq);
-+}
-+
-+static void wake_timersd(void)
-+{
-+        struct task_struct *tsk = __this_cpu_read(timersd);
-+
-+        if (tsk)
-+                wake_up_process(tsk);
-+}
-+
- static inline void __irq_exit_rcu(void)
- {
- #ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED
-@@ -634,6 +650,8 @@ static inline void __irq_exit_rcu(void)
- 	preempt_count_sub(HARDIRQ_OFFSET);
- 	if (!in_interrupt() && local_softirq_pending())
- 		invoke_softirq();
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !in_interrupt() && local_pending_timers())
-+		wake_timersd();
- 
- 	tick_irq_exit();
- }
-@@ -962,11 +980,69 @@ static struct smp_hotplug_thread softirq_threads = {
- 	.thread_comm		= "ksoftirqd/%u",
- };
- 
-+static void timersd_setup(unsigned int cpu)
-+{
-+        sched_set_fifo_low(current);
-+}
-+
-+static int timersd_should_run(unsigned int cpu)
-+{
-+        return local_pending_timers();
-+}
-+
-+static void run_timersd(unsigned int cpu)
-+{
-+	unsigned int timer_si;
-+
-+	ksoftirqd_run_begin();
-+
-+	timer_si = local_pending_timers();
-+	__this_cpu_write(pending_timer_softirq, 0);
-+	or_softirq_pending(timer_si);
-+
-+	__do_softirq();
-+
-+	ksoftirqd_run_end();
-+}
-+
-+#ifdef CONFIG_PREEMPT_RT
-+static void raise_ktimers_thread(unsigned int nr)
-+{
-+	trace_softirq_raise(nr);
-+	__this_cpu_or(pending_timer_softirq, 1 << nr);
-+}
-+
-+void raise_hrtimer_softirq(void)
-+{
-+	raise_ktimers_thread(HRTIMER_SOFTIRQ);
-+}
-+
-+void raise_timer_softirq(void)
-+{
-+	unsigned long flags;
-+
-+	local_irq_save(flags);
-+	raise_ktimers_thread(TIMER_SOFTIRQ);
-+	wake_timersd();
-+	local_irq_restore(flags);
-+}
-+#endif
-+
-+struct smp_hotplug_thread timer_threads = {
-+        .store                  = &timersd,
-+        .setup                  = timersd_setup,
-+        .thread_should_run      = timersd_should_run,
-+        .thread_fn              = run_timersd,
-+        .thread_comm            = "ktimers/%u",
-+};
-+
- static __init int spawn_ksoftirqd(void)
- {
- 	cpuhp_setup_state_nocalls(CPUHP_SOFTIRQ_DEAD, "softirq:dead", NULL,
- 				  takeover_tasklets);
- 	BUG_ON(smpboot_register_percpu_thread(&softirq_threads));
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-+		BUG_ON(smpboot_register_percpu_thread(&timer_threads));
- 
- 	return 0;
- }
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 0ea8702eb5163..dead5e738ecf1 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1805,7 +1805,7 @@ void hrtimer_interrupt(struct clock_event_device *dev)
- 	if (!ktime_before(now, cpu_base->softirq_expires_next)) {
- 		cpu_base->softirq_expires_next = KTIME_MAX;
- 		cpu_base->softirq_activated = 1;
--		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+		raise_hrtimer_softirq();
- 	}
- 
- 	__hrtimer_run_queues(cpu_base, now, flags, HRTIMER_ACTIVE_HARD);
-@@ -1918,7 +1918,7 @@ void hrtimer_run_queues(void)
- 	if (!ktime_before(now, cpu_base->softirq_expires_next)) {
- 		cpu_base->softirq_expires_next = KTIME_MAX;
- 		cpu_base->softirq_activated = 1;
--		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+		raise_hrtimer_softirq();
- 	}
- 
- 	__hrtimer_run_queues(cpu_base, now, flags, HRTIMER_ACTIVE_HARD);
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index e3d2c23c413d4..b276c34690fa2 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1766,7 +1766,7 @@ static void run_local_timers(void)
- 		if (time_before(jiffies, base->next_expiry))
- 			return;
- 	}
--	raise_softirq(TIMER_SOFTIRQ);
-+	raise_timer_softirq();
- }
- 
- /*
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d806670..045478966e9f1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
+
+Mike Galbraith (1):
+  mm, zsmalloc: Convert zsmalloc_handle.lock to spinlock_t
+
+Sebastian Andrzej Siewior (6):
+  sched: Switch wait_task_inactive to HRTIMER_MODE_REL_HARD
+  preempt: Move preempt_enable_no_resched() to the RT block
+  mm: Disable NUMA_BALANCING_DEFAULT_ENABLED and TRANSPARENT_HUGEPAGE on
+    PREEMPT_RT
+  fscache: Use only one fscache_object_cong_wait.
+  fscache: Use only one fscache_object_cong_wait.
+  locking: Drop might_resched() from might_sleep_no_state_check()
+
+Tom Zanussi (1):
+  Linux 5.4.161-rt67-rc1
+
+ fs/fscache/internal.h   |  1 -
+ fs/fscache/main.c       |  6 ------
+ fs/fscache/object.c     | 13 +++++--------
+ include/linux/kernel.h  |  2 +-
+ include/linux/preempt.h |  6 +++---
+ init/Kconfig            |  2 +-
+ kernel/sched/core.c     |  2 +-
+ localversion-rt         |  2 +-
+ mm/zsmalloc.c           | 12 ++++++------
+ 9 files changed, 18 insertions(+), 28 deletions(-)
+
+-- 
+2.17.1
+
