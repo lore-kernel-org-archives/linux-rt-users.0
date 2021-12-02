@@ -2,79 +2,371 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40803C433FE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Dec 2021 20:42:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E52DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Dec 2021 15:44:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1353126AbhLAUpm (ORCPT
+        id S232664AbhLBPrY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Dec 2021 15:45:42 -0500
-Received: from sin.source.kernel.org ([145.40.73.55]:43888 "EHLO
-        sin.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1353020AbhLAUoo (ORCPT
+        Thu, 2 Dec 2021 10:47:24 -0500
+Received: from gateway32.websitewelcome.com ([192.185.145.178]:38557 "EHLO
+        gateway32.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1347999AbhLBPrX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Dec 2021 15:44:44 -0500
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by sin.source.kernel.org (Postfix) with ESMTPS id 8B87CCE1DED;
-        Wed,  1 Dec 2021 20:41:21 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id DB6DFC53FCF;
-        Wed,  1 Dec 2021 20:41:18 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1638391279;
-        bh=ERuVyUB0Dw+gqopVgRcEFB6TKIIwtdk9P9zkGW2KS00=;
-        h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
-         References:From;
-        b=RbC7f9f6jntVAOAYYbNmiv2bDBlvEGWZLbxEF/HU/UeAQRYZcQ4sY2ng9m7mYivkj
-         fdLhdTGQ8CmjmqWvlF40IjlI9zKpNHPSuSRO62+KR3L7QtUyh76aQwuM0L0TB4vKHz
-         c4xUXfU8ghdvIKFMvLJeJ52aDoOGG2oS6E/p5mrf3SLN6iwicXyehW1cNDWYK/OCmq
-         uMyvb5QPqELm+czj7JP8/rsNB5FjGQk2CgDc4dJNtS64NI+5Er+mA11hZ989G55U5X
-         cC3a6dlLnOE77a3M3hHybn2bBlX/TcmgfWVvWqDNlrK+r0f/gwxBvAbMpRvS9511rK
-         0Ce1JHLVMozXA==
-From:   zanussi@kernel.org
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
+        Thu, 2 Dec 2021 10:47:23 -0500
+X-Greylist: delayed 1426 seconds by postgrey-1.27 at vger.kernel.org; Thu, 02 Dec 2021 10:47:23 EST
+Received: from cm13.websitewelcome.com (cm13.websitewelcome.com [100.42.49.6])
+        by gateway32.websitewelcome.com (Postfix) with ESMTP id 19001CE890C
+        for <linux-rt-users@vger.kernel.org>; Thu,  2 Dec 2021 09:20:00 -0600 (CST)
+Received: from gator4132.hostgator.com ([192.185.4.144])
+        by cmsmtp with SMTP
+        id snrOmNezRXCKjsnrOmukZP; Thu, 02 Dec 2021 09:18:58 -0600
+X-Authority-Reason: nr=8
+Received: from host-79-34-250-122.business.telecomitalia.it ([79.34.250.122]:57870 helo=[10.0.0.161])
+        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        (Exim 4.94.2)
+        (envelope-from <bristot@kernel.org>)
+        id 1msnrN-004BKV-Ad; Thu, 02 Dec 2021 09:18:57 -0600
+Message-ID: <9944378d-456f-79a5-2dbf-30dbbbc94522@kernel.org>
+Date:   Thu, 2 Dec 2021 16:18:53 +0100
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.3.0
+Subject: Re: [PATCH V8 03/14] rtla: Add osnoise tool
+Content-Language: en-US
+To:     Tao Zhou <tao.zhou@linux.dev>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
         Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 8/8] Linux 5.4.161-rt67-rc1
-Date:   Wed,  1 Dec 2021 14:41:08 -0600
-Message-Id: <fa1ec22578baf666ed5f1774e3e93a04c729cbc5.1638391253.git.zanussi@kernel.org>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <cover.1638391253.git.zanussi@kernel.org>
-References: <cover.1638391253.git.zanussi@kernel.org>
-In-Reply-To: <cover.1638391253.git.zanussi@kernel.org>
-References: <cover.1638391253.git.zanussi@kernel.org>
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+References: <cover.1638182284.git.bristot@kernel.org>
+ <ffb7f1b1e8cc42fc8ec52f1a89fdd2ca0d70c36e.1638182284.git.bristot@kernel.org>
+ <YaZEzvzp5jkRyLEJ@geo.homenetwork>
+From:   Daniel Bristot de Oliveira <bristot@kernel.org>
+In-Reply-To: <YaZEzvzp5jkRyLEJ@geo.homenetwork>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
+X-AntiAbuse: Original Domain - vger.kernel.org
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - kernel.org
+X-BWhitelist: no
+X-Source-IP: 79.34.250.122
+X-Source-L: No
+X-Exim-ID: 1msnrN-004BKV-Ad
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+X-Source-Sender: host-79-34-250-122.business.telecomitalia.it ([10.0.0.161]) [79.34.250.122]:57870
+X-Source-Auth: kernel@bristot.me
+X-Email-Count: 3
+X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
+X-Local-Domain: no
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+Hi Tao
 
-v5.4.161-rt67-rc1 stable review patch.
-If anyone has any objections, please let me know.
+On 11/30/21 16:35, Tao Zhou wrote:
+> Hi Daniel,
+> 
+> On Mon, Nov 29, 2021 at 12:07:41PM +0100, Daniel Bristot de Oliveira wrote:
+>> +/*
+>> + * osnoise_restore_cpus - restore the original "osnoise/cpus"
+>> + *
+>> + * osnoise_set_cpus() saves the original data for the "osnoise/cpus"
+> 
+> osnoise_set_cpus() --> osnoise_restore_cpus()
 
------------
+This comment is correct... osnoise_set_cpus saves the data (in the tool),
+osnoise_restore_cpus() restores it.
+
+>> + * file. This function restore the original config it was previously
+>> + * modified.
+>> + */
+>> +void osnoise_restore_cpus(struct osnoise_context *context)
+>> +{
+>> +	int retval;
+>> +
+>> +	if (!context->orig_cpus)
+>> +		return;
+>> +
+>> +	if (!context->curr_cpus)
+>> +		return;
+>> +
+>> +	/* nothing to do? */
+>> +	if (!strcmp(context->orig_cpus, context->curr_cpus))
+>> +		goto out_done;
+>> +
+>> +	retval = write(context->cpus_fd, context->orig_cpus, strlen(context->orig_cpus));
+> 
+> 'strlen(context->orig_cpus) + 1' for write size;
+> 
+>> +	if (retval < strlen(context->orig_cpus))
+> 
+> Same here. Check 'strlen(context->orig_cpus) + 1'
+
+Fixed in v9.
+
+>> +		err_msg("could not restore original osnoise cpus\n");
+>> +
+>> +out_done:
+>> +	free(context->curr_cpus);
+>> +	context->curr_cpus = NULL;
+>> +}
+>> +
+>> +/*
+>> + * osnoise_get_runtime - return the original "osnoise/runtime_us" value
+>> + *
+>> + * It also saves the value to be restored.
+>> + */
+>> +unsigned long long osnoise_get_runtime(struct osnoise_context *context)
+>> +{
+>> +	char buffer[BUFF_U64_STR_SIZE];
+>> +	long long runtime_us;
+>> +	char *runtime_path;
+>> +	int retval;
+>> +
+>> +	if (context->runtime_us != OSNOISE_TIME_INIT_VAL)
+>> +		return context->runtime_us;
+>> +
+>> +	if (context->orig_runtime_us != OSNOISE_TIME_INIT_VAL)
+>> +		return context->orig_runtime_us;
+>> +
+>> +	runtime_path = tracefs_get_tracing_file("osnoise/runtime_us");
+>> +
+>> +	context->runtime_fd = open(runtime_path, O_RDWR);
+>> +	if (context->runtime_fd < 0)
+>> +		goto out_err;
+>> +
+>> +	retval = read(context->runtime_fd, &buffer, sizeof(buffer));
+>> +	if (retval <= 0)
+>> +		goto out_close;
+>> +
+>> +	runtime_us = get_llong_from_str(buffer);
+>> +	if (runtime_us < 0)
+>> +		goto out_close;
+>> +
+>> +	tracefs_put_tracing_file(runtime_path);
+>> +
+>> +	context->orig_runtime_us = runtime_us;
+>> +	return runtime_us;
+>> +
+>> +out_close:
+>> +	close(context->runtime_fd);
+>> +	context->runtime_fd = CLOSED_FD;
+>> +out_err:
+>> +	tracefs_put_tracing_file(runtime_path);
+>> +	return 0;
+>> +}
+>> +/*
+>> + * osnoise_get_period - return the original "osnoise/period_us" value
+>> + *
+>> + * It also saves the value to be restored.
+>> + */
+>> +unsigned long long osnoise_get_period(struct osnoise_context *context)
+>> +{
+>> +	char buffer[BUFF_U64_STR_SIZE];
+>> +	char *period_path;
+>> +	long long period_us;
+>> +	int retval;
+>> +
+>> +	if (context->period_us != OSNOISE_TIME_INIT_VAL)
+>> +		return context->period_us;
+>> +
+>> +	if (context->orig_period_us != OSNOISE_TIME_INIT_VAL)
+>> +		return context->orig_period_us;
+>> +
+>> +	period_path = tracefs_get_tracing_file("osnoise/period_us");
+>> +
+>> +	context->period_fd = open(period_path, O_RDWR);
+>> +	if (context->period_fd < 0)
+>> +		goto out_err;
+>> +
+>> +	retval = read(context->period_fd, &buffer, sizeof(buffer));
+>> +	if (retval <= 0)
+>> +		goto out_close;
+>> +
+>> +	period_us = get_llong_from_str(buffer);
+>> +	if (period_us < 0)
+>> +		goto out_close;
+>> +
+>> +	tracefs_put_tracing_file(period_path);
+>> +
+>> +	context->orig_period_us = period_us;
+>> +	return period_us;
+>> +
+>> +out_close:
+>> +	close(context->period_fd);
+>> +	context->period_fd = CLOSED_FD;
+>> +out_err:
+>> +	tracefs_put_tracing_file(period_path);
+>> +	return 0;
+>> +}
+> 
+> osnoise_get_period() and osnoise_get_runtime() almost the same.
+> Use macro to generate code. Some thing also not sure now. Shame
+> 
+> 
+> #define osnoise_get_period osnoise_get(period)
+> #define osnoise_get_runtime osnoise_get(runtime)
+> 
+> #define osnoise_get(x)	\
+> unsigned long long osnoise_get_##x(struct osnoise_context *context) \ 
+> {              \
+> 	char buffer[BUFF_U64_STR_SIZE];             \
+> 	char * x##_path;             \ 
+> 	long long x##_us;            \
+> 	if (context->x##_us != OSNOISE_TIME_INIT_VAL)                   \
+> 		return context->x##_us;           \
+> 	if (context->orig_##x##_us != OSNOISE_TIME_INIT_VAL)            \
+> 		return context->orig_##x##_us;          \
+> 	x##_path = tracefs_get_tracing_file("osnoise/x##_us");        \
+> 	context->x##_fd = open(x##_path, O_RDWR);               \
+> 	if (context->x##_fd < 0)                        \
+> 		goto out_err;                 \
+> 	retval = read(context->x##_fd, &buffer, sizeof(buffer));        \
+> 	if (retval <= 0)                  \
+> 		goto out_close;               \
+> 	x##_us = get_llong_from_str(buffer);            \
+> 	if (x##_us < 0)                   \
+> 		goto out_close;               \
+> 	tracefs_put_tracing_file(x##_path);             \
+> 	context->orig_##x##_us = x##_us;                \
+> 	return x##_us;                    \
+> out_close:                            \
+> 	close(context->x##_fd);           \
+> 	context->x##_fd = CLOSED_FD;                    \
+> out_err:                              \
+> 	tracefs_put_tracing_file(x##_path);             \
+> 	return 0;                         \
+> }
 
 
-Signed-off-by: Tom Zanussi <zanussi@kernel.org>
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+I am not sure if it is worth to trade the readability for just two functions. I
+will keep this as is foe now, and think about it in a second moment.
 
-diff --git a/localversion-rt b/localversion-rt
-index d42c0971b041..6f295236237c 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt66
-+-rt67-rc1
--- 
-2.17.1
+[...]
+>> +
+>> +/*
+>> + * osnoise_set_runtime_period - set osnoise runtime and period
+>> + *
+>> + * Osnoise's runtime and period are related as runtime <= period.
+>> + * Thus, this function saves the original values, and then tries
+>> + * to set the runtime and period if they are != 0.
+>> + */
+>> +int osnoise_set_runtime_period(struct osnoise_context *context,
+>> +			       unsigned long long runtime,
+>> +			       unsigned long long period)
+>> +{
+>> +	unsigned long long curr_runtime_us;
+>> +	unsigned long long curr_period_us;
+>> +	int retval;
+>> +
+>> +	if (!period && !runtime)
+>> +		return 0;
+>> +
+>> +	curr_runtime_us = osnoise_get_runtime(context);
+>> +	curr_period_us = osnoise_get_period(context);
+>> +
+>> +	/* error getting any value? */
+>> +	if (curr_period_us == -1 || curr_runtime_us == -1)
+>> +		return -1;
+> 
+> 'curr_period_us' and 'curr_runtime_us' error value should be
+> 0(OSNOISE_TIME_INIT_VAL).
+> 
+
+
+Right, I am now (in v9) returning the *_INIT_VAL on all errors, and using the
+macro to check for errors.
+
+[...]
+
+>> +static long long
+>> +osnoise_get_timerlat_period_us(struct osnoise_context *context)
+>> +{
+>> +	char buffer[BUFF_U64_STR_SIZE];
+>> +	long long timerlat_period_us;
+>> +	char *stop_path;
+>> +	int retval;
+>> +
+>> +	if (context->timerlat_period_us != OSNOISE_TIME_INIT_VAL)
+>> +		return context->timerlat_period_us;
+>> +
+>> +	if (context->orig_timerlat_period_us != OSNOISE_TIME_INIT_VAL)
+>> +		return context->orig_timerlat_period_us;
+>> +
+>> +	stop_path = tracefs_get_tracing_file("osnoise/timerlat_period_us");
+> 
+> Using timerlat_period_path seems to be straightforward.
+> 
+
+I am using config_path for all variables like this.
+
+
+[...]
+
+>> +/*
+>> + * osnoise_context_alloc - alloc an osnoise_context
+>> + *
+>> + * The osnoise context contains the information of the "osnoise/" configs.
+>> + * It is used to set and restore the config.
+>> + */
+>> +struct osnoise_context *osnoise_context_alloc(void)
+>> +{
+>> +	struct osnoise_context *context;
+>> +
+>> +	context = calloc(1, sizeof(*context));
+>> +	if (!context)
+>> +		goto out_err;
+>> +
+>> +	context->cpus_fd 		= CLOSED_FD;
+>> +	context->runtime_fd		= CLOSED_FD;
+>> +	context->period_fd		= CLOSED_FD;
+>> +	context->stop_us_fd		= CLOSED_FD;
+>> +	context->stop_total_us_fd	= CLOSED_FD;
+>> +	context->timerlat_period_us_fd	= CLOSED_FD;
+>> +	context->print_stack_fd		= CLOSED_FD;
+>> +
+>> +	context->orig_stop_us		= OSNOISE_OPTION_INIT_VAL;
+>> +	context->stop_us		= OSNOISE_OPTION_INIT_VAL;
+>> +
+>> +	context->orig_stop_total_us	= OSNOISE_OPTION_INIT_VAL;
+>> +	context->stop_total_us		= OSNOISE_OPTION_INIT_VAL;
+>> +
+>> +	context->orig_print_stack	= OSNOISE_OPTION_INIT_VAL;
+>> +	context->print_stack		= OSNOISE_OPTION_INIT_VAL;
+>> +
+>> +	osnoise_get_context(context);
+>> +
+>> +	return context;
+>> +out_err:
+>> +	if (context)
+>> +		free(context);
+> 
+> context is NULL here, so no need the check. Just directly return NULL
+> when 'if(!context)' is enough.
+> 
+>> +	return NULL;
+>> +}
+
+In v9, I am removing the goto, returning NULL if (!context).
+
+> Sorry for my slow and not complete reply.. and leave not sure here.
+> 
+> Thanks,
+> Tao
+
+Thanks Tao
+-- Daniel
 
