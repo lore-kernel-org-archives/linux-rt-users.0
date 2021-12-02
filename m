@@ -2,115 +2,84 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A96C3C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Dec 2021 16:28:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5503C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Dec 2021 22:06:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1359531AbhLBQbt (ORCPT
+        id S232465AbhLBWJ2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 2 Dec 2021 11:31:49 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:37352 "EHLO
+        Thu, 2 Dec 2021 17:09:28 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:45808 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1359553AbhLBQaT (ORCPT
+        by vger.kernel.org with ESMTP id S229851AbhLBWJ1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 2 Dec 2021 11:30:19 -0500
+        Thu, 2 Dec 2021 17:09:27 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1638462414;
+        s=mimecast20190719; t=1638482764;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=NYCh2dhHffxrJlRcZGBoZYUArmtQ7dENpgOfY14c6PY=;
-        b=ib4XiAn7m2TFamOMIXySu76Qa6lte4d6ojJLCWRNJhp0zGC41Z+SM2x2y19k8RSyl71gW6
-        VQeYThhfP1SfH8FRa9fIMe2EfTuJwuXKSPyTWNsoMX4BIPCxWpY71EGSo1UtpFFa5E6QUw
-        6x33d8umuzo4lL7ACvRWNR6nza13u6s=
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=7k9NAT51bqzJ5YbHuv7Ujc3TJL0g+29BxG+D9YetdSU=;
+        b=hCSIuZV4mY58OVYn8VJfDaLw8Uc9zSwQvLTB1nLPrYZVZV9bZL7oEo/cCXZ5TWyocSD6sP
+        B7t5WQqiVfhqLrhdey49/grWQv7aW/sJxvNxmM/JV25B2J7Qzk9k1uznulnhb6SUGtSYJb
+        OgfEnAhxl99BRpdelcjMOx4XgOV4jmw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-384-mXFpOi1mOk-kiYIYOoKZ4Q-1; Thu, 02 Dec 2021 11:26:53 -0500
-X-MC-Unique: mXFpOi1mOk-kiYIYOoKZ4Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-497-GT2GT0iMMCaKwwGHuQOfsw-1; Thu, 02 Dec 2021 17:05:58 -0500
+X-MC-Unique: GT2GT0iMMCaKwwGHuQOfsw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6A8AC10151E6;
-        Thu,  2 Dec 2021 16:26:51 +0000 (UTC)
-Received: from fuller.cnet (ovpn-112-3.gru2.redhat.com [10.97.112.3])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id EC27819C46;
-        Thu,  2 Dec 2021 16:26:50 +0000 (UTC)
-Received: by fuller.cnet (Postfix, from userid 1000)
-        id 89AD5416CE5D; Wed,  1 Dec 2021 11:01:50 -0300 (-03)
-Date:   Wed, 1 Dec 2021 11:01:50 -0300
-From:   Marcelo Tosatti <mtosatti@redhat.com>
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
-Cc:     Vlastimil Babka <vbabka@suse.cz>, akpm@linux-foundation.org,
-        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        frederic@kernel.org, tglx@linutronix.de, peterz@infradead.org,
-        nilal@redhat.com, mgorman@suse.de, linux-rt-users@vger.kernel.org,
-        cl@linux.com, ppandit@redhat.com
-Subject: Re: [PATCH v2 0/3] mm/page_alloc: Remote per-cpu page list drain
- support
-Message-ID: <20211201140149.GA12861@fuller.cnet>
-References: <20211103170512.2745765-1-nsaenzju@redhat.com>
- <7549db15-5149-160f-86e3-55136fe482ce@suse.cz>
- <43462fe11258395f4e885c3d594a3ed1b604b858.camel@redhat.com>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 21F7684B9A6;
+        Thu,  2 Dec 2021 22:05:56 +0000 (UTC)
+Received: from lclaudio.dyndns.org (unknown [10.22.32.148])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 534955DF37;
+        Thu,  2 Dec 2021 22:05:55 +0000 (UTC)
+Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
+        id 898C63C023B; Thu,  2 Dec 2021 19:05:53 -0300 (-03)
+Date:   Thu, 2 Dec 2021 19:05:53 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>
+Subject: [ANNOUNCE] 5.10.83-rt58
+Message-ID: <YalDQe/lyXqAxB0K@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <43462fe11258395f4e885c3d594a3ed1b604b858.camel@redhat.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Nov 30, 2021 at 07:09:23PM +0100, Nicolas Saenz Julienne wrote:
-> Hi Vlastimil, sorry for the late reply and thanks for your feedback. :)
-> 
-> On Tue, 2021-11-23 at 15:58 +0100, Vlastimil Babka wrote:
-> > > [1] Other approaches can be found here:
-> > > 
-> > >   - Static branch conditional on nohz_full, no performance loss, the extra
-> > >     config option makes is painful to maintain (v1):
-> > >     https://lore.kernel.org/linux-mm/20210921161323.607817-5-nsaenzju@redhat.com/
-> > > 
-> > >   - RCU based approach, complex, yet a bit less taxing performance wise
-> > >     (RFC):
-> > >     https://lore.kernel.org/linux-mm/20211008161922.942459-4-nsaenzju@redhat.com/
-> > 
-> > Hm I wonder if there might still be another alternative possible. IIRC I did
-> > propose at some point a local drain on the NOHZ cpu before returning to
-> > userspace, and then avoiding that cpu in remote drains, but tglx didn't like
-> > the idea of making entering the NOHZ full mode more expensive [1].
-> > 
-> > But what if we instead set pcp->high = 0 for these cpus so they would avoid
-> > populating the pcplists in the first place? Then there wouldn't have to be a
-> > drain at all. On the other hand page allocator operations would not benefit
-> > from zone lock batching on those cpus. But perhaps that would be acceptable
-> > tradeoff, as a nohz cpu is expected to run in userspace most of the time,
-> > and page allocator operations are rare except maybe some initial page
-> > faults? (I assume those kind of workloads pre-populate and/or mlock their
-> > address space anyway).
-> 
-> I've looked a bit into this and it seems straightforward. Our workloads
-> pre-populate everything, and a slight statup performance hit is not that tragic
-> (I'll measure it nonetheless). The per-cpu nohz_full state at some point will
-> be dynamic, but the feature seems simple to disable/enable. I'll have to teach
-> __drain_all_pages(zone, force_all_cpus=true) to bypass this special case
-> but that's all. I might have a go at this.
-> 
-> Thanks!
-> 
-> -- 
-> Nicolás Sáenz
+Hello RT Folks!
 
-True, but a nohz cpu does not necessarily have to run in userspace most
-of the time. For example, an application can enter nohz full mode, 
-go back to userspace, idle, return from idle all without leaving
-nohz_full mode.
+I'm pleased to announce the 5.10.83-rt58 stable release.
 
-So its not clear that nohz_full is an appropriate trigger for setting
-pcp->high = 0. Perhaps a task isolation feature would be an appropriate
-location.
+This release is just an update to the new stable 5.10.83
+version and no RT specific changes have been made.
 
+You can get this release via the git tree at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: 63bd813e523a6e08bb4bb04b71903d252cbcae80
+
+Or to build 5.10.83-rt58 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.83.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.83-rt58.patch.xz
+
+Enjoy!
+Luis
 
