@@ -2,94 +2,120 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 47F09C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Dec 2021 09:18:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E4ADC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Dec 2021 14:13:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1379500AbhLCJV1 (ORCPT
+        id S1352356AbhLCOQj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Dec 2021 04:21:27 -0500
-Received: from out1.migadu.com ([91.121.223.63]:44279 "EHLO out1.migadu.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1351372AbhLCJVX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Dec 2021 04:21:23 -0500
-Date:   Fri, 3 Dec 2021 17:17:53 +0800
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-        t=1638523078;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+        Fri, 3 Dec 2021 09:16:39 -0500
+Received: from smtp-out2.suse.de ([195.135.220.29]:35680 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233920AbhLCOQj (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Dec 2021 09:16:39 -0500
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out2.suse.de (Postfix) with ESMTP id 3FB1F1FD3C;
+        Fri,  3 Dec 2021 14:13:14 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1638540794; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=jRRcKTkq0gHKNp/1iXJzXbhalmkcrndZwlkadLPBwxI=;
-        b=OjxdyOaB9u43vku1s/oXzfeVtG6jDIVjT6DU3FCM5MKcHijMpQ+Wt8QBs2RMEAaOTGcDaP
-        LCsKC9fQVZcZNTMeiotb8g9o74vnSUlFBxF2AYCLEIsy9sTMX3+Fh2Ykl4REPLDoIEKvYV
-        7SWZUsT7H9PauEtCPHElyDBtnjY2Wag=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From:   Tao Zhou <tao.zhou@linux.dev>
-To:     Daniel Bristot de Oliveira <bristot@kernel.org>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH V8 07/14] rtla/timerlat: Add timerlat hist mode
-Message-ID: <YangwS/M9hO+o7TH@geo.homenetwork>
-References: <cover.1638182284.git.bristot@kernel.org>
- <eb486340cc983bd8f7f69fe6f99f8d2927fcd296.1638182284.git.bristot@kernel.org>
+        bh=YuUZJgfai8aZBSYulx5eyhjnGiU4iwqWBDGtGmY3Ows=;
+        b=Vx5k4E6Dt3aM8OuP9h6yqyuBbGglcfKrIpf+8dpkEYQCKNdIUSLqI2yEHS69Uz5fPy9LOa
+        R8nKFuAyeYuadcNqM3bkKRjPWXwR1A/5WRBqRdL/Qm28D4DlB4CjijQxJrnwZJu6e/I8kP
+        rJLajlqbjRpGOr3re1nbj0qbDpwxZSo=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1638540794;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=YuUZJgfai8aZBSYulx5eyhjnGiU4iwqWBDGtGmY3Ows=;
+        b=UXGFi8yNmmX1K5YTMXm8Wn1utZgUQf5L2Yrt5lo/ylLk0EIqLWrkvG3k1NrvJ4KOdVdxCB
+        859Fu9S0veXzrECg==
+Received: from suse.de (unknown [10.163.43.106])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by relay2.suse.de (Postfix) with ESMTPS id 8AFCDA3B85;
+        Fri,  3 Dec 2021 14:13:13 +0000 (UTC)
+Date:   Fri, 3 Dec 2021 14:13:06 +0000
+From:   Mel Gorman <mgorman@suse.de>
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        peterz@infradead.org, mtosatti@redhat.com, nilal@redhat.com,
+        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
+        ppandit@redhat.com
+Subject: Re: [PATCH v2 3/3] mm/page_alloc: Remotely drain per-cpu lists
+Message-ID: <20211203141306.GG3301@suse.de>
+References: <20211103170512.2745765-1-nsaenzju@redhat.com>
+ <20211103170512.2745765-4-nsaenzju@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-15
 Content-Disposition: inline
-In-Reply-To: <eb486340cc983bd8f7f69fe6f99f8d2927fcd296.1638182284.git.bristot@kernel.org>
-X-Migadu-Flow: FLOW_OUT
-X-Migadu-Auth-User: linux.dev
+In-Reply-To: <20211103170512.2745765-4-nsaenzju@redhat.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Nov 29, 2021 at 12:07:45PM +0100,
-Daniel Bristot de Oliveira wrote:
+On Wed, Nov 03, 2021 at 06:05:12PM +0100, Nicolas Saenz Julienne wrote:
+> Some setups, notably NOHZ_FULL CPUs, are too busy to handle the per-cpu
+> drain work queued by __drain_all_pages(). So introduce new a mechanism
+> to remotely drain the per-cpu lists. It is made possible by remotely
+> locking 'struct per_cpu_pages' new per-cpu spinlocks. A benefit of this
+> new scheme is that drain operations are now migration safe.
+> 
+> There was no observed performance degradation vs. the previous scheme.
+> Both netperf and hackbench were run in parallel to triggering the
+> __drain_all_pages(NULL, true) code path around ~100 times per second.
+> The new scheme performs a bit better (~5%), although the important point
+> here is there are no performance regressions vs. the previous mechanism.
+> Per-cpu lists draining happens only in slow paths.
+> 
 
-> +static void timerlat_hist_usage(char *usage)
-> +{
-> +	int i;
-> +
-> +	char *msg[] = {
-> +		"",
-> +		"  usage: [rtla] timerlat hist [-h] [-q] [-p us] [-i us] [-t us] [-s us] [-T[=file]] \\",
-> +		"         [-c cpu-list] [-P priority] [--no-irq] [--no-thread] [--no-header] [--no-summary] \\",
-> +		"         [--no-index] [--with-zeros]",
-> +		"",
-> +		"	  -h/--help: print this menu",
-> +		"	  -p/--period us: timerlat period in us",
-> +		"	  -i/--irq us: stop trace if the irq latency is higher than the argument in us",
-> +		"	  -T/--thread us: stop trace if the thread latency is higher than the argument in us",
-> +		"	  -s/--stack us: save the stack trace at the IRQ if a thread latency is higher than the argument in us",
-> +		"	  -c/--cpus cpus: run the tracer only on the given cpus",
-> +		"	  -d/--duration time[m|h|d]: duration of the session in seconds",
-> +		"	  -T/--trace[=file]: save the stopped trace to [file|timerlat_trace.txt]",
-> +		"	  -n/--nano: display data in nanoseconds",
-> +		"	  -b/--bucket-size N: set the histogram bucket size (default 1)",
-> +		"	  -e/--entries N: set the number of entries of the histogram (default 256)",
-> +		"	     --no-irq: ignore IRQ latencies",
-> +		"	     --no-thread: ignore thread latencies",
-> +		"	     --no-header: do not print header",
-> +		"	     --no-summary: do not print summary",
-> +		"	     --no-index: do not print index",
-> +		"	     --with-zeros: print zero only entries",
-> +		"	  -P/--priority o:prio|r:prio|f:prio|d:runtime:period : set scheduling parameters",
-> +		"		o:prio - use SCHED_OTHER with prio",
-> +		"		r:prio - use SCHED_RR with prio",
-> +		"		f:prio - use SCHED_FIFO with prio",
-> +		"		d:runtime[us|ms|s]:period[us|ms|s] - use SCHED_DEADLINE with runtime and period",
-> +		"						       in nanoseconds",
-> +		NULL,
-> +	};
+netperf and hackbench are not great indicators of page allocator
+performance as IIRC they are more slab-intensive than page allocator
+intensive. I ran the series through a few benchmarks and can confirm
+that there was negligible difference to netperf and hackbench.
 
-[-t us] --> [-T us]
-[-T[=file]] --> [-t[=file]]
-[-d] [-b] [-e] [-n] lack in usage info. this is not important tho.
+However, on Page Fault Test (pft in mmtests), it is noticable. On a
+2-socket cascadelake machine I get
+
+pft timings
+                                 5.16.0-rc1             5.16.0-rc1
+                                    vanilla    mm-remotedrain-v2r1
+Amean     system-1         27.48 (   0.00%)       27.85 *  -1.35%*
+Amean     system-4         28.65 (   0.00%)       30.84 *  -7.65%*
+Amean     system-7         28.70 (   0.00%)       32.43 * -13.00%*
+Amean     system-12        30.33 (   0.00%)       34.21 * -12.80%*
+Amean     system-21        37.14 (   0.00%)       41.51 * -11.76%*
+Amean     system-30        36.79 (   0.00%)       46.15 * -25.43%*
+Amean     system-48        58.95 (   0.00%)       65.28 * -10.73%*
+Amean     system-79       111.61 (   0.00%)      114.78 *  -2.84%*
+Amean     system-80       113.59 (   0.00%)      116.73 *  -2.77%*
+Amean     elapsed-1        32.83 (   0.00%)       33.12 *  -0.88%*
+Amean     elapsed-4         8.60 (   0.00%)        9.17 *  -6.66%*
+Amean     elapsed-7         4.97 (   0.00%)        5.53 * -11.30%*
+Amean     elapsed-12        3.08 (   0.00%)        3.43 * -11.41%*
+Amean     elapsed-21        2.19 (   0.00%)        2.41 * -10.06%*
+Amean     elapsed-30        1.73 (   0.00%)        2.04 * -17.87%*
+Amean     elapsed-48        1.73 (   0.00%)        2.03 * -17.77%*
+Amean     elapsed-79        1.61 (   0.00%)        1.64 *  -1.90%*
+Amean     elapsed-80        1.60 (   0.00%)        1.64 *  -2.50%*
+
+It's not specific to cascade lake, I see varying size regressions on
+different Intel and AMD chips, some better and worse than this result.
+The smallest regression was on a single CPU skylake machine with a 2-6%
+hit. Worst was Zen1 with a 3-107% hit.
+
+I didn't profile it to establish why but in all cases the system CPU
+usage was much higher. It *might* be because the spinlock in
+per_cpu_pages crosses a new cache line and it might be cold although the
+penalty seems a bit high for that to be the only factor.
+
+Code-wise, the patches look fine but the apparent penalty for PFT is
+too severe.
+
+-- 
+Mel Gorman
+SUSE Labs
