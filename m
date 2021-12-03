@@ -2,35 +2,36 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67AF7C433FE
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Dec 2021 17:42:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B051CC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Dec 2021 18:03:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1382403AbhLCRpr (ORCPT
+        id S1353431AbhLCSGe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Dec 2021 12:45:47 -0500
-Received: from gateway22.websitewelcome.com ([192.185.47.144]:23937 "EHLO
-        gateway22.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1343584AbhLCRpq (ORCPT
+        Fri, 3 Dec 2021 13:06:34 -0500
+Received: from gateway33.websitewelcome.com ([192.185.146.119]:45584 "EHLO
+        gateway33.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1353418AbhLCSGd (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Dec 2021 12:45:46 -0500
-Received: from cm12.websitewelcome.com (cm12.websitewelcome.com [100.42.49.8])
-        by gateway22.websitewelcome.com (Postfix) with ESMTP id 630F53D0E2
-        for <linux-rt-users@vger.kernel.org>; Fri,  3 Dec 2021 11:42:10 -0600 (CST)
+        Fri, 3 Dec 2021 13:06:33 -0500
+X-Greylist: delayed 1285 seconds by postgrey-1.27 at vger.kernel.org; Fri, 03 Dec 2021 13:06:33 EST
+Received: from cm13.websitewelcome.com (cm13.websitewelcome.com [100.42.49.6])
+        by gateway33.websitewelcome.com (Postfix) with ESMTP id 1B76DD24BAA
+        for <linux-rt-users@vger.kernel.org>; Fri,  3 Dec 2021 11:41:43 -0600 (CST)
 Received: from gator4132.hostgator.com ([192.185.4.144])
         by cmsmtp with SMTP
-        id tCZVmDBC2jXZUtCZVmZa8T; Fri, 03 Dec 2021 11:42:09 -0600
+        id tCZ5m3eQU0ESotCZ5mtZ0c; Fri, 03 Dec 2021 11:41:43 -0600
 X-Authority-Reason: nr=8
-Received: from host-79-34-250-122.business.telecomitalia.it ([79.34.250.122]:47268 helo=[10.0.0.165])
+Received: from host-79-34-250-122.business.telecomitalia.it ([79.34.250.122]:47266 helo=[10.0.0.165])
         by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         (Exim 4.94.2)
         (envelope-from <bristot@kernel.org>)
-        id 1mtCZU-002YlH-6q; Fri, 03 Dec 2021 11:42:08 -0600
-Message-ID: <aabde006-ce0e-fc68-63fb-58eb43648ef1@kernel.org>
-Date:   Fri, 3 Dec 2021 18:42:04 +0100
+        id 1mtCZ3-002YDG-So; Fri, 03 Dec 2021 11:41:42 -0600
+Message-ID: <e39ddd6d-27f0-e70e-17a1-b5bb1134d2fc@kernel.org>
+Date:   Fri, 3 Dec 2021 18:41:37 +0100
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.3.0
-Subject: Re: [PATCH V8 07/14] rtla/timerlat: Add timerlat hist mode
+Subject: Re: [PATCH V8 06/14] rtla: Add timerlat tool and timelart top mode
 Content-Language: en-US
 To:     Tao Zhou <tao.zhou@linux.dev>
 Cc:     Steven Rostedt <rostedt@goodmis.org>,
@@ -46,10 +47,10 @@ Cc:     Steven Rostedt <rostedt@goodmis.org>,
         linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
         linux-kernel@vger.kernel.org
 References: <cover.1638182284.git.bristot@kernel.org>
- <eb486340cc983bd8f7f69fe6f99f8d2927fcd296.1638182284.git.bristot@kernel.org>
- <YangwS/M9hO+o7TH@geo.homenetwork>
+ <e65a6899bbde6ecb129cfaf55e402d785ad124eb.1638182284.git.bristot@kernel.org>
+ <YanfyfUgMW6KWpxS@geo.homenetwork>
 From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <YangwS/M9hO+o7TH@geo.homenetwork>
+In-Reply-To: <YanfyfUgMW6KWpxS@geo.homenetwork>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
@@ -60,50 +61,41 @@ X-AntiAbuse: Sender Address Domain - kernel.org
 X-BWhitelist: no
 X-Source-IP: 79.34.250.122
 X-Source-L: No
-X-Exim-ID: 1mtCZU-002YlH-6q
+X-Exim-ID: 1mtCZ3-002YDG-So
 X-Source: 
 X-Source-Args: 
 X-Source-Dir: 
-X-Source-Sender: host-79-34-250-122.business.telecomitalia.it ([10.0.0.165]) [79.34.250.122]:47268
+X-Source-Sender: host-79-34-250-122.business.telecomitalia.it ([10.0.0.165]) [79.34.250.122]:47266
 X-Source-Auth: kernel@bristot.me
-X-Email-Count: 17
+X-Email-Count: 3
 X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
 X-Local-Domain: no
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 12/3/21 10:17, Tao Zhou wrote:
-> On Mon, Nov 29, 2021 at 12:07:45PM +0100,
-> Daniel Bristot de Oliveira wrote:
-> 
->> +static void timerlat_hist_usage(char *usage)
+On 12/3/21 10:13, Tao Zhou wrote:
+>> +/*
+>> + * timerlat_top_usage - prints timerlat top usage message
+>> + */
+>> +static void timerlat_top_usage(char *usage)
 >> +{
 >> +	int i;
 >> +
->> +	char *msg[] = {
+>> +	static const char *const msg[] = {
 >> +		"",
->> +		"  usage: [rtla] timerlat hist [-h] [-q] [-p us] [-i us] [-t us] [-s us] [-T[=file]] \\",
->> +		"         [-c cpu-list] [-P priority] [--no-irq] [--no-thread] [--no-header] [--no-summary] \\",
->> +		"         [--no-index] [--with-zeros]",
+>> +		"  usage: rtla timerlat [top] [-h] [-q] [-p us] [-i us] [-t us] [-s us] [-T[=file]] \\",
+>> +		"	  [-c cpu-list] [-P priority]",
 >> +		"",
 >> +		"	  -h/--help: print this menu",
 >> +		"	  -p/--period us: timerlat period in us",
 >> +		"	  -i/--irq us: stop trace if the irq latency is higher than the argument in us",
 >> +		"	  -T/--thread us: stop trace if the thread latency is higher than the argument in us",
 >> +		"	  -s/--stack us: save the stack trace at the IRQ if a thread latency is higher than the argument in us",
->> +		"	  -c/--cpus cpus: run the tracer only on the given cpus",
->> +		"	  -d/--duration time[m|h|d]: duration of the session in seconds",
->> +		"	  -T/--trace[=file]: save the stopped trace to [file|timerlat_trace.txt]",
+>> +		"	  -c/--cpus cpus: run the tracer only on the given cpus	  -d/--duration time[m|h|d]: duration of the session in seconds",
+>> +		"	  -t/--trace[=file]: save the stopped trace to [file|timerlat_trace.txt]",
 >> +		"	  -n/--nano: display data in nanoseconds",
->> +		"	  -b/--bucket-size N: set the histogram bucket size (default 1)",
->> +		"	  -e/--entries N: set the number of entries of the histogram (default 256)",
->> +		"	     --no-irq: ignore IRQ latencies",
->> +		"	     --no-thread: ignore thread latencies",
->> +		"	     --no-header: do not print header",
->> +		"	     --no-summary: do not print summary",
->> +		"	     --no-index: do not print index",
->> +		"	     --with-zeros: print zero only entries",
+>> +		"	  -q/--quiet print only a summary at the end",
 >> +		"	  -P/--priority o:prio|r:prio|f:prio|d:runtime:period : set scheduling parameters",
 >> +		"		o:prio - use SCHED_OTHER with prio",
 >> +		"		r:prio - use SCHED_RR with prio",
@@ -112,10 +104,12 @@ On 12/3/21 10:17, Tao Zhou wrote:
 >> +		"						       in nanoseconds",
 >> +		NULL,
 >> +	};
+> About help usage msg.
 > 
 > [-t us] --> [-T us]
-> [-T[=file]] --> [-t[=file]]
-> [-d] [-b] [-e] [-n] lack in usage info. this is not important tho.
+> [-T=[file]] --> [-t[=file]]
+> 
+> [-d] [-D] [-n] lack in the head usage info 'usage: ...'
 > 
 
 Fixed in V9
