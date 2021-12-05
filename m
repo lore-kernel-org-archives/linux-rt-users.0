@@ -2,26 +2,26 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B5DEC433EF
-	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Dec 2021 12:49:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A791C433F5
+	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Dec 2021 12:50:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233824AbhLEMxA (ORCPT
+        id S233825AbhLEMxa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 5 Dec 2021 07:53:00 -0500
-Received: from ciao.gmane.io ([116.202.254.214]:60274 "EHLO ciao.gmane.io"
+        Sun, 5 Dec 2021 07:53:30 -0500
+Received: from ciao.gmane.io ([116.202.254.214]:33766 "EHLO ciao.gmane.io"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S233720AbhLEMxA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 5 Dec 2021 07:53:00 -0500
+        id S233824AbhLEMxa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 5 Dec 2021 07:53:30 -0500
 Received: from list by ciao.gmane.io with local (Exim 4.92)
         (envelope-from <glru-linux-rt-users@m.gmane-mx.org>)
-        id 1mtqxQ-0006ws-9P
-        for linux-rt-users@vger.kernel.org; Sun, 05 Dec 2021 13:49:32 +0100
+        id 1mtqxt-0007bg-RC
+        for linux-rt-users@vger.kernel.org; Sun, 05 Dec 2021 13:50:01 +0100
 X-Injected-Via-Gmane: http://gmane.org/
 To:     linux-rt-users@vger.kernel.org
 From:   "S. Baerwolf" <stephan@matrixstorm.com>
 Subject: Re: [ANNOUNCE] 5.10.83-rt58
-Date:   Sun, 5 Dec 2021 12:49:27 +0000
-Message-ID: <06a8466c-9962-4caf-51c2-1cc79c1205e6@matrixstorm.com>
+Date:   Sun, 5 Dec 2021 12:42:34 +0000
+Message-ID: <28263a38-1fa4-7c82-b449-8e89bd4f69cc@matrixstorm.com>
 References: <YalDQe/lyXqAxB0K@uudg.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
@@ -46,6 +46,8 @@ Where can I get your RSA publickey
 "9354064999728D31D464D140F394A423F8E67C26" for verification?
 
 BR Stephan
+
+
 
 
 On 02.12.21 22:05, Luis Claudio R. Goncalves wrote:
