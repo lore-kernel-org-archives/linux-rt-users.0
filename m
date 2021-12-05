@@ -2,129 +2,78 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EDD01C433EF
-	for <linux-rt-users@archiver.kernel.org>; Sat,  4 Dec 2021 18:04:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B5DEC433EF
+	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Dec 2021 12:49:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1385372AbhLDSIW (ORCPT
+        id S233824AbhLEMxA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 4 Dec 2021 13:08:22 -0500
-Received: from gateway33.websitewelcome.com ([192.185.146.78]:15054 "EHLO
-        gateway33.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1345275AbhLDSIV (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 4 Dec 2021 13:08:21 -0500
-Received: from cm13.websitewelcome.com (cm13.websitewelcome.com [100.42.49.6])
-        by gateway33.websitewelcome.com (Postfix) with ESMTP id 1470612CCEC2
-        for <linux-rt-users@vger.kernel.org>; Sat,  4 Dec 2021 12:04:17 -0600 (CST)
-Received: from gator4132.hostgator.com ([192.185.4.144])
-        by cmsmtp with SMTP
-        id tZOTmpDYc0ESotZOTmcnXm; Sat, 04 Dec 2021 12:04:17 -0600
-X-Authority-Reason: nr=8
-Received: from host-79-34-250-122.business.telecomitalia.it ([79.34.250.122]:60004 helo=[10.0.0.166])
-        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.94.2)
-        (envelope-from <bristot@kernel.org>)
-        id 1mtZOR-001jqO-UU; Sat, 04 Dec 2021 12:04:16 -0600
-Message-ID: <6234e96a-3e1f-77fb-8d18-6bff24095f90@kernel.org>
-Date:   Sat, 4 Dec 2021 19:04:11 +0100
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.3.0
-Subject: Re: [PATCH V8 04/14] rtla/osnoise: Add osnoise top mode
-Content-Language: en-US
-To:     Tao Zhou <tao.zhou@linux.dev>
-Cc:     Ingo Molnar <mingo@redhat.com>, Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>
-References: <cover.1638182284.git.bristot@kernel.org>
- <edbe1a4be48b5fd9d7fd224e819918cdb943db4a.1638182284.git.bristot@kernel.org>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <edbe1a4be48b5fd9d7fd224e819918cdb943db4a.1638182284.git.bristot@kernel.org>
-Content-Type: text/plain; charset=UTF-8
+        Sun, 5 Dec 2021 07:53:00 -0500
+Received: from ciao.gmane.io ([116.202.254.214]:60274 "EHLO ciao.gmane.io"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S233720AbhLEMxA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 5 Dec 2021 07:53:00 -0500
+Received: from list by ciao.gmane.io with local (Exim 4.92)
+        (envelope-from <glru-linux-rt-users@m.gmane-mx.org>)
+        id 1mtqxQ-0006ws-9P
+        for linux-rt-users@vger.kernel.org; Sun, 05 Dec 2021 13:49:32 +0100
+X-Injected-Via-Gmane: http://gmane.org/
+To:     linux-rt-users@vger.kernel.org
+From:   "S. Baerwolf" <stephan@matrixstorm.com>
+Subject: Re: [ANNOUNCE] 5.10.83-rt58
+Date:   Sun, 5 Dec 2021 12:49:27 +0000
+Message-ID: <06a8466c-9962-4caf-51c2-1cc79c1205e6@matrixstorm.com>
+References: <YalDQe/lyXqAxB0K@uudg.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - kernel.org
-X-BWhitelist: no
-X-Source-IP: 79.34.250.122
-X-Source-L: No
-X-Exim-ID: 1mtZOR-001jqO-UU
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: host-79-34-250-122.business.telecomitalia.it ([10.0.0.166]) [79.34.250.122]:60004
-X-Source-Auth: kernel@bristot.me
-X-Email-Count: 4
-X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
-X-Local-Domain: no
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.14.0
+In-Reply-To: <YalDQe/lyXqAxB0K@uudg.org>
+Content-Language: en-US
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Tao
+Hi Luis
+
+Thanks for releasing rt58 on linux-5.10.
+
+I assume you signed the
+"https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.83-rt58.patch.sign" 
+?
+
+Where can I get your RSA publickey 
+"9354064999728D31D464D140F394A423F8E67C26" for verification?
+
+BR Stephan
 
 
-On 11/29/21 12:07, Daniel Bristot de Oliveira wrote:
-> +int osnoise_top_main(int argc, char **argv)
-> +{
-> +	struct osnoise_top_params *params;
-> +	struct trace_instance *trace;
-> +	struct osnoise_tool *record;
-> +	struct osnoise_tool *tool;
-> +	int return_value = 1;
-> +	int retval;
-> +
-> +	params = osnoise_top_parse_args(argc, argv);
-> +	if (!params)
-> +		exit(1);
-> +
-> +	tool = osnoise_init_top(params);
-> +	if (!tool) {
-> +		err_msg("Could not init osnoise top\n");
-> +		goto out_exit;
-> +	}
-> +
-> +	retval = osnoise_top_apply_config(tool, params);
-> +	if (retval) {
-> +		err_msg("Could not apply config\n");
-> +		goto out_top;
-> +	}
-> +
-> +	trace = &tool->trace;
-> +
-> +	retval = enable_osnoise(trace);
-> +	if (retval) {
-> +		err_msg("Failed to enable osnoise tracer\n");
-> +		goto out_top;
-> +	}
-> +
-> +	if (params->set_sched) {
-> +		retval = set_comm_sched_attr("osnoise/", &params->sched_param);
-> +		if (retval) 
+On 02.12.21 22:05, Luis Claudio R. Goncalves wrote:
+> Hello RT Folks!
+> 
+> I'm pleased to announce the 5.10.83-rt58 stable release.
+> 
+> This release is just an update to the new stable 5.10.83
+> version and no RT specific changes have been made.
+> 
+> You can get this release via the git tree at:
+> 
+>    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> 
+>    branch: v5.10-rt
+>    Head SHA1: 63bd813e523a6e08bb4bb04b71903d252cbcae80
+> 
+> Or to build 5.10.83-rt58 directly, the following patches should be applied:
+> 
+>    https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+> 
+>    https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.83.xz
+> 
+>    https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.83-rt58.patch.xz
+> 
+> Enjoy!
+> Luis
+> 
+> 
 
-
-You hit this case. It is correct to get this error if one sets SCHED_DEADLINE
-without disabling the admission control.
-
-However, there is also a problem here. The tracer was not disabled, and the
-instance was not removed - so osnoise threads kept running after the error
-message and exit().
-
-I will fix this on all tools for v9.
-
-Thanks for testing!
---- Daniel
-
-> +			osnoise_top_usage("Failed to set sched parameters\n");
-> +	}
-> +
 
