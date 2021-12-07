@@ -2,74 +2,60 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A7BB9C433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Dec 2021 20:17:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E003DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Dec 2021 20:20:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236290AbhLGUUr (ORCPT
+        id S241203AbhLGUY2 convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 7 Dec 2021 15:20:47 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43686 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230259AbhLGUUr (ORCPT
+        Tue, 7 Dec 2021 15:24:28 -0500
+Received: from sin.source.kernel.org ([145.40.73.55]:49518 "EHLO
+        sin.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S241190AbhLGUY0 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Dec 2021 15:20:47 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 739ACC061574;
-        Tue,  7 Dec 2021 12:17:16 -0800 (PST)
-Date:   Tue, 7 Dec 2021 21:17:12 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1638908234;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=oESRTJAmMs9dAuWEEdfClw9487fUg9HjiJqAVoDqOcs=;
-        b=JJrRgLydgeWsXw7qDeKhKAVFqFj+/XprP4TnlZvSQegsrva5MGEdcyN+nKWjOl9J+8eNPo
-        0O5GqccVI4KjRyCuST0rD+MiCUTGBD6vlWgWbdSXgNiXj9bI2LIBHb9lLXytmA3z8Af7KP
-        77pO1dXtWjF8+Hhtd30O/B+n/sACCi8kNG0P+ivXX9e61z3pkcB5xlwPmQhhTYX71Ynrwp
-        zRvF8Uq61MOdti2hoJF7dRaXZ+k0QHEDfDnuHSW9ddhSl7ppVyLLEQTuo1VrSdB8Rcxhdw
-        a0jgVbAGypB4AhLK3jKmJ+yO0s00ILif3D5iRLuP7XWKBfEFHzsSjMPhD80kSA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1638908234;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=oESRTJAmMs9dAuWEEdfClw9487fUg9HjiJqAVoDqOcs=;
-        b=sLui7Pa19kqJfHS3vDLNwaomXrnW8Vgs0klhG1cXio6vrgCCvKswZQ+fSW9o+fUhGDT63Z
-        0vIlsl6C9DP1e+Ag==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Tue, 7 Dec 2021 15:24:26 -0500
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by sin.source.kernel.org (Postfix) with ESMTPS id 27686CE1DEF;
+        Tue,  7 Dec 2021 20:20:54 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 08AD4C341C7;
+        Tue,  7 Dec 2021 20:20:50 +0000 (UTC)
+Date:   Tue, 7 Dec 2021 15:20:49 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        stable-rt@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Daniel Wagner <daniel.wagner@suse.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>, carnil@debian.org
 Subject: Re: [ANNOUNCE] 5.10.83-rt58
-Message-ID: <20211207201712.7yqbksbba3zgu7u3@linutronix.de>
+Message-ID: <20211207152049.1013e1ce@gandalf.local.home>
+In-Reply-To: <20211207201712.7yqbksbba3zgu7u3@linutronix.de>
 References: <YalDQe/lyXqAxB0K@uudg.org>
+        <20211207201712.7yqbksbba3zgu7u3@linutronix.de>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <YalDQe/lyXqAxB0K@uudg.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-12-02 19:05:53 [-0300], Luis Claudio R. Goncalves wrote:
-> I'm pleased to announce the 5.10.83-rt58 stable release.
-=E2=80=A6
->   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.83-=
-rt58.patch.xz
+On Tue, 7 Dec 2021 21:17:12 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-Any particular reason why every patch has "v4.9-rt" in the Subject line?
+> On 2021-12-02 19:05:53 [-0300], Luis Claudio R. Goncalves wrote:
+> > I'm pleased to announce the 5.10.83-rt58 stable release.  
+> …
+> >   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.83-rt58.patch.xz  
+> 
+> Any particular reason why every patch has "v4.9-rt" in the Subject line?
 
-> Enjoy!
-> Luis
+I'm guessing because he just took over 5.10-rt and did not update his
+scripts ;-)
 
-Sebastian
+-- Steve
