@@ -2,88 +2,81 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 85F1BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Dec 2021 14:42:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 94C75C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Dec 2021 14:48:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235299AbhLHOqF (ORCPT
+        id S235431AbhLHOwE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Dec 2021 09:46:05 -0500
-Received: from jabberwock.ucw.cz ([46.255.230.98]:53696 "EHLO
-        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229611AbhLHOqF (ORCPT
+        Wed, 8 Dec 2021 09:52:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45978 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233272AbhLHOwE (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Dec 2021 09:46:05 -0500
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id 0B6421C0B77; Wed,  8 Dec 2021 15:42:32 +0100 (CET)
-Date:   Wed, 8 Dec 2021 15:42:31 +0100
-From:   Pavel Machek <pavel@denx.de>
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Wed, 8 Dec 2021 09:52:04 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2E353C061746;
+        Wed,  8 Dec 2021 06:48:32 -0800 (PST)
+Date:   Wed, 8 Dec 2021 15:48:28 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1638974909;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=qtWRead05hSnhf1TWBaKHwSo0tRXaJsGd5xhhRb2fWY=;
+        b=ATd3hA5UkSaE0GR/AaIJP1SYLTMM081RkUs2lObd4CV5kQ/wKMsot4RXFZgm9Xfafp7QCA
+        5mjGzkH7Pxg7NKUt0NmqgZsBUJzqc9C87K946VRpP4EQzkjOYHUZ+boC6kKYNP+kPUeCs9
+        prfabs1XfToaUVkSptDAYIMAFL+HGb1Vxet8GCNiehe8f4RxTlV6nMDFXdpGLhlk829Eju
+        U/0V/ddgU5hfTnsQYf/54yGqFH4QtrK9oAt9tgUy3Gh7igAzVtNKRYpqnEzN7IlyhiyvV/
+        af9B7fIV2e2ueujVFm6GQHN6DHtiSUg8bPqfUwfV3P5UrP8gSPNAnkd4zV/7xw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1638974909;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=qtWRead05hSnhf1TWBaKHwSo0tRXaJsGd5xhhRb2fWY=;
+        b=32zEQj91hd+clAMRFKsI50xY6ZMokRDpsb1sc76LoYc1rPWxJ2RF2wdLfM6XQnWnqj8AXA
+        q3nULV/uSCVC7ZCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Luis Goncalves <lgoncalv@redhat.com>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        stable-rt@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@suse.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>
+        Mark Gross <markgross@kernel.org>, carnil@debian.org
 Subject: Re: [ANNOUNCE] 5.10.83-rt58
-Message-ID: <20211208144231.GA323@amd>
+Message-ID: <20211208144828.y2e2d4h3yincjyqg@linutronix.de>
 References: <YalDQe/lyXqAxB0K@uudg.org>
+ <20211207201712.7yqbksbba3zgu7u3@linutronix.de>
+ <20211207152049.1013e1ce@gandalf.local.home>
+ <20211207205628.auc54rwl4duuisah@linutronix.de>
+ <20211207160203.30206456@gandalf.local.home>
+ <CAD8J--9V7KxJrT==vnoawWXpp9Ur_-o2Fhm_ebNd4-hH8ncfPg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="envbJBWh7q8WU6mo"
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <YalDQe/lyXqAxB0K@uudg.org>
-User-Agent: Mutt/1.5.23 (2014-03-12)
+In-Reply-To: <CAD8J--9V7KxJrT==vnoawWXpp9Ur_-o2Fhm_ebNd4-hH8ncfPg@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2021-12-08 10:14:41 [-0300], Luis Goncalves wrote:
+> Yes, I am really sorry that escaped my review. I focused on testing
+> the code and missed something that obvious.
+> 
+> Sorry for the confusion I caused.
+> 
+> Steven, Sebastian, would it be worth a v5.10.83-rt59 with the patch
+> subjects fixed?
 
---envbJBWh7q8WU6mo
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+No, I don't think that it is worth it. Please correct it for the next
+release.
+I'm not sure if there is a need for the base version in the patch tag.
 
-Hi!
->=20
-> I'm pleased to announce the 5.10.83-rt58 stable release.
->=20
-> This release is just an update to the new stable 5.10.83
-> version and no RT specific changes have been made.
+> Thanks for spotting that,
+> Luis
 
-Thank you. CIP project started doing 5.10.X based releases, and we
-include -rt tree, too. To make my job tiny bit easier, would it be
-possible to CC: pavel@denx.de on release announcemnts?
-
-Tree is available at
-https://git.kernel.org/pub/scm/linux/kernel/git/cip/linux-cip.git/log/?h=3D=
-linux-5.10.y-cip-rt
-=2E
-
-What may be more interesting is that we are running tests over at
-gitlab:
-
-https://gitlab.com/cip-project/cip-kernel/linux-cip/tree/linux-5.10.y-cip-rt
-
-Thanks and best regards,
-								Pavel
---=20
-DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
-
---envbJBWh7q8WU6mo
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAmGwxFcACgkQMOfwapXb+vJP0QCfSe9w3nkvs4oP91ub6A/xCvxC
-a9YAnicVd6jnmRzTpRTOCsdSOwEsWeM9
-=96G3
------END PGP SIGNATURE-----
-
---envbJBWh7q8WU6mo--
+Sebastian
