@@ -2,129 +2,143 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CBD16C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Dec 2021 09:19:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 77B2CC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Dec 2021 10:51:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234416AbhLIJXL (ORCPT
+        id S236133AbhLIKyc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 9 Dec 2021 04:23:11 -0500
-Received: from mail-eopbgr10079.outbound.protection.outlook.com ([40.107.1.79]:7163
-        "EHLO EUR02-HE1-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S232940AbhLIJXK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 9 Dec 2021 04:23:10 -0500
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=QvfRUEUFk+Jc5l6Ty1IG04BKuCcCSatOKjpReQoJGWoqoX5Q+p+9yOlYZ4Dk+9OWVhMvq9sccK/lhKEX7xrJN+/iy772sh2gJ+qXG3pGSOXHVooFZPaveWT30fpz9eW8wjgN7qEBx4xeSJKSEN+af0jRhu6Ggrau4+m3mz26byiMEqem9P33SVEnq1uHqSnNHox/cLJtxBgS4J+JNdHS/02v3VYY4fvcXJ8cU+iuBUTolJehok79QqdN72LwUgkP5FDbyDpmlHai3L61pK/yA3WA3jyrF6Qp2gP4lsz8ne66XIflICoIFBO3SQW3c+EvbU9mHvLsjUKRlx1+Lfkykg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=YHEWInp3cBaj2WM+GBnFonbMnXFttqO+jmVQ9i14+mo=;
- b=EpepmZ8OjdU+pFGXlG3IyB5RWiAwbTIFWm7+pyx12FTtsgMlTjnasWV+KooHSbVI8p5al8igw9uGa12oyqyIUk4ZbIjchsjE64CTkl5ysBVd6caAJPP+NjVbm6Cy5BvZ5ol2JRPQL1o1UYW23daPWWrMH1UVo6ttxRnZJxdpRie5f2hrM4LwOUbtl1kew1vTPH2sRUtmkCYfwbREW1Q+oNR6QvmmH1f8eF3QxhdzA9f3+CdNfveHLqfk8jzXIo5u/T826ljhljhkoRMZukjgZD/3rI+YWlK2hJWQniKY0qTXm3ODnzu0vxFE7wo8vBK7RfbUqhAyVroZqhP6UbciQg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=sap.com; dmarc=pass action=none header.from=sap.com; dkim=pass
- header.d=sap.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sap.com; s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=YHEWInp3cBaj2WM+GBnFonbMnXFttqO+jmVQ9i14+mo=;
- b=b7TQjlAo6k/5rtbczdSghFZne2n2t+EKugQMnLZi9whGzPlZbIZK5l//uF8rbpHT5seGxZlH58FwJcZ+cK6RLwWuIFMql0nDFhAkMatKz6Jm+m5EUuxB8mvzJ96kf8XtEW+zeYcBBKsBnpS5y89triEDGYqtJKn6QB0s6gD3eCnscaD15CNul1NgR8pfSjvdSM9UHqc5f8nFu4cc5ZZ4vaZA0/Lut0zVveg/S25ednCpgR3J7w7jEwh2gulohTAYJy/kLhY4o4siwa1eQ1b5p8n2s5NAKCX96OFEu8H2M4hKkrkJmGhaeNsI1tofy14shrK2YUDaKQKVlFCGL4nvaQ==
-Received: from AM0PR02MB5859.eurprd02.prod.outlook.com (2603:10a6:208:18a::22)
- by AM9PR02MB7012.eurprd02.prod.outlook.com (2603:10a6:20b:262::17) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4755.11; Thu, 9 Dec
- 2021 09:19:35 +0000
-Received: from AM0PR02MB5859.eurprd02.prod.outlook.com
- ([fe80::5f4:5895:622a:f47d]) by AM0PR02MB5859.eurprd02.prod.outlook.com
- ([fe80::5f4:5895:622a:f47d%7]) with mapi id 15.20.4778.013; Thu, 9 Dec 2021
- 09:19:35 +0000
-From:   "Riesop, Vincent" <v.riesop@sap.com>
-To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: Q: verify signature of 5.10.83-rt Patchset 
-Thread-Topic: Q: verify signature of 5.10.83-rt Patchset 
-Thread-Index: AQHX7N3iFz04E0NZOUOwr8ESgd7k/w==
-Date:   Thu, 9 Dec 2021 09:19:35 +0000
-Message-ID: <D966A34A-70D9-4CFA-9644-B9DC35841AB3@sap.com>
-Accept-Language: de-DE, en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-mailer: Apple Mail (2.3693.20.0.1.32)
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=sap.com;
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 1ac0e32f-afa0-4ea2-62ee-08d9baf504aa
-x-ms-traffictypediagnostic: AM9PR02MB7012:EE_
-x-microsoft-antispam-prvs: <AM9PR02MB70121FD475939AF2E98E52579D709@AM9PR02MB7012.eurprd02.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:9508;
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: 5FpeirKLkt/+43SlmtZiWhn/dUySXhf/yVWlPXsiZgwYNGwz+zEGUSsg8RLD7TYpj15LCtnhTap/o4F88pHEQWXcQlDbFcU7q/bL56T96yDrr/xVAFUXMC4EIbj3mSLfMNc/ywYbfXd68ifoIbHjokNhQtsgrINz3u0aOP6NOhKJigPiYUKaX+MzzBQKaBCEiyRVVlHiX70Pe/PAcoInRfnwII4MPnwgh70gjHOM+Zmqn4m/HplsmU7H9OU1D1hqztmZ7MMWarJo2MfLwid1TEYy0v/BmuD3FP6uMLQN4HVCZvh7gqHLoa0/8Y6QaxTrz1nDm+6rGA1tS3FX7phbAdx+XMOJtDVWjt/0n3J945IKPY2GoYY2Y47ksdRM8SGcRTWLFYk/WbY8PUzYdi8abTujiRL6vyxHvD5VpGV6jjUWQ5XWLXSimJl7lNmksm0M7gAWxVQ4UAoq66FTdgh82EbROvgNoNwUMaOQyNS2x6EGHXOFy+WhdZpXF8Q0Xkf0flplmdRP0or8WcE5K9KGYvpIcVB4uaYZ1TMKIdD41315sJ/KPR1SuB6+8CLlL50N/WRcWi9daYS827/ZvrAb0Orx3tRN6U+Q3tYZfJtgV603bNYCwxuvyJMYyFuBmK8zsMLtgEQ/vH1EpIdLkjrl2WaAgEQ4eQy6170HqFRS6lzsaKQOJx6U8+yU8EH193FZwopjOX8YfD1zFEMDbA1Djq4shaqM5VV+4lCn/1w9UEI=
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR02MB5859.eurprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(366004)(8936002)(38100700002)(2616005)(4743002)(38070700005)(66476007)(5660300002)(316002)(66446008)(64756008)(186003)(6512007)(122000001)(66946007)(66556008)(8676002)(4744005)(2906002)(26005)(6486002)(76116006)(6506007)(82960400001)(91956017)(36756003)(508600001)(86362001)(6916009)(33656002)(83380400001)(71200400001)(45980500001);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?NU5pZHZnbFpkRmNNZHJjcTE3NzZqdUZHQTdqcEVMSjIxc0U2TFlJOUoxa0RD?=
- =?utf-8?B?aUc2YU5VMUsrTmtZZkMvUlk2V085bzBLeTAxRjdXTWtwWUpXT3cxTHVKeGFJ?=
- =?utf-8?B?MjJMbmhtcThvOEI2QjVRUDJ0Mkpzd3QwcC9GZ3JZZjVyajZ1eWNnUHh1MExs?=
- =?utf-8?B?M2JRckJLL1V3YllzWm1BUUN6Z09KSjlmRUpRbVZONTUydHdxRU11M0NuaEha?=
- =?utf-8?B?M3FEMW93dE9MaC94c3QyVlB0MlpxQVU0YUhHNERXRTc4ekxyalJqME1jV3BU?=
- =?utf-8?B?cWRud0dsYUN3MzVjb2Nudk1XUFhXWlJMbmFIWUZjRGFXWHhRN0JYTGF5ZVhm?=
- =?utf-8?B?cTFjV0tLRmJEN0ZpUGVKYlBqb0VkQW1tYVA5blJqM0lzaFZBWFAvS1RMaWFO?=
- =?utf-8?B?dGdqREhGb1A0ZjBsbzRGeUV3cC9ScXQ3ODRNVUYyL1RHWWZpV3FSSGY1Ty9u?=
- =?utf-8?B?RUkrbUdxK1FaZTFyTkExa1U0T25TM2FQTU53S2xObzRGalV1RlpIZzN6QWR5?=
- =?utf-8?B?eVE3L09ZWVR6K1pNK202M09wVGtLMEMyNnkzVlQzRjd5b1AwT29iYnZFYk9p?=
- =?utf-8?B?b25UZzMvYnBEcDFaZnVwK204c1pYa3AveHJtSlBmd1pXU21TdXFYY1MyRG1a?=
- =?utf-8?B?c1JvWnovYXY5YXFIYXFtQ1VydE13Tk9IL0Q3VGc3cU9mMFp6aUdkSzI1L0VM?=
- =?utf-8?B?MGJlVmtZOTRqdlBzRytucHJjdzRoa0xJVFRsNFNPRFo5dHg4WU1xV0VaSVFa?=
- =?utf-8?B?OER3WGViUERId3BvWXFnUGN4Z2U5Um0vZEF1ekQrNUovblpRTllDc3RUZlpH?=
- =?utf-8?B?Q0FHK1dyK0hJZ2ZmbjJwSWdvN200STJCQXhwZXBVYUE0cFp1aWhWUWFBdUov?=
- =?utf-8?B?anBWRkF0cm45NHdnSU9YNW9oaHpiM282aEhLVXNyTll6ZlhtNDFuY0VRaVNJ?=
- =?utf-8?B?N1hMZFJmWXpKdkM5bWtwY3pQMnBhb2doVDRvbUVJZ2xVM3dtcnE3cTVEN2Fy?=
- =?utf-8?B?V29uR3ArUXhyMnJqR3NidjlqRHgwR3lpV2ljbWpXRzVIclRHWTkyNHFnbU9W?=
- =?utf-8?B?Nlgra25acHB5ZFNhc011L1dVemxwdDd3QkxhZjF1VCtZMVNGZDFFb3pzZ2N2?=
- =?utf-8?B?Rk5uSDlON2VJVDVpM1A0cnl0TGdrODJJZ1VZUzdSbGZBR1RxTGNYenhEcjV5?=
- =?utf-8?B?eFpoTEhBRGhrTEJKQStpQjZIaDdrM3RMT0RjRHNUYkZRdXRNakhabVpnVC9F?=
- =?utf-8?B?VzRwMHRCM3lXUmQ4OE5OcjlMb1cyU21pSGxRbnBWUDVLZC9CNTB1bEZJemIx?=
- =?utf-8?B?TGF2dE5nSmlWYitPNFR5b1FLeHU1QVJWMklwMlpBR1Q4QXFnZ1BhaE02MmJ6?=
- =?utf-8?B?WHhhNGxKazFvQmE3NDN2b2RvTGpKT2dOOUlaR2Frb2F1c09KZmovL2llS3ZU?=
- =?utf-8?B?ajgycDdIclY2SGJzSU53cVZzUUU5dVIxalQ2WDI4YnZVRk1XckJzbW5xNVlE?=
- =?utf-8?B?WDgzNFpEaGF4SkVyb0ZBYkVuaHhBTkEyaHB1Yiswc0FRRFVDMlRMbUZBTzBv?=
- =?utf-8?B?cERITXcxRVJzT3lkeE1HMm9DaklyZ3JpUS9JUmhyLzRRK1EvZFF0M1FOVmZL?=
- =?utf-8?B?OG9iTS9oVjJZSFdrbGFyUCs0eis3VURCcjRHUkRrS2JpcGJHSis1Q0pvQjUv?=
- =?utf-8?B?aVpTQ2plSUtoa0VWZG9DdGZLSk45S3F2RUJYd1lLYS9WYXdnTklTMVdvenFP?=
- =?utf-8?B?REpDUUFkSHF2TmovK1Radis0T0w4djRuaE5ZdDlGdFM4OFFwUC9sU20rWFp2?=
- =?utf-8?B?d25pTUFrWlJHUGErdDdkNDI5cE5EVTFINEJKS0F5cDVmSzgvdzBwYkhSUzN0?=
- =?utf-8?B?WTdJMms2ZEY0RzJNY0h2dUhDLzliMm5vUVpiZE5NWDBFbHo5TXR0YWl0R0xh?=
- =?utf-8?B?ZFRtaTFIdHZuUTdMMkRySWFYVHNDYTdOOWh0NkphQXE5T2FpSzZmeGpLV3RM?=
- =?utf-8?B?R1BZR0NtL2dwUHJOU0dlN2hla0NOSVNuaFZTVUpPbkRLTjR1TGRVNGhpNndJ?=
- =?utf-8?B?Y3RjcE4yYVlob3NNbnZmSTFRTGV5ZUpPcGlDVDN1WDA5VnlMN3RMdzZ1MHZt?=
- =?utf-8?B?NFlHSmRoUEZjWEJBRDJvckxqNzZvUjJEcG5sWTVmVFYrUVQxZVpuTm14Mm5L?=
- =?utf-8?Q?j/ZjnO8Pa9obuEqw5OIgLvc=3D?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <0ECFB6FE4F3A9B4297C2CBDF5FA8E8D3@eurprd02.prod.outlook.com>
-Content-Transfer-Encoding: base64
+        Thu, 9 Dec 2021 05:54:32 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:31128 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S236032AbhLIKyc (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 9 Dec 2021 05:54:32 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1639047058;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=8WMX44FIcF1N6xF21LwWdhI92Ui/1ZtttLXrtc8/meE=;
+        b=aYNpwcmreILLL+V+YSV2wW8kb0PKKNuoGCSejdajWcz/do7L4lY0ruxL/50kBnb9UMLl+1
+        5r800BdyFL9HXBC5D/JTTJbrkE8tP1u+Lxp/+PcqvDidEo55jSU6nfkKmTlHPGNKJkknYS
+        t6Q0fh39xaWaGsGjf+0X2YAXZjHdb1E=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-575-zpyKj5cFMzW98l9k013wMw-1; Thu, 09 Dec 2021 05:50:57 -0500
+X-MC-Unique: zpyKj5cFMzW98l9k013wMw-1
+Received: by mail-wm1-f70.google.com with SMTP id g80-20020a1c2053000000b003331a764709so4680005wmg.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 09 Dec 2021 02:50:57 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
+         :references:user-agent:mime-version:content-transfer-encoding;
+        bh=8WMX44FIcF1N6xF21LwWdhI92Ui/1ZtttLXrtc8/meE=;
+        b=Ed6ssndgzlKOB8VOOjyZuMgbmPT65fli9Ee2i+L2SjqnKLqB90cp+roY0KMMKyJxoU
+         iZ7kNtYgMOxUJGL7wkMVy1up2cDRyXPVTLr1hhnu3HxqRTdTZ+T6dUmHSDHR1tTqTMEx
+         GDjizksRWcDoO5zCTPvy7ZjayNYCCyWVjBjrHCDiRXzIzqPUyI0eFwrcnpxnmNysdaCz
+         dcqW30MEl/XZV0rFpuX0P8zrmQa3UMghbO/TPxziC+3M7cfFClK7ZWT2RbCtYD0p5bvN
+         UqeSur2JhAUsYq+ZdoSTaXU1xAzhwnhpOUqOfHJkbviBLhPna4Gmgo4VinziseibGwIB
+         LTTw==
+X-Gm-Message-State: AOAM531H6IiwDenBZFUhbKSu5l97PWFF4aRTG2Cuu/IZ5RUn2l4wqjKa
+        y8XURvBbuM69j6t4gQjhKhzDk9dOrYRfUX8gToLMeXMgQamWyaR9eBTm77FaapLoJeg+WEsBOXd
+        bXWMut9TzyKHNTjd1jJxlRmJwVh0=
+X-Received: by 2002:a1c:f609:: with SMTP id w9mr6017382wmc.99.1639047056383;
+        Thu, 09 Dec 2021 02:50:56 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJyFtJxoZ+HMp9tXZ3J0oijd/AaehaJazoUmvUj2rmanSHM0rjneYa37IHLdZm2qxceis4Jp/g==
+X-Received: by 2002:a1c:f609:: with SMTP id w9mr6017358wmc.99.1639047056134;
+        Thu, 09 Dec 2021 02:50:56 -0800 (PST)
+Received: from ?IPv6:2a0c:5a80:3c10:3400:3c70:6643:6e71:7eae? ([2a0c:5a80:3c10:3400:3c70:6643:6e71:7eae])
+        by smtp.gmail.com with ESMTPSA id c6sm11112341wmq.46.2021.12.09.02.50.54
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 09 Dec 2021 02:50:55 -0800 (PST)
+Message-ID: <fbf5c0aa4109588c9f470b93d9d82d613eeff8fa.camel@redhat.com>
+Subject: Re: [PATCH v2 3/3] mm/page_alloc: Remotely drain per-cpu lists
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     Mel Gorman <mgorman@suse.de>
+Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        peterz@infradead.org, mtosatti@redhat.com, nilal@redhat.com,
+        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
+        ppandit@redhat.com
+Date:   Thu, 09 Dec 2021 11:50:53 +0100
+In-Reply-To: <20211203141306.GG3301@suse.de>
+References: <20211103170512.2745765-1-nsaenzju@redhat.com>
+         <20211103170512.2745765-4-nsaenzju@redhat.com>
+         <20211203141306.GG3301@suse.de>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.1 (3.42.1-1.fc35) 
 MIME-Version: 1.0
-X-OriginatorOrg: sap.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AM0PR02MB5859.eurprd02.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 1ac0e32f-afa0-4ea2-62ee-08d9baf504aa
-X-MS-Exchange-CrossTenant-originalarrivaltime: 09 Dec 2021 09:19:35.7196
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 42f7676c-f455-423c-82f6-dc2d99791af7
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: pn+bB9yskdWxCCVC3IXzWvVK2bBx1/hSheuppgM1iAdwHZQtB7Oz7zGgaqFJaSJk0rqMiBlzGiP95wc2RtdZfA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM9PR02MB7012
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-SGksDQoNCkkgd2FudCB0byBidWlsZCBhIDUuMTAuODMga2VybmVsIHdpdGggUlQgcGF0Y2hlcyBk
-b3dubG9hZGVkIGZyb20gbWlycm9ycy5rZXJuZWwub3JnLg0KDQpCdXQgSSBhbSBub3QgYWJsZSB0
-byBmaW5kIHRoZSBwdWJsaWMga2V5IGZvciBGMzk0QTQyM0Y4RTY3QzI2DQp3aGljaCBzZWVtcyB0
-byBiZSB0aGUgcHVibGljIGtleSB1c2VkIHRvIGNyZWF0ZSB0aGUgc2lnbmF0dXJlIG9mIHBhdGNo
-ZXMtNS4xMC44My1ydDU4LnRhci5zaWduDQooSSB0aGluayB0aGUgcHViIGtleSB1c2VkIGhlcmUg
-aXMgZnJvbSBMdWlzIENsYXVkaW8gUi4gR29uw6dhbHZlcywgYnV0IEkgY2Fubm90IGZpbmQgaXQg
-b24gdWJ1bnR1IG9yICBvcGVucGdwIGtleXNlcnZlcnMpDQoNClF1ZXN0aW9uIDE6IFdoZXJlIGNh
-biBJIGdldCBhbiDigJxvZmZpY2lhbOKAnSBsaXN0IG9mIHB1YmxpYyBrZXlzIHVzZWQgdG8gY3Jl
-YXRlIHRoZSBzaWduYXR1cmVzIGZvciB0aGUgUlQgcGF0Y2hlcz8NClF1ZXN0aW9uIDI6IFdoYXQg
-aXMgdGhlIHByZWZlcnJlZCBrZXlzZXJ2ZXIgdG8gcmV0cmlldmUgdGhlIHB1YmxpYyBrZXlzPw0K
-IA0KDQpUaGFua3MhDQpWaW5jZW50DQoNCg==
+Hi Mel,
+
+On Fri, 2021-12-03 at 14:13 +0000, Mel Gorman wrote:
+> On Wed, Nov 03, 2021 at 06:05:12PM +0100, Nicolas Saenz Julienne wrote:
+> > Some setups, notably NOHZ_FULL CPUs, are too busy to handle the per-cpu
+> > drain work queued by __drain_all_pages(). So introduce new a mechanism
+> > to remotely drain the per-cpu lists. It is made possible by remotely
+> > locking 'struct per_cpu_pages' new per-cpu spinlocks. A benefit of this
+> > new scheme is that drain operations are now migration safe.
+> > 
+> > There was no observed performance degradation vs. the previous scheme.
+> > Both netperf and hackbench were run in parallel to triggering the
+> > __drain_all_pages(NULL, true) code path around ~100 times per second.
+> > The new scheme performs a bit better (~5%), although the important point
+> > here is there are no performance regressions vs. the previous mechanism.
+> > Per-cpu lists draining happens only in slow paths.
+> > 
+> 
+> netperf and hackbench are not great indicators of page allocator
+> performance as IIRC they are more slab-intensive than page allocator
+> intensive. I ran the series through a few benchmarks and can confirm
+> that there was negligible difference to netperf and hackbench.
+> 
+> However, on Page Fault Test (pft in mmtests), it is noticable. On a
+> 2-socket cascadelake machine I get
+> 
+> pft timings
+>                                  5.16.0-rc1             5.16.0-rc1
+>                                     vanilla    mm-remotedrain-v2r1
+> Amean     system-1         27.48 (   0.00%)       27.85 *  -1.35%*
+> Amean     system-4         28.65 (   0.00%)       30.84 *  -7.65%*
+> Amean     system-7         28.70 (   0.00%)       32.43 * -13.00%*
+> Amean     system-12        30.33 (   0.00%)       34.21 * -12.80%*
+> Amean     system-21        37.14 (   0.00%)       41.51 * -11.76%*
+> Amean     system-30        36.79 (   0.00%)       46.15 * -25.43%*
+> Amean     system-48        58.95 (   0.00%)       65.28 * -10.73%*
+> Amean     system-79       111.61 (   0.00%)      114.78 *  -2.84%*
+> Amean     system-80       113.59 (   0.00%)      116.73 *  -2.77%*
+> Amean     elapsed-1        32.83 (   0.00%)       33.12 *  -0.88%*
+> Amean     elapsed-4         8.60 (   0.00%)        9.17 *  -6.66%*
+> Amean     elapsed-7         4.97 (   0.00%)        5.53 * -11.30%*
+> Amean     elapsed-12        3.08 (   0.00%)        3.43 * -11.41%*
+> Amean     elapsed-21        2.19 (   0.00%)        2.41 * -10.06%*
+> Amean     elapsed-30        1.73 (   0.00%)        2.04 * -17.87%*
+> Amean     elapsed-48        1.73 (   0.00%)        2.03 * -17.77%*
+> Amean     elapsed-79        1.61 (   0.00%)        1.64 *  -1.90%*
+> Amean     elapsed-80        1.60 (   0.00%)        1.64 *  -2.50%*
+> 
+> It's not specific to cascade lake, I see varying size regressions on
+> different Intel and AMD chips, some better and worse than this result.
+> The smallest regression was on a single CPU skylake machine with a 2-6%
+> hit. Worst was Zen1 with a 3-107% hit.
+> 
+> I didn't profile it to establish why but in all cases the system CPU
+> usage was much higher. It *might* be because the spinlock in
+> per_cpu_pages crosses a new cache line and it might be cold although the
+> penalty seems a bit high for that to be the only factor.
+> 
+> Code-wise, the patches look fine but the apparent penalty for PFT is
+> too severe.
+
+Thanks for taking the time to look at this. I agree the performance penalty is
+way too big. I'll move to an alternative approach.
+
+-- 
+Nicolás Sáenz
+
