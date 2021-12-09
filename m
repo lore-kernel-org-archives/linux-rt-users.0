@@ -2,278 +2,287 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 552A3C433FE
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Dec 2021 18:01:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 869BDC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Dec 2021 23:07:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243152AbhLISEp (ORCPT
+        id S232386AbhLIXLG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 9 Dec 2021 13:04:45 -0500
-Received: from gateway30.websitewelcome.com ([192.185.180.41]:43696 "EHLO
-        gateway30.websitewelcome.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229803AbhLISEo (ORCPT
+        Thu, 9 Dec 2021 18:11:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44796 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229455AbhLIXLG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 9 Dec 2021 13:04:44 -0500
-X-Greylist: delayed 1827 seconds by postgrey-1.27 at vger.kernel.org; Thu, 09 Dec 2021 13:04:44 EST
-Received: from cm11.websitewelcome.com (cm11.websitewelcome.com [100.42.49.5])
-        by gateway30.websitewelcome.com (Postfix) with ESMTP id 51A8D31A145;
-        Thu,  9 Dec 2021 10:33:56 -0600 (CST)
-Received: from gator4132.hostgator.com ([192.185.4.144])
-        by cmsmtp with SMTP
-        id vMA6mOdU74teEvMAqmJDC9; Thu, 09 Dec 2021 10:21:39 -0600
-X-Authority-Reason: nr=8
-Received: from host-87-6-201-63.retail.telecomitalia.it ([87.6.201.63]:45012 helo=[10.0.0.193])
-        by gator4132.hostgator.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.94.2)
-        (envelope-from <bristot@kernel.org>)
-        id 1mvM4m-000oFe-Lq; Thu, 09 Dec 2021 10:15:20 -0600
-Message-ID: <c451b79f-e6c4-1dbf-8556-c497ae32b058@kernel.org>
-Date:   Thu, 9 Dec 2021 17:15:16 +0100
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.3.0
-Subject: Re: [PATCH V8 03/14] rtla: Add osnoise tool
-Content-Language: en-US
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     Tao Zhou <tao.zhou@linux.dev>, Ingo Molnar <mingo@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
+        Thu, 9 Dec 2021 18:11:06 -0500
+Received: from sin.source.kernel.org (sin.source.kernel.org [IPv6:2604:1380:40e1:4800::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 34324C061746;
+        Thu,  9 Dec 2021 15:07:32 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by sin.source.kernel.org (Postfix) with ESMTPS id A26FECE2944;
+        Thu,  9 Dec 2021 23:07:30 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98850C004DD;
+        Thu,  9 Dec 2021 23:07:28 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.19.219-rt97
+Date:   Thu, 09 Dec 2021 23:06:41 -0000
+Message-ID: <163909120133.198294.16887281421187270584@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-References: <cover.1638182284.git.bristot@kernel.org>
- <ffb7f1b1e8cc42fc8ec52f1a89fdd2ca0d70c36e.1638182284.git.bristot@kernel.org>
- <20211208171311.5f1ad94f@gandalf.local.home>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <20211208171311.5f1ad94f@gandalf.local.home>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
-X-AntiAbuse: Primary Hostname - gator4132.hostgator.com
-X-AntiAbuse: Original Domain - vger.kernel.org
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - kernel.org
-X-BWhitelist: no
-X-Source-IP: 87.6.201.63
-X-Source-L: No
-X-Exim-ID: 1mvM4m-000oFe-Lq
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: host-87-6-201-63.retail.telecomitalia.it ([10.0.0.193]) [87.6.201.63]:45012
-X-Source-Auth: kernel@bristot.me
-X-Email-Count: 14
-X-Source-Cap: YnJpc3RvdG1lO2JyaXN0b3RtZTtnYXRvcjQxMzIuaG9zdGdhdG9yLmNvbQ==
-X-Local-Domain: no
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 12/8/21 23:13, Steven Rostedt wrote:
-> On Mon, 29 Nov 2021 12:07:41 +0100
-> Daniel Bristot de Oliveira <bristot@kernel.org> wrote:
-> 
->> The osnoise tool is the interface for the osnoise tracer. The osnoise
->> tool will have multiple "modes" with different outputs. At this point,
->> no mode is included.
->>
->> The osnoise.c includes the osnoise_context abstraction. It serves to
->> read-save-change-restore the default values from tracing/osnoise/
->> directory. When the context is deleted, the default values are restored.
->>
->> It also includes some other helper functions for managing osnoise
->> tracer sessions.
->>
->> With these bits and pieces in place, we can start adding some
->> functionality to rtla.
->>
->> Cc: Steven Rostedt <rostedt@goodmis.org>
->> Cc: Ingo Molnar <mingo@redhat.com>
->> Cc: Tom Zanussi <zanussi@kernel.org>
->> Cc: Masami Hiramatsu <mhiramat@kernel.org>
->> Cc: Juri Lelli <juri.lelli@redhat.com>
->> Cc: Clark Williams <williams@redhat.com>
->> Cc: John Kacur <jkacur@redhat.com>
->> Cc: Peter Zijlstra <peterz@infradead.org>
->> Cc: Thomas Gleixner <tglx@linutronix.de>
->> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
->> Cc: Daniel Bristot de Oliveira <bristot@kernel.org>
->> Cc: linux-rt-users@vger.kernel.org
->> Cc: linux-trace-devel@vger.kernel.org
->> Cc: linux-kernel@vger.kernel.org
->> Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
->> ---
->>  tools/tracing/rtla/Makefile      |    2 +
->>  tools/tracing/rtla/src/osnoise.c | 1013 ++++++++++++++++++++++++++++++
->>  tools/tracing/rtla/src/osnoise.h |   95 +++
->>  tools/tracing/rtla/src/rtla.c    |   10 +
->>  4 files changed, 1120 insertions(+)
->>  create mode 100644 tools/tracing/rtla/src/osnoise.c
->>  create mode 100644 tools/tracing/rtla/src/osnoise.h
->>
->> diff --git a/tools/tracing/rtla/Makefile b/tools/tracing/rtla/Makefile
->> index d99ea2d8b87e..ba6f327e815a 100644
->> --- a/tools/tracing/rtla/Makefile
->> +++ b/tools/tracing/rtla/Makefile
->> @@ -60,6 +60,8 @@ install:
->>  	$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)
->>  	$(INSTALL) rtla -m 755 $(DESTDIR)$(BINDIR)
->>  	$(STRIP) $(DESTDIR)$(BINDIR)/rtla
->> +	@test ! -f $(DESTDIR)$(BINDIR)/osnoise || rm $(DESTDIR)$(BINDIR)/osnoise
->> +	ln -s $(DESTDIR)$(BINDIR)/rtla $(DESTDIR)$(BINDIR)/osnoise
->>  
->>  .PHONY: clean tarball
->>  clean:
->> diff --git a/tools/tracing/rtla/src/osnoise.c b/tools/tracing/rtla/src/osnoise.c
->> new file mode 100644
->> index 000000000000..7ef686dddc09
->> --- /dev/null
->> +++ b/tools/tracing/rtla/src/osnoise.c
->> @@ -0,0 +1,1013 @@
->> +// SPDX-License-Identifier: GPL-2.0
->> +/*
->> + * Copyright (C) 2021 Red Hat Inc, Daniel Bristot de Oliveira <bristot@kernel.org>
->> + */
->> +
->> +#include <sys/types.h>
->> +#include <sys/stat.h>
->> +#include <pthread.h>
->> +#include <stdlib.h>
->> +#include <string.h>
->> +#include <unistd.h>
->> +#include <errno.h>
->> +#include <fcntl.h>
->> +#include <stdio.h>
->> +
->> +#include "osnoise.h"
->> +#include "utils.h"
->> +
->> +/*
->> + * osnoise_get_cpus - return the original "osnoise/cpus" content
->> + *
->> + * It also saves the value to be restored.
->> + */
->> +char *osnoise_get_cpus(struct osnoise_context *context)
->> +{
->> +	char buffer[1024];
->> +	char *cpus_path;
->> +	int retval;
->> +
->> +	if (context->curr_cpus)
->> +		return context->curr_cpus;
->> +
->> +	if (context->orig_cpus)
->> +		return context->orig_cpus;
->> +
->> +	cpus_path = tracefs_get_tracing_file("osnoise/cpus");
->> +
->> +	context->cpus_fd = open(cpus_path, O_RDWR);
->> +	if (context->cpus_fd < 0)
->> +		goto out_err;
->> +
->> +	retval = read(context->cpus_fd, &buffer, sizeof(buffer));
->> +	if (retval <= 0)
->> +		goto out_close;
->> +
->> +	context->orig_cpus = strdup(buffer);
-> 
-> 
-> Or you could have done:
-> 
-> 	context->orig_cpus = tracefs_instance_read(NULL, "osnoise/cpus");
+Hello RT-list!
+
+I'm pleased to announce the 4.19.219-rt97 stable release.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.19-rt
+  Head SHA1: 82e461318dc307102eb36e636f1f3c34bd97ca50
+
+Or to build 4.19.219-rt97 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.219.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.219-rt97.patch.xz
 
 
-Yep, that would be better.
+You can also build from 4.19.218-rt96 by applying the incremental patch:
 
-> as I doubt that reading and writing the cpus file you really care about
-> keeping around the file descriptor.
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.218-rt96-rt97.patch.xz
 
-Yep, I do not necessarly need it.... (do not ask me why I am not using, it is
-obviosly better... I might have just missed it).
+Enjoy!
+Clark
 
-It's not something likely to be done
-> where you care about "disrupting" the system. But if you really do care:
-> 
-> 	context->cpus_fd = tracefs_instance_file_open(NULL, "osnoise/cpus",
-> 				O_RDWR);
+Changes from v4.19.218-rt96:
+---
 
-I will use tracefs helpers to read/write files, and remove the file descriptor
-variables.
+Alexander Aring (1):
+      net: ieee802154: handle iftypes as u32
 
-[...]
+Clark Williams (2):
+      Merge tag 'v4.19.219' into v4.19-rt
+      Linux 4.19.219-rt97
 
->> +	snprintf(buffer, sizeof(buffer), "%llu\n", runtime);
->> +
->> +	retval = write(context->runtime_fd, buffer, strlen(buffer) + 1);
-> 
-> Again, how important is it to have the fd?
-> 
+Dan Carpenter (2):
+      staging: rtl8192e: Fix use after free in _rtl92e_pci_disconnect()
+      drm/vc4: fix error code in vc4_create_object()
 
-it is not...
+Daniele Palmas (1):
+      USB: serial: option: add Telit LE910S1 0x9200 composition
 
-[...]
+David Hildenbrand (2):
+      proc/vmcore: fix clearing user buffer by properly using clear_user()
+      s390/mm: validate VMA in PGSTE manipulation functions
 
->> +/*
->> + * osnoise_set_stop_total_us - set "stop_tracing_total_us"
->> + */
->> +int osnoise_set_stop_total_us(struct osnoise_context *context, long long stop_total_us)
->> +{
->> +	long long curr_stop_total_us = osnoise_get_stop_total_us(context);
->> +	char buffer[BUFF_U64_STR_SIZE];
->> +	int retval;
->> +
->> +	if (curr_stop_total_us == OSNOISE_OPTION_INIT_VAL)
->> +		return -1;
->> +
->> +	snprintf(buffer, BUFF_U64_STR_SIZE, "%lld\n", stop_total_us);
->> +
->> +	retval = write(context->stop_total_us_fd, buffer, strlen(buffer) + 1);
-> 
-> And here.
-> 
-> Hmm, we should add a helper:
-> 
-> 	tracefs_instance_file_printf(instance, fmt, ...)
-> 
-> Where the above could be:
-> 
-> 	tracefs_instance_file_printf(NULL, "%lld\n", stop_total_us);
-> 
-> Of course, for now, you could just add a helper function that does that.
+Eric Dumazet (2):
+      ipv6: fix typos in __ip6_finish_output()
+      tcp_cubic: fix spurious Hystart ACK train detections for not-cwnd-limited flows
 
-sounds good to me.
+Florian Fainelli (2):
+      ARM: dts: BCM5301X: Fix I2C controller interrupt
+      ARM: dts: BCM5301X: Add interrupt properties to GPIO node
 
-[...]
->> +/*
->> + * osnoise_context_alloc - alloc an osnoise_context
->> + *
->> + * The osnoise context contains the information of the "osnoise/" configs.
->> + * It is used to set and restore the config.
->> + */
->> +struct osnoise_context *osnoise_context_alloc(void)
->> +{
->> +	struct osnoise_context *context;
->> +
->> +	context = calloc(1, sizeof(*context));
->> +	if (!context)
->> +		goto out_err;
->> +
->> +	context->cpus_fd 		= CLOSED_FD;
->> +	context->runtime_fd		= CLOSED_FD;
->> +	context->period_fd		= CLOSED_FD;
->> +	context->stop_us_fd		= CLOSED_FD;
->> +	context->stop_total_us_fd	= CLOSED_FD;
->> +	context->timerlat_period_us_fd	= CLOSED_FD;
->> +	context->print_stack_fd		= CLOSED_FD;
-> 
-> You could save a lot of code by using the tracefs_instance_file_*()
-> helpers. And do you really need to keep around the file descriptors?
+Greg Kroah-Hartman (1):
+      Linux 4.19.219
 
-I will use the helpers in v9, I am convincede... :-)
+Gregory CLEMENT (1):
+      pinctrl: armada-37xx: add missing pin: PCIe1 Wakeup
 
-Thanks Steve
--- Daniel
+Guangbin Huang (1):
+      net: hns3: fix VF RSS failed problem after PF enable multi-TCs
+
+Hans Verkuil (1):
+      media: cec: copy sequence field for the reply
+
+Huang Pei (1):
+      MIPS: use 3-level pgtable for 64KB page size on MIPS_VA_BITS_48
+
+Jason Gerecke (1):
+      HID: wacom: Use "Confidence" flag to prevent reporting invalid contacts
+
+Juergen Gross (9):
+      xen: sync include/xen/interface/io/ring.h with Xen's newest version
+      xen/blkfront: read response from backend only once
+      xen/blkfront: don't take local copy of a request from the ring page
+      xen/blkfront: don't trust the backend response data blindly
+      xen/netfront: read response from backend only once
+      xen/netfront: don't read data from request on the ring page
+      xen/netfront: disentangle tx_skb_freelist
+      xen/netfront: don't trust the backend response data blindly
+      tty: hvc: replace BUG_ON() with negative return value
+
+Lin Ma (1):
+      NFC: add NCI_UNREG flag to eliminate the race
+
+Marek Behún (4):
+      PCI: aardvark: Improve link training
+      pinctrl: armada-37xx: Correct mpp definitions
+      pinctrl: armada-37xx: Correct PWM pins definitions
+      arm64: dts: marvell: armada-37xx: Set pcie_reset_pin to gpio function
+
+Mathias Nyman (2):
+      usb: hub: Fix usb enumeration issue due to address0 race
+      usb: hub: Fix locking issues with address0_mutex
+
+Miklos Szeredi (2):
+      fuse: fix page stealing
+      fuse: release pipe buf after last use
+
+Mingjie Zhang (1):
+      USB: serial: option: add Fibocom FM101-GL variants
+
+Miquel Raynal (1):
+      arm64: dts: marvell: armada-37xx: declare PCIe reset pin
+
+Nadav Amit (1):
+      hugetlbfs: flush TLBs correctly after huge_pmd_unshare
+
+Nathan Chancellor (1):
+      usb: dwc2: hcd_queue: Fix use of floating point literal
+
+Pali Rohár (12):
+      PCI: aardvark: Train link immediately after enabling training
+      PCI: aardvark: Issue PERST via GPIO
+      PCI: aardvark: Replace custom macros by standard linux/pci_regs.h macros
+      PCI: aardvark: Indicate error in 'val' when config read fails
+      PCI: aardvark: Don't touch PCIe registers if no card connected
+      PCI: aardvark: Fix compilation on s390
+      PCI: aardvark: Move PCIe reset card code to advk_pcie_train_link()
+      PCI: aardvark: Update comment about disabling link training
+      PCI: aardvark: Configure PCIe resources from 'ranges' DT property
+      PCI: aardvark: Fix PCIe Max Payload Size setting
+      PCI: aardvark: Fix link training
+      PCI: aardvark: Fix checking for link up via LTSSM state
+
+Peng Fan (1):
+      firmware: arm_scmi: pm: Propagate return value to caller
+
+Randy Dunlap (1):
+      xtensa: use CONFIG_USE_OF instead of CONFIG_OF
+
+Remi Pommarel (1):
+      PCI: aardvark: Wait for endpoint to be ready before training link
+
+Sreekanth Reddy (1):
+      scsi: mpt3sas: Fix kernel panic during drive powercycle test
+
+Srinivas Kandagatla (1):
+      ASoC: qdsp6: q6routing: Conditionally reset FrontEnd Mixer
+
+Stefano Garzarella (1):
+      vhost/vsock: fix incorrect used length reported to the guest
+
+Stefano Stabellini (2):
+      xen: don't continue xenstore initialization in case of errors
+      xen: detect uninitialized xenbus in xenbus_init
+
+Steven Rostedt (VMware) (2):
+      tracing: Fix pid filtering when triggers are attached
+      tracing: Check pid filtering when creating events
+
+Takashi Iwai (3):
+      ALSA: ctxfi: Fix out-of-range access
+      ASoC: topology: Add missing rwsem around snd_ctl_remove() calls
+      ARM: socfpga: Fix crash with CONFIG_FORTIRY_SOURCE
+
+Thomas Zeitlhofer (1):
+      PM: hibernate: use correct mode for swsusp_close()
+
+Todd Kjos (1):
+      binder: fix test regression due to sender_euid change
+
+Tony Lu (2):
+      net/smc: Ensure the active closing peer first closes clcsock
+      net/smc: Don't call clcsock shutdown twice when smc shutdown
+
+Trond Myklebust (1):
+      NFSv42: Don't fail clone() unless the OP_CLONE operation failed
+
+Wen Yang (1):
+      PCI: aardvark: Fix a leaked reference by adding missing of_node_put()
+
+yangxingwu (1):
+      netfilter: ipvs: Fix reuse connection if RS weight is 0
+---
+.../pinctrl/marvell,armada-37xx-pinctrl.txt        |  26 +-
+ Documentation/networking/ipvs-sysctl.txt           |   3 +-
+ Makefile                                           |   2 +-
+ arch/arm/boot/dts/bcm5301x.dtsi                    |   4 +-
+ arch/arm/include/asm/tlb.h                         |   8 +
+ arch/arm/mach-socfpga/core.h                       |   2 +-
+ arch/arm/mach-socfpga/platsmp.c                    |   8 +-
+ arch/arm64/boot/dts/marvell/armada-3720-db.dts     |   3 +
+ .../boot/dts/marvell/armada-3720-espressobin.dts   |   3 +
+ arch/arm64/boot/dts/marvell/armada-37xx.dtsi       |   9 +
+ arch/ia64/include/asm/tlb.h                        |  10 +
+ arch/mips/Kconfig                                  |   2 +-
+ arch/s390/include/asm/tlb.h                        |  16 +
+ arch/s390/mm/pgtable.c                             |  13 +
+ arch/sh/include/asm/tlb.h                          |  10 +
+ arch/um/include/asm/tlb.h                          |  12 +
+ arch/xtensa/include/asm/vectors.h                  |   2 +-
+ arch/xtensa/kernel/setup.c                         |  12 +-
+ arch/xtensa/mm/mmu.c                               |   2 +-
+ drivers/android/binder.c                           |   2 +-
+ drivers/block/xen-blkfront.c                       | 126 ++++--
+ drivers/firmware/arm_scmi/scmi_pm_domain.c         |   4 +-
+ drivers/gpu/drm/vc4/vc4_bo.c                       |   2 +-
+ drivers/hid/wacom_wac.c                            |   8 +-
+ drivers/hid/wacom_wac.h                            |   1 +
+ drivers/media/cec/cec-adap.c                       |   1 +
+ .../ethernet/hisilicon/hns3/hns3vf/hclgevf_main.c  |   4 +-
+ drivers/net/xen-netfront.c                         | 257 +++++++-----
+ drivers/pci/controller/pci-aardvark.c              | 436 ++++++++++++++++++---
+ drivers/pinctrl/mvebu/pinctrl-armada-37xx.c        |  28 +-
+ drivers/scsi/mpt3sas/mpt3sas_scsih.c               |   2 +-
+ drivers/staging/rtl8192e/rtl8192e/rtl_core.c       |   3 +-
+ drivers/tty/hvc/hvc_xen.c                          |  17 +-
+ drivers/usb/core/hub.c                             |  23 +-
+ drivers/usb/dwc2/hcd_queue.c                       |   2 +-
+ drivers/usb/serial/option.c                        |   5 +
+ drivers/vhost/vsock.c                              |   2 +-
+ drivers/xen/xenbus/xenbus_probe.c                  |  27 +-
+ fs/fuse/dev.c                                      |  14 +-
+ fs/nfs/nfs42xdr.c                                  |   3 +-
+ fs/proc/vmcore.c                                   |  15 +-
+ include/asm-generic/tlb.h                          |   2 +
+ include/net/nfc/nci_core.h                         |   1 +
+ include/net/nl802154.h                             |   7 +-
+ include/xen/interface/io/ring.h                    | 293 +++++++-------
+ kernel/power/hibernate.c                           |   6 +-
+ kernel/trace/trace.h                               |  24 +-
+ kernel/trace/trace_events.c                        |   7 +
+ localversion-rt                                    |   2 +-
+ mm/hugetlb.c                                       |  23 +-
+ mm/memory.c                                        |  10 +
+ net/ipv4/tcp_cubic.c                               |   5 +-
+ net/ipv6/ip6_output.c                              |   2 +-
+ net/netfilter/ipvs/ip_vs_core.c                    |   8 +-
+ net/nfc/nci/core.c                                 |  19 +-
+ net/smc/af_smc.c                                   |   8 +-
+ net/smc/smc_close.c                                |   6 +
+ sound/pci/ctxfi/ctamixer.c                         |  14 +-
+ sound/pci/ctxfi/ctdaio.c                           |  16 +-
+ sound/pci/ctxfi/ctresource.c                       |   7 +-
+ sound/pci/ctxfi/ctresource.h                       |   4 +-
+ sound/pci/ctxfi/ctsrc.c                            |   7 +-
+ sound/soc/qcom/qdsp6/q6routing.c                   |   6 +-
+ sound/soc/soc-topology.c                           |   3 +
+ 64 files changed, 1157 insertions(+), 452 deletions(-)
+---
