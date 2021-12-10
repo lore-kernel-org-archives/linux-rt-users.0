@@ -2,287 +2,141 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 869BDC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Dec 2021 23:07:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EDFF9C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Dec 2021 10:55:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232386AbhLIXLG (ORCPT
+        id S237191AbhLJK72 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 9 Dec 2021 18:11:06 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44796 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229455AbhLIXLG (ORCPT
+        Fri, 10 Dec 2021 05:59:28 -0500
+Received: from smtp-out2.suse.de ([195.135.220.29]:42046 "EHLO
+        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233200AbhLJK71 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 9 Dec 2021 18:11:06 -0500
-Received: from sin.source.kernel.org (sin.source.kernel.org [IPv6:2604:1380:40e1:4800::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 34324C061746;
-        Thu,  9 Dec 2021 15:07:32 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        Fri, 10 Dec 2021 05:59:27 -0500
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out2.suse.de (Postfix) with ESMTP id 1D5001F3A0;
+        Fri, 10 Dec 2021 10:55:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1639133752; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=tEA8M2dPFCwk0nPW1Jgh85CclY/tEN/U41/6yvfqPdU=;
+        b=phhXFXmIQM+o/8hYQgWa10y2cTXXYd9J89owAaWmokUdydXWOEMchtweLx/llc+K6X7jsD
+        +nLXEJjtCr4pP/yFvZW1ZnY4sxCmAP4cjqLYBe0Ed+eqKmOZ7IItsZt2QhNSinslYMeuB/
+        La6Q7rwlRlRiks08oOjb+N7VNY0hs1c=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1639133752;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=tEA8M2dPFCwk0nPW1Jgh85CclY/tEN/U41/6yvfqPdU=;
+        b=JkQV2R2ik9qUH2TOkkW73sAYqig502hAdHdorannepsDcTEZphJcYcTi1q3aTOo2FE/yrH
+        sX+fSzPxAwg9q+BA==
+Received: from suse.de (unknown [10.163.43.106])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by sin.source.kernel.org (Postfix) with ESMTPS id A26FECE2944;
-        Thu,  9 Dec 2021 23:07:30 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98850C004DD;
-        Thu,  9 Dec 2021 23:07:28 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.19.219-rt97
-Date:   Thu, 09 Dec 2021 23:06:41 -0000
-Message-ID: <163909120133.198294.16887281421187270584@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+        by relay2.suse.de (Postfix) with ESMTPS id 2B91EA3B92;
+        Fri, 10 Dec 2021 10:55:51 +0000 (UTC)
+Date:   Fri, 10 Dec 2021 10:55:49 +0000
+From:   Mel Gorman <mgorman@suse.de>
+To:     Marcelo Tosatti <mtosatti@redhat.com>
+Cc:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        peterz@infradead.org, nilal@redhat.com,
+        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
+        ppandit@redhat.com
+Subject: Re: [PATCH v2 3/3] mm/page_alloc: Remotely drain per-cpu lists
+Message-ID: <20211210105549.GJ3301@suse.de>
+References: <20211103170512.2745765-1-nsaenzju@redhat.com>
+ <20211103170512.2745765-4-nsaenzju@redhat.com>
+ <20211203141306.GG3301@suse.de>
+ <20211209174535.GA70283@fuller.cnet>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-15
+Content-Disposition: inline
+In-Reply-To: <20211209174535.GA70283@fuller.cnet>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On Thu, Dec 09, 2021 at 02:45:35PM -0300, Marcelo Tosatti wrote:
+> On Fri, Dec 03, 2021 at 02:13:06PM +0000, Mel Gorman wrote:
+> > On Wed, Nov 03, 2021 at 06:05:12PM +0100, Nicolas Saenz Julienne wrote:
+> > > Some setups, notably NOHZ_FULL CPUs, are too busy to handle the per-cpu
+> > > drain work queued by __drain_all_pages(). So introduce new a mechanism
+> > > to remotely drain the per-cpu lists. It is made possible by remotely
+> > > locking 'struct per_cpu_pages' new per-cpu spinlocks. A benefit of this
+> > > new scheme is that drain operations are now migration safe.
+> > > 
+> > > There was no observed performance degradation vs. the previous scheme.
+> > > Both netperf and hackbench were run in parallel to triggering the
+> > > __drain_all_pages(NULL, true) code path around ~100 times per second.
+> > > The new scheme performs a bit better (~5%), although the important point
+> > > here is there are no performance regressions vs. the previous mechanism.
+> > > Per-cpu lists draining happens only in slow paths.
+> > > 
+> > 
+> > netperf and hackbench are not great indicators of page allocator
+> > performance as IIRC they are more slab-intensive than page allocator
+> > intensive. I ran the series through a few benchmarks and can confirm
+> > that there was negligible difference to netperf and hackbench.
+> > 
+> > However, on Page Fault Test (pft in mmtests), it is noticable. On a
+> > 2-socket cascadelake machine I get
+> > 
+> > pft timings
+> >                                  5.16.0-rc1             5.16.0-rc1
+> >                                     vanilla    mm-remotedrain-v2r1
+> > Amean     system-1         27.48 (   0.00%)       27.85 *  -1.35%*
+> > Amean     system-4         28.65 (   0.00%)       30.84 *  -7.65%*
+> > Amean     system-7         28.70 (   0.00%)       32.43 * -13.00%*
+> > Amean     system-12        30.33 (   0.00%)       34.21 * -12.80%*
+> > Amean     system-21        37.14 (   0.00%)       41.51 * -11.76%*
+> > Amean     system-30        36.79 (   0.00%)       46.15 * -25.43%*
+> > Amean     system-48        58.95 (   0.00%)       65.28 * -10.73%*
+> > Amean     system-79       111.61 (   0.00%)      114.78 *  -2.84%*
+> > Amean     system-80       113.59 (   0.00%)      116.73 *  -2.77%*
+> > Amean     elapsed-1        32.83 (   0.00%)       33.12 *  -0.88%*
+> > Amean     elapsed-4         8.60 (   0.00%)        9.17 *  -6.66%*
+> > Amean     elapsed-7         4.97 (   0.00%)        5.53 * -11.30%*
+> > Amean     elapsed-12        3.08 (   0.00%)        3.43 * -11.41%*
+> > Amean     elapsed-21        2.19 (   0.00%)        2.41 * -10.06%*
+> > Amean     elapsed-30        1.73 (   0.00%)        2.04 * -17.87%*
+> > Amean     elapsed-48        1.73 (   0.00%)        2.03 * -17.77%*
+> > Amean     elapsed-79        1.61 (   0.00%)        1.64 *  -1.90%*
+> > Amean     elapsed-80        1.60 (   0.00%)        1.64 *  -2.50%*
+> > 
+> > It's not specific to cascade lake, I see varying size regressions on
+> > different Intel and AMD chips, some better and worse than this result.
+> > The smallest regression was on a single CPU skylake machine with a 2-6%
+> > hit. Worst was Zen1 with a 3-107% hit.
+> > 
+> > I didn't profile it to establish why but in all cases the system CPU
+> > usage was much higher. It *might* be because the spinlock in
+> > per_cpu_pages crosses a new cache line and it might be cold although the
+> > penalty seems a bit high for that to be the only factor.
+> > 
+> > Code-wise, the patches look fine but the apparent penalty for PFT is
+> > too severe.
+> 
+> Mel,
+> 
+> Have you read Nicolas RCU patches?
+> 
 
-I'm pleased to announce the 4.19.219-rt97 stable release.
+I agree with Vlastimil's review on overhead.
 
-You can get this release via the git tree at:
+I think it would be more straight-forward to disable the pcp allocator for
+NOHZ_FULL CPUs like what zone_pcp_disable except for individual CPUs with
+care taken to not accidentally re-enable nohz CPus in zone_pcp_enable. The
+downside is that there will be a performance penalty if an application
+running on a NOHZ_FULL CPU is page allocator intensive for whatever
+reason.  However, I guess this is unlikely because if there was a lot
+of kernel activity for a NOHZ_FULL CPU, the vmstat shepherd would also
+cause interference.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.19-rt
-  Head SHA1: 82e461318dc307102eb36e636f1f3c34bd97ca50
-
-Or to build 4.19.219-rt97 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.219.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.219-rt97.patch.xz
-
-
-You can also build from 4.19.218-rt96 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.218-rt96-rt97.patch.xz
-
-Enjoy!
-Clark
-
-Changes from v4.19.218-rt96:
----
-
-Alexander Aring (1):
-      net: ieee802154: handle iftypes as u32
-
-Clark Williams (2):
-      Merge tag 'v4.19.219' into v4.19-rt
-      Linux 4.19.219-rt97
-
-Dan Carpenter (2):
-      staging: rtl8192e: Fix use after free in _rtl92e_pci_disconnect()
-      drm/vc4: fix error code in vc4_create_object()
-
-Daniele Palmas (1):
-      USB: serial: option: add Telit LE910S1 0x9200 composition
-
-David Hildenbrand (2):
-      proc/vmcore: fix clearing user buffer by properly using clear_user()
-      s390/mm: validate VMA in PGSTE manipulation functions
-
-Eric Dumazet (2):
-      ipv6: fix typos in __ip6_finish_output()
-      tcp_cubic: fix spurious Hystart ACK train detections for not-cwnd-limited flows
-
-Florian Fainelli (2):
-      ARM: dts: BCM5301X: Fix I2C controller interrupt
-      ARM: dts: BCM5301X: Add interrupt properties to GPIO node
-
-Greg Kroah-Hartman (1):
-      Linux 4.19.219
-
-Gregory CLEMENT (1):
-      pinctrl: armada-37xx: add missing pin: PCIe1 Wakeup
-
-Guangbin Huang (1):
-      net: hns3: fix VF RSS failed problem after PF enable multi-TCs
-
-Hans Verkuil (1):
-      media: cec: copy sequence field for the reply
-
-Huang Pei (1):
-      MIPS: use 3-level pgtable for 64KB page size on MIPS_VA_BITS_48
-
-Jason Gerecke (1):
-      HID: wacom: Use "Confidence" flag to prevent reporting invalid contacts
-
-Juergen Gross (9):
-      xen: sync include/xen/interface/io/ring.h with Xen's newest version
-      xen/blkfront: read response from backend only once
-      xen/blkfront: don't take local copy of a request from the ring page
-      xen/blkfront: don't trust the backend response data blindly
-      xen/netfront: read response from backend only once
-      xen/netfront: don't read data from request on the ring page
-      xen/netfront: disentangle tx_skb_freelist
-      xen/netfront: don't trust the backend response data blindly
-      tty: hvc: replace BUG_ON() with negative return value
-
-Lin Ma (1):
-      NFC: add NCI_UNREG flag to eliminate the race
-
-Marek Behún (4):
-      PCI: aardvark: Improve link training
-      pinctrl: armada-37xx: Correct mpp definitions
-      pinctrl: armada-37xx: Correct PWM pins definitions
-      arm64: dts: marvell: armada-37xx: Set pcie_reset_pin to gpio function
-
-Mathias Nyman (2):
-      usb: hub: Fix usb enumeration issue due to address0 race
-      usb: hub: Fix locking issues with address0_mutex
-
-Miklos Szeredi (2):
-      fuse: fix page stealing
-      fuse: release pipe buf after last use
-
-Mingjie Zhang (1):
-      USB: serial: option: add Fibocom FM101-GL variants
-
-Miquel Raynal (1):
-      arm64: dts: marvell: armada-37xx: declare PCIe reset pin
-
-Nadav Amit (1):
-      hugetlbfs: flush TLBs correctly after huge_pmd_unshare
-
-Nathan Chancellor (1):
-      usb: dwc2: hcd_queue: Fix use of floating point literal
-
-Pali Rohár (12):
-      PCI: aardvark: Train link immediately after enabling training
-      PCI: aardvark: Issue PERST via GPIO
-      PCI: aardvark: Replace custom macros by standard linux/pci_regs.h macros
-      PCI: aardvark: Indicate error in 'val' when config read fails
-      PCI: aardvark: Don't touch PCIe registers if no card connected
-      PCI: aardvark: Fix compilation on s390
-      PCI: aardvark: Move PCIe reset card code to advk_pcie_train_link()
-      PCI: aardvark: Update comment about disabling link training
-      PCI: aardvark: Configure PCIe resources from 'ranges' DT property
-      PCI: aardvark: Fix PCIe Max Payload Size setting
-      PCI: aardvark: Fix link training
-      PCI: aardvark: Fix checking for link up via LTSSM state
-
-Peng Fan (1):
-      firmware: arm_scmi: pm: Propagate return value to caller
-
-Randy Dunlap (1):
-      xtensa: use CONFIG_USE_OF instead of CONFIG_OF
-
-Remi Pommarel (1):
-      PCI: aardvark: Wait for endpoint to be ready before training link
-
-Sreekanth Reddy (1):
-      scsi: mpt3sas: Fix kernel panic during drive powercycle test
-
-Srinivas Kandagatla (1):
-      ASoC: qdsp6: q6routing: Conditionally reset FrontEnd Mixer
-
-Stefano Garzarella (1):
-      vhost/vsock: fix incorrect used length reported to the guest
-
-Stefano Stabellini (2):
-      xen: don't continue xenstore initialization in case of errors
-      xen: detect uninitialized xenbus in xenbus_init
-
-Steven Rostedt (VMware) (2):
-      tracing: Fix pid filtering when triggers are attached
-      tracing: Check pid filtering when creating events
-
-Takashi Iwai (3):
-      ALSA: ctxfi: Fix out-of-range access
-      ASoC: topology: Add missing rwsem around snd_ctl_remove() calls
-      ARM: socfpga: Fix crash with CONFIG_FORTIRY_SOURCE
-
-Thomas Zeitlhofer (1):
-      PM: hibernate: use correct mode for swsusp_close()
-
-Todd Kjos (1):
-      binder: fix test regression due to sender_euid change
-
-Tony Lu (2):
-      net/smc: Ensure the active closing peer first closes clcsock
-      net/smc: Don't call clcsock shutdown twice when smc shutdown
-
-Trond Myklebust (1):
-      NFSv42: Don't fail clone() unless the OP_CLONE operation failed
-
-Wen Yang (1):
-      PCI: aardvark: Fix a leaked reference by adding missing of_node_put()
-
-yangxingwu (1):
-      netfilter: ipvs: Fix reuse connection if RS weight is 0
----
-.../pinctrl/marvell,armada-37xx-pinctrl.txt        |  26 +-
- Documentation/networking/ipvs-sysctl.txt           |   3 +-
- Makefile                                           |   2 +-
- arch/arm/boot/dts/bcm5301x.dtsi                    |   4 +-
- arch/arm/include/asm/tlb.h                         |   8 +
- arch/arm/mach-socfpga/core.h                       |   2 +-
- arch/arm/mach-socfpga/platsmp.c                    |   8 +-
- arch/arm64/boot/dts/marvell/armada-3720-db.dts     |   3 +
- .../boot/dts/marvell/armada-3720-espressobin.dts   |   3 +
- arch/arm64/boot/dts/marvell/armada-37xx.dtsi       |   9 +
- arch/ia64/include/asm/tlb.h                        |  10 +
- arch/mips/Kconfig                                  |   2 +-
- arch/s390/include/asm/tlb.h                        |  16 +
- arch/s390/mm/pgtable.c                             |  13 +
- arch/sh/include/asm/tlb.h                          |  10 +
- arch/um/include/asm/tlb.h                          |  12 +
- arch/xtensa/include/asm/vectors.h                  |   2 +-
- arch/xtensa/kernel/setup.c                         |  12 +-
- arch/xtensa/mm/mmu.c                               |   2 +-
- drivers/android/binder.c                           |   2 +-
- drivers/block/xen-blkfront.c                       | 126 ++++--
- drivers/firmware/arm_scmi/scmi_pm_domain.c         |   4 +-
- drivers/gpu/drm/vc4/vc4_bo.c                       |   2 +-
- drivers/hid/wacom_wac.c                            |   8 +-
- drivers/hid/wacom_wac.h                            |   1 +
- drivers/media/cec/cec-adap.c                       |   1 +
- .../ethernet/hisilicon/hns3/hns3vf/hclgevf_main.c  |   4 +-
- drivers/net/xen-netfront.c                         | 257 +++++++-----
- drivers/pci/controller/pci-aardvark.c              | 436 ++++++++++++++++++---
- drivers/pinctrl/mvebu/pinctrl-armada-37xx.c        |  28 +-
- drivers/scsi/mpt3sas/mpt3sas_scsih.c               |   2 +-
- drivers/staging/rtl8192e/rtl8192e/rtl_core.c       |   3 +-
- drivers/tty/hvc/hvc_xen.c                          |  17 +-
- drivers/usb/core/hub.c                             |  23 +-
- drivers/usb/dwc2/hcd_queue.c                       |   2 +-
- drivers/usb/serial/option.c                        |   5 +
- drivers/vhost/vsock.c                              |   2 +-
- drivers/xen/xenbus/xenbus_probe.c                  |  27 +-
- fs/fuse/dev.c                                      |  14 +-
- fs/nfs/nfs42xdr.c                                  |   3 +-
- fs/proc/vmcore.c                                   |  15 +-
- include/asm-generic/tlb.h                          |   2 +
- include/net/nfc/nci_core.h                         |   1 +
- include/net/nl802154.h                             |   7 +-
- include/xen/interface/io/ring.h                    | 293 +++++++-------
- kernel/power/hibernate.c                           |   6 +-
- kernel/trace/trace.h                               |  24 +-
- kernel/trace/trace_events.c                        |   7 +
- localversion-rt                                    |   2 +-
- mm/hugetlb.c                                       |  23 +-
- mm/memory.c                                        |  10 +
- net/ipv4/tcp_cubic.c                               |   5 +-
- net/ipv6/ip6_output.c                              |   2 +-
- net/netfilter/ipvs/ip_vs_core.c                    |   8 +-
- net/nfc/nci/core.c                                 |  19 +-
- net/smc/af_smc.c                                   |   8 +-
- net/smc/smc_close.c                                |   6 +
- sound/pci/ctxfi/ctamixer.c                         |  14 +-
- sound/pci/ctxfi/ctdaio.c                           |  16 +-
- sound/pci/ctxfi/ctresource.c                       |   7 +-
- sound/pci/ctxfi/ctresource.h                       |   4 +-
- sound/pci/ctxfi/ctsrc.c                            |   7 +-
- sound/soc/qcom/qdsp6/q6routing.c                   |   6 +-
- sound/soc/soc-topology.c                           |   3 +
- 64 files changed, 1157 insertions(+), 452 deletions(-)
----
+-- 
+Mel Gorman
+SUSE Labs
