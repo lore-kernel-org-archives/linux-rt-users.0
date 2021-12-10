@@ -2,141 +2,215 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EDFF9C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Dec 2021 10:55:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E3F8C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Dec 2021 18:11:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237191AbhLJK72 (ORCPT
+        id S244711AbhLJSPc convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 10 Dec 2021 05:59:28 -0500
-Received: from smtp-out2.suse.de ([195.135.220.29]:42046 "EHLO
-        smtp-out2.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233200AbhLJK71 (ORCPT
+        Fri, 10 Dec 2021 13:15:32 -0500
+Received: from us-smtp-delivery-44.mimecast.com ([207.211.30.44]:47441 "EHLO
+        us-smtp-delivery-44.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S230284AbhLJSPb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Dec 2021 05:59:27 -0500
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
-        by smtp-out2.suse.de (Postfix) with ESMTP id 1D5001F3A0;
-        Fri, 10 Dec 2021 10:55:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1639133752; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=tEA8M2dPFCwk0nPW1Jgh85CclY/tEN/U41/6yvfqPdU=;
-        b=phhXFXmIQM+o/8hYQgWa10y2cTXXYd9J89owAaWmokUdydXWOEMchtweLx/llc+K6X7jsD
-        +nLXEJjtCr4pP/yFvZW1ZnY4sxCmAP4cjqLYBe0Ed+eqKmOZ7IItsZt2QhNSinslYMeuB/
-        La6Q7rwlRlRiks08oOjb+N7VNY0hs1c=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1639133752;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=tEA8M2dPFCwk0nPW1Jgh85CclY/tEN/U41/6yvfqPdU=;
-        b=JkQV2R2ik9qUH2TOkkW73sAYqig502hAdHdorannepsDcTEZphJcYcTi1q3aTOo2FE/yrH
-        sX+fSzPxAwg9q+BA==
-Received: from suse.de (unknown [10.163.43.106])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Fri, 10 Dec 2021 13:15:31 -0500
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-503-g7OqnpiqNHCFDHtPMzzPrA-1; Fri, 10 Dec 2021 13:11:52 -0500
+X-MC-Unique: g7OqnpiqNHCFDHtPMzzPrA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by relay2.suse.de (Postfix) with ESMTPS id 2B91EA3B92;
-        Fri, 10 Dec 2021 10:55:51 +0000 (UTC)
-Date:   Fri, 10 Dec 2021 10:55:49 +0000
-From:   Mel Gorman <mgorman@suse.de>
-To:     Marcelo Tosatti <mtosatti@redhat.com>
-Cc:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
-        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
-        peterz@infradead.org, nilal@redhat.com,
-        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
-        ppandit@redhat.com
-Subject: Re: [PATCH v2 3/3] mm/page_alloc: Remotely drain per-cpu lists
-Message-ID: <20211210105549.GJ3301@suse.de>
-References: <20211103170512.2745765-1-nsaenzju@redhat.com>
- <20211103170512.2745765-4-nsaenzju@redhat.com>
- <20211203141306.GG3301@suse.de>
- <20211209174535.GA70283@fuller.cnet>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A9C1E344E2;
+        Fri, 10 Dec 2021 18:11:50 +0000 (UTC)
+Received: from x1.com (unknown [10.22.16.188])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id CAA1C60CC3;
+        Fri, 10 Dec 2021 18:11:38 +0000 (UTC)
+From:   Daniel Bristot de Oliveira <bristot@kernel.org>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Daniel Bristot de Oliveira <bristot@kernel.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Tao Zhou <tao.zhou@linux.dev>
+Subject: [PATCH V9 00/14] RTLA: An interface for osnoise/timerlat tracers
+Date:   Fri, 10 Dec 2021 19:11:19 +0100
+Message-Id: <cover.1639158831.git.bristot@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <20211209174535.GA70283@fuller.cnet>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+Authentication-Results: relay.mimecast.com;
+        auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=bristot@kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: kernel.org
+Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=WINDOWS-1252
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Dec 09, 2021 at 02:45:35PM -0300, Marcelo Tosatti wrote:
-> On Fri, Dec 03, 2021 at 02:13:06PM +0000, Mel Gorman wrote:
-> > On Wed, Nov 03, 2021 at 06:05:12PM +0100, Nicolas Saenz Julienne wrote:
-> > > Some setups, notably NOHZ_FULL CPUs, are too busy to handle the per-cpu
-> > > drain work queued by __drain_all_pages(). So introduce new a mechanism
-> > > to remotely drain the per-cpu lists. It is made possible by remotely
-> > > locking 'struct per_cpu_pages' new per-cpu spinlocks. A benefit of this
-> > > new scheme is that drain operations are now migration safe.
-> > > 
-> > > There was no observed performance degradation vs. the previous scheme.
-> > > Both netperf and hackbench were run in parallel to triggering the
-> > > __drain_all_pages(NULL, true) code path around ~100 times per second.
-> > > The new scheme performs a bit better (~5%), although the important point
-> > > here is there are no performance regressions vs. the previous mechanism.
-> > > Per-cpu lists draining happens only in slow paths.
-> > > 
-> > 
-> > netperf and hackbench are not great indicators of page allocator
-> > performance as IIRC they are more slab-intensive than page allocator
-> > intensive. I ran the series through a few benchmarks and can confirm
-> > that there was negligible difference to netperf and hackbench.
-> > 
-> > However, on Page Fault Test (pft in mmtests), it is noticable. On a
-> > 2-socket cascadelake machine I get
-> > 
-> > pft timings
-> >                                  5.16.0-rc1             5.16.0-rc1
-> >                                     vanilla    mm-remotedrain-v2r1
-> > Amean     system-1         27.48 (   0.00%)       27.85 *  -1.35%*
-> > Amean     system-4         28.65 (   0.00%)       30.84 *  -7.65%*
-> > Amean     system-7         28.70 (   0.00%)       32.43 * -13.00%*
-> > Amean     system-12        30.33 (   0.00%)       34.21 * -12.80%*
-> > Amean     system-21        37.14 (   0.00%)       41.51 * -11.76%*
-> > Amean     system-30        36.79 (   0.00%)       46.15 * -25.43%*
-> > Amean     system-48        58.95 (   0.00%)       65.28 * -10.73%*
-> > Amean     system-79       111.61 (   0.00%)      114.78 *  -2.84%*
-> > Amean     system-80       113.59 (   0.00%)      116.73 *  -2.77%*
-> > Amean     elapsed-1        32.83 (   0.00%)       33.12 *  -0.88%*
-> > Amean     elapsed-4         8.60 (   0.00%)        9.17 *  -6.66%*
-> > Amean     elapsed-7         4.97 (   0.00%)        5.53 * -11.30%*
-> > Amean     elapsed-12        3.08 (   0.00%)        3.43 * -11.41%*
-> > Amean     elapsed-21        2.19 (   0.00%)        2.41 * -10.06%*
-> > Amean     elapsed-30        1.73 (   0.00%)        2.04 * -17.87%*
-> > Amean     elapsed-48        1.73 (   0.00%)        2.03 * -17.77%*
-> > Amean     elapsed-79        1.61 (   0.00%)        1.64 *  -1.90%*
-> > Amean     elapsed-80        1.60 (   0.00%)        1.64 *  -2.50%*
-> > 
-> > It's not specific to cascade lake, I see varying size regressions on
-> > different Intel and AMD chips, some better and worse than this result.
-> > The smallest regression was on a single CPU skylake machine with a 2-6%
-> > hit. Worst was Zen1 with a 3-107% hit.
-> > 
-> > I didn't profile it to establish why but in all cases the system CPU
-> > usage was much higher. It *might* be because the spinlock in
-> > per_cpu_pages crosses a new cache line and it might be cold although the
-> > penalty seems a bit high for that to be the only factor.
-> > 
-> > Code-wise, the patches look fine but the apparent penalty for PFT is
-> > too severe.
-> 
-> Mel,
-> 
-> Have you read Nicolas RCU patches?
-> 
+The rtla(1) is a meta-tool that includes a set of commands that
+aims to analyze the real-time properties of Linux. But instead of
+testing Linux as a black box, rtla leverages kernel tracing
+capabilities to provide precise information about the properties
+and root causes of unexpected results.
 
-I agree with Vlastimil's review on overhead.
+To start, it presents an interface to the osnoise and timerlat tracers.
+In the future, it will also serve as home to the rtsl [1] and other
+latency/noise tracers.
 
-I think it would be more straight-forward to disable the pcp allocator for
-NOHZ_FULL CPUs like what zone_pcp_disable except for individual CPUs with
-care taken to not accidentally re-enable nohz CPus in zone_pcp_enable. The
-downside is that there will be a performance penalty if an application
-running on a NOHZ_FULL CPU is page allocator intensive for whatever
-reason.  However, I guess this is unlikely because if there was a lot
-of kernel activity for a NOHZ_FULL CPU, the vmstat shepherd would also
-cause interference.
+If you just want to run it, you can download the tarball here:
+  - https://bristot.me/files/rtla/tarball/rtla-0.5.tar.bz2
+
+To compile rtla on fedora you need:
+  $ git clone git://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git
+  $ cd libtraceevent/
+  $ make
+  $ sudo make install
+  $ cd ..
+  $ git clone git://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git
+  $ cd libtracefs/
+  $ make
+  $ sudo make install
+  $ cd ..
+  $ sudo dnf install python3-docutils procps-devel
+  $ cd $rtla_src
+  $ make
+  $ sudo make install
+
+The tracing option (-t) depends some kernel patches that are
+available at [2].
+
+This tool was be discussed at the RT-MC during LPC2021 [3]
+
+[1] rtsl: https://github.com/bristot/rtsl/
+[2] https://lore.kernel.org/lkml/cover.1635533292.git.bristot@kernel.org/
+[3] https://youtu.be/cZUzc0U1jJ4
+
+Changes from V8:
+  - Fixed usage messages (Tao Zhou)
+  - Fixed some return value check on osnoise.c (Tao Zhou)
+  - Properly delete instances when failing to set priorities (Tao Zhou)
+  - Use tracefs helpers to read/write to files on osnoise.c (Steven)
+Changes from V7:
+  - Add README.txt with information about how to compile the tool
+    (Steven)
+  - Use $$($(PKG_CONFIG) --libs libtracefs) to find libtracefs on
+    Makefile (Steven)
+  - Fix *buffer[4096] (using buffer[4096]) on save_trace_to_file()
+    (Steven)
+Changes from v6:
+  - Revisited osnoise option config functions
+  - Properly handles offline CPUs
+  - Some cleanups
+  - Fixed an histogram allocation problem (Tao Zhou)
+  - Revisited open()/read()/write() (Tao Zhou)
+Changes from v5:
+  - Fix retval check in save_trace_to_file() (Tao Zhou)
+  - Fix goto logic in save_trace_to_file() (Tao Zhou)
+  - Removed unused save_trace_pipe_to_file() function
+  - Correctly handle an error on osnoise_set_* functions during
+    "apply config" for all tools (Tao Zhou)
+Changes from v3:
+  - Add cross-compile support (Ahmed S. Darwish)
+  - Move documentation to Documentation/tools/rtla (Jonathan Corbet)
+  - Use .rst format for documentation (Jonathan Corbet)
+  - Use include option from .rst to group common parts of the documentation
+  - Makefile (main and doc) cleanups
+Changes from v2:
+  - Fix the miss conception of the "size" for kernel histograms (Steven/Tom)
+  - Change the --skip-zeros to --with-zeros option as the former is better
+    for humans (and the latter for computers to plot charts).
+  - A lot of checkpatch fixes for the user-space part.
+Changes from v1:
+  - Fixes -t options on osnoise tracers (-t means --trace for all tools now)
+  - Fixes --bucket-size references (not --bucket_size)
+Daniel Bristot de Oliveira (14):
+  rtla: Real-Time Linux Analysis tool
+  rtla: Helper functions for rtla
+  rtla: Add osnoise tool
+  rtla/osnoise: Add osnoise top mode
+  rtla/osnoise: Add the hist mode
+  rtla: Add timerlat tool and timelart top mode
+  rtla/timerlat: Add timerlat hist mode
+  rtla: Add Documentation
+  rtla: Add rtla osnoise man page
+  rtla: Add rtla osnoise top documentation
+  rtla: Add rtla osnoise hist documentation
+  rtla: Add rtla timerlat documentation
+  rtla: Add rtla timerlat top documentation
+  rtla: Add rtla timerlat hist documentation
+
+ Documentation/tools/rtla/Makefile             |  41 +
+ Documentation/tools/rtla/common_appendix.rst  |  12 +
+ .../tools/rtla/common_hist_options.rst        |  23 +
+ Documentation/tools/rtla/common_options.rst   |  28 +
+ .../tools/rtla/common_osnoise_description.rst |   8 +
+ .../tools/rtla/common_osnoise_options.rst     |  17 +
+ .../rtla/common_timerlat_description.rst      |  10 +
+ .../tools/rtla/common_timerlat_options.rst    |  16 +
+ .../tools/rtla/common_top_options.rst         |   3 +
+ .../tools/rtla/rtla-osnoise-hist.rst          |  66 ++
+ Documentation/tools/rtla/rtla-osnoise-top.rst |  61 ++
+ Documentation/tools/rtla/rtla-osnoise.rst     |  59 ++
+ .../tools/rtla/rtla-timerlat-hist.rst         | 106 +++
+ .../tools/rtla/rtla-timerlat-top.rst          | 145 +++
+ Documentation/tools/rtla/rtla-timerlat.rst    |  57 ++
+ Documentation/tools/rtla/rtla.rst             |  48 +
+ tools/tracing/rtla/Makefile                   | 102 ++
+ tools/tracing/rtla/README.txt                 |  36 +
+ tools/tracing/rtla/src/osnoise.c              | 875 ++++++++++++++++++
+ tools/tracing/rtla/src/osnoise.h              |  91 ++
+ tools/tracing/rtla/src/osnoise_hist.c         | 801 ++++++++++++++++
+ tools/tracing/rtla/src/osnoise_top.c          | 579 ++++++++++++
+ tools/tracing/rtla/src/rtla.c                 |  87 ++
+ tools/tracing/rtla/src/timerlat.c             |  72 ++
+ tools/tracing/rtla/src/timerlat.h             |   4 +
+ tools/tracing/rtla/src/timerlat_hist.c        | 822 ++++++++++++++++
+ tools/tracing/rtla/src/timerlat_top.c         | 618 +++++++++++++
+ tools/tracing/rtla/src/trace.c                | 192 ++++
+ tools/tracing/rtla/src/trace.h                |  27 +
+ tools/tracing/rtla/src/utils.c                | 433 +++++++++
+ tools/tracing/rtla/src/utils.h                |  56 ++
+ 31 files changed, 5495 insertions(+)
+ create mode 100644 Documentation/tools/rtla/Makefile
+ create mode 100644 Documentation/tools/rtla/common_appendix.rst
+ create mode 100644 Documentation/tools/rtla/common_hist_options.rst
+ create mode 100644 Documentation/tools/rtla/common_options.rst
+ create mode 100644 Documentation/tools/rtla/common_osnoise_description.rst
+ create mode 100644 Documentation/tools/rtla/common_osnoise_options.rst
+ create mode 100644 Documentation/tools/rtla/common_timerlat_description.rst
+ create mode 100644 Documentation/tools/rtla/common_timerlat_options.rst
+ create mode 100644 Documentation/tools/rtla/common_top_options.rst
+ create mode 100644 Documentation/tools/rtla/rtla-osnoise-hist.rst
+ create mode 100644 Documentation/tools/rtla/rtla-osnoise-top.rst
+ create mode 100644 Documentation/tools/rtla/rtla-osnoise.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat-hist.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat-top.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat.rst
+ create mode 100644 Documentation/tools/rtla/rtla.rst
+ create mode 100644 tools/tracing/rtla/Makefile
+ create mode 100644 tools/tracing/rtla/README.txt
+ create mode 100644 tools/tracing/rtla/src/osnoise.c
+ create mode 100644 tools/tracing/rtla/src/osnoise.h
+ create mode 100644 tools/tracing/rtla/src/osnoise_hist.c
+ create mode 100644 tools/tracing/rtla/src/osnoise_top.c
+ create mode 100644 tools/tracing/rtla/src/rtla.c
+ create mode 100644 tools/tracing/rtla/src/timerlat.c
+ create mode 100644 tools/tracing/rtla/src/timerlat.h
+ create mode 100644 tools/tracing/rtla/src/timerlat_hist.c
+ create mode 100644 tools/tracing/rtla/src/timerlat_top.c
+ create mode 100644 tools/tracing/rtla/src/trace.c
+ create mode 100644 tools/tracing/rtla/src/trace.h
+ create mode 100644 tools/tracing/rtla/src/utils.c
+ create mode 100644 tools/tracing/rtla/src/utils.h
 
 -- 
-Mel Gorman
-SUSE Labs
+2.31.1
+
