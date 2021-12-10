@@ -2,166 +2,67 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2EEDC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Dec 2021 18:47:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D8DAC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Dec 2021 20:42:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S245526AbhLJSuk (ORCPT
+        id S1344245AbhLJUq0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 10 Dec 2021 13:50:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33508 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239005AbhLJSuk (ORCPT
+        Fri, 10 Dec 2021 15:46:26 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:27827 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1344201AbhLJUqZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Dec 2021 13:50:40 -0500
-Received: from mail-qk1-x72c.google.com (mail-qk1-x72c.google.com [IPv6:2607:f8b0:4864:20::72c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BEC57C061746;
-        Fri, 10 Dec 2021 10:47:04 -0800 (PST)
-Received: by mail-qk1-x72c.google.com with SMTP id de30so8657917qkb.0;
-        Fri, 10 Dec 2021 10:47:04 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=Ju9sIZBRyEsHZQ7xPVmI/d5eXqoqem5zt4WkakOQBZY=;
-        b=Gfcii0qEAnukZtC8p1YyLcw7dsquwLGZQMYLztMBeGWd14eHW2F2QommN9kCAin4e9
-         O6ACLrKNuVYsDjj+PVK+iHx/OpKQBXs+p0gnK9yZvYRg+grMC6SOAxova/lVj0JKV/hC
-         X0PlhFmwwD53E84csTixZlo89knwklPwxVSiMQO1aiNSeFM2zxOmjeDbNtYCksku+2FN
-         pWbDHZghj4QoVQFs0XUAL3ZgEYFbGZjFYwCOwO9AoKCW2qAz0+Zf+diwqOg0lxo3mQUL
-         F7qhUTgBPuRLsf6q1s+1qgUckre30PXmILOoxNADRavhRwVU+M4pIGM4NqwI8yW+gujK
-         7/vQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=Ju9sIZBRyEsHZQ7xPVmI/d5eXqoqem5zt4WkakOQBZY=;
-        b=ZTNKc2KPJA5AfYip4KRO1LYeg74EyArtXUL/CDKnZPLcAAXb7Aru6Uh2JOuYKyWKab
-         E3/j2C2U1gD3eDX2EVHno1O3dNpIJDht4u22YrCCwujLmbzWHF4IbHJekCREPSCi9Cn0
-         mrFzoGdWJJS0P3y2LT1yGDuNFnBcqkNBApEAaJQZ1u3NYA5KIe5Dh/oeTcTs+485ZFuh
-         E73NM/gLp8o1QBjVtiTHL6CmqwAnYnM8l+Ij1MIJBukF7YjitCStBL8mUgN4uA52cU5X
-         K8EAGLVmt3CNyyb7W8xVoc/ftSD50mLnIAGELEmxqju0OsYt0lMpkn0COlJaUytSkdD/
-         p31w==
-X-Gm-Message-State: AOAM5302q9Jc7fHVx5K2CbbbXxcGitXAMMviCRxI5f7KQlaFcB6EIX4h
-        qFhzMr/7F4dRqrGN2AWmXAn5WlvgXetZjw==
-X-Google-Smtp-Source: ABdhPJw+VaMxLVSg0ejMpWbBarmLK2CuChA7OzKaJYUzRzkFgv8yaezyEQlMaPp3fqPXNkiaMIW2BA==
-X-Received: by 2002:ae9:e8c5:: with SMTP id a188mr20495137qkg.713.1639162023787;
-        Fri, 10 Dec 2021 10:47:03 -0800 (PST)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-11-174-88-121-95.dsl.bell.ca. [174.88.121.95])
-        by smtp.gmail.com with ESMTPSA id c25sm1724641qkp.31.2021.12.10.10.47.02
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 10 Dec 2021 10:47:03 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     lkml <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Kate Carcia <kcarcia@redhat.com>,
-        Leah Leshchinsky <lleshchi@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-2.3
-Date:   Fri, 10 Dec 2021 13:46:49 -0500
-Message-Id: <20211210184649.11084-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.31.1
+        Fri, 10 Dec 2021 15:46:25 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1639168969;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=Ohtjp5ENEhR73TGjgyBs/JxihfZk0CXzRtqhRe/3wZY=;
+        b=X2PbA5w70Z3GtvPtWqwU75JnM0TJmQyxsPW/KYjdJDPCRHkZHF9Ruga/wcspeij3oQwrR1
+        T281TPIBfHFO3IQZ4M/6DPOGekG1p1ydemhTTMEB6tOGpdoIDs60FtYbVQcJMX1TX77Ggw
+        aVdERjvfuGPIEPtJxS+v5aK3gGIM75g=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-113-HIuiFW6eOhStaycKlMHrxw-1; Fri, 10 Dec 2021 15:42:46 -0500
+X-MC-Unique: HIuiFW6eOhStaycKlMHrxw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 890D4192FDA0;
+        Fri, 10 Dec 2021 20:42:45 +0000 (UTC)
+Received: from wcosta.com (ovpn-116-199.gru2.redhat.com [10.97.116.199])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D03B2781EB;
+        Fri, 10 Dec 2021 20:42:28 +0000 (UTC)
+From:   Wander Lairson Costa <wander@redhat.com>
+To:     linux-kernel@vger.kernel.org
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org,
+        Wander Lairson Costa <wander@redhat.com>
+Subject: [PREEMPT_RT PATCH 0/2] Fix warnings in blktrace
+Date:   Fri, 10 Dec 2021 17:41:54 -0300
+Message-Id: <20211210204156.96336-1-wander@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm pleased to announce v2.3 of rt-tests
+These two patches fix wrong usage of lock primitives with
+CONFIG_PREEMPT_RT in the blktrace code.
 
-A few things included in this release:
+Wander Lairson Costa (2):
+  block: Avoid sleeping function called from invalid context bug
+  blktrace: switch trace spinlock to a raw spinlock
 
-- fixes in cyclicdeadline and deadline_test to prevent double mounting
-  of cgroups
-- significant clean-ups and fixes to hwlatdetect 
-- aarch64 support for oslat
-- The addition of the --default-system option in cyclictest
-  This runs cyclictest without attempting any tuning. Power management
-  is not suppressed so cyclictest measures the system as it is configured.
-  This may result in worse realtime behaviour, but is sometimes what you
-  are trying to measure.
-
-Thank you to everyone who contributed.
-
-Bug reports, testing, and patches are always appreciated.
-
-You can get this version via git or tarballs as explained below.
-
-Enjoy!
-
-Clone
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
-
-Branch: main
-
-Tag: v2.3
-
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
-
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
-
-
-John Kacur (23):
-  rt-tests: pi_stress: Fix "id" in help
-  rt-tests: Add *.dat to .gitignore
-  rt-tests: Update the help and man page for --latency
-  rt-tests: cyclictest: Add --default-system option
-  rt-tests: cyclictest: Remove unused 'C' and 'E' options
-  rt-tests:hwlatdetect: Remove useless object in class declaration
-  rt-tests:hwlatdetect.py: Remove multiple statements on one line
-  rt-tests:hwlatdetect.py: Remove unnecessary 'not'
-  rt-tests: deadline_tests: Null check to prevent floating point
-    exception
-  rt-tests: cyclictest: Check user supplies an value to histogram
-  rt-tests: get_cyclictest_snapshot: print_warning should be a
-    classmethod
-  rt-tests: hwlatdetect: Remove unnessary parens after return
-  rt-tests: hwlatdetect: Use "with" for opening files
-  rt-tests: hwlatdetect: Use python3 style super()
-  rt-tests: hwlatdetect: Keep consistent name from abstract method
-  rt-tests: hwlatdetect: Remove class Hwlat
-  rt-tests: hwlatdetect: Use abstractmethod decorator
-  rt-tests: hwlatdetect: Remove unused class Kmod
-  rt-tests: hwlatdetect: Don't use built-in name str as a variable
-  rt-tests: deadline_test: Fix double mount of cgroups
-  rt-tests: cyclicdeadline: Fix double mount of cgroups
-  rt-tests: deadline_test: Fix typo "highes"
-  rt-tests: Change to version 2.3
-
-Leah Leshchinsky (1):
-  rt-tests: Add missing option F to optstring
-
-Nicolas Saenz Julienne (4):
-  oslat: Rename cpu_mhz/cpu_hz to counter_mhz/counter_hz
-  oslat: Add aarch64 support
-  oslat: Allow for arch specific counter frequency measurements
-  oslat: Avoid out-of-order memory accesses to precede counter read
-
-Oscar Shiang (1):
-  rt-tests: cyclictest.8: Remove reference to -n in --system in manpage
-
-Punit Agrawal (4):
-  rt-tests: hwlatdetect: Gracefully handle lack of /dev/cpu_dma_latency
-  rt-tests: cyclictest: Drop unused defines
-  rt-tests: cyclictest: Simplify duplicate initialization of "stop"
-  rt-tests: cyclictest: Drop unnecessary variable "bufsize"
-
- .gitignore                                |   1 +
- Makefile                                  |   2 +-
- src/cyclictest/cyclictest.8               |  17 +-
- src/cyclictest/cyclictest.c               |  40 ++-
- src/cyclictest/get_cyclictest_snapshot.py |   7 +-
- src/hwlatdetect/hwlatdetect.py            | 388 ++++++++--------------
- src/oslat/oslat.c                         |  52 ++-
- src/pi_tests/pi_stress.c                  |   2 +-
- src/sched_deadline/cyclicdeadline.c       |  39 ++-
- src/sched_deadline/deadline_test.c        |  47 ++-
- 10 files changed, 288 insertions(+), 307 deletions(-)
+ block/blk-cgroup.c      |  4 ++--
+ kernel/trace/blktrace.c | 14 +++++++-------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
 -- 
-2.31.1
+2.27.0
 
