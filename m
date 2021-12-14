@@ -2,96 +2,134 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A4CCC433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 03:17:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E1AAC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 07:13:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233041AbhLNDRA (ORCPT
+        id S231348AbhLNHNx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 13 Dec 2021 22:17:00 -0500
-Received: from out0.migadu.com ([94.23.1.103]:15360 "EHLO out0.migadu.com"
+        Tue, 14 Dec 2021 02:13:53 -0500
+Received: from mga04.intel.com ([192.55.52.120]:49269 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232633AbhLNDQ7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Dec 2021 22:16:59 -0500
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-        t=1639451816;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=1vndxrNGB+WzR5xqhu3RD4FILb9wlm0/q3X11bIWkos=;
-        b=w5By6ZS3fnzrzSFtNkLbtOkmZ0qL8Bki24Eu+3FK+uNAzyl3IYnsHeHeyyLhQfcxr7dWc4
-        Rt22vJPkaHD5KZ0KNldK2yJEYK0xfQpfueDK/MKqILACVT5KKOEKcQ3nxLv/dH9cDS4mTh
-        /Ea+/oiAwNdVz9O3P5wQ6xMZX1bOM1Y=
-From:   Yajun Deng <yajun.deng@linux.dev>
-To:     stockhausen@collogia.de, song@kernel.org
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-raid@vger.kernel.org, Yajun Deng <yajun.deng@linux.dev>
-Subject: [PATCH] lib/raid6: fix abnormally high latency
-Date:   Tue, 14 Dec 2021 11:15:53 +0800
-Message-Id: <20211214031553.16435-1-yajun.deng@linux.dev>
+        id S229752AbhLNHNx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Dec 2021 02:13:53 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1639466033; x=1671002033;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=Jdfb5fVu5E7xPCWOdi0WEdnnVTTuMGI/SwiH4gh3/nk=;
+  b=UKuByHmhVDuk0A1k/fsFdhlvU8rfhNC59zJ0RDbpwZEkmD/72F6VOH4X
+   znHHbOfVkSbLq0UjVErvFvFbOS203kI09tVe+KRmXF/sGLrlxw/EzBw8e
+   NHKFT0gpbbwwr0bwI3iWxLpgiL74TKrlyAvvUC0u/Y2t87q2Up8v+3eDA
+   x/dVWN3t1HxRy+HpDbT1SYzQ16Oact5AVcUrIHKp7vumUfNZsQ2mARHyR
+   0+NrBNhJej3Q9NuTfFpVeAfhx+d+NCt6RGsRhISkzOO+bYiamd2ry+PMV
+   FjHVa29md96e1bcEzqSSTq121YLsuF1iW9r4MEHPwtSkk3ctBFHjzdw/V
+   g==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10197"; a="237653013"
+X-IronPort-AV: E=Sophos;i="5.88,204,1635231600"; 
+   d="scan'208";a="237653013"
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Dec 2021 23:13:52 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.88,204,1635231600"; 
+   d="scan'208";a="583275986"
+Received: from lkp-server02.sh.intel.com (HELO 9f38c0981d9f) ([10.239.97.151])
+  by fmsmga004.fm.intel.com with ESMTP; 13 Dec 2021 23:13:51 -0800
+Received: from kbuild by 9f38c0981d9f with local (Exim 4.92)
+        (envelope-from <lkp@intel.com>)
+        id 1mx20U-00001s-Bx; Tue, 14 Dec 2021 07:13:50 +0000
+Date:   Tue, 14 Dec 2021 15:13:05 +0800
+From:   kernel test robot <lkp@intel.com>
+To:     Wander Lairson Costa <wander@redhat.com>,
+        linux-kernel@vger.kernel.org
+Cc:     kbuild-all@lists.01.org, Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org,
+        Wander Lairson Costa <wander@redhat.com>
+Subject: Re: [PATCH v2 1/2] block: Avoid sleeping function called from
+ invalid context bug
+Message-ID: <202112141554.2175ujH7-lkp@intel.com>
+References: <20211213123737.9147-2-wander@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
-X-Migadu-Auth-User: yajun.deng@linux.dev
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20211213123737.9147-2-wander@redhat.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We found an abnormally high latency when executing modprobe raid6_pq, the
-latency is greater than 1.2s when CONFIG_PREEMPT_VOLUNTARY=y, greater than
-67ms when CONFIG_PREEMPT=y, and greater than 16ms when CONFIG_PREEMPT_RT=y.
-This is caused by disable the preemption, this time is too long and
-unreasonable. We just need to disable migration. so used migrate_disable()/
-migrate_enable() instead of preempt_disable()/preempt_enable(). This is
-beneficial for CONFIG_PREEMPT=y or CONFIG_PREEMPT_RT=y, but no effect for
-CONFIG_PREEMPT_VOLUNTARY=y.
+Hi Wander,
 
-Fixes: fe5cbc6e06c7 ("md/raid6 algorithms: delta syndrome functions")
-Signed-off-by: Yajun Deng <yajun.deng@linux.dev>
+Thank you for the patch! Yet something to improve:
+
+[auto build test ERROR on axboe-block/for-next]
+[also build test ERROR on linux/master linus/master v5.16-rc5]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch]
+
+url:    https://github.com/0day-ci/linux/commits/Wander-Lairson-Costa/Fix-warnings-in-blktrace/20211213-204207
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux-block.git for-next
+config: x86_64-rhel-8.3-kselftests (https://download.01.org/0day-ci/archive/20211214/202112141554.2175ujH7-lkp@intel.com/config)
+compiler: gcc-9 (Debian 9.3.0-22) 9.3.0
+reproduce (this is a W=1 build):
+        # https://github.com/0day-ci/linux/commit/e53f7f8c1ce0b19fef6164247fea08d17d5f771d
+        git remote add linux-review https://github.com/0day-ci/linux
+        git fetch --no-tags linux-review Wander-Lairson-Costa/Fix-warnings-in-blktrace/20211213-204207
+        git checkout e53f7f8c1ce0b19fef6164247fea08d17d5f771d
+        # save the config file to linux build tree
+        mkdir build_dir
+        make W=1 O=build_dir ARCH=x86_64 SHELL=/bin/bash
+
+If you fix the issue, kindly add following tag as appropriate
+Reported-by: kernel test robot <lkp@intel.com>
+
+All errors (new ones prefixed by >>):
+
+   block/blk-cgroup.c: In function 'blk_cgroup_bio_start':
+>> block/blk-cgroup.c:1915:8: error: implicit declaration of function 'get_cpu_light'; did you mean 'em_cpu_get'? [-Werror=implicit-function-declaration]
+    1915 |  cpu = get_cpu_light();
+         |        ^~~~~~~~~~~~~
+         |        em_cpu_get
+>> block/blk-cgroup.c:1932:2: error: implicit declaration of function 'put_cpu_light'; did you mean 'fput_light'? [-Werror=implicit-function-declaration]
+    1932 |  put_cpu_light();
+         |  ^~~~~~~~~~~~~
+         |  fput_light
+   cc1: some warnings being treated as errors
+
+
+vim +1915 block/blk-cgroup.c
+
+  1908	
+  1909	void blk_cgroup_bio_start(struct bio *bio)
+  1910	{
+  1911		int rwd = blk_cgroup_io_type(bio), cpu;
+  1912		struct blkg_iostat_set *bis;
+  1913		unsigned long flags;
+  1914	
+> 1915		cpu = get_cpu_light();
+  1916		bis = per_cpu_ptr(bio->bi_blkg->iostat_cpu, cpu);
+  1917		flags = u64_stats_update_begin_irqsave(&bis->sync);
+  1918	
+  1919		/*
+  1920		 * If the bio is flagged with BIO_CGROUP_ACCT it means this is a split
+  1921		 * bio and we would have already accounted for the size of the bio.
+  1922		 */
+  1923		if (!bio_flagged(bio, BIO_CGROUP_ACCT)) {
+  1924			bio_set_flag(bio, BIO_CGROUP_ACCT);
+  1925			bis->cur.bytes[rwd] += bio->bi_iter.bi_size;
+  1926		}
+  1927		bis->cur.ios[rwd]++;
+  1928	
+  1929		u64_stats_update_end_irqrestore(&bis->sync, flags);
+  1930		if (cgroup_subsys_on_dfl(io_cgrp_subsys))
+  1931			cgroup_rstat_updated(bio->bi_blkg->blkcg->css.cgroup, cpu);
+> 1932		put_cpu_light();
+  1933	}
+  1934	
+
 ---
- lib/raid6/algos.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/lib/raid6/algos.c b/lib/raid6/algos.c
-index 6d5e5000fdd7..21611d05c34c 100644
---- a/lib/raid6/algos.c
-+++ b/lib/raid6/algos.c
-@@ -162,7 +162,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
- 
- 			perf = 0;
- 
--			preempt_disable();
-+			migrate_disable();
- 			j0 = jiffies;
- 			while ((j1 = jiffies) == j0)
- 				cpu_relax();
-@@ -171,7 +171,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
- 				(*algo)->gen_syndrome(disks, PAGE_SIZE, *dptrs);
- 				perf++;
- 			}
--			preempt_enable();
-+			migrate_enable();
- 
- 			if (perf > bestgenperf) {
- 				bestgenperf = perf;
-@@ -186,7 +186,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
- 
- 			perf = 0;
- 
--			preempt_disable();
-+			migrate_disable();
- 			j0 = jiffies;
- 			while ((j1 = jiffies) == j0)
- 				cpu_relax();
-@@ -196,7 +196,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
- 						      PAGE_SIZE, *dptrs);
- 				perf++;
- 			}
--			preempt_enable();
-+			migrate_enable();
- 
- 			if (best == *algo)
- 				bestxorperf = perf;
--- 
-2.32.0
-
+0-DAY CI Kernel Test Service, Intel Corporation
+https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org
