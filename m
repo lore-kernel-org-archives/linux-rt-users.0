@@ -2,33 +2,33 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F75AC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 03:00:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A4CCC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 03:17:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234405AbhLNDAi (ORCPT
+        id S233041AbhLNDRA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 13 Dec 2021 22:00:38 -0500
-Received: from out1.migadu.com ([91.121.223.63]:43363 "EHLO out1.migadu.com"
+        Mon, 13 Dec 2021 22:17:00 -0500
+Received: from out0.migadu.com ([94.23.1.103]:15360 "EHLO out0.migadu.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S232118AbhLNDAi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Dec 2021 22:00:38 -0500
+        id S232633AbhLNDQ7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Dec 2021 22:16:59 -0500
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-        t=1639450836;
+        t=1639451816;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding;
         bh=1vndxrNGB+WzR5xqhu3RD4FILb9wlm0/q3X11bIWkos=;
-        b=aa5DItfFUBXVg9oWFUceXio6WJYRTdCp2svDEOuCREFZahU78m7Ni49GUe517XJG8iNF6p
-        CkQqp6aO3v9SijZOvk9bTe+45OO9GsIlJsMGho7VVTG0GF/SmAF/nRW7vl02Tq9AHVHXox
-        PKdi5l/jt7auqt1VpD4pxIcMOpf1otQ=
+        b=w5By6ZS3fnzrzSFtNkLbtOkmZ0qL8Bki24Eu+3FK+uNAzyl3IYnsHeHeyyLhQfcxr7dWc4
+        Rt22vJPkaHD5KZ0KNldK2yJEYK0xfQpfueDK/MKqILACVT5KKOEKcQ3nxLv/dH9cDS4mTh
+        /Ea+/oiAwNdVz9O3P5wQ6xMZX1bOM1Y=
 From:   Yajun Deng <yajun.deng@linux.dev>
-To:     stockhausen@collogia.de, neilb@suse.de
+To:     stockhausen@collogia.de, song@kernel.org
 Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Yajun Deng <yajun.deng@linux.dev>
+        linux-raid@vger.kernel.org, Yajun Deng <yajun.deng@linux.dev>
 Subject: [PATCH] lib/raid6: fix abnormally high latency
-Date:   Tue, 14 Dec 2021 10:59:46 +0800
-Message-Id: <20211214025946.15980-1-yajun.deng@linux.dev>
+Date:   Tue, 14 Dec 2021 11:15:53 +0800
+Message-Id: <20211214031553.16435-1-yajun.deng@linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
