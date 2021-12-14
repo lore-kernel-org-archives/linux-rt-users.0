@@ -2,134 +2,158 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E1AAC433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 07:13:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F01C6C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 10:58:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231348AbhLNHNx (ORCPT
+        id S233340AbhLNK65 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Dec 2021 02:13:53 -0500
-Received: from mga04.intel.com ([192.55.52.120]:49269 "EHLO mga04.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229752AbhLNHNx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Dec 2021 02:13:53 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1639466033; x=1671002033;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=Jdfb5fVu5E7xPCWOdi0WEdnnVTTuMGI/SwiH4gh3/nk=;
-  b=UKuByHmhVDuk0A1k/fsFdhlvU8rfhNC59zJ0RDbpwZEkmD/72F6VOH4X
-   znHHbOfVkSbLq0UjVErvFvFbOS203kI09tVe+KRmXF/sGLrlxw/EzBw8e
-   NHKFT0gpbbwwr0bwI3iWxLpgiL74TKrlyAvvUC0u/Y2t87q2Up8v+3eDA
-   x/dVWN3t1HxRy+HpDbT1SYzQ16Oact5AVcUrIHKp7vumUfNZsQ2mARHyR
-   0+NrBNhJej3Q9NuTfFpVeAfhx+d+NCt6RGsRhISkzOO+bYiamd2ry+PMV
-   FjHVa29md96e1bcEzqSSTq121YLsuF1iW9r4MEHPwtSkk3ctBFHjzdw/V
-   g==;
-X-IronPort-AV: E=McAfee;i="6200,9189,10197"; a="237653013"
-X-IronPort-AV: E=Sophos;i="5.88,204,1635231600"; 
-   d="scan'208";a="237653013"
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 Dec 2021 23:13:52 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.88,204,1635231600"; 
-   d="scan'208";a="583275986"
-Received: from lkp-server02.sh.intel.com (HELO 9f38c0981d9f) ([10.239.97.151])
-  by fmsmga004.fm.intel.com with ESMTP; 13 Dec 2021 23:13:51 -0800
-Received: from kbuild by 9f38c0981d9f with local (Exim 4.92)
-        (envelope-from <lkp@intel.com>)
-        id 1mx20U-00001s-Bx; Tue, 14 Dec 2021 07:13:50 +0000
-Date:   Tue, 14 Dec 2021 15:13:05 +0800
-From:   kernel test robot <lkp@intel.com>
-To:     Wander Lairson Costa <wander@redhat.com>,
-        linux-kernel@vger.kernel.org
-Cc:     kbuild-all@lists.01.org, Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org,
-        Wander Lairson Costa <wander@redhat.com>
-Subject: Re: [PATCH v2 1/2] block: Avoid sleeping function called from
- invalid context bug
-Message-ID: <202112141554.2175ujH7-lkp@intel.com>
-References: <20211213123737.9147-2-wander@redhat.com>
+        Tue, 14 Dec 2021 05:58:57 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:40601 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S229725AbhLNK64 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Dec 2021 05:58:56 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1639479536;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=yJFfcJSjeMg8fWyUYeS5TNuvh21SuSS14o7UlPfottI=;
+        b=IVE+uTcNOcRpwerkUhb1B9E6MRr5diXYxgvLL6ILncv1h9uQKO/CT05PB12rcLK6Wr++NL
+        J8zTjpGiFEcGbwI++bJHgOGVY5nJMSudikhJgZ1EqtwzhUowABuu3Dl6QitMn7cw3x59Uq
+        uAvc/KXFcxRphCNuyhon4j0D606/KCo=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-546-hcdHxCoqOP6HY-u7w9SSCw-1; Tue, 14 Dec 2021 05:58:52 -0500
+X-MC-Unique: hcdHxCoqOP6HY-u7w9SSCw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DD7AC64083;
+        Tue, 14 Dec 2021 10:58:50 +0000 (UTC)
+Received: from fuller.cnet (ovpn-112-3.gru2.redhat.com [10.97.112.3])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id E38CD68D90;
+        Tue, 14 Dec 2021 10:58:47 +0000 (UTC)
+Received: by fuller.cnet (Postfix, from userid 1000)
+        id 9CA5E4168B84; Tue, 14 Dec 2021 07:58:23 -0300 (-03)
+Date:   Tue, 14 Dec 2021 07:58:23 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Mel Gorman <mgorman@suse.de>, Thomas Gleixner <tglx@linutronix.de>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Christoph Lameter <cl@gentwo.de>
+Cc:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        peterz@infradead.org, nilal@redhat.com,
+        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
+        ppandit@redhat.com
+Subject: Re: [PATCH v2 3/3] mm/page_alloc: Remotely drain per-cpu lists
+Message-ID: <20211214105823.GA53878@fuller.cnet>
+References: <20211103170512.2745765-1-nsaenzju@redhat.com>
+ <20211103170512.2745765-4-nsaenzju@redhat.com>
+ <20211203141306.GG3301@suse.de>
+ <20211209174535.GA70283@fuller.cnet>
+ <20211210105549.GJ3301@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20211213123737.9147-2-wander@redhat.com>
+In-Reply-To: <20211210105549.GJ3301@suse.de>
 User-Agent: Mutt/1.10.1 (2018-07-13)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Wander,
+On Fri, Dec 10, 2021 at 10:55:49AM +0000, Mel Gorman wrote:
+> On Thu, Dec 09, 2021 at 02:45:35PM -0300, Marcelo Tosatti wrote:
+> > On Fri, Dec 03, 2021 at 02:13:06PM +0000, Mel Gorman wrote:
+> > > On Wed, Nov 03, 2021 at 06:05:12PM +0100, Nicolas Saenz Julienne wrote:
+> > > > Some setups, notably NOHZ_FULL CPUs, are too busy to handle the per-cpu
+> > > > drain work queued by __drain_all_pages(). So introduce new a mechanism
+> > > > to remotely drain the per-cpu lists. It is made possible by remotely
+> > > > locking 'struct per_cpu_pages' new per-cpu spinlocks. A benefit of this
+> > > > new scheme is that drain operations are now migration safe.
+> > > > 
+> > > > There was no observed performance degradation vs. the previous scheme.
+> > > > Both netperf and hackbench were run in parallel to triggering the
+> > > > __drain_all_pages(NULL, true) code path around ~100 times per second.
+> > > > The new scheme performs a bit better (~5%), although the important point
+> > > > here is there are no performance regressions vs. the previous mechanism.
+> > > > Per-cpu lists draining happens only in slow paths.
+> > > > 
+> > > 
+> > > netperf and hackbench are not great indicators of page allocator
+> > > performance as IIRC they are more slab-intensive than page allocator
+> > > intensive. I ran the series through a few benchmarks and can confirm
+> > > that there was negligible difference to netperf and hackbench.
+> > > 
+> > > However, on Page Fault Test (pft in mmtests), it is noticable. On a
+> > > 2-socket cascadelake machine I get
+> > > 
+> > > pft timings
+> > >                                  5.16.0-rc1             5.16.0-rc1
+> > >                                     vanilla    mm-remotedrain-v2r1
+> > > Amean     system-1         27.48 (   0.00%)       27.85 *  -1.35%*
+> > > Amean     system-4         28.65 (   0.00%)       30.84 *  -7.65%*
+> > > Amean     system-7         28.70 (   0.00%)       32.43 * -13.00%*
+> > > Amean     system-12        30.33 (   0.00%)       34.21 * -12.80%*
+> > > Amean     system-21        37.14 (   0.00%)       41.51 * -11.76%*
+> > > Amean     system-30        36.79 (   0.00%)       46.15 * -25.43%*
+> > > Amean     system-48        58.95 (   0.00%)       65.28 * -10.73%*
+> > > Amean     system-79       111.61 (   0.00%)      114.78 *  -2.84%*
+> > > Amean     system-80       113.59 (   0.00%)      116.73 *  -2.77%*
+> > > Amean     elapsed-1        32.83 (   0.00%)       33.12 *  -0.88%*
+> > > Amean     elapsed-4         8.60 (   0.00%)        9.17 *  -6.66%*
+> > > Amean     elapsed-7         4.97 (   0.00%)        5.53 * -11.30%*
+> > > Amean     elapsed-12        3.08 (   0.00%)        3.43 * -11.41%*
+> > > Amean     elapsed-21        2.19 (   0.00%)        2.41 * -10.06%*
+> > > Amean     elapsed-30        1.73 (   0.00%)        2.04 * -17.87%*
+> > > Amean     elapsed-48        1.73 (   0.00%)        2.03 * -17.77%*
+> > > Amean     elapsed-79        1.61 (   0.00%)        1.64 *  -1.90%*
+> > > Amean     elapsed-80        1.60 (   0.00%)        1.64 *  -2.50%*
+> > > 
+> > > It's not specific to cascade lake, I see varying size regressions on
+> > > different Intel and AMD chips, some better and worse than this result.
+> > > The smallest regression was on a single CPU skylake machine with a 2-6%
+> > > hit. Worst was Zen1 with a 3-107% hit.
+> > > 
+> > > I didn't profile it to establish why but in all cases the system CPU
+> > > usage was much higher. It *might* be because the spinlock in
+> > > per_cpu_pages crosses a new cache line and it might be cold although the
+> > > penalty seems a bit high for that to be the only factor.
+> > > 
+> > > Code-wise, the patches look fine but the apparent penalty for PFT is
+> > > too severe.
+> > 
+> > Mel,
+> > 
+> > Have you read Nicolas RCU patches?
+> > 
+> 
+> I agree with Vlastimil's review on overhead.
 
-Thank you for the patch! Yet something to improve:
+Not sure those points are any fundamental performance problem with RCU: 
+https://paulmck.livejournal.com/31058.html
 
-[auto build test ERROR on axboe-block/for-next]
-[also build test ERROR on linux/master linus/master v5.16-rc5]
-[If your patch is applied to the wrong git tree, kindly drop us a note.
-And when submitting patch, we suggest to use '--base' as documented in
-https://git-scm.com/docs/git-format-patch]
+> I think it would be more straight-forward to disable the pcp allocator for
+> NOHZ_FULL CPUs like what zone_pcp_disable except for individual CPUs with
+> care taken to not accidentally re-enable nohz CPus in zone_pcp_enable. The
+> downside is that there will be a performance penalty if an application
+> running on a NOHZ_FULL CPU is page allocator intensive for whatever
+> reason.  However, I guess this is unlikely because if there was a lot
+> of kernel activity for a NOHZ_FULL CPU, the vmstat shepherd would also
+> cause interference.
 
-url:    https://github.com/0day-ci/linux/commits/Wander-Lairson-Costa/Fix-warnings-in-blktrace/20211213-204207
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux-block.git for-next
-config: x86_64-rhel-8.3-kselftests (https://download.01.org/0day-ci/archive/20211214/202112141554.2175ujH7-lkp@intel.com/config)
-compiler: gcc-9 (Debian 9.3.0-22) 9.3.0
-reproduce (this is a W=1 build):
-        # https://github.com/0day-ci/linux/commit/e53f7f8c1ce0b19fef6164247fea08d17d5f771d
-        git remote add linux-review https://github.com/0day-ci/linux
-        git fetch --no-tags linux-review Wander-Lairson-Costa/Fix-warnings-in-blktrace/20211213-204207
-        git checkout e53f7f8c1ce0b19fef6164247fea08d17d5f771d
-        # save the config file to linux build tree
-        mkdir build_dir
-        make W=1 O=build_dir ARCH=x86_64 SHELL=/bin/bash
+Yes, it does, and its being fixed:
 
-If you fix the issue, kindly add following tag as appropriate
-Reported-by: kernel test robot <lkp@intel.com>
+https://lkml.org/lkml/2021/12/8/663
 
-All errors (new ones prefixed by >>):
+Honestly i am not sure whether the association between a nohz_full CPU
+and "should be mostly in userspace" is desired. The RCU solution
+would be more generic. As Nicolas mentioned, for the usecases in
+questions, either solution is OK.
 
-   block/blk-cgroup.c: In function 'blk_cgroup_bio_start':
->> block/blk-cgroup.c:1915:8: error: implicit declaration of function 'get_cpu_light'; did you mean 'em_cpu_get'? [-Werror=implicit-function-declaration]
-    1915 |  cpu = get_cpu_light();
-         |        ^~~~~~~~~~~~~
-         |        em_cpu_get
->> block/blk-cgroup.c:1932:2: error: implicit declaration of function 'put_cpu_light'; did you mean 'fput_light'? [-Werror=implicit-function-declaration]
-    1932 |  put_cpu_light();
-         |  ^~~~~~~~~~~~~
-         |  fput_light
-   cc1: some warnings being treated as errors
+Thomas, Frederic, Christoph, do you have any opinion on this ?
 
 
-vim +1915 block/blk-cgroup.c
-
-  1908	
-  1909	void blk_cgroup_bio_start(struct bio *bio)
-  1910	{
-  1911		int rwd = blk_cgroup_io_type(bio), cpu;
-  1912		struct blkg_iostat_set *bis;
-  1913		unsigned long flags;
-  1914	
-> 1915		cpu = get_cpu_light();
-  1916		bis = per_cpu_ptr(bio->bi_blkg->iostat_cpu, cpu);
-  1917		flags = u64_stats_update_begin_irqsave(&bis->sync);
-  1918	
-  1919		/*
-  1920		 * If the bio is flagged with BIO_CGROUP_ACCT it means this is a split
-  1921		 * bio and we would have already accounted for the size of the bio.
-  1922		 */
-  1923		if (!bio_flagged(bio, BIO_CGROUP_ACCT)) {
-  1924			bio_set_flag(bio, BIO_CGROUP_ACCT);
-  1925			bis->cur.bytes[rwd] += bio->bi_iter.bi_size;
-  1926		}
-  1927		bis->cur.ios[rwd]++;
-  1928	
-  1929		u64_stats_update_end_irqrestore(&bis->sync, flags);
-  1930		if (cgroup_subsys_on_dfl(io_cgrp_subsys))
-  1931			cgroup_rstat_updated(bio->bi_blkg->blkcg->css.cgroup, cpu);
-> 1932		put_cpu_light();
-  1933	}
-  1934	
-
----
-0-DAY CI Kernel Test Service, Intel Corporation
-https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org
