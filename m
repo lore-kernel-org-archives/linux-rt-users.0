@@ -2,103 +2,123 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F218FC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 12:26:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BBB67C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Dec 2021 17:28:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231768AbhLNM0U (ORCPT
+        id S236018AbhLNR2I (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Dec 2021 07:26:20 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:28714 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S231744AbhLNM0U (ORCPT
+        Tue, 14 Dec 2021 12:28:08 -0500
+Received: from ams.source.kernel.org ([145.40.68.75]:39692 "EHLO
+        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233789AbhLNR2H (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Dec 2021 07:26:20 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1639484779;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=fNWLhg1ntWwp5Ppu09h0Eh4UGAn0KphaoLRSOYk8nM8=;
-        b=UW3qsvsE+CkfW50igxM3rIOGipSPWaLBVR/RuttDTJ4XcSM67itm/HLbzgtbXhC3o3BNzf
-        S6NAyQVEUSxCmCMARZveTDCXGTjF1A0BJhl2I6HXbdhBTL/Pwqc7Bc/ZMEIbkGalz29tyV
-        sjdrbDSVkEaRAQnu4LOWF8KtDvyevPU=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-540-BMYZV-O3O2KuLxy71sdZRg-1; Tue, 14 Dec 2021 07:26:18 -0500
-X-MC-Unique: BMYZV-O3O2KuLxy71sdZRg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        Tue, 14 Dec 2021 12:28:07 -0500
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 63D3B192CC40;
-        Tue, 14 Dec 2021 12:26:16 +0000 (UTC)
-Received: from fuller.cnet (ovpn-112-3.gru2.redhat.com [10.97.112.3])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 38EEE5E26D;
-        Tue, 14 Dec 2021 12:26:01 +0000 (UTC)
-Received: by fuller.cnet (Postfix, from userid 1000)
-        id 506EA416D862; Tue, 14 Dec 2021 09:25:58 -0300 (-03)
-Date:   Tue, 14 Dec 2021 09:25:58 -0300
-From:   Marcelo Tosatti <mtosatti@redhat.com>
-To:     Christoph Lameter <cl@gentwo.org>
-Cc:     Mel Gorman <mgorman@suse.de>, Thomas Gleixner <tglx@linutronix.de>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Christoph Lameter <cl@gentwo.de>,
-        Nicolas Saenz Julienne <nsaenzju@redhat.com>,
-        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, peterz@infradead.org, nilal@redhat.com,
-        linux-rt-users@vger.kernel.org, vbabka@suse.cz, ppandit@redhat.com
-Subject: Re: [PATCH v2 3/3] mm/page_alloc: Remotely drain per-cpu lists
-Message-ID: <20211214122558.GB57271@fuller.cnet>
-References: <20211103170512.2745765-1-nsaenzju@redhat.com>
- <20211103170512.2745765-4-nsaenzju@redhat.com>
- <20211203141306.GG3301@suse.de>
- <20211209174535.GA70283@fuller.cnet>
- <20211210105549.GJ3301@suse.de>
- <20211214105823.GA53878@fuller.cnet>
- <alpine.DEB.2.22.394.2112141239550.371576@gentwo.de>
+        by ams.source.kernel.org (Postfix) with ESMTPS id 82E63B81BB9;
+        Tue, 14 Dec 2021 17:28:06 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5553BC34604;
+        Tue, 14 Dec 2021 17:28:05 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1639502885;
+        bh=iWhZUpZug7nx6pfIKr0DItc2+D2cy9/JIdFzbQtsEhI=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=rYv9JVZ9YX6Z0mBpVDMKm5mu/TzapluDlyLScme2UrTuIXRhZgJB+QO6JHt2eHkyY
+         3+Jqu7AOYi1QgWWEksD+65gGuD0VjAq1acIcvtuXXbqs+tH8BEhJowarrvQvSWSPCS
+         8kJvbqQpEEGu3nXWKmkGoYBqfMPTzpI/yorx8TTNlK8WkzYco3Cu1XxPzAxUGbcxsY
+         iO+svhxl9Uio5GhrkOjfUMJ1zxy9eQVcWcj0E5w9TM/2/0tMICRAFO/Yhd+T1cWrb7
+         gJ3bLGn7U40/JibUXtbMYNVionNiTEfCchB2L6TzUJibY8OBopc2EEs98X8fh7TMjS
+         l3SaS41aVL9JQ==
+Received: by mail-yb1-f180.google.com with SMTP id d10so48128844ybe.3;
+        Tue, 14 Dec 2021 09:28:05 -0800 (PST)
+X-Gm-Message-State: AOAM530j4MZ4wwlvdqpMAD0OIlKF4S3mrXfdpeDpk1u9t+t3reWEPLgJ
+        05JFBUiN2cHil5aUB3xrTVjkaylQzmD5FUbWWUY=
+X-Google-Smtp-Source: ABdhPJzaIWhZ2KXfV3WBSipGqRCpcplKqZGV0U2L1BO8aObP0RNronSXvgKpJlPOO1T9RuBg8PP4FeHUtdss6/yaXVI=
+X-Received: by 2002:a25:8284:: with SMTP id r4mr383980ybk.47.1639502884465;
+ Tue, 14 Dec 2021 09:28:04 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.22.394.2112141239550.371576@gentwo.de>
-User-Agent: Mutt/1.10.1 (2018-07-13)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+References: <20211214031553.16435-1-yajun.deng@linux.dev>
+In-Reply-To: <20211214031553.16435-1-yajun.deng@linux.dev>
+From:   Song Liu <song@kernel.org>
+Date:   Tue, 14 Dec 2021 09:27:53 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW5X+zewpKoJLjMMGOUeSiJ1EYqD+0i1bA8y7SFtJLkMeg@mail.gmail.com>
+Message-ID: <CAPhsuW5X+zewpKoJLjMMGOUeSiJ1EYqD+0i1bA8y7SFtJLkMeg@mail.gmail.com>
+Subject: Re: [PATCH] lib/raid6: fix abnormally high latency
+To:     Yajun Deng <yajun.deng@linux.dev>
+Cc:     stockhausen@collogia.de, open list <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        linux-raid <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Dec 14, 2021 at 12:42:58PM +0100, Christoph Lameter wrote:
-> On Tue, 14 Dec 2021, Marcelo Tosatti wrote:
-> 
-> > > downside is that there will be a performance penalty if an application
-> > > running on a NOHZ_FULL CPU is page allocator intensive for whatever
-> > > reason.  However, I guess this is unlikely because if there was a lot
-> > > of kernel activity for a NOHZ_FULL CPU, the vmstat shepherd would also
-> > > cause interference.
-> >
-> > Yes, it does, and its being fixed:
-> >
-> > https://lkml.org/lkml/2021/12/8/663
-> >
-> > Honestly i am not sure whether the association between a nohz_full CPU
-> > and "should be mostly in userspace" is desired. The RCU solution
-> > would be more generic. As Nicolas mentioned, for the usecases in
-> > questions, either solution is OK.
-> >
-> > Thomas, Frederic, Christoph, do you have any opinion on this ?
-> 
-> Applications running would ideally have no performance penalty and there
-> is no  issue with kernel activity unless the application is in its special
-> low latency loop. NOHZ is currently only activated after spinning in that
-> loop for 2 seconds or so. Would be best to be able to trigger that
-> manually somehow.
+On Mon, Dec 13, 2021 at 7:17 PM Yajun Deng <yajun.deng@linux.dev> wrote:
+>
+> We found an abnormally high latency when executing modprobe raid6_pq, the
+> latency is greater than 1.2s when CONFIG_PREEMPT_VOLUNTARY=y, greater than
+> 67ms when CONFIG_PREEMPT=y, and greater than 16ms when CONFIG_PREEMPT_RT=y.
+> This is caused by disable the preemption, this time is too long and
+> unreasonable. We just need to disable migration. so used migrate_disable()/
+> migrate_enable() instead of preempt_disable()/preempt_enable(). This is
+> beneficial for CONFIG_PREEMPT=y or CONFIG_PREEMPT_RT=y, but no effect for
+> CONFIG_PREEMPT_VOLUNTARY=y.
+>
+> Fixes: fe5cbc6e06c7 ("md/raid6 algorithms: delta syndrome functions")
+> Signed-off-by: Yajun Deng <yajun.deng@linux.dev>
 
-Can add a task isolation feature to do that.
+We measure the speed of different RAID algorithms.If we don't disable
+preempt, the result may be inaccurate, right? IIUC, we only disable preempt
+for 16 jiffies. Why do we see 1.2 second delay?
 
-> And I would prefer to be able to run the whole system as
-> NOHZ and have the ability to selectively enable the quiet mode if a
-> process requires it for its processing.
+Thanks,
+Song
 
-IIRC Frederic has been working on that.
-
-Thanks.
-
+> ---
+>  lib/raid6/algos.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
+>
+> diff --git a/lib/raid6/algos.c b/lib/raid6/algos.c
+> index 6d5e5000fdd7..21611d05c34c 100644
+> --- a/lib/raid6/algos.c
+> +++ b/lib/raid6/algos.c
+> @@ -162,7 +162,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
+>
+>                         perf = 0;
+>
+> -                       preempt_disable();
+> +                       migrate_disable();
+>                         j0 = jiffies;
+>                         while ((j1 = jiffies) == j0)
+>                                 cpu_relax();
+> @@ -171,7 +171,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
+>                                 (*algo)->gen_syndrome(disks, PAGE_SIZE, *dptrs);
+>                                 perf++;
+>                         }
+> -                       preempt_enable();
+> +                       migrate_enable();
+>
+>                         if (perf > bestgenperf) {
+>                                 bestgenperf = perf;
+> @@ -186,7 +186,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
+>
+>                         perf = 0;
+>
+> -                       preempt_disable();
+> +                       migrate_disable();
+>                         j0 = jiffies;
+>                         while ((j1 = jiffies) == j0)
+>                                 cpu_relax();
+> @@ -196,7 +196,7 @@ static inline const struct raid6_calls *raid6_choose_gen(
+>                                                       PAGE_SIZE, *dptrs);
+>                                 perf++;
+>                         }
+> -                       preempt_enable();
+> +                       migrate_enable();
+>
+>                         if (best == *algo)
+>                                 bestxorperf = perf;
+> --
+> 2.32.0
+>
