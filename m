@@ -2,93 +2,83 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20ABEC433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Dec 2021 19:34:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CBC2EC433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Dec 2021 19:54:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231807AbhLOTej (ORCPT
+        id S233652AbhLOTyy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 15 Dec 2021 14:34:39 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37886 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231730AbhLOTei (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Dec 2021 14:34:38 -0500
-Received: from mail-il1-x12d.google.com (mail-il1-x12d.google.com [IPv6:2607:f8b0:4864:20::12d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B4854C06173E
-        for <linux-rt-users@vger.kernel.org>; Wed, 15 Dec 2021 11:34:38 -0800 (PST)
-Received: by mail-il1-x12d.google.com with SMTP id m12so7274847ild.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 15 Dec 2021 11:34:38 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20210112.gappssmtp.com; s=20210112;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=YYuJKqVn7Dufbjabi8CjodjpBv4ACD8m6+dlUH/6df8=;
-        b=IgEyIy/9MvGru6oGIjcd47E6pH+tmCMPgWAu5g5fJRDmGYzHMaSl/xq1X68lOzMJEb
-         Ogmz9ta4k4LQuh+tlxxy1S/QiPpgo/7uf1Seo/KHZXT6lAO+EnxwLHzeqMWQeU1L/rVb
-         p7W+lls6HNy6IiRWI+nEEwsaSaFkgvkQ2u1seErcsWL2FNQK9glG/LVupOaRkcu/3nqd
-         THCNHiGUaf6ozXEha6yYDgfsgVvJMd1DkxfD1kvlfmPkTtQsDDIJmU2DkYdLLF6b01nv
-         51wSJdDY2JShyRmeLVmCkYHn3w50x7ip672QQlxsr4fe0WeeK/iu+KKRIDFiTZBXwmPa
-         fCBA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=YYuJKqVn7Dufbjabi8CjodjpBv4ACD8m6+dlUH/6df8=;
-        b=2QRQYGWdzes37tZvoYtTDuZYNbF0gTKhF1glqM7bYmC+b2rRBGPH2NP5Cos492FRsF
-         q0ZH3st0zlO9n1Q6pY7eRT3p6TVF0052QYQAu9UdFkb4qIxxiQrUqEQiztwHOaZ/EHTS
-         41dugLLDy8JMDhYpoaoJPHdejgx3fNT51377zHMpj5/JPchLO4mf3/ofUkymkFMMTSx5
-         sUmrNTgKD+INiL5A9bd9tlfjda3qZtULR2CvB5h9H2bz9eHHDzazuK611ow53fJLXYlJ
-         Dtn8Cows8FrBhJQVosOHm9/OMIeSLvPeJsP05zKD3eFFb5E23gO1W2aSikOAi42RLxi+
-         y8BQ==
-X-Gm-Message-State: AOAM531H243FJB2jzqweVg2CQZehQG3Y/lT4KbqlKTO+inkVACdCKw7c
-        /XirjmVlEgoJwlh6nYFhNiK6XQ9CaIrFiA==
-X-Google-Smtp-Source: ABdhPJyCwB+0QpTfDuFl0wmjchcOgWrh4jG6Rn07fk+46K379Kte18I++eGxTuUOw/EgEfDTAhCcmA==
-X-Received: by 2002:a05:6e02:b4a:: with SMTP id f10mr7275230ilu.281.1639596877741;
-        Wed, 15 Dec 2021 11:34:37 -0800 (PST)
-Received: from [192.168.1.30] ([207.135.234.126])
-        by smtp.gmail.com with ESMTPSA id q132sm1462857iod.18.2021.12.15.11.34.36
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 15 Dec 2021 11:34:37 -0800 (PST)
-Subject: Re: [PATCH v2 2/2] blktrace: switch trace spinlock to a raw spinlock
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Wander Lairson Costa <wander@redhat.com>,
-        linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users@vger.kernel.org
-References: <20211213123737.9147-1-wander@redhat.com>
- <20211213123737.9147-3-wander@redhat.com> <YbohEio+66fyFo6D@linutronix.de>
- <20211215123116.622da7ef@gandalf.local.home>
-From:   Jens Axboe <axboe@kernel.dk>
-Message-ID: <2f3300ba-0879-ad7d-8d44-bb8d8b17d7e2@kernel.dk>
-Date:   Wed, 15 Dec 2021 12:34:36 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
+        Wed, 15 Dec 2021 14:54:54 -0500
+Received: from mout.gmx.net ([212.227.15.19]:50047 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S229648AbhLOTyw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 15 Dec 2021 14:54:52 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1639598081;
+        bh=swQPX1FjMZ2t4/rIyJDymJRL7SG6qrTNIpAKma6KJWw=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=ernfPgnb8R9vCILpUHbutd15r+ImqKtf2V5PGLZb7kyfoku2rmdkYhDVv+LDy7muU
+         ZiHRDrEAf7OSHCuYNTEnGMHCgv1axLniGyJ+uk9mUDx9ooqI3NbkMoM+koRHhJhNTT
+         WM06748LcjGW15EXdYpUfdH7VnFNVBQzGNzYLPpk=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.191.216.62]) by mail.gmx.net (mrgmx004
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1M3DO3-1mwl121FzJ-003he7; Wed, 15
+ Dec 2021 20:54:41 +0100
+Message-ID: <254513dc01188ca3ff161fcb456bc96a610821a1.camel@gmx.de>
+Subject: Re: [rcf/patch] netpoll: Make it RT friendly
+From:   Mike Galbraith <efault@gmx.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        RT <linux-rt-users@vger.kernel.org>
+Date:   Wed, 15 Dec 2021 20:54:40 +0100
+In-Reply-To: <YboSe4NfbCeoqF1j@linutronix.de>
+References: <20211118163405.adczki7ibk22bw7e@linutronix.de>
+         <773fd8246a1ec4ef79142d9e31b8ba4163a0d496.camel@gmx.de>
+         <YboSe4NfbCeoqF1j@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.2 
 MIME-Version: 1.0
-In-Reply-To: <20211215123116.622da7ef@gandalf.local.home>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:n8ykRYWPdacXtHF+MxgjAnfwYCp4ox5DY/mZ2UhsDHtj6Vl5qnl
+ hU1f3TXZttQEXApDw+wPxyIWPs+NOChKqu6Jly+QtZXWyH/fqqxeveFVTnQsXHDDzf+CrzS
+ OHk5zTyhd7uWDXiDF21lUGSz/K4rFE2dHmF1uj6w/7FDQtEWtUOK7pbgNhZD8Gzh8w+gtB3
+ RvjUIYNVnDkAk9FLfzIgQ==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:61j7QCcUWyo=:XtlkPRr7VU6sa6DhisEFEP
+ nC+W/i6MMJxjaBVLf0xY/SDKxpieql+1k6kjEokE7fuOghXwkoJPHCVhR5DcO32RN7DKjpF90
+ b1WaXjI3AhStgXRzqiiuvyc7HOcLzJpn0iY/ZKtfMnfuwvhdQ5vY2HwwTmmb91mz+wUZ7tAJ8
+ M2fXzvNIhlV+Yk5MOrVPK+0+wmObmXDXohsL/ddWufSmZ4st/IRMS7aqErMcrVOWhxhMt187D
+ BwUqoBJOyZNZXXfJjaKEpQw+osAkPkmdHTHIXlMO4DZA2eDGvHerr6EKJyE8sSi1IBN/oMEgc
+ EwULjlaalBroPC6RsCNJkldaOVOvrkB5d42rOB0y9/Tq4lnVbxOQyzvVCYaX2qWJrfch/+JDa
+ lC8uZ0g4AY5z7CeD26H4/64rJbMGhEl7Mzb2JWUtoJfaURqPTzu498VCajvVUWd1hlygy9TqV
+ NgRoNcQqHHjnFETGhx1n6PXZvqLTLxCeoZM46U/je2ixKyzV1BszhtldmH/v2nUZnBLQ36ktA
+ P/bAJ4EDpDpS0yNiWG1XBDlUnnjj9ejkYi3h5mT+4SZ0tS5bhQH9vRCCFIVvzwDlgdOy+his6
+ CfBGwaTexRbU05oU78qYqAsysRT+NSc/PrSKOwufE+Ru4Tn3ahbmbx2bbBsVlnHDFwDpRKWts
+ Hr8Z0jPQTnxsP19V3pGf54ZQxn+o8+JEI+fbdV7Ftxkglh2uWfG3cNO8KXvzxWcfoSNQ7E5Eb
+ kawXIpVihBoLADOJHzPxgakQtBjetbb2HeXugYAdr/KWd8+hj14USKvN8f/+qn94fQZgbnjcI
+ 9USXNIzW8dNEhegiwyc0Z55uniCSelyuko92gvPfzJ9GCDDlqrDu6dV09rO5KkUneYboyguP9
+ +FWK0RarIkYliZk4B3UVW0z90H1KttHc37+SWM0/7bFS6xfip16tZNMSkhA17HaIrBy/qVMhl
+ EgBs3OdAv2eVsD+buFHiMXmmMHpZ/tnoCsFUGoMHRPC0CG2u1/SF7i9N2Spk6+2W9PjC7ZUKM
+ 2UjryOmmc5wj2qPStZbdc1FCEr5j8qX5FxpCEpun0tJ1AWX235eeLFkVoBHkYHNIy7wAxQr5h
+ YWp2sm41Hs2KIE=
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 12/15/21 10:31 AM, Steven Rostedt wrote:
-> On Wed, 15 Dec 2021 18:08:34 +0100
-> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> 
->> On 2021-12-13 09:37:37 [-0300], Wander Lairson Costa wrote:
->> …
->>> To avoid this bug, we switch the trace lock to a raw spinlock.  
->>
->> Steven, do you think this is a good idea?
->>
-> 
-> blktrace is actually maintained by Jens.
+On Wed, 2021-12-15 at 17:06 +0100, Sebastian Andrzej Siewior wrote:
+>
+> What is the context for netpoll_send_skb()? Why do we need to disable BH
+> + RCU on RT?
 
-Looks like there are two patches, and none were CC'ed linux-block.
-Please resend.
+Because rcu_dereference_bh() says it better be, but..
 
--- 
-Jens Axboe
+> If interrupts are never disabled, doesn't this break the assumption made
+> in netpoll_tx_running()?
+>
+> queue_process() is also busted.
 
+..that makes it kinda moot, and wasn't unexpected. It works, or at
+least netconsole does, and lockdep was fine with it, but I figured it
+unlikely to fly.  In fact, I had already taken the silence as a "Surely
+you jest" or such.
+
+	-Mike
