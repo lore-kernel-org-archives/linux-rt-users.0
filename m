@@ -2,83 +2,122 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CBC2EC433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Dec 2021 19:54:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0B4CC433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Dec 2021 02:15:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233652AbhLOTyy (ORCPT
+        id S230054AbhLPCPM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 15 Dec 2021 14:54:54 -0500
-Received: from mout.gmx.net ([212.227.15.19]:50047 "EHLO mout.gmx.net"
+        Wed, 15 Dec 2021 21:15:12 -0500
+Received: from out0.migadu.com ([94.23.1.103]:57677 "EHLO out0.migadu.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229648AbhLOTyw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Dec 2021 14:54:52 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1639598081;
-        bh=swQPX1FjMZ2t4/rIyJDymJRL7SG6qrTNIpAKma6KJWw=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=ernfPgnb8R9vCILpUHbutd15r+ImqKtf2V5PGLZb7kyfoku2rmdkYhDVv+LDy7muU
-         ZiHRDrEAf7OSHCuYNTEnGMHCgv1axLniGyJ+uk9mUDx9ooqI3NbkMoM+koRHhJhNTT
-         WM06748LcjGW15EXdYpUfdH7VnFNVBQzGNzYLPpk=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.216.62]) by mail.gmx.net (mrgmx004
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1M3DO3-1mwl121FzJ-003he7; Wed, 15
- Dec 2021 20:54:41 +0100
-Message-ID: <254513dc01188ca3ff161fcb456bc96a610821a1.camel@gmx.de>
-Subject: Re: [rcf/patch] netpoll: Make it RT friendly
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        RT <linux-rt-users@vger.kernel.org>
-Date:   Wed, 15 Dec 2021 20:54:40 +0100
-In-Reply-To: <YboSe4NfbCeoqF1j@linutronix.de>
-References: <20211118163405.adczki7ibk22bw7e@linutronix.de>
-         <773fd8246a1ec4ef79142d9e31b8ba4163a0d496.camel@gmx.de>
-         <YboSe4NfbCeoqF1j@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.2 
+        id S229955AbhLPCPM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 15 Dec 2021 21:15:12 -0500
 MIME-Version: 1.0
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+        t=1639620910;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=k4phbJHuL8+tP9BmJgUGj0AvkreTd5WR5XGVGz/EErs=;
+        b=iEzd/CuZnr8rHBKTFUjSyuR/rpZbVLRe1uhQ+UFjq9Bx6exxgkyobtWJKXzEMpCuEs/Eng
+        9REM202CHRa91HhvCPgOCeGOumxa8pvHsNMvuhilguRaOkRRmM8C5me7NJfbEkM3Flsjwf
+        TPn9r7+elS4iwuwcdKNni4SFJilekvg=
+Date:   Thu, 16 Dec 2021 02:15:09 +0000
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:n8ykRYWPdacXtHF+MxgjAnfwYCp4ox5DY/mZ2UhsDHtj6Vl5qnl
- hU1f3TXZttQEXApDw+wPxyIWPs+NOChKqu6Jly+QtZXWyH/fqqxeveFVTnQsXHDDzf+CrzS
- OHk5zTyhd7uWDXiDF21lUGSz/K4rFE2dHmF1uj6w/7FDQtEWtUOK7pbgNhZD8Gzh8w+gtB3
- RvjUIYNVnDkAk9FLfzIgQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:61j7QCcUWyo=:XtlkPRr7VU6sa6DhisEFEP
- nC+W/i6MMJxjaBVLf0xY/SDKxpieql+1k6kjEokE7fuOghXwkoJPHCVhR5DcO32RN7DKjpF90
- b1WaXjI3AhStgXRzqiiuvyc7HOcLzJpn0iY/ZKtfMnfuwvhdQ5vY2HwwTmmb91mz+wUZ7tAJ8
- M2fXzvNIhlV+Yk5MOrVPK+0+wmObmXDXohsL/ddWufSmZ4st/IRMS7aqErMcrVOWhxhMt187D
- BwUqoBJOyZNZXXfJjaKEpQw+osAkPkmdHTHIXlMO4DZA2eDGvHerr6EKJyE8sSi1IBN/oMEgc
- EwULjlaalBroPC6RsCNJkldaOVOvrkB5d42rOB0y9/Tq4lnVbxOQyzvVCYaX2qWJrfch/+JDa
- lC8uZ0g4AY5z7CeD26H4/64rJbMGhEl7Mzb2JWUtoJfaURqPTzu498VCajvVUWd1hlygy9TqV
- NgRoNcQqHHjnFETGhx1n6PXZvqLTLxCeoZM46U/je2ixKyzV1BszhtldmH/v2nUZnBLQ36ktA
- P/bAJ4EDpDpS0yNiWG1XBDlUnnjj9ejkYi3h5mT+4SZ0tS5bhQH9vRCCFIVvzwDlgdOy+his6
- CfBGwaTexRbU05oU78qYqAsysRT+NSc/PrSKOwufE+Ru4Tn3ahbmbx2bbBsVlnHDFwDpRKWts
- Hr8Z0jPQTnxsP19V3pGf54ZQxn+o8+JEI+fbdV7Ftxkglh2uWfG3cNO8KXvzxWcfoSNQ7E5Eb
- kawXIpVihBoLADOJHzPxgakQtBjetbb2HeXugYAdr/KWd8+hj14USKvN8f/+qn94fQZgbnjcI
- 9USXNIzW8dNEhegiwyc0Z55uniCSelyuko92gvPfzJ9GCDDlqrDu6dV09rO5KkUneYboyguP9
- +FWK0RarIkYliZk4B3UVW0z90H1KttHc37+SWM0/7bFS6xfip16tZNMSkhA17HaIrBy/qVMhl
- EgBs3OdAv2eVsD+buFHiMXmmMHpZ/tnoCsFUGoMHRPC0CG2u1/SF7i9N2Spk6+2W9PjC7ZUKM
- 2UjryOmmc5wj2qPStZbdc1FCEr5j8qX5FxpCEpun0tJ1AWX235eeLFkVoBHkYHNIy7wAxQr5h
- YWp2sm41Hs2KIE=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From:   yajun.deng@linux.dev
+Message-ID: <3ed867e06f7f9bb9d89beaafc50905c8@linux.dev>
+Subject: Re: [PATCH] lib/raid6: fix abnormally high latency
+To:     "Song Liu" <song@kernel.org>
+Cc:     stockhausen@collogia.de,
+        "open list" <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        "linux-raid" <linux-raid@vger.kernel.org>, masahiroy@kernel.org,
+        williams@redhat.com
+In-Reply-To: <CAPhsuW6T_nqqfOtj_dVn9KV+iUbki2X3WU3pxfo25Ewj3i5ZjA@mail.gmail.com>
+References: <CAPhsuW6T_nqqfOtj_dVn9KV+iUbki2X3WU3pxfo25Ewj3i5ZjA@mail.gmail.com>
+ <20211214031553.16435-1-yajun.deng@linux.dev>
+ <CAPhsuW5X+zewpKoJLjMMGOUeSiJ1EYqD+0i1bA8y7SFtJLkMeg@mail.gmail.com>
+ <0d07e13a5454dfb03b22e5223d101a1b@linux.dev>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: linux.dev
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 2021-12-15 at 17:06 +0100, Sebastian Andrzej Siewior wrote:
->
-> What is the context for netpoll_send_skb()? Why do we need to disable BH
-> + RCU on RT?
-
-Because rcu_dereference_bh() says it better be, but..
-
-> If interrupts are never disabled, doesn't this break the assumption made
-> in netpoll_tx_running()?
->
-> queue_process() is also busted.
-
-..that makes it kinda moot, and wasn't unexpected. It works, or at
-least netconsole does, and lockdep was fine with it, but I figured it
-unlikely to fly.  In fact, I had already taken the silence as a "Surely
-you jest" or such.
-
-	-Mike
+December 16, 2021 12:52 AM, "Song Liu" <song@kernel.org> wrote:=0A=0A> On=
+ Tue, Dec 14, 2021 at 6:14 PM <yajun.deng@linux.dev> wrote:=0A> =0A>> Dec=
+ember 15, 2021 1:27 AM, "Song Liu" <song@kernel.org> wrote:=0A>> =0A>> On=
+ Mon, Dec 13, 2021 at 7:17 PM Yajun Deng <yajun.deng@linux.dev> wrote:=0A=
+>> =0A>> We found an abnormally high latency when executing modprobe raid=
+6_pq, the=0A>> latency is greater than 1.2s when CONFIG_PREEMPT_VOLUNTARY=
+=3Dy, greater than=0A>> 67ms when CONFIG_PREEMPT=3Dy, and greater than 16=
+ms when CONFIG_PREEMPT_RT=3Dy.=0A>> This is caused by disable the preempt=
+ion, this time is too long and=0A>> unreasonable. We just need to disable=
+ migration. so used migrate_disable()/=0A>> migrate_enable() instead of p=
+reempt_disable()/preempt_enable(). This is=0A>> beneficial for CONFIG_PRE=
+EMPT=3Dy or CONFIG_PREEMPT_RT=3Dy, but no effect for=0A>> CONFIG_PREEMPT_=
+VOLUNTARY=3Dy.=0A>> =0A>> Fixes: fe5cbc6e06c7 ("md/raid6 algorithms: delt=
+a syndrome functions")=0A>> Signed-off-by: Yajun Deng <yajun.deng@linux.d=
+ev>=0A>> =0A>> We measure the speed of different RAID algorithms.If we do=
+n't disable=0A>> preempt, the result may be inaccurate, right? IIUC, we o=
+nly disable preempt=0A>> for 16 jiffies. Why do we see 1.2 second delay?=
+=0A>> =0A>> Here are the command of my test=EF=BC=9A=0A>> Execute "sudo c=
+yclictest -S -p 95 -d 0 -i 1000 -D 24h -m" in one terminal and "sudo modp=
+robe=0A>> raid6_pq" in the other terminal.=0A>> =0A>> Here are the result=
+s of my test=EF=BC=9A=0A>> CONFIG_PREEMPT_VOLUNTARY=3Dy=EF=BC=8CCONFIG_HZ=
+_250=3Dy=0A>> T: 0 ( 3092) P:95 I:1000 C: 8514 Min: 1 Act: 2 Avg: 1 Max: =
+6=0A>> T: 1 ( 3093) P:95 I:1000 C: 8511 Min: 1 Act: 2 Avg: 1 Max: 14=0A> =
+=0A> I am not very familiar with the RT work, so please forgive me for so=
+me=0A> rookie questions.=0A> =0A> From the result, I think the CONFIG_PRE=
+EMPT_VOLUNTARY=3Dy and the=0A> CONFIG_PREEMPT=3Dy cases failed to preempt=
+ during the preempt enabled period in=0A> raid6_choose_gen(). Is this exp=
+ected?=0A> =0A=0ANo, This is due to disable preemption causing ksoftirqd =
+fail to schedule, we can use bcc tools see that.=0A=0A> OTOH, the 16ms la=
+tency with CONFIG_PREEMPT_RT=3Dy is more or less expected.=0A> Is this ac=
+ceptable? If not, is 1ms latency acceptable?=0A> =0A=0AHere are the test =
+results after adding patch=EF=BC=9A=0ACONFIG_PREEMPT=3Dy  or CONFIG_PREEM=
+PT_RT=3Dy=0AT: 0 ( 3167) P:95 I:1000 C:  13958 Min:      1 Act:    2 Avg:=
+    1 Max:       5=0AT: 1 ( 3168) P:95 I:1000 C:  13956 Min:      1 Act: =
+   2 Avg:    1 Max:       7=0AT: 2 ( 3169) P:95 I:1000 C:  13946 Min:    =
+  1 Act:    2 Avg:    1 Max:      12=0AT: 3 ( 3170) P:95 I:1000 C:  13951=
+ Min:      1 Act:    2 Avg:    1 Max:       5=0AT: 4 ( 3171) P:95 I:1000 =
+C:  13949 Min:      1 Act:    2 Avg:    1 Max:       3=0AT: 5 ( 3172) P:9=
+5 I:1000 C:  13947 Min:      1 Act:    2 Avg:    1 Max:      16=0AT: 6 ( =
+3173) P:95 I:1000 C:  13945 Min:      1 Act:    2 Avg:    2 Max:       7=
+=0AT: 7 ( 3174) P:95 I:1000 C:  13942 Min:      1 Act:    2 Avg:    1 Max=
+:       3=0AT: 8 ( 3175) P:95 I:1000 C:  13940 Min:      1 Act:    2 Avg:=
+    1 Max:       3=0AT: 9 ( 3176) P:95 I:1000 C:  13938 Min:      1 Act: =
+   1 Avg:    1 Max:       3=0AT:10 ( 3177) P:95 I:1000 C:  13936 Min:    =
+  1 Act:    2 Avg:    1 Max:       6=0AT:11 ( 3178) P:95 I:1000 C:  13933=
+ Min:      1 Act:    2 Avg:    1 Max:       3=0AT:12 ( 3179) P:95 I:1000 =
+C:  13931 Min:      1 Act:    2 Avg:    1 Max:       4=0AT:13 ( 3180) P:9=
+5 I:1000 C:  13929 Min:      1 Act:    2 Avg:    1 Max:       7=0AT:14 ( =
+3181) P:95 I:1000 C:  13927 Min:      1 Act:    2 Avg:    1 Max:       6=
+=0AT:15 ( 3182) P:95 I:1000 C:  13925 Min:      1 Act:    2 Avg:    1 Max=
+:       4=0AT:16 ( 3183) P:95 I:1000 C:  13923 Min:      1 Act:    2 Avg:=
+    1 Max:       5=0AT:17 ( 3184) P:95 I:1000 C:  13921 Min:      1 Act: =
+   2 Avg:    1 Max:       5=0AT:18 ( 3185) P:95 I:1000 C:  13919 Min:    =
+  1 Act:    2 Avg:    1 Max:       4=0AT:19 ( 3186) P:95 I:1000 C:  13916=
+ Min:      1 Act:    2 Avg:    1 Max:       4=0AT:20 ( 3187) P:95 I:1000 =
+C:  13914 Min:      1 Act:    2 Avg:    1 Max:       4=0AT:21 ( 3188) P:9=
+5 I:1000 C:  13912 Min:      1 Act:    2 Avg:    1 Max:      10=0AT:22 ( =
+3189) P:95 I:1000 C:  13910 Min:      1 Act:    2 Avg:    1 Max:       5=
+=0AT:23 ( 3190) P:95 I:1000 C:  13908 Min:      1 Act:    2 Avg:    1 Max=
+:       5=0AT:24 ( 3191) P:95 I:1000 C:  13906 Min:      1 Act:    2 Avg:=
+    1 Max:      18=0AT:25 ( 3192) P:95 I:1000 C:  13904 Min:      1 Act: =
+   2 Avg:    1 Max:       7=0AT:26 ( 3193) P:95 I:1000 C:  13902 Min:    =
+  1 Act:    2 Avg:    1 Max:       5=0AT:27 ( 3194) P:95 I:1000 C:  13900=
+ Min:      1 Act:    1 Avg:    1 Max:      11=0AT:28 ( 3195) P:95 I:1000 =
+C:  13898 Min:      1 Act:    2 Avg:    1 Max:       3=0AT:29 ( 3196) P:9=
+5 I:1000 C:  13896 Min:      1 Act:    2 Avg:    1 Max:       5=0AT:30 ( =
+3197) P:95 I:1000 C:  13894 Min:      1 Act:    2 Avg:    1 Max:       4=
+=0AT:31 ( 3198) P:95 I:1000 C:  13892 Min:      1 Act:    2 Avg:    1 Max=
+:       3=0A=0Awe can see the latency will not greater than 100us=EF=BC=
+=8Cso 1ms latency is also too long for CONFIG_PREEMPT=3Dy  or CONFIG_PREE=
+MPT_RT=3Dy.=0Ause migrate_disable()/migrate_enable() instead of preempt_d=
+isable()/preempt_enable() will not affect the speed of different RAID alg=
+orithms and the latency can be reduced to a reasonable range.=0A=0A=0A> T=
+hanks,=0A> Song=0A> =0A> [...]
