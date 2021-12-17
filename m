@@ -2,85 +2,68 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38084C4332F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Dec 2021 13:42:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23E13C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Dec 2021 14:00:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236709AbhLQNmV (ORCPT
+        id S236768AbhLQN77 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Dec 2021 08:42:21 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:33360 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231375AbhLQNmU (ORCPT
+        Fri, 17 Dec 2021 08:59:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35588 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231337AbhLQN76 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Dec 2021 08:42:20 -0500
-Date:   Fri, 17 Dec 2021 14:42:17 +0100
+        Fri, 17 Dec 2021 08:59:58 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74DACC061574;
+        Fri, 17 Dec 2021 05:59:58 -0800 (PST)
+Date:   Fri, 17 Dec 2021 14:59:54 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1639748539;
+        s=2020; t=1639749596;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=y9t3us+BAk9470BAEhbmBUCeSGzoYQ7LS0Tsk6tNMXY=;
-        b=c+B1b8JaAQoEvO43R2R6bRsFgYeE3YSp4vWxLWZU3xOfdlAnmEwte/hjSx468Vzm0HkCDz
-        q2i/IKbJIBh4zDPJlBheB0HkXsMzAjUtPN1rJQ4xTkZbH5bQjpiDVv7iRPUIUm3emapHxT
-        2r6+FqO40r2sIjedtNWxyreM0Q9O93AsrpUWq8DDZ2rtJfQSDQ/tWNXtMeXgziBSzDUQ10
-        YqpplUEJpihQRUYa93/LM5Bcobz/hdcywuTg85FDtEP+eqlRGnI4CopwSm1LgMVxvrS2WB
-        xsxtUn3WcghLnJXWh6qe47sWtvMcSZGUPKzGCeWfiA0AG5D3vAQAr1JRmY+yPA==
+        bh=Ulut3Oae1WTXpyC3Q+QPKjLe0yqmOTzHpdVAA+9Qn1o=;
+        b=ueiYqYjhDGV+ltjGMHHYoT+SEb4QBrdwnRktcLIN8aDOtmcJsXHaNV6IuddrtiXlGEnYrP
+        Z8dJ3u0X8nb7r9XS2zgNbmSJ17pxm3vQJFTCEz5+jo9uNooYj5ngU5YN7zNLRNpFBov4IK
+        zRqVsVEc7ZpteiLhTFFnWJXIqbMO+jJ8+TmOuPncIR5WzV/e0x8YCw19xlpjQwS5SLJynF
+        ALJK9I2JUy9t3SiuyMUFbJ3TvVNT8J99oDsKvo8EnKb141R6bd0M+xpDqZQofTi+GuO6w4
+        MN4MoeBVy4uhdEt9Voe+LxRoqrNI8+IlaW3DIq/6RC2IRqJR3RpwZGKClXHOYg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1639748539;
+        s=2020e; t=1639749596;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=y9t3us+BAk9470BAEhbmBUCeSGzoYQ7LS0Tsk6tNMXY=;
-        b=1HvD9OCjzb8K+rydxGcStwI2YQMC5j6haYHY0xcYDRhOJ1YQEyCNoR2KH/4TvnUcxcWBW4
-        xLUEs8YOC5oMUUBA==
+        bh=Ulut3Oae1WTXpyC3Q+QPKjLe0yqmOTzHpdVAA+9Qn1o=;
+        b=4Kjdk5QzdvsXROFI8Meekp9c9MKML/zjiDKb7nsOf97En4VYhuWUelPN5eDomujHd3j0rQ
+        DjGUv4Lli7cUypDg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Yajun Deng <yajun.deng@linux.dev>
-Cc:     song@kernel.org, masahiroy@kernel.org, williams@redhat.com,
-        pmenzel@molgen.mpg.de, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, linux-raid@vger.kernel.org,
-        stable@vger.kernel.org, tglx@linutronix.de
-Subject: Re: [PATCH v3] lib/raid6: Reduce high latency by using migrate
- instead of preempt
-Message-ID: <YbyTuRWkB0gYbn7x@linutronix.de>
-References: <20211217021610.12801-1-yajun.deng@linux.dev>
+To:     Mike Galbraith <efault@gmx.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        RT <linux-rt-users@vger.kernel.org>
+Subject: Re: [rcf/patch] netpoll: Make it RT friendly
+Message-ID: <YbyX2gAsLFrq+mMG@linutronix.de>
+References: <20211118163405.adczki7ibk22bw7e@linutronix.de>
+ <773fd8246a1ec4ef79142d9e31b8ba4163a0d496.camel@gmx.de>
+ <YboSe4NfbCeoqF1j@linutronix.de>
+ <254513dc01188ca3ff161fcb456bc96a610821a1.camel@gmx.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20211217021610.12801-1-yajun.deng@linux.dev>
+In-Reply-To: <254513dc01188ca3ff161fcb456bc96a610821a1.camel@gmx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2021-12-17 10:16:10 [+0800], Yajun Deng wrote:
-> We found an abnormally high latency when executing modprobe raid6_pq, the
-> latency is greater than 1.2s when CONFIG_PREEMPT_VOLUNTARY=y, greater than
-> 67ms when CONFIG_PREEMPT=y, and greater than 16ms when CONFIG_PREEMPT_RT=y.
-> 
-> How to reproduce:
->  - Install cyclictest
->      sudo apt install rt-tests
->  - Run cyclictest example in one terminal
->      sudo cyclictest -S -p 95 -d 0 -i 1000 -D 24h -m
->  - Modprobe raid6_pq in another terminal
->      sudo modprobe raid6_pq
-> 
-> This is caused by ksoftirqd fail to scheduled due to disable preemption,
-> this time is too long and unreasonable.
-> 
-> Reduce high latency by using migrate_disabl()/emigrate_enable() instead of
-> preempt_disable()/preempt_enable(), the latency won't greater than 100us.
-> 
-> This patch beneficial for CONFIG_PREEMPT=y or CONFIG_PREEMPT_RT=y, but no
-> effect for CONFIG_PREEMPT_VOLUNTARY=y.
+On 2021-12-15 20:54:40 [+0100], Mike Galbraith wrote:
+>                   In fact, I had already taken the silence as a "Surely
+> you jest" or such.
 
-Why does it matter? This is only during boot-up/ module loading or do I
-miss something? 
-The delay is a jiffy so it depends on CONFIG_HZ. You do benchmark for
-the best algorithm and if you get preempted during that period then your
-results may be wrong and you make a bad selection.
+No, not really. netpoll is currently the least of my worries and I
+wanted to finish my other network patches before I start wrapping my
+mind around this in case something changes. But I have currently no idea
+how to do netpoll run/ detect and so on.
 
-You can either enable one algorithm and or disable
-CONFIG_RAID6_PQ_BENCHMARK. I don't see the need for this patch not to
-mention the stable tree.
+> 	-Mike
 
 Sebastian
