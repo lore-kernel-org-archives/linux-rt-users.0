@@ -2,130 +2,116 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A0D6C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Dec 2021 17:42:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8697C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Dec 2021 06:42:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240464AbhLURmj (ORCPT
+        id S242779AbhLVGm7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 21 Dec 2021 12:42:39 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34928 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231764AbhLURmj (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Dec 2021 12:42:39 -0500
-Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5F5E8C061574;
-        Tue, 21 Dec 2021 09:42:38 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=metanate.com; s=stronger; h=Content-Transfer-Encoding:Content-Type:
-        References:In-Reply-To:Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID
-        :Content-Description; bh=TupUKF0VK4vg65WIuMQBgabCl7SjWqeiUzuXaaiefOE=; b=Dxjv
-        ii8l2A9scfMMOd9FBIcBR+gfXLs7mW//0vJRA5kk6lDnWpVDWNdhgJzeguEYF8vNlI7s/ATdwlk31
-        aTsyuZN9Xy0P9PCpR5BzPbrd48ITEdT5UKqmnbYSqP+yL1d+U6q7WiqFeJTB00gcU7x+wvnFDO9G9
-        JzZdmxN0OfMBzv14Iqxga/bebByPQ3RmFf1YbR512JMzsRz249stHj/AUlvHAB2r24p6VWdOXSEnw
-        fmBZLDDpJPNIkG8IBEoV/mpwn0LpehpIJ0RTj+FCeS/QPi7R5a1ihljVNw2D+zz6FlOvaUJoWeotw
-        jekNb8LStw9vRIRa23hbPJQWYL6ZtQ==;
-Received: from [81.174.171.191] (helo=donbot)
-        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <john@metanate.com>)
-        id 1mzj9W-0006jB-Jy; Tue, 21 Dec 2021 17:42:18 +0000
-Date:   Tue, 21 Dec 2021 17:42:15 +0000
-From:   John Keeping <john@metanate.com>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        linux-kernel@vger.kernel.org
-Subject: Re: [RT] BUG in sched/cpupri.c
-Message-ID: <20211221174215.04b07f31.john@metanate.com>
-In-Reply-To: <87wnjx7u05.mognet@arm.com>
-References: <Yb3vXx3DcqVOi+EA@donbot>
-        <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com>
-        <87zgou6iq1.mognet@arm.com>
-        <20211221164528.3c84543f.john@metanate.com>
-        <87wnjx7u05.mognet@arm.com>
-X-Mailer: Claws Mail 4.0.0 (GTK+ 3.24.30; x86_64-pc-linux-gnu)
+        Wed, 22 Dec 2021 01:42:59 -0500
+Received: from mail-tycjpn01olkn2086.outbound.protection.outlook.com ([52.100.215.86]:39587
+        "EHLO JPN01-TYC-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S233215AbhLVGm6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Dec 2021 01:42:58 -0500
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=DaVb66/hosj6StNlbQ8k5H4no42RY8v3eUn7uhK89YFtjpo4V9sqcsL0LXQi9SaCI8Kq08r7Qa63si8Qxd4IEkmjtjYTK1CuWXqOizjPe95CtkSzLDWWEk2QKNnebvHkcKjyDSkege27kM/3ySEpcDsjWWZOSeWlxSMmzFqcaNYCAC3fU+ATZA027a3zYsS/H2SLDgBHScUGzczZKOXYzkBMBIhSS0CMaNj+bS6pWPxuf60EFpJ0/K9Nvlfri8Q0IiseUacKYtVpKOvFPG2OlEa7McrGzUbX+8nyWv4l9Ke4Ert85ayHkRHt3nTAzlzMMKiveaX7nLmmJEzIE5sdcw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=I+xY58m/rcpQHBzDnTaAuoLjzLdL9QBrMDWmineXcSQ=;
+ b=YO3V08zRERxYeHp6UCHjtkUrmLuP2wjuVu/KcTGbemWTDaeXaQHNyuL75Q8BaiQ82XLSYq0tOlUYRSWC9gstNEmK+BMzCf+MzQO8HHn2K2Fb6EUjmQf1dLdBj2PlqOaExZKd0fc5M99zWieTY7rjqhZQ/dT+Gvt2BfcX5b9iHl7H8+r8lq+v2iOtWznqla2AdM4lXRDJQupjFq0riScz90earHPz17dWXZsR2wRKSNsc56FchOaTdJdb2Z9Y+sxRevO56wqWFDgGnmt/eY3HZju+LXwaDfNjBHCg6iIYYCT9dloIBK0gaqUfJV3+taAnv9V1CBG+n9QJv3IhnVHVwg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
+ dkim=none; arc=none
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:11e::14)
+ by TYCP286MB2416.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:17d::12) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4823.18; Wed, 22 Dec
+ 2021 06:28:38 +0000
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2]) by TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2%6]) with mapi id 15.20.4801.020; Wed, 22 Dec 2021
+ 06:28:38 +0000
+From:   Oscar Shiang <oscar0225@livemail.tw>
+To:     linux-rt-users@vger.kernel.org
+Cc:     jkacur@redhat.com, williams@redhat.com,
+        Oscar Shiang <oscar0225@livemail.tw>
+Subject: [PATCH] rt-numa: Fix the value to check in numa_initialize()
+Date:   Wed, 22 Dec 2021 14:28:03 +0800
+Message-ID: <TYCP286MB1913E08DE65A54E19F3286F3A17D9@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
+X-Mailer: git-send-email 2.25.1
+Content-Transfer-Encoding: 7BIT
+Content-Type:   text/plain; charset=US-ASCII
+X-TMN:  [+dVgwdmlK4XXrmiuS7xUN67N4WwZbjD8]
+X-ClientProxiedBy: SG2PR06CA0175.apcprd06.prod.outlook.com
+ (2603:1096:1:1e::29) To TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ (2603:1096:400:11e::14)
+X-Microsoft-Original-Message-ID: <20211222062803.5710-1-oscar0225@livemail.tw>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Authenticated: YES
+X-MS-Exchange-MessageSentRepresentingType: 1
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 5ab42706-d244-4ca2-b05e-08d9c51449fb
+X-MS-TrafficTypeDiagnostic: TYCP286MB2416:EE_
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: Rj4jeFEO/nZAbzL8PBmKCBEp+TcLmKwnTNREhOZSwo2P2+vBNwAmWhVbIhCjDmukTklKy/jBYiuDD1S4yMgGLfog9Zw5W76l6Gj6n334omByUXwoX6V9a6I7PbLQkqanGZ9m2/s0G43SLSOy2X39L+5NqzVrhMjl5lm0uffckz7KaQe3HYKm3L44Ns9bw15cDu1+WccTw00uGD7s3wSGMy44c1bQ7D2+45otlnDj4gE9mravRaAxDsYOfd6EDPRK9qbsSbJhqVZ+cVXzhvptB1kTholDxa08FdTpnocuTeiJlRxgMyAGdochpJzecKG2EI72WCjIWAjSjJ86NViUexuaC7LEWl3RLxRvRB0Ow4c+PazKmX4OQaUhYAdqI4Srs1VdBpUd0WCv5oIDhv5zoBsalaAjmMYSDd/6qeazOcb5H7QR1516dk+78eh3b0B0/xumU59mtrACEXJki5+pxgrYPrCAjkscuZlr5wsTJ7W7HHNlfnIuaLDKCvCztoQrwn1W7tMTT7Qgu9EVzJRGtZTMW1b2I7GZYSm3OQXXqKg9uU+FiaD47D400laVtreMfOZUPdPcF8TRhA/aUYXLc0d/MG2tt1FrefvT/BkkHtih72dybaV0hpYwS8v6Xwgt
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?KTJ03b0HbtVSiQQwmsEMlK6taPp5/qZv6Lj9LuIr2LkU5lSwj/nXEv7y+T0v?=
+ =?us-ascii?Q?Nw8hzh3CMJZVlp/vsVJEku68MbcV4mAKqc//MIPpwfHAaOZV6HWRB3V1xN9C?=
+ =?us-ascii?Q?GMVZBllaCX5IFO82P9dA7ATyFKQSGfgBW9LiktT69eldLHc2uB56Z4h9nkS4?=
+ =?us-ascii?Q?Jkjgg6ETvCOu8KuJhA9DHJ0rBOB4VQWXYPFMbusPgDyjja9sKz1YpJmWkgUO?=
+ =?us-ascii?Q?oq6rgA21dV7Ub9ie1viD2FYebgC9/8KMLgXhOPIUHyB+2Yp+x8tXMYnymekI?=
+ =?us-ascii?Q?+GxSQt30HZo/CLPybB4ty4I59Jb56J5st+d/E226gs1TVfMIisGXqdJn5v00?=
+ =?us-ascii?Q?8Bt6gVXCXAAcMIOlimnKmoATpKlq55Ep0Y4WqCk1tx+iLPrngiG3KyHCCmw9?=
+ =?us-ascii?Q?e4mRkPIPqTAPyspmcX+98oLCr/2V7IUM+of3dEHwh6g5puvMxl7c+jwNB2ep?=
+ =?us-ascii?Q?B0A7Ia/bOopLVPXJ4IFIeUc7EVOjyeKLudYgQBTc62wdBzs6QW9/gLoN3mgF?=
+ =?us-ascii?Q?2CNVhp0Wp4aTGvzgyVuLckO3KDGF9DtDgBFX9nUpy/7Ptxdfh0MqytxAaIkk?=
+ =?us-ascii?Q?tLA+eB3SO6VdOpV/6gMi3QiwrCbQGKHsbJ8zCFM4uVzFB0q+94Ev1PecfNcQ?=
+ =?us-ascii?Q?KiHfZ+pnChoyjSadSE4F6LWyGnyEKMcLOI4P/7oE84zZ3mNcS4SptQrs31MS?=
+ =?us-ascii?Q?NRBh6UpFFaFhfA5D4B8URnwN47yRnpMOuQfgEGHqEpi59xZs6HDVSu73ksNA?=
+ =?us-ascii?Q?x/DHyPTfiXbv4BviomPKqaXoxrNY9sII/lou4I9ZXeSC6ypjE2pYhwyXm7F6?=
+ =?us-ascii?Q?G/e7c9KBDlPr/uFp+gr9YvWN8DgyVlFXFpwwr6IJb3egNyRUCdwGe7aw7F00?=
+ =?us-ascii?Q?MsFTFQJmE0moV1A8PAgm2c7e59AHZf6UOfP0slS0VXbN3d8bpxSf8xBBEP0q?=
+ =?us-ascii?Q?nAB5B/UyU3R02Ddp0kPKjw=3D=3D?=
+X-OriginatorOrg: sct-15-20-4755-11-msonline-outlook-05f45.templateTenant
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5ab42706-d244-4ca2-b05e-08d9c51449fb
+X-MS-Exchange-CrossTenant-AuthSource: TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Dec 2021 06:28:38.3961
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYCP286MB2416
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 21 Dec 2021 17:22:34 +0000
-Valentin Schneider <valentin.schneider@arm.com> wrote:
+According to numa(3) [1], all numa functions are undefined if
+numa_available() returns -1.
 
-> On 21/12/21 16:45, John Keeping wrote:
-> > On Tue, 21 Dec 2021 16:11:34 +0000
-> > Valentin Schneider <valentin.schneider@arm.com> wrote:
-> >  
-> >> On 20/12/21 18:35, Dietmar Eggemann wrote:  
-> >> > diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> >> > index ef8228d19382..798887f1eeff 100644
-> >> > --- a/kernel/sched/rt.c
-> >> > +++ b/kernel/sched/rt.c
-> >> > @@ -1895,9 +1895,17 @@ static int push_rt_task(struct rq *rq, bool pull)
-> >> >                 struct task_struct *push_task = NULL;
-> >> >                 int cpu;
-> >> >
-> >> > +               if (WARN_ON_ONCE(!rt_task(rq->curr))) {
-> >> > +                       printk("next_task=[%s %d] rq->curr=[%s %d]\n",
-> >> > +                              next_task->comm, next_task->pid, rq->curr->comm, rq->curr->pid);
-> >> > +               }
-> >> > +
-> >> >                 if (!pull || rq->push_busy)
-> >> >                         return 0;
-> >> >
-> >> > +               if (!rt_task(rq->curr))
-> >> > +                       return 0;
-> >> > +    
-> >> 
-> >> If current is a DL/stopper task, why not; if that's CFS (which IIUC is your
-> >> case), that's buggered: we shouldn't be trying to pull RT tasks when we
-> >> have queued RT tasks and a less-than-RT current, we should be rescheduling
-> >> right now.
-> >> 
-> >> I'm thinking this can happen via rt_mutex_setprio() when we demote an RT-boosted
-> >> CFS task (or straight up sched_setscheduler()):
-> >> check_class_changed()->switched_from_rt() doesn't trigger a resched_curr(),
-> >> so I suspect we get to the push/pull callback before getting a
-> >> resched (I actually don't see where we'd get a resched in that case other
-> >> than at the next tick).
-> >> 
-> >> IOW, feels like we want the below. Unfortunately I can't reproduce the
-> >> issue locally (yet), so that's untested.  
-> >
-> > This patch doesn't make any difference for me - I hit the BUG on the
-> > first boot with this applied.
-> >  
-> 
-> Thanks for the swift testing!
-> 
-> Did you give Dietmar's patch a try? ITSM it lacks a resched_curr(), but if
-> we can somehow get to the push IRQ work before rescheduling (which I think
-> might happen if we try to resched_curr(this_rq)), then we need his
-> bailout.
+Thus numa_initialize() should not return 0, which indicates
+libnuma is available, if numa_available() returns -1. It should
+return 1 instead.
 
-With Dietmar's patch I hit the added WARN_ON_ONCE with:
+[1]: https://man7.org/linux/man-pages/man3/numa.3.html
 
-	next_task=[rcu_preempt 11] rq->curr=[ksoftirqd/1 21]
-	next_task=[rcu_preempt 11] rq->curr=[ksoftirqd/1 21]
+Signed-off-by: Oscar Shiang <oscar0225@livemail.tw>
+---
+ src/lib/rt-numa.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-	# ps -eTo comm,pid,lwp,pri,rtprio,nice,class
-	...
-	rcu_preempt        11    11  41      1   - FF
-	...
-	ksoftirqd/1        21    21  19      -   0 TS
+diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+index bb0121a..47a643e 100644
+--- a/src/lib/rt-numa.c
++++ b/src/lib/rt-numa.c
+@@ -25,7 +25,7 @@ int numa_initialize(void)
+ 	if (is_initialized == 1)
+ 		return numa;
+ 
+-	if (numa_available() != -1)
++	if (numa_available() == -1)
+ 		numa = 1;
+ 
+ 	is_initialized = 1;
+-- 
+2.25.1
 
-Out of three reproductions, rcu_preempt as next_task is consistent, but
-I've seen three different tasks in rq->curr (although all with
-SCHED_OTHER).
-
-And as expected, the added early return does stop the BUG.
