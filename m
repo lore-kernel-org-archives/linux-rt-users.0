@@ -2,168 +2,218 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 72892C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Dec 2021 19:35:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9867C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Dec 2021 19:48:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345252AbhLVTf0 (ORCPT
+        id S1345319AbhLVTsn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Dec 2021 14:35:26 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:34694 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232808AbhLVTfZ (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Dec 2021 14:35:25 -0500
-Date:   Wed, 22 Dec 2021 20:35:22 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1640201724;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=rkPNWOADgnC36BjgHUX/l07Xpal9174kWfL7noL/iQ0=;
-        b=z9hToS1fSJQDmIizgg5c68gAfttWbhc5y5zulXIGTv8C7Acknp6zBqymzPubJ9pUJ0Kp0D
-        Xn7EmWhswAbPklw3UKW/y0lCvTw6uhQvT0UVAm5QNBVtNwWg1lOjTv8HK2JG7iM+cegmyA
-        EckIq8MoBmUwa1D6n5UOTTHuV4pXzDewlN7Rd/gT4EtCeMn+9TazFiJxgYM1ZmUtrbj+1S
-        Ip/Bpiwve8C43kQL5JjvXEhKlqTvH7Lm2sJSKOJ42m4xOxJK4WwywWqJtJltakEiOS38p5
-        uaSFGrFgYyE+gspkv/t5w/jI7zgZi9zeJ55bNl8Fg/LPdtwlEAMEz8gM/UoPNw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1640201724;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=rkPNWOADgnC36BjgHUX/l07Xpal9174kWfL7noL/iQ0=;
-        b=dSvyKK+j1I4mP2azSbbXHkXrmQQicRdPLVkeTnEpT/E5u0f8k+iXACOGacRsVzgaRhRrC9
-        my6n42wjB2HqsbBQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Clark Williams <williams@redhat.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Wed, 22 Dec 2021 14:48:43 -0500
+Received: from foss.arm.com ([217.140.110.172]:53342 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1345312AbhLVTsl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Dec 2021 14:48:41 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 4363C1FB;
+        Wed, 22 Dec 2021 11:48:41 -0800 (PST)
+Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.196.57])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id AEF423F5A1;
+        Wed, 22 Dec 2021 11:48:39 -0800 (PST)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        John Keeping <john@metanate.com>
+Cc:     linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Pavel Machek <pavel@denx.de>,
-        Salvatore Bonaccorso <carnil@debian.org>
-Subject: [PATCH RT] net: Add missing xmit_lock_owner hunks.
-Message-ID: <YcN9+vGl7GXAZwJH@linutronix.de>
-References: <163977665182.1250088.11049848941535534253@puck.lan>
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        linux-kernel@vger.kernel.org
+Subject: Re: [RT] BUG in sched/cpupri.c
+In-Reply-To: <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
+References: <Yb3vXx3DcqVOi+EA@donbot> <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com> <20211221164528.3c84543f.john@metanate.com> <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
+Date:   Wed, 22 Dec 2021 19:48:33 +0000
+Message-ID: <87r1a4775a.mognet@arm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <163977665182.1250088.11049848941535534253@puck.lan>
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The patch
-	net: move xmit_recursion to per-task variable on -RT
+On 22/12/21 18:46, Dietmar Eggemann wrote:
+> On 21.12.21 17:45, John Keeping wrote:
+>> On Tue, 21 Dec 2021 16:11:34 +0000
+>> Valentin Schneider <valentin.schneider@arm.com> wrote:
+>>
+>>> On 20/12/21 18:35, Dietmar Eggemann wrote:
+>
+> [...]
+>
+>>> diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+>>> index fd7c4f972aaf..7d61ceec1a3b 100644
+>>> --- a/kernel/sched/deadline.c
+>>> +++ b/kernel/sched/deadline.c
+>>> @@ -2467,10 +2467,13 @@ static void switched_from_dl(struct rq *rq, struct task_struct *p)
+>>>      * this is the right place to try to pull some other one
+>>>      * from an overloaded CPU, if any.
+>>>      */
+>>> -	if (!task_on_rq_queued(p) || rq->dl.dl_nr_running)
+>>> +	if (!task_on_rq_queued(p))
+>>>             return;
+>>>
+>>> -	deadline_queue_pull_task(rq);
+>>> +	if (!rq->dl.dl_nr_running)
+>>> +		deadline_queue_pull_task(rq);
+>>> +	else if (task_current(rq, p) && (p->sched_class < &dl_sched_class))
+>>> +		resched_curr(rq);
+>>>  }
+>>>
+>>>  /*
+>>> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+>>> index ef8228d19382..1ea2567612fb 100644
+>>> --- a/kernel/sched/rt.c
+>>> +++ b/kernel/sched/rt.c
+>>> @@ -2322,10 +2322,13 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
+>>>      * we may need to handle the pulling of RT tasks
+>>>      * now.
+>>>      */
+>>> -	if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
+>>> +	if (!task_on_rq_queued(p))
+>>>             return;
+>>>
+>>> -	rt_queue_pull_task(rq);
+>>> +	if (!rq->rt.rt_nr_running)
+>>> +		rt_queue_pull_task(rq);
+>>> +	else if (task_current(rq, p) && (p->sched_class < &rt_sched_class))
+>>> +		resched_curr(rq);
+>
+> switched_from_rt() -> rt_queue_pull_task(, pull_rt_task)
+>   pull_rt_task()->tell_cpu_to_push()->irq_work_queue_on(&rq->rd->rto_push_work,)
+>     rto_push_irq_work_func() -> push_rt_task(rq, true)
+>
+> seems to be the only way with pull=true.
+>
+> In my tests, rq->rt.rt_nr_running seems to be 0 when it happens.
+>
+> [   22.288537] CPU3 switched_to_rt: p=[ksoftirqd/3 35]
+> [   22.288554] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] pi_task=[rcu_preempt 11] queued=1 running=0 prio=98 oldprio=120
+> [   22.288636] CPU3 switched_from_rt: p=[ksoftirqd/3 35] rq->rt.rt_nr_running=0
+>                                                          ^^^^^^^^^^^^^^^^^^^^^^
+> [   22.288649] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] queued=1 running=1 prio=120 oldprio=98
+> [   22.288681] CPU3 push_rt_task: next_task=[rcu_preempt 11] migr_dis=1 rq->curr=[ksoftirqd/3 35] pull=1
+>                                                              ^^^^^^^^^^                           ^^^^^^
 
-lost a few hunks during its rebase.
+mark_wakeup_next_waiter() first deboosts the previous owner and then
+wakeups the next top waiter. Seems like you somehow have the wakeup happen
+before the push_rt_task IRQ work is run. Also, tell_cpu_to_push() should
+only pick a CPU that is in rq->rd->rto_mask, which requires having at least
+2 RT tasks there...
 
-Add the `xmit_lock_owner' accessor/wrapper.
+Now, that wakeup from the rtmutex unlock would give us a resched_curr() via
+check_preempt_curr() if required, which is good, though I think we are
+still missing some for sched_setscheduler() (there are no wakeups
+there). So if we just have to live with an IRQ work popping in before we
+get to preempt_schedule_irq() (or somesuch), then perhaps the below would
+be sufficient.
 
-Reported-by: Salvatore Bonaccorso <carnil@debian.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> What about slightly changing the layout in switched_from_rt() (only lightly tested):
+>
+>
+> @@ -2322,7 +2338,15 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
+>          * we may need to handle the pulling of RT tasks
+>          * now.
+>          */
+> -       if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
+> +       if (!task_on_rq_queued(p))
+> +               return;
+> +
+> +       if (task_current(rq, p) && (p->sched_class < &rt_sched_class)) {
+> +               resched_curr(rq);
+> +               return;
+> +       }
+> +
+> +       if (rq->rt.rt_nr_running)
+>                 return;
+>
+>         rt_queue_pull_task(rq);
+
+If !rq->rt.rt_nr_running then there's no point in issuing a reschedule (at
+least from RT's perspective; p->sched_class->switched_to() takes care of
+the rest)
+
 ---
- include/linux/netdevice.h | 29 +++++++++++++----------------
- 1 file changed, 13 insertions(+), 16 deletions(-)
 
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index 7b34ce34114ac..ce19befe4d87d 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -3882,17 +3882,17 @@ static inline u32 netif_msg_init(int debug_value, int default_msg_enable_bits)
- #ifdef CONFIG_PREEMPT_RT_FULL
- static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
- {
--	txq->xmit_lock_owner = current;
-+	WRITE_ONCE(txq->xmit_lock_owner, current);
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index fd7c4f972aaf..7d61ceec1a3b 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -2467,10 +2467,13 @@ static void switched_from_dl(struct rq *rq, struct task_struct *p)
+ 	 * this is the right place to try to pull some other one
+ 	 * from an overloaded CPU, if any.
+ 	 */
+-	if (!task_on_rq_queued(p) || rq->dl.dl_nr_running)
++	if (!task_on_rq_queued(p))
+ 		return;
+ 
+-	deadline_queue_pull_task(rq);
++	if (!rq->dl.dl_nr_running)
++		deadline_queue_pull_task(rq);
++	else if (task_current(rq, p) && (p->sched_class < &dl_sched_class))
++		resched_curr(rq);
  }
  
- static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
- {
--	txq->xmit_lock_owner = NULL;
-+	WRITE_ONCE(txq->xmit_lock_owner, NULL);
+ /*
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index ef8228d19382..8f3e3a1367b6 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
+ 	if (!next_task)
+ 		return 0;
+ 
++	/*
++	 * It's possible that the next_task slipped in of higher priority than
++	 * current, or current has *just* changed priority.  If that's the case
++	 * just reschedule current.
++	 */
++	if (unlikely(next_task->prio < rq->curr->prio)) {
++		resched_curr(rq);
++		return 0;
++	}
++
+ retry:
+ 	if (is_migration_disabled(next_task)) {
+ 		struct task_struct *push_task = NULL;
+@@ -1922,16 +1932,6 @@ static int push_rt_task(struct rq *rq, bool pull)
+ 	if (WARN_ON(next_task == rq->curr))
+ 		return 0;
+ 
+-	/*
+-	 * It's possible that the next_task slipped in of
+-	 * higher priority than current. If that's the case
+-	 * just reschedule current.
+-	 */
+-	if (unlikely(next_task->prio < rq->curr->prio)) {
+-		resched_curr(rq);
+-		return 0;
+-	}
+-
+ 	/* We might release rq lock */
+ 	get_task_struct(next_task);
+ 
+@@ -2322,10 +2322,13 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
+ 	 * we may need to handle the pulling of RT tasks
+ 	 * now.
+ 	 */
+-	if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
++	if (!task_on_rq_queued(p))
+ 		return;
+ 
+-	rt_queue_pull_task(rq);
++	if (!rq->rt.rt_nr_running)
++		rt_queue_pull_task(rq);
++	else if (task_current(rq, p) && (p->sched_class < &rt_sched_class))
++		resched_curr(rq);
  }
  
- static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
- {
--	if (txq->xmit_lock_owner != NULL)
-+	if (READ_ONCE(txq->xmit_lock_owner) != NULL)
- 		return true;
- 	return false;
- }
-@@ -3901,17 +3901,19 @@ static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
- 
- static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
- {
--	txq->xmit_lock_owner = cpu;
-+	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+	WRITE_ONCE(txq->xmit_lock_owner, cpu);
- }
- 
- static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
- {
--	txq->xmit_lock_owner = -1;
-+	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+	WRITE_ONCE(txq->xmit_lock_owner, -1);
- }
- 
- static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
- {
--	if (txq->xmit_lock_owner != -1)
-+	if (READ_ONCE(txq->xmit_lock_owner != -1))
- 		return true;
- 	return false;
- }
-@@ -3920,8 +3922,7 @@ static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
- static inline void __netif_tx_lock(struct netdev_queue *txq, int cpu)
- {
- 	spin_lock(&txq->_xmit_lock);
--	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
--	WRITE_ONCE(txq->xmit_lock_owner, cpu);
-+	netdev_queue_set_owner(txq, cpu);
- }
- 
- static inline bool __netif_tx_acquire(struct netdev_queue *txq)
-@@ -3938,8 +3939,7 @@ static inline void __netif_tx_release(struct netdev_queue *txq)
- static inline void __netif_tx_lock_bh(struct netdev_queue *txq)
- {
- 	spin_lock_bh(&txq->_xmit_lock);
--	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
--	WRITE_ONCE(txq->xmit_lock_owner, smp_processor_id());
-+	netdev_queue_set_owner(txq, smp_processor_id());
- }
- 
- static inline bool __netif_tx_trylock(struct netdev_queue *txq)
-@@ -3947,23 +3947,20 @@ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
- 	bool ok = spin_trylock(&txq->_xmit_lock);
- 
- 	if (likely(ok)) {
--		/* Pairs with READ_ONCE() in __dev_queue_xmit() */
--		WRITE_ONCE(txq->xmit_lock_owner, smp_processor_id());
-+		netdev_queue_set_owner(txq, smp_processor_id());
- 	}
- 	return ok;
- }
- 
- static inline void __netif_tx_unlock(struct netdev_queue *txq)
- {
--	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
--	WRITE_ONCE(txq->xmit_lock_owner, -1);
-+	netdev_queue_clear_owner(txq);
- 	spin_unlock(&txq->_xmit_lock);
- }
- 
- static inline void __netif_tx_unlock_bh(struct netdev_queue *txq)
- {
--	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
--	WRITE_ONCE(txq->xmit_lock_owner, -1);
-+	netdev_queue_clear_owner(txq);
- 	spin_unlock_bh(&txq->_xmit_lock);
- }
- 
--- 
-2.34.1
-
+ void __init init_sched_rt_class(void)
