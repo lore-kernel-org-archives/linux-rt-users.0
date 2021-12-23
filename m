@@ -2,68 +2,69 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 672F2C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Dec 2021 14:05:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 81D6AC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Dec 2021 16:03:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243771AbhLWOFV (ORCPT
+        id S239918AbhLWQD2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Dec 2021 09:05:21 -0500
-Received: from foss.arm.com ([217.140.110.172]:42740 "EHLO foss.arm.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229449AbhLWOFV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Dec 2021 09:05:21 -0500
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 6CF3AD6E;
-        Thu, 23 Dec 2021 06:05:20 -0800 (PST)
-Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.196.57])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id D1FCF3F5A1;
-        Thu, 23 Dec 2021 06:05:18 -0800 (PST)
-From:   Valentin Schneider <valentin.schneider@arm.com>
-To:     John Keeping <john@metanate.com>
-Cc:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        linux-kernel@vger.kernel.org
-Subject: Re: [RT] BUG in sched/cpupri.c
-In-Reply-To: <YcRkUt8nFCWI7PHn@donbot>
-References: <Yb3vXx3DcqVOi+EA@donbot> <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com> <20211221164528.3c84543f.john@metanate.com> <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com> <87r1a4775a.mognet@arm.com> <YcRkUt8nFCWI7PHn@donbot>
-Date:   Thu, 23 Dec 2021 14:05:13 +0000
-Message-ID: <87mtkr76xy.mognet@arm.com>
+        Thu, 23 Dec 2021 11:03:28 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:39880 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S233535AbhLWQD1 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Dec 2021 11:03:27 -0500
+Date:   Thu, 23 Dec 2021 17:03:25 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1640275406;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=lXSe9/5inwpHwW+YAtKtG9Yzs1PptI7qRTKy7hchzyA=;
+        b=GbDMT3ur4iOxB0Rl9lGe4uBCxOegKA2H1Hj6eEKCV2AbRU18zU6rBFfTq6xtPG/0AImduz
+        BeFrDs3ZgFhNP8fkNOEcIkRhvjvjjNI0NpAMd5QZaZkSbr+4/8BlmkkfeHqkblu5JyJd21
+        olKd56tRwDQSmvV8BhHHonSwztudpZeHmaMnVdoc0onK+DH3ZSw604Reg01FuNMlzvsFul
+        FQKt8hP6J8RxDffWTXVgMG9Lpn3qjBwZGSuUwZxwe6GNHtZabpvWy8lOI3+H+hG+0+LoV9
+        CuNIN/CGTlbrDW4jJEmX6sEyP/ShXoykKSnfW5XQ0IvJNTU2eHLpNP0UzI53DQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1640275406;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=lXSe9/5inwpHwW+YAtKtG9Yzs1PptI7qRTKy7hchzyA=;
+        b=3GM74BqKpLB76lIX66rh0taaa4Rtaum/m5VrLxANAprVBuBwgoQ1AZyVByxqStxutE6bZd
+        CuYi5QMPPYFtRADg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Oscar Shiang <oscar0225@livemail.tw>
+Cc:     jkacur@redhat.com, williams@redhat.com,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] rt-numa: Correct the comment of numa_initialize()
+Message-ID: <YcSdzd3jmjV/rxBB@linutronix.de>
+References: <TYCP286MB1913AD6234046FE1CF1D3877A17E9@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <TYCP286MB1913AD6234046FE1CF1D3877A17E9@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 23/12/21 11:58, John Keeping wrote:
-> On Wed, Dec 22, 2021 at 07:48:33PM +0000, Valentin Schneider wrote:
->> mark_wakeup_next_waiter() first deboosts the previous owner and then
->> wakeups the next top waiter. Seems like you somehow have the wakeup happen
->> before the push_rt_task IRQ work is run. Also, tell_cpu_to_push() should
->> only pick a CPU that is in rq->rd->rto_mask, which requires having at least
->> 2 RT tasks there...
->> 
->> Now, that wakeup from the rtmutex unlock would give us a resched_curr() via
->> check_preempt_curr() if required, which is good, though I think we are
->> still missing some for sched_setscheduler() (there are no wakeups
->> there). So if we just have to live with an IRQ work popping in before we
->> get to preempt_schedule_irq() (or somesuch), then perhaps the below would
->> be sufficient.
->
-> With this patch I ran 100 reboots without hitting the BUG, so it looks
-> like this is the solution!
->
-> If you post this as a patch, feel free to add:
->
-> 	Tested-by: John Keeping <john@metanate.com>
+On 2021-12-23 22:01:07 [+0800], Oscar Shiang wrote:
+> --- a/src/lib/rt-numa.c
+> +++ b/src/lib/rt-numa.c
+> @@ -15,7 +15,7 @@
+>  
+>  /*
+>   * numa_available() must be called before any other calls to the numa library
+> - * returns 0 if numa is available, or 1 if numa is not available
+> + * returns 1 if numa is available, or 0 if numa is not available
+>   */
 
-Thanks!
+To quote the man page:
 
-I still need to convince myself beyond reasonable doubt that this is really
-what is happening (esp the sched_setscheduler()) part, so the next episode
-will probably air after the break :-)
+       Before  any  other  calls  in this library can be used numa_available()
+       must be called. If it returns -1, all other functions in  this  library
+       are undefined.
+
+Based on that, neither 0 nor 1 is defined.
+
+Sebastian
