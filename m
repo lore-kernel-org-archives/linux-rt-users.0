@@ -2,218 +2,114 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9867C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Dec 2021 19:48:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 177C6C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Dec 2021 06:29:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345319AbhLVTsn (ORCPT
+        id S242286AbhLWG3n convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Dec 2021 14:48:43 -0500
-Received: from foss.arm.com ([217.140.110.172]:53342 "EHLO foss.arm.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1345312AbhLVTsl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Dec 2021 14:48:41 -0500
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 4363C1FB;
-        Wed, 22 Dec 2021 11:48:41 -0800 (PST)
-Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.196.57])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id AEF423F5A1;
-        Wed, 22 Dec 2021 11:48:39 -0800 (PST)
-From:   Valentin Schneider <valentin.schneider@arm.com>
-To:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        John Keeping <john@metanate.com>
-Cc:     linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        linux-kernel@vger.kernel.org
-Subject: Re: [RT] BUG in sched/cpupri.c
-In-Reply-To: <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
-References: <Yb3vXx3DcqVOi+EA@donbot> <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com> <20211221164528.3c84543f.john@metanate.com> <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
-Date:   Wed, 22 Dec 2021 19:48:33 +0000
-Message-ID: <87r1a4775a.mognet@arm.com>
+        Thu, 23 Dec 2021 01:29:43 -0500
+Received: from [40.92.98.69] ([40.92.98.69]:61187 "EHLO
+        JPN01-OS0-obe.outbound.protection.outlook.com"
+        rhost-flags-FAIL-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
+        id S232444AbhLWG3n (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Dec 2021 01:29:43 -0500
+X-Greylist: delayed 86462 seconds by postgrey-1.27 at vger.kernel.org; Thu, 23 Dec 2021 01:29:43 EST
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=G5ly3sSjLtnuNB5IeLQmKOweeuWlWod7VwDwEAyBOffxjMRnpzmBvCxWHILbhLFkAUqjwNJKt6RAK3XhDLjgS1qqdUBk6Kd+m8WvK0jloPE1+h/JrtoDCOXkeyS/huC5hz1M3rFhvm8V7KvfoLbBMHGvKQ3Bbl0tnUErEBh+j7NIauQS7AEeTOsZgv7BFjIE5cCx1clQZRzsQ7XLZ479aixOYRNZpZLtszJ8QG/D+O6TIQZczs61FDYtwjJ2L9yBuB1OfscqQxxmYLvFpLJKRW3ow8b+af0YEooM1ONuXFDLwTT+rJDDbMjqBbD/u497aC9IuqqTAQPbyE7/tpXFBw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=rnPyyOztUkp1wJ41zcQPGDfAPSZAnBFT+LeV2KKzAQE=;
+ b=QIa4+WtfKmCsVQ2Qf7v4cm4mAt77pU3fx8t0GCDjpEpebjAn00o854S4Q8XmXbekCdL7hX8q9ufa7nmVofF0zwjfiQ8AbzQ1qNZIpX+yblzWY1H0i4yOSRctKaV0DN06iw2FG8olue8I+AVEr/AFU+x8W5HlB4yqz0yJ/ECKo9lwcOkaCdrdaiMV9gXJ6AwyQ9nah98L1WoOk6lJGVOAdg0O4gFWpel9/vYse++yqR7gICX8DaKiayy13lOG1A7oQJGZVfE4JxCosqJSb7L2MnS0EZbhqIsVkUQ5QT0XcG+B+66BASpZM8VngbsvZOq80YKFYxI6vyGcLXphAUs5QA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
+ dkim=none; arc=none
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:11e::14)
+ by TYCP286MB1972.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:15c::7) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4823.19; Thu, 23 Dec
+ 2021 06:29:40 +0000
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2]) by TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2%6]) with mapi id 15.20.4801.020; Thu, 23 Dec 2021
+ 06:29:40 +0000
+From:   =?iso-2022-jp?B?GyRCOH4bKEIgGyRCN0pPSxsoQg==?= 
+        <oscar0225@livemail.tw>
+To:     John Kacur <jkacur@redhat.com>
+CC:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] rt-numa: Fix the value to check in numa_initialize()
+Thread-Topic: [PATCH] rt-numa: Fix the value to check in numa_initialize()
+Thread-Index: AQHX9v0nLlGh/6I0HkGs3EVTfxwm8Kw+p9AAgAD3IAA=
+Date:   Thu, 23 Dec 2021 06:29:40 +0000
+Message-ID: <E3FC7213-F685-423A-9105-61F780CD1219@livemail.tw>
+References: <TYCP286MB1913E08DE65A54E19F3286F3A17D9@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
+ <edf1dff-ec8-c42b-d1c-8fba1b96d36d@redhat.com>
+In-Reply-To: <edf1dff-ec8-c42b-d1c-8fba1b96d36d@redhat.com>
+Accept-Language: zh-TW, en-US
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-messagesentrepresentingtype: 1
+x-tmn:  [ZouIWozT1EcvMf0T0klJBlil8zzIwcIJ]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 0f64242b-4d82-42ab-4450-08d9c5dd99d6
+x-ms-traffictypediagnostic: TYCP286MB1972:EE_
+x-microsoft-antispam: BCL:0;
+x-microsoft-antispam-message-info: 0yxnZXvB7/tT08Rur6ShFI7ZsYgIRmmP/FRnYBNdvo3lqJFWXi545giYMI+JzQ/qusApyYF2AN3NLm13jVhXKJ4Yb7z/NYp0ucTHXSD7g7mTICegVAoltMe99lB0lR90/ec52A8piQm2AfDttWBzX/eLRkodXOJEjLZgqVHgMF/d+akXKPtVBl7co9GOtIFjDlrs5Xvm5nmXpSeixAICpOF1H37+wVRuFkwx1nkRKptMu/4E1ibfYRCjn9T8uY/1xKmb2Eg5aNqNnF+la4MbYvQ/IYZOGuO5pjqN4f1Fg+6BRffBSwuAfPGl+0Z96mXO1OGka6Zh0dZ/WJxq2ngdUHPJ/Rh9lrQJz09nQVhP5ConRoEBNZ7v76PqIMNwHoy1IKoPIrwgsp/KNvuYo9layYYoW+xLjRk3WyOi16KUdDyhvL8//jP4BPWwMxcSiYRH6NCyPaJmJi4y+yc3xHaNWQbmYNQ04eDJu79DYRrZt/lNvwHMJaWBlrm1s7WBxPv6BxJnJNGjCSq5RPhwjSvekyGDg91JVFpNAq3UG5us0m9MFz9NQIZAItFKEH/f19dVo23quGFiB+F3e1WWsV+BGA==
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-2022-jp?B?SyswMWF5TDdhSUdaWk93SFZTOTh5blE0WFhLOGNBSUp3L05ZSzhJcmh6?=
+ =?iso-2022-jp?B?d1VzVTczUXh2TkI3UERkYUtHTjB2U0x5SHN2dnFCK1RWZ3BwcnFBUFdC?=
+ =?iso-2022-jp?B?ZTlUNGFwK3hRQkN1eHQ4aEpab1MrODRJOVVKQXBuRGtJV0txSXFUYTRH?=
+ =?iso-2022-jp?B?cUQrTncrNnpOSGZteVdOaXFMelZZaFZXZlY4YnNKN3JWTmtoc0ZNcXVo?=
+ =?iso-2022-jp?B?N0ZldGN5S01EUEJBMFJaZU11a3VmMHF6T3VnYjdHVGFzUC9zUmo2MjBz?=
+ =?iso-2022-jp?B?b2Y0OVRUc2g1K3l0VzJkeEFmcnQ1bENOMTJmSlJpTnhSWFpSbFA0WE1y?=
+ =?iso-2022-jp?B?dVh5b1VBVDVqY29JR1NvZVlrdzdDcmFQNDgxUDF0bnF3NTM0K0lQeFBW?=
+ =?iso-2022-jp?B?cENLS0FMbFJDaVlPTHBpVE1jRmdWWEhVandVS004WWFIeDBBU3FWczRm?=
+ =?iso-2022-jp?B?YzllN0hXaWxkZlM3Y1RycDduOU5NdU81ZWpGYldRYlBMa29LZFpxS0Z2?=
+ =?iso-2022-jp?B?OW5BL29LZ3VpbVdJZkp3a0FwUzVNSDJmZnFhUXBTVFJ5eStHMFZDcHFl?=
+ =?iso-2022-jp?B?cVJ3aUwxOWI1QlNTVlQycFB1dlVVRjZYcnFrRFExRUdXWTJGRXRtMmpw?=
+ =?iso-2022-jp?B?bngrUEhRSU9jZmNpQmpIaldLTWpsVWR1d3o0eFpvYWZabUN0SnkvNkRx?=
+ =?iso-2022-jp?B?ZDQ4YStZMTUyS2wwQmNScWVzQ2ozdkExVFYxR0NZMVhqNlJBMnl2TU1W?=
+ =?iso-2022-jp?B?RTJ1ZUNpK25yMFN0VWlkbnFRMEV3RHZIOHFONVhlT21sMmwzV0Z0RVdF?=
+ =?iso-2022-jp?B?elc4dmMxZVhUdkc3cW1Bc3haY1JqSDBHTG1FcVZsTVJSSVI3Z1ppZ2tw?=
+ =?iso-2022-jp?B?Z3hWcGZ2cmI2dzNoQVlDZmVZbXFDaDNkc2x1QWhQUytwcTZrSkhkZVZG?=
+ =?iso-2022-jp?B?T1FWQVR1UzRSb2hxQnUrVjF6KzhLZXdMNDFRdXBqV2JaVjBHSlRZN3dh?=
+ =?iso-2022-jp?B?dlBtS1Y4eEtpWEZBaXRuV2VKQlpTanc0ZGZtVUh6eFc4T0YvMEROWSt2?=
+ =?iso-2022-jp?B?VkltcVo0YThCRXNabTkrQ1dmejZKRFVMNmJRM1VtMXBrRUdUUGFqSi9h?=
+ =?iso-2022-jp?B?RldobUNjQlpGR3Btdzc0bFduV2pudi9zQzlwM2hUa3ZXN0N2eDRZNTFs?=
+ =?iso-2022-jp?B?enFZVno1bUNqWWFPU1l0US9neUtaSitkT3dPQXRmUlM2K25JbFcxdkp5?=
+ =?iso-2022-jp?B?M3RIRmZNZEM3U0VrQmVkOE44RVd5Q212M0xSNUp5M3ZQRjd5dndVMTlL?=
+ =?iso-2022-jp?B?d0JFS2ZZbVh3YmJCWmpWejN0UFJnYzM1dk9nS29CUFg1NXVQT0ZjWDF0?=
+ =?iso-2022-jp?B?aVJvemlJUEw2cjRkSEc5dz09?=
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-ID: <8336C5ACBDCB454F8EAA9D96659069CB@JPNP286.PROD.OUTLOOK.COM>
+Content-Transfer-Encoding: 8BIT
 MIME-Version: 1.0
-Content-Type: text/plain
+X-OriginatorOrg: sct-15-20-4755-11-msonline-outlook-05f45.templateTenant
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-CrossTenant-Network-Message-Id: 0f64242b-4d82-42ab-4450-08d9c5dd99d6
+X-MS-Exchange-CrossTenant-originalarrivaltime: 23 Dec 2021 06:29:40.8578
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYCP286MB1972
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 22/12/21 18:46, Dietmar Eggemann wrote:
-> On 21.12.21 17:45, John Keeping wrote:
->> On Tue, 21 Dec 2021 16:11:34 +0000
->> Valentin Schneider <valentin.schneider@arm.com> wrote:
->>
->>> On 20/12/21 18:35, Dietmar Eggemann wrote:
->
-> [...]
->
->>> diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
->>> index fd7c4f972aaf..7d61ceec1a3b 100644
->>> --- a/kernel/sched/deadline.c
->>> +++ b/kernel/sched/deadline.c
->>> @@ -2467,10 +2467,13 @@ static void switched_from_dl(struct rq *rq, struct task_struct *p)
->>>      * this is the right place to try to pull some other one
->>>      * from an overloaded CPU, if any.
->>>      */
->>> -	if (!task_on_rq_queued(p) || rq->dl.dl_nr_running)
->>> +	if (!task_on_rq_queued(p))
->>>             return;
->>>
->>> -	deadline_queue_pull_task(rq);
->>> +	if (!rq->dl.dl_nr_running)
->>> +		deadline_queue_pull_task(rq);
->>> +	else if (task_current(rq, p) && (p->sched_class < &dl_sched_class))
->>> +		resched_curr(rq);
->>>  }
->>>
->>>  /*
->>> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
->>> index ef8228d19382..1ea2567612fb 100644
->>> --- a/kernel/sched/rt.c
->>> +++ b/kernel/sched/rt.c
->>> @@ -2322,10 +2322,13 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
->>>      * we may need to handle the pulling of RT tasks
->>>      * now.
->>>      */
->>> -	if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
->>> +	if (!task_on_rq_queued(p))
->>>             return;
->>>
->>> -	rt_queue_pull_task(rq);
->>> +	if (!rq->rt.rt_nr_running)
->>> +		rt_queue_pull_task(rq);
->>> +	else if (task_current(rq, p) && (p->sched_class < &rt_sched_class))
->>> +		resched_curr(rq);
->
-> switched_from_rt() -> rt_queue_pull_task(, pull_rt_task)
->   pull_rt_task()->tell_cpu_to_push()->irq_work_queue_on(&rq->rd->rto_push_work,)
->     rto_push_irq_work_func() -> push_rt_task(rq, true)
->
-> seems to be the only way with pull=true.
->
-> In my tests, rq->rt.rt_nr_running seems to be 0 when it happens.
->
-> [   22.288537] CPU3 switched_to_rt: p=[ksoftirqd/3 35]
-> [   22.288554] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] pi_task=[rcu_preempt 11] queued=1 running=0 prio=98 oldprio=120
-> [   22.288636] CPU3 switched_from_rt: p=[ksoftirqd/3 35] rq->rt.rt_nr_running=0
->                                                          ^^^^^^^^^^^^^^^^^^^^^^
-> [   22.288649] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] queued=1 running=1 prio=120 oldprio=98
-> [   22.288681] CPU3 push_rt_task: next_task=[rcu_preempt 11] migr_dis=1 rq->curr=[ksoftirqd/3 35] pull=1
->                                                              ^^^^^^^^^^                           ^^^^^^
 
-mark_wakeup_next_waiter() first deboosts the previous owner and then
-wakeups the next top waiter. Seems like you somehow have the wakeup happen
-before the push_rt_task IRQ work is run. Also, tell_cpu_to_push() should
-only pick a CPU that is in rq->rd->rto_mask, which requires having at least
-2 RT tasks there...
 
-Now, that wakeup from the rtmutex unlock would give us a resched_curr() via
-check_preempt_curr() if required, which is good, though I think we are
-still missing some for sched_setscheduler() (there are no wakeups
-there). So if we just have to live with an IRQ work popping in before we
-get to preempt_schedule_irq() (or somesuch), then perhaps the below would
-be sufficient.
+> On Dec 22, 2021, at 11:45 PM, John Kacur <jkacur@redhat.com> wrote:
+> 
+> No, it looks to me like the code is correct but the comment is incorrect.
+> If you submit a patch fixing the comment, I'll apply it.
+> 
 
-> What about slightly changing the layout in switched_from_rt() (only lightly tested):
->
->
-> @@ -2322,7 +2338,15 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
->          * we may need to handle the pulling of RT tasks
->          * now.
->          */
-> -       if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
-> +       if (!task_on_rq_queued(p))
-> +               return;
-> +
-> +       if (task_current(rq, p) && (p->sched_class < &rt_sched_class)) {
-> +               resched_curr(rq);
-> +               return;
-> +       }
-> +
-> +       if (rq->rt.rt_nr_running)
->                 return;
->
->         rt_queue_pull_task(rq);
+I agree. I will send another patch to fix the comment.
 
-If !rq->rt.rt_nr_running then there's no point in issuing a reschedule (at
-least from RT's perspective; p->sched_class->switched_to() takes care of
-the rest)
+Thanks
 
----
-
-diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-index fd7c4f972aaf..7d61ceec1a3b 100644
---- a/kernel/sched/deadline.c
-+++ b/kernel/sched/deadline.c
-@@ -2467,10 +2467,13 @@ static void switched_from_dl(struct rq *rq, struct task_struct *p)
- 	 * this is the right place to try to pull some other one
- 	 * from an overloaded CPU, if any.
- 	 */
--	if (!task_on_rq_queued(p) || rq->dl.dl_nr_running)
-+	if (!task_on_rq_queued(p))
- 		return;
- 
--	deadline_queue_pull_task(rq);
-+	if (!rq->dl.dl_nr_running)
-+		deadline_queue_pull_task(rq);
-+	else if (task_current(rq, p) && (p->sched_class < &dl_sched_class))
-+		resched_curr(rq);
- }
- 
- /*
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index ef8228d19382..8f3e3a1367b6 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
- 	if (!next_task)
- 		return 0;
- 
-+	/*
-+	 * It's possible that the next_task slipped in of higher priority than
-+	 * current, or current has *just* changed priority.  If that's the case
-+	 * just reschedule current.
-+	 */
-+	if (unlikely(next_task->prio < rq->curr->prio)) {
-+		resched_curr(rq);
-+		return 0;
-+	}
-+
- retry:
- 	if (is_migration_disabled(next_task)) {
- 		struct task_struct *push_task = NULL;
-@@ -1922,16 +1932,6 @@ static int push_rt_task(struct rq *rq, bool pull)
- 	if (WARN_ON(next_task == rq->curr))
- 		return 0;
- 
--	/*
--	 * It's possible that the next_task slipped in of
--	 * higher priority than current. If that's the case
--	 * just reschedule current.
--	 */
--	if (unlikely(next_task->prio < rq->curr->prio)) {
--		resched_curr(rq);
--		return 0;
--	}
--
- 	/* We might release rq lock */
- 	get_task_struct(next_task);
- 
-@@ -2322,10 +2322,13 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
- 	 * we may need to handle the pulling of RT tasks
- 	 * now.
- 	 */
--	if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
-+	if (!task_on_rq_queued(p))
- 		return;
- 
--	rt_queue_pull_task(rq);
-+	if (!rq->rt.rt_nr_running)
-+		rt_queue_pull_task(rq);
-+	else if (task_current(rq, p) && (p->sched_class < &rt_sched_class))
-+		resched_curr(rq);
- }
- 
- void __init init_sched_rt_class(void)
+Oscar
