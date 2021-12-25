@@ -2,76 +2,98 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79D94C433F5
-	for <linux-rt-users@archiver.kernel.org>; Sat, 25 Dec 2021 02:17:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8FC7C433EF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 25 Dec 2021 07:18:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229488AbhLYCR1 (ORCPT
+        id S230331AbhLYHSF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 Dec 2021 21:17:27 -0500
-Received: from mout.gmx.net ([212.227.17.20]:37455 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S229471AbhLYCR1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 Dec 2021 21:17:27 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1640398618;
-        bh=pfHDFwQwt/QEbu1J8kSPjMYX72C93NC1b1/5lK97LUg=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=K6AQmI49QdGNawE2ZktRsdsZOhBQnzKeW/5LysgMxdfUnXSYOlFJm/ut5d4mc0ydF
-         HqTaqZfNo71wwMf+39DvuU416UWEXAUmzlFR19oNHiQbQXmVlVEGxmQOPEIXZ2mZOn
-         jpWHjGI43KpWcRdHiG7fIXM+j9uN3uxW1muTdFCk=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.221.151.63]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1N3bX1-1mIhjN2Plj-010cNc; Sat, 25
- Dec 2021 03:16:58 +0100
-Message-ID: <64294bf40ace6be86a295099b895a7d1f6a5c49f.camel@gmx.de>
-Subject: Re: [ANNOUNCE] v5.16-rc6-rt12
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Date:   Sat, 25 Dec 2021 03:16:57 +0100
-In-Reply-To: <YcSgQY8lzb6MkQPx@linutronix.de>
-References: <YcSgQY8lzb6MkQPx@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.2 
+        Sat, 25 Dec 2021 02:18:05 -0500
+Received: from [40.92.98.13] ([40.92.98.13]:38597 "EHLO
+        JPN01-OS0-obe.outbound.protection.outlook.com"
+        rhost-flags-FAIL-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
+        id S230298AbhLYHSF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 25 Dec 2021 02:18:05 -0500
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=fdNIzmnqQ7S6mYsilBK7pV1iPW0lssMZy6DKddIQ77hSfChbSZbn10UtXvWuyoNmD4M3iwNSbwxFxidHNwqLw0Wualdf7uKa5CrTfFM8QXTmoEOQGgxqsyM+rCzUrD8Mtx8UCma3NAVFqwdK8K9ISLfIdgkcZWmbOojVOS6izm4hC4Y2/ExxOIcFxeaq8CNlBmqz4qF5cT/kzuqwgcG1gKJoG1yGXxR8odasEHJehxNLoSZ8XFquQZdb0tmHg+htKa/sfDuOX8fp6izESjjSwfcgy6YFNMGVGJJl6vRt37sQi+bqJM2qhjt/Q/ykpHL2MHr5mjIuUT55snNTSYPoCA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=NHMEqlakycRIn4FPgim7eWgEDoH+HRg02a326Y7WYLQ=;
+ b=TAd5zepiivb7lFu/kGXkTbBYSRn3M2I3Ct8q1Dj7R/nlXeRdWxuW3/AqulEQ8B721366vTKtHp6sa2zNfXJ9/Iwbf3SZAsK0VwvWudX15dIATz6bwWjdGaYJ+HuhKv2QCJj4BuUllEG5KXgZ6/JNKsDpK6I7JGDU7r4/qiHTra07qlY4xZdvQn115KI/beXtO7Zc4cl70xCc9Hn1fVXv3ZNbPo+MBTokNG7X7ir+6/miRgj+JND49FqHtmX1RtPXdiaSR7QDf2Uegb+fNrFzmypNA5xSEiT4FVKwy8Nl9n9tcGG0DBg0EC8C+1VnSknVv2Ipqm+4RirwK+zoZpSF1g==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
+ dkim=none; arc=none
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:11e::14)
+ by TYCP286MB1946.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:103::5) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4823.18; Sat, 25 Dec
+ 2021 07:18:02 +0000
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2]) by TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::807e:a600:21c4:42a2%4]) with mapi id 15.20.4823.021; Sat, 25 Dec 2021
+ 07:18:02 +0000
+From:   Oscar Shiang <oscar0225@livemail.tw>
+To:     bigeasy@linutronix.de
+Cc:     jkacur@redhat.com, linux-rt-users@vger.kernel.org,
+        oscar0225@livemail.tw, williams@redhat.com
+Subject: Re: [PATCH] rt-numa: Correct the comment of numa_initialize()
+Date:   Sat, 25 Dec 2021 15:17:12 +0800
+Message-ID: <TYCP286MB19139E08FF93D414E381E4BEA1409@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <YcSdzd3jmjV/rxBB@linutronix.de>
+References: <YcSdzd3jmjV/rxBB@linutronix.de>
+Content-Transfer-Encoding: 7BIT
+Content-Type:   text/plain; charset=US-ASCII
+X-TMN:  [oIqWqKriQto/M17xmNOM0qLCLNePWJYg]
+X-ClientProxiedBy: HK2PR02CA0153.apcprd02.prod.outlook.com
+ (2603:1096:201:1f::13) To TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ (2603:1096:400:11e::14)
+X-Microsoft-Original-Message-ID: <20211225071711.25085-1-oscar0225@livemail.tw>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:Xeet9qeBg7VpsyOjK6029ybcbWO5Yw1TQTT4t0e8vF2l8PTRZxs
- o1S61a6LXxR+Wjzzv4P16Bw/YwlKL2g5ZlMEkYsyYt8O3iG0QLgKViHXiUSvtw8zYf9ONrr
- swHSM8nnySoxWll50aO6Bqtus2OUdt2iBx6BocNJ7CADQkG6YlFlJ772ksySFyvBdZUjlLS
- 8gQVVWBR4vsHvGbdXOl9w==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:AdK+zt0ryVI=:Y1sgYqxSL50lHxpj4T2e12
- I/lFZN5YGWd1mQJjwcvgE/IHbOzaNVtUXr6cWXqfcru8k7K+bEQHkDm4yLtz+5Js+qOvxpE3W
- wcw7wfUlZPSo7VPgxS3hzaCaHVrBUM3y3e7sbvhbF4M8JplztGmoN/ME8W3VVWUSS7q5TTwVC
- XCGujLJggQ7QBR6vhoAfBpcMD5eUDHVtNLsmBa69alMzg/8i8e2PVhbm/soNHXHBTvBYHNZhy
- UPRXP4jOBCU/jqx3sXerY4FCSqnHSLC5ZHTQ2s6p64VCEc/gukLxefcTxmBwFQ8DjlAzMF/Kb
- HmiAJmeJfDs/fxMf4YKeHFEf3duAubbWfPzZZPkB47HI036PkJiMe1GWt+RbeLrv63h6GF64H
- DLP2Dcx0BhZWOY4XksMzWF1uT6Vq7Mb+qKAFamtlyaav00fSDlyB3RV8P1Oo0clSmFdReJ8kt
- eC0CddsmDhlX6Cy/NUTm8ksW/Gad8J95ZAGmipHcyNfCJEpFlk5XdHo5ncppRDZWtXaNX0/g0
- kQTRtUe25RQ3vAx1DsFFmDvUDWv+VHJBzL+225+vtWZZWqqbGF14t0ONMeWeCAYUCUd/rmwLn
- Ay8VPo4ldf1d5RbN4gnUkiiLhVB/erVVRfhqEo0Hi8AAZRBQ1U1c0kGZbVVEeng195ogBZhIA
- 1R+M59noy59Klts0rWzfheik223XB+DCDTJVrRdKJ8JdYIYg4IFBCFfNhyP2OdHnxbCkY1OoK
- KXjWDty79Qf7QEClCH3crIu3L4ewBtAQMBxWEhFGpHkhIH0y5D/2OWaKbtWBqyAO6Jo3zPONg
- EWmSsh3Fzo7imjXL6a27vr+VpJVIJI8COcUQJGUWdXwtr3ARCg1EUy7APT6zfUuh1wXFIx5pW
- VytoSoMpjLWS20TP7kk5rwNiVTatqqt7sB1WYtP0DReUvWBZzgbVisUGeejOPznCNVOZ4ey8U
- upm9HEhYqgIeSAN+UfeaznaXmAXTm9IOTKUvx3Vm6a3hOnnSfYHcbEBjIVXd6+lUUBs6PLQ4C
- JtNkWgGpBNan41w3dsqV+VCNM+2HN1QBS/sfrnJ2iR5ucIMKWICQwPOhtx9ce78r1Lofk/p/S
- vbgAkskIMFIFK8=
+X-MS-Exchange-MessageSentRepresentingType: 1
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 24f7ddc0-f677-42f9-f93e-08d9c776b046
+X-MS-TrafficTypeDiagnostic: TYCP286MB1946:EE_
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: sODi2b76MzH096N12GY1ZBEzMvJ+MCi4wc85oCpTz22uXi2vFbfjlWBL7+CjcoYd7XyZDqZ3QIIKuoBbLyG7Sxe+/Z+WvW/NuhqpEbiymh5vltg7SvK2ACM7ZduxaHRkTvZ9szcDOk+Vyw6aJ63HbeDP7++bNVyNb1qKobTLu1iocEiV+epI7AlqlDrEJfgLfjbYC2g7QyFUwUqIJ5DWG8VpQP5NPWXJW8cUqaiVeS3uMbmPyyu5YMRFkKBzT1cKsd5Kxw35TIpgKcRGris0vr73NRSDZmzmdDoxLTCntjCisvwIdBEh2If8KTLUm30QvCcqsJppF+kKqeeLbdTWz4yOQerwc2qXy+OSRFu91NzLddWwzVee2PNJGV58QRm6Al8O/VfM+eWiAlY++istQ9AY2zQHEJQvkSRVYVzLo6a/ZUeaobMPlkkCiOe63KXY+8CBRMkvq6T8ucY4GksB7h92fm+7Ly+P2KBgM0JnhftPWTfJ0rNPmAhwWuH6+Q5UkCoQCE7Wsat7ohVADFtIpsSjo4PVJ9liRYHXj7R5V/iYIdq843hI11emGoGO+TS85CWeao/lnUC5vnRBG4t6LA==
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?65bc7BhS6jyPFs16GaDq0F4nmZUz/5X6vbCuiAVpwfrvsr6369B1hXzjdf68?=
+ =?us-ascii?Q?yQIo0GMEqzk8nTixbUeto9gtnK74yJk1At3/W8WfTn9zpH72UxFRy8O9Sif6?=
+ =?us-ascii?Q?MN5o8KqrTRoKJx6P/mS9wjPMMrAc4LbgANfHHcrslGa0zt67wpQm26PdG9i6?=
+ =?us-ascii?Q?OYj4PC85kGY2iiXy9VfWnQSIhOy7ZVCN4Mu7D4vzJfyA/POBYyuy2olsEO7B?=
+ =?us-ascii?Q?L1u2oGU5RCwuZ7OAlMBCINe98I9lR6QQNhMnE4cCDTwUlkhvMGynQzb4s63r?=
+ =?us-ascii?Q?jAh+AgMTeiKe1KOW7Tjdvg4bp/FP8zNpfW9szqnvnbvz0dgSBuieodig8qMO?=
+ =?us-ascii?Q?2LJgEhzH9ClJ7nPiAr1M58ZchsvObWHORXppfcjqtaYSIn0WxPWKAfqXZEE9?=
+ =?us-ascii?Q?CbGbyXAhj+vECpafuXp7ee2FWt1AaHZV9U0gXDfiznmuZ3BD7WK+V3y0LGx1?=
+ =?us-ascii?Q?JbcdQfXkD2NWQYNTWuNd+rw/wuEbmwh2zQIIQ7r5wW/2drNLIBsLvgeZqqDB?=
+ =?us-ascii?Q?qFIsEAmURRStzpWgZB9ImwLfJp0bqwfnq9rmLB1kdGK4FQO4gUD3ho6TcKoS?=
+ =?us-ascii?Q?2U6cbhiC2BZep25+xAHUTN5g1l80kPLkfPNnA0IOt5qRC/Sclzxt/Jtbn5Fk?=
+ =?us-ascii?Q?YRCSpEB14bioRMUs+BzxmU+If7m3AceFrhCNtOUaMO1Kgxs4qM/k2zQAMAo5?=
+ =?us-ascii?Q?+mYqRebcDAi1VeXE3wqfJJnCt34JfT1KS+M36DeQCXm0TMMLWM7jf0WVJd6y?=
+ =?us-ascii?Q?5zh26yOztBkuqQuuyHTBRKwWH9QvruMvvFNYwJYza9J3Ss8Hdd+iRbyj6isz?=
+ =?us-ascii?Q?nLc5ZCnh7oDp9+tCc9wpcGkRFkmv5cyPQNOxy9JVM9fvAmRkstLSSjxmIN8m?=
+ =?us-ascii?Q?gFLX3hVm/RWAfxqkFthprs5E0aZ0jVK7uGFCPX0QrP0zmzJ4Pw6TD74PPEt3?=
+ =?us-ascii?Q?footZl0ZFbmRa4BesExTDA=3D=3D?=
+X-OriginatorOrg: sct-15-20-4755-11-msonline-outlook-05f45.templateTenant
+X-MS-Exchange-CrossTenant-Network-Message-Id: 24f7ddc0-f677-42f9-f93e-08d9c776b046
+X-MS-Exchange-CrossTenant-AuthSource: TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Dec 2021 07:18:02.9574
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYCP286MB1946
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 2021-12-23 at 17:13 +0100, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the v5.16-rc6-rt12 patch set.
->
-> Changes since v5.16-rc6-rt11:
-...
-> =C2=A0 - The "Memory controller" (CONFIG_MEMCG) can be enabled again.
+> Based on that, neither 0 nor 1 is defined.
 
-FWIW, LTP testcases pass on rpi4 and x86_64 boxen with no gripeage.
-Full LTP with maximally bloated config was as uninteresting as one can
-hope for.
+Yes, it is.
+
+But I think the comment is to describe the return value of numa_initialize()
+not for numa_available().
+
+That is also the reason why it has 0 and 1 as its return values.
+
+Oscar
