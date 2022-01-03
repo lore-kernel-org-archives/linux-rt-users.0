@@ -2,101 +2,76 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2CF2DC433F5
-	for <linux-rt-users@archiver.kernel.org>; Sat,  1 Jan 2022 21:18:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EBD6EC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jan 2022 13:56:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232720AbiAAVSo (ORCPT
+        id S233113AbiACN4G (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 1 Jan 2022 16:18:44 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:47806 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S229961AbiAAVSo (ORCPT
+        Mon, 3 Jan 2022 08:56:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59856 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229531AbiACN4F (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 1 Jan 2022 16:18:44 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1641071923;
+        Mon, 3 Jan 2022 08:56:05 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 36C32C061761;
+        Mon,  3 Jan 2022 05:56:05 -0800 (PST)
+Date:   Mon, 3 Jan 2022 14:56:00 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1641218161;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=VfinJrBVuVKxezw2axzeYyy3h3zEaU7q681zxGonGgs=;
-        b=BGFzg3cAlGsdKX0h+zc/QdOAeCX8iABvd9ghB9MwDRC5mDcD5RlUL3jkJ9hsWOuHtzjIYx
-        YAvu2c47TS9ozgBfaXNIPDw3in01GOmI552woPgbgz7HjUuu90pDc5jttIb3c0Z/eK5jLS
-        iozk5WPzwwC97B00LzQbqL9UP1GNXhE=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-287-QuencM62NeqFImzMgrekAQ-1; Sat, 01 Jan 2022 16:18:42 -0500
-X-MC-Unique: QuencM62NeqFImzMgrekAQ-1
-Received: by mail-qt1-f198.google.com with SMTP id h13-20020ac87d4d000000b002af9c496444so22249636qtb.22
-        for <linux-rt-users@vger.kernel.org>; Sat, 01 Jan 2022 13:18:42 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=VfinJrBVuVKxezw2axzeYyy3h3zEaU7q681zxGonGgs=;
-        b=eO1ng+kGklc5X3Oybyl4rq1woJNZPkqO9oaD2j+IYW0i7OWm1vWH1K9EThxlPueo5s
-         aqzD0LeGwg2mmva4WkbI5DN5F3ia0BCHyMTUVb04o1XPipgYGKo5l/4DtiNIjLaWhWM9
-         BMwMEBkbqb2H0XgVBctpSyqOlq2Sn3zk6d2+0DNenCMM5iQyrjMyxuFEcdP0xKk39CPB
-         5v9SRFYtv3JK7fLgOj/tx8kG/CM52Y/XnDW2rpQWgNRJpvkUXkDw9ksIpGxZPCnCpG7G
-         CvHoVyF1HIBA0O+dODrvSo+XHeFErxc/60CrLAXpZ95eOrvsjygU5pohTVC70CRLs+7n
-         QVWQ==
-X-Gm-Message-State: AOAM530HGH3M82rlHh/Aek4MqvFNawnzU6x9A7GxLbURZcMLe4sgKavO
-        msCmC2pP6+WzIUWKxVVtx4BGLlP7XikopgrHt0d+3c8V8QBLBI0X4y4MZ1DlxXJZmqwnot2b4MI
-        4kIW57p0FLjLRQf5sUTEb/hsThpo=
-X-Received: by 2002:a05:6214:2346:: with SMTP id hu6mr13895643qvb.31.1641071922219;
-        Sat, 01 Jan 2022 13:18:42 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJzk6Xq8ZCCh9EOeHKqgP1uGwqHBtvWGqpj+gmjMDIKexDgVlBFYgQbjoWQoqos9NOzr+F5LCQ==
-X-Received: by 2002:a05:6214:2346:: with SMTP id hu6mr13895634qvb.31.1641071922064;
-        Sat, 01 Jan 2022 13:18:42 -0800 (PST)
-Received: from fionn (bras-base-rdwyon0600w-grc-10-174-88-120-130.dsl.bell.ca. [174.88.120.130])
-        by smtp.gmail.com with ESMTPSA id s4sm24797516qko.47.2022.01.01.13.18.41
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 01 Jan 2022 13:18:41 -0800 (PST)
-Date:   Sat, 1 Jan 2022 16:18:40 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-To:     Oscar Shiang <oscar0225@livemail.tw>
-cc:     williams@redhat.com, peterx@redhat.com,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-tests: oslat.8: Remove the argument of --bias
-In-Reply-To: <TYCP286MB19139F2712AF29EB517F70FBA1459@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
-Message-ID: <dcdb4ae0-d44c-4a3a-1342-8c832749d8fc@redhat.com>
-References: <TYCP286MB19139F2712AF29EB517F70FBA1459@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
+        bh=dqKZZ+ljUNVf1aTbkbenLLudzqsUvVwUVUrwoLCM40I=;
+        b=jJ9yLz6AWWWhGReceaeZtyKZY4XcXM9ys23f/LZaxWmjWZu1u18sFhU3EeonFpa64DIudk
+        35JUtOnJEsz8B7CiflXsUFBlktKD8L6EUNF/WXBiVLI/p2jOouhPO5BhbJkzlH1w45dfNh
+        f3PlaskXcWeBzfwDl9M4/1De/s75/tZhf7YIKk0xCds5aUSBuIrUXUEnJx3ysPY7Ye+9jg
+        Tp3PpujpidkwWgqZlT/no9qeO+mFDKomIHaXqn2yfLKY8HU0PlWXKPGO0wi5ukKXsqNcoq
+        Nl5I1US537tWqZ4uGoq5N5jvzJdWbbH8QSx1x4frDlZ3PvvSIh1WUH3KzFrngA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1641218161;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=dqKZZ+ljUNVf1aTbkbenLLudzqsUvVwUVUrwoLCM40I=;
+        b=4Z/GfZIeNQMsc+8OqD5hAgBrSUy9D64owNC8g/yktjPsj1S+v1NxZJHmSScK5MeWgl8O29
+        aPPlKs+Yj58nCXCA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mike Galbraith <efault@gmx.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.16-rc6-rt12
+Message-ID: <YdMAcJGoUMuaSHKb@linutronix.de>
+References: <YcSgQY8lzb6MkQPx@linutronix.de>
+ <64294bf40ace6be86a295099b895a7d1f6a5c49f.camel@gmx.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <64294bf40ace6be86a295099b895a7d1f6a5c49f.camel@gmx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2021-12-25 03:16:57 [+0100], Mike Galbraith wrote:
+> On Thu, 2021-12-23 at 17:13 +0100, Sebastian Andrzej Siewior wrote:
+> > Dear RT folks!
+> >
+> > I'm pleased to announce the v5.16-rc6-rt12 patch set.
+> >
+> > Changes since v5.16-rc6-rt11:
+> ...
+> > =C2=A0 - The "Memory controller" (CONFIG_MEMCG) can be enabled again.
+>=20
+> FWIW, LTP testcases pass on rpi4 and x86_64 boxen with no gripeage.
+> Full LTP with maximally bloated config was as uninteresting as one can
+> hope for.
 
+Okay, thank you. I'm going to add an reference to your mail in case
+someone asks.
 
-On Thu, 30 Dec 2021, Oscar Shiang wrote:
-
-> The option --bias does not require an argument and the bias should
-> be estimated later.
-> 
-> There is no need to provide USEC to --bias option.
-> 
-> Signed-off-by: Oscar Shiang <oscar0225@livemail.tw>
-> ---
->  src/oslat/oslat.8 | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/src/oslat/oslat.8 b/src/oslat/oslat.8
-> index 4b28abd..39b36df 100644
-> --- a/src/oslat/oslat.8
-> +++ b/src/oslat/oslat.8
-> @@ -18,7 +18,7 @@ TSC information and measuring the time frequently during the process.
->  .B \-b, \-\-bucket-size=N
->  Specify the number of the buckets (4-1024).
->  .TP
-> -.B \-B, \-\-bias=USEC
-> +.B \-B, \-\-bias
->  Add a bias to all the buckets using the estimated mininum.
->  .TP
->  .B \-c, \-\-cpu-list=CPULIST
-> -- 
-> 2.25.1
-> 
-> 
-Signed-off-by: John Kacur <jkacur@gmail.com>
-
+Sebastian
