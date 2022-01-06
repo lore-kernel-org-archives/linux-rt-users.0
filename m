@@ -2,39 +2,39 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 232E7C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Jan 2022 00:31:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 39161C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Jan 2022 23:40:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1343806AbiAFAb5 (ORCPT
+        id S245626AbiAFXkD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 5 Jan 2022 19:31:57 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:24868 "EHLO
+        Thu, 6 Jan 2022 18:40:03 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:24231 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1343809AbiAFAbq (ORCPT
+        by vger.kernel.org with ESMTP id S245603AbiAFXkD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 5 Jan 2022 19:31:46 -0500
+        Thu, 6 Jan 2022 18:40:03 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1641429105;
+        s=mimecast20190719; t=1641512402;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=csY0xQkbTlH3U/FWpRiwb9k561geNDd80dW+afPDJzw=;
-        b=Jh2NTz8ocP2LZYa37ZT0BJ59KNg/HJUE3FzHOlMRAtHZAEJLiqib4dgulA6Qz4km1eRQtf
-        9BX8uJII+wA1H3eCwQZkpe6+nKajvGGlb+JwAeKQ2Ycg7fpbbZr3NysVPAXfjF49cBXK5r
-        Peqv1rFkDSlIqvFqBFlT8X/ftDKFGy4=
+        bh=snfAN0ArrPjFN7o3z+hAO2zHFv1mtZb/ukDqj+26TZQ=;
+        b=F7jjXeLXWDn/8/utgdff7e1xGbocVig+kGYLAIll5fHqI1axeT1aAOQcFSXIFXfmgdyedf
+        7hL+PKLcJ9O/EQO69bYB+KnCGg19J044K8/VarZHlN+mD7yUb+vypEw7YeEYh05YWI6gpx
+        EMgz60v0R1vhnjAmUzafUYnI2sllMnE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-556-9QbHZVpxNUe3EWw_Mlft4A-1; Wed, 05 Jan 2022 19:31:42 -0500
-X-MC-Unique: 9QbHZVpxNUe3EWw_Mlft4A-1
+ us-mta-424-Qh24qR7gOLWqCBPV1rCZmw-1; Thu, 06 Jan 2022 18:39:57 -0500
+X-MC-Unique: Qh24qR7gOLWqCBPV1rCZmw-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 474E8185302A;
-        Thu,  6 Jan 2022 00:31:40 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B82188015CD;
+        Thu,  6 Jan 2022 23:39:55 +0000 (UTC)
 Received: from localhost (unknown [10.22.8.179])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id DAD0B108C7;
-        Thu,  6 Jan 2022 00:31:38 +0000 (UTC)
-Date:   Wed, 5 Jan 2022 21:31:37 -0300
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 6588F104F6;
+        Thu,  6 Jan 2022 23:39:54 +0000 (UTC)
+Date:   Thu, 6 Jan 2022 20:39:53 -0300
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -46,11 +46,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
         Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.90-rt60
-Message-ID: <YdY4aTWXU1mlwsZI@uudg.org>
+Subject: [ANNOUNCE] 4.14.261-rt127
+Message-ID: <Ydd9yTTun4Wzcka/@uudg.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
@@ -61,29 +59,30 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hello RT-list!
 
-I'm pleased to announce the 5.10.90-rt60 stable release.
+I'm pleased to announce the 4.14.261-rt127 stable release.
 
-This release is just an update to the new stable 5.10.90
+This release is just an update to the new stable 4.14.261
 version and no RT specific changes have been performed.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.10-rt
-  Head SHA1: b4e833b63931f1d9fe1f23b44ab8e37a25b1b03f
+  branch: v4.14-rt
+  Head SHA1: f0e3531534b936c7cc2a171dffd21ee5c95edb44
 
-Or to build 5.10.90-rt60 directly, the following patches should be applied:
+Or to build 4.14.261-rt127 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.90.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.261.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.90-rt60.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.261-rt127.patch.xz
+
 
 All keys used for the uploads can be found on the following git repository:
 
-  git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
 
 Enjoy!
