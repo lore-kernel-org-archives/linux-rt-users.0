@@ -2,43 +2,46 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 39161C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Jan 2022 23:40:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 988C0C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 02:15:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S245626AbiAFXkD (ORCPT
+        id S1345316AbiAGCPL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 6 Jan 2022 18:40:03 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:24231 "EHLO
+        Thu, 6 Jan 2022 21:15:11 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:34662 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S245603AbiAFXkD (ORCPT
+        by vger.kernel.org with ESMTP id S1345308AbiAGCPK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 6 Jan 2022 18:40:03 -0500
+        Thu, 6 Jan 2022 21:15:10 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1641512402;
+        s=mimecast20190719; t=1641521709;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=snfAN0ArrPjFN7o3z+hAO2zHFv1mtZb/ukDqj+26TZQ=;
-        b=F7jjXeLXWDn/8/utgdff7e1xGbocVig+kGYLAIll5fHqI1axeT1aAOQcFSXIFXfmgdyedf
-        7hL+PKLcJ9O/EQO69bYB+KnCGg19J044K8/VarZHlN+mD7yUb+vypEw7YeEYh05YWI6gpx
-        EMgz60v0R1vhnjAmUzafUYnI2sllMnE=
+         to:to:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=IrYXyJ7QBFhCYeLjDtYNF4VC+c+Lpn756lQ3ts75Kjo=;
+        b=g6CGKC3jwBaJmR8e7dm7k4cB5pevxiBpPLlFY2RvCNx+rHbhSfuIf+brTSmT7O4NEu0zPe
+        UV2WIoF4hDTCUKXIWVphVzV4VlIO+J/6pDQHefg0xncfZiNux0auPpz2uhJ3sOzueUP6iv
+        EvjI4mOpqgAf1c70DeTogRtj7pVzxzA=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-424-Qh24qR7gOLWqCBPV1rCZmw-1; Thu, 06 Jan 2022 18:39:57 -0500
-X-MC-Unique: Qh24qR7gOLWqCBPV1rCZmw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-280-a2dNKw5vMGCMB8uVfdDbgw-1; Thu, 06 Jan 2022 21:15:06 -0500
+X-MC-Unique: a2dNKw5vMGCMB8uVfdDbgw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B82188015CD;
-        Thu,  6 Jan 2022 23:39:55 +0000 (UTC)
-Received: from localhost (unknown [10.22.8.179])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 6588F104F6;
-        Thu,  6 Jan 2022 23:39:54 +0000 (UTC)
-Date:   Thu, 6 Jan 2022 20:39:53 -0300
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F6E78015CD;
+        Fri,  7 Jan 2022 02:15:05 +0000 (UTC)
+Received: from lclaudio.dyndns.org (unknown [10.22.8.179])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D2F2100164A;
+        Fri,  7 Jan 2022 02:15:04 +0000 (UTC)
+Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
+        id A9F6A3C0048; Thu,  6 Jan 2022 23:15:02 -0300 (-03)
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        "stable-rt@vger.kernel.org"@redhat.com,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -46,45 +49,38 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
         Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.261-rt127
-Message-ID: <Ydd9yTTun4Wzcka/@uudg.org>
+Subject: [PATCH RT 3/3] Linux 5.10.90-rt61-rc1
+Date:   Thu,  6 Jan 2022 23:15:02 -0300
+Message-Id: <20220107021502.1121597-4-lgoncalv@redhat.com>
+In-Reply-To: <20220107021502.1121597-1-lgoncalv@redhat.com>
+References: <20220107021502.1121597-1-lgoncalv@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+v5.10.90-rt61-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-I'm pleased to announce the 4.14.261-rt127 stable release.
-
-This release is just an update to the new stable 4.14.261
-version and no RT specific changes have been performed.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: f0e3531534b936c7cc2a171dffd21ee5c95edb44
-
-Or to build 4.14.261-rt127 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.261.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.261-rt127.patch.xz
+-----------
 
 
-All keys used for the uploads can be found on the following git repository:
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-
-Enjoy!
-Luis
+diff --git a/localversion-rt b/localversion-rt
+index 66fa05e70f292..c040746653492 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt60
++-rt61-rc1
+-- 
+2.33.1
 
