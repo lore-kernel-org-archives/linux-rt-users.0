@@ -2,37 +2,24 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A12F9C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 11:49:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8543FC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 14:25:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347221AbiAGLty (ORCPT
+        id S239146AbiAGOZ1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 Jan 2022 06:49:54 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36382 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238042AbiAGLtx (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 Jan 2022 06:49:53 -0500
-Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 800F7C061245;
-        Fri,  7 Jan 2022 03:49:53 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=metanate.com; s=stronger; h=In-Reply-To:Content-Type:References:Message-ID:
-        Subject:Cc:To:From:Date:Reply-To:Content-Transfer-Encoding:Content-ID:
-        Content-Description; bh=DBw/yxgkvw2Kf7vhLp4FcogOKyh2cchQam1f9G18PGg=; b=kOuwZ
-        rWvV2p2OgeZwCFNQJQPxkmu8WhWcubSfQ8KVtEvseu4O+GGl9oAREjqYzlyyst3Kh90lU9rLaHXnS
-        4/KUhbupU/eCvM/D2g3rcsAniIW6Sn3PIP668vEKtGe/4TGOjKiXJdbjUXh5TWChfDggeqqwcK6Nb
-        qr9S7qR1R42trU2lSwn9O2j+IeWufNwyowxUmbFgZDJohdoPrluKl0/x9nAdv4r9Y1dM2f8QzFRQJ
-        rCB7MogGTsyUrIpzr/53asHuCoH5GEf/mPgI0qbejILaMULHipUO6tW0vtaq93GxtXWJELaxUk0By
-        QzPReYW1OI7TQGTNXdnVfVbDTcPug==;
-Received: from [81.174.171.191] (helo=donbot)
-        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <john@metanate.com>)
-        id 1n5nki-0006Nq-5S; Fri, 07 Jan 2022 11:49:48 +0000
-Date:   Fri, 7 Jan 2022 11:49:46 +0000
-From:   John Keeping <john@metanate.com>
-To:     Dietmar Eggemann <dietmar.eggemann@arm.com>
+        Fri, 7 Jan 2022 09:25:27 -0500
+Received: from foss.arm.com ([217.140.110.172]:41090 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S238858AbiAGOZY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 7 Jan 2022 09:25:24 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 0174613A1;
+        Fri,  7 Jan 2022 06:25:24 -0800 (PST)
+Received: from [192.168.178.6] (unknown [172.31.20.19])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 38D8F3F774;
+        Fri,  7 Jan 2022 06:25:22 -0800 (PST)
+Subject: Re: [RT] BUG in sched/cpupri.c
+To:     John Keeping <john@metanate.com>
 Cc:     Valentin Schneider <valentin.schneider@arm.com>,
         linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
@@ -42,74 +29,82 @@ Cc:     Valentin Schneider <valentin.schneider@arm.com>,
         Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
         linux-kernel@vger.kernel.org
-Subject: Re: [RT] BUG in sched/cpupri.c
-Message-ID: <Ydgo2lENzywieaZL@donbot>
 References: <Yb3vXx3DcqVOi+EA@donbot>
- <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com>
- <87zgou6iq1.mognet@arm.com>
+ <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com>
  <20211221164528.3c84543f.john@metanate.com>
- <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
- <87r1a4775a.mognet@arm.com>
- <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
+ <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com> <87r1a4775a.mognet@arm.com>
+ <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com> <Ydgo2lENzywieaZL@donbot>
+From:   Dietmar Eggemann <dietmar.eggemann@arm.com>
+Message-ID: <88826618-5ce8-dd1f-c9db-ec273fede3ce@arm.com>
+Date:   Fri, 7 Jan 2022 15:25:21 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.14.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
-X-Authenticated: YES
+In-Reply-To: <Ydgo2lENzywieaZL@donbot>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Jan 07, 2022 at 11:46:45AM +0100, Dietmar Eggemann wrote:
-> On 22/12/2021 20:48, Valentin Schneider wrote:
-> >  /*
-> > diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> > index ef8228d19382..8f3e3a1367b6 100644
-> > --- a/kernel/sched/rt.c
-> > +++ b/kernel/sched/rt.c
-> > @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
-> >  	if (!next_task)
-> >  		return 0;
-> >  
-> > +	/*
-> > +	 * It's possible that the next_task slipped in of higher priority than
-> > +	 * current, or current has *just* changed priority.  If that's the case
-> > +	 * just reschedule current.
-> > +	 */
-> > +	if (unlikely(next_task->prio < rq->curr->prio)) {
-> > +		resched_curr(rq);
-> > +		return 0;
-> > +	}
+On 07/01/2022 12:49, John Keeping wrote:
+> On Fri, Jan 07, 2022 at 11:46:45AM +0100, Dietmar Eggemann wrote:
+>> On 22/12/2021 20:48, Valentin Schneider wrote:
+>>>  /*
+>>> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+>>> index ef8228d19382..8f3e3a1367b6 100644
+>>> --- a/kernel/sched/rt.c
+>>> +++ b/kernel/sched/rt.c
+>>> @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
+>>>  	if (!next_task)
+>>>  		return 0;
+>>>  
+>>> +	/*
+>>> +	 * It's possible that the next_task slipped in of higher priority than
+>>> +	 * current, or current has *just* changed priority.  If that's the case
+>>> +	 * just reschedule current.
+>>> +	 */
+>>> +	if (unlikely(next_task->prio < rq->curr->prio)) {
+>>> +		resched_curr(rq);
+>>> +		return 0;
+>>> +	}
+>>
+>> IMHO, that's the bit which prevents the BUG.
+>>
+>> But this would also prevent the case in which rq->curr is an RT task
+>> with lower prio than next_task.
+>>
+>> Also `rq->curr = migration/X` goes still though which is somehow fine
+>> since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
+>>
+>> And DL tasks (like sugov:X go through and they can have
+>> task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
+>> freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
+>> can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
+>> by coincidence.
+>>
+>> So maybe something like this:
 > 
-> IMHO, that's the bit which prevents the BUG.
-> 
-> But this would also prevent the case in which rq->curr is an RT task
-> with lower prio than next_task.
-> 
-> Also `rq->curr = migration/X` goes still though which is somehow fine
-> since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
-> 
-> And DL tasks (like sugov:X go through and they can have
-> task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
-> freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
-> can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
-> by coincidence.
-> 
-> So maybe something like this:
+> Do you mean to replace just the one hunk from Valentin's patch with the
+> change below (keeping the rest), or are you saying that only the change
+> below is needed?
 
-Do you mean to replace just the one hunk from Valentin's patch with the
-change below (keeping the rest), or are you saying that only the change
-below is needed?
+The latter.
 
-> @ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
->                 if (!pull || rq->push_busy)
->                         return 0;
-> 
-> +               if (rq->curr->sched_class != &rt_sched_class) {
-> +                       resched_curr(rq);
-> +                       return 0;
-> +               }
-> +
->                 cpu = find_lowest_rq(rq->curr);
-> 
-> [...]
+I think Valentin wanted to see if something like this can also occur via
+sched_setscheduler() and maybe for this changes in switched_from_[rt/dl]
+will be necessary.
+
+>> @ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
+>>                 if (!pull || rq->push_busy)
+>>                         return 0;
+>>
+>> +               if (rq->curr->sched_class != &rt_sched_class) {
+>> +                       resched_curr(rq);
+>> +                       return 0;
+>> +               }
+>> +
+>>                 cpu = find_lowest_rq(rq->curr);
+>>
+>> [...
