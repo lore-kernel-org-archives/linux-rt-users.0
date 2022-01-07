@@ -2,145 +2,200 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9E32C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 02:19:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED84BC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 10:46:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345348AbiAGCT4 (ORCPT
+        id S237836AbiAGKqz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 6 Jan 2022 21:19:56 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:53757 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1345318AbiAGCT4 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 6 Jan 2022 21:19:56 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1641521995;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=xBY87WLDVEegvIdvOyVB6C7vFrMWm23N9YQpD+toFwo=;
-        b=Tu2BFA0/VtNjJ1L+k0s4QzUNGO+gRwPAcFgHifdbtowqoh8Kk2Tb/9JUyVHvVGY2O+DbfK
-        jNNTjgFcmax6hd8Z99LhtWXPFbN64pndhMpJ3y8ibpMp4undshdMv7Xf2yoOQ31FB+mCfs
-        aMN1B26pDrbOVKjBCBQurt+nwXxGJqk=
-Received: from mail-lf1-f70.google.com (mail-lf1-f70.google.com
- [209.85.167.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-433-4vO9anlAM1Krjc6xZmZ1sw-1; Thu, 06 Jan 2022 21:19:54 -0500
-X-MC-Unique: 4vO9anlAM1Krjc6xZmZ1sw-1
-Received: by mail-lf1-f70.google.com with SMTP id u4-20020a056512128400b0042abc4f4f9aso1277768lfs.15
-        for <linux-rt-users@vger.kernel.org>; Thu, 06 Jan 2022 18:19:53 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to;
-        bh=xBY87WLDVEegvIdvOyVB6C7vFrMWm23N9YQpD+toFwo=;
-        b=WQOO/STSvktmkx8OVK/FL4m8LEoEB32hxdMb8WZsvyHzRsloEhVLgeqP9k9oGnu0Y0
-         ppybAi7ZtbyXiFYvaFlf9dsD3WLjK6mcuPHTHoFSCJ+JSuwC61LEXbiFpyAK1f8XZxER
-         eqwyJxraZNNET9DxZ0qBU0qdbUXo6fgYsqQweO3UYnpqDTymE12ZPTS0c7o4nQuF10XQ
-         CmxCgMv9nP/MOHs0dJSFE1xM4mKmCd+R+dr1dLQhGtlC/2h4E9bGnP0dWGpV2zDeWH0R
-         ngUjTsG4EwSS0kcD3z2FTlW+B3B8FlQIoXgLctcI54m+bVMQdVZZIbY7KgxcaL8KiJWC
-         +N3Q==
-X-Gm-Message-State: AOAM531KVjpPptPLSMKOU8ElsEkjJUskg8Y40F15qpSpvtYDZo13F+8Y
-        7dm6LfsZ/EzLijLkNatE9YVtkCai4uxD91OKOWCxiJvFwIPfQ4gkHhDWfH6rgNu8jN5NLnM54Kh
-        GPeoARhL0P7PUzfFlLatz9LuOjOQiJcOOZjl1bNbmWS8=
-X-Received: by 2002:a05:6512:3223:: with SMTP id f3mr54704325lfe.593.1641521991119;
-        Thu, 06 Jan 2022 18:19:51 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJx7HZbV8X5mv5B+nTa1dGS/8SgEvdTMV1H2/lgG8F/UivDR4QpGRcY60eSLFrRw60Fvd2p0jzS76len2MnZaPE=
-X-Received: by 2002:a05:6512:3223:: with SMTP id f3mr54704306lfe.593.1641521990882;
- Thu, 06 Jan 2022 18:19:50 -0800 (PST)
+        Fri, 7 Jan 2022 05:46:55 -0500
+Received: from foss.arm.com ([217.140.110.172]:39382 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S237653AbiAGKqy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 7 Jan 2022 05:46:54 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 6F49C13D5;
+        Fri,  7 Jan 2022 02:46:54 -0800 (PST)
+Received: from [192.168.178.6] (unknown [172.31.20.19])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id A639C3F66F;
+        Fri,  7 Jan 2022 02:46:52 -0800 (PST)
+Subject: Re: [RT] BUG in sched/cpupri.c
+To:     Valentin Schneider <valentin.schneider@arm.com>,
+        John Keeping <john@metanate.com>
+Cc:     linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        linux-kernel@vger.kernel.org
+References: <Yb3vXx3DcqVOi+EA@donbot>
+ <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com>
+ <20211221164528.3c84543f.john@metanate.com>
+ <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com> <87r1a4775a.mognet@arm.com>
+From:   Dietmar Eggemann <dietmar.eggemann@arm.com>
+Message-ID: <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
+Date:   Fri, 7 Jan 2022 11:46:45 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.14.0
 MIME-Version: 1.0
-References: <20220107021502.1121597-1-lgoncalv@redhat.com>
-In-Reply-To: <20220107021502.1121597-1-lgoncalv@redhat.com>
-From:   Luis Goncalves <lgoncalv@redhat.com>
-Date:   Thu, 6 Jan 2022 23:19:39 -0300
-Message-ID: <CAD8J--_3bw6gw=RDqyZ+OcB97=Y0PzwrONWdujy09QaUe3FOxQ@mail.gmail.com>
-Subject: Re: [PATCH RT 0/3] Linux v5.10.90-rt61-rc1
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
+In-Reply-To: <87r1a4775a.mognet@arm.com>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jan 6, 2022 at 11:15 PM Luis Claudio R. Goncalves
-<lgoncalv@redhat.com> wrote:
->
-> Dear RT Folks,
->
-> This is the RT stable review cycle of patch 5.10.90-rt61-rc1.
->
-> Please scream at me if I messed something up. Please test the patches
-> too.
->
-> The -rc release will be uploaded to kernel.org and will be deleted
-> when the final release is out. This is just a review release (or
-> release candidate).
->
-> The pre-releases will not be pushed to the git repository, only the
-> final release is.
->
-> If all goes well, this patch will be converted to the next main
-> release on 2022-01-13.
->
-> Known problem:
->
->   There is a printk build warning that would be fixed by commit 43a17111c2553
->   ("printk: wake up klogd in vprintk_emit"), already present in v4.19-rt. I am
->   trying to decide whether it is justifiable to suggest the backport of this
->   commit to 4.14-stable or if I should write a simple rt-only fix. Comments are
->   welcome.
+On 22/12/2021 20:48, Valentin Schneider wrote:
+> On 22/12/21 18:46, Dietmar Eggemann wrote:
+>> On 21.12.21 17:45, John Keeping wrote:
+>>> On Tue, 21 Dec 2021 16:11:34 +0000
+>>> Valentin Schneider <valentin.schneider@arm.com> wrote:
+>>>
+>>>> On 20/12/21 18:35, Dietmar Eggemann wrote:
 
-Please disregard the note above. That was an error in my template message.
-There are no known errors in this -rc1 release.
+[...]
 
-Sorry for any inconvenience.
+>> switched_from_rt() -> rt_queue_pull_task(, pull_rt_task)
+>>   pull_rt_task()->tell_cpu_to_push()->irq_work_queue_on(&rq->rd->rto_push_work,)
+>>     rto_push_irq_work_func() -> push_rt_task(rq, true)
+>>
+>> seems to be the only way with pull=true.
+>>
+>> In my tests, rq->rt.rt_nr_running seems to be 0 when it happens.
+>>
+>> [   22.288537] CPU3 switched_to_rt: p=[ksoftirqd/3 35]
+>> [   22.288554] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] pi_task=[rcu_preempt 11] queued=1 running=0 prio=98 oldprio=120
+>> [   22.288636] CPU3 switched_from_rt: p=[ksoftirqd/3 35] rq->rt.rt_nr_running=0
+>>                                                          ^^^^^^^^^^^^^^^^^^^^^^
+>> [   22.288649] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] queued=1 running=1 prio=120 oldprio=98
+>> [   22.288681] CPU3 push_rt_task: next_task=[rcu_preempt 11] migr_dis=1 rq->curr=[ksoftirqd/3 35] pull=1
+>>                                                              ^^^^^^^^^^                           ^^^^^^
+> 
+> mark_wakeup_next_waiter() first deboosts the previous owner and then
+> wakeups the next top waiter. Seems like you somehow have the wakeup happen
+> before the push_rt_task IRQ work is run. Also, tell_cpu_to_push() should
+> only pick a CPU that is in rq->rd->rto_mask, which requires having at least
+> 2 RT tasks there...
 
-> To build 5.10.90-rt61-rc1 directly, the following patches should be applied:
->
->   https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
->
->   https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.90.xz
->
->   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.90-rt61-rc1.patch.xz
->
->
-> You can also build from 5.10.90-rt60 by applying the incremental patch:
->
->   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.90-rt60-rt61-rc1.patch.xz
->
-> Enjoy,
->
-> -- Luis
->
->
->
-> Luis Claudio R. Goncalves (1):
->   Linux 5.10.90-rt61-rc1
->
-> Sebastian Andrzej Siewior (1):
->   stop_machine: Remove this_cpu_ptr() from print_stop_info().
->
-> Thomas Gleixner (1):
->   eventfd: Make signal recursion protection a task bit
->
->  fs/aio.c                |  2 +-
->  fs/eventfd.c            | 12 +++++-------
->  include/linux/eventfd.h | 11 +++++------
->  include/linux/sched.h   |  4 ++++
->  kernel/stop_machine.c   |  6 +++++-
->  localversion-rt         |  2 +-
->  6 files changed, 21 insertions(+), 16 deletions(-)
->
-> --
-> 2.33.1
->
+True, this_cpu has rt_nr_running = 0 and *cpu* has rt_nr_running >= 2:
 
+  mark_wakeup_next_waiter()
+
+    (1) /* deboost */
+    rt_mutex_adjust_prio()
+
+      rt_mutex_setprio(current, ...)
+
+        rq = __task_rq_lock(current, );
+        check_class_changed(rq, p, prev_class, oldprio)
+
+          switched_from_rt()
+
+            if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
+              return;
+
+            rt_queue_pull_task(rq)
+
+              queue_balance_callback(rq, ..., pull_rt_task);
+
+                pull_rt_task()
+
+                  tell_cpu_to_push()
+
+                    *cpu* = rto_next_cpu(rq->rd)
+                    irq_work_queue_on(&rq->rd->rto_push_work, *cpu*)
+
+                      rto_push_irq_work_func()
+                        push_rt_task(rq, true) <-- !!!
+
+    (2) /* waking the top waiter */
+    rt_mutex_wake_q_add(wqh, waiter);
+
+> Now, that wakeup from the rtmutex unlock would give us a resched_curr() via
+> check_preempt_curr() if required, which is good, though I think we are
+> still missing some for sched_setscheduler() (there are no wakeups
+> there). So if we just have to live with an IRQ work popping in before we
+> get to preempt_schedule_irq() (or somesuch), then perhaps the below would
+> be sufficient.
+
+I think that's the case here but we are on the RT overloaded CPU (*cpu*).
+
+> 
+>> What about slightly changing the layout in switched_from_rt() (only lightly tested):
+>>
+>>
+>> @@ -2322,7 +2338,15 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
+>>          * we may need to handle the pulling of RT tasks
+>>          * now.
+>>          */
+>> -       if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
+>> +       if (!task_on_rq_queued(p))
+>> +               return;
+>> +
+>> +       if (task_current(rq, p) && (p->sched_class < &rt_sched_class)) {
+>> +               resched_curr(rq);
+>> +               return;
+>> +       }
+>> +
+>> +       if (rq->rt.rt_nr_running)
+>>                 return;
+>>
+>>         rt_queue_pull_task(rq);
+> 
+> If !rq->rt.rt_nr_running then there's no point in issuing a reschedule (at
+> least from RT's perspective; p->sched_class->switched_to() takes care of
+> the rest)
+
+Right.
+
+[...]
+
+>  /*
+> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+> index ef8228d19382..8f3e3a1367b6 100644
+> --- a/kernel/sched/rt.c
+> +++ b/kernel/sched/rt.c
+> @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
+>  	if (!next_task)
+>  		return 0;
+>  
+> +	/*
+> +	 * It's possible that the next_task slipped in of higher priority than
+> +	 * current, or current has *just* changed priority.  If that's the case
+> +	 * just reschedule current.
+> +	 */
+> +	if (unlikely(next_task->prio < rq->curr->prio)) {
+> +		resched_curr(rq);
+> +		return 0;
+> +	}
+
+IMHO, that's the bit which prevents the BUG.
+
+But this would also prevent the case in which rq->curr is an RT task
+with lower prio than next_task.
+
+Also `rq->curr = migration/X` goes still though which is somehow fine
+since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
+
+And DL tasks (like sugov:X go through and they can have
+task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
+freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
+can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
+by coincidence.
+
+So maybe something like this:
+
+@ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
+                if (!pull || rq->push_busy)
+                        return 0;
+
++               if (rq->curr->sched_class != &rt_sched_class) {
++                       resched_curr(rq);
++                       return 0;
++               }
++
+                cpu = find_lowest_rq(rq->curr);
+
+[...]
