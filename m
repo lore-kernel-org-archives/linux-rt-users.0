@@ -2,26 +2,39 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED84BC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 10:46:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A12F9C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 11:49:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237836AbiAGKqz (ORCPT
+        id S1347221AbiAGLty (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 Jan 2022 05:46:55 -0500
-Received: from foss.arm.com ([217.140.110.172]:39382 "EHLO foss.arm.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S237653AbiAGKqy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 Jan 2022 05:46:54 -0500
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 6F49C13D5;
-        Fri,  7 Jan 2022 02:46:54 -0800 (PST)
-Received: from [192.168.178.6] (unknown [172.31.20.19])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id A639C3F66F;
-        Fri,  7 Jan 2022 02:46:52 -0800 (PST)
-Subject: Re: [RT] BUG in sched/cpupri.c
-To:     Valentin Schneider <valentin.schneider@arm.com>,
-        John Keeping <john@metanate.com>
-Cc:     linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
+        Fri, 7 Jan 2022 06:49:54 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36382 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S238042AbiAGLtx (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 7 Jan 2022 06:49:53 -0500
+Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 800F7C061245;
+        Fri,  7 Jan 2022 03:49:53 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=metanate.com; s=stronger; h=In-Reply-To:Content-Type:References:Message-ID:
+        Subject:Cc:To:From:Date:Reply-To:Content-Transfer-Encoding:Content-ID:
+        Content-Description; bh=DBw/yxgkvw2Kf7vhLp4FcogOKyh2cchQam1f9G18PGg=; b=kOuwZ
+        rWvV2p2OgeZwCFNQJQPxkmu8WhWcubSfQ8KVtEvseu4O+GGl9oAREjqYzlyyst3Kh90lU9rLaHXnS
+        4/KUhbupU/eCvM/D2g3rcsAniIW6Sn3PIP668vEKtGe/4TGOjKiXJdbjUXh5TWChfDggeqqwcK6Nb
+        qr9S7qR1R42trU2lSwn9O2j+IeWufNwyowxUmbFgZDJohdoPrluKl0/x9nAdv4r9Y1dM2f8QzFRQJ
+        rCB7MogGTsyUrIpzr/53asHuCoH5GEf/mPgI0qbejILaMULHipUO6tW0vtaq93GxtXWJELaxUk0By
+        QzPReYW1OI7TQGTNXdnVfVbDTcPug==;
+Received: from [81.174.171.191] (helo=donbot)
+        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <john@metanate.com>)
+        id 1n5nki-0006Nq-5S; Fri, 07 Jan 2022 11:49:48 +0000
+Date:   Fri, 7 Jan 2022 11:49:46 +0000
+From:   John Keeping <john@metanate.com>
+To:     Dietmar Eggemann <dietmar.eggemann@arm.com>
+Cc:     Valentin Schneider <valentin.schneider@arm.com>,
+        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
         Juri Lelli <juri.lelli@redhat.com>,
         Vincent Guittot <vincent.guittot@linaro.org>,
@@ -29,173 +42,74 @@ Cc:     linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
         Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
         linux-kernel@vger.kernel.org
+Subject: Re: [RT] BUG in sched/cpupri.c
+Message-ID: <Ydgo2lENzywieaZL@donbot>
 References: <Yb3vXx3DcqVOi+EA@donbot>
- <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com>
+ <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com>
+ <87zgou6iq1.mognet@arm.com>
  <20211221164528.3c84543f.john@metanate.com>
- <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com> <87r1a4775a.mognet@arm.com>
-From:   Dietmar Eggemann <dietmar.eggemann@arm.com>
-Message-ID: <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
-Date:   Fri, 7 Jan 2022 11:46:45 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
- Thunderbird/78.14.0
+ <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
+ <87r1a4775a.mognet@arm.com>
+ <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
 MIME-Version: 1.0
-In-Reply-To: <87r1a4775a.mognet@arm.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
+X-Authenticated: YES
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 22/12/2021 20:48, Valentin Schneider wrote:
-> On 22/12/21 18:46, Dietmar Eggemann wrote:
->> On 21.12.21 17:45, John Keeping wrote:
->>> On Tue, 21 Dec 2021 16:11:34 +0000
->>> Valentin Schneider <valentin.schneider@arm.com> wrote:
->>>
->>>> On 20/12/21 18:35, Dietmar Eggemann wrote:
-
-[...]
-
->> switched_from_rt() -> rt_queue_pull_task(, pull_rt_task)
->>   pull_rt_task()->tell_cpu_to_push()->irq_work_queue_on(&rq->rd->rto_push_work,)
->>     rto_push_irq_work_func() -> push_rt_task(rq, true)
->>
->> seems to be the only way with pull=true.
->>
->> In my tests, rq->rt.rt_nr_running seems to be 0 when it happens.
->>
->> [   22.288537] CPU3 switched_to_rt: p=[ksoftirqd/3 35]
->> [   22.288554] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] pi_task=[rcu_preempt 11] queued=1 running=0 prio=98 oldprio=120
->> [   22.288636] CPU3 switched_from_rt: p=[ksoftirqd/3 35] rq->rt.rt_nr_running=0
->>                                                          ^^^^^^^^^^^^^^^^^^^^^^
->> [   22.288649] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] queued=1 running=1 prio=120 oldprio=98
->> [   22.288681] CPU3 push_rt_task: next_task=[rcu_preempt 11] migr_dis=1 rq->curr=[ksoftirqd/3 35] pull=1
->>                                                              ^^^^^^^^^^                           ^^^^^^
+On Fri, Jan 07, 2022 at 11:46:45AM +0100, Dietmar Eggemann wrote:
+> On 22/12/2021 20:48, Valentin Schneider wrote:
+> >  /*
+> > diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+> > index ef8228d19382..8f3e3a1367b6 100644
+> > --- a/kernel/sched/rt.c
+> > +++ b/kernel/sched/rt.c
+> > @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
+> >  	if (!next_task)
+> >  		return 0;
+> >  
+> > +	/*
+> > +	 * It's possible that the next_task slipped in of higher priority than
+> > +	 * current, or current has *just* changed priority.  If that's the case
+> > +	 * just reschedule current.
+> > +	 */
+> > +	if (unlikely(next_task->prio < rq->curr->prio)) {
+> > +		resched_curr(rq);
+> > +		return 0;
+> > +	}
 > 
-> mark_wakeup_next_waiter() first deboosts the previous owner and then
-> wakeups the next top waiter. Seems like you somehow have the wakeup happen
-> before the push_rt_task IRQ work is run. Also, tell_cpu_to_push() should
-> only pick a CPU that is in rq->rd->rto_mask, which requires having at least
-> 2 RT tasks there...
-
-True, this_cpu has rt_nr_running = 0 and *cpu* has rt_nr_running >= 2:
-
-  mark_wakeup_next_waiter()
-
-    (1) /* deboost */
-    rt_mutex_adjust_prio()
-
-      rt_mutex_setprio(current, ...)
-
-        rq = __task_rq_lock(current, );
-        check_class_changed(rq, p, prev_class, oldprio)
-
-          switched_from_rt()
-
-            if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
-              return;
-
-            rt_queue_pull_task(rq)
-
-              queue_balance_callback(rq, ..., pull_rt_task);
-
-                pull_rt_task()
-
-                  tell_cpu_to_push()
-
-                    *cpu* = rto_next_cpu(rq->rd)
-                    irq_work_queue_on(&rq->rd->rto_push_work, *cpu*)
-
-                      rto_push_irq_work_func()
-                        push_rt_task(rq, true) <-- !!!
-
-    (2) /* waking the top waiter */
-    rt_mutex_wake_q_add(wqh, waiter);
-
-> Now, that wakeup from the rtmutex unlock would give us a resched_curr() via
-> check_preempt_curr() if required, which is good, though I think we are
-> still missing some for sched_setscheduler() (there are no wakeups
-> there). So if we just have to live with an IRQ work popping in before we
-> get to preempt_schedule_irq() (or somesuch), then perhaps the below would
-> be sufficient.
-
-I think that's the case here but we are on the RT overloaded CPU (*cpu*).
-
+> IMHO, that's the bit which prevents the BUG.
 > 
->> What about slightly changing the layout in switched_from_rt() (only lightly tested):
->>
->>
->> @@ -2322,7 +2338,15 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
->>          * we may need to handle the pulling of RT tasks
->>          * now.
->>          */
->> -       if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
->> +       if (!task_on_rq_queued(p))
->> +               return;
->> +
->> +       if (task_current(rq, p) && (p->sched_class < &rt_sched_class)) {
->> +               resched_curr(rq);
->> +               return;
->> +       }
->> +
->> +       if (rq->rt.rt_nr_running)
->>                 return;
->>
->>         rt_queue_pull_task(rq);
+> But this would also prevent the case in which rq->curr is an RT task
+> with lower prio than next_task.
 > 
-> If !rq->rt.rt_nr_running then there's no point in issuing a reschedule (at
-> least from RT's perspective; p->sched_class->switched_to() takes care of
-> the rest)
+> Also `rq->curr = migration/X` goes still though which is somehow fine
+> since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
+> 
+> And DL tasks (like sugov:X go through and they can have
+> task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
+> freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
+> can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
+> by coincidence.
+> 
+> So maybe something like this:
 
-Right.
+Do you mean to replace just the one hunk from Valentin's patch with the
+change below (keeping the rest), or are you saying that only the change
+below is needed?
 
-[...]
-
->  /*
-> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> index ef8228d19382..8f3e3a1367b6 100644
-> --- a/kernel/sched/rt.c
-> +++ b/kernel/sched/rt.c
-> @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
->  	if (!next_task)
->  		return 0;
->  
-> +	/*
-> +	 * It's possible that the next_task slipped in of higher priority than
-> +	 * current, or current has *just* changed priority.  If that's the case
-> +	 * just reschedule current.
-> +	 */
-> +	if (unlikely(next_task->prio < rq->curr->prio)) {
-> +		resched_curr(rq);
-> +		return 0;
-> +	}
-
-IMHO, that's the bit which prevents the BUG.
-
-But this would also prevent the case in which rq->curr is an RT task
-with lower prio than next_task.
-
-Also `rq->curr = migration/X` goes still though which is somehow fine
-since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
-
-And DL tasks (like sugov:X go through and they can have
-task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
-freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
-can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
-by coincidence.
-
-So maybe something like this:
-
-@ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
-                if (!pull || rq->push_busy)
-                        return 0;
-
-+               if (rq->curr->sched_class != &rt_sched_class) {
-+                       resched_curr(rq);
-+                       return 0;
-+               }
-+
-                cpu = find_lowest_rq(rq->curr);
-
-[...]
+> @ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
+>                 if (!pull || rq->push_busy)
+>                         return 0;
+> 
+> +               if (rq->curr->sched_class != &rt_sched_class) {
+> +                       resched_curr(rq);
+> +                       return 0;
+> +               }
+> +
+>                 cpu = find_lowest_rq(rq->curr);
+> 
+> [...]
