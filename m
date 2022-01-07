@@ -2,46 +2,61 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0AC16C433FE
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 02:15:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E9E32C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 02:19:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345318AbiAGCPN (ORCPT
+        id S1345348AbiAGCT4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 6 Jan 2022 21:15:13 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:56470 "EHLO
+        Thu, 6 Jan 2022 21:19:56 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:53757 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1345311AbiAGCPK (ORCPT
+        by vger.kernel.org with ESMTP id S1345318AbiAGCT4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 6 Jan 2022 21:15:10 -0500
+        Thu, 6 Jan 2022 21:19:56 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1641521710;
+        s=mimecast20190719; t=1641521995;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
+         to:to:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=BzgW/hMAkaYmE/PCpGJg/xJsF2e9MkiTeEf2jdbYL6Q=;
-        b=TzT/WDT0eAQNAPJledVDV3mDR0quYc0aHknMIid+C/2/wN0ksVa9VcfKX6zkqrfHicTau0
-        o3GdDxp/oCYKCEvU9+J7no05AfPBLj9+NYCsbiT0oVppsvPKdfQ50Q3lK/8/pCXRYOy34R
-        apfUoyMkNaCETKt4ZyLsK2UwM9GS1zw=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=xBY87WLDVEegvIdvOyVB6C7vFrMWm23N9YQpD+toFwo=;
+        b=Tu2BFA0/VtNjJ1L+k0s4QzUNGO+gRwPAcFgHifdbtowqoh8Kk2Tb/9JUyVHvVGY2O+DbfK
+        jNNTjgFcmax6hd8Z99LhtWXPFbN64pndhMpJ3y8ibpMp4undshdMv7Xf2yoOQ31FB+mCfs
+        aMN1B26pDrbOVKjBCBQurt+nwXxGJqk=
+Received: from mail-lf1-f70.google.com (mail-lf1-f70.google.com
+ [209.85.167.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-133-KoIaiob8O7mf4Zlk4lcPCA-1; Thu, 06 Jan 2022 21:15:07 -0500
-X-MC-Unique: KoIaiob8O7mf4Zlk4lcPCA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 542DB8042E2;
-        Fri,  7 Jan 2022 02:15:05 +0000 (UTC)
-Received: from lclaudio.dyndns.org (unknown [10.22.8.179])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 486C599D6;
-        Fri,  7 Jan 2022 02:15:04 +0000 (UTC)
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id A17633C0025; Thu,  6 Jan 2022 23:15:02 -0300 (-03)
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+ us-mta-433-4vO9anlAM1Krjc6xZmZ1sw-1; Thu, 06 Jan 2022 21:19:54 -0500
+X-MC-Unique: 4vO9anlAM1Krjc6xZmZ1sw-1
+Received: by mail-lf1-f70.google.com with SMTP id u4-20020a056512128400b0042abc4f4f9aso1277768lfs.15
+        for <linux-rt-users@vger.kernel.org>; Thu, 06 Jan 2022 18:19:53 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to;
+        bh=xBY87WLDVEegvIdvOyVB6C7vFrMWm23N9YQpD+toFwo=;
+        b=WQOO/STSvktmkx8OVK/FL4m8LEoEB32hxdMb8WZsvyHzRsloEhVLgeqP9k9oGnu0Y0
+         ppybAi7ZtbyXiFYvaFlf9dsD3WLjK6mcuPHTHoFSCJ+JSuwC61LEXbiFpyAK1f8XZxER
+         eqwyJxraZNNET9DxZ0qBU0qdbUXo6fgYsqQweO3UYnpqDTymE12ZPTS0c7o4nQuF10XQ
+         CmxCgMv9nP/MOHs0dJSFE1xM4mKmCd+R+dr1dLQhGtlC/2h4E9bGnP0dWGpV2zDeWH0R
+         ngUjTsG4EwSS0kcD3z2FTlW+B3B8FlQIoXgLctcI54m+bVMQdVZZIbY7KgxcaL8KiJWC
+         +N3Q==
+X-Gm-Message-State: AOAM531KVjpPptPLSMKOU8ElsEkjJUskg8Y40F15qpSpvtYDZo13F+8Y
+        7dm6LfsZ/EzLijLkNatE9YVtkCai4uxD91OKOWCxiJvFwIPfQ4gkHhDWfH6rgNu8jN5NLnM54Kh
+        GPeoARhL0P7PUzfFlLatz9LuOjOQiJcOOZjl1bNbmWS8=
+X-Received: by 2002:a05:6512:3223:: with SMTP id f3mr54704325lfe.593.1641521991119;
+        Thu, 06 Jan 2022 18:19:51 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJx7HZbV8X5mv5B+nTa1dGS/8SgEvdTMV1H2/lgG8F/UivDR4QpGRcY60eSLFrRw60Fvd2p0jzS76len2MnZaPE=
+X-Received: by 2002:a05:6512:3223:: with SMTP id f3mr54704306lfe.593.1641521990882;
+ Thu, 06 Jan 2022 18:19:50 -0800 (PST)
+MIME-Version: 1.0
+References: <20220107021502.1121597-1-lgoncalv@redhat.com>
+In-Reply-To: <20220107021502.1121597-1-lgoncalv@redhat.com>
+From:   Luis Goncalves <lgoncalv@redhat.com>
+Date:   Thu, 6 Jan 2022 23:19:39 -0300
+Message-ID: <CAD8J--_3bw6gw=RDqyZ+OcB97=Y0PzwrONWdujy09QaUe3FOxQ@mail.gmail.com>
+Subject: Re: [PATCH RT 0/3] Linux v5.10.90-rt61-rc1
 To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "stable-rt@vger.kernel.org"@redhat.com,
-        Steven Rostedt <rostedt@goodmis.org>,
+        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -51,169 +66,81 @@ To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         Mark Gross <markgross@kernel.org>,
         Jeff Brady <jeffreyjbrady@gmail.com>,
         Luis Goncalves <lgoncalv@redhat.com>
-Cc:     Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Jason Wang <jasowang@redhat.com>,
-        Al Viro <viro@zeniv.linux.org.uk>
-Subject: [PATCH RT 1/3] eventfd: Make signal recursion protection a task bit
-Date:   Thu,  6 Jan 2022 23:15:00 -0300
-Message-Id: <20220107021502.1121597-2-lgoncalv@redhat.com>
-In-Reply-To: <20220107021502.1121597-1-lgoncalv@redhat.com>
-References: <20220107021502.1121597-1-lgoncalv@redhat.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+On Thu, Jan 6, 2022 at 11:15 PM Luis Claudio R. Goncalves
+<lgoncalv@redhat.com> wrote:
+>
+> Dear RT Folks,
+>
+> This is the RT stable review cycle of patch 5.10.90-rt61-rc1.
+>
+> Please scream at me if I messed something up. Please test the patches
+> too.
+>
+> The -rc release will be uploaded to kernel.org and will be deleted
+> when the final release is out. This is just a review release (or
+> release candidate).
+>
+> The pre-releases will not be pushed to the git repository, only the
+> final release is.
+>
+> If all goes well, this patch will be converted to the next main
+> release on 2022-01-13.
+>
+> Known problem:
+>
+>   There is a printk build warning that would be fixed by commit 43a17111c2553
+>   ("printk: wake up klogd in vprintk_emit"), already present in v4.19-rt. I am
+>   trying to decide whether it is justifiable to suggest the backport of this
+>   commit to 4.14-stable or if I should write a simple rt-only fix. Comments are
+>   welcome.
 
-v5.10.90-rt61-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Please disregard the note above. That was an error in my template message.
+There are no known errors in this -rc1 release.
 
------------
+Sorry for any inconvenience.
 
-
-Upstream commit b542e383d8c005f06a131e2b40d5889b812f19c6
-
-The recursion protection for eventfd_signal() is based on a per CPU
-variable and relies on the !RT semantics of spin_lock_irqsave() for
-protecting this per CPU variable. On RT kernels spin_lock_irqsave() neither
-disables preemption nor interrupts which allows the spin lock held section
-to be preempted. If the preempting task invokes eventfd_signal() as well,
-then the recursion warning triggers.
-
-Paolo suggested to protect the per CPU variable with a local lock, but
-that's heavyweight and actually not necessary. The goal of this protection
-is to prevent the task stack from overflowing, which can be achieved with a
-per task recursion protection as well.
-
-Replace the per CPU variable with a per task bit similar to other recursion
-protection bits like task_struct::in_page_owner. This works on both !RT and
-RT kernels and removes as a side effect the extra per CPU storage.
-
-No functional change for !RT kernels.
-
-Reported-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Tested-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Acked-by: Jason Wang <jasowang@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Link: https://lore.kernel.org/r/87wnp9idso.ffs@tglx
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- fs/aio.c                |  2 +-
- fs/eventfd.c            | 12 +++++-------
- include/linux/eventfd.h | 11 +++++------
- include/linux/sched.h   |  4 ++++
- 4 files changed, 15 insertions(+), 14 deletions(-)
-
-diff --git a/fs/aio.c b/fs/aio.c
-index c72b2c51b446c..f7d47c9ff6deb 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1761,7 +1761,7 @@ static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
- 		list_del_init(&req->wait.entry);
- 		list_del(&iocb->ki_list);
- 		iocb->ki_res.res = mangle_poll(mask);
--		if (iocb->ki_eventfd && eventfd_signal_count()) {
-+		if (iocb->ki_eventfd && eventfd_signal_allowed()) {
- 			iocb = NULL;
- 			INIT_WORK(&req->work, aio_poll_put_work);
- 			schedule_work(&req->work);
-diff --git a/fs/eventfd.c b/fs/eventfd.c
-index df466ef81dddf..9035ca60bfcf3 100644
---- a/fs/eventfd.c
-+++ b/fs/eventfd.c
-@@ -25,8 +25,6 @@
- #include <linux/idr.h>
- #include <linux/uio.h>
- 
--DEFINE_PER_CPU(int, eventfd_wake_count);
--
- static DEFINE_IDA(eventfd_ida);
- 
- struct eventfd_ctx {
-@@ -67,21 +65,21 @@ __u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 n)
- 	 * Deadlock or stack overflow issues can happen if we recurse here
- 	 * through waitqueue wakeup handlers. If the caller users potentially
- 	 * nested waitqueues with custom wakeup handlers, then it should
--	 * check eventfd_signal_count() before calling this function. If
--	 * it returns true, the eventfd_signal() call should be deferred to a
-+	 * check eventfd_signal_allowed() before calling this function. If
-+	 * it returns false, the eventfd_signal() call should be deferred to a
- 	 * safe context.
- 	 */
--	if (WARN_ON_ONCE(this_cpu_read(eventfd_wake_count)))
-+	if (WARN_ON_ONCE(current->in_eventfd_signal))
- 		return 0;
- 
- 	spin_lock_irqsave(&ctx->wqh.lock, flags);
--	this_cpu_inc(eventfd_wake_count);
-+	current->in_eventfd_signal = 1;
- 	if (ULLONG_MAX - ctx->count < n)
- 		n = ULLONG_MAX - ctx->count;
- 	ctx->count += n;
- 	if (waitqueue_active(&ctx->wqh))
- 		wake_up_locked_poll(&ctx->wqh, EPOLLIN);
--	this_cpu_dec(eventfd_wake_count);
-+	current->in_eventfd_signal = 0;
- 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
- 
- 	return n;
-diff --git a/include/linux/eventfd.h b/include/linux/eventfd.h
-index dc4fd8a6644dd..836b4c021a0a4 100644
---- a/include/linux/eventfd.h
-+++ b/include/linux/eventfd.h
-@@ -14,6 +14,7 @@
- #include <linux/err.h>
- #include <linux/percpu-defs.h>
- #include <linux/percpu.h>
-+#include <linux/sched.h>
- 
- /*
-  * CAREFUL: Check include/uapi/asm-generic/fcntl.h when defining
-@@ -42,11 +43,9 @@ __u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 n);
- int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx, wait_queue_entry_t *wait,
- 				  __u64 *cnt);
- 
--DECLARE_PER_CPU(int, eventfd_wake_count);
--
--static inline bool eventfd_signal_count(void)
-+static inline bool eventfd_signal_allowed(void)
- {
--	return this_cpu_read(eventfd_wake_count);
-+	return !current->in_eventfd_signal;
- }
- 
- #else /* CONFIG_EVENTFD */
-@@ -77,9 +76,9 @@ static inline int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx,
- 	return -ENOSYS;
- }
- 
--static inline bool eventfd_signal_count(void)
-+static inline bool eventfd_signal_allowed(void)
- {
--	return false;
-+	return true;
- }
- 
- #endif
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 409a24036952c..29e6ff1af1df9 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -852,6 +852,10 @@ struct task_struct {
- 	/* Stalled due to lack of memory */
- 	unsigned			in_memstall:1;
- #endif
-+#ifdef CONFIG_EVENTFD
-+	/* Recursion prevention for eventfd_signal() */
-+	unsigned			in_eventfd_signal:1;
-+#endif
- 
- 	unsigned long			atomic_flags; /* Flags requiring atomic access. */
- 
--- 
-2.33.1
+> To build 5.10.90-rt61-rc1 directly, the following patches should be applied:
+>
+>   https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+>
+>   https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.90.xz
+>
+>   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.90-rt61-rc1.patch.xz
+>
+>
+> You can also build from 5.10.90-rt60 by applying the incremental patch:
+>
+>   https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/incr/patch-5.10.90-rt60-rt61-rc1.patch.xz
+>
+> Enjoy,
+>
+> -- Luis
+>
+>
+>
+> Luis Claudio R. Goncalves (1):
+>   Linux 5.10.90-rt61-rc1
+>
+> Sebastian Andrzej Siewior (1):
+>   stop_machine: Remove this_cpu_ptr() from print_stop_info().
+>
+> Thomas Gleixner (1):
+>   eventfd: Make signal recursion protection a task bit
+>
+>  fs/aio.c                |  2 +-
+>  fs/eventfd.c            | 12 +++++-------
+>  include/linux/eventfd.h | 11 +++++------
+>  include/linux/sched.h   |  4 ++++
+>  kernel/stop_machine.c   |  6 +++++-
+>  localversion-rt         |  2 +-
+>  6 files changed, 21 insertions(+), 16 deletions(-)
+>
+> --
+> 2.33.1
+>
 
