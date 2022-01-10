@@ -2,127 +2,70 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F74AC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Jan 2022 18:36:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BA8AC433FE
+	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Jan 2022 07:42:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229657AbiAGSgK (ORCPT
+        id S240186AbiAJHme (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 Jan 2022 13:36:10 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43978 "EHLO
+        Mon, 10 Jan 2022 02:42:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51766 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229528AbiAGSfw (ORCPT
+        with ESMTP id S242065AbiAJHkN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 Jan 2022 13:35:52 -0500
-Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 78954C061574;
-        Fri,  7 Jan 2022 10:35:47 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=metanate.com; s=stronger; h=In-Reply-To:Content-Type:References:Message-ID:
-        Subject:Cc:To:From:Date:Reply-To:Content-Transfer-Encoding:Content-ID:
-        Content-Description; bh=+Gbab7Fnbxp9CRQp1CY+Df8nwrrWXPr1d5W8ipvlME8=; b=Ne7AU
-        FALCLnVOJabo2OuSO1Hv6r1Ehk9p2dTlls8CCLBntRvC3ffJbtm71+1aSlspKAnpyHwdOkSB6zrE7
-        3y7O220veg6azUkjAb7JPgnoHSx8vd2Enk+o3o/rAzel8rjCsOOKegLl5TjcL997fhU5G7GVD+rIn
-        vuzvx6kFjFicwqBZCRPioKj5R81p0u+cgACjXfQ9W8jJIYqB7gtw221L4UUzR8X/zNUvqrmz8puap
-        88zK+cyu7kRndtinjobjQCA2ApL/cUSDx4gewqN3lqUDZzceEKR1EFaK/eP+HuR9Ga8daAeyM835Y
-        dI9yEFH1qXqVbUMG8m4wVhpYhR4HA==;
-Received: from [81.174.171.191] (helo=donbot)
-        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-        (Exim 4.93)
-        (envelope-from <john@metanate.com>)
-        id 1n5u5W-00037k-8f; Fri, 07 Jan 2022 18:35:42 +0000
-Date:   Fri, 7 Jan 2022 18:35:40 +0000
-From:   John Keeping <john@metanate.com>
-To:     Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc:     Valentin Schneider <valentin.schneider@arm.com>,
-        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
+        Mon, 10 Jan 2022 02:40:13 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E8B5BC02259A;
+        Sun,  9 Jan 2022 23:34:07 -0800 (PST)
+Date:   Mon, 10 Jan 2022 08:34:03 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1641800044;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=X1Fyw/nK/eEELQ/VDjJLho5JF7z/A8I/nGFppjKVNmM=;
+        b=WQ0mqVWTlRHsgCd+gFHT38uHoVAxxj+yDUeJx2FCEvZj1Y8xn9WJKOhVY6ce/vyJb273TG
+        RNiz2N9lWAbfee98M/JkXgnO74hRNTOKNjCJLSgkx/ixhyVuHGXtpTC1oN6mbgJ3nr7P8k
+        zewoosB9DbTnyiNTnQbRp3n/288uyhbKunhUd6jwNVU6kwe7k4DcnYNdiZ9z2sa1Rb8/4H
+        xpOtpkti+btiZXgtw1S6mMYSg37xROT1UyTHxPbMUyTnyduRPkBFmlCMme1zy+gy8co2m+
+        Jc63CW6S5ZWI5gaOYUKlZUR1JHh8uQ59ebwHSuTGQvcdNc4bi3Z1szVmfemVZA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1641800044;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=X1Fyw/nK/eEELQ/VDjJLho5JF7z/A8I/nGFppjKVNmM=;
+        b=6Cosbfs7uwMSnZILukUWRlByOnALOg4G2tiFlXgCbKO21SEaKdf1bYjLW8zFDnMbTRlKmh
+        igTghP+n1awVmjBg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Clark Williams <williams@redhat.com>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        linux-kernel@vger.kernel.org
-Subject: Re: [RT] BUG in sched/cpupri.c
-Message-ID: <YdiH/IphUgixfayu@donbot>
-References: <Yb3vXx3DcqVOi+EA@donbot>
- <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com>
- <87zgou6iq1.mognet@arm.com>
- <20211221164528.3c84543f.john@metanate.com>
- <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com>
- <87r1a4775a.mognet@arm.com>
- <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
- <Ydgo2lENzywieaZL@donbot>
- <88826618-5ce8-dd1f-c9db-ec273fede3ce@arm.com>
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Pavel Machek <pavel@denx.de>
+Subject: Re: [ANNOUNCE] 4.19.223-rt100
+Message-ID: <Ydvha9U7NCRRB8YL@linutronix.de>
+References: <164133136582.713651.8616556329027058758@puck.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <88826618-5ce8-dd1f-c9db-ec273fede3ce@arm.com>
-X-Authenticated: YES
+In-Reply-To: <164133136582.713651.8616556329027058758@puck.lan>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Jan 07, 2022 at 03:25:21PM +0100, Dietmar Eggemann wrote:
-> On 07/01/2022 12:49, John Keeping wrote:
-> > On Fri, Jan 07, 2022 at 11:46:45AM +0100, Dietmar Eggemann wrote:
-> >> On 22/12/2021 20:48, Valentin Schneider wrote:
-> >>>  /*
-> >>> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> >>> index ef8228d19382..8f3e3a1367b6 100644
-> >>> --- a/kernel/sched/rt.c
-> >>> +++ b/kernel/sched/rt.c
-> >>> @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
-> >>>  	if (!next_task)
-> >>>  		return 0;
-> >>>  
-> >>> +	/*
-> >>> +	 * It's possible that the next_task slipped in of higher priority than
-> >>> +	 * current, or current has *just* changed priority.  If that's the case
-> >>> +	 * just reschedule current.
-> >>> +	 */
-> >>> +	if (unlikely(next_task->prio < rq->curr->prio)) {
-> >>> +		resched_curr(rq);
-> >>> +		return 0;
-> >>> +	}
-> >>
-> >> IMHO, that's the bit which prevents the BUG.
-> >>
-> >> But this would also prevent the case in which rq->curr is an RT task
-> >> with lower prio than next_task.
-> >>
-> >> Also `rq->curr = migration/X` goes still though which is somehow fine
-> >> since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
-> >>
-> >> And DL tasks (like sugov:X go through and they can have
-> >> task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
-> >> freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
-> >> can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
-> >> by coincidence.
-> >>
-> >> So maybe something like this:
-> > 
-> > Do you mean to replace just the one hunk from Valentin's patch with the
-> > change below (keeping the rest), or are you saying that only the change
-> > below is needed?
+On 2022-01-04 21:22:45 [-0000], Clark Williams wrote:
+> Hello RT-list!
 > 
-> The latter.
+> I'm pleased to announce the 4.19.223-rt100 stable release.
 
-Thanks!  I tested the patch below and can confirm that I no longer see
-any BUGs with this applied.
+Do you have
+     https://lore.kernel.org/all/YcN9+vGl7GXAZwJH@linutronix.de/
 
-Tested-By: John Keeping <john@metanate.com>
+on your radar?
 
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
-                if (!pull || rq->push_busy)
-                        return 0;
- 
-+               if (rq->curr->sched_class != &rt_sched_class) {
-+                       resched_curr(rq);
-+                       return 0;
-+               }
-+
-                cpu = find_lowest_rq(rq->curr);
-                if (cpu == -1 || cpu == rq->cpu)
-                        return 0;
+Sebastian
