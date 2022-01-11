@@ -2,34 +2,34 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58627C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Jan 2022 17:31:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6F0DC4321E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Jan 2022 17:32:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344726AbiAKRb5 (ORCPT
+        id S1344660AbiAKRcL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 11 Jan 2022 12:31:57 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42896 "EHLO
+        Tue, 11 Jan 2022 12:32:11 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42884 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344422AbiAKRbW (ORCPT
+        with ESMTP id S1344388AbiAKRbU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 11 Jan 2022 12:31:22 -0500
+        Tue, 11 Jan 2022 12:31:20 -0500
 Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 637A8C06175E;
-        Tue, 11 Jan 2022 09:31:20 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 536E0C061759;
+        Tue, 11 Jan 2022 09:31:19 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id B17DCB81C48;
-        Tue, 11 Jan 2022 17:31:19 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 627C5C36AED;
-        Tue, 11 Jan 2022 17:31:19 +0000 (UTC)
+        by ams.source.kernel.org (Postfix) with ESMTPS id B7747B81C3B;
+        Tue, 11 Jan 2022 17:31:18 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 75B27C36AF3;
+        Tue, 11 Jan 2022 17:31:18 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.95)
         (envelope-from <rostedt@goodmis.org>)
-        id 1n7KzO-0032K5-Ir;
-        Tue, 11 Jan 2022 12:31:18 -0500
-Message-ID: <20220111173118.415962778@goodmis.org>
+        id 1n7KzN-0032HF-LO;
+        Tue, 11 Jan 2022 12:31:17 -0500
+Message-ID: <20220111173117.491473727@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Tue, 11 Jan 2022 12:30:59 -0500
+Date:   Tue, 11 Jan 2022 12:30:54 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Ingo Molnar <mingo@kernel.org>,
@@ -44,8 +44,9 @@ Cc:     Ingo Molnar <mingo@kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Bristot de Oliveira <bristot@kernel.org>,
-        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org
-Subject: [for-next][PATCH 28/31] rtla: Add rtla timerlat top documentation
+        linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org,
+        Jonathan Corbet <corbet@lwn.net>
+Subject: [for-next][PATCH 23/31] rtla: Add Documentation
 References: <20220111173030.999527342@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,9 +56,16 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Daniel Bristot de Oliveira <bristot@kernel.org>
 
-Man page for rtla timerlat top mode.
+Adds the basis for rtla documentation. This patch also
+includes the rtla(1) man page.
 
-Link: https://lkml.kernel.org/r/df06fa7801571078e43d77002c6645bdc49f779a.1638182284.git.bristot@kernel.org
+As suggested by Jonathan Corbet, we are placing these man
+pages at Documentation/tools/rtla, using rst format. It
+is not linked to the official documentation, though.
+
+The Makefile is based on bpftool's Documentation one.
+
+Link: https://lkml.kernel.org/r/66edf7af207dfe69fabae10575f42d73d92f07c4.1638182284.git.bristot@kernel.org
 
 Cc: Tao Zhou <tao.zhou@linux.dev>
 Cc: Ingo Molnar <mingo@redhat.com>
@@ -73,187 +81,203 @@ Cc: Daniel Bristot de Oliveira <bristot@kernel.org>
 Cc: linux-rt-users@vger.kernel.org
 Cc: linux-trace-devel@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
+Suggested-by: Steven Rostedt <rostedt@goodmis.org>
+Suggested-by: Jonathan Corbet <corbet@lwn.net>
 Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- .../tools/rtla/common_timerlat_options.rst    |  16 ++
- .../tools/rtla/rtla-timerlat-top.rst          | 145 ++++++++++++++++++
- 2 files changed, 161 insertions(+)
- create mode 100644 Documentation/tools/rtla/common_timerlat_options.rst
- create mode 100644 Documentation/tools/rtla/rtla-timerlat-top.rst
+ Documentation/tools/rtla/Makefile            | 41 +++++++++++++++++
+ Documentation/tools/rtla/common_appendix.rst | 12 +++++
+ Documentation/tools/rtla/rtla.rst            | 48 ++++++++++++++++++++
+ tools/tracing/rtla/Makefile                  | 30 ++++++++++--
+ 4 files changed, 127 insertions(+), 4 deletions(-)
+ create mode 100644 Documentation/tools/rtla/Makefile
+ create mode 100644 Documentation/tools/rtla/common_appendix.rst
+ create mode 100644 Documentation/tools/rtla/rtla.rst
 
-diff --git a/Documentation/tools/rtla/common_timerlat_options.rst b/Documentation/tools/rtla/common_timerlat_options.rst
+diff --git a/Documentation/tools/rtla/Makefile b/Documentation/tools/rtla/Makefile
 new file mode 100644
-index 000000000000..e9c1bfd55d48
+index 000000000000..9f2b84af1a6c
 --- /dev/null
-+++ b/Documentation/tools/rtla/common_timerlat_options.rst
-@@ -0,0 +1,16 @@
-+**-p**, **--period** *us*
++++ b/Documentation/tools/rtla/Makefile
+@@ -0,0 +1,41 @@
++# SPDX-License-Identifier: GPL-2.0-only
++# Based on bpftool's Documentation Makefile
 +
-+        Set the *timerlat* tracer period in microseconds.
++INSTALL		?= install
++RM		?= rm -f
++RMDIR		?= rmdir --ignore-fail-on-non-empty
 +
-+**-i**, **--irq** *us*
++PREFIX		?= /usr/share
++MANDIR		?= $(PREFIX)/man
++MAN1DIR		= $(MANDIR)/man1
 +
-+        Stop trace if the *IRQ* latency is higher than the argument in us.
++MAN1_RST	= $(wildcard rtla*.rst)
 +
-+**-T**, **--thread** *us*
++_DOC_MAN1	= $(patsubst %.rst,%.1,$(MAN1_RST))
++DOC_MAN1	= $(addprefix $(OUTPUT),$(_DOC_MAN1))
 +
-+        Stop trace if the *Thread* latency is higher than the argument in us.
++RST2MAN_DEP	:= $(shell command -v rst2man 2>/dev/null)
++RST2MAN_OPTS	+= --verbose
 +
-+**-s**, **--stack** *us*
++$(OUTPUT)%.1: %.rst
++ifndef RST2MAN_DEP
++	$(error "rst2man not found, but required to generate man pages")
++endif
++	rst2man $(RST2MAN_OPTS) $< > $@
 +
-+        Save the stack trace at the *IRQ* if a *Thread* latency is higher than the
-+        argument in us.
-diff --git a/Documentation/tools/rtla/rtla-timerlat-top.rst b/Documentation/tools/rtla/rtla-timerlat-top.rst
++man1: $(DOC_MAN1)
++man: man1
++
++clean:
++	$(RM) $(DOC_MAN1)
++
++install: man
++	$(INSTALL) -d -m 755 $(DESTDIR)$(MAN1DIR)
++	$(INSTALL) -m 644 $(DOC_MAN1) $(DESTDIR)$(MAN1DIR)
++
++uninstall:
++	$(RM) $(addprefix $(DESTDIR)$(MAN1DIR)/,$(_DOC_MAN1))
++	$(RMDIR) $(DESTDIR)$(MAN1DIR)
++
++.PHONY: man man1 clean install uninstall
++.DEFAULT_GOAL := man
+diff --git a/Documentation/tools/rtla/common_appendix.rst b/Documentation/tools/rtla/common_appendix.rst
 new file mode 100644
-index 000000000000..1c321de1c171
+index 000000000000..b494084acccd
 --- /dev/null
-+++ b/Documentation/tools/rtla/rtla-timerlat-top.rst
-@@ -0,0 +1,145 @@
-+====================
-+rtla-timerlat-top
-+====================
-+-------------------------------------------
-+Measures the operating system timer latency
-+-------------------------------------------
++++ b/Documentation/tools/rtla/common_appendix.rst
+@@ -0,0 +1,12 @@
++REPORTING BUGS
++==============
++Report bugs to <lkml@vger.kernel.org>
++
++LICENSE
++=======
++**rtla** is Free Software licensed under the GNU GPLv2
++
++COPYING
++=======
++Copyright \(C) 2021 Red Hat, Inc. Free use of this software is granted under
++the terms of the GNU Public License (GPL).
+diff --git a/Documentation/tools/rtla/rtla.rst b/Documentation/tools/rtla/rtla.rst
+new file mode 100644
+index 000000000000..fc0d233efcd5
+--- /dev/null
++++ b/Documentation/tools/rtla/rtla.rst
+@@ -0,0 +1,48 @@
++=========
++rtla
++=========
++--------------------------------
++Real-time Linux Analysis tool
++--------------------------------
 +
 +:Manual section: 1
 +
 +SYNOPSIS
 +========
-+**rtla timerlat top** [*OPTIONS*] ...
++**rtla** *COMMAND* [*OPTIONS*]
 +
 +DESCRIPTION
 +===========
++The **rtla** is a meta-tool that includes a set of commands that aims to
++analyze the real-time properties of Linux. But instead of testing Linux
++as a black box, **rtla** leverages kernel tracing capabilities to provide
++precise information about the properties and root causes of unexpected
++results.
 +
-+.. include:: common_timerlat_description.rst
++COMMANDS
++========
++**osnoise**
 +
-+The **rtla timerlat top** displays a summary of the periodic output
-+from the *timerlat* tracer. It also provides information for each
-+operating system noise via the **osnoise:** tracepoints that can be
-+seem with the option **-T**.
++        Gives information about the operating system noise (osnoise).
++
++**timerlat**
++
++        Measures the IRQ and thread timer latency.
 +
 +OPTIONS
 +=======
++**-h**, **--help**
 +
-+.. include:: common_timerlat_options.rst
++        Display the help text.
 +
-+.. include:: common_top_options.rst
-+
-+.. include:: common_options.rst
-+
-+EXAMPLE
-+=======
-+
-+In the example below, the *timerlat* tracer is set to capture the stack trace at
-+the IRQ handler, printing it to the buffer if the *Thread* timer latency is
-+higher than *30 us*. It is also set to stop the session if a *Thread* timer
-+latency higher than *30 us* is hit. Finally, it is set to save the trace
-+buffer if the stop condition is hit::
-+
-+  [root@alien ~]# rtla timerlat top -s 30 -t 30 -T
-+                   Timer Latency
-+    0 00:00:59   |          IRQ Timer Latency (us)        |         Thread Timer Latency (us)
-+  CPU COUNT      |      cur       min       avg       max |      cur       min       avg       max
-+    0 #58634     |        1         0         1        10 |       11         2        10        23
-+    1 #58634     |        1         0         1         9 |       12         2         9        23
-+    2 #58634     |        0         0         1        11 |       10         2         9        23
-+    3 #58634     |        1         0         1        11 |       11         2         9        24
-+    4 #58634     |        1         0         1        10 |       11         2         9        26
-+    5 #58634     |        1         0         1         8 |       10         2         9        25
-+    6 #58634     |       12         0         1        12 |       30         2        10        30 <--- CPU with spike
-+    7 #58634     |        1         0         1         9 |       11         2         9        23
-+    8 #58633     |        1         0         1         9 |       11         2         9        26
-+    9 #58633     |        1         0         1         9 |       10         2         9        26
-+   10 #58633     |        1         0         1        13 |       11         2         9        28
-+   11 #58633     |        1         0         1        13 |       12         2         9        24
-+   12 #58633     |        1         0         1         8 |       10         2         9        23
-+   13 #58633     |        1         0         1        10 |       10         2         9        22
-+   14 #58633     |        1         0         1        18 |       12         2         9        27
-+   15 #58633     |        1         0         1        10 |       11         2         9        28
-+   16 #58633     |        0         0         1        11 |        7         2         9        26
-+   17 #58633     |        1         0         1        13 |       10         2         9        24
-+   18 #58633     |        1         0         1         9 |       13         2         9        22
-+   19 #58633     |        1         0         1        10 |       11         2         9        23
-+   20 #58633     |        1         0         1        12 |       11         2         9        28
-+   21 #58633     |        1         0         1        14 |       11         2         9        24
-+   22 #58633     |        1         0         1         8 |       11         2         9        22
-+   23 #58633     |        1         0         1        10 |       11         2         9        27
-+  timerlat hit stop tracing
-+  saving trace to timerlat_trace.txt
-+  [root@alien bristot]# tail -60 timerlat_trace.txt
-+  [...]
-+      timerlat/5-79755   [005] .......   426.271226: #58634 context thread timer_latency     10823 ns
-+              sh-109404  [006] dnLh213   426.271247: #58634 context    irq timer_latency     12505 ns
-+              sh-109404  [006] dNLh313   426.271258: irq_noise: local_timer:236 start 426.271245463 duration 12553 ns
-+              sh-109404  [006] d...313   426.271263: thread_noise:       sh:109404 start 426.271245853 duration 4769 ns
-+      timerlat/6-79756   [006] .......   426.271264: #58634 context thread timer_latency     30328 ns
-+      timerlat/6-79756   [006] ....1..   426.271265: <stack trace>
-+  => timerlat_irq
-+  => __hrtimer_run_queues
-+  => hrtimer_interrupt
-+  => __sysvec_apic_timer_interrupt
-+  => sysvec_apic_timer_interrupt
-+  => asm_sysvec_apic_timer_interrupt
-+  => _raw_spin_unlock_irqrestore			<---- spinlock that disabled interrupt.
-+  => try_to_wake_up
-+  => autoremove_wake_function
-+  => __wake_up_common
-+  => __wake_up_common_lock
-+  => ep_poll_callback
-+  => __wake_up_common
-+  => __wake_up_common_lock
-+  => fsnotify_add_event
-+  => inotify_handle_inode_event
-+  => fsnotify
-+  => __fsnotify_parent
-+  => __fput
-+  => task_work_run
-+  => exit_to_user_mode_prepare
-+  => syscall_exit_to_user_mode
-+  => do_syscall_64
-+  => entry_SYSCALL_64_after_hwframe
-+  => 0x7265000001378c
-+  => 0x10000cea7
-+  => 0x25a00000204a
-+  => 0x12e302d00000000
-+  => 0x19b51010901b6
-+  => 0x283ce00726500
-+  => 0x61ea308872
-+  => 0x00000fe3
-+            bash-109109  [007] d..h...   426.271265: #58634 context    irq timer_latency      1211 ns
-+      timerlat/6-79756   [006] .......   426.271267: timerlat_main: stop tracing hit on cpu 6
-+
-+In the trace, it is possible the notice that the *IRQ* timer latency was
-+already high, accounting *12505 ns*. The IRQ delay was caused by the
-+*bash-109109* process that disabled IRQs in the wake-up path
-+(*_try_to_wake_up()* function). The duration of the IRQ handler that woke
-+up the timerlat thread, informed with the **osnoise:irq_noise** event, was
-+also high and added more *12553 ns* to the Thread latency. Finally, the
-+**osnoise:thread_noise** added by the currently running thread (including
-+the scheduling overhead) added more *4769 ns*. Summing up these values,
-+the *Thread* timer latency accounted for *30328 ns*.
-+
-+The primary reason for this high value is the wake-up path that was hit
-+twice during this case: when the *bash-109109* was waking up a thread
-+and then when the *timerlat* thread was awakened. This information can
-+then be used as the starting point of a more fine-grained analysis.
-+
-+Note that **rtla timerlat** was dispatched without changing *timerlat* tracer
-+threads' priority. That is generally not needed because these threads hava
-+priority *FIFO:95* by default, which is a common priority used by real-time
-+kernel developers to analyze scheduling delays.
++For other options, see the man page for the corresponding command.
 +
 +SEE ALSO
-+--------
-+**rtla-timerlat**\(1), **rtla-timerlat-hist**\(1)
-+
-+*timerlat* tracer documentation: <https://www.kernel.org/doc/html/latest/trace/timerlat-tracer.html>
++========
++**rtla-osnoise**\(1), **rtla-timerlat**\(1)
 +
 +AUTHOR
-+------
-+Written by Daniel Bristot de Oliveira <bristot@kernel.org>
++======
++Daniel Bristot de Oliveira <bristot@kernel.org>
 +
 +.. include:: common_appendix.rst
+diff --git a/tools/tracing/rtla/Makefile b/tools/tracing/rtla/Makefile
+index 9631a98976a8..72c002406bff 100644
+--- a/tools/tracing/rtla/Makefile
++++ b/tools/tracing/rtla/Makefile
+@@ -45,18 +45,28 @@ DATADIR	:=	/usr/share
+ DOCDIR	:=	$(DATADIR)/doc
+ MANDIR	:=	$(DATADIR)/man
+ LICDIR	:=	$(DATADIR)/licenses
++SRCTREE	:=	$(if $(BUILD_SRC),$(BUILD_SRC),$(CURDIR))
++
++# If running from the tarball, man pages are stored in the Documentation
++# dir. If running from the kernel source, man pages are stored in
++# Documentation/tools/rtla/.
++ifneq ($(wildcard Documentation/.*),)
++DOCSRC	=	Documentation/
++else
++DOCSRC	=	$(SRCTREE)/../../../Documentation/tools/rtla/
++endif
+ 
+ .PHONY:	all
+ all:	rtla
+ 
+-rtla: $(OBJ)
++rtla: $(OBJ) doc
+ 	$(CC) -o rtla $(LDFLAGS) $(OBJ) $(LIBS)
+ 
+ static: $(OBJ)
+ 	$(CC) -o rtla-static $(LDFLAGS) --static $(OBJ) $(LIBS) -lpthread -ldl
+ 
+ .PHONY: install
+-install:
++install: doc_install
+ 	$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)
+ 	$(INSTALL) rtla -m 755 $(DESTDIR)$(BINDIR)
+ 	$(STRIP) $(DESTDIR)$(BINDIR)/rtla
+@@ -66,15 +76,27 @@ install:
+ 	ln -s $(DESTDIR)$(BINDIR)/rtla $(DESTDIR)$(BINDIR)/timerlat
+ 
+ .PHONY: clean tarball
+-clean:
++clean: doc_clean
+ 	@test ! -f rtla || rm rtla
+ 	@test ! -f rtla-static || rm rtla-static
+ 	@test ! -f src/rtla.o || rm src/rtla.o
+ 	@test ! -f $(TARBALL) || rm -f $(TARBALL)
+ 	@rm -rf *~ $(OBJ) *.tar.$(CEXT)
+ 
+-tarball:  clean
++tarball: clean
+ 	rm -rf $(NAME)-$(VERSION) && mkdir $(NAME)-$(VERSION)
+ 	cp -r $(DIRS) $(FILES) $(NAME)-$(VERSION)
++	mkdir $(NAME)-$(VERSION)/Documentation/
++	cp -rp $(SRCTREE)/../../../Documentation/tools/rtla/* $(NAME)-$(VERSION)/Documentation/
+ 	tar $(TAROPTS) --exclude='*~' $(NAME)-$(VERSION)
+ 	rm -rf $(NAME)-$(VERSION)
++
++.PHONY: doc doc_clean doc_install
++doc:
++	$(MAKE) -C $(DOCSRC)
++
++doc_clean:
++	$(MAKE) -C $(DOCSRC) clean
++
++doc_install:
++	$(MAKE) -C $(DOCSRC) install
 -- 
 2.33.0
