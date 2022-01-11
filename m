@@ -2,34 +2,34 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E30FC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Jan 2022 17:31:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58627C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Jan 2022 17:31:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344719AbiAKRbz (ORCPT
+        id S1344726AbiAKRb5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 11 Jan 2022 12:31:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42894 "EHLO
+        Tue, 11 Jan 2022 12:31:57 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42896 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344419AbiAKRbW (ORCPT
+        with ESMTP id S1344422AbiAKRbW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 11 Jan 2022 12:31:22 -0500
 Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 856ABC06175B;
-        Tue, 11 Jan 2022 09:31:19 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 637A8C06175E;
+        Tue, 11 Jan 2022 09:31:20 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 1ECA5B81C51;
+        by ams.source.kernel.org (Postfix) with ESMTPS id B17DCB81C48;
         Tue, 11 Jan 2022 17:31:19 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D09F0C36AF5;
-        Tue, 11 Jan 2022 17:31:18 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 627C5C36AED;
+        Tue, 11 Jan 2022 17:31:19 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.95)
         (envelope-from <rostedt@goodmis.org>)
-        id 1n7KzO-0032IO-0s;
+        id 1n7KzO-0032K5-Ir;
         Tue, 11 Jan 2022 12:31:18 -0500
-Message-ID: <20220111173117.862493725@goodmis.org>
+Message-ID: <20220111173118.415962778@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Tue, 11 Jan 2022 12:30:56 -0500
+Date:   Tue, 11 Jan 2022 12:30:59 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Ingo Molnar <mingo@kernel.org>,
@@ -45,7 +45,7 @@ Cc:     Ingo Molnar <mingo@kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Bristot de Oliveira <bristot@kernel.org>,
         linux-rt-users@vger.kernel.org, linux-trace-devel@vger.kernel.org
-Subject: [for-next][PATCH 25/31] rtla: Add rtla osnoise top documentation
+Subject: [for-next][PATCH 28/31] rtla: Add rtla timerlat top documentation
 References: <20220111173030.999527342@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,9 +55,9 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Daniel Bristot de Oliveira <bristot@kernel.org>
 
-Man page for rtla osnoise top mode.
+Man page for rtla timerlat top mode.
 
-Link: https://lkml.kernel.org/r/3dfdba589524498ee4a2cfe7a0b3ed18319d87db.1638182284.git.bristot@kernel.org
+Link: https://lkml.kernel.org/r/df06fa7801571078e43d77002c6645bdc49f779a.1638182284.git.bristot@kernel.org
 
 Cc: Tao Zhou <tao.zhou@linux.dev>
 Cc: Ingo Molnar <mingo@redhat.com>
@@ -76,111 +76,67 @@ Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Daniel Bristot de Oliveira <bristot@kernel.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- Documentation/tools/rtla/common_options.rst   | 24 ++++++++
- .../tools/rtla/common_osnoise_options.rst     | 17 ++++++
- .../tools/rtla/common_top_options.rst         |  3 +
- Documentation/tools/rtla/rtla-osnoise-top.rst | 61 +++++++++++++++++++
- 4 files changed, 105 insertions(+)
- create mode 100644 Documentation/tools/rtla/common_options.rst
- create mode 100644 Documentation/tools/rtla/common_osnoise_options.rst
- create mode 100644 Documentation/tools/rtla/common_top_options.rst
- create mode 100644 Documentation/tools/rtla/rtla-osnoise-top.rst
+ .../tools/rtla/common_timerlat_options.rst    |  16 ++
+ .../tools/rtla/rtla-timerlat-top.rst          | 145 ++++++++++++++++++
+ 2 files changed, 161 insertions(+)
+ create mode 100644 Documentation/tools/rtla/common_timerlat_options.rst
+ create mode 100644 Documentation/tools/rtla/rtla-timerlat-top.rst
 
-diff --git a/Documentation/tools/rtla/common_options.rst b/Documentation/tools/rtla/common_options.rst
+diff --git a/Documentation/tools/rtla/common_timerlat_options.rst b/Documentation/tools/rtla/common_timerlat_options.rst
 new file mode 100644
-index 000000000000..ea6529667e7c
+index 000000000000..e9c1bfd55d48
 --- /dev/null
-+++ b/Documentation/tools/rtla/common_options.rst
-@@ -0,0 +1,24 @@
-+**-c**, **--cpus** *cpu-list*
-+
-+        Set the osnoise tracer to run the sample threads in the cpu-list.
-+
-+**-d**, **--duration** *time[s|m|h|d]*
-+
-+        Set the duration of the session.
-+
-+**-t**, **--trace**\[*=file*]
-+
-+        Save the stopped trace to [*file|osnoise_trace.txt*].
-+
-+**-P**, **--priority** *o:prio|r:prio|f:prio|d:runtime:period*
-+
-+        Set scheduling parameters to the osnoise tracer threads, the format to set the priority are:
-+
-+        - *o:prio* - use SCHED_OTHER with *prio*;
-+        - *r:prio* - use SCHED_RR with *prio*;
-+        - *f:prio* - use SCHED_FIFO with *prio*;
-+        - *d:runtime[us|ms|s]:period[us|ms|s]* - use SCHED_DEADLINE with *runtime* and *period* in nanoseconds.
-+
-+**-h**, **--help**
-+
-+        Print help menu.
-diff --git a/Documentation/tools/rtla/common_osnoise_options.rst b/Documentation/tools/rtla/common_osnoise_options.rst
-new file mode 100644
-index 000000000000..d556883e4e26
---- /dev/null
-+++ b/Documentation/tools/rtla/common_osnoise_options.rst
-@@ -0,0 +1,17 @@
++++ b/Documentation/tools/rtla/common_timerlat_options.rst
+@@ -0,0 +1,16 @@
 +**-p**, **--period** *us*
 +
-+        Set the *osnoise* tracer period in microseconds.
++        Set the *timerlat* tracer period in microseconds.
 +
-+**-r**, **--runtime** *us*
++**-i**, **--irq** *us*
 +
-+        Set the *osnoise* tracer runtime in microseconds.
++        Stop trace if the *IRQ* latency is higher than the argument in us.
 +
-+**-s**, **--stop** *us*
++**-T**, **--thread** *us*
 +
-+        Stop the trace if a single sample is higher than the argument in microseconds.
-+        If **-T** is set, it will also save the trace to the output.
++        Stop trace if the *Thread* latency is higher than the argument in us.
 +
-+**-S**, **--stop-total** *us*
++**-s**, **--stack** *us*
 +
-+        Stop the trace if the total sample is higher than the argument in microseconds.
-+        If **-T** is set, it will also save the trace to the output.
-diff --git a/Documentation/tools/rtla/common_top_options.rst b/Documentation/tools/rtla/common_top_options.rst
++        Save the stack trace at the *IRQ* if a *Thread* latency is higher than the
++        argument in us.
+diff --git a/Documentation/tools/rtla/rtla-timerlat-top.rst b/Documentation/tools/rtla/rtla-timerlat-top.rst
 new file mode 100644
-index 000000000000..f48878938f84
+index 000000000000..1c321de1c171
 --- /dev/null
-+++ b/Documentation/tools/rtla/common_top_options.rst
-@@ -0,0 +1,3 @@
-+**-q**, **--quiet**
-+
-+        Print only a summary at the end of the session.
-diff --git a/Documentation/tools/rtla/rtla-osnoise-top.rst b/Documentation/tools/rtla/rtla-osnoise-top.rst
-new file mode 100644
-index 000000000000..5d75d1394516
---- /dev/null
-+++ b/Documentation/tools/rtla/rtla-osnoise-top.rst
-@@ -0,0 +1,61 @@
-+===================
-+rtla-osnoise-top
-+===================
-+-----------------------------------------------
-+Display a summary of the operating system noise
-+-----------------------------------------------
++++ b/Documentation/tools/rtla/rtla-timerlat-top.rst
+@@ -0,0 +1,145 @@
++====================
++rtla-timerlat-top
++====================
++-------------------------------------------
++Measures the operating system timer latency
++-------------------------------------------
 +
 +:Manual section: 1
 +
 +SYNOPSIS
 +========
-+**rtla osnoise top** [*OPTIONS*]
++**rtla timerlat top** [*OPTIONS*] ...
 +
 +DESCRIPTION
 +===========
-+.. include:: common_osnoise_description.rst
 +
-+**rtla osnoise top** collects the periodic summary from the *osnoise* tracer,
-+including the counters of the occurrence of the interference source,
-+displaying the results in a user-friendly format.
++.. include:: common_timerlat_description.rst
 +
-+The tool also allows many configurations of the *osnoise* tracer and the
-+collection of the tracer output.
++The **rtla timerlat top** displays a summary of the periodic output
++from the *timerlat* tracer. It also provides information for each
++operating system noise via the **osnoise:** tracepoints that can be
++seem with the option **-T**.
 +
 +OPTIONS
 +=======
-+.. include:: common_osnoise_options.rst
++
++.. include:: common_timerlat_options.rst
 +
 +.. include:: common_top_options.rst
 +
@@ -188,30 +144,114 @@ index 000000000000..5d75d1394516
 +
 +EXAMPLE
 +=======
-+In the example below, the **rtla osnoise top** tool is set to run with a
-+real-time priority *FIFO:1*, on CPUs *0-3*, for *900ms* at each period
-+(*1s* by default). The reason for reducing the runtime is to avoid starving
-+the rtla tool. The tool is also set to run for *one minute* and to display
-+a summary of the report at the end of the session::
 +
-+  [root@f34 ~]# rtla osnoise top -P F:1 -c 0-3 -r 900000 -d 1M -q
-+                                          Operating System Noise
-+  duration:   0 00:01:00 | time is in us
-+  CPU Period       Runtime        Noise  % CPU Aval   Max Noise   Max Single          HW          NMI          IRQ      Softirq       Thread
-+    0 #59         53100000       304896    99.42580        6978           56         549            0        53111         1590           13
-+    1 #59         53100000       338339    99.36282        8092           24         399            0        53130         1448           31
-+    2 #59         53100000       290842    99.45227        6582           39         855            0        53110         1406           12
-+    3 #59         53100000       204935    99.61405        6251           33         290            0        53156         1460           12
++In the example below, the *timerlat* tracer is set to capture the stack trace at
++the IRQ handler, printing it to the buffer if the *Thread* timer latency is
++higher than *30 us*. It is also set to stop the session if a *Thread* timer
++latency higher than *30 us* is hit. Finally, it is set to save the trace
++buffer if the stop condition is hit::
++
++  [root@alien ~]# rtla timerlat top -s 30 -t 30 -T
++                   Timer Latency
++    0 00:00:59   |          IRQ Timer Latency (us)        |         Thread Timer Latency (us)
++  CPU COUNT      |      cur       min       avg       max |      cur       min       avg       max
++    0 #58634     |        1         0         1        10 |       11         2        10        23
++    1 #58634     |        1         0         1         9 |       12         2         9        23
++    2 #58634     |        0         0         1        11 |       10         2         9        23
++    3 #58634     |        1         0         1        11 |       11         2         9        24
++    4 #58634     |        1         0         1        10 |       11         2         9        26
++    5 #58634     |        1         0         1         8 |       10         2         9        25
++    6 #58634     |       12         0         1        12 |       30         2        10        30 <--- CPU with spike
++    7 #58634     |        1         0         1         9 |       11         2         9        23
++    8 #58633     |        1         0         1         9 |       11         2         9        26
++    9 #58633     |        1         0         1         9 |       10         2         9        26
++   10 #58633     |        1         0         1        13 |       11         2         9        28
++   11 #58633     |        1         0         1        13 |       12         2         9        24
++   12 #58633     |        1         0         1         8 |       10         2         9        23
++   13 #58633     |        1         0         1        10 |       10         2         9        22
++   14 #58633     |        1         0         1        18 |       12         2         9        27
++   15 #58633     |        1         0         1        10 |       11         2         9        28
++   16 #58633     |        0         0         1        11 |        7         2         9        26
++   17 #58633     |        1         0         1        13 |       10         2         9        24
++   18 #58633     |        1         0         1         9 |       13         2         9        22
++   19 #58633     |        1         0         1        10 |       11         2         9        23
++   20 #58633     |        1         0         1        12 |       11         2         9        28
++   21 #58633     |        1         0         1        14 |       11         2         9        24
++   22 #58633     |        1         0         1         8 |       11         2         9        22
++   23 #58633     |        1         0         1        10 |       11         2         9        27
++  timerlat hit stop tracing
++  saving trace to timerlat_trace.txt
++  [root@alien bristot]# tail -60 timerlat_trace.txt
++  [...]
++      timerlat/5-79755   [005] .......   426.271226: #58634 context thread timer_latency     10823 ns
++              sh-109404  [006] dnLh213   426.271247: #58634 context    irq timer_latency     12505 ns
++              sh-109404  [006] dNLh313   426.271258: irq_noise: local_timer:236 start 426.271245463 duration 12553 ns
++              sh-109404  [006] d...313   426.271263: thread_noise:       sh:109404 start 426.271245853 duration 4769 ns
++      timerlat/6-79756   [006] .......   426.271264: #58634 context thread timer_latency     30328 ns
++      timerlat/6-79756   [006] ....1..   426.271265: <stack trace>
++  => timerlat_irq
++  => __hrtimer_run_queues
++  => hrtimer_interrupt
++  => __sysvec_apic_timer_interrupt
++  => sysvec_apic_timer_interrupt
++  => asm_sysvec_apic_timer_interrupt
++  => _raw_spin_unlock_irqrestore			<---- spinlock that disabled interrupt.
++  => try_to_wake_up
++  => autoremove_wake_function
++  => __wake_up_common
++  => __wake_up_common_lock
++  => ep_poll_callback
++  => __wake_up_common
++  => __wake_up_common_lock
++  => fsnotify_add_event
++  => inotify_handle_inode_event
++  => fsnotify
++  => __fsnotify_parent
++  => __fput
++  => task_work_run
++  => exit_to_user_mode_prepare
++  => syscall_exit_to_user_mode
++  => do_syscall_64
++  => entry_SYSCALL_64_after_hwframe
++  => 0x7265000001378c
++  => 0x10000cea7
++  => 0x25a00000204a
++  => 0x12e302d00000000
++  => 0x19b51010901b6
++  => 0x283ce00726500
++  => 0x61ea308872
++  => 0x00000fe3
++            bash-109109  [007] d..h...   426.271265: #58634 context    irq timer_latency      1211 ns
++      timerlat/6-79756   [006] .......   426.271267: timerlat_main: stop tracing hit on cpu 6
++
++In the trace, it is possible the notice that the *IRQ* timer latency was
++already high, accounting *12505 ns*. The IRQ delay was caused by the
++*bash-109109* process that disabled IRQs in the wake-up path
++(*_try_to_wake_up()* function). The duration of the IRQ handler that woke
++up the timerlat thread, informed with the **osnoise:irq_noise** event, was
++also high and added more *12553 ns* to the Thread latency. Finally, the
++**osnoise:thread_noise** added by the currently running thread (including
++the scheduling overhead) added more *4769 ns*. Summing up these values,
++the *Thread* timer latency accounted for *30328 ns*.
++
++The primary reason for this high value is the wake-up path that was hit
++twice during this case: when the *bash-109109* was waking up a thread
++and then when the *timerlat* thread was awakened. This information can
++then be used as the starting point of a more fine-grained analysis.
++
++Note that **rtla timerlat** was dispatched without changing *timerlat* tracer
++threads' priority. That is generally not needed because these threads hava
++priority *FIFO:95* by default, which is a common priority used by real-time
++kernel developers to analyze scheduling delays.
 +
 +SEE ALSO
-+========
++--------
++**rtla-timerlat**\(1), **rtla-timerlat-hist**\(1)
 +
-+**rtla-osnoise**\(1), **rtla-osnoise-hist**\(1)
-+
-+Osnoise tracer documentation: <https://www.kernel.org/doc/html/latest/trace/osnoise-tracer.html>
++*timerlat* tracer documentation: <https://www.kernel.org/doc/html/latest/trace/timerlat-tracer.html>
 +
 +AUTHOR
-+======
++------
 +Written by Daniel Bristot de Oliveira <bristot@kernel.org>
 +
 +.. include:: common_appendix.rst
