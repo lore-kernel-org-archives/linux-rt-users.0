@@ -2,118 +2,80 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2EC4C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Jan 2022 21:53:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D3AAEC433FE
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Jan 2022 17:19:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344346AbiAJVxM (ORCPT
+        id S241344AbiAKRT5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 10 Jan 2022 16:53:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53484 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241465AbiAJVxL (ORCPT
+        Tue, 11 Jan 2022 12:19:57 -0500
+Received: from ams.source.kernel.org ([145.40.68.75]:39774 "EHLO
+        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1344150AbiAKRTb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 10 Jan 2022 16:53:11 -0500
-Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 12F2DC06173F
-        for <linux-rt-users@vger.kernel.org>; Mon, 10 Jan 2022 13:53:11 -0800 (PST)
-Received: by mail-qk1-x736.google.com with SMTP id m2so16956795qkd.8
-        for <linux-rt-users@vger.kernel.org>; Mon, 10 Jan 2022 13:53:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=wIPZhRDTNppRVrJG8ocsLcnit8bssizHEMP4v9SA0es=;
-        b=VetQDju/E0iipagzsAPwyHslK2vpFp5BKPLintziIlE3/Zft+o668nG4yQagIuOdnb
-         HKHn2SISV2jCLkuDFQYPks9HBY9NXZ2c5VSDsfQ6pjoMa/QOcOdj2n7E9koYq5mmKrMA
-         haHafo5D3nfIDfRk9QjXl+wh5zBUkk9x6phR9bGomiiDoMkFccTjrzKSdeJkMrv5AhB2
-         dPCqK5RHbfxQUQ5/DgHUNMKOwIliWQi1vpzStLZaU8G3ZFb9RUfs1vg5DVB/L7aat2rm
-         Pv0OW2xog8EDL16+EF8pubNiBGNbso39jYEx3vKEKF7mHSVld/I0FtVParSqfQNvdM0E
-         ge/g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=wIPZhRDTNppRVrJG8ocsLcnit8bssizHEMP4v9SA0es=;
-        b=RwL/FrCVkEku9fJ51YFrlhuR+2fyltQ6Jf17Qk7BrWCKg40QfmndG/0/j2I14mPCBE
-         JUVdEQmFDMoeJtMuZmZeu7W3LPt0OqHed4HtVxT6GQTGvVUo6JSfazUk/PQ7+6gEMjxL
-         mU8QTqLjMRTphjFqUMsNXTt9LIsa+yrHfc97RtZfY/AHuFf/UNFsqkLXgl7w4aEQWGZw
-         yVhmiwSyslu/bMaZL0OPllzdTFwotRBCJSo+rmoZF+bGLrl3Y3knEB+ZWikQ6aQvbTqp
-         ozQXvb52uDY4m5fz3t+uf5YaQhaXQhfQeya/wXy1hpZTy5MUYENx6M+OKpg6LeU3d2e8
-         uoRg==
-X-Gm-Message-State: AOAM532YtLrhDiwEnDp+vjKBYJoqd5dlTPB55TvO+wHlitQWeULdvias
-        2tp0uTYAMHpgVrf858/uVjQ=
-X-Google-Smtp-Source: ABdhPJxQ8Uzc211A/nFaX6G9biyf5TeETh142W7FzxGRcPBsSCJMF5TgjCr5gAQUgzikxD6k/3oCxg==
-X-Received: by 2002:a05:620a:796:: with SMTP id 22mr1311553qka.454.1641851590084;
-        Mon, 10 Jan 2022 13:53:10 -0800 (PST)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
-        by smtp.gmail.com with ESMTPSA id z14sm5716167qtw.59.2022.01.10.13.53.09
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 10 Jan 2022 13:53:09 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     tuna-devel@lists.fedorahosted.org
-Cc:     Jiri Kastner <cz172638@gmail.com>,
-        Leah Leshchinsky <lleshchi@redhat.com>,
-        Kate Carcia Poulin <kcarcia@redhat.com>,
+        Tue, 11 Jan 2022 12:19:31 -0500
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id D9F9EB81C0F;
+        Tue, 11 Jan 2022 17:19:29 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CDC30C36AE3;
+        Tue, 11 Jan 2022 17:19:27 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1641921568;
+        bh=4WOy8PFtWqhpNOcP0RRCE7km2AQS+xSEKUSjsICm1qY=;
+        h=Subject:From:To:Date:From;
+        b=G4CCXsyBDanGtXyFJG2vZ2MbhYU0tBmlHwERDaDbfKyXfUM5L/ZncNgexDpQfsC1u
+         amkEfJUfrB4P9koGveYluLwfbGZRwxAIJDBOQsxtvDbjs43b1X8fP09uh8M54KGbFt
+         89iWr2L+31JYBUmhh1fAfDKn2nzc2/CPG2lbSmp+P+9hzdgYPpxqClolxpu+J1pkqC
+         Crs8QVfBTdUeAi85t2TFwiwk3mIpi/Nixz+Oy7PXsT/YZM7F9kN7knrkvkNoGofAQM
+         KgoF8Dx4EfhNBkYVjHzcPkNwqKQ2iX6SZhgyuTslJLEhmSJC+UvSpU1bb3stAgK4M2
+         IfKohWBtABp5Q==
+Message-ID: <82a9c514a3604fca7499d0f9b39baa9e5a8dd3c9.camel@kernel.org>
+Subject: [ANNOUNCE] 5.4.170-rt68
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
         Clark Williams <williams@redhat.com>,
-        RT <linux-rt-users@vger.kernel.org>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] python-linux-procfs-0.7.0
-Date:   Mon, 10 Jan 2022 16:52:59 -0500
-Message-Id: <20220110215259.19442-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.31.1
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Date:   Tue, 11 Jan 2022 11:19:26 -0600
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm pleased to announce version 0.7.0 of python-linux-procfs
+Hello RT Folks!
 
-Your bug reports, patches and comments are always welcome.
+I'm pleased to announce the 5.4.170-rt68 stable release.
 
-John Kacur
+This release is just an update to the new stable 5.4.170
+version and no RT specific changes have been made.
 
-To fetch
+You can get this release via the git tree at:
 
-Clone
-git://git.kernel.org/pub/scm/libs/python/python-linux-procfs/python-linux-procfs.git
-https://git.kernel.org/pub/scm/libs/python/python-linux-procfs/python-linux-procfs.git
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Branch: main
-Tag: v0.7.0
+  branch: v5.4-rt
+  Head SHA1: 4806e14e8b1d4a7196ebd2234afc8feabb6821eb
 
-Tarballs available here
-https://mirrors.edge.kernel.org/pub/software/libs/python/python-linux-procfs/
+Or to build 5.4.170-rt68 directly, the following patches should be applied:
 
-Older version tarballs are available here
-https://mirrors.edge.kernel.org/pub/software/libs/python/python-linux-procfs/older
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
 
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.170.xz
 
-John Kacur (9):
-  python-linux-procfs: Add tar.xz and asc files to gitignore
-  python-linux-procfs: Fix traceback with non-utf8 chars in the
-    /proc/PID/cmdline
-  python-linux-procfs: Propagate error to user if a pid is completed
-  python-linux-procfs: pflags: Handle pids that completed
-  python-linux-procfs: Makefile: Add ctags
-  python-linux-procfs: Remove procfs/sysctl.py
-  python-linux-procfs: Various clean-ups
-  python-linux-procfs: Fix UnicodeDecodeError
-  python-linux-procfs: Create release v0.7.0
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.170-rt68.patch.xz
 
- .gitignore                         |   2 +
- MANIFEST                           |   1 -
- Makefile                           |  10 +-
- pflags                             |  15 +-
- procfs/__init__.py                 |   1 -
- procfs/procfs.py                   | 329 +++++++++++++++--------------
- procfs/sysctl.py                   |  68 ------
- rpm/SPECS/python-linux-procfs.spec |  13 +-
- setup.py                           |   2 +-
- 9 files changed, 209 insertions(+), 232 deletions(-)
- delete mode 100755 procfs/sysctl.py
+Enjoy!
 
--- 
-2.31.1
+   Tom
 
