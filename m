@@ -2,96 +2,114 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40F26C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Jan 2022 10:24:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49A3BC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Jan 2022 16:28:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1358132AbiAaKYA (ORCPT
+        id S1380379AbiAaQ2m (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 31 Jan 2022 05:24:00 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:58542 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1358122AbiAaKX4 (ORCPT
+        Mon, 31 Jan 2022 11:28:42 -0500
+Received: from dfw.source.kernel.org ([139.178.84.217]:42044 "EHLO
+        dfw.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1380358AbiAaQ2j (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 31 Jan 2022 05:23:56 -0500
-Date:   Mon, 31 Jan 2022 11:23:52 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1643624633;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=KP118xyiOlCfNk6Yd6qwpbFDC5oBogtckl9rVGfc3U4=;
-        b=1qqMupU1R69pNXQ/TeFSoXrMek18fQYm3CcWo22+BNV0gvpzOnj0/2zBU81yHvGmd3CzPI
-        Z0b5+It4pK6zgzj3Q5tQUzYR0puoqFdctdXjTXc9+QiMOISO6bUOoDEdz5YNYiYy9vMKob
-        ZY8i4ifLPQGJEewcDzITyVmvKtV4her+Tv1KXbIZE9v5YXL5iMZyblZ697BBQic/wzT3+O
-        XLlZZH0iJROtnuCTOEfahzwp3XQ4JoAGg+oaw2W53qzikqJjbV0GCzZkx/1nR6EKxbva73
-        nMAZ5WBgFM02EFqx8/M5NwfcEMPtYCsCRuRvaUDdf0GdSxiRuhzYMGAbJUJrUw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1643624633;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=KP118xyiOlCfNk6Yd6qwpbFDC5oBogtckl9rVGfc3U4=;
-        b=E/2C2AXQkKgwmIl3KTMx+DqHKQS7paMznJWUUCeCefUq64ONtb2twfK0tt02MTsp7fnzjz
-        ca7gtMjUE+FLQCCA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Clark Williams <clark.williams@gmail.com>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.org>,
-        linux-rt-users@vger.kernel.org, williams@redhat.com,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH PREEMPT_RT 4.19 STABLE] rt:  PREEMPT_RT safety net for
- backported patches
-Message-ID: <Yfe4uHYEC+syPy/J@linutronix.de>
-References: <20220130221944.7992CC340E4@smtp.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20220130221944.7992CC340E4@smtp.kernel.org>
+        Mon, 31 Jan 2022 11:28:39 -0500
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id DC544614BE;
+        Mon, 31 Jan 2022 16:28:38 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1C48CC340ED;
+        Mon, 31 Jan 2022 16:28:38 +0000 (UTC)
+X-Mailbox-Line: From 9f0ed270b80b0209ff781027712c0c46e3f085d6 Mon Sep 17 00:00:00 2001
+From:   Clark Williams <williams@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Date:   Thu, 13 Jan 2022 17:12:15 -0600
+Subject: [RFC PATCH PREEMPT_RT 4.19 STABLE] net: Fix compiler warnings on 4.19 PREEMPT_RT with xmit_lock_owner
+Message-Id: <20220131162838.1C48CC340ED@smtp.kernel.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-01-30 15:46:27 [-0600], Clark Williams wrote:
-> While doing some 4.19-rt cleanup work, I stumbled across the fact that parts of
-> two backported patches were dependent on CONFIG_PREEMPT_RT, rather than
-> the CONFIG_PREEMPT_RT_FULL used in 4.19 and earlier RT series.  The commits
-> in the linux-stable-rt v4.19-rt branch are:
-> 
-> dad4c6a33bf4e mm: slub: Don't resize the location tracking cache on PREEMPT_RT
-> e626b6f873f2c net: Treat __napi_schedule_irqoff() as __napi_schedule() on PREEMPT_RT
-> 
-> Discussing this at the Stable RT maintainers meeting, Steven Rostedt suggested that
-> we automagically select CONFIG_PREEMPT_RT if CONFIG_PREEMPT_RT_FULL is on, giving
-> us a safety net for any subsequently backported patches. Here's my first cut at
-> that patch.
-> 
-> I suspect we'll need a similar patch for stable RT kernels < 4.19.
-> 
-> Suggested-by: Steven Rostedt <rostedt@goodmis.org>
-> Signed-off-by: Clark Williams <williams@redhat.com>
-Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+GCC 11 has started complaining about the PREEMPT_RT changes to 2fd949365fe6628fb2
+which change the xmit_lock_owner from an integer to a pointer to struct
+task_struct. These changes are from the patch:
 
-> ---
->  kernel/Kconfig.preempt | 5 +++++
->  1 file changed, 5 insertions(+)
-> 
-> diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-> index 306567f72a3e..951f58cbd652 100644
-> --- a/kernel/Kconfig.preempt
-> +++ b/kernel/Kconfig.preempt
-> @@ -6,6 +6,10 @@ config PREEMPT_RT_BASE
->  	bool
->  	select PREEMPT
->  
-> +config PREEMPT_RT
-> +       bool
-> +       default false
+	     net: move xmit_recursion to per-task variable on -RT
 
-default is false.
+The below patch is ugly but fixes the compiler warnings.
 
-> +
->  config HAVE_PREEMPT_LAZY
->  	bool
->  
+I'd be happy to entertain a better/cleaner solution
 
-Sebastian
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ include/linux/netdevice.h | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 7b34ce34114a..fa2a52d24218 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -3921,7 +3921,11 @@ static inline void __netif_tx_lock(struct netdev_queue *txq, int cpu)
+ {
+ 	spin_lock(&txq->_xmit_lock);
+ 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
++#ifdef CONFIG_PREEMPT_RT_FULL
++	WRITE_ONCE(txq->xmit_lock_owner, current);
++#else
+ 	WRITE_ONCE(txq->xmit_lock_owner, cpu);
++#endif
+ }
+ 
+ static inline bool __netif_tx_acquire(struct netdev_queue *txq)
+@@ -3939,7 +3943,11 @@ static inline void __netif_tx_lock_bh(struct netdev_queue *txq)
+ {
+ 	spin_lock_bh(&txq->_xmit_lock);
+ 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
++#ifdef CONFIG_PREEMPT_RT_FULL
++	WRITE_ONCE(txq->xmit_lock_owner, current);
++#else
+ 	WRITE_ONCE(txq->xmit_lock_owner, smp_processor_id());
++#endif
+ }
+ 
+ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
+@@ -3948,7 +3956,11 @@ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
+ 
+ 	if (likely(ok)) {
+ 		/* Pairs with READ_ONCE() in __dev_queue_xmit() */
++#ifdef CONFIG_PREEMPT_RT_FULL
++		WRITE_ONCE(txq->xmit_lock_owner, current);
++#else
+ 		WRITE_ONCE(txq->xmit_lock_owner, smp_processor_id());
++#endif
+ 	}
+ 	return ok;
+ }
+@@ -3956,14 +3968,22 @@ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
+ static inline void __netif_tx_unlock(struct netdev_queue *txq)
+ {
+ 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
++#ifdef CONFIG_PREEMPT_RT_FULL
++	WRITE_ONCE(txq->xmit_lock_owner, NULL);
++#else
+ 	WRITE_ONCE(txq->xmit_lock_owner, -1);
++#endif
+ 	spin_unlock(&txq->_xmit_lock);
+ }
+ 
+ static inline void __netif_tx_unlock_bh(struct netdev_queue *txq)
+ {
+ 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
++#ifdef CONFIG_PREEMPT_RT_FULL
++	WRITE_ONCE(txq->xmit_lock_owner, NULL);
++#else
+ 	WRITE_ONCE(txq->xmit_lock_owner, -1);
++#endif
+ 	spin_unlock_bh(&txq->_xmit_lock);
+ }
+ 
+-- 
+2.34.1
+
