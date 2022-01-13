@@ -2,62 +2,64 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D77F4C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jan 2022 18:32:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30A3BC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jan 2022 19:25:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234075AbiAMScT (ORCPT
+        id S231907AbiAMTZE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Jan 2022 13:32:19 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35408 "EHLO
+        Thu, 13 Jan 2022 14:25:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47426 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230151AbiAMScS (ORCPT
+        with ESMTP id S231237AbiAMTZD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Jan 2022 13:32:18 -0500
-Received: from mail-qt1-x833.google.com (mail-qt1-x833.google.com [IPv6:2607:f8b0:4864:20::833])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 81569C061574
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jan 2022 10:32:18 -0800 (PST)
-Received: by mail-qt1-x833.google.com with SMTP id c19so8171278qtx.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jan 2022 10:32:18 -0800 (PST)
+        Thu, 13 Jan 2022 14:25:03 -0500
+Received: from mail-qv1-xf31.google.com (mail-qv1-xf31.google.com [IPv6:2607:f8b0:4864:20::f31])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33358C061574
+        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jan 2022 11:25:03 -0800 (PST)
+Received: by mail-qv1-xf31.google.com with SMTP id jr5so7911919qvb.11
+        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jan 2022 11:25:03 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=sender:from:to:cc:subject:date:message-id:mime-version
          :content-transfer-encoding;
-        bh=tG2QxnrtIHvZCBDM9ZBRXd4l4PUQ8iz5xODVPIlPM/4=;
-        b=if72D4g2Ir78Y81qaY1cyJmYbSkVBWkVTRrTDdtlWgQxeHLHUT+cXSrx6+hgdphk8F
-         OFoELO2DWMKwwrz9Hih41TEpUbkbZy4XNCM9HoFThpNUlBmje6POgmgsWRQt+QyIht71
-         JfSYtRwnWqinn5JqfzUqfDIn/5LDXhAURpifXXb28gy8NYt2MgeBd/Ses2kMjek1aK2j
-         FZxS9KbuClDf8tLLek5NlGliRkDnMozEVon75tyheJexpLvKNlHFlAxKm6JzpzWAIa0v
-         qtKFuZV9/PueLBrVSVHQ4l3Wb/Ku6eR2QJUAm/wGoyv2+aVGxmMYjqXc0VglZOQXn9pM
-         BokQ==
+        bh=+OTN42X16amUFwGXSesgB29lNQgKIHfhxZFtb0Q5f18=;
+        b=LnXQwDexeG9STp/Nx3O0QW6moIMSQhoEStbWleNPWjV2MxIgt5YWwvG2TQqNm3WXRn
+         DRsRVUJybj6nUEKeasP/IEy/+NMt8uTz6vn1V8aAS0jGbQ4O+0geljXbbSx/wjKjsiNC
+         cuHiPjQKr3TZsTkpCgp2BArKXqxj45vvZKZIWVOOFsWCKwGILWphRcCn0/vBRKCaHY57
+         d7kCXFCEitYVikZ2d75xMWMGDDHItjmvmJHfMNg7QCxma9kh19PckDXuO62s7XumiMx2
+         hHQeBLK4rzpXuZIgyyrqQGx2AtaG+QYkzL2fLlpUUD2y4zvQHJBlQO0IQsLEiFG3SuEa
+         xktw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :mime-version:content-transfer-encoding;
-        bh=tG2QxnrtIHvZCBDM9ZBRXd4l4PUQ8iz5xODVPIlPM/4=;
-        b=iLbBiYD2lPXad0DfiCKKevWv35GUnGILA+z/YS1AL7KbJPQPZWNaaoUttGH5ddJe7z
-         pH6hCp2vNeFoPfYQQ5MHnx446R6H3zIk1VfShdTwQ6QS605mjdMuXWbbKR0dM4BS13Et
-         S1vr/cyvVXnJYRz5OOOF1X9C00Wd8qplkgHZnKmsH8EvEJHYOxtZTZIlNYudRC8farnc
-         cbEkF/jgbHgAzPFuofP+J6OX36L8eBs2DJpTukyuwwOz8rwrRmTQX8hC33/sQpR1hcG+
-         KKucyeH6x2sbg8n2taxqQ0K6+W3jLdGkSCklHbGumZxOEfPxZRanmsTFzuA0NPyZTIsF
-         KI6g==
-X-Gm-Message-State: AOAM5333RceKO9EXV+0LW1cz9a0abuOnLa0H3agI80DksC/OWL/RiwU6
-        KcTR1yrpjaZHXT2gzk0KOktFCkrXPHg=
-X-Google-Smtp-Source: ABdhPJxVi7t0MUXsWMzub12ouVXgl1ECtOSL8k9n7Sm0xSKpujf3hA+3DwX0OCgXeP2/PfrnmqaOSg==
-X-Received: by 2002:a05:622a:281:: with SMTP id z1mr4724502qtw.477.1642098737412;
-        Thu, 13 Jan 2022 10:32:17 -0800 (PST)
+        bh=+OTN42X16amUFwGXSesgB29lNQgKIHfhxZFtb0Q5f18=;
+        b=zYLD6eh8gLSvXkVsYa0AAL/gpV55ZIYlDwVFBmSI4kULjZFwz4P2J7dgK5TsKu6Yk0
+         plCtHToxycZZKYIztm/mlT4yJR49vD0MzcIowMIqQItOYTd7KvhcCNvP92qSRnz0uSHm
+         axSASltwibzLkoqyw06EefZmglNobVmbece/FEAk+xsAjUlF+SX9HIOXUdOJilgogNGe
+         E29+Pfm+Guy4bJFHuzhY+XGKpNJh02ND4yzYIxvmoRBQLgjrXQrO5YeKdRAkIQge8Cbk
+         E5eswsusT/TDTTMOHiXuYtGsYh1kVpi+RO8Ygc2GlI6TrUgbzfRMje+0DmcMvcBuZyLR
+         IQ7w==
+X-Gm-Message-State: AOAM533qUsuVuif4Qh/qnuiMiGOcR91f+WwnDw3Bn0LR7WgpT7BnNxfT
+        gjCEta4xwuiNyVycNrvaoYL1rXA1ugc=
+X-Google-Smtp-Source: ABdhPJy85dH1JlOfuFCgVANZP+6e6jnxhpkzCd7aPC/wYVjPUS5McL8k7vJTSR7jX4CW6h2ycfD01w==
+X-Received: by 2002:a05:6214:20ac:: with SMTP id 12mr5250977qvd.119.1642101901702;
+        Thu, 13 Jan 2022 11:25:01 -0800 (PST)
 Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
-        by smtp.gmail.com with ESMTPSA id y16sm2043111qki.41.2022.01.13.10.32.16
+        by smtp.gmail.com with ESMTPSA id r4sm2514369qkp.93.2022.01.13.11.25.01
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 13 Jan 2022 10:32:17 -0800 (PST)
+        Thu, 13 Jan 2022 11:25:01 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
+Cc:     Atsushi Nemoto <atsushi.nemoto@sord.co.jp>,
+        Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
         Clark Williams <williams@redhat.com>,
+        Kate Carcia Poulin <kcarcia@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rteval: Don't run hackbench by default on low memory systems
-Date:   Thu, 13 Jan 2022 13:31:56 -0500
-Message-Id: <20220113183156.165953-1-jkacur@redhat.com>
+Subject: [ANNOUNCE] I'm pleased to announce version 3.3 of rteval
+Date:   Thu, 13 Jan 2022 14:24:43 -0500
+Message-Id: <20220113192443.168001-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -65,62 +67,96 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-commit cb8263770e4f5834a43db6be8ffb55ffd7f876c9
-Changed rteval to allow running on low memory systems by default because
-on some machines, such as certain Arm boards, it isn't a problem.
+I'm pleased to announce rteval-3.3
 
-However, on our automated testing systems it is causing problems.
+Some changes of note:
+- The idea of an exclusive load module has ben added.
+- stress-ng has been made an exclusive load module, so that when it
+  runs, no other load modules run
+- --cyclictest-threshold=USEC added to end a rteval run early if the
+  threshold exceeds the specified USEC
+- --hackbench-runlowmem allows hackbench to run on machines with
+  low memory (by default it is not run on low memory machines)
+- Support for systems running kthreads with a deadline policy
 
-This patch disables running hackbench by default on a low memory system.
-In order to allow people to run on a lowmem system where this isn't a
-problem, this patch also creates the option
---hackbench-runlowmem=True|False
+A special thanks to Punit Agrawal for many bug fixes and for changes
+that make it easier to run rteval on non-x86-64 machines such as ARM
 
-A user who wants hackbench to run in rteval on a low memory system, only
-needs to specify
+Comments, bug reports and patches are always welcome
 
---hackbench-runlowmem=True
+Thanks
+John Kacur
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval/modules/loads/hackbench.py | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+To fetch
 
-diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
-index 21a803b8a3cd..ddd1378bac75 100644
---- a/rteval/modules/loads/hackbench.py
-+++ b/rteval/modules/loads/hackbench.py
-@@ -39,6 +39,7 @@ from rteval.systopology import SysTopology
- 
- class Hackbench(CommandLineLoad):
-     def __init__(self, config, logger):
-+        self.__cfg = config
-         CommandLineLoad.__init__(self, "hackbench", config, logger)
- 
-     def _WorkloadSetup(self):
-@@ -56,7 +57,11 @@ class Hackbench(CommandLineLoad):
- 
-         ratio = float(mem) / float(self.num_cpus)
-         if ratio < 0.75:
--            self._log(Log.WARN, "Low memory system (%f GB/core)!" % ratio)
-+            if self.__cfg.runlowmem:
-+                self._log(Log.WARN, "Low memory system (%f GB/core)!" % ratio)
-+            else:
-+                self._log(Log.WARN, "Low memory system (%f GB/core)! Not running hackbench" % ratio)
-+                self._donotrun = True
- 
-         sysTop = SysTopology()
-         # get the number of nodes
-@@ -198,6 +203,9 @@ def ModuleParameters():
-     return {"jobspercore": {"descr": "Number of working threads per CPU core",
-                             "default": 5,
-                             "metavar": "NUM"},
-+            "runlowmem": {"descr": "Run hackbench on machines where low memory is detected",
-+                            "default": False,
-+                            "metavar": "True|False"}
-             }
- 
- 
+Clone
+git://git.kernel.org/pub/scm/utils/rteval/rteval.git
+
+Branch: main
+Tag: v3.3
+
+Tarballs available here:
+https://kernel.org/pub/linux/utils/rteval/
+
+Older version tarballs are available here:
+https://kernel.org/pub/linux/utils/rteval/older
+
+Atsushi Nemoto (1):
+  rteval: cyclictest.py: Do not pass obsolete --notrace option
+
+John Kacur (18):
+  rteval: Restrict measurement threads to the cpus in cpumask
+  rteval: Update to using the linux-5.13.2 kernel
+  rteval: Add __contains__ in rtevalConfig
+  rteval: Only process warnings if dmidecode_loaded is True
+  rteval: Construct a 'model name' on architectures that don't have one
+  rteval: kcompile: Fix for no numactl and no cpulist
+  rteval: services: Iterate through items in MakeReport
+  rteval: Remove mult from hackbench.py
+  rteval: Remove self.__err_sleep
+  rteval: Make donotrun work correctly in load modules
+  rteval: Add idea of exclusive load module and make stress-ng one
+  rteval: systopology: Use 'with' on open with sysread
+  rteval: systopology: Update copyright
+  rteval: kcompile: Fix spelling in debug message
+  rteval: Change misc.py to be executable
+  rteval: Add --cyclictest-threshold=USEC
+  rteval: Don't run hackbench by default on low memory systems
+  rteval: update version number to v3.3
+
+Punit Agrawal (8):
+  rteval: systopology.py: Add support for systems that don't have Numa
+  rteval: osinfo.py: Fix RT kernel detection
+  rteval: services.py: Fix incorrect detection of container environment
+  rteval: hackbench.py: Enable running on a system with low memory
+  rteval: kernel.py: Add support for kthreads running with deadline
+    policy
+  rteval: cyclictest.py Parse max latencies from cyclictest output
+  rteval: cyclictest.py: Sort the list of cpus
+  rteval: cyclictest.py: Skip statistics reporting in case of an
+    overflow
+
+ Makefile                                 |  2 +-
+ rteval.spec                              |  2 +-
+ rteval/__init__.py                       |  4 +-
+ rteval/misc.py                           | 21 ++++++++
+ rteval/modules/__init__.py               | 21 ++++++++
+ rteval/modules/loads/__init__.py         |  2 +-
+ rteval/modules/loads/hackbench.py        | 22 +++++---
+ rteval/modules/loads/kcompile.py         | 39 ++++++++++----
+ rteval/modules/loads/stressng.py         |  2 +
+ rteval/modules/measurement/cyclictest.py | 65 ++++++++++++++++++++----
+ rteval/rteval.conf                       |  2 +-
+ rteval/rtevalConfig.py                   |  2 +
+ rteval/sysinfo/dmi.py                    |  3 ++
+ rteval/sysinfo/kernel.py                 |  2 +-
+ rteval/sysinfo/osinfo.py                 |  2 +-
+ rteval/sysinfo/services.py               | 16 +++---
+ rteval/systopology.py                    | 42 ++++++++++++---
+ rteval/version.py                        |  2 +-
+ 18 files changed, 199 insertions(+), 52 deletions(-)
+ mode change 100644 => 100755 rteval/misc.py
+
 -- 
 2.31.1
 
