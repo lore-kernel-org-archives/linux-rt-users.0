@@ -2,161 +2,190 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 30A3BC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jan 2022 19:25:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8652FC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Jan 2022 18:25:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231907AbiAMTZE (ORCPT
+        id S244085AbiANSZt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Jan 2022 14:25:04 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47426 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231237AbiAMTZD (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Jan 2022 14:25:03 -0500
-Received: from mail-qv1-xf31.google.com (mail-qv1-xf31.google.com [IPv6:2607:f8b0:4864:20::f31])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33358C061574
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jan 2022 11:25:03 -0800 (PST)
-Received: by mail-qv1-xf31.google.com with SMTP id jr5so7911919qvb.11
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jan 2022 11:25:03 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=+OTN42X16amUFwGXSesgB29lNQgKIHfhxZFtb0Q5f18=;
-        b=LnXQwDexeG9STp/Nx3O0QW6moIMSQhoEStbWleNPWjV2MxIgt5YWwvG2TQqNm3WXRn
-         DRsRVUJybj6nUEKeasP/IEy/+NMt8uTz6vn1V8aAS0jGbQ4O+0geljXbbSx/wjKjsiNC
-         cuHiPjQKr3TZsTkpCgp2BArKXqxj45vvZKZIWVOOFsWCKwGILWphRcCn0/vBRKCaHY57
-         d7kCXFCEitYVikZ2d75xMWMGDDHItjmvmJHfMNg7QCxma9kh19PckDXuO62s7XumiMx2
-         hHQeBLK4rzpXuZIgyyrqQGx2AtaG+QYkzL2fLlpUUD2y4zvQHJBlQO0IQsLEiFG3SuEa
-         xktw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=+OTN42X16amUFwGXSesgB29lNQgKIHfhxZFtb0Q5f18=;
-        b=zYLD6eh8gLSvXkVsYa0AAL/gpV55ZIYlDwVFBmSI4kULjZFwz4P2J7dgK5TsKu6Yk0
-         plCtHToxycZZKYIztm/mlT4yJR49vD0MzcIowMIqQItOYTd7KvhcCNvP92qSRnz0uSHm
-         axSASltwibzLkoqyw06EefZmglNobVmbece/FEAk+xsAjUlF+SX9HIOXUdOJilgogNGe
-         E29+Pfm+Guy4bJFHuzhY+XGKpNJh02ND4yzYIxvmoRBQLgjrXQrO5YeKdRAkIQge8Cbk
-         E5eswsusT/TDTTMOHiXuYtGsYh1kVpi+RO8Ygc2GlI6TrUgbzfRMje+0DmcMvcBuZyLR
-         IQ7w==
-X-Gm-Message-State: AOAM533qUsuVuif4Qh/qnuiMiGOcR91f+WwnDw3Bn0LR7WgpT7BnNxfT
-        gjCEta4xwuiNyVycNrvaoYL1rXA1ugc=
-X-Google-Smtp-Source: ABdhPJy85dH1JlOfuFCgVANZP+6e6jnxhpkzCd7aPC/wYVjPUS5McL8k7vJTSR7jX4CW6h2ycfD01w==
-X-Received: by 2002:a05:6214:20ac:: with SMTP id 12mr5250977qvd.119.1642101901702;
-        Thu, 13 Jan 2022 11:25:01 -0800 (PST)
-Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
-        by smtp.gmail.com with ESMTPSA id r4sm2514369qkp.93.2022.01.13.11.25.01
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 13 Jan 2022 11:25:01 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Atsushi Nemoto <atsushi.nemoto@sord.co.jp>,
-        Punit Agrawal <punit1.agrawal@toshiba.co.jp>,
-        Clark Williams <williams@redhat.com>,
-        Kate Carcia Poulin <kcarcia@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] I'm pleased to announce version 3.3 of rteval
-Date:   Thu, 13 Jan 2022 14:24:43 -0500
-Message-Id: <20220113192443.168001-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.31.1
+        Fri, 14 Jan 2022 13:25:49 -0500
+Received: from foss.arm.com ([217.140.110.172]:36686 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S236376AbiANSZs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 Jan 2022 13:25:48 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id EF795ED1;
+        Fri, 14 Jan 2022 10:25:47 -0800 (PST)
+Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.196.57])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 657E23F766;
+        Fri, 14 Jan 2022 10:25:46 -0800 (PST)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        John Keeping <john@metanate.com>
+Cc:     linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        linux-kernel@vger.kernel.org
+Subject: Re: [RT] BUG in sched/cpupri.c
+In-Reply-To: <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
+References: <Yb3vXx3DcqVOi+EA@donbot> <71ddbe51-2b7f-2b13-5f22-9013506471dc@arm.com> <87zgou6iq1.mognet@arm.com> <20211221164528.3c84543f.john@metanate.com> <31a47e99-6de3-76ec-62ad-9c98d092ead5@arm.com> <87r1a4775a.mognet@arm.com> <f2d50e78-dc7b-6851-f12e-d702fbfea826@arm.com>
+Date:   Fri, 14 Jan 2022 18:25:35 +0000
+Message-ID: <87h7a66uow.mognet@arm.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm pleased to announce rteval-3.3
 
-Some changes of note:
-- The idea of an exclusive load module has ben added.
-- stress-ng has been made an exclusive load module, so that when it
-  runs, no other load modules run
-- --cyclictest-threshold=USEC added to end a rteval run early if the
-  threshold exceeds the specified USEC
-- --hackbench-runlowmem allows hackbench to run on machines with
-  low memory (by default it is not run on low memory machines)
-- Support for systems running kthreads with a deadline policy
+Trying to page this back in...
 
-A special thanks to Punit Agrawal for many bug fixes and for changes
-that make it easier to run rteval on non-x86-64 machines such as ARM
+On 07/01/22 11:46, Dietmar Eggemann wrote:
+> On 22/12/2021 20:48, Valentin Schneider wrote:
+>> On 22/12/21 18:46, Dietmar Eggemann wrote:
+>>> On 21.12.21 17:45, John Keeping wrote:
+>>>> On Tue, 21 Dec 2021 16:11:34 +0000
+>>>> Valentin Schneider <valentin.schneider@arm.com> wrote:
+>>>>
+>>>>> On 20/12/21 18:35, Dietmar Eggemann wrote:
+>
+> [...]
+>
+>>> switched_from_rt() -> rt_queue_pull_task(, pull_rt_task)
+>>>   pull_rt_task()->tell_cpu_to_push()->irq_work_queue_on(&rq->rd->rto_push_work,)
+>>>     rto_push_irq_work_func() -> push_rt_task(rq, true)
+>>>
+>>> seems to be the only way with pull=true.
+>>>
+>>> In my tests, rq->rt.rt_nr_running seems to be 0 when it happens.
+>>>
+>>> [   22.288537] CPU3 switched_to_rt: p=[ksoftirqd/3 35]
+>>> [   22.288554] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] pi_task=[rcu_preempt 11] queued=1 running=0 prio=98 oldprio=120
+>>> [   22.288636] CPU3 switched_from_rt: p=[ksoftirqd/3 35] rq->rt.rt_nr_running=0
+>>>                                                          ^^^^^^^^^^^^^^^^^^^^^^
+>>> [   22.288649] rt_mutex_setprio: CPU3 p=[ksoftirqd/3 35] queued=1 running=1 prio=120 oldprio=98
+>>> [   22.288681] CPU3 push_rt_task: next_task=[rcu_preempt 11] migr_dis=1 rq->curr=[ksoftirqd/3 35] pull=1
+>>>                                                              ^^^^^^^^^^                           ^^^^^^
+>> 
+>> mark_wakeup_next_waiter() first deboosts the previous owner and then
+>> wakeups the next top waiter. Seems like you somehow have the wakeup happen
+>> before the push_rt_task IRQ work is run. Also, tell_cpu_to_push() should
+>> only pick a CPU that is in rq->rd->rto_mask, which requires having at least
+>> 2 RT tasks there...
+>
+> True, this_cpu has rt_nr_running = 0 and *cpu* has rt_nr_running >= 2:
+>
+>   mark_wakeup_next_waiter()
+>
+>     (1) /* deboost */
+>     rt_mutex_adjust_prio()
+>
+>       rt_mutex_setprio(current, ...)
+>
+>         rq = __task_rq_lock(current, );
+>         check_class_changed(rq, p, prev_class, oldprio)
+>
+>           switched_from_rt()
+>
+>             if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
+>               return;
+>
+>             rt_queue_pull_task(rq)
+>
+>               queue_balance_callback(rq, ..., pull_rt_task);
+>
+>                 pull_rt_task()
+>
+>                   tell_cpu_to_push()
+>
+>                     *cpu* = rto_next_cpu(rq->rd)
+>                     irq_work_queue_on(&rq->rd->rto_push_work, *cpu*)
+>
+>                       rto_push_irq_work_func()
+>                         push_rt_task(rq, true) <-- !!!
+>
+>     (2) /* waking the top waiter */
+>     rt_mutex_wake_q_add(wqh, waiter);
+>
+>> Now, that wakeup from the rtmutex unlock would give us a resched_curr() via
+>> check_preempt_curr() if required, which is good, though I think we are
+>> still missing some for sched_setscheduler() (there are no wakeups
+>> there). So if we just have to live with an IRQ work popping in before we
+>> get to preempt_schedule_irq() (or somesuch), then perhaps the below would
+>> be sufficient.
+>
+> I think that's the case here but we are on the RT overloaded CPU (*cpu*).
+>
 
-Comments, bug reports and patches are always welcome
+So one thing I wasn't entirely clear on (and holidays didn't fix that) is
+the rt_queue_pull_task() from switched_from_rt() only happens if that rq
+has no other runnable RT tasks, so I don't quite see how the
+irq_work_queue_on() can end up as a self-IPI...
 
-Thanks
-John Kacur
+>> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+>> index ef8228d19382..8f3e3a1367b6 100644
+>> --- a/kernel/sched/rt.c
+>> +++ b/kernel/sched/rt.c
+>> @@ -1890,6 +1890,16 @@ static int push_rt_task(struct rq *rq, bool pull)
+>>  	if (!next_task)
+>>  		return 0;
+>>  
+>> +	/*
+>> +	 * It's possible that the next_task slipped in of higher priority than
+>> +	 * current, or current has *just* changed priority.  If that's the case
+>> +	 * just reschedule current.
+>> +	 */
+>> +	if (unlikely(next_task->prio < rq->curr->prio)) {
+>> +		resched_curr(rq);
+>> +		return 0;
+>> +	}
+>
+> IMHO, that's the bit which prevents the BUG.
+>
+> But this would also prevent the case in which rq->curr is an RT task
+> with lower prio than next_task.
+>
 
-To fetch
+I think that's what we want - if current isn't the (logical) highest
+priority task on the runqueue, we should forgo push/pull and reschedule
+ASAP.
 
-Clone
-git://git.kernel.org/pub/scm/utils/rteval/rteval.git
+> Also `rq->curr = migration/X` goes still though which is somehow fine
+> since find_lowest_rq() bails out for if (task->nr_cpus_allowed == 1).
+>
+> And DL tasks (like sugov:X go through and they can have
+> task->nr_cpus_allowed > 1 (arm64 slow-switching boards with shared
+> freuency domains with schedutil). cpupri_find_fitness()->convert_prio()
+> can handle  task_pri, p->prio = -1 (CPUPRI_INVALID) although its somehow
+> by coincidence.
+>
 
-Branch: main
-Tag: v3.3
+Right. This reminds me of:
+https://lore.kernel.org/lkml/jhjblbx7glh.mognet@arm.com/
 
-Tarballs available here:
-https://kernel.org/pub/linux/utils/rteval/
 
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rteval/older
+> So maybe something like this:
+>
 
-Atsushi Nemoto (1):
-  rteval: cyclictest.py: Do not pass obsolete --notrace option
+Ah, so you explicitely prevent rt.c::find_lowest_rq() invocations with a
+non-RT task... But what if current is an RT task that just got deboosted,
+so that next_task->prio < rq->curr->prio? IMO we should reschedule ASAP (as
+I already blabbered about above). If next_task is migration_disabled but
+higher (logical) prio than current, we don't need to do any of the
+migration_disabled specific crud, we just reschedule.
 
-John Kacur (18):
-  rteval: Restrict measurement threads to the cpus in cpumask
-  rteval: Update to using the linux-5.13.2 kernel
-  rteval: Add __contains__ in rtevalConfig
-  rteval: Only process warnings if dmidecode_loaded is True
-  rteval: Construct a 'model name' on architectures that don't have one
-  rteval: kcompile: Fix for no numactl and no cpulist
-  rteval: services: Iterate through items in MakeReport
-  rteval: Remove mult from hackbench.py
-  rteval: Remove self.__err_sleep
-  rteval: Make donotrun work correctly in load modules
-  rteval: Add idea of exclusive load module and make stress-ng one
-  rteval: systopology: Use 'with' on open with sysread
-  rteval: systopology: Update copyright
-  rteval: kcompile: Fix spelling in debug message
-  rteval: Change misc.py to be executable
-  rteval: Add --cyclictest-threshold=USEC
-  rteval: Don't run hackbench by default on low memory systems
-  rteval: update version number to v3.3
-
-Punit Agrawal (8):
-  rteval: systopology.py: Add support for systems that don't have Numa
-  rteval: osinfo.py: Fix RT kernel detection
-  rteval: services.py: Fix incorrect detection of container environment
-  rteval: hackbench.py: Enable running on a system with low memory
-  rteval: kernel.py: Add support for kthreads running with deadline
-    policy
-  rteval: cyclictest.py Parse max latencies from cyclictest output
-  rteval: cyclictest.py: Sort the list of cpus
-  rteval: cyclictest.py: Skip statistics reporting in case of an
-    overflow
-
- Makefile                                 |  2 +-
- rteval.spec                              |  2 +-
- rteval/__init__.py                       |  4 +-
- rteval/misc.py                           | 21 ++++++++
- rteval/modules/__init__.py               | 21 ++++++++
- rteval/modules/loads/__init__.py         |  2 +-
- rteval/modules/loads/hackbench.py        | 22 +++++---
- rteval/modules/loads/kcompile.py         | 39 ++++++++++----
- rteval/modules/loads/stressng.py         |  2 +
- rteval/modules/measurement/cyclictest.py | 65 ++++++++++++++++++++----
- rteval/rteval.conf                       |  2 +-
- rteval/rtevalConfig.py                   |  2 +
- rteval/sysinfo/dmi.py                    |  3 ++
- rteval/sysinfo/kernel.py                 |  2 +-
- rteval/sysinfo/osinfo.py                 |  2 +-
- rteval/sysinfo/services.py               | 16 +++---
- rteval/systopology.py                    | 42 ++++++++++++---
- rteval/version.py                        |  2 +-
- 18 files changed, 199 insertions(+), 52 deletions(-)
- mode change 100644 => 100755 rteval/misc.py
-
--- 
-2.31.1
-
+> @ -1898,6 +1898,11 @@ static int push_rt_task(struct rq *rq, bool pull)
+>                 if (!pull || rq->push_busy)
+>                         return 0;
+>
+> +               if (rq->curr->sched_class != &rt_sched_class) {
+> +                       resched_curr(rq);
+> +                       return 0;
+> +               }
+> +
+>                 cpu = find_lowest_rq(rq->curr);
+>
+> [...]
