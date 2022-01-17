@@ -2,76 +2,114 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F1C5C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jan 2022 10:02:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C663AC433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jan 2022 12:54:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238482AbiAQKCt (ORCPT
+        id S232491AbiAQMyU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Jan 2022 05:02:49 -0500
-Received: from smtp-out1.suse.de ([195.135.220.28]:44202 "EHLO
-        smtp-out1.suse.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238473AbiAQKCt (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jan 2022 05:02:49 -0500
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out1.suse.de (Postfix) with ESMTPS id A5388212B9;
-        Mon, 17 Jan 2022 10:02:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1642413767; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=SJmKeizHq6WQTFQ97oG9pwhWoRMnaCiKvK2TrmL7UeU=;
-        b=VaK0+JwQuOTEQVdwVDRsUEWZXL5pPa/hwTo3Y8QQyOK8M0MHL5qq2MsH9ZfrbP2s7e9KAH
-        lh3mZZ+p/uyLnyY83yd7t0PolW1pWG48kDQ6hJ1lp5jDX2qAx09M98N8R4R1FIaux7qpFV
-        kxn09vqltxTwgNy36nBt9E9ZqoPs6ys=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1642413767;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=SJmKeizHq6WQTFQ97oG9pwhWoRMnaCiKvK2TrmL7UeU=;
-        b=7psUiaZXvJ0wT2d7Er88CZ09PwNHNGiw3TeLrS3EvjYv/9yqQXk+LhVzmIzBPRFA7OZcet
-        3iDTQVAPUTOt0yAA==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 961F713CF9;
-        Mon, 17 Jan 2022 10:02:47 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id pslpJMc+5WHnRwAAMHmgww
-        (envelope-from <dwagner@suse.de>); Mon, 17 Jan 2022 10:02:47 +0000
-Date:   Mon, 17 Jan 2022 11:02:47 +0100
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
-Subject: Re: [ANNOUNCE] 4.4.299-rt230
-Message-ID: <20220117100247.yftwn4k4dmvneisg@carbon.lan>
-References: <164232885429.16727.14256146043064078052@beryllium.lan>
- <YeU9ahVNB8aLHoBl@linutronix.de>
+        Mon, 17 Jan 2022 07:54:20 -0500
+Received: from mail.djicorp.com ([14.21.64.4]:3776 "EHLO mail.djicorp.com"
+        rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
+        id S231817AbiAQMyT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 17 Jan 2022 07:54:19 -0500
+IronPort-SDR: ytfYKrWuCYdD0QoFZ1f7EFpCOaI7wZ0T+8T76M+2Ggn9XREGZrFuwJR22tMte0+jc4wpL0z3Ud
+ ITOuQhbSx85w==
+X-IronPort-AV: E=Sophos;i="5.88,295,1635177600"; 
+   d="scan'208";a="13199749"
+From:   Caine Chen <caine.chen@dji.com>
+To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: =?gb2312?B?16q3ojog?=
+Thread-Index: AQHYBfVrUsEQJRaHwkqiO7owzXSvE6xcNafS
+Date:   Mon, 17 Jan 2022 12:54:16 +0000
+Message-ID: <dd9673737c354eb898fc22ee466efbda@dji.com>
+References: <10b1995b392e490aaa2db645f219015e@dji.com>
+In-Reply-To: <10b1995b392e490aaa2db645f219015e@dji.com>
+Accept-Language: zh-CN, en-US
+Content-Language: zh-CN
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [58.34.188.114]
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <YeU9ahVNB8aLHoBl@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Jan 17, 2022 at 10:56:58AM +0100, Sebastian Andrzej Siewior wrote:
-> The uploads still stuck? You want me to ping?
-
-Yep, still not working. I think my last email never reached the right
-inbox. It might be due some DKIM problems on my side. I'll try again
-with my work email. Thanks for reminding me.
+SGkgZ3V5czoNCldlIGZvdW5kIHRoYXQgc29tZSBJUlEgdGhyZWFkcyB3aWxsIGJsb2NrIGluIGxv
+Y2FsX2JoX2Rpc2FibGUoICkgZm9yDQpsb25nIHRpbWUgaW4gc29tZSBzaXR1YXRpb24gYW5kIHdl
+IGhvcGUgdG8gZ2V0IHlvdXIgdmFsdWFibGUgc3VnZ2VzdGlvbnMuDQpNeSBrZXJuZWwgdmVyc2lv
+biBpcyA1LjQgYW5kIHRoZSBpcnEtZGVsYXkgaXMgY2F1c2VkIGJ5IHRoZSB1c2Ugb2YNCndyaXRl
+X2xvY2tfYmgoKS4NCkl0IGNhbiBiZSBkZXNjcmliZWQgaW4gdGhlIGZvbGxvd2luZyBmaWd1cmU6
+DQooMSkgVGhyZWFkXzEgd2hpY2ggaXMgYSBTQ0hFRF9OT1JNQUwgdGhyZWFkIHJ1bnMgb24gQ1BV
+MSwNCiAgICBhbmQgaXQgdXNlcyByZWFkX2xvY2tfYmgoKSB0byBwcm90ZWN0IHNvbWUgZGF0YS4N
+CigyKSBUaHJlYWRfMiB3aGljaCBpcyBhIFNDSEVEX1JSIHRocmVhZCBydW5zIG9uIENQVTEgYW5k
+IGl0IHByZWVtcHRzIHRocmVhZF8xDQogICAgYWZ0ZXIgdGhyZWFkXzEgaW52b2tlZCByZWFkX2xv
+Y2tfYmgoKS4gVGhyZWFkXzIgbWF5IHJ1biA2MCBtcyBpbiBteSBzeXN0ZW0uDQooMykgVGhyZWFk
+XzMgd2hpY2ggaXMgYSBTQ0hFRF9OT1JNQUwgdGhyZWFkIHJ1bnMgb24gQ1BVMC4gVGhpcyB0aHJl
+YWQgYWNxdWlyZXMNCiAgICB3cml0ZXIncyBsb2NrIGJ5IGludm9raW5nIHdyaXRlX2xvY2tfYmgo
+KS4gVGhpcyBmdW5jdGlvbiB3aWxsIGRpc2FibGUNCiAgICBidXR0b24taGFsZiBmaXJzdGx5IGJ5
+IGludm9raW5nIGxvY2FsX2JoX2Rpc2FibGUoICkuIEJ1dCBpdCB3aWxsIGJsb2NrIGluDQogICAg
+cnRfd3JpdGVfbG9jaygpICwgYmVjYXVzZSByZWFkIGxvY2sgaXMgaGVsZCBieSB0aHJlYWRfMS4N
+Cig0KSBBdCB0aGlzIHRpbWUsIGlmIGlycSB0aHJlYWQgd2l0aG91dCBJUlFGX05PX1RIUkVBRCBm
+bGFnIG9uIENQVTAgdHJ5cyB0bw0KICAgIGFjcXVpcmUgYmhfbG9jayhpdCBoYXMgYmVlbiByZW5h
+bWVkIGFzIHNvZnRpcnFfY3RybC5sb2NrIG5vdyksIGlycQ0KICAgIHRocmVhZCB3aWxsIGJsb2Nr
+IGJlY2F1c2UgdGhpcyBsb2NrIGlzIGhlbGQgYnkgdGhyZWFkXzMuDQoNCi0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLQ0KQ1BVMSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBDUFUwDQotLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICAgICAgICAgICAgICAgICAgICAtLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCnRo
+cmVhZF8yICAgICAgICAgICAgICAgICAgICAgICB0aHJlYWRfMSAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIHRocmVhZF8zICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlycV90aHJlYWQN
+Ci0tLS0tLS0tLS0tLS0tICAgICAgICAgICAgICAgICAgLS0tLS0tLS0tLS0gICAgICAgICAgICAg
+ICAgICAgICAgICAgICAtLS0tLS0tLS0tLSAgICAgICAgICAgICAgICAgICAgICAgICAgICAtLS0t
+LS0tLS0tLS0tLQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVhZF9sb2NrX2Jo
+KCkNCg0KLi4uLi4uDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICB3cml0ZV9sb2NrX2JoKCkNCi8qZG8gd29yayovICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAvKiBpcnEgdGhyZWFkIGJsb2NrIGhl
+cmUqLw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICBsb2NhbF9iaF9kaXNhYmxlKCkNCi4uLi4uLg0KICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgcmVhZF91bmxvY2tfYmgoKQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLi4uLi4uDQogICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAv
+KiBkbyB3b3JrICovDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAuLi4uLi4NCiAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHdyaXRlX3VubG9j
+a19iaCgpDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgIGlycV90aHJlYWRfZm4oKQ0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KDQpJbiB0aGlzIGNhc2UsIGlm
+IFNDSEVEX1JSIHRocmVhZF8yIHByZWVtcHRzIHRocmVhZF8xIGFuZCBydW5zIHRvbyBtdWNoIHRp
+bWUsIGFsbA0KaXJxIHRocmVhZHMgb24gQ1BVMCB3aWxsIGJlIGJsb2NrZWQuDQpJdCBsb29rcyBs
+aWtlIGEgcHJpb3JpdHkgcmV2ZXJzZSBwcm9ibGVtIG9mIHJlYWwtdGltZSB0aHJlYWQgcHJlZW1w
+dC4NCkhvdyBjYW4gSSBhdm9pZCB0aGlzIHByb2JsZW0/ICBJIGhhdmUgYSBmZXcgdGhvdWdodHM6
+DQooMSkgVGhlIGtleSBwb2ludCwgSSB0aGluaywgaXMgdGhhdCB3cml0ZV9sb2NrX2JoKCkvcmVh
+ZF9sb2NrX2JoKCkgd2lsbCBkaXNhYmxlDQogICAgYnV0dG9tIGhhbGYgd2hpY2ggd2lsbCBkaXNh
+YmxlIHNvbWUgaXJxIHRocmVhZHMgdG9vLiBDb3VsZCBJIHVzZQ0KICAgIHdyaXRlX2xvY2tfaXJx
+KCkvcmVhZF9sb2NrX2lycSgpIGluc3RlYWQ/DQooMikgSWYgbXkgaXJxIGhhbmRsZXIgd2FudHMg
+dG8gZ2V0IGJldHRlciBwZXJmb3JtYW5jZSwgSSBzaG91bGQgcmVxdWVzdCBhDQogICAgdGhyZWFk
+ZWQgaGFuZGxlciBmb3IgdGhlIElSUSBhcyBTZWJhc3RpYW4gc3VnZ2VzdGVkIGluIExLTUwNCiAg
+ICA8UkU6IGlycSB0aHJlYWQgbGF0ZW5jeSBjYXVzZWQgYnkgc29mdGlycV9jdHJsLmxvY2sgY29u
+dGVudGlvbj4uDQogICAgSXMgdGhyZWFkZWQgaGFuZGxlciBkZXNpZ25lZCBmb3IgbG93IGlycSBk
+ZWxheT8NCigzKSBUaHJlYWRfMiB0YWtlcyB0b28gbG9uZyB0aW1lIGZvciBydW5uaW5nLiBTbyBp
+dCBpcyBub3Qgc3VpdGFibGUgdG8gc2V0IHRoaXMNCiAgICB0aHJlYWQgd2l0aCBoaWdoIHJ0LXBy
+aW9yaXR5LiBTaG91bGQgSSByZWR1Y2UgdGhpcyB0aHJlYWQncyBwcmlvcml0eSB0bw0KICAgIHNv
+bHZlIHRoaXMgcHJvYmxlbT8NCg0KQXJlIHRoZXJlIGJldHRlciB3YXlzIHRvIGF2b2lkIHRoaXMg
+cHJvYmxlbT8gV2UgaG9wZSB0byBnZXQgeW91ciB2YWx1YWJsZQ0Kc3VnZ2VzdGlvbnMuIFRoYW5r
+cyENCg0KQmVzdCByZWdhcmRzLA0KQ2FpbmUuY2hlbg0KVGhpcyBlbWFpbCBhbmQgYW55IGF0dGFj
+aG1lbnRzIHRoZXJldG8gbWF5IGNvbnRhaW4gcHJpdmF0ZSwgY29uZmlkZW50aWFsLCBhbmQgcHJp
+dmlsZWdlZCBtYXRlcmlhbCBmb3IgdGhlIHNvbGUgdXNlIG9mIHRoZSBpbnRlbmRlZCByZWNpcGll
+bnQuIEFueSByZXZpZXcsIGNvcHlpbmcsIG9yIGRpc3RyaWJ1dGlvbiBvZiB0aGlzIGVtYWlsIChv
+ciBhbnkgYXR0YWNobWVudHMgdGhlcmV0bykgYnkgb3RoZXJzIGlzIHN0cmljdGx5IHByb2hpYml0
+ZWQuIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZCByZWNpcGllbnQsIHBsZWFzZSBjb250YWN0
+IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIHBlcm1hbmVudGx5IGRlbGV0ZSB0aGUgb3JpZ2lu
+YWwgYW5kIGFueSBjb3BpZXMgb2YgdGhpcyBlbWFpbCBhbmQgYW55IGF0dGFjaG1lbnRzIHRoZXJl
+dG8uDQoNCrTLtefX09PKvP68sLi9vP7L+bD8uqzE2sjdvt/T0Lv6w9zQ1KOsx9K99s/e09q908rV
+yMvKudPDoaPOtL6t1MrQ7aOsvfvWubXayP3Iy9TEtsGhori01sa78rSrsqW4w7Xn19PTyrz+1tC1
+xMjOus7Qxc+ioaPI57n7xPqyu8r009rS1MnPtefX09PKvP61xMS/seq908rV1d+jrMfrxPrBory0
+zajWqreiy83Iy7Kiyb6z/dSttefX09PKvP68sMbkz+C52LXEuL28/qGjDQo=
