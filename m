@@ -2,28 +2,29 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C663AC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jan 2022 12:54:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 33247C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jan 2022 12:59:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232491AbiAQMyU (ORCPT
+        id S240050AbiAQM7o (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Jan 2022 07:54:20 -0500
-Received: from mail.djicorp.com ([14.21.64.4]:3776 "EHLO mail.djicorp.com"
+        Mon, 17 Jan 2022 07:59:44 -0500
+Received: from mail.djicorp.com ([14.21.64.4]:47560 "EHLO mail.djicorp.com"
         rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
-        id S231817AbiAQMyT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jan 2022 07:54:19 -0500
-IronPort-SDR: ytfYKrWuCYdD0QoFZ1f7EFpCOaI7wZ0T+8T76M+2Ggn9XREGZrFuwJR22tMte0+jc4wpL0z3Ud
- ITOuQhbSx85w==
+        id S229563AbiAQM7o (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 17 Jan 2022 07:59:44 -0500
+IronPort-SDR: 3ntYdWet2FjWkCSC/XLSfC4/1KDMZPAhiMWWlh7Wff44Fl3ZK0bcthMkdgDUmrUJ+CLqHDj6RJ
+ VGixjicGekzg==
 X-IronPort-AV: E=Sophos;i="5.88,295,1635177600"; 
-   d="scan'208";a="13199749"
+   d="scan'208";a="13199892"
 From:   Caine Chen <caine.chen@dji.com>
 To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: =?gb2312?B?16q3ojog?=
-Thread-Index: AQHYBfVrUsEQJRaHwkqiO7owzXSvE6xcNafS
-Date:   Mon, 17 Jan 2022 12:54:16 +0000
-Message-ID: <dd9673737c354eb898fc22ee466efbda@dji.com>
-References: <10b1995b392e490aaa2db645f219015e@dji.com>
-In-Reply-To: <10b1995b392e490aaa2db645f219015e@dji.com>
+Subject: [Question] How to avoid irq delay caused by write_lock_bh() and rt
+ thread preempt
+Thread-Topic: [Question] How to avoid irq delay caused by write_lock_bh() and
+ rt thread preempt
+Thread-Index: AQHYC6Hovz/JkfyhY0+MRcCVX33uoA==
+Date:   Mon, 17 Jan 2022 12:59:42 +0000
+Message-ID: <912ca51a30eb4a1c96c95009debec3ea@dji.com>
 Accept-Language: zh-CN, en-US
 Content-Language: zh-CN
 X-MS-Has-Attach: 
