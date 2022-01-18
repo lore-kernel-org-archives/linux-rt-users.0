@@ -2,115 +2,139 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33247C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jan 2022 12:59:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C53FDC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jan 2022 12:39:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240050AbiAQM7o (ORCPT
+        id S232927AbiARMjE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Jan 2022 07:59:44 -0500
-Received: from mail.djicorp.com ([14.21.64.4]:47560 "EHLO mail.djicorp.com"
-        rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
-        id S229563AbiAQM7o (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jan 2022 07:59:44 -0500
-IronPort-SDR: 3ntYdWet2FjWkCSC/XLSfC4/1KDMZPAhiMWWlh7Wff44Fl3ZK0bcthMkdgDUmrUJ+CLqHDj6RJ
- VGixjicGekzg==
-X-IronPort-AV: E=Sophos;i="5.88,295,1635177600"; 
-   d="scan'208";a="13199892"
-From:   Caine Chen <caine.chen@dji.com>
-To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: [Question] How to avoid irq delay caused by write_lock_bh() and rt
- thread preempt
-Thread-Topic: [Question] How to avoid irq delay caused by write_lock_bh() and
+        Tue, 18 Jan 2022 07:39:04 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:35562 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232952AbiARMjE (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 18 Jan 2022 07:39:04 -0500
+Date:   Tue, 18 Jan 2022 13:39:01 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1642509542;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=DcmW5+qIK/XDpkV9bC6ZwMt7Be6EY+3hAZsM335cobg=;
+        b=Nojwfv1LSJKoJi9+4WKqjvlhA0yCDkMbwpMJNbxdUhnzYFAAL1lNEVGvZKJhnwqZir55yx
+        LMlO/55dUwu1UOTfWI2eQ2Fi/9DAW0oqqNjHXHyzuThzTlL5ke2kOsP/A/Hi0ufapdnYqv
+        K85kv/MEinnp0ffoZdGCvy5xWU4t29l2q5XT4qTosaT54HiXi3FWq+1O0XIPw4WLR/ZUAv
+        uK1ogM5+k3hW+xpBb673Q+C58y2C9CMp7ESN2M78OO3akOeDLqH4PyoXSR8gqivMCpUQ8B
+        9Vq4bGOrp2MyT0nUqb7k1qsfiL25SzHRAvufNCZpPfYUQF6xSmlZBhj+zZZwfw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1642509542;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=DcmW5+qIK/XDpkV9bC6ZwMt7Be6EY+3hAZsM335cobg=;
+        b=Su1eObrR15JdiZEmRlb7Qw6u4mSyi+pooeXpWC4sWmbHRnS1f9b3ZaAjGUV07zXBPi/I1o
+        +uN5Tb8VjYkfKaCw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Caine Chen <caine.chen@dji.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: [Question] How to avoid irq delay caused by write_lock_bh() and
  rt thread preempt
-Thread-Index: AQHYC6Hovz/JkfyhY0+MRcCVX33uoA==
-Date:   Mon, 17 Jan 2022 12:59:42 +0000
-Message-ID: <912ca51a30eb4a1c96c95009debec3ea@dji.com>
-Accept-Language: zh-CN, en-US
-Content-Language: zh-CN
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [58.34.188.114]
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
+Message-ID: <Yea05fybfdgp6CXO@linutronix.de>
+References: <912ca51a30eb4a1c96c95009debec3ea@dji.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <912ca51a30eb4a1c96c95009debec3ea@dji.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-SGkgZ3V5czoNCldlIGZvdW5kIHRoYXQgc29tZSBJUlEgdGhyZWFkcyB3aWxsIGJsb2NrIGluIGxv
-Y2FsX2JoX2Rpc2FibGUoICkgZm9yDQpsb25nIHRpbWUgaW4gc29tZSBzaXR1YXRpb24gYW5kIHdl
-IGhvcGUgdG8gZ2V0IHlvdXIgdmFsdWFibGUgc3VnZ2VzdGlvbnMuDQpNeSBrZXJuZWwgdmVyc2lv
-biBpcyA1LjQgYW5kIHRoZSBpcnEtZGVsYXkgaXMgY2F1c2VkIGJ5IHRoZSB1c2Ugb2YNCndyaXRl
-X2xvY2tfYmgoKS4NCkl0IGNhbiBiZSBkZXNjcmliZWQgaW4gdGhlIGZvbGxvd2luZyBmaWd1cmU6
-DQooMSkgVGhyZWFkXzEgd2hpY2ggaXMgYSBTQ0hFRF9OT1JNQUwgdGhyZWFkIHJ1bnMgb24gQ1BV
-MSwNCiAgICBhbmQgaXQgdXNlcyByZWFkX2xvY2tfYmgoKSB0byBwcm90ZWN0IHNvbWUgZGF0YS4N
-CigyKSBUaHJlYWRfMiB3aGljaCBpcyBhIFNDSEVEX1JSIHRocmVhZCBydW5zIG9uIENQVTEgYW5k
-IGl0IHByZWVtcHRzIHRocmVhZF8xDQogICAgYWZ0ZXIgdGhyZWFkXzEgaW52b2tlZCByZWFkX2xv
-Y2tfYmgoKS4gVGhyZWFkXzIgbWF5IHJ1biA2MCBtcyBpbiBteSBzeXN0ZW0uDQooMykgVGhyZWFk
-XzMgd2hpY2ggaXMgYSBTQ0hFRF9OT1JNQUwgdGhyZWFkIHJ1bnMgb24gQ1BVMC4gVGhpcyB0aHJl
-YWQgYWNxdWlyZXMNCiAgICB3cml0ZXIncyBsb2NrIGJ5IGludm9raW5nIHdyaXRlX2xvY2tfYmgo
-KS4gVGhpcyBmdW5jdGlvbiB3aWxsIGRpc2FibGUNCiAgICBidXR0b24taGFsZiBmaXJzdGx5IGJ5
-IGludm9raW5nIGxvY2FsX2JoX2Rpc2FibGUoICkuIEJ1dCBpdCB3aWxsIGJsb2NrIGluDQogICAg
-cnRfd3JpdGVfbG9jaygpICwgYmVjYXVzZSByZWFkIGxvY2sgaXMgaGVsZCBieSB0aHJlYWRfMS4N
-Cig0KSBBdCB0aGlzIHRpbWUsIGlmIGlycSB0aHJlYWQgd2l0aG91dCBJUlFGX05PX1RIUkVBRCBm
-bGFnIG9uIENQVTAgdHJ5cyB0bw0KICAgIGFjcXVpcmUgYmhfbG9jayhpdCBoYXMgYmVlbiByZW5h
-bWVkIGFzIHNvZnRpcnFfY3RybC5sb2NrIG5vdyksIGlycQ0KICAgIHRocmVhZCB3aWxsIGJsb2Nr
-IGJlY2F1c2UgdGhpcyBsb2NrIGlzIGhlbGQgYnkgdGhyZWFkXzMuDQoNCi0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLQ0KQ1BVMSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBDUFUwDQotLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICAgICAgICAgICAgICAgICAgICAtLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCnRo
-cmVhZF8yICAgICAgICAgICAgICAgICAgICAgICB0aHJlYWRfMSAgICAgICAgICAgICAgICAgICAg
-ICAgICAgIHRocmVhZF8zICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlycV90aHJlYWQN
-Ci0tLS0tLS0tLS0tLS0tICAgICAgICAgICAgICAgICAgLS0tLS0tLS0tLS0gICAgICAgICAgICAg
-ICAgICAgICAgICAgICAtLS0tLS0tLS0tLSAgICAgICAgICAgICAgICAgICAgICAgICAgICAtLS0t
-LS0tLS0tLS0tLQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVhZF9sb2NrX2Jo
-KCkNCg0KLi4uLi4uDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICB3cml0ZV9sb2NrX2JoKCkNCi8qZG8gd29yayovICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAvKiBpcnEgdGhyZWFkIGJsb2NrIGhl
-cmUqLw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICBsb2NhbF9iaF9kaXNhYmxlKCkNCi4uLi4uLg0KICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgcmVhZF91bmxvY2tfYmgoKQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLi4uLi4uDQogICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAv
-KiBkbyB3b3JrICovDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAuLi4uLi4NCiAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHdyaXRlX3VubG9j
-a19iaCgpDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIGlycV90aHJlYWRfZm4oKQ0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KDQpJbiB0aGlzIGNhc2UsIGlm
-IFNDSEVEX1JSIHRocmVhZF8yIHByZWVtcHRzIHRocmVhZF8xIGFuZCBydW5zIHRvbyBtdWNoIHRp
-bWUsIGFsbA0KaXJxIHRocmVhZHMgb24gQ1BVMCB3aWxsIGJlIGJsb2NrZWQuDQpJdCBsb29rcyBs
-aWtlIGEgcHJpb3JpdHkgcmV2ZXJzZSBwcm9ibGVtIG9mIHJlYWwtdGltZSB0aHJlYWQgcHJlZW1w
-dC4NCkhvdyBjYW4gSSBhdm9pZCB0aGlzIHByb2JsZW0/ICBJIGhhdmUgYSBmZXcgdGhvdWdodHM6
-DQooMSkgVGhlIGtleSBwb2ludCwgSSB0aGluaywgaXMgdGhhdCB3cml0ZV9sb2NrX2JoKCkvcmVh
-ZF9sb2NrX2JoKCkgd2lsbCBkaXNhYmxlDQogICAgYnV0dG9tIGhhbGYgd2hpY2ggd2lsbCBkaXNh
-YmxlIHNvbWUgaXJxIHRocmVhZHMgdG9vLiBDb3VsZCBJIHVzZQ0KICAgIHdyaXRlX2xvY2tfaXJx
-KCkvcmVhZF9sb2NrX2lycSgpIGluc3RlYWQ/DQooMikgSWYgbXkgaXJxIGhhbmRsZXIgd2FudHMg
-dG8gZ2V0IGJldHRlciBwZXJmb3JtYW5jZSwgSSBzaG91bGQgcmVxdWVzdCBhDQogICAgdGhyZWFk
-ZWQgaGFuZGxlciBmb3IgdGhlIElSUSBhcyBTZWJhc3RpYW4gc3VnZ2VzdGVkIGluIExLTUwNCiAg
-ICA8UkU6IGlycSB0aHJlYWQgbGF0ZW5jeSBjYXVzZWQgYnkgc29mdGlycV9jdHJsLmxvY2sgY29u
-dGVudGlvbj4uDQogICAgSXMgdGhyZWFkZWQgaGFuZGxlciBkZXNpZ25lZCBmb3IgbG93IGlycSBk
-ZWxheT8NCigzKSBUaHJlYWRfMiB0YWtlcyB0b28gbG9uZyB0aW1lIGZvciBydW5uaW5nLiBTbyBp
-dCBpcyBub3Qgc3VpdGFibGUgdG8gc2V0IHRoaXMNCiAgICB0aHJlYWQgd2l0aCBoaWdoIHJ0LXBy
-aW9yaXR5LiBTaG91bGQgSSByZWR1Y2UgdGhpcyB0aHJlYWQncyBwcmlvcml0eSB0bw0KICAgIHNv
-bHZlIHRoaXMgcHJvYmxlbT8NCg0KQXJlIHRoZXJlIGJldHRlciB3YXlzIHRvIGF2b2lkIHRoaXMg
-cHJvYmxlbT8gV2UgaG9wZSB0byBnZXQgeW91ciB2YWx1YWJsZQ0Kc3VnZ2VzdGlvbnMuIFRoYW5r
-cyENCg0KQmVzdCByZWdhcmRzLA0KQ2FpbmUuY2hlbg0KVGhpcyBlbWFpbCBhbmQgYW55IGF0dGFj
-aG1lbnRzIHRoZXJldG8gbWF5IGNvbnRhaW4gcHJpdmF0ZSwgY29uZmlkZW50aWFsLCBhbmQgcHJp
-dmlsZWdlZCBtYXRlcmlhbCBmb3IgdGhlIHNvbGUgdXNlIG9mIHRoZSBpbnRlbmRlZCByZWNpcGll
-bnQuIEFueSByZXZpZXcsIGNvcHlpbmcsIG9yIGRpc3RyaWJ1dGlvbiBvZiB0aGlzIGVtYWlsIChv
-ciBhbnkgYXR0YWNobWVudHMgdGhlcmV0bykgYnkgb3RoZXJzIGlzIHN0cmljdGx5IHByb2hpYml0
-ZWQuIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZCByZWNpcGllbnQsIHBsZWFzZSBjb250YWN0
-IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIHBlcm1hbmVudGx5IGRlbGV0ZSB0aGUgb3JpZ2lu
-YWwgYW5kIGFueSBjb3BpZXMgb2YgdGhpcyBlbWFpbCBhbmQgYW55IGF0dGFjaG1lbnRzIHRoZXJl
-dG8uDQoNCrTLtefX09PKvP68sLi9vP7L+bD8uqzE2sjdvt/T0Lv6w9zQ1KOsx9K99s/e09q908rV
-yMvKudPDoaPOtL6t1MrQ7aOsvfvWubXayP3Iy9TEtsGhori01sa78rSrsqW4w7Xn19PTyrz+1tC1
-xMjOus7Qxc+ioaPI57n7xPqyu8r009rS1MnPtefX09PKvP61xMS/seq908rV1d+jrMfrxPrBory0
-zajWqreiy83Iy7Kiyb6z/dSttefX09PKvP68sMbkz+C52LXEuL28/qGjDQo=
+On 2022-01-17 12:59:42 [+0000], Caine Chen wrote:
+> Hi guys:
+Hi,
+
+> We found that some IRQ threads will block in local_bh_disable( ) for
+> long time in some situation and we hope to get your valuable suggestions.
+> My kernel version is 5.4 and the irq-delay is caused by the use of
+> write_lock_bh().
+> It can be described in the following figure:
+> (1) Thread_1 which is a SCHED_NORMAL thread runs on CPU1,
+>     and it uses read_lock_bh() to protect some data.
+> (2) Thread_2 which is a SCHED_RR thread runs on CPU1 and it preempts thre=
+ad_1
+>     after thread_1 invoked read_lock_bh(). Thread_2 may run 60 ms in my s=
+ystem.
+> (3) Thread_3 which is a SCHED_NORMAL thread runs on CPU0. This thread acq=
+uires
+>     writer's lock by invoking write_lock_bh(). This function will disable
+>     button-half firstly by invoking local_bh_disable( ). But it will bloc=
+k in
+>     rt_write_lock() , because read lock is held by thread_1.
+> (4) At this time, if irq thread without IRQF_NO_THREAD flag on CPU0 trys =
+to
+>     acquire bh_lock(it has been renamed as softirq_ctrl.lock now), irq
+>     thread will block because this lock is held by thread_3.
+
+so far, everything as expected.
+
+> In this case, if SCHED_RR thread_2 preempts thread_1 and runs too much ti=
+me, all
+> irq threads on CPU0 will be blocked.
+
+All force-threaded IRQs on CPU0 will be blocked. If you request your
+interrupt handler with
+	request_threaded_irq(num, NULL, handler, =E2=80=A6)
+
+then bottom halves won't be disabled upon entry of the handler. This is
+okay as long as the handler does not rely on disabled BH for some reason
+(network processing function expect BH to be disabled, timer can't
+fire, =E2=80=A6). You should also not raise softirqs in your handler for la=
+ter
+processing.
+
+> It looks like a priority reverse problem of real-time thread preempt.
+> How can I avoid this problem?  I have a few thoughts:
+> (1) The key point, I think, is that write_lock_bh()/read_lock_bh() will d=
+isable
+>     buttom half which will disable some irq threads too. Could I use
+>     write_lock_irq()/read_lock_irq() instead?
+
+It will disable processing of bottom halves. If your lock requires
+disabling processing of softirqs then you must not replace it with the
+_irq suffix because it does not have this guaranties on PREEMPT_RT.
+If you don't have such requirements and the resource, you protect, can
+be protected by the lock then avoiding the bh suffix is an option (and
+then using the irq suffix in thread context is needed).
+
+> (2) If my irq handler wants to get better performance, I should request a
+>     threaded handler for the IRQ as Sebastian suggested in LKML
+>     <RE: irq thread latency caused by softirq_ctrl.lock contention>.
+>     Is threaded handler designed for low irq delay?
+
+All interrupt handler are force-threaded (the handler are threaded)
+except for a few which are marked as non-threaded.
+The forced-threaded must disable BH. If you explicitly request a
+threaded handler then BH is not disabled and you must not rely on it.
+Performance wise, there is no difference since the primary handler
+simply wakes the thread which runs by default at the same SCHED_FIFO
+priority. I probably suggested to avoid the softirq-lock contention if
+the requirements are not needed.
+
+> (3) Thread_2 takes too long time for running. So it is not suitable to se=
+t this
+>     thread with high rt-priority. Should I reduce this thread's priority =
+to
+>     solve this problem?
+
+I would suggest to first decouple locked resources before playing with
+priorities.
+
+> Are there better ways to avoid this problem? We hope to get your valuable
+> suggestions. Thanks!
+>=20
+> Best regards,
+> Caine.chen
+
+Sebastian
