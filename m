@@ -2,138 +2,118 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2FFA6C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Jan 2022 00:00:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4CF8DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Jan 2022 14:17:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1378293AbiAUAAL (ORCPT
+        id S1381004AbiAUOR2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 20 Jan 2022 19:00:11 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48412 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1378267AbiAUAAK (ORCPT
+        Fri, 21 Jan 2022 09:17:28 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:35150 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1350707AbiAUORV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Jan 2022 19:00:10 -0500
-Received: from ms.lwn.net (ms.lwn.net [IPv6:2600:3c01:e000:3a1::42])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 09E16C061574;
-        Thu, 20 Jan 2022 16:00:09 -0800 (PST)
-Received: from localhost (unknown [IPv6:2601:281:8300:104d::5f6])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Fri, 21 Jan 2022 09:17:21 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1642774640;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=AgLRKGOnOEF/OCFOBJ3+Ud2VmYfBk+EPtZeqQ/2DNeo=;
+        b=BykEJfISLrD+acUd6Yfw8SCt0wm6AF/tcNNc5kRmpYhMF53RCUaz/A4v0DHTkJvxChOVVy
+        2OYZaev+e5RwMUQY16kdX1Qu0xTvHNdqIb852AWkC6w+7iG7fqq8d3OJPTu+7jBz3OrpxJ
+        1DecWJUfrFbpR/XjR93aqJztzWsjnvE=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-599-um-zERa8Ofm271F7W5RGnw-1; Fri, 21 Jan 2022 09:17:19 -0500
+X-MC-Unique: um-zERa8Ofm271F7W5RGnw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by ms.lwn.net (Postfix) with ESMTPSA id EF34B739;
-        Fri, 21 Jan 2022 00:00:08 +0000 (UTC)
-DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net EF34B739
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=lwn.net; s=20201203;
-        t=1642723209; bh=6QS9eIYAOg5uqt0s0/YFYoQv5skTUPZokkn4RpqMbgI=;
-        h=From:To:Cc:Subject:Date:From;
-        b=HHeLMVVCDeLFVVt3IheI8G5Eq1bkNTIQJPdv/TI65UQZmN+JQhpchuqQwJRjg+suw
-         BE8x0DknRdDwZ6xUEsOJnsaSxJQRFlS2OAmnaBBiTwoZCNxhGUDAMqM+2LMhMLgsAR
-         p2VpSR6b6atV3ALk+qBrnV9clOYU9P0kLIkRPWC000Pzy5OILG/xRsCJMIp7+UHo8g
-         dkwFodmcFPvtob+Eeado9Bz5Z55Ha9B+mLZhG/0MjHQMJrFok0JbmRpKCh56Z6qzbo
-         chfeD2NlyDS/F2wj2OZX+KN8rF5wI+BuPLZOIVvLgEQY02QRiwa3eEXvw1MIwcZLmT
-         eWDjKRH8skz9g==
-From:   Jonathan Corbet <corbet@lwn.net>
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-trace-devel@vger.kernel.org,
-        Daniel Bristot de Oliveira <bristot@kernel.org>
-Subject: [PATCH] docs: Hook the RTLA documents into the kernel docs build
-Date:   Thu, 20 Jan 2022 17:00:33 -0700
-Message-ID: <877dau555q.fsf@meer.lwn.net>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5D8348144E6
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 Jan 2022 14:17:18 +0000 (UTC)
+Received: from fuller.cnet (ovpn-112-2.gru2.redhat.com [10.97.112.2])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 0C737798B8;
+        Fri, 21 Jan 2022 14:17:18 +0000 (UTC)
+Received: by fuller.cnet (Postfix, from userid 1000)
+        id 960364171322; Fri, 21 Jan 2022 11:16:59 -0300 (-03)
+Date:   Fri, 21 Jan 2022 11:16:59 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-numa: optionally ignore runtime cpumask
+Message-ID: <YerAW90QwEg9yXAb@fuller.cnet>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The RTLA documents were added to Documentation/ but never hooked into the
-rest of the docs build, leading to a bunch of warnings like:
 
-  Documentation/tools/rtla/rtla-osnoise.rst: WARNING: document isn't included in any toctree
+use_current_cpuset() function does:
 
-Add some basic glue to wire these documents into the build so that they are
-available with the rest of the rendered docs.  No attempt has been made to
-turn the RTLA docs into proper RST files rather than warmed-over man pages;
-that is an exercise for the future.
+/*
+ * After this function is called, affinity_mask is the intersection of
+ * the user supplied affinity mask and the affinity mask from the run
+ * time environment
+ */
+static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
 
-Fixes: d40d48e1f1f2 ("rtla: Add Documentation")
-Signed-off-by: Jonathan Corbet <corbet@lwn.net>
----
-I'm happy to see this follow the original via the tracing tree, or I can
-send it Linusward myself once docs-next catches up with mainline.
+However, when using isolcpus kernel command line option, the CPUs 
+specificied at isolcpus= are not part of the run time environment
+cpumask.
 
- Documentation/index.rst            |  1 +
- Documentation/tools/index.rst      | 18 ++++++++++++++++++
- Documentation/tools/rtla/index.rst | 24 ++++++++++++++++++++++++
- 3 files changed, 43 insertions(+)
- create mode 100644 Documentation/tools/index.rst
- create mode 100644 Documentation/tools/rtla/index.rst
+This causes "cyclictest -a isolatedcpus" to fail with:
 
-diff --git a/Documentation/index.rst b/Documentation/index.rst
-index 2b4de3926858..b58692d687f6 100644
---- a/Documentation/index.rst
-+++ b/Documentation/index.rst
-@@ -166,6 +166,7 @@ to ReStructured Text format, or are simply too old.
- .. toctree::
-    :maxdepth: 2
+WARN: Couldn't setaffinity in main thread: Invalid argument
+FATAL: No allowable cpus to run on
+# /dev/cpu_dma_latency set to 0us
+
+To fix this, add an environment variable IGNORE_RUNTIME_CPU_AFFINITY_MASK
+that when set to a value other than 0, will override the runtime cpu
+affinity mask (retrieved with numa_sched_getaffinity) with a bit set
+for each CPU in numa_num_configured_cpus:
+
+numa_num_configured_cpus() returns the number of cpus in the system.
+This count includes any cpus that are currently disabled. This count is
+derived from the cpu numbers in /sys/devices/system/cpu. If the kernel
+is configured without /sys (CONFIG_SYSFS=n) then it falls back to using
+the number of online cpus.
+
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+
+diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+index ee5ab99..3106f1e 100644
+--- a/src/lib/rt-numa.c
++++ b/src/lib/rt-numa.c
+@@ -9,6 +9,7 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <pthread.h>
++#include <stdlib.h>
  
-+   tools/index
-    staging/index
-    watch_queue
+ #include "rt-error.h"
+ #include "rt-numa.h"
+@@ -99,11 +100,20 @@ int cpu_for_thread_ua(int thread_num, int max_cpus)
+ static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
+ {
+ 	struct bitmask *curmask;
++	char *ignore_affinity_mask;
+ 	int i;
  
-diff --git a/Documentation/tools/index.rst b/Documentation/tools/index.rst
-new file mode 100644
-index 000000000000..18f5f4583996
---- /dev/null
-+++ b/Documentation/tools/index.rst
-@@ -0,0 +1,18 @@
-+============
-+Kernel tools
-+============
+ 	curmask = numa_allocate_cpumask();
+ 	numa_sched_getaffinity(getpid(), curmask);
+ 
++	ignore_affinity_mask = getenv("IGNORE_RUNTIME_CPU_AFFINITY_MASK");
++	if (ignore_affinity_mask && *ignore_affinity_mask != '0') {
++		int conf_cpus = numa_num_configured_cpus();
 +
-+This book covers user-space tools that are shipped with the kernel source;
-+more additions are needed here:
++		for (i = 0; i < conf_cpus; i++)
++			numa_bitmask_setbit(curmask, i);
++	}
 +
-+.. toctree::
-+   :maxdepth: 1
-+
-+   rtla/index
-+
-+.. only::  subproject and html
-+
-+   Indices
-+   =======
-+
-+   * :ref:`genindex`
-diff --git a/Documentation/tools/rtla/index.rst b/Documentation/tools/rtla/index.rst
-new file mode 100644
-index 000000000000..5938009bf4ae
---- /dev/null
-+++ b/Documentation/tools/rtla/index.rst
-@@ -0,0 +1,24 @@
-+================================
-+The realtime Linux analysis tool
-+================================
-+
-+RTLA provides a set of tools for the analysis of the kernel's realtime
-+behavior on specific hardware.
-+
-+.. toctree::
-+   :maxdepth: 1
-+
-+   rtla
-+   rtla-osnoise
-+   rtla-osnoise-hist
-+   rtla-osnoise-top
-+   rtla-timerlat
-+   rtla-timerlat-hist
-+   rtla-timerlat-top
-+
-+.. only::  subproject and html
-+
-+   Indices
-+   =======
-+
-+   * :ref:`genindex`
--- 
-2.34.1
+ 	/*
+ 	 * Clear bits that are not set in both the cpuset from the
+ 	 * environment, and in the user specified affinity.
 
