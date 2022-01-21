@@ -2,79 +2,90 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 60323C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Jan 2022 18:16:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D46F7C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Jan 2022 19:02:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1382040AbiAUSQv (ORCPT
+        id S230525AbiAUTCo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Jan 2022 13:16:51 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:57388 "EHLO
+        Fri, 21 Jan 2022 14:02:44 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:57594 "EHLO
         galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1351856AbiAUSQu (ORCPT
+        with ESMTP id S230332AbiAUTCo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Jan 2022 13:16:50 -0500
-Date:   Fri, 21 Jan 2022 19:16:48 +0100
+        Fri, 21 Jan 2022 14:02:44 -0500
+Date:   Fri, 21 Jan 2022 20:02:41 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1642789009;
+        s=2020; t=1642791762;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=BGTHsHDeNpAG/ZvDWQS1YfsjUFcWQ4ALdxBER110fgA=;
-        b=PSKK3/PXy275H1SD4lhilVWFgY8WrupUeL/6nmPrHLobLlfuHct5geHZdyvEsDcDFHKLAe
-        0kOg3rVG8V1iZUH/+qUKiYtVT/fQBfhdHtGfYinQ8oR7W4ts/+ipTyIVOI7Chd4zdkHHQW
-        EDJcsg+fBVB5+rSsXsX/3k1emNl8fOlVCkM4B89125wQQFZZJKUSCTUHDudGhD+XrzrEY/
-        GfFANchDpPgauY3Z/1e9ToX7R2e1/A5wQiCVTLcIg3hMwv1Dfo6n+aAwGRwnKrXTEsW5s3
-        lyjMZxnXRABvzKkL1lkou5zitb3u+sLfODhrQR2Hdt9lfUKF25dj5VEh22Qx6A==
+        bh=fG4ZoXatxEkNbG5UBcm+lHkGC19XMjND5Hhdrf/oMvc=;
+        b=CicPx0kKrpOco+R2uwemaIWb13krg1Vm3REpg0bTJf/dh3v9ZTIdgh+nTmH+REckZhi6IO
+        es6mKr6aXX+QQBZQSjdlAC8dqueXESsA6ZlNV7kwMerMM6pVX+1DXxgPUFskUOCsEdpxVd
+        QF38oEwRYEH5wZaAAm2Np6xAilpElnGTvgEVcD1+KOQ1EeduL1+/HK0w1oWbHqAtYr3eVG
+        p0Mr2GMmnEwLWJJ2dIZ4l9YeJa1oGlMxXLhSeQ8QTmrwzp1ep6aurJhpdcQYsr7qbOD+/o
+        G/3OhwTX18CA4IPPDS4CECa/c0YMT/X17x4dbca4RilFlyFGxr3dAhvCgo1LOQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1642789009;
+        s=2020e; t=1642791762;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=BGTHsHDeNpAG/ZvDWQS1YfsjUFcWQ4ALdxBER110fgA=;
-        b=WOcx4nI/Of+CETaCbRuxiD7JwXUFKvmRbhDXUmifTJmTSkHxvY4KcJ22kmWwNJ21Ip/wJA
-        VUhIKvpXnRQEkSCA==
+        bh=fG4ZoXatxEkNbG5UBcm+lHkGC19XMjND5Hhdrf/oMvc=;
+        b=fRtimwwvuM5hArrw57j7b+p7TzTP1em7EqCTkZE2JjqBMESxnFIbSWxK4sCox5bZVoLLph
+        kLIXkc7EogAY78AQ==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Marcelo Tosatti <mtosatti@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] rt-numa: optionally ignore runtime cpumask
-Message-ID: <Yer4kB0fmR41u19Y@linutronix.de>
-References: <YerAW90QwEg9yXAb@fuller.cnet>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.16.2-rt19
+Message-ID: <YesDUV+ErrdoEvvw@linutronix.de>
+References: <Yer73zjSLXFooB1+@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <YerAW90QwEg9yXAb@fuller.cnet>
+In-Reply-To: <Yer73zjSLXFooB1+@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-01-21 11:16:59 [-0300], Marcelo Tosatti wrote:
+On 2022-01-21 19:30:57 [+0100], To Thomas Gleixner wrote:
+> Dear RT folks!
 > 
-> use_current_cpuset() function does:
+> I'm pleased to announce the v5.16.2-rt19 patch set. 
 > 
-> /*
->  * After this function is called, affinity_mask is the intersection of
->  * the user supplied affinity mask and the affinity mask from the run
->  * time environment
->  */
-> static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
+> Changes since v5.16.2-rt18:
 > 
-> However, when using isolcpus kernel command line option, the CPUs 
-> specificied at isolcpus= are not part of the run time environment
-> cpumask.
+>   - Update the printk series. Patches by John Ogness.
 > 
-> This causes "cyclictest -a isolatedcpus" to fail with:
+>   - Redo the i2c patches introduced in the previous release to address
+>     other driver which look also broken.
 > 
-> WARN: Couldn't setaffinity in main thread: Invalid argument
-> FATAL: No allowable cpus to run on
-> # /dev/cpu_dma_latency set to 0us
+> Known issues
+>      - netconsole triggers WARN.
 > 
-> To fix this, add an environment variable IGNORE_RUNTIME_CPU_AFFINITY_MASK
-> that when set to a value other than 0, will override the runtime cpu
-> affinity mask (retrieved with numa_sched_getaffinity) with a bit set
-> for each CPU in numa_num_configured_cpus:
+>      - Valentin Schneider reported a few splats on ARM64, see
+>           https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+> 
+> The delta patch against v5.16.2-rt18 is appended below and can be found here:
+>  
+>      https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/incr/patch-5.16.2-rt18-rt19.patch.xz
 
-This looks hacky and not documented. What about using all CPUs which
-part of current affinity mask by default. And then either specify the
-requested CPU mask or use explicitly all CPUs.
+The diff got too big and and the announcement didn't make it to the
+list. Here is the mail without the incremental diff which can been
+viewed at
+   https://git.kernel.org/rt/linux-rt-devel/d/v5.16.2-rt19/v5.16.2-rt18
+
+> You can get this release via the git tree at:
+> 
+>     git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.16.2-rt19
+> 
+> The RT patch against v5.16.2 can be found here:
+> 
+>     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/older/patch-5.16.2-rt19.patch.xz
+> 
+> The split quilt queue is available at:
+> 
+>     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.16/older/patches-5.16.2-rt19.tar.xz
 
 Sebastian
