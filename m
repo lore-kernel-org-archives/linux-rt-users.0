@@ -2,69 +2,88 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49FCCC433EF
-	for <linux-rt-users@archiver.kernel.org>; Sun, 23 Jan 2022 13:01:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16A25C433EF
+	for <linux-rt-users@archiver.kernel.org>; Sun, 23 Jan 2022 14:40:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236378AbiAWNB2 (ORCPT
+        id S236791AbiAWOkG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 23 Jan 2022 08:01:28 -0500
-Received: from mail.nearlyone.de ([46.163.114.145]:51494 "EHLO
-        mail.nearlyone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236355AbiAWNB2 (ORCPT
+        Sun, 23 Jan 2022 09:40:06 -0500
+Received: from mwweb08oc.mail2world.com ([74.202.142.113]:58629 "EHLO
+        mwweb08oc.m2wprod.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S233561AbiAWOkG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 23 Jan 2022 08:01:28 -0500
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 6B3E25CF96;
-        Sun, 23 Jan 2022 14:01:24 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1642942886; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         content-transfer-encoding:content-language:in-reply-to:references;
-        bh=U3cKLFg7NF1MN2kUPqUTqLe2gaAwY57VRnajnPlcKHI=;
-        b=AVLwJK3j/JPgSBnKyzbhtxGgRCybdbNKVWMTcujRY1WpCkSgRN4p0NbKLyeqWl+1Zqpof7
-        +gxEge767ytmXGDczYc9Z7tUX9MC3M7/gjVbyV0Me8eew8gnxagc/cwJ/NU1B5H0np5S/S
-        J817yOxFnaFG5spagKan+T4UZPvga1a/LVg+ixze58ppARDHLRGHAyb9TQoN85oXcOQXs1
-        Bukv0e/4fJTmhSLrnl57ZhaPe/OMOH34D9t8F/Wbdb1VNeFG+oKXAY0L8Fv7GG9V4x53sb
-        pW8U2QCiEltvI3RQ1hOiQakd9PeYvX2GD2TCBb7QE5STn6vdRrBDTUUstSo59A==
-Message-ID: <b5d08049-0e02-9085-a52e-da31b17e4806@monom.org>
-Date:   Sun, 23 Jan 2022 14:01:24 +0100
+        Sun, 23 Jan 2022 09:40:06 -0500
+Received: from mail pickup service by mwweb08oc.m2wprod.com with Microsoft SMTPSVC;
+         Sun, 23 Jan 2022 06:42:12 -0800
+Received: from mail pickup service by mwweb08oc.mail2world.com with Microsoft SMTPSVC;
+         Sun, 23 Jan 2022 06:42:10 -0800
+auth-sender: gheskett@shentel.net
+Received: from 204.111.64.149 unverified ([204.111.64.149]) by mwweb08oc.mail2world.com with Mail2World SMTP Server; 
+        Sun, 23 Jan 2022 06:42:09 -0800
+From:   gene heskett <gheskett@shentel.net>
+To:     Mike Galbraith <efault@gmx.de>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [ANNOUNCE] v5.16-rc6-rt12
+Date:   Sun, 23 Jan 2022 09:40:01 -0500
+Message-ID: <8448352.jqPtiG1ysD@coyote>
+Organization: only accidental
+In-Reply-To: <64294bf40ace6be86a295099b895a7d1f6a5c49f.camel@gmx.de>
+References: <YcSgQY8lzb6MkQPx@linutronix.de> <64294bf40ace6be86a295099b895a7d1f6a5c49f.camel@gmx.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.5.0
-Subject: Re: [ANNOUNCE] 4.4.299-rt230
-Content-Language: en-US
-To:     Daniel Wagner <dwagner@suse.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
-References: <164232885429.16727.14256146043064078052@beryllium.lan>
- <YeU9ahVNB8aLHoBl@linutronix.de> <20220117100247.yftwn4k4dmvneisg@carbon.lan>
-From:   Daniel Wagner <wagi@monom.org>
-In-Reply-To: <20220117100247.yftwn4k4dmvneisg@carbon.lan>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="us-ascii"
+X-CTCH-Spam: Unknown
+X-CTCH-RefID: str=0001.0A702F16.61ED68C3.0004,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+X-OriginalArrivalTime: 23 Jan 2022 14:42:10.0057 (UTC) FILETIME=[66D87F90:01D81067]
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 17.01.22 11:02, Daniel Wagner wrote:
-> On Mon, Jan 17, 2022 at 10:56:58AM +0100, Sebastian Andrzej Siewior wrote:
->> The uploads still stuck? You want me to ping?
+On Friday, December 24, 2021 9:16:57 PM EST you wrote:
+> On Thu, 2021-12-23 at 17:13 +0100, Sebastian Andrzej Siewior wrote:
+> > Dear RT folks!
+> > 
+> > I'm pleased to announce the v5.16-rc6-rt12 patch set.
 > 
-> Yep, still not working. I think my last email never reached the right
-> inbox. It might be due some DKIM problems on my side. I'll try again
-> with my work email. Thanks for reminding me.
+> > Changes since v5.16-rc6-rt11:
+> ...
+> 
+> >   - The "Memory controller" (CONFIG_MEMCG) can be enabled again.
+> 
+> FWIW, LTP testcases pass on rpi4 and x86_64 boxen with no gripeage.
+> Full LTP with maximally bloated config was as uninteresting as one can
+> hope for.
+> .
 
-I have access again. Uploaded all previous releases including this one.
+Unforch and after many try's, I can't get it to reboot when installed, 
+sorta, on an rpi4b.
 
-BTW, there will be on be one final release end of this month. Pavel, 
-after this release you can take it over for CIP.
+I say sorta, because no matter how many times I rebuild it, the build 
+does not generate an arch/arm/boot/dts/overlays directory.  The build 
+itself is error free.
 
-Thanks,
-Daniel
+The raspi kernel build instructions from their somewhat dated wiki also 
+say to use the bcm2711_defconfig, but it does not now exist in a git 
+clone. And a hwinfo of the rpi4b says I should use the bcm2835_defconfig 
+for a starter .config.
+
+Is there any hope of making this work?
+
+I have been using a 4.19 rt-preempt I built on a rpi4 running buster, 
+driving 3/4 ton of 75 yo Sheldon lathe, and now I'm trying to help a guy 
+at the west end of the country rig an rpi4b to run a good sized cinci 
+mill. The pi4 has more than enough power to run LinuxCNC.
+
+Thanks for any guidance.
+
+Cheers, Gene Heskett.
+-- 
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author, 1940)
+If we desire respect for the law, we must first make the law respectable.
+ - Louis D. Brandeis
+Genes Web page <http://geneslinuxbox.net:6309/gene>
+
+
+
