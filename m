@@ -2,114 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E615C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jan 2022 01:14:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9501AC433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jan 2022 13:14:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240700AbiAXBO3 (ORCPT
+        id S234938AbiAXNOD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 23 Jan 2022 20:14:29 -0500
-Received: from mout.gmx.net ([212.227.17.22]:54465 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S235226AbiAXBO2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 23 Jan 2022 20:14:28 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1642986859;
-        bh=NJlapxgK/qn5GhYRFOBCR+9jWwoj0EJZrXOSAsu72vg=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=jyg0lL/eXhgYoC94Y8+Uocnd64Lw0gkj+ncTNRlTGnPEtF9p/v99/wH7r5Kq6Q7E9
-         FDJ3K4zlbCJudqb7TbuIM9EVhOPRAe4JyHlZwOD863Xvk21aDB1n80reqD17QybLqt
-         tyirvOmdDcux5RBHF9k73oAO7J7WQliELQvfKfW8=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.218.50]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MCsUC-1n2yEN0944-008qri; Mon, 24
- Jan 2022 02:14:19 +0100
-Message-ID: <b34a560ceeb3bf29f20169f6201b941c64f3d20a.camel@gmx.de>
-Subject: Re: [ANNOUNCE] v5.16-rc6-rt12
-From:   Mike Galbraith <efault@gmx.de>
-To:     gene heskett <gheskett@shentel.net>
-Cc:     linux-rt-users@vger.kernel.org
-Date:   Mon, 24 Jan 2022 02:14:13 +0100
-In-Reply-To: <8448352.jqPtiG1ysD@coyote>
-References: <YcSgQY8lzb6MkQPx@linutronix.de>
-         <64294bf40ace6be86a295099b895a7d1f6a5c49f.camel@gmx.de>
-         <8448352.jqPtiG1ysD@coyote>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.3 
+        Mon, 24 Jan 2022 08:14:03 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:43657 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S242984AbiAXNNh (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Jan 2022 08:13:37 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1643030016;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=fVs0ujk+EjVk5n7wjEMKsl3asE24/bjqqSeECyU54Z4=;
+        b=Yka5+3pqyanNZCMBTeNPuXKkhiIf+O5uMXZ7cRbDa+9Q94Q+xAKzWk+Gm11sXWBImM6RQG
+        nwg24bEi35ao56jqTUyIAWyG/1Cy8n0XZH05yYJ72soUn4gG2u8nB0hOa4L3YK/ARyxvt4
+        syokWkwhtFGDsLCMuvmW4XEXr/TnRcc=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-650-TPEv10eIN0SwkO5eZSQmXQ-1; Mon, 24 Jan 2022 08:13:33 -0500
+X-MC-Unique: TPEv10eIN0SwkO5eZSQmXQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 95B7E1091DA1;
+        Mon, 24 Jan 2022 13:13:32 +0000 (UTC)
+Received: from fuller.cnet (ovpn-112-2.gru2.redhat.com [10.97.112.2])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 5DDDE78A99;
+        Mon, 24 Jan 2022 13:13:32 +0000 (UTC)
+Received: by fuller.cnet (Postfix, from userid 1000)
+        id 99A6D416D5CA; Mon, 24 Jan 2022 09:58:31 -0300 (-03)
+Date:   Mon, 24 Jan 2022 09:58:31 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH] rt-numa: optionally ignore runtime cpumask
+Message-ID: <Ye6id4lSKMcqAZ65@fuller.cnet>
+References: <YerAW90QwEg9yXAb@fuller.cnet>
+ <Yer4kB0fmR41u19Y@linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:fuY0fbhp1w4F/8kKWtQY/Bxh5O9CoiNBg5zseL/5N75ZMR8KdRT
- UdAf6aNo8RgMzKsSAPUvHuhFsMQJtiotEhJtFbAUlD2Zus62XU4VIfvHuzPUWhRtKOYS/3Q
- vvXS43My5YhZ9tTQhrXyqKHjxYOUdVhQ22kx8x5NUkvNzf6iTx/ChBTWf7CSbZpfalxDXeJ
- umErgcN85GanC1O7QxTDQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:Dn+Z8ZX3CPo=:N9s7ZInvyA8xnfEcT3z7Ns
- 6ORG9sqO7zjujAEaJINNdYiOlg0p+RK7WW+i0guXiauKluB2N6ci+QEl7U55G79oRZmJJ0DUh
- uWNCiPcv6gEOLwtTPvABiKndeq3n3vElTuxGzarYppS8brjaj4zJpdMJLWZufCvLVPn/9DiDt
- SE0/j3vGmEocMWYm02nuL3Q2GJwzoLPZOX6tIyxz9fLO6G5oYwIh9sgcimtj/h9Rm9JU8YOKW
- 8bzUjGoyC4N2lvfF8kAGwSZrw1myECuv8LJ1JqF9DnkX28dl+xpirveaaSFhIPAJ1uyM+nLI8
- iLAYH+FgJZ0V9+nk+SmyFJXrJKUDJb+tSOZ2SMo0/1769JpLAcR/84++k+vR1HAF2vodieHXN
- 5qKt0hJHnNLYJ4YOTSph2r4hYUm3X6lMrZUHaL+oI4vzHmzldRKQSYJ/3xjraaDdjzxIHihl7
- apEKSOcyE0G589wvpTaScjG8P9KVnD0JKMt9TCdobjB2G9QH11JIJUzLoHqpGgcCOxu2WWuxh
- BpHdRUAcU8yBYD0lWss0DKEiLtXgfigO2PC91M+qLhS2s4vJudTvssyKuoAzHyqbjgyWU7IjO
- zAfgMAj0JF1JWKeQibl9d7pNr3RmBlAglpem8LDBSKtnNFLxHxsqwV8we8d60XJETpcwsJoy8
- iKA5q6etmVpkSElE+XU3pJE2UV8HQInHxZP0VYPHYM0+eGnFpNu1S2Sl6//wcPoQpJ1Z9VJKP
- JNxGR/8X+FfHYAsS26EZhgytaSnsjinxEqCgEM66YxJgjLBiD9OqrADicQrEmV4ToUJwPzZxH
- VXmRCTUp41BMro0znFCO/ZhyIRhn30+03334k2xEq9ap+vX5BV8Rfxtv+8x4pNiLqDx1RSJdk
- 2jCegm/gmTr1kheifiwBI+IdzgHeI6WrwMusk+d+voe3wwblf+PzkKjaBIkgqBKC5dRSGYPcs
- XBaFZcAeQZCo0HijaACnGJujjuNgoDbyzJ4mYydbKq8NuDJk8wc/WtPAXUKi5efWFbU3lFR6g
- rRWI6uGSaUiU00NrglpL5H7ZU5tA9AMY5zWtfRoxeg4nVDNtkBDYQOnoDhgZxdsgxHsZ5/6Ji
- r1Y1ApsXHz5EOw=
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Yer4kB0fmR41u19Y@linutronix.de>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Sun, 2022-01-23 at 09:40 -0500, gene heskett wrote:
-> On Friday, December 24, 2021 9:16:57 PM EST you wrote:
-> > On Thu, 2021-12-23 at 17:13 +0100, Sebastian Andrzej Siewior wrote:
-> > > Dear RT folks!
-> > >
-> > > I'm pleased to announce the v5.16-rc6-rt12 patch set.
-> >
-> > > Changes since v5.16-rc6-rt11:
-> > ...
-> >
-> > > =C2=A0 - The "Memory controller" (CONFIG_MEMCG) can be enabled again=
-.
-> >
-> > FWIW, LTP testcases pass on rpi4 and x86_64 boxen with no gripeage.
-> > Full LTP with maximally bloated config was as uninteresting as one can
-> > hope for.
-> > .
->
-> Unforch and after many try's, I can't get it to reboot when installed,
-> sorta, on an rpi4b.
->
-> I say sorta, because no matter how many times I rebuild it, the build
-> does not generate an arch/arm/boot/dts/overlays directory.=C2=A0 The bui=
-ld
-> itself is error free.
->
-> The raspi kernel build instructions from their somewhat dated wiki also
-> say to use the bcm2711_defconfig, but it does not now exist in a git
-> clone. And a hwinfo of the rpi4b says I should use the bcm2835_defconfig
-> for a starter .config.
->
-> Is there any hope of making this work?
+On Fri, Jan 21, 2022 at 07:16:48PM +0100, Sebastian Andrzej Siewior wrote:
+> On 2022-01-21 11:16:59 [-0300], Marcelo Tosatti wrote:
+> > 
+> > use_current_cpuset() function does:
+> > 
+> > /*
+> >  * After this function is called, affinity_mask is the intersection of
+> >  * the user supplied affinity mask and the affinity mask from the run
+> >  * time environment
+> >  */
+> > static void use_current_cpuset(int max_cpus, struct bitmask *cpumask)
+> > 
+> > However, when using isolcpus kernel command line option, the CPUs 
+> > specificied at isolcpus= are not part of the run time environment
+> > cpumask.
+> > 
+> > This causes "cyclictest -a isolatedcpus" to fail with:
+> > 
+> > WARN: Couldn't setaffinity in main thread: Invalid argument
+> > FATAL: No allowable cpus to run on
+> > # /dev/cpu_dma_latency set to 0us
+> > 
+> > To fix this, add an environment variable IGNORE_RUNTIME_CPU_AFFINITY_MASK
+> > that when set to a value other than 0, will override the runtime cpu
+> > affinity mask (retrieved with numa_sched_getaffinity) with a bit set
+> > for each CPU in numa_num_configured_cpus:
+> 
+> This looks hacky and not documented. What about using all CPUs which
+> part of current affinity mask by default. 
 
-Sure.  Given bcm2711_defconfig is missing, sounds like you're trying to
-build patched up kernel.org source.  You can do that, works fine for
-me, and I know jack diddly spit about cute little arm gizmos ;-) but
-you're better off patching up source from...=C2=A0
+You mean "using all CPUs which are part of the current affinity mask by
+default" ? (where current affinity mask would mean user specified CPU
+mask).
 
-	git clone https://github.com/raspberrypi/linux.git
+> And then either specify the
+> requested CPU mask or use explicitly all CPUs.
 
-...instead, which has a large pile of not yet upstreamed rpi patches.
-Just checkout the rpi-5.16.y branch and apply the 5.16-rt patch set.
-There you'll find that bcm2711_defconfig you were looking for.
+Do you mean to drop 
 
-I build on my desktop box, rpi4 being every bit as fast as you'd expect
-something that dinky to be, then nfs mount from rpi4 and sudo make
-modules_install dtbs_install install.  Edit /boot/config.txt, reboot,
-and presto, you too will be ready to have any unrealistic x86_64 based
-expectations you may have thoroughly dashed by cyclictest numbers :)
+        /*
+         * Clear bits that are not set in both the cpuset from the
+         * environment, and in the user specified affinity.
 
-	-Mike
+And just attempt to use the user specified mask? (which will then return
+failure to the user in which case he can correct it).
+
+
