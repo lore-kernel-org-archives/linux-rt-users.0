@@ -2,61 +2,62 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BE8A9C433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jan 2022 18:43:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38572C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jan 2022 18:46:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233119AbiAYSmi (ORCPT
+        id S233438AbiAYSqa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 25 Jan 2022 13:42:38 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:45984 "EHLO
+        Tue, 25 Jan 2022 13:46:30 -0500
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:24494 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S233046AbiAYSlr (ORCPT
+        by vger.kernel.org with ESMTP id S233421AbiAYSq1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Jan 2022 13:41:47 -0500
+        Tue, 25 Jan 2022 13:46:27 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1643136102;
+        s=mimecast20190719; t=1643136383;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=pyqTaNe7ZLQNGnEdmlH1BdAYZ6Hyzm1SaLqfep3f8Yo=;
-        b=dzirxZosW313I5VP+scujxcLDQLIKDSrNe3xDJ9QYv8HJf2SePR/VD+gkOYrl1e7aoh5YB
-        MNKeKmpOXic6YA1REs+EqQJEWH6lkAF1IIhuwrTIg1PhbGD7XFhxqe5bcJKakQBlOc9Vmg
-        8L6PZGCZGIjsFTOMT2375Mh3987HpzQ=
+        bh=iAbZeSVhhEVBO6mY6W10L9odsWn2Yz3eqpP+pZ5BIb4=;
+        b=KaftbCVa3BZ8tbr5/huiDl47sA7O1sNnBMrak3VKCo47pidZH1+x0g+O1RgxuVxCrVSPVL
+        9D+awwEYjJYDhPUA/yrGP0g58aN8n6Jn8tXGoiy6oBLD3O2738smwkzA1BMHNPdUf1/AZL
+        yb38Xgeai4eImglr2+WR4S8QrvLxzdA=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-58-HWfftRYMNL2rk8RqqQ1lNQ-1; Tue, 25 Jan 2022 13:41:38 -0500
-X-MC-Unique: HWfftRYMNL2rk8RqqQ1lNQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-192-Xoh8xe-lOiy_FVvHNHntYw-1; Tue, 25 Jan 2022 13:46:19 -0500
+X-MC-Unique: Xoh8xe-lOiy_FVvHNHntYw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 040DD1083F69;
-        Tue, 25 Jan 2022 18:41:38 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 97BE4180FD60;
+        Tue, 25 Jan 2022 18:46:18 +0000 (UTC)
 Received: from fuller.cnet (ovpn-112-2.gru2.redhat.com [10.97.112.2])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id ACC7C838DA;
-        Tue, 25 Jan 2022 18:41:37 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 3F3F1CB835;
+        Tue, 25 Jan 2022 18:46:18 +0000 (UTC)
 Received: by fuller.cnet (Postfix, from userid 1000)
-        id CB25E4188583; Tue, 25 Jan 2022 15:40:13 -0300 (-03)
-Date:   Tue, 25 Jan 2022 15:40:13 -0300
+        id 36512416D5CA; Tue, 25 Jan 2022 15:46:00 -0300 (-03)
+Date:   Tue, 25 Jan 2022 15:46:00 -0300
 From:   Marcelo Tosatti <mtosatti@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH] rt-numa: ignore runtime cpumask if -a CPULIST is specified
-Message-ID: <YfBEDR4E2dNK8XzK@fuller.cnet>
+Subject: [PATCH v2] rt-numa: ignore runtime cpumask if -a CPULIST is specified
+Message-ID: <YfBFaNrP/1LCgWoN@fuller.cnet>
 References: <YerAW90QwEg9yXAb@fuller.cnet>
+ <YfBEDR4E2dNK8XzK@fuller.cnet>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <YerAW90QwEg9yXAb@fuller.cnet>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+In-Reply-To: <YfBEDR4E2dNK8XzK@fuller.cnet>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-
+ 
 When using isolcpus kernel command line option, the CPUs
-specificied at isolcpus= are not part of the run time environment
+specified at isolcpus= are not part of the run time environment
 cpumask.
 
 This causes "cyclictest -a isolatedcpus" to fail with:
@@ -71,6 +72,10 @@ or "all" are specified in the cpu list string.
 Suggested by Sebastian Andrzej Siewior.
 
 Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+
+---
+
+v2: fix changelog typo
 
 diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
 index ee5ab99..d887355 100644
