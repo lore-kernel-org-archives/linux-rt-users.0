@@ -2,240 +2,179 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 85C23C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Jan 2022 14:51:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F610C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Jan 2022 15:41:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238243AbiA0Ovw (ORCPT
+        id S242857AbiA0PlK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Jan 2022 09:51:52 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54802 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232186AbiA0Ovv (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Jan 2022 09:51:51 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1A5B5C061714;
-        Thu, 27 Jan 2022 06:51:51 -0800 (PST)
-Date:   Thu, 27 Jan 2022 15:51:47 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1643295108;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=EFUY3d9V/DhmW0e3d/BOZXjCGxChHXYxSYqI6yl6mmA=;
-        b=TzEuH6rnlNeBGZs0oTYrPiUkIUiqcEOy2myRCX3hL92Iw4Ko+lijdMyycsKHUBtNumJ7H5
-        iGfwOhjQsTpgmu6i2OgRrx/x3k2Eb/6/JgGJQ2m1qgsblsbquh5VzCVjRWq/8JkECYQ1hN
-        k1Glzjj5S69ad215gyLObYTcQgdbs3ydc6dtkvlZC3c8FgLF4jDeBEITJGrOghT4yK/q44
-        iwC2i0tGgGEHC4ZDFA8Ppz4aGQ4D53aXZwyWQo7eLUepzOJrGuxpzGTZ4YXJGMvfO3RxK3
-        bQIKGaslgqQodN3JK4ZCdiRFDt4CEfiTt8dpK2AwrESTua4ZXZGPCGGdaLmrpw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1643295108;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=EFUY3d9V/DhmW0e3d/BOZXjCGxChHXYxSYqI6yl6mmA=;
-        b=0SCuzXnzyxt/EbPUtuXNrr0wLPF3O5NQwtdvbnyI42P6GlQbhIvTLACb4ICq8elF8xvfK3
-        AEb6aXV/9Nqag5AQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.17-rc1-rt2
-Message-ID: <YfKxg112mYzXBXib@linutronix.de>
+        Thu, 27 Jan 2022 10:41:10 -0500
+Received: from foss.arm.com ([217.140.110.172]:39834 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S234206AbiA0PlJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 27 Jan 2022 10:41:09 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 02D091063;
+        Thu, 27 Jan 2022 07:41:09 -0800 (PST)
+Received: from e113632-lin.cambridge.arm.com (e113632-lin.cambridge.arm.com [10.1.196.57])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id 55D0F3F766;
+        Thu, 27 Jan 2022 07:41:07 -0800 (PST)
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     John Keeping <john@metanate.com>, Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [PATCH v2] sched/rt: Plug rt_mutex_setprio() vs push_rt_task() race
+Date:   Thu, 27 Jan 2022 15:40:59 +0000
+Message-Id: <20220127154059.974729-1-valentin.schneider@arm.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+John reported that push_rt_task() can end up invoking
+find_lowest_rq(rq->curr) when curr is not an RT task (in this case a CFS
+one), which causes mayhem down convert_prio().
 
-I'm pleased to announce the v5.17-rc1-rt2 patch set. 
+This can happen when current gets demoted to e.g. CFS when releasing an
+rt_mutex, and the local CPU gets hit with an rto_push_work irqwork before
+getting the chance to reschedule. Exactly who triggers this work isn't
+entirely clear to me - switched_from_rt() only invokes rt_queue_pull_task()
+if there are no RT tasks on the local RQ, which means the local CPU can't
+be in the rto_mask.
 
-Changes since v5.17-rc1-rt1:
+My current suspected sequence is something along the lines of the below,
+with the demoted task being current.
 
-  - Update the printk to the latest version. Patch by John Ogness.
+  mark_wakeup_next_waiter()
+    rt_mutex_adjust_prio()
+      rt_mutex_setprio() // deboost originally-CFS task
+	check_class_changed()
+	  switched_from_rt() // Only rt_queue_pull_task() if !rq->rt.rt_nr_running
+	  switched_to_fair() // Sets need_resched
+      __balance_callbacks() // if pull_rt_task(), tell_cpu_to_push() can't select local CPU per the above
+      raw_spin_rq_unlock(rq)
 
-Known issues
-     - netconsole triggers WARN.
+       // need_resched is set, so task_woken_rt() can't
+       // invoke push_rt_tasks(). Best I can come up with is
+       // local CPU has rt_nr_migratory >= 2 after the demotion, so stays
+       // in the rto_mask, and then:
 
-     - Valentin Schneider reported a few splats on ARM64, see
-          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+       <some other CPU running rto_push_irq_work_func() queues rto_push_work on this CPU>
+	 push_rt_task()
+	   // breakage follows here as rq->curr is CFS
 
-The delta patch against v5.17-rc1-rt1 is appended below and can be found here:
+Move an existing check to check rq->curr vs the next pushable task's
+priority before getting anywhere near find_lowest_rq(). While at it, add an
+explicit sched_class of rq->curr check prior to invoking
+find_lowest_rq(rq->curr). Align the DL logic to also reschedule regardless
+of next_task's migratability.
+
+Link: http://lore.kernel.org/r/Yb3vXx3DcqVOi+EA@donbot
+Fixes: a7c81556ec4d ("sched: Fix migrate_disable() vs rt/dl balancing")
+Reported-by: John Keeping <john@metanate.com>
+Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+Tested-by: John Keeping <john@metanate.com>
+---
+v1 -> v2: Reworded comments, added DL part (Dietmar)
+---
+ kernel/sched/deadline.c | 12 ++++++------
+ kernel/sched/rt.c       | 32 ++++++++++++++++++++++----------
+ 2 files changed, 28 insertions(+), 16 deletions(-)
+
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index d2c072b0ef01..62f0cf842277 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -2240,12 +2240,6 @@ static int push_dl_task(struct rq *rq)
+ 		return 0;
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/incr/patch-5.17-rc1-rt1-rt2.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.17-rc1-rt2
-
-The RT patch against v5.17-rc1 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/older/patch-5.17-rc1-rt2.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/older/patches-5.17-rc1-rt2.tar.xz
-
-Sebastian
-
-diff --git a/kernel/panic.c b/kernel/panic.c
-index 0939c67bfb48c..ee7e26d93b410 100644
---- a/kernel/panic.c
-+++ b/kernel/panic.c
-@@ -232,6 +232,11 @@ void panic(const char *fmt, ...)
- 		dump_stack();
- #endif
- 
-+	/* If atomic consoles are available, flush the kernel log. */
-+	console_flush_on_panic(CONSOLE_ATOMIC_FLUSH_PENDING);
-+
-+	bust_spinlocks(1);
-+
- 	/*
- 	 * If kgdb is enabled, give it a chance to run before we stop all
- 	 * the other CPUs or else we won't be able to debug processes left
-@@ -239,11 +244,6 @@ void panic(const char *fmt, ...)
- 	 */
- 	kgdb_panic(buf);
- 
--	/* Use atomic consoles to dump the kernel log. */
--	console_flush_on_panic(CONSOLE_ATOMIC_FLUSH_PENDING);
+ retry:
+-	if (is_migration_disabled(next_task))
+-		return 0;
 -
--	bust_spinlocks(1);
+-	if (WARN_ON(next_task == rq->curr))
+-		return 0;
 -
  	/*
- 	 * If we have crashed and we have a crash kernel loaded let it handle
- 	 * everything else.
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 6621a4633c2d8..cc04e94c320c4 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -2043,8 +2043,10 @@ static u8 *__printk_recursion_counter(void)
- 
- int printk_delay_msec __read_mostly;
- 
--static inline void printk_delay(void)
-+static inline void printk_delay(int level)
- {
-+	boot_delay_msec(level);
-+
- 	if (unlikely(printk_delay_msec)) {
- 		int m = printk_delay_msec;
- 
-@@ -2423,11 +2425,10 @@ static ssize_t msg_print_ext_body(char *buf, size_t size,
- static void console_lock_spinning_enable(void) { }
- static int console_lock_spinning_disable_and_check(void) { return 0; }
- static void call_console_driver(struct console *con, const char *text, size_t len,
--				char *dropped_text, bool atomic_printing) { }
-+				char *dropped_text, bool atomic_printing) {}
- static bool suppress_message_printing(int level) { return false; }
--static void start_printk_kthread(struct console *con) { }
--static inline void boot_delay_msec(int level) { }
--static inline void printk_delay(void) { }
-+static void printk_delay(int level) {}
-+static void start_printk_kthread(struct console *con) {}
- 
- #endif /* CONFIG_PRINTK */
- 
-@@ -2683,6 +2684,31 @@ int console_trylock(void)
- }
- EXPORT_SYMBOL(console_trylock);
- 
-+/*
-+ * A variant of console_trylock() that allows specifying if the context may
-+ * sleep. If yes, a trylock on @console_sem is attempted and if successful,
-+ * the threaded printers are paused. This is important to ensure that
-+ * sleepable contexts do not become involved in console_lock handovers and
-+ * will call cond_resched() during the printing loop.
-+ */
-+static int console_trylock_sched(bool may_schedule)
-+{
-+	if (!may_schedule)
-+		return console_trylock();
-+
-+	might_sleep();
-+
-+	if (down_trylock_console_sem())
-+		return 0;
-+	if (console_suspended) {
-+		up_console_sem();
-+		return 0;
-+	}
-+	pause_all_consoles();
-+	console_may_schedule = 1;
-+	return 1;
-+}
-+
- /*
-  * This is used to help to make sure that certain paths within the VT code are
-  * running with the console lock held. It is definitely not the perfect debug
-@@ -2836,8 +2862,8 @@ static void write_console_seq(struct console *con, u64 val, bool atomic_printing
-  *
-  * @handover will be set to true if a printk waiter has taken over the
-  * console_lock, in which case the caller is no longer holding the
-- * console_lock. A NULL pointer may be provided to disable allowing
-- * the console_lock to be taken over by a printk waiter.
-+ * console_lock. Otherwise it is set to false. A NULL pointer may be provided
-+ * to disable allowing the console_lock to be taken over by a printk waiter.
-  */
- static bool console_emit_next_record(struct console *con, char *text, char *ext_text,
- 				     char *dropped_text, bool atomic_printing,
-@@ -2917,8 +2943,7 @@ static bool console_emit_next_record(struct console *con, char *text, char *ext_
- 		printk_safe_exit_irqrestore(flags);
+ 	 * If next_task preempts rq->curr, and rq->curr
+ 	 * can move away, it makes sense to just reschedule
+@@ -2258,6 +2252,12 @@ static int push_dl_task(struct rq *rq)
+ 		return 0;
  	}
  
--	boot_delay_msec(r.info->level);
--	printk_delay();
-+	printk_delay(r.info->level);
- skip:
- 	return true;
- }
-@@ -2935,7 +2960,7 @@ static bool console_emit_next_record(struct console *con, char *text, char *ext_
-  *
-  * @handover will be set to true if a printk waiter has taken over the
-  * console_lock, in which case the caller is no longer holding the
-- * console_lock.
-+ * console_lock. Otherwise it is set to false.
-  */
- static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handover)
- {
-@@ -3089,11 +3114,8 @@ void console_unlock(void)
- 	 * between lines if allowable.  Not doing so can cause a very long
- 	 * scheduling stall on a slow console leading to RCU stall and
- 	 * softlockup warnings which exacerbate the issue with more
--	 * messages practically incapacitating the system.
--	 *
--	 * console_trylock() is not able to detect the preemptive
--	 * context reliably. Therefore the value must be stored before
--	 * and cleared after the "again" goto label.
-+	 * messages practically incapacitating the system. Therefore, create
-+	 * a local to use for the printing loop.
- 	 */
- 	do_cond_resched = console_may_schedule;
- 
-@@ -3116,7 +3138,7 @@ void console_unlock(void)
- 		 * Re-check if there is a new record to flush. If the trylock
- 		 * fails, another context is already handling the printing.
- 		 */
--	} while (prb_read_valid(prb, next_seq, NULL) && console_trylock());
-+	} while (prb_read_valid(prb, next_seq, NULL) && console_trylock_sched(do_cond_resched));
- }
- EXPORT_SYMBOL(console_unlock);
- 
-@@ -3626,6 +3648,7 @@ static int __init printk_late_init(void)
- 		start_printk_kthread(con);
- 	kthreads_started = true;
- 	console_unlock();
++	if (is_migration_disabled(next_task))
++		return 0;
 +
- 	return 0;
- }
- late_initcall(printk_late_init);
-diff --git a/localversion-rt b/localversion-rt
-index 6f206be67cd28..c3054d08a1129 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt1
-+-rt2
++	if (WARN_ON(next_task == rq->curr))
++		return 0;
++
+ 	/* We might release rq lock */
+ 	get_task_struct(next_task);
+ 
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 7b4f4fbbb404..14f273c29518 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -2026,6 +2026,16 @@ static int push_rt_task(struct rq *rq, bool pull)
+ 		return 0;
+ 
+ retry:
++	/*
++	 * It's possible that the next_task slipped in of
++	 * higher priority than current. If that's the case
++	 * just reschedule current.
++	 */
++	if (unlikely(next_task->prio < rq->curr->prio)) {
++		resched_curr(rq);
++		return 0;
++	}
++
+ 	if (is_migration_disabled(next_task)) {
+ 		struct task_struct *push_task = NULL;
+ 		int cpu;
+@@ -2033,6 +2043,18 @@ static int push_rt_task(struct rq *rq, bool pull)
+ 		if (!pull || rq->push_busy)
+ 			return 0;
+ 
++		/*
++		 * Invoking find_lowest_rq() on anything but an RT task doesn't
++		 * make sense. Per the above priority check, curr has to
++		 * be of higher priority than next_task, so no need to
++		 * reschedule when bailing out.
++		 *
++		 * Note that the stoppers are masqueraded as SCHED_FIFO
++		 * (cf. sched_set_stop_task()), so we can't rely on rt_task().
++		 */
++		if (rq->curr->sched_class != &rt_sched_class)
++			return 0;
++
+ 		cpu = find_lowest_rq(rq->curr);
+ 		if (cpu == -1 || cpu == rq->cpu)
+ 			return 0;
+@@ -2057,16 +2079,6 @@ static int push_rt_task(struct rq *rq, bool pull)
+ 	if (WARN_ON(next_task == rq->curr))
+ 		return 0;
+ 
+-	/*
+-	 * It's possible that the next_task slipped in of
+-	 * higher priority than current. If that's the case
+-	 * just reschedule current.
+-	 */
+-	if (unlikely(next_task->prio < rq->curr->prio)) {
+-		resched_curr(rq);
+-		return 0;
+-	}
+-
+ 	/* We might release rq lock */
+ 	get_task_struct(next_task);
+ 
+-- 
+2.25.1
+
