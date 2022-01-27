@@ -2,26 +2,26 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 803B3C433FE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Jan 2022 18:23:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D9FCC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Jan 2022 19:24:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244927AbiA0SXy convert rfc822-to-8bit (ORCPT
+        id S239666AbiA0TY7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Jan 2022 13:23:54 -0500
-Received: from foss.arm.com ([217.140.110.172]:48012 "EHLO foss.arm.com"
+        Thu, 27 Jan 2022 14:24:59 -0500
+Received: from foss.arm.com ([217.140.110.172]:51600 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S244957AbiA0SXx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Jan 2022 13:23:53 -0500
+        id S232674AbiA0TY5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 27 Jan 2022 14:24:57 -0500
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id D19A0113E;
-        Thu, 27 Jan 2022 10:23:52 -0800 (PST)
-Received: from e113632-lin (usa-sjc-imap-foss1.foss.arm.com [10.121.207.14])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id D754F3F7D7;
-        Thu, 27 Jan 2022 10:23:49 -0800 (PST)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id E67E0113E;
+        Thu, 27 Jan 2022 11:24:56 -0800 (PST)
+Received: from e113632-lin.cambridge.arm.com (e113632-lin.cambridge.arm.com [10.1.196.57])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id ED4243F7D7;
+        Thu, 27 Jan 2022 11:24:53 -0800 (PST)
 From:   Valentin Schneider <valentin.schneider@arm.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
+To:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        linux-rt-users@vger.kernel.org
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Catalin Marinas <catalin.marinas@arm.com>,
         Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
         Peter Zijlstra <peterz@infradead.org>,
@@ -41,31 +41,50 @@ Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         Ard Biesheuvel <ardb@kernel.org>,
         Boqun Feng <boqun.feng@gmail.com>,
         Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH v3 2/4] sched: Introduce migratable()
-In-Reply-To: <YfJu3Z9wKOAjLuad@linutronix.de>
-References: <20210811201354.1976839-1-valentin.schneider@arm.com> <20210811201354.1976839-3-valentin.schneider@arm.com> <20210817170925.2jwqvgvmqab2glwu@linutronix.de> <87czq573et.mognet@arm.com> <YfF9I5PcZJA5532B@linutronix.de> <87r18u2wr8.mognet@arm.com> <YfJu3Z9wKOAjLuad@linutronix.de>
-Date:   Thu, 27 Jan 2022 18:23:44 +0000
-Message-ID: <87o83x2g27.mognet@arm.com>
+Subject: [PATCH v4] arm64: mm: Make arch_faults_on_old_pte() check for migratability
+Date:   Thu, 27 Jan 2022 19:24:37 +0000
+Message-Id: <20220127192437.1192957-1-valentin.schneider@arm.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 27/01/22 11:07, Sebastian Andrzej Siewior wrote:
-> On 2022-01-26 18:10:51 [+0000], Valentin Schneider wrote:
->> > | 2021-08-11 21:13 +0100 Valentin Schneider    ∙ sched: Introduce migratable()
->> > | 2021-08-11 21:13 +0100 Valentin Schneider    ∙ arm64: mm: Make arch_faults_on_old_pte() check for migratability
-> …
->> Heh, had forgotten about those - I'm happy to repost with the
->> s/migratable/is_migratable/. I also need to go back to those splats I got
->> on my emag and fix the PMU/GPIO warnings...
->
-> Now that I look at it gain, you might want to drop #1 and then #2 would
-> switch to cant_migrate(). This might work…
->
+arch_faults_on_old_pte() relies on the calling context being
+non-preemptible. CONFIG_PREEMPT_RT turns the PTE lock into a sleepable
+spinlock, which doesn't disable preemption once acquired, triggering the
+warning in arch_faults_on_old_pte().
 
-Wasn't aware of cant_migrate(), that does look even better. Lemme give it a shot.
+It does however disable migration, ensuring the task remains on the same
+CPU during the entirety of the critical section, making the read of
+cpu_has_hw_af() safe and stable.
 
-> Sebastian
+Make arch_faults_on_old_pte() check cant_migrate() instead of preemptible().
+
+Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+Link: https://lore.kernel.org/r/20210811201354.1976839-5-valentin.schneider@arm.com
+---
+v3 -> v4: Dropped migratable(), reuse cant_migrate() (Sebastian)
+---
+ arch/arm64/include/asm/pgtable.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
+index c4ba047a82d2..3caf6346ea95 100644
+--- a/arch/arm64/include/asm/pgtable.h
++++ b/arch/arm64/include/asm/pgtable.h
+@@ -1001,7 +1001,8 @@ static inline void update_mmu_cache(struct vm_area_struct *vma,
+  */
+ static inline bool arch_faults_on_old_pte(void)
+ {
+-	WARN_ON(preemptible());
++	/* The register read below requires a stable CPU to make any sense */
++	cant_migrate();
+ 
+ 	return !cpu_has_hw_af();
+ }
+-- 
+2.25.1
+
