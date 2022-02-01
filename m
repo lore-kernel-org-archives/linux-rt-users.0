@@ -2,114 +2,106 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49A3BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Jan 2022 16:28:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 724CCC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Feb 2022 15:28:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1380379AbiAaQ2m (ORCPT
+        id S240391AbiBAP2e (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 31 Jan 2022 11:28:42 -0500
-Received: from dfw.source.kernel.org ([139.178.84.217]:42044 "EHLO
-        dfw.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1380358AbiAaQ2j (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 31 Jan 2022 11:28:39 -0500
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id DC544614BE;
-        Mon, 31 Jan 2022 16:28:38 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1C48CC340ED;
-        Mon, 31 Jan 2022 16:28:38 +0000 (UTC)
-X-Mailbox-Line: From 9f0ed270b80b0209ff781027712c0c46e3f085d6 Mon Sep 17 00:00:00 2001
-From:   Clark Williams <williams@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Date:   Thu, 13 Jan 2022 17:12:15 -0600
-Subject: [RFC PATCH PREEMPT_RT 4.19 STABLE] net: Fix compiler warnings on 4.19 PREEMPT_RT with xmit_lock_owner
-Message-Id: <20220131162838.1C48CC340ED@smtp.kernel.org>
+        Tue, 1 Feb 2022 10:28:34 -0500
+Received: from foss.arm.com ([217.140.110.172]:46980 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S240416AbiBAP2V (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 1 Feb 2022 10:28:21 -0500
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id DFB9711B3;
+        Tue,  1 Feb 2022 07:28:20 -0800 (PST)
+Received: from [192.168.178.6] (unknown [172.31.20.19])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 498BB3F40C;
+        Tue,  1 Feb 2022 07:28:18 -0800 (PST)
+Subject: Re: [PATCH v2] sched/rt: Plug rt_mutex_setprio() vs push_rt_task()
+ race
+To:     Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     John Keeping <john@metanate.com>, Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>
+References: <20220127154059.974729-1-valentin.schneider@arm.com>
+From:   Dietmar Eggemann <dietmar.eggemann@arm.com>
+Message-ID: <c12765d4-6b0e-fd1a-8152-a68e6e56cbb8@arm.com>
+Date:   Tue, 1 Feb 2022 16:28:10 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.14.0
+MIME-Version: 1.0
+In-Reply-To: <20220127154059.974729-1-valentin.schneider@arm.com>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-GCC 11 has started complaining about the PREEMPT_RT changes to 2fd949365fe6628fb2
-which change the xmit_lock_owner from an integer to a pointer to struct
-task_struct. These changes are from the patch:
+On 27/01/2022 16:40, Valentin Schneider wrote:
+> John reported that push_rt_task() can end up invoking
+> find_lowest_rq(rq->curr) when curr is not an RT task (in this case a CFS
+> one), which causes mayhem down convert_prio().
+> 
+> This can happen when current gets demoted to e.g. CFS when releasing an
+> rt_mutex, and the local CPU gets hit with an rto_push_work irqwork before
+> getting the chance to reschedule. Exactly who triggers this work isn't
+> entirely clear to me - switched_from_rt() only invokes rt_queue_pull_task()
+> if there are no RT tasks on the local RQ, which means the local CPU can't
+> be in the rto_mask.
+> 
+> My current suspected sequence is something along the lines of the below,
+> with the demoted task being current.
+> 
+>   mark_wakeup_next_waiter()
+>     rt_mutex_adjust_prio()
+>       rt_mutex_setprio() // deboost originally-CFS task
+> 	check_class_changed()
+> 	  switched_from_rt() // Only rt_queue_pull_task() if !rq->rt.rt_nr_running
+> 	  switched_to_fair() // Sets need_resched
+>       __balance_callbacks() // if pull_rt_task(), tell_cpu_to_push() can't select local CPU per the above
+>       raw_spin_rq_unlock(rq)
+> 
+>        // need_resched is set, so task_woken_rt() can't
+>        // invoke push_rt_tasks(). Best I can come up with is
+>        // local CPU has rt_nr_migratory >= 2 after the demotion, so stays
+>        // in the rto_mask, and then:
+> 
+>        <some other CPU running rto_push_irq_work_func() queues rto_push_work on this CPU>
+> 	 push_rt_task()
+> 	   // breakage follows here as rq->curr is CFS
+> 
+> Move an existing check to check rq->curr vs the next pushable task's
+> priority before getting anywhere near find_lowest_rq(). While at it, add an
+> explicit sched_class of rq->curr check prior to invoking
+> find_lowest_rq(rq->curr). Align the DL logic to also reschedule regardless
+> of next_task's migratability.
+> 
+> Link: http://lore.kernel.org/r/Yb3vXx3DcqVOi+EA@donbot
+> Fixes: a7c81556ec4d ("sched: Fix migrate_disable() vs rt/dl balancing")
+> Reported-by: John Keeping <john@metanate.com>
+> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+> Tested-by: John Keeping <john@metanate.com>
+> ---
+> v1 -> v2: Reworded comments, added DL part (Dietmar)
+> ---
 
-	     net: move xmit_recursion to per-task variable on -RT
+LGTM.
 
-The below patch is ugly but fixes the compiler warnings.
+Rescheduling in case rq->curr has lower prio (including CFS tasks) than
+next_task and bailing out in case rq->curr is DL or stop-task prevents
+the bug from happening.
 
-I'd be happy to entertain a better/cleaner solution
+The only small issue is the fact that, unlike in push_rt_task(), the DL
+logic only compares DL tasks (if (dl_task(rq->curr) ...), so you miss
+rescheduling when rq->curr is a lower priority non-DL task.
 
-Signed-off-by: Clark Williams <williams@redhat.com>
----
- include/linux/netdevice.h | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+Reviewed-by: Dietmar Eggemann <dietmar.eggemann@arm.com>
 
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index 7b34ce34114a..fa2a52d24218 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -3921,7 +3921,11 @@ static inline void __netif_tx_lock(struct netdev_queue *txq, int cpu)
- {
- 	spin_lock(&txq->_xmit_lock);
- 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	WRITE_ONCE(txq->xmit_lock_owner, current);
-+#else
- 	WRITE_ONCE(txq->xmit_lock_owner, cpu);
-+#endif
- }
- 
- static inline bool __netif_tx_acquire(struct netdev_queue *txq)
-@@ -3939,7 +3943,11 @@ static inline void __netif_tx_lock_bh(struct netdev_queue *txq)
- {
- 	spin_lock_bh(&txq->_xmit_lock);
- 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	WRITE_ONCE(txq->xmit_lock_owner, current);
-+#else
- 	WRITE_ONCE(txq->xmit_lock_owner, smp_processor_id());
-+#endif
- }
- 
- static inline bool __netif_tx_trylock(struct netdev_queue *txq)
-@@ -3948,7 +3956,11 @@ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
- 
- 	if (likely(ok)) {
- 		/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		WRITE_ONCE(txq->xmit_lock_owner, current);
-+#else
- 		WRITE_ONCE(txq->xmit_lock_owner, smp_processor_id());
-+#endif
- 	}
- 	return ok;
- }
-@@ -3956,14 +3968,22 @@ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
- static inline void __netif_tx_unlock(struct netdev_queue *txq)
- {
- 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	WRITE_ONCE(txq->xmit_lock_owner, NULL);
-+#else
- 	WRITE_ONCE(txq->xmit_lock_owner, -1);
-+#endif
- 	spin_unlock(&txq->_xmit_lock);
- }
- 
- static inline void __netif_tx_unlock_bh(struct netdev_queue *txq)
- {
- 	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	WRITE_ONCE(txq->xmit_lock_owner, NULL);
-+#else
- 	WRITE_ONCE(txq->xmit_lock_owner, -1);
-+#endif
- 	spin_unlock_bh(&txq->_xmit_lock);
- }
- 
--- 
-2.34.1
-
+[...]
