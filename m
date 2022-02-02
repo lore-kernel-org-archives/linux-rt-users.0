@@ -2,76 +2,139 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 050A3C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Feb 2022 08:26:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23354C433FE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Feb 2022 13:34:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240764AbiBBI0D (ORCPT
+        id S1344356AbiBBNeE convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 2 Feb 2022 03:26:03 -0500
-Received: from ams.source.kernel.org ([145.40.68.75]:54774 "EHLO
-        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236672AbiBBI0C (ORCPT
+        Wed, 2 Feb 2022 08:34:04 -0500
+Received: from mail.savoirfairelinux.com ([208.88.110.44]:33002 "EHLO
+        mail.savoirfairelinux.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229552AbiBBNeD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 2 Feb 2022 03:26:02 -0500
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id B63D3B8302F;
-        Wed,  2 Feb 2022 08:26:01 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D99E6C004E1;
-        Wed,  2 Feb 2022 08:25:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1643790360;
-        bh=xrV4cjsjCXxwl2JL84Csa7GD6T5ZwxgoSFYH2ZIgt7Y=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=uf8I6VQtKPuLrhZKYeERQZIPR8SQZiRToFXyCBn3ykziJSc7xO93xTwtb/jyCmSb7
-         JiFQg06R1rWbdVJE6UfcCEAFT0AXmDytZCXwX6gUizA0dtu2nDopBaW9gzgK78D8TV
-         OxXQeGeF1/64N1PqgaqZYgZSROdwLxbMqVkVdvSY=
-Date:   Wed, 2 Feb 2022 09:25:57 +0100
-From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To:     Daniel Wagner <wagi@monom.org>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
-Subject: Re: [ANNOUNCE] 4.4.301-rt231
-Message-ID: <YfpAFdoZ/t74kt7H@kroah.com>
-References: <164373149744.25521.668105457088547829@beryllium.lan>
- <da5b0bc4-0980-5193-cb65-c1b06e46574b@monom.org>
+        Wed, 2 Feb 2022 08:34:03 -0500
+Received: from localhost (localhost [127.0.0.1])
+        by mail.savoirfairelinux.com (Postfix) with ESMTP id 780DE9C035C
+        for <linux-rt-users@vger.kernel.org>; Wed,  2 Feb 2022 08:34:02 -0500 (EST)
+Received: from mail.savoirfairelinux.com ([127.0.0.1])
+        by localhost (mail.savoirfairelinux.com [127.0.0.1]) (amavisd-new, port 10032)
+        with ESMTP id xtty_CWvjavG for <linux-rt-users@vger.kernel.org>;
+        Wed,  2 Feb 2022 08:34:02 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+        by mail.savoirfairelinux.com (Postfix) with ESMTP id ECDAD9C0381
+        for <linux-rt-users@vger.kernel.org>; Wed,  2 Feb 2022 08:34:01 -0500 (EST)
+X-Virus-Scanned: amavisd-new at mail.savoirfairelinux.com
+Received: from mail.savoirfairelinux.com ([127.0.0.1])
+        by localhost (mail.savoirfairelinux.com [127.0.0.1]) (amavisd-new, port 10026)
+        with ESMTP id YQoKOh0e8Xdk for <linux-rt-users@vger.kernel.org>;
+        Wed,  2 Feb 2022 08:34:01 -0500 (EST)
+Received: from mail.savoirfairelinux.com (mail.savoirfairelinux.com [192.168.48.237])
+        by mail.savoirfairelinux.com (Postfix) with ESMTP id D2C2A9C035C
+        for <linux-rt-users@vger.kernel.org>; Wed,  2 Feb 2022 08:34:01 -0500 (EST)
+Date:   Wed, 2 Feb 2022 08:34:01 -0500 (EST)
+From:   Mathieu =?utf-8?Q?Dupr=C3=A9?= 
+        <mathieu.dupre@savoirfairelinux.com>
+To:     linux-rt-users@vger.kernel.org
+Message-ID: <1631541178.407490.1643808841804.JavaMail.zimbra@savoirfairelinux.com>
+Subject: [Question] KVM-RT high max latency after upgrade host from 4.19 to
+ 5.15
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <da5b0bc4-0980-5193-cb65-c1b06e46574b@monom.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+X-Mailer: Zimbra 8.8.15_GA_4180 (ZimbraWebClient - FF96 (Linux)/8.8.15_GA_4177)
+Thread-Index: qaWvNM6UwH2GH+JAFkGbBK4C+eZ+Eg==
+Thread-Topic: KVM-RT high max latency after upgrade host from 4.19 to 5.15
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Feb 02, 2022 at 08:56:36AM +0100, Daniel Wagner wrote:
-> On 01.02.22 17:14, Daniel Wagner wrote:
-> > Hello RT-list!
-> > 
-> > I'm pleased to announce the 4.4.301-rt231 stable release.
-> > 
-> > This is just an update to the latest and last 4.4.x stable
-> > release. There are no RT specific changes.
-> > 
-> > With this release there wont be any updates for this branch in
-> > stable-rt tree. I understand Pavel Machek is continuing to maintaining
-> > the v4.4-rt branch under the CIP umbrella:
-> > 
-> >    https://git.kernel.org/pub/scm/linux/kernel/git/cip/linux-cip.git/log/?h=linux-4.4.y-cip-rt
-> > 
-> 
-> It seems Greg is still updating v4.4.y. I'll do another update, when 4.4.y
-> gets an update
-> 
-> https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git/log/?h=linux-4.4.y
+Hello all,
 
-I will do one more release, probably in a day or so, and then it is
-dead.  Run away!!!  :)
+I have a high latency in KVM with Linux 5.15 that I did not have in 4.19.
+
+Previously I was on version 4.19.188-rt77 (with the PREEMPT_RT and CONFIG_PREEMPT_FULL patch), I was running KVM on an isolated CPU and I had a max latency with cyclictest of ~60 µs.
+
+I have bumped the kernel version to 5.15.13-rt26 (on both host and guest) and I have now a huge maximal latency of 40 ms.
+
+I try to tweak halt_poll_ns, and I managed to reduce the latency to 4 ms.
+
+The host max latency outside KVM is the same.
+
+When I used LTTng to know what’s happen, I see that periodically the CPU core running KVM enter in idle mode.
+
+I have tried with 3 different Intel CPU (Intel Core i3-4130, Intel Xeon E5-2680 and Intel Xeon X5660) and I have always the same result.
+
+Here is my setup :
+Intel CPU
+KVM runing on a dedecated CPU with real-time priority
+Kernel parameters : isolcpus=2-3 nohz_full=2-3 rcu_nocbs=2-3 irqaffinity=0-1
+CONFIG_CPU_IDLE not set
+qemu-x86_64 version 4.2.0
+cyclictest command : cyclictest -l1000000 -m -Sp90 -i200 -h200
+
+Qemu parameters
+/usr/bin/qemu-system-x86_64
+-name guest=guest0,debug-threads=on
+-S
+-object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-2-guest0/master-key.aes
+-blockdev {"driver":"file","filename":"/usr/share/qemu/edk2-x86_64-code.fd","node-name":"libvirt-pflash0-storage","auto-read-only":true,"discard":"unmap"}
+-blockdev {"node-name":"libvirt-pflash0-format","read-only":true,"driver":"raw","file":"libvirt-pflash0-storage"}
+-blockdev {"driver":"file","filename":"/var/lib/libvirt/qemu/nvram/guest0_VARS.fd","node-name":"libvirt-pflash1-storage","auto-read-only":true,"discard":"unmap"}
+-blockdev {"node-name":"libvirt-pflash1-format","read-only":false,"driver":"raw","file":"libvirt-pflash1-storage"}
+-machine pc-i440fx-4.1,accel=kvm,usb=off,dump-guest-core=off,pflash0=libvirt-pflash0-format,pflash1=libvirt-pflash1-format
+-cpu host,tsc-deadline=on,pmu=off
+-m 256
+-overcommit mem-lock=off
+-smp 1,sockets=1,dies=1,cores=1,threads=1
+-uuid 06ed47d1-6dc8-437b-a655-c578768dd0c2
+-no-user-config
+-nodefaults
+-device sga
+-chardev socket,id=charmonitor,fd=35,server,nowait
+-mon chardev=charmonitor,id=monitor,mode=control
+-rtc base=utc,driftfix=slew
+-global kvm-pit.lost_tick_policy=delay
+-no-hpet
+-no-shutdown
+-global PIIX4_PM.disable_s3=1
+-global PIIX4_PM.disable_s4=1
+-boot menu=off,reboot-timeout=0,strict=on
+-device piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2
+-blockdev {"driver":"file","filename":"/var/lib/libvirt/images/seapath-guest-efi-test-image-votp-vm.wic.qcow2","node-name":"libvirt-1-storage","auto-read-only":true,"discard":"unmap"}
+-blockdev {"node-name":"libvirt-1-format","read-only":false,"driver":"qcow2","file":"libvirt-1-storage","backing":null}
+-device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x3,drive=libvirt-1-format,id=virtio-disk0,bootindex=1
+-netdev tap,fd=37,id=hostnet0,vhost=on,vhostfd=38
+-device virtio-net-pci,netdev=hostnet0,id=net0,mac=52:54:00:34:56:4d,bus=pci.0,addr=0x5
+-chardev pty,id=charserial0
+-device isa-serial,chardev=charserial0,id=serial0
+-vnc 127.0.0.1:0
+-device VGA,id=video0,vgamem_mb=16,bus=pci.0,addr=0x4
+-device ib700,id=watchdog0
+-watchdog-action poweroff
+-device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x2
+-msg timestamp=on
+
+Results :
+Kernel host : 4.19.188-rt77
+Kernel guest : 4.19.188-rt77
+halt_poll_ns : default value
+Max latency : ~60 µs
+
+Kernel host : 5.15.13-rt26
+Kernel guest :  5.15.13-rt26
+halt_poll_ns : default value
+Max latency : > 40 ms
+
+Kernel host : 5.15.13-rt26
+Kernel guest :  4.19.188-rt77
+halt_poll_ns : default value
+Max latency : > 40 ms
+
+Kernel host : 5.15.13-rt26
+Kernel guest :  5.15.13-rt26
+halt_poll_ns : 50000
+Max latency : > 4 ms
+
+I would like to know what is introducing this latency. Is it related to the fact that the CPU running KVM periodically enters IDLE mode? Why do we have this behavior in 5.15 and not in 4.19?
+
+Thanks.
