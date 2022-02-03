@@ -2,252 +2,187 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A1B13C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Feb 2022 09:17:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFA57C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Feb 2022 11:49:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232600AbiBCJRJ (ORCPT
+        id S236153AbiBCLte (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 3 Feb 2022 04:17:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43032 "EHLO
+        Thu, 3 Feb 2022 06:49:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49366 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230259AbiBCJRI (ORCPT
+        with ESMTP id S230468AbiBCLte (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 3 Feb 2022 04:17:08 -0500
-Received: from mail-yb1-xb35.google.com (mail-yb1-xb35.google.com [IPv6:2607:f8b0:4864:20::b35])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1C497C061714;
-        Thu,  3 Feb 2022 01:17:08 -0800 (PST)
-Received: by mail-yb1-xb35.google.com with SMTP id r65so6828600ybc.11;
-        Thu, 03 Feb 2022 01:17:08 -0800 (PST)
+        Thu, 3 Feb 2022 06:49:34 -0500
+Received: from mail-yb1-xb29.google.com (mail-yb1-xb29.google.com [IPv6:2607:f8b0:4864:20::b29])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 19013C061714
+        for <linux-rt-users@vger.kernel.org>; Thu,  3 Feb 2022 03:49:34 -0800 (PST)
+Received: by mail-yb1-xb29.google.com with SMTP id 124so7448133ybw.6
+        for <linux-rt-users@vger.kernel.org>; Thu, 03 Feb 2022 03:49:34 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=ksShP3fR6++C7+JWXso3T61Lx+3NGk421kIXKkoqvK4=;
-        b=YkUtOJLAmvTFkwd4MKMKrDYMKkrKx6Z9hDNyZEdpnJXRQZ1/nbfeHsjqFYx9ZNp02V
-         YrTMufcdkwObHxiVPIi7QcjPIixzWC8eKHvXOLrVc6jWCwlqVc7yjkCGL5UnL/K9OpU2
-         gd4/gI6SwzaXaS5ahR8KIkrvq5DPD3ymrlZ4msbKe4xN4X4jB9zxnFCschwz92u6mJvC
-         LVzPqK3KuALPwMGRlOmaC5CeXReAGslfm1vEn4HrYbRHsA0tBjJkSj/xnrZ8YoJkUyeI
-         BoODEjDB8FRVSFDd+ZPfe/PlbAkutlswD3Q9U8gL5KXCzKdB52L+jx2N2rzs6N5Px7K4
-         LqeA==
+         :cc:content-transfer-encoding;
+        bh=bik78RjsZLAmzDZiN6WUbHyOyEn06UrCc9meP5snEAw=;
+        b=AcOa0CQ2u7dpFK+nmK7cvYUHJs0S9Kp3/csTzDeecczSlBP6Dj22EnRZUB1Ask8GB5
+         hrnJKe8P+UffiZ1C3XxoBCV1FJd0fIfTKYsWdHejL8QmZrBEW3smLZK4lQD1K5JDBdNu
+         bJ9DNm7Yl9oHbbY4RKLAnb7/mMKMOpriKC/tCDqRrK2pQXaEW0221g6i1EACkmnBPnuD
+         zrx9XyalNVJMMhnNxn9hprzBugxcIUDEEnZ+taycjGT4KCOEXM7r6d1r0qk8u8j9tbX1
+         iMrk9n3q0s6VfPReolUx4yrHDkw54425KT5IQrxAg3nCIhDuYz3e36xe4ucSu4oevhQO
+         mwVg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=ksShP3fR6++C7+JWXso3T61Lx+3NGk421kIXKkoqvK4=;
-        b=3gQeCxAcaA3ScS5L2vOn3vTv8zX9RS7p0aumM37s2h4bf8uipMBxAhfM85BItY04rN
-         lKgq/l72BRCzsBA3idXZ3B336ct0bfks5EQw4zf33X3YHD4yTIekCnM8Q8Z93MzKWIfP
-         8h3d2jm73GBO1wy3Vk+nz956RhTOVBiVFe0CLJJC/8qARx+rVSi8R5OpsC5EdlqWs8oP
-         pDwKeCW6xw7fCRoTWlI46ERsQ8jUrp0/N/8qTThWDCqnqTjKFL+LXYG3t6p5KSuKvhOu
-         hMOYKRiPfOI8qe8t+cB0B1e+VPQcWUaOxvEXnWsuUTgn8lvyCRrXrmNr6Z/3XEabwh0A
-         1/Zg==
-X-Gm-Message-State: AOAM533JcXPy7EvHzHogQBl9nL0nyYZ4OeacBtSQ3U0Ol2Xkvhv+HJiJ
-        prWPNGDEkZaJgDTM04c2Qz2v6OgzZ0tp2JRWjOI=
-X-Google-Smtp-Source: ABdhPJysKqIAnrMdBAbpjonl06eTkobS6pdQbCgL9m7U/wJkSgPNEn+546QRxNtFKG5HK9YymtdZkDjKq/X3J3lmF0Y=
-X-Received: by 2002:a81:7146:: with SMTP id m67mr3583480ywc.446.1643879827305;
- Thu, 03 Feb 2022 01:17:07 -0800 (PST)
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=bik78RjsZLAmzDZiN6WUbHyOyEn06UrCc9meP5snEAw=;
+        b=MAswrPMAjCcYsezZoM2bEKPlFQsSu/jdU6CTKD6EhbaQ961Y80HHwfhbthiqVirskS
+         N62iwZo9nTQM79tQnsA9ECymW5V/lvmhMa6fhXMpUT2D9N9q6PQxBCWsqksKrUlGHU1O
+         lqombfmP7KG5w9CJN68mmh21Ag9HG4ghOaGdqUnKg0UoWNldz2y7ytAiqzWMmmTTrCWI
+         nKeSibStmHPZ31L7w/C+Xh0XUxJ1IweqZ4YkpRDwaQNt3T5VQCWuKfHwdzmuR+nWahhc
+         L+lSmnvEArNRSz6vJO67nkcVqMQMuLgOGqKJnhCVMy24g4dgKedtqOp9CwuUrNOF0k6d
+         vlXw==
+X-Gm-Message-State: AOAM533100mGGoCIR4JIGKl2Y+uwUB9RSjGNx4yW0qfqU7bDMoSrL3BA
+        c1Tih5IO6a4dK03U8M9f0+WX6U4Zi8d0ahtq42eCwdQrjcBmjA==
+X-Google-Smtp-Source: ABdhPJw/GMI7uf37ihVreLaAZxCtNquqDRFo5jkIuogz+d5xOf5tBxsJYzKHd7KxD38Xjvq3x05xiLyjl+94WPc7TcM=
+X-Received: by 2002:a25:a89:: with SMTP id 131mr45424725ybk.234.1643888972067;
+ Thu, 03 Feb 2022 03:49:32 -0800 (PST)
 MIME-Version: 1.0
-References: <20220107021502.1121597-1-lgoncalv@redhat.com> <20220107021502.1121597-2-lgoncalv@redhat.com>
- <CAA7rmPFkHO=2AA3hfsoeB4KSYqj4+GMFu7+AuqLObGvfCngVFw@mail.gmail.com>
-In-Reply-To: <CAA7rmPFkHO=2AA3hfsoeB4KSYqj4+GMFu7+AuqLObGvfCngVFw@mail.gmail.com>
+References: <10b1995b392e490aaa2db645f219015e@dji.com> <dd9673737c354eb898fc22ee466efbda@dji.com>
+In-Reply-To: <dd9673737c354eb898fc22ee466efbda@dji.com>
 From:   Daniel Vacek <neelx.g@gmail.com>
-Date:   Thu, 3 Feb 2022 10:16:56 +0100
-Message-ID: <CAA7rmPGuz7p6B81t6Q1LFRT+cXXQoEN05M8pKo4EraR-JgOdUw@mail.gmail.com>
-Subject: Re: [PATCH RT 1/3] eventfd: Make signal recursion protection a task bit
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Jason Wang <jasowang@redhat.com>,
-        Al Viro <viro@zeniv.linux.org.uk>
+Date:   Thu, 3 Feb 2022 12:49:20 +0100
+Message-ID: <CAA7rmPGCZ35NSzuEpWapT0cH=XFXaKcUGds3fvxgvCQSM+Noeg@mail.gmail.com>
+Subject: Re:
+To:     Caine Chen <caine.chen@dji.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Actually I see it was fixed later with
-4b3749865374899e115aa8c48681709b086fe6d3 so I guess it should be
-included as well.
+Hi Caine,
 
---nX
+On Tue, Jan 18, 2022 at 4:44 AM Caine Chen <caine.chen@dji.com> wrote:
+>
+> Hi guys:
+> We found that some IRQ threads will block in local_bh_disable( ) for
+> long time in some situation and we hope to get your valuable suggestions.
+> My kernel version is 5.4 and the irq-delay is caused by the use of
+> write_lock_bh().
+> It can be described in the following figure:
+> (1) Thread_1 which is a SCHED_NORMAL thread runs on CPU1,
+>     and it uses read_lock_bh() to protect some data.
+> (2) Thread_2 which is a SCHED_RR thread runs on CPU1 and it preempts thre=
+ad_1
+>     after thread_1 invoked read_lock_bh(). Thread_2 may run 60 ms in my s=
+ystem.
+> (3) Thread_3 which is a SCHED_NORMAL thread runs on CPU0. This thread acq=
+uires
+>     writer's lock by invoking write_lock_bh(). This function will disable
+>     button-half firstly by invoking local_bh_disable( ). But it will bloc=
+k in
+>     rt_write_lock() , because read lock is held by thread_1.
+> (4) At this time, if irq thread without IRQF_NO_THREAD flag on CPU0 trys =
+to
+>     acquire bh_lock(it has been renamed as softirq_ctrl.lock now), irq
+>     thread will block because this lock is held by thread_3.
+>
+> -------------------------------------------------------------------------=
+-----------------------------------------------------------
+> CPU1                                                                     =
+       CPU0
+> -------------------------------------------------                    ----=
+-----------------------------------------------------------
+> thread_2                       thread_1                           thread_=
+3                               irq_thread
+> --------------                  -----------                           ---=
+--------                            --------------
+>                                  read_lock_bh()
+>
+> ......
+>                                                                      writ=
+e_lock_bh()
+> /*do work*/                                                              =
+                                 /* irq thread block here*/
+>                                                                          =
+                                     local_bh_disable()
+> ......
+>                                  read_unlock_bh()
+>                                                                      ....=
+..
+>                                                                      /* d=
+o work */
+>                                                                      ....=
+..
+>                                                                      writ=
+e_unlock_bh()
+>                                                                          =
+                                     irq_thread_fn()
+> -------------------------------------------------------------------------=
+---------------------------------------------------------
+>
+> In this case, if SCHED_RR thread_2 preempts thread_1 and runs too much ti=
+me, all
+> irq threads on CPU0 will be blocked.
+> It looks like a priority reverse problem of real-time thread preempt.
 
-On Thu, Feb 3, 2022 at 9:59 AM Daniel Vacek <neelx.g@gmail.com> wrote:
+Not really. I guess there's one misunderstanding in your description.
+Disabling the bottom half is local to running thread and not to the
+CPU which executes that thread. As an effect, preemption practically
+enables the bottom half again (as long as the new thread did not have
+it already disabled before, of course...).
+
+That said, the irq_thread will _not_ be blocked as bottom half is not
+disabled in it's context. From your chart, it's disabled only in
+thread_3 context and thread_1 context. But these two are independent
+(due to the different thread contexts and not the different CPU
+contexts as you misassumed) and they do not block each other either,
+it's the rw_lock serializing these threads, right?
+
+You should be able to see this with tracing. There should be no issue
+or the issue is different than you think it is and different than you
+described here.
+
+Hopefully the above helps you,
+Daniel
+
+> How can I avoid this problem?  I have a few thoughts:
+> (1) The key point, I think, is that write_lock_bh()/read_lock_bh() will d=
+isable
+>     buttom half which will disable some irq threads too. Could I use
+>     write_lock_irq()/read_lock_irq() instead?
+> (2) If my irq handler wants to get better performance, I should request a
+>     threaded handler for the IRQ as Sebastian suggested in LKML
+>     <RE: irq thread latency caused by softirq_ctrl.lock contention>.
+>     Is threaded handler designed for low irq delay?
+> (3) Thread_2 takes too long time for running. So it is not suitable to se=
+t this
+>     thread with high rt-priority. Should I reduce this thread's priority =
+to
+>     solve this problem?
 >
-> Hi,
+> Are there better ways to avoid this problem? We hope to get your valuable
+> suggestions. Thanks!
 >
-> OT: Btw for some reason you're sending a copy to
-> "stable-rt@vger.kernel.org"@redhat.com.
+> Best regards,
+> Caine.chen
+> This email and any attachments thereto may contain private, confidential,=
+ and privileged material for the sole use of the intended recipient. Any re=
+view, copying, or distribution of this email (or any attachments thereto) b=
+y others is strictly prohibited. If you are not the intended recipient, ple=
+ase contact the sender immediately and permanently delete the original and =
+any copies of this email and any attachments thereto.
 >
-> On Fri, Jan 7, 2022 at 8:04 PM Luis Claudio R. Goncalves
-> <lgoncalv@redhat.com> wrote:
-> >
-> > From: Thomas Gleixner <tglx@linutronix.de>
-> >
-> > v5.10.90-rt61-rc1 stable review patch.
-> > If anyone has any objections, please let me know.
-> >
-> > -----------
-> >
-> >
-> > Upstream commit b542e383d8c005f06a131e2b40d5889b812f19c6
-> >
-> > The recursion protection for eventfd_signal() is based on a per CPU
-> > variable and relies on the !RT semantics of spin_lock_irqsave() for
-> > protecting this per CPU variable. On RT kernels spin_lock_irqsave() neither
-> > disables preemption nor interrupts which allows the spin lock held section
-> > to be preempted. If the preempting task invokes eventfd_signal() as well,
-> > then the recursion warning triggers.
-> >
-> > Paolo suggested to protect the per CPU variable with a local lock, but
-> > that's heavyweight and actually not necessary. The goal of this protection
-> > is to prevent the task stack from overflowing, which can be achieved with a
-> > per task recursion protection as well.
-> >
-> > Replace the per CPU variable with a per task bit similar to other recursion
-> > protection bits like task_struct::in_page_owner. This works on both !RT and
-> > RT kernels and removes as a side effect the extra per CPU storage.
-> >
-> > No functional change for !RT kernels.
-> >
-> > Reported-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-> > Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> > Tested-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-> > Acked-by: Jason Wang <jasowang@redhat.com>
-> > Cc: Al Viro <viro@zeniv.linux.org.uk>
-> > Link: https://lore.kernel.org/r/87wnp9idso.ffs@tglx
-> > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > ---
-> >  fs/aio.c                |  2 +-
-> >  fs/eventfd.c            | 12 +++++-------
-> >  include/linux/eventfd.h | 11 +++++------
-> >  include/linux/sched.h   |  4 ++++
-> >  4 files changed, 15 insertions(+), 14 deletions(-)
-> >
-> > diff --git a/fs/aio.c b/fs/aio.c
-> > index c72b2c51b446c..f7d47c9ff6deb 100644
-> > --- a/fs/aio.c
-> > +++ b/fs/aio.c
-> > @@ -1761,7 +1761,7 @@ static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
-> >                 list_del_init(&req->wait.entry);
-> >                 list_del(&iocb->ki_list);
-> >                 iocb->ki_res.res = mangle_poll(mask);
-> > -               if (iocb->ki_eventfd && eventfd_signal_count()) {
-> > +               if (iocb->ki_eventfd && eventfd_signal_allowed()) {
->
-> IIUC, the logic changed and this should read
-> !eventfd_signal_allowed(). Or am I missing something here?
->
-> Actually checking other stable branches and upstream, this looks to be
-> a typo only in v5.10.90-rt61-rc1
->
-> --nX
->
->
->
->
-> >                         iocb = NULL;
-> >                         INIT_WORK(&req->work, aio_poll_put_work);
-> >                         schedule_work(&req->work);
-> > diff --git a/fs/eventfd.c b/fs/eventfd.c
-> > index df466ef81dddf..9035ca60bfcf3 100644
-> > --- a/fs/eventfd.c
-> > +++ b/fs/eventfd.c
-> > @@ -25,8 +25,6 @@
-> >  #include <linux/idr.h>
-> >  #include <linux/uio.h>
-> >
-> > -DEFINE_PER_CPU(int, eventfd_wake_count);
-> > -
-> >  static DEFINE_IDA(eventfd_ida);
-> >
-> >  struct eventfd_ctx {
-> > @@ -67,21 +65,21 @@ __u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 n)
-> >          * Deadlock or stack overflow issues can happen if we recurse here
-> >          * through waitqueue wakeup handlers. If the caller users potentially
-> >          * nested waitqueues with custom wakeup handlers, then it should
-> > -        * check eventfd_signal_count() before calling this function. If
-> > -        * it returns true, the eventfd_signal() call should be deferred to a
-> > +        * check eventfd_signal_allowed() before calling this function. If
-> > +        * it returns false, the eventfd_signal() call should be deferred to a
-> >          * safe context.
-> >          */
-> > -       if (WARN_ON_ONCE(this_cpu_read(eventfd_wake_count)))
-> > +       if (WARN_ON_ONCE(current->in_eventfd_signal))
-> >                 return 0;
-> >
-> >         spin_lock_irqsave(&ctx->wqh.lock, flags);
-> > -       this_cpu_inc(eventfd_wake_count);
-> > +       current->in_eventfd_signal = 1;
-> >         if (ULLONG_MAX - ctx->count < n)
-> >                 n = ULLONG_MAX - ctx->count;
-> >         ctx->count += n;
-> >         if (waitqueue_active(&ctx->wqh))
-> >                 wake_up_locked_poll(&ctx->wqh, EPOLLIN);
-> > -       this_cpu_dec(eventfd_wake_count);
-> > +       current->in_eventfd_signal = 0;
-> >         spin_unlock_irqrestore(&ctx->wqh.lock, flags);
-> >
-> >         return n;
-> > diff --git a/include/linux/eventfd.h b/include/linux/eventfd.h
-> > index dc4fd8a6644dd..836b4c021a0a4 100644
-> > --- a/include/linux/eventfd.h
-> > +++ b/include/linux/eventfd.h
-> > @@ -14,6 +14,7 @@
-> >  #include <linux/err.h>
-> >  #include <linux/percpu-defs.h>
-> >  #include <linux/percpu.h>
-> > +#include <linux/sched.h>
-> >
-> >  /*
-> >   * CAREFUL: Check include/uapi/asm-generic/fcntl.h when defining
-> > @@ -42,11 +43,9 @@ __u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 n);
-> >  int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx, wait_queue_entry_t *wait,
-> >                                   __u64 *cnt);
-> >
-> > -DECLARE_PER_CPU(int, eventfd_wake_count);
-> > -
-> > -static inline bool eventfd_signal_count(void)
-> > +static inline bool eventfd_signal_allowed(void)
-> >  {
-> > -       return this_cpu_read(eventfd_wake_count);
-> > +       return !current->in_eventfd_signal;
-> >  }
-> >
-> >  #else /* CONFIG_EVENTFD */
-> > @@ -77,9 +76,9 @@ static inline int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx,
-> >         return -ENOSYS;
-> >  }
-> >
-> > -static inline bool eventfd_signal_count(void)
-> > +static inline bool eventfd_signal_allowed(void)
-> >  {
-> > -       return false;
-> > +       return true;
-> >  }
-> >
-> >  #endif
-> > diff --git a/include/linux/sched.h b/include/linux/sched.h
-> > index 409a24036952c..29e6ff1af1df9 100644
-> > --- a/include/linux/sched.h
-> > +++ b/include/linux/sched.h
-> > @@ -852,6 +852,10 @@ struct task_struct {
-> >         /* Stalled due to lack of memory */
-> >         unsigned                        in_memstall:1;
-> >  #endif
-> > +#ifdef CONFIG_EVENTFD
-> > +       /* Recursion prevention for eventfd_signal() */
-> > +       unsigned                        in_eventfd_signal:1;
-> > +#endif
-> >
-> >         unsigned long                   atomic_flags; /* Flags requiring atomic access. */
-> >
-> > --
-> > 2.33.1
-> >
+> =E6=AD=A4=E7=94=B5=E5=AD=90=E9=82=AE=E4=BB=B6=E5=8F=8A=E9=99=84=E4=BB=B6=
+=E6=89=80=E5=8C=85=E5=90=AB=E5=86=85=E5=AE=B9=E5=85=B7=E6=9C=89=E6=9C=BA=E5=
+=AF=86=E6=80=A7=EF=BC=8C=E4=B8=94=E4=BB=85=E9=99=90=E4=BA=8E=E6=8E=A5=E6=94=
+=B6=E4=BA=BA=E4=BD=BF=E7=94=A8=E3=80=82=E6=9C=AA=E7=BB=8F=E5=85=81=E8=AE=B8=
+=EF=BC=8C=E7=A6=81=E6=AD=A2=E7=AC=AC=E4=B8=89=E4=BA=BA=E9=98=85=E8=AF=BB=E3=
+=80=81=E5=A4=8D=E5=88=B6=E6=88=96=E4=BC=A0=E6=92=AD=E8=AF=A5=E7=94=B5=E5=AD=
+=90=E9=82=AE=E4=BB=B6=E4=B8=AD=E7=9A=84=E4=BB=BB=E4=BD=95=E4=BF=A1=E6=81=AF=
+=E3=80=82=E5=A6=82=E6=9E=9C=E6=82=A8=E4=B8=8D=E5=B1=9E=E4=BA=8E=E4=BB=A5=E4=
+=B8=8A=E7=94=B5=E5=AD=90=E9=82=AE=E4=BB=B6=E7=9A=84=E7=9B=AE=E6=A0=87=E6=8E=
+=A5=E6=94=B6=E8=80=85=EF=BC=8C=E8=AF=B7=E6=82=A8=E7=AB=8B=E5=8D=B3=E9=80=9A=
+=E7=9F=A5=E5=8F=91=E9=80=81=E4=BA=BA=E5=B9=B6=E5=88=A0=E9=99=A4=E5=8E=9F=E7=
+=94=B5=E5=AD=90=E9=82=AE=E4=BB=B6=E5=8F=8A=E5=85=B6=E7=9B=B8=E5=85=B3=E7=9A=
+=84=E9=99=84=E4=BB=B6=E3=80=82
