@@ -2,44 +2,44 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B96DC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 09:25:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0715CC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 09:31:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231464AbiBDJZ1 (ORCPT
+        id S243191AbiBDJbu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 4 Feb 2022 04:25:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60986 "EHLO
+        Fri, 4 Feb 2022 04:31:50 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34640 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1357593AbiBDJYa (ORCPT
+        with ESMTP id S1358880AbiBDJbK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 4 Feb 2022 04:24:30 -0500
+        Fri, 4 Feb 2022 04:31:10 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8B7C4C061759;
-        Fri,  4 Feb 2022 01:24:30 -0800 (PST)
-Date:   Fri, 4 Feb 2022 10:24:25 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A7804C0613BC;
+        Fri,  4 Feb 2022 01:29:31 -0800 (PST)
+Date:   Fri, 4 Feb 2022 10:29:28 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1643966667;
+        s=2020; t=1643966970;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=A1OquCNeqBrmSz1l+c7aggW4kgLy2MKoprxou4C3Lds=;
-        b=gPEs6AT/BsmdvBXVrkFPpf1gIUZh4ZepiJtkxEXOQI+h4zPxl7Ewut4c/sti4Cv6QvyLo5
-        qQS7Fh9I25FxXiXjvgYtGUKqQtrAfEF7hcrC9g9ozeoAywRT+Vpboq77CsEaOq9WWEjsHC
-        LLWAUEAeF53XOOX9GxzW4yKyW6oaGd6Bt9csn9kDqBo697qkM/Ceij65ZIVE1/b0EYvvI6
-        p8cKl8q3WOIDwE7Lji6ZZBy6wpx2PYhUsHFnD5YbioKZEtHYD7HsssaRWTywavro8GuZPr
-        SDVJHE6Xev9tPagiuDV0CyjqE1FyYdb598WpjE+3UPE18Ki807iB9om+B5MAKQ==
+        bh=/eecWjACA0rGMqqEQiDgokZRkG3UepJI5ulPZyG6uO0=;
+        b=Kq3E210trmVV3cpVxMoJ0wqgmkAoAXew8RuSZaqcds1os6QjXpnmgz46wHdKI0PVoeoWZV
+        S0i2vVf5tU2o0cky+cRkS34UDv2oxDo/kALrSY0PIvSbz0SfT2q1i0OuOKP2X/GtSi7YNC
+        raKGH932Jo7zHOOEZuNzw1BjC07lIKJf2tWut7tH745ktB3dAvF65AyZjPH9WkQxw8nvZj
+        oC40ZFV22BsIVWWo4yhtDaq1eiuKbpaCExsHNWl9OqyUKV3qGDVwwqdhaFBA1fO+ToGLCy
+        hl+yYD+Rauk/817C+r5UA0EX6NwVqjr1kxa1b/a3wlH/ASxRRKLe5AlPfrm8FQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1643966667;
+        s=2020e; t=1643966970;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=A1OquCNeqBrmSz1l+c7aggW4kgLy2MKoprxou4C3Lds=;
-        b=ohfrdA8XNt14v/qtvuGcHuIt9fP7Ul8cAktixgFJE1U1guZl3f9HoU+g3end07R64deWKT
-        isP5+PQiTyB7CuCA==
+        bh=/eecWjACA0rGMqqEQiDgokZRkG3UepJI5ulPZyG6uO0=;
+        b=veSy3hJgJZREMiqCtupWodV6mbWqNkewKhr9cAPLZVdJcH2E4cDVZfPvx95cF/mzB5uDPC
+        ezydNgc5y/tjroCw==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Valentin Schneider <valentin.schneider@arm.com>
 Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-rt-users@vger.kernel.org,
         Catalin Marinas <catalin.marinas@arm.com>,
         Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
         Peter Zijlstra <peterz@infradead.org>,
@@ -59,35 +59,37 @@ Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         Ard Biesheuvel <ardb@kernel.org>,
         Boqun Feng <boqun.feng@gmail.com>,
         Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH v3 2/4] sched: Introduce migratable()
-Message-ID: <YfzwycgvDlVSGrB1@linutronix.de>
-References: <20210811201354.1976839-1-valentin.schneider@arm.com>
- <20210811201354.1976839-3-valentin.schneider@arm.com>
- <20210817170925.2jwqvgvmqab2glwu@linutronix.de>
- <87czq573et.mognet@arm.com>
- <YfF9I5PcZJA5532B@linutronix.de>
- <87v8y5nflv.mognet@arm.com>
+Subject: Re: [PATCH v4] arm64: mm: Make arch_faults_on_old_pte() check for
+ migratability
+Message-ID: <Yfzx+P3jUXA0Z/Y7@linutronix.de>
+References: <20220127192437.1192957-1-valentin.schneider@arm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <87v8y5nflv.mognet@arm.com>
+In-Reply-To: <20220127192437.1192957-1-valentin.schneider@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-01-27 19:27:56 [+0000], Valentin Schneider wrote:
-
-Sorry, got distracted.
-
-> While I'm at it, I see you're still carrying
+On 2022-01-27 19:24:37 [+0000], Valentin Schneider wrote:
+> arch_faults_on_old_pte() relies on the calling context being
+> non-preemptible. CONFIG_PREEMPT_RT turns the PTE lock into a sleepable
+> spinlock, which doesn't disable preemption once acquired, triggering the
+> warning in arch_faults_on_old_pte().
 > 
->   6ab5bb09040d arm64/sve: Make kernel FPU protection RT friendly
+> It does however disable migration, ensuring the task remains on the same
+> CPU during the entirety of the critical section, making the read of
+> cpu_has_hw_af() safe and stable.
 > 
-> If you're OK with it, I'll repost that:
-> https://lore.kernel.org/lkml/20210722175157.1367122-1-valentin.schneider@arm.com/
+> Make arch_faults_on_old_pte() check cant_migrate() instead of preemptible().
+> 
+> Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+> Link: https://lore.kernel.org/r/20210811201354.1976839-5-valentin.schneider@arm.com
 
-I'm not too keen about preempt_enable_bh(). I would prefer the current
-approach maybe with a comment why BH here and preemption there is
-correct.
- 
+Let me pick that up so I can drop the other two. I hope the ARM64 folks
+follow my lead ;)
+
+Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+
 Sebastian
