@@ -2,31 +2,43 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1927C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 18:55:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E9919C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 19:09:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1377712AbiBDSz0 (ORCPT
+        id S231361AbiBDTJz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 4 Feb 2022 13:55:26 -0500
-Received: from dfw.source.kernel.org ([139.178.84.217]:38176 "EHLO
-        dfw.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235874AbiBDSzZ (ORCPT
+        Fri, 4 Feb 2022 14:09:55 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:33620 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S231264AbiBDTJz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 4 Feb 2022 13:55:25 -0500
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 6A2F961C50;
-        Fri,  4 Feb 2022 18:55:25 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8F9E6C340E9;
-        Fri,  4 Feb 2022 18:55:20 +0000 (UTC)
-Date:   Fri, 4 Feb 2022 18:55:17 +0000
-From:   Catalin Marinas <catalin.marinas@arm.com>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        linux-rt-users@vger.kernel.org,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Fri, 4 Feb 2022 14:09:55 -0500
+Date:   Fri, 4 Feb 2022 20:09:52 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1644001793;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=0ztGWZd/+VDoCCxVFgzszVEd5z8zhx+3EJ51jPTdbrY=;
+        b=ABkPPnM+svtgEQcLiOg76O0Tt6etvRLaHAvB4ReM8bX0OytfvVx/JA9zVC6bTtICbq9QN8
+        xK2BxvhwIvmbb3nBJVEH0y7rywShdnXtp5y2KXrBMHUM8L0473qKK78ACBTtCFnYiLmo3N
+        n6jhqLRbcUb0ArxCBi6KIoftmGXoGzepFFceLNRmLePZI9DQo6LCJCIFJNGkPhGPPj/Rwu
+        TTDntG1U+fjhvoVifv0vLqLW7b/1k0B+S1LoSXqD3shjPgyMuj733DpnTIqrMl9QVDLUH1
+        wcGZDsOENzzsQvBTEGvCS8pwQzJKx2QfiUG7JGFKFTqFqhI+9tawKy1boAlr3w==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1644001793;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=0ztGWZd/+VDoCCxVFgzszVEd5z8zhx+3EJ51jPTdbrY=;
+        b=Tk7lxMKmF2C9Aaui4dGo82bDhdyCtPzsOOyxQaRhJoGNs3dUiJLZ5l5mQ2UNsiWHXrK5BD
+        EUR4qs8bMq8kpxAw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Catalin Marinas <catalin.marinas@arm.com>
+Cc:     Valentin Schneider <valentin.schneider@arm.com>,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        linux-rt-users@vger.kernel.org, Will Deacon <will@kernel.org>,
+        Ingo Molnar <mingo@kernel.org>,
         Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -46,53 +58,24 @@ Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
         Mike Galbraith <efault@gmx.de>
 Subject: Re: [PATCH v4] arm64: mm: Make arch_faults_on_old_pte() check for
  migratability
-Message-ID: <Yf12lXHtPVXgAoFL@arm.com>
+Message-ID: <Yf16AFzch6B4o/uv@linutronix.de>
 References: <20220127192437.1192957-1-valentin.schneider@arm.com>
+ <Yf12lXHtPVXgAoFL@arm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220127192437.1192957-1-valentin.schneider@arm.com>
+In-Reply-To: <Yf12lXHtPVXgAoFL@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jan 27, 2022 at 07:24:37PM +0000, Valentin Schneider wrote:
-> arch_faults_on_old_pte() relies on the calling context being
-> non-preemptible. CONFIG_PREEMPT_RT turns the PTE lock into a sleepable
-> spinlock, which doesn't disable preemption once acquired, triggering the
-> warning in arch_faults_on_old_pte().
+On 2022-02-04 18:55:17 [+0000], Catalin Marinas wrote:
 > 
-> It does however disable migration, ensuring the task remains on the same
-> CPU during the entirety of the critical section, making the read of
-> cpu_has_hw_af() safe and stable.
-> 
-> Make arch_faults_on_old_pte() check cant_migrate() instead of preemptible().
-> 
-> Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
-> Link: https://lore.kernel.org/r/20210811201354.1976839-5-valentin.schneider@arm.com
-> ---
-> v3 -> v4: Dropped migratable(), reuse cant_migrate() (Sebastian)
-> ---
->  arch/arm64/include/asm/pgtable.h | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-> index c4ba047a82d2..3caf6346ea95 100644
-> --- a/arch/arm64/include/asm/pgtable.h
-> +++ b/arch/arm64/include/asm/pgtable.h
-> @@ -1001,7 +1001,8 @@ static inline void update_mmu_cache(struct vm_area_struct *vma,
->   */
->  static inline bool arch_faults_on_old_pte(void)
->  {
-> -	WARN_ON(preemptible());
-> +	/* The register read below requires a stable CPU to make any sense */
-> +	cant_migrate();
->  
->  	return !cpu_has_hw_af();
->  }
+> The patch looks alright but what's the plan with it? Does it go into the
+> preempt-rt tree, mainline? It's not a fix to be queued now, so:
 
-The patch looks alright but what's the plan with it? Does it go into the
-preempt-rt tree, mainline? It's not a fix to be queued now, so:
+It would be nice if if it could go mainline, too.
 
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+> Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+
+Sebastian
