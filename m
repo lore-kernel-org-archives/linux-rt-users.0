@@ -2,94 +2,151 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0715CC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 09:31:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4ABB8C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 09:45:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243191AbiBDJbu (ORCPT
+        id S1357850AbiBDJpa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 4 Feb 2022 04:31:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34640 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1358880AbiBDJbK (ORCPT
+        Fri, 4 Feb 2022 04:45:30 -0500
+Received: from mail.nearlyone.de ([46.163.114.145]:52476 "EHLO
+        mail.nearlyone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1357714AbiBDJpZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 4 Feb 2022 04:31:10 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A7804C0613BC;
-        Fri,  4 Feb 2022 01:29:31 -0800 (PST)
-Date:   Fri, 4 Feb 2022 10:29:28 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1643966970;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=/eecWjACA0rGMqqEQiDgokZRkG3UepJI5ulPZyG6uO0=;
-        b=Kq3E210trmVV3cpVxMoJ0wqgmkAoAXew8RuSZaqcds1os6QjXpnmgz46wHdKI0PVoeoWZV
-        S0i2vVf5tU2o0cky+cRkS34UDv2oxDo/kALrSY0PIvSbz0SfT2q1i0OuOKP2X/GtSi7YNC
-        raKGH932Jo7zHOOEZuNzw1BjC07lIKJf2tWut7tH745ktB3dAvF65AyZjPH9WkQxw8nvZj
-        oC40ZFV22BsIVWWo4yhtDaq1eiuKbpaCExsHNWl9OqyUKV3qGDVwwqdhaFBA1fO+ToGLCy
-        hl+yYD+Rauk/817C+r5UA0EX6NwVqjr1kxa1b/a3wlH/ASxRRKLe5AlPfrm8FQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1643966970;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=/eecWjACA0rGMqqEQiDgokZRkG3UepJI5ulPZyG6uO0=;
-        b=veSy3hJgJZREMiqCtupWodV6mbWqNkewKhr9cAPLZVdJcH2E4cDVZfPvx95cF/mzB5uDPC
-        ezydNgc5y/tjroCw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        linux-rt-users@vger.kernel.org,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
+        Fri, 4 Feb 2022 04:45:25 -0500
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 6C4835D29E;
+        Fri,  4 Feb 2022 10:45:18 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1643967920; h=from:subject:date:message-id:to:cc:mime-version:content-type;
+        bh=uW+iRR5gqEJU+1M6EnA8mdOewWVOAxPVV8N6J4EW8hY=;
+        b=JV64dYc6Hyr/HoKpususCmfBbiJ45ShPx9mx6JJqprck7tZ526xlavIbpxb7UnFTkni6+D
+        nAnP1pTZuttmAvhQfzbH6OIyha5AU2Vkk7bM4kxuoZU8zj37RLG5ocYq+g9PC4itI+Y1aE
+        OaEMM0a2xHy2gl+OAWEdKcy+ZLwybNA0rceTbjFm5KLDhYGKrk/I0NkS+u9ionFsZt6WRn
+        1LMnZGuWMxfRZJkb64jShGZNoh9QWSxeDOTTbMI70as6Zg9AiHXqD9kjQB3B1edexKeIrR
+        2J3MNd5rPg8ef80QxjTIJoSlwLdt77H9sfEgz01uGGtIb5A6tBtYbhAn0eMOSA==
+Date:   Fri, 4 Feb 2022 10:45:17 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        "Paul E. McKenney" <paulmck@kernel.org>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Steven Price <steven.price@arm.com>,
-        Ard Biesheuvel <ardb@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH v4] arm64: mm: Make arch_faults_on_old_pte() check for
- migratability
-Message-ID: <Yfzx+P3jUXA0Z/Y7@linutronix.de>
-References: <20220127192437.1192957-1-valentin.schneider@arm.com>
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
+Subject: [ANNOUNCE] 4.4.302-rt232 (END OF LIFE)
+Message-ID: <164396730424.21109.15121913505546223213@beryllium.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20220127192437.1192957-1-valentin.schneider@arm.com>
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-01-27 19:24:37 [+0000], Valentin Schneider wrote:
-> arch_faults_on_old_pte() relies on the calling context being
-> non-preemptible. CONFIG_PREEMPT_RT turns the PTE lock into a sleepable
-> spinlock, which doesn't disable preemption once acquired, triggering the
-> warning in arch_faults_on_old_pte().
-> 
-> It does however disable migration, ensuring the task remains on the same
-> CPU during the entirety of the critical section, making the read of
-> cpu_has_hw_af() safe and stable.
-> 
-> Make arch_faults_on_old_pte() check cant_migrate() instead of preemptible().
-> 
-> Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
-> Link: https://lore.kernel.org/r/20210811201354.1976839-5-valentin.schneider@arm.com
+Hello RT-list!
 
-Let me pick that up so I can drop the other two. I hope the ARM64 folks
-follow my lead ;)
+I'm pleased to announce the 4.4.302-rt232 stable release.
 
-Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is an update to the v4.4 stable update[1]. No RT specific changes.
 
-Sebastian
+The v4.4-rt branch is END OF LIFE. There wont be any v4.4-rt updates
+from the stable-rt community anymore as the stable v4.4 branch reached
+END OF LIFE as well. As Greg indicated the CIP project is considering to
+support v4.4 a bit longer.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 334a53b5f6c3f92cfe37ba1083fe3dd06eac1df4
+
+Or to build 4.4.302-rt232 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.302.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.302-rt232.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+Enjoy!
+Daniel
+
+[1] https://lore.kernel.org/stable/1643877137240249@kroah.com/
+
+
+Changes from v4.4.301-rt231:
+---
+
+Alan Stern (2):
+      usb-storage: Add unusual-devs entry for VL817 USB-SATA bridge
+      USB: core: Fix hang in usb_kill_urb by adding memory barriers
+
+Brian Gix (1):
+      Bluetooth: refactor malicious adv data check
+
+Cameron Williams (1):
+      tty: Add support for Brainboxes UC cards.
+
+Congyu Liu (1):
+      net: fix information leakage in /proc/net/ptype
+
+Daniel Wagner (2):
+      Merge tag 'v4.4.302' into v4.4-rt
+      Linux 4.4.302-rt232
+
+Eric Dumazet (3):
+      ipv4: avoid using shared IP generator for connected sockets
+      ipv4: raw: lock the socket in raw_bind()
+      ipv4: tcp: send zero IPID in SYNACK messages
+
+Greg Kroah-Hartman (2):
+      PM: wakeup: simplify the output logic of pm_show_wakelocks()
+      Linux 4.4.302
+
+Guenter Roeck (1):
+      hwmon: (lm90) Reduce maximum conversion rate for G781
+
+Guillaume Bertholon (5):
+      Bluetooth: MGMT: Fix misplaced BT_HS check
+      Revert "drm/radeon/ci: disable mclk switching for high refresh rates (v2)"
+      Revert "tc358743: fix register i2c_rd/wr function fix"
+      KVM: x86: Fix misplaced backport of "work around leak of uninitialized stack contents"
+      Input: i8042 - Fix misplaced backport of "add ASUS Zenbook Flip to noselftest list"
+
+Ido Schimmel (1):
+      ipv6_tunnel: Rate limit warning messages
+
+Jan Kara (2):
+      udf: Restore i_lenAlloc when inode expansion fails
+      udf: Fix NULL ptr deref when converting from inline format
+
+Jianguo Wu (1):
+      net-procfs: show net devices bound packet types
+
+John Meneghini (1):
+      scsi: bnx2fc: Flush destroy_work queue before calling bnx2fc_interface_put()
+
+Steffen Maier (1):
+      scsi: zfcp: Fix failed recovery on gone remote port with non-NPIV FCP devices
+
+Valentin Caron (1):
+      serial: stm32: fix software flow control transfer
+
+Vasily Gorbik (1):
+      s390/hypfs: include z/VM guests with access control group set
+
+Xianting Tian (1):
+      drm/msm: Fix wrong size calculation
+
+Ziyang Xuan (1):
+      can: bcm: fix UAF of bcm op
+
+daniel.starke@siemens.com (1):
+      tty: n_gsm: fix SW flow control encoding/handling
