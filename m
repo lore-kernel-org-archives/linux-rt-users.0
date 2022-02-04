@@ -2,91 +2,92 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5861BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Feb 2022 21:43:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B96DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Feb 2022 09:25:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1352052AbiBCVnL (ORCPT
+        id S231464AbiBDJZ1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 3 Feb 2022 16:43:11 -0500
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:49655 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1355441AbiBCVnL (ORCPT
+        Fri, 4 Feb 2022 04:25:27 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60986 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1357593AbiBDJYa (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 3 Feb 2022 16:43:11 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1643924590;
+        Fri, 4 Feb 2022 04:24:30 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8B7C4C061759;
+        Fri,  4 Feb 2022 01:24:30 -0800 (PST)
+Date:   Fri, 4 Feb 2022 10:24:25 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1643966667;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=nLi55D9ATw+W+qLwhaf4fFv/bYa7va7wAOnCPaBxxhc=;
-        b=OyMf61aZbi6y5QeMmLMfo0CbyZlL5hnI2VrHuStW5PgF0DMeiUjMMiZD7KofiRaS/rcbNq
-        tkZZN7SJfA6oajeJ0Q01SnWRX2669Rwy9WaVL/UrjFIy4Cu6PNehw1dXxTCmYqXnYqau+/
-        vLN4PliOeAg43LozXU6uqIwqBSNLtRg=
-Received: from mail-lf1-f69.google.com (mail-lf1-f69.google.com
- [209.85.167.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-531-1Spbe39xMKyjrI531x_C8Q-1; Thu, 03 Feb 2022 16:43:09 -0500
-X-MC-Unique: 1Spbe39xMKyjrI531x_C8Q-1
-Received: by mail-lf1-f69.google.com with SMTP id d1-20020ac244c1000000b0043626a5df76so2061488lfm.7
-        for <linux-rt-users@vger.kernel.org>; Thu, 03 Feb 2022 13:43:09 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=nLi55D9ATw+W+qLwhaf4fFv/bYa7va7wAOnCPaBxxhc=;
-        b=j/ul+Q/CHbqSJWKv0G/k3C7rD+JF+VFPT4AtFPC72wGX+kLR8TdNp2ff8UoDFrX1Ug
-         2DNXueFKiDiukgZSQmJ34Y5Djd1Ew92A9g38KFXefLdUDz0s8aSWNzXi8V4zPAyd/mXl
-         P5vM3YdZf0EP2hxdlaGQajAebLrmFYWwx/sPP4R6+Pwnw+H7uGKrM9yqk3WKflCGXvzC
-         EEDhG6Og0T2Y3HGbDUx1FatJRAwQlAX40YTgc1IVW23S46zopyrtu5oQEPiuJm4WHyY6
-         jTKcd2uMvfRKFmkQKdXf1i/EMtq7fsCZeSukTmPWJoCK7hfvO2wdfuiq7nZrn8vbgdcv
-         UNxA==
-X-Gm-Message-State: AOAM530BnOD9uVoEWt0q8R5TQ1+Qs0aWEL5HM4Q6OWbOWHquGQlx/5mz
-        B+EL1lgbWKSQropyqqCVq8jzWLZ2I/xdMQmlXXlmjvgkURq+5Ir39dNwrzm/f4XD4IqK8zcxVG+
-        jjnsFSAg3EsWP525YrDpa2j+5WXbpgV8imaTPe9p6lVc=
-X-Received: by 2002:a2e:9f4a:: with SMTP id v10mr23163130ljk.79.1643924588293;
-        Thu, 03 Feb 2022 13:43:08 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJwOXzU/0KThTKyWzYwEHyqt374d4ITZjpCW6M2kDhKLyxJZhLpRAhB2+mAlN+cMBLiEJ6WqRJBWS3efU91r4Vg=
-X-Received: by 2002:a2e:9f4a:: with SMTP id v10mr23163121ljk.79.1643924588098;
- Thu, 03 Feb 2022 13:43:08 -0800 (PST)
-MIME-Version: 1.0
-References: <20220107021502.1121597-1-lgoncalv@redhat.com> <20220107021502.1121597-2-lgoncalv@redhat.com>
- <CAA7rmPFkHO=2AA3hfsoeB4KSYqj4+GMFu7+AuqLObGvfCngVFw@mail.gmail.com> <CAA7rmPGuz7p6B81t6Q1LFRT+cXXQoEN05M8pKo4EraR-JgOdUw@mail.gmail.com>
-In-Reply-To: <CAA7rmPGuz7p6B81t6Q1LFRT+cXXQoEN05M8pKo4EraR-JgOdUw@mail.gmail.com>
-From:   Luis Goncalves <lgoncalv@redhat.com>
-Date:   Thu, 3 Feb 2022 18:42:56 -0300
-Message-ID: <CAD8J---5bmtF=RwPBFwBGeiifPuOhXhaBvTyioj8qu9yMde4kQ@mail.gmail.com>
-Subject: Re: [PATCH RT 1/3] eventfd: Make signal recursion protection a task bit
-To:     Daniel Vacek <neelx.g@gmail.com>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        bh=A1OquCNeqBrmSz1l+c7aggW4kgLy2MKoprxou4C3Lds=;
+        b=gPEs6AT/BsmdvBXVrkFPpf1gIUZh4ZepiJtkxEXOQI+h4zPxl7Ewut4c/sti4Cv6QvyLo5
+        qQS7Fh9I25FxXiXjvgYtGUKqQtrAfEF7hcrC9g9ozeoAywRT+Vpboq77CsEaOq9WWEjsHC
+        LLWAUEAeF53XOOX9GxzW4yKyW6oaGd6Bt9csn9kDqBo697qkM/Ceij65ZIVE1/b0EYvvI6
+        p8cKl8q3WOIDwE7Lji6ZZBy6wpx2PYhUsHFnD5YbioKZEtHYD7HsssaRWTywavro8GuZPr
+        SDVJHE6Xev9tPagiuDV0CyjqE1FyYdb598WpjE+3UPE18Ki807iB9om+B5MAKQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1643966667;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=A1OquCNeqBrmSz1l+c7aggW4kgLy2MKoprxou4C3Lds=;
+        b=ohfrdA8XNt14v/qtvuGcHuIt9fP7Ul8cAktixgFJE1U1guZl3f9HoU+g3end07R64deWKT
+        isP5+PQiTyB7CuCA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Valentin Schneider <valentin.schneider@arm.com>
+Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        rcu@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Jason Wang <jasowang@redhat.com>,
-        Al Viro <viro@zeniv.linux.org.uk>
-Content-Type: text/plain; charset="UTF-8"
+        "Paul E. McKenney" <paulmck@kernel.org>,
+        Frederic Weisbecker <frederic@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Anshuman Khandual <anshuman.khandual@arm.com>,
+        Vincenzo Frascino <vincenzo.frascino@arm.com>,
+        Steven Price <steven.price@arm.com>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH v3 2/4] sched: Introduce migratable()
+Message-ID: <YfzwycgvDlVSGrB1@linutronix.de>
+References: <20210811201354.1976839-1-valentin.schneider@arm.com>
+ <20210811201354.1976839-3-valentin.schneider@arm.com>
+ <20210817170925.2jwqvgvmqab2glwu@linutronix.de>
+ <87czq573et.mognet@arm.com>
+ <YfF9I5PcZJA5532B@linutronix.de>
+ <87v8y5nflv.mognet@arm.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <87v8y5nflv.mognet@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Feb 3, 2022 at 6:17 AM Daniel Vacek <neelx.g@gmail.com> wrote:
->
-> Actually I see it was fixed later with
-> 4b3749865374899e115aa8c48681709b086fe6d3 so I guess it should be
-> included as well.
+On 2022-01-27 19:27:56 [+0000], Valentin Schneider wrote:
 
-Thank you for the feedback!
-I will proceed with the changes and testing to release the kernel
-probably on Monday.
+Sorry, got distracted.
 
-Also, thank you for the note about the wrong email address!
+> While I'm at it, I see you're still carrying
+> 
+>   6ab5bb09040d arm64/sve: Make kernel FPU protection RT friendly
+> 
+> If you're OK with it, I'll repost that:
+> https://lore.kernel.org/lkml/20210722175157.1367122-1-valentin.schneider@arm.com/
 
-Best regards,
-Luis
-
+I'm not too keen about preempt_enable_bh(). I would prefer the current
+approach maybe with a comment why BH here and preemption there is
+correct.
+ 
+Sebastian
