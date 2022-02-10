@@ -2,117 +2,293 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DC2DEC433FE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Feb 2022 08:34:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 046BCC433FE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Feb 2022 10:59:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233339AbiBJIer (ORCPT
+        id S238281AbiBJK7w (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 10 Feb 2022 03:34:47 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:37112 "EHLO
+        Thu, 10 Feb 2022 05:59:52 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:37332 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234928AbiBJIeo (ORCPT
+        with ESMTP id S233803AbiBJK7u (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 10 Feb 2022 03:34:44 -0500
-Received: from smtp-relay-internal-1.canonical.com (smtp-relay-internal-1.canonical.com [185.125.188.123])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BDF33E4F
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 Feb 2022 00:34:45 -0800 (PST)
-Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com [209.85.218.70])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        by smtp-relay-internal-1.canonical.com (Postfix) with ESMTPS id 6299F4005D
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 Feb 2022 08:34:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-        s=20210705; t=1644482084;
-        bh=pGebfukMA0/cVNt1ZjmZH/7cNrKPzwQS8ExlqEeW/aA=;
-        h=From:To:Cc:Subject:Date:Message-Id:MIME-Version;
-        b=lwnSlTzfmpcEx9Wh36NnaX5DTSjRKDDTSBLIpAHIIGq4aCPoLHqmzXK6fq9x2w87B
-         ceH1NQTB/RzDnb5QxFV/xbjqiS9gsYRLZyv0OaPDd3x5+n7xqatCyAn2GmSwJiTDnU
-         5sIaexIyYDdk44tcpi5fzaJWSRb98SYa8fTpz8V1KfpQDSogkxaNJ11jH+7nc3MKmC
-         18ySKAXkD2VxDsxV+arS2Ygom7EljaUB9kNtpi/lFfhUlbb++urf1NCcRCEnuZBf2v
-         nPSiddECJuJSGzPZP9lglkqY33oc3hXYuEtnRDNb/58/lMK0ugOYEMBQ/pMy/Ox4kY
-         cQBR2KfUZJrPg==
-Received: by mail-ej1-f70.google.com with SMTP id ky6-20020a170907778600b0068e4bd99fd1so2359120ejc.15
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 Feb 2022 00:34:44 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=pGebfukMA0/cVNt1ZjmZH/7cNrKPzwQS8ExlqEeW/aA=;
-        b=IWr4K7GuntUGlt1zS+jCdAbuNOsmNyUBhYIacJJaGXU9YTciVO5/sMBZsw7RJ3H/Bu
-         DWr9tF9CQsgHzXXir7EArMUEmZjrW76QZHpMOI4Bo+UCSeCfNCj1bvOOKX4Oo626j5WN
-         23uZmwPsU5CSu8r22s7i6+N5IEESTj7EpvmQc1//uakW/TZsmttNfrAktYBVBfHlY5GL
-         aBrYlFx15a3fpT/Z9wLPXTXJTfxMSYp3o4RcETQnbFEn1/+kxHF//KEUlWLXD3ln3jLG
-         KPoLZWMkNlyxXb9anwB/rCb6md9XW5UhgSGopaOaLJECvNsl6Nmky2f8fFsTIoIj57fI
-         YbIQ==
-X-Gm-Message-State: AOAM531a4fTirnKimk/dmAub+kaG5B02o0LQvzq78eljHSlkpxsD77Cg
-        yVuLGUc821bWDBzKe53/sn0HFQrSPEWkqXtwB2es9UwbPdJ2QOavS8a2ufGjLF4e5Q9oQlBsok3
-        qR1XsaqC5Pn8zv6JFl9bkyECkMhn949VBjaRezw5AABMA
-X-Received: by 2002:a17:906:648a:: with SMTP id e10mr5362011ejm.608.1644482083889;
-        Thu, 10 Feb 2022 00:34:43 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJxi63reSP6zKskv4B7VSWKJyO4DkjBtRkrM6w8hTZY1HnS05jKb54fS63VtY8oyNWSo8tLgdA==
-X-Received: by 2002:a17:906:648a:: with SMTP id e10mr5362002ejm.608.1644482083651;
-        Thu, 10 Feb 2022 00:34:43 -0800 (PST)
-Received: from localhost.localdomain (xdsl-188-155-168-84.adslplus.ch. [188.155.168.84])
-        by smtp.gmail.com with ESMTPSA id r22sm9289438edt.51.2022.02.10.00.34.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 10 Feb 2022 00:34:42 -0800 (PST)
-From:   Krzysztof Kozlowski <krzysztof.kozlowski@canonical.com>
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        Ingo Molnar <mingo@redhat.com>, Shuah Khan <shuah@kernel.org>,
-        Krzysztof Kozlowski <krzysztof.kozlowski@canonical.com>,
-        linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, joseph.salisbury@canonical.com
-Cc:     Shuah Khan <skhan@linuxfoundation.org>
-Subject: [PATCH v2] selftests/ftrace: Do not trace do_softirq because of PREEMPT_RT
-Date:   Thu, 10 Feb 2022 09:33:56 +0100
-Message-Id: <20220210083356.11212-1-krzysztof.kozlowski@canonical.com>
-X-Mailer: git-send-email 2.32.0
+        Thu, 10 Feb 2022 05:59:50 -0500
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com [45.249.212.187])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 06CC1FDB;
+        Thu, 10 Feb 2022 02:59:50 -0800 (PST)
+Received: from dggpemm500020.china.huawei.com (unknown [172.30.72.55])
+        by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4JvYdf50pwzccsH;
+        Thu, 10 Feb 2022 18:58:46 +0800 (CST)
+Received: from dggpemm500002.china.huawei.com (7.185.36.229) by
+ dggpemm500020.china.huawei.com (7.185.36.49) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2308.21; Thu, 10 Feb 2022 18:59:48 +0800
+Received: from [10.174.179.5] (10.174.179.5) by dggpemm500002.china.huawei.com
+ (7.185.36.229) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2308.21; Thu, 10 Feb
+ 2022 18:59:47 +0800
+Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        <akpm@linux-foundation.org>
+CC:     <linux-kernel@vger.kernel.org>, <linux-mm@kvack.org>,
+        <frederic@kernel.org>, <tglx@linutronix.de>, <mtosatti@redhat.com>,
+        <mgorman@suse.de>, <linux-rt-users@vger.kernel.org>,
+        <vbabka@suse.cz>, <cl@linux.com>, <paulmck@kernel.org>,
+        <willy@infradead.org>
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+From:   Xiongfeng Wang <wangxiongfeng2@huawei.com>
+Message-ID: <8cf34eed-be5a-1aae-0523-c2de9e087cb6@huawei.com>
+Date:   Thu, 10 Feb 2022 18:59:46 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:68.0) Gecko/20100101
+ Thunderbird/68.4.1
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20220208100750.1189808-1-nsaenzju@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [10.174.179.5]
+X-ClientProxiedBy: dggems706-chm.china.huawei.com (10.3.19.183) To
+ dggpemm500002.china.huawei.com (7.185.36.229)
+X-CFilter-Loop: Reflected
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The PREEMPT_RT patchset does not use soft IRQs thus trying to filter for
-do_softirq fails for such kernel:
+Hi Nicolas,
 
-  echo do_softirq
-  ftracetest: 81: echo: echo: I/O error
+I found there are several 'lru_add_drain_per_cpu()' worker thread on the
+NOHZ_FULL CPUs. I am just wondering do you have plan to add support for remote
+per-cpu LRU pagevec drain ?
 
-Choose some other visible function for the test.
+Thanks,
+Xiongfeng
 
-Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@canonical.com>
-Reviewed-by: Shuah Khan <skhan@linuxfoundation.org>
-
----
-
-Changes since v1:
-1. Use scheduler_tick.
-2. Add review tag.
-
-Notes:
-I understand that the failure does not exist on mainline kernel (only
-with PREEMPT_RT patchset) but the change does not harm it.
-
-If it is not suitable alone, please consider it for RT patchset.
----
- .../selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc      | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc b/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc
-index e96e279e0533..25432b8cd5bd 100644
---- a/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc
-+++ b/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc
-@@ -19,7 +19,7 @@ fail() { # mesg
- 
- FILTER=set_ftrace_filter
- FUNC1="schedule"
--FUNC2="do_softirq"
-+FUNC2="scheduler_tick"
- 
- ALL_FUNCS="#### all functions enabled ####"
- 
--- 
-2.32.0
-
+On 2022/2/8 18:07, Nicolas Saenz Julienne wrote:
+> This series replaces mm/page_alloc's per-cpu page lists drain mechanism with
+> one that allows accessing the lists remotely. Currently, only a local CPU is
+> permitted to change its per-cpu lists, and it's expected to do so, on-demand,
+> whenever a process demands it by means of queueing a drain task on the local
+> CPU. This causes problems for NOHZ_FULL CPUs and real-time systems that can't
+> take any sort of interruption and to some lesser extent inconveniences idle and
+> virtualised systems.
+> 
+> The new algorithm will atomically switch the pointer to the per-cpu page lists
+> and use RCU to make sure it's not being concurrently used before draining the
+> lists. And its main benefit of is that it fixes the issue for good, avoiding
+> the need for configuration based heuristics or having to modify applications
+> (i.e. using the isolation prctrl being worked by Marcello Tosatti ATM).
+> 
+> All this with minimal performance implications: a page allocation
+> microbenchmark was run on multiple systems and architectures generally showing
+> no performance differences, only the more extreme cases showed a 1-3%
+> degradation. See data below. Needless to say that I'd appreciate if someone
+> could validate my values independently.
+> 
+> The approach has been stress-tested: I forced 100 drains/s while running
+> mmtests' pft in a loop for a full day on multiple machines and archs (arm64,
+> x86_64, ppc64le).
+> 
+> Note that this is not the first attempt at fixing this per-cpu page lists:
+>  - The first attempt[1] tried to conditionally change the pagesets locking
+>    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
+>    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
+>    for NOHZ_FULL setups, which isn't ideal.
+>  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
+>    performance degradation was too big.
+> 
+> Previous RFC: https://lkml.org/lkml/2021/10/8/793
+> 
+> Thanks!
+> 
+> [1] https://lkml.org/lkml/2021/9/21/599
+> [2] https://lkml.org/lkml/2021/11/3/644
+> 
+> ---
+> 
+> Changes since RFC:
+>  - Get rid of aesthetic changes that affected performance
+>  - Add more documentation
+>  - Add better commit messages
+>  - Pass sparse tests
+>  - Verify this_cpu_*() usage
+>  - Performance measurements
+> 
+> Nicolas Saenz Julienne (2):
+>   mm/page_alloc: Access lists in 'struct per_cpu_pages' indirectly
+>   mm/page_alloc: Add remote draining support to per-cpu lists
+> 
+>  include/linux/mmzone.h |  28 +++++-
+>  mm/page_alloc.c        | 212 ++++++++++++++++++++++++++---------------
+>  mm/vmstat.c            |   6 +-
+>  3 files changed, 162 insertions(+), 84 deletions(-)
+> 
+> 
+> -------------------------Performance results-----------------------------
+> 
+> I'm focusing on mmtests' Page Fault Test (pft), as it's page allocator
+> intensive.
+> 
+> - AMD Daytona Reference System, 2 sockets, AMD EPYC 7742, Zen 2, 64-Core,
+>   4 NUMA nodes, x86_64
+> 
+> pft timings:
+>                                      vanilla                    rcu
+> Amean     system-1          58.52 (   0.00%)       58.92 *  -0.68%*
+> Amean     system-4          61.00 (   0.00%)       61.41 *  -0.67%*
+> Amean     system-7          61.55 (   0.00%)       61.74 *  -0.30%*
+> Amean     system-12         64.91 (   0.00%)       64.94 *  -0.05%*
+> Amean     system-21         98.80 (   0.00%)       99.92 *  -1.13%*
+> Amean     system-30        147.68 (   0.00%)      145.83 *   1.25%*
+> Amean     system-48        237.04 (   0.00%)      241.29 *  -1.79%*
+> Amean     system-79        286.61 (   0.00%)      283.72 *   1.01%*
+> Amean     system-110       303.40 (   0.00%)      299.91 *   1.15%*
+> Amean     system-128       345.07 (   0.00%)      342.10 *   0.86%*
+> Amean     elapsed-1         61.21 (   0.00%)       61.65 *  -0.71%*
+> Amean     elapsed-4         15.94 (   0.00%)       16.05 *  -0.69%*
+> Amean     elapsed-7          9.24 (   0.00%)        9.28 *  -0.47%*
+> Amean     elapsed-12         5.70 (   0.00%)        5.70 *  -0.07%*
+> Amean     elapsed-21         5.11 (   0.00%)        5.06 *   1.13%*
+> Amean     elapsed-30         5.28 (   0.00%)        5.14 *   2.73%*
+> Amean     elapsed-48         5.28 (   0.00%)        5.24 *   0.74%*
+> Amean     elapsed-79         4.41 (   0.00%)        4.31 *   2.17%*
+> Amean     elapsed-110        3.45 (   0.00%)        3.44 *   0.40%*
+> Amean     elapsed-128        2.75 (   0.00%)        2.75 *  -0.28%*
+> 
+> - AMD Speedway Reference System, 2 sockets, AMD EPYC 7601, Zen 1, 64-core, 8
+>   NUMA nodes, x86_64. Lots of variance between tests on this platform. It'll
+>   easily swing -+5% on each result. 
+> 
+> pft timings:
+>                                      vanilla                    rcu
+> Amean     system-1          69.20 (   0.00%)       66.21 *   4.32%*
+> Amean     system-4          70.79 (   0.00%)       69.01 *   2.52%*
+> Amean     system-7          71.34 (   0.00%)       69.16 *   3.05%*
+> Amean     system-12         74.00 (   0.00%)       72.74 *   1.70%*
+> Amean     system-21         86.01 (   0.00%)       85.70 *   0.36%*
+> Amean     system-30         89.21 (   0.00%)       89.93 *  -0.80%*
+> Amean     system-48         92.39 (   0.00%)       92.43 *  -0.04%*
+> Amean     system-79        120.19 (   0.00%)      121.30 *  -0.92%*
+> Amean     system-110       172.79 (   0.00%)      179.37 *  -3.81%*
+> Amean     system-128       201.70 (   0.00%)      212.57 *  -5.39%*
+> Amean     elapsed-1         72.23 (   0.00%)       69.29 *   4.08%*
+> Amean     elapsed-4         18.69 (   0.00%)       18.28 *   2.20%*
+> Amean     elapsed-7         10.80 (   0.00%)       10.54 *   2.41%*
+> Amean     elapsed-12         6.62 (   0.00%)        6.53 *   1.30%*
+> Amean     elapsed-21         4.68 (   0.00%)        4.69 *  -0.14%*
+> Amean     elapsed-30         3.44 (   0.00%)        3.50 *  -1.66%*
+> Amean     elapsed-48         2.40 (   0.00%)        2.42 *  -1.00%*
+> Amean     elapsed-79         2.05 (   0.00%)        2.09 *  -1.90%*
+> Amean     elapsed-110        1.83 (   0.00%)        1.91 *  -4.60%*
+> Amean     elapsed-128        1.75 (   0.00%)        1.85 *  -5.99%*
+> 
+> - IBM 9006-22C system, 2 sockets, POWER9, 64-Core, 1 NUMA node per cpu,
+>   pppc64le.
+> 
+> pft timings:
+>                                      vanilla                    rcu
+> Amean     system-1           1.82 (   0.00%)        1.85 *  -1.43%*
+> Amean     system-4           2.18 (   0.00%)        2.22 *  -2.02%*
+> Amean     system-7           3.27 (   0.00%)        3.28 *  -0.15%*
+> Amean     system-12          5.22 (   0.00%)        5.20 *   0.26%*
+> Amean     system-21         10.10 (   0.00%)       10.20 *  -1.00%*
+> Amean     system-30         15.00 (   0.00%)       14.52 *   3.20%*
+> Amean     system-48         26.41 (   0.00%)       25.96 *   1.71%*
+> Amean     system-79         29.35 (   0.00%)       29.70 *  -1.21%*
+> Amean     system-110        24.01 (   0.00%)       23.40 *   2.54%*
+> Amean     system-128        24.57 (   0.00%)       25.32 *  -3.06%*
+> Amean     elapsed-1          1.85 (   0.00%)        1.87 *  -1.28%*
+> Amean     elapsed-4          0.56 (   0.00%)        0.57 *  -1.72%*
+> Amean     elapsed-7          0.51 (   0.00%)        0.50 *   0.07%*
+> Amean     elapsed-12         0.51 (   0.00%)        0.51 *   0.06%*
+> Amean     elapsed-21         0.54 (   0.00%)        0.54 *   0.06%*
+> Amean     elapsed-30         0.54 (   0.00%)        0.53 *   2.22%*
+> Amean     elapsed-48         0.58 (   0.00%)        0.57 *   1.73%*
+> Amean     elapsed-79         0.49 (   0.00%)        0.48 *   0.89%*
+> Amean     elapsed-110        0.37 (   0.00%)        0.37 *  -1.08%*
+> Amean     elapsed-128        0.33 (   0.00%)        0.33 *   0.00%*
+> 
+> - Ampere MtSnow, 1 socket, Neoverse-N1, 80-Cores, 1 NUMA node, arm64.
+> 
+> pft timings:
+>                                     vanilla		       rcu
+> Amean     system-1         11.92 (   0.00%)       11.99 *  -0.61%*
+> Amean     system-4         13.13 (   0.00%)       13.09 *   0.31%*
+> Amean     system-7         13.91 (   0.00%)       13.94 *  -0.20%*
+> Amean     system-12        15.77 (   0.00%)       15.69 *   0.48%*
+> Amean     system-21        21.32 (   0.00%)       21.42 *  -0.46%*
+> Amean     system-30        28.58 (   0.00%)       29.12 *  -1.90%*
+> Amean     system-48        47.41 (   0.00%)       46.91 *   1.04%*
+> Amean     system-79        76.76 (   0.00%)       77.16 *  -0.52%*
+> Amean     system-80        77.98 (   0.00%)       78.23 *  -0.32%*
+> Amean     elapsed-1        12.46 (   0.00%)       12.53 *  -0.58%*
+> Amean     elapsed-4         3.47 (   0.00%)        3.46 *   0.34%*
+> Amean     elapsed-7         2.18 (   0.00%)        2.21 *  -1.58%*
+> Amean     elapsed-12        1.41 (   0.00%)        1.42 *  -0.80%*
+> Amean     elapsed-21        1.09 (   0.00%)        1.12 *  -2.60%*
+> Amean     elapsed-30        0.98 (   0.00%)        1.01 *  -3.08%*
+> Amean     elapsed-48        1.08 (   0.00%)        1.10 *  -1.78%*
+> Amean     elapsed-79        1.32 (   0.00%)        1.28 *   2.71%*
+> Amean     elapsed-80        1.32 (   0.00%)        1.28 *   3.23%*
+> 
+> - Dell R430, 2 sockets, Intel Xeon E5-2640 v3, Sandy Bridge, 16-Cores, 2 NUMA
+>   nodes, x86_64.
+> 
+> pft timings:
+>                                     vanilla		       rcu
+> Amean     system-1         11.10 (   0.00%)       11.07 *   0.24%*
+> Amean     system-3         11.14 (   0.00%)       11.10 *   0.34%*
+> Amean     system-5         11.18 (   0.00%)       11.13 *   0.47%*
+> Amean     system-7         11.21 (   0.00%)       11.17 *   0.38%*
+> Amean     system-12        11.28 (   0.00%)       11.28 (  -0.03%)
+> Amean     system-18        13.24 (   0.00%)       13.25 *  -0.11%*
+> Amean     system-24        17.12 (   0.00%)       17.14 (  -0.13%)
+> Amean     system-30        21.10 (   0.00%)       21.23 *  -0.60%*
+> Amean     system-32        22.31 (   0.00%)       22.47 *  -0.71%*
+> Amean     elapsed-1        11.76 (   0.00%)       11.73 *   0.29%*
+> Amean     elapsed-3         3.93 (   0.00%)        3.93 *   0.17%*
+> Amean     elapsed-5         2.39 (   0.00%)        2.37 *   0.74%*
+> Amean     elapsed-7         1.72 (   0.00%)        1.71 *   0.81%*
+> Amean     elapsed-12        1.02 (   0.00%)        1.03 (  -0.42%)
+> Amean     elapsed-18        1.13 (   0.00%)        1.14 (  -0.18%)
+> Amean     elapsed-24        0.87 (   0.00%)        0.88 *  -0.65%*
+> Amean     elapsed-30        0.77 (   0.00%)        0.78 *  -0.86%*
+> Amean     elapsed-32        0.74 (   0.00%)        0.74 (   0.00%)
+> 
+> - HPE Apollo 70, 2 sockets, Cavium ThunderX2, 128-Cores, 2 NUMA nodes, arm64.
+>   NOTE: The test here only goes up to 128 for some reason, although there are
+>   256 CPUs. Maybe a mmtests issue? I didn't investigate.
+> 
+> pft timings:
+>                                      vanilla		        rcu
+> Amean     system-1           4.42 (   0.00%)        4.36 *   1.29%*
+> Amean     system-4           4.56 (   0.00%)        4.51 *   1.05%*
+> Amean     system-7           4.63 (   0.00%)        4.65 *  -0.42%*
+> Amean     system-12          5.96 (   0.00%)        6.02 *  -1.00%*
+> Amean     system-21         10.97 (   0.00%)       11.01 *  -0.32%*
+> Amean     system-30         16.01 (   0.00%)       16.04 *  -0.19%*
+> Amean     system-48         26.81 (   0.00%)       26.78 *   0.09%*
+> Amean     system-79         30.80 (   0.00%)       30.85 *  -0.16%*
+> Amean     system-110        31.87 (   0.00%)       31.93 *  -0.19%*
+> Amean     system-128        36.27 (   0.00%)       36.31 *  -0.10%*
+> Amean     elapsed-1          4.88 (   0.00%)        4.85 *   0.60%*
+> Amean     elapsed-4          1.27 (   0.00%)        1.26 *   1.00%*
+> Amean     elapsed-7          0.73 (   0.00%)        0.74 *  -0.46%*
+> Amean     elapsed-12         0.55 (   0.00%)        0.55 *   1.09%*
+> Amean     elapsed-21         0.59 (   0.00%)        0.60 *  -0.96%*
+> Amean     elapsed-30         0.60 (   0.00%)        0.60 *   0.28%*
+> Amean     elapsed-48         0.60 (   0.00%)        0.60 *   0.44%*
+> Amean     elapsed-79         0.49 (   0.00%)        0.49 *  -0.07%*
+> Amean     elapsed-110        0.36 (   0.00%)        0.36 *   0.28%*
+> Amean     elapsed-128        0.31 (   0.00%)        0.31 *  -0.43%*
+> 
+> - Raspberry Pi 4, 1 socket, bcm2711, Cortex-A72, 4-Cores, 1 NUMA node, arm64.
+> 
+> pft timings:
+>                                    vanilla		      rcu
+> Amean     system-1         0.67 (   0.00%)        0.67 *  -1.25%*
+> Amean     system-3         1.30 (   0.00%)        1.29 *   0.62%*
+> Amean     system-4         1.61 (   0.00%)        1.59 *   0.95%*
+> Amean     elapsed-1        0.71 (   0.00%)        0.72 *  -1.17%*
+> Amean     elapsed-3        0.45 (   0.00%)        0.45 *   0.88%*
+> Amean     elapsed-4        0.42 (   0.00%)        0.42 *   1.19%*
+> 
+> 
