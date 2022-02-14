@@ -2,93 +2,125 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C7F5C433F5
-	for <linux-rt-users@archiver.kernel.org>; Sat, 12 Feb 2022 21:53:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F9A6C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Feb 2022 08:37:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229604AbiBLVxQ (ORCPT
+        id S242075AbiBNIhr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 12 Feb 2022 16:53:16 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:59238 "EHLO
+        Mon, 14 Feb 2022 03:37:47 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:34042 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229461AbiBLVxQ (ORCPT
+        with ESMTP id S240112AbiBNIhq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 12 Feb 2022 16:53:16 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 5E56D606FA
-        for <linux-rt-users@vger.kernel.org>; Sat, 12 Feb 2022 13:53:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1644702791;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=ZYoI4t4aOs9vYFmU2KxOKzf4EPJhf5pQaKO/he1Stuk=;
-        b=eqdOyGNfgJ6lJsLnGEt3D+Qu0VziU1uhm9dKCpdTcjMUGgXtj3X9HgGExa/wjkjvX36p0d
-        smnuWsEim30v+nSO7fGvRHJ8kzKP0rbCtyucXQtguDqWNNKJ8QKRuYOvrWfst5TA4XRXb6
-        SPbRt/bKr0YtNferMfoByLthGAkCyzg=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-554-D_dgcEfVOxiQ6V23MGoXxw-1; Sat, 12 Feb 2022 16:53:07 -0500
-X-MC-Unique: D_dgcEfVOxiQ6V23MGoXxw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        Mon, 14 Feb 2022 03:37:46 -0500
+Received: from smtp-relay-internal-0.canonical.com (smtp-relay-internal-0.canonical.com [185.125.188.122])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9709FDF6A
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Feb 2022 00:37:38 -0800 (PST)
+Received: from mail-ed1-f69.google.com (mail-ed1-f69.google.com [209.85.208.69])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D376814243;
-        Sat, 12 Feb 2022 21:53:05 +0000 (UTC)
-Received: from localhost (unknown [10.22.17.50])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 672644531D;
-        Sat, 12 Feb 2022 21:52:50 +0000 (UTC)
-Date:   Sat, 12 Feb 2022 18:52:49 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.266-rt129
-Message-ID: <YggsMYFxI8G+dEvr@uudg.org>
+        by smtp-relay-internal-0.canonical.com (Postfix) with ESMTPS id 41FFA3F071
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Feb 2022 08:37:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1644827857;
+        bh=UeS9MvqP+4XVHpHzzOg6ayahqyEHPitjbY58dkpAMu0=;
+        h=From:To:Cc:Subject:Date:Message-Id:MIME-Version;
+        b=NSjk2lG0p10BZUmenmlcPDzGQ8q5zoAeU6qrz5jfY3klFki7z2tdZJqA5oMyBAcU+
+         txrN5ghpRoS6QzFdiZGhk5cgmMc4i1hgGHLAoaAfVu11AT52wajDEaMWk+1gHqMHoy
+         LgRFJS0p9QWhvlvR+fN7C+rl0VF2c9l7OzA53QyhnaJpxjaR1cs9jRagA2r4KwEw8b
+         dhY5lYP3y1i/ki/ERc5VPpes9kW8laje3Br/HjVq20nZyVIRGPAWXt76IMUAfCG2yZ
+         c3xCBcfvRTmytWDs7UREgXmWfpHXfDm/q6In9BEEr84KHauJFojpfyr4+TI2pUX7fa
+         3qHdJG990LpTA==
+Received: by mail-ed1-f69.google.com with SMTP id l3-20020a50cbc3000000b0041083c11173so4465599edi.4
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Feb 2022 00:37:37 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=UeS9MvqP+4XVHpHzzOg6ayahqyEHPitjbY58dkpAMu0=;
+        b=B1Tyk1eVF5aWmy95CduYlYrhn4rQQ96HQ2sehqVK6CsBeZAIf1LAham3NQILuvnmT5
+         6eDWo32We2QE6M0GeJcg8gqMYwg7l5nh+g6sVSR5S0a1NXQyJBR+mxg4345AonDXlYXz
+         DW4zk5Y4nZg7C37PqhByxU5glYfQCHaGBUscvI0ET/IUCoffErxcptb6TmslLSORMMSL
+         f/+1any5T1IB6Urq3xzUFtjJTZBsBmoWb1b/uDCxMXMEFdMhwUTE951KYFMdwUN51ume
+         xdkV/gYBpGHBTMgRRGKpMoQi5TxRwjrd/sCMAHzS3dnn6VXC7pYCZsrBwk3/TPc995Xa
+         /VtQ==
+X-Gm-Message-State: AOAM530jwEV5q7pf7t4JAJF51TagUtG5LU/SgR7MKhOjNi5Tm/58VoZw
+        UNXF4rR+AtTiIbwQbihAXs6yFybLBx4DlWNJg9W6IAuWhxaaPJCYjYm+AxP6sVU9DcPs2x86p57
+        Whh1r+sWMLydKWYpoWirQqV9FeFB234LSqFo42PbL4aGV
+X-Received: by 2002:a05:6402:4313:: with SMTP id m19mr14313665edc.320.1644827857013;
+        Mon, 14 Feb 2022 00:37:37 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJx9hR1XFJB05UFJug9MAC7FCA5IP+wUp4mjQ048N34QgP+jdO/yTjWnA6oWYkRX7X+tyG4Qzg==
+X-Received: by 2002:a05:6402:4313:: with SMTP id m19mr14313649edc.320.1644827856877;
+        Mon, 14 Feb 2022 00:37:36 -0800 (PST)
+Received: from localhost.localdomain (xdsl-188-155-168-84.adslplus.ch. [188.155.168.84])
+        by smtp.gmail.com with ESMTPSA id er9sm10310087edb.77.2022.02.14.00.37.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 14 Feb 2022 00:37:36 -0800 (PST)
+From:   Krzysztof Kozlowski <krzysztof.kozlowski@canonical.com>
+To:     Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>, Shuah Khan <shuah@kernel.org>,
+        Krzysztof Kozlowski <krzysztof.kozlowski@canonical.com>,
+        linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, joseph.salisbury@canonical.com
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Shuah Khan <skhan@linuxfoundation.org>
+Subject: [PATCH v3] selftests/ftrace: Do not trace do_softirq because of PREEMPT_RT
+Date:   Mon, 14 Feb 2022 09:36:57 +0100
+Message-Id: <20220214083657.165921-1-krzysztof.kozlowski@canonical.com>
+X-Mailer: git-send-email 2.32.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+The PREEMPT_RT patchset does not use do_softirq() function thus trying
+to filter for do_softirq fails for such kernel:
 
-I'm pleased to announce the 4.14.266-rt129 stable release.
+  echo do_softirq
+  ftracetest: 81: echo: echo: I/O error
 
-This release is just an update to the new stable 4.14.266
-version and no RT specific changes have been made.
+Choose some other visible function for the test.  The function does not
+have to be actually executed during the test, because it is only testing
+filter API interface.
 
-You can get this release via the git tree at:
+Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@canonical.com>
+Reviewed-by: Shuah Khan <skhan@linuxfoundation.org>
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+---
 
-  branch: v4.14-rt
-  Head SHA1: 30e466937f86764e9be27db71a3c53ef616d7d1d
+Changes since v2:
+1. Rephrase commit msg, after comments from Sebastian.
+2. Add review tag.
 
-Or to build 4.14.266-rt129 directly, the following patches should be applied:
+Changes since v1:
+1. Use scheduler_tick.
+2. Add review tag.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+Notes:
+I understand that the failure does not exist on mainline kernel (only
+with PREEMPT_RT patchset) but the change does not harm it.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.266.xz
+If it is not suitable alone, please consider it for RT patchset.
+---
+ .../selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc      | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.266-rt129.patch.xz
-
-
-All keys used for the uploads can be found on the following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-
-Enjoy!
-Luis
+diff --git a/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc b/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc
+index e96e279e0533..25432b8cd5bd 100644
+--- a/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc
++++ b/tools/testing/selftests/ftrace/test.d/ftrace/func_set_ftrace_file.tc
+@@ -19,7 +19,7 @@ fail() { # mesg
+ 
+ FILTER=set_ftrace_filter
+ FUNC1="schedule"
+-FUNC2="do_softirq"
++FUNC2="scheduler_tick"
+ 
+ ALL_FUNCS="#### all functions enabled ####"
+ 
+-- 
+2.32.0
 
