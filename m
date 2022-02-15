@@ -2,110 +2,130 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B86C8C433FE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Feb 2022 15:42:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C036C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Feb 2022 17:32:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240925AbiBOPmx (ORCPT
+        id S238771AbiBORcb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 15 Feb 2022 10:42:53 -0500
-Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:43784 "EHLO
+        Tue, 15 Feb 2022 12:32:31 -0500
+Received: from mxb-00190b01.gslb.pphosted.com ([23.128.96.19]:48428 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240475AbiBOPml (ORCPT
+        with ESMTP id S233271AbiBORc2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 15 Feb 2022 10:42:41 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3AB42D2047;
-        Tue, 15 Feb 2022 07:37:38 -0800 (PST)
+        Tue, 15 Feb 2022 12:32:28 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08D251D33A;
+        Tue, 15 Feb 2022 09:32:18 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 8B965B81AF1;
-        Tue, 15 Feb 2022 15:37:36 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1349EC340EB;
-        Tue, 15 Feb 2022 15:37:30 +0000 (UTC)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 90A29615EF;
+        Tue, 15 Feb 2022 17:32:17 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F396CC340EB;
+        Tue, 15 Feb 2022 17:32:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1644939455;
-        bh=BsBNZ9apjGJSc2g0ZwEBxAVFFQEqTe0vH5kNc5TqqNU=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=Z6Iki+WPdLb9gpmywemitTCbjFKLwFXyTTkar9otLYCKmkVVJPLCuaNDalikiu+v1
-         TFg7/MiGeNkMeC5C+RikqLWr791Vcf3KgyznU/cTJXJwn4KkTeYH5QXgrrDOtIAhzR
-         HXFUOcqXeTgSTD2IXcbWEAHEL3htsLHJhtz/sS63033m1wmPOY/h6HTiaccbMIJUMt
-         3alZOADJ+zQEo5A/yY2sNEVbLpudzmSGh3At7PAJF7bpC5s4Inb1TFrMCDOxMrFBqZ
-         U+gGuiE1GqpSi3wnrtEQO//Mqi29tuq6Bz6N4JtqUeb0zS2jeX1gvVisnLyw0ihv+N
-         oDOxIMDwcMJGA==
-Date:   Tue, 15 Feb 2022 15:37:27 +0000
-From:   Will Deacon <will@kernel.org>
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        linux-rt-users@vger.kernel.org,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        "Paul E. McKenney" <paulmck@kernel.org>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Josh Triplett <josh@joshtriplett.org>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Anshuman Khandual <anshuman.khandual@arm.com>,
-        Vincenzo Frascino <vincenzo.frascino@arm.com>,
-        Steven Price <steven.price@arm.com>,
-        Ard Biesheuvel <ardb@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH v4] arm64: mm: Make arch_faults_on_old_pte() check for
- migratability
-Message-ID: <20220215153726.GA7944@willie-the-truck>
-References: <20220127192437.1192957-1-valentin.schneider@arm.com>
+        s=k20201202; t=1644946337;
+        bh=dWJuGin0yny3G/JlamcHgjYAM9ls/bo33ms1my3RK4M=;
+        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
+        b=k2dValidg8ClDnhpDiX2/p01wd0zpBMbzPs5Txa4eWOEqT7fOJKth1KTMJtKLx9yE
+         dIOmIpAlWrqTShTrFMi6s69hQUumFCjwxIA8gaaUZSpVeZO8O4R3FTMwoHLRb3T/AQ
+         fdz/faCQ0N9ozaaKfTnjRyt7hMY8V7paVlHnN5jhdz1fn9P7Ihroa388jyElLdPDY5
+         foECbklDNLNqI8CMjfcofeHZP4DE2Xlc+CME/3oMbT3CgY+zn+9WvHsSedzmtiJ1jt
+         WdHBa6g8ztDC2Q3DoDOuEsYRdHqKfB7vPa7cUTId9hPoL942V6kfCRjB55Jk/sPYdd
+         NFWk9NQ+GI/LQ==
+Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
+        id B55C25C0641; Tue, 15 Feb 2022 09:32:16 -0800 (PST)
+Date:   Tue, 15 Feb 2022 09:32:16 -0800
+From:   "Paul E. McKenney" <paulmck@kernel.org>
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Cc:     Marcelo Tosatti <mtosatti@redhat.com>, akpm@linux-foundation.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        frederic@kernel.org, tglx@linutronix.de, mgorman@suse.de,
+        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
+        willy@infradead.org
+Subject: Re: [PATCH 2/2] mm/page_alloc: Add remote draining support to
+ per-cpu lists
+Message-ID: <20220215173216.GG4285@paulmck-ThinkPad-P17-Gen-1>
+Reply-To: paulmck@kernel.org
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+ <20220208100750.1189808-3-nsaenzju@redhat.com>
+ <YgKQfsznPUDN34un@fuller.cnet>
+ <2374bbca7651b671ec934fa5c630cbe3eed3b496.camel@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
-In-Reply-To: <20220127192437.1192957-1-valentin.schneider@arm.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <2374bbca7651b671ec934fa5c630cbe3eed3b496.camel@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jan 27, 2022 at 07:24:37PM +0000, Valentin Schneider wrote:
-> arch_faults_on_old_pte() relies on the calling context being
-> non-preemptible. CONFIG_PREEMPT_RT turns the PTE lock into a sleepable
-> spinlock, which doesn't disable preemption once acquired, triggering the
-> warning in arch_faults_on_old_pte().
+On Tue, Feb 15, 2022 at 09:47:35AM +0100, Nicolas Saenz Julienne wrote:
+> On Tue, 2022-02-08 at 12:47 -0300, Marcelo Tosatti wrote:
+> > > Changes since RFC:
+> > >  - Avoid unnecessary spin_lock_irqsave/restore() in free_pcppages_bulk()
+> > >  - Add more detail to commit and code comments.
+> > >  - Use synchronize_rcu() instead of synchronize_rcu_expedited(), the RCU
+> > >    documentation says to avoid it unless really justified. I don't think
+> > >    it's justified here, if we can schedule and join works, waiting for
+> > >    an RCU grace period is OK.
+> > 
+> > https://patchwork.ozlabs.org/project/netdev/patch/1306228052.3026.16.camel@edumazet-laptop/
+> > 
+> > Adding 100ms to direct reclaim path might be problematic. It will also
+> > slowdown kcompactd (note it'll call drain_all_pages for each zone).
 > 
-> It does however disable migration, ensuring the task remains on the same
-> CPU during the entirety of the critical section, making the read of
-> cpu_has_hw_af() safe and stable.
-> 
-> Make arch_faults_on_old_pte() check cant_migrate() instead of preemptible().
-> 
-> Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
-> Link: https://lore.kernel.org/r/20210811201354.1976839-5-valentin.schneider@arm.com
-> ---
-> v3 -> v4: Dropped migratable(), reuse cant_migrate() (Sebastian)
-> ---
->  arch/arm64/include/asm/pgtable.h | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-> index c4ba047a82d2..3caf6346ea95 100644
-> --- a/arch/arm64/include/asm/pgtable.h
-> +++ b/arch/arm64/include/asm/pgtable.h
-> @@ -1001,7 +1001,8 @@ static inline void update_mmu_cache(struct vm_area_struct *vma,
->   */
->  static inline bool arch_faults_on_old_pte(void)
->  {
-> -	WARN_ON(preemptible());
-> +	/* The register read below requires a stable CPU to make any sense */
-> +	cant_migrate();
+> I did some measurements on an idle machine, worst case was ~30ms. I agree that
+> might too much for direct reclaim, so I'll switch back to expedited and add a
+> comment.
 
-FWIW: There's a patch in the multi-generational LRU series that drops this
-WARN_ON() entirely. I'm not sure if/when that lot will land, but just wanted
-to let you know.
+Given your measurements, it looks to me like this is a case where use
+of expedited grace periods really is justified.
 
-Will
+For one thing, expedited grace periods are much less disruptive than
+they were in the old days, for example, back when they used stop-machine.
+For another thing, systems that cannot tolerate the disturbance (an IPI
+per non-idle non-nohz_full CPU per grace period, less than a wakeup)
+can always be booted with rcupdate.rcu_normal=1, which will make
+synchronize_rcu_expedited() act like synchronize_rcu(), at least once
+RCU has spawned its kthreads.  And CONFIG_PREEMPT_RT=y kernels forcibly
+set this mode.  ;-)
+
+Nevertheless, expedited grace periods should not be used lightly because
+they do increase overhead.
+
+							Thanx, Paul
+
+> > >  - Avoid sparse warnings by using rcu_access_pointer() and
+> > >    rcu_dereference_protected().
+> > > 
+> > >  include/linux/mmzone.h |  22 +++++-
+> > >  mm/page_alloc.c        | 155 ++++++++++++++++++++++++++---------------
+> > >  mm/vmstat.c            |   6 +-
+> > >  3 files changed, 120 insertions(+), 63 deletions(-)
+> > > 
+> > > diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
+> > > index b4cb85d9c6e8..b0b593fd8e48 100644
+> > > --- a/include/linux/mmzone.h
+> > > +++ b/include/linux/mmzone.h
+> > > @@ -388,13 +388,31 @@ struct per_cpu_pages {
+> > >  	short expire;		/* When 0, remote pagesets are drained */
+> > >  #endif
+> > >  
+> > > -	struct pcplists *lp;
+> > > +	/*
+> > > +	 * As a rule of thumb, any access to struct per_cpu_pages's 'lp' has
+> > > +	 * happen with the pagesets local_lock held and using
+> > > +	 * rcu_dereference_check(). If there is a need to modify both
+> > > +	 * 'lp->count' and 'lp->lists' in the same critical section 'pcp->lp'
+> > > +	 * can only be derefrenced once. See for example:
+> > 
+> > Typo.
+> 
+> Noted.
+> 
+> Thanks!
+> 
+> -- 
+> Nicolás Sáenz
+> 
