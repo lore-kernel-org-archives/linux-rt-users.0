@@ -2,106 +2,123 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8B97C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Mar 2022 21:40:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F3BCC433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Mar 2022 11:45:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S245392AbiCBVkp (ORCPT
+        id S232957AbiCCLqk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 2 Mar 2022 16:40:45 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56786 "EHLO
+        Thu, 3 Mar 2022 06:46:40 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33410 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245394AbiCBVkm (ORCPT
+        with ESMTP id S231383AbiCCLqj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 2 Mar 2022 16:40:42 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 36DB5CA710;
-        Wed,  2 Mar 2022 13:39:58 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        Thu, 3 Mar 2022 06:46:39 -0500
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BEC1BE338D;
+        Thu,  3 Mar 2022 03:45:53 -0800 (PST)
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out2.suse.de (Postfix) with ESMTP id 7A1E21F381;
+        Thu,  3 Mar 2022 11:45:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1646307952; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=pquBnsbxpVaSTX7gQj4O/UJ7qdLMfPFk/a+htdK7mOg=;
+        b=uulOFw0gfnY8HAvmBKvG7Qm+K70G4pDxO00DcUyip3QrpEgn0zw91GeHcRWJw+qwEgSGiN
+        cr/zX3Dfu9EYAgYUrTwIdKYmc8NAf14CNUxqOg2xYueGmYfowXg44QUhxsLuonLHCk20sy
+        CqFUlFq+etk2JGnYaiqGhi40oa/sVxA=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1646307952;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=pquBnsbxpVaSTX7gQj4O/UJ7qdLMfPFk/a+htdK7mOg=;
+        b=eA8mGhdnM7QfMyJhroeNVDAQTfOiot4lMAt/mOxhBfe6DgT5p6gH9I7wbjv3y80yVXJg+W
+        Bdm82kWyM6TQ/HBA==
+Received: from suse.de (unknown [10.163.43.106])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id C9A0FB8223F;
-        Wed,  2 Mar 2022 21:39:56 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 528C7C004E1;
-        Wed,  2 Mar 2022 21:39:55 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 5.15.25-rt33
-Date:   Wed, 02 Mar 2022 21:36:15 -0000
-Message-ID: <164625697532.2377441.9278541632521957793@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+        by relay2.suse.de (Postfix) with ESMTPS id F1A39A3B81;
+        Thu,  3 Mar 2022 11:45:51 +0000 (UTC)
+Date:   Thu, 3 Mar 2022 11:45:50 +0000
+From:   Mel Gorman <mgorman@suse.de>
+To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
+        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
+        willy@infradead.org
+Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
+Message-ID: <20220303114550.GE4363@suse.de>
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-15
+Content-Disposition: inline
+In-Reply-To: <20220208100750.1189808-1-nsaenzju@redhat.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On Tue, Feb 08, 2022 at 11:07:48AM +0100, Nicolas Saenz Julienne wrote:
+> This series replaces mm/page_alloc's per-cpu page lists drain mechanism with
+> one that allows accessing the lists remotely. Currently, only a local CPU is
+> permitted to change its per-cpu lists, and it's expected to do so, on-demand,
+> whenever a process demands it by means of queueing a drain task on the local
+> CPU. This causes problems for NOHZ_FULL CPUs and real-time systems that can't
+> take any sort of interruption and to some lesser extent inconveniences idle and
+> virtualised systems.
+> 
 
-I'm pleased to announce the 5.15.25-rt33 stable release.
+I know this has been sitting here for a long while. Last few weeks have
+not been fun.
 
-This release contains a backport of the following commits from the 5.17.y-rt tree:
+> Note that this is not the first attempt at fixing this per-cpu page lists:
+>  - The first attempt[1] tried to conditionally change the pagesets locking
+>    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
+>    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
+>    for NOHZ_FULL setups, which isn't ideal.
+>  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
+>    performance degradation was too big.
+> 
 
-ac9c70a245d28	genirq: Provide generic_handle_irq_safe()
-7e44f2d97e9c2	i2c: core: Use generic_handle_irq_safe() in i2c_handle_smbus_host_notify().
-8ea8588239d64	i2c: cht-wc: Use generic_handle_irq_safe().
-87ebe41b420c6	misc: hi6421-spmi-pmic: Use generic_handle_irq_safe().
-a6efcd21ca31e	mfd: ezx-pcap: Use generic_handle_irq_safe().
-dda02de93749e	net: usb: lan78xx: Use generic_handle_irq_safe().
-37801f96e1f0e	staging: greybus: gpio: Use generic_handle_irq_safe().
+For unrelated reasons I looked at using llist to avoid locks entirely. It
+turns out it's not possible and needs a lock. We know "local_locks to
+per-cpu spinlocks" took a large penalty so I considered alternatives on
+how a lock could be used.  I found it's possible to both remote drain
+the lists and avoid the disable/enable of IRQs entirely as long as a
+preempting IRQ is willing to take the zone lock instead (should be very
+rare). The IRQ part is a bit hairy though as softirqs are also a problem
+and preempt-rt needs different rules and the llist has to sort PCP
+refills which might be a loss in total. However, the remote draining may
+still be interesting. The full series is at
+https://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git/ mm-pcpllist-v1r2
 
-You can get this release via the git tree at:
+It's still waiting on tests to complete and not all the changelogs are
+complete which is why it's not posted.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+This is a comparison of vanilla vs "local_locks to per-cpu spinlocks"
+versus the git series up to "mm/page_alloc: Remotely drain per-cpu lists"
+for the page faulting microbench I originally complained about.  The test
+machine is a 2-socket CascadeLake machine.
 
-  branch: v5.15-rt
-  Head SHA1: e9e1ef73da553f7b8f8dc135229a97c7ad3b4ad4
+pft timings
+                                 5.17.0-rc5             5.17.0-rc5             5.17.0-rc5
+                                    vanilla    mm-remotedrain-v2r1       mm-pcpdrain-v1r1
+Amean     elapsed-1        32.54 (   0.00%)       33.08 *  -1.66%*       32.82 *  -0.86%*
+Amean     elapsed-4         8.66 (   0.00%)        9.24 *  -6.72%*        8.69 *  -0.38%*
+Amean     elapsed-7         5.02 (   0.00%)        5.43 *  -8.16%*        5.05 *  -0.55%*
+Amean     elapsed-12        3.07 (   0.00%)        3.38 * -10.00%*        3.09 *  -0.72%*
+Amean     elapsed-21        2.36 (   0.00%)        2.38 *  -0.89%*        2.19 *   7.39%*
+Amean     elapsed-30        1.75 (   0.00%)        1.87 *  -6.50%*        1.62 *   7.59%*
+Amean     elapsed-48        1.71 (   0.00%)        2.00 * -17.32%*        1.71 (  -0.08%)
+Amean     elapsed-79        1.56 (   0.00%)        1.62 *  -3.84%*        1.56 (  -0.02%)
+Amean     elapsed-80        1.57 (   0.00%)        1.65 *  -5.31%*        1.57 (  -0.04%)
 
-Or to build 5.15.25-rt33 directly, the following patches should be applied:
+Note the local_lock conversion took 1 1-17% penalty while the git tree
+takes a negligile penalty while still allowing remote drains. It might
+have some potential while being less complex than the RCU approach.
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.25.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.25-rt33.patch.xz
-
-
-You can also build from 5.15.25-rt32 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/incr/patch-5.15.25-rt32-rt33.patch.xz
-
-Enjoy!
-Clark
-
-Changes from v5.15.25-rt32:
----
-
-Clark Williams (1):
-      Linux 5.15.25-rt33
-
-Sebastian Andrzej Siewior (7):
-      genirq: Provide generic_handle_irq_safe().
-      i2c: core: Use generic_handle_irq_safe() in i2c_handle_smbus_host_notify().
-      i2c: cht-wc: Use generic_handle_irq_safe().
-      misc: hi6421-spmi-pmic: Use generic_handle_irq_safe().
-      mfd: ezx-pcap: Use generic_handle_irq_safe().
-      net: usb: lan78xx: Use generic_handle_irq_safe().
-      staging: greybus: gpio: Use generic_handle_irq_safe().
----
-drivers/i2c/busses/i2c-cht-wc.c | 11 ++---------
- drivers/i2c/i2c-core-base.c     |  2 +-
- drivers/mfd/ezx-pcap.c          |  4 +---
- drivers/misc/hi6421v600-irq.c   |  6 +++---
- drivers/net/usb/lan78xx.c       |  7 ++-----
- drivers/staging/greybus/gpio.c  |  5 +----
- include/linux/irqdesc.h         |  1 +
- kernel/irq/irqdesc.c            | 23 +++++++++++++++++++++++
- localversion-rt                 |  2 +-
- 9 files changed, 35 insertions(+), 26 deletions(-)
----
+-- 
+Mel Gorman
+SUSE Labs
