@@ -2,231 +2,109 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE2BFC433F5
-	for <linux-rt-users@archiver.kernel.org>; Sat,  5 Mar 2022 15:30:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 124FCC433FE
+	for <linux-rt-users@archiver.kernel.org>; Sun,  6 Mar 2022 10:18:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231815AbiCEPaq (ORCPT
+        id S232434AbiCFKTA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 5 Mar 2022 10:30:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43622 "EHLO
+        Sun, 6 Mar 2022 05:19:00 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53976 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229885AbiCEPap (ORCPT
+        with ESMTP id S230004AbiCFKS6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 5 Mar 2022 10:30:45 -0500
-Received: from lithops.sigma-star.at (lithops.sigma-star.at [195.201.40.130])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 953E8229CA6
-        for <linux-rt-users@vger.kernel.org>; Sat,  5 Mar 2022 07:29:54 -0800 (PST)
-Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id 891216081112;
-        Sat,  5 Mar 2022 16:29:52 +0100 (CET)
-Received: from lithops.sigma-star.at ([127.0.0.1])
-        by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id OFy0vatg_dVz; Sat,  5 Mar 2022 16:29:51 +0100 (CET)
-Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id D0F726081108;
-        Sat,  5 Mar 2022 16:29:51 +0100 (CET)
-Received: from lithops.sigma-star.at ([127.0.0.1])
-        by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id NNzxoL1YeeLO; Sat,  5 Mar 2022 16:29:51 +0100 (CET)
-Received: from blindfold.corp.sigma-star.at (213-47-184-186.cable.dynamic.surfer.at [213.47.184.186])
-        by lithops.sigma-star.at (Postfix) with ESMTPSA id 840326081100;
-        Sat,  5 Mar 2022 16:29:51 +0100 (CET)
-From:   Richard Weinberger <richard@nod.at>
-To:     williams@redhat.com, jkacur@redhat.com
-Cc:     linux-rt-users@vger.kernel.org, Richard Weinberger <richard@nod.at>
-Subject: [PATCH v2] rt-tests: Support building with meson
-Date:   Sat,  5 Mar 2022 16:29:44 +0100
-Message-Id: <20220305152944.15275-1-richard@nod.at>
-X-Mailer: git-send-email 2.26.2
+        Sun, 6 Mar 2022 05:18:58 -0500
+Received: from mail-yw1-x1141.google.com (mail-yw1-x1141.google.com [IPv6:2607:f8b0:4864:20::1141])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4EA5027CFE;
+        Sun,  6 Mar 2022 02:18:06 -0800 (PST)
+Received: by mail-yw1-x1141.google.com with SMTP id 00721157ae682-2dbd8777564so134833787b3.0;
+        Sun, 06 Mar 2022 02:18:06 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=FMOobh8nHhcrPpWV4O/wajuKnYqT9MqpD2rk4aIOeew=;
+        b=Goedn+VBvsRSba5EGffAp1+WLrLJfspwNpMpUqoW/ooYaehP3heX/hRuDnsyJxzS3/
+         gHugUemS2aSDn80bCTFowNaF5KWVcmLRIyAZdNTWKrJe4asm9hSNsnEuDoi9kP1/yv5N
+         oZCdqn7jvhMNgpRZzSkbU2vvBivUeCoBrmqwtLtZfaOlTqjikwvLrMpmCnVuufu+OF2c
+         7i/IXSJlywGHxK6yeHTOgVUAh+a+E4OVl+0ecIWxxNsz4soz8nGHlkx3c+18UEGiAYZe
+         YMM/BxKDzlPbbM1nvjGeaWLpKXHEIew25bWlQsGNmScLjTn8HMDVLGqG+2KSA7Pmr/Zx
+         PaLQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=FMOobh8nHhcrPpWV4O/wajuKnYqT9MqpD2rk4aIOeew=;
+        b=UZ4jVLLlJiNEU7pJGJ8/nGg4hdFtHBCw8jrTh8Mn4q6pFzm9MX/yV3DpWigXGUVwgv
+         FbF17hXHkCQ3jva/O0/ip6aGbmbkhQ3zlaGOL6rgo9EFyGarGCdRyMAMyaJzTy56ZdIz
+         ZmzX+LJ28CxsiuUreH21HcMTzjzEqTN3Qyd6FIb0Z47v6V94ldSVIRFFsHnsMaYqTZwy
+         WWgbNcQe9rttodR8CHgC8qapntGA57ESKugzioyPIQyqx7W0I8sOMsid4fnJpHh1xqUi
+         JfEyiS/NKlpIGAqeIuPbYdpI7n8qsGDcxaWq8Wsqns+hWn6ov1/Y/QmHPKGf2G9Bx4x7
+         AkqQ==
+X-Gm-Message-State: AOAM5327g9SGRzC9MXXhP5NAm98/lXAdSJvPgsnvvT8t1MaioM3/evia
+        6UGC+FRLqsIiWhrQY2y/hAmYIgcP9bZIg9kT7u5XaNXAQeGgM9VR
+X-Google-Smtp-Source: ABdhPJxiOhUnhtEwbnu50sJjXz6gV1Z3Rk2jM1FVLyO/ASgHE9+5+Jubw//NwDs2sQTh3QYGJPjxSUbMq6kEGP/RrMg=
+X-Received: by 2002:a81:8781:0:b0:2db:da7f:c068 with SMTP id
+ x123-20020a818781000000b002dbda7fc068mr4772814ywf.75.1646561885254; Sun, 06
+ Mar 2022 02:18:05 -0800 (PST)
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+From:   Yunhao Tian <t123yh.xyz@gmail.com>
+Date:   Sun, 6 Mar 2022 18:17:54 +0800
+Message-ID: <CAFQXTv2B10=i6DMV1iJpOT-Mj9F93hOi_415cn49N6X_yDFw2g@mail.gmail.com>
+Subject: PREEMPT_RT causes scheduling errors with f_rndis USB gadget
+To:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-usb@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-While rt-test's Makefile is not super complicated I still think
-it can benefit from meson.
-meson gracefully handles dependencies and Python installations.
+Hi everyone,
 
-To build and install using meson, run:
-	meson builddir
-	ninja -C builddir
-	DESTDIR=3D/your/dest ninja -C builddir install
+I'm using Linux 5.15.24-rt31 kernel with PREEMPT_RT enabled, on my
+RK3308 board. I set up f_rndis gadget with the following script, and
+plugged my board to a x86 Linux computer running 5.15.25 kernel:
 
-Android support is completely untested.
+#!/bin/sh
+cd /sys/kernel/config/usb_gadget
+mkdir g_smartcross; cd g_smartcross
+echo 0xF055 > idVendor
+echo 0xCAFE > idProduct
+mkdir strings/0x409
+echo "SmartCross" > strings/0x409/manufacturer
+echo "SC-1 USB Device" > strings/0x409/product
+mkdir configs/c.1
+mkdir functions/rndis.usb0
+echo EF > functions/rndis.usb0/class
+echo 4 > functions/rndis.usb0/subclass
+echo 1 > functions/rndis.usb0/protocol
+ln -s functions/rndis.usb0 configs/c.1
+echo ff400000.usb > UDC
 
-Signed-off-by: Richard Weinberger <richard@nod.at>
----
-Changes since v1:
-	- Found a better way to express link dependencies
-	- Removed c_srcs_non_adroid variable
----
- README.markdown |   6 +++
- meson.build     | 136 ++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 142 insertions(+)
- create mode 100644 meson.build
+ I started a HTTP server using python3 -m http.server on the x86
+computer, and executed curl on my board to download a 100MB file from
+the computer. I got the following kernel logs from serial console of
+the board:
 
-diff --git a/README.markdown b/README.markdown
-index 3ab6ddf53c7e..8fbab9e75de0 100644
---- a/README.markdown
-+++ b/README.markdown
-@@ -9,6 +9,12 @@ This repository contains some programs that test various=
- rt-linux features.
-     sudo apt-get install build-essential libnuma-dev
-     make
-=20
-+### Compile and install with meson
-+
-+    meson builddir
-+    ninja -C builddir
-+    DESTDIR=3D/your/dest ninja -C builddir install
-+
- ### Run tests
-=20
- To run one test thread per CPU or per CPU core, each thread on a separat=
-e
-diff --git a/meson.build b/meson.build
-new file mode 100644
-index 000000000000..db7f02063cb9
---- /dev/null
-+++ b/meson.build
-@@ -0,0 +1,136 @@
-+project('rt-tests', 'c', version: '2.3')
-+
-+os_args =3D []
-+want_andoid =3D false
-+
-+if target_machine.system() =3D=3D 'android'
-+	os_args +=3D ['-DPTHREAD_BIONIC']
-+	want_andoid =3D true
-+endif
-+
-+add_global_arguments([
-+	'-D_GNU_SOURCE',
-+	'-Wno-nonnull',
-+	'-DVERSION=3D@0@'.format(meson.project_version()),
-+	os_args,
-+        ],
-+        language: 'c',
-+)
-+
-+cc =3D meson.get_compiler('c')
-+
-+libdl_dep =3D cc.find_library('dl')
-+librt_dep =3D cc.find_library('rt')
-+
-+thread_dep =3D dependency('threads')
-+libnuma_dep =3D dependency('numa')
-+
-+base_inc =3D include_directories('src/include')
-+
-+pymod =3D import('python')
-+pyinst =3D pymod.find_installation(required: false)
-+
-+rttest_lib =3D static_library(
-+	'rtest',
-+	[
-+		'src/lib/rt-error.c',
-+		'src/lib/rt-get_cpu.c',
-+		'src/lib/rt-sched.c',
-+		'src/lib/rt-utils.c',
-+	],
-+	include_directories: base_inc,
-+)
-+
-+rttestnuma_lib =3D static_library(
-+	'rtestnuma',
-+	[
-+		'src/lib/rt-numa.c',
-+	],
-+	include_directories: base_inc,
-+)
-+
-+c_srcs =3D [
-+	'src/cyclictest/cyclictest.c',
-+	'src/hackbench/hackbench.c',
-+]
-+
-+if want_andoid =3D=3D false
-+	c_srcs +=3D [
-+		'src/oslat/oslat.c',
-+		'src/pi_tests/pi_stress.c',
-+		'src/pi_tests/pip_stress.c',
-+		'src/pmqtest/pmqtest.c',
-+		'src/ptsematest/ptsematest.c',
-+		'src/queuelat/queuelat.c',
-+		'src/rt-migrate-test/rt-migrate-test.c',
-+		'src/sched_deadline/cyclicdeadline.c',
-+		'src/sched_deadline/deadline_test.c',
-+		'src/signaltest/signaltest.c',
-+		'src/sigwaittest/sigwaittest.c',
-+		'src/ssdd/ssdd.c',
-+		'src/svsematest/svsematest.c',
-+	]
-+
-+endif
-+
-+py_srcs =3D [
-+	'src/cyclictest/get_cyclictest_snapshot.py',
-+	'src/hwlatdetect/hwlatdetect.py',
-+]
-+
-+sh_srcs =3D [
-+	'src/queuelat/determine_maximum_mpps.sh',
-+]
-+
-+rttestnuma_dep =3D declare_dependency(
-+	dependencies: [libnuma_dep],
-+	link_with: [rttestnuma_lib],
-+)
-+
-+extra_link =3D {
-+	'hackbench': [],
-+}
-+
-+extra_dep =3D {
-+	'cyclictest': [rttestnuma_dep],
-+	'oslat': [rttestnuma_dep],
-+	'signaltest': [rttestnuma_dep],
-+	'ptsematest': [libdl_dep],
-+	'sigwaittest': [libdl_dep],
-+	'svsematest': [libdl_dep],
-+	'pmqtest': [libdl_dep],
-+}
-+
-+foreach src: c_srcs
-+	exe =3D src.split('/')[-1].split('.c')[0]
-+	executable(
-+		exe,
-+		src,
-+		include_directories: base_inc,
-+		dependencies: [
-+			librt_dep,
-+			thread_dep,
-+			extra_dep.get(exe, []),
-+		],
-+		link_with: [
-+			extra_link.get(exe, rttest_lib),
-+		],
-+		install: true,
-+	)
-+	install_man(src.split('.c')[0] + '.8')
-+endforeach
-+
-+if pyinst.found()
-+	pyinst.install_sources(py_srcs)
-+	foreach src: py_srcs
-+		install_man(src.split('.py')[0] + '.8')
-+	endforeach
-+endif
-+
-+install_data(sh_srcs,
-+	install_dir: get_option('bindir'),
-+	install_mode: 'rwxr-xr-x',
-+)
-+foreach src: sh_srcs
-+	install_man(src.split('.sh')[0] + '.8')
-+endforeach
---=20
-2.26.2
+% Total % Received % Xferd Average Speed Time Time Time Current
+Dload Upload Total Spent Left Speed
+7 100M 7 7500k 0 0 7217k 0 0:00:14 0:00:01 0:00:13 7218k[ 23.002846]
+sched: RT throttling activated
+23 100M 23 23.4M 0 0 5948k 0 0:00:17 0:00:04 0:00:13 5948k[ 25.992869]
+NOHZ tick-stop error: Non-RCU local softi!
+[ 25.993834] NOHZ tick-stop error: Non-RCU local softirq work is
+pending, handler #80!!!
+[ 25.994833] NOHZ tick-stop error: Non-RCU local softirq work is
+pending, handler #80!!!
+[ 25.995832] NOHZ tick-stop error: Non-RCU local softirq work is
+pending, handler #80!!!
+[ 25.995885] NOHZ tick-stop error: Non-RCU local softirq work is
+pending, handler #180!!!
+[ 25.996831] NOHZ tick-stop error: Non-RCU local softirq work is
+pending, handler #180!!!
+[ 25.997830] NOHZ tick-stop error: Non-RCU local softirq work is
+pending, handler #180!!!
 
+If I turn off PREEMPT_RT, there won't be any errors while downloading.
+
+I believe this problem is not tied to any specific board, and anyone
+can reproduce this problem using a Raspberry Pi (Although I didn't try
+because I don't have one). I would like to ask for assistance
+regarding this problem.
