@@ -2,109 +2,59 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 124FCC433FE
-	for <linux-rt-users@archiver.kernel.org>; Sun,  6 Mar 2022 10:18:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C148C433F5
+	for <linux-rt-users@archiver.kernel.org>; Sun,  6 Mar 2022 10:36:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232434AbiCFKTA (ORCPT
+        id S233158AbiCFKgy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 6 Mar 2022 05:19:00 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53976 "EHLO
+        Sun, 6 Mar 2022 05:36:54 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34024 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230004AbiCFKS6 (ORCPT
+        with ESMTP id S232978AbiCFKgy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 6 Mar 2022 05:18:58 -0500
-Received: from mail-yw1-x1141.google.com (mail-yw1-x1141.google.com [IPv6:2607:f8b0:4864:20::1141])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4EA5027CFE;
-        Sun,  6 Mar 2022 02:18:06 -0800 (PST)
-Received: by mail-yw1-x1141.google.com with SMTP id 00721157ae682-2dbd8777564so134833787b3.0;
-        Sun, 06 Mar 2022 02:18:06 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=FMOobh8nHhcrPpWV4O/wajuKnYqT9MqpD2rk4aIOeew=;
-        b=Goedn+VBvsRSba5EGffAp1+WLrLJfspwNpMpUqoW/ooYaehP3heX/hRuDnsyJxzS3/
-         gHugUemS2aSDn80bCTFowNaF5KWVcmLRIyAZdNTWKrJe4asm9hSNsnEuDoi9kP1/yv5N
-         oZCdqn7jvhMNgpRZzSkbU2vvBivUeCoBrmqwtLtZfaOlTqjikwvLrMpmCnVuufu+OF2c
-         7i/IXSJlywGHxK6yeHTOgVUAh+a+E4OVl+0ecIWxxNsz4soz8nGHlkx3c+18UEGiAYZe
-         YMM/BxKDzlPbbM1nvjGeaWLpKXHEIew25bWlQsGNmScLjTn8HMDVLGqG+2KSA7Pmr/Zx
-         PaLQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=FMOobh8nHhcrPpWV4O/wajuKnYqT9MqpD2rk4aIOeew=;
-        b=UZ4jVLLlJiNEU7pJGJ8/nGg4hdFtHBCw8jrTh8Mn4q6pFzm9MX/yV3DpWigXGUVwgv
-         FbF17hXHkCQ3jva/O0/ip6aGbmbkhQ3zlaGOL6rgo9EFyGarGCdRyMAMyaJzTy56ZdIz
-         ZmzX+LJ28CxsiuUreH21HcMTzjzEqTN3Qyd6FIb0Z47v6V94ldSVIRFFsHnsMaYqTZwy
-         WWgbNcQe9rttodR8CHgC8qapntGA57ESKugzioyPIQyqx7W0I8sOMsid4fnJpHh1xqUi
-         JfEyiS/NKlpIGAqeIuPbYdpI7n8qsGDcxaWq8Wsqns+hWn6ov1/Y/QmHPKGf2G9Bx4x7
-         AkqQ==
-X-Gm-Message-State: AOAM5327g9SGRzC9MXXhP5NAm98/lXAdSJvPgsnvvT8t1MaioM3/evia
-        6UGC+FRLqsIiWhrQY2y/hAmYIgcP9bZIg9kT7u5XaNXAQeGgM9VR
-X-Google-Smtp-Source: ABdhPJxiOhUnhtEwbnu50sJjXz6gV1Z3Rk2jM1FVLyO/ASgHE9+5+Jubw//NwDs2sQTh3QYGJPjxSUbMq6kEGP/RrMg=
-X-Received: by 2002:a81:8781:0:b0:2db:da7f:c068 with SMTP id
- x123-20020a818781000000b002dbda7fc068mr4772814ywf.75.1646561885254; Sun, 06
- Mar 2022 02:18:05 -0800 (PST)
-MIME-Version: 1.0
-From:   Yunhao Tian <t123yh.xyz@gmail.com>
-Date:   Sun, 6 Mar 2022 18:17:54 +0800
-Message-ID: <CAFQXTv2B10=i6DMV1iJpOT-Mj9F93hOi_415cn49N6X_yDFw2g@mail.gmail.com>
-Subject: PREEMPT_RT causes scheduling errors with f_rndis USB gadget
-To:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Sun, 6 Mar 2022 05:36:54 -0500
+Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 756D341FBF;
+        Sun,  6 Mar 2022 02:36:02 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id DA708B80E5C;
+        Sun,  6 Mar 2022 10:36:00 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2EB06C340EE;
+        Sun,  6 Mar 2022 10:35:58 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+        s=korg; t=1646562959;
+        bh=gvEYtQYF7ha3DiR4nG7noqhI3AFlwCUzsE5pl8SAOVk=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=Pw7oNzVz8iktT3an9ByXr3nocIiWUaUSqcaSHI4LWojeQCmrtBaH3VwTfmUv/VTai
+         9drPYcAZz2gQGAjZxNpa2nXXtSe5Nd0oRERD9U411fpL7DF/QbW79zylOCaAzv88O1
+         UwhFY8W/m3T9Wl0W89NlboE2etDlo2AZFJIcB7Ak=
+Date:   Sun, 6 Mar 2022 11:35:56 +0100
+From:   Greg KH <gregkh@linuxfoundation.org>
+To:     Yunhao Tian <t123yh.xyz@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-usb@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Subject: Re: PREEMPT_RT causes scheduling errors with f_rndis USB gadget
+Message-ID: <YiSOjGLzMCvKOm0G@kroah.com>
+References: <CAFQXTv2B10=i6DMV1iJpOT-Mj9F93hOi_415cn49N6X_yDFw2g@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAFQXTv2B10=i6DMV1iJpOT-Mj9F93hOi_415cn49N6X_yDFw2g@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi everyone,
+On Sun, Mar 06, 2022 at 06:17:54PM +0800, Yunhao Tian wrote:
+> Hi everyone,
+> 
+> I'm using Linux 5.15.24-rt31 kernel with PREEMPT_RT enabled, on my
+> RK3308 board. I set up f_rndis gadget with the following script, and
+> plugged my board to a x86 Linux computer running 5.15.25 kernel:
 
-I'm using Linux 5.15.24-rt31 kernel with PREEMPT_RT enabled, on my
-RK3308 board. I set up f_rndis gadget with the following script, and
-plugged my board to a x86 Linux computer running 5.15.25 kernel:
+Does the same thing happen with the non-rt kernel?
 
-#!/bin/sh
-cd /sys/kernel/config/usb_gadget
-mkdir g_smartcross; cd g_smartcross
-echo 0xF055 > idVendor
-echo 0xCAFE > idProduct
-mkdir strings/0x409
-echo "SmartCross" > strings/0x409/manufacturer
-echo "SC-1 USB Device" > strings/0x409/product
-mkdir configs/c.1
-mkdir functions/rndis.usb0
-echo EF > functions/rndis.usb0/class
-echo 4 > functions/rndis.usb0/subclass
-echo 1 > functions/rndis.usb0/protocol
-ln -s functions/rndis.usb0 configs/c.1
-echo ff400000.usb > UDC
+thanks,
 
- I started a HTTP server using python3 -m http.server on the x86
-computer, and executed curl on my board to download a 100MB file from
-the computer. I got the following kernel logs from serial console of
-the board:
-
-% Total % Received % Xferd Average Speed Time Time Time Current
-Dload Upload Total Spent Left Speed
-7 100M 7 7500k 0 0 7217k 0 0:00:14 0:00:01 0:00:13 7218k[ 23.002846]
-sched: RT throttling activated
-23 100M 23 23.4M 0 0 5948k 0 0:00:17 0:00:04 0:00:13 5948k[ 25.992869]
-NOHZ tick-stop error: Non-RCU local softi!
-[ 25.993834] NOHZ tick-stop error: Non-RCU local softirq work is
-pending, handler #80!!!
-[ 25.994833] NOHZ tick-stop error: Non-RCU local softirq work is
-pending, handler #80!!!
-[ 25.995832] NOHZ tick-stop error: Non-RCU local softirq work is
-pending, handler #80!!!
-[ 25.995885] NOHZ tick-stop error: Non-RCU local softirq work is
-pending, handler #180!!!
-[ 25.996831] NOHZ tick-stop error: Non-RCU local softirq work is
-pending, handler #180!!!
-[ 25.997830] NOHZ tick-stop error: Non-RCU local softirq work is
-pending, handler #180!!!
-
-If I turn off PREEMPT_RT, there won't be any errors while downloading.
-
-I believe this problem is not tied to any specific board, and anyone
-can reproduce this problem using a Raspberry Pi (Although I didn't try
-because I don't have one). I would like to ask for assistance
-regarding this problem.
+greg k-h
