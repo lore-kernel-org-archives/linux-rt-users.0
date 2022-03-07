@@ -2,91 +2,125 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 222FEC4332F
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Mar 2022 08:55:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6BD3C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Mar 2022 13:57:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234410AbiCGI4L (ORCPT
+        id S242562AbiCGN6t (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 7 Mar 2022 03:56:11 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48200 "EHLO
+        Mon, 7 Mar 2022 08:58:49 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44906 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233437AbiCGI4K (ORCPT
+        with ESMTP id S241637AbiCGN6s (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Mar 2022 03:56:10 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A9CBC1BEA7;
-        Mon,  7 Mar 2022 00:55:15 -0800 (PST)
-Date:   Mon, 7 Mar 2022 09:55:11 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1646643312;
+        Mon, 7 Mar 2022 08:58:48 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 03F883A1B9
+        for <linux-rt-users@vger.kernel.org>; Mon,  7 Mar 2022 05:57:52 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1646661472;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=JoVzBf1uXNcTzGiPbR/fg/8odB0x/Dhp0N0m6GdxpLc=;
-        b=41o4gWkezgvWk2XDLJwhHNQd6xE5gchpopyr67bC28C+0MAqDQU5Q+J/CYaqkDucEHKu5P
-        j7QCHtamiLiAGWTuOIWB3S+i49YXDYtFniewiIr/ydSxb8cBGfotgNF2m3mEOpx73MMcPR
-        GrwVjWiyr/tpjaJpf4fI0Nkx9053gTZBh+1IYrIdN5TkgxCf2FrJ6U5CtWxrZxuOVFfYzw
-        Yhh8LzkHg2j8HrEZVTsbcO7RkYhzyRX1ZvfcASdd87cFpIfp+yN8M9xZ9GzOvDQyWkSabP
-        AemowUH/V58vsQEjl3ulifi/opRG9zcLSumiIrE5MTO6VLAmC2RIA0GJfto9iQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1646643312;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=JoVzBf1uXNcTzGiPbR/fg/8odB0x/Dhp0N0m6GdxpLc=;
-        b=md/CxHPZCzL2m9kymyQ2UtneZu8bff63noOjI8mU80fRT5BDsn+PxWkt3keVIigL1h0u9g
-        +JTvhpl/d4aVXRBw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Yunhao Tian <t123yh.xyz@gmail.com>
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-usb@vger.kernel.org
-Subject: Re: PREEMPT_RT causes scheduling errors with f_rndis USB gadget
-Message-ID: <YiXIb43PR4bayMHw@linutronix.de>
-References: <CAFQXTv2B10=i6DMV1iJpOT-Mj9F93hOi_415cn49N6X_yDFw2g@mail.gmail.com>
+        bh=wM6VOulZtYrylaSH6OVQrZB6SV0lfkKkm0v+oBQEvPk=;
+        b=ifrn7hDyGk+ErHM2XhBsvxckv7+SMyxFPW9WBNvOEpBO2GV0PB3/F8XWBkKwCA9w6E5SSY
+        EGOULgpLgi7NIUL4gC4sslCptpVPpd7GngF+Q/pBQbeJA1Bmn9zjLaZyKAmh+lsRjKI4LE
+        K/K5UkbmEg9cd4Py3kVphuDxRhloSwc=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-168-Y-1SIRE3MqmBw2ki5wlrUQ-1; Mon, 07 Mar 2022 08:57:50 -0500
+X-MC-Unique: Y-1SIRE3MqmBw2ki5wlrUQ-1
+Received: by mail-wr1-f70.google.com with SMTP id t8-20020adfa2c8000000b001e8f6889404so4581739wra.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 Mar 2022 05:57:50 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
+         :references:user-agent:mime-version:content-transfer-encoding;
+        bh=wM6VOulZtYrylaSH6OVQrZB6SV0lfkKkm0v+oBQEvPk=;
+        b=q+WQgAjIpZEi3zAK89zh+lC3MPNTX4U9CuvrJBnjPsRDyatpHjkOCSqKKJsxQZi9/7
+         qd0ejFHazjFkEvd6ByyLZnIJjIhFQ/Ei8BgdACZQJPSax0BtHzPm736y0mQ3p3xhAmJl
+         6QdihF5KeYUqTEaLPKEk8t4iuyGTHw/TOkvwDuqOVnZV522btDOqCbCE4f75YKTWUzk4
+         VYR7uga8/hCIcj8TLnq2J+DXX92R91cFM6EbzV7h7p8RuRe+tVQ+MxEIqPbhZ3Ss7Rlm
+         3CMsoXsTSW9VzAYJZ8MzbJ1KISTxpenlB46etenfFx5ciU7nENjNa116iMg300oOc4eh
+         rLDg==
+X-Gm-Message-State: AOAM531lUNFgiaXHv6QmkXW4t2kc/l5pAQHlbQvlPn+FGjP983DMNg6V
+        hQ+7078BrcUJblVKKxPWCHVQE4cb5sRmAY0hxcdHZUFDrZ5TAG0RTNS1aURsmzzzJivlzPbodnF
+        v2kz7E1X+E4kT9q4+384GkitHZ+I=
+X-Received: by 2002:adf:d1e4:0:b0:1fd:bcc4:66c8 with SMTP id g4-20020adfd1e4000000b001fdbcc466c8mr822266wrd.488.1646661469374;
+        Mon, 07 Mar 2022 05:57:49 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJzoPAJ77EFUcVlCEoryGdZ4Di7c8IlBBuTKzrsfodTyiISnPTIgOVliwHERXJfFacwYmqHQlQ==
+X-Received: by 2002:adf:d1e4:0:b0:1fd:bcc4:66c8 with SMTP id g4-20020adfd1e4000000b001fdbcc466c8mr822240wrd.488.1646661469127;
+        Mon, 07 Mar 2022 05:57:49 -0800 (PST)
+Received: from ?IPv6:2a0c:5a80:1b14:b500:abb:f9d1:7bc2:3db8? ([2a0c:5a80:1b14:b500:abb:f9d1:7bc2:3db8])
+        by smtp.gmail.com with ESMTPSA id l5-20020a5d6745000000b001f1e4e40e42sm5589858wrw.77.2022.03.07.05.57.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 07 Mar 2022 05:57:48 -0800 (PST)
+Message-ID: <fcdaacf58296dfd826bfdbbd5ef3a06b6e05a456.camel@redhat.com>
+Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     Mel Gorman <mgorman@suse.de>
+Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
+        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
+        willy@infradead.org
+Date:   Mon, 07 Mar 2022 14:57:47 +0100
+In-Reply-To: <20220303114550.GE4363@suse.de>
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+         <20220303114550.GE4363@suse.de>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 (3.42.4-1.fc35) 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <CAFQXTv2B10=i6DMV1iJpOT-Mj9F93hOi_415cn49N6X_yDFw2g@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-03-06 18:17:54 [+0800], Yunhao Tian wrote:
-> Hi everyone,
-Hi,
+Hi Mel,
+Thanks for having a look at this.
 
-> I'm using Linux 5.15.24-rt31 kernel with PREEMPT_RT enabled, on my
-> RK3308 board. I set up f_rndis gadget with the following script, and
-> plugged my board to a x86 Linux computer running 5.15.25 kernel:
+On Thu, 2022-03-03 at 11:45 +0000, Mel Gorman wrote:
+> On Tue, Feb 08, 2022 at 11:07:48AM +0100, Nicolas Saenz Julienne wrote:
+> > This series replaces mm/page_alloc's per-cpu page lists drain mechanism with
+> > one that allows accessing the lists remotely. Currently, only a local CPU is
+> > permitted to change its per-cpu lists, and it's expected to do so, on-demand,
+> > whenever a process demands it by means of queueing a drain task on the local
+> > CPU. This causes problems for NOHZ_FULL CPUs and real-time systems that can't
+> > take any sort of interruption and to some lesser extent inconveniences idle and
+> > virtualised systems.
+> > 
+> 
+> I know this has been sitting here for a long while. Last few weeks have
+> not been fun.
 
-Is this 5.15.24-rt31 as-is or are there other patches involved?
-What UDC is used here?
+No problem.
 
-=E2=80=A6
-> [ 25.993834] NOHZ tick-stop error: Non-RCU local softirq work is
-> pending, handler #80!!!
-that is sched
+> > Note that this is not the first attempt at fixing this per-cpu page lists:
+> >  - The first attempt[1] tried to conditionally change the pagesets locking
+> >    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
+> >    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
+> >    for NOHZ_FULL setups, which isn't ideal.
+> >  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
+> >    performance degradation was too big.
+> > 
+> 
+> For unrelated reasons I looked at using llist to avoid locks entirely. It
+> turns out it's not possible and needs a lock. We know "local_locks to
+> per-cpu spinlocks" took a large penalty so I considered alternatives on
+> how a lock could be used.  I found it's possible to both remote drain
+> the lists and avoid the disable/enable of IRQs entirely as long as a
+> preempting IRQ is willing to take the zone lock instead (should be very
+> rare). The IRQ part is a bit hairy though as softirqs are also a problem
+> and preempt-rt needs different rules and the llist has to sort PCP
+> refills which might be a loss in total. However, the remote draining may
+> still be interesting. The full series is at
+> https://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git/ mm-pcpllist-v1r2
 
-=E2=80=A6
-> [ 25.995885] NOHZ tick-stop error: Non-RCU local softirq work is
-> pending, handler #180!!!
+I'll have a proper look at it soon.
 
-that is additionally hrtimer.
-I did touch hrtimer but I did not yet touch sched so I account myself as
-50% innocent.
-You don't have by chance change the thread affinity of tasks/ interrupt
-threads? The SoC has 4 cores if I see this right.
+Regards,
 
-> If I turn off PREEMPT_RT, there won't be any errors while downloading.
->=20
-> I believe this problem is not tied to any specific board, and anyone
-> can reproduce this problem using a Raspberry Pi (Although I didn't try
-> because I don't have one). I would like to ask for assistance
-> regarding this problem.
+-- 
+Nicolás Sáenz
 
-Let me try dummy_udc=E2=80=A6
-
-Sebastian
