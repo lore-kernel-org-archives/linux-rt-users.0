@@ -2,83 +2,127 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 93280C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Mar 2022 15:09:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A91DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Mar 2022 20:48:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243248AbiCGPKu (ORCPT
+        id S239730AbiCGUtN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 7 Mar 2022 10:10:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42520 "EHLO
+        Mon, 7 Mar 2022 15:49:13 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59598 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236493AbiCGPKu (ORCPT
+        with ESMTP id S234473AbiCGUtM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Mar 2022 10:10:50 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DE3FA34BB6;
-        Mon,  7 Mar 2022 07:09:55 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Mon, 7 Mar 2022 15:49:12 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id BA6711400D
+        for <linux-rt-users@vger.kernel.org>; Mon,  7 Mar 2022 12:48:16 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1646686095;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KSMBnuH3EDTdQZsI9EhfLFxqdlWYA5qSa5KfVdxC0LQ=;
+        b=NlXNTZJ6HtVHqzJMfI2OoZlcNej4HLlPLnJuz3q1LyqardA2wsTEC56a/GW2T0jN+eUsQ4
+        sU7fobGoUeBuIc43PPjS9ALIgEvmj4fz1BhWKZqCQ+oB1TZLhDmxTj5+dhuCPlIMeE1sOM
+        9LQcmuR4beWUxnYA1T8AuKEaV0+g0tc=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-421-cykugfQEOw-AFfmo64uZaQ-1; Mon, 07 Mar 2022 15:48:14 -0500
+X-MC-Unique: cykugfQEOw-AFfmo64uZaQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 68F4AB815DD;
-        Mon,  7 Mar 2022 15:09:54 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2C642C340E9;
-        Mon,  7 Mar 2022 15:09:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1646665793;
-        bh=nroespDCTfI8GUP+QfMklKnR583dye6R4K9fyDl8frs=;
-        h=Subject:From:To:Date:From;
-        b=kpguhQ9aXByJLq1N2/25s98p7Zh/ak5SbThhkVzZ+oJh6vWQovVFLl6DGq/Z3RHaV
-         CD5tpt5zCblQ2qyYzyfa235c5S0DWPeso/ft5HB7v0iJSY8vG0UXxIzH4UMwZcbyMz
-         ND00oqxmypyZ+WrIjFx8mH+iyQ0n1AIWGwLic3y3z6RdBrXcHMFoDEZ+uX2Ay3SrZI
-         brFf0/b5cXtakbpBYKxwk/Tz7tINtJpcHkg293nzoPqPMSXJGvQh9hZHZXtncPLj82
-         sUM4AsTmSAT+u///aPIKx7zIi3ayGn09iJN9JlyjWj6VOtK99IBtZEk/MGJQjslJB/
-         4/5CPKWu62BaQ==
-Message-ID: <c4f9c937630a72d5a5034cebe7facdbad9866e8b.camel@kernel.org>
-Subject: [ANNOUNCE] 5.4.182-rt70
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Mon, 07 Mar 2022 09:09:50 -0600
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 55D551091DA0;
+        Mon,  7 Mar 2022 20:48:12 +0000 (UTC)
+Received: from fuller.cnet (ovpn-112-2.gru2.redhat.com [10.97.112.2])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 9FCF15D9DE;
+        Mon,  7 Mar 2022 20:48:06 +0000 (UTC)
+Received: by fuller.cnet (Postfix, from userid 1000)
+        id 2D5B2416CE5D; Mon,  7 Mar 2022 17:47:39 -0300 (-03)
+Date:   Mon, 7 Mar 2022 17:47:39 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Mel Gorman <mgorman@suse.de>
+Cc:     Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org, vbabka@suse.cz, cl@linux.com,
+        paulmck@kernel.org, willy@infradead.org
+Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
+Message-ID: <YiZva67/uV/Frdph@fuller.cnet>
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+ <20220303114550.GE4363@suse.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220303114550.GE4363@suse.de>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+On Thu, Mar 03, 2022 at 11:45:50AM +0000, Mel Gorman wrote:
+> On Tue, Feb 08, 2022 at 11:07:48AM +0100, Nicolas Saenz Julienne wrote:
+> > This series replaces mm/page_alloc's per-cpu page lists drain mechanism with
+> > one that allows accessing the lists remotely. Currently, only a local CPU is
+> > permitted to change its per-cpu lists, and it's expected to do so, on-demand,
+> > whenever a process demands it by means of queueing a drain task on the local
+> > CPU. This causes problems for NOHZ_FULL CPUs and real-time systems that can't
+> > take any sort of interruption and to some lesser extent inconveniences idle and
+> > virtualised systems.
+> > 
+> 
+> I know this has been sitting here for a long while. Last few weeks have
+> not been fun.
+> 
+> > Note that this is not the first attempt at fixing this per-cpu page lists:
+> >  - The first attempt[1] tried to conditionally change the pagesets locking
+> >    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
+> >    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
+> >    for NOHZ_FULL setups, which isn't ideal.
+> >  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
+> >    performance degradation was too big.
+> > 
+> 
+> For unrelated reasons I looked at using llist to avoid locks entirely. It
+> turns out it's not possible and needs a lock. We know "local_locks to
+> per-cpu spinlocks" took a large penalty so I considered alternatives on
+> how a lock could be used.  I found it's possible to both remote drain
+> the lists and avoid the disable/enable of IRQs entirely as long as a
+> preempting IRQ is willing to take the zone lock instead (should be very
+> rare). The IRQ part is a bit hairy though as softirqs are also a problem
+> and preempt-rt needs different rules and the llist has to sort PCP
+> refills which might be a loss in total. However, the remote draining may
+> still be interesting. The full series is at
+> https://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git/ mm-pcpllist-v1r2
+> 
+> It's still waiting on tests to complete and not all the changelogs are
+> complete which is why it's not posted.
+> 
+> This is a comparison of vanilla vs "local_locks to per-cpu spinlocks"
+> versus the git series up to "mm/page_alloc: Remotely drain per-cpu lists"
+> for the page faulting microbench I originally complained about.  The test
+> machine is a 2-socket CascadeLake machine.
+> 
+> pft timings
+>                                  5.17.0-rc5             5.17.0-rc5             5.17.0-rc5
+>                                     vanilla    mm-remotedrain-v2r1       mm-pcpdrain-v1r1
+> Amean     elapsed-1        32.54 (   0.00%)       33.08 *  -1.66%*       32.82 *  -0.86%*
+> Amean     elapsed-4         8.66 (   0.00%)        9.24 *  -6.72%*        8.69 *  -0.38%*
+> Amean     elapsed-7         5.02 (   0.00%)        5.43 *  -8.16%*        5.05 *  -0.55%*
+> Amean     elapsed-12        3.07 (   0.00%)        3.38 * -10.00%*        3.09 *  -0.72%*
+> Amean     elapsed-21        2.36 (   0.00%)        2.38 *  -0.89%*        2.19 *   7.39%*
+> Amean     elapsed-30        1.75 (   0.00%)        1.87 *  -6.50%*        1.62 *   7.59%*
+> Amean     elapsed-48        1.71 (   0.00%)        2.00 * -17.32%*        1.71 (  -0.08%)
+> Amean     elapsed-79        1.56 (   0.00%)        1.62 *  -3.84%*        1.56 (  -0.02%)
+> Amean     elapsed-80        1.57 (   0.00%)        1.65 *  -5.31%*        1.57 (  -0.04%)
+> 
+> Note the local_lock conversion took 1 1-17% penalty while the git tree
+> takes a negligile penalty while still allowing remote drains. It might
+> have some potential while being less complex than the RCU approach.
 
-I'm pleased to announce the 5.4.182-rt70 stable release.
+Nice!
 
-This release is just an update to the new stable 5.4.182
-version and no RT specific changes have been made.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.4-rt
-  Head SHA1: ffd36f43c2e7b9eb1f1c261b2146c44ccd781936
-
-Or to build 5.4.182-rt70 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.182.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.182-rt70.patch.xz
-
-Enjoy!
-
-   Tom
+Hopefully a spinlock can be added to "struct lru_pvecs" without
+degradation in performance, similarly to what is done here.
 
