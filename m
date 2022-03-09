@@ -2,156 +2,110 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 267D1C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Mar 2022 14:37:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D42C9C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Mar 2022 15:27:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233558AbiCIOi3 (ORCPT
+        id S233860AbiCIP24 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Mar 2022 09:38:29 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45676 "EHLO
+        Wed, 9 Mar 2022 10:28:56 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56324 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231130AbiCIOi2 (ORCPT
+        with ESMTP id S232635AbiCIP2x (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Mar 2022 09:38:28 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0951C638B;
-        Wed,  9 Mar 2022 06:37:29 -0800 (PST)
-Date:   Wed, 9 Mar 2022 15:37:26 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1646836648;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=XeKLByoAc1u1XmlVztQtMK5+4qmQfYNGgQmNQElVMMk=;
-        b=HsVGXHRr+wYG4KIGe+6DuqwL4WzDm5dLlE6VrJ18PiONJuKrlxViig0oIn4etMvMy5icgy
-        Z6ctbOgl6yBrUjGfRWoC/uw1ru1cYFTuG6+xh/PqfBFDl6KDKzJnwM/VGw6aZy8s4AUwTT
-        mjePrir8nZ/5lHZy02YWHXltTLegSn5dcuFMfQtqgbBgvjtdpAEaYhoJ67D500IVDKb2fd
-        RNTuVV7ciEqb521x6RG5DEC9DVHXU4u+o6Eb3rPu7tkFF9qGoAF+S63wfVntFk6RxhQfsr
-        u3A3ovdYhtBukkqrNGAxmbY/OW+fOlJh8QpZUkGejITc74sc5TFBLfxw+F0IzA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1646836648;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=XeKLByoAc1u1XmlVztQtMK5+4qmQfYNGgQmNQElVMMk=;
-        b=XwF3eNMiyInmTZx6J4TA6B0vO6bajBmxJdioGXo7pG1P8SZ0MIRGMG3TRELPTZIW6J9DTk
-        cK1bpLRmA9Kz6+CQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.17-rc7-rt13
-Message-ID: <Yii7pvkj7o8L1uTQ@linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+        Wed, 9 Mar 2022 10:28:53 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0C896397;
+        Wed,  9 Mar 2022 07:27:51 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 7CED36147E;
+        Wed,  9 Mar 2022 15:27:51 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0BD21C340E8;
+        Wed,  9 Mar 2022 15:27:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1646839670;
+        bh=UHfRDJcyynBr1r5QzAuImHIGoYHpWR3Bll7JKdgtM/Q=;
+        h=From:To:Subject:Date:From;
+        b=tKnJK3MAH+v1odS4rlwFQFDnOAZJrNPLwfKcNl77pziWzoKLI5g/PzDwH+BdNLpLw
+         3eK3NfWKk5R/O/I/TrhQHBaPG8vMkdK96yXDqP2sw8yURD+wZfYR2o/TczMMRDl+qs
+         0IAB1aR0+s0z2wh3d7Jyaj5fyW0jyWDE7/DMKov2pceaKKRjLuvEuBakrzmh7H567p
+         WDBNoAoUmyfVdqNaTXFZh+uAjvBf9H26obpY3mLAE9Z9LVTlRnRB2gWlebMA13CnNX
+         wySa3vV5+SZRgYi1FjtKOsOn2F/mKKaEpz0fvoYgu+Ktp/jGWY223C6yrdu8auLJPh
+         B9AvnDOhl+DPA==
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 0/3] Linux v5.4.182-rt71-rc1
+Date:   Wed,  9 Mar 2022 09:27:45 -0600
+Message-Id: <cover.1646839649.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.17.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+From: Tom Zanussi <zanussi@kernel.org>
 
-I'm pleased to announce the v5.17-rc7-rt13 patch set. 
+Dear RT Folks,
 
-Changes since v5.17-rc7-rt12:
+This is the RT stable review cycle of patch 5.4.182-rt71-rc1.
 
-  - Instead of spawning ksoftirqd early, adjust the RCU-tasks timeout
-    after discussion with upstream.
+Please scream at me if I messed something up. Please test the patches
+too.
 
-Known issues
-     - Valentin Schneider reported a few splats on ARM64, see
-          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
 
-The delta patch against v5.17-rc7-rt12 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/incr/patch-5.17-rc7-rt12-rt13.patch.xz
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-You can get this release via the git tree at:
+If all goes well, this patch will be converted to the next main
+release on 2022-03-12.
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.17-rc7-rt13
+To build 5.4.182-rt71-rc1 directly, the following patches should be applied:
 
-The RT patch against v5.17-rc7 can be found here:
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/older/patch-5.17-rc7-rt13.patch.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.182.xz
 
-The split quilt queue is available at:
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.182-rt71-rc1.patch.xz
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/older/patches-5.17-rc7-rt13.tar.xz
+You can also build from 5.4.182-rt70 by applying the incremental patch:
 
-Sebastian
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.182-rt70-rt71-rc1.patch.xz
 
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index e286e6b6fdf9b..db4a23d07a571 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -600,7 +600,6 @@ asmlinkage void __do_softirq(void);
- 
- extern void open_softirq(int nr, void (*action)(struct softirq_action *));
- extern void softirq_init(void);
--extern void softirq_spawn_ksoftirqd(void);
- extern void __raise_softirq_irqoff(unsigned int nr);
- 
- extern void raise_softirq_irqoff(unsigned int nr);
-diff --git a/init/main.c b/init/main.c
-index a0014b8bae203..65fa2e41a9c09 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -1598,7 +1598,6 @@ static noinline void __init kernel_init_freeable(void)
- 
- 	init_mm_internals();
- 
--	softirq_spawn_ksoftirqd();
- 	rcu_init_tasks_generic();
- 	do_pre_smp_initcalls();
- 	lockup_detector_init();
-diff --git a/kernel/rcu/tasks.h b/kernel/rcu/tasks.h
-index f804afb304135..e99f9e61cc7a3 100644
---- a/kernel/rcu/tasks.h
-+++ b/kernel/rcu/tasks.h
-@@ -630,12 +630,15 @@ static void rcu_tasks_wait_gp(struct rcu_tasks *rtp)
- 	while (!list_empty(&holdouts)) {
- 		bool firstreport;
- 		bool needreport;
-+		ktime_t exp;
- 		int rtst;
- 
- 		/* Slowly back off waiting for holdouts */
- 		set_tasks_gp_state(rtp, RTGS_WAIT_SCAN_HOLDOUTS);
--		schedule_timeout_idle(fract);
--
-+		exp = jiffies_to_nsecs(fract);
-+		__set_current_state(TASK_IDLE);
-+		schedule_hrtimeout_range(&exp, jiffies_to_nsecs(HZ / 2),
-+					 HRTIMER_MODE_REL_HARD);
- 		if (fract < HZ)
- 			fract++;
- 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 32c1c503b9d65..22948c2109f5b 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -1037,14 +1037,17 @@ static struct smp_hotplug_thread timer_threads = {
-         .thread_comm            = "ktimers/%u",
- };
- 
--__init void softirq_spawn_ksoftirqd(void)
-+static __init int spawn_ksoftirqd(void)
- {
- 	cpuhp_setup_state_nocalls(CPUHP_SOFTIRQ_DEAD, "softirq:dead", NULL,
- 				  takeover_tasklets);
- 	BUG_ON(smpboot_register_percpu_thread(&softirq_threads));
- 	if (IS_ENABLED(CONFIG_PREEMPT_RT))
- 		BUG_ON(smpboot_register_percpu_thread(&timer_threads));
-+
-+	return 0;
- }
-+early_initcall(spawn_ksoftirqd);
- 
- /*
-  * [ These __weak aliases are kept in a separate compilation unit, so that
-diff --git a/localversion-rt b/localversion-rt
-index 6e44e540b927b..9f7d0bdbffb18 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt12
-+-rt13
+
+Enjoy,
+
+-- Tom
+
+
+Thomas Gleixner (1):
+  eventfd: Make signal recursion protection a task bit
+
+Tom Zanussi (1):
+  Linux 5.4.182-rt71-rc1
+
+Xie Yongji (1):
+  aio: Fix incorrect usage of eventfd_signal_allowed()
+
+ fs/aio.c                |  2 +-
+ fs/eventfd.c            | 12 +++++-------
+ include/linux/eventfd.h | 11 +++++------
+ include/linux/sched.h   | 12 ++++++++++++
+ localversion-rt         |  2 +-
+ 5 files changed, 24 insertions(+), 15 deletions(-)
+
+-- 
+2.17.1
+
