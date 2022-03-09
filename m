@@ -2,71 +2,113 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8092C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Mar 2022 18:22:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 39422C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Mar 2022 19:20:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236192AbiCISX1 (ORCPT
+        id S234756AbiCITVR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Mar 2022 13:23:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36516 "EHLO
+        Wed, 9 Mar 2022 14:21:17 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34898 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236097AbiCISX0 (ORCPT
+        with ESMTP id S233956AbiCITVP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Mar 2022 13:23:26 -0500
-Received: from mail-pg1-x52c.google.com (mail-pg1-x52c.google.com [IPv6:2607:f8b0:4864:20::52c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7C422574B5
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Mar 2022 10:22:27 -0800 (PST)
-Received: by mail-pg1-x52c.google.com with SMTP id c11so2646320pgu.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Mar 2022 10:22:27 -0800 (PST)
+        Wed, 9 Mar 2022 14:21:15 -0500
+Received: from mail-qk1-x731.google.com (mail-qk1-x731.google.com [IPv6:2607:f8b0:4864:20::731])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EF1BD13F08
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Mar 2022 11:20:15 -0800 (PST)
+Received: by mail-qk1-x731.google.com with SMTP id r127so2572374qke.13
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Mar 2022 11:20:15 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to;
-        bh=y2GMrSFWjX8zwjQO8mqaFsTCAy39LnOsJAbSpdJbfyw=;
-        b=TzK4xf5a2832vs1doKmVzvpR8wdLbUfwJ1HKFv3u1OlYZbPdhEHgzqqjAol6iMtyod
-         x/EvCHexxTKI/41qEnLe9UflPFTCXhj15+iNkCvTK7u9REe26KWeFNL+RCmWTRNcZKlS
-         kvBMjl8cZFI1yOk/nfz7UfWkxcpEeFoYkm3XUfjxYvh72EDJA6si9nw25OwPO/KINBB5
-         MgrfAvJpESYxqOBdphD64sNAvPgKQ0G79ezrv6cy28KVxpYq67R8qsz9Nv3oz1JLFJSG
-         Sx+6qoEIIU2LErcWIv3IKrcpjVL+77Xod4506FVCC2enU00fsRHC3SS/Y6VEQ/lesovr
-         eG7Q==
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=W0lboncYjtQXWNplSLbMf6iFrIMBFKm1En98pMzzZgQ=;
+        b=EWkqq8yY4c1jiZ9erqtIkEokYDItWt5CeU/q6bvRGuS+tH/LhC47LjQSou4r4w4tTq
+         r6whLH2qr+sBLseK/K6McRonUWGXhFUehWOuWlgwQ+OcuTBhV5C6bZguWIXAA/BtH4k8
+         sWROysv8whZywNooPcQxdi367ml+Pf3+ObTGK9fn62cJyK8EB8FXdq8QBf0ejTJtug31
+         VpZ5RPtXeoTWjLZ4Ylo8XGtND8ULtdZV6NO3G3cKVKIJa6P4diC6ddC/sS6tAyzLYWJr
+         9EtY4XtSNteNpvN+oB6bVusjCJv9r9Cozj8rc11faFEsGVOVUXSMTdOBITmIyRRW1y/i
+         iaiA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to;
-        bh=y2GMrSFWjX8zwjQO8mqaFsTCAy39LnOsJAbSpdJbfyw=;
-        b=XE5OI2TuPD+JEFQpluS+hSGSmtTgSHYssbL/hrEKiU6dt00FMCwSdjDgENoGroZ8hN
-         6y3uDIE9ERpLJx9XLrmOH7auT5Y0U/R284LVx++/gbZ1J1bxnd2wUWfcTCpvRsHhXa2B
-         OYpe6IjDoadrj8NoF0v9enrH7WnFvs2dWLw+JLq+ndAQezX4unUaxXsII0RS1Xt/6TlK
-         l6mC/Ft4C0UpDa1jmLVm4zQJTS8+ZGzPcPWC7kpovPjTjt6tDi0fFIjNePSgY3WLUy/v
-         OBNBrqEBRJoFmGYF9SReQHPdCHRFmx/0D/6UsU8lJ8NTfOnf1has7nwIG36MWEWsg9rc
-         aM9g==
-X-Gm-Message-State: AOAM533HR/DxhQyOHbTWy5aCrUMqqA9yBxPCDmwR4xVoraMtDX3rGg+h
-        RLJ4uu7GvX+snpobiEKBjQXzHyoqd7XVKsVw55KLge4d
-X-Google-Smtp-Source: ABdhPJzCi0uIhgeD0vKotyiRcHiJ4Omt0hOPGaUWa4O6BIGCSLqYlqXuoVuopWz+7MjCb0vGHgFvecuEr/2nk4T3dys=
-X-Received: by 2002:a05:6a00:a23:b0:4f6:72a8:20c7 with SMTP id
- p35-20020a056a000a2300b004f672a820c7mr831977pfh.12.1646850147097; Wed, 09 Mar
- 2022 10:22:27 -0800 (PST)
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=W0lboncYjtQXWNplSLbMf6iFrIMBFKm1En98pMzzZgQ=;
+        b=uU4FPFpb/akyrLMsLpAHrz5RmM1ibx710hTQLke+M6LZTYy8kQAp9RUiJiWNO5PUwt
+         dcLrr23a1HGz48/N4+tZ03VF7a3v4rWQyukLgu9/ZYVDUYRrD1pFi35O3ofP10DcPSbC
+         +AgnYh3HTYpP8h3DB1N7oOIXVhMePSXZWTVHQ3yEnffQ2loomeI6T8i6VKxMU74XhojX
+         ICJTMJUAwpH5gF4PkKi2UWHBMPK53rLAA1uo0TcSuGRWZiJtOuP8w+Y2SSms5DVKRajD
+         kZZQSeIYXRbSXV9pXxB2O45aqquwUSkN6XLvUK+Z4xrKPJjtzbmoRYUXl3E0TfB+9Q4h
+         Dumw==
+X-Gm-Message-State: AOAM530V6jPUxk5x55OwWvHE1zC8MXVgqy7zsAMsfLd5snD7NRGuyb3q
+        GyOHg71A5JpUdkYC/RuTJhI65u3snzE=
+X-Google-Smtp-Source: ABdhPJweULf+Ic41XdOncExgPH+xcMaRCXn4yZ/zpBFLOxd/yDwcvZ9n21M3RJsY2SUx8HvbSKQj9Q==
+X-Received: by 2002:a37:4117:0:b0:649:2b2e:d1d0 with SMTP id o23-20020a374117000000b006492b2ed1d0mr805466qka.668.1646853614897;
+        Wed, 09 Mar 2022 11:20:14 -0800 (PST)
+Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
+        by smtp.gmail.com with ESMTPSA id t66-20020ae9df45000000b0064915aff85fsm1338687qkf.45.2022.03.09.11.20.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 09 Mar 2022 11:20:14 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rteval: Fix Popen for python3.6 where text=True is not available
+Date:   Wed,  9 Mar 2022 14:19:43 -0500
+Message-Id: <20220309191944.382066-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.35.1
 MIME-Version: 1.0
-References: <2658635.4HAHC1xCac@coyote>
-In-Reply-To: <2658635.4HAHC1xCac@coyote>
-From:   Arve Barsnes <arve.barsnes@gmail.com>
-Date:   Wed, 9 Mar 2022 19:22:15 +0100
-Message-ID: <CAJjrzcUo_30mZAuWVN4W2WK=WcoFC_55_Lq5y7YxdjD37US_YA@mail.gmail.com>
-Subject: Re: dirty-pipe ?
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 9 Mar 2022 at 19:16, gene heskett <gheskett@shentel.net> wrote:
->
-> Greetings all;
->
-> Is this kernel vulnerable?
-> 4.19.71-rt24-v7l+ #1 SMP PREEMPT RT Thu Feb 6 07:09:18 EST 2020 armv7l
-> GNU/Linux
+Fix using text=True in Popen for python-3.6 by using
+encoding='utf-8' instead
 
-No, the vulnerability was introduced in kernel 5.8
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/sysinfo/services.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Regards,
-Arve
+diff --git a/rteval/sysinfo/services.py b/rteval/sysinfo/services.py
+index e5de22efc342..c85980e19165 100644
+--- a/rteval/sysinfo/services.py
++++ b/rteval/sysinfo/services.py
+@@ -62,11 +62,11 @@ class SystemServices:
+             if not [1 for p in reject if fnmatch.fnmatch(servicename, p)] \
+                     and os.access(service, os.X_OK):
+                 cmd = '%s -qs "\(^\|\W\)status)" %s' % (getcmdpath('grep'), service)
+-                c = subprocess.Popen(cmd, shell=True, text=True)
++                c = subprocess.Popen(cmd, shell=True, encoding='utf-8')
+                 c.wait()
+                 if c.returncode == 0:
+                     cmd = ['env', '-i', 'LANG="%s"' % os.environ['LANG'], 'PATH="%s"' % os.environ['PATH'], 'TERM="%s"' % os.environ['TERM'], service, 'status']
+-                    c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
++                    c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+                     c.wait()
+                     if c.returncode == 0 and (c.stdout.read() or c.stderr.read()):
+                         ret_services[servicename] = 'running'
+@@ -81,7 +81,7 @@ class SystemServices:
+         ret_services = {}
+         cmd = '%s list-unit-files -t service --no-legend' % getcmdpath('systemctl')
+         self.__log(Log.DEBUG, "cmd: %s" % cmd)
+-        c = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
++        c = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+         for p in c.stdout:
+             # p are lines like b'servicename.service status'
+             v = p.strip().split()
+@@ -91,7 +91,7 @@ class SystemServices:
+ 
+     def services_get(self):
+         cmd = [getcmdpath('ps'), '-ocomm=', '1']
+-        c = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
++        c = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding='utf-8')
+         self.__init = c.stdout.read().strip()
+         if self.__init == 'systemd':
+             self.__log(Log.DEBUG, "Using systemd to get services status")
+-- 
+2.35.1
+
