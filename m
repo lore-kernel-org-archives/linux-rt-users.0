@@ -2,166 +2,104 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DB1D6C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Apr 2022 13:18:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1E33C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Apr 2022 20:05:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232323AbiDFNUw (ORCPT
+        id S233781AbiDFUG5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 6 Apr 2022 09:20:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57370 "EHLO
+        Wed, 6 Apr 2022 16:06:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39022 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232984AbiDFNUp (ORCPT
+        with ESMTP id S233863AbiDFUGL (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 Apr 2022 09:20:45 -0400
-Received: from mail-lf1-x134.google.com (mail-lf1-x134.google.com [IPv6:2a00:1450:4864:20::134])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4A7E361D7F6
-        for <linux-rt-users@vger.kernel.org>; Wed,  6 Apr 2022 03:01:03 -0700 (PDT)
-Received: by mail-lf1-x134.google.com with SMTP id z12so3143692lfu.10
-        for <linux-rt-users@vger.kernel.org>; Wed, 06 Apr 2022 03:01:02 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=rasmusvillemoes.dk; s=google;
-        h=message-id:date:mime-version:user-agent:subject:content-language:to
-         :cc:references:from:in-reply-to:content-transfer-encoding;
-        bh=ce0iJzgCIHHOpZmIxOx1PZ02f2jXcsJcbDW9EK00h6E=;
-        b=a0YqmMBXrk5NUm0SO4wg2X/pZ/UOk3/9o8rdLBpRprpeD0IcisnKmwgC5vqchY4Tnf
-         zCkYwqdhNQ1egj/bWCE1I+wgu4I2zvzfFEaCesESgcJ9Axx0G8Jjq3mKqFyNKUiq4YNN
-         2siTOcum3TWZvmMzB0T2Y6eXP2QV0z20r3TaA=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-         :content-language:to:cc:references:from:in-reply-to
-         :content-transfer-encoding;
-        bh=ce0iJzgCIHHOpZmIxOx1PZ02f2jXcsJcbDW9EK00h6E=;
-        b=0WyEJHNQvSyFJWDNTsdZGMLiG2vlOLYVGQLbFl0CxhRzbBRo7K/QeWQYIPryPreOxs
-         7GufzH5Vrtv/TXEqxQgF4+pVZAx9RGR2Q43tZZ0IftWVtg+W6U84+qhsaEAGhL3oDiEb
-         tqTcrR0xGQqfk1FomlBKHxiSYig3SwcPc2I1ldsas1q6hC9SxQlkRWIMTM9545wgzCfu
-         8PHpYdRAFcMmrkcG0KTC4rMr2tA//1qmLYLNuQAiKXWkFVO+a8rTRRAjXek7WhA33ox+
-         xXJj9yPQV7uSWfB2MK45aFgSoIa0RlNgjiG/yCN8ds17thSdYAR3SyvchI/a7ylPeh00
-         s1nw==
-X-Gm-Message-State: AOAM531GjQPpWBYY+a4Tuss96EU6I4AKxwB3NKHviq7YnGVUCO2wvnCb
-        MfDyjelZ929+wx/owdR8Ma+eig==
-X-Google-Smtp-Source: ABdhPJzaZfOxf4PkYGYckjccQ8y6xANyGEfvkaJdnTNvh8UqtItuiRLFR/X3n73TsiTSCKXIgY2Y1A==
-X-Received: by 2002:a05:6512:3d8e:b0:44a:3ad1:8bae with SMTP id k14-20020a0565123d8e00b0044a3ad18baemr5352184lfv.231.1649239251588;
-        Wed, 06 Apr 2022 03:00:51 -0700 (PDT)
-Received: from [172.16.11.74] ([81.216.59.226])
-        by smtp.gmail.com with ESMTPSA id d23-20020a056512369700b0045080f3fcd5sm757273lfs.114.2022.04.06.03.00.49
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 06 Apr 2022 03:00:50 -0700 (PDT)
-Message-ID: <0ec367bf-8609-3139-2984-6df3bb3cd28c@rasmusvillemoes.dk>
-Date:   Wed, 6 Apr 2022 12:00:48 +0200
+        Wed, 6 Apr 2022 16:06:11 -0400
+Received: from mail194c50.megamailservers.eu (mail213c50.megamailservers.eu [91.136.10.223])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 26B45203A40
+        for <linux-rt-users@vger.kernel.org>; Wed,  6 Apr 2022 10:53:45 -0700 (PDT)
+X-Authenticated-User: ralf.mardorf@o2mail.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
+        s=maildub; t=1646853334;
+        bh=8gRtmVN28drM65ksClWqdsaDmyz+2PYCk3GP1LVCPZI=;
+        h=Date:From:To:Subject:In-Reply-To:References:From;
+        b=NvNvrDxNwrm0R7gkp51fZafCD2hPWelgJHYcpBCazlXtgLWr4LVMTTYkrVYWWCO8w
+         szlTquYW4L4usk4/TxJ5jkEv/HL3+IEwDT8AzZyJQmSqpk1k9bAXGR+cvXpUqHbX+y
+         bkPGEqi6gLUP+BwWr6Wpsr/zim+YvtlcBhJdXAco=
+Feedback-ID: ralf.mardorf@al
+Received: from archlinux (dynamic-078-048-006-193.78.48.pool.telefonica.de [78.48.6.193])
+        (authenticated bits=0)
+        by mail194c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id 229JFWFL007272
+        (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Wed, 9 Mar 2022 19:15:33 +0000
+Date:   Wed, 9 Mar 2022 20:15:34 +0100
+From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: dirty-pipe ?
+Message-ID: <20220309201534.3a3b8e22@archlinux>
+In-Reply-To: <CAJjrzcUo_30mZAuWVN4W2WK=WcoFC_55_Lq5y7YxdjD37US_YA@mail.gmail.com>
+References: <2658635.4HAHC1xCac@coyote>
+        <CAJjrzcUo_30mZAuWVN4W2WK=WcoFC_55_Lq5y7YxdjD37US_YA@mail.gmail.com>
+X-Mailer: Claws Mail (linux)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.7.0
-Subject: Re: [RFC PATCH 0/2] RT scheduling policies for workqueues
-Content-Language: en-US
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Tejun Heo <tj@kernel.org>, Marc Kleine-Budde <mkl@pengutronix.de>,
-        Peter Hurley <peter@hurleysoftware.com>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Esben Haabendal <esben@geanix.com>,
-        Steven Walter <stevenrwalter@gmail.com>,
-        linux-kernel@vger.kernel.org,
-        Oleksij Rempel <o.rempel@pengutronix.de>,
-        Pengutronix Kernel Team <kernel@pengutronix.de>,
-        =?UTF-8?Q?Andr=c3=a9_Pribil?= <a.pribil@beck-ipc.com>,
-        Jiri Slaby <jirislaby@kernel.org>,
-        linux-rt-users@vger.kernel.org
-References: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
- <YkGIhYKJG+w4L7ge@linutronix.de>
- <20220328100927.5ax34nea7sp7jdsy@pengutronix.de>
- <YkHyzcfiyjLfIVOo@slm.duckdns.org> <YkKnlUUsufZPiZxM@linutronix.de>
- <8b21ad64-ea9c-84f2-c798-222c9383e3de@rasmusvillemoes.dk>
- <YkbEDoPBKzVUqNLb@linutronix.de>
-From:   Rasmus Villemoes <linux@rasmusvillemoes.dk>
-In-Reply-To: <YkbEDoPBKzVUqNLb@linutronix.de>
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
+X-CTCH-RefID: str=0001.0A742F1C.6228FCD5.0094,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+X-CTCH-VOD: Unknown
+X-CTCH-Spam: Unknown
+X-CTCH-Score: 0.000
+X-CTCH-Rules: 
+X-CTCH-Flags: 0
+X-CTCH-ScoreCust: 0.000
+X-Origin-Country: DE
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 01/04/2022 11.21, Sebastian Andrzej Siewior wrote:
-> On 2022-03-29 10:33:19 [+0200], Rasmus Villemoes wrote:
->> On 29/03/2022 08.30, Sebastian Andrzej Siewior wrote:
->>> On 2022-03-28 07:39:25 [-1000], Tejun Heo wrote:
->>>> Hello,
->>> Hi,
->>>
->>>> I wonder whether it'd be useful to provide a set of wrappers which can make
->>>> switching between workqueue and kworker easy. Semantics-wise, they're
->>>> already mostly aligned and it shouldn't be too difficult to e.g. make an
->>>> unbounded workqueue be backed by a dedicated kthread_worker instead of
->>>> shared pool depending on a flag, or even allow switching dynamically.
->>
->> Well, that would certainly not make it any easier for userspace to
->> discover the thread it needs to chrt().
-> 
-> It should be configured within the tty-layer and not making a working RT
-> just because it is possible.
+On Wed, 9 Mar 2022 19:22:15 +0100, Arve Barsnes wrote:
+>On Wed, 9 Mar 2022 at 19:16, gene heskett <gheskett@shentel.net> wrote:
+>> Is this kernel vulnerable?
+>> 4.19.71-rt24-v7l+ #1 SMP PREEMPT RT Thu Feb 6 07:09:18 EST 2020
+>> armv7l GNU/Linux  
+>
+>No, the vulnerability was introduced in kernel 5.8
 
-I'm sorry, I can't parse that sentence.
+Hi,
 
-The tty-layer cannot possibly set the right RT priorities, only the
-application/userspace/the BSP developer knows what is right. The kernel
-has rightly standardized on just the two sched_set_fifo and
-sched_set_fifo_low; the admin must configure the system, but that also
-requires that the admin has access to knobs to actually do that.
->>
->> Here's another idea: In an ideal world, the irq thread itself [people
->> caring about latency use threaded interrupts] could just do the work
->> immediately - then the admin only has one kernel thread to properly
->> configure. However, as Sebastian pointed out, doing that leads to a
->> lockdep splat [1], and it also means that there's no work item involved,
->> so some other thread calling tty_buffer_flush_work() might not actually
->> wait for a concurrent flush_to_ldisc() to finish. So could we create a
->> struct hybrid_work { } which, when enqueued, does something like
->>
->>   bool current_is_irqthread(void) { return in_task() &&
->> kthread_func(current) == irq_thread; }
->>
->> hwork_queue(struct hybrid_work *hwork, struct workqueue_struct *wq)
->>   if (current_is_irqthread()) {
->>     task_work_add(current, &hwork->twork)
->>   } else {
->>     queue_work(wq, &hwork->work);
->>   }
->>
->> (with extra bookkeeping so _flush  and _cancel_sync methods can also be
->> created). It would require irqthread to learn to run its queued
->> task_works in its main loop, which in turn would require finding some
->> other way to do the irq_thread_dtor() cleanup, but that should be doable.
->>
->> While the implementation of hybrid_work might be a bit complex, I think
->> this would have potential for being used in other situations, and for
->> the users, the API would be as simple as the current workqueue/struct
->> kwork APIs. By letting the irq thread do more/all of the work, we'd
->> probably also win some latency due to fewer threads involved and better
->> cache locality. And the admin/BSP is already setting the rt priorities
->> of the [irq/...] threads.
-> 
-> Hmmm. Sounds complicated. Especially the part where irqthread needs to
-> deal with irq_thread_dtor in another way.
+that is my understanding, too, hence my reply yesterday on another
+mailing list, see
+https://lists.ubuntu.com/archives/ubuntu-users/2022-March/307093.html .
 
-Well, we wouldn't need to use the task_work mechanism, we could also add
-a list_head to struct irqaction {} aka the irq thread's kthread_data().
+However, 4.19 kernels received many patches and I haven't verified
+myself that non of those patches includes a backport introducing dirty
+pipe or any other nasty issue.
 
-> If this is something we want for everyone and not just for the "low
-> latency" attribute because it seems to make sense for everyone, would it
-> work to add the data in one step and then flush it once all locks are
-> dropped? The UART driver could be extended to a threaded handler if it
-> is not desired/ possible to complete in the primary handler.
+Regards,
+Ralf
 
-Yes, the idea is certainly to create something which is applicable more
-generally than just for the tty problem. There are lots of places where
-one ends up with a somewhat silly situation in that the driver's irq
-handler is carefully written to not do much more than just schedule a
-work item, so with the -RT patch set, we wake a task so it can wake a
-task so it can ... And it also means that the admin might have carefully
-adjusted the rt priority of the irq/foobar kernel thread and the
-consuming application, but that doesn't matter when there's some random
-SCHED_OTHER task in between - i.e. exactly the tty problem.
+-- 
+[rocketmouse@archlinux ~]$ pacman -Q linux-rt{-cornflower,-pussytoes,,-securityink}|cut -d\  -f2
+4.19.230_rt103-0.300
+4.19.227_rt102-0.300
+4.19.223_rt100-0.1000
+4.19.219_rt97-0.300
+[rocketmouse@archlinux ~]$ echo $(uname -srvm;zgrep CONFIG_AUDIT\  /proc/config.gz || zgrep CONFIG_AUDIT= /proc/config.gz);echo;cat /proc/cmdline;echo;grep . /sys/devices/system/cpu/vulnerabilities/* | cut -d/ -f7;rtirq status|head -8 
+Linux 4.19.230-rt103-0.300-cornflower #1 SMP PREEMPT RT Tue, 22 Feb 2022 07:30:23 +0100 x86_64 # CONFIG_AUDIT is not set
 
-I guess I should write some real patches to explain what I mean more
-clearly.
+BOOT_IMAGE=../vmlinuz-linux-rt-cornflower root=LABEL=s3.archlinux ro initrd=../intel-ucode.img,../initramfs-linux-rt-cornflower.img
 
-Rasmus
+itlb_multihit:KVM: Mitigation: Split huge pages
+l1tf:Mitigation: PTE Inversion; VMX: conditional cache flushes, SMT disabled
+mds:Mitigation: Clear CPU buffers; SMT disabled
+meltdown:Mitigation: PTI
+spec_store_bypass:Mitigation: Speculative Store Bypass disabled via prctl and seccomp
+spectre_v1:Mitigation: usercopy
+spectre_v2:Mitigation: Full generic retpoline, IBPB: conditional, IBRS_FW, STIBP: disabled, RSB filling
+srbds:Mitigation: Microcode
+tsx_async_abort:Not affected
+
+    PID CLS RTPRIO  NI PRI %CPU STAT COMMAND	
+    142 FF      90   - 130  0.0 S    irq/24-xhci_hcd	
+    153 FF      90   - 130  0.0 S    irq/16-ehci_hcd	
+    156 FF      89   - 129  0.0 S    irq/23-ehci_hcd	
+    312 FF      85   - 125  0.0 S    irq/16-snd_hdsp	
+    339 FF      80   - 120  0.0 S    irq/16-snd_ice1	
+     42 FF      50   -  90  0.0 S    irq/9-acpi
