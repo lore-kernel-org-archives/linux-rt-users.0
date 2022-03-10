@@ -2,133 +2,137 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B6A80C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Mar 2022 16:32:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A0F7C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Mar 2022 21:44:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243404AbiCJQdB (ORCPT
+        id S1344041AbiCJVpb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 10 Mar 2022 11:33:01 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50332 "EHLO
+        Thu, 10 Mar 2022 16:45:31 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43054 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238790AbiCJQdA (ORCPT
+        with ESMTP id S1343994AbiCJVp3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 10 Mar 2022 11:33:00 -0500
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6229E190C16;
-        Thu, 10 Mar 2022 08:31:59 -0800 (PST)
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
-        by smtp-out1.suse.de (Postfix) with ESMTP id 160D821106;
-        Thu, 10 Mar 2022 16:31:58 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1646929918; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ckgh/54VKAw6Qnxgd+jgb5k0txhbSVaOhP9+nLif3j4=;
-        b=B3uvBSn76znSqOZimKCNoKHULtUje9t1w9TAl/MSQRejuXE1ujCmyUAb0+LeXbhBB8ZLAC
-        jQvtBHO0vrmBIncL8JER8VU/uLNHZPu/t9jVMTRHtnwTuX1LZF3GjcaIMWgO56ZDo+Xrav
-        t/e/+LHEKDA+xGlu0wgJ/eVEMF2lcJA=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1646929918;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ckgh/54VKAw6Qnxgd+jgb5k0txhbSVaOhP9+nLif3j4=;
-        b=V4kt/xeRGn5rhiPYx2cBdKqA7CcmeVGg3Ft6k1W5KRrfwKerbMwoXI+4ri5Jj7tf/YP1BV
-        iSdYXYNInQEdwaAw==
-Received: from suse.de (unknown [10.163.32.246])
+        Thu, 10 Mar 2022 16:45:29 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 61028158E81;
+        Thu, 10 Mar 2022 13:44:27 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by relay2.suse.de (Postfix) with ESMTPS id 17676A3B83;
-        Thu, 10 Mar 2022 16:31:56 +0000 (UTC)
-Date:   Thu, 10 Mar 2022 16:31:54 +0000
-From:   Mel Gorman <mgorman@suse.de>
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
-Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
-        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
-        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
-        willy@infradead.org
-Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
-Message-ID: <20220310163154.GF4363@suse.de>
-References: <20220208100750.1189808-1-nsaenzju@redhat.com>
- <20220303114550.GE4363@suse.de>
- <fcdaacf58296dfd826bfdbbd5ef3a06b6e05a456.camel@redhat.com>
+        by dfw.source.kernel.org (Postfix) with ESMTPS id E75D161A39;
+        Thu, 10 Mar 2022 21:44:26 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9424CC340E8;
+        Thu, 10 Mar 2022 21:44:23 +0000 (UTC)
+Date:   Thu, 10 Mar 2022 16:44:22 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        "linux-trace-users@vger.kernel.org" 
+        <linux-trace-users@vger.kernel.org>,
+        Linux Trace Devel <linux-trace-devel@vger.kernel.org>
+Cc:     Namhyung Kim <namhyung@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Yordan Karadzhov <y.karadz@gmail.com>,
+        Tzvetomir Stoyanov <tz.stoyanov@gmail.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Changbin Du <changbin.du@gmail.com>,
+        Patrick McLean <chutzpah@gentoo.org>,
+        Josh Boyer <jwboyer@fedoraproject.org>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        John Kacur <jkacur@redhat.com>, Tony Jones <tonyj@suse.de>,
+        Tom Zanussi <zanussi@kernel.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Daniel Wagner <wagi@monom.org>,
+        Johannes Berg <johannes@sipsolutions.net>,
+        Josef Bacik <jbacik@fb.com>, troyengel@gmail.com,
+        Behan Webster <behanw@converseincode.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] trace-cmd 3.0
+Message-ID: <20220310164422.41c57c7c@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <fcdaacf58296dfd826bfdbbd5ef3a06b6e05a456.camel@redhat.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Mar 07, 2022 at 02:57:47PM +0100, Nicolas Saenz Julienne wrote:
-> > > Note that this is not the first attempt at fixing this per-cpu page lists:
-> > >  - The first attempt[1] tried to conditionally change the pagesets locking
-> > >    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
-> > >    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
-> > >    for NOHZ_FULL setups, which isn't ideal.
-> > >  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
-> > >    performance degradation was too big.
-> > > 
-> > 
-> > For unrelated reasons I looked at using llist to avoid locks entirely. It
-> > turns out it's not possible and needs a lock. We know "local_locks to
-> > per-cpu spinlocks" took a large penalty so I considered alternatives on
-> > how a lock could be used.  I found it's possible to both remote drain
-> > the lists and avoid the disable/enable of IRQs entirely as long as a
-> > preempting IRQ is willing to take the zone lock instead (should be very
-> > rare). The IRQ part is a bit hairy though as softirqs are also a problem
-> > and preempt-rt needs different rules and the llist has to sort PCP
-> > refills which might be a loss in total. However, the remote draining may
-> > still be interesting. The full series is at
-> > https://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git/ mm-pcpllist-v1r2
-> 
-> I'll have a proper look at it soon.
-> 
+[ Resending without corrupted email headers ]
 
-Thanks. I'm still delayed actually finishing the series as most of my
-time is dedicated to a separate issue. However, there is at least one
-bug in there at patch "mm/page_alloc: Remotely drain per-cpu lists"
-that causes a lockup under severe memory pressure. The fix is
+I'm happy to announce that after over a year, we finally are able to
+release trace-cmd version 3.0!
 
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index c9a6f2b5548e..11b54f383d04 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -3065,10 +3065,8 @@ static int rmqueue_bulk(struct zone *zone, unsigned int order,
-  */
- void drain_zone_pages(struct zone *zone, struct per_cpu_pages *pcp)
- {
--	unsigned long flags;
- 	int to_drain, batch;
- 
--	pcp_local_lock(&pagesets.lock, flags);
- 	batch = READ_ONCE(pcp->batch);
- 	to_drain = min(pcp->count, batch);
- 	if (to_drain > 0) {
-@@ -3076,7 +3074,6 @@ void drain_zone_pages(struct zone *zone, struct per_cpu_pages *pcp)
- 		free_pcppages_bulk(zone, to_drain, pcp, 0);
- 		spin_unlock(&pcp->lock);
- 	}
--	pcp_local_unlock(&pagesets.lock, flags);
- }
- #endif
- 
-@@ -3088,16 +3085,12 @@ static void drain_pages_zone(unsigned int cpu, struct zone *zone)
- 	unsigned long flags;
- 	struct per_cpu_pages *pcp;
- 
--	pcp_local_lock(&pagesets.lock, flags);
--
- 	pcp = per_cpu_ptr(zone->per_cpu_pageset, cpu);
- 	if (pcp->count) {
- 		spin_lock(&pcp->lock);
- 		free_pcppages_bulk(zone, pcp->count, pcp, 0);
- 		spin_unlock(&pcp->lock);
- 	}
--
--	pcp_local_unlock(&pagesets.lock, flags);
- }
- 
- /*
+The two biggest changes:
+
+1) Updated trace.dat to version 7 (not compatible with older versions of
+   trace-cmd). But now supports compression.
+
+2) Better synchronization between host and guest kernel tracing.
+
+
+Features and user visible updates since 2.9:
+
+- Relies on upstream repos for libtraceevent and libtracefs:
+    * Removed libtraceevent code (Upstream minimum version 1.5)
+    * Removed libtracefs code (Upstream minimum version 1.3)
+
+- KernelShark is no longer installed in the trace-cmd repo.
+
+- Some perf support
+
+- trace-cmd dump updates:
+   * Display the clock used in the file
+
+- New trace-cmd clock: tsc2nsec to use the tsc clock in the ring buffer but
+  to display it as nanoseconds. Requires architecture support, but trace-cmd
+  list -C will show if it supported or not.
+
+- New option --raw-ts for trace-cmd report to show raw timestamps without any
+  modifications.
+
+- New timestamp synchronization between host and guests.
+   * P2P : timing back and forth of host and guest
+   * KVM : queries the kernel for the multiplier, offset and shift for exact
+           synchronization of host and guest timestamps.
+
+- tracecmd_warning() API for writing error messages in libtracecmd library.
+
+- Better bash tab completion.
+
+- Plugins now go into /usr/[local/]lib/trace-cmd instead of traceevent
+  directory.
+
+- New option --full for trace-cmd list to show "print fmt" of event formats
+  specified by -e <event> -F
+
+- trace-cmd list now shows ftrace events as well as events that can be
+  enabled.
+
+- Supports non qemu VM host/guest tracing.
+
+- New option --align-ts for trace-cmd report that will make the timestamps of
+  all events a delta from the first event. (0.000003 instead of 16292.633984)
+
+- New option -V for trace-cmd report to change verbosity.
+
+- New option --verbose for a bunch of commands to trace-cmd.
+
+- New option --poll for trace-cmd record to poll which makes trace-cmd check
+  the buffers with O_NONBLOCK instead of relying on IPIs to wake it up. This
+  reduces latency on recording tasks that trace-cmd is not running on.
+
+- trace.dat output has been updated to Version 7 (incompatible with older
+  trace-cmd, but trace-cmd convert can convert back to version 6, with
+  possible lost of features).
+   * The file is broken up into sections (defined as options) just like an ELF
+     file.
+   * Allows for sections to be compressed.
+      .  Supports zlib compression
+      .  Supports ZSTD compression
+   * Will allow for new types of data to be added
+      . Target for perf data to be included (still in development)
+
+- New command: trace-cmd convert, to convert between trace-cmd 7 and 6 files.
