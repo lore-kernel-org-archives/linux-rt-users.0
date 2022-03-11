@@ -2,273 +2,108 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 63FDCC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Mar 2022 08:29:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C606FC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Mar 2022 13:23:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234079AbiCKIaX (ORCPT
+        id S1348884AbiCKNYN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 11 Mar 2022 03:30:23 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46258 "EHLO
+        Fri, 11 Mar 2022 08:24:13 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35608 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234020AbiCKIaX (ORCPT
+        with ESMTP id S1345965AbiCKNYM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 11 Mar 2022 03:30:23 -0500
-X-Greylist: delayed 608 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 11 Mar 2022 00:29:19 PST
-Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:488:66:1000:2ea3:7291:0:1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A1321B8FF1;
-        Fri, 11 Mar 2022 00:29:19 -0800 (PST)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 62CE55CD07;
-        Fri, 11 Mar 2022 09:19:05 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1646986747; h=from:subject:date:message-id:to:mime-version:content-type:
-         content-transfer-encoding; bh=ba/SYLs6LiMuyItQixZYYNNJ+XqLIWTXJlICJRitxrY=;
-        b=H5bNnEoNiapHd8wt8oDUlgsBa5BlYOjF4sxn2MGUV476uG20RPzPqjnjRLO98MMJ23zZdd
-        4bQT5t4onqta8YC8N3mIqHhqq7THWbgmGSzcGheSUrjcg/RjCdo7Xbtcqf/i4roCca2vpf
-        MLRChBPJyLvI/Z2bmYwWQHflMx0tAS6/OZOGsLchwApoPYpFFKFzKOFHcYD8zQK+DZtn8E
-        Upki8c9e0lyomrXjKYkrzSDiGpqVCqBpmQj7s/Y14xiw2PqhVhZDLmO7nVWlZPml2ixxWs
-        rMlv8cRWAOLtHnmFlQJz2mdsKcI96SmYfUu3IlhMabBDs6/DL23YbDlewSUNgg==
-Date:   Fri, 11 Mar 2022 09:19:04 +0100
-From:   Daniel Wagner <wagi@monom.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
+        Fri, 11 Mar 2022 08:24:12 -0500
+Received: from mga04.intel.com (mga04.intel.com [192.55.52.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F0A0C76E2F;
+        Fri, 11 Mar 2022 05:23:08 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1647004988; x=1678540988;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=UXpw8xMUXXNMq602k1Jggox1J6ysJh5BAv361tPlTcw=;
+  b=KZEkNrHTIeAtqBK4mOqvbDsHCjg7dYekL3ojVUQwWmuJAYhfPMwg2Z0T
+   RcawHPKZXCCmQVjj3rcSYh+ZGbOCORdM9QHOrQf2bZL/xehOjn0Ql9XQv
+   SrN+drxYJhdJDZmPsDRnQYtJ0FcSUBszIFfW0gViCKs6jMihnFa61CuIZ
+   peI3gYeNql6Oqr54agAszoDlI+5XEARj0NdX8nk3cY9KqfdEqACalbR1z
+   bHOPrsVJ97OLvy0MLvK6EHV41GsosqqHTXl/Rtd+K4hh+L5kVFg0MLMLA
+   ykRkPm850ZSr4OYC51w2xMxT1DuN6uG01y1y4C4BBV4s5lZGZp4hk2VhS
+   w==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10282"; a="254398554"
+X-IronPort-AV: E=Sophos;i="5.90,173,1643702400"; 
+   d="scan'208";a="254398554"
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 11 Mar 2022 05:23:08 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.90,173,1643702400"; 
+   d="scan'208";a="612153648"
+Received: from lkp-server02.sh.intel.com (HELO 89b41b6ae01c) ([10.239.97.151])
+  by fmsmga004.fm.intel.com with ESMTP; 11 Mar 2022 05:23:05 -0800
+Received: from kbuild by 89b41b6ae01c with local (Exim 4.92)
+        (envelope-from <lkp@intel.com>)
+        id 1nSfEX-0006Sh-18; Fri, 11 Mar 2022 13:23:05 +0000
+Date:   Fri, 11 Mar 2022 21:22:25 +0800
+From:   kernel test robot <lkp@intel.com>
+To:     Steven Rostedt <rostedt@goodmis.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Cc:     kbuild-all@lists.01.org, Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Linux Memory Management List <linux-mm@kvack.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.19.233-rt105
-Message-ID: <164698646082.13723.1987519373498826881@beryllium.lan>
+        Tom Zanussi <zanussi@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH] tracing: Add snapshot at end of kernel boot up
+Message-ID: <202203112151.vHjFh9wP-lkp@intel.com>
+References: <20220310214133.0e58e321@gandalf.local.home>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
+In-Reply-To: <20220310214133.0e58e321@gandalf.local.home>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Hi Steven,
 
-I'm pleased to announce the 4.19.233-rt105 stable release. This is just
-an update to the latest upstream stable release. No RT specific changes.
+Thank you for the patch! Perhaps something to improve:
 
-Note, I've taken the maintainer job for the v4.19-rt series over from
-Clark, hence the signing key has changed (see below).
+[auto build test WARNING on rostedt-trace/for-next]
+[also build test WARNING on linux/master hnaz-mm/master linus/master v5.17-rc7 next-20220310]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch]
 
-You can get this release via the git tree at:
+url:    https://github.com/0day-ci/linux/commits/Steven-Rostedt/tracing-Add-snapshot-at-end-of-kernel-boot-up/20220311-104216
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/rostedt/linux-trace.git for-next
+config: xtensa-buildonly-randconfig-r002-20220310 (https://download.01.org/0day-ci/archive/20220311/202203112151.vHjFh9wP-lkp@intel.com/config)
+compiler: xtensa-linux-gcc (GCC) 11.2.0
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # https://github.com/0day-ci/linux/commit/60ed6397c93a264f9ccbc8a6ca0b3ecc4dfdf6da
+        git remote add linux-review https://github.com/0day-ci/linux
+        git fetch --no-tags linux-review Steven-Rostedt/tracing-Add-snapshot-at-end-of-kernel-boot-up/20220311-104216
+        git checkout 60ed6397c93a264f9ccbc8a6ca0b3ecc4dfdf6da
+        # save the config file to linux build tree
+        mkdir build_dir
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-11.2.0 make.cross O=build_dir ARCH=xtensa SHELL=/bin/bash
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+If you fix the issue, kindly add following tag as appropriate
+Reported-by: kernel test robot <lkp@intel.com>
 
-  branch: v4.19-rt
-  Head SHA1: d335ad45d7f06f4cf7cbf6679a55d8cf957efca0
+All warnings (new ones prefixed by >>, old ones prefixed by <<):
 
-Or to build 4.19.233-rt105 directly, the following patches should be applied:
+>> WARNING: modpost: vmlinux.o(.text+0x7c164): Section mismatch in reference from the function __se_sys_delete_module() to the function .init.text:ftrace_boot_snapshot()
+The function __se_sys_delete_module() references
+the function __init ftrace_boot_snapshot().
+This is often because __se_sys_delete_module lacks a __init
+annotation or the annotation of ftrace_boot_snapshot is wrong.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.233.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.233-rt105.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-Enjoy!
-Daniel
-
-Changes from v4.19.232-rt104:
 ---
-
-Alyssa Ross (1):
-      firmware: arm_scmi: Remove space in MODULE_ALIAS name
-
-Antony Antony (1):
-      xfrm: fix the if_id check in changelink
-
-Benjamin Beichler (1):
-      mac80211_hwsim: report NOACK frames in tx_status
-
-Brian Norris (1):
-      arm64: dts: rockchip: Switch RK3399-Gru DP to SPDIF output
-
-D. Wythe (2):
-      net/smc: fix unexpected SMC_CLC_DECL_ERR_REGRMB error generated by client
-      net/smc: fix unexpected SMC_CLC_DECL_ERR_REGRMB error cause by server
-
-Daniel Wagner (2):
-      Merge tag 'v4.19.233' into v4.19-rt
-      Linux 4.19.233-rt105
-
-Daniele Palmas (1):
-      net: usb: cdc_mbim: avoid altsetting toggling for Telit FN990
-
-Eric Anholt (1):
-      i2c: bcm2835: Avoid clock stretching timeouts
-
-Eric Dumazet (1):
-      netfilter: fix use-after-free in __nf_register_net_hook()
-
-Filipe Manana (1):
-      btrfs: add missing run of delayed items after unlink during log replay
-
-Florian Westphal (2):
-      netfilter: nf_queue: don't assume sk is full socket
-      netfilter: nf_queue: fix possible use-after-free
-
-Greg Kroah-Hartman (1):
-      Linux 4.19.233
-
-Hangyu Hua (2):
-      usb: gadget: don't release an existing dev->buf
-      usb: gadget: clear related members when goto fail
-
-Hans de Goede (2):
-      Input: elan_i2c - move regulator_[en|dis]able() out of elan_[en|dis]able_power()
-      Input: elan_i2c - fix regulator enable count imbalance after suspend/resume
-
-Huang Pei (1):
-      hamradio: fix macro redefine warning
-
-Hugh Dickins (1):
-      memfd: fix F_SEAL_WRITE after shmem huge page allocated
-
-JaeMan Park (1):
-      mac80211_hwsim: initialize ieee80211_tx_info at hw_scan_work
-
-Jann Horn (1):
-      efivars: Respect "block" flag in efivar_entry_set_safe()
-
-Jia-Ju Bai (1):
-      net: chelsio: cxgb3: check the return value of pci_find_capability()
-
-Jiasheng Jiang (2):
-      soc: fsl: qe: Check of ioremap return value
-      nl80211: Handle nla_memdup failures in handle_nan_filter
-
-Jiri Bohac (1):
-      xfrm: fix MTU regression
-
-José Expósito (1):
-      Input: clear BTN_RIGHT/MIDDLE on buttonpads
-
-Kai Vehmanen (2):
-      ASoC: rt5668: do not block workqueue if card is unbound
-      ASoC: rt5682: do not block workqueue if card is unbound
-
-Leon Romanovsky (1):
-      xfrm: enforce validity of offload input flags
-
-Lukas Wunner (1):
-      PCI: pciehp: Fix infinite loop in IRQ handler upon power fault
-
-Marek Marczykowski-Górecki (1):
-      xen/netfront: destroy queues before real_num_tx_queues is zeroed
-
-Marek Vasut (1):
-      ASoC: ops: Shift tested values in snd_soc_put_volsw() by +min
-
-Nicolas Escande (1):
-      mac80211: fix forwarded mesh frames AC & queue selection
-
-Randy Dunlap (3):
-      net: stmmac: fix return value of __setup handler
-      net: sxgbe: fix return value of __setup handler
-      ARM: 9182/1: mmu: fix returns from early_param() and __setup() functions
-
-Ronnie Sahlberg (1):
-      cifs: fix double free race when mount fails in cifs_get_root()
-
-Sergey Shtylyov (1):
-      ata: pata_hpt37x: fix PCI clock detection
-
-Steven Rostedt (Google) (1):
-      tracing/histogram: Fix sorting on old "cpu" value
-
-Sukadev Bhattiprolu (1):
-      ibmvnic: free reset-work-item when flushing
-
-Sven Eckelmann (3):
-      batman-adv: Request iflink once in batadv-on-batadv check
-      batman-adv: Request iflink once in batadv_get_real_netdevice
-      batman-adv: Don't expect inter-netns unique iflink indices
-
-Vincent Mailhol (1):
-      can: gs_usb: change active_channels's type from atomic_t to u8
-
-Vladimir Oltean (2):
-      net: dcb: flush lingering app table entries for unregistered devices
-      net: dcb: disable softirqs in dcbnl_flush_dev()
-
-William Mahon (1):
-      HID: add mapping for KEY_ALL_APPLICATIONS
-
-Wolfram Sang (2):
-      i2c: cadence: allow COMPILE_TEST
-      i2c: qup: allow COMPILE_TEST
-
-Ye Bin (1):
-      block: Fix fsync always failed if once failed
-
-Yongzhi Liu (1):
-      dmaengine: shdma: Fix runtime PM imbalance on error
-
-Zhen Ni (1):
-      ALSA: intel_hdmi: Fix reference to PCM buffer address
-
-Zheyu Ma (1):
-      net: arcnet: com20020: Fix null-ptr-deref in com20020pci_probe()
----
-Makefile                                          |  2 +-
- arch/arm/mm/mmu.c                                 |  2 +
- arch/arm64/boot/dts/rockchip/rk3399-gru.dtsi      | 17 ++++--
- block/blk-flush.c                                 |  4 +-
- drivers/ata/pata_hpt37x.c                         |  4 +-
- drivers/dma/sh/shdma-base.c                       |  4 +-
- drivers/firmware/arm_scmi/driver.c                |  2 +-
- drivers/firmware/efi/vars.c                       |  5 +-
- drivers/hid/hid-debug.c                           |  4 +-
- drivers/hid/hid-input.c                           |  2 +
- drivers/i2c/busses/Kconfig                        |  4 +-
- drivers/i2c/busses/i2c-bcm2835.c                  | 11 ++++
- drivers/input/input.c                             |  6 +++
- drivers/input/mouse/elan_i2c_core.c               | 64 ++++++++---------------
- drivers/net/arcnet/com20020-pci.c                 |  3 ++
- drivers/net/can/usb/gs_usb.c                      | 10 ++--
- drivers/net/ethernet/chelsio/cxgb3/t3_hw.c        |  2 +
- drivers/net/ethernet/ibm/ibmvnic.c                |  4 +-
- drivers/net/ethernet/samsung/sxgbe/sxgbe_main.c   |  6 +--
- drivers/net/ethernet/stmicro/stmmac/stmmac_main.c |  6 +--
- drivers/net/hamradio/mkiss.c                      |  2 +
- drivers/net/usb/cdc_mbim.c                        |  5 ++
- drivers/net/wireless/mac80211_hwsim.c             | 13 +++++
- drivers/net/xen-netfront.c                        | 39 ++++++++------
- drivers/pci/hotplug/pciehp_hpc.c                  |  7 +--
- drivers/soc/fsl/qe/qe_io.c                        |  2 +
- drivers/usb/gadget/legacy/inode.c                 | 10 ++--
- fs/btrfs/tree-log.c                               | 18 +++++++
- fs/cifs/cifsfs.c                                  |  1 +
- include/net/netfilter/nf_queue.h                  |  2 +-
- include/uapi/linux/input-event-codes.h            |  3 +-
- include/uapi/linux/xfrm.h                         |  6 +++
- kernel/trace/trace_events_hist.c                  |  6 +--
- localversion-rt                                   |  2 +-
- mm/memfd.c                                        | 30 ++++++++---
- net/batman-adv/hard-interface.c                   | 29 ++++++----
- net/dcb/dcbnl.c                                   | 44 ++++++++++++++++
- net/ipv6/ip6_output.c                             | 11 ++--
- net/mac80211/rx.c                                 |  4 +-
- net/netfilter/core.c                              |  5 +-
- net/netfilter/nf_queue.c                          | 22 ++++++--
- net/netfilter/nfnetlink_queue.c                   | 12 +++--
- net/smc/smc_core.c                                |  5 +-
- net/wireless/nl80211.c                            | 12 +++++
- net/xfrm/xfrm_device.c                            |  6 ++-
- net/xfrm/xfrm_interface.c                         |  2 +-
- sound/soc/codecs/rt5668.c                         | 12 +++--
- sound/soc/codecs/rt5682.c                         | 12 +++--
- sound/soc/soc-ops.c                               |  4 +-
- sound/x86/intel_hdmi_audio.c                      |  2 +-
- 50 files changed, 346 insertions(+), 144 deletions(-)
+0-DAY CI Kernel Test Service
+https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org
