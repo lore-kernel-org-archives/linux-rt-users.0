@@ -2,174 +2,273 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 184E7C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Mar 2022 02:41:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 63FDCC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Mar 2022 08:29:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344918AbiCKCml (ORCPT
+        id S234079AbiCKIaX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 10 Mar 2022 21:42:41 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50810 "EHLO
+        Fri, 11 Mar 2022 03:30:23 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46258 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242345AbiCKCml (ORCPT
+        with ESMTP id S234020AbiCKIaX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 10 Mar 2022 21:42:41 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EDD52188A0D;
-        Thu, 10 Mar 2022 18:41:38 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id AA710B829A0;
-        Fri, 11 Mar 2022 02:41:37 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1108DC340EB;
-        Fri, 11 Mar 2022 02:41:34 +0000 (UTC)
-Date:   Thu, 10 Mar 2022 21:41:33 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>
-Cc:     Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
+        Fri, 11 Mar 2022 03:30:23 -0500
+X-Greylist: delayed 608 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 11 Mar 2022 00:29:19 PST
+Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:488:66:1000:2ea3:7291:0:1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A1321B8FF1;
+        Fri, 11 Mar 2022 00:29:19 -0800 (PST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 62CE55CD07;
+        Fri, 11 Mar 2022 09:19:05 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1646986747; h=from:subject:date:message-id:to:mime-version:content-type:
+         content-transfer-encoding; bh=ba/SYLs6LiMuyItQixZYYNNJ+XqLIWTXJlICJRitxrY=;
+        b=H5bNnEoNiapHd8wt8oDUlgsBa5BlYOjF4sxn2MGUV476uG20RPzPqjnjRLO98MMJ23zZdd
+        4bQT5t4onqta8YC8N3mIqHhqq7THWbgmGSzcGheSUrjcg/RjCdo7Xbtcqf/i4roCca2vpf
+        MLRChBPJyLvI/Z2bmYwWQHflMx0tAS6/OZOGsLchwApoPYpFFKFzKOFHcYD8zQK+DZtn8E
+        Upki8c9e0lyomrXjKYkrzSDiGpqVCqBpmQj7s/Y14xiw2PqhVhZDLmO7nVWlZPml2ixxWs
+        rMlv8cRWAOLtHnmFlQJz2mdsKcI96SmYfUu3IlhMabBDs6/DL23YbDlewSUNgg==
+Date:   Fri, 11 Mar 2022 09:19:04 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Borislav Petkov <bp@alien8.de>
-Subject: [PATCH] tracing: Add snapshot at end of kernel boot up
-Message-ID: <20220310214133.0e58e321@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.19.233-rt105
+Message-ID: <164698646082.13723.1987519373498826881@beryllium.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: "Steven Rostedt (Google)" <rostedt@goodmis.org>
+Hello RT-list!
 
-Add ftrace_boot_snapshot kernel parameter that will take a snapshot at the
-end of boot up just before switching over to user space (it happens during
-the kernel freeing of init memory).
+I'm pleased to announce the 4.19.233-rt105 stable release. This is just
+an update to the latest upstream stable release. No RT specific changes.
 
-This is useful when there's interesting data that can be collected from
-kernel start up, but gets overridden by user space start up code. With
-this option, the ring buffer content from the boot up traces gets saved in
-the snapshot at the end of boot up. This trace can be read from:
+Note, I've taken the maintainer job for the v4.19-rt series over from
+Clark, hence the signing key has changed (see below).
 
- /sys/kernel/tracing/snapshot
+You can get this release via the git tree at:
 
-Signed-off-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.19-rt
+  Head SHA1: d335ad45d7f06f4cf7cbf6679a55d8cf957efca0
+
+Or to build 4.19.233-rt105 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.233.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.233-rt105.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+Enjoy!
+Daniel
+
+Changes from v4.19.232-rt104:
 ---
- .../admin-guide/kernel-parameters.txt          |  8 ++++++++
- include/linux/ftrace.h                         | 11 ++++++++++-
- kernel/trace/ftrace.c                          |  2 ++
- kernel/trace/trace.c                           | 18 ++++++++++++++++++
- 4 files changed, 38 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index f5a27f067db9..f6b7ee64ace8 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -1435,6 +1435,14 @@
- 			as early as possible in order to facilitate early
- 			boot debugging.
- 
-+	ftrace_boot_snapshot
-+			[FTRACE] On boot up, a snapshot will be taken of the
-+			ftrace ring buffer that can be read at:
-+			/sys/kernel/tracing/snapshot.
-+			This is useful if you need tracing information from kernel
-+			boot up that is likely to be overridden by user space
-+			start up functionality.
-+
- 	ftrace_dump_on_oops[=orig_cpu]
- 			[FTRACE] will dump the trace buffers on oops.
- 			If no parameter is passed, ftrace will dump
-diff --git a/include/linux/ftrace.h b/include/linux/ftrace.h
-index 9999e29187de..ee91400c1c97 100644
---- a/include/linux/ftrace.h
-+++ b/include/linux/ftrace.h
-@@ -30,6 +30,12 @@
- #define ARCH_SUPPORTS_FTRACE_OPS 0
- #endif
- 
-+#ifdef CONFIG_TRACING
-+extern void ftrace_boot_snapshot(void);
-+#else
-+static inline void ftrace_boot_snapshot(void) { }
-+#endif
-+
- #ifdef CONFIG_FUNCTION_TRACER
- struct ftrace_ops;
- struct ftrace_regs;
-@@ -216,7 +222,10 @@ void ftrace_free_init_mem(void);
- void ftrace_free_mem(struct module *mod, void *start, void *end);
- #else
- static inline void ftrace_free_init_mem(void) { }
--static inline void ftrace_free_mem(struct module *mod, void *start, void *end) { }
-+static inline void ftrace_free_mem(struct module *mod, void *start, void *end)
-+{
-+	ftrace_boot_snapshot();
-+}
- #endif
- 
- /*
-diff --git a/kernel/trace/ftrace.c b/kernel/trace/ftrace.c
-index 7f93577ee428..9774ea0ad878 100644
---- a/kernel/trace/ftrace.c
-+++ b/kernel/trace/ftrace.c
-@@ -7123,6 +7123,8 @@ void __init ftrace_free_init_mem(void)
- 	void *start = (void *)(&__init_begin);
- 	void *end = (void *)(&__init_end);
- 
-+	ftrace_boot_snapshot();
-+
- 	ftrace_free_mem(NULL, start, end);
- }
- 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 7c85ce9ffdc3..eaf7d30ca6f1 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -185,6 +185,7 @@ static char bootup_tracer_buf[MAX_TRACER_SIZE] __initdata;
- static char *default_bootup_tracer;
- 
- static bool allocate_snapshot;
-+static bool snapshot_at_boot;
- 
- static int __init set_cmdline_ftrace(char *str)
- {
-@@ -230,6 +231,15 @@ static int __init boot_alloc_snapshot(char *str)
- __setup("alloc_snapshot", boot_alloc_snapshot);
- 
- 
-+static int __init boot_snapshot(char *str)
-+{
-+	snapshot_at_boot = true;
-+	boot_alloc_snapshot(str);
-+	return 1;
-+}
-+__setup("ftrace_boot_snapshot", boot_snapshot);
-+
-+
- static char trace_boot_options_buf[MAX_TRACER_SIZE] __initdata;
- 
- static int __init set_trace_boot_options(char *str)
-@@ -10149,6 +10159,14 @@ __init static int tracer_alloc_buffers(void)
- 	return ret;
- }
- 
-+void __init ftrace_boot_snapshot(void)
-+{
-+	if (snapshot_at_boot) {
-+		tracing_snapshot();
-+		internal_trace_puts("** Boot snapshot taken **\n");
-+	}
-+}
-+
- void __init early_trace_init(void)
- {
- 	if (tracepoint_printk) {
--- 
-2.34.1
+Alyssa Ross (1):
+      firmware: arm_scmi: Remove space in MODULE_ALIAS name
 
+Antony Antony (1):
+      xfrm: fix the if_id check in changelink
+
+Benjamin Beichler (1):
+      mac80211_hwsim: report NOACK frames in tx_status
+
+Brian Norris (1):
+      arm64: dts: rockchip: Switch RK3399-Gru DP to SPDIF output
+
+D. Wythe (2):
+      net/smc: fix unexpected SMC_CLC_DECL_ERR_REGRMB error generated by client
+      net/smc: fix unexpected SMC_CLC_DECL_ERR_REGRMB error cause by server
+
+Daniel Wagner (2):
+      Merge tag 'v4.19.233' into v4.19-rt
+      Linux 4.19.233-rt105
+
+Daniele Palmas (1):
+      net: usb: cdc_mbim: avoid altsetting toggling for Telit FN990
+
+Eric Anholt (1):
+      i2c: bcm2835: Avoid clock stretching timeouts
+
+Eric Dumazet (1):
+      netfilter: fix use-after-free in __nf_register_net_hook()
+
+Filipe Manana (1):
+      btrfs: add missing run of delayed items after unlink during log replay
+
+Florian Westphal (2):
+      netfilter: nf_queue: don't assume sk is full socket
+      netfilter: nf_queue: fix possible use-after-free
+
+Greg Kroah-Hartman (1):
+      Linux 4.19.233
+
+Hangyu Hua (2):
+      usb: gadget: don't release an existing dev->buf
+      usb: gadget: clear related members when goto fail
+
+Hans de Goede (2):
+      Input: elan_i2c - move regulator_[en|dis]able() out of elan_[en|dis]able_power()
+      Input: elan_i2c - fix regulator enable count imbalance after suspend/resume
+
+Huang Pei (1):
+      hamradio: fix macro redefine warning
+
+Hugh Dickins (1):
+      memfd: fix F_SEAL_WRITE after shmem huge page allocated
+
+JaeMan Park (1):
+      mac80211_hwsim: initialize ieee80211_tx_info at hw_scan_work
+
+Jann Horn (1):
+      efivars: Respect "block" flag in efivar_entry_set_safe()
+
+Jia-Ju Bai (1):
+      net: chelsio: cxgb3: check the return value of pci_find_capability()
+
+Jiasheng Jiang (2):
+      soc: fsl: qe: Check of ioremap return value
+      nl80211: Handle nla_memdup failures in handle_nan_filter
+
+Jiri Bohac (1):
+      xfrm: fix MTU regression
+
+José Expósito (1):
+      Input: clear BTN_RIGHT/MIDDLE on buttonpads
+
+Kai Vehmanen (2):
+      ASoC: rt5668: do not block workqueue if card is unbound
+      ASoC: rt5682: do not block workqueue if card is unbound
+
+Leon Romanovsky (1):
+      xfrm: enforce validity of offload input flags
+
+Lukas Wunner (1):
+      PCI: pciehp: Fix infinite loop in IRQ handler upon power fault
+
+Marek Marczykowski-Górecki (1):
+      xen/netfront: destroy queues before real_num_tx_queues is zeroed
+
+Marek Vasut (1):
+      ASoC: ops: Shift tested values in snd_soc_put_volsw() by +min
+
+Nicolas Escande (1):
+      mac80211: fix forwarded mesh frames AC & queue selection
+
+Randy Dunlap (3):
+      net: stmmac: fix return value of __setup handler
+      net: sxgbe: fix return value of __setup handler
+      ARM: 9182/1: mmu: fix returns from early_param() and __setup() functions
+
+Ronnie Sahlberg (1):
+      cifs: fix double free race when mount fails in cifs_get_root()
+
+Sergey Shtylyov (1):
+      ata: pata_hpt37x: fix PCI clock detection
+
+Steven Rostedt (Google) (1):
+      tracing/histogram: Fix sorting on old "cpu" value
+
+Sukadev Bhattiprolu (1):
+      ibmvnic: free reset-work-item when flushing
+
+Sven Eckelmann (3):
+      batman-adv: Request iflink once in batadv-on-batadv check
+      batman-adv: Request iflink once in batadv_get_real_netdevice
+      batman-adv: Don't expect inter-netns unique iflink indices
+
+Vincent Mailhol (1):
+      can: gs_usb: change active_channels's type from atomic_t to u8
+
+Vladimir Oltean (2):
+      net: dcb: flush lingering app table entries for unregistered devices
+      net: dcb: disable softirqs in dcbnl_flush_dev()
+
+William Mahon (1):
+      HID: add mapping for KEY_ALL_APPLICATIONS
+
+Wolfram Sang (2):
+      i2c: cadence: allow COMPILE_TEST
+      i2c: qup: allow COMPILE_TEST
+
+Ye Bin (1):
+      block: Fix fsync always failed if once failed
+
+Yongzhi Liu (1):
+      dmaengine: shdma: Fix runtime PM imbalance on error
+
+Zhen Ni (1):
+      ALSA: intel_hdmi: Fix reference to PCM buffer address
+
+Zheyu Ma (1):
+      net: arcnet: com20020: Fix null-ptr-deref in com20020pci_probe()
+---
+Makefile                                          |  2 +-
+ arch/arm/mm/mmu.c                                 |  2 +
+ arch/arm64/boot/dts/rockchip/rk3399-gru.dtsi      | 17 ++++--
+ block/blk-flush.c                                 |  4 +-
+ drivers/ata/pata_hpt37x.c                         |  4 +-
+ drivers/dma/sh/shdma-base.c                       |  4 +-
+ drivers/firmware/arm_scmi/driver.c                |  2 +-
+ drivers/firmware/efi/vars.c                       |  5 +-
+ drivers/hid/hid-debug.c                           |  4 +-
+ drivers/hid/hid-input.c                           |  2 +
+ drivers/i2c/busses/Kconfig                        |  4 +-
+ drivers/i2c/busses/i2c-bcm2835.c                  | 11 ++++
+ drivers/input/input.c                             |  6 +++
+ drivers/input/mouse/elan_i2c_core.c               | 64 ++++++++---------------
+ drivers/net/arcnet/com20020-pci.c                 |  3 ++
+ drivers/net/can/usb/gs_usb.c                      | 10 ++--
+ drivers/net/ethernet/chelsio/cxgb3/t3_hw.c        |  2 +
+ drivers/net/ethernet/ibm/ibmvnic.c                |  4 +-
+ drivers/net/ethernet/samsung/sxgbe/sxgbe_main.c   |  6 +--
+ drivers/net/ethernet/stmicro/stmmac/stmmac_main.c |  6 +--
+ drivers/net/hamradio/mkiss.c                      |  2 +
+ drivers/net/usb/cdc_mbim.c                        |  5 ++
+ drivers/net/wireless/mac80211_hwsim.c             | 13 +++++
+ drivers/net/xen-netfront.c                        | 39 ++++++++------
+ drivers/pci/hotplug/pciehp_hpc.c                  |  7 +--
+ drivers/soc/fsl/qe/qe_io.c                        |  2 +
+ drivers/usb/gadget/legacy/inode.c                 | 10 ++--
+ fs/btrfs/tree-log.c                               | 18 +++++++
+ fs/cifs/cifsfs.c                                  |  1 +
+ include/net/netfilter/nf_queue.h                  |  2 +-
+ include/uapi/linux/input-event-codes.h            |  3 +-
+ include/uapi/linux/xfrm.h                         |  6 +++
+ kernel/trace/trace_events_hist.c                  |  6 +--
+ localversion-rt                                   |  2 +-
+ mm/memfd.c                                        | 30 ++++++++---
+ net/batman-adv/hard-interface.c                   | 29 ++++++----
+ net/dcb/dcbnl.c                                   | 44 ++++++++++++++++
+ net/ipv6/ip6_output.c                             | 11 ++--
+ net/mac80211/rx.c                                 |  4 +-
+ net/netfilter/core.c                              |  5 +-
+ net/netfilter/nf_queue.c                          | 22 ++++++--
+ net/netfilter/nfnetlink_queue.c                   | 12 +++--
+ net/smc/smc_core.c                                |  5 +-
+ net/wireless/nl80211.c                            | 12 +++++
+ net/xfrm/xfrm_device.c                            |  6 ++-
+ net/xfrm/xfrm_interface.c                         |  2 +-
+ sound/soc/codecs/rt5668.c                         | 12 +++--
+ sound/soc/codecs/rt5682.c                         | 12 +++--
+ sound/soc/soc-ops.c                               |  4 +-
+ sound/x86/intel_hdmi_audio.c                      |  2 +-
+ 50 files changed, 346 insertions(+), 144 deletions(-)
