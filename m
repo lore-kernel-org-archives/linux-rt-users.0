@@ -2,93 +2,59 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5AA3AC433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Mar 2022 15:23:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F513C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Mar 2022 18:02:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241035AbiCNPYq (ORCPT
+        id S243558AbiCNSDQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 14 Mar 2022 11:24:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53184 "EHLO
+        Mon, 14 Mar 2022 14:03:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36440 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239682AbiCNPYk (ORCPT
+        with ESMTP id S236191AbiCNSDP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 14 Mar 2022 11:24:40 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 6E66C6340
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Mar 2022 08:23:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1647271409;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=KHZnSg7/qBVpskWF9ZLyqLdJeUS4qXl+pZ5FsBxS5Ts=;
-        b=K/jJG40NzbI5BsQa/ZRO1NIaFX+nARgpzgi9RGeO27+vockG1aftHqXnLjBElBd8hW4Id8
-        u4Pk4YfAKcbcKyv/zxTScDlwD7OlfipaCN4WEVMu1+2aUT/S3T6KqgWEP1hw57zUGNBi/c
-        rVi7q8dqzwcGUpUZGxK1c81x/Y/0bik=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-491-Rk8c9Uk7NPmrR0__sH1B9w-1; Mon, 14 Mar 2022 11:23:26 -0400
-X-MC-Unique: Rk8c9Uk7NPmrR0__sH1B9w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2B9733806709;
-        Mon, 14 Mar 2022 15:23:25 +0000 (UTC)
-Received: from localhost (unknown [10.22.17.205])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 47779400F756;
-        Mon, 14 Mar 2022 15:23:24 +0000 (UTC)
-Date:   Mon, 14 Mar 2022 12:23:23 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.270-rt130
-Message-ID: <Yi9d67rCGFSDb/UP@uudg.org>
+        Mon, 14 Mar 2022 14:03:15 -0400
+Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:488:66:1000:2ea3:7291:0:1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2DFAB3A1AB
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Mar 2022 11:02:05 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 61A005CDBA;
+        Mon, 14 Mar 2022 19:02:02 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1647280922; h=from:subject:date:message-id:to:cc:mime-version:content-type:
+         in-reply-to:references; bh=1aJYgkpysSoUKQLGDwbHYfsUmeAY7LFrK9MuROUzRUg=;
+        b=Oj4NmLWDmXyxphTj3W8zUn04hcdUpFVqUOX83zQcuPjRIm67NktQU/+KQfT0nY8AKgpYa7
+        UIDp4pyBXMbwr3PMUju9V0NN2DMjgwYmDRQbUFfyaV4/R3pI+Yh4/Azfy7R+6LOap1RCdU
+        xPA5zA6HMPHAUmukvlqpAZRcuOjkwB11Q7qnWgw7DnCi6ysvg/Fyv6XFPo1wWqlz9hL/uf
+        PFU6Sjqk2cfBivxc8uuN0kbD1Sjk/VOyeDMi/TPHCEzxW2k6bRsSqIChq6zMZVExwZ6T51
+        S/VhLUyr229/OloVhFs8RjKcJdyd0TQTk4hgLCpqMqjBQLjaY7GnygdD9mjb9g==
+Date:   Mon, 14 Mar 2022 19:02:00 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     Arve Barsnes <arve.barsnes@gmail.com>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: dirty-pipe ?
+Message-ID: <20220314180200.dgp3w3clar4ruuwy@carbon.lan>
+References: <2658635.4HAHC1xCac@coyote>
+ <CAJjrzcUo_30mZAuWVN4W2WK=WcoFC_55_Lq5y7YxdjD37US_YA@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+In-Reply-To: <CAJjrzcUo_30mZAuWVN4W2WK=WcoFC_55_Lq5y7YxdjD37US_YA@mail.gmail.com>
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On Wed, Mar 09, 2022 at 07:22:15PM +0100, Arve Barsnes wrote:
+> On Wed, 9 Mar 2022 at 19:16, gene heskett <gheskett@shentel.net> wrote:
+> >
+> > Greetings all;
+> >
+> > Is this kernel vulnerable?
+> > 4.19.71-rt24-v7l+ #1 SMP PREEMPT RT Thu Feb 6 07:09:18 EST 2020 armv7l
+> > GNU/Linux
+> 
+> No, the vulnerability was introduced in kernel 5.8
 
-I'm pleased to announce the 4.14.270-rt130 stable release.
-
-This release is just an update to the new stable 4.14.270
-version and no RT specific changes have been made.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: c20ba726d404f40c1aedeece35f48c795d5a1659
-
-Or to build 4.14.270-rt130 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.270.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.270-rt130.patch.xz
-
-
-All keys used for the uploads can be found on the following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-
-Enjoy!
-Luis
-
+And the latest release is v4.19.233-rt105, while you are still on
+v4.19.71-rt24. So you are missing out of other security bug fixes for
+sure. As GregKH would say: All users of the 4.19(-rt) kernel series must
+upgrade.
