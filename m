@@ -2,26 +2,35 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79E4FC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Mar 2022 18:40:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADDB7C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 15 Mar 2022 19:20:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1351112AbiCOSlX (ORCPT
+        id S1345783AbiCOTVl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 15 Mar 2022 14:41:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41076 "EHLO
+        Tue, 15 Mar 2022 15:21:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33302 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1345461AbiCOSlX (ORCPT
+        with ESMTP id S1345039AbiCOTVk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 15 Mar 2022 14:41:23 -0400
-Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5888E593B9;
-        Tue, 15 Mar 2022 11:40:09 -0700 (PDT)
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id 821CC1C0BA4; Tue, 15 Mar 2022 19:40:06 +0100 (CET)
-Date:   Tue, 15 Mar 2022 19:40:05 +0100
-From:   Pavel Machek <pavel@denx.de>
-To:     Clark Williams <williams@redhat.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Tue, 15 Mar 2022 15:21:40 -0400
+Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:488:66:1000:2ea3:7291:0:1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0D56B3A72A;
+        Tue, 15 Mar 2022 12:20:27 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 486CB5D30E;
+        Tue, 15 Mar 2022 20:20:21 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1647372024; h=from:subject:date:message-id:to:cc:mime-version:content-type:
+         in-reply-to:references; bh=dPNeZhQEBf2PMi45+dp4nB2zJ3oU/+iXDWONotEcGmc=;
+        b=Ec9xh1iHziUQdyFoG8JXLqFgo6E/AMTD++oBTTm3sJGo9lkNF6Br4eAuTxCU/08za9nFt2
+        t7ZXZtXpy2h7Geid+o+XkXPM4jUEu/tKpNJxf9F2UEZOvIgGaj+ctxYyTKLGE0F03uotrQ
+        5CVq/7yjth9BMPKT61j3Ww/N+D/2/ABzELCIS+oN/YYqixPZDErNWPwHOv1YDEb4E2kQYl
+        J5XZgacMGrmlEUQ5UJTgrdbCWtO62aaL6h4EN2ClzSCPpWs0z7G7lbzJo5Jynrs2Eg3Xrm
+        bB2mMPj/SMpFR8cPRYiDw8IAlCR20DuHUIWvIPdhNMNobGLvQwUFKqJcZKSGLg==
+Date:   Tue, 15 Mar 2022 20:20:19 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     Pavel Machek <pavel@denx.de>
+Cc:     Clark Williams <williams@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -29,59 +38,27 @@ Cc:     LKML <linux-kernel@vger.kernel.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Pavel Machek <pavel@denx.de>
+        Tom Zanussi <tom.zanussi@linux.intel.com>
 Subject: Re: [ANNOUNCE] 4.19.232-rt104
-Message-ID: <20220315184005.GB30901@duo.ucw.cz>
+Message-ID: <20220315192019.4yvkc4ts2rg5dc3q@carbon.lan>
 References: <164642254363.3441070.3803906129050387693@puck.lan>
+ <20220315184005.GB30901@duo.ucw.cz>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="i9LlY+UWpKt15+FH"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <164642254363.3441070.3803906129050387693@puck.lan>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+In-Reply-To: <20220315184005.GB30901@duo.ucw.cz>
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Tue, Mar 15, 2022 at 07:40:05PM +0100, Pavel Machek wrote:
+> > I'm pleased to announce the 4.19.232-rt104 stable release.
+> 
+> Thanks for all the releases. I believe there's tag missing for
+> e9e0405cb34e459b713ed0aca4e3ab5ef61f540e aka 4.19.219-rt98. Tags are
+> there for for other releases.
 
---i9LlY+UWpKt15+FH
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hi!
-
-> I'm pleased to announce the 4.19.232-rt104 stable release.
-
-Thanks for all the releases. I believe there's tag missing for
-e9e0405cb34e459b713ed0aca4e3ab5ef61f540e aka 4.19.219-rt98. Tags are
-there for for other releases.
-
-pavel@duo:~/cip/19$ git show v4.19.219-rt98
-fatal: ambiguous argument 'v4.19.219-rt98': unknown revision or path not in=
- the working tree.
-Use '--' to separate paths from revisions, like this:
-'git <command> [<revision>...] -- [<file>...]'
-pavel@duo:~/cip/19$ git show v4.19.219-rt97
-tag v4.19.219-rt97
-Tagger: Clark Williams <williams@redhat.com>
-Date:   Thu Dec 9 17:04:52 2021 -0600
-
-Best regards,
-								Pavel
---=20
-DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
-
---i9LlY+UWpKt15+FH
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCYjDdhQAKCRAw5/Bqldv6
-8sSIAKCbv/V96cG8QKwO8wQWQz1K6bOBIwCfXcSMCChT7k+s4Wf6ZmTNeTV5dZ4=
-=bjOo
------END PGP SIGNATURE-----
-
---i9LlY+UWpKt15+FH--
+Clark, if you still have the original tag on your local machine, could
+you push it? If not I can add the tag, but obviously, it's not matching
+then with your signature.
