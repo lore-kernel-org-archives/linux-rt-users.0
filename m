@@ -2,46 +2,44 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5C4C2C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Mar 2022 13:14:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 691EEC433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Mar 2022 22:15:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1356175AbiCPNPf (ORCPT
+        id S230310AbiCPWQZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 16 Mar 2022 09:15:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47322 "EHLO
+        Wed, 16 Mar 2022 18:16:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43092 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1356177AbiCPNPd (ORCPT
+        with ESMTP id S1358314AbiCPWQS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 16 Mar 2022 09:15:33 -0400
+        Wed, 16 Mar 2022 18:16:18 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 41EA731359
-        for <linux-rt-users@vger.kernel.org>; Wed, 16 Mar 2022 06:14:15 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 1782A167F0
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Mar 2022 15:15:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1647436455;
+        s=mimecast20190719; t=1647468899;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=6eH0YtiXAwxaE8S/9oN+NS+Lr1yASIS4rv8M7vDZ2P4=;
-        b=DCwQjBd+fjOXVbhsOGrxGehUusUphDqarUTI7h1biN3d3A0pwu2v3SaPySEPqdVJpORSgj
-        aiaBUvrs7BvRjeguvyMEOMGy5mEQWVojvTXIB0uifIA1AqHU9d9eMVMcGMrgnJ72APXdFm
-        ESOIK99WRJa1c7l5ESvfK/zC6QMd+70=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=06VM9QVqLqr5jKaKSaDvfKQgNcuArl4+zBHdi7mXMdY=;
+        b=C8PfEG8L/pChUZomq1WJSHTPr0X0JP8kAReU4wADkdyI3vrsKnBJlaYuXsl0HLWBtDwgB+
+        A9MdowwjslR8BADIhRQ3Zrfs+OW/H+f3xhnkZDh7omiXPDgd7Sx4O11jWMMBBbQVT6HjSG
+        f1JUNLvQdWJvi5rnIqPSZeZO4Cl29c0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-223-XEYK9hxTMYKR0Cz4QAtUOw-1; Wed, 16 Mar 2022 09:14:09 -0400
-X-MC-Unique: XEYK9hxTMYKR0Cz4QAtUOw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-583-Cf9whyP7NGWjqR1G_FGrOw-1; Wed, 16 Mar 2022 18:14:54 -0400
+X-MC-Unique: Cf9whyP7NGWjqR1G_FGrOw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E8CE31C168EA;
-        Wed, 16 Mar 2022 13:14:08 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 58F11811E80;
+        Wed, 16 Mar 2022 22:14:53 +0000 (UTC)
 Received: from localhost (unknown [10.22.17.205])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 46A33200D8FD;
-        Wed, 16 Mar 2022 13:14:08 +0000 (UTC)
-Date:   Wed, 16 Mar 2022 10:14:07 -0300
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 86496401E79;
+        Wed, 16 Mar 2022 22:14:52 +0000 (UTC)
+Date:   Wed, 16 Mar 2022 19:14:51 -0300
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     Pavel Machek <pavel@denx.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         stable-rt <stable-rt@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -52,64 +50,47 @@ Cc:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>
-Subject: Re: [ANNOUNCE] 5.10.104-rt63
-Message-ID: <YjHin0XYJ10voZUG@uudg.org>
-References: <Yip/3Gp8iiVbZ85Z@uudg.org>
- <20220313223026.GA19874@duo.ucw.cz>
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.106-rt64
+Message-ID: <YjJhWyuA91uJkkRp@uudg.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="rfwHUegpD7znHBJN"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20220313223026.GA19874@duo.ucw.cz>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hello RT-list!
 
---rfwHUegpD7znHBJN
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I'm pleased to announce the 5.10.106-rt64 stable release.
 
-On Sun, Mar 13, 2022 at 11:30:26PM +0100, Pavel Machek wrote:
-> Hi!
->=20
-> > I'm pleased to announce the 5.10.104-rt63 stable release.
-> >=20
-> > This release is just an update to the new stable 5.10.104
-> > version and no RT specific changes have been made.
->=20
-> Thanks for the release.
->=20
-> It seems more security fixes (spectre again, AFAICT) are pending for
-> 5.10.105. Do you plan an -rt release based on that, too?
+This release is just an update to the new stable 5.10.106
+version and no RT specific changes have been made.
 
-Yes, it is in the works. The testing should be complete tomorrow morning.
+You can get this release via the git tree at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: 0d387674950bbcb8a4d75f39bd0e1e5974f586e0
+
+Or to build 5.10.106-rt64 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.106.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/patch-5.10.106-rt64.patch.xz
+
+
+All keys used for the uploads can be found on the following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+
+Enjoy!
 Luis
-
-
---rfwHUegpD7znHBJN
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAmIx4p4ACgkQ85SkI/jm
-fCZevA//QCHJOdXDVVks0BX5UvuotbzA774kzDUDtCkaQ+EigQHHD4WcVDgXDbBC
-DbV5R4KrmVTVcZqtytrU+4+CCrOTVhYFZ0tJPbISMKWCLN9cnf6AWwCk/2FzbLQs
-MNdR+KWPgFduPsfWkjsD1/0dMGJfB4EjhHco1AiZ++yZRoztSwK6nIjM3XaMCcYv
-JaZ6oI9Vd0juzRCDLKfAWV67X4FscE5t5ZR1D46sgjvBctqwZSsoVZDvDkDe4dEc
-XrNKxmKZUJ2kN47h0Pz/OIYeff5nxJhGhGxSTpPpC3tRJbpMEvDFEY18IJWfigYn
-P2dvYYs3I38oMdV0sOpvceCRvu9IXY3JJ3dzYiH2wzdV6y3NaPN08d2jqEiqn3hR
-2Cq/ADgYNW4rpjvMNOzJUCxMZ7q3PJ/Hk7W4QSg6VqKrozaSZFRFykXHtHNKnZ4N
-loxvpkMWb94XTsjr2I/iro9rmZne7o/fDmDMvc6W9WVTBWBdNplKKg6qdxkjeoRg
-vUC/Psc/xyZ9iKj7O4fn9QVI5lKj1fcqaEzY0MabxIz76z0zTgLWa/rqLl6tXjnC
-Mmxtatyizxn2JxJQiu6kq5VvNiZexqmOovbFxegwr77prkhsaxBHYk0k3zL30xDY
-nB451oHVCeCZ7bi/wN8/9LydzxG4Sj7HECkVIz5rDOaDbl7MmB8=
-=1GUd
------END PGP SIGNATURE-----
-
---rfwHUegpD7znHBJN--
 
