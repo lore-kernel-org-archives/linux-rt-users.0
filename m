@@ -2,89 +2,68 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 76C38C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 17 Mar 2022 08:33:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C485C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 17 Mar 2022 09:03:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231335AbiCQIee (ORCPT
+        id S231685AbiCQJEZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 17 Mar 2022 04:34:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47986 "EHLO
+        Thu, 17 Mar 2022 05:04:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37534 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231341AbiCQIed (ORCPT
+        with ESMTP id S231699AbiCQJEY (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 17 Mar 2022 04:34:33 -0400
-Received: from mwweb08oc.m2wprod.com (mwweb08oc.mail2world.com [74.202.142.113])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 2DFA12BCD
-        for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2022 01:33:12 -0700 (PDT)
-Received: from mail pickup service by mwweb08oc.m2wprod.com with Microsoft SMTPSVC;
-         Thu, 17 Mar 2022 01:35:27 -0700
-Received: from mail pickup service by mwweb08oc.mail2world.com with Microsoft SMTPSVC;
-         Thu, 17 Mar 2022 01:35:26 -0700
-auth-sender: gheskett@shentel.net
-Received: from 204.111.64.149 unverified ([204.111.64.149]) by mwweb08oc.mail2world.com with Mail2World SMTP Server; 
-        Thu, 17 Mar 2022 01:35:26 -0700
-From:   gene heskett <gheskett@shentel.net>
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     wagi@monom.org
+        Thu, 17 Mar 2022 05:04:24 -0400
+X-Greylist: delayed 170856 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 17 Mar 2022 02:03:06 PDT
+Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A97FF62F4
+        for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2022 02:03:05 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 8B19F5CE54;
+        Thu, 17 Mar 2022 10:02:47 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1647507783; h=from:subject:date:message-id:to:cc:mime-version:content-type:
+         in-reply-to:references; bh=yE8RhcudnCZqf5AV+GeQheTcuEKFODHKRghKR7d+TlE=;
+        b=qGPqXmFXo3zM4lLYaAwEFhym4nQpr9ia/nuBvKTQ3oJpPrYk5JI8bDCzuaUsfIaUwgTs1Z
+        kYzsKJMJpZGQHZax3qV8LE70YiNNI+jlnoxmE9kunXUIZ/RvadUaCkrRnda6fZBoY4VRIK
+        zMtWzRyckW2+Jq7cxk/n76OrZZzofqsjDePegdHHg/0rUvH3LUyLRJ94+Bg8jVYc99E/rv
+        IQ1AkYdhWfJHo8bIsrl+Q5wNDo5ES9cMaXxxLBTQ3fMdxQ5xqLdebObrNho4pdBxHx2FJb
+        eQsl7iGgpYhXLiWvjUIrWVZKkTYQSDl+Gv6SFckI7V8iN+jT4lbqp/nEBz3biQ==
+Date:   Thu, 17 Mar 2022 10:02:45 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     gene heskett <gheskett@shentel.net>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
 Subject: Re: found linux-stable-rt-4.19.233-rt105-rebase
-Date:   Thu, 17 Mar 2022 04:33:09 -0400
-Message-ID: <1680097.7vmoJTWvpf@coyote>
-Organization: only accidental
-In-Reply-To: <2066930.VyunGXjrIA@coyote>
+Message-ID: <20220317090245.riqtsgncpegagvof@carbon.lan>
 References: <2066930.VyunGXjrIA@coyote>
+ <1680097.7vmoJTWvpf@coyote>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-X-CTCH-Spam: Unknown
-X-CTCH-RefID: str=0001.0A702F1C.6232F247.0012,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-X-OriginalArrivalTime: 17 Mar 2022 08:35:26.0631 (UTC) FILETIME=[F3ACE370:01D839D9]
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <1680097.7vmoJTWvpf@coyote>
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thursday, 17 March 2022 03:09:13 EDT you wrote:
-> Greetings rt-kernel-users;
-> 
-> I managed to trace thru git.kernel.org until I found the above rebase.
-> Downloaded it, moved it to the rpi4, and unpacked it.
-> 
-> But to build it on an rpi4b for armhf, needs a bcm2711-defconfig, and
-> it is not there in this tarball.
-> 
-> The newest I have on site is dated Jan 20, 2020 from a 4.19.y tarball.
-> 
-> I obviously got the wrong tarball, so where do I find the right tarball
-> or git clone that will build on an rpi4b today?
-> 
-> I have since found this one:
-> <linux-stable-rt-d28ccbd42ce8c5b5d0b5f79160bfe0c5c98f9037.tar.gz>
-> Is this the one I need?
+On Thu, Mar 17, 2022 at 04:33:09AM -0400, gene heskett wrote:
+> On Thursday, 17 March 2022 03:09:13 EDT you wrote:
+> > Greetings rt-kernel-users;
+> > 
+> > I managed to trace thru git.kernel.org until I found the above rebase.
+> > Downloaded it, moved it to the rpi4, and unpacked it.
+> > 
+> > But to build it on an rpi4b for armhf, needs a bcm2711-defconfig, and
+> > it is not there in this tarball.
 
-And this one has also lost the bcm2711 support.
-Please advise.
+RPi4 was released in 2019, while v4.19 got released in October
+2018. Hence the upstream v4.19 kernel never had support for the RPi4 as
+far I can tell.
 
-> Thanks all.
-> 
-> Cheers, Gene Heskett.
-> --
-> "There are four boxes to be used in defense of liberty:
->  soap, ballot, jury, and ammo. Please use in that order."
-> -Ed Howdershelt (Author, 1940)
-> If we desire respect for the law, we must first make the law
-> respectable. - Louis D. Brandeis
-> 
-> 
-> 
-> .
+> And this one has also lost the bcm2711 support.
+> Please advise.
 
+It sounds very likely that you are running a downstream kernel for which
+RPi4 support was retrofitted. Nothing lost in upstream stable or
+stable-rt kernels.
 
-Cheers, Gene Heskett.
--- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author, 1940)
-If we desire respect for the law, we must first make the law respectable.
- - Louis D. Brandeis
-
-
-
+If you want to run upstream kernels, I suggest you pick a newer kernel
+which supports RPi4.
