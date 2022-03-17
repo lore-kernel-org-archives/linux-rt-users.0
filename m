@@ -2,68 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C485C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 17 Mar 2022 09:03:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2482FC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 17 Mar 2022 15:39:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231685AbiCQJEZ (ORCPT
+        id S233968AbiCQPki (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 17 Mar 2022 05:04:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37534 "EHLO
+        Thu, 17 Mar 2022 11:40:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40220 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231699AbiCQJEY (ORCPT
+        with ESMTP id S231924AbiCQPkh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 17 Mar 2022 05:04:24 -0400
-X-Greylist: delayed 170856 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 17 Mar 2022 02:03:06 PDT
-Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A97FF62F4
-        for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2022 02:03:05 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 8B19F5CE54;
-        Thu, 17 Mar 2022 10:02:47 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1647507783; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         in-reply-to:references; bh=yE8RhcudnCZqf5AV+GeQheTcuEKFODHKRghKR7d+TlE=;
-        b=qGPqXmFXo3zM4lLYaAwEFhym4nQpr9ia/nuBvKTQ3oJpPrYk5JI8bDCzuaUsfIaUwgTs1Z
-        kYzsKJMJpZGQHZax3qV8LE70YiNNI+jlnoxmE9kunXUIZ/RvadUaCkrRnda6fZBoY4VRIK
-        zMtWzRyckW2+Jq7cxk/n76OrZZzofqsjDePegdHHg/0rUvH3LUyLRJ94+Bg8jVYc99E/rv
-        IQ1AkYdhWfJHo8bIsrl+Q5wNDo5ES9cMaXxxLBTQ3fMdxQ5xqLdebObrNho4pdBxHx2FJb
-        eQsl7iGgpYhXLiWvjUIrWVZKkTYQSDl+Gv6SFckI7V8iN+jT4lbqp/nEBz3biQ==
-Date:   Thu, 17 Mar 2022 10:02:45 +0100
-From:   Daniel Wagner <wagi@monom.org>
-To:     gene heskett <gheskett@shentel.net>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: found linux-stable-rt-4.19.233-rt105-rebase
-Message-ID: <20220317090245.riqtsgncpegagvof@carbon.lan>
-References: <2066930.VyunGXjrIA@coyote>
- <1680097.7vmoJTWvpf@coyote>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1680097.7vmoJTWvpf@coyote>
-X-Last-TLS-Session-Version: TLSv1.3
+        Thu, 17 Mar 2022 11:40:37 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1256F20C2E0;
+        Thu, 17 Mar 2022 08:39:21 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id A37256199A;
+        Thu, 17 Mar 2022 15:39:20 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 33E67C340E9;
+        Thu, 17 Mar 2022 15:39:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1647531560;
+        bh=kAnUC1aavvusyWa+wFL6sbzRNu9ksr/TulLSJxlxVL8=;
+        h=From:To:Subject:Date:From;
+        b=syX9WOU1OyD5EzA6dIyZgD/DEBIhb1Bfem0i5y0y9fP0z9TLnbqKxkmWgkWUT0DL1
+         rcEOhYwMEVM6jtuI0GJefJevUgNMCqKLioJ0rtpdIFeBi/ZuKtXHASYu0G5IVUuPqB
+         ANVUCGbTaBX8KspC8/H3urbvthJvsLWbcUNru5ygQ97HXoDG1e5MUw1Y1zX+0lZRyN
+         Gtfi3Ij95S+gTsC+n46n5oT8dNNVecSuaj6CN6DDq4slIsjcz1DbCPN7Z9wRroqCQp
+         Uca2MxPc989aHEWjYceokpcIYAHSBlqNKZiud9eDGsrepAfIrNNqEKaWXpHC6whETP
+         pQ/pQ4+RrJdQw==
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 0/2] Linux v5.4.182-rt72-rc1
+Date:   Thu, 17 Mar 2022 10:39:15 -0500
+Message-Id: <cover.1647531549.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.17.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Mar 17, 2022 at 04:33:09AM -0400, gene heskett wrote:
-> On Thursday, 17 March 2022 03:09:13 EDT you wrote:
-> > Greetings rt-kernel-users;
-> > 
-> > I managed to trace thru git.kernel.org until I found the above rebase.
-> > Downloaded it, moved it to the rpi4, and unpacked it.
-> > 
-> > But to build it on an rpi4b for armhf, needs a bcm2711-defconfig, and
-> > it is not there in this tarball.
+From: Tom Zanussi <zanussi@kernel.org>
 
-RPi4 was released in 2019, while v4.19 got released in October
-2018. Hence the upstream v4.19 kernel never had support for the RPi4 as
-far I can tell.
+Dear RT Folks,
 
-> And this one has also lost the bcm2711 support.
-> Please advise.
+This is the RT stable review cycle of patch 5.4.182-rt72-rc1.
 
-It sounds very likely that you are running a downstream kernel for which
-RPi4 support was retrofitted. Nothing lost in upstream stable or
-stable-rt kernels.
+Please scream at me if I messed something up. Please test the patches
+too.
 
-If you want to run upstream kernels, I suggest you pick a newer kernel
-which supports RPi4.
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main
+release on 2022-03-20.
+
+To build 5.4.182-rt72-rc1 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.182.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.182-rt72-rc1.patch.xz
+
+You can also build from 5.4.182-rt71 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.182-rt71-rt72-rc1.patch.xz
+
+
+Enjoy,
+
+-- Tom
+
+
+Tom Zanussi (2):
+  eventfd: Fix stable-rt v5.4.182-rt71 conflict fixup issue
+  Linux 5.4.182-rt72-rc1
+
+ include/linux/sched.h | 8 --------
+ localversion-rt       | 2 +-
+ 2 files changed, 1 insertion(+), 9 deletions(-)
+
+-- 
+2.17.1
+
