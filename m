@@ -2,93 +2,88 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2010C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Mar 2022 00:29:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AAB30C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Mar 2022 05:11:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231181AbiCRAax (ORCPT
+        id S232419AbiCRFNA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 17 Mar 2022 20:30:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56384 "EHLO
+        Fri, 18 Mar 2022 01:13:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40386 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231179AbiCRAaw (ORCPT
+        with ESMTP id S230325AbiCRFM7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 17 Mar 2022 20:30:52 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 117FA25EB7
-        for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2022 17:29:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1647563374;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=ykdqpOUYM+1dT8BIx3Ik/4nigxiRO/zKs1PrUkdRvt4=;
-        b=hHY/CC/GLzrhQWIojinJ0KgDxPwVCtjthT+5skk4ziyhTNrlRrsQ761XRkuw67V7YlF87u
-        s9u8t0JQnoyZi6FQZT+dBwCrs3Xak1Hdg7+nsLTsDVG9O+5zN6qyX4M9he/pWAQ4QHEaQl
-        kgcj23WdLWZ/Im6LGj5wSNU5QXIOP7o=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-374-HvkYXXqfPYKnAuFXCBPrVQ-1; Thu, 17 Mar 2022 20:29:31 -0400
-X-MC-Unique: HvkYXXqfPYKnAuFXCBPrVQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DE1C1C05AA5;
-        Fri, 18 Mar 2022 00:29:30 +0000 (UTC)
-Received: from localhost (unknown [10.22.16.86])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id ABE6740CFD05;
-        Fri, 18 Mar 2022 00:29:29 +0000 (UTC)
-Date:   Thu, 17 Mar 2022 21:29:28 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.272-rt131
-Message-ID: <YjPSaM/vQZSIEevU@uudg.org>
+        Fri, 18 Mar 2022 01:12:59 -0400
+X-Greylist: delayed 574 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 17 Mar 2022 22:11:38 PDT
+Received: from mail193c50.megamailservers.eu (mail200c50.megamailservers.eu [91.136.10.210])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 343F2180222
+        for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2022 22:11:37 -0700 (PDT)
+X-Authenticated-User: ralf.mardorf@o2mail.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
+        s=maildub; t=1647579713;
+        bh=L+KB4yCAmppFuG125xrbXXKT0/FRm42CZSBr7OhTDa4=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=aMAUDlMVsaxUATDMuLar4OGRuygmYDG4wQSZOlJLw6M/P5mCHphcMo5nHC1h0W+NB
+         3Iz7BmzmX7O6k8MoBg/CG6ElJTEh3zPesm5t3KWOVNlyMG4uXVmzva2uMDKqrBROyp
+         vn+Ng42B4YzvA1nGU2WcNlboLuoEfDskk/5YxeH4=
+Feedback-ID: ralf.mardorf@al
+Received: from archlinux (dynamic-002-243-188-167.2.243.pool.telefonica.de [2.243.188.167])
+        (authenticated bits=0)
+        by mail193c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id 22I51pwF015520
+        (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
+        Fri, 18 Mar 2022 05:01:52 +0000
+Date:   Fri, 18 Mar 2022 06:01:51 +0100
+From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Daniel Wagner <wagi@monom.org>
+Subject: Re: [ANNOUNCE] 4.19.233-rt105
+Message-ID: <20220318060151.411f6789@archlinux>
+In-Reply-To: <164698646082.13723.1987519373498826881@beryllium.lan>
+References: <164698646082.13723.1987519373498826881@beryllium.lan>
+X-Mailer: Claws Mail (linux)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+X-CTCH-RefID: str=0001.0A742F27.62341241.001A,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+X-CTCH-VOD: Unknown
+X-CTCH-Spam: Unknown
+X-CTCH-Score: 0.000
+X-CTCH-Rules: 
+X-CTCH-Flags: 0
+X-CTCH-ScoreCust: 0.000
+X-Origin-Country: DE
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On Fri, 11 Mar 2022 09:19:04 +0100, Daniel Wagner wrote:
+>Signing key fingerprint:
+>
+>  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
 
-I'm pleased to announce the 4.14.272-rt131 stable release.
+Hi,
 
-This release is just an update to the new stable 4.14.272
-version and no RT specific changes have been made.
+where is actually the required key (E072D068B1F5703E) uploaded, to
+verify the patch?
 
-You can get this release via the git tree at:
+[rocketmouse@archlinux linux-rt]$ gpg --keyserver hkp://keyserver.ubuntu.co=
+m --recv-keys 5BF67BC5082672CABB45ACAE587C5ECA5D0A306C
+gpg: key 587C5ECA5D0A306C: "Daniel Wagner <dwagner@suse.de>" not changed
+gpg: Total number processed: 1
+gpg:              unchanged: 1
+[rocketmouse@archlinux linux-rt]$ gzip -cd patch-4.19.233-rt105.patch.gz | =
+gpg2 --verify patch-4.19.233-rt105.patch.sign -
+gpg: Signature made Fri 11 Mar 2022 09:10:11 CET
+gpg:                using EDDSA key 1B45744BE36280CA7D6BD460E072D068B1F5703E
+gpg: Can't check signature: No public key
+[rocketmouse@archlinux linux-rt]$ gpg --keyserver hkp://pgp.uni-mainz.de --=
+recv-keys 1B45744BE36280CA7D6BD460E072D068B1F5703E
+gpg: keyserver receive failed: No data
+[rocketmouse@archlinux linux-rt]$ gpg --keyserver hkp://keyserver.ubuntu.co=
+m --recv-keys 1B45744BE36280CA7D6BD460E072D068B1F5703E
+gpg: keyserver receive failed: No data
+[rocketmouse@archlinux linux-rt]$ ls -hl /bin/gpg2
+lrwxrwxrwx root root 3 B Sat Nov 13 20:28:21 2021 =EF=92=81 /bin/gpg2 =E2=
+=87=92 gpg
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: 3fa9dae3226ce68ffe22fb190e9039e47491b93f
-
-Or to build 4.14.272-rt131 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.272.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.272-rt131.patch.xz
-
-
-All keys used for the uploads can be found on the following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-
-Enjoy!
-Luis
-
+Regards,
+Ralf
