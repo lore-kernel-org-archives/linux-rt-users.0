@@ -2,116 +2,112 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 24615C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Mar 2022 17:43:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AFC9DC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Mar 2022 05:38:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239712AbiCRRoS (ORCPT
+        id S1344419AbiCUFkB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Mar 2022 13:44:18 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41444 "EHLO
+        Mon, 21 Mar 2022 01:40:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40432 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236578AbiCRRoR (ORCPT
+        with ESMTP id S237634AbiCUFkA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Mar 2022 13:44:17 -0400
-Received: from mail118c50.megamailservers.eu (mail1480c50.megamailservers.eu [91.136.14.80])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E6050231933
-        for <linux-rt-users@vger.kernel.org>; Fri, 18 Mar 2022 10:42:56 -0700 (PDT)
-X-Authenticated-User: ralf.mardorf@o2mail.de
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
-        s=maildub; t=1647625369;
-        bh=ye3UrX/2Uc7VpMJq6Cya92Cum9/BZ75RSP84yUeWT+I=;
-        h=Date:From:To:Subject:In-Reply-To:References:From;
-        b=iJacFSZ91k+wrRi2FbnO6phJA3hk5r9MHo5d/OUbM2iYQx7yArxRr/Lxe12QfOlXO
-         6pSNA0HoXT8F3lGeXa60d0K/xEuMLRjxqk9FQNkti6bPO2xPyr0R1pVG0Hj5ozlnbu
-         391zelGjbYsUNYMoKJUx+KC/xG9HkmJIdcK4iFBc=
-Feedback-ID: ralf.mardorf@al
-Received: from archlinux (dynamic-002-243-188-167.2.243.pool.telefonica.de [2.243.188.167])
-        (authenticated bits=0)
-        by mail118c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id 22IHglZj024921
-        (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
-        Fri, 18 Mar 2022 17:42:48 +0000
-Date:   Fri, 18 Mar 2022 18:42:49 +0100
-From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-To:     Daniel Wagner <wagi@monom.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [ANNOUNCE] 4.19.233-rt105
-Message-ID: <20220318184249.39b17ee0@archlinux>
-In-Reply-To: <20220318180057.7a223148@archlinux>
-References: <164698646082.13723.1987519373498826881@beryllium.lan>
-        <20220318060151.411f6789@archlinux>
-        <20220318084800.6f5xs4rnp5kw6lxo@carbon.lan>
-        <20220318102051.483333f2@archlinux>
-        <20220318102718.1347247d@archlinux>
-        <20220318094535.azlclmxubdbmusss@carbon.lan>
-        <20220318180057.7a223148@archlinux>
-X-Mailer: Claws Mail (linux)
+        Mon, 21 Mar 2022 01:40:00 -0400
+Received: from mail-qv1-xf34.google.com (mail-qv1-xf34.google.com [IPv6:2607:f8b0:4864:20::f34])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0E9712611D;
+        Sun, 20 Mar 2022 22:38:36 -0700 (PDT)
+Received: by mail-qv1-xf34.google.com with SMTP id kl29so4469257qvb.2;
+        Sun, 20 Mar 2022 22:38:36 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=ElyZxBSGFcV7GRF7AHMLc39rdz6a/cByjmTIAqRWb9w=;
+        b=hv5W1ECgcQ1dF9rhFkQb3PFBtyZOm+aZunZsyGWsV1eI1ISLonvLLPwTEqML/HcCVR
+         my7bUb4IYJ1L293x2TbNTKlK17U+1Lx1ae8prjFGj96SBMssSdQUH6nP1/JeIRaeJgJD
+         1a/5UfuS2ToHVrIdQLpqcuN9efN3Pc57nmSqqO44EEL+sNrUcmsgZpmuvRxQCgsaD7M/
+         xykBJF8Y1oA9UQGdbxaBDo+LOUUHL0Cs7rw5fFLlsXy7eblS5gcOmScQoqzBYSoIQwxs
+         FNGSuBaP1hVb+rehn0dlJMRR0H5gqlY+PwGmE3Va1bQSs52oAhcx+8G/TdEuxkh/Agg5
+         h8Wg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=ElyZxBSGFcV7GRF7AHMLc39rdz6a/cByjmTIAqRWb9w=;
+        b=4bWtsUuhvg8TLAZBUtmtYgJfEfgDymTb12yMU2gBl6uVeKC+/bNez0GNFjSNYxoX2I
+         1RmrlLUfayTCo9WsJXRDnCjAQllbt2D932bBV7fX6r5bF1Ylg9UGk2RzxcUj9HbMN1kZ
+         aTM8YCD5nyufMoP9B6MlhE3r9W0hHWFUFw3T5Rf89hHwZ/oz8O7RXOkiMNp+oR6aBIoF
+         h1h61Gb3tCcCz0JYk+nJ49VMhKt9/B0xCVVca2H/45ViSFLnIsosVr+RMkVCeObvehPP
+         eiY+NOp9c8PEfXVjA+8ihVeegDO/naVE+YhD6yjQ/ycyU+7mt2mawEW/EuhwDwzcphWZ
+         tZ6Q==
+X-Gm-Message-State: AOAM532eO+VQSdOIzKQowZTiyE+HmTF1Rg2h7IodKlqerE1nuZPUSbAB
+        rTB+5sIi94Be2HH3J5gr5Fw=
+X-Google-Smtp-Source: ABdhPJyIqxkdkSIUu18d2F0nVvEAN+k6swQvjRrfh9TbYnj1z2/8wI06xHn1i82zJlN6yn1SbKsiiQ==
+X-Received: by 2002:a05:6214:2487:b0:441:1c21:2693 with SMTP id gi7-20020a056214248700b004411c212693mr3736618qvb.17.1647841115223;
+        Sun, 20 Mar 2022 22:38:35 -0700 (PDT)
+Received: from localhost (ec2-13-59-0-164.us-east-2.compute.amazonaws.com. [13.59.0.164])
+        by smtp.gmail.com with UTF8SMTPSA id l7-20020a37f507000000b0047b528ef416sm7263142qkk.93.2022.03.20.22.38.31
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sun, 20 Mar 2022 22:38:35 -0700 (PDT)
+From:   Schspa Shi <schspa@gmail.com>
+To:     pmladek@suse.com, sergey.senozhatsky@gmail.com,
+        rostedt@goodmis.org, john.ogness@linutronix.de
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        bigeasy@linutronix.de, tglx@linutronix.de, schspa@gmail.com
+Subject: [PATCH 5.10-rt] printk: fix suppressed message print when reboot/panic
+Date:   Mon, 21 Mar 2022 13:38:16 +0800
+Message-Id: <20220321053815.71316-1-schspa@gmail.com>
+X-Mailer: git-send-email 2.29.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-X-CTCH-RefID: str=0001.0A742F27.6234C499.0018,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-X-CTCH-VOD: Unknown
-X-CTCH-Spam: Unknown
-X-CTCH-Score: 0.000
-X-CTCH-Rules: 
-X-CTCH-Flags: 0
-X-CTCH-ScoreCust: 0.000
-X-Origin-Country: DE
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 18 Mar 2022 18:00:57 +0100, Ralf Mardorf wrote:
->On Fri, 18 Mar 2022 10:45:35 +0100, Daniel Wagner wrote:
->>$ gpg pgpkeys/keys/587C5ECA5D0A306C.asc =20
->that's the wrong key:
->
->
->[rocketmouse@archlinux linux-rt]$ gzip -cd
->patch-4.19.233-rt105.patch.gz | gpg2 --verify
->patch-4.19.233-rt105.patch.sign - gpg: Signature made Fri 11 Mar 2022
->09:10:11 CET gpg:                using EDDSA key
->1B45744BE36280CA7D6BD460E072D068B1F5703E
->                        ^^^^^^^^^^^^^^^^
->                        587C5ECA5D0A306C.asc
->
->
->Importing your key from a keyserver (e.g. from
->hkp://keyserver.ubuntu.com) isn't an issue at all.
->
->The rt-patch was either signed with another key (E072D068B1F5703E
->instead of 587C5ECA5D0A306C) or the uploaded patch is malicious.
->
->The patch was downloaded from
->https://www.kernel.org/pub/linux/kernel/projects/rt/ :
->
->
->[rocketmouse@archlinux ~]$ head -24 /usr/src/linux-rt-rm/PKGBUILD
->[snip]
->_pkgver=3D4.19.233
->_rtpatchver=3D105
->pkgver=3D"${_pkgver}_rt${_rtpatchver}"
->[snip]
->source=3D(
->  "https://www.kernel.org/pub/linux/kernel/v${_pkgver%%.*}.x/linux-${_pkgv=
-er}.tar.gz"
->  "https://www.kernel.org/pub/linux/kernel/v${_pkgver%%.*}.x/linux-${_pkgv=
-er}.tar.sign"
->  "https://www.kernel.org/pub/linux/kernel/projects/rt/${_pkgver%.*}/older=
-/patch-${_pkgver}-rt${_rtpatchver}.patch.gz"
->  "https://www.kernel.org/pub/linux/kernel/projects/rt/${_pkgver%.*}/older=
-/patch-${_pkgver}-rt${_rtpatchver}.patch.sign"
+Update printk_seq for suppressed message.
 
-PS: [de]/[en]
+Affects 5.9-rt and 5.10-rt
 
-[de]
-Ich habe das Patch weder =C3=BCber git bekommen, noch habe ich die xz Datei=
-en
-heruntergeladen. Ich habe die gz Dateien heruntergeladen.
-Die gz Patch-Datei wurde mit einem anderen Schl=C3=BCssel signiert. Dieser
-Schl=C3=BCssel scheint nicht verf=C3=BCgbar zu sein.
+When message is suppressed, printk_seq should be updated, otherwise
+this message will be printed when reboot. This problem was introduced
+in commit 3edc0c85d154 ("printk: Rebase on top of new ring buffer").
 
-[en]
-I didn't get the patch from git, neither did I download the xz
-related files. I downloaded the gz related files.
-The gz patch file is signed with another key. This key seems to be
-unavailable.
+Signed-off-by: Schspa Shi <schspa@gmail.com>
+---
+ kernel/printk/printk.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index 0c56873396a9..f68c4ba7eb4d 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -2826,8 +2826,17 @@ static int printk_kthread_func(void *data)
+ 		if (!(con->flags & CON_ENABLED))
+ 			continue;
+ 
+-		if (suppress_message_printing(r.info->level))
++		printk_seq = atomic64_read(&con->printk_seq);
++
++		if (suppress_message_printing(r.info->level)) {
++			/*
++			 * Skip record we have buffered and already printed
++			 * directly to the console when we received it, and
++			 * record that has level above the console loglevel.
++			 */
++			atomic64_cmpxchg_relaxed(&con->printk_seq, printk_seq, seq);
+ 			continue;
++		}
+ 
+ 		if (con->flags & CON_EXTENDED) {
+ 			len = info_print_ext_header(ext_text,
+@@ -2843,7 +2852,6 @@ static int printk_kthread_func(void *data)
+ 				printk_time);
+ 		}
+ 
+-		printk_seq = atomic64_read(&con->printk_seq);
+ 
+ 		console_lock();
+ 		console_may_schedule = 0;
+-- 
+2.29.0
+
