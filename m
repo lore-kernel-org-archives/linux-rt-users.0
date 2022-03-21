@@ -2,101 +2,100 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5EE12C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Mar 2022 10:13:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57936C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Mar 2022 11:15:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240075AbiCUKOs (ORCPT
+        id S1346711AbiCULQ6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 21 Mar 2022 06:14:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40550 "EHLO
+        Mon, 21 Mar 2022 07:16:58 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38172 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233527AbiCUKOs (ORCPT
+        with ESMTP id S1346706AbiCULQz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 21 Mar 2022 06:14:48 -0400
-Received: from mail263c50.megamailservers.eu (mail1437c50.megamailservers.eu [91.136.14.37])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3575B15A09
-        for <linux-rt-users@vger.kernel.org>; Mon, 21 Mar 2022 03:13:17 -0700 (PDT)
-X-Authenticated-User: ralf.mardorf@o2mail.de
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
-        s=maildub; t=1647857588;
-        bh=+ZcdHd/KZav5HTZJAkHRz0IJsnd4GRkrBe9i6OxpKVw=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=VnetBcp/KIU3SWCCtnEF8MoX/PI+95jnhBupOPDvT02Yb115DsGBxFqsdcMO1Mqd8
-         vQeE1y/2glPXmrBrv/x8Cz3L9818qUk/RrvJVoDnQSwAYaUMv4E2ml6VYF/09gXUzt
-         6YsRrxZOvHIJ61jNsW5rhEbV74Xe6sSsaimABaSQ=
-Feedback-ID: ralf.mardorf@al
-Received: from archlinux (dynamic-093-135-178-127.93.135.pool.telefonica.de [93.135.178.127])
-        (authenticated bits=0)
-        by mail263c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id 22LAD6wY022187
-        (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
-        Mon, 21 Mar 2022 10:13:08 +0000
-Date:   Mon, 21 Mar 2022 11:13:07 +0100
-From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Daniel Wagner <wagi@monom.org>
-Subject: Re: [ANNOUNCE] 4.19.233-rt105
-Message-ID: <20220321111307.20e45966@archlinux>
-In-Reply-To: <20220321083611.ikxq26ax55nqavei@beryllium.lan>
-References: <164698646082.13723.1987519373498826881@beryllium.lan>
-        <20220318060151.411f6789@archlinux>
-        <20220318084800.6f5xs4rnp5kw6lxo@carbon.lan>
-        <20220318102051.483333f2@archlinux>
-        <20220318102718.1347247d@archlinux>
-        <20220318094535.azlclmxubdbmusss@carbon.lan>
-        <20220318180057.7a223148@archlinux>
-        <20220318184249.39b17ee0@archlinux>
-        <20220321083611.ikxq26ax55nqavei@beryllium.lan>
-X-Mailer: Claws Mail (linux)
+        Mon, 21 Mar 2022 07:16:55 -0400
+Received: from mail-qt1-x831.google.com (mail-qt1-x831.google.com [IPv6:2607:f8b0:4864:20::831])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2045A554A1;
+        Mon, 21 Mar 2022 04:15:29 -0700 (PDT)
+Received: by mail-qt1-x831.google.com with SMTP id c4so11588866qtx.1;
+        Mon, 21 Mar 2022 04:15:29 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=r58jtRbok/salGZLYM01BLC5vndO53EKP4rvTMG539M=;
+        b=N9g+VtIuE50+e80f/IWduxz+a2u7dFN/Ik1qSRvlzP90TaARL55x492QbBQC7DTF8Z
+         /uA614WiLOa3DCmi/soVltz8+lbAjUOZUqoJLfAYyW2EmlUefK8CNt1ZOn4aarrpVSrE
+         bauTmQhj0TuIokEDLfG5RDceSbn5f0GGUvLAtYMCHMNOd5xz6LRuwj6tearhenvWZX4x
+         wCNGYACHOhmS6PPC0m28yaLVmWIhzMo4GtQL1LeBJnU2/QNhT9DzpWD32qT1Ye7bNtBn
+         XdB2uNP7TfrQk6aoSn3J0+gpeDQ+WBCf1CWG6Xb7FRT8TYA9WWJiRuLcPZGY9SvZgzS6
+         LzEg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=r58jtRbok/salGZLYM01BLC5vndO53EKP4rvTMG539M=;
+        b=VwEnTK/CJ/cjYxY0To88LVwbbWwCfEMxNvNOtKCjr2YpXOTA42CtXayP49L2hAFXRE
+         es2pqAEUBoytjKa0lfG2F3DF1F0q++yB5U30Tc4d1bnMsCjkHondE/ro0RFamiQqyjxd
+         NovzD8n8qW4CP1jgM2d22Cwq/5kW0YuSW4CnY2WvbB5qfodhudt+I9A3slsRf2rnHH+j
+         ZQpnEf/kVhiWM3+Yr/+Ne0tSPPfvsaS/YtBTETjqPzXarksIhBVdnA0k0b41YomToD31
+         l7yQpkwC1VLW8SGR8B2vIrd1T9odqA57AgIFHbwyz14PnACi5nv0SLgERm8CvCSHSqG6
+         rGXA==
+X-Gm-Message-State: AOAM531+UWl6ZxwTQmRFosOLfEffvjDZHS1AsfBMYciKLxgRQMmDhpGd
+        /uWFwfNfT2Lm4twAEVU4CXA=
+X-Google-Smtp-Source: ABdhPJy/HYNeExNgRICAe7MeZiNOQ3nwcf9303GuNuAbuyWWRy/LkElT8eUYYLCtAVQzhgCm8jFckA==
+X-Received: by 2002:ac8:5f07:0:b0:2e1:d695:d857 with SMTP id x7-20020ac85f07000000b002e1d695d857mr15755266qta.40.1647861328214;
+        Mon, 21 Mar 2022 04:15:28 -0700 (PDT)
+Received: from localhost (ec2-13-59-0-164.us-east-2.compute.amazonaws.com. [13.59.0.164])
+        by smtp.gmail.com with UTF8SMTPSA id x21-20020a376315000000b0067d1b191f89sm7653630qkb.68.2022.03.21.04.15.24
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 21 Mar 2022 04:15:27 -0700 (PDT)
+From:   Schspa Shi <schspa@gmail.com>
+To:     pmladek@suse.com, sergey.senozhatsky@gmail.com,
+        rostedt@goodmis.org, john.ogness@linutronix.de
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        bigeasy@linutronix.de, tglx@linutronix.de, schspa@gmail.com
+Subject: [PATCH 5.15-rt] printk: fix suppressed message print when reboot/panic
+Date:   Mon, 21 Mar 2022 19:15:02 +0800
+Message-Id: <20220321111501.68241-1-schspa@gmail.com>
+X-Mailer: git-send-email 2.29.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-CTCH-RefID: str=0001.0A742F23.62384FB4.0051,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-X-CTCH-VOD: Unknown
-X-CTCH-Spam: Unknown
-X-CTCH-Score: 0.000
-X-CTCH-Rules: 
-X-CTCH-Flags: 0
-X-CTCH-ScoreCust: 0.000
-X-Origin-Country: DE
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 21 Mar 2022 09:36:11 +0100, Daniel Wagner wrote:
->Did you import 587C5ECA5D0A306C.asc from korg?
+Update printk_seq for suppressed message.
 
-Hi,
+When message is suppressed, printk_seq should be updated, otherwise
+this message will be printed when reboot. This problem was introduced
+in commit 3edc0c85d154 ("printk: Rebase on top of new ring buffer").
 
-no, I imported it from a keyserver.
+This patch apply fix to 5.15-rt according to
+Message-ID: <87a6dj3b5c.fsf@jogness.linutronix.de>
 
->I have very strong feelings when it comes to gpg and no they are not
->the good ones.
+Signed-off-by: Schspa Shi <schspa@gmail.com>
+---
+ kernel/printk/printk.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-;)
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index 0cc8e8acf545..c3e245c95de4 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -2255,8 +2255,12 @@ static int printk_kthread_func(void *data)
+ 		if (!(con->flags & CON_ENABLED))
+ 			continue;
+ 
+-		if (suppress_message_printing(r.info->level))
++		if (suppress_message_printing(r.info->level)) {
++			console_lock();
++			latched_seq_write(&con->printk_seq, seq);
++			console_unlock();
+ 			continue;
++		}
+ 
+ 		if (con->flags & CON_EXTENDED) {
+ 			len = info_print_ext_header(ext_text,
+-- 
+2.29.0
 
-I suspected a subkey, but OTOH it's odd that a check points to a
-missing subkey, without mentioning the key that needs to be imported.
-It's also odd that the needed key is available by a keyserver, but
-without the subkey included.
-
-Thank you, I imported from git and all is good now [1].
-
-Regards,
-Ralf
-
-[1]
-[rocketmouse@archlinux ~]$ gpg --import /tmp/pgpkeys/keys/587C5ECA5D0A306C.asc 
-gpg: key 587C5ECA5D0A306C: 17 signatures not checked due to missing keys
-gpg: key 587C5ECA5D0A306C: "Daniel Wagner <wagi@monom.org>" 24 new signatures
-gpg: key 587C5ECA5D0A306C: "Daniel Wagner <wagi@monom.org>" 2 new subkeys
-gpg: Total number processed: 1
-gpg:            new subkeys: 2
-gpg:         new signatures: 24
-[snip]
-[rocketmouse@archlinux linux-rt]$ makepkg -s 
-==> Making package: linux-rt 4.19.235_rt106-0.1000 (Mon 21 Mar 2022 10:58:09 CET)
-[snip]
-==> Verifying source file signatures with gpg...
-    linux-4.19.235.tar ... Passed
-    patch-4.19.235-rt106.patch ... Passed
-[snip]
