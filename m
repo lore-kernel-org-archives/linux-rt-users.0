@@ -2,97 +2,68 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BAAD4C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Mar 2022 11:57:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 27C9EC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Mar 2022 13:04:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347012AbiCUL7K (ORCPT
+        id S1347717AbiCUNFv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 21 Mar 2022 07:59:10 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46852 "EHLO
+        Mon, 21 Mar 2022 09:05:51 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58472 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1345896AbiCUL7J (ORCPT
+        with ESMTP id S1347714AbiCUNFv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 21 Mar 2022 07:59:09 -0400
-Received: from mail-qv1-xf2c.google.com (mail-qv1-xf2c.google.com [IPv6:2607:f8b0:4864:20::f2c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6149C15B07D;
-        Mon, 21 Mar 2022 04:57:32 -0700 (PDT)
-Received: by mail-qv1-xf2c.google.com with SMTP id gh15so6630201qvb.8;
-        Mon, 21 Mar 2022 04:57:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=jGIwRa3FcC2veOls//vnX+YOmatILFcNzd8+dnQrnzU=;
-        b=bcOKssJof9v1EZ4ojQb0oapk0wlHmg6od+QJ9oqIE+DY2FS4ix3TxD+jpd7+xKzDwn
-         Ja0G3dV09hKBYxvUY6jMbY74VUMlJ+NzyKOl3+refyIWLpSDjYZbruk/07GVe+1NNaQu
-         EyuhNHHgy6uUez6OvF8j4bUpUMN4oJTd213hm4+edgtYAU5bJrUqLuutK6Twe4vc0VKJ
-         kRkvoMrmMiomL5IqzytGHjf1SDD1OqBpfxoQpq/J1XJxSbzpif1xFDKLnjcA7nWM7b8R
-         MZwKoJC4oiuXQcJRb1wyjIyvTmy2tpPC4yv+1C+0tri5+yiF2VtnO6aeMtblq43wZ5Qc
-         OwWw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=jGIwRa3FcC2veOls//vnX+YOmatILFcNzd8+dnQrnzU=;
-        b=Bayo3M+Yk24mwm5RSdSY63bt6AhxFLBH2KG/kXkgwIJ/AdUCHXVCk2+nNjA3i+cDao
-         iRy7Dguf7GTtr0t79PexeS0l8afXMNAIx21XRWxhoL0KBYND4zncBoYHkqeS8d+nTcOM
-         O9ZOjgU1kIk9QsqbimFvxUdpNnxLZRElj+hqjJHZ07LOaBu4ZDduc1DEI9lIZFyWKlxa
-         d/2ujuE5w88fByExZHUTmtwhSkC/QENvnjfPMb9HN3obC4eWS7ya6OwoSp2ZcSNVDk2b
-         iW+9EL1msyk3nxE9bhPet4UJeUk7av61JGnv/c9HPVctg/k00QRUil2Qjf0ii9gDPI1g
-         txdw==
-X-Gm-Message-State: AOAM531VLuVc6u9UvMG41sZ6XLGpeDox6ycmtEiVWnMIr6oCdIxuICf8
-        2lpejFCVp1MgPm90IQRh4rjDRwsFcc7VBtQMMwM=
-X-Google-Smtp-Source: ABdhPJzTt2NY5A4S7KLCgQ9QSNIqObNNWBN/Z5yI35spdYZbfQd4pV49kthYZEHCXSz+Qa5abuRmYkQ4aFOr3EsSLuU=
-X-Received: by 2002:a05:6214:1cc2:b0:435:1c62:62cc with SMTP id
- g2-20020a0562141cc200b004351c6262ccmr15758217qvd.26.1647863851445; Mon, 21
- Mar 2022 04:57:31 -0700 (PDT)
+        Mon, 21 Mar 2022 09:05:51 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37DDD3D4B7;
+        Mon, 21 Mar 2022 06:04:25 -0700 (PDT)
+From:   John Ogness <john.ogness@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1647867863;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=6oh2tEkEvjtphKwTfNJTxWtdpPsyogRNq0ARlevmVvo=;
+        b=EWp9++qZBQoNASlyfzS6XD1omza7JaZAVVxYvCu9eRb+2nHkNQxk0zPF7Hp7vf6u7RarH7
+        SZoJKCSjzeB6gkPChyBwA52pRHi1ty8eqTwW3QI5Xsdn+MwXRuqfpTOylEDoTPVe64ExbB
+        Ys2ANjxvkShFkwOHqdl6Cf2kPDi6UHAMsR/dccBmzok2mgQjc+KZweuH+rcO5Az7PWpRV5
+        0WD+MT6HmK8m/IwnoL80Y/hnCAvBItHu7JWDY7wIZsMG+P2Tq9RabtpU3fLtCwZo4pvEKl
+        128EdjmP/efmLSdNDt9F3N6PQtEuOoLvoxFWgf8sghLw+CZqfcDFrvLNWSn8lQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1647867863;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=6oh2tEkEvjtphKwTfNJTxWtdpPsyogRNq0ARlevmVvo=;
+        b=xO0o9eV7PJ+CWUidT3gg5/3KffvRIiu2tTbyLPmGcxd3q12bfns3yMJHyiaANKOvRiS2Ix
+        a8I7O0NVgzDnH5Cw==
+To:     Schspa Shi <schspa@gmail.com>, pmladek@suse.com,
+        sergey.senozhatsky@gmail.com, rostedt@goodmis.org
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        bigeasy@linutronix.de, tglx@linutronix.de, schspa@gmail.com
+Subject: Re: [PATCH 5.15-rt] printk: fix suppressed message print when
+ reboot/panic
+In-Reply-To: <20220321111501.68241-1-schspa@gmail.com>
+References: <20220321111501.68241-1-schspa@gmail.com>
+Date:   Mon, 21 Mar 2022 14:10:23 +0106
+Message-ID: <87o81z1mp4.fsf@jogness.linutronix.de>
 MIME-Version: 1.0
-References: <20220321053815.71316-1-schspa@gmail.com> <87a6dj3b5c.fsf@jogness.linutronix.de>
-In-Reply-To: <87a6dj3b5c.fsf@jogness.linutronix.de>
-From:   Shi Schspa <schspa@gmail.com>
-Date:   Mon, 21 Mar 2022 19:57:19 +0800
-Message-ID: <CAMA88TpV6p4wRhx1dpRf7V2Oc27FzV_HR7mb70oGn83RGnfF-w@mail.gmail.com>
-Subject: Re: [PATCH 5.10-rt] printk: fix suppressed message print when reboot/panic
-To:     John Ogness <john.ogness@linutronix.de>
-Cc:     pmladek@suse.com, sergey.senozhatsky@gmail.com,
-        rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org, bigeasy@linutronix.de,
-        tglx@linutronix.de
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-John Ogness <john.ogness@linutronix.de> writes:
-
-> On 2022-03-21, Schspa Shi <schspa@gmail.com> wrote:
->> Update printk_seq for suppressed message.
->>
->> Affects 5.9-rt and 5.10-rt
->>
->> When message is suppressed, printk_seq should be updated, otherwise
->> this message will be printed when reboot. This problem was introduced
->> in commit 3edc0c85d154 ("printk: Rebase on top of new ring buffer").
->>
->> Signed-off-by: Schspa Shi <schspa@gmail.com>
+On 2022-03-21, Schspa Shi <schspa@gmail.com> wrote:
+> Update printk_seq for suppressed message.
 >
-> Reviewed-by: John Ogness <john.ogness@linutronix.de>
+> When message is suppressed, printk_seq should be updated, otherwise
+> this message will be printed when reboot. This problem was introduced
+> in commit 3edc0c85d154 ("printk: Rebase on top of new ring buffer").
 >
-> Nice catch. Thanks.
+> This patch apply fix to 5.15-rt according to
+> Message-ID: <87a6dj3b5c.fsf@jogness.linutronix.de>
 >
-> 5.15-rt also has this issue, although the fix is slightly different. For
-> 5.15-rt, writing to con->printk_seq (via latched_seq_write()) requires
-> the console locked. Would you like to post a patch for 5.15-rt as well,
-> or would you like me to do it?
->
+> Signed-off-by: Schspa Shi <schspa@gmail.com>
 
-I have upload a new patch for 5.15-rt, please review it too.
-Message-Id: <20220321111501.68241-1-schspa@gmail.com>
+Reviewed-by: John Ogness <john.ogness@linutronix.de>
 
-> 5.16 and beyond does not have this issue.
->
-> John Ogness
-
-BRs
-
-Schspa Shi
+Thanks.
