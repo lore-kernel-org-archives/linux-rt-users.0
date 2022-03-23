@@ -2,174 +2,222 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28568C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 23 Mar 2022 14:56:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B07F1C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 23 Mar 2022 19:35:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244941AbiCWO5o (ORCPT
+        id S1344296AbiCWThT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 23 Mar 2022 10:57:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58626 "EHLO
+        Wed, 23 Mar 2022 15:37:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54184 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244934AbiCWO5k (ORCPT
+        with ESMTP id S1344307AbiCWThQ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 23 Mar 2022 10:57:40 -0400
-Received: from mail-ej1-x632.google.com (mail-ej1-x632.google.com [IPv6:2a00:1450:4864:20::632])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8AFCC7DE24
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Mar 2022 07:56:10 -0700 (PDT)
-Received: by mail-ej1-x632.google.com with SMTP id yy13so3392791ejb.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Mar 2022 07:56:10 -0700 (PDT)
+        Wed, 23 Mar 2022 15:37:16 -0400
+Received: from mail-vk1-xa34.google.com (mail-vk1-xa34.google.com [IPv6:2607:f8b0:4864:20::a34])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8330E89090
+        for <linux-rt-users@vger.kernel.org>; Wed, 23 Mar 2022 12:35:45 -0700 (PDT)
+Received: by mail-vk1-xa34.google.com with SMTP id c4so1413983vkq.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 23 Mar 2022 12:35:45 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=rasmusvillemoes.dk; s=google;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=xxpZ0iiJJ0ZwZEvYkcJ55MAH2/mjQ7Nkl8lEGJi9pe8=;
-        b=LABB1GCxIPlD3luxLyc/Nvl+Hx/y317qPwHAgq23XvnHF9qpUBg7Oj4qKR9m2oKy9Z
-         nLHPjFsSVxbqnfMNTml3G5XFtYhv8f8ntalWyDLPzFpp/dHrB+gFda+AuFQOaMhvDpOG
-         lVJ8tx+kfAFLsN1d7jnDqXAnP4HnCw5VLTupQ=
+        d=gmail.com; s=20210112;
+        h=mime-version:from:date:message-id:subject:to
+         :content-transfer-encoding;
+        bh=6gZr5RFx2ghdzotAtFrgJtRK7f3V/b1riCGzfNKNtVo=;
+        b=dI90R7RKPImXzBoD8xduXsVMBDEf9qmbG/xI5NNXHBevr/lvJwaaYb9szmdf8cGVlF
+         YIxZKumP3/YQQX3bU2yNAFhmOPShbA/2thl5hBToBgV80p2kcf1XKMePcmWG0rrUayfL
+         utNTxpL7MuhSGbjXKhI9i88vyYnrZK3yXO+vMzYYKTcrUIwYwcb2E8pKxa0pxdPnj9jt
+         fZBren4YZZCgvDpx7XhAX96htC2R35Gq6Z6urNYYY/HqUEF4g4eqJL0lT0gzfGf1deTg
+         q+9hO6Lsil1QsuPM67lT6W474wJa3LkWC2NUm3E9uhudXjFCfrQF5SJ3mWV7NEtn2o5D
+         q7Gw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=xxpZ0iiJJ0ZwZEvYkcJ55MAH2/mjQ7Nkl8lEGJi9pe8=;
-        b=H0059s8Lvyf49ajyGUvnMWhWP+EcS/8v0C+Wcn4EW68JG8NuN5q2gYrQJt8DPaCo3j
-         dYnF3tfMfxxKT28SDGlVVjYtM219YPZLF4VFatFoBh/eYwS9Af9KHnnTOtJEKhIMtUI4
-         baaHJ4uKmZXz3vOuPVk8W0afubq7RTP5SruLY6OJT6aEmNCaF0rpBqTWABzJJ2rPf6Bc
-         PIvb9oCesq1oe2RuLego18poaiujgiOyDtLwUvZrjlZKzIriP862vtWHs+H/6iLvjgn4
-         uUXhi9+YEMV7hCxhG4ls6fmgGvs8RI0fRxa42Hjq8Uq1ZcAm9e5tvNLz1INVJgDfq9k5
-         u3aQ==
-X-Gm-Message-State: AOAM530rAsfE1H3cJs+cxvhL4TjGgs2MH7rPEmFCwnjwXhziyrWGQ5k7
-        X2oIiN3o22by3kts14VPHAxbGQ==
-X-Google-Smtp-Source: ABdhPJyFFyzCsMB02alxju10p2mtcDMblMiJlaXPaFNhnOhkRjAQ/fDW1gf6qTgwYf+nZz7WQmnLzQ==
-X-Received: by 2002:a17:906:57c1:b0:6d6:da73:e9c0 with SMTP id u1-20020a17090657c100b006d6da73e9c0mr363734ejr.45.1648047369103;
-        Wed, 23 Mar 2022 07:56:09 -0700 (PDT)
-Received: from prevas-ravi.tritech.se ([80.208.64.233])
-        by smtp.gmail.com with ESMTPSA id p14-20020a05640210ce00b00413211746d4sm77256edu.51.2022.03.23.07.56.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 23 Mar 2022 07:56:08 -0700 (PDT)
-From:   Rasmus Villemoes <linux@rasmusvillemoes.dk>
-To:     Tejun Heo <tj@kernel.org>, Lai Jiangshan <jiangshanlai@gmail.com>
-Cc:     =?UTF-8?q?Andr=C3=A9=20Pribil?= <a.pribil@beck-ipc.com>,
-        Steven Walter <stevenrwalter@gmail.com>,
-        Oleksij Rempel <o.rempel@pengutronix.de>,
-        Esben Haabendal <esben@geanix.com>,
-        Jiri Slaby <jirislaby@kernel.org>,
-        Pengutronix Kernel Team <kernel@pengutronix.de>,
-        Peter Hurley <peter@hurleysoftware.com>,
-        linux-rt-users@vger.kernel.org,
-        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
-        linux-kernel@vger.kernel.org
-Subject: [RFC PATCH 2/2] workqueue: update sysfs handlers, allow setting RT policies
-Date:   Wed, 23 Mar 2022 15:56:00 +0100
-Message-Id: <20220323145600.2156689-3-linux@rasmusvillemoes.dk>
-X-Mailer: git-send-email 2.31.1
-In-Reply-To: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
-References: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to
+         :content-transfer-encoding;
+        bh=6gZr5RFx2ghdzotAtFrgJtRK7f3V/b1riCGzfNKNtVo=;
+        b=jNHq32jb4zxsYgLThJQDADPAT8I1t2mCXLikNXSU+q5n00wlLmomKGNsxYKBwc8yqy
+         ggLiVv/Q4vqsiyC2pWjrZvQUGKGFAx45yrIonGRv5DMt91jhc+yI1lJWz3Dc1fiAmVgQ
+         L9hDY4HT5nN78fDk6imGhnwTV3AMcxZahbG1miCMfMuMaQjI6ED8S1BNRSseoDNWStGE
+         y4DFL4bPYxwM+pp/Gyob2BBUm1+OW+VLvqGcnLCkIosXQ02jclHljgrBz5vZs640bR/S
+         BYcwAdu14NKBEUjKfEyVDtH042Or2zsTuu1RFSmXCIjBh2/ja2GvMlowa6Zjy4Y4M7yP
+         eBHg==
+X-Gm-Message-State: AOAM531ewx9LWRtla47O8W8k6SKggY8NocZAT5QzNQZakgWtUzgCgial
+        w0ziGJe8kTAsu/dwg/eNFclZcIGmw59e3a+9Zi3CFHSBTRo=
+X-Google-Smtp-Source: ABdhPJzf5zuDjEIbGdOf7k92J0F3ZWAfuvX4gfrzwZ1+6n+LfKiBDzjLlqagy7BB5SVaN9lXL9nmlHcOguIVK/wtuko=
+X-Received: by 2002:a05:6122:218d:b0:33f:b74a:17e1 with SMTP id
+ j13-20020a056122218d00b0033fb74a17e1mr885949vkd.26.1648064144123; Wed, 23 Mar
+ 2022 12:35:44 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From:   Gautam Thaker <ghthaker@gmail.com>
+Date:   Wed, 23 Mar 2022 12:35:33 -0700
+Message-ID: <CA+1+E3UVmbLA76t_JkZMMC6FHsmc_EOKeLztvgN6nAhTjjK5bQ@mail.gmail.com>
+Subject: 5.15.28-rt35 #2 SMP PREEMPT_RT: Should scheduling latency be as large
+ as 800 usec?
+To:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-For this POC, this (ab)uses the "nice" attribute.
+I built 5.15.28-rt35 #2 SMP PREEMPT_RT  with  =E2=80=9CFully Preemptible
+Kernel" option and otherwise using .config from  a stock Ubuntu 20.04
+ 5.4.0 kernel.
 
-It's of course not exactly pretty, but it avoids the problem of "what
-to show in the xyz file when using SCHED_NORMAL, and what to show in
-the nice file when using SCHED_RR/SCHED_FIFO".
+Quick question: I see scheduling/wake_up latencies around 800 usec and
+this is confirmed by cyclictest. Is there a link that can point me to
+systematic steps I can take to trace down if my problem is a wrong
+config param (un-needed, hurtful debug option) or this is best that I
+can do (on good modern HW.)?  I am hoping that with PREEMPT-RT on an
+unloaded system running at SCHED_FIFO prio 99 I can get max latencies
+of <=3D 100 usec? Is this possible?
 
-It's backwards-compatible, in that a bare integer is interpreted as a
-nice value, while an integer prefixed by "fifo:" or "rr:" chooses that
-RT scheduling policy with the associated value as the priority. The
-show method of course reflects what the store method accepts.
+Details:
 
-Signed-off-by: Rasmus Villemoes <linux@rasmusvillemoes.dk>
----
- kernel/workqueue.c | 54 ++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 47 insertions(+), 7 deletions(-)
+node-0> grep -i preempt /boot/config-5.15.28-rt35
+CONFIG_HAVE_PREEMPT_LAZY=3Dy
+CONFIG_PREEMPT_LAZY=3Dy
+# CONFIG_PREEMPT_NONE is not set
+# CONFIG_PREEMPT_VOLUNTARY is not set
+# CONFIG_PREEMPT is not set
+CONFIG_PREEMPT_RT=3Dy
+CONFIG_PREEMPT_COUNT=3Dy
+CONFIG_PREEMPTION=3Dy
+CONFIG_PREEMPT_RCU=3Dy
+CONFIG_HAVE_PREEMPT_DYNAMIC=3DyA
+CONFIG_PREEMPT_NOTIFIERS=3Dy
+# CONFIG_DEBUG_PREEMPT is not set
+# CONFIG_PREEMPT_TRACER is not set
+# CONFIG_PREEMPTIRQ_DELAY_TEST is not set
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 9eb2ff7bcc04..a97f1aff809e 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -5538,13 +5538,34 @@ static ssize_t wq_nice_show(struct device *dev, struct device_attribute *attr,
- 			    char *buf)
- {
- 	struct workqueue_struct *wq = dev_to_wq(dev);
--	int written;
-+	struct workqueue_attrs *wqattrs;
-+	const char *pfx;
-+	int val;
- 
- 	mutex_lock(&wq->mutex);
--	written = scnprintf(buf, PAGE_SIZE, "%d\n", wq->unbound_attrs->nice);
-+	wqattrs = wq->unbound_attrs;
-+	switch (wqattrs->policy) {
-+	case SCHED_NORMAL:
-+		pfx = "";
-+		val = wqattrs->nice;
-+		break;
-+	case SCHED_FIFO:
-+		pfx = "fifo:";
-+		val = wqattrs->priority;
-+		break;
-+	case SCHED_RR:
-+		pfx = "rr:";
-+		val = wqattrs->priority;
-+		break;
-+	default:
-+		/* Shouldn't happen. */
-+		pfx = NULL;
-+	}
- 	mutex_unlock(&wq->mutex);
- 
--	return written;
-+	if (!pfx)
-+		return -EIO;
-+	return scnprintf(buf, PAGE_SIZE, "%s%d\n", pfx, val);
- }
- 
- /* prepare workqueue_attrs for sysfs store operations */
-@@ -5568,6 +5589,24 @@ static ssize_t wq_nice_store(struct device *dev, struct device_attribute *attr,
- 	struct workqueue_struct *wq = dev_to_wq(dev);
- 	struct workqueue_attrs *attrs;
- 	int ret = -ENOMEM;
-+	int policy, val;
-+
-+	if (sscanf(buf, "fifo:%d", &val) == 1)
-+		policy = SCHED_FIFO;
-+	else if (sscanf(buf, "rr:%d", &val) == 1)
-+		policy = SCHED_RR;
-+	else if (sscanf(buf, "%d", &val) == 1)
-+		policy = SCHED_NORMAL;
-+	else
-+		return -EINVAL;
-+
-+	if (policy == SCHED_NORMAL) {
-+		if (val < MIN_NICE || val > MAX_NICE)
-+			return -EINVAL;
-+	} else {
-+		if (val <= 0 || val >= MAX_RT_PRIO)
-+			return -EINVAL;
-+	}
- 
- 	apply_wqattrs_lock();
- 
-@@ -5575,11 +5614,12 @@ static ssize_t wq_nice_store(struct device *dev, struct device_attribute *attr,
- 	if (!attrs)
- 		goto out_unlock;
- 
--	if (sscanf(buf, "%d", &attrs->nice) == 1 &&
--	    attrs->nice >= MIN_NICE && attrs->nice <= MAX_NICE)
--		ret = apply_workqueue_attrs_locked(wq, attrs);
-+	attrs->policy = policy;
-+	if (policy == SCHED_NORMAL)
-+		attrs->nice = val;
- 	else
--		ret = -EINVAL;
-+		attrs->priority = val;
-+	ret = apply_workqueue_attrs_locked(wq, attrs);
- 
- out_unlock:
- 	apply_wqattrs_unlock();
--- 
-2.31.1
+node-0> grep -i debug  /boot/config-5.15.28-rt35 |grep  =3Dy
+CONFIG_SLUB_DEBUG=3Dy
+CONFIG_IOSF_MBI_DEBUG=3Dy
+CONFIG_X86_DEBUGCTLMSR=3Dy
+CONFIG_PM_DEBUG=3Dy
+CONFIG_PM_ADVANCED_DEBUG=3Dy
+CONFIG_PM_SLEEP_DEBUG=3Dy
+CONFIG_ACPI_DEBUGGER=3Dy
+CONFIG_ACPI_DEBUGGER_USER=3Dy
+CONFIG_ACPI_DEBUG=3Dy
+CONFIG_ARCH_SUPPORTS_DEBUG_PAGEALLOC=3Dy
+CONFIG_BLK_DEBUG_FS=3Dy
+CONFIG_BLK_DEBUG_FS_ZONED=3Dy
+CONFIG_NFS_DEBUG=3Dy
+CONFIG_SUNRPC_DEBUG=3Dy
+CONFIG_DYNAMIC_DEBUG=3Dy
+CONFIG_DYNAMIC_DEBUG_CORE=3Dy
+CONFIG_DEBUG_BUGVERBOSE=3Dy
+CONFIG_DEBUG_INFO=3Dy
+CONFIG_DEBUG_INFO_DWARF4=3Dy
+CONFIG_DEBUG_FS=3Dy
+CONFIG_DEBUG_FS_ALLOW_ALL=3Dy
+CONFIG_ARCH_HAS_EARLY_DEBUG=3Dy
+CONFIG_DEBUG_KERNEL=3Dy
+CONFIG_DEBUG_MISC=3Dy
+CONFIG_ARCH_HAS_DEBUG_WX=3Dy
+CONFIG_DEBUG_WX=3Dy
+CONFIG_HAVE_DEBUG_KMEMLEAK=3Dy
+CONFIG_ARCH_HAS_DEBUG_VM_PGTABLE=3Dy
+CONFIG_ARCH_HAS_DEBUG_VIRTUAL=3Dy
+CONFIG_SCHED_DEBUG=3Dy
+CONFIG_LOCK_DEBUGGING_SUPPORT=3Dy
+CONFIG_X86_DEBUG_FPU=3Dy
 
+My test involves using "nanosleep(x)" with different values of "x" and
+examining stats of actual sleep durations. I see:
+
+#nanosleep_duration  minimum:  maximum:  mean:    num_points:  Range
+100                  103       934       108.635  100000       831
+500                  504       1377      543.272  100000       873
+1000                 1010      1870      1053.24  100000       860
+2000                 2010      2872      2052.46  100000       862
+4000                 4011      4906      4046.66  100000       895
+10000                10013     10738     10067.3  100000       725
+
+I next ran cyclictest which mostly agrees with the ~700-800 max
+latency I see in my own tests:
+
+node-0> sudo ./cyclictest --mlockall --smp --priority=3D80
+--interval=3D1000 --distance=3D0
+# /dev/cpu_dma_latency set to 0us
+policy: fifo: loadavg: 2.84 0.86 0.62 1/551 8688
+
+T: 0 ( 8655) P:80 I:1000 C:   6656 Min:      3 Act:    3 Avg:    4 Max:    =
+  24
+T: 1 ( 8656) P:80 I:1000 C:   6650 Min:      3 Act:    4 Avg:    5 Max:    =
+  68
+T: 2 ( 8657) P:80 I:1000 C:   6645 Min:      3 Act:    4 Avg:    4 Max:    =
+  24
+T: 3 ( 8658) P:80 I:1000 C:   6640 Min:      3 Act:    4 Avg:    4 Max:    =
+  28
+T: 4 ( 8659) P:80 I:1000 C:   6635 Min:      3 Act:    3 Avg:    4 Max:    =
+  27
+T: 5 ( 8660) P:80 I:1000 C:   6629 Min:      3 Act:    3 Avg:    4 Max:    =
+  26
+T: 6 ( 8661) P:80 I:1000 C:   6625 Min:      3 Act:    3 Avg:    4 Max:    =
+  25
+T: 7 ( 8662) P:80 I:1000 C:   6620 Min:      3 Act:    3 Avg:    4 Max:    =
+  98
+T: 8 ( 8663) P:80 I:1000 C:   6615 Min:      3 Act:    4 Avg:    5 Max:    =
+ 300
+T: 9 ( 8664) P:80 I:1000 C:   6610 Min:      3 Act:    3 Avg:    5 Max:    =
+ 610
+T:10 ( 8665) P:80 I:1000 C:   6606 Min:      3 Act:    4 Avg:    4 Max:    =
+  16
+T:11 ( 8666) P:80 I:1000 C:   6601 Min:      3 Act:    3 Avg:    5 Max:    =
+ 319
+T:12 ( 8667) P:80 I:1000 C:   6596 Min:      3 Act:    5 Avg:    5 Max:    =
+ 696
+T:13 ( 8668) P:80 I:1000 C:   6592 Min:      3 Act:    4 Avg:    5 Max:    =
+ 149
+T:14 ( 8669) P:80 I:1000 C:   6587 Min:      3 Act:    3 Avg:    5 Max:    =
+ 633
+T:15 ( 8670) P:80 I:1000 C:   6583 Min:      3 Act:    3 Avg:    4 Max:    =
+ 159
+T:16 ( 8671) P:80 I:1000 C:   6578 Min:      3 Act:    3 Avg:    5 Max:    =
+ 661
+T:17 ( 8672) P:80 I:1000 C:   6574 Min:      3 Act:    4 Avg:    5 Max:    =
+ 170
+T:18 ( 8673) P:80 I:1000 C:   6569 Min:      3 Act:    3 Avg:    4 Max:    =
+  13
+T:19 ( 8674) P:80 I:1000 C:   6565 Min:      3 Act:    4 Avg:    4 Max:    =
+ 348
+T:20 ( 8675) P:80 I:1000 C:   6561 Min:      3 Act:    3 Avg:    4 Max:    =
+  23
+T:21 ( 8676) P:80 I:1000 C:   6556 Min:      3 Act:    4 Avg:    5 Max:    =
+ 635
+T:22 ( 8677) P:80 I:1000 C:   6552 Min:      3 Act:    4 Avg:    5 Max:    =
+ 349
+T:23 ( 8678) P:80 I:1000 C:   6548 Min:      3 Act:    3 Avg:    4 Max:    =
+  16
+T:24 ( 8679) P:80 I:1000 C:   6543 Min:      3 Act:    4 Avg:    6 Max:    =
+ 610
+T:25 ( 8680) P:80 I:1000 C:   6539 Min:      3 Act:    3 Avg:    4 Max:    =
+  99
+T:26 ( 8681) P:80 I:1000 C:   6534 Min:      3 Act:    4 Avg:    4 Max:    =
+ 547
+T:27 ( 8682) P:80 I:1000 C:   6530 Min:      3 Act:    3 Avg:    5 Max:    =
+ 157
+T:28 ( 8683) P:80 I:1000 C:   6526 Min:      3 Act:    4 Avg:    4 Max:    =
+  26
+T:29 ( 8684) P:80 I:1000 C:   6521 Min:      3 Act:    4 Avg:    5 Max:    =
+ 382
+T:30 ( 8685) P:80 I:1000 C:   6517 Min:      3 Act:    3 Avg:    4 Max:    =
+  17
+T:31 ( 8686) P:80 I:1000 C:   6512 Min:      3 Act:    3 Avg:    5 Max:    =
+ 639
+
+My HW is a Dell d430 on which /proc/cpuinfo shows 32 processors of type:
+
+processor       : 31
+vendor_id       : GenuineIntel
+cpu family      : 6
+model           : 63
+model name      : Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
+stepping        : 2
+microcode       : 0x46
+cpu MHz         : 1200.000
+cache size      : 20480 KB
+
+Any directions to how one goes about reducing my max latencies will be
+much appreciated.
