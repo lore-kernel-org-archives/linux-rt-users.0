@@ -2,100 +2,310 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C998C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Mar 2022 20:31:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CA17C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Mar 2022 22:20:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232261AbiCYUd2 (ORCPT
+        id S233714AbiCYWVf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 25 Mar 2022 16:33:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53422 "EHLO
+        Fri, 25 Mar 2022 18:21:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59108 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232209AbiCYUd0 (ORCPT
+        with ESMTP id S233603AbiCYWVe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Mar 2022 16:33:26 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 20EC2E0F5;
-        Fri, 25 Mar 2022 13:31:52 -0700 (PDT)
+        Fri, 25 Mar 2022 18:21:34 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6EE3219897B;
+        Fri, 25 Mar 2022 15:19:59 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id B47AE61D2A;
-        Fri, 25 Mar 2022 20:31:51 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8F6B0C2BBE4;
-        Fri, 25 Mar 2022 20:31:50 +0000 (UTC)
-Date:   Fri, 25 Mar 2022 16:31:48 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     John Keeping <john@metanate.com>
-Cc:     linux-trace-devel@vger.kernel.org, williskung@google.com,
-        kaleshsingh@google.com, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 09/12] trace-cmd analyze: Add wake up latency timings
-Message-ID: <20220325163148.0bf4146b@gandalf.local.home>
-In-Reply-To: <20220325161333.65ffb789@gandalf.local.home>
-References: <20220324025726.1727204-1-rostedt@goodmis.org>
-        <20220324025726.1727204-10-rostedt@goodmis.org>
-        <Yj4ZPMJdz49eQy7I@donbot>
-        <20220325161333.65ffb789@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        by dfw.source.kernel.org (Postfix) with ESMTPS id F0C2461425;
+        Fri, 25 Mar 2022 22:19:58 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4216AC340F0;
+        Fri, 25 Mar 2022 22:19:58 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 5.15.31-rt38
+Date:   Fri, 25 Mar 2022 22:19:01 -0000
+Message-ID: <164824674160.618312.17652860693196499470@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 25 Mar 2022 16:13:33 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+Hello RT-list!
 
-> I'll fix it in v2.
+I'm pleased to announce the 5.15.31-rt38 stable release.
 
-BTW, I plan on rewriting a lot of this to move it into libtracecmd. That
-way other tools can easily extract data from it.
+You can get this release via the git tree at:
 
-For example, instead of hard coding "page faults" and "wake ups" I plan on
-adding a way to register events to trigger on. Something like:
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
- tracecmd_analyze_register_event_timing(handle, name, start_event,
-		 start_field, start_record, end_event, end_field,
-		 end_record);
+  branch: v5.15-rt
+  Head SHA1: 4a5bf82a954ec1e8dbfcaa20f6e60263bfdda64b
 
-Where "start_record" and "end_record" is if the field is a task to record.
+Or to build 5.15.31-rt38 directly, the following patches should be applied:
 
-enum {
-	TRACECMD_ANALYZE_FL_NONE,
-	TRACECMD_ANALYZE_FL_PID,
-	TRACECMD_ANALYZE_FL_PID_CPU,
-};
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
 
-Thus, we could have:
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.31.xz
 
-	tracecmd_analyze_register_event_timing(handle,
-			"Wakeup", sched_waking,
-			pid_field, TRACECMD_ANALYZE_FL_PID,
-			sched_switch, next_pid,
-			TRACECMD_ANALYZE_FL_PID_CPU);
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.31-rt38.patch.xz
 
-Or something like the above, that will end up turning into the
-process_wakeup() function (and properly record the waking pid globally).
 
-One tool I want to use this with, is my ktrace shell (development has
-stalled, but I do plan on starting it again). 
+Enjoy!
+Clark
 
-  https://git.kernel.org/pub/scm/linux/kernel/git/rostedt/ktrace.git/
+Changes from v5.15.29-rt37:
+---
 
-And then I could have commands like:
+Alan Stern (2):
+      usb: gadget: Fix use-after-free bug by not setting udc->dev.driver
+      usb: usbtmc: Fix bug in pipe direction for control transfers
 
-ktrace> open trace.dat
-ktrace> analyze register timing sched.sched_switch pid global \
-  sched.sched_switch next_pid cpu
-ktrace> analyze
-ktrace> analyze show cpu 1
+Alexander Lobakin (1):
+      MIPS: smp: fill in sibling and core maps earlier
 
-And it only shows cpu 1 data.
+Arnd Bergmann (1):
+      arm64: fix clang warning about TRAMP_VALIAS
 
-ktrace> analyze show pid 512
+Brian Masney (1):
+      crypto: qcom-rng - ensure buffer for generate is completely filled
 
-to see just pid 512
+Chengming Zhou (1):
+      kselftest/vm: fix tests build with old libc
 
-etc.
+Christoph Niedermaier (1):
+      drm/imx: parallel-display: Remove bus flags check in imx_pd_bridge_atomic_check()
 
--- Steve
+Christophe JAILLET (1):
+      bnx2: Fix an error message
+
+Clark Williams (3):
+      Merge tag 'v5.15.30' into v5.15-rt
+      Merge tag 'v5.15.31' into v5.15-rt
+      Linux 5.15.31-rt38
+
+Corentin Labbe (1):
+      ARM: dts: rockchip: fix a typo on rk3288 crypto-controller
+
+Dan Carpenter (1):
+      usb: gadget: rndis: prevent integer overflow in rndis_set_response()
+
+Dinh Nguyen (1):
+      arm64: dts: agilex: use the compatible "intel,socfpga-agilex-hsotg"
+
+Doug Berger (1):
+      net: bcmgenet: skip invalid partial checksums
+
+Eric Dumazet (2):
+      tcp: make tcp_read_sock() more robust
+      net/packet: fix slab-out-of-bounds access in packet_recvmsg()
+
+Filipe Manana (1):
+      btrfs: skip reserved bytes warning on unmount after log cleanup failure
+
+Golan Ben Ami (1):
+      iwlwifi: don't advertise TWT support
+
+Greg Kroah-Hartman (2):
+      Linux 5.15.30
+      Linux 5.15.31
+
+Guo Ziliang (1):
+      mm: swap: get rid of livelock in swapin readahead
+
+Ivan Vecera (2):
+      ice: Fix race condition during interface enslave
+      iavf: Fix hang during reboot/shutdown
+
+Jakob Unterwurzacher (1):
+      arm64: dts: rockchip: fix rk3399-puma eMMC HS400 signal integrity
+
+Jia-Ju Bai (1):
+      atm: firestream: check the return value of ioremap() in fs_init()
+
+Jiasheng Jiang (2):
+      atm: eni: Add check for dma_map_single
+      hv_netvsc: Add check for kvmalloc_array
+
+Jiyong Park (1):
+      vsock: each transport cycles only on its own sockets
+
+Jocelyn Falempe (1):
+      drm/mgag200: Fix PLL setup for g200wb and g200ew
+
+Johannes Berg (1):
+      mac80211: refuse aggregations sessions before authorized
+
+Joseph Qi (1):
+      ocfs2: fix crash when initialize filecheck kobj fails
+
+Juerg Haefliger (1):
+      net: phy: mscc: Add MODULE_FIRMWARE macros
+
+Julian Braha (1):
+      ARM: 9178/1: fix unmet dependency on BITREVERSE for HAVE_ARCH_BITREVERSE
+
+Kai Lueke (1):
+      Revert "xfrm: state and policy should fail if XFRMA_IF_ID 0"
+
+Krzysztof Kozlowski (1):
+      arm64: dts: rockchip: align pl330 node name with dtschema
+
+Kurt Cancemi (1):
+      net: phy: marvell: Fix invalid comparison in the resume and suspend functions
+
+Lad Prabhakar (1):
+      can: rcar_canfd: rcar_canfd_channel_probe(): register the CAN device when fully ready
+
+Luiz Augusto von Dentz (1):
+      Bluetooth: hci_core: Fix leaking sent_cmd skb
+
+Manasi Navare (1):
+      drm/vrr: Set VRR capable prop only if it is attached to connector
+
+Manish Chopra (1):
+      bnx2x: fix built-in kernel driver load failure
+
+Marek Vasut (1):
+      drm/panel: simple: Fix Innolux G070Y2-L01 BPP settings
+
+Matt Lupfer (1):
+      scsi: mpt3sas: Page fault in reply q processing
+
+Miaoqian Lin (1):
+      net: dsa: Add missing of_node_put() in dsa_port_parse_of
+
+Michael Petlan (1):
+      perf symbols: Fix symbol size calculation condition
+
+Ming Lei (1):
+      block: release rq qos structures for queue without disk
+
+Nicolas Dichtel (1):
+      net: handle ARPHRD_PIMREG in dev_is_mac_header_xmit()
+
+Niels Dossche (2):
+      sfc: extend the locking on mcdi->seqno
+      alx: acquire mutex for alx_reinit in alx_change_mtu
+
+Pavel Skripkin (1):
+      Input: aiptek - properly check endpoint type
+
+Peter Zijlstra (1):
+      x86/module: Fix the paravirt vs alternative order
+
+Przemyslaw Patynowski (1):
+      iavf: Fix double free in iavf_reset_task
+
+Quentin Schulz (1):
+      arm64: dts: rockchip: fix rk3399-puma-haikou USB OTG mode
+
+Randy Dunlap (1):
+      efi: fix return value of __setup handlers
+
+Sabrina Dubroca (1):
+      esp6: fix check on ipv6_skip_exthdr's return value
+
+Sascha Hauer (2):
+      arm64: dts: rockchip: reorder rk3399 hdmi clocks
+      ARM: dts: rockchip: reorder rk322x hmdi clocks
+
+Sreeramya Soratkal (1):
+      nl80211: Update bss channel on channel switch for P2P_CLIENT
+
+Thomas Zimmermann (1):
+      drm: Don't make DRM_PANEL_BRIDGE dependent on DRM_KMS_HELPERS
+
+Vladimir Oltean (1):
+      net: mscc: ocelot: fix backwards compatibility with single-chain tc-flower offload
+
+Yan Yan (2):
+      xfrm: Check if_id in xfrm_migrate
+      xfrm: Fix xfrm migrate issues when address family changes
+---
+Makefile                                           |  2 +-
+ arch/arm/boot/dts/rk322x.dtsi                      |  4 ++--
+ arch/arm/boot/dts/rk3288.dtsi                      |  2 +-
+ arch/arm64/boot/dts/intel/socfpga_agilex.dtsi      |  4 ++--
+ arch/arm64/boot/dts/rockchip/px30.dtsi             |  2 +-
+ arch/arm64/boot/dts/rockchip/rk3328.dtsi           |  2 +-
+ .../arm64/boot/dts/rockchip/rk3399-puma-haikou.dts |  1 +
+ arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi      | 20 ++++++++++++++++
+ arch/arm64/boot/dts/rockchip/rk3399.dtsi           |  6 ++---
+ arch/arm64/include/asm/vectors.h                   |  4 ++--
+ arch/mips/kernel/smp.c                             |  6 ++---
+ arch/x86/kernel/module.c                           | 13 ++++++----
+ block/blk-core.c                                   |  4 ++++
+ drivers/atm/eni.c                                  |  2 ++
+ drivers/atm/firestream.c                           |  2 ++
+ drivers/crypto/qcom-rng.c                          | 17 +++++++------
+ drivers/firmware/efi/apple-properties.c            |  2 +-
+ drivers/firmware/efi/efi.c                         |  2 +-
+ drivers/gpu/drm/bridge/Kconfig                     |  2 +-
+ drivers/gpu/drm/drm_connector.c                    |  3 +++
+ drivers/gpu/drm/imx/parallel-display.c             |  8 -------
+ drivers/gpu/drm/mgag200/mgag200_pll.c              |  6 ++---
+ drivers/gpu/drm/panel/Kconfig                      |  1 +
+ drivers/gpu/drm/panel/panel-simple.c               |  2 +-
+ drivers/input/tablet/aiptek.c                      | 10 ++++----
+ drivers/net/can/rcar/rcar_canfd.c                  |  6 ++---
+ drivers/net/ethernet/atheros/alx/main.c            |  5 +++-
+ drivers/net/ethernet/broadcom/bnx2.c               |  2 +-
+ drivers/net/ethernet/broadcom/bnx2x/bnx2x.h        |  2 --
+ drivers/net/ethernet/broadcom/bnx2x/bnx2x_cmn.c    | 28 +++++++++++++---------
+ drivers/net/ethernet/broadcom/bnx2x/bnx2x_main.c   | 15 ++----------
+ drivers/net/ethernet/broadcom/genet/bcmgenet.c     |  6 +++--
+ drivers/net/ethernet/intel/iavf/iavf_main.c        | 15 +++++++++++-
+ drivers/net/ethernet/intel/ice/ice.h               | 11 ++++++++-
+ drivers/net/ethernet/intel/ice/ice_main.c          | 12 +++++++++-
+ drivers/net/ethernet/mscc/ocelot_flower.c          | 16 ++++++++++++-
+ drivers/net/ethernet/sfc/mcdi.c                    |  2 +-
+ drivers/net/hyperv/netvsc_drv.c                    |  3 +++
+ drivers/net/phy/marvell.c                          |  8 +++----
+ drivers/net/phy/mscc/mscc_main.c                   |  3 +++
+ drivers/net/wireless/intel/iwlwifi/iwl-nvm-parse.c |  3 +--
+ drivers/net/wireless/intel/iwlwifi/mvm/mac80211.c  |  1 -
+ drivers/scsi/mpt3sas/mpt3sas_base.c                |  5 ++--
+ drivers/usb/class/usbtmc.c                         | 13 +++++++---
+ drivers/usb/gadget/function/rndis.c                |  1 +
+ drivers/usb/gadget/udc/core.c                      |  3 ---
+ drivers/vhost/vsock.c                              |  3 ++-
+ fs/btrfs/block-group.c                             | 26 ++++++++++++++++++--
+ fs/btrfs/ctree.h                                   |  7 ++++++
+ fs/btrfs/tree-log.c                                | 23 ++++++++++++++++++
+ fs/ocfs2/super.c                                   | 22 ++++++++---------
+ include/linux/if_arp.h                             |  1 +
+ include/net/af_vsock.h                             |  3 ++-
+ include/net/xfrm.h                                 |  5 ++--
+ lib/Kconfig                                        |  1 -
+ localversion-rt                                    |  2 +-
+ mm/swap_state.c                                    |  2 +-
+ net/bluetooth/hci_core.c                           |  1 +
+ net/dsa/dsa2.c                                     |  1 +
+ net/ipv4/tcp.c                                     | 10 ++++----
+ net/ipv6/esp6.c                                    |  3 +--
+ net/key/af_key.c                                   |  2 +-
+ net/mac80211/agg-tx.c                              | 10 +++++++-
+ net/packet/af_packet.c                             | 11 ++++++++-
+ net/vmw_vsock/af_vsock.c                           |  9 +++++--
+ net/vmw_vsock/virtio_transport.c                   |  7 ++++--
+ net/vmw_vsock/vmci_transport.c                     |  5 +++-
+ net/wireless/nl80211.c                             |  3 ++-
+ net/xfrm/xfrm_policy.c                             | 14 ++++++-----
+ net/xfrm/xfrm_state.c                              | 15 ++++++++----
+ net/xfrm/xfrm_user.c                               | 27 +++++++--------------
+ tools/perf/util/symbol.c                           |  2 +-
+ tools/testing/selftests/vm/userfaultfd.c           |  1 +
+ 73 files changed, 336 insertions(+), 167 deletions(-)
+---
