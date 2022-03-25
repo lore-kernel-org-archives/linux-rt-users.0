@@ -2,100 +2,89 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B862C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Mar 2022 19:45:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 28AD8C4332F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Mar 2022 19:47:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231158AbiCYTqk (ORCPT
+        id S231312AbiCYTtG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 25 Mar 2022 15:46:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42296 "EHLO
+        Fri, 25 Mar 2022 15:49:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42418 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231502AbiCYTqX (ORCPT
+        with ESMTP id S231924AbiCYTr4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Mar 2022 15:46:23 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F1D952BC1FE
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Mar 2022 12:27:48 -0700 (PDT)
-From:   John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1648236463;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=JfydAyDAsZAFNAngXFtaXDNQOR2Cj6aPIN10rHkwcu8=;
-        b=wF4zfsjA/NZyghlXVuaERsIfqeLMrd7YWJg3X/ntD8/FC2mFPRZk29Ub+ty1LCPIYn71vJ
-        ejxGaXJV9BPeoLAYwbOJj3CcznQqXmLKaeFbqu02h/uHAIeKE6KahhW21reUq0wbbqjJh/
-        3w+q6ajFf83JA4QUZUlyLkNvIzzbuXTufyhMoWhAkCxfqtZnyFC1qq8mUD9+9v+N5qu94u
-        yA9UE+6+BbIfehUvb9V31lIJKtUcdSAX+T77REGI2Q7rccM/KmpIHJ/HONYDlL0xhF3v+U
-        oU8LoApeLM/H2QJaSrJap9ZxMfDMk62QUU4NDvTBrJRX8wN8+t35NzLtPa543Q==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1648236463;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=JfydAyDAsZAFNAngXFtaXDNQOR2Cj6aPIN10rHkwcu8=;
-        b=QYLNikRTwYtpQQeYz93zew4qvb5t4G0Gvi3uhdJST6nA3HxcjP2xlHtoPOzUypq2Mly87T
-        NeeLxJYaXJaoIGBQ==
-To:     Gautam Thaker <ghthaker@gmail.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: 5.15.28-rt35 #2 SMP PREEMPT_RT: Should scheduling latency be as
- large as 800 usec?
-In-Reply-To: <CA+1+E3XkM=4ZPbbOGtj7kuWtJfciAJ+=M-UrOn-9YA2_B2mjmA@mail.gmail.com>
-References: <CA+1+E3UVmbLA76t_JkZMMC6FHsmc_EOKeLztvgN6nAhTjjK5bQ@mail.gmail.com>
- <871qyse8ra.fsf@jogness.linutronix.de>
- <CA+1+E3WxTOMbh5OCub2wNiNWNELA2fcDL1hXgzJzr-Yc-FuoTQ@mail.gmail.com>
- <87lewzohkk.fsf@jogness.linutronix.de>
- <CA+1+E3WBGf1Q9aXAMiN3gfUEEqWQDfzPH-Hg6-G8FrZEBSZUYw@mail.gmail.com>
- <87r16qzbpu.fsf@jogness.linutronix.de>
- <CA+1+E3XkM=4ZPbbOGtj7kuWtJfciAJ+=M-UrOn-9YA2_B2mjmA@mail.gmail.com>
-Date:   Fri, 25 Mar 2022 20:33:42 +0106
-Message-ID: <877d8hhlxt.fsf@jogness.linutronix.de>
+        Fri, 25 Mar 2022 15:47:56 -0400
+Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 70CCA1786BA;
+        Fri, 25 Mar 2022 12:37:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=metanate.com; s=stronger; h=In-Reply-To:Content-Type:References:Message-ID:
+        Subject:Cc:To:From:Date:Reply-To:Content-Transfer-Encoding:Content-ID:
+        Content-Description; bh=KMC7/9jTpe9v+E1NnmAuNea1e+9FubhZixtwMrAgmFo=; b=J2Bts
+        OklpsY1qXe5F1zD09AHVweziiqc6wqQg7z5uQOwFeNm1PDBW7fZn1SAjIRdkzXeS1Ns8ZFs+5YD34
+        QPgc7V+0Wnifhg5Iv1zqEaPwOqUdchgwnfzyXEW0v8CorbbNfxQag8E9AiYky9N0jAKCPTZeJaNbo
+        N4/85pmzTUbj1OFlENT7bTTGaSWhK1jv/eH8rk4X/WdT+vvRVLTYlL0cjU8skLGzt2gQezUZoy1nf
+        rnpR4RaKCS1M+2ejM+D8ms3CkVAUqy7tqAsJmoJhomUYErUBAu78P2eeLDrSSI5lYjMLsHNW2RZGq
+        SPSwYgpu6SSLqbK/qvlllFYSOVThw==;
+Received: from [81.174.171.191] (helo=donbot)
+        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+        (Exim 4.93)
+        (envelope-from <john@metanate.com>)
+        id 1nXpk8-0002S0-QJ; Fri, 25 Mar 2022 19:37:04 +0000
+Date:   Fri, 25 Mar 2022 19:37:03 +0000
+From:   John Keeping <john@metanate.com>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     linux-trace-devel@vger.kernel.org, williskung@google.com,
+        kaleshsingh@google.com, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 06/12] trace-cmd analyze: Add tracing of tasks and their
+ states
+Message-ID: <Yj4Z39HsErMB73E9@donbot>
+References: <20220324025726.1727204-1-rostedt@goodmis.org>
+ <20220324025726.1727204-7-rostedt@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220324025726.1727204-7-rostedt@goodmis.org>
+X-Authenticated: YES
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-03-25, Gautam Thaker <ghthaker@gmail.com> wrote:
-> Even after I set  to "-g performance"  and set "-d 3.2GHz -u 3.2GHz"  I get:
->
-> ..[same for all CPUS 0-30 as well]
-> analyzing CPU 31:
->   driver: intel_cpufreq
->   CPUs which run at the same hardware frequency: 31
->   CPUs which need to have their frequency coordinated by software: 31
->   maximum transition latency: 20.0 us.
->   hardware limits: 1.20 GHz - 3.20 GHz
->   available cpufreq governors: conservative, ondemand, userspace,
-> powersave, performance, schedutil
->   current policy: frequency should be within 3.20 GHz and 3.20 GHz.
->                   The governor "performance" may decide which speed to use
->                   within this range.
->   current CPU frequency is 1.20 GHz.
->
-> The current CPU freq is at 1.2 GHz.   SHould "current CPU frequency"
-> be at 3.2 GHz now all the time?
+On Wed, Mar 23, 2022 at 10:57:20PM -0400, Steven Rostedt wrote:
+> From: "Steven Rostedt (Google)" <rostedt@goodmis.org>
+> 
+> If sched_switch is found and has the prev_state field, then record them
+> and keep track of the time the task was in the state, the number of times
+> it was scheduled out of the state, and print the total time, average time,
+> and number of times the task was scheduled out of that state. Also show
+> the time stamp of where the longest time it went into that state.
+> 
+> Currently the only states that are supported are "preempted" (which was in
+> state running), "blocked" (state uninterruptible), "sleeping" (state
+> interruptible), and "other" (all other states).
+> 
+> Signed-off-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+> ---
+> @@ -288,6 +337,24 @@ static void process_switch(struct analysis_data *data,
+>  		task->start_ts = record->ts;
+>  		cpu_data->current_pid = pid;
+>  
+> +		switch (task->last_state) {
+> +		case -1:
+> +			/* First time seen */
+> +			break;
+> +		case 0:
+> +			update_sched_timings(&task->preempt, record->ts);
+> +			break;
+> +		case 0x1:
+> +			update_sched_timings(&task->sleep, record->ts);
+> +			break;
+> +		case 0x2:
+> +			update_sched_timings(&task->blocked, record->ts);
+> +			break;
+> +		default:
+> +			update_sched_timings(&task->other, record->ts);
+> +		}
+> +		task->last_state = val & 0x1f;
 
-Yes, it should.
-
-> And even at 1.2GHz, if that freq is steady, why should 'hwlatdetect'
-> report the 800 usec latency?
-
-Why do you think it is steady?
-
-> It seems my issues are something other
-> than  "cpufreq-set" policy I am using. (SMIs?)
-
-Perhaps your BIOS is performing some scaling via SMIs.
-
-It might be interesting to burn your CPUs and see if they ramp up. And
-then perform your cyclictest and hwlatdetect tests while they burn.
-
-An effective way to burn your CPUs is just send them into infinite
-loops:
-
-for c in $(seq $(nproc)); do ( while true; do echo -n; done & ); done
-
-Be sure check cpufreq-info while this is running.
-
-John Ogness
+val is next_pid here, does last_state even need to be updated for the
+switched-to task?
