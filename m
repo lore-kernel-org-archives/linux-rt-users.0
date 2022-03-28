@@ -2,116 +2,157 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5818C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Mar 2022 10:24:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AF80C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Mar 2022 13:51:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240218AbiC1K00 (ORCPT
+        id S243503AbiC1Nxb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 28 Mar 2022 06:26:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53942 "EHLO
+        Mon, 28 Mar 2022 09:53:31 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38724 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240202AbiC1K0V (ORCPT
+        with ESMTP id S243506AbiC1Nxa (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 28 Mar 2022 06:26:21 -0400
-Received: from metis.ext.pengutronix.de (metis.ext.pengutronix.de [IPv6:2001:67c:670:201:290:27ff:fe1d:cc33])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1538637015
-        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 03:24:41 -0700 (PDT)
-Received: from gallifrey.ext.pengutronix.de ([2001:67c:670:201:5054:ff:fe8d:eefb] helo=bjornoya.blackshift.org)
-        by metis.ext.pengutronix.de with esmtps (TLS1.3:ECDHE_RSA_AES_256_GCM_SHA384:256)
-        (Exim 4.92)
-        (envelope-from <mkl@pengutronix.de>)
-        id 1nYmY1-0003iM-9k; Mon, 28 Mar 2022 12:24:29 +0200
-Received: from pengutronix.de (2a03-f580-87bc-d400-accf-b53a-6e18-7f7d.ip6.dokom21.de [IPv6:2a03:f580:87bc:d400:accf:b53a:6e18:7f7d])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange ECDHE (P-256) server-signature RSA-PSS (4096 bits) server-digest SHA256)
-        (Client did not present a certificate)
-        (Authenticated sender: mkl-all@blackshift.org)
-        by smtp.blackshift.org (Postfix) with ESMTPSA id 84729554F2;
-        Mon, 28 Mar 2022 10:09:27 +0000 (UTC)
-Date:   Mon, 28 Mar 2022 12:09:27 +0200
-From:   Marc Kleine-Budde <mkl@pengutronix.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Rasmus Villemoes <linux@rasmusvillemoes.dk>,
-        Peter Hurley <peter@hurleysoftware.com>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Esben Haabendal <esben@geanix.com>,
-        Steven Walter <stevenrwalter@gmail.com>,
-        linux-kernel@vger.kernel.org,
-        Oleksij Rempel <o.rempel@pengutronix.de>,
-        Pengutronix Kernel Team <kernel@pengutronix.de>,
-        =?utf-8?B?QW5kcsOp?= Pribil <a.pribil@beck-ipc.com>,
-        Tejun Heo <tj@kernel.org>, Jiri Slaby <jirislaby@kernel.org>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH 0/2] RT scheduling policies for workqueues
-Message-ID: <20220328100927.5ax34nea7sp7jdsy@pengutronix.de>
-References: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
- <YkGIhYKJG+w4L7ge@linutronix.de>
+        Mon, 28 Mar 2022 09:53:30 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 1DD285EDC2
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 06:51:49 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1648475508;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=7kNKLf8yfEf9VObJjS6Szdmj1nSgLd4zL/Xd+OpmbEc=;
+        b=Fse/Xl7LHjFnfG/id6cF38fiOwDV3Wj/6zmjLLQCw/S3A8gImuA6AkBoC9WNSSweeTpfZg
+        tvhIRL8dV5G7DFguZnY9ijPXUhoDeeX37+5uSZbI85e7L6pVp5EHepjXpNzXlydLp4nNxg
+        9IRc4TWU9SI+yQB9OGSlzi63NQ8b/Ww=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-163-1p_hCqd6Md2Mw3Yt4UhKhQ-1; Mon, 28 Mar 2022 09:51:46 -0400
+X-MC-Unique: 1p_hCqd6Md2Mw3Yt4UhKhQ-1
+Received: by mail-wr1-f70.google.com with SMTP id h11-20020a5d430b000000b001f01a35a86fso4307379wrq.4
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 06:51:46 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
+         :references:user-agent:mime-version:content-transfer-encoding;
+        bh=7kNKLf8yfEf9VObJjS6Szdmj1nSgLd4zL/Xd+OpmbEc=;
+        b=QFSV3dZoQYY9iAwSPeRW7c/glJZ0eKStf5xqmeeROU5u4wMmrocwx5uSAeXpgE2QUi
+         36V1ARB0bB2A04OF2fOFKIplV1f6EiGi+9NXgJvr1F3Vfu0LKsgmh4EL+zHkvRPm5Azv
+         bIUtDrytznFM/ATk4ANnVODnDKIuWeS8aSaz8sM9t/BQn57Cu8WLMD07UoVKr6gjpRP+
+         p2qVaojCKirjL8KcGf736qQ64xCnyQeg/WclRgjV6akC/qI40Yuo1vGc+n0mppTgZUt5
+         YnFv84O2arqwQjRkZoPL7HcwR7kBk0Wvm2lO0svNMZ3Enl93goON3vn/IioSIrAmCX5m
+         f4xw==
+X-Gm-Message-State: AOAM5300+b4m0WyyX/8hYtwU+4Tgx4F+bekRsTLsox7LTTqDR7LOFY44
+        CRDsKpFBLukYD/NY/djaeklqxTnhf0aRDvl4el12cYIjBgh2cdCxeVPf8Sp9P0gD7P+TU2m96BS
+        RhOsoSLMKHC9TN2a/1yzeevPNeTk=
+X-Received: by 2002:a05:600c:3c9d:b0:37f:a5c3:fccf with SMTP id bg29-20020a05600c3c9d00b0037fa5c3fccfmr26326982wmb.13.1648475505470;
+        Mon, 28 Mar 2022 06:51:45 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwDqmAiCMutmOITS8J5yRNisNHw6matYR2Mqlf/hrWAc0SWh4ga/RYFaM088TWMjvLA8ZIJ9A==
+X-Received: by 2002:a05:600c:3c9d:b0:37f:a5c3:fccf with SMTP id bg29-20020a05600c3c9d00b0037fa5c3fccfmr26326947wmb.13.1648475505195;
+        Mon, 28 Mar 2022 06:51:45 -0700 (PDT)
+Received: from ?IPv6:2a0c:5a80:3506:3400:69b5:c807:1d52:ff67? ([2a0c:5a80:3506:3400:69b5:c807:1d52:ff67])
+        by smtp.gmail.com with ESMTPSA id n8-20020a5d5988000000b00203d5f1f3e4sm13491929wri.105.2022.03.28.06.51.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 28 Mar 2022 06:51:44 -0700 (PDT)
+Message-ID: <d21d742154cbd6d2b7546533655810e0bf7dd82f.camel@redhat.com>
+Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     Mel Gorman <mgorman@suse.de>
+Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
+        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
+        willy@infradead.org
+Date:   Mon, 28 Mar 2022 15:51:43 +0200
+In-Reply-To: <20220325104800.GI4363@suse.de>
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+         <20220303114550.GE4363@suse.de>
+         <3c24840e8378c69224974f321ec5c06a36a33dd3.camel@redhat.com>
+         <20220325104800.GI4363@suse.de>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 (3.42.4-1.fc35) 
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="sxi5n6s7wqxpvtgc"
-Content-Disposition: inline
-In-Reply-To: <YkGIhYKJG+w4L7ge@linutronix.de>
-X-SA-Exim-Connect-IP: 2001:67c:670:201:5054:ff:fe8d:eefb
-X-SA-Exim-Mail-From: mkl@pengutronix.de
-X-SA-Exim-Scanned: No (on metis.ext.pengutronix.de); SAEximRunCond expanded to false
-X-PTX-Original-Recipient: linux-rt-users@vger.kernel.org
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Mel,
 
---sxi5n6s7wqxpvtgc
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On Fri, 2022-03-25 at 10:48 +0000, Mel Gorman wrote:
+> > [1] It follows this pattern:
+> > 
+> > 	struct per_cpu_pages *pcp;
+> > 
+> > 	pcp = raw_cpu_ptr(page_zone(page)->per_cpu_pageset);
+> > 	// <- Migration here is OK: spin_lock protects vs eventual pcplist
+> > 	// access from local CPU as long as all list access happens through the
+> > 	// pcp pointer.
+> > 	spin_lock(&pcp->lock);
+> > 	do_stuff_with_pcp_lists(pcp);
+> > 	spin_unlock(&pcp->lock);
+> > 
+> 
+> And this was the part I am concerned with. We are accessing a PCP
+> structure that is not necessarily the one belonging to the CPU we
+> are currently running on. This type of pattern is warned about in
+> Documentation/locking/locktypes.rst
+> 
+> ---8<---
+> A typical scenario is protection of per-CPU variables in thread context::
+> 
+>   struct foo *p = get_cpu_ptr(&var1);
+> 
+>   spin_lock(&p->lock);
+>   p->count += this_cpu_read(var2);
+> 
+> This is correct code on a non-PREEMPT_RT kernel, but on a PREEMPT_RT kernel
+> this breaks. The PREEMPT_RT-specific change of spinlock_t semantics does
+> not allow to acquire p->lock because get_cpu_ptr() implicitly disables
+> preemption. The following substitution works on both kernels::
+> ---8<---
+> 
+> Now we don't explicitly have this pattern because there isn't an
+> obvious this_cpu_read() for example but it can accidentally happen for
+> counting. __count_zid_vm_events -> __count_vm_events -> raw_cpu_add is
+> an example although a harmless one.
+> 
+> Any of the mod_page_state ones are more problematic though because we
+> lock one PCP but potentially update the per-cpu pcp stats of another CPU
+> of a different PCP that we have not locked and those counters must be
+> accurate.
 
-On 28.03.2022 12:05:57, Sebastian Andrzej Siewior wrote:
-> On 2022-03-23 15:55:58 [+0100], Rasmus Villemoes wrote:
-> > This RFC is motivated by an old problem in the tty layer. Ever since
-> > commit a9c3f68f3cd8 (tty: Fix low_latency BUG), use of UART for
-> > real-time applications has been problematic. Even if both the
-> > application itself and the irq thread are set to SCHED_FIFO, the fact
-> > that the flush_to_ldisc work is scheduled on the generic and global
-> > system_unbound_wq (with all workers running at normal scheduling
-> > priority) means that UART RX can suffer unbounded latency.
->=20
-> Having a kthread per "low-latency" tty instance is something I would
-> prefer. The kwork corner is an anonymous worker instance and probably
-> does more harm than good. Especially if it is a knob for everyone which
-> is used for the wrong reasons and manages to be harmful in the end.
-> With a special kthread for a particular tty, the thread can be assigned
-> with the desired priority within the system and ttyS1 can be
-> distinguished from ttyS0 (and so on). This turned out to be useful in a
-> few setups over the years.
+But IIUC vmstats don't track pcplist usage (i.e. adding a page into the local
+pcplist doesn't affect the count at all). It is only when interacting with the
+buddy allocator that they get updated. It makes sense for the CPU that
+adds/removes pages from the allocator to do the stat update, regardless of the
+page's journey.
 
-+1
+> It *might* still be safe but it's subtle, it could be easily accidentally
+> broken in the future and it would be hard to detect because it would be
+> very slow corruption of VM counters like NR_FREE_PAGES that must be
+> accurate.
 
-The networking subsystem has gone the same/similar way with NAPI. NAPI
-handling can be switched from the softirq to kernel thread on a per
-interface basis.
+What does accurate mean here? vmstat consumers don't get accurate data, only
+snapshots. And as I comment above you can't infer information about pcplist
+usage from these stats. So, I see no real need for CPU locality when updating
+them (which we're still retaining nonetheless, as per my comment above), the
+only thing that is really needed is atomicity, achieved by disabling IRQs (and
+preemption on RT). And this, even with your solution, is achieved through the
+struct zone's spin_lock (plus a preempt_disable() in RT).
 
-regards
-Marc
+All in all, my point is that none of the stats are affected by the change, nor
+have a dependency with the pcplists handling. And if we ever have the need to
+pin vmstat updates to pcplist usage they should share the same pcp structure.
+That said, I'm happy with either solution as long as we get remote pcplist
+draining. So if still unconvinced, let me know how can I help. I have access to
+all sorts of machines to validate perf results, time to review, or even to move
+the series forward.
 
---=20
-Pengutronix e.K.                 | Marc Kleine-Budde           |
-Embedded Linux                   | https://www.pengutronix.de  |
-Vertretung West/Dortmund         | Phone: +49-231-2826-924     |
-Amtsgericht Hildesheim, HRA 2686 | Fax:   +49-5121-206917-5555 |
+Thanks!
 
---sxi5n6s7wqxpvtgc
-Content-Type: application/pgp-signature; name="signature.asc"
+-- 
+Nicolás Sáenz
 
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCgAdFiEEBsvAIBsPu6mG7thcrX5LkNig010FAmJBiVQACgkQrX5LkNig
-013kAgf/XgFTUqoCWgqZFouYS5Twgl7e1Fy/YTn0pXsn3bq6D+WZBLG7yfmrafoe
-VYX5Hg2nFO8YXJEbMCi1mRT7KFjz0s4JlmqVSqK8Pp/2Mt6g4Hw+oT8TDGh7Pirg
-Dh607CZuRPf2SgLr5qSxpX2DA/9KvkvselhAh5X2jFv2p67vOWQGh3fp/xg3L2V3
-aMTBIsLxGtciaMmlb3uwPzSQV/+oJZwIGwbRiMbJSHrVuFTceUTLQXF8JkPNcYX5
-T28BIEOnRgz8IwDNwl9Z+zihlYj82teBCEHTmaNEpBX3te0R51MCPHwKwxXn+G20
-+a5sG1rIKrIJ0MSyskiwzfvylsooSw==
-=HKoZ
------END PGP SIGNATURE-----
-
---sxi5n6s7wqxpvtgc--
