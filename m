@@ -2,157 +2,76 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AF80C433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Mar 2022 13:51:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D921C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Mar 2022 15:07:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243503AbiC1Nxb (ORCPT
+        id S240477AbiC1PI5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 28 Mar 2022 09:53:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38724 "EHLO
+        Mon, 28 Mar 2022 11:08:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49736 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S243506AbiC1Nxa (ORCPT
+        with ESMTP id S239745AbiC1PI4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 28 Mar 2022 09:53:30 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 1DD285EDC2
-        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 06:51:49 -0700 (PDT)
+        Mon, 28 Mar 2022 11:08:56 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 7859C5046C
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 08:07:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1648475508;
+        s=mimecast20190719; t=1648480035;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=7kNKLf8yfEf9VObJjS6Szdmj1nSgLd4zL/Xd+OpmbEc=;
-        b=Fse/Xl7LHjFnfG/id6cF38fiOwDV3Wj/6zmjLLQCw/S3A8gImuA6AkBoC9WNSSweeTpfZg
-        tvhIRL8dV5G7DFguZnY9ijPXUhoDeeX37+5uSZbI85e7L6pVp5EHepjXpNzXlydLp4nNxg
-        9IRc4TWU9SI+yQB9OGSlzi63NQ8b/Ww=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=65aLt8ZhvM9hS74QjoSFNbVobCiOXK02ylA6S5uGN1w=;
+        b=VxZ0pbWjQ6CF6uJz2J9MTxFVrEFIjmeGUE4mUrkSJrcGOXAW1KH9pY7Z+BU9LUi7C+v/di
+        GZXH3Ddb8cB1uy1SXjMiO1/dv6zA4pcsjyllEYG9nRhv8GL/jbly21QLJ08nAFQgiAC/mS
+        e87yH0z/rOk4v07wJ1//5OSUi/6cpmQ=
+Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
+ [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-163-1p_hCqd6Md2Mw3Yt4UhKhQ-1; Mon, 28 Mar 2022 09:51:46 -0400
-X-MC-Unique: 1p_hCqd6Md2Mw3Yt4UhKhQ-1
-Received: by mail-wr1-f70.google.com with SMTP id h11-20020a5d430b000000b001f01a35a86fso4307379wrq.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 06:51:46 -0700 (PDT)
+ us-mta-258-5220PRLzO-WzJimODBG50w-1; Mon, 28 Mar 2022 11:07:13 -0400
+X-MC-Unique: 5220PRLzO-WzJimODBG50w-1
+Received: by mail-ej1-f69.google.com with SMTP id de52-20020a1709069bf400b006dffb966922so6973655ejc.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Mar 2022 08:07:13 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
-         :references:user-agent:mime-version:content-transfer-encoding;
-        bh=7kNKLf8yfEf9VObJjS6Szdmj1nSgLd4zL/Xd+OpmbEc=;
-        b=QFSV3dZoQYY9iAwSPeRW7c/glJZ0eKStf5xqmeeROU5u4wMmrocwx5uSAeXpgE2QUi
-         36V1ARB0bB2A04OF2fOFKIplV1f6EiGi+9NXgJvr1F3Vfu0LKsgmh4EL+zHkvRPm5Azv
-         bIUtDrytznFM/ATk4ANnVODnDKIuWeS8aSaz8sM9t/BQn57Cu8WLMD07UoVKr6gjpRP+
-         p2qVaojCKirjL8KcGf736qQ64xCnyQeg/WclRgjV6akC/qI40Yuo1vGc+n0mppTgZUt5
-         YnFv84O2arqwQjRkZoPL7HcwR7kBk0Wvm2lO0svNMZ3Enl93goON3vn/IioSIrAmCX5m
-         f4xw==
-X-Gm-Message-State: AOAM5300+b4m0WyyX/8hYtwU+4Tgx4F+bekRsTLsox7LTTqDR7LOFY44
-        CRDsKpFBLukYD/NY/djaeklqxTnhf0aRDvl4el12cYIjBgh2cdCxeVPf8Sp9P0gD7P+TU2m96BS
-        RhOsoSLMKHC9TN2a/1yzeevPNeTk=
-X-Received: by 2002:a05:600c:3c9d:b0:37f:a5c3:fccf with SMTP id bg29-20020a05600c3c9d00b0037fa5c3fccfmr26326982wmb.13.1648475505470;
-        Mon, 28 Mar 2022 06:51:45 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwDqmAiCMutmOITS8J5yRNisNHw6matYR2Mqlf/hrWAc0SWh4ga/RYFaM088TWMjvLA8ZIJ9A==
-X-Received: by 2002:a05:600c:3c9d:b0:37f:a5c3:fccf with SMTP id bg29-20020a05600c3c9d00b0037fa5c3fccfmr26326947wmb.13.1648475505195;
-        Mon, 28 Mar 2022 06:51:45 -0700 (PDT)
-Received: from ?IPv6:2a0c:5a80:3506:3400:69b5:c807:1d52:ff67? ([2a0c:5a80:3506:3400:69b5:c807:1d52:ff67])
-        by smtp.gmail.com with ESMTPSA id n8-20020a5d5988000000b00203d5f1f3e4sm13491929wri.105.2022.03.28.06.51.44
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 28 Mar 2022 06:51:44 -0700 (PDT)
-Message-ID: <d21d742154cbd6d2b7546533655810e0bf7dd82f.camel@redhat.com>
-Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
-From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
-To:     Mel Gorman <mgorman@suse.de>
-Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
-        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
-        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
-        willy@infradead.org
-Date:   Mon, 28 Mar 2022 15:51:43 +0200
-In-Reply-To: <20220325104800.GI4363@suse.de>
-References: <20220208100750.1189808-1-nsaenzju@redhat.com>
-         <20220303114550.GE4363@suse.de>
-         <3c24840e8378c69224974f321ec5c06a36a33dd3.camel@redhat.com>
-         <20220325104800.GI4363@suse.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 (3.42.4-1.fc35) 
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=65aLt8ZhvM9hS74QjoSFNbVobCiOXK02ylA6S5uGN1w=;
+        b=U3TVWe65cmcGXIDClxb0aytq0iwk11W7/KBX+GtXIBAbgZMrzXeohzro+LmRIzj+LZ
+         lUrb4o2tgaYRYBMTXN/bvLe9fP0/Nsy5drDfKRpuNQA36nSPa1+18cSv7F+X3Be2dNcx
+         xbU/9Jt5ZsjBwvtjhFzQCN6VC4b6Ifz7m4FpYuClz8Eu9ygL1c6d5cn+rQz1U11NNGpQ
+         szOaNE1EWWoOKNdYFoipr1otA9A6YUtKni08+EttuE7wT2ePjnwN2r2sR2oHox++Pi/s
+         iKzyn8REDoUm/alMxSRIXkhC81TJ0NkLnItNF0q6SWzYk4310qQz52Cx/a9iTM7W0LPc
+         5GUw==
+X-Gm-Message-State: AOAM532BmrqDdaBZpi3LMpKGWJWQgWTQF7/KVEn+bjC9f0MabGYXk8Md
+        9LGOUDofwcBQAUn2nAafFnRUIJ/l0imjE17x1D31PQL1IuNRfxgEK0Erak0jJjGQNAYiKX5yYwm
+        ydTxhTA/tIBdGraitqtgwY8QKe6w+WDpGvnx8Mr+Vz0o=
+X-Received: by 2002:a17:906:4795:b0:6e0:78b8:42f6 with SMTP id cw21-20020a170906479500b006e078b842f6mr26438451ejc.88.1648480032168;
+        Mon, 28 Mar 2022 08:07:12 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJy5JIVcu10MnLQ2zZbEZGlm2/CmisXHiX0sjcMq7UiEgLvtZvBcGeZR9EJPLBpE9qS+ywuYoPsEa3R8ahh8cpU=
+X-Received: by 2002:a17:906:4795:b0:6e0:78b8:42f6 with SMTP id
+ cw21-20020a170906479500b006e078b842f6mr26438422ejc.88.1648480031836; Mon, 28
+ Mar 2022 08:07:11 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From:   Bart Wensley <bwensley@redhat.com>
+Date:   Mon, 28 Mar 2022 11:07:05 -0400
+Message-ID: <CAGCuPdNVEtSk0jqL+74RiV5YcHmdHzsAOcAu_DqLSdhh4h6-aA@mail.gmail.com>
+Subject: Cyclictest doesn't support --smi option for ice lake processors
+To:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Mel,
+Using the --smi option with cyclictest on ice lake processors gives
+the following error:
+FATAL: SMI counter is not supported on this processor
 
-On Fri, 2022-03-25 at 10:48 +0000, Mel Gorman wrote:
-> > [1] It follows this pattern:
-> > 
-> > 	struct per_cpu_pages *pcp;
-> > 
-> > 	pcp = raw_cpu_ptr(page_zone(page)->per_cpu_pageset);
-> > 	// <- Migration here is OK: spin_lock protects vs eventual pcplist
-> > 	// access from local CPU as long as all list access happens through the
-> > 	// pcp pointer.
-> > 	spin_lock(&pcp->lock);
-> > 	do_stuff_with_pcp_lists(pcp);
-> > 	spin_unlock(&pcp->lock);
-> > 
-> 
-> And this was the part I am concerned with. We are accessing a PCP
-> structure that is not necessarily the one belonging to the CPU we
-> are currently running on. This type of pattern is warned about in
-> Documentation/locking/locktypes.rst
-> 
-> ---8<---
-> A typical scenario is protection of per-CPU variables in thread context::
-> 
->   struct foo *p = get_cpu_ptr(&var1);
-> 
->   spin_lock(&p->lock);
->   p->count += this_cpu_read(var2);
-> 
-> This is correct code on a non-PREEMPT_RT kernel, but on a PREEMPT_RT kernel
-> this breaks. The PREEMPT_RT-specific change of spinlock_t semantics does
-> not allow to acquire p->lock because get_cpu_ptr() implicitly disables
-> preemption. The following substitution works on both kernels::
-> ---8<---
-> 
-> Now we don't explicitly have this pattern because there isn't an
-> obvious this_cpu_read() for example but it can accidentally happen for
-> counting. __count_zid_vm_events -> __count_vm_events -> raw_cpu_add is
-> an example although a harmless one.
-> 
-> Any of the mod_page_state ones are more problematic though because we
-> lock one PCP but potentially update the per-cpu pcp stats of another CPU
-> of a different PCP that we have not locked and those counters must be
-> accurate.
+It looks like the ice lake model (0x6A) is missing from function
+has_smi_counter:
+https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/cyclictest/cyclictest.c#n410
 
-But IIUC vmstats don't track pcplist usage (i.e. adding a page into the local
-pcplist doesn't affect the count at all). It is only when interacting with the
-buddy allocator that they get updated. It makes sense for the CPU that
-adds/removes pages from the allocator to do the stat update, regardless of the
-page's journey.
+Before submitting a patch for this, I was just wondering if there was
+a better way to handle this than having to update cyclictest every
+time a new processor model is released?
 
-> It *might* still be safe but it's subtle, it could be easily accidentally
-> broken in the future and it would be hard to detect because it would be
-> very slow corruption of VM counters like NR_FREE_PAGES that must be
-> accurate.
-
-What does accurate mean here? vmstat consumers don't get accurate data, only
-snapshots. And as I comment above you can't infer information about pcplist
-usage from these stats. So, I see no real need for CPU locality when updating
-them (which we're still retaining nonetheless, as per my comment above), the
-only thing that is really needed is atomicity, achieved by disabling IRQs (and
-preemption on RT). And this, even with your solution, is achieved through the
-struct zone's spin_lock (plus a preempt_disable() in RT).
-
-All in all, my point is that none of the stats are affected by the change, nor
-have a dependency with the pcplists handling. And if we ever have the need to
-pin vmstat updates to pcplist usage they should share the same pcp structure.
-That said, I'm happy with either solution as long as we get remote pcplist
-draining. So if still unconvinced, let me know how can I help. I have access to
-all sorts of machines to validate perf results, time to review, or even to move
-the series forward.
-
-Thanks!
-
--- 
-Nicolás Sáenz
+Bart
 
