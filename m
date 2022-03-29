@@ -2,82 +2,73 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 35EF4C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Mar 2022 06:30:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2AAA3C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Mar 2022 07:02:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233039AbiC2Gcd (ORCPT
+        id S233249AbiC2HEV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 29 Mar 2022 02:32:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53114 "EHLO
+        Tue, 29 Mar 2022 03:04:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54268 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232190AbiC2Gcd (ORCPT
+        with ESMTP id S230505AbiC2HET (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Mar 2022 02:32:33 -0400
+        Tue, 29 Mar 2022 03:04:19 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D5FE71959CC;
-        Mon, 28 Mar 2022 23:30:49 -0700 (PDT)
-Date:   Tue, 29 Mar 2022 08:30:45 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7FCDB689A2
+        for <linux-rt-users@vger.kernel.org>; Tue, 29 Mar 2022 00:02:36 -0700 (PDT)
+Date:   Tue, 29 Mar 2022 09:02:33 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1648535447;
+        s=2020; t=1648537355;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=BPMbslHvcWl9AuG65q7i4FLjo8NvVN67J002+wav/FY=;
-        b=z5k01oUOKZTixIWULLUcr508q/nMMT4tEEjUge5ZQhzBEYr5bPRwiQs5vJj69dJ8aKWe0l
-        jS8wDg+MxF5n3WIOpjYprknAz/fsRet90+HfSfbSpsXDmQz8PHqwVbo5tp/crRjl8EvIAx
-        rZhQ9IxuO6UVMLbFCJsH6IWU7PFRCUUA0GjlXNDWXQFsbJeclC6zdaQLTIYNmz/2sxskDr
-        aWELyVDtoySPAKA7Dzz4wvMzsDOzuChceYIe/QRlTD2wnf2ANI6RCFPgiZ8NdmZY1MwYXA
-        IF6jphQxssXXlq5Idttg7mrH3MOnpCJjfSRUI3J/uL0fki1lgqnz04LPhr4X2Q==
+        bh=jRHsfexOs7K+UYs/DePjmLhYZUW70RFq9D+Yh9OC5gg=;
+        b=dEA+BTPF+WYbidrGiVmN4H+DV1LdY0uoNkfzGjLhiMZTR6W0SAFz7YIYceqwzWF9vK3pZC
+        lh/ddPOlxaoO0LkoGUaicucChuFc5pl+Zuf9w+Ilwyui09B5yJ4mKilqGSfElltXFkKP04
+        kHtnY3cmUjuJ/oHZdU22T/a216nxX7QQK7s1lnp9FSJFREXYuzgfzK9TA8v0JVR0ThgH+5
+        87RkKM9CZE0Fd4oTNazURQ4hVeGz+ErEOPLFdJx+emL0/nKDR4qlkrAWA8TozJ2ka1AvH6
+        00VjOQ7BEHtUnC0WZ8JcRmqKswqCobHIYNgtl3HLhXbFxC7OV+5+VM04li8AMA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1648535447;
+        s=2020e; t=1648537355;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=BPMbslHvcWl9AuG65q7i4FLjo8NvVN67J002+wav/FY=;
-        b=GQrvXCOItrac/je83cPCtN63EkGHkvcRnczk/iwqe7CV0yuSFNYWm+SEQQ7E05EByC9PsT
-        itHjLIsLol12wLCg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Tejun Heo <tj@kernel.org>
-Cc:     Marc Kleine-Budde <mkl@pengutronix.de>,
-        Rasmus Villemoes <linux@rasmusvillemoes.dk>,
-        Peter Hurley <peter@hurleysoftware.com>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Esben Haabendal <esben@geanix.com>,
-        Steven Walter <stevenrwalter@gmail.com>,
-        linux-kernel@vger.kernel.org,
-        Oleksij Rempel <o.rempel@pengutronix.de>,
-        Pengutronix Kernel Team <kernel@pengutronix.de>,
-        =?utf-8?B?QW5kcsOp?= Pribil <a.pribil@beck-ipc.com>,
-        Jiri Slaby <jirislaby@kernel.org>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH 0/2] RT scheduling policies for workqueues
-Message-ID: <YkKnlUUsufZPiZxM@linutronix.de>
-References: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
- <YkGIhYKJG+w4L7ge@linutronix.de>
- <20220328100927.5ax34nea7sp7jdsy@pengutronix.de>
- <YkHyzcfiyjLfIVOo@slm.duckdns.org>
+        bh=jRHsfexOs7K+UYs/DePjmLhYZUW70RFq9D+Yh9OC5gg=;
+        b=A0ZqmdjmQj5SKFxJaJ3hVkeuW4LdMOxTFljQp36T3SvrpCokkMgLJg8xarCrM1YojH4/eh
+        7ynp0NMbyxa/FUBQ==
+From:   "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+To:     "Chen, Angus" <angus.chen@intel.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Chang, Junxiao" <junxiao.chang@intel.com>,
+        "Ung, Teng En" <teng.en.ung@intel.com>,
+        "tglx@linutronix.de" <tglx@linutronix.de>
+Subject: Re: RT  kernel video playback issue (screen freeze)
+Message-ID: <YkKvCf3wOnGaZDMw@linutronix.de>
+References: <DM6PR11MB4596027F97399B46BCD7681B8F199@DM6PR11MB4596.namprd11.prod.outlook.com>
+ <DM6PR11MB459605ADA58FBEAE43EDD3468F1E9@DM6PR11MB4596.namprd11.prod.outlook.com>
+ <DM6PR11MB45963AAEF4717C359986FBCB8F1E9@DM6PR11MB4596.namprd11.prod.outlook.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <YkHyzcfiyjLfIVOo@slm.duckdns.org>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <DM6PR11MB45963AAEF4717C359986FBCB8F1E9@DM6PR11MB4596.namprd11.prod.outlook.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-03-28 07:39:25 [-1000], Tejun Heo wrote:
-> Hello,
+On 2022-03-29 02:27:31 [+0000], Chen, Angus wrote:
+>=20
+> Hi there,
 Hi,
 
-> I wonder whether it'd be useful to provide a set of wrappers which can make
-> switching between workqueue and kworker easy. Semantics-wise, they're
-> already mostly aligned and it shouldn't be too difficult to e.g. make an
-> unbounded workqueue be backed by a dedicated kthread_worker instead of
-> shared pool depending on a flag, or even allow switching dynamically.
+> The dmesg log from UART port.=C2=A0 After the log showed "the sched: RT t=
+hrottling activated", the screen freeze.
 
-This could work. For the tty layer it could use 'lowlatency' attribute
-to decide which implementation makes sense.
+any update on what happens after the "-1 to sched_rt_runtime_us" change?
 
-> Thanks.
-> 
+> Best Regards,
+> Angus
 
 Sebastian
