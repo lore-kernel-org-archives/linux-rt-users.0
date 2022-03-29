@@ -2,108 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 15428C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Mar 2022 16:57:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A823C433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Mar 2022 22:19:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239994AbiC2Q7k (ORCPT
+        id S236602AbiC2WVI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 29 Mar 2022 12:59:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43080 "EHLO
+        Tue, 29 Mar 2022 18:21:08 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59422 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231454AbiC2Q7j (ORCPT
+        with ESMTP id S236608AbiC2WVG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Mar 2022 12:59:39 -0400
-Received: from mail-pj1-x102e.google.com (mail-pj1-x102e.google.com [IPv6:2607:f8b0:4864:20::102e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 79E56B0D13;
-        Tue, 29 Mar 2022 09:57:56 -0700 (PDT)
-Received: by mail-pj1-x102e.google.com with SMTP id gb19so18087971pjb.1;
-        Tue, 29 Mar 2022 09:57:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=94zP/jLn1L+Xrank8hwMs73OTAQl/2oxOGU8uUoGhTI=;
-        b=W1xfrD0nMlE4TBaKt9iksGu5nMHAKpP7NliAWLypf0K0qenTxU4EELYpz0X3KXiiTx
-         bzntRG43EGSIxpZJhNuBlJ2PudeZnte3O0M5cwrr9FMj59HLQppyFRVlYhi/nuiBtdNo
-         9YToBE3ptd3Uhr8TaQqfFRwABlpWyO7oERcNXxkyaFOygY/4BZPgdn4n3hM+Fg3dH4sh
-         9exd7djH694obC67d5qmvy98iU6C13AqLS6mAyZv2hb1DlnpchhsgKherEvYct8HiEnm
-         4ozhME6Rvu4UYrILqoLWp2lgy5+ksCr16XR3o+XV5XTdJoMfeqGoZGQzVDVdn6SICCzl
-         Mgjw==
+        Tue, 29 Mar 2022 18:21:06 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id DCC6B4133F
+        for <linux-rt-users@vger.kernel.org>; Tue, 29 Mar 2022 15:19:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1648592359;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=2AVT9NIxWV7b7zLqUQtMxEUF/d2SgBDH5G5+pu2PC6k=;
+        b=B9Ced1DiJRW47dlSm0bZuYyP3iUu2igGV3MtMpdmBE23IBvb/0AESGVqQCJYc1/UGJf8Ah
+        MQ0OwITxWi0gnRZWhge4v+5EcsYVKjVa2nXH/9DAaLB+wWmmHecP/Su9PaEKPoMXx+xqbi
+        51FZCnxyVXYDchJ+EhEA/D+Uwezk0Rg=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-154-oSQArG0OPK2puOdauNo0_Q-1; Tue, 29 Mar 2022 18:19:18 -0400
+X-MC-Unique: oSQArG0OPK2puOdauNo0_Q-1
+Received: by mail-qk1-f197.google.com with SMTP id q5-20020a05620a0d8500b004738c1b48beso11427258qkl.7
+        for <linux-rt-users@vger.kernel.org>; Tue, 29 Mar 2022 15:19:18 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
-         :references:mime-version:content-disposition:in-reply-to;
-        bh=94zP/jLn1L+Xrank8hwMs73OTAQl/2oxOGU8uUoGhTI=;
-        b=MtXp7LzCRWFZgLRw5dBaW9Bp/gZrQIDh8jKr/y5SY3plwgu6eb4dKDq7Drtw/zeCTo
-         pOdDd3N7ozr/8eg/oXhvdpm8op/ca8MjZUzRyofxwsi8X4f2ca1EUoRVwf5/FVuHZeP5
-         7mHGyVMxzfE1t8ErUkVMMdroC5torxx6Z5AfwV7JPA60uAEZNaf4impoANo3Vm38YGvm
-         ppZD/g8f6qgypwkqBn0dviE5OVVYuIqfcsr7SGaJVjND4+Ohktax1JmDJDFmB8iwK3b4
-         R87E/bCIJDT820LHjSxWl+w7gtJA6SeaxnF0k6Hz+fNtnijUc+Odh6HcGt6U9/ViM+YY
-         XqIA==
-X-Gm-Message-State: AOAM531hs7LhzVaXtN8r6bwNgyD9R0le01bBo55qI/KlH4uONWe+idwb
-        K5+MRJE9SpVgb4aAvnjocbQ=
-X-Google-Smtp-Source: ABdhPJw5hqO9n5W68aIyFix6+aqAO9D2sR5YOlrwcYOt/n8Z2BiEvOzeNScxpb60v+N662TLqh/9xQ==
-X-Received: by 2002:a17:90b:4ccb:b0:1c9:c1de:9c9d with SMTP id nd11-20020a17090b4ccb00b001c9c1de9c9dmr71545pjb.105.1648573075693;
-        Tue, 29 Mar 2022 09:57:55 -0700 (PDT)
-Received: from localhost ([2620:10d:c090:400::5:7749])
-        by smtp.gmail.com with ESMTPSA id x38-20020a056a0018a600b004fafd05ac3fsm17848303pfh.37.2022.03.29.09.57.54
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=2AVT9NIxWV7b7zLqUQtMxEUF/d2SgBDH5G5+pu2PC6k=;
+        b=eQ3cbEB9Sqp0rJIaSjxYA5S0khkgMMBdH3GESZldZiiYaGKWX9SkzAQbUJCmvf3hy/
+         KJceibfi+QcrcAcnOu++4mci4BUyKVMRVGmjmywQAATYH8QC272T+2mgGZn4Au0HlzQn
+         fCUUrgnoE1ThJRZcgE4z26wtxxWyH1MMwR40pyzKxOGvaiBSY5GpAqJ5xXIMsEHWkyER
+         7FMUBs4FF9BUa3g68gNQ/KFi86lZ/M84quKtgEieGo1T0qaPZx/pabgDtv+1c1fSCn30
+         rrNA6h3U8NQpibWFk9Vrb7vDLUhc1ZXbO1b2/s8lWy72O4qdruFWHvNaXzKgwuox5Ar+
+         errA==
+X-Gm-Message-State: AOAM532bSjo1GT1PGB85c7jGe65rdns3GHjAvGVknof/+Se7jQ2xQvTV
+        MzNxokLa+9PJO4sEmprOFOgTJHf92hcKQ6avpk1hj8vy98s6cFiViA44CytHuVvd7FxzvgWLJK9
+        b+ZbrRs4oSSZNIblUuuJYz/sBRYA=
+X-Received: by 2002:a05:620a:2981:b0:67d:6a35:70f2 with SMTP id r1-20020a05620a298100b0067d6a3570f2mr21692252qkp.404.1648592357617;
+        Tue, 29 Mar 2022 15:19:17 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzNfg3ziUCvSMGXlM36yI2dxPI8NKJKngzyPd5pTWMW9/hCVp6MehZSlnT2H+KggDUaFgkIOg==
+X-Received: by 2002:a05:620a:2981:b0:67d:6a35:70f2 with SMTP id r1-20020a05620a298100b0067d6a3570f2mr21692238qkp.404.1648592357355;
+        Tue, 29 Mar 2022 15:19:17 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
+        by smtp.gmail.com with ESMTPSA id o6-20020a05622a044600b002e1b9be8e6fsm15630751qtx.36.2022.03.29.15.19.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 29 Mar 2022 09:57:55 -0700 (PDT)
-Sender: Tejun Heo <htejun@gmail.com>
-Date:   Tue, 29 Mar 2022 06:57:53 -1000
-From:   Tejun Heo <tj@kernel.org>
-To:     Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Marc Kleine-Budde <mkl@pengutronix.de>,
-        Peter Hurley <peter@hurleysoftware.com>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        Esben Haabendal <esben@geanix.com>,
-        Steven Walter <stevenrwalter@gmail.com>,
-        linux-kernel@vger.kernel.org,
-        Oleksij Rempel <o.rempel@pengutronix.de>,
-        Pengutronix Kernel Team <kernel@pengutronix.de>,
-        =?iso-8859-1?Q?Andr=E9?= Pribil <a.pribil@beck-ipc.com>,
-        Jiri Slaby <jirislaby@kernel.org>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH 0/2] RT scheduling policies for workqueues
-Message-ID: <YkM6keHS22ajPks5@slm.duckdns.org>
-References: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
- <YkGIhYKJG+w4L7ge@linutronix.de>
- <20220328100927.5ax34nea7sp7jdsy@pengutronix.de>
- <YkHyzcfiyjLfIVOo@slm.duckdns.org>
- <YkKnlUUsufZPiZxM@linutronix.de>
- <8b21ad64-ea9c-84f2-c798-222c9383e3de@rasmusvillemoes.dk>
+        Tue, 29 Mar 2022 15:19:16 -0700 (PDT)
+Date:   Tue, 29 Mar 2022 18:19:15 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Bart Wensley <bwensley@redhat.com>
+cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Daniel Bristot de Oliveria <bristot@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: Cyclictest doesn't support --smi option for ice lake
+ processors
+In-Reply-To: <CAGCuPdNVEtSk0jqL+74RiV5YcHmdHzsAOcAu_DqLSdhh4h6-aA@mail.gmail.com>
+Message-ID: <383be4c3-c1ad-3b60-dd32-71b8d04e814f@redhat.com>
+References: <CAGCuPdNVEtSk0jqL+74RiV5YcHmdHzsAOcAu_DqLSdhh4h6-aA@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <8b21ad64-ea9c-84f2-c798-222c9383e3de@rasmusvillemoes.dk>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello,
 
-On Tue, Mar 29, 2022 at 10:33:19AM +0200, Rasmus Villemoes wrote:
-> On 29/03/2022 08.30, Sebastian Andrzej Siewior wrote:
-> > On 2022-03-28 07:39:25 [-1000], Tejun Heo wrote:
-> >> Hello,
-> > Hi,
-> > 
-> >> I wonder whether it'd be useful to provide a set of wrappers which can make
-> >> switching between workqueue and kworker easy. Semantics-wise, they're
-> >> already mostly aligned and it shouldn't be too difficult to e.g. make an
-> >> unbounded workqueue be backed by a dedicated kthread_worker instead of
-> >> shared pool depending on a flag, or even allow switching dynamically.
+
+On Mon, 28 Mar 2022, Bart Wensley wrote:
+
+> Using the --smi option with cyclictest on ice lake processors gives
+> the following error:
+> FATAL: SMI counter is not supported on this processor
 > 
-> Well, that would certainly not make it any easier for userspace to
-> discover the thread it needs to chrt().
+> It looks like the ice lake model (0x6A) is missing from function
+> has_smi_counter:
+> https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/cyclictest/cyclictest.c#n410
+> 
+> Before submitting a patch for this, I was just wondering if there was
+> a better way to handle this than having to update cyclictest every
+> time a new processor model is released?
+> 
+> Bart
+> 
+> 
 
-Each workqueue have a name and it's not difficult to make dedicated workers
-created this way to inherit the name. From user's pov, it's not that
-complicated - if kttyd (or whatever) is present, the user can twiddle with
-its scheduling class and priority.
+This function is based on turbostat in the linux kernel. It hasn't been 
+synced in awhile, so, if you would like to update it for ice lake
+then please update it for any other processors in turbostat as well.
+I think the function to look at is probe_nhm_msrs().
 
-Thanks.
+Thank You
 
--- 
-tejun
+John Kacur
+
