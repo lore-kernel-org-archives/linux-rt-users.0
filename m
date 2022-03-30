@@ -2,102 +2,151 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A823C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Mar 2022 22:19:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D137C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Mar 2022 11:29:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236602AbiC2WVI (ORCPT
+        id S245054AbiC3La4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 29 Mar 2022 18:21:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59422 "EHLO
+        Wed, 30 Mar 2022 07:30:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43674 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236608AbiC2WVG (ORCPT
+        with ESMTP id S237379AbiC3Laz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Mar 2022 18:21:06 -0400
+        Wed, 30 Mar 2022 07:30:55 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id DCC6B4133F
-        for <linux-rt-users@vger.kernel.org>; Tue, 29 Mar 2022 15:19:20 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id E78EC165BAA
+        for <linux-rt-users@vger.kernel.org>; Wed, 30 Mar 2022 04:29:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1648592359;
+        s=mimecast20190719; t=1648639749;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=2AVT9NIxWV7b7zLqUQtMxEUF/d2SgBDH5G5+pu2PC6k=;
-        b=B9Ced1DiJRW47dlSm0bZuYyP3iUu2igGV3MtMpdmBE23IBvb/0AESGVqQCJYc1/UGJf8Ah
-        MQ0OwITxWi0gnRZWhge4v+5EcsYVKjVa2nXH/9DAaLB+wWmmHecP/Su9PaEKPoMXx+xqbi
-        51FZCnxyVXYDchJ+EhEA/D+Uwezk0Rg=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=yaxx7Mi+hRPrFxRT4XMjZarJbz28r/Aqr9FeS7C1aeM=;
+        b=aRA/S1hi2q5Geq7dM8aMElhlamNd4vz59V9rFtym916Ii7g3740tyxIBATlFSzfjWhdMi3
+        luw7YI7YHmb0AKYbO/4Bc5xaCZuhCJ2hiYB9ysNgpYvdz7zoRv0yNKPAQHDZXf8q9cV6ep
+        Yp/CCy/jTarSCok3aR86KZDXocZ9wxk=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-154-oSQArG0OPK2puOdauNo0_Q-1; Tue, 29 Mar 2022 18:19:18 -0400
-X-MC-Unique: oSQArG0OPK2puOdauNo0_Q-1
-Received: by mail-qk1-f197.google.com with SMTP id q5-20020a05620a0d8500b004738c1b48beso11427258qkl.7
-        for <linux-rt-users@vger.kernel.org>; Tue, 29 Mar 2022 15:19:18 -0700 (PDT)
+ us-mta-618--fg9ZFpCNqa2Ii10LYP90w-1; Wed, 30 Mar 2022 07:29:07 -0400
+X-MC-Unique: -fg9ZFpCNqa2Ii10LYP90w-1
+Received: by mail-wm1-f69.google.com with SMTP id i6-20020a1c5406000000b0038c97ed0db5so7778829wmb.7
+        for <linux-rt-users@vger.kernel.org>; Wed, 30 Mar 2022 04:29:07 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=2AVT9NIxWV7b7zLqUQtMxEUF/d2SgBDH5G5+pu2PC6k=;
-        b=eQ3cbEB9Sqp0rJIaSjxYA5S0khkgMMBdH3GESZldZiiYaGKWX9SkzAQbUJCmvf3hy/
-         KJceibfi+QcrcAcnOu++4mci4BUyKVMRVGmjmywQAATYH8QC272T+2mgGZn4Au0HlzQn
-         fCUUrgnoE1ThJRZcgE4z26wtxxWyH1MMwR40pyzKxOGvaiBSY5GpAqJ5xXIMsEHWkyER
-         7FMUBs4FF9BUa3g68gNQ/KFi86lZ/M84quKtgEieGo1T0qaPZx/pabgDtv+1c1fSCn30
-         rrNA6h3U8NQpibWFk9Vrb7vDLUhc1ZXbO1b2/s8lWy72O4qdruFWHvNaXzKgwuox5Ar+
-         errA==
-X-Gm-Message-State: AOAM532bSjo1GT1PGB85c7jGe65rdns3GHjAvGVknof/+Se7jQ2xQvTV
-        MzNxokLa+9PJO4sEmprOFOgTJHf92hcKQ6avpk1hj8vy98s6cFiViA44CytHuVvd7FxzvgWLJK9
-        b+ZbrRs4oSSZNIblUuuJYz/sBRYA=
-X-Received: by 2002:a05:620a:2981:b0:67d:6a35:70f2 with SMTP id r1-20020a05620a298100b0067d6a3570f2mr21692252qkp.404.1648592357617;
-        Tue, 29 Mar 2022 15:19:17 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzNfg3ziUCvSMGXlM36yI2dxPI8NKJKngzyPd5pTWMW9/hCVp6MehZSlnT2H+KggDUaFgkIOg==
-X-Received: by 2002:a05:620a:2981:b0:67d:6a35:70f2 with SMTP id r1-20020a05620a298100b0067d6a3570f2mr21692238qkp.404.1648592357355;
-        Tue, 29 Mar 2022 15:19:17 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
-        by smtp.gmail.com with ESMTPSA id o6-20020a05622a044600b002e1b9be8e6fsm15630751qtx.36.2022.03.29.15.19.16
+        h=x-gm-message-state:message-id:subject:from:to:cc:date:in-reply-to
+         :references:user-agent:mime-version:content-transfer-encoding;
+        bh=yaxx7Mi+hRPrFxRT4XMjZarJbz28r/Aqr9FeS7C1aeM=;
+        b=wEW+/6swm/DGPenthHX50UK+zsGlRTEh7XpvuZ1rdr0rDnmhw5LiTwDuShaBN5UwBW
+         geoHm1c3i+boDUhoRtyuYYh4TonIuIXHZz2cwAqDaaE143UVmyKnthTilIH85Rp+iov+
+         RJC9gUjY3FxmmrF0XH0L55LNd+BbyAjTbzh+CBkESSttg4duR0OAjG6pImWVButz4773
+         ORCleOWWP7mVwpBfq5nSK4Gm5JhlJlTa5ZYV/lAXrme0jGXUrHWEjLZYrk2F0dCsCJgX
+         2mkXh71X++tllGPJOecARVtxU42zKRvmyvNV/4pEHmGo+VViVRX16NzihIQlIRE7mouv
+         /q6Q==
+X-Gm-Message-State: AOAM533CTGfQ8CB4GD/09X9pg7ggI/UW86CUgQY2dwg8ctcTMJIwErDU
+        dPAUtmG7LCqDOh6AyT47yu3a0c8WokNpvAOCw326MWCMzWqN/Psfa9pE3w1YlSRyyxubVhKMrCx
+        AN1q3eY6PTgQnSS84ME3lIK1ERVo=
+X-Received: by 2002:a1c:f211:0:b0:381:6c60:742f with SMTP id s17-20020a1cf211000000b003816c60742fmr4110594wmc.130.1648639746485;
+        Wed, 30 Mar 2022 04:29:06 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJz3tJfjg2ltNgBDJTjAI6UNvach4o9T1u3xP9F0MW35LlWoSLgV4PaG9kYJkXDGXk8iOPzXyQ==
+X-Received: by 2002:a1c:f211:0:b0:381:6c60:742f with SMTP id s17-20020a1cf211000000b003816c60742fmr4110575wmc.130.1648639746177;
+        Wed, 30 Mar 2022 04:29:06 -0700 (PDT)
+Received: from ?IPv6:2a0c:5a80:1c1a:5300:ea85:f79:5235:c7fc? ([2a0c:5a80:1c1a:5300:ea85:f79:5235:c7fc])
+        by smtp.gmail.com with ESMTPSA id bg18-20020a05600c3c9200b0037c2ef07493sm5273322wmb.3.2022.03.30.04.29.05
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 29 Mar 2022 15:19:16 -0700 (PDT)
-Date:   Tue, 29 Mar 2022 18:19:15 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Bart Wensley <bwensley@redhat.com>
-cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Daniel Bristot de Oliveria <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: Cyclictest doesn't support --smi option for ice lake
- processors
-In-Reply-To: <CAGCuPdNVEtSk0jqL+74RiV5YcHmdHzsAOcAu_DqLSdhh4h6-aA@mail.gmail.com>
-Message-ID: <383be4c3-c1ad-3b60-dd32-71b8d04e814f@redhat.com>
-References: <CAGCuPdNVEtSk0jqL+74RiV5YcHmdHzsAOcAu_DqLSdhh4h6-aA@mail.gmail.com>
+        Wed, 30 Mar 2022 04:29:05 -0700 (PDT)
+Message-ID: <7d115ec39714b906e31398373855c28391229ff9.camel@redhat.com>
+Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     Mel Gorman <mgorman@suse.de>
+Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
+        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
+        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
+        willy@infradead.org
+Date:   Wed, 30 Mar 2022 13:29:04 +0200
+In-Reply-To: <20220303114550.GE4363@suse.de>
+References: <20220208100750.1189808-1-nsaenzju@redhat.com>
+         <20220303114550.GE4363@suse.de>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 (3.42.4-1.fc35) 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Mel,
 
-
-On Mon, 28 Mar 2022, Bart Wensley wrote:
-
-> Using the --smi option with cyclictest on ice lake processors gives
-> the following error:
-> FATAL: SMI counter is not supported on this processor
+On Thu, 2022-03-03 at 11:45 +0000, Mel Gorman wrote:
+> On Tue, Feb 08, 2022 at 11:07:48AM +0100, Nicolas Saenz Julienne wrote:
+> > This series replaces mm/page_alloc's per-cpu page lists drain mechanism with
+> > one that allows accessing the lists remotely. Currently, only a local CPU is
+> > permitted to change its per-cpu lists, and it's expected to do so, on-demand,
+> > whenever a process demands it by means of queueing a drain task on the local
+> > CPU. This causes problems for NOHZ_FULL CPUs and real-time systems that can't
+> > take any sort of interruption and to some lesser extent inconveniences idle and
+> > virtualised systems.
+> > 
 > 
-> It looks like the ice lake model (0x6A) is missing from function
-> has_smi_counter:
-> https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/cyclictest/cyclictest.c#n410
+> I know this has been sitting here for a long while. Last few weeks have
+> not been fun.
 > 
-> Before submitting a patch for this, I was just wondering if there was
-> a better way to handle this than having to update cyclictest every
-> time a new processor model is released?
+> > Note that this is not the first attempt at fixing this per-cpu page lists:
+> >  - The first attempt[1] tried to conditionally change the pagesets locking
+> >    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
+> >    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
+> >    for NOHZ_FULL setups, which isn't ideal.
+> >  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
+> >    performance degradation was too big.
+> > 
 > 
-> Bart
+> For unrelated reasons I looked at using llist to avoid locks entirely. It
+> turns out it's not possible and needs a lock. We know "local_locks to
+> per-cpu spinlocks" took a large penalty so I considered alternatives on
+> how a lock could be used.  I found it's possible to both remote drain
+> the lists and avoid the disable/enable of IRQs entirely as long as a
+> preempting IRQ is willing to take the zone lock instead (should be very
+> rare). The IRQ part is a bit hairy though as softirqs are also a problem
+> and preempt-rt needs different rules and the llist has to sort PCP
+> refills which might be a loss in total. However, the remote draining may
+> still be interesting. The full series is at
+> https://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git/ mm-pcpllist-v1r2
 > 
+> It's still waiting on tests to complete and not all the changelogs are
+> complete which is why it's not posted.
 > 
+> This is a comparison of vanilla vs "local_locks to per-cpu spinlocks"
+> versus the git series up to "mm/page_alloc: Remotely drain per-cpu lists"
+> for the page faulting microbench I originally complained about.  The test
+> machine is a 2-socket CascadeLake machine.
+> 
+> pft timings
+>                                  5.17.0-rc5             5.17.0-rc5             5.17.0-rc5
+>                                     vanilla    mm-remotedrain-v2r1       mm-pcpdrain-v1r1
+> Amean     elapsed-1        32.54 (   0.00%)       33.08 *  -1.66%*       32.82 *  -0.86%*
+> Amean     elapsed-4         8.66 (   0.00%)        9.24 *  -6.72%*        8.69 *  -0.38%*
+> Amean     elapsed-7         5.02 (   0.00%)        5.43 *  -8.16%*        5.05 *  -0.55%*
+> Amean     elapsed-12        3.07 (   0.00%)        3.38 * -10.00%*        3.09 *  -0.72%*
+> Amean     elapsed-21        2.36 (   0.00%)        2.38 *  -0.89%*        2.19 *   7.39%*
+> Amean     elapsed-30        1.75 (   0.00%)        1.87 *  -6.50%*        1.62 *   7.59%*
+> Amean     elapsed-48        1.71 (   0.00%)        2.00 * -17.32%*        1.71 (  -0.08%)
+> Amean     elapsed-79        1.56 (   0.00%)        1.62 *  -3.84%*        1.56 (  -0.02%)
+> Amean     elapsed-80        1.57 (   0.00%)        1.65 *  -5.31%*        1.57 (  -0.04%)
+> 
+> Note the local_lock conversion took 1 1-17% penalty while the git tree
+> takes a negligile penalty while still allowing remote drains. It might
+> have some potential while being less complex than the RCU approach.
 
-This function is based on turbostat in the linux kernel. It hasn't been 
-synced in awhile, so, if you would like to update it for ice lake
-then please update it for any other processors in turbostat as well.
-I think the function to look at is probe_nhm_msrs().
+I've been made aware of a problem with the spin_trylock() approach. It doesn't
+work for UP since in that context spin_lock() is a NOOP (well, it only disables
+preemption). So nothing prevents a race with an IRQ.
 
-Thank You
+It's kinda funny, breakages generally happen the other way around.
 
-John Kacur
+Regards,
+
+-- 
+Nicolás Sáenz
 
