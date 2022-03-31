@@ -2,141 +2,147 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E7960C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 15:24:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 584DCC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 16:26:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238211AbiCaP0I (ORCPT
+        id S237862AbiCaQ2k (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 31 Mar 2022 11:26:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48194 "EHLO
+        Thu, 31 Mar 2022 12:28:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48014 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238170AbiCaP0G (ORCPT
+        with ESMTP id S233616AbiCaQ2j (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 31 Mar 2022 11:26:06 -0400
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2EF221BBF41;
-        Thu, 31 Mar 2022 08:24:19 -0700 (PDT)
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
-        by smtp-out1.suse.de (Postfix) with ESMTP id C68FA21A91;
-        Thu, 31 Mar 2022 15:24:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1648740257; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ma8vdlDSWnrbojUZ5AhKhb7K0e//yNVxGAJzpxbcTxI=;
-        b=msPQrXJSC8g3Be+Dlt5DFWM1bRQlwNIsLIi7IUyd0lrtSCsLvpwtdOn9SFIjTGBhcV6EDG
-        Ho1CrG0uvneuBInQKEppLoUN6PIRHhY4misTlQS2pBNAGuwGWybZl1mqUhTm2t7zX85DGw
-        TMwYqsVmlNK0en53c4BdtZ3oDJAOlpY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1648740257;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ma8vdlDSWnrbojUZ5AhKhb7K0e//yNVxGAJzpxbcTxI=;
-        b=HIsZ+TMnSMyDKb4WZQbzNECBG2x1LqZuWbIsNP63QfhnLfP07i8LUaidBV+RHoSRbDgXrN
-        4dk3oDTeHo94p1Ag==
-Received: from suse.de (unknown [10.163.32.246])
+        Thu, 31 Mar 2022 12:28:39 -0400
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D54906A01F;
+        Thu, 31 Mar 2022 09:26:51 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by relay2.suse.de (Postfix) with ESMTPS id B8B40A3B83;
-        Thu, 31 Mar 2022 15:24:16 +0000 (UTC)
-Date:   Thu, 31 Mar 2022 16:24:09 +0100
-From:   Mel Gorman <mgorman@suse.de>
-To:     Nicolas Saenz Julienne <nsaenzju@redhat.com>
-Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, frederic@kernel.org, tglx@linutronix.de,
-        mtosatti@redhat.com, linux-rt-users@vger.kernel.org,
-        vbabka@suse.cz, cl@linux.com, paulmck@kernel.org,
-        willy@infradead.org
-Subject: Re: [PATCH 0/2] mm/page_alloc: Remote per-cpu lists drain support
-Message-ID: <20220331152409.GK4363@suse.de>
-References: <20220208100750.1189808-1-nsaenzju@redhat.com>
- <20220303114550.GE4363@suse.de>
- <7d115ec39714b906e31398373855c28391229ff9.camel@redhat.com>
+        by ams.source.kernel.org (Postfix) with ESMTPS id 80105B8218D;
+        Thu, 31 Mar 2022 16:26:50 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3D55FC340F3;
+        Thu, 31 Mar 2022 16:26:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1648744009;
+        bh=Fi29zH/dyHSzp3dAKxwvQUC4j76Ay7mtWm2iwZJrAdc=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=JKq3a/26rubuO20/NiStfyKorOy2c+93e35TjulUFXtfd16K7aYUX2FxzQCy7faMH
+         j1vt1zzNlS3fjUaXqOt/9IXZGunSZvnTdgQQAaEaXI+jKiWs0mM/l2F88oA+R0irXp
+         1ldglz/nsCa4qBYvhfzUzug/CwAYmw/jIxMIFbtQE2H0L5xXZN4ly2Ai2H40uduffQ
+         qtft2dtkFhZSZ7kWBhsAylgb9cBKq3mc6wza6xzMZCVh0GIGl9GYnBGrYZ8whG/Kzs
+         YCursU/Evv71+9L2U++31jKcCAHq23av0keh+56o7tEctzijZ3h0me9MrAy7z78SFP
+         aLBxnyQZX0oQQ==
+Received: by mail-oa1-f51.google.com with SMTP id 586e51a60fabf-de3eda6b5dso25952865fac.0;
+        Thu, 31 Mar 2022 09:26:49 -0700 (PDT)
+X-Gm-Message-State: AOAM532m20mC+qfWoMkIn00Tjiafctwdg1lGcWRuRYiqPbGc3U2HZedj
+        vLKHPE0Ocv8zvMUbBKUAplOBI5GgEMIP3WX8ueU=
+X-Google-Smtp-Source: ABdhPJxHe52iIX0kUeRpuEF42n49iMCyW0ZRO4wtNoSQW4gUguuVEnnICF17DZZ2EkFQjaNFGc6c7qZBJ2+mvDgaoz8=
+X-Received: by 2002:a05:6870:eaa5:b0:da:b3f:2b45 with SMTP id
+ s37-20020a056870eaa500b000da0b3f2b45mr3049827oap.228.1648744008366; Thu, 31
+ Mar 2022 09:26:48 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <7d115ec39714b906e31398373855c28391229ff9.camel@redhat.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+References: <20220331151654.184433-1-javierm@redhat.com>
+In-Reply-To: <20220331151654.184433-1-javierm@redhat.com>
+From:   Ard Biesheuvel <ardb@kernel.org>
+Date:   Thu, 31 Mar 2022 18:26:37 +0200
+X-Gmail-Original-Message-ID: <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
+Message-ID: <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
+Subject: Re: [PATCH v2] efi: Allow to enable EFI runtime services by default
+ on RT
+To:     Javier Martinez Canillas <javierm@redhat.com>
+Cc:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-efi <linux-efi@vger.kernel.org>,
+        Brian Masney <bmasney@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Al Stone <ahs3@redhat.com>,
+        Peter Robinson <pbrobinson@gmail.com>,
+        Robbie Harwood <rharwood@redhat.com>,
+        Peter Jones <pjones@redhat.com>,
+        Alexander Larsson <alexl@redhat.com>,
+        Andrew Halaney <ahalaney@redhat.com>,
+        linux-rt-users@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Mar 30, 2022 at 01:29:04PM +0200, Nicolas Saenz Julienne wrote:
-> Hi Mel,
-> 
-> On Thu, 2022-03-03 at 11:45 +0000, Mel Gorman wrote:
-> > On Tue, Feb 08, 2022 at 11:07:48AM +0100, Nicolas Saenz Julienne wrote:
-> > > This series replaces mm/page_alloc's per-cpu page lists drain mechanism with
-> > > one that allows accessing the lists remotely. Currently, only a local CPU is
-> > > permitted to change its per-cpu lists, and it's expected to do so, on-demand,
-> > > whenever a process demands it by means of queueing a drain task on the local
-> > > CPU. This causes problems for NOHZ_FULL CPUs and real-time systems that can't
-> > > take any sort of interruption and to some lesser extent inconveniences idle and
-> > > virtualised systems.
-> > > 
-> > 
-> > I know this has been sitting here for a long while. Last few weeks have
-> > not been fun.
-> > 
-> > > Note that this is not the first attempt at fixing this per-cpu page lists:
-> > >  - The first attempt[1] tried to conditionally change the pagesets locking
-> > >    scheme based the NOHZ_FULL config. It was deemed hard to maintain as the
-> > >    NOHZ_FULL code path would be rarely tested. Also, this only solves the issue
-> > >    for NOHZ_FULL setups, which isn't ideal.
-> > >  - The second[2] unanimously switched the local_locks to per-cpu spinlocks. The
-> > >    performance degradation was too big.
-> > > 
-> > 
-> > For unrelated reasons I looked at using llist to avoid locks entirely. It
-> > turns out it's not possible and needs a lock. We know "local_locks to
-> > per-cpu spinlocks" took a large penalty so I considered alternatives on
-> > how a lock could be used.  I found it's possible to both remote drain
-> > the lists and avoid the disable/enable of IRQs entirely as long as a
-> > preempting IRQ is willing to take the zone lock instead (should be very
-> > rare). The IRQ part is a bit hairy though as softirqs are also a problem
-> > and preempt-rt needs different rules and the llist has to sort PCP
-> > refills which might be a loss in total. However, the remote draining may
-> > still be interesting. The full series is at
-> > https://git.kernel.org/pub/scm/linux/kernel/git/mel/linux.git/ mm-pcpllist-v1r2
-> > 
-> > It's still waiting on tests to complete and not all the changelogs are
-> > complete which is why it's not posted.
-> > 
-> > This is a comparison of vanilla vs "local_locks to per-cpu spinlocks"
-> > versus the git series up to "mm/page_alloc: Remotely drain per-cpu lists"
-> > for the page faulting microbench I originally complained about.  The test
-> > machine is a 2-socket CascadeLake machine.
-> > 
-> > pft timings
-> >                                  5.17.0-rc5             5.17.0-rc5             5.17.0-rc5
-> >                                     vanilla    mm-remotedrain-v2r1       mm-pcpdrain-v1r1
-> > Amean     elapsed-1        32.54 (   0.00%)       33.08 *  -1.66%*       32.82 *  -0.86%*
-> > Amean     elapsed-4         8.66 (   0.00%)        9.24 *  -6.72%*        8.69 *  -0.38%*
-> > Amean     elapsed-7         5.02 (   0.00%)        5.43 *  -8.16%*        5.05 *  -0.55%*
-> > Amean     elapsed-12        3.07 (   0.00%)        3.38 * -10.00%*        3.09 *  -0.72%*
-> > Amean     elapsed-21        2.36 (   0.00%)        2.38 *  -0.89%*        2.19 *   7.39%*
-> > Amean     elapsed-30        1.75 (   0.00%)        1.87 *  -6.50%*        1.62 *   7.59%*
-> > Amean     elapsed-48        1.71 (   0.00%)        2.00 * -17.32%*        1.71 (  -0.08%)
-> > Amean     elapsed-79        1.56 (   0.00%)        1.62 *  -3.84%*        1.56 (  -0.02%)
-> > Amean     elapsed-80        1.57 (   0.00%)        1.65 *  -5.31%*        1.57 (  -0.04%)
-> > 
-> > Note the local_lock conversion took 1 1-17% penalty while the git tree
-> > takes a negligile penalty while still allowing remote drains. It might
-> > have some potential while being less complex than the RCU approach.
-> 
-> I've been made aware of a problem with the spin_trylock() approach. It doesn't
-> work for UP since in that context spin_lock() is a NOOP (well, it only disables
-> preemption). So nothing prevents a race with an IRQ.
-> 
+On Thu, 31 Mar 2022 at 17:17, Javier Martinez Canillas
+<javierm@redhat.com> wrote:
+>
+> Commit d9f283ae71af ("efi: Disable runtime services on RT") disabled EFI
+> runtime services by default when the CONFIG_PREEMPT_RT option is enabled.
+>
+> The rationale for that commit is that some EFI calls could take too much
+> time, leading to large latencies which is an issue for Real-Time kernels.
+>
+> But a side effect of that change was that now is not possible anymore to
+> enable the EFI runtime services by default when CONFIG_PREEMPT_RT is set,
+> without passing an efi=runtime command line parameter to the kernel.
+>
+> Instead, let's add a new EFI_DISABLE_RUNTIME boolean Kconfig option, that
+> would be set to n by default but to y if CONFIG_PREEMPT_RT is enabled.
+>
+> That way, the current behaviour is preserved but gives users a mechanism
+> to enable the EFI runtimes services in their kernels if that is required.
+> For example, if the firmware could guarantee bounded time for EFI calls.
+>
+> Also, having a separate boolean config could allow users to disable the
+> EFI runtime services by default even when CONFIG_PREEMPT_RT is not set.
+>
+> Reported-by: Alexander Larsson <alexl@redhat.com>
+> Fixes: d9f283ae71af ("efi: Disable runtime services on RT")
+> Signed-off-by: Javier Martinez Canillas <javierm@redhat.com>
+> ---
+>
+> Changes in v2:
+> - Improve commit description to make clear the motivation for the change
+>   (Sebastian Andrzej Siewior).
+>
 
-I didn't think of UP being a problem. I'm offline shortly until early next
-week but superficially the spin_[try]lock for PCP would need a pcp_lock
-and pcp_trylock helpers. On SMP, it would be the equivalent lock. On UP,
-pcp_lock would map to spin_lock but pcp_trylock would likely need to map
-to spin_lock_irqsave. It means that UP would always disable IRQs but that
-would be no worse than the current allocator.
+This looks ok to me. I'll queue this up once the merge window closes.
 
--- 
-Mel Gorman
-SUSE Labs
+>  drivers/firmware/efi/Kconfig | 15 +++++++++++++++
+>  drivers/firmware/efi/efi.c   |  2 +-
+>  2 files changed, 16 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/firmware/efi/Kconfig b/drivers/firmware/efi/Kconfig
+> index 2c3dac5ecb36..243882f5e5f9 100644
+> --- a/drivers/firmware/efi/Kconfig
+> +++ b/drivers/firmware/efi/Kconfig
+> @@ -284,3 +284,18 @@ config EFI_CUSTOM_SSDT_OVERLAYS
+>
+>           See Documentation/admin-guide/acpi/ssdt-overlays.rst for more
+>           information.
+> +
+> +config EFI_DISABLE_RUNTIME
+> +       bool "Disable EFI runtime services support by default"
+> +       default y if PREEMPT_RT
+> +       help
+> +         Allow to disable the EFI runtime services support by default. This can
+> +         already be achieved by using the efi=noruntime option, but it could be
+> +         useful to have this default without any kernel command line parameter.
+> +
+> +         The EFI runtime services are disabled by default when PREEMPT_RT is
+> +         enabled, because measurements have shown that some EFI functions calls
+> +         might take too much time to complete, causing large latencies which is
+> +         an issue for Real-Time kernels.
+> +
+> +         This default can be overridden by using the efi=runtime option.
+> diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
+> index 5502e176d51b..ff57db8f8d05 100644
+> --- a/drivers/firmware/efi/efi.c
+> +++ b/drivers/firmware/efi/efi.c
+> @@ -66,7 +66,7 @@ struct mm_struct efi_mm = {
+>
+>  struct workqueue_struct *efi_rts_wq;
+>
+> -static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT);
+> +static bool disable_runtime = IS_ENABLED(CONFIG_EFI_DISABLE_RUNTIME);
+>  static int __init setup_noefi(char *arg)
+>  {
+>         disable_runtime = true;
+> --
+> 2.35.1
+>
