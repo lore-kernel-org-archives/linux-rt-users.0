@@ -2,209 +2,128 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8EDF7C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 18:58:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 513D8C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 19:29:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237678AbiCaTAD (ORCPT
+        id S240726AbiCaTay (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 31 Mar 2022 15:00:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41544 "EHLO
+        Thu, 31 Mar 2022 15:30:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38944 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235959AbiCaTAC (ORCPT
+        with ESMTP id S240705AbiCaTax (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 31 Mar 2022 15:00:02 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B37032364D4;
-        Thu, 31 Mar 2022 11:58:13 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 4F6436187F;
-        Thu, 31 Mar 2022 18:58:13 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 95009C340ED;
-        Thu, 31 Mar 2022 18:58:12 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 5.15.32-rt39
-Date:   Thu, 31 Mar 2022 18:57:24 -0000
-Message-ID: <164875304500.974121.18336996246209199283@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
+        Thu, 31 Mar 2022 15:30:53 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9975F21244;
+        Thu, 31 Mar 2022 12:29:04 -0700 (PDT)
+Date:   Thu, 31 Mar 2022 21:29:01 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1648754942;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=SyRunJIttOSoKPtRPHVIrqd1pxkb0TjVve+voxhbD10=;
+        b=Kb6NtKDnhx71zz0GNRf097nKYq6nD1t7B3ApI8gUlJpzEqWyM/bVV04hZFHUhd66cgwkkB
+        s5QzvQIF4+pXqVYxkIopLCiEhvVpiw/vLG+43VyDaLWf0CQInoDz8VJFu9YkNwEkfJrbFX
+        rrwCCl7DxjIcb9N/o6dHp0vGghmY6cd6YkZGtHAqGWKUHvYa6ZfDLNy48EBbJZk9VB4sbz
+        6S6OPPGD6o9tRtxWQRMDTv4ENqC9Bbh7ggeByeklACXiFLxlasYMtZfrKCqaxJIK4W+V6l
+        euVywUCvpP/kzuk9vAlsY/uvtevd5a0llcjqeOysKcu1Gk32esIxCo6Zae0H8A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1648754942;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=SyRunJIttOSoKPtRPHVIrqd1pxkb0TjVve+voxhbD10=;
+        b=uWFmRx5ti2WzkyyQpub6TqK7NwdfLKb6opOH0V23cijzXiMLlrEA+HR0IUlKfLppY7UdjY
+        Hqhkzoo4hWHiWNCQ==
+From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
+To:     Ard Biesheuvel <ardb@kernel.org>
+Cc:     Javier Martinez Canillas <javierm@redhat.com>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-efi <linux-efi@vger.kernel.org>,
+        Brian Masney <bmasney@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+        Al Stone <ahs3@redhat.com>,
+        Peter Robinson <pbrobinson@gmail.com>,
+        Robbie Harwood <rharwood@redhat.com>,
+        Peter Jones <pjones@redhat.com>,
+        Alexander Larsson <alexl@redhat.com>,
+        Andrew Halaney <ahalaney@redhat.com>,
+        linux-rt-users@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v2] efi: Allow to enable EFI runtime services by default
+ on RT
+Message-ID: <YkYA/Wpqa/PMczkp@lx-t490>
+References: <20220331151654.184433-1-javierm@redhat.com>
+ <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Hi Ard, Javier,
 
-I'm pleased to announce the 5.15.32-rt39 stable release.
+Am Do, Mar 31, 2022, schrieb Ard Biesheuvel:
+> On Thu, 31 Mar 2022 at 17:17, Javier Martinez Canillas
+> <javierm@redhat.com> wrote:
+> >
+> > Commit d9f283ae71af ("efi: Disable runtime services on RT") disabled EFI
+> > runtime services by default when the CONFIG_PREEMPT_RT option is enabled.
+> >
+> > The rationale for that commit is that some EFI calls could take too much
+> > time, leading to large latencies which is an issue for Real-Time kernels.
+> >
+> > But a side effect of that change was that now is not possible anymore to
+> > enable the EFI runtime services by default when CONFIG_PREEMPT_RT is set,
+> > without passing an efi=runtime command line parameter to the kernel.
+> >
+> > Instead, let's add a new EFI_DISABLE_RUNTIME boolean Kconfig option, that
+> > would be set to n by default but to y if CONFIG_PREEMPT_RT is enabled.
+> >
+> > That way, the current behaviour is preserved but gives users a mechanism
+> > to enable the EFI runtimes services in their kernels if that is required.
+> > For example, if the firmware could guarantee bounded time for EFI calls.
+> >
+> > Also, having a separate boolean config could allow users to disable the
+> > EFI runtime services by default even when CONFIG_PREEMPT_RT is not set.
+> >
+> > Reported-by: Alexander Larsson <alexl@redhat.com>
+> > Fixes: d9f283ae71af ("efi: Disable runtime services on RT")
+> > Signed-off-by: Javier Martinez Canillas <javierm@redhat.com>
+> > ---
+> >
+> > Changes in v2:
+> > - Improve commit description to make clear the motivation for the change
+> >   (Sebastian Andrzej Siewior).
+> >
+>
+> This looks ok to me. I'll queue this up once the merge window closes.
+>
 
-You can get this release via the git tree at:
+In case of (CONFIG_PREEMPT_RT=y && CONFIG_EFI_DISABLE_RUNTIME=n),
+shouldn't we add a small message in the kernel log warning that EFI
+runtime services are enabled for the RT kernel?
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+In almost all HW, except custom ones with "verified" firmware, such a
+warning would be useful... This is especially true since in the embedded
+domain, manually-configured RT kernels are almost always the norm.
 
-  branch: v5.15-rt
-  Head SHA1: 40291aa6846edc6813885b33bcc837c61a58bf3b
+Thanks,
 
-Or to build 5.15.32-rt39 directly, the following patches should be applied:
+--
+Ahmed S. Darwish
+Linutronix GmbH | Bahnhofstrasse 3 | D-88690 Uhldingen-Mühlhofen
+Phone: +49 7556 25 999 31; Fax.: +49 7556 25 999 99
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
+Hinweise zum Datenschutz finden Sie hier (Informations on data privacy
+can be found here): https://linutronix.de/kontakt/Datenschutz.php
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.32.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.32-rt39.patch.xz
-
-
-Enjoy!
-Clark
-
-Changes from v5.15.31-rt38:
----
-
-Arnd Bergmann (3):
-      uaccess: fix integer overflow on access_ok()
-      m68k: fix access_ok for coldfire
-      nds32: fix access_ok() checks in get/put_user
-
-Brian Norris (1):
-      Revert "ath: add support for special 0x0 regulatory domain"
-
-Bryan O'Donoghue (1):
-      wcn36xx: Differentiate wcn3660 from wcn3620
-
-Clark Williams (2):
-      Merge tag 'v5.15.32' into v5.15-rt
-      Linux 5.15.32-rt39
-
-Eric Dumazet (2):
-      llc: fix netdevice reference leaks in llc_ui_bind()
-      llc: only change llc->dev when bind() succeeds
-
-Giacomo Guiduzzi (1):
-      ALSA: pci: fix reading of swapped values from pcmreg in AC97 codec
-
-Giovanni Cabiddu (1):
-      crypto: qat - disable registration of algorithms
-
-Greg Kroah-Hartman (1):
-      Linux 5.15.32
-
-Helmut Grohne (1):
-      Bluetooth: btusb: Add another Realtek 8761BU
-
-James Bottomley (1):
-      tpm: use try_get_ops() in tpm-space.c
-
-Jason Zheng (1):
-      ALSA: hda/realtek: Add quirk for ASUS GA402
-
-Jonathan Teh (1):
-      ALSA: cmipci: Restore aux vol on suspend/resume
-
-Jordy Zomer (1):
-      nfc: st21nfca: Fix potential buffer overflows in EVT_TRANSACTION
-
-Larry Finger (1):
-      Bluetooth: btusb: Add one more Bluetooth part for the Realtek RTL8852AE
-
-Lars-Peter Clausen (1):
-      ALSA: usb-audio: Add mute TLV for playback volumes on RODE NT-USB
-
-Linus LÃ¼ssing (1):
-      mac80211: fix potential double free on mesh join
-
-Mark Cilissen (1):
-      ACPI / x86: Work around broken XSDT on Advantech DAC-BJ01 board
-
-Maximilian Luz (1):
-      ACPI: battery: Add device HID and quirk for Microsoft Surface Go 3
-
-Pablo Neira Ayuso (2):
-      netfilter: nf_tables: initialize registers in nft_do_chain()
-      netfilter: nf_tables: validate registers coming from userspace.
-
-Paul E. McKenney (1):
-      rcu: Don't deboost before reporting expedited quiescent state
-
-Reza Jahanbakhshi (1):
-      ALSA: usb-audio: add mapping for new Corsair Virtuoso SE
-
-Roberto Sassu (1):
-      drm/virtio: Ensure that objs is not NULL in virtio_gpu_array_put_free()
-
-Stephane Graber (1):
-      drivers: net: xgene: Fix regression in CRC stripping
-
-Tadeusz Struk (2):
-      net: ipv6: fix skb_over_panic in __ip6_append_data
-      tpm: Fix error handling in async work
-
-Takashi Iwai (7):
-      ASoC: sti: Fix deadlock via snd_pcm_stop_xrun() call
-      ALSA: oss: Fix PCM OSS buffer allocation overflow
-      ALSA: pcm: Fix races among concurrent hw_params and hw_free calls
-      ALSA: pcm: Fix races among concurrent read/write and buffer changes
-      ALSA: pcm: Fix races among concurrent prepare and hw_params/hw_free calls
-      ALSA: pcm: Fix races among concurrent prealloc proc writes
-      ALSA: pcm: Add stream lock during PCM reset ioctl operations
-
-Tim Crawford (2):
-      ALSA: hda/realtek: Add quirk for Clevo NP70PNJ
-      ALSA: hda/realtek: Add quirk for Clevo NP50PNJ
-
-Werner Sembach (1):
-      ACPI: video: Force backlight native for Clevo NL5xRU and NL5xNU
-
-huangwenhui (1):
-      ALSA: hda/realtek - Fix headset mic problem for a HP machine with alc671
----
-Makefile                                         |  2 +-
- arch/csky/include/asm/uaccess.h                  |  7 +-
- arch/hexagon/include/asm/uaccess.h               | 18 ++---
- arch/m68k/include/asm/uaccess.h                  | 15 ++--
- arch/microblaze/include/asm/uaccess.h            | 19 +----
- arch/nds32/include/asm/uaccess.h                 | 22 ++++--
- arch/x86/kernel/acpi/boot.c                      | 24 ++++++
- drivers/acpi/battery.c                           | 12 +++
- drivers/acpi/video_detect.c                      | 75 ++++++++++++++++++
- drivers/bluetooth/btusb.c                        |  4 +
- drivers/char/tpm/tpm-dev-common.c                |  8 +-
- drivers/char/tpm/tpm2-space.c                    |  8 +-
- drivers/crypto/qat/qat_4xxx/adf_drv.c            |  7 ++
- drivers/crypto/qat/qat_common/qat_crypto.c       |  7 ++
- drivers/gpu/drm/virtio/virtgpu_gem.c             |  3 +
- drivers/net/ethernet/apm/xgene/xgene_enet_main.c | 12 +--
- drivers/net/wireless/ath/regd.c                  | 10 +--
- drivers/net/wireless/ath/wcn36xx/main.c          |  3 +
- drivers/net/wireless/ath/wcn36xx/wcn36xx.h       |  1 +
- drivers/nfc/st21nfca/se.c                        | 10 +++
- include/sound/pcm.h                              |  1 +
- kernel/rcu/tree_plugin.h                         |  8 +-
- localversion-rt                                  |  2 +-
- net/ipv6/ip6_output.c                            |  4 +-
- net/llc/af_llc.c                                 | 48 ++++++++----
- net/mac80211/cfg.c                               |  3 -
- net/netfilter/nf_tables_api.c                    | 22 ++++--
- net/netfilter/nf_tables_core.c                   |  2 +-
- sound/core/oss/pcm_oss.c                         | 12 ++-
- sound/core/oss/pcm_plugin.c                      |  5 +-
- sound/core/pcm.c                                 |  2 +
- sound/core/pcm_lib.c                             |  4 +
- sound/core/pcm_memory.c                          | 11 ++-
- sound/core/pcm_native.c                          | 97 +++++++++++++++---------
- sound/pci/ac97/ac97_codec.c                      |  4 +-
- sound/pci/cmipci.c                               |  3 +-
- sound/pci/hda/patch_realtek.c                    |  4 +
- sound/soc/sti/uniperif_player.c                  |  6 +-
- sound/soc/sti/uniperif_reader.c                  |  2 +-
- sound/usb/mixer_maps.c                           | 10 +++
- sound/usb/mixer_quirks.c                         |  7 +-
- 41 files changed, 381 insertions(+), 143 deletions(-)
----
+Linutronix GmbH | Firmensitz (Registered Office): Uhldingen-Mühlhofen |
+Registergericht (Registration Court): Amtsgericht Freiburg i.Br., HRB700
+806 | Geschäftsführer (Managing Directors): Heinz Egger, Thomas Gleixner
