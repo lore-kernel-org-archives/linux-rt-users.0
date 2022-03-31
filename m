@@ -2,45 +2,67 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 513D8C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 19:29:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93D54C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 22:20:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240726AbiCaTay (ORCPT
+        id S242379AbiCaWWB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 31 Mar 2022 15:30:54 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38944 "EHLO
+        Thu, 31 Mar 2022 18:22:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39560 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240705AbiCaTax (ORCPT
+        with ESMTP id S242368AbiCaWWA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 31 Mar 2022 15:30:53 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9975F21244;
-        Thu, 31 Mar 2022 12:29:04 -0700 (PDT)
-Date:   Thu, 31 Mar 2022 21:29:01 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1648754942;
+        Thu, 31 Mar 2022 18:22:00 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 6AF56173F5B
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Mar 2022 15:20:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1648765211;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=SyRunJIttOSoKPtRPHVIrqd1pxkb0TjVve+voxhbD10=;
-        b=Kb6NtKDnhx71zz0GNRf097nKYq6nD1t7B3ApI8gUlJpzEqWyM/bVV04hZFHUhd66cgwkkB
-        s5QzvQIF4+pXqVYxkIopLCiEhvVpiw/vLG+43VyDaLWf0CQInoDz8VJFu9YkNwEkfJrbFX
-        rrwCCl7DxjIcb9N/o6dHp0vGghmY6cd6YkZGtHAqGWKUHvYa6ZfDLNy48EBbJZk9VB4sbz
-        6S6OPPGD6o9tRtxWQRMDTv4ENqC9Bbh7ggeByeklACXiFLxlasYMtZfrKCqaxJIK4W+V6l
-        euVywUCvpP/kzuk9vAlsY/uvtevd5a0llcjqeOysKcu1Gk32esIxCo6Zae0H8A==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1648754942;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=SyRunJIttOSoKPtRPHVIrqd1pxkb0TjVve+voxhbD10=;
-        b=uWFmRx5ti2WzkyyQpub6TqK7NwdfLKb6opOH0V23cijzXiMLlrEA+HR0IUlKfLppY7UdjY
-        Hqhkzoo4hWHiWNCQ==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     Ard Biesheuvel <ardb@kernel.org>
-Cc:     Javier Martinez Canillas <javierm@redhat.com>,
+        bh=lcacMdqd3bf9RhdWBIFn3jh9EYGsuLJ5EDgnlxHe6hY=;
+        b=V7GjAglvSMSC6Tbc5GTFLZ5OVuoPCjrDy/fCoK8jYKAJNn0SRoX+WMFHF6p0HyYIAMbe/S
+        GNKrvk19aJAxvywobbU0dLCOKW52meqSr13UAg6ih6pUIS5E0iGj0i8I403I9Q6Bgccm/o
+        IPbggj/T8CsIY4OvTrvhslWk5+NJVBc=
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
+ [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-306-Ih2eyiq2Omq2pSQvyOyXRA-1; Thu, 31 Mar 2022 18:20:10 -0400
+X-MC-Unique: Ih2eyiq2Omq2pSQvyOyXRA-1
+Received: by mail-ej1-f72.google.com with SMTP id hg13-20020a1709072ccd00b006dfa484ec23so512643ejc.8
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Mar 2022 15:20:09 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=lcacMdqd3bf9RhdWBIFn3jh9EYGsuLJ5EDgnlxHe6hY=;
+        b=6CNPYHVlgXvux9gCY8Bty0k1YZyN0Fd5AyxQT27pyUJ8edWKc2Bz3uf6idZu4oDrku
+         pNTC++/9sJ8A35c5I0e0SnmLTmv3dzziAzLDHur77U+FI1EH7bH7xqlWw77bjYglNknM
+         WaBrmJCLXRU5kiqH37ZVyLbiMILmk6wQJLzvBUcDHfke0OeL7R+u+h8IxEuUJspWX5u9
+         VWYQHiol3S3NaSnaNWbVPhhf2CtG/CGDjwpfS6ZffalniDcR7TPE828OgIKkjRoXIhZR
+         ENW9qGA8dtMhcF0+vA1EKFav4KmosE641ZNlk3HlMqRkyaxsrz8U0GhgUcTHw5kIs1DJ
+         noKQ==
+X-Gm-Message-State: AOAM533sskIQU7Zbtqj05FBvQB6yzhJTxRTbAFSCXDpFIzyuDju3SdOD
+        uEktocIeBM0aNXGpeNgMdYsQofSykcEalQrt6V/qdgNXB1nwJCV/AvlGWF3JjZQd4beIO+lD1kO
+        DYHGfmDtLHrFgXfDNyKnb/3LcQbgetU4h91JNzPFazNI=
+X-Received: by 2002:aa7:c789:0:b0:413:605d:8d17 with SMTP id n9-20020aa7c789000000b00413605d8d17mr18443757eds.100.1648765208977;
+        Thu, 31 Mar 2022 15:20:08 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxJS+G0lRPGKhUebBKREDAXsEcg0UrX4NCWqjao2fTUSk/VCXDWb6txzdyF194RLS6KRUjV8UwtsdLq0U1h44U=
+X-Received: by 2002:aa7:c789:0:b0:413:605d:8d17 with SMTP id
+ n9-20020aa7c789000000b00413605d8d17mr18443736eds.100.1648765208701; Thu, 31
+ Mar 2022 15:20:08 -0700 (PDT)
+MIME-Version: 1.0
+References: <20220331151654.184433-1-javierm@redhat.com> <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
+ <YkYA/Wpqa/PMczkp@lx-t490>
+In-Reply-To: <YkYA/Wpqa/PMczkp@lx-t490>
+From:   Javier Martinez Canillas <javierm@redhat.com>
+Date:   Fri, 1 Apr 2022 00:19:57 +0200
+Message-ID: <CAFOAJEeKNy0HW82W6HV_49d5sc5L0m62QDfY9qA1906_ZzGRYg@mail.gmail.com>
+Subject: Re: [PATCH v2] efi: Allow to enable EFI runtime services by default
+ on RT
+To:     "Ahmed S. Darwish" <a.darwish@linutronix.de>
+Cc:     Ard Biesheuvel <ardb@kernel.org>,
         Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
         linux-efi <linux-efi@vger.kernel.org>,
         Brian Masney <bmasney@redhat.com>,
@@ -53,77 +75,49 @@ Cc:     Javier Martinez Canillas <javierm@redhat.com>,
         Andrew Halaney <ahalaney@redhat.com>,
         linux-rt-users@vger.kernel.org,
         Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v2] efi: Allow to enable EFI runtime services by default
- on RT
-Message-ID: <YkYA/Wpqa/PMczkp@lx-t490>
-References: <20220331151654.184433-1-javierm@redhat.com>
- <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Ard, Javier,
+Hello Ahmed,
 
-Am Do, Mar 31, 2022, schrieb Ard Biesheuvel:
-> On Thu, 31 Mar 2022 at 17:17, Javier Martinez Canillas
-> <javierm@redhat.com> wrote:
-> >
-> > Commit d9f283ae71af ("efi: Disable runtime services on RT") disabled EFI
-> > runtime services by default when the CONFIG_PREEMPT_RT option is enabled.
-> >
-> > The rationale for that commit is that some EFI calls could take too much
-> > time, leading to large latencies which is an issue for Real-Time kernels.
-> >
-> > But a side effect of that change was that now is not possible anymore to
-> > enable the EFI runtime services by default when CONFIG_PREEMPT_RT is set,
-> > without passing an efi=runtime command line parameter to the kernel.
-> >
-> > Instead, let's add a new EFI_DISABLE_RUNTIME boolean Kconfig option, that
-> > would be set to n by default but to y if CONFIG_PREEMPT_RT is enabled.
-> >
-> > That way, the current behaviour is preserved but gives users a mechanism
-> > to enable the EFI runtimes services in their kernels if that is required.
-> > For example, if the firmware could guarantee bounded time for EFI calls.
-> >
-> > Also, having a separate boolean config could allow users to disable the
-> > EFI runtime services by default even when CONFIG_PREEMPT_RT is not set.
-> >
-> > Reported-by: Alexander Larsson <alexl@redhat.com>
-> > Fixes: d9f283ae71af ("efi: Disable runtime services on RT")
-> > Signed-off-by: Javier Martinez Canillas <javierm@redhat.com>
-> > ---
-> >
-> > Changes in v2:
-> > - Improve commit description to make clear the motivation for the change
-> >   (Sebastian Andrzej Siewior).
-> >
+On Thu, Mar 31, 2022 at 9:36 PM Ahmed S. Darwish
+<a.darwish@linutronix.de> wrote:
 >
-> This looks ok to me. I'll queue this up once the merge window closes.
+> Hi Ard, Javier,
+>
+> Am Do, Mar 31, 2022, schrieb Ard Biesheuvel:
+> > On Thu, 31 Mar 2022 at 17:17, Javier Martinez Canillas
+> > <javierm@redhat.com> wrote:
 >
 
-In case of (CONFIG_PREEMPT_RT=y && CONFIG_EFI_DISABLE_RUNTIME=n),
-shouldn't we add a small message in the kernel log warning that EFI
-runtime services are enabled for the RT kernel?
+[snip]
 
-In almost all HW, except custom ones with "verified" firmware, such a
-warning would be useful... This is especially true since in the embedded
-domain, manually-configured RT kernels are almost always the norm.
+> In case of (CONFIG_PREEMPT_RT=y && CONFIG_EFI_DISABLE_RUNTIME=n),
+> shouldn't we add a small message in the kernel log warning that EFI
+> runtime services are enabled for the RT kernel?
+>
+> In almost all HW, except custom ones with "verified" firmware, such a
+> warning would be useful... This is especially true since in the embedded
 
-Thanks,
+I considered that as well but was not sure about what that message should be.
 
---
-Ahmed S. Darwish
-Linutronix GmbH | Bahnhofstrasse 3 | D-88690 Uhldingen-Mühlhofen
-Phone: +49 7556 25 999 31; Fax.: +49 7556 25 999 99
+Since it will be printed even on systems whose EFI firmwares do not
+have such long call times as the ones described in the commit that
+disabled the runtime services for RT.
 
-Hinweise zum Datenschutz finden Sie hier (Informations on data privacy
-can be found here): https://linutronix.de/kontakt/Datenschutz.php
+And in that case the warning may be misleading and make users believe
+that a problem exists, which might not be accurate.
 
-Linutronix GmbH | Firmensitz (Registered Office): Uhldingen-Mühlhofen |
-Registergericht (Registration Court): Amtsgericht Freiburg i.Br., HRB700
-806 | Geschäftsführer (Managing Directors): Heinz Egger, Thomas Gleixner
+> domain, manually-configured RT kernels are almost always the norm.
+>
+
+Agreed. That is why the default for CONFIG_EFI_DISABLE_RUNTIME=y, if
+CONFIG_PREEMPT_RT=y. So users will need to explicitly disable the
+option if they want the EFI runtime services to be enabled with
+CONFIG_PREEMPT_RT.
+
+Best regards,
+Javier
+
