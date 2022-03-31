@@ -2,123 +2,142 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9167FC433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Mar 2022 17:03:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D79AC433FE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Mar 2022 14:11:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1349138AbiC3RFW (ORCPT
+        id S233236AbiCaOM5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 30 Mar 2022 13:05:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57094 "EHLO
+        Thu, 31 Mar 2022 10:12:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36192 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1349141AbiC3RFV (ORCPT
+        with ESMTP id S237337AbiCaOMr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 30 Mar 2022 13:05:21 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 27206344D4;
-        Wed, 30 Mar 2022 10:03:34 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id A09FCB81DA6;
-        Wed, 30 Mar 2022 17:03:33 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6B695C340EC;
-        Wed, 30 Mar 2022 17:03:31 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1648659812;
-        bh=chK2qbB5D/LYv0rx7RdNf49OUEThRDCKHrbLz8l+vKY=;
-        h=Subject:From:To:Date:From;
-        b=Fpf34Aqgd+dq0hsevijXXEKgp7MPWP2u7Y1xvrC1KFnHfxOxI90t6no2WxKNRZpS8
-         ms0SRdMsyZwoLKadUq5vWwfTmtdnXNaM3yVgmGw4h696bnZJsCJ1pAspJF98CJC/Fv
-         3cbblIX+ZwTm5JjCZinYjvmj6cY6FCtE+yZMuUsqiGLsqTEy/HiKEKWHS9SzDKVi+9
-         trbU10bJMdKdRlDwyWcfBHmeC7xVkiRni7d0nfUJaYIOPWxwKTMoF/ZC5uCQ7uT2xH
-         x3zuC1Lpp6hCQNypcD4iLcwSHOf8omfKidnP1EJbdZu7WfBkVLNQ34rZxAplkwmA5u
-         5hFOb9sAqkJcQ==
-Message-ID: <d1dfc82e8fb7ccb3975e58aabef8c24dbe224601.camel@kernel.org>
-Subject: [ANNOUNCE] 5.4.182-rt72
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
+        Thu, 31 Mar 2022 10:12:47 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D09AA1A48BF
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Mar 2022 07:10:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1648735858;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=+4so6aFuDRRvDSwPLBC1SYqRreDKMfHkuu+cZnQ7gCc=;
+        b=JVvAtSDoDGW7SOxJXJ0kjWPSxG/opZoFfw8QvRLyvvkJFbSQatySrPKjephhYENfwfBwkT
+        NsV7FkKJ6dps4LEzZhlLZpJU4tVlOKR4VnJawf+efznr5kxktf+ePA6RjXr9+7WDCEzgsu
+        XJhT9bvMA6Ui6Qh80ZuAbkXQkUk9Y0c=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-577-X4BEDrwQPumPGMRxmHWQLw-1; Thu, 31 Mar 2022 10:10:57 -0400
+X-MC-Unique: X4BEDrwQPumPGMRxmHWQLw-1
+Received: by mail-wm1-f69.google.com with SMTP id q6-20020a1cf306000000b0038c5726365aso1202087wmq.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Mar 2022 07:10:57 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=+4so6aFuDRRvDSwPLBC1SYqRreDKMfHkuu+cZnQ7gCc=;
+        b=dNsayYov57k+8/d6OZrstpUUneVwJJgMhLF//w+Ac7SjL9Ac+AVs3wOhM83JJMwlXM
+         4p9QB9HO8LwodUXTdUVMFE4zAJJTT3DhYMRrzO39iyNFPAU6bShQ/TPskrZ0a2J3RArX
+         JU5VdTDXjMeki2l2A1y0kD06S4o7+oaHUUZkt3IH346FLiiDz9AdE4OYD/2HqjW7tvN7
+         n26bKFm9OSDmBcaSHtNoToq5swo3rCX2M9/ajl3Poh53PKp7owwXeKZPX4SxUZm94KUG
+         DdY0fCplpJDoCGsaMFbXKT7nBgjXvvVsRLraqZa58K6f1ybI5B/2kc2bvvs7QgGV5RIN
+         Vqug==
+X-Gm-Message-State: AOAM530sXjgclpvl90eqg+CfhNHFW88xn2kG0R/Bmotf9PFpB8WZcN7S
+        8SXEZ8SZX9HVjVIKuaq26QAFGKMNzQGr9ooKBFQokvPGtNWS7rCVwiG6qK+hThlBDnzN5F9Ubf5
+        Du7aH7dzLwPY0eOTpA1KzWR18sMY=
+X-Received: by 2002:a5d:6041:0:b0:204:1c96:c04d with SMTP id j1-20020a5d6041000000b002041c96c04dmr4302131wrt.541.1648735856230;
+        Thu, 31 Mar 2022 07:10:56 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJysM97+fkPHW/+UC3JXm8yYSTlzHvNluGBBf4OE1SLeaKKiEhxH6c0r2GhUn3IXB8B2cvSV5A==
+X-Received: by 2002:a5d:6041:0:b0:204:1c96:c04d with SMTP id j1-20020a5d6041000000b002041c96c04dmr4302113wrt.541.1648735855979;
+        Thu, 31 Mar 2022 07:10:55 -0700 (PDT)
+Received: from minerva.home ([92.176.231.205])
+        by smtp.gmail.com with ESMTPSA id t4-20020a05600001c400b00203fb5dcf29sm19537626wrx.40.2022.03.31.07.10.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 31 Mar 2022 07:10:55 -0700 (PDT)
+From:   Javier Martinez Canillas <javierm@redhat.com>
+To:     linux-kernel@vger.kernel.org
+Cc:     Peter Jones <pjones@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Wed, 30 Mar 2022 12:03:29 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Alexander Larsson <alexl@redhat.com>,
+        Al Stone <ahs3@redhat.com>, linux-efi@vger.kernel.org,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Andrew Halaney <ahalaney@redhat.com>,
+        linux-rt-users@vger.kernel.org, Brian Masney <bmasney@redhat.com>,
+        Robbie Harwood <rharwood@redhat.com>,
+        Javier Martinez Canillas <javierm@redhat.com>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH] efi: Allow to enable EFI runtime services with PREEMPT_RT
+Date:   Thu, 31 Mar 2022 16:10:38 +0200
+Message-Id: <20220331141038.171204-1-javierm@redhat.com>
+X-Mailer: git-send-email 2.35.1
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Commit d9f283ae71af ("efi: Disable runtime services on RT") disabled EFI
+runtime services when the CONFIG_PREEMPT_RT option is enabled.
 
-I'm pleased to announce the 5.4.182-rt72 stable release.
+The rationale for the change is that some EFI calls could take too much
+time, leading to large latencies which are an issue for RT kernels.
 
-You can get this release via the git tree at:
+But a side effect of that commit is that now is not possible anymore to
+enable the EFI runtime services by default when CONFIG_PREEMPT_RT is set
+to y, even for platforms that could guarantee bounded time for EFI calls.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Instead, let's add a new EFI_DISABLE_RUNTIME boolean Kconfig option, that
+would be set to n by default but to y if CONFIG_PREEMPT_RT is enabled.
 
-  branch: v5.4-rt
-  Head SHA1: 9ec5060e670727f499db330d72369cb428d39851
+That way, the current behaviour is preserved but gives users a mechanism
+to enable the EFI runtimes services in their kernels if that is required.
 
-Or to build 5.4.182-rt72 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.182.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.182-rt72.patch.xz
-
-
-You can also build from 5.4.182-rt71 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.182-rt71-rt72.patch.xz
-
-Enjoy!
-
-   Tom
-
-Changes from v5.4.182-rt71:
+Reported-by: Alexander Larsson <alexl@redhat.com>
+Fixes: d9f283ae71af ("efi: Disable runtime services on RT")
+Signed-off-by: Javier Martinez Canillas <javierm@redhat.com>
 ---
 
-Tom Zanussi (2):
-      eventfd: Fix stable-rt v5.4.182-rt71 conflict fixup issue
-      Linux 5.4.182-rt72
----
-include/linux/sched.h | 8 --------
- localversion-rt       | 2 +-
- 2 files changed, 1 insertion(+), 9 deletions(-)
----
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index e1dfb01f4623..91f1aac3c86a 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -802,14 +802,6 @@ struct task_struct {
- 	/* to be used once the psi infrastructure lands upstream. */
- 	unsigned			use_memdelay:1;
- #endif
--#ifdef CONFIG_PSI
--	/* Stalled due to lack of memory */
--	unsigned			in_memstall:1;
--#endif
--#ifdef CONFIG_PAGE_OWNER
--	/* Used by page_owner=on to detect recursion in page tracking. */
--	unsigned			in_page_owner:1;
--#endif
- #ifdef CONFIG_EVENTFD
- 	/* Recursion prevention for eventfd_signal() */
- 	unsigned			in_eventfd_signal:1;
-diff --git a/localversion-rt b/localversion-rt
-index f38a3cc7f310..2c95a3cdbcb8 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt71
-+-rt72
+ drivers/firmware/efi/Kconfig | 15 +++++++++++++++
+ drivers/firmware/efi/efi.c   |  2 +-
+ 2 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/firmware/efi/Kconfig b/drivers/firmware/efi/Kconfig
+index 2c3dac5ecb36..3c5373de86fc 100644
+--- a/drivers/firmware/efi/Kconfig
++++ b/drivers/firmware/efi/Kconfig
+@@ -284,3 +284,18 @@ config EFI_CUSTOM_SSDT_OVERLAYS
+ 
+ 	  See Documentation/admin-guide/acpi/ssdt-overlays.rst for more
+ 	  information.
++
++config EFI_DISABLE_RUNTIME
++	bool "Disable EFI runtime services support by default"
++	default y if PREEMPT_RT
++	help
++	  Allow to disable the EFI runtime services support by default. This can
++	  already be achieved by using the efi=noruntime option, but it could be
++	  useful to have this default without any kernel command line parameter.
++
++	  The EFI runtime services are disabled by default when PREEMPT_RT is
++	  enabled, because measurements have shown that some EFI functions calls
++	  might take too much time to complete, causing large latencies which are
++	  an issue for RT.
++
++	  This default can be overridden by using the efi=runtime option.
+diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
+index 5502e176d51b..ff57db8f8d05 100644
+--- a/drivers/firmware/efi/efi.c
++++ b/drivers/firmware/efi/efi.c
+@@ -66,7 +66,7 @@ struct mm_struct efi_mm = {
+ 
+ struct workqueue_struct *efi_rts_wq;
+ 
+-static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT);
++static bool disable_runtime = IS_ENABLED(CONFIG_EFI_DISABLE_RUNTIME);
+ static int __init setup_noefi(char *arg)
+ {
+ 	disable_runtime = true;
+-- 
+2.35.1
 
