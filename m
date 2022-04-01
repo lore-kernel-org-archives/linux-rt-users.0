@@ -2,182 +2,89 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 840CAC433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Apr 2022 10:57:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A02DBC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Apr 2022 11:15:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345255AbiDAK7e (ORCPT
+        id S1343946AbiDALRk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 1 Apr 2022 06:59:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57040 "EHLO
+        Fri, 1 Apr 2022 07:17:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59502 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244272AbiDAK7e (ORCPT
+        with ESMTP id S232569AbiDALRj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Apr 2022 06:59:34 -0400
+        Fri, 1 Apr 2022 07:17:39 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E2D4C26B3A7;
-        Fri,  1 Apr 2022 03:57:44 -0700 (PDT)
-Date:   Fri, 1 Apr 2022 12:57:41 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8D9C917F3D8;
+        Fri,  1 Apr 2022 04:15:50 -0700 (PDT)
+Date:   Fri, 1 Apr 2022 13:15:47 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1648810663;
+        s=2020; t=1648811749;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=/7N1HR5Tgltj8+MZZuxlysA6sc9VMTIUsAdh5kS4RTA=;
-        b=aPFjJHvFF5LbvY9qCytGgM2ii27lyxB/bE0iWZ0KRvMl6AnaGYrfs2dYMnKIKWA6OG3dRS
-        mxbZUx3XtunOQUtT8ITf8ehkoo16jJPkJwdWBigMA+AgH0c71tGgNio5+p/qwk8DmAT2+J
-        /lcEFhXmOIYtWiV/vyeCcR0St2vM/shQfsKT8Oks3oeej0Ieh6sYGyRT7kfnnNTvh9vqCb
-        C8GKuvboeyQWWLA/2R40zKzbh9DXFWX/fpAUz6+WS4sd4eMT8JUsexxNMUoBQd73B/P+Yf
-        De+wn8OAfSbCOCNGGL0dapj/mVaucP6uqAxznAaHDSnhGL8TLLsAkgCAoza/uw==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=oKF9VqRTjJp3lTVoEsc7dqEf9uWuEicp/om5wBdNDCM=;
+        b=pjOSccKOS6kaXHc1+sf/OM5FG1tzRaVuwec9T6AALXzmv5XrkKS2n5d6hgG3YZpvkn6IDw
+        txBlOvu0IOY4tcHpXzRBqODjPNNqWWYExkxiU+q9Ng0N6OPWUv631TNuVKImt/Qv90QWqQ
+        KmWhOOZ4h5V2jMfigvW+ZRlMZiXYWI5otwF+mjIAn6slQ4oWhyZh5cFIlplXHb60SFp2/T
+        Ww7L797Bijz+eU/GsXmfpV1qbuH9a0X0Mn4F+nZXWB3CD31cfGea1k+hxyKFxQYxeR+b/t
+        QJlSmyKha39l1byP5XZXZyIrq1eu7/SiFe4ExAJc8CyAGvmkYAVAPxm/BAhwSA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1648810663;
+        s=2020e; t=1648811749;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=/7N1HR5Tgltj8+MZZuxlysA6sc9VMTIUsAdh5kS4RTA=;
-        b=zGgraDMZP9Sn9SkD+x4uknNUCKwrGAydhEuge7rTZKQexHtIdQ0iFhfnzwPYti6RMweVM0
-        83Gy2kBvLVLxZzDg==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=oKF9VqRTjJp3lTVoEsc7dqEf9uWuEicp/om5wBdNDCM=;
+        b=wtjk/bOGe7M9+i4Sq/yN6vbGu9gJHveTrV30EHMFShDrD1nIlS/E2XU9/xNdndadImVuGr
+        Qfz6BM6FIIoc1LBg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.17.1-rt17
-Message-ID: <Ykbapdep6CxfSIOf@linutronix.de>
+To:     "Zhang, Qiang1" <qiang1.zhang@intel.com>
+Cc:     "ryabinin.a.a@gmail.com" <ryabinin.a.a@gmail.com>,
+        "glider@google.com" <glider@google.com>,
+        "andreyknvl@gmail.com" <andreyknvl@gmail.com>,
+        "dvyukov@google.com" <dvyukov@google.com>,
+        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
+        "kasan-dev@googlegroups.com" <kasan-dev@googlegroups.com>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH] kasan: Fix sleeping function called from invalid context
+ in PREEMPT_RT
+Message-ID: <Ykbe46hLAfJ8TsnW@linutronix.de>
+References: <20220401091006.2100058-1-qiang1.zhang@intel.com>
+ <YkbFhgN1jZPTMfnS@linutronix.de>
+ <PH0PR11MB58800917A1BF8D1A76BEF84EDAE09@PH0PR11MB5880.namprd11.prod.outlook.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+In-Reply-To: <PH0PR11MB58800917A1BF8D1A76BEF84EDAE09@PH0PR11MB5880.namprd11.prod.outlook.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+On 2022-04-01 10:10:38 [+0000], Zhang, Qiang1 wrote:
+> >Could we fix in a way that we don't involve freeing memory from in-IRQ?
+> >This could trigger a lockdep splat if the local-lock in SLUB is acquired from in-IRQ context on !PREEMPT_RT.
+> 
+> Hi, I  will move qlist_free_all() from IPI context to task context,
+> This operation and the next release  members
+> in the quarantine pool operate similarly
+> 
+> I don't know the phenomenon you described. Can you explain it in detail?
 
-I'm pleased to announce the v5.17.1-rt17 patch set. 
+If you mean by phenomenon my second sentence then the kernel option
+CONFIG_PROVE_RAW_LOCK_NESTING will trigger on !PREEMPT_RT in a code
+sequence like
+	raw_spin_lock()
+	spin_lock();
 
-Changes since v5.17.1-rt16:
+which is wrong on PREEMPT_RT. So we have a warning on both
+configurations.
+The call chain in your case will probably not lead to a warning since
+there is no raw_spinlock_t involved within the IPI call. We worked on
+avoiding memory allocation and freeing from in-IRQ context therefore I
+would prefer to have something that works for both and not just ifdef
+around the RT-case.
 
-  - Update the "ptrace: fix ptrace vs tasklist_lock race" patch:
-
-    - The rework in v5.17-rc6-rt11 caused a bug which may update the
-      wrong state during a ptrace operation.
-
-    - wait_task_inactive() waits for the expected task state and ensures
-      that the task is not blocked on a lock.
-
-Known issues
-     - Valentin Schneider reported a few splats on ARM64, see
-          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
-
-The delta patch against v5.17.1-rt16 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/incr/patch-5.17.1-rt16-rt17.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.17.1-rt17
-
-The RT patch against v5.17.1 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/older/patch-5.17.1-rt17.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.17/older/patches-5.17.1-rt17.tar.xz
+> Thanks
+> Zqiang
 
 Sebastian
-
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 3df4ab414f1ad..94ead66808a50 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2058,21 +2058,22 @@ static inline bool task_state_match_and(struct task_struct *tsk, long state)
- 	return match;
- }
- 
--static inline bool __task_state_match_eq(struct task_struct *tsk, long state)
-+static inline int __task_state_match_eq(struct task_struct *tsk, long state)
- {
--	bool match = false;
-+	int match = 0;
- 
- 	if (READ_ONCE(tsk->__state) == state)
--		match = true;
-+		match = 1;
- 	else if (tsk->saved_state == state)
--		match = true;
-+		match = -1;
-+
- 	return match;
- }
- 
--static inline bool task_state_match_eq(struct task_struct *tsk, long state)
-+static inline int task_state_match_eq(struct task_struct *tsk, long state)
- {
- 	unsigned long flags;
--	bool match;
-+	int match;
- 
- 	raw_spin_lock_irqsave(&tsk->pi_lock, flags);
- 	match = __task_state_match_eq(tsk, state);
-@@ -2091,7 +2092,7 @@ static inline bool task_state_match_and_set(struct task_struct *tsk, long state,
- 		WRITE_ONCE(tsk->__state, new_state);
- 		match = true;
- 	} else if (tsk->saved_state & state) {
--		tsk->__state = new_state;
-+		tsk->saved_state = new_state;
- 		match = true;
- 	}
- 	raw_spin_unlock_irqrestore(&tsk->pi_lock, flags);
-@@ -2123,12 +2124,12 @@ static inline bool task_state_match_and(struct task_struct *tsk, long state)
- 	return READ_ONCE(tsk->__state) & state;
- }
- 
--static inline bool __task_state_match_eq(struct task_struct *tsk, long state)
-+static inline int __task_state_match_eq(struct task_struct *tsk, long state)
- {
- 	return READ_ONCE(tsk->__state) == state;
- }
- 
--static inline bool task_state_match_eq(struct task_struct *tsk, long state)
-+static inline int task_state_match_eq(struct task_struct *tsk, long state)
- {
- 	return __task_state_match_eq(tsk, state);
- }
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 33ce5cd113d82..7cda920dc6939 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3261,6 +3261,8 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
- 	struct rq *rq;
- 
- 	for (;;) {
-+		int match_type = 0;
-+
- 		/*
- 		 * We do the initial early heuristics without holding
- 		 * any task-queue locks at all. We'll only try to get
-@@ -3297,7 +3299,9 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
- 		running = task_running(rq, p);
- 		queued = task_on_rq_queued(p);
- 		ncsw = 0;
--		if (!match_state || __task_state_match_eq(p, match_state))
-+		if (match_state)
-+			match_type = __task_state_match_eq(p, match_state);
-+		if (!match_state || match_type)
- 			ncsw = p->nvcsw | LONG_MIN; /* sets MSB */
- 		task_rq_unlock(rq, p, &rf);
- 
-@@ -3327,7 +3331,7 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
- 		 * running right now), it's preempted, and we should
- 		 * yield - it could be a while.
- 		 */
--		if (unlikely(queued)) {
-+		if (unlikely(queued || match_type < 0)) {
- 			ktime_t to = NSEC_PER_SEC / HZ;
- 
- 			set_current_state(TASK_UNINTERRUPTIBLE);
-diff --git a/localversion-rt b/localversion-rt
-index 1199ebade17b4..1e584b47c987e 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt16
-+-rt17
