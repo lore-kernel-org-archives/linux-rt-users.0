@@ -2,81 +2,150 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D4340C433FE
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Apr 2022 09:05:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B8FCC433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Apr 2022 09:09:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344286AbiDAJGz (ORCPT
+        id S1344338AbiDAJL3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 1 Apr 2022 05:06:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48312 "EHLO
+        Fri, 1 Apr 2022 05:11:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33546 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231157AbiDAJGy (ORCPT
+        with ESMTP id S1344322AbiDAJL2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Apr 2022 05:06:54 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5AD8E197FBB;
-        Fri,  1 Apr 2022 02:05:05 -0700 (PDT)
-Date:   Fri, 1 Apr 2022 11:05:00 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1648803901;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=tR9DgVlpSOJuydn7n6nmqNv1be3Re6NKi4LsEiFJsmA=;
-        b=upOCUZdQ1W7WMALoNxGm7U67PmhdPX40qo79mt2GS3MWDKxdYCzPGM7Bm+c/K5FUOY55r7
-        z31qwmXi4nm5ceBL70BH4UPuiuW02OjpkAK4hyngLLDxjHm/LJEIaRaW1WvmwsyJsCZ/m4
-        +VHmHzxzfyCzDdiZlr1rAGZsGQbXue7IbQhDHbSuX861v8nNuEJ95DJAOSTL00P8WBaUBX
-        WO+U7hQuCnpYsN89NweqHFYC+eJwLNJkVR0VCXK3KP4NBkfzjpP3Vk4G4fAnDCo8AvW1H3
-        +OMgcYlWtELOJ3CvRK1eZoRV5QmDJXwpAv3ooK+7+ajmboWtsS/2E+pvC8tpEA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1648803901;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=tR9DgVlpSOJuydn7n6nmqNv1be3Re6NKi4LsEiFJsmA=;
-        b=825AAtMzXSW8A6THac+dFj4CeDwCsfOO3CfjAxxvptsgp2WpaA/OjROo/WynlXLp0rJo9J
-        1C8+IID19gpkJ+CQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Ard Biesheuvel <ardb@kernel.org>
-Cc:     Javier Martinez Canillas <javierm@redhat.com>,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-efi <linux-efi@vger.kernel.org>,
-        Brian Masney <bmasney@redhat.com>, Al Stone <ahs3@redhat.com>,
-        Peter Robinson <pbrobinson@gmail.com>,
-        Robbie Harwood <rharwood@redhat.com>,
-        Peter Jones <pjones@redhat.com>,
-        Alexander Larsson <alexl@redhat.com>,
-        Andrew Halaney <ahalaney@redhat.com>,
-        linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v2] efi: Allow to enable EFI runtime services by default
- on RT
-Message-ID: <YkbAPPDJyiZ/FLN1@linutronix.de>
-References: <20220331151654.184433-1-javierm@redhat.com>
- <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
- <YkYA/Wpqa/PMczkp@lx-t490>
- <CAFOAJEeKNy0HW82W6HV_49d5sc5L0m62QDfY9qA1906_ZzGRYg@mail.gmail.com>
- <Ykas9iX/D3WURx8T@linutronix.de>
- <78a0360d-1a27-5280-10bf-d27d1d306fa5@redhat.com>
- <CAMj1kXGEBtcdD+3MFK5gO6vCw8dg=ruTthdWGVUu1eJpgZXf8Q@mail.gmail.com>
+        Fri, 1 Apr 2022 05:11:28 -0400
+Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 42AA3198958;
+        Fri,  1 Apr 2022 02:09:39 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1648804179; x=1680340179;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=qRPdv9PmrjB2+eqpmkvc6pDI5296u1UnhUf/jBHiUrs=;
+  b=dfN9/1pCtX9iKBlpPDtUccqb14Lggr+AZVVvsTqWXyqYK/VG2SY8ad7a
+   8kR9oOzWHB/EXjwBWItAmur0wTq0NW03uMZt/2mimO009geK1SUsKD8cx
+   edPX7znG4VYelRfeIuQewiuduFldlb51SXKp9FRWSMUj4t1ky7rFqHQ9a
+   h+inJwss3APN/vGcQ2ZERy9bK6f8PbdRMiwkcpZce/LQ0DRv2jf0YiiO3
+   hOgDxTyb6LOLxFzMO9ymaD/3NEjXk0kKua9ZTKsqEneuaKQzkNbNNbIir
+   S0QTHrNz00WcaWB7JqZGo5ZKdM59KQxcw3Mpe+arkXt3a9WTTVOJ7/YgJ
+   A==;
+X-IronPort-AV: E=McAfee;i="6200,9189,10303"; a="240024108"
+X-IronPort-AV: E=Sophos;i="5.90,226,1643702400"; 
+   d="scan'208";a="240024108"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2022 02:09:39 -0700
+X-IronPort-AV: E=Sophos;i="5.90,226,1643702400"; 
+   d="scan'208";a="567317605"
+Received: from zq-optiplex-7090.bj.intel.com ([10.238.156.125])
+  by orsmga008-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Apr 2022 02:09:35 -0700
+From:   Zqiang <qiang1.zhang@intel.com>
+To:     ryabinin.a.a@gmail.com, glider@google.com, andreyknvl@gmail.com,
+        dvyukov@google.com, bigeasy@linutronix.de,
+        akpm@linux-foundation.org
+Cc:     kasan-dev@googlegroups.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+Subject: [PATCH] kasan: Fix sleeping function called from invalid context in PREEMPT_RT
+Date:   Fri,  1 Apr 2022 17:10:06 +0800
+Message-Id: <20220401091006.2100058-1-qiang1.zhang@intel.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAMj1kXGEBtcdD+3MFK5gO6vCw8dg=ruTthdWGVUu1eJpgZXf8Q@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-04-01 10:34:03 [+0200], Ard Biesheuvel wrote:
-> I don't think we need another warning.
+BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
+in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 1, name: swapper/0
+preempt_count: 1, expected: 0
+...........
+CPU: 0 PID: 1 Comm: swapper/0 Not tainted 5.17.1-rt16-yocto-preempt-rt #22
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009),
+BIOS rel-1.15.0-0-g2dd4b9b3f840-prebuilt.qemu.org 04/01/2014
+Call Trace:
+<TASK>
+dump_stack_lvl+0x60/0x8c
+dump_stack+0x10/0x12
+ __might_resched.cold+0x13b/0x173
+rt_spin_lock+0x5b/0xf0
+ ___cache_free+0xa5/0x180
+qlist_free_all+0x7a/0x160
+per_cpu_remove_cache+0x5f/0x70
+smp_call_function_many_cond+0x4c4/0x4f0
+on_each_cpu_cond_mask+0x49/0xc0
+kasan_quarantine_remove_cache+0x54/0xf0
+kasan_cache_shrink+0x9/0x10
+kmem_cache_shrink+0x13/0x20
+acpi_os_purge_cache+0xe/0x20
+acpi_purge_cached_objects+0x21/0x6d
+acpi_initialize_objects+0x15/0x3b
+acpi_init+0x130/0x5ba
+do_one_initcall+0xe5/0x5b0
+kernel_init_freeable+0x34f/0x3ad
+kernel_init+0x1e/0x140
+ret_from_fork+0x22/0x30
 
-exactly.
+When the kmem_cache_shrink() be called, the IPI was triggered, the
+___cache_free() is called in IPI interrupt context, the local lock
+or spin lock will be acquired. on PREEMPT_RT kernel, these lock is
+replaced with sleepbale rt spin lock, so the above problem is triggered.
+fix it by migrating the release action from the IPI interrupt context
+to the task context on RT kernel.
 
-> The kernel log already tells you whether or not EFI runtime services
-> are enabled.
+Signed-off-by: Zqiang <qiang1.zhang@intel.com>
+---
+ mm/kasan/quarantine.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
-Correct. We either warn about all problematic options or none but this
-is independent of this patch.
+diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
+index 08291ed33e93..c26fa6473119 100644
+--- a/mm/kasan/quarantine.c
++++ b/mm/kasan/quarantine.c
+@@ -90,6 +90,7 @@ static void qlist_move_all(struct qlist_head *from, struct qlist_head *to)
+  */
+ static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine);
+ 
++static DEFINE_PER_CPU(struct qlist_head, cpu_shrink_qlist);
+ /* Round-robin FIFO array of batches. */
+ static struct qlist_head global_quarantine[QUARANTINE_BATCHES];
+ static int quarantine_head;
+@@ -311,12 +312,14 @@ static void qlist_move_cache(struct qlist_head *from,
+ static void per_cpu_remove_cache(void *arg)
+ {
+ 	struct kmem_cache *cache = arg;
+-	struct qlist_head to_free = QLIST_INIT;
++	struct qlist_head *to_free;
+ 	struct qlist_head *q;
+ 
++	to_free = this_cpu_ptr(&cpu_shrink_qlist);
+ 	q = this_cpu_ptr(&cpu_quarantine);
+-	qlist_move_cache(q, &to_free, cache);
+-	qlist_free_all(&to_free, cache);
++	qlist_move_cache(q, to_free, cache);
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		qlist_free_all(to_free, cache);
+ }
+ 
+ /* Free all quarantined objects belonging to cache. */
+@@ -324,6 +327,7 @@ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
+ {
+ 	unsigned long flags, i;
+ 	struct qlist_head to_free = QLIST_INIT;
++	int cpu;
+ 
+ 	/*
+ 	 * Must be careful to not miss any objects that are being moved from
+@@ -334,6 +338,11 @@ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
+ 	 */
+ 	on_each_cpu(per_cpu_remove_cache, cache, 1);
+ 
++	if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
++		for_each_possible_cpu(cpu)
++			qlist_free_all(per_cpu_ptr(&cpu_shrink_qlist, cpu), cache);
++	}
++
+ 	raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 	for (i = 0; i < QUARANTINE_BATCHES; i++) {
+ 		if (qlist_empty(&global_quarantine[i]))
+-- 
+2.25.1
 
-Sebastian
