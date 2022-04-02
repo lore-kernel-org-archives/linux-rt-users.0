@@ -2,166 +2,101 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C6E22C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Apr 2022 11:39:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0FD68C433EF
+	for <linux-rt-users@archiver.kernel.org>; Sat,  2 Apr 2022 04:39:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243608AbiDALld (ORCPT
+        id S238043AbiDBElr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 1 Apr 2022 07:41:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51940 "EHLO
+        Sat, 2 Apr 2022 00:41:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34536 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241658AbiDALla (ORCPT
+        with ESMTP id S236185AbiDBElp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Apr 2022 07:41:30 -0400
-Received: from mail-oa1-x30.google.com (mail-oa1-x30.google.com [IPv6:2001:4860:4864:20::30])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BA8904C41C
-        for <linux-rt-users@vger.kernel.org>; Fri,  1 Apr 2022 04:39:38 -0700 (PDT)
-Received: by mail-oa1-x30.google.com with SMTP id 586e51a60fabf-df0940c4eeso2365037fac.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 01 Apr 2022 04:39:38 -0700 (PDT)
+        Sat, 2 Apr 2022 00:41:45 -0400
+Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 12D6691AC5;
+        Fri,  1 Apr 2022 21:39:55 -0700 (PDT)
+Received: by mail-qk1-x736.google.com with SMTP id p25so3649537qkj.10;
+        Fri, 01 Apr 2022 21:39:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=+8Dv18kj8IAp5BXzcoVdvPm3aoVZ9KkfAIFlQfRSHMc=;
-        b=aoPZa1pn34n3/UbbBEmBNxfGoFIYfhjDeJHZb7LC5OAYcrTuPJuXuocMHswRPmqFN8
-         mjbIP5IeObSQsfZl60QvvIGmZfUITORtgwwe/TDNFBkaOuYwN6mSh5Ra0NfFu8CYU21F
-         6knBvpWyYhTljKSJlwD0nNFZzNn/ZxCAtX5COK2NJXAQB6vLv0/+Z/iZ41KqW61I2jIY
-         XaxAhwNl6rCY8DjhtBsr1bQIufr3ujRnIHuF4uqEUKMFGn1J8sF/OFzbzbLNtw+et2rR
-         Eh85+s/sqdhBsV4HMHo2QU2em9WRSibZUtaTc30I5aOcAPaAMBhcPfr2XDBUNQIwZqbj
-         fd7g==
+        d=gmail.com; s=20210112;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=ZCKP32vula9w3akN0CgQn1wv1m6mI2NCAYew8yna2+A=;
+        b=MZM44T2r8GY6VZfMI7e1jA0uzXdZ8rRb8JpboGeTuvoffDKJSb3G3caji4/TD0iKkN
+         hXUh9SOaZnhryXzmdltO1aS2mjPortVm7nq4harb1nW5m6UXQ/rXnudTyeGaoFjOyW1x
+         /kcgQQu6M/8Q6D3cbs/StOJ2MRuQCtlkj3W33ayIeQLA5mU1H55/LA/Ndih5YkAFzQT6
+         OR0dvDctnU7Y4y75kGhouFwb1SXL91xF9jXBZElTeIxJoi+Hz74TXjewnZgC4d2Wcx/M
+         Wf9Lr7JgpS0GsuSAUAYZJz7FUjms8wbCl6xWXM6/kjiXdikgbX9B1/DZrAem/Bc8Aewf
+         bbaw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=+8Dv18kj8IAp5BXzcoVdvPm3aoVZ9KkfAIFlQfRSHMc=;
-        b=gBa4ie+bLGs1Y6D1QqukcbNt6IUkGq3AvCEceEeV/YKWhnkC7vCXxz6KgDJMo+3zRA
-         VYR8D9+vLFvT4CteTYphT5RTDHRbIQYh4uj93kfehpdF6TrptsEyoafESJ5Nj7kRR/dv
-         +A2YKDD7hgMBitijp2UfoByKFZS1oWpPyz+6jtjt+5RbFRyN/W7kuKA0o11Z0y7fSdHh
-         cJomxcz/WKBXM05a9q/HTXO4g8EXetRWvQD+269wSemr34bvvtKBZqDw+0u8Cb6zFQwU
-         qBqaOBFooiBDuX+ggfyusF13QcJBy6T3LZ5b/s6gzHjzQoYROCIavtcQ4+f5rUhFkqsb
-         U3HA==
-X-Gm-Message-State: AOAM532+/JLtQuM4ulELzmSuqc54oHnzcI57QT8DTUOzFruLGIn1vCBe
-        4OCqo+KAFw93ig27+S4jYhaLaueVmQEI7WFgqIc3Fw==
-X-Google-Smtp-Source: ABdhPJxWLxR+hwwbMPprX/38Wf8W+ylowuP0eojFUEJsF+C6PtS475L2/4YSCEJpDavKonwYTJhiNL5h4z5MIUgdJjw=
-X-Received: by 2002:a05:6870:b629:b0:de:a293:bf74 with SMTP id
- cm41-20020a056870b62900b000dea293bf74mr4791423oab.163.1648813176421; Fri, 01
- Apr 2022 04:39:36 -0700 (PDT)
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=ZCKP32vula9w3akN0CgQn1wv1m6mI2NCAYew8yna2+A=;
+        b=WfheBACkP+WGsIN7BMsEbJRfy6FGtOixi4sllHnMr6T+39ENF1+b9ggWmEDLNtVvlt
+         2OB/bKW3HjExOCzdSRcpqlEIi5hRlzDRMzXbHqQ4UIUlxWgQXvG65hpQFfrmoHWWdLbV
+         GNPPFTdO6PAm30TfySPjTYeMSVkSgcPs9H3P3N07tdx1kf+N1aB+VSCIzdKh1TAOluNB
+         SS8Ig/Hb2OfHqP1O5fd+xxoG7kKw671foM1bctRrw3L5dzCAyalMETRjIVji41rnVUnB
+         K36ah7oSQ/V50906cWln/QGvB4izJeA4aBnb8/mp0t7Fdq/IBZB/QP15WiTERpgrs77K
+         avbg==
+X-Gm-Message-State: AOAM532dnAv0tBtKTh/PMseN/krzJITtAp6FHp5D8b/rOp2Rxl3wWQkD
+        GxQlbZnP5KHtGM2dCbclv3t86XBD6iI=
+X-Google-Smtp-Source: ABdhPJy0ncxq7pro34tBQvYd2nBebkRRDY2ZVNDwH00/Zli1Z4Z9nablrPNAOB0PUPdV4H/rdffghA==
+X-Received: by 2002:a05:620a:c08:b0:67d:3b4e:229f with SMTP id l8-20020a05620a0c0800b0067d3b4e229fmr8639178qki.550.1648874394236;
+        Fri, 01 Apr 2022 21:39:54 -0700 (PDT)
+Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
+        by smtp.gmail.com with ESMTPSA id e15-20020a05622a110f00b002e1ed105652sm2996957qty.2.2022.04.01.21.39.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 01 Apr 2022 21:39:53 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     Steven Rostedt <rostedt@goodmis.org>,
+        Daniel Bristot de Oliveria <bristot@redhat.com>
+Cc:     lkml <linux-kernel@vger.kernel.org>,
+        RT <linux-rt-users@vger.kernel.org>,
+        linux-trace-devel@vger.kernel.org, John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rtla: Don't overwrite existing directory mode
+Date:   Sat,  2 Apr 2022 00:39:38 -0400
+Message-Id: <20220402043939.6962-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.35.1
 MIME-Version: 1.0
-References: <20220401091006.2100058-1-qiang1.zhang@intel.com>
-In-Reply-To: <20220401091006.2100058-1-qiang1.zhang@intel.com>
-From:   Dmitry Vyukov <dvyukov@google.com>
-Date:   Fri, 1 Apr 2022 13:39:23 +0200
-Message-ID: <CACT4Y+Zw7FJ6Rp0+DB_crXJ0rwZHNM9n-z+V2E-e_=87c6ewgg@mail.gmail.com>
-Subject: Re: [PATCH] kasan: Fix sleeping function called from invalid context
- in PREEMPT_RT
-To:     Zqiang <qiang1.zhang@intel.com>
-Cc:     ryabinin.a.a@gmail.com, glider@google.com, andreyknvl@gmail.com,
-        bigeasy@linutronix.de, akpm@linux-foundation.org,
-        kasan-dev@googlegroups.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 1 Apr 2022 at 11:09, Zqiang <qiang1.zhang@intel.com> wrote:
->
-> BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
-> in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 1, name: swapper/0
-> preempt_count: 1, expected: 0
-> ...........
-> CPU: 0 PID: 1 Comm: swapper/0 Not tainted 5.17.1-rt16-yocto-preempt-rt #22
-> Hardware name: QEMU Standard PC (Q35 + ICH9, 2009),
-> BIOS rel-1.15.0-0-g2dd4b9b3f840-prebuilt.qemu.org 04/01/2014
-> Call Trace:
-> <TASK>
-> dump_stack_lvl+0x60/0x8c
-> dump_stack+0x10/0x12
->  __might_resched.cold+0x13b/0x173
-> rt_spin_lock+0x5b/0xf0
->  ___cache_free+0xa5/0x180
-> qlist_free_all+0x7a/0x160
-> per_cpu_remove_cache+0x5f/0x70
-> smp_call_function_many_cond+0x4c4/0x4f0
-> on_each_cpu_cond_mask+0x49/0xc0
-> kasan_quarantine_remove_cache+0x54/0xf0
-> kasan_cache_shrink+0x9/0x10
-> kmem_cache_shrink+0x13/0x20
-> acpi_os_purge_cache+0xe/0x20
-> acpi_purge_cached_objects+0x21/0x6d
-> acpi_initialize_objects+0x15/0x3b
-> acpi_init+0x130/0x5ba
-> do_one_initcall+0xe5/0x5b0
-> kernel_init_freeable+0x34f/0x3ad
-> kernel_init+0x1e/0x140
-> ret_from_fork+0x22/0x30
->
-> When the kmem_cache_shrink() be called, the IPI was triggered, the
-> ___cache_free() is called in IPI interrupt context, the local lock
-> or spin lock will be acquired. on PREEMPT_RT kernel, these lock is
-> replaced with sleepbale rt spin lock, so the above problem is triggered.
-> fix it by migrating the release action from the IPI interrupt context
-> to the task context on RT kernel.
->
-> Signed-off-by: Zqiang <qiang1.zhang@intel.com>
-> ---
->  mm/kasan/quarantine.c | 15 ++++++++++++---
->  1 file changed, 12 insertions(+), 3 deletions(-)
->
-> diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
-> index 08291ed33e93..c26fa6473119 100644
-> --- a/mm/kasan/quarantine.c
-> +++ b/mm/kasan/quarantine.c
-> @@ -90,6 +90,7 @@ static void qlist_move_all(struct qlist_head *from, struct qlist_head *to)
->   */
->  static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine);
->
-> +static DEFINE_PER_CPU(struct qlist_head, cpu_shrink_qlist);
->  /* Round-robin FIFO array of batches. */
->  static struct qlist_head global_quarantine[QUARANTINE_BATCHES];
->  static int quarantine_head;
-> @@ -311,12 +312,14 @@ static void qlist_move_cache(struct qlist_head *from,
->  static void per_cpu_remove_cache(void *arg)
->  {
->         struct kmem_cache *cache = arg;
-> -       struct qlist_head to_free = QLIST_INIT;
-> +       struct qlist_head *to_free;
->         struct qlist_head *q;
->
-> +       to_free = this_cpu_ptr(&cpu_shrink_qlist);
->         q = this_cpu_ptr(&cpu_quarantine);
-> -       qlist_move_cache(q, &to_free, cache);
-> -       qlist_free_all(&to_free, cache);
-> +       qlist_move_cache(q, to_free, cache);
-> +       if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-> +               qlist_free_all(to_free, cache);
->  }
->
->  /* Free all quarantined objects belonging to cache. */
-> @@ -324,6 +327,7 @@ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
->  {
->         unsigned long flags, i;
->         struct qlist_head to_free = QLIST_INIT;
-> +       int cpu;
->
->         /*
->          * Must be careful to not miss any objects that are being moved from
-> @@ -334,6 +338,11 @@ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
->          */
->         on_each_cpu(per_cpu_remove_cache, cache, 1);
->
-> +       if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
-> +               for_each_possible_cpu(cpu)
-> +                       qlist_free_all(per_cpu_ptr(&cpu_shrink_qlist, cpu), cache);
-> +       }
+The mode on /usr/bin is often 555 these days,
+but make install on rtla overwrites this with 755
 
-Hi Zqiang,
+Fix this by preserving the current directory if it exists.
 
-This code is not protected by any kind of mutex, right? If so, I think
-it can lead to subtle memory corruptions, double-frees and leaks when
-several tasks move to/free from cpu_shrink_qlist list.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ tools/tracing/rtla/Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
+diff --git a/tools/tracing/rtla/Makefile b/tools/tracing/rtla/Makefile
+index 11fb417abb42..5a3226e436ef 100644
+--- a/tools/tracing/rtla/Makefile
++++ b/tools/tracing/rtla/Makefile
+@@ -23,6 +23,7 @@ $(call allow-override,LD_SO_CONF_PATH,/etc/ld.so.conf.d/)
+ $(call allow-override,LDCONFIG,ldconfig)
+ 
+ INSTALL	=	install
++MKDIR	=	mkdir
+ FOPTS	:=	-flto=auto -ffat-lto-objects -fexceptions -fstack-protector-strong \
+ 		-fasynchronous-unwind-tables -fstack-clash-protection
+ WOPTS	:= 	-Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -Wno-maybe-uninitialized
+@@ -68,7 +69,7 @@ static: $(OBJ)
+ 
+ .PHONY: install
+ install: doc_install
+-	$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)
++	$(MKDIR) -p $(DESTDIR)$(BINDIR)
+ 	$(INSTALL) rtla -m 755 $(DESTDIR)$(BINDIR)
+ 	$(STRIP) $(DESTDIR)$(BINDIR)/rtla
+ 	@test ! -f $(DESTDIR)$(BINDIR)/osnoise || rm $(DESTDIR)$(BINDIR)/osnoise
+-- 
+2.31.1
 
->         raw_spin_lock_irqsave(&quarantine_lock, flags);
->         for (i = 0; i < QUARANTINE_BATCHES; i++) {
->                 if (qlist_empty(&global_quarantine[i]))
