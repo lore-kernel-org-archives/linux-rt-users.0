@@ -2,210 +2,174 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0AEFFC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Apr 2022 12:12:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CF4BC433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue,  5 Apr 2022 01:59:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239892AbiDDMOp (ORCPT
+        id S229580AbiDECBk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Apr 2022 08:14:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51330 "EHLO
+        Mon, 4 Apr 2022 22:01:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38412 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238662AbiDDMOo (ORCPT
+        with ESMTP id S229546AbiDECBj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Apr 2022 08:14:44 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.15])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 25EBB3DDC2;
-        Mon,  4 Apr 2022 05:12:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1649074349;
-        bh=v21tH+u/8F6TEa8sT09Fxu0jyYY4D+sWP8+7wd/HBOw=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=gBFIptL8BOPJ5UEyChdBYa8cmdSim3YYZuKtmPs0GI0aO2oWaW4DNuCPxSI4jxy2g
-         GkDhQHtzRlyJChRrzIB1EWbFdqJVeQVlASJz3Ni7/cupgpxghQUf9pgNezTzrvwS4e
-         ATmSO+NmqPLXxpTZtkTk6Oiym8KNIqIEzOrpTiHo=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.216.17]) by mail.gmx.net (mrgmx004
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1Ma20k-1nXxvs3ZbA-00Vy2K; Mon, 04
- Apr 2022 14:12:28 +0200
-Message-ID: <dacc7a27f5545714f1f9ab51510e7856d5118b88.camel@gmx.de>
-Subject: Re: [PATCH] kasan: Fix sleeping function called from invalid
- context in PREEMPT_RT
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Zqiang <qiang1.zhang@intel.com>
-Cc:     ryabinin.a.a@gmail.com, glider@google.com, andreyknvl@gmail.com,
-        dvyukov@google.com, akpm@linux-foundation.org,
-        kasan-dev@googlegroups.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-Date:   Mon, 04 Apr 2022 14:12:27 +0200
-In-Reply-To: <YkbFhgN1jZPTMfnS@linutronix.de>
-References: <20220401091006.2100058-1-qiang1.zhang@intel.com>
-         <YkbFhgN1jZPTMfnS@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+        Mon, 4 Apr 2022 22:01:39 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EF48C462B01;
+        Mon,  4 Apr 2022 18:18:12 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 30A9060DC6;
+        Tue,  5 Apr 2022 01:08:08 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 31008C2BBE4;
+        Tue,  5 Apr 2022 01:08:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1649120887;
+        bh=Jpz+Jv4Xaf7lFDh2SyosScKUc58hWmkQlsew08yht+o=;
+        h=From:To:Cc:Subject:Date:From;
+        b=gXub8KIAxJdu63/6MTrPAGneJXnd33dv3jqT5/0InvZyfMvDdsjypiJF0mto6q6Cv
+         YWCf8Tb872r+2Rl4K9dpQUcB0YJk+XoyfGUjkRiSq1wT7U65peaU4UbicSrtviTo8W
+         bKrnRxxCVyVNqiaycQ0H+MvUz/I08bwaZjFP+K+YB68g0lBYcBZPCap2uO3Um6Rr1H
+         31i+hM6JhR63/nOoS0nS25pbmjnnod8+BTvHDo0btkMBCDBxLEzm+X8BmKfzrn5mVr
+         hP8iJuyoWGAAyVcn2uyRCX0dpaOgNLWjJX73pEa9FAxZ6EIuT9Gx0YdUddFU/a11Oz
+         lO9XgGO2Tr/5Q==
+From:   Frederic Weisbecker <frederic@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>
+Cc:     Frederic Weisbecker <frederic@kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Mel Gorman <mgorman@suse.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: [RT][PATCH 1/2] rcutorture: Also force sched priority to timersd on boosting test
+Date:   Tue,  5 Apr 2022 03:07:51 +0200
+Message-Id: <20220405010752.1347437-1-frederic@kernel.org>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:yDD/V6srw+dnsfO45M/ZKWZVHJafFapRqtE2OaaAX2pCN96K+vV
- 0vRIAimIchv/3E0kjJ6JluuH/JWs9THUEvij7tCWIeqHvMI2m/P/F1O3L6RyafgGDswHzgY
- Fpp9Y3JDqbBrdh24/cKg1vJ+ynmgcOq5qK2HVVuIGPi2ZHPQOz/+5de1Ws7dD3Sobv9az8Q
- lBYuDXQoDmBFlpaBj3gYQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:jqVeMoJBa8M=:6VrjVN+reFOb2M3+bsb2Vr
- zw3JsbCCPcpj5plrSTD1u08IFanf95ogTmH5BnDnfuDwtLQt/752WNoOO7t0n+5Hp6RTuIxvI
- rlQmXLvaUTW3skTKpG1FfzP/NKZ+1m/tN+261ePv26XOZ3AT8r8Gy4hCr3wWQZT+Fo+RF8EjT
- GJ5Fzk48VSdRMOWC7NbtJUQ3TAFPO39W2OsRAsZKRPsqN1o1faZmjlaPZS3pg7dyKuhGjZNZa
- YpMp/U9n+jiy+7VsZuRJT/xfGq9vvWxvCU6R/8XlPaEOgNwh91Qxy+MQWumJH0s6AUdVgQfz3
- CXgSE61bbHlnGFR0JgddC89HP5oC2vIy6z+lRo80IZDlNCeGb7ReKXWZMwqbhnaQ32nxticch
- x7wgr3QgU6YnOm8UT9+UYrkjYUsAP6lFaYLf5SAF9bsMRoIWWWZ0c/EO8iAInzpt1GIojF6tS
- oyH/kTbyKgNnIGM/ijh2TAbt4c1gv9OnsKRbYoyODEUcIn+MyQY94eTnvnLy9aERprEm3QZ4w
- mzKhesiNSm6J6H1/KMERpKM/vnONnk/bpXShZvRbnr+lqaqcsR2lCsmweBk2sEHFFCHihAwnG
- Zva+5Y1E1QOGiHPDe7aescz5xbmegw/u38lzu8bta9mqd/V3cOX8Sd6AQDT1LSQ+X4x36noMr
- KQYLosWHvghA62nOP86EpA9hXFvESRg/Q9NW0T8OHU5ZS/96mfw8+HN62wHR05MdK18R2gpMZ
- gCM0loXqFuu7MYA1Y5fS83p2k7EIkbIgqD9t+I1WyLYgrBv72LvKgzyOjOVZjbm03eTyd1M82
- miElQL7PAbvU6i+5OD2Wym9JjgtzAq5TUAx7262qDGQk/aDTIzQ9cb0Gzib6oPnL9qsYLeh/1
- l8sblzdraT+uxle5ePQL4/SlbBFc8eC6qqNMf6HlRBgY03qJ4jIZhynoDDphOkMTKA57sZrAt
- 3f3aNdbCMDhBFRKzYEk8t3lzcFnrULuuj3WVjOPP2C7fALqMZ9xVhgmyEUFzejXhiibMetopJ
- GxAEw9DKqskLanw/uIq7u0SZIOo+sqpLEQvMpV/3D/FSg0xPHkNMkmHNu7jeV7oMAFhMOhKIE
- QNX3FQYEmiW6AI=
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 2022-04-01 at 11:27 +0200, Sebastian Andrzej Siewior wrote:
-> On 2022-04-01 17:10:06 [+0800], Zqiang wrote:
-> > BUG: sleeping function called from invalid context at kernel/locking/s=
-pinlock_rt.c:46
-> > in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 1, name: swappe=
-r/0
-> > preempt_count: 1, expected: 0
-> > ...........
-> > CPU: 0 PID: 1 Comm: swapper/0 Not tainted 5.17.1-rt16-yocto-preempt-rt=
- #22
-> > Hardware name: QEMU Standard PC (Q35 + ICH9, 2009),
-> > BIOS rel-1.15.0-0-g2dd4b9b3f840-prebuilt.qemu.org 04/01/2014
-> > Call Trace:
-> > <TASK>
-> > dump_stack_lvl+0x60/0x8c
-> > dump_stack+0x10/0x12
-> > =C2=A0__might_resched.cold+0x13b/0x173
-> > rt_spin_lock+0x5b/0xf0
-> > =C2=A0___cache_free+0xa5/0x180
-> > qlist_free_all+0x7a/0x160
-> > per_cpu_remove_cache+0x5f/0x70
-> > smp_call_function_many_cond+0x4c4/0x4f0
-> > on_each_cpu_cond_mask+0x49/0xc0
-> > kasan_quarantine_remove_cache+0x54/0xf0
-> > kasan_cache_shrink+0x9/0x10
-> > kmem_cache_shrink+0x13/0x20
-> > acpi_os_purge_cache+0xe/0x20
-> > acpi_purge_cached_objects+0x21/0x6d
-> > acpi_initialize_objects+0x15/0x3b
-> > acpi_init+0x130/0x5ba
-> > do_one_initcall+0xe5/0x5b0
-> > kernel_init_freeable+0x34f/0x3ad
-> > kernel_init+0x1e/0x140
-> > ret_from_fork+0x22/0x30
-> >
-> > When the kmem_cache_shrink() be called, the IPI was triggered, the
-> > ___cache_free() is called in IPI interrupt context, the local lock
-> > or spin lock will be acquired. on PREEMPT_RT kernel, these lock is
-> > replaced with sleepbale rt spin lock, so the above problem is triggere=
-d.
-> > fix it by migrating the release action from the IPI interrupt context
-> > to the task context on RT kernel.
->
-> I haven't seen that while playing with kasan. Is this new?
+ksoftirqd is statically boosted to the priority level right above the
+one of rcu_torture_boost() so that timers, which torture readers rely on,
+get a chance to run while rcu_torture_boost() is polling.
 
-Don't think so, the rock below was apparently first tossed at 5.12.
+However timers processing got split from ksoftirqd into their own kthread
+(timersd) that isn't boosted. It has the same SCHED_FIFO low prio as
+rcu_torture_boost() and therefore timers can't preempt it and may
+starve.
 
-=2D--
- lib/stackdepot.c      |    3 +++
- mm/kasan/quarantine.c |   49 ++++++++++++++++++++++++++++++++++++++++++++=
-+++++
- 2 files changed, 52 insertions(+)
+The issue can be triggered in practice on v5.17.1-rt17 using:
 
-=2D-- a/lib/stackdepot.c
-+++ b/lib/stackdepot.c
-@@ -375,6 +375,9 @@ depot_stack_handle_t __stack_depot_save(
- 	if (found)
- 		goto exit;
+	./kvm.sh --allcpus --configs TREE04 --duration 10m --kconfig "CONFIG_EXPERT=y CONFIG_PREEMPT_RT=y"
 
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT) && can_alloc && !preemptible())
-+		can_alloc =3D false;
-+
- 	/*
- 	 * Check if the current or the next stack slab need to be initialized.
- 	 * If so, allocate the memory - we won't be able to do that under the
-=2D-- a/mm/kasan/quarantine.c
-+++ b/mm/kasan/quarantine.c
-@@ -19,6 +19,9 @@
- #include <linux/srcu.h>
- #include <linux/string.h>
- #include <linux/types.h>
-+#include <linux/cpu.h>
-+#include <linux/mutex.h>
-+#include <linux/workqueue.h>
- #include <linux/cpuhotplug.h>
+triggering the following:
 
- #include "../slab.h"
-@@ -319,6 +322,48 @@ static void per_cpu_remove_cache(void *a
- 	qlist_free_all(&to_free, cache);
- }
+	 rcu-torture: rcu_torture_boost boosting failed
+	 Boost inversion thread ->rt_priority 1 gp_state 12908 jiffies 3501
+	 rcu: rcu_preempt: wait state: RCU_GP_WAIT_FQS(5) ->state: 0x402 ->rt_priority 2 delta ->gp_start 3502 ->gp_activity 3502 ->gp_req_activity 3502 ->gp_wake_time 3502 ->gp_wake_seq 12897 ->gp_seq 12901 ->gp_seq_needed 12904 ->gp_max 4057 ->gp_flags 0x0
+	 rcu:     rcu_node 0:7 ->gp_seq 12901 ->gp_seq_needed 12904 ->qsmask 0x2 .... ->n_boosts 0
+	 rcu:     rcu_node 0:3 ->gp_seq 12901 ->gp_seq_needed 12908 ->qsmask 0x0 b... ->n_boosts 22
+	 rcu:     cpu 0 ->gp_seq_needed 12904
+	 rcu:     rcu_node 4:7 ->gp_seq 12901 ->gp_seq_needed 12908 ->qsmask 0x0 b..G ->n_boosts 6
+	 rcu:     cpu 5 ->gp_seq_needed 12904
+	 rcu:    CB 1^0->2 KbclSW F5089 L5089 C1 ..... q0 S CPU 0
+	 rcu:    CB 2^0->3 KbclSW F16859 L16859 C1 ..... q0 S CPU 0
+	 rcu:    CB 3^0->-1 KbclSW F3502 L3502 C2 .W12908.N. q4 S CPU 0
+	 rcu: nocb GP 4 KldtS .[W.] .G:12904 rnp 4:7 1459 S CPU 0
+	 rcu:    CB 4^4->5 KbclSW F9918 L10534 C4 ..... q0 S CPU 0
+	 rcu:    CB 5^4->6 KbclSW F2550 L2550 C2 .W12904.N. q8 S CPU 0
+	 rcu:    CB 6^4->7 KbclSW F6639 L7253 C0 ..... q0 S CPU 0
+	 rcu:    CB 7^4->-1 KbclSW F30685 L30685 C1 ..... q0 S CPU 0
+	 rcu: RCU callbacks invoked since boot: 236075
+	 rcu_tasks: RTGS_WAIT_CBS(11) since 409853 g:0 i:0/0 k.
+	 rcu_tasks_rude: RTGS_WAIT_CBS(11) since 409851 g:0 i:0/0 k.
+	 rcu_tasks_trace: RTGS_WAIT_CBS(11) since 409848 g:0 i:0/0 k. N0 h:0/0/0
+	 Boost inversion: GP 12908 still pending.
+	 rcu-torture: rtc: 0000000093327eb2 ver: 1504 tfle: 0 rta: 1505 rtaf: 0 rtf: 1493 rtmbe: 0 rtmbkf: 0/782 rtbe: 0 rtbke: 0 rtbre: 0 rtbf: 1 rtb: 7 nt: 66220 onoff: 6/6:11/12 40,763:29,5050 1537:11766 (HZ=1000) barrier: 239/240:0 read-exits: 67 nocb-toggles: 0:0
+	 rcu-torture: !!!
+	 ------------[ cut here ]------------
+	 WARNING: CPU: 5 PID: 121 at kernel/rcu/rcutorture.c:1870 rcu_torture_stats_print+0x5ad/0x610
+	 Modules linked in:
+	 CPU: 5 PID: 121 Comm: rcu_torture_sta Not tainted 5.17.1-rt17 #63
+	 Hardware name: QEMU Standard PC (Q35 + ICH9, 2009)
+	 RIP: 0010:rcu_torture_stats_print+0x5ad/0x610
+	 Code: c7 01 02 00 74 02 0f 0b 48 83 3d 35 c7 01 02 00 74 02 0f 0b 48 83 3d 21 c7 01 02 00 74 02 0f 0b 48 83 3d 0d c7 01 02 00 74 02 <0f> 0b 83 eb 01 0f 8e ba fc ff ff 0f 0b e9 b3 fc ff ff 8b 05 8f c6
+	 RSP: 0018:ffffa7560041fdf8 EFLAGS: 00010202
+	 RAX: 0000000000000000 RBX: 0000000000000001 RCX: 0000000000000001
+	 RDX: 0000000000000000 RSI: 40000000ffffe735 RDI: 00000000ffffffff
+	 RBP: 00000000000005d5 R08: ffffffffaf65f6e0 R09: ffffffffafee3a7c
+	 R10: ffffa75600427d58 R11: 0000000020212121 R12: ffffa7560041fe20
+	 R13: ffffa7560041fe78 R14: 0000000000000000 R15: 000000000001bd20
+	 FS:  0000000000000000(0000) GS:ffff9fe7df540000(0000) knlGS:0000000000000000
+	 CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+	 CR2: 0000000000000000 CR3: 0000000014216000 CR4: 00000000000006e0
+	 DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+	 DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+	 Call Trace:
+	  <TASK>
+	  ? lock_timer_base+0x62/0x80
+	  ? rcu_torture_stats_print+0x610/0x610
+	  rcu_torture_stats+0x29/0x70
+	  kthread+0x118/0x130
+	  ? kthread_complete_and_exit+0x20/0x20
+	  ret_from_fork+0x22/0x30
+	  </TASK>
 
+Fix this with statically boosting timersd just like is done with ksoftirqd.
+
+Suggested-by: Mel Gorman <mgorman@suse.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Frederic Weisbecker <frederic@kernel.org>
+---
+ include/linux/interrupt.h | 1 +
+ kernel/rcu/rcutorture.c   | 6 ++++++
+ kernel/softirq.c          | 2 +-
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index db4a23d07a57..e4b8a04e67ce 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -606,6 +606,7 @@ extern void raise_softirq_irqoff(unsigned int nr);
+ extern void raise_softirq(unsigned int nr);
+ 
+ #ifdef CONFIG_PREEMPT_RT
++DECLARE_PER_CPU(struct task_struct *, timersd);
+ extern void raise_timer_softirq(void);
+ extern void raise_hrtimer_softirq(void);
+ 
+diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+index 422f7e4cc08d..ac9715ed58ba 100644
+--- a/kernel/rcu/rcutorture.c
++++ b/kernel/rcu/rcutorture.c
+@@ -3283,6 +3283,12 @@ rcu_torture_init(void)
+ 				WARN_ON_ONCE(!t);
+ 				sp.sched_priority = 2;
+ 				sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
 +#ifdef CONFIG_PREEMPT_RT
-+struct remove_cache_work {
-+	struct work_struct work;
-+	struct kmem_cache *cache;
-+};
-+
-+static DEFINE_MUTEX(remove_caches_lock);
-+static DEFINE_PER_CPU(struct remove_cache_work, remove_cache_work);
-+
-+static void per_cpu_remove_cache_work(struct work_struct *w)
-+{
-+	struct remove_cache_work *rcw;
-+
-+	rcw =3D container_of(w, struct remove_cache_work, work);
-+	per_cpu_remove_cache(rcw->cache);
-+}
-+
-+static void per_cpu_remove_caches_sync(struct kmem_cache *cache)
-+{
-+	struct remove_cache_work *rcw;
-+	unsigned int cpu;
-+
-+	cpus_read_lock();
-+	mutex_lock(&remove_caches_lock);
-+
-+	for_each_online_cpu(cpu) {
-+		rcw =3D &per_cpu(remove_cache_work, cpu);
-+		INIT_WORK(&rcw->work, per_cpu_remove_cache_work);
-+		rcw->cache =3D cache;
-+		schedule_work_on(cpu, &rcw->work);
-+	}
-+
-+	for_each_online_cpu(cpu) {
-+		rcw =3D &per_cpu(remove_cache_work, cpu);
-+		flush_work(&rcw->work);
-+	}
-+
-+	mutex_unlock(&remove_caches_lock);
-+	cpus_read_unlock();
-+}
++				t = per_cpu(timersd, cpu);
++				WARN_ON_ONCE(!t);
++				sp.sched_priority = 2;
++				sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
 +#endif
-+
- /* Free all quarantined objects belonging to cache. */
- void kasan_quarantine_remove_cache(struct kmem_cache *cache)
- {
-@@ -332,7 +377,11 @@ void kasan_quarantine_remove_cache(struc
- 	 * achieves the first goal, while synchronize_srcu() achieves the
- 	 * second.
- 	 */
-+#ifndef CONFIG_PREEMPT_RT
- 	on_each_cpu(per_cpu_remove_cache, cache, 1);
-+#else
-+	per_cpu_remove_caches_sync(cache);
-+#endif
-
- 	raw_spin_lock_irqsave(&quarantine_lock, flags);
- 	for (i =3D 0; i < QUARANTINE_BATCHES; i++) {
+ 			}
+ 		}
+ 	}
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 22948c2109f5..89eb45614af6 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -624,7 +624,7 @@ static inline void tick_irq_exit(void)
+ #endif
+ }
+ 
+-static DEFINE_PER_CPU(struct task_struct *, timersd);
++DEFINE_PER_CPU(struct task_struct *, timersd);
+ static DEFINE_PER_CPU(unsigned long, pending_timer_softirq);
+ 
+ static unsigned int local_pending_timers(void)
+-- 
+2.25.1
 
