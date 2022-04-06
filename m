@@ -2,194 +2,166 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 306CBC433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Apr 2022 03:44:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DB1D6C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Apr 2022 13:18:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238029AbiDFDqW (ORCPT
+        id S232323AbiDFNUw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 5 Apr 2022 23:46:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53498 "EHLO
+        Wed, 6 Apr 2022 09:20:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57370 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1457639AbiDEQX3 (ORCPT
+        with ESMTP id S232984AbiDFNUp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 5 Apr 2022 12:23:29 -0400
-Received: from mail-yb1-xb29.google.com (mail-yb1-xb29.google.com [IPv6:2607:f8b0:4864:20::b29])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F669814A2
-        for <linux-rt-users@vger.kernel.org>; Tue,  5 Apr 2022 09:21:28 -0700 (PDT)
-Received: by mail-yb1-xb29.google.com with SMTP id x131so11687671ybe.11
-        for <linux-rt-users@vger.kernel.org>; Tue, 05 Apr 2022 09:21:28 -0700 (PDT)
+        Wed, 6 Apr 2022 09:20:45 -0400
+Received: from mail-lf1-x134.google.com (mail-lf1-x134.google.com [IPv6:2a00:1450:4864:20::134])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4A7E361D7F6
+        for <linux-rt-users@vger.kernel.org>; Wed,  6 Apr 2022 03:01:03 -0700 (PDT)
+Received: by mail-lf1-x134.google.com with SMTP id z12so3143692lfu.10
+        for <linux-rt-users@vger.kernel.org>; Wed, 06 Apr 2022 03:01:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=aurora.tech; s=google;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=E6JV8zFGCZHwuE5XQBxxuF6dginIdY0wojSrfDf5WPw=;
-        b=Ii7ey2hT/J9PA4X9sGdgxr4Fh1UGPKsIxFbr40aeSR/KOogE4gz5jfWehcdoO63/T1
-         t/AFdRe2rtBx22Xg79K2W/3rSgaiGYSC+5r+Ipm1d2Zjm94AblvikVCBGp1LfpAylLUV
-         oRETyJ/x1Rdvk27tKjA9EAeHdIQJiZ39GqRcdtiZPdtwsFY4+WmP4GrUXF9WnlLK2Y5V
-         24X44FjKFMXicoGpHuIo529x+H4xFvh3+WZuk/eQqO3ULjV5YBd7puFMtFjI23YLWClo
-         41G/7e13tpuR3QQpWnTUNboTWdCP1F6ArdPiS7A4FyCNN4AqEZrLXWQ+PV106wfR8lw+
-         OzTA==
+        d=rasmusvillemoes.dk; s=google;
+        h=message-id:date:mime-version:user-agent:subject:content-language:to
+         :cc:references:from:in-reply-to:content-transfer-encoding;
+        bh=ce0iJzgCIHHOpZmIxOx1PZ02f2jXcsJcbDW9EK00h6E=;
+        b=a0YqmMBXrk5NUm0SO4wg2X/pZ/UOk3/9o8rdLBpRprpeD0IcisnKmwgC5vqchY4Tnf
+         zCkYwqdhNQ1egj/bWCE1I+wgu4I2zvzfFEaCesESgcJ9Axx0G8Jjq3mKqFyNKUiq4YNN
+         2siTOcum3TWZvmMzB0T2Y6eXP2QV0z20r3TaA=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=E6JV8zFGCZHwuE5XQBxxuF6dginIdY0wojSrfDf5WPw=;
-        b=pTsXs5WgxZZomf1V0cg/3ZsS6Oke/na3ScIIRM+31PcE80C4rABx7AsiwYHwqx5nfH
-         PjOU+7hfmfrtp2pxDfJ9BjIIjDWr02OSrkdgtQN7sI8/1z2Tu0/vF56iFLyjjdU2YfwW
-         7/rrWzw2oWY3Aqp+Iln8GTosAEg4clj0obZiMqIv16ng8cMw3G669lTRSpRsLUXTzdw5
-         +09kyw2RSLbG3UihRrbzhWAIuuv+iTK18RoE+zLlBFgXLMW+u9w57VXZVPhgYEZOTfhm
-         u7IPSfnSW16KP2bTw6+Qkees1JMnepwMYkPHr4uv0Ze6gyGn08BXqHNr0rZAhzB+s1VW
-         bkDg==
-X-Gm-Message-State: AOAM530QX/CrhD4uS+ffXtimCDNlN2cIrW2SSWARyIpo1zit8hF6xNV6
-        Tf5JQYferoSlQoopA92rycjfySHZ5kW1oqW05ngGHw==
-X-Google-Smtp-Source: ABdhPJwDq+1cqs59XrwvRt34pPHyqt9RpZm1dlxLb7e/hOS6+ZW1ANCTKuHubxzgQIpPFOkaai1WDkvmin42mPbt6EQ=
-X-Received: by 2002:a05:6902:1506:b0:638:44f6:673d with SMTP id
- q6-20020a056902150600b0063844f6673dmr3163404ybu.605.1649175687868; Tue, 05
- Apr 2022 09:21:27 -0700 (PDT)
+        h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+         :content-language:to:cc:references:from:in-reply-to
+         :content-transfer-encoding;
+        bh=ce0iJzgCIHHOpZmIxOx1PZ02f2jXcsJcbDW9EK00h6E=;
+        b=0WyEJHNQvSyFJWDNTsdZGMLiG2vlOLYVGQLbFl0CxhRzbBRo7K/QeWQYIPryPreOxs
+         7GufzH5Vrtv/TXEqxQgF4+pVZAx9RGR2Q43tZZ0IftWVtg+W6U84+qhsaEAGhL3oDiEb
+         tqTcrR0xGQqfk1FomlBKHxiSYig3SwcPc2I1ldsas1q6hC9SxQlkRWIMTM9545wgzCfu
+         8PHpYdRAFcMmrkcG0KTC4rMr2tA//1qmLYLNuQAiKXWkFVO+a8rTRRAjXek7WhA33ox+
+         xXJj9yPQV7uSWfB2MK45aFgSoIa0RlNgjiG/yCN8ds17thSdYAR3SyvchI/a7ylPeh00
+         s1nw==
+X-Gm-Message-State: AOAM531GjQPpWBYY+a4Tuss96EU6I4AKxwB3NKHviq7YnGVUCO2wvnCb
+        MfDyjelZ929+wx/owdR8Ma+eig==
+X-Google-Smtp-Source: ABdhPJzaZfOxf4PkYGYckjccQ8y6xANyGEfvkaJdnTNvh8UqtItuiRLFR/X3n73TsiTSCKXIgY2Y1A==
+X-Received: by 2002:a05:6512:3d8e:b0:44a:3ad1:8bae with SMTP id k14-20020a0565123d8e00b0044a3ad18baemr5352184lfv.231.1649239251588;
+        Wed, 06 Apr 2022 03:00:51 -0700 (PDT)
+Received: from [172.16.11.74] ([81.216.59.226])
+        by smtp.gmail.com with ESMTPSA id d23-20020a056512369700b0045080f3fcd5sm757273lfs.114.2022.04.06.03.00.49
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 06 Apr 2022 03:00:50 -0700 (PDT)
+Message-ID: <0ec367bf-8609-3139-2984-6df3bb3cd28c@rasmusvillemoes.dk>
+Date:   Wed, 6 Apr 2022 12:00:48 +0200
 MIME-Version: 1.0
-References: <20220405010752.1347437-1-frederic@kernel.org> <20220405010752.1347437-2-frederic@kernel.org>
-In-Reply-To: <20220405010752.1347437-2-frederic@kernel.org>
-From:   Alison Chaiken <achaiken@aurora.tech>
-Date:   Tue, 5 Apr 2022 09:21:16 -0700
-Message-ID: <CAFzL-7s0oWtSS_oYTOJ1A-1Dbso6S+4qoR-n91joexgQYCaJEg@mail.gmail.com>
-Subject: Re: [RT][PATCH 2/2] tick: Fix timer storm since introduction of timersd
-To:     Frederic Weisbecker <frederic@kernel.org>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Mel Gorman <mgorman@suse.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Glenn Elliott <glenn@aurora.tech>
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.7.0
+Subject: Re: [RFC PATCH 0/2] RT scheduling policies for workqueues
+Content-Language: en-US
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Tejun Heo <tj@kernel.org>, Marc Kleine-Budde <mkl@pengutronix.de>,
+        Peter Hurley <peter@hurleysoftware.com>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Esben Haabendal <esben@geanix.com>,
+        Steven Walter <stevenrwalter@gmail.com>,
+        linux-kernel@vger.kernel.org,
+        Oleksij Rempel <o.rempel@pengutronix.de>,
+        Pengutronix Kernel Team <kernel@pengutronix.de>,
+        =?UTF-8?Q?Andr=c3=a9_Pribil?= <a.pribil@beck-ipc.com>,
+        Jiri Slaby <jirislaby@kernel.org>,
+        linux-rt-users@vger.kernel.org
+References: <20220323145600.2156689-1-linux@rasmusvillemoes.dk>
+ <YkGIhYKJG+w4L7ge@linutronix.de>
+ <20220328100927.5ax34nea7sp7jdsy@pengutronix.de>
+ <YkHyzcfiyjLfIVOo@slm.duckdns.org> <YkKnlUUsufZPiZxM@linutronix.de>
+ <8b21ad64-ea9c-84f2-c798-222c9383e3de@rasmusvillemoes.dk>
+ <YkbEDoPBKzVUqNLb@linutronix.de>
+From:   Rasmus Villemoes <linux@rasmusvillemoes.dk>
+In-Reply-To: <YkbEDoPBKzVUqNLb@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Apr 4, 2022 at 9:33 PM Frederic Weisbecker <frederic@kernel.org> wrote:
->
-> If timers are pending while the tick is reprogrammed on nohz_mode, the
-> next expiry is not armed to fire now, it is delayed one jiffy forward
-> instead so as not to raise an inextinguishable timer storm with such
-> scenario:
->
-> 1) IRQ triggers and queue a timer
-> 2) ksoftirqd() is woken up
-> 3) IRQ tail: timer is reprogrammed to fire now
-> 4) IRQ exit
-> 5) TIMER interrupt
-> 6) goto 3)
->
-> ...all that until we finally reach ksoftirqd.
->
-> Unfortunately we are checking the wrong softirq vector bitmask since
-> timersd kthread has split from ksoftirqd. Timers now have their own
-> vector state field that must be checked separately.
+On 01/04/2022 11.21, Sebastian Andrzej Siewior wrote:
+> On 2022-03-29 10:33:19 [+0200], Rasmus Villemoes wrote:
+>> On 29/03/2022 08.30, Sebastian Andrzej Siewior wrote:
+>>> On 2022-03-28 07:39:25 [-1000], Tejun Heo wrote:
+>>>> Hello,
+>>> Hi,
+>>>
+>>>> I wonder whether it'd be useful to provide a set of wrappers which can make
+>>>> switching between workqueue and kworker easy. Semantics-wise, they're
+>>>> already mostly aligned and it shouldn't be too difficult to e.g. make an
+>>>> unbounded workqueue be backed by a dedicated kthread_worker instead of
+>>>> shared pool depending on a flag, or even allow switching dynamically.
+>>
+>> Well, that would certainly not make it any easier for userspace to
+>> discover the thread it needs to chrt().
+> 
+> It should be configured within the tty-layer and not making a working RT
+> just because it is possible.
 
-With kernel 5.15 and the timersd patch applied, we've observed that
-x86_64 cores tend to enter deeper C-states even when there are pending
-hrtimers.      Presumably failure to check the right   bits could also
-explain that observation and, accordingly, the patch might fix it?
+I'm sorry, I can't parse that sentence.
 
-> As a result, the
-> old timer storm is back. This shows up early on boot with extremely long
-> initcalls:
->
->         [  333.004807] initcall dquot_init+0x0/0x111 returned 0 after 323822879 usecs
->
-> and the cause is uncovered with the right trace events showing just
-> 10 microseconds between ticks (~100 000 Hz):
->
->         swapper/-1         1dn.h111 60818582us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415486608
->         swapper/-1         1dn.h111 60818592us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415496082
->         swapper/-1         1dn.h111 60818601us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415505550
->         swapper/-1         1dn.h111 60818611us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415515013
->         swapper/-1         1dn.h111 60818620us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415524483
->         swapper/-1         1dn.h111 60818630us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415533949
->         swapper/-1         1dn.h111 60818639us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415543426
->         swapper/-1         1dn.h111 60818649us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415553061
->         swapper/-1         1dn.h111 60818658us : hrtimer_expire_entry: hrtimer=00000000e0ef0f6b function=tick_sched_timer now=60415562511
->
-> Fix this with checking the right timer vector state from the nohz code.
->
-> Signed-off-by: Frederic Weisbecker <frederic@kernel.org>
-> Cc: Mel Gorman <mgorman@suse.de>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> ---
->  include/linux/interrupt.h | 12 ++++++++++++
->  kernel/softirq.c          |  7 +------
->  kernel/time/tick-sched.c  |  2 +-
->  3 files changed, 14 insertions(+), 7 deletions(-)
->
-> diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-> index e4b8a04e67ce..da248458f4d9 100644
-> --- a/include/linux/interrupt.h
-> +++ b/include/linux/interrupt.h
-> @@ -607,9 +607,16 @@ extern void raise_softirq(unsigned int nr);
->
->  #ifdef CONFIG_PREEMPT_RT
->  DECLARE_PER_CPU(struct task_struct *, timersd);
-> +DECLARE_PER_CPU(unsigned long, pending_timer_softirq);
-> +
->  extern void raise_timer_softirq(void);
->  extern void raise_hrtimer_softirq(void);
->
-> +static inline unsigned int local_pending_timers(void)
-> +{
-> +        return __this_cpu_read(pending_timer_softirq);
-> +}
-> +
->  #else
->  static inline void raise_timer_softirq(void)
->  {
-> @@ -620,6 +627,11 @@ static inline void raise_hrtimer_softirq(void)
->  {
->         raise_softirq_irqoff(HRTIMER_SOFTIRQ);
->  }
-> +
-> +static inline unsigned int local_pending_timers(void)
-> +{
-> +        return local_softirq_pending();
-> +}
->  #endif
->
->  DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
-> diff --git a/kernel/softirq.c b/kernel/softirq.c
-> index 89eb45614af6..c0aef5f760e5 100644
-> --- a/kernel/softirq.c
-> +++ b/kernel/softirq.c
-> @@ -625,12 +625,7 @@ static inline void tick_irq_exit(void)
->  }
->
->  DEFINE_PER_CPU(struct task_struct *, timersd);
-> -static DEFINE_PER_CPU(unsigned long, pending_timer_softirq);
-> -
-> -static unsigned int local_pending_timers(void)
-> -{
-> -        return __this_cpu_read(pending_timer_softirq);
-> -}
-> +DEFINE_PER_CPU(unsigned long, pending_timer_softirq);
->
->  static void wake_timersd(void)
->  {
-> diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-> index 17a283ce2b20..7c359f029b97 100644
-> --- a/kernel/time/tick-sched.c
-> +++ b/kernel/time/tick-sched.c
-> @@ -763,7 +763,7 @@ static void tick_nohz_restart(struct tick_sched *ts, ktime_t now)
->
->  static inline bool local_timer_softirq_pending(void)
->  {
-> -       return local_softirq_pending() & BIT(TIMER_SOFTIRQ);
-> +       return local_pending_timers() & BIT(TIMER_SOFTIRQ);
->  }
->
->  static ktime_t tick_nohz_next_event(struct tick_sched *ts, int cpu)
-> --
-> 2.25.1
->
+The tty-layer cannot possibly set the right RT priorities, only the
+application/userspace/the BSP developer knows what is right. The kernel
+has rightly standardized on just the two sched_set_fifo and
+sched_set_fifo_low; the admin must configure the system, but that also
+requires that the admin has access to knobs to actually do that.
+>>
+>> Here's another idea: In an ideal world, the irq thread itself [people
+>> caring about latency use threaded interrupts] could just do the work
+>> immediately - then the admin only has one kernel thread to properly
+>> configure. However, as Sebastian pointed out, doing that leads to a
+>> lockdep splat [1], and it also means that there's no work item involved,
+>> so some other thread calling tty_buffer_flush_work() might not actually
+>> wait for a concurrent flush_to_ldisc() to finish. So could we create a
+>> struct hybrid_work { } which, when enqueued, does something like
+>>
+>>   bool current_is_irqthread(void) { return in_task() &&
+>> kthread_func(current) == irq_thread; }
+>>
+>> hwork_queue(struct hybrid_work *hwork, struct workqueue_struct *wq)
+>>   if (current_is_irqthread()) {
+>>     task_work_add(current, &hwork->twork)
+>>   } else {
+>>     queue_work(wq, &hwork->work);
+>>   }
+>>
+>> (with extra bookkeeping so _flush  and _cancel_sync methods can also be
+>> created). It would require irqthread to learn to run its queued
+>> task_works in its main loop, which in turn would require finding some
+>> other way to do the irq_thread_dtor() cleanup, but that should be doable.
+>>
+>> While the implementation of hybrid_work might be a bit complex, I think
+>> this would have potential for being used in other situations, and for
+>> the users, the API would be as simple as the current workqueue/struct
+>> kwork APIs. By letting the irq thread do more/all of the work, we'd
+>> probably also win some latency due to fewer threads involved and better
+>> cache locality. And the admin/BSP is already setting the rt priorities
+>> of the [irq/...] threads.
+> 
+> Hmmm. Sounds complicated. Especially the part where irqthread needs to
+> deal with irq_thread_dtor in another way.
 
-Thanks,
-Alison Chaiken
-achaiken@aurora.tech
-Aurora Innovation
+Well, we wouldn't need to use the task_work mechanism, we could also add
+a list_head to struct irqaction {} aka the irq thread's kthread_data().
+
+> If this is something we want for everyone and not just for the "low
+> latency" attribute because it seems to make sense for everyone, would it
+> work to add the data in one step and then flush it once all locks are
+> dropped? The UART driver could be extended to a threaded handler if it
+> is not desired/ possible to complete in the primary handler.
+
+Yes, the idea is certainly to create something which is applicable more
+generally than just for the tty problem. There are lots of places where
+one ends up with a somewhat silly situation in that the driver's irq
+handler is carefully written to not do much more than just schedule a
+work item, so with the -RT patch set, we wake a task so it can wake a
+task so it can ... And it also means that the admin might have carefully
+adjusted the rt priority of the irq/foobar kernel thread and the
+consuming application, but that doesn't matter when there's some random
+SCHED_OTHER task in between - i.e. exactly the tty problem.
+
+I guess I should write some real patches to explain what I mean more
+clearly.
+
+Rasmus
