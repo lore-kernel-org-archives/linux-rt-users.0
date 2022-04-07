@@ -2,153 +2,197 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D3B33C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Apr 2022 18:23:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EF160C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Apr 2022 18:56:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233305AbiDGSZW (ORCPT
+        id S233161AbiDGS6R (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 7 Apr 2022 14:25:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34674 "EHLO
+        Thu, 7 Apr 2022 14:58:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46500 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232949AbiDGSZV (ORCPT
+        with ESMTP id S1347159AbiDGS6N (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 7 Apr 2022 14:25:21 -0400
-Received: from mail-qt1-x82e.google.com (mail-qt1-x82e.google.com [IPv6:2607:f8b0:4864:20::82e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 61B3B11B
-        for <linux-rt-users@vger.kernel.org>; Thu,  7 Apr 2022 11:23:20 -0700 (PDT)
-Received: by mail-qt1-x82e.google.com with SMTP id t7so8730961qta.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 07 Apr 2022 11:23:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=lOXNSvSnGVuY6DDNk6cy0IxMz81cIzSK7RneGT1gKyQ=;
-        b=glNPyT8SxqNNLSrw9j91I/ViqPKs5q7+kvQik2hQfX5hQWDMZYXlG6meYeRrfIEmzk
-         ptbWprsr8jPhaxfytsMi3nq3g4ij4VEcBIgeUqXooABMNGt+zQ2fs/Dox/dtr6wACNAw
-         7jj72VxqVoXXveYz76VAP9t9x7S1LJ8ld7LYUIWQvtyojU0OGXeqwOyBhQ9t45hlseen
-         +CQPrKzK0Fvgh0G7nDAHeS4+zv7qfezM/ADbTixtpR8TXhbQYRP0yPYdRdt0RTOPV7Rh
-         y+SWyqj71HjwzHraK95d4b0SNy4Ky2m9imIQcMVzCWUfm9hJZFBC/iLyQpUv2pYS0aK5
-         m7cg==
+        Thu, 7 Apr 2022 14:58:13 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 518E8DBD1A
+        for <linux-rt-users@vger.kernel.org>; Thu,  7 Apr 2022 11:56:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1649357768;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=vwYJ1tfYEAIxUiQ6jWtttv5DsBenUn9oy5Vn+k9D8c0=;
+        b=NiRO3KPUG+jZuddqsCw32M++UO0awmxpayfAztvpjXlkfwAu4gYAVjZg6KyNOKZD85fKDa
+        8pjoXmccBnWeDhJpyukvzTYOZu9VhJCj09zW1s0aebi9BDhbr3u7lZTgTzXAt/WU070CI2
+        xRey8TEJ0aZmZntgp1/+6rc16Kt1TGs=
+Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com
+ [209.85.218.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-55-goTQtmkeOzGXEycomSSRjw-1; Thu, 07 Apr 2022 14:56:07 -0400
+X-MC-Unique: goTQtmkeOzGXEycomSSRjw-1
+Received: by mail-ej1-f70.google.com with SMTP id sc14-20020a1709078a0e00b006e773507c0cso3579871ejc.10
+        for <linux-rt-users@vger.kernel.org>; Thu, 07 Apr 2022 11:56:06 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=lOXNSvSnGVuY6DDNk6cy0IxMz81cIzSK7RneGT1gKyQ=;
-        b=uBx4EAYbuqxN61VbCugolT0R+hEWfBbNkVHP6Xn32h7z4RPOfQI8iMSL8+hSMmG8YZ
-         30MADnrsdcl3YPxsKnbdHCAVUSfNsSlt4PGixG3o2y3V1ZG+ZKbQCpPbMQoIXf74TnXS
-         MEzKtrHffqn9aUkzn9kbKxrHKn8UPejU56dD4yg+kHFUgJDH5FzdzUZo7t7Ql/F7XdVX
-         uCePlJZmo1KTkxd21rOAqpVRqxD44XFHryEVCXwTTKbeaWmlADcIsmp7rK6UcAm6ffT/
-         cTkE5efQw5rRU2rnkPVi6fX/hbOgzFZyMybGtvqWrrSG4XXAueh86iw6QNWqfToyciTF
-         FgDg==
-X-Gm-Message-State: AOAM530KKGLZpQJWAaWA+y6YEYwExQGPyPQRuJ3SgVtXkhaVmRTVEwEu
-        jaEqrE+Rg6HrxnH37z5eDki2VU2KPko=
-X-Google-Smtp-Source: ABdhPJyUBoK1/lEGG7vm7g/W9jSj96gwtwL8/fRuT7SnoSuNBaYxwLHpJDdStr9+B+/SWkCjjlavJA==
-X-Received: by 2002:ac8:7e8e:0:b0:2eb:8e71:8dcc with SMTP id w14-20020ac87e8e000000b002eb8e718dccmr12780861qtj.67.1649355799335;
-        Thu, 07 Apr 2022 11:23:19 -0700 (PDT)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-11-174-88-121-127.dsl.bell.ca. [174.88.121.127])
-        by smtp.gmail.com with ESMTPSA id r7-20020ac85c87000000b002e234014a1fsm17043388qta.81.2022.04.07.11.23.18
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 07 Apr 2022 11:23:19 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        Daniel Bristot de Oliveria <bristot@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Bart Wensley <bwensley@redhat.com>
-Subject: [PATCH] rt-tests: Update has_smi_counter
-Date:   Thu,  7 Apr 2022 14:22:56 -0400
-Message-Id: <20220407182256.19947-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.35.1
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=vwYJ1tfYEAIxUiQ6jWtttv5DsBenUn9oy5Vn+k9D8c0=;
+        b=ApgVnL9v5CY7OIIu2DYAZ4XRsIK+XuXvQHoAtWBQfoUhV30NyeQ0X8NeeF090aGS3r
+         pWbgxSE/eQo346FhFPcYE9VcC2ypRgrzAJ028zWGtpmREhD4fKagFbPkmVHqWF+lg6Ct
+         LLc0wu44TFnDRsbtpRvH8VhvubmuW3pIOCDvIz1rc8lRPRkxV4qvhUXTOJ6h1ubZawHs
+         Tkah+mNUV4bucw8S2fhdxPYl58ZDxU8tDs+PrO/gl1HX7wIGGXJEqZmnSn4GEobWEiYz
+         mBCUBlJBuDMNauaC6uFpW6i7HTyXGiasMLOGDTX40v6ERPMpFdO+V1MBRo6RNIE9rSQf
+         IvdQ==
+X-Gm-Message-State: AOAM5300VlhZwZkP1Yi4GjwUyWjRmSug741kl+s0tWmf/2iluSOUfX3D
+        HJf+jCSh1GeWMBYCR2nmeCxMXoXAy97jimusrKNOzohS81whudpgf3PNT9C6MoIWNe3sUHRDGRL
+        l7IVYfiHwkTKlT76M3i43/5FFOaof86eT9xdX+8AR7r4=
+X-Received: by 2002:a05:6402:27d1:b0:419:1b02:4a04 with SMTP id c17-20020a05640227d100b004191b024a04mr15661370ede.218.1649357765861;
+        Thu, 07 Apr 2022 11:56:05 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwbfXdRHFrFS4EcN7BYQ5HnA6ZgtukF7abN/5NIbWjfdJ6PnolFz2sPCmBN7yFY7v9lQJMty5IFJ8QNk1fsyJY=
+X-Received: by 2002:a05:6402:27d1:b0:419:1b02:4a04 with SMTP id
+ c17-20020a05640227d100b004191b024a04mr15661356ede.218.1649357765675; Thu, 07
+ Apr 2022 11:56:05 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20220407182256.19947-1-jkacur@redhat.com>
+In-Reply-To: <20220407182256.19947-1-jkacur@redhat.com>
+From:   Bart Wensley <bwensley@redhat.com>
+Date:   Thu, 7 Apr 2022 14:55:55 -0400
+Message-ID: <CAGCuPdMz-f=PDETQq5EGrsjdLv1+V+BOx=JVk+oOKkh=RA6C8A@mail.gmail.com>
+Subject: Re: [PATCH] rt-tests: Update has_smi_counter
+To:     John Kacur <jkacur@redhat.com>
+Cc:     RT <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Bristot de Oliveria <bristot@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Update has_smi_counter() to include
+Thanks John for doing this.
 
-case 0x66:	/* INTEL_FAM6_CANNONLAKE_L, Palm Cove */
-case 0x6A:	/* INTEL_FAM6_ICELAKE_X */
-case 0x96:	/* INTEL_FAM6_ATOM_TREMONT Elkhart Lake */
-case 0x86:	/* INTEL_FAM6_ATOM_TREMONT_D, Jacobsville */
+It really is too bad we can't check for SMI counter support at runtime
+instead of having to hardcode the families like this. And I guess
+there is no way to access the constants defined in
+linux/arch/x86/include/asm/intel-family.h? I don't see any devel
+package for that.
 
-This function is based on probe_nhm_msrs() in file turbostat.c in the
-linux kernel.
+My main comment is that the turbostat.c checks also rely on
+intel_model_duplicates which collapses some of the families before
+probe_nhm_msrs is called. Looking at intel_model_duplicates, I think
+we're still missing some families:
 
-This update also reorders the model numbers to more closely match the
-order in probe_nhm_msrs, and adds comments to match symbolic names for
-the model numbers.
+#define INTEL_FAM6_COMETLAKE 0xA5 /* Sky Lake             */
+#define INTEL_FAM6_COMETLAKE_L 0xA6 /* Sky Lake             */
+#define INTEL_FAM6_ICELAKE_L 0x7E /* Sunny Cove */
+#define INTEL_FAM6_ICELAKE_NNPI 0x9D /* Sunny Cove */
+#define INTEL_FAM6_TIGERLAKE_L 0x8C /* Willow Cove */
+#define INTEL_FAM6_TIGERLAKE 0x8D /* Willow Cove */
+#define INTEL_FAM6_ROCKETLAKE 0xA7 /* Cypress Cove */
+#define INTEL_FAM6_LAKEFIELD 0x8A /* Sunny Cove / Tremont */
+#define INTEL_FAM6_ALDERLAKE 0x97 /* Golden Cove / Gracemont */
+#define INTEL_FAM6_ALDERLAKE_L 0x9A /* Golden Cove / Gracemont */
+#define INTEL_FAM6_ATOM_TREMONT_L 0x9C /* Jasper Lake */
+#define INTEL_FAM6_ICELAKE_D 0x6C /* Sunny Cove */
+#define INTEL_FAM6_SAPPHIRERAPIDS_X 0x8F /* Golden Cove */
 
-Reported-by: Bart Wensley <bwensley@redhat.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/cyclictest/cyclictest.c | 50 ++++++++++++++++++++-----------------
- 1 file changed, 27 insertions(+), 23 deletions(-)
+To make this easier to maintain in the future it might be nice to do
+the check in two parts - the first to eliminate the duplicates in the
+same way intel_model_duplicates does it and then the second part to
+check the reduced set (basically the existing switch statement. Maybe
+that's too much?
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index c9ed9e08f6e1..a4979ad81f21 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -440,31 +440,35 @@ static int has_smi_counter(void)
- 	case 0x2C:      /* Westmere EP - Gulftown */
- 	case 0x2E:      /* Nehalem-EX Xeon - Beckton */
- 	case 0x2F:      /* Westmere-EX Xeon - Eagleton */
--	case 0x2A:      /* SNB */
--	case 0x2D:      /* SNB Xeon */
--	case 0x3A:      /* IVB */
--	case 0x3E:      /* IVB Xeon */
--	case 0x3C:      /* HSW */
--	case 0x3F:      /* HSX */
--	case 0x45:      /* HSW */
--	case 0x46:      /* HSW */
--	case 0x3D:      /* BDW */
--	case 0x47:      /* BDW */
--	case 0x4F:      /* BDX */
--	case 0x56:      /* BDX-DE */
--	case 0x4E:      /* SKL */
--	case 0x5E:      /* SKL */
-+	case 0x2A:      /* INTEL_FAM6_SANDYBRIDGE, SNB */
-+	case 0x2D:      /* INTEL_FAM6_SANDYBRIDGE_X, SNB Xeon */
-+	case 0x3A:      /* INTEL_FAM6_IVYBRIDGE, IVB */
-+	case 0x3E:      /* INTEL_FAM6_IVYBRIDGE_X, IVB Xeon */
-+	case 0x3C:      /* INTEL_FAM6_HASWELL, HSW */
-+	case 0x46:      /* INTEL_FAM6_HASWELL_G, HSW */
-+	case 0x3F:      /* INTEL_FAM6_HASWELL_X, HSX */
-+	case 0x45:      /* INTEL_FAM6_HASWELL_L, HSW */
-+	case 0x3D:      /* INTEL_FAM6_BROADWELL, BDW */
-+	case 0x47:      /* INTEL_FAM6_BROADWELL_G, BDW */
-+	case 0x4F:      /* INTEL_FAM6_BROADWELL_X, BDX */
-+	case 0x56:      /* INTEL_FAM6_BROADWELL_D, BDX-DE */
-+	case 0x4E:      /* INTEL_FAM6_SKYLAKE_L SKL */
-+	case 0x66:	/* INTEL_FAM6_CANNONLAKE_L, Palm Cove */
-+	case 0x55:      /* INTEL_FAM6_SKYLAKE_X, SKX */
-+	case 0x6A:	/* INTEL_FAM6_ICELAKE_X */
-+	case 0x5E:      /* INTEL_FAM6_SKYLAKE, SKL */
- 	case 0x8E:      /* KBL */
- 	case 0x9E:      /* KBL */
--	case 0x55:      /* SKX */
--	case 0x37:      /* BYT */
--	case 0x4D:      /* AVN */
--	case 0x4C:      /* AMT */
--	case 0x57:      /* PHI */
--	case 0x5C:      /* BXT */
--	case 0x5F:	/* DNV */
--	case 0x7A:	/* Gemini Lake */
--	case 0x85:	/* Knights Mill */
-+	case 0x37:      /* INTEL_FAM6_ATOM_SILVERMONT, BYT */
-+	case 0x4D:      /* INTEL_FAM6_ATOM_SILVERMONT_D, AVN */
-+	case 0x4C:      /* INTEL_FAM6_ATOM_AIRMONT, AMT */
-+	case 0x57:      /* INTEL_FAM6_XEON_PHI_KNL, PHI */
-+	case 0x5C:      /* INTEL_FAM6_ATOM_GOLDMONT, BXT, Apollo Lake */
-+	case 0x7A:	/* INTEL_FAM6_ATOM_GOLDMONT_PLUS, Gemini Lake */
-+	case 0x5F:	/* INTEL_FAM6_ATOM_GOLDMONT_D, DNV, Denverton */
-+	case 0x96:	/* INTEL_FAM6_ATOM_TREMONT Elkhart Lake */
-+	case 0x86:	/* INTEL_FAM6_ATOM_TREMONT_D, Jacobsville */
-+	case 0x85:	/* INTEL_FAM6_XEON_PHI_KNM, Knights Mill */
- 		break;
- 	default:
- 		return 0;
--- 
-2.35.1
+Also, might be nice to update all the comments to include the
+constants from intel-family.h (I noticed you didn't update the first
+group in the switch statement).
+
+Bart
+
+On Thu, Apr 7, 2022 at 2:23 PM John Kacur <jkacur@redhat.com> wrote:
+>
+> Update has_smi_counter() to include
+>
+> case 0x66:      /* INTEL_FAM6_CANNONLAKE_L, Palm Cove */
+> case 0x6A:      /* INTEL_FAM6_ICELAKE_X */
+> case 0x96:      /* INTEL_FAM6_ATOM_TREMONT Elkhart Lake */
+> case 0x86:      /* INTEL_FAM6_ATOM_TREMONT_D, Jacobsville */
+>
+> This function is based on probe_nhm_msrs() in file turbostat.c in the
+> linux kernel.
+>
+> This update also reorders the model numbers to more closely match the
+> order in probe_nhm_msrs, and adds comments to match symbolic names for
+> the model numbers.
+>
+> Reported-by: Bart Wensley <bwensley@redhat.com>
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  src/cyclictest/cyclictest.c | 50 ++++++++++++++++++++-----------------
+>  1 file changed, 27 insertions(+), 23 deletions(-)
+>
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index c9ed9e08f6e1..a4979ad81f21 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -440,31 +440,35 @@ static int has_smi_counter(void)
+>         case 0x2C:      /* Westmere EP - Gulftown */
+>         case 0x2E:      /* Nehalem-EX Xeon - Beckton */
+>         case 0x2F:      /* Westmere-EX Xeon - Eagleton */
+> -       case 0x2A:      /* SNB */
+> -       case 0x2D:      /* SNB Xeon */
+> -       case 0x3A:      /* IVB */
+> -       case 0x3E:      /* IVB Xeon */
+> -       case 0x3C:      /* HSW */
+> -       case 0x3F:      /* HSX */
+> -       case 0x45:      /* HSW */
+> -       case 0x46:      /* HSW */
+> -       case 0x3D:      /* BDW */
+> -       case 0x47:      /* BDW */
+> -       case 0x4F:      /* BDX */
+> -       case 0x56:      /* BDX-DE */
+> -       case 0x4E:      /* SKL */
+> -       case 0x5E:      /* SKL */
+> +       case 0x2A:      /* INTEL_FAM6_SANDYBRIDGE, SNB */
+> +       case 0x2D:      /* INTEL_FAM6_SANDYBRIDGE_X, SNB Xeon */
+> +       case 0x3A:      /* INTEL_FAM6_IVYBRIDGE, IVB */
+> +       case 0x3E:      /* INTEL_FAM6_IVYBRIDGE_X, IVB Xeon */
+> +       case 0x3C:      /* INTEL_FAM6_HASWELL, HSW */
+> +       case 0x46:      /* INTEL_FAM6_HASWELL_G, HSW */
+> +       case 0x3F:      /* INTEL_FAM6_HASWELL_X, HSX */
+> +       case 0x45:      /* INTEL_FAM6_HASWELL_L, HSW */
+> +       case 0x3D:      /* INTEL_FAM6_BROADWELL, BDW */
+> +       case 0x47:      /* INTEL_FAM6_BROADWELL_G, BDW */
+> +       case 0x4F:      /* INTEL_FAM6_BROADWELL_X, BDX */
+> +       case 0x56:      /* INTEL_FAM6_BROADWELL_D, BDX-DE */
+> +       case 0x4E:      /* INTEL_FAM6_SKYLAKE_L SKL */
+> +       case 0x66:      /* INTEL_FAM6_CANNONLAKE_L, Palm Cove */
+> +       case 0x55:      /* INTEL_FAM6_SKYLAKE_X, SKX */
+> +       case 0x6A:      /* INTEL_FAM6_ICELAKE_X */
+> +       case 0x5E:      /* INTEL_FAM6_SKYLAKE, SKL */
+>         case 0x8E:      /* KBL */
+>         case 0x9E:      /* KBL */
+> -       case 0x55:      /* SKX */
+> -       case 0x37:      /* BYT */
+> -       case 0x4D:      /* AVN */
+> -       case 0x4C:      /* AMT */
+> -       case 0x57:      /* PHI */
+> -       case 0x5C:      /* BXT */
+> -       case 0x5F:      /* DNV */
+> -       case 0x7A:      /* Gemini Lake */
+> -       case 0x85:      /* Knights Mill */
+> +       case 0x37:      /* INTEL_FAM6_ATOM_SILVERMONT, BYT */
+> +       case 0x4D:      /* INTEL_FAM6_ATOM_SILVERMONT_D, AVN */
+> +       case 0x4C:      /* INTEL_FAM6_ATOM_AIRMONT, AMT */
+> +       case 0x57:      /* INTEL_FAM6_XEON_PHI_KNL, PHI */
+> +       case 0x5C:      /* INTEL_FAM6_ATOM_GOLDMONT, BXT, Apollo Lake */
+> +       case 0x7A:      /* INTEL_FAM6_ATOM_GOLDMONT_PLUS, Gemini Lake */
+> +       case 0x5F:      /* INTEL_FAM6_ATOM_GOLDMONT_D, DNV, Denverton */
+> +       case 0x96:      /* INTEL_FAM6_ATOM_TREMONT Elkhart Lake */
+> +       case 0x86:      /* INTEL_FAM6_ATOM_TREMONT_D, Jacobsville */
+> +       case 0x85:      /* INTEL_FAM6_XEON_PHI_KNM, Knights Mill */
+>                 break;
+>         default:
+>                 return 0;
+> --
+> 2.35.1
+>
 
