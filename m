@@ -2,198 +2,183 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ADACFC433FE
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Apr 2022 15:53:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D56ACC433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Apr 2022 16:50:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237270AbiDKPzX (ORCPT
+        id S1348694AbiDKQwX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Apr 2022 11:55:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37902 "EHLO
+        Mon, 11 Apr 2022 12:52:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54546 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232065AbiDKPzV (ORCPT
+        with ESMTP id S1348693AbiDKQwW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Apr 2022 11:55:21 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 83D6331502
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Apr 2022 08:53:07 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1649692386;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=O9m6y9C6Pfmizntp/dopc6Ki+6b9unw1nEqdAlnl+Ls=;
-        b=PE+U88j9F85nks/imQn5w8gGZfKRrVEz7o0e3pOJTrHNz4fJBw4LqLF79Wxp/t5EDUSiUS
-        g5lKZh67jt343tCL1iSntmkKs7stmPv6TXw/UGSdDcU4E5JWjND6G+tCF9BUxoioCshmf8
-        eI9UMBcKGo6leH+Zbs+4HA+h0QQtOOc=
-Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
- [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-517-ehfHCA3QNf-kH2yKQVhvzA-1; Mon, 11 Apr 2022 11:53:05 -0400
-X-MC-Unique: ehfHCA3QNf-kH2yKQVhvzA-1
-Received: by mail-ej1-f69.google.com with SMTP id hp19-20020a1709073e1300b006e82eaf2677so5729629ejc.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Apr 2022 08:53:05 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=O9m6y9C6Pfmizntp/dopc6Ki+6b9unw1nEqdAlnl+Ls=;
-        b=M/b7Cv6N+5oOyovNVEYbUWsLfDUtkaNFc7GgvCqHm9fXMGeLb1MSzgS6jLRycdPHUF
-         EcbccOSQMyFFjozZXHyURdqULfJFHMiWLlt8WUT3IGuXWngBCVADwm9LwiS7w/IaEkAq
-         8/WNHicD5YzGlbY9QRY2szBwu7gN19iPCrfIOuD8K/y6yVndJNq6GoRYW4sfF0GZ0uBY
-         rQpvWndx8x4vTBrhbJNkALhB2ip3s90Cc60LmsHiU9fKLKx0hGR26Ym589+yLFSrZTLw
-         qOseaB58+7eN4uk18TRAaZ+OHKL5G++UmZ7oKmEHIdn+cL8gV2OUNGp0eEAvC2IcknwX
-         phtA==
-X-Gm-Message-State: AOAM532U2XjcdQ8bp2XmBj+VYv1ulXB0tpcEb7szAHA2Np8UutcWweqk
-        9GevA3Q/wGqqyr0ObNd+SGQrWaewlA3VP6Bfv05r3oJ7AoUH7EIRzO7hAyYdVoWBoFdJoAhf0wM
-        oNHh0UFqwn71AHWQaFmc99JC/VeXTUDgk5lzJD/Tp/Wk=
-X-Received: by 2002:a17:906:32d0:b0:6ce:e1cf:3f2e with SMTP id k16-20020a17090632d000b006cee1cf3f2emr29421935ejk.214.1649692384267;
-        Mon, 11 Apr 2022 08:53:04 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJy+huLV83lY1+tf3euMJTbQkUKmd8j7EoIS9Xhn/qHteEpVqCOO9PFPs6j7E+6YQcn3u6RYlC1SxFLaBsT2Ngs=
-X-Received: by 2002:a17:906:32d0:b0:6ce:e1cf:3f2e with SMTP id
- k16-20020a17090632d000b006cee1cf3f2emr29421919ejk.214.1649692384068; Mon, 11
- Apr 2022 08:53:04 -0700 (PDT)
+        Mon, 11 Apr 2022 12:52:22 -0400
+Received: from JPN01-TYC-obe.outbound.protection.outlook.com (mail-tycjpn01olkn2013.outbound.protection.outlook.com [40.92.99.13])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E18EA2DD74
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Apr 2022 09:50:04 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=Mb6EFt0q37Z/cygOA2HV0XNbFRe1kq+/lHdlNcrkpNrrrqUmHXbMnUIlNYanj+Sxow/jtXhTvyf3hJUHzZzHbQxlfxOCKreOVy8+RLrNlKMH2ZSTtnfgzOVoD4XIic+tU4Gb+OB89P8xlc5Zxhq9NeztoPSYvobHim0SNI9+l5MV7P739V6Jxq3W7WrD2QzDpfrWanwh9mUnYxe36AqrYmUvcTXiGaWpWioj2gqUf5+Nud1BwTlcnzdgPYU9eQZfHxzICeLmZtyX1hlUc2s4sI6xC3r+pjEPkqzbw5rDyzAooIedu5cknNYFolTnSxoHGReZkDD63AHq2lnhDyhKZQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=/Vj9kFkq7ygBvTHJ7U0IaKgA1toXWw4m9vN1x7UT4tQ=;
+ b=fzbhKQXCCTDNrllrzkc2CQoys8HdpQ87lN33YvhFc6t/VLh3cL9mPL0HcjBUwrqdpwAmafhSBP1Fs3qohBnLxYiGQPhgABVa2+3OOFSM4Xm27aKtHl4grxBpaaY9WCXjEBm+lWDYayqMwf3emIEgO9sv6AdeTcKtA38yYpQlqJGyIIzWDjgq+WqPkwBbzkgpg8M7Z6fS5auTPTmbb8bePvcmNxo7WHs+FHWO/UCsEpMoxhTgcAvLAmLvsAQRNs1fpqUDfQLbBcguQS97+M8po8ecCPlLXm1LPYF3kgpa1dE//lQwjaQOo7jxhXZY85X0dzocOSVw686tJA+d0o+03A==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
+ dkim=none; arc=none
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:11e::14)
+ by TYCP286MB1410.JPNP286.PROD.OUTLOOK.COM (2603:1096:400:c1::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5144.29; Mon, 11 Apr
+ 2022 16:50:02 +0000
+Received: from TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::bcb9:b9b1:d444:d264]) by TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ ([fe80::bcb9:b9b1:d444:d264%7]) with mapi id 15.20.5144.029; Mon, 11 Apr 2022
+ 16:50:02 +0000
+From:   Oscar Shiang <oscar0225@livemail.tw>
+To:     John Kacur <jkacur@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Cc:     rt-users <linux-rt-users@vger.kernel.org>,
+        Oscar Shiang <oscar0225@livemail.tw>
+Subject: [PATCH] rt-tests: hwlatdetect: Add option to specify cpumask
+Date:   Tue, 12 Apr 2022 00:49:01 +0800
+Message-ID: <TYCP286MB1913F333CCBD550E845C4CFDA1EA9@TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM>
+X-Mailer: git-send-email 2.25.1
+Content-Transfer-Encoding: 7BIT
+Content-Type:   text/plain; charset=US-ASCII
+X-TMN:  [p1mPWe/jj9J1toD9FwilaDCiRq4yTqM1]
+X-ClientProxiedBy: HK2PR02CA0152.apcprd02.prod.outlook.com
+ (2603:1096:201:1f::12) To TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+ (2603:1096:400:11e::14)
+X-Microsoft-Original-Message-ID: <20220411164901.8203-1-oscar0225@livemail.tw>
 MIME-Version: 1.0
-From:   Bart Wensley <bwensley@redhat.com>
-Date:   Mon, 11 Apr 2022 11:52:59 -0400
-Message-ID: <CAGCuPdNWM2EBdjuGWMkpskMz5dq5tqUK+YrVLfAOtccTDK6_pQ@mail.gmail.com>
-Subject: [PATCH v2] rt-tests: resync has_smi_counter with turbostat code
-To:     RT <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
+X-MS-Exchange-MessageSentRepresentingType: 1
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 20e390ba-6d2d-4aa8-6db6-08da1bdb528d
+X-MS-TrafficTypeDiagnostic: TYCP286MB1410:EE_
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: vY6zumQHfdAYVrTfaFPS1DwIz0gde9sLPbi7PFCrwxXO7JzYUfqjEv5XUde4UnSeZYKBKfVP5+MYD655FIQLWIpskJVFZzBHteqSIYo9zSF+UeVjEfeqIkUlVQ9F5bBMQ6YCQp9zqlxEwSESrOfZZkWFlQjGxRIE6U7+eDVR6Rrwcmoyw2UcBeTwSv4/A9xnddD20j5MlG00R6vVYE/QZ9/aT9zBZWf/veCNXKyuTER28kLx8sLApK7hlEjyN6904mUd37BjUmDjEn6V7otD3orMgEOGVfTmu87GE91BrJUFX6poSZ5474dORgxaYo6Zld2GkWx9Nri4XJYLFqhO72QDcU6dR46u/VxekMs3utNcM06asZe4LVFLtJHKxIkTMU/2OQba6sqoTwmLG6CSlKaUAI9t0rjiJcDy5VtmEBG1szvY+nbLFYyxZ24dMESJ8IN3ej88NtPWo/Q9gT7pZRB3MgF3KlS0CZ3wI4U2zu3mkMiuZAYvMlgjSsgsGuH3hB4X9lFWs3DCw6KKbAIBvz9NHcv/NKXVCLaF1Y1e5j72DAegzAKc8AHejvVOlrIfMGuNY9TckIWgb8d7gblR6ywDTQeRbSWaFfj0QuMdEGn+jUlw44Df9l6/woBWrwga
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?3ApWPWOuzAQa7U2vxDyiuHHJF8xJtd6x907xRf4Aoc3o8vN0RKwZNiBOf8AC?=
+ =?us-ascii?Q?8oeHPY2uJmqWcrdjjcLwYxIEN5WKYdryVQWy/f12YLWWZ2rBB7f832tdLZm0?=
+ =?us-ascii?Q?42rIZ8r7XqxOOtetBBdAGplDSi46RLl9cSa1nEI1nhQX8PgNdyLDZsZhbny0?=
+ =?us-ascii?Q?wDdnJEwhPX6DV3f2yLln7dt22Y2kKYoUsqZkNHB+glaQLTxE8iR1R3Ie6caZ?=
+ =?us-ascii?Q?rHMdI+wOLssdHT28nNvRLkwQyFeb8uqlJrOEO5ovyQR5g1/qMcrUdbdDsA+s?=
+ =?us-ascii?Q?2vR4AsPABc+Xxbt0B7HlYNHM0g1BYPYpYFFBxBhQ1xp4g94fzuczieRsTvpu?=
+ =?us-ascii?Q?M/CyD4XOzgn9sQRPTaetMqoTTdsidIu0ONhRS2OJqcUtV7OndCmbAuh8ZESW?=
+ =?us-ascii?Q?bJQBZ9/UDQPuxwIYaqagp6rO6Wyk2+Pu1Y6DX/mnkGu5ACGPlayJy5o6HrEN?=
+ =?us-ascii?Q?n1zGPiF+C914M7kxrrhBQEX5HtRaXC9yYIGBazg7YQZdogaNIFbIZWlSKlC/?=
+ =?us-ascii?Q?UnuNNELOPJNnwhURuR01xRq8WeCMprwGPG5cr+Qhe/HxtluWTIsAWtAoDdBs?=
+ =?us-ascii?Q?8j2OBGiuYkjOaKrEJ7VnFx9uBmEbfTIojtJp1HzJF7UZUZ7sbixD+T+Aw5Ss?=
+ =?us-ascii?Q?BrFDASElECe9m//Ltj+wOJyl7iuKenQ4P423W0T1j5Ck2Ick0O3lRT2OE+Lm?=
+ =?us-ascii?Q?JVrAsCEc33eV4T2YaZd2zIt2tZRql1Hv0YWzUYJZLKKCqYQYaEGEQK9eHydf?=
+ =?us-ascii?Q?+dFrIQthuvVEy7g7GjYdl6K36UrZNEaYRBeMP38W/yod3QZ4jVvcomHUZwR+?=
+ =?us-ascii?Q?+clPjKjJ0DZuqG/lQ2EUCIZAaCPqv5I/3ruWqfsWXFAL1ACYASng7uJa7IQo?=
+ =?us-ascii?Q?tPsp+DK3bfYctSOtbqt1zUnVxQPIqnhVEjxioC6kOQ73Xrf8+401/0V8dwtf?=
+ =?us-ascii?Q?/YBDzIAbAPTb12jM6CIqiwmg73cujUZfEbkNdFEggxKd7muFTSOJkV8a03qJ?=
+ =?us-ascii?Q?Dwg/7KFz5sIvWpffQff9SiQMfrC0zO8fXbMGjMNUI0Ii9nB8k55YVjgdUMtM?=
+ =?us-ascii?Q?y9IhM5nZvQiRYvKVRp3GHP70xGtLXVWmy/DfldJR9ovLPHHjxc8XAtUletFY?=
+ =?us-ascii?Q?RfiYCWEwQPCfoBpGLRI+BrtdHG2er+kbBpjBauJ4T08Xb1ZvalRWtOD/Zt9R?=
+ =?us-ascii?Q?d6m38PPrWEd5cFAwzpYBEMCJC1mFaq7SsXjkAdHCauJ1uc2HaY0648uGtmTA?=
+ =?us-ascii?Q?TsFRECximlsszhwxkPZ/BYKw2jJ2ihZiFPrTwIwxUHbVCp68cTW1COR6p73f?=
+ =?us-ascii?Q?lJLYyouwa/dRuxc2+SK9w5hpBPrE1xkpfADLKMGixKA2W6SmEKBqx2W0m29E?=
+ =?us-ascii?Q?cK0M7UZcGemJKsQk8jSqsCLboW8wwaCG6CiybXGnMdx7agDqsUP+uHv4+5dR?=
+ =?us-ascii?Q?mhIWnwsHNTg=3D?=
+X-OriginatorOrg: sct-15-20-4755-11-msonline-outlook-05f45.templateTenant
+X-MS-Exchange-CrossTenant-Network-Message-Id: 20e390ba-6d2d-4aa8-6db6-08da1bdb528d
+X-MS-Exchange-CrossTenant-AuthSource: TYCP286MB1913.JPNP286.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Apr 2022 16:50:02.5321
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYCP286MB1410
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Updating has_smi_counter to match most recent turbostat code, in
-order to support recent cpu models (e.g. Ice Lake).
+The hwlat tracer can be configured to run on a set of cpus via
+tracing_cpumask [1].
 
-Restructured the code to match the turbostat functions so it will
-be easier to keep the code in sync in the future.
+Add a new option cpu-list to support the configuration of
+tracing_cpumask in the format of cpu list.
 
-Signed-off-by: bartwensley <bwensley@redhat.com>
+For example, if we want the thread to run on CPU 1,2,3 and 5,
+we can specify the cpu list to 1-3,5
+
+The value to pass to hwlatdetect is:
+
+    $ hwlatdetect --cpu-list=1-3,5
+
+[1]: https://docs.kernel.org/trace/hwlat_detector.html
+
+Signed-off-by: Oscar Shiang <oscar0225@livemail.tw>
 ---
- src/cyclictest/cyclictest.c | 104 +++++++++++++++++++++++++-----------
- 1 file changed, 73 insertions(+), 31 deletions(-)
+ src/hwlatdetect/hwlatdetect.8  |  3 +++
+ src/hwlatdetect/hwlatdetect.py | 19 +++++++++++++++++++
+ 2 files changed, 22 insertions(+)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index c9ed9e0..da430dc 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -432,39 +432,81 @@ static int has_smi_counter(void)
-
-        model = (((fms >> 16) & 0xf) << 4) + ((fms >> 4) & 0xf);
-
-+       /* Based on intel_model_duplicates */
-        switch (model) {
--       case 0x1A:      /* Core i7, Xeon 5500 series - Bloomfield,
-Gainstown NHM-EP */
--       case 0x1E:      /* Core i7 and i5 Processor - Clarksfield,
-Lynnfield, Jasper Forest */
-+       case 0x1A:      /* INTEL_FAM6_NEHALEM_EP */
-+       case 0x1E:      /* INTEL_FAM6_NEHALEM */
-        case 0x1F:      /* Core i7 and i5 Processor - Nehalem */
--       case 0x25:      /* Westmere Client - Clarkdale, Arrandale */
--       case 0x2C:      /* Westmere EP - Gulftown */
--       case 0x2E:      /* Nehalem-EX Xeon - Beckton */
--       case 0x2F:      /* Westmere-EX Xeon - Eagleton */
--       case 0x2A:      /* SNB */
--       case 0x2D:      /* SNB Xeon */
--       case 0x3A:      /* IVB */
--       case 0x3E:      /* IVB Xeon */
--       case 0x3C:      /* HSW */
--       case 0x3F:      /* HSX */
--       case 0x45:      /* HSW */
--       case 0x46:      /* HSW */
--       case 0x3D:      /* BDW */
--       case 0x47:      /* BDW */
--       case 0x4F:      /* BDX */
--       case 0x56:      /* BDX-DE */
--       case 0x4E:      /* SKL */
--       case 0x5E:      /* SKL */
--       case 0x8E:      /* KBL */
--       case 0x9E:      /* KBL */
--       case 0x55:      /* SKX */
--       case 0x37:      /* BYT */
--       case 0x4D:      /* AVN */
--       case 0x4C:      /* AMT */
--       case 0x57:      /* PHI */
--       case 0x5C:      /* BXT */
--       case 0x5F:      /* DNV */
--       case 0x7A:      /* Gemini Lake */
--       case 0x85:      /* Knights Mill */
-+       case 0x25:      /* INTEL_FAM6_WESTMERE */
-+       case 0x2C:      /* INTEL_FAM6_WESTMERE_EP */
-+               model = 0x1E;      /* INTEL_FAM6_NEHALEM */
-+               break;
-+       case 0x2E:      /* INTEL_FAM6_NEHALEM_EX */
-+       case 0x2F:      /* INTEL_FAM6_WESTMERE_EX */
-+               model = 0x2E;      /* INTEL_FAM6_NEHALEM_EX */
-+               break;
-+       case 0x85:      /* INTEL_FAM6_XEON_PHI_KNM */
-+               model = 0x57;      /* INTEL_FAM6_XEON_PHI_KNL */
-+               break;
-+       case 0x4F:      /* INTEL_FAM6_BROADWELL_X */
-+       case 0x56:      /* INTEL_FAM6_BROADWELL_D */
-+               model = 0x4F;      /* INTEL_FAM6_BROADWELL_X */
-+               break;
-+       case 0x4E:      /* INTEL_FAM6_SKYLAKE_L */
-+       case 0x5E:      /* INTEL_FAM6_SKYLAKE */
-+       case 0x8E:      /* INTEL_FAM6_KABYLAKE_L */
-+       case 0x9E:      /* INTEL_FAM6_KABYLAKE */
-+       case 0xA6:      /* INTEL_FAM6_COMETLAKE_L */
-+       case 0xA5:      /* INTEL_FAM6_COMETLAKE */
-+               model = 0x4E;      /* INTEL_FAM6_SKYLAKE_L */
-+               break;
-+       case 0x7E:      /* INTEL_FAM6_ICELAKE_L */
-+       case 0x9D:      /* INTEL_FAM6_ICELAKE_NNPI */
-+       case 0x8C:      /* INTEL_FAM6_TIGERLAKE_L */
-+       case 0x8D:      /* INTEL_FAM6_TIGERLAKE */
-+       case 0xA7:      /* INTEL_FAM6_ROCKETLAKE */
-+       case 0x8A:      /* INTEL_FAM6_LAKEFIELD */
-+       case 0x97:      /* INTEL_FAM6_ALDERLAKE */
-+       case 0x9A:      /* INTEL_FAM6_ALDERLAKE_L */
-+               model = 0x66;      /* INTEL_FAM6_CANNONLAKE_L */
-+               break;
-+       case 0x9C:      /* INTEL_FAM6_ATOM_TREMONT_L */
-+               model = 0x96;      /* INTEL_FAM6_ATOM_TREMONT */
-+               break;
-+       case 0x6C:      /* INTEL_FAM6_ICELAKE_D */
-+       case 0x8F:      /* INTEL_FAM6_SAPPHIRERAPIDS_X */
-+               model = 0x6A;      /* INTEL_FAM6_ICELAKE_X */
-+               break;
-+       }
+diff --git a/src/hwlatdetect/hwlatdetect.8 b/src/hwlatdetect/hwlatdetect.8
+index df33180..21d0fe4 100644
+--- a/src/hwlatdetect/hwlatdetect.8
++++ b/src/hwlatdetect/hwlatdetect.8
+@@ -88,6 +88,9 @@ actually sampling. Must be less than the \-\-window value.
+ Specify the output filename of the detector report. Default
+ behavior is to print to standard output
+ .TP
++.B \-\-cpu-list=CPU-LIST
++Specify the CPUs for hwlat thread to move across.
++.TP
+ .B \-\-debug
+ Turn on debug prints
+ .TP
+diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+index 27c2b8a..9ef50f8 100755
+--- a/src/hwlatdetect/hwlatdetect.py
++++ b/src/hwlatdetect/hwlatdetect.py
+@@ -232,6 +232,7 @@ class Tracer(Detector):
+         'window'    : "hwlat_detector/window",
+         'enable'    : "tracing_on",
+         'threshold' : "tracing_thresh",
++        'cpumask'   : "tracing_cpumask",
+     }
+ 
+     class Sample:
+@@ -410,6 +411,10 @@ if __name__ == '__main__':
+                         dest="report",
+                         help="filename for sample data")
+ 
++    parser.add_argument("--cpu-list", default=None,
++                        dest="cpulist",
++                        help="the CPUs for hwlat thread to move across")
 +
-+       /* Based on probe_nhm_msrs */
-+       switch (model) {
-+       case 0x1E:      /* INTEL_FAM6_NEHALEM */
-+       case 0x2E:      /* INTEL_FAM6_NEHALEM_EX */
-+       case 0x2A:      /* INTEL_FAM6_SANDYBRIDGE */
-+       case 0x2D:      /* INTEL_FAM6_SANDYBRIDGE_X */
-+       case 0x3A:      /* INTEL_FAM6_IVYBRIDGE */
-+       case 0x3E:      /* INTEL_FAM6_IVYBRIDGE_X */
-+       case 0x3C:      /* INTEL_FAM6_HASWELL */
-+       case 0x46:      /* INTEL_FAM6_HASWELL_G */
-+       case 0x3F:      /* INTEL_FAM6_HASWELL_X */
-+       case 0x45:      /* INTEL_FAM6_HASWELL_L */
-+       case 0x3D:      /* INTEL_FAM6_BROADWELL */
-+       case 0x47:      /* INTEL_FAM6_BROADWELL_G */
-+       case 0x4F:      /* INTEL_FAM6_BROADWELL_X */
-+       case 0x4E:      /* INTEL_FAM6_SKYLAKE_L */
-+       case 0x66:      /* INTEL_FAM6_CANNONLAKE_L */
-+       case 0x55:      /* INTEL_FAM6_SKYLAKE_X */
-+       case 0x6A:      /* INTEL_FAM6_ICELAKE_X */
-+       case 0x37:      /* INTEL_FAM6_ATOM_SILVERMONT */
-+       case 0x4D:      /* INTEL_FAM6_ATOM_SILVERMONT_D */
-+       case 0x4C:      /* INTEL_FAM6_ATOM_AIRMONT */
-+       case 0x57:      /* INTEL_FAM6_XEON_PHI_KNL */
-+       case 0x5C:      /* INTEL_FAM6_ATOM_GOLDMONT */
-+       case 0x7A:      /* INTEL_FAM6_ATOM_GOLDMONT_PLUS */
-+       case 0x5F:      /* INTEL_FAM6_ATOM_GOLDMONT_D */
-+       case 0x96:      /* INTEL_FAM6_ATOM_TREMONT */
-+       case 0x86:      /* INTEL_FAM6_ATOM_TREMONT_D */
-                break;
-        default:
-                return 0;
---
-2.35.1
+     parser.add_argument("--debug", action="store_true", default=False,
+                         dest="debug",
+                         help="turn on debugging prints")
+@@ -476,9 +481,23 @@ if __name__ == '__main__':
+ 
+     reportfile = args.report
+ 
++    if args.cpulist:
++        cpumask = 0
++        for c in args.cpulist.split(','):
++            l, r = 0, 0
++            if '-' in c:
++                l, r = map(int, c.split('-'))
++            else:
++                l, r = map(int, [c, c])
++            for i in range(l, r + 1):
++                cpumask |= (1 << i)
++        debug("set tracing_cpumask to %x" % cpumask)
++        detect.set("cpumask", "%x" % cpumask)
++
+     info("hwlatdetect:  test duration %d seconds" % detect.testduration)
+     info("   detector: %s" % detect.type)
+     info("   parameters:")
++    info("        CPU list:          %s"   % args.cpulist)
+     info("        Latency threshold: %dus" % int(detect.get("threshold")))
+     info("        Sample window:     %dus" % int(detect.get("window")))
+     info("        Sample width:      %dus" % int(detect.get("width")))
+-- 
+2.25.1
 
