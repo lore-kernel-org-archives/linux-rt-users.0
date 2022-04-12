@@ -2,83 +2,99 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C0C2BC433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Apr 2022 20:39:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE878C43217
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Apr 2022 13:55:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1349900AbiDKUlw (ORCPT
+        id S1356453AbiDLN6O (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Apr 2022 16:41:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39346 "EHLO
+        Tue, 12 Apr 2022 09:58:14 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59762 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237305AbiDKUlv (ORCPT
+        with ESMTP id S1356468AbiDLN5o (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Apr 2022 16:41:51 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E47641CFF1;
-        Mon, 11 Apr 2022 13:39:33 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 1A56B615EB;
-        Mon, 11 Apr 2022 20:39:33 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 314E0C385A4;
-        Mon, 11 Apr 2022 20:39:31 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1649709572;
-        bh=XLIf4zoqUn/vAcbQLvEyIomVh9fJYy3IUmn8vUBhetA=;
-        h=Subject:From:To:Date:From;
-        b=J5E7YfYaR5U1J54qJE2g691tLqK48j3Ttas2G85bFEVC92rnVtengnTz5r0Y/ET1/
-         YYT8v7XqE3h41GULEO35ERO/6JALdBSF/bwLmhgIsNNKP/q/mrN66KYkG2a+q2IQ+L
-         5eGOMuA5oRgrjfbUkw7anik1zHgLTclg4gap4h6AHZjcnOrQmW6DHYNzIN5Za8vDgE
-         +i3pDASqomMeA9q3fsHzryeKotAfRr8cou5ccrn5b3fJ8RE85M+crfhTVBrUs0oc6s
-         KjnneLDMdW5dGG1J8Oh8kJC724iib2DEBBMroDVhyU57htz67TWeHM9n+DsSt4utOW
-         mcjZFC9lMPlfA==
-Message-ID: <eeb57bbe5f26a437260ff9032928c4d7edc83fbb.camel@kernel.org>
-Subject: [ANNOUNCE] 5.4.188-rt73
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Mon, 11 Apr 2022 15:39:29 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Tue, 12 Apr 2022 09:57:44 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 260AFF51
+        for <linux-rt-users@vger.kernel.org>; Tue, 12 Apr 2022 06:55:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1649771725;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=o9KO4BUrUfJXkHq4q3BloAhoMoPs3lORN6KLCN8AuX4=;
+        b=KHutDgeAQ9BOE/mwb6pCGBD06S09bC/suAfKTHSf/YdSs9ljfCaJkGaZBISNyWorVJe1Hn
+        ZV6lhC650paRjUhqVLXazPAEWodPl9Aw1uyaFAeFhHEXjZRsGBepmYe7ORXNHprw6BphgJ
+        b8HvIMI3n7dT/uMRLnFdcFpczYQJPx8=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-499-QgW5oKOOP7O6S85xV3W5bw-1; Tue, 12 Apr 2022 09:55:24 -0400
+X-MC-Unique: QgW5oKOOP7O6S85xV3W5bw-1
+Received: by mail-wm1-f69.google.com with SMTP id k16-20020a7bc310000000b0038e6cf00439so1325533wmj.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 12 Apr 2022 06:55:24 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=o9KO4BUrUfJXkHq4q3BloAhoMoPs3lORN6KLCN8AuX4=;
+        b=F/psAziiBxOwnkuSvnv4t5/KC6OOU/mK8H3dXBaUMM7BM7BXpI7g0nv1Mk6Tu5dWPC
+         Cgjna+YHvGO2H5YVCmgBlF9XAkn2mTbe9SnRwxa2LSccerTkIxg2IGEJFQOyVID0bHxG
+         8jz1YQleGQamTw3VIUfANCqNLUHH7PQwCAszhr4xRriV/1axdaW8h/E1ofWhwYpPqXzn
+         nvrT7OI/AG7zz2zJ5nBnex5Ln/gUsDNoQYdrflZrS1GBD5Lyo6oFHuI73n8r+ztmkBSG
+         XCpB7d4z1oTohPF//Yx+afd1uMFEoyW8G5OWO6Fp0X4UIFsCzzk5MkTayWmGnx+yjKCl
+         d7Ug==
+X-Gm-Message-State: AOAM533KYyRNHzswFpTBwvAaOWmxs9uS+Lxymai7a4EOTEjFXblZ6YE9
+        9K0gLh5bCBy8S3WOiGAez2uzD33tnQiog3wI9tzoCCQhfCOfC5kp6eJ3LQvo0pzNJOtlMZ8hCwj
+        T1Uz6fS6o8n/CociZlpIZjsNF47Rb5GOnVU3D7H0khXIJSHcmaCy8yk9zrH2la+1rTJqRCPrsGF
+        nkNvc=
+X-Received: by 2002:a05:600c:4fce:b0:38d:a58:6d16 with SMTP id o14-20020a05600c4fce00b0038d0a586d16mr4368434wmq.11.1649771722956;
+        Tue, 12 Apr 2022 06:55:22 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyz1eFu15in4wa5JBf8EHB1EOCibhGrMwb22OoyT8nd24fNFYRlr6usO7khAL0IpfmGONiyng==
+X-Received: by 2002:a05:600c:4fce:b0:38d:a58:6d16 with SMTP id o14-20020a05600c4fce00b0038d0a586d16mr4368418wmq.11.1649771722738;
+        Tue, 12 Apr 2022 06:55:22 -0700 (PDT)
+Received: from vian.redhat.com ([2a0c:5a80:1306:2f00:cfcf:62cf:6f38:dd92])
+        by smtp.gmail.com with ESMTPSA id z5-20020a05600c0a0500b0037bb8df81a2sm3030651wmp.13.2022.04.12.06.55.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 Apr 2022 06:55:22 -0700 (PDT)
+From:   Nicolas Saenz Julienne <nsaenzju@redhat.com>
+To:     linux-rt-users@vger.kernel.org, peterx@redhat.com
+Cc:     williams@redhat.com, jkacur@redhat.com, nsaenzju@redhat.com
+Subject: [PATCH] oslat: Print offending cpu number when above threshold
+Date:   Tue, 12 Apr 2022 15:55:18 +0200
+Message-Id: <20220412135518.531234-1-nsaenzju@redhat.com>
+X-Mailer: git-send-email 2.35.1
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Knowing which CPU went above the trace threshold is useful information,
+even when not tracing. So let's print it.
 
-I'm pleased to announce the 5.4.188-rt73 stable release.
+Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+---
+ src/oslat/oslat.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-This release is just an update to the new stable 5.4.188
-version and no RT specific changes have been made.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.4-rt
-  Head SHA1: a643cd5066c215e4454b4b5d7d5707cbd778908b
-
-Or to build 5.4.188-rt73 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.188.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.188-rt73.patch.xz
-
-Enjoy!
-
-   Tom
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index aa0e9a7..55302f1 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -334,10 +334,10 @@ static void insert_bucket(struct thread *t, stamp_t value)
+ 	assert(us > 0);
+ 
+ 	if (!g.preheat && g.trace_threshold && us >= g.trace_threshold) {
+-		char *line = "%s: Trace threshold (%d us) triggered with %u us!\n"
++		char *line = "%s: Trace threshold (%d us) triggered on cpu %d with %u us!\n"
+ 		    "Stopping the test.\n";
+-		tracemark(line, g.app_name, g.trace_threshold, us);
+-		err_quit(line, g.app_name, g.trace_threshold, us);
++		tracemark(line, g.app_name, g.trace_threshold, t->core_i, us);
++		err_quit(line, g.app_name, g.trace_threshold, t->core_i, us);
+ 	}
+ 
+ 	/* Update max latency */
+-- 
+2.35.1
 
