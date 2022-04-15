@@ -2,88 +2,87 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC7D2C433FE
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Apr 2022 17:12:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C5FEBC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Apr 2022 10:29:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237211AbiDMROa (ORCPT
+        id S1352311AbiDOKb0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Apr 2022 13:14:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52456 "EHLO
+        Fri, 15 Apr 2022 06:31:26 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55862 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234291AbiDMRO3 (ORCPT
+        with ESMTP id S1350201AbiDOKbZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Apr 2022 13:14:29 -0400
+        Fri, 15 Apr 2022 06:31:25 -0400
 Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1E8A56AA4A;
-        Wed, 13 Apr 2022 10:12:08 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A04ABBC843;
+        Fri, 15 Apr 2022 03:28:57 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id D77FFB82663;
-        Wed, 13 Apr 2022 17:12:06 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 991B3C385AB;
-        Wed, 13 Apr 2022 17:12:05 +0000 (UTC)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 5E156B82DEB;
+        Fri, 15 Apr 2022 10:28:56 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A17D2C385A6;
+        Fri, 15 Apr 2022 10:28:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1649869925;
-        bh=gbreY5EZm5Hdz5VUm0yMo/CRP2FBt1ekdqTihXr4SLc=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=laZncea9PrRC8w3saqV1Xp5IMP1QrvwfkDGFEH0GLMCtB/gLohQTS7tiq9N9PEz42
-         d8+zjNjCeTn4HUSzlEsK2qrwTb3Qk/YCd1Z8hqIiYt0QqrVs9NhUYeUypl31ZkmWxv
-         YZaUNwCZbnfAVisEGC93GUduQraPt2BejdvgMBqJ9QxirWDPSuvsFrRmGp7BLtZcgs
-         J4tVdWcG6LUpAhhY14r8CtgAvsAFYAjVEQs9TxhQXMdjrMSWlM3xTiZkI9JVTXrK4R
-         CI0GEYMqZtkSIjLlY7rCnwNPWubhS0iz9DFD3Fnv5BYluX0bY+4B0tVrxwzvODQxpI
-         y8uUWmmwpKQrw==
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-d6e29fb3d7so2659566fac.7;
-        Wed, 13 Apr 2022 10:12:05 -0700 (PDT)
-X-Gm-Message-State: AOAM5325JJqGAy2rIe8ytUxooCO2Nbpzgv1AYTd2FiQOQTNdTZINMDGf
-        Pz/lLyzpGRdCvjJxy1kQkucet517Hz6p92Q6aq8=
-X-Google-Smtp-Source: ABdhPJzoUiYv3LpSzqOKsqPieARDNusXrE6TCTNTkWIprk1YtpkigP2Z70J0SrtJMKGrVJ0d1EWF2cNPezysAZRi2/M=
-X-Received: by 2002:a05:6870:b027:b0:de:7fcd:fabf with SMTP id
- y39-20020a056870b02700b000de7fcdfabfmr4819279oae.126.1649869924713; Wed, 13
- Apr 2022 10:12:04 -0700 (PDT)
+        s=k20201202; t=1650018535;
+        bh=+KEpsYKGgSKldm+NlWBYkFbQsp6L86Twv51N6txzysE=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=m4WNaud45Hme92XUWA9Z9Mvs3B7jBAVH7vXXw6Y+5UJuzsPz+J/hjKSlt/B3syLiv
+         lh7I9ClYkcmsBIZbErevi8Vj7tKeP3+Q7BuzENnTpfpTEuGm4uwnwzo2WDv96HKep+
+         z09uBKVwwcHusgB8mk4L2NzsB7oqbQTQ7k35b9+WKybtjCscT1PuKjoNEx+dYMkwo3
+         3FQu+V8iySTMcpumNycGUC7mTT1r2S8srkcGjfDYUKyNmHj2DDsvISyF1j6QYOKIPI
+         FPuPPNaeZjy4tUsQl7E1TloABt2C5hToiXZVprUkVdzmufLSuHzOpEmWm5amrl2arn
+         KaC3mHMRfY72A==
+Date:   Fri, 15 Apr 2022 12:28:52 +0200
+From:   Frederic Weisbecker <frederic@kernel.org>
+To:     Alison Chaiken <achaiken@aurora.tech>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Mel Gorman <mgorman@suse.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Glenn Elliott <glenn@aurora.tech>
+Subject: Re: [RT][PATCH 2/2] tick: Fix timer storm since introduction of
+ timersd
+Message-ID: <20220415102852.GA1654237@lothringen>
+References: <20220405010752.1347437-1-frederic@kernel.org>
+ <20220405010752.1347437-2-frederic@kernel.org>
+ <CAFzL-7s0oWtSS_oYTOJ1A-1Dbso6S+4qoR-n91joexgQYCaJEg@mail.gmail.com>
 MIME-Version: 1.0
-References: <20220331151654.184433-1-javierm@redhat.com> <CAMj1kXHgyjB_BVzXx+CK0tBuJpZ3h=8XKus7nWiyovECjVQ0gw@mail.gmail.com>
- <YkYA/Wpqa/PMczkp@lx-t490> <CAFOAJEeKNy0HW82W6HV_49d5sc5L0m62QDfY9qA1906_ZzGRYg@mail.gmail.com>
- <Ykas9iX/D3WURx8T@linutronix.de> <78a0360d-1a27-5280-10bf-d27d1d306fa5@redhat.com>
- <CAMj1kXGEBtcdD+3MFK5gO6vCw8dg=ruTthdWGVUu1eJpgZXf8Q@mail.gmail.com> <YkbAPPDJyiZ/FLN1@linutronix.de>
-In-Reply-To: <YkbAPPDJyiZ/FLN1@linutronix.de>
-From:   Ard Biesheuvel <ardb@kernel.org>
-Date:   Wed, 13 Apr 2022 19:11:52 +0200
-X-Gmail-Original-Message-ID: <CAMj1kXEZa__9KK2xaSqCQ8ftfinL5g-5BeG6aXzEC8GVdAgtgA@mail.gmail.com>
-Message-ID: <CAMj1kXEZa__9KK2xaSqCQ8ftfinL5g-5BeG6aXzEC8GVdAgtgA@mail.gmail.com>
-Subject: Re: [PATCH v2] efi: Allow to enable EFI runtime services by default
- on RT
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Javier Martinez Canillas <javierm@redhat.com>,
-        "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-efi <linux-efi@vger.kernel.org>,
-        Brian Masney <bmasney@redhat.com>, Al Stone <ahs3@redhat.com>,
-        Peter Robinson <pbrobinson@gmail.com>,
-        Robbie Harwood <rharwood@redhat.com>,
-        Peter Jones <pjones@redhat.com>,
-        Alexander Larsson <alexl@redhat.com>,
-        Andrew Halaney <ahalaney@redhat.com>,
-        linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAFzL-7s0oWtSS_oYTOJ1A-1Dbso6S+4qoR-n91joexgQYCaJEg@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 1 Apr 2022 at 11:05, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
->
-> On 2022-04-01 10:34:03 [+0200], Ard Biesheuvel wrote:
-> > I don't think we need another warning.
->
-> exactly.
->
-> > The kernel log already tells you whether or not EFI runtime services
-> > are enabled.
->
-> Correct. We either warn about all problematic options or none but this
-> is independent of this patch.
->
+On Tue, Apr 05, 2022 at 09:21:16AM -0700, Alison Chaiken wrote:
+> On Mon, Apr 4, 2022 at 9:33 PM Frederic Weisbecker <frederic@kernel.org> wrote:
+> >
+> > If timers are pending while the tick is reprogrammed on nohz_mode, the
+> > next expiry is not armed to fire now, it is delayed one jiffy forward
+> > instead so as not to raise an inextinguishable timer storm with such
+> > scenario:
+> >
+> > 1) IRQ triggers and queue a timer
+> > 2) ksoftirqd() is woken up
+> > 3) IRQ tail: timer is reprogrammed to fire now
+> > 4) IRQ exit
+> > 5) TIMER interrupt
+> > 6) goto 3)
+> >
+> > ...all that until we finally reach ksoftirqd.
+> >
+> > Unfortunately we are checking the wrong softirq vector bitmask since
+> > timersd kthread has split from ksoftirqd. Timers now have their own
+> > vector state field that must be checked separately.
+> 
+> With kernel 5.15 and the timersd patch applied, we've observed that
+> x86_64 cores tend to enter deeper C-states even when there are pending
+> hrtimers.      Presumably failure to check the right   bits could also
+> explain that observation and, accordingly, the patch might fix it?
 
-Queued up now in efi/next. Thanks all.
+Well, this issue rather adds unnecessary ticks. Thus I wouldn't expect
+deeper C-states as a consequence but who knows...
+
+Thanks.
