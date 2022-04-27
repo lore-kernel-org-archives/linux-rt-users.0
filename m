@@ -2,79 +2,64 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F3FBC43219
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Apr 2022 16:24:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47833C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Apr 2022 08:30:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230525AbiDUQ1Y (ORCPT
+        id S1359406AbiD0IdV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 21 Apr 2022 12:27:24 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60588 "EHLO
+        Wed, 27 Apr 2022 04:33:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58092 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230160AbiDUQKo (ORCPT
+        with ESMTP id S1359401AbiD0IdT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Apr 2022 12:10:44 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 21FC447541;
-        Thu, 21 Apr 2022 09:07:55 -0700 (PDT)
-Date:   Thu, 21 Apr 2022 18:07:51 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1650557273;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=K14QTM7Qe+PKqSGcrLG7jOzYp3yn8ozz6G/LoWNfiyc=;
-        b=JUA6dHEJm3WZyKKktnpAyxcAqobaMl08V0hDiBfciCFoUfwe1jPmDFiVrx7QfXQDMCRc6f
-        jdxE6uDh6ZvSTjIW4FE4O1pjHjP4pQMkt/SSbp1HeclEyWVEWfAG1uU0RPxegrS4P4zcg9
-        eLYSfIDIV9mIKK7OLeDDD5Tz48EvUHdc97mTrg0r6gy7KLFKuPYZYobbnauyENilQvvtyA
-        wPcDwu3clBssqlgzOpEVscM7m1ImjIPJBelG49x12/paOgiymFmGNFwpOm45SNVQ+hZ4tJ
-        MwuJhN8CRrtBa7lkJNsangSxMbAhdtf+joXQLIF1FO6ZV/IgXWGqiMtZ6BjpHA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1650557273;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=K14QTM7Qe+PKqSGcrLG7jOzYp3yn8ozz6G/LoWNfiyc=;
-        b=k68WP7D8eVaPd0RnakYM6Medmw/sl7gr/TCpP+ZXibP350SD9mtpEiqCzWktttbdNPSZ+F
-        7V/NTmtP7qGzXTDQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.18-rc3-rt1
-Message-ID: <YmGBVzuZLRVNs3C2@linutronix.de>
+        Wed, 27 Apr 2022 04:33:19 -0400
+Received: from smtp6-g21.free.fr (smtp6-g21.free.fr [IPv6:2a01:e0c:1:1599::15])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED12D1FA48
+        for <linux-rt-users@vger.kernel.org>; Wed, 27 Apr 2022 01:30:08 -0700 (PDT)
+Received: from zimbra35-e6.priv.proxad.net (unknown [172.20.243.185])
+        by smtp6-g21.free.fr (Postfix) with ESMTP id AAC2778034D
+        for <linux-rt-users@vger.kernel.org>; Wed, 27 Apr 2022 10:30:06 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=free.fr;
+        s=smtp-20201208; t=1651048206;
+        bh=B9qTb2KXsiQNBJx9Y8DlBiuvDAyJencmeZ4oyE1RU5E=;
+        h=Date:From:To:In-Reply-To:Subject:From;
+        b=q9Mhkg/GfSuO7XWqpabSpiDHUhaYXpAEUkXkWK5dBtZzMZYTwGONbGVNcWrHkZog4
+         vm2MxvEyxAxzKHo26zQctbNAZbyktirUosOG7phhJWEduiNZhXAaux5NU3L2g15jDg
+         PEzrS+/bafE8HTwrk6tXk34yH/xvJGvrScvhSK58mExdOTAIJaW62BUvGFHolFaljO
+         TOYL2jmQWMBjp+8QiWMtqlVOgn+X9i2V5RlNloqJ/foUPZ7DovPU4NzHmJe1QOVg/e
+         sFtg2SEiFFiZD6d0PHroWHDNHh2n3V/f6gZ8I6lZtuhmPNs7DCBPu+cN7NaU7EdEvJ
+         ue9qdzx6Oi3ww==
+Date:   Wed, 27 Apr 2022 10:30:06 +0200 (CEST)
+From:   ycollette.nospam@free.fr
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Message-ID: <762097346.1053386669.1651048206470.JavaMail.root@zimbra35-e6.priv.proxad.net>
+In-Reply-To: <164875304500.974121.18336996246209199283@puck.lan>
+Subject: Problem compiling 5.10.109.rt65 on Fedora 36
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [2a01:e0a:244:b080:249c:e6cc:8f26:fa90]
+X-Mailer: Zimbra 7.2.0-GA2598 (ZimbraWebClient - GC100 (Mac)/7.2.0-GA2598)
+X-Authenticated-User: ycollette.nospam@free.fr
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+Hello,
 
-I'm pleased to announce the v5.18-rc3-rt1 patch set. 
+I am trying to compile 5.10.109.rt65 on Fedora 36 beta using gcc 12.
+The compilation fails with this message:
 
-Changes since v5.17.1-rt17:
+ Auto-detecting system features: 
+... libelf: [ on ] 
+... zlib: [ OFF ] 
+... bpf: [ on ] 
+No zlib found
 
-  - Rebase to v5.18-rc3.
+The same build succeeds on Fedora 35. zlib-devel is installed in both cases.
 
-  - Update John's printk series to v3.
+Do you have some hints about why this build can fails ?
 
-  - Include v5 of "smp: Make softirq handling RT friendly" as posted by
-    Thomas Gleixner.
+Best regards,
 
-Known issues
-     - Valentin Schneider reported a few splats on ARM64, see
-          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.18-rc3-rt1
-
-The RT patch against v5.18-rc3 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.18/older/patch-5.18-rc3-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.18/older/patches-5.18-rc3-rt1.tar.xz
-
-Sebastian
+Yann
