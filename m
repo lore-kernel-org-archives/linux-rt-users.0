@@ -2,185 +2,145 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33A39C433FE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Apr 2022 10:37:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C723C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Apr 2022 11:10:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241218AbiD1Kkt (ORCPT
+        id S1344833AbiD1LNp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Apr 2022 06:40:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42848 "EHLO
+        Thu, 28 Apr 2022 07:13:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56188 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235059AbiD1Kkq (ORCPT
+        with ESMTP id S1344512AbiD1LNp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Apr 2022 06:40:46 -0400
-Received: from out30-131.freemail.mail.aliyun.com (out30-131.freemail.mail.aliyun.com [115.124.30.131])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D68996A07A
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Apr 2022 03:37:31 -0700 (PDT)
-X-Alimail-AntiSpam: AC=PASS;BC=-1|-1;BR=01201311R901e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=e01e04423;MF=wuyihao@linux.alibaba.com;NM=1;PH=DS;RN=4;SR=0;TI=SMTPD_---0VBaNWDR_1651142249;
-Received: from localhost(mailfrom:wuyihao@linux.alibaba.com fp:SMTPD_---0VBaNWDR_1651142249)
-          by smtp.aliyun-inc.com(127.0.0.1);
-          Thu, 28 Apr 2022 18:37:29 +0800
-From:   Yihao Wu <wuyihao@linux.alibaba.com>
-To:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: [PATCH 2/2] hackbench: Add af_inet mode besides af_unix and pipe
-Date:   Thu, 28 Apr 2022 18:37:26 +0800
-Message-Id: <20220428103726.108597-3-wuyihao@linux.alibaba.com>
-X-Mailer: git-send-email 2.32.0.604.gb1f3e1269
-In-Reply-To: <20220428103726.108597-1-wuyihao@linux.alibaba.com>
-References: <20220428103726.108597-1-wuyihao@linux.alibaba.com>
+        Thu, 28 Apr 2022 07:13:45 -0400
+X-Greylist: delayed 1227 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 28 Apr 2022 04:10:29 PDT
+Received: from mail.pcs.gmbh (mail.pcs.gmbh [89.27.162.52])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C870186D2;
+        Thu, 28 Apr 2022 04:10:27 -0700 (PDT)
+Received: from mail.csna.de (mail.csna.de [89.27.162.50])
+        by mail.pcs.gmbh with ESMTPA
+        ; Thu, 28 Apr 2022 12:49:58 +0200
+Received: from EXCHANGE2019.pcs.ditec.de (mail.pcs.com [89.27.162.5])
+        by mail.csna.de with ESMTPA
+        ; Thu, 28 Apr 2022 12:49:59 +0200
+Received: from EXCHANGE2019.pcs.ditec.de (192.168.8.214) by
+ EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.986.22; Thu, 28 Apr 2022 12:49:58 +0200
+Received: from lxtpfaff.pcs.ditec.de (192.168.9.96) by
+ EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.986.22
+ via Frontend Transport; Thu, 28 Apr 2022 12:49:58 +0200
+Date:   Thu, 28 Apr 2022 12:49:58 +0200
+From:   Thomas Pfaff <tpfaff@pcs.com>
+To:     <linux-kernel@vger.kernel.org>
+CC:     <linux-rt-users@vger.kernel.org>
+Subject: [PATCH] irq: synchronize irq_thread startup
+Message-ID: <f18798-9e66-66e7-8c9d-cb8eeda364c4@pcs.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"
+X-KSE-ServerInfo: EXCHANGE2019.pcs.ditec.de, 9
+X-KSE-AntiSpam-Interceptor-Info: white sender email list
+X-KSE-AttachmentFiltering-Interceptor-Info: protection disabled
+X-KSE-Antivirus-Interceptor-Info: scan successful
+X-KSE-Antivirus-Info: Clean, bases: 28.04.2022 09:19:00
+X-KSE-BulkMessagesFiltering-Scan-Result: protection disabled
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We observerved strange performance regression with hackbench, but only with
-its default mode instead of pipe mode. It turned out it was unix domain
-socket to blame rather than the scheduler. Because on older kernels, there
-was a big lock. And modifications to the scheduler made the contension
-worse.
+From: Thomas Pfaff <tpfaff@pcs.com>
 
-However pipe mode is much different from the default af_unix mode. So it's
-hard to prove it's really the case. So we think it might be a good idea to
-have af_inet mode for hackbench.
+While running
+"while /bin/true; do setserial /dev/ttyS0 uart none;
+setserial /dev/ttyS0 uart 16550A; done"
+on a kernel with threaded irqs, setserial is hung after some calls.
 
-After implementing it, we compare these three modes. And the result shows
-as what we expect, that only af_unix mode has regression, the others don't.
-This proves adding af_inet mode is valuable.
+setserial opens the device, this will install an irq handler if the uart is
+not none, followed by TIOCGSERIAL and TIOCSSERIAL ioctls.
+Then the device is closed. On close, synchronize_irq() is called by
+serial_core.
 
-Signed-off-by: Yihao Wu <wuyihao@linux.alibaba.com>
+If the close comes too fast, the irq_thread does not really start,
+it is terminated immediately without going into irq_thread().
+But an interrupt might already been handled by
+irq_default_primary_handler(), going to __irq_wake_thread() and
+incrementing threads_active.
+If this happens, synchronize_irq() will hang forever, because the
+irq_thread is already dead, and threads_active will never be decremented.
+
+The fix is to make sure that the irq_thread is really started
+during __setup_irq().
+
+Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
 ---
- src/hackbench/hackbench.c | 57 ++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 56 insertions(+), 1 deletion(-)
-
-diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
-index b9b0af6..030342f 100644
---- a/src/hackbench/hackbench.c
-+++ b/src/hackbench/hackbench.c
-@@ -20,11 +20,14 @@
- #include <string.h>
- #include <errno.h>
- #include <unistd.h>
-+#include <sys/ioctl.h>
- #include <sys/types.h>
- #include <sys/socket.h>
- #include <sys/wait.h>
- #include <sys/time.h>
- #include <sys/poll.h>
-+#include <netinet/in.h>
-+#include <arpa/inet.h>
- #include <limits.h>
- #include <getopt.h>
- #include <signal.h>
-@@ -46,6 +49,7 @@ static unsigned int fifo = 0;
- static unsigned int process_mode = PROCESS_MODE;
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index f40754caaefa..82a16a12d472 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -113,6 +113,8 @@ typedef irqreturn_t (*irq_handler_t)(int, void *);
+  * @secondary:	pointer to secondary irqaction (force threading)
+  * @thread_flags:	flags related to @thread
+  * @thread_mask:	bitmask for keeping track of @thread activity
++ * @thread_is_up:	threaded irq handler initializated
++ * @wait_for_thread:	wait queue to wait for thread initialization
+  * @dir:	pointer to the proc/irq/NN/name entry
+  */
+ struct irqaction {
+@@ -127,6 +129,8 @@ struct irqaction {
+ 	unsigned int		flags;
+ 	unsigned long		thread_flags;
+ 	unsigned long		thread_mask;
++	atomic_t		thread_is_up;
++	wait_queue_head_t	wait_for_thread;
+ 	const char		*name;
+ 	struct proc_dir_entry	*dir;
+ } ____cacheline_internodealigned_in_smp;
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index c03f71d5ec10..345e4f824c58 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -1272,6 +1272,9 @@ static int irq_thread(void *data)
  
- static int use_pipes = 0;
-+static int use_inet = 0;
+ 	irq_thread_check_affinity(desc, action);
  
- struct sender_context {
- 	unsigned int num_fds;
-@@ -99,6 +103,7 @@ static void print_usage_exit(int error)
- 	       "-h       --help            print this message\n"
- 	       "-l       --loops=LOOPS     how many message should be send\n"
- 	       "-p       --pipe            send data via a pipe\n"
-+	       "-i       --inet            send data via a inet tcp connection\n"
- 	       "-s       --datasize=SIZE   message size\n"
- 	       "-T       --threads         use POSIX threads\n"
- 	       "-P       --process         use fork (default)\n"
-@@ -106,11 +111,52 @@ static void print_usage_exit(int error)
- 	exit(error);
- }
++	atomic_set(&action->thread_is_up, 1);
++	wake_up(&action->wait_for_thread);
++
+ 	while (!irq_wait_for_interrupt(action)) {
+ 		irqreturn_t action_ret;
  
-+static int inet_socketpair(int fds[2])
-+{
-+	int s1, s2;
-+	struct sockaddr_in sin;
-+	unsigned long ul = 1;
-+
-+	if ((s1 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-+		barf("socket");
-+	if ((s2 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-+		barf("socket");
-+
-+	socklen_t len = sizeof(sin);
-+	bzero(&sin, len);
-+	sin.sin_family = AF_INET;
-+	sin.sin_port = 0;
-+	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
-+
-+	if (bind(s1, &sin, len) < 0)
-+		barf("bind");
-+	getsockname(s1, &sin, &len);
-+	if (listen(s1, 10) < 0)
-+		barf("listen");
-+	if (ioctl(s2, FIONBIO, &ul) < 0)
-+		barf("ioctl");
-+	if (ioctl(s1, FIONBIO, &ul) < 0)
-+		barf("ioctl");
-+	connect(s2, &sin, len);
-+	if ((fds[0] = accept(s1, &sin, &len)) < 0)
-+		barf("accept");
-+	ul = 0;
-+	if (ioctl(s2, FIONBIO, &ul) < 0)
-+		barf("ioctl");
-+	fds[1] = s2;
-+	close(s1);
-+
-+	return 0;
-+}
-+
- static void fdpair(int fds[2])
+@@ -1415,6 +1418,8 @@ setup_irq_thread(struct irqaction *new, unsigned int irq, bool secondary)
  {
- 	if (use_pipes) {
- 		if (pipe(fds) == 0)
- 			return;
-+	} else if (use_inet) {
-+		if (inet_socketpair(fds) == 0)
-+			return;
- 	} else {
- 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0)
- 			return;
-@@ -364,13 +410,14 @@ static void process_options(int argc, char *argv[])
- 			{"help",	no_argument,		NULL, 'h'},
- 			{"loops",	required_argument,	NULL, 'l'},
- 			{"pipe",	no_argument,		NULL, 'p'},
-+			{"inet",	no_argument,		NULL, 'i'},
- 			{"datasize",	required_argument,	NULL, 's'},
- 			{"threads",	no_argument,		NULL, 'T'},
- 			{"processes",	no_argument,		NULL, 'P'},
- 			{NULL, 0, NULL, 0}
- 		};
+ 	struct task_struct *t;
  
--		int c = getopt_long(argc, argv, "f:Fg:hl:ps:TP",
-+		int c = getopt_long(argc, argv, "f:Fg:hl:pis:TP",
- 				    longopts, &optind);
- 		if (c == -1) {
- 			break;
-@@ -402,6 +449,9 @@ static void process_options(int argc, char *argv[])
- 		case 'p':
- 			use_pipes = 1;
- 			break;
-+		case 'i':
-+			use_inet = 1;
-+			break;
- 		case 's':
- 			if ((datasize = atoi(optarg)) <= 0) {
- 				fprintf(stderr, "%s: --datasize|-s requires an integer > 0\n", argv[0]);
-@@ -418,6 +468,11 @@ static void process_options(int argc, char *argv[])
- 			print_usage_exit(1);
- 		}
- 	}
++	init_waitqueue_head(&new->wait_for_thread);
 +
-+	if (use_pipes && use_inet) {
-+		fprintf(stderr, "%s: --pipe|-p and --inet|-i cannot be used together\n", argv[0]);
-+		print_usage_exit(1);
-+	}
- }
+ 	if (!secondary) {
+ 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
+ 				   new->name);
+@@ -1781,13 +1786,18 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 	irq_setup_timings(desc, new);
  
- void sigcatcher(int sig) {
--- 
-2.18.2
+ 	/*
+-	 * Strictly no need to wake it up, but hung_task complains
+-	 * when no hard interrupt wakes the thread up.
++	 * wake thread up, and wait until it is really up
+ 	 */
+-	if (new->thread)
++	if (new->thread) {
+ 		wake_up_process(new->thread);
+-	if (new->secondary)
++		wait_event(new->wait_for_thread,
++			   atomic_read(&new->thread_is_up));
++	}
++	if (new->secondary) {
+ 		wake_up_process(new->secondary->thread);
++		wait_event(new->secondary->wait_for_thread,
++			   atomic_read(&new->secondary->thread_is_up));
++	}
+ 
+ 	register_irq_proc(irq, desc);
+ 	new->dir = NULL;
+
 
