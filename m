@@ -2,145 +2,115 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C723C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Apr 2022 11:10:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0CBC4C4332F
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Apr 2022 15:43:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344833AbiD1LNp (ORCPT
+        id S1349522AbiD1PqW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Apr 2022 07:13:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56188 "EHLO
+        Thu, 28 Apr 2022 11:46:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35996 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344512AbiD1LNp (ORCPT
+        with ESMTP id S1349500AbiD1PqU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Apr 2022 07:13:45 -0400
-X-Greylist: delayed 1227 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 28 Apr 2022 04:10:29 PDT
-Received: from mail.pcs.gmbh (mail.pcs.gmbh [89.27.162.52])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C870186D2;
-        Thu, 28 Apr 2022 04:10:27 -0700 (PDT)
-Received: from mail.csna.de (mail.csna.de [89.27.162.50])
-        by mail.pcs.gmbh with ESMTPA
-        ; Thu, 28 Apr 2022 12:49:58 +0200
-Received: from EXCHANGE2019.pcs.ditec.de (mail.pcs.com [89.27.162.5])
-        by mail.csna.de with ESMTPA
-        ; Thu, 28 Apr 2022 12:49:59 +0200
-Received: from EXCHANGE2019.pcs.ditec.de (192.168.8.214) by
- EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.986.22; Thu, 28 Apr 2022 12:49:58 +0200
-Received: from lxtpfaff.pcs.ditec.de (192.168.9.96) by
- EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.986.22
- via Frontend Transport; Thu, 28 Apr 2022 12:49:58 +0200
-Date:   Thu, 28 Apr 2022 12:49:58 +0200
-From:   Thomas Pfaff <tpfaff@pcs.com>
-To:     <linux-kernel@vger.kernel.org>
-CC:     <linux-rt-users@vger.kernel.org>
-Subject: [PATCH] irq: synchronize irq_thread startup
-Message-ID: <f18798-9e66-66e7-8c9d-cb8eeda364c4@pcs.com>
+        Thu, 28 Apr 2022 11:46:20 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DF289B1A9F;
+        Thu, 28 Apr 2022 08:42:57 -0700 (PDT)
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1651160576;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=rnMkrEHxL7tcsjFuW+K1zq3QhquJH/R43AmLLdfMdcA=;
+        b=N03I2ddNLi7GD8ZRfz7/TYFT7DjtoZwLgZyUF99N6VXg67ZN0AMXE4ZuPZuM1vUlPde+xS
+        M+4bQyMFz1vMqXVzlGMBli7O1rAQ9XHqThXNEA9W/v/A6+cNyNQTzD0zJy3/x1VJy+v3dI
+        aOUr7hfJl5KZrnGQIT9+ArBjnjDRH7YDuqEPwnnT2NYdXUyNMUPbcGX3ofjOYWVUVM6AAj
+        nxMhiQR4W7d95fdreCxkPrnAMdyDRQ0/BNYNKcDl3Jecez4l7bg3EnhkVny2RTivqjJZeZ
+        nMimq+4Brfb76LsSY4p/ydMYnz3QqGVmAE4yG+inox8BzE9v8f7ZFprmLMkRDQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1651160576;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=rnMkrEHxL7tcsjFuW+K1zq3QhquJH/R43AmLLdfMdcA=;
+        b=tN+6DcJDG5jxKhXmlZP3w7aojECgAsZzh5xQxkfjPkSG4DjF9uGLVyGP9vsl9e2NNZXzIi
+        v3BhvEsCActT/GAg==
+To:     Thomas Pfaff <tpfaff@pcs.com>, linux-kernel@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org, Marc Zyngier <maz@kernel.org>
+Subject: Re: [PATCH] irq: synchronize irq_thread startup
+In-Reply-To: <f18798-9e66-66e7-8c9d-cb8eeda364c4@pcs.com>
+References: <f18798-9e66-66e7-8c9d-cb8eeda364c4@pcs.com>
+Date:   Thu, 28 Apr 2022 17:42:55 +0200
+Message-ID: <87r15huscg.ffs@tglx>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-X-KSE-ServerInfo: EXCHANGE2019.pcs.ditec.de, 9
-X-KSE-AntiSpam-Interceptor-Info: white sender email list
-X-KSE-AttachmentFiltering-Interceptor-Info: protection disabled
-X-KSE-Antivirus-Interceptor-Info: scan successful
-X-KSE-Antivirus-Info: Clean, bases: 28.04.2022 09:19:00
-X-KSE-BulkMessagesFiltering-Scan-Result: protection disabled
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Thomas Pfaff <tpfaff@pcs.com>
+Thomas,
 
-While running
-"while /bin/true; do setserial /dev/ttyS0 uart none;
-setserial /dev/ttyS0 uart 16550A; done"
-on a kernel with threaded irqs, setserial is hung after some calls.
+On Thu, Apr 28 2022 at 12:49, Thomas Pfaff wrote:
 
-setserial opens the device, this will install an irq handler if the uart is
-not none, followed by TIOCGSERIAL and TIOCSSERIAL ioctls.
-Then the device is closed. On close, synchronize_irq() is called by
-serial_core.
+please always Cc maintainers when sending patches and please also have a
+look at:
 
-If the close comes too fast, the irq_thread does not really start,
-it is terminated immediately without going into irq_thread().
-But an interrupt might already been handled by
-irq_default_primary_handler(), going to __irq_wake_thread() and
-incrementing threads_active.
-If this happens, synchronize_irq() will hang forever, because the
-irq_thread is already dead, and threads_active will never be decremented.
+https://www.kernel.org/doc/html/latest/process/maintainer-tip.html#patch-submission-notes
 
-The fix is to make sure that the irq_thread is really started
-during __setup_irq().
+> While running
+> "while /bin/true; do setserial /dev/ttyS0 uart none;
+> setserial /dev/ttyS0 uart 16550A; done"
+> on a kernel with threaded irqs, setserial is hung after some calls.
+>
+> setserial opens the device, this will install an irq handler if the uart is
+> not none, followed by TIOCGSERIAL and TIOCSSERIAL ioctls.
+> Then the device is closed. On close, synchronize_irq() is called by
+> serial_core.
+>
+> If the close comes too fast, the irq_thread does not really start,
+> it is terminated immediately without going into irq_thread().
+> But an interrupt might already been handled by
+> irq_default_primary_handler(), going to __irq_wake_thread() and
+> incrementing threads_active.
+> If this happens, synchronize_irq() will hang forever, because the
+> irq_thread is already dead, and threads_active will never be decremented.
+>
+> The fix is to make sure that the irq_thread is really started
+> during __setup_irq().
 
-Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
----
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index f40754caaefa..82a16a12d472 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -113,6 +113,8 @@ typedef irqreturn_t (*irq_handler_t)(int, void *);
-  * @secondary:	pointer to secondary irqaction (force threading)
-  * @thread_flags:	flags related to @thread
-  * @thread_mask:	bitmask for keeping track of @thread activity
-+ * @thread_is_up:	threaded irq handler initializated
-+ * @wait_for_thread:	wait queue to wait for thread initialization
-  * @dir:	pointer to the proc/irq/NN/name entry
-  */
- struct irqaction {
-@@ -127,6 +129,8 @@ struct irqaction {
- 	unsigned int		flags;
- 	unsigned long		thread_flags;
- 	unsigned long		thread_mask;
-+	atomic_t		thread_is_up;
-+	wait_queue_head_t	wait_for_thread;
- 	const char		*name;
- 	struct proc_dir_entry	*dir;
- } ____cacheline_internodealigned_in_smp;
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index c03f71d5ec10..345e4f824c58 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -1272,6 +1272,9 @@ static int irq_thread(void *data)
- 
- 	irq_thread_check_affinity(desc, action);
- 
-+	atomic_set(&action->thread_is_up, 1);
-+	wake_up(&action->wait_for_thread);
-+
- 	while (!irq_wait_for_interrupt(action)) {
- 		irqreturn_t action_ret;
- 
-@@ -1415,6 +1418,8 @@ setup_irq_thread(struct irqaction *new, unsigned int irq, bool secondary)
- {
- 	struct task_struct *t;
- 
-+	init_waitqueue_head(&new->wait_for_thread);
-+
- 	if (!secondary) {
- 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
- 				   new->name);
-@@ -1781,13 +1786,18 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 	irq_setup_timings(desc, new);
- 
- 	/*
--	 * Strictly no need to wake it up, but hung_task complains
--	 * when no hard interrupt wakes the thread up.
-+	 * wake thread up, and wait until it is really up
- 	 */
--	if (new->thread)
-+	if (new->thread) {
- 		wake_up_process(new->thread);
--	if (new->secondary)
-+		wait_event(new->wait_for_thread,
-+			   atomic_read(&new->thread_is_up));
-+	}
-+	if (new->secondary) {
- 		wake_up_process(new->secondary->thread);
-+		wait_event(new->secondary->wait_for_thread,
-+			   atomic_read(&new->secondary->thread_is_up));
-+	}
- 
- 	register_irq_proc(irq, desc);
- 	new->dir = NULL;
+Right. Nice detective work.
 
+> @@ -127,6 +129,8 @@ struct irqaction {
+>  	unsigned int		flags;
+>  	unsigned long		thread_flags;
+>  	unsigned long		thread_mask;
+> +	atomic_t		thread_is_up;
+> +	wait_queue_head_t	wait_for_thread;
 
+I don't think we need any of this extra ballast per irqaction.
+
+irqaction::thread_flags is already there and can be used as indicator.
+There are enough bits left.
+
+irq_desc already has a wait queue, which is used for synchronize_irq()
+to wait for threads to complete. That wait queue is unused at the point
+where an interrupt is set up, so there is no reason to introduce a new
+one which is only used once.
+
+This is not a problem in the rare case that the interrupt fires and
+wakes the thread which then in consequence might wake the waiter via
+wake_threads_waitq().
+
+> -	if (new->thread)
+> +	if (new->thread) {
+>  		wake_up_process(new->thread);
+> -	if (new->secondary)
+> +		wait_event(new->wait_for_thread,
+> +			   atomic_read(&new->thread_is_up));
+
+Please stick this into a helper function.
+
+Thanks,
+
+        tglx
