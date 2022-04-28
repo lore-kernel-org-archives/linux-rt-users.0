@@ -2,31 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EE2ACC433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Apr 2022 10:37:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 33A39C433FE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Apr 2022 10:37:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234923AbiD1Kkr (ORCPT
+        id S241218AbiD1Kkt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Apr 2022 06:40:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42804 "EHLO
+        Thu, 28 Apr 2022 06:40:49 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42848 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233489AbiD1Kkp (ORCPT
+        with ESMTP id S235059AbiD1Kkq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Apr 2022 06:40:45 -0400
-Received: from out30-57.freemail.mail.aliyun.com (out30-57.freemail.mail.aliyun.com [115.124.30.57])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 033656A075
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Apr 2022 03:37:30 -0700 (PDT)
-X-Alimail-AntiSpam: AC=PASS;BC=-1|-1;BR=01201311R141e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=e01e04400;MF=wuyihao@linux.alibaba.com;NM=1;PH=DS;RN=4;SR=0;TI=SMTPD_---0VBaLFN6_1651142248;
-Received: from localhost(mailfrom:wuyihao@linux.alibaba.com fp:SMTPD_---0VBaLFN6_1651142248)
+        Thu, 28 Apr 2022 06:40:46 -0400
+Received: from out30-131.freemail.mail.aliyun.com (out30-131.freemail.mail.aliyun.com [115.124.30.131])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D68996A07A
+        for <linux-rt-users@vger.kernel.org>; Thu, 28 Apr 2022 03:37:31 -0700 (PDT)
+X-Alimail-AntiSpam: AC=PASS;BC=-1|-1;BR=01201311R901e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=e01e04423;MF=wuyihao@linux.alibaba.com;NM=1;PH=DS;RN=4;SR=0;TI=SMTPD_---0VBaNWDR_1651142249;
+Received: from localhost(mailfrom:wuyihao@linux.alibaba.com fp:SMTPD_---0VBaNWDR_1651142249)
           by smtp.aliyun-inc.com(127.0.0.1);
-          Thu, 28 Apr 2022 18:37:28 +0800
+          Thu, 28 Apr 2022 18:37:29 +0800
 From:   Yihao Wu <wuyihao@linux.alibaba.com>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org
-Subject: [PATCH 1/2] hackbench: Fix negativity opt checking
-Date:   Thu, 28 Apr 2022 18:37:25 +0800
-Message-Id: <20220428103726.108597-2-wuyihao@linux.alibaba.com>
+Subject: [PATCH 2/2] hackbench: Add af_inet mode besides af_unix and pipe
+Date:   Thu, 28 Apr 2022 18:37:26 +0800
+Message-Id: <20220428103726.108597-3-wuyihao@linux.alibaba.com>
 X-Mailer: git-send-email 2.32.0.604.gb1f3e1269
 In-Reply-To: <20220428103726.108597-1-wuyihao@linux.alibaba.com>
 References: <20220428103726.108597-1-wuyihao@linux.alibaba.com>
@@ -36,72 +36,151 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-It was easy to escape the checking. For example, run
+We observerved strange performance regression with hackbench, but only with
+its default mode instead of pipe mode. It turned out it was unix domain
+socket to blame rather than the scheduler. Because on older kernels, there
+was a big lock. And modifications to the scheduler made the contension
+worse.
 
-  ./hackbench --datasize 4096 -g -1 -l -1
+However pipe mode is much different from the default af_unix mode. So it's
+hard to prove it's really the case. So we think it might be a good idea to
+have af_inet mode for hackbench.
 
-This patch fixes the checking.
+After implementing it, we compare these three modes. And the result shows
+as what we expect, that only af_unix mode has regression, the others don't.
+This proves adding af_inet mode is valuable.
 
 Signed-off-by: Yihao Wu <wuyihao@linux.alibaba.com>
 ---
- src/hackbench/hackbench.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ src/hackbench/hackbench.c | 57 ++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 56 insertions(+), 1 deletion(-)
 
 diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
-index 268c232..b9b0af6 100644
+index b9b0af6..030342f 100644
 --- a/src/hackbench/hackbench.c
 +++ b/src/hackbench/hackbench.c
-@@ -31,10 +31,10 @@
- #include <setjmp.h>
- #include <sched.h>
+@@ -20,11 +20,14 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <unistd.h>
++#include <sys/ioctl.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/wait.h>
+ #include <sys/time.h>
+ #include <sys/poll.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
+ #include <limits.h>
+ #include <getopt.h>
+ #include <signal.h>
+@@ -46,6 +49,7 @@ static unsigned int fifo = 0;
+ static unsigned int process_mode = PROCESS_MODE;
  
--static unsigned int datasize = 100;
--static unsigned int loops = 100;
--static unsigned int num_groups = 10;
--static unsigned int num_fds = 20;
-+static int datasize = 100;
-+static int loops = 100;
-+static int num_groups = 10;
-+static int num_fds = 20;
- static unsigned int fifo = 0;
+ static int use_pipes = 0;
++static int use_inet = 0;
  
- /*
-@@ -377,7 +377,7 @@ static void process_options(int argc, char *argv[])
- 		}
- 		switch (c) {
- 		case 'f':
--			if (!(argv[optind] && (num_fds = atoi(optarg)) > 0)) {
-+			if ((num_fds = atoi(optarg)) <= 0) {
- 				fprintf(stderr, "%s: --fds|-f requires an integer > 0\n", argv[0]);
- 				print_usage_exit(1);
- 			}
-@@ -386,7 +386,7 @@ static void process_options(int argc, char *argv[])
- 			fifo = 1;
+ struct sender_context {
+ 	unsigned int num_fds;
+@@ -99,6 +103,7 @@ static void print_usage_exit(int error)
+ 	       "-h       --help            print this message\n"
+ 	       "-l       --loops=LOOPS     how many message should be send\n"
+ 	       "-p       --pipe            send data via a pipe\n"
++	       "-i       --inet            send data via a inet tcp connection\n"
+ 	       "-s       --datasize=SIZE   message size\n"
+ 	       "-T       --threads         use POSIX threads\n"
+ 	       "-P       --process         use fork (default)\n"
+@@ -106,11 +111,52 @@ static void print_usage_exit(int error)
+ 	exit(error);
+ }
+ 
++static int inet_socketpair(int fds[2])
++{
++	int s1, s2;
++	struct sockaddr_in sin;
++	unsigned long ul = 1;
++
++	if ((s1 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
++		barf("socket");
++	if ((s2 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
++		barf("socket");
++
++	socklen_t len = sizeof(sin);
++	bzero(&sin, len);
++	sin.sin_family = AF_INET;
++	sin.sin_port = 0;
++	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
++
++	if (bind(s1, &sin, len) < 0)
++		barf("bind");
++	getsockname(s1, &sin, &len);
++	if (listen(s1, 10) < 0)
++		barf("listen");
++	if (ioctl(s2, FIONBIO, &ul) < 0)
++		barf("ioctl");
++	if (ioctl(s1, FIONBIO, &ul) < 0)
++		barf("ioctl");
++	connect(s2, &sin, len);
++	if ((fds[0] = accept(s1, &sin, &len)) < 0)
++		barf("accept");
++	ul = 0;
++	if (ioctl(s2, FIONBIO, &ul) < 0)
++		barf("ioctl");
++	fds[1] = s2;
++	close(s1);
++
++	return 0;
++}
++
+ static void fdpair(int fds[2])
+ {
+ 	if (use_pipes) {
+ 		if (pipe(fds) == 0)
+ 			return;
++	} else if (use_inet) {
++		if (inet_socketpair(fds) == 0)
++			return;
+ 	} else {
+ 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0)
+ 			return;
+@@ -364,13 +410,14 @@ static void process_options(int argc, char *argv[])
+ 			{"help",	no_argument,		NULL, 'h'},
+ 			{"loops",	required_argument,	NULL, 'l'},
+ 			{"pipe",	no_argument,		NULL, 'p'},
++			{"inet",	no_argument,		NULL, 'i'},
+ 			{"datasize",	required_argument,	NULL, 's'},
+ 			{"threads",	no_argument,		NULL, 'T'},
+ 			{"processes",	no_argument,		NULL, 'P'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+ 
+-		int c = getopt_long(argc, argv, "f:Fg:hl:ps:TP",
++		int c = getopt_long(argc, argv, "f:Fg:hl:pis:TP",
+ 				    longopts, &optind);
+ 		if (c == -1) {
  			break;
- 		case 'g':
--			if (!(argv[optind] && (num_groups = atoi(optarg)) > 0)) {
-+			if ((num_groups = atoi(optarg)) <= 0) {
- 				fprintf(stderr, "%s: --groups|-g requires an integer > 0\n", argv[0]);
- 				print_usage_exit(1);
- 			}
-@@ -394,7 +394,7 @@ static void process_options(int argc, char *argv[])
- 		case 'h':
- 			print_usage_exit(0);
- 		case 'l':
--			if (!(argv[optind] && (loops = atoi(optarg)) > 0)) {
-+			if ((loops = atoi(optarg)) <= 0) {
- 				fprintf(stderr, "%s: --loops|-l requires an integer > 0\n", argv[0]);
- 				print_usage_exit(1);
- 			}
-@@ -403,7 +403,7 @@ static void process_options(int argc, char *argv[])
+@@ -402,6 +449,9 @@ static void process_options(int argc, char *argv[])
+ 		case 'p':
  			use_pipes = 1;
  			break;
++		case 'i':
++			use_inet = 1;
++			break;
  		case 's':
--			if (!(argv[optind] && (datasize = atoi(optarg)) > 0)) {
-+			if ((datasize = atoi(optarg)) <= 0) {
+ 			if ((datasize = atoi(optarg)) <= 0) {
  				fprintf(stderr, "%s: --datasize|-s requires an integer > 0\n", argv[0]);
- 				print_usage_exit(1);
- 			}
+@@ -418,6 +468,11 @@ static void process_options(int argc, char *argv[])
+ 			print_usage_exit(1);
+ 		}
+ 	}
++
++	if (use_pipes && use_inet) {
++		fprintf(stderr, "%s: --pipe|-p and --inet|-i cannot be used together\n", argv[0]);
++		print_usage_exit(1);
++	}
+ }
+ 
+ void sigcatcher(int sig) {
 -- 
 2.18.2
 
