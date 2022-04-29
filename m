@@ -2,137 +2,148 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A6C30C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Apr 2022 20:53:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A64C1C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Apr 2022 21:30:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1381062AbiD2U4q (ORCPT
+        id S235155AbiD2VdT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 29 Apr 2022 16:56:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47220 "EHLO
+        Fri, 29 Apr 2022 17:33:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45248 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1381069AbiD2U4o (ORCPT
+        with ESMTP id S231147AbiD2VdR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 29 Apr 2022 16:56:44 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 538E8CC517
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Apr 2022 13:53:25 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1651265604;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Mf11uxN2CtyOag1m7eneTl+o8UxHGhCTVhKLPBN+bEc=;
-        b=MGRIIIcimMw/FYJL3xJOfNg6i0drRovgmndO7jFMM+E4cdYdW4Fr4HduplE1Bes5LFk6KF
-        QMkDtMWputjh2FNXswlVV4uowbJ3x2swMrjUiwiytwUYt2ZM6oeAGeei/XcsGfwrsqxWuu
-        1PRzW5aiaznpTigR48mKDFoqOyq84fg=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-490-my0NQoSiOr6GaZFFZ8Pmow-1; Fri, 29 Apr 2022 16:53:22 -0400
-X-MC-Unique: my0NQoSiOr6GaZFFZ8Pmow-1
-Received: by mail-qt1-f197.google.com with SMTP id x10-20020ac8700a000000b002c3ef8fc44cso6505935qtm.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Apr 2022 13:53:22 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=Mf11uxN2CtyOag1m7eneTl+o8UxHGhCTVhKLPBN+bEc=;
-        b=Gf2ykX2ZEpUs15afAv9BWw/8rDB0SBqdqpYudZpAHD36HxvdTjNeRMLujbX9Z/tRnP
-         2DAJRqBmdIoZkDWmKlqR8trkgWTCSVrCLlp8e39urww279z7GzsXCqAc+ZmpznQa0YW9
-         U4Y2T4VlE66ZUcvJfUu5Qi4Ll4OVJKTwnY5QiwfQZnjQ7VjG5Dvw3HXve0Eyw6xyvIpX
-         lNFo1aBE7KyzN0FYHHErS1IR1inrQC5cm9sKO4RhBhVJ6k87FCNx65Y5qOYJ0BaUFbzP
-         pRlq4EOlPR6ZsqIMvdCWnn5G2dlyU3UHFBODjxUPeX+tQMH9mSCblusJK/Dkncys9unx
-         NM8w==
-X-Gm-Message-State: AOAM530Z7B7oRydgxakuQ1dCdSeOaztJMwdAYyWs+rsLQfILhgKGhhI5
-        0Ss1YVpShJPwD7mN6MMe01Bx88HGwhjBokAyJvnqGKXkK8nXHVhltVti2wWyqTxHNd219Jx3aqG
-        g0/tb9IR9J6H2DKfMEt9537xs+cw=
-X-Received: by 2002:a05:6214:21e4:b0:457:c078:be48 with SMTP id p4-20020a05621421e400b00457c078be48mr966718qvj.118.1651265602243;
-        Fri, 29 Apr 2022 13:53:22 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwwClWi780Pji4Ig4qc45XVUPEZOxmXb33o/gIHAiyQxBh5ptFGvzaRYuKxM4LYA47wNZru6w==
-X-Received: by 2002:a05:6214:21e4:b0:457:c078:be48 with SMTP id p4-20020a05621421e400b00457c078be48mr966709qvj.118.1651265602081;
-        Fri, 29 Apr 2022 13:53:22 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
-        by smtp.gmail.com with ESMTPSA id 138-20020a370a90000000b0069fc13ce1ffsm148080qkk.48.2022.04.29.13.53.20
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 29 Apr 2022 13:53:21 -0700 (PDT)
-Date:   Fri, 29 Apr 2022 16:53:20 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Valentin Schneider <vschneid@redhat.com>
-cc:     linux-rt-users@vger.kernel.org,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 3/3] rteval: systopology: Slight CpuList.__expand_cpulist()
- cleanup
-In-Reply-To: <20220419161443.89674-4-vschneid@redhat.com>
-Message-ID: <f03dc22b-75e8-982b-5766-e0ccfbe3cd7c@redhat.com>
-References: <20220419161443.89674-1-vschneid@redhat.com> <20220419161443.89674-4-vschneid@redhat.com>
-MIME-Version: 1.0
+        Fri, 29 Apr 2022 17:33:17 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DCD8A9F39C;
+        Fri, 29 Apr 2022 14:29:58 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 704A36229E;
+        Fri, 29 Apr 2022 21:29:58 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C5137C385A7;
+        Fri, 29 Apr 2022 21:29:57 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1651267797;
+        bh=EuQ+Tnjjj+1/zdg5oEaPiwrIStLtZ5qMD9wOSYLHeyg=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=OdudNfruDa6O3Jvs0g45BNiB2bs+O3p65nKmMIPAWsviqPhxjzOpNLD8GHfVnsC2u
+         tSGfz9momnEHOq2KWdJatcMSblOQe6YUegtiOxvJU+VjEAp7z5zlgHu7JPrFdSl+iy
+         blqoOR+sJ/ffLDl/ZNqP9Vfm1IxpXOrKcrH3k58pvsG+/t6dR2HzYeA/f2qBpZvi9c
+         R5dGwXLnoe0YNCzQHnCH2xKG6Az11aitfhdDfVO+s5JTVz9aGlfPaylPWyxQNvxRKP
+         j3knDg8FZxV0MNCI2Ory5rlmzpmxPjSIGDi7YSVwqfxDzHD1eKLfiH8lk0+MINkkhk
+         /g6SEQkONBsww==
+Received: from sofa.misterjones.org ([185.219.108.64] helo=why.misterjones.org)
+        by disco-boy.misterjones.org with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.94.2)
+        (envelope-from <maz@kernel.org>)
+        id 1nkYBX-0082bx-4t; Fri, 29 Apr 2022 22:29:55 +0100
+Date:   Fri, 29 Apr 2022 22:29:54 +0100
+Message-ID: <87levn8tnx.wl-maz@kernel.org>
+From:   Marc Zyngier <maz@kernel.org>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Thomas Pfaff <tpfaff@pcs.com>, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, Hillf Danton <hdanton@sina.com>
+Subject: Re: [PATCH v2] irq/core: synchronize irq_thread startup
+In-Reply-To: <87fslvoez3.ffs@tglx>
+References: <1e3f96b7-9294-1534-e83b-efe3602f876f@pcs.com>
+        <87sfpv98j0.wl-maz@kernel.org>
+        <87fslvoez3.ffs@tglx>
+User-Agent: Wanderlust/2.15.9 (Almost Unreal) SEMI-EPG/1.14.7 (Harue)
+ FLIM-LB/1.14.9 (=?UTF-8?B?R29qxY0=?=) APEL-LB/10.8 EasyPG/1.0.0 Emacs/27.1
+ (x86_64-pc-linux-gnu) MULE/6.0 (HANACHIRUSATO)
+MIME-Version: 1.0 (generated by SEMI-EPG 1.14.7 - "Harue")
 Content-Type: text/plain; charset=US-ASCII
+X-SA-Exim-Connect-IP: 185.219.108.64
+X-SA-Exim-Rcpt-To: tglx@linutronix.de, tpfaff@pcs.com, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, hdanton@sina.com
+X-SA-Exim-Mail-From: maz@kernel.org
+X-SA-Exim-Scanned: No (on disco-boy.misterjones.org); SAEximRunCond expanded to false
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Fri, 29 Apr 2022 20:40:32 +0100,
+Thomas Gleixner <tglx@linutronix.de> wrote:
+> 
+> On Fri, Apr 29 2022 at 17:08, Marc Zyngier wrote:
+> > On Fri, 29 Apr 2022 12:52:48 +0100,
+> > Thomas Pfaff <tpfaff@pcs.com> wrote:
+> 
+>  > +static void wait_for_irq_thread_startup(struct irq_desc *desc,
+>  > +		struct irqaction *action)
+> 
+>  and this would be wait_for_irq_thread_ready().
+> 
+> which is sill a misnomer as this actually wakes and waits.
 
+Hey, I didn't say I picked the right color for that shed! ;-)
 
-On Tue, 19 Apr 2022, Valentin Schneider wrote:
-
-> This method currently aggregates CPUs into a list, then converts this to
-> set and then back to list. The aggregation can instead be done directly
-> into a set.
 > 
-> (as an offside, it would make more sense for CpuList to have its storage be
-> a set in the first place as duplicate CPU ids don't make sense for it, but
-> that's a separate discussion :-))
+> >> @@ -1522,6 +1548,8 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+> >>  		}
+> >>  	}
+> >>  
+> >> +	init_waitqueue_head(&desc->wait_for_threads);
+> >> +
+> >
+> > I'm trying to convince myself that this one is safe.
+> >
+> > It was so far only done when registering the first handler of a
+> > threaded interrupt, while it is now done on every call to
+> > __setup_irq().  However, this is now done outside of the protection of
+> > any of the locks, meaning that a concurrent __setup_irq() for a shared
+> > interrupt can now barge in and corrupt the wait queue.
+> >
+> > So I don't think this is right. You may be able to hoist the
+> > request_lock up, but I haven't checked what could break, if anything.
 > 
-> The integer conversion of the "a-b" pattern can also be condensed into a
-> single map() expression.
+> It can't be moved here, but I can see why Thomas wants to move it. With
+> a spurious wakeup of the irq thread (should not happen), the thread
+> would try to invoke wake_up() on a non initialize wait queue head.
 > 
-> Signed-off-by: Valentin Schneider <vschneid@redhat.com>
-> ---
->  rteval/systopology.py | 15 +++++++--------
->  1 file changed, 7 insertions(+), 8 deletions(-)
+> Something like this should do the trick.
 > 
-> diff --git a/rteval/systopology.py b/rteval/systopology.py
-> index b2da7bb..2a28f9c 100644
-> --- a/rteval/systopology.py
-> +++ b/rteval/systopology.py
-> @@ -102,20 +102,19 @@ class CpuList:
->          """ expand a range string into an array of cpu numbers
->          don't error check against online cpus
->          """
-> -        result = []
+> diff --git a/kernel/irq/irqdesc.c b/kernel/irq/irqdesc.c
+> index 939d21cd55c3..0099b87dd853 100644
+> --- a/kernel/irq/irqdesc.c
+> +++ b/kernel/irq/irqdesc.c
+> @@ -407,6 +407,7 @@ static struct irq_desc *alloc_desc(int irq, int node, unsigned int flags,
+>  	lockdep_set_class(&desc->lock, &irq_desc_lock_class);
+>  	mutex_init(&desc->request_mutex);
+>  	init_rcu_head(&desc->rcu);
+> +	init_waitqueue_head(&desc->wait_for_threads);
+>  
+>  	desc_set_defaults(irq, desc, node, affinity, owner);
+>  	irqd_set(&desc->irq_data, flags);
+> @@ -575,6 +576,7 @@ int __init early_irq_init(void)
+>  		raw_spin_lock_init(&desc[i].lock);
+>  		lockdep_set_class(&desc[i].lock, &irq_desc_lock_class);
+>  		mutex_init(&desc[i].request_mutex);
+> +		init_waitqueue_head(&desc[i].wait_for_threads);
+>  		desc_set_defaults(i, &desc[i], node, NULL, NULL);
+>  	}
+>  	return arch_early_irq_init();
+> diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+> index c03f71d5ec10..6a0942f4d068 100644
+> --- a/kernel/irq/manage.c
+> +++ b/kernel/irq/manage.c
+> @@ -1683,8 +1683,6 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+>  	}
+>  
+>  	if (!shared) {
+> -		init_waitqueue_head(&desc->wait_for_threads);
 > -
->          if not cpulist:
-> -            return result
-> +            return []
-> +
-> +        result = set()
->  
->          for part in cpulist.split(','):
->              if '-' in part:
-> -                a, b = part.split('-')
-> -                a, b = int(a), int(b)
-> -                result.extend(list(range(a, b + 1)))
-> +                a, b = map(int, part.split('-'))
-> +                result |= set(range(a, b + 1))
->              else:
->                  a = int(part)
-> -                result.append(a)
-> -        return [int(i) for i in list(set(result))]
-> +                result |= {a}
-> +        return list(result)
->  
->      def getcpulist(self):
->          """ return the list of cpus tracked """
-> -- 
-> 2.27.0
-> 
+>  		/* Setup the type (level, edge polarity) if configured: */
+>  		if (new->flags & IRQF_TRIGGER_MASK) {
+>  			ret = __irq_set_trigger(desc,
 > 
 
-I'm guessing that the reason for the "set" was to remove any potential 
-duplicates. Duplicates are not normally a problem in rteval, but if you 
-want to ensure you handle any user input correctly, it makes sense to do 
-that. I think your code is correct, but I'm not sure if it buys us 
-anything.
+Indeed, it makes a lot of sense to fully initialise the irqdesc
+structure at the point of allocation, rather than later.
 
-John
+Thanks,
 
+	M.
+
+-- 
+Without deviation from the norm, progress is not possible.
