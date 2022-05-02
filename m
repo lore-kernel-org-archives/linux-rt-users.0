@@ -2,134 +2,67 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DAA24C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 May 2022 15:34:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3BD70C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 May 2022 19:00:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1381571AbiEBPho (ORCPT
+        id S1387012AbiEBTEI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 May 2022 11:37:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44066 "EHLO
+        Mon, 2 May 2022 15:04:08 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38112 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1358130AbiEBPhm (ORCPT
+        with ESMTP id S1387014AbiEBTD6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 May 2022 11:37:42 -0400
-Received: from mail.pcs.gmbh (mail.pcs.gmbh [89.27.162.52])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B285BDF81;
-        Mon,  2 May 2022 08:34:09 -0700 (PDT)
-Received: from mail.csna.de (mail.csna.de [89.27.162.50])
-        by mail.pcs.gmbh with ESMTPA
-        ; Mon, 2 May 2022 17:34:03 +0200
-Received: from EXCHANGE2019.pcs.ditec.de (mail.pcs.com [89.27.162.5])
-        by mail.csna.de with ESMTPA
-        ; Mon, 2 May 2022 17:34:03 +0200
-Received: from EXCHANGE2019.pcs.ditec.de (192.168.8.214) by
- EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.986.22; Mon, 2 May 2022 17:34:03 +0200
-Received: from lxtpfaff.pcs.ditec.de (192.168.9.96) by
- EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.986.22
- via Frontend Transport; Mon, 2 May 2022 17:34:03 +0200
-Date:   Mon, 2 May 2022 17:34:03 +0200
-From:   Thomas Pfaff <tpfaff@pcs.com>
-To:     Thomas Gleixner <tglx@linutronix.de>
-CC:     <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+        Mon, 2 May 2022 15:03:58 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A3F7D1091;
+        Mon,  2 May 2022 12:00:28 -0700 (PDT)
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1651518026;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=oFN2WdqzeQgS5RZmSYBBhPah4ZERNvMYVR3oemiypyA=;
+        b=VVCXveVrglTJO+py77rxRcLewjhMSOAqz6KbQPP+jZ06befE0vVuYoMZQFO1Yp7sVfFbjV
+        eowVD+Xzea+vvAoXaEOlQJrqqsMJRijOqOs54dH/7vOsVNdkTn/t5oP9XMBG/eRnF9jL/z
+        AaA+nqYfSZmroz4q2Q1tpVygPuTLAaER+ewKvaVpkP/HIVMG+OUmrJ05g/9JRK7XPNXcvk
+        LDKJttwxK1143D7Gahd4Ds7VqLP1Y0ntfTgaddiuqhvcE8WDeHQp7kUPqT23aNHNDtzo8z
+        A94hMVpdLMBIJVcKwpwD3SQj4/BXSRLGxiRoSbo7QVyfJXGaAFM6YWEEjHpi9Q==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1651518026;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=oFN2WdqzeQgS5RZmSYBBhPah4ZERNvMYVR3oemiypyA=;
+        b=JMGQYnCzotx+pHJfzEw3Da+0YcRKN3m4LSdwDdFRa+XG0LHzNKRqZn1zeZOCjEs/uilsSo
+        2wATdimnD9bb8eAw==
+To:     Thomas Pfaff <tpfaff@pcs.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Marc Zyngier <maz@kernel.org>, Lukas Wunner <lukas@wunner.de>
 Subject: Re: [PATCH v3] irq/core: synchronize irq_thread startup
-In-Reply-To: <87mtg0m2jb.ffs@tglx>
-Message-ID: <bbe3603c-df84-290-fb3c-10f450c21518@pcs.com>
-References: <552fe7b4-9224-b183-bb87-a8f36d335690@pcs.com> <87mtg0m2jb.ffs@tglx>
+In-Reply-To: <bbe3603c-df84-290-fb3c-10f450c21518@pcs.com>
+References: <552fe7b4-9224-b183-bb87-a8f36d335690@pcs.com>
+ <87mtg0m2jb.ffs@tglx> <bbe3603c-df84-290-fb3c-10f450c21518@pcs.com>
+Date:   Mon, 02 May 2022 21:00:25 +0200
+Message-ID: <87a6bzn4ja.ffs@tglx>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-X-KSE-ServerInfo: EXCHANGE2019.pcs.ditec.de, 9
-X-KSE-AntiSpam-Interceptor-Info: white sender email list
-X-KSE-AttachmentFiltering-Interceptor-Info: protection disabled
-X-KSE-Antivirus-Interceptor-Info: scan successful
-X-KSE-Antivirus-Info: Clean, bases: 02.05.2022 14:16:00
-X-KSE-BulkMessagesFiltering-Scan-Result: protection disabled
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Mon, May 02 2022 at 17:34, Thomas Pfaff wrote:
+> On Mon, 2 May 2022, Thomas Gleixner wrote:
+>
+> I can confirm that your patch works.
 
+But for the very wrong reasons. desc->threads_active is a counter and
+not a mask. Where is that brown paperbag?
 
-On Mon, 2 May 2022, Thomas Gleixner wrote:
+Let me merge your patch and add the information about the root cause to
+the changelog.
 
-> But free_irq() stopped issuing synchronize_irq() with commit
-> 519cc8652b3a ("genirq: Synchronize only with single thread on
-> free_irq()"). And that turns out to be the root cause of the problem.
-> I should have caught that back then, but in hindsight ....
-> 
-> While the proposed patch works, I think the real solution is to ensure
-> that both the hardware interrupt _and_ the interrupt threads which are
-> associated to the removed action are in quiescent state. This should
-> catch the case you observed.
+Thanks,
 
-I can confirm that your patch works.
-And it also explains why I never had this issue on a 4.4 kernel with
-realtime patch ...
-
-> ---
-> Subject: genirq: Quiesce interrupt threads in free_irq()
-> From: Thomas Gleixner <tglx@linutronix.de>
-> Date: Mon, 02 May 2022 15:40:25 +0200
-> 
-> Fill void...
-> 
-> Fixes: 519cc8652b3a ("genirq: Synchronize only with single thread on free_irq()")
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> ---
->  kernel/irq/manage.c |   25 +++++++++++++++++++++----
->  1 file changed, 21 insertions(+), 4 deletions(-)
-> 
-> --- a/kernel/irq/manage.c
-> +++ b/kernel/irq/manage.c
-> @@ -1914,6 +1914,22 @@ static struct irqaction *__free_irq(stru
->  	 */
->  	__synchronize_hardirq(desc, true);
->  
-> +	/*
-> +	 * Wait for associated interrupt threads to complete. This cannot
-> +	 * use synchronize_irq() due to interrupt sharing in the PCIe
-> +	 * layer. See 519cc8652b3a ("genirq: Synchronize only with single
-> +	 * thread on free_irq()") for further explanation.
-> +	 */
-> +	if (action->thread) {
-> +		unsigned int thread_mask = action->thread_mask;
-> +
-> +		if (action->secondary)
-> +			thread_mask |= action->secondary->thread_mask;
-> +
-> +		wait_event(desc->wait_for_threads,
-> +			   !(atomic_read(&desc->threads_active) & thread_mask));
-> +	}
-> +
->  #ifdef CONFIG_DEBUG_SHIRQ
->  	/*
->  	 * It's a shared IRQ -- the driver ought to be prepared for an IRQ
-> @@ -1931,10 +1947,11 @@ static struct irqaction *__free_irq(stru
->  #endif
->  
->  	/*
-> -	 * The action has already been removed above, but the thread writes
-> -	 * its oneshot mask bit when it completes. Though request_mutex is
-> -	 * held across this which prevents __setup_irq() from handing out
-> -	 * the same bit to a newly requested action.
-> +	 * The action has already been removed above and both the hardware
-> +	 * interrupt and the associated threads have been synchronized,
-> +	 * which means they are in quiescent state. request_mutex is still
-> +	 * held which prevents __setup_irq() from handing out action's
-> +	 * thread_mask to a newly requested action.
->  	 */
->  	if (action->thread) {
->  		kthread_stop(action->thread);
-> 
-> 
-> 
-
-Tested-by: Thomas Pfaff <tpfaff@pcs.com>
-
-Thank you,
-	Thomas
-
-
+        tglx
+ 
