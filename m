@@ -2,190 +2,95 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F2CFC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 May 2022 11:28:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EC225C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 May 2022 11:48:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1384728AbiEBLcX (ORCPT
+        id S1384813AbiEBLwV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 May 2022 07:32:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48468 "EHLO
+        Mon, 2 May 2022 07:52:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41426 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1384723AbiEBLcV (ORCPT
+        with ESMTP id S229651AbiEBLwU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 May 2022 07:32:21 -0400
-Received: from mail.pcs.gmbh (mail.pcs.gmbh [89.27.162.52])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BE0C9FD;
-        Mon,  2 May 2022 04:28:52 -0700 (PDT)
-Received: from mail.csna.de (mail.csna.de [89.27.162.50])
-        by mail.pcs.gmbh with ESMTPA
-        ; Mon, 2 May 2022 13:28:28 +0200
-Received: from EXCHANGE2019.pcs.ditec.de (mail.pcs.com [89.27.162.5])
-        by mail.csna.de with ESMTPA
-        ; Mon, 2 May 2022 13:28:28 +0200
-Received: from EXCHANGE2019.pcs.ditec.de (192.168.8.214) by
- EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.986.22; Mon, 2 May 2022 13:28:29 +0200
-Received: from lxtpfaff.pcs.ditec.de (192.168.9.96) by
- EXCHANGE2019.pcs.ditec.de (192.168.8.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.986.22
- via Frontend Transport; Mon, 2 May 2022 13:28:29 +0200
-Date:   Mon, 2 May 2022 13:28:29 +0200
-From:   Thomas Pfaff <tpfaff@pcs.com>
-To:     Thomas Gleixner <tglx@linutronix.de>
-CC:     <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-        Marc Zyngier <maz@kernel.org>
-Subject: [PATCH v3] irq/core: synchronize irq_thread startup
-Message-ID: <552fe7b4-9224-b183-bb87-a8f36d335690@pcs.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-X-KSE-ServerInfo: EXCHANGE2019.pcs.ditec.de, 9
-X-KSE-AntiSpam-Interceptor-Info: white sender email list
-X-KSE-AttachmentFiltering-Interceptor-Info: protection disabled
-X-KSE-Antivirus-Interceptor-Info: scan successful
-X-KSE-Antivirus-Info: Clean, bases: 02.05.2022 09:21:00
-X-KSE-BulkMessagesFiltering-Scan-Result: protection disabled
+        Mon, 2 May 2022 07:52:20 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92534167D4;
+        Mon,  2 May 2022 04:48:50 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 2D83461216;
+        Mon,  2 May 2022 11:48:50 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8BA1EC385A4;
+        Mon,  2 May 2022 11:48:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1651492129;
+        bh=Q/Dwiz7iDgoIpV/c4fgjsYyhGcgio6QJN9349xFIIes=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=LcpF+LDS2Amjh/S9E3y1f4npeLGj9+v6LLbQN6K43SuwbTsU7+htBpA3Hg43E6yHw
+         kZGBYVpM5dZmmCWlPUeAyXMGcCEd38aXCM5JwimdilO7dgoR/RS9Ki8tBscks+Bnmh
+         CFaQd4iQJl9Cay6eC1nQGcEGtY7fUls8wDkVv5Eeco648KrHZb2UZL7vpxwCZCcCe0
+         dPV6bWVqnRel5ReSPpjrmnnRkNUfx1i5h2HuuFxFjSUUwg4AhmC1bzaGLjIFeFCCSm
+         SWyq39aiC4XvbLX2Oou8w6ojJ3XMqFwycdGWHzyn2H5LXIoDotqv1btABjRpRH0Thd
+         Bn0N8pAse3KoQ==
+Received: from sofa.misterjones.org ([185.219.108.64] helo=wait-a-minute.misterjones.org)
+        by disco-boy.misterjones.org with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        (Exim 4.94.2)
+        (envelope-from <maz@kernel.org>)
+        id 1nlUXn-008PI4-4z; Mon, 02 May 2022 12:48:47 +0100
+Date:   Mon, 02 May 2022 12:48:46 +0100
+Message-ID: <87bkwgi28x.wl-maz@kernel.org>
+From:   Marc Zyngier <maz@kernel.org>
+To:     Thomas Pfaff <tpfaff@pcs.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH v3] irq/core: synchronize irq_thread startup
+In-Reply-To: <552fe7b4-9224-b183-bb87-a8f36d335690@pcs.com>
+References: <552fe7b4-9224-b183-bb87-a8f36d335690@pcs.com>
+User-Agent: Wanderlust/2.15.9 (Almost Unreal) SEMI-EPG/1.14.7 (Harue)
+ FLIM-LB/1.14.9 (=?UTF-8?B?R29qxY0=?=) APEL-LB/10.8 EasyPG/1.0.0 Emacs/27.1
+ (x86_64-pc-linux-gnu) MULE/6.0 (HANACHIRUSATO)
+MIME-Version: 1.0 (generated by SEMI-EPG 1.14.7 - "Harue")
+Content-Type: text/plain; charset=US-ASCII
+X-SA-Exim-Connect-IP: 185.219.108.64
+X-SA-Exim-Rcpt-To: tpfaff@pcs.com, tglx@linutronix.de, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+X-SA-Exim-Mail-From: maz@kernel.org
+X-SA-Exim-Scanned: No (on disco-boy.misterjones.org); SAEximRunCond expanded to false
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Thomas Pfaff <tpfaff@pcs.com>
+On Mon, 02 May 2022 12:28:29 +0100,
+Thomas Pfaff <tpfaff@pcs.com> wrote:
+> 
+> From: Thomas Pfaff <tpfaff@pcs.com>
+> 
+> While running
+> "while /bin/true; do setserial /dev/ttyS0 uart none;
+> setserial /dev/ttyS0 uart 16550A; done"
+> on a kernel with threaded irqs, setserial is hung after some calls.
+> 
+> setserial opens the device, this will install an irq handler if the uart is
+> not none, followed by TIOCGSERIAL and TIOCSSERIAL ioctls.
+> Then the device is closed. On close, synchronize_irq() is called by
+> serial_core.
+> 
+> If the close comes too fast, the irq_thread does not really start,
+> it is terminated immediately without going into irq_thread().
+> But an interrupt might already been handled by
+> irq_default_primary_handler(), going to __irq_wake_thread() and
+> incrementing threads_active.
+> If this happens, synchronize_irq() will hang forever, because the
+> irq_thread is already dead, and threads_active will never be decremented.
+> 
+> The fix is to make sure that the irq_thread is really started
+> during __setup_irq().
+> 
+> Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
 
-While running
-"while /bin/true; do setserial /dev/ttyS0 uart none;
-setserial /dev/ttyS0 uart 16550A; done"
-on a kernel with threaded irqs, setserial is hung after some calls.
+Reviewed-by: Marc Zyngier <maz@kernel.org>
 
-setserial opens the device, this will install an irq handler if the uart is
-not none, followed by TIOCGSERIAL and TIOCSSERIAL ioctls.
-Then the device is closed. On close, synchronize_irq() is called by
-serial_core.
+	M.
 
-If the close comes too fast, the irq_thread does not really start,
-it is terminated immediately without going into irq_thread().
-But an interrupt might already been handled by
-irq_default_primary_handler(), going to __irq_wake_thread() and
-incrementing threads_active.
-If this happens, synchronize_irq() will hang forever, because the
-irq_thread is already dead, and threads_active will never be decremented.
-
-The fix is to make sure that the irq_thread is really started
-during __setup_irq().
-
-Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
----
-v2-v3:
-  - initialize wait_for_threads waitqueue early
-  - be more precise about flag and function names
-diff --git a/kernel/irq/internals.h b/kernel/irq/internals.h
-index 99cbdf55a8bd..f09c60393e55 100644
---- a/kernel/irq/internals.h
-+++ b/kernel/irq/internals.h
-@@ -29,12 +29,14 @@ extern struct irqaction chained_action;
-  * IRQTF_WARNED    - warning "IRQ_WAKE_THREAD w/o thread_fn" has been printed
-  * IRQTF_AFFINITY  - irq thread is requested to adjust affinity
-  * IRQTF_FORCED_THREAD  - irq action is force threaded
-+ * IRQTF_READY     - signals that irq thread is ready
-  */
- enum {
- 	IRQTF_RUNTHREAD,
- 	IRQTF_WARNED,
- 	IRQTF_AFFINITY,
- 	IRQTF_FORCED_THREAD,
-+	IRQTF_READY,
- };
- 
- /*
-diff --git a/kernel/irq/irqdesc.c b/kernel/irq/irqdesc.c
-index 939d21cd55c3..02f3b5bf5145 100644
---- a/kernel/irq/irqdesc.c
-+++ b/kernel/irq/irqdesc.c
-@@ -407,6 +407,7 @@ static struct irq_desc *alloc_desc(int irq, int node, unsigned int flags,
- 	lockdep_set_class(&desc->lock, &irq_desc_lock_class);
- 	mutex_init(&desc->request_mutex);
- 	init_rcu_head(&desc->rcu);
-+	init_waitqueue_head(&desc->wait_for_threads);
- 
- 	desc_set_defaults(irq, desc, node, affinity, owner);
- 	irqd_set(&desc->irq_data, flags);
-@@ -575,6 +576,7 @@ int __init early_irq_init(void)
- 		raw_spin_lock_init(&desc[i].lock);
- 		lockdep_set_class(&desc[i].lock, &irq_desc_lock_class);
- 		mutex_init(&desc[i].request_mutex);
-+		init_waitqueue_head(&desc->wait_for_threads);
- 		desc_set_defaults(i, &desc[i], node, NULL, NULL);
- 	}
- 	return arch_early_irq_init();
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index f1d5a94c6c9f..4dca48506d38 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -1263,6 +1263,31 @@ static void irq_wake_secondary(struct irq_desc *desc, struct irqaction *action)
- 	raw_spin_unlock_irq(&desc->lock);
- }
- 
-+/*
-+ * Internal function to notify that irq_thread is ready
-+ */
-+static void irq_thread_set_ready(struct irq_desc *desc,
-+				 struct irqaction *action)
-+{
-+	set_bit(IRQTF_READY, &action->thread_flags);
-+	wake_up(&desc->wait_for_threads);
-+}
-+
-+/*
-+ * Internal function to wake up irq_thread
-+ * and wait until it is ready
-+ */
-+static void wake_up_and_wait_for_irq_thread_ready(struct irq_desc *desc,
-+						  struct irqaction *action)
-+{
-+	if (!action || !action->thread)
-+		return;
-+
-+	wake_up_process(action->thread);
-+	wait_event(desc->wait_for_threads,
-+		   test_bit(IRQTF_READY, &action->thread_flags));
-+}
-+
- /*
-  * Interrupt handler thread
-  */
-@@ -1287,6 +1312,8 @@ static int irq_thread(void *data)
- 
- 	irq_thread_check_affinity(desc, action);
- 
-+	irq_thread_set_ready(desc, action);
-+
- 	while (!irq_wait_for_interrupt(action)) {
- 		irqreturn_t action_ret;
- 
-@@ -1698,8 +1725,6 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 	}
- 
- 	if (!shared) {
--		init_waitqueue_head(&desc->wait_for_threads);
--
- 		/* Setup the type (level, edge polarity) if configured: */
- 		if (new->flags & IRQF_TRIGGER_MASK) {
- 			ret = __irq_set_trigger(desc,
-@@ -1795,14 +1820,8 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 
- 	irq_setup_timings(desc, new);
- 
--	/*
--	 * Strictly no need to wake it up, but hung_task complains
--	 * when no hard interrupt wakes the thread up.
--	 */
--	if (new->thread)
--		wake_up_process(new->thread);
--	if (new->secondary)
--		wake_up_process(new->secondary->thread);
-+	wake_up_and_wait_for_irq_thread_ready(desc, new);
-+	wake_up_and_wait_for_irq_thread_ready(desc, new->secondary);
- 
- 	register_irq_proc(irq, desc);
- 	new->dir = NULL;
-
-
+-- 
+Without deviation from the norm, progress is not possible.
