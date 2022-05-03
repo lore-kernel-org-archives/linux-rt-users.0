@@ -2,74 +2,116 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9E1B6C433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 May 2022 13:59:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0694CC433F5
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 May 2022 14:49:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236585AbiECOC6 (ORCPT
+        id S237396AbiECOxC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 May 2022 10:02:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46928 "EHLO
+        Tue, 3 May 2022 10:53:02 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46600 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236375AbiECOCv (ORCPT
+        with ESMTP id S237321AbiECOw6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 May 2022 10:02:51 -0400
-Received: from mail-vs1-xe2c.google.com (mail-vs1-xe2c.google.com [IPv6:2607:f8b0:4864:20::e2c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C3CE02F39E
-        for <linux-rt-users@vger.kernel.org>; Tue,  3 May 2022 06:59:17 -0700 (PDT)
-Received: by mail-vs1-xe2c.google.com with SMTP id w124so16479062vsb.8
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 May 2022 06:59:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=Kc9EqZyyYSZAOs9cnIhJHFzWGVjy5TAUNXSAD6jVZpA=;
-        b=JedDEuKdmrsPWDkD8pL33DMl16cRPAIUnzhzgjUokuf0iwvR3uKxISGKO5mJrYB4M9
-         PTUl8i9vKd62f1RUYcQhNrjJABCSNe0xXvqmbWFGfOcW8LTNkfGgvp8nEpIjf3u41d4q
-         /ORrGfeNvpuodn7nVnroNIRsR32kl1j8IObLhXZZ0OQ4kZ6r5+zki0p/3S6gwJHeFcAG
-         k6f5cpWUpcNWi2G6lVHDRdEUad8we0u1+JLc7Mwps+fRC+A0je0czEhwXGBE7e4BjdgP
-         ROJ0V1dMhbLU4vZYNxQ4SsYFRtCYT/MY/ZwPuJExb69JknOHAWzHoZD3Pwk3p7nPWMKW
-         Coiw==
+        Tue, 3 May 2022 10:52:58 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 7BDC5393FE
+        for <linux-rt-users@vger.kernel.org>; Tue,  3 May 2022 07:49:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1651589362;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=nn3aqP0/1gEOVtMV30AjwmQjuScFO/x8JSqPLYRfYp4=;
+        b=L/1retMoV95CyUNL1ZBzLctorJpX/eLavofwbEsv1g7rmbRNEjbAszDI/+4UyRMMUje7Av
+        XLL/SQ8cS8CMk4CBpVrW+HIwrikwIxnGmQyDN79D0a6hDAPhLqjBHe94MMm7Jb6P1lnCEk
+        4123DZLidx53PT0Qf2jWl8ttEhb8mCE=
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-241-wnSSp6J0NaCck8ghqFehDw-1; Tue, 03 May 2022 10:49:03 -0400
+X-MC-Unique: wnSSp6J0NaCck8ghqFehDw-1
+Received: by mail-qk1-f198.google.com with SMTP id y140-20020a376492000000b0069f7e985c95so12435560qkb.15
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 May 2022 07:49:01 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=Kc9EqZyyYSZAOs9cnIhJHFzWGVjy5TAUNXSAD6jVZpA=;
-        b=USGI/PxP//B8JDHJsLJw0m1E3kU9qlt1Xh44P4Z4wtEgHw6vGNw2Sw4H7g0vEkH7ML
-         WEcE9gBq5kJTPYpJDmSJVO9d7UFJREsV5E7uoNTD6XJ+B0kGEQlW53yuW6I0LZfJyTiN
-         ly+VR0yTcJ+33/eRdaFbaG7HZVlJ5TCtAkcR3V46b2JMngBU7Xoo5bSOv9IZGb1uC2Bj
-         0mU64ezKkwB0jj2viT1vkPlB0s/WNVVc6GwCfcGyIPlaubpzkCkeON5Xs3hEobNnjk4L
-         gQcWjH/284jd0oSVLRjinCyx8NQkXeR7Lde5sVJEefzX5xpgcc+JK8qRL4EW34m6lJhR
-         ekyA==
-X-Gm-Message-State: AOAM530GUeC3oO1UK7kavTt6llUsqST2x283+XxK+A8dTWCwvBMimBqo
-        pp6NDT+LNX/opD2wE9OVw6x4Aj4vdR5ppbbHdsdQDncGgmo=
-X-Google-Smtp-Source: ABdhPJy5hF/fDDF6hxFMyYdGq0bR9M7CQV1D1LPLcUZWukCUKzFiugc5Nx8C9G3q2XEDzXHgw4EvBXz0sueVlk0q+GY=
-X-Received: by 2002:a67:d81e:0:b0:31b:a09a:1c4d with SMTP id
- e30-20020a67d81e000000b0031ba09a1c4dmr5255307vsj.0.1651586356082; Tue, 03 May
- 2022 06:59:16 -0700 (PDT)
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=nn3aqP0/1gEOVtMV30AjwmQjuScFO/x8JSqPLYRfYp4=;
+        b=na3B1x96zrDprOiqxFPGNtxx7gEZfdKv92YNtv/MPGqhtQw22em6hyUgENsrM7irwH
+         I/Pg/uXbRglaHgKayk+Z5TLULyqDojfEE5/7+7DigQM1wXnjmrv5CInRrl69juFt55gS
+         WpoNKju9HD/CPB0PVe2MdHMM5jC0grnuoHpfHM6vIzJnZjhjDORN74mem+7et+KmVfTD
+         vj+R5fMuH+zsnd8WjM39IAYq621DT4rsZHB/EFkIb0rNupQBp4zJgIgiQ3VmalUdk345
+         Hr/3zYtEaMSaZmCuKcd3OSLri10MFnuVQqkDn+rlzM/anS8F/h1V/oCeo+S991hOoHQv
+         HETw==
+X-Gm-Message-State: AOAM53247ZG6y/FBkOqW4Nhq+bnNGu9CwtzHSz8Gk8bgS6/Zmov3friA
+        A+x7zWE0DE/l9/hN328Yv80c4q0SpUjia6qbjoio2bvurZry2Y9A9P1ZT6+p7yvmK1moGH1yWZY
+        voah0LE1yG64ePcqsNDlswcNhlEA=
+X-Received: by 2002:a05:620a:4709:b0:69f:1725:3a5 with SMTP id bs9-20020a05620a470900b0069f172503a5mr11901922qkb.759.1651586380480;
+        Tue, 03 May 2022 06:59:40 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzA7vv0cN03U2xmUOL2/Fflr4+q0fQ/hwNKVkSJQxqJIDecvXysiU9Kr0qxQdKyqLFnwH4Zag==
+X-Received: by 2002:a05:620a:4709:b0:69f:1725:3a5 with SMTP id bs9-20020a05620a470900b0069f172503a5mr11901909qkb.759.1651586380264;
+        Tue, 03 May 2022 06:59:40 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
+        by smtp.gmail.com with ESMTPSA id d137-20020a37688f000000b0069fc13ce223sm6212719qkc.84.2022.05.03.06.59.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 03 May 2022 06:59:39 -0700 (PDT)
+Date:   Tue, 3 May 2022 09:59:26 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Valentin Schneider <vschneid@redhat.com>
+cc:     RT <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] rteval: kcompile: Use systopology to get a list of cpus
+ on a node
+In-Reply-To: <xhsmhlevivrlz.mognet@vschneid.remote.csb>
+Message-ID: <d9ba6cec-253a-9bb7-6097-d04e43741648@redhat.com>
+References: <20220429202202.23499-1-jkacur@redhat.com> <xhsmhlevivrlz.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
-From:   Gautam Thaker <ghthaker@gmail.com>
-Date:   Tue, 3 May 2022 09:59:05 -0400
-Message-ID: <CA+1+E3V4Z-Y=-iBRxoFzD=14Tq7ndaHdM=3fzT=nKDZmUNpbeg@mail.gmail.com>
-Subject: seeking a .config with ALL DEBUG settings turned off...
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I am building 5.17.1-RT and I want to disable ALL DEBUG (both related
-to RT Patch) and all others that can be turned off and still have a
-working RT kernel. I want todo this to try to measure scheduling
-latency, etc that is not marred by various counters and trace support
-things.
 
-Is there a page or directions that can tell me how to do this? I go
-thru and disable various DEBUG settings in .config manually, but then
-I notice that making the kernel re-enables some of them, it is unclear
-to me why this is.
 
-I do:
+On Tue, 3 May 2022, Valentin Schneider wrote:
 
-# cp -vi /boot/config-`uname -r` .config
+> On 29/04/22 16:22, John Kacur wrote:
+> > kcompile gets a lists of cpus on a node but doesn't take into account
+> > whether the cpus are online or not.
+> >
+> > Instead of using the method in kcompile, use the method in systopology,
+> > since that will consider whether the cpus are online or not.
+> >
+> > Reported-by: Valentin Schneider <vschneid@redhat.com>
+> > Signed-off-by: John Kacur <jkacur@redhat.com>
+> 
+> Tested-by: Valentin Schneider <vschneid@redhat.com>
+> 
+> > ---
+> >  rteval/modules/loads/kcompile.py | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >
+> > diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
+> > index 367f8dc1ca86..add0cd86cde4 100644
+> > --- a/rteval/modules/loads/kcompile.py
+> > +++ b/rteval/modules/loads/kcompile.py
+> > @@ -202,7 +202,7 @@ class Kcompile(CommandLineLoad):
+> >          self.cpus = {}
+> >          self.nodes = self.topology.getnodes()
+> >          for n in self.nodes:
+> > -            self.cpus[n] = [int(c.split('/')[-1][3:]) for c in glob.glob('/sys/devices/system/node/node%s/cpu[0-9]*' % n)]
+> > +            self.cpus[n] = self.topology.getcpus(n)
+> >              self.cpus[n].sort()
+> >
+> >              # if a cpulist was specified, only allow cpus in that list on the node
+> > --
+> > 2.35.1
+> 
+> 
 
-as my starting point.
+I added your Tested-by: to the commit.
 
-Thanks.
+Thanks for testing!
+
+John
+
