@@ -2,138 +2,85 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C50DDC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  5 May 2022 14:34:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 287EDC433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  5 May 2022 23:18:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1378668AbiEEOhx (ORCPT
+        id S242745AbiEEXWf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 5 May 2022 10:37:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33158 "EHLO
+        Thu, 5 May 2022 19:22:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57620 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1349341AbiEEOhx (ORCPT
+        with ESMTP id S235676AbiEEXWe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 5 May 2022 10:37:53 -0400
-Received: from us-smtp-delivery-74.mimecast.com (us-smtp-delivery-74.mimecast.com [170.10.129.74])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 5E03F5AA6B
-        for <linux-rt-users@vger.kernel.org>; Thu,  5 May 2022 07:34:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1651761252;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=hmtDhBMpBNP5F1NbebqjSDQRe35h2O8vk+AARiw6T5E=;
-        b=YJedeNum74trgZTPz++DsqBUbgs9nQnguTVSH7JyzpZvtlf2kn2k88V2v4SlTBGgM+lnCS
-        5odW230kStbAECy6Ws2q1zXl/cbroLL7gF40KgIgM/Xnz6wQmJkLVRXMWJlY9wbBECtYSV
-        svS/dCMbqKdBMknYbpdgp36EEWNK+O4=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-375-rgMRcabkMiuK7UEw61ejNw-1; Thu, 05 May 2022 10:34:11 -0400
-X-MC-Unique: rgMRcabkMiuK7UEw61ejNw-1
-Received: by mail-qt1-f197.google.com with SMTP id w2-20020ac87e82000000b002f3a6e81a56so3481231qtj.14
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 May 2022 07:34:11 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=hmtDhBMpBNP5F1NbebqjSDQRe35h2O8vk+AARiw6T5E=;
-        b=BdTXNSnG+tJjIKchKr+NzT2gXrgleO2DhfeZ4bmS0SqyuUswn2WAuarA2AfnfxtiOQ
-         7JJAoo76suws8vJ945TSrvwhGzvP/Q+LhpBjGm8y2b4tX59UOZtneqfrBNPc7+jNoRp+
-         7R0zmfyxxeazW3E4jiTpuWNWPdenrR+2St9rgdeEC6ob/lz7aLLzqj5LkjMzAYZXJ6CA
-         jly3mh1l+Q0+ZvLTDrkECKV42ZA9oXDcy5Qptna+xCosKFU/+giLSakqh6uHGASE/pd1
-         SWWadhXkdnx2DltUn+TVMgUGpzpqRo1mKOVSf5+OHKOd39Vn26mJF/W7aSTbGVrBQjWa
-         tTSA==
-X-Gm-Message-State: AOAM533XHizJAbcFROQZuimNv/kIZ4KFKFLlo+5kTZFSyUR3rgH3jDW4
-        R5MDDI8XW8I8o+eji5SqxuufgdoShzVKRdMwMVWZxRtQXy6wFqc+/DiJpvyv+Vi4/8RClL0rCxx
-        J9450DcUy/+lmTTUfGTFn7N3UYTw=
-X-Received: by 2002:a0c:f68f:0:b0:456:38b0:7b9c with SMTP id p15-20020a0cf68f000000b0045638b07b9cmr21939937qvn.26.1651761250642;
-        Thu, 05 May 2022 07:34:10 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzguvlWSe1PUpWpzP0teBMYdaixDLtT/DuapZLUiRWzDywRjiSEM77p8zqPiHFEYCqSomEOpg==
-X-Received: by 2002:a0c:f68f:0:b0:456:38b0:7b9c with SMTP id p15-20020a0cf68f000000b0045638b07b9cmr21939917qvn.26.1651761250469;
-        Thu, 05 May 2022 07:34:10 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
-        by smtp.gmail.com with ESMTPSA id bj32-20020a05620a192000b0069fc2a7e7a5sm851967qkb.75.2022.05.05.07.34.09
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 05 May 2022 07:34:09 -0700 (PDT)
-Date:   Thu, 5 May 2022 10:33:48 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Valentin Schneider <vschneid@redhat.com>
-cc:     linux-rt-users@vger.kernel.org,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] rteval: kcompile: Fix source tarball argument handling
-In-Reply-To: <20220503110106.40564-1-vschneid@redhat.com>
-Message-ID: <21467ee5-7dd1-645c-36fa-512a1e8f1799@redhat.com>
-References: <20220503110106.40564-1-vschneid@redhat.com>
+        Thu, 5 May 2022 19:22:34 -0400
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3BC535DBD1;
+        Thu,  5 May 2022 16:18:51 -0700 (PDT)
+Received: from [192.168.1.31] (097-089-247-249.biz.spectrum.com [97.89.247.249])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 253383F1AF;
+        Thu,  5 May 2022 23:18:47 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1651792727;
+        bh=VVnmPbFnA4OIRX+hXqQx9XDh1uWLf3BJMOQz6Bb6B4U=;
+        h=Message-ID:Date:MIME-Version:Cc:From:To:Subject:Content-Type;
+        b=QAYWDspQ0p7qfXYLaLcFNbtWR9OGuK7KfGOJNrX+DQDapPLCM8P0GXDLjJMeKvaTI
+         I7xV1BKw/jC3askrfGgYOXKYqg3LpXL3ieB2zOjcwUsd+T82XBrgx8DpGRmWE2sfRL
+         d9/+K55WDj3X4s8n8MBVEcTlJX1qAYB7f3+IextUr/TCDruW6lZixSS0LmMcLaBHw2
+         QhulImiekLFVYFO7cpAv88qQVhLLZIWM0sT6QtlbVWUy3bKz2Zajr27ynfSZm9gvsn
+         NXWLehTYJv3GbjqNJv5tcGjrtIN+ANiacAnijj3xuq5Yr1PkbWBcT/rfq4oVaAVDBA
+         VUEA1OZpkp6wg==
+Message-ID: <bdb23fe5-51ae-8873-a3d7-85f377877c79@canonical.com>
+Date:   Thu, 5 May 2022 19:18:45 -0400
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.8.1
+Content-Language: en-US
+Cc:     linux-kernel@vger.kernel.org, dave.hansen@linux.intel.com,
+        linux-rt-users@vger.kernel.org
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+To:     tglx@linutronix.de
+Subject: Issue With real-time patches on 5.15.y
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hello,
+
+I ran into a build failure after applying the rt40 real-time patches[0] 
+to an Ubuntu 22.04 kernel. The Ubuntu kernel is based on upstream stable 
+5.15.y(5.15.34 currently).  I believe this patch is the specific one 
+that introduces the build issue: 
+0086-locking-Allow-to-include-asm-spinlock_types.h-from-l.patch.
+
+After a bisect, the following commit was identified as the cause for the 
+build failure:
+b50854eca0e0 ("x86/pkru: Remove useless include")
+
+This commit was added to mainline as of 5.16-rc1 and not Cc'd to stable, 
+so it should not exist in 5.15.y.  However, it was purposely added to 
+the Ubuntu kernel to enable x86 AMX support[1].
+
+The real-time kernel build failure can be resolved by reverting commit 
+b50854eca0e0.  The failure seems to be due to the removal of an include 
+of xstate.h from pkru.h and caused spinlock_t to not be defined.  The 
+commit would only be reverted for the real-time kernel and not any other 
+kernels.  I wanted to see if reverting the commit is the proper 
+approach, or if cherry-picking additional commits might be a better 
+solution in preparation for additional changes that might be coming in 
+the future?
+
+Any suggestions would be greatly appreciated.
+
+Thanks,
+
+Joe
 
 
-On Tue, 3 May 2022, Valentin Schneider wrote:
-
-> Kcompile._WorkloadSetup() looks for a "tarball" and "tarfile" entry in
-> the CfgSection, but I couldn't find a single setter for thoses. The
-> only way for a user to specify a file is via --kcompile-source, which
-> doesn't seem to be actually used by the module.
-> 
-> Make Kcompile actually use --kcompile-source.
-> 
-> Signed-off-by: Valentin Schneider <vschneid@redhat.com>
-> ---
->  rteval/modules/loads/kcompile.py | 11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
-> 
-> diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-> index 367f8dc..023b9d6 100644
-> --- a/rteval/modules/loads/kcompile.py
-> +++ b/rteval/modules/loads/kcompile.py
-> @@ -28,6 +28,7 @@ import sys
->  import os
->  import os.path
->  import glob
-> +import re
->  import subprocess
->  from rteval.modules import rtevalRuntimeError
->  from rteval.modules.loads import CommandLineLoad
-> @@ -35,7 +36,7 @@ from rteval.Log import Log
->  from rteval.misc import expand_cpulist, compress_cpulist
->  from rteval.systopology import SysTopology
->  
-> -kernel_prefix = "linux-5.13"
-> +DEFAULT_KERNEL_PREFIX = "linux-5.13"
->  
->  class KBuildJob:
->      '''Class to manage a build job bound to a particular node'''
-> @@ -163,17 +164,19 @@ class Kcompile(CommandLineLoad):
->              return
->  
->          # find our source tarball
-> -        if 'tarball' in self._cfg:
-> -            tarfile = os.path.join(self.srcdir, self._cfg.tarfile)
-> +        if self._cfg.source:
-> +            tarfile = os.path.join(self.srcdir, self._cfg.source)
->              if not os.path.exists(tarfile):
->                  raise rtevalRuntimeError(self, " tarfile %s does not exist!" % tarfile)
->              self.source = tarfile
-> +            kernel_prefix = re.search(r"linux-\d\.\d", self.source).group(0)
->          else:
-> -            tarfiles = glob.glob(os.path.join(self.srcdir, "%s*" % kernel_prefix))
-> +            tarfiles = glob.glob(os.path.join(self.srcdir, "%s*" % DEFAULT_KERNEL_PREFIX))
->              if tarfiles:
->                  self.source = tarfiles[0]
->              else:
->                  raise rtevalRuntimeError(self, " no kernel tarballs found in %s" % self.srcdir)
-> +            kernel_prefix = DEFAULT_KERNEL_PREFIX
->  
->          # check for existing directory
->          kdir = None
-> -- 
-> 2.27.0
-> 
-> 
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
-
+[0] 
+https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.15/older/patches-5.15.34-rt40.tar.gz
+[1] https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1967750
