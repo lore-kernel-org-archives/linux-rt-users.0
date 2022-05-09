@@ -2,79 +2,105 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DD484C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 May 2022 10:15:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DDD48C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 May 2022 10:20:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232505AbiEIKS5 (ORCPT
+        id S233507AbiEIKYe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 May 2022 06:18:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37774 "EHLO
+        Mon, 9 May 2022 06:24:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59986 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231322AbiEIKSz (ORCPT
+        with ESMTP id S233788AbiEIKYJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 May 2022 06:18:55 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.21])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 928F128135F;
-        Mon,  9 May 2022 03:14:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1652091254;
-        bh=62XK6zJxU055tL7PZ4571/szLvXI08h0pLjjJJksoHQ=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=GGwpYB7rqQH6//z9zXUeAWZxGNZBprSkq62CYV4kl7Ru36mo4k5aSwEx0nJ9IfPeR
-         h4nnELyrNG/4x9bQCjkSW1+rFtyZ1v/EAdgbqH+i0Mz3F5/c3Tc3LooarmfYmSkdY4
-         ZLgZHCZ4XwLTv7v98SL2PAfsygJL35YNYzGu5yM4=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.221.150.43]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MIMfc-1nbtRK2YmS-00EOv1; Mon, 09
- May 2022 12:14:14 +0200
-Message-ID: <c3d382759dac2e9b0927c0074d95e1b930e8e8dd.camel@gmx.de>
-Subject: Re: Issue With real-time patches on 5.15.y
-From:   Mike Galbraith <efault@gmx.de>
-To:     Joseph Salisbury <joseph.salisbury@canonical.com>,
-        tglx@linutronix.de
-Cc:     linux-kernel@vger.kernel.org, dave.hansen@linux.intel.com,
-        linux-rt-users@vger.kernel.org
-Date:   Mon, 09 May 2022 12:14:11 +0200
-In-Reply-To: <35c5a001-61b0-09d7-393c-b46836d0b676@canonical.com>
-References: <bdb23fe5-51ae-8873-a3d7-85f377877c79@canonical.com>
-         <35c5a001-61b0-09d7-393c-b46836d0b676@canonical.com>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+        Mon, 9 May 2022 06:24:09 -0400
+Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8E420285AD0;
+        Mon,  9 May 2022 03:20:12 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 82AA3B810F2;
+        Mon,  9 May 2022 10:04:24 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3E4BAC385AB;
+        Mon,  9 May 2022 10:04:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1652090663;
+        bh=KRAr8NAr9HEhffjgiwK4Uw60pEgav6/jUA27cwEshUw=;
+        h=In-Reply-To:References:From:Date:Subject:To:Cc:From;
+        b=lnp1a43fnuMuxe/CY86/uHJMx+9RQ310fGLR4bv866phL0rSFo+n/duplpgIqZ566
+         qd+Iliuv5LFd1W+h3GV3o1DyoJppsCfpOMJyxbaTHbAjLSG13T+yQBu4T0OwND7HVL
+         Kli8QiYQdG77pMR/YNwimqzl7+028JaxkMxM9scYRKxXoe1QVSQnsnKjhwvIClGIIh
+         8XYAjgehQ84qaQTjwYIu1Lf9OMfK3PEHfna+mcMDRMPkzPKc62fnGWHdEUbiy97OA1
+         I010isfobv2am5LZy3U6Pu1M+YKcMirXPxc1aXoo4qb+At0OE+tjD/+NNdvStgFKdZ
+         /4M31cGqBx9Ag==
+Received: by mail-ua1-f51.google.com with SMTP id ay15so5241514uab.9;
+        Mon, 09 May 2022 03:04:23 -0700 (PDT)
+X-Gm-Message-State: AOAM530h/+zOOmcrXHtlqDvsG4MSqqzeWv7iQetGjrTtSbgDmEH1emZT
+        UQJ0Ol5WnZpuXXZREQyWMz8uIuCXJpcgwSlayAE=
+X-Google-Smtp-Source: ABdhPJze9Bj2vif80pdU9vnKaat0koYohXFjUE9PaOAFIxquVtTO15k2qJPF8nmLMdZuTxk4Wl6LoraCGSJ0kxfq0rU=
+X-Received: by 2002:ab0:77d5:0:b0:352:42d7:88c2 with SMTP id
+ y21-20020ab077d5000000b0035242d788c2mr7385929uar.1.1652090662208; Mon, 09 May
+ 2022 03:04:22 -0700 (PDT)
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:cCIWrvpd3XJr2ZdvboFCrs5uDHMwcRqzCzAWlNnqCvjEGR28Ypo
- EVCBvUSpuqbMrNMGXTPIWOSLFRm8t/OtEtvMKCTkPVrq6i8G31wXDmR43TS7/K1nGaVLPSq
- cftXmS46wDhPyLxLGp4B9xcZ+gpMRD1+UCh49RYQ1JAqQRmYnGwBeXxq30et8t0LWBfGQsq
- kNoaez7FztpW0YEGA990g==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:RPnTyqZje+E=:Wq+ancMX2WYzDksMkhS+7O
- UQmxA/YkR8gaCraaF4vMcEopDl1BeHyqhjOgIuF6vF9N+mF1iuszacfFkJFgZEJOpGel4poY5
- HcCJ3xKvXMfGQKJ9+eybr6LDUwBf5bazgPQRfEK6VPmiHJp8d6yK0Rrsj0JL68yRy7quJ4RCW
- LblMCaBReJTvYQzTFkViEUpDYjcXXVBK6m/xtx4U3wM0wAPJfHxZHNTK8r776KoXZ7hE7incV
- JQ4vBMIij7e0eqHYvhO5h8I2RWnDZVwLHw257DA8X77rN2jAHa1YqDSjVTivGWShWbPrWsfpM
- NzF5oR9G6Jy06KK7GyQCPD5kACXVA5jvL99DWNCy0ZbwKel9k+AeqNTHnNsTlXCubqtkcvmrf
- tLT4QsHP7IjJphOR33mjnkJXef0aAWptNQ3evwvEqFapWgF5pPUSe4VHuTDQQxiroJ+xYV74C
- 9OAKW/3WI7oa9IuxGDjELjkxgMbsSg8eSZjwCnEk9145mAWyRl568CsByWgzZ9b/iTMuykaPy
- kUUjlDbaIIo3wplAdUYjxGugmEdDO2w2YZH7Kz/pzDFLGPbfmzdZJaL33RsG109a583z3KMro
- +Q3kvUabpENoZKkwvB63VMA/Qu1zkdfEm136NVPQQVpnx9zoKNCRbawBkd2qgIM1HRMyH8hnf
- BrSjAcXTE1ym2TfOBr88khcxrTEqV1BQNanlxRBkd5uXesEi5kTOHi8rPFwS4l4cflVGAzSKZ
- YTIvcOLFuXr6fdSTO5WI4dAARk/2sSOSI8bi1x7hHPSyYWcJoBaUN2F5zan5XiKh5yGHNROP0
- wjlRiW4+dFTUm6O1QoerrOWLiaIjc9ZyaZMZqSyrbAUWVkqbxK1G5HdY2cG7DkwCy8E44gW8l
- E/steqpQdynyaDszGb+6ozzUrE5gD29B/mffCIK2dz1BQgC7opxSY4ICqft679I/LFrdPdi2z
- ZVj7Mm55J6yUSH8KfHWFECWg9iyuLRpKZqg0ykbtcQ63fcmqGK8JN3pr0t5D1f2VEN+rCwu4K
- YsPfM8szhZIxapFwHu/Jo+vfQSGgW0ZBIXV68x4MRnWCwityAS3mGI3aiF1qRpcvcw==
+Received: by 2002:a59:b691:0:b0:2ae:8ec8:872b with HTTP; Mon, 9 May 2022
+ 03:04:21 -0700 (PDT)
+In-Reply-To: <YnVagPnKc+SDnkP/@linutronix.de>
+References: <YnVagPnKc+SDnkP/@linutronix.de>
+From:   Frederic Weisbecker <frederic@kernel.org>
+Date:   Mon, 9 May 2022 12:04:21 +0200
+X-Gmail-Original-Message-ID: <CAFTL4hxoGnTkXs4O4_L2bZafFjFJOPUH+U+h__zsfYOhLpsSGQ@mail.gmail.com>
+Message-ID: <CAFTL4hxoGnTkXs4O4_L2bZafFjFJOPUH+U+h__zsfYOhLpsSGQ@mail.gmail.com>
+Subject: Re: [ANNOUNCE] v5.18-rc5-rt5
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 2022-05-05 at 19:20 -0400, Joseph Salisbury wrote:
-> ...
-> Also, the following is the build failure that happens:
-> arch/x86/include/asm/pgtable.h:55:8: error: unknown type name 'spinlock_=
-t'
-> =C2=A0=C2=A0=C2=A0 55 | extern spinlock_t pgd_lock;
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0 ^~~~~~~~~~
+2022-05-06 19:27 UTC+02:00, Sebastian Andrzej Siewior <bigeasy@linutronix.de>:
+> Dear RT folks!
+>
+> I'm pleased to announce the v5.18-rc5-rt5 patch set.
+>
+> Changes since v5.18-rc5-rt4:
+>
+>   - Replace the ptrace patch with v4 of Eric W. Biederman's rework plus
+>     a smaller patch on top to get it to work.
+>
+>   - Drop get_cpu_light from the series:
+>
+>     - Replace the crypto/cryptd patch with an alternative version.
+>
+>     - Replace the nfs/sunrpc patch with an alternative version.
+>
+>     - Replace the vmalloc related patch with an alternative version.
+>
+>     - Replace the block-mq related patch with an alternative version.
+>
+>     - Replace the scsi/fcoe patch with two patches by Davidlohr Bueso plus
+>       two additional patches in order to tackle two remaining issues in
+>       that area.
+>
+>   - Drop the preempt-disable -> migrate-disable replacement in kvm on
+>     arm64. It seems no longer to be needed.
+>
+>   - Drop the "delay sending signals in atomic context" on x86/arm64. It
+>     is not needed to send a SIGTRAP for a breakpoint on x86 (the
+>     original motivation). Lets see if something else pops up. This might
+>     break ARM64 in that regard and will be investigated in a follow up
+>     release.
+>
+> Known issues
+>      - Valentin Schneider reported a few splats on ARM64, see
 
-35fa745286ac4 was merged into mainline 5.17-rc1 to squash that buglet.
+Please don't ignore
+https://lore.kernel.org/all/20220405010752.1347437-1-frederic@kernel.org/
+and https://lore.kernel.org/all/20220405010752.1347437-2-frederic@kernel.org/
 
-	-Mike
+Especially the second patch fixes a pretty serious issue!
+
+Thanks.
