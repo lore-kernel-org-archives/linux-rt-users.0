@@ -2,67 +2,79 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2172EC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 May 2022 10:09:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DD484C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 May 2022 10:15:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233995AbiEIKMx (ORCPT
+        id S232505AbiEIKS5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 May 2022 06:12:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35652 "EHLO
+        Mon, 9 May 2022 06:18:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37774 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234151AbiEIKMu (ORCPT
+        with ESMTP id S231322AbiEIKSz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 May 2022 06:12:50 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EDC9222387A;
-        Mon,  9 May 2022 03:08:48 -0700 (PDT)
-Date:   Mon, 9 May 2022 12:06:30 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1652090792;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=kRM2zMJ9XhBQmwQro9AS/tz3rra0CYimJ07/gdih+4g=;
-        b=wQI5dVEpzI2jTq6PNAJStI8X544Ms++lTQPW8/tmEYTDnbG1+ihgP0hGW/i07N5hghWmS6
-        PlyJUlyZqGAULc+FxtPTCVXyDB+rlJtld4gWUwB/RVgF4So5Vm8O409iJLZu+ML5yTqk0U
-        oyqI3PblyXKABjqvM5JBm+eQl6cR5tLGGXvV6QkqxQ/geBVtaavESuxVRrfimWTDoE7MX7
-        nqgqimmHc3yeoubqDITq3gzCXHlqYE9AXpyBuAsAk4lL0SA4T4GXVW33qdGXLQLQQr6Ohm
-        uBe5TBTt5c/Q0Ai6BFXYqXKQdAI+l8Et+Ym9BGekwcTAxYForHcvSI9UaCUYXg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1652090792;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=kRM2zMJ9XhBQmwQro9AS/tz3rra0CYimJ07/gdih+4g=;
-        b=V8rd+T8MGrRH607niUq0b6Ovku6MsABSNAmj15ZPOth+ECLVvXwnSpAyq+Ot6Lc1V/Ya+6
-        TpqbSp/WBjHJKICg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Frederic Weisbecker <frederic@kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] v5.18-rc5-rt5
-Message-ID: <YnjnprZzEZUM4z89@linutronix.de>
-References: <YnVagPnKc+SDnkP/@linutronix.de>
- <CAFTL4hxoGnTkXs4O4_L2bZafFjFJOPUH+U+h__zsfYOhLpsSGQ@mail.gmail.com>
+        Mon, 9 May 2022 06:18:55 -0400
+Received: from mout.gmx.net (mout.gmx.net [212.227.17.21])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 928F128135F;
+        Mon,  9 May 2022 03:14:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1652091254;
+        bh=62XK6zJxU055tL7PZ4571/szLvXI08h0pLjjJJksoHQ=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=GGwpYB7rqQH6//z9zXUeAWZxGNZBprSkq62CYV4kl7Ru36mo4k5aSwEx0nJ9IfPeR
+         h4nnELyrNG/4x9bQCjkSW1+rFtyZ1v/EAdgbqH+i0Mz3F5/c3Tc3LooarmfYmSkdY4
+         ZLgZHCZ4XwLTv7v98SL2PAfsygJL35YNYzGu5yM4=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.fritz.box ([185.221.150.43]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MIMfc-1nbtRK2YmS-00EOv1; Mon, 09
+ May 2022 12:14:14 +0200
+Message-ID: <c3d382759dac2e9b0927c0074d95e1b930e8e8dd.camel@gmx.de>
+Subject: Re: Issue With real-time patches on 5.15.y
+From:   Mike Galbraith <efault@gmx.de>
+To:     Joseph Salisbury <joseph.salisbury@canonical.com>,
+        tglx@linutronix.de
+Cc:     linux-kernel@vger.kernel.org, dave.hansen@linux.intel.com,
+        linux-rt-users@vger.kernel.org
+Date:   Mon, 09 May 2022 12:14:11 +0200
+In-Reply-To: <35c5a001-61b0-09d7-393c-b46836d0b676@canonical.com>
+References: <bdb23fe5-51ae-8873-a3d7-85f377877c79@canonical.com>
+         <35c5a001-61b0-09d7-393c-b46836d0b676@canonical.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAFTL4hxoGnTkXs4O4_L2bZafFjFJOPUH+U+h__zsfYOhLpsSGQ@mail.gmail.com>
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:cCIWrvpd3XJr2ZdvboFCrs5uDHMwcRqzCzAWlNnqCvjEGR28Ypo
+ EVCBvUSpuqbMrNMGXTPIWOSLFRm8t/OtEtvMKCTkPVrq6i8G31wXDmR43TS7/K1nGaVLPSq
+ cftXmS46wDhPyLxLGp4B9xcZ+gpMRD1+UCh49RYQ1JAqQRmYnGwBeXxq30et8t0LWBfGQsq
+ kNoaez7FztpW0YEGA990g==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:RPnTyqZje+E=:Wq+ancMX2WYzDksMkhS+7O
+ UQmxA/YkR8gaCraaF4vMcEopDl1BeHyqhjOgIuF6vF9N+mF1iuszacfFkJFgZEJOpGel4poY5
+ HcCJ3xKvXMfGQKJ9+eybr6LDUwBf5bazgPQRfEK6VPmiHJp8d6yK0Rrsj0JL68yRy7quJ4RCW
+ LblMCaBReJTvYQzTFkViEUpDYjcXXVBK6m/xtx4U3wM0wAPJfHxZHNTK8r776KoXZ7hE7incV
+ JQ4vBMIij7e0eqHYvhO5h8I2RWnDZVwLHw257DA8X77rN2jAHa1YqDSjVTivGWShWbPrWsfpM
+ NzF5oR9G6Jy06KK7GyQCPD5kACXVA5jvL99DWNCy0ZbwKel9k+AeqNTHnNsTlXCubqtkcvmrf
+ tLT4QsHP7IjJphOR33mjnkJXef0aAWptNQ3evwvEqFapWgF5pPUSe4VHuTDQQxiroJ+xYV74C
+ 9OAKW/3WI7oa9IuxGDjELjkxgMbsSg8eSZjwCnEk9145mAWyRl568CsByWgzZ9b/iTMuykaPy
+ kUUjlDbaIIo3wplAdUYjxGugmEdDO2w2YZH7Kz/pzDFLGPbfmzdZJaL33RsG109a583z3KMro
+ +Q3kvUabpENoZKkwvB63VMA/Qu1zkdfEm136NVPQQVpnx9zoKNCRbawBkd2qgIM1HRMyH8hnf
+ BrSjAcXTE1ym2TfOBr88khcxrTEqV1BQNanlxRBkd5uXesEi5kTOHi8rPFwS4l4cflVGAzSKZ
+ YTIvcOLFuXr6fdSTO5WI4dAARk/2sSOSI8bi1x7hHPSyYWcJoBaUN2F5zan5XiKh5yGHNROP0
+ wjlRiW4+dFTUm6O1QoerrOWLiaIjc9ZyaZMZqSyrbAUWVkqbxK1G5HdY2cG7DkwCy8E44gW8l
+ E/steqpQdynyaDszGb+6ozzUrE5gD29B/mffCIK2dz1BQgC7opxSY4ICqft679I/LFrdPdi2z
+ ZVj7Mm55J6yUSH8KfHWFECWg9iyuLRpKZqg0ykbtcQ63fcmqGK8JN3pr0t5D1f2VEN+rCwu4K
+ YsPfM8szhZIxapFwHu/Jo+vfQSGgW0ZBIXV68x4MRnWCwityAS3mGI3aiF1qRpcvcw==
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-05-09 12:04:21 [+0200], Frederic Weisbecker wrote:
-> Please don't ignore
-> https://lore.kernel.org/all/20220405010752.1347437-1-frederic@kernel.org/
-> and https://lore.kernel.org/all/20220405010752.1347437-2-frederic@kernel.org/
-> 
-> Especially the second patch fixes a pretty serious issue!
+On Thu, 2022-05-05 at 19:20 -0400, Joseph Salisbury wrote:
+> ...
+> Also, the following is the build failure that happens:
+> arch/x86/include/asm/pgtable.h:55:8: error: unknown type name 'spinlock_=
+t'
+> =C2=A0=C2=A0=C2=A0 55 | extern spinlock_t pgd_lock;
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 ^~~~~~~~~~
 
-Sorry, this somehow slipped.
+35fa745286ac4 was merged into mainline 5.17-rc1 to squash that buglet.
 
-> Thanks.
-
-Sebastian
+	-Mike
