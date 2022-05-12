@@ -2,67 +2,95 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 29198C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 11 May 2022 23:23:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1512CC433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 12 May 2022 03:39:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1349338AbiEKXXV (ORCPT
+        id S1344515AbiELDj3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 11 May 2022 19:23:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52684 "EHLO
+        Wed, 11 May 2022 23:39:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39878 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1349292AbiEKXXC (ORCPT
+        with ESMTP id S233136AbiELDj2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 11 May 2022 19:23:02 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BE5B322A8A6
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 16:19:45 -0700 (PDT)
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1652311183;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=bwVUL4BmngtW9b7VtyfXKdAtTlSO+OLvKSAXi2GFoTU=;
-        b=RzncLUo8jrV8gdiBFvgEBsU9XZO/hA+kmIlN4yUu2yRoz8zAvkcBYo+WkuGnuyub1i0IqW
-        GmCQ8hI98Pg7rqbXJDxrPQm/lxad4m7kQEFP0iY6oaib3q+KaPadh1xH9xLzBqM2bxbskq
-        cDv7jGKp4F+JWFAPAK0dtHqNMKY3iThca02Mb9eXeqiwMtBtenGoTJ2OSX9WPeHftX1SV1
-        QHA0xziOeHBfOp9xU6BfSqd9ujSC5xKMvLspUKCGcYOM2Jes8WlhpYmy3d7TJALMV9WIKG
-        WKF2ToQA7fyzfL/3D0TMpQthOV+deDWMoAwPHB+VntdzsopzrPEVyK1ux0oVCw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1652311183;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=bwVUL4BmngtW9b7VtyfXKdAtTlSO+OLvKSAXi2GFoTU=;
-        b=MnGcAGzxkut/wFHqVrQRbytIyrkra+u8OJrF5YUe1UizeDMTRbCEcwZrqfSVbvQDltuKae
-        iRonZXCoDyHJvQDA==
-To:     Yimin Deng <yimin11.deng@gmail.com>, linux-rt-users@vger.kernel.org
-Subject: Re: Oops or bad page in page_alloc.c
-In-Reply-To: <CAAh1qtktzZQxXp_t43YhxL6FZTS58rn_xvK2Zrq33-s3=j_sGQ@mail.gmail.com>
-References: <CAAh1qtktzZQxXp_t43YhxL6FZTS58rn_xvK2Zrq33-s3=j_sGQ@mail.gmail.com>
-Date:   Thu, 12 May 2022 01:19:43 +0200
-Message-ID: <875ymby7w0.ffs@tglx>
+        Wed, 11 May 2022 23:39:28 -0400
+Received: from mail-wr1-x431.google.com (mail-wr1-x431.google.com [IPv6:2a00:1450:4864:20::431])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30F096A06E
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 20:39:27 -0700 (PDT)
+Received: by mail-wr1-x431.google.com with SMTP id a5so1610728wrp.7
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 20:39:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=message-id:date:mime-version:user-agent:content-language:to
+         :references:from:subject:in-reply-to:content-transfer-encoding;
+        bh=Ryf/wp9YLlSIBtisquynJ+a8dPy2fUuThClLTwGccH8=;
+        b=EXZDMNVZY8/arrbKhzQeO5bEsobyD1fCGlgTyqvSRwQHEkv7tdRlMyi8JqJeU5NDA2
+         yjWQ9sIPoLEKxGwJoFD0aLgyyIcf3LWrx+sRqaaxQYiZuPO7a9GeoW0/j42qMDqF1yCD
+         0wvawWoxrjiZafEls2eJKGlrJCcMKvF+z8D+fZlyEmxqD8QSNYLvUnyfK701PVuexoq8
+         EMtdid3EJTXVwJDAETcfxG8d8aQQGh1pn8+Ndcc28LgtXXGR93OC4ST/GdP592gyRW3S
+         xYYI+MJt73JX+xhnipCZRwBbWWRnC3VG9fWzh6+97/wiHjoleMehF6DW0WR71YlzO3/d
+         s3Xw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:message-id:date:mime-version:user-agent
+         :content-language:to:references:from:subject:in-reply-to
+         :content-transfer-encoding;
+        bh=Ryf/wp9YLlSIBtisquynJ+a8dPy2fUuThClLTwGccH8=;
+        b=Smr0EKn36kCC51oz+Z+Scb+cA3vnyxC12Hn2bWNuqogvOzdHR7PWxexVoMGc2yu3P9
+         A5DNwdbBiHOVYtvQrR5AEZX0HiKKutCxpmEIcCMHgBJnqliEPQs783cI/0mZEYl1Gp1z
+         IyLGGg+uKou38xohYGkG1USq3xpXd/EDNtszqZ6T9n2kIUHUf0VEG56sTdKA+S6Em1pc
+         Zf0cvcnqdoQvievkKN7J5JBfhvZCfeU4KN2gaJTMu2HKEwmWlLC6NkTC+atIrvHLc0n7
+         tpdYEaRzqkRNsTw0x4lQ1E8gNt8qeKRw0Ygd530YlGi3SaM4bSWYkPPJOmTPBDiXUvd+
+         ArNQ==
+X-Gm-Message-State: AOAM5302tIPsQCbpupL5P8/O2VYXFQJ2FphzLryyc7xIup4KDeqKTxeT
+        McBu2MvV3SaUnaL1ycZ5CfEdEsBzcx0=
+X-Google-Smtp-Source: ABdhPJwjAKuzqAM58vWpq0bow8IM4w5fN2HAkS0yai2XSiBmFpikyr6elPBe0xVzVkf0hU8JXhSVOg==
+X-Received: by 2002:a5d:5085:0:b0:20a:e090:85ad with SMTP id a5-20020a5d5085000000b0020ae09085admr25125156wrt.235.1652326765354;
+        Wed, 11 May 2022 20:39:25 -0700 (PDT)
+Received: from [192.168.1.6] ([5.28.133.54])
+        by smtp.googlemail.com with ESMTPSA id m12-20020a5d56cc000000b0020c635ca28bsm2867332wrw.87.2022.05.11.20.39.24
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 11 May 2022 20:39:24 -0700 (PDT)
+Message-ID: <7f336ac2-b664-452e-12e7-d29ccc53fbf6@gmail.com>
+Date:   Thu, 12 May 2022 06:39:23 +0300
 MIME-Version: 1.0
-Content-Type: text/plain
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.9.0
+Content-Language: en-US
+To:     linux-rt-users@vger.kernel.org
+References: <CAB6A5-C=YsVca4OQJZ=tOg9mjzEjobD9b94Mkvc0Ora_uQ-GCA@mail.gmail.com>
+ <87czrtorwp.ffs@nanos.tec.linutronix.de>
+From:   yosi yarchi <yosi.yarchi@gmail.com>
+Subject: high latency introduced by hrtimer_interrupt
+In-Reply-To: <87czrtorwp.ffs@nanos.tec.linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, May 09 2022 at 15:40, Yimin Deng wrote:
-> I encountered an oops in isolate_pcp_pages() and a bad page in
-> get_page_from_freelist().
->
-> linux: 3.12.37-rt51  (CONFIG_PREEMPT_RT_BASE not enabled)
+hi
 
-The 3.12 kernel series went out of maintenance five years ago
-with version 3.12.74-rt99.
 
-    https://www.kernel.org/doc/html/latest/admin-guide/reporting-issues.html
+I'm using linux-rt, 5.4.41, at91 sam9x35 (single core).
 
-> [18857089.275357] CPU: 1 PID: 10357 Comm: appmon.sh Tainted: G   O 3.12.37-rt51 #1
 
-    https://www.kernel.org/doc/html/latest/admin-guide/tainted-kernels.html
+AFAIK, the hrtimer_interrupt must run at HW context, and could not be 
+threaded.
+On my system, hrtimer_interrupt processing takes ~100us in average, 
+~40us in best case and ~200us in worst case. when adding the overhead of 
+the re-scheduling that follow each interrupt, we get to worst case 
+overhead of ~250us for the hrtimer_interrupt.
+This worst case and the huge variance are too high for some of my 
+threaded interrupts, which have to record timestamps of HW events with 
+precision < 100us.
 
-Thanks,
+Digging in documentation and mailing lists, I didn't find any solution...
 
-        tglx
+
+Any idea on how to overcome this problem?
+
+
+With best regards
+Yosi Yarchi
+
