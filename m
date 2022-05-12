@@ -2,95 +2,146 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1512CC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 May 2022 03:39:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A9E16C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 12 May 2022 03:56:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344515AbiELDj3 (ORCPT
+        id S1345308AbiELD4U (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 11 May 2022 23:39:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39878 "EHLO
+        Wed, 11 May 2022 23:56:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37708 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233136AbiELDj2 (ORCPT
+        with ESMTP id S1345278AbiELD4E (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 11 May 2022 23:39:28 -0400
-Received: from mail-wr1-x431.google.com (mail-wr1-x431.google.com [IPv6:2a00:1450:4864:20::431])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30F096A06E
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 20:39:27 -0700 (PDT)
-Received: by mail-wr1-x431.google.com with SMTP id a5so1610728wrp.7
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 20:39:27 -0700 (PDT)
+        Wed, 11 May 2022 23:56:04 -0400
+Received: from mail-io1-xd2f.google.com (mail-io1-xd2f.google.com [IPv6:2607:f8b0:4864:20::d2f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3DE1712AC9
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 20:56:02 -0700 (PDT)
+Received: by mail-io1-xd2f.google.com with SMTP id z18so4094159iob.5
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 May 2022 20:56:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=message-id:date:mime-version:user-agent:content-language:to
-         :references:from:subject:in-reply-to:content-transfer-encoding;
-        bh=Ryf/wp9YLlSIBtisquynJ+a8dPy2fUuThClLTwGccH8=;
-        b=EXZDMNVZY8/arrbKhzQeO5bEsobyD1fCGlgTyqvSRwQHEkv7tdRlMyi8JqJeU5NDA2
-         yjWQ9sIPoLEKxGwJoFD0aLgyyIcf3LWrx+sRqaaxQYiZuPO7a9GeoW0/j42qMDqF1yCD
-         0wvawWoxrjiZafEls2eJKGlrJCcMKvF+z8D+fZlyEmxqD8QSNYLvUnyfK701PVuexoq8
-         EMtdid3EJTXVwJDAETcfxG8d8aQQGh1pn8+Ndcc28LgtXXGR93OC4ST/GdP592gyRW3S
-         xYYI+MJt73JX+xhnipCZRwBbWWRnC3VG9fWzh6+97/wiHjoleMehF6DW0WR71YlzO3/d
-         s3Xw==
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=Xcm/62+yD5RSL2gQPzQLNX4HYx+/RpaPEGiKu8NTGnw=;
+        b=kL1Mq0FwsuxWhOS96WGJfZT1xPKCPM8PPZv4CFAUhmz2MvfFHBdumNrk8fi98qtJVk
+         E/Oy93XY45I+ghqlSdeXckWOTXxLO18wAHIP2fw+jh+ODJLLq6nrKD8uht7y1ZWq0EJj
+         2vUFZbnXx/cFK9saVbWGHfR1oiuk23fNqV/JcRzjrWMrNovP0rxLLrStZeOgqJRXzb1M
+         u+SmzBzzC52JY8b8voekcdnNyiC6+T692HEmUSKlNhRQGXthul0p5TzDupOlwzmTTsJt
+         iw4JpUzQ34R+ibK9P3uwiqeuc1qpQGqPGFcHMtdpqrFkEaWcUntDz2LOWCHMiPZqM5IX
+         /XQg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:date:mime-version:user-agent
-         :content-language:to:references:from:subject:in-reply-to
-         :content-transfer-encoding;
-        bh=Ryf/wp9YLlSIBtisquynJ+a8dPy2fUuThClLTwGccH8=;
-        b=Smr0EKn36kCC51oz+Z+Scb+cA3vnyxC12Hn2bWNuqogvOzdHR7PWxexVoMGc2yu3P9
-         A5DNwdbBiHOVYtvQrR5AEZX0HiKKutCxpmEIcCMHgBJnqliEPQs783cI/0mZEYl1Gp1z
-         IyLGGg+uKou38xohYGkG1USq3xpXd/EDNtszqZ6T9n2kIUHUf0VEG56sTdKA+S6Em1pc
-         Zf0cvcnqdoQvievkKN7J5JBfhvZCfeU4KN2gaJTMu2HKEwmWlLC6NkTC+atIrvHLc0n7
-         tpdYEaRzqkRNsTw0x4lQ1E8gNt8qeKRw0Ygd530YlGi3SaM4bSWYkPPJOmTPBDiXUvd+
-         ArNQ==
-X-Gm-Message-State: AOAM5302tIPsQCbpupL5P8/O2VYXFQJ2FphzLryyc7xIup4KDeqKTxeT
-        McBu2MvV3SaUnaL1ycZ5CfEdEsBzcx0=
-X-Google-Smtp-Source: ABdhPJwjAKuzqAM58vWpq0bow8IM4w5fN2HAkS0yai2XSiBmFpikyr6elPBe0xVzVkf0hU8JXhSVOg==
-X-Received: by 2002:a5d:5085:0:b0:20a:e090:85ad with SMTP id a5-20020a5d5085000000b0020ae09085admr25125156wrt.235.1652326765354;
-        Wed, 11 May 2022 20:39:25 -0700 (PDT)
-Received: from [192.168.1.6] ([5.28.133.54])
-        by smtp.googlemail.com with ESMTPSA id m12-20020a5d56cc000000b0020c635ca28bsm2867332wrw.87.2022.05.11.20.39.24
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 11 May 2022 20:39:24 -0700 (PDT)
-Message-ID: <7f336ac2-b664-452e-12e7-d29ccc53fbf6@gmail.com>
-Date:   Thu, 12 May 2022 06:39:23 +0300
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc:content-transfer-encoding;
+        bh=Xcm/62+yD5RSL2gQPzQLNX4HYx+/RpaPEGiKu8NTGnw=;
+        b=0Hx5v8pCpb4/HL98diHmhVbQWVFxGmaUQppX7VRIqW6c3dmtVceRyhE0cXi3YFMWjD
+         zH6b/GzDtI8XiCzL6nOoD1m5GmPiEWZQnP9RiOdngxdXHAC2wrCskObWD2XuTfRDqdaw
+         mOChBomY7U6jFF1tAK5nra6rxNMVyMWB1Ze45cfbAOl0m640zBYfGMG+b73oHFn32KFd
+         KWFTUZASfszLTVCluDSwxUJqlrC00SIwNasn5LaZZ3BkVoVqq6/ehS9O8lv1AUNImCT9
+         /axOWbPLdfKMhSe0AWHFUEa/u/uhYOlFGvlDKhbFNRpTHzazrgIkKoNvmAtggwvUWYP1
+         /qjQ==
+X-Gm-Message-State: AOAM530217NVINodB/8ULzPPmBOczATOwPkWntnmEVVLb9BhidV4ldsA
+        lQXShWYEfoz2MOUiAxOV9mDVP4M4G/tjv+LlvB/IYSjQEpjj6w==
+X-Google-Smtp-Source: ABdhPJy9ShouKSdr5fjmjzZQawvdUr6iVVNo/xwmLJ3Aj4z2VTzz8AVfDfaI2tedbzzb/DZvjuVw/70c9M8A4IBktLI=
+X-Received: by 2002:a02:860d:0:b0:32b:2210:95c with SMTP id
+ e13-20020a02860d000000b0032b2210095cmr13811533jai.175.1652327761608; Wed, 11
+ May 2022 20:56:01 -0700 (PDT)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.9.0
-Content-Language: en-US
-To:     linux-rt-users@vger.kernel.org
-References: <CAB6A5-C=YsVca4OQJZ=tOg9mjzEjobD9b94Mkvc0Ora_uQ-GCA@mail.gmail.com>
- <87czrtorwp.ffs@nanos.tec.linutronix.de>
-From:   yosi yarchi <yosi.yarchi@gmail.com>
-Subject: high latency introduced by hrtimer_interrupt
-In-Reply-To: <87czrtorwp.ffs@nanos.tec.linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+References: <CAAh1qtktzZQxXp_t43YhxL6FZTS58rn_xvK2Zrq33-s3=j_sGQ@mail.gmail.com>
+ <Ynvh8Nh7hyp4tSKk@linutronix.de>
+In-Reply-To: <Ynvh8Nh7hyp4tSKk@linutronix.de>
+From:   Yimin Deng <yimin11.deng@gmail.com>
+Date:   Thu, 12 May 2022 11:55:49 +0800
+Message-ID: <CAAh1qtme2Lefj5XZsNoPOmGqhjcf=qkWzs3z_=tbYH209QgLyQ@mail.gmail.com>
+Subject: Re: Oops or bad page in page_alloc.c
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-hi
+Hi Sebastian,
 
+Thanks a lot for your quick reply!
 
-I'm using linux-rt, 5.4.41, at91 sam9x35 (single core).
+CONFIG_HAVE_PREEMPT_LAZY=3Dy
+CONFIG_PREEMPT_NONE=3Dy
+# CONFIG_PREEMPT_VOLUNTARY is not set
+# CONFIG_PREEMPT__LL is not set
+# CONFIG_PREEMPT_RTB is not set
+# CONFIG_PREEMPT_RT_FULL is not set
 
+CONFIG_SLAB=3Dy
+# CONFIG_SLUB is not set
+# CONFIG_SLOB is not set
 
-AFAIK, the hrtimer_interrupt must run at HW context, and could not be 
-threaded.
-On my system, hrtimer_interrupt processing takes ~100us in average, 
-~40us in best case and ~200us in worst case. when adding the overhead of 
-the re-scheduling that follow each interrupt, we get to worst case 
-overhead of ~250us for the hrtimer_interrupt.
-This worst case and the huge variance are too high for some of my 
-threaded interrupts, which have to record timestamps of HW events with 
-precision < 100us.
+CONFIG_PREEMPT_RT_FULL is not enabled, neither CONFIG_SLUB. I think
+it's not related to the issue fixed in f1aca90802af9 ("Revert "slub:
+delay ctor until the object is requested""). We share the kernel
+source code but using different configuration on different products.
+The applications on this product are non-RT applications.
 
-Digging in documentation and mailing lists, I didn't find any solution...
+This issue was reported on different nodes, so it seems not related to
+hardware bad RAM. I'm checking whether it's possible for other CPUs in
+AMP to overwrite the memory.
 
+I will consider your suggestion on disabling the memory compacting and
+enabling the list-debugging.
 
-Any idea on how to overcome this problem?
+Sincerely appreciate your support!
 
+B.R.
+Yimin
 
-With best regards
-Yosi Yarchi
-
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> =E4=BA=8E2022=E5=B9=B45=
+=E6=9C=8812=E6=97=A5=E5=91=A8=E5=9B=9B 00:18=E5=86=99=E9=81=93=EF=BC=9A
+>
+> On 2022-05-09 15:40:43 [+0800], Yimin Deng wrote:
+> > Hi
+> Hi,
+>
+> > I encountered an oops in isolate_pcp_pages() and a bad page in
+> > get_page_from_freelist().
+> >
+> > linux: 3.12.37-rt51  (CONFIG_PREEMPT_RT_BASE not enabled)
+> > arch: PowperPC (e500)
+> =E2=80=A6
+> What you mean by CONFIG_PREEMPT_RT_BASE is not enabled? Is
+> CONFIG_PREEMPT_RT_FULL enabled or none of those options?
+>
+> > Any suggestions will be appreciated!
+> >
+> > [18857088.953420] Unable to handle kernel paging request for data at
+> > address 0x00100104
+> > [18857089.046143] Faulting instruction address: 0xc0075624
+> =E2=80=A6
+> > [18857090.073578] NIP [c0075624] isolate_pcp_pages+0x84/0xc4
+> > [18857090.138173] LR [c0078f24] free_hot_cold_page+0x124/0x174
+> =E2=80=A6
+>
+> I can't even tell if I saw a report as yours earlier or not. I do
+> remember that I saw the "bad page state" reports earlier but I don't
+> remember how they went away. I know that I had two 8572DS systems and
+> one started to report all kind different errors (including "bad page
+> state") but this was due to bad RAM (probably) since the other system
+> never had this error despite that they had the same configuration.
+>
+> Your kernel is kind of old. The latest v3.12 is v3.12.74-rt99 which
+> contains a few bug fixes including commit
+>     f1aca90802af9 ("Revert "slub: delay ctor until the object is requeste=
+d"")
+>
+> which is probably not what you see but a possible crash.
+> You could disable memory compacting and so on but as far as I remember
+> they could lead higher latencies in some cases, not to a crash.
+> You could enable list-debugging in case an entry is added/removed
+> multiple times.
+> The e500 support is quite good upstream so you could upgrade to a later
+> kernel (one of the current LTS kernels).
+>
+> > B.R.
+> > Yimin
+>
+> Sebastian
