@@ -2,181 +2,267 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 488FCC433F5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 May 2022 14:23:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 67661C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 May 2022 19:09:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244627AbiEPOXo (ORCPT
+        id S1345320AbiEPTJT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 May 2022 10:23:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60396 "EHLO
+        Mon, 16 May 2022 15:09:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53488 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244531AbiEPOXg (ORCPT
+        with ESMTP id S1345311AbiEPTJS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 May 2022 10:23:36 -0400
-Received: from mail-ua1-x936.google.com (mail-ua1-x936.google.com [IPv6:2607:f8b0:4864:20::936])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6FC723B3C3
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 May 2022 07:23:24 -0700 (PDT)
-Received: by mail-ua1-x936.google.com with SMTP id n24so25801uap.13
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 May 2022 07:23:24 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=hDW2+Jg3JfWkAbvIEok9LptY7efQPzBNt+FHHmadtGE=;
-        b=iaPhBoyCgu+Z0mzPret+hxTCSAbDCIB/pNxkmRWXKuSKMJv0DphS5MCx4qeWMzzC7M
-         gs3N4mZ++ifuZwU2MbtcUNBdhH9hk7aEHO+ToVvUmJwcf53JBGZIcogqoqRX9EnAVNIV
-         oOihiafqZq8AJn79bzLjAo8bPPUJ6X65nMnuPGs1PjirTN5dVK3uBiOXIpGmIqMEGQjU
-         nF/bNS+ZJxa67ZncNedzfcRNusH2CnDdjujG9gEd6ELNYVbHRcLT3J0lzRM27eVqhL4e
-         MzryZcCuyljU/CqD9sH9EHA/wTzvKTU6Oh9kKyMgmyULVTalB6PL7MO2FUL5/GY4EVg7
-         83yQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=hDW2+Jg3JfWkAbvIEok9LptY7efQPzBNt+FHHmadtGE=;
-        b=accFTtqOMztBtXrqSMde7CEMc9rgopJ0mUlOiqBICCoM8FtzHuYuZNHAtVV8zgdJG7
-         a0iJ7euGPpT9j2jKA0rNmkcBcmiKnLy//3WBravzeIQFlxM/5YAKuR2eqx9jzTwGd7EW
-         aJYhBeHV1pEnUOit6S7JfXKCR6y9H0hxAMzsSowQzXMxVBQf0dzYcv1nHIAk4v1JS4yK
-         XOwlTzqyM0wtTnbUDQGaH3Zx1UgWJKt3I0AhytgoklptZGxlPjjjbXC0d1ebQe3hJXvU
-         QBpR0ZpU9DBZaHDIU4Ys4mI+u6YKV/N3aaZ399DQPBZ3TC6ARgXxR+j8xH0YUXwYmf07
-         i4bg==
-X-Gm-Message-State: AOAM532D7tJv7LMOc4O1A7vZnWzQY9IcK/PYpo5koFM23CTfCOJROf3X
-        kgTNdu+EUrLzshYqtTbo0TdKrkFLuvOZg8iJdc46o9yuCGA=
-X-Google-Smtp-Source: ABdhPJyTarHHjulEQRwQRdrWaGp7A2pOQgQ5CcGrLFnhtR2ZSmSsDnYOvhrRWqIKBMbDcAB2GZZib9yG+qzkxZXKbeE=
-X-Received: by 2002:a05:6130:32a:b0:365:88b6:fd2 with SMTP id
- ay42-20020a056130032a00b0036588b60fd2mr6902068uab.97.1652711003325; Mon, 16
- May 2022 07:23:23 -0700 (PDT)
-MIME-Version: 1.0
-References: <1631541178.407490.1643808841804.JavaMail.zimbra@savoirfairelinux.com>
-In-Reply-To: <1631541178.407490.1643808841804.JavaMail.zimbra@savoirfairelinux.com>
-From:   Florent Carli <fcarli@gmail.com>
-Date:   Mon, 16 May 2022 16:23:11 +0200
-Message-ID: <CAJuRqcA-PCJratDCxK==eu3oZEFerj+trtfcZz1-hVzttP3+Nw@mail.gmail.com>
-Subject: Re: [Question] KVM-RT high max latency after upgrade host from 4.19
- to 5.15
-To:     =?UTF-8?Q?Mathieu_Dupr=C3=A9?= <mathieu.dupre@savoirfairelinux.com>
-Cc:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+        Mon, 16 May 2022 15:09:18 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 867723969C;
+        Mon, 16 May 2022 12:09:16 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 13073614C6;
+        Mon, 16 May 2022 19:09:16 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4C7ACC385AA;
+        Mon, 16 May 2022 19:09:15 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 5.15.40-rt43
+Date:   Mon, 16 May 2022 19:08:25 -0000
+Message-ID: <165272810508.507274.552990901918954361@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-> I would like to know what is introducing this latency. Is it related to the fact
-> that the CPU running KVM periodically enters IDLE mode? Why do we
-> have this behavior in 5.15 and not in 4.19?
+Hello RT-list!
 
-This is easily reproducible when using vcpu-pinning on a guest, I
-think I got to the bottom of this. Buckle up, this is a bit tricky :)
-I believe these latencies come from hitting RT-Throttling in your
-host. This can be verified in your kernel logs where you should find
-"RT throttling activated" (printed only once). By default
-RT-throttling prevents an RT process to consume more than 95% of a cpu
-runtime (actually 950000us/1000000us as you can check in
-/proc/sys/kernel/sched_rt_period_us and
-/proc/sys/kernel/sched_rt_runtime_us).
-Why is throttling activated? Because your guest vCPU processes are
-above 95% utilisation, which may seem weird since the cyclictest
-process is not consuming so much... what's happening? Indeed the cpu
-usage from inside your guest is small, why is it so high from the host
-perspective?
-The root cause is actually the default value of kvm halt_pool_ns
-(200000ns, matching your cyclictest interval value 200us), and because
-you are probably using vcpu-pinning (or any other mecanism/constraint
-that makes the vcpus running on the exact same number of cpu --> the
-vcpu is constrained to a cpu).
+I'm pleased to announce the 5.15.40-rt43 stable release.
 
-From https://www.kernel.org/doc/Documentation/virtual/kvm/halt-polling.txt:
-"The KVM halt polling system provides a feature within KVM whereby the
-latency of a guest can, under some circumstances, be reduced by
-polling in the host for some time period after the guest has elected
-to no longer run by cedeing."
+You can get this release via the git tree at:
 
-When the cyclictest interval is larger than halt_poll_ns, then the
-polling does not help (it's never interrupted) and the
-growing/shrinking algorithm makes the interval go to 0 ("In the event
-that the total block time was greater than the global max polling
-interval then the host will never poll for long enough (limited by the
-global max) to wakeup during the polling interval so it may as well be
-shrunk in order to avoid pointless polling.").
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-But when the cyclictest interval starts becoming smaller than
-halt_poll_ns, then a wakeup source is received within polling...
-"During polling if a wakeup source is received within the halt polling
-interval, the interval is left unchanged.", and so polling continues
-with the same value, again and again, which puts us is this situation:
+  branch: v5.15-rt
+  Head SHA1: 3122b8942f4d214f432a601d1646ed08b1a0d381
 
-"Care should be taken when setting the halt_poll_ns module parameter
-as a large value has the potential to drive the cpu usage to 100% on a
-machine which would be almost entirely idle otherwise. This is because
-even if a guest has wakeups during which very little work is done and
-which are quite far apart, if the period is shorter than the global
-max polling interval (halt_poll_ns) then the host will always poll for
-the entire block time and thus cpu utilisation will go to 100%."
+Or to build 5.15.40-rt43 directly, the following patches should be applied:
 
-To sum up, when you use cyclictest with an interval <= halt_poll_ns,
-and when the vCPU is constrained, the vCPU and the associated CPU will
-naturally hit 100%, which will make your host throttle the RT process
-(by default 50ms every second, which is precisely the kind of
-latencies you observe).
-If the vCPU is not constrained to a CPU, I guess the high load from
-the RT process is more easily migrated to different cpus by the
-scheduler, so even though the process will show 100% usage total, no
-cpu will hit RT-throttling. I don't know what makes the process
-migrate in that case, if someone knows please feel free to respond.
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
 
-What's weird is that you say you still encounter this situation with
-halt_poll_ns lowered to 50000ns and that's not supposed to happen. My
-guess is that you may not have restarted your guest so that it catches
-on the new value. My experience (I didn't check the kvm code) is that
-this setting is determined per guest, at guest startup.
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.40.xz
 
-Now for the last part of the problem, why you didn't hit this problem
-with kernel v4.19.
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.40-rt43.patch.xz
 
-With kernel v4.19 you didn't hit RT-throttling, even thought the vcpu
-was using 100% cpu runtime (you can check in your kernel logs). The
-reason is that on kernel < 5.10, the scheduler comes with RT runtime
-sharing enabled (RT_RUNTIME_SHARE is true by default). With kernel
-v5.10, RT_RUNTIME_SHARE is disabled by default.
-https://lore.kernel.org/lkml/c596a06773658d976fb839e02843a459ed4c2edf.1479204252.git.bristot@redhat.com/
 
-"RT_RUNTIME_SHARE sched feature enables the sharing of rt_runtime
-between CPUs, allowing a CPU to run a real-time task up to 100% of the
-time while leaving more space for non-real-time tasks to run on the
-CPU that lend rt_runtime"
+Enjoy!
+Clark
 
-My understanding it that with RT_RUNTIME_SHARE enabled (on your 4.19
-kernel), the vcpu needing 100% runtime would "borrow" the extra 5% to
-another cpu runtime, and thus would not get throttled by
-RT-throttling.
+Changes from v5.15.39-rt42:
+---
 
-To conclude, you have 5 ways not to have this problem (the first 3 are
-just to not be in this very specific situation):
-1) increase your cyclictest interval, so that you don't hit the halt
-polling problem at default value 200us, then your vpcu won't use 100%
-of the cpu
-2) lower your halt polling max interval, so that your cyclictest with
-a 200us does not hit the lowered halt polling interval (you can also
-disable halt polling altogother, by setting 0 to halt_poll_ns), your
-vcpu won't use 100% of the cpu. This is what you have tested and
-should have solved the issue. Be sure you stop the VM and start it
-again when you change halt_poll_ns.
-3) do not use vcpu-pinning so that the high cpu load is dispatched on
-different cpus (if you have more cpus than vcpus of course...)
-4) disable RT-Throttling (echo -1 >
-/proc/sys/kernel/sched_rt_period_us): even though the vcpu uses 100%
-of its cpu, it won't be throttled so you won't get the latencies
-5) enable RT_RUNTIME_SHARE (echo RT_RUNTIME_SHARE >
-/sys/kernel/debug/sched/features) so that your are exactly in the
-kernel <5.10 situation (no throttling because of sharing). Since you
-are compiling a custom kernel, note that you need CONFIG_SCHED_DEBUG
-to play with scheduler features.
+Arnaldo Carvalho de Melo (1):
+      tools arch: Update arch/x86/lib/mem{cpy,set}_64.S copies used in 'perf bench mem memcpy'
 
-I personally would keep using vcpu-pinning, but avoid testing with a
-cyclictest interval <= halt_poll_ns since it's kind of a particular
-situation which will make you cpu go crazy, which is something you
-probably do not want anyway. And since you are using isolated cpus for
-your RT workloads, I would also go with disabling RT-Throttling, which
-is kind of a standard best practice when trying to achieve best
-latencies (see redhat tuned profile for realtime for example)
-https://github.com/redhat-performance/tuned/blob/9fa66f19de78f31009fdaf3968a6d75686c190bc/profiles/realtime/tuned.conf#L44
+Borislav Petkov (1):
+      kvm/emulate: Fix SETcc emulation function offsets with SLS
+
+Clark Williams (2):
+      Merge tag 'v5.15.40' into v5.15-rt
+      'Linux 5.15.40-rt43'
+
+Gleb Fotengauer-Malinovskiy (1):
+      rfkill: uapi: fix RFKILL_IOCTL_MAX_SIZE ioctl request definition
+
+Greg Kroah-Hartman (1):
+      Linux 5.15.40
+
+Itay Iellin (1):
+      Bluetooth: Fix the creation of hdev->name
+
+Jan Kara (1):
+      udf: Avoid using stale lengthOfImpUse
+
+Masahiro Yamada (1):
+      kbuild: move objtool_args back to scripts/Makefile.build
+
+Miaohe Lin (1):
+      mm/mlock: fix potential imbalanced rlimit ucounts adjustment
+
+Muchun Song (4):
+      mm: fix missing cache flush for all tail pages of compound page
+      mm: hugetlb: fix missing cache flush in copy_huge_page_from_user()
+      mm: shmem: fix missing cache flush in shmem_mfill_atomic_pte()
+      mm: userfaultfd: fix missing cache flush in mcopy_atomic_pte() and __mcopy_atomic()
+
+Naoya Horiguchi (1):
+      mm/hwpoison: fix error page recovered but reported "not recovered"
+
+Peter Xu (1):
+      mm: fix invalid page pointer returned with FOLL_PIN gups
+
+Peter Zijlstra (8):
+      x86/lib/atomic64_386_32: Rename things
+      x86: Prepare asm files for straight-line-speculation
+      x86: Prepare inline-asm for straight-line-speculation
+      objtool: Add straight-line-speculation validation
+      x86/alternative: Relax text_poke_bp() constraint
+      x86: Add straight-line-speculation mitigation
+      crypto: x86/poly1305 - Fixup SLS
+      objtool: Fix SLS validation for kcov tail-call replacement
+---
+Makefile                                      |  2 +-
+ arch/x86/Kconfig                              | 12 ++++
+ arch/x86/Makefile                             |  4 ++
+ arch/x86/boot/compressed/efi_thunk_64.S       |  2 +-
+ arch/x86/boot/compressed/head_64.S            |  8 +--
+ arch/x86/boot/compressed/mem_encrypt.S        |  6 +-
+ arch/x86/crypto/aegis128-aesni-asm.S          | 48 +++++++--------
+ arch/x86/crypto/aes_ctrby8_avx-x86_64.S       |  2 +-
+ arch/x86/crypto/aesni-intel_asm.S             | 56 ++++++++---------
+ arch/x86/crypto/aesni-intel_avx-x86_64.S      | 40 ++++++-------
+ arch/x86/crypto/blake2s-core.S                |  4 +-
+ arch/x86/crypto/blowfish-x86_64-asm_64.S      | 12 ++--
+ arch/x86/crypto/camellia-aesni-avx-asm_64.S   | 14 ++---
+ arch/x86/crypto/camellia-aesni-avx2-asm_64.S  | 14 ++---
+ arch/x86/crypto/camellia-x86_64-asm_64.S      | 12 ++--
+ arch/x86/crypto/cast5-avx-x86_64-asm_64.S     | 12 ++--
+ arch/x86/crypto/cast6-avx-x86_64-asm_64.S     | 10 ++--
+ arch/x86/crypto/chacha-avx2-x86_64.S          |  6 +-
+ arch/x86/crypto/chacha-avx512vl-x86_64.S      |  6 +-
+ arch/x86/crypto/chacha-ssse3-x86_64.S         |  8 +--
+ arch/x86/crypto/crc32-pclmul_asm.S            |  2 +-
+ arch/x86/crypto/crc32c-pcl-intel-asm_64.S     |  2 +-
+ arch/x86/crypto/crct10dif-pcl-asm_64.S        |  2 +-
+ arch/x86/crypto/des3_ede-asm_64.S             |  4 +-
+ arch/x86/crypto/ghash-clmulni-intel_asm.S     |  6 +-
+ arch/x86/crypto/nh-avx2-x86_64.S              |  2 +-
+ arch/x86/crypto/nh-sse2-x86_64.S              |  2 +-
+ arch/x86/crypto/poly1305-x86_64-cryptogams.pl | 38 ++++++------
+ arch/x86/crypto/serpent-avx-x86_64-asm_64.S   | 10 ++--
+ arch/x86/crypto/serpent-avx2-asm_64.S         | 10 ++--
+ arch/x86/crypto/serpent-sse2-i586-asm_32.S    |  6 +-
+ arch/x86/crypto/serpent-sse2-x86_64-asm_64.S  |  6 +-
+ arch/x86/crypto/sha1_avx2_x86_64_asm.S        |  2 +-
+ arch/x86/crypto/sha1_ni_asm.S                 |  2 +-
+ arch/x86/crypto/sha1_ssse3_asm.S              |  2 +-
+ arch/x86/crypto/sha256-avx-asm.S              |  2 +-
+ arch/x86/crypto/sha256-avx2-asm.S             |  2 +-
+ arch/x86/crypto/sha256-ssse3-asm.S            |  2 +-
+ arch/x86/crypto/sha256_ni_asm.S               |  2 +-
+ arch/x86/crypto/sha512-avx-asm.S              |  2 +-
+ arch/x86/crypto/sha512-avx2-asm.S             |  2 +-
+ arch/x86/crypto/sha512-ssse3-asm.S            |  2 +-
+ arch/x86/crypto/sm4-aesni-avx-asm_64.S        | 12 ++--
+ arch/x86/crypto/sm4-aesni-avx2-asm_64.S       |  8 +--
+ arch/x86/crypto/twofish-avx-x86_64-asm_64.S   | 10 ++--
+ arch/x86/crypto/twofish-i586-asm_32.S         |  4 +-
+ arch/x86/crypto/twofish-x86_64-asm_64-3way.S  |  6 +-
+ arch/x86/crypto/twofish-x86_64-asm_64.S       |  4 +-
+ arch/x86/entry/entry_32.S                     |  2 +-
+ arch/x86/entry/entry_64.S                     | 10 ++--
+ arch/x86/entry/thunk_32.S                     |  2 +-
+ arch/x86/entry/thunk_64.S                     |  2 +-
+ arch/x86/entry/vdso/vdso32/system_call.S      |  2 +-
+ arch/x86/entry/vdso/vsgx.S                    |  2 +-
+ arch/x86/entry/vsyscall/vsyscall_emu_64.S     |  6 +-
+ arch/x86/include/asm/linkage.h                | 14 +++++
+ arch/x86/include/asm/paravirt.h               |  2 +-
+ arch/x86/include/asm/qspinlock_paravirt.h     |  4 +-
+ arch/x86/include/asm/static_call.h            |  2 +-
+ arch/x86/kernel/acpi/wakeup_32.S              |  6 +-
+ arch/x86/kernel/alternative.c                 | 51 +++++++++++-----
+ arch/x86/kernel/ftrace.c                      |  2 +-
+ arch/x86/kernel/ftrace_32.S                   |  6 +-
+ arch/x86/kernel/ftrace_64.S                   | 10 ++--
+ arch/x86/kernel/head_32.S                     |  2 +-
+ arch/x86/kernel/irqflags.S                    |  2 +-
+ arch/x86/kernel/kprobes/core.c                |  2 +-
+ arch/x86/kernel/paravirt.c                    |  2 +-
+ arch/x86/kernel/relocate_kernel_32.S          | 10 ++--
+ arch/x86/kernel/relocate_kernel_64.S          | 10 ++--
+ arch/x86/kernel/sev_verify_cbit.S             |  2 +-
+ arch/x86/kernel/static_call.c                 |  5 +-
+ arch/x86/kernel/verify_cpu.S                  |  4 +-
+ arch/x86/kvm/emulate.c                        | 23 +++++--
+ arch/x86/kvm/svm/vmenter.S                    |  4 +-
+ arch/x86/kvm/vmx/vmenter.S                    | 14 ++---
+ arch/x86/lib/atomic64_386_32.S                | 86 +++++++++++++++------------
+ arch/x86/lib/atomic64_cx8_32.S                | 16 ++---
+ arch/x86/lib/checksum_32.S                    |  8 +--
+ arch/x86/lib/clear_page_64.S                  |  6 +-
+ arch/x86/lib/cmpxchg16b_emu.S                 |  4 +-
+ arch/x86/lib/cmpxchg8b_emu.S                  |  4 +-
+ arch/x86/lib/copy_mc_64.S                     |  6 +-
+ arch/x86/lib/copy_page_64.S                   |  4 +-
+ arch/x86/lib/copy_user_64.S                   | 12 ++--
+ arch/x86/lib/csum-copy_64.S                   |  2 +-
+ arch/x86/lib/error-inject.c                   |  3 +-
+ arch/x86/lib/getuser.S                        | 22 +++----
+ arch/x86/lib/hweight.S                        |  6 +-
+ arch/x86/lib/iomap_copy_64.S                  |  2 +-
+ arch/x86/lib/memcpy_64.S                      | 12 ++--
+ arch/x86/lib/memmove_64.S                     |  4 +-
+ arch/x86/lib/memset_64.S                      |  6 +-
+ arch/x86/lib/msr-reg.S                        |  4 +-
+ arch/x86/lib/putuser.S                        |  6 +-
+ arch/x86/lib/retpoline.S                      |  4 +-
+ arch/x86/math-emu/div_Xsig.S                  |  2 +-
+ arch/x86/math-emu/div_small.S                 |  2 +-
+ arch/x86/math-emu/mul_Xsig.S                  |  6 +-
+ arch/x86/math-emu/polynom_Xsig.S              |  2 +-
+ arch/x86/math-emu/reg_norm.S                  |  6 +-
+ arch/x86/math-emu/reg_round.S                 |  2 +-
+ arch/x86/math-emu/reg_u_add.S                 |  2 +-
+ arch/x86/math-emu/reg_u_div.S                 |  2 +-
+ arch/x86/math-emu/reg_u_mul.S                 |  2 +-
+ arch/x86/math-emu/reg_u_sub.S                 |  2 +-
+ arch/x86/math-emu/round_Xsig.S                |  4 +-
+ arch/x86/math-emu/shr_Xsig.S                  |  8 +--
+ arch/x86/math-emu/wm_shrx.S                   | 16 ++---
+ arch/x86/mm/mem_encrypt_boot.S                |  4 +-
+ arch/x86/platform/efi/efi_stub_32.S           |  2 +-
+ arch/x86/platform/efi/efi_stub_64.S           |  2 +-
+ arch/x86/platform/efi/efi_thunk_64.S          |  2 +-
+ arch/x86/platform/olpc/xo1-wakeup.S           |  6 +-
+ arch/x86/power/hibernate_asm_32.S             |  4 +-
+ arch/x86/power/hibernate_asm_64.S             |  4 +-
+ arch/x86/um/checksum_32.S                     |  4 +-
+ arch/x86/um/setjmp_32.S                       |  2 +-
+ arch/x86/um/setjmp_64.S                       |  2 +-
+ arch/x86/xen/xen-asm.S                        | 12 ++--
+ arch/x86/xen/xen-head.S                       |  2 +-
+ fs/udf/namei.c                                |  8 +--
+ include/net/bluetooth/hci_core.h              |  3 +
+ include/uapi/linux/rfkill.h                   |  2 +-
+ localversion-rt                               |  2 +-
+ mm/gup.c                                      |  2 +-
+ mm/memory-failure.c                           |  4 +-
+ mm/memory.c                                   |  2 +
+ mm/migrate.c                                  |  7 ++-
+ mm/mlock.c                                    |  1 +
+ mm/shmem.c                                    |  4 +-
+ mm/userfaultfd.c                              |  3 +
+ net/bluetooth/hci_core.c                      |  6 +-
+ samples/ftrace/ftrace-direct-modify.c         |  4 +-
+ samples/ftrace/ftrace-direct-too.c            |  2 +-
+ samples/ftrace/ftrace-direct.c                |  2 +-
+ scripts/Makefile.build                        | 11 ++++
+ scripts/Makefile.lib                          | 11 ----
+ scripts/link-vmlinux.sh                       |  3 +
+ tools/arch/x86/lib/memcpy_64.S                | 12 ++--
+ tools/arch/x86/lib/memset_64.S                |  6 +-
+ tools/objtool/arch/x86/decode.c               | 13 ++--
+ tools/objtool/builtin-check.c                 |  3 +-
+ tools/objtool/check.c                         | 24 ++++++++
+ tools/objtool/include/objtool/arch.h          |  1 +
+ tools/objtool/include/objtool/builtin.h       |  2 +-
+ 146 files changed, 608 insertions(+), 484 deletions(-)
+---
