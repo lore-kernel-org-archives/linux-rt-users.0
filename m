@@ -2,83 +2,82 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D697C433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 May 2022 22:04:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED275C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 May 2022 08:36:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229982AbiEQWEQ (ORCPT
+        id S233353AbiERIgZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 May 2022 18:04:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57482 "EHLO
+        Wed, 18 May 2022 04:36:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33386 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229951AbiEQWEO (ORCPT
+        with ESMTP id S233326AbiERIgR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 May 2022 18:04:14 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 135B749F29;
-        Tue, 17 May 2022 15:04:14 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id BF5F8B81CBA;
-        Tue, 17 May 2022 22:04:12 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id ED82EC385B8;
-        Tue, 17 May 2022 22:04:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1652825051;
-        bh=Znd9eYIPaF0iJIaRGP7but9a+svacnqOyw6mc3ZUB2M=;
-        h=Subject:From:To:Date:From;
-        b=HDL0yumrRynKNY9mFDF+xsznkIRqrGn5rVgntWJrdyLye5vRhZWpvOvhdN7LvW1Qx
-         6+osWg0D4/v2kknEcruT8q3saei8gH8rx0Kk19hYE4RzujN7DzT3YwzDW6hLRa2PvI
-         bomcBiHE7dHjDahQosoQLNirU2m3DG6wx7by4uOvamBqp2/GjD9xOIlRXtdLO/kR4M
-         oimQjpD/dZ5n/xFxTCOf2QEN/INJUXUZB9H0/kU/stRaeJTNuK57tyVNfwTgqpDlf3
-         ltYuxDR+Ixvo8+xFuv3+6uX8I9PvLJMmies4MfYrVywr9twMSNO1WUbAE4FnG72cYK
-         gdyaDeabqAHhg==
-Message-ID: <50baec90cbd1ae552777f4d00efc7edcfb36eedf.camel@kernel.org>
-Subject: [ANNOUNCE] 5.4.193-rt74
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Tue, 17 May 2022 17:04:08 -0500
+        Wed, 18 May 2022 04:36:17 -0400
+Received: from mail-ua1-x92f.google.com (mail-ua1-x92f.google.com [IPv6:2607:f8b0:4864:20::92f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 253D91B78D
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 May 2022 01:36:16 -0700 (PDT)
+Received: by mail-ua1-x92f.google.com with SMTP id f13so575091uax.11
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 May 2022 01:36:16 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=qPRYWH9FC0R/QFAVviwF1QF3Zm7LslrpqMqi6JDsjhY=;
+        b=NSTJiLngDsaWkGHoRa8ByWFEOPheL9bXdEZv0cwAJlnFqMierBRG5Vi8SBIwyNWoq6
+         PVRXKUfYkwE24gdkAad1Fy2asqqDv3neeBlH0KAx3RkT2nXnN+lWlB+yUPidA1Yb5ENI
+         SczJOqQmyCh8BuQF8ZtVfhogShczFvPQ5L3hIX0kZnzwDSFzOsf6AJFYW00t/v8mszIR
+         aZn4gSHPqzsRF6ZH/KzQhKKO2LIoZ28E5G7RNCwX70omMvfxb75B7Dj0HWMjuIRVIAG9
+         9FQ04JFK7ZJiBfBp3mCYnmvJIivwy7hpXYS6RvyXFsCdXLzZf+EioI2SUtwisNh9gx24
+         iclQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=qPRYWH9FC0R/QFAVviwF1QF3Zm7LslrpqMqi6JDsjhY=;
+        b=MDYsyNKk8qJQA+o9OxTwlkc0/QHG0akkGgRPnwg9GM/tqvT15hQm7+i6ZEDQ6IsUlh
+         qcWodf5odQaJMx7yhrGU3klglHsEIL1MOPBgBEm3zvsg0217km0l6ZkZddDtKIp6NtnO
+         z8IesnwsysYmprKZRmGATSSuzlh6V/L7G1QmPm0ur2XLeznLvzXcbFlvlw+zBPEK5inU
+         UgAEEjBbb7hFIoPiB4X7ADRS1MbBeoxBuYSSGxW7yG3AoQzm7qwiYbAi1Hb6BsN07ISe
+         Y3GOy4CUzhtS0U6OrO4Q4SKJ/yfHh8zzgJg8BVCCbPue+EFQYoJOhYIwz9MssvOMbXBJ
+         uZqA==
+X-Gm-Message-State: AOAM533kCi+njdo8cnt/ox5ERkiSY4Mn8RWrg2V6QhEVN3R33aj6KJy+
+        H8GvqbfXsMfEdVwMzNgAOhjZIJ9Awi5ERO1hDcT5xTT/Ws4Q8w==
+X-Google-Smtp-Source: ABdhPJyZ9gSKcSKuIg0pMd5ZRKAzTtqUrNLY+PCgNhChe6noizt6qVluaR35CczzIC6EOHo9F6T3+vS3wVBBkx2Ni/g=
+X-Received: by 2002:ab0:604f:0:b0:368:caa5:41ea with SMTP id
+ o15-20020ab0604f000000b00368caa541eamr566000ual.97.1652862975221; Wed, 18 May
+ 2022 01:36:15 -0700 (PDT)
+MIME-Version: 1.0
+From:   Florent Carli <fcarli@gmail.com>
+Date:   Wed, 18 May 2022 10:36:04 +0200
+Message-ID: <CAJuRqcA02DGBGMh4frvkN8ceQbucMaomiUkOXPUGwhQvnesrfQ@mail.gmail.com>
+Subject: CONFIG_HZ impact on system load
+To:     linux-rt-users@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Hello,
 
-I'm pleased to announce the 5.4.193-rt74 stable release.
+I was surprised to notice that when I change the HZ value in a patched
+preempt-rt kernel from 250Hz to 1000Hz, the system load apparently
+drops.
+On my setup (x86_64, 24 vcores, hosting a few kvm guests, some ceph
+services, pacemaker/corosync, ovs, etc.):
+- kernel with RT patch, CONFIG_HZ=1000: system load is between 1 and 1.5
+- kernel with RT patch, CONFIG_HZ=250: system load is between 3 and 3.5
+And just in case it helps:
+- kernel without RT patch, CONFIG_HZ=250: system load is between 1 and 1.5
 
-This release is just an update to the new stable 5.4.193
-version and no RT specific changes have been made.
+The rest of the system does not change, I'm just switching kernels for
+which there is only this config_hz modification...
+I tried this on 5.10rt, 5.15rt, 5.16rt...
+Everytime I try to list the runnable/uninterruptible processes (ps -A
+r), I see nothing, which makes me think this comes from the kernel but
+how exactly, I have no clue (htop showing kernel threads does not
+really show any differences).
 
-You can get this release via the git tree at:
+Does anyone know how CONFIG_HZ can impact system load on a RT kernel?
+Is it a "real" system load increase that will impact the performance
+of my system or just a by-product of how it's calculted maybe?
+It is maybe something to be expected to improve latency?
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.4-rt
-  Head SHA1: 5e0620d175441f899c093f590d84e4be6beda434
-
-Or to build 5.4.193-rt74 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.193.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.193-rt74.patch.xz
-
-Enjoy!
-
-   Tom
-
+Thanks.
