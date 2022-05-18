@@ -2,82 +2,152 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED275C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 May 2022 08:36:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C920BC433FE
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 May 2022 14:11:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233353AbiERIgZ (ORCPT
+        id S238512AbiEROLa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 May 2022 04:36:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33386 "EHLO
+        Wed, 18 May 2022 10:11:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33290 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233326AbiERIgR (ORCPT
+        with ESMTP id S238580AbiEROLQ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 May 2022 04:36:17 -0400
-Received: from mail-ua1-x92f.google.com (mail-ua1-x92f.google.com [IPv6:2607:f8b0:4864:20::92f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 253D91B78D
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 May 2022 01:36:16 -0700 (PDT)
-Received: by mail-ua1-x92f.google.com with SMTP id f13so575091uax.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 May 2022 01:36:16 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=qPRYWH9FC0R/QFAVviwF1QF3Zm7LslrpqMqi6JDsjhY=;
-        b=NSTJiLngDsaWkGHoRa8ByWFEOPheL9bXdEZv0cwAJlnFqMierBRG5Vi8SBIwyNWoq6
-         PVRXKUfYkwE24gdkAad1Fy2asqqDv3neeBlH0KAx3RkT2nXnN+lWlB+yUPidA1Yb5ENI
-         SczJOqQmyCh8BuQF8ZtVfhogShczFvPQ5L3hIX0kZnzwDSFzOsf6AJFYW00t/v8mszIR
-         aZn4gSHPqzsRF6ZH/KzQhKKO2LIoZ28E5G7RNCwX70omMvfxb75B7Dj0HWMjuIRVIAG9
-         9FQ04JFK7ZJiBfBp3mCYnmvJIivwy7hpXYS6RvyXFsCdXLzZf+EioI2SUtwisNh9gx24
-         iclQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=qPRYWH9FC0R/QFAVviwF1QF3Zm7LslrpqMqi6JDsjhY=;
-        b=MDYsyNKk8qJQA+o9OxTwlkc0/QHG0akkGgRPnwg9GM/tqvT15hQm7+i6ZEDQ6IsUlh
-         qcWodf5odQaJMx7yhrGU3klglHsEIL1MOPBgBEm3zvsg0217km0l6ZkZddDtKIp6NtnO
-         z8IesnwsysYmprKZRmGATSSuzlh6V/L7G1QmPm0ur2XLeznLvzXcbFlvlw+zBPEK5inU
-         UgAEEjBbb7hFIoPiB4X7ADRS1MbBeoxBuYSSGxW7yG3AoQzm7qwiYbAi1Hb6BsN07ISe
-         Y3GOy4CUzhtS0U6OrO4Q4SKJ/yfHh8zzgJg8BVCCbPue+EFQYoJOhYIwz9MssvOMbXBJ
-         uZqA==
-X-Gm-Message-State: AOAM533kCi+njdo8cnt/ox5ERkiSY4Mn8RWrg2V6QhEVN3R33aj6KJy+
-        H8GvqbfXsMfEdVwMzNgAOhjZIJ9Awi5ERO1hDcT5xTT/Ws4Q8w==
-X-Google-Smtp-Source: ABdhPJyZ9gSKcSKuIg0pMd5ZRKAzTtqUrNLY+PCgNhChe6noizt6qVluaR35CczzIC6EOHo9F6T3+vS3wVBBkx2Ni/g=
-X-Received: by 2002:ab0:604f:0:b0:368:caa5:41ea with SMTP id
- o15-20020ab0604f000000b00368caa541eamr566000ual.97.1652862975221; Wed, 18 May
- 2022 01:36:15 -0700 (PDT)
+        Wed, 18 May 2022 10:11:16 -0400
+Received: from sin.source.kernel.org (sin.source.kernel.org [IPv6:2604:1380:40e1:4800::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 57705344F6;
+        Wed, 18 May 2022 07:11:12 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by sin.source.kernel.org (Postfix) with ESMTPS id A3A62CE2135;
+        Wed, 18 May 2022 14:11:10 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6C342C385AA;
+        Wed, 18 May 2022 14:10:57 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1652883068;
+        bh=rhhgaJOX3Nwe+osh/bDkMx6UVKw+p2ONZnKPvdg6Q4w=;
+        h=Date:Cc:From:Subject:To:From;
+        b=Y729/LYg+EjaFHgBQVlEf18ZibiPWFS/+SYr0fKN+EwX7+BF9PUMFJUY+JRQytwHm
+         smh+767A/84cHFoyYKIl8h/sHymoAqnwO/hVR34sPvHuKugUantiRt+UeEVbIcey/6
+         Q2Qb2UvhDvE1Qgrxkz1g3SFz8KBRHGXQ7MJaOxB8+5wWN8HpyG1MRWSCMyBepc0G44
+         JM4MjIaVJqLsQV0Zn3tzTcpge/ylNTUvkK3f5Sgo8kzsKQw7mg8iFF3YcPYZ1pppL1
+         qIZLs9GMTlVUWCxTU3l4TES6vpv88pL6Q3rWOqR2hL6PTirltAe40uafTBYoR7CSM5
+         Dy5M0nB30zc9A==
+Message-ID: <5564e168-c443-687b-77db-011084078a8c@kernel.org>
+Date:   Wed, 18 May 2022 16:10:52 +0200
 MIME-Version: 1.0
-From:   Florent Carli <fcarli@gmail.com>
-Date:   Wed, 18 May 2022 10:36:04 +0200
-Message-ID: <CAJuRqcA02DGBGMh4frvkN8ceQbucMaomiUkOXPUGwhQvnesrfQ@mail.gmail.com>
-Subject: CONFIG_HZ impact on system load
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.9.0
+Content-Language: en-US
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Mel Gorman <mgorman@suse.de>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Phil Auld <pauld@redhat.com>,
+        "Gautham R. Shenoy" <gautham.shenoy@amd.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        =?UTF-8?Q?Andr=c3=a9_Almeida?= <andrealmeid@collabora.com>,
+        John Kacur <jkacur@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Kate Carcia <kcarcia@redhat.com>,
+        Kate Stewart <kstewart@linuxfoundation.org>,
+        Shuah Khan <skhan@linuxfoundation.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        =?UTF-8?Q?Luis_Claudio_R=2e_Gon=c3=a7alves?= <lclaudio@redhat.com>,
+        Mark Brown <broonie@kernel.org>,
+        Mark Gross <markgross@kernel.org>,
+        Daniel Wagner <wagi@monom.org>,
+        Ben Segall <bsegall@google.com>,
+        "paulmck@kernel.org" <paulmck@kernel.org>,
+        Qais Yousef <qais.yousef@arm.com>,
+        "Hyser,Chris" <chris.hyser@oracle.com>,
+        Dhaval Giani <dhaval.giani@gmail.com>,
+        patrick.bellasi@matbug.net, Paul Turner <pjt@google.com>,
+        Tejun Heo <tj@kernel.org>, Quentin Perret <qperret@google.com>,
+        Waiman Long <longman@redhat.com>,
+        Scott Wood <swood@redhat.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Lukasz Luba <lukasz.luba@arm.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Kees Cook <keescook@chromium.org>,
+        Kees Cook <keescook@chromium.org>,
+        "Joel Fernandes (Google)" <joel@joelfernandes.org>,
+        Marcelo Tosatti <mtosatti@redhat.com>,
+        Frederic Weisbecker <fweisbec@gmail.com>,
+        Nicolas Saenz Julienne <nsaenzju@redhat.com>,
+        Zefan Li <lizefan.x@bytedance.com>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Will Deacon <will@kernel.org>,
+        Boqun Feng <boqun.feng@gmail.com>
+From:   Daniel Bristot de Oliveira <bristot@kernel.org>
+Subject: [ANNOUNCE] CFP: Real-time and Scheduling Microconference - Linux
+ Plumbers Conference 2022
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello,
+The real-time and scheduling micro-conference joins these two intrinsically 
+connected communities to discuss the next steps together.
 
-I was surprised to notice that when I change the HZ value in a patched
-preempt-rt kernel from 250Hz to 1000Hz, the system load apparently
-drops.
-On my setup (x86_64, 24 vcores, hosting a few kvm guests, some ceph
-services, pacemaker/corosync, ovs, etc.):
-- kernel with RT patch, CONFIG_HZ=1000: system load is between 1 and 1.5
-- kernel with RT patch, CONFIG_HZ=250: system load is between 3 and 3.5
-And just in case it helps:
-- kernel without RT patch, CONFIG_HZ=250: system load is between 1 and 1.5
+Over the past decade, many parts of PREEMPT_RT have been included in the 
+official Linux codebase. Examples include real-time mutexes, high-resolution 
+timers, lockdep, ftrace, RCU_PREEMPT, threaded interrupt handlers and more. The 
+number of patches that need integration has been significantly reduced, and the 
+rest is mature enough to make their way into mainline Linux.
 
-The rest of the system does not change, I'm just switching kernels for
-which there is only this config_hz modification...
-I tried this on 5.10rt, 5.15rt, 5.16rt...
-Everytime I try to list the runnable/uninterruptible processes (ps -A
-r), I see nothing, which makes me think this comes from the kernel but
-how exactly, I have no clue (htop showing kernel threads does not
-really show any differences).
+The scheduler is the core of Linux performance. With different topologies and 
+workloads, it is not an easy task to give the user the best experience possible, 
+from low latency to high throughput, and from small power-constrained devices to 
+HPC.
 
-Does anyone know how CONFIG_HZ can impact system load on a RT kernel?
-Is it a "real" system load increase that will impact the performance
-of my system or just a by-product of how it's calculted maybe?
-It is maybe something to be expected to improve latency?
+In the last years, the real-time and scheduling microconferences helped in the 
+The Real-time Linux Analysis tool merge [1], progress on the full mainline merge 
+of the PREEMPT_RT,  core scheduling merge and to promote the progress in the 
+latency nice scheduling feature [3].
 
-Thanks.
+If you are interested in participating in this microconference and have topics 
+to propose, please use the LPC CfP process [4], and select "Real-time and 
+Scheduling" for the "Track".
+
+A non exhaustive list of potential topics is:
+  - How to scale PREEMPT_RT for very-large systems
+  - Improve overall system partitioning for real-time HPC workloads
+  - Latency nice scheduling feature
+  - Better support/heuristics for new processors
+  - New tools for PREEMPT_RT analysis.
+  - How do we teach the rest of the kernel developers how not to break 
+    PREEMPT_RT?
+  - The usage of PREEMPT_RT on safety-critical systems: what do we need to do?
+  - The merge's status, and how can we resolve the last issues that block the 
+    merge.
+  - What’s next?
+
+The submission deadline is June 30.
+
+Come and join us in the discussion, we hope to see you there!
+
+[1] https://www.kernel.org/doc/html/latest/tools/rtla/rtla.html
+[2] https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/core-scheduling.html
+[3] https://lore.kernel.org/lkml/20220311161406.23497-1-vincent.guittot@linaro.org/
+[4] https://lpc.events/event/16/abstracts/
+
+In case of doubts, feel contact the MC Leads:
+
+Daniel Bristot de Oliveira <bristot@kernel.org>
+Steven Rostedt <rostedt@goodmis.org>
+Vincent Guittot <vincent.guittot@linaro.org>
+Juri Lelli <juri.lelli@redhat.com>
+
+Please, forward this email to anyone who might be interested on it
+(and sorry if I forgot to add someone in Cc:, it is a long list).
+
+Thanks
+-- Daniel
