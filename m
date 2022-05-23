@@ -2,38 +2,38 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4B075C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 May 2022 15:39:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DD972C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 23 May 2022 15:40:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238040AbiEWPjb (ORCPT
+        id S238074AbiEWPk4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 23 May 2022 11:39:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42666 "EHLO
+        Mon, 23 May 2022 11:40:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44750 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238045AbiEWPj0 (ORCPT
+        with ESMTP id S238041AbiEWPkz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 23 May 2022 11:39:26 -0400
-Received: from out30-45.freemail.mail.aliyun.com (out30-45.freemail.mail.aliyun.com [115.124.30.45])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 70E2EDFA2
-        for <linux-rt-users@vger.kernel.org>; Mon, 23 May 2022 08:39:24 -0700 (PDT)
-X-Alimail-AntiSpam: AC=PASS;BC=-1|-1;BR=01201311R491e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=e01e04395;MF=wuyihao@linux.alibaba.com;NM=1;PH=DS;RN=3;SR=0;TI=SMTPD_---0VED2nYH_1653320360;
-Received: from B-V5AVMD6P-1927.local(mailfrom:wuyihao@linux.alibaba.com fp:SMTPD_---0VED2nYH_1653320360)
+        Mon, 23 May 2022 11:40:55 -0400
+Received: from out30-130.freemail.mail.aliyun.com (out30-130.freemail.mail.aliyun.com [115.124.30.130])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DC75334B8D
+        for <linux-rt-users@vger.kernel.org>; Mon, 23 May 2022 08:40:53 -0700 (PDT)
+X-Alimail-AntiSpam: AC=PASS;BC=-1|-1;BR=01201311R191e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=e01e04394;MF=wuyihao@linux.alibaba.com;NM=1;PH=DS;RN=3;SR=0;TI=SMTPD_---0VECzErp_1653320448;
+Received: from B-V5AVMD6P-1927.local(mailfrom:wuyihao@linux.alibaba.com fp:SMTPD_---0VECzErp_1653320448)
           by smtp.aliyun-inc.com(127.0.0.1);
-          Mon, 23 May 2022 23:39:20 +0800
-Subject: Re: [PATCH 1/2] hackbench: Fix negativity opt checking
+          Mon, 23 May 2022 23:40:48 +0800
+Subject: [PATCH v2] hackbench: Add af_inet mode besides af_unix and pipe
 To:     John Kacur <jkacur@redhat.com>
 Cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
 References: <20220428103726.108597-1-wuyihao@linux.alibaba.com>
- <20220428103726.108597-2-wuyihao@linux.alibaba.com>
- <3986d547-06e-b7f9-353c-1ff05f1bcee@redhat.com>
+ <20220428103726.108597-3-wuyihao@linux.alibaba.com>
+ <8950ed98-c3be-4658-a27f-df78c6dfe67e@redhat.com>
 From:   Yihao Wu <wuyihao@linux.alibaba.com>
-Message-ID: <489b13a9-a4ff-87ce-ea2c-ed99a068cbaa@linux.alibaba.com>
-Date:   Mon, 23 May 2022 23:39:19 +0800
+Message-ID: <c5a3d153-0fe5-4155-9115-a636dea35af2@linux.alibaba.com>
+Date:   Mon, 23 May 2022 23:40:47 +0800
 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
  Gecko/20100101 Thunderbird/78.12.0
 MIME-Version: 1.0
-In-Reply-To: <3986d547-06e-b7f9-353c-1ff05f1bcee@redhat.com>
+In-Reply-To: <8950ed98-c3be-4658-a27f-df78c6dfe67e@redhat.com>
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
@@ -41,48 +41,152 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm sorry! John. In the commit log, I described the problem wrong. It 
-should be more trivially reproduced like this,
+We observerved strange performance regression with hackbench, but only 
+with its default mode instead of pipe mode. It turned out it was unix 
+domain socket to blame rather than the scheduler. Because on older 
+kernels, there was a big lock. And modifications to the scheduler made 
+the contension worse.
 
-./hackbench --datasize 4096 -g 1 -l 1
+However pipe mode is much different from the default af_unix mode. So 
+it's hard to prove it's really the case. So we think it might be a good 
+idea to have af_inet mode for hackbench.
 
-This command gives an error "--datasize|-s requires an integer > 0". But 
-if you append any argument (or nonsense) after this command, like,
+After implementing it, we compare these three modes. And the result 
+shows as what we expect, that only af_unix mode has regression, the 
+others don't. This proves adding af_inet mode is valuable.
 
-./hackbench --datasize 4096 -g 1 -l 1 whatever
+Signed-off-by: Yihao Wu <wuyihao@linux.alibaba.com>
+---
+  src/hackbench/hackbench.c | 57 ++++++++++++++++++++++++++++++++++++++-
+  1 file changed, 56 insertions(+), 1 deletion(-)
 
-This command runs without any error message.
+diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+index 268c232..18c9284 100644
+--- a/src/hackbench/hackbench.c
++++ b/src/hackbench/hackbench.c
+@@ -20,11 +20,14 @@
+  #include <string.h>
+  #include <errno.h>
+  #include <unistd.h>
++#include <sys/ioctl.h>
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <sys/wait.h>
+  #include <sys/time.h>
+  #include <sys/poll.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
+  #include <limits.h>
+  #include <getopt.h>
+  #include <signal.h>
+@@ -46,6 +49,7 @@ static unsigned int fifo = 0;
+  static unsigned int process_mode = PROCESS_MODE;
 
-My original intention of this patch was to remove "!(argv[optind]". I 
-suppose this condition leads to this bug. (Pardon me for I don't know 
-what's it for. I'd admit I'm not familiar with getopt)
+  static int use_pipes = 0;
++static int use_inet = 0;
 
-This negative bugfix should only be a piggypack fix. But as you've 
-pointed out, it merely hides misusage. So it's a bad bugfix.
+  struct sender_context {
+  	unsigned int num_fds;
+@@ -99,6 +103,7 @@ static void print_usage_exit(int error)
+  	       "-h       --help            print this message\n"
+  	       "-l       --loops=LOOPS     how many message should be send\n"
+  	       "-p       --pipe            send data via a pipe\n"
++	       "-i       --inet            send data via a inet tcp connection\n"
+  	       "-s       --datasize=SIZE   message size\n"
+  	       "-T       --threads         use POSIX threads\n"
+  	       "-P       --process         use fork (default)\n"
+@@ -106,11 +111,52 @@ static void print_usage_exit(int error)
+  	exit(error);
+  }
 
-Thanks,
++static int inet_socketpair(int fds[2])
++{
++	int s1, s2;
++	struct sockaddr_in sin;
++	unsigned long ul = 1;
++
++	if ((s1 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
++		barf("socket");
++	if ((s2 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
++		barf("socket");
++
++	socklen_t len = sizeof(sin);
++	bzero(&sin, len);
++	sin.sin_family = AF_INET;
++	sin.sin_port = 0;
++	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
++
++	if (bind(s1, &sin, len) < 0)
++		barf("bind");
++	getsockname(s1, &sin, &len);
++	if (listen(s1, 10) < 0)
++		barf("listen");
++	if (ioctl(s2, FIONBIO, &ul) < 0)
++		barf("ioctl");
++	if (ioctl(s1, FIONBIO, &ul) < 0)
++		barf("ioctl");
++	connect(s2, &sin, len);
++	if ((fds[0] = accept(s1, &sin, &len)) < 0)
++		barf("accept");
++	ul = 0;
++	if (ioctl(s2, FIONBIO, &ul) < 0)
++		barf("ioctl");
++	fds[1] = s2;
++	close(s1);
++
++	return 0;
++}
++
+  static void fdpair(int fds[2])
+  {
+  	if (use_pipes) {
+  		if (pipe(fds) == 0)
+  			return;
++	} else if (use_inet) {
++		if (inet_socketpair(fds) == 0)
++			return;
+  	} else {
+  		if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0)
+  			return;
+@@ -364,13 +410,14 @@ static void process_options(int argc, char *argv[])
+  			{"help",	no_argument,		NULL, 'h'},
+  			{"loops",	required_argument,	NULL, 'l'},
+  			{"pipe",	no_argument,		NULL, 'p'},
++			{"inet",	no_argument,		NULL, 'i'},
+  			{"datasize",	required_argument,	NULL, 's'},
+  			{"threads",	no_argument,		NULL, 'T'},
+  			{"processes",	no_argument,		NULL, 'P'},
+  			{NULL, 0, NULL, 0}
+  		};
 
-Yihao
+-		int c = getopt_long(argc, argv, "f:Fg:hl:ps:TP",
++		int c = getopt_long(argc, argv, "f:Fg:hl:pis:TP",
+  				    longopts, &optind);
+  		if (c == -1) {
+  			break;
+@@ -402,6 +449,9 @@ static void process_options(int argc, char *argv[])
+  		case 'p':
+  			use_pipes = 1;
+  			break;
++		case 'i':
++			use_inet = 1;
++			break;
+  		case 's':
+  			if (!(argv[optind] && (datasize = atoi(optarg)) > 0)) {
+  				fprintf(stderr, "%s: --datasize|-s requires an integer > 0\n", 
+argv[0]);
+@@ -418,6 +468,11 @@ static void process_options(int argc, char *argv[])
+  			print_usage_exit(1);
+  		}
+  	}
++
++	if (use_pipes && use_inet) {
++		fprintf(stderr, "%s: --pipe|-p and --inet|-i cannot be used 
+together\n", argv[0]);
++		print_usage_exit(1);
++	}
+  }
 
-On 2022/5/10 02:59, John Kacur wrote:
-> Well, the code doesn't work the way the author intended, that's for sure.
-> As your patch indicates, you realize the problem is that an unsigned
-> variable can never be less than zero, so the check is meaningless.
-> However, is changing the data type the right solution, just to make a
-> check against something stupid a user might input the correct thing to do?
-> It decreases the size of valid input. Maybe that doesn't matter, but then
-> could it introduce a new bug somewhere? You've dropped the argv[optind]
-> too which also doesn't work the way the author intended, but it was
-> probably meant as a check of whether the user provided an argument or not.
-> 
-> What I would rather see if you want to fix this, is a check against the
-> user input that doesn't change the datatype. For example, if you treat the
-> input as a char, if (optarg[0] == '-') then we can tell the difference
-> between a really big number or user input that is stupid or malicious.
-> If you look in cyclictest, (there could be bugs lurking there too), there
-> is an attempt to parse this kind of thing and to check whether there are
-> arguments too.
-> 
-> Thanks
-> 
-> John
+  void sigcatcher(int sig) {
+--
+2.32.0.604.gb1f3e1269
