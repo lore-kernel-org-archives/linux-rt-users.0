@@ -2,33 +2,34 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 465EAC433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE170C433EF
 	for <linux-rt-users@archiver.kernel.org>; Fri, 27 May 2022 06:46:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344065AbiE0Gqu (ORCPT
+        id S1344090AbiE0Gqx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 27 May 2022 02:46:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60150 "EHLO
+        Fri, 27 May 2022 02:46:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60152 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1343946AbiE0Gqs (ORCPT
+        with ESMTP id S236258AbiE0Gqs (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 27 May 2022 02:46:48 -0400
-X-Greylist: delayed 542 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 26 May 2022 23:46:43 PDT
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3BF5E2771;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3F6BE2772;
         Thu, 26 May 2022 23:46:40 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id D163B5D874;
-        Fri, 27 May 2022 08:37:29 +0200 (CEST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 7FDF85DA19;
+        Fri, 27 May 2022 08:37:58 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1653633454; h=from:subject:date:message-id:to:mime-version:content-type:
-         content-transfer-encoding; bh=N3s1PyI+zoJLf3stVP3Sq5jdecaMK3ePvXv88rFI0OI=;
-        b=F+1UHpBywKTiiUNTPZytT+bpm5JOqL2JxAlTvdnBJqb+7WdqkgX1Z9HBBpnmgoCwoIOMsg
-        NhI8ayhnx7XK6SsM+JcKAqWB+GPS5w+6mT26ekFYvUfs8MFO2vJ0Ot/1nkzqvEqOav/WRn
-        P8OS0GiDkZpM9ODH8KvMetwlGEfEVLImBccNjYEUxIaVdtkJfxu2gMehSZnSWOskVhaA/c
-        bPKI11iRhAX5+7GE40g5g45Caj6fRG9P9UlHAvgepKVSy2LKEsiPlxUY0FxESwgnn0Aze+
-        91n9uvH50LT6xqUS+3rjMdVAlGJTA1A1yuGijV2PKRSUXrPZ4NH5fkloLZ17pQ==
-Date:   Fri, 27 May 2022 08:24:39 +0200
+        t=1653633478; h=from:subject:date:message-id:to;
+        bh=RTQ5QtXNVlVLvhfQv0kgnNLTHiqXoF7p72taJmmkFSY=;
+        b=nwfBL6Tb69LK2QWqsBTnjAYh+emyr9pVKPNAh9KtaXVoQQhC1OU9ATqU3IIFmfAYKoOtjA
+        SadsD1yRxcrVIrdqR/R/rSqlDmnV2cXFzxqENE0wWGcn7xnreifmKCKRqr6qvYrzvBEJpU
+        PPIXdok6Yo22anxw6p8Tr707s3pEtB7BnNiA6Prw3mMwBvnFPyESV9hRIbXvitZP88a1Ff
+        vG4au8/fOyLnkGAGAK8MkOjej6hf9nScEJ6fZ2F7Jhpd+0l6yOMyxjpyybkHazQ0wJ4p0l
+        iFyfUJU1bJIU+KeYFoQ99fNeq1rBFj+1UpxO1nsDEWVTR/njCG2W9uxULXCaYg==
 From:   Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.19.245-rt109
+Date:   Wed, 25 May 2022 07:31:40 -0000
+Message-ID: <165346390046.11398.18138245986252936857@beryllium.lan>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -39,23 +40,18 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
-Subject: [ANNOUNCE] 4.19.245-rt109
-Message-ID: <165346390046.11398.18138245986252936857@beryllium.lan>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
 X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
+Message-ID: <20220525073140.Cu_H0n6rFLgl6m9qse65R-UUsWp-xQNchyS3rzy1t2c@z>
 
 Hello RT-list!
 
 I'm pleased to announce the 4.19.245-rt109 stable release.
 
-There are no RT specific changes. This is just an update to the latest
-stable release.
+This is just an update to the latest stable release. No RT specific
+changes.
 
 You can get this release via the git tree at:
 
@@ -387,7 +383,7 @@ Oliver Neukum (2):
 Ondrej Mosnacek (1):
       crypto: qcom-rng - fix infinite loop on requests not multiple of WORD_SZ
 
-Pali Rohár (2):
+Pali RohÃ¡r (2):
       PCI: aardvark: Clear all MSIs at setup
       PCI: aardvark: Fix reading MSI interrupt number
 
@@ -488,7 +484,7 @@ Ulf Hansson (4):
       mmc: block: Use generic_cmd6_time when modifying INAND_CMD38_ARG_EXT_CSD
       mmc: core: Default to generic_cmd6_time as timeout in __mmc_switch()
 
-Uwe Kleine-König (2):
+Uwe Kleine-KÃ¶nig (2):
       usb: typec: tcpci: Don't skip cleanup in .remove() on error
       gpio: mvebu/pwm: Refuse requests with inverted polarity
 
