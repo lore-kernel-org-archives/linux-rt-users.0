@@ -2,88 +2,97 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B19E0CCA481
-	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Jun 2022 17:46:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E69CCCA48C
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Jun 2022 00:42:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347414AbiFGRq5 (ORCPT
+        id S231371AbiFHAmt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 7 Jun 2022 13:46:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37218 "EHLO
+        Tue, 7 Jun 2022 20:42:49 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46226 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1347802AbiFGRof (ORCPT
+        with ESMTP id S1389022AbiFGWwp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Jun 2022 13:44:35 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A5631312A0
-        for <linux-rt-users@vger.kernel.org>; Tue,  7 Jun 2022 10:35:24 -0700 (PDT)
-Date:   Tue, 7 Jun 2022 19:35:20 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1654623321;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=5b6dFH+VNDXcWPKvtUIoFRoueze2L+uW/bK96tejcek=;
-        b=z22sLxPhqt7ycDN6SLfpzfoUarW5/tPD+OGWZxNGmNDso8lxJOk731NKHKlfwzexSZKn71
-        3M0x8mOqV4rlbGG3Gn65KBYSmOLZrVzxCnKSlxzHcTIACbSwJBo3w9cSzeoGK+aKXAc8dc
-        bGqNSoOxECPzjNJR/WCxLvLsjL0Nr852lV48/AHEt4iVlpbm98jAa3fAYenW2kD5h7YsHC
-        uHsheGjm4gkFY5RDL71a2AaOak8KAbOL1H5bFZMI/2CFaoPl7KdcretchdU894X4XBHx0p
-        9oQpEytdCtC0bn0PPSC+O9xSM5855ZQCDHD30Oz5e+lhmiyrPzZ6984gGz24WA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1654623321;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=5b6dFH+VNDXcWPKvtUIoFRoueze2L+uW/bK96tejcek=;
-        b=IGYdB4brjL5SV/w/y8ID2/4Sis1Y2f800pU9nX0FRvNFl5TsVZ8/1apQ4oOjwa0Y0cKtpB
-        /rmDAEmsr16nI6Bw==
-From:   "Ahmed S. Darwish" <a.darwish@linutronix.de>
-To:     "Willett, Tony" <st20214513@outlook.cardiffmet.ac.uk>
-Cc:     "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>
+        Tue, 7 Jun 2022 18:52:45 -0400
+Received: from mail102c50.megamailservers.eu (mail1471c50.megamailservers.eu [91.136.14.71])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 65B9569703
+        for <linux-rt-users@vger.kernel.org>; Tue,  7 Jun 2022 12:47:23 -0700 (PDT)
+X-Authenticated-User: ralf.mardorf@o2mail.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
+        s=maildub; t=1654631239;
+        bh=wSwo8hUZe3wRB1zJsq7a4H5phErUMPdanAJ6+/eAl5I=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=FOy/lWk7wep3DCfUt+v2KXJnbEwx87sbDPQBT0+7/h5Az5ggJb88NdNo203XgLYqC
+         58Hnk2YtDmoI/ojtu3zXDAVGML7MdckMBn5oHzl+Mtign1SLl6Z4StA3XcKTvXqVTW
+         uNEwdKjiLHtIIKLWCryBR4QDDoeZimd+JtTJcM3o=
+Feedback-ID: ralf.mardorf@al
+Received: from archlinux (dynamic-093-133-128-052.93.133.pool.telefonica.de [93.133.128.52])
+        (authenticated bits=0)
+        by mail102c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id 257JlHal029713
+        (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
+        Tue, 7 Jun 2022 19:47:19 +0000
+Date:   Tue, 7 Jun 2022 21:47:25 +0200
+From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+To:     linux-rt-users@vger.kernel.org
+Cc:     "Willett, Tony" <st20214513@outlook.cardiffmet.ac.uk>
 Subject: Re: Problems installing a real time kernel.
-Message-ID: <Yp+MWLaEysfFrqaB@lx-t490>
-References: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Message-ID: <20220607214725.639e0fc2@archlinux>
 In-Reply-To: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
+References: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
+X-Mailer: Claws Mail (linux)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-CTCH-RefID: str=0001.0A782F16.629FAB46.006E,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+X-CTCH-VOD: Unknown
+X-CTCH-Spam: Unknown
+X-CTCH-Score: 0.000
+X-CTCH-Rules: 
+X-CTCH-Flags: 0
+X-CTCH-ScoreCust: 0.000
+X-Origin-Country: DE
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 07, 2022, Willett, Tony wrote:
-> Hello.
->
-> I am trying to work with a Franka Emika Panda Robot Arm and to do so I
-> need to run a real time kernel on my Linux PC.
->
-> This tutorial/walkthrough is my primary source of information-
-> https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel
->
+On Tue, 7 Jun 2022 13:24:06 +0000, Willett, Tony wrote:
+>mailto:lab@panda:~/linux-5.13$ make -j8 deb-pkg
 
-This is not the primary/official documentation. The primary
-documentation is at:
+Hi,
 
-    https://wiki.linuxfoundation.org/realtime/preempt_rt_versions
+a long time ago I was used to build Debian rt patched kernels. When I
+migrated to Ubuntu I continued building kernels the Debian way.
+Referring to a script I wrote in 2013 to build an Ubuntu linux-rt
+package the Debian way:
 
-Please clone the linux-stable-rt git repo directly and switch to the
-stable rt version you want, instead of manually applying the RT patch.
+export CONCURRENCY_LEVEL=8
+make-kpkg clean
+make-kpkg --rootcmd fakeroot --initrd kernel-image kernel-headers
 
-> Patch the kernel and set up .config file to choose Preemptable kernel (Real-Time).
-> Then I compile it, it produces linux-upstream files which I did not expect.
-> Making the kernel looked good and then fails with the following error-
-> Initially it gives the following warnings-
+I exported CONCURRENCY_LEVEL=2. Since you are using make with
+the -j8 option, it probably should be CONCURRENCY_LEVEL=8 for you.
+However, I don't know what changed within the years. I build at least
+one kernel after that seemingly not using the script, but don't have
+notes at hand. I remember that before or after that time something
+related to fakeroot changed, but IIRC I always used make-kpkg to build
+Debian and Ubuntu kernel packages. Probably with something else, but
+the --rootcmd fakeroot option.
 
-Vendor patches or instructions cannot be supported here.
+The package containing the command make-kpkg was removed in 2020, see
+https://tracker.debian.org/pkg/kernel-package . But some Debian
+rekleases might still provide it. Ubuntu 20.04LTS and earlier still
+provide it, see
+https://packages.ubuntu.com/search?suite=focal&searchon=names&keywords=kernel-package
+, but later Ubuntu releases don't.
 
-Please clone the repository earlier shown, switch to the stable rt
-version you need (list of stable rt releases are in the aforementioned
-link), mention the tag you've used, then show the exact build command
-sequence you did.
+If your Debian release's repos should provide it, consider to test
+using make-kpkg, if not consider to ask on a Debian user mailing list
+how to build a Debian kernel package nowadays.
 
-Afterwards, hopefully I can provide some further help.
+Alternatively you could build and install a kernel without building a
+package at all.
 
-Good luck,
+Nowadays I build kernel packages for Arch Linux only. Arch does use a
+completely different package management.
 
---
-Ahmed S. Darwish
-Linutronix GmbH
+Regards,
+Ralf
