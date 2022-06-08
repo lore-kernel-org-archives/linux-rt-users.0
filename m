@@ -2,97 +2,153 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E69CCCA48C
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Jun 2022 00:42:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4120C43334
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Jun 2022 09:26:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231371AbiFHAmt (ORCPT
+        id S234985AbiFHJ0Z (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 7 Jun 2022 20:42:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46226 "EHLO
+        Wed, 8 Jun 2022 05:26:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38270 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1389022AbiFGWwp (ORCPT
+        with ESMTP id S235181AbiFHJZr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Jun 2022 18:52:45 -0400
-Received: from mail102c50.megamailservers.eu (mail1471c50.megamailservers.eu [91.136.14.71])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 65B9569703
-        for <linux-rt-users@vger.kernel.org>; Tue,  7 Jun 2022 12:47:23 -0700 (PDT)
-X-Authenticated-User: ralf.mardorf@o2mail.de
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
-        s=maildub; t=1654631239;
-        bh=wSwo8hUZe3wRB1zJsq7a4H5phErUMPdanAJ6+/eAl5I=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=FOy/lWk7wep3DCfUt+v2KXJnbEwx87sbDPQBT0+7/h5Az5ggJb88NdNo203XgLYqC
-         58Hnk2YtDmoI/ojtu3zXDAVGML7MdckMBn5oHzl+Mtign1SLl6Z4StA3XcKTvXqVTW
-         uNEwdKjiLHtIIKLWCryBR4QDDoeZimd+JtTJcM3o=
-Feedback-ID: ralf.mardorf@al
-Received: from archlinux (dynamic-093-133-128-052.93.133.pool.telefonica.de [93.133.128.52])
-        (authenticated bits=0)
-        by mail102c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id 257JlHal029713
-        (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
-        Tue, 7 Jun 2022 19:47:19 +0000
-Date:   Tue, 7 Jun 2022 21:47:25 +0200
-From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-To:     linux-rt-users@vger.kernel.org
-Cc:     "Willett, Tony" <st20214513@outlook.cardiffmet.ac.uk>
-Subject: Re: Problems installing a real time kernel.
-Message-ID: <20220607214725.639e0fc2@archlinux>
-In-Reply-To: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
-References: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
-X-Mailer: Claws Mail (linux)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-CTCH-RefID: str=0001.0A782F16.629FAB46.006E,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-X-CTCH-VOD: Unknown
-X-CTCH-Spam: Unknown
-X-CTCH-Score: 0.000
-X-CTCH-Rules: 
-X-CTCH-Flags: 0
-X-CTCH-ScoreCust: 0.000
-X-Origin-Country: DE
+        Wed, 8 Jun 2022 05:25:47 -0400
+X-Greylist: delayed 411 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 08 Jun 2022 01:50:51 PDT
+Received: from 189.cn (ptr.189.cn [183.61.185.104])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 85FD912E33D
+        for <linux-rt-users@vger.kernel.org>; Wed,  8 Jun 2022 01:50:51 -0700 (PDT)
+HMM_SOURCE_IP: 10.64.8.41:46236.392699032
+HMM_ATTACHE_NUM: 0000
+HMM_SOURCE_TYPE: SMTP
+Received: from clientip-123.150.8.43 (unknown [10.64.8.41])
+        by 189.cn (HERMES) with SMTP id CDDB21002AD;
+        Wed,  8 Jun 2022 16:43:54 +0800 (CST)
+Received: from  ([123.150.8.43])
+        by gateway-153622-dep-749df8664c-mvcg4 with ESMTP id 34d87c02f8c24ed299594c0eef8284a1 for linux-rt-users@vger.kernel.org;
+        Wed, 08 Jun 2022 16:43:56 CST
+X-Transaction-ID: 34d87c02f8c24ed299594c0eef8284a1
+X-Real-From: chensong_2000@189.cn
+X-Receive-IP: 123.150.8.43
+X-MEDUSA-Status: 0
+Sender: chensong_2000@189.cn
+From:   Song Chen <chensong_2000@189.cn>
+To:     linux-rt-users@vger.kernel.org, jkacur@readhat.com
+Cc:     williams@readhat.com, Song Chen <chensong@kylinos.cn>
+Subject: [PATCH] sched_deadline/cyclicdeadline: add tracelimit
+Date:   Wed,  8 Jun 2022 16:45:13 +0800
+Message-Id: <1654677913-27549-1-git-send-email-chensong_2000@189.cn>
+X-Mailer: git-send-email 2.7.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 7 Jun 2022 13:24:06 +0000, Willett, Tony wrote:
->mailto:lab@panda:~/linux-5.13$ make -j8 deb-pkg
+From: Song Chen <chensong@kylinos.cn>
 
-Hi,
+cyclictest has tracelimit to stop running when max latency
+is higher than threshold but cyclicdeadline doesn't.
 
-a long time ago I was used to build Debian rt patched kernels. When I
-migrated to Ubuntu I continued building kernels the Debian way.
-Referring to a script I wrote in 2013 to build an Ubuntu linux-rt
-package the Debian way:
+Therefore, tracelimit is introduced to cyclicdeadline in
+this commit, once max latency is over, test stops and log
+prints at the bottom of the ftrace file.
 
-export CONCURRENCY_LEVEL=8
-make-kpkg clean
-make-kpkg --rootcmd fakeroot --initrd kernel-image kernel-headers
+Signed-off-by: Song Chen <chensong@kylinos.cn>
+---
+ src/sched_deadline/cyclicdeadline.c | 37 +++++++++++++++++++++++++----
+ 1 file changed, 33 insertions(+), 4 deletions(-)
 
-I exported CONCURRENCY_LEVEL=2. Since you are using make with
-the -j8 option, it probably should be CONCURRENCY_LEVEL=8 for you.
-However, I don't know what changed within the years. I build at least
-one kernel after that seemingly not using the script, but don't have
-notes at hand. I remember that before or after that time something
-related to fakeroot changed, but IIRC I always used make-kpkg to build
-Debian and Ubuntu kernel packages. Probably with something else, but
-the --rootcmd fakeroot option.
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index d865fa3..ae5021f 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -80,7 +80,10 @@ struct sched_data {
+ };
+ 
+ static int shutdown;
+-
++static int tracelimit = 0;
++static pthread_mutex_t break_thread_id_lock = PTHREAD_MUTEX_INITIALIZER;
++static pid_t break_thread_id = 0;
++static uint64_t break_thread_value = 0;
+ static pthread_barrier_t barrier;
+ 
+ static int cpu_count;
+@@ -689,6 +692,7 @@ static void usage(int error)
+ 	       "                           (default 500us).\n"
+ 	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
+ 	       "-q       --quiet           print a summary only on exit\n"
++	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+ 	       );
+ 	exit(error);
+ }
+@@ -825,6 +829,19 @@ void *run_deadline(void *data)
+ 
+ 	while (!shutdown) {
+ 		period = do_runtime(tid, sd, period);
++		if (tracelimit && (stat->max > tracelimit)) {
++			shutdown++;
++			pthread_mutex_lock(&break_thread_id_lock);
++			if (break_thread_id == 0) {
++				break_thread_id = stat->tid;
++				break_thread_value = stat->max;
++				ftrace_write(sd->buff,
++						 "hit latency threshold (%lld > %d)",
++						 (unsigned long long) stat->max, tracelimit);
++			}
++			pthread_mutex_unlock(&break_thread_id_lock);
++			break;
++		}
+ 		sched_yield();
+ 	}
+ 	ret = sched_getattr(0, &attr, sizeof(attr), 0);
+@@ -1063,9 +1080,9 @@ static void write_stats(FILE *f, void *data)
+ 	fprintf(f, "  }\n");
+ }
+ 
+-enum options_valud {
++enum options_values {
+ 	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
+-	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET
++	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET, OPT_BREAKTRACE,
+ };
+ 
+ int main(int argc, char **argv)
+@@ -1104,9 +1121,10 @@ int main(int argc, char **argv)
+ 			{ "step",	required_argument,	NULL,	OPT_STEP },
+ 			{ "threads",	required_argument,	NULL,	OPT_THREADS },
+ 			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
++			{ "breaktrace",       required_argument, NULL, OPT_BREAKTRACE },
+ 			{ NULL,		0,			NULL,	0   },
+ 		};
+-		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
++		c = getopt_long(argc, argv, "a::c:D:hi:s:t:b:q", options, NULL);
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
+@@ -1141,6 +1159,10 @@ int main(int argc, char **argv)
+ 		case 'D':
+ 			duration = parse_time_string(optarg);
+ 			break;
++		case 'b':
++		case OPT_BREAKTRACE:
++			tracelimit = atoi(optarg);
++			break;
+ 		case OPT_QUIET:
+ 		case 'q':
+ 			quiet = 1;
+@@ -1294,6 +1316,13 @@ int main(int argc, char **argv)
+ 
+ 	loop(sched_data, nr_threads);
+ 
++	if (tracelimit) {
++		if (break_thread_id) {
++			printf("# Break thread: %d\n", break_thread_id);
++			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
++		}
++	}
++
+ 	for (i = 0; i < nr_threads; i++) {
+ 
+ 		sd = &sched_data[i];
+-- 
+2.25.1
 
-The package containing the command make-kpkg was removed in 2020, see
-https://tracker.debian.org/pkg/kernel-package . But some Debian
-rekleases might still provide it. Ubuntu 20.04LTS and earlier still
-provide it, see
-https://packages.ubuntu.com/search?suite=focal&searchon=names&keywords=kernel-package
-, but later Ubuntu releases don't.
-
-If your Debian release's repos should provide it, consider to test
-using make-kpkg, if not consider to ask on a Debian user mailing list
-how to build a Debian kernel package nowadays.
-
-Alternatively you could build and install a kernel without building a
-package at all.
-
-Nowadays I build kernel packages for Arch Linux only. Arch does use a
-completely different package management.
-
-Regards,
-Ralf
