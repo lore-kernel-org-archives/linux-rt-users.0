@@ -2,41 +2,40 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B4120C43334
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Jun 2022 09:26:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9772FC43334
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Jun 2022 09:29:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234985AbiFHJ0Z (ORCPT
+        id S234848AbiFHJ3Q (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Jun 2022 05:26:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38270 "EHLO
+        Wed, 8 Jun 2022 05:29:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51452 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235181AbiFHJZr (ORCPT
+        with ESMTP id S235580AbiFHJ2m (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Jun 2022 05:25:47 -0400
-X-Greylist: delayed 411 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 08 Jun 2022 01:50:51 PDT
-Received: from 189.cn (ptr.189.cn [183.61.185.104])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 85FD912E33D
-        for <linux-rt-users@vger.kernel.org>; Wed,  8 Jun 2022 01:50:51 -0700 (PDT)
-HMM_SOURCE_IP: 10.64.8.41:46236.392699032
+        Wed, 8 Jun 2022 05:28:42 -0400
+Received: from 189.cn (ptr.189.cn [183.61.185.101])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D3C85A76F8
+        for <linux-rt-users@vger.kernel.org>; Wed,  8 Jun 2022 01:53:36 -0700 (PDT)
+HMM_SOURCE_IP: 10.64.8.43:50616.1247170464
 HMM_ATTACHE_NUM: 0000
 HMM_SOURCE_TYPE: SMTP
-Received: from clientip-123.150.8.43 (unknown [10.64.8.41])
-        by 189.cn (HERMES) with SMTP id CDDB21002AD;
-        Wed,  8 Jun 2022 16:43:54 +0800 (CST)
+Received: from clientip-123.150.8.43 (unknown [10.64.8.43])
+        by 189.cn (HERMES) with SMTP id 7C7D9100214;
+        Wed,  8 Jun 2022 16:53:33 +0800 (CST)
 Received: from  ([123.150.8.43])
-        by gateway-153622-dep-749df8664c-mvcg4 with ESMTP id 34d87c02f8c24ed299594c0eef8284a1 for linux-rt-users@vger.kernel.org;
-        Wed, 08 Jun 2022 16:43:56 CST
-X-Transaction-ID: 34d87c02f8c24ed299594c0eef8284a1
+        by gateway-153622-dep-749df8664c-nmrf6 with ESMTP id 3f5271d439e9452fb6697f18b1b8d8ff for linux-rt-users@vger.kernel.org;
+        Wed, 08 Jun 2022 16:53:35 CST
+X-Transaction-ID: 3f5271d439e9452fb6697f18b1b8d8ff
 X-Real-From: chensong_2000@189.cn
 X-Receive-IP: 123.150.8.43
 X-MEDUSA-Status: 0
 Sender: chensong_2000@189.cn
 From:   Song Chen <chensong_2000@189.cn>
-To:     linux-rt-users@vger.kernel.org, jkacur@readhat.com
-Cc:     williams@readhat.com, Song Chen <chensong@kylinos.cn>
+To:     linux-rt-users@vger.kernel.org, jkacur@redhat.com
+Cc:     williams@redhat.com, Song Chen <chensong@kylinos.cn>
 Subject: [PATCH] sched_deadline/cyclicdeadline: add tracelimit
-Date:   Wed,  8 Jun 2022 16:45:13 +0800
-Message-Id: <1654677913-27549-1-git-send-email-chensong_2000@189.cn>
+Date:   Wed,  8 Jun 2022 16:54:52 +0800
+Message-Id: <1654678492-27812-1-git-send-email-chensong_2000@189.cn>
 X-Mailer: git-send-email 2.7.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
