@@ -2,42 +2,42 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2EDE6C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Jun 2022 17:49:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF5DCC433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Jun 2022 17:56:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347141AbiFJRtf (ORCPT
+        id S1346502AbiFJR4G (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 10 Jun 2022 13:49:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43710 "EHLO
+        Fri, 10 Jun 2022 13:56:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39528 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344919AbiFJRte (ORCPT
+        with ESMTP id S1350226AbiFJR4F (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Jun 2022 13:49:34 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 821E856381
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jun 2022 10:49:32 -0700 (PDT)
+        Fri, 10 Jun 2022 13:56:05 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id B67766213B
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Jun 2022 10:56:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1654883371;
+        s=mimecast20190719; t=1654883762;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=UCQMUFGSKwZqO7cHnFbbmrpMB5ua/08zA/e8+K92F5c=;
-        b=RmFI5OCg+2j9jtwS3XdDdjb6N/qJqGcWk+ysjUOLSDXFakN99ZZH++OA109/23OYqd1tkr
-        2AfDJ4Ef3Jqs2wvZL5GD2Guxz8a/ibxzjO7Y1mEeidk4EG8W6ec3VE2ClFGu4hYIIZsaYP
-        pkEkGjcuq8OjQ6a0ZiywE5axhQPqDss=
+        bh=LjOxEXCNnEpBGxwK7AJ1zjh6I68BRDvkLmj759bnQFw=;
+        b=YsGzBbqFJr2WKES2X8IlNDbqHqm5XvTGQUsxTrZCXf3EKe8Ulrq9WgauoayRGNUVoU6SZB
+        3YqA71TAsfvLmFPfMhHIxNDaBxN7EoAVrHW8ffuEqc1ooEXFUVvnxKQmgUpjmG1NjsOh3I
+        dqH58rjnEiTIO/2H2KfSnNSRLd0d4+g=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-262-Urgkwr8-NNOvUxYnkSW-Sg-1; Fri, 10 Jun 2022 13:49:30 -0400
-X-MC-Unique: Urgkwr8-NNOvUxYnkSW-Sg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-251-IrE3hS3VN_-H3Wt6_1iFPQ-1; Fri, 10 Jun 2022 13:55:58 -0400
+X-MC-Unique: IrE3hS3VN_-H3Wt6_1iFPQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A76A4811E75;
-        Fri, 10 Jun 2022 17:49:29 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2F41F185A79C;
+        Fri, 10 Jun 2022 17:55:58 +0000 (UTC)
 Received: from localhost (unknown [10.22.8.60])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id DD5CB404E4B5;
-        Fri, 10 Jun 2022 17:49:28 +0000 (UTC)
-Date:   Fri, 10 Jun 2022 14:49:27 -0300
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D561D40CFD0A;
+        Fri, 10 Jun 2022 17:55:57 +0000 (UTC)
+Date:   Fri, 10 Jun 2022 14:55:57 -0300
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -50,41 +50,35 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
         Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.120-rt70
-Message-ID: <YqOEJ86n0m/Xmkea@uudg.org>
+Subject: [ANNOUNCE] 4.14.282-rt135
+Message-ID: <YqOFrc3UjP+nVxAA@uudg.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hello RT-list!
 
-I'm pleased to announce the 5.10.120-rt70 stable release.
-
-Even though there are no RT-specific changes, the updates to the random code
-merged in from v5.10.119 completely replaced the code from commit c19a1b9dff1a
-("random: Make it work on rt").
+I'm pleased to announce the 4.14.282-rt135 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.10-rt
-  Head SHA1: 00d0d912f74b1dbed51561b7e8515e870581c593
+  branch: v4.14-rt
+  Head SHA1: 9b4c91040ecbf75bb8768593b3cdad7a08b071a1
 
-Or to build 5.10.120-rt70 directly, the following patches should be applied:
+Or to build 4.14.282-rt135 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.120.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.282.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.120-rt70.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.282-rt135.patch.xz
 
 Signing key fingerprint:
 
