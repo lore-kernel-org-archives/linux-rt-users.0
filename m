@@ -2,78 +2,109 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 31A2AC433EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Jun 2022 10:36:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ACBF5C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Jun 2022 11:38:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241029AbiFNKgC (ORCPT
+        id S245377AbiFOLix (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Jun 2022 06:36:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51434 "EHLO
+        Wed, 15 Jun 2022 07:38:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40224 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1356022AbiFNKfw (ORCPT
+        with ESMTP id S1347478AbiFOLiu (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Jun 2022 06:35:52 -0400
-Received: from mail-wm1-x32f.google.com (mail-wm1-x32f.google.com [IPv6:2a00:1450:4864:20::32f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4520749698
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Jun 2022 03:35:32 -0700 (PDT)
-Received: by mail-wm1-x32f.google.com with SMTP id m16-20020a7bca50000000b0039c8a224c95so3651350wml.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Jun 2022 03:35:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=bytedance-com.20210112.gappssmtp.com; s=20210112;
-        h=from:to:cc:subject:references:date:in-reply-to:message-id
-         :user-agent:mime-version;
-        bh=blbkbpOSCUWCzMvnWvpj2eZHCxranKKGhS/EQ2fvDjk=;
-        b=p5kEGpuz6IoHQJU1SRu6Jha1OyN4cLq0tkyVIOSEa1b2UQEWVqXmj/HmTmta/931DB
-         dcsKeux8VsP2SJmvdUtHfxWSiYVGV+dn6vrFWIus99STSXrNEhqg/v3Zm97WDPx5Ip/b
-         cC8616TyzRx9lUVW3JERD0SkMQYYrcFzUAETgB9TYCIUSDtkYFlPjn2TLr2NbNx/YhIY
-         akSNRpTH7NkFUkuwPcmQcXnQKYQKpJDFYQ3aOSXxUX1TJRBk/oDliaynegN5W51Lj9GP
-         +D7kHFDPkLqjwiPhdXMVsfw9nOEkDe3ujcu0zCXQ5fAopc1bzYssy3ICDmQdXKu2KlGn
-         oBBw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:references:date:in-reply-to
-         :message-id:user-agent:mime-version;
-        bh=blbkbpOSCUWCzMvnWvpj2eZHCxranKKGhS/EQ2fvDjk=;
-        b=UHQ9L1aL3tad2wBNdIhhuQnmJdTc8P6vL4+SqQIi0aLzNQ1msm45noKStbuxjG2qyd
-         W38LEsS1jPJ9TLzr0ZbB+xpPH5IDzOOsVOvW3o5cyJmOjJKpCnjwz9+b/xzypEzRWxRZ
-         Lp3hTZJaaiMbOGmVGw5rXNPP0LiZznFyuOTi3qS0oJmJdcxPxrdKdpcLj9jOj2JkgGSG
-         h/zW8ufcz0MOc6yLVT5RjIXRXKip+cRh3qgZX9bWgaWWuFmd0rWtxQotj83KUAMnStKS
-         yKr2P0rK4WFBmAq8uRgvFGSgkhOjoZVMb14TFp27jX03QVXpBIbHpgv6qM5AyB2/w7LK
-         b73Q==
-X-Gm-Message-State: AOAM531DY4c1RH4MZpN5NJtkTlazyYYcNDzDYytuTWeO26cSecBBQ7DD
-        wdV4K2wzSP1ECXJCr2xYAnTYTA==
-X-Google-Smtp-Source: ABdhPJy289yZqi559mHtRpuEgvHMyK90SmdnTwmltEFIzJvdFbRHB9vngHUtB57MJR06CtZMK4Rq3Q==
-X-Received: by 2002:a05:600c:35c2:b0:39b:fa1f:4f38 with SMTP id r2-20020a05600c35c200b0039bfa1f4f38mr3468698wmq.22.1655202930818;
-        Tue, 14 Jun 2022 03:35:30 -0700 (PDT)
-Received: from localhost ([109.180.234.132])
-        by smtp.gmail.com with ESMTPSA id x3-20020a5d6503000000b002103136623esm11275345wru.85.2022.06.14.03.35.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Jun 2022 03:35:28 -0700 (PDT)
-From:   Punit Agrawal <punit.agrawal@bytedance.com>
-To:     "Willett, Tony" <st20214513@outlook.cardiffmet.ac.uk>
-Cc:     "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>
-Subject: Re: Problems installing a real time kernel.
-References: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
-Date:   Tue, 14 Jun 2022 11:35:26 +0100
-In-Reply-To: <CWXP265MB501198E1F104B6044E93E188A5A59@CWXP265MB5011.GBRP265.PROD.OUTLOOK.COM>
-        (Tony Willett's message of "Tue, 7 Jun 2022 13:24:06 +0000")
-Message-ID: <87sfo7pm6p.fsf@stealth>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
+        Wed, 15 Jun 2022 07:38:50 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 507783A5EE
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Jun 2022 04:38:49 -0700 (PDT)
+Date:   Wed, 15 Jun 2022 13:38:46 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1655293127;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=S/n78tGv1vSo8yCEwFzSvr1/9M/zyYKYQotAGOP9Q5k=;
+        b=RA+I0OQL5HnQWvsHgHhLXQtsyFXUY1b7oqT437Zc7kCgom0+sOw9LdW3FCaOwBykihjwma
+        juiSZ7VQSueq8qCwefeR0Z3LbU2vouiXPE3LurMtJvpEU2sIFfO3bA2sb+BSsPOryZ66qh
+        ooUuUqgp5LIz8nrMlfoOAE4TG6dunjfJdunMBhFd+KLEaCYC/UIDVW/VCsV4ybGm3pAk+g
+        AyshY/sBaR6IMjVEyHPBf2sytUqWKpU6jqtRWjvfn2+pjxV4itjtmRmDd3FLHqI/qyImiP
+        QOIvHwpa+64w3NIdqRsIxiHFZDstoieuKbZryoDAAqV8oZvz8KZV3br43sU+zw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1655293127;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=S/n78tGv1vSo8yCEwFzSvr1/9M/zyYKYQotAGOP9Q5k=;
+        b=660Loo72758aAwAy3TyjFKUfGdBD1A2eNlMc97QIPGxfwbJouin5HuM5D/mZpVqXEf0tHe
+        DLve3wQ9oy7ujFBg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org,
+        Clark Williams <williams@redhat.com>
+Subject: [PATCH] cyclictest: Delay setting of main_affinity_mask after
+ creating threads.
+Message-ID: <YqnExv0GkIKTSwoI@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-"Willett, Tony" <st20214513@outlook.cardiffmet.ac.uk> writes:
+Assuming the current affinity mask of the task is 0x31 (CPUs 0, 4, 5).
+Starting cyclictest with '-S' option will fork the following threads:
+- monitor, mask 0x31
+- measure thread 1, mask 0x01
+- measure thread 2, mask 0x10
+- measure thread 3, mask 0x20
 
-> Hello.
->
-> I am trying to work with a Franka Emika Panda Robot Arm and to do so I need to run a real time kernel on my Linux PC.
-> This tutorial/walkthrough is my primary source of information-
-> https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel
+works as expected. Using the options '-S --mainaffinity=0' leads to:
+- monitor, mask 0x01
+- measure thread 1, mask 0x01
+- measure thread 2, mask 0x01
+- measure thread 3, mask 0x01
 
-Debian provides RT kernel images[0] - if you don't require any changes,
-installing the packaged kernel maybe easier.
+because the mask of the main thread has been reset early to 0x01 and
+does not allow a CPU mask outside of this mask while setting the
+affinity for the new threads.
 
-[0] https://packages.debian.org/search?keywords=linux-image-rt
+Delay setting the affinity of the main/ monitor thread after the
+measuring threads have been deployed. This leads to the following
+state:
+- monitor, mask 0x01
+- measure thread 1, mask 0x01
+- measure thread 2, mask 0x10
+- measure thread 3, mask 0x20
+
+Signed-off-by: Sebastian Andrzej Savior <bigeasy@linutronix.de>
+---
+ src/cyclictest/cyclictest.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index be8285a072b4e..cbf8d00293ec6 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1816,10 +1816,7 @@ int main(int argc, char **argv)
+ 		printf("Online CPUs = %d\n", online_cpus);
+ 	}
+ 
+-	/* Restrict the main pid to the affinity specified by the user */
+-	if (main_affinity_mask != NULL) {
+-		set_main_thread_affinity(main_affinity_mask);
+-	} else if (affinity_mask != NULL) {
++	if (affinity_mask != NULL) {
+ 		set_main_thread_affinity(affinity_mask);
+ 		if (verbose)
+ 			printf("Using %u cpus.\n",
+@@ -2094,6 +2091,10 @@ int main(int argc, char **argv)
+ 			fatal("failed to create thread %d: %s\n", i, strerror(status));
+ 
+ 	}
++	/* Restrict the main pid to the affinity specified by the user */
++	if (main_affinity_mask != NULL)
++		set_main_thread_affinity(main_affinity_mask);
++
+ 	if (use_fifo) {
+ 		status = pthread_create(&fifo_threadid, NULL, fifothread, NULL);
+ 		if (status)
+-- 
+2.36.1
+
