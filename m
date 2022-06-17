@@ -2,124 +2,83 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5EA08C433EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jun 2022 14:46:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B278C43334
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jun 2022 15:13:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1382833AbiFQOqc (ORCPT
+        id S1383062AbiFQPNM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jun 2022 10:46:32 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49474 "EHLO
+        Fri, 17 Jun 2022 11:13:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44088 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1382552AbiFQOqb (ORCPT
+        with ESMTP id S233854AbiFQPNH (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Jun 2022 10:46:31 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id BE0EA427D0
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Jun 2022 07:46:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1655477189;
+        Fri, 17 Jun 2022 11:13:07 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 742A4220F0;
+        Fri, 17 Jun 2022 08:13:05 -0700 (PDT)
+Date:   Fri, 17 Jun 2022 17:13:01 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1655478783;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=9WJ3fcpXL0f2WOS1lh4X7CDZ3Ewdk0gaVvZYQvOA7jA=;
-        b=d+rJIo9fNstpU1X52hJPrUAmMGTnhuVSTgZJxHx5yiPtBQ4cisIRDhWuE1pnzCV7bC7GWh
-        tx1aWNFGVWyWWluaLAdj8+BPtU1wjIVqOBmxhMtMVlCyCpZmnU2bPvxYTfXV2xiDtIRST2
-        4NA1TwnLZMfj1U5+T1d5YTWoCAbdJuI=
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
- [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-617-iNM8x0QLP7WCFxMJqx-TqA-1; Fri, 17 Jun 2022 10:46:28 -0400
-X-MC-Unique: iNM8x0QLP7WCFxMJqx-TqA-1
-Received: by mail-qk1-f199.google.com with SMTP id bl27-20020a05620a1a9b00b0069994eeb30cso5180062qkb.11
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Jun 2022 07:46:28 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:in-reply-to:references:date
-         :message-id:mime-version;
-        bh=9WJ3fcpXL0f2WOS1lh4X7CDZ3Ewdk0gaVvZYQvOA7jA=;
-        b=ucoyflzZCJAKLdxTTLDPp6d2J6Q1cme6QriyML0RUCOMG+SMedwdsDQhLNTXotn1jd
-         Yvtl4o6sT8FC2b2KAOgnBK43VzNJ/dFH8poHMB1WMHxsmYtN6/K3OkkH9inDgJEvZgt8
-         LE8Zln2ONdItq6TdjJV7HkBj+eVYJkyoGYpHo0Jnj7DQRfSqMCe1niWmXIDPTNa7e2Ap
-         G4pw4KWm7NQNxFJSMs2OZ2WwZ/khjp2PeoOJ2m8Rh9ngAcjPwW8C70cLxw8SqeTYCLvE
-         SW+Q7EvMz+mvLykMY/5bAYcwCsuqJZW2+XSscc03Q9+fZ+kI0iZgMUsU9YY8jiAcU3QJ
-         43cw==
-X-Gm-Message-State: AJIora+ATc86hKemYOeh5KLRlBP1NBdKKoK/FU26Cn/F8fmVpCq93cAx
-        FRe2NULDpUikpsAIDSepGY0+PDWDDa2AjiWtqLlDT4g7W4iEvvVCLa+vUnVba288EsNOOB15lJq
-        vfBovG+WVscT5zlrRXSKWkbp2nY8=
-X-Received: by 2002:ad4:5c4a:0:b0:464:5920:7c1a with SMTP id a10-20020ad45c4a000000b0046459207c1amr8736676qva.58.1655477188329;
-        Fri, 17 Jun 2022 07:46:28 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1tAXwW2mpsUavrlypnLTFvGbZu5tQk5+gn1Z1EAvySMi1FHasDEGVadg1bRJOm3lqNdYXoCAg==
-X-Received: by 2002:ad4:5c4a:0:b0:464:5920:7c1a with SMTP id a10-20020ad45c4a000000b0046459207c1amr8736646qva.58.1655477188058;
-        Fri, 17 Jun 2022 07:46:28 -0700 (PDT)
-Received: from vschneid.remote.csb ([185.11.37.247])
-        by smtp.gmail.com with ESMTPSA id a15-20020ac85b8f000000b00304e38fb3dasm4813173qta.35.2022.06.17.07.46.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Jun 2022 07:46:27 -0700 (PDT)
-From:   Valentin Schneider <vschneid@redhat.com>
-To:     Petr Mladek <pmladek@suse.com>
-Cc:     Tao Zhou <tao.zhou@linux.dev>, linux-kernel@vger.kernel.org,
-        kexec@lists.infradead.org, linux-rt-users@vger.kernel.org,
+        bh=wiu9PNjZtU75kIkIdHT6F9YTnsKXty0kUhXe7MZj/OY=;
+        b=VWsUFRPGgm0fCvp7HHY7pbSwdK24YjbQEDDPhkEAbehRCbREWJMzfhCBrLLK5m6E5KAcg3
+        s1imxbWmxgANfm+OdObHWUwrjG41h+XpIBjR/glouGvos/nuuA1c5mS8J+ORbVbD4vzgIe
+        Y+K8U3lc5Zjv+RK0YaQAzd5tXQpZX9M3+RR2Bg9prOimxiSXzliW+S7eVR/G/Sq4B9WC6u
+        6bbULRMq7dEuONqAlzPEzvy3OP2RboABzozdc/0jLYBgCEmMxAQQKdlEW6U6bXrGTDSFtm
+        bhAr0zL+bTgMOtWoqk+BW/cGduuC/hexfOwfJs85yM66l4IK2tQ+sBScJs1mzA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1655478783;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=wiu9PNjZtU75kIkIdHT6F9YTnsKXty0kUhXe7MZj/OY=;
+        b=5AJqEuLIJ5X0bNh+w9zDdl7BaWRhqliITi6SMcLGKXdiIjQ3+jnqt4RIpdbrpACZf5DNdE
+        E2KAP1r1XKwMeBCA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Valentin Schneider <vschneid@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
+        linux-rt-users@vger.kernel.org,
         Eric Biederman <ebiederm@xmission.com>,
-        Arnd Bergmann <arnd@arndb.de>,
+        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Juri Lelli <jlelli@redhat.com>,
         "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 Subject: Re: [PATCH] panic, kexec: Don't mutex_trylock() in __crash_kexec()
-In-Reply-To: <YqyHGxPCgiXuep3/@alley>
+Message-ID: <YqyZ/Uf14qkYtMDX@linutronix.de>
 References: <20220616123709.347053-1-vschneid@redhat.com>
- <Yqxaf6V+hvCSXQSM@geo.homenetwork>
- <xhsmhh74j7biy.mognet@vschneid.remote.csb> <YqyHGxPCgiXuep3/@alley>
-Date:   Fri, 17 Jun 2022 15:46:23 +0100
-Message-ID: <xhsmhczf773gg.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20220616123709.347053-1-vschneid@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 17/06/22 15:52, Petr Mladek wrote:
-> On Fri 2022-06-17 12:52:05, Valentin Schneider wrote:
->> If you look at __crash_kexec() in isolation yes, but if you look at panic()
->> and nmi_panic() only a single NMI can get in there. I think that is also
->> true for invocations via crash_kexec().
->
-> It is true that panic() could be called only once, see this code
-> in panic():
->
-> 	 * Only one CPU is allowed to execute the panic code from here. For
-> 	this_cpu = raw_smp_processor_id();
-> 	old_cpu  = atomic_cmpxchg(&panic_cpu, PANIC_CPU_INVALID, this_cpu);
->
-> 	if (old_cpu != PANIC_CPU_INVALID && old_cpu != this_cpu)
-> 		panic_smp_self_stop();
->
->
-> One the other hand, the aproach with two variables is strage
-> and brings exactly these questions.
->
-> If a trylock is enough that the mutex can be replaced by two
-> simple atomic operations. The mutex would be needed only
-> when a user really would need to wait for another one.
->
->
-> 	atomic_t crash_kexec_lock;
->
-> 	/* trylock part */
-> 	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1) != 0)
-> 		return -EBUSY;
->
-> 	/* do anything guarded by crash_kexec_lock */
->
-> 	/* release lock */
-> 	atomic_set_release(&crash_kexec_lock, 0);
->
-> The _acquire, _release variants will do the barriers correctly.
->
+On 2022-06-16 13:37:09 [+0100], Valentin Schneider wrote:
+> Regarding the original explanation for the WARN & return:
+> 
+> I don't get why 2) is a problem - if the lock is acquired by the trylock
+> then the critical section will be run without interruption since it
+> cannot sleep, the interrupted task may get boosted but that will not
+> have any actual impact AFAICT.
 
-Looks saner! I can't think of anything wrong with it so I'll shove that in
-v2. Thanks!
+boosting an unrelated task is considered wrong. I don't know how bad
+it gets in terms of lock chains since a task is set as owner which did
+not actually ask for the lock.
 
-> Best Regards,
-> Petr
+> Regardless, even if this doesn't sleep, the ->wait_lock in the slowpath
+> isn't NMI safe so this needs changing.
 
+This includes the unlock path which may wake a waiter and deboost.
+
+> I've thought about trying to defer the kexec out of an NMI (or IRQ)
+> context, but that pretty much means deferring the panic() which I'm
+> not sure is such a great idea.
+
+If we could defer it out of NMI on RT then it would work non-RT, too. If
+the system is "stuck" and the NMI is the only to respond then I guess
+that it is not a great idea.
+
+Sebastian
