@@ -2,159 +2,264 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 60757C433EF
-	for <linux-rt-users@archiver.kernel.org>; Sat, 18 Jun 2022 09:35:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC0ADC433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Jun 2022 11:16:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232505AbiFRJfE (ORCPT
+        id S241990AbiFTLQ1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 18 Jun 2022 05:35:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38900 "EHLO
+        Mon, 20 Jun 2022 07:16:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41018 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231782AbiFRJfE (ORCPT
+        with ESMTP id S241578AbiFTLQL (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 18 Jun 2022 05:35:04 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.20])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DB7621759C
-        for <linux-rt-users@vger.kernel.org>; Sat, 18 Jun 2022 02:35:02 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1655544892;
-        bh=j7Qsa+ZzDYRvJhxRgxVsLB0A/Or96acR1vNc2NdVwh8=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date;
-        b=WvZj6JsW8ncdis03ZgyOrfHSYBNtAj8qDF1rJJAfUr8jWhZxXL82K2qLjW4lP/sEX
-         zZ+AsW2/+4o1fDXLfLd9lfJnMoSSI6IjE95G7ACsltw9U0Ca4mvYAiyIVqAosr5GvN
-         iXtEFoxn/bpJBLIg7C/elPbJDpwF8uhP7lsHeNdA=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.217.210]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1M59GG-1o1OOG0mkW-0018R6; Sat, 18
- Jun 2022 11:34:52 +0200
-Message-ID: <bf74019da22b3c6a750153cbc74ffe3fcdb0ddf7.camel@gmx.de>
-Subject: v5.19-rc2-rt3: mm/kfence might_sleep() splat
-From:   Mike Galbraith <efault@gmx.de>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date:   Sat, 18 Jun 2022 11:34:51 +0200
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+        Mon, 20 Jun 2022 07:16:11 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 02DC717E1D
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Jun 2022 04:15:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1655723745;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=C/YAxTMPWaMMeJDgal3C/TOrHv5lxTWth0EeXUfR+Y4=;
+        b=aZjptZ8EUiWtNLzX5YIk1sePRxI/xDrbCDyhIXoLuEbF78vmIZX4DoeW7BvZS53AeYEKKd
+        oU428Pkcu6TTsrQKPqsuv//icg5r0dLnxDPFDJ8d+f5Q/lpM36Ghs/SOyqKv5p+cL1P1g1
+        qbmNYhtzg2la5w0j8LUouE3rpgdN27I=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-632-U0gjij1AP0qNFttKsYkWvA-1; Mon, 20 Jun 2022 07:15:44 -0400
+X-MC-Unique: U0gjij1AP0qNFttKsYkWvA-1
+Received: by mail-wr1-f70.google.com with SMTP id v8-20020adfa1c8000000b0021b81a553fbso1748278wrv.18
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Jun 2022 04:15:44 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=C/YAxTMPWaMMeJDgal3C/TOrHv5lxTWth0EeXUfR+Y4=;
+        b=iYrtVNu1e6jwJkNMh5RwNkqBnD744zLihNOmJ4ZbYh1tJKHy38rDHdd481rx1Omvqs
+         GD2S7GLFRYeHVCScrXsYtz1RM8J19GlQMpKJR4IXYlBfSkkQPvmbBF05YlMtSIQpRfMQ
+         IkpaZwxQx5msdQVTUbWRxhUl/gPJGBiNUEXud3lRYxb4FTyb+QUaVtWXrwc+e/wSJnkh
+         82CZ8zBntpuoI814CnkZg6CIFVuUmw4MdaNPnV91GacvP304OmYZq9IYJ90l/ZonXrPp
+         ZqshNnmHEZhpMroXdACnL7bPPJd4BjjlCKl1gCQE1Pse6lkg3vMPWHpdEXx2G5cMOSw4
+         6RwA==
+X-Gm-Message-State: AOAM530H1QNAQJvy4wQzPPiaPEGRoJ3aZBlcKxmbEwsAWZIs81EN2LJO
+        SXqKv/8wWsCVhmPD3AfUiy7WKNlonJz+qd6jCDC7bgdMW0r7ADfSbvpC9aClc6bFVpzcWhakerj
+        x/WHEwekox9QP/A2J6VVZNXZkUE8=
+X-Received: by 2002:a7b:c113:0:b0:39d:86c0:3ebe with SMTP id w19-20020a7bc113000000b0039d86c03ebemr34444008wmi.38.1655723742440;
+        Mon, 20 Jun 2022 04:15:42 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzj82MNWSq7B7gWuB4AL33FUyV5eqkbqmeNRvPdUZPxtW8cOlQhltFmvUoqFG3syv3hfXYfRg==
+X-Received: by 2002:a7b:c113:0:b0:39d:86c0:3ebe with SMTP id w19-20020a7bc113000000b0039d86c03ebemr34443984wmi.38.1655723742182;
+        Mon, 20 Jun 2022 04:15:42 -0700 (PDT)
+Received: from vschneid.remote.csb ([185.11.37.247])
+        by smtp.gmail.com with ESMTPSA id q185-20020a1c43c2000000b0039c3056c3dfsm21613089wma.27.2022.06.20.04.15.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 20 Jun 2022 04:15:41 -0700 (PDT)
+From:   Valentin Schneider <vschneid@redhat.com>
+To:     linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
+        linux-rt-users@vger.kernel.org
+Cc:     Eric Biederman <ebiederm@xmission.com>,
+        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Subject: [PATCH v2] panic, kexec: Make __crash_kexec() NMI safe
+Date:   Mon, 20 Jun 2022 12:15:20 +0100
+Message-Id: <20220620111520.1039685-1-vschneid@redhat.com>
+X-Mailer: git-send-email 2.31.1
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Provags-ID: V03:K1:tUV653VUZ0AQR4+huzCaI7rdMdEC63dmuPBGhZhM/TVsftZ3yXC
- Omh4fhJr/Cv33XeR6fzePJ0UvZU2DdAxeMCO7++hxyGpRN8GodYO8AzSiC3ye58LSRRcRcE
- IFjH2OD0AL7ZFO+HnC+AI8knjCTIHgDXYYWPvw/kkasIweJUqgta/csNzhHjdu2MotJDlOJ
- weezctM17jHT7RgTSkItA==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:1B2mSYP8E84=:CK4Bd1njw5EsGonIi790Nz
- z4dpV6z15PmimGhYq0zn+RNSoYyfZkUTZquYreQP4vkTwHnyUfdvaWH/vv8jQIMyPruylWTRE
- h3n0R26nTjIqKJvM2ujWLioqQantb1Ua1FL3+WpjL1qgViCAKaVNANKPkVQD/oSgccnZ8bLs+
- Dtgi748Dr2A1BIkZ9gtW6zhP2GHyXJMff8K523oL4QUs2XpYJBOZawkMxyBpbq76G96iMsry1
- gth6wLi9blXu4/XRG5v4UEzH7qo1SilEob1n1D4H+JMr4YqcatdwBrjuYX+hdyaWAuXzic62a
- XjwW0hpQ4GoYe4DnkHQBOytWDB37Npqhp9ZxdqCstf76XKt3lorT1TYff8Iapb2WR0lmV4M6p
- HurMkirW+pDq28uP4zA3xbtHB3/MMg4PMZh3NxhZ81baflBjLADgpt76f0D3zNWwOrDrGmD14
- ydrELMOu1W6i1x3WJ9YAGGeQcu3G+VD2/u6CCqb4zsaAHqFGEbWtQgAPDoayuB+1jEQ2edFc3
- w+sA3KBZ7TqngnG9OK0u97VEFy6wgEJfSg51q9+vp0NN6XnljYZCnw6GqUIGn51YfYPCeXj1M
- 4Fo9zZlQeaMtUhaXc/2XRrvG9fKC3yZRIOvzTuB0g/X3nDXx9WECLYI+gCYCA68pbvsajrwhO
- nbnvwI9WsdTCU+evR5TPqhxoTwcILSj6VI/timUxrT2UvAwG3WC8++VBc0wQMzVhrvYftcPDu
- f+cICm3ZUxAjoGA2llBaJRL/QZIsVMZLzA08OpgJWMCk/emWvn3YgD+o0qVJCe4WUItYUWYIQ
- aYJMX98BGmFEdWCMsyK6x1n+gYbq7Ru7jNZ471zyhJNQexwYJp8WSt7jKL5MLm4wOYK5uwTEw
- LgRrxM4qaxNOj0OxIGLs20CfPorm7bsXpeVDj+FYvsbZHuapDHiRwp/RoCI7DlBGWjb0ca+43
- NgFFQKMu5dCev52jlzc7P7oiFVAK7MEb+yqT3tCgtYOqP4/of3xnZu8Sy7i6Ozp38D0YWl4U+
- WYW17+QvJVpyKYjNsqMyW7m58b7QF8TtFQTHU082GZYPgNx3JK5TrKCo7+PKdtTyQAFYYgTGt
- LsRHNOKw54moWkyePPKXbsTBf+uql8M00iDxxdxSOca7pp/aNc1MrMkBA==
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I moved the prandom_u32_max() call in kfence_guarded_alloc() out from
-under raw spinlock to shut this one up.
+Attempting to get a crash dump out of a debug PREEMPT_RT kernel via an NMI
+panic() doesn't work. The cause of that lies in the PREEMPT_RT definition
+of mutex_trylock():
 
-[    1.128544] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
-[    1.128546] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 90, name: kworker/u16:3
-[    1.128547] preempt_count: 1, expected: 0
-[    1.128548] RCU nest depth: 1, expected: 1
-[    1.128549] CPU: 3 PID: 90 Comm: kworker/u16:3 Tainted: G        W         5.19.0.g0639b59-master-rt #2 55e5fbd63d8381661776ddec390c2b764f305c0b
-[    1.128551] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09/23/2013
-[    1.128552] Workqueue: events_unbound async_run_entry_fn
-[    1.128556] Call Trace:
-[    1.128557]  <TASK>
-[    1.128558]  dump_stack_lvl+0x44/0x58
-[    1.128562]  __might_resched+0x141/0x160
-[    1.128566]  rt_spin_lock+0x2d/0x70
-[    1.128569]  get_random_u32+0x45/0x100
-[    1.128572]  ? stack_trace_save+0x4b/0x70
-[    1.128575]  __kfence_alloc+0x3f4/0x6c0
-[    1.128579]  ? __kfence_alloc+0xa8/0x6c0
-[    1.128581]  ? kmem_cache_alloc_lru+0x1d8/0x220
-[    1.128582]  ? xas_alloc+0x9b/0xc0
-[    1.128585]  ? xas_create+0x20c/0x390
-[    1.128586]  ? xas_store+0x52/0x5a0
-[    1.128587]  ? __filemap_add_folio+0x189/0x5a0
-[    1.128590]  ? filemap_add_folio+0x38/0xa0
-[    1.128591]  ? __filemap_get_folio+0x1b0/0x580
-[    1.128592]  ? pagecache_get_page+0x13/0x80
-[    1.128595]  ? simple_write_begin+0x20/0x2d0
-[    1.128597]  ? generic_perform_write+0xae/0x1e0
-[    1.128599]  ? __generic_file_write_iter+0x141/0x180
-[    1.128600]  ? generic_file_write_iter+0x5d/0xb0
-[    1.128601]  ? __kernel_write+0x139/0x2f0
-[    1.128604]  ? kernel_write+0x56/0x1a0
-[    1.128606]  ? xwrite.constprop.8+0x35/0x8e
-[    1.128609]  ? do_copy+0xee/0x13a
-[    1.128610]  ? write_buffer+0x27/0x37
-[    1.128612]  ? flush_buffer+0x34/0x8b
-[    1.128614]  ? unxz+0x1b8/0x301
-[    1.128616]  ? unpack_to_rootfs+0x17f/0x2ae
-[    1.128617]  ? do_populate_rootfs+0x59/0x108
-[    1.128619]  ? async_run_entry_fn+0x2b/0x110
-[    1.128620]  ? process_one_work+0x21f/0x4a0
-[    1.128622]  ? worker_thread+0x39/0x3d0
-[    1.128624]  ? kthread+0x13e/0x160
-[    1.128625]  ? ret_from_fork+0x1f/0x30
-[    1.128628]  ? get_random_u32+0xbb/0x100
-[    1.128629]  ? new_slab+0x288/0x4e0
-[    1.128631]  ? rt_spin_unlock+0x13/0x40
-[    1.128633]  ? ___slab_alloc+0x31a/0x660
-[    1.128635]  ? xas_alloc+0x9b/0xc0
-[    1.128637]  ? rt_spin_unlock+0x13/0x40
-[    1.128638]  ? ___slab_alloc+0x31a/0x660
-[    1.128640]  ? __d_alloc+0x29/0x1f0
-[    1.128642]  ? ___slab_alloc+0x31a/0x660
-[    1.128644]  ? slab_pre_alloc_hook.constprop.85+0x37/0x1c0
-[    1.128646]  ? xas_alloc+0x9b/0xc0
-[    1.128647]  kmem_cache_alloc_lru+0x1d8/0x220
-[    1.128649]  xas_alloc+0x9b/0xc0
-[    1.128651]  xas_create+0x20c/0x390
-[    1.128653]  xas_store+0x52/0x5a0
-[    1.128654]  ? xas_load+0x37/0x40
-[    1.128654]  ? xa_get_order+0x9a/0xf0
-[    1.128655]  __filemap_add_folio+0x189/0x5a0
-[    1.128657]  ? scan_shadow_nodes+0x30/0x30
-[    1.128660]  filemap_add_folio+0x38/0xa0
-[    1.128661]  __filemap_get_folio+0x1b0/0x580
-[    1.128662]  ? mntput_no_expire+0x4a/0x230
-[    1.128665]  pagecache_get_page+0x13/0x80
-[    1.128667]  simple_write_begin+0x20/0x2d0
-[    1.128669]  generic_perform_write+0xae/0x1e0
-[    1.128671]  __generic_file_write_iter+0x141/0x180
-[    1.128672]  generic_file_write_iter+0x5d/0xb0
-[    1.128674]  __kernel_write+0x139/0x2f0
-[    1.128676]  kernel_write+0x56/0x1a0
-[    1.128678]  xwrite.constprop.8+0x35/0x8e
-[    1.128680]  ? initrd_load+0x3f/0x3f
-[    1.128682]  do_copy+0xee/0x13a
-[    1.128684]  ? write_buffer+0x27/0x37
-[    1.128685]  write_buffer+0x27/0x37
-[    1.128687]  flush_buffer+0x34/0x8b
-[    1.128689]  ? write_buffer+0x37/0x37
-[    1.128690]  unxz+0x1b8/0x301
-[    1.128692]  ? initrd_load+0x3f/0x3f
-[    1.128693]  ? unlzo+0x3cc/0x3cc
-[    1.128695]  unpack_to_rootfs+0x17f/0x2ae
-[    1.128696]  ? initrd_load+0x3f/0x3f
-[    1.128698]  do_populate_rootfs+0x59/0x108
-[    1.128700]  async_run_entry_fn+0x2b/0x110
-[    1.128701]  process_one_work+0x21f/0x4a0
-[    1.128703]  worker_thread+0x39/0x3d0
-[    1.128704]  ? process_one_work+0x4a0/0x4a0
-[    1.128706]  kthread+0x13e/0x160
-[    1.128707]  ? kthread_complete_and_exit+0x20/0x20
-[    1.128709]  ret_from_fork+0x1f/0x30
-[    1.128711]  </TASK>
+	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES) && WARN_ON_ONCE(!in_task()))
+		return 0;
+
+This prevents an NMI panic() from executing the main body of
+__crash_kexec() which does the actual kexec into the kdump kernel.
+The warning and return are explained by:
+
+  6ce47fd961fa ("rtmutex: Warn if trylock is called from hard/softirq context")
+  [...]
+  The reasons for this are:
+
+      1) There is a potential deadlock in the slowpath
+
+      2) Another cpu which blocks on the rtmutex will boost the task
+	 which allegedly locked the rtmutex, but that cannot work
+	 because the hard/softirq context borrows the task context.
+
+Furthermore, grabbing the lock isn't NMI safe, so do away with it and
+use an atomic variable to serialize reads vs writes of
+kexec_crash_image.
+
+Tested by triggering NMI panics via:
+
+  $ echo 1 > /proc/sys/kernel/panic_on_unrecovered_nmi
+  $ echo 1 > /proc/sys/kernel/unknown_nmi_panic
+  $ echo 1 > /proc/sys/kernel/panic
+
+  $ ipmitool power diag
+
+Fixes: 6ce47fd961fa ("rtmutex: Warn if trylock is called from hard/softirq context")
+Signed-off-by: Valentin Schneider <vschneid@redhat.com>
+---
+v1 -> v2
+++++++++
+
+o Changed from Peterson-like synchronization to simpler atomic_cmpxchg
+  (Petr)
+o Slightly reworded changelog
+o Added Fixes: tag. Technically should be up to since kexec can happen
+  in an NMI, but that isn't such a clear target
+---
+ include/linux/kexec.h |  1 +
+ kernel/kexec.c        | 16 ++++++++++++----
+ kernel/kexec_core.c   | 36 +++++++++++++++++++-----------------
+ kernel/kexec_file.c   | 11 +++++++++++
+ 4 files changed, 43 insertions(+), 21 deletions(-)
+
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index ce6536f1d269..5849a15ae3dd 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -369,6 +369,7 @@ extern int kimage_crash_copy_vmcoreinfo(struct kimage *image);
+ 
+ extern struct kimage *kexec_image;
+ extern struct kimage *kexec_crash_image;
++extern atomic_t crash_kexec_lock;
+ extern int kexec_load_disabled;
+ 
+ #ifndef kexec_flush_icache_page
+diff --git a/kernel/kexec.c b/kernel/kexec.c
+index b5e40f069768..73e0df2c608f 100644
+--- a/kernel/kexec.c
++++ b/kernel/kexec.c
+@@ -94,14 +94,20 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+ 	/*
+ 	 * Because we write directly to the reserved memory region when loading
+ 	 * crash kernels we need a mutex here to prevent multiple crash kernels
+-	 * from attempting to load simultaneously, and to prevent a crash kernel
+-	 * from loading over the top of a in use crash kernel.
+-	 *
+-	 * KISS: always take the mutex.
++	 * from attempting to load simultaneously.
+ 	 */
+ 	if (!mutex_trylock(&kexec_mutex))
+ 		return -EBUSY;
+ 
++	/*
++	 * Prevent loading a new crash kernel while one is in use.
++	 * See associated comment in __crash_kexec().
++	 */
++	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1)) {
++		ret = -EBUSY;
++		goto out_unlock_mutex;
++	}
++
+ 	if (flags & KEXEC_ON_CRASH) {
+ 		dest_image = &kexec_crash_image;
+ 		if (kexec_crash_image)
+@@ -165,6 +171,8 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+ 
+ 	kimage_free(image);
+ out_unlock:
++	atomic_set_release(&crash_kexec_lock, 0);
++out_unlock_mutex:
+ 	mutex_unlock(&kexec_mutex);
+ 	return ret;
+ }
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index 4d34c78334ce..f957109a266c 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -933,6 +933,7 @@ int kimage_load_segment(struct kimage *image,
+ 
+ struct kimage *kexec_image;
+ struct kimage *kexec_crash_image;
++atomic_t crash_kexec_lock = ATOMIC_INIT(0);
+ int kexec_load_disabled;
+ #ifdef CONFIG_SYSCTL
+ static struct ctl_table kexec_core_sysctls[] = {
+@@ -964,25 +965,26 @@ late_initcall(kexec_core_sysctl_init);
+  */
+ void __noclone __crash_kexec(struct pt_regs *regs)
+ {
+-	/* Take the kexec_mutex here to prevent sys_kexec_load
+-	 * running on one cpu from replacing the crash kernel
+-	 * we are using after a panic on a different cpu.
+-	 *
+-	 * If the crash kernel was not located in a fixed area
+-	 * of memory the xchg(&kexec_crash_image) would be
+-	 * sufficient.  But since I reuse the memory...
++	/*
++	 * This should be taking kexec_mutex before doing anything with the
++	 * kexec_crash_image, but this code can be run in NMI context which
++	 * means we can't even trylock. This is circumvented by using an
++	 * atomic variable that is *also* used by the codepaths that take
++	 * the mutex to modify kexec_crash_image.
+ 	 */
+-	if (mutex_trylock(&kexec_mutex)) {
+-		if (kexec_crash_image) {
+-			struct pt_regs fixed_regs;
+-
+-			crash_setup_regs(&fixed_regs, regs);
+-			crash_save_vmcoreinfo();
+-			machine_crash_shutdown(&fixed_regs);
+-			machine_kexec(kexec_crash_image);
+-		}
+-		mutex_unlock(&kexec_mutex);
++	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1))
++		return;
++
++	if (kexec_crash_image) {
++		struct pt_regs fixed_regs;
++
++		crash_setup_regs(&fixed_regs, regs);
++		crash_save_vmcoreinfo();
++		machine_crash_shutdown(&fixed_regs);
++		machine_kexec(kexec_crash_image);
+ 	}
++
++	atomic_set_release(&crash_kexec_lock, 0);
+ }
+ STACK_FRAME_NON_STANDARD(__crash_kexec);
+ 
+diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
+index 145321a5e798..3faec031cfc9 100644
+--- a/kernel/kexec_file.c
++++ b/kernel/kexec_file.c
+@@ -337,6 +337,15 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
+ 	if (!mutex_trylock(&kexec_mutex))
+ 		return -EBUSY;
+ 
++	/*
++	 * Prevent loading a new crash kernel while one is in use.
++	 * See associated comment in __crash_kexec().
++	 */
++	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1)) {
++		ret = -EBUSY;
++		goto out_mutex_unlock;
++	}
++
+ 	dest_image = &kexec_image;
+ 	if (flags & KEXEC_FILE_ON_CRASH) {
+ 		dest_image = &kexec_crash_image;
+@@ -406,6 +415,8 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
+ 	if ((flags & KEXEC_FILE_ON_CRASH) && kexec_crash_image)
+ 		arch_kexec_protect_crashkres();
+ 
++	atomic_set_release(&crash_kexec_lock, 0);
++out_mutex_unlock:
+ 	mutex_unlock(&kexec_mutex);
+ 	kimage_free(image);
+ 	return ret;
+-- 
+2.31.1
 
