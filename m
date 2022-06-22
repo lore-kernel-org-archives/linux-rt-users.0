@@ -2,564 +2,1370 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DD4D3CCA47E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jun 2022 11:05:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A1D21C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jun 2022 11:05:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241539AbiFVLFm (ORCPT
+        id S229696AbiFVLFn convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Jun 2022 07:05:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48008 "EHLO
+        Wed, 22 Jun 2022 07:05:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47890 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1353545AbiFVLFa (ORCPT
+        with ESMTP id S1353631AbiFVLFc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Jun 2022 07:05:30 -0400
+        Wed, 22 Jun 2022 07:05:32 -0400
 Received: from lithops.sigma-star.at (lithops.sigma-star.at [195.201.40.130])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C4A8C3BBE5
-        for <linux-rt-users@vger.kernel.org>; Wed, 22 Jun 2022 04:05:27 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5180C3BBD2
+        for <linux-rt-users@vger.kernel.org>; Wed, 22 Jun 2022 04:05:28 -0700 (PDT)
 Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id 7B8A161F1116;
+        by lithops.sigma-star.at (Postfix) with ESMTP id EEC0F61F111A;
         Wed, 22 Jun 2022 13:05:26 +0200 (CEST)
 Received: from lithops.sigma-star.at ([127.0.0.1])
         by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id tBzYDpYXZFOe; Wed, 22 Jun 2022 13:05:25 +0200 (CEST)
+        with ESMTP id JHIo7sj0P1jM; Wed, 22 Jun 2022 13:05:24 +0200 (CEST)
 Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id 097F161B8B66;
-        Wed, 22 Jun 2022 13:05:25 +0200 (CEST)
+        by lithops.sigma-star.at (Postfix) with ESMTP id 9DE0A61B8B69;
+        Wed, 22 Jun 2022 13:05:24 +0200 (CEST)
 Received: from lithops.sigma-star.at ([127.0.0.1])
         by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id LVF1eDgOxzNp; Wed, 22 Jun 2022 13:05:24 +0200 (CEST)
+        with ESMTP id AD_wxIbpFI-u; Wed, 22 Jun 2022 13:05:24 +0200 (CEST)
 Received: from foxxylove.corp.sigma-star.at (unknown [82.150.214.1])
-        by lithops.sigma-star.at (Postfix) with ESMTPSA id BA8BC61B8B4F;
+        by lithops.sigma-star.at (Postfix) with ESMTPSA id 4EE5361B8B4F;
         Wed, 22 Jun 2022 13:05:24 +0200 (CEST)
 From:   Richard Weinberger <richard@nod.at>
 To:     linux-rt-users@vger.kernel.org
 Cc:     williams@redhat.com, bigeasy@linutronix.de,
+        Michal Hocko <mhocko@kernel.org>,
+        =?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny@suse.com>,
         Richard Weinberger <richard@nod.at>
-Subject: [v5.15 3/4] mm/memcg: Add a local_lock_t for IRQ and TASK object.
-Date:   Wed, 22 Jun 2022 13:05:05 +0200
-Message-Id: <20220622110506.10534-4-richard@nod.at>
+Subject: [v5.15 1/4] mm/memcg: Disable threshold event handlers on PREEMPT_RT
+Date:   Wed, 22 Jun 2022 13:05:03 +0200
+Message-Id: <20220622110506.10534-2-richard@nod.at>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20220622110506.10534-1-richard@nod.at>
 References: <20220622110506.10534-1-richard@nod.at>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The members of the per-CPU structure memcg_stock_pcp are protected
-either by disabling interrupts or by disabling preemption if the
-invocation occurred in process context.
-Disabling interrupts protects most of the structure excluding task_obj
-while disabling preemption protects only task_obj.
-This schema is incompatible with PREEMPT_RT because it creates atomic
-context in which actions are performed which require preemptible
-context. One example is obj_cgroup_release().
+During the integration of PREEMPT_RT support, the code flow around
+memcg_check_events() resulted in `twisted code'. Moving the code around
+and avoiding then would then lead to an additional local-irq-save
+section within memcg_check_events(). While looking better, it adds a
+local-irq-save section to code flow which is usually within an
+local-irq-off block on non-PREEMPT_RT configurations.
 
-The IRQ-disable and preempt-disable sections can be replaced with
-local_lock_t which preserves the explicit disabling of interrupts while
-keeps the code preemptible on PREEMPT_RT.
+The threshold event handler is a deprecated memcg v1 feature. Instead of
+trying to get it to work under PREEMPT_RT just disable it. There should
+be no users on PREEMPT_RT. From that perspective it makes even less
+sense to get it to work under PREEMPT_RT while having zero users.
 
-The task_obj has been added for performance reason on non-preemptible
-kernels where preempt_disable() is a NOP. On the PREEMPT_RT preemption
-model preempt_disable() is always implemented. Also there are no memory
-allocations in_irq() context and softirqs are processed in (preemptible)
-process context. Therefore it makes sense to avoid using task_obj.
+Make memory.soft_limit_in_bytes and cgroup.event_control return
+-EOPNOTSUPP on PREEMPT_RT. Make an empty memcg_check_events() and
+memcg_write_event_control() which return only -EOPNOTSUPP on PREEMPT_RT.
+Document that the two knobs are disabled on PREEMPT_RT. Shuffle the code around
+so that all unused function are in on #ifdef block.
 
-Don't use task_obj on PREEMPT_RT and replace manual disabling of
-interrupts with a local_lock_t. This change requires some factoring:
-
-- drain_obj_stock() drops a reference on obj_cgroup which leads to an
-invocation of obj_cgroup_release() if it is the last object. This in
-turn leads to recursive locking of the local_lock_t. To avoid this,
-obj_cgroup_release() is invoked outside of the locked section.
-
-- drain_obj_stock() gets a memcg_stock_pcp passed if the stock_lock has b=
-een
-acquired (instead of the task_obj_lock) to avoid recursive locking later
-in refill_stock().
-
-- drain_all_stock() disables preemption via get_cpu() and then invokes
-drain_local_stock() if it is the local CPU to avoid scheduling a worker
-(which invokes the same function). Disabling preemption here is
-problematic due to the sleeping locks in drain_local_stock().
-This can be avoided by always scheduling a worker, even for the local
-CPU. Using cpus_read_lock() stabilizes cpu_online_mask which ensures
-that no worker is scheduled for an offline CPU. Since there is no
-flush_work(), it is still possible that a worker is invoked on the wrong
-CPU but it is okay since it operates always on the local-CPU data.
-
-- drain_local_stock() is always invoked as a worker so it can be optimize=
-d
-by removing in_task() (it is always true) and avoiding the "irq_save"
-variant because interrupts are always enabled here. Operating on
-task_obj first allows to acquire the lock_lock_t without lockdep
-complains.
-
+Suggested-by: Michal Hocko <mhocko@kernel.org>
+Suggested-by: Michal Koutný <mkoutny@suse.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 [rw: backported to v5.15]
 Signed-off-by: Richard Weinberger <richard@nod.at>
 ---
- mm/memcontrol.c | 173 +++++++++++++++++++++++++++++++-----------------
- 1 file changed, 113 insertions(+), 60 deletions(-)
+ mm/memcontrol.c | 1120 ++++++++++++++++++++++++-----------------------
+ 1 file changed, 568 insertions(+), 552 deletions(-)
 
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 4ac57acca300..6f0d13216a9b 100644
+index 971546bb99e0..10081957d525 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -260,8 +260,10 @@ bool mem_cgroup_kmem_disabled(void)
- 	return cgroup_memory_nokmem;
- }
-=20
-+struct memcg_stock_pcp;
- static void obj_cgroup_uncharge_pages(struct obj_cgroup *objcg,
--				      unsigned int nr_pages);
-+				      unsigned int nr_pages,
-+				      bool stock_lock_acquried);
-=20
- static void obj_cgroup_release(struct percpu_ref *ref)
- {
-@@ -295,7 +297,7 @@ static void obj_cgroup_release(struct percpu_ref *ref=
-)
- 	nr_pages =3D nr_bytes >> PAGE_SHIFT;
-=20
- 	if (nr_pages)
--		obj_cgroup_uncharge_pages(objcg, nr_pages);
-+		obj_cgroup_uncharge_pages(objcg, nr_pages, false);
-=20
- 	spin_lock_irqsave(&objcg_lock, flags);
- 	list_del(&objcg->list);
-@@ -2026,25 +2028,40 @@ struct obj_stock {
+@@ -169,7 +169,6 @@ struct mem_cgroup_event {
+ 	struct work_struct remove;
  };
-=20
- struct memcg_stock_pcp {
-+	/* Protects memcg_stock_pcp */
-+	local_lock_t stock_lock;
- 	struct mem_cgroup *cached; /* this never be root cgroup */
- 	unsigned int nr_pages;
-+#ifndef CONFIG_PREEMPT_RT
-+	/* Protects only task_obj */
-+	local_lock_t task_obj_lock;
- 	struct obj_stock task_obj;
-+#endif
- 	struct obj_stock irq_obj;
-=20
- 	struct work_struct work;
- 	unsigned long flags;
- #define FLUSHING_CACHED_CHARGE	0
- };
--static DEFINE_PER_CPU(struct memcg_stock_pcp, memcg_stock);
-+static DEFINE_PER_CPU(struct memcg_stock_pcp, memcg_stock) =3D {
-+	.stock_lock =3D INIT_LOCAL_LOCK(stock_lock),
-+#ifndef CONFIG_PREEMPT_RT
-+	.task_obj_lock =3D INIT_LOCAL_LOCK(task_obj_lock),
-+#endif
-+};
-+
-+
- static DEFINE_MUTEX(percpu_charge_mutex);
-=20
- #ifdef CONFIG_MEMCG_KMEM
--static void drain_obj_stock(struct obj_stock *stock);
-+static struct obj_cgroup *drain_obj_stock(struct obj_stock *stock,
-+					  bool stock_lock_acquried);
- static bool obj_stock_flush_required(struct memcg_stock_pcp *stock,
- 				     struct mem_cgroup *root_memcg);
-=20
- #else
--static inline void drain_obj_stock(struct obj_stock *stock)
-+static inline struct obj_cgroup *drain_obj_stock(struct obj_stock *stock=
-,
-+						 bool stock_lock_acquried)
- {
+ 
+-static void mem_cgroup_threshold(struct mem_cgroup *memcg);
+ static void mem_cgroup_oom_notify(struct mem_cgroup *memcg);
+ 
+ /* Stuffs for move charges at task migration. */
+@@ -451,28 +450,12 @@ ino_t page_cgroup_ino(struct page *page)
+ 	return ino;
  }
- static bool obj_stock_flush_required(struct memcg_stock_pcp *stock,
-@@ -2065,28 +2082,34 @@ static bool obj_stock_flush_required(struct memcg=
-_stock_pcp *stock,
-  * can only be accessed after disabling interrupt. User context code can
-  * access interrupt object stock, but not vice versa.
-  */
--static inline struct obj_stock *get_obj_stock(unsigned long *pflags)
-+static inline struct obj_stock *get_obj_stock(unsigned long *pflags, boo=
-l *stock_lock_acquried)
- {
- 	struct memcg_stock_pcp *stock;
-=20
-+#ifndef CONFIG_PREEMPT_RT
- 	if (likely(in_task())) {
- 		*pflags =3D 0UL;
--		preempt_disable();
-+		*stock_lock_acquried =3D false;
-+		local_lock(&memcg_stock.task_obj_lock);
- 		stock =3D this_cpu_ptr(&memcg_stock);
- 		return &stock->task_obj;
- 	}
+ 
+-static struct mem_cgroup_per_node *
+-mem_cgroup_page_nodeinfo(struct mem_cgroup *memcg, struct page *page)
+-{
+-	int nid = page_to_nid(page);
 -
--	local_irq_save(*pflags);
-+#endif
-+	*stock_lock_acquried =3D true;
-+	local_lock_irqsave(&memcg_stock.stock_lock, *pflags);
- 	stock =3D this_cpu_ptr(&memcg_stock);
- 	return &stock->irq_obj;
- }
-=20
--static inline void put_obj_stock(unsigned long flags)
-+static inline void put_obj_stock(unsigned long flags, bool stock_lock_ac=
-quried)
- {
--	if (likely(in_task()))
--		preempt_enable();
--	else
--		local_irq_restore(flags);
-+#ifndef CONFIG_PREEMPT_RT
-+	if (likely(!stock_lock_acquried)) {
-+		local_unlock(&memcg_stock.task_obj_lock);
-+		return;
-+	}
-+#endif
-+	local_unlock_irqrestore(&memcg_stock.stock_lock, flags);
- }
-=20
- /**
-@@ -2109,7 +2132,7 @@ static bool consume_stock(struct mem_cgroup *memcg,=
- unsigned int nr_pages)
- 	if (nr_pages > MEMCG_CHARGE_BATCH)
- 		return ret;
-=20
--	local_irq_save(flags);
-+	local_lock_irqsave(&memcg_stock.stock_lock, flags);
-=20
- 	stock =3D this_cpu_ptr(&memcg_stock);
- 	if (memcg =3D=3D stock->cached && stock->nr_pages >=3D nr_pages) {
-@@ -2117,7 +2140,7 @@ static bool consume_stock(struct mem_cgroup *memcg,=
- unsigned int nr_pages)
- 		ret =3D true;
- 	}
-=20
--	local_irq_restore(flags);
-+	local_unlock_irqrestore(&memcg_stock.stock_lock, flags);
-=20
- 	return ret;
- }
-@@ -2145,38 +2168,43 @@ static void drain_stock(struct memcg_stock_pcp *s=
-tock)
-=20
- static void drain_local_stock(struct work_struct *dummy)
- {
--	struct memcg_stock_pcp *stock;
--	unsigned long flags;
-+	struct memcg_stock_pcp *stock_pcp;
-+	struct obj_cgroup *old;
-=20
- 	/*
- 	 * The only protection from cpu hotplug (memcg_hotplug_cpu_dead) vs.
- 	 * drain_stock races is that we always operate on local CPU stock
- 	 * here with IRQ disabled
- 	 */
--	local_irq_save(flags);
-+#ifndef CONFIG_PREEMPT_RT
-+	local_lock(&memcg_stock.task_obj_lock);
-+	old =3D drain_obj_stock(&this_cpu_ptr(&memcg_stock)->task_obj, NULL);
-+	local_unlock(&memcg_stock.task_obj_lock);
-+	if (old)
-+		obj_cgroup_put(old);
-+#endif
-=20
--	stock =3D this_cpu_ptr(&memcg_stock);
--	drain_obj_stock(&stock->irq_obj);
--	if (in_task())
--		drain_obj_stock(&stock->task_obj);
--	drain_stock(stock);
--	clear_bit(FLUSHING_CACHED_CHARGE, &stock->flags);
-+	local_lock_irq(&memcg_stock.stock_lock);
-+	stock_pcp =3D this_cpu_ptr(&memcg_stock);
-+	old =3D drain_obj_stock(&stock_pcp->irq_obj, stock_pcp);
-=20
--	local_irq_restore(flags);
-+	drain_stock(stock_pcp);
-+	clear_bit(FLUSHING_CACHED_CHARGE, &stock_pcp->flags);
-+
-+	local_unlock_irq(&memcg_stock.stock_lock);
-+	if (old)
-+		obj_cgroup_put(old);
- }
-=20
- /*
-  * Cache charges(val) to local per_cpu area.
-  * This will be consumed by consume_stock() function, later.
-  */
--static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages=
-)
-+static void __refill_stock(struct mem_cgroup *memcg, unsigned int nr_pag=
-es)
- {
--	struct memcg_stock_pcp *stock;
--	unsigned long flags;
-+	struct memcg_stock_pcp *stock =3D this_cpu_ptr(&memcg_stock);
-=20
--	local_irq_save(flags);
+-	return memcg->nodeinfo[nid];
+-}
 -
--	stock =3D this_cpu_ptr(&memcg_stock);
-+	lockdep_assert_held(&stock->stock_lock);
- 	if (stock->cached !=3D memcg) { /* reset if necessary */
- 		drain_stock(stock);
- 		css_get(&memcg->css);
-@@ -2186,8 +2214,20 @@ static void refill_stock(struct mem_cgroup *memcg,=
- unsigned int nr_pages)
-=20
- 	if (stock->nr_pages > MEMCG_CHARGE_BATCH)
- 		drain_stock(stock);
-+}
-=20
--	local_irq_restore(flags);
-+static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages=
-,
-+			 bool stock_lock_acquried)
-+{
-+	unsigned long flags;
-+
-+	if (stock_lock_acquried) {
-+		__refill_stock(memcg, nr_pages);
-+		return;
-+	}
-+	local_lock_irqsave(&memcg_stock.stock_lock, flags);
-+	__refill_stock(memcg, nr_pages);
-+	local_unlock_irqrestore(&memcg_stock.stock_lock, flags);
- }
-=20
- /*
-@@ -2196,7 +2236,7 @@ static void refill_stock(struct mem_cgroup *memcg, =
-unsigned int nr_pages)
-  */
- static void drain_all_stock(struct mem_cgroup *root_memcg)
+ static struct mem_cgroup_tree_per_node *
+ soft_limit_tree_node(int nid)
  {
--	int cpu, curcpu;
-+	int cpu;
-=20
- 	/* If someone's already draining, avoid adding running more workers. */
- 	if (!mutex_trylock(&percpu_charge_mutex))
-@@ -2207,7 +2247,7 @@ static void drain_all_stock(struct mem_cgroup *root=
-_memcg)
- 	 * as well as workers from this path always operate on the local
- 	 * per-cpu data. CPU up doesn't touch memcg_stock at all.
- 	 */
--	curcpu =3D get_cpu();
-+	cpus_read_lock();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock =3D &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -2223,14 +2263,10 @@ static void drain_all_stock(struct mem_cgroup *ro=
-ot_memcg)
- 		rcu_read_unlock();
-=20
- 		if (flush &&
--		    !test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags)) {
--			if (cpu =3D=3D curcpu)
--				drain_local_stock(&stock->work);
--			else
--				schedule_work_on(cpu, &stock->work);
--		}
-+		    !test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags))
-+			schedule_work_on(cpu, &stock->work);
- 	}
--	put_cpu();
-+	cpus_read_unlock();
- 	mutex_unlock(&percpu_charge_mutex);
+ 	return soft_limit_tree.rb_tree_per_node[nid];
  }
-=20
-@@ -2631,7 +2667,7 @@ static int try_charge_memcg(struct mem_cgroup *memc=
-g, gfp_t gfp_mask,
-=20
- done_restock:
- 	if (batch > nr_pages)
--		refill_stock(memcg, batch - nr_pages);
-+		refill_stock(memcg, batch - nr_pages, false);
-=20
- 	/*
- 	 * If the hierarchy is above the normal consumption range, schedule
-@@ -2892,7 +2928,8 @@ static void memcg_free_cache_id(int id)
-  * @nr_pages: number of pages to uncharge
-  */
- static void obj_cgroup_uncharge_pages(struct obj_cgroup *objcg,
--				      unsigned int nr_pages)
-+				      unsigned int nr_pages,
-+				      bool stock_lock_acquried)
- {
- 	struct mem_cgroup *memcg;
-=20
-@@ -2900,7 +2937,7 @@ static void obj_cgroup_uncharge_pages(struct obj_cg=
-roup *objcg,
-=20
- 	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
- 		page_counter_uncharge(&memcg->kmem, nr_pages);
--	refill_stock(memcg, nr_pages);
-+	refill_stock(memcg, nr_pages, stock_lock_acquried);
-=20
- 	css_put(&memcg->css);
+ 
+-static struct mem_cgroup_tree_per_node *
+-soft_limit_tree_from_page(struct page *page)
+-{
+-	int nid = page_to_nid(page);
+-
+-	return soft_limit_tree.rb_tree_per_node[nid];
+-}
+-
+ static void __mem_cgroup_insert_exceeded(struct mem_cgroup_per_node *mz,
+ 					 struct mem_cgroup_tree_per_node *mctz,
+ 					 unsigned long new_usage_in_excess)
+@@ -543,43 +526,6 @@ static unsigned long soft_limit_excess(struct mem_cgroup *memcg)
+ 	return excess;
  }
-@@ -2987,7 +3024,7 @@ void __memcg_kmem_uncharge_page(struct page *page, =
-int order)
- 		return;
-=20
- 	objcg =3D __page_objcg(page);
--	obj_cgroup_uncharge_pages(objcg, nr_pages);
-+	obj_cgroup_uncharge_pages(objcg, nr_pages, false);
- 	page->memcg_data =3D 0;
- 	obj_cgroup_put(objcg);
- }
-@@ -2995,17 +3032,20 @@ void __memcg_kmem_uncharge_page(struct page *page=
-, int order)
- void mod_objcg_state(struct obj_cgroup *objcg, struct pglist_data *pgdat=
-,
- 		     enum node_stat_item idx, int nr)
- {
-+	bool stock_lock_acquried;
- 	unsigned long flags;
--	struct obj_stock *stock =3D get_obj_stock(&flags);
-+	struct obj_cgroup *old =3D NULL;
-+	struct obj_stock *stock;
- 	int *bytes;
-=20
-+	stock =3D get_obj_stock(&flags, &stock_lock_acquried);
- 	/*
- 	 * Save vmstat data in stock and skip vmstat array update unless
- 	 * accumulating over a page of vmstat data or when pgdat or idx
- 	 * changes.
- 	 */
- 	if (stock->cached_objcg !=3D objcg) {
--		drain_obj_stock(stock);
-+		old =3D drain_obj_stock(stock, stock_lock_acquried);
- 		obj_cgroup_get(objcg);
- 		stock->nr_bytes =3D atomic_read(&objcg->nr_charged_bytes)
- 				? atomic_xchg(&objcg->nr_charged_bytes, 0) : 0;
-@@ -3049,38 +3089,43 @@ void mod_objcg_state(struct obj_cgroup *objcg, st=
-ruct pglist_data *pgdat,
- 	if (nr)
- 		mod_objcg_mlstate(objcg, pgdat, idx, nr);
-=20
--	put_obj_stock(flags);
-+	put_obj_stock(flags, stock_lock_acquried);
-+	if (old)
-+		obj_cgroup_put(old);
- }
-=20
- static bool consume_obj_stock(struct obj_cgroup *objcg, unsigned int nr_=
-bytes)
- {
-+	bool stock_lock_acquried;
- 	unsigned long flags;
--	struct obj_stock *stock =3D get_obj_stock(&flags);
-+	struct obj_stock *stock;
- 	bool ret =3D false;
-=20
-+	stock =3D get_obj_stock(&flags, &stock_lock_acquried);
- 	if (objcg =3D=3D stock->cached_objcg && stock->nr_bytes >=3D nr_bytes) =
-{
- 		stock->nr_bytes -=3D nr_bytes;
- 		ret =3D true;
- 	}
-=20
--	put_obj_stock(flags);
-+	put_obj_stock(flags, stock_lock_acquried);
-=20
- 	return ret;
- }
-=20
--static void drain_obj_stock(struct obj_stock *stock)
-+static struct obj_cgroup *drain_obj_stock(struct obj_stock *stock,
-+					  bool stock_lock_acquried)
- {
- 	struct obj_cgroup *old =3D stock->cached_objcg;
-=20
- 	if (!old)
+ 
+-static void mem_cgroup_update_tree(struct mem_cgroup *memcg, struct page *page)
+-{
+-	unsigned long excess;
+-	struct mem_cgroup_per_node *mz;
+-	struct mem_cgroup_tree_per_node *mctz;
+-
+-	mctz = soft_limit_tree_from_page(page);
+-	if (!mctz)
 -		return;
-+		return NULL;
-=20
- 	if (stock->nr_bytes) {
- 		unsigned int nr_pages =3D stock->nr_bytes >> PAGE_SHIFT;
- 		unsigned int nr_bytes =3D stock->nr_bytes & (PAGE_SIZE - 1);
-=20
- 		if (nr_pages)
--			obj_cgroup_uncharge_pages(old, nr_pages);
-+			obj_cgroup_uncharge_pages(old, nr_pages, stock_lock_acquried);
-=20
- 		/*
- 		 * The leftover is flushed to the centralized per-memcg value.
-@@ -3115,8 +3160,8 @@ static void drain_obj_stock(struct obj_stock *stock=
-)
- 		stock->cached_pgdat =3D NULL;
- 	}
-=20
--	obj_cgroup_put(old);
- 	stock->cached_objcg =3D NULL;
-+	return old;
- }
-=20
- static bool obj_stock_flush_required(struct memcg_stock_pcp *stock,
-@@ -3124,11 +3169,14 @@ static bool obj_stock_flush_required(struct memcg=
-_stock_pcp *stock,
+-	/*
+-	 * Necessary to update all ancestors when hierarchy is used.
+-	 * because their event counter is not touched.
+-	 */
+-	for (; memcg; memcg = parent_mem_cgroup(memcg)) {
+-		mz = mem_cgroup_page_nodeinfo(memcg, page);
+-		excess = soft_limit_excess(memcg);
+-		/*
+-		 * We have to update the tree if mz is on RB-tree or
+-		 * mem is over its softlimit.
+-		 */
+-		if (excess || mz->on_tree) {
+-			unsigned long flags;
+-
+-			spin_lock_irqsave(&mctz->lock, flags);
+-			/* if on-tree, remove it */
+-			if (mz->on_tree)
+-				__mem_cgroup_remove_exceeded(mz, mctz);
+-			/*
+-			 * Insert again. mz->usage_in_excess will be updated.
+-			 * If excess is 0, no tree ops.
+-			 */
+-			__mem_cgroup_insert_exceeded(mz, mctz, excess);
+-			spin_unlock_irqrestore(&mctz->lock, flags);
+-		}
+-	}
+-}
+-
+ static void mem_cgroup_remove_from_trees(struct mem_cgroup *memcg)
  {
- 	struct mem_cgroup *memcg;
-=20
+ 	struct mem_cgroup_tree_per_node *mctz;
+@@ -878,50 +824,6 @@ static void mem_cgroup_charge_statistics(struct mem_cgroup *memcg,
+ 	__this_cpu_add(memcg->vmstats_percpu->nr_page_events, nr_pages);
+ }
+ 
+-static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
+-				       enum mem_cgroup_events_target target)
+-{
+-	unsigned long val, next;
+-
+-	val = __this_cpu_read(memcg->vmstats_percpu->nr_page_events);
+-	next = __this_cpu_read(memcg->vmstats_percpu->targets[target]);
+-	/* from time_after() in jiffies.h */
+-	if ((long)(next - val) < 0) {
+-		switch (target) {
+-		case MEM_CGROUP_TARGET_THRESH:
+-			next = val + THRESHOLDS_EVENTS_TARGET;
+-			break;
+-		case MEM_CGROUP_TARGET_SOFTLIMIT:
+-			next = val + SOFTLIMIT_EVENTS_TARGET;
+-			break;
+-		default:
+-			break;
+-		}
+-		__this_cpu_write(memcg->vmstats_percpu->targets[target], next);
+-		return true;
+-	}
+-	return false;
+-}
+-
+-/*
+- * Check events in order.
+- *
+- */
+-static void memcg_check_events(struct mem_cgroup *memcg, struct page *page)
+-{
+-	/* threshold event is triggered in finer grain than soft limit */
+-	if (unlikely(mem_cgroup_event_ratelimit(memcg,
+-						MEM_CGROUP_TARGET_THRESH))) {
+-		bool do_softlimit;
+-
+-		do_softlimit = mem_cgroup_event_ratelimit(memcg,
+-						MEM_CGROUP_TARGET_SOFTLIMIT);
+-		mem_cgroup_threshold(memcg);
+-		if (unlikely(do_softlimit))
+-			mem_cgroup_update_tree(memcg, page);
+-	}
+-}
+-
+ struct mem_cgroup *mem_cgroup_from_task(struct task_struct *p)
+ {
+ 	/*
+@@ -3816,8 +3718,12 @@ static ssize_t mem_cgroup_write(struct kernfs_open_file *of,
+ 		}
+ 		break;
+ 	case RES_SOFT_LIMIT:
 +#ifndef CONFIG_PREEMPT_RT
- 	if (in_task() && stock->task_obj.cached_objcg) {
- 		memcg =3D obj_cgroup_memcg(stock->task_obj.cached_objcg);
- 		if (memcg && mem_cgroup_is_descendant(memcg, root_memcg))
- 			return true;
- 	}
+ 		memcg->soft_limit = nr_pages;
+ 		ret = 0;
++#else
++		ret = -EOPNOTSUPP;
 +#endif
-+
- 	if (stock->irq_obj.cached_objcg) {
- 		memcg =3D obj_cgroup_memcg(stock->irq_obj.cached_objcg);
- 		if (memcg && mem_cgroup_is_descendant(memcg, root_memcg))
-@@ -3141,12 +3189,15 @@ static bool obj_stock_flush_required(struct memcg=
-_stock_pcp *stock,
- static void refill_obj_stock(struct obj_cgroup *objcg, unsigned int nr_b=
-ytes,
- 			     bool allow_uncharge)
- {
-+	bool stock_lock_acquried;
- 	unsigned long flags;
--	struct obj_stock *stock =3D get_obj_stock(&flags);
-+	struct obj_stock *stock;
- 	unsigned int nr_pages =3D 0;
-+	struct obj_cgroup *old =3D NULL;
-=20
-+	stock =3D get_obj_stock(&flags, &stock_lock_acquried);
- 	if (stock->cached_objcg !=3D objcg) { /* reset if necessary */
--		drain_obj_stock(stock);
-+		old =3D drain_obj_stock(stock, stock_lock_acquried);
- 		obj_cgroup_get(objcg);
- 		stock->cached_objcg =3D objcg;
- 		stock->nr_bytes =3D atomic_read(&objcg->nr_charged_bytes)
-@@ -3160,10 +3211,12 @@ static void refill_obj_stock(struct obj_cgroup *o=
-bjcg, unsigned int nr_bytes,
- 		stock->nr_bytes &=3D (PAGE_SIZE - 1);
+ 		break;
  	}
-=20
--	put_obj_stock(flags);
-+	put_obj_stock(flags, stock_lock_acquried);
-+	if (old)
-+		obj_cgroup_put(old);
-=20
- 	if (nr_pages)
--		obj_cgroup_uncharge_pages(objcg, nr_pages);
-+		obj_cgroup_uncharge_pages(objcg, nr_pages, false);
+ 	return ret ?: nbytes;
+@@ -4122,82 +4028,6 @@ static int mem_cgroup_swappiness_write(struct cgroup_subsys_state *css,
+ 	return 0;
  }
-=20
- int obj_cgroup_charge(struct obj_cgroup *objcg, gfp_t gfp, size_t size)
-@@ -7125,7 +7178,7 @@ void mem_cgroup_uncharge_skmem(struct mem_cgroup *m=
-emcg, unsigned int nr_pages)
-=20
- 	mod_memcg_state(memcg, MEMCG_SOCK, -nr_pages);
-=20
--	refill_stock(memcg, nr_pages);
-+	refill_stock(memcg, nr_pages, false);
+ 
+-static void __mem_cgroup_threshold(struct mem_cgroup *memcg, bool swap)
+-{
+-	struct mem_cgroup_threshold_ary *t;
+-	unsigned long usage;
+-	int i;
+-
+-	rcu_read_lock();
+-	if (!swap)
+-		t = rcu_dereference(memcg->thresholds.primary);
+-	else
+-		t = rcu_dereference(memcg->memsw_thresholds.primary);
+-
+-	if (!t)
+-		goto unlock;
+-
+-	usage = mem_cgroup_usage(memcg, swap);
+-
+-	/*
+-	 * current_threshold points to threshold just below or equal to usage.
+-	 * If it's not true, a threshold was crossed after last
+-	 * call of __mem_cgroup_threshold().
+-	 */
+-	i = t->current_threshold;
+-
+-	/*
+-	 * Iterate backward over array of thresholds starting from
+-	 * current_threshold and check if a threshold is crossed.
+-	 * If none of thresholds below usage is crossed, we read
+-	 * only one element of the array here.
+-	 */
+-	for (; i >= 0 && unlikely(t->entries[i].threshold > usage); i--)
+-		eventfd_signal(t->entries[i].eventfd, 1);
+-
+-	/* i = current_threshold + 1 */
+-	i++;
+-
+-	/*
+-	 * Iterate forward over array of thresholds starting from
+-	 * current_threshold+1 and check if a threshold is crossed.
+-	 * If none of thresholds above usage is crossed, we read
+-	 * only one element of the array here.
+-	 */
+-	for (; i < t->size && unlikely(t->entries[i].threshold <= usage); i++)
+-		eventfd_signal(t->entries[i].eventfd, 1);
+-
+-	/* Update current_threshold */
+-	t->current_threshold = i - 1;
+-unlock:
+-	rcu_read_unlock();
+-}
+-
+-static void mem_cgroup_threshold(struct mem_cgroup *memcg)
+-{
+-	while (memcg) {
+-		__mem_cgroup_threshold(memcg, false);
+-		if (do_memsw_account())
+-			__mem_cgroup_threshold(memcg, true);
+-
+-		memcg = parent_mem_cgroup(memcg);
+-	}
+-}
+-
+-static int compare_thresholds(const void *a, const void *b)
+-{
+-	const struct mem_cgroup_threshold *_a = a;
+-	const struct mem_cgroup_threshold *_b = b;
+-
+-	if (_a->threshold > _b->threshold)
+-		return 1;
+-
+-	if (_a->threshold < _b->threshold)
+-		return -1;
+-
+-	return 0;
+-}
+-
+ static int mem_cgroup_oom_notify_cb(struct mem_cgroup *memcg)
+ {
+ 	struct mem_cgroup_eventfd_list *ev;
+@@ -4219,105 +4049,446 @@ static void mem_cgroup_oom_notify(struct mem_cgroup *memcg)
+ 		mem_cgroup_oom_notify_cb(iter);
  }
-=20
- static int __init cgroup_memory(char *s)
---=20
+ 
+-static int __mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd, const char *args, enum res_type type)
++static int mem_cgroup_oom_control_read(struct seq_file *sf, void *v)
+ {
+-	struct mem_cgroup_thresholds *thresholds;
+-	struct mem_cgroup_threshold_ary *new;
+-	unsigned long threshold;
+-	unsigned long usage;
+-	int i, size, ret;
++	struct mem_cgroup *memcg = mem_cgroup_from_seq(sf);
+ 
+-	ret = page_counter_memparse(args, "-1", &threshold);
+-	if (ret)
+-		return ret;
++	seq_printf(sf, "oom_kill_disable %d\n", memcg->oom_kill_disable);
++	seq_printf(sf, "under_oom %d\n", (bool)memcg->under_oom);
++	seq_printf(sf, "oom_kill %lu\n",
++		   atomic_long_read(&memcg->memory_events[MEMCG_OOM_KILL]));
++	return 0;
++}
+ 
+-	mutex_lock(&memcg->thresholds_lock);
++static int mem_cgroup_oom_control_write(struct cgroup_subsys_state *css,
++	struct cftype *cft, u64 val)
++{
++	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+ 
+-	if (type == _MEM) {
+-		thresholds = &memcg->thresholds;
+-		usage = mem_cgroup_usage(memcg, false);
+-	} else if (type == _MEMSWAP) {
+-		thresholds = &memcg->memsw_thresholds;
+-		usage = mem_cgroup_usage(memcg, true);
+-	} else
+-		BUG();
++	/* cannot set to root cgroup and only 0 and 1 are allowed */
++	if (mem_cgroup_is_root(memcg) || !((val == 0) || (val == 1)))
++		return -EINVAL;
+ 
+-	/* Check if a threshold crossed before adding a new one */
+-	if (thresholds->primary)
+-		__mem_cgroup_threshold(memcg, type == _MEMSWAP);
++	memcg->oom_kill_disable = val;
++	if (!val)
++		memcg_oom_recover(memcg);
+ 
+-	size = thresholds->primary ? thresholds->primary->size + 1 : 1;
++	return 0;
++}
+ 
+-	/* Allocate memory for new array of thresholds */
+-	new = kmalloc(struct_size(new, entries, size), GFP_KERNEL);
+-	if (!new) {
+-		ret = -ENOMEM;
+-		goto unlock;
+-	}
+-	new->size = size;
++#ifdef CONFIG_CGROUP_WRITEBACK
+ 
+-	/* Copy thresholds (if any) to new array */
+-	if (thresholds->primary)
+-		memcpy(new->entries, thresholds->primary->entries,
+-		       flex_array_size(new, entries, size - 1));
++#include <trace/events/writeback.h>
+ 
+-	/* Add new threshold */
+-	new->entries[size - 1].eventfd = eventfd;
+-	new->entries[size - 1].threshold = threshold;
++static int memcg_wb_domain_init(struct mem_cgroup *memcg, gfp_t gfp)
++{
++	return wb_domain_init(&memcg->cgwb_domain, gfp);
++}
+ 
+-	/* Sort thresholds. Registering of new threshold isn't time-critical */
+-	sort(new->entries, size, sizeof(*new->entries),
+-			compare_thresholds, NULL);
++static void memcg_wb_domain_exit(struct mem_cgroup *memcg)
++{
++	wb_domain_exit(&memcg->cgwb_domain);
++}
+ 
+-	/* Find current threshold */
+-	new->current_threshold = -1;
+-	for (i = 0; i < size; i++) {
+-		if (new->entries[i].threshold <= usage) {
+-			/*
+-			 * new->current_threshold will not be used until
+-			 * rcu_assign_pointer(), so it's safe to increment
+-			 * it here.
+-			 */
+-			++new->current_threshold;
+-		} else
++static void memcg_wb_domain_size_changed(struct mem_cgroup *memcg)
++{
++	wb_domain_size_changed(&memcg->cgwb_domain);
++}
++
++struct wb_domain *mem_cgroup_wb_domain(struct bdi_writeback *wb)
++{
++	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
++
++	if (!memcg->css.parent)
++		return NULL;
++
++	return &memcg->cgwb_domain;
++}
++
++/**
++ * mem_cgroup_wb_stats - retrieve writeback related stats from its memcg
++ * @wb: bdi_writeback in question
++ * @pfilepages: out parameter for number of file pages
++ * @pheadroom: out parameter for number of allocatable pages according to memcg
++ * @pdirty: out parameter for number of dirty pages
++ * @pwriteback: out parameter for number of pages under writeback
++ *
++ * Determine the numbers of file, headroom, dirty, and writeback pages in
++ * @wb's memcg.  File, dirty and writeback are self-explanatory.  Headroom
++ * is a bit more involved.
++ *
++ * A memcg's headroom is "min(max, high) - used".  In the hierarchy, the
++ * headroom is calculated as the lowest headroom of itself and the
++ * ancestors.  Note that this doesn't consider the actual amount of
++ * available memory in the system.  The caller should further cap
++ * *@pheadroom accordingly.
++ */
++void mem_cgroup_wb_stats(struct bdi_writeback *wb, unsigned long *pfilepages,
++			 unsigned long *pheadroom, unsigned long *pdirty,
++			 unsigned long *pwriteback)
++{
++	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
++	struct mem_cgroup *parent;
++
++	mem_cgroup_flush_stats();
++
++	*pdirty = memcg_page_state(memcg, NR_FILE_DIRTY);
++	*pwriteback = memcg_page_state(memcg, NR_WRITEBACK);
++	*pfilepages = memcg_page_state(memcg, NR_INACTIVE_FILE) +
++			memcg_page_state(memcg, NR_ACTIVE_FILE);
++
++	*pheadroom = PAGE_COUNTER_MAX;
++	while ((parent = parent_mem_cgroup(memcg))) {
++		unsigned long ceiling = min(READ_ONCE(memcg->memory.max),
++					    READ_ONCE(memcg->memory.high));
++		unsigned long used = page_counter_read(&memcg->memory);
++
++		*pheadroom = min(*pheadroom, ceiling - min(ceiling, used));
++		memcg = parent;
++	}
++}
++
++/*
++ * Foreign dirty flushing
++ *
++ * There's an inherent mismatch between memcg and writeback.  The former
++ * tracks ownership per-page while the latter per-inode.  This was a
++ * deliberate design decision because honoring per-page ownership in the
++ * writeback path is complicated, may lead to higher CPU and IO overheads
++ * and deemed unnecessary given that write-sharing an inode across
++ * different cgroups isn't a common use-case.
++ *
++ * Combined with inode majority-writer ownership switching, this works well
++ * enough in most cases but there are some pathological cases.  For
++ * example, let's say there are two cgroups A and B which keep writing to
++ * different but confined parts of the same inode.  B owns the inode and
++ * A's memory is limited far below B's.  A's dirty ratio can rise enough to
++ * trigger balance_dirty_pages() sleeps but B's can be low enough to avoid
++ * triggering background writeback.  A will be slowed down without a way to
++ * make writeback of the dirty pages happen.
++ *
++ * Conditions like the above can lead to a cgroup getting repeatedly and
++ * severely throttled after making some progress after each
++ * dirty_expire_interval while the underlying IO device is almost
++ * completely idle.
++ *
++ * Solving this problem completely requires matching the ownership tracking
++ * granularities between memcg and writeback in either direction.  However,
++ * the more egregious behaviors can be avoided by simply remembering the
++ * most recent foreign dirtying events and initiating remote flushes on
++ * them when local writeback isn't enough to keep the memory clean enough.
++ *
++ * The following two functions implement such mechanism.  When a foreign
++ * page - a page whose memcg and writeback ownerships don't match - is
++ * dirtied, mem_cgroup_track_foreign_dirty() records the inode owning
++ * bdi_writeback on the page owning memcg.  When balance_dirty_pages()
++ * decides that the memcg needs to sleep due to high dirty ratio, it calls
++ * mem_cgroup_flush_foreign() which queues writeback on the recorded
++ * foreign bdi_writebacks which haven't expired.  Both the numbers of
++ * recorded bdi_writebacks and concurrent in-flight foreign writebacks are
++ * limited to MEMCG_CGWB_FRN_CNT.
++ *
++ * The mechanism only remembers IDs and doesn't hold any object references.
++ * As being wrong occasionally doesn't matter, updates and accesses to the
++ * records are lockless and racy.
++ */
++void mem_cgroup_track_foreign_dirty_slowpath(struct page *page,
++					     struct bdi_writeback *wb)
++{
++	struct mem_cgroup *memcg = page_memcg(page);
++	struct memcg_cgwb_frn *frn;
++	u64 now = get_jiffies_64();
++	u64 oldest_at = now;
++	int oldest = -1;
++	int i;
++
++	trace_track_foreign_dirty(page, wb);
++
++	/*
++	 * Pick the slot to use.  If there is already a slot for @wb, keep
++	 * using it.  If not replace the oldest one which isn't being
++	 * written out.
++	 */
++	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) {
++		frn = &memcg->cgwb_frn[i];
++		if (frn->bdi_id == wb->bdi->id &&
++		    frn->memcg_id == wb->memcg_css->id)
+ 			break;
++		if (time_before64(frn->at, oldest_at) &&
++		    atomic_read(&frn->done.cnt) == 1) {
++			oldest = i;
++			oldest_at = frn->at;
++		}
++	}
++
++	if (i < MEMCG_CGWB_FRN_CNT) {
++		/*
++		 * Re-using an existing one.  Update timestamp lazily to
++		 * avoid making the cacheline hot.  We want them to be
++		 * reasonably up-to-date and significantly shorter than
++		 * dirty_expire_interval as that's what expires the record.
++		 * Use the shorter of 1s and dirty_expire_interval / 8.
++		 */
++		unsigned long update_intv =
++			min_t(unsigned long, HZ,
++			      msecs_to_jiffies(dirty_expire_interval * 10) / 8);
++
++		if (time_before64(frn->at, now - update_intv))
++			frn->at = now;
++	} else if (oldest >= 0) {
++		/* replace the oldest free one */
++		frn = &memcg->cgwb_frn[oldest];
++		frn->bdi_id = wb->bdi->id;
++		frn->memcg_id = wb->memcg_css->id;
++		frn->at = now;
+ 	}
++}
++
++/* issue foreign writeback flushes for recorded foreign dirtying events */
++void mem_cgroup_flush_foreign(struct bdi_writeback *wb)
++{
++	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
++	unsigned long intv = msecs_to_jiffies(dirty_expire_interval * 10);
++	u64 now = jiffies_64;
++	int i;
++
++	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) {
++		struct memcg_cgwb_frn *frn = &memcg->cgwb_frn[i];
++
++		/*
++		 * If the record is older than dirty_expire_interval,
++		 * writeback on it has already started.  No need to kick it
++		 * off again.  Also, don't start a new one if there's
++		 * already one in flight.
++		 */
++		if (time_after64(frn->at, now - intv) &&
++		    atomic_read(&frn->done.cnt) == 1) {
++			frn->at = 0;
++			trace_flush_foreign(wb, frn->bdi_id, frn->memcg_id);
++			cgroup_writeback_by_id(frn->bdi_id, frn->memcg_id,
++					       WB_REASON_FOREIGN_FLUSH,
++					       &frn->done);
++		}
++	}
++}
++
++#else	/* CONFIG_CGROUP_WRITEBACK */
++
++static int memcg_wb_domain_init(struct mem_cgroup *memcg, gfp_t gfp)
++{
++	return 0;
++}
++
++static void memcg_wb_domain_exit(struct mem_cgroup *memcg)
++{
++}
++
++static void memcg_wb_domain_size_changed(struct mem_cgroup *memcg)
++{
++}
++
++#endif	/* CONFIG_CGROUP_WRITEBACK */
++
++
++#ifndef CONFIG_PREEMPT_RT
++/*
++ * DO NOT USE IN NEW FILES.
++ *
++ * "cgroup.event_control" implementation.
++ *
++ * This is way over-engineered.  It tries to support fully configurable
++ * events for each user.  Such level of flexibility is completely
++ * unnecessary especially in the light of the planned unified hierarchy.
++ *
++ * Please deprecate this and replace with something simpler if at all
++ * possible.
++ */
++
++static struct mem_cgroup_tree_per_node *
++soft_limit_tree_from_page(struct page *page)
++{
++	int nid = page_to_nid(page);
++
++	return soft_limit_tree.rb_tree_per_node[nid];
++}
++
++static struct mem_cgroup_per_node *
++mem_cgroup_page_nodeinfo(struct mem_cgroup *memcg, struct page *page)
++{
++	int nid = page_to_nid(page);
++
++	return memcg->nodeinfo[nid];
++}
++
++static void mem_cgroup_update_tree(struct mem_cgroup *memcg, struct page *page)
++{
++	unsigned long excess;
++	struct mem_cgroup_per_node *mz;
++	struct mem_cgroup_tree_per_node *mctz;
++
++	mctz = soft_limit_tree_from_page(page);
++	if (!mctz)
++		return;
++	/*
++	 * Necessary to update all ancestors when hierarchy is used.
++	 * because their event counter is not touched.
++	 */
++	for (; memcg; memcg = parent_mem_cgroup(memcg)) {
++		mz = mem_cgroup_page_nodeinfo(memcg, page);
++		excess = soft_limit_excess(memcg);
++		/*
++		 * We have to update the tree if mz is on RB-tree or
++		 * mem is over its softlimit.
++		 */
++		if (excess || mz->on_tree) {
++			unsigned long flags;
++
++			spin_lock_irqsave(&mctz->lock, flags);
++			/* if on-tree, remove it */
++			if (mz->on_tree)
++				__mem_cgroup_remove_exceeded(mz, mctz);
++			/*
++			 * Insert again. mz->usage_in_excess will be updated.
++			 * If excess is 0, no tree ops.
++			 */
++			__mem_cgroup_insert_exceeded(mz, mctz, excess);
++			spin_unlock_irqrestore(&mctz->lock, flags);
++		}
++	}
++}
++
++static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
++				       enum mem_cgroup_events_target target)
++{
++	unsigned long val, next;
++
++	val = __this_cpu_read(memcg->vmstats_percpu->nr_page_events);
++	next = __this_cpu_read(memcg->vmstats_percpu->targets[target]);
++	/* from time_after() in jiffies.h */
++	if ((long)(next - val) < 0) {
++		switch (target) {
++		case MEM_CGROUP_TARGET_THRESH:
++			next = val + THRESHOLDS_EVENTS_TARGET;
++			break;
++		case MEM_CGROUP_TARGET_SOFTLIMIT:
++			next = val + SOFTLIMIT_EVENTS_TARGET;
++			break;
++		default:
++			break;
++		}
++		__this_cpu_write(memcg->vmstats_percpu->targets[target], next);
++		return true;
++	}
++	return false;
++}
++
++static void __mem_cgroup_threshold(struct mem_cgroup *memcg, bool swap)
++{
++	struct mem_cgroup_threshold_ary *t;
++	unsigned long usage;
++	int i;
++
++	rcu_read_lock();
++	if (!swap)
++		t = rcu_dereference(memcg->thresholds.primary);
++	else
++		t = rcu_dereference(memcg->memsw_thresholds.primary);
++
++	if (!t)
++		goto unlock;
++
++	usage = mem_cgroup_usage(memcg, swap);
++
++	/*
++	 * current_threshold points to threshold just below or equal to usage.
++	 * If it's not true, a threshold was crossed after last
++	 * call of __mem_cgroup_threshold().
++	 */
++	i = t->current_threshold;
++
++	/*
++	 * Iterate backward over array of thresholds starting from
++	 * current_threshold and check if a threshold is crossed.
++	 * If none of thresholds below usage is crossed, we read
++	 * only one element of the array here.
++	 */
++	for (; i >= 0 && unlikely(t->entries[i].threshold > usage); i--)
++		eventfd_signal(t->entries[i].eventfd, 1);
++
++	/* i = current_threshold + 1 */
++	i++;
++
++	/*
++	 * Iterate forward over array of thresholds starting from
++	 * current_threshold+1 and check if a threshold is crossed.
++	 * If none of thresholds above usage is crossed, we read
++	 * only one element of the array here.
++	 */
++	for (; i < t->size && unlikely(t->entries[i].threshold <= usage); i++)
++		eventfd_signal(t->entries[i].eventfd, 1);
++
++	/* Update current_threshold */
++	t->current_threshold = i - 1;
++unlock:
++	rcu_read_unlock();
++}
++
++static void mem_cgroup_threshold(struct mem_cgroup *memcg)
++{
++	while (memcg) {
++		__mem_cgroup_threshold(memcg, false);
++		if (do_memsw_account())
++			__mem_cgroup_threshold(memcg, true);
+ 
+-	/* Free old spare buffer and save old primary buffer as spare */
+-	kfree(thresholds->spare);
+-	thresholds->spare = thresholds->primary;
++		memcg = parent_mem_cgroup(memcg);
++	}
++}
+ 
+-	rcu_assign_pointer(thresholds->primary, new);
++static int compare_thresholds(const void *a, const void *b)
++{
++	const struct mem_cgroup_threshold *_a = a;
++	const struct mem_cgroup_threshold *_b = b;
+ 
+-	/* To be sure that nobody uses thresholds */
+-	synchronize_rcu();
++	if (_a->threshold > _b->threshold)
++		return 1;
+ 
+-unlock:
+-	mutex_unlock(&memcg->thresholds_lock);
++	if (_a->threshold < _b->threshold)
++		return -1;
+ 
+-	return ret;
++	return 0;
+ }
+ 
+-static int mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd, const char *args)
++/*
++ * Check events in order.
++ *
++ */
++static void memcg_check_events(struct mem_cgroup *memcg, struct page *page)
+ {
+-	return __mem_cgroup_usage_register_event(memcg, eventfd, args, _MEM);
+-}
++	/* threshold event is triggered in finer grain than soft limit */
++	if (unlikely(mem_cgroup_event_ratelimit(memcg,
++						MEM_CGROUP_TARGET_THRESH))) {
++		bool do_softlimit;
+ 
+-static int memsw_cgroup_usage_register_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd, const char *args)
+-{
+-	return __mem_cgroup_usage_register_event(memcg, eventfd, args, _MEMSWAP);
++		do_softlimit = mem_cgroup_event_ratelimit(memcg,
++						MEM_CGROUP_TARGET_SOFTLIMIT);
++		mem_cgroup_threshold(memcg);
++		if (unlikely(do_softlimit))
++			mem_cgroup_update_tree(memcg, page);
++	}
+ }
+ 
+-static void __mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd, enum res_type type)
++static int __mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd, const char *args, enum res_type type)
+ {
+ 	struct mem_cgroup_thresholds *thresholds;
+ 	struct mem_cgroup_threshold_ary *new;
++	unsigned long threshold;
+ 	unsigned long usage;
+-	int i, j, size, entries;
++	int i, size, ret;
++
++	ret = page_counter_memparse(args, "-1", &threshold);
++	if (ret)
++		return ret;
+ 
+ 	mutex_lock(&memcg->thresholds_lock);
+ 
+@@ -4330,56 +4501,49 @@ static void __mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
+ 	} else
+ 		BUG();
+ 
+-	if (!thresholds->primary)
+-		goto unlock;
++	/* Check if a threshold crossed before adding a new one */
++	if (thresholds->primary)
++		__mem_cgroup_threshold(memcg, type == _MEMSWAP);
+ 
+-	/* Check if a threshold crossed before removing */
+-	__mem_cgroup_threshold(memcg, type == _MEMSWAP);
++	size = thresholds->primary ? thresholds->primary->size + 1 : 1;
+ 
+-	/* Calculate new number of threshold */
+-	size = entries = 0;
+-	for (i = 0; i < thresholds->primary->size; i++) {
+-		if (thresholds->primary->entries[i].eventfd != eventfd)
+-			size++;
+-		else
+-			entries++;
++	/* Allocate memory for new array of thresholds */
++	new = kmalloc(struct_size(new, entries, size), GFP_KERNEL);
++	if (!new) {
++		ret = -ENOMEM;
++		goto unlock;
+ 	}
++	new->size = size;
+ 
+-	new = thresholds->spare;
+-
+-	/* If no items related to eventfd have been cleared, nothing to do */
+-	if (!entries)
+-		goto unlock;
++	/* Copy thresholds (if any) to new array */
++	if (thresholds->primary)
++		memcpy(new->entries, thresholds->primary->entries,
++		       flex_array_size(new, entries, size - 1));
+ 
+-	/* Set thresholds array to NULL if we don't have thresholds */
+-	if (!size) {
+-		kfree(new);
+-		new = NULL;
+-		goto swap_buffers;
+-	}
++	/* Add new threshold */
++	new->entries[size - 1].eventfd = eventfd;
++	new->entries[size - 1].threshold = threshold;
+ 
+-	new->size = size;
++	/* Sort thresholds. Registering of new threshold isn't time-critical */
++	sort(new->entries, size, sizeof(*new->entries),
++			compare_thresholds, NULL);
+ 
+-	/* Copy thresholds and find current threshold */
++	/* Find current threshold */
+ 	new->current_threshold = -1;
+-	for (i = 0, j = 0; i < thresholds->primary->size; i++) {
+-		if (thresholds->primary->entries[i].eventfd == eventfd)
+-			continue;
+-
+-		new->entries[j] = thresholds->primary->entries[i];
+-		if (new->entries[j].threshold <= usage) {
++	for (i = 0; i < size; i++) {
++		if (new->entries[i].threshold <= usage) {
+ 			/*
+-			 * new->current_threshold will not be used
+-			 * until rcu_assign_pointer(), so it's safe to increment
++			 * new->current_threshold will not be used until
++			 * rcu_assign_pointer(), so it's safe to increment
+ 			 * it here.
+ 			 */
+ 			++new->current_threshold;
+-		}
+-		j++;
++		} else
++			break;
+ 	}
+ 
+-swap_buffers:
+-	/* Swap primary and spare array */
++	/* Free old spare buffer and save old primary buffer as spare */
++	kfree(thresholds->spare);
+ 	thresholds->spare = thresholds->primary;
+ 
+ 	rcu_assign_pointer(thresholds->primary, new);
+@@ -4387,318 +4551,160 @@ static void __mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
+ 	/* To be sure that nobody uses thresholds */
+ 	synchronize_rcu();
+ 
+-	/* If all events are unregistered, free the spare array */
+-	if (!new) {
+-		kfree(thresholds->spare);
+-		thresholds->spare = NULL;
+-	}
+ unlock:
+ 	mutex_unlock(&memcg->thresholds_lock);
+-}
+-
+-static void mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd)
+-{
+-	return __mem_cgroup_usage_unregister_event(memcg, eventfd, _MEM);
+-}
+ 
+-static void memsw_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd)
+-{
+-	return __mem_cgroup_usage_unregister_event(memcg, eventfd, _MEMSWAP);
++	return ret;
+ }
+ 
+-static int mem_cgroup_oom_register_event(struct mem_cgroup *memcg,
++static int mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
+ 	struct eventfd_ctx *eventfd, const char *args)
+ {
+-	struct mem_cgroup_eventfd_list *event;
+-
+-	event = kmalloc(sizeof(*event),	GFP_KERNEL);
+-	if (!event)
+-		return -ENOMEM;
+-
+-	spin_lock(&memcg_oom_lock);
+-
+-	event->eventfd = eventfd;
+-	list_add(&event->list, &memcg->oom_notify);
+-
+-	/* already in OOM ? */
+-	if (memcg->under_oom)
+-		eventfd_signal(eventfd, 1);
+-	spin_unlock(&memcg_oom_lock);
+-
+-	return 0;
+-}
+-
+-static void mem_cgroup_oom_unregister_event(struct mem_cgroup *memcg,
+-	struct eventfd_ctx *eventfd)
+-{
+-	struct mem_cgroup_eventfd_list *ev, *tmp;
+-
+-	spin_lock(&memcg_oom_lock);
+-
+-	list_for_each_entry_safe(ev, tmp, &memcg->oom_notify, list) {
+-		if (ev->eventfd == eventfd) {
+-			list_del(&ev->list);
+-			kfree(ev);
+-		}
+-	}
+-
+-	spin_unlock(&memcg_oom_lock);
+-}
+-
+-static int mem_cgroup_oom_control_read(struct seq_file *sf, void *v)
+-{
+-	struct mem_cgroup *memcg = mem_cgroup_from_seq(sf);
+-
+-	seq_printf(sf, "oom_kill_disable %d\n", memcg->oom_kill_disable);
+-	seq_printf(sf, "under_oom %d\n", (bool)memcg->under_oom);
+-	seq_printf(sf, "oom_kill %lu\n",
+-		   atomic_long_read(&memcg->memory_events[MEMCG_OOM_KILL]));
+-	return 0;
+-}
+-
+-static int mem_cgroup_oom_control_write(struct cgroup_subsys_state *css,
+-	struct cftype *cft, u64 val)
+-{
+-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+-
+-	/* cannot set to root cgroup and only 0 and 1 are allowed */
+-	if (mem_cgroup_is_root(memcg) || !((val == 0) || (val == 1)))
+-		return -EINVAL;
+-
+-	memcg->oom_kill_disable = val;
+-	if (!val)
+-		memcg_oom_recover(memcg);
+-
+-	return 0;
+-}
+-
+-#ifdef CONFIG_CGROUP_WRITEBACK
+-
+-#include <trace/events/writeback.h>
+-
+-static int memcg_wb_domain_init(struct mem_cgroup *memcg, gfp_t gfp)
+-{
+-	return wb_domain_init(&memcg->cgwb_domain, gfp);
+-}
+-
+-static void memcg_wb_domain_exit(struct mem_cgroup *memcg)
+-{
+-	wb_domain_exit(&memcg->cgwb_domain);
+-}
+-
+-static void memcg_wb_domain_size_changed(struct mem_cgroup *memcg)
+-{
+-	wb_domain_size_changed(&memcg->cgwb_domain);
++	return __mem_cgroup_usage_register_event(memcg, eventfd, args, _MEM);
+ }
+ 
+-struct wb_domain *mem_cgroup_wb_domain(struct bdi_writeback *wb)
++static int memsw_cgroup_usage_register_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd, const char *args)
+ {
+-	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
+-
+-	if (!memcg->css.parent)
+-		return NULL;
+-
+-	return &memcg->cgwb_domain;
++	return __mem_cgroup_usage_register_event(memcg, eventfd, args, _MEMSWAP);
+ }
+ 
+-/**
+- * mem_cgroup_wb_stats - retrieve writeback related stats from its memcg
+- * @wb: bdi_writeback in question
+- * @pfilepages: out parameter for number of file pages
+- * @pheadroom: out parameter for number of allocatable pages according to memcg
+- * @pdirty: out parameter for number of dirty pages
+- * @pwriteback: out parameter for number of pages under writeback
+- *
+- * Determine the numbers of file, headroom, dirty, and writeback pages in
+- * @wb's memcg.  File, dirty and writeback are self-explanatory.  Headroom
+- * is a bit more involved.
+- *
+- * A memcg's headroom is "min(max, high) - used".  In the hierarchy, the
+- * headroom is calculated as the lowest headroom of itself and the
+- * ancestors.  Note that this doesn't consider the actual amount of
+- * available memory in the system.  The caller should further cap
+- * *@pheadroom accordingly.
+- */
+-void mem_cgroup_wb_stats(struct bdi_writeback *wb, unsigned long *pfilepages,
+-			 unsigned long *pheadroom, unsigned long *pdirty,
+-			 unsigned long *pwriteback)
++static void __mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd, enum res_type type)
+ {
+-	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
+-	struct mem_cgroup *parent;
++	struct mem_cgroup_thresholds *thresholds;
++	struct mem_cgroup_threshold_ary *new;
++	unsigned long usage;
++	int i, j, size, entries;
+ 
+-	mem_cgroup_flush_stats();
++	mutex_lock(&memcg->thresholds_lock);
+ 
+-	*pdirty = memcg_page_state(memcg, NR_FILE_DIRTY);
+-	*pwriteback = memcg_page_state(memcg, NR_WRITEBACK);
+-	*pfilepages = memcg_page_state(memcg, NR_INACTIVE_FILE) +
+-			memcg_page_state(memcg, NR_ACTIVE_FILE);
++	if (type == _MEM) {
++		thresholds = &memcg->thresholds;
++		usage = mem_cgroup_usage(memcg, false);
++	} else if (type == _MEMSWAP) {
++		thresholds = &memcg->memsw_thresholds;
++		usage = mem_cgroup_usage(memcg, true);
++	} else
++		BUG();
+ 
+-	*pheadroom = PAGE_COUNTER_MAX;
+-	while ((parent = parent_mem_cgroup(memcg))) {
+-		unsigned long ceiling = min(READ_ONCE(memcg->memory.max),
+-					    READ_ONCE(memcg->memory.high));
+-		unsigned long used = page_counter_read(&memcg->memory);
++	if (!thresholds->primary)
++		goto unlock;
+ 
+-		*pheadroom = min(*pheadroom, ceiling - min(ceiling, used));
+-		memcg = parent;
++	/* Check if a threshold crossed before removing */
++	__mem_cgroup_threshold(memcg, type == _MEMSWAP);
++
++	/* Calculate new number of threshold */
++	size = entries = 0;
++	for (i = 0; i < thresholds->primary->size; i++) {
++		if (thresholds->primary->entries[i].eventfd != eventfd)
++			size++;
++		else
++			entries++;
+ 	}
+-}
+ 
+-/*
+- * Foreign dirty flushing
+- *
+- * There's an inherent mismatch between memcg and writeback.  The former
+- * tracks ownership per-page while the latter per-inode.  This was a
+- * deliberate design decision because honoring per-page ownership in the
+- * writeback path is complicated, may lead to higher CPU and IO overheads
+- * and deemed unnecessary given that write-sharing an inode across
+- * different cgroups isn't a common use-case.
+- *
+- * Combined with inode majority-writer ownership switching, this works well
+- * enough in most cases but there are some pathological cases.  For
+- * example, let's say there are two cgroups A and B which keep writing to
+- * different but confined parts of the same inode.  B owns the inode and
+- * A's memory is limited far below B's.  A's dirty ratio can rise enough to
+- * trigger balance_dirty_pages() sleeps but B's can be low enough to avoid
+- * triggering background writeback.  A will be slowed down without a way to
+- * make writeback of the dirty pages happen.
+- *
+- * Conditions like the above can lead to a cgroup getting repeatedly and
+- * severely throttled after making some progress after each
+- * dirty_expire_interval while the underlying IO device is almost
+- * completely idle.
+- *
+- * Solving this problem completely requires matching the ownership tracking
+- * granularities between memcg and writeback in either direction.  However,
+- * the more egregious behaviors can be avoided by simply remembering the
+- * most recent foreign dirtying events and initiating remote flushes on
+- * them when local writeback isn't enough to keep the memory clean enough.
+- *
+- * The following two functions implement such mechanism.  When a foreign
+- * page - a page whose memcg and writeback ownerships don't match - is
+- * dirtied, mem_cgroup_track_foreign_dirty() records the inode owning
+- * bdi_writeback on the page owning memcg.  When balance_dirty_pages()
+- * decides that the memcg needs to sleep due to high dirty ratio, it calls
+- * mem_cgroup_flush_foreign() which queues writeback on the recorded
+- * foreign bdi_writebacks which haven't expired.  Both the numbers of
+- * recorded bdi_writebacks and concurrent in-flight foreign writebacks are
+- * limited to MEMCG_CGWB_FRN_CNT.
+- *
+- * The mechanism only remembers IDs and doesn't hold any object references.
+- * As being wrong occasionally doesn't matter, updates and accesses to the
+- * records are lockless and racy.
+- */
+-void mem_cgroup_track_foreign_dirty_slowpath(struct page *page,
+-					     struct bdi_writeback *wb)
+-{
+-	struct mem_cgroup *memcg = page_memcg(page);
+-	struct memcg_cgwb_frn *frn;
+-	u64 now = get_jiffies_64();
+-	u64 oldest_at = now;
+-	int oldest = -1;
+-	int i;
++	new = thresholds->spare;
+ 
+-	trace_track_foreign_dirty(page, wb);
++	/* If no items related to eventfd have been cleared, nothing to do */
++	if (!entries)
++		goto unlock;
+ 
+-	/*
+-	 * Pick the slot to use.  If there is already a slot for @wb, keep
+-	 * using it.  If not replace the oldest one which isn't being
+-	 * written out.
+-	 */
+-	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) {
+-		frn = &memcg->cgwb_frn[i];
+-		if (frn->bdi_id == wb->bdi->id &&
+-		    frn->memcg_id == wb->memcg_css->id)
+-			break;
+-		if (time_before64(frn->at, oldest_at) &&
+-		    atomic_read(&frn->done.cnt) == 1) {
+-			oldest = i;
+-			oldest_at = frn->at;
+-		}
++	/* Set thresholds array to NULL if we don't have thresholds */
++	if (!size) {
++		kfree(new);
++		new = NULL;
++		goto swap_buffers;
+ 	}
+ 
+-	if (i < MEMCG_CGWB_FRN_CNT) {
+-		/*
+-		 * Re-using an existing one.  Update timestamp lazily to
+-		 * avoid making the cacheline hot.  We want them to be
+-		 * reasonably up-to-date and significantly shorter than
+-		 * dirty_expire_interval as that's what expires the record.
+-		 * Use the shorter of 1s and dirty_expire_interval / 8.
+-		 */
+-		unsigned long update_intv =
+-			min_t(unsigned long, HZ,
+-			      msecs_to_jiffies(dirty_expire_interval * 10) / 8);
++	new->size = size;
+ 
+-		if (time_before64(frn->at, now - update_intv))
+-			frn->at = now;
+-	} else if (oldest >= 0) {
+-		/* replace the oldest free one */
+-		frn = &memcg->cgwb_frn[oldest];
+-		frn->bdi_id = wb->bdi->id;
+-		frn->memcg_id = wb->memcg_css->id;
+-		frn->at = now;
++	/* Copy thresholds and find current threshold */
++	new->current_threshold = -1;
++	for (i = 0, j = 0; i < thresholds->primary->size; i++) {
++		if (thresholds->primary->entries[i].eventfd == eventfd)
++			continue;
++
++		new->entries[j] = thresholds->primary->entries[i];
++		if (new->entries[j].threshold <= usage) {
++			/*
++			 * new->current_threshold will not be used
++			 * until rcu_assign_pointer(), so it's safe to increment
++			 * it here.
++			 */
++			++new->current_threshold;
++		}
++		j++;
+ 	}
+-}
+ 
+-/* issue foreign writeback flushes for recorded foreign dirtying events */
+-void mem_cgroup_flush_foreign(struct bdi_writeback *wb)
+-{
+-	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
+-	unsigned long intv = msecs_to_jiffies(dirty_expire_interval * 10);
+-	u64 now = jiffies_64;
+-	int i;
++swap_buffers:
++	/* Swap primary and spare array */
++	thresholds->spare = thresholds->primary;
+ 
+-	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) {
+-		struct memcg_cgwb_frn *frn = &memcg->cgwb_frn[i];
++	rcu_assign_pointer(thresholds->primary, new);
+ 
+-		/*
+-		 * If the record is older than dirty_expire_interval,
+-		 * writeback on it has already started.  No need to kick it
+-		 * off again.  Also, don't start a new one if there's
+-		 * already one in flight.
+-		 */
+-		if (time_after64(frn->at, now - intv) &&
+-		    atomic_read(&frn->done.cnt) == 1) {
+-			frn->at = 0;
+-			trace_flush_foreign(wb, frn->bdi_id, frn->memcg_id);
+-			cgroup_writeback_by_id(frn->bdi_id, frn->memcg_id,
+-					       WB_REASON_FOREIGN_FLUSH,
+-					       &frn->done);
+-		}
++	/* To be sure that nobody uses thresholds */
++	synchronize_rcu();
++
++	/* If all events are unregistered, free the spare array */
++	if (!new) {
++		kfree(thresholds->spare);
++		thresholds->spare = NULL;
+ 	}
++unlock:
++	mutex_unlock(&memcg->thresholds_lock);
+ }
+ 
+-#else	/* CONFIG_CGROUP_WRITEBACK */
+-
+-static int memcg_wb_domain_init(struct mem_cgroup *memcg, gfp_t gfp)
++static void mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd)
+ {
+-	return 0;
++	return __mem_cgroup_usage_unregister_event(memcg, eventfd, _MEM);
+ }
+ 
+-static void memcg_wb_domain_exit(struct mem_cgroup *memcg)
++static void memsw_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd)
+ {
++	return __mem_cgroup_usage_unregister_event(memcg, eventfd, _MEMSWAP);
+ }
+ 
+-static void memcg_wb_domain_size_changed(struct mem_cgroup *memcg)
++static int mem_cgroup_oom_register_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd, const char *args)
+ {
++	struct mem_cgroup_eventfd_list *event;
++
++	event = kmalloc(sizeof(*event),	GFP_KERNEL);
++	if (!event)
++		return -ENOMEM;
++
++	spin_lock(&memcg_oom_lock);
++
++	event->eventfd = eventfd;
++	list_add(&event->list, &memcg->oom_notify);
++
++	/* already in OOM ? */
++	if (memcg->under_oom)
++		eventfd_signal(eventfd, 1);
++	spin_unlock(&memcg_oom_lock);
++
++	return 0;
+ }
+ 
+-#endif	/* CONFIG_CGROUP_WRITEBACK */
++static void mem_cgroup_oom_unregister_event(struct mem_cgroup *memcg,
++	struct eventfd_ctx *eventfd)
++{
++	struct mem_cgroup_eventfd_list *ev, *tmp;
++
++	spin_lock(&memcg_oom_lock);
++
++	list_for_each_entry_safe(ev, tmp, &memcg->oom_notify, list) {
++		if (ev->eventfd == eventfd) {
++			list_del(&ev->list);
++			kfree(ev);
++		}
++	}
++
++	spin_unlock(&memcg_oom_lock);
++}
+ 
+-/*
+- * DO NOT USE IN NEW FILES.
+- *
+- * "cgroup.event_control" implementation.
+- *
+- * This is way over-engineered.  It tries to support fully configurable
+- * events for each user.  Such level of flexibility is completely
+- * unnecessary especially in the light of the planned unified hierarchy.
+- *
+- * Please deprecate this and replace with something simpler if at all
+- * possible.
+- */
+ 
+ /*
+  * Unregister event and free resources.
+@@ -4910,6 +4916,16 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
+ 	return ret;
+ }
+ 
++#else
++static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
++					 char *buf, size_t nbytes, loff_t off)
++{
++	return -EOPNOTSUPP;
++}
++
++static void memcg_check_events(struct mem_cgroup *memcg, struct page *page) { }
++#endif /* CONFIG_PREEMPT_RT */
++
+ static struct cftype mem_cgroup_legacy_files[] = {
+ 	{
+ 		.name = "usage_in_bytes",
+-- 
 2.26.2
+
+
 
