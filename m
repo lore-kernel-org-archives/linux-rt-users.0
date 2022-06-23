@@ -2,98 +2,71 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 63A95C43334
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jun 2022 12:03:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E9CCC43334
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jun 2022 13:35:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229734AbiFWMDW convert rfc822-to-8bit (ORCPT
+        id S231691AbiFWNf1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jun 2022 08:03:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49984 "EHLO
+        Thu, 23 Jun 2022 09:35:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48526 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231508AbiFWMDK (ORCPT
+        with ESMTP id S231586AbiFWNf1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jun 2022 08:03:10 -0400
-Received: from lithops.sigma-star.at (lithops.sigma-star.at [195.201.40.130])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7A9C04EA26
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jun 2022 05:02:47 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id F0D616141887;
-        Thu, 23 Jun 2022 14:02:44 +0200 (CEST)
-Received: from lithops.sigma-star.at ([127.0.0.1])
-        by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id ODogzjK5POzB; Thu, 23 Jun 2022 14:02:44 +0200 (CEST)
-Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id 911F961B8B4F;
-        Thu, 23 Jun 2022 14:02:44 +0200 (CEST)
-Received: from lithops.sigma-star.at ([127.0.0.1])
-        by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id PbpC0lVei8OP; Thu, 23 Jun 2022 14:02:44 +0200 (CEST)
-Received: from lithops.sigma-star.at (lithops.sigma-star.at [195.201.40.130])
-        by lithops.sigma-star.at (Postfix) with ESMTP id 716986141887;
-        Thu, 23 Jun 2022 14:02:44 +0200 (CEST)
-Date:   Thu, 23 Jun 2022 14:02:44 +0200 (CEST)
-From:   Richard Weinberger <richard@nod.at>
-To:     bigeasy <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com
-Message-ID: <1958751921.205825.1655985764383.JavaMail.zimbra@nod.at>
-In-Reply-To: <YrRNJqo94yLPDa7Z@linutronix.de>
-References: <20220622110506.10534-1-richard@nod.at> <YrRNJqo94yLPDa7Z@linutronix.de>
-Subject: Re: [v5.15 0/4] Backport MEMCG changes from v5.16
+        Thu, 23 Jun 2022 09:35:27 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6BC9E175AA;
+        Thu, 23 Jun 2022 06:35:26 -0700 (PDT)
+Date:   Thu, 23 Jun 2022 15:35:23 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1655991325;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=XIfS0wAgMAPHur5F2be+uJqVhpZpyJ5Kv6RCfMNIA5Y=;
+        b=RLnb/2S7c5GR0UcxJAp3h60TVmoTk1srsw7+OQ7Mbsh7YSgcTJKZ49HwFYSpl8pR/aLahp
+        Q1Uln3TsxKnRj+cJcXe28JLZz95eZSL2gbaE7rDqlbQVFYfn4ZkIIikRp5GT4EJcy+05tD
+        ki63ivVZCVzv9zJjl1RPG7v1WBofxzwDLkagvo4Z1SF2qFhVC5N38U+8AG7phV5uGStbed
+        BYenYgFimrJOHwQn4tsQUNq1CaWXfgo4CkgjMLWyQIcVICALLtko+d2vOpm/5pAM9SlNlV
+        VvX09gHdPhqO8SXq2bBaGSaFnY1qg1NHJcZ2YWbxjkx3F+HImzf2LqeuvwY4sA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1655991325;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=XIfS0wAgMAPHur5F2be+uJqVhpZpyJ5Kv6RCfMNIA5Y=;
+        b=hO4ECR8hE6DwZxhwnYOBCV7FqgzraeYR171ibypr2FWi0oQeO1sXGHQUDzPXY+cEpF27wc
+        UmYzi4JcHBqhXnCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Valentin Schneider <vschneid@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
+        linux-rt-users@vger.kernel.org,
+        Eric Biederman <ebiederm@xmission.com>,
+        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Subject: Re: [PATCH v2] panic, kexec: Make __crash_kexec() NMI safe
+Message-ID: <YrRsGzXTpms+FOeI@linutronix.de>
+References: <20220620111520.1039685-1-vschneid@redhat.com>
+ <YrQzB7sPD8BNxSFq@linutronix.de>
+ <xhsmhy1xn622a.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-X-Originating-IP: [195.201.40.130]
-X-Mailer: Zimbra 8.8.12_GA_3807 (ZimbraWebClient - FF97 (Linux)/8.8.12_GA_3809)
-Thread-Topic: Backport MEMCG changes from v5.16
-Thread-Index: yfHtI7O0iMLSiCgLjmoIcV6N9kXsrw==
+Content-Disposition: inline
+In-Reply-To: <xhsmhy1xn622a.mognet@vschneid.remote.csb>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Sebastian,
-
------ Ursprüngliche Mail -----
-> Von: "bigeasy" <bigeasy@linutronix.de>
-> An: "richard" <richard@nod.at>
-> CC: linux-rt-users@vger.kernel.org, williams@redhat.com
-> Gesendet: Donnerstag, 23. Juni 2022 13:23:18
-> Betreff: Re: [v5.15 0/4] Backport MEMCG changes from v5.16
-
-> On 2022-06-22 13:05:02 [+0200], Richard Weinberger wrote:
->> This is a backport of Sebastian's MEMCG changes to v5.15, with these patches
->> applied,
->> it is possible to use memory cgroups together with PREEMPT_RT on v5.15, just
->> like on v5.16.
->> 
->> Richard Weinberger (1):
->>   Allow MEMCG on PREEMPT_RT
->> 
->> Sebastian Andrzej Siewior (3):
->>   mm/memcg: Disable threshold event handlers on PREEMPT_RT
->>   mm/memcg: Protect per-CPU counter by disabling preemption on
->>     PREEMPT_RT where needed.
->>   mm/memcg: Add a local_lock_t for IRQ and TASK object.
+On 2022-06-23 12:39:57 [+0100], Valentin Schneider wrote:
+> > RT-wise it would be needed for each release.
 > 
-> So you took the four patches from v5.16 and added it to v5.15.
+> So git tells me the Fixes: commit dates from v4.2; from [1] and [2] I get
+> that both current longterm stable and stable-rt trees go as far back as
+> v4.9, so I'm guessing if that gets picked up for the stable trees then it
+> should make its way into the stable -rt trees?
 
-Exactly.
+correct, if it goes -stable. Just pointing it out. But the
+mutex_unlock() looks like it might also be relevant for non-RT kernels.
 
-> I would prefer taking what ended up in v5.17 as of v5.17.1-rt17
-> 
-> - 0001-mm-memcg-Revert-mm-memcg-optimize-user-context-objec.patch
-> - 0002-mm-memcg-Disable-threshold-event-handlers-on-PREEMPT.patch
-> - 0003-mm-memcg-Protect-per-CPU-counter-by-disabling-preemp.patch
-> - 0004-mm-memcg-Opencode-the-inner-part-of-obj_cgroup_uncha.patch
-> - 0005-mm-memcg-Protect-memcg_stock-with-a-local_lock_t.patch
-> - 0006-mm-memcg-Disable-migration-instead-of-preemption-in-.patch
-> - 0007-mm-memcg-Add-missing-counter-index-which-are-not-upd.patch
-> - 0008-mm-memcg-Add-a-comment-regarding-the-release-obj.patch
-> - mm-memcg-Only-perform-the-debug-checks-on-PREEMPT_RT.patch
-> 
-> since this is what finally landed upstream. So we don't have an
-> intermediate step from an not supported kernel in a supported one.
-
-Okay. 
-
-Thanks,
-//richard
+Sebastian
