@@ -2,95 +2,81 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E1373C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jun 2022 10:51:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 815B9C433EF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jun 2022 11:23:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231344AbiFWKvg (ORCPT
+        id S230412AbiFWLXZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jun 2022 06:51:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48260 "EHLO
+        Thu, 23 Jun 2022 07:23:25 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43832 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231327AbiFWKve (ORCPT
+        with ESMTP id S230248AbiFWLXX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jun 2022 06:51:34 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 8CFED4B1E2
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jun 2022 03:51:33 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1655981492;
+        Thu, 23 Jun 2022 07:23:23 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 19E7929CBF
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jun 2022 04:23:22 -0700 (PDT)
+Date:   Thu, 23 Jun 2022 13:23:18 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1655983400;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Rt62F0DwW/EmXD1WWsZVPFxILSy2pYZ1XM+8hUl5XBA=;
-        b=i2h6ef4eHwEmHv8DRCMMFSvOm93csTza5Ki/7CTSfY9cMIAJjtdZ7+rsiWoFk5eo8RbHWx
-        bQzUwoZOoh2Vn9HBMO8qvUMlujdvbtljNJip6c9BaL2K3mlaoJI4MWoGNc7KeMmJLyAxXw
-        pdmnwewx05pZLLTwI4AJbAv3iyhjwd4=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-413-ovcjf1MzPvGB6-B-_Q15Vg-1; Thu, 23 Jun 2022 06:51:29 -0400
-X-MC-Unique: ovcjf1MzPvGB6-B-_Q15Vg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA92E294EDD5;
-        Thu, 23 Jun 2022 10:51:28 +0000 (UTC)
-Received: from localhost (ovpn-13-154.pek2.redhat.com [10.72.13.154])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E7B7C28115;
-        Thu, 23 Jun 2022 10:51:27 +0000 (UTC)
-Date:   Thu, 23 Jun 2022 18:51:18 +0800
-From:   Baoquan He <bhe@redhat.com>
-To:     Zhipeng Shi <zhipeng.shi0@gmail.com>
-Cc:     linux-mm@kvack.org, linux-rt-users@vger.kernel.org,
-        tglx@linutronix.de, shengjian.xu@horizon.ai, schspa@gmail.com,
-        longman@redhat.com
-Subject: Re: [Question] vmalloc latency in RT-Linux
-Message-ID: <YrRFpmk0pxvXanbH@MiWiFi-R3L-srv>
-References: <20220621121547.GB37196@ubuntu20>
+        bh=L6B7HkFj9w8/1GRc5qCrc7c780engZlmFFoF2UE02no=;
+        b=RSEjS9WDkJozo0jkcAVnn9aqvScSKLPVSssWy2xq8D0DpuY7LqE6BhsNS6Aj7heFIAPTzU
+        Bo7FlmW8KLRyoXfmyWZ3yCt2T9JhbfqhGDibUVwHE31NmJomgorFCA9gf4G5T3aZyqFEz2
+        8CuWWE1jRPLjhzBe5aqEjjQ5K0ACg1QUgHJqqyJG+iJVf00rM/BID+tSINrNQuaWX8GRGG
+        UhYRQbERnIrPM3UJXJ7yM5CrVvhR0q1dh2hLTQcwXigaqwJo05peoWxQxZBb2idC+g6Oki
+        xM9ieuuNbCwnDk8GDdS6XWYbHLtReKbl4761+wSMCFVKZ/CsYxZv+vqFoVvOcQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1655983400;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=L6B7HkFj9w8/1GRc5qCrc7c780engZlmFFoF2UE02no=;
+        b=rAg5vfqUd3UasdIU2CaieEKKoRiq7nJLeNdJhbxHAetTkxJoOnafi8HJ14SF/NzalWqQAM
+        rGiPUjalMc4vM5CA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Richard Weinberger <richard@nod.at>
+Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com
+Subject: Re: [v5.15 0/4] Backport MEMCG changes from v5.16
+Message-ID: <YrRNJqo94yLPDa7Z@linutronix.de>
+References: <20220622110506.10534-1-richard@nod.at>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220621121547.GB37196@ubuntu20>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+In-Reply-To: <20220622110506.10534-1-richard@nod.at>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 06/21/22 at 08:15pm, Zhipeng Shi wrote:
-> I noticed in rt-linux, vmalloc has a large latency. This is because the 
-> free_vmap_area_lock is held for a long time in the function  
-> __purge_vmap_area_lazy. 
+On 2022-06-22 13:05:02 [+0200], Richard Weinberger wrote:
+> This is a backport of Sebastian's MEMCG changes to v5.15, with these patches applied,
+> it is possible to use memory cgroups together with PREEMPT_RT on v5.15, just like on v5.16.
 > 
-> In non-RT-Linux, because the function spin_is_contended is well 
-> implemented, so there will be no such problem.
+> Richard Weinberger (1):
+>   Allow MEMCG on PREEMPT_RT
 > 
-> But in RT-Linux, spin_is_contended simply returns 0. I don't understand 
-> why this function was implemented like this before, but in order to
-> solve this problem, I thought of two ways.
-> 
-> The first is to modify the spin_is_contended definition in spinlock_rt.h 
-> as shown below, but I'm not sure if the change has side-effects:
-> 
-> -#define spin_is_contended(lock)    (((void)(lock), 0))
-> +static inline int spin_is_contended(spinlock_t *lock)
-> +{
-> + unsigned long *p = (unsigned long *) &lock->lock.owner;
-> +
-> + return (READ_ONCE(*p) & RT_MUTEX_HAS_WAITERS);
-> +}
-> 
-> The second is by reducing the number of lazy_max_pages, but it will lead 
-> to lower performance of vmalloc.
+> Sebastian Andrzej Siewior (3):
+>   mm/memcg: Disable threshold event handlers on PREEMPT_RT
+>   mm/memcg: Protect per-CPU counter by disabling preemption on
+>     PREEMPT_RT where needed.
+>   mm/memcg: Add a local_lock_t for IRQ and TASK object.
 
-__purge_vmap_area_lazy() has cond_resched_lock() to reschedule and drop
-the lock. From your saying, it's spin_is_contended() which is not
-working well to make rescheduling happen during __purge_vmap_area_lazy()
-handling. Then the fixing should be done in lock side.
+So you took the four patches from v5.16 and added it to v5.15.
+I would prefer taking what ended up in v5.17 as of v5.17.1-rt17
 
-> 
-> Guys, Do you have any good ideas?
-> 
-> Best regards,
-> Zhipeng
-> 
+- 0001-mm-memcg-Revert-mm-memcg-optimize-user-context-objec.patch
+- 0002-mm-memcg-Disable-threshold-event-handlers-on-PREEMPT.patch
+- 0003-mm-memcg-Protect-per-CPU-counter-by-disabling-preemp.patch
+- 0004-mm-memcg-Opencode-the-inner-part-of-obj_cgroup_uncha.patch
+- 0005-mm-memcg-Protect-memcg_stock-with-a-local_lock_t.patch
+- 0006-mm-memcg-Disable-migration-instead-of-preemption-in-.patch
+- 0007-mm-memcg-Add-missing-counter-index-which-are-not-upd.patch
+- 0008-mm-memcg-Add-a-comment-regarding-the-release-obj.patch
+- mm-memcg-Only-perform-the-debug-checks-on-PREEMPT_RT.patch
 
+since this is what finally landed upstream. So we don't have an
+intermediate step from an not supported kernel in a supported one.
+
+Sebastian
