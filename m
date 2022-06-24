@@ -2,182 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5EEAC43334
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jun 2022 10:19:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 15C73C43334
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jun 2022 13:38:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230061AbiFXKTo (ORCPT
+        id S232199AbiFXNiA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 Jun 2022 06:19:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34292 "EHLO
+        Fri, 24 Jun 2022 09:38:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40056 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229911AbiFXKTn (ORCPT
+        with ESMTP id S232163AbiFXNht (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 Jun 2022 06:19:43 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AF6567A6E5
-        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2022 03:19:41 -0700 (PDT)
-Date:   Fri, 24 Jun 2022 12:19:39 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1656065980;
+        Fri, 24 Jun 2022 09:37:49 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D698B54BF1
+        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2022 06:37:39 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1656077858;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=9tAI24A1Yauf4AL9pVvvjbijON6dtwXkm+nMJF7F/bw=;
-        b=X6nZrUhWDg9IC9XlhJ7YbXT5C956jlQK+7L3/ZwKXGxhOzNKNQ/LW3sI1nTdX6L2OCMQUw
-        cWUHBoR6fNy65ZP0Ee7MbySfb2dgJw8C3A8CYKEBgSUmbZH7CLbAt2JsgYFzYGTiPZgWHT
-        v54SxYPdLW+ypw4CTH6dZdazeDlQ6F2piSZGlSb9JYZdEQT5rhHBkasdcacB2FCv8uWtjD
-        07EmrdV10XfetXpde1LIVckmwB46uZcsUhtV3eBTY2OFEOIImuRsBafM2oid8olI8hpcsk
-        oqY/muQCioMB9RsFmCi7pB3you5xObsQcB9dpyQ5VXurlMVBUWnv7F4fzeYPog==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1656065980;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=9tAI24A1Yauf4AL9pVvvjbijON6dtwXkm+nMJF7F/bw=;
-        b=RzgpSafD8dm/sFMtl/a9oz8EmDg/AJszpOx97XZpavg0glDqZIns3YqWKh+Tnfwo8DQSSr
-        w44Stn7vmxPdSlBA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mike Galbraith <efault@gmx.de>
-Cc:     RT <linux-rt-users@vger.kernel.org>,
-        John Ogness <john.ogness@linutronix.de>
-Subject: Re: v5.19-rc2-rt3: nouveau might sleep splat
-Message-ID: <YrWPu5Zr2sTiR5se@linutronix.de>
-References: <01e0c6949e6f0611954016552da8f0795b20600a.camel@gmx.de>
- <YrV4795StT13AUC+@linutronix.de>
- <a35dc9666de31d406a2132fc9457349dc8ee10ef.camel@gmx.de>
- <YrWPiwtk0kAWxXI9@linutronix.de>
+        bh=iihGsDJaCfgB0U9H9bTk3P+5uHXU2Udgo4mdhsEY1hk=;
+        b=Royy/kYSZQmbA8kjAokE+eg67UWwe37hREQM4pAAKdvjOxKJdJ/Nc/7waUVv9pfXgk0qWq
+        mBO+ZUUq3HLE9NYqMiI3JUiglLRwiSwLwSkl494rV9mXJ+nffqdlipTAHZHO8eL9Sp4N4V
+        QRNoHE2e3XrD9PjIfqJASy/GpWvrJ6g=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-350-dcmSBeTONJaeKq1k7a3rgA-1; Fri, 24 Jun 2022 09:37:37 -0400
+X-MC-Unique: dcmSBeTONJaeKq1k7a3rgA-1
+Received: by mail-wm1-f71.google.com with SMTP id bg6-20020a05600c3c8600b003a03d5d19e4so381788wmb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2022 06:37:37 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:in-reply-to:references:date
+         :message-id:mime-version;
+        bh=iihGsDJaCfgB0U9H9bTk3P+5uHXU2Udgo4mdhsEY1hk=;
+        b=jklTQcCGg+bUPuraO1pt390E8b6rPLFYA29sfsGQ75wbkGpAtExNGXgca+NBadBZMq
+         wBVhDNUJbC8O4VHV67CNnEQrONoCmq7Y23b0Mgi5dTGSl3yCKLHQmoGZv+grtOQg75Uy
+         l4fPC4FU11otKTYc23koqv85SnmAB0AGjXQ6zmGosiZduUVJAZN2NW98nbLYFJGud5dF
+         tr1EYAt88k/tBflCTTELd+pIPP4s404CSE8tyO5L7uNlVDEY0dXpMfjxTMUF9Mz1T2PX
+         w8nyrbOrudSNdXgmREUbyb5B9TeeDb+Gt+3UlIWm3k4Jm1F2hq4YOdTqeouj+0462ccy
+         yOMg==
+X-Gm-Message-State: AJIora+yte9bxCpYZmpfR+0Yo1I/TaXxT85SdPdkGfJnZKF8EyrtVOHG
+        /4GvJKD3ExZlmZxxr/aoWi/3lBywSE47dLIl0ZQz8Erjd0Kw2Pfl0Jryh6MnBmm1dsCS95dbBzf
+        aXSfiOSWN2r+Tp/zop+ZtTmQ1s5M=
+X-Received: by 2002:a05:6000:1373:b0:21b:ae65:cd38 with SMTP id q19-20020a056000137300b0021bae65cd38mr5758324wrz.323.1656077855326;
+        Fri, 24 Jun 2022 06:37:35 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1t5kxEQLYP7f2/L7To0n1AeI7/BBSZOapMMFe+ZmhaXEaq7njP/DHXIEAivdtbuhzGRbNBfxw==
+X-Received: by 2002:a05:6000:1373:b0:21b:ae65:cd38 with SMTP id q19-20020a056000137300b0021bae65cd38mr5758301wrz.323.1656077855110;
+        Fri, 24 Jun 2022 06:37:35 -0700 (PDT)
+Received: from vschneid.remote.csb ([185.11.37.247])
+        by smtp.gmail.com with ESMTPSA id h6-20020adffd46000000b0021b96cdf68fsm2300843wrs.97.2022.06.24.06.37.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 24 Jun 2022 06:37:34 -0700 (PDT)
+From:   Valentin Schneider <vschneid@redhat.com>
+To:     Baoquan He <bhe@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
+        linux-rt-users@vger.kernel.org,
+        Eric Biederman <ebiederm@xmission.com>,
+        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Subject: Re: [PATCH v2] panic, kexec: Make __crash_kexec() NMI safe
+In-Reply-To: <YrUTsJiIQb583fKy@MiWiFi-R3L-srv>
+References: <20220620111520.1039685-1-vschneid@redhat.com>
+ <YrUTsJiIQb583fKy@MiWiFi-R3L-srv>
+Date:   Fri, 24 Jun 2022 14:37:33 +0100
+Message-ID: <xhsmhsfnu5giq.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <YrWPiwtk0kAWxXI9@linutronix.de>
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-now really + John
+On 24/06/22 09:30, Baoquan He wrote:
+> On 06/20/22 at 12:15pm, Valentin Schneider wrote:
+>> @@ -94,14 +94,20 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+>>  	/*
+>>  	 * Because we write directly to the reserved memory region when loading
+>>  	 * crash kernels we need a mutex here to prevent multiple crash kernels
+>> -	 * from attempting to load simultaneously, and to prevent a crash kernel
+>> -	 * from loading over the top of a in use crash kernel.
+>> -	 *
+>> -	 * KISS: always take the mutex.
+>> +	 * from attempting to load simultaneously.
+>>  	 */
+>>  	if (!mutex_trylock(&kexec_mutex))
+>>  		return -EBUSY;
+>
+> So kexec_mutex is degenerated to only avoid simultaneous loading,
+> should we rename to reflect that?, e.g kexec_load_mutex.
+>
 
-On 2022-06-24 12:18:52 [+0200], To Mike Galbraith wrote:
-> + John
-> 
-> On 2022-06-24 11:52:26 [+0200], Mike Galbraith wrote:
-> > On Fri, 2022-06-24 at 10:42 +0200, Sebastian Andrzej Siewior wrote:
-> > > On 2022-06-18 11:25:39 [+0200], Mike Galbraith wrote:
-> > > > I haven't done any digging to see why this now happens where it
-> > > > previously did not.
-> > >
-> > > I don't see where interrupts have been disabled but they have been. The
-> > > printk path should yell earlier but did not the crng path is kind of
-> > > late and I don't see anything obvious in between.
-> > 
-> > Allegedly vprintk_store().
-> > 
-> > (gdb) list *vprintk_store+0x3cc
-> > 0xffffffff8114283c is in vprintk_store (kernel/printk/printk.c:2280).
-> > warning: Source file is more recent than executable.
-> > 2275            u32 caller_id;
-> > 2276            u16 text_len;
-> > 2277            int ret = 0;
-> > 2278            u64 ts_nsec;
-> > 2279
-> > 2280            if (!printk_enter_irqsave(recursion_ptr, irqflags))
-> > 2281                    return 0;
-> > 2282
-> > 2283            /*
-> > 2284             * Since the duration of printk() can vary depending on the message
-> > (gdb)
-> 
-> ehm. Why do we need to keep interrupts disabled for vsnprintf()?
-> Wouldn't it work to move that lock a few lines below where it is
-> actually needed?
-> 
-> > [    6.520357] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
-> > [    6.520358] in_atomic(): 0, irqs_disabled(): 1, non_block: 0, pid: 399, name: systemd-udevd
-> > [    6.520359] preempt_count: 0, expected: 0
-> > [    6.520359] RCU nest depth: 1, expected: 1
-> > [    6.520360] 5 locks held by systemd-udevd/399:
-> > [    6.520361]  #0: ffff909a815821a8 (&dev->mutex){....}-{3:3}, at: __driver_attach+0xa1/0x170
-> > [    6.520367]  #1: ffff909a912b0a98 (&helper->lock){+.+.}-{3:3}, at: drm_fb_helper_initial_config+0x26/0x40 [drm_kms_helper]
-> > [    6.520383]  #2: ffffffffbd8e91b8 (filling){....}-{2:2}, at: default_pointer+0x17e/0x2d0
-> > [    6.520387]  #3: ffffffffbd7929a0 (rcu_read_lock){....}-{1:2}, at: rt_spin_trylock+0x36/0xd0
-> > [    6.520391]  #4: ffff909d8ea335a0 ((crngs.lock)){+.+.}-{2:2}, at: crng_make_state+0x76/0x1c0
-> > [    6.520394] irq event stamp: 843364
-> > [    6.520394] hardirqs last  enabled at (843363): [<ffffffffbc7dfb10>] _raw_spin_unlock_irqrestore+0x30/0x77
-> > [    6.520397] hardirqs last disabled at (843364): [<ffffffffbbd4283c>] vprintk_store+0x3cc/0x550
-> > [    6.520399] softirqs last  enabled at (151950): [<ffffffffbbcb8223>] __local_bh_enable_ip+0xc3/0x150
-> > [    6.520401] softirqs last disabled at (151944): [<ffffffffbbe8c135>] btf_alloc_id+0x5/0xb0
-> > [    6.520404] CPU: 0 PID: 399 Comm: systemd-udevd Tainted: G        W   E     5.19.0.gca1fdab-master-rt #5 2262f40963ee88d2873a82a86160b299ace0d165
-> > [    6.520406] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09/23/2013
-> > [    6.520407] Call Trace:
-> > [    6.520408]  <TASK>
-> > [    6.520409]  dump_stack_lvl+0x55/0x6d
-> > [    6.520413]  __might_resched+0x1aa/0x1e0
-> > [    6.520418]  rt_spin_lock+0x4d/0xe0
-> > [    6.520419]  ? crng_make_state+0x76/0x1c0
-> > [    6.520422]  crng_make_state+0x76/0x1c0
-> > [    6.520426]  _get_random_bytes.part.16+0x4e/0x110
-> > [    6.520428]  ? rt_spin_trylock+0x36/0xd0
-> > [    6.520432]  ? preempt_count_sub+0x43/0x50
-> > [    6.520434]  ? rt_spin_trylock+0x8b/0xd0
-> > [    6.520435]  ? rt_spin_trylock+0x8b/0xd0
-> > [    6.520438]  ? migrate_disable+0x119/0x120
-> > [    6.520442]  default_pointer+0x2a0/0x2d0
-> > [    6.520448]  vsnprintf+0x35a/0x4c0
-> > [    6.520449]  ? kernel_text_address+0xaa/0xc0
-> > [    6.520454]  va_format.isra.16+0x6e/0xa0
-> > [    6.520459]  vsnprintf+0x35a/0x4c0
-> > [    6.520464]  vprintk_store+0x150/0x550
-> > [    6.520468]  ? string+0x40/0x50
-> > [    6.520472]  ? vsnprintf+0x48f/0x4c0
-> > [    6.520480]  vprintk_emit+0x44/0x170
-> > [    6.520482]  ? __lock_acquire+0xb9d/0x18b0
-> > [    6.520487]  dev_vprintk_emit+0x185/0x1ae
-> > [    6.520494]  ? lock_is_held_type+0xb2/0x110
-> > [    6.520499]  ? dev_printk_emit+0x4a/0x66
-> > [    6.520501]  ? mark_held_locks+0x49/0x70
-> > [    6.520502]  dev_printk_emit+0x4a/0x66
-> > [    6.520506]  ? preempt_count_sub+0x43/0x50
-> > [    6.520510]  _dev_info+0x64/0x80
-> > [    6.520518]  nouveau_fbcon_create+0x2d4/0x500 [nouveau adfaa6c52e612d43880f223e1d4b1d7b83facd58]
-> > [    6.520615]  __drm_fb_helper_initial_config_and_unlock+0x336/0x5f0 [drm_kms_helper 8e2e6f207f0cb44a547a65ef3965573df1212de6]
-> > [    6.520635]  nouveau_fbcon_init+0x180/0x1f0 [nouveau adfaa6c52e612d43880f223e1d4b1d7b83facd58]
-> > [    6.520706]  nouveau_drm_device_init+0x1f7/0x860 [nouveau adfaa6c52e612d43880f223e1d4b1d7b83facd58]
-> > [    6.520778]  ? pci_update_current_state+0x65/0xa0
-> > [    6.520785]  nouveau_drm_probe+0x11b/0x220 [nouveau adfaa6c52e612d43880f223e1d4b1d7b83facd58]
-> > [    6.520856]  local_pci_probe+0x42/0x90
-> > [    6.520860]  pci_device_probe+0x176/0x240
-> > [    6.520862]  ? sysfs_do_create_link_sd.isra.2+0x68/0xd0
-> > [    6.520869]  really_probe+0x108/0x3d0
-> > [    6.520873]  __driver_probe_device+0x100/0x170
-> > [    6.520876]  driver_probe_device+0x1f/0xa0
-> > [    6.520879]  __driver_attach+0xac/0x170
-> > [    6.520881]  ? __device_attach_driver+0xe0/0xe0
-> > [    6.520884]  ? __device_attach_driver+0xe0/0xe0
-> > [    6.520886]  bus_for_each_dev+0x76/0xc0
-> > [    6.520890]  bus_add_driver+0x19f/0x240
-> > [    6.520893]  ? 0xffffffffc06ec000
-> > [    6.520896]  driver_register+0x5b/0xf0
-> > [    6.520898]  ? 0xffffffffc06ec000
-> > [    6.520899]  do_one_initcall+0x58/0x3d0
-> > [    6.520903]  ? trace_kmalloc+0xb6/0x140
-> > [    6.520905]  ? kmem_cache_alloc_trace+0x13c/0x1c0
-> > [    6.520907]  ? do_init_module+0x22/0x1fc
-> > [    6.520914]  do_init_module+0x4b/0x1fc
-> > [    6.520918]  load_module+0x18d2/0x2380
-> > [    6.520936]  ? __do_sys_finit_module+0xaf/0x120
-> > [    6.520937]  __do_sys_finit_module+0xaf/0x120
-> > [    6.520948]  do_syscall_64+0x58/0x80
-> > [    6.520951]  ? do_syscall_64+0x67/0x80
-> > [    6.520953]  ? lockdep_hardirqs_on_prepare+0xd8/0x170
-> > [    6.520957]  ? do_syscall_64+0x67/0x80
-> > [    6.520958]  ? do_syscall_64+0x67/0x80
-> > [    6.520962]  entry_SYSCALL_64_after_hwframe+0x46/0xb0
-> > [    6.520965] RIP: 0033:0x7f911ee69ec9
-> > [    6.520967] Code: 2e 00 b8 ca 00 00 00 0f 05 eb a5 66 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 97 7f 2d 00 f7 d8 64 89 01 48
-> > [    6.520968] RSP: 002b:00007ffe6427de98 EFLAGS: 00000246 ORIG_RAX: 0000000000000139
-> > [    6.520969] RAX: ffffffffffffffda RBX: 0000558cc2ab38a0 RCX: 00007f911ee69ec9
-> > [    6.520970] RDX: 0000000000000000 RSI: 00007f911f7dd79d RDI: 000000000000001b
-> > [    6.520971] RBP: 00007f911f7dd79d R08: 0000000000000000 R09: 0000558cc2a939a0
-> > [    6.520971] R10: 000000000000001b R11: 0000000000000246 R12: 0000000000020000
-> > [    6.520972] R13: 0000558cc2abec00 R14: 0000000000000000 R15: 0000558cc2ac7f80
-> 
-> Sebastian
+It's also serializing crash_get_memory_size() and crash_shrink_memory();
+more generally it should still be the preferred serialization mechanism as
+it's a "proper" lock visible by instrumentation, the atomic variable is a
+side character for the NMI case.
+
