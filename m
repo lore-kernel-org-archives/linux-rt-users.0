@@ -2,257 +2,104 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EB574C43334
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jun 2022 01:30:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CB8C6C43334
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jun 2022 02:39:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231157AbiFXBap (ORCPT
+        id S229499AbiFXCjz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jun 2022 21:30:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41630 "EHLO
+        Thu, 23 Jun 2022 22:39:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58962 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230320AbiFXBao (ORCPT
+        with ESMTP id S229725AbiFXCjx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jun 2022 21:30:44 -0400
+        Thu, 23 Jun 2022 22:39:53 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 10D2D5DC0B
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jun 2022 18:30:42 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id B64A856741
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jun 2022 19:39:52 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1656034242;
+        s=mimecast20190719; t=1656038391;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=XQueJ1NBfP6rBWtDaDGGyAl5dbRuYQpX5eBYhbGPVcE=;
-        b=XoF258+ZOdfneF5GsB93wGBLoT/1HSA7vD0pE5S6XyzvkIe6v/aj+krv4nNx9j2crmxgic
-        6okctcJEX03XUz/Vi2tflZ8sbNeBTgsNbzZUxQx9d6k2fYQbMwuENDaJaR2tLgCBVwJvET
-        YOJsxC9T8XEDxg27W5jikukBznYzRvs=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=v9YSb5G2vemrnnEESOBJoJ5PZIWec+fG22z2dXykH4k=;
+        b=hMfP+dXhw+gNC+o1TLAzQS6KQpdRd2+ToUIPDApfChP0A1rHgOLMRtzIR/RIjhd7aIZKqE
+        PhB+IjjaHjkWPtHYhkPzkLK2c3GLVrPsmh7ffRkD+SHENPDtMIHbQPjRIHyXdf9kBfPq1I
+        tBQ36U+IzGWDalmnVqiH6ygXGfO9ck8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-618-UtdlkmqBM_65ZRNQOSRZkg-1; Thu, 23 Jun 2022 21:30:37 -0400
-X-MC-Unique: UtdlkmqBM_65ZRNQOSRZkg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-264-pidpG-JWNeyOTg-QBMFg2Q-1; Thu, 23 Jun 2022 22:39:48 -0400
+X-MC-Unique: pidpG-JWNeyOTg-QBMFg2Q-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7AF113C17321;
-        Fri, 24 Jun 2022 01:30:29 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF72C1818D0E;
+        Fri, 24 Jun 2022 02:39:47 +0000 (UTC)
 Received: from localhost (ovpn-12-66.pek2.redhat.com [10.72.12.66])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 899B640D0168;
-        Fri, 24 Jun 2022 01:30:28 +0000 (UTC)
-Date:   Fri, 24 Jun 2022 09:30:24 +0800
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 893351121314;
+        Fri, 24 Jun 2022 02:39:46 +0000 (UTC)
+Date:   Fri, 24 Jun 2022 10:39:43 +0800
 From:   Baoquan He <bhe@redhat.com>
-To:     Valentin Schneider <vschneid@redhat.com>
-Cc:     linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
-        linux-rt-users@vger.kernel.org,
-        Eric Biederman <ebiederm@xmission.com>,
-        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
+To:     Waiman Long <longman@redhat.com>,
+        Zhipeng Shi <zhipeng.shi0@gmail.com>
+Cc:     linux-mm@kvack.org, linux-rt-users@vger.kernel.org,
+        tglx@linutronix.de, shengjian.xu@horizon.ai, schspa@gmail.com,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Juri Lelli <jlelli@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Subject: Re: [PATCH v2] panic, kexec: Make __crash_kexec() NMI safe
-Message-ID: <YrUTsJiIQb583fKy@MiWiFi-R3L-srv>
-References: <20220620111520.1039685-1-vschneid@redhat.com>
+        peterz@infradead.org
+Subject: Re: [Question] vmalloc latency in RT-Linux
+Message-ID: <YrUj70P1sYFXsnqf@MiWiFi-R3L-srv>
+References: <20220621121547.GB37196@ubuntu20>
+ <YrRFpmk0pxvXanbH@MiWiFi-R3L-srv>
+ <dd4f2422-3151-2c0b-e4c6-fe49f6d2ac30@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20220620111520.1039685-1-vschneid@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+In-Reply-To: <dd4f2422-3151-2c0b-e4c6-fe49f6d2ac30@redhat.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 06/20/22 at 12:15pm, Valentin Schneider wrote:
-> Attempting to get a crash dump out of a debug PREEMPT_RT kernel via an NMI
-> panic() doesn't work. The cause of that lies in the PREEMPT_RT definition
-> of mutex_trylock():
+On 06/23/22 at 02:04pm, Waiman Long wrote:
+> On 6/23/22 06:51, Baoquan He wrote:
+> > On 06/21/22 at 08:15pm, Zhipeng Shi wrote:
+> > > I noticed in rt-linux, vmalloc has a large latency. This is because the
+> > > free_vmap_area_lock is held for a long time in the function
+> > > __purge_vmap_area_lazy.
+> > > 
+> > > In non-RT-Linux, because the function spin_is_contended is well
+> > > implemented, so there will be no such problem.
+> > > 
+> > > But in RT-Linux, spin_is_contended simply returns 0. I don't understand
+> > > why this function was implemented like this before, but in order to
+> > > solve this problem, I thought of two ways.
+> > > 
+> > > The first is to modify the spin_is_contended definition in spinlock_rt.h
+> > > as shown below, but I'm not sure if the change has side-effects:
+> > > 
+> > > -#define spin_is_contended(lock)    (((void)(lock), 0))
+> > > +static inline int spin_is_contended(spinlock_t *lock)
+> > > +{
+> > > + unsigned long *p = (unsigned long *) &lock->lock.owner;
+> > > +
+> > > + return (READ_ONCE(*p) & RT_MUTEX_HAS_WAITERS);
+> > > +}
+> > > 
+> > > The second is by reducing the number of lazy_max_pages, but it will lead
+> > > to lower performance of vmalloc.
+> > __purge_vmap_area_lazy() has cond_resched_lock() to reschedule and drop
+> > the lock. From your saying, it's spin_is_contended() which is not
+> > working well to make rescheduling happen during __purge_vmap_area_lazy()
+> > handling. Then the fixing should be done in lock side.
 > 
-> 	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES) && WARN_ON_ONCE(!in_task()))
-> 		return 0;
+> Sebastian had sent out patch last year to fix spin_is_contended().
 > 
-> This prevents an NMI panic() from executing the main body of
-> __crash_kexec() which does the actual kexec into the kdump kernel.
-> The warning and return are explained by:
+> https://lore.kernel.org/lkml/20210906143004.2259141-3-bigeasy@linutronix.de/
 > 
->   6ce47fd961fa ("rtmutex: Warn if trylock is called from hard/softirq context")
->   [...]
->   The reasons for this are:
-> 
->       1) There is a potential deadlock in the slowpath
-> 
->       2) Another cpu which blocks on the rtmutex will boost the task
-> 	 which allegedly locked the rtmutex, but that cannot work
-> 	 because the hard/softirq context borrows the task context.
-> 
-> Furthermore, grabbing the lock isn't NMI safe, so do away with it and
-> use an atomic variable to serialize reads vs writes of
-> kexec_crash_image.
-> 
-> Tested by triggering NMI panics via:
-> 
->   $ echo 1 > /proc/sys/kernel/panic_on_unrecovered_nmi
->   $ echo 1 > /proc/sys/kernel/unknown_nmi_panic
->   $ echo 1 > /proc/sys/kernel/panic
-> 
->   $ ipmitool power diag
-> 
-> Fixes: 6ce47fd961fa ("rtmutex: Warn if trylock is called from hard/softirq context")
-> Signed-off-by: Valentin Schneider <vschneid@redhat.com>
-> ---
-> v1 -> v2
-> ++++++++
-> 
-> o Changed from Peterson-like synchronization to simpler atomic_cmpxchg
->   (Petr)
-> o Slightly reworded changelog
-> o Added Fixes: tag. Technically should be up to since kexec can happen
->   in an NMI, but that isn't such a clear target
-> ---
->  include/linux/kexec.h |  1 +
->  kernel/kexec.c        | 16 ++++++++++++----
->  kernel/kexec_core.c   | 36 +++++++++++++++++++-----------------
->  kernel/kexec_file.c   | 11 +++++++++++
->  4 files changed, 43 insertions(+), 21 deletions(-)
-> 
-> diff --git a/include/linux/kexec.h b/include/linux/kexec.h
-> index ce6536f1d269..5849a15ae3dd 100644
-> --- a/include/linux/kexec.h
-> +++ b/include/linux/kexec.h
-> @@ -369,6 +369,7 @@ extern int kimage_crash_copy_vmcoreinfo(struct kimage *image);
->  
->  extern struct kimage *kexec_image;
->  extern struct kimage *kexec_crash_image;
-> +extern atomic_t crash_kexec_lock;
->  extern int kexec_load_disabled;
->  
->  #ifndef kexec_flush_icache_page
-> diff --git a/kernel/kexec.c b/kernel/kexec.c
-> index b5e40f069768..73e0df2c608f 100644
-> --- a/kernel/kexec.c
-> +++ b/kernel/kexec.c
-> @@ -94,14 +94,20 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
->  	/*
->  	 * Because we write directly to the reserved memory region when loading
->  	 * crash kernels we need a mutex here to prevent multiple crash kernels
-> -	 * from attempting to load simultaneously, and to prevent a crash kernel
-> -	 * from loading over the top of a in use crash kernel.
-> -	 *
-> -	 * KISS: always take the mutex.
-> +	 * from attempting to load simultaneously.
->  	 */
->  	if (!mutex_trylock(&kexec_mutex))
->  		return -EBUSY;
+> However, there is no follow-up after some discussion and the patch wasn't
+> merged.
 
-So kexec_mutex is degenerated to only avoid simultaneous loading,
-should we rename to reflect that?, e.g kexec_load_mutex.
+That's great. Thanks, Longman.
 
->  
-> +	/*
-> +	 * Prevent loading a new crash kernel while one is in use.
-> +	 * See associated comment in __crash_kexec().
-> +	 */
-> +	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1)) {
-> +		ret = -EBUSY;
-> +		goto out_unlock_mutex;
-> +	}
-> +
->  	if (flags & KEXEC_ON_CRASH) {
->  		dest_image = &kexec_crash_image;
->  		if (kexec_crash_image)
-> @@ -165,6 +171,8 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
->  
->  	kimage_free(image);
->  out_unlock:
-> +	atomic_set_release(&crash_kexec_lock, 0);
-> +out_unlock_mutex:
->  	mutex_unlock(&kexec_mutex);
->  	return ret;
->  }
-> diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
-> index 4d34c78334ce..f957109a266c 100644
-> --- a/kernel/kexec_core.c
-> +++ b/kernel/kexec_core.c
-> @@ -933,6 +933,7 @@ int kimage_load_segment(struct kimage *image,
->  
->  struct kimage *kexec_image;
->  struct kimage *kexec_crash_image;
-> +atomic_t crash_kexec_lock = ATOMIC_INIT(0);
->  int kexec_load_disabled;
->  #ifdef CONFIG_SYSCTL
->  static struct ctl_table kexec_core_sysctls[] = {
-> @@ -964,25 +965,26 @@ late_initcall(kexec_core_sysctl_init);
->   */
->  void __noclone __crash_kexec(struct pt_regs *regs)
->  {
-> -	/* Take the kexec_mutex here to prevent sys_kexec_load
-> -	 * running on one cpu from replacing the crash kernel
-> -	 * we are using after a panic on a different cpu.
-> -	 *
-> -	 * If the crash kernel was not located in a fixed area
-> -	 * of memory the xchg(&kexec_crash_image) would be
-> -	 * sufficient.  But since I reuse the memory...
-> +	/*
-> +	 * This should be taking kexec_mutex before doing anything with the
-> +	 * kexec_crash_image, but this code can be run in NMI context which
-> +	 * means we can't even trylock. This is circumvented by using an
-> +	 * atomic variable that is *also* used by the codepaths that take
-> +	 * the mutex to modify kexec_crash_image.
->  	 */
-> -	if (mutex_trylock(&kexec_mutex)) {
-> -		if (kexec_crash_image) {
-> -			struct pt_regs fixed_regs;
-> -
-> -			crash_setup_regs(&fixed_regs, regs);
-> -			crash_save_vmcoreinfo();
-> -			machine_crash_shutdown(&fixed_regs);
-> -			machine_kexec(kexec_crash_image);
-> -		}
-> -		mutex_unlock(&kexec_mutex);
-> +	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1))
-> +		return;
-> +
-> +	if (kexec_crash_image) {
-> +		struct pt_regs fixed_regs;
-> +
-> +		crash_setup_regs(&fixed_regs, regs);
-> +		crash_save_vmcoreinfo();
-> +		machine_crash_shutdown(&fixed_regs);
-> +		machine_kexec(kexec_crash_image);
->  	}
-> +
-> +	atomic_set_release(&crash_kexec_lock, 0);
->  }
->  STACK_FRAME_NON_STANDARD(__crash_kexec);
->  
-> diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
-> index 145321a5e798..3faec031cfc9 100644
-> --- a/kernel/kexec_file.c
-> +++ b/kernel/kexec_file.c
-> @@ -337,6 +337,15 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
->  	if (!mutex_trylock(&kexec_mutex))
->  		return -EBUSY;
->  
-> +	/*
-> +	 * Prevent loading a new crash kernel while one is in use.
-> +	 * See associated comment in __crash_kexec().
-> +	 */
-> +	if (atomic_cmpxchg_acquire(&crash_kexec_lock, 0, 1)) {
-> +		ret = -EBUSY;
-> +		goto out_mutex_unlock;
-> +	}
-> +
->  	dest_image = &kexec_image;
->  	if (flags & KEXEC_FILE_ON_CRASH) {
->  		dest_image = &kexec_crash_image;
-> @@ -406,6 +415,8 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
->  	if ((flags & KEXEC_FILE_ON_CRASH) && kexec_crash_image)
->  		arch_kexec_protect_crashkres();
->  
-> +	atomic_set_release(&crash_kexec_lock, 0);
-> +out_mutex_unlock:
->  	mutex_unlock(&kexec_mutex);
->  	kimage_free(image);
->  	return ret;
-> -- 
-> 2.31.1
-> 
+Then this is a good chance to reconsider it, maybe with a test from Zhipeng.
 
