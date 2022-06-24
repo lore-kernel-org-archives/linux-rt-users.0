@@ -2,71 +2,111 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A132BCCA473
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jun 2022 14:39:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CF917C43334
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jun 2022 15:50:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232644AbiFXOj3 (ORCPT
+        id S232215AbiFXPuc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 Jun 2022 10:39:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40234 "EHLO
+        Fri, 24 Jun 2022 11:50:32 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54082 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232491AbiFXOj2 (ORCPT
+        with ESMTP id S231669AbiFXPub (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 Jun 2022 10:39:28 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 77E0E64780
-        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2022 07:39:27 -0700 (PDT)
-Date:   Fri, 24 Jun 2022 16:39:24 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1656081565;
+        Fri, 24 Jun 2022 11:50:31 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id AA3D14B1FF
+        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2022 08:50:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1656085829;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=wCUyCAW7QbtHoKM6NF6oJ9BrCBzUsH9pnjQtef5t6K0=;
-        b=h6j1UFipe26+WQIryJHaVmLko7kosGc34spbeUCTGfrDFNgVoXMBx52SQMWj2untrz9X+W
-        02GtAOcjFH11aYeIoWwj+5mA1Yc2mu1qCBNeBrrEYgtmEG0Nuo8ChQsknszdEHkJ4Xm9z0
-        +TO9waXymgtsX7dz9VlMao/8uZfM4eda5S4Y23WD6Q1VVdKqdkfslqTBH07wumHFpf3riQ
-        J6LesflNoNnbvTPpjOr7h8X2SFWM2f8fYHrrnfgJ5j0SDSIhahVBKH+ikS5o4AdjwmJjfK
-        LvLz1NB18hgCxtX8crBq6vnq1aAGASj5XbiXfq11Wm9FHNLWIPDMvgVEEy9Mwg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1656081565;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=wCUyCAW7QbtHoKM6NF6oJ9BrCBzUsH9pnjQtef5t6K0=;
-        b=Fg+Qh+zYO38DzwHHfJfhzmaDJHdpNmtvklFNTwMPFjnDgMfBqo6qj6ZkurGiCjDniSpr60
-        K5c9tLIYTkErKUDg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     John Ogness <john.ogness@linutronix.de>
-Cc:     Mike Galbraith <efault@gmx.de>, RT <linux-rt-users@vger.kernel.org>
-Subject: Re: v5.19-rc2-rt3: nouveau might sleep splat
-Message-ID: <YrXMnCDoO2QPD9np@linutronix.de>
-References: <01e0c6949e6f0611954016552da8f0795b20600a.camel@gmx.de>
- <YrV4795StT13AUC+@linutronix.de>
- <a35dc9666de31d406a2132fc9457349dc8ee10ef.camel@gmx.de>
- <YrWPiwtk0kAWxXI9@linutronix.de>
- <87wnd616ds.fsf@jogness.linutronix.de>
- <87tu8a16bm.fsf@jogness.linutronix.de>
+        bh=q1zAL95W6AgQ7o2C1t9C5eQgRPUg9jpxe4MUJjDnb8k=;
+        b=cGILu2ukqAg+T3pymStpz3X4rAXn/SJMcTktP/JThq0/QMeNbRurNFHEvzymJAxlRNPnxn
+        VeJuvIu8oM+ODq+A8vhEYtE52qVXVCFVkphscfuEEJdJlfea78eBQXOFNuHbsxRZWl8ZfL
+        sUgykMcP96uawlvn3uP+w8CKNu9WXSI=
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-465-SCuswc7lNwuP-8RP9vDFfA-1; Fri, 24 Jun 2022 11:50:28 -0400
+X-MC-Unique: SCuswc7lNwuP-8RP9vDFfA-1
+Received: by mail-qv1-f70.google.com with SMTP id m7-20020ad45dc7000000b0047042480dbfso2914774qvh.9
+        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2022 08:50:28 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=q1zAL95W6AgQ7o2C1t9C5eQgRPUg9jpxe4MUJjDnb8k=;
+        b=4RxBzJsizM/r441fPqdgDD7jtJA/CFJ4SV8r67pb7BkfF0AW3a0e5uHOtK5WjjqD2j
+         Y7EgfyRF1JHxRWtUUoywtsOIjdWVPLnikfb/BLWEQXVhBw8jU5pajkkui/PkgNqrD6Qs
+         a1XDiL9ZK4aiWKYjO3GMZ8inntNRlScHymmfOdWLdQXDyqBND4rySkIR2ot2crtnZqVG
+         mTgBqTuLC6+kEA5EaT4DxZvLUzIMx09B350AQ+v/nMBx5kKKx2U5pIKgz7bYX3coRvv4
+         tV04h2FNh8DUpMD35kPvlaaMGctPfLsgqj9W1KjAw2xSSQAt7c4vqUkmv0F0X41fc1mO
+         RBTQ==
+X-Gm-Message-State: AJIora9vUwm0hupfkn0qGhZLZQD8cHdYUfNhDPMOlxHgWbPXN8vFBbu0
+        iKuUZp+gapxqTKOQAxLfd5DUzM+RqlKT3TgaB1/hpJrJTll1dDQ4eU33kPS5NNTU8XAZQys0gIq
+        AvJ9ioLHOpz7gBSG+4vNFZ/eW22M=
+X-Received: by 2002:a0c:a944:0:b0:470:85e2:dc1c with SMTP id z4-20020a0ca944000000b0047085e2dc1cmr6542226qva.8.1656085827737;
+        Fri, 24 Jun 2022 08:50:27 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1uBFKq5s7VDnRBYKmF3QkinWUMFPyNZ4hCEMRYnXMCS17IIqpOc+8HOoKQDAWfq3fBFU5kyfg==
+X-Received: by 2002:a0c:a944:0:b0:470:85e2:dc1c with SMTP id z4-20020a0ca944000000b0047085e2dc1cmr6542204qva.8.1656085827466;
+        Fri, 24 Jun 2022 08:50:27 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
+        by smtp.gmail.com with ESMTPSA id ay37-20020a05620a17a500b006a7137330e2sm2153037qkb.132.2022.06.24.08.50.26
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 24 Jun 2022 08:50:26 -0700 (PDT)
+Date:   Fri, 24 Jun 2022 11:50:25 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Gautam Thaker <ghthaker@gmail.com>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: cyclictest count value seems incorrect...
+In-Reply-To: <CA+1+E3XngtGKoc72x5okmFmv0nt3omU=RUFXbH0C0X3yKMfH+A@mail.gmail.com>
+Message-ID: <c8494b31-2a0-c8a7-8be3-0e7ce6653@redhat.com>
+References: <CA+1+E3XngtGKoc72x5okmFmv0nt3omU=RUFXbH0C0X3yKMfH+A@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <87tu8a16bm.fsf@jogness.linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-06-24 16:37:25 [+0206], John Ogness wrote:
-> On 2022-06-24, John Ogness <john.ogness@linutronix.de> wrote:
-> > As to this the actual problem reported in this thread, I believe this
-> > patch solves it:
-> >
-> > https://lore.kernel.org/lkml/20220609121709.12939-1-Jason@zx2c4.com
-> 
-> There was a cleaner v2 later in the thread:
-> 
-> https://lore.kernel.org/lkml/20220609123319.17576-1-Jason@zx2c4.com
 
-In that case v5.19-rc3-rt5 should no longer show it but I am still
-confused why we need to disable interrupts within vsnprintf().
 
-Sebastian
+On Wed, 22 Jun 2022, Gautam Thaker wrote:
+
+Please always include the version in bug reports
+
+> I ran the following 3 hour test using cyclictest. The count for T:0
+> that I saw when I returned to my screen in the morning seemed
+> puzzling. Because I use the '-M' option it display updates when there
+> is a new maximum on any CPU. Does the output as shown mean on CPU 0
+> the maximum value of 26 happened on count 168704 and as it never
+> increased after that the C: xxx is simply not updated?
+
+It looks to me that for some reason processor 0 was printed twice and the 
+second one is correct.
+
+> 
+> I wish even with -M option at end of the display would do a final
+> update. Because of -M the only things that will update on the last
+> screen update would be count values, but this would be useful.
+
+
+> 
+> 
+> node-0> date; sudo ./cyclictest  -d  0 -p 90  -S -D 3h  -m -M; date
+> Tue Jun 21 21:37:22 MDT 2022
+> # /dev/cpu_dma_latency set to 0us
+> policy: fifo: loadavg: 0.00 0.03 0.04 2/166 5380
+> policy: fifo: loadavg: 0.16 0.03 0.01 2/170 5702
+> T: 0 ( 5368) P:90 I:1000 C: 168704 Min:      3 Act:    5 Avg:    5 Max:      26
+> T: 0 ( 5368) P:90 I:1000 C:9742264 Min:      3 Act:    6 Avg:    5 Max:      61
+> T: 1 ( 5369) P:90 I:1000 C:9742261 Min:      3 Act:  132 Avg:    5 Max:     132
+> T: 2 ( 5370) P:90 I:1000 C:9742257 Min:      3 Act:   13 Avg:    5 Max:      67
+> T: 3 ( 5371) P:90 I:1000 C:9742254 Min:      3 Act:    6 Avg:    5 Max:      91
+> T: 4 ( 5372) P:90 I:1000 C:9742245 Min:      3 Act:    6 Avg:    5 Max:      59
+> T: 5 ( 5373) P:90 I:1000 C:9742247 Min:      3 Act:   10 Avg:    5 Max:      41
+> T: 6 ( 5374) P:90 I:1000 C:9742244 Min:      3 Act:    7 Avg:    5 Max:      67
+> T: 7 ( 5375) P:90 I:1000 C:9742241 Min:      3 Act:    7 Avg:    5 Max:      29
+> Wed Jun 22 00:37:22 MDT 2022
+> 
+
