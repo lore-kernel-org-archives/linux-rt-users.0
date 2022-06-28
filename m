@@ -2,171 +2,154 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C7A39C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jun 2022 23:23:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5F90EC43334
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Jun 2022 03:56:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241826AbiF0XXk (ORCPT
+        id S243868AbiF1D4U (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 27 Jun 2022 19:23:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34830 "EHLO
+        Mon, 27 Jun 2022 23:56:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43646 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237413AbiF0XXj (ORCPT
+        with ESMTP id S236892AbiF1D4T (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Jun 2022 19:23:39 -0400
-Received: from mail-yw1-x1135.google.com (mail-yw1-x1135.google.com [IPv6:2607:f8b0:4864:20::1135])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C352622B18
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jun 2022 16:23:36 -0700 (PDT)
-Received: by mail-yw1-x1135.google.com with SMTP id 00721157ae682-2ef5380669cso100258117b3.9
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jun 2022 16:23:36 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=aurora.tech; s=google;
-        h=mime-version:from:date:message-id:subject:to:cc
-         :content-transfer-encoding;
-        bh=g5FpzbgzyTi7QS1EYBh4dLkzqBRUxAUBHkmhjlyD/TI=;
-        b=DmB26aY/aEv8T76HvMt5mKRmSmWJj6Dsds39w/K10kmTu+BFeGtzOVj19hz1fCaxbY
-         +0ClO5WYk7D1by6PXZh9cwFtq/5MU4/FRGTLZkRxS43w0GHNYog0iDaKod82wRMhXfof
-         PKmGUWmXwGL454vCm/fwisqG2Y/sdofIb89tFsbI2RpX7OAbvp/43Q8TixS6RDsFWp4S
-         tDKutSac5rp8IDjU1PyLFJkN7wB1apOlVjVQM1APgAZ49zAY5BY7h7JVZXjQFqJXEKDj
-         jqPw1vkGSlfhe3o693xUii+ZpX1g/xNWn26N3rrGXVHumi4KR6NxfmqV9oJntVebx//i
-         P8vQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to:cc
-         :content-transfer-encoding;
-        bh=g5FpzbgzyTi7QS1EYBh4dLkzqBRUxAUBHkmhjlyD/TI=;
-        b=raVBNdbStsfYrni3ZApOMIGgM+Rx/9qEz8qmOGhkGj/8desI4Qa45Ovedx9oPnXnw9
-         P0An8krG7FgqjhezdiUHhSb/Kwcb4Qav+hKQt3Halckmrkw8wfx6yipaGLHAM4lprQKl
-         VGVs5io5T+MC5LZ1+oo4a/e0R/j+P8LRWGqukXGymIquLth9svOxLQ9hC7vQ5Jb51EgO
-         0RZZ1G0l9BoUE6fYJi/t/uk5v1EngOPTiGlfFbNb+bYi5FwW+jmfYKuv1Ehswk/eWV/r
-         c3ngMfSTcJrbKNSe3j1trMwdAKCzlVaiauGOaSdIKXOxmbJvKRdRirDyofRmaRSZCXy9
-         wUhA==
-X-Gm-Message-State: AJIora8geFInluzEeyFK+mKt4YDgdKunwXq4AX6qlEW4f3B0guPLYIxj
-        THBevFuOE338bCY+zOhsKA9e2lmGeQKyZoHyVvSbm3Ldd0goSw==
-X-Google-Smtp-Source: AGRyM1tmV7S46YaqJWEaCstxT5ufk3BixUl+dGR7WX8YPBP6IuoS7qcqSFePp2U+GloNmkRog9qVvdIABI5GPGdBGfc=
-X-Received: by 2002:a81:ad1:0:b0:318:3b63:6d00 with SMTP id
- 200-20020a810ad1000000b003183b636d00mr18625902ywk.146.1656372215972; Mon, 27
- Jun 2022 16:23:35 -0700 (PDT)
+        Mon, 27 Jun 2022 23:56:19 -0400
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 886F627B35;
+        Mon, 27 Jun 2022 20:56:18 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 3DDE2B81C18;
+        Tue, 28 Jun 2022 03:56:17 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9E9E4C3411D;
+        Tue, 28 Jun 2022 03:56:13 +0000 (UTC)
+Date:   Mon, 27 Jun 2022 23:56:12 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Aaron Tomlin <atomlin@redhat.com>
+Cc:     mcgrof@kernel.org, christophe.leroy@csgroup.eu, cl@linux.com,
+        mbenes@suse.cz, akpm@linux-foundation.org, jeyu@kernel.org,
+        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
+        void@manifault.com, atomlin@atomlin.com, allen.lkml@gmail.com,
+        joe@perches.com, msuchanek@suse.de, oleksandr@natalenko.name,
+        jason.wessel@windriver.com, pmladek@suse.com,
+        daniel.thompson@linaro.org, hch@infradead.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH v11 10/14] module: kallsyms: Fix suspicious rcu usage
+Message-ID: <20220627235612.4796c837@gandalf.local.home>
+In-Reply-To: <20220310102413.3438665-11-atomlin@redhat.com>
+References: <20220310102413.3438665-1-atomlin@redhat.com>
+        <20220310102413.3438665-11-atomlin@redhat.com>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-From:   Alison Chaiken <achaiken@aurora.tech>
-Date:   Mon, 27 Jun 2022 16:23:25 -0700
-Message-ID: <CAFzL-7v-NSFKAsyhxReEES7bMomSTwYyrZscnjbkydEP3CTXmQ@mail.gmail.com>
-Subject: late ktimer events due to C-state transitions
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Rami Jaber <rjaber@aurora.tech>, Glenn Elliott <glenn@aurora.tech>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We observe late ktimer events due to C-state transitions from CPU Idle
-mode.  The test results come from a 5.15-rt kernel with two
-timers-related patches backported:
+On Thu, 10 Mar 2022 10:24:09 +0000
+Aaron Tomlin <atomlin@redhat.com> wrote:
 
-    "softirq: Use a dedicated thread for timer wakeups." from Sebastian via
-     https://lore.kernel.org/linux-rt-users/20211201173316.rm6o67qapqsx2n47=
-@linutronix.de/
+> No functional change.
 
-and
+There most definitely is a functional change here.
 
-     "tick: Fix timer storm since introduction of timersd" from Frederic vi=
-a
-     https://lore.kernel.org/linux-rt-users/20220405010752.1347437-2-freder=
-ic@kernel.org/
+> 
+> The purpose of this patch is to address the various Sparse warnings
+> due to the incorrect dereference/or access of an __rcu pointer.
+> 
+> Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
+> ---
+>  kernel/module/kallsyms.c | 34 ++++++++++++++++++++++------------
+>  1 file changed, 22 insertions(+), 12 deletions(-)
+> 
+> diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
+> index 1b0780e20aab..a3da0686a2a6 100644
+> --- a/kernel/module/kallsyms.c
+> +++ b/kernel/module/kallsyms.c
+> @@ -171,14 +171,17 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
+>  	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
+>  
+>  	/* Set up to point into init section. */
+> -	mod->kallsyms = mod->init_layout.base + info->mod_kallsyms_init_off;
+> +	mod->kallsyms = (void __rcu *)mod->init_layout.base +
+> +		info->mod_kallsyms_init_off;
+>  
+> +	preempt_disable();
 
-The kernel is configured with NO_HZ_COMMON=3Dy and NO_HZ_IDLE=3Dy.
-
-Expected sequence of events:
-@ 0ms: userspace enqueues a timer event to fire in 10ms from now
-@ 10ms: ktimer event fires and triggers the online_periodic callback
-@ 10ms: userspace enqueues a timer event to fire in 10ms from now
-@ 20ms: ktimer event fires and triggers the online_periodic callback
-...
-
-What we=E2=80=99re actually seeing via kprobes:
-@ 0ms: userspace enqueues a timer event to fire in 10ms from now
-@ 10ms: ktimer event fires and triggers the online_periodic callback
-@ 10ms: userspace enqueues a timer event to fire in 10ms from now
-@ 15ms: CPU enters a deep idle state and sleeps for a long time
-(20-100+)ms, let's say 70ms for this example
-@ 80ms: ktimer event fires and triggers the online_periodic callback
-@ 80ms: userspace enqueues a timer event to fire in 10ms from now
-
-The result is that the second timer callback runs after 75ms instead
-of the expected 10ms.
+        ^^^^^^^^^^^^^^^^^^
 
 
-When the timers work well, the hrtimer_interrupt causes
-raise_hrtimer_softirq() to run, as expected and __do_softirq() runs:
-<userspace>-13534   [007] 16947.039513: enqueue_hrtimer
-          <idle>-0       [007] 16947.039555:
-hrtimer_next_event_without: 16947.037643167
-          <idle>-0       [007] 16947.039562: enqueue_hrtimer
-          <idle>-0       [007] 16947.049453: hrtimer_interrupt
-          <idle>-0       [007] 16947.049457: raise_hrtimer_softirq.
-          <idle>-0       [007] 16947.049474: enqueue_hrtimer
-       ktimers/7-80      [007] 16947.049483: __do_softirq
-       ktimers/7-80      [007] 16947.049485: hrtimer_run_softirq.
- <userspace>-13534   [007] 16947.049523: enqueue_hrtimer
-          <idle>-0       [007] 16947.049567:
-hrtimer_next_event_without: 16947.047643167
-          <idle>-0       [007] 16947.049573: enqueue_hrtimer
-          <idle>-0       [007] 16947.049586: enqueue_hrtimer
-          <idle>-0       [007] 16947.049594:
-hrtimer_next_event_without: 16947.047643167
-          <idle>-0       [007] 16947.049598: enqueue_hrtimer
-          <idle>-0       [007] 16947.059418: hrtimer_interrupt
-          <idle>-0       [007] 16947.059423: raise_hrtimer_softirq.
-          <idle>-0       [007] 16947.059441: enqueue_hrtimer
-       ktimers/7-80      [007] 16947.059449: __do_softirq
-       ktimers/7-80      [007] 16947.059451: hrtimer_run_softirq.
- <userspace>-13534   [007] 16947.059490: enqueue_hrtimer
-          <idle>-0       [007] 16947.059529:
-hrtimer_next_event_without: 16947.057643167
-          <idle>-0       [007] 16947.059531: enqueue_hrtimer
-          <idle>-0       [007] 16947.069434: hrtimer_interrupt
+>  	/* The following is safe since this pointer cannot change */
+> -	mod->kallsyms->symtab = (void *)symsec->sh_addr;
+> -	mod->kallsyms->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
+> +	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
+> +	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
+>  	/* Make sure we get permanent strtab: don't use info->strtab. */
+> -	mod->kallsyms->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
+> -	mod->kallsyms->typetab = mod->init_layout.base + info->init_typeoffs;
+> +	rcu_dereference_sched(mod->kallsyms)->strtab =
+> +		(void *)info->sechdrs[info->index.str].sh_addr;
+> +	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
+>  
+>  	/*
+>  	 * Now populate the cut down core kallsyms for after init
+> @@ -187,20 +190,22 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
+>  	mod->core_kallsyms.symtab = dst = mod->core_layout.base + info->symoffs;
+>  	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
+>  	mod->core_kallsyms.typetab = mod->core_layout.base + info->core_typeoffs;
+> -	src = mod->kallsyms->symtab;
+> -	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
+> -		mod->kallsyms->typetab[i] = elf_type(src + i, info);
+> +	src = rcu_dereference_sched(mod->kallsyms)->symtab;
+> +	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
 
-When the timers are delayed, the trouble appears to begin when the
-hrtimer_interrupt results in execution of hrtimer_run_queues() instead
-of raise_hrtimer_softirq():
- <userspace>-13534   [007] 16947.069504: enqueue_hrtimer
-          <idle>-0       [007] 16947.069547:
-hrtimer_next_event_without: 16947.067643167
-          <idle>-0       [007] 16947.069553: enqueue_hrtimer
-          <idle>-0       [007] 16947.069567: enqueue_hrtimer
-          <idle>-0       [007] 16947.069575:
-hrtimer_next_event_without: 16947.067643167
-          <idle>-0       [007] 16947.069579: enqueue_hrtimer
-          <idle>-0       [007] 16947.078270: hrtimer_interrupt
-          <idle>-0       [007] 16947.078278: hrtimer_run_queues.
-          <idle>-0       [007] 16947.078300: enqueue_hrtimer
-       ktimers/7-80      [007] 16947.078308: __do_softirq
-     ksoftirqd/7-81      [007] 16947.078338: ksoftirqd_should_run 0
-          <idle>-0       [007] 16947.078361:
-hrtimer_next_event_without: 16947.067643167
-          <idle>-0       [007] 16947.079323: hrtimer_interrupt
-          <idle>-0       [007] 16947.079328: hrtimer_run_queues.
-          <idle>-0       [007] 16947.079334: enqueue_hrtimer
-     ksoftirqd/7-81      [007] 16947.079359: ksoftirqd_should_run 128
-     ksoftirqd/7-81      [007] 16947.079360: __do_softirq
-     ksoftirqd/7-81      [007] 16947.079361: hrtimer_interrupt
-     ksoftirqd/7-81      [007] 16947.079361: raise_hrtimer_softirq.
-     ksoftirqd/7-81      [007] 16947.079364: ksoftirqd_should_run 0
-          <idle>-0       [007] 16947.079375:
-hrtimer_next_event_without: 9223372036854775807
-          <idle>-0       [007] 16947.079376:
-tick_nohz_get_sleep_length: 86.838 ms
-          <idle>-0       [007] 16947.079378: enqueue_hrtimer
+How big is this loop?
 
-Is the problem perhaps that ksoftirqd_should_run() needs to check
-local_timer_softirq_pending() created by Frederic's patch as well as
-local_softirq_pending()?
+> +		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
+>  		if (i == 0 || is_livepatch_module(mod) ||
+>  		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
+>  				   info->index.pcpu)) {
+>  			mod->core_kallsyms.typetab[ndst] =
+> -			    mod->kallsyms->typetab[i];
+> +			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
+>  			dst[ndst] = src[i];
+>  			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
+> -			s += strscpy(s, &mod->kallsyms->strtab[src[i].st_name],
+> +			s += strscpy(s,
+> +				     &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
+>  				     KSYM_NAME_LEN) + 1;
+>  		}
+>  	}
+> +	preempt_enable();
 
-For the moment, we find that replacing NO_HZ_COMMON=3Dy and NO_HZ_IDLE=3Dy
-with NO_HZ_PERIODIC prevents the undesirable sleep-state transition,
-but clearly this solution is not ideal.
+        ^^^^^^^^^^^^^^^^^
 
-Thanks for any suggestions,
-Alison Chaiken
-achaiken@aurora.tech
-Aurora Innovation
+This just introduced an unbounded latency and will fail PREEMPT_RT.
+
+-- Steve
+
+>  	mod->core_kallsyms.num_symtab = ndst;
+>  }
+>  
+> @@ -478,11 +483,16 @@ int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
+>  
+>  	mutex_lock(&module_mutex);
+>  	list_for_each_entry(mod, &modules, list) {
+> -		/* We hold module_mutex: no need for rcu_dereference_sched */
+> -		struct mod_kallsyms *kallsyms = mod->kallsyms;
+> +		struct mod_kallsyms *kallsyms;
+>  
+>  		if (mod->state == MODULE_STATE_UNFORMED)
+>  			continue;
+> +
+> +		/* Use rcu_dereference_sched() to remain compliant with the sparse tool */
+> +		preempt_disable();
+> +		kallsyms = rcu_dereference_sched(mod->kallsyms);
+> +		preempt_enable();
+> +
+>  		for (i = 0; i < kallsyms->num_symtab; i++) {
+>  			const Elf_Sym *sym = &kallsyms->symtab[i];
+>  
+
