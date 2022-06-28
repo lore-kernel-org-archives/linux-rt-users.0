@@ -2,154 +2,153 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5F90EC43334
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Jun 2022 03:56:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B5BE2C433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Jun 2022 15:39:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S243868AbiF1D4U (ORCPT
+        id S1347222AbiF1Pjg (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 27 Jun 2022 23:56:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43646 "EHLO
+        Tue, 28 Jun 2022 11:39:36 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46808 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236892AbiF1D4T (ORCPT
+        with ESMTP id S231835AbiF1Pjf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Jun 2022 23:56:19 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 886F627B35;
-        Mon, 27 Jun 2022 20:56:18 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 3DDE2B81C18;
-        Tue, 28 Jun 2022 03:56:17 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9E9E4C3411D;
-        Tue, 28 Jun 2022 03:56:13 +0000 (UTC)
-Date:   Mon, 27 Jun 2022 23:56:12 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Aaron Tomlin <atomlin@redhat.com>
-Cc:     mcgrof@kernel.org, christophe.leroy@csgroup.eu, cl@linux.com,
-        mbenes@suse.cz, akpm@linux-foundation.org, jeyu@kernel.org,
-        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
-        void@manifault.com, atomlin@atomlin.com, allen.lkml@gmail.com,
-        joe@perches.com, msuchanek@suse.de, oleksandr@natalenko.name,
-        jason.wessel@windriver.com, pmladek@suse.com,
-        daniel.thompson@linaro.org, hch@infradead.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH v11 10/14] module: kallsyms: Fix suspicious rcu usage
-Message-ID: <20220627235612.4796c837@gandalf.local.home>
-In-Reply-To: <20220310102413.3438665-11-atomlin@redhat.com>
-References: <20220310102413.3438665-1-atomlin@redhat.com>
-        <20220310102413.3438665-11-atomlin@redhat.com>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        Tue, 28 Jun 2022 11:39:35 -0400
+Received: from mail-qv1-xf36.google.com (mail-qv1-xf36.google.com [IPv6:2607:f8b0:4864:20::f36])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 60D0BB58
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Jun 2022 08:39:32 -0700 (PDT)
+Received: by mail-qv1-xf36.google.com with SMTP id z1so3285455qvp.9
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Jun 2022 08:39:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=Z5f7HYjN1Z1DdYINrKMciCcxaZ0VfQjvjITW4Uq1HyA=;
+        b=PIuww35+PpKGPslIWQQTngDGANq85P7KB8KG+RzEKO7HYS74+TRR9MM/kIENB5TUhc
+         8bCLz0h/hQu8/2gJZDolnJhyA9MTWF6VP+UeQ6ps/WHdHiZbN3aG64YNju02Vnee+X7i
+         y/givlcYVw7UG8BgZWPeWVIwh1VagAsrlgdCLcJ0vAjFc9ImBuV2ClGEZGTzHkppgbsr
+         4LqBQ2JzFzblvnUadOz7lRP3vYW8AWEb3UDFHXr4c7Ux77cRKTxmR84hdpuhQVIFB5Kz
+         pzD3JwXJP++ijpNVFDR7+/pVTuq1B7fxfzj9q0lnjht0QGvPUwWA/KfJ/Ni2N7hAV/yj
+         /r7g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=Z5f7HYjN1Z1DdYINrKMciCcxaZ0VfQjvjITW4Uq1HyA=;
+        b=Fe9Yq7yKVR+8w5vkeHjqloXZ9/b5FqOOH+067yDftxFeZyx6dphvHrtQj00PULnHKE
+         2Hi89oxKt9DMec+K7PCiS6nlDXAZkRc0nNPJkZN2Z+7O8hB4Iq6cH5WS4HpdjPigNQH2
+         j+JiFQXQAuhrblSfejiiIreD5Duh9RQ2BykWCFhs3t7aiwe3qEPKkrV4i0qQ9qN1VuxX
+         UnciB8U7FfmthvK7+xo5qtdobx/IagfR0octOjOZWKns8EyFXVNYdrRC7xkKe4KD5OVH
+         dO8ZzUbWWrmC67pQtFLxdzGqxjAKL69BJnb3L6FExqBqkkfFKccxdh8HlfSJIctBzhi2
+         YbJw==
+X-Gm-Message-State: AJIora9rBlh+QAgqLcfOrFSeefaKl0xMki6iqIMKmBS8PV+Loxnv7O4l
+        Xmez1uvpuotOJ0ZfGnNEnKQLeCQlhQU=
+X-Google-Smtp-Source: AGRyM1uuKU/Qzwa7vXnMFrrqE9UwgDzWAjxA3AsNvXr1cW5A1ipUx7eUET5tT6hro3s5zTTqogx7HA==
+X-Received: by 2002:ac8:5e50:0:b0:317:c68f:e32c with SMTP id i16-20020ac85e50000000b00317c68fe32cmr13455368qtx.132.1656430771274;
+        Tue, 28 Jun 2022 08:39:31 -0700 (PDT)
+Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
+        by smtp.gmail.com with ESMTPSA id v18-20020a05620a441200b006a701d8a43bsm3225154qkp.79.2022.06.28.08.39.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 28 Jun 2022 08:39:30 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        Kate Carcia Poulin <kcarcia@redhat.com>,
+        Leah Leshchinsky <lleshchi@redhat.com>,
+        Valentin Schneider <vschneid@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] rteval-v3.4
+Date:   Tue, 28 Jun 2022 11:39:16 -0400
+Message-Id: <20220628153916.18333-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.36.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 10 Mar 2022 10:24:09 +0000
-Aaron Tomlin <atomlin@redhat.com> wrote:
+I am pleased to announce version 3.4 of rteval
 
-> No functional change.
+rteval-3.4 contains a number of fixes, users are encouraged to upgrade
 
-There most definitely is a functional change here.
+Some changes from v3.3:
+- The default number of buckets requested from cyclictest is increased
+  to allow for a wider range of maximum latencies. Hopefully this is
+  only an issue when running on a non-rt kernel.
+- The cpumask policy has been loosened to match cyclictest, namely we
+  don't restrict ourselves to cpus from the inherited environment,
+  but depend on the kernel to tell us where we are not allowed to run.
+- A problem was fixed in the report when dealing with an offline NUMA node
+- Use systopology in kcompile to get a list of cpus on a node that
+  properly deals with offline cpus
+- Fix the --kcompile-source=TARBALL so that the user can specify a
+  non-default kernel to compile as a load
+- Fix passing a timeout value to stress-ng (needs to be a string)
+- The default kernel has been changed to linux-5.18.1, because some
+  older kernels fail to compile on newer tool chains.
+- Popen was changed to be compatible with slightly older versions of
+  python, python-3.6)
+- modules signing is changed to sha512 for environments that don't allow
+  sha1 signing
 
-> 
-> The purpose of this patch is to address the various Sparse warnings
-> due to the incorrect dereference/or access of an __rcu pointer.
-> 
-> Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
-> ---
->  kernel/module/kallsyms.c | 34 ++++++++++++++++++++++------------
->  1 file changed, 22 insertions(+), 12 deletions(-)
-> 
-> diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
-> index 1b0780e20aab..a3da0686a2a6 100644
-> --- a/kernel/module/kallsyms.c
-> +++ b/kernel/module/kallsyms.c
-> @@ -171,14 +171,17 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
->  	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
->  
->  	/* Set up to point into init section. */
-> -	mod->kallsyms = mod->init_layout.base + info->mod_kallsyms_init_off;
-> +	mod->kallsyms = (void __rcu *)mod->init_layout.base +
-> +		info->mod_kallsyms_init_off;
->  
-> +	preempt_disable();
+Special thanks to Valentin for his contributions regarding NUMA nodes and
+fixing --kcompile-source
 
-        ^^^^^^^^^^^^^^^^^^
+Thanks
+John Kacur
+
+To fetch
+
+Clone
+git://git.kernel.org/pub/scm/utils/rteval/rteval.git
+
+Branch: main
+Tag: v3.4
+
+Tarballs available here:
+https://kernel.org/pub/linux/utils/rteval
+
+Older version tarballs are available here:
+https://kernel.org/pub/linux/utils/rteval/older
 
 
->  	/* The following is safe since this pointer cannot change */
-> -	mod->kallsyms->symtab = (void *)symsec->sh_addr;
-> -	mod->kallsyms->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
-> +	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
-> +	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
->  	/* Make sure we get permanent strtab: don't use info->strtab. */
-> -	mod->kallsyms->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
-> -	mod->kallsyms->typetab = mod->init_layout.base + info->init_typeoffs;
-> +	rcu_dereference_sched(mod->kallsyms)->strtab =
-> +		(void *)info->sechdrs[info->index.str].sh_addr;
-> +	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
->  
->  	/*
->  	 * Now populate the cut down core kallsyms for after init
-> @@ -187,20 +190,22 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
->  	mod->core_kallsyms.symtab = dst = mod->core_layout.base + info->symoffs;
->  	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
->  	mod->core_kallsyms.typetab = mod->core_layout.base + info->core_typeoffs;
-> -	src = mod->kallsyms->symtab;
-> -	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
-> -		mod->kallsyms->typetab[i] = elf_type(src + i, info);
-> +	src = rcu_dereference_sched(mod->kallsyms)->symtab;
-> +	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
+John Kacur (16):
+  rteval: Fix test misses threshold assignment
+  rteval: Increase default buckets from 2000 to 3500
+  rteval: Don't restrict measurement threads to inherited cpumask
+  rteval: If the user doesn't specify a cpumask, use the inherited one
+  rteval: Fix Popen for python3.6 where text=True is not available
+  rteval: Fix allmodconfig build on machines that don't allow sha1
+    signing
+  rteval: kcompile: Use systopology to get a list of cpus on a node
+  rteval: rteval-cmd: Use "with" with open
+  rteval: misc.py: Use "with" for resource allocation
+  rteval: stressng.py: Remove unnecessary list
+  rteval: cyclictest.py: Use "with" with resource allocation
+  rteval: systopology.py: Use "with" for resource allocation
+  rteval: kcompile: Fix regular expression to match kernel prefix
+  rteval: stressng: The stressng option should not be a string
+  rteval: Change the default kernel to compile to linux-5.18.1
+  rteval: update version number to v3.4
 
-How big is this loop?
+Valentin Schneider (2):
+  rteval: systopology: Fix offline NUMA node parsing
+  rteval: kcompile: Fix source tarball argument handling
 
-> +		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
->  		if (i == 0 || is_livepatch_module(mod) ||
->  		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
->  				   info->index.pcpu)) {
->  			mod->core_kallsyms.typetab[ndst] =
-> -			    mod->kallsyms->typetab[i];
-> +			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
->  			dst[ndst] = src[i];
->  			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
-> -			s += strscpy(s, &mod->kallsyms->strtab[src[i].st_name],
-> +			s += strscpy(s,
-> +				     &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
->  				     KSYM_NAME_LEN) + 1;
->  		}
->  	}
-> +	preempt_enable();
+ Makefile                                 |  2 +-
+ doc/rteval.8                             |  2 +-
+ rteval-cmd                               | 12 +++----
+ rteval.spec                              |  2 +-
+ rteval/misc.py                           | 28 ++++++++++-------
+ rteval/modules/loads/kcompile.py         | 17 ++++++----
+ rteval/modules/loads/stressng.py         |  5 +--
+ rteval/modules/measurement/cyclictest.py | 40 +++++++++++-------------
+ rteval/rteval.conf                       |  4 +--
+ rteval/sysinfo/services.py               |  8 ++---
+ rteval/systopology.py                    | 34 +++++++++++---------
+ rteval/version.py                        |  2 +-
+ 12 files changed, 84 insertions(+), 72 deletions(-)
 
-        ^^^^^^^^^^^^^^^^^
-
-This just introduced an unbounded latency and will fail PREEMPT_RT.
-
--- Steve
-
->  	mod->core_kallsyms.num_symtab = ndst;
->  }
->  
-> @@ -478,11 +483,16 @@ int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
->  
->  	mutex_lock(&module_mutex);
->  	list_for_each_entry(mod, &modules, list) {
-> -		/* We hold module_mutex: no need for rcu_dereference_sched */
-> -		struct mod_kallsyms *kallsyms = mod->kallsyms;
-> +		struct mod_kallsyms *kallsyms;
->  
->  		if (mod->state == MODULE_STATE_UNFORMED)
->  			continue;
-> +
-> +		/* Use rcu_dereference_sched() to remain compliant with the sparse tool */
-> +		preempt_disable();
-> +		kallsyms = rcu_dereference_sched(mod->kallsyms);
-> +		preempt_enable();
-> +
->  		for (i = 0; i < kallsyms->num_symtab; i++) {
->  			const Elf_Sym *sym = &kallsyms->symtab[i];
->  
+-- 
+2.36.1
 
