@@ -2,88 +2,88 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C2EFC433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jun 2022 17:35:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9B69BC43334
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jun 2022 17:51:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230434AbiF2RfL (ORCPT
+        id S230498AbiF2Rvk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jun 2022 13:35:11 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44090 "EHLO
+        Wed, 29 Jun 2022 13:51:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58254 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230021AbiF2RfJ (ORCPT
+        with ESMTP id S229989AbiF2Rvj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Jun 2022 13:35:09 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 8347C28E18
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 10:35:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1656524107;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=+sh2n6JO8uSzu4Thu8m+JkICT7gIsxqvxuzmnYKGy0c=;
-        b=Md8LF46Y0N4KnFPdYvdpGplbHoSt2RzH7ssowWEDAnwdCWkugL6OjnYLgm9MyiyC8S9BfJ
-        LdepAWUUSNy92a2wL6LaY7CnwbDKzgIvjXaPly90uk9wmozVcAIb4f/8PEJHYt/Dv6Tnm1
-        cJLZoGRvAgXwb9KBIo7yUUeLrlN06rE=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-569-osL_vEzyNjiWbFI6N9-ctQ-1; Wed, 29 Jun 2022 13:35:05 -0400
-X-MC-Unique: osL_vEzyNjiWbFI6N9-ctQ-1
-Received: by mail-qk1-f198.google.com with SMTP id g194-20020a379dcb000000b006aef700d954so16869770qke.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 10:35:05 -0700 (PDT)
+        Wed, 29 Jun 2022 13:51:39 -0400
+Received: from mail-pg1-x549.google.com (mail-pg1-x549.google.com [IPv6:2607:f8b0:4864:20::549])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 737B51EEC6
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 10:51:37 -0700 (PDT)
+Received: by mail-pg1-x549.google.com with SMTP id r142-20020a632b94000000b0040c978aef47so8491441pgr.10
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 10:51:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=date:message-id:mime-version:subject:from:to:cc;
+        bh=MoAGJJsXkdtvgenknQ4HOS1oOce8TQbNR+BaxSpMxyY=;
+        b=GeLzThxvNikhm87rH5+1ecy9lVg91YtKB1p/h6quczURXHIYTCaQbMlkj2NU3mv/2D
+         bgrUxS4ZBaJ3UnaMH5T+0hj4pUWAJOEvX87KuZCwZSl4inK1+0pJX65EtqoUt3f7DOip
+         /t8MkyIT2ghxEobF/jmxwnS4SIdB8OqzMGyfGaE4n3/DsmX+ZNfYf7QVk2PBT9FPLQer
+         5Ati/soM5TRlyE+rp3sFpQAEXGZY2kpYW3UUthYG5Pu8QWyucj1XIenCaWqb/iT6v16h
+         ShkhPQEgtZbzDkpP6Y4E3i+bUwE61Cw0t12Y+39TMeI+y7dE2oTZ05Fulg2/lR4HGUQl
+         R2Pg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=+sh2n6JO8uSzu4Thu8m+JkICT7gIsxqvxuzmnYKGy0c=;
-        b=UUTtSbl7YEC/48WLYrcfKcbXXMxHDxAhvQ7WD3/UMGt0i+0cB/fBO0IRo76gdRLpPo
-         wsyHPFG/cqUpUeMHU3pmyB9FY7T7Tvd94ZRH89ssqz7AxdWVEFTylCssJ2ZNxPJUwwSI
-         Smn7vlIH+/HsBUieAjaG+jOf8JY0DrOswN881TEiICesih5u1gqljeBAgaXYMOXTeG72
-         FRipItAO8mt22m195gB1FZkO5d5pVQCBNhNHThOpT523toh/utv4P/hITKlUCRxpv88i
-         kB3IRvg8WD2UqNG7EXuXMmP+2vpwyz+i8Yjdp+ieDmZchYpsizcUQ704IogUsUSg2TOI
-         7n8g==
-X-Gm-Message-State: AJIora8H4LGOHb69/LTLDA7CmkbzAzlWbAOqHVolB6RsreUqN7m3KQFY
-        CXSG18tUMR/pV9razG6xVAEPdbHH5cOUsTnDwShwjbuQFNApq6LpNU6ORssHwlmnDF5CLKHmKeZ
-        tmSxduJ5Yqy2F1YZagEYB0PqN0g8=
-X-Received: by 2002:ac8:75c5:0:b0:31a:f72e:df35 with SMTP id z5-20020ac875c5000000b0031af72edf35mr3539729qtq.361.1656524104631;
-        Wed, 29 Jun 2022 10:35:04 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1sKXwKjRC1cOYiy8Dlpb078QgCZIXKWeo1W4l42MF9tTE4uHRAfFqzV0WwbZN+vkyOetj5xNw==
-X-Received: by 2002:ac8:75c5:0:b0:31a:f72e:df35 with SMTP id z5-20020ac875c5000000b0031af72edf35mr3539711qtq.361.1656524104440;
-        Wed, 29 Jun 2022 10:35:04 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
-        by smtp.gmail.com with ESMTPSA id q11-20020a05620a0d8b00b006a32bf19502sm13266894qkl.60.2022.06.29.10.35.03
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 29 Jun 2022 10:35:03 -0700 (PDT)
-Date:   Wed, 29 Jun 2022 13:35:02 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Daniel Wagner <wagi@monom.org>
-cc:     Song Chen <chensong_2000@189.cn>, linux-rt-users@vger.kernel.org,
-        williams@redhat.com
-Subject: Re: [PATCH v2] sched_deadline/cyclicdeadline add tracelimit
-In-Reply-To: <20220629170304.abppmxmie7yq3kmh@beryllium.lan>
-Message-ID: <30f526bd-20e3-606a-e56-33342a55fe0@redhat.com>
-References: <1655448052-12537-1-git-send-email-chensong_2000@189.cn> <20220629065848.zpppngaem7qqazzf@beryllium.lan> <8d2bbda3-492-a5c9-4efc-722bddbc7bf6@redhat.com> <20220629170304.abppmxmie7yq3kmh@beryllium.lan>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+        h=x-gm-message-state:date:message-id:mime-version:subject:from:to:cc;
+        bh=MoAGJJsXkdtvgenknQ4HOS1oOce8TQbNR+BaxSpMxyY=;
+        b=IG0fNl5Lb2l4+xe0em+OQczBUfD6aM/uRjci5Tq5/Mh0VvbrT1Ezm2Hq02JmOBMl0f
+         /NkUyomWRMvVGGkl8mjOtGBtqBZfWQ3nhJnqBeLpYdQIpgudw98iY0WZdOkcel2QKdoT
+         EEV5oa+eq7V2TsMO5hcsSudyUsfOYqjIdHWeC9MmhgLlfdACfJtajOQydxPx/3/g3PBr
+         lGDQ+SHu1fu00Qzj36yjkBaSWqpo1myWr1l4rXWF/fyG+DWqgu5brcNPrW7zewe3Ry4r
+         UbVwqd86iKQP7CFUgy69L+ukIAEQDp+GdqnBmL0yMPGomwXzjh1YvOZkb4mOloNoAQc8
+         Ilyw==
+X-Gm-Message-State: AJIora8fDnewW7d59/ZymSw1fijvIrKJAaovpUeB7JtYBz7x13kAV8nl
+        A8c3ACAdxV63o0KeThy7ukCdLXoZW5mOORI=
+X-Google-Smtp-Source: AGRyM1v3UJne6FsezgkHqY7hGd309rO260B5fAub+thTXe+vN1mzkZJS0qYbhgDFlqKiiw1gUduqAiI20nRSCAI=
+X-Received: from grimace.c.googlers.com ([fda3:e722:ac3:cc00:7f:e700:c0a8:21e])
+ (user=icoolidge job=sendgmr) by 2002:a17:90b:4a12:b0:1ed:56ab:b2d5 with SMTP
+ id kk18-20020a17090b4a1200b001ed56abb2d5mr5318514pjb.152.1656525097035; Wed,
+ 29 Jun 2022 10:51:37 -0700 (PDT)
+Date:   Wed, 29 Jun 2022 17:51:34 +0000
+Message-Id: <20220629175134.162666-1-icoolidge@google.com>
+Mime-Version: 1.0
+X-Mailer: git-send-email 2.37.0.rc0.161.g10f37bed90-goog
+Subject: [PATCH] rt-tests: rt-utils: Fix potential 'debugfileprefix' overflow
+From:   "Ian K. Coolidge" <icoolidge@google.com>
+To:     jkacur@redhat.com, williams@redhat.com
+Cc:     linux-rt-users@vger.kernel.org,
+        "Ian K. Coolidge" <icoolidge@google.com>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+fscanf on line 73 amounts to
+fscanf(fp, "... %256s ...", debugfileprefix)
 
+This can result in 256 characters excluding nul.
 
-On Wed, 29 Jun 2022, Daniel Wagner wrote:
+Add 1 to buffer size to accomodate a maximum write + a nul.
 
-> On Wed, Jun 29, 2022 at 11:34:40AM -0400, John Kacur wrote:
-> > @Danel Wagner, is that just a comment or would you like a Reviewed-by ?
-> 
-> I just noticed that several option have been added to various tools an
-> no one cared to add them to the manual patches. Makes a bit sad after
-> spending time syncing all man pages up.
-> 
+Signed-off-by: Ian K. Coolidge <icoolidge@google.com>
+---
+ src/lib/rt-utils.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks Daniel
-I should start requiring that before I pull in patches.
-
-John
+diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+index 6c0235d..bbc0b82 100644
+--- a/src/lib/rt-utils.c
++++ b/src/lib/rt-utils.c
+@@ -32,7 +32,7 @@
+ #define  MAX_COMMAND_LINE 4096
+ #define  MAX_TS_SIZE 64
+ 
+-static char debugfileprefix[MAX_PATH];
++static char debugfileprefix[MAX_PATH + 1];
+ static char *fileprefix;
+ static int trace_fd = -1;
+ static int tracemark_fd = -1;
+-- 
+2.37.0.rc0.161.g10f37bed90-goog
 
