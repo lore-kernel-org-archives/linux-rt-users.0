@@ -2,123 +2,139 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E7856C43334
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jun 2022 12:23:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E28D5C43334
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jun 2022 14:53:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231177AbiF2MXf (ORCPT
+        id S231966AbiF2OxW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jun 2022 08:23:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56954 "EHLO
+        Wed, 29 Jun 2022 10:53:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57816 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232749AbiF2MXc (ORCPT
+        with ESMTP id S229862AbiF2OxF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Jun 2022 08:23:32 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 8DE23338BC
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 05:23:31 -0700 (PDT)
+        Wed, 29 Jun 2022 10:53:05 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 2F8D21EACD
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 07:53:04 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1656505410;
+        s=mimecast20190719; t=1656514383;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=D4xckCgJ4Bw0w9xbbVbINWepGBRVBzb5aJNwu4HG9GY=;
-        b=F3S2hu8ZUrmB8GOmNcWX1q+CUEKr91CQfXUIZeeL7yt0oYJq9I4VDSRIOHV9FQLbWCBdt8
-        V4axvDv0KDsniNl7+Ajl/Gwxrz9PNzqloN9vsrQetV28ga5RHhThyc1d6KFO1XrB60ZnHH
-        PCYpYEwafYd2xgQ7MZ4IYbPYbYloW6w=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=kal7eBa59kutpQYu99xUU24O0MYJGVmtziZ1yFwAuy0=;
+        b=ZERVz2SV8jThPs7AwJ6ItiKxU83EIZ8RuDu2qcVn4V/7VqeyhEpVlsVRUOJH2M1xc7IyEg
+        qZ3bgtioDbE+ZiBmdPw6iOmS5/4tR8geWDCoYyLh0bhhh2PhnpZ+roB4H7hYFiSkT458H6
+        LBew7+XAlIGuMKLYa3yZUG+LOzRBCcI=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-597-WXXmwLknPtWZwUN07easSA-1; Wed, 29 Jun 2022 08:23:26 -0400
-X-MC-Unique: WXXmwLknPtWZwUN07easSA-1
-Received: by mail-wr1-f70.google.com with SMTP id n5-20020adf8b05000000b00219ece7272bso2378437wra.8
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 05:23:26 -0700 (PDT)
+ us-mta-154-wxcyvaCLO-6xIa4vUQRQtA-1; Wed, 29 Jun 2022 10:53:01 -0400
+X-MC-Unique: wxcyvaCLO-6xIa4vUQRQtA-1
+Received: by mail-qk1-f200.google.com with SMTP id de4-20020a05620a370400b006a9711bd9f8so16426390qkb.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2022 07:53:01 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:in-reply-to:references:date
-         :message-id:mime-version;
-        bh=D4xckCgJ4Bw0w9xbbVbINWepGBRVBzb5aJNwu4HG9GY=;
-        b=EnG8u2J9Blf7YdJUJ/gwD0TZoWAxkizKtAFMeRHBiDqr3LPTrQKnwE4/RlezW0BJWf
-         zImRZrC9lF0ZFE2jCp8YA/oUhmlEjY4zp5PzDLfi9iy9ZAB6+ZIIwbJdbDJyi7at05gC
-         AIsitIA2/jBXFsaxsnlthtlvP4isv8O74U1hkaHU9Zg63aLWD4tP1XfwoeaOanlOtkxh
-         3T9oYxzzaH0KQgPjLD2WcpuFS+x27osZhetwuyYHTBkBG9xzR9PY/GH1xoEUEJU428Mk
-         Xe8u6wp86Wvr7AOcZfiadaoIPMCi030mhbqHBAQU+XrtEu+Koq6MQSX7zepQ1nd2x3VC
-         HbXw==
-X-Gm-Message-State: AJIora9gJ6DMhmZ3vecsqmLRFVT9i5lJ1De8/zCRd5sZGWE/o9HU6QSF
-        eZ80J+i3aLqsJ9Z87EjFAAxP7b5bbLugSSdzl1EOirl60h8OmAnejLgqdz1HuUAHKxufz9p1Coe
-        yIjY6ap/ksA7kzBi2llYv+9T+gjc=
-X-Received: by 2002:a05:6000:1281:b0:21b:9c01:df79 with SMTP id f1-20020a056000128100b0021b9c01df79mr2793332wrx.563.1656505405768;
-        Wed, 29 Jun 2022 05:23:25 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1v9pJO/EqSfuHhWYEuTzIM+Ml0Cf5xYU+IXYXEoEGJo5PASFAvTCOcpNz8z35DuzQpGGt5rXw==
-X-Received: by 2002:a05:6000:1281:b0:21b:9c01:df79 with SMTP id f1-20020a056000128100b0021b9c01df79mr2793306wrx.563.1656505405591;
-        Wed, 29 Jun 2022 05:23:25 -0700 (PDT)
-Received: from vschneid.remote.csb ([185.11.37.247])
-        by smtp.gmail.com with ESMTPSA id o12-20020a1c750c000000b003a04b248896sm2888552wmc.35.2022.06.29.05.23.24
+        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
+         :references:mime-version;
+        bh=kal7eBa59kutpQYu99xUU24O0MYJGVmtziZ1yFwAuy0=;
+        b=Fvb598nxAn2foikXgtys4MD7mJxVSIoNhl2oWTIRvFvpXE5M3QH4C3qOllBYZ4jDzC
+         YKsUYeiu8TY5vAu1iHBDnhxUa7PPd/S35MqTDOqyOcvULw5iqbfNb3rxDjyBfacjlOix
+         1pqO3hnYoQmZf/RSeQzTIfWoveJR6SC9oUMM0JxMQa5vL2jJ5kqlc0kIRzU2UyriIM1c
+         KgiuVIMfOht/X3AaoU6PIlH+5utjaW9+Nity+gJFxYMLrb2gGQSqtNjTICG/y8wtsvQr
+         0/kthLQzvRRow5ClWSKjMMeA/Je+6GKbogtFxL/7Y3b6RYVeZwkkDZARP18Fbw2a9F8i
+         WQ2w==
+X-Gm-Message-State: AJIora9U7HoKyNJWvpS7GplvX42MOSSm8K+if6fXCKUgsWFpRS2MRssy
+        SlXujIXDKOPFRlTp3X1vLtckUk+nW3nKIA9qpz062f2LPiHmdNZcZikj15+myPFBAzIC6cqRH1C
+        PrfK5ot+hljQuKY4KC84Nna35Oy0=
+X-Received: by 2002:ad4:5bc1:0:b0:42c:3700:a6df with SMTP id t1-20020ad45bc1000000b0042c3700a6dfmr8070085qvt.94.1656514381294;
+        Wed, 29 Jun 2022 07:53:01 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1sCI1Kk/KCqXJOIV338poORuKFCxsCFWivwz075f7oZAzggaH6NnQooObqDTcmiC6f+pTg0Yw==
+X-Received: by 2002:ad4:5bc1:0:b0:42c:3700:a6df with SMTP id t1-20020ad45bc1000000b0042c3700a6dfmr8070064qvt.94.1656514381015;
+        Wed, 29 Jun 2022 07:53:01 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-93.dsl.bell.ca. [184.147.143.93])
+        by smtp.gmail.com with ESMTPSA id bt5-20020ac86905000000b0031bf68f502esm2088394qtb.59.2022.06.29.07.52.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 29 Jun 2022 05:23:24 -0700 (PDT)
-From:   Valentin Schneider <vschneid@redhat.com>
-To:     Petr Mladek <pmladek@suse.com>
-Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
-        linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
-        linux-rt-users@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Juri Lelli <jlelli@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH v2] panic, kexec: Make __crash_kexec() NMI safe
-In-Reply-To: <20220629115539.GB12720@pathway.suse.cz>
-References: <20220620111520.1039685-1-vschneid@redhat.com>
- <87r13c7jyp.fsf@email.froward.int.ebiederm.org>
- <xhsmhpmiu5lch.mognet@vschneid.remote.csb>
- <xhsmhmtdw66cr.mognet@vschneid.remote.csb>
- <20220629115539.GB12720@pathway.suse.cz>
-Date:   Wed, 29 Jun 2022 13:23:08 +0100
-Message-ID: <xhsmhk08z64lv.mognet@vschneid.remote.csb>
+        Wed, 29 Jun 2022 07:53:00 -0700 (PDT)
+Date:   Wed, 29 Jun 2022 10:52:28 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+cc:     linux-rt-users@vger.kernel.org,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] cyclictest: Delay setting of main_affinity_mask after
+ creating threads.
+In-Reply-To: <YqnExv0GkIKTSwoI@linutronix.de>
+Message-ID: <161e452-804c-57a8-dde1-4a4f18cd29e0@redhat.com>
+References: <YqnExv0GkIKTSwoI@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 29/06/22 13:55, Petr Mladek wrote:
-> On Tue 2022-06-28 18:33:08, Valentin Schneider wrote:
->>
->> 8c5a1cf0ad3a ("kexec: use a mutex for locking rather than xchg()") was
->> straightforward enough because it turned
->>
->>         if (xchg(&lock, 1))
->>                 return -EBUSY;
->>
->> into
->>
->>         if (!mutex_trylock(&lock))
->>                 return -EBUSY;
->>
->> Now, most of the kexec_mutex uses are trylocks, except for:
->> - crash_get_memory_size()
->> - crash_shrink_memory()
->>
->> I really don't want to go down the route of turning those into cmpxchg
->> try-loops, would it be acceptable to make those use trylocks (i.e. return
->> -EBUSY if the cmpxchg fails)?
->
-> IMHO, -EBUSY is acceptable for both crash_get_memory_size()
-> and crash_shrink_memory(). They are used in the sysfs interface.
->
->> Otherwise, we keep the mutexes for functions like those which go nowhere
->> near an NMI.
->
-> If we go this way then I would hide the locking into some wrappers,
-> like crash_kexec_trylock()/unlock() that would do both mutex
-> and xchg. The xchg part might be hidden in a separate wrapper
-> __crash_kexec_trylock()/unlock() or
-> crash_kexec_atomic_trylock()/unlock().
->
 
-Makes sense, thanks. I've started playing with the trylock/-EBUSY approach,
-I'll toss it out if I don't end up hating it.
 
-> Best Regards,
-> Petr
+On Wed, 15 Jun 2022, Sebastian Andrzej Siewior wrote:
+
+> Assuming the current affinity mask of the task is 0x31 (CPUs 0, 4, 5).
+> Starting cyclictest with '-S' option will fork the following threads:
+> - monitor, mask 0x31
+> - measure thread 1, mask 0x01
+> - measure thread 2, mask 0x10
+> - measure thread 3, mask 0x20
+> 
+> works as expected. Using the options '-S --mainaffinity=0' leads to:
+> - monitor, mask 0x01
+> - measure thread 1, mask 0x01
+> - measure thread 2, mask 0x01
+> - measure thread 3, mask 0x01
+> 
+> because the mask of the main thread has been reset early to 0x01 and
+> does not allow a CPU mask outside of this mask while setting the
+> affinity for the new threads.
+> 
+> Delay setting the affinity of the main/ monitor thread after the
+> measuring threads have been deployed. This leads to the following
+> state:
+> - monitor, mask 0x01
+> - measure thread 1, mask 0x01
+> - measure thread 2, mask 0x10
+> - measure thread 3, mask 0x20
+> 
+> Signed-off-by: Sebastian Andrzej Savior <bigeasy@linutronix.de>
+> ---
+>  src/cyclictest/cyclictest.c | 9 +++++----
+>  1 file changed, 5 insertions(+), 4 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index be8285a072b4e..cbf8d00293ec6 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1816,10 +1816,7 @@ int main(int argc, char **argv)
+>  		printf("Online CPUs = %d\n", online_cpus);
+>  	}
+>  
+> -	/* Restrict the main pid to the affinity specified by the user */
+> -	if (main_affinity_mask != NULL) {
+> -		set_main_thread_affinity(main_affinity_mask);
+> -	} else if (affinity_mask != NULL) {
+> +	if (affinity_mask != NULL) {
+>  		set_main_thread_affinity(affinity_mask);
+>  		if (verbose)
+>  			printf("Using %u cpus.\n",
+> @@ -2094,6 +2091,10 @@ int main(int argc, char **argv)
+>  			fatal("failed to create thread %d: %s\n", i, strerror(status));
+>  
+>  	}
+> +	/* Restrict the main pid to the affinity specified by the user */
+> +	if (main_affinity_mask != NULL)
+> +		set_main_thread_affinity(main_affinity_mask);
+> +
+>  	if (use_fifo) {
+>  		status = pthread_create(&fifo_threadid, NULL, fifothread, NULL);
+>  		if (status)
+> -- 
+> 2.36.1
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
