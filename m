@@ -2,57 +2,116 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 15F31C433EF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jun 2022 07:02:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B5D3C433EF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jun 2022 11:55:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232095AbiF2HC2 (ORCPT
+        id S231208AbiF2Lzn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jun 2022 03:02:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40556 "EHLO
+        Wed, 29 Jun 2022 07:55:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59158 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232967AbiF2HBz (ORCPT
+        with ESMTP id S230326AbiF2Lzm (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Jun 2022 03:01:55 -0400
-Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6AD20313A3
-        for <linux-rt-users@vger.kernel.org>; Tue, 28 Jun 2022 23:58:53 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 5637B5D989;
-        Wed, 29 Jun 2022 08:58:49 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1656485931; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         in-reply-to:references; bh=BNyy0HgjleQZbLLxpbdEQEcX5ad3ovR5gJjkEdpYsGc=;
-        b=EDcpxAZhP3Dbx+7Tw/GiQl1DUA0WnEl1G95ericIbKYUGgItJjzSKtWKuPwcKqPOov+5Ox
-        x2M+Dq8ICIdqJxcGsNXsk+R5jn+im45Vldg5DeDXOvNpMpvk3RMiVod2D9ZK4G7C9SQmlH
-        hagC0QIH4ZxKR5+7Z5jALu+e5Ls+welGeYMZ9Y6+nWlN5TnKf4knYZrt/Sl3Rlkb9mB+Lb
-        UnXwmbovlzntDfLfV2oDA4BHp3E6kd9sSRyqGnzapfD2e/v1l4IA32TivMShLl2xgLAdIU
-        GKXdHl0DOCZ2GpIfug1SRlQeMnhgvZF0D1ONLhOtr+A0DMiVEdQd1MQnZ9Ouqw==
-Date:   Wed, 29 Jun 2022 08:58:48 +0200
-From:   Daniel Wagner <wagi@monom.org>
-To:     Song Chen <chensong_2000@189.cn>
-Cc:     linux-rt-users@vger.kernel.org, jkacur@redhat.com,
-        williams@redhat.com
-Subject: Re: [PATCH v2] sched_deadline/cyclicdeadline add tracelimit
-Message-ID: <20220629065848.zpppngaem7qqazzf@beryllium.lan>
-References: <1655448052-12537-1-git-send-email-chensong_2000@189.cn>
+        Wed, 29 Jun 2022 07:55:42 -0400
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2427E387B1;
+        Wed, 29 Jun 2022 04:55:41 -0700 (PDT)
+Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
+        by smtp-out1.suse.de (Postfix) with ESMTP id D6707220E0;
+        Wed, 29 Jun 2022 11:55:39 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1656503739; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=bF/LSSs2g8Q6JLHlya2E6zoiGTFvYRLz8XXwkmSkeI0=;
+        b=GiHzf/Mi0x/V4my9jBprmV4ydlz1A8WxABnZ+n81Wxqgcgfa5dMtxOIA1EtJvo/rN3uJA2
+        lVEHsSW5xKN4UPsqhddeK8fDq9C8Ja+RTbdCzXAXQbd42plY8G+0Ag9wjXuWsqEC65fpBQ
+        7IkSyEbV5gRPYtEG9fw8bcHwqH1ITFM=
+Received: from suse.cz (pathway.suse.cz [10.100.12.24])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by relay2.suse.de (Postfix) with ESMTPS id A79142C141;
+        Wed, 29 Jun 2022 11:55:39 +0000 (UTC)
+Date:   Wed, 29 Jun 2022 13:55:39 +0200
+From:   Petr Mladek <pmladek@suse.com>
+To:     Valentin Schneider <vschneid@redhat.com>
+Cc:     "Eric W. Biederman" <ebiederm@xmission.com>,
+        linux-kernel@vger.kernel.org, kexec@lists.infradead.org,
+        linux-rt-users@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH v2] panic, kexec: Make __crash_kexec() NMI safe
+Message-ID: <20220629115539.GB12720@pathway.suse.cz>
+References: <20220620111520.1039685-1-vschneid@redhat.com>
+ <87r13c7jyp.fsf@email.froward.int.ebiederm.org>
+ <xhsmhpmiu5lch.mognet@vschneid.remote.csb>
+ <xhsmhmtdw66cr.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <1655448052-12537-1-git-send-email-chensong_2000@189.cn>
-X-Last-TLS-Session-Version: TLSv1.3
+In-Reply-To: <xhsmhmtdw66cr.mognet@vschneid.remote.csb>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+On Tue 2022-06-28 18:33:08, Valentin Schneider wrote:
+> On 27/06/22 13:42, Valentin Schneider wrote:
+> > On 25/06/22 12:04, Eric W. Biederman wrote:
+> >> At this point I recommend going back to being ``unconventional'' with
+> >> the kexec locking and effectively reverting commit 8c5a1cf0ad3a ("kexec:
+> >> use a mutex for locking rather than xchg()").
+> >>
+> >> That would also mean that we don't have to worry about the lockdep code
+> >> doing something weird in the future and breaking kexec.
+> >>
+> >> Your change starting to is atomic_cmpxchng is most halfway to a revert
+> >> of commit 8c5a1cf0ad3a ("kexec: use a mutex for locking rather than
+> >> xchg()").  So we might as well go the whole way and just document that
+> >> the kexec on panic code can not use conventional kernel locking
+> >> primitives and has to dig deep and build it's own.  At which point it
+> >> makes no sense for the rest of the kexec code to use anything different.
+> >>
+> >
+> > Hm, I'm a bit torn about that one, ideally I'd prefer to keep "homegrown"
+> > locking primitives to just where they are needed (loading & kexec'ing), but
+> > I'm also not immensely fond of the "hybrid" mutex+cmpxchg approach.
+> >
+> 
+> 8c5a1cf0ad3a ("kexec: use a mutex for locking rather than xchg()") was
+> straightforward enough because it turned
+> 
+>         if (xchg(&lock, 1))
+>                 return -EBUSY;
+> 
+> into
+> 
+>         if (!mutex_trylock(&lock))
+>                 return -EBUSY;
+> 
+> Now, most of the kexec_mutex uses are trylocks, except for:
+> - crash_get_memory_size()
+> - crash_shrink_memory()
+> 
+> I really don't want to go down the route of turning those into cmpxchg
+> try-loops, would it be acceptable to make those use trylocks (i.e. return
+> -EBUSY if the cmpxchg fails)?
 
-On Fri, Jun 17, 2022 at 02:40:52PM +0800, Song Chen wrote:
->  static void usage(int error)
-> @@ -689,6 +697,7 @@ static void usage(int error)
->  	       "                           (default 500us).\n"
->  	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
->  	       "-q       --quiet           print a summary only on exit\n"
-> +	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+IMHO, -EBUSY is acceptable for both crash_get_memory_size()
+and crash_shrink_memory(). They are used in the sysfs interface.
 
-Please also consider to update the man pages.
+> Otherwise, we keep the mutexes for functions like those which go nowhere
+> near an NMI.
 
-Daniel
+If we go this way then I would hide the locking into some wrappers,
+like crash_kexec_trylock()/unlock() that would do both mutex
+and xchg. The xchg part might be hidden in a separate wrapper
+__crash_kexec_trylock()/unlock() or
+crash_kexec_atomic_trylock()/unlock().
+
+Best Regards,
+Petr
