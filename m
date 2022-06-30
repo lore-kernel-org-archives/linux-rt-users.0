@@ -2,209 +2,169 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DDEB1C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Jun 2022 07:58:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5879C43334
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Jun 2022 17:21:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232821AbiF3H6Z (ORCPT
+        id S235814AbiF3RVU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 30 Jun 2022 03:58:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50972 "EHLO
+        Thu, 30 Jun 2022 13:21:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46154 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229813AbiF3H6Z (ORCPT
+        with ESMTP id S235411AbiF3RVT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 Jun 2022 03:58:25 -0400
-Received: from 189.cn (ptr.189.cn [183.61.185.103])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 1FD1A17580
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2022 00:58:21 -0700 (PDT)
-HMM_SOURCE_IP: 10.64.8.41:57664.28326552
-HMM_ATTACHE_NUM: 0000
-HMM_SOURCE_TYPE: SMTP
-Received: from clientip-123.150.8.42 (unknown [10.64.8.41])
-        by 189.cn (HERMES) with SMTP id 16C1E100212;
-        Thu, 30 Jun 2022 15:58:19 +0800 (CST)
-Received: from  ([123.150.8.42])
-        by gateway-153622-dep-749df8664c-mvcg4 with ESMTP id f0697723663e4d699d8f3f4824c7de02 for wagi@monom.org;
-        Thu, 30 Jun 2022 15:58:20 CST
-X-Transaction-ID: f0697723663e4d699d8f3f4824c7de02
-X-Real-From: chensong_2000@189.cn
-X-Receive-IP: 123.150.8.42
-X-MEDUSA-Status: 0
-Sender: chensong_2000@189.cn
-From:   Song Chen <chensong_2000@189.cn>
-To:     wagi@monom.org, jkacur@redhat.com, williams@redhat.com
-Cc:     linux-rt-users@vger.kernel.org, Song Chen <chensong_2000@189.cn>
-Subject: [PATCH v3] sched_deadline/cyclicdeadline: add tracelimit
-Date:   Thu, 30 Jun 2022 16:00:28 +0800
-Message-Id: <1656576028-20474-1-git-send-email-chensong_2000@189.cn>
-X-Mailer: git-send-email 2.7.4
+        Thu, 30 Jun 2022 13:21:19 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 744DD1C13C
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2022 10:21:18 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1656609677;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=M7KwLoH0d9jahqdN5gAGjp/0Ed77DbKf9u/QbOUdSiM=;
+        b=XdeDthHerYLKGWeYE8nDMyM2vHDfRk7SslNjHGeVuqMTqPuSZ2f5xM0WrMMuHSO3GnSNV/
+        07kwTgPYpwbT8XYDTCvSzR+fmSVJL/4CAIK39Mi1wTkPtgQfPv+1upjKu7EQeFUASzirL2
+        LqI4qj/4XRk+Q7/e3b6OVQgI8s0qazo=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-674-9siM450MO26f7CX4TlxeXw-1; Thu, 30 Jun 2022 13:21:16 -0400
+X-MC-Unique: 9siM450MO26f7CX4TlxeXw-1
+Received: by mail-wm1-f71.google.com with SMTP id be12-20020a05600c1e8c00b0039c506b52a4so1659765wmb.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2022 10:21:16 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=M7KwLoH0d9jahqdN5gAGjp/0Ed77DbKf9u/QbOUdSiM=;
+        b=ramPE5DraauPI1f2zl7s7e9J32F79PF7FvKkAVs964Pa7welp1wVw/m8D/XgJNKd4d
+         PE1cjXsDfGCeBPF91MV5e9ZoyAvSpttJhJlWFFv5IpIVT2ksZMyIW1vQ40AAq7Bbb5YD
+         Z39kWjr4JSqJ+VVeFiZ4ckTtu+/FV1gJvg88RHvR7N8YZj7Ml8k9KfkW9aC3WG9VcHF/
+         bKFL3Pj6pYRaxXdyltDh8kovXl1dgHtr+VN7YaTBQK/IU7f9rTUiI1PC+KZAcpHUXXqE
+         DzDcPMCPaQD0BnGmXbWWR7m6bcDiNgzRhydeDaPlAy7DYHoSOsn9kaFeYAoY82qyuWea
+         rwLw==
+X-Gm-Message-State: AJIora9VrE7JYg5qBZT9IChKCrPRlnJXlHuIVa7LKZEzY8IBDZlsHhgJ
+        lEeUZZ1lVFUiz9LG1BqOmfVlf+OXl7KkUGknCqgpVt/L15pH/oMcsrfv9lQKwOgJYl7T3/b+2Jm
+        SoTl5AgwMu9Gvqof3BtU0yKNiQ7I=
+X-Received: by 2002:a5d:5d89:0:b0:21d:407a:d8d3 with SMTP id ci9-20020a5d5d89000000b0021d407ad8d3mr2670458wrb.369.1656609674407;
+        Thu, 30 Jun 2022 10:21:14 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1uokbBJS0X9zNHyARJlxgnxT5Y/QOC+ZqoAr8T+We19KOdP9D4fgQBmv32oBqxEO1suOpVFfg==
+X-Received: by 2002:a5d:5d89:0:b0:21d:407a:d8d3 with SMTP id ci9-20020a5d5d89000000b0021d407ad8d3mr2670436wrb.369.1656609674232;
+        Thu, 30 Jun 2022 10:21:14 -0700 (PDT)
+Received: from vschneid.remote.csb ([185.11.37.247])
+        by smtp.gmail.com with ESMTPSA id f20-20020a05600c155400b0039c41686421sm4065122wmg.17.2022.06.30.10.21.12
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 30 Jun 2022 10:21:13 -0700 (PDT)
+From:   Valentin Schneider <vschneid@redhat.com>
+To:     kexec@lists.infradead.org, linux-rt-users@vger.kernel.org
+Cc:     Eric Biederman <ebiederm@xmission.com>,
+        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
+        Miaohe Lin <linmiaohe@huawei.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Subject: [PATCH v3 1/2] kexec: Turn all kexec_mutex acquisitions into trylocks
+Date:   Thu, 30 Jun 2022 18:20:40 +0100
+Message-Id: <20220630172041.4100123-2-vschneid@redhat.com>
+X-Mailer: git-send-email 2.31.1
+In-Reply-To: <20220630172041.4100123-1-vschneid@redhat.com>
+References: <20220630172041.4100123-1-vschneid@redhat.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-cyclictest has tracelimit to stop running when max latency
-is higher than threshold but cyclicdeadline doesn't.
+Most acquistions of kexec_mutex are done via mutex_trylock() - those were a
+direct "translation" from:
 
-Therefore, tracelimit is introduced to cyclicdeadline in
-this commit, once max latency is over, test stops and log
-prints at the bottom of the ftrace file.
+  8c5a1cf0ad3a ("kexec: use a mutex for locking rather than xchg()")
 
-Signed-off-by: Song Chen <chensong_2000@189.cn>
-Reviewed-by:   Daniel Wagner <wagi@monom.org>
+there has however been two additions since then that use mutex_lock():
+crash_get_memory_size() and crash_shrink_memory().
 
+A later commit will replace said mutex with an atomic variable, and locking
+operations will become atomic_cmpxchg(). Rather than having those
+mutex_lock() become while (atomic_cmpxchg(&lock, 0, 1)), turn them into
+trylocks that can return -EBUSY on acquisition failure.
+
+This does halve the printable size of the crash kernel, but that's still
+neighbouring 2G for 32bit kernels which should be ample enough.
+
+Signed-off-by: Valentin Schneider <vschneid@redhat.com>
 ---
-v2:
-1, disable ftrace when hitting thresold
+ include/linux/kexec.h |  2 +-
+ kernel/kexec_core.c   | 12 ++++++++----
+ kernel/ksysfs.c       |  7 ++++++-
+ 3 files changed, 15 insertions(+), 6 deletions(-)
 
-v3:
-1, update man page
----
- src/sched_deadline/cyclicdeadline.8 |  6 ++++
- src/sched_deadline/cyclicdeadline.c | 49 ++++++++++++++++++++++++++---
- 2 files changed, 51 insertions(+), 4 deletions(-)
-
-diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-index 1a56ed0..fab301e 100644
---- a/src/sched_deadline/cyclicdeadline.8
-+++ b/src/sched_deadline/cyclicdeadline.8
-@@ -50,6 +50,12 @@ The number of threads to run as deadline (default 1)
- .B \-q, \-\-quiet
- Print a summary only on exit. Useful for automated tests, where only
- the summary output needs to be captured.
-+.TP
-+.B \-b, \-\-breaktrace=USEC
-+Send break trace command when latency > USEC
-+.TP
-+.B \-\-tracemark
-+write a trace mark when \-b latency is exceeded.
- .br
- .SH AUTHOR
- cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index d865fa3..a925d1c 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -80,7 +80,11 @@ struct sched_data {
- };
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index ce6536f1d269..54d7030d3c41 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -390,7 +390,7 @@ extern int kexec_load_disabled;
+ extern bool kexec_in_progress;
  
- static int shutdown;
--
-+static int tracelimit = 0;
-+static int trace_marker = 0;
-+static pthread_mutex_t break_thread_id_lock = PTHREAD_MUTEX_INITIALIZER;
-+static pid_t break_thread_id = 0;
-+static uint64_t break_thread_value = 0;
- static pthread_barrier_t barrier;
+ int crash_shrink_memory(unsigned long new_size);
+-size_t crash_get_memory_size(void);
++ssize_t crash_get_memory_size(void);
+ void crash_free_reserved_phys_range(unsigned long begin, unsigned long end);
  
- static int cpu_count;
-@@ -667,6 +671,10 @@ static void teardown(void)
- 
- 	destroy_cpuset(CPUSET_ALL, 0);
- 	destroy_cpuset(CPUSET_LOCAL, 1);
-+
-+	/* close any tracer file descriptors */
-+	disable_trace_mark();
-+
- }
- 
- static void usage(int error)
-@@ -689,6 +697,8 @@ static void usage(int error)
- 	       "                           (default 500us).\n"
- 	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
- 	       "-q       --quiet           print a summary only on exit\n"
-+	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
-+	       "         --tracemark       write a trace mark when -b latency is exceeded\n"
- 	       );
- 	exit(error);
- }
-@@ -825,6 +835,18 @@ void *run_deadline(void *data)
- 
- 	while (!shutdown) {
- 		period = do_runtime(tid, sd, period);
-+		if (tracelimit && (stat->max > tracelimit)) {
-+			shutdown++;
-+			pthread_mutex_lock(&break_thread_id_lock);
-+			if (break_thread_id == 0) {
-+				break_thread_id = stat->tid;
-+				break_thread_value = stat->max;
-+				tracemark( "hit latency threshold (%lld > %d)",
-+						 (unsigned long long) stat->max, tracelimit);
-+			}
-+			pthread_mutex_unlock(&break_thread_id_lock);
-+			break;
-+		}
- 		sched_yield();
+ void arch_kexec_protect_crashkres(void);
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index 4d34c78334ce..16370926b21a 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -1009,13 +1009,16 @@ void crash_kexec(struct pt_regs *regs)
  	}
- 	ret = sched_getattr(0, &attr, sizeof(attr), 0);
-@@ -1063,9 +1085,10 @@ static void write_stats(FILE *f, void *data)
- 	fprintf(f, "  }\n");
  }
  
--enum options_valud {
-+enum options_values {
- 	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
--	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET
-+	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET,
-+	OPT_BREAKTRACE, OPT_TRACEMARK,
- };
- 
- int main(int argc, char **argv)
-@@ -1104,9 +1127,11 @@ int main(int argc, char **argv)
- 			{ "step",	required_argument,	NULL,	OPT_STEP },
- 			{ "threads",	required_argument,	NULL,	OPT_THREADS },
- 			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
-+			{ "breaktrace",       required_argument, NULL, OPT_BREAKTRACE },
-+			{ "tracemark",	     no_argument,	NULL, OPT_TRACEMARK },
- 			{ NULL,		0,			NULL,	0   },
- 		};
--		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
-+		c = getopt_long(argc, argv, "a::c:D:hi:s:t:b:q", options, NULL);
- 		if (c == -1)
- 			break;
- 		switch (c) {
-@@ -1141,6 +1166,10 @@ int main(int argc, char **argv)
- 		case 'D':
- 			duration = parse_time_string(optarg);
- 			break;
-+		case 'b':
-+		case OPT_BREAKTRACE:
-+			tracelimit = atoi(optarg);
-+			break;
- 		case OPT_QUIET:
- 		case 'q':
- 			quiet = 1;
-@@ -1149,6 +1178,9 @@ int main(int argc, char **argv)
- 		case 'h':
- 			usage(0);
- 			break;
-+		case OPT_TRACEMARK:
-+			trace_marker = 1;
-+			break;
- 		default:
- 			usage(1);
- 		}
-@@ -1186,6 +1218,8 @@ int main(int argc, char **argv)
- 		warn("mlockall");
- 
- 	setup_ftrace_marker();
-+	if (tracelimit && trace_marker)
-+		enable_trace_mark();
- 
- 	thread = calloc(nr_threads, sizeof(*thread));
- 	sched_data = calloc(nr_threads, sizeof(*sched_data));
-@@ -1294,6 +1328,13 @@ int main(int argc, char **argv)
- 
- 	loop(sched_data, nr_threads);
- 
-+	if (tracelimit) {
-+		if (break_thread_id) {
-+			printf("# Break thread: %d\n", break_thread_id);
-+			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
-+		}
-+	}
+-size_t crash_get_memory_size(void)
++ssize_t crash_get_memory_size(void)
+ {
+-	size_t size = 0;
++	ssize_t size = 0;
 +
- 	for (i = 0; i < nr_threads; i++) {
++	if (!mutex_trylock(&kexec_mutex))
++		return -EBUSY;
  
- 		sd = &sched_data[i];
+-	mutex_lock(&kexec_mutex);
+ 	if (crashk_res.end != crashk_res.start)
+ 		size = resource_size(&crashk_res);
++
+ 	mutex_unlock(&kexec_mutex);
+ 	return size;
+ }
+@@ -1036,7 +1039,8 @@ int crash_shrink_memory(unsigned long new_size)
+ 	unsigned long old_size;
+ 	struct resource *ram_res;
+ 
+-	mutex_lock(&kexec_mutex);
++	if (!mutex_trylock(&kexec_mutex))
++		return -EBUSY;
+ 
+ 	if (kexec_crash_image) {
+ 		ret = -ENOENT;
+diff --git a/kernel/ksysfs.c b/kernel/ksysfs.c
+index b1292a57c2a5..65dba9076f31 100644
+--- a/kernel/ksysfs.c
++++ b/kernel/ksysfs.c
+@@ -105,7 +105,12 @@ KERNEL_ATTR_RO(kexec_crash_loaded);
+ static ssize_t kexec_crash_size_show(struct kobject *kobj,
+ 				       struct kobj_attribute *attr, char *buf)
+ {
+-	return sprintf(buf, "%zu\n", crash_get_memory_size());
++	ssize_t size = crash_get_memory_size();
++
++	if (size < 0)
++		return size;
++
++	return sprintf(buf, "%zd\n", size);
+ }
+ static ssize_t kexec_crash_size_store(struct kobject *kobj,
+ 				   struct kobj_attribute *attr,
 -- 
-2.25.1
+2.31.1
 
