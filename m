@@ -2,296 +2,144 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C35D2C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Jun 2022 22:33:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6C62EC433EF
+	for <linux-rt-users@archiver.kernel.org>; Sun,  3 Jul 2022 12:31:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231452AbiF3Wde (ORCPT
+        id S232566AbiGCMbR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 30 Jun 2022 18:33:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58382 "EHLO
+        Sun, 3 Jul 2022 08:31:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42828 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231467AbiF3WdQ (ORCPT
+        with ESMTP id S232438AbiGCMbQ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 Jun 2022 18:33:16 -0400
+        Sun, 3 Jul 2022 08:31:16 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 816BFCC3
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2022 15:33:14 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id A343026C9
+        for <linux-rt-users@vger.kernel.org>; Sun,  3 Jul 2022 05:31:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1656628393;
+        s=mimecast20190719; t=1656851474;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=P4I+MH1BitjShuNkM5CAAnuV26uY5raJYeW45VTPEJk=;
-        b=JZtmmRxsXaNt8B1ln+kxGw8wTSS8jDzgLAURhvsCPsQGZ7oBMgy9KLUyQS+NzLyfq6CUBz
-        1ZEqbcrwFSI9Q1j+RfGTXG6JJ/ErUYCNOVT+lU0c0qeKUzK4ab8kwymBGX0rYzqVjAniYy
-        PFYVSEI8pb35A+6gxPlXEDsCa3qy/ik=
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
- [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
+         content-transfer-encoding:content-transfer-encoding;
+        bh=nK4ahcYY0WO5KebMw8df2u7hNaBerN6cj/QjBF2fJk4=;
+        b=hBbvjlGD2q4CYPLB5CJyCUU9YKxAfStjwkQykNtDWyhBj42ZVCOcnP5TY9bLv3oBy3bDrE
+        BXDK3AOsbY4QKEH85d2BJl4pwAwZC7XJW7pw1V8AxNm4z/Xv3kITmk4q/RA8Wh5QMuIACJ
+        gzqWLBI4f303KLVGIR5aPxzAi6YtyKA=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-50-11ag8g_DPmmgHELh8eO70A-1; Thu, 30 Jun 2022 18:33:12 -0400
-X-MC-Unique: 11ag8g_DPmmgHELh8eO70A-1
-Received: by mail-wr1-f69.google.com with SMTP id j14-20020adfa54e000000b0021b8c8204easo60133wrb.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2022 15:33:12 -0700 (PDT)
+ us-mta-562-82gnCjSGOrOeFT3Ldd-u8Q-1; Sun, 03 Jul 2022 08:31:12 -0400
+X-MC-Unique: 82gnCjSGOrOeFT3Ldd-u8Q-1
+Received: by mail-wm1-f70.google.com with SMTP id p22-20020a05600c359600b0039c7b23a1c7so5891747wmq.2
+        for <linux-rt-users@vger.kernel.org>; Sun, 03 Jul 2022 05:31:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=P4I+MH1BitjShuNkM5CAAnuV26uY5raJYeW45VTPEJk=;
-        b=MQpDGVCfMxtLNej958YSerMuVLYAJWhnBCjndEMUxWnC5Jrg+xPdv1vYTpXzm6K9pr
-         b6KexvUudOhgasqod+6oAaX4imQqWi405cU7qBLGxW4uGZ1BYe5PCW1ZCiKFRrEx1KAY
-         JSrpTmYOXgeaIoikX1MQujY0eooc7arO06XL8UOnFgokvLml2jFXdCOHp9uoPZ9lSi4p
-         OT2eQCQXy8E3txKVq2Q9QKveBgr2LLHi4ep8+GfGo3sqlmV0hRIndYQL3f9eIxzhFqO/
-         UkxGcmQw5Tk0iF8UCaP29g/UDRVwOpPH6Bmw7x0wz3QBHARjqyOYVD3mNl7xxgE6Lzj2
-         4w4w==
-X-Gm-Message-State: AJIora9JwAw5qbdu4m2E91jhRP0U3hoaEIBo2VwUKoOPZLqkKY/wOp5b
-        hz8ZboF/nLflp/HxUMYQX7H4Zs6WLxY1fyZRhjgFWyiWqxm4tSCzz4mKmkmpbcXChsSbyOkpeMP
-        +eYRcyitA73jHunL/ndhFENEq4Xg=
-X-Received: by 2002:a5d:5888:0:b0:21b:ccc1:ab00 with SMTP id n8-20020a5d5888000000b0021bccc1ab00mr10670848wrf.385.1656628391122;
-        Thu, 30 Jun 2022 15:33:11 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1timqBDrx8wWmo3UJTVGb1qSoxfmdLn9yt/nE0BpLRCKzWRuI8/gHovtfTbzu2OliwBhtdqVA==
-X-Received: by 2002:a5d:5888:0:b0:21b:ccc1:ab00 with SMTP id n8-20020a5d5888000000b0021bccc1ab00mr10670828wrf.385.1656628390878;
-        Thu, 30 Jun 2022 15:33:10 -0700 (PDT)
-Received: from vschneid.remote.csb ([185.11.37.247])
-        by smtp.gmail.com with ESMTPSA id m9-20020a056000024900b0020c5253d907sm4308387wrz.83.2022.06.30.15.33.09
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=nK4ahcYY0WO5KebMw8df2u7hNaBerN6cj/QjBF2fJk4=;
+        b=v2tlsgFgwaxBnJfFDmrD/JxOyzKlj1wvkRd2I91BJZMHaIwrZ5bcxRuXceexnEqLzp
+         07kziytuORZ/6n2/dgMSZ4dKM1l8fwa3sISB6ITOOLz0MnIIZWtU1FmvP4pEoGUqygOq
+         phUUOhEoPgJMGtuOGBhE0bYLhH7iWMlzLzja13H1WKo3pMgMbVCgB6UFfS4E0IqGgL6i
+         vIBzXjHoTZvlsC7F6nU5wfZvIgoYpQ0hEO5E5Way5DUMK0ZRyv1tkd17xB0fsVfnc8Dn
+         XYnxXDnq/LChS2Y2T3mWWEYW8tB5q7GOgsiizbWf7ybmTz/ulAiAgl8eo/stRmRh2Zgf
+         6byg==
+X-Gm-Message-State: AJIora/FQ71HmBLzQmT/Z+RUQXB0NtZR1zuGGBLTbACqVV4aeEQtUu+N
+        Dnxy11sE10hQuxghhRtaKGkIUMamRN9AhSRhUwnm4X6SdhAn67VqSPd+KZaamDRuUpLcC2X3DCX
+        oUvaxy6X+w+DrH47EesLsE5RauA==
+X-Received: by 2002:a5d:48cf:0:b0:210:1229:2e7 with SMTP id p15-20020a5d48cf000000b00210122902e7mr22092839wrs.567.1656851471636;
+        Sun, 03 Jul 2022 05:31:11 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1swJauhVcRZc5PEe1i4cxgg4inMrv54zzjG82+59GDRFdfcac/oAFteoiFhrNgo5aPGUMZ6nA==
+X-Received: by 2002:a5d:48cf:0:b0:210:1229:2e7 with SMTP id p15-20020a5d48cf000000b00210122902e7mr22092817wrs.567.1656851471447;
+        Sun, 03 Jul 2022 05:31:11 -0700 (PDT)
+Received: from localhost (cpc111743-lutn13-2-0-cust979.9-3.cable.virginm.net. [82.17.115.212])
+        by smtp.gmail.com with ESMTPSA id l5-20020a05600c47c500b0039c693a54ecsm19314211wmo.23.2022.07.03.05.31.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 30 Jun 2022 15:33:10 -0700 (PDT)
-From:   Valentin Schneider <vschneid@redhat.com>
-To:     kexec@lists.infradead.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Cc:     Eric Biederman <ebiederm@xmission.com>,
-        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
-        Miaohe Lin <linmiaohe@huawei.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Juri Lelli <jlelli@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Subject: [PATCH v4 2/2] panic, kexec: Make __crash_kexec() NMI safe
-Date:   Thu, 30 Jun 2022 23:32:58 +0100
-Message-Id: <20220630223258.4144112-3-vschneid@redhat.com>
-X-Mailer: git-send-email 2.31.1
-In-Reply-To: <20220630223258.4144112-1-vschneid@redhat.com>
-References: <20220630223258.4144112-1-vschneid@redhat.com>
+        Sun, 03 Jul 2022 05:31:10 -0700 (PDT)
+From:   Aaron Tomlin <atomlin@redhat.com>
+To:     mcgrof@kernel.org, rostedt@goodmis.org
+Cc:     cl@linux.com, pmladek@suse.com, mbenes@suse.cz,
+        christophe.leroy@csgroup.eu, akpm@linux-foundation.org,
+        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
+        atomlin@atomlin.com, ghalat@redhat.com, oleksandr@natalenko.name,
+        neelx@redhat.com, daniel.thompson@linaro.org, hch@infradead.org,
+        tglx@linutronix.de, linux-rt-users@vger.kernel.org
+Subject: [PATCH] module: kallsyms: Ensure preemption in add_kallsyms() with PREEMPT_RT
+Date:   Sun,  3 Jul 2022 13:31:09 +0100
+Message-Id: <20220703123109.3770204-1-atomlin@redhat.com>
+X-Mailer: git-send-email 2.34.3
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Attempting to get a crash dump out of a debug PREEMPT_RT kernel via an NMI
-panic() doesn't work. The cause of that lies in the PREEMPT_RT definition
-of mutex_trylock():
+Looking at add_kallsyms(), there is absolutely no need to explicitly
+disable preemption. Before kallsyms-specific data is prepared/or set-up, we
+ensure that the unformed module is known to be unique i.e. does not already
+exist (see load_module()). Therefore, we can use the common RCU primitive
+as this section of code can be pre-empted. In other words, it is safe to be
+re-scheduled, in this context.
 
-	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES) && WARN_ON_ONCE(!in_task()))
-		return 0;
-
-This prevents an nmi_panic() from executing the main body of
-__crash_kexec() which does the actual kexec into the kdump kernel.
-The warning and return are explained by:
-
-  6ce47fd961fa ("rtmutex: Warn if trylock is called from hard/softirq context")
-  [...]
-  The reasons for this are:
-
-      1) There is a potential deadlock in the slowpath
-
-      2) Another cpu which blocks on the rtmutex will boost the task
-	 which allegedly locked the rtmutex, but that cannot work
-	 because the hard/softirq context borrows the task context.
-
-Furthermore, grabbing the lock isn't NMI safe, so do away with kexec_mutex
-and replace it with an atomic variable. This is somewhat overzealous
-as *some* callsites could keep using a mutex (e.g. the sysfs-facing ones
-like crash_shrink_memory()), but this has the benefit of involving a single
-unified lock and preventing any future NMI-related surprises.
-
-Tested by triggering NMI panics via:
-
-  $ echo 1 > /proc/sys/kernel/panic_on_unrecovered_nmi
-  $ echo 1 > /proc/sys/kernel/unknown_nmi_panic
-  $ echo 1 > /proc/sys/kernel/panic
-
-  $ ipmitool power diag
-
-Fixes: 6ce47fd961fa ("rtmutex: Warn if trylock is called from hard/softirq context")
-Signed-off-by: Valentin Schneider <vschneid@redhat.com>
+Reported-by: Steven Rostedt <rostedt@goodmis.org>
+Fixes: 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
+Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
 ---
- kernel/kexec.c          | 11 ++++-------
- kernel/kexec_core.c     | 20 ++++++++++----------
- kernel/kexec_file.c     |  4 ++--
- kernel/kexec_internal.h | 15 ++++++++++++++-
- 4 files changed, 30 insertions(+), 20 deletions(-)
+ kernel/module/kallsyms.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/kernel/kexec.c b/kernel/kexec.c
-index b5e40f069768..cb8e6e6f983c 100644
---- a/kernel/kexec.c
-+++ b/kernel/kexec.c
-@@ -93,13 +93,10 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
+diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
+index 3e11523bc6f6..b16ff36b4b71 100644
+--- a/kernel/module/kallsyms.c
++++ b/kernel/module/kallsyms.c
+@@ -174,14 +174,14 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
+ 	mod->kallsyms = (void __rcu *)mod->init_layout.base +
+ 		info->mod_kallsyms_init_off;
+ 
+-	preempt_disable();
++	rcu_read_lock();
+ 	/* The following is safe since this pointer cannot change */
+-	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
+-	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
++	rcu_dereference(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
++	rcu_dereference(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
+ 	/* Make sure we get permanent strtab: don't use info->strtab. */
+-	rcu_dereference_sched(mod->kallsyms)->strtab =
++	rcu_dereference(mod->kallsyms)->strtab =
+ 		(void *)info->sechdrs[info->index.str].sh_addr;
+-	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
++	rcu_dereference(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
  
  	/*
- 	 * Because we write directly to the reserved memory region when loading
--	 * crash kernels we need a mutex here to prevent multiple crash kernels
--	 * from attempting to load simultaneously, and to prevent a crash kernel
--	 * from loading over the top of a in use crash kernel.
--	 *
--	 * KISS: always take the mutex.
-+	 * crash kernels we need a serialization here to prevent multiple crash
-+	 * kernels from attempting to load simultaneously.
- 	 */
--	if (!mutex_trylock(&kexec_mutex))
-+	if (!kexec_trylock())
- 		return -EBUSY;
- 
- 	if (flags & KEXEC_ON_CRASH) {
-@@ -165,7 +162,7 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
- 
- 	kimage_free(image);
- out_unlock:
--	mutex_unlock(&kexec_mutex);
-+	kexec_unlock();
- 	return ret;
- }
- 
-diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
-index 16370926b21a..b03859a0fbaa 100644
---- a/kernel/kexec_core.c
-+++ b/kernel/kexec_core.c
-@@ -46,7 +46,7 @@
- #include <crypto/hash.h>
- #include "kexec_internal.h"
- 
--DEFINE_MUTEX(kexec_mutex);
-+atomic_t __kexec_lock = ATOMIC_INIT(0);
- 
- /* Per cpu memory for storing cpu states in case of system crash. */
- note_buf_t __percpu *crash_notes;
-@@ -964,7 +964,7 @@ late_initcall(kexec_core_sysctl_init);
-  */
- void __noclone __crash_kexec(struct pt_regs *regs)
- {
--	/* Take the kexec_mutex here to prevent sys_kexec_load
-+	/* Take the kexec_lock here to prevent sys_kexec_load
- 	 * running on one cpu from replacing the crash kernel
- 	 * we are using after a panic on a different cpu.
- 	 *
-@@ -972,7 +972,7 @@ void __noclone __crash_kexec(struct pt_regs *regs)
- 	 * of memory the xchg(&kexec_crash_image) would be
- 	 * sufficient.  But since I reuse the memory...
- 	 */
--	if (mutex_trylock(&kexec_mutex)) {
-+	if (kexec_trylock()) {
- 		if (kexec_crash_image) {
- 			struct pt_regs fixed_regs;
- 
-@@ -981,7 +981,7 @@ void __noclone __crash_kexec(struct pt_regs *regs)
- 			machine_crash_shutdown(&fixed_regs);
- 			machine_kexec(kexec_crash_image);
+ 	 * Now populate the cut down core kallsyms for after init
+@@ -190,22 +190,22 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
+ 	mod->core_kallsyms.symtab = dst = mod->data_layout.base + info->symoffs;
+ 	mod->core_kallsyms.strtab = s = mod->data_layout.base + info->stroffs;
+ 	mod->core_kallsyms.typetab = mod->data_layout.base + info->core_typeoffs;
+-	src = rcu_dereference_sched(mod->kallsyms)->symtab;
+-	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
+-		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
++	src = rcu_dereference(mod->kallsyms)->symtab;
++	for (ndst = i = 0; i < rcu_dereference(mod->kallsyms)->num_symtab; i++) {
++		rcu_dereference(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
+ 		if (i == 0 || is_livepatch_module(mod) ||
+ 		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
+ 				   info->index.pcpu)) {
+ 			mod->core_kallsyms.typetab[ndst] =
+-			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
++			    rcu_dereference(mod->kallsyms)->typetab[i];
+ 			dst[ndst] = src[i];
+ 			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
+ 			s += strscpy(s,
+-				     &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
++				     &rcu_dereference(mod->kallsyms)->strtab[src[i].st_name],
+ 				     KSYM_NAME_LEN) + 1;
  		}
--		mutex_unlock(&kexec_mutex);
-+		kexec_unlock();
  	}
- }
- STACK_FRAME_NON_STANDARD(__crash_kexec);
-@@ -1013,13 +1013,13 @@ ssize_t crash_get_memory_size(void)
- {
- 	ssize_t size = 0;
- 
--	if (!mutex_trylock(&kexec_mutex))
-+	if (!kexec_trylock())
- 		return -EBUSY;
- 
- 	if (crashk_res.end != crashk_res.start)
- 		size = resource_size(&crashk_res);
- 
--	mutex_unlock(&kexec_mutex);
-+	kexec_unlock();
- 	return size;
+-	preempt_enable();
++	rcu_read_unlock();
+ 	mod->core_kallsyms.num_symtab = ndst;
  }
  
-@@ -1039,7 +1039,7 @@ int crash_shrink_memory(unsigned long new_size)
- 	unsigned long old_size;
- 	struct resource *ram_res;
- 
--	if (!mutex_trylock(&kexec_mutex))
-+	if (!kexec_trylock())
- 		return -EBUSY;
- 
- 	if (kexec_crash_image) {
-@@ -1078,7 +1078,7 @@ int crash_shrink_memory(unsigned long new_size)
- 	insert_resource(&iomem_resource, ram_res);
- 
- unlock:
--	mutex_unlock(&kexec_mutex);
-+	kexec_unlock();
- 	return ret;
- }
- 
-@@ -1150,7 +1150,7 @@ int kernel_kexec(void)
- {
- 	int error = 0;
- 
--	if (!mutex_trylock(&kexec_mutex))
-+	if (!kexec_trylock())
- 		return -EBUSY;
- 	if (!kexec_image) {
- 		error = -EINVAL;
-@@ -1226,7 +1226,7 @@ int kernel_kexec(void)
- #endif
- 
-  Unlock:
--	mutex_unlock(&kexec_mutex);
-+	kexec_unlock();
- 	return error;
- }
- 
-diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
-index 145321a5e798..42b95bf58daf 100644
---- a/kernel/kexec_file.c
-+++ b/kernel/kexec_file.c
-@@ -334,7 +334,7 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
- 
- 	image = NULL;
- 
--	if (!mutex_trylock(&kexec_mutex))
-+	if (!kexec_trylock())
- 		return -EBUSY;
- 
- 	dest_image = &kexec_image;
-@@ -406,7 +406,7 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
- 	if ((flags & KEXEC_FILE_ON_CRASH) && kexec_crash_image)
- 		arch_kexec_protect_crashkres();
- 
--	mutex_unlock(&kexec_mutex);
-+	kexec_unlock();
- 	kimage_free(image);
- 	return ret;
- }
-diff --git a/kernel/kexec_internal.h b/kernel/kexec_internal.h
-index 48aaf2ac0d0d..74da1409cd14 100644
---- a/kernel/kexec_internal.h
-+++ b/kernel/kexec_internal.h
-@@ -13,7 +13,20 @@ void kimage_terminate(struct kimage *image);
- int kimage_is_destination_range(struct kimage *image,
- 				unsigned long start, unsigned long end);
- 
--extern struct mutex kexec_mutex;
-+/*
-+ * Whatever is used to serialize accesses to the kexec_crash_image needs to be
-+ * NMI safe, as __crash_kexec() can happen during nmi_panic(), so here we use a
-+ * "simple" atomic variable that is acquired with a cmpxchg().
-+ */
-+extern atomic_t __kexec_lock;
-+static inline bool kexec_trylock(void)
-+{
-+	return atomic_cmpxchg_acquire(&__kexec_lock, 0, 1) == 0;
-+}
-+static inline void kexec_unlock(void)
-+{
-+	atomic_set_release(&__kexec_lock, 0);
-+}
- 
- #ifdef CONFIG_KEXEC_FILE
- #include <linux/purgatory.h>
 -- 
-2.31.1
+2.34.3
 
