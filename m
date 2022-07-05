@@ -2,145 +2,110 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EB331CCA479
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Jul 2022 16:19:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3364CC433EF
+	for <linux-rt-users@archiver.kernel.org>; Tue,  5 Jul 2022 08:41:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235235AbiGDQTQ (ORCPT
+        id S230309AbiGEIlc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Jul 2022 12:19:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53586 "EHLO
+        Tue, 5 Jul 2022 04:41:32 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46618 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235171AbiGDQTC (ORCPT
+        with ESMTP id S230493AbiGEIlb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Jul 2022 12:19:02 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id E6F0113D30
-        for <linux-rt-users@vger.kernel.org>; Mon,  4 Jul 2022 09:17:57 -0700 (PDT)
+        Tue, 5 Jul 2022 04:41:31 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 0B4347661
+        for <linux-rt-users@vger.kernel.org>; Tue,  5 Jul 2022 01:41:30 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1656951476;
+        s=mimecast20190719; t=1657010490;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=fFo1Gztfi7kgv8mceCsQUHgfH8ojypad3OlaiOUxnPI=;
-        b=P0BghRxr5SDgAOaQ/8lqVOdzzs99hOwtiKtRJG5hKozliSeBPvnD/iSGKuHfyce5xv2/6W
-        JhgnsRPIN8U3euLAJF2ki1rbPr9KWpIKz7/DX3RbZAO6FmXt22p0TH4CQyegH3fynshPn9
-        dD7yw3hYdljiiigca0VQbEd9XEwtGLY=
-Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
- [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=PBMOa/d2tjfgeB/QHIx1dN7myWa507lkje9vgtYdk1M=;
+        b=ZSU4vBrkQnG2v2F7S3ZWcrhPvt8+1UEsLv8NXj7wfAGfOHNCZfGNyRgGOjpZ6sqbTH6a8e
+        +UGmgQtKxCI6tSfkrP50esH6omfMs5jesLVXcNIShMb37024RFBEcNbsq9mQfEegNGLp+k
+        uB8tsJ/HjVwIOrodArTIf0JVGAVcM2E=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-382-f3bW02NOPIOY5zr6j2-xXA-1; Mon, 04 Jul 2022 12:17:55 -0400
-X-MC-Unique: f3bW02NOPIOY5zr6j2-xXA-1
-Received: by mail-wm1-f71.google.com with SMTP id i5-20020a1c3b05000000b003a02b027e53so7576001wma.7
-        for <linux-rt-users@vger.kernel.org>; Mon, 04 Jul 2022 09:17:55 -0700 (PDT)
+ us-mta-501-yeyLKEM4NGCG8TMSF25ugg-1; Tue, 05 Jul 2022 04:41:28 -0400
+X-MC-Unique: yeyLKEM4NGCG8TMSF25ugg-1
+Received: by mail-wr1-f71.google.com with SMTP id t13-20020adfe10d000000b0021bae3def1eso1722382wrz.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 05 Jul 2022 01:41:28 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=fFo1Gztfi7kgv8mceCsQUHgfH8ojypad3OlaiOUxnPI=;
-        b=AagEqq1mboA2p5sU5X4sjdrv4ndvuto2X/58O45lrPV5xknO1H2RMum4L4zfRpdPIs
-         SUfBqeuARyFZ/uR3HZOUqLKJNMitrvbrGSQlmzt86bm2f4rVFMOB4c3LB3mfaeF4zyc2
-         X32JiZC7kjLF7OlUs+zE/FZ78wNZfZ09MReoxtrQoVyUn/4M6reZlHl8oIaFfayYIUa7
-         ISB0eEEvu66hK/r4Sa3W1ApCHbSFsuz4NrGCIb5FEf4fl0/cZTfhixDpuVbLomACZDfA
-         ibYzyXhmpwplaEn+/+o81NXUBwao09H0iuYrc9T2HkZsnzZT0i/vc60KnYunrtM8iR/I
-         rDhw==
-X-Gm-Message-State: AJIora9HbZP29hEcjmKrksUx17mC4TN0E9q/M86oK1B3Xiv49FCfdZEb
-        cSVzGDnYOzheaxRbByKcjJ/ikBEQqPMrWIgYOy8+pvsFM6z0JzF1GGocTi4tBbytp/UT4JLcTVV
-        Oweai05OnHScbJkW/e4tTteAY3Q==
-X-Received: by 2002:adf:f24c:0:b0:21d:31c5:ecdc with SMTP id b12-20020adff24c000000b0021d31c5ecdcmr24675493wrp.117.1656951474421;
-        Mon, 04 Jul 2022 09:17:54 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1tyOteUULtuiy9WslLyjcSRKCS+ZDX9Lyu3zOkbMt/1zDWdYRgY+4fWxBLH6oXO9ryG6ChKLA==
-X-Received: by 2002:adf:f24c:0:b0:21d:31c5:ecdc with SMTP id b12-20020adff24c000000b0021d31c5ecdcmr24675458wrp.117.1656951474166;
-        Mon, 04 Jul 2022 09:17:54 -0700 (PDT)
-Received: from localhost (cpc111743-lutn13-2-0-cust979.9-3.cable.virginm.net. [82.17.115.212])
-        by smtp.gmail.com with ESMTPSA id i8-20020a05600c354800b0039c4e2ff7cfsm17019931wmq.43.2022.07.04.09.17.53
+        h=x-gm-message-state:from:to:cc:subject:in-reply-to:references:date
+         :message-id:mime-version;
+        bh=PBMOa/d2tjfgeB/QHIx1dN7myWa507lkje9vgtYdk1M=;
+        b=5xtx/Xpe1Eka7BBRAlMGutAkle2cRhods8pfRasWO1rdUK3hLO2q8rgP40kJl1QnVR
+         wKdDbQaoBbPgAPYUAf29N1mF8mPCL09KFb4fI4A08CujidLsqtQ9Y3lz2o0w0kBI51C1
+         Rgw1LICXN6ALHEbYWaBHok8q17tcqIyM9q3UvbVTarQuyyGLYpN86Aq6hK7H1L7VN6jU
+         97XtbR6SRnBxEuYTwLAqW01eBTLvbBba8yPpgNODy8ysIIJFX5IvSrpR7A6Je22XLjl0
+         1evGJDpzN51WUMtENUl8zDdTS2U2WflHLTzepklDSBlJaGDc2pkOVf7oHA9KnHCwgQka
+         zs6Q==
+X-Gm-Message-State: AJIora+6n4k/GJ/8rsOyrYOMleg/0yuISJm2gy1DfT+xaTY57tzavG2S
+        yszpAo227UCUbYIiaNQ6dnHEr6x6Od3AP3dSmgkjC8EPa67mdXAs5Z/+RXGE8sOtUqC21Dlih/g
+        rLEV1O/cvoEStgDd/DHKa0mZal4o=
+X-Received: by 2002:a05:600c:4282:b0:3a0:2ddf:4df3 with SMTP id v2-20020a05600c428200b003a02ddf4df3mr35291745wmc.45.1657010487756;
+        Tue, 05 Jul 2022 01:41:27 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1sGnHWLme//B+hbcAQKsKiJmsBsmUMTZFJ9LGNlyeIvIOH67tTiyDoMStTGpwMudz/TipXL+Q==
+X-Received: by 2002:a05:600c:4282:b0:3a0:2ddf:4df3 with SMTP id v2-20020a05600c428200b003a02ddf4df3mr35291729wmc.45.1657010487581;
+        Tue, 05 Jul 2022 01:41:27 -0700 (PDT)
+Received: from vschneid.remote.csb ([185.11.37.247])
+        by smtp.gmail.com with ESMTPSA id s14-20020a5d510e000000b0021d60994b0asm8522281wrt.100.2022.07.05.01.41.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 04 Jul 2022 09:17:53 -0700 (PDT)
-From:   Aaron Tomlin <atomlin@redhat.com>
-To:     mcgrof@kernel.org, rostedt@goodmis.org
-Cc:     cl@linux.com, pmladek@suse.com, mbenes@suse.cz,
-        christophe.leroy@csgroup.eu, akpm@linux-foundation.org,
-        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
-        atomlin@atomlin.com, ghalat@redhat.com, oleksandr@natalenko.name,
-        neelx@redhat.com, daniel.thompson@linaro.org, hch@infradead.org,
-        tglx@linutronix.de, linux-rt-users@vger.kernel.org
-Subject: [PATCH v2] module: kallsyms: Ensure preemption in add_kallsyms() with PREEMPT_RT
-Date:   Mon,  4 Jul 2022 17:17:53 +0100
-Message-Id: <20220704161753.4033684-1-atomlin@redhat.com>
-X-Mailer: git-send-email 2.34.3
+        Tue, 05 Jul 2022 01:41:27 -0700 (PDT)
+From:   Valentin Schneider <vschneid@redhat.com>
+To:     Juri Lelli <juri.lelli@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Juri Lelli <juri.lelli@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Bruno Goncalves <bgoncalv@redhat.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: Re: [PATCH] linux/wait: Fix __wait_event_hrtimeout for RT/DL tasks
+In-Reply-To: <20220627095051.42470-1-juri.lelli@redhat.com>
+References: <20220627095051.42470-1-juri.lelli@redhat.com>
+Date:   Tue, 05 Jul 2022 09:41:26 +0100
+Message-ID: <xhsmhtu7weytl.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-To disable preemption in the context of add_kallsyms() is incorrect.
+On 27/06/22 11:50, Juri Lelli wrote:
+> Changes to hrtimer mode (potentially made by __hrtimer_init_sleeper on
+> PREEMPT_RT) are not visible to hrtimer_start_range_ns, thus not
+> accounted for by hrtimer_start_expires call paths. In particular,
+> __wait_event_hrtimeout suffers from this problem as we have, for
+> example:
+>
+> fs/aio.c::read_events
+>   wait_event_interruptible_hrtimeout
+>     __wait_event_hrtimeout
+>       hrtimer_init_sleeper_on_stack <- this might "mode |= HRTIMER_MODE_HARD"
+>                                        on RT if task runs at RT/DL priority
+>         hrtimer_start_range_ns
+>           WARN_ON_ONCE(!(mode & HRTIMER_MODE_HARD) ^ !timer->is_hard)
+>           fires since the latter doesn't see the change of mode done by
+>           init_sleeper
+>
+> Fix it by making __wait_event_hrtimeout call hrtimer_sleeper_start_expires,
+> which is aware of the special RT/DL case, instead of hrtimer_start_range_ns.
+>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Reported-by: Bruno Goncalves <bgoncalv@redhat.com>
+> Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
 
-Before kallsyms-specific data is prepared/or set-up, we ensure that
-the unformed module is known to be unique i.e. does not already exist
-(see load_module()). Therefore, we can fix this by using the common RCU
-primitive as this section of code can be safely preempted.
+Makes sense, that's now aligned with what e.g.
+schedule_hrtimer_range_clock() does.
 
-Reported-by: Steven Rostedt <rostedt@goodmis.org>
-Fixes: 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
-Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
----
- kernel/module/kallsyms.c | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
-
-diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
-index 3e11523bc6f6..0b6fd82d5898 100644
---- a/kernel/module/kallsyms.c
-+++ b/kernel/module/kallsyms.c
-@@ -174,14 +174,14 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
- 	mod->kallsyms = (void __rcu *)mod->init_layout.base +
- 		info->mod_kallsyms_init_off;
- 
--	preempt_disable();
-+	rcu_read_lock();
- 	/* The following is safe since this pointer cannot change */
--	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
--	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
-+	rcu_dereference(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
-+	rcu_dereference(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
- 	/* Make sure we get permanent strtab: don't use info->strtab. */
--	rcu_dereference_sched(mod->kallsyms)->strtab =
-+	rcu_dereference(mod->kallsyms)->strtab =
- 		(void *)info->sechdrs[info->index.str].sh_addr;
--	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
-+	rcu_dereference(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
- 
- 	/*
- 	 * Now populate the cut down core kallsyms for after init
-@@ -190,22 +190,22 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
- 	mod->core_kallsyms.symtab = dst = mod->data_layout.base + info->symoffs;
- 	mod->core_kallsyms.strtab = s = mod->data_layout.base + info->stroffs;
- 	mod->core_kallsyms.typetab = mod->data_layout.base + info->core_typeoffs;
--	src = rcu_dereference_sched(mod->kallsyms)->symtab;
--	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
--		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
-+	src = rcu_dereference(mod->kallsyms)->symtab;
-+	for (ndst = i = 0; i < rcu_dereference(mod->kallsyms)->num_symtab; i++) {
-+		rcu_dereference(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
- 		if (i == 0 || is_livepatch_module(mod) ||
- 		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
- 				   info->index.pcpu)) {
- 			mod->core_kallsyms.typetab[ndst] =
--			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
-+			    rcu_dereference(mod->kallsyms)->typetab[i];
- 			dst[ndst] = src[i];
- 			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
--			s += strscpy(s,
--				     &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
-+			s += strlcpy(s,
-+				     &rcu_dereference(mod->kallsyms)->strtab[src[i].st_name],
- 				     KSYM_NAME_LEN) + 1;
- 		}
- 	}
--	preempt_enable();
-+	rcu_read_unlock();
- 	mod->core_kallsyms.num_symtab = ndst;
- }
- 
--- 
-2.34.3
+Reviewed-by: Valentin Schneider <vschneid@redhat.com>
 
