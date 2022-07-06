@@ -2,70 +2,134 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CEE05C43334
-	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Jul 2022 11:51:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8E69C43334
+	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Jul 2022 17:59:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233110AbiGFLvM (ORCPT
+        id S234275AbiGFR7F (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 6 Jul 2022 07:51:12 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52202 "EHLO
+        Wed, 6 Jul 2022 13:59:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45942 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229804AbiGFLvK (ORCPT
+        with ESMTP id S234069AbiGFR7D (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 Jul 2022 07:51:10 -0400
-Received: from mx0.woks-audio.com (mx0.woks-audio.com [88.99.2.238])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0A558286F7
-        for <linux-rt-users@vger.kernel.org>; Wed,  6 Jul 2022 04:51:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=woks-audio.com;
-         h=cc:cc:content-transfer-encoding:content-type:content-type
-        :date:from:from:in-reply-to:message-id:mime-version:references
-        :reply-to:subject:subject:to:to; s=woks; bh=oLhaS2stL0RW8ISQyvWH
-        Pswsr/QG0OMsRfm7WqZNq/8=; b=fieo69g8FZ0st+kiWoRxtRnNpHU1P9CS4264
-        hvJGuSXylHqdOiJ8qNATXu0TCDoybfZAE91tYNVM/7TzXW139KjZRZDUSKsjNS8E
-        D3bbUTM927JpuCNPjbL+0e2i2h8Dz7ZI3jMgNoRqu0XG9DIBQd3AsyFzPCt+2OId
-        kuuO2ssB/zBpzg7rpegovBhz+/m+uvbqKH2YVDSDsKg2HnDmhzQ6m/BZL39y5pmz
-        B/OTqxAXd6mYseFugkzAhZNYN9AzbivAY4n/h0DlQLZSOP5opBqg6cutus3aYgoO
-        fwwuteJhZUa5lhN63Dw55vcICMLe+rMk5359TK3x9gYvN6xDBg==
-From:   Benjamin Steinke <benjamin.steinke@woks-audio.com>
-To:     Daniel Bristot de Oliveira <bristot@redhat.com>
-CC:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "linux-trace-devel@vger.kernel.org" 
-        <linux-trace-devel@vger.kernel.org>
-Subject: Re: stopping ftrace on event
-Date:   Wed, 6 Jul 2022 13:51:06 +0200
-Message-ID: <5900013.0QKTdidtKr@desktop>
-In-Reply-To: <c8aa45af-9a64-8318-71d6-91511afed8e6@redhat.com>
-References: <4044532.36S9Iv5CRb@desktop> <c8aa45af-9a64-8318-71d6-91511afed8e6@redhat.com>
+        Wed, 6 Jul 2022 13:59:03 -0400
+Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 42FFB29C84;
+        Wed,  6 Jul 2022 10:58:58 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Sender:In-Reply-To:Content-Type:
+        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=OYgCfPr17FuNNS3i7T8/+pPqO4BBUG/Cc2fFpfiZ7Oo=; b=P7V+Trm6JddmaQmgCWxREId4CA
+        F0lXawIaH9L5F/RFLUFqOexOpc3VUiSq33esaDgmRJTQcLap1u5PsMyXl67McsfQzPWGknlJLjEj1
+        gt0Bo9JKUxvcMlv5a2NRmvXwNnQqJn3JBtvHyC0XPbzVqmcWFcyb/raI+B/+et1axPSuBIwvxdrSy
+        Y3kiW7OV6cDBix9zGGu0TAhLa2CAcNNaUz7/kX5o1+anc9AvAWSnfCSTBmH76gbsHPxsdkUexQz7z
+        uRZrQicD7cqdVeTJAhQ4YcVNlBYfdNlS3zABJtnF3ea1irGha1HGGmFS6Sj++EbDFUqvKayYDK0Vv
+        dLfXGnGA==;
+Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1o99IT-00BsCZ-HS; Wed, 06 Jul 2022 17:58:45 +0000
+Date:   Wed, 6 Jul 2022 10:58:45 -0700
+From:   Luis Chamberlain <mcgrof@kernel.org>
+To:     Aaron Tomlin <atomlin@redhat.com>
+Cc:     rostedt@goodmis.org, cl@linux.com, pmladek@suse.com,
+        mbenes@suse.cz, christophe.leroy@csgroup.eu,
+        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-modules@vger.kernel.org, atomlin@atomlin.com,
+        ghalat@redhat.com, oleksandr@natalenko.name, neelx@redhat.com,
+        daniel.thompson@linaro.org, hch@infradead.org, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v2] module: kallsyms: Ensure preemption in add_kallsyms()
+ with PREEMPT_RT
+Message-ID: <YsXNVSAtO+VDggcI@bombadil.infradead.org>
+References: <20220704161753.4033684-1-atomlin@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-X-ClientProxiedBy: EX1.jas.loc (10.100.2.20) To EX1.jas.loc (10.100.2.20)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220704161753.4033684-1-atomlin@redhat.com>
+Sender: Luis Chamberlain <mcgrof@infradead.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Am Mittwoch, 6. Juli 2022, 13:31:00 CEST schrieb Daniel Bristot de Oliveira:
-> On 7/6/22 10:50, Benjamin Steinke wrote:
-> > Hi all,
-> > 
-> > I'm hunting sporadic high irq-handler latencies in a pcie driver by using
-> > ftrace. I'm currently using trace-cmd record but get way to large files
-> > due to the event being so infrequent.
-> > 
-> > Is there a way to stop tracing or dump the current trace buffer when a
-> > specific event occurs?
+Hey Aaron, thanks again!
+
+On Mon, Jul 04, 2022 at 05:17:53PM +0100, Aaron Tomlin wrote:
+> To disable preemption in the context of add_kallsyms() is incorrect.
+
+Why, what broke? Did this used to work? Was the commit in question a
+regression then? Clarifying all this will help a lot.
+
+The commit log is better but yet doesn't make it easy for me to tell
+if I should send this to Linus as a fix in the rc series.
+
+  Luis
+
+> Before kallsyms-specific data is prepared/or set-up, we ensure that
+> the unformed module is known to be unique i.e. does not already exist
+> (see load_module()). Therefore, we can fix this by using the common RCU
+> primitive as this section of code can be safely preempted.
 > 
-> https://www.kernel.org/doc/html/latest/trace/events.html#event-triggers ?
-
-Oh, didn't see the forest for the trees. I probably scrolled a number of times 
-over this section. Thanks a lot. 
-
+> Reported-by: Steven Rostedt <rostedt@goodmis.org>
+> Fixes: 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
+> Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
+> ---
+>  kernel/module/kallsyms.c | 24 ++++++++++++------------
+>  1 file changed, 12 insertions(+), 12 deletions(-)
 > 
-> -- Daniel
+> diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
+> index 3e11523bc6f6..0b6fd82d5898 100644
+> --- a/kernel/module/kallsyms.c
+> +++ b/kernel/module/kallsyms.c
+> @@ -174,14 +174,14 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
+>  	mod->kallsyms = (void __rcu *)mod->init_layout.base +
+>  		info->mod_kallsyms_init_off;
+>  
+> -	preempt_disable();
+> +	rcu_read_lock();
+>  	/* The following is safe since this pointer cannot change */
+> -	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
+> -	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
+> +	rcu_dereference(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
+> +	rcu_dereference(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
+>  	/* Make sure we get permanent strtab: don't use info->strtab. */
+> -	rcu_dereference_sched(mod->kallsyms)->strtab =
+> +	rcu_dereference(mod->kallsyms)->strtab =
+>  		(void *)info->sechdrs[info->index.str].sh_addr;
+> -	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
+> +	rcu_dereference(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
+>  
+>  	/*
+>  	 * Now populate the cut down core kallsyms for after init
+> @@ -190,22 +190,22 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
+>  	mod->core_kallsyms.symtab = dst = mod->data_layout.base + info->symoffs;
+>  	mod->core_kallsyms.strtab = s = mod->data_layout.base + info->stroffs;
+>  	mod->core_kallsyms.typetab = mod->data_layout.base + info->core_typeoffs;
+> -	src = rcu_dereference_sched(mod->kallsyms)->symtab;
+> -	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
+> -		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
+> +	src = rcu_dereference(mod->kallsyms)->symtab;
+> +	for (ndst = i = 0; i < rcu_dereference(mod->kallsyms)->num_symtab; i++) {
+> +		rcu_dereference(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
+>  		if (i == 0 || is_livepatch_module(mod) ||
+>  		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
+>  				   info->index.pcpu)) {
+>  			mod->core_kallsyms.typetab[ndst] =
+> -			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
+> +			    rcu_dereference(mod->kallsyms)->typetab[i];
+>  			dst[ndst] = src[i];
+>  			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
+> -			s += strscpy(s,
+> -				     &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
+> +			s += strlcpy(s,
+> +				     &rcu_dereference(mod->kallsyms)->strtab[src[i].st_name],
+>  				     KSYM_NAME_LEN) + 1;
+>  		}
+>  	}
+> -	preempt_enable();
+> +	rcu_read_unlock();
+>  	mod->core_kallsyms.num_symtab = ndst;
+>  }
+>  
+> -- 
+> 2.34.3
 > 
-> > Thanks for your help,
-> > Benjamin
-
-
-
-
