@@ -2,134 +2,76 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8E69C43334
-	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Jul 2022 17:59:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FA94C43334
+	for <linux-rt-users@archiver.kernel.org>; Wed,  6 Jul 2022 20:23:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234275AbiGFR7F (ORCPT
+        id S233563AbiGFUXU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 6 Jul 2022 13:59:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45942 "EHLO
+        Wed, 6 Jul 2022 16:23:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33524 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234069AbiGFR7D (ORCPT
+        with ESMTP id S229664AbiGFUXT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 Jul 2022 13:59:03 -0400
-Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 42FFB29C84;
-        Wed,  6 Jul 2022 10:58:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Sender:In-Reply-To:Content-Type:
-        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=OYgCfPr17FuNNS3i7T8/+pPqO4BBUG/Cc2fFpfiZ7Oo=; b=P7V+Trm6JddmaQmgCWxREId4CA
-        F0lXawIaH9L5F/RFLUFqOexOpc3VUiSq33esaDgmRJTQcLap1u5PsMyXl67McsfQzPWGknlJLjEj1
-        gt0Bo9JKUxvcMlv5a2NRmvXwNnQqJn3JBtvHyC0XPbzVqmcWFcyb/raI+B/+et1axPSuBIwvxdrSy
-        Y3kiW7OV6cDBix9zGGu0TAhLa2CAcNNaUz7/kX5o1+anc9AvAWSnfCSTBmH76gbsHPxsdkUexQz7z
-        uRZrQicD7cqdVeTJAhQ4YcVNlBYfdNlS3zABJtnF3ea1irGha1HGGmFS6Sj++EbDFUqvKayYDK0Vv
-        dLfXGnGA==;
-Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1o99IT-00BsCZ-HS; Wed, 06 Jul 2022 17:58:45 +0000
-Date:   Wed, 6 Jul 2022 10:58:45 -0700
-From:   Luis Chamberlain <mcgrof@kernel.org>
-To:     Aaron Tomlin <atomlin@redhat.com>
-Cc:     rostedt@goodmis.org, cl@linux.com, pmladek@suse.com,
-        mbenes@suse.cz, christophe.leroy@csgroup.eu,
-        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-modules@vger.kernel.org, atomlin@atomlin.com,
-        ghalat@redhat.com, oleksandr@natalenko.name, neelx@redhat.com,
-        daniel.thompson@linaro.org, hch@infradead.org, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2] module: kallsyms: Ensure preemption in add_kallsyms()
- with PREEMPT_RT
-Message-ID: <YsXNVSAtO+VDggcI@bombadil.infradead.org>
-References: <20220704161753.4033684-1-atomlin@redhat.com>
+        Wed, 6 Jul 2022 16:23:19 -0400
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0439A21E08
+        for <linux-rt-users@vger.kernel.org>; Wed,  6 Jul 2022 13:23:19 -0700 (PDT)
+Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+        (No client certificate requested)
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 5D3633F103;
+        Wed,  6 Jul 2022 20:23:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1657138997;
+        bh=1eGXGQCPo0MoK0iFGGIu+p2feFk22+/CSQs+e4rjt/c=;
+        h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type;
+        b=OjE9wRZELy9fBFKOX0t/89sFRSZpU70br+ASarg4UYadYYPFLTXJyUte8RcaCKDSp
+         H83DgjEvNOEJbdP112/NldxXejernMmhFAhjZUWjMkMuTvPG5T/ohwbuSwV5X0H2e8
+         XlT8cHJDZSPz3pmyOviy883ptRK44ufYfC13XVfZlJeoIP0LtLDUyfHKbn7KVEeK97
+         7R+WKtVC6/1hGdQ052rTgogD57+ccth8BtNdqvWUPmxnlIjNZXoyizQTPC4TBE3vTZ
+         0sbIQLPm2b/us36MTAPSYGjnPuc5lK4SAYOvL7xhHb5YOHY6zljobzc/1EmoDAmItT
+         FundDzgfi/P4A==
+Message-ID: <456adbc0-63d4-7d8f-a700-b5e65e81d885@canonical.com>
+Date:   Wed, 6 Jul 2022 16:23:16 -0400
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220704161753.4033684-1-atomlin@redhat.com>
-Sender: Luis Chamberlain <mcgrof@infradead.org>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.9.1
+Content-Language: en-US
+To:     linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+        williams@redhat.com
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+Subject: Question Regarding [PATCH 098/167] in the 5.15 real-time patchset
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hey Aaron, thanks again!
+Hello,
 
-On Mon, Jul 04, 2022 at 05:17:53PM +0100, Aaron Tomlin wrote:
-> To disable preemption in the context of add_kallsyms() is incorrect.
+An end user reported a bug[1] when attempting to use an Ubuntu kernel 
+with the 5.15 real-time patches applied.  The user reports an issue with 
+missing cg memory when Kubernetes is used with the 5.15 patchset.
 
-Why, what broke? Did this used to work? Was the commit in question a
-regression then? Clarifying all this will help a lot.
+After an investigation, it was found the issue is happens if the 
+CONFIG_MEMCG config is not enabled.  That config is usually enabled for 
+the generic Ubuntu kernel.  However, the config is disabled by the 
+following patch in the 5.15 real-time patch set:
 
-The commit log is better but yet doesn't make it easy for me to tell
-if I should send this to Linus as a fix in the rc series.
+[PATCH 098/167] mm/memcontrol: Disable on PREEMPT_RT
 
-  Luis
+I don't see this patch in the 5.16 and newer patch sets.  Is there a fix 
+in mainline or in the newer 5.16 patches that allows the 'mm/memcontrol: 
+Disable on PREEMPT_RT' patch to be dropped?  If so, I could assist with 
+backporting the fix to 5.15 and older.
 
-> Before kallsyms-specific data is prepared/or set-up, we ensure that
-> the unformed module is known to be unique i.e. does not already exist
-> (see load_module()). Therefore, we can fix this by using the common RCU
-> primitive as this section of code can be safely preempted.
-> 
-> Reported-by: Steven Rostedt <rostedt@goodmis.org>
-> Fixes: 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
-> Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
-> ---
->  kernel/module/kallsyms.c | 24 ++++++++++++------------
->  1 file changed, 12 insertions(+), 12 deletions(-)
-> 
-> diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
-> index 3e11523bc6f6..0b6fd82d5898 100644
-> --- a/kernel/module/kallsyms.c
-> +++ b/kernel/module/kallsyms.c
-> @@ -174,14 +174,14 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
->  	mod->kallsyms = (void __rcu *)mod->init_layout.base +
->  		info->mod_kallsyms_init_off;
->  
-> -	preempt_disable();
-> +	rcu_read_lock();
->  	/* The following is safe since this pointer cannot change */
-> -	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
-> -	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
-> +	rcu_dereference(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
-> +	rcu_dereference(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
->  	/* Make sure we get permanent strtab: don't use info->strtab. */
-> -	rcu_dereference_sched(mod->kallsyms)->strtab =
-> +	rcu_dereference(mod->kallsyms)->strtab =
->  		(void *)info->sechdrs[info->index.str].sh_addr;
-> -	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
-> +	rcu_dereference(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
->  
->  	/*
->  	 * Now populate the cut down core kallsyms for after init
-> @@ -190,22 +190,22 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
->  	mod->core_kallsyms.symtab = dst = mod->data_layout.base + info->symoffs;
->  	mod->core_kallsyms.strtab = s = mod->data_layout.base + info->stroffs;
->  	mod->core_kallsyms.typetab = mod->data_layout.base + info->core_typeoffs;
-> -	src = rcu_dereference_sched(mod->kallsyms)->symtab;
-> -	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
-> -		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
-> +	src = rcu_dereference(mod->kallsyms)->symtab;
-> +	for (ndst = i = 0; i < rcu_dereference(mod->kallsyms)->num_symtab; i++) {
-> +		rcu_dereference(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
->  		if (i == 0 || is_livepatch_module(mod) ||
->  		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
->  				   info->index.pcpu)) {
->  			mod->core_kallsyms.typetab[ndst] =
-> -			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
-> +			    rcu_dereference(mod->kallsyms)->typetab[i];
->  			dst[ndst] = src[i];
->  			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
-> -			s += strscpy(s,
-> -				     &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
-> +			s += strlcpy(s,
-> +				     &rcu_dereference(mod->kallsyms)->strtab[src[i].st_name],
->  				     KSYM_NAME_LEN) + 1;
->  		}
->  	}
-> -	preempt_enable();
-> +	rcu_read_unlock();
->  	mod->core_kallsyms.num_symtab = ndst;
->  }
->  
-> -- 
-> 2.34.3
-> 
+Thanks in advance!
+
+Joe
+
+
+[0] https://bugs.launchpad.net/ubuntu-realtime/+bug/1978814
+
+
+
