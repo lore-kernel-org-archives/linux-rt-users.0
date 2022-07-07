@@ -2,94 +2,88 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F779C43334
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Jul 2022 17:21:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 986CACCA47F
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Jul 2022 18:58:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236376AbiGGRU7 (ORCPT
+        id S236616AbiGGS6p (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 7 Jul 2022 13:20:59 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58786 "EHLO
+        Thu, 7 Jul 2022 14:58:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53162 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236314AbiGGRUy (ORCPT
+        with ESMTP id S236603AbiGGS6o (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 7 Jul 2022 13:20:54 -0400
-Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EE5763335D;
-        Thu,  7 Jul 2022 10:20:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Sender:In-Reply-To:Content-Type:
-        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=H/z41n38fMrVHxK1y42Tj7P6QUPD60u5+XY8Ng8yfX4=; b=4Sn1wsXPrs/yPqmi1PLgRr5BWp
-        FHSQgVgDsdRtzm9v9KaJo4XwQvosGgRCB7c7Aj9ffpCIFDLnjZke7fTotJFHHaB3oPbWA0shGuBnZ
-        Qu/XhyKGfvyau20y8SvAUG6NuttXxvPKwYkrbpWh2+fZH9g+37n5HSanJywA/TwDrh1UXDuz+WpMg
-        t9l5gG9ew20hIBgsxIUM1HmFi4Eplosy6rE0RonRn+oVCf3LWSQosjXtELHUJ882+qdzGFUSaPwvF
-        21DHzBDyfz13iiBdtvfoh8DHWaYMKFlAZK2Gq7gH7w4otB1Q/j1xwhfdPKeGGB8o18f4nvkhbUrsH
-        3Tc6zh2g==;
-Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1o9VBG-00HCSD-Gf; Thu, 07 Jul 2022 17:20:46 +0000
-Date:   Thu, 7 Jul 2022 10:20:46 -0700
-From:   Luis Chamberlain <mcgrof@kernel.org>
-To:     Aaron Tomlin <atomlin@redhat.com>
-Cc:     rostedt@goodmis.org, cl@linux.com, pmladek@suse.com,
-        mbenes@suse.cz, christophe.leroy@csgroup.eu,
-        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-modules@vger.kernel.org, atomlin@atomlin.com,
+        Thu, 7 Jul 2022 14:58:44 -0400
+X-Greylist: delayed 139 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 07 Jul 2022 11:58:40 PDT
+Received: from p3plsmtpa11-09.prod.phx3.secureserver.net (p3plsmtpa11-09.prod.phx3.secureserver.net [68.178.252.110])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BE44333A3D
+        for <linux-rt-users@vger.kernel.org>; Thu,  7 Jul 2022 11:58:40 -0700 (PDT)
+Received: from localhost ([82.17.115.212])
+        by :SMTPAUTH: with ESMTPA
+        id 9WfjoIiykskDW9WfkoGRQw; Thu, 07 Jul 2022 11:56:21 -0700
+X-CMAE-Analysis: v=2.4 cv=Xs8/hXJ9 c=1 sm=1 tr=0 ts=62c72c55
+ a=9gipVNR6X1CoIeAWHwLoWw==:117 a=9gipVNR6X1CoIeAWHwLoWw==:17
+ a=IkcTkHD0fZMA:10 a=eTMhzGaj8ZgCguw-XMsA:9 a=QEXdDO2ut3YA:10
+X-SECURESERVER-ACCT: atomlin@atomlin.com
+Date:   Thu, 7 Jul 2022 19:56:19 +0100
+From:   Aaron Tomlin <atomlin@atomlin.com>
+To:     Luis Chamberlain <mcgrof@kernel.org>
+Cc:     Aaron Tomlin <atomlin@redhat.com>, rostedt@goodmis.org,
+        cl@linux.com, pmladek@suse.com, mbenes@suse.cz,
+        christophe.leroy@csgroup.eu, akpm@linux-foundation.org,
+        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
         ghalat@redhat.com, oleksandr@natalenko.name, neelx@redhat.com,
         daniel.thompson@linaro.org, hch@infradead.org, tglx@linutronix.de,
         linux-rt-users@vger.kernel.org
 Subject: Re: [PATCH v2] module: kallsyms: Ensure preemption in add_kallsyms()
  with PREEMPT_RT
-Message-ID: <YscV7ujYs6Q60N+E@bombadil.infradead.org>
+Message-ID: <20220707185619.sryhytlfkolmklnn@ava.usersys.com>
 References: <20220704161753.4033684-1-atomlin@redhat.com>
  <YsXNVSAtO+VDggcI@bombadil.infradead.org>
  <20220707165750.tk4fadpv3d4zr2mb@ava.usersys.com>
+ <YscV7ujYs6Q60N+E@bombadil.infradead.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220707165750.tk4fadpv3d4zr2mb@ava.usersys.com>
-Sender: Luis Chamberlain <mcgrof@infradead.org>
+In-Reply-To: <YscV7ujYs6Q60N+E@bombadil.infradead.org>
+X-CMAE-Envelope: MS4xfGEMyf6Pz6mlMCSJNtHLJiYMh7dgsvwhNEd4JPCgr+M9xzhH21w9OoBC0LiHe0S66f3rKR/w8RiPmVGRg6390rdCCMs//UhGAo2BvKBdnklQnxf8+gFT
+ 1MhEawYd4UqLCWcXpEk3+GrGzN9EIURTCAroHzZLExclzNaTkGCvHNxGJxzeS74uTqi5JPWp8JrAgO05BGu4tBYo3WT8m97ptLDry6Gmc35loe3tDxVjlacs
+ CsqNlDPolZvTBv1oOEImTbHehwgM0YHlNMD4L7hjHvFvPUhXQG+PqHkr/Otf0+9oHNZjkS9DrTmiDtX5lRIxk0dkF4Noo1/MwaHMF56zY38O0OB/d4viQf1Z
+ 4QM9vOKQ/xsFbnPG14tezHJOQmHcpFEmB7Z33etagOYbihoQRMyASRKfqPeG6tlhrZ+xwx4S5AKoYScqAlYTdAaAwf01QRjtA0itnBcqGYRk60dattexZee0
+ aD18YX/UGoaGphq3kh90S78TQVaXbrcvY1WDwS8/+DmS/gZ1/Cnjj+ZqFv1dDQWt1Q7w7Wsb/IKW7yDYZRLOyA+QvHxFkwKUxzUMraJ5yyVUC5A6fe5XffHB
+ /wObdG1dGe0QNfR1UNQB1yw31rZNsVt8nEYLs5WGSQc/VcURgsGfRQI2YaAxqAWEuyIgmx9Turs4kQ79ttJEiOLSIs3j7NYqbD1nDcuOMyk2LlcNgKA7h4MO
+ 8wclV0+bWyY=
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jul 07, 2022 at 05:57:50PM +0100, Aaron Tomlin wrote:
-> On Wed 2022-07-06 10:58 -0700, Luis Chamberlain wrote:
-> > Hey Aaron, thanks again!
+On Thu 2022-07-07 10:20 -0700, Luis Chamberlain wrote:
+> This is incredibly important information which should be added to the
+> commit log, specialy as PREEMPT_RT=y becomes a first class citizen.
+
+Understood.
+
 > 
-> Hi Luis,
-> 
-> No problem :)
-> 
-> > On Mon, Jul 04, 2022 at 05:17:53PM +0100, Aaron Tomlin wrote:
-> > > To disable preemption in the context of add_kallsyms() is incorrect.
+> > So, I would say this was a regression since earlier preemption was
+> > not disabled and we would dereference RCU-protected pointers explicitly
+> > i.e. without using the more appropriate rcu_dereference() family
+> > of primitives. That being said, these pointers cannot change in this
+> > context as explained previously.
 > > 
-> > Why, what broke? Did this used to work? Was the commit in question a
-> > regression then? Clarifying all this will help a lot.
+> > Would the above be suitable - just to confirm before I send another
+> > iteration?
 > 
-> Sorry for the confusion! If I understand correctly, nothing broke
-> intrinsically.
-> 
-> Rather with commit 08126db5ff73 ("module: kallsyms: Fix suspicious rcu
-> usage") under PREEMPT_RT=y, by disabling preemption, I introduced an
-> unbounded latency since the loop is not fixed which is generally frowned
-> upon.
+> Yes, I would send this to Linus for the rc series. Please adjust the
+> commit log with all this information.
 
-This is incredibly important information which should be added to the
-commit log, specialy as PREEMPT_RT=y becomes a first class citizen.
+Will do.
 
-> So, I would say this was a regression since earlier preemption was
-> not disabled and we would dereference RCU-protected pointers explicitly
-> i.e. without using the more appropriate rcu_dereference() family
-> of primitives. That being said, these pointers cannot change in this
-> context as explained previously.
-> 
-> Would the above be suitable - just to confirm before I send another
-> iteration?
+> BTW I think there is just one more fix pending from you right?
 
-Yes, I would send this to Linus for the rc series. Please adjust the
-commit log with all this information.
+Yes - I will send/or prepare it as a partial revert:
+'s/strscpy/strlcpy/' with a brief explanation.
 
-BTW I think there is just one more fix pending from you right?
 
-  Luis
+Kind regards,
+
+-- 
+Aaron Tomlin
