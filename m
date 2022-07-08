@@ -2,248 +2,201 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 007D3C433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Jul 2022 19:32:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD4BFC43334
+	for <linux-rt-users@archiver.kernel.org>; Fri,  8 Jul 2022 09:32:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236348AbiGGTcP (ORCPT
+        id S237161AbiGHJcd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 7 Jul 2022 15:32:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48362 "EHLO
+        Fri, 8 Jul 2022 05:32:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52660 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236345AbiGGTcN (ORCPT
+        with ESMTP id S237375AbiGHJcZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 7 Jul 2022 15:32:13 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 083BD21260
-        for <linux-rt-users@vger.kernel.org>; Thu,  7 Jul 2022 12:32:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1657222331;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=lLQqitHF7TUs+vy1ObQBX8567GU2U9pgVlyM5wLJpmQ=;
-        b=OT2LkQoli5+F6qWxLIzt9Z9rPKIpITYRdWILme1ZocpROUCj3Of6PE2hYzUaYwoZZdIzPc
-        WdtGsrolxpz5cht8X12tKj/w60xieqIhIfEtAu4Oy2AATKNqChyAfp2SdqpL9s2nvfDZoV
-        LF8Q7GzRwVrineJNyD2Y48f3z8rQgs8=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-401-fCGAMpqcNYubhuZnFNU__g-1; Thu, 07 Jul 2022 15:32:10 -0400
-X-MC-Unique: fCGAMpqcNYubhuZnFNU__g-1
-Received: by mail-qt1-f198.google.com with SMTP id q21-20020ac84115000000b0031bf60d9b35so16242861qtl.4
-        for <linux-rt-users@vger.kernel.org>; Thu, 07 Jul 2022 12:32:10 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=lLQqitHF7TUs+vy1ObQBX8567GU2U9pgVlyM5wLJpmQ=;
-        b=CyjO48A6z7ci2ihqKphLSBz/J8Zmfzusl4aReR5Pnl8JY+M/HTcAsp3Ac3XqksJasZ
-         +XIaz+JhXRyDSyFziwyDRRKmT+h0ibmqFiTbWuxT5AtzmWGgcDi4Crhu6NItx3RLojDc
-         OOaQlvLO+Yl8zuyeBGep6VLxeU+8Q98oOEs0oPhcZ81nZHc9PqsORbuIXNpG7Z1v2UxC
-         VyfkbuH0rUGKyRXPklsoLtPbgJNXMDIaDv4yssEzd1SOXCwf6NrDQQgC24NBH6HVyoHi
-         m6A+t0N5O23RS1/DsZWKbTUBYwsgqeR9/ZB8WuBWFMjpnEru61RH4Iqsf5HZCZyHUmYC
-         fuPQ==
-X-Gm-Message-State: AJIora+WoLEUW5gA25gvx2Bw638Bji+y/zfobirHLdknAI/RrdtEoxEn
-        aO48anVTa0rgU8szeh9Nlte4T3GB7//ySAjf6C9RfE/IGNqmwnli/1kflre3PuMaAkupbDxyZ8b
-        DmKt3BDM3Oh6um7uxA7zKBXypTi8=
-X-Received: by 2002:a05:620a:2805:b0:67d:5c7e:c43a with SMTP id f5-20020a05620a280500b0067d5c7ec43amr32740123qkp.84.1657222329930;
-        Thu, 07 Jul 2022 12:32:09 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1tX/8YPRrI5TJSoXoIqIaEX6Z439ViSsVl9a10R8bT2OfTHDWwx3Lg3+pVcsEqXYwoVufDABQ==
-X-Received: by 2002:a05:620a:2805:b0:67d:5c7e:c43a with SMTP id f5-20020a05620a280500b0067d5c7ec43amr32740100qkp.84.1657222329648;
-        Thu, 07 Jul 2022 12:32:09 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-180.dsl.bell.ca. [184.147.143.180])
-        by smtp.gmail.com with ESMTPSA id o16-20020a05620a2a1000b006a68fdc2d18sm30057341qkp.130.2022.07.07.12.32.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 07 Jul 2022 12:32:08 -0700 (PDT)
-Date:   Thu, 7 Jul 2022 15:31:55 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Song Chen <chensong_2000@189.cn>
-cc:     wagi@monom.org, williams@redhat.com, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v3] sched_deadline/cyclicdeadline: add tracelimit
-In-Reply-To: <1656576028-20474-1-git-send-email-chensong_2000@189.cn>
-Message-ID: <ab1d4f62-46e7-9e47-1a9b-9de5bc79d312@redhat.com>
-References: <1656576028-20474-1-git-send-email-chensong_2000@189.cn>
+        Fri, 8 Jul 2022 05:32:25 -0400
+Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7D49831214;
+        Fri,  8 Jul 2022 02:32:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=metanate.com; s=stronger; h=Content-Transfer-Encoding:Message-Id:Date:
+        Subject:Cc:To:From:Content-Type:Reply-To:Content-ID:Content-Description:
+        In-Reply-To:References; bh=GRDtLrg1eo3rpDwABeMBkn3OTA3HriAEjs7QS83CUjk=; b=i3
+        qk2JIJp2WNfMWQ5AYXeH55kLCwjvkHM7dvsjvc+wPowDZ/9aEbBTO/vwbhKKlYOTQz6nbUWgA2wOs
+        KfIn6R+25OioHIRfiD45PH9cbxvmZicFk0OlBbgGZq6p+jGk+AUSz0mZkT7I8dTbjc4+6E3n2Fx5H
+        sSsirV9JwTCXmp1kcDDPA37BJ6Xu7CJwv6zOkI28THkCcVdPLCalMj3s+QQ19GUFGSox+piuAMjz/
+        4eAW9S5kmpcHS3Udi9ddTVR82fkD81OVCEdtAij7tMDZHo22M5REgQcybdp748kTVVD/8wgB8Fjyn
+        CpkZK+p8vWq3aZDM/nkzZLCqcOjAbamw==;
+Received: from [81.174.171.191] (helo=donbot.metanate.com)
+        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+        (Exim 4.95)
+        (envelope-from <john@metanate.com>)
+        id 1o9kLS-0002vl-Br;
+        Fri, 08 Jul 2022 10:32:19 +0100
+From:   John Keeping <john@metanate.com>
+To:     linux-kernel@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org, John Keeping <john@metanate.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Valentin Schneider <vschneid@redhat.com>
+Subject: [PATCH v2] sched/core: Always flush pending blk_plug
+Date:   Fri,  8 Jul 2022 10:32:12 +0100
+Message-Id: <20220708093213.1635880-1-john@metanate.com>
+X-Mailer: git-send-email 2.37.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Authenticated: YES
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+With CONFIG_PREEMPT_RT, it is possible to hit a deadlock between two
+normal priority tasks (SCHED_OTHER, nice level zero):
 
+	INFO: task kworker/u8:0:8 blocked for more than 491 seconds.
+	      Not tainted 5.15.49-rt46 #1
+	"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+	task:kworker/u8:0    state:D stack:    0 pid:    8 ppid:     2 flags:0x00000000
+	Workqueue: writeback wb_workfn (flush-7:0)
+	[<c08a3a10>] (__schedule) from [<c08a3d84>] (schedule+0xdc/0x134)
+	[<c08a3d84>] (schedule) from [<c08a65a0>] (rt_mutex_slowlock_block.constprop.0+0xb8/0x174)
+	[<c08a65a0>] (rt_mutex_slowlock_block.constprop.0) from [<c08a6708>]
+	+(rt_mutex_slowlock.constprop.0+0xac/0x174)
+	[<c08a6708>] (rt_mutex_slowlock.constprop.0) from [<c0374d60>] (fat_write_inode+0x34/0x54)
+	[<c0374d60>] (fat_write_inode) from [<c0297304>] (__writeback_single_inode+0x354/0x3ec)
+	[<c0297304>] (__writeback_single_inode) from [<c0297998>] (writeback_sb_inodes+0x250/0x45c)
+	[<c0297998>] (writeback_sb_inodes) from [<c0297c20>] (__writeback_inodes_wb+0x7c/0xb8)
+	[<c0297c20>] (__writeback_inodes_wb) from [<c0297f24>] (wb_writeback+0x2c8/0x2e4)
+	[<c0297f24>] (wb_writeback) from [<c0298c40>] (wb_workfn+0x1a4/0x3e4)
+	[<c0298c40>] (wb_workfn) from [<c0138ab8>] (process_one_work+0x1fc/0x32c)
+	[<c0138ab8>] (process_one_work) from [<c0139120>] (worker_thread+0x22c/0x2d8)
+	[<c0139120>] (worker_thread) from [<c013e6e0>] (kthread+0x16c/0x178)
+	[<c013e6e0>] (kthread) from [<c01000fc>] (ret_from_fork+0x14/0x38)
+	Exception stack(0xc10e3fb0 to 0xc10e3ff8)
+	3fa0:                                     00000000 00000000 00000000 00000000
+	3fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+	3fe0: 00000000 00000000 00000000 00000000 00000013 00000000
 
-On Thu, 30 Jun 2022, Song Chen wrote:
+	INFO: task tar:2083 blocked for more than 491 seconds.
+	      Not tainted 5.15.49-rt46 #1
+	"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+	task:tar             state:D stack:    0 pid: 2083 ppid:  2082 flags:0x00000000
+	[<c08a3a10>] (__schedule) from [<c08a3d84>] (schedule+0xdc/0x134)
+	[<c08a3d84>] (schedule) from [<c08a41b0>] (io_schedule+0x14/0x24)
+	[<c08a41b0>] (io_schedule) from [<c08a455c>] (bit_wait_io+0xc/0x30)
+	[<c08a455c>] (bit_wait_io) from [<c08a441c>] (__wait_on_bit_lock+0x54/0xa8)
+	[<c08a441c>] (__wait_on_bit_lock) from [<c08a44f4>] (out_of_line_wait_on_bit_lock+0x84/0xb0)
+	[<c08a44f4>] (out_of_line_wait_on_bit_lock) from [<c0371fb0>] (fat_mirror_bhs+0xa0/0x144)
+	[<c0371fb0>] (fat_mirror_bhs) from [<c0372a68>] (fat_alloc_clusters+0x138/0x2a4)
+	[<c0372a68>] (fat_alloc_clusters) from [<c0370b14>] (fat_alloc_new_dir+0x34/0x250)
+	[<c0370b14>] (fat_alloc_new_dir) from [<c03787c0>] (vfat_mkdir+0x58/0x148)
+	[<c03787c0>] (vfat_mkdir) from [<c0277b60>] (vfs_mkdir+0x68/0x98)
+	[<c0277b60>] (vfs_mkdir) from [<c027b484>] (do_mkdirat+0xb0/0xec)
+	[<c027b484>] (do_mkdirat) from [<c0100060>] (ret_fast_syscall+0x0/0x1c)
+	Exception stack(0xc2e1bfa8 to 0xc2e1bff0)
+	bfa0:                   01ee42f0 01ee4208 01ee42f0 000041ed 00000000 00004000
+	bfc0: 01ee42f0 01ee4208 00000000 00000027 01ee4302 00000004 000dcb00 01ee4190
+	bfe0: 000dc368 bed11924 0006d4b0 b6ebddfc
 
-> cyclictest has tracelimit to stop running when max latency
-> is higher than threshold but cyclicdeadline doesn't.
-> 
-> Therefore, tracelimit is introduced to cyclicdeadline in
-> this commit, once max latency is over, test stops and log
-> prints at the bottom of the ftrace file.
-> 
-> Signed-off-by: Song Chen <chensong_2000@189.cn>
-> Reviewed-by:   Daniel Wagner <wagi@monom.org>
-> 
-> ---
-> v2:
-> 1, disable ftrace when hitting thresold
-> 
-> v3:
-> 1, update man page
-> ---
->  src/sched_deadline/cyclicdeadline.8 |  6 ++++
->  src/sched_deadline/cyclicdeadline.c | 49 ++++++++++++++++++++++++++---
->  2 files changed, 51 insertions(+), 4 deletions(-)
-> 
-> diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-> index 1a56ed0..fab301e 100644
-> --- a/src/sched_deadline/cyclicdeadline.8
-> +++ b/src/sched_deadline/cyclicdeadline.8
-> @@ -50,6 +50,12 @@ The number of threads to run as deadline (default 1)
->  .B \-q, \-\-quiet
->  Print a summary only on exit. Useful for automated tests, where only
->  the summary output needs to be captured.
-> +.TP
-> +.B \-b, \-\-breaktrace=USEC
-> +Send break trace command when latency > USEC
-> +.TP
-> +.B \-\-tracemark
-> +write a trace mark when \-b latency is exceeded.
->  .br
->  .SH AUTHOR
->  cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
-> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index d865fa3..a925d1c 100644
-> --- a/src/sched_deadline/cyclicdeadline.c
-> +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -80,7 +80,11 @@ struct sched_data {
->  };
->  
->  static int shutdown;
-> -
-> +static int tracelimit = 0;
-> +static int trace_marker = 0;
-> +static pthread_mutex_t break_thread_id_lock = PTHREAD_MUTEX_INITIALIZER;
-> +static pid_t break_thread_id = 0;
-> +static uint64_t break_thread_value = 0;
->  static pthread_barrier_t barrier;
->  
->  static int cpu_count;
-> @@ -667,6 +671,10 @@ static void teardown(void)
->  
->  	destroy_cpuset(CPUSET_ALL, 0);
->  	destroy_cpuset(CPUSET_LOCAL, 1);
-> +
-> +	/* close any tracer file descriptors */
-> +	disable_trace_mark();
-> +
->  }
->  
->  static void usage(int error)
-> @@ -689,6 +697,8 @@ static void usage(int error)
->  	       "                           (default 500us).\n"
->  	       "-t NUM   --threads         The number of threads to run as deadline (default 1).\n"
->  	       "-q       --quiet           print a summary only on exit\n"
-> +	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
-> +	       "         --tracemark       write a trace mark when -b latency is exceeded\n"
->  	       );
->  	exit(error);
->  }
-> @@ -825,6 +835,18 @@ void *run_deadline(void *data)
->  
->  	while (!shutdown) {
->  		period = do_runtime(tid, sd, period);
-> +		if (tracelimit && (stat->max > tracelimit)) {
-> +			shutdown++;
-> +			pthread_mutex_lock(&break_thread_id_lock);
-> +			if (break_thread_id == 0) {
-> +				break_thread_id = stat->tid;
-> +				break_thread_value = stat->max;
-> +				tracemark( "hit latency threshold (%lld > %d)",
-> +						 (unsigned long long) stat->max, tracelimit);
-> +			}
-> +			pthread_mutex_unlock(&break_thread_id_lock);
-> +			break;
-> +		}
->  		sched_yield();
->  	}
->  	ret = sched_getattr(0, &attr, sizeof(attr), 0);
-> @@ -1063,9 +1085,10 @@ static void write_stats(FILE *f, void *data)
->  	fprintf(f, "  }\n");
->  }
->  
-> -enum options_valud {
-> +enum options_values {
->  	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
-> -	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET
-> +	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET,
-> +	OPT_BREAKTRACE, OPT_TRACEMARK,
->  };
->  
->  int main(int argc, char **argv)
-> @@ -1104,9 +1127,11 @@ int main(int argc, char **argv)
->  			{ "step",	required_argument,	NULL,	OPT_STEP },
->  			{ "threads",	required_argument,	NULL,	OPT_THREADS },
->  			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
-> +			{ "breaktrace",       required_argument, NULL, OPT_BREAKTRACE },
-> +			{ "tracemark",	     no_argument,	NULL, OPT_TRACEMARK },
->  			{ NULL,		0,			NULL,	0   },
->  		};
-> -		c = getopt_long(argc, argv, "a::c:D:hi:s:t:q", options, NULL);
-> +		c = getopt_long(argc, argv, "a::c:D:hi:s:t:b:q", options, NULL);
->  		if (c == -1)
->  			break;
->  		switch (c) {
-> @@ -1141,6 +1166,10 @@ int main(int argc, char **argv)
->  		case 'D':
->  			duration = parse_time_string(optarg);
->  			break;
-> +		case 'b':
-> +		case OPT_BREAKTRACE:
-> +			tracelimit = atoi(optarg);
-> +			break;
->  		case OPT_QUIET:
->  		case 'q':
->  			quiet = 1;
-> @@ -1149,6 +1178,9 @@ int main(int argc, char **argv)
->  		case 'h':
->  			usage(0);
->  			break;
-> +		case OPT_TRACEMARK:
-> +			trace_marker = 1;
-> +			break;
->  		default:
->  			usage(1);
->  		}
-> @@ -1186,6 +1218,8 @@ int main(int argc, char **argv)
->  		warn("mlockall");
->  
->  	setup_ftrace_marker();
-> +	if (tracelimit && trace_marker)
-> +		enable_trace_mark();
->  
->  	thread = calloc(nr_threads, sizeof(*thread));
->  	sched_data = calloc(nr_threads, sizeof(*sched_data));
-> @@ -1294,6 +1328,13 @@ int main(int argc, char **argv)
->  
->  	loop(sched_data, nr_threads);
->  
-> +	if (tracelimit) {
-> +		if (break_thread_id) {
-> +			printf("# Break thread: %d\n", break_thread_id);
-> +			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
-> +		}
-> +	}
-> +
->  	for (i = 0; i < nr_threads; i++) {
->  
->  		sd = &sched_data[i];
-> -- 
-> 2.25.1
-> 
-> 
-    - Fixed style problems reported by checkpatch from kernel, namely
-    - Don't initialize static to 0
-    - no space after open parenthesis
-    - removed multiple spaces after Reviewed-by
-    Signed-off-by: John Kacur <jkacur@redhat.com>
+Here the kworker is waiting on msdos_sb_info::s_lock which is held by
+tar which is in turn waiting for a buffer which is locked waiting to be
+flushed, but this operation is plugged in the kworker.
+
+The lock is a normal struct mutex, so tsk_is_pi_blocked() will always
+return false on !RT and thus the behaviour changes for RT.
+
+It seems that the intent here is to skip blk_flush_plug() in the case
+where a non-preemptible lock (such as a spinlock) has been converted to
+a rtmutex on RT, which is the case covered by the SM_RTLOCK_WAIT
+schedule flag.  But sched_submit_work() is only called from schedule()
+which is never called in this scenario, so the check can simply be
+deleted.
+
+Looking at the history of the -rt patchset, in fact this change was
+present from v5.9.1-rt20 until being dropped in v5.13-rt1 as it was part
+of a larger patch [1] most of which was replaced by commit b4bfa3fcfe3b
+("sched/core: Rework the __schedule() preempt argument").
+
+As described in [1]:
+
+   The schedule process must distinguish between blocking on a regular
+   sleeping lock (rwsem and mutex) and a RT-only sleeping lock (spinlock
+   and rwlock):
+   - rwsem and mutex must flush block requests (blk_schedule_flush_plug())
+     even if blocked on a lock. This can not deadlock because this also
+     happens for non-RT.
+     There should be a warning if the scheduling point is within a RCU read
+     section.
+
+   - spinlock and rwlock must not flush block requests. This will deadlock
+     if the callback attempts to acquire a lock which is already acquired.
+     Similarly to being preempted, there should be no warning if the
+     scheduling point is within a RCU read section.
+
+and with the tsk_is_pi_blocked() in the scheduler path, we hit the first
+issue.
+
+[1] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/0022-locking-rtmutex-Use-custom-scheduling-function-for-s.patch?h=linux-5.10.y-rt-patches
+
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+Signed-off-by: John Keeping <john@metanate.com>
+---
+v2:
+- Add Steven's R-b and update the commit message with his suggested
+  quote from [1]
+
+ include/linux/sched/rt.h | 8 --------
+ kernel/sched/core.c      | 3 ---
+ 2 files changed, 11 deletions(-)
+
+diff --git a/include/linux/sched/rt.h b/include/linux/sched/rt.h
+index e5af028c08b49..994c25640e156 100644
+--- a/include/linux/sched/rt.h
++++ b/include/linux/sched/rt.h
+@@ -39,20 +39,12 @@ static inline struct task_struct *rt_mutex_get_top_task(struct task_struct *p)
+ }
+ extern void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task);
+ extern void rt_mutex_adjust_pi(struct task_struct *p);
+-static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+-{
+-	return tsk->pi_blocked_on != NULL;
+-}
+ #else
+ static inline struct task_struct *rt_mutex_get_top_task(struct task_struct *task)
+ {
+ 	return NULL;
+ }
+ # define rt_mutex_adjust_pi(p)		do { } while (0)
+-static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+-{
+-	return false;
+-}
+ #endif
+ 
+ extern void normalize_rt_tasks(void);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 1d4660a1915b3..e4974fe003b5b 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6578,9 +6578,6 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ 			io_wq_worker_sleeping(tsk);
+ 	}
+ 
+-	if (tsk_is_pi_blocked(tsk))
+-		return;
+-
+ 	/*
+ 	 * If we are going to sleep and we have plugged IO queued,
+ 	 * make sure to submit it to avoid deadlocks.
+-- 
+2.37.0
 
