@@ -2,145 +2,209 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E43C5C43334
-	for <linux-rt-users@archiver.kernel.org>; Fri,  8 Jul 2022 15:00:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC720C433EF
+	for <linux-rt-users@archiver.kernel.org>; Fri,  8 Jul 2022 16:28:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238370AbiGHPAo (ORCPT
+        id S239366AbiGHQ2Q (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 8 Jul 2022 11:00:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54176 "EHLO
+        Fri, 8 Jul 2022 12:28:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35884 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231890AbiGHPAn (ORCPT
+        with ESMTP id S239210AbiGHQ1k (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 8 Jul 2022 11:00:43 -0400
-Received: from mail-qt1-x835.google.com (mail-qt1-x835.google.com [IPv6:2607:f8b0:4864:20::835])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D63A6252B7;
-        Fri,  8 Jul 2022 08:00:42 -0700 (PDT)
-Received: by mail-qt1-x835.google.com with SMTP id r2so27707743qta.0;
-        Fri, 08 Jul 2022 08:00:42 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=PSI4KLEuzkabIqqadLT6+X8M6jfSSpKpVHtyF/imonU=;
-        b=C6am7rebaM0Tifi+XLxyOed4RDqyyUpGEqHhJv6tlPppXmzeC6Fillwk2V58Dm/AAE
-         t/vcsaxZvH4O2H7SReRcrxqK3/G1j1n3qmXC3pN7mQ14IVHk+1CyX38YlZwcUkQe8F/+
-         8F4Y0xqHWQtBRP+D9CiPasDGCW7fxytOMIYZS5qlZY5VcEjDJIpoZox/Z3geLo7l2WYv
-         ZZt3tdF6VRebIoLzUGm8yllF735stIhXHd66SQWORhPhY0wBO5qycY7VX3ynNPXIBWh3
-         zb5Jvl2ttJIfZ7HAueYgP2+zmv5/HkTCXOrWqdMqyAW+j2dS62L3d0pTuCd0oIdwaCIt
-         eDSA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=PSI4KLEuzkabIqqadLT6+X8M6jfSSpKpVHtyF/imonU=;
-        b=0u/Hs0tvn9iK/iqrYtQl46degCO/bMEsKIfYXW6VGiao32K7Ks+AZti90FFhFHIGcj
-         DLLyhlfT+Qbu/bdLSDPKJd9TDBfj/NN86D/0Rt8k2HOuoO6nsurw+T2Xvu6yFPSmD8UJ
-         6K6DOqU/rbwXKH4a6IlwJYv3rkzW65a+altZzKBoe2k5yjDjkqPaafdK6UILdX/Hd4jt
-         ZQ+Kcel34soDdTJrKXRn6J/ph1QwlhM9eN4Xnyv4SVD4bzLvwIFfDSkUTMCOKYMrNhHd
-         na4S9e2N8F0+LweNQqzr8BEZEjzXCVVDUD9cq9C/5qcWiSAmhwRoCNIYUQAo1EaH2GSv
-         ZvVQ==
-X-Gm-Message-State: AJIora/dtfY/bCU80pb1u7lwrh/6GDO1gKBIE9BrrbXyiXdP2Nb7ViNq
-        u2OVMGuZ45Xr9v/Dtn3tZOE7k6FZsuo=
-X-Google-Smtp-Source: AGRyM1tfZAHLe/EFx4sZ0b2lTA9QuQx+Ojm07ZEfBw+nta/I97l4QIA1Y9vugt4RgHd9paBi12VEUA==
-X-Received: by 2002:ad4:5d6f:0:b0:470:6dd0:c407 with SMTP id fn15-20020ad45d6f000000b004706dd0c407mr3140797qvb.121.1657292441725;
-        Fri, 08 Jul 2022 08:00:41 -0700 (PDT)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-09-184-147-143-180.dsl.bell.ca. [184.147.143.180])
-        by smtp.gmail.com with ESMTPSA id j13-20020a05620a410d00b006a716fed4d6sm5091100qko.50.2022.07.08.08.00.40
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 08 Jul 2022 08:00:41 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     lkml <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Kate Carcia Poulin <kcarcia@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-2.4
-Date:   Fri,  8 Jul 2022 11:00:17 -0400
-Message-Id: <20220708150017.13462-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.36.1
+        Fri, 8 Jul 2022 12:27:40 -0400
+Received: from metanate.com (unknown [IPv6:2001:8b0:1628:5005::111])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA8A684EE6;
+        Fri,  8 Jul 2022 09:27:16 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=metanate.com; s=stronger; h=Content-Transfer-Encoding:Message-Id:Date:
+        Subject:Cc:To:From:Content-Type:Reply-To:Content-ID:Content-Description:
+        In-Reply-To:References; bh=dqnvtOM9WRzBsACI8H2L3qMUFDa4G14/jQNmiIiim1o=; b=0q
+        VJ7nyLpqBFZuGWKuZU5pwnNicPDxJKiXcxXJXvR5Ine7DIjHx2uvYOD4gdFAj/ppkPlnpT94lK96/
+        Hr7kyUV0teLKteVzyHEuUGgcRkW7m4ZxJNSTofHAzR63W/LhNaNMtnxu20/AnNBHFv89bxD44jEAQ
+        6dEt7fW7H/iECjix3qjMaNuX4Zuy1p8zBKYVkoS71hjNkWPZxJSZqyPiG4dhKuurkkGiPmydFgHWH
+        LBSOfcbMbPwfF8qnbvg3i6oF/hi1/GmvpEGaBxZVhMe/YmzP6YKZAxmvEddm/LmK3lyh9I5i6i47d
+        1+DpClV3+lqWwsY89AamjLP6eu03nWPw==;
+Received: from [81.174.171.191] (helo=donbot.metanate.com)
+        by email.metanate.com with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+        (Exim 4.95)
+        (envelope-from <john@metanate.com>)
+        id 1o9qow-0002UW-2C;
+        Fri, 08 Jul 2022 17:27:11 +0100
+From:   John Keeping <john@metanate.com>
+To:     linux-kernel@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org, John Keeping <john@metanate.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Valentin Schneider <vschneid@redhat.com>
+Subject: [PATCH v3] sched/core: Always flush pending blk_plug
+Date:   Fri,  8 Jul 2022 17:27:02 +0100
+Message-Id: <20220708162702.1758865-1-john@metanate.com>
+X-Mailer: git-send-email 2.37.0
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-Authenticated: YES
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm pleased to announce version 2.4 of the rt-tests suite.
+With CONFIG_PREEMPT_RT, it is possible to hit a deadlock between two
+normal priority tasks (SCHED_OTHER, nice level zero):
 
-Thanks to everyone who contributed!
+	INFO: task kworker/u8:0:8 blocked for more than 491 seconds.
+	      Not tainted 5.15.49-rt46 #1
+	"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+	task:kworker/u8:0    state:D stack:    0 pid:    8 ppid:     2 flags:0x00000000
+	Workqueue: writeback wb_workfn (flush-7:0)
+	[<c08a3a10>] (__schedule) from [<c08a3d84>] (schedule+0xdc/0x134)
+	[<c08a3d84>] (schedule) from [<c08a65a0>] (rt_mutex_slowlock_block.constprop.0+0xb8/0x174)
+	[<c08a65a0>] (rt_mutex_slowlock_block.constprop.0) from [<c08a6708>]
+	+(rt_mutex_slowlock.constprop.0+0xac/0x174)
+	[<c08a6708>] (rt_mutex_slowlock.constprop.0) from [<c0374d60>] (fat_write_inode+0x34/0x54)
+	[<c0374d60>] (fat_write_inode) from [<c0297304>] (__writeback_single_inode+0x354/0x3ec)
+	[<c0297304>] (__writeback_single_inode) from [<c0297998>] (writeback_sb_inodes+0x250/0x45c)
+	[<c0297998>] (writeback_sb_inodes) from [<c0297c20>] (__writeback_inodes_wb+0x7c/0xb8)
+	[<c0297c20>] (__writeback_inodes_wb) from [<c0297f24>] (wb_writeback+0x2c8/0x2e4)
+	[<c0297f24>] (wb_writeback) from [<c0298c40>] (wb_workfn+0x1a4/0x3e4)
+	[<c0298c40>] (wb_workfn) from [<c0138ab8>] (process_one_work+0x1fc/0x32c)
+	[<c0138ab8>] (process_one_work) from [<c0139120>] (worker_thread+0x22c/0x2d8)
+	[<c0139120>] (worker_thread) from [<c013e6e0>] (kthread+0x16c/0x178)
+	[<c013e6e0>] (kthread) from [<c01000fc>] (ret_from_fork+0x14/0x38)
+	Exception stack(0xc10e3fb0 to 0xc10e3ff8)
+	3fa0:                                     00000000 00000000 00000000 00000000
+	3fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+	3fe0: 00000000 00000000 00000000 00000000 00000013 00000000
 
-John Kacur
+	INFO: task tar:2083 blocked for more than 491 seconds.
+	      Not tainted 5.15.49-rt46 #1
+	"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+	task:tar             state:D stack:    0 pid: 2083 ppid:  2082 flags:0x00000000
+	[<c08a3a10>] (__schedule) from [<c08a3d84>] (schedule+0xdc/0x134)
+	[<c08a3d84>] (schedule) from [<c08a41b0>] (io_schedule+0x14/0x24)
+	[<c08a41b0>] (io_schedule) from [<c08a455c>] (bit_wait_io+0xc/0x30)
+	[<c08a455c>] (bit_wait_io) from [<c08a441c>] (__wait_on_bit_lock+0x54/0xa8)
+	[<c08a441c>] (__wait_on_bit_lock) from [<c08a44f4>] (out_of_line_wait_on_bit_lock+0x84/0xb0)
+	[<c08a44f4>] (out_of_line_wait_on_bit_lock) from [<c0371fb0>] (fat_mirror_bhs+0xa0/0x144)
+	[<c0371fb0>] (fat_mirror_bhs) from [<c0372a68>] (fat_alloc_clusters+0x138/0x2a4)
+	[<c0372a68>] (fat_alloc_clusters) from [<c0370b14>] (fat_alloc_new_dir+0x34/0x250)
+	[<c0370b14>] (fat_alloc_new_dir) from [<c03787c0>] (vfat_mkdir+0x58/0x148)
+	[<c03787c0>] (vfat_mkdir) from [<c0277b60>] (vfs_mkdir+0x68/0x98)
+	[<c0277b60>] (vfs_mkdir) from [<c027b484>] (do_mkdirat+0xb0/0xec)
+	[<c027b484>] (do_mkdirat) from [<c0100060>] (ret_fast_syscall+0x0/0x1c)
+	Exception stack(0xc2e1bfa8 to 0xc2e1bff0)
+	bfa0:                   01ee42f0 01ee4208 01ee42f0 000041ed 00000000 00004000
+	bfc0: 01ee42f0 01ee4208 00000000 00000027 01ee4302 00000004 000dcb00 01ee4190
+	bfe0: 000dc368 bed11924 0006d4b0 b6ebddfc
 
-To fetch:
+Here the kworker is waiting on msdos_sb_info::s_lock which is held by
+tar which is in turn waiting for a buffer which is locked waiting to be
+flushed, but this operation is plugged in the kworker.
 
-Clone
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+The lock is a normal struct mutex, so tsk_is_pi_blocked() will always
+return false on !RT and thus the behaviour changes for RT.
 
-Branch: main
+It seems that the intent here is to skip blk_flush_plug() in the case
+where a non-preemptible lock (such as a spinlock) has been converted to
+a rtmutex on RT, which is the case covered by the SM_RTLOCK_WAIT
+schedule flag.  But sched_submit_work() is only called from schedule()
+which is never called in this scenario, so the check can simply be
+deleted.
 
-Tag: v2.4
+Looking at the history of the -rt patchset, in fact this change was
+present from v5.9.1-rt20 until being dropped in v5.13-rt1 as it was part
+of a larger patch [1] most of which was replaced by commit b4bfa3fcfe3b
+("sched/core: Rework the __schedule() preempt argument").
 
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
+As described in [1]:
 
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
+   The schedule process must distinguish between blocking on a regular
+   sleeping lock (rwsem and mutex) and a RT-only sleeping lock (spinlock
+   and rwlock):
+   - rwsem and mutex must flush block requests (blk_schedule_flush_plug())
+     even if blocked on a lock. This can not deadlock because this also
+     happens for non-RT.
+     There should be a warning if the scheduling point is within a RCU read
+     section.
 
-John Kacur (5):
-  rt-tests: Fix parsing of affinity when there is a space.
-  rt-tests: Remove classic_pi
-  rt-tests: Makefile: ctags: Change obsolete extra to extras
-  rt-tests: cyclictest: Fix seg fault for verbose with no affinity maxk
-  rt-tests: Change to version v2.4
+   - spinlock and rwlock must not flush block requests. This will deadlock
+     if the callback attempts to acquire a lock which is already acquired.
+     Similarly to being preempted, there should be no warning if the
+     scheduling point is within a RCU read section.
 
-Liwei Song (1):
-  rt-migrate-test: increase the buf size to 2048 when parse cpuinfo
+and with the tsk_is_pi_blocked() in the scheduler path, we hit the first
+issue.
 
-Marcelo Tosatti (1):
-  rt-numa: ignore runtime cpumask if -a CPULIST is specified
+[1] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/0022-locking-rtmutex-Use-custom-scheduling-function-for-s.patch?h=linux-5.10.y-rt-patches
 
-Nicolas Saenz Julienne (1):
-  oslat: Print offending cpu number when above threshold
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+Signed-off-by: John Keeping <john@metanate.com>
+---
+v3:
+- Add SCHED_WARN_ON(current->__state & TASK_RTLOCK_WAIT) as suggested by
+  Peter
+v2:
+- Add Steven's R-b and update the commit message with his suggested
+  quote from [1]
 
-Oscar Shiang (3):
-  rt-numa: Correct the comment of numa_initialize()
-  rt-tests: oslat.8: Remove the argument of --bias
-  rt-tests: hwlatdetect: Add option to specify cpumask
+ include/linux/sched/rt.h | 8 --------
+ kernel/sched/core.c      | 8 ++++++--
+ 2 files changed, 6 insertions(+), 10 deletions(-)
 
-Sebastian Andrzej Siewior (1):
-  cyclictest: Delay setting of main_affinity_mask after creating
-    threads.
-
-Song Chen (1):
-  sched_deadline/cyclicdeadline: add tracelimit
-
-Yihao Wu (1):
-  hackbench: Add af_inet mode besides af_unix and pipe
-
-bartwensley (1):
-  rt-tests: resync has_smi_counter with turbostat code
-
- Makefile                              |   6 +-
- src/cyclictest/cyclictest.c           | 119 +++--
- src/hackbench/hackbench.c             |  57 ++-
- src/hwlatdetect/hwlatdetect.8         |   3 +
- src/hwlatdetect/hwlatdetect.py        |  19 +
- src/lib/rt-numa.c                     |   5 +-
- src/oslat/oslat.8                     |   2 +-
- src/oslat/oslat.c                     |   8 +-
- src/pi_tests/classic_pi.c             | 599 --------------------------
- src/pi_tests/classic_pi.odg           | Bin 12470 -> 0 bytes
- src/rt-migrate-test/rt-migrate-test.c |   4 +-
- src/sched_deadline/cyclicdeadline.8   |   6 +
- src/sched_deadline/cyclicdeadline.c   |  49 ++-
- src/signaltest/signaltest.c           |   4 +-
- 14 files changed, 227 insertions(+), 654 deletions(-)
- delete mode 100644 src/pi_tests/classic_pi.c
- delete mode 100644 src/pi_tests/classic_pi.odg
-
+diff --git a/include/linux/sched/rt.h b/include/linux/sched/rt.h
+index e5af028c08b49..994c25640e156 100644
+--- a/include/linux/sched/rt.h
++++ b/include/linux/sched/rt.h
+@@ -39,20 +39,12 @@ static inline struct task_struct *rt_mutex_get_top_task(struct task_struct *p)
+ }
+ extern void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task);
+ extern void rt_mutex_adjust_pi(struct task_struct *p);
+-static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+-{
+-	return tsk->pi_blocked_on != NULL;
+-}
+ #else
+ static inline struct task_struct *rt_mutex_get_top_task(struct task_struct *task)
+ {
+ 	return NULL;
+ }
+ # define rt_mutex_adjust_pi(p)		do { } while (0)
+-static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+-{
+-	return false;
+-}
+ #endif
+ 
+ extern void normalize_rt_tasks(void);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 1d4660a1915b3..71d6385ece83f 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6578,8 +6578,12 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ 			io_wq_worker_sleeping(tsk);
+ 	}
+ 
+-	if (tsk_is_pi_blocked(tsk))
+-		return;
++	/*
++	 * spinlock and rwlock must not flush block requests.  This will
++	 * deadlock if the callback attempts to acquire a lock which is
++	 * already acquired.
++	 */
++	SCHED_WARN_ON(current->__state & TASK_RTLOCK_WAIT);
+ 
+ 	/*
+ 	 * If we are going to sleep and we have plugged IO queued,
 -- 
-2.36.1
+2.37.0
 
