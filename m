@@ -2,78 +2,81 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7117EC433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 16:13:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D8CB4C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 16:31:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229941AbiGKQN0 (ORCPT
+        id S231938AbiGKQbe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Jul 2022 12:13:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37524 "EHLO
+        Mon, 11 Jul 2022 12:31:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53210 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229594AbiGKQNZ (ORCPT
+        with ESMTP id S229926AbiGKQbc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Jul 2022 12:13:25 -0400
-Received: from mail-pl1-x62d.google.com (mail-pl1-x62d.google.com [IPv6:2607:f8b0:4864:20::62d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5EE927A50F;
-        Mon, 11 Jul 2022 09:13:24 -0700 (PDT)
-Received: by mail-pl1-x62d.google.com with SMTP id v21so2321492plo.0;
-        Mon, 11 Jul 2022 09:13:24 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=references:user-agent:from:to:cc:subject:date:in-reply-to
-         :message-id:mime-version;
-        bh=1BtirUFZlUNsNaJ0rGa4j2n8R2Nb+qFWRgftNDn7dlM=;
-        b=h2gP/eINh3df/khVpYyOKAFueaRwnze8whTPM4NWnJhXedhNVdiYw7q36eqbuk2+b2
-         x9yIbcmMZ07Xc7n7eTivCKkImfW2gbCrlNL7Va25RMwU9StsglbqTN88W1rLDjwueG2U
-         MA8Agg8kStw9PZ+SHWNSZHh5bL+8vfgdcGvT+aszFKSptbnsV42YwLIvz2NmhlfT6KWP
-         0psdwRlghGHK0zrh7XZehpiSD3xdWr7xD56y07PrqCexG4YVWeznvWxWcy6LHvIc8B/l
-         7kcJlwCMs9z53KdaK9c8p3mQ7Vrimb+0YNsRHZlO1N+d/Xv2hdgezVoi22iNgkExNUCr
-         poqQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:references:user-agent:from:to:cc:subject:date
-         :in-reply-to:message-id:mime-version;
-        bh=1BtirUFZlUNsNaJ0rGa4j2n8R2Nb+qFWRgftNDn7dlM=;
-        b=jJsmT/lqqHKfMe4j5FMz0qjOYmEnsiJA9yRc+EunXLnfEkoPcInborXMcFOzTAvxIY
-         QT2n6g2JVDJ/oRNexzYDH8AAqxNHnlZOn4Lpx5f0yIR9aHMSEsKjhKPxOISjcovSa1Bv
-         /BrPCONOIH+bSvwd6eP3JjwmmJVavwQiKv4gNWzGyMv5pW4SMJYXHIqUV+92q3AZjtpY
-         x1oPCs43ZuvDFcq7Yb7z3a4p0aYNE4KJiGlSTyV9qAKsbgJjZy7wdbgO+udkO8DSz+cb
-         PiD5OoCB9QuJz8gA/Cyj8cVtE6qHxuQWlzB8XwcNRA5CIeKcstPZdoFbfDK6LhnZy3sa
-         ZmtA==
-X-Gm-Message-State: AJIora++j08gyPt4itBy2O9UeS65tW/mLBzmjimK4B8hUIadC8nWorKu
-        ol8VQYQeYKCa23QX/+yRclY=
-X-Google-Smtp-Source: AGRyM1uGPEntwk/brrDrAanebOrOr3Lt4WdZYw78TD8cNiNnyXHKbxBrBweYKn9sc24tLdRLZ3CAOQ==
-X-Received: by 2002:a17:903:2452:b0:16c:18f4:7997 with SMTP id l18-20020a170903245200b0016c18f47997mr19363436pls.68.1657556003779;
-        Mon, 11 Jul 2022 09:13:23 -0700 (PDT)
-Received: from ArchLinux (ec2-13-59-0-164.us-east-2.compute.amazonaws.com. [13.59.0.164])
-        by smtp.gmail.com with ESMTPSA id h10-20020a170902f54a00b0016bdf0032b9sm4932804plf.110.2022.07.11.09.13.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 11 Jul 2022 09:13:22 -0700 (PDT)
-References: <20220321053815.71316-1-schspa@gmail.com>
- <YjhF/jWXY5L3I+DZ@linutronix.de>
-User-agent: mu4e 1.7.5; emacs 28.1
-From:   Schspa Shi <schspa@gmail.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     pmladek@suse.com, sergey.senozhatsky@gmail.com,
-        rostedt@goodmis.org, john.ogness@linutronix.de,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de
+        Mon, 11 Jul 2022 12:31:32 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EBFB527FDB;
+        Mon, 11 Jul 2022 09:31:31 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 87C6A611DF;
+        Mon, 11 Jul 2022 16:31:31 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EF0AAC34115;
+        Mon, 11 Jul 2022 16:31:29 +0000 (UTC)
+Date:   Mon, 11 Jul 2022 12:31:28 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     Schspa Shi <schspa@gmail.com>, pmladek@suse.com,
+        sergey.senozhatsky@gmail.com, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org, bigeasy@linutronix.de,
+        tglx@linutronix.de, "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Subject: Re: [PATCH 5.10-rt] printk: fix suppressed message print when
  reboot/panic
-Date:   Tue, 12 Jul 2022 00:05:51 +0800
-In-reply-to: <YjhF/jWXY5L3I+DZ@linutronix.de>
-Message-ID: <m2r12rocfd.fsf@gmail.com>
+Message-ID: <20220711123128.1278e203@gandalf.local.home>
+In-Reply-To: <87a6dj3b5c.fsf@jogness.linutronix.de>
+References: <20220321053815.71316-1-schspa@gmail.com>
+        <87a6dj3b5c.fsf@jogness.linutronix.de>
+X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi guys:
 
-   Do we need to add this to the rt stable tree?
-   The stable tree still have this issues.
+Luis,
 
--- 
-BRs
-Schspa Shi
+Care to add this patch into the 5.10-rt stable?
+
+Thanks,
+
+-- Steve
+
+On Mon, 21 Mar 2022 10:36:55 +0106
+John Ogness <john.ogness@linutronix.de> wrote:
+
+> On 2022-03-21, Schspa Shi <schspa@gmail.com> wrote:
+> > Update printk_seq for suppressed message.
+> >
+> > Affects 5.9-rt and 5.10-rt
+> >
+> > When message is suppressed, printk_seq should be updated, otherwise
+> > this message will be printed when reboot. This problem was introduced
+> > in commit 3edc0c85d154 ("printk: Rebase on top of new ring buffer").
+> >
+> > Signed-off-by: Schspa Shi <schspa@gmail.com>  
+> 
+> Reviewed-by: John Ogness <john.ogness@linutronix.de>
+> 
+> Nice catch. Thanks.
+> 
+> 5.15-rt also has this issue, although the fix is slightly different. For
+> 5.15-rt, writing to con->printk_seq (via latched_seq_write()) requires
+> the console locked. Would you like to post a patch for 5.15-rt as well,
+> or would you like me to do it?
+> 
+> 5.16 and beyond does not have this issue.
+> 
+> John Ogness
+
