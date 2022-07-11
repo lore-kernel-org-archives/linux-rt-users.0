@@ -2,205 +2,74 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DF836C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 17:24:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23187C43334
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 17:32:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229737AbiGKRYB (ORCPT
+        id S231316AbiGKRcw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Jul 2022 13:24:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59248 "EHLO
+        Mon, 11 Jul 2022 13:32:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36476 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229623AbiGKRYA (ORCPT
+        with ESMTP id S229645AbiGKRcv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Jul 2022 13:24:00 -0400
-Received: from mail-pf1-x42f.google.com (mail-pf1-x42f.google.com [IPv6:2607:f8b0:4864:20::42f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1CB06545EB;
-        Mon, 11 Jul 2022 10:23:59 -0700 (PDT)
-Received: by mail-pf1-x42f.google.com with SMTP id w185so5333845pfb.4;
-        Mon, 11 Jul 2022 10:23:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=rvxfrVG0Mm4wXtw9yt0JSCd2txuXR8C99E8tNu8cTUs=;
-        b=Ti9ZT6CQLlREHmFG/2KWscgIQsZgijKmybLk3UtvTdC26CNgTRjIi23V7FmyzGTJsu
-         9K2/D98BioiJfscK/rOKF59aSVRlH7nJKJGFSrgdDHTc9yXnuzlF0ECV43fNY57Ze/IS
-         uhf8ZJoc9aWAPJ2n6ApM8utzCmMPGPyZBgfJx8csIv+7fPBPTbsoUsS7Z4+fPBeKS4b/
-         H6XCKY6D/AbfVTHvZrHRv2LCC3N9XKrpwDLMk3MLSDjVAv02L+6Tkbc9Rss6vE7mOu7o
-         gvtNnAFLaJDegXQco34fmHlkL+Z7k6kNkyLqdWRLuUZP+cvgZ0azLXZn+vaxCOyKQ7np
-         R0Zg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=rvxfrVG0Mm4wXtw9yt0JSCd2txuXR8C99E8tNu8cTUs=;
-        b=AJGci/m62ouDaR13ueVx27sk/7ccqf+YkpPEeXFULLRQ3grEcA3vWr7VXkuJozIWv+
-         BshOhma/icdP1Gs/FbcpxhCqi8WQvaSTy2X9pcP44YpCYMAHk5VQYGQZ8RoO+dPBnkzO
-         uwkeIWTSVT3YSkrA5rpU4pqfDw17XUqESxJen296nqBhLHns3C3nxYRyaPNjrtBlF8j+
-         IT4XAmhKWhzum//m0qKiSQnEnMtZujbVQD/JHhZR4LEHUqzt1LjagCIJwDHGgZTC080S
-         lD/x7aqypg3IrsvoK3TzwFYFZyeUVafEu20V+6mj4OEbXrtEOQXgdwPA/CBHA77TGmSy
-         fw7Q==
-X-Gm-Message-State: AJIora/9LeOng4y8WQQRNWuTelfJ7QT+ZR+Iz683MinA8l3v7apnaIPi
-        pgtbic8f2H47tfOiI8V3NvU=
-X-Google-Smtp-Source: AGRyM1s3+/QpShVw7Ek4MerBvg8nNobEica4T7ApoftzFsj4uX/q6S6QeERcJojdtCLaoQTXHv2Mdg==
-X-Received: by 2002:a63:4b60:0:b0:418:78e:93d8 with SMTP id k32-20020a634b60000000b00418078e93d8mr440758pgl.74.1657560238551;
-        Mon, 11 Jul 2022 10:23:58 -0700 (PDT)
-Received: from localhost.localdomain (ec2-13-59-0-164.us-east-2.compute.amazonaws.com. [13.59.0.164])
-        by smtp.gmail.com with ESMTPSA id d124-20020a623682000000b00528d4f647f2sm5183369pfa.91.2022.07.11.10.23.53
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 11 Jul 2022 10:23:57 -0700 (PDT)
-From:   Schspa Shi <schspa@gmail.com>
-To:     bigeasy@linutronix.de, rostedt@goodmis.org
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Schspa Shi <schspa@gmail.com>
-Subject: [RFC PATCH] irq_work: wakeup irq_workd when queued first rt_lazy work
-Date:   Tue, 12 Jul 2022 01:23:15 +0800
-Message-Id: <20220711172314.603717-1-schspa@gmail.com>
-X-Mailer: git-send-email 2.37.0
+        Mon, 11 Jul 2022 13:32:51 -0400
+Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 69AAB61D85;
+        Mon, 11 Jul 2022 10:32:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Sender:In-Reply-To:Content-Type:
+        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=IKqtYuP3772AWhdPEwSolwbaEJNh5Kyl/a398AmbV1w=; b=1VXB/b8e3Fg9TNR/6sctYNCKiD
+        phXZB8UZWum9R7Q7eVbf3e4yAg4OK4uN3Fi8f2iAXI5PUQ9nySx7plNQJ4Z5NPZPSK023g+DzpH7R
+        sWP5SdQzZwqieRIGT4nLZMQo6FDnMxivRSCagIeImsJTp8Mz4M2UDwOyu6n2mKSeaD4PyfS5ksPzh
+        OITgsIE09m4C8UC9jN2OGJ6AJ5LS38O79SkCajZby1gDXWCBOEpP9Ic2uqhv3YIcfBku17G0VIwpu
+        wJv1jMK8zdvHh5ESjP2oIlFyG54wthWFHbY6z3RQ4fC154rf3C9RnT0ApvlIhGu8T9s9QXsTNmX/Z
+        2AKjL5Ng==;
+Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1oAxGt-003Vdh-5t; Mon, 11 Jul 2022 17:32:35 +0000
+Date:   Mon, 11 Jul 2022 10:32:35 -0700
+From:   Luis Chamberlain <mcgrof@kernel.org>
+To:     Aaron Tomlin <atomlin@redhat.com>
+Cc:     rostedt@goodmis.org, cl@linux.com, pmladek@suse.com,
+        mbenes@suse.cz, christophe.leroy@csgroup.eu,
+        akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
+        linux-modules@vger.kernel.org, atomlin@atomlin.com,
+        ghalat@redhat.com, oleksandr@natalenko.name, neelx@redhat.com,
+        daniel.thompson@linaro.org, hch@infradead.org, tglx@linutronix.de,
+        adrian.hunter@intel.com, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v3 -next 1/1] module: kallsyms: Ensure preemption in
+ add_kallsyms() with PREEMPT_RT
+Message-ID: <Ysxes81GjdNK3yE+@bombadil.infradead.org>
+References: <20220711171719.1244255-1-atomlin@redhat.com>
+ <20220711171719.1244255-2-atomlin@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20220711171719.1244255-2-atomlin@redhat.com>
+Sender: Luis Chamberlain <mcgrof@infradead.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Commit b4c6f86ec2f64
-("irq_work: Handle some irq_work in a per-CPU thread on PREEMPT_RT")
-treat all irq_work without IRQ_WORK_HARD_IRQ flags to the lazy_list
-in PREEMPT_RT. But this kind of irq_work still has some difference
-with IRQ work set IRQ_WORK_LAZY. The difference as fellowing:
+On Mon, Jul 11, 2022 at 06:17:19PM +0100, Aaron Tomlin wrote:
+> The commit 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
+> under PREEMPT_RT=y, disabling preemption introduced an unbounded
+> latency since the loop is not fixed. This change caused a regression
+> since previously preemption was not disabled and we would dereference
+> RCU-protected pointers explicitly. That being said, these pointers
+> cannot change.
+> 
+> Before kallsyms-specific data is prepared/or set-up, we ensure that
+> the unformed module is known to be unique i.e. does not already exist
+> (see load_module()). Therefore, we can fix this by using the common and
+> more appropriate RCU flavour as this section of code can be safely
+> preempted.
+> 
+> Reported-by: Steven Rostedt <rostedt@goodmis.org>
+> Fixes: 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
+> Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
 
-- With IRQ_WORK_LAZY: (type1)
-  This kind of work will be executed after the next time tick by wakeup
-  irq_workd, there will be more scheduling delays.
+Thanks! Queued up!
 
-  Let's mark this as type1
-
-- Without IRQ_WORK_LAZY and IRQ_WORK_HARD_IRQ: (type2)
-  This kind of irq_work will have a faster response speed by wakeup
-  irq_workd from IPI interrupt.
-
-  Let's mark it as type2
-
-I want to know if this difference is by design.
-
-If this is by design, we have a problem that the irq_work of type2
-will not execute as quickly as expected, it may be delayed by the
-irq_work of type1.
-
-Please consider the following scenarios:
-
-If the CPU queued a type1 irq_work A, and then a type2 irq_work B.
-But we won't make B executed quickly, because we won't issue the IPI
-interrupt to wakeup irq_workd (the llist_add call will return false).
-
-This PATCH will issue the IPI_IRQ_WORK to make B execute quickly.
-
-One thing that needs to be optimized is that we now have
-lazy_list.node.llist and lazy_work_raised which need to be granted
-to be atomicity, disabled the local CPU IRQ to make this atomic.
-There should be a better way to make these two variants to be atomically
-and I can go in deep if this little problem is not by design, and need
-to be fixed.
-
-If these two types of irq_work should be the same with the priority.
-maybe we should change.
-
-if (!lazy_work || tick_nohz_tick_stopped()) {
-	arch_irq_work_raise();
-}
-
-to
-
-if (!(lazy_work || rt_lazy_work) || tick_nohz_tick_stopped()) {
-	arch_irq_work_raise();
-}
-
-I'm uploading this patch just to explain the problem, hopefully
-don't pay too much attention to the ugly changes below.
-
-Signed-off-by: Schspa Shi <schspa@gmail.com>
----
- kernel/irq_work.c | 40 +++++++++++++++++++++++++++++++++++++---
- 1 file changed, 37 insertions(+), 3 deletions(-)
-
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index 7afa40fe5cc43..d5d0b720fac15 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -25,6 +25,7 @@
- static DEFINE_PER_CPU(struct llist_head, raised_list);
- static DEFINE_PER_CPU(struct llist_head, lazy_list);
- static DEFINE_PER_CPU(struct task_struct *, irq_workd);
-+static DEFINE_PER_CPU(bool, lazy_work_raised);
- 
- static void wake_irq_workd(void)
- {
-@@ -81,6 +82,7 @@ static void __irq_work_queue_local(struct irq_work *work)
- 	bool rt_lazy_work = false;
- 	bool lazy_work = false;
- 	int work_flags;
-+	unsigned long flags;
- 
- 	work_flags = atomic_read(&work->node.a_flags);
- 	if (work_flags & IRQ_WORK_LAZY)
-@@ -94,12 +96,35 @@ static void __irq_work_queue_local(struct irq_work *work)
- 	else
- 		list = this_cpu_ptr(&raised_list);
- 
--	if (!llist_add(&work->node.llist, list))
-+	local_irq_save(flags);
-+	if (!llist_add(&work->node.llist, list)) {
-+		bool irq_raised;
-+		/*
-+		 * In PREEMPT_RT, if we add a lazy work added to the list
-+		 * before, the work maybe not raised. We need a extra check
-+		 * for PREEMPT_RT.
-+		 */
-+		irq_raised = !xchg(this_cpu_ptr(&lazy_work_raised), true);
-+		local_irq_restore(flags);
-+		if (unlikely(!irq_raised))
-+			arch_irq_work_raise();
-+
- 		return;
-+	}
- 
- 	/* If the work is "lazy", handle it from next tick if any */
--	if (!lazy_work || tick_nohz_tick_stopped())
-+	if (!lazy_work || tick_nohz_tick_stopped()) {
-+		(void) xchg(this_cpu_ptr(&lazy_work_raised), true);
-+		local_irq_restore(flags);
- 		arch_irq_work_raise();
-+	} else if (lazy_work || rt_lazy_work) {
-+		/*
-+		 * The first added irq work not raise a irq work, we need to
-+		 * raise one for the next added irq work.
-+		 */
-+		(void) xchg(this_cpu_ptr(&lazy_work_raised), false);
-+		local_irq_restore(flags);
-+	}
- }
- 
- /* Enqueue the irq work @work on the current CPU */
-@@ -151,9 +176,18 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
- 		 */
- 		if (IS_ENABLED(CONFIG_PREEMPT_RT) &&
- 		    !(atomic_read(&work->node.a_flags) & IRQ_WORK_HARD_IRQ)) {
-+			unsigned long flags;
-+
-+			local_irq_save(flags);
-+			if (!llist_add(&work->node.llist, &per_cpu(lazy_list, cpu))) {
-+				if (!xchg(this_cpu_ptr(&lazy_work_raised), true))
-+					arch_irq_work_raise();
- 
--			if (!llist_add(&work->node.llist, &per_cpu(lazy_list, cpu)))
-+				local_irq_restore(flags);
- 				goto out;
-+			}
-+			(void) xchg(this_cpu_ptr(&lazy_work_raised), true);
-+			local_irq_restore(flags);
- 
- 			work = &per_cpu(irq_work_wakeup, cpu);
- 			if (!irq_work_claim(work))
--- 
-2.37.0
-
+  Luis
