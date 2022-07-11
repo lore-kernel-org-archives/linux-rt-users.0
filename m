@@ -2,89 +2,78 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DE343C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 15:57:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7117EC433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 16:13:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229490AbiGKP5m (ORCPT
+        id S229941AbiGKQN0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Jul 2022 11:57:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50574 "EHLO
+        Mon, 11 Jul 2022 12:13:26 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37524 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230323AbiGKP5k (ORCPT
+        with ESMTP id S229594AbiGKQNZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Jul 2022 11:57:40 -0400
-Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F2A6A33413;
-        Mon, 11 Jul 2022 08:57:38 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Sender:In-Reply-To:Content-Type:
-        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=S5eI42e6zt7NmkB9y9JfjDA8loQFmC6DlzCNO41e3LY=; b=0Rhdgwxibnfkm5r5i7jTEVBK19
-        imIyo9ZmAX7xikNkYe0icYcht/V3sLap/GbLNgDJAHCwfkQv3ZJYLRibFZl1VuCir5FdwHUlLC6I9
-        yEPK/yR2Kj/HfvPRXsIw7cIo9Y1ju6zCOcEIEMJ2miOaDQChtOKy0/66LTxGvsfbkL0fv/jUEoxwM
-        8dSnBSh60s7lkLKOYf5NR9hHEYHCOPoLV/i/QWNb0gT52afidT4Nb2hxISHO2R2ZMuod1PNHOXJea
-        cLVU6pRhwjgwNv+denF7LFANFKRsf/jMU8tP65kNbIiYqCHIhV8dyMDgM65Rm6nTu4URTOE4Kyq0M
-        iDTquLRw==;
-Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1oAvmn-0033fT-53; Mon, 11 Jul 2022 15:57:25 +0000
-Date:   Mon, 11 Jul 2022 08:57:25 -0700
-From:   Luis Chamberlain <mcgrof@kernel.org>
-To:     Aaron Tomlin <atomlin@atomlin.com>,
-        Adrian Hunter <adrian.hunter@intel.com>
-Cc:     Aaron Tomlin <atomlin@redhat.com>, rostedt@goodmis.org,
-        cl@linux.com, pmladek@suse.com, mbenes@suse.cz,
-        christophe.leroy@csgroup.eu, akpm@linux-foundation.org,
-        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
-        ghalat@redhat.com, oleksandr@natalenko.name, neelx@redhat.com,
-        daniel.thompson@linaro.org, hch@infradead.org, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2] module: kallsyms: Ensure preemption in add_kallsyms()
- with PREEMPT_RT
-Message-ID: <YsxIZfhgdQnh2QsJ@bombadil.infradead.org>
-References: <20220704161753.4033684-1-atomlin@redhat.com>
- <YsXNVSAtO+VDggcI@bombadil.infradead.org>
- <20220707165750.tk4fadpv3d4zr2mb@ava.usersys.com>
- <YscV7ujYs6Q60N+E@bombadil.infradead.org>
- <20220707185619.sryhytlfkolmklnn@ava.usersys.com>
+        Mon, 11 Jul 2022 12:13:25 -0400
+Received: from mail-pl1-x62d.google.com (mail-pl1-x62d.google.com [IPv6:2607:f8b0:4864:20::62d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5EE927A50F;
+        Mon, 11 Jul 2022 09:13:24 -0700 (PDT)
+Received: by mail-pl1-x62d.google.com with SMTP id v21so2321492plo.0;
+        Mon, 11 Jul 2022 09:13:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=references:user-agent:from:to:cc:subject:date:in-reply-to
+         :message-id:mime-version;
+        bh=1BtirUFZlUNsNaJ0rGa4j2n8R2Nb+qFWRgftNDn7dlM=;
+        b=h2gP/eINh3df/khVpYyOKAFueaRwnze8whTPM4NWnJhXedhNVdiYw7q36eqbuk2+b2
+         x9yIbcmMZ07Xc7n7eTivCKkImfW2gbCrlNL7Va25RMwU9StsglbqTN88W1rLDjwueG2U
+         MA8Agg8kStw9PZ+SHWNSZHh5bL+8vfgdcGvT+aszFKSptbnsV42YwLIvz2NmhlfT6KWP
+         0psdwRlghGHK0zrh7XZehpiSD3xdWr7xD56y07PrqCexG4YVWeznvWxWcy6LHvIc8B/l
+         7kcJlwCMs9z53KdaK9c8p3mQ7Vrimb+0YNsRHZlO1N+d/Xv2hdgezVoi22iNgkExNUCr
+         poqQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:references:user-agent:from:to:cc:subject:date
+         :in-reply-to:message-id:mime-version;
+        bh=1BtirUFZlUNsNaJ0rGa4j2n8R2Nb+qFWRgftNDn7dlM=;
+        b=jJsmT/lqqHKfMe4j5FMz0qjOYmEnsiJA9yRc+EunXLnfEkoPcInborXMcFOzTAvxIY
+         QT2n6g2JVDJ/oRNexzYDH8AAqxNHnlZOn4Lpx5f0yIR9aHMSEsKjhKPxOISjcovSa1Bv
+         /BrPCONOIH+bSvwd6eP3JjwmmJVavwQiKv4gNWzGyMv5pW4SMJYXHIqUV+92q3AZjtpY
+         x1oPCs43ZuvDFcq7Yb7z3a4p0aYNE4KJiGlSTyV9qAKsbgJjZy7wdbgO+udkO8DSz+cb
+         PiD5OoCB9QuJz8gA/Cyj8cVtE6qHxuQWlzB8XwcNRA5CIeKcstPZdoFbfDK6LhnZy3sa
+         ZmtA==
+X-Gm-Message-State: AJIora++j08gyPt4itBy2O9UeS65tW/mLBzmjimK4B8hUIadC8nWorKu
+        ol8VQYQeYKCa23QX/+yRclY=
+X-Google-Smtp-Source: AGRyM1uGPEntwk/brrDrAanebOrOr3Lt4WdZYw78TD8cNiNnyXHKbxBrBweYKn9sc24tLdRLZ3CAOQ==
+X-Received: by 2002:a17:903:2452:b0:16c:18f4:7997 with SMTP id l18-20020a170903245200b0016c18f47997mr19363436pls.68.1657556003779;
+        Mon, 11 Jul 2022 09:13:23 -0700 (PDT)
+Received: from ArchLinux (ec2-13-59-0-164.us-east-2.compute.amazonaws.com. [13.59.0.164])
+        by smtp.gmail.com with ESMTPSA id h10-20020a170902f54a00b0016bdf0032b9sm4932804plf.110.2022.07.11.09.13.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 11 Jul 2022 09:13:22 -0700 (PDT)
+References: <20220321053815.71316-1-schspa@gmail.com>
+ <YjhF/jWXY5L3I+DZ@linutronix.de>
+User-agent: mu4e 1.7.5; emacs 28.1
+From:   Schspa Shi <schspa@gmail.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     pmladek@suse.com, sergey.senozhatsky@gmail.com,
+        rostedt@goodmis.org, john.ogness@linutronix.de,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de
+Subject: Re: [PATCH 5.10-rt] printk: fix suppressed message print when
+ reboot/panic
+Date:   Tue, 12 Jul 2022 00:05:51 +0800
+In-reply-to: <YjhF/jWXY5L3I+DZ@linutronix.de>
+Message-ID: <m2r12rocfd.fsf@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20220707185619.sryhytlfkolmklnn@ava.usersys.com>
-Sender: Luis Chamberlain <mcgrof@infradead.org>
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jul 07, 2022 at 07:56:19PM +0100, Aaron Tomlin wrote:
-> On Thu 2022-07-07 10:20 -0700, Luis Chamberlain wrote:
-> > This is incredibly important information which should be added to the
-> > commit log, specialy as PREEMPT_RT=y becomes a first class citizen.
-> 
-> Understood.
-> 
-> > 
-> > > So, I would say this was a regression since earlier preemption was
-> > > not disabled and we would dereference RCU-protected pointers explicitly
-> > > i.e. without using the more appropriate rcu_dereference() family
-> > > of primitives. That being said, these pointers cannot change in this
-> > > context as explained previously.
-> > > 
-> > > Would the above be suitable - just to confirm before I send another
-> > > iteration?
-> > 
-> > Yes, I would send this to Linus for the rc series. Please adjust the
-> > commit log with all this information.
-> 
-> Will do.
-> 
-> > BTW I think there is just one more fix pending from you right?
-> 
-> Yes - I will send/or prepare it as a partial revert:
-> 's/strscpy/strlcpy/' with a brief explanation.
+Hi guys:
 
-If that is just the kallsyms fix Adrian Hunter already sent a fix:
+   Do we need to add this to the rt stable tree?
+   The stable tree still have this issues.
 
-https://lkml.kernel.org/r/20220701094403.3044-1-adrian.hunter@intel.com         
-
-  Luis
+-- 
+BRs
+Schspa Shi
