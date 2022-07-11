@@ -2,160 +2,205 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3CF2FCCA481
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 17:17:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF836C433EF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Jul 2022 17:24:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231377AbiGKRR3 (ORCPT
+        id S229737AbiGKRYB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 11 Jul 2022 13:17:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53850 "EHLO
+        Mon, 11 Jul 2022 13:24:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59248 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229477AbiGKRR2 (ORCPT
+        with ESMTP id S229623AbiGKRYA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Jul 2022 13:17:28 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 58B395140F
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Jul 2022 10:17:27 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1657559846;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=r5CZMjCHrznhAlDAvMwZi4LrvvAMrjysFI7tqvoFjPg=;
-        b=QHuEVeJ3E2HsKTgsIrfib4yRWtfauiey4FK2pibXbpv9qd1/oAel0nZNnYRSiLgiDqaViM
-        806eH4N1k5jSKI7yoiGdm96AHabuVk/W0woXoxGRSAH60QtGCk8zVjURirQRUwZwdsBao8
-        lw37MSG0EcUQGcm6dFz/BiCXqldTrKA=
-Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
- [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-457-gb_2jp-oPAqsDXvK2lPndA-1; Mon, 11 Jul 2022 13:17:25 -0400
-X-MC-Unique: gb_2jp-oPAqsDXvK2lPndA-1
-Received: by mail-wm1-f72.google.com with SMTP id r206-20020a1c44d7000000b003a2cfab0839so2620599wma.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Jul 2022 10:17:25 -0700 (PDT)
+        Mon, 11 Jul 2022 13:24:00 -0400
+Received: from mail-pf1-x42f.google.com (mail-pf1-x42f.google.com [IPv6:2607:f8b0:4864:20::42f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1CB06545EB;
+        Mon, 11 Jul 2022 10:23:59 -0700 (PDT)
+Received: by mail-pf1-x42f.google.com with SMTP id w185so5333845pfb.4;
+        Mon, 11 Jul 2022 10:23:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=rvxfrVG0Mm4wXtw9yt0JSCd2txuXR8C99E8tNu8cTUs=;
+        b=Ti9ZT6CQLlREHmFG/2KWscgIQsZgijKmybLk3UtvTdC26CNgTRjIi23V7FmyzGTJsu
+         9K2/D98BioiJfscK/rOKF59aSVRlH7nJKJGFSrgdDHTc9yXnuzlF0ECV43fNY57Ze/IS
+         uhf8ZJoc9aWAPJ2n6ApM8utzCmMPGPyZBgfJx8csIv+7fPBPTbsoUsS7Z4+fPBeKS4b/
+         H6XCKY6D/AbfVTHvZrHRv2LCC3N9XKrpwDLMk3MLSDjVAv02L+6Tkbc9Rss6vE7mOu7o
+         gvtNnAFLaJDegXQco34fmHlkL+Z7k6kNkyLqdWRLuUZP+cvgZ0azLXZn+vaxCOyKQ7np
+         R0Zg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=r5CZMjCHrznhAlDAvMwZi4LrvvAMrjysFI7tqvoFjPg=;
-        b=JlD9iq42pMiObFm1wtMWZ4kkf029iW4weYkCoQWe1Qb9bvLgFilRyX8Vw/QGw8Hqnf
-         sN3Vzhd7B/gYndREw+etb7BaVExB1vLit8ckG59iHO/PxO7iCfyE4k6xSAyzCKiUk6Sf
-         3XQQu9kBo+ERUIdEZIAAh55olxHf6adfXKJu+mg9WyypY/cIHWHAXSyECiwy1JXU3nGk
-         ygFPPPTYLtsU67whU6ma023mogTLEX5a8QWTaKy5J+/RmMs7MQ/No7zPsOMcVio7ct89
-         7O0AdZsuYvA2M0rmDWNXYx50OleVyIdinO7EGIZuf0HEaP9NinX5VdPjM9cGn81oz1Ct
-         YWVg==
-X-Gm-Message-State: AJIora9ADkxXnXFAyNQXdI2OqM0j7naY4QFR+KVNm99FFZ6ySZO3bM6e
-        OyWz4hmGqI9XjQpB9h7WBg+vdcJ1layPkmmeml0FzfkQVfuDNauA//qjzu3npXUXBxg/NrUl3CK
-        EzSu7IFTWwjYA8jgDMGNqRCtN+Q==
-X-Received: by 2002:a05:600c:4f95:b0:3a1:7310:62d8 with SMTP id n21-20020a05600c4f9500b003a1731062d8mr16840445wmq.16.1657559844277;
-        Mon, 11 Jul 2022 10:17:24 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1v0iG5UhoXyDbYSBqO1pe6N4iA2WYxaZ6drqDo17YFm0K4RwhjlO/+3C4clOQZfwzUOTD1sGA==
-X-Received: by 2002:a05:600c:4f95:b0:3a1:7310:62d8 with SMTP id n21-20020a05600c4f9500b003a1731062d8mr16840422wmq.16.1657559844102;
-        Mon, 11 Jul 2022 10:17:24 -0700 (PDT)
-Received: from localhost (cpc111743-lutn13-2-0-cust979.9-3.cable.virginm.net. [82.17.115.212])
-        by smtp.gmail.com with ESMTPSA id f13-20020a05600c154d00b003a04d19dab3sm26356809wmg.3.2022.07.11.10.17.22
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=rvxfrVG0Mm4wXtw9yt0JSCd2txuXR8C99E8tNu8cTUs=;
+        b=AJGci/m62ouDaR13ueVx27sk/7ccqf+YkpPEeXFULLRQ3grEcA3vWr7VXkuJozIWv+
+         BshOhma/icdP1Gs/FbcpxhCqi8WQvaSTy2X9pcP44YpCYMAHk5VQYGQZ8RoO+dPBnkzO
+         uwkeIWTSVT3YSkrA5rpU4pqfDw17XUqESxJen296nqBhLHns3C3nxYRyaPNjrtBlF8j+
+         IT4XAmhKWhzum//m0qKiSQnEnMtZujbVQD/JHhZR4LEHUqzt1LjagCIJwDHGgZTC080S
+         lD/x7aqypg3IrsvoK3TzwFYFZyeUVafEu20V+6mj4OEbXrtEOQXgdwPA/CBHA77TGmSy
+         fw7Q==
+X-Gm-Message-State: AJIora/9LeOng4y8WQQRNWuTelfJ7QT+ZR+Iz683MinA8l3v7apnaIPi
+        pgtbic8f2H47tfOiI8V3NvU=
+X-Google-Smtp-Source: AGRyM1s3+/QpShVw7Ek4MerBvg8nNobEica4T7ApoftzFsj4uX/q6S6QeERcJojdtCLaoQTXHv2Mdg==
+X-Received: by 2002:a63:4b60:0:b0:418:78e:93d8 with SMTP id k32-20020a634b60000000b00418078e93d8mr440758pgl.74.1657560238551;
+        Mon, 11 Jul 2022 10:23:58 -0700 (PDT)
+Received: from localhost.localdomain (ec2-13-59-0-164.us-east-2.compute.amazonaws.com. [13.59.0.164])
+        by smtp.gmail.com with ESMTPSA id d124-20020a623682000000b00528d4f647f2sm5183369pfa.91.2022.07.11.10.23.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 11 Jul 2022 10:17:22 -0700 (PDT)
-From:   Aaron Tomlin <atomlin@redhat.com>
-To:     mcgrof@kernel.org, rostedt@goodmis.org
-Cc:     cl@linux.com, pmladek@suse.com, mbenes@suse.cz,
-        christophe.leroy@csgroup.eu, akpm@linux-foundation.org,
-        linux-kernel@vger.kernel.org, linux-modules@vger.kernel.org,
-        atomlin@atomlin.com, ghalat@redhat.com, oleksandr@natalenko.name,
-        neelx@redhat.com, daniel.thompson@linaro.org, hch@infradead.org,
-        tglx@linutronix.de, adrian.hunter@intel.com,
-        linux-rt-users@vger.kernel.org
-Subject: [PATCH v3 -next 1/1] module: kallsyms: Ensure preemption in add_kallsyms() with PREEMPT_RT
-Date:   Mon, 11 Jul 2022 18:17:19 +0100
-Message-Id: <20220711171719.1244255-2-atomlin@redhat.com>
-X-Mailer: git-send-email 2.34.3
-In-Reply-To: <20220711171719.1244255-1-atomlin@redhat.com>
-References: <20220711171719.1244255-1-atomlin@redhat.com>
+        Mon, 11 Jul 2022 10:23:57 -0700 (PDT)
+From:   Schspa Shi <schspa@gmail.com>
+To:     bigeasy@linutronix.de, rostedt@goodmis.org
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Schspa Shi <schspa@gmail.com>
+Subject: [RFC PATCH] irq_work: wakeup irq_workd when queued first rt_lazy work
+Date:   Tue, 12 Jul 2022 01:23:15 +0800
+Message-Id: <20220711172314.603717-1-schspa@gmail.com>
+X-Mailer: git-send-email 2.37.0
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The commit 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
-under PREEMPT_RT=y, disabling preemption introduced an unbounded
-latency since the loop is not fixed. This change caused a regression
-since previously preemption was not disabled and we would dereference
-RCU-protected pointers explicitly. That being said, these pointers
-cannot change.
+Commit b4c6f86ec2f64
+("irq_work: Handle some irq_work in a per-CPU thread on PREEMPT_RT")
+treat all irq_work without IRQ_WORK_HARD_IRQ flags to the lazy_list
+in PREEMPT_RT. But this kind of irq_work still has some difference
+with IRQ work set IRQ_WORK_LAZY. The difference as fellowing:
 
-Before kallsyms-specific data is prepared/or set-up, we ensure that
-the unformed module is known to be unique i.e. does not already exist
-(see load_module()). Therefore, we can fix this by using the common and
-more appropriate RCU flavour as this section of code can be safely
-preempted.
+- With IRQ_WORK_LAZY: (type1)
+  This kind of work will be executed after the next time tick by wakeup
+  irq_workd, there will be more scheduling delays.
 
-Reported-by: Steven Rostedt <rostedt@goodmis.org>
-Fixes: 08126db5ff73 ("module: kallsyms: Fix suspicious rcu usage")
-Signed-off-by: Aaron Tomlin <atomlin@redhat.com>
+  Let's mark this as type1
+
+- Without IRQ_WORK_LAZY and IRQ_WORK_HARD_IRQ: (type2)
+  This kind of irq_work will have a faster response speed by wakeup
+  irq_workd from IPI interrupt.
+
+  Let's mark it as type2
+
+I want to know if this difference is by design.
+
+If this is by design, we have a problem that the irq_work of type2
+will not execute as quickly as expected, it may be delayed by the
+irq_work of type1.
+
+Please consider the following scenarios:
+
+If the CPU queued a type1 irq_work A, and then a type2 irq_work B.
+But we won't make B executed quickly, because we won't issue the IPI
+interrupt to wakeup irq_workd (the llist_add call will return false).
+
+This PATCH will issue the IPI_IRQ_WORK to make B execute quickly.
+
+One thing that needs to be optimized is that we now have
+lazy_list.node.llist and lazy_work_raised which need to be granted
+to be atomicity, disabled the local CPU IRQ to make this atomic.
+There should be a better way to make these two variants to be atomically
+and I can go in deep if this little problem is not by design, and need
+to be fixed.
+
+If these two types of irq_work should be the same with the priority.
+maybe we should change.
+
+if (!lazy_work || tick_nohz_tick_stopped()) {
+	arch_irq_work_raise();
+}
+
+to
+
+if (!(lazy_work || rt_lazy_work) || tick_nohz_tick_stopped()) {
+	arch_irq_work_raise();
+}
+
+I'm uploading this patch just to explain the problem, hopefully
+don't pay too much attention to the ugly changes below.
+
+Signed-off-by: Schspa Shi <schspa@gmail.com>
 ---
- kernel/module/kallsyms.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ kernel/irq_work.c | 40 +++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 37 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/module/kallsyms.c b/kernel/module/kallsyms.c
-index 18c23545b984..77e75bead569 100644
---- a/kernel/module/kallsyms.c
-+++ b/kernel/module/kallsyms.c
-@@ -176,14 +176,14 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
- 	mod->kallsyms = (void __rcu *)mod->init_layout.base +
- 		info->mod_kallsyms_init_off;
+diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+index 7afa40fe5cc43..d5d0b720fac15 100644
+--- a/kernel/irq_work.c
++++ b/kernel/irq_work.c
+@@ -25,6 +25,7 @@
+ static DEFINE_PER_CPU(struct llist_head, raised_list);
+ static DEFINE_PER_CPU(struct llist_head, lazy_list);
+ static DEFINE_PER_CPU(struct task_struct *, irq_workd);
++static DEFINE_PER_CPU(bool, lazy_work_raised);
  
--	preempt_disable();
-+	rcu_read_lock();
- 	/* The following is safe since this pointer cannot change */
--	rcu_dereference_sched(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
--	rcu_dereference_sched(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
-+	rcu_dereference(mod->kallsyms)->symtab = (void *)symsec->sh_addr;
-+	rcu_dereference(mod->kallsyms)->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
- 	/* Make sure we get permanent strtab: don't use info->strtab. */
--	rcu_dereference_sched(mod->kallsyms)->strtab =
-+	rcu_dereference(mod->kallsyms)->strtab =
- 		(void *)info->sechdrs[info->index.str].sh_addr;
--	rcu_dereference_sched(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
-+	rcu_dereference(mod->kallsyms)->typetab = mod->init_layout.base + info->init_typeoffs;
+ static void wake_irq_workd(void)
+ {
+@@ -81,6 +82,7 @@ static void __irq_work_queue_local(struct irq_work *work)
+ 	bool rt_lazy_work = false;
+ 	bool lazy_work = false;
+ 	int work_flags;
++	unsigned long flags;
  
- 	/*
- 	 * Now populate the cut down core kallsyms for after init
-@@ -193,20 +193,20 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
- 	mod->core_kallsyms.strtab = s = mod->data_layout.base + info->stroffs;
- 	mod->core_kallsyms.typetab = mod->data_layout.base + info->core_typeoffs;
- 	strtab_size = info->core_typeoffs - info->stroffs;
--	src = rcu_dereference_sched(mod->kallsyms)->symtab;
--	for (ndst = i = 0; i < rcu_dereference_sched(mod->kallsyms)->num_symtab; i++) {
--		rcu_dereference_sched(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
-+	src = rcu_dereference(mod->kallsyms)->symtab;
-+	for (ndst = i = 0; i < rcu_dereference(mod->kallsyms)->num_symtab; i++) {
-+		rcu_dereference(mod->kallsyms)->typetab[i] = elf_type(src + i, info);
- 		if (i == 0 || is_livepatch_module(mod) ||
- 		    is_core_symbol(src + i, info->sechdrs, info->hdr->e_shnum,
- 				   info->index.pcpu)) {
- 			ssize_t ret;
+ 	work_flags = atomic_read(&work->node.a_flags);
+ 	if (work_flags & IRQ_WORK_LAZY)
+@@ -94,12 +96,35 @@ static void __irq_work_queue_local(struct irq_work *work)
+ 	else
+ 		list = this_cpu_ptr(&raised_list);
  
- 			mod->core_kallsyms.typetab[ndst] =
--			    rcu_dereference_sched(mod->kallsyms)->typetab[i];
-+			    rcu_dereference(mod->kallsyms)->typetab[i];
- 			dst[ndst] = src[i];
- 			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
- 			ret = strscpy(s,
--				      &rcu_dereference_sched(mod->kallsyms)->strtab[src[i].st_name],
-+				      &rcu_dereference(mod->kallsyms)->strtab[src[i].st_name],
- 				      strtab_size);
- 			if (ret < 0)
- 				break;
-@@ -214,7 +214,7 @@ void add_kallsyms(struct module *mod, const struct load_info *info)
- 			strtab_size -= ret + 1;
- 		}
- 	}
--	preempt_enable();
-+	rcu_read_unlock();
- 	mod->core_kallsyms.num_symtab = ndst;
+-	if (!llist_add(&work->node.llist, list))
++	local_irq_save(flags);
++	if (!llist_add(&work->node.llist, list)) {
++		bool irq_raised;
++		/*
++		 * In PREEMPT_RT, if we add a lazy work added to the list
++		 * before, the work maybe not raised. We need a extra check
++		 * for PREEMPT_RT.
++		 */
++		irq_raised = !xchg(this_cpu_ptr(&lazy_work_raised), true);
++		local_irq_restore(flags);
++		if (unlikely(!irq_raised))
++			arch_irq_work_raise();
++
+ 		return;
++	}
+ 
+ 	/* If the work is "lazy", handle it from next tick if any */
+-	if (!lazy_work || tick_nohz_tick_stopped())
++	if (!lazy_work || tick_nohz_tick_stopped()) {
++		(void) xchg(this_cpu_ptr(&lazy_work_raised), true);
++		local_irq_restore(flags);
+ 		arch_irq_work_raise();
++	} else if (lazy_work || rt_lazy_work) {
++		/*
++		 * The first added irq work not raise a irq work, we need to
++		 * raise one for the next added irq work.
++		 */
++		(void) xchg(this_cpu_ptr(&lazy_work_raised), false);
++		local_irq_restore(flags);
++	}
  }
  
+ /* Enqueue the irq work @work on the current CPU */
+@@ -151,9 +176,18 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
+ 		 */
+ 		if (IS_ENABLED(CONFIG_PREEMPT_RT) &&
+ 		    !(atomic_read(&work->node.a_flags) & IRQ_WORK_HARD_IRQ)) {
++			unsigned long flags;
++
++			local_irq_save(flags);
++			if (!llist_add(&work->node.llist, &per_cpu(lazy_list, cpu))) {
++				if (!xchg(this_cpu_ptr(&lazy_work_raised), true))
++					arch_irq_work_raise();
+ 
+-			if (!llist_add(&work->node.llist, &per_cpu(lazy_list, cpu)))
++				local_irq_restore(flags);
+ 				goto out;
++			}
++			(void) xchg(this_cpu_ptr(&lazy_work_raised), true);
++			local_irq_restore(flags);
+ 
+ 			work = &per_cpu(irq_work_wakeup, cpu);
+ 			if (!irq_work_claim(work))
 -- 
-2.34.3
+2.37.0
 
