@@ -2,65 +2,69 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9B0BC43334
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Jul 2022 11:46:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35B09CCA483
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Jul 2022 11:46:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230257AbiGLLqP (ORCPT
+        id S231916AbiGLLqQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 12 Jul 2022 07:46:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58462 "EHLO
+        Tue, 12 Jul 2022 07:46:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58464 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231206AbiGLLqN (ORCPT
+        with ESMTP id S231584AbiGLLqN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Tue, 12 Jul 2022 07:46:13 -0400
-X-Greylist: delayed 1398 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 12 Jul 2022 04:46:10 PDT
-Received: from mail.infraroot.at (mail.infraroot.at [IPv6:2001:41d0:701:1100::afc])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AAE36B195A
+Received: from mail.infraroot.at (mail.infraroot.at [54.37.73.54])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AD308B1963
         for <linux-rt-users@vger.kernel.org>; Tue, 12 Jul 2022 04:46:10 -0700 (PDT)
 Received: from localtoast.corp.sigma-star.at (unknown [82.150.214.1])
-        by mail.infraroot.at (Postfix) with ESMTPSA id CCF9E3F477;
-        Tue, 12 Jul 2022 13:22:46 +0200 (CEST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mail.infraroot.at CCF9E3F477
+        by mail.infraroot.at (Postfix) with ESMTPSA id 3F10640AAE;
+        Tue, 12 Jul 2022 13:22:49 +0200 (CEST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mail.infraroot.at 3F10640AAE
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=infraroot.at;
-        s=default; t=1657624967;
-        bh=CHqd+mf9Z0Ap8s0WhsT9i2n2dxAFfcmjG17ues+W5Aw=;
-        h=From:To:Cc:Subject:Date:From;
-        b=MmFA6nwei1cURekjCQodPMJ1/FDgSPkd+MQ5YuFHJoL+0hs+lwQ9BfocLw3uFoqLT
-         7GZMRMz+rqvchEBdt9iEYbi9wskYj6i3CNCL5jFCI1uPmnFfncVKlecfS9YJhEeqDy
-         Vyd+oFKnJhWs39V6/DkggLBFgFjSIEkfWWab1Xhw=
+        s=default; t=1657624969;
+        bh=VdWRuWrJvrHCpkbnZjaLP6hbNsoyeYZS7k+p3f9yklY=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=ysbH0rrGXCO38zWbhjnTm55K6eCfXQDn0Ko6erY7XxJhZ/5zH/IGGWlWsdUiOM58H
+         hStWYnRUubgCWIcXWi6OnA4hmWDJzICzB9zjkF60i7QGPYQYVfPMbnM7YThRCW464a
+         IADFaL3G8F9jzFWR8bNtVvY3un5nSanp7Mn+WBCI=
 From:   David Oberhollenzer <goliath@infraroot.at>
 To:     linux-rt-users@vger.kernel.org
 Cc:     williams@redhat.com, bigeasy@linutronix.de, richard@nod.at,
         David Oberhollenzer <goliath@infraroot.at>
-Subject: [PATCH 0/4] Backport MEMCG changes from v5.17
-Date:   Tue, 12 Jul 2022 13:22:34 +0200
-Message-Id: <20220712112238.18824-1-goliath@infraroot.at>
+Subject: [PATCH 4/4] Allow MEMCG on PREEMPT_RT
+Date:   Tue, 12 Jul 2022 13:22:38 +0200
+Message-Id: <20220712112238.18824-5-goliath@infraroot.at>
 X-Mailer: git-send-email 2.36.1
+In-Reply-To: <20220712112238.18824-1-goliath@infraroot.at>
+References: <20220712112238.18824-1-goliath@infraroot.at>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This is a backport of Sebastian's MEMCG changes to v5.15. With these
-patches applied, it is possible to use memory cgroups together
-with PREEMPT_RT on v5.15, just like on v5.17.
+With these backported, it is safe to use MEMCG again:
+mm/memcg: Add a local_lock_t for IRQ and TASK object.
+mm/memcg: Protect per-CPU counter by disabling preemption on PREEMPT_RT where needed.
+mm/memcg: Disable threshold event handlers on PREEMPT_RT
 
-David Oberhollenzer (1):
-  Allow MEMCG on PREEMPT_RT
+Signed-off-by: David Oberhollenzer <goliath@infraroot.at>
+---
+ init/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
 
-Sebastian Andrzej Siewior (3):
-  mm/memcg: Disable threshold event handlers on PREEMPT_RT
-  mm/memcg: Protect per-CPU counter by disabling preemption on
-    PREEMPT_RT where needed.
-  mm/memcg: Add a local_lock_t for IRQ and TASK object.
-
- .../admin-guide/cgroup-v1/memory.rst          |    2 +
- init/Kconfig                                  |    1 -
- mm/memcontrol.c                               | 1264 +++++++++--------
- 3 files changed, 671 insertions(+), 596 deletions(-)
-
+diff --git a/init/Kconfig b/init/Kconfig
+index 160f836f81c7..1646c25f6ec5 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -943,7 +943,6 @@ config PAGE_COUNTER
+ 
+ config MEMCG
+ 	bool "Memory controller"
+-	depends on !PREEMPT_RT
+ 	select PAGE_COUNTER
+ 	select EVENTFD
+ 	help
 -- 
 2.36.1
 
