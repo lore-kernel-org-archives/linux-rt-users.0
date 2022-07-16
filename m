@@ -2,207 +2,95 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A732C43334
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Jul 2022 16:56:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CFFF6C433EF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 16 Jul 2022 00:39:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234717AbiGOQ4j (ORCPT
+        id S231441AbiGPAjK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Jul 2022 12:56:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39354 "EHLO
+        Fri, 15 Jul 2022 20:39:10 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39398 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234399AbiGOQ4i (ORCPT
+        with ESMTP id S230452AbiGPAjJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Jul 2022 12:56:38 -0400
+        Fri, 15 Jul 2022 20:39:09 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id C608679EF7
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Jul 2022 09:56:36 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 374993DBF7
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Jul 2022 17:39:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1657904196;
+        s=mimecast20190719; t=1657931945;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=pDSNuxBUIThTYS24Ha4dFQ5kDajVDYVu6HVLSR5OTZY=;
-        b=ONPoM1PTAjgLWZ6smFBfOGY4x+xpUiqx86LVthw3pm5lkzETuijMosIjKatsLm8SiUSBcA
-        8aNp8BtWYwJVrN2qTFGa40k+pYyndgMwzk4DD73R4ymTWglzdkniC+FO/Jow572aPuJOa1
-        frO1K0qXYNc0UTPPRSyH200ers3/gOU=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=oxMsgHgkOs0K1Xf4snqsrkPHTjlyIKqMwEhVdQleeuM=;
+        b=aHBLpFAAdcJV/Wr4m01CcewJmEy3folTFDIozVeQsrPkuQzHgfehHITQON/umXFoXc3KFK
+        bRmSgACCChkJI/CUH3yFgy+G/SvLRSaX3VmxyiM9eMsRbBUQQQ96DDdDtHGcwvXbPWuh35
+        sFStUwqC4KA6NlYBQSEoA0ESNBgeRbw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-532-DjMlNwMkOvydcycrod_bdg-1; Fri, 15 Jul 2022 12:56:34 -0400
-X-MC-Unique: DjMlNwMkOvydcycrod_bdg-1
-Received: by mail-qt1-f197.google.com with SMTP id w24-20020ac843d8000000b0031ecbfedc25so3961190qtn.15
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Jul 2022 09:56:34 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=pDSNuxBUIThTYS24Ha4dFQ5kDajVDYVu6HVLSR5OTZY=;
-        b=dZ6KXz5shwfKklHDUj4TxdnoHxhrsy26ESRzrZZPFQMnshnTBNrBKjHFbTvrOwoU9A
-         BvCBusAvBP7Nl7D7ffkkl13BAEZ7yvsFTmdYMuTT1HX27pHfoHSUpKFbiZhRxoYo09YH
-         StDNpvINl8zeiPXL8z2a7HnUCltCDbol2WeikqNOeks4e9PtfIt4pCoJnnRwrJD13NGO
-         w4MdYkNQf1Wx9x/j3a/nI3K3QPW/WftCVMLEdKRNsK5C1Xf+x+3kGuHCXfZvEvYCg9Ps
-         nxBwRjZUTyMQF948jzuqp/SpVzoVD8PMKUntcbgW6wPR8mU5pMlgvAn1Qb/NI7XrPjvw
-         pNdw==
-X-Gm-Message-State: AJIora/0BPGa0AR7RzQbphQqBgqAJtsup5raO+DfiGLkhrHI6rUH2TeX
-        Azi0FnmHe4GlJ/awpadq1kxKzytmmMG49BowDnei+LFSLcD9Fo4XJ5FEuvfv1OKGHlblZhS9qYP
-        P9b75owl5vgg97+boey16L13XPaE=
-X-Received: by 2002:a05:6214:19c8:b0:472:f250:2d97 with SMTP id j8-20020a05621419c800b00472f2502d97mr12621721qvc.13.1657904194405;
-        Fri, 15 Jul 2022 09:56:34 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1unyicVx2umR9N1DoD8mD62yPgqs2POGustMx0S6NyfqD0IfKJs6TG7KHwzfFQ5QnUXlBSYCw==
-X-Received: by 2002:a05:6214:19c8:b0:472:f250:2d97 with SMTP id j8-20020a05621419c800b00472f2502d97mr12621707qvc.13.1657904194183;
-        Fri, 15 Jul 2022 09:56:34 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-09-184-147-143-180.dsl.bell.ca. [184.147.143.180])
-        by smtp.gmail.com with ESMTPSA id j13-20020a05620a410d00b006af10bd3635sm4518175qko.57.2022.07.15.09.56.33
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 15 Jul 2022 09:56:33 -0700 (PDT)
-Date:   Fri, 15 Jul 2022 12:56:10 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Manasi Godse <magodse@redhat.com>
-cc:     linux-rt-users@vger.kernel.org, lleshchi@redhat.com,
-        kcarcia@redhat.com
-Subject: Re: [PATCH] rteval: Add option for downloading kernel
-In-Reply-To: <20220713202531.398854-1-magodse@redhat.com>
-Message-ID: <4c67edd-f0d4-de0-af35-283cf5ddcf11@redhat.com>
-References: <20220713202531.398854-1-magodse@redhat.com>
+ us-mta-208-T9rEP0h4O9q6fqMoIf1kBg-1; Fri, 15 Jul 2022 20:38:55 -0400
+X-MC-Unique: T9rEP0h4O9q6fqMoIf1kBg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE8CF80418F;
+        Sat, 16 Jul 2022 00:38:54 +0000 (UTC)
+Received: from localhost (unknown [10.22.32.232])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 0509040E80E0;
+        Sat, 16 Jul 2022 00:38:53 +0000 (UTC)
+Date:   Fri, 15 Jul 2022 21:38:53 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.131-rt72
+Message-ID: <YtIIneq0NCXILs8T@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hello RT-list!
 
+I'm pleased to announce the 5.10.131-rt72 stable release.
 
-On Wed, 13 Jul 2022, Manasi Godse wrote:
+You can get this release via the git tree at:
 
-> Added an option -S, --source-download to download a kernel source
-> tarball from kernel.org to the appropriate loadsource directory.
-> Acceptable strings for the kernel version are 'linux-5.18.1.tar.xz;,
-> 'linux-5.18.1.tar.gz', 'linux-5.18.1', '5.18.1', 'linux-5.19-rc5'.
-> 
-> Conditions have been added to check for default kernel packaged with
-> rteval-loads and backing up the tarball if it already exists. This
-> enhancement simplifies the  manual downloading of kernel to the loadsource
-> directory.
-> 
-> Signed-off-by: Manasi Godse <magodse@redhat.com>
-> ---
->  rteval-cmd             | 61 ++++++++++++++++++++++++++++++++++++++++++
->  rteval/rtevalConfig.py |  1 +
->  2 files changed, 62 insertions(+)
-> 
-> diff --git a/rteval-cmd b/rteval-cmd
-> index 4598ba514ddc..dcd06dc30ba4 100755
-> --- a/rteval-cmd
-> +++ b/rteval-cmd
-> @@ -37,8 +37,11 @@
->  import sys
->  import os
->  import time
-> +import re
-> +import shutil
->  import optparse
->  import tempfile
-> +import requests
->  import lxml.etree
->  from rteval.Log import Log
->  from rteval import RtEval, rtevalConfig
-> @@ -46,6 +49,7 @@ from rteval.modules.loads import LoadModules
->  from rteval.modules.measurement import MeasurementModules
->  from rteval.version import RTEVAL_VERSION
->  from rteval.misc import invert_cpulist, compress_cpulist
-> +from rteval.modules.loads.kcompile import ModuleParameters
->  
->  def summarize(repfile, xslt):
->      """ Summarize an already existing XML report """
-> @@ -158,6 +162,10 @@ def parse_options(cfg, parser, cmdargs):
->      parser.add_option("-V", "--version", dest="rteval___version",
->                        action='store_true', default=False,
->                        help='print rteval version and exit')
-> +    parser.add_option("-S", "--source-download", dest="rteval___srcdownload",
-> +                        type="string", default=None, metavar="KERNEL_VERSION",
-> +                        help='download a source kernel from kernel.org')
-> +
->  
->      if not cmdargs:
->          cmdargs = ["--help"]
-> @@ -254,6 +262,59 @@ if __name__ == '__main__':
->          measuremods.SetupModuleOptions(parser)
->          cmd_args = parse_options(config, parser, sys.argv[1:])
->  
-> +        # download kernel tarball
-> +        if rtevcfg.srcdownload:
-> +            logger.log(Log.DEBUG, f"Kernel Version to download = {rtevcfg.srcdownload}")
-> +
-> +            # handle a kernel version like linux-5.19-rc5
-> +            if 'rc' in rtevcfg.srcdownload:
-> +                kernel_prefix = re.search(r"\d{1,2}\.\d{1,3}\-[a-z]*\d{1,2}", rtevcfg.srcdownload).group(0)
-> +                url = "https://git.kernel.org/torvalds/t/"
-> +            else:
-> +                kernel_prefix = re.search(r"\d{1,2}\.\d{1,3}\.*\d{1,2}", rtevcfg.srcdownload).group(0)
-> +                major_version = re.search(r"\d{1,2}", kernel_prefix).group(0)
-> +                url = "https://kernel.org/pub/linux/kernel/v" + major_version + ".x/"
-> +
-> +
-> +            if rtevcfg.srcdownload.endswith(".gz") or 'rc' in rtevcfg.srcdownload:
-> +                rtevcfg.srcdownload = "linux-" + kernel_prefix + ".tar.gz"
-> +            else:
-> +                rtevcfg.srcdownload = "linux-" + kernel_prefix + ".tar.xz"
-> +            tarfl = os.path.join(rtevcfg.srcdir, rtevcfg.srcdownload)
-> +
-> +            # if default kernel packages with rteval-loads exists, do not download/overwrite
-> +            default_kernel_file = ModuleParameters().get('source').get('default')
-> +            if os.path.exists(tarfl):
-> +                if rtevcfg.srcdownload == default_kernel_file:
-> +                    sys.exit("Default kernel already exists, will not download")
-> +                prompt = input("Kernel already exists, download and overwrite anyways? (y/n)  ")
-> +                prompt = prompt.lower()
-> +                if prompt in ('no', 'n'):
-> +                    sys.exit("Exiting")
-> +                elif prompt in ('yes','y'):
-> +                    # backup the existing kernel in case it needs to be restored later
-> +                    shutil.move(tarfl, tarfl + ".bkup")
-> +                else:
-> +                    sys.exit("Invalid option. Exiting")
-> +
-> +            url = url + rtevcfg.srcdownload
-> +            print(f"Downloading kernel {url}")
-> +            downloaded_file = requests.get(url)
-> +            if downloaded_file.status_code != 200:
-> +                # restore the kernel file if it exists
-> +                if os.path.exists(tarfl + ".bkup"):
-> +                    shutil.move(tarfl + ".bkup", tarfl)
-> +                sys.exit(f"Could not download tar file {rtevcfg.srcdownload}, status code {downloaded_file.status_code}")
-> +            with open(tarfl, 'wb') as fd:
-> +                fd.write(downloaded_file.content)
-> +            logger.log(Log.DEBUG, f"Kernel source {rtevcfg.srcdownload} downloaded successfully")
-> +            logger.log(Log.DEBUG, f"Downloaded to directory location: {rtevcfg.srcdir}")
-> +            # download was successful, delete the backup file if it exists
-> +            if os.path.exists(tarfl + ".bkup"):
-> +                os.remove(tarfl + ".bkup")
-> +            sys.exit(0)
-> +
-> +
->          # if we only specified one set of cpus (loads or measurement)
->          # default the other to the inverse of the specified list
->          ldcfg = config.GetSection('loads')
-> diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-> index 56bbc9ee0de6..decd36ed18ab 100644
-> --- a/rteval/rtevalConfig.py
-> +++ b/rteval/rtevalConfig.py
-> @@ -97,6 +97,7 @@ default_config = {
->          'xslt_histogram': default_config_search(['rteval_histogram_raw.xsl'], os.path.isfile),
->          'report_interval': '600',
->          'logging'    : False,
-> +        'srcdownload': None,
->          }
->      }
->  
-> -- 
-> 2.31.1
-> 
-> 
-    Tested-by: Leah Leshchinsky <lleshchi@redhat.com>
-    - Two small tweaks, non-standard "anyways" changed to "anyway", and
-      added the words "and exit" to the end of the help option
-    Signed-off-by: John Kacur <jkacur@redhat.com>
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: 708e7c0b39cf6f804901396f0bb1e620fe7c429b
+
+Or to build 5.10.131-rt72 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.131.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.131-rt72.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
