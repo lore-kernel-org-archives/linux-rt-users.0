@@ -2,132 +2,171 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 921D9C433EF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Jul 2022 17:49:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 77F78C43334
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Jul 2022 05:30:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235870AbiGRRtj (ORCPT
+        id S234078AbiGSFa2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Jul 2022 13:49:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35366 "EHLO
+        Tue, 19 Jul 2022 01:30:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40110 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233927AbiGRRtj (ORCPT
+        with ESMTP id S236412AbiGSFaT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Jul 2022 13:49:39 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id BC1F02B608
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Jul 2022 10:49:37 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1658166576;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=/v9C8IVWnHwkh1IYyzNz1WEisDLhjKbD5jwVdQcA0h4=;
-        b=GE5iMSK7ajGOYHHqhpyKDZUkT3rOUuDoAKQIGzDUm9OiCyhY1sMzeesrEvGLQu4CtdyXyd
-        vqNqEBViZpOHbZv6ZNwN5YoX8lEqjrRwSkugqdB3t2qCxPOGEJwnRKb2rRIZtPl9dw0Z+J
-        pJxDCq93fh4zdLeNZY9aEMsSDR8A9VI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-378-v0jdJGJgNRutCmzUmqsSaw-1; Mon, 18 Jul 2022 13:49:21 -0400
-X-MC-Unique: v0jdJGJgNRutCmzUmqsSaw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7C61D101A586
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Jul 2022 17:49:21 +0000 (UTC)
-Received: from lleshchi.bos.com (unknown [10.22.10.124])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 13BC01121314;
-        Mon, 18 Jul 2022 17:49:21 +0000 (UTC)
-From:   Leah Leshchinsky <lleshchi@redhat.com>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: [PATCH] Add measurement and load location to run report
-Date:   Mon, 18 Jul 2022 13:49:18 -0400
-Message-Id: <20220718174918.570599-1-lleshchi@redhat.com>
+        Tue, 19 Jul 2022 01:30:19 -0400
+Received: from NAM11-CO1-obe.outbound.protection.outlook.com (mail-co1nam11on2068.outbound.protection.outlook.com [40.107.220.68])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A73D21183E;
+        Mon, 18 Jul 2022 22:30:18 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=jfLR5ekgQUpxwZ2WUODYdaEa/sZm+9tt8pnvIPKTCVH40edLy4lgM3wmwln8OhlaFhYNByiLGhjiuQMA8iWT1H0tolMRRpo0VRU1n10T3FoDARXotFoSuQESLOipVhJa1quxGAaIWFm9ibeDSw9WaT/T52m9pVMqDLAswYpVBBGZNx0ZUdB23rW+2mr6lqzR3T4x59zvDBYwfUZrEQKVi5wgGhFKZoky7KjYuY5CBTWKK76v5NOsGh8ZDq6bi7taQHnwZ5cJ/SjsgJ+8Z3q1jJ3R2BRM5EQKNpSuEP11i6BZT9rc3WgcH41I5N2KvKoMKDysfTtI5CfkRjDjfFp2Hg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=eFauMaplh30gvy+Idy57gwytWbQz06MZUwaqbBWcIYE=;
+ b=D048+WcutuZsgSiHW6hxg0KsYn4F8JClr1WbtwpcOEyo/7hNLw8p5fQRm+rgYcv/17qmTfdhPFFT6YT2tJReuSXYj+sWHIQumuYILrBKIbEgoT0CZfAIVYmDHZzD4QUlXUu7J3PasplxIxxyxIWIISfYrNQ7H39EDonhxWZsh873NBwI9Iy9mAftAnHWHlfTrX7y6W7NYB5PWjcAJcQrbLty6R2tVojQMQ6hYLayyvoMl8uHg4a7axhmPMOOBboZHKPDSgVqXpTUYERj5vvun4qJlBs8Ybs0LRq7h6WOSw9Cp6R16vRFDjDI0GxTr9M4rzLaPx4H7p6e+8u3D22JcA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=vmware.com; dmarc=pass action=none header.from=vmware.com;
+ dkim=pass header.d=vmware.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vmware.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=eFauMaplh30gvy+Idy57gwytWbQz06MZUwaqbBWcIYE=;
+ b=09IV/ftvqSMbCOje2aPEjdlPmgfzX+ZUpZmj8sLkzEjTxkbgNrNk6S73MNxx1unLW9BILU3++28gN19x7ogV0JYBVz/pOxpEHEOezksSU8toVqO07vewOxa9O/JEwMQJNs8muKDZkRGLCE+UrialuaSy6ZlFW2YAKE7k4k/NDP4=
+Received: from SA1PR05MB8311.namprd05.prod.outlook.com (2603:10b6:806:1e2::19)
+ by MW4PR05MB8871.namprd05.prod.outlook.com (2603:10b6:303:133::21) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5458.7; Tue, 19 Jul
+ 2022 05:30:16 +0000
+Received: from SA1PR05MB8311.namprd05.prod.outlook.com
+ ([fe80::4841:cc3c:63a9:28c2]) by SA1PR05MB8311.namprd05.prod.outlook.com
+ ([fe80::4841:cc3c:63a9:28c2%5]) with mapi id 15.20.5458.016; Tue, 19 Jul 2022
+ 05:30:16 +0000
+From:   Ankit Jain <ankitja@vmware.com>
+To:     Juri Lelli <juri.lelli@redhat.com>
+CC:     "srivatsa@csail.mit.edu" <srivatsa@csail.mit.edu>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Valentin Schneider <vschneid@redhat.com>,
+        Sharan Turlapati <sturlapati@vmware.com>,
+        Him Kalyan Bordoloi <bordoloih@vmware.com>,
+        Keerthana Kalyanasundaram <keerthanak@vmware.com>,
+        Anish Swaminathan <anishs@vmware.com>,
+        Srivatsa Bhat <srivatsab@vmware.com>
+Subject: Re: [PATCH] sched/deadline: Fix BUG_ON condition for deboosted tasks
+Thread-Topic: [PATCH] sched/deadline: Fix BUG_ON condition for deboosted tasks
+Thread-Index: AQHYlv/naTAeq6v5SkONmwFBTShmLq19eIcAgAFmCICAADGWgIAEtrMAgABYHQCAARRKgA==
+Date:   Tue, 19 Jul 2022 05:30:16 +0000
+Message-ID: <B466E709-EFCF-4B27-B3F6-D7561C381BF7@vmware.com>
+References: <20220713075014.411739-1-juri.lelli@redhat.com>
+ <806a86d3-5204-145e-af46-023bf0142aa8@csail.mit.edu>
+ <Ys/FiJ3tgc0CYDcu@localhost.localdomain>
+ <D5F4086A-AD87-4CCB-B926-25713BBF00ED@vmware.com>
+ <YtEbd2WjIOB6nXvr@localhost.localdomain>
+ <DC16804A-D429-402E-B076-783B6373D21C@vmware.com>
+ <YtVZokpe+l50EpWs@localhost.localdomain>
+In-Reply-To: <YtVZokpe+l50EpWs@localhost.localdomain>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+authentication-results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=vmware.com;
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 8d62fc9a-e6de-4c00-005c-08da6947c2fb
+x-ms-traffictypediagnostic: MW4PR05MB8871:EE_
+x-ld-processed: b39138ca-3cee-4b4a-a4d6-cd83d9dd62f0,ExtAddr
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0;
+x-microsoft-antispam-message-info: TIMxpZvz0SRQATA59HaKbTN7i1DLVfzwqPmI0fkR9KSr+v9oq5snDS7v+jzocZBkNgJowFJmDU6sf6KIodSn/cnKiEY7ys8BCMO/R+rle5rpMurok6g98wOKkpG+8TqYg8YTagIpc0+eVdjSooQaAyQ2Txx/bLaOgby3V29pao3ma2C70UuYhPrriwyAu3CK5Sqp3rI0KaYahw5R4AMw/GnqxbrYOUvYTvdgIfXC0W+LvM2d7AcYVvEYbjlnQkcpA5eZzPTXJT63ywOER6D6U4Pw10NJId9a97ZybUSCRnSNGDPxbz5hokZ6lhWzzDGt8QY5Ja4f6Hsp4SDcxPBzCgYwMqqdHZQelK/HYDjZrhgSabL89leb1cTU/XoqtOGYiT96jD+oIuozxRgFtOAl3NVSvhtO+d0p6dRhBDuBrwQ/i4+3eurl64HOqW3kE39XyjGKuDmbhFxhxKn7kdBBTRyzAZiozSrmys2HRcnnbLP7RVLGQuPWZJgjdJPNt296hRrZk3gWBhHQIS+tXJSIXGvysaOpTX7u+6zsbh790DDAX1GADl4I6UJrjsUIjoHIbDWFRS1jac1hmMbbWG90lU3WsvzCDqc2pDivLvPoobKeCfl8h8tGCldLx4J5T2MIZhpmGFvmsgiCUH6lBoONkDhz2o5N+qu9s7cwO4N5d3y3CbtxdItTdOCUHRHK2JvynW6VT8fzUBjRc7+1eHnQlYvY5ad8hMzErVAZ8q/qPfiun+PXOyY/hn8x5iNkzYbZoz9Bgk272k968hUyjqYgpUmN5XiSnULZVtYVL21fU3ViRyWVJ2uDD0oAFaaui7QLKXV3cy7qg30HTO8wEBd4j2U8Dtlt3eRHdNnAqBd4940r4ye0mRyhh+O4ngF1xHnq
+x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SA1PR05MB8311.namprd05.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230016)(4636009)(39860400002)(136003)(376002)(346002)(396003)(366004)(33656002)(5660300002)(36756003)(2906002)(66556008)(8936002)(54906003)(91956017)(66446008)(66476007)(86362001)(316002)(7416002)(76116006)(4326008)(186003)(478600001)(71200400001)(122000001)(6916009)(8676002)(41300700001)(6512007)(38100700002)(26005)(6506007)(83380400001)(107886003)(6486002)(53546011)(2616005)(66946007)(64756008)(38070700005)(45980500001);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?THRUUVBCakNQcWZIZkxCT3FHenU2WWZSMHpFMTlqR0ZWZnlwYlkvRUtOaVFH?=
+ =?utf-8?B?RWtSeFAwd2VtQWRHNFBabXM1U3FZUEIrZGxtbkdVYzR4ZFcrQUpvODhlZ0Fu?=
+ =?utf-8?B?T3lZK2JHUWcwSStwYzRwMVJGa3doQUVTMm9SMTZRRG8zMERVM09lbC96UVVJ?=
+ =?utf-8?B?bVFIM3haMCtraTUyeFE5UkxjU3cvcU9FRHVFTDd5K09YeGYwNjEvVmE5akJZ?=
+ =?utf-8?B?eEQvelBUZEkwWXNBYytjQ1k1WnludDJxMXc2WXN2NGZjU3FBcjlYRlY2WGdE?=
+ =?utf-8?B?N2pab3VTY1lzNzhjdUtNVktYY1laZm9UZ2p2bmdtMW5sZ0M0QXhFdDdsZ0p4?=
+ =?utf-8?B?RE9Wa2kxNnlhRnpkRGt4VkJ3NHdvTzRnbHQyMlN5di9MSmw1Z1JPOHdHd2VS?=
+ =?utf-8?B?YjIyQWFrbHk2dlBYam5jNnRCZjMxeTJYd1VDN1kvemE0MTlxR2p3QUVzM2VO?=
+ =?utf-8?B?YTJrbmQ3UjJHM3RWQXNWWEpnbS81MVBtSEtXZmJvcXJWamdrc0l4SVZsSkxi?=
+ =?utf-8?B?cURqTk13YnFVM1NpZXN0bEVxbENkN2VxbU53aG5WN3hKVVJYenhnS1dtYndU?=
+ =?utf-8?B?WTc4VFYwK2x4WkE5b1J1ZDFmL0s2ZHhlUElaYVc5TiswMGQzNndvUFp0VzAv?=
+ =?utf-8?B?SHBJUldDb2doVXdHV3BaajNDTFNkSU9lVWxPYlQ4NlpZR0lvRWgwS0R3QmhE?=
+ =?utf-8?B?VXhvR1ZvTmR3ZjViS29wUFFtZDdjT1YrQVhtRUpVNThaRXFyeUtzMm1jTmFT?=
+ =?utf-8?B?alFsVlVmd3hURlZUYlJQWHZndDZQcW1nUEJDUVJYcndiS3JPeFRIQTBoOGtQ?=
+ =?utf-8?B?WTB2UGQ5SzVsVW4yVmY0K0VKdi9wZkEyU2tObURGZzhOVjBmS0IzWGM0cHhu?=
+ =?utf-8?B?bCtYMVN2aGdUdmJpaGFLUTI4YVNsb21EUEtKTVh6UFRmei90SFNSREc0bnRh?=
+ =?utf-8?B?V1R0R0dMMEFFeU52TXdtcmxNb2VzQ3NvNHhXblR2SnBwSnlwMW9RYkZqK0Vl?=
+ =?utf-8?B?dEdQcmZ3RU50VTM3dkhLOGFQaUxyS2wxdlNjWkJrL1JvaE1EZXAzRW5hK2RM?=
+ =?utf-8?B?elhOdkkvSS9OMStIU2Jqc1BNVjdkT2dPaFlhUUxxZmxMRDBjcEdnUjVkNHAw?=
+ =?utf-8?B?Y2ZWdDljeEMzV2hiR2VoWUZhdDVtSmNtcjE1WDJlMzloUkVibHZEeEJJdVgv?=
+ =?utf-8?B?LzFzZTdwSThlWnQzZlFBVnFBaFZoYkcvaXNFbVNwNmhsUDBaeDZ6RE1DaS9Y?=
+ =?utf-8?B?ZU5GVGg4dUtESG1PSTRldGl2c1RzY09qcmNzWnh6ZjNCcGpYdytoSE9PMEJo?=
+ =?utf-8?B?Q2FUWEF4UDcwRWhTNDBpbHJyb0dSM0tYWENMR29LWnFWMWxLd2txRUhTdnRN?=
+ =?utf-8?B?VnNXU0RCVmJMS1RDRjB6WkRUSTZzb3ZrSDFVdHFxNzYzQnBDa0JITTRZa21a?=
+ =?utf-8?B?NVNsUHpQY3FkSDQvZEQ1ZVhXTGV1VzhJREdwR1ZrTUc2bEliR0hzTHdCZGFy?=
+ =?utf-8?B?NlNPZDN4Q0NTOUxUWkhsVm5vRy9YQ3hiTUdaKzNNZU9aWVgwWXA5YzhSZUZY?=
+ =?utf-8?B?ZU1GRVRMallBbFB4Yys4Y0dwcmt4a2dYK1RmNCtnaDQySTVPOFhVdm8wUjIz?=
+ =?utf-8?B?K29rUXcyYUJtRVhXd2hyRXU5Rks1L0RtRURyZ2t5cDVvUGNER1ZteFB1dGF3?=
+ =?utf-8?B?bzhJN0lYMUxtSElPWkZDbzFkM0ZlWkgrMmM3MnJUd0llanRJdVNONWhUcGN3?=
+ =?utf-8?B?SDZIQ0dWTWYyV1FBcTJmYjVUZm9VcEI3WUFNMElDWkFJcStQUjlOWnJpcW9m?=
+ =?utf-8?B?OWgwcWhiYWRiVno4VlNXMjdMTFVpS2FKL3ZrZ2MyZVJ5TnFFeXZhMjF0UUtv?=
+ =?utf-8?B?Y014NVlPdjFRWGdHVWNkSTRGTlA4WDVmV2NYbmdIdFowblZ1VGxGQ3dNVTlT?=
+ =?utf-8?B?WmRZTEgxaGRuYzdyQ3hPUTJ2WW96OUg5dlR5bkI1azlhcEkyNlRMbVZLNy9H?=
+ =?utf-8?B?bXdrdklQb3ZldkEvV0dyYW5UMVgrTkIvZ0VSNXdrb3BPaWVubWo1NTVnK210?=
+ =?utf-8?B?cFN6aTNmRmlWalFsOUpOYWxjQjMyWlRNSlNqMjhEdzFLSkxxb0FFSlV6Qldo?=
+ =?utf-8?Q?wVaaW/eT2ai+AC8NMKjV4e4R/?=
+Content-Type: text/plain; charset="utf-8"
+Content-ID: <7752B1519133534199198A4B0EDEA8ED@namprd05.prod.outlook.com>
+Content-Transfer-Encoding: base64
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-OriginatorOrg: vmware.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: SA1PR05MB8311.namprd05.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8d62fc9a-e6de-4c00-005c-08da6947c2fb
+X-MS-Exchange-CrossTenant-originalarrivaltime: 19 Jul 2022 05:30:16.0545
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b39138ca-3cee-4b4a-a4d6-cd83d9dd62f0
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: RpPufMBIxJv4Bp2wD1XymB43hC282lCWdy1bmJ0X6abjBd83kkaSZTpU+fp02k58VZYpl67WDmOvSxobjBlrLQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW4PR05MB8871
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The run report produced at the end of a run does not contain information
-on load and measurement thread locations.
-
-Adjust MakeReport() functions of LoadModules and MeasurementModules
-class so that new properties with number of loads and cpu information
-are added to the XML report and can be read by rteval_text.xsl.
-
-Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
-
-diff --git a/rteval/modules/loads/__init__.py b/rteval/modules/loads/__init__.py
-index 2c2105efa964..f08c1ce07cac 100644
---- a/rteval/modules/loads/__init__.py
-+++ b/rteval/modules/loads/__init__.py
-@@ -30,6 +30,7 @@ import libxml2
- from rteval.Log import Log
- from rteval.rtevalConfig import rtevalCfgSection
- from rteval.modules import RtEvalModules, rtevalModulePrototype
-+from rteval.misc import compress_cpulist, online_cpus
- 
- class LoadThread(rtevalModulePrototype):
-     def __init__(self, name, config, logger=None):
-@@ -131,6 +132,11 @@ class LoadModules(RtEvalModules):
-     def MakeReport(self):
-         rep_n = RtEvalModules.MakeReport(self)
-         rep_n.newProp("load_average", str(self.GetLoadAvg()))
-+        rep_n.newProp("loads", str(self.ModulesLoaded()))
-+        cpulist = self._cfg.GetSection(self._module_config).cpulist
-+        if not cpulist:
-+            cpulist = compress_cpulist(sorted(online_cpus()))
-+        rep_n.newProp("loadcpus", str(cpulist))
- 
-         return rep_n
- 
-diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
-index 318248bd7e35..356daff5ef73 100644
---- a/rteval/modules/measurement/__init__.py
-+++ b/rteval/modules/measurement/__init__.py
-@@ -24,7 +24,7 @@
- 
- import libxml2
- from rteval.modules import RtEvalModules, ModuleContainer
--
-+from rteval.misc import compress_cpulist, online_cpus
- 
- class MeasurementProfile(RtEvalModules):
-     """Keeps and controls all the measurement modules with the same measurement profile"""
-@@ -189,6 +189,11 @@ measurement profiles, based on their characteristics"""
- 
-         # Get the reports from all meaurement modules in all measurement profiles
-         rep_n = libxml2.newNode("Measurements")
-+        cpulist = self.__cfg.GetSection("measurement").cpulist
-+        if not cpulist:
-+            cpulist = compress_cpulist(sorted(online_cpus()))
-+        rep_n.newProp("measurecpus", str(cpulist))
-+
-         for mp in self.__measureprofiles:
-             mprep_n = mp.MakeReport()
-             if mprep_n:
-diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
-index c40063e3dd19..7ecfac6b6140 100644
---- a/rteval/rteval_text.xsl
-+++ b/rteval/rteval_text.xsl
-@@ -13,6 +13,14 @@
-     <xsl:value-of select="run_info/date"/><xsl:text> </xsl:text><xsl:value-of select="run_info/time"/>
-     <xsl:text>&#10;</xsl:text>
- 
-+    <xsl:text>   Loads:        </xsl:text>
-+    <xsl:value-of select="loads/@loads"/><xsl:text> loads run on cores </xsl:text><xsl:value-of select="loads/@loadcpus"/>
-+    <xsl:text>&#10;</xsl:text>
-+
-+    <xsl:text>   Measurement:  </xsl:text>
-+    <xsl:text>measurement threads run on cores </xsl:text><xsl:value-of select="Measurements/@measurecpus"/>
-+    <xsl:text>&#10;</xsl:text>
-+
-     <xsl:text>   Run time:     </xsl:text>
-     <xsl:value-of select="run_info/@days"/><xsl:text> days </xsl:text>
-     <xsl:value-of select="run_info/@hours"/><xsl:text>h </xsl:text>
--- 
-2.31.1
-
+DQoNCj4gT24gMTgtSnVsLTIwMjIsIGF0IDY6MzEgUE0sIEp1cmkgTGVsbGkgPGp1cmkubGVsbGlA
+cmVkaGF0LmNvbT4gd3JvdGU6DQo+IA0KPiDimqAgRXh0ZXJuYWwgRW1haWwNCj4gDQo+IE9uIDE4
+LzA3LzIyIDA3OjQ2LCBBbmtpdCBKYWluIHdyb3RlOg0KPiANCj4gLi4uDQo+IA0KPj4gSGkgSnVy
+aSwNCj4+IA0KPj4gQWN0dWFsbHksIHdoaWxlIHRlc3RpbmcgSSBhbHJlYWR5IGluY2x1ZGVkIGJl
+bG93IGNvbW1pdHMgaW4gNC4xOS1ydCA6DQo+PiANCj4+IGZlZmYyZTY1ZWZkOGQ4NGNmODMxNjY4
+ZTE4MmIyY2U3M2M2MDRiYmIgKHNjaGVkL2RlYWRsaW5lOiBVbnRocm90dGxlIFBJIGJvb3N0ZWQg
+dGhyZWFkcyB3aGlsZQ0KPj4gZW5xdWV1aW5nKQ0KPj4gNDZmY2M0YjAwYzNjY2E4YWRiOWI3Yzlh
+ZmRkNDk5ZjY0ZTQyNzEzNSAoc2NoZWQvZGVhZGxpbmU6IEZpeCBzdGFsZSB0aHJvdHRsaW5nIG9u
+IGRlLS9ib29zdGVkIHRhc2tzKQ0KPj4gMjI3OWY1NDBlYTdkMDVmMjJkMmYwYzQyMjQzMTkzMzAy
+Mjg1ODZiYyAoc2NoZWQvZGVhZGxpbmU6IEZpeCBwcmlvcml0eSBpbmhlcml0YW5jZSB3aXRoIG11
+bHRpcGxlKQ0KPj4gMGUzODcyNDk5ZGUxYTEyMzBjZWY1MjIxNjA3ZDcxYWEwOTI2NGJkNSAoa2Vy
+bmVsL3NjaGVkOiBSZW1vdmUgZGxfYm9vc3RlZCBmbGFnIGNvbW1lbnQpDQo+IA0KPiBJbnRlcmVz
+dGluZy4NCj4gDQo+IElzIHRoZSB3b3JrbG9hZCB5b3UgYXJlIHVzaW5nIHRvIHRlc3QgdGhpcyBl
+YXNpbHkgcmVwcm9kdWNpYmxlPyBJJ2QgbGlrZQ0KPiB0byB0cnkgdGhhdCBvdXQgb24gbXkgZW5k
+IHRvIGNoZWNrIGlmIEkgc2VlIHRoZSBzYW1lIChvZiBjb3Vyc2UgdGhlDQo+IGlzc3VlIEkgd2Fz
+IHdvcmtpbmcgb24gZ29lcyBhd2F5IHdpdGggbXkgZml4IDopLg0KPiANCj4gQmVzdCwNCj4gSnVy
+aQ0KPiANCg0KSGkgSnVyaSwNCg0KVGhlIHRlc3Qgd2l0aCB3aGljaCBpIGFtIGFibGUgdG8gaGl0
+IHRoZSBpc3N1ZSBpcyBhcyBmb2xsb3dzOg0KCeKAoiBTY2hlZHVsZSBTQ0hFRF9GSUZPLzU1IChz
+Y2hlZF9wcmlvcml0eSA9IDU1KSB0YXNrcyBydW5uaW5nIGluZmluaXRlIGxvb3Agb24gYWxsIGlz
+b2xhdGVkIGNvcmVzLg0KCeKAoiBzcHdhbiAzMC00MCBkb2NrZXIgY29udGFpbmVycyBpbiBsb29w
+IChkb2NrZXIgbG9hZCAsIGRvY2tlciBydW4pDQoJ4oCiIEltbWVkaWF0ZWx5IGFmdGVyIHRoYXQg
+c2NoZWR1bGUgU0NIRURfRklGTy81NSAoc2NoZWRfcHJpb3JpdHkgPSA1NSkgdGFza3MgcnVubmlu
+ZyBpbmZpbml0ZSBsb29wIG9uIGFsbCBpc29sYXRlZCBjb3JlcyBhZ2Fpbi4NCgnigKIgQlVHX09O
+IGdldHMgaGl0IGFsbW9zdCBldmVyeSB0aW1lLg0KU3lzdGVtIGNvbmZpZyBhcyBmb2xsb3dzOg0K
+CeKAoiA0LjE5LXJ0IGtlcm5lbA0KCeKAoiA0MCBjcHUgKDAtMSBob3VzZWtlZXBpbmcsIDItMzkg
+aXNvbCBjcHVzKQ0KCeKAoiBzdGFsbGQtMS4zLjAgd2l0aCB0aGUgZml4ZXMgZnJvbSBsYXRlc3Qg
+dmVyc2lvbiAoZm9yIHRhc2sgc3RhcnZhdGlvbiBhdm9pZGFuY2UpLCAidHVuZWQiIHdpdGggcmVh
+bC10aW1lIHByb2ZpbGUgDQoNClRoYW5rcy4NCg0K
