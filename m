@@ -2,192 +2,210 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 90F0BC43334
-	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Jul 2022 07:29:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58AFDC43334
+	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Jul 2022 16:26:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239346AbiGTH27 (ORCPT
+        id S235586AbiGTQ0V (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 20 Jul 2022 03:28:59 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48348 "EHLO
+        Wed, 20 Jul 2022 12:26:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57640 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231650AbiGTH26 (ORCPT
+        with ESMTP id S230119AbiGTQ0U (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 20 Jul 2022 03:28:58 -0400
-Received: from mail-pj1-x102a.google.com (mail-pj1-x102a.google.com [IPv6:2607:f8b0:4864:20::102a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6F1A754CAF;
-        Wed, 20 Jul 2022 00:28:55 -0700 (PDT)
-Received: by mail-pj1-x102a.google.com with SMTP id n4-20020a17090a73c400b001f1e87432c2so1313217pjk.3;
-        Wed, 20 Jul 2022 00:28:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=RFrHXTL8Q2FobO7rjUUAkyYxzxKSZ1yAWcrkdPU4Ak8=;
-        b=ngcmrnB/DSWpG3Oqu0t39TGFQj2tURSijQLbs2mIiaW2gIuMxAAUMar2FDoNtpYXQF
-         /sBzEKP6WamnRh2+GLpSW6dW1NMoAkuCp0+olpBunnzEttZ505b/eXfMS8E6T7r42S4b
-         dGisVBPKLF0F60X+RmUW+o/6PFT+ZsfL9RjjI25fB5zkcsSfGgsjGkYVUYg6ZC8ODUkY
-         /K8q6PdHZlRyNdsZw1vijIssNeQxph1NhIXq6lhV5d6nKAbZCR4z5FIUuDwQv/biG+9g
-         NDgMra9Eb7BMIA6sKeptP0cQ+hDv+UrRN9QbfL9sECy9lOIcGd543qNyADGYZ/OeKMlS
-         0oKQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=RFrHXTL8Q2FobO7rjUUAkyYxzxKSZ1yAWcrkdPU4Ak8=;
-        b=NyJBNPcv9yEMIfM5SiL7u/HGWSyCKkn/XafYkBIBbOCdanGCvlwBUOy7JFXoa8e3bX
-         mPflW0xexbGiQs842Sq01xysDqfes9x5obJwgbcNcXRySRjP9edoA7EB0CSyoTkFDdGj
-         i9+pEqEBMqI4OfQ/CqmeBywQeQNhoEUa/9uUdJ1XF3CjfPtwFErW7vDdleKDof88GyvN
-         Cj9zcRH9TDsiyP2KzJspD1iGo1GuwTibir1mU3e8RmU5qTqpXEpXgQIn+4gjJUIv+JuC
-         T7sb5nE21F1htV77gPMYnefvzK7X43bKD/VjTuCcVTKCBaMAa6jgSyPmsKqmpywntU1/
-         Tb1g==
-X-Gm-Message-State: AJIora9IGtZykK4GFZhn1AAh4eLpsXNBrYZC5wZDvNwBeuQwaWzWS+fG
-        UIt4I3m3DpEFYewPyQJVkDakg6jbrSIZ7g==
-X-Google-Smtp-Source: AGRyM1uh9ttAT4ntu5MJ2NslnmzrqW5AtYrNwTs30U6mTfJ5yD0pMdfEPMDHTbqOMGxd6hzKhZB4LA==
-X-Received: by 2002:a17:90b:3d85:b0:1f0:7355:734 with SMTP id pq5-20020a17090b3d8500b001f073550734mr3798860pjb.24.1658302134485;
-        Wed, 20 Jul 2022 00:28:54 -0700 (PDT)
-Received: from ubuntu.hobot.cc ([39.170.101.209])
-        by smtp.gmail.com with ESMTPSA id y12-20020aa78f2c000000b00528c149fe97sm12834297pfr.89.2022.07.20.00.28.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 20 Jul 2022 00:28:53 -0700 (PDT)
-From:   "yuxin.ye" <yeyuxin0925@gmail.com>
-To:     linux-rt-users@vger.kernel.org, peterz@infradead.org,
-        mingo@redhat.com, will@kernel.org, longman@redhat.com,
-        boqun.feng@gmail.com
-Cc:     linux-kernel@vger.kernel.org, "yuxin.ye" <yeyuxin0925@gmail.com>
-Subject: [PATCH RFC] rtmutex: Fix BUG_ON at kernel/locking/rtmutex.c:1331!
-Date:   Wed, 20 Jul 2022 00:28:06 -0700
-Message-Id: <20220720072806.43445-1-yeyuxin0925@gmail.com>
-X-Mailer: git-send-email 2.17.1
+        Wed, 20 Jul 2022 12:26:20 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 90C291AD93;
+        Wed, 20 Jul 2022 09:26:18 -0700 (PDT)
+Date:   Wed, 20 Jul 2022 18:26:15 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1658334377;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=FmzFd4vLylbmJlciVmTg+XgbOpWzFd/O3iwyuawf0N8=;
+        b=kmMmfNPHddxwhREZau1sVKYB9C4Bc/yb7iuXkI1H0ypBNrvSUQmgDqrOfXfI5S2Ks+e9oY
+        25bNkJOpLGe00K3EVTogpzYhK+QOdwJBmI1RKz5XxCuuYodNUCStf3GfldGSngcy0TRsLA
+        5rMF5Bjdn2ZPAO1gZBWl4OxMlAZGp+6kRTJakcGjYU584yGK4LlN6XxLjN3MRVbyDhsUyJ
+        4J6rUaosyzzmfNwvtFTmb6Jiyf+avglgCvz0Ib9eTDoBOJSr6l3IPcz50vq6moX2Mg7VUJ
+        xX6/8LYeLOtZwvYM+W3kBCrQ9Kl+U0kRl4/P7pR3ycdnwzijzQVKqjaX1fC+2w==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1658334377;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=FmzFd4vLylbmJlciVmTg+XgbOpWzFd/O3iwyuawf0N8=;
+        b=qRZlY4smc589nRlBaRfBm45fGHCmG4O/jbC0L5cO4vjZrK2+SJDMpPS2dzS4QLwxw21A2I
+        A/9xeeRqiyHpN9BA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.19-rc7-rt7
+Message-ID: <Ytgsp00o2dfGRn9v@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-before rt_mutex_adjust_prio_chain(),unlock lock->wait_lock will cause
-BUG_ON at kernel/locking/rtmutex.c:1331:
-[147800.420240] Call trace:
-[147800.420243]  dump_backtrace+0x0/0x1cc
-[147800.420260]  show_stack+0x18/0x24
-[147800.420267]  dump_stack+0xcc/0x12c
-[147800.420278]  nmi_cpu_backtrace+0xbc/0xc8
-[147800.420287]  nmi_trigger_cpumask_backtrace+0xcc/0x1c0
-[147800.420295]  arch_trigger_cpumask_backtrace+0x28/0x40
-[147800.420304]  oops_enter+0x3c/0x48
-[147800.420313]  die+0x54/0x228
-[147800.420320]  bug_handler+0x44/0x6c
-[147800.420327]  call_break_hook+0x40/0x74
-[147800.420336]  brk_handler+0x1c/0x5c
-[147800.420342]  do_debug_exception+0x88/0xc4
-[147800.420350]  el1_dbg+0x38/0x54
-[147800.420359]  el1_sync_handler+0xac/0xb8
-[147800.420365]  el1_sync+0x88/0x140
-[147800.420372]  task_blocks_on_rt_mutex+0x94/0x1b4
-[147800.420383]  rt_spin_lock_slowlock_locked+0x90/0x1bc
-[147800.420391]  rt_spin_lock_slowlock+0x5c/0x94
-[147800.420399]  rt_spin_lock_fastlock.constprop.0+0x28/0x34
-[147800.420408]  rt_spin_lock+0x10/0x24
-[147800.420415]  local_lock_acquire+0x28/0xd0
-[147800.420425]  free_unref_page+0x94/0x114
-[147800.420432]  free_the_page+0x14/0x2c
-[147800.420440]  __free_pages+0x30/0x78
-[147800.420447]  __vunmap+0x188/0x1c8
-[147800.420453]  __vfree+0x4c/0x50
-[147800.420460]  vfree+0x30/0x40
-[147800.420465]  free_thread_stack+0xd0/0x120
-[147800.420472]  put_task_stack+0x60/0x6c
-[147800.420479]  __put_task_struct+0x4c/0xd4
-[147800.420485]  put_task_struct+0x44/0x78
-[147800.420493]  rt_mutex_adjust_prio_chain+0x1a0/0x370
-[147800.420502]  task_blocks_on_rt_mutex+0x188/0x1b4
-[147800.420511]  rt_mutex_slowlock_locked+0xb0/0x170
-[147800.420519]  rt_mutex_slowlock+0x7c/0xd4
-[147800.420526]  __rt_mutex_lock_state+0x3c/0x50
-[147800.420534]  _mutex_lock_blk_flush+0x5c/0x6c
-[147800.420543]  _mutex_lock+0x14/0x20
-[147800.420550]  ion_alloc+0x5f8/0x62c
-[147800.420561]  ion_ioctl+0x18c/0x694
-[147800.420569]  vfs_ioctl+0x28/0x48
-[147800.420578]  __arm64_sys_ioctl+0x78/0xcc
-[147800.420586]  el0_svc_common.constprop.0+0x148/0x1e8
-[147800.420593]  do_el0_svc+0x50/0x80
-[147800.420599]  el0_svc+0x14/0x20
-[147800.420606]  el0_sync_handler+0xcc/0x154
-[147800.420612]  el0_sync+0x180/0x1c0
+Dear RT folks!
 
-A\B\C is task.
-L1\L2 is lock.
-adj: means rt_mutex_adjust_prio_chain()
+I'm pleased to announce the v5.19-rc7-rt7 patch set. 
 
-key process:
-    1. A owns L1,and blocked on L2.
-    2. B blocked on L1,B execute mutex_lock or spinlock will adjust A's
-       priority by execute adj func.
-    3. before execute adj,it will unlock L1->wait_lock
-    4. If at this point,C release L2.A owns L2,and finish the whole thread
-       work very quickly,Finally the B thread exited.In this process,
-       unlock L1 will assign 0x1 to L1->owner,what orign value is A
-       task_struct.But in adj func,the parameter of task is still A's
-       pointer.becaues of A already exited,put_task_struct will release
-       task A.
-    5. If local page.lock is locked,it will cause a BUG_ON,becaues one
-       task A be blocked on two lock.
+Changes since v5.19-rc7-rt6:
 
-    ====A================B===============C================
-        |                |               |->owns L2
-        |->owns L1       |               |
-        |->block on L2   |->lock L1.rawspin_wait_lock
-        |                |->block on L1  |
-        |                |               |->unlock L2
-        |                |->get A task_truct
-        |->owns L2       |->unlocked L1.rawspin_wait_lock
-        |->lock L1.rawspin_wait_lock
-        |->unlock L1     |               |
-        |                |               |
-        |->unlock L1.rawspin_wait_lock
-        |->release L2    |               |
-        |->A exit & not free
-        |                |->put A task_struct
-        |                |        ↓
-                                 [5]
+  - Slightly update the ptrace patch (for wait_task_inactive(). There is
+    no change in functionality, just the code has been reordered.
 
-Signed-off-by: yuxin.ye <yeyuxin0925@gmail.com>
----
- kernel/locking/rtmutex.c | 8 --------
- 1 file changed, 8 deletions(-)
+Known issues
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 7779ee8ab..52e9cebc3 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1175,13 +1175,9 @@ static int __sched task_blocks_on_rt_mutex(struct rt_mutex_base *lock,
- 	 */
- 	get_task_struct(owner);
+The delta patch against v5.19-rc7-rt6 is appended below and can be found here:
  
--	raw_spin_unlock_irq(&lock->wait_lock);
--
- 	res = rt_mutex_adjust_prio_chain(owner, chwalk, lock,
- 					 next_lock, waiter, task);
- 
--	raw_spin_lock_irq(&lock->wait_lock);
--
- 	return res;
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.19/incr/patch-5.19-rc7-rt6-rt7.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.19-rc7-rt7
+
+The RT patch against v5.19-rc7 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.19/older/patch-5.19-rc7-rt7.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.19/older/patches-5.19-rc7-rt7.tar.xz
+
+Sebastian
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 1d4660a1915b3..377e7d4139d87 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3299,6 +3299,40 @@ int migrate_swap(struct task_struct *cur, struct task_struct *p,
  }
+ #endif /* CONFIG_NUMA_BALANCING */
  
-@@ -1461,12 +1457,8 @@ static void __sched remove_waiter(struct rt_mutex_base *lock,
- 	/* gets dropped in rt_mutex_adjust_prio_chain()! */
- 	get_task_struct(owner);
++#ifdef CONFIG_PREEMPT_RT
++static __always_inline bool state_mismatch(struct task_struct *p, unsigned int match_state)
++{
++	unsigned long flags;
++	bool mismatch;
++
++	raw_spin_lock_irqsave(&p->pi_lock, flags);
++	mismatch = READ_ONCE(p->__state) != match_state &&
++		READ_ONCE(p->saved_state) != match_state;
++	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
++	return mismatch;
++}
++static __always_inline bool state_match(struct task_struct *p, unsigned int match_state,
++					bool *wait)
++{
++	if (READ_ONCE(p->__state) == match_state)
++		return true;
++	if (READ_ONCE(p->saved_state) != match_state)
++		return false;
++	*wait = true;
++	return true;
++}
++#else
++static __always_inline bool state_mismatch(struct task_struct *p, unsigned int match_state)
++{
++	return READ_ONCE(p->__state) != match_state;
++}
++static __always_inline bool state_match(struct task_struct *p, unsigned int match_state,
++					bool *wait)
++{
++	return READ_ONCE(p->__state) == match_state;
++}
++#endif
++
+ /*
+  * wait_task_inactive - wait for a thread to unschedule.
+  *
+@@ -3317,12 +3351,10 @@ int migrate_swap(struct task_struct *cur, struct task_struct *p,
+  */
+ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state)
+ {
+-	int running, queued;
++	bool running, wait;
+ 	struct rq_flags rf;
+ 	unsigned long ncsw;
+ 	struct rq *rq;
+-	bool saved_state_match;
+-	bool update_ncsw;
  
--	raw_spin_unlock_irq(&lock->wait_lock);
+ 	for (;;) {
+ 		/*
+@@ -3345,24 +3377,8 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
+ 		 * is actually now running somewhere else!
+ 		 */
+ 		while (task_running(rq, p)) {
 -
- 	rt_mutex_adjust_prio_chain(owner, RT_MUTEX_MIN_CHAINWALK, lock,
- 				   next_lock, NULL, current);
+-			if (match_state) {
+-				bool mismatch = false;
+-#ifndef CONFIG_PREEMPT_RT
+-				if (READ_ONCE(p->__state != match_state)
+-					mismatch = true;
+-#else
+-				unsigned long flags;
 -
--	raw_spin_lock_irq(&lock->wait_lock);
- }
+-				raw_spin_lock_irqsave(&p->pi_lock, flags);
+-				if (READ_ONCE(p->__state) != match_state &&
+-				    READ_ONCE(p->saved_state) != match_state)
+-					mismatch = true;
+-				raw_spin_unlock_irqrestore(&p->pi_lock, flags);
+-#endif
+-				if (mismatch)
+-					return 0;
+-			}
++			if (match_state && state_mismatch(p, match_state))
++				return 0;
+ 			cpu_relax();
+ 		}
  
- /**
--- 
-2.17.1
-
+@@ -3374,24 +3390,12 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
+ 		rq = task_rq_lock(p, &rf);
+ 		trace_sched_wait_task(p);
+ 		running = task_running(rq, p);
+-		queued = task_on_rq_queued(p);
++		wait = task_on_rq_queued(p);
+ 		ncsw = 0;
+-		update_ncsw = false;
+-		saved_state_match = false;
+ 
+-		if (!match_state) {
+-			update_ncsw = true;
+-		} else if (READ_ONCE(p->__state) == match_state) {
+-			update_ncsw = true;
+-#ifdef CONFIG_PREEMPT_RT
+-		} else if (READ_ONCE(p->saved_state) == match_state) {
+-			update_ncsw = true;
+-			saved_state_match = true;
+-#endif
+-		}
+-
+-		if (update_ncsw)
++		if (!match_state || state_match(p, match_state, &wait))
+ 			ncsw = p->nvcsw | LONG_MIN; /* sets MSB */
++
+ 		task_rq_unlock(rq, p, &rf);
+ 
+ 		/*
+@@ -3420,7 +3424,7 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
+ 		 * running right now), it's preempted, and we should
+ 		 * yield - it could be a while.
+ 		 */
+-		if (unlikely(queued) || saved_state_match) {
++		if (unlikely(wait)) {
+ 			ktime_t to = NSEC_PER_SEC / HZ;
+ 
+ 			set_current_state(TASK_UNINTERRUPTIBLE);
+diff --git a/localversion-rt b/localversion-rt
+index 8fc605d806670..045478966e9f1 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt6
++-rt7
