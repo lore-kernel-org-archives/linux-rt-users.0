@@ -2,113 +2,192 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DCC4C43334
-	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Jul 2022 08:48:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90F0BC43334
+	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Jul 2022 07:29:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236995AbiGSIsP (ORCPT
+        id S239346AbiGTH27 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 19 Jul 2022 04:48:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53164 "EHLO
+        Wed, 20 Jul 2022 03:28:59 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48348 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236955AbiGSIsE (ORCPT
+        with ESMTP id S231650AbiGTH26 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 19 Jul 2022 04:48:04 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id C74B53C8D6
-        for <linux-rt-users@vger.kernel.org>; Tue, 19 Jul 2022 01:48:03 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1658220482;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=T+a4ycFhjarx9mlzPS8D1+gxrl/DhKN12r6qeEGChLA=;
-        b=OkJZF5fTZsy/VLhRP/AongwJgbteTv/P9BFiTNCRGc/xjoEZ1nVbScWPSXJUqPdEvYPUMk
-        VDJjm+5gKMRm5iGDSEyj+iUksAjUb+Ff4qZwD8Xg1IogBObii7DYIMuz1bYEg5sr2SyKTS
-        Kbu9LVs6lrmA8E+ZYff5yS9m44XUNDw=
-Received: from mail-ed1-f69.google.com (mail-ed1-f69.google.com
- [209.85.208.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-604-0Yaf6dMGNfaUPrxOFFYK5Q-1; Tue, 19 Jul 2022 04:47:55 -0400
-X-MC-Unique: 0Yaf6dMGNfaUPrxOFFYK5Q-1
-Received: by mail-ed1-f69.google.com with SMTP id g7-20020a056402424700b0043ac55ccf15so9454963edb.4
-        for <linux-rt-users@vger.kernel.org>; Tue, 19 Jul 2022 01:47:55 -0700 (PDT)
+        Wed, 20 Jul 2022 03:28:58 -0400
+Received: from mail-pj1-x102a.google.com (mail-pj1-x102a.google.com [IPv6:2607:f8b0:4864:20::102a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6F1A754CAF;
+        Wed, 20 Jul 2022 00:28:55 -0700 (PDT)
+Received: by mail-pj1-x102a.google.com with SMTP id n4-20020a17090a73c400b001f1e87432c2so1313217pjk.3;
+        Wed, 20 Jul 2022 00:28:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=RFrHXTL8Q2FobO7rjUUAkyYxzxKSZ1yAWcrkdPU4Ak8=;
+        b=ngcmrnB/DSWpG3Oqu0t39TGFQj2tURSijQLbs2mIiaW2gIuMxAAUMar2FDoNtpYXQF
+         /sBzEKP6WamnRh2+GLpSW6dW1NMoAkuCp0+olpBunnzEttZ505b/eXfMS8E6T7r42S4b
+         dGisVBPKLF0F60X+RmUW+o/6PFT+ZsfL9RjjI25fB5zkcsSfGgsjGkYVUYg6ZC8ODUkY
+         /K8q6PdHZlRyNdsZw1vijIssNeQxph1NhIXq6lhV5d6nKAbZCR4z5FIUuDwQv/biG+9g
+         NDgMra9Eb7BMIA6sKeptP0cQ+hDv+UrRN9QbfL9sECy9lOIcGd543qNyADGYZ/OeKMlS
+         0oKQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-         :content-language:to:cc:references:from:in-reply-to
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
          :content-transfer-encoding;
-        bh=T+a4ycFhjarx9mlzPS8D1+gxrl/DhKN12r6qeEGChLA=;
-        b=MvOBEr4+gbpPuTWAkLyyuLVMWsHyNpE6uvM1SxHW+SC/YYMwtiJqCJeaUMjVer6HqO
-         wiXkOavpTNvVwpLyqvzNV6C/qw1XExo4OE1mCq+fyyCAcjshonFdHxmFKhUm+4+ob8nT
-         vpA9qZSL5IDi6SfFrsSDOnj7BHlmd7SvxEOoXJhmk3CJqGLIAymaNqkgplAJlfwI4Bcc
-         iLVYS6JBv/UBZF1bHfBak06TI/Y1cVTc/rhkK3r5h+I2ekght77rQUqMYoQdwm/kmhhE
-         wgvdrqBHJr1zm1AeeBk8wHsiO2i0OvghymxPyR3dtpahhNjLBEU1HT0vSnMtHinKdRwY
-         qglQ==
-X-Gm-Message-State: AJIora8NR8EdRFCGI8Ydsa6HuZW9xEiaciP0CwM/r+yXlL7rbzWdQsPG
-        9K5ZyOnwzHSpBXW1lYhxRHcdWWRQaPT+bgtgTeJQF3Isyne77pr7KZj32YDabXpWrrpcUVMVIul
-        9q7F1/yROZcqlsPl77AD6Y2vQ5Kg=
-X-Received: by 2002:a17:906:58d0:b0:72e:e25a:46e7 with SMTP id e16-20020a17090658d000b0072ee25a46e7mr23821056ejs.459.1658220474638;
-        Tue, 19 Jul 2022 01:47:54 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1uQHMU5eoA6/zvvcSw83C7AvpAZZ6w2gQJAz0OpyfqTXsmBvyBSiOUUf7stsy8sZJD7iFQfXg==
-X-Received: by 2002:a17:906:58d0:b0:72e:e25a:46e7 with SMTP id e16-20020a17090658d000b0072ee25a46e7mr23821038ejs.459.1658220474380;
-        Tue, 19 Jul 2022 01:47:54 -0700 (PDT)
-Received: from [192.168.0.198] (host-80-104-20-93.retail.telecomitalia.it. [80.104.20.93])
-        by smtp.gmail.com with ESMTPSA id q14-20020a17090676ce00b00722e50dab2csm6393555ejn.109.2022.07.19.01.47.53
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 19 Jul 2022 01:47:54 -0700 (PDT)
-Message-ID: <cff61541-2c12-964c-ad87-3852a5a1e8f8@redhat.com>
-Date:   Tue, 19 Jul 2022 10:47:52 +0200
+        bh=RFrHXTL8Q2FobO7rjUUAkyYxzxKSZ1yAWcrkdPU4Ak8=;
+        b=NyJBNPcv9yEMIfM5SiL7u/HGWSyCKkn/XafYkBIBbOCdanGCvlwBUOy7JFXoa8e3bX
+         mPflW0xexbGiQs842Sq01xysDqfes9x5obJwgbcNcXRySRjP9edoA7EB0CSyoTkFDdGj
+         i9+pEqEBMqI4OfQ/CqmeBywQeQNhoEUa/9uUdJ1XF3CjfPtwFErW7vDdleKDof88GyvN
+         Cj9zcRH9TDsiyP2KzJspD1iGo1GuwTibir1mU3e8RmU5qTqpXEpXgQIn+4gjJUIv+JuC
+         T7sb5nE21F1htV77gPMYnefvzK7X43bKD/VjTuCcVTKCBaMAa6jgSyPmsKqmpywntU1/
+         Tb1g==
+X-Gm-Message-State: AJIora9IGtZykK4GFZhn1AAh4eLpsXNBrYZC5wZDvNwBeuQwaWzWS+fG
+        UIt4I3m3DpEFYewPyQJVkDakg6jbrSIZ7g==
+X-Google-Smtp-Source: AGRyM1uh9ttAT4ntu5MJ2NslnmzrqW5AtYrNwTs30U6mTfJ5yD0pMdfEPMDHTbqOMGxd6hzKhZB4LA==
+X-Received: by 2002:a17:90b:3d85:b0:1f0:7355:734 with SMTP id pq5-20020a17090b3d8500b001f073550734mr3798860pjb.24.1658302134485;
+        Wed, 20 Jul 2022 00:28:54 -0700 (PDT)
+Received: from ubuntu.hobot.cc ([39.170.101.209])
+        by smtp.gmail.com with ESMTPSA id y12-20020aa78f2c000000b00528c149fe97sm12834297pfr.89.2022.07.20.00.28.51
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 20 Jul 2022 00:28:53 -0700 (PDT)
+From:   "yuxin.ye" <yeyuxin0925@gmail.com>
+To:     linux-rt-users@vger.kernel.org, peterz@infradead.org,
+        mingo@redhat.com, will@kernel.org, longman@redhat.com,
+        boqun.feng@gmail.com
+Cc:     linux-kernel@vger.kernel.org, "yuxin.ye" <yeyuxin0925@gmail.com>
+Subject: [PATCH RFC] rtmutex: Fix BUG_ON at kernel/locking/rtmutex.c:1331!
+Date:   Wed, 20 Jul 2022 00:28:06 -0700
+Message-Id: <20220720072806.43445-1-yeyuxin0925@gmail.com>
+X-Mailer: git-send-email 2.17.1
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.11.0
-Subject: Re: [PATCH] linux/wait: Fix __wait_event_hrtimeout for RT/DL tasks
-Content-Language: en-US
-To:     Juri Lelli <juri.lelli@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Bruno Goncalves <bgoncalv@redhat.com>,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
-        Valentin Schneider <vschneid@redhat.com>
-References: <20220627095051.42470-1-juri.lelli@redhat.com>
-From:   Daniel Bristot de Oliveira <bristot@redhat.com>
-In-Reply-To: <20220627095051.42470-1-juri.lelli@redhat.com>
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 6/27/22 11:50, Juri Lelli wrote:
-> Changes to hrtimer mode (potentially made by __hrtimer_init_sleeper on
-> PREEMPT_RT) are not visible to hrtimer_start_range_ns, thus not
-> accounted for by hrtimer_start_expires call paths. In particular,
-> __wait_event_hrtimeout suffers from this problem as we have, for
-> example:
-> 
-> fs/aio.c::read_events
->   wait_event_interruptible_hrtimeout
->     __wait_event_hrtimeout
->       hrtimer_init_sleeper_on_stack <- this might "mode |= HRTIMER_MODE_HARD"
->                                        on RT if task runs at RT/DL priority
->         hrtimer_start_range_ns
->           WARN_ON_ONCE(!(mode & HRTIMER_MODE_HARD) ^ !timer->is_hard)
->           fires since the latter doesn't see the change of mode done by
->           init_sleeper
-> 
-> Fix it by making __wait_event_hrtimeout call hrtimer_sleeper_start_expires,
-> which is aware of the special RT/DL case, instead of hrtimer_start_range_ns.
-> 
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Reported-by: Bruno Goncalves <bgoncalv@redhat.com>
-> Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
+before rt_mutex_adjust_prio_chain(),unlock lock->wait_lock will cause
+BUG_ON at kernel/locking/rtmutex.c:1331:
+[147800.420240] Call trace:
+[147800.420243]  dump_backtrace+0x0/0x1cc
+[147800.420260]  show_stack+0x18/0x24
+[147800.420267]  dump_stack+0xcc/0x12c
+[147800.420278]  nmi_cpu_backtrace+0xbc/0xc8
+[147800.420287]  nmi_trigger_cpumask_backtrace+0xcc/0x1c0
+[147800.420295]  arch_trigger_cpumask_backtrace+0x28/0x40
+[147800.420304]  oops_enter+0x3c/0x48
+[147800.420313]  die+0x54/0x228
+[147800.420320]  bug_handler+0x44/0x6c
+[147800.420327]  call_break_hook+0x40/0x74
+[147800.420336]  brk_handler+0x1c/0x5c
+[147800.420342]  do_debug_exception+0x88/0xc4
+[147800.420350]  el1_dbg+0x38/0x54
+[147800.420359]  el1_sync_handler+0xac/0xb8
+[147800.420365]  el1_sync+0x88/0x140
+[147800.420372]  task_blocks_on_rt_mutex+0x94/0x1b4
+[147800.420383]  rt_spin_lock_slowlock_locked+0x90/0x1bc
+[147800.420391]  rt_spin_lock_slowlock+0x5c/0x94
+[147800.420399]  rt_spin_lock_fastlock.constprop.0+0x28/0x34
+[147800.420408]  rt_spin_lock+0x10/0x24
+[147800.420415]  local_lock_acquire+0x28/0xd0
+[147800.420425]  free_unref_page+0x94/0x114
+[147800.420432]  free_the_page+0x14/0x2c
+[147800.420440]  __free_pages+0x30/0x78
+[147800.420447]  __vunmap+0x188/0x1c8
+[147800.420453]  __vfree+0x4c/0x50
+[147800.420460]  vfree+0x30/0x40
+[147800.420465]  free_thread_stack+0xd0/0x120
+[147800.420472]  put_task_stack+0x60/0x6c
+[147800.420479]  __put_task_struct+0x4c/0xd4
+[147800.420485]  put_task_struct+0x44/0x78
+[147800.420493]  rt_mutex_adjust_prio_chain+0x1a0/0x370
+[147800.420502]  task_blocks_on_rt_mutex+0x188/0x1b4
+[147800.420511]  rt_mutex_slowlock_locked+0xb0/0x170
+[147800.420519]  rt_mutex_slowlock+0x7c/0xd4
+[147800.420526]  __rt_mutex_lock_state+0x3c/0x50
+[147800.420534]  _mutex_lock_blk_flush+0x5c/0x6c
+[147800.420543]  _mutex_lock+0x14/0x20
+[147800.420550]  ion_alloc+0x5f8/0x62c
+[147800.420561]  ion_ioctl+0x18c/0x694
+[147800.420569]  vfs_ioctl+0x28/0x48
+[147800.420578]  __arm64_sys_ioctl+0x78/0xcc
+[147800.420586]  el0_svc_common.constprop.0+0x148/0x1e8
+[147800.420593]  do_el0_svc+0x50/0x80
+[147800.420599]  el0_svc+0x14/0x20
+[147800.420606]  el0_sync_handler+0xcc/0x154
+[147800.420612]  el0_sync+0x180/0x1c0
 
-Reviewed-by: Daniel Bristot de Oliveira <bristot@kernel.org>
--- Daniel
+A\B\C is task.
+L1\L2 is lock.
+adj: means rt_mutex_adjust_prio_chain()
+
+key process:
+    1. A owns L1,and blocked on L2.
+    2. B blocked on L1,B execute mutex_lock or spinlock will adjust A's
+       priority by execute adj func.
+    3. before execute adj,it will unlock L1->wait_lock
+    4. If at this point,C release L2.A owns L2,and finish the whole thread
+       work very quickly,Finally the B thread exited.In this process,
+       unlock L1 will assign 0x1 to L1->owner,what orign value is A
+       task_struct.But in adj func,the parameter of task is still A's
+       pointer.becaues of A already exited,put_task_struct will release
+       task A.
+    5. If local page.lock is locked,it will cause a BUG_ON,becaues one
+       task A be blocked on two lock.
+
+    ====A================B===============C================
+        |                |               |->owns L2
+        |->owns L1       |               |
+        |->block on L2   |->lock L1.rawspin_wait_lock
+        |                |->block on L1  |
+        |                |               |->unlock L2
+        |                |->get A task_truct
+        |->owns L2       |->unlocked L1.rawspin_wait_lock
+        |->lock L1.rawspin_wait_lock
+        |->unlock L1     |               |
+        |                |               |
+        |->unlock L1.rawspin_wait_lock
+        |->release L2    |               |
+        |->A exit & not free
+        |                |->put A task_struct
+        |                |        ↓
+                                 [5]
+
+Signed-off-by: yuxin.ye <yeyuxin0925@gmail.com>
+---
+ kernel/locking/rtmutex.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 7779ee8ab..52e9cebc3 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1175,13 +1175,9 @@ static int __sched task_blocks_on_rt_mutex(struct rt_mutex_base *lock,
+ 	 */
+ 	get_task_struct(owner);
+ 
+-	raw_spin_unlock_irq(&lock->wait_lock);
+-
+ 	res = rt_mutex_adjust_prio_chain(owner, chwalk, lock,
+ 					 next_lock, waiter, task);
+ 
+-	raw_spin_lock_irq(&lock->wait_lock);
+-
+ 	return res;
+ }
+ 
+@@ -1461,12 +1457,8 @@ static void __sched remove_waiter(struct rt_mutex_base *lock,
+ 	/* gets dropped in rt_mutex_adjust_prio_chain()! */
+ 	get_task_struct(owner);
+ 
+-	raw_spin_unlock_irq(&lock->wait_lock);
+-
+ 	rt_mutex_adjust_prio_chain(owner, RT_MUTEX_MIN_CHAINWALK, lock,
+ 				   next_lock, NULL, current);
+-
+-	raw_spin_lock_irq(&lock->wait_lock);
+ }
+ 
+ /**
+-- 
+2.17.1
 
