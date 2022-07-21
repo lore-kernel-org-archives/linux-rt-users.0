@@ -2,161 +2,92 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4285EC433EF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jul 2022 13:08:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ACE71C43334
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Jul 2022 18:14:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234051AbiGUNIS (ORCPT
+        id S230072AbiGUSO1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 21 Jul 2022 09:08:18 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43806 "EHLO
+        Thu, 21 Jul 2022 14:14:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35138 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234098AbiGUNHc (ORCPT
+        with ESMTP id S229781AbiGUSOZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Jul 2022 09:07:32 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.21])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CA5EC85F83
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jul 2022 06:06:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1658408805;
-        bh=aMGT4bQp+Yg2KFTtLto6zb+TYYYwJR/WgX5TxgQFdb0=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=SolL+k7qgkdXYXHHXlBpXeW4CkCEjYI11S71LTOnqRRvc6smKot66UR4/t1oFzA6K
-         AS8E6FMx8miMgrw7BZAx1EgDlhV9d+lHQHua+hPSZ3Z6IAOt19BpvtGHVwrqZw6FSi
-         /3iR121z7rJrZfYbJg1sDl9syL7WXfveFW5XKPVc=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.fritz.box ([185.191.218.106]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1N79yG-1nR7l3358G-017SNI; Thu, 21
- Jul 2022 15:06:45 +0200
-Message-ID: <daf9b4678af9a121ba85f30b04f1335b44639433.camel@gmx.de>
-Subject: Re: v5.19-rc2-rt3: nouveau might sleep splat
-From:   Mike Galbraith <efault@gmx.de>
-To:     John Ogness <john.ogness@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     RT <linux-rt-users@vger.kernel.org>
-Date:   Thu, 21 Jul 2022 15:06:45 +0200
-In-Reply-To: <87tu8a16bm.fsf@jogness.linutronix.de>
-References: <01e0c6949e6f0611954016552da8f0795b20600a.camel@gmx.de>
-         <YrV4795StT13AUC+@linutronix.de>
-         <a35dc9666de31d406a2132fc9457349dc8ee10ef.camel@gmx.de>
-         <YrWPiwtk0kAWxXI9@linutronix.de> <87wnd616ds.fsf@jogness.linutronix.de>
-         <87tu8a16bm.fsf@jogness.linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+        Thu, 21 Jul 2022 14:14:25 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 5743A8C58E
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jul 2022 11:14:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1658427259;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=WoluNnyynHGUmuV72joXwEw3SFlNDiyppF7kCvhsj94=;
+        b=dsWJimiIURWkZdh7KC51e/rUxNuwWzNmdoBzHdmjWl5y1SyQUQarR2Uz5jnXc1/QezEmc4
+        Y1kVPPL41E3SCMsovwEFp+kkoc32d1E3z5TGnweaN007OFPmJwbiJFeBlP0kJ3lJoeSJ56
+        odq0AdJE/zm01OnzfRRDBNcV5wIZVqk=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-551-Ywsb4lX9PRmK15R9SRyI7A-1; Thu, 21 Jul 2022 14:14:17 -0400
+X-MC-Unique: Ywsb4lX9PRmK15R9SRyI7A-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2502C80A0B9;
+        Thu, 21 Jul 2022 18:14:17 +0000 (UTC)
+Received: from [10.22.33.96] (unknown [10.22.33.96])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id BFB2C2166B26;
+        Thu, 21 Jul 2022 18:14:16 +0000 (UTC)
+Message-ID: <4953388d-bce4-37cd-f2b9-28dc3627c17d@redhat.com>
+Date:   Thu, 21 Jul 2022 14:14:16 -0400
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:hxNg/54lH8k3Xk2VWCE6s2ryl5nwXuLLADJGnFrueQK5hKqt0o5
- LHzBdD+FSU2KFeJHN1vcUgVxJlNeG0cWKcY2TkBqiqYsDZXLDnF8PNjPwk639G/eEERga1e
- QRl3CAyU+v7OAZzLCxZO4t5WYy8cixaFNH/TVGoff8bb4n9sIioLqP/A7NQiw6U12Dp9+CD
- +wOUI3db3dQHlf5lofBvg==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:uhBIRgkFR6c=:DX58kzbmF/IsjOyEpIFy1/
- 1Wo4AfbZMF4VVuZyB25MqNwtCdjm3wU2w2KEr25zXiZu+0cjTRQQ3a4Nh93LKICe6TmF4fj2B
- cXNgR7AAvNoc07K/7PWM/i7lkgw41lUwvRQ1d6mmDh7gqi1+oKHklJbDCCKk0Pm3kDKKiRIrf
- +jnDrSjzeYLUaWJdFedjQuZCZwMT0abqlX0da/iH85W4WnhM9bPOIySPtfti9+vR7ylOXgVnK
- HTYOZPaCepRpkm1TM+F2UZxhFFTj9p92mv1wHDTpXwzOhq21oQB7jFgHodYxUi97+eqErcDni
- +71aqoWWHCUZEsRYHBhLdl1FG8n9MRat6qcTUD7YKxxogWBPykodHwcdrNo/vrMqP2btCDsSl
- 3H1Q4oIFvjt60STGoVMJfBPkCPzXIj7OD6xhjxHz/dv+OxUl12VyYHlEkeDfo4jmQ5QnyKkVb
- gy0NKzvZOdARWXIajhABbhzo5cl/Zk9XBSzUfnhXiahLPVCVxWFuvT11FyWIMm9qsWzF2Gj8u
- TkmxjInKTYBXJeWL7/3lMxitjB5F0JixT+porgYBNM4oWHsoAA8tTW1Ievsq7qPmDzyGvRCWN
- zeFbjg/hH3ak9q/Zfg9usYd2N0TPJt4h4LYsX4AerMydrgpuUY2vJBGLqdjb2iaPzRUQcWCCN
- DpaHxGrVuQqaL31tpMtttwOhRGiMgifgRxMbRFWziCDDUeteq170kE2EwZprTdMmtorUDsv78
- NZAxj5j3Uble+3xoYmM+rJ2ippyTz85FvkJjQoviZ0GDv3fA9y0Vud6TPngm2jUx/9q/GT/wO
- zfcQlNzSDCuo1+Sh7Zql/ycQ3cWKzSjgBOXsJqDLruDwRyYQQ8NZlMlTFNgGhAb13W3NkthV+
- UX176cjEFuZ9pJIIZyPO+IlDaK+nA4Z0Nw40KyMyOeEdwgjER0MmfPLi8PYkZfkprqgxly/TT
- X46da8ruNoioErwk29TW4922XSg0BhSToIDYKxQN2R0yRvmnaK5KHoo250wOiOq0cKnYYGA2n
- CHh62+GdYEkJ+IvCnDKQYSG7wBhkxzAveKGhExqEkqksZV4gFcB4vYZgf86eguYu+tJ2pc+EY
- QhKZq2PSfQH925cEVjCopgYhcLjcjD9W2mNCnCKQiPFALJx+V1eyL0LxA==
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.11.0
+Subject: Re: [PATCH RFC] rtmutex: Fix BUG_ON at kernel/locking/rtmutex.c:1331!
+Content-Language: en-US
+To:     "yuxin.ye" <yeyuxin0925@gmail.com>, linux-rt-users@vger.kernel.org,
+        peterz@infradead.org, mingo@redhat.com, will@kernel.org,
+        boqun.feng@gmail.com
+Cc:     linux-kernel@vger.kernel.org
+References: <20220720072806.43445-1-yeyuxin0925@gmail.com>
+ <62de0805-a6ec-f2a1-00f2-1b24a95c72f0@redhat.com>
+ <20220721071656.GA8109@ubuntu>
+From:   Waiman Long <longman@redhat.com>
+In-Reply-To: <20220721071656.GA8109@ubuntu>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 2022-06-24 at 16:37 +0206, John Ogness wrote:
-> On 2022-06-24, John Ogness <john.ogness@linutronix.de> wrote:
-> > As to this the actual problem reported in this thread, I believe
-> > this
-> > patch solves it:
-> >
-> > https://lore.kernel.org/lkml/20220609121709.12939-1-Jason@zx2c4.com
->
-> There was a cleaner v2 later in the thread:
->
-> https://lore.kernel.org/lkml/20220609123319.17576-1-Jason@zx2c4.com
 
-That's in tip, but pulling my bandaid off...
+On 7/21/22 03:17, yuxin.ye wrote:
+> On Wed, Jul 20, 2022 at 10:25:17PM -0400, Waiman Long wrote:
+>> On 7/20/22 03:28, yuxin.ye wrote:
+>>> before rt_mutex_adjust_prio_chain(),unlock lock->wait_lock will cause
+>>> BUG_ON at kernel/locking/rtmutex.c:1331:
+>> The current upstream kernel/locking/rtmutex.c has no BUG_ON() call. Which
+>> version of the kernel are you using?
+>>
+>> Cheers,
+>> Longman
+>>
+> The Linux version is 5.10.
+> The upstream has indeed removed the BUG_ON, But in rt_mutex_adjust_prio_chain()
+> it is still possible to have a thread is blocked by two locks. Can this situation
+> be ignored without BUG_ON?
 
-[    3.903338] BUG: sleeping function called from invalid context at kerne=
-l/locking/spinlock_rt.c:46
-[    3.903340] in_atomic(): 0, irqs_disabled(): 1, non_block: 0, pid: 389,=
- name: systemd-udevd
-[    3.903340] preempt_count: 0, expected: 0
-[    3.903341] RCU nest depth: 1, expected: 1
-[    3.903342] CPU: 0 PID: 389 Comm: systemd-udevd Tainted: G            E=
-     5.19.0.g96ff3a1-tip-rt #8 3a0ec7519629dbce1c881d809a8600cfad8358ca
-[    3.903344] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09=
-/23/2013
-[    3.903345] Call Trace:
-[    3.903346]  <TASK>
-[    3.903347]  dump_stack_lvl+0x44/0x5c
-[    3.903352]  ? migrate_disable+0x37/0xa0
-[    3.903354]  __might_resched+0x171/0x1c0
-[    3.903357]  rt_spin_lock+0x2d/0x70
-[    3.903361]  crng_make_state+0x80/0x1d0
-[    3.903364]  _get_random_bytes.part.15+0x4e/0x120
-[    3.903366]  ? nvkm_vmm_iter.constprop.11+0x311/0x860 [nouveau 9c7d46b6=
-4ad6b15f254390d4ef3bd03268a3030d]
-[    3.903449]  ? nvkm_vmm_sparse_unref_ptes+0x80/0x80 [nouveau 9c7d46b64a=
-d6b15f254390d4ef3bd03268a3030d]
-[    3.903518]  ? gf100_vmm_pgt_sgl+0x230/0x230 [nouveau 9c7d46b64ad6b15f2=
-54390d4ef3bd03268a3030d]
-[    3.903588]  default_pointer+0x2a0/0x2d0
-[    3.903591]  vsnprintf+0x35e/0x4c0
-[    3.903593]  ? gf100_gr_object_new+0x2b/0x70 [nouveau 9c7d46b64ad6b15f2=
-54390d4ef3bd03268a3030d]
-[    3.903669]  va_format.isra.16+0x6e/0xa0
-[    3.903670]  vsnprintf+0x35e/0x4c0
-[    3.903673]  vprintk_store+0x140/0x540
+No. However, we don't remove the lock like what you do with your patch. 
+It will corrupt the data if multiple CPUs are allowed to run 
+rt_mutex_adjust_prio_chain() for the same rt_mutex simultaneously. You 
+need to find a way to fix the underlying problem.
 
-Bandaid:
+BTW, I still can't see a BUG_ON at line 1331 of rtmutex.c with a v5.10 
+kernel. Does your source tree have some out-of-tree patches that 
+modifies rtmutex?
 
-printk: fix RT vprintk_store() might sleep splat
-
-RT can't call vsnprintf() with IRQs disabled, so disable migration
-and move the printk_enter_irqsave() call down to where it's needed.
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-=2D--
- kernel/printk/printk.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
-
-=2D-- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -2277,8 +2277,7 @@ int vprintk_store(int facility, int leve
- 	int ret =3D 0;
- 	u64 ts_nsec;
-
--	if (!printk_enter_irqsave(recursion_ptr, irqflags))
--		return 0;
-+	migrate_disable();
-
- 	/*
- 	 * Since the duration of printk() can vary depending on the message
-@@ -2313,6 +2312,11 @@ int vprintk_store(int facility, int leve
- 	if (dev_info)
- 		flags |=3D LOG_NEWLINE;
-
-+	if (!printk_enter_irqsave(recursion_ptr, irqflags)) {
-+		migrate_enable();
-+		return 0;
-+	}
-+
- 	if (flags & LOG_CONT) {
- 		prb_rec_init_wr(&r, reserve_size);
- 		if (prb_reserve_in_last(&e, prb, &r, caller_id, LOG_LINE_MAX)) {
-@@ -2369,6 +2373,7 @@ int vprintk_store(int facility, int leve
- 	ret =3D text_len + trunc_msg_len;
- out:
- 	printk_exit_irqrestore(recursion_ptr, irqflags);
-+	migrate_enable();
- 	return ret;
- }
-
+Cheers,
+Longman
 
