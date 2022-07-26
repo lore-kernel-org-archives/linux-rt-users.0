@@ -2,53 +2,53 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 92169CCA47E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jul 2022 13:36:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED45FCCA489
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 Jul 2022 13:36:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238795AbiGZNgA (ORCPT
+        id S238921AbiGZNgB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 Jul 2022 09:36:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51252 "EHLO
+        Tue, 26 Jul 2022 09:36:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51262 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233894AbiGZNf7 (ORCPT
+        with ESMTP id S232851AbiGZNgA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Jul 2022 09:35:59 -0400
+        Tue, 26 Jul 2022 09:36:00 -0400
 Received: from mail-io1-xd35.google.com (mail-io1-xd35.google.com [IPv6:2607:f8b0:4864:20::d35])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43D0C60C5
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F21E925EF
         for <linux-rt-users@vger.kernel.org>; Tue, 26 Jul 2022 06:35:58 -0700 (PDT)
-Received: by mail-io1-xd35.google.com with SMTP id o2so3232027iof.8
+Received: by mail-io1-xd35.google.com with SMTP id v185so11165042ioe.11
         for <linux-rt-users@vger.kernel.org>; Tue, 26 Jul 2022 06:35:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=JPo0GMNJQL5+9gR0ByVooqTrE5pNbtAkTZ6XMx9bVh0=;
-        b=i7PDgxvogpiNC+2ecHMjjIb8I99O/g3DHmMr1zbTg89NhmR3rEIecxFgLoYEaPiVJ9
-         +UNXNh3u617+v87atbFNDLEMz0P5ZWSUrHm0Uc3Ljoz+C2sg5RJFSBZxZoBdOnFG3kZv
-         VOtGpq0/YCmaau+Ija9i1p4VOiHgeLBe/5DYlBvhyzxEmmYleM27pk2Q0zWocfcjXrKO
-         7mLdP08HeEWokVCin/hKCHZIQNqvBC2udCdMqlZupCDPl1pd6u1+lB6Kt/shmpwmtR0m
-         7sg21cUNnErDEWJxL69JDCxJWP5NN0YX3/4+EtmibXqx7uf/WF4h2wrcgTsCTPCVEi6I
-         csVQ==
+        bh=gBBoiwCwGvq6uV4fk7sgyse6ec8E0fOuJ+OlMEDFM74=;
+        b=RrbfkP72PF+VPiVcp4kquJtU+wLOi9Ldl1s/U1d6PekNax1/k+r9iJrM59ml9uklhd
+         9aGmTq/zIo1EAMkN2raQ0b2fns1yqfQOU71ICrfWE3Pk1qmXjc+boHNIMM00tnO0mIIa
+         EJHuOl0HMORsTSbT9ksgGxRbDB187omzn7QhK48kwLkTH/t40O3V8pRrObn1hP9Uagji
+         PYGjbEQr4rWiXGR/jPAWzItyial9WDb9/k4/9brD8b0mClutFS1lDdv48GybVF8evUrw
+         PQfm2PNYn3fNGU8pO53H9/94FlP0K8VklGF79ssQadjFwSUSZgu67s2BIS5va8y4dYg5
+         JKAw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=JPo0GMNJQL5+9gR0ByVooqTrE5pNbtAkTZ6XMx9bVh0=;
-        b=A0TCyujJ+ngfd0k92ym0HpFK4MAqhvIJYIVI5we97rC+eTGxJ+qbamdnLCRXFQ86bx
-         Ix1ZZ5zJRZA3YzIrjySm0Qt1qrvObH7zpdIR9CPRVtDmHzGzz6YBkyFH+TQ8qMWkvsh7
-         kqBsDqJOoMitCVqaa84ECoeDFFVjK745MLwVLHsMnlzuHmWYcVfxxgBJNwCkh7t5COAD
-         Yc2G2BgMwGsMv5E7hc5wCwZjVcZzdYF7TynrgtUkCRqf1vUlU/mbBYTdNmN6NNrvwZ6T
-         hOluDs0nbzCG39DTKp4KP3w41HLurUNfUAHYD4bL2mwlzT2tjCfRhSPBnPkKdblZPv9m
-         X4dA==
-X-Gm-Message-State: AJIora/yo0qN4YyUTS9Rfpmh8DlbuqsO2MXbwG70Qo7ZFK6MhIGFam0u
-        H3mtMJfyDwawNRgYiXcH0O9iKpGR7hE=
-X-Google-Smtp-Source: AGRyM1tvCRAQytm8QrvBirg1k8RTxS3Df+OLx5Hif7+OMVVy906u81peCNPyyAQWCegl+jm5Ls7qgQ==
-X-Received: by 2002:a6b:ba44:0:b0:67b:cf5d:4deb with SMTP id k65-20020a6bba44000000b0067bcf5d4debmr5997140iof.183.1658842557593;
-        Tue, 26 Jul 2022 06:35:57 -0700 (PDT)
+        bh=gBBoiwCwGvq6uV4fk7sgyse6ec8E0fOuJ+OlMEDFM74=;
+        b=idd8OGqiGP4g3w5x5wxwK9NlHHtkimtwRh5iyvYR9IYPcK8qs0L8Ej2VsFZ6E6hvEv
+         TL0C8q/NPcthjk6arvrAzyk+UfGKf1LAlcLchBu7wUwHcGnK4MJP/WQc1ZCqAHcssC7C
+         pY2rymKwr/eJW8ZUyPvPkkTrRJOfpgMshqjQ99pdR+fHkUMpNOUXUCQEQFSUrRT8ZFdu
+         62aMz43jKyzdkaC5aegeFqJcfv/WOQi8QV2VE4Mf9Unrnstg6qgJKMTkO1UFACLxbWmP
+         Yly3ovtEVcDGXPRTMezUL3lv/dEqKxWpXRzPK3eqbVea03kL3MtD5LPTs95FkgOnSptO
+         oxhw==
+X-Gm-Message-State: AJIora+Et1iyRPv+2TslohxtdI5/XMAocmDh+MlSCdebpisB6oA+YsJ3
+        JRaOVRwFi21PHLTSxsEx2v6FusKxDbw=
+X-Google-Smtp-Source: AGRyM1uk20k3FZ13mB4mz9S8rCkETL/UMVFaYFsi7nLrxev2ey8JWgIBeAcB+csYplZYxJgnTRWqSQ==
+X-Received: by 2002:a05:6638:d52:b0:341:40ca:b21f with SMTP id d18-20020a0566380d5200b0034140cab21fmr7155706jak.35.1658842558279;
+        Tue, 26 Jul 2022 06:35:58 -0700 (PDT)
 Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-09-184-147-143-180.dsl.bell.ca. [184.147.143.180])
-        by smtp.gmail.com with ESMTPSA id e42-20020a02212a000000b00339ceeec5edsm6617760jaa.12.2022.07.26.06.35.56
+        by smtp.gmail.com with ESMTPSA id e42-20020a02212a000000b00339ceeec5edsm6617760jaa.12.2022.07.26.06.35.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 26 Jul 2022 06:35:57 -0700 (PDT)
+        Tue, 26 Jul 2022 06:35:58 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
@@ -56,9 +56,9 @@ Cc:     Clark Williams <williams@redhat.com>,
         Leah Leshchinsky <lleshchi@redhat.com>,
         Manasi Godse <magodse@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/6] rteval: Make use of systopology instead of misc in rteval-cmd
-Date:   Tue, 26 Jul 2022 09:35:31 -0400
-Message-Id: <20220726133535.10824-3-jkacur@redhat.com>
+Subject: [PATCH 3/6] rteval: Make use of systopology instead of misc in hackbench
+Date:   Tue, 26 Jul 2022 09:35:32 -0400
+Message-Id: <20220726133535.10824-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.37.1
 In-Reply-To: <20220726133535.10824-1-jkacur@redhat.com>
 References: <20220726133535.10824-1-jkacur@redhat.com>
@@ -68,125 +68,122 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-- convert rteval-cmd to use methods / functions in systopology instead of misc.
-- strings converted to f-strings
+- Make use of systopology instead of misc in hackbench
+- Add a module docstring
+- Make use of f-strings
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval-cmd | 45 +++++++++++++++++++++++----------------------
- 1 file changed, 23 insertions(+), 22 deletions(-)
+ rteval/modules/loads/hackbench.py | 30 ++++++++++++++----------------
+ 1 file changed, 14 insertions(+), 16 deletions(-)
 
-diff --git a/rteval-cmd b/rteval-cmd
-index c1a68bd5133b..24ff5df76883 100755
---- a/rteval-cmd
-+++ b/rteval-cmd
-@@ -33,6 +33,7 @@
+diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
+index ddd1378bac75..45bcd546e3b3 100644
+--- a/rteval/modules/loads/hackbench.py
++++ b/rteval/modules/loads/hackbench.py
+@@ -24,6 +24,7 @@
  #   including keys needed to generate an equivalently functional executable
  #   are deemed to be part of the source code.
  #
-+""" Main module of the rteval program """
++""" Load module - run the hackbench program from rt-tests ad a load """
  
  import sys
  import os
-@@ -48,9 +49,11 @@ from rteval import RtEval, rtevalConfig
- from rteval.modules.loads import LoadModules
- from rteval.modules.measurement import MeasurementModules
- from rteval.version import RTEVAL_VERSION
--from rteval.misc import invert_cpulist, compress_cpulist
+@@ -34,8 +35,9 @@ import errno
+ from signal import SIGKILL
+ from rteval.modules.loads import CommandLineLoad
+ from rteval.Log import Log
+-from rteval.misc import expand_cpulist
+-from rteval.systopology import SysTopology
 +from rteval.systopology import CpuList, SysTopology
- from rteval.modules.loads.kcompile import ModuleParameters
- 
-+compress_cpulist = CpuList.compress_cpulist
 +
- def summarize(repfile, xslt):
-     """ Summarize an already existing XML report """
-     isarchive = False
-@@ -60,7 +63,7 @@ def summarize(repfile, xslt):
-         try:
-             t = tarfile.open(repfile)
-         except:
--            print("Don't know how to summarize %s (tarfile open failed)" % repfile)
-+            print(f"Don't know how to summarize {repfile} (tarfile open failed)")
++expand_cpulist = CpuList.expand_cpulist
+ 
+ class Hackbench(CommandLineLoad):
+     def __init__(self, config, logger):
+@@ -46,7 +48,7 @@ class Hackbench(CommandLineLoad):
+         if self._donotrun:
              return
-         element = None
-         for f in t.getnames():
-@@ -68,7 +71,7 @@ def summarize(repfile, xslt):
-                 element = f
-                 break
-         if element is None:
--            print("No summary.xml found in tar archive %s" % repfile)
-+            print(f"No summary.xml found in tar archive {repfile}")
-             return
-         tmp = tempfile.gettempdir()
-         t.extract(element, path=tmp)
-@@ -172,7 +175,7 @@ def parse_options(cfg, parser, cmdargs):
  
-     (cmd_opts, cmd_args) = parser.parse_args(args=cmdargs)
-     if cmd_opts.rteval___version:
--        print(("rteval version %s" % RTEVAL_VERSION))
-+        print(f"rteval version {RTEVAL_VERSION}")
-         sys.exit(0)
+-        'calculate arguments based on input parameters'
++        # calculate arguments based on input parameters
+         (mem, units) = self.memsize
+         if units == 'KB':
+             mem = mem / (1024.0 * 1024.0)
+@@ -58,9 +60,9 @@ class Hackbench(CommandLineLoad):
+         ratio = float(mem) / float(self.num_cpus)
+         if ratio < 0.75:
+             if self.__cfg.runlowmem:
+-                self._log(Log.WARN, "Low memory system (%f GB/core)!" % ratio)
++                self._log(Log.WARN, f"Low memory system ({ratio} GB/core)!")
+             else:
+-                self._log(Log.WARN, "Low memory system (%f GB/core)! Not running hackbench" % ratio)
++                self._log(Log.WARN, f"Low memory system ({ratio} GB/core)! Not running hackbench")
+                 self._donotrun = True
  
-     if cmd_opts.rteval___duration:
-@@ -320,11 +323,13 @@ if __name__ == '__main__':
-         ldcfg = config.GetSection('loads')
-         msrcfg = config.GetSection('measurement')
-         if not ldcfg.cpulist and msrcfg.cpulist:
--            ldcfg.cpulist = compress_cpulist(invert_cpulist(msrcfg.cpulist))
-+            invlist = SysTopology().invert_cpulist(msrcfg.cpulist)
-+            ldcfg.cpulist = compress_cpulist(invlist)
-         if not msrcfg.cpulist and ldcfg.cpulist:
--            msrcfg.cpulist = compress_cpulist(invert_cpulist(ldcfg.cpulist))
-+            invlist = SysTopology().invert_cpulist(ldcfg.cpulist)
-+            msrcfg.cpulist = compress_cpulist(invlist)
+         sysTop = SysTopology()
+@@ -85,7 +87,7 @@ class Hackbench(CommandLineLoad):
+         for node, cpus in list(self.cpus.items()):
+             if not cpus:
+                 self.nodes.remove(node)
+-                self._log(Log.DEBUG, "node %s has no available cpus, removing" % node)
++                self._log(Log.DEBUG, f"node {node} has no available cpus, removing")
  
--        logger.log(Log.DEBUG, "workdir: %s" % rtevcfg.workdir)
-+        logger.log(Log.DEBUG, f"workdir: {rtevcfg.workdir}")
+         # setup jobs based on the number of cores available per node
+         self.jobs = biggest * 3
+@@ -95,7 +97,7 @@ class Hackbench(CommandLineLoad):
+         self.__multinodes = False
+         if len(self.nodes) > 1:
+             self.__multinodes = True
+-            self._log(Log.INFO, "running with multiple nodes (%d)" % len(self.nodes))
++            self._log(Log.INFO, f"running with multiple nodes ({len(self.nodes)})")
+             if os.path.exists('/usr/bin/numactl') and not self.cpulist:
+                 self.__usenumactl = True
+                 self._log(Log.INFO, "using numactl for thread affinity")
+@@ -121,7 +123,7 @@ class Hackbench(CommandLineLoad):
  
-         # if --summarize was specified then just parse the XML, print it and exit
-         if rtevcfg.summarize or rtevcfg.rawhistogram:
-@@ -343,22 +348,18 @@ if __name__ == '__main__':
-             print("Must be root to run rteval!")
-             sys.exit(-1)
+         self.tasks = {}
  
--        logger.log(Log.DEBUG, '''rteval options:
--     workdir: %s
--     loaddir: %s
--     reportdir: %s
--     verbose: %s
--     debugging: %s
--     logging:  %s
--     duration: %f
--     sysreport: %s''' % (
--         rtevcfg.workdir, rtevcfg.srcdir,
--         rtevcfg.reportdir, rtevcfg.verbose,
--         rtevcfg.debugging, rtevcfg.logging,
--         rtevcfg.duration, rtevcfg.sysreport))
-+        logger.log(Log.DEBUG, f'''rteval options:
-+     workdir: {rtevcfg.workdir}
-+     loaddir: {rtevcfg.srcdir}
-+     reportdir: {rtevcfg.reportdir}
-+     verbose: {rtevcfg.verbose}
-+     debugging: {rtevcfg.debugging}
-+     logging:  {rtevcfg.logging}
-+     duration: {rtevcfg.duration}
-+     sysreport: {rtevcfg.sysreport}''')
+-        self._log(Log.DEBUG, "starting loop (jobs: %d)" % self.jobs)
++        self._log(Log.DEBUG, f"starting loop (jobs: {self.jobs})")
  
-         if not os.path.isdir(rtevcfg.workdir):
--            raise RuntimeError("work directory %s does not exist" % rtevcfg.workdir)
-+            raise RuntimeError(f"work directory {rtevcfg.workdir} does not exist")
+         self.started = False
  
- 
-         rteval = RtEval(config, loadmods, measuremods, logger)
-@@ -378,7 +379,7 @@ if __name__ == '__main__':
+@@ -135,14 +137,14 @@ class Hackbench(CommandLineLoad):
          else:
-             # ... otherwise, run the full measurement suite with loads
-             ec = rteval.Measure()
--            logger.log(Log.DEBUG, "exiting with exit code: %d" % ec)
-+            logger.log(Log.DEBUG, f"exiting with exit code: {ec}")
+             args = self.args
  
-         sys.exit(ec)
-     except KeyboardInterrupt:
+-        self._log(Log.DEBUG, "starting on node %s: args = %s" % (node, args))
++        self._log(Log.DEBUG, "starting on node node{}: args = {args}")
+         p = subprocess.Popen(args,
+                              stdin=self.__nullfp,
+                              stdout=self.__out,
+                              stderr=self.__err)
+         if not p:
+-            self._log(Log.DEBUG, "hackbench failed to start on node %s" % node)
+-            raise RuntimeError("hackbench failed to start on node %s" % node)
++            self._log(Log.DEBUG, f"hackbench failed to start on node {node}")
++            raise RuntimeError(f"hackbench failed to start on node {node}")
+         return p
+ 
+     def _WorkloadTask(self):
+@@ -181,7 +183,7 @@ class Hackbench(CommandLineLoad):
+ 
+         for node in self.nodes:
+             if node in self.tasks and self.tasks[node].poll() is None:
+-                self._log(Log.INFO, "cleaning up hackbench on node %s" % node)
++                self._log(Log.INFO, f"cleaning up hackbench on node {node}")
+                 self.tasks[node].send_signal(SIGKILL)
+                 if self.tasks[node].poll() is None:
+                     time.sleep(2)
+@@ -213,7 +215,3 @@ def ModuleParameters():
+ def create(config, logger):
+     return Hackbench(config, logger)
+ 
+-# TODO: The following test is broken
+-#if __name__ == '__main__':
+-#    h = Hackbench(params={'debugging':True, 'verbose':True})
+-#    h.run()
 -- 
 2.37.1
 
