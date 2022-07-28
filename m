@@ -2,59 +2,59 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3DD64C04A68
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jul 2022 19:51:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 50BD8C04A68
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Jul 2022 20:22:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230090AbiG1TvJ (ORCPT
+        id S229590AbiG1UWq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Jul 2022 15:51:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36106 "EHLO
+        Thu, 28 Jul 2022 16:22:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58930 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229502AbiG1TvI (ORCPT
+        with ESMTP id S229456AbiG1UWp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Jul 2022 15:51:08 -0400
-Received: from mail-wr1-x435.google.com (mail-wr1-x435.google.com [IPv6:2a00:1450:4864:20::435])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C07FD21E28
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Jul 2022 12:51:07 -0700 (PDT)
-Received: by mail-wr1-x435.google.com with SMTP id q18so3574328wrx.8
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Jul 2022 12:51:07 -0700 (PDT)
+        Thu, 28 Jul 2022 16:22:45 -0400
+Received: from mail-pg1-x54a.google.com (mail-pg1-x54a.google.com [IPv6:2607:f8b0:4864:20::54a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A8A0D24096
+        for <linux-rt-users@vger.kernel.org>; Thu, 28 Jul 2022 13:22:44 -0700 (PDT)
+Received: by mail-pg1-x54a.google.com with SMTP id i63-20020a638742000000b0041b082610f7so1346863pge.14
+        for <linux-rt-users@vger.kernel.org>; Thu, 28 Jul 2022 13:22:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=google.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=Hc8tNYTSdzLvTo670mXF8ACqL3yRvg61zCqsdXamFkg=;
-        b=kiCYc3LELQVweS/lhrZGzKGjmfGa80NTv92+ximWlZI4Ia4Hjtzl98wutjRD25o9cN
-         RByRe3gSvl1wij2avgem+s4eekI4H0fgP3R1gWjiImSoblTRrjVZFp5nmF7IpcHt/ixW
-         BWxee6/2NcOjJH/mfNezfP7o0+tHlX9XwbRA1/TDAIJwT+UfB5c/JwEA54edVQUTjjCB
-         gokqHWcm/gn1rzFsWoObVC22i6VBRj/UT2bAy7pjixTrbvqFFoJ396xcqrmL+5vizTB6
-         iEgGkyx8J2T8Vc/lCOUGAIo1XRbcH+LPuXxdjReMnTS+2/Nyn4pBj7b+tzP1bYOaBnXc
-         9L6A==
+        h=date:message-id:mime-version:subject:from:to:cc;
+        bh=Gb5Mf2NqH3U3xVYnQy7iWXpdCNP4TaQlDNvSwu2icgI=;
+        b=QB8FJ9v9FW0Jw8q6ZrR7qmQ0eKYXEBIi4yfxAG+JV5j08lPVo4XNbBnpPCIXPcZZsn
+         ViEGlsaXP67WNPtO8lJzgoih3Rwp0xbOSKJsfQOMudKDh8UDvOABsc/N4ZTiOwGSCPer
+         UI/+v4MC48DUDlLIKcH7LRWc5GJjd1SlbIEJBq6jSM7ZpweqQ4SuzEUK3kacRBBSWJrZ
+         eXPMKNSum8j+L63N5w/d6Z9c7jb2usYXUHUDKYgvTFEXs+GISyWFw4JH9clJSe3B7tpr
+         WfsC1e4y1cYg3nN6ZMRSD7Awpz8Mavg3ex4TaAKlAlVz4nFenFKMaIs7mOcfE5MkFxW3
+         aTYg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=Hc8tNYTSdzLvTo670mXF8ACqL3yRvg61zCqsdXamFkg=;
-        b=qHYQfr2TFtukPVSTTpbPuDcZSXDWm/mU7sX2uLBZDqE0okqa59MRxbLclQVG7LVyWv
-         C9sb9boJKDI/uH5uDKVMeR0grGBd044BWUwn5GFOfr+/Z3Q4MecKkibom9Gr4QmWlqlL
-         HSFCgOaSGAvigLcknh1L4quyP2e8udAb47c7nvm/lca8lzpWZnsSRd+Ijs3GfjSu/bVF
-         hopKgvXM2YyYLfg5XhvtHaZG6w5+TjtjO/tl8TJ2JkikukyiKmyOEaDjqV1wzf8LMPvp
-         1x4zrAhRdG0xoraXDrcr5RDdUqb0dP1+fsKT8h1a48E8FEFemWHzbkzCBi6+4dAIU/Kd
-         W0vg==
-X-Gm-Message-State: ACgBeo1tHYsEEvJYiZQBj0vUkqdTuou7JbKcYbHX/xvU53PRrsDd9oNK
-        LvUTapW+BEMbNV1MbLxKFZNBam8pPz/5MHv36+fc
-X-Google-Smtp-Source: AA6agR545VIvg5ZkorYjGVQ/qjbTWavMmqg5AZND4NrreckMEGh67Qmius8EPp1om3CFstRHaNXzg0xSm5PEptsFUgI=
-X-Received: by 2002:a05:6000:1d86:b0:21d:6433:1455 with SMTP id
- bk6-20020a0560001d8600b0021d64331455mr309115wrb.514.1659037866117; Thu, 28
- Jul 2022 12:51:06 -0700 (PDT)
-MIME-Version: 1.0
-References: <20220726180502.2932619-1-jstultz@google.com> <da2be617-4f3e-9733-2ae3-42d1c271107a@redhat.com>
-In-Reply-To: <da2be617-4f3e-9733-2ae3-42d1c271107a@redhat.com>
+        h=x-gm-message-state:date:message-id:mime-version:subject:from:to:cc;
+        bh=Gb5Mf2NqH3U3xVYnQy7iWXpdCNP4TaQlDNvSwu2icgI=;
+        b=6zcS3W/2R0M3o2wo2DseEFSKbTHZpVDkBc/a/GaalF1slieNFave8rTc3xPI/bN+Fk
+         5odSERe8LP5nUXefZrj+OV2PgM2LMP3V7BzOYWENGIJLhUQHPNw3OwcPItshtH/w2WKm
+         EFUqoDSI0WP6iuxLv45AgH5fUV5xAgt7bZYb44MS0Bs90HfTDhheA9CYQbfUH8+gIGa8
+         qKwWYk2fKhDYKi7q3cWrpJmu6QBCtsBbgq9QDRwimNQhZBfP4S4qiWZoVimflMQ761T9
+         hArM1AGQjXpck6mliZQ0xccvcCvN87da0gMvL8qGd7oG264WOUA2qE+EwOxA44BU59uV
+         6oTQ==
+X-Gm-Message-State: ACgBeo2Yh1McsIbkV7zzTJ1D9QcMmbyyZLBkEau75jTOscFF/6OcXBQ6
+        dnJpheUOBjzhfpAbpDvg4xSHMVvohKRMIrQyZB31uUqLqkfBg4SXtyqI9whywwX3S4p5oKt06/V
+        Hl/r7Ro0yjm5ffDxqlRKL81WfQA3VnD+uFOfxwrfoX6Z7Pfo9PxrcByCIBNNZI5gpn4dbqSgS2A
+        ==
+X-Google-Smtp-Source: AA6agR5/RlILJtknTerLydqcmXouVu1YriyXuJD6T1QbFSvIYFyF1O/GiQCAHETv3ag3kqy46a0wwrTQIbIO
+X-Received: from jstultz-noogler2.c.googlers.com ([fda3:e722:ac3:cc00:24:72f4:c0a8:600])
+ (user=jstultz job=sendgmr) by 2002:a17:902:bb09:b0:16d:b1c1:1200 with SMTP id
+ im9-20020a170902bb0900b0016db1c11200mr581821plb.75.1659039764049; Thu, 28 Jul
+ 2022 13:22:44 -0700 (PDT)
+Date:   Thu, 28 Jul 2022 20:22:36 +0000
+Message-Id: <20220728202236.3998964-1-jstultz@google.com>
+Mime-Version: 1.0
+X-Mailer: git-send-email 2.37.1.455.g008518b4e5-goog
+Subject: [PATCH v2] cyclictest: Fix threads being affined even when -a isn't set
 From:   John Stultz <jstultz@google.com>
-Date:   Thu, 28 Jul 2022 12:50:54 -0700
-Message-ID: <CANDhNCrUnnrTkN07XJQFQdKyr2YiAu=pWLMmPkv9bMDfXmq2qw@mail.gmail.com>
-Subject: Re: [PATCH] cyclictest: Fix threads being affined even when -a isn't set
-To:     John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org,
+To:     linux-rt-users@vger.kernel.org
+Cc:     John Stultz <jstultz@google.com>, John Kacur <jkacur@redhat.com>,
         "Connor O'Brien" <connoro@google.com>,
         Qais Yousef <qais.yousef@arm.com>
 Content-Type: text/plain; charset="UTF-8"
@@ -62,50 +62,115 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jul 28, 2022 at 7:48 AM John Kacur <jkacur@redhat.com> wrote:
-> On Tue, 26 Jul 2022, John Stultz wrote:
-> > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> > index decea78..02f32f6 100644
-> > --- a/src/cyclictest/cyclictest.c
-> > +++ b/src/cyclictest/cyclictest.c
-> > @@ -1270,8 +1270,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
-> >       /* if smp wasn't requested, test for numa automatically */
-> >       if (!smp) {
-> >               numa = numa_initialize();
-> > -             if (setaffinity == AFFINITY_UNSPECIFIED)
-> > -                     setaffinity = AFFINITY_USEALL;
-> >       }
-> >
-> >       if (option_affinity) {
-> > --
-> > 2.37.1.359.gd136c6c3e2-goog
-> >
-> >
->
-> Okay, I see what's happening. We removed the numa flag to automate if
-> the user doesn't specify smi, then we use numa if we detect that it is
-> available and in that case we assume AFFINITY_USEALL. Part of this was an
-> attempt to reduce the alphabet soup that the cyclictest commandline was
-> becoming. However, I see your point, if a person doesn't ask for affinity,
-> then, it shouldn't be assumed.
->
-> Your patch of course doesn't work as it is, because we'll end-up passing a
-> cpu=-1 value to rt_numa_numa_node_of_cpu(int cpu) resulting in
-> FATAL: invalid cpu passed to numa_node_of_cpu(-1)
-> but it illustrated your point.
+Using cyclictest without specifying affinity via -a, I was
+noticing a strange issue where the rt threads where not
+migrating when being blocked.
 
-Ah. Apologies! Interestingly I didn't see this on the device I was
-testing with, but I can reproduce it on another system.
+After lots of debugging in the kernel, I found its actually an
+issue with cyclictest.
 
-> I'm off for a few days, but I'll tackle this when I come back on.
+When using -t there is no behavioral difference between specifying
+-a or not specifying -a.
 
-I've got an approach that in the numa case, has a separate node_cpu
-value which is normally cpu but if cpu is -1 it will use the result of
-cpu_for_thread_ua(). That should at least match previous behavior with
-regards to the numa allocation logic.
+This can be confirmed by adding printf messages around the
+pthread_setaffinity_np() call in the threadtest function.
 
-I'll send that out in a second here and you can take or tweak it as
-you feel best when you're back.
+Currently:
 
-thanks
--john
+root@localhost:~/rt-tests# ./cyclictest -t -a -q -D1
+Affining thread 0 to cpu: 0
+Affining thread 1 to cpu: 1
+Affining thread 2 to cpu: 2
+Affining thread 3 to cpu: 3
+Affining thread 4 to cpu: 4
+Affining thread 5 to cpu: 5
+Affining thread 7 to cpu: 7
+Affining thread 6 to cpu: 6
+T: 0 (15034) P: 0 I:1000 C:   1000 Min:     82 Act:  184 Avg:  180 Max: 705
+...
+
+root@localhost:~/rt-tests# ./cyclictest -t -q -D1
+Affining thread 0 to cpu: 0
+Affining thread 1 to cpu: 1
+Affining thread 2 to cpu: 2
+Affining thread 3 to cpu: 3
+Affining thread 4 to cpu: 4
+Affining thread 5 to cpu: 5
+Affining thread 6 to cpu: 6
+Affining thread 7 to cpu: 7
+T: 0 (15044) P: 0 I:1000 C:   1000 Min:     74 Act:  144 Avg:  162 Max: 860
+..
+
+This issue seems to come from the logic in process_options():
+	/* if smp wasn't requested, test for numa automatically */
+	if (!smp) {
+		numa = numa_initialize();
+		if (setaffinity == AFFINITY_UNSPECIFIED)
+			setaffinity = AFFINITY_USEALL;
+        }
+
+Here, by setting setaffinity = AFFINITY_USEALL, we effectively
+pin each thread to its respective cpu, same as the "-a" option.
+
+This was most recently introduced in commit bdb8350f1b0b
+("Revert "cyclictest: Use affinity_mask for steering
+thread placement"").
+
+This seems erronious to me, so I wanted to share this patch
+which removes the overriding AFFINITY_UNSPECIFIED with
+AFFINITY_USEALL by default. Also, some additional tweaks to
+preserve the existing numa allocation affinity.
+
+With this patch, we no longer call pthread_setaffinity_np() in the
+"./cyclictest -t -q -D1"  case.
+
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Connor O'Brien <connoro@google.com>
+Cc: Qais Yousef <qais.yousef@arm.com>
+Signed-off-by: John Stultz <jstultz@google.com>
+---
+v2: Fixes error passing cpu = -1 to rt_numa_numa_node_of_cpu()
+---
+ src/cyclictest/cyclictest.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index decea78..82759d1 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1270,8 +1270,6 @@ static void process_options(int argc, char *argv[], int max_cpus)
+ 	/* if smp wasn't requested, test for numa automatically */
+ 	if (!smp) {
+ 		numa = numa_initialize();
+-		if (setaffinity == AFFINITY_UNSPECIFIED)
+-			setaffinity = AFFINITY_USEALL;
+ 	}
+ 
+ 	if (option_affinity) {
+@@ -2043,9 +2041,13 @@ int main(int argc, char **argv)
+ 			void *stack;
+ 			void *currstk;
+ 			size_t stksize;
++			int node_cpu = cpu;
++
++			if (node_cpu == -1)
++				node_cpu = cpu_for_thread_ua(i, max_cpus);
+ 
+ 			/* find the memory node associated with the cpu i */
+-			node = rt_numa_numa_node_of_cpu(cpu);
++			node = rt_numa_numa_node_of_cpu(node_cpu);
+ 
+ 			/* get the stack size set for this thread */
+ 			if (pthread_attr_getstack(&attr, &currstk, &stksize))
+@@ -2056,7 +2058,7 @@ int main(int argc, char **argv)
+ 				stksize = PTHREAD_STACK_MIN * 2;
+ 
+ 			/*  allocate memory for a stack on appropriate node */
+-			stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
++			stack = rt_numa_numa_alloc_onnode(stksize, node, node_cpu);
+ 
+ 			/* touch the stack pages to pre-fault them in */
+ 			memset(stack, 0, stksize);
+-- 
+2.37.1.455.g008518b4e5-goog
+
