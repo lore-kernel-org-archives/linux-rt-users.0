@@ -2,39 +2,39 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20644C00144
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Jul 2022 16:38:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59508C00144
+	for <linux-rt-users@archiver.kernel.org>; Mon,  1 Aug 2022 18:18:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238020AbiG2Qi3 (ORCPT
+        id S232769AbiHASSE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 29 Jul 2022 12:38:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54894 "EHLO
+        Mon, 1 Aug 2022 14:18:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53900 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238012AbiG2Qhx (ORCPT
+        with ESMTP id S232431AbiHASSD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 29 Jul 2022 12:37:53 -0400
+        Mon, 1 Aug 2022 14:18:03 -0400
 Received: from smtp-relay-canonical-1.canonical.com (smtp-relay-canonical-1.canonical.com [185.125.188.121])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BADF988F2C
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Jul 2022 09:37:41 -0700 (PDT)
-Received: from [192.168.1.30] (unknown [70.105.249.172])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 55748286D7
+        for <linux-rt-users@vger.kernel.org>; Mon,  1 Aug 2022 11:18:02 -0700 (PDT)
+Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
         (No client certificate requested)
-        by smtp-relay-canonical-1.canonical.com (Postfix) with ESMTPSA id 6D7423F3BA;
-        Fri, 29 Jul 2022 16:37:39 +0000 (UTC)
+        by smtp-relay-canonical-1.canonical.com (Postfix) with ESMTPSA id 16DB13F3D4;
+        Mon,  1 Aug 2022 18:17:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-        s=20210705; t=1659112660;
-        bh=CAzf+YNlP6WYOCElCMYgZB8EuaCxhQRq+Gh+W7p9DXk=;
+        s=20210705; t=1659377880;
+        bh=beJxg3rx/6Sd0mgUkVeQ8WQcZXl/nZvobxRg1/txqZ8=;
         h=Message-ID:Date:MIME-Version:To:Cc:References:From:Subject:
          In-Reply-To:Content-Type;
-        b=pxCCWa961t9LUd0H//DvJLrbLsu3caFgZTPgXCz/ShXC2iDSResKrzTrRNoFr1Xap
-         BtaHvbIrdLN93cPckhsjZ+4M5q81ldHnAds0dBDNgP7Fubfk56iF6sIp+Gtp3I0MVq
-         Nia9zqu30yZp11KFBycoZ08u4TIydpQAfgpQTJr2Ps8bN3Zt4keEp8WWoDZ86GCAWj
-         R8h/nlvviugBZ37YV+JbXFDAZi9AZjsNJwlPqU6uuSU3U/gT4pKVkcC7y/t3urSRgY
-         MMyEWTSoYp3UwgFu/yIVKLf+lQ0xKMpBGeqCeo4CrvWWqODo2kBGK7QVAs8f+/hpCK
-         f+wrVNAUY5QNA==
-Message-ID: <181525bd-1d06-b1d6-7af1-e4bf770cc9bd@canonical.com>
-Date:   Fri, 29 Jul 2022 12:37:38 -0400
+        b=N94StCVfIiIce9Lxrxfwt7z4PKIOgE6F7Lzy5NeSJ+AUlJtD6hBV52246WSZHO9LC
+         ze8han8iH4TlJuOQ5DxzGrKEZfPxIEtVY6rOp4G1c3CLpTvCeG5Gh5aDeubtdEEFyx
+         hs8pPgeNXw3twJeSMu6TkmAIHUKpQGGw51PJIMBvTgCzGLx1etdzR9lfvxjkNqMxW/
+         4KLCazgeEqGM5985SdktHlg2DAoQBB9orz/Er0EF4Zy+wadEP4TxjNIabsUApA6NyR
+         CcLxFJiKK9KoqiQZjtGo1h+KAgfhGKs8kEkbnyrZgILgabHtm6WazvE0NXwcYSTBV/
+         SP3YIZoAuLRHA==
+Message-ID: <cac0fa51-0e02-b759-4887-cfa3141c9154@canonical.com>
+Date:   Mon, 1 Aug 2022 14:17:58 -0400
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.11.0
@@ -63,15 +63,24 @@ On 7/29/22 12:14, Sebastian Andrzej Siewior wrote:
 >
 >> Do you know if these patches will be merged into the 5.15 patchset?
 > I'm going to look at these next week. Has this been tested?
-Thanks for the update, Sebastian!  I have not tested the patches 
-myself.  There is an open Ubuntu kernel bug[0].  I can build a test 
-kernel for the bug reporter and ask them to test.  I will provide 
-testing results to this thread.
+If anyone is interested in testing these patches with the Ubuntu distro, 
+I created a 5.15.39 based test kernel which is packaged as a .deb. This 
+test kernel has the rt-42 patch set, and the four patches from David.
+This test kernel can be downloaded from:
+https://people.canonical.com/~jsalisbury/MEMCG_UNSUPPORTED_TEST_KERNEL/
+
+This kernel will also be tested in an Ubuntu kernel bug[0].  The bug 
+reporter will be testing if the patches resolve a bug that affects 
+kubernetes, which is missing cgroup memory.  However, the bug reporter 
+will probably not be testing latency differences.  That is something I 
+could look into next week.
+
+Joe
+
+[0] http://pad.lv/1978814
 >
 >> Thanks,
 >>
 >> Joe
 > Sebastian
 
-
-[0] http://pad.lv/1978814
