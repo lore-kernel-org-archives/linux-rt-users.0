@@ -2,118 +2,77 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C09F5C00140
-	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Aug 2022 12:28:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D02F9C19F28
+	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Aug 2022 06:25:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236442AbiHBM2z (ORCPT
+        id S235355AbiHCGZD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 2 Aug 2022 08:28:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48678 "EHLO
+        Wed, 3 Aug 2022 02:25:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39886 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237078AbiHBM2x (ORCPT
+        with ESMTP id S231150AbiHCGZC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 2 Aug 2022 08:28:53 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 7013E51418
-        for <linux-rt-users@vger.kernel.org>; Tue,  2 Aug 2022 05:28:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1659443329;
+        Wed, 3 Aug 2022 02:25:02 -0400
+Received: from out0.migadu.com (out0.migadu.com [IPv6:2001:41d0:2:267::])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 197664A80F;
+        Tue,  2 Aug 2022 23:25:01 -0700 (PDT)
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+        t=1659507899;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Nn7D1b+GTXDRMhPjjDw9wDMDc6fRBFgLaiKTIqh5zu4=;
-        b=JrQKpfyR21gRCLX7zuHnazCSJCF/N/pEeZXaWQRhy/CuV8qIF4sQ5X9yBmDwBANG+3fLOY
-        M282QRdWpDpddF3dxOd7JWBw83uP6MiSGRHJpVDdQZWY4RI1dftRBPLyawqP+Y8WmlL3gj
-        8PgA7ULpwE4QZ9Wx3dz2Szg/yd4+jVM=
-Received: from mail-pg1-f199.google.com (mail-pg1-f199.google.com
- [209.85.215.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-657-btnCUAoOPEe6V3263wfzPg-1; Tue, 02 Aug 2022 08:28:46 -0400
-X-MC-Unique: btnCUAoOPEe6V3263wfzPg-1
-Received: by mail-pg1-f199.google.com with SMTP id q82-20020a632a55000000b0041bafd16728so3386679pgq.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 02 Aug 2022 05:28:46 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc;
-        bh=Nn7D1b+GTXDRMhPjjDw9wDMDc6fRBFgLaiKTIqh5zu4=;
-        b=PjIXKihuTIUiuEL7WK+VyVCppcAZMJQVshzFlyC0R3D57JegpAY+CMxd8U7hr83Oh9
-         6WgqhB8X7naWWa3AHOIo3VNkChcUBowo9ZhU8aNLXu9jaRo07+qAAOMdfPN8v2Putu+X
-         ud9sdQJnvEiTy1hUJlwiy6E63QE1UVVPTdyM8QsHgSz9uslMX9RmQtby+0s2dpaPvfF7
-         Avv8t3Gb7cFQWbZu7ql+6G7eCRPjbxu5fIUTBG71iEjGOUR4pwPnjHR42Tg/y1fu8C5P
-         jS99/IBb00UYBjK8N8kF+MDO62n53IuSpmZYro3gF4z8Fsag4KU9U4Z303n5p8pj5w+Q
-         fFiA==
-X-Gm-Message-State: ACgBeo3mm6Z+MWZskR2KRBGTkkE4rwsHNds2Yh+/iF2un3FL81Qx49Gr
-        5EhjQRqkBFUj2xRDQ0LBxKD2mBpNicnurchCd0M4/Cb4pBrQt/TOUkWxiEYNTh197jD7phssHNm
-        735zg8Sf9ZPSGNO95k6lkt1FDjAd5RT4E6tvB6yKnkr0=
-X-Received: by 2002:a17:903:260b:b0:16e:d654:6c41 with SMTP id jd11-20020a170903260b00b0016ed6546c41mr13724310plb.29.1659443325208;
-        Tue, 02 Aug 2022 05:28:45 -0700 (PDT)
-X-Google-Smtp-Source: AA6agR5dZYIvVpMkgW4hByDOWyl+/USYvvmAC2XQKOBEvdzpSq8qDJJSnOX1XxJ6lqaDduAK/GFDWMZpMReFwbwZQwk=
-X-Received: by 2002:a17:903:260b:b0:16e:d654:6c41 with SMTP id
- jd11-20020a170903260b00b0016ed6546c41mr13724286plb.29.1659443324922; Tue, 02
- Aug 2022 05:28:44 -0700 (PDT)
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=OzId+F46IaLnzWfW2BSyAFKdP9KBL4ckAbH6G9go3O4=;
+        b=OMxCPuEpWoKH0M7VnBlll4RRmC3J3I0AfRjI5zOVDD0kApvjp9qzWgzmlmL79DzkYio6+f
+        bw3LkESEBOWdqawAyOULKoBJQzX7572bml5HNNa2Ct8ipaSKYTTxz4DB9tYBlRmeHD56dt
+        tiEQeMbBY8zEfjfW9UNONnVxZHRbzIg=
+From:   Yajun Deng <yajun.deng@linux.dev>
+To:     peterz@infradead.org, mingo@redhat.com, will@kernel.org,
+        bigeasy@linutronix.de
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Yajun Deng <yajun.deng@linux.dev>
+Subject: [PATCH 5.10-rt] locking/rtmutex: switch to EXPORT_SYMBOL() for ww_mutex_lock{,_interruptible}()
+Date:   Wed,  3 Aug 2022 14:24:30 +0800
+Message-Id: <20220803062430.1307312-1-yajun.deng@linux.dev>
 MIME-Version: 1.0
-References: <20220712112238.18824-1-goliath@infraroot.at> <60f230fb-de97-ead8-b3a3-12a591804c32@canonical.com>
- <YuQHe3g3Ydmljx7M@linutronix.de> <cac0fa51-0e02-b759-4887-cfa3141c9154@canonical.com>
- <aa48288b-2982-0756-4350-3287bdf6c09f@canonical.com>
-In-Reply-To: <aa48288b-2982-0756-4350-3287bdf6c09f@canonical.com>
-From:   Clark Williams <williams@redhat.com>
-Date:   Tue, 2 Aug 2022 12:28:34 +0000
-Message-ID: <CAMLffL_wDb01QX+C+g3oa1EvGNmt82WL=Cas8+OhUk+1e8UUEw@mail.gmail.com>
-Subject: Re: [PATCH 0/4] Backport MEMCG changes from v5.17
-To:     Joseph Salisbury <joseph.salisbury@canonical.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        David Oberhollenzer <goliath@infraroot.at>,
-        linux-rt-users@vger.kernel.org, richard@nod.at
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: linux.dev
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm currently working through some conflicts when I merged Greg's
-v5.15.58 into the 5.15-rt stable tree, but I'd be very interesting in
-testing in your patch after I get that resolved.
+We can use EXPORT_SYMBOL() instead of EXPORT_SYMBOL_GPL() in
+ww_mutex_lock_interruptible() and ww_mutex_lock(). That match
+ww_mutex_unlock() well. And also good for 3rd kernel modules.
 
-Clark
+Signed-off-by: Yajun Deng <yajun.deng@linux.dev>
+---
+ kernel/locking/rtmutex.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-On Mon, Aug 1, 2022 at 10:36 PM Joseph Salisbury
-<joseph.salisbury@canonical.com> wrote:
->
->
->
-> On 8/1/22 14:17, Joseph Salisbury wrote:
-> >
-> >
-> > On 7/29/22 12:14, Sebastian Andrzej Siewior wrote:
-> >> On 2022-07-27 16:35:44 [-0400], Joseph Salisbury wrote:
-> >>> Hi David,
-> >> Hi,
-> >>
-> >>> Do you know if these patches will be merged into the 5.15 patchset?
-> >> I'm going to look at these next week. Has this been tested?
-> > If anyone is interested in testing these patches with the Ubuntu
-> > distro, I created a 5.15.39 based test kernel which is packaged as a
-> > .deb. This test kernel has the rt-42 patch set, and the four patches
-> > from David.
-> > This test kernel can be downloaded from:
-> > https://people.canonical.com/~jsalisbury/MEMCG_UNSUPPORTED_TEST_KERNEL/
-> Also, the test kernel is AMD64.  If anyone needs an ARM64 kernel, just
-> let me know.
-> >
-> > This kernel will also be tested in an Ubuntu kernel bug[0].  The bug
-> > reporter will be testing if the patches resolve a bug that affects
-> > kubernetes, which is missing cgroup memory.  However, the bug reporter
-> > will probably not be testing latency differences. That is something I
-> > could look into next week.
-> >
-> > Joe
-> >
-> > [0] http://pad.lv/1978814
-> >>
-> >>> Thanks,
-> >>>
-> >>> Joe
-> >> Sebastian
-> >
->
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 31b374d36d04..b110fc57f733 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -2513,7 +2513,7 @@ ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(ww_mutex_lock_interruptible);
++EXPORT_SYMBOL(ww_mutex_lock_interruptible);
+ 
+ int __sched
+ ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+@@ -2533,7 +2533,7 @@ ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(ww_mutex_lock);
++EXPORT_SYMBOL(ww_mutex_lock);
+ 
+ void __sched ww_mutex_unlock(struct ww_mutex *lock)
+ {
+-- 
+2.25.1
 
