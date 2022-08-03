@@ -2,70 +2,99 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED16CC19F28
-	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Aug 2022 06:54:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47217C19F28
+	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Aug 2022 07:50:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234955AbiHCGyE (ORCPT
+        id S237022AbiHCHuX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 3 Aug 2022 02:54:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59896 "EHLO
+        Wed, 3 Aug 2022 03:50:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40938 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233079AbiHCGyD (ORCPT
+        with ESMTP id S234663AbiHCHuW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 3 Aug 2022 02:54:03 -0400
+        Wed, 3 Aug 2022 03:50:22 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0E1804B0E0
-        for <linux-rt-users@vger.kernel.org>; Tue,  2 Aug 2022 23:54:02 -0700 (PDT)
-Date:   Wed, 3 Aug 2022 08:53:59 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BB4E89FDE;
+        Wed,  3 Aug 2022 00:50:20 -0700 (PDT)
+Date:   Wed, 3 Aug 2022 09:50:17 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1659509640;
+        s=2020; t=1659513019;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=eikrkKKIvyjhgb4ZVBPwEXgSU8aiwUc/Q+TNVxk/Dyg=;
-        b=J6YSK+5xSY/DimMeuJVQnSWeVpjXdREVgDKYfSVwjXN+aznwIA+3tyh2yaSfOBwuVu/iT0
-        3ivLybXfRqSe2w4/H7oFZARMv8kR+2r4N6G3BlIHS8Tp9hLryZOjI4+x8ykJ+hEdVvBRt9
-        Chg8gF8a7dNh2bLZyu0XBAlv+H5FPq8MW2VxUsj5whOLkcvfNKjFKAHE5fB6sV/GkUq2MP
-        ypNf0tScYVzDXt2BTaLRCA1dSgZ+zrxwa/vB51wW6M0xzkwPTvh1W7SEeY6hJYJS71OUDf
-        nilVJPNHaStWMhbhoLpm3iQAX6l1/zB4qgmESktnt3aHwRMqM/jc7Ezf5Xtw3g==
+        bh=dlzjMvdxHZr3wJ0ux9kQ0Lvo6AT9nnrD4nXVK3eGOeo=;
+        b=rLKhQqgtu+QGgGq/PvU09fcWl3eYD5euXHH2NBkJPq4Sx20Xbf6JXJliBOzPDPUEpzoXlD
+        q8fWAkLhNI4eR/Pyf7+bWGHWrI5T3DqNVzInJBSFXRC18/3fhqZHEMGMsLtwAUl4pDCBQF
+        tFK4Uj4+l9MHMGzX7UGQMGJAymkACLEYHUPGZPCITvuNKK40kpgZG3qkClw5PKKSnC0Ytz
+        fX8oNFINxG/PS4Vg5IUQpHq5v1pt/umxXyaVwQLj41PULo+myYbXy7J/6p3/mlYGPCztj/
+        U3r3QAM3BBWQiZ0TvjRYSX6Ayl/g7M9c+HVG3OjgrR3DKSMMbcYf/RGR1nfo5w==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1659509640;
+        s=2020e; t=1659513019;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=eikrkKKIvyjhgb4ZVBPwEXgSU8aiwUc/Q+TNVxk/Dyg=;
-        b=oZ2490u9CDmz/bBrlxKPF/oqAWxnM7074BPTJmCQBEihrbVeyLfjUtbfGOBsIA+q7l7KNT
-        eY5tmGBOmIBQDLCg==
+        bh=dlzjMvdxHZr3wJ0ux9kQ0Lvo6AT9nnrD4nXVK3eGOeo=;
+        b=6YtScFnQEjbBynP9OgEGNh/qIPZ3U1P17gqzwAqNtmXM6AhHbTDTIGkKvxlQcToVjLbyaZ
+        uBddK5mFRwJX2dDQ==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     David Oberhollenzer <goliath@infraroot.at>
-Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com, richard@nod.at
-Subject: Re: [PATCH 0/4] Backport MEMCG changes from v5.17
-Message-ID: <Yuobh/+/Sv8VTjTP@linutronix.de>
-References: <20220712112238.18824-1-goliath@infraroot.at>
+To:     Anand Je Saipureddy <s.anandje1@gmail.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        cminyard@mvista.com, psiddaiah@mvista.com
+Subject: Re: [PATCH] ftrace: Fix improper usage of __trace_stack() function.
+Message-ID: <YuooucgDVO0uDPS/@linutronix.de>
+References: <20220723064943.16532-1-s.anandje1@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220712112238.18824-1-goliath@infraroot.at>
+In-Reply-To: <20220723064943.16532-1-s.anandje1@gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-07-12 13:22:34 [+0200], David Oberhollenzer wrote:
-> This is a backport of Sebastian's MEMCG changes to v5.15. With these
-> patches applied, it is possible to use memory cgroups together
-> with PREEMPT_RT on v5.15, just like on v5.17.
+On 2022-07-23 12:19:43 [+0530], Anand Je Saipureddy wrote:
+> In kernel/trace/trace_events_trigger.c --> stacktrace_trigger() -->
+> __trace_stack() is not defined as per the function definition.
+> 
+> With commit edbaaa13a660
+> ("tracing: Merge irqflags + preemt counter, add RT bits")
+> the irqflags(flags) and preemption counter(preempt_count()) are
+> now should be evaluated early by tracing_gen_ctx().
+> 
+> This patch replaces the irqflags and preemption counter
+> with tracing_gen_ctx().
+> 
+> Fixes: 5e8446e3820c ("tracing: Dump stacktrace trigger to the corresponding instance")
+> Signed-off-by: Anand Je Saipureddy <s.anandje1@gmail.com>
+> Reviewed-by: Corey Minyard <cminyard@mvista.com>
 
-This isn't the series that was merged upstream:
-| 0001-mm-memcg-Revert-mm-memcg-optimize-user-context-objec.patch
-| 0002-mm-memcg-Disable-threshold-event-handlers-on-PREEMPT.patch
-| 0003-mm-memcg-Protect-per-CPU-counter-by-disabling-preemp.patch
-| 0004-mm-memcg-Opencode-the-inner-part-of-obj_cgroup_uncha.patch
-| 0005-mm-memcg-Protect-memcg_stock-with-a-local_lock_t.patch
-| 0006-mm-memcg-Disable-migration-instead-of-preemption-in-.patch
-| 0007-mm-memcg-Add-missing-counter-index-which-are-not-upd.patch
-| 0008-mm-memcg-Add-a-comment-regarding-the-release-obj.patch
-| mm-memcg-Only-perform-the-debug-checks-on-PREEMPT_RT.patch
+Please use [PATCH RT v5.10] in the future.
+Luis, could you please pick it up?
 
-any reason why not backport those?
+> ---
+>  kernel/trace/trace_events_trigger.c | 8 +++-----
+>  1 file changed, 3 insertions(+), 5 deletions(-)
+> 
+> diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
+> index 75fef9fcfd0f..3c6229f16e81 100644
+> --- a/kernel/trace/trace_events_trigger.c
+> +++ b/kernel/trace/trace_events_trigger.c
+> @@ -1220,12 +1220,10 @@ stacktrace_trigger(struct event_trigger_data *data, void *rec,
+>  		   struct ring_buffer_event *event)
+>  {
+>  	struct trace_event_file *file = data->private_data;
+> -	unsigned long flags;
+>  
+> -	if (file) {
+> -		local_save_flags(flags);
+> -		__trace_stack(file->tr, STACK_SKIP, preempt_count());
+> -	} else
+> +	if (file)
+> +		__trace_stack(file->tr, tracing_gen_ctx(), STACK_SKIP);
+> +	else
+>  		trace_dump_stack(STACK_SKIP);
+>  }
+>  
 
 Sebastian
