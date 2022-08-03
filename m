@@ -2,77 +2,70 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D02F9C19F28
-	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Aug 2022 06:25:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED16CC19F28
+	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Aug 2022 06:54:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235355AbiHCGZD (ORCPT
+        id S234955AbiHCGyE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 3 Aug 2022 02:25:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39886 "EHLO
+        Wed, 3 Aug 2022 02:54:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59896 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231150AbiHCGZC (ORCPT
+        with ESMTP id S233079AbiHCGyD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 3 Aug 2022 02:25:02 -0400
-Received: from out0.migadu.com (out0.migadu.com [IPv6:2001:41d0:2:267::])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 197664A80F;
-        Tue,  2 Aug 2022 23:25:01 -0700 (PDT)
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-        t=1659507899;
+        Wed, 3 Aug 2022 02:54:03 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0E1804B0E0
+        for <linux-rt-users@vger.kernel.org>; Tue,  2 Aug 2022 23:54:02 -0700 (PDT)
+Date:   Wed, 3 Aug 2022 08:53:59 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1659509640;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=OzId+F46IaLnzWfW2BSyAFKdP9KBL4ckAbH6G9go3O4=;
-        b=OMxCPuEpWoKH0M7VnBlll4RRmC3J3I0AfRjI5zOVDD0kApvjp9qzWgzmlmL79DzkYio6+f
-        bw3LkESEBOWdqawAyOULKoBJQzX7572bml5HNNa2Ct8ipaSKYTTxz4DB9tYBlRmeHD56dt
-        tiEQeMbBY8zEfjfW9UNONnVxZHRbzIg=
-From:   Yajun Deng <yajun.deng@linux.dev>
-To:     peterz@infradead.org, mingo@redhat.com, will@kernel.org,
-        bigeasy@linutronix.de
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Yajun Deng <yajun.deng@linux.dev>
-Subject: [PATCH 5.10-rt] locking/rtmutex: switch to EXPORT_SYMBOL() for ww_mutex_lock{,_interruptible}()
-Date:   Wed,  3 Aug 2022 14:24:30 +0800
-Message-Id: <20220803062430.1307312-1-yajun.deng@linux.dev>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=eikrkKKIvyjhgb4ZVBPwEXgSU8aiwUc/Q+TNVxk/Dyg=;
+        b=J6YSK+5xSY/DimMeuJVQnSWeVpjXdREVgDKYfSVwjXN+aznwIA+3tyh2yaSfOBwuVu/iT0
+        3ivLybXfRqSe2w4/H7oFZARMv8kR+2r4N6G3BlIHS8Tp9hLryZOjI4+x8ykJ+hEdVvBRt9
+        Chg8gF8a7dNh2bLZyu0XBAlv+H5FPq8MW2VxUsj5whOLkcvfNKjFKAHE5fB6sV/GkUq2MP
+        ypNf0tScYVzDXt2BTaLRCA1dSgZ+zrxwa/vB51wW6M0xzkwPTvh1W7SEeY6hJYJS71OUDf
+        nilVJPNHaStWMhbhoLpm3iQAX6l1/zB4qgmESktnt3aHwRMqM/jc7Ezf5Xtw3g==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1659509640;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=eikrkKKIvyjhgb4ZVBPwEXgSU8aiwUc/Q+TNVxk/Dyg=;
+        b=oZ2490u9CDmz/bBrlxKPF/oqAWxnM7074BPTJmCQBEihrbVeyLfjUtbfGOBsIA+q7l7KNT
+        eY5tmGBOmIBQDLCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     David Oberhollenzer <goliath@infraroot.at>
+Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com, richard@nod.at
+Subject: Re: [PATCH 0/4] Backport MEMCG changes from v5.17
+Message-ID: <Yuobh/+/Sv8VTjTP@linutronix.de>
+References: <20220712112238.18824-1-goliath@infraroot.at>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
-X-Migadu-Auth-User: linux.dev
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20220712112238.18824-1-goliath@infraroot.at>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We can use EXPORT_SYMBOL() instead of EXPORT_SYMBOL_GPL() in
-ww_mutex_lock_interruptible() and ww_mutex_lock(). That match
-ww_mutex_unlock() well. And also good for 3rd kernel modules.
+On 2022-07-12 13:22:34 [+0200], David Oberhollenzer wrote:
+> This is a backport of Sebastian's MEMCG changes to v5.15. With these
+> patches applied, it is possible to use memory cgroups together
+> with PREEMPT_RT on v5.15, just like on v5.17.
 
-Signed-off-by: Yajun Deng <yajun.deng@linux.dev>
----
- kernel/locking/rtmutex.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+This isn't the series that was merged upstream:
+| 0001-mm-memcg-Revert-mm-memcg-optimize-user-context-objec.patch
+| 0002-mm-memcg-Disable-threshold-event-handlers-on-PREEMPT.patch
+| 0003-mm-memcg-Protect-per-CPU-counter-by-disabling-preemp.patch
+| 0004-mm-memcg-Opencode-the-inner-part-of-obj_cgroup_uncha.patch
+| 0005-mm-memcg-Protect-memcg_stock-with-a-local_lock_t.patch
+| 0006-mm-memcg-Disable-migration-instead-of-preemption-in-.patch
+| 0007-mm-memcg-Add-missing-counter-index-which-are-not-upd.patch
+| 0008-mm-memcg-Add-a-comment-regarding-the-release-obj.patch
+| mm-memcg-Only-perform-the-debug-checks-on-PREEMPT_RT.patch
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 31b374d36d04..b110fc57f733 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2513,7 +2513,7 @@ ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
- 
- 	return ret;
- }
--EXPORT_SYMBOL_GPL(ww_mutex_lock_interruptible);
-+EXPORT_SYMBOL(ww_mutex_lock_interruptible);
- 
- int __sched
- ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
-@@ -2533,7 +2533,7 @@ ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
- 
- 	return ret;
- }
--EXPORT_SYMBOL_GPL(ww_mutex_lock);
-+EXPORT_SYMBOL(ww_mutex_lock);
- 
- void __sched ww_mutex_unlock(struct ww_mutex *lock)
- {
--- 
-2.25.1
+any reason why not backport those?
 
+Sebastian
