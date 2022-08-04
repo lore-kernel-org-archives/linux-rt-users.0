@@ -2,134 +2,81 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F3A6AC19F2A
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Aug 2022 15:48:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C9DCC19F21
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Aug 2022 19:28:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233149AbiHDPsP (ORCPT
+        id S240033AbiHDT2g (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 4 Aug 2022 11:48:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47718 "EHLO
+        Thu, 4 Aug 2022 15:28:36 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39168 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230482AbiHDPsO (ORCPT
+        with ESMTP id S239523AbiHDT2d (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Aug 2022 11:48:14 -0400
+        Thu, 4 Aug 2022 15:28:33 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D09E426AE2
-        for <linux-rt-users@vger.kernel.org>; Thu,  4 Aug 2022 08:48:13 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 997976D54F
+        for <linux-rt-users@vger.kernel.org>; Thu,  4 Aug 2022 12:28:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1659628092;
+        s=mimecast20190719; t=1659641311;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding;
-        bh=ouTVt//4ICOg5e54sb8UIo25dfe5W+R9q9Q63n1/lSg=;
-        b=WkwXZraY/RUNeuIIlgyK3U08BXpMfnoDKtVAeYFqoV5cOi8HK4qOTVXGAqV4Ogvj2J2dPt
-        coHzrgjnUbP8n0qsm+NAVeZ8GvNSS1y3g5cO0o79rsoN53Es78OI0yIFkLExT0ze0Wtk2+
-        ckUfNLtZQBeFNJlv9ZdhEJSTtzRtX1g=
+        bh=IvR+5TlrfQkDYbLmmbA0paEW0grD/fC8Rn212sSVlw4=;
+        b=ErIzsWbA5F40tH/TV9+2+6gJUOWj4HtmJpCqxHk/fRhE00BjeEPy5EPZD/UFMc4ODOtEJj
+        LVxxpLCQXoPhY5hchFOxqbQyouNo1pqXUPAqf4gs+e14vImFQpsstC7hm1X+v55qsFTSBp
+        rKcuw1+0wdyoeh5lezf7nRpLdbfKSTc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-602-5zCg8r6wN36dP0M38-3DlQ-1; Thu, 04 Aug 2022 11:48:08 -0400
-X-MC-Unique: 5zCg8r6wN36dP0M38-3DlQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-562-6HUIXnVYNgacPGx3Ij-qUA-1; Thu, 04 Aug 2022 15:28:28 -0400
+X-MC-Unique: 6HUIXnVYNgacPGx3Ij-qUA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8EBF68061CB
-        for <linux-rt-users@vger.kernel.org>; Thu,  4 Aug 2022 15:48:08 +0000 (UTC)
-Received: from lleshchi.bos.com (unknown [10.22.9.157])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 57449909FF;
-        Thu,  4 Aug 2022 15:48:08 +0000 (UTC)
-From:   Leah Leshchinsky <lleshchi@redhat.com>
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5D41D85A584;
+        Thu,  4 Aug 2022 19:28:28 +0000 (UTC)
+Received: from magodse.remote.csb (unknown [10.2.17.154])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 9E01714152E0;
+        Thu,  4 Aug 2022 19:28:27 +0000 (UTC)
+From:   Manasi Godse <magodse@redhat.com>
 To:     jkacur@redhat.com
-Cc:     linux-rt-users@vger.kernel.org
-Subject: [PATCH v2] rteval: Add measurement and load location to run report
-Date:   Thu,  4 Aug 2022 11:48:07 -0400
-Message-Id: <20220804154807.252163-1-lleshchi@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, lleshchi@redhat.com,
+        kcarcia@redhat.com, magodse@redhat.com, gmanasi13@gmail.com
+Subject: [PATCH] rteval: fix regex in kcompile to calculate patch number for kernel prefix
+Date:   Thu,  4 Aug 2022 12:28:25 -0700
+Message-Id: <20220804192825.1207283-1-magodse@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The run report produced at the end of a run does not contain information
-on load and measurement thread locations.
+Updated the regular expression to find the kernel prefix of the source
+file. If there are kernel source files with the same major.minor version
+but different patch numbers, kcompile would pick up the first one that
+is listed based on the kernel prefix and ignore the patch number.
+Example: linux-5.17.11.tar.xz and linux-5.17.13.tar.xz. If 5.17.13 had
+to be tested, kcompile could pick up linux-5.17.11.tar.xz
 
-Adjust MakeReport() functions of LoadModules and MeasurementModules
-class so that new properties with number of loads and cpu information
-are added to the XML report and can be read by rteval_text.xsl.
+Signed-off-by: Manasi Godse <magodse@redhat.com>
+---
+ rteval/modules/loads/kcompile.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
-
-diff --git a/rteval/modules/loads/__init__.py b/rteval/modules/loads/__init__.py
-index 2c2105efa964..5e5a5d85b616 100644
---- a/rteval/modules/loads/__init__.py
-+++ b/rteval/modules/loads/__init__.py
-@@ -30,6 +30,7 @@ import libxml2
- from rteval.Log import Log
- from rteval.rtevalConfig import rtevalCfgSection
- from rteval.modules import RtEvalModules, rtevalModulePrototype
-+from rteval.systopology import collapse_cpulist, SysTopology
- 
- class LoadThread(rtevalModulePrototype):
-     def __init__(self, name, config, logger=None):
-@@ -131,6 +132,12 @@ class LoadModules(RtEvalModules):
-     def MakeReport(self):
-         rep_n = RtEvalModules.MakeReport(self)
-         rep_n.newProp("load_average", str(self.GetLoadAvg()))
-+        rep_n.newProp("loads", str(self.ModulesLoaded()))
-+        cpulist = self._cfg.GetSection(self._module_config).cpulist
-+        if not cpulist:
-+            st = SysTopology()
-+            cpulist = collapse_cpulist(st.online_cpus())
-+        rep_n.newProp("loadcpus", cpulist)
- 
-         return rep_n
- 
-diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
-index 318248bd7e35..371fc5d08f44 100644
---- a/rteval/modules/measurement/__init__.py
-+++ b/rteval/modules/measurement/__init__.py
-@@ -24,7 +24,7 @@
- 
- import libxml2
- from rteval.modules import RtEvalModules, ModuleContainer
--
-+from rteval.systopology import collapse_cpulist, SysTopology
- 
- class MeasurementProfile(RtEvalModules):
-     """Keeps and controls all the measurement modules with the same measurement profile"""
-@@ -189,6 +189,12 @@ measurement profiles, based on their characteristics"""
- 
-         # Get the reports from all meaurement modules in all measurement profiles
-         rep_n = libxml2.newNode("Measurements")
-+        cpulist = self.__cfg.GetSection("measurement").cpulist
-+        if not cpulist:
-+            st = SysTopology()
-+            cpulist = collapse_cpulist(st.online_cpus())
-+        rep_n.newProp("measurecpus", cpulist)
-+
-         for mp in self.__measureprofiles:
-             mprep_n = mp.MakeReport()
-             if mprep_n:
-diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
-index c40063e3dd19..7ecfac6b6140 100644
---- a/rteval/rteval_text.xsl
-+++ b/rteval/rteval_text.xsl
-@@ -13,6 +13,14 @@
-     <xsl:value-of select="run_info/date"/><xsl:text> </xsl:text><xsl:value-of select="run_info/time"/>
-     <xsl:text>&#10;</xsl:text>
- 
-+    <xsl:text>   Loads:        </xsl:text>
-+    <xsl:value-of select="loads/@loads"/><xsl:text> loads run on cores </xsl:text><xsl:value-of select="loads/@loadcpus"/>
-+    <xsl:text>&#10;</xsl:text>
-+
-+    <xsl:text>   Measurement:  </xsl:text>
-+    <xsl:text>measurement threads run on cores </xsl:text><xsl:value-of select="Measurements/@measurecpus"/>
-+    <xsl:text>&#10;</xsl:text>
-+
-     <xsl:text>   Run time:     </xsl:text>
-     <xsl:value-of select="run_info/@days"/><xsl:text> days </xsl:text>
-     <xsl:value-of select="run_info/@hours"/><xsl:text>h </xsl:text>
+diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
+index 4a8659c042e6..6dd8d940f8b3 100644
+--- a/rteval/modules/loads/kcompile.py
++++ b/rteval/modules/loads/kcompile.py
+@@ -176,7 +176,7 @@ class Kcompile(CommandLineLoad):
+             if not os.path.exists(tarfile):
+                 raise rtevalRuntimeError(self, f" tarfile {tarfile} does not exist!")
+             self.source = tarfile
+-            kernel_prefix = re.search(r"linux-\d{1,2}\.\d{1,3}", self.source).group(0)
++            kernel_prefix = re.search(r"linux-\d{1,2}\.\d{1,3}\.*\d{1,2}", self.source).group(0)
+         else:
+             tarfiles = glob.glob(os.path.join(self.srcdir, f"{DEFAULT_KERNEL_PREFIX}*"))
+             if tarfiles:
 -- 
 2.31.1
 
