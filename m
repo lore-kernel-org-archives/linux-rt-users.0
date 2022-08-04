@@ -2,105 +2,134 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 729B6C19F2B
-	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Aug 2022 20:51:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F3A6AC19F2A
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Aug 2022 15:48:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238790AbiHCUvj (ORCPT
+        id S233149AbiHDPsP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 3 Aug 2022 16:51:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56360 "EHLO
+        Thu, 4 Aug 2022 11:48:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47718 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238798AbiHCUv3 (ORCPT
+        with ESMTP id S230482AbiHDPsO (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 3 Aug 2022 16:51:29 -0400
+        Thu, 4 Aug 2022 11:48:14 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id B818CCE25
-        for <linux-rt-users@vger.kernel.org>; Wed,  3 Aug 2022 13:51:24 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D09E426AE2
+        for <linux-rt-users@vger.kernel.org>; Thu,  4 Aug 2022 08:48:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1659559883;
+        s=mimecast20190719; t=1659628092;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8WcgdRhDiEw/HcxZt96Dot+lNjJnRjMfTfDMfYK22WM=;
-        b=Xj43z0eTymyYWr1Sd1ueB+7pnjZehO9GF3k9X/Fl4EIcBB5RdLzzG5jCkksOj9Ht949NAg
-        IEYoRhqJKMTznE09Im2noJ2iRDaJ6vJuFUGlG5zh52wyUzYRQRasZzksv7znoj9f7A1tqx
-        N+bs4PwVcp3G42itIehJ5mBTJ+jVEbo=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=ouTVt//4ICOg5e54sb8UIo25dfe5W+R9q9Q63n1/lSg=;
+        b=WkwXZraY/RUNeuIIlgyK3U08BXpMfnoDKtVAeYFqoV5cOi8HK4qOTVXGAqV4Ogvj2J2dPt
+        coHzrgjnUbP8n0qsm+NAVeZ8GvNSS1y3g5cO0o79rsoN53Es78OI0yIFkLExT0ze0Wtk2+
+        ckUfNLtZQBeFNJlv9ZdhEJSTtzRtX1g=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-92-Um0bvAuJPC2Z0vkVhTPZQA-1; Wed, 03 Aug 2022 16:51:23 -0400
-X-MC-Unique: Um0bvAuJPC2Z0vkVhTPZQA-1
-Received: by mail-qt1-f197.google.com with SMTP id f1-20020ac84641000000b0031ecb35e4d1so11675306qto.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 03 Aug 2022 13:51:23 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=x-gm-message-state:date:from:to:cc:subject:in-reply-to:message-id
-         :references:mime-version;
-        bh=8WcgdRhDiEw/HcxZt96Dot+lNjJnRjMfTfDMfYK22WM=;
-        b=hirtQyYjd0X0QkIixakwPMRjID/Dwce8cyuK/VOcpaBztC/EoDirng/7KR/KvQ8ZOm
-         MhOsAKyftc4wN+3mxqoRrYDg9D9hqD76V0/QZenrZjnqliwTkZwP0ET86eOSQbFciIgK
-         8tflGyvxswzcOyqtQFDc5FIx+0Rj8KKR24FLCH2zp6/I9KDWveHglGrJ4qUusEhy5/Me
-         ZcmMufSZV4rjaFisLznC9k7CDzrjZoIsFgns1fMvLVtB1W47BYijgVFru+ikB7pzwzjp
-         SWfWiWvZi+suQa6z0kvf4tjFHo4cmwpJwKQdX5rImZqrcuy48CyCTaxyXVL9SzbTrKgq
-         06TQ==
-X-Gm-Message-State: AJIora/M4EJEtzC4owQjSR3dm48DMys8jkZURRLaCWaWfivxqdWyXGQZ
-        TeNx71CRZNceWfaunOpLVVnxX9lWAc+/qNaQMuWhQ6ohWN+ZglTYH//IJKMPogQURwvMY5b48up
-        aukdnkkB5eIgJRjZ0ncOt/oSJPAk=
-X-Received: by 2002:a37:8a47:0:b0:6b5:561c:b90b with SMTP id m68-20020a378a47000000b006b5561cb90bmr19334631qkd.427.1659559882316;
-        Wed, 03 Aug 2022 13:51:22 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1sbQma1ELJOrxFbKPeMUUhPsULZPIqudF+7PYDQDE+2V41/0upADbGewJY1DB++nrIoZ/ribw==
-X-Received: by 2002:a37:8a47:0:b0:6b5:561c:b90b with SMTP id m68-20020a378a47000000b006b5561cb90bmr19334620qkd.427.1659559882119;
-        Wed, 03 Aug 2022 13:51:22 -0700 (PDT)
-Received: from fionn ([142.189.102.90])
-        by smtp.gmail.com with ESMTPSA id p22-20020ac84616000000b0031ea864d3b2sm11565344qtn.30.2022.08.03.13.51.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 03 Aug 2022 13:51:21 -0700 (PDT)
-Date:   Wed, 3 Aug 2022 16:51:20 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Manasi Godse <magodse@redhat.com>
-cc:     linux-rt-users@vger.kernel.org, lleshchi@redhat.com,
-        kcarcia@redhat.com
-Subject: Re: [PATCH] rteval: restrict kernel source download with invalid
- file extensions
-In-Reply-To: <20220803204122.1091137-1-magodse@redhat.com>
-Message-ID: <9b5189c8-9d5b-138b-90c7-b0e2a1070f3@redhat.com>
-References: <20220803204122.1091137-1-magodse@redhat.com>
+ us-mta-602-5zCg8r6wN36dP0M38-3DlQ-1; Thu, 04 Aug 2022 11:48:08 -0400
+X-MC-Unique: 5zCg8r6wN36dP0M38-3DlQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8EBF68061CB
+        for <linux-rt-users@vger.kernel.org>; Thu,  4 Aug 2022 15:48:08 +0000 (UTC)
+Received: from lleshchi.bos.com (unknown [10.22.9.157])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 57449909FF;
+        Thu,  4 Aug 2022 15:48:08 +0000 (UTC)
+From:   Leah Leshchinsky <lleshchi@redhat.com>
+To:     jkacur@redhat.com
+Cc:     linux-rt-users@vger.kernel.org
+Subject: [PATCH v2] rteval: Add measurement and load location to run report
+Date:   Thu,  4 Aug 2022 11:48:07 -0400
+Message-Id: <20220804154807.252163-1-lleshchi@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+The run report produced at the end of a run does not contain information
+on load and measurement thread locations.
 
+Adjust MakeReport() functions of LoadModules and MeasurementModules
+class so that new properties with number of loads and cpu information
+are added to the XML report and can be read by rteval_text.xsl.
 
-On Wed, 3 Aug 2022, Manasi Godse wrote:
+Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
 
-> If the user inputs an extension other than tar.xz or tar.gz to the -S or --source-download option, the
-> program should exit.
-> 
-> Signed-off-by: Manasi Godse <magodse@redhat.com>
-> ---
->  rteval-cmd | 4 ++++
->  1 file changed, 4 insertions(+)
-> 
-> diff --git a/rteval-cmd b/rteval-cmd
-> index c1a68bd5133b..e4a6bcb223da 100755
-> --- a/rteval-cmd
-> +++ b/rteval-cmd
-> @@ -275,6 +275,10 @@ if __name__ == '__main__':
->                  major_version = re.search(r"\d{1,2}", kernel_prefix).group(0)
->                  url = "https://kernel.org/pub/linux/kernel/v" + major_version + ".x/"
->  
-> +            file_ext = rtevcfg.srcdownload.split(kernel_prefix)[-1]
-> +
-> +            if file_ext and file_ext not in ('.tar.xz', '.tar.gz'):
-> +                sys.exit("Invalid file extension for the kernel source. Exiting")
->  
->              if rtevcfg.srcdownload.endswith(".gz") or 'rc' in rtevcfg.srcdownload:
->                  rtevcfg.srcdownload = "linux-" + kernel_prefix + ".tar.gz"
-> -- 
-> 2.31.1
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+diff --git a/rteval/modules/loads/__init__.py b/rteval/modules/loads/__init__.py
+index 2c2105efa964..5e5a5d85b616 100644
+--- a/rteval/modules/loads/__init__.py
++++ b/rteval/modules/loads/__init__.py
+@@ -30,6 +30,7 @@ import libxml2
+ from rteval.Log import Log
+ from rteval.rtevalConfig import rtevalCfgSection
+ from rteval.modules import RtEvalModules, rtevalModulePrototype
++from rteval.systopology import collapse_cpulist, SysTopology
+ 
+ class LoadThread(rtevalModulePrototype):
+     def __init__(self, name, config, logger=None):
+@@ -131,6 +132,12 @@ class LoadModules(RtEvalModules):
+     def MakeReport(self):
+         rep_n = RtEvalModules.MakeReport(self)
+         rep_n.newProp("load_average", str(self.GetLoadAvg()))
++        rep_n.newProp("loads", str(self.ModulesLoaded()))
++        cpulist = self._cfg.GetSection(self._module_config).cpulist
++        if not cpulist:
++            st = SysTopology()
++            cpulist = collapse_cpulist(st.online_cpus())
++        rep_n.newProp("loadcpus", cpulist)
+ 
+         return rep_n
+ 
+diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
+index 318248bd7e35..371fc5d08f44 100644
+--- a/rteval/modules/measurement/__init__.py
++++ b/rteval/modules/measurement/__init__.py
+@@ -24,7 +24,7 @@
+ 
+ import libxml2
+ from rteval.modules import RtEvalModules, ModuleContainer
+-
++from rteval.systopology import collapse_cpulist, SysTopology
+ 
+ class MeasurementProfile(RtEvalModules):
+     """Keeps and controls all the measurement modules with the same measurement profile"""
+@@ -189,6 +189,12 @@ measurement profiles, based on their characteristics"""
+ 
+         # Get the reports from all meaurement modules in all measurement profiles
+         rep_n = libxml2.newNode("Measurements")
++        cpulist = self.__cfg.GetSection("measurement").cpulist
++        if not cpulist:
++            st = SysTopology()
++            cpulist = collapse_cpulist(st.online_cpus())
++        rep_n.newProp("measurecpus", cpulist)
++
+         for mp in self.__measureprofiles:
+             mprep_n = mp.MakeReport()
+             if mprep_n:
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index c40063e3dd19..7ecfac6b6140 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -13,6 +13,14 @@
+     <xsl:value-of select="run_info/date"/><xsl:text> </xsl:text><xsl:value-of select="run_info/time"/>
+     <xsl:text>&#10;</xsl:text>
+ 
++    <xsl:text>   Loads:        </xsl:text>
++    <xsl:value-of select="loads/@loads"/><xsl:text> loads run on cores </xsl:text><xsl:value-of select="loads/@loadcpus"/>
++    <xsl:text>&#10;</xsl:text>
++
++    <xsl:text>   Measurement:  </xsl:text>
++    <xsl:text>measurement threads run on cores </xsl:text><xsl:value-of select="Measurements/@measurecpus"/>
++    <xsl:text>&#10;</xsl:text>
++
+     <xsl:text>   Run time:     </xsl:text>
+     <xsl:value-of select="run_info/@days"/><xsl:text> days </xsl:text>
+     <xsl:value-of select="run_info/@hours"/><xsl:text>h </xsl:text>
+-- 
+2.31.1
 
