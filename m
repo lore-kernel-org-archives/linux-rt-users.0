@@ -2,69 +2,68 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F2E13C00140
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Aug 2022 15:35:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 99292C00140
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Aug 2022 16:32:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237817AbiHEPfw (ORCPT
+        id S236318AbiHEQcp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Aug 2022 11:35:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41176 "EHLO
+        Fri, 5 Aug 2022 12:32:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34480 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232065AbiHEPfu (ORCPT
+        with ESMTP id S240682AbiHEQcm (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 5 Aug 2022 11:35:50 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id B0744FD20
-        for <linux-rt-users@vger.kernel.org>; Fri,  5 Aug 2022 08:35:48 -0700 (PDT)
+        Fri, 5 Aug 2022 12:32:42 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 89203DF60
+        for <linux-rt-users@vger.kernel.org>; Fri,  5 Aug 2022 09:32:37 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1659713747;
+        s=mimecast20190719; t=1659717156;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=sHO1itvPqRAlrc3LEDFoJ+A0mT1nAmwz7EvMFV0CCX4=;
-        b=XNDAGsGkI62BKzp3jQAw/o70KSh10kid4wcEcNijEb+mQhYexPAOUv6Du+dwX2/5lEbZ0O
-        VZqZ7pboGQVumxL/9i8maEIqJTGQi5bYhr2aqpMxrEqVleTSp0GsnPAQT9CVAZtC99Up/U
-        S64SHMW11eSAJQJhK5f6Twc1pGTaMg8=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=sWO+nn78o4o6D//fQOgZgUOiedj3CaI685bq4smqUw0=;
+        b=FYMDJajnMBSlsiCSSnsVQcS+KjFaXHaQ8dazAJBLWG3FePm8SL/lC9TL7SBDns0TH92dIn
+        h/eWWSRwyPTx01RlenbcqoPVrnQVh2NNmXred/AOnJELh0B2Y3p/IYfvnewIJpy0CosKFL
+        DUwrIoGYjkjWGoxemJ7jAEmCY4O4e1M=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-546-dYYXNN2xOT2BVVbnBw__zQ-1; Fri, 05 Aug 2022 11:35:46 -0400
-X-MC-Unique: dYYXNN2xOT2BVVbnBw__zQ-1
-Received: by mail-qk1-f198.google.com with SMTP id l15-20020a05620a28cf00b006b46997c070so2237139qkp.20
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Aug 2022 08:35:46 -0700 (PDT)
+ us-mta-515-R_mERVdwNeu15z_ijmXnMA-1; Fri, 05 Aug 2022 12:32:34 -0400
+X-MC-Unique: R_mERVdwNeu15z_ijmXnMA-1
+Received: by mail-qk1-f199.google.com with SMTP id h8-20020a05620a284800b006b5c98f09fbso2348450qkp.21
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Aug 2022 09:32:34 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc;
-        bh=sHO1itvPqRAlrc3LEDFoJ+A0mT1nAmwz7EvMFV0CCX4=;
-        b=TuMROVAkUIi1DtF4EnhHqUXEmeqWJy1P300BvTEJtUSenQ8kUNgHSdXMfezfW5KOhk
-         aXoyhlp13iWqcWrlHe4HvqI9zdOH28mm9qwmIyhJwPJrdIAFc3xr021X4rCQaR18rxCw
-         GZUiGepEgR40MwdUs6bIJ0v4VR2TO3jot85jLP20GOtCJEGHRRZYfPq4yJkgUvup/oa+
-         gOQgYw7pWlStfq9WSW67T0Iq7YQD2RrbPYw1PrICTHu2yvePgrIJfg3hInJBfY2yBy45
-         OCFqZQfH4CY1tLaWL7PGleviiXjDVtpM1FqC4Gkz2OCwnCWyuSCcQcGAEHD+STGpWf+9
-         qSIw==
-X-Gm-Message-State: ACgBeo0GBFh+dDwZ8D+4s1f6l5JGK+sGmNYpk6vlMTmcG7T+66D/skCZ
-        ceAnxQkVeWrM5gaZgQRbQVc1zTpCDGEk+aOb6Qg40qQ/zB9r+wEf/PLDSk7jGPRJxHr41p3eVuy
-        XBfYis3is+hxfE+avdQqgAjCHI/Q=
-X-Received: by 2002:a0c:8bd2:0:b0:474:7d1a:eb5b with SMTP id a18-20020a0c8bd2000000b004747d1aeb5bmr6027380qvc.18.1659713745891;
-        Fri, 05 Aug 2022 08:35:45 -0700 (PDT)
-X-Google-Smtp-Source: AA6agR4bl34k6JuVyQH5jjd6IgWVNpNJLqhtZYVj/y5tpxSS0mgSsWxwA35QFpZzvFMQPWyqjVeahA==
-X-Received: by 2002:a0c:8bd2:0:b0:474:7d1a:eb5b with SMTP id a18-20020a0c8bd2000000b004747d1aeb5bmr6027366qvc.18.1659713745662;
-        Fri, 05 Aug 2022 08:35:45 -0700 (PDT)
+        bh=sWO+nn78o4o6D//fQOgZgUOiedj3CaI685bq4smqUw0=;
+        b=B2XZ8NsaoxdBA7+nTHgDvas5JuSi/DMvElVYxjpiyTtnI5456zJteIts+ftiYdNwK4
+         HC8+uiP00V/36DTD9lSn0NQrIJtJBNF2NPthH6HxceaDfIODfecpGOQ4+N6YA5X9njrF
+         a6RmXEzcGhE6sWxrBnH/Ixo5+brzA8BtlokMGKM63fZ/3OMhXxrqsCjN4BIhVD0xq3o2
+         d4jjQVEWGpolL6Z3V6JyybW7shOFjZxgjdQ69kX5XWpylpuHtFyH4hOX190n5eH+BWYd
+         eqEpYKltD9mssUPfiGWKolcjJI2/4zZd7YxSKYAkA4VhZrMgJg5tvAL9LtpOincKl5C2
+         HDwA==
+X-Gm-Message-State: ACgBeo147UexLCP5mC4vGjpC53eCIfwI1eH0UsQiFJKhYGQg0kyNW4vW
+        8TpLk2nFiwmZZPGjDarzBYuRgOEA+D2oG9T5hN2mllE1MTFLDm7T/dBhHJayhoTKBWnW+ceG11V
+        Wyy0oJj7+0JFQaRU3YULP2HNrD/U=
+X-Received: by 2002:a05:6214:2265:b0:474:8865:7ba2 with SMTP id gs5-20020a056214226500b0047488657ba2mr6289063qvb.98.1659717154397;
+        Fri, 05 Aug 2022 09:32:34 -0700 (PDT)
+X-Google-Smtp-Source: AA6agR6Ggb5kjIhFqRE5cNV9w0HbKTBE+bQWjbNlHXJqOH5EviYEu0pA+mefc5XhvcQdzIdO1r5aCA==
+X-Received: by 2002:a05:6214:2265:b0:474:8865:7ba2 with SMTP id gs5-20020a056214226500b0047488657ba2mr6289038qvb.98.1659717154135;
+        Fri, 05 Aug 2022 09:32:34 -0700 (PDT)
 Received: from fionn ([142.189.102.90])
-        by smtp.gmail.com with ESMTPSA id dm16-20020a05620a1d5000b006b8cb64110bsm3352894qkb.45.2022.08.05.08.35.44
+        by smtp.gmail.com with ESMTPSA id y17-20020a05620a25d100b006b60d5a7205sm3149482qko.51.2022.08.05.09.32.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 05 Aug 2022 08:35:44 -0700 (PDT)
-Date:   Fri, 5 Aug 2022 11:35:18 -0400 (EDT)
+        Fri, 05 Aug 2022 09:32:33 -0700 (PDT)
+Date:   Fri, 5 Aug 2022 12:32:32 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Manasi Godse <magodse@redhat.com>
-cc:     linux-rt-users@vger.kernel.org, lleshchi@redhat.com,
-        kcarcia@redhat.com, gmanasi13@gmail.com
-Subject: Re: [PATCH] rteval: enhancement to --kcompile-source option for
- kernel tarball
-In-Reply-To: <20220805003219.1248947-1-magodse@redhat.com>
-Message-ID: <927ccc3-3beb-d923-abd4-a5e63b2a8c3@redhat.com>
-References: <20220805003219.1248947-1-magodse@redhat.com>
+To:     Leah Leshchinsky <lleshchi@redhat.com>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v2] rteval: Add measurement and load location to run
+ report
+In-Reply-To: <Yu0dNzEf76KtzQ+I@lleshchi.bos.csb>
+Message-ID: <8047d387-1396-c2ff-70e5-aa448a907fb4@redhat.com>
+References: <20220804154807.252163-1-lleshchi@redhat.com> <Yu0dNzEf76KtzQ+I@lleshchi.bos.csb>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -73,65 +72,143 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Thu, 4 Aug 2022, Manasi Godse wrote:
+On Fri, 5 Aug 2022, Leah Leshchinsky wrote:
 
-> The --kcompile-source option is enhanced such that it can find the
-> kernel source tarballs using the values as 'linux-5.18.1' , '5.18.1',
-> 'linux-5.18.1.tar.xz' This eliminates the need to type the entire
-> source filename as a value to the option. The enhancement will look for
-> the tarballs in the loadsource directory.
+> On Thu, Aug 04, 2022 at 11:48:07AM -0400, Leah Leshchinsky wrote:
+> > The run report produced at the end of a run does not contain information
+> > on load and measurement thread locations.
+> > 
+> > Adjust MakeReport() functions of LoadModules and MeasurementModules
+> > class so that new properties with number of loads and cpu information
+> > are added to the XML report and can be read by rteval_text.xsl.
+> > 
+> > Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
+> > 
+> > diff --git a/rteval/modules/loads/__init__.py b/rteval/modules/loads/__init__.py
+> > index 2c2105efa964..5e5a5d85b616 100644
+> > --- a/rteval/modules/loads/__init__.py
+> > +++ b/rteval/modules/loads/__init__.py
+> > @@ -30,6 +30,7 @@ import libxml2
+> >  from rteval.Log import Log
+> >  from rteval.rtevalConfig import rtevalCfgSection
+> >  from rteval.modules import RtEvalModules, rtevalModulePrototype
+> > +from rteval.systopology import collapse_cpulist, SysTopology
+> >  
+> >  class LoadThread(rtevalModulePrototype):
+> >      def __init__(self, name, config, logger=None):
+> > @@ -131,6 +132,12 @@ class LoadModules(RtEvalModules):
+> >      def MakeReport(self):
+> >          rep_n = RtEvalModules.MakeReport(self)
+> >          rep_n.newProp("load_average", str(self.GetLoadAvg()))
+> > +        rep_n.newProp("loads", str(self.ModulesLoaded()))
+> > +        cpulist = self._cfg.GetSection(self._module_config).cpulist
+> > +        if not cpulist:
+> > +            st = SysTopology()
+> > +            cpulist = collapse_cpulist(st.online_cpus())
+> > +        rep_n.newProp("loadcpus", cpulist)
+> >  
+> >          return rep_n
+> >  
+> > diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
+> > index 318248bd7e35..371fc5d08f44 100644
+> > --- a/rteval/modules/measurement/__init__.py
+> > +++ b/rteval/modules/measurement/__init__.py
+> > @@ -24,7 +24,7 @@
+> >  
+> >  import libxml2
+> >  from rteval.modules import RtEvalModules, ModuleContainer
+> > -
+> > +from rteval.systopology import collapse_cpulist, SysTopology
+> >  
+> >  class MeasurementProfile(RtEvalModules):
+> >      """Keeps and controls all the measurement modules with the same measurement profile"""
+> > @@ -189,6 +189,12 @@ measurement profiles, based on their characteristics"""
+> >  
+> >          # Get the reports from all meaurement modules in all measurement profiles
+> >          rep_n = libxml2.newNode("Measurements")
+> > +        cpulist = self.__cfg.GetSection("measurement").cpulist
+> > +        if not cpulist:
+> > +            st = SysTopology()
+> > +            cpulist = collapse_cpulist(st.online_cpus())
+> > +        rep_n.newProp("measurecpus", cpulist)
+> > +
+> >          for mp in self.__measureprofiles:
+> >              mprep_n = mp.MakeReport()
+> >              if mprep_n:
+> > diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+> > index c40063e3dd19..7ecfac6b6140 100644
+> > --- a/rteval/rteval_text.xsl
+> > +++ b/rteval/rteval_text.xsl
+> > @@ -13,6 +13,14 @@
+> >      <xsl:value-of select="run_info/date"/><xsl:text> </xsl:text><xsl:value-of select="run_info/time"/>
+> >      <xsl:text>&#10;</xsl:text>
+> >  
+> > +    <xsl:text>   Loads:        </xsl:text>
+> > +    <xsl:value-of select="loads/@loads"/><xsl:text> loads run on cores </xsl:text><xsl:value-of select="loads/@loadcpus"/>
+> > +    <xsl:text>&#10;</xsl:text>
+> > +
+> > +    <xsl:text>   Measurement:  </xsl:text>
+> > +    <xsl:text>measurement threads run on cores </xsl:text><xsl:value-of select="Measurements/@measurecpus"/>
+> > +    <xsl:text>&#10;</xsl:text>
+> > +
+> >      <xsl:text>   Run time:     </xsl:text>
+> >      <xsl:value-of select="run_info/@days"/><xsl:text> days </xsl:text>
+> >      <xsl:value-of select="run_info/@hours"/><xsl:text>h </xsl:text>
+> > -- 
+> > 2.31.1
+> > 
 > 
-> Signed-off-by: Manasi Godse <magodse@redhat.com>
-> ---
->  rteval/modules/loads/kcompile.py | 25 +++++++++++++++++++++----
->  1 file changed, 21 insertions(+), 4 deletions(-)
+> Hi John,
 > 
-> diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-> index 6dd8d940f8b3..7d78d0ff9cae 100644
-> --- a/rteval/modules/loads/kcompile.py
-> +++ b/rteval/modules/loads/kcompile.py
-> @@ -166,16 +166,33 @@ class Kcompile(CommandLineLoad):
->              raise rtevalRuntimeError(self, \
->                  f"error removing builddir ({self.buildir}) (ret={ret})")
->  
-> +    def _find_tarball(self):
-> +       # If the user specifies the full kernel name, check if available
-> +        tarfile = os.path.join(self.srcdir, self._cfg.source)
-> +        if os.path.exists(tarfile):
-> +            return tarfile
-> +
-> +        if 'rc' in self._cfg.source:
-> +            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\-[a-z]*\d{1,2}", self._cfg.source).group(0)
-> +        else:
-> +            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\.*\d{1,2}", self._cfg.source).group(0)
-> +
-> +        # either a tar.xz or tar.gz might exist. Check for both.
-> +        xz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.xz" )
-> +        gz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.gz" )
-> +        if os.path.exists(xz_file):
-> +            return xz_file
-> +        elif os.path.exists(gz_file):
-> +            return gz_file
-> +        raise rtevalRuntimeError(self, f"tarfile {tarfile} does not exist!")
-> +
->      def _WorkloadSetup(self):
->          if self._donotrun:
->              return
->  
->          # find our source tarball
->          if self._cfg.source:
-> -            tarfile = os.path.join(self.srcdir, self._cfg.source)
-> -            if not os.path.exists(tarfile):
-> -                raise rtevalRuntimeError(self, f" tarfile {tarfile} does not exist!")
-> -            self.source = tarfile
-> +            self.source = self._find_tarball()
->              kernel_prefix = re.search(r"linux-\d{1,2}\.\d{1,3}\.*\d{1,2}", self.source).group(0)
->          else:
->              tarfiles = glob.glob(os.path.join(self.srcdir, f"{DEFAULT_KERNEL_PREFIX}*"))
-> -- 
-> 2.31.1
+> I do believe the cpulist variable can be empty. I was able to test this by running rteval without specifying and load and measurement cpus.
+
+Ok, you are correct, cpulist can be empty if the following are not set
+--loads-cpulist=LIST
+--measurement-cpulist=LIST
+
+So you do need some code to initialize the list of it is empty.
+But there are still problems
+
+For example if you shut off cpu 3
+su -c 'echo 0 > /sys/devices/system/cpu/cpu3/online '
+
+And then request measurement on cpus 0-5
+su -c './rteval-cmd -d5s --measurement-cpulist=0-5'
+
+The report should say 
+Measurement:  measurement threads run on cores  0-2,4,5
+Loads:        3 loads run on cores 6-11 (the inverse)
+but instead with your patch it says
+Loads:        3 loads run on cores 1,2,4,6,7,8,9,10,11
+Measurement:  measurement threads run on cores 0-5
+
+Now there are problems that exist even before your patch, so for example, 
+the initial info to the screen not included in the report doesn't consider 
+offline cpus. (We should fix that too of course, but we can do this 
+stepwise)
+
+And it's also possible that I have introduced some new problems with the 
+changes to systopology that will hopefully make things simpler in the long 
+run but may be interferring with your code. So, there are many things to 
+untangle here.
+
+> 
+> This patch is attempting to replicate the behavior found in rteval/__init.py lines 187-201, which also finds the cpulist using
+>             cpulist = self._loadmods._cfg.GetSection("loads").cpulist
+> and if the cpulist is empty, defaults to reporting the online cpus. I assume this is because the rteval program uses all available cpus
+> to run measurement and load threads if no specific cpus are specified.
+> 
+> Please let me know if I am misunderstanding any of the above.
+> 
+> I will investigate why the xsl code is not working for you. It seems to be working for me at the moment.
+
+
+> 
+> Thank you for the review,
+> Leah
 > 
 > 
-Reviewed-by: Leah Leshchinsky <lleshchi@redhat.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
+Thanks Leah
+
+John
 
