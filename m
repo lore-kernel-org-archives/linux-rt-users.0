@@ -2,146 +2,127 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8757EC25B08
-	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Aug 2022 12:56:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 038B6C25B0D
+	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Aug 2022 12:56:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237479AbiHHM4q (ORCPT
+        id S242800AbiHHM4s (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 8 Aug 2022 08:56:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40824 "EHLO
+        Mon, 8 Aug 2022 08:56:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40846 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237443AbiHHM4k (ORCPT
+        with ESMTP id S241832AbiHHM4k (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Mon, 8 Aug 2022 08:56:40 -0400
 Received: from mail.infraroot.at (mail.infraroot.at [54.37.73.54])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1BD9C273D
-        for <linux-rt-users@vger.kernel.org>; Mon,  8 Aug 2022 05:56:38 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AE55A38AF
+        for <linux-rt-users@vger.kernel.org>; Mon,  8 Aug 2022 05:56:39 -0700 (PDT)
 Received: from localtoast.corp.sigma-star.at (unknown [82.150.214.1])
-        by mail.infraroot.at (Postfix) with ESMTPSA id 80CA34169D;
-        Mon,  8 Aug 2022 14:56:35 +0200 (CEST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mail.infraroot.at 80CA34169D
+        by mail.infraroot.at (Postfix) with ESMTPSA id A10B9416A1;
+        Mon,  8 Aug 2022 14:56:36 +0200 (CEST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mail.infraroot.at A10B9416A1
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=infraroot.at;
-        s=default; t=1659963395;
-        bh=DhPN7weyQjmj15xvQ18fmASiGvEpFtfU/y3t7RmmEe8=;
+        s=default; t=1659963397;
+        bh=M+bJ4tqx4dLgqcZrZ76MbmGEKAf1tcpLk6KbvZTtkZo=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=UI+2InPLF0mUN5gksNv+kARLY2g28SpqE47sgMl1wbw9k2fu1jx7zqdi7seb7Ghbe
-         L1Vmi5E9d/xH71f81r5WRux0mn/YX10hIuKGC0uEpnt0ykXOJntCwTUnMNtTNstKDI
-         9/+c1l2PDBqbvOlJ+00/aQ44vq0XWgVa1XyGg+as=
+        b=H5eVEYauyIdX1lFm2MP1Vl7fuxYVjTGmn3befQfBOIIM2f/nLeRCw5UFd7I2BMWS9
+         2cN4C+ShmtHIj1wVwkhCz7eIy8uXr0hAbvv6XBetN4lTLupNdrNqhfQTR256Ei5EEE
+         kIQG7TivRnQB39qLx4ougH5zaQ9kOkTQNuXtx3f4=
 From:   David Oberhollenzer <goliath@infraroot.at>
 To:     linux-rt-users@vger.kernel.org
 Cc:     williams@redhat.com, bigeasy@linutronix.de, richard@nod.at,
-        joseph.salisbury@canonical.com, Michal Hocko <mhocko@kernel.org>,
-        =?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny@suse.com>,
-        Roman Gushchin <guro@fb.com>,
+        joseph.salisbury@canonical.com,
         Johannes Weiner <hannes@cmpxchg.org>,
         Shakeel Butt <shakeelb@google.com>,
-        Michal Hocko <mhocko@suse.com>,
+        Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@suse.com>,
         David Oberhollenzer <goliath@infraroot.at>
-Subject: [PATCH v2 02/10] mm/memcg: Disable threshold event handlers on PREEMPT_RT
-Date:   Mon,  8 Aug 2022 14:55:54 +0200
-Message-Id: <20220808125602.97747-3-goliath@infraroot.at>
+Subject: [PATCH v2 04/10] mm/memcg: Opencode the inner part of obj_cgroup_uncharge_pages() in drain_obj_stock()
+Date:   Mon,  8 Aug 2022 14:55:56 +0200
+Message-Id: <20220808125602.97747-5-goliath@infraroot.at>
 X-Mailer: git-send-email 2.37.1
 In-Reply-To: <20220808125602.97747-1-goliath@infraroot.at>
 References: <20220808125602.97747-1-goliath@infraroot.at>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Johannes Weiner <hannes@cmpxchg.org>
 
-During the integration of PREEMPT_RT support, the code flow around
-memcg_check_events() resulted in `twisted code'. Moving the code around
-and avoiding then would then lead to an additional local-irq-save
-section within memcg_check_events(). While looking better, it adds a
-local-irq-save section to code flow which is usually within an
-local-irq-off block on non-PREEMPT_RT configurations.
+Provide the inner part of refill_stock() as __refill_stock() without
+disabling interrupts. This eases the integration of local_lock_t where
+recursive locking must be avoided.
+Open code obj_cgroup_uncharge_pages() in drain_obj_stock() and use
+__refill_stock(). The caller of drain_obj_stock() already disables
+interrupts.
 
-The threshold event handler is a deprecated memcg v1 feature. Instead of
-trying to get it to work under PREEMPT_RT just disable it. There should
-be no users on PREEMPT_RT. From that perspective it makes even less
-sense to get it to work under PREEMPT_RT while having zero users.
+[bigeasy: Patch body around Johannes' diff ]
 
-Make memory.soft_limit_in_bytes and cgroup.event_control return
--EOPNOTSUPP on PREEMPT_RT. Make an empty memcg_check_events() and
-memcg_write_event_control() which return only -EOPNOTSUPP on PREEMPT_RT.
-Document that the two knobs are disabled on PREEMPT_RT.
-
-Suggested-by: Michal Hocko <mhocko@kernel.org>
-Suggested-by: Michal Koutný <mkoutny@suse.com>
+Signed-off-by: Johannes Weiner <hannes@cmpxchg.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Acked-by: Roman Gushchin <guro@fb.com>
-Acked-by: Johannes Weiner <hannes@cmpxchg.org>
 Reviewed-by: Shakeel Butt <shakeelb@google.com>
+Reviewed-by: Roman Gushchin <guro@fb.com>
 Acked-by: Michal Hocko <mhocko@suse.com>
 [do: backported to v5.15]
 Signed-off-by: David Oberhollenzer <goliath@infraroot.at>
 ---
- Documentation/admin-guide/cgroup-v1/memory.rst |  2 ++
- mm/memcontrol.c                                | 14 ++++++++++++--
- 2 files changed, 14 insertions(+), 2 deletions(-)
+ mm/memcontrol.c | 26 ++++++++++++++++++++------
+ 1 file changed, 20 insertions(+), 6 deletions(-)
 
-diff --git a/Documentation/admin-guide/cgroup-v1/memory.rst b/Documentation/admin-guide/cgroup-v1/memory.rst
-index 41191b5fb69d..c45291ac9ffb 100644
---- a/Documentation/admin-guide/cgroup-v1/memory.rst
-+++ b/Documentation/admin-guide/cgroup-v1/memory.rst
-@@ -64,6 +64,7 @@ Brief summary of control files.
- 				     threads
-  cgroup.procs			     show list of processes
-  cgroup.event_control		     an interface for event_fd()
-+				     This knob is not available on CONFIG_PREEMPT_RT systems.
-  memory.usage_in_bytes		     show current usage for memory
- 				     (See 5.5 for details)
-  memory.memsw.usage_in_bytes	     show current usage for memory+Swap
-@@ -75,6 +76,7 @@ Brief summary of control files.
-  memory.max_usage_in_bytes	     show max memory usage recorded
-  memory.memsw.max_usage_in_bytes     show max memory+Swap usage recorded
-  memory.soft_limit_in_bytes	     set/show soft limit of memory usage
-+				     This knob is not available on CONFIG_PREEMPT_RT systems.
-  memory.stat			     show various statistics
-  memory.use_hierarchy		     set/show hierarchical account enabled
-                                      This knob is deprecated and shouldn't be
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index a07e068989b4..6078d57aee0f 100644
+index e566c34466a1..2cf55b3ab4b0 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -909,6 +909,9 @@ static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
+@@ -2264,12 +2264,9 @@ static void drain_local_stock(struct work_struct *dummy)
+  * Cache charges(val) to local per_cpu area.
+  * This will be consumed by consume_stock() function, later.
   */
- static void memcg_check_events(struct mem_cgroup *memcg, struct page *page)
+-static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
++static void __refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
  {
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-+		return;
+ 	struct memcg_stock_pcp *stock;
+-	unsigned long flags;
+-
+-	local_irq_save(flags);
+ 
+ 	stock = this_cpu_ptr(&memcg_stock);
+ 	if (stock->cached != memcg) { /* reset if necessary */
+@@ -2281,7 +2278,14 @@ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ 
+ 	if (stock->nr_pages > MEMCG_CHARGE_BATCH)
+ 		drain_stock(stock);
++}
+ 
++static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
++{
++	unsigned long flags;
 +
- 	/* threshold event is triggered in finer grain than soft limit */
- 	if (unlikely(mem_cgroup_event_ratelimit(memcg,
- 						MEM_CGROUP_TARGET_THRESH))) {
-@@ -3777,8 +3780,12 @@ static ssize_t mem_cgroup_write(struct kernfs_open_file *of,
- 		}
- 		break;
- 	case RES_SOFT_LIMIT:
--		memcg->soft_limit = nr_pages;
--		ret = 0;
-+		if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
-+			ret = -EOPNOTSUPP;
-+		} else {
-+			memcg->soft_limit = nr_pages;
-+			ret = 0;
++	local_irq_save(flags);
++	__refill_stock(memcg, nr_pages);
+ 	local_irq_restore(flags);
+ }
+ 
+@@ -3180,8 +3184,18 @@ static void drain_obj_stock(struct memcg_stock_pcp *stock)
+ 		unsigned int nr_pages = stock->nr_bytes >> PAGE_SHIFT;
+ 		unsigned int nr_bytes = stock->nr_bytes & (PAGE_SIZE - 1);
+ 
+-		if (nr_pages)
+-			obj_cgroup_uncharge_pages(old, nr_pages);
++		if (nr_pages) {
++			struct mem_cgroup *memcg;
++
++			memcg = get_mem_cgroup_from_objcg(old);
++
++			if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
++				page_counter_uncharge(&memcg->kmem, nr_pages);
++
++			__refill_stock(memcg, nr_pages);
++
++			css_put(&memcg->css);
 +		}
- 		break;
- 	}
- 	return ret ?: nbytes;
-@@ -4754,6 +4761,9 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
- 	char *endp;
- 	int ret;
  
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-+		return -EOPNOTSUPP;
-+
- 	buf = strstrip(buf);
- 
- 	efd = simple_strtoul(buf, &endp, 10);
+ 		/*
+ 		 * The leftover is flushed to the centralized per-memcg value.
 -- 
 2.37.1
 
