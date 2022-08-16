@@ -2,118 +2,136 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A078C00140
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Aug 2022 21:43:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1FDEFC25B0E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Aug 2022 16:20:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244490AbiHOVns (ORCPT
+        id S236043AbiHPQUi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 15 Aug 2022 17:43:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49392 "EHLO
+        Tue, 16 Aug 2022 12:20:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57502 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S243789AbiHOVmG (ORCPT
+        with ESMTP id S236045AbiHPQUR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 15 Aug 2022 17:42:06 -0400
-Received: from mail-qv1-xf32.google.com (mail-qv1-xf32.google.com [IPv6:2607:f8b0:4864:20::f32])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80EF06DAFB
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 Aug 2022 12:29:34 -0700 (PDT)
-Received: by mail-qv1-xf32.google.com with SMTP id mz1so1135734qvb.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 Aug 2022 12:29:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc;
-        bh=qrAMSUBibhYzlIFJFop2b4E17UxhNQYmAmYnUmYBUns=;
-        b=oiNbvQTL5EEQq1zrgjuPzQAVqnE5QEYiBIURjvs26427CykHXYhS5ExpQVU1Htv0Yb
-         buPgBh7i+IovmvgP1/wq6v3pPpXVSX+qlAj/e2EURO2MiBd+EBJTqLPchO27DWbCqCZv
-         AHA2uAqXREzppJ/dkSTeHz0IYc2ctfsgpIlwE9I88zTs/APiDg6IvfJi75BzoGDxwJIu
-         /3QT8yODDohp9H5sn/+JPul3xW/10TG9SLrcoUWs6M0bSeDzvT9C4Mn0j+Ya7339ndZy
-         uMdK4UDGg9V+WiE3T++rwHOBGDOitGWfGsn7EVUADkudXru4SRjcHt7b0ys4Ec25WB16
-         mHtQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc;
-        bh=qrAMSUBibhYzlIFJFop2b4E17UxhNQYmAmYnUmYBUns=;
-        b=00A4/1BkuN7JUa9gbTAbZmJKG9otOufQBxWmkwZ+mZGBvJOnmXVDzQScwx/h/heOD+
-         Z50NYWNQExFKguifdVlj07Gh3NGvVTWQ2vYFQGSs6i7ElGXQOE2lKQglAkCo5eTAIo1v
-         P/9DU6XoIUgNc3O4l6hxWfx4p0Qfpz770QoT+VNFpvF4o/mO5qNFQqaVAfiYjC1hkgrg
-         x0dFmhdrVOk5THD1NdUEPFV5LX+PD/LUTqc7X13WpMK/AX0T6GzhIypJ5mcaL6/pFLGk
-         LZuamEBgyhJ09qI+115ISLaurfhhYz27wOYx7iHeFlLoEPnqgwQ32WNwawZffjjvUSi2
-         ++ug==
-X-Gm-Message-State: ACgBeo3AbhUhIy7lmH4bcmSq+0kKAqTfAeilAWH1l0rb0U61vSQj5OeS
-        TVN59Ai7T5HPtUSScasPlxMjea28VHSP+zhaXlJo9w==
-X-Google-Smtp-Source: AA6agR5cumipWgboi6k1U7VP+Sq2I089zyPYm38VAsrE8NVK69MvxS/sBU3ZXKH0MMP1EU9qUL8nzh3N7Y4hXo0y+pc=
-X-Received: by 2002:ad4:4ea1:0:b0:474:8090:5cd2 with SMTP id
- ed1-20020ad44ea1000000b0047480905cd2mr14692250qvb.105.1660591773415; Mon, 15
- Aug 2022 12:29:33 -0700 (PDT)
+        Tue, 16 Aug 2022 12:20:17 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 323A36154
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Aug 2022 09:20:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1660666814;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=i39j09c6BNPejQJZcyInLy3m7+y9efxVFrnR+y/Au40=;
+        b=SclkZlD3k+GWpxetbs5snnsC6Si/W9R9HgbdmxSlMzfdfTK5azVrCqu3krYsxiWA0hMnDz
+        58rf2sMHKBv/OQ2m4iwEr7qGI5NA1A1iPDw/LdSg6+xsK9eNvMnSgGQtcVh4ErWiTcEEs3
+        jM56bo3uHiJfVI+qD3HXNkdpfGj1EP4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-531-83VE_YbfPeeox7N_klRkhg-1; Tue, 16 Aug 2022 12:20:13 -0400
+X-MC-Unique: 83VE_YbfPeeox7N_klRkhg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E973381494D
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Aug 2022 16:20:13 +0000 (UTC)
+Received: from lleshchi.bos.com (unknown [10.22.18.227])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 068B72026D4C;
+        Tue, 16 Aug 2022 16:20:12 +0000 (UTC)
+From:   Leah Leshchinsky <lleshchi@redhat.com>
+To:     jkacur@redhat.com
+Cc:     linux-rt-users@vger.kernel.org
+Subject: [PATCH v3] rteval: Add measurement and load location to run report
+Date:   Tue, 16 Aug 2022 12:20:11 -0400
+Message-Id: <20220816162011.606213-1-lleshchi@redhat.com>
 MIME-Version: 1.0
-References: <CAJkfWY5KbJY_qD5qw88Bd9DNxrb47F+FVXnTQCsz-RDQxMujcg@mail.gmail.com>
- <98bbfc8f-ac29-fed8-7f2d-72da4a1e907e@redhat.com>
-In-Reply-To: <98bbfc8f-ac29-fed8-7f2d-72da4a1e907e@redhat.com>
-From:   Nathan Huckleberry <nhuck@google.com>
-Date:   Mon, 15 Aug 2022 12:29:22 -0700
-Message-ID: <CAJkfWY6uH4B_RVaOkJPWR6PmG+pqEHNW9LwRVWSarkFTJN8n=A@mail.gmail.com>
-Subject: Re: rt-tests: cyclictest: Building cyclictest for Android
-To:     John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org,
-        Sami Tolvanen <samitolvanen@google.com>,
-        Eric Biggers <ebiggers@kernel.org>,
-        Bart Van Assche <bvanassche@google.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hey John,
+The run report produced at the end of a run does not contain information
+on load and measurement thread locations.
 
-I made some progress by building libnuma with the Android toolchain,
-then linking against that. I'm now running into issues because bionic
-does not support shm_open/shm_unlink. It looks like those functions
-are intentionally not supported as seen here:
-https://android.googlesource.com/platform/bionic/+/8b14256/docs/status.md
+Adjust MakeReport() functions of LoadModules and MeasurementModules
+class so that new properties with number of loads and cpu information
+are added to the XML report and can be read by rteval_text.xsl.
 
-Do you have any thoughts on how to proceed? I think I could add a shim
-for shm_open/shm_unlink that uses memfd in src/include/bionic.h; the
-memory would only be accessible through /proc, but the tool would at
-least build.
+Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
 
-Let me know what you think is best to do here.
+diff --git a/rteval/modules/loads/__init__.py b/rteval/modules/loads/__init__.py
+index 2c2105efa964..2f7f1d4356ae 100644
+--- a/rteval/modules/loads/__init__.py
++++ b/rteval/modules/loads/__init__.py
+@@ -30,6 +30,7 @@ import libxml2
+ from rteval.Log import Log
+ from rteval.rtevalConfig import rtevalCfgSection
+ from rteval.modules import RtEvalModules, rtevalModulePrototype
++from rteval.systopology import collapse_cpulist, CpuList, SysTopology as SysTop
+ 
+ class LoadThread(rtevalModulePrototype):
+     def __init__(self, name, config, logger=None):
+@@ -131,6 +132,13 @@ class LoadModules(RtEvalModules):
+     def MakeReport(self):
+         rep_n = RtEvalModules.MakeReport(self)
+         rep_n.newProp("load_average", str(self.GetLoadAvg()))
++        rep_n.newProp("loads", str(self.ModulesLoaded()))
++        cpulist = self._cfg.GetSection(self._module_config).cpulist
++        if cpulist:
++            cpulist = CpuList(cpulist).cpulist
++        else:
++            cpulist = SysTop().online_cpus()
++        rep_n.newProp("loadcpus", collapse_cpulist(cpulist))
+ 
+         return rep_n
+ 
+diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
+index 318248bd7e35..90e1839333bb 100644
+--- a/rteval/modules/measurement/__init__.py
++++ b/rteval/modules/measurement/__init__.py
+@@ -24,7 +24,7 @@
+ 
+ import libxml2
+ from rteval.modules import RtEvalModules, ModuleContainer
+-
++from rteval.systopology import collapse_cpulist, CpuList, SysTopology as SysTop
+ 
+ class MeasurementProfile(RtEvalModules):
+     """Keeps and controls all the measurement modules with the same measurement profile"""
+@@ -189,6 +189,13 @@ measurement profiles, based on their characteristics"""
+ 
+         # Get the reports from all meaurement modules in all measurement profiles
+         rep_n = libxml2.newNode("Measurements")
++        cpulist = self.__cfg.GetSection("measurement").cpulist
++        if cpulist:
++            cpulist = CpuList(cpulist).cpulist
++        else:
++            cpulist = SysTop().online_cpus()
++        rep_n.newProp("measurecpus", collapse_cpulist(cpulist))
++
+         for mp in self.__measureprofiles:
+             mprep_n = mp.MakeReport()
+             if mprep_n:
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index c40063e3dd19..7ecfac6b6140 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -13,6 +13,14 @@
+     <xsl:value-of select="run_info/date"/><xsl:text> </xsl:text><xsl:value-of select="run_info/time"/>
+     <xsl:text>&#10;</xsl:text>
+ 
++    <xsl:text>   Loads:        </xsl:text>
++    <xsl:value-of select="loads/@loads"/><xsl:text> loads run on cores </xsl:text><xsl:value-of select="loads/@loadcpus"/>
++    <xsl:text>&#10;</xsl:text>
++
++    <xsl:text>   Measurement:  </xsl:text>
++    <xsl:text>measurement threads run on cores </xsl:text><xsl:value-of select="Measurements/@measurecpus"/>
++    <xsl:text>&#10;</xsl:text>
++
+     <xsl:text>   Run time:     </xsl:text>
+     <xsl:value-of select="run_info/@days"/><xsl:text> days </xsl:text>
+     <xsl:value-of select="run_info/@hours"/><xsl:text>h </xsl:text>
+-- 
+2.31.1
 
-Thanks,
-Huck
-
-On Fri, Aug 12, 2022 at 6:07 PM John Kacur <jkacur@redhat.com> wrote:
->
->
->
-> On Fri, 12 Aug 2022, Nathan Huckleberry wrote:
->
-> > Hello,
-> >
-> > I'm trying to build cyclictest for Android.
-> >
-> > I'm able to build cyclictest on stable/v1.0 after making some changes
-> > to src/include/bionic.h. There were redefinitions of several functions
-> > that have existed in bionic since Android API level 24. See:
-> > https://android.googlesource.com/platform/bionic/+/e7c2fffa16eccecfd43d99516751a43776f5f609
-> >
-> > However, I'm unable to build cyclictest on main since support was
-> > removed to build without libnuma (commit
-> > 240938737e7034c0ff533ddbbfc7003b72453854). Android's toolchain does
-> > not provide libnuma.
-> >
-> > Does cyclictest no longer support systems where libnuma is
-> > unavailable? Should I just use stable/v1.0?
-> >
-> > Thanks,
-> > Huck
-> >
->
-> stable/v1.0 is really old, you probably don't want to run that.
-> We designed it so that you need the numa libs at build time, but not at
-> run time, so you should be able to copy it to Android and run it with your
-> the numa libs. However, I haven't tested this in awhile. Let me know if
-> that works for you, also, I happily take patches.
->
-> John
->
