@@ -2,66 +2,83 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67F0EC00140
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Aug 2022 15:56:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0769CC00140
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Aug 2022 16:08:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1344406AbiHRP4v (ORCPT
+        id S1343603AbiHRQIX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 18 Aug 2022 11:56:51 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60986 "EHLO
+        Thu, 18 Aug 2022 12:08:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49588 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344250AbiHRP4e (ORCPT
+        with ESMTP id S233295AbiHRQIV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 Aug 2022 11:56:34 -0400
+        Thu, 18 Aug 2022 12:08:21 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F14D065DC
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2022 08:56:00 -0700 (PDT)
-Date:   Thu, 18 Aug 2022 17:55:58 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8621764C2;
+        Thu, 18 Aug 2022 09:08:19 -0700 (PDT)
+Date:   Thu, 18 Aug 2022 18:08:16 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1660838159;
+        s=2020; t=1660838898;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=n3yO877OsGQib7c3yFw5KihHi8i446fMMJCGBlTPyA4=;
-        b=mnmZQDIZAOHkCZ3dqym5YZE7Y5xV/vUDRJkFdw52eBhdF0sQTU0jwrfDXvFSi9lwTdJxDo
-        BA0bhoSAUkv74jXIIjGvpE+/lUecITPRIRTWZP6gm952/wtlujuVmM9DpWQ6GMwdO/pnxT
-        626EqU0Oup/TwPEEZ1qfa7RjlvpM6oqio4A5mhatWFlfNv1lvN+5mWH75uoDMt+BhfZBKk
-        Aypi3Vl6YBS67ldNuEt59kiMK0O14cwW3fGroy3I5aPA+oxb8u7Hbg8zyu46FrXFJVozGn
-        98H+FC43GQ/mH+f7cK02w8VQYPq2R8jUfmFcKR9/8r5S4tpS3kfIgwqS6sFDSw==
+        bh=WSEnY9Oyyc/p4us4LuxFbzYZ43B4fny9FnSWnDSoyqc=;
+        b=oZeZEF4rcv1sm1g9R7AUQW4/GoeFNvk+H4Nbb8oBcZ6DixvGOm9627O5/LtVGhVpqG5jl6
+        pHo2zOIm1BC5jvbWEmCGYukgr/ukL4Dqmgh1UjJxSLXQ/GTK7JnauJlfRZxfDCSYHBsTdi
+        DjqbmXgrxYGBP/jkfuzeI69cgKFlshbyUMcrv7dBbbxaoQ4lhliI+5rwNEwjgjn2BQ7tdP
+        Ig0LD9Hj9mQTVOEsVc0LlmIXNwkSZhH9A9EqwXOTm0SpKnPxULTwE79k56F+InhGM42rlo
+        KbXvFIjLvtiDx/SMJKPVasl1dOzcdUUCYh/+HodsaMZegKZuwmjZyHt0HVcDmg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1660838159;
+        s=2020e; t=1660838898;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=n3yO877OsGQib7c3yFw5KihHi8i446fMMJCGBlTPyA4=;
-        b=1vr7TyqDC3YFL/Yb9MevNSr275uaZNTvrhcx6Bf5wOmmS9ujUqjcDJswztgMEssJqZtp9G
-        LMqqPn3pA6tiK0Dg==
+        bh=WSEnY9Oyyc/p4us4LuxFbzYZ43B4fny9FnSWnDSoyqc=;
+        b=frcnYRt+bgC2hvQ50FFQr9kw8qXuVYqCAk4HBBQep5msKjngWfB641mmvDqndJx33Wju9g
+        8WOCRprK+BZ6YzAg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     David Oberhollenzer <goliath@infraroot.at>
-Cc:     linux-rt-users@vger.kernel.org, williams@redhat.com,
-        richard@nod.at, joseph.salisbury@canonical.com
-Subject: Re: [PATCH v2 00/10] Backport MEMCG changes from v5.17
-Message-ID: <Yv5hDthdk5REuJEh@linutronix.de>
-References: <20220808125602.97747-1-goliath@infraroot.at>
+To:     Joe Korty <joe.korty@concurrent-rt.com>
+Cc:     Mark Gross <markgross@kernel.org>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Linux RT users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RT BUG] Mismatched get_uid/free_uid usage in signals in some
+ rts (2nd try)
+Message-ID: <Yv5j8NQ72KXu60nL@linutronix.de>
+References: <VI1PR09MB358214376379A2D6B024A689A0B39@VI1PR09MB3582.eurprd09.prod.outlook.com>
+ <YrXtH1z2JSmwLS7W@T470>
+ <20220624184431.GA4386@zipoli.concurrent-rt.com>
+ <20220626123019.GA51149@zipoli.concurrent-rt.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220808125602.97747-1-goliath@infraroot.at>
+In-Reply-To: <20220626123019.GA51149@zipoli.concurrent-rt.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-08-08 14:55:52 [+0200], David Oberhollenzer wrote:
-> This is a backport of Sebastian's MEMCG changes to v5.15. With these
-> patches applied, it is possible to use memory cgroups together
-> with PREEMPT_RT on v5.15, just like on v5.17.
+On 2022-06-26 08:30:19 [-0400], Joe Korty wrote:
+> Hi Mark,
+> Absent an actual test of your port of a99e09659e6c to 4.9-rt, I just
+> eye-verified that the change it makes to sigqueue_free_current looks
+> correct.  In detail,
 > 
-> The patch set was tested on my end by building an x86_64 kernel
-> with PREEMPT_RT, cgroup debug and lockdep enabled. The kernel was
-> run in Qemu, where a small number of child cgroups were created,
-> with memory controller enabled for each and an instance of a small
-> test program running.
+>   matches the same change the Linus patch makes to __sigqueue_free (ie,
+>   to the routine that sigqueue_free_current is a copy of).
+> 
+>   That the new variable 'up', in sigqueue_free_current, is being used
+>   in the patch (some variants of this fix do not have 'up'), and that
+>   variable is present in 4.9's version of sigqueue_free_current.
+>   
+>   That atomic_dec_and_test, rather than the refcounting version of that
+>   some function, is being used (some versions of this patch are refcounted
+>   instead).
 
-This looks good, thank you.
+What is the status here? Is this still needed?
+
+> Regards,
+> Joe
 
 Sebastian
