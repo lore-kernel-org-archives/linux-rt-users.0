@@ -2,83 +2,102 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0769CC00140
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Aug 2022 16:08:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B554BC00140
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Aug 2022 16:28:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1343603AbiHRQIX (ORCPT
+        id S1344014AbiHRQ2M (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 18 Aug 2022 12:08:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49588 "EHLO
+        Thu, 18 Aug 2022 12:28:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35968 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233295AbiHRQIV (ORCPT
+        with ESMTP id S1344786AbiHRQ2H (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 Aug 2022 12:08:21 -0400
+        Thu, 18 Aug 2022 12:28:07 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8621764C2;
-        Thu, 18 Aug 2022 09:08:19 -0700 (PDT)
-Date:   Thu, 18 Aug 2022 18:08:16 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C2883E0CE;
+        Thu, 18 Aug 2022 09:28:06 -0700 (PDT)
+Date:   Thu, 18 Aug 2022 18:28:02 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1660838898;
+        s=2020; t=1660840084;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=WSEnY9Oyyc/p4us4LuxFbzYZ43B4fny9FnSWnDSoyqc=;
-        b=oZeZEF4rcv1sm1g9R7AUQW4/GoeFNvk+H4Nbb8oBcZ6DixvGOm9627O5/LtVGhVpqG5jl6
-        pHo2zOIm1BC5jvbWEmCGYukgr/ukL4Dqmgh1UjJxSLXQ/GTK7JnauJlfRZxfDCSYHBsTdi
-        DjqbmXgrxYGBP/jkfuzeI69cgKFlshbyUMcrv7dBbbxaoQ4lhliI+5rwNEwjgjn2BQ7tdP
-        Ig0LD9Hj9mQTVOEsVc0LlmIXNwkSZhH9A9EqwXOTm0SpKnPxULTwE79k56F+InhGM42rlo
-        KbXvFIjLvtiDx/SMJKPVasl1dOzcdUUCYh/+HodsaMZegKZuwmjZyHt0HVcDmg==
+        bh=PRTVq6FMPaQVH3R6PFr1y0wp2p0Fv7JQuFoG/1x21lI=;
+        b=pvLLxS8UByH12yyhGrZNKIX6Z4egm2GF22xXz6epuwdCY2eANFlBRxNYd2I++0XNHfyk6w
+        rUGiNzWvO+FCAnx5+OqF0WevsL2fFnVLiV+lWCt4vJPyEksSZLXc6AP3LTlZZkDpwjwP1Z
+        QMddf0H7+HqmhusyP7zzk9bOy2U17c/a1BOCA4YNI3kP9zvZvpkiI6sAXm1U7L4VQmC8bu
+        kWRiV4PgZGCd5Mf1RnzdGKQlaf3Fpsie2NTjNdph9sa75LZP2HhyKuxfgkA/l2RtPTORG/
+        2iEsbMHsiuVkMR7ZT9qHhNFoa8vg09tkZw7wBfQeCcGdslnw6IzNl9if8uPk6w==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1660838898;
+        s=2020e; t=1660840084;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=WSEnY9Oyyc/p4us4LuxFbzYZ43B4fny9FnSWnDSoyqc=;
-        b=frcnYRt+bgC2hvQ50FFQr9kw8qXuVYqCAk4HBBQep5msKjngWfB641mmvDqndJx33Wju9g
-        8WOCRprK+BZ6YzAg==
+        bh=PRTVq6FMPaQVH3R6PFr1y0wp2p0Fv7JQuFoG/1x21lI=;
+        b=t/Hs/pi1zuC46GhSD96ccovmViwaYG7LaaKKKqn7cCcn97CMr7XEXNvfK+eJgZHP9fIvwW
+        6aG+yEmmbUl7QCDw==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Joe Korty <joe.korty@concurrent-rt.com>
-Cc:     Mark Gross <markgross@kernel.org>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Linux RT users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RT BUG] Mismatched get_uid/free_uid usage in signals in some
- rts (2nd try)
-Message-ID: <Yv5j8NQ72KXu60nL@linutronix.de>
-References: <VI1PR09MB358214376379A2D6B024A689A0B39@VI1PR09MB3582.eurprd09.prod.outlook.com>
- <YrXtH1z2JSmwLS7W@T470>
- <20220624184431.GA4386@zipoli.concurrent-rt.com>
- <20220626123019.GA51149@zipoli.concurrent-rt.com>
+To:     Schspa Shi <schspa@gmail.com>
+Cc:     rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [RFC PATCH] irq_work: wakeup irq_workd when queued first rt_lazy
+ work
+Message-ID: <Yv5okqzH92iPytgl@linutronix.de>
+References: <20220711172314.603717-1-schspa@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220626123019.GA51149@zipoli.concurrent-rt.com>
+In-Reply-To: <20220711172314.603717-1-schspa@gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-06-26 08:30:19 [-0400], Joe Korty wrote:
-> Hi Mark,
-> Absent an actual test of your port of a99e09659e6c to 4.9-rt, I just
-> eye-verified that the change it makes to sigqueue_free_current looks
-> correct.  In detail,
-> 
->   matches the same change the Linus patch makes to __sigqueue_free (ie,
->   to the routine that sigqueue_free_current is a copy of).
-> 
->   That the new variable 'up', in sigqueue_free_current, is being used
->   in the patch (some variants of this fix do not have 'up'), and that
->   variable is present in 4.9's version of sigqueue_free_current.
->   
->   That atomic_dec_and_test, rather than the refcounting version of that
->   some function, is being used (some versions of this patch are refcounted
->   instead).
+On 2022-07-12 01:23:15 [+0800], Schspa Shi wrote:
+> I want to know if this difference is by design.
 
-What is the status here? Is this still needed?
+Yes. type1 (LAZY) does not need immediate action but can't be scheduled
+regularly like a workqueue.
 
-> Regards,
-> Joe
+> If this is by design, we have a problem that the irq_work of type2
+> will not execute as quickly as expected, it may be delayed by the
+> irq_work of type1.
+> 
+> Please consider the following scenarios:
+> 
+> If the CPU queued a type1 irq_work A, and then a type2 irq_work B.
+> But we won't make B executed quickly, because we won't issue the IPI
+> interrupt to wakeup irq_workd (the llist_add call will return false).
+
+But those two are different lists. So adding type1 to list1 does not
+affect type2 with list2
+
+> This PATCH will issue the IPI_IRQ_WORK to make B execute quickly.
+> 
+> One thing that needs to be optimized is that we now have
+> lazy_list.node.llist and lazy_work_raised which need to be granted
+> to be atomicity, disabled the local CPU IRQ to make this atomic.
+> There should be a better way to make these two variants to be atomically
+> and I can go in deep if this little problem is not by design, and need
+> to be fixed.
+> 
+> If these two types of irq_work should be the same with the priority.
+> maybe we should change.
+> 
+> if (!lazy_work || tick_nohz_tick_stopped()) {
+> 	arch_irq_work_raise();
+> }
+> 
+> to
+> 
+> if (!(lazy_work || rt_lazy_work) || tick_nohz_tick_stopped()) {
+> 	arch_irq_work_raise();
+> }
+
+but we wait for the timer for the lazy-work. RT has more LAZY items
+compared to !RT. So if there is an error then it should be visible
+there, too.
+
+Is there a problem with this? Adding (as you call it) type1 item does
+not affect type2 items. They will will processed asap.
 
 Sebastian
