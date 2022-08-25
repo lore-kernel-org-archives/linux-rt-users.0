@@ -2,114 +2,203 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A6173C64990
-	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Aug 2022 13:41:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 914E0C28D13
+	for <linux-rt-users@archiver.kernel.org>; Thu, 25 Aug 2022 15:24:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241850AbiHYNlq (ORCPT
+        id S241116AbiHYPYJ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 25 Aug 2022 09:41:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58490 "EHLO
+        Thu, 25 Aug 2022 11:24:09 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34260 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241879AbiHYNln (ORCPT
+        with ESMTP id S241862AbiHYPYB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 25 Aug 2022 09:41:43 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F7D7B2CD4
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Aug 2022 06:41:40 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1661434899;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=tB9lZlEpaTpauWX08ilgdGkVQfIwbOMu2sfyE552IJk=;
-        b=g+nsqiwefLzEPyPNAAMEOYxIMkmKtUtvG2Bc542nFAdicLWX1uOq0IzVxIBwUmjcVH6dH5
-        YbUldD+ee1YL1eFHN2QIef8a4WzGyD5RHeL7uTCvBddP8/6KowTTc9nE2drdiXrRS95Q3e
-        WHMRYMlnXO/+BLopuYCrQTVut11xfYo=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-9-w1r1YX8QMCOMmCZwGaRoOg-1; Thu, 25 Aug 2022 09:41:38 -0400
-X-MC-Unique: w1r1YX8QMCOMmCZwGaRoOg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 23EB01C01B42;
-        Thu, 25 Aug 2022 13:41:38 +0000 (UTC)
-Received: from localhost (unknown [10.22.33.213])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 68DB21415117;
-        Thu, 25 Aug 2022 13:41:37 +0000 (UTC)
-Date:   Thu, 25 Aug 2022 10:41:36 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Anand Je Saipureddy <s.anandje1@gmail.com>,
-        Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        cminyard@mvista.com, psiddaiah@mvista.com
-Subject: Re: [PATCH] ftrace: Fix improper usage of __trace_stack() function.
-Message-ID: <Ywd8EABDyMywfp7C@uudg.org>
-References: <20220723064943.16532-1-s.anandje1@gmail.com>
- <YuooucgDVO0uDPS/@linutronix.de>
+        Thu, 25 Aug 2022 11:24:01 -0400
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 53C4EB99E0;
+        Thu, 25 Aug 2022 08:23:53 -0700 (PDT)
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id F1D01D6E;
+        Thu, 25 Aug 2022 08:23:57 -0700 (PDT)
+Received: from cam-smtp0.cambridge.arm.com (pierre123.nice.arm.com [10.34.100.116])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPA id 71A6D3F93E;
+        Thu, 25 Aug 2022 08:23:52 -0700 (PDT)
+From:   Pierre Gondois <pierre.gondois@arm.com>
+To:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     Pierre Gondois <pierre.gondois@arm.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Marc Zyngier <maz@kernel.org>
+Subject: [PATCH] irqchip/gic-v3-its: Remove cpumask_var_t allocation
+Date:   Thu, 25 Aug 2022 17:23:48 +0200
+Message-Id: <20220825152348.1634133-1-pierre.gondois@arm.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <YuooucgDVO0uDPS/@linutronix.de>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Aug 03, 2022 at 09:50:17AM +0200, Sebastian Andrzej Siewior wrote:
-> On 2022-07-23 12:19:43 [+0530], Anand Je Saipureddy wrote:
-> > In kernel/trace/trace_events_trigger.c --> stacktrace_trigger() -->
-> > __trace_stack() is not defined as per the function definition.
-> > 
-> > With commit edbaaa13a660
-> > ("tracing: Merge irqflags + preemt counter, add RT bits")
-> > the irqflags(flags) and preemption counter(preempt_count()) are
-> > now should be evaluated early by tracing_gen_ctx().
-> > 
-> > This patch replaces the irqflags and preemption counter
-> > with tracing_gen_ctx().
-> > 
-> > Fixes: 5e8446e3820c ("tracing: Dump stacktrace trigger to the corresponding instance")
-> > Signed-off-by: Anand Je Saipureddy <s.anandje1@gmail.com>
-> > Reviewed-by: Corey Minyard <cminyard@mvista.com>
-> 
-> Please use [PATCH RT v5.10] in the future.
-> Luis, could you please pick it up?
+In KvmTool, on a ThunderX2, when running a preemp_rt kernel based on
+v5.19-rc3-rt4, the following happens:
+[    4.070739] [ BUG: Invalid wait context ]
+[    4.070740] 5.19.0-rc3-rt4-00001-g1a6597c0bdcf #153 Not tainted
+[    4.070742] -----------------------------
+[    4.070743] swapper/0/1 is trying to lock:
+[    4.070744] ffff0000ab7405d8 ((&c->lock)){+.+.}-{3:3}, at: ___slab_alloc (mm/slub.c:2954)
+[    4.070757] other info that might help us debug this:
+[    4.070758] context-{5:5}
+[    4.070759] 5 locks held by swapper/0/1:
+[    4.070760] #0: ffff0000811491e0 (&dev->mutex){....}-{4:4}, at: __device_driver_lock (drivers/base/dd.c:1055)
+[    4.070769] #1: ffff0000846c5670 (&desc->request_mutex){+.+.}-{4:4}, at: __setup_irq (kernel/irq/internals.h:147)
+[    4.070778] #2: ffff0000846c54c8 (&irq_desc_lock_class){....}-{2:2}, at: __setup_irq (kernel/irq/manage.c:1612)
+[    4.070784] #3: ffff80000b23ea78 (mask_lock){....}-{2:2}, at: irq_setup_affinity (./include/linux/irq.h:381)
+[    4.070791] #4: ffff80000b23ea38 (tmp_mask_lock){....}-{2:2}, at: irq_do_set_affinity (./include/linux/irq.h:381)
+[    4.070797] stack backtrace:
+[    4.070801] CPU: 2 PID: 1 Comm: swapper/0 Not tainted 5.19.0-rc3-rt4-00001-g1a6597c0bdcf #153
+[    4.070805] Call trace:
+[    4.070806] dump_backtrace (arch/arm64/kernel/stacktrace.c:200)
+[    4.070811] show_stack (arch/arm64/kernel/stacktrace.c:207)
+[    4.070813] dump_stack_lvl (lib/dump_stack.c:107)
+[    4.070818] dump_stack (lib/dump_stack.c:114)
+[    4.070820] __lock_acquire (kernel/locking/lockdep.c:4707)
+[    4.070823] lock_acquire (kernel/locking/lockdep.c:466)
+[    4.070825] rt_spin_lock (./arch/arm64/include/asm/current.h:19 (discriminator 4))
+[    4.070830] ___slab_alloc (mm/slub.c:2954)
+[    4.070832] __slab_alloc.isra.0 (mm/slub.c:3116)
+[    4.070835] __kmalloc_node (mm/slub.c:3207)
+[    4.070837] alloc_cpumask_var_node (lib/cpumask.c:115)
+[    4.070843] alloc_cpumask_var (lib/cpumask.c:147)
+[    4.070846] its_select_cpu (drivers/irqchip/irq-gic-v3-its.c:1580)
+[    4.070850] its_set_affinity (drivers/irqchip/irq-gic-v3-its.c:1659)
+[    4.070853] msi_domain_set_affinity (kernel/irq/msi.c:501)
+[    4.070857] irq_do_set_affinity (kernel/irq/manage.c:276)
+[    4.070860] irq_setup_affinity (kernel/irq/manage.c:633)
+[    4.070863] irq_startup (kernel/irq/chip.c:280)
+[    4.070865] __setup_irq (kernel/irq/manage.c:1777)
+[    4.070869] request_threaded_irq (kernel/irq/manage.c:2206)
+[    4.070872] vp_find_vqs_msix (./include/linux/interrupt.h:168)
+[    4.070876] vp_find_vqs (drivers/virtio/virtio_pci_common.c:400)
+[    4.070878] vp_modern_find_vqs (drivers/virtio/virtio_pci_modern.c:259)
+[    4.070880] init_vq (./include/linux/virtio_config.h:213)
+[    4.070885] virtblk_probe (drivers/block/virtio_blk.c:936)
+[    4.070887] virtio_dev_probe (drivers/virtio/virtio.c:303)
+[    4.070892] really_probe (drivers/base/dd.c:555)
+[    4.070895] __driver_probe_device (drivers/base/dd.c:764)
+[    4.070897] driver_probe_device (drivers/base/dd.c:794)
+[    4.070899] __driver_attach (drivers/base/dd.c:1164)
+[    4.070901] bus_for_each_dev (drivers/base/bus.c:301)
+[    4.070904] driver_attach (drivers/base/dd.c:1181)
+[    4.070906] bus_add_driver (drivers/base/bus.c:618)
+[    4.070908] driver_register (drivers/base/driver.c:240)
+[    4.070910] register_virtio_driver (drivers/virtio/virtio.c:356 (discriminator 4))
+[    4.070913] virtio_blk_init (drivers/block/virtio_blk.c:1218)
+[    4.070918] do_one_initcall (init/main.c:1295)
+[    4.070921] kernel_init_freeable (init/main.c:1367)
+[    4.070924] kernel_init (init/main.c:1503)
+[    4.070927] ret_from_fork (arch/arm64/kernel/entry.S:868)
 
-Added to the list.
+commit cba4235e6031e ("genirq: Remove mask argument from
+setup_affinity()")
+and
+commit 11ea68f553e24 ("genirq, sched/isolation: Isolate from handling
+managed interrupts")
+overcome this issue by defining a static struct cpumask and protecting
+it by a raw spinlock. The code in these commits is executed with IRQs
+disabled.
+its_select_cpu() can be executed with IRQs enabled or disabled. Thus
+disabling IRQs is necesserary to avoid deadlocking.
 
-And thank you for spotting this change, I missed that in my earlier sweep.
+This patch:
+- makes tmpmask a 'static struct cpumask'. This prevents storing it on
+  the stack and having to dynamically allocate it
+- protects tmpmask with a raw spinlock
+- disables IRQs around the spinlock for the case its_select_cpu() is
+  called with IRQs enabled
 
-Luis
+Signed-off-by: Pierre Gondois <pierre.gondois@arm.com>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 34 +++++++++++++++++---------------
+ 1 file changed, 18 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index 5ff09de6c48f..3cf89e59b036 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -1574,14 +1574,15 @@ static int its_select_cpu(struct irq_data *d,
+ 			  const struct cpumask *aff_mask)
+ {
+ 	struct its_device *its_dev = irq_data_get_irq_chip_data(d);
+-	cpumask_var_t tmpmask;
++	static DEFINE_RAW_SPINLOCK(tmpmask_lock);
++	static struct cpumask tmpmask;
++	unsigned long flags;
+ 	int cpu, node;
+-
+-	if (!alloc_cpumask_var(&tmpmask, GFP_ATOMIC))
+-		return -ENOMEM;
+-
+ 	node = its_dev->its->numa_node;
  
-> > ---
-> >  kernel/trace/trace_events_trigger.c | 8 +++-----
-> >  1 file changed, 3 insertions(+), 5 deletions(-)
-> > 
-> > diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-> > index 75fef9fcfd0f..3c6229f16e81 100644
-> > --- a/kernel/trace/trace_events_trigger.c
-> > +++ b/kernel/trace/trace_events_trigger.c
-> > @@ -1220,12 +1220,10 @@ stacktrace_trigger(struct event_trigger_data *data, void *rec,
-> >  		   struct ring_buffer_event *event)
-> >  {
-> >  	struct trace_event_file *file = data->private_data;
-> > -	unsigned long flags;
-> >  
-> > -	if (file) {
-> > -		local_save_flags(flags);
-> > -		__trace_stack(file->tr, STACK_SKIP, preempt_count());
-> > -	} else
-> > +	if (file)
-> > +		__trace_stack(file->tr, tracing_gen_ctx(), STACK_SKIP);
-> > +	else
-> >  		trace_dump_stack(STACK_SKIP);
-> >  }
-> >  
-> 
-> Sebastian
-> 
----end quoted text---
++	local_irq_save(flags);
++	raw_spin_lock(&tmpmask_lock);
++
+ 	if (!irqd_affinity_is_managed(d)) {
+ 		/* First try the NUMA node */
+ 		if (node != NUMA_NO_NODE) {
+@@ -1589,8 +1590,8 @@ static int its_select_cpu(struct irq_data *d,
+ 			 * Try the intersection of the affinity mask and the
+ 			 * node mask (and the online mask, just to be safe).
+ 			 */
+-			cpumask_and(tmpmask, cpumask_of_node(node), aff_mask);
+-			cpumask_and(tmpmask, tmpmask, cpu_online_mask);
++			cpumask_and(&tmpmask, cpumask_of_node(node), aff_mask);
++			cpumask_and(&tmpmask, &tmpmask, cpu_online_mask);
+ 
+ 			/*
+ 			 * Ideally, we would check if the mask is empty, and
+@@ -1604,7 +1605,7 @@ static int its_select_cpu(struct irq_data *d,
+ 			 * Instead, just fallback on the online mask. This
+ 			 * diverges from Thomas' suggestion above.
+ 			 */
+-			cpu = cpumask_pick_least_loaded(d, tmpmask);
++			cpu = cpumask_pick_least_loaded(d, &tmpmask);
+ 			if (cpu < nr_cpu_ids)
+ 				goto out;
+ 
+@@ -1616,25 +1617,26 @@ static int its_select_cpu(struct irq_data *d,
+ 		}
+ 
+ 		/* Try the intersection of the affinity and online masks */
+-		cpumask_and(tmpmask, aff_mask, cpu_online_mask);
++		cpumask_and(&tmpmask, aff_mask, cpu_online_mask);
+ 
+ 		/* If that doesn't fly, the online mask is the last resort */
+-		if (cpumask_empty(tmpmask))
+-			cpumask_copy(tmpmask, cpu_online_mask);
++		if (cpumask_empty(&tmpmask))
++			cpumask_copy(&tmpmask, cpu_online_mask);
+ 
+-		cpu = cpumask_pick_least_loaded(d, tmpmask);
++		cpu = cpumask_pick_least_loaded(d, &tmpmask);
+ 	} else {
+-		cpumask_copy(tmpmask, aff_mask);
++		cpumask_copy(&tmpmask, aff_mask);
+ 
+ 		/* If we cannot cross sockets, limit the search to that node */
+ 		if ((its_dev->its->flags & ITS_FLAGS_WORKAROUND_CAVIUM_23144) &&
+ 		    node != NUMA_NO_NODE)
+-			cpumask_and(tmpmask, tmpmask, cpumask_of_node(node));
++			cpumask_and(&tmpmask, &tmpmask, cpumask_of_node(node));
+ 
+-		cpu = cpumask_pick_least_loaded(d, tmpmask);
++		cpu = cpumask_pick_least_loaded(d, &tmpmask);
+ 	}
+ out:
+-	free_cpumask_var(tmpmask);
++	raw_spin_unlock(&tmpmask_lock);
++	local_irq_restore(flags);
+ 
+ 	pr_debug("IRQ%d -> %*pbl CPU%d\n", d->irq, cpumask_pr_args(aff_mask), cpu);
+ 	return cpu;
+-- 
+2.25.1
 
