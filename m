@@ -2,72 +2,78 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A573ECAAD2
-	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Sep 2022 21:16:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F25FC6FA83
+	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Sep 2022 06:52:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233701AbiIAVQ2 (ORCPT
+        id S235558AbiIBGwa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 1 Sep 2022 17:16:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57688 "EHLO
+        Fri, 2 Sep 2022 02:52:30 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58038 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232731AbiIAVQ1 (ORCPT
+        with ESMTP id S235561AbiIBGw0 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 1 Sep 2022 17:16:27 -0400
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D62766EF01;
-        Thu,  1 Sep 2022 14:16:26 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 90349B8293B;
-        Thu,  1 Sep 2022 21:16:25 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F2418C433D7;
-        Thu,  1 Sep 2022 21:16:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1662066984;
-        bh=X+gJcdZ9YPLa1BE3uX4TgQx40NOCborVQZJFGVa3iJ8=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=fFw6aH37IqXWz/hsME4RvNZf6/bEaZJ6jnp2etGPNCOiFZnK90LbzXmBwMsXiREnP
-         3wAgnXdEEbOyXB6GlBY4cWDPYXxaYqgMhGNdmiqV9Kt4PnlsWjKIwMOY7xUFbaJWjH
-         pIK0s37vYoOd32EhIW9QKCFvKcn+ni1gtnUnBxkPU9TpFsIsm4w7T7bNw1+nZQzUvB
-         tLggnezYH0WHwhOCWyV4llZMMxvsmtQ9JoZW5pcXJL+ZE7v/W7/GndYn0rWcyeEDjL
-         lyXpz0kj668HMuYP56FTKZhgcW5BtPVs7KxzFoaXTLOqzpDzCXXqQfX3xQyx0ZxPqQ
-         7W/segMGH9tNQ==
-Date:   Thu, 1 Sep 2022 14:16:22 -0700
-From:   Mark Gross <markgross@kernel.org>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Mark Gross <markgross@kernel.org>, linux-rt-users@vger.kernel.org,
-        stable-rt@vger.kernel.org, Salvatore Bonaccorso <carnil@debian.org>
+        Fri, 2 Sep 2022 02:52:26 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 01B55B7281;
+        Thu,  1 Sep 2022 23:52:21 -0700 (PDT)
+Date:   Fri, 2 Sep 2022 08:52:18 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1662101540;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=4CGfTf4nVmZv2iyB8AOtoXxr8kILd9xnWGJfgZcAGkc=;
+        b=pXBQKmIknV4FL15w9+JHN/wWIc6SbQFj3XmyXjGrFcN0HUmaHNBGaMha3FvL+y6kN1EcAP
+        F7IvW3HqrzrwdsCws2pojjViUnMcg/KnIVG5rXkkIsORG4Czur1UCCsWo9bEF/TRarX5E6
+        Zjgq85xScimmJYvpWBXyeTXmPAaLb3XHITAZ8db/4aQowwcLDCca/qCeULrx0paREgf19F
+        iC3DtcffdIAJgJJKA9Tlpz/+yT2T/sIBuHkRxB1fnlW3R3OBW9gItyyUydRlVicXbLQvkg
+        Th2H+baq0mfR/i06AyK6pNAyIA0mx6pgQze9/s05lKqvIirYcdxXjhR6N/zAZA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1662101540;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=4CGfTf4nVmZv2iyB8AOtoXxr8kILd9xnWGJfgZcAGkc=;
+        b=HFibHFJmycuhgyD9fipGZhlzrJxAmvZHdRo0zzh1aUuKVFvGhUDYNZe7gIb+XCWIpSZ5N7
+        GWiLm9Uy16UNPUDA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mark Gross <markgross@kernel.org>
+Cc:     linux-rt-users@vger.kernel.org, stable-rt@vger.kernel.org,
+        Salvatore Bonaccorso <carnil@debian.org>
 Subject: Re: [PATCH 0/9 v4.9-RT] Backports to fix random core
-Message-ID: <YxEhJqm40AIPxCTX@T470>
+Message-ID: <YxGoItZaDcwxRcV5@linutronix.de>
 References: <20220819092446.980320-1-bigeasy@linutronix.de>
+ <YxEhJqm40AIPxCTX@T470>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20220819092446.980320-1-bigeasy@linutronix.de>
+In-Reply-To: <YxEhJqm40AIPxCTX@T470>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Aug 19, 2022 at 11:24:37AM +0200, Sebastian Andrzej Siewior wrote:
-> Hi,
+On 2022-09-01 14:16:22 [-0700], Mark Gross wrote:
+> Sorry for taking so long to start working these.  Are these patches to be
+> applied to v4.9.320, or to the RT patches prior to the linux-stable merge?
 > 
-> in v4.9.320 some random-core patches broke RT. This is a series of
-> backports to align with later RT versions and keep things working again.
+> Or are these patches the updates to the patches that conflict with v4.9.320 as
+> I rebase?
 > 
-> Sebastian
-Sorry for taking so long to start working these.  Are these patches to be
-applied to v4.9.320, or to the RT patches prior to the linux-stable merge?
+> I'm guessing the latter as the patches don't seem to work on just the last RT
+> release or v4.9.320 directly.
+> 
+> Bottom line, I'm not sure how you expected me to use these 9 patches.
 
-Or are these patches the updates to the patches that conflict with v4.9.320 as
-I rebase?
+The commit I cited was backported into v4.9-stable, I *think* it is part
+of v4.9-stable as of v4.9.320. If you apply the RT queue then you should
+have conflicts. The "old" RT patches for random are obsolete if I
+remember correctly.
 
-I'm guessing the latter as the patches don't seem to work on just the last RT
-release or v4.9.320 directly.
+> Sorry for being dense.
 
-Bottom line, I'm not sure how you expected me to use these 9 patches.
+No worries. If in doubt, make a -rc and let me look over it or if
+completely in doubt yell and I prepare a complete queue.
 
-Sorry for being dense.
+> --mark
 
---mark
-
+Sebastian
