@@ -2,78 +2,153 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F25FC6FA83
-	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Sep 2022 06:52:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E9BADECAAD5
+	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Sep 2022 00:54:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235558AbiIBGwa (ORCPT
+        id S231799AbiIDAyH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 2 Sep 2022 02:52:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58038 "EHLO
+        Sat, 3 Sep 2022 20:54:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58370 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235561AbiIBGw0 (ORCPT
+        with ESMTP id S231550AbiIDAyG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Sep 2022 02:52:26 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 01B55B7281;
-        Thu,  1 Sep 2022 23:52:21 -0700 (PDT)
-Date:   Fri, 2 Sep 2022 08:52:18 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1662101540;
+        Sat, 3 Sep 2022 20:54:06 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC89B4F643
+        for <linux-rt-users@vger.kernel.org>; Sat,  3 Sep 2022 17:54:05 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1662252845;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=4CGfTf4nVmZv2iyB8AOtoXxr8kILd9xnWGJfgZcAGkc=;
-        b=pXBQKmIknV4FL15w9+JHN/wWIc6SbQFj3XmyXjGrFcN0HUmaHNBGaMha3FvL+y6kN1EcAP
-        F7IvW3HqrzrwdsCws2pojjViUnMcg/KnIVG5rXkkIsORG4Czur1UCCsWo9bEF/TRarX5E6
-        Zjgq85xScimmJYvpWBXyeTXmPAaLb3XHITAZ8db/4aQowwcLDCca/qCeULrx0paREgf19F
-        iC3DtcffdIAJgJJKA9Tlpz/+yT2T/sIBuHkRxB1fnlW3R3OBW9gItyyUydRlVicXbLQvkg
-        Th2H+baq0mfR/i06AyK6pNAyIA0mx6pgQze9/s05lKqvIirYcdxXjhR6N/zAZA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1662101540;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=4CGfTf4nVmZv2iyB8AOtoXxr8kILd9xnWGJfgZcAGkc=;
-        b=HFibHFJmycuhgyD9fipGZhlzrJxAmvZHdRo0zzh1aUuKVFvGhUDYNZe7gIb+XCWIpSZ5N7
-        GWiLm9Uy16UNPUDA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mark Gross <markgross@kernel.org>
-Cc:     linux-rt-users@vger.kernel.org, stable-rt@vger.kernel.org,
-        Salvatore Bonaccorso <carnil@debian.org>
-Subject: Re: [PATCH 0/9 v4.9-RT] Backports to fix random core
-Message-ID: <YxGoItZaDcwxRcV5@linutronix.de>
-References: <20220819092446.980320-1-bigeasy@linutronix.de>
- <YxEhJqm40AIPxCTX@T470>
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=BzdkHxCdTzj99SJffDVFKOlFJAb1fNVqRDykaw4q/eY=;
+        b=B27O8wfv7yVyOhnW3pvq4tOBLjIEBMQae2DUfYKca7GpKj3w2W0b5JBBYXRjGQdwHJ6WZV
+        04yRx9z+PdVx42VjCJaIkgxHbPrw0brNXVj/ZvM0nn49ZkRkAWBxN4pbkh1gKF6YD4M+vJ
+        F3uxLME85arOKWxtW+ps/t66SqKIujg=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-610-81fy1TVfNVO2o3bHoHo73g-1; Sat, 03 Sep 2022 20:53:59 -0400
+X-MC-Unique: 81fy1TVfNVO2o3bHoHo73g-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 372E529AB3EE;
+        Sun,  4 Sep 2022 00:53:59 +0000 (UTC)
+Received: from localhost (unknown [10.22.16.142])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 412C640C141D;
+        Sun,  4 Sep 2022 00:53:58 +0000 (UTC)
+Date:   Sat, 3 Sep 2022 21:53:57 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.140-rt73
+Message-ID: <YxP3JSZKpzRMKltJ@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <YxEhJqm40AIPxCTX@T470>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-09-01 14:16:22 [-0700], Mark Gross wrote:
-> Sorry for taking so long to start working these.  Are these patches to be
-> applied to v4.9.320, or to the RT patches prior to the linux-stable merge?
-> 
-> Or are these patches the updates to the patches that conflict with v4.9.320 as
-> I rebase?
-> 
-> I'm guessing the latter as the patches don't seem to work on just the last RT
-> release or v4.9.320 directly.
-> 
-> Bottom line, I'm not sure how you expected me to use these 9 patches.
+Hello RT-list!
 
-The commit I cited was backported into v4.9-stable, I *think* it is part
-of v4.9-stable as of v4.9.320. If you apply the RT queue then you should
-have conflicts. The "old" RT patches for random are obsolete if I
-remember correctly.
+I'm pleased to announce the 5.10.140-rt73 stable release.
 
-> Sorry for being dense.
+You can get this release via the git tree at:
 
-No worries. If in doubt, make a -rc and let me look over it or if
-completely in doubt yell and I prepare a complete queue.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-> --mark
+  branch: v5.10-rt
+  Head SHA1: 7e0c30501d7e9f87e93474d4702744fadb46e54e
 
-Sebastian
+Or to build 5.10.140-rt73 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.140.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.140-rt73.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+
+RT-specific Changes from v5.10.131-rt72:
+---
+
+Anand Je Saipureddy (1):
+      ftrace: Fix improper usage of __trace_stack() function.
+
+Yajun Deng (1):
+      locking/rtmutex: switch to EXPORT_SYMBOL() for ww_mutex_lock{,_interruptible}()
+
+---
+ kernel/trace/trace_events_trigger.c                |    8 +++-----
+ kernel/locking/rtmutex.c                           |    4 ++--
+ 2 files changed, 5 insertions(+), 7 deletions(-)
+---
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 31b374d36d04b..b110fc57f7330 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -2513,7 +2513,7 @@ ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(ww_mutex_lock_interruptible);
++EXPORT_SYMBOL(ww_mutex_lock_interruptible);
+ 
+ int __sched
+ ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+@@ -2533,7 +2533,7 @@ ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(ww_mutex_lock);
++EXPORT_SYMBOL(ww_mutex_lock);
+ 
+ void __sched ww_mutex_unlock(struct ww_mutex *lock)
+ {
+diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
+index 75fef9fcfd0fb..3c6229f16e81d 100644
+--- a/kernel/trace/trace_events_trigger.c
++++ b/kernel/trace/trace_events_trigger.c
+@@ -1220,12 +1220,10 @@ stacktrace_trigger(struct event_trigger_data *data, void *rec,
+ 		   struct ring_buffer_event *event)
+ {
+ 	struct trace_event_file *file = data->private_data;
+-	unsigned long flags;
+ 
+-	if (file) {
+-		local_save_flags(flags);
+-		__trace_stack(file->tr, STACK_SKIP, preempt_count());
+-	} else
++	if (file)
++		__trace_stack(file->tr, tracing_gen_ctx(), STACK_SKIP);
++	else
+ 		trace_dump_stack(STACK_SKIP);
+ }
+ 
+
