@@ -2,153 +2,101 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9BADECAAD5
-	for <linux-rt-users@archiver.kernel.org>; Sun,  4 Sep 2022 00:54:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1DA25ECAAD3
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Sep 2022 16:22:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231799AbiIDAyH (ORCPT
+        id S230207AbiIIQW3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 3 Sep 2022 20:54:07 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58370 "EHLO
+        Fri, 9 Sep 2022 12:22:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40278 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231550AbiIDAyG (ORCPT
+        with ESMTP id S229712AbiIIQW2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 3 Sep 2022 20:54:06 -0400
+        Fri, 9 Sep 2022 12:22:28 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC89B4F643
-        for <linux-rt-users@vger.kernel.org>; Sat,  3 Sep 2022 17:54:05 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3AD90134622
+        for <linux-rt-users@vger.kernel.org>; Fri,  9 Sep 2022 09:22:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1662252845;
+        s=mimecast20190719; t=1662740546;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=BzdkHxCdTzj99SJffDVFKOlFJAb1fNVqRDykaw4q/eY=;
-        b=B27O8wfv7yVyOhnW3pvq4tOBLjIEBMQae2DUfYKca7GpKj3w2W0b5JBBYXRjGQdwHJ6WZV
-        04yRx9z+PdVx42VjCJaIkgxHbPrw0brNXVj/ZvM0nn49ZkRkAWBxN4pbkh1gKF6YD4M+vJ
-        F3uxLME85arOKWxtW+ps/t66SqKIujg=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-610-81fy1TVfNVO2o3bHoHo73g-1; Sat, 03 Sep 2022 20:53:59 -0400
-X-MC-Unique: 81fy1TVfNVO2o3bHoHo73g-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 372E529AB3EE;
-        Sun,  4 Sep 2022 00:53:59 +0000 (UTC)
-Received: from localhost (unknown [10.22.16.142])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 412C640C141D;
-        Sun,  4 Sep 2022 00:53:58 +0000 (UTC)
-Date:   Sat, 3 Sep 2022 21:53:57 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.140-rt73
-Message-ID: <YxP3JSZKpzRMKltJ@uudg.org>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=QWVzTB7DhyDS1w2QS4cDTPYpzzqRPNqjM1zAYKWvkqk=;
+        b=NuHFu3G7mWCF2gUu3V6H67VvUCrW2079UEwTLn0IL7dW1oF2tpznebuiGFd6ar+Rtv1Mug
+        nn/f2LxWKkzuoJPidEXDpF9Ys7HB0AiigOM9AEjWGqwe3ooV07l13ZuPW2RGyjFljSQ0gm
+        vmlXHTRGyPSY697WLa3IdY3xmh/nTbI=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-326-dJpU85x2O02Ss0Iu-dGAqQ-1; Fri, 09 Sep 2022 12:22:25 -0400
+X-MC-Unique: dJpU85x2O02Ss0Iu-dGAqQ-1
+Received: by mail-qt1-f199.google.com with SMTP id cf25-20020a05622a401900b0035a6ef450e9so1888672qtb.9
+        for <linux-rt-users@vger.kernel.org>; Fri, 09 Sep 2022 09:22:25 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date;
+        bh=QWVzTB7DhyDS1w2QS4cDTPYpzzqRPNqjM1zAYKWvkqk=;
+        b=QPwBeMFJWHK9Syq3KAE2FhSRyjdg/2TVUNMRYnty+wPRvevRsnPwnf4jlgIAJBnZlt
+         T+hv04hJ1pS4WpcnsmF1f/xawjlSNlPoW3kk6Okb9YTfehfBspG1lsWhGq8vNk2GXG0d
+         Spo2dkEQCUJnk0cU+gvbfRc/t+i1w+XfnD3RSGVEeCeJ/zJAviDTUs6KrBrpGTz4h8dN
+         K15M5+yZxCaDCMs4EljML0Q/36dGsPHJmXey2DmW8G2dARDhksi/OT/IeDtQ+2dCo4Zn
+         98rOWJNCp2MGRKNfW1adYoKldTqo83AL21HN05zkoEWM38jDRIxDcfOzERewOn8rOYDs
+         KGiQ==
+X-Gm-Message-State: ACgBeo2j/Aw3tRcH+JMyKS47O8774Qbd1naoG9cDq1NggPqQgPPtBD0X
+        nlG7Oy3DrSHqX5JQF3Pbgf6IAcoU7ZgKmDQcbaGN/4+jMhgtctbuCbogv8jP3LM/P7ImiJ75Poi
+        pBtPx5EJiaE2igwzuJOwunbgS1vs=
+X-Received: by 2002:ac8:5753:0:b0:344:7fb3:3fa4 with SMTP id 19-20020ac85753000000b003447fb33fa4mr13376490qtx.504.1662740544682;
+        Fri, 09 Sep 2022 09:22:24 -0700 (PDT)
+X-Google-Smtp-Source: AA6agR7hAW+s8f9b2oeDvYgHufQE+ib/CEkDy6knsDMA34gr6nCl29JT4WooLEDoRT/Y5hac315yKA==
+X-Received: by 2002:ac8:5753:0:b0:344:7fb3:3fa4 with SMTP id 19-20020ac85753000000b003447fb33fa4mr13376467qtx.504.1662740544446;
+        Fri, 09 Sep 2022 09:22:24 -0700 (PDT)
+Received: from localhost (pool-100-0-210-47.bstnma.fios.verizon.net. [100.0.210.47])
+        by smtp.gmail.com with ESMTPSA id g15-20020ac87f4f000000b00342e86b3bdasm833619qtk.12.2022.09.09.09.22.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 09 Sep 2022 09:22:23 -0700 (PDT)
+From:   Eric Chanudet <echanude@redhat.com>
+To:     Andy Gross <agross@kernel.org>,
+        Bjorn Andersson <bjorn.andersson@linaro.org>,
+        Manivannan Sadhasivam <mani@kernel.org>,
+        Jassi Brar <jassisinghbrar@gmail.com>
+Cc:     linux-arm-msm@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Eric Chanudet <echanude@redhat.com>
+Subject: [PATCH] mailbox: qcom-ipcc: Use generic_handle_irq_safe()
+Date:   Fri,  9 Sep 2022 12:20:43 -0400
+Message-Id: <20220909162043.2734873-1-echanude@redhat.com>
+X-Mailer: git-send-email 2.37.3
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Content-type: text/plain
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+PREEMPT_RT forces qcom-ipcc's handler to be threaded with interrupts
+enabled, which triggers a warning in __handle_irq_event_percpu().
 
-I'm pleased to announce the 5.10.140-rt73 stable release.
+Use generic_handle_irq_safe() that can be called with or without
+interrupts enabled instead.
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: 7e0c30501d7e9f87e93474d4702744fadb46e54e
-
-Or to build 5.10.140-rt73 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.140.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.140-rt73.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
-
-
-RT-specific Changes from v5.10.131-rt72:
+Signed-off-by: Eric Chanudet <echanude@redhat.com>
 ---
+ drivers/mailbox/qcom-ipcc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Anand Je Saipureddy (1):
-      ftrace: Fix improper usage of __trace_stack() function.
-
-Yajun Deng (1):
-      locking/rtmutex: switch to EXPORT_SYMBOL() for ww_mutex_lock{,_interruptible}()
-
----
- kernel/trace/trace_events_trigger.c                |    8 +++-----
- kernel/locking/rtmutex.c                           |    4 ++--
- 2 files changed, 5 insertions(+), 7 deletions(-)
----
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 31b374d36d04b..b110fc57f7330 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2513,7 +2513,7 @@ ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
+diff --git a/drivers/mailbox/qcom-ipcc.c b/drivers/mailbox/qcom-ipcc.c
+index 31d58b7d55fe..be803f324a33 100644
+--- a/drivers/mailbox/qcom-ipcc.c
++++ b/drivers/mailbox/qcom-ipcc.c
+@@ -82,7 +82,7 @@ static irqreturn_t qcom_ipcc_irq_fn(int irq, void *data)
  
- 	return ret;
- }
--EXPORT_SYMBOL_GPL(ww_mutex_lock_interruptible);
-+EXPORT_SYMBOL(ww_mutex_lock_interruptible);
+ 		virq = irq_find_mapping(ipcc->irq_domain, hwirq);
+ 		writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_CLEAR);
+-		generic_handle_irq(virq);
++		generic_handle_irq_safe(virq);
+ 	}
  
- int __sched
- ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
-@@ -2533,7 +2533,7 @@ ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
- 
- 	return ret;
- }
--EXPORT_SYMBOL_GPL(ww_mutex_lock);
-+EXPORT_SYMBOL(ww_mutex_lock);
- 
- void __sched ww_mutex_unlock(struct ww_mutex *lock)
- {
-diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-index 75fef9fcfd0fb..3c6229f16e81d 100644
---- a/kernel/trace/trace_events_trigger.c
-+++ b/kernel/trace/trace_events_trigger.c
-@@ -1220,12 +1220,10 @@ stacktrace_trigger(struct event_trigger_data *data, void *rec,
- 		   struct ring_buffer_event *event)
- {
- 	struct trace_event_file *file = data->private_data;
--	unsigned long flags;
- 
--	if (file) {
--		local_save_flags(flags);
--		__trace_stack(file->tr, STACK_SKIP, preempt_count());
--	} else
-+	if (file)
-+		__trace_stack(file->tr, tracing_gen_ctx(), STACK_SKIP);
-+	else
- 		trace_dump_stack(STACK_SKIP);
- }
- 
+ 	return IRQ_HANDLED;
+-- 
+2.37.3
 
