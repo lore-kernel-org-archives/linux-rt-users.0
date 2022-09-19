@@ -2,80 +2,104 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF87AECAAD8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Sep 2022 20:05:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 90481ECAAD3
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Sep 2022 11:12:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229932AbiIPUF6 (ORCPT
+        id S230234AbiISLMQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 16 Sep 2022 16:05:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33982 "EHLO
+        Mon, 19 Sep 2022 07:12:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48902 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229515AbiIPUF5 (ORCPT
+        with ESMTP id S230214AbiISLLy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 16 Sep 2022 16:05:57 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9F11986727
-        for <linux-rt-users@vger.kernel.org>; Fri, 16 Sep 2022 13:05:56 -0700 (PDT)
-Date:   Fri, 16 Sep 2022 22:05:53 +0200
+        Mon, 19 Sep 2022 07:11:54 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6A39621E05;
+        Mon, 19 Sep 2022 04:11:32 -0700 (PDT)
+Date:   Mon, 19 Sep 2022 13:11:28 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1663358754;
+        s=2020; t=1663585890;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=O/CpW9yjYIlm74xasgX9nUbAOuab8lYt8Os54csP+ZA=;
-        b=gotPXLFvGZ1qlj1r2UvAcmvIXFYapmUkFBTbFXfK4oqQC4b7dmDAqdm3Yy+816Xq58CqWs
-        oE7B7Jsr++juA3LsSGoSW2E4rX85XsYHTfg9TYTlws7rnqga6uNCxJoigjZxJzeQBSx6zx
-        rCNHnFUdHJBRNuIbA/oLp2MB2BmWlYoOZYYwQXqGcos2VuzbFoobKI7+VYXaD8FsKm85dI
-        JtyJHkek61uXsf+I7pJOqmAgdk+wxVH1w3qjBbeDJm2MXJWXFghbbJOZIlbnLmDDkMPS8l
-        WZgtLOm90XxyXRFRzGpz8IxYYvE1eNw8xqggKRAbQQ1rH4IIfm1QNcoF1gzT1A==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=H0shSodpQ8wr2ZBQWx7H2T4on6Oaer0NGZFAOFgkPlI=;
+        b=jUKAlFLlXQ+glCi4K4je/sfzdS34Y/qf4SMnMuT/zJo25508X63/ADNWd+rHIZ5zsEpjDW
+        mtumNOAO1dZQw+bwBJnPBij6Yq3vYkDEFhjwjpYHaHIFqavJpmtsczJDS7Q8XUO/4hsHwg
+        uN/o9Ple18Ts6egnKuqr+keZNfTQ4GPJ6o3/SctnleoIprG/vZFhnhHj4Whu4HPbdH1OCv
+        vgJtwvNHhr/pGlqp1f3dt+ZkP9l4r0p5vDDRl96irZXNYP1gB4PupJu2qFCXQSPmUB8i3g
+        YLVwXaDDkROO8mYa+7brek5tcKmhGBEv93D8GvhOSqamhATHbxyOtI9L/tVe1g==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1663358754;
+        s=2020e; t=1663585890;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=O/CpW9yjYIlm74xasgX9nUbAOuab8lYt8Os54csP+ZA=;
-        b=1eVqowP/7uwyqtV/gM40XEfAZMHrUpAGs/Lzd13nn0wIT0nHMO9l98IUTRYDw0PzuJbnqp
-        4H9FMpXy4PDbdLDg==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=H0shSodpQ8wr2ZBQWx7H2T4on6Oaer0NGZFAOFgkPlI=;
+        b=RkoJKsOHDveNtZyTwkMwkaXaz46LViqx32Few/LKBSmYbQoACFkYROVlxKBfIS90iPsxDC
+        sIM7+02z/KrndTDg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Danilo Cezar Zanella <danilo.zanella@iag.usp.br>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: Exception in function_graph tracing
-Message-ID: <YyTXIUjq9tmFPTDi@linutronix.de>
-References: <CAAxUTH4zpibkhOS+NPzcYsXFqx1bJfSU19gdt0eCAOrpWAkinA@mail.gmail.com>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.0-rc6-rt9
+Message-ID: <YyhOYFenu9V2jEPE@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <CAAxUTH4zpibkhOS+NPzcYsXFqx1bJfSU19gdt0eCAOrpWAkinA@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-09-13 16:21:27 [-0300], Danilo Cezar Zanella wrote:
-> Hi
-Hi,
+Dear RT folks!
 
-> I'm getting the following error message when I set the current_tracer
-> to function_graph. Procedures:
->=20
-> cd / sys/kernel/tracing
-> echo function_graph > current_tracer
->=20
-> Then I saw the following message in the console.
->=20
-> Unable to handle kernel paging request at virtual address fffffffc
-=E2=80=A6
-> What is going on?
-> Am I doing something wrong?
+I'm pleased to announce the v6.0-rc6-rt9 patch set. 
 
-No, not as far I can tell. It looks like the function_graph tracer is
-busted in v4.19 even without the PREEMPT_RT patch. The function tracer
-seems to work.
+Changes since v6.0-rc6-rt8:
 
-> Thanks
->=20
-> Danilo
+  - Drop a checkpatch patch. It has been superseded by another approach
+    which is merged into the tip tree.
+
+Known issues
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
+
+The delta patch against v6.0-rc6-rt8 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/incr/patch-6.0-rc6-rt8-rt9.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.0-rc6-rt9
+
+The RT patch against v6.0-rc6 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/older/patch-6.0-rc6-rt9.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/older/patches-6.0-rc6-rt9.tar.xz
 
 Sebastian
+
+diff --git a/localversion-rt b/localversion-rt
+index 700c857efd9ba..22746d6390a42 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt8
++-rt9
+diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
+index d130db6726414..79e759aac543b 100755
+--- a/scripts/checkpatch.pl
++++ b/scripts/checkpatch.pl
+@@ -5749,12 +5749,6 @@ sub process {
+ 			}
+ 		}
+ 
+-# rwlock.h must not be included directly. It will be included via spinlock.h if needed.
+-		if ($rawline =~ /\#\s*include.*\<linux\/rwlock\.h/) {
+-			ERROR("INCLUDES_BAD_HEADER",
+-				"Please don't include rwlock.h directly, use spinlock.h if needed.\n" . $herecurr);
+-		}
+-
+ # warn if <asm/foo.h> is #included and <linux/foo.h> is available and includes
+ # itself <asm/foo.h> (uses RAW line)
+ 		if ($tree && $rawline =~ m{^.\s*\#\s*include\s*\<asm\/(.*)\.h\>}) {
