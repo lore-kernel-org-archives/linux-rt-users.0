@@ -2,99 +2,98 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67F7DC32771
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Sep 2022 23:54:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9387AC6FA82
+	for <linux-rt-users@archiver.kernel.org>; Thu, 22 Sep 2022 16:45:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229814AbiIUXyx (ORCPT
+        id S230419AbiIVQpr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 21 Sep 2022 19:54:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36178 "EHLO
+        Thu, 22 Sep 2022 12:45:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33146 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229499AbiIUXyt (ORCPT
+        with ESMTP id S229813AbiIVQpp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Sep 2022 19:54:49 -0400
-Received: from mail-pf1-x433.google.com (mail-pf1-x433.google.com [IPv6:2607:f8b0:4864:20::433])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8A39714D1F;
-        Wed, 21 Sep 2022 16:54:46 -0700 (PDT)
-Received: by mail-pf1-x433.google.com with SMTP id a80so7585721pfa.4;
-        Wed, 21 Sep 2022 16:54:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date;
-        bh=0QKLHzjgFC8G3roJi1ZzbgK4edYCAMV4o0XzcHxrPS0=;
-        b=VX7n6GKJQLkFZ4661oR94fC3SQeGQH631f47a3ulfxCsmstnUzavDqlHJaoq8SOeqq
-         Bfdn+56En29hfy5g+ByJxlDamT0DeDf1u+e9gQUYt7DEAXff/bF2UoEcnYNphbw04z2W
-         2wdWQcH7oPaHr2JJAlrLCezXgd/SBAK1nR/9FrBBDuHs0f1XiLuSRDfDKamddS81KX0C
-         dPQpEHErk5Ps1+GyZ4wfOdbNHma7qb4zH5XPHTeeM46SuNg+kyG0G0mDMWAU1nHUiSLs
-         kTi+dSbm7w1WLWnm8wCHyXutwOujOHt1Qw61mQn3Mp+mLe3Z45CE8XtIKAhXepz8YJBF
-         j1/Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date;
-        bh=0QKLHzjgFC8G3roJi1ZzbgK4edYCAMV4o0XzcHxrPS0=;
-        b=SmDYMHJRqRm+Ir3V5Rj5SesKjoFMHZWIzze9u95DgkCwvDMreeKFn8vnP0gSW4h2kC
-         QJIQoWdxHFyIS620SfA/03CSBzHZtvZ3pkrDVZFOU5c8K3hJ6rU5x+Ork+h5Jrv3eAB+
-         Ft9t2JkVJkA8V1ru44n4ETKKrRygXBK1w1xntYqUIsczoNhNne6C+H+OMckJSYBXM6Jr
-         /T1JlPj/K1bqxdRCHHJ2SiDhlBnict1dtWIR8UA9pKd0uHKGUov5IwWoSmoARUGs8Ryv
-         5cp83cZ96W5U/ISRkoQoIbKBXZQpnsx0llRxje+uPXF6vYAFFmq9VKEMg8KHtuLGPcvr
-         /tVg==
-X-Gm-Message-State: ACrzQf1uD10wM0Pir/HNYbnQUQZtjNj7ND21mMTY3Ed2dTijyRr2oxSM
-        FMAcCRwyDCK+eF5h3mbKrNc=
-X-Google-Smtp-Source: AMsMyM60RIhZdWRdmOqpVvZGcXuYIDUweg512rwzoRK9zNVCrGgDs/Qxu89H+gVgaXdi8R3SGqznEg==
-X-Received: by 2002:a63:117:0:b0:43a:348b:603c with SMTP id 23-20020a630117000000b0043a348b603cmr633185pgb.378.1663804485852;
-        Wed, 21 Sep 2022 16:54:45 -0700 (PDT)
-Received: from localhost ([2620:10d:c090:400::5:f5ba])
-        by smtp.gmail.com with ESMTPSA id a67-20020a624d46000000b005465ffaa89dsm2741869pfb.184.2022.09.21.16.54.44
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Sep 2022 16:54:45 -0700 (PDT)
-Sender: Tejun Heo <htejun@gmail.com>
-Date:   Wed, 21 Sep 2022 13:54:43 -1000
-From:   Tejun Heo <tj@kernel.org>
-To:     "Jason A. Donenfeld" <Jason@zx2c4.com>
+        Thu, 22 Sep 2022 12:45:45 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3237F9E2DF;
+        Thu, 22 Sep 2022 09:45:45 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id C0A16636A9;
+        Thu, 22 Sep 2022 16:45:44 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5BEAEC433D6;
+        Thu, 22 Sep 2022 16:45:43 +0000 (UTC)
+Authentication-Results: smtp.kernel.org;
+        dkim=pass (1024-bit key) header.d=zx2c4.com header.i=@zx2c4.com header.b="YjmEGxm6"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=zx2c4.com; s=20210105;
+        t=1663865141;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=qIiaOcRx5bVWqVXMbg0MBYV+EUTIZZiWQtV5u1WQL3o=;
+        b=YjmEGxm6RKC5i9AQrfoyJ0hN1/XDCaEwRrPALAuC7Ey3+yrMCDZ3/tr7d3vFpIWQWRX/JX
+        N7nIAyTKXE+Gg716h73kX62/i1/byltX7kxqwSuBywsqVgvQKlktCRdB5UXnBX0Bf2vCPn
+        4pCPLAOZDyo63fKEJ6RDljseavSWs7c=
+Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTPSA id 536c23f5 (TLSv1.3:TLS_AES_256_GCM_SHA384:256:NO);
+        Thu, 22 Sep 2022 16:45:41 +0000 (UTC)
+Date:   Thu, 22 Sep 2022 18:45:37 +0200
+From:   "Jason A. Donenfeld" <Jason@zx2c4.com>
+To:     Tejun Heo <tj@kernel.org>
 Cc:     Sherry Yang <sherry.yang@oracle.com>, netdev@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Lai Jiangshan <jiangshanlai@gmail.com>,
         Sebastian Siewior <bigeasy@linutronix.de>,
         Jack Vogel <jack.vogel@oracle.com>,
-        Tariq Toukan <tariqt@nvidia.com>
+        Tariq Toukan <tariqt@nvidia.com>, sultan@kerneltoast.com
 Subject: Re: 10% regression in qperf tcp latency after introducing commit
  "4a61bf7f9b18 random: defer fast pool mixing to worker"
-Message-ID: <YyukQ/oU/jkp0OXA@slm.duckdns.org>
+Message-ID: <YyyRMam6Eu8nmeCd@zx2c4.com>
 References: <B1BC4DB8-8F40-4975-B8E7-9ED9BFF1D50E@oracle.com>
  <CAHmME9rUn0b5FKNFYkxyrn5cLiuW_nOxUZi3mRpPaBkUo9JWEQ@mail.gmail.com>
  <04044E39-B150-4147-A090-3D942AF643DF@oracle.com>
  <CAHmME9oKcqceoFpKkooCp5wriLLptpN=+WrrG0KcDWjBahM0bQ@mail.gmail.com>
  <BD03BFF6-C369-4D34-A38B-49653F1CBC53@oracle.com>
  <YyuREcGAXV9828w5@zx2c4.com>
+ <YyukQ/oU/jkp0OXA@slm.duckdns.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <YyuREcGAXV9828w5@zx2c4.com>
+In-Reply-To: <YyukQ/oU/jkp0OXA@slm.duckdns.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello,
+Hi Tejun,
 
-On Thu, Sep 22, 2022 at 12:32:49AM +0200, Jason A. Donenfeld wrote:
-> What are our options? Investigate queue_work_on() bottlenecks? Move back
-> to the original pattern, but use raw spinlocks? Some thing else?
+On Wed, Sep 21, 2022 at 01:54:43PM -1000, Tejun Heo wrote:
+> Hello,
+> 
+> On Thu, Sep 22, 2022 at 12:32:49AM +0200, Jason A. Donenfeld wrote:
+> > What are our options? Investigate queue_work_on() bottlenecks? Move back
+> > to the original pattern, but use raw spinlocks? Some thing else?
+> 
+> I doubt it's queue_work_on() itself if it's called at very high frequency as
+> the duplicate calls would just fail to claim the PENDING bit and return but
+> if it's being called at a high frequency, it'd be waking up a kthread over
+> and over again, which can get pretty expensive. Maybe that ends competing
+> with softirqd which is handling net rx or sth?
 
-I doubt it's queue_work_on() itself if it's called at very high frequency as
-the duplicate calls would just fail to claim the PENDING bit and return but
-if it's being called at a high frequency, it'd be waking up a kthread over
-and over again, which can get pretty expensive. Maybe that ends competing
-with softirqd which is handling net rx or sth?
+Huh, yea, interesting theory. Orrr, the one time that it _does_ pass the
+test_and_set_bit check, the extra overhead here is enough to screw up
+the latency? Both theories sound at least plausible.
 
-So, yeah, I'd try something which doesn't always involve scheduling and a
-context switch whether that's softirq, tasklet, or irq work. I probably am
-mistaken but I thought RT kernel pushes irq handling to threads so that
-these things can be handled sanely. Is this some special case?
+> So, yeah, I'd try something which doesn't always involve scheduling and a
+> context switch whether that's softirq, tasklet, or irq work.
 
-Thanks.
+Alright, I'll do that. I posted a diff for Sherry to try, and I'll make
+that into a real patch and wait for her test.
 
--- 
-tejun
+> I probably am
+> mistaken but I thought RT kernel pushes irq handling to threads so that
+> these things can be handled sanely. Is this some special case?
+
+It does mostly. But there's still a hard IRQ handler, somewhere, because
+IRQs gotta IRQ, and the RNG benefits from getting a timestamp exactly
+when that happens. So here we are.
+
+Jason
