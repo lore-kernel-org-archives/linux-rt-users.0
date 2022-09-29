@@ -2,32 +2,44 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5BC8C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Sep 2022 14:12:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C2A74C43217
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Sep 2022 14:24:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235612AbiI2OMo convert rfc822-to-8bit (ORCPT
+        id S234788AbiI2OYz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Sep 2022 10:12:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56754 "EHLO
+        Thu, 29 Sep 2022 10:24:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53598 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235606AbiI2OMk (ORCPT
+        with ESMTP id S231620AbiI2OYx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Sep 2022 10:12:40 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85F361B85E4;
-        Thu, 29 Sep 2022 07:12:39 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 21E3A614C1;
-        Thu, 29 Sep 2022 14:12:39 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 66699C433D6;
-        Thu, 29 Sep 2022 14:12:37 +0000 (UTC)
-Date:   Thu, 29 Sep 2022 10:13:49 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Ulf Hansson <ulf.hansson@linaro.org>
-Cc:     "dinggao.pan" <dinggao.pan@horizon.ai>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        Thu, 29 Sep 2022 10:24:53 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3C2A1A071;
+        Thu, 29 Sep 2022 07:24:52 -0700 (PDT)
+Date:   Thu, 29 Sep 2022 16:24:50 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1664461491;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=Xsnz1CPyHg7fip2P3ukxoL3NjBLtoXu7CInHbewXJRY=;
+        b=KynjMfTsthMMkazZIoXqMMlyUpykKSLtTKB61F+QM3Y2du1qSNAMgbl+AKQPbG2Jl8Fxt0
+        2RD7NfYg/pXqJ0Gyn05o8XfmO7d44J4eHD5or1AYSpAKgcQo9EilB1NNm8DgeNteIn8i6c
+        cw9YWElVvMS5BRxIw5jIG/UKb3KfhrV8lwFnFAs0DUaXmoUbHqKmG4/t/TqLZObV2bZelw
+        74OOogbQ4g6o7JI3+BTXuMhi3iU5V7QTb6fTJncTfgzektRIUrUn3pmxxdjMXew8YTd9t7
+        Ld1GZCBGm+bXNS12W3KbZ6AiGrlUh7aVHJ9HrI4jpF7qFjMcaqXeqljn9hCu+Q==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1664461491;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=Xsnz1CPyHg7fip2P3ukxoL3NjBLtoXu7CInHbewXJRY=;
+        b=7f4uxMMSNzHHZMB6f8cbpHG4Wcok74vNJG+t896bZPakpyjo60hNoEezrPRRYkBv9KKbFg
+        r3hvTJ1v4oVp6DDQ==
+From:   "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Ulf Hansson <ulf.hansson@linaro.org>,
+        "dinggao.pan" <dinggao.pan@horizon.ai>,
         "tglx@linutronix.de" <tglx@linutronix.de>,
         "ming.yu" <ming.yu@horizon.ai>,
         "yunqian.wang" <yunqian.wang@horizon.ai>,
@@ -37,121 +49,28 @@ Cc:     "dinggao.pan" <dinggao.pan@horizon.ai>,
         "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 Subject: Re: [PATCH RFC stable 4.14 1/1] mmc: core: fix hung task caused by
  race condition on context_info
-Message-ID: <20220929101349.25c835db@gandalf.local.home>
-In-Reply-To: <20220929100750.172e53d4@gandalf.local.home>
+Message-ID: <YzWqsm9sRv0f6fTy@linutronix.de>
 References: <21f604139a9a4675b9ed49292839dcfb@horizon.ai>
-        <dd8d212c48944cb4ba3b58af2efe3723@horizon.ai>
-        <CAPDyKFo_izPD7z-GmSEZ_8H_AX+KiVuLqN7JcD2Kdjjuukk-7g@mail.gmail.com>
-        <20220929100750.172e53d4@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+ <dd8d212c48944cb4ba3b58af2efe3723@horizon.ai>
+ <CAPDyKFo_izPD7z-GmSEZ_8H_AX+KiVuLqN7JcD2Kdjjuukk-7g@mail.gmail.com>
+ <20220929100750.172e53d4@gandalf.local.home>
+ <20220929101349.25c835db@gandalf.local.home>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20220929101349.25c835db@gandalf.local.home>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 29 Sep 2022 10:07:50 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On 2022-09-29 10:13:49 [-0400], Steven Rostedt wrote:
+> It appears that I have an old email address for Luis, and it bounced.
+> Updated with his redhat one.
 
-> On Thu, 29 Sep 2022 14:41:26 +0200
-> Ulf Hansson <ulf.hansson@linaro.org> wrote:
-> 
-> > On Mon, 5 Sept 2022 at 08:22, dinggao.pan <dinggao.pan@horizon.ai> wrote:  
-> > >
-> > > Hi,
-> > > After applying rt patches to our 4.14 kernel and enabling preempt-rt, we met a hung task during boot caused by race condition on context_info stored in struct mmc_host.
-> > > From our investigation, context_info should not be changed by threads that have not claimed the host, hence the following fix.
-> > >
-> > > Any comments are much appreciated.
-> > > Dinggao Pan    
-> > 
-> > Hi Dinggao,
-> > 
-> > Apologize for the delay.
-> > 
-> > The 4.14 kernel is too old for me to be able to comment. In
-> > particular, the mmc block layer moved to blk-mq in v4.16, which means
-> > the path you are investigating doesn't exist any more, sorry.  
-> 
-> Luis (Cc'd) is still supporting the 4.14-rt kernel.
+It would be to know if this affects mainline. If not, does it affect
+4.14 or just 4.14-RT. If it is not limited to RT then it should be sent
+-stable once we know how it is fixed mainline.
 
-It appears that I have an old email address for Luis, and it bounced.
-Updated with his redhat one.
+> -- Steve
 
--- Steve
-
-> 
-> > 
-> > Kind regards
-> > Uffe
-> >   
-> > >
-> > > From: "Dinggao Pan" <mailto:dinggao.pan@horizon.ai>
-> > >
-> > > 　　A race condition happens under following circumstances:
-> > >     (mmc_thread1)               |              (mmc_thread2)
-> > >     mmc_issue_rq(req1)          |    
-> > >       > qcnt++ for req1         |    
-> > >         host handling req1      |
-> > >     mmc_queue_thread(req=null)  |    
-> > >       > enter queue thread      |    
-> > >         again, fetches blk req  |
-> > >         (return null), sets     |
-> > >         is_waiting_last_req 1   |  mmc_request_fn(req1) -> set is_new_req 1
-> > >                                 |                   and wake_up wait_queue
-> > >     mmc_issue_rq(req2)          |   > mmc_thread2 tries to claim host    
-> > >       > **qcnt++ for req2**     |    
-> > >       mmc_finalize_req(req2)    |    
-> > >         > should wait for req1  |    
-> > >           done but req2 return  |
-> > >           MMC_BLK_NEW_REQ       |
-> > >           due to is_new_req     |
-> > >           already set to 1      |
-> > >                                 |
-> > >                                 |
-> > >     req1 done                   |    
-> > >       > qcnt-- for req1         |    
-> > >     mmc_issue_rq(req3)          |    
-> > >       > qcnt++ for req3         |    
-> > > req2 is not handled but qcnt is already added(noted by **),
-> > > thus mmc_thread1 will never release host, causing mmc_threads
-> > > except thread1 to hung. Fix race by moving wake_up to the front of
-> > > context_info update.
-> > >
-> > > Reviewed By: Yunqian Wang <mailto:yunqian.wang@horizon.ai>
-> > > Signed-off-by: Dinggao Pan <mailto:dinggao.pan@horizon.ai>
-> > > Signed-off-by: Ming Yu <mailto:ming.yu@horizon.ai>
-> > > ---
-> > > drivers/mmc/core/queue.c | 7 +++++--
-> > > 1 file changed, 5 insertions(+), 2 deletions(-)
-> > >
-> > > diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
-> > > index 0a4e77a5b..58318c102 100644
-> > > --- a/drivers/mmc/core/queue.c
-> > > +++ b/drivers/mmc/core/queue.c
-> > > @@ -107,6 +107,11 @@ static void mmc_request_fn(struct request_queue *q)
-> > >                return;
-> > >       }
-> > >
-> > > +      if (mq->asleep) {
-> > > +               wake_up_process(mq->thread);
-> > > +               return;
-> > > +      }
-> > > +
-> > >       cntx = &mq->card->host->context_info;
-> > >
-> > >       if (cntx->is_waiting_last_req) {
-> > > @@ -114,8 +119,6 @@ static void mmc_request_fn(struct request_queue *q)
-> > >                wake_up_interruptible(&cntx->wait);
-> > >       }
-> > >
-> > > -       if (mq->asleep)
-> > > -                wake_up_process(mq->thread);
-> > > }
-> > >
-> > > static struct scatterlist *mmc_alloc_sg(int sg_len, gfp_t gfp)
-> > > --
-> > > 2.36.1    
-> 
-
+Sebastian
