@@ -2,165 +2,139 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0C42C433F5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Sep 2022 16:40:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C3C5C433F5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Sep 2022 15:01:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235750AbiI2QkR (ORCPT
+        id S231679AbiI3PBI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Sep 2022 12:40:17 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39226 "EHLO
+        Fri, 30 Sep 2022 11:01:08 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33716 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235742AbiI2QkK (ORCPT
+        with ESMTP id S231718AbiI3PAf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Sep 2022 12:40:10 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2303237ED
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 Sep 2022 09:40:03 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1664469602;
+        Fri, 30 Sep 2022 11:00:35 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A4DC2C1EB7;
+        Fri, 30 Sep 2022 07:58:45 -0700 (PDT)
+Date:   Fri, 30 Sep 2022 16:58:41 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1664549923;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=L6vXI1WS0UxzQeZpA4OgRrRLeEgBfGYudqcjKdjRj7M=;
-        b=X6FB2B3wXfHY6Kw62tIJfNoNGivYqjmnVMIY6g104FDaIAtyuZnOsfS2SI+CTLa47/1tdO
-        mJJkkrHN1xkRxrMKqQvOtoxIipUJkacCGhAONf5JADYXHPOh37p2tND3M+qkEKQT/o9oNU
-        L5mt2k3hknVv7Qs6UUHJlwO24po8yrM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-582-6I3q8TJ0Pm2bKTmHsCLDzQ-1; Thu, 29 Sep 2022 12:40:00 -0400
-X-MC-Unique: 6I3q8TJ0Pm2bKTmHsCLDzQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C5FB85A5B6;
-        Thu, 29 Sep 2022 16:39:59 +0000 (UTC)
-Received: from localhost (unknown [10.22.11.90])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id F310F1731B;
-        Thu, 29 Sep 2022 16:39:58 +0000 (UTC)
-Date:   Thu, 29 Sep 2022 13:39:57 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     Ulf Hansson <ulf.hansson@linaro.org>
-Cc:     "dinggao.pan" <dinggao.pan@horizon.ai>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "ming.yu" <ming.yu@horizon.ai>,
-        "yunqian.wang" <yunqian.wang@horizon.ai>,
-        "linux-mmc@vger.kernel.org" <linux-mmc@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH RFC stable 4.14 1/1] mmc: core: fix hung task caused by
- race condition on context_info
-Message-ID: <YzXKXQOw5FtNmy/J@uudg.org>
-References: <21f604139a9a4675b9ed49292839dcfb@horizon.ai>
- <dd8d212c48944cb4ba3b58af2efe3723@horizon.ai>
- <CAPDyKFo_izPD7z-GmSEZ_8H_AX+KiVuLqN7JcD2Kdjjuukk-7g@mail.gmail.com>
+        bh=a+spfYMCZZ1hiMsyKYMRyJJWw3SbhydAe67QIBjklrI=;
+        b=UwQW8Ez+JlwCgQWm8ahL5evfpnXszfMqY8BYqTeELuVOPeRXxLQ61z3gEazZjg8WcaMDht
+        /SAoOhYq+MwW+3WRnMSPXa79scUTtgjDodhoEuIzyGMkBxZPdzh3E4dXKO7HmJ31FVoXY6
+        Sc13a/wxo1C3vM9AMcKe9vyH0W4wT0hO9k817z1XqQ+PR7H3WD9gwpF9F4XJqUOkJAGbFO
+        +H30nRvYNGRTenFlsd3yHDOFvkZPi/zpEHQWMLKs2lB9wnkeFCtkMVebNuHJi9z1sdqHFp
+        bmq6nOEMtuWQ6RR6jnhDq7L926WEwhAJX1JBIrT3z1TlBtoy3YlS07Qh0lcGsA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1664549923;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=a+spfYMCZZ1hiMsyKYMRyJJWw3SbhydAe67QIBjklrI=;
+        b=QqNy0wkxgzQjkkMp5aI8qz6QB0OO1+QZGMscurUMslt9nboZdp/vDsRKf+3sASYWEP6IWt
+        W72sjcPR6dRdGqBg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mark Gross <markgross@kernel.org>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Danie l Wagner <dwagner@suse.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Junxiao Chang <junxiao.chang@intel.com>
+Subject: Re: [ANNOUNCE] 4.9.327-rt197
+Message-ID: <YzcEIU17EIZ7ZIF5@linutronix.de>
+References: <165222469651.210737.17409564443317121708@T470>
+ <Yy4ShVWORi6XNhCv@T470>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAPDyKFo_izPD7z-GmSEZ_8H_AX+KiVuLqN7JcD2Kdjjuukk-7g@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+In-Reply-To: <Yy4ShVWORi6XNhCv@T470>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Sep 29, 2022 at 02:41:26PM +0200, Ulf Hansson wrote:
-> On Mon, 5 Sept 2022 at 08:22, dinggao.pan <dinggao.pan@horizon.ai> wrote:
-> >
-> > Hi,
-> > After applying rt patches to our 4.14 kernel and enabling preempt-rt, we met a hung task during boot caused by race condition on context_info stored in struct mmc_host.
-> > From our investigation, context_info should not be changed by threads that have not claimed the host, hence the following fix.
-> >
-> > Any comments are much appreciated.
-> > Dinggao Pan
-> 
-> Hi Dinggao,
-> 
-> Apologize for the delay.
-> 
-> The 4.14 kernel is too old for me to be able to comment. In
-> particular, the mmc block layer moved to blk-mq in v4.16, which means
-> the path you are investigating doesn't exist any more, sorry.
+On 2022-09-23 13:09:41 [-0700], Mark Gross wrote:
+> > As this was a tricky one I request people to give a good look over.
 
-And the new code has the queue operations protected by a spinlock
-(queue_lock), which I believe is necessary to fix the issue reported
-here.
+You did good. I not so much. If you could please add the following patch
+on top, then it will compile also on !RT.
 
-Luis
+Thank you for work.
+
+------->8----------
+
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date: Fri, 30 Sep 2022 16:55:34 +0200
+Subject: [PATCH] local_lock: Provide INIT_LOCAL_LOCK().
+
+The original code was using INIT_LOCAL_LOCK() and I tried to sneak
+around it and forgot that this code also needs to compile on !RT
+platforms.
+
+Provide INIT_LOCAL_LOCK() to initialize properly on RT and do nothing on
+!RT. Let random.c use which is the only user so far and oes not compile
+on !RT otherwise.
+
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ drivers/char/random.c     | 4 ++--
+ include/linux/locallock.h | 5 +++++
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index daea466812fed..86c475f70343d 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -236,7 +236,7 @@ struct crng {
  
-> Kind regards
-> Uffe
-> 
-> >
-> > From: "Dinggao Pan" <mailto:dinggao.pan@horizon.ai>
-> >
-> > 　　A race condition happens under following circumstances:
-> >     (mmc_thread1)               |              (mmc_thread2)
-> >     mmc_issue_rq(req1)          |
-> >       > qcnt++ for req1         |
-> >         host handling req1      |
-> >     mmc_queue_thread(req=null)  |
-> >       > enter queue thread      |
-> >         again, fetches blk req  |
-> >         (return null), sets     |
-> >         is_waiting_last_req 1   |  mmc_request_fn(req1) -> set is_new_req 1
-> >                                 |                   and wake_up wait_queue
-> >     mmc_issue_rq(req2)          |   > mmc_thread2 tries to claim host
-> >       > **qcnt++ for req2**     |
-> >       mmc_finalize_req(req2)    |
-> >         > should wait for req1  |
-> >           done but req2 return  |
-> >           MMC_BLK_NEW_REQ       |
-> >           due to is_new_req     |
-> >           already set to 1      |
-> >                                 |
-> >                                 |
-> >     req1 done                   |
-> >       > qcnt-- for req1         |
-> >     mmc_issue_rq(req3)          |
-> >       > qcnt++ for req3         |
-> > req2 is not handled but qcnt is already added(noted by **),
-> > thus mmc_thread1 will never release host, causing mmc_threads
-> > except thread1 to hung. Fix race by moving wake_up to the front of
-> > context_info update.
-> >
-> > Reviewed By: Yunqian Wang <mailto:yunqian.wang@horizon.ai>
-> > Signed-off-by: Dinggao Pan <mailto:dinggao.pan@horizon.ai>
-> > Signed-off-by: Ming Yu <mailto:ming.yu@horizon.ai>
-> > ---
-> > drivers/mmc/core/queue.c | 7 +++++--
-> > 1 file changed, 5 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
-> > index 0a4e77a5b..58318c102 100644
-> > --- a/drivers/mmc/core/queue.c
-> > +++ b/drivers/mmc/core/queue.c
-> > @@ -107,6 +107,11 @@ static void mmc_request_fn(struct request_queue *q)
-> >                return;
-> >       }
-> >
-> > +      if (mq->asleep) {
-> > +               wake_up_process(mq->thread);
-> > +               return;
-> > +      }
-> > +
-> >       cntx = &mq->card->host->context_info;
-> >
-> >       if (cntx->is_waiting_last_req) {
-> > @@ -114,8 +119,6 @@ static void mmc_request_fn(struct request_queue *q)
-> >                wake_up_interruptible(&cntx->wait);
-> >       }
-> >
-> > -       if (mq->asleep)
-> > -                wake_up_process(mq->thread);
-> > }
-> >
-> > static struct scatterlist *mmc_alloc_sg(int sg_len, gfp_t gfp)
-> > --
-> > 2.36.1
-> 
----end quoted text---
+ static DEFINE_PER_CPU(struct crng, crngs) = {
+ 	.generation = ULONG_MAX,
+-	.lock.lock = __SPIN_LOCK_UNLOCKED(crngs.lock.lock),
++	.lock = INIT_LOCAL_LOCK(crngs.lock),
+ };
+ 
+ /* Used by crng_reseed() and crng_make_state() to extract a new seed from the input pool. */
+@@ -515,7 +515,7 @@ struct batch_ ##type {								\
+ };										\
+ 										\
+ static DEFINE_PER_CPU(struct batch_ ##type, batched_entropy_ ##type) = {	\
+-	.lock.lock = __SPIN_LOCK_UNLOCKED(batched_entropy_ ##type.lock.lock),	\
++	.lock = INIT_LOCAL_LOCK(batched_entropy_ ##type.lock),			\
+ 	.position = UINT_MAX							\
+ };										\
+ 										\
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 0c3ff5b23f6a1..70af9a177197e 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -22,6 +22,8 @@ struct local_irq_lock {
+ 	unsigned long		flags;
+ };
+ 
++#define INIT_LOCAL_LOCK(lvar)			{ .lock = __SPIN_LOCK_UNLOCKED((lvar).lock.lock) }
++
+ #define DEFINE_LOCAL_IRQ_LOCK(lvar)					\
+ 	DEFINE_PER_CPU(struct local_irq_lock, lvar) = {			\
+ 		.lock = __SPIN_LOCK_UNLOCKED((lvar).lock) }
+@@ -256,6 +258,9 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 
+ #else /* PREEMPT_RT_BASE */
+ 
++struct local_irq_lock { };
++#define INIT_LOCAL_LOCK(lvar)			{ }
++
+ #define DEFINE_LOCAL_IRQ_LOCK(lvar)		__typeof__(const int) lvar
+ #define DECLARE_LOCAL_IRQ_LOCK(lvar)		extern __typeof__(const int) lvar
+ 
+-- 
+2.37.2
 
+
+Sebastian
