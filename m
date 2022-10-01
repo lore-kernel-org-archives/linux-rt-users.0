@@ -2,550 +2,101 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9443C433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Sep 2022 21:26:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1DBEAC433FE
+	for <linux-rt-users@archiver.kernel.org>; Sat,  1 Oct 2022 01:19:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231590AbiI3V0A (ORCPT
+        id S232850AbiJABTB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Sep 2022 17:26:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57024 "EHLO
+        Fri, 30 Sep 2022 21:19:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37954 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232083AbiI3VZh (ORCPT
+        with ESMTP id S231758AbiJABS1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 30 Sep 2022 17:25:37 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4406572EFD;
-        Fri, 30 Sep 2022 14:25:34 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 79C2D62394;
-        Fri, 30 Sep 2022 21:25:33 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C05A9C433C1;
-        Fri, 30 Sep 2022 21:25:32 +0000 (UTC)
+        Fri, 30 Sep 2022 21:18:27 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E7D43195F50
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2022 18:15:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1664586924;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=o5Sm+yoW8ulpfXtWT6RkcdBhM6mj/vms7W1DqXDH4q4=;
+        b=jCfqCsxunj14rpr9tlW7WRL4Dq25Ao3Un2fQ61tcMWTp52obGMGcT1SGZqZhXNmucVipay
+        AdYHaeN0pboZ96SwLtrRGq+DJEagaZuBfPTO3SIv61ZxWZewMHUTyHen4b727OVgPWIOZf
+        PrILqGQDScsKTR1QsyjmUvOJlQJoC5w=
+Received: from mail-ed1-f72.google.com (mail-ed1-f72.google.com
+ [209.85.208.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-63-Lfz4wTX8MWqdiq1SV8jCZg-1; Fri, 30 Sep 2022 21:15:22 -0400
+X-MC-Unique: Lfz4wTX8MWqdiq1SV8jCZg-1
+Received: by mail-ed1-f72.google.com with SMTP id w20-20020a05640234d400b00450f24c8ca6so4617558edc.13
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2022 18:15:22 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date;
+        bh=o5Sm+yoW8ulpfXtWT6RkcdBhM6mj/vms7W1DqXDH4q4=;
+        b=1M+A5BOEVh+tOZRNB2k2NOlPJjRCq8eSO5Cm3vPOKWK8y99cv8kv2L+C8MIZBwaZxb
+         Hrj75m+IZHMhc+g2iOGXFwi+yn7gRg51O8BVL3/KuNlvGLYVZra3LvsIt9ehcKyX/LIS
+         A+mNO8oxRe3yYslYDAo5EiIMvw0bVsEquW+lBkv06CJw1Dkh1fibsOl/T68FJCEbeSG0
+         bYw9zSPTe2MQd3bk7EA4hFg/oxaCjN1DTOyZb2t17ovyUDkdmPJ/wVLMkJTzqlkoRsmV
+         lpJgmWuVExUPBl43WWahLMNLrZLPBIGEZLkTcnGLiCcZH9yVG/qzvvWq1MiJmIPjBIG3
+         Yl4w==
+X-Gm-Message-State: ACrzQf2zsSBz7HsQxmxdWqGecylkJbWe3UHGXpjNvpJucRetWlQ2Fvhv
+        OhxJ0nxCwXCXr2KeOBk38cASTl7V/RA5pBhxkM8TR8IXHQbiC1Nzk08IYjZJ9vuHgu8MUgVEp0/
+        9GwpgZtbGzuqHGUaIBF5+xl9a68QEQHpjjA86eYFQr2c=
+X-Received: by 2002:a17:907:6d28:b0:782:32ad:7b64 with SMTP id sa40-20020a1709076d2800b0078232ad7b64mr8812204ejc.23.1664586921220;
+        Fri, 30 Sep 2022 18:15:21 -0700 (PDT)
+X-Google-Smtp-Source: AMsMyM6560DmY3MtvBHbgSR5QBSpzMDUkWcwMqV28BI5mHezGTKZ1zmK17tiVlJQw9fJ/khBhx3dhprOx5jXcYHFSwg=
+X-Received: by 2002:a17:907:6d28:b0:782:32ad:7b64 with SMTP id
+ sa40-20020a1709076d2800b0078232ad7b64mr8812196ejc.23.1664586921074; Fri, 30
+ Sep 2022 18:15:21 -0700 (PDT)
+MIME-Version: 1.0
+References: <CAEYdEeSpYW3wS=yXtsa9C0e-LmZDXNZ=AP3z33FYZKsgU7XcxQ@mail.gmail.com>
+In-Reply-To: <CAEYdEeSpYW3wS=yXtsa9C0e-LmZDXNZ=AP3z33FYZKsgU7XcxQ@mail.gmail.com>
 From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 5.15.71-rt51
-Date:   Fri, 30 Sep 2022 21:24:49 -0000
-Message-ID: <166457308996.2840140.18420165368433142309@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+Date:   Sat, 1 Oct 2022 01:15:10 +0000
+Message-ID: <CAMLffL_49B2DEgTiDPg3vwL5gR-Dagvo-OBbymrBapgBJifnkw@mail.gmail.com>
+Subject: Re: Abort on boot for 5.15.7 patch RT 23
+To:     Brian Wrenn <dcbrianw@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+First question is, which version of the PREEMPT_RT patch did you use?
+For v5.15.7 you should be using the series released back in December
+of 2021:  v5.15.7-rt23.
 
-I'm pleased to announce the 5.15.71-rt51 stable release.
+It looks like things went bad when booting the RT kernel while
+initializing the cpuidle driver.  I'm suspicious of the nested locking
+done in the genpd_* functions (and how they work with rtmutexes).  If
+I get some time next week I'll see if I can make sense of the locking
+done there.
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.15-rt
-  Head SHA1: 8e96dac117bb7fec566ba84498c6cc515d59fec2
-
-Or to build 5.15.71-rt51 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.71.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.71-rt51.patch.xz
-
-
-Enjoy!
 Clark
 
-Changes from v5.15.70-rt50:
----
+On Fri, Sep 30, 2022 at 3:44 PM Brian Wrenn <dcbrianw@gmail.com> wrote:
+>
+> Hi,
+>
+> I am building a kernel from source derived from Linaro 21.12, based on
+> linux kernel 5.15.7.  It runs on a Variscite DART SD410 dev board.
+> When I build that kernel, it will boots successfully.  When I build
+> the same kernel source with the PREEMPT-RT patch, it aborts during
+> boot.  I attached console output for each case.
+>
+> An incompatibility between the Variscite patches and PREEMPT-RT could
+> cause this abort, but just to cover all my bases, I'm try to rule out
+> the PREEMPT-RT patch itself.
+>
+> The call trace includes RT specific routines, so I'm wondering if
+> there are any known problems with routines in this call state, and if
+> any fix for them exists in some way applicable to the v23 patch.
+>
+> Thank you for any information or leads.
+>
+> -Brian
 
-Adrian Hunter (1):
-      perf kcore_copy: Do not check /proc/modules is unchanged
-
-Al Viro (1):
-      riscv: fix a nasty sigreturn bug...
-
-Alan Stern (1):
-      USB: core: Fix RST error in hub.c
-
-Alex Deucher (2):
-      drm/amdgpu: make sure to init common IP before gmc
-      drm/amdgpu: don't register a dirty callback for non-atomic
-
-Alex Elder (1):
-      net: ipa: properly limit modem routing table use
-
-Andy Shevchenko (1):
-      gpio: mockup: Fix potential resource leakage when register a chip
-
-AngeloGioacchino Del Regno (1):
-      drm/mediatek: dsi: Add atomic {destroy,duplicate}_state, reset callbacks
-
-Ard Biesheuvel (2):
-      efi: x86: Wipe setup_data on pure EFI boot
-      efi: libstub: check Shim mode using MokSBStateRT
-
-Asmaa Mnebhi (3):
-      i2c: mlxbf: incorrect base address passed during io write
-      i2c: mlxbf: prevent stack overflow in mlxbf_i2c_smbus_start_transaction()
-      i2c: mlxbf: Fix frequency calculation
-
-Bartosz Golaszewski (1):
-      gpio: mockup: fix NULL pointer dereference when removing debugfs
-
-Benjamin Poirier (3):
-      net: bonding: Share lacpdu_mcast_addr definition
-      net: bonding: Unsync device addresses on ndo_stop
-      net: team: Unsync device addresses on ndo_stop
-
-Brett Creeley (1):
-      iavf: Fix cached head and tail value for iavf_get_tx_pending
-
-Brian Foster (1):
-      xfs: fix xfs_ifree() error handling to not leak perag ref
-
-Brian Norris (1):
-      arm64: dts: rockchip: Pull up wlan wake# on Gru-Bob
-
-Callum Osmotherly (2):
-      ALSA: hda/realtek: Enable 4-speaker output Dell Precision 5570 laptop
-      ALSA: hda/realtek: Enable 4-speaker output Dell Precision 5530 laptop
-
-Candy Febriyanto (1):
-      staging: r8188eu: Remove support for devices with 8188FU chipset (0bda:f179)
-
-Carl Yin(殷张成) (1):
-      USB: serial: option: add Quectel BG95 0x0203 composition
-
-Chao Yu (1):
-      mm/slub: fix to return errno if kmalloc() fails
-
-Christian Lamparter (1):
-      um: fix default console kernel parameter
-
-Clark Williams (2):
-      Merge tag 'v5.15.71' into v5.15-rt
-      'Linux 5.15.71-rt51'
-
-Cristian Marussi (2):
-      firmware: arm_scmi: Harden accesses to the reset domains
-      firmware: arm_scmi: Fix the asynchronous reset requests
-
-Dan Williams (1):
-      devdax: Fix soft-reservation memory description
-
-Dave Chinner (2):
-      xfs: reorder iunlink remove operation in xfs_ifree
-      xfs: validate inode fork size against fork format
-
-Dave Ertman (1):
-      ice: Don't double unplug aux on peer initiated reset
-
-David Leadbeater (1):
-      netfilter: nf_conntrack_irc: Tighten matching on DCC message
-
-David Matlack (1):
-      KVM: x86/mmu: Fold rmap_recycle into rmap_add
-
-David Thompson (1):
-      mlxbf_gige: clear MDIO gateway lock after read
-
-Fabio Estevam (1):
-      arm64: dts: rockchip: Remove 'enable-active-low' from rk3399-puma
-
-Felix Fietkau (1):
-      wifi: mt76: fix reading current per-tid starting sequence number for aggregation
-
-Filipe Manana (2):
-      btrfs: fix hang during unmount when stopping block group reclaim worker
-      btrfs: fix hang during unmount when stopping a space reclaim worker
-
-Florian Westphal (1):
-      netfilter: ebtables: fix memory leak when blob is malformed
-
-Geert Uytterhoeven (2):
-      net: ravb: Fix PHY state warning splat during system resume
-      net: sh_eth: Fix PHY state warning splat during system resume
-
-Gil Fine (1):
-      thunderbolt: Add support for Intel Maple Ridge single port controller
-
-Greg Kroah-Hartman (3):
-      Revert "usb: add quirks for Lenovo OneLink+ Dock"
-      Revert "usb: gadget: udc-xilinx: replace memcpy with memcpy_toio"
-      Linux 5.15.71
-
-Guchun Chen (1):
-      drm/amd/pm: disable BACO entry/exit completely on several sienna cichlid cards
-
-Haiyang Zhang (1):
-      net: mana: Add rmb after checking owner bits
-
-Hamza Mahfooz (1):
-      drm/amdgpu: use dirty framebuffer helper
-
-Hangbin Liu (1):
-      selftests: forwarding: add shebang for sch_red.sh
-
-Hangyu Hua (1):
-      net: sched: fix possible refcount leak in tc_new_tfilter()
-
-Hans de Goede (1):
-      drm/gma500: Fix BUG: sleeping function called from invalid context errors
-
-Heiko Schocher (1):
-      drm/panel: simple: Fix innolux_g121i1_l01 bus_format
-
-Igor Ryzhov (1):
-      netfilter: nf_conntrack_sip: fix ct_sip_walk_headers
-
-Ilpo Järvinen (3):
-      serial: Create uart_xmit_advance()
-      serial: tegra: Use uart_xmit_advance(), fixes icount.tx accounting
-      serial: tegra-tcu: Use uart_xmit_advance(), fixes icount.tx accounting
-
-Ioana Ciornei (1):
-      net: phy: aquantia: wait for the suspend/resume operations to finish
-
-Jagan Teki (1):
-      arm64: dts: rockchip: Fix typo in lisense text for PX30.Core
-
-Jakub Kicinski (1):
-      bnxt: prevent skb UAF after handing over to PTP worker
-
-Jan Kara (4):
-      ext4: make directory inode spreading reflect flexbg size
-      ext4: make mballoc try target group first even with mb_optimize_scan
-      ext4: avoid unnecessary spreading of allocations among groups
-      ext4: use locality group preallocation for small closed files
-
-Jason A. Donenfeld (2):
-      wireguard: ratelimiter: disable timings test by default
-      wireguard: netlink: avoid variable-sized memcpy on sockaddr
-
-Javier Martinez Canillas (1):
-      drm/hisilicon/hibmc: Allow to be built if COMPILE_TEST is enabled
-
-Jean-Francois Le Fillatre (1):
-      usb: add quirks for Lenovo OneLink+ Dock
-
-Jingwen Chen (1):
-      drm/amd/amdgpu: fixing read wrong pf2vf data in SRIOV
-
-Johan Hovold (1):
-      media: flexcop-usb: fix endpoint type check
-
-Jonathan Toppins (1):
-      bonding: fix NULL deref in bond_rr_gen_slave_id
-
-Kai Vehmanen (1):
-      ALSA: hda: add Intel 5 Series / 3400 PCI DID
-
-Larry Finger (1):
-      staging: r8188eu: Add Rosewill USB-N150 Nano to device tables
-
-Li Jinlin (1):
-      fsdax: Fix infinite loop in dax_iomap_rw()
-
-Liang He (2):
-      dmaengine: ti: k3-udma-private: Fix refcount leak bug in of_xudma_dev_get()
-      of: mdio: Add of_node_put() when breaking out of for_each_xx
-
-Lieven Hey (1):
-      perf jit: Include program header in ELF files
-
-Lu Wei (1):
-      ipvlan: Fix out-of-bound bugs caused by unset skb->mac_header
-
-Ludovic Cintrat (1):
-      net: core: fix flow symmetric hash
-
-Lukas Wunner (1):
-      serial: fsl_lpuart: Reset prior to registration
-
-Luke D. Jones (3):
-      ALSA: hda/realtek: Add pincfg for ASUS G513 HP jack
-      ALSA: hda/realtek: Add pincfg for ASUS G533Z HP jack
-      ALSA: hda/realtek: Add quirk for ASUS GA503R laptop
-
-Luís Henriques (1):
-      ext4: fix bug in extents parsing when eh_entries == 0 and eh_depth > 0
-
-Marc Kleine-Budde (2):
-      can: flexcan: flexcan_mailbox_read() fix return value for drop = true
-      can: gs_usb: gs_can_open(): fix race dev->can.state condition
-
-Maurizio Lombardi (1):
-      mm: slub: fix flush_cpu_slab()/__free_slab() invocations in task context.
-
-Meng Li (1):
-      gpiolib: cdev: Set lineevent_state::irq after IRQ register successfully
-
-Michal Jaron (3):
-      iavf: Fix set max MTU size with port VLAN and jumbo frames
-      i40e: Fix VF set max MTU size
-      i40e: Fix set max_tx_rate when it is lower than 1 Mbps
-
-Mohan Kumar (1):
-      ALSA: hda/tegra: set depop delay for tegra
-
-Namhyung Kim (2):
-      perf stat: Fix BPF program section name
-      perf tools: Honor namespace when synthesizing build-ids
-
-Nathan Chancellor (3):
-      drm/amd/display: Reduce number of arguments of dml31's CalculateWatermarksAndDRAMSpeedChangeSupport()
-      drm/amd/display: Reduce number of arguments of dml31's CalculateFlipSchedule()
-      drm/amd/display: Mark dml30's UseMinimumDCFCLK() as noinline for stack usage
-
-Nathan Huckleberry (1):
-      drm/rockchip: Fix return type of cdn_dp_connector_mode_valid
-
-Norbert Zulinski (1):
-      iavf: Fix bad page state
-
-Nícolas F. R. A. Prado (1):
-      drm/mediatek: dsi: Move mtk_dsi_stop() call back to mtk_dsi_poweroff()
-
-Pablo Neira Ayuso (1):
-      netfilter: nfnetlink_osf: fix possible bogus match in nf_osf_find()
-
-Peter Collingbourne (1):
-      kasan: call kasan_malloc() from __kmalloc_*track_caller()
-
-Phil Auld (1):
-      drivers/base: Fix unsigned comparison to -1 in CPUMAP_FILE_MAX_BYTES
-
-Piyush Mehta (1):
-      usb: gadget: udc-xilinx: replace memcpy with memcpy_toio
-
-Rafael Mendonca (1):
-      scsi: qla2xxx: Fix memory leak in __qlt_24xx_handle_abts()
-
-Randy Dunlap (2):
-      MIPS: lantiq: export clk_get_io() for lantiq_wdt.ko
-      drm/hisilicon: Add depends on MMU
-
-Sean Anderson (1):
-      net: sunhme: Fix packet reception for len < RX_COPY_THRESHOLD
-
-Sean Christopherson (1):
-      KVM: x86: Inject #UD on emulated XSETBV if XSAVES isn't enabled
-
-Serge Semin (1):
-      MIPS: Loongson32: Fix PHY-mode being left unspecified
-
-Sergey Shtylyov (1):
-      arm64: topology: fix possible overflow in amu_fie_setup()
-
-Sreekanth Reddy (1):
-      scsi: mpt3sas: Fix return value check of dma_get_required_mask()
-
-Stefan Haberland (1):
-      s390/dasd: fix Oops in dasd_alias_get_start_dev due to missing pavgroup
-
-Takashi Iwai (3):
-      Revert "ALSA: usb-audio: Split endpoint setups for hw_params and prepare"
-      ALSA: core: Fix double-free at snd_card_new()
-      ALSA: hda/realtek: Re-arrange quirk table entries
-
-Tetsuo Handa (3):
-      netfilter: nf_tables: fix nft_counters_enabled underflow at nf_tables_addchain()
-      netfilter: nf_tables: fix percpu memory leak at nf_tables_addchain()
-      workqueue: don't skip lockdep work dependency in cancel_work_sync()
-
-Theodore Ts'o (1):
-      ext4: limit the number of retries after discarding preallocations blocks
-
-Thinh Nguyen (3):
-      usb: dwc3: gadget: Prevent repeat pullup()
-      usb: dwc3: gadget: Refactor pullup()
-      usb: dwc3: gadget: Don't modify GEVNTCOUNT in pullup()
-
-Trond Myklebust (1):
-      NFSv4: Fixes for nfs4_inode_return_delegation()
-
-Uwe Kleine-König (1):
-      i2c: imx: If pm_runtime_get_sync() returned 1 device access is possible
-
-Victor Skvortsov (1):
-      drm/amdgpu: Separate vf2pf work item init from virt data exchange
-
-Vitaly Kuznetsov (1):
-      Drivers: hv: Never allocate anything besides framebuffer from framebuffer memory region
-
-Vladimir Oltean (4):
-      net: enetc: move enetc_set_psfp() out of the common enetc_set_features()
-      net: enetc: deny offload of tc-based TSN features on VF interfaces
-      net/sched: taprio: avoid disabling offload when it was never enabled
-      net/sched: taprio: make qdisc_leaf() see the per-netdev-queue pfifo child qdiscs
-
-Wen Gu (1):
-      net/smc: Stop the CLC flow if no link to map buffers on
-
-Wesley Cheng (3):
-      usb: dwc3: gadget: Avoid starting DWC3 gadget during UDC unbind
-      usb: dwc3: Issue core soft reset before enabling run/stop
-      usb: dwc3: gadget: Avoid duplicate requests to enable Run/Stop
-
-Will Deacon (1):
-      vmlinux.lds.h: CFI: Reduce alignment of jump-table to function alignment
-
-William Wu (1):
-      usb: dwc3: core: leave default DMA if the controller does not support 64-bit DMA
-
-Yao Wang1 (1):
-      drm/amd/display: Limit user regamma to a valid value
-
-Yi Liu (1):
-      iommu/vt-d: Check correct capability for sagaw determination
-
-huangwenhui (1):
-      ALSA: hda/realtek: Add quirk for Huawei WRT-WX9
-
-jerry meng (1):
-      USB: serial: option: add Quectel RM520N
-
-zain wang (1):
-      arm64: dts: rockchip: Set RK3399-Gru PCLK_EDP to 24 MHz
-
-Íñigo Huguet (2):
-      sfc: fix TX channel offset when using legacy interrupts
-      sfc: fix null pointer dereference in efx_hard_start_xmit
----
-Makefile                                           |   2 +-
- .../boot/dts/rockchip/px30-engicam-px30-core.dtsi  |   4 +-
- arch/arm64/boot/dts/rockchip/rk3399-gru-bob.dts    |   5 +
- .../boot/dts/rockchip/rk3399-gru-chromebook.dtsi   |   9 +
- arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi      |   1 -
- arch/arm64/kernel/topology.c                       |   2 +-
- arch/mips/lantiq/clk.c                             |   1 +
- arch/mips/loongson32/common/platform.c             |  16 +-
- arch/riscv/kernel/signal.c                         |   2 +
- arch/um/kernel/um_arch.c                           |   2 +-
- arch/x86/kvm/emulate.c                             |   3 +
- arch/x86/kvm/mmu/mmu.c                             |  40 +-
- arch/x86/kvm/x86.c                                 |   1 +
- drivers/dax/hmem/device.c                          |   1 +
- drivers/dma/ti/k3-udma-private.c                   |   6 +-
- drivers/firmware/arm_scmi/reset.c                  |  10 +-
- drivers/firmware/efi/libstub/secureboot.c          |   8 +-
- drivers/firmware/efi/libstub/x86-stub.c            |   7 +
- drivers/gpio/gpio-mockup.c                         |   6 +-
- drivers/gpio/gpiolib-cdev.c                        |   5 +-
- drivers/gpu/drm/amd/amdgpu/amdgpu_device.c         |  18 +-
- drivers/gpu/drm/amd/amdgpu/amdgpu_display.c        |  13 +-
- drivers/gpu/drm/amd/amdgpu/amdgpu_virt.c           |  42 ++-
- drivers/gpu/drm/amd/amdgpu/amdgpu_virt.h           |   1 +
- .../amd/display/dc/dml/dcn30/display_mode_vba_30.c |   3 +-
- .../amd/display/dc/dml/dcn31/display_mode_vba_31.c | 420 +++++----------------
- .../drm/amd/display/modules/color/color_gamma.c    |   4 +
- .../drm/amd/pm/swsmu/smu11/sienna_cichlid_ppt.c    |  11 +
- drivers/gpu/drm/gma500/gma_display.c               |  11 +-
- drivers/gpu/drm/hisilicon/hibmc/Kconfig            |   3 +-
- drivers/gpu/drm/mediatek/mtk_dsi.c                 |  24 +-
- drivers/gpu/drm/panel/panel-simple.c               |   2 +-
- drivers/gpu/drm/rockchip/cdn-dp-core.c             |   5 +-
- drivers/hv/vmbus_drv.c                             |  10 +-
- drivers/i2c/busses/i2c-imx.c                       |   2 +-
- drivers/i2c/busses/i2c-mlxbf.c                     |  68 ++--
- drivers/iommu/intel/iommu.c                        |   2 +-
- drivers/media/usb/b2c2/flexcop-usb.c               |   2 +-
- drivers/net/bonding/bond_3ad.c                     |   5 +-
- drivers/net/bonding/bond_main.c                    |  72 ++--
- drivers/net/can/flexcan.c                          |  10 +-
- drivers/net/can/usb/gs_usb.c                       |   4 +-
- drivers/net/ethernet/broadcom/bnxt/bnxt.c          |  10 +-
- drivers/net/ethernet/freescale/enetc/Makefile      |   1 -
- drivers/net/ethernet/freescale/enetc/enetc.c       |  53 +--
- drivers/net/ethernet/freescale/enetc/enetc.h       |  12 +-
- drivers/net/ethernet/freescale/enetc/enetc_pf.c    |  32 +-
- drivers/net/ethernet/freescale/enetc/enetc_qos.c   |  23 ++
- drivers/net/ethernet/freescale/enetc/enetc_vf.c    |  17 +-
- drivers/net/ethernet/intel/i40e/i40e_main.c        |  32 +-
- drivers/net/ethernet/intel/i40e/i40e_virtchnl_pf.c |  20 +
- drivers/net/ethernet/intel/iavf/iavf_txrx.c        |   9 +-
- drivers/net/ethernet/intel/iavf/iavf_virtchnl.c    |   7 +-
- drivers/net/ethernet/intel/ice/ice_main.c          |   2 -
- .../ethernet/mellanox/mlxbf_gige/mlxbf_gige_mdio.c |   6 +
- drivers/net/ethernet/microsoft/mana/gdma_main.c    |  10 +
- drivers/net/ethernet/renesas/ravb_main.c           |   2 +
- drivers/net/ethernet/renesas/sh_eth.c              |   2 +
- drivers/net/ethernet/sfc/efx_channels.c            |   2 +-
- drivers/net/ethernet/sfc/tx.c                      |   2 +-
- drivers/net/ethernet/sun/sunhme.c                  |   4 +-
- drivers/net/ipa/ipa_qmi.c                          |   8 +-
- drivers/net/ipa/ipa_qmi_msg.c                      |   8 +-
- drivers/net/ipa/ipa_qmi_msg.h                      |  37 +-
- drivers/net/ipa/ipa_table.c                        |   2 -
- drivers/net/ipa/ipa_table.h                        |   3 +
- drivers/net/ipvlan/ipvlan_core.c                   |   6 +-
- drivers/net/mdio/of_mdio.c                         |   1 +
- drivers/net/phy/aquantia_main.c                    |  53 ++-
- drivers/net/team/team.c                            |  24 +-
- drivers/net/wireguard/netlink.c                    |  13 +-
- drivers/net/wireguard/selftest/ratelimiter.c       |  25 +-
- drivers/net/wireless/mediatek/mt76/mt7615/mac.c    |   2 +-
- drivers/s390/block/dasd_alias.c                    |   9 +-
- drivers/scsi/mpt3sas/mpt3sas_base.c                |   2 +-
- drivers/scsi/qla2xxx/qla_target.c                  |   4 +-
- drivers/staging/r8188eu/os_dep/usb_intf.c          |   2 +-
- drivers/thunderbolt/icm.c                          |   1 +
- drivers/thunderbolt/nhi.h                          |   1 +
- drivers/tty/serial/fsl_lpuart.c                    |   9 +-
- drivers/tty/serial/serial-tegra.c                  |   5 +-
- drivers/tty/serial/tegra-tcu.c                     |   2 +-
- drivers/usb/core/hub.c                             |   2 +-
- drivers/usb/dwc3/core.c                            |  17 +-
- drivers/usb/dwc3/core.h                            |   4 +
- drivers/usb/dwc3/gadget.c                          |  81 ++--
- drivers/usb/serial/option.c                        |   6 +
- fs/btrfs/disk-io.c                                 |  42 ++-
- fs/dax.c                                           |   3 +
- fs/ext4/extents.c                                  |   4 +
- fs/ext4/ialloc.c                                   |   2 +-
- fs/ext4/mballoc.c                                  |  69 ++--
- fs/nfs/delegation.c                                |  10 +-
- fs/xfs/libxfs/xfs_inode_buf.c                      |  35 +-
- fs/xfs/xfs_inode.c                                 |  22 +-
- include/asm-generic/vmlinux.lds.h                  |   3 +-
- include/linux/cpumask.h                            |   5 +-
- include/linux/serial_core.h                        |  17 +
- include/net/bond_3ad.h                             |   2 -
- include/net/bonding.h                              |   3 +
- kernel/workqueue.c                                 |   6 +-
- localversion-rt                                    |   2 +-
- mm/slub.c                                          |  18 +-
- net/bridge/netfilter/ebtables.c                    |   4 +-
- net/core/flow_dissector.c                          |   5 +-
- net/netfilter/nf_conntrack_irc.c                   |  34 +-
- net/netfilter/nf_conntrack_sip.c                   |   4 +-
- net/netfilter/nf_tables_api.c                      |   8 +-
- net/netfilter/nfnetlink_osf.c                      |   4 +-
- net/sched/cls_api.c                                |   1 +
- net/sched/sch_taprio.c                             |  18 +-
- net/smc/smc_core.c                                 |   5 +-
- sound/core/init.c                                  |  10 +-
- sound/pci/hda/hda_intel.c                          |   2 +
- sound/pci/hda/patch_hdmi.c                         |   1 +
- sound/pci/hda/patch_realtek.c                      |  32 +-
- sound/usb/endpoint.c                               |  23 +-
- sound/usb/endpoint.h                               |   6 +-
- sound/usb/pcm.c                                    |  14 +-
- tools/perf/util/bpf_skel/bperf_cgroup.bpf.c        |   2 +-
- tools/perf/util/genelf.c                           |  14 +
- tools/perf/util/genelf.h                           |   4 +
- tools/perf/util/symbol-elf.c                       |   7 +-
- tools/perf/util/synthetic-events.c                 |  17 +-
- tools/testing/selftests/net/forwarding/sch_red.sh  |   1 +
- 125 files changed, 1050 insertions(+), 845 deletions(-)
----
