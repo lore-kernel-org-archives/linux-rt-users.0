@@ -2,105 +2,100 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D52AC433FE
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Oct 2022 13:06:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 69399C433FE
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Oct 2022 13:21:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229831AbiJCNGs (ORCPT
+        id S229918AbiJCNVA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Oct 2022 09:06:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51830 "EHLO
+        Mon, 3 Oct 2022 09:21:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51432 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229446AbiJCNGr (ORCPT
+        with ESMTP id S229831AbiJCNU6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Oct 2022 09:06:47 -0400
-Received: from mail-yb1-xb2d.google.com (mail-yb1-xb2d.google.com [IPv6:2607:f8b0:4864:20::b2d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EB42A31EC4
-        for <linux-rt-users@vger.kernel.org>; Mon,  3 Oct 2022 06:06:46 -0700 (PDT)
-Received: by mail-yb1-xb2d.google.com with SMTP id o123so12993068yba.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 03 Oct 2022 06:06:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date;
-        bh=/FwfnYsBWW5yupAorqKilHEi/Pz/u6tVRbH9nfKNqL8=;
-        b=Ne1nKvjyTIT//Fw7H1jYtZvzyBuIDG9GUZm7du1V88tgJrorxJ70bR7P9rq29bv4Qg
-         umY8JAC2dxtfifRb6XyvHn8TEZzg/duqwdjfG8wm5zj8Q2Qokb4BqTMAc+qElyBdttuZ
-         91ijyDoEvqMg1ogM6/HzoBhXkJob4UArc7y5mAyZJ8L93aNnLUFjeMS+ArYnynKV902F
-         6SIRNuHhB5LLdtML6tdSvhhLej7IADe0M9tr2/WrBmDesfO5giHBl7zDNnbEcx7ctJ7S
-         pZb0NV6ryaHgW0s0k5xZevEouEivYbQ62jVR5R40EUnHBgablTY9urxricGWbEILEELD
-         bkbA==
+        Mon, 3 Oct 2022 09:20:58 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 756B639BB8
+        for <linux-rt-users@vger.kernel.org>; Mon,  3 Oct 2022 06:20:56 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1664803255;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=hVXsJIBXalnx9DWAK2vGpTAO0XTeIS5m62mJRZPuaKk=;
+        b=jAmnYn/C3wd6bR/Kcoqu4TyeC/LgaaauUk8XuVKPoehWRUXs2adEfK2dncC5UoS0/uQo3z
+        pWvcBDmfrZTXwEy0/dH7lWcRI+L3hj7v38GawinNlo+KNTULiS8BtGDDj9ix/dV9nk0I2K
+        EHR4COpCXUSxXqoFis2UyojvPwmCtJQ=
+Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
+ [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-416-UWLAwHkCORS92pDRghVpDw-1; Mon, 03 Oct 2022 09:20:54 -0400
+X-MC-Unique: UWLAwHkCORS92pDRghVpDw-1
+Received: by mail-wm1-f72.google.com with SMTP id r9-20020a1c4409000000b003b3f017f259so6284636wma.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 03 Oct 2022 06:20:54 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date;
-        bh=/FwfnYsBWW5yupAorqKilHEi/Pz/u6tVRbH9nfKNqL8=;
-        b=ase7fYhAskttsH36jmBUtft1q/GsKtUdIzwpwLuSnYcZioTdvfxLA1bIRXFwTR+tIC
-         N8h+XcUCHguSbIlrGqxLsy4WzunoFbQ5hN/k3t03b/oS6XRs5l37YNwDyFr2UiItYzEH
-         yve+lhkGPJwO6L6C6nVWMkN1Uh1BLeCADt1BWPWH7hwarUszGDK1o4YOU4eiU2ficnGz
-         /oG8R3JeiqxblZggpc+CrJ90KOFO/K690HRcXWdG95yGoOJc5RvPAcfTW8OeevRNbopQ
-         ei9u4KEqisY1+Ke5zzfiSX7QIB3N+PbbR1cKHgy708toxV+iuijd1UziynCGJIlYeNgl
-         wWKg==
-X-Gm-Message-State: ACrzQf0GMKF7ymrg5gVjCjRTvUFshW60ZLoCoIihrhAoDelGjlczzi5X
-        MO9jUETfi5zkxnUkvOYn4dJeUITTVHgLyLZHL6mYObU3evo=
-X-Google-Smtp-Source: AMsMyM6gtIOoucJEAAGtQMN4AnKOSTkxSbRUuI3JLNwxBYrubpQf49cAU/slNSEghtWqVC4tli05b7dCIr608YBYETs=
-X-Received: by 2002:a25:b87:0:b0:6bc:f027:e4ac with SMTP id
- 129-20020a250b87000000b006bcf027e4acmr14149869ybl.595.1664802406164; Mon, 03
- Oct 2022 06:06:46 -0700 (PDT)
+        h=mime-version:message-id:date:references:in-reply-to:subject:cc:to
+         :from:x-gm-message-state:from:to:cc:subject:date;
+        bh=hVXsJIBXalnx9DWAK2vGpTAO0XTeIS5m62mJRZPuaKk=;
+        b=pchlx/l2g4EGo3WfaMJ7bynXq0MHkGDRaFz0lgScMpkZFaMOytyXQHMiHTsXcrRFOx
+         MwEZgpFysgF7p1P+zFAYwhEvG6riSqVynQAd3Z0TjgPBy/ATY46n9gMx+8l7PYf/LzP8
+         LWQGzf2gvSCrr7IiGiMYHaGKD4t4rtpZGtG/wG0jVy8iBGEH7xhJX8LbcMU0juGTAfV2
+         6ZFp3WsZz27uHWhnsimoPYmhSBHixojmsGeGw833i7D32Pudc+sM7btgVUjRe5DNb/+j
+         69p3LGGT9IhCceGAuF8NNt2zkyNZaIfXQwm0lo2uwjTJW8lNCTJNnynXiUVZd7rQ2Say
+         MkNw==
+X-Gm-Message-State: ACrzQf36b8JT4iDpoY6M0NJPTNBQ4bjcoAQWMOkUahBjsY7/9gY2nvsv
+        ya2/VXlf2F7K+eAt9y9NjgszxXViGbAHfPEL0iH4RfKajBsN5dNqP7ff67zwwu6zUNCf0DwQAcW
+        nOoFnsX5GMweliPr7a5mbWh9y8FA=
+X-Received: by 2002:adf:d1e1:0:b0:22a:cd3e:e98b with SMTP id g1-20020adfd1e1000000b0022acd3ee98bmr13557953wrd.510.1664803253420;
+        Mon, 03 Oct 2022 06:20:53 -0700 (PDT)
+X-Google-Smtp-Source: AMsMyM4yziT+A7H/8++Xkk8zqP5zDeXrH0j0Cz7+uAIJmoQRJ6TFWZ9Hd0AE6hLkuUVLVWF97tjM0g==
+X-Received: by 2002:adf:d1e1:0:b0:22a:cd3e:e98b with SMTP id g1-20020adfd1e1000000b0022acd3ee98bmr13557945wrd.510.1664803253271;
+        Mon, 03 Oct 2022 06:20:53 -0700 (PDT)
+Received: from vschneid.remote.csb ([149.71.65.94])
+        by smtp.gmail.com with ESMTPSA id bh9-20020a05600005c900b0022ccbc7efb5sm9968291wrb.73.2022.10.03.06.20.51
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 03 Oct 2022 06:20:52 -0700 (PDT)
+From:   Valentin Schneider <vschneid@redhat.com>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     Baoquan He <bhe@redhat.com>, kexec@lists.infradead.org,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Eric Biederman <ebiederm@xmission.com>,
+        Arnd Bergmann <arnd@arndb.de>, Petr Mladek <pmladek@suse.com>,
+        Miaohe Lin <linmiaohe@huawei.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Juri Lelli <jlelli@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Subject: Re: [PATCH v4 0/2] kexec, panic: Making crash_kexec() NMI safe
+In-Reply-To: <20220713103933.e7510daa1c1f6ccde32f4d42@linux-foundation.org>
+References: <20220630223258.4144112-1-vschneid@redhat.com>
+ <Yszgzwnk2Y+4ki58@MiWiFi-R3L-srv>
+ <xhsmh35f68tz4.mognet@vschneid.remote.csb>
+ <20220713103933.e7510daa1c1f6ccde32f4d42@linux-foundation.org>
+Date:   Mon, 03 Oct 2022 14:20:51 +0100
+Message-ID: <xhsmho7ut2gcs.mognet@vschneid.remote.csb>
 MIME-Version: 1.0
-References: <CAEYdEeSpYW3wS=yXtsa9C0e-LmZDXNZ=AP3z33FYZKsgU7XcxQ@mail.gmail.com>
- <CAMLffL_49B2DEgTiDPg3vwL5gR-Dagvo-OBbymrBapgBJifnkw@mail.gmail.com>
-In-Reply-To: <CAMLffL_49B2DEgTiDPg3vwL5gR-Dagvo-OBbymrBapgBJifnkw@mail.gmail.com>
-From:   Brian Wrenn <dcbrianw@gmail.com>
-Date:   Mon, 3 Oct 2022 09:06:35 -0400
-Message-ID: <CAEYdEeSC=trHvAcPjN+35mF+gd_c4Bj9dVK-D9BkLM7U3gUUrg@mail.gmail.com>
-Subject: Re: Abort on boot for 5.15.7 patch RT 23
-To:     Clark Williams <williams@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Clark,
 
-just to confirm, yes, I'm using 5.15.7-rt23.
+Hi,
 
-Thank you,
-Brian
+On 13/07/22 10:39, Andrew Morton wrote:
+> On Tue, 12 Jul 2022 12:13:03 +0100 Valentin Schneider <vschneid@redhat.com> wrote:
+>
+>> On 12/07/22 10:47, Baoquan He wrote:
+>> > Hi,
+>> >
+>> > This series looks good, has it been taken into any tree?
+>> >
+>>
+>> I don't think so, briefly poked around git and haven't seen it anywhere.
+>
+> I'll stash it away for consideration after -rc1.
 
-On Fri, Sep 30, 2022 at 9:15 PM Clark Williams <williams@redhat.com> wrote:
->
-> First question is, which version of the PREEMPT_RT patch did you use?
-> For v5.15.7 you should be using the series released back in December
-> of 2021:  v5.15.7-rt23.
->
-> It looks like things went bad when booting the RT kernel while
-> initializing the cpuidle driver.  I'm suspicious of the nested locking
-> done in the genpd_* functions (and how they work with rtmutexes).  If
-> I get some time next week I'll see if I can make sense of the locking
-> done there.
->
-> Clark
->
-> On Fri, Sep 30, 2022 at 3:44 PM Brian Wrenn <dcbrianw@gmail.com> wrote:
-> >
-> > Hi,
-> >
-> > I am building a kernel from source derived from Linaro 21.12, based on
-> > linux kernel 5.15.7.  It runs on a Variscite DART SD410 dev board.
-> > When I build that kernel, it will boots successfully.  When I build
-> > the same kernel source with the PREEMPT-RT patch, it aborts during
-> > boot.  I attached console output for each case.
-> >
-> > An incompatibility between the Variscite patches and PREEMPT-RT could
-> > cause this abort, but just to cover all my bases, I'm try to rule out
-> > the PREEMPT-RT patch itself.
-> >
-> > The call trace includes RT specific routines, so I'm wondering if
-> > there are any known problems with routines in this call state, and if
-> > any fix for them exists in some way applicable to the v23 patch.
-> >
-> > Thank you for any information or leads.
-> >
-> > -Brian
->
+I've seen them in linux-next for a while, am I right in assuming they'll be
+part of a 6.1 PR?
+
