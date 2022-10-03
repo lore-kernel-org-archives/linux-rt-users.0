@@ -2,101 +2,105 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1DBEAC433FE
-	for <linux-rt-users@archiver.kernel.org>; Sat,  1 Oct 2022 01:19:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D52AC433FE
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Oct 2022 13:06:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232850AbiJABTB (ORCPT
+        id S229831AbiJCNGs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Sep 2022 21:19:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37954 "EHLO
+        Mon, 3 Oct 2022 09:06:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51830 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231758AbiJABS1 (ORCPT
+        with ESMTP id S229446AbiJCNGr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 30 Sep 2022 21:18:27 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E7D43195F50
-        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2022 18:15:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1664586924;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=o5Sm+yoW8ulpfXtWT6RkcdBhM6mj/vms7W1DqXDH4q4=;
-        b=jCfqCsxunj14rpr9tlW7WRL4Dq25Ao3Un2fQ61tcMWTp52obGMGcT1SGZqZhXNmucVipay
-        AdYHaeN0pboZ96SwLtrRGq+DJEagaZuBfPTO3SIv61ZxWZewMHUTyHen4b727OVgPWIOZf
-        PrILqGQDScsKTR1QsyjmUvOJlQJoC5w=
-Received: from mail-ed1-f72.google.com (mail-ed1-f72.google.com
- [209.85.208.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-63-Lfz4wTX8MWqdiq1SV8jCZg-1; Fri, 30 Sep 2022 21:15:22 -0400
-X-MC-Unique: Lfz4wTX8MWqdiq1SV8jCZg-1
-Received: by mail-ed1-f72.google.com with SMTP id w20-20020a05640234d400b00450f24c8ca6so4617558edc.13
-        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2022 18:15:22 -0700 (PDT)
+        Mon, 3 Oct 2022 09:06:47 -0400
+Received: from mail-yb1-xb2d.google.com (mail-yb1-xb2d.google.com [IPv6:2607:f8b0:4864:20::b2d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EB42A31EC4
+        for <linux-rt-users@vger.kernel.org>; Mon,  3 Oct 2022 06:06:46 -0700 (PDT)
+Received: by mail-yb1-xb2d.google.com with SMTP id o123so12993068yba.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 03 Oct 2022 06:06:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date;
+        bh=/FwfnYsBWW5yupAorqKilHEi/Pz/u6tVRbH9nfKNqL8=;
+        b=Ne1nKvjyTIT//Fw7H1jYtZvzyBuIDG9GUZm7du1V88tgJrorxJ70bR7P9rq29bv4Qg
+         umY8JAC2dxtfifRb6XyvHn8TEZzg/duqwdjfG8wm5zj8Q2Qokb4BqTMAc+qElyBdttuZ
+         91ijyDoEvqMg1ogM6/HzoBhXkJob4UArc7y5mAyZJ8L93aNnLUFjeMS+ArYnynKV902F
+         6SIRNuHhB5LLdtML6tdSvhhLej7IADe0M9tr2/WrBmDesfO5giHBl7zDNnbEcx7ctJ7S
+         pZb0NV6ryaHgW0s0k5xZevEouEivYbQ62jVR5R40EUnHBgablTY9urxricGWbEILEELD
+         bkbA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:x-gm-message-state:from:to:cc:subject:date;
-        bh=o5Sm+yoW8ulpfXtWT6RkcdBhM6mj/vms7W1DqXDH4q4=;
-        b=1M+A5BOEVh+tOZRNB2k2NOlPJjRCq8eSO5Cm3vPOKWK8y99cv8kv2L+C8MIZBwaZxb
-         Hrj75m+IZHMhc+g2iOGXFwi+yn7gRg51O8BVL3/KuNlvGLYVZra3LvsIt9ehcKyX/LIS
-         A+mNO8oxRe3yYslYDAo5EiIMvw0bVsEquW+lBkv06CJw1Dkh1fibsOl/T68FJCEbeSG0
-         bYw9zSPTe2MQd3bk7EA4hFg/oxaCjN1DTOyZb2t17ovyUDkdmPJ/wVLMkJTzqlkoRsmV
-         lpJgmWuVExUPBl43WWahLMNLrZLPBIGEZLkTcnGLiCcZH9yVG/qzvvWq1MiJmIPjBIG3
-         Yl4w==
-X-Gm-Message-State: ACrzQf2zsSBz7HsQxmxdWqGecylkJbWe3UHGXpjNvpJucRetWlQ2Fvhv
-        OhxJ0nxCwXCXr2KeOBk38cASTl7V/RA5pBhxkM8TR8IXHQbiC1Nzk08IYjZJ9vuHgu8MUgVEp0/
-        9GwpgZtbGzuqHGUaIBF5+xl9a68QEQHpjjA86eYFQr2c=
-X-Received: by 2002:a17:907:6d28:b0:782:32ad:7b64 with SMTP id sa40-20020a1709076d2800b0078232ad7b64mr8812204ejc.23.1664586921220;
-        Fri, 30 Sep 2022 18:15:21 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM6560DmY3MtvBHbgSR5QBSpzMDUkWcwMqV28BI5mHezGTKZ1zmK17tiVlJQw9fJ/khBhx3dhprOx5jXcYHFSwg=
-X-Received: by 2002:a17:907:6d28:b0:782:32ad:7b64 with SMTP id
- sa40-20020a1709076d2800b0078232ad7b64mr8812196ejc.23.1664586921074; Fri, 30
- Sep 2022 18:15:21 -0700 (PDT)
+        bh=/FwfnYsBWW5yupAorqKilHEi/Pz/u6tVRbH9nfKNqL8=;
+        b=ase7fYhAskttsH36jmBUtft1q/GsKtUdIzwpwLuSnYcZioTdvfxLA1bIRXFwTR+tIC
+         N8h+XcUCHguSbIlrGqxLsy4WzunoFbQ5hN/k3t03b/oS6XRs5l37YNwDyFr2UiItYzEH
+         yve+lhkGPJwO6L6C6nVWMkN1Uh1BLeCADt1BWPWH7hwarUszGDK1o4YOU4eiU2ficnGz
+         /oG8R3JeiqxblZggpc+CrJ90KOFO/K690HRcXWdG95yGoOJc5RvPAcfTW8OeevRNbopQ
+         ei9u4KEqisY1+Ke5zzfiSX7QIB3N+PbbR1cKHgy708toxV+iuijd1UziynCGJIlYeNgl
+         wWKg==
+X-Gm-Message-State: ACrzQf0GMKF7ymrg5gVjCjRTvUFshW60ZLoCoIihrhAoDelGjlczzi5X
+        MO9jUETfi5zkxnUkvOYn4dJeUITTVHgLyLZHL6mYObU3evo=
+X-Google-Smtp-Source: AMsMyM6gtIOoucJEAAGtQMN4AnKOSTkxSbRUuI3JLNwxBYrubpQf49cAU/slNSEghtWqVC4tli05b7dCIr608YBYETs=
+X-Received: by 2002:a25:b87:0:b0:6bc:f027:e4ac with SMTP id
+ 129-20020a250b87000000b006bcf027e4acmr14149869ybl.595.1664802406164; Mon, 03
+ Oct 2022 06:06:46 -0700 (PDT)
 MIME-Version: 1.0
 References: <CAEYdEeSpYW3wS=yXtsa9C0e-LmZDXNZ=AP3z33FYZKsgU7XcxQ@mail.gmail.com>
-In-Reply-To: <CAEYdEeSpYW3wS=yXtsa9C0e-LmZDXNZ=AP3z33FYZKsgU7XcxQ@mail.gmail.com>
-From:   Clark Williams <williams@redhat.com>
-Date:   Sat, 1 Oct 2022 01:15:10 +0000
-Message-ID: <CAMLffL_49B2DEgTiDPg3vwL5gR-Dagvo-OBbymrBapgBJifnkw@mail.gmail.com>
+ <CAMLffL_49B2DEgTiDPg3vwL5gR-Dagvo-OBbymrBapgBJifnkw@mail.gmail.com>
+In-Reply-To: <CAMLffL_49B2DEgTiDPg3vwL5gR-Dagvo-OBbymrBapgBJifnkw@mail.gmail.com>
+From:   Brian Wrenn <dcbrianw@gmail.com>
+Date:   Mon, 3 Oct 2022 09:06:35 -0400
+Message-ID: <CAEYdEeSC=trHvAcPjN+35mF+gd_c4Bj9dVK-D9BkLM7U3gUUrg@mail.gmail.com>
 Subject: Re: Abort on boot for 5.15.7 patch RT 23
-To:     Brian Wrenn <dcbrianw@gmail.com>
+To:     Clark Williams <williams@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-First question is, which version of the PREEMPT_RT patch did you use?
-For v5.15.7 you should be using the series released back in December
-of 2021:  v5.15.7-rt23.
+Hi Clark,
 
-It looks like things went bad when booting the RT kernel while
-initializing the cpuidle driver.  I'm suspicious of the nested locking
-done in the genpd_* functions (and how they work with rtmutexes).  If
-I get some time next week I'll see if I can make sense of the locking
-done there.
+just to confirm, yes, I'm using 5.15.7-rt23.
 
-Clark
+Thank you,
+Brian
 
-On Fri, Sep 30, 2022 at 3:44 PM Brian Wrenn <dcbrianw@gmail.com> wrote:
+On Fri, Sep 30, 2022 at 9:15 PM Clark Williams <williams@redhat.com> wrote:
 >
-> Hi,
+> First question is, which version of the PREEMPT_RT patch did you use?
+> For v5.15.7 you should be using the series released back in December
+> of 2021:  v5.15.7-rt23.
 >
-> I am building a kernel from source derived from Linaro 21.12, based on
-> linux kernel 5.15.7.  It runs on a Variscite DART SD410 dev board.
-> When I build that kernel, it will boots successfully.  When I build
-> the same kernel source with the PREEMPT-RT patch, it aborts during
-> boot.  I attached console output for each case.
+> It looks like things went bad when booting the RT kernel while
+> initializing the cpuidle driver.  I'm suspicious of the nested locking
+> done in the genpd_* functions (and how they work with rtmutexes).  If
+> I get some time next week I'll see if I can make sense of the locking
+> done there.
 >
-> An incompatibility between the Variscite patches and PREEMPT-RT could
-> cause this abort, but just to cover all my bases, I'm try to rule out
-> the PREEMPT-RT patch itself.
+> Clark
 >
-> The call trace includes RT specific routines, so I'm wondering if
-> there are any known problems with routines in this call state, and if
-> any fix for them exists in some way applicable to the v23 patch.
+> On Fri, Sep 30, 2022 at 3:44 PM Brian Wrenn <dcbrianw@gmail.com> wrote:
+> >
+> > Hi,
+> >
+> > I am building a kernel from source derived from Linaro 21.12, based on
+> > linux kernel 5.15.7.  It runs on a Variscite DART SD410 dev board.
+> > When I build that kernel, it will boots successfully.  When I build
+> > the same kernel source with the PREEMPT-RT patch, it aborts during
+> > boot.  I attached console output for each case.
+> >
+> > An incompatibility between the Variscite patches and PREEMPT-RT could
+> > cause this abort, but just to cover all my bases, I'm try to rule out
+> > the PREEMPT-RT patch itself.
+> >
+> > The call trace includes RT specific routines, so I'm wondering if
+> > there are any known problems with routines in this call state, and if
+> > any fix for them exists in some way applicable to the v23 patch.
+> >
+> > Thank you for any information or leads.
+> >
+> > -Brian
 >
-> Thank you for any information or leads.
->
-> -Brian
-
