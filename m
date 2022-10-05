@@ -2,94 +2,99 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5766AC433FE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Oct 2022 16:20:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C14AFC433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Oct 2022 16:23:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229674AbiJEQUc (ORCPT
+        id S229593AbiJEQXJ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 5 Oct 2022 12:20:32 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37500 "EHLO
+        Wed, 5 Oct 2022 12:23:09 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38208 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229450AbiJEQU3 (ORCPT
+        with ESMTP id S229674AbiJEQXH (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 5 Oct 2022 12:20:29 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.15])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 33A626C766
-        for <linux-rt-users@vger.kernel.org>; Wed,  5 Oct 2022 09:20:28 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1664986817;
-        bh=xp0YDhyK4r3237xFIDXjx45OISuXKpw7nqdyvq0OPIU=;
-        h=X-UI-Sender-Class:Date:Subject:To:Cc:References:From:In-Reply-To;
-        b=MFr9UaaSW76hvGE2KFlBfr5YA1mw5ibnCXFi9eaFIGVTl1iJvab1W4AmIyljyKmI9
-         5OM81psXSItvujmQJjqfAsf4YU6YpWh34CokET/xyoDRGLyA7o1l34pQrNk7u5OmLd
-         0Xhcfa80ZlFff5zcsn+oozy2YTWR9fyiHCIO08jA=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from [192.168.178.43] ([178.208.115.148]) by mail.gmx.net (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MHoRA-1oSLEV1CbO-00Ey9O; Wed, 05
- Oct 2022 18:20:17 +0200
-Message-ID: <ff61ad6d-a8d3-e83e-1296-bf7d1f503aeb@gmx.net>
-Date:   Wed, 5 Oct 2022 18:20:23 +0200
+        Wed, 5 Oct 2022 12:23:07 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A55746DAE3
+        for <linux-rt-users@vger.kernel.org>; Wed,  5 Oct 2022 09:23:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1664986985;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=U5fCIEPw1aPUARhX0jj6r5TlOkSXtlor22k7XPUIU3k=;
+        b=S868gzVur9mKniCsl/9bbvJesPcPFGg0KbaGps8O91qAl4t6IRkAWSFEyudZFqjCPVFCbz
+        ORLKP8cfDQgP3rbEzIflgxB847VhP0iHvq5RQMLAfoq2Jf6JlZh+2vUJ26In1U4fc8Ebba
+        jn/PCOvak1fi5YVUaOjJR62DiPpfwGw=
+Received: from mail-ed1-f70.google.com (mail-ed1-f70.google.com
+ [209.85.208.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-391-y4NY_OEtN5eGiRFifrlUJg-1; Wed, 05 Oct 2022 12:23:04 -0400
+X-MC-Unique: y4NY_OEtN5eGiRFifrlUJg-1
+Received: by mail-ed1-f70.google.com with SMTP id w2-20020a056402268200b00458ef2a5a4eso7579855edd.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 05 Oct 2022 09:23:04 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date;
+        bh=U5fCIEPw1aPUARhX0jj6r5TlOkSXtlor22k7XPUIU3k=;
+        b=EtRfxH1sCc87quPpx6XgfIloiZMZu8Adz2IE7xni1NdAMpAE7VK9fTh53CWp1toXqF
+         LGJDPT3FfT1BMLESE6qPWCt6iWwE/jeWH/7z/Gf7/IGVHqiEj8OkePHbyJjYZex9mdNm
+         8iyFP9PmIS/cyESLdnrv8gJW935tJVwle1ttMXJNShfYTqVUfwE5BwS39I1mIp7s6oGX
+         3VVXW5M+jt6IAeTdt56fn+xTrn+8V2HiRU+4UFmdDJilLbvGzC4zKlhZAEBTslAObQfI
+         wfMHKI5c07+pcqwbvmTzko0chiP9exLr580Y2WmuSuoNomynLwNSkfuyS7VSQvmCIy2j
+         A+fQ==
+X-Gm-Message-State: ACrzQf1rpD/GVGL+Fv9VEB5DrU6lTkfvbCygyQYi8zTesnyuBT+n6nal
+        2UVW1hneElfA6bt0Z/TYZkZodw1VPwzZrTaNfEcbAaBfo9mdB7QRM4fDOSKQtC6a65l8PNLUK/x
+        s1a7z5+rJwfvkGX0cIOH0YtuudSQ=
+X-Received: by 2002:a17:907:628a:b0:781:bbff:1d42 with SMTP id nd10-20020a170907628a00b00781bbff1d42mr291996ejc.375.1664986983256;
+        Wed, 05 Oct 2022 09:23:03 -0700 (PDT)
+X-Google-Smtp-Source: AMsMyM4NkPHReT/IB19B7fIOqVIaCHCfvlLaDjcDYyTNVfanyGv3RR+V0wHd12EQ1ySu+lJtmQRr9g==
+X-Received: by 2002:a17:907:628a:b0:781:bbff:1d42 with SMTP id nd10-20020a170907628a00b00781bbff1d42mr291984ejc.375.1664986983079;
+        Wed, 05 Oct 2022 09:23:03 -0700 (PDT)
+Received: from [192.168.0.198] (host-79-50-96-115.retail.telecomitalia.it. [79.50.96.115])
+        by smtp.gmail.com with ESMTPSA id la3-20020a170907780300b00781dbdb292asm8834364ejc.155.2022.10.05.09.23.02
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 05 Oct 2022 09:23:02 -0700 (PDT)
+Message-ID: <6b79b2f3-7ec9-88e9-48e4-71c6ec85b7db@redhat.com>
+Date:   Wed, 5 Oct 2022 18:23:02 +0200
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
- Thunderbird/91.13.1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.2.1
 Subject: Re: Regression (latency spike) between 5.16.2-rt19 and 5.17.1-rt17
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Language: en-US
+To:     Florian Paul Schmidt <mista.tapas@gmx.net>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     linux-rt-users@vger.kernel.org
 References: <565463ae-b86e-357d-962b-89d2a151ac73@gmx.net>
  <Yz2HQlzZ491HtOm+@linutronix.de>
-From:   Florian Paul Schmidt <mista.tapas@gmx.net>
-In-Reply-To: <Yz2HQlzZ491HtOm+@linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:OHbtmkkZt3f+K8ORVjjw3HdD2ir6wgJFe/d3AMw1wERYMzaz1Wv
- V8/sawbcOe8DvwryTpBnuND0tSF74lcz+aL0+DQQjPkwUgizqMn7+AL91D6norCA1Q/pfTB
- wMO8TtQzSdh9rICLsaG+PWSScG8l+wbzxcs/j5atkGqEnlBrZUA7aNcgxrOxc8fLBnrE1nn
- RewuK8AwgX8PGfmxp4glw==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:no2lDiShx2U=:Hatfd5grRh22jyI2jTOsA+
- Bee2UcLDN+mizTc/aWhBc/6VR5QH+W2YoBBK1vP00I/H9sQLkKM6J1oecKFSCBTh81IGpPBCH
- K5WV2R+J19guzytBKsv6aPMsgpmhi/oEasEScqhlgt3r54hoP6mUNItvFADKTkO9K1c3+Vdr8
- xn66REDjiQzQU5USZdPxmKFq15NZ/Hr4hbi8swSUKNjulXwS3aaQPUSXlzksjKXyjAAtZwyfQ
- 1/qkH2UIH+sarw8jW5tnTU3cD0yClBmDYJ5onI4+0RRe8v/GUts3HFatALOhN0PSHTZ6bz69M
- wqTs1ppufhAz+CzgJq8dP2ac4MWeSX1Zfy920UejjLEfQrVPBKJr3AOYWbm4P3+d0M8eooyvR
- ESbcGPMw1tidXht9yg2qcoVBAVz08jWdk2unYMDA0ywRlq/gr4w26CZETzAjQ0CgRA0Ictamv
- sdWajBQfkanh3HLxA+yqW+BLTnunH/AGyTH5vdsm5cVjVvhQcN4OtlCMTrx/+hdF2zHbCKQlr
- 5G+xpUUJ0uiVCruwEZNGsGHucj9viLjxwNYqEH8r4pqYTOFrEFMvHrqgm5GOyejFF/5qYcSXu
- yxT2FKFO4g/tTmrMGVqE6NRzi+9wjg2+YJA0rRpX8kl/qnHfY8g534vTKmNUeHOzreHzlLhbY
- 4t42k7rtQkcAcj4nRjT6Dz+G4LaH1CLQ4KvEk//ZfLpeTZ+/k5jpfYBhrfS7mck9S2gMZUnKi
- B5oxCVoB08CZtMzJmejBSjgUDFDKf0kI1CJjI0MZWWuVxR5pcbIEtFLryl0FQFhFFBWs5iOCZ
- ZAXRASK+edWXsDAW+Fv1+ER2VMPCH9HovSyYOySPw+u/WVhceccS7lgDQQqkvzW4TAWZaZsZr
- dg5ZA2nu/dcmo0Obl1crqhIEFPJMEYUpnq6ZTjmpXb8VFl2i8MjLqswJj3zmnX52xTRr+UYre
- dO6j0mdlVgJrDJBNfgjbRmJ1Srp/6qpife1qR7im1pPvB5LCHntlFRJMf4cAulM0vkQe5GL7/
- TxG6n9YnaDkFxAsE0pPE+xPIckQ3VtIWRv8AOFZJR7aAyF4inbGZSnGqguqtbZHrnZWwZUSXR
- SdDFeI3EZvxjWDQW5gh89/PLNEUE2zwFsgsroVwsaDgW27B/i3g4qQEZACUyfi7BQfGWw7A25
- V6gI1M6fHOs8XiLPfoERHLLcxr
+ <5675da76-80ba-5708-e022-2385e3b56fad@redhat.com>
+ <9a950f2b-94c2-7dad-51f2-545aa37850c2@gmx.net>
+From:   Daniel Bristot de Oliveira <bristot@redhat.com>
+In-Reply-To: <9a950f2b-94c2-7dad-51f2-545aa37850c2@gmx.net>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 10/5/22 18:17, Florian Paul Schmidt wrote:
+>> try:
+>> # timerlat -a 100
+>>
+>> wait for it to stop and save the trace. Then see what the trace points out at the
+>> end of the trace.
+> 
+> What package contains the timerlat command? I gathered from searching
+> online for timerlat that it is part of the tracing machinery but I
+> didn't find the executable itself..
 
+on fedora it is part of rtla, but you can compile it from the kernel source:
 
-Am 05/10/2022 um 15:31 schrieb Sebastian Andrzej Siewior:
-> On 2022-10-05 09:46:30 [+0200], Florian Paul Schmidt wrote:
->> 5.19-rt10    has the problem
->> 5.17.1-rt17  has the problem
->> 5.16.2-rt19  does not have the problem
->
-> Could you check v5.17-rc1-rt1? Maybe it was introduced in v5.17 cycle.
+$ cd tools/tracing/rtla/
+$ make 
+$ sudo make install
 
-Will do!
+-- Daniel
 
->> I would possibly be willing to git bisect the issue. But I am a little
->> bit confused about how to go about that. What repo/tree would I
->> precisely bisect (I am using the the patch tarballs from
->> https://cdn.kernel.org/pub/linux/kernel/projects/rt/)?
->
-> if it got introduced post v5.17-rc1-rt1 then we could try to bisect it.
-> Otherwise we would have to trace it. Since the latency spike is huge, it
-> should be easy to spot.
-
-Will try and see if I get the tracing working afterwards (will take a
-while - slow PC) :)
-
-Kind regards,
-FPS
