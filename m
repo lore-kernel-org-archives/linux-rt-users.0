@@ -2,246 +2,108 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B440DC433F5
-	for <linux-rt-users@archiver.kernel.org>; Tue,  4 Oct 2022 19:04:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C7CA4C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Oct 2022 07:46:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229468AbiJDTEz (ORCPT
+        id S229905AbiJEHqf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 4 Oct 2022 15:04:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46564 "EHLO
+        Wed, 5 Oct 2022 03:46:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35000 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229482AbiJDTEx (ORCPT
+        with ESMTP id S229821AbiJEHqd (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 4 Oct 2022 15:04:53 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5BF0DB491
-        for <linux-rt-users@vger.kernel.org>; Tue,  4 Oct 2022 12:04:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1664910289;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=gWqqe6UjWorS26gNc71GWFj9RqbIyOX3Bnthp6LoLeI=;
-        b=g0KsTeUi+z55Xloc9GZSuUeG0DFnQk9ecuVczx9x6V5NjU4FT8Gzd0wVtP14dHaJhOiU/x
-        CzHTULDZw98IoCPHkObvNFayWAosmf/g96ooh+laOXj0dxe27BpLNbAQ3cMRHkPCHw46p/
-        QnHBuWLhzdcnu/BDsP6vHuVf8XDA1mo=
-Received: from mail-lf1-f70.google.com (mail-lf1-f70.google.com
- [209.85.167.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-296-ChMUXc_rO1SjQKxBD8r80w-1; Tue, 04 Oct 2022 15:04:48 -0400
-X-MC-Unique: ChMUXc_rO1SjQKxBD8r80w-1
-Received: by mail-lf1-f70.google.com with SMTP id u3-20020a056512094300b00497a14e7589so5460773lft.12
-        for <linux-rt-users@vger.kernel.org>; Tue, 04 Oct 2022 12:04:48 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date;
-        bh=gWqqe6UjWorS26gNc71GWFj9RqbIyOX3Bnthp6LoLeI=;
-        b=bezis3nFpaB/3LE6k0HmepYy9gapR+Zc2WQx2iESlLzZpSGF0ZfpKIAKh9ZZmhy0EO
-         cqjGJp/r22+0TBkoPVSC9xSbQ6dn55gsXLXYn+lUPFjY46oK3VO5efuzzsox0laiq8TE
-         kEZuhuJgqvfg8pxUTTD28F0E7D+qeR42yMVasP91rBTM3pD5gLqefe+HfTIuDEwXjAqA
-         ijE0n9rAowoJrcaxX4Z/cwyNU6/H581GhRlMeOhdn3E4GUybyILChpI4ocpcqMMKi42h
-         V/CRuQOLr2DmXTihtsLwlP8IvfihVzaP1FGD48FNnlnG2lUPNLuElEL3ZZ4AZfO6v+PA
-         eoLQ==
-X-Gm-Message-State: ACrzQf2j0ZvE4EOM5QdPmA2JXvt5Sl7uy65ObKeiqNkgYdK4n/2uP268
-        +LxIvPffXzMPyXuNstMU4DEelBa1XJuytailOiGRULqk4QJ3Gn7/hvlnXEowH6OehQqbaD7M9Hm
-        O1F1mZRC+5DxD+TlQ74Lat1Ubjv04AOfYJT/q6NO3xrs=
-X-Received: by 2002:a05:6512:130a:b0:4a1:d80d:95e with SMTP id x10-20020a056512130a00b004a1d80d095emr8901833lfu.565.1664910287175;
-        Tue, 04 Oct 2022 12:04:47 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM4ogd5ijoEpw1AiozrvY5jmHKlIZk//9m8NsD9zIFSXqft1Dc0NvuEsWm5Y4sL2oY8VrPXhr3AlA1qVEMVwgmE=
-X-Received: by 2002:a05:6512:130a:b0:4a1:d80d:95e with SMTP id
- x10-20020a056512130a00b004a1d80d095emr8901825lfu.565.1664910286905; Tue, 04
- Oct 2022 12:04:46 -0700 (PDT)
+        Wed, 5 Oct 2022 03:46:33 -0400
+Received: from mout.gmx.net (mout.gmx.net [212.227.17.22])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 88F0C5815E
+        for <linux-rt-users@vger.kernel.org>; Wed,  5 Oct 2022 00:46:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1664955990;
+        bh=9+OLwu+Ykg1lrOEjzly8CyAHBf0ig+IzX8B+bA81b1c=;
+        h=X-UI-Sender-Class:Date:To:From:Subject;
+        b=AdoULsW2n7+k0JmMy3cMFK+bhtaNNfL1rWF+TeWwbZXK1/bbe1XXIqt9yHj7d8+uG
+         Zrshi8sLWwts9YDxm3Q4/4OydVz9VQ4F4XbwFIyIc6CTnQGclrEoatTI5eAAPniaqi
+         0ZIa2ltUiPtmMNRqj5F8cJ06ofdQz60ELdPT9O7I=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from [129.70.76.171] ([129.70.76.171]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MiaYJ-1pA4av2Fl9-00fh7M for
+ <linux-rt-users@vger.kernel.org>; Wed, 05 Oct 2022 09:46:30 +0200
+Message-ID: <565463ae-b86e-357d-962b-89d2a151ac73@gmx.net>
+Date:   Wed, 5 Oct 2022 09:46:30 +0200
 MIME-Version: 1.0
-References: <CAEYdEeSpYW3wS=yXtsa9C0e-LmZDXNZ=AP3z33FYZKsgU7XcxQ@mail.gmail.com>
- <20221003201010.bebxyq7blirp5kfs@halaney-x13s> <CAEYdEeTdT0T6qmn+b4xG2o4g3OYHApbw4wSXP5a-7YBQ8YCu+A@mail.gmail.com>
-In-Reply-To: <CAEYdEeTdT0T6qmn+b4xG2o4g3OYHApbw4wSXP5a-7YBQ8YCu+A@mail.gmail.com>
-From:   Clark Williams <williams@redhat.com>
-Date:   Tue, 4 Oct 2022 19:04:35 +0000
-Message-ID: <CAMLffL-8_aqTr1GTR=oTjFRXXMg2g3UgvJrpQPfJ7uBcVcj8Rg@mail.gmail.com>
-Subject: Re: Abort on boot for 5.15.7 patch RT 23
-To:     Brian Wrenn <dcbrianw@gmail.com>
-Cc:     Andrew Halaney <ahalaney@redhat.com>,
-        linux-rt-users@vger.kernel.org, athierry@redhat.com
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.3.0
+Content-Language: en-US
+To:     linux-rt-users@vger.kernel.org
+From:   Florian Paul Schmidt <mista.tapas@gmx.net>
+Subject: Regression (latency spike) between 5.16.2-rt19 and 5.17.1-rt17
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:ijobFdtcXNxEBk7fZEKSmfhIC2f2EZ+mTnjQyp9ASMgCT5RPMNP
+ 6pCkfJWSKM88gqOowciVkTLa82HvQ6IuBZorLdC5vQutZMQO95c4A+Ibniki5KoMB3WKqmp
+ 0bPD31F7rC7ez4g7cnIUvwVtd804bISqQl4Dxmdi11/q5W7PCSUAzhKCLNbDJ0w5YJarf1O
+ q5X3D3KwA8k19fzPUlFNw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:cyIUzoPKa/M=:j3ihkjzsuH8OLEz1BQdDt+
+ +4gnC1Zv9Pt+U0lsBpqUyWKQoLcbToFxBaCqmLZpkVkUeXDGYp0DKKFZSkjNW0O1DofhkcPIa
+ crariVDLLxMqpZk6JmFobBPX2yqvwv6/uE5Vxjtq7Ziu8YUzwYEKb68qrlYtzgaKHlqq5rZt1
+ GDEQSKrg+PIIMUGXvTpnaut5q5RzDDChcs/OqgZME3la0i4xIp21W00+A5gkSbcGGz7KnbBjp
+ S0Ll6Y/u9sBjtzeqnGBPQFvAuW39hG0J/GXtp8/1RuB0Acb+QknfSh4pAvusxeqQCqTnOQH4e
+ eVrKzbmprUWtXsmcO5VLt3huOBh7t2YQLECPRQ+hMemZ6bty4eePFp8V/giWfsqIDNrlItoAf
+ HjcRxOmfmI/zVGruY1EIK/7Ly/zOOYYK1bSqfddGLG5rRVECdX2517QuHHhjgb9zideBs8EMK
+ LRB6GIwPTjGY2UIc+DiwgCYK8s1VOZtb3i/Nf28Kpe8DRDzV8xx7RRGHQLn3zk4T1PoGAKdml
+ DU8GMI/TwyifnsdBr6KHZ7bbPL8UUTG//uRF3tEl6u4zIRYT4pwBfgTh/tdZtgX8eJi4/ZLgX
+ v2nK2UEt/KfZ8HUz1lU2Jhk5NaYWh0/7y+wFBiWcnl/zyY7u5K7SsCFytGN02j6BTqnsHodN8
+ ZmKwSILlk8+xUS6ATTXVWW8AOMpWN3JnLK4ZIGKWaUZd+wwwWf+G3Lg19fdFjxHtMP4h0S9Vs
+ yzOunU1fvftbN1Syf1eGV5L2vnTFbbzbcisi5mu2IFqLc2WLq2L42LZwy6ZrTHCdAz3Dfgnt6
+ 7GyhVbwDn414TKmW00Y0q0JJziFtqR2GlqdpIf5hfzcb6Opke10nDV793rZPQQdDG1AZIGSpO
+ cvHfECPGg5YhybYHh+UCM/EzlBT4pxFJMISnonmK2bshLXn2NHzxE7Ho4BJHZFJZmy2Tpks1F
+ HOAFsB/pY4nhdTyvwmOOdASpd+S+pzJNYjXoA/ue/jUOvj+nJQpb3hQ4zkzbM7sgoKyc4Hu1m
+ pMIk2AaKbNTXBBbMZszueFZMOe+QRaltgpzW6yihOorNndpoZkxwFrHO4HSKbD5Cmj9GXT0Pg
+ hkgQGlJfEQWBSgs0BPanK3H/i7O/fEWYkDBZd4fsFYE8bth5uYJvcjMv8QhVOO+7qlcbaIhf6
+ M4bnJpKWpD/+8wHAnGqpYasSTk
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I was going to tell you that I'd successfully booted and run
-5.15.7-rt23 on my Honeycomb board, but after talking with Andrew
-realized that I wasn't going through the same code paths on boot
-(Honeycomb is uefi/acpi, your board is DT). Glad Andrew's suggestion
-works for you.
 
-I might suggest you taking the changes built on top of 5.15.7-rt23 and
-try rebasing them onto the head of the v5.15-rt stable tree, which
-should be v5.15.71-rt51.  Lots of fixes available there
+Dear rt-users,
 
-Clark
+I was happily using kernel version 5.4.84-rt47 on this Celeron j4125
+system (all power management and cpu frequency scaling disabled in bios)
+and it was working great. Worst case cyclictest latency was around 30 to
+40 us depending on system load.
 
-On Tue, Oct 4, 2022 at 4:00 PM Brian Wrenn <dcbrianw@gmail.com> wrote:
->
-> Hi Andrew,
->
-> thank you for the suggestion.  I tried that.  The devboard boots into
-> the PREEMPT-RT kernel.  I've still got some other problems to resolve,
-> but those seem to be rooted elsewhere.
->
-> -Brian
->
-> On Mon, Oct 3, 2022 at 4:10 PM Andrew Halaney <ahalaney@redhat.com> wrote:
-> >
-> > Hey Brian,
-> >
-> > On Fri, Sep 30, 2022 at 11:43:11AM -0400, Brian Wrenn wrote:
-> > > Hi,
-> > >
-> > > I am building a kernel from source derived from Linaro 21.12, based on
-> > > linux kernel 5.15.7.  It runs on a Variscite DART SD410 dev board.
-> > > When I build that kernel, it will boots successfully.  When I build
-> > > the same kernel source with the PREEMPT-RT patch, it aborts during
-> > > boot.  I attached console output for each case.
-> > >
-> > > An incompatibility between the Variscite patches and PREEMPT-RT could
-> > > cause this abort, but just to cover all my bases, I'm try to rule out
-> > > the PREEMPT-RT patch itself.
-> > >
-> > > The call trace includes RT specific routines, so I'm wondering if
-> > > there are any known problems with routines in this call state, and if
-> > > any fix for them exists in some way applicable to the v23 patch.
-> >
-> > I've seen these backtraces before, but unfortunately don't have a proper
-> > fix to point you to.
-> >
-> > > Format: Log Type - Time(microsec) - Message - Optional Info
-> > > Log Type: B - Since Boot(Power On Reset),  D - Delta,  S - Statistic
-> > > S - QC_IMAGE_VERSION_STRING=BOOT.BF.3.0-00288
-> > > S - IMAGE_VARIANT_STRING=HAAAANAZA
-> > > S - OEM_IMAGE_VERSION_STRING=CRM
-> > > S - Boot Config, 0x000002e3
-> > <snip>..
-> > > [    0.882843] BUG: scheduling while atomic: swapper/2/0/0x00000002
-> > > [    0.882858] Modules linked in:
-> > > [    0.882867] CPU: 2 PID: 0 Comm: swapper/2 Not tainted 5.15.7-qcomlt-arm64 #3
-> > > [    0.882876] Hardware name: Variscite LTD. VAR-DART410 HDMI (DT)
-> > > [    0.882881] Call trace:
-> > > [    0.882883]  dump_backtrace+0x0/0x1e8
-> > > [    0.882902]  show_stack+0x18/0x28
-> > > [    0.882911]  dump_stack_lvl+0x68/0x84
-> > > [    0.882922]  dump_stack+0x18/0x34
-> > > [    0.882941]  __schedule_bug+0x54/0x78
-> > > [    0.882958]  __schedule+0x730/0x838
-> > > [    0.882972]  schedule_rtlock+0x28/0x58
-> > > [    0.882986]  rtlock_slowlock_locked+0x228/0xcc8
-> > > [    0.882998]  rt_spin_lock+0x7c/0xa8
-> > > [    0.883013]  genpd_lock_nested_spin+0x1c/0x30
-> > > [    0.883030]  genpd_power_off+0x18c/0x278
-> > > [    0.883045]  genpd_runtime_suspend+0x1ec/0x300
-> > > [    0.883062]  __rpm_callback+0x44/0x130
-> > > [    0.883077]  rpm_callback+0x6c/0x78
-> > > [    0.883094]  rpm_suspend+0xdc/0x470
-> > > [    0.883105]  __pm_runtime_suspend+0x5c/0xa8
-> > > [    0.883121]  __psci_enter_domain_idle_state.isra.5+0x54/0xe0
-> > > [    0.883139]  psci_enter_domain_idle_state+0x18/0x28
-> > > [    0.883153]  cpuidle_enter_state+0x25c/0x300
-> > > [    0.883170]  cpuidle_enter+0x3c/0x58
-> > > [    0.883179]  call_cpuidle+0x30/0x58
-> > > [    0.883188]  do_idle+0x248/0x2a0
-> > > [    0.883195]  cpu_startup_entry+0x24/0x70
-> > > [    0.883203]  secondary_start_kernel+0x1b8/0x1e8
-> > > [    0.883212]  __secondary_switched+0x90/0x94
-> > > [    0.883227] bad: scheduling from the idle thread!
-> > > [    0.883231] CPU: 2 PID: 0 Comm: swapper/2 Tainted: G        W         5.15.7-qcomlt-arm64 #3
-> > > [    0.883239] Hardware name: Variscite LTD. VAR-DART410 HDMI (DT)
-> > > [    0.883243] Call trace:
-> > > [    0.883244]  dump_backtrace+0x0/0x1e8
-> > > [    0.883254]  show_stack+0x18/0x28
-> > > [    0.883262]  dump_stack_lvl+0x68/0x84
-> > > [    0.883272]  dump_stack+0x18/0x34
-> > > [    0.883281]  dequeue_task_idle+0x30/0x60
-> > > [    0.883290]  __do_set_cpus_allowed+0x108/0x1e0
-> > > [    0.883299]  __schedule+0x778/0x838
-> > > [    0.883305]  schedule_rtlock+0x28/0x58
-> > > [    0.883311]  rtlock_slowlock_locked+0x228/0xcc8
-> > > [    0.883319]  rt_spin_lock+0x7c/0xa8
-> > > [    0.883326]  genpd_lock_nested_spin+0x1c/0x30
-> > > [    0.883333]  genpd_power_off+0x18c/0x278
-> > > [    0.883340]  genpd_runtime_suspend+0x1ec/0x300
-> > > [    0.883348]  __rpm_callback+0x44/0x130
-> > > [    0.883357]  rpm_callback+0x6c/0x78
-> > > [    0.883364]  rpm_suspend+0xdc/0x470
-> > > [    0.883371]  __pm_runtime_suspend+0x5c/0xa8
-> > > [    0.883379]  __psci_enter_domain_idle_state.isra.5+0x54/0xe0
-> > > [    0.883388]  psci_enter_domain_idle_state+0x18/0x28
-> > > [    0.883395]  cpuidle_enter_state+0x25c/0x300
-> > > [    0.883401]  cpuidle_enter+0x3c/0x58
-> > > [    0.883408]  call_cpuidle+0x30/0x58
-> > > [    0.883420]  do_idle+0x248/0x2a0
-> > > [    0.883437]  cpu_startup_entry+0x24/0x70
-> > > [    0.883449]  secondary_start_kernel+0x1b8/0x1e8
-> > > [    0.883458]  __secondary_switched+0x90/0x94
-> > > [    0.883470] Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000
-> > > [    0.883475] Mem abort info:
-> > > [    0.883476]   ESR = 0x86000006
-> > > [    0.883480]   EC = 0x21: IABT (current EL), IL = 32 bits
-> > > [    0.883484]   SET = 0, FnV = 0
-> > > [    0.883487]   EA = 0, S1PTW = 0
-> > > [    0.883490]   FSC = 0x06: level 2 translation fault
-> > > [    0.883494] user pgtable: 4k pages, 48-bit VAs, pgdp=0000000084c5b000
-> > > [    0.883499] [0000000000000000] pgd=080000008547a003, p4d=080000008547a003, pud=080000008547b003, pmd=0000000000000000
-> > > [    0.883513] Internal error: Oops: 86000006 [#1] PREEMPT_RT SMP
-> > > [    0.883518] Modules linked in:
-> > > [    0.883523] CPU: 2 PID: 0 Comm: swapper/2 Tainted: G        W         5.15.7-qcomlt-arm64 #3
-> > > [    0.883530] Hardware name: Variscite LTD. VAR-DART410 HDMI (DT)
-> > > [    0.883534] pstate: 000000c5 (nzcv daIF -PAN -UAO -TCO -DIT -SSBS BTYPE=--)
-> > > [    0.883542] pc : 0x0
-> > > [    0.883547] lr : __do_set_cpus_allowed+0x140/0x1e0
-> > > [    0.883558] sp : ffff800012573930
-> > > [    0.883560] x29: ffff800012573930 x28: ffff00000322d588 x27: 0080000000000000
-> > > [    0.883571] x26: ffff8000124bb000 x25: ffff000002960670 x24: ffff800011116528
-> > > [    0.883581] x23: ffff80001113ae50 x22: 0000000000000002 x21: ffff000002960000
-> > > [    0.883591] x20: ffff000002a10000 x19: ffff00003fc91580 x18: ffffffffffffffff
-> > > [    0.883601] x17: 000000040044ffff x16: 00400032b5503510 x15: ffff8000119b0ea8
-> > > [    0.883611] x14: 0000000000000000 x13: ffff80001257335c x12: 656c646920656874
-> > > [    0.883621] x11: ffff800012573260 x10: 000000000000000a x9 : 00000000ffffffd0
-> > > [    0.883631] x8 : 000000000000000a x7 : 000000000000001e x6 : ffff8000121cbfb8
-> > > [    0.883641] x5 : ffff000002960a28 x4 : 0000000000000000 x3 : 0000000000000000
-> > > [    0.883650] x2 : 000000000000000a x1 : ffff000002960000 x0 : ffff00003fc91580
-> > > [    0.883661] Call trace:
-> > > [    0.883663]  0x0
-> > > [    0.883668]  __schedule+0x778/0x838
-> > > [    0.883676]  schedule_rtlock+0x28/0x58
-> > > [    0.883685]  rtlock_slowlock_locked+0x228/0xcc8
-> > > [    0.883693]  rt_spin_lock+0x7c/0xa8
-> > > [    0.883706]  genpd_lock_nested_spin+0x1c/0x30
-> > > [    0.883721]  genpd_power_off+0x18c/0x278
-> > > [    0.883729]  genpd_runtime_suspend+0x1ec/0x300
-> > > [    0.883736]  __rpm_callback+0x44/0x130
-> > > [    0.883744]  rpm_callback+0x6c/0x78
-> > > [    0.883751]  rpm_suspend+0xdc/0x470
-> > > [    0.883759]  __pm_runtime_suspend+0x5c/0xa8
-> > > [    0.883766]  __psci_enter_domain_idle_state.isra.5+0x54/0xe0
-> > > [    0.883775]  psci_enter_domain_idle_state+0x18/0x28
-> > > [    0.883783]  cpuidle_enter_state+0x25c/0x300
-> > > [    0.883789]  cpuidle_enter+0x3c/0x58
-> > > [    0.883795]  call_cpuidle+0x30/0x58
-> > > [    0.883804]  do_idle+0x248/0x2a0
-> > > [    0.883812]  cpu_startup_entry+0x24/0x70
-> > > [    0.883820]  secondary_start_kernel+0x1b8/0x1e8
-> > > [    0.883828]  __secondary_switched+0x90/0x94
-> > > [    0.883843] Code: bad PC value
-> > > [    0.883850] ---[ end trace 0000000000000002 ]---
-> >
-> > Here's where Adrien poked at it a little:
-> >
-> >     https://lore.kernel.org/all/20220615203605.1068453-1-athierry@redhat.com/
-> >
-> > As a dirty workaround you could disable CONFIG_ARM_PSCI_CPUIDLE in your
-> > config.
-> >
-> > Thanks,
-> > Andrew
-> >
->
+Due to some USB fixes landing in 5.14 I went and tried upgrading my
+kernel. I started with 5.19-rt10 but something weird showed up:
+cyclictest reported _huge_ latencies on one of the four cores (thread 1
+of cyclictest) of around 700 us. So I went back to my old kernel to make
+sure it really was the kernel and sure thing. The old kernel still had
+the nice 30 to 40 us worst case latencies I determined previously. So I
+went through some kernel versions:
 
+5.19-rt10    has the problem
+5.17.1-rt17  has the problem
+5.16.2-rt19  does not have the problem
+
+So I would guess somewhere between 5.16.2-rt19 and 5.17.1-rt17 something
+horrible happened ;)
+
+Maybe interesting fact: It is always thread 1 of cyclictest that shows
+the large latency. The other threads are seemingly completely in-line
+with the expectation of 30 - 40 us.
+
+Here's my cyclictest command:
+
+sudo ./cyclictest -m -p 95 -S -M
+
+cyclictest at stable/v1.0
+
+I would possibly be willing to git bisect the issue. But I am a little
+bit confused about how to go about that. What repo/tree would I
+precisely bisect (I am using the the patch tarballs from
+https://cdn.kernel.org/pub/linux/kernel/projects/rt/)?
+
+Kind regards,
+FPS
+
+=2D-
+https://fps.io
