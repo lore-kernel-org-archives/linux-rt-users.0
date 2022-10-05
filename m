@@ -2,108 +2,140 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C7CA4C433F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Oct 2022 07:46:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66467C433F5
+	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Oct 2022 08:43:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229905AbiJEHqf (ORCPT
+        id S229591AbiJEIno (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 5 Oct 2022 03:46:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35000 "EHLO
+        Wed, 5 Oct 2022 04:43:44 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47938 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229821AbiJEHqd (ORCPT
+        with ESMTP id S229941AbiJEInk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 5 Oct 2022 03:46:33 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.22])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 88F0C5815E
-        for <linux-rt-users@vger.kernel.org>; Wed,  5 Oct 2022 00:46:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1664955990;
-        bh=9+OLwu+Ykg1lrOEjzly8CyAHBf0ig+IzX8B+bA81b1c=;
-        h=X-UI-Sender-Class:Date:To:From:Subject;
-        b=AdoULsW2n7+k0JmMy3cMFK+bhtaNNfL1rWF+TeWwbZXK1/bbe1XXIqt9yHj7d8+uG
-         Zrshi8sLWwts9YDxm3Q4/4OydVz9VQ4F4XbwFIyIc6CTnQGclrEoatTI5eAAPniaqi
-         0ZIa2ltUiPtmMNRqj5F8cJ06ofdQz60ELdPT9O7I=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from [129.70.76.171] ([129.70.76.171]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MiaYJ-1pA4av2Fl9-00fh7M for
- <linux-rt-users@vger.kernel.org>; Wed, 05 Oct 2022 09:46:30 +0200
-Message-ID: <565463ae-b86e-357d-962b-89d2a151ac73@gmx.net>
-Date:   Wed, 5 Oct 2022 09:46:30 +0200
+        Wed, 5 Oct 2022 04:43:40 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9FA9F74DCD;
+        Wed,  5 Oct 2022 01:43:39 -0700 (PDT)
+Date:   Wed, 5 Oct 2022 10:43:34 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1664959417;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=YUhdeTLnxdYmOvPifFFeBXKgsqaD5X82FItEAMBhlJs=;
+        b=jf1ERVTQJq95KzHJs4mQ+Ex9Nk5qcqDGUzkVtDWaoryRrOW4Q2l+IjAB9/Weqb6sHIt+zp
+        Bi2QV5GHqGM7pIB1Fn8OZ8DLHDr9w5KDspoAcTyF+QvnE49P8N70vAcX+UIpBeDuTEzPe/
+        JuWIaLbxJMVV83FfNH/8AsvjH5JFi/HEgp6VgIZhHYy+JBjKdyuaRJVkaepkkTJpH/AV+W
+        f/O3YI54rgWEGeXZYtbcnPRNgBl120CNo5H8Q288uX75xCOxcyu1JiKeRty4lVydn1g/BK
+        4rHMH/Sp9dqYWQwKAVThXWpmz28570bIRGfQyU3/749OVZk6PqAqgkaWllCVRw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1664959417;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=YUhdeTLnxdYmOvPifFFeBXKgsqaD5X82FItEAMBhlJs=;
+        b=XbcNL3z6wgdaLRSoUCdqCVEJRC2zAmXggWWsidjcCIA6M8cGlotu7uAowm/UVkhK1VUUP3
+        ODDeiB2CDS8g26Dw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     stable@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org,
+        Danilo Cezar Zanella <danilo.zanella@iag.usp.br>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Russell King <rmk+kernel@armlinux.org.uk>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH] ARM: fix function graph tracer and unwinder dependencies
+Message-ID: <Yz1DtlYj+W7jfJLK@linutronix.de>
+References: <CAAxUTH4zpibkhOS+NPzcYsXFqx1bJfSU19gdt0eCAOrpWAkinA@mail.gmail.com>
+ <YyTXIUjq9tmFPTDi@linutronix.de>
+ <CAAxUTH4xawCFpnwpRkcaZ5fdzMEbZZmPOyVDoqdMrPrf+G64dg@mail.gmail.com>
+ <YzLZIX+Pi6lyIr1f@linutronix.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
- Thunderbird/102.3.0
-Content-Language: en-US
-To:     linux-rt-users@vger.kernel.org
-From:   Florian Paul Schmidt <mista.tapas@gmx.net>
-Subject: Regression (latency spike) between 5.16.2-rt19 and 5.17.1-rt17
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:ijobFdtcXNxEBk7fZEKSmfhIC2f2EZ+mTnjQyp9ASMgCT5RPMNP
- 6pCkfJWSKM88gqOowciVkTLa82HvQ6IuBZorLdC5vQutZMQO95c4A+Ibniki5KoMB3WKqmp
- 0bPD31F7rC7ez4g7cnIUvwVtd804bISqQl4Dxmdi11/q5W7PCSUAzhKCLNbDJ0w5YJarf1O
- q5X3D3KwA8k19fzPUlFNw==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:cyIUzoPKa/M=:j3ihkjzsuH8OLEz1BQdDt+
- +4gnC1Zv9Pt+U0lsBpqUyWKQoLcbToFxBaCqmLZpkVkUeXDGYp0DKKFZSkjNW0O1DofhkcPIa
- crariVDLLxMqpZk6JmFobBPX2yqvwv6/uE5Vxjtq7Ziu8YUzwYEKb68qrlYtzgaKHlqq5rZt1
- GDEQSKrg+PIIMUGXvTpnaut5q5RzDDChcs/OqgZME3la0i4xIp21W00+A5gkSbcGGz7KnbBjp
- S0Ll6Y/u9sBjtzeqnGBPQFvAuW39hG0J/GXtp8/1RuB0Acb+QknfSh4pAvusxeqQCqTnOQH4e
- eVrKzbmprUWtXsmcO5VLt3huOBh7t2YQLECPRQ+hMemZ6bty4eePFp8V/giWfsqIDNrlItoAf
- HjcRxOmfmI/zVGruY1EIK/7Ly/zOOYYK1bSqfddGLG5rRVECdX2517QuHHhjgb9zideBs8EMK
- LRB6GIwPTjGY2UIc+DiwgCYK8s1VOZtb3i/Nf28Kpe8DRDzV8xx7RRGHQLn3zk4T1PoGAKdml
- DU8GMI/TwyifnsdBr6KHZ7bbPL8UUTG//uRF3tEl6u4zIRYT4pwBfgTh/tdZtgX8eJi4/ZLgX
- v2nK2UEt/KfZ8HUz1lU2Jhk5NaYWh0/7y+wFBiWcnl/zyY7u5K7SsCFytGN02j6BTqnsHodN8
- ZmKwSILlk8+xUS6ATTXVWW8AOMpWN3JnLK4ZIGKWaUZd+wwwWf+G3Lg19fdFjxHtMP4h0S9Vs
- yzOunU1fvftbN1Syf1eGV5L2vnTFbbzbcisi5mu2IFqLc2WLq2L42LZwy6ZrTHCdAz3Dfgnt6
- 7GyhVbwDn414TKmW00Y0q0JJziFtqR2GlqdpIf5hfzcb6Opke10nDV793rZPQQdDG1AZIGSpO
- cvHfECPGg5YhybYHh+UCM/EzlBT4pxFJMISnonmK2bshLXn2NHzxE7Ho4BJHZFJZmy2Tpks1F
- HOAFsB/pY4nhdTyvwmOOdASpd+S+pzJNYjXoA/ue/jUOvj+nJQpb3hQ4zkzbM7sgoKyc4Hu1m
- pMIk2AaKbNTXBBbMZszueFZMOe+QRaltgpzW6yihOorNndpoZkxwFrHO4HSKbD5Cmj9GXT0Pg
- hkgQGlJfEQWBSgs0BPanK3H/i7O/fEWYkDBZd4fsFYE8bth5uYJvcjMv8QhVOO+7qlcbaIhf6
- M4bnJpKWpD/+8wHAnGqpYasSTk
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <YzLZIX+Pi6lyIr1f@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Danilo Cezar Zanella reported broken function graph tracer in the v4.19
+tree. This was caused by the backport of commit
+   f9b58e8c7d031 ("ARM: 8800/1: use choice for kernel unwinders")
 
-Dear rt-users,
+which ended in the v4.19-stable tree as of v4.19.222.
+It is also part of v4.14-stable since v4.14.259.
+It is also part of v4.9-stable since v4.9.299.
 
-I was happily using kernel version 5.4.84-rt47 on this Celeron j4125
-system (all power management and cpu frequency scaling disabled in bios)
-and it was working great. Worst case cyclictest latency was around 30 to
-40 us depending on system load.
+------->8---------
 
-Due to some USB fixes landing in 5.14 I went and tried upgrading my
-kernel. I started with 5.19-rt10 but something weird showed up:
-cyclictest reported _huge_ latencies on one of the four cores (thread 1
-of cyclictest) of around 700 us. So I went back to my old kernel to make
-sure it really was the kernel and sure thing. The old kernel still had
-the nice 30 to 40 us worst case latencies I determined previously. So I
-went through some kernel versions:
+From: Russell King <rmk+kernel@armlinux.org.uk>
+Date: Tue, 23 Apr 2019 17:09:38 +0100
+Subject: [PATCH] ARM: fix function graph tracer and unwinder dependencies
 
-5.19-rt10    has the problem
-5.17.1-rt17  has the problem
-5.16.2-rt19  does not have the problem
+Upstream commit 503621628b32782a07b2318e4112bd4372aa3401
 
-So I would guess somewhere between 5.16.2-rt19 and 5.17.1-rt17 something
-horrible happened ;)
+Naresh Kamboju recently reported that the function-graph tracer crashes
+on ARM. The function-graph tracer assumes that the kernel is built with
+frame pointers.
 
-Maybe interesting fact: It is always thread 1 of cyclictest that shows
-the large latency. The other threads are seemingly completely in-line
-with the expectation of 30 - 40 us.
+We explicitly disabled the function-graph tracer when building Thumb2,
+since the Thumb2 ABI doesn't have frame pointers.
 
-Here's my cyclictest command:
+We recently changed the way the unwinder method was selected, which
+seems to have made it more likely that we can end up with the function-
+graph tracer enabled but without the kernel built with frame pointers.
 
-sudo ./cyclictest -m -p 95 -S -M
+Fix up the function graph tracer dependencies so the option is not
+available when we have no possibility of having frame pointers, and
+adjust the dependencies on the unwinder option to hide the non-frame
+pointer unwinder options if the function-graph tracer is enabled.
 
-cyclictest at stable/v1.0
+Reviewed-by: Masami Hiramatsu <mhiramat@kernel.org>
+Tested-by: Masami Hiramatsu <mhiramat@kernel.org>
+Signed-off-by: Russell King <rmk+kernel@armlinux.org.uk>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Reported-by: Danilo Cezar Zanella <danilo.zanella@iag.usp.br>
+---
+ arch/arm/Kconfig       | 2 +-
+ arch/arm/Kconfig.debug | 6 +++---
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-I would possibly be willing to git bisect the issue. But I am a little
-bit confused about how to go about that. What repo/tree would I
-precisely bisect (I am using the the patch tarballs from
-https://cdn.kernel.org/pub/linux/kernel/projects/rt/)?
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index d89d013f586cb..fce7e85f3ef57 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -68,7 +68,7 @@ config ARM
+ 	select HAVE_EFFICIENT_UNALIGNED_ACCESS if (CPU_V6 || CPU_V6K || CPU_V7) && MMU
+ 	select HAVE_EXIT_THREAD
+ 	select HAVE_FTRACE_MCOUNT_RECORD if (!XIP_KERNEL)
+-	select HAVE_FUNCTION_GRAPH_TRACER if (!THUMB2_KERNEL)
++	select HAVE_FUNCTION_GRAPH_TRACER if (!THUMB2_KERNEL && !CC_IS_CLANG)
+ 	select HAVE_FUNCTION_TRACER if (!XIP_KERNEL)
+ 	select HAVE_FUTEX_CMPXCHG if FUTEX
+ 	select HAVE_GCC_PLUGINS
+diff --git a/arch/arm/Kconfig.debug b/arch/arm/Kconfig.debug
+index 01c760929c9e4..b931fac129a1b 100644
+--- a/arch/arm/Kconfig.debug
++++ b/arch/arm/Kconfig.debug
+@@ -47,8 +47,8 @@ config DEBUG_WX
+ 
+ choice
+ 	prompt "Choose kernel unwinder"
+-	default UNWINDER_ARM if AEABI && !FUNCTION_GRAPH_TRACER
+-	default UNWINDER_FRAME_POINTER if !AEABI || FUNCTION_GRAPH_TRACER
++	default UNWINDER_ARM if AEABI
++	default UNWINDER_FRAME_POINTER if !AEABI
+ 	help
+ 	  This determines which method will be used for unwinding kernel stack
+ 	  traces for panics, oopses, bugs, warnings, perf, /proc/<pid>/stack,
+@@ -65,7 +65,7 @@ config UNWINDER_FRAME_POINTER
+ 
+ config UNWINDER_ARM
+ 	bool "ARM EABI stack unwinder"
+-	depends on AEABI
++	depends on AEABI && !FUNCTION_GRAPH_TRACER
+ 	select ARM_UNWIND
+ 	help
+ 	  This option enables stack unwinding support in the kernel
+-- 
+2.37.2
 
-Kind regards,
-FPS
-
-=2D-
-https://fps.io
