@@ -2,118 +2,132 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7DE72C4332F
-	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Oct 2022 19:29:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4CFE6C433F5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Oct 2022 20:12:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231878AbiJFT3d (ORCPT
+        id S231628AbiJFUMd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 6 Oct 2022 15:29:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43718 "EHLO
+        Thu, 6 Oct 2022 16:12:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33740 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231445AbiJFT3b (ORCPT
+        with ESMTP id S231858AbiJFUMb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 6 Oct 2022 15:29:31 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67DDBC2C80
-        for <linux-rt-users@vger.kernel.org>; Thu,  6 Oct 2022 12:29:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1665084569;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=08jbpfBTd1YQoRYfrXDErR4SgE4lO6QGJjAUK4zNVW0=;
-        b=FB7I0zDE3m8a0QZURjfAaKerlydmF4VgNHQwrL4X22CQd7FtaU6iIDjxFQT23nikLX6Z3G
-        YgBmCBawVa7nkFWt5SOvRzjBlC5xfU0uc3sgy3oSnGuMfl8bCp0pLef4GKRFBpR2kAhpqM
-        RJHU0AiYFPGEzYVF4AJPMfnzIT98+wM=
-Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com
- [209.85.167.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-517-pwx1YOuKPTqjSTt6pPR0Kw-1; Thu, 06 Oct 2022 15:29:28 -0400
-X-MC-Unique: pwx1YOuKPTqjSTt6pPR0Kw-1
-Received: by mail-oi1-f198.google.com with SMTP id t37-20020a05680815a500b0034fdd9124d9so1500492oiw.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 06 Oct 2022 12:29:28 -0700 (PDT)
+        Thu, 6 Oct 2022 16:12:31 -0400
+Received: from mail-qk1-x735.google.com (mail-qk1-x735.google.com [IPv6:2607:f8b0:4864:20::735])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D25AC704E
+        for <linux-rt-users@vger.kernel.org>; Thu,  6 Oct 2022 13:12:30 -0700 (PDT)
+Received: by mail-qk1-x735.google.com with SMTP id h6so1755058qkl.11
+        for <linux-rt-users@vger.kernel.org>; Thu, 06 Oct 2022 13:12:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=DjydNZiVsxlynN6JjPPEjWX2U+/k/nS38H8OcmmaEkg=;
+        b=P8ZuUUx//WEhPDc/+6XZUdBskwH9UCB9ool+249YedLRxBXOUQz10sS1tJ5i6fACsj
+         aFbOWw89FUGuzuWXghMF12qqypy7fT6E/V+jjpMEx4SJTXHEph4u5X/5y+QGrmIcCJ3U
+         D8FYMfnLwuHNvdXj3HN28k4IdQzxS+n9rf9mukbnnoA1zIEOgEnSF2mqCWAz/W/Anmi4
+         03QiZPLFMEVeHAptR9zwIDfr+MI31nPwqUFNragM/bSSY7CJLmAKqsMky/s0srDil0nr
+         7Dag/t237tXd2nTHyK0Uw/LVBE9s7gRba7ew1br2C4LFL9N+DIhMhWusm25WM8HYOULh
+         D5Gw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=08jbpfBTd1YQoRYfrXDErR4SgE4lO6QGJjAUK4zNVW0=;
-        b=E3UZezfc/qP3qPsVcotOFmPGt9Xg5qmxR/Ex5PankeFFhaSvf8szTPwUaZkeHsOUXi
-         8Mrj4HjbULKlztYqs2xLy1GlzpMgPcmKoNsovxDZlG1LkFoxecLBvr+0p6HiwjxO+Saw
-         O/LnYBY0mlKtvdFP65COyXdur+UpYd8bY0QBIVUJ+5QLKqXptiWclUJXtyHEfVGydzYg
-         9j1DCjQokFhu5feaIylpQZ0jhP6PtPQDETrZTBKqTjNN8FTzBNJ9sTsma6R7rSjrL3Fz
-         lPUfpf0YNp4kc2v9Adhhqcv89OtUAKE1H8gd7sNZMzffZXsdzjDnfL8V0J99hHbYmQdb
-         L2Tw==
-X-Gm-Message-State: ACrzQf0SiL/+a11s0CdJzo7TOCClvgB6pfVdtGFhV/EmCm3mx+RZZOQ5
-        H/Dx91ixOPfVQZ5F5s2HJxdA2omWL0vSxwLBiPybc+l43fg6bSYl6lpq7DtAo3NrYb4pjmMvz2c
-        o+YNHlCocFoxzdjw85NRydgrXKzo=
-X-Received: by 2002:a05:6808:e90:b0:345:6ee0:9a68 with SMTP id k16-20020a0568080e9000b003456ee09a68mr633819oil.173.1665084566574;
-        Thu, 06 Oct 2022 12:29:26 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM4Tft7TyzQPnpWaWyWuOlVkW+RxIUVgBIRxRwmiIs7DA8kbsZ6Pfmd2dIYuXYjbu29i+hBWDg==
-X-Received: by 2002:a05:6808:e90:b0:345:6ee0:9a68 with SMTP id k16-20020a0568080e9000b003456ee09a68mr633803oil.173.1665084566347;
-        Thu, 06 Oct 2022 12:29:26 -0700 (PDT)
-Received: from localhost (pool-100-0-210-47.bstnma.fios.verizon.net. [100.0.210.47])
-        by smtp.gmail.com with ESMTPSA id w107-20020a9d3674000000b00638ef9bb847sm170071otb.79.2022.10.06.12.29.25
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=DjydNZiVsxlynN6JjPPEjWX2U+/k/nS38H8OcmmaEkg=;
+        b=AgDyCjcZveYjxn2lSCK15DuQrKDoy66RzMPZFKMPlp0A41RQ/rcXAg+jzExhntRyKH
+         tEPs8jWpSMw2j74z90uMDwb9id2sTvdQcClSk76FiuWxqPaczk9G+AdGBjLDLKqhWrBu
+         6YfhfnfRAJF01Vi+450rx4IgcBClNvlhxG51Ktn7unMD64MNWq6EE9xjoOyLxXN8+Xwj
+         s85DUJho7SGE4d6hx0m7pREnfOp5rRyQCVQ4CSB7/lT/iWy1EUnZQPvrCswK8xYgxyNZ
+         dUsDPgVC3PVNdofObFYGpmp8RJa7AuzqUk3ouB69WHnPQh35ZWm2TnnMPYCTUMfGT9TQ
+         rFjA==
+X-Gm-Message-State: ACrzQf1IqfZNSIQGCTYnIE/IsScYv33w+R7jD8idr8He+SGTTaa2CvXw
+        8YC9rD3oQ9/y2Ex5mxY0MT5eY3TgvjI=
+X-Google-Smtp-Source: AMsMyM5bZhzGz1O34tnFdw6PxYEPrnp6RwqIYI/eaREx/JL6kXxG49PP6vzDZ0aMx4d9hF0W860deA==
+X-Received: by 2002:a05:620a:1029:b0:6e7:b1f0:fae9 with SMTP id a9-20020a05620a102900b006e7b1f0fae9mr937929qkk.564.1665087148790;
+        Thu, 06 Oct 2022 13:12:28 -0700 (PDT)
+Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-11-174-88-121-224.dsl.bell.ca. [174.88.121.224])
+        by smtp.gmail.com with ESMTPSA id i8-20020a05620a404800b006bc192d277csm57665qko.10.2022.10.06.13.12.27
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 06 Oct 2022 12:29:25 -0700 (PDT)
-From:   Eric Chanudet <echanude@redhat.com>
-To:     Andy Gross <agross@kernel.org>,
-        Bjorn Andersson <andersson@kernel.org>,
-        Konrad Dybcio <konrad.dybcio@somainline.org>,
-        Manivannan Sadhasivam <mani@kernel.org>,
-        Jassi Brar <jassisinghbrar@gmail.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-arm-msm@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Eric Chanudet <echanude@redhat.com>
-Subject: [PATCH v2] mailbox: qcom-ipcc: flag IRQ NO_THREAD
-Date:   Thu,  6 Oct 2022 15:28:56 -0400
-Message-Id: <20221006192856.2546702-1-echanude@redhat.com>
+        Thu, 06 Oct 2022 13:12:28 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: Remove arbitrary num of threads limits
+Date:   Thu,  6 Oct 2022 16:11:55 -0400
+Message-Id: <20221006201155.14736-1-jkacur@redhat.com>
 X-Mailer: git-send-email 2.37.3
 MIME-Version: 1.0
-Content-type: text/plain
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-PREEMPT_RT forces qcom-ipcc's handler to be threaded with interrupts
-enabled, which triggers a warning in __handle_irq_event_percpu():
-    irq 173 handler irq_default_primary_handler+0x0/0x10 enabled interrupts
-    WARNING: CPU: 0 PID: 77 at kernel/irq/handle.c:161 __handle_irq_event_percpu+0x4c4/0x4d0
+Remove the arbitrary limit to the number of threads in pmqtest,
+ptsematest, sigwaittest and svsematest.
 
-Mark it IRQF_NO_THREAD. This is an IRQ-multiplexer and as such it should
-not be threaded, otherwise its child-interrupts would be invoked from
-the thread handler which is not desired.
-
-This is noticed by PREEMPT_RT, but also on a non-PREEMPT_RT kernel where
-`threadirqs' has been used.
-
-Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Eric Chanudet <echanude@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
-Changes since v1:
-- Reformulate the patch description using Sebastian's response.
+ src/pmqtest/pmqtest.c         | 2 +-
+ src/ptsematest/ptsematest.c   | 2 +-
+ src/sigwaittest/sigwaittest.c | 2 +-
+ src/svsematest/svsematest.c   | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
 
-v1 can be found at
-https://lore.kernel.org/linux-arm-msm/20221003170849.383005-1-echanude@redhat.com/
-
- drivers/mailbox/qcom-ipcc.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/mailbox/qcom-ipcc.c b/drivers/mailbox/qcom-ipcc.c
-index 31d58b7d55fe..7e27acf6c0cc 100644
---- a/drivers/mailbox/qcom-ipcc.c
-+++ b/drivers/mailbox/qcom-ipcc.c
-@@ -308,7 +308,8 @@ static int qcom_ipcc_probe(struct platform_device *pdev)
- 		goto err_mbox;
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 6ad0a92ffb5c..9e142787d8b4 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -393,7 +393,7 @@ static void process_options(int argc, char *argv[])
+ 		}
+ 	}
  
- 	ret = devm_request_irq(&pdev->dev, ipcc->irq, qcom_ipcc_irq_fn,
--			       IRQF_TRIGGER_HIGH | IRQF_NO_SUSPEND, name, ipcc);
-+			       IRQF_TRIGGER_HIGH | IRQF_NO_SUSPEND |
-+			       IRQF_NO_THREAD, name, ipcc);
- 	if (ret < 0) {
- 		dev_err(&pdev->dev, "Failed to register the irq: %d\n", ret);
- 		goto err_req_irq;
+-	if (num_threads < 0 || num_threads > 255)
++	if (num_threads < 0)
+ 		error = 1;
+ 
+ 	if (priority < 0 || priority > 99)
+diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+index e000c3017081..a9d6c69b6449 100644
+--- a/src/ptsematest/ptsematest.c
++++ b/src/ptsematest/ptsematest.c
+@@ -299,7 +299,7 @@ static void process_options(int argc, char *argv[])
+ 		}
+ 	}
+ 
+-	if (num_threads < 0 || num_threads > 255)
++	if (num_threads < 0)
+ 		error = 1;
+ 
+ 	if (priority < 0 || priority > 99)
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index d0d79df940de..728176a0b385 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -369,7 +369,7 @@ static void process_options(int argc, char *argv[])
+ 		if (duration < 0)
+ 			error = 1;
+ 
+-		if (num_threads < 1 || num_threads > 255)
++		if (num_threads < 1)
+ 			error = 1;
+ 
+ 		if (priority < 0 || priority > 99)
+diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+index 22ea7bcb7374..243b13738b19 100644
+--- a/src/svsematest/svsematest.c
++++ b/src/svsematest/svsematest.c
+@@ -398,7 +398,7 @@ static void process_options(int argc, char *argv[])
+ 		if (duration < 0)
+ 			error = 0;
+ 
+-		if (num_threads < 1 || num_threads > 255)
++		if (num_threads < 1)
+ 			error = 1;
+ 
+ 		if (priority < 0 || priority > 99)
 -- 
 2.37.3
 
