@@ -2,166 +2,459 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1645AC433F5
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Oct 2022 15:06:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 45488C433F5
+	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Oct 2022 14:07:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229780AbiJGPGf (ORCPT
+        id S229779AbiJJOHo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 Oct 2022 11:06:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54642 "EHLO
+        Mon, 10 Oct 2022 10:07:44 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59082 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229701AbiJGPGe (ORCPT
+        with ESMTP id S229452AbiJJOHn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 Oct 2022 11:06:34 -0400
-Received: from mail-lj1-x22a.google.com (mail-lj1-x22a.google.com [IPv6:2a00:1450:4864:20::22a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EB9A1DD8A7;
-        Fri,  7 Oct 2022 08:06:32 -0700 (PDT)
-Received: by mail-lj1-x22a.google.com with SMTP id bn8so6035462ljb.6;
-        Fri, 07 Oct 2022 08:06:32 -0700 (PDT)
+        Mon, 10 Oct 2022 10:07:43 -0400
+Received: from mail-qk1-x736.google.com (mail-qk1-x736.google.com [IPv6:2607:f8b0:4864:20::736])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0FEE16E8BB
+        for <linux-rt-users@vger.kernel.org>; Mon, 10 Oct 2022 07:07:42 -0700 (PDT)
+Received: by mail-qk1-x736.google.com with SMTP id s7so2748151qkj.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 10 Oct 2022 07:07:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=RvetpNMt4A2GE+wgaRh9E9I38lKPBGEwG8dnPxelXng=;
-        b=YgY8AGuy34MS3Jk/VqePmRKNG7ELuNSUExbNe01puHXG1ygTkDXyHTpMhq0nwDejy0
-         B24b/O+zAlixrCK4uORirH6A6izNRUyWQg6epuryHi7NAptUEbv7bqAKumjm/1oLrdAw
-         +f4zGHikac6T7drHFq+RGh1AuIMcfr9y8PbU6Y0kTS+NZh0zGvZGg6SFoaGlLdOyEh+e
-         eYCtAmR7+/DDpX2HGeOZlG9OTnGWeX5442jUg8LarXibOgRqljA2QrAM+rihSDI4hTp6
-         wmJTjZVS+cOqlGXg5sQuulU0m5gVbmmUBoQn4r2CVUL2Uu5mukE8ONS98MArE1kOrOHl
-         SA9A==
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=8YrPl5h8+80qDvCbGlLNHRN27s6/11HixGs4gCTqXCg=;
+        b=D8eHQG2zzJ0i4eg7a9Dhe2nijqAiq/JENR7PLF3zRiNPe6xLnE3kkrqJUG4oQfBB0E
+         FLEgSeWVbbgMpAWnqqyVfJjV1kkJVYZ0X4sXzcblKaVXUbe4g4+n9HZ2l3Hnxt4bA2KA
+         JOsoevZ3RBnrDbd4KBEW3A7ufD+YGBmc1ndmQz6541ZUwOR3OVrVbygJatww40pk+Au1
+         vC77KGETLfE8UcKuSXeQXkxWSRe7ztZfFF5ooGJUUGD899UJukFcN+/lhZ2fQD0f5EfD
+         0IK3ad8jFQHPUT/rO6pmoyazQbwjDsxIqnauS+8IZiO8yDOCo7wBSgAQ4hbuvmxFnxCO
+         ypbQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=RvetpNMt4A2GE+wgaRh9E9I38lKPBGEwG8dnPxelXng=;
-        b=7FM+5IF8AHozg/+wlG05o5ExvEXH+Py1FQ6Ubh6E/xB1YaDoD/2t7JhVkwER2iiSQs
-         PDPKy42VSJG1AIF+1RrXGfUcGEX1Ta9FXK1H2CJQ3r3bCJSfvTQcaByHAHFgWiYKCsLF
-         s6tTcJod7NNuhX5WU1lavKNgcqsVK7FSkNhkp7MIMAU7d6M7MNXQ6rCWeYh3ePvZp0FV
-         QABkRiSlst/D/2hD9ZWmKSeGsd9hZdmnjdOMskMz0IKtBpQRgXbsq+PDMeo+QCBHus8d
-         7zANSnLeCoZ5nPmWjHLOU9USw2kk8/IR50a/m92wFGRRsCkrUAE3DQDrGyJMYPytaMvP
-         xtOQ==
-X-Gm-Message-State: ACrzQf1oXdZbtkMIQ3+U0IIgf2Jm7htTgPEvup/Gzjwaq7Wiv9T2oIq4
-        VxodW3npT725/Uywgk8h7u+mQHiYzl9GfjGsiJc=
-X-Google-Smtp-Source: AMsMyM5DBkabI6V5uUbXJNDW5jgdIQpKljR43oP0GxKxAdlXl6j0W392Z+ljV5/rba1tf1wtE4l4A3w5CNabUo/EM00=
-X-Received: by 2002:a05:651c:98e:b0:26a:c93b:18dd with SMTP id
- b14-20020a05651c098e00b0026ac93b18ddmr1950279ljq.487.1665155190598; Fri, 07
- Oct 2022 08:06:30 -0700 (PDT)
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=8YrPl5h8+80qDvCbGlLNHRN27s6/11HixGs4gCTqXCg=;
+        b=HEKbR86xO1Hw/4bKQHhZLjjH7N78ndBFt4sgJaapKHEJmamwNeSwAyFYgotBPbprk9
+         0H4bdGaOl1UOEyIC70qlz4crzI/wMwF8FNOWnPTRMCFxzh87/W9UnBZ1kLv7b5N1wRpq
+         uKc57p5VF5tUASU8Bg4TC+39jVMwNfPrEbriWz+g0uX/xaa/2TlmFs/lsGZnJZQR1kLN
+         QireXxJZPz0DNA3TuwQ0rqWCWxKAXHq2426Bdmr+8yip5GHXdKHsLQly70zzJs5ILA2W
+         ZAN98kmVB02jORZyz5dzjK0D2zZdzJMagQUC7cxpUzu57lpbQZLqPOqzUcc9+rZhORAT
+         nWmQ==
+X-Gm-Message-State: ACrzQf3f34jw7jE84Nw89k7/gr1oXPHbCIBsNJWhl83Zk+WVpzzaW3Yx
+        HQFAQiBsDqxYU3BVfvo4ZiNr9VwVZoU=
+X-Google-Smtp-Source: AMsMyM7Oi4nbbQY7booQB9Vre9EOsLFbOqBP7duLxt0GTO1IaBV0dQXD4lnRdUjaD3B1ygyHme6odA==
+X-Received: by 2002:a05:620a:44c7:b0:6ce:a0b5:4614 with SMTP id y7-20020a05620a44c700b006cea0b54614mr12785436qkp.753.1665410861130;
+        Mon, 10 Oct 2022 07:07:41 -0700 (PDT)
+Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-11-174-88-121-224.dsl.bell.ca. [174.88.121.224])
+        by smtp.gmail.com with ESMTPSA id i17-20020ac871d1000000b00397c4528a5bsm5960578qtp.79.2022.10.10.07.07.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 10 Oct 2022 07:07:40 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     Clark Williams <williams@redhat.com>,
+        RT <linux-rt-users@vger.kernel.org>
+Cc:     Leah Leshchinsky <lleshchi@redhat.com>,
+        Kate Carcia Poulin <kcarcia@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [RFC PATCH] rteval: Replace python-ethtool with inline code
+Date:   Mon, 10 Oct 2022 10:07:25 -0400
+Message-Id: <20221010140725.125546-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.37.3
 MIME-Version: 1.0
-References: <e86930e4-4b9c-cf18-5119-50c6910b76dd@redhat.com>
- <Yz7Yv6d3v3oETZYI@google.com> <20221006141302.GW4196@paulmck-ThinkPad-P17-Gen-1>
-In-Reply-To: <20221006141302.GW4196@paulmck-ThinkPad-P17-Gen-1>
-From:   Florent Carli <fcarli@gmail.com>
-Date:   Fri, 7 Oct 2022 17:06:19 +0200
-Message-ID: <CAJuRqcDeJu6Szo5iUOXMi407CcYyh-3sB1BQA2zFP7GU05h-FA@mail.gmail.com>
-Subject: Re: RCU stall warnings even with rcu_nocbs and rcu_nocb_poll
-To:     paulmck@kernel.org
-Cc:     Joel Fernandes <joel@joelfernandes.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        rcu@vger.kernel.org, frederic@kernel.org,
-        linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Thank you all.
+This patch adds the file newnet.py which to replace the use of python-ethtool
+The information it generates will appear in the summary.xml
+You can also test the functionality by running
+python rteval/sysinfo/newnet.py
 
-I make sure the rcu_preempt kthread affinity was set on a non-isolated
-core (as well as all unbounded rcu* threads) so I guess it is not a
-competing issue.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/sysinfo/__init__.py |   3 +-
+ rteval/sysinfo/network.py  | 117 -------------------
+ rteval/sysinfo/newnet.py   | 224 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 226 insertions(+), 118 deletions(-)
+ delete mode 100644 rteval/sysinfo/network.py
+ create mode 100644 rteval/sysinfo/newnet.py
 
-What I=E2=80=99m running on those isolated cores are qemu/kvm vcpu tasks, a=
-nd
-I guess they might spend some time in the kernel=E2=80=A6 in which case I
-understand it=E2=80=99s completely normal to see some rcuc activity.
-And so I conclude that using isolcpus + nohz_full (which includes
-rcu_nocbs) + rcu_nocb_poll + rcutree.kthread_prio is the way to go.
+diff --git a/rteval/sysinfo/__init__.py b/rteval/sysinfo/__init__.py
+index a4359382f006..bb1d00810856 100644
+--- a/rteval/sysinfo/__init__.py
++++ b/rteval/sysinfo/__init__.py
+@@ -32,7 +32,7 @@ from rteval.sysinfo.services import SystemServices
+ from rteval.sysinfo.cputopology import CPUtopology
+ from rteval.sysinfo.memory import MemoryInfo
+ from rteval.sysinfo.osinfo import OSInfo
+-from rteval.sysinfo.network import NetworkInfo
++from rteval.sysinfo.newnet import NetworkInfo
+ from rteval.sysinfo.cmdline import cmdlineInfo
+ from rteval.sysinfo import dmi
+ 
+@@ -46,6 +46,7 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+         CPUtopology.__init__(self)
+         OSInfo.__init__(self, logger=logger)
+         cmdlineInfo.__init__(self, logger=logger)
++        NetworkInfo.__init__(self, logger=logger)
+ 
+         # Parse initial DMI decoding errors
+         dmi.ProcessWarnings()
+diff --git a/rteval/sysinfo/network.py b/rteval/sysinfo/network.py
+deleted file mode 100644
+index ce9989a1240b..000000000000
+--- a/rteval/sysinfo/network.py
++++ /dev/null
+@@ -1,117 +0,0 @@
+-# -*- coding: utf-8 -*-
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-#   This program is free software; you can redistribute it and/or modify
+-#   it under the terms of the GNU General Public License as published by
+-#   the Free Software Foundation; either version 2 of the License, or
+-#   (at your option) any later version.
+-#
+-#   This program is distributed in the hope that it will be useful,
+-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-#   GNU General Public License for more details.
+-#
+-#   You should have received a copy of the GNU General Public License along
+-#   with this program; if not, write to the Free Software Foundation, Inc.,
+-#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+-#
+-#   For the avoidance of doubt the "preferred form" of this code is one which
+-#   is in an open unpatent encumbered format. Where cryptographic key signing
+-#   forms part of the process of creating an executable the information
+-#   including keys needed to generate an equivalently functional executable
+-#   are deemed to be part of the source code.
+-#
+-
+-import ethtool, libxml2
+-
+-class NetworkInfo(object):
+-    def __init__(self):
+-        pass
+-
+-    def net_GetDefaultGW(self):
+-        # Get the interface name for the IPv4 default gw
+-        route = open('/proc/net/route')
+-        defgw4 = None
+-        if route:
+-            rl = route.readline()
+-            while rl != '' :
+-                rl = route.readline()
+-                splt = rl.split("\t")
+-                # Only catch default route
+-                if len(splt) > 2 and splt[2] != '00000000' and splt[1] == '00000000':
+-                    defgw4 = splt[0]
+-                    break
+-            route.close()
+-        return (defgw4, None) # IPv6 gw not yet implemented
+-
+-    def MakeReport(self):
+-        ncfg_n = libxml2.newNode("NetworkConfig")
+-        (defgw4, defgw6) = self.net_GetDefaultGW()
+-
+-        # Make an interface tag for each device found
+-        if hasattr(ethtool, 'get_interfaces_info'):
+-            # Using the newer python-ethtool API (version >= 0.4)
+-            for dev in ethtool.get_interfaces_info(ethtool.get_devices()):
+-                if dev.device == 'lo':
+-                    continue
+-
+-                intf_n = libxml2.newNode('interface')
+-                intf_n.newProp('device', dev.device)
+-                intf_n.newProp('hwaddr', dev.mac_address)
+-                ncfg_n.addChild(intf_n)
+-
+-                # Protcol configurations
+-                if dev.ipv4_address:
+-                    ipv4_n = libxml2.newNode('IPv4')
+-                    ipv4_n.newProp('ipaddr', dev.ipv4_address)
+-                    ipv4_n.newProp('netmask', str(dev.ipv4_netmask))
+-                    ipv4_n.newProp('broadcast', dev.ipv4_broadcast)
+-                    ipv4_n.newProp('defaultgw', (defgw4 == dev.device) and '1' or '0')
+-                    intf_n.addChild(ipv4_n)
+-
+-                for ip6 in dev.get_ipv6_addresses():
+-                    ipv6_n = libxml2.newNode('IPv6')
+-                    ipv6_n.newProp('ipaddr', ip6.address)
+-                    ipv6_n.newProp('netmask', str(ip6.netmask))
+-                    ipv6_n.newProp('scope', ip6.scope)
+-                    intf_n.addChild(ipv6_n)
+-
+-        else: # Fall back to older python-ethtool API (version < 0.4)
+-            ifdevs = ethtool.get_active_devices()
+-            ifdevs.remove('lo')
+-            ifdevs.sort()
+-
+-            for dev in ifdevs:
+-                intf_n = libxml2.newNode('interface')
+-                intf_n.newProp('device', dev.device)
+-                intf_n.newProp('hwaddr', dev.mac_address)
+-                ncfg_n.addChild(intf_n)
+-
+-                ipv4_n = libxml2.newNode('IPv4')
+-                ipv4_n.newProp('ipaddr', ethtool.get_ipaddr(dev))
+-                ipv4_n.newProp('netmask', str(ethtool.get_netmask(dev)))
+-                ipv4_n.newProp('defaultgw', (defgw4 == dev) and '1' or '0')
+-                intf_n.addChild(ipv4_n)
+-
+-        return ncfg_n
+-
+-
+-def unit_test(rootdir):
+-    import sys
+-    try:
+-        net = NetworkInfo()
+-        doc = libxml2.newDoc('1.0')
+-        cfg = net.MakeReport()
+-        doc.setRootElement(cfg)
+-        doc.saveFormatFileEnc('-', 'UTF-8', 1)
+-
+-    except Exception as e:
+-        import traceback
+-        traceback.print_exc(file=sys.stdout)
+-        print("** EXCEPTION %s", str(e))
+-        return 1
+-
+-if __name__ == '__main__':
+-    unit_test(None)
+-
+diff --git a/rteval/sysinfo/newnet.py b/rteval/sysinfo/newnet.py
+new file mode 100644
+index 000000000000..c8763fb68957
+--- /dev/null
++++ b/rteval/sysinfo/newnet.py
+@@ -0,0 +1,224 @@
++''' Module to obtain network information for the rteval report '''
++#
++#   Copyright 2022 John Kacur <jkacur@redhat.com
++#
++
++import os
++import socket
++import ipaddress
++import sys
++import libxml2
++from rteval.Log import Log
++
++def get_active_devices():
++    ''' returns a list of active network devices, similar to ethtool '''
++    ret = []
++
++    for device in socket.if_nameindex():
++        ret.append(device[1])
++
++    return ret
++
++def compress_iv6(addr):
++    ''' inserts colons into an ipv6address and returns it in compressed form '''
++    retaddr = ''
++    # Insert colons into the number
++    for i in range(4,33,4):
++        if i == 32:
++            retaddr += addr[i-4:i]
++        else:
++            retaddr += addr[i-4:i] + ':'
++    addr = ipaddress.IPv6Network(retaddr)
++    retaddr = str(ipaddress.IPv6Address(retaddr))
++    return retaddr
++
++def get_defaultgw():
++    ''' return the ipv4address of the default gateway '''
++    defaultgw = None
++    with open('/proc/net/route') as f:
++        line = f.readline().strip()
++        while len(line) > 0:
++            (iface, dest, gateway, _, _, _, _, _, _, _, _) = line.split()
++            if iface == 'Iface':
++                line = f.readline().strip()
++                continue
++            if dest == '00000000' and gateway != '00000000':
++                addr = int(gateway, base=16)
++                defaultgw = str(ipaddress.IPv4Address(socket.ntohl(addr)))
++                return defaultgw
++            line = f.readline().strip()
++    return defaultgw
++
++class IPv6Addresses():
++    ''' Obtains a list of IPv6 addresses from the proc file system '''
++
++    def __init__(self):
++        self.data = {}
++        IPv6Addresses.load(self)
++
++    def __contains__(self, dev):
++        return dev in self.data
++
++    def __getitem__(self, dev):
++        return self.data.get(dev, None)
++
++    def __iter__(self):
++        return iter(self.data)
++
++    def load(self):
++        '''
++            Called by init to load the self.data dictionary with device keys
++            and a list of ipv6addresses
++        '''
++        MYP = '/proc/net/if_inet6'
++        with open(MYP, 'r') as f:
++            mystr = f.readline().strip()
++            while len(mystr) > 0:
++                ipv6addr , _, _, _, _, intf = mystr.split()
++                ipv6addr = compress_iv6(ipv6addr)
++                if intf == 'lo':
++                    mystr = f.readline().strip()
++                    continue
++                if intf not in self.data:
++                    self.data[intf] = [ipv6addr]
++                else:
++                    self.data[intf].append(ipv6addr)
++                mystr = f.readline().strip()
++
++class IPv4Addresses():
++    ''' Obtains a list of IPv4 addresses from the proc file system '''
++
++    def __init__(self):
++        self.data = {}
++        IPv4Addresses.load(self)
++
++    def __contains__(self, dev):
++        return dev in self.data
++
++    def __getitem__(self, dev):
++        return self.data[dev]
++
++    def __iter__(self):
++        return iter(self.data)
++
++    def load(self):
++        '''
++            Called by init to load the self.data dictionary with
++            device keys, and value consisting of a list of
++            ipv4address, netmask and broadcast address
++        '''
++        MYP = '/proc/net/route'
++        with open(MYP, 'r') as f:
++            mystr = f.readline().strip()
++            while len(mystr) > 0:
++                intf, dest, _, _, _, _, _, mask, _, _, _ = mystr.split()
++                # Skip over the head of the table an the gateway line
++                if intf == "Iface" or dest == '00000000':
++                    mystr = f.readline().strip()
++                    continue
++                d1 = int(dest, base=16)
++                m1 = int(mask, base=16)
++                addr = str(ipaddress.IPv4Address(socket.ntohl(d1)))
++                netmask = str(ipaddress.IPv4Address(socket.ntohl(m1)))
++                addr_with_mask = ipaddress.ip_network(addr + '/' + netmask)
++                broadcast = str(addr_with_mask.broadcast_address)
++                if intf not in self.data:
++                    self.data[intf] = [(addr, netmask, broadcast)]
++                else:
++                    self.data[intf].append((addr, netmask, broadcast))
++                mystr = f.readline().strip()
++
++
++class MacAddresses():
++    ''' Obtains a list of hardware addresses of network devices '''
++
++    def __init__(self):
++        self.mac_address = {}
++        self.path = None
++        MacAddresses.load(self)
++
++    def load(self):
++        '''
++            called by init to load self.mac_address as a dictionary of
++            device keys, and mac or hardware addresses as values
++        '''
++        nics = get_active_devices()
++        for nic in nics:
++            self.path = f'/sys/class/net/{nic}'
++            hwaddr = MacAddresses.set_val(self, 'address')
++            self.mac_address[nic] = hwaddr
++
++    def set_val(self, val):
++        ''' Return the result of reading self.path/val '''
++        val_path = f'{self.path}/{val}'
++        if os.path.exists(val_path):
++            with open(val_path, 'r') as f:
++                return f.readline().strip()
++        return None
++
++    def __contains__(self, dev):
++        return dev in self.mac_address
++
++    def __getitem__(self, dev):
++        return self.mac_address[dev]
++
++    def __iter__(self):
++        return iter(self.mac_address)
++
++class NetworkInfo():
++    ''' Creates an xml report of the network for rteval '''
++
++    def __init__(self, logger):
++        self.defgw4 = get_defaultgw()
++        self.__logger = logger
++
++    def MakeReport(self):
++        ''' Make an xml report for rteval '''
++        ncfg_n = libxml2.newNode("NetworkConfig")
++        defgw4 = self.defgw4
++
++        mads = MacAddresses()
++        for device in mads:
++            if device == 'lo':
++                continue
++            intf_n = libxml2.newNode('interface')
++            intf_n.newProp('device', device)
++            intf_n.newProp('hwaddr', mads[device])
++            ncfg_n.addChild(intf_n)
++
++            ipv4ads = IPv4Addresses()
++            ipv6ads = IPv6Addresses()
++            for dev in ipv4ads:
++                if dev != device:
++                    continue
++                for lelem in ipv4ads[dev]:
++                    ipv4_n = libxml2.newNode('IPv4')
++                    (ipaddr, netmask, broadcast) = lelem
++                    ipv4_n.newProp('ipaddr', ipaddr)
++                    ipv4_n.newProp('netmask', netmask)
++                    ipv4_n.newProp('broadcast', broadcast)
++                    ipv4_n.newProp('defaultgw', (defgw4 == ipaddr) and '1' or '0')
++                    intf_n.addChild(ipv4_n)
++                if ipv6ads[dev]:
++                    for lelem in ipv6ads[dev]:
++                        ipv6_n = libxml2.newNode('IPv6')
++                        ipaddr = lelem
++                        ipv6_n.newProp('ipaddr', ipaddr)
++                        intf_n.addChild(ipv6_n)
++        return ncfg_n
++
++if __name__ == "__main__":
++
++    try:
++        log = Log()
++        log.SetLogVerbosity(Log.DEBUG|Log.INFO)
++        net = NetworkInfo(logger=log)
++        doc = libxml2.newDoc('1.0')
++        cfg = net.MakeReport()
++        doc.setRootElement(cfg)
++        doc.saveFormatFileEnc('-', 'UTF-8', 1)
++
++    except Exception as e:
++        import traceback
++        traceback.print_exc(file=sys.stdout)
++        print(f"** EXCEPTION {str(e)}")
+-- 
+2.37.3
 
-Thanks everyone.
-
-On Thu, Oct 6, 2022 at 4:13 PM Paul E. McKenney <paulmck@kernel.org> wrote:
->
-> On Thu, Oct 06, 2022 at 01:31:43PM +0000, Joel Fernandes wrote:
-> > On Wed, Oct 05, 2022 at 06:03:39PM +0200, Daniel Bristot de Oliveira wr=
-ote:
-> > > On 10/5/22 18:01, Florent Carli wrote:
-> > > > Hello,
-> > > >
-> > > > I'm trying to isolate some cores to run a CPU-bound real-time task =
-and
-> > > > even though I'm using rcu_nocbs and rcu_nocb_poll, I can see the rc=
-uc
-> > > > threads wake up, and I get RCU stall warnings on the isolated core.
-> >
-> > Isolating a CPU does not mean that RCU activity is forbidden on it, eve=
-n with
-> > nohz_full, if the CPU enters the kernel (say syscall or interrupt), the=
-n it
-> > may enter a read-side critical section so RCU will be watching it, and =
-such
-> > CPU will have to report quiescent state.
->
-> What Joel said!
->
-> Plus, if you keep that CPU out of the kernel (including avoiding it ever
-> taking any interrupts), you won't see rcuc activity on that CPU.
->
-> > > > As per the documentation, if I use rcutree.kthread_prio with a
-> > > > priority > my RT task, then the rcu stall does not happen.
-> >
-> > Yes, it sounds like the main RCU GP thread (mostly called rcu_preempt t=
-hread)
-> > in your system is competing with your RT task. Increase kthread_prio is
-> > standard procedure to resolve this issue, as you did.
->
-> Or affinity the rcu_preempt kthread elsewhere so that it is not competing
-> with your real-time workload.
->
-> > > > However I find it confusing: why are the rcuc threads woken up on t=
-he
-> > > > isolated cores despite using rcu_nocbs and rcu_nocb_poll? In my (ve=
-ry
-> > > > likely erroneous) understanding, I shouldn't have to fiddle with rc=
-u
-> > > > priority... In other words, how come I get rcu stalls on cores that
-> > > > have no rcu callbacks?
-> >
-> > It is not possible to provide further help without more info, in partic=
-ular
-> > are you using nohz_full and isolcpus options? Can you provide kernel
-> > and #CPU configuration?
-> >
-> > Happy to look further! Also adding some more folks who know a lot about=
- this
-> > stuff and +rcu list for archives.
->
-> The rcuc kthreads communicate between the corresponding CPU and the
-> rcu_preempt kthread (AKA RCU GP kthread).  They wake up only when there
-> is something for them to do, and letting your nohz_full/rcu_nocbs CPUs
-> execute in the kernel is an excellent way to give them something to do.
->
-> In particular, if that CPU runs in the kernel, it might have executed
-> an RCU read-side critical section.  Because RCU grace periods are not
-> permitted to complete until all pre-existing RCU read-side critical
-> sections finish, communication is required.
->
-> So, yes, that rcuc kthread will need to execute if its CPU queues an
-> RCU callback.  But it might also need to execute if some other CPU queues
-> an RCU callback -and- its CPU spends significant time in the kernel.
->
->                                                         Thanx, Paul
->
-> > thanks,
-> >
-> >  - Joel
-> >
-> > >
-> > > Adding Joel because we had a chat about it during lpc...
-> > >
-> > > > Thanks.
-> > > >
-> > > -- Daniel
-> > >
