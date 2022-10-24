@@ -2,33 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 995FCECAAA1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CE5EC38A2D
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229663AbiJXKyU (ORCPT
+        id S229728AbiJXKyj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 06:54:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57982 "EHLO
+        Mon, 24 Oct 2022 06:54:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58924 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229556AbiJXKyT (ORCPT
+        with ESMTP id S229865AbiJXKyg (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Oct 2022 06:54:19 -0400
-X-Greylist: delayed 589 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 24 Oct 2022 03:54:19 PDT
+        Mon, 24 Oct 2022 06:54:36 -0400
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F5DC5A17D;
-        Mon, 24 Oct 2022 03:54:18 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 147C361C24;
-        Mon, 24 Oct 2022 12:54:17 +0200 (CEST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7378C65D5;
+        Mon, 24 Oct 2022 03:54:31 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 4C9E561D80;
+        Mon, 24 Oct 2022 12:44:33 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1666608857;
-        h=from:subject:date:message-id:to:mime-version:content-type:in-reply-to:
-         references; bh=ggedhJh1EHWK9qNin4m66c03VGctJh9G7V0HKNEN04Y=;
-        b=fdFQpBm4T/UC47utgxrSqkY3N24nXcCQFT1qJ77mNYeZdEjDkAaf5MBUil6J4f4psSe43M
-        19VwejTI/p1KSwwjFeyjHwhJtOUswaUIACU/9lKyA+dvLc+tE5P1Yijz4s87fqZ/9s1QrN
-        x5J3GOPLc80mZTvAR3f3daRZIViZj8jIpthSNA3XAiCAIxTOE73MgavXez1EMRq6d3gZb8
-        CJYpsD+CHTG3S7+ClmMF4HhN9Au45IEEnzzC3IriyW4wpKhVyRhq5y84i3q/F1WSTipCIw
-        iHSmGI6007mTclyjUcix+03IAphOqLpOu3LSBO7zVlvkIEonFkRR0qXb5Ceb4w==
-Date:   Mon, 24 Oct 2022 12:54:16 +0200
+        t=1666608273; h=from:subject:date:message-id:to:cc:mime-version:
+         content-transfer-encoding:in-reply-to:references;
+        bh=BOoIY9WJFmBt1PSHlkPpnZQdqGiT4O4onH5CW/obUpI=;
+        b=aO0uZ3v90bbg6mi3ImXFlkzhdHX/g0FQCi0pycvauxRpctXYkmPO+cOdvY0LbEcCXZLkUr
+        N1k7H6QO3ImFEEKEkU5ghTkU6tbR/35k1X9QQV1e84adehoMye5oeTX9kxZoatKYbcSGNm
+        D4teRsHUUeE7lzcA4nVfOSJwEisS1Qz3AqbJCYaF6Q43b6E2GoKjcAKa7V1/7/0DsSlxad
+        moM8HgLNk2F63w+h80FgwXG66xSu15BqOxhktjyb7sqhBwJRh0bhvDo+skJfp4vPMKhQHS
+        jsVBy+gfqOonqQGMg8wexjfk+tMuWi7380sqd13iw/QmD5V8OBf8yecVVUYhuQ==
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -40,59 +38,89 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
-Subject: Re: [PATCH RT 0/9] Linux v4.19.255-rt114-rc1
-Message-ID: <20221024105416.nflnrqhmzsyqqdzz@carbon.lan>
+Cc:     Mike Galbraith <efault@gmx.de>, Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 6/9] timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
+Date:   Mon, 24 Oct 2022 12:44:22 +0200
+Message-Id: <20221024104425.16423-7-wagi@monom.org>
+In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
 References: <20221024104425.16423-1-wagi@monom.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
+Content-Transfer-Encoding: 8bit
 X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Oct 24, 2022 at 12:44:16PM +0200, Daniel Wagner wrote:
-> Dear RT Folks,
->
-> This is the RT stable review cycle of patch 4.19.255-rt114-rc1.
->
-> Please scream at me if I messed something up. Please test the patches
-> too.
->
-> The -rc release will be uploaded to kernel.org and will be deleted
-> when the final release is out. This is just a review release (or
-> release candidate).
->
-> The pre-releases will not be pushed to the git repository, only the
-> final release is.
->
-> If all goes well, this patch will be converted to the next main
-> release on 2022-10-31.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Timer changes seem not to be correct though:
+v4.19.255-rt114-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-[   24.674424] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
-[   24.674426] in_atomic(): 0, irqs_disabled(): 1, pid: 23, name: ktimersoftd/1
-[   25.730421] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
-[   25.730424] in_atomic(): 0, irqs_disabled(): 1, pid: 11, name: ktimersoftd/0
-
-I get those for when running any of the rttests. I suppose I am missing
-an additional fix:
-
--               if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL) &&
--                   timer->flags & TIMER_IRQSAFE) {
-+               if (timer->flags & TIMER_IRQSAFE) {
-                        raw_spin_unlock(&base->lock);
-                        call_timer_fn(timer, fn);
-                        base->running_timer = NULL;
+-----------
 
 
-is now queuing up fn callbacks with TIMER_IRQSAFE which then triggers:
+Upstream commit c725dafc95f1b37027840aaeaa8b7e4e9cd20516
 
-+       if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
-+               might_sleep();
+PREEMPT_RT does not spin and wait until a running timer completes its
+callback but instead it blocks on a sleeping lock to prevent a livelock in
+the case that the task waiting for the callback completion preempted the
+callback.
 
-in del_timer_sync(). But this is just a guess.
+This cannot be done for timers flagged with TIMER_IRQSAFE. These timers can
+be canceled from an interrupt disabled context even on RT kernels.
 
-Daniel
+The expiry callback of such timers is invoked with interrupts disabled so
+there is no need to use the expiry lock mechanism because obviously the
+callback cannot be preempted even on RT kernels.
+
+Do not use the timer_base::expiry_lock mechanism when waiting for a running
+callback to complete if the timer is flagged with TIMER_IRQSAFE.
+
+Also add a lockdep assertion for RT kernels to validate that the expiry
+lock mechanism is always invoked in preemptible context.
+
+Reported-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lore.kernel.org/r/20201103190937.hga67rqhvknki3tp@linutronix.de
+[bigeasy: The logic in v4.19 is slightly different but the outcome is the
+   same as we must not sleep while waiting for the irqsafe timer to
+   complete. The IRQSAFE timer can not be preempted.
+   The "lockdep annotation" is not available and has been replaced with
+   might_sleep()]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Daniel Wagner <wagi@monom.org>
+---
+ kernel/time/timer.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 3e2c0bd03004..0a6d60b3e67c 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1272,6 +1272,9 @@ static int __del_timer_sync(struct timer_list *timer)
+ 		if (ret >= 0)
+ 			return ret;
+ 
++		if (READ_ONCE(timer->flags) & TIMER_IRQSAFE)
++			continue;
++
+ 		/*
+ 		 * When accessing the lock, timers of base are no longer expired
+ 		 * and so timer is no longer running.
+@@ -1336,6 +1339,12 @@ int del_timer_sync(struct timer_list *timer)
+ 	 * could lead to deadlock.
+ 	 */
+ 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
++	/*
++	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
++	 * __del_timer_sync().
++	 */
++	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
++		might_sleep();
+ 
+ 	return __del_timer_sync(timer);
+ }
+-- 
+2.38.0
+
