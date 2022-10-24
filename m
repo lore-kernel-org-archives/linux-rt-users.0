@@ -2,31 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E5C1FA373E
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BCC9FA3740
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229886AbiJXKyn (ORCPT
+        id S229755AbiJXKyr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 06:54:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59456 "EHLO
+        Mon, 24 Oct 2022 06:54:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59454 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229871AbiJXKyk (ORCPT
+        with ESMTP id S229742AbiJXKyk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Mon, 24 Oct 2022 06:54:40 -0400
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DCB40CE0E;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 39516B7CD;
         Mon, 24 Oct 2022 03:54:31 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id F0CAF61D7A;
-        Mon, 24 Oct 2022 12:44:31 +0200 (CEST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 82E1B61D7C;
+        Mon, 24 Oct 2022 12:44:30 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1666608272; h=from:subject:date:message-id:to:cc:mime-version:
+        t=1666608270; h=from:subject:date:message-id:to:cc:mime-version:
          content-transfer-encoding:in-reply-to:references;
-        bh=s6+zpCqS6FPxz8ZLKaj1J443b3jYNWuEs6pNuizXfBs=;
-        b=cLi1hzzFHj8dNkBW0yrnn+LRsRdGoWuCmaLSI+VBf2/mX7lC78Gmie4gPpJH1URSSet0TW
-        Un8fW2WYnNd2MfYt8nPZwl56cNZSBWJfaXaIXLC0dsHQaXefyftS5cTmUf+95gdot1Et6p
-        4u1TipPziBcE6dw4QlQ2YPSekpcidzfFDtNF2n7ggsPHF7gpgZjvBq/wlRpvdFaY9DfrUw
-        gVW37QGelHsXHePuKfGb6OIEq/pWRP4XJ3WeMBcUO7IyFblXtW4fCNSZdWxupzVduwLZpu
-        E3P3Md1gbUfo+moCh7DDDnaxhZUQllbRiRZ3BL2WWzS0g78pE5ScnNROjc0uAg==
+        bh=ScROC3sGA4GWsZP9jfPmNdGSmAv/ip4dlZ5Qh/Mh1f4=;
+        b=yKdjvmL0NaVsQKuw4uS6ES5CgxzRLTabK1AaP+a2OzH/14AW0ZofPSNn5zT0hgv4hbi51D
+        Z//IK1Kc1oeoBrgkGvsMZ7rbfn6p1tvDY+qKEqbM9VgxEPSMLsHvNV4swoHLlQY6pmi60a
+        bh54YY162QKwbNpbul750XTDSFu99iAlejmGfI/otbTzjcf8QVLJh92A618XNbdfTLtfnN
+        NoA/CrtYXha+JjJ7e0hZKg+4PVkzyqFM5G7AfI65cj2FGM2RtVyi425jye2h7HK9BG+7Dc
+        k25egpUEaorjGV69IL0vEOoVcf+j5FufnKi7J+0byextGew23S9LllviW5VPFQ==
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -39,9 +39,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
 Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 4/9] Revert "workqueue: Use local irq lock instead of irq disable regions"
-Date:   Mon, 24 Oct 2022 12:44:20 +0200
-Message-Id: <20221024104425.16423-5-wagi@monom.org>
+Subject: [PATCH RT 3/9] local_lock: Provide INIT_LOCAL_LOCK().
+Date:   Mon, 24 Oct 2022 12:44:19 +0200
+Message-Id: <20221024104425.16423-4-wagi@monom.org>
 In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
 References: <20221024104425.16423-1-wagi@monom.org>
 MIME-Version: 1.0
@@ -59,37 +59,66 @@ If anyone has any objections, please let me know.
 -----------
 
 
-This reverts the PREEMPT_RT related changes to workqueue. It reverts the
-usage of local_locks() and cpu_chill().
+The original code was using INIT_LOCAL_LOCK() and I tried to sneak
+around it and forgot that this code also needs to compile on !RT
+platforms.
 
-This is a preparation to pull in the PREEMPT_RT related changes which
-were merged upstream.
+Provide INIT_LOCAL_LOCK() to initialize properly on RT and do nothing on
+!RT. Let random.c use which is the only user so far and oes not compile
+on !RT otherwise.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-[wagi: 827b6f6962da ("workqueue: rework") already reverted
-       most of the changes, except the missing update in
-       put_pwq_unlocked.]
+Link: https://lore.kernel.org/all/YzcEIU17EIZ7ZIF5@linutronix.de/
 Signed-off-by: Daniel Wagner <wagi@monom.org>
 ---
- kernel/workqueue.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ drivers/char/random.c     | 4 ++--
+ include/linux/locallock.h | 5 +++++
+ 2 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 4ed22776b2ee..d97c2ad8dc08 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1496,11 +1496,9 @@ EXPORT_SYMBOL(queue_work_on);
- void delayed_work_timer_fn(struct timer_list *t)
- {
- 	struct delayed_work *dwork = from_timer(dwork, t, timer);
--	unsigned long flags;
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index 0fd0462054bd..a7b345c47d1f 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -235,7 +235,7 @@ struct crng {
  
--	local_irq_save(flags);
-+	/* should have been called from irqsafe timer with irq already off */
- 	__queue_work(dwork->cpu, dwork->wq, &dwork->work);
--	local_irq_restore(flags);
- }
- EXPORT_SYMBOL(delayed_work_timer_fn);
+ static DEFINE_PER_CPU(struct crng, crngs) = {
+ 	.generation = ULONG_MAX,
+-	.lock.lock = __SPIN_LOCK_UNLOCKED(crngs.lock.lock),
++	.lock =  INIT_LOCAL_LOCK(crngs.lock),
+ };
+ 
+ /* Used by crng_reseed() and crng_make_state() to extract a new seed from the input pool. */
+@@ -514,7 +514,7 @@ struct batch_ ##type {								\
+ };										\
+ 										\
+ static DEFINE_PER_CPU(struct batch_ ##type, batched_entropy_ ##type) = {	\
+-	.lock.lock = __SPIN_LOCK_UNLOCKED(batched_entropy_ ##type.lock.lock),	\
++	.lock = INIT_LOCAL_LOCK(batched_entropy_ ##type.lock),			\
+ 	.position = UINT_MAX							\
+ };										\
+ 										\
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 81c89d87723b..7964ee6b998c 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -23,6 +23,8 @@ struct local_irq_lock {
+ 	unsigned long		flags;
+ };
+ 
++#define INIT_LOCAL_LOCK(lvar)			{ .lock = __SPIN_LOCK_UNLOCKED((lvar).lock.lock) }
++
+ #define DEFINE_LOCAL_IRQ_LOCK(lvar)					\
+ 	DEFINE_PER_CPU(struct local_irq_lock, lvar) = {			\
+ 		.lock = __SPIN_LOCK_UNLOCKED((lvar).lock) }
+@@ -241,6 +243,9 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 
+ #else /* PREEMPT_RT_BASE */
+ 
++struct local_irq_lock { };
++#define INIT_LOCAL_LOCK(lvar)			{ }
++
+ #define DEFINE_LOCAL_IRQ_LOCK(lvar)		__typeof__(const int) lvar
+ #define DECLARE_LOCAL_IRQ_LOCK(lvar)		extern __typeof__(const int) lvar
  
 -- 
 2.38.0
