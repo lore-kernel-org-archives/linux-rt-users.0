@@ -2,30 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AB58DFA373E
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E5C1FA373E
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229727AbiJXKym (ORCPT
+        id S229886AbiJXKyn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 06:54:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59452 "EHLO
+        Mon, 24 Oct 2022 06:54:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59456 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229866AbiJXKyk (ORCPT
+        with ESMTP id S229871AbiJXKyk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Mon, 24 Oct 2022 06:54:40 -0400
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 393DA109E;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DCB40CE0E;
         Mon, 24 Oct 2022 03:54:31 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 5F33D618F7;
-        Mon, 24 Oct 2022 12:44:26 +0200 (CEST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id F0CAF61D7A;
+        Mon, 24 Oct 2022 12:44:31 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1666608268; h=from:subject:date:message-id:to:cc:mime-version:
-         content-transfer-encoding; bh=PwVx9GHMb7vRQqqXAMgZial/VEPJ+6ZVGwTJNOi99aE=;
-        b=K3hRJnqCu5P0Pd2UQLF4AxnIOnQot3DaXl5SULmhTFM8Z7z3T92QOLD7SPyGuCyXyoZ4f5
-        5pzQM/vurHFiUS0SWZ3uYUgvRERZitwJocG93sfTVeaiZ2XXWGbRNZTzdq1tksMfA0ry7H
-        xmm6In77LM5211h1yBYOupqEz5jHghxRBkkgWHl/w3n1xjEKzFkGWHHgmtPnOoPd0W7of5
-        ddmTf/wJtfnsbrv9RZL6IYr1GalSO3sIS0qK7rSvegH4RUEe90IVosvFc/XVd78dkixGWv
-        mdDhOvuSd47tGiwY5sCY+dIpQXDAXQ3ds976SUzCPMY8kxfbhKJcaQS46OeqBg==
+        t=1666608272; h=from:subject:date:message-id:to:cc:mime-version:
+         content-transfer-encoding:in-reply-to:references;
+        bh=s6+zpCqS6FPxz8ZLKaj1J443b3jYNWuEs6pNuizXfBs=;
+        b=cLi1hzzFHj8dNkBW0yrnn+LRsRdGoWuCmaLSI+VBf2/mX7lC78Gmie4gPpJH1URSSet0TW
+        Un8fW2WYnNd2MfYt8nPZwl56cNZSBWJfaXaIXLC0dsHQaXefyftS5cTmUf+95gdot1Et6p
+        4u1TipPziBcE6dw4QlQ2YPSekpcidzfFDtNF2n7ggsPHF7gpgZjvBq/wlRpvdFaY9DfrUw
+        gVW37QGelHsXHePuKfGb6OIEq/pWRP4XJ3WeMBcUO7IyFblXtW4fCNSZdWxupzVduwLZpu
+        E3P3Md1gbUfo+moCh7DDDnaxhZUQllbRiRZ3BL2WWzS0g78pE5ScnNROjc0uAg==
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -38,9 +39,11 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
 Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 0/9] Linux v4.19.255-rt114-rc1
-Date:   Mon, 24 Oct 2022 12:44:16 +0200
-Message-Id: <20221024104425.16423-1-wagi@monom.org>
+Subject: [PATCH RT 4/9] Revert "workqueue: Use local irq lock instead of irq disable regions"
+Date:   Mon, 24 Oct 2022 12:44:20 +0200
+Message-Id: <20221024104425.16423-5-wagi@monom.org>
+In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
+References: <20221024104425.16423-1-wagi@monom.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Last-TLS-Session-Version: TLSv1.3
@@ -48,70 +51,46 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT Folks,
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-This is the RT stable review cycle of patch 4.19.255-rt114-rc1.
+v4.19.255-rt114-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main
-release on 2022-10-31.
-
-To build 4.19.255-rt114-rc1 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.255.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.255-rt114-rc1.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.255-rt113:
+-----------
 
 
-Daniel Wagner (3):
-  Revert "random: Use local locks for crng context access"
-  rcu: Update rcuwait
-  Linux 4.19.255-rt114-rc1
+This reverts the PREEMPT_RT related changes to workqueue. It reverts the
+usage of local_locks() and cpu_chill().
 
-Sebastian Andrzej Siewior (6):
-  random: Bring back the local_locks
-  local_lock: Provide INIT_LOCAL_LOCK().
-  Revert "workqueue: Use local irq lock instead of irq disable regions"
-  timers: Keep interrupts disabled for TIMER_IRQSAFE timer.
-  timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
-  workqueue: Use rcuwait for wq_manager_wait
+This is a preparation to pull in the PREEMPT_RT related changes which
+were merged upstream.
 
- drivers/char/random.c         | 16 +++++++------
- include/linux/locallock.h     |  5 +++++
- include/linux/rcuwait.h       | 42 +++++++++++++++++++++++++++--------
- kernel/exit.c                 |  7 ++++--
- kernel/locking/percpu-rwsem.c |  2 +-
- kernel/rcu/update.c           |  8 +++++++
- kernel/time/timer.c           | 12 ++++++++--
- kernel/workqueue.c            | 28 +++++++++++++++++------
- localversion-rt               |  2 +-
- 9 files changed, 93 insertions(+), 29 deletions(-)
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[wagi: 827b6f6962da ("workqueue: rework") already reverted
+       most of the changes, except the missing update in
+       put_pwq_unlocked.]
+Signed-off-by: Daniel Wagner <wagi@monom.org>
+---
+ kernel/workqueue.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 4ed22776b2ee..d97c2ad8dc08 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1496,11 +1496,9 @@ EXPORT_SYMBOL(queue_work_on);
+ void delayed_work_timer_fn(struct timer_list *t)
+ {
+ 	struct delayed_work *dwork = from_timer(dwork, t, timer);
+-	unsigned long flags;
+ 
+-	local_irq_save(flags);
++	/* should have been called from irqsafe timer with irq already off */
+ 	__queue_work(dwork->cpu, dwork->wq, &dwork->work);
+-	local_irq_restore(flags);
+ }
+ EXPORT_SYMBOL(delayed_work_timer_fn);
+ 
 -- 
 2.38.0
 
