@@ -2,31 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 369AEECAAA1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:55:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AFCA5FA373E
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:55:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229954AbiJXKzZ (ORCPT
+        id S230043AbiJXKz2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 06:55:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59740 "EHLO
+        Mon, 24 Oct 2022 06:55:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59948 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229851AbiJXKy6 (ORCPT
+        with ESMTP id S229912AbiJXKy6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Mon, 24 Oct 2022 06:54:58 -0400
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2C78D13F0E;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2C8B613F34;
         Mon, 24 Oct 2022 03:54:38 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 9CD8E61D7D;
-        Mon, 24 Oct 2022 12:44:32 +0200 (CEST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id D116061D78;
+        Mon, 24 Oct 2022 12:44:28 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1666608272; h=from:subject:date:message-id:to:cc:mime-version:
+        t=1666608269; h=from:subject:date:message-id:to:cc:mime-version:
          content-transfer-encoding:in-reply-to:references;
-        bh=Ewd7YIr3/bEdlcKC7v2uy0s+SHWdjFr5K1Yi5NyIu0o=;
-        b=C4+RmTg5hzIEjuwHdWs8SjfZlMU3wo4WAXs4hFa2XAeFvu7j/5Ex526Dr8JBA/Rpd8240j
-        Lvl25pbIOnbMYiQ5Q63Zn9n+AiEZNa8+hsqjOdes0N1hWylcOuqwZqclS7EoN9ydqC1XCE
-        C71lqELBsDMUJrw5ZSB8NzDLSXqMCnEuaGiCzQU+lFylRPG5OBNSQKEYHaDfJ8Ni2Nfirs
-        sfim8pizNBl+Hcuy1Nz4M+DraDhnpArs/5hMlNI5ZejIYJqtdLdTW1CBuIXthe1cp1LycB
-        FeVnF3jK7IQeCZiETOlo/kkfmj+S7+V+oiDu1bqT2W0G1/OU3CpgdiWN02iWiw==
+        bh=OO8ivmGitwcKDyAkmI+pQE3XfdhYBWotXa3wVqMIHE4=;
+        b=OVscYbQBs3+pgCis9WTsKntYC4FUwkJhmodaQtdp/Ujq7AL2cze7YucRBBlPBRyWtk39FW
+        skrs6X8tG7lzd6HPwuRtF/V0O5BCnvhjxWgYyjxaFz+TmiysVlBpxA+bqG7qGsR0m4jjJT
+        5CYIS8ae1T1it1DBGHa2736TDV94gwjMjETQqpabaH8MtlliOGOtJxkiW6dGqbvFtGeqHI
+        L7qpzbzQ1qgw5ME9vi7reGiE4u/Q76PdL6TbVJFDdLg/Xr0IfG2MhfsfLdk4VSdYVoTBgr
+        CgJ8bpBvW8TsRRj3asXaJpZflnO7hByW+Axx8VnTGUwNlTUMhAHtgcgfL/tNPg==
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -39,9 +39,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
 Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 5/9] timers: Keep interrupts disabled for TIMER_IRQSAFE timer.
-Date:   Mon, 24 Oct 2022 12:44:21 +0200
-Message-Id: <20221024104425.16423-6-wagi@monom.org>
+Subject: [PATCH RT 1/9] Revert "random: Use local locks for crng context access"
+Date:   Mon, 24 Oct 2022 12:44:17 +0200
+Message-Id: <20221024104425.16423-2-wagi@monom.org>
 In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
 References: <20221024104425.16423-1-wagi@monom.org>
 MIME-Version: 1.0
@@ -51,39 +51,81 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-
 v4.19.255-rt114-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 -----------
 
 
-Keep interrupts disabled across callback invocation for the
-TIMER_IRQSAFE as expected.
-This is required for the timer used by workqueue after the upcomming
-rework.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Daniel Wagner <wagi@monom.org>
+This reverts commit af5469c6f4f85f60f3ecc9bd541adfb6bdbeaff2.
 ---
- kernel/time/timer.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/char/random.c | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index a2be2277506d..3e2c0bd03004 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1397,8 +1397,7 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index c06705a32246..2be38780a7f7 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -53,7 +53,6 @@
+ #include <linux/uaccess.h>
+ #include <linux/siphash.h>
+ #include <linux/uio.h>
+-#include <linux/locallock.h>
+ #include <crypto/chacha20.h>
+ #include <crypto/blake2s.h>
+ #include <asm/processor.h>
+@@ -235,7 +234,6 @@ struct crng {
+ static DEFINE_PER_CPU(struct crng, crngs) = {
+ 	.generation = ULONG_MAX
+ };
+-DEFINE_LOCAL_IRQ_LOCK(crngs_lock);
  
- 		fn = timer->function;
+ /* Used by crng_reseed() and crng_make_state() to extract a new seed from the input pool. */
+ static void extract_entropy(void *buf, size_t len);
+@@ -364,7 +362,7 @@ static void crng_make_state(u32 chacha_state[CHACHA20_BLOCK_SIZE / sizeof(u32)],
+ 	if (unlikely(crng_has_old_seed()))
+ 		crng_reseed();
  
--		if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL) &&
--		    timer->flags & TIMER_IRQSAFE) {
-+		if (timer->flags & TIMER_IRQSAFE) {
- 			raw_spin_unlock(&base->lock);
- 			call_timer_fn(timer, fn);
- 			base->running_timer = NULL;
+-	local_lock_irqsave(crngs_lock, flags);
++	local_irq_save(flags);
+ 	crng = raw_cpu_ptr(&crngs);
+ 
+ 	/*
+@@ -389,7 +387,7 @@ static void crng_make_state(u32 chacha_state[CHACHA20_BLOCK_SIZE / sizeof(u32)],
+ 	 * should wind up here immediately.
+ 	 */
+ 	crng_fast_key_erasure(crng->key, chacha_state, random_data, random_data_len);
+-	local_unlock_irqrestore(crngs_lock, flags);
++	local_irq_restore(flags);
+ }
+ 
+ static void _get_random_bytes(void *buf, size_t len)
+@@ -514,7 +512,6 @@ struct batch_ ##type {								\
+ static DEFINE_PER_CPU(struct batch_ ##type, batched_entropy_ ##type) = {	\
+ 	.position = UINT_MAX							\
+ };										\
+-static DEFINE_LOCAL_IRQ_LOCK(batched_entropy_lock_ ##type);			\
+ 										\
+ type get_random_ ##type(void)							\
+ {										\
+@@ -530,7 +527,7 @@ type get_random_ ##type(void)							\
+ 		return ret;							\
+ 	}									\
+ 										\
+-	local_lock_irqsave(batched_entropy_lock_ ##type, flags);		\
++	local_irq_save(flags);		\
+ 	batch = raw_cpu_ptr(&batched_entropy_##type);				\
+ 										\
+ 	next_gen = READ_ONCE(base_crng.generation);				\
+@@ -544,7 +541,7 @@ type get_random_ ##type(void)							\
+ 	ret = batch->entropy[batch->position];					\
+ 	batch->entropy[batch->position] = 0;					\
+ 	++batch->position;							\
+-	local_unlock_irqrestore(batched_entropy_lock_ ##type, flags);		\
++	local_irq_restore(flags);		\
+ 	return ret;								\
+ }										\
+ EXPORT_SYMBOL(get_random_ ##type);
 -- 
 2.38.0
 
