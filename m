@@ -2,31 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BCC9FA3740
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E4D68ECAAA1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:55:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229755AbiJXKyr (ORCPT
+        id S229939AbiJXKzX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 06:54:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59454 "EHLO
+        Mon, 24 Oct 2022 06:55:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59950 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229742AbiJXKyk (ORCPT
+        with ESMTP id S229905AbiJXKy6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Oct 2022 06:54:40 -0400
+        Mon, 24 Oct 2022 06:54:58 -0400
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 39516B7CD;
-        Mon, 24 Oct 2022 03:54:31 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 82E1B61D7C;
-        Mon, 24 Oct 2022 12:44:30 +0200 (CEST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 400D513EAB;
+        Mon, 24 Oct 2022 03:54:38 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id DB1BE61D87;
+        Mon, 24 Oct 2022 12:44:34 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1666608270; h=from:subject:date:message-id:to:cc:mime-version:
+        t=1666608275; h=from:subject:date:message-id:to:cc:mime-version:
          content-transfer-encoding:in-reply-to:references;
-        bh=ScROC3sGA4GWsZP9jfPmNdGSmAv/ip4dlZ5Qh/Mh1f4=;
-        b=yKdjvmL0NaVsQKuw4uS6ES5CgxzRLTabK1AaP+a2OzH/14AW0ZofPSNn5zT0hgv4hbi51D
-        Z//IK1Kc1oeoBrgkGvsMZ7rbfn6p1tvDY+qKEqbM9VgxEPSMLsHvNV4swoHLlQY6pmi60a
-        bh54YY162QKwbNpbul750XTDSFu99iAlejmGfI/otbTzjcf8QVLJh92A618XNbdfTLtfnN
-        NoA/CrtYXha+JjJ7e0hZKg+4PVkzyqFM5G7AfI65cj2FGM2RtVyi425jye2h7HK9BG+7Dc
-        k25egpUEaorjGV69IL0vEOoVcf+j5FufnKi7J+0byextGew23S9LllviW5VPFQ==
+        bh=wKMtxoQSqU1ebaoGnDGb+/Jm2lZqqN7MOioiczni8Q4=;
+        b=Gv8xGyN41xfixWyk3MSUHYHC7pQsBIjt/5gQfFsrP+8A+mdStUayYM0dMm4r9Tq3xa3+RG
+        XLgriCxoVzZ/UnXb7hvMiJl2uZJiKEYCl5QwMi7DuHVlGZouJ2jkOXFGMMvzURJ9rfwaxF
+        QM9M59BVerI6FHPuqCK/nretNaZAtZaPo32eY0uMJsxs6RJhRwClq4IoVgexxFR96mz9L/
+        Ud/SeXsu/XDhW9RibK7QU8l/8DiTQxiKUxrhlRiFGSzrDpFf32JxwQLNQeiWwB114jtKs7
+        oJm2a1X1GKTlfDqmrwXrkPkLZcbg/InzJPn1FqI5iAWS/oorsTkZckHxJ6jQZA==
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -38,10 +38,10 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
-Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 3/9] local_lock: Provide INIT_LOCAL_LOCK().
-Date:   Mon, 24 Oct 2022 12:44:19 +0200
-Message-Id: <20221024104425.16423-4-wagi@monom.org>
+Cc:     Tejun Heo <tj@kernel.org>, Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 8/9] workqueue: Use rcuwait for wq_manager_wait
+Date:   Mon, 24 Oct 2022 12:44:24 +0200
+Message-Id: <20221024104425.16423-9-wagi@monom.org>
 In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
 References: <20221024104425.16423-1-wagi@monom.org>
 MIME-Version: 1.0
@@ -59,67 +59,103 @@ If anyone has any objections, please let me know.
 -----------
 
 
-The original code was using INIT_LOCAL_LOCK() and I tried to sneak
-around it and forgot that this code also needs to compile on !RT
-platforms.
+Upstream commit d8bb65ab70f702531aaaa11d9710f9450078e295
 
-Provide INIT_LOCAL_LOCK() to initialize properly on RT and do nothing on
-!RT. Let random.c use which is the only user so far and oes not compile
-on !RT otherwise.
+The workqueue code has it's internal spinlock (pool::lock) and also
+implicit spinlock usage in the wq_manager waitqueue. These spinlocks
+are converted to 'sleeping' spinlocks on a RT-kernel.
+
+Workqueue functions can be invoked from contexts which are truly atomic
+even on a PREEMPT_RT enabled kernel. Taking sleeping locks from such
+contexts is forbidden.
+
+pool::lock can be converted to a raw spinlock as the lock held times
+are short. But the workqueue manager waitqueue is handled inside of
+pool::lock held regions which again violates the lock nesting rules
+of raw and regular spinlocks.
+
+The manager waitqueue has no special requirements like custom wakeup
+callbacks or mass wakeups. While it does not use exclusive wait mode
+explicitly there is no strict requirement to queue the waiters in a
+particular order as there is only one waiter at a time.
+
+This allows to replace the waitqueue with rcuwait which solves the
+locking problem because rcuwait relies on existing locking.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Link: https://lore.kernel.org/all/YzcEIU17EIZ7ZIF5@linutronix.de/
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[wagi: Updated context as v4.19-rt was using swait]
 Signed-off-by: Daniel Wagner <wagi@monom.org>
 ---
- drivers/char/random.c     | 4 ++--
- include/linux/locallock.h | 5 +++++
- 2 files changed, 7 insertions(+), 2 deletions(-)
+ kernel/workqueue.c | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index 0fd0462054bd..a7b345c47d1f 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -235,7 +235,7 @@ struct crng {
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index d97c2ad8dc08..a3777fe1e224 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -50,6 +50,7 @@
+ #include <linux/sched/isolation.h>
+ #include <linux/nmi.h>
+ #include <linux/kvm_para.h>
++#include <linux/rcuwait.h>
  
- static DEFINE_PER_CPU(struct crng, crngs) = {
- 	.generation = ULONG_MAX,
--	.lock.lock = __SPIN_LOCK_UNLOCKED(crngs.lock.lock),
-+	.lock =  INIT_LOCAL_LOCK(crngs.lock),
- };
+ #include "workqueue_internal.h"
  
- /* Used by crng_reseed() and crng_make_state() to extract a new seed from the input pool. */
-@@ -514,7 +514,7 @@ struct batch_ ##type {								\
- };										\
- 										\
- static DEFINE_PER_CPU(struct batch_ ##type, batched_entropy_ ##type) = {	\
--	.lock.lock = __SPIN_LOCK_UNLOCKED(batched_entropy_ ##type.lock.lock),	\
-+	.lock = INIT_LOCAL_LOCK(batched_entropy_ ##type.lock),			\
- 	.position = UINT_MAX							\
- };										\
- 										\
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 81c89d87723b..7964ee6b998c 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -23,6 +23,8 @@ struct local_irq_lock {
- 	unsigned long		flags;
- };
+@@ -299,7 +300,8 @@ static struct workqueue_attrs *wq_update_unbound_numa_attrs_buf;
+ static DEFINE_MUTEX(wq_pool_mutex);	/* protects pools and workqueues list */
+ static DEFINE_MUTEX(wq_pool_attach_mutex); /* protects worker attach/detach */
+ static DEFINE_RAW_SPINLOCK(wq_mayday_lock);	/* protects wq->maydays list */
+-static DECLARE_SWAIT_QUEUE_HEAD(wq_manager_wait); /* wait for manager to go away */
++/* wait for manager to go away */
++static struct rcuwait manager_wait = __RCUWAIT_INITIALIZER(manager_wait);
  
-+#define INIT_LOCAL_LOCK(lvar)			{ .lock = __SPIN_LOCK_UNLOCKED((lvar).lock.lock) }
+ static LIST_HEAD(workqueues);		/* PR: list of all workqueues */
+ static bool workqueue_freezing;		/* PL: have wqs started freezing? */
+@@ -2023,7 +2025,7 @@ static bool manage_workers(struct worker *worker)
+ 
+ 	pool->manager = NULL;
+ 	pool->flags &= ~POOL_MANAGER_ACTIVE;
+-	swake_up_one(&wq_manager_wait);
++	rcuwait_wake_up(&manager_wait);
+ 	return true;
+ }
+ 
+@@ -3344,6 +3346,18 @@ static void rcu_free_pool(struct rcu_head *rcu)
+ 	kfree(pool);
+ }
+ 
++/* This returns with the lock held on success (pool manager is inactive). */
++static bool wq_manager_inactive(struct worker_pool *pool)
++{
++	raw_spin_lock_irq(&pool->lock);
 +
- #define DEFINE_LOCAL_IRQ_LOCK(lvar)					\
- 	DEFINE_PER_CPU(struct local_irq_lock, lvar) = {			\
- 		.lock = __SPIN_LOCK_UNLOCKED((lvar).lock) }
-@@ -241,6 +243,9 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
- 
- #else /* PREEMPT_RT_BASE */
- 
-+struct local_irq_lock { };
-+#define INIT_LOCAL_LOCK(lvar)			{ }
++	if (pool->flags & POOL_MANAGER_ACTIVE) {
++		raw_spin_unlock_irq(&pool->lock);
++		return false;
++	}
++	return true;
++}
 +
- #define DEFINE_LOCAL_IRQ_LOCK(lvar)		__typeof__(const int) lvar
- #define DECLARE_LOCAL_IRQ_LOCK(lvar)		extern __typeof__(const int) lvar
+ /**
+  * put_unbound_pool - put a worker_pool
+  * @pool: worker_pool to put
+@@ -3379,10 +3393,12 @@ static void put_unbound_pool(struct worker_pool *pool)
+ 	 * Become the manager and destroy all workers.  This prevents
+ 	 * @pool's workers from blocking on attach_mutex.  We're the last
+ 	 * manager and @pool gets freed with the flag set.
++	 * Because of how wq_manager_inactive() works, we will hold the
++	 * spinlock after a successful wait.
+ 	 */
+ 	raw_spin_lock_irq(&pool->lock);
+-	swait_event_lock_irq(wq_manager_wait,
+-			    !(pool->flags & POOL_MANAGER_ACTIVE), pool->lock);
++	rcuwait_wait_event(&manager_wait, wq_manager_inactive(pool),
++			   TASK_UNINTERRUPTIBLE);
+ 	pool->flags |= POOL_MANAGER_ACTIVE;
  
+ 	while ((worker = first_idle_worker(pool)))
 -- 
 2.38.0
 
