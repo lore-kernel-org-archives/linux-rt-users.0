@@ -2,49 +2,97 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D3EB9C3A59D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 06:58:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 995FCECAAA1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:54:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230091AbiJXG6g (ORCPT
+        id S229663AbiJXKyU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 02:58:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33994 "EHLO
+        Mon, 24 Oct 2022 06:54:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57982 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229455AbiJXG6f (ORCPT
+        with ESMTP id S229556AbiJXKyT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Oct 2022 02:58:35 -0400
-X-Greylist: delayed 511 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Sun, 23 Oct 2022 23:58:33 PDT
-Received: from mail601b.mxthunder.net (mail601b.mxthunder.net [209.41.68.211])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0E2605E67C
-        for <linux-rt-users@vger.kernel.org>; Sun, 23 Oct 2022 23:58:33 -0700 (PDT)
-Received: from bolt101b.mxthunder.net (bolt101b.mxthunder.net [209.41.68.240])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         server-signature RSA-PSS (2048 bits))
-        (No client certificate requested)
-        by mail601b.mxthunder.net (Postfix) with ESMTPS id 4Mwm0T6mSPz13VpC
-        for <linux-rt-users@vger.kernel.org>; Sun, 23 Oct 2022 23:50:01 -0700 (PDT)
-X-MXT-TRACKING-KEY: 4MwlmB3bt3z2vyZF-101b
-X-Virus-Scanned: amavisd-new at ondulapel.com.br
-Reply-To: chooleech@gmail.com
-From:   adaincle@gmail.com
-To:     linux-rt-users@vger.kernel.org
-Subject: Partnership
-Date:   23 Oct 2022 23:39:19 -0700
-Message-ID: <20221023233918.69D3706A6E5CA673@gmail.com>
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-X-MXT-EXTENDED-ID: 4MwlmB3bt3z2vyZF-101b-72072-B-S5aAic-500b
+        Mon, 24 Oct 2022 06:54:19 -0400
+X-Greylist: delayed 589 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 24 Oct 2022 03:54:19 PDT
+Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F5DC5A17D;
+        Mon, 24 Oct 2022 03:54:18 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 147C361C24;
+        Mon, 24 Oct 2022 12:54:17 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1666608857;
+        h=from:subject:date:message-id:to:mime-version:content-type:in-reply-to:
+         references; bh=ggedhJh1EHWK9qNin4m66c03VGctJh9G7V0HKNEN04Y=;
+        b=fdFQpBm4T/UC47utgxrSqkY3N24nXcCQFT1qJ77mNYeZdEjDkAaf5MBUil6J4f4psSe43M
+        19VwejTI/p1KSwwjFeyjHwhJtOUswaUIACU/9lKyA+dvLc+tE5P1Yijz4s87fqZ/9s1QrN
+        x5J3GOPLc80mZTvAR3f3daRZIViZj8jIpthSNA3XAiCAIxTOE73MgavXez1EMRq6d3gZb8
+        CJYpsD+CHTG3S7+ClmMF4HhN9Au45IEEnzzC3IriyW4wpKhVyRhq5y84i3q/F1WSTipCIw
+        iHSmGI6007mTclyjUcix+03IAphOqLpOu3LSBO7zVlvkIEonFkRR0qXb5Ceb4w==
+Date:   Mon, 24 Oct 2022 12:54:16 +0200
+From:   Daniel Wagner <wagi@monom.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
+Subject: Re: [PATCH RT 0/9] Linux v4.19.255-rt114-rc1
+Message-ID: <20221024105416.nflnrqhmzsyqqdzz@carbon.lan>
+References: <20221024104425.16423-1-wagi@monom.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I am Mr. Lee Chong, Business Relationship Manager at Nanyang
-Commercial Bank in Hong Kong, China. I have decided to contact
-you regarding the state of the client who managed an investment
-under our bank many years ago. If you are interested in
-partnership kindly reply to my emails for more information
-email: Leechong@asia.com
-Respectfully,
-Lee Chong
+On Mon, Oct 24, 2022 at 12:44:16PM +0200, Daniel Wagner wrote:
+> Dear RT Folks,
+>
+> This is the RT stable review cycle of patch 4.19.255-rt114-rc1.
+>
+> Please scream at me if I messed something up. Please test the patches
+> too.
+>
+> The -rc release will be uploaded to kernel.org and will be deleted
+> when the final release is out. This is just a review release (or
+> release candidate).
+>
+> The pre-releases will not be pushed to the git repository, only the
+> final release is.
+>
+> If all goes well, this patch will be converted to the next main
+> release on 2022-10-31.
 
+Timer changes seem not to be correct though:
+
+[   24.674424] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+[   24.674426] in_atomic(): 0, irqs_disabled(): 1, pid: 23, name: ktimersoftd/1
+[   25.730421] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+[   25.730424] in_atomic(): 0, irqs_disabled(): 1, pid: 11, name: ktimersoftd/0
+
+I get those for when running any of the rttests. I suppose I am missing
+an additional fix:
+
+-               if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL) &&
+-                   timer->flags & TIMER_IRQSAFE) {
++               if (timer->flags & TIMER_IRQSAFE) {
+                        raw_spin_unlock(&base->lock);
+                        call_timer_fn(timer, fn);
+                        base->running_timer = NULL;
+
+
+is now queuing up fn callbacks with TIMER_IRQSAFE which then triggers:
+
++       if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
++               might_sleep();
+
+in del_timer_sync(). But this is just a guess.
+
+Daniel
