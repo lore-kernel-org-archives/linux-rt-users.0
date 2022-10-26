@@ -2,155 +2,74 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BA91CECAAA1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Oct 2022 10:55:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EAB2C38A2D
+	for <linux-rt-users@archiver.kernel.org>; Wed, 26 Oct 2022 15:18:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229682AbiJXKzi (ORCPT
+        id S234500AbiJZPSG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Oct 2022 06:55:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59722 "EHLO
+        Wed, 26 Oct 2022 11:18:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50948 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229671AbiJXKzF (ORCPT
+        with ESMTP id S234485AbiJZPSF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Oct 2022 06:55:05 -0400
-Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B9A6C1B79B;
-        Mon, 24 Oct 2022 03:54:41 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 7F6E061D77;
-        Mon, 24 Oct 2022 12:44:29 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1666608269; h=from:subject:date:message-id:to:cc:mime-version:
-         content-transfer-encoding:in-reply-to:references;
-        bh=3wa0f+zrOtFlna7a224EJfMKkCUy+rnhosyUNwJXajU=;
-        b=t6jrHgifm7euHqYxcpmUyTMRqj8Wj+Y7OApKKa7oEPARDPsxnQos35MzpkLtHAUiUuPWOf
-        ggwoRrnup5iR1V8pw4reDw7zFAM7qhucPYJLW97ByT8TeqfDuvPhO5kP8pzKHbnmpveiZa
-        0AmqKeh1K/Wm7DwA0d4PPF9LbjNBmlKiVYXCgDFm8hvYPnOaKq/htN1Nj9fzgnE7F+61ZH
-        5UObSt24gzejAgZgrcUMiq7Bpj+Tl0y0L/Nwtkg47AbuZuHMfn5XHDqfUmMPmU7ihaq8ZU
-        OvXC1RgQbfyB7Wh9DLoSiKRTywBapiSZ/fmo2M3DM1KEOFo/JN8D4VglxL9Vfg==
-From:   Daniel Wagner <wagi@monom.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
-Cc:     Daniel Wagner <dwagner@suse.de>
-Subject: [PATCH RT 2/9] random: Bring back the local_locks
-Date:   Mon, 24 Oct 2022 12:44:18 +0200
-Message-Id: <20221024104425.16423-3-wagi@monom.org>
-In-Reply-To: <20221024104425.16423-1-wagi@monom.org>
-References: <20221024104425.16423-1-wagi@monom.org>
+        Wed, 26 Oct 2022 11:18:05 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9D229127BFA;
+        Wed, 26 Oct 2022 08:18:04 -0700 (PDT)
+Date:   Wed, 26 Oct 2022 17:18:00 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1666797482;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=TQTK4JJTsg9QsJ/M2GeZgy9I/7bCrsUV6/GQLB4bkIo=;
+        b=y/pSMUneKUVgoTQY7o9MIpk1u3AnFY+matZ6f7f4bBsAY1xJULEkST2SmuvTN5o59cwZyC
+        jXlbJyHgWgBhjNkv4sirmhvmCurUjcHCbiH/r9TS1n8X2kweIK38dv+yuKgek4FVbAm6m5
+        QuoyUxV1ZilCR854cY/DCvPaHI19Xh3vWWTrCmXVrEOCwYaS+8TvY9FfCnYzdsOlbtwYgM
+        YzLjxK+XwkPZ6KVsCOJ12YRJJTovc9m/Gja9duyzdcdzppCt8WdXbVaJPjbOYO3JDJ0g4u
+        Lwv5eqoXLqPaBR+AlSUBT5VlMdQh3taHmlgKSkUASj4I80q1OtbfrPJ8pU5MQA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1666797482;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=TQTK4JJTsg9QsJ/M2GeZgy9I/7bCrsUV6/GQLB4bkIo=;
+        b=OQ97oGDd90OU65YTrkTtr68Z5xAehwhDCmbWXvWaDrLZjvCT9OZREJLN0yB7qiRdNANiFk
+        URqfidPk8v32N4AQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.1-rc2-rt1
+Message-ID: <Y1lPqHjmytaSEnHn@linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Dear RT folks!
 
-v4.19.255-rt114-rc1 stable review patch.
-If anyone has any objections, please let me know.
+I'm pleased to announce the v6.1-rc2-rt1 patch set. 
 
------------
+Changes since v6.0.3-rt12:
 
+  - Update to v6.1-rc2.
 
-As part of the backports the random code lost its local_lock_t type and
-the whole operation became a local_irq_{disable|enable}() simply because
-the older kernel did not provide those primitives.
+Known issues
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
 
-RT as of v4.9 has a slightly different variant of local_locks.
-Replace the local_irq_*() operations with matching local_lock_irq*()
-operations which were there as part of commit
-   77760fd7f7ae3 ("random: remove batched entropy locking")
+You can get this release via the git tree at:
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Link: https://lore.kernel.org/all/20220819092446.980320-2-bigeasy@linutronix.de/
-Signed-off-by: Daniel Wagner <dwagner@suse.de>
----
- drivers/char/random.c | 15 ++++++++++-----
- 1 file changed, 10 insertions(+), 5 deletions(-)
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.1-rc2-rt1
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index 2be38780a7f7..0fd0462054bd 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -53,6 +53,7 @@
- #include <linux/uaccess.h>
- #include <linux/siphash.h>
- #include <linux/uio.h>
-+#include <linux/locallock.h>
- #include <crypto/chacha20.h>
- #include <crypto/blake2s.h>
- #include <asm/processor.h>
-@@ -229,10 +230,12 @@ static struct {
- struct crng {
- 	u8 key[CHACHA20_KEY_SIZE];
- 	unsigned long generation;
-+	struct local_irq_lock lock;
- };
- 
- static DEFINE_PER_CPU(struct crng, crngs) = {
--	.generation = ULONG_MAX
-+	.generation = ULONG_MAX,
-+	.lock.lock = __SPIN_LOCK_UNLOCKED(crngs.lock.lock),
- };
- 
- /* Used by crng_reseed() and crng_make_state() to extract a new seed from the input pool. */
-@@ -362,7 +365,7 @@ static void crng_make_state(u32 chacha_state[CHACHA20_BLOCK_SIZE / sizeof(u32)],
- 	if (unlikely(crng_has_old_seed()))
- 		crng_reseed();
- 
--	local_irq_save(flags);
-+	local_lock_irqsave(crngs.lock, flags);
- 	crng = raw_cpu_ptr(&crngs);
- 
- 	/*
-@@ -387,7 +390,7 @@ static void crng_make_state(u32 chacha_state[CHACHA20_BLOCK_SIZE / sizeof(u32)],
- 	 * should wind up here immediately.
- 	 */
- 	crng_fast_key_erasure(crng->key, chacha_state, random_data, random_data_len);
--	local_irq_restore(flags);
-+	local_unlock_irqrestore(crngs.lock, flags);
- }
- 
- static void _get_random_bytes(void *buf, size_t len)
-@@ -505,11 +508,13 @@ struct batch_ ##type {								\
- 	 * formula of (integer_blocks + 0.5) * CHACHA20_BLOCK_SIZE.		\
- 	 */									\
- 	type entropy[CHACHA20_BLOCK_SIZE * 3 / (2 * sizeof(type))];		\
-+	struct local_irq_lock lock;						\
- 	unsigned long generation;						\
- 	unsigned int position;							\
- };										\
- 										\
- static DEFINE_PER_CPU(struct batch_ ##type, batched_entropy_ ##type) = {	\
-+	.lock.lock = __SPIN_LOCK_UNLOCKED(batched_entropy_ ##type.lock.lock),	\
- 	.position = UINT_MAX							\
- };										\
- 										\
-@@ -527,7 +532,7 @@ type get_random_ ##type(void)							\
- 		return ret;							\
- 	}									\
- 										\
--	local_irq_save(flags);		\
-+	local_lock_irqsave(batched_entropy_ ##type.lock, flags);		\
- 	batch = raw_cpu_ptr(&batched_entropy_##type);				\
- 										\
- 	next_gen = READ_ONCE(base_crng.generation);				\
-@@ -541,7 +546,7 @@ type get_random_ ##type(void)							\
- 	ret = batch->entropy[batch->position];					\
- 	batch->entropy[batch->position] = 0;					\
- 	++batch->position;							\
--	local_irq_restore(flags);		\
-+	local_unlock_irqrestore(batched_entropy_ ##type.lock, flags);		\
- 	return ret;								\
- }										\
- EXPORT_SYMBOL(get_random_ ##type);
--- 
-2.38.0
+The RT patch against v6.1-rc2 can be found here:
 
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.1/older/patch-6.1-rc2-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.1/older/patches-6.1-rc2-rt1.tar.xz
+
+Sebastian
