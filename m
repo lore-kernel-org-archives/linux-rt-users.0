@@ -2,138 +2,112 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A66AC67871
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Oct 2022 07:01:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87A85C38A2D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Oct 2022 08:08:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233800AbiJ0HBl (ORCPT
+        id S234545AbiJ0IIp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Oct 2022 03:01:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59410 "EHLO
+        Thu, 27 Oct 2022 04:08:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37440 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234358AbiJ0HBe (ORCPT
+        with ESMTP id S229995AbiJ0IIn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Oct 2022 03:01:34 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0ACEE63FD0
-        for <linux-rt-users@vger.kernel.org>; Thu, 27 Oct 2022 00:01:31 -0700 (PDT)
-Date:   Thu, 27 Oct 2022 09:01:27 +0200
+        Thu, 27 Oct 2022 04:08:43 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 55FCC16A4F6;
+        Thu, 27 Oct 2022 01:08:42 -0700 (PDT)
+Date:   Thu, 27 Oct 2022 10:08:38 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1666854088;
+        s=2020; t=1666858120;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=ztr/WoAVyCzwfXOFI5zLxh/u/D/VVcswMhp7QMPcgXQ=;
-        b=Ix4ByvUH/p3e6WeuprsXMvr3WRgYHWVyQ/NWuCvm8tVCPrwpaojleX65jNe0/Cuq97NRa3
-        ApGX3HXjSYPw0EmpKJxDfm1t7Wvp5XVc11rtPiBpX8x5+ENAmUecpqUJXLuIAVrnoWFRer
-        RhV3WREW5DnRehCe80d0+tLSczOVqH4JQxyPcyXPzf+oE4AKNv320Cazvl+Vdp8Xwqr9En
-        KAAYz+4KapiCdpVa6h9Pym2uTc+SoN926BHeaSME+iGZhW6gs57lm5PJwKDhvnn7pyK2b5
-        hO9/CBphhVqi0plWX+gLmarrk5M6c5A0LN/q6LIrAS1Au8Tdm+QI8TFnFy2KPQ==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=MfKIFyyU67Gj1IrfueNH2q1KXlvNeXvyAhLCvopQQRs=;
+        b=P6G0RUvRGyqzHesIpk219I5l2aLhAUcO38zwo4ukJ7BB+PbtWATOwr4G+cChpNtWWsAlKq
+        7QIgcYSQ5dWKjO+KRk8mZ/34BODGIncTtvi+95jP/lZ5IlcwjhD3n5eep1OY5hu3iDqglj
+        O4q5Md9r6wVwoOxDi6ehkI9EDH9Ke7E+ph97ZR5fhHmLqkRw4pQV1ieJuW4xE1nIeAsl1w
+        iXdiRAbLo7UQx2FMN9/5JxvRlw6PVuM3OjA/61FSv7Sc1QyrHbDXBqNiU1NbuCk/5Agc5k
+        LozElx6z7VIQ1gK7QzUSvzkp7XVFdt6ImPbJ7pzeo5AswkypWNFmSOa1a6i5Iw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1666854088;
+        s=2020e; t=1666858120;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=ztr/WoAVyCzwfXOFI5zLxh/u/D/VVcswMhp7QMPcgXQ=;
-        b=VBD5feJvZ+xV7E/mfCsMyt/8f/nadO+cLzQxOTrlGoeNFYd8ElbNyWOZf7J5LoZ5Fri9Me
-        7/y4OSiheSp+2CCQ==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=MfKIFyyU67Gj1IrfueNH2q1KXlvNeXvyAhLCvopQQRs=;
+        b=Tjkz3bmtBLroc2rSNqFa65aC7N3x4AjfJLGZaPdmv6O732F+MN9t2e9ixnGLfv6YXR0w0O
+        zMJmAzusGTFJvgAA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     David Runge <dave@sleepmap.de>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: v6.0.3-rt12 does not compile (WAS: [ANNOUNCE] v6.1-rc2-rt1)
-Message-ID: <Y1osx2Iw0qs3gWxu@linutronix.de>
-References: <Y1lPqHjmytaSEnHn@linutronix.de>
- <Y1m0MXDKt0yqXdsu@hmbx>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.0.5-rt14
+Message-ID: <Y1o8hqwQKDpOTkNr@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <Y1m0MXDKt0yqXdsu@hmbx>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Please keep the list in Cc:
+Dear RT folks!
 
-On 2022-10-27 00:26:45 [+0200], David Runge wrote:
-> Hi Sebastian,
+I'm pleased to announce the v6.0.5-rt14 patch set. 
 
-Hi David,
+Changes since v6.0.5-rt13:
 
-> I'm following the linux-rt development for the Arch Linux package [1].
-> With 6.0.3-rt12 I have run into a bit of a pickle though.
+  - Replace deprecated API in the Xilinx AXI Ethernet driver so that it
+    compiles again. Reported by David Runge.
 
-I released it the other as the last one for the v6.0 series. Didn't
-announce it officially since I made no RT relevant change.
+Known issues
+     - Valentin Schneider reported a few splats on ARM64, see
+          https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
 
-> I'm seeing:
->=20
-> ```
-> drivers/net/ethernet/xilinx/xilinx_axienet_main.c: In function =E2=80=98a=
-xienet_get_stats64=E2=80=99:
-> drivers/net/ethernet/xilinx/xilinx_axienet_main.c:1308:25: error: implici=
-t declaration of function =E2=80=98u64_stats_fetch_begin_irq=E2=80=99; did =
-you mean =E2=80=98u64_stats_fetch_begin=E2=80=99? [-Werror=3Dimplicit-funct=
-ion-declaration]
->  1308 |                 start =3D u64_stats_fetch_begin_irq(&lp->rx_stat_=
-sync);
->       |                         ^~~~~~~~~~~~~~~~~~~~~~~~~
->       |                         u64_stats_fetch_begin
-> drivers/net/ethernet/xilinx/xilinx_axienet_main.c:1311:18: error: implici=
-t declaration of function =E2=80=98u64_stats_fetch_retry_irq=E2=80=99; did =
-you mean =E2=80=98u64_stats_fetch_retry=E2=80=99? [-Werror=3Dimplicit-funct=
-ion-declaration]
->  1311 |         } while (u64_stats_fetch_retry_irq(&lp->rx_stat_sync, sta=
-rt));
->       |                  ^~~~~~~~~~~~~~~~~~~~~~~~~
->       |                  u64_stats_fetch_retry
-> ```
+The delta patch against v6.0.5-rt13 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/incr/patch-6.0.5-rt13-rt14.patch.xz
 
-I addressed this for the v6.1 release, wasn't aware that it also managed
-its way into the v6.0 series.
+You can get this release via the git tree at:
 
-> Grepping for either =E2=80=98u64_stats_fetch_begin_irq=E2=80=99, or
-> =E2=80=98u64_stats_fetch_retry_irq=E2=80=99 in the codebase, they are ind=
-eed the only
-> occurences of it in that file... which is strange.
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.0.5-rt14
 
-Well, we are working on getting rid of this function. Upstream should
-follow in ~v6.2.
+The RT patch against v6.0.5 can be found here:
 
-> ```
-> rg u64_stats_fetch_begin_irq
-> drivers/net/ethernet/xilinx/xilinx_axienet_main.c
-> 1308:           start =3D u64_stats_fetch_begin_irq(&lp->rx_stat_sync);
-> 1314:           start =3D u64_stats_fetch_begin_irq(&lp->tx_stat_sync);
-> ```
->=20
-> If I check our own kernel or Greg's v6.0.3 tag there are plenty of
-> occurences of the function all across the codebase, but not as soon as
-> the patchset is merged.
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/older/patch-6.0.5-rt14.patch.xz
 
-There is
-   0002-net-Remove-the-obsolte-u64_stats_fetch_-_irq-users.patch
+The split quilt queue is available at:
 
-which gets rid of drivers/net users and then there is
-   u64_stat-Remove-the-obsolete-fetch_irq-variants.patch
-
-which removes the API once all users are gone.
-
-> When doing the release for 6.0.0-rt11 I already noticed a few missing
-> options but was under the impression that they might be missing due to
-> the realtime options disabling them. However, now it looks as if there
-> are entire subsets missing oO
-> Does the patchset drop a lot of network driver code and/or do the last
-> occurences there also have to be removed?
-> As is, I am unable to build v6.0.3-rt12.
-
-I'm going to release -rt13 in a bit with this fixed.
-There are few options like SLAB or TRANSPARENT_HUGEPAGE which are not
-available on PREEMPT_RT for one reason or another. I try to avoid
-dropping options if possible.
-
-> Best,
-> David
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/older/patches-6.0.5-rt14.tar.xz
 
 Sebastian
+
+diff --git a/drivers/net/ethernet/xilinx/xilinx_axienet_main.c b/drivers/net/ethernet/xilinx/xilinx_axienet_main.c
+index 9262988d26a32..2c233b59e7d93 100644
+--- a/drivers/net/ethernet/xilinx/xilinx_axienet_main.c
++++ b/drivers/net/ethernet/xilinx/xilinx_axienet_main.c
+@@ -1305,16 +1305,16 @@ axienet_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
+ 	netdev_stats_to_stats64(stats, &dev->stats);
+ 
+ 	do {
+-		start = u64_stats_fetch_begin_irq(&lp->rx_stat_sync);
++		start = u64_stats_fetch_begin(&lp->rx_stat_sync);
+ 		stats->rx_packets = u64_stats_read(&lp->rx_packets);
+ 		stats->rx_bytes = u64_stats_read(&lp->rx_bytes);
+-	} while (u64_stats_fetch_retry_irq(&lp->rx_stat_sync, start));
++	} while (u64_stats_fetch_retry(&lp->rx_stat_sync, start));
+ 
+ 	do {
+-		start = u64_stats_fetch_begin_irq(&lp->tx_stat_sync);
++		start = u64_stats_fetch_begin(&lp->tx_stat_sync);
+ 		stats->tx_packets = u64_stats_read(&lp->tx_packets);
+ 		stats->tx_bytes = u64_stats_read(&lp->tx_bytes);
+-	} while (u64_stats_fetch_retry_irq(&lp->tx_stat_sync, start));
++	} while (u64_stats_fetch_retry(&lp->tx_stat_sync, start));
+ }
+ 
+ static const struct net_device_ops axienet_netdev_ops = {
+diff --git a/localversion-rt b/localversion-rt
+index 9f7d0bdbffb18..08b3e75841adc 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt13
++-rt14
