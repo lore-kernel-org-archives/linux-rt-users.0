@@ -2,93 +2,92 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B65B4FA3740
-	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Oct 2022 02:36:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E9DEECAAA1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Oct 2022 13:26:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229665AbiJaCgG (ORCPT
+        id S231418AbiJaN0w (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 30 Oct 2022 22:36:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46670 "EHLO
+        Mon, 31 Oct 2022 09:26:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36134 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229553AbiJaCgF (ORCPT
+        with ESMTP id S230335AbiJaN0s (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 30 Oct 2022 22:36:05 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3433A64FF
-        for <linux-rt-users@vger.kernel.org>; Sun, 30 Oct 2022 19:35:03 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1667183702;
+        Mon, 31 Oct 2022 09:26:48 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C4DA7FD31;
+        Mon, 31 Oct 2022 06:26:47 -0700 (PDT)
+Date:   Mon, 31 Oct 2022 14:26:44 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1667222806;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=e41sBJr/U8nwabsK/+TTxg0We0ijqyvL4glZWXndQlY=;
-        b=ZUcBexE/BEkYG4N5hBt4EktvH5Kdd4pLSl9xJihAeI4682lge7TmuGRhkM9z/eM/xJpIok
-        tRWsIfhuLawu6AV6YxtriWzHpdQYfuTPTtwV7h9E7kdE3+0OCcVivpfrAwTLhjk3tGl5wl
-        ExHE1KVmVXBXz3KQJOeYMPOUocrpI7Y=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-41-LO43A0KdPKKVUCGR5anRAA-1; Sun, 30 Oct 2022 22:34:58 -0400
-X-MC-Unique: LO43A0KdPKKVUCGR5anRAA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE03987B2A0;
-        Mon, 31 Oct 2022 02:34:57 +0000 (UTC)
-Received: from localhost (unknown [10.22.18.117])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id EADFC40C2066;
-        Mon, 31 Oct 2022 02:34:56 +0000 (UTC)
-Date:   Sun, 30 Oct 2022 23:34:56 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=mb0Ej1ortleeAucLmIkRx/CfRh3SIJWlRcaDUzgtOlY=;
+        b=WeedCGcxygL/AggvsG+rVn/FHu5H6ziSUozUC/fJ/bMoSWtDrNpd6SlR/dHC0QctebkcKA
+        lo+n7VEq6CdbwF0mLlqp89sw2ajFaJ11fFHnmpIINpxEU0g38AM9UeeuzwxSO9ueDWz3os
+        jAS2ahjHSS6B0TKVQSjaJyrO2tAtNrYDUrGNO88pOxBYM+YlN/2X3eIPkwSLzLRf7Gjs3X
+        0Jf1F359W/RcZ87vgqLHYq/mEc9RtSy7psBsAmnAYCLU7T1KYy6CIa0Uar3CGKkXIbuVU9
+        L18Bc6/IMIj1CNgtxs7mtuRBWAGsai2Jq9jV2YijLZYxNNw6p0+HEY2GJpav9A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1667222806;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=mb0Ej1ortleeAucLmIkRx/CfRh3SIJWlRcaDUzgtOlY=;
+        b=7ae/r6wgnayJ24/06k3+EUyTMjDRV+GCjzJhZBVutHnmA3vWVxdfOvtAti3p0aP7xtDI4c
+        mhPsmxl628tmftAw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Pierre Gondois <pierre.gondois@arm.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
         Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.296-rt139
-Message-ID: <Y180UKeFSd2mZrlq@uudg.org>
+        Valentin Schneider <vschneid@redhat.com>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Mark Rutland <mark.rutland@arm.com>, stable-rt@vger.kernel.org
+Subject: Re: [ANNOUNCE] v6.0.5-rt14
+Message-ID: <Y1/NFIjRFZzszZB6@linutronix.de>
+References: <Y1o8hqwQKDpOTkNr@linutronix.de>
+ <649af0f6-e5e2-c450-879c-e9153e0c0abc@arm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+In-Reply-To: <649af0f6-e5e2-c450-879c-e9153e0c0abc@arm.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On 2022-10-28 11:47:28 [+0200], Pierre Gondois wrote:
+> Hello Sebastian,
 
-I'm pleased to announce the 4.14.296-rt139 stable release.
+Hi Pierre,
 
-You can get this release via the git tree at:
+> About the issues Valentin reported:
+> 
+> - [SPLAT 1/3] arm_pmu: Sleeping spinlocks down armpmu_alloc_atomic()
+> will be fixed by:
+> https://lore.kernel.org/all/20220930111844.1522365-1-mark.rutland@arm.com/
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+This is still pending and I don't see it in next. Could someone give me
+a ping once this is merged, please?
 
-  branch: v4.14-rt
-  Head SHA1: 49c3ad623ef5b25a0dda134024190677fa27672f
+> - [SPLAT 2/3] irqchip/gic-v3-its: Sleeping spinlocks down gic_reserve_range()
+> was fixed by:
+> https://lore.kernel.org/lkml/20211027151506.2085066-3-valentin.schneider@arm.com/
 
-Or to build 4.14.296-rt139 directly, the following patches should be applied:
+That is
+   d23bc2bc1d634 ("irqchip/gic-v3-its: Postpone LPI pending table freeing and memreserve")
+   v5.17-rc1
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+> - [SPLAT 3/3] gpio: dwapb: Sleeping spinlocks down IRQ mapping
+> was fixed by:
+> https://lore.kernel.org/all/20220419012810.88417-1-schspa@gmail.com/
+  3c938cc5cebcb ("gpio: use raw spinlock for gpio chip shadowed data")
+  v5.19-rc1
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.296.xz
+Is someone picking the two up or RT-stable?
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.296-rt139.patch.xz
+> Regards,
+> Pierre
 
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
-
+Sebastian
