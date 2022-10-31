@@ -2,42 +2,42 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 05F4EFA3747
-	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Oct 2022 15:51:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F6A1FA3743
+	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Oct 2022 15:51:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231405AbiJaPvT (ORCPT
+        id S231790AbiJaPvS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 31 Oct 2022 11:51:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56720 "EHLO
+        Mon, 31 Oct 2022 11:51:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56716 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231754AbiJaPvQ (ORCPT
+        with ESMTP id S231721AbiJaPvQ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Mon, 31 Oct 2022 11:51:16 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 59A0811C35
-        for <linux-rt-users@vger.kernel.org>; Mon, 31 Oct 2022 08:51:15 -0700 (PDT)
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D1FB611A33
+        for <linux-rt-users@vger.kernel.org>; Mon, 31 Oct 2022 08:51:14 -0700 (PDT)
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1667231474;
+        s=2020; t=1667231473;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=dxrLsNaCxmjh7zZfTWjtpgN2DnX1GSZaFz3TRuacpbE=;
-        b=SmwwEh0XOIYw2Zsxj1Nw9n8nkUjD2reFodM89fadMQd33k94gV1iZyUVlGp80pMw+IaOUv
-        3y+FH/YBWYCQ5ZhI8oN+ANP1ze6HST1x8oQnJ9OHoJGe+xYitEckZpFHgjMDXpynaPSJtW
-        RHbs/z5I1cAcPYppFXIoUpGYYmIZvnB0eUBPH8RQtki7Fv5ESjtRNCgU1VgFzfMFXty5kd
-        5L9GhQqUisWdJpolbkgYFG0wMg/QzKYqRH2RtyKp6gYTRfJupzxxpLr1NYAUuXgdpyqszY
-        LQHo5bMwwPfnbpvTnaOCsyk84Imki+y0W81sAf64kOdbB6nSEDVT07qjEydrOg==
+        bh=YBPS80aHUpZuC7rxRWs0ybW07qqs1RfIuE6+vKBkRoA=;
+        b=lyeZwqm1T2TAUEpMbr+S2bLDVjpI2cD7Jv5dIZZURy9vvQ89GqORlguHdrKCbT1JXv748n
+        qKxX0reWYKls9uAVhFGKMebjxddDBScssGwd88QQ+6KvlooxaEuZF9Pf1pbQIxUsowIniT
+        DZJ0LUiBWeZCTxWnrqCuNRw6xfSIh0kcTnuPrLt/s6Nd3odYdFBjp/TJGPHzcc+I4WSXVf
+        EdIyPD8skREha1FDqPU8dmMiJFg85Z/GJHXKYvTGBT7oAjaHuEB1Brq7fUiCoqFJRM+i7a
+        US6eJAL7XCgNSZQLcK4LW3mzko/MX8txyVJyLLQITTO4GiqS46fJmWO57opQUA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1667231474;
+        s=2020e; t=1667231473;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=dxrLsNaCxmjh7zZfTWjtpgN2DnX1GSZaFz3TRuacpbE=;
-        b=ljqZr8y5/vqNljyk44Vo1CyvnNCUjmsQD46GmzsqehmukYqdzQ19AnwSKAjTT9dukhrlLn
-        H/1O0eKBY28Xa5Ag==
+        bh=YBPS80aHUpZuC7rxRWs0ybW07qqs1RfIuE6+vKBkRoA=;
+        b=KkLBFrrJHhZAxqMkTp32wZqGj6G81dRITVJOoMbs7W9cTnF0It60JMxEe8WYuUja12y0Hx
+        k/PQyrvMu6K2+MDw==
 To:     Daniel Wagner <wagi@monom.org>
 Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -47,9 +47,9 @@ Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
-Subject: [PATCH RT 3/3] timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
-Date:   Mon, 31 Oct 2022 16:50:06 +0100
-Message-Id: <20221031155006.1651995-4-bigeasy@linutronix.de>
+Subject: [PATCH RT 1/3] timers: Prepare support for PREEMPT_RT
+Date:   Mon, 31 Oct 2022 16:50:04 +0100
+Message-Id: <20221031155006.1651995-2-bigeasy@linutronix.de>
 In-Reply-To: <20221031155006.1651995-1-bigeasy@linutronix.de>
 References: <20221024105416.nflnrqhmzsyqqdzz@carbon.lan>
  <20221031155006.1651995-1-bigeasy@linutronix.de>
@@ -59,68 +59,290 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Upstream commit c725dafc95f1b37027840aaeaa8b7e4e9cd20516
+From: Anna-Maria Gleixner <anna-maria@linutronix.de>
 
-PREEMPT_RT does not spin and wait until a running timer completes its
-callback but instead it blocks on a sleeping lock to prevent a livelock in
-the case that the task waiting for the callback completion preempted the
-callback.
+Upstream commit 030dcdd197d77374879bb5603d091eee7d8aba80
 
-This cannot be done for timers flagged with TIMER_IRQSAFE. These timers can
-be canceled from an interrupt disabled context even on RT kernels.
+When PREEMPT_RT is enabled, the soft interrupt thread can be preempted.  If
+the soft interrupt thread is preempted in the middle of a timer callback,
+then calling del_timer_sync() can lead to two issues:
 
-The expiry callback of such timers is invoked with interrupts disabled so
-there is no need to use the expiry lock mechanism because obviously the
-callback cannot be preempted even on RT kernels.
+  - If the caller is on a remote CPU then it has to spin wait for the timer
+    handler to complete. This can result in unbound priority inversion.
 
-Do not use the timer_base::expiry_lock mechanism when waiting for a running
-callback to complete if the timer is flagged with TIMER_IRQSAFE.
+  - If the caller originates from the task which preempted the timer
+    handler on the same CPU, then spin waiting for the timer handler to
+    complete is never going to end.
 
-Also add a lockdep assertion for RT kernels to validate that the expiry
-lock mechanism is always invoked in preemptible context.
+To avoid these issues, add a new lock to the timer base which is held
+around the execution of the timer callbacks. If del_timer_sync() detects
+that the timer callback is currently running, it blocks on the expiry
+lock. When the callback is finished, the expiry lock is dropped by the
+softirq thread which wakes up the waiter and the system makes progress.
 
-[ bigeasy: Dropping that lockdep_assert_preemption_enabled() check in
-           backport ]
+This addresses both the priority inversion and the life lock issues.
 
-Reported-by: Mike Galbraith <efault@gmx.de>
+This mechanism is not used for timers which are marked IRQSAFE as for those
+preemption is disabled accross the callback and therefore this situation
+cannot happen. The callbacks for such timers need to be individually
+audited for RT compliance.
+
+The same issue can happen in virtual machines when the vCPU which runs a
+timer callback is scheduled out. If a second vCPU of the same guest calls
+del_timer_sync() it will spin wait for the other vCPU to be scheduled back
+in. The expiry lock mechanism would avoid that. It'd be trivial to enable
+this when paravirt spinlocks are enabled in a guest, but it's not clear
+whether this is an actual problem in the wild, so for now it's an RT only
+mechanism.
+
+As the softirq thread can be preempted with PREEMPT_RT=3Dy, the SMP variant
+of del_timer_sync() needs to be used on UP as well.
+
+[ tglx: Refactored it for mainline ]
+
+Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Link: https://lore.kernel.org/r/20201103190937.hga67rqhvknki3tp@linutronix.=
-de
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20190726185753.832418500@linutronix.de
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/time/timer.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ kernel/time/timer.c | 144 +++++++++++++++++++++++++++++---------------
+ 1 file changed, 95 insertions(+), 49 deletions(-)
 
 diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 603985720f547..8c7bfcee9609a 100644
+index 0a6d60b3e67cd..b859ecf6424bd 100644
 --- a/kernel/time/timer.c
 +++ b/kernel/time/timer.c
-@@ -1304,7 +1304,7 @@ static void del_timer_wait_running(struct timer_list =
-*timer)
- 	u32 tf;
+@@ -198,7 +198,10 @@ EXPORT_SYMBOL(jiffies_64);
+ struct timer_base {
+ 	raw_spinlock_t		lock;
+ 	struct timer_list	*running_timer;
++#ifdef CONFIG_PREEMPT_RT
+ 	spinlock_t		expiry_lock;
++	atomic_t		timer_waiters;
++#endif
+ 	unsigned long		clk;
+ 	unsigned long		next_expiry;
+ 	unsigned int		cpu;
+@@ -1227,25 +1230,6 @@ int del_timer(struct timer_list *timer)
+ }
+ EXPORT_SYMBOL(del_timer);
 =20
- 	tf =3D READ_ONCE(timer->flags);
--	if (!(tf & TIMER_MIGRATING)) {
-+	if (!(tf & (TIMER_MIGRATING | TIMER_IRQSAFE))) {
- 		struct timer_base *base =3D get_timer_base(tf);
+-static int __try_to_del_timer_sync(struct timer_list *timer,
+-				   struct timer_base **basep)
+-{
+-	struct timer_base *base;
+-	unsigned long flags;
+-	int ret =3D -1;
+-
+-	debug_assert_init(timer);
+-
+-	*basep =3D base =3D lock_timer_base(timer, &flags);
+-
+-	if (base->running_timer !=3D timer)
+-		ret =3D detach_if_pending(timer, base, true);
+-
+-	raw_spin_unlock_irqrestore(&base->lock, flags);
+-
+-	return ret;
+-}
+-
+ /**
+  * try_to_del_timer_sync - Try to deactivate a timer
+  * @timer: timer to delete
+@@ -1256,34 +1240,94 @@ static int __try_to_del_timer_sync(struct timer_lis=
+t *timer,
+ int try_to_del_timer_sync(struct timer_list *timer)
+ {
+ 	struct timer_base *base;
++	unsigned long flags;
++	int ret =3D -1;
 =20
- 		/*
-@@ -1388,6 +1388,15 @@ int del_timer_sync(struct timer_list *timer)
- 	 */
- 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+-	return __try_to_del_timer_sync(timer, &base);
++	debug_assert_init(timer);
++
++	base =3D lock_timer_base(timer, &flags);
++
++	if (base->running_timer !=3D timer)
++		ret =3D detach_if_pending(timer, base, true);
++
++	raw_spin_unlock_irqrestore(&base->lock, flags);
++
++	return ret;
+ }
+ EXPORT_SYMBOL(try_to_del_timer_sync);
 =20
-+	/*
-+	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
-+	 * del_timer_wait_running().
-+	 */
-+#if 0
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
-+		lockdep_assert_preemption_enabled();
+-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+-static int __del_timer_sync(struct timer_list *timer)
++#ifdef CONFIG_PREEMPT_RT
++static __init void timer_base_init_expiry_lock(struct timer_base *base)
+ {
+-	struct timer_base *base;
+-	int ret;
++	spin_lock_init(&base->expiry_lock);
++}
+=20
+-	for (;;) {
+-		ret =3D __try_to_del_timer_sync(timer, &base);
+-		if (ret >=3D 0)
+-			return ret;
++static inline void timer_base_lock_expiry(struct timer_base *base)
++{
++	spin_lock(&base->expiry_lock);
++}
+=20
+-		if (READ_ONCE(timer->flags) & TIMER_IRQSAFE)
+-			continue;
++static inline void timer_base_unlock_expiry(struct timer_base *base)
++{
++	spin_unlock(&base->expiry_lock);
++}
+=20
+-		/*
+-		 * When accessing the lock, timers of base are no longer expired
+-		 * and so timer is no longer running.
+-		 */
+-		spin_lock(&base->expiry_lock);
++/*
++ * The counterpart to del_timer_wait_running().
++ *
++ * If there is a waiter for base->expiry_lock, then it was waiting for the
++ * timer callback to finish. Drop expiry_lock and reaquire it. That allows
++ * the waiter to acquire the lock and make progress.
++ */
++static void timer_sync_wait_running(struct timer_base *base)
++{
++	if (atomic_read(&base->timer_waiters)) {
+ 		spin_unlock(&base->expiry_lock);
++		spin_lock(&base->expiry_lock);
+ 	}
+ }
+=20
++/*
++ * This function is called on PREEMPT_RT kernels when the fast path
++ * deletion of a timer failed because the timer callback function was
++ * running.
++ *
++ * This prevents priority inversion, if the softirq thread on a remote CPU
++ * got preempted, and it prevents a life lock when the task which tries to
++ * delete a timer preempted the softirq thread running the timer callback
++ * function.
++ */
++static void del_timer_wait_running(struct timer_list *timer)
++{
++	u32 tf;
++
++	tf =3D READ_ONCE(timer->flags);
++	if (!(tf & TIMER_MIGRATING)) {
++		struct timer_base *base =3D get_timer_base(tf);
++
++		/*
++		 * Mark the base as contended and grab the expiry lock,
++		 * which is held by the softirq across the timer
++		 * callback. Drop the lock immediately so the softirq can
++		 * expire the next timer. In theory the timer could already
++		 * be running again, but that's more than unlikely and just
++		 * causes another wait loop.
++		 */
++		atomic_inc(&base->timer_waiters);
++		spin_lock_bh(&base->expiry_lock);
++		atomic_dec(&base->timer_waiters);
++		spin_unlock_bh(&base->expiry_lock);
++	}
++}
++#else
++static inline void timer_base_init_expiry_lock(struct timer_base *base) { }
++static inline void timer_base_lock_expiry(struct timer_base *base) { }
++static inline void timer_base_unlock_expiry(struct timer_base *base) { }
++static inline void timer_sync_wait_running(struct timer_base *base) { }
++static inline void del_timer_wait_running(struct timer_list *timer) { }
 +#endif
 +
- 	do {
- 		ret =3D try_to_del_timer_sync(timer);
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+ /**
+  * del_timer_sync - deactivate a timer and wait for the handler to finish.
+  * @timer: the timer to be deactivated
+@@ -1322,6 +1366,8 @@ static int __del_timer_sync(struct timer_list *timer)
+  */
+ int del_timer_sync(struct timer_list *timer)
+ {
++	int ret;
++
+ #ifdef CONFIG_LOCKDEP
+ 	unsigned long flags;
+=20
+@@ -1339,14 +1385,17 @@ int del_timer_sync(struct timer_list *timer)
+ 	 * could lead to deadlock.
+ 	 */
+ 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+-	/*
+-	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
+-	 * __del_timer_sync().
+-	 */
+-	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
+-		might_sleep();
+=20
+-	return __del_timer_sync(timer);
++	do {
++		ret =3D try_to_del_timer_sync(timer);
++
++		if (unlikely(ret < 0)) {
++			del_timer_wait_running(timer);
++			cpu_relax();
++		}
++	} while (ret < 0);
++
++	return ret;
+ }
+ EXPORT_SYMBOL(del_timer_sync);
+ #endif
+@@ -1410,15 +1459,12 @@ static void expire_timers(struct timer_base *base, =
+struct hlist_head *head)
+ 			raw_spin_unlock(&base->lock);
+ 			call_timer_fn(timer, fn);
+ 			base->running_timer =3D NULL;
+-			spin_unlock(&base->expiry_lock);
+-			spin_lock(&base->expiry_lock);
+ 			raw_spin_lock(&base->lock);
+ 		} else {
+ 			raw_spin_unlock_irq(&base->lock);
+ 			call_timer_fn(timer, fn);
+ 			base->running_timer =3D NULL;
+-			spin_unlock(&base->expiry_lock);
+-			spin_lock(&base->expiry_lock);
++			timer_sync_wait_running(base);
+ 			raw_spin_lock_irq(&base->lock);
+ 		}
+ 	}
+@@ -1715,7 +1761,7 @@ static inline void __run_timers(struct timer_base *ba=
+se)
+ 	if (!time_after_eq(jiffies, base->clk))
+ 		return;
+=20
+-	spin_lock(&base->expiry_lock);
++	timer_base_lock_expiry(base);
+ 	raw_spin_lock_irq(&base->lock);
+=20
+ 	/*
+@@ -1743,7 +1789,7 @@ static inline void __run_timers(struct timer_base *ba=
+se)
+ 			expire_timers(base, heads + levels);
+ 	}
+ 	raw_spin_unlock_irq(&base->lock);
+-	spin_unlock(&base->expiry_lock);
++	timer_base_unlock_expiry(base);
+ }
+=20
+ /*
+@@ -1990,7 +2036,7 @@ static void __init init_timer_cpu(int cpu)
+ 		base->cpu =3D cpu;
+ 		raw_spin_lock_init(&base->lock);
+ 		base->clk =3D jiffies;
+-		spin_lock_init(&base->expiry_lock);
++		timer_base_init_expiry_lock(base);
+ 	}
+ }
 =20
 --=20
 2.37.2
