@@ -2,130 +2,95 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E1621ECAAA1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Oct 2022 09:47:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 14B6CC38A02
+	for <linux-rt-users@archiver.kernel.org>; Mon, 31 Oct 2022 00:18:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229714AbiJ1Jrj (ORCPT
+        id S229576AbiJaASX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 28 Oct 2022 05:47:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33508 "EHLO
+        Sun, 30 Oct 2022 20:18:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49160 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229520AbiJ1Jri (ORCPT
+        with ESMTP id S229457AbiJaASW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 28 Oct 2022 05:47:38 -0400
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id E91561C4EC7;
-        Fri, 28 Oct 2022 02:47:36 -0700 (PDT)
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 8FA6F1FB;
-        Fri, 28 Oct 2022 02:47:42 -0700 (PDT)
-Received: from [10.57.2.46] (unknown [10.57.2.46])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 26C863F71A;
-        Fri, 28 Oct 2022 02:47:33 -0700 (PDT)
-Message-ID: <649af0f6-e5e2-c450-879c-e9153e0c0abc@arm.com>
-Date:   Fri, 28 Oct 2022 11:47:28 +0200
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.2.2
-Subject: Re: [ANNOUNCE] v6.0.5-rt14
-Content-Language: en-US
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
+        Sun, 30 Oct 2022 20:18:22 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 493B6958A
+        for <linux-rt-users@vger.kernel.org>; Sun, 30 Oct 2022 17:17:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1667175445;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=cno3VevIhcVUGIxiIeJg7OckKn+/Jx75RoNoh7/5qmc=;
+        b=A75suH00SmoWSagCbDfrVg81mC3IqZLe2R57iGwZdSXrCSUrWxF3gn1Z47Xie/ptBTHosn
+        1V6E8dTLPkZakUDw7C7YLqmo3CVyQ7UsndKYOtHr3xWINjW3fABl+XQhjrENkEl76iHk2Q
+        XgWpCiEMmFnRtzWNVddEuuoEyvmn744=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-108-qRKIuXkLObuLp5BA-h26UA-1; Sun, 30 Oct 2022 20:17:22 -0400
+X-MC-Unique: qRKIuXkLObuLp5BA-h26UA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 577F53C025A0;
+        Mon, 31 Oct 2022 00:17:21 +0000 (UTC)
+Received: from localhost (unknown [10.22.18.117])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 6A3611759E;
+        Mon, 31 Oct 2022 00:17:20 +0000 (UTC)
+Date:   Sun, 30 Oct 2022 21:17:19 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Valentin Schneider <vschneid@redhat.com>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Pierre Gondois <pierre.gondois@arm.com>
-References: <Y1o8hqwQKDpOTkNr@linutronix.de>
-From:   Pierre Gondois <pierre.gondois@arm.com>
-In-Reply-To: <Y1o8hqwQKDpOTkNr@linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.152-rt75
+Message-ID: <Y18UDwitPIcEjPFg@uudg.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello Sebastian,
-About the issues Valentin reported:
+Hello RT-list!
 
-- [SPLAT 1/3] arm_pmu: Sleeping spinlocks down armpmu_alloc_atomic()
-will be fixed by:
-https://lore.kernel.org/all/20220930111844.1522365-1-mark.rutland@arm.com/
+I'm pleased to announce the 5.10.152-rt75 stable release.
 
-- [SPLAT 2/3] irqchip/gic-v3-its: Sleeping spinlocks down gic_reserve_range()
-was fixed by:
-https://lore.kernel.org/lkml/20211027151506.2085066-3-valentin.schneider@arm.com/
+You can get this release via the git tree at:
 
-- [SPLAT 3/3] gpio: dwapb: Sleeping spinlocks down IRQ mapping
-was fixed by:
-https://lore.kernel.org/all/20220419012810.88417-1-schspa@gmail.com/
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Regards,
-Pierre
+  branch: v5.10-rt
+  Head SHA1: b9458c61e205c0d72dd95e768fd790787425f9e8
 
-On 10/27/22 10:08, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
-> 
-> I'm pleased to announce the v6.0.5-rt14 patch set.
-> 
-> Changes since v6.0.5-rt13:
-> 
->    - Replace deprecated API in the Xilinx AXI Ethernet driver so that it
->      compiles again. Reported by David Runge.
-> 
-> Known issues
->       - Valentin Schneider reported a few splats on ARM64, see
->            https://lkml.kernel.org/r/20210810134127.1394269-1-valentin.schneider@arm.com
-> 
-> The delta patch against v6.0.5-rt13 is appended below and can be found here:
->   
->       https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/incr/patch-6.0.5-rt13-rt14.patch.xz
-> 
-> You can get this release via the git tree at:
-> 
->      git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.0.5-rt14
-> 
-> The RT patch against v6.0.5 can be found here:
-> 
->      https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/older/patch-6.0.5-rt14.patch.xz
-> 
-> The split quilt queue is available at:
-> 
->      https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.0/older/patches-6.0.5-rt14.tar.xz
-> 
-> Sebastian
-> 
-> diff --git a/drivers/net/ethernet/xilinx/xilinx_axienet_main.c b/drivers/net/ethernet/xilinx/xilinx_axienet_main.c
-> index 9262988d26a32..2c233b59e7d93 100644
-> --- a/drivers/net/ethernet/xilinx/xilinx_axienet_main.c
-> +++ b/drivers/net/ethernet/xilinx/xilinx_axienet_main.c
-> @@ -1305,16 +1305,16 @@ axienet_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
->   	netdev_stats_to_stats64(stats, &dev->stats);
->   
->   	do {
-> -		start = u64_stats_fetch_begin_irq(&lp->rx_stat_sync);
-> +		start = u64_stats_fetch_begin(&lp->rx_stat_sync);
->   		stats->rx_packets = u64_stats_read(&lp->rx_packets);
->   		stats->rx_bytes = u64_stats_read(&lp->rx_bytes);
-> -	} while (u64_stats_fetch_retry_irq(&lp->rx_stat_sync, start));
-> +	} while (u64_stats_fetch_retry(&lp->rx_stat_sync, start));
->   
->   	do {
-> -		start = u64_stats_fetch_begin_irq(&lp->tx_stat_sync);
-> +		start = u64_stats_fetch_begin(&lp->tx_stat_sync);
->   		stats->tx_packets = u64_stats_read(&lp->tx_packets);
->   		stats->tx_bytes = u64_stats_read(&lp->tx_bytes);
-> -	} while (u64_stats_fetch_retry_irq(&lp->tx_stat_sync, start));
-> +	} while (u64_stats_fetch_retry(&lp->tx_stat_sync, start));
->   }
->   
->   static const struct net_device_ops axienet_netdev_ops = {
-> diff --git a/localversion-rt b/localversion-rt
-> index 9f7d0bdbffb18..08b3e75841adc 100644
-> --- a/localversion-rt
-> +++ b/localversion-rt
-> @@ -1 +1 @@
-> --rt13
-> +-rt14
+Or to build 5.10.152-rt75 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.152.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.152-rt75.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
