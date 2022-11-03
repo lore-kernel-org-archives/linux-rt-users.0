@@ -2,187 +2,340 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 402D2C4332F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Nov 2022 20:31:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F032FC433FE
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Nov 2022 07:56:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230305AbiKBUb1 (ORCPT
+        id S231459AbiKCH4i (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 2 Nov 2022 16:31:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58088 "EHLO
+        Thu, 3 Nov 2022 03:56:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44500 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230047AbiKBUb0 (ORCPT
+        with ESMTP id S230106AbiKCH4S (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 2 Nov 2022 16:31:26 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E36F6B88
-        for <linux-rt-users@vger.kernel.org>; Wed,  2 Nov 2022 13:30:23 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1667421023;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=XQyQZbBaa7C1Rq3N7Z9zsZCeOoS0vR0UfP0yySU/eBg=;
-        b=DyBDVwugBgJG2/WkI7Egt371o6VQzmVVJUZWNvZr5aLv3zqniecV/wYl9UuhFzc4a5cOUc
-        CPgysbuiBw51XRcIzL/ePcTiWlHUrbnGPcG8wgPWrCTFoVJVHGdmzMtnd142lu0pN/Lr/m
-        G2tcM7GKNaUq7X7MNAAOfxl6pArmLUk=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-655-CZcmNb5YPT-GGv0RsMPonQ-1; Wed, 02 Nov 2022 16:30:21 -0400
-X-MC-Unique: CZcmNb5YPT-GGv0RsMPonQ-1
-Received: by mail-qt1-f200.google.com with SMTP id ff5-20020a05622a4d8500b003a526107477so76141qtb.9
-        for <linux-rt-users@vger.kernel.org>; Wed, 02 Nov 2022 13:30:21 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=XQyQZbBaa7C1Rq3N7Z9zsZCeOoS0vR0UfP0yySU/eBg=;
-        b=IQ07EXhmCGHBaiutmkcQ0ZHnucAXn91ULhkH/G9P37xyjg0D2zjhTSscSbsOJ7Z74W
-         IR4yFZjuEtlbFyr0ZFbDzxgIY2SGgGuwOAhZ88J3qotkpbmP08vK4C8ZqJW7yrlchtkV
-         0ohIzEnOiEYXSTDHmUkK6RMrXOLzu3uLpiWCrzERLIk9vuXc8wQZcte5fUJDOOEhbaVV
-         fgKwLuev1xKLBltjHohUNjy7jNKi1DwLh4+0GUL+Ihr6WlRvuO2/Yhtapx+pzhglZwny
-         5rAGnAMVUIws9mTa13zL0CXJG1tg21IVLSf/UZqqjqH4Y/G/tKq02qZuwHR8iHeyOQIp
-         xK9g==
-X-Gm-Message-State: ACrzQf0J7GvRn+nK1afQPgc4FsPNS2OGHfy2Ce4wtvHV2CQMQUaEglNy
-        N4iGSAqQdFLsaqRq5K11LO5k/HsdxOj0jjm64+QW/tDssgKTW+p7W4jFG9A4vultbavN892J3qw
-        ovP6ThF/eeY9zESBLLWV+CquYK0Y=
-X-Received: by 2002:a05:620a:1002:b0:6fa:f78:32c8 with SMTP id z2-20020a05620a100200b006fa0f7832c8mr19052996qkj.89.1667421020396;
-        Wed, 02 Nov 2022 13:30:20 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM6FVHBWvnTgOct7EnXaIEv0Ou+7tQg69e0KLy5P4JOEDD54hQoZq9PbvDa0rnTiQzBIPy4Hhw==
-X-Received: by 2002:a05:620a:1002:b0:6fa:f78:32c8 with SMTP id z2-20020a05620a100200b006fa0f7832c8mr19052977qkj.89.1667421020149;
-        Wed, 02 Nov 2022 13:30:20 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-08-184-147-142-10.dsl.bell.ca. [184.147.142.10])
-        by smtp.gmail.com with ESMTPSA id dm21-20020a05620a1d5500b006b95b0a714esm9233542qkb.17.2022.11.02.13.30.19
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 02 Nov 2022 13:30:19 -0700 (PDT)
-Date:   Wed, 2 Nov 2022 16:30:18 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Leah Leshchinsky <lleshchi@redhat.com>
-cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-tests: hwlatdetect.py Covert to f-strings
-In-Reply-To: <20221102143554.214241-1-lleshchi@redhat.com>
-Message-ID: <f624d8c-3865-2cb-d030-a8c20f46d9a@redhat.com>
-References: <20221102143554.214241-1-lleshchi@redhat.com>
+        Thu, 3 Nov 2022 03:56:18 -0400
+Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D7DD7643C;
+        Thu,  3 Nov 2022 00:55:53 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 19B6C61E20;
+        Thu,  3 Nov 2022 08:55:51 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1667462151; h=from:subject:date:message-id:to:cc:mime-version:
+         content-transfer-encoding:in-reply-to:references;
+        bh=jgiZ76hjZGwQyFp2pMmSV5dvCWpl+uU1tutNnDKJgL8=;
+        b=T0qUswBSZskxLY9E/HLspktcWimDaLmaC3Oa/jt1KdwUxJVUQVy9HlzXzSadMMGO6aOyk4
+        izUf6+xSFVMyZl+5t9rofs+woAcO+jyKSVIpBcv9TvFxoaX7CMKVSaqfRz0qAsianrrWFU
+        b4t0AwEBgGWj4qAg3ps5kqMNnVPIZBXiX7ucwZ2yUj6cHOFFlF83EV+JQfXwW/CcO6ZmYv
+        mWAgMvBIVkat+TjGEUAxiYuL1AypFAElZx+b4lxxgnke2WDnT19qiyMwY3z7+ECTu9Z999
+        FKSREl5W6Ux1/MGI3c4cCzDmoI9h1hwBrK8K6mStEql1IOHS5seP/meyFabyPw==
+From:   Daniel Wagner <wagi@monom.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
+Cc:     Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 1/4] timers: Prepare support for PREEMPT_RT
+Date:   Thu,  3 Nov 2022 08:55:45 +0100
+Message-Id: <20221103075548.6477-2-wagi@monom.org>
+In-Reply-To: <20221103075548.6477-1-wagi@monom.org>
+References: <20221103075548.6477-1-wagi@monom.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+From: Anna-Maria Gleixner <anna-maria@linutronix.de>
+
+v4.19.255-rt114-rc2 stable review patch.
+If anyone has any objections, please let me know.
+
+-----------
 
 
-On Wed, 2 Nov 2022, Leah Leshchinsky wrote:
+Upstream commit 030dcdd197d77374879bb5603d091eee7d8aba80
 
-> Add f-strings where applicable for readability.
-> 
-> Signed-off-by: Leah Leshchinsky <lleshchi@redhat.com>
-> 
-> diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-> index 9ef50f862127..3b20f664a536 100755
-> --- a/src/hwlatdetect/hwlatdetect.py
-> +++ b/src/hwlatdetect/hwlatdetect.py
-> @@ -59,7 +59,7 @@ class DebugFS:
->          if self.premounted or self.mounted:
->              debug("not mounting debugfs")
->              return True
-> -        debug("mounting debugfs at %s" % path)
-> +        debug(f"mounting debugfs at {path}")
->          self.mountpoint = path
->          cmd = ['/bin/mount', '-t', 'debugfs', 'none', path]
->          self.mounted = (subprocess.call(cmd) == 0)
-> @@ -90,7 +90,7 @@ class DebugFS:
->              try:
->                  val = f.readline()
->              except OSError as e:
-> -                print("errno: %s" % e)
-> +                print(f"errno: {e}")
->                  if e.errno == errno.EAGAIN:
->                      val = None
->                  else:
-> @@ -192,13 +192,13 @@ class Detector:
->          count = 0
->          threshold = int(self.get("threshold"))
->          self.c_states_off()
-> -        debug("enabling detector module (threshold: %d)" % threshold)
-> +        debug(f"enabling detector module (threshold: {threshold})")
->          self.set("enable", 1)
->          while self.get("enable") == 0:
->              debug("still disabled, retrying in a bit")
->              count += 1
->              time.sleep(0.1)
-> -            debug("retrying enable of detector module (%d)" % count)
-> +            debug(f"retrying enable of detector module ({count})")
->              self.set("enable", 1)
->          if self.get("threshold") != threshold:
->              debug("start: threshold reset by start, fixing")
-> @@ -214,7 +214,7 @@ class Detector:
->              debug("still enabled, retrying in a bit")
->              count += 1
->              time.sleep(0.1)
-> -            debug("retrying disable of detector module(%d)" % count)
-> +            debug(f"retrying disable of detector module({count})")
->              self.set("enable", 0)
->          self.c_states_on()
->          debug("detector module disabled")
-> @@ -248,7 +248,7 @@ class Tracer(Detector):
->              self.outer = int(o)
->  
->          def __str__(self):
-> -            return "ts: %s, inner:%d, outer:%d" % (self.timestamp, self.inner, self.outer)
-> +            return f"ts: {self.timestamp}, inner:{self.inner}, outer:{self.outer}"
->  
->          def display(self):
->              """ convert object to string and print """
-> @@ -352,7 +352,7 @@ def seconds(sval):
->          return int(sval[0:-1]) * 86400
->      if sval[-1:] == 'w':
->          return int(sval[0:-1]) * 86400 * 7
-> -    raise RuntimeError("invalid input for seconds: '%s'" % sval)
-> +    raise RuntimeError(f"invalid input for seconds: '{sval}'")
->  
->  
->  def milliseconds(sval):
-> @@ -367,7 +367,7 @@ def milliseconds(sval):
->          return int(sval[0:-1]) * 1000 * 60
->      if sval[-1] == 'h':
->          return int(sval[0:-1]) * 1000 * 60 * 60
-> -    raise RuntimeError("invalid input for milliseconds: %s" % sval)
-> +    raise RuntimeError(f"invalid input for milliseconds: {sval}")
->  
->  
->  def microseconds(sval):
-> @@ -380,7 +380,7 @@ def microseconds(sval):
->          return int(sval[0:-2])
->      if sval[-1:] == 's':
->          return int(sval[0:-1]) * 1000 * 1000
-> -    raise RuntimeError("invalid input for microseconds: '%s'" % sval)
-> +    raise RuntimeError(f"invalid input for microseconds: '{sval}'")
->  
->  
->  if __name__ == '__main__':
-> @@ -518,7 +518,7 @@ if __name__ == '__main__':
->      info("Samples recorded: %d" % len(detect.samples))
->  
->      exceeding = detect.get("count")
-> -    info("Samples exceeding threshold: %d" % exceeding)
-> +    info(f"Samples exceeding threshold: {exceeding}")
->  
->      if detect.have_msr:
->          finishsmi = detect.getsmicounts()
-> @@ -527,8 +527,8 @@ if __name__ == '__main__':
->              if count > detect.initsmi[i]:
->                  smis = count - detect.initsmi[i]
->                  total_smis += smis
-> -                print("%d SMIs occured on cpu %d" % (smis, i))
-> -        info("SMIs during run: %d" % total_smis)
-> +                print(f"{smis} SMIs occured on cpu {i}")
-> +        info(f"SMIs during run: {total_smis}")
->  
->      maxlatency = int(detect.get("max"))
->  
-> -- 
+When PREEMPT_RT is enabled, the soft interrupt thread can be preempted.  If
+the soft interrupt thread is preempted in the middle of a timer callback,
+then calling del_timer_sync() can lead to two issues:
 
-This looks fine, but there are others that could be converted too.
+  - If the caller is on a remote CPU then it has to spin wait for the timer
+    handler to complete. This can result in unbound priority inversion.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+  - If the caller originates from the task which preempted the timer
+    handler on the same CPU, then spin waiting for the timer handler to
+    complete is never going to end.
+
+To avoid these issues, add a new lock to the timer base which is held
+around the execution of the timer callbacks. If del_timer_sync() detects
+that the timer callback is currently running, it blocks on the expiry
+lock. When the callback is finished, the expiry lock is dropped by the
+softirq thread which wakes up the waiter and the system makes progress.
+
+This addresses both the priority inversion and the life lock issues.
+
+This mechanism is not used for timers which are marked IRQSAFE as for those
+preemption is disabled accross the callback and therefore this situation
+cannot happen. The callbacks for such timers need to be individually
+audited for RT compliance.
+
+The same issue can happen in virtual machines when the vCPU which runs a
+timer callback is scheduled out. If a second vCPU of the same guest calls
+del_timer_sync() it will spin wait for the other vCPU to be scheduled back
+in. The expiry lock mechanism would avoid that. It'd be trivial to enable
+this when paravirt spinlocks are enabled in a guest, but it's not clear
+whether this is an actual problem in the wild, so for now it's an RT only
+mechanism.
+
+As the softirq thread can be preempted with PREEMPT_RT=y, the SMP variant
+of del_timer_sync() needs to be used on UP as well.
+
+[ tglx: Refactored it for mainline ]
+
+Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20190726185753.832418500@linutronix.de
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Daniel Wagner <wagi@monom.org>
+---
+ kernel/time/timer.c | 130 ++++++++++++++++++++++++++++++--------------
+ 1 file changed, 88 insertions(+), 42 deletions(-)
+
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 0a6d60b3e67c..b859ecf6424b 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -198,7 +198,10 @@ EXPORT_SYMBOL(jiffies_64);
+ struct timer_base {
+ 	raw_spinlock_t		lock;
+ 	struct timer_list	*running_timer;
++#ifdef CONFIG_PREEMPT_RT
+ 	spinlock_t		expiry_lock;
++	atomic_t		timer_waiters;
++#endif
+ 	unsigned long		clk;
+ 	unsigned long		next_expiry;
+ 	unsigned int		cpu;
+@@ -1227,8 +1230,14 @@ int del_timer(struct timer_list *timer)
+ }
+ EXPORT_SYMBOL(del_timer);
+ 
+-static int __try_to_del_timer_sync(struct timer_list *timer,
+-				   struct timer_base **basep)
++/**
++ * try_to_del_timer_sync - Try to deactivate a timer
++ * @timer: timer to delete
++ *
++ * This function tries to deactivate a timer. Upon successful (ret >= 0)
++ * exit the timer is not queued and the handler is not running on any CPU.
++ */
++int try_to_del_timer_sync(struct timer_list *timer)
+ {
+ 	struct timer_base *base;
+ 	unsigned long flags;
+@@ -1236,7 +1245,7 @@ static int __try_to_del_timer_sync(struct timer_list *timer,
+ 
+ 	debug_assert_init(timer);
+ 
+-	*basep = base = lock_timer_base(timer, &flags);
++	base = lock_timer_base(timer, &flags);
+ 
+ 	if (base->running_timer != timer)
+ 		ret = detach_if_pending(timer, base, true);
+@@ -1245,45 +1254,80 @@ static int __try_to_del_timer_sync(struct timer_list *timer,
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL(try_to_del_timer_sync);
+ 
+-/**
+- * try_to_del_timer_sync - Try to deactivate a timer
+- * @timer: timer to delete
+- *
+- * This function tries to deactivate a timer. Upon successful (ret >= 0)
+- * exit the timer is not queued and the handler is not running on any CPU.
+- */
+-int try_to_del_timer_sync(struct timer_list *timer)
++#ifdef CONFIG_PREEMPT_RT
++static __init void timer_base_init_expiry_lock(struct timer_base *base)
+ {
+-	struct timer_base *base;
++	spin_lock_init(&base->expiry_lock);
++}
+ 
+-	return __try_to_del_timer_sync(timer, &base);
++static inline void timer_base_lock_expiry(struct timer_base *base)
++{
++	spin_lock(&base->expiry_lock);
+ }
+-EXPORT_SYMBOL(try_to_del_timer_sync);
+ 
+-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+-static int __del_timer_sync(struct timer_list *timer)
++static inline void timer_base_unlock_expiry(struct timer_base *base)
+ {
+-	struct timer_base *base;
+-	int ret;
++	spin_unlock(&base->expiry_lock);
++}
+ 
+-	for (;;) {
+-		ret = __try_to_del_timer_sync(timer, &base);
+-		if (ret >= 0)
+-			return ret;
++/*
++ * The counterpart to del_timer_wait_running().
++ *
++ * If there is a waiter for base->expiry_lock, then it was waiting for the
++ * timer callback to finish. Drop expiry_lock and reaquire it. That allows
++ * the waiter to acquire the lock and make progress.
++ */
++static void timer_sync_wait_running(struct timer_base *base)
++{
++	if (atomic_read(&base->timer_waiters)) {
++		spin_unlock(&base->expiry_lock);
++		spin_lock(&base->expiry_lock);
++	}
++}
+ 
+-		if (READ_ONCE(timer->flags) & TIMER_IRQSAFE)
+-			continue;
++/*
++ * This function is called on PREEMPT_RT kernels when the fast path
++ * deletion of a timer failed because the timer callback function was
++ * running.
++ *
++ * This prevents priority inversion, if the softirq thread on a remote CPU
++ * got preempted, and it prevents a life lock when the task which tries to
++ * delete a timer preempted the softirq thread running the timer callback
++ * function.
++ */
++static void del_timer_wait_running(struct timer_list *timer)
++{
++	u32 tf;
++
++	tf = READ_ONCE(timer->flags);
++	if (!(tf & TIMER_MIGRATING)) {
++		struct timer_base *base = get_timer_base(tf);
+ 
+ 		/*
+-		 * When accessing the lock, timers of base are no longer expired
+-		 * and so timer is no longer running.
++		 * Mark the base as contended and grab the expiry lock,
++		 * which is held by the softirq across the timer
++		 * callback. Drop the lock immediately so the softirq can
++		 * expire the next timer. In theory the timer could already
++		 * be running again, but that's more than unlikely and just
++		 * causes another wait loop.
+ 		 */
+-		spin_lock(&base->expiry_lock);
+-		spin_unlock(&base->expiry_lock);
++		atomic_inc(&base->timer_waiters);
++		spin_lock_bh(&base->expiry_lock);
++		atomic_dec(&base->timer_waiters);
++		spin_unlock_bh(&base->expiry_lock);
+ 	}
+ }
++#else
++static inline void timer_base_init_expiry_lock(struct timer_base *base) { }
++static inline void timer_base_lock_expiry(struct timer_base *base) { }
++static inline void timer_base_unlock_expiry(struct timer_base *base) { }
++static inline void timer_sync_wait_running(struct timer_base *base) { }
++static inline void del_timer_wait_running(struct timer_list *timer) { }
++#endif
+ 
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+ /**
+  * del_timer_sync - deactivate a timer and wait for the handler to finish.
+  * @timer: the timer to be deactivated
+@@ -1322,6 +1366,8 @@ static int __del_timer_sync(struct timer_list *timer)
+  */
+ int del_timer_sync(struct timer_list *timer)
+ {
++	int ret;
++
+ #ifdef CONFIG_LOCKDEP
+ 	unsigned long flags;
+ 
+@@ -1339,14 +1385,17 @@ int del_timer_sync(struct timer_list *timer)
+ 	 * could lead to deadlock.
+ 	 */
+ 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+-	/*
+-	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
+-	 * __del_timer_sync().
+-	 */
+-	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
+-		might_sleep();
+ 
+-	return __del_timer_sync(timer);
++	do {
++		ret = try_to_del_timer_sync(timer);
++
++		if (unlikely(ret < 0)) {
++			del_timer_wait_running(timer);
++			cpu_relax();
++		}
++	} while (ret < 0);
++
++	return ret;
+ }
+ EXPORT_SYMBOL(del_timer_sync);
+ #endif
+@@ -1410,15 +1459,12 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
+ 			raw_spin_unlock(&base->lock);
+ 			call_timer_fn(timer, fn);
+ 			base->running_timer = NULL;
+-			spin_unlock(&base->expiry_lock);
+-			spin_lock(&base->expiry_lock);
+ 			raw_spin_lock(&base->lock);
+ 		} else {
+ 			raw_spin_unlock_irq(&base->lock);
+ 			call_timer_fn(timer, fn);
+ 			base->running_timer = NULL;
+-			spin_unlock(&base->expiry_lock);
+-			spin_lock(&base->expiry_lock);
++			timer_sync_wait_running(base);
+ 			raw_spin_lock_irq(&base->lock);
+ 		}
+ 	}
+@@ -1715,7 +1761,7 @@ static inline void __run_timers(struct timer_base *base)
+ 	if (!time_after_eq(jiffies, base->clk))
+ 		return;
+ 
+-	spin_lock(&base->expiry_lock);
++	timer_base_lock_expiry(base);
+ 	raw_spin_lock_irq(&base->lock);
+ 
+ 	/*
+@@ -1743,7 +1789,7 @@ static inline void __run_timers(struct timer_base *base)
+ 			expire_timers(base, heads + levels);
+ 	}
+ 	raw_spin_unlock_irq(&base->lock);
+-	spin_unlock(&base->expiry_lock);
++	timer_base_unlock_expiry(base);
+ }
+ 
+ /*
+@@ -1990,7 +2036,7 @@ static void __init init_timer_cpu(int cpu)
+ 		base->cpu = cpu;
+ 		raw_spin_lock_init(&base->lock);
+ 		base->clk = jiffies;
+-		spin_lock_init(&base->expiry_lock);
++		timer_base_init_expiry_lock(base);
+ 	}
+ }
+ 
+-- 
+2.38.0
 
