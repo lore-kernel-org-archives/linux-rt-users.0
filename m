@@ -2,30 +2,31 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 64D13C43219
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Nov 2022 07:56:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5775DC433FE
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Nov 2022 07:56:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231477AbiKCH4k (ORCPT
+        id S231479AbiKCH4l (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 3 Nov 2022 03:56:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44686 "EHLO
+        Thu, 3 Nov 2022 03:56:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44688 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231411AbiKCH4S (ORCPT
+        with ESMTP id S231516AbiKCH4S (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Thu, 3 Nov 2022 03:56:18 -0400
 Received: from mail.nearlyone.de (mail.nearlyone.de [46.163.114.145])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4BEBF5F46;
-        Thu,  3 Nov 2022 00:55:51 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id C8DEC61D44;
-        Thu,  3 Nov 2022 08:55:48 +0100 (CET)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CAE8C5FEC;
+        Thu,  3 Nov 2022 00:55:55 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 0AB2861E22;
+        Thu,  3 Nov 2022 08:55:54 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1667462150; h=from:subject:date:message-id:to:cc:mime-version:
-         content-transfer-encoding; bh=wUylA1v2L/wSVlQur6dot5LazixTY5ESTvRCKvYkbj4=;
-        b=GFup15Q83mjohhnF3snQzlc6o1RBPDqeeHRFq2MTFBpyRL5eczSKLLr5rzcEzxXlunuwym
-        JR9vhwYgPVNss12etNJg75ZOcvd/ZqjKXoGhCjsaX4WeQIn5jRv969QCGtlZFVa/nC83bk
-        jjTyJfumCAwVCu9/SnwBziUMrXUROWFzQD7slLxnuG2oOQjLJNym685xa1YlWmhGrMwLVl
-        /MJoT5KJOOb+UNdLsJTjjj2dd/nZHT2MkdemGf793Hst1z3rZTC9TFT9FmSvHtNuqdtEaQ
-        Yj4fAaUuW1zZqeCAHXj8kVruX487IUUnJ3PvyIxAqCvjeoxoGQkS9HSAOpoiMA==
+        t=1667462154; h=from:subject:date:message-id:to:cc:mime-version:
+         content-transfer-encoding:in-reply-to:references;
+        bh=ZxhjYU0O0vxXngLgbF21571m+6DO7DnQnlwU/VKcYWA=;
+        b=l9EmVc+WeSb+UvTMwVrqzYARLhTPxntmczs/zvkZtqfZWpqVzdgGB3/8iajkWfVFM4XiU6
+        nqPYAqBUXdSuxXK0Wr971eDapJQJdU8KJaaLNCwGS3IV0pEMHKJ4pO8udXx3C+F3kA+qs4
+        /WfaK1n5RBXWVN3CeSSB+JQNeU9stZfTXI2juTt3Z5ybdrDTFFEIKQL7TlysZM0vC0meJX
+        shpw+bIByCt5toSOT6gHP7f74HCY2D5Sgdzgy3Id/CX3eapDYkNMZwtcui8pwIBYLMnPyY
+        lxYS4KYAX64B83Vh2pJFPkjA/NK9QYHIoMMPa+DFf+BpYq4rYFq9bB+Zp02AGg==
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -37,10 +38,12 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
-Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 0/4] Linux v4.19.255-rt114-rc2
-Date:   Thu,  3 Nov 2022 08:55:44 +0100
-Message-Id: <20221103075548.6477-1-wagi@monom.org>
+Cc:     Mike Galbraith <efault@gmx.de>, Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 3/4] timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
+Date:   Thu,  3 Nov 2022 08:55:47 +0100
+Message-Id: <20221103075548.6477-4-wagi@monom.org>
+In-Reply-To: <20221103075548.6477-1-wagi@monom.org>
+References: <20221103075548.6477-1-wagi@monom.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Last-TLS-Session-Version: TLSv1.3
@@ -48,62 +51,76 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT Folks,
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-This is the RT stable review cycle of patch 4.19.255-rt114-rc2.
+v4.19.255-rt114-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main
-release on 2022-11-10.
-
-To build 4.19.255-rt114-rc2 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.255.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.255-rt114-rc2.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.255-rt114-rc1:
+-----------
 
 
-Anna-Maria Gleixner (1):
-  timers: Prepare support for PREEMPT_RT
+Upstream commit c725dafc95f1b37027840aaeaa8b7e4e9cd20516
 
-Daniel Wagner (1):
-  Linux 4.19.255-rt114-rc2
+PREEMPT_RT does not spin and wait until a running timer completes its
+callback but instead it blocks on a sleeping lock to prevent a livelock in
+the case that the task waiting for the callback completion preempted the
+callback.
 
-Sebastian Andrzej Siewior (1):
-  timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
+This cannot be done for timers flagged with TIMER_IRQSAFE. These timers can
+be canceled from an interrupt disabled context even on RT kernels.
 
-Thomas Gleixner (1):
-  timers: Move clearing of base::timer_running under base:: Lock
+The expiry callback of such timers is invoked with interrupts disabled so
+there is no need to use the expiry lock mechanism because obviously the
+callback cannot be preempted even on RT kernels.
 
- kernel/time/timer.c | 137 +++++++++++++++++++++++++++++++-------------
- localversion-rt     |   2 +-
- 2 files changed, 98 insertions(+), 41 deletions(-)
+Do not use the timer_base::expiry_lock mechanism when waiting for a running
+callback to complete if the timer is flagged with TIMER_IRQSAFE.
 
+Also add a lockdep assertion for RT kernels to validate that the expiry
+lock mechanism is always invoked in preemptible context.
+
+[ bigeasy: Dropping that lockdep_assert_preemption_enabled() check in
+           backport ]
+
+Reported-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lore.kernel.org/r/20201103190937.hga67rqhvknki3tp@linutronix.de
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Daniel Wagner <wagi@monom.org>
+---
+ kernel/time/timer.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 603985720f54..8c7bfcee9609 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1304,7 +1304,7 @@ static void del_timer_wait_running(struct timer_list *timer)
+ 	u32 tf;
+ 
+ 	tf = READ_ONCE(timer->flags);
+-	if (!(tf & TIMER_MIGRATING)) {
++	if (!(tf & (TIMER_MIGRATING | TIMER_IRQSAFE))) {
+ 		struct timer_base *base = get_timer_base(tf);
+ 
+ 		/*
+@@ -1388,6 +1388,15 @@ int del_timer_sync(struct timer_list *timer)
+ 	 */
+ 	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+ 
++	/*
++	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
++	 * del_timer_wait_running().
++	 */
++#if 0
++	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
++		lockdep_assert_preemption_enabled();
++#endif
++
+ 	do {
+ 		ret = try_to_del_timer_sync(timer);
+ 
 -- 
 2.38.0
 
