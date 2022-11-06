@@ -2,83 +2,91 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB678C4332F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  4 Nov 2022 20:23:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 979B5C433FE
+	for <linux-rt-users@archiver.kernel.org>; Sun,  6 Nov 2022 19:17:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229991AbiKDUX2 (ORCPT
+        id S230037AbiKFTRM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 4 Nov 2022 16:23:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33416 "EHLO
+        Sun, 6 Nov 2022 14:17:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36966 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230007AbiKDUXY (ORCPT
+        with ESMTP id S229919AbiKFTRK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 4 Nov 2022 16:23:24 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA5414C26B
-        for <linux-rt-users@vger.kernel.org>; Fri,  4 Nov 2022 13:22:26 -0700 (PDT)
+        Sun, 6 Nov 2022 14:17:10 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9749DBC12
+        for <linux-rt-users@vger.kernel.org>; Sun,  6 Nov 2022 11:16:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1667593345;
+        s=mimecast20190719; t=1667762178;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=IEC3YoQur9oR8RdILpbxLY1AGs9Swo+08fxPh1HejRE=;
-        b=TzVi66R6lxcdt3/7Xrhte7e7p44pHPrccGjJFtTGFVTswznr5VfZ783l2JnZ/i6PTE2XTn
-        uEJgonKJDzSQdHEpCBd/5UdrbBhtM18JRUxiRaof1uA+GrP3j+ZSpvMOHVPfCgWdmALV5p
-        Q/JZZLyoEymj6DCe99FlRtbuhiOvo3k=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=Ct/53obgr+TolK8pf6KD3dr+n5Th9R5wBEHA2hn44tc=;
+        b=VRfpCG/ZYW6g/U4QjrnGGmCKMUKJmMkZJO1l0gNHScSzGDKxdPKW2+ALC693qJlwiOPvuN
+        6APdsUlz9sGxWvFKE1LMVmtIFd58EJ+Rj09w4pHE9c1PYOuC36h/OzSdBgZHZow9C5PxhB
+        6KtN65TSg0KgNTr1pfyCmg22nAzAWSo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-380-KSU7H_2cPM2V2X7H8ndBOw-1; Fri, 04 Nov 2022 16:22:22 -0400
-X-MC-Unique: KSU7H_2cPM2V2X7H8ndBOw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-145--Q7oqc2XPEuG6HKrgNL1hg-1; Sun, 06 Nov 2022 14:16:15 -0500
+X-MC-Unique: -Q7oqc2XPEuG6HKrgNL1hg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2358738164D6;
-        Fri,  4 Nov 2022 20:22:22 +0000 (UTC)
-Received: from localhost (unknown [10.22.17.61])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id CD24240C6DC7;
-        Fri,  4 Nov 2022 20:22:21 +0000 (UTC)
-Date:   Fri, 4 Nov 2022 17:22:21 -0300
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B9A6E8039A2;
+        Sun,  6 Nov 2022 19:16:14 +0000 (UTC)
+Received: from localhost (unknown [10.22.32.57])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 1ECE740C2064;
+        Sun,  6 Nov 2022 19:16:13 +0000 (UTC)
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         stable-rt <stable-rt@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
         Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.298-rt140
-Message-ID: <Y2V0feqRgHK0arYM@uudg.org>
+Subject: [PATCH RT 0/4] Linux v4.14.298-rt141-rc1
+Date:   Sun,  6 Nov 2022 16:16:08 -0300
+Message-Id: <20221106191612.21730-1-lgoncalv@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Dear RT Folks,
 
-I'm pleased to announce the 4.14.298-rt140 stable release.
+This is the RT stable review cycle of patch 4.14.298-rt141-rc1.
 
-You can get this release via the git tree at:
+This is the backport of the timers update proposed for v4.19-rt by
+Sebastian Andrzej Siewior in this email thread:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+    timers: backport timer bits
+    https://lore.kernel.org/all/20221031155006.1651995-1-bigeasy@linutronix.de/
 
-  branch: v4.14-rt
-  Head SHA1: ab081f53d34e1093fc72590c21809298aa80ac94
+Please scream at me if I messed something up. Please test the patches
+too.
 
-Or to build 4.14.298-rt140 directly, the following patches should be applied:
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main
+release on 2022-11-13.
+
+To build 4.14.298-rt141-rc1 directly, the following patches should be applied:
 
   https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
 
   https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.298.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.298-rt140.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.298-rt141-rc1.patch.xz
 
 Signing key fingerprint:
 
@@ -91,4 +99,26 @@ following git repository:
 
 Enjoy!
 Luis
+
+Changes from v4.14.298-rt140:
+
+
+Anna-Maria Gleixner (1):
+  timers: Prepare support for PREEMPT_RT
+
+Luis Claudio R. Goncalves (1):
+  Linux 4.14.298-rt141-rc1
+
+Sebastian Andrzej Siewior (1):
+  timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
+
+Thomas Gleixner (1):
+  timers: Move clearing of base::timer_running under base:: Lock
+
+ kernel/time/timer.c | 136 ++++++++++++++++++++++++++++++++------------
+ localversion-rt     |   2 +-
+ 2 files changed, 102 insertions(+), 36 deletions(-)
+
+-- 
+2.38.1
 
