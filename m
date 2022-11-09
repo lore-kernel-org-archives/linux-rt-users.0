@@ -2,86 +2,123 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A640C4332F
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Nov 2022 01:46:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EBCB3C4332F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Nov 2022 11:36:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230298AbiKGBqO (ORCPT
+        id S229766AbiKILgB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 6 Nov 2022 20:46:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43782 "EHLO
+        Wed, 9 Nov 2022 06:36:01 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52986 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230079AbiKGBqN (ORCPT
+        with ESMTP id S229448AbiKILgA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 6 Nov 2022 20:46:13 -0500
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54CA3D118;
-        Sun,  6 Nov 2022 17:46:12 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id D7C7460E16;
-        Mon,  7 Nov 2022 01:46:11 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EB3EEC433D6;
-        Mon,  7 Nov 2022 01:46:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1667785571;
-        bh=wdW4MuLubcZsoo6RyAO3d6UmEsN46a6OqI3ERxcJLnY=;
-        h=Date:From:To:Subject:From;
-        b=WIaAzPu0qfn4DPxl8nsVRIDs0CpET1Lp1bu+JHYRl99Q1bZJujei4jJIWovZJRPPr
-         /Qj1aDoubNKYZNsy2PrkMxTPNfQYqrTsr5k310Llt12KcthSGgU5NWax9e4Cfmaxow
-         EwV4EwQqSC6LfSBdq7oKJsd0+NHjZHmNrQKCjln8sDPiKNtudYDmZhcMhF19peqWRE
-         7pVlHmyQJs43lw22XLu/7UrpuQsJcNPeujS8GEwiKsNsk8zDV2tiV9Nmq0YuAFnkpF
-         BND+lOYeqcQ6jCcvWJZT3Q/22NAK31rgqEpQ57f9wiBjvtCJEcvxMb6yKvQfw95rUG
-         09rK5bJ6q3RPw==
-Date:   Sun, 6 Nov 2022 17:46:09 -0800
-From:   Mark Gross <markgross@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Danie l Wagner <dwagner@suse.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.9.327-rt197
-Message-ID: <166778430472.25456.2119007061331575558@T470>
+        Wed, 9 Nov 2022 06:36:00 -0500
+X-Greylist: delayed 310 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 09 Nov 2022 03:35:58 PST
+Received: from outbound-smtp02.blacknight.com (outbound-smtp02.blacknight.com [81.17.249.8])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7162225EB9
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Nov 2022 03:35:58 -0800 (PST)
+Received: from mail.blacknight.com (pemlinmail05.blacknight.ie [81.17.254.26])
+        by outbound-smtp02.blacknight.com (Postfix) with ESMTPS id 75784BAB63
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Nov 2022 11:30:46 +0000 (GMT)
+Received: (qmail 14175 invoked from network); 9 Nov 2022 11:30:46 -0000
+Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
+  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 9 Nov 2022 11:30:46 -0000
+Date:   Wed, 9 Nov 2022 11:30:44 +0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     "Chang S. Bae" <chang.seok.bae@intel.com>,
+        Borislav Petkov <bp@suse.de>, Mike Galbraith <efault@gmx.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Linux-RT <linux-rt-users@vger.kernel.org>
+Subject: [RFC PATCH] x86: Drop fpregs lock before inheriting FPU permissions
+ during clone
+Message-ID: <20221109113044.7ncdw6263o3msycl@techsingularity.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-15
 Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Mike Galbraith reported the following off-list against an old fork of
+preempt-rt but the same issue likely also applies to current preempt-rt
 
-I'm pleased to announce the 4.9.327-rt197 stable release.
+   BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
+   in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 1, name: systemd
+   preempt_count: 1, expected: 0
+   RCU nest depth: 0, expected: 0
+   Preemption disabled at:
+   fpu_clone+0xfa/0x480
+   CPU: 6 PID: 1 Comm: systemd Tainted: G            E       (unreleased)
+   Call Trace:
+    <TASK>
+    dump_stack_lvl+0x45/0x5b
+    ? fpu_clone+0xfa/0x480
+    __might_resched+0x165/0x200
+    rt_spin_lock+0x2d/0x70
+    fpu_clone+0x32a/0x480
+    ? copy_thread+0xef/0x270
+    ? copy_process+0xd2c/0x1c00
+    ? shmem_alloc_inode+0x16/0x30
+    ? kmem_cache_alloc+0x120/0x2a0
+    ? kernel_clone+0x9b/0x460
+    ? __do_sys_clone+0x72/0xa0
+    ? do_syscall_64+0x58/0x80
+    ? __x64_sys_rt_sigprocmask+0x93/0xd0
+    ? syscall_exit_to_user_mode+0x18/0x40
+    ? do_syscall_64+0x67/0x80
+    ? syscall_exit_to_user_mode+0x18/0x40
+    ? do_syscall_64+0x67/0x80
+    ? syscall_exit_to_user_mode+0x18/0x40
+    ? do_syscall_64+0x67/0x80
+    ? exc_page_fault+0x6a/0x190
+    ? entry_SYSCALL_64_after_hwframe+0x61/0xcb
+    </TASK>
 
-You can get this release via the git tree at:
+  The splat comes from fpu_inherit_perms() being called under fpregs_lock(),
+  and us reaching the spin_lock_irq() therein due to fpu_state_size_dynamic()
+  returning true despite static key __fpu_state_size_dynamic having never
+  been enabled.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Mike's assessment looks correct. fpregs_lock on PREEMPT_RT disables
+preemption only so the spin_lock_irq() in fpu_inherit_perms is unsafe
+and converting siglock to raw spinlock would be an unwelcome change.
+This problem exists since commit 9e798e9aa14c ("x86/fpu: Prepare fpu_clone()
+for dynamically enabled features"). While the bug triggering is probably a
+mistake for the affected machine and due to a bug that is not in mainline,
+spin_lock_irq within a preempt_disable section on PREEMPT_RT is problematic.
 
-  branch: v4.9-rt-rebase
-  Head SHA1: 526140e6fc728cfdda65e2c4ef6dd085eb5e3aec
+In this specific context, it may not be necessary to hold fpregs_lock at
+all. The lock is necessary when editing the FPU registers or a tasks fpstate
+but in this case, the only write of any FP state in fpu_inherit_perms is
+for the new child which is not running yet so it cannot context switch or
+be borrowed by a kernel thread yet. Hence, fpregs_lock is not protecting
+anything in the new child until clone() completes. The siglock still needs
+to be acquired by fpu_inherit_perms as the read of the parents permissions
+has to be serialised.
 
-Or to build 4.9.327-rt197 directly, the following patches should be applied:
+This is not tested as I did not access to a machine with Intel's
+eXtended Feature Disable (XFD) feature that enables the relevant path
+in fpu_inherit_perms and the bug is against a non-mainline kernel.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+Reported-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
+---
+ arch/x86/kernel/fpu/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.327.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patch-4.9.327-rt197.patch.xz
-
-Signing key fingerprint:
-
-  A073 BC64 746A 086C DA24  97C8 F92D 73C9 A31A 1C17
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Mark Gross
-
+diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
+index 3b28c5b25e12..d00db56a8868 100644
+--- a/arch/x86/kernel/fpu/core.c
++++ b/arch/x86/kernel/fpu/core.c
+@@ -605,9 +605,9 @@ int fpu_clone(struct task_struct *dst, unsigned long clone_flags, bool minimal)
+ 	if (test_thread_flag(TIF_NEED_FPU_LOAD))
+ 		fpregs_restore_userregs();
+ 	save_fpregs_to_fpstate(dst_fpu);
++	fpregs_unlock();
+ 	if (!(clone_flags & CLONE_THREAD))
+ 		fpu_inherit_perms(dst_fpu);
+-	fpregs_unlock();
+ 
+ 	/*
+ 	 * Children never inherit PASID state.
