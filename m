@@ -2,101 +2,110 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED246C433FE
-	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Nov 2022 19:53:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A314C4167D
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Nov 2022 16:37:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234317AbiKKTxv (ORCPT
+        id S237711AbiKNQhz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 11 Nov 2022 14:53:51 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46100 "EHLO
+        Mon, 14 Nov 2022 11:37:55 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47184 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234299AbiKKTxs (ORCPT
+        with ESMTP id S237994AbiKNQhE (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 11 Nov 2022 14:53:48 -0500
-Received: from mail-qk1-x72b.google.com (mail-qk1-x72b.google.com [IPv6:2607:f8b0:4864:20::72b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6907020F6D
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Nov 2022 11:53:48 -0800 (PST)
-Received: by mail-qk1-x72b.google.com with SMTP id g10so3593104qkl.6
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Nov 2022 11:53:48 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=kS4LT3r+baucYCk9MJKod0wvesZNb9jMBFqLw552ISQ=;
-        b=FjAWhDJ+iPOPSABqwi3ZIegNphnnT7KW8RHGfF5nQYGMOdyH6MG7F2jXyg8ch1DFFX
-         ON2VYFvW6xhGwYVC6K5MtG2MerPhsfVlxNSKGN+VahuNLGDK/gnqB+xvYC9gw0ReWV0C
-         fppQ1/sMXMXK5Hx6TenL2t+LrgKmgyfzl5SK9AyfBZZBi6Qu9ubBArWIe7bs7VC8QgGk
-         lA1crmmpg6cm4pt7AweZH/pto9TKM3F452oXqTgZLZw6FoSLs3orYSQ+kcL8pQy7+atT
-         P5hAAhg02wGgZToTMPnu4ae0hpIseT7VSt+VL/D2lHueck6bYAn2wxCRe83AflZGxuXy
-         1lEA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=kS4LT3r+baucYCk9MJKod0wvesZNb9jMBFqLw552ISQ=;
-        b=Zpb02Qx/hZOpjE31b2HOhRDIbZTazjKEvGpqWu18mWbf0SM4sf9P6DB7LyQVE0f69w
-         J80hqHnSjOV/L3JSuhzDSPvz/QgHJjaKjc4rOHuzbI4PkO8pNQ61+jB0j9F3DGXJ5hNv
-         MW+nFyQJzJL3bIdEdIA7VgQYGCza34KeUIRmUj18fkr6P7U7WA9Zm3+O3jmmHorRRgca
-         NJ5GcGxdkkaD1z7IGxaDaccT8jakysX6btAAaO08WxGoCzDLNHwTUxaC6q7o7/kMg4n4
-         dhkjF0KyM6qrLA+MdWAGE8lK9ZfxFEMiE7+s3xwyrpkGZNwUfeIzv/lIJqXi72RreT5g
-         /JuQ==
-X-Gm-Message-State: ANoB5pkSOYHA1mEspFUjBwBik+Gxpg63ZLOVq8GD0K0coK1i6QaR6aeS
-        L7GbUvqoo521pZ6ohphB7pz1tNIcdeE=
-X-Google-Smtp-Source: AA0mqf4ILtSWma1ISoE7eH4hIMCDTdY5M2ES1g7v4KnS1tYnwn9pMqLLnoP3yITwUCPN0EvTHQHKXw==
-X-Received: by 2002:a37:8785:0:b0:6f9:25e5:8398 with SMTP id j127-20020a378785000000b006f925e58398mr2465915qkd.231.1668196426796;
-        Fri, 11 Nov 2022 11:53:46 -0800 (PST)
-Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-08-184-147-142-10.dsl.bell.ca. [184.147.142.10])
-        by smtp.gmail.com with ESMTPSA id i17-20020ac85c11000000b00397e97baa96sm1794332qti.0.2022.11.11.11.53.45
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Nov 2022 11:53:46 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        Leah Leshchinsky <lleshchi@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [PATCH 8/8] rt-tests: hwlatdetect: Fix incorrect comment about testduration
-Date:   Fri, 11 Nov 2022 14:53:23 -0500
-Message-Id: <20221111195323.27402-8-jkacur@redhat.com>
-X-Mailer: git-send-email 2.38.1
-In-Reply-To: <20221111195323.27402-1-jkacur@redhat.com>
-References: <20221111195323.27402-1-jkacur@redhat.com>
+        Mon, 14 Nov 2022 11:37:04 -0500
+X-Greylist: delayed 371 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 14 Nov 2022 08:32:38 PST
+Received: from mail.nearlyone.de (unknown [IPv6:2a01:4f8:1c1e:abde::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9356E528B8;
+        Mon, 14 Nov 2022 08:32:38 -0800 (PST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 0CD3AE3010;
+        Mon, 14 Nov 2022 17:26:21 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1668443184; h=from:subject:date:message-id:to:mime-version:content-type;
+        bh=1StDczw4e3LuLKYoP5nni+c0NUCH5y1MWiweDne5D+Q=;
+        b=ZtdlkjtG69gwkeSw71nKMsqZvkI7LA5Y1TEwQtaN5pecKqztGHj8OJV0HxGnLE93hESSwJ
+        VS+eC/aI9CLQPhIVXvzL4zwkVEsCRWe3tejJCCkWkAneQAt359+Q4l5wvsCVGKIAm18veq
+        8v6OKo84oShCAbdRoO9A5zgK/AOX5ODK+PTw5dAUd7XGxxsYaQhuAlneYZ9mnElmO72GUB
+        H912oxT81pkKxnsJOpBgPYk5lukbgMXfItTCMiHzqZevuv/pQvG/TON17Y7lUrjOoFN9wq
+        xGW64q9FFea/niDlsDLKXrGtxf87x/2DSZYsWrH3ewpmoi3uABDsaO7xTnEcdA==
+Date:   Mon, 14 Nov 2022 17:26:21 +0100
+From:   Daniel Wagner <wagi@monom.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
+Subject: [ANNOUNCE] 4.19.255-rt114
+Message-ID: <166841697922.6047.1364424530338819464@beryllium.lan>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-At some point
-self.testduration = 10
-was changed to
-self.testduration = 30
+Hello RT-list!
 
-but retained the comment, "ten seconds"
+I'm pleased to announce the 4.19.255-rt114 stable release.
 
-Just change the comment to say, "in seconds" so it's clear what unit
-we are talking about.
+This update has adding few backport updates from Sebastian. Mainly
+timer and workqueues. This bring the v4.19 in sync with the other -rt
+stable versions.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+I'll start now with the stable update so the next release will be
+syncing the v4.19-rt with the latest stable v4.19 version.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.19-rt
+  Head SHA1: bcecbff27cc9717eb953482a4bfc5667653cc451
+
+Or to build 4.19.255-rt114 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.255.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.255-rt114.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
+
+Changes from v4.19.255-rt113:
 ---
- src/hwlatdetect/hwlatdetect.py | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-index c5b3a689dcd1..68df58f7e2d0 100755
---- a/src/hwlatdetect/hwlatdetect.py
-+++ b/src/hwlatdetect/hwlatdetect.py
-@@ -130,7 +130,7 @@ class Detector:
-         if not self.debugfs.mount():
-             raise RuntimeError("failed to mount debugfs")
-         self.samples = []
--        self.testduration = 30  # ten seconds
-+        self.testduration = 30  # in seconds
-         self.have_msr = False
-         self.initsmi = []
-         if os.path.exists('/usr/sbin/rdmsr'):
--- 
-2.38.1
+Anna-Maria Gleixner (1):
+      timers: Prepare support for PREEMPT_RT
 
+Daniel Wagner (3):
+      Revert "random: Use local locks for crng context access"
+      rcu: Update rcuwait
+      Linux 4.19.255-rt114
+
+Sebastian Andrzej Siewior (7):
+      random: Bring back the local_locks
+      local_lock: Provide INIT_LOCAL_LOCK().
+      Revert "workqueue: Use local irq lock instead of irq disable regions"
+      timers: Keep interrupts disabled for TIMER_IRQSAFE timer.
+      timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
+      workqueue: Use rcuwait for wq_manager_wait
+      timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
+
+Thomas Gleixner (1):
+      timers: Move clearing of base::timer_running under base:: Lock
