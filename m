@@ -2,32 +2,33 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A314C4167D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Nov 2022 16:37:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6755C433FE
+	for <linux-rt-users@archiver.kernel.org>; Mon, 14 Nov 2022 16:45:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S237711AbiKNQhz (ORCPT
+        id S237921AbiKNQp7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 14 Nov 2022 11:37:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47184 "EHLO
+        Mon, 14 Nov 2022 11:45:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55008 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237994AbiKNQhE (ORCPT
+        with ESMTP id S237882AbiKNQp5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 14 Nov 2022 11:37:04 -0500
-X-Greylist: delayed 371 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 14 Nov 2022 08:32:38 PST
-Received: from mail.nearlyone.de (unknown [IPv6:2a01:4f8:1c1e:abde::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9356E528B8;
-        Mon, 14 Nov 2022 08:32:38 -0800 (PST)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 0CD3AE3010;
-        Mon, 14 Nov 2022 17:26:21 +0100 (CET)
+        Mon, 14 Nov 2022 11:45:57 -0500
+X-Greylist: delayed 1167 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 14 Nov 2022 08:45:56 PST
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 50E392F014;
+        Mon, 14 Nov 2022 08:45:56 -0800 (PST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id DD446E2FD1;
+        Mon, 14 Nov 2022 17:45:52 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1668443184; h=from:subject:date:message-id:to:mime-version:content-type;
-        bh=1StDczw4e3LuLKYoP5nni+c0NUCH5y1MWiweDne5D+Q=;
-        b=ZtdlkjtG69gwkeSw71nKMsqZvkI7LA5Y1TEwQtaN5pecKqztGHj8OJV0HxGnLE93hESSwJ
-        VS+eC/aI9CLQPhIVXvzL4zwkVEsCRWe3tejJCCkWkAneQAt359+Q4l5wvsCVGKIAm18veq
-        8v6OKo84oShCAbdRoO9A5zgK/AOX5ODK+PTw5dAUd7XGxxsYaQhuAlneYZ9mnElmO72GUB
-        H912oxT81pkKxnsJOpBgPYk5lukbgMXfItTCMiHzqZevuv/pQvG/TON17Y7lUrjOoFN9wq
-        xGW64q9FFea/niDlsDLKXrGtxf87x/2DSZYsWrH3ewpmoi3uABDsaO7xTnEcdA==
-Date:   Mon, 14 Nov 2022 17:26:21 +0100
+        t=1668444354;
+        h=from:subject:date:message-id:to:mime-version:content-type:in-reply-to:
+         references; bh=e07aYwGXb0YQRnAR0Zm0B/N0R42SMJqw3YBe+GiJpqc=;
+        b=q2YXMls6QVIpPSd7cyyp3m11GKmQlnknmJy3JKIapO9rr2XtWejI7DNKPXjBJJYaOJwykl
+        gJxJIR/aQPhE567qM7qRgi/MMeBtkYKuV7SqgAaGcWYsVuMxccmnETEYCIrhib09y/otFm
+        bELb2C1AyG7QlyZOM/4xpowHpU/u8zZN3PJ9Rsh12Gehb6dN5BUVks5jKuR0F4dpnSojY9
+        Mj7/o6rDGsHMaGGuYDHMumvsWRqmEUgHqk2DB1eIHOEN8Ykwy2Wmzq8/gcHtESv4hWIr2R
+        CmfN7uCf996KEryuAugKCs/p22sZ4XKqKmV2gOBAtIgZ0hdkjkaLA4CMAvNOOQ==
+Date:   Mon, 14 Nov 2022 17:45:52 +0100
 From:   Daniel Wagner <wagi@monom.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -39,73 +40,24 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>
-Subject: [ANNOUNCE] 4.19.255-rt114
-Message-ID: <166841697922.6047.1364424530338819464@beryllium.lan>
+Subject: Re: [ANNOUNCE] 4.19.255-rt114
+Message-ID: <20221114164552.jogogw726hdobunk@carbon.lan>
+References: <166841697922.6047.1364424530338819464@beryllium.lan>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <166841697922.6047.1364424530338819464@beryllium.lan>
 X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+On Mon, Nov 14, 2022 at 05:26:21PM +0100, Daniel Wagner wrote:
+> Signing key fingerprint:
+> 
+>   5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
 
-I'm pleased to announce the 4.19.255-rt114 stable release.
+I forgot to mention: I had to update my subkey, in order to verify my
+tags, you need to fetch a new key from
 
-This update has adding few backport updates from Sebastian. Mainly
-timer and workqueues. This bring the v4.19 in sync with the other -rt
-stable versions.
-
-I'll start now with the stable update so the next release will be
-syncing the v4.19-rt with the latest stable v4.19 version.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.19-rt
-  Head SHA1: bcecbff27cc9717eb953482a4bfc5667653cc451
-
-Or to build 4.19.255-rt114 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.255.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.255-rt114.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.255-rt113:
----
-
-Anna-Maria Gleixner (1):
-      timers: Prepare support for PREEMPT_RT
-
-Daniel Wagner (3):
-      Revert "random: Use local locks for crng context access"
-      rcu: Update rcuwait
-      Linux 4.19.255-rt114
-
-Sebastian Andrzej Siewior (7):
-      random: Bring back the local_locks
-      local_lock: Provide INIT_LOCAL_LOCK().
-      Revert "workqueue: Use local irq lock instead of irq disable regions"
-      timers: Keep interrupts disabled for TIMER_IRQSAFE timer.
-      timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
-      workqueue: Use rcuwait for wq_manager_wait
-      timers: Don't block on ->expiry_lock for TIMER_IRQSAFE timers
-
-Thomas Gleixner (1):
-      timers: Move clearing of base::timer_running under base:: Lock
+  git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
