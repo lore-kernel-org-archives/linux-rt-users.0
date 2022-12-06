@@ -2,29 +2,42 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C8AEAC4321E
-	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Dec 2022 15:02:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CE575C4708C
+	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Dec 2022 11:44:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233645AbiLBPC0 (ORCPT
+        id S233844AbiLFLn6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 2 Dec 2022 10:02:26 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33960 "EHLO
+        Tue, 6 Dec 2022 06:43:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42390 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232741AbiLBPCZ (ORCPT
+        with ESMTP id S233558AbiLFLn5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Dec 2022 10:02:25 -0500
-Received: from outbound-smtp03.blacknight.com (outbound-smtp03.blacknight.com [81.17.249.16])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F107F83E84
-        for <linux-rt-users@vger.kernel.org>; Fri,  2 Dec 2022 07:02:21 -0800 (PST)
-Received: from mail.blacknight.com (pemlinmail02.blacknight.ie [81.17.254.11])
-        by outbound-smtp03.blacknight.com (Postfix) with ESMTPS id A2A11C0E97
-        for <linux-rt-users@vger.kernel.org>; Fri,  2 Dec 2022 15:02:20 +0000 (GMT)
-Received: (qmail 20000 invoked from network); 2 Dec 2022 15:02:20 -0000
-Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
-  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 2 Dec 2022 15:02:20 -0000
-Date:   Fri, 2 Dec 2022 15:01:58 +0000
-From:   Mel Gorman <mgorman@techsingularity.net>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Tue, 6 Dec 2022 06:43:57 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C83B31A059;
+        Tue,  6 Dec 2022 03:43:55 -0800 (PST)
+Date:   Tue, 6 Dec 2022 12:43:51 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1670327033;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=dP3T+S+aLmRfAy6FLnk9bCE+dI1DE5HTxIK16+BuHp0=;
+        b=KO6aodTSgzOwrYYtTO48XmeW2iNKdfmTYbr1ZTrG2imhbkW8yPwvMjA21vskt6kPpF3M4b
+        WUzAbcQDU5IET7jdvNvcSGdV7D2X0Yoa589vcm7OUOsX/avotCPcdALxbaW9FVUrYAi0Z9
+        6ADDkNMuvfFzAK1YJ5Au7neac2AZJhIMw86y51QtZhzyV9scd3UJO3E+cn7QaHzQKd+iTf
+        FX6nK61LWXVMCUsb/LrqjluyIgW3HteMCVS1lqxTuUHDQ7GTS/gfQxIX2aiaKEoHN+fjET
+        TjOCpE7TMTDNNQMGS5Ir4qNCFv8KcWN10J48Dr9paPON7uWivsMMoxUUH6bwVQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1670327033;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=dP3T+S+aLmRfAy6FLnk9bCE+dI1DE5HTxIK16+BuHp0=;
+        b=NuBk0oK6E6MphaE5QCnN+ImHu3blbgMg/uf4RsDV8/pkJRWFRPfNgS2UAbAW14XMIl+vAG
+        PTMeY1t/2E+p6SAg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mel Gorman <mgorman@techsingularity.net>
 Cc:     Peter Zijlstra <peterz@infradead.org>, Jan Kara <jack@suse.cz>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, Will Deacon <will@kernel.org>,
@@ -38,70 +51,70 @@ Cc:     Peter Zijlstra <peterz@infradead.org>, Jan Kara <jack@suse.cz>,
         Linux-RT <linux-rt-users@vger.kernel.org>
 Subject: Re: [PATCH] rtmutex: Add acquire semantics for rtmutex lock
  acquisition
-Message-ID: <20221202150158.xzgovoy7wuic6vvk@techsingularity.net>
+Message-ID: <Y48q9/G2B6aMdJ1w@linutronix.de>
 References: <20221202100223.6mevpbl7i6x5udfd@techsingularity.net>
  <Y4nfopZfBxR4lJ6G@linutronix.de>
+ <20221202150158.xzgovoy7wuic6vvk@techsingularity.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <Y4nfopZfBxR4lJ6G@linutronix.de>
+In-Reply-To: <20221202150158.xzgovoy7wuic6vvk@techsingularity.net>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Dec 02, 2022 at 12:21:06PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2022-12-02 10:02:23 [+0000], Mel Gorman wrote:
-> > The lock owner is updated with an IRQ-safe raw spinlock held but the
-> > spin_unlock does not provide acquire semantics which are needed when
-> > acquiring a mutex. This patch adds the necessary acquire semantics for a
-> > lock operation when the lock owner is updated. It successfully completed
-> > 10 iterations of the dbench workload while the vanilla kernel fails on
-> > the first iteration.
+On 2022-12-02 15:01:58 [+0000], Mel Gorman wrote:
+> > Fixes: 700318d1d7b38 ("locking/rtmutex: Use acquire/release semantics")
+> > 
 > 
-> I *think* it is
+> Adding Davidlohr to cc.
 > 
-> Fixes: 700318d1d7b38 ("locking/rtmutex: Use acquire/release semantics")
+> It might have made the problem worse but even then rt_mutex_set_owner was
+> just a plain assignment and while I didn't check carefully, at a glance
+> try_to_take_rt_mutex didn't look like it guaranteed ACQUIRE semantics.
+
+It looks like it had a strong cmpxchg which was relaxed. But I might be
+wrong ;) Either way we need stable tag so that this gets back ported.
+The commit in question is since v4.4 and stable trees are maintained
+down to 4.9 (but only until JAN so we should hurry ;)).
+
+> > Before that, it did cmpxchg() which should be fine.
+> > 
+> > Regarding mark_rt_mutex_waiters(). Isn't acquire semantic required in
+> > order for the lock-owner not perform the fastpath but go to the slowpath
+> > instead?
+> > 
 > 
+> Good spot, it does. While the most straight-forward solution is to use
+> cmpxchg_acquire, I think it is overkill because it could incur back-to-back
+> ACQUIRE operations in the event of contention. There could be a smp_wmb
+> after the cmpxchg_relaxed but that impacts all arches and a non-paired
+> smp_wmb is generally frowned upon.
 
-Adding Davidlohr to cc.
+but in general, it should succeed on the first iteration. It can only
+fail (and retry) if the owner was able to unlock it first. A second
+locker will spin on the wait_lock so.
 
-It might have made the problem worse but even then rt_mutex_set_owner was
-just a plain assignment and while I didn't check carefully, at a glance
-try_to_take_rt_mutex didn't look like it guaranteed ACQUIRE semantics.
-
-> Before that, it did cmpxchg() which should be fine.
+> I'm thinking this on top of the patch should be sufficient even though
+> it's a heavier operation than is necesary for ACQUIRE as well as being
+> "not typical" according to Documentation/atomic_t.txt. Will, as this
+> affects ARM primarily do you have any preference?
 > 
-> Regarding mark_rt_mutex_waiters(). Isn't acquire semantic required in
-> order for the lock-owner not perform the fastpath but go to the slowpath
-> instead?
-> 
+> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+> index 35212f260148..af0dbe4d5e97 100644
+> --- a/kernel/locking/rtmutex.c
+> +++ b/kernel/locking/rtmutex.c
+> @@ -238,6 +238,13 @@ static __always_inline void mark_rt_mutex_waiters(struct rt_mutex_base *lock)
+>  		owner = *p;
+>  	} while (cmpxchg_relaxed(p, owner,
+>  				 owner | RT_MUTEX_HAS_WAITERS) != owner);
+> +
+> +	/*
+> +	 * The cmpxchg loop above is relaxed to avoid back-to-back ACQUIRE
+> +	 * operations in the event of contention. Ensure the successful
+> +	 * cmpxchg is visible.
+> +	 */
+> +	smp_mb__after_atomic();
+>  }
 
-Good spot, it does. While the most straight-forward solution is to use
-cmpxchg_acquire, I think it is overkill because it could incur back-to-back
-ACQUIRE operations in the event of contention. There could be a smp_wmb
-after the cmpxchg_relaxed but that impacts all arches and a non-paired
-smp_wmb is generally frowned upon.
-
-I'm thinking this on top of the patch should be sufficient even though
-it's a heavier operation than is necesary for ACQUIRE as well as being
-"not typical" according to Documentation/atomic_t.txt. Will, as this
-affects ARM primarily do you have any preference?
-
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 35212f260148..af0dbe4d5e97 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -238,6 +238,13 @@ static __always_inline void mark_rt_mutex_waiters(struct rt_mutex_base *lock)
- 		owner = *p;
- 	} while (cmpxchg_relaxed(p, owner,
- 				 owner | RT_MUTEX_HAS_WAITERS) != owner);
-+
-+	/*
-+	 * The cmpxchg loop above is relaxed to avoid back-to-back ACQUIRE
-+	 * operations in the event of contention. Ensure the successful
-+	 * cmpxchg is visible.
-+	 */
-+	smp_mb__after_atomic();
- }
- 
- /*
+Sebastian
