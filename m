@@ -2,119 +2,95 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE575C4708C
-	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Dec 2022 11:44:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74DA2C4332F
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Dec 2022 08:04:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233844AbiLFLn6 (ORCPT
+        id S229623AbiLHIEk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 6 Dec 2022 06:43:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42390 "EHLO
+        Thu, 8 Dec 2022 03:04:40 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49808 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233558AbiLFLn5 (ORCPT
+        with ESMTP id S229462AbiLHIEj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Dec 2022 06:43:57 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C83B31A059;
-        Tue,  6 Dec 2022 03:43:55 -0800 (PST)
-Date:   Tue, 6 Dec 2022 12:43:51 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1670327033;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=dP3T+S+aLmRfAy6FLnk9bCE+dI1DE5HTxIK16+BuHp0=;
-        b=KO6aodTSgzOwrYYtTO48XmeW2iNKdfmTYbr1ZTrG2imhbkW8yPwvMjA21vskt6kPpF3M4b
-        WUzAbcQDU5IET7jdvNvcSGdV7D2X0Yoa589vcm7OUOsX/avotCPcdALxbaW9FVUrYAi0Z9
-        6ADDkNMuvfFzAK1YJ5Au7neac2AZJhIMw86y51QtZhzyV9scd3UJO3E+cn7QaHzQKd+iTf
-        FX6nK61LWXVMCUsb/LrqjluyIgW3HteMCVS1lqxTuUHDQ7GTS/gfQxIX2aiaKEoHN+fjET
-        TjOCpE7TMTDNNQMGS5Ir4qNCFv8KcWN10J48Dr9paPON7uWivsMMoxUUH6bwVQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1670327033;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=dP3T+S+aLmRfAy6FLnk9bCE+dI1DE5HTxIK16+BuHp0=;
-        b=NuBk0oK6E6MphaE5QCnN+ImHu3blbgMg/uf4RsDV8/pkJRWFRPfNgS2UAbAW14XMIl+vAG
-        PTMeY1t/2E+p6SAg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mel Gorman <mgorman@techsingularity.net>
-Cc:     Peter Zijlstra <peterz@infradead.org>, Jan Kara <jack@suse.cz>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Will Deacon <will@kernel.org>,
-        Waiman Long <longman@redhat.com>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Pierre Gondois <pierre.gondois@arm.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Linux-RT <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] rtmutex: Add acquire semantics for rtmutex lock
- acquisition
-Message-ID: <Y48q9/G2B6aMdJ1w@linutronix.de>
-References: <20221202100223.6mevpbl7i6x5udfd@techsingularity.net>
- <Y4nfopZfBxR4lJ6G@linutronix.de>
- <20221202150158.xzgovoy7wuic6vvk@techsingularity.net>
+        Thu, 8 Dec 2022 03:04:39 -0500
+Received: from mga06.intel.com (mga06b.intel.com [134.134.136.31])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8814642F4B;
+        Thu,  8 Dec 2022 00:04:38 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1670486678; x=1702022678;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=1pFvOsRkGtabANKsYx3xAqx/MQZ2T6uHV8P/PaccLHU=;
+  b=TceCVayJwHNNz3D0qb5In4i+MyuoCnxImRMqIbO4WXZ/f+w+ORqlJMB2
+   W84ATqr7xFbSeUabrBMJq9EZQYNS3p8h5qWMqcEJXETDjLtl/rVnycYRa
+   WBdbvECzknRTAMRuVC8OdgcGsdRnpfmKvfOwV1n+8n7wqR//Km+2c/uc+
+   dNK+jQoKAi0b8pqFRkhIx1xHIxiDwsFyWsEYemWg1dsyE0aXIUyJsKJnl
+   9pEnmqKKUClTWfzse63pO7lwlCQyQF6g+EPHgZ4/1Y9B9Nuj/CbPloL2t
+   cRXuFdN0SpyWvFe2WctBdUkYvk1RA92BqsN4+Vo1FLX2w3yGhzsPhFHrz
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10554"; a="379272841"
+X-IronPort-AV: E=Sophos;i="5.96,227,1665471600"; 
+   d="scan'208";a="379272841"
+Received: from orsmga007.jf.intel.com ([10.7.209.58])
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 08 Dec 2022 00:04:37 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10554"; a="640539187"
+X-IronPort-AV: E=Sophos;i="5.96,227,1665471600"; 
+   d="scan'208";a="640539187"
+Received: from junxiaochang.bj.intel.com ([10.238.135.52])
+  by orsmga007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 08 Dec 2022 00:04:35 -0800
+From:   Junxiao Chang <junxiao.chang@intel.com>
+To:     linux-kernel@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org, bigeasy@linutronix.de,
+        tglx@linutronix.de, rostedt@goodmis.org, junxiao.chang@intel.com,
+        hock.zhang.peh@intel.com
+Subject: [PATCH] softirq: wake up ktimer thread in softirq context
+Date:   Thu,  8 Dec 2022 15:56:04 +0800
+Message-Id: <20221208075604.811710-1-junxiao.chang@intel.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20221202150158.xzgovoy7wuic6vvk@techsingularity.net>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-12-02 15:01:58 [+0000], Mel Gorman wrote:
-> > Fixes: 700318d1d7b38 ("locking/rtmutex: Use acquire/release semantics")
-> > 
-> 
-> Adding Davidlohr to cc.
-> 
-> It might have made the problem worse but even then rt_mutex_set_owner was
-> just a plain assignment and while I didn't check carefully, at a glance
-> try_to_take_rt_mutex didn't look like it guaranteed ACQUIRE semantics.
+Occiaionally timer interrupt might be triggered in softirq context,
+ktimer thread should be woken up with RT kernel, or else ktimer
+thread might stay in sleep state although timer interrupt has been
+triggered.
 
-It looks like it had a strong cmpxchg which was relaxed. But I might be
-wrong ;) Either way we need stable tag so that this gets back ported.
-The commit in question is since v4.4 and stable trees are maintained
-down to 4.9 (but only until JAN so we should hurry ;)).
+This change fixes a latency issue that timer handler is delayed for
+more than 4ms in network related test.
 
-> > Before that, it did cmpxchg() which should be fine.
-> > 
-> > Regarding mark_rt_mutex_waiters(). Isn't acquire semantic required in
-> > order for the lock-owner not perform the fastpath but go to the slowpath
-> > instead?
-> > 
-> 
-> Good spot, it does. While the most straight-forward solution is to use
-> cmpxchg_acquire, I think it is overkill because it could incur back-to-back
-> ACQUIRE operations in the event of contention. There could be a smp_wmb
-> after the cmpxchg_relaxed but that impacts all arches and a non-paired
-> smp_wmb is generally frowned upon.
+Fixes: 2165d27554e8 ("softirq: Use a dedicated thread for timer wakeups.")
+Reported-by: Peh, Hock Zhang <hock.zhang.peh@intel.com>
+Signed-off-by: Junxiao Chang <junxiao.chang@intel.com>
+---
+ kernel/softirq.c | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
 
-but in general, it should succeed on the first iteration. It can only
-fail (and retry) if the owner was able to unlock it first. A second
-locker will spin on the wait_lock so.
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index ab1fe34326bab..34ae39e4a3d10 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -664,13 +664,10 @@ static inline void __irq_exit_rcu(void)
+ #endif
+ 	account_hardirq_exit(current);
+ 	preempt_count_sub(HARDIRQ_OFFSET);
+-	if (!in_interrupt()) {
+-		if (local_softirq_pending())
+-			invoke_softirq();
+-
+-		if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers())
+-			wake_timersd();
+-	}
++	if (!in_interrupt() && local_softirq_pending())
++		invoke_softirq();
++	if (!(in_nmi() || in_hardirq()) && local_pending_timers())
++		wake_timersd();
+ 
+ 	tick_irq_exit();
+ }
+-- 
+2.25.1
 
-> I'm thinking this on top of the patch should be sufficient even though
-> it's a heavier operation than is necesary for ACQUIRE as well as being
-> "not typical" according to Documentation/atomic_t.txt. Will, as this
-> affects ARM primarily do you have any preference?
-> 
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 35212f260148..af0dbe4d5e97 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -238,6 +238,13 @@ static __always_inline void mark_rt_mutex_waiters(struct rt_mutex_base *lock)
->  		owner = *p;
->  	} while (cmpxchg_relaxed(p, owner,
->  				 owner | RT_MUTEX_HAS_WAITERS) != owner);
-> +
-> +	/*
-> +	 * The cmpxchg loop above is relaxed to avoid back-to-back ACQUIRE
-> +	 * operations in the event of contention. Ensure the successful
-> +	 * cmpxchg is visible.
-> +	 */
-> +	smp_mb__after_atomic();
->  }
-
-Sebastian
