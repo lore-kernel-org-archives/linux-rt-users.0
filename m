@@ -2,90 +2,95 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2253AC4332F
-	for <linux-rt-users@archiver.kernel.org>; Sat, 10 Dec 2022 01:41:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CB57FC4167B
+	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Dec 2022 10:42:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229758AbiLJBlI (ORCPT
+        id S232056AbiLLKmP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 9 Dec 2022 20:41:08 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58566 "EHLO
+        Mon, 12 Dec 2022 05:42:15 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33626 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229704AbiLJBlH (ORCPT
+        with ESMTP id S232013AbiLLKk6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Dec 2022 20:41:07 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F30BB9D8BB
-        for <linux-rt-users@vger.kernel.org>; Fri,  9 Dec 2022 17:40:14 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1670636414;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=crD2TSHJPEOXGsbaYVla2gOMkl4nyt+X99CfQbEv4cI=;
-        b=YKB4qQ0hrxMCwLYyRKn7Ipc2eS2uAZvbD2ifmQPene+1eb5UARSdOGmGe/gt8rsITCMaCj
-        M1bfoEhaBEes1NlY4+1qv1bESqZCOSk60vaRQ37MwB/yz79Yk8tXNSfoa7zzNRJFWakBIh
-        Cn0LP2eRemrVSGMQBklVmsxpAYmpUEo=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-621-YyaG9L_WPfmvvbn1cFOp8Q-1; Fri, 09 Dec 2022 20:40:12 -0500
-X-MC-Unique: YyaG9L_WPfmvvbn1cFOp8Q-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C2A83C0D84B
-        for <linux-rt-users@vger.kernel.org>; Sat, 10 Dec 2022 01:40:12 +0000 (UTC)
-Received: from [10.22.34.151] (unknown [10.22.34.151])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 09A74477F5C;
-        Sat, 10 Dec 2022 01:40:11 +0000 (UTC)
-Message-ID: <e1402a544c74b508b6d2b4cc644fce5909ccd863.camel@redhat.com>
-Subject: Re: [PATCH] oslat: Add command line option for bucket width
-From:   Crystal Wood <swood@redhat.com>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     Clark Williams <williams@redhat.com>,
-        rt-users <linux-rt-users@vger.kernel.org>,
-        Peter Xu <peterx@redhat.com>
-Date:   Fri, 09 Dec 2022 19:40:09 -0600
-In-Reply-To: <1624dd34-d12c-38dc-aed1-a34366ceafba@redhat.com>
-References: <20221209052254.2609767-1-swood@redhat.com>
-         <1624dd34-d12c-38dc-aed1-a34366ceafba@redhat.com>
-Organization: Red Hat
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
-User-Agent: Evolution 3.44.4 (3.44.4-2.fc36) 
+        Mon, 12 Dec 2022 05:40:58 -0500
+Received: from mail-pj1-x1034.google.com (mail-pj1-x1034.google.com [IPv6:2607:f8b0:4864:20::1034])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A71E411A22
+        for <linux-rt-users@vger.kernel.org>; Mon, 12 Dec 2022 02:35:26 -0800 (PST)
+Received: by mail-pj1-x1034.google.com with SMTP id gt4so9894547pjb.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 12 Dec 2022 02:35:26 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=usp.br; s=usp-google;
+        h=content-transfer-encoding:to:subject:message-id:date:from
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=C0xaWoW6JDlR+88t9m04EXynCTQRT5q4T7uT/UEYCbI=;
+        b=KCPFIEgU/xccX0DayZWxhAme704aHRXQ5Z86Z0Vl8sLVnQOhN1JEFZdPBRBt3aCKPy
+         jGgT5aMU6AoOHmXo1NbtSBxhLKHTpfDKbT7Lvz76EsgU3D2iIQT6gBjAZSv73NpE3IcN
+         pQ1+WWppjCLrHAtuTV8C4XPL1RNidBoH4x/mj7bBAVfY/VIbwK1K/zt6XDu6KKxPwPPj
+         vDWklXnIif7PClOPu45Kwy8Fmhb51Gf6VYClDLQh6E2KunTK7qpqz5S/hUIoIzDTopAF
+         n5coBj5HWrLkJ4IsKkn1Ns6sGcl4hVNcXpkpoxUyRqeTjt1JZ3YJ/Esw3ED0picASp2S
+         TkhA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=content-transfer-encoding:to:subject:message-id:date:from
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=C0xaWoW6JDlR+88t9m04EXynCTQRT5q4T7uT/UEYCbI=;
+        b=c0zMSqxqxQEHdh/AxOZ/qrWOgUH6OQsWrersHo/898tPXKaqMytZyKAhvlaDs9Qmjf
+         hw86xf+UPdprlfCQDoSH6Ool9xZbI/CQVtIrnEw4vT6+CAI1sGz3CQsjoYW5zJRbz+X+
+         8iL8o2syyXuKpkry9BoV68x97IvIGbZrw2opkqZF9Vi97HWrcXJtyIZzkAOAPUpokdr+
+         HyxdHIsO5gotxdBupHGbhMJlkCyfraE49tE3bq3nWEqAGlrVs8bZE9S5ADXE515YFcHw
+         lW99xG1eFWuWhtS/PwFIMw+2gmGA1jB1LJYFiCqXO0hASYgKIJYzCaYg6oSt/3rd5SMj
+         4qcQ==
+X-Gm-Message-State: ANoB5pkOWPCqdkRSHf8waKrO6zKG0LMsjVYy5vD6VcQ6ADXtQvT8QyXf
+        bQnROOTKQ3uhXZP/Qku7P/yIGT1PUxVTDgGAE9+Z3UJr01ckrTp1
+X-Google-Smtp-Source: AA0mqf4fJNvG0UxIOZc6e3MdXz2AcXAYTeKGu0YueB0y5qZDUbPu7zNW7siM4zmBdQylwPQkb79hhACPHNNr82kmYds=
+X-Received: by 2002:a17:903:2791:b0:18e:ade3:a523 with SMTP id
+ jw17-20020a170903279100b0018eade3a523mr282016plb.35.1670841325868; Mon, 12
+ Dec 2022 02:35:25 -0800 (PST)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+From:   Danilo Cezar Zanella <danilo.zanella@iag.usp.br>
+Date:   Mon, 12 Dec 2022 07:35:14 -0300
+Message-ID: <CAAxUTH4L-eRTdnOE6cPaa6wZUawJ2sU_aToKygR98xmXJvu+QA@mail.gmail.com>
+Subject: pci_alloc_irq_vectors problem further investigation
+To:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-T24gRnJpLCAyMDIyLTEyLTA5IGF0IDIwOjAzIC0wNTAwLCBKb2huIEthY3VyIHdyb3RlOgo+IAo+
-IAo+IE9uIFRodSwgOCBEZWMgMjAyMiwgQ3J5c3RhbCBXb29kIHdyb3RlOgo+IAo+IAo+ID4gwqAK
-PiA+IEBAIC02NzcsNiArNjk5LDIwIEBAIHN0YXRpYyB2b2lkIHBhcnNlX29wdGlvbnMoaW50IGFy
-Z2MsIGNoYXIgKmFyZ3ZbXSkKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBleGl0KDEpOwo+ID4gwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfQo+ID4gwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgYnJlYWs7Cj4gPiArwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgY2FzZSBPUFRfQlVDS0VUV0lEVEg6Cj4gPiArwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgY2FzZSAnVyc6Cj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoGcuYnVja2V0X3dpZHRoID0gc3RydG9sKG9wdGFyZywgTlVMTCwg
-MTApOwo+ID4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBp
-ZiAoZy5idWNrZXRfc2l6ZSA8PSAwKSB7Cj4gCj4gSSB0aGluayB0aGlzIHNob3VsZCBiZSBnLmJ1
-Y2tldF93aWR0aAoKT29wcwoKPiAKPiBBIHF1aWNrIGZpcnN0IGxvb2sgdGhyb3VnaCBhbmQgcnVu
-LCBzZWUgdGhlIG9uZSBjb21tZW50IGFib3ZlCj4gbmVhciAiY2FzZSAnVyciCj4gCj4gYW5kIHRo
-ZW4KPiAKPiBjaGVja3BhdGNoIHJlcG9ydHMgc29tZSBtaW5vciBlYXNpbHkgZml4ZWQgcHJvYmxl
-bXMKPiAKPiAuLi9saW51eC9zY3JpcHRzL2NoZWNrcGF0Y2gucGwgb3NsYXQucGF0Y2ggCj4gRVJS
-T1I6IGNvZGUgaW5kZW50IHNob3VsZCB1c2UgdGFicyB3aGVyZSBwb3NzaWJsZQo+ICMxMDA6IEZJ
-TEU6IHNyYy9vc2xhdC9vc2xhdC5jOjM0MjoKPiArXkleScKgwqDCoMKgwqDCoMKgwqDCoCBnLnBy
-ZWNpc2lvbiwgdXMpOyQKPiAKPiBFUlJPUjogY29kZSBpbmRlbnQgc2hvdWxkIHVzZSB0YWJzIHdo
-ZXJlIHBvc3NpYmxlCj4gIzEwMjogRklMRTogc3JjL29zbGF0L29zbGF0LmM6MzQ0Ogo+ICteSV5J
-wqDCoMKgwqDCoMKgwqDCoCBnLnByZWNpc2lvbiwgdXMpOyQKCkkgd2FzIG1hdGNoaW5nIHRoZSBl
-eGlzdGluZyBzdHlsZSBpbiB0aGUgZmlsZSB0aGF0IHRlbmRlZCB0byB1c2Ugc3BhY2VzIGZvcgph
-bGlnbm1lbnQuCgo+IEVSUk9SOiBzcGFjZXMgcmVxdWlyZWQgYXJvdW5kIHRoYXQgJz0nIChjdHg6
-VnhWKQo+ICMyMjc6IEZJTEU6IHNyYy9vc2xhdC9vc2xhdC5jOjY1NDoKPiArwqDCoMKgwqDCoMKg
-wqBPUFRfQlVDS0VUU0laRT0xLCBPUFRfQlVDS0VUV0lEVEgsIE9QVF9DUFVfTElTVCwgCj4gT1BU
-X0NQVV9NQUlOX1RIUkVBRCwKPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqAgXgoKSSBvbmx5IGFkZGVkIE9QVF9CVUNLRVRXSURUSCB0byB0aGUgbGlzdDsgSSBkaWRu
-J3QgdG91Y2ggdGhlID0xIHBhcnQuCgotU2NvdHQKCg==
+Hi,
 
+There is a driver developed by EmbeddedTS (the board is Marvell
+armada-385, dual core processor) that tries to allocate 32 MSI
+interrupts, using pci_alloc_irq_vectors(..,32,32,...). When I ran the
+Kernel (4.14 NON RT) provided by them, it worked fine, but when I
+recompiled the kernel (4.19.249 using the RT_FULL options), it didn't,
+returning -ENOSPC.
+In RT_FULL Kernel:
+- First fact, when I ran pci_msi_vec_count, it returned 32.
+- Second, if I changed to 16, calling
+pci_alloc_irq_vectors(..,16,16,...), it  worked.
+I traced this kernel and I found that:
+pci_alloc_irq_vectors_affinity
+  __pci_enable_msi_range
+    msi_capability_init
+      pci_msi_setup_msi_irqs
+        msi_domain_alloc_irqs
+          __irq_domain_alloc_irqs
+            irq_domain_alloc_descs
+              Then I stopped here...
+
+I searched on the Internet, but I couldn't find anything.
+Has someone had a similar problem?
+Is there something that I missed? Some configuration??
+
+Thanks
+
+--=20
+Danilo C. Zanella
+Radio Astronomy Group  / IAG
+University of Sao Paulo
+Rua do Mat=C3=A3o, 1226 - Cidade Universit=C3=A1ria S=C3=A3o Paulo - SP - B=
+rasil - 05508-090
+Tel.: +55 11 3091-2743
