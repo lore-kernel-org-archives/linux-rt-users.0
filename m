@@ -2,95 +2,107 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB57FC4167B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Dec 2022 10:42:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F0B0C4332F
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Dec 2022 13:56:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232056AbiLLKmP (ORCPT
+        id S235745AbiLMN4O (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 12 Dec 2022 05:42:15 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33626 "EHLO
+        Tue, 13 Dec 2022 08:56:14 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58304 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232013AbiLLKk6 (ORCPT
+        with ESMTP id S234027AbiLMN4N (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 12 Dec 2022 05:40:58 -0500
-Received: from mail-pj1-x1034.google.com (mail-pj1-x1034.google.com [IPv6:2607:f8b0:4864:20::1034])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A71E411A22
-        for <linux-rt-users@vger.kernel.org>; Mon, 12 Dec 2022 02:35:26 -0800 (PST)
-Received: by mail-pj1-x1034.google.com with SMTP id gt4so9894547pjb.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 12 Dec 2022 02:35:26 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=usp.br; s=usp-google;
-        h=content-transfer-encoding:to:subject:message-id:date:from
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=C0xaWoW6JDlR+88t9m04EXynCTQRT5q4T7uT/UEYCbI=;
-        b=KCPFIEgU/xccX0DayZWxhAme704aHRXQ5Z86Z0Vl8sLVnQOhN1JEFZdPBRBt3aCKPy
-         jGgT5aMU6AoOHmXo1NbtSBxhLKHTpfDKbT7Lvz76EsgU3D2iIQT6gBjAZSv73NpE3IcN
-         pQ1+WWppjCLrHAtuTV8C4XPL1RNidBoH4x/mj7bBAVfY/VIbwK1K/zt6XDu6KKxPwPPj
-         vDWklXnIif7PClOPu45Kwy8Fmhb51Gf6VYClDLQh6E2KunTK7qpqz5S/hUIoIzDTopAF
-         n5coBj5HWrLkJ4IsKkn1Ns6sGcl4hVNcXpkpoxUyRqeTjt1JZ3YJ/Esw3ED0picASp2S
-         TkhA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:to:subject:message-id:date:from
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=C0xaWoW6JDlR+88t9m04EXynCTQRT5q4T7uT/UEYCbI=;
-        b=c0zMSqxqxQEHdh/AxOZ/qrWOgUH6OQsWrersHo/898tPXKaqMytZyKAhvlaDs9Qmjf
-         hw86xf+UPdprlfCQDoSH6Ool9xZbI/CQVtIrnEw4vT6+CAI1sGz3CQsjoYW5zJRbz+X+
-         8iL8o2syyXuKpkry9BoV68x97IvIGbZrw2opkqZF9Vi97HWrcXJtyIZzkAOAPUpokdr+
-         HyxdHIsO5gotxdBupHGbhMJlkCyfraE49tE3bq3nWEqAGlrVs8bZE9S5ADXE515YFcHw
-         lW99xG1eFWuWhtS/PwFIMw+2gmGA1jB1LJYFiCqXO0hASYgKIJYzCaYg6oSt/3rd5SMj
-         4qcQ==
-X-Gm-Message-State: ANoB5pkOWPCqdkRSHf8waKrO6zKG0LMsjVYy5vD6VcQ6ADXtQvT8QyXf
-        bQnROOTKQ3uhXZP/Qku7P/yIGT1PUxVTDgGAE9+Z3UJr01ckrTp1
-X-Google-Smtp-Source: AA0mqf4fJNvG0UxIOZc6e3MdXz2AcXAYTeKGu0YueB0y5qZDUbPu7zNW7siM4zmBdQylwPQkb79hhACPHNNr82kmYds=
-X-Received: by 2002:a17:903:2791:b0:18e:ade3:a523 with SMTP id
- jw17-20020a170903279100b0018eade3a523mr282016plb.35.1670841325868; Mon, 12
- Dec 2022 02:35:25 -0800 (PST)
+        Tue, 13 Dec 2022 08:56:13 -0500
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 7A2101A238;
+        Tue, 13 Dec 2022 05:56:12 -0800 (PST)
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id CE1F62F4;
+        Tue, 13 Dec 2022 05:56:52 -0800 (PST)
+Received: from [10.34.100.128] (pierre123.nice.arm.com [10.34.100.128])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id CA96C3F71E;
+        Tue, 13 Dec 2022 05:56:10 -0800 (PST)
+Message-ID: <a675a7a1-e0bc-9ec1-6570-3dbaa35d98c6@arm.com>
+Date:   Tue, 13 Dec 2022 14:56:02 +0100
 MIME-Version: 1.0
-From:   Danilo Cezar Zanella <danilo.zanella@iag.usp.br>
-Date:   Mon, 12 Dec 2022 07:35:14 -0300
-Message-ID: <CAAxUTH4L-eRTdnOE6cPaa6wZUawJ2sU_aToKygR98xmXJvu+QA@mail.gmail.com>
-Subject: pci_alloc_irq_vectors problem further investigation
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.4.2
+Subject: Re: [ANNOUNCE] v6.0.5-rt14
+To:     Clark Williams <williams@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Valentin Schneider <vschneid@redhat.com>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Mark Rutland <mark.rutland@arm.com>, stable-rt@vger.kernel.org
+References: <Y1o8hqwQKDpOTkNr@linutronix.de>
+ <649af0f6-e5e2-c450-879c-e9153e0c0abc@arm.com>
+ <Y1/NFIjRFZzszZB6@linutronix.de>
+ <CAMLffL_VY52DAHxVO_BE=nAjXwzvq-jmAOO4JwDT3vw3sHy15A@mail.gmail.com>
+Content-Language: en-US
+From:   Pierre Gondois <pierre.gondois@arm.com>
+In-Reply-To: <CAMLffL_VY52DAHxVO_BE=nAjXwzvq-jmAOO4JwDT3vw3sHy15A@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+Hello Sebastian, Clark,
 
-There is a driver developed by EmbeddedTS (the board is Marvell
-armada-385, dual core processor) that tries to allocate 32 MSI
-interrupts, using pci_alloc_irq_vectors(..,32,32,...). When I ran the
-Kernel (4.14 NON RT) provided by them, it worked fine, but when I
-recompiled the kernel (4.19.249 using the RT_FULL options), it didn't,
-returning -ENOSPC.
-In RT_FULL Kernel:
-- First fact, when I ran pci_msi_vec_count, it returned 32.
-- Second, if I changed to 16, calling
-pci_alloc_irq_vectors(..,16,16,...), it  worked.
-I traced this kernel and I found that:
-pci_alloc_irq_vectors_affinity
-  __pci_enable_msi_range
-    msi_capability_init
-      pci_msi_setup_msi_irqs
-        msi_domain_alloc_irqs
-          __irq_domain_alloc_irqs
-            irq_domain_alloc_descs
-              Then I stopped here...
+On 10/31/22 15:06, Clark Williams wrote:
+> I can pick them up for v5.19-rt
+> 
+> On Mon, Oct 31, 2022 at 1:28 PM Sebastian Andrzej Siewior
+> <bigeasy@linutronix.de> wrote:
+>>
+>> On 2022-10-28 11:47:28 [+0200], Pierre Gondois wrote:
+>>> Hello Sebastian,
+>>
+>> Hi Pierre,
+>>
+>>> About the issues Valentin reported:
+>>>
+>>> - [SPLAT 1/3] arm_pmu: Sleeping spinlocks down armpmu_alloc_atomic()
+>>> will be fixed by:
+>>> https://lore.kernel.org/all/20220930111844.1522365-1-mark.rutland@arm.com/
+>>
+>> This is still pending and I don't see it in next. Could someone give me
+>> a ping once this is merged, please?
 
-I searched on the Internet, but I couldn't find anything.
-Has someone had a similar problem?
-Is there something that I missed? Some configuration??
+This is now merged at:
+commit fe40ffdb7656 ("arm_pmu: rework ACPI probing")
+commit 6349a2470d07 ("arm_pmu: factor out PMU matching")
+commit ad51b5043bb3 ("arm_pmu: acpi: factor out PMU<->CPU association")
 
-Thanks
+If you also judge it is necessary to take:
+commit f55a9b59e8f0 ("irqchip/gic-v3-its: Remove cpumask_var_t allocation")
 
---=20
-Danilo C. Zanella
-Radio Astronomy Group  / IAG
-University of Sao Paulo
-Rua do Mat=C3=A3o, 1226 - Cidade Universit=C3=A1ria S=C3=A3o Paulo - SP - B=
-rasil - 05508-090
-Tel.: +55 11 3091-2743
+Regards,
+Pierre
+
+>>
+>>> - [SPLAT 2/3] irqchip/gic-v3-its: Sleeping spinlocks down gic_reserve_range()
+>>> was fixed by:
+>>> https://lore.kernel.org/lkml/20211027151506.2085066-3-valentin.schneider@arm.com/
+>>
+>> That is
+>>     d23bc2bc1d634 ("irqchip/gic-v3-its: Postpone LPI pending table freeing and memreserve")
+>>     v5.17-rc1
+>>
+>>> - [SPLAT 3/3] gpio: dwapb: Sleeping spinlocks down IRQ mapping
+>>> was fixed by:
+>>> https://lore.kernel.org/all/20220419012810.88417-1-schspa@gmail.com/
+>>    3c938cc5cebcb ("gpio: use raw spinlock for gpio chip shadowed data")
+>>    v5.19-rc1
+>>
+>> Is someone picking the two up or RT-stable?
+>>
+>>> Regards,
+>>> Pierre
+>>
+>> Sebastian
+>>
+> 
