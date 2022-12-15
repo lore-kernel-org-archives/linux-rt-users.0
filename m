@@ -2,105 +2,78 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E5C4C4332F
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Dec 2022 14:47:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0845DC4332F
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Dec 2022 18:39:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229786AbiLOOrw (ORCPT
+        id S229846AbiLOSj4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 15 Dec 2022 09:47:52 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57474 "EHLO
+        Thu, 15 Dec 2022 13:39:56 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37378 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229793AbiLOOru (ORCPT
+        with ESMTP id S229806AbiLOSjw (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 15 Dec 2022 09:47:50 -0500
-Received: from mail-pl1-x636.google.com (mail-pl1-x636.google.com [IPv6:2607:f8b0:4864:20::636])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 58EA02F64D
-        for <linux-rt-users@vger.kernel.org>; Thu, 15 Dec 2022 06:47:49 -0800 (PST)
-Received: by mail-pl1-x636.google.com with SMTP id l10so7091839plb.8
-        for <linux-rt-users@vger.kernel.org>; Thu, 15 Dec 2022 06:47:49 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=E21P3+xoC+hmuC3jKvtc2SpHoJGCst494qW6S++/x8Q=;
-        b=LmpHUGSp68l/570C0qBR4qPepyjtCxln0DGUSObCW0dkCCeXJNpzz2tdW2kF7Yj/7M
-         c3wRf1oV906Fab5jlD92vdT5LPy8GeHSGUF/wL1KR2PSykA7qLdiMK8AFTTJ4jCQrzP0
-         p9Va1Xpzg9Ls0Dk7mgZmEOrwLgjTyg8/D16k6/TM/qAQrtyFU6StOCgkG40xnX2H5Kjt
-         NaQrv8A/pZjCohj1LUFvynfxQOORe6VqgXg+cu2fhV09rcjpg/Hb6oIWhoBTyG7wpnLb
-         hrM7nt7vKmyfAGiu4USM5h34+6HVZj7gChnNUi/Uqh+nJy3IlLpqxdLA7Yv2ZWxBFhhk
-         RoVg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=E21P3+xoC+hmuC3jKvtc2SpHoJGCst494qW6S++/x8Q=;
-        b=0b23jTef2+SgOLGaSjWhoYkz90U0mWGF9kqzb7KMtQccsQo7X0PUOvJaLj0FCfS8ID
-         B8Y1FJYdG7Aq/FxPVPxW5lTvAQgHccJlrs4kAjY0AY8d+55e5eEkbzYyE/ln7gm1ogmD
-         BUPjuItqIEQNiqn0fP+XXYF+J2TqSq4UZwatuhPr0USStS5coWtVRfOrVWDaLCYXnXWX
-         ZU6year2v9NOk6qa6kgboDnEXiRsBqEcYmNqSSYvk0Z1Xq19zr8Vltkk70fXHIFVmbYz
-         uLJcfStlUANbFQelHQ3YFlc4sy8pah20v+RT1GVJbNyu9io3B3K16SqFho4Dkyvzj61z
-         JaGg==
-X-Gm-Message-State: AFqh2koaZFzgSozFBiXegQyayeeBQzBle6ZqbfkHJ1B3ZSq3Ek0fOYbU
-        bv5ocDm4pOSmDQIUewkfPuIlyfm66NZnOyl4EueO9zi8
-X-Google-Smtp-Source: AMrXdXvSRS3KuXE8iBJcPaQ9DPeoesmRVYE7Pmb8XX8iD3iw3w2FGeGEFVh5xccrKQQVfi2E+FRMYNTSis3PYHuK9Co=
-X-Received: by 2002:a17:90b:2541:b0:219:8199:ef57 with SMTP id
- nw1-20020a17090b254100b002198199ef57mr565481pjb.129.1671115668868; Thu, 15
- Dec 2022 06:47:48 -0800 (PST)
+        Thu, 15 Dec 2022 13:39:52 -0500
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 51101BB
+        for <linux-rt-users@vger.kernel.org>; Thu, 15 Dec 2022 10:39:48 -0800 (PST)
+Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 58CC942807;
+        Thu, 15 Dec 2022 18:39:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1671129584;
+        bh=3qV4mYIB52/VJQiT1Z2NDahbK6t0DJK9gqlgYyEqRVs=;
+        h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type;
+        b=MTDH8SSD8Hq7tDq9Iv0fedIS21ylrKSOfyU0YOLvT3HPFSQLtyI0qJZxhMArFRsEN
+         ldMwdoirwlwjxfXp48ouQNOSF4xxDKAMi9m29/CW2Xuoz+NJ4Bngn1f6FiCn/krGPO
+         U1g9OU3E5cEJX/VEgHGVMzPBeWC38Sm10IeeV5hqpLa/4OTUaHn4Unbquj6YUAHFHo
+         yEjIfZDBNDoAwN9avRZRafCe8LvjOpwKakB7jz1YmBjmBryhzDAlO3tSOXnlFxUR24
+         P6LMJVCMlKfPW/K9uFwjI6CeCzpEAGkZ8rndQj8ugz6csZ9aVPkMNzPrp5mEGyMyGN
+         c+12xj7/9TX0Q==
+Message-ID: <fe5974c9-3ed0-938a-f43c-4d301f603e92@canonical.com>
+Date:   Thu, 15 Dec 2022 13:39:38 -0500
 MIME-Version: 1.0
-References: <CAEYdEeS4T33R48EQ6016rdSmVNN4ii5YBN3DKL_RRCDznGpJGA@mail.gmail.com>
- <CAMLffL_pK6riLWOT60MV7-X-EsDs0kFCQK4bSF9aogEcsdvZ3A@mail.gmail.com>
-In-Reply-To: <CAMLffL_pK6riLWOT60MV7-X-EsDs0kFCQK4bSF9aogEcsdvZ3A@mail.gmail.com>
-From:   Brian Wrenn <dcbrianw@gmail.com>
-Date:   Thu, 15 Dec 2022 09:47:37 -0500
-Message-ID: <CAEYdEeT3m36Nu7f8FpAGgRFLOAfO2FzrNiZAnV9BOEXmMPt3LQ@mail.gmail.com>
-Subject: Re: Version Magic Mismatch for Kernel Module
-To:     Clark Williams <williams@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.4.2
+Content-Language: en-US
+To:     linux-rt-users@vger.kernel.org
+Cc:     williams@redhat.com, bigeasy@linutronix.de
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+Subject: System Hang With 5.15.79-rt54 Patch Set
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-1. aarch64 on an sd410
-2. spidev & rtc_pm8xxx
+Hello,
 
-spidev seems to work as expected despite the error.
-rtc_pm8xxx doesn't perform all the expected functionality, but I don't
-think that has anything to do with the version magic mismatch.
+A bug has been reported[0] against a linux-5.15.y based Ubuntu kernel 
+that has the 5.15.79-rt54 real-time patch set applied.
 
-On Wed, Dec 14, 2022 at 5:49 PM Clark Williams <williams@redhat.com> wrote:
->
-> I've not seen this before. A couple of questions:
->
-> 1. What arch are you building?
-> 2. Which modules report version magic mis-match?
->
-> Thanks,
-> Clark
->
->
-> On Wed, Dec 14, 2022 at 2:09 PM Brian Wrenn <dcbrianw@gmail.com> wrote:
->>
->> Hi, I've patched the Linux Kernel v5.15.7 with rt23 and used
->> menuconfig to select the fully preemptable kernel.  The boot process
->> for two modules reports an unexpected version magic.  It reads the
->> following:
->>
->> <module name>: version magic '<kernel version> SMP preempt mode_unload
->> <arch>' should be '<kernel version> SMP preemp_rt mod_unload <arch>
->>
->> This only happens for two modules, and I've built all the modules
->> under the same source tree with the same make command.  This warning
->> makes sense since I have indeed built and imaged my SOM with the
->> preempt kernel.  The command 'uname -v' returns, "SMP PREEMPT_RT
->> <date>".
->>
->> Even though I've never built this source tree without the PREEMPT_RT
->> patch, I've done a clean build to remove any doubt about obsolete
->> object files.  Can offer a hint as to what I need to change to get
->> those modules to build with the correct version magic?
->>
->> Thank you for any help,
->> Brian
->>
+This bug is causing a system hang when running disk tests with the 
+stress-ng[1] test suite.  A 'hung task' call trace is being generated[2] 
+just prior to the system hanging.  It appears the hang is happening 
+during a call to schedule.
+
+To see if this was a regression, I also tested prior real-time patch 
+sets, going as far back to rt38 and all versions exhibit this bug. I 
+will test back further to see if this is in fact a regression and a 
+kernel bisect can be done.  I also confirmed the same kernel without the 
+rt54 patch set applied does not exhibit this bug.
+
+I will continue to debug this issue, but I wanted to send this message 
+upstream in case anyone else runs into it.  Any specific tests, tracing 
+or debugging steps would be greatly appreciated. Otherwise, I'll report 
+back to this thread with any findings.
+
+Thanks,
+
+Joe
+
+
+[0] https://bugs.launchpad.net/ubuntu-realtime/+bug/1998536
+[1] https://github.com/ColinIanKing/stress-ng
+[2] https://launchpadlibrarian.net/637058129/dmesg_dl110_rt_kernel.txt
