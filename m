@@ -2,85 +2,64 @@ Return-Path: <linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3C63C4167B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Dec 2022 16:21:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A56AFC4332F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Dec 2022 09:09:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231405AbiLPQVA (ORCPT
+        id S231418AbiLSJJP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 16 Dec 2022 11:21:00 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52024 "EHLO
+        Mon, 19 Dec 2022 04:09:15 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40262 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231681AbiLPQUb (ORCPT
+        with ESMTP id S231511AbiLSJJK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 16 Dec 2022 11:20:31 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2E7281DF0B;
-        Fri, 16 Dec 2022 08:20:18 -0800 (PST)
-Date:   Fri, 16 Dec 2022 17:20:14 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1671207615;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=+MEibrmmCh/iophEg5CPI5D8t7JQfVecU9sRiaAK93A=;
-        b=cEVV8iwST4jB0LztH86xpKsLGAedVX4PqoLvh9iyG/LPIXAmCN4CY2fEFIiV8HuYdQi43p
-        RHW6rod4xspj+V25qLaQn4r9/K3xdBCiuHLJjree/R8lCuF5v+vGbGYFouT2zCd77oBnIP
-        WM4gv2VB73rGKKk72NXCdpqf04BdScspQGbRJVKWQxDyY3rN+IttB9LbDKZBrTeVM+a0h5
-        UtWgI6s2b8TKpmYcknTFCX5blQm9NHPFiLzh4tKyy5DxLGgc/YI8MAq5MUmMwSij9Sdscp
-        GVliHFE9UT8iLBXrtVZ52WaYejG/2gRVOB42/97AxIIRd9ikQHdQcaOmL7l1FA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1671207615;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=+MEibrmmCh/iophEg5CPI5D8t7JQfVecU9sRiaAK93A=;
-        b=hHeeO2kRBdDp/EV4zb6aWIKp74+nvyVb6wRQWDxW491yTRyRsIxQuUSghinXev+IYZ8fDo
-        hZWeOwRinb7cUaBw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Will Deacon <will@kernel.org>
-Cc:     Mel Gorman <mgorman@techsingularity.net>,
-        Peter Zijlstra <peterz@infradead.org>, Jan Kara <jack@suse.cz>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        Waiman Long <longman@redhat.com>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        Pierre Gondois <pierre.gondois@arm.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Linux-RT <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] rtmutex: Add acquire semantics for rtmutex lock
- acquisition
-Message-ID: <Y5yavm77lWLH+IWj@linutronix.de>
-References: <20221202100223.6mevpbl7i6x5udfd@techsingularity.net>
- <Y4nfopZfBxR4lJ6G@linutronix.de>
- <20221202150158.xzgovoy7wuic6vvk@techsingularity.net>
- <20221216111412.GA8666@willie-the-truck>
- <20221216135548.itw2xrqbvuldk35y@techsingularity.net>
- <20221216155803.GB8949@willie-the-truck>
+        Mon, 19 Dec 2022 04:09:10 -0500
+Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0FB2B1E5;
+        Mon, 19 Dec 2022 01:09:08 -0800 (PST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id B4E07DB18B;
+        Mon, 19 Dec 2022 10:09:04 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1671440946; h=from:subject:date:message-id:to:cc:mime-version:content-type:
+         content-transfer-encoding:in-reply-to:references;
+        bh=cCM0WmhdJCB7i3ercJ6r0ihv7WIKNB9Qtht577iiRX0=;
+        b=GrULWLSZpCG6P+seTrUM1VfwacW7JunPwNLoENFUgsiaS4+ZSAGYnejfxLE7d5V9mb/sOZ
+        IdzXf9+WEJnbkePe+tghwDrlS9tFhEAhK7AXzsN+DnzD/nBQCxJsrhQSOgpzf8XA1rxPW4
+        Tzh//OIZDyEXcbDKBmCgn+F6o1xAFztjeWMRfzxmtu8hofpH0xowro8CeX+bfYKLnEk6AG
+        jSH5/6XfAW46D2qcfpYj20PKJks6Zw96wwDB2sVS+bcEF8yc3upDn+FXTmUd0eh6LsxEmj
+        flptNesuMzKWBdMnO60osBug+UcDLEy46MctI0QFgEd+pe+YB9mZPPsnGrFp9g==
+From:   Daniel Wagner <wagi@monom.org>
+To:     Ben Hutchings <ben@decadent.org.uk>
+Cc:     Daniel Wagner <wagi@monom.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH 4.19-rt] Revert "percpu: include irqflags.h for raw_local_irq_save()"
+Date:   Mon, 19 Dec 2022 10:08:58 +0100
+Message-Id: <167144091839.4434.12706685546162320277.b4-ty@monom.org>
+In-Reply-To: <Y5O/aVw/zHKqmpu7@decadent.org.uk>
+References: <Y5O/aVw/zHKqmpu7@decadent.org.uk>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20221216155803.GB8949@willie-the-truck>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2022-12-16 15:58:04 [+0000], Will Deacon wrote:
-> I guess bigeasy can give the weaker barrier a try if he has the time, but
-> otherwise we can leave the change as-is.
-
-I can't give a try because I have no HW. All I contributed here so far
-was based on what you wrote in the previous email and then I spotted the
-lack of the barrier of any sorts and asked about it.
-I _would_ assume that the cmpxchg_barrier() here would work but I'm far
-from knowing.
-If the explicit barrier after the cmpxchg_relaxed() is what you two
-agree on and it is better/ cheaper/ more obvious then fine. Do it ;)
-
-> Cheers,
+On Sat, 10 Dec 2022 00:06:17 +0100, Ben Hutchings wrote:
+> This reverts commit 0d796a9e6a93608b4dd84fbd09f01e912ae34bdc.
 > 
-> Will
+> After merging stable release 4.19.266 into the -rt branch, an x86
+> build will fail with the following error:
+> 
+>     .../include/linux/percpu-defs.h:49:34: error: 'PER_CPU_BASE_SECTION' undeclared here (not in a function); did you mean 'PER_CPU_FIRST_SECTION'?
+> 
+> [...]
 
-Sebastian
+Applied, thanks!
+
+[1/1] Revert "percpu: include irqflags.h for raw_local_irq_save()"
+      commit: 2c16891623cc7e8c0c4144f8665d117c7fc94552
+
+Best regards,
+-- 
+Daniel Wagner <wagi@monom.org>
