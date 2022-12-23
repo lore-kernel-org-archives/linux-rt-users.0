@@ -1,138 +1,131 @@
-Return-Path: <linux-rt-users-owner@kernel.org>
+Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9E82CC4332F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 20 Dec 2022 21:37:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AAA1EC4332F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Dec 2022 14:23:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234154AbiLTVhQ (ORCPT
+        id S235627AbiLWOXE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 20 Dec 2022 16:37:16 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52664 "EHLO
+        Fri, 23 Dec 2022 09:23:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56414 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230048AbiLTVhO (ORCPT
+        with ESMTP id S230374AbiLWOXB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 20 Dec 2022 16:37:14 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A84AC13D2D
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 Dec 2022 13:36:27 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1671572186;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=knEFZp/Br2lwUYLZXfbzI9ZSnZOaTBCXhLfkLB5psow=;
-        b=ecXMKQbnA8nLHUESey+9ksl4iB+FZTfuZJB2YTIus9GJ7OcbCIKFvBFSBoBRF7YT/dRUiJ
-        YXuyNuS9kaVJbN5i9N+Nkg+ehSCPYIX1dQc4WSjearWrWzpMZc0Wvm5UUEVOlEMZ8edEbZ
-        0OWOhHRu/4sj0AUhW2yw1zqxeNZWaXs=
-Received: from mail-yw1-f199.google.com (mail-yw1-f199.google.com
- [209.85.128.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-655-gyuawPVkMSibkicDDlBk1A-1; Tue, 20 Dec 2022 16:36:24 -0500
-X-MC-Unique: gyuawPVkMSibkicDDlBk1A-1
-Received: by mail-yw1-f199.google.com with SMTP id 00721157ae682-45e2e1d6d2fso8139917b3.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 Dec 2022 13:36:24 -0800 (PST)
+        Fri, 23 Dec 2022 09:23:01 -0500
+Received: from mail-pj1-x1032.google.com (mail-pj1-x1032.google.com [IPv6:2607:f8b0:4864:20::1032])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4439731379
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Dec 2022 06:23:01 -0800 (PST)
+Received: by mail-pj1-x1032.google.com with SMTP id n10-20020a17090a73ca00b00225cbc4dfaeso655259pjk.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Dec 2022 06:23:01 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=vje6yt/sqIiWl/oxBi3EgOo+WxcYhyjLAaabUiAoG9Y=;
+        b=bv8OfQkXO77sCikHsu0zjgLzrXbPO63CvDO7qWFsRyd/VYZKC3wSR0BlKh2MdQtlMy
+         ffGEobkXHS8RewvP/yX7AZI6dAXjDrXNZ3Uug7auOz7yGQjvQKvs4t+5Hh36+qKJm9aA
+         5Wyz540SNtO7xpi7L6Jvy1tqEi+Nx9Ryyk++EfVQXUrUBH7DLF+cZXza0D+BKNQJop/5
+         AHcnikcxSFaEvkKt0SwMPjqgf2//otI/7uubDRx9M4t3CjX+OZrrfCmokKaCqKXTZE96
+         2qYrV0Gej8JY8xC114FNjPalSWmcGx1MNxR3vagbduELh04s8GkVC9MR0tt8Cqtqr2WI
+         FIDg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=knEFZp/Br2lwUYLZXfbzI9ZSnZOaTBCXhLfkLB5psow=;
-        b=RBs9CfbrGhUWBLm1trk7HbRmE3o6l4W0DAbQJjHOuxoAQKOFUQMzswexDGTCKGpwQh
-         VD25W6CrcxgpoCjVD45DwElbBA/thSe3TqWKXZEqgbYOiOqsaYChAuHwKCq4w+aNUVmD
-         +bclv+lrrhuJuT1rW2mjN+QMYkgVgsxmaYE6y3X5F/FsaCxY6N+YLgG9bTaImGcbSt9W
-         cKyK1+kAwiUYVjjEm490xyjATKbE6Wt6w7cZbaK2NLn35Tr+o6Jae9t64q1prgE2ULfY
-         LZv6NCg/3sX34tS95uuRiIZHyKl2HBCNtFbmIfopLVfcLADxQ+Q/pYPDP9XTLa+fgr6A
-         Svnw==
-X-Gm-Message-State: AFqh2kqNabXOjTvPRL7DaID72vtJUvWeFRkEXpqz80kk5joqPUpBx2FV
-        MCiKdUyQ4aJcmZIW8qAyYOwwn2IGLypR+SM1n7tqwRlEuMuVTtEmSG8F+/NvzAWmFCICecDGexc
-        2zMicXtihMLjlOyx0t7MbArWGazU=
-X-Received: by 2002:a25:1341:0:b0:750:1a06:a065 with SMTP id 62-20020a251341000000b007501a06a065mr3477884ybt.27.1671572183797;
-        Tue, 20 Dec 2022 13:36:23 -0800 (PST)
-X-Google-Smtp-Source: AMrXdXsPohFHhtEKKvf6gK73YNmbJSdo8yOT0tgD3pKborKAYbk0JfGgQt+ZczDVgb1x59kgQv6r9Q==
-X-Received: by 2002:a25:1341:0:b0:750:1a06:a065 with SMTP id 62-20020a251341000000b007501a06a065mr3477861ybt.27.1671572183536;
-        Tue, 20 Dec 2022 13:36:23 -0800 (PST)
-Received: from fedora (modemcable149.19-202-24.mc.videotron.ca. [24.202.19.149])
-        by smtp.gmail.com with ESMTPSA id u25-20020a37ab19000000b006feea093006sm9457393qke.124.2022.12.20.13.36.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 20 Dec 2022 13:36:22 -0800 (PST)
-Date:   Tue, 20 Dec 2022 16:36:20 -0500
-From:   Adrien Thierry <athierry@redhat.com>
-To:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
-Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
-        Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Kevin Hilman <khilman@kernel.org>,
-        Ulf Hansson <ulf.hansson@linaro.org>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>,
-        Lorenzo Pieralisi <lpieralisi@kernel.org>,
-        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        Brian Masney <bmasney@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2 0/5] PM: Fixes for Realtime systems
-Message-ID: <Y6Iq1CyHScvZM++Y@fedora>
-References: <20221219151503.385816-1-krzysztof.kozlowski@linaro.org>
+        h=content-transfer-encoding:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=vje6yt/sqIiWl/oxBi3EgOo+WxcYhyjLAaabUiAoG9Y=;
+        b=B6S5A9T8tAODUDiQe0yGD5GidMuIDQfcfyxgvi7cCvTJ+XmAR9c5QGVJZY1oIvRLVG
+         wyLGZVsIUGKr896Xj33xMb1JG6v8he2EB5tE9eqrFzs4pyshLBm+4OVhwjY829DGQNM7
+         1HasZ2Rf0c8llbwWim+8VnEDEFAw4iaDf34+QXWPBzoCalv16h3WoOUXc+M6hE+skTtN
+         pOTquyCPjIV9X1UXkDA3DHgz4Pok6+GGlL5mJfV1sNgDyUXQd6Vb2cPmJSuovlUNjl6Z
+         fI3I7h0m/3gONCUvrV9b+XZHG/ZbJAxMzCtj1LWV7ek4jJWk5Iyh0GCYpQPLhkBr5/sp
+         KTrQ==
+X-Gm-Message-State: AFqh2koOROvq8IfJ4fn0pgfSJtmzPoo+edCL4PcmgovUJlCeu9bdiSOW
+        BscwWdWMhvKkhGtnL7ZRNIa35QFCE6GA+uERUUERl43b2Ik=
+X-Google-Smtp-Source: AMrXdXst3FFsR7Q2ucBqFa12vECfQAthKNPiaN64dTyjqktCn9menQaEabji5m2e4VcI2vE0zJKTqKd5ZHP+qrGKcqM=
+X-Received: by 2002:a17:90a:8d0d:b0:219:da8f:c6f0 with SMTP id
+ c13-20020a17090a8d0d00b00219da8fc6f0mr1028696pjo.1.1671805380372; Fri, 23 Dec
+ 2022 06:23:00 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20221219151503.385816-1-krzysztof.kozlowski@linaro.org>
+References: <CAA6Pxnhb2XwztmT8QpJkokC3A6k1mmMdUoYpr-WQw6rzhjAqJQ@mail.gmail.com>
+In-Reply-To: <CAA6Pxnhb2XwztmT8QpJkokC3A6k1mmMdUoYpr-WQw6rzhjAqJQ@mail.gmail.com>
+From:   =?UTF-8?B?VsOtY3RvciBMw7NwZXo=?= <lopez1987@gmail.com>
+Date:   Fri, 23 Dec 2022 15:22:34 +0100
+Message-ID: <CAA6PxngEQppmQZ0t3OMz00hnd37V6NBax+81R5xVccRkaRf01g@mail.gmail.com>
+Subject: Re: Non-rt sleep is extremely inaccurate
+To:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Krzysztof,
-Thanks for looking into this!
+I have pinpointed the source of the delays to this patch:
+softirq: Use a dedicated thread for timer wakeups.
+(https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/comm=
+it/?h=3Dlinux-6.1.y-rt-rebase&id=3D65f32c25b9c87966cbf2ecbbe478273f13e97ceb=
+).
 
-I tested your patchset on the QDrive3 on a CentOS Stream 9 RT kernel (I
-couldn't test it on mainline because the latest RT patchset only supports
-6.1 which is missing some bits needed to boot QDrive3).
+At least on the 6.1-rc7 kernel.
 
-It fixes the PSCI cpuidle issue I was encountering in [1]. However, I may
-have found another code path that triggers a similar issue:
+Additionally, I've found that although the wrong sleep behavior is
+present with both acpi-cpufreq and intel_paste CPU governors, with
+acpi-cpufreq the sleep errors are always under 50ms. But with
+intel_pstate the delays go over 1200ms.
 
-BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
-in_atomic(): 1, irqs_disabled(): 128, non_block: 0, pid: 113, name: kworker/4:2
-preempt_count: 1, expected: 0
-RCU nest depth: 0, expected: 0
-4 locks held by kworker/4:2/113:
- #0: ffff09b0c2376928 ((wq_completion)pm){+.+.}-{0:0}, at: process_one_work+0x1f4/0x7c0
- #1: ffff800008bf3dd0 ((work_completion)(&genpd->power_off_work)){+.+.}-{0:0}, at: process_one_work+0x1f4/0x7c0
- #2: ffff09b0c2e44860 (&genpd->rslock){....}-{2:2}, at: genpd_lock_rawspin+0x20/0x30
- #3: ffff09b0c6696a20 (&dev->power.lock){+.+.}-{2:2}, at: dev_pm_qos_flags+0x2c/0x60
-irq event stamp: 170
-hardirqs last  enabled at (169): [<ffffa1be822f8a78>] _raw_spin_unlock_irq+0x48/0xc4
-hardirqs last disabled at (170): [<ffffa1be822f8df4>] _raw_spin_lock_irqsave+0xb0/0xfc
-softirqs last  enabled at (0): [<ffffa1be814cfff0>] copy_process+0x68c/0x1500
-softirqs last disabled at (0): [<0000000000000000>] 0x0
-Preemption disabled at:
-[<ffffa1be81d7e620>] genpd_lock_rawspin+0x20/0x30
-CPU: 4 PID: 113 Comm: kworker/4:2 Tainted: G               X --------- ---  5.14.0-rt14+ #2
-Hardware name: Qualcomm SA8540 ADP (DT)
-Workqueue: pm genpd_power_off_work_fn
-Call trace:
- dump_backtrace+0xb4/0x12c
- show_stack+0x1c/0x70
- dump_stack_lvl+0x98/0xd0
- dump_stack+0x14/0x2c
- __might_resched+0x180/0x220
- rt_spin_lock+0x74/0x11c
- dev_pm_qos_flags+0x2c/0x60
- genpd_power_off.part.0.isra.0+0xac/0x2d0
- genpd_power_off_work_fn+0x68/0x8c
- process_one_work+0x2b8/0x7c0
- worker_thread+0x15c/0x44c
- kthread+0xf8/0x104
- ret_from_fork+0x10/0x20
+I am testing a kernel without that patch, and the patches built on top
+of that, but I would like to know why.
+This patch is not on the linux-rt-stable repo.
 
-This happens consistently during boot. But on the mainline kernel, this
-code path has changed: genpd_power_off no longer calls dev_pm_qos_flags.
-So it might not happen on mainline. I hope to be able to test your
-patchset again soon on mainline with the next version of the RT patchset
-(which should be able to boot the QDrive3).
 
-Best,
-Adrien
-
-[1] https://lore.kernel.org/all/20220615203605.1068453-1-athierry@redhat.com/
-
+On Thu, 1 Dec 2022 at 15:34, V=C3=ADctor L=C3=B3pez <lopez1987@gmail.com> w=
+rote:
+>
+> I reported this on https://bugzilla.kernel.org/show_bug.cgi?id=3D216702
+> two weeks ago, but I believe that the bug tracker has less activity
+> than this mailing list.
+>
+> Here's the bug report I pasted:
+> std::this_thread::sleep_for and other types of sleep in non-realtime
+> tasks are extremely inaccurate on some RT kernels.
+> A sleep of 10ms may sometimes take over 700ms to complete.
+> The PC is idle, and there are no RT tasks running.
+>
+> This has been tested on modern Intel CPUs (1165G7 and 1260p) as well
+> as Ryzen 4800HS.
+>
+> I have tested many combinations of CPU governors and performance
+> settings but the problem is not fixed by those.
+>
+> I initially tried  5.10, 5.16, 5.19, and 6.0, and all except 5.10
+> exhibited the same behavior.
+>
+> With a 5.10 kernel, I may run the sample code for 20 minutes and get
+> 3-4 messages about the sleep taking at most 25ms.
+>
+> With the other kernels, multiple times per minute I get sleeps of up to 7=
+00ms.
+>
+> Later I tried v6.1-rc5-rt3 which exhibits the same problem too 7-8
+> messages per minute.
+>
+> 5.16.2 with 5.16.2-rt18 works better, with 1-2 messages per minute.
+>
+> 5.15.49 with 5.15.49-rt47  works almost flawlessly.
+>
+> I have tried the same kernels without the RT patch on the same
+> computers, and the problem does not occur.
+>
+> I have built the kernels myself, and have also tried with the ones from:
+> https://packages.debian.org/search?arch=3Damd64&keywords=3Dlinux-image-rt
+>
+> I have tried using the config from 5.10 on the 6.0 kernel, but the
+> problem still appears on the 6.0 rt kernel.
+>
+> I would really like to use the RT patch on 6.1 or  6.2 when available
+> since the system we are using has an Intel Hybrid 12th gen CPU, the
+> support of which is being greatly improved lately.
+>
+> I am attaching an example to reproduce the issue:
