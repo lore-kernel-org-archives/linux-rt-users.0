@@ -2,119 +2,137 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DF96DC3DA7D
-	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Jan 2023 15:04:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E9F5C46467
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Jan 2023 15:15:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233580AbjACPEM (ORCPT
+        id S234930AbjADPPw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 3 Jan 2023 10:04:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39688 "EHLO
+        Wed, 4 Jan 2023 10:15:52 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55700 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233534AbjACPEG (ORCPT
+        with ESMTP id S233812AbjADPPn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 3 Jan 2023 10:04:06 -0500
-X-Greylist: delayed 600 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 03 Jan 2023 07:04:05 PST
-Received: from mail.sleepmap.de (sleepmap.de [85.10.206.218])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5836D11837;
-        Tue,  3 Jan 2023 07:04:05 -0800 (PST)
-Date:   Tue, 3 Jan 2023 15:46:44 +0100
-From:   David Runge <dave@sleepmap.de>
-To:     Clark Williams <williams@redhat.com>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Pavel Machek <pavel@denx.de>
-Subject: Re: [ANNOUNCE] 5.15.85-rt55
-Message-ID: <Y7Q/3udZgxscrsq5@hmbx>
-References: <167183636829.152847.13405480898195673998@puck.lan>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="rroYYypT0UA9ZuQj"
-Content-Disposition: inline
-In-Reply-To: <167183636829.152847.13405480898195673998@puck.lan>
+        Wed, 4 Jan 2023 10:15:43 -0500
+Received: from mail-pg1-x534.google.com (mail-pg1-x534.google.com [IPv6:2607:f8b0:4864:20::534])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 810D31AA1F
+        for <linux-rt-users@vger.kernel.org>; Wed,  4 Jan 2023 07:15:42 -0800 (PST)
+Received: by mail-pg1-x534.google.com with SMTP id 7so22440170pga.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 04 Jan 2023 07:15:42 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=NcHEJMiIJ2CTsxxcy2YLVjiMLnHtyJJbhyDHZkGM4Oc=;
+        b=F9bpsh37Sd0YglgZi0WpS89CpHqfv0diullW3FFmTO9bOi7hfscSE/OjGPxPEPQkEN
+         30dLoca9DbFdO0h28yq/V0+zKhhwP7if4KzONvm0C5e4ZGN7RR/mJV/dX+GglLwSPMpc
+         Gck5P/9AM6XxWAH5yODKBjx04KGJHJrt3cUGzkNpLz7TtkHshqQEQMmgpRlw05G6wUeV
+         5W4gvQ8VVwwjaGsE/rtTb24nlbbWIKIJVIXrbhMZpYUq/nPtkr3qwhzF10vZuWlV1+AP
+         2/8yaiwVmq1nGEh+/72E1SVue5OHi7WQ+fmXOrDqBI08/KLZ3ui1bKaArAvMh6A4NakM
+         rQ1w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=NcHEJMiIJ2CTsxxcy2YLVjiMLnHtyJJbhyDHZkGM4Oc=;
+        b=umRUPpaWZ78EkU77eBHAAKjj8dyHRzdvDDFU8rwD/7eGCx3WgDlx3c3I4zmSIm3rlB
+         oakZtdJtSbDX5G+zWMnsdiWnVKxokktzmSRJfX8foEmpSDXveOScAdtwcvCPjkTSuN4D
+         N/siyvGD9BRSUW1Drg7nQWOJnSmMeaVkOXQ2T1FghWtMyPYPqDvTdiCBEiHQm2sImgI4
+         6c/8WSuZCQLuAAXBJJTCOTTSaCq+IiDU10vgtU6m0383+9g/sYB0W3iny5xP1SOTxNy3
+         UcRYlwJEfriaqwdf1GYq+KNcuYqNmRQZvJO07Bh58ID/lIdXaF43ekxbidhaysvIQ6IZ
+         xKNA==
+X-Gm-Message-State: AFqh2kpXxDOC765rsV8GwQxLhBwIWbUFHpAA7WsH3UegEYrBBmEAftwP
+        iSkumP0IlW9SMiYiWQeM7KuLUeEvyGEd0sk6aQGXGA==
+X-Google-Smtp-Source: AMrXdXt93Kj3tA2/Y9cGuM6OLuxk7FuAuBumQ9h/vxk1VLQQewgTolksdOkOGf5EMaiCJCDrv92isJrfu7ZsSe9hYkE=
+X-Received: by 2002:a63:ba09:0:b0:479:2227:3aa1 with SMTP id
+ k9-20020a63ba09000000b0047922273aa1mr2127830pgf.595.1672845341858; Wed, 04
+ Jan 2023 07:15:41 -0800 (PST)
+MIME-Version: 1.0
+References: <20221219151503.385816-1-krzysztof.kozlowski@linaro.org> <Y6Iq1CyHScvZM++Y@fedora>
+In-Reply-To: <Y6Iq1CyHScvZM++Y@fedora>
+From:   Ulf Hansson <ulf.hansson@linaro.org>
+Date:   Wed, 4 Jan 2023 16:15:05 +0100
+Message-ID: <CAPDyKFpCK-z5TH02rFTUHwsFTz83xtiAq=Vp0iE+iztB-CcB5w@mail.gmail.com>
+Subject: Re: [PATCH v2 0/5] PM: Fixes for Realtime systems
+To:     Adrien Thierry <athierry@redhat.com>
+Cc:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Kevin Hilman <khilman@kernel.org>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Lorenzo Pieralisi <lpieralisi@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        Brian Masney <bmasney@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Tue, 20 Dec 2022 at 22:36, Adrien Thierry <athierry@redhat.com> wrote:
+>
+> Hi Krzysztof,
+> Thanks for looking into this!
+>
+> I tested your patchset on the QDrive3 on a CentOS Stream 9 RT kernel (I
+> couldn't test it on mainline because the latest RT patchset only supports
+> 6.1 which is missing some bits needed to boot QDrive3).
+>
+> It fixes the PSCI cpuidle issue I was encountering in [1]. However, I may
+> have found another code path that triggers a similar issue:
+>
+> BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
+> in_atomic(): 1, irqs_disabled(): 128, non_block: 0, pid: 113, name: kworker/4:2
+> preempt_count: 1, expected: 0
+> RCU nest depth: 0, expected: 0
+> 4 locks held by kworker/4:2/113:
+>  #0: ffff09b0c2376928 ((wq_completion)pm){+.+.}-{0:0}, at: process_one_work+0x1f4/0x7c0
+>  #1: ffff800008bf3dd0 ((work_completion)(&genpd->power_off_work)){+.+.}-{0:0}, at: process_one_work+0x1f4/0x7c0
+>  #2: ffff09b0c2e44860 (&genpd->rslock){....}-{2:2}, at: genpd_lock_rawspin+0x20/0x30
+>  #3: ffff09b0c6696a20 (&dev->power.lock){+.+.}-{2:2}, at: dev_pm_qos_flags+0x2c/0x60
+> irq event stamp: 170
+> hardirqs last  enabled at (169): [<ffffa1be822f8a78>] _raw_spin_unlock_irq+0x48/0xc4
+> hardirqs last disabled at (170): [<ffffa1be822f8df4>] _raw_spin_lock_irqsave+0xb0/0xfc
+> softirqs last  enabled at (0): [<ffffa1be814cfff0>] copy_process+0x68c/0x1500
+> softirqs last disabled at (0): [<0000000000000000>] 0x0
+> Preemption disabled at:
+> [<ffffa1be81d7e620>] genpd_lock_rawspin+0x20/0x30
+> CPU: 4 PID: 113 Comm: kworker/4:2 Tainted: G               X --------- ---  5.14.0-rt14+ #2
+> Hardware name: Qualcomm SA8540 ADP (DT)
+> Workqueue: pm genpd_power_off_work_fn
+> Call trace:
+>  dump_backtrace+0xb4/0x12c
+>  show_stack+0x1c/0x70
+>  dump_stack_lvl+0x98/0xd0
+>  dump_stack+0x14/0x2c
+>  __might_resched+0x180/0x220
+>  rt_spin_lock+0x74/0x11c
+>  dev_pm_qos_flags+0x2c/0x60
+>  genpd_power_off.part.0.isra.0+0xac/0x2d0
+>  genpd_power_off_work_fn+0x68/0x8c
+>  process_one_work+0x2b8/0x7c0
+>  worker_thread+0x15c/0x44c
+>  kthread+0xf8/0x104
+>  ret_from_fork+0x10/0x20
+>
+> This happens consistently during boot. But on the mainline kernel, this
+> code path has changed: genpd_power_off no longer calls dev_pm_qos_flags.
+> So it might not happen on mainline. I hope to be able to test your
+> patchset again soon on mainline with the next version of the RT patchset
+> (which should be able to boot the QDrive3).
 
---rroYYypT0UA9ZuQj
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 3 Jan 2023 15:46:44 +0100
-From: David Runge <dave@sleepmap.de>
-To: Clark Williams <williams@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Pavel Machek <pavel@denx.de>
-Subject: Re: [ANNOUNCE] 5.15.85-rt55
+You are right, since commit 3f9ee7da724a ("PM: domains: Don't check
+PM_QOS_FLAG_NO_POWER_OFF in genpd") dev_pm_qos_flags() doesn't get
+called in genpd_power_off() anymore. That patch was introduced in
+v5.19.
+>
+> Best,
+> Adrien
+>
+> [1] https://lore.kernel.org/all/20220615203605.1068453-1-athierry@redhat.com/
+>
 
-On 2022-12-23 22:59:28 (-0000), Clark Williams wrote:
-> Hello RT-list!
->=20
-> I'm pleased to announce the 5.15.85-rt55 stable release.
->=20
-> You can get this release via the git tree at:
->=20
->   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
->=20
->   branch: v5.15-rt
->   Head SHA1: 167affb50e57a4e26fea150d28a49ff02ed0947b
->=20
-> Or to build 5.15.85-rt55 directly, the following patches should be applie=
-d:
->=20
->   https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
->=20
->   https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.85.xz
->=20
->   https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.85-=
-rt55.patch.xz
->=20
->=20
-> Enjoy!
-> Clark
-
-Hi Clark,
-
-thanks for the release!
-
-Could I get a short comment on my previous mail [1] in regards to the
-git repository?
-The repository now tracks multiple newer kernel versions (sort of) and
-there has been no reply to my questions yet (wildcard ignoring all v6,
-v5.19, v5.18, v5.17, v5.16 tags in that repository is not a solution
-that scales when it comes to downstream version tracking). Thanks!
-
-Best,
-David
-
-[1] https://www.spinics.net/lists/linux-rt-users/msg26405.html
-
---=20
-https://sleepmap.de
-
---rroYYypT0UA9ZuQj
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYKAB0WIQQXk9rV2AOo/9dFFpe7mS+YZPrRaAUCY7Q/1AAKCRC7mS+YZPrR
-aL4YAP9666QLhndyK7/Qj60udKH9OmCYdiaV5scxmNoGHnbrrAEAjKYYsGfr9ATj
-gptentMeDB26HqyPkrg98flDF5lcdQM=
-=tT/C
------END PGP SIGNATURE-----
-
---rroYYypT0UA9ZuQj--
+Kind regards
+Uffe
