@@ -2,71 +2,92 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 982DEC46467
-	for <linux-rt-users@archiver.kernel.org>; Wed, 11 Jan 2023 09:47:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F03DC61DB3
+	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Jan 2023 10:03:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238493AbjAKJrr (ORCPT
+        id S235845AbjALKDI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 11 Jan 2023 04:47:47 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46658 "EHLO
+        Thu, 12 Jan 2023 05:03:08 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39530 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232741AbjAKJr2 (ORCPT
+        with ESMTP id S236568AbjALKBG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 11 Jan 2023 04:47:28 -0500
-Received: from mout.kundenserver.de (mout.kundenserver.de [212.227.126.131])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AE138D98;
-        Wed, 11 Jan 2023 01:45:34 -0800 (PST)
-Received: from [192.168.6.149] ([212.159.46.162]) by mrelayeu.kundenserver.de
- (mreue012 [213.165.67.99]) with ESMTPSA (Nemesis) id
- 1Mrfgi-1oRxIt3Uou-00nlPx; Wed, 11 Jan 2023 10:44:51 +0100
-Message-ID: <208196df-d0b2-5cf6-29b3-4570a0946e77@veremit.xyz>
-Date:   Wed, 11 Jan 2023 09:44:45 +0000
+        Thu, 12 Jan 2023 05:01:06 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 57145CD6
+        for <linux-rt-users@vger.kernel.org>; Thu, 12 Jan 2023 02:00:53 -0800 (PST)
+Date:   Thu, 12 Jan 2023 11:00:43 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1673517651;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=SIo5RR9Xb6qN9+3Y21sXIWWdQ+Gin+ug73sGChYsu4A=;
+        b=lbGOGug7eTpOuDADxyxcfT83zgoKtirnthsDdBogiUcXERpPDOiioP/Gu5Qf5GADO3d95e
+        S+8j+MC3/5lEYgLJlHfybo5xQFJGJLULTJulZF0HbbAeDCXwc6yf5gY0kSoRLXGQ5SwVOZ
+        lDb0wIjP32etADIe65f0OWBG93seBMUkFxIU3fnEicnbCzLhXmHDvy5Tf1HceI13s2XG2q
+        9nmLgdrKXwBm/h4SNdgRDEQSoSWscVMwMby2RtX40BHajmOam+hhDtNTxfbG80a9Fw62Uz
+        qOvnCjB70BVRrg0gYiZtF2d9u9uOzHvlFGJsXOU8R9fQOM2dyRZpoEYGQQTvMw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1673517651;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=SIo5RR9Xb6qN9+3Y21sXIWWdQ+Gin+ug73sGChYsu4A=;
+        b=KKBVK7d0szqEEmxsZYzXXh48IszKzy368BKFBvIIORxDV6mj7YhB3jxgoI11FCzUyY/hf+
+        I6oLfrcLS1oL7kCQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: [PATCH] rt-numa: Use a reasonable default max CPU value.
+Message-ID: <Y7/aS/dW0H0CK8Oe@linutronix.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.4.2
-Subject: Re: linux-6.1-rt ?
-Content-Language: en-GB
-To:     Christian Eggers <ceggers@arri.de>, linux-rt-users@vger.kernel.org
-Cc:     linux-kernel@vger.kernel.org
-References: <12136223.O9o76ZdvQC@n95hx1g2>
-From:   Michael Everitt <gentoo@veremit.xyz>
-In-Reply-To: <12136223.O9o76ZdvQC@n95hx1g2>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-Provags-ID: V03:K1:GH4nCekC7J8gmdNRQj5CfXCLMrmjp1El7VNYXUlxouSG/WeCjXm
- eWU2/W6P5KabxLKIatlTGVkDucSjauFF1TyJ+2AMMUo3YueDWVBZfNHErCrqn8n6SNRgaUj
- DA1U5f51KADEmYplxrCVYQmYNbG26PTEYeyucN6RVzFmrRClD/Y2Z/MYh5IP2+GrF2G/+TX
- WMxIhfBRU3iwcz53xhhUg==
-UI-OutboundReport: notjunk:1;M01:P0:cyKacGI8rXM=;EEyL3U6Pp4nNsi+4mfi38bkps/l
- WWq0VH5nbm/PLg1qI/nXwBVCuKqccWfuoyphCzrZqO3Ym1o7hrBvNjgqs2Kpeh6vU1env2asm
- YJEfMGGqC2NFriJDQR2/ZBJqQ3asbaiVAQZOdF6ObRbGk5sTQqsGQZgX2SBflcroyo667hSN+
- 90ObzHKxE+OM0WIBTEzeMxj35+XUncViMH+xJsnR+kRX6nKJIT+b52JqDBrfk73AqgQ+UuGGx
- YS1c/VgHIlNSaZ/6O3RSMQWnaH/xH4dD6/ObDC3ZZ0dOTNjZJK5ixvUQXmTRFiLZvY06bhjrE
- spIm3TA0CliHM92L6fCA3ytNYUk07j6RiTNVrbt8ARLsqboiDdWKobZCe7hXfDyy8LmoMc3Dl
- ON9vTfoBycm63XHq7PMwPSDXqqecd2zVvZ1ff4wCKZUYhDKrPosayIh0jWFddyOHsBCEDy6+h
- pyYXIOZqJMZta4EXqzKntMqG4FOB586FR1/aVpZz6Uz/0gpGT23eM6ndBN+71kyVKykJrFY0b
- DeHDAkqqdKoUiMUW4UJn2y1FHylcGKdA4VVgd/ig7wj8Es7YTLp4FbyGewFNUYUMJGlkrtesJ
- uT8lQDIkZR7mbP6Ujfz96GYTsrKGz3OyomZ5IG9IXPcJTdDHr+SXEhiFOuEu/oeKIqa/0Zb83
- GLfBtj2R2E/HH2n6HHkgvLBxTwtC16nF6VlE7gZXSA==
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 11/01/2023 08:36, Christian Eggers wrote:
-> linux-6.1 seems to be the next LTS kernel [1]
-> 
-> Are there any plans to release a -rt version of linux-6.1?
-> 
-> regards
-> Christian
-> 
-> [1] https://lore.kernel.org/lkml/Yz%2FZWBeNZvKenEVM@kroah.com/
-> 
-> 
+numa_num_task_cpus() returns here > 100 CPUs while the system has only
+32 populated. The BIOS assumes that I can probably use larger CPUs (with
+more cores) on the socket so the number of "configured CPUs" is rather
+high.
+For default configuration, only with the -S option, it makes sense to
+use the current affinity instead looking at the number of possible CPUs
+which could be brought online. It still depends on the affinity of the
+created threads if the additional CPUs can be used. In a container setup
+this may not be the case.
 
-You probably want this: https://www.spinics.net/lists/linux-rt-users/msg26345.html
+Use sched_getaffinity() to figure out the number of possible CPUs.
 
-You may wish to wait for the maintainer to complete their processes!
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ src/lib/rt-numa.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-Regards,
-veremitz/Michael.
+diff --git a/src/lib/rt-numa.c b/src/lib/rt-numa.c
+index 3eead80c3b2b3..1b09cff8d9485 100644
+--- a/src/lib/rt-numa.c
++++ b/src/lib/rt-numa.c
+@@ -35,10 +35,19 @@ int numa_initialize(void)
+ 
+ int get_available_cpus(struct bitmask *cpumask)
+ {
++	cpu_set_t cpuset;
++	int ret;
++
+ 	if (cpumask)
+ 		return numa_bitmask_weight(cpumask);
+ 
+-	return numa_num_task_cpus();
++	CPU_ZERO(&cpuset);
++
++	ret = sched_getaffinity(0, sizeof(cpu_set_t), &cpuset);
++	if (ret < 0)
++		fatal("sched_getaffinity failed: %m\n");
++
++	return CPU_COUNT(&cpuset);
+ }
+ 
+ int cpu_for_thread_sp(int thread_num, int max_cpus, struct bitmask *cpumask)
+-- 
+2.39.0
