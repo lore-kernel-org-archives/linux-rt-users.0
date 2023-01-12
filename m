@@ -2,196 +2,79 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D67EC61DB3
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Jan 2023 11:47:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8DCF5C61DB3
+	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Jan 2023 17:02:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232187AbjALLrB (ORCPT
+        id S240354AbjALRCY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Jan 2023 06:47:01 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57542 "EHLO
+        Thu, 12 Jan 2023 12:02:24 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59034 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232039AbjALLq1 (ORCPT
+        with ESMTP id S240908AbjALRBt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Jan 2023 06:46:27 -0500
-Received: from mail-ej1-x62d.google.com (mail-ej1-x62d.google.com [IPv6:2a00:1450:4864:20::62d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AE6505C933
-        for <linux-rt-users@vger.kernel.org>; Thu, 12 Jan 2023 03:37:30 -0800 (PST)
-Received: by mail-ej1-x62d.google.com with SMTP id vm8so44038361ejc.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 12 Jan 2023 03:37:30 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=hXQ/SgOW9ZIz5YPVls2OSgh2a8mqb0cRkYRLLkLbVHI=;
-        b=uX4CGHSmu8BJWn04RKsyh8DbfwXi9VpEohOvGmvvEE2DZjYm7gO3ehgZujRagi2N8T
-         Fg+s2iMX/JLFPBnFtxDCUZQZlsrOc6+OvM8Y2vD60B4FfXZQTWcPKHNJEbUAb5d/oEDr
-         2XgyxpDm5qb6z441NicpOHTr8KNOLBO5zwfCfANgmQN60KEknw4qzzN6SsfY15Mqwrw9
-         6IyZJNSH4R2RSwjka4pIg/3sTBaoDcZ6M00tG44WtAO+nWSWunMKlgC5jxq10D+XuXxv
-         3U5Cm3IH140QagEVhbtEIbnaYS/0ywNZ/ShGG47XQ5NnF+Dx31aMIpLREa9qr0UkwYj+
-         3ldw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=hXQ/SgOW9ZIz5YPVls2OSgh2a8mqb0cRkYRLLkLbVHI=;
-        b=ocsji5MHWefBSxyjQorm/2lUh7Wxr2/bE3tKjYogEZrZK9o+Qmj6eyWwyLw6gK3yoL
-         XFETkoeyh2AeGhdKT4Fvstsy1ocdytDehsq9Vib8bcKO/vpE2pn2Q0YeUNUBl8o/20e4
-         4d+hoWfkVLQ9GCRf3LcH9+TiSDvZdpo6anz6yZYt/aFjeoXMP1EJ1OL/M02jAMzToHo0
-         Su1PLprdClQoi9N7v/C+rhxo0aoW/m0wShrtRRffYp6MzcieuKGO0wXNYsQGCXYr5uYZ
-         DovugKil1Z/NoY+Rff+CF1Hk/4qD5f389lDybCAMsVdYzbF2AIpRXcu938ocdQLZl8Jb
-         H4rw==
-X-Gm-Message-State: AFqh2kqP12TOnm7QQSdUy/uPooaAwqjGFVcaxm99Dt9BlEotiJL/r+lN
-        XLktUNfQAMQD++wx5H8VtzsaEw==
-X-Google-Smtp-Source: AMrXdXtISiqCWRExHvPBfANuhyJGYIWCtdeYm0iF4V7TNOJs9R8iNDdaYn430QChTu9b2s5637tU/Q==
-X-Received: by 2002:a17:907:c28f:b0:83f:5f77:8ff9 with SMTP id tk15-20020a170907c28f00b0083f5f778ff9mr65293259ejc.12.1673523449252;
-        Thu, 12 Jan 2023 03:37:29 -0800 (PST)
-Received: from [192.168.1.109] ([178.197.216.144])
-        by smtp.gmail.com with ESMTPSA id ku12-20020a170907788c00b0084d4564c65fsm5158059ejc.42.2023.01.12.03.37.27
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 12 Jan 2023 03:37:28 -0800 (PST)
-Message-ID: <4562c5c8-e2bd-4ade-55df-dab07540ce19@linaro.org>
-Date:   Thu, 12 Jan 2023 12:37:26 +0100
+        Thu, 12 Jan 2023 12:01:49 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B57FE65AA;
+        Thu, 12 Jan 2023 08:43:48 -0800 (PST)
+Date:   Thu, 12 Jan 2023 17:42:39 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1673541761;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=QCzsbhTLzC2qtVf51+C0cYLAWf2NacHEGnNMmW1UjiM=;
+        b=Rlk9NyaS5mHcFxktwrMoWoKV8TYV9zSu9qCjJD2qmYicBinFPikHpzWimU0WTOIsloL7KH
+        fuwV5B1Gpv0nAgzYt+9bz7ivbjhUC670q6fwJ9vK/wEnC2X9mP1NwsNsig3Hk6TdYCfJHB
+        zTjropHxTfINdXMa31HrYofg/qcocKPaYjYsTmsAYEZjgwVYcz9MsiX8ogMPbEzfPPzXEr
+        dPaYcF0FOIKj6Ctc2D+wlHiimr7njzAi4DJOiTaZQkP8cjGJ/7+VeJELkCktaf4rduqgyp
+        PROzhPU1o621k99r3qAVJalQ4pujf6yoZlOde2RqRrEngSLxmihCWLL5Buqmiw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1673541761;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=QCzsbhTLzC2qtVf51+C0cYLAWf2NacHEGnNMmW1UjiM=;
+        b=uZd5+5NupRvsCC1TKIZw8UCJvNlBswwAlAsxp/i83Pvy1pX+DzTfmJu+azk1puDXNbkrDf
+        dG/RL2Gxws6w80DQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.2-rc3-rt1
+Message-ID: <Y8A4f9m/ddIUwfZE@linutronix.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.6.1
-Subject: Re: [PATCH v2 5/5] PM: domains: Do not call
- device_pm_check_callbacks() when holding genpd_lock()
-Content-Language: en-US
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
-        Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Kevin Hilman <khilman@kernel.org>,
-        Ulf Hansson <ulf.hansson@linaro.org>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>,
-        Lorenzo Pieralisi <lpieralisi@kernel.org>,
-        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        Adrien Thierry <athierry@redhat.com>,
-        Brian Masney <bmasney@redhat.com>,
-        linux-rt-users@vger.kernel.org
-References: <20221219151503.385816-1-krzysztof.kozlowski@linaro.org>
- <20221219151503.385816-6-krzysztof.kozlowski@linaro.org>
- <Y7/vdnD8qELX4A5m@linutronix.de>
-From:   Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
-In-Reply-To: <Y7/vdnD8qELX4A5m@linutronix.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 12/01/2023 12:31, Sebastian Andrzej Siewior wrote:
-> On 2022-12-19 16:15:03 [+0100], Krzysztof Kozlowski wrote:
->> If PM domain on PREEMPT_RT is marked as GENPD_FLAG_RT_SAFE(), the
->> genpd_lock() will be a raw spin lock, thus device_pm_check_callbacks()
-> 
-> a raw_spinlock_t
-> 
->> must be called outside of the domain lock.
-> 
-> Right. First the sleeping lock, followed by the spinning locks. This is
-> covered in
-> 	Documentation/locking/locktypes.rst
-> 
-> at the end. 
+Dear RT folks!
 
-I don't understand your comment. Do you expect me to change something?
+I'm pleased to announce the v6.2-rc3-rt1 patch set. 
 
-> 
->> This solves on PREEMPT_RT:
-> Yes but
->>   [ BUG: Invalid wait context ]
-> 
-> This "Invalid wait context" should also trigger on !PREEMPT_RT with
-> CONFIG_PROVE_RAW_LOCK_NESTING.
+Changes since v6.1-rc7-rt5:
 
-Could be, I just did not hit it.
+  - Update to v6.2-rc3
 
-> 
->>   6.1.0-rt5-00325-g8a5f56bcfcca #8 Tainted: G        W
->>   -----------------------------
->>   swapper/0/1 is trying to lock:
->>   ffff76e045dec9a0 (&dev->power.lock){+.+.}-{3:3}, at: device_pm_check_callbacks+0x20/0xf0
->>   other info that might help us debug this:
->>   context-{5:5}
->>   3 locks held by swapper/0/1:
->>    #0: ffff76e045deb8e8 (&dev->mutex){....}-{4:4}, at: __device_attach+0x38/0x1c0
->>    #1: ffffa92b81f825e0 (gpd_list_lock){+.+.}-{4:4}, at: __genpd_dev_pm_attach+0x7c/0x250
->>    #2: ffff76e04105c7a0 (&genpd->rslock){....}-{2:2}, at: genpd_lock_rawspin+0x1c/0x30
->>   stack backtrace:
->>   CPU: 5 PID: 1 Comm: swapper/0 Tainted: G        W          6.1.0-rt5-00325-g8a5f56bcfcca #8
->>   Hardware name: Qualcomm Technologies, Inc. Robotics RB5 (DT)
->>   Call trace:
->>    dump_backtrace.part.0+0xe0/0xf0
->>    show_stack+0x18/0x40
->>    dump_stack_lvl+0x8c/0xb8
->>    dump_stack+0x18/0x34
->>    __lock_acquire+0x938/0x2100
->>    lock_acquire.part.0+0x104/0x28c
->>    lock_acquire+0x68/0x84
->>    rt_spin_lock+0x40/0x100
->>    device_pm_check_callbacks+0x20/0xf0
->>    dev_pm_domain_set+0x54/0x64
->>    genpd_add_device+0x258/0x340
->>    __genpd_dev_pm_attach+0xa8/0x250
->>    genpd_dev_pm_attach_by_id+0xc4/0x190
->>    genpd_dev_pm_attach_by_name+0x3c/0x60
->>    dev_pm_domain_attach_by_name+0x20/0x30
->>    dt_idle_attach_cpu+0x24/0x90
->>    psci_cpuidle_probe+0x300/0x4b0
->>    platform_probe+0x68/0xe0
->>    really_probe+0xbc/0x2dc
->>    __driver_probe_device+0x78/0xe0
->>    driver_probe_device+0x3c/0x160
->>    __device_attach_driver+0xb8/0x140
->>    bus_for_each_drv+0x78/0xd0
->>    __device_attach+0xa8/0x1c0
->>    device_initial_probe+0x14/0x20
->>    bus_probe_device+0x9c/0xa4
->>    device_add+0x3b4/0x8dc
->>    platform_device_add+0x114/0x234
->>    platform_device_register_full+0x108/0x1a4
->>    psci_idle_init+0x6c/0xb0
->>    do_one_initcall+0x74/0x450
->>    kernel_init_freeable+0x2e0/0x350
->>    kernel_init+0x24/0x130
->>    ret_from_fork+0x10/0x20
-> 
-> I would prefer a description of the issue instead hacing this
-> backtrace.
+Known issues
+     - Valentin Schneider reported a few splats on ARM64 in arm_pmu, see
+          https://lore.kernel.org/all/20210810134127.1394269-1-valentin.schneider@arm.com/T/#mf05c04376f59a543da6cceeb72e162af2de2b648
+       It is worked on
+          https://lore.kernel.org/all/20220930111844.1522365-1-mark.rutland@arm.com/
 
-I'll extend the commit msg.
+     - It has been reported that the ktimers thread may not be woken up
+       and instead the timer is handled in softirq context.
 
-> 
->> Cc: Adrien Thierry <athierry@redhat.com>
->> Cc: Brian Masney <bmasney@redhat.com>
->> Cc: linux-rt-users@vger.kernel.org
->> Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
->> ---
->>  drivers/base/power/domain.c | 6 +++++-
->>  1 file changed, 5 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/base/power/domain.c b/drivers/base/power/domain.c
->> index 4dfce1d476f4..db499ba40497 100644
->> --- a/drivers/base/power/domain.c
->> +++ b/drivers/base/power/domain.c
->> @@ -1666,10 +1666,14 @@ static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
->>  	if (ret)
->>  		goto out;
->>  
->> +
->> +	/* PREEMPT_RT: Must be outside of genpd_lock */
-> 
-> Could this comment be rewritten if needed?
-> The callback, which acquires sleeping locks on PREEMPT_RT, can be moved
-> before genpd_lock() because it does not rely on this lock. It must be
-> moved because the latter may acquire spinning locks.
+You can get this release via the git tree at:
 
-Sure
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.2-rc3-rt1
 
-Best regards,
-Krzysztof
+The RT patch against v6.2-rc3 can be found here:
 
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patch-6.2-rc3-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patches-6.2-rc3-rt1.tar.xz
+
+Sebastian
