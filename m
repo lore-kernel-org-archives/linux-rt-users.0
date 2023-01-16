@@ -2,79 +2,96 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8DCF5C61DB3
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Jan 2023 17:02:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02D53C54EBE
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Jan 2023 13:37:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240354AbjALRCY (ORCPT
+        id S231252AbjAPNg7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Jan 2023 12:02:24 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59034 "EHLO
+        Mon, 16 Jan 2023 08:36:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52294 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240908AbjALRBt (ORCPT
+        with ESMTP id S231243AbjAPNgn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Jan 2023 12:01:49 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B57FE65AA;
-        Thu, 12 Jan 2023 08:43:48 -0800 (PST)
-Date:   Thu, 12 Jan 2023 17:42:39 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1673541761;
+        Mon, 16 Jan 2023 08:36:43 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CBDC572AC
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Jan 2023 05:35:55 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1673876155;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=QCzsbhTLzC2qtVf51+C0cYLAWf2NacHEGnNMmW1UjiM=;
-        b=Rlk9NyaS5mHcFxktwrMoWoKV8TYV9zSu9qCjJD2qmYicBinFPikHpzWimU0WTOIsloL7KH
-        fuwV5B1Gpv0nAgzYt+9bz7ivbjhUC670q6fwJ9vK/wEnC2X9mP1NwsNsig3Hk6TdYCfJHB
-        zTjropHxTfINdXMa31HrYofg/qcocKPaYjYsTmsAYEZjgwVYcz9MsiX8ogMPbEzfPPzXEr
-        dPaYcF0FOIKj6Ctc2D+wlHiimr7njzAi4DJOiTaZQkP8cjGJ/7+VeJELkCktaf4rduqgyp
-        PROzhPU1o621k99r3qAVJalQ4pujf6yoZlOde2RqRrEngSLxmihCWLL5Buqmiw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1673541761;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=QCzsbhTLzC2qtVf51+C0cYLAWf2NacHEGnNMmW1UjiM=;
-        b=uZd5+5NupRvsCC1TKIZw8UCJvNlBswwAlAsxp/i83Pvy1pX+DzTfmJu+azk1puDXNbkrDf
-        dG/RL2Gxws6w80DQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.2-rc3-rt1
-Message-ID: <Y8A4f9m/ddIUwfZE@linutronix.de>
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=9Ys57xffdNMMFn26UewX3tN0RcyW+Hjhp62oLJJcKEA=;
+        b=gAtLG2UXoxwaoyTHxEEGVH8lhQBUpS0bbrElsqmv0k2ey7XYML7sovwuaYjcpDrIWtzGRe
+        kU3LWcUvWwYjGGrXkdK2d1hA9R8rTjCbRqGrBkKdSv15OklYEswzDxNyS5sjLtItS4r4dn
+        1CKwyr1GWPtYfg9cJ81IzfA8vY7cwnE=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-578-beejkRYJPCeK1y-9P9plCQ-1; Mon, 16 Jan 2023 08:35:49 -0500
+X-MC-Unique: beejkRYJPCeK1y-9P9plCQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BEA4F857F47;
+        Mon, 16 Jan 2023 13:35:48 +0000 (UTC)
+Received: from localhost (unknown [10.22.32.170])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 0BE26492B10;
+        Mon, 16 Jan 2023 13:35:47 +0000 (UTC)
+Date:   Mon, 16 Jan 2023 10:35:46 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Salvatore Bonaccorso <carnil@debian.org>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.162-rt78
+Message-ID: <Y8VSslRJZpFbo1/u@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+Hello RT-list!
 
-I'm pleased to announce the v6.2-rc3-rt1 patch set. 
-
-Changes since v6.1-rc7-rt5:
-
-  - Update to v6.2-rc3
-
-Known issues
-     - Valentin Schneider reported a few splats on ARM64 in arm_pmu, see
-          https://lore.kernel.org/all/20210810134127.1394269-1-valentin.schneider@arm.com/T/#mf05c04376f59a543da6cceeb72e162af2de2b648
-       It is worked on
-          https://lore.kernel.org/all/20220930111844.1522365-1-mark.rutland@arm.com/
-
-     - It has been reported that the ktimers thread may not be woken up
-       and instead the timer is handled in softirq context.
+I'm pleased to announce the 5.10.162-rt78 stable release.
 
 You can get this release via the git tree at:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.2-rc3-rt1
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The RT patch against v6.2-rc3 can be found here:
+  branch: v5.10-rt
+  Head SHA1: 143ef105f40a65f3ddd57121d4b4bc36eb10cc06
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patch-6.2-rc3-rt1.patch.xz
+Or to build 5.10.162-rt78 directly, the following patches should be applied:
 
-The split quilt queue is available at:
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patches-6.2-rc3-rt1.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.162.xz
 
-Sebastian
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.162-rt78.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
