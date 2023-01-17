@@ -2,477 +2,129 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B4FEC6379F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 16:50:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C17D4C00A5A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 23:46:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232013AbjAQQu3 (ORCPT
+        id S229603AbjAQXp7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Jan 2023 11:50:29 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57178 "EHLO
+        Tue, 17 Jan 2023 18:45:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38132 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230441AbjAQQu1 (ORCPT
+        with ESMTP id S229472AbjAQXpe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Jan 2023 11:50:27 -0500
-Received: from outbound-smtp14.blacknight.com (outbound-smtp14.blacknight.com [46.22.139.231])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 797284C0D
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 08:50:24 -0800 (PST)
-Received: from mail.blacknight.com (pemlinmail05.blacknight.ie [81.17.254.26])
-        by outbound-smtp14.blacknight.com (Postfix) with ESMTPS id 008E81C362B
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 16:50:22 +0000 (GMT)
-Received: (qmail 16444 invoked from network); 17 Jan 2023 16:50:22 -0000
-Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
-  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 17 Jan 2023 16:50:22 -0000
-Date:   Tue, 17 Jan 2023 16:50:21 +0000
-From:   Mel Gorman <mgorman@techsingularity.net>
+        Tue, 17 Jan 2023 18:45:34 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4F1766A49
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 14:50:49 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1673995848;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=3ObKU7O3BSEw35QpsA7CzEwshqqhOyObYoYelY5e2Jk=;
+        b=SHBrj3e0m6T303zsdLtRF5Koc/th83UnaT4wThzqBgim8uNjoo7S5JczveoyYZlVSQYe7H
+        Nz1zr3g7s8iY5+3LLgerTb3ayZnPqLJ5LEDPfLDjpLLmGH8I8YMr9EWBFAoFVjy4ABtFNP
+        Jh90+7YbySHsWp7iARKzjEeonmRU1Xc=
+Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
+ [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-517-_XZVSelhOQyWjliScRiuSg-1; Tue, 17 Jan 2023 17:50:41 -0500
+X-MC-Unique: _XZVSelhOQyWjliScRiuSg-1
+Received: by mail-qt1-f197.google.com with SMTP id k8-20020ac84788000000b003b631e8cc4dso2417680qtq.16
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 14:50:41 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=3ObKU7O3BSEw35QpsA7CzEwshqqhOyObYoYelY5e2Jk=;
+        b=M3/bCpwyOAVw3wZ1uM48lQsxBGQkxwavQ8tjeUST7SXKuvAXWrQIT39lGReJq9MANH
+         Yz/sQ0VGjDh1t2hnl4rJkD212jU8h4YDC7j0GyDB3fjAlkL1HJUBPS2ii3d2fXG12Acb
+         IL3HHIhQLf+QsRa1zuzoNLrj21NCwdQ23aBjxeTsA0M6/yjsLkHw6sIpt+r4hVDZO/uU
+         pmaVHUdATTgb1uvZVgxDFI8FCRua1yyN7l3PqYfDON6NNjdpj40NCncA5KeuWX+tg+v7
+         IQbxfcHlmpbqSf4hpTPv2zUV9c+c9rUgNilN4p9Hs45CpSIwfheSk2hqX4JZkqQNmPb/
+         meJg==
+X-Gm-Message-State: AFqh2kqTSuxHqAlAzkI5IUMv+HC8P58ixUz6wJ5g0lryuvALV9o1sm8H
+        qu1v8xojWI2AvOk/xF+Ep7G9+FeyZgsnIXNJgsAGzbYmVutHxJ7LlAOuW4/uxj0y9tubUElEwZa
+        Qy6NxmkXaeKesfqWO9WbdjwJXTDI=
+X-Received: by 2002:a05:622a:2591:b0:3b6:32ed:54e6 with SMTP id cj17-20020a05622a259100b003b632ed54e6mr5763129qtb.6.1673995841089;
+        Tue, 17 Jan 2023 14:50:41 -0800 (PST)
+X-Google-Smtp-Source: AMrXdXt4/FfYZ/OBDBS/9cYWAnoQwg76FpoW+SjiOJL5/IivnHWqHsXzXXF3UPh0RnbjaXKn4YRVYA==
+X-Received: by 2002:a05:622a:2591:b0:3b6:32ed:54e6 with SMTP id cj17-20020a05622a259100b003b632ed54e6mr5763115qtb.6.1673995840876;
+        Tue, 17 Jan 2023 14:50:40 -0800 (PST)
+Received: from fionn (bras-base-rdwyon0600w-grc-14-76-71-123-7.dsl.bell.ca. [76.71.123.7])
+        by smtp.gmail.com with ESMTPSA id i8-20020ac860c8000000b003b644e8e3a3sm842790qtm.23.2023.01.17.14.50.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 17 Jan 2023 14:50:40 -0800 (PST)
+Date:   Tue, 17 Jan 2023 17:50:06 -0500 (EST)
+From:   John Kacur <jkacur@redhat.com>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Linux-RT <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
-Message-ID: <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
-References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
- <Y8avJm1FQI9vB9cv@linutronix.de>
+cc:     "Ahmed S. Darwish" <darwi@linutronix.de>,
+        Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] rt-numa: Use a reasonable default max CPU value.
+In-Reply-To: <Y8Zh3h17Fu1uChsa@linutronix.de>
+Message-ID: <b48eb073-d752-c1f0-2b51-d6ecc369c3c1@redhat.com>
+References: <Y7/aS/dW0H0CK8Oe@linutronix.de> <5515f090-51cf-37fd-68a-66283fb0c639@redhat.com> <Y8WaaXViNE5dEuyc@lx-t490> <25a775d-77e-e76e-a626-1e6c605e1df3@redhat.com> <Y8Zh3h17Fu1uChsa@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <Y8avJm1FQI9vB9cv@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jan 17, 2023 at 03:22:30PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2023-01-17 08:38:17 [+0000], Mel Gorman wrote:
-> > rw_semaphore and rwlock are explicitly unfair to writers in the presense
-> > of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
-> > ("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
+
+
+On Tue, 17 Jan 2023, Sebastian Andrzej Siewior wrote:
+
+> On 2023-01-16 13:58:42 [-0500], John Kacur wrote:
 > > 
-> >         The implementation is writer unfair, as it is not feasible to do
-> >         priority inheritance on multiple readers, but experience has shown
-> >         that real-time workloads are not the typical workloads which are
-> >         sensitive to writer starvation.
-> > 
-> > While atypical, it's also trivial to block writers with PREEMPT_RT
-> > indefinitely without ever making forward progress. Since LTP-20220121,
-> > the dio_truncate test case went from having 1 reader to having 16 readers
-> > and the number of readers is sufficient to prevent the down_write ever
-> > succeeding while readers exist. Eventually the test is killed after 30
-> > minutes as a failure.
-> > 
-> > dio_truncate is not a realtime application but indefinite writer starvation
+> > Okay, not sure how that adds to the conversation. I'm all for "sane" 
+> > defaults for --smp too, but we care about other kinds of invocations too. 
+> > As soon as I get a patch that doesn't break other things as well, I'll 
+> > apply it.
 > 
-> If so then the PI boosting would not work if we would have it ;)
-> 
+> BROKEN IT IS.
 
-True, but it's still undesirable for a basic functional test using normal
-tasks with no prioritisation to stall forever.
+Well something is broken isn't it? But could it be your BIOS then?
+This does work for most people on most machines.
 
-> > is undesirable. The test case has one writer appending and truncating files
-> > A and B while multiple readers read file A. The readers and writer are
-> > contending for one file's inode lock which never succeeds as the readers
-> > keep reading until the writer is done which never happens.
-> 
-> This tests the implementation of rwsem/ rwlock functionality to ensure
-> that it is not writer unfair.
-> 
-
-Also true but in this case at least, the test's tasks do not care about
-priority inheritance.
-
-> > This patch records a timestamp when the first writer is blocked if no
-> > deadline or realtime task has recently acquired the lock for read. If
-> > dt/rt tasks are involved, then reader bias is preserved. For other tasks,
-> DL/ RT. Would it work to use the capital letters if it refers to the
-> scheduling class?
-> 
-
-Sure.
-
-> > reader bias is allowed until the first writer has been blocked for a minimum
-> > of 4ms or 1 tick. The cutoff time is arbitrary on the assumption that a
-> > normal application contending for 4ms also does not need PREEMPT_RT. On
-> > a test machine, the test completed in 88 seconds.
-> 
-> I would go for one second just because it _usually_ does not matter
-> since none of the important locks rely on that (as stated in the commit
-> message). But then why not use the 4ms/ 1 tick as you suggest. This is
-> after all what the NON-PREEMPT_RT implementation is using to ensure that
-> the writer is not stalled infinitely. The RWLOCK implementation is
-> already writer unfair.
-> 
-
-1 second is a relatively long time. The test would eventually complete
-but not before the 30 minute timeout hits and kills the test anyway.
-It makes more sense to explicitly make it similar to RWSEM_WAIT_TIMEOUT.
-
-> Side note: If the test case gets updated to RT reader which acquire the
-> lock (the whole time) then they will block writer again :)
-> 
-
-True, but in that case a RT-specific test showed that the lock is
-writer unfair and no one is surprised. It's the test design equivalent
-of "stop hitting yourself" until the lock is writer fair assuming that
-happens.
-
-> > Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
-> > ---
-> >  include/linux/rwbase_rt.h  |  3 ++
-> >  kernel/locking/rwbase_rt.c | 84 +++++++++++++++++++++++++++++++++++++++++++---
-> >  2 files changed, 82 insertions(+), 5 deletions(-)
-> > 
-> > diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
-> > index 1d264dd08625..05c4dc74b8bd 100644
-> > --- a/include/linux/rwbase_rt.h
-> > +++ b/include/linux/rwbase_rt.h
-> > @@ -10,12 +10,14 @@
-> >  
-> >  struct rwbase_rt {
-> >  	atomic_t		readers;
-> > +	unsigned long		waiter_blocked;
-> >  	struct rt_mutex_base	rtmutex;
-> >  };
-> >  
-> >  #define __RWBASE_INITIALIZER(name)				\
-> >  {								\
-> >  	.readers = ATOMIC_INIT(READER_BIAS),			\
-> > +	.waiter_blocked = 0,					\
-> >  	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
-> >  }
-> >  
-> > @@ -23,6 +25,7 @@ struct rwbase_rt {
-> >  	do {							\
-> >  		rt_mutex_base_init(&(rwbase)->rtmutex);		\
-> >  		atomic_set(&(rwbase)->readers, READER_BIAS);	\
-> > +		(rwbase)->waiter_blocked = 0;			\
-> >  	} while (0)
-> >  
-> >  
-> > diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-> > index c201aadb9301..db2f6accf49f 100644
-> > --- a/kernel/locking/rwbase_rt.c
-> > +++ b/kernel/locking/rwbase_rt.c
-> > @@ -39,7 +39,11 @@
-> >   * major surgery for a very dubious value.
-> >   *
-> >   * The risk of writer starvation is there, but the pathological use cases
-> > - * which trigger it are not necessarily the typical RT workloads.
-> > + * which trigger it are not necessarily the typical RT workloads. The worst
-> > + * case of indefinite starvation of a writer will force readers into the
-> > + * slow path if a writer is blocked for more than RW_CONTENTION_THRESHOLD
-> > + * jiffies unless dl/rt tasks have taken a read lock since the last write
->
-> DL/RT please.
-> 
-
-Done.
-
-> > + * unlock.
-> >   *
-> >   * Fast-path orderings:
-> >   * The lock/unlock of readers can run in fast paths: lock and unlock are only
-> > @@ -65,6 +69,61 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
-> >  	return 0;
-> >  }
-> >  
-> > +/*
-> > + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
-> 
->     * This matches RWSEM_WAIT_TIMEOUT for the generic RWSEM
->     * implementation.
-> 
-
-Done, but I also renamed the threshold to RWBASE_RT_WAIT_TIMEOUT.
-
-> > + * The granularity is not exact as the lowest bit in rwbase_rt->waiter_blocked
-> > + * is used to detect recent rt/dl tasks taking a read lock.
-> > + */
-> > +#define RW_CONTENTION_THRESHOLD (HZ/250+1)
-> 				   DIV_ROUND_UP(HZ, 250)
-> 
-> > +static void __sched update_dlrt_reader(struct rwbase_rt *rwb)
-> > +{
-> > +	/* No update required if dl/rt tasks already identified. */
-> > +	if (rwb->waiter_blocked & 1)
-> > +		return;
-> > +
-> > +	/*
-> > +	 * Record a dl/rt task acquiring the lock for read. This may result
-> DL/RT
-> > +	 * in indefinite writer starvation but dl/rt tasks should avoid such
-> > +	 * behaviour.
-> > +	 */
-> > +	if (dl_task(current) || rt_task(current)) {
-> 
-> There is also task_is_realtime(). But using only rt_task() should work
-> since it also covers dl_task().
-
-True, changed to rt_task only. 
+The thing I'm always on the look out for is making sure a fix for one 
+problem doesn't cause problems elsewhere.
 
 > 
-> > +		struct rt_mutex_base *rtm = &rwb->rtmutex;
-> > +		unsigned long flags;
-> > +
-> > +		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-> > +		rwb->waiter_blocked |= 1;
-> > +		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
-> > +	}
-> > +}
-> > +
-> > +/* rtmutex->wait_lock must be held. */
-> > +static void __sched set_writer_blocked(struct rwbase_rt *rwb)
-> > +{
-> > +	/*
-> > +	 * Lowest bit preserved to identify recent rt/dl tasks acquiring
-> > +	 * the lock for read so guarantee at least one tick delay.
-> > +	 */
-> > +	rwb->waiter_blocked |= (jiffies + 2) & ~1UL;
+> I want to use that and not fix every time I use it. Using
+> 	-S -p 90 -d0 -m
 > 
-> I'm unsure what |= means in terms of multiple writers. It seems to
-> extend the wait period and the second writer has none after the first
-> one leaves.
-> 
+> are already a lot of options just for a simple test to use all CPUs on a
+> system. This used to work on this machine. Now it starts way more
+> threads than I have CPUs. I accept that this might be something that
+> someone wants to test so he can use -t 100. But the simple test that is
+> no longer working. srsly. Starting more threads than the current
+> available online CPUs or even CPU affinity makes no sense since the
+> results with equal priority distribution or not reproducible.
 
-That's an oversight as v1 only covered the first writer. The unguarded
-check turns into garbage for multiple writers.
+Right, your patch said
+"For default configuration, only with the -S option"
 
-> > +}
-> > +
-> > +static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
-> > +{
-> > +	/*
-> > +	 * Allow reader bias if a dl or rt task took the lock for read
-> > +	 * since the last write unlock. Such tasks should be designed
-> > +	 * to avoid heavy writer contention or indefinite starvation.
-> > +	 */
-> > +	if (rwb->waiter_blocked & 1)
-> > +		return true;
-> > +
-> > +	/*
-> > +	 * Allow reader bias unless a writer has been blocked for more
-> > +	 * than RW_CONTENTION_THRESHOLD jiffies.
-> > +	 */
-> > +	return jiffies - rwb->waiter_blocked < RW_CONTENTION_THRESHOLD;
+So, I looked at the code, and thought, this could be called
+for OPT_THREADS as well as for OPT_SMP
+
+That's the only thing I asked you to address.
+
+However, taking a step back, I think it will work fine for OPT_THREADS as 
+well. In fact we used to do it that way, it got changed here.
+
+commit 76ad600da83771dc4985b4a9db1f63344bb364cb
+
+with what certainely seemed like a sane clean-up.
+
+So, I'm just going to do a little more testing, and make sure
+it doesn't break rteval, and then I'll likely apply your patch.
+
+John
+
 > 
-> if you set
-> 	rwb->waiter_blocked = jiffies + RW_CONTENTION_THRESHOLD
+> > John
 > 
-> then you could use
-> 	time_after(jiffies, waiter->waiter_blocked)
-> 
-> and we could name it timeout. So the first writer sets it and my guess
-> would be that the each RT reader ignores this delay while every non-RT
-> tries to acquire the lock unless as long as the timeout did not occur.
-> Then they back off and wait for one writer to acquire the lock.
-> I don't know what we do with the possible second writer but I guess
-> first writer on unlock should reset the timeout for the next writer. So
-> we have again reader followed by writer.
+> Sebastian
 > 
 
-The second writer was an oversight. I think it's better to keep it simple
-and let the first writer blocked determine when reader bias finishes.
-The timeout resets when the write lock is released.
-
-Thanks Sebastian. Based on your feedback, v3 looks like this
-
---8<--
-locking/rwbase: Prevent indefinite writer starvation
-
-rw_semaphore and rwlock are explicitly unfair to writers in the presense
-of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
-("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
-
-        The implementation is writer unfair, as it is not feasible to do
-        priority inheritance on multiple readers, but experience has shown
-        that real-time workloads are not the typical workloads which are
-        sensitive to writer starvation.
-
-While atypical, it's also trivial to block writers with PREEMPT_RT
-indefinitely without ever making forward progress. Since LTP-20220121,
-the dio_truncate test case went from having 1 reader to having 16 readers
-and the number of readers is sufficient to prevent the down_write ever
-succeeding while readers exist. Eventually the test is killed after 30
-minutes as a failure.
-
-dio_truncate is not a realtime application but indefinite writer starvation
-is undesirable. The test case has one writer appending and truncating files
-A and B while multiple readers read file A. The readers and writer are
-contending for one file's inode lock which never succeeds as the readers
-keep reading until the writer is done which never happens.
-
-This patch records a timestamp when the first writer is blocked if no
-deadline or realtime task has recently acquired the lock for read. If DT / RT
-tasks are involved, then reader bias priority inheritance is preserved. For
-other tasks, reader bias is allowed until the first writer has been blocked
-for a minimum of 4ms similar to RWSEM_WAIT_TIMEOUT.  This is sufficient
-to allow the test case to complete within the 30 minutes timeout.
-
-Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
----
- include/linux/rwbase_rt.h  |  3 ++
- kernel/locking/rwbase_rt.c | 87 +++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 85 insertions(+), 5 deletions(-)
-
-diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
-index 1d264dd08625..b969b1d9bb85 100644
---- a/include/linux/rwbase_rt.h
-+++ b/include/linux/rwbase_rt.h
-@@ -10,12 +10,14 @@
- 
- struct rwbase_rt {
- 	atomic_t		readers;
-+	unsigned long		waiter_timeout;
- 	struct rt_mutex_base	rtmutex;
- };
- 
- #define __RWBASE_INITIALIZER(name)				\
- {								\
- 	.readers = ATOMIC_INIT(READER_BIAS),			\
-+	.waiter_timeout = 0,					\
- 	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
- }
- 
-@@ -23,6 +25,7 @@ struct rwbase_rt {
- 	do {							\
- 		rt_mutex_base_init(&(rwbase)->rtmutex);		\
- 		atomic_set(&(rwbase)->readers, READER_BIAS);	\
-+		(rwbase)->waiter_timeout = 0;			\
- 	} while (0)
- 
- 
-diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-index c201aadb9301..99d81e8d1f25 100644
---- a/kernel/locking/rwbase_rt.c
-+++ b/kernel/locking/rwbase_rt.c
-@@ -39,7 +39,11 @@
-  * major surgery for a very dubious value.
-  *
-  * The risk of writer starvation is there, but the pathological use cases
-- * which trigger it are not necessarily the typical RT workloads.
-+ * which trigger it are not necessarily the typical RT workloads. The worst
-+ * case of indefinite starvation of a writer will force readers into the
-+ * slow path if a writer is blocked for more than RWBASE_RT_WAIT_TIMEOUT
-+ * jiffies unless DL / RT tasks have taken a read lock since the last write
-+ * unlock.
-  *
-  * Fast-path orderings:
-  * The lock/unlock of readers can run in fast paths: lock and unlock are only
-@@ -65,6 +69,64 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
- 	return 0;
- }
- 
-+/*
-+ * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
-+ * This matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
-+ * The granularity is not exact as the lowest bit in rwbase_rt->waiter_timeout
-+ * is used to detect recent DL / RT tasks taking a read lock.
-+ */
-+#define RWBASE_RT_WAIT_TIMEOUT DIV_ROUND_UP(HZ, 250)
-+
-+static void __sched update_dlrt_reader(struct rwbase_rt *rwb)
-+{
-+	/* No update required if DL / RT tasks already identified. */
-+	if (rwb->waiter_timeout & 1)
-+		return;
-+
-+	/*
-+	 * Record a DL / RT task acquiring the lock for read. This may result
-+	 * in indefinite writer starvation but DL / RT tasks should avoid such
-+	 * behaviour.
-+	 */
-+	if (rt_task(current)) {
-+		struct rt_mutex_base *rtm = &rwb->rtmutex;
-+		unsigned long flags;
-+
-+		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-+		rwb->waiter_timeout |= 1;
-+		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
-+	}
-+}
-+
-+/* rtmutex->wait_lock must be held. */
-+static void __sched set_writer_blocked(struct rwbase_rt *rwb)
-+{
-+	/*
-+	 * Record the timeout based on the the first writer to block. The
-+	 * lowest bit is used to identify recent DL / RT tasks acquiring the
-+	 * lock for read so guarantee at least one tick delay.
-+	 */
-+	if (rwb->waiter_timeout <= 1) {
-+		unsigned long timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT + 2;
-+
-+		rwb->waiter_timeout |= timeout & ~1UL;
-+	}
-+}
-+
-+static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
-+{
-+	/*
-+	 * Allow reader bias if a DL / RT task took the lock for read
-+	 * since the last write unlock. Such tasks should be designed
-+	 * to avoid heavy writer contention or indefinite starvation.
-+	 */
-+	if (rwb->waiter_timeout & 1)
-+		return true;
-+
-+	/* Allow reader bias unless a writer timeout is reached. */
-+	return time_before(jiffies, rwb->waiter_timeout);
-+}
-+
- static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 				      unsigned int state)
- {
-@@ -74,9 +136,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 	raw_spin_lock_irq(&rtm->wait_lock);
- 	/*
- 	 * Allow readers, as long as the writer has not completely
--	 * acquired the semaphore for write.
-+	 * acquired the semaphore for write and reader bias is still
-+	 * allowed.
- 	 */
--	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
-+	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
-+	    rwbase_allow_reader_bias(rwb)) {
- 		atomic_inc(&rwb->readers);
- 		raw_spin_unlock_irq(&rtm->wait_lock);
- 		return 0;
-@@ -140,10 +204,18 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- static __always_inline int rwbase_read_lock(struct rwbase_rt *rwb,
- 					    unsigned int state)
- {
-+	int ret;
-+
- 	if (rwbase_read_trylock(rwb))
--		return 0;
-+		ret = 0;
-+	else
-+		ret = __rwbase_read_lock(rwb, state);
-+
-+	/* Record if the current task acquiring the lock is a DL / RT task. */
-+	if (!ret)
-+		update_dlrt_reader(rwb);
- 
--	return __rwbase_read_lock(rwb, state);
-+	return ret;
- }
- 
- static void __sched __rwbase_read_unlock(struct rwbase_rt *rwb,
-@@ -264,12 +336,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
- 		if (__rwbase_write_trylock(rwb))
- 			break;
- 
-+		/* Record first new read/write contention. */
-+		set_writer_blocked(rwb);
-+
- 		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
- 		rwbase_schedule();
- 		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
- 
- 		set_current_state(state);
- 	}
-+
-+	rwb->waiter_timeout = 0;
- 	rwbase_restore_current_state();
- 	trace_contention_end(rwb, 0);
- 
