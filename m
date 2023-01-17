@@ -2,79 +2,131 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1687C63797
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 08:53:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AF7DC63797
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 12:18:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235677AbjAQIxG (ORCPT
+        id S236005AbjAQMSr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Jan 2023 03:53:06 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53564 "EHLO
+        Tue, 17 Jan 2023 07:18:47 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49240 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235802AbjAQIww (ORCPT
+        with ESMTP id S237017AbjAQMSp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Jan 2023 03:52:52 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 646824C2C
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 00:52:50 -0800 (PST)
-Date:   Tue, 17 Jan 2023 09:52:46 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1673945567;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Jgbws5IcTXpPYA+TIccNFu/oAysmZ73KGxRws3vcyF0=;
-        b=WHGXsSxuorvZXkD3KuRVgBlLikykrXQOBcds4Pvfvq9FulEOoz5WPAYiGAIG0WWAkH/LSK
-        qYZBZNvN48J5mqamzUsxv3CWo+mVEYp3noPnxUQafDGu+RCMQCO1HU/SsCy/7HaKQA4cO5
-        5uyDI6OfpkiWrT3Ju6qEs9grE8W41AAo1Wjuhg7BdoDQFY6svJJ0dmo99Ty0T39IgOcj/9
-        PtnklvIeAbA85ixCwkePATiEgbCuRdfUijDeG98dE9SgI0dhqrrMtCjc/7s08b1A1Vk48I
-        SLkWLKZrx9Mhqy2cRGuL+HAAW2DJDzV/o2cYehtC/967yg2MbG0yQ4Q8Zrt17w==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1673945567;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=Jgbws5IcTXpPYA+TIccNFu/oAysmZ73KGxRws3vcyF0=;
-        b=HA8Yq+LhXw+MOkpVMBOVccZV10pMHorrr6y4DLzEUTpxvH5chaUOpMqc9SZChYRoRGni3B
-        HUuPHC1lIpLpvJDg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     "Ahmed S. Darwish" <darwi@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-numa: Use a reasonable default max CPU value.
-Message-ID: <Y8Zh3h17Fu1uChsa@linutronix.de>
-References: <Y7/aS/dW0H0CK8Oe@linutronix.de>
- <5515f090-51cf-37fd-68a-66283fb0c639@redhat.com>
- <Y8WaaXViNE5dEuyc@lx-t490>
- <25a775d-77e-e76e-a626-1e6c605e1df3@redhat.com>
+        Tue, 17 Jan 2023 07:18:45 -0500
+Received: from outbound-smtp19.blacknight.com (outbound-smtp19.blacknight.com [46.22.139.246])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D94DD35279
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 04:18:42 -0800 (PST)
+Received: from mail.blacknight.com (pemlinmail03.blacknight.ie [81.17.254.16])
+        by outbound-smtp19.blacknight.com (Postfix) with ESMTPS id 64BB81C3754
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 12:18:41 +0000 (GMT)
+Received: (qmail 26768 invoked from network); 17 Jan 2023 12:18:41 -0000
+Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
+  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 17 Jan 2023 12:18:41 -0000
+Date:   Tue, 17 Jan 2023 12:18:39 +0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Hillf Danton <hdanton@sina.com>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
+Message-ID: <20230117121839.vnubhcrlms7pt2ab@techsingularity.net>
+References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+ <20230117105031.2512-1-hdanton@sina.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-15
 Content-Disposition: inline
-In-Reply-To: <25a775d-77e-e76e-a626-1e6c605e1df3@redhat.com>
+In-Reply-To: <20230117105031.2512-1-hdanton@sina.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-01-16 13:58:42 [-0500], John Kacur wrote:
+On Tue, Jan 17, 2023 at 06:50:31PM +0800, Hillf Danton wrote:
+> On Tue, 17 Jan 2023 08:38:17 +0000 Mel Gorman <mgorman@techsingularity.net>
+> > +/*
+> > + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
+> > + * The granularity is not exact as the lowest bit in rwbase_rt->waiter_blocked
+> > + * is used to detect recent rt/dl tasks taking a read lock.
+> > + */
+> > +#define RW_CONTENTION_THRESHOLD (HZ/250+1)
+> > +
+> > +static void __sched update_dlrt_reader(struct rwbase_rt *rwb)
+> > +{
+> > +	/* No update required if dl/rt tasks already identified. */
+> > +	if (rwb->waiter_blocked & 1)
+> > +		return;
+> > +
+> > +	/*
+> > +	 * Record a dl/rt task acquiring the lock for read. This may result
+> > +	 * in indefinite writer starvation but dl/rt tasks should avoid such
+> > +	 * behaviour.
+> > +	 */
+> > +	if (dl_task(current) || rt_task(current)) {
+> > +		struct rt_mutex_base *rtm = &rwb->rtmutex;
+> > +		unsigned long flags;
+> > +
+> > +		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
+> > +		rwb->waiter_blocked |= 1;
+> > +		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
+> > +	}
+> > +}
+> > +
+> > +/* rtmutex->wait_lock must be held. */
+> > +static void __sched set_writer_blocked(struct rwbase_rt *rwb)
+> > +{
+> > +	/*
+> > +	 * Lowest bit preserved to identify recent rt/dl tasks acquiring
+> > +	 * the lock for read so guarantee at least one tick delay.
+> > +	 */
+> > +	rwb->waiter_blocked |= (jiffies + 2) & ~1UL;
+> > +}
+> > +
+> > +static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
+> > +{
+> > +	/*
+> > +	 * Allow reader bias if a dl or rt task took the lock for read
+> > +	 * since the last write unlock. Such tasks should be designed
+> > +	 * to avoid heavy writer contention or indefinite starvation.
+> > +	 */
+> > +	if (rwb->waiter_blocked & 1)
+> > +		return true;
 > 
-> Okay, not sure how that adds to the conversation. I'm all for "sane" 
-> defaults for --smp too, but we care about other kinds of invocations too. 
-> As soon as I get a patch that doesn't break other things as well, I'll 
-> apply it.
+> This true opens a window for two tons of readers, no?
 
-BROKEN IT IS.
+I don't understand the question or what you mean by two tons of readers.
+In case you mean that the threshold is not precise, it's noted earlier
+in a comment.
 
-I want to use that and not fix every time I use it. Using
-	-S -p 90 -d0 -m
+ * The granularity is not exact as the lowest bit in rwbase_rt->waiter_blocked
+ * is used to detect recent rt/dl tasks taking a read lock.
 
-are already a lot of options just for a simple test to use all CPUs on a
-system. This used to work on this machine. Now it starts way more
-threads than I have CPUs. I accept that this might be something that
-someone wants to test so he can use -t 100. But the simple test that is
-no longer working. srsly. Starting more threads than the current
-available online CPUs or even CPU affinity makes no sense since the
-results with equal priority distribution or not reproducible.
+> > +
+> > +	/*
+> > +	 * Allow reader bias unless a writer has been blocked for more
+> > +	 * than RW_CONTENTION_THRESHOLD jiffies.
+> > +	 */
+> > +	return jiffies - rwb->waiter_blocked < RW_CONTENTION_THRESHOLD;
+> 
+> Why pure 4ms deadline fails to work without taking care of dlrt tasks?
+> 
 
-> John
+I don't understand the question. For DL/RT tasks taking the lock for read,
+indefinite writer starvation is still possible. It is assumed DL/RT tasks
+take care to avoid the scenario. For other tasks, 4 ms is an arbitrary
+cutoff so forward progress is made.
 
-Sebastian
+> Given it would take 88 seconds to complete the test, is it going to
+> take 100 seconds or more for the 4ms deadline?
+
+It took 88 seconds to complete the test. Without the patch, the test
+never finishes and is eventually killed after a timeout and marked as
+failure. Actual time to completion will vary depending on the machine,
+number of CPUs and speed of storage. The point isn't how fast the test
+completes, the point is that the test completes successfully.
+
+-- 
+Mel Gorman
+SUSE Labs
