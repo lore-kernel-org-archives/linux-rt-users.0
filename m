@@ -2,119 +2,236 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9CEDC54EBE
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Jan 2023 18:59:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADD5EC3DA78
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 08:38:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233575AbjAPS7h (ORCPT
+        id S235525AbjAQIiZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Jan 2023 13:59:37 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58336 "EHLO
+        Tue, 17 Jan 2023 03:38:25 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47354 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233570AbjAPS7b (ORCPT
+        with ESMTP id S235677AbjAQIiX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Jan 2023 13:59:31 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BCA7025E06
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 Jan 2023 10:58:46 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1673895525;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=y4Ntw2SqniyX4vGXDT/rZGS2sJ6PkV9tfoMs31yrqT8=;
-        b=Cf1hxendvPtp+mDAX3CCmnENCHxpAYIldrS9ysAy5H1mXqWzmn340MqRQ8Row/WyXJKiAu
-        a7kvzsNvpc2z6EpwU6bVBvX3GwVmf2MtsAdVhjEvV5/WtilCkuegwY+923+u8LL9gifHIX
-        wxLB4fcp1ROEIPqt6wxyb4585optQ30=
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-235-d8K0f5N8PqKCbMIXI3eHLg-1; Mon, 16 Jan 2023 13:58:44 -0500
-X-MC-Unique: d8K0f5N8PqKCbMIXI3eHLg-1
-Received: by mail-qv1-f69.google.com with SMTP id nh4-20020a056214390400b004e36a91ecffso14982365qvb.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 Jan 2023 10:58:44 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=y4Ntw2SqniyX4vGXDT/rZGS2sJ6PkV9tfoMs31yrqT8=;
-        b=k1AH25Pi3Gi1plgxVxYQdZS0TX/OfUeg4HA9lkROHfV0lsKEXAHOAOgJFambNWi7HU
-         34dAN1kF/5W6gSI7dtGGLrtA2Qlm/5UtLMy39EZpWN44yyLR+aP8+aWwv7YO+DgFmj3n
-         rVHvGGfJ3g62qbV/Qy8BUSBscx1cvrSQ0xQpZeIvNwpBoNmXJq5qrZEHzBKdfYgefJef
-         WyH144OFaCy5Fzxr+yDUmJw0pjgYrXvSqhmdCEfAImU+tADNKvteQ+0PmaIo34ij82xs
-         ABHUjFAWS4SoD0J+s5Tn0Kw9vs71+oTSSbOkQpaxxqU7ULBU3HGTr74pO/gHTyeJOaW1
-         wCUw==
-X-Gm-Message-State: AFqh2koo90tSfetH5mYUMjtsXdAJA8mAs/RRybDWtkNDk5GLeCLRfnR/
-        LNTlQjFsFUP+PO3O7F1MnGqkZxtuDCKxWSVbnvCgb4IB58iwqvKL6CvS9HPg9SW0PgytfU68pQQ
-        2n00ilex3RehzNlvmu7Py3lzSw3I=
-X-Received: by 2002:a0c:9781:0:b0:534:fe24:db67 with SMTP id l1-20020a0c9781000000b00534fe24db67mr964301qvd.16.1673895524096;
-        Mon, 16 Jan 2023 10:58:44 -0800 (PST)
-X-Google-Smtp-Source: AMrXdXt0g6WZeLnLOPNUF1ySL4ZszfgUZaIxTnBceMQkDL87rRdL71LXMDOOsGetG65nFdm5XnTPPA==
-X-Received: by 2002:a0c:9781:0:b0:534:fe24:db67 with SMTP id l1-20020a0c9781000000b00534fe24db67mr964288qvd.16.1673895523880;
-        Mon, 16 Jan 2023 10:58:43 -0800 (PST)
-Received: from fionn (bras-base-rdwyon0600w-grc-14-76-71-123-7.dsl.bell.ca. [76.71.123.7])
-        by smtp.gmail.com with ESMTPSA id u8-20020a05620a430800b006b615cd8c13sm18804991qko.106.2023.01.16.10.58.43
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 16 Jan 2023 10:58:43 -0800 (PST)
-Date:   Mon, 16 Jan 2023 13:58:42 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-To:     "Ahmed S. Darwish" <darwi@linutronix.de>
-cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-numa: Use a reasonable default max CPU value.
-In-Reply-To: <Y8WaaXViNE5dEuyc@lx-t490>
-Message-ID: <25a775d-77e-e76e-a626-1e6c605e1df3@redhat.com>
-References: <Y7/aS/dW0H0CK8Oe@linutronix.de> <5515f090-51cf-37fd-68a-66283fb0c639@redhat.com> <Y8WaaXViNE5dEuyc@lx-t490>
+        Tue, 17 Jan 2023 03:38:23 -0500
+Received: from outbound-smtp21.blacknight.com (outbound-smtp21.blacknight.com [81.17.249.41])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3CE4E901C
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 00:38:20 -0800 (PST)
+Received: from mail.blacknight.com (pemlinmail05.blacknight.ie [81.17.254.26])
+        by outbound-smtp21.blacknight.com (Postfix) with ESMTPS id 10348CCCE7
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 08:38:19 +0000 (GMT)
+Received: (qmail 30288 invoked from network); 17 Jan 2023 08:38:18 -0000
+Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
+  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 17 Jan 2023 08:38:18 -0000
+Date:   Tue, 17 Jan 2023 08:38:17 +0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Peter Zijlstra <peterz@infradead.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
+Message-ID: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=iso-8859-15
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+rw_semaphore and rwlock are explicitly unfair to writers in the presense
+of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
+("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
 
+        The implementation is writer unfair, as it is not feasible to do
+        priority inheritance on multiple readers, but experience has shown
+        that real-time workloads are not the typical workloads which are
+        sensitive to writer starvation.
 
-On Mon, 16 Jan 2023, Ahmed S. Darwish wrote:
+While atypical, it's also trivial to block writers with PREEMPT_RT
+indefinitely without ever making forward progress. Since LTP-20220121,
+the dio_truncate test case went from having 1 reader to having 16 readers
+and the number of readers is sufficient to prevent the down_write ever
+succeeding while readers exist. Eventually the test is killed after 30
+minutes as a failure.
 
-> On Mon, 16 Jan 2023, John Kacur wrote:
-> >
-> > On Thu, 12 Jan 2023, Sebastian Andrzej Siewior wrote:
-> >
-> > > numa_num_task_cpus() returns here > 100 CPUs while the system has only
-> > > 32 populated. The BIOS assumes that I can probably use larger CPUs (with
-> > > more cores) on the socket so the number of "configured CPUs" is rather
-> > > high.
-> > > For default configuration, only with the -S option, it makes sense to
-> > > use the current affinity instead looking at the number of possible CPUs
-> > > which could be brought online. It still depends on the affinity of the
-> > > created threads if the additional CPUs can be used. In a container setup
-> > > this may not be the case.
-> > >
-> > > Use sched_getaffinity() to figure out the number of possible CPUs.
-> ...
-> >
-> > In cyclictest we have
-> >
-> > 	if (num_threads == -1)
-> > 		num_threads = get_available_cpus(affinity_mask);
-> >
-> >
-> > But the num_threads can be set to -1 in OPT_THREADS too,
-> > not just for OPT_SMP
-> 
-> A sane default for --smp, which is almost-always used in sane cyclictest
-> invocations, is still valuable IMHO.
-> 
-> Thanks,
-> 
-> --
-> Ahmed S. Darwish
-> Linutronix GmbH
-> 
+dio_truncate is not a realtime application but indefinite writer starvation
+is undesirable. The test case has one writer appending and truncating files
+A and B while multiple readers read file A. The readers and writer are
+contending for one file's inode lock which never succeeds as the readers
+keep reading until the writer is done which never happens.
 
-Okay, not sure how that adds to the conversation. I'm all for "sane" 
-defaults for --smp too, but we care about other kinds of invocations too. 
-As soon as I get a patch that doesn't break other things as well, I'll 
-apply it.
+This patch records a timestamp when the first writer is blocked if no
+deadline or realtime task has recently acquired the lock for read. If
+dt/rt tasks are involved, then reader bias is preserved. For other tasks,
+reader bias is allowed until the first writer has been blocked for a minimum
+of 4ms or 1 tick. The cutoff time is arbitrary on the assumption that a
+normal application contending for 4ms also does not need PREEMPT_RT. On
+a test machine, the test completed in 88 seconds.
 
-John
+Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
+---
+ include/linux/rwbase_rt.h  |  3 ++
+ kernel/locking/rwbase_rt.c | 84 +++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 82 insertions(+), 5 deletions(-)
 
+diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
+index 1d264dd08625..05c4dc74b8bd 100644
+--- a/include/linux/rwbase_rt.h
++++ b/include/linux/rwbase_rt.h
+@@ -10,12 +10,14 @@
+ 
+ struct rwbase_rt {
+ 	atomic_t		readers;
++	unsigned long		waiter_blocked;
+ 	struct rt_mutex_base	rtmutex;
+ };
+ 
+ #define __RWBASE_INITIALIZER(name)				\
+ {								\
+ 	.readers = ATOMIC_INIT(READER_BIAS),			\
++	.waiter_blocked = 0,					\
+ 	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
+ }
+ 
+@@ -23,6 +25,7 @@ struct rwbase_rt {
+ 	do {							\
+ 		rt_mutex_base_init(&(rwbase)->rtmutex);		\
+ 		atomic_set(&(rwbase)->readers, READER_BIAS);	\
++		(rwbase)->waiter_blocked = 0;			\
+ 	} while (0)
+ 
+ 
+diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+index c201aadb9301..db2f6accf49f 100644
+--- a/kernel/locking/rwbase_rt.c
++++ b/kernel/locking/rwbase_rt.c
+@@ -39,7 +39,11 @@
+  * major surgery for a very dubious value.
+  *
+  * The risk of writer starvation is there, but the pathological use cases
+- * which trigger it are not necessarily the typical RT workloads.
++ * which trigger it are not necessarily the typical RT workloads. The worst
++ * case of indefinite starvation of a writer will force readers into the
++ * slow path if a writer is blocked for more than RW_CONTENTION_THRESHOLD
++ * jiffies unless dl/rt tasks have taken a read lock since the last write
++ * unlock.
+  *
+  * Fast-path orderings:
+  * The lock/unlock of readers can run in fast paths: lock and unlock are only
+@@ -65,6 +69,61 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
+ 	return 0;
+ }
+ 
++/*
++ * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
++ * The granularity is not exact as the lowest bit in rwbase_rt->waiter_blocked
++ * is used to detect recent rt/dl tasks taking a read lock.
++ */
++#define RW_CONTENTION_THRESHOLD (HZ/250+1)
++
++static void __sched update_dlrt_reader(struct rwbase_rt *rwb)
++{
++	/* No update required if dl/rt tasks already identified. */
++	if (rwb->waiter_blocked & 1)
++		return;
++
++	/*
++	 * Record a dl/rt task acquiring the lock for read. This may result
++	 * in indefinite writer starvation but dl/rt tasks should avoid such
++	 * behaviour.
++	 */
++	if (dl_task(current) || rt_task(current)) {
++		struct rt_mutex_base *rtm = &rwb->rtmutex;
++		unsigned long flags;
++
++		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
++		rwb->waiter_blocked |= 1;
++		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
++	}
++}
++
++/* rtmutex->wait_lock must be held. */
++static void __sched set_writer_blocked(struct rwbase_rt *rwb)
++{
++	/*
++	 * Lowest bit preserved to identify recent rt/dl tasks acquiring
++	 * the lock for read so guarantee at least one tick delay.
++	 */
++	rwb->waiter_blocked |= (jiffies + 2) & ~1UL;
++}
++
++static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
++{
++	/*
++	 * Allow reader bias if a dl or rt task took the lock for read
++	 * since the last write unlock. Such tasks should be designed
++	 * to avoid heavy writer contention or indefinite starvation.
++	 */
++	if (rwb->waiter_blocked & 1)
++		return true;
++
++	/*
++	 * Allow reader bias unless a writer has been blocked for more
++	 * than RW_CONTENTION_THRESHOLD jiffies.
++	 */
++	return jiffies - rwb->waiter_blocked < RW_CONTENTION_THRESHOLD;
++}
++
+ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 				      unsigned int state)
+ {
+@@ -74,9 +133,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 	raw_spin_lock_irq(&rtm->wait_lock);
+ 	/*
+ 	 * Allow readers, as long as the writer has not completely
+-	 * acquired the semaphore for write.
++	 * acquired the semaphore for write and reader bias is still
++	 * allowed.
+ 	 */
+-	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
++	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
++	    rwbase_allow_reader_bias(rwb)) {
+ 		atomic_inc(&rwb->readers);
+ 		raw_spin_unlock_irq(&rtm->wait_lock);
+ 		return 0;
+@@ -140,10 +201,18 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ static __always_inline int rwbase_read_lock(struct rwbase_rt *rwb,
+ 					    unsigned int state)
+ {
++	int ret;
++
+ 	if (rwbase_read_trylock(rwb))
+-		return 0;
++		ret = 0;
++	else
++		ret = __rwbase_read_lock(rwb, state);
++
++	/* Record if the current task acquiring the lock is a dl/rt task. */
++	if (!ret)
++		update_dlrt_reader(rwb);
+ 
+-	return __rwbase_read_lock(rwb, state);
++	return ret;
+ }
+ 
+ static void __sched __rwbase_read_unlock(struct rwbase_rt *rwb,
+@@ -264,12 +333,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+ 		if (__rwbase_write_trylock(rwb))
+ 			break;
+ 
++		/* Record first new read/write contention. */
++		set_writer_blocked(rwb);
++
+ 		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
+ 		rwbase_schedule();
+ 		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
+ 
+ 		set_current_state(state);
+ 	}
++
++	rwb->waiter_blocked = 0;
+ 	rwbase_restore_current_state();
+ 	trace_contention_end(rwb, 0);
+ 
