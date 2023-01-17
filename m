@@ -2,305 +2,178 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F413C63797
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 14:24:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CCDDC63797
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Jan 2023 15:12:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232375AbjAQOY4 (ORCPT
+        id S233304AbjAQPL7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Jan 2023 09:24:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43084 "EHLO
+        Tue, 17 Jan 2023 10:11:59 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49872 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232358AbjAQOYC (ORCPT
+        with ESMTP id S233157AbjAQPL4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Jan 2023 09:24:02 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 65B0F1C306;
-        Tue, 17 Jan 2023 06:22:41 -0800 (PST)
-Date:   Tue, 17 Jan 2023 15:22:30 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1673965358;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8rNbRUq17jXca6tXC9u5GgCkkefHgg4QVQCXss833Bc=;
-        b=cf0DDugTrpbViSovrf0++ZeIl/5rAcjhz4FV299F2W05nHIEhd0ozFEb2cPNs7rjV7qAyU
-        GYJH0ANcfWNUYmYc3DWevC27bHJCbumOjwWlxnJKASH8ML0vSl9AgATb7ICSJkUBTky9OB
-        Qcy0UjmnhbdiF6F/qACROrwGHOyq48GP7Rj3w9B2PoIY+Wr0ke9nhe+1Uhidb1a+XBaP1U
-        99JnBWIn4RaILadXixunQlzQyZ58R5T59e+8zQfyuI5oVd5Tk7uYwmDddVN8WIpmZB2k9Q
-        ZtZsOhKFHxUoP54HqmUkG1hjkEho69Mb+MOIrAx6zAoJ70MPaKl5hJeLlVbsRg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1673965358;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8rNbRUq17jXca6tXC9u5GgCkkefHgg4QVQCXss833Bc=;
-        b=cI3GLTo9pTXge6PUPWObzW/e4e9TG5xFHfTVLPwgZ8umeT3sevkYJZvGVYBliVpJ+a7msl
-        gPnI5Y+O7mus5wBQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mel Gorman <mgorman@techsingularity.net>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Linux-RT <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
-Message-ID: <Y8avJm1FQI9vB9cv@linutronix.de>
-References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+        Tue, 17 Jan 2023 10:11:56 -0500
+Received: from mail-pj1-x1035.google.com (mail-pj1-x1035.google.com [IPv6:2607:f8b0:4864:20::1035])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1CD704EC5
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 07:11:55 -0800 (PST)
+Received: by mail-pj1-x1035.google.com with SMTP id s13-20020a17090a6e4d00b0022900843652so15914338pjm.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Jan 2023 07:11:55 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=xUcKWpwPhTRCrCYmeiWFa+p8NZqQHVS8dp2x80vvN2E=;
+        b=i5FxZgEumiJ8FnuC6w3ZPlpjI2uIk1GxX/D13B6iZ8gelXMF9326oWDdxQJWWlPQum
+         w9o9XpXMLM+bl3gIz4dn2sqwz3JMe4Bz+FS0zOQeDms1skkuM+kkfWKKYt5BQYTAlwZK
+         ikGYF2SWASfsFOwDIx0YFFKWv6mthFGwptf5UT+I0fd5TWOOc4EU1H9ZbX7Ta4vwgapf
+         UVEU3KA53mPjf1kTqf8mLWBkotyJN+UC0OZhZjg1KWnWWsLBZ1K8T2oKRGVvVwUuZlRl
+         nrIJIQXZDBaJ2/4iQEQxYXcK5o/64ujWJaG6d2EQTakAPrHLYbZZkVomso52WzaDS85s
+         Ffaw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=xUcKWpwPhTRCrCYmeiWFa+p8NZqQHVS8dp2x80vvN2E=;
+        b=sGxPW7KCUsoPP59nqhUJlh3oMJz9/WkMIBEyqZESYaxFWo156zllg5T+7MHxziGvxF
+         kW07AR1T8I1mbXTWe1ujyD0pKTOq4Ofz4XclSLoaNGPVNVM2tOGj2DxuV8y2sfv4UD7a
+         EimiH4nACuWE7jgDq3N4j9ct/rCQlJ5h4nZMuK9jdtHu0BiAqyzFrqUNUAuQfTyAVyG4
+         F+aDBjxSpNHcRrKpjEqH5XBkkhaKjBlQwfvT9LjM+TxhuRGvNDFg2xJ3kxmuSKmYl7Is
+         bv0+zDqkWTtpt+YImhVet7aOEQFf//Xj+pwzcb8JOx4rPOkhkmF8wNVQ4Pp+AItDJBfi
+         Vu4g==
+X-Gm-Message-State: AFqh2kqTt9wePxhNp0uwMHMl3Rz3NBwa52j5GuE5gtOpQjLZxhcI/qG2
+        SCpvXmdqHByoQRstQaVTujqYAOVMfN2t27ajowKqIQ==
+X-Google-Smtp-Source: AMrXdXtpuDodVQl3BW9NsJpqFbWNMxfzSa4qQxrarcGmm4jmlom2dliA3FVJGFz0n30PGkZH6+LMAScxQ86s5PwdPIE=
+X-Received: by 2002:a17:90a:1d07:b0:228:f08f:a9b3 with SMTP id
+ c7-20020a17090a1d0700b00228f08fa9b3mr335881pjd.202.1673968314504; Tue, 17 Jan
+ 2023 07:11:54 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+References: <20221219151503.385816-1-krzysztof.kozlowski@linaro.org> <20221219151503.385816-6-krzysztof.kozlowski@linaro.org>
+In-Reply-To: <20221219151503.385816-6-krzysztof.kozlowski@linaro.org>
+From:   Ulf Hansson <ulf.hansson@linaro.org>
+Date:   Tue, 17 Jan 2023 16:11:18 +0100
+Message-ID: <CAPDyKFoHx+cr-kO-E8mH2UMbs-sH4LY78+1VzJrkS+kGVKvYeQ@mail.gmail.com>
+Subject: Re: [PATCH v2 5/5] PM: domains: Do not call device_pm_check_callbacks()
+ when holding genpd_lock()
+To:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
+        Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        Kevin Hilman <khilman@kernel.org>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Lorenzo Pieralisi <lpieralisi@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        Adrien Thierry <athierry@redhat.com>,
+        Brian Masney <bmasney@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-01-17 08:38:17 [+0000], Mel Gorman wrote:
-> rw_semaphore and rwlock are explicitly unfair to writers in the presense
-> of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
-> ("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
-> 
->         The implementation is writer unfair, as it is not feasible to do
->         priority inheritance on multiple readers, but experience has shown
->         that real-time workloads are not the typical workloads which are
->         sensitive to writer starvation.
-> 
-> While atypical, it's also trivial to block writers with PREEMPT_RT
-> indefinitely without ever making forward progress. Since LTP-20220121,
-> the dio_truncate test case went from having 1 reader to having 16 readers
-> and the number of readers is sufficient to prevent the down_write ever
-> succeeding while readers exist. Eventually the test is killed after 30
-> minutes as a failure.
-> 
-> dio_truncate is not a realtime application but indefinite writer starvation
-
-If so then the PI boosting would not work if we would have it ;)
-
-> is undesirable. The test case has one writer appending and truncating files
-> A and B while multiple readers read file A. The readers and writer are
-> contending for one file's inode lock which never succeeds as the readers
-> keep reading until the writer is done which never happens.
-
-This tests the implementation of rwsem/ rwlock functionality to ensure
-that it is not writer unfair.
-
-> This patch records a timestamp when the first writer is blocked if no
-> deadline or realtime task has recently acquired the lock for read. If
-> dt/rt tasks are involved, then reader bias is preserved. For other tasks,
-DL/ RT. Would it work to use the capital letters if it refers to the
-scheduling class?
-
-> reader bias is allowed until the first writer has been blocked for a minimum
-> of 4ms or 1 tick. The cutoff time is arbitrary on the assumption that a
-> normal application contending for 4ms also does not need PREEMPT_RT. On
-> a test machine, the test completed in 88 seconds.
-
-I would go for one second just because it _usually_ does not matter
-since none of the important locks rely on that (as stated in the commit
-message). But then why not use the 4ms/ 1 tick as you suggest. This is
-after all what the NON-PREEMPT_RT implementation is using to ensure that
-the writer is not stalled infinitely. The RWLOCK implementation is
-already writer unfair.
-
-Side note: If the test case gets updated to RT reader which acquire the
-lock (the whole time) then they will block writer again :)
-
-> Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
+On Mon, 19 Dec 2022 at 16:15, Krzysztof Kozlowski
+<krzysztof.kozlowski@linaro.org> wrote:
+>
+> If PM domain on PREEMPT_RT is marked as GENPD_FLAG_RT_SAFE(), the
+> genpd_lock() will be a raw spin lock, thus device_pm_check_callbacks()
+> must be called outside of the domain lock.
+>
+> This solves on PREEMPT_RT:
+>
+>   [ BUG: Invalid wait context ]
+>   6.1.0-rt5-00325-g8a5f56bcfcca #8 Tainted: G        W
+>   -----------------------------
+>   swapper/0/1 is trying to lock:
+>   ffff76e045dec9a0 (&dev->power.lock){+.+.}-{3:3}, at: device_pm_check_callbacks+0x20/0xf0
+>   other info that might help us debug this:
+>   context-{5:5}
+>   3 locks held by swapper/0/1:
+>    #0: ffff76e045deb8e8 (&dev->mutex){....}-{4:4}, at: __device_attach+0x38/0x1c0
+>    #1: ffffa92b81f825e0 (gpd_list_lock){+.+.}-{4:4}, at: __genpd_dev_pm_attach+0x7c/0x250
+>    #2: ffff76e04105c7a0 (&genpd->rslock){....}-{2:2}, at: genpd_lock_rawspin+0x1c/0x30
+>   stack backtrace:
+>   CPU: 5 PID: 1 Comm: swapper/0 Tainted: G        W          6.1.0-rt5-00325-g8a5f56bcfcca #8
+>   Hardware name: Qualcomm Technologies, Inc. Robotics RB5 (DT)
+>   Call trace:
+>    dump_backtrace.part.0+0xe0/0xf0
+>    show_stack+0x18/0x40
+>    dump_stack_lvl+0x8c/0xb8
+>    dump_stack+0x18/0x34
+>    __lock_acquire+0x938/0x2100
+>    lock_acquire.part.0+0x104/0x28c
+>    lock_acquire+0x68/0x84
+>    rt_spin_lock+0x40/0x100
+>    device_pm_check_callbacks+0x20/0xf0
+>    dev_pm_domain_set+0x54/0x64
+>    genpd_add_device+0x258/0x340
+>    __genpd_dev_pm_attach+0xa8/0x250
+>    genpd_dev_pm_attach_by_id+0xc4/0x190
+>    genpd_dev_pm_attach_by_name+0x3c/0x60
+>    dev_pm_domain_attach_by_name+0x20/0x30
+>    dt_idle_attach_cpu+0x24/0x90
+>    psci_cpuidle_probe+0x300/0x4b0
+>    platform_probe+0x68/0xe0
+>    really_probe+0xbc/0x2dc
+>    __driver_probe_device+0x78/0xe0
+>    driver_probe_device+0x3c/0x160
+>    __device_attach_driver+0xb8/0x140
+>    bus_for_each_drv+0x78/0xd0
+>    __device_attach+0xa8/0x1c0
+>    device_initial_probe+0x14/0x20
+>    bus_probe_device+0x9c/0xa4
+>    device_add+0x3b4/0x8dc
+>    platform_device_add+0x114/0x234
+>    platform_device_register_full+0x108/0x1a4
+>    psci_idle_init+0x6c/0xb0
+>    do_one_initcall+0x74/0x450
+>    kernel_init_freeable+0x2e0/0x350
+>    kernel_init+0x24/0x130
+>    ret_from_fork+0x10/0x20
+>
+> Cc: Adrien Thierry <athierry@redhat.com>
+> Cc: Brian Masney <bmasney@redhat.com>
+> Cc: linux-rt-users@vger.kernel.org
+> Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
 > ---
->  include/linux/rwbase_rt.h  |  3 ++
->  kernel/locking/rwbase_rt.c | 84 +++++++++++++++++++++++++++++++++++++++++++---
->  2 files changed, 82 insertions(+), 5 deletions(-)
-> 
-> diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
-> index 1d264dd08625..05c4dc74b8bd 100644
-> --- a/include/linux/rwbase_rt.h
-> +++ b/include/linux/rwbase_rt.h
-> @@ -10,12 +10,14 @@
->  
->  struct rwbase_rt {
->  	atomic_t		readers;
-> +	unsigned long		waiter_blocked;
->  	struct rt_mutex_base	rtmutex;
->  };
->  
->  #define __RWBASE_INITIALIZER(name)				\
->  {								\
->  	.readers = ATOMIC_INIT(READER_BIAS),			\
-> +	.waiter_blocked = 0,					\
->  	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
->  }
->  
-> @@ -23,6 +25,7 @@ struct rwbase_rt {
->  	do {							\
->  		rt_mutex_base_init(&(rwbase)->rtmutex);		\
->  		atomic_set(&(rwbase)->readers, READER_BIAS);	\
-> +		(rwbase)->waiter_blocked = 0;			\
->  	} while (0)
->  
->  
-> diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-> index c201aadb9301..db2f6accf49f 100644
-> --- a/kernel/locking/rwbase_rt.c
-> +++ b/kernel/locking/rwbase_rt.c
-> @@ -39,7 +39,11 @@
->   * major surgery for a very dubious value.
->   *
->   * The risk of writer starvation is there, but the pathological use cases
-> - * which trigger it are not necessarily the typical RT workloads.
-> + * which trigger it are not necessarily the typical RT workloads. The worst
-> + * case of indefinite starvation of a writer will force readers into the
-> + * slow path if a writer is blocked for more than RW_CONTENTION_THRESHOLD
-> + * jiffies unless dl/rt tasks have taken a read lock since the last write
-DL/RT please.
-
-> + * unlock.
->   *
->   * Fast-path orderings:
->   * The lock/unlock of readers can run in fast paths: lock and unlock are only
-> @@ -65,6 +69,61 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
->  	return 0;
->  }
->  
-> +/*
-> + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
-
-    * This matches RWSEM_WAIT_TIMEOUT for the generic RWSEM
-    * implementation.
-
-> + * The granularity is not exact as the lowest bit in rwbase_rt->waiter_blocked
-> + * is used to detect recent rt/dl tasks taking a read lock.
-> + */
-> +#define RW_CONTENTION_THRESHOLD (HZ/250+1)
-				   DIV_ROUND_UP(HZ, 250)
-
-> +static void __sched update_dlrt_reader(struct rwbase_rt *rwb)
-> +{
-> +	/* No update required if dl/rt tasks already identified. */
-> +	if (rwb->waiter_blocked & 1)
-> +		return;
+>  drivers/base/power/domain.c | 6 +++++-
+>  1 file changed, 5 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/base/power/domain.c b/drivers/base/power/domain.c
+> index 4dfce1d476f4..db499ba40497 100644
+> --- a/drivers/base/power/domain.c
+> +++ b/drivers/base/power/domain.c
+> @@ -1666,10 +1666,14 @@ static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
+>         if (ret)
+>                 goto out;
+>
 > +
-> +	/*
-> +	 * Record a dl/rt task acquiring the lock for read. This may result
-DL/RT
-> +	 * in indefinite writer starvation but dl/rt tasks should avoid such
-> +	 * behaviour.
-> +	 */
-> +	if (dl_task(current) || rt_task(current)) {
-
-There is also task_is_realtime(). But using only rt_task() should work
-since it also covers dl_task().
-
-> +		struct rt_mutex_base *rtm = &rwb->rtmutex;
-> +		unsigned long flags;
+> +       /* PREEMPT_RT: Must be outside of genpd_lock */
+> +       device_pm_check_callbacks(dev);
 > +
-> +		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-> +		rwb->waiter_blocked |= 1;
-> +		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
-> +	}
-> +}
-> +
-> +/* rtmutex->wait_lock must be held. */
-> +static void __sched set_writer_blocked(struct rwbase_rt *rwb)
-> +{
-> +	/*
-> +	 * Lowest bit preserved to identify recent rt/dl tasks acquiring
-> +	 * the lock for read so guarantee at least one tick delay.
-> +	 */
-> +	rwb->waiter_blocked |= (jiffies + 2) & ~1UL;
+>         genpd_lock(genpd);
+>
+>         genpd_set_cpumask(genpd, gpd_data->cpu);
+> -       dev_pm_domain_set(dev, &genpd->domain);
+> +       dev_pm_domain_set_no_cb(dev, &genpd->domain);
+>
+>         genpd->device_count++;
+>         if (gd)
 
-I'm unsure what |= means in terms of multiple writers. It seems to
-extend the wait period and the second writer has none after the first
-one leaves.
+Rather than splitting up the assignment in two steps, I think it
+should be perfectly fine to move the call to dev_pm_domain_set()
+outside the genpd lock.
 
-> +}
-> +
-> +static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
-> +{
-> +	/*
-> +	 * Allow reader bias if a dl or rt task took the lock for read
-> +	 * since the last write unlock. Such tasks should be designed
-> +	 * to avoid heavy writer contention or indefinite starvation.
-> +	 */
-> +	if (rwb->waiter_blocked & 1)
-> +		return true;
-> +
-> +	/*
-> +	 * Allow reader bias unless a writer has been blocked for more
-> +	 * than RW_CONTENTION_THRESHOLD jiffies.
-> +	 */
-> +	return jiffies - rwb->waiter_blocked < RW_CONTENTION_THRESHOLD;
+Note that, genpd_add_device() is always being called with
+gpd_list_lock mutex being held. This prevents the genpd from being
+removed, while we use it here.
 
-if you set
-	rwb->waiter_blocked = jiffies + RW_CONTENTION_THRESHOLD
+Moreover, we need a similar change for the call to dev_pm_domain_set()
+in genpd_remove_device().
 
-then you could use
-	time_after(jiffies, waiter->waiter_blocked)
+> --
+> 2.34.1
+>
 
-and we could name it timeout. So the first writer sets it and my guess
-would be that the each RT reader ignores this delay while every non-RT
-tries to acquire the lock unless as long as the timeout did not occur.
-Then they back off and wait for one writer to acquire the lock.
-I don't know what we do with the possible second writer but I guess
-first writer on unlock should reset the timeout for the next writer. So
-we have again reader followed by writer.
-
-> +}
-> +
->  static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
->  				      unsigned int state)
->  {
-> @@ -74,9 +133,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
->  	raw_spin_lock_irq(&rtm->wait_lock);
->  	/*
->  	 * Allow readers, as long as the writer has not completely
-> -	 * acquired the semaphore for write.
-> +	 * acquired the semaphore for write and reader bias is still
-> +	 * allowed.
->  	 */
-> -	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
-> +	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
-> +	    rwbase_allow_reader_bias(rwb)) {
->  		atomic_inc(&rwb->readers);
->  		raw_spin_unlock_irq(&rtm->wait_lock);
->  		return 0;
-> @@ -140,10 +201,18 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
->  static __always_inline int rwbase_read_lock(struct rwbase_rt *rwb,
->  					    unsigned int state)
->  {
-> +	int ret;
-> +
->  	if (rwbase_read_trylock(rwb))
-> -		return 0;
-> +		ret = 0;
-> +	else
-> +		ret = __rwbase_read_lock(rwb, state);
-> +
-> +	/* Record if the current task acquiring the lock is a dl/rt task. */
-> +	if (!ret)
-> +		update_dlrt_reader(rwb);
->  
-> -	return __rwbase_read_lock(rwb, state);
-> +	return ret;
->  }
->  
->  static void __sched __rwbase_read_unlock(struct rwbase_rt *rwb,
-> @@ -264,12 +333,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
->  		if (__rwbase_write_trylock(rwb))
->  			break;
->  
-> +		/* Record first new read/write contention. */
-> +		set_writer_blocked(rwb);
-> +
->  		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
->  		rwbase_schedule();
->  		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
->  
->  		set_current_state(state);
->  	}
-> +
-> +	rwb->waiter_blocked = 0;
->  	rwbase_restore_current_state();
->  	trace_contention_end(rwb, 0);
->  
-
-Sebastian
+Kind regards
+Uffe
