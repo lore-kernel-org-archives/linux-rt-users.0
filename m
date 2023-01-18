@@ -2,92 +2,71 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 27032C32793
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Jan 2023 11:28:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6759C38159
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Jan 2023 15:27:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229670AbjARL2E (ORCPT
+        id S230333AbjARP1Z (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Jan 2023 06:28:04 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45038 "EHLO
+        Wed, 18 Jan 2023 10:27:25 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57542 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229941AbjARL1l (ORCPT
+        with ESMTP id S231264AbjARP1K (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Jan 2023 06:27:41 -0500
-Received: from mail-ej1-x634.google.com (mail-ej1-x634.google.com [IPv6:2a00:1450:4864:20::634])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 175FCBD145;
-        Wed, 18 Jan 2023 02:45:53 -0800 (PST)
-Received: by mail-ej1-x634.google.com with SMTP id mg12so9851399ejc.5;
-        Wed, 18 Jan 2023 02:45:53 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=FJaMI56CuLQSWiXvcFp/J8HGei2lr3N4VqMBnaci1Eg=;
-        b=h1pBp+ReYZJ1R2WXFgIEHoWl0UI1RZ8YxXFlZUuvlcn7bNNethjx3rZKL83ZRXIt1A
-         2tzcW98ytzjAjZUkpVYsIP9xVm481iP91GeIlzPkssYEKvxyKHfVbWP+rbxHABMVMFBx
-         n8iGaTiyh7PIcCzRfnVRFPUwfI2NncWMoAQVUbvW2GdKdBajOtC8X/RluZu6lKj0Y2zp
-         HUP8jb8ooNS8SAsclVxfsDLO2u4nyeIb89YrLKtNeS44tVrY/C+zF6tojUAcTVAHAWfj
-         h0iK9568MFunp7NedC8boxuY+DHoWCOrrXv4HcysNklsV0uSAt3Zva3Hch3hioRBmwyF
-         FoXg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=FJaMI56CuLQSWiXvcFp/J8HGei2lr3N4VqMBnaci1Eg=;
-        b=3mTIfZqT/5FqnJ6Z1/UYhqvQbxXUMXWVz6WBrLK9IfXQOR96W9ucFU8e/0Pyvk9UfD
-         YHOZ6f+WDjweHgxtsaOTjwuadGZtSSrQHHr9gzpNAYgX7Xv6GSI2Yx/B98iC93CL0M5R
-         Zi6wWKpjBl2P/FiTfzxWRqyugP3wiF0AvUNleeCboHYdIWAp6c1EQW2qXcIh1qEdBI/4
-         NYrNBBLIr/F4rlSdrjocZTHT+fsOa15Nfj8zra9jRPF5fVsNZF3YK0sgoqX56ovzwjsB
-         Ajl4bWJBPQ2RtxILiwNCkdUN6HGYJUTpQZdKUiKwz7xAC0J2XLXNedz0KXmnTtdss5Cd
-         xloQ==
-X-Gm-Message-State: AFqh2kq6KcHOcSn1MKj7jtNjPbC41uLvaLEl4pQmmrMTVt049akTXzoE
-        N2slDy1gNU9PYLi1+UZOB80=
-X-Google-Smtp-Source: AMrXdXtvhn2U2RX2/t9Rt422JPZkiRxbYqLS3xwB7ZOocBkenMXPFWgl4FYZh4Nlmxi0Bnir2UzbBQ==
-X-Received: by 2002:a17:906:fb0d:b0:856:6884:675f with SMTP id lz13-20020a170906fb0d00b008566884675fmr6467925ejb.52.1674038751892;
-        Wed, 18 Jan 2023 02:45:51 -0800 (PST)
-Received: from gmail.com ([31.46.242.11])
-        by smtp.gmail.com with ESMTPSA id f1-20020a17090631c100b007aea1dc1840sm14429002ejf.111.2023.01.18.02.45.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Jan 2023 02:45:51 -0800 (PST)
-Sender: Ingo Molnar <mingo.kernel.org@gmail.com>
-Date:   Wed, 18 Jan 2023 11:45:45 +0100
-From:   Ingo Molnar <mingo@kernel.org>
+        Wed, 18 Jan 2023 10:27:10 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A5C17298;
+        Wed, 18 Jan 2023 07:26:01 -0800 (PST)
+Date:   Wed, 18 Jan 2023 16:25:57 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1674055558;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=BkBdwCC72vnFXKz7wAyBwaI38/pVFTFiaN/Bh+nVBec=;
+        b=0zN9/jm9ajNMr+mXoKrxvbTMD1MMQw2XozYf/rTD5Rd38p/D5vt982AvYA1EGF0zFjF3Zz
+        U44RC2U/oKbyDxKdxdkYPnRP6xOlyI4S6Z9+lO+et/NO6ggLq4K8CIdDsv2MAB8Kf+rd0M
+        IJnJfwjlkCl6U7rZwCe4GdhSMVTSqv2gtqYe2HAgUXp770vUvpoqyRdBtyYgFeaiowgbbc
+        Kbo0IyIrR4OEPFGwvS5eCUK3mmISlbHdx/einy6lkmXTCVDgLZQYpN0PXhml9lnpIcjHLN
+        FzWflrNs3w1GeZGYrFweVTD0+7JBuw4dvyUWnya2mdFPy4+E+YQqa3ZeE7+ORw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1674055558;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=BkBdwCC72vnFXKz7wAyBwaI38/pVFTFiaN/Bh+nVBec=;
+        b=xYvHBkcXAL87G9vS7nzryaX9fr+1OJLj2dwhyt1g2IyitBFq+Fh0Q+ACn2B2bADJCgsf5r
+        pyFqbuoQ6I0iA9Cg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Mel Gorman <mgorman@techsingularity.net>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
+Cc:     Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
         Davidlohr Bueso <dave@stgolabs.net>,
         Linux-RT <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
 Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
-Message-ID: <Y8fN2VQQTGUZ3ykw@gmail.com>
+Message-ID: <Y8gPhTGkfCbGwoUu@linutronix.de>
 References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
  <Y8avJm1FQI9vB9cv@linutronix.de>
  <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 In-Reply-To: <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2023-01-17 16:50:21 [+0000], Mel Gorman wrote:
 
-* Mel Gorman <mgorman@techsingularity.net> wrote:
-
-> > > dio_truncate is not a realtime application but indefinite writer 
-> > > starvation
-> > 
-> > If so then the PI boosting would not work if we would have it ;)
-> > 
-> 
-> True, but it's still undesirable for a basic functional test using normal 
-> tasks with no prioritisation to stall forever.
-
-Agreed.
-
+> diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+> index c201aadb9301..99d81e8d1f25 100644
+> --- a/kernel/locking/rwbase_rt.c
+> +++ b/kernel/locking/rwbase_rt.c
+> @@ -65,6 +69,64 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
+>  	return 0;
+>  }
+>  
 > +/*
 > + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
 > + * This matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
@@ -113,17 +92,37 @@ Agreed.
 > +
 > +		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
 > +		rwb->waiter_timeout |= 1;
+
+Let me see of I parsed the whole logic right:
+
+_After_ the RT reader acquired the lock, the lowest bit is set. This may
+be immediately if the timeout did not occur yet.
+With this flag set, all following reader incl. SCHED_OTHER will acquire
+the lock.
+
+If so, then I don't know why this is a good idea.
+
+If _only_ the RT reader is allowed to acquire the lock while the writer
+is waiting then it make sense to prefer the RT tasks. (So the check is
+on current and not on the lowest bit).
+All other (SCHED_OTHER) reader would have to block on the rtmutex after
+the timeout. This makes sense to avoid the starvation.
+
+If we drop that "we prefer the RT reader" then it would block on the
+RTmutex. It will _still_ be preferred over the writer because it will be
+enqueued before the writer in the queue due to its RT priority. The only
+downside is that it has to wait until all readers are left.
+So by allowing the RT reader to always acquire the lock as long as the
+WRITER_BIAS isn't set, we would allow to enter early while the other
+reader are still in and after the timeout you would only have RT reader
+going in and out. All SCHED_OTHER reader block on the RTmutex.
+
+I think I like this.
+
+
 > +		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
 > +	}
 > +}
+> +
 
-So I'm not sure this should be dependent on the task being an RT task.
-
-Starvation scenarios are bad no matter what scheduling policy is used.
-
-Should be unconditional - and all workloads should live with the new 
-behavior.
-
-Thanks,
-
-	Ingo
+Sebastian
