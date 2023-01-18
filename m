@@ -2,271 +2,183 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B77EFC46467
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Jan 2023 17:32:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 48F1EC38147
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Jan 2023 18:52:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229776AbjARRcT (ORCPT
+        id S229569AbjARSwa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Jan 2023 12:32:19 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58510 "EHLO
+        Wed, 18 Jan 2023 13:52:30 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37336 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230430AbjARRcB (ORCPT
+        with ESMTP id S229512AbjARSw3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Jan 2023 12:32:01 -0500
-Received: from outbound-smtp42.blacknight.com (outbound-smtp42.blacknight.com [46.22.139.226])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C1E60577F5
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Jan 2023 09:31:34 -0800 (PST)
-Received: from mail.blacknight.com (pemlinmail03.blacknight.ie [81.17.254.16])
-        by outbound-smtp42.blacknight.com (Postfix) with ESMTPS id C76961C1E
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Jan 2023 17:31:32 +0000 (GMT)
-Received: (qmail 18706 invoked from network); 18 Jan 2023 17:31:32 -0000
-Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
-  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 18 Jan 2023 17:31:32 -0000
-Date:   Wed, 18 Jan 2023 17:31:30 +0000
-From:   Mel Gorman <mgorman@techsingularity.net>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Linux-RT <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
-Message-ID: <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
-References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
- <Y8avJm1FQI9vB9cv@linutronix.de>
- <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
- <Y8gPhTGkfCbGwoUu@linutronix.de>
+        Wed, 18 Jan 2023 13:52:29 -0500
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80AE1367E1
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Jan 2023 10:52:27 -0800 (PST)
+Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 9F5113F12A;
+        Wed, 18 Jan 2023 18:52:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1674067944;
+        bh=wBmBN8UT++KM5edV/QvnrCt6IRASr8MKopVpbOzRDZs=;
+        h=Message-ID:Date:MIME-Version:From:To:Cc:References:Subject:
+         In-Reply-To:Content-Type;
+        b=CPovh16o0JchBaFCzoDnFAuVna+v43DmfxkTUGeFAJZgJR/L/fSZ3SWyo4NAdYgJm
+         Yle3qeLgtO2y/kF9cApRY/9kKUYRXpIc0L0NwmUf9kb/6wHml+JO44kxjjGviJuch/
+         xSeGMLwb7Q9bTHks27qb9q4n/CSnHR5Eq6xooeQOWvlq7+V/SR4aeR6CuPHjK97By9
+         gYEqy7uhtABMoATLQrUE2L0FUD3P1F8fTaS3D79r2PN6Ja8YK0BTOzK8fRCpTvU7eN
+         HvYgoTsDnTMgxWzXa8JUQvrRZywwzoV7Fbr83eso5TwnSC+XLhHGte2CO2CCpH/+9f
+         f+QhSaA9KZokQ==
+Message-ID: <c4fe632e-568b-7c60-c6d2-99e0148680ad@canonical.com>
+Date:   Wed, 18 Jan 2023 13:52:21 -0500
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <Y8gPhTGkfCbGwoUu@linutronix.de>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.4.2
+Content-Language: en-US
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     williams@redhat.com, bigeasy@linutronix.de
+References: <fe5974c9-3ed0-938a-f43c-4d301f603e92@canonical.com>
+ <be47fd9c-028a-0b6b-9c7f-877f01e73960@canonical.com>
+ <dea6d0e9-7814-4b8c-44dd-4804cbe48227@canonical.com>
+Subject: Re: System Hang With 5.15.79-rt54 Patch Set
+In-Reply-To: <dea6d0e9-7814-4b8c-44dd-4804cbe48227@canonical.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Jan 18, 2023 at 04:25:57PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2023-01-17 16:50:21 [+0000], Mel Gorman wrote:
-> 
-> > diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-> > index c201aadb9301..99d81e8d1f25 100644
-> > --- a/kernel/locking/rwbase_rt.c
-> > +++ b/kernel/locking/rwbase_rt.c
-> > @@ -65,6 +69,64 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
-> >  	return 0;
-> >  }
-> >  
-> > +/*
-> > + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick.
-> > + * This matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
-> > + * The granularity is not exact as the lowest bit in rwbase_rt->waiter_timeout
-> > + * is used to detect recent DL / RT tasks taking a read lock.
-> > + */
-> > +#define RWBASE_RT_WAIT_TIMEOUT DIV_ROUND_UP(HZ, 250)
-> > +
-> > +static void __sched update_dlrt_reader(struct rwbase_rt *rwb)
-> > +{
-> > +	/* No update required if DL / RT tasks already identified. */
-> > +	if (rwb->waiter_timeout & 1)
-> > +		return;
-> > +
-> > +	/*
-> > +	 * Record a DL / RT task acquiring the lock for read. This may result
-> > +	 * in indefinite writer starvation but DL / RT tasks should avoid such
-> > +	 * behaviour.
-> > +	 */
-> > +	if (rt_task(current)) {
-> > +		struct rt_mutex_base *rtm = &rwb->rtmutex;
-> > +		unsigned long flags;
-> > +
-> > +		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-> > +		rwb->waiter_timeout |= 1;
-> 
-> Let me see of I parsed the whole logic right:
-> 
-> _After_ the RT reader acquired the lock, the lowest bit is set. This may
-> be immediately if the timeout did not occur yet.
-> With this flag set, all following reader incl. SCHED_OTHER will acquire
-> the lock.
-> 
 
-Correct. The intent was to track if there were any DL / RT tasks since
-the last write unlock in case there was a mix of SCHED_OTHER and rt_tasks
-contending on the same lock with unknown arrival times.
 
-> If so, then I don't know why this is a good idea.
-> 
-> If _only_ the RT reader is allowed to acquire the lock while the writer
-> is waiting then it make sense to prefer the RT tasks. (So the check is
-> on current and not on the lowest bit).
-> All other (SCHED_OTHER) reader would have to block on the rtmutex after
-> the timeout. This makes sense to avoid the starvation.
-> 
+On 1/4/23 15:47, Joseph Salisbury wrote:
+>
+>
+> On 12/15/22 18:39, Joseph Salisbury wrote:
+>>
+>>
+>> On 12/15/22 13:39, Joseph Salisbury wrote:
+>>> Hello,
+>>>
+>>> A bug has been reported[0] against a linux-5.15.y based Ubuntu 
+>>> kernel that has the 5.15.79-rt54 real-time patch set applied.
+>>>
+>>> This bug is causing a system hang when running disk tests with the 
+>>> stress-ng[1] test suite.  A 'hung task' call trace is being 
+>>> generated[2] just prior to the system hanging.  It appears the hang 
+>>> is happening during a call to schedule.
+>>>
+>>> To see if this was a regression, I also tested prior real-time patch 
+>>> sets, going as far back to rt38 and all versions exhibit this bug. I 
+>>> will test back further to see if this is in fact a regression and a 
+>>> kernel bisect can be done.  I also confirmed the same kernel without 
+>>> the rt54 patch set applied does not exhibit this bug.
+>>>
+>>> I will continue to debug this issue, but I wanted to send this 
+>>> message upstream in case anyone else runs into it.  Any specific 
+>>> tests, tracing or debugging steps would be greatly appreciated. 
+>>> Otherwise, I'll report back to this thread with any findings.
+>>>
+>>> Thanks,
+>>>
+>>> Joe
+>>>
+>>>
+>>> [0] https://bugs.launchpad.net/ubuntu-realtime/+bug/1998536
+>>> [1] https://github.com/ColinIanKing/stress-ng
+>>> [2] https://launchpadlibrarian.net/637058129/dmesg_dl110_rt_kernel.txt
+>>
+>> I should have also mentioned, I will also test the latest available 
+>> patch set (6.1-rc7-rt5) to see if it also exhibits the bug.
+>>
+>>
+> This bug/system hang does still happen with the v6.1-rc7 kernel and 
+> the rt5 real-time patch.  I also confirmed the bug/system hang does 
+> not happen with just v6.1-rc7 without the real-time patch applied.
+>
+> I will bisect through the rt patches to see if I can find the specific 
+> patch(s) that causes the bug.  I will use the v5.15 kernel and it's rt 
+> patches, since v5.15 has the patches broken out individually, and they 
+> can be applied one at a time with 'git am'.
+>
+> I'll provide further updates during the bisect.
+>
+> Thanks,
+>
+> Joe
+>
+>
 
-Ok, fair enough.
+I've been bisecting this bug down. It appears the bug has existed back 
+to v5.15-rc3-rt5. I'll test older versions, but it may be that this bug 
+has always existed with PREEMPT_RT enabled.
 
-> If we drop that "we prefer the RT reader" then it would block on the
-> RTmutex. It will _still_ be preferred over the writer because it will be
-> enqueued before the writer in the queue due to its RT priority. The only
-> downside is that it has to wait until all readers are left.
+I will test some of the real-time patch releases prior to v5.15 to 
+confirm this issue has always existed or not.
 
-The writer has to wait until all the readers have left anyway.
+This is the current message I see on the console when the system locks up:
 
-> So by allowing the RT reader to always acquire the lock as long as the
-> WRITER_BIAS isn't set, we would allow to enter early while the other
-> reader are still in and after the timeout you would only have RT reader
-> going in and out. All SCHED_OTHER reader block on the RTmutex.
-> 
-> I think I like this.
-> 
+[ 4363.605933] INFO: task journal-offline:23780 blocked for more than 
+622 seconds.
+[ 4363.605936]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.605938] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606051] INFO: task stress-ng:23298 blocked for more than 622 
+seconds.
+[ 4363.606052]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606053] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606121] INFO: task stress-ng:23299 blocked for more than 622 
+seconds.
+[ 4363.606122]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606122] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606183] INFO: task stress-ng:23300 blocked for more than 622 
+seconds.
+[ 4363.606184]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606184] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606235] INFO: task stress-ng:23302 blocked for more than 622 
+seconds.
+[ 4363.606236]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606237] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606290] INFO: task stress-ng:23305 blocked for more than 622 
+seconds.
+[ 4363.606291]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606291] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606346] INFO: task stress-ng:23309 blocked for more than 622 
+seconds.
+[ 4363.606347]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606347] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606393] INFO: task stress-ng:23314 blocked for more than 622 
+seconds.
+[ 4363.606394]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606394] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606440] INFO: task stress-ng:23319 blocked for more than 622 
+seconds.
+[ 4363.606440]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606441] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4363.606484] INFO: task stress-ng:23323 blocked for more than 622 
+seconds.
+[ 4363.606485]       Not tainted 5.15.85-051585-realtime #202301172024
+[ 4363.606486] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+disables this message.
+[ 4708.553134] systemd[1]: Failed to start Journal Service.
+[ 4770.052389] systemd[1]: systemd-timesyncd.service: Watchdog timeout 
+(limit 3min)!
 
-If I understand you correctly, the patch becomes this;
 
---8<--
-locking/rwbase: Prevent indefinite writer starvation
+I'll add more details to this thread as I continue.
 
-rw_semaphore and rwlock are explicitly unfair to writers in the presense
-of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
-("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
 
-        The implementation is writer unfair, as it is not feasible to do
-        priority inheritance on multiple readers, but experience has shown
-        that real-time workloads are not the typical workloads which are
-        sensitive to writer starvation.
 
-While atypical, it's also trivial to block writers with PREEMPT_RT
-indefinitely without ever making forward progress. Since LTP-20220121,
-the dio_truncate test case went from having 1 reader to having 16 readers
-and the number of readers is sufficient to prevent the down_write ever
-succeeding while readers exist. Eventually the test is killed after 30
-minutes as a failure.
 
-dio_truncate is not a realtime application but indefinite writer starvation
-is undesirable. The test case has one writer appending and truncating files
-A and B while multiple readers read file A. The readers and writer are
-contending for one file's inode lock which never succeeds as the readers
-keep reading until the writer is done which never happens.
-
-This patch records a timestamp when the first writer is blocked. DT /
-RT tasks can continue to take the lock for read as long as readers exist
-indefinitely. Other readers can acquire the read lock unless a writer
-has been blocked for a minimum of 4ms. This is sufficient to allow the
-dio_truncate test case to complete within the 30 minutes timeout.
-
-Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
----
- include/linux/rwbase_rt.h  |  3 +++
- kernel/locking/rwbase_rt.c | 45 ++++++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 45 insertions(+), 3 deletions(-)
-
-diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
-index 1d264dd08625..b969b1d9bb85 100644
---- a/include/linux/rwbase_rt.h
-+++ b/include/linux/rwbase_rt.h
-@@ -10,12 +10,14 @@
- 
- struct rwbase_rt {
- 	atomic_t		readers;
-+	unsigned long		waiter_timeout;
- 	struct rt_mutex_base	rtmutex;
- };
- 
- #define __RWBASE_INITIALIZER(name)				\
- {								\
- 	.readers = ATOMIC_INIT(READER_BIAS),			\
-+	.waiter_timeout = 0,					\
- 	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
- }
- 
-@@ -23,6 +25,7 @@ struct rwbase_rt {
- 	do {							\
- 		rt_mutex_base_init(&(rwbase)->rtmutex);		\
- 		atomic_set(&(rwbase)->readers, READER_BIAS);	\
-+		(rwbase)->waiter_timeout = 0;			\
- 	} while (0)
- 
- 
-diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-index c201aadb9301..84c5e4e4d25b 100644
---- a/kernel/locking/rwbase_rt.c
-+++ b/kernel/locking/rwbase_rt.c
-@@ -39,7 +39,10 @@
-  * major surgery for a very dubious value.
-  *
-  * The risk of writer starvation is there, but the pathological use cases
-- * which trigger it are not necessarily the typical RT workloads.
-+ * which trigger it are not necessarily the typical RT workloads. SCHED_OTHER
-+ * reader acquisitions will be forced into the slow path if a writer is
-+ * blocked for more than RWBASE_RT_WAIT_TIMEOUT jiffies. New DL / RT readers
-+ * can still starve a writer indefinitely.
-  *
-  * Fast-path orderings:
-  * The lock/unlock of readers can run in fast paths: lock and unlock are only
-@@ -65,6 +68,35 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
- 	return 0;
- }
- 
-+/*
-+ * Allow reader bias for SCHED_OTHER tasks with a pending writer for a
-+ * minimum of 4ms or 1 tick. This matches RWSEM_WAIT_TIMEOUT for the
-+ * generic RWSEM implementation.
-+ */
-+#define RWBASE_RT_WAIT_TIMEOUT DIV_ROUND_UP(HZ, 250)
-+
-+/* rtmutex->wait_lock must be held. */
-+static void __sched set_writer_blocked(struct rwbase_rt *rwb)
-+{
-+	/* Record the timeout based on the the first writer to block. */
-+	if (!rwb->waiter_timeout)
-+		rwb->waiter_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
-+}
-+
-+static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
-+{
-+	/*
-+	 * Allow reader bias for DL / RT tasks. Such tasks should be
-+	 * designed to avoid heavy writer contention or indefinite
-+	 * starvation.
-+	 */
-+	if (rt_task(current))
-+		return true;
-+
-+	/* Allow reader bias unless a writer timeout is reached. */
-+	return time_before(jiffies, rwb->waiter_timeout);
-+}
-+
- static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 				      unsigned int state)
- {
-@@ -74,9 +106,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 	raw_spin_lock_irq(&rtm->wait_lock);
- 	/*
- 	 * Allow readers, as long as the writer has not completely
--	 * acquired the semaphore for write.
-+	 * acquired the semaphore for write and reader bias is still
-+	 * allowed.
- 	 */
--	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
-+	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
-+	    rwbase_allow_reader_bias(rwb)) {
- 		atomic_inc(&rwb->readers);
- 		raw_spin_unlock_irq(&rtm->wait_lock);
- 		return 0;
-@@ -264,12 +298,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
- 		if (__rwbase_write_trylock(rwb))
- 			break;
- 
-+		/* Record first new read/write contention. */
-+		set_writer_blocked(rwb);
-+
- 		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
- 		rwbase_schedule();
- 		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
- 
- 		set_current_state(state);
- 	}
-+
-+	rwb->waiter_timeout = 0;
- 	rwbase_restore_current_state();
- 	trace_contention_end(rwb, 0);
- 
