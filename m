@@ -2,183 +2,152 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 48F1EC38147
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Jan 2023 18:52:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 363C3C00A5A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 08:26:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229569AbjARSwa (ORCPT
+        id S229682AbjASI0m (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Jan 2023 13:52:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37336 "EHLO
+        Thu, 19 Jan 2023 03:26:42 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44920 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229512AbjARSw3 (ORCPT
+        with ESMTP id S230190AbjASI0H (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Jan 2023 13:52:29 -0500
-Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80AE1367E1
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Jan 2023 10:52:27 -0800 (PST)
-Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 9F5113F12A;
-        Wed, 18 Jan 2023 18:52:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-        s=20210705; t=1674067944;
-        bh=wBmBN8UT++KM5edV/QvnrCt6IRASr8MKopVpbOzRDZs=;
-        h=Message-ID:Date:MIME-Version:From:To:Cc:References:Subject:
-         In-Reply-To:Content-Type;
-        b=CPovh16o0JchBaFCzoDnFAuVna+v43DmfxkTUGeFAJZgJR/L/fSZ3SWyo4NAdYgJm
-         Yle3qeLgtO2y/kF9cApRY/9kKUYRXpIc0L0NwmUf9kb/6wHml+JO44kxjjGviJuch/
-         xSeGMLwb7Q9bTHks27qb9q4n/CSnHR5Eq6xooeQOWvlq7+V/SR4aeR6CuPHjK97By9
-         gYEqy7uhtABMoATLQrUE2L0FUD3P1F8fTaS3D79r2PN6Ja8YK0BTOzK8fRCpTvU7eN
-         HvYgoTsDnTMgxWzXa8JUQvrRZywwzoV7Fbr83eso5TwnSC+XLhHGte2CO2CCpH/+9f
-         f+QhSaA9KZokQ==
-Message-ID: <c4fe632e-568b-7c60-c6d2-99e0148680ad@canonical.com>
-Date:   Wed, 18 Jan 2023 13:52:21 -0500
+        Thu, 19 Jan 2023 03:26:07 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4BBA3677BD;
+        Thu, 19 Jan 2023 00:26:01 -0800 (PST)
+Date:   Thu, 19 Jan 2023 09:25:56 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1674116757;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=UL5oma6ejlLF3N+uLlDTWSEseczx97uBZC0GZjrlM6k=;
+        b=3heCkZOhJTEFLLsQfzuQw1rsg0gkYuGSZcBGSYZrizUeXhblr1QlTKX4l3gAoEZTaOXBLj
+        +oy9RwlB0k1x2vhGJVHJNFyl+Jyyo3ILaceodBn3QE78poDYoBHDRzpRoVxZGuP6fyh1Fr
+        U2wZttowTwnmEx3PdMIp/pZ66gmIcdaGNfWbv7Uk28BGhhoIjonCqXlE9WkULC10JdWMKO
+        fCxgG2MzSsNdYMVzFcUygOffdNb4wRFW0QRsLbaBsrFaY8Jp5CAUloF4hc/sBEVO9MW4aK
+        PraAyUcbEa6Vr5AAIy7Hc3X3DlAQppPLkRrud/WV8Rxqf7fTfl//3ND5r1aOlg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1674116757;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=UL5oma6ejlLF3N+uLlDTWSEseczx97uBZC0GZjrlM6k=;
+        b=lPxErHMuXBykY/ZAX21XfN/w1l/K9BFSybPlBcs0f7C3msLY1H0OlZyIPTY4uorB80wRrj
+        3ZF1qAsBFvXycQDw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mel Gorman <mgorman@techsingularity.net>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
+Message-ID: <Y8j+lENBWNWgt4mf@linutronix.de>
+References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+ <Y8avJm1FQI9vB9cv@linutronix.de>
+ <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
+ <Y8gPhTGkfCbGwoUu@linutronix.de>
+ <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.4.2
-Content-Language: en-US
-From:   Joseph Salisbury <joseph.salisbury@canonical.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     williams@redhat.com, bigeasy@linutronix.de
-References: <fe5974c9-3ed0-938a-f43c-4d301f603e92@canonical.com>
- <be47fd9c-028a-0b6b-9c7f-877f01e73960@canonical.com>
- <dea6d0e9-7814-4b8c-44dd-4804cbe48227@canonical.com>
-Subject: Re: System Hang With 5.15.79-rt54 Patch Set
-In-Reply-To: <dea6d0e9-7814-4b8c-44dd-4804cbe48227@canonical.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2023-01-18 17:31:30 [+0000], Mel Gorman wrote:
+ > If we drop that "we prefer the RT reader" then it would block on the
+> > RTmutex. It will _still_ be preferred over the writer because it will be
+> > enqueued before the writer in the queue due to its RT priority. The only
+> > downside is that it has to wait until all readers are left.
+>=20
+> The writer has to wait until all the readers have left anyway.
 
+I meant the READER in case it has RT priority. It will enqueue itself on
+the RTmutex, first in line, and wait until all other READER leave.
 
-On 1/4/23 15:47, Joseph Salisbury wrote:
->
->
-> On 12/15/22 18:39, Joseph Salisbury wrote:
->>
->>
->> On 12/15/22 13:39, Joseph Salisbury wrote:
->>> Hello,
->>>
->>> A bug has been reported[0] against a linux-5.15.y based Ubuntu 
->>> kernel that has the 5.15.79-rt54 real-time patch set applied.
->>>
->>> This bug is causing a system hang when running disk tests with the 
->>> stress-ng[1] test suite.  A 'hung task' call trace is being 
->>> generated[2] just prior to the system hanging.  It appears the hang 
->>> is happening during a call to schedule.
->>>
->>> To see if this was a regression, I also tested prior real-time patch 
->>> sets, going as far back to rt38 and all versions exhibit this bug. I 
->>> will test back further to see if this is in fact a regression and a 
->>> kernel bisect can be done.  I also confirmed the same kernel without 
->>> the rt54 patch set applied does not exhibit this bug.
->>>
->>> I will continue to debug this issue, but I wanted to send this 
->>> message upstream in case anyone else runs into it.  Any specific 
->>> tests, tracing or debugging steps would be greatly appreciated. 
->>> Otherwise, I'll report back to this thread with any findings.
->>>
->>> Thanks,
->>>
->>> Joe
->>>
->>>
->>> [0] https://bugs.launchpad.net/ubuntu-realtime/+bug/1998536
->>> [1] https://github.com/ColinIanKing/stress-ng
->>> [2] https://launchpadlibrarian.net/637058129/dmesg_dl110_rt_kernel.txt
->>
->> I should have also mentioned, I will also test the latest available 
->> patch set (6.1-rc7-rt5) to see if it also exhibits the bug.
->>
->>
-> This bug/system hang does still happen with the v6.1-rc7 kernel and 
-> the rt5 real-time patch.  I also confirmed the bug/system hang does 
-> not happen with just v6.1-rc7 without the real-time patch applied.
->
-> I will bisect through the rt patches to see if I can find the specific 
-> patch(s) that causes the bug.  I will use the v5.15 kernel and it's rt 
-> patches, since v5.15 has the patches broken out individually, and they 
-> can be applied one at a time with 'git am'.
->
-> I'll provide further updates during the bisect.
->
-> Thanks,
->
-> Joe
->
->
+> If I understand you correctly, the patch becomes this;
 
-I've been bisecting this bug down. It appears the bug has existed back 
-to v5.15-rc3-rt5. I'll test older versions, but it may be that this bug 
-has always existed with PREEMPT_RT enabled.
+exactly.
 
-I will test some of the real-time patch releases prior to v5.15 to 
-confirm this issue has always existed or not.
+> --8<--
+=E2=80=A6
+> This patch records a timestamp when the first writer is blocked. DT /
 
-This is the current message I see on the console when the system locks up:
+s/DT/DL
 
-[ 4363.605933] INFO: task journal-offline:23780 blocked for more than 
-622 seconds.
-[ 4363.605936]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.605938] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606051] INFO: task stress-ng:23298 blocked for more than 622 
-seconds.
-[ 4363.606052]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606053] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606121] INFO: task stress-ng:23299 blocked for more than 622 
-seconds.
-[ 4363.606122]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606122] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606183] INFO: task stress-ng:23300 blocked for more than 622 
-seconds.
-[ 4363.606184]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606184] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606235] INFO: task stress-ng:23302 blocked for more than 622 
-seconds.
-[ 4363.606236]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606237] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606290] INFO: task stress-ng:23305 blocked for more than 622 
-seconds.
-[ 4363.606291]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606291] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606346] INFO: task stress-ng:23309 blocked for more than 622 
-seconds.
-[ 4363.606347]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606347] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606393] INFO: task stress-ng:23314 blocked for more than 622 
-seconds.
-[ 4363.606394]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606394] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606440] INFO: task stress-ng:23319 blocked for more than 622 
-seconds.
-[ 4363.606440]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606441] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4363.606484] INFO: task stress-ng:23323 blocked for more than 622 
-seconds.
-[ 4363.606485]       Not tainted 5.15.85-051585-realtime #202301172024
-[ 4363.606486] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-disables this message.
-[ 4708.553134] systemd[1]: Failed to start Journal Service.
-[ 4770.052389] systemd[1]: systemd-timesyncd.service: Watchdog timeout 
-(limit 3min)!
+> RT tasks can continue to take the lock for read as long as readers exist
+> indefinitely. Other readers can acquire the read lock unless a writer
+> has been blocked for a minimum of 4ms. This is sufficient to allow the
+> dio_truncate test case to complete within the 30 minutes timeout.
+>=20
+> Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
+> ---
+=E2=80=A6
+> diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+> index c201aadb9301..84c5e4e4d25b 100644
+> --- a/kernel/locking/rwbase_rt.c
+> +++ b/kernel/locking/rwbase_rt.c
+> @@ -74,9 +106,11 @@ static int __sched __rwbase_read_lock(struct rwbase_r=
+t *rwb,
+>  	raw_spin_lock_irq(&rtm->wait_lock);
+>  	/*
+>  	 * Allow readers, as long as the writer has not completely
+> -	 * acquired the semaphore for write.
+> +	 * acquired the semaphore for write and reader bias is still
+> +	 * allowed.
+>  	 */
+> -	if (atomic_read(&rwb->readers) !=3D WRITER_BIAS) {
+> +	if (atomic_read(&rwb->readers) !=3D WRITER_BIAS &&
+> +	    rwbase_allow_reader_bias(rwb)) {
+>  		atomic_inc(&rwb->readers);
+>  		raw_spin_unlock_irq(&rtm->wait_lock);
+>  		return 0;
+> @@ -264,12 +298,17 @@ static int __sched rwbase_write_lock(struct rwbase_=
+rt *rwb,
+>  		if (__rwbase_write_trylock(rwb))
+>  			break;
+> =20
+> +		/* Record first new read/write contention. */
+> +		set_writer_blocked(rwb);
+> +
+>  		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
+>  		rwbase_schedule();
+>  		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
+> =20
+>  		set_current_state(state);
+>  	}
+> +
+> +	rwb->waiter_timeout =3D 0;
 
+Regarding memory ordering and ordering in general:
+- Should the writer leave from rwbase_schedule() due to a signal then
+  set_writer_blocked() sets a timeout but it is not cleared on the
+  signal leave.
 
-I'll add more details to this thread as I continue.
+- There is only writer in that for loop within rwbase_write_lock()
+  because only one writer can own the rtmutex at a time. (A second
+  writer blocks on the RTmutex and needs to wait, I may have spread some
+  confusion earler). Therefore it should be okay to unconditionally set
+  the timeout (instead of checking for zero).
 
+- Once the writer removes READER_BIAS, it forces the reader into the
+  slowpath. At that time the writer does not own the wait_lock meaning
+  the reader _could_ check the timeout before writer had a chance to set
+  it. The worst thing is probably that if jiffies does not have the
+  highest bit set then it will always disable the reader bias here.
+  The easiest thing is probably to check timeout vs 0 and ensure on the
+  writer side that the lowest bit is always set (in the unlikely case it
+  will end up as zero).
 
+>  	rwbase_restore_current_state();
+>  	trace_contention_end(rwb, 0);
 
-
+Sebastian
