@@ -2,191 +2,127 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D1CBC00A5A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 15:58:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CF0BC004D4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 16:29:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231523AbjASP61 (ORCPT
+        id S229898AbjASQ3B (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 19 Jan 2023 10:58:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54436 "EHLO
+        Thu, 19 Jan 2023 11:29:01 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53012 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231499AbjASP6S (ORCPT
+        with ESMTP id S230099AbjASQ2z (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 19 Jan 2023 10:58:18 -0500
-Received: from mail-wm1-x334.google.com (mail-wm1-x334.google.com [IPv6:2a00:1450:4864:20::334])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A97AE872BB
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2023 07:58:07 -0800 (PST)
-Received: by mail-wm1-x334.google.com with SMTP id g10so1912993wmo.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2023 07:58:07 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=gQh0d2d3M7BVSCcyQZ/JkIHHtILkCJvFyXalBfM8ct4=;
-        b=owdCTvk7akDhOaCdo2MzLWpG+rB7UdvjKBN9kyrv/NKsI0sN5r7dGwHsss2DpgsUf8
-         zm1q+2pvBKVNdcxLejLl/Dht6JFny5uOFk8vRCZwbh/sa7RaC/GLXRGs6cYFcdrx3Scn
-         xT6PgvAyoaHDTT6GWGvB98ZIvgKGy0jZIMfXCu64QF6RbRxQ9++12lf9fm5sZyYUMs20
-         Mc5Z/LJ5Znf8YFbZCwj2WjsLrY32U4TlDrdTgrDwMlpMwPO8UjrFcfAPsu9hjRVO+/8N
-         CIRsE9+1yYet7g5gLgNs2YFAECRQPJ7AzauQDKNXaYKPAfwSLmCwybBukJy3DIbg3OOz
-         +IgA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=gQh0d2d3M7BVSCcyQZ/JkIHHtILkCJvFyXalBfM8ct4=;
-        b=oAwvZiVLhcQYwj30yR/zV8J+cfVaomg6KwgYMGCf9B2xqypAxLlbfwtn/zqYVXIKAs
-         6lDLO5FFW3wDohetziTijp+n7HEo/UpS8oZFZo/sghQsdhHMC+SKUOsNSEWA1K64XsKI
-         pm3zm1wDW1FuuN8HgNZgWOJG+/vMd6ZYiqtII03pCgK5Wo/bA2d3pEOmvxuUf28fhUOX
-         hhtNzaKXipK6Uj0CxJUynlU34gO3v0IS7HWEIxMlbwIe9xtOBxkWW9/HivZRdYbKohoh
-         sCjsKASm0AKHddqWgdxKF0pvuVENVNOW1Ewvk/zB2WQpmcaU6nQrTwfcBMQraS0TrY5P
-         CQZg==
-X-Gm-Message-State: AFqh2kpovWTJEaji3R7gs38El1uBlvEWrtJEr8N5fkFw/H7O7M0tallX
-        P+J+fBQ+fK3Pa/P3hIFpt5C0QSkr4mgB8mDE
-X-Google-Smtp-Source: AMrXdXtMKAou2/XvWDBzPQR6Vseue9tpoqCal8oksDpCwyXgPLdJ2U5VT7/tCX6HQX0llVCa6nZGsw==
-X-Received: by 2002:a05:600c:1c83:b0:3db:27b3:a654 with SMTP id k3-20020a05600c1c8300b003db27b3a654mr1576213wms.26.1674143886226;
-        Thu, 19 Jan 2023 07:58:06 -0800 (PST)
-Received: from [192.168.1.109] ([178.197.216.144])
-        by smtp.gmail.com with ESMTPSA id n21-20020a05600c4f9500b003db0cab0844sm2153116wmq.40.2023.01.19.07.58.04
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 19 Jan 2023 07:58:05 -0800 (PST)
-Message-ID: <18793e0c-0563-05a4-2e38-f919641a3bd4@linaro.org>
-Date:   Thu, 19 Jan 2023 16:58:04 +0100
+        Thu, 19 Jan 2023 11:28:55 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5E7473583;
+        Thu, 19 Jan 2023 08:28:53 -0800 (PST)
+Date:   Thu, 19 Jan 2023 17:28:48 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1674145730;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=xSJxOY/6fo3NzgfrGyFmvSSdAM8W+liCARNIy2pivbo=;
+        b=YIMzvNKahXri42yD5JeF01x8Eqfv+1DuiYSm1Sy4pONAMb9Te/6wXX9XBhmurZDGU78uiX
+        Ivx/Nahdmrn6kxKRx32e/vyxHlkxjsbTiyRatVUw9WPJUnc8gwYKgpBrfKWRXnKbR5LAMS
+        V1ZxxarS1m6se3HDPjWeXFr82+hNk4+Mj/YkMOHusUVYSx0AnhRIv59/SXDol0gtMRgEzq
+        z61I54j7v24KVS8q37MCWzMRp7iaGLz7tmte1UJ+rt/3spoYO/0S/sJL5bQ/3LBGRFxByt
+        vGn/mG2peJfOLEMHFXOAE3oqlbTsqprB2ZFIEnA6p3g+NVps/Z7ni5qNscNytw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1674145730;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=xSJxOY/6fo3NzgfrGyFmvSSdAM8W+liCARNIy2pivbo=;
+        b=CBTxq6QMcx5mZJlDwhB5e5VyLK8DxS6BUydVFDQ+sA3LiZJo3ZoEYDsxX4qgh9L1xZ2k7i
+        HKlGJLc/mZk/ByBA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mel Gorman <mgorman@techsingularity.net>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
+Message-ID: <Y8lvwKHmmnikVDgk@linutronix.de>
+References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+ <Y8avJm1FQI9vB9cv@linutronix.de>
+ <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
+ <Y8gPhTGkfCbGwoUu@linutronix.de>
+ <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
+ <Y8j+lENBWNWgt4mf@linutronix.de>
+ <20230119110220.kphftcehehhi5l5u@techsingularity.net>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.7.0
-Subject: Re: [PATCH v2 5/5] PM: domains: Do not call
- device_pm_check_callbacks() when holding genpd_lock()
-Content-Language: en-US
-To:     Ulf Hansson <ulf.hansson@linaro.org>
-Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
-        Len Brown <len.brown@intel.com>, Pavel Machek <pavel@ucw.cz>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Kevin Hilman <khilman@kernel.org>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>,
-        Lorenzo Pieralisi <lpieralisi@kernel.org>,
-        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        Adrien Thierry <athierry@redhat.com>,
-        Brian Masney <bmasney@redhat.com>,
-        linux-rt-users@vger.kernel.org
-References: <20221219151503.385816-1-krzysztof.kozlowski@linaro.org>
- <20221219151503.385816-6-krzysztof.kozlowski@linaro.org>
- <CAPDyKFoHx+cr-kO-E8mH2UMbs-sH4LY78+1VzJrkS+kGVKvYeQ@mail.gmail.com>
-From:   Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
-In-Reply-To: <CAPDyKFoHx+cr-kO-E8mH2UMbs-sH4LY78+1VzJrkS+kGVKvYeQ@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20230119110220.kphftcehehhi5l5u@techsingularity.net>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 17/01/2023 16:11, Ulf Hansson wrote:
-> On Mon, 19 Dec 2022 at 16:15, Krzysztof Kozlowski
-> <krzysztof.kozlowski@linaro.org> wrote:
->>
->> If PM domain on PREEMPT_RT is marked as GENPD_FLAG_RT_SAFE(), the
->> genpd_lock() will be a raw spin lock, thus device_pm_check_callbacks()
->> must be called outside of the domain lock.
->>
->> This solves on PREEMPT_RT:
->>
->>   [ BUG: Invalid wait context ]
->>   6.1.0-rt5-00325-g8a5f56bcfcca #8 Tainted: G        W
->>   -----------------------------
->>   swapper/0/1 is trying to lock:
->>   ffff76e045dec9a0 (&dev->power.lock){+.+.}-{3:3}, at: device_pm_check_callbacks+0x20/0xf0
->>   other info that might help us debug this:
->>   context-{5:5}
->>   3 locks held by swapper/0/1:
->>    #0: ffff76e045deb8e8 (&dev->mutex){....}-{4:4}, at: __device_attach+0x38/0x1c0
->>    #1: ffffa92b81f825e0 (gpd_list_lock){+.+.}-{4:4}, at: __genpd_dev_pm_attach+0x7c/0x250
->>    #2: ffff76e04105c7a0 (&genpd->rslock){....}-{2:2}, at: genpd_lock_rawspin+0x1c/0x30
->>   stack backtrace:
->>   CPU: 5 PID: 1 Comm: swapper/0 Tainted: G        W          6.1.0-rt5-00325-g8a5f56bcfcca #8
->>   Hardware name: Qualcomm Technologies, Inc. Robotics RB5 (DT)
->>   Call trace:
->>    dump_backtrace.part.0+0xe0/0xf0
->>    show_stack+0x18/0x40
->>    dump_stack_lvl+0x8c/0xb8
->>    dump_stack+0x18/0x34
->>    __lock_acquire+0x938/0x2100
->>    lock_acquire.part.0+0x104/0x28c
->>    lock_acquire+0x68/0x84
->>    rt_spin_lock+0x40/0x100
->>    device_pm_check_callbacks+0x20/0xf0
->>    dev_pm_domain_set+0x54/0x64
->>    genpd_add_device+0x258/0x340
->>    __genpd_dev_pm_attach+0xa8/0x250
->>    genpd_dev_pm_attach_by_id+0xc4/0x190
->>    genpd_dev_pm_attach_by_name+0x3c/0x60
->>    dev_pm_domain_attach_by_name+0x20/0x30
->>    dt_idle_attach_cpu+0x24/0x90
->>    psci_cpuidle_probe+0x300/0x4b0
->>    platform_probe+0x68/0xe0
->>    really_probe+0xbc/0x2dc
->>    __driver_probe_device+0x78/0xe0
->>    driver_probe_device+0x3c/0x160
->>    __device_attach_driver+0xb8/0x140
->>    bus_for_each_drv+0x78/0xd0
->>    __device_attach+0xa8/0x1c0
->>    device_initial_probe+0x14/0x20
->>    bus_probe_device+0x9c/0xa4
->>    device_add+0x3b4/0x8dc
->>    platform_device_add+0x114/0x234
->>    platform_device_register_full+0x108/0x1a4
->>    psci_idle_init+0x6c/0xb0
->>    do_one_initcall+0x74/0x450
->>    kernel_init_freeable+0x2e0/0x350
->>    kernel_init+0x24/0x130
->>    ret_from_fork+0x10/0x20
->>
->> Cc: Adrien Thierry <athierry@redhat.com>
->> Cc: Brian Masney <bmasney@redhat.com>
->> Cc: linux-rt-users@vger.kernel.org
->> Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
->> ---
->>  drivers/base/power/domain.c | 6 +++++-
->>  1 file changed, 5 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/base/power/domain.c b/drivers/base/power/domain.c
->> index 4dfce1d476f4..db499ba40497 100644
->> --- a/drivers/base/power/domain.c
->> +++ b/drivers/base/power/domain.c
->> @@ -1666,10 +1666,14 @@ static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
->>         if (ret)
->>                 goto out;
->>
->> +
->> +       /* PREEMPT_RT: Must be outside of genpd_lock */
->> +       device_pm_check_callbacks(dev);
->> +
->>         genpd_lock(genpd);
->>
->>         genpd_set_cpumask(genpd, gpd_data->cpu);
->> -       dev_pm_domain_set(dev, &genpd->domain);
->> +       dev_pm_domain_set_no_cb(dev, &genpd->domain);
->>
->>         genpd->device_count++;
->>         if (gd)
+On 2023-01-19 11:02:20 [+0000], Mel Gorman wrote:
+> > - Once the writer removes READER_BIAS, it forces the reader into the
+> >   slowpath.
 > 
-> Rather than splitting up the assignment in two steps, I think it
-> should be perfectly fine to move the call to dev_pm_domain_set()
-> outside the genpd lock.
+> Removed in __rwbase_write_trylock IIUC
+
+And added back in case try trylock failed via __rwbase_write_unlock().
+The RTmutex is unlocked and the READER_BIAS is "returned".
+
+> >   At that time the writer does not own the wait_lock meaning
+> >   the reader _could_ check the timeout before writer had a chance to set
+> >   it. The worst thing is probably that if jiffies does not have the
+> >   highest bit set then it will always disable the reader bias here.
+> >   The easiest thing is probably to check timeout vs 0 and ensure on the
+> >   writer side that the lowest bit is always set (in the unlikely case it
+> >   will end up as zero).
+> > 
 > 
-> Note that, genpd_add_device() is always being called with
-> gpd_list_lock mutex being held. This prevents the genpd from being
-> removed, while we use it here.
-
-Hm, indeed, should be fine.
-
+> I am missing something important. On the read side, we have
 > 
-> Moreover, we need a similar change for the call to dev_pm_domain_set()
-> in genpd_remove_device().
 
-Right.
+Look at this side by side:
 
-Best regards,
-Krzysztof
+                writer                                                       reader
 
+| static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+|                                      unsigned int state)
+| {
+|         /* Force readers into slow path */
+|         atomic_sub(READER_BIAS, &rwb->readers);
+
+
+|                                                               static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+|                                                                                                     unsigned int state)
+|                                                               {       
+|                                                                       struct rt_mutex_base *rtm = &rwb->rtmutex;
+|                                                                       int ret;                         
+|                                                               
+|                                                                       raw_spin_lock_irq(&rtm->wait_lock);
+
+Reader has the lock, writer will wait.
+
+|                                                                       /*
+|                                                                        * Allow readers, as long as the writer has not completely
+|                                                                        * acquired the semaphore for write.
+|                                                                        */
+|                                                                       if (atomic_read(&rwb->readers) != WRITER_BIAS) {
+
+here, the timeout value is not yet populated by the writer so the reader
+compares vs 0.
+
+|                                                                               atomic_inc(&rwb->readers);
+|                                                                               raw_spin_unlock_irq(&rtm->wait_lock);
+|                                                                               return 0;
+|                                                                       }
+|                                                              
+
+|         raw_spin_lock_irqsave(&rtm->wait_lock, flags);
+|         if (__rwbase_write_trylock(rwb))
+|                 goto out_unlock;
+|
+
+Hope this makes it easier.
+
+Sebastian
