@@ -2,206 +2,110 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 454C6C004D4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 11:03:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7AF6DC004D4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 11:40:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230209AbjASLC6 (ORCPT
+        id S230312AbjASLkG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 19 Jan 2023 06:02:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49654 "EHLO
+        Thu, 19 Jan 2023 06:40:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46648 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229899AbjASLC1 (ORCPT
+        with ESMTP id S231159AbjASLj3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 19 Jan 2023 06:02:27 -0500
-Received: from outbound-smtp18.blacknight.com (outbound-smtp18.blacknight.com [46.22.139.245])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F2FE6778B
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2023 03:02:24 -0800 (PST)
-Received: from mail.blacknight.com (pemlinmail06.blacknight.ie [81.17.255.152])
-        by outbound-smtp18.blacknight.com (Postfix) with ESMTPS id DB6311C3D1A
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2023 11:02:22 +0000 (GMT)
-Received: (qmail 16588 invoked from network); 19 Jan 2023 11:02:22 -0000
-Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
-  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 19 Jan 2023 11:02:22 -0000
-Date:   Thu, 19 Jan 2023 11:02:20 +0000
-From:   Mel Gorman <mgorman@techsingularity.net>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Thu, 19 Jan 2023 06:39:29 -0500
+Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 13F0178A89;
+        Thu, 19 Jan 2023 03:38:28 -0800 (PST)
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+        id C8D331C09F6; Thu, 19 Jan 2023 12:38:25 +0100 (CET)
+Date:   Thu, 19 Jan 2023 12:38:25 +0100
+From:   Pavel Machek <pavel@denx.de>
+To:     Vignesh Raghavendra <vigneshr@ti.com>
+Cc:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Linux-RT <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
-Message-ID: <20230119110220.kphftcehehhi5l5u@techsingularity.net>
-References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
- <Y8avJm1FQI9vB9cv@linutronix.de>
- <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
- <Y8gPhTGkfCbGwoUu@linutronix.de>
- <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
- <Y8j+lENBWNWgt4mf@linutronix.de>
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Salvatore Bonaccorso <carnil@debian.org>
+Subject: Re: [ANNOUNCE] 5.10.162-rt78
+Message-ID: <Y8krsVFguwWLy+zT@duo.ucw.cz>
+References: <Y8VSslRJZpFbo1/u@uudg.org>
+ <40de655e-26f3-aa7b-f1ec-6877396a9f1e@ti.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="Cfp9a2B4eltLvtv1"
 Content-Disposition: inline
-In-Reply-To: <Y8j+lENBWNWgt4mf@linutronix.de>
+In-Reply-To: <40de655e-26f3-aa7b-f1ec-6877396a9f1e@ti.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jan 19, 2023 at 09:25:56AM +0100, Sebastian Andrzej Siewior wrote:
-> On 2023-01-18 17:31:30 [+0000], Mel Gorman wrote:
->  > If we drop that "we prefer the RT reader" then it would block on the
-> > > RTmutex. It will _still_ be preferred over the writer because it will be
-> > > enqueued before the writer in the queue due to its RT priority. The only
-> > > downside is that it has to wait until all readers are left.
-> > 
-> > The writer has to wait until all the readers have left anyway.
-> 
-> I meant the READER in case it has RT priority. It will enqueue itself on
-> the RTmutex, first in line, and wait until all other READER leave.
-> 
 
-Ah.
+--Cfp9a2B4eltLvtv1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> > If I understand you correctly, the patch becomes this;
-> 
-> exactly.
-> 
-> > --8<--
-> ???
-> > This patch records a timestamp when the first writer is blocked. DT /
-> 
-> s/DT/DL
-> 
+Hi!
 
-Fixed.
+> > I'm pleased to announce the 5.10.162-rt78 stable release.
+> >=20
+> > You can get this release via the git tree at:
+> >=20
+> >   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> >=20
+> >   branch: v5.10-rt
+> >   Head SHA1: 143ef105f40a65f3ddd57121d4b4bc36eb10cc06
+> >=20
+> > Or to build 5.10.162-rt78 directly, the following patches should be app=
+lied:
 
-> > RT tasks can continue to take the lock for read as long as readers exist
-> > indefinitely. Other readers can acquire the read lock unless a writer
-> > has been blocked for a minimum of 4ms. This is sufficient to allow the
-> > dio_truncate test case to complete within the 30 minutes timeout.
-> > 
-> > Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
-> > ---
-> ???
-> > diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-> > index c201aadb9301..84c5e4e4d25b 100644
-> > --- a/kernel/locking/rwbase_rt.c
-> > +++ b/kernel/locking/rwbase_rt.c
-> > @@ -74,9 +106,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
-> >  	raw_spin_lock_irq(&rtm->wait_lock);
-> >  	/*
-> >  	 * Allow readers, as long as the writer has not completely
-> > -	 * acquired the semaphore for write.
-> > +	 * acquired the semaphore for write and reader bias is still
-> > +	 * allowed.
-> >  	 */
-> > -	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
-> > +	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
-> > +	    rwbase_allow_reader_bias(rwb)) {
-> >  		atomic_inc(&rwb->readers);
-> >  		raw_spin_unlock_irq(&rtm->wait_lock);
-> >  		return 0;
-> > @@ -264,12 +298,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
-> >  		if (__rwbase_write_trylock(rwb))
-> >  			break;
-> >  
-> > +		/* Record first new read/write contention. */
-> > +		set_writer_blocked(rwb);
-> > +
-> >  		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
-> >  		rwbase_schedule();
-> >  		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-> >  
-> >  		set_current_state(state);
-> >  	}
-> > +
-> > +	rwb->waiter_timeout = 0;
-> 
-> Regarding memory ordering and ordering in general:
-> - Should the writer leave from rwbase_schedule() due to a signal then
->   set_writer_blocked() sets a timeout but it is not cleared on the
->   signal leave.
-> 
+> I see that vanilla 5.10.162-rt78 fails to build with arm64 defconfig. [0]=
+ Full log [1]
+> Any pointers on what maybe wrong?
 
-You're correct, it should be reset in the signal check block before the
-wait_lock is released by __rwbase_write_unlock. I considered different
-ways to avoid multiple reset points but it was untidy.
+We see the same failure.=20
 
-> - There is only writer in that for loop within rwbase_write_lock()
->   because only one writer can own the rtmutex at a time. (A second
->   writer blocks on the RTmutex and needs to wait, I may have spread some
->   confusion earler). Therefore it should be okay to unconditionally set
->   the timeout (instead of checking for zero).
-> 
+>   AS      arch/arm64/kernel/entry.o
+> arch/arm64/kernel/entry.S: Assembler messages:
+> arch/arm64/kernel/entry.S:763: Error: immediate out of range at operand 3=
+ -- `and x2,x19,#((1<<1)|(1<<0)|(1<<2)|(1<<3)|(1<<4)|(1<<5)|(1<<6)|(1<<13)|=
+(1<<7))'
+> make[2]: *** [scripts/Makefile.build:367: arch/arm64/kernel/entry.o] Erro=
+r 1
+> make[1]: *** [scripts/Makefile.build:503: arch/arm64/kernel] Error 2
+> make: *** [Makefile:1837: arch/arm64] Error 2
 
-Ah ok, I see now or at least I think I do.
+The line is:
 
-> - Once the writer removes READER_BIAS, it forces the reader into the
->   slowpath.
+>        and     x2, x19, #_TIF_WORK_MASK
 
-Removed in __rwbase_write_trylock IIUC
+And I believe there were some cleanups in stable in that area. Let me
+search for them.
 
->   At that time the writer does not own the wait_lock meaning
->   the reader _could_ check the timeout before writer had a chance to set
->   it. The worst thing is probably that if jiffies does not have the
->   highest bit set then it will always disable the reader bias here.
->   The easiest thing is probably to check timeout vs 0 and ensure on the
->   writer side that the lowest bit is always set (in the unlikely case it
->   will end up as zero).
-> 
+Best regards,
+								Pavel
+--=20
+DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
 
-I am missing something important. On the read side, we have
+--Cfp9a2B4eltLvtv1
+Content-Type: application/pgp-signature; name="signature.asc"
 
-        raw_spin_lock_irq(&rtm->wait_lock);
-        /*
-         * Allow readers, as long as the writer has not completely
-         * acquired the semaphore for write and reader bias is still
-         * allowed.
-         */
-        if (atomic_read(&rwb->readers) != WRITER_BIAS &&
-            rwbase_allow_reader_bias(rwb)) {
-                atomic_inc(&rwb->readers);
-                raw_spin_unlock_irq(&rtm->wait_lock);
-                return 0;
-        }
+-----BEGIN PGP SIGNATURE-----
 
-So rtm->wait_lock is held and both the WRITER_BASE and timeout are checked
-under the lock. On the write side it's also held when the timeout is
-updated here
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCY8krsQAKCRAw5/Bqldv6
+8vT7AJ9jFg3/8RRnxGSeF124ebi5x6X7KACgu7fIwA3SBuZR/RoUGxsZqM/2q68=
+=+Nem
+-----END PGP SIGNATURE-----
 
-        raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-	...
-	for (;;) {
-		...
-
-                /* Record timeout when reader bias is ignored. */
-                rwb->waiter_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
-
-                raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
-                rwbase_schedule();
-                raw_spin_lock_irqsave(&rtm->wait_lock, flags);
-
-                set_current_state(state);
-        }
-
-        rwb->waiter_timeout = 0;
-	...
-
-out_unlock:
-        raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
-
-(it's also now held in the signal block when it is cleared)
-
-I'm not seeing exactly what the problem is unless it's an issue in the
-fast path but I think the atomic_try_cmpxchg_acquire works there.
-
-In the absense of wait_lock, I guess there would be a potential
-race between the atomic_read(&rwb->readers) != WRITER_BIAS and
-rwbase_allow_reader_bias(rwb) but that shouldn't be the case now. Even
-if it wasn't locked, it might allow a new reader through but it'd be
-a transient problem and writer starvation should be prevented once the
-timeout is observed.
-
--- 
-Mel Gorman
-SUSE Labs
+--Cfp9a2B4eltLvtv1--
