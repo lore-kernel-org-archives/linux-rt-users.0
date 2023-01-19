@@ -2,27 +2,46 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA886C004D4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 12:41:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 68199C004D4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Jan 2023 13:17:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230375AbjASMlF (ORCPT
+        id S231136AbjASNRl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 19 Jan 2023 07:41:05 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59444 "EHLO
+        Thu, 19 Jan 2023 08:17:41 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56492 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229751AbjASMkq (ORCPT
+        with ESMTP id S230217AbjASNR2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 19 Jan 2023 07:40:46 -0500
-Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 15CA151C77;
-        Thu, 19 Jan 2023 04:37:30 -0800 (PST)
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id 956321C09F6; Thu, 19 Jan 2023 13:37:28 +0100 (CET)
-Date:   Thu, 19 Jan 2023 13:37:28 +0100
-From:   Pavel Machek <pavel@denx.de>
+        Thu, 19 Jan 2023 08:17:28 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43D14BB8B
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2023 05:16:46 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1674134205;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=ICTXnwd6Can73IBUDK0Kd0Dz0sJD+IpzxuL1dlMdbsA=;
+        b=AL5TBreh1VjyFyRJT5EiI2ufamHNJ62LGEahPcTDW02pe427E81fhgqsBnT/Okd4WpnEMC
+        art4TR5DAzmjU/5S5rNzdgORufVQZ+JVPRsshvAIrO+CaoVb3mhnFjOnTKa+jxbZCCts3P
+        SIfArYhuZbYLnZqEqr1c/wRNqMl2eI4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-358-v4iRnjPTONmUIC1xeNPNFw-1; Thu, 19 Jan 2023 08:16:39 -0500
+X-MC-Unique: v4iRnjPTONmUIC1xeNPNFw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 14D941C08985;
+        Thu, 19 Jan 2023 13:16:36 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.197])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 5FF9E492B03;
+        Thu, 19 Jan 2023 13:16:35 +0000 (UTC)
+Date:   Thu, 19 Jan 2023 10:16:34 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To:     Pavel Machek <pavel@denx.de>
 Cc:     Vignesh Raghavendra <vigneshr@ti.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
         LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         stable-rt <stable-rt@vger.kernel.org>,
@@ -37,27 +56,29 @@ Cc:     Vignesh Raghavendra <vigneshr@ti.com>,
         Jeff Brady <jeffreyjbrady@gmail.com>,
         Salvatore Bonaccorso <carnil@debian.org>
 Subject: Re: [ANNOUNCE] 5.10.162-rt78
-Message-ID: <Y8k5iGfwGJRQRi1Q@duo.ucw.cz>
+Message-ID: <Y8lCspFtQ0wg6uCy@uudg.org>
 References: <Y8VSslRJZpFbo1/u@uudg.org>
  <40de655e-26f3-aa7b-f1ec-6877396a9f1e@ti.com>
  <Y8krsVFguwWLy+zT@duo.ucw.cz>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="3TX4iDTAe6OJlpVP"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="RrHfV96HQrxQVFBx"
 Content-Disposition: inline
 In-Reply-To: <Y8krsVFguwWLy+zT@duo.ucw.cz>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
---3TX4iDTAe6OJlpVP
+--RrHfV96HQrxQVFBx
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
-
+On Thu, Jan 19, 2023 at 12:38:25PM +0100, Pavel Machek wrote:
+> Hi!
+>=20
 > > > I'm pleased to announce the 5.10.162-rt78 stable release.
 > > >=20
 > > > You can get this release via the git tree at:
@@ -89,27 +110,69 @@ ror 1
 > The line is:
 >=20
 > >        and     x2, x19, #_TIF_WORK_MASK
->=20
-> And I believe there were some cleanups in stable in that area. Let me
-> search for them.
 
-Commit 1bee9dbbcabbb77617fb257f964628b50ba2529c is related, but does
-not revert cleanly.
+I believe this is related to the arch/arm64/include/asm/thread_info.h
+changes in 5.10.162-rt78, specifically:
+
+    79a9991e87fe arm64: add support for TIF_NOTIFY_SIGNAL
+    1ba44dcf789d Merge tag 'v5.10.162' into v5.10-rt
+
+The first one is the original change, coming from stable v5.10.162 and the
+second one has the merge conflict I fixed in that file due to the existence
+of TIF_NEED_RESCHED_LAZY in PREEMPT_RT.
+
+It escaped me that having TIF_NEED_RESCHED_LAZY set to 13 breaks the AND
+statement reported above. Looking at
+
+    b5a5a01d8e9a arm64: uaccess: remove addr_limit_user_check()
+
+specially this note
+
+    To ensure that _TIF_WORK_MASK can be used as an immediate value in an
+    AND instruction (as it is in `ret_to_user`), TIF_MTE_ASYNC_FAULT is
+    renumbered to keep the constituent bits of _TIF_WORK_MASK contiguous.
+
+I understand that I need to either have to renumber TIF_NEED_RESCHED_LAZY
+to 8, with the risk of breaking something else, or backport commit
+b5a5a01d8e9a in order to remove TIF_FSCHECK and then safely renumber
+TIF_NEED_RESCHED_LAZY.
+
+Guidance is welcome here :)
 
 Best regards,
-								Pavel
---=20
-DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Luis
 
---3TX4iDTAe6OJlpVP
+> And I believe there were some cleanups in stable in that area. Let me
+> search for them.
+>=20
+> Best regards,
+> 								Pavel
+> --=20
+> DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
+> HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+
+
+---end quoted text---
+
+--RrHfV96HQrxQVFBx
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCY8k5iAAKCRAw5/Bqldv6
-8hy8AJ9/XGrPRpjd8hXHIeUftUS7E60+wACfcDFgRf0R2QqJm+7zGeKE4N1uh9A=
-=I1bi
+iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAmPJQrIACgkQ85SkI/jm
+fCbnbA//Zj+o1GrFLzhK3mDWQHoDRlUtgAEk0ctO3VLzBr8SZTskqJW1x47Ihfgq
+BNFy7MLSniqu7fyJgEzH/0arW/+3qoOy0T61NybJv5HIUj00m37Ah4CVjVXNSpGB
+Io9uCy6JdbzEmhDGAZ1iSjvowjhlzKcdM9226BVn0BMMJqy2s2j6BCykZn7YabmI
+h4VelQTIJYlfSvxZsp0iK3l3Z9GRCDoSyduvnRX07siiWOZfXRRHp2XIhEHKvE/R
+3LXrqYv576mF2nfY0QIYo27rhJd4RZ1X7ADKfGx13pZVyObNsyoKwdtGyQqnynRD
+lxfYMW3B0mwXfrhR5soYvv/xaSqthNthjkxY+3oNTpltYxx0DzESXxXywefNseZE
+3KITzG8drms7H9bzw8tVVwHeD2KtrkswsUNRCNyDpsI4klyujxwZWubkrgMd1Ja9
+wGDrP+f3OGzlv62qVgBMfVV8vMrO4Xlvr/QqKywqFkAmwiX7BnDFuhSpcwQrZruF
+rgEyCCFmIpDwejWGVH5ccl0tU6d5psju8taFO6ImPI9bACJ8UxqsgnGgkIl6iJRH
+HCa0RRSQ5zmSj4ZOKbLUrAnNhcSmwELKdrMNI7rstN2a0hIsRxK8o5RE81sPOJAg
+nppOugBmH75Jce8q5m0ZbtnJ0CrDgfM7hsH65ZgwDGiEmWGX55E=
+=V2rh
 -----END PGP SIGNATURE-----
 
---3TX4iDTAe6OJlpVP--
+--RrHfV96HQrxQVFBx--
+
