@@ -2,42 +2,29 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A68DCC25B4E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 13:38:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADD3FC05027
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 14:07:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229975AbjATNij (ORCPT
+        id S230076AbjATOHY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Jan 2023 08:38:39 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48988 "EHLO
+        Fri, 20 Jan 2023 09:07:24 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34328 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229459AbjATNii (ORCPT
+        with ESMTP id S229683AbjATOHW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Jan 2023 08:38:38 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 372035421A;
-        Fri, 20 Jan 2023 05:38:30 -0800 (PST)
-Date:   Fri, 20 Jan 2023 14:38:27 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1674221908;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=NsKNz+h7l7zK73sE5jHBFOsX4kUSjPMG5HGuXT67KNU=;
-        b=hMVb0C/qwtLknqlm9ZTWsZp8gViVTHq3936ul8+F/rjZ2C/sgt5+DFrbylMt7YcpAHU3oH
-        s5YRhw0mbmU5xAOUw11TSsuYNR6BabwKiK0BUZH6EnHXFtJrzjrfU7+jk9sLeRQFhl52bM
-        noYQvDhJmie3ohgf6vlqG25yiFWOsAwo294gs5CU+91q19gh2Ous1s4W2gLWSXf4hfFq5g
-        N/SSCNdKYGIkOYGevx1ji2XNC15o/itV2b+YKslr31hccta4mAL/107ExcW87kQo7dXxix
-        HZ6fc5RqejZNFrSOnc60iWEfw7mR8Tr5XafJoL8j51qB5CsHiSldM4D/A+x0Yw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1674221908;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=NsKNz+h7l7zK73sE5jHBFOsX4kUSjPMG5HGuXT67KNU=;
-        b=1/EOPOv6QyXT4fegGzYXsWuax92mLA9Ez2GeK/k4fouB6Yl9u7shmtVu/E/cx6Mcn5/W6Z
-        NQC1tgrEqUl2cjDA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mel Gorman <mgorman@techsingularity.net>
+        Fri, 20 Jan 2023 09:07:22 -0500
+Received: from outbound-smtp27.blacknight.com (outbound-smtp27.blacknight.com [81.17.249.195])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 728B440C6
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Jan 2023 06:07:19 -0800 (PST)
+Received: from mail.blacknight.com (pemlinmail06.blacknight.ie [81.17.255.152])
+        by outbound-smtp27.blacknight.com (Postfix) with ESMTPS id C59BA146014
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Jan 2023 14:07:17 +0000 (GMT)
+Received: (qmail 17776 invoked from network); 20 Jan 2023 14:07:17 -0000
+Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
+  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 20 Jan 2023 14:07:17 -0000
+Date:   Fri, 20 Jan 2023 14:07:15 +0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@kernel.org>,
@@ -45,9 +32,8 @@ Cc:     Peter Zijlstra <peterz@infradead.org>,
         Linux-RT <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
 Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
-Message-ID: <Y8qZU33Cvbc7p7DE@linutronix.de>
-References: <Y8avJm1FQI9vB9cv@linutronix.de>
- <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
+Message-ID: <20230120140715.svqidkl3fbwz3krm@techsingularity.net>
+References: <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
  <Y8gPhTGkfCbGwoUu@linutronix.de>
  <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
  <Y8j+lENBWNWgt4mf@linutronix.de>
@@ -56,40 +42,35 @@ References: <Y8avJm1FQI9vB9cv@linutronix.de>
  <20230119174101.rddtxk5xlamlnquh@techsingularity.net>
  <Y8pP3CD1PQ4KWhXF@linutronix.de>
  <20230120132441.4jjke47rnpikiuf5@techsingularity.net>
+ <Y8qZU33Cvbc7p7DE@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-15
 Content-Disposition: inline
-In-Reply-To: <20230120132441.4jjke47rnpikiuf5@techsingularity.net>
+In-Reply-To: <Y8qZU33Cvbc7p7DE@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-01-20 13:24:41 [+0000], Mel Gorman wrote:
-> --- a/kernel/locking/rwbase_rt.c
-> +++ b/kernel/locking/rwbase_rt.c
-> @@ -264,12 +291,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
->  		if (__rwbase_write_trylock(rwb))
->  			break;
->  
-> +		/* Record timeout when reader bias is ignored. */
-> +		rwb->waiter_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
-		rwb->waiter_timeout = (jiffies + RWBASE_RT_WAIT_TIMEOUT) | 1;
+On Fri, Jan 20, 2023 at 02:38:27PM +0100, Sebastian Andrzej Siewior wrote:
+> On 2023-01-20 13:24:41 [+0000], Mel Gorman wrote:
+> > --- a/kernel/locking/rwbase_rt.c
+> > +++ b/kernel/locking/rwbase_rt.c
+> > @@ -264,12 +291,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+> >  		if (__rwbase_write_trylock(rwb))
+> >  			break;
+> >  
+> > +		/* Record timeout when reader bias is ignored. */
+> > +		rwb->waiter_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
+> 		rwb->waiter_timeout = (jiffies + RWBASE_RT_WAIT_TIMEOUT) | 1;
+> 
+> There is the unlikely case that (jiffies + RWBASE_RT_WAIT_TIMEOUT) = 0
+> on 32bit where it is not jiffies64.
+> 
+> Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> 
 
-There is the unlikely case that (jiffies + RWBASE_RT_WAIT_TIMEOUT) = 0
-on 32bit where it is not jiffies64.
+Thanks very much, updated version will be posted shortly.
 
-Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-
-> +
->  		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
->  		rwbase_schedule();
->  		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
->  
->  		set_current_state(state);
->  	}
-> +
-> +	rwb->waiter_timeout = 0;
->  	rwbase_restore_current_state();
->  	trace_contention_end(rwb, 0);
-
-Sebastian
+-- 
+Mel Gorman
+SUSE Labs
