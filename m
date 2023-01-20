@@ -2,109 +2,115 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D2001C46467
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 06:01:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5AFEAC25B4E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 08:25:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230527AbjATGB6 (ORCPT
+        id S229798AbjATIZG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Jan 2023 01:01:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44790 "EHLO
+        Fri, 20 Jan 2023 03:25:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47740 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229701AbjATGB4 (ORCPT
+        with ESMTP id S229678AbjATIZF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Jan 2023 01:01:56 -0500
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.22])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5BB9E2B2A9;
-        Thu, 19 Jan 2023 22:01:55 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.de; s=s31663417;
-        t=1674194486; bh=2HTFXG94hmGf8elB+ZGfbE05fbZFJ3N1BBWe/PnHMYg=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=CXCcqAAjf3jrbmcESAaVjifzWD4XGAJDWhDIcbzxTaTmr1yuchXTueHqsio/yrb1G
-         ft49Gqn5tkv90edo1fBSQhNqVZgk2FWuqPuRssbw523kEuH7370SgiDblq+0LM9GVM
-         4l9fU+cLNOYFHj6shVb/g4oO0GoXNFYQlwJwrlmbyHjnsrka8EEU31FQc+0g5X4pmd
-         irFf++3FKQvCOA5RwocFNPKtd26VOgNsQlPAby4oDnONg8M9fcEgobQQK2rEYfMFQl
-         FGGAYy6HbRbAGeCz7le7lxMU8hrK05QKrtDRVpwSGxu3mDVzEsJk8igpld3PatNLLN
-         20pJI5/+oseGg==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from homer.fritz.box ([185.221.149.244]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MvK0X-1oSR1g3vaz-00rI6r; Fri, 20
- Jan 2023 07:01:26 +0100
-Message-ID: <c9b77d7df95c2ae354e655ada0f34ea3c83f0bba.camel@gmx.de>
-Subject: Re: [ANNOUNCE] 5.10.162-rt78
-From:   Mike Galbraith <efault@gmx.de>
-To:     Jens Axboe <axboe@kernel.dk>,
-        Salvatore Bonaccorso <carnil@debian.org>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     Pavel Machek <pavel@denx.de>,
-        Vignesh Raghavendra <vigneshr@ti.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+        Fri, 20 Jan 2023 03:25:05 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 192B66C13D;
+        Fri, 20 Jan 2023 00:25:04 -0800 (PST)
+Date:   Fri, 20 Jan 2023 09:25:00 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1674203102;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=EW8WxfGlo7Z0hlPrNiMcuJpvKn5fURLAgb76eM76chc=;
+        b=sDge4ZGvVNczEo0IxcwLsPGOET45jvufaYgyg4o5w+SHHhLnYcI9Oa+Kjnc1JVsGdbw4ER
+        nn+zXTc1xSrg38OMnT/XGGbchGmzrDCICkmJ2YXOIZEHmM0wASB34vbRUzKtxWXSQ/RXSq
+        PsuDDVdqZG1TnIxU7GWKpGFPAgOrELpMvc0qF3jmIQ4btHVSOzBDOnTk8ksqq6tMkVhDOJ
+        XCY+clsk2q0ffOfDa8XcohUrxcklIEM/Isi3+XQjhLEkTH5lwBJdQyHo//77SzcKDErgFC
+        pHKn1h4dlKXLBcyUnt2a1RKLEzpn3iwcVFXbb/frjdRc6MUg0fjNTTG8uGWH4A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1674203102;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=EW8WxfGlo7Z0hlPrNiMcuJpvKn5fURLAgb76eM76chc=;
+        b=g2RQ2E2lMR1HQFsq4hO6g8uUApU4XwFvlm/AJ7D8mYBpPQOgK8AMFuT7VO05YF+kSjosP/
+        wi5XPN5COMSuRBCw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Mel Gorman <mgorman@techsingularity.net>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>
-Date:   Fri, 20 Jan 2023 07:01:23 +0100
-In-Reply-To: <a4f62523-b01e-3986-7914-767f999b4153@kernel.dk>
-References: <Y8VSslRJZpFbo1/u@uudg.org>
-         <40de655e-26f3-aa7b-f1ec-6877396a9f1e@ti.com> <Y8krsVFguwWLy+zT@duo.ucw.cz>
-         <Y8lCspFtQ0wg6uCy@uudg.org> <Y8mwF0m+M1+e/fz/@eldamar.lan>
-         <a4f62523-b01e-3986-7914-767f999b4153@kernel.dk>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
+Message-ID: <Y8pP3CD1PQ4KWhXF@linutronix.de>
+References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+ <Y8avJm1FQI9vB9cv@linutronix.de>
+ <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
+ <Y8gPhTGkfCbGwoUu@linutronix.de>
+ <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
+ <Y8j+lENBWNWgt4mf@linutronix.de>
+ <20230119110220.kphftcehehhi5l5u@techsingularity.net>
+ <Y8lvwKHmmnikVDgk@linutronix.de>
+ <20230119174101.rddtxk5xlamlnquh@techsingularity.net>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:ny3ueawLfOJf2WQgVtegw2ap7gBT/CvPRPQCFdlKZODxWZ2vuuA
- iRFFo+iiO8MWT288kxpCwH0BDCRWL8yS9dIOh5CoYDyUvSq8iDhSt2CUdGLI1JCxImxl9z1
- wgmbXrFgEGdPokq2cJ74qPSo5Uj/JU1dFoCRIY/PEP6xWFvcLM27VWGwE9xKK4dkqw2AL3j
- CjgJwcwY7ZGGGoBoTafzA==
-UI-OutboundReport: notjunk:1;M01:P0:IAKBSwuht70=;NhdDCTifPmQI9s9BFfDJr57WvvA
- gBAf2dcNknJMlcmwerzfG/Brur9S1wXfcqig3zCDMrvmYihzp3tujk1RQNS597xK/2S6Pd71d
- jm2RrXZ2JXhnPklpH7kOnEmDxV7zAWg6mHy/CbieFEAsjO9P7ECSeU7fzpetRUY0Qgi3uJuFE
- o8+cc2Pml/NmUzyFbWjatt8mgot+6pKNZTK089/PQmu1M3K2Z3t/nSh0Z4v955/l0KJQ9TMwF
- 5506z7U+n7ELvrBwkpatWTF562DA3sbvyHqKgfdCY5ac7PXtCCs55xLwBeAdV4ko/nqqijWO+
- k6JomYHRu+pmQLAcUJhmQ8dK7Zt4TqSSqDmGEsK4vz9dfLx+rXAqf33RHggO5rfj4afywhQdL
- 8zw7PIYj8F/kvYBiUvy6Cdnp9lyGRBqUp4cHpqbB26fPK+lDeQpsuRFmbX2maysOMs9vZQtt/
- 0r3OX3yOTyOoHXHDvP8FlL0MhMpDzDdxZiFjATvPZJ98Q8Rc2/sTaMyVNRLPs4VNmnEP/1XDr
- gSSHTvSqMObqiYwPl0t4sRGittA0ArzVv0ij9a0ABgEgjPaRnjG+Yg18Q1+8/vqBqVMkaaoK0
- vuPbVwqq4Ms3/b9zi5tlj0tLEWKuxexsD8WWsCT/Fd9aQHUpDRGMegHS77yaOhGc5AIWS0GIJ
- x9xWOQxH99cI5hjVm3+qDFqOd47HfgHMbBaFiS/W8lc1t1LJrpxoHrWRzVzUk10Os4CteTp19
- UbmunKzQkj/omL/Csn0NLAF3k6BfcSVqe8lcb+mc989DOG1itipR/4nStVCofyPHcZ8WEwjUI
- ICDwwLU7UqUBUZ2dRTYptv0Q2P1UgKjal6O9VRsDoz8/zwcftSC18cem25IwSZNN4Xbd/l/BX
- PRHUIxWcWPj6eTjiptxJqcnpXvNmwM6JEGnLY3m78NOJLbdKgCKn7VCk6gx/TYEn5xAEdtBHb
- G5b3CHZANeiPaOb2RM5ReyLmx3w=
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20230119174101.rddtxk5xlamlnquh@techsingularity.net>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 2023-01-19 at 16:09 -0700, Jens Axboe wrote:
->
-> I guess we need to twiddle that asm to deal with eg 16 bits, rather than
-> attempt to backport any TIF removal patches.
+On 2023-01-19 17:41:01 [+0000], Mel Gorman wrote:
+> 
+> Yes, it makes your concern much clearer but I'm not sure it actually matters
+> in terms of preventing write starvation or in terms of correctness. At
+> worst, a writer is blocked that could have acquired the lock during a tiny
+> race but that's a timing issue rather than a correctness issue.
 
-Hm, 'mov' gets past the weird ass rules committee, so seems it should
-be trivial for someone who speaks arm.  This built/booted once on rpi4.
+Correct. My concern is that one reader may need to wait 4ms+ for the
+lock while a following reader (that one that sees the timeout) does not.
+This can lead to confusion later on.
 
-diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
-index d5bc1dbdd2fd..a4931bff8ea9 100644
-=2D-- a/arch/arm64/kernel/entry.S
-+++ b/arch/arm64/kernel/entry.S
-@@ -751,7 +760,12 @@ SYM_CODE_START_LOCAL(ret_to_user)
- 	bl	trace_hardirqs_off
- #endif
- 	ldr	x19, [tsk, #TSK_TI_FLAGS]
-+#ifndef CONFIG_PREEMPT_RT
- 	and	x2, x19, #_TIF_WORK_MASK
-+#else
-+	mov	x2, #_TIF_WORK_MASK
-+	and	x2, x19, x2
-+#endif
- 	cbnz	x2, work_pending
- finish_ret_to_user:
- 	user_enter_irqoff
+> Lets say the race hits
+> 
+> 									reader sees waiter_timeout == 0
+> 	writer acquires wait_lock
+> 	__rwbase_write_trylock fails
+> 	update waiter_timeout
+> 	rwbase_schedule
+> 
+> Each reader that hits the race goes ahead at a point in time but anything
+> readers after that observe the timeout and eventually the writer goes ahead.
+> 
+> If the waiter_timeout was updated before atomic_sub(READER_BIAS),
+> it doesn't close the race as atomic_sub is unordered so barriers would
+> also be needed and clearing of waiter_timeout moves to out_unlock in case
+> __rwbase_write_trylock succeeds. That's possible but the need for barriers
+> makes it more complicated than is necessary.
 
+yes...
+
+> The race could be closed by moving wait_lock acquisition before the
+> atomic_sub in rwbase_write_lock() but it expands the scope of the wait_lock
+> and I'm not sure that's necessary for either correctness or preventing
+> writer starvation. It's a more straight-forward fix but expanding the
+> scope of a lock unnecessarily has been unpopular in the past.
+> 
+> I think we can close the race that concerns you but I'm not convinced we
+> need to and changing the scope of wait_lock would need a big comment and
+> probably deserves a separate patch.
+
+would it work to check the timeout vs 0 before and only apply the
+timeout check if it is != zero? The writer would need to unconditionally
+or the lowest bit. That should close gaps at a low price. The timeout
+variable is always read within the lock so there shouldn't be need for
+any additional barriers.
+
+> Sorry if I'm still missing something stupid and thanks for your patience
+> reviewing this.
+thank that it is patience and not pain in the ass ;)
+
+Sebastian
