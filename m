@@ -2,83 +2,239 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 84FD4C05027
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 13:04:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13755C05027
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 13:24:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230458AbjATNEb (ORCPT
+        id S229907AbjATNYt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Jan 2023 08:04:31 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56822 "EHLO
+        Fri, 20 Jan 2023 08:24:49 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41986 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230453AbjATNEa (ORCPT
+        with ESMTP id S229897AbjATNYs (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Jan 2023 08:04:30 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F1D93C131D;
-        Fri, 20 Jan 2023 05:04:19 -0800 (PST)
-Date:   Fri, 20 Jan 2023 14:04:15 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1674219856;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=u1W0wx5GLXqJFqLI02c9LueVs242lVw0159Mgl2bhFE=;
-        b=3R+rSoPpKs/9y39PgQ9cpha7hWA0zUk0UZ73qQvoXWjXXdYcW49Ep16oKAXStcVyMHIfPu
-        o0pe/VzSgDfLVAn19lPkhgtf3AFMSnqyr0vnHoDZUwuiHEaEP1x0DuMMOtnz79/I6bbwhU
-        xxjzoNg63xsvN5Wg7l+WtAuHNXuuPg/rsQV0bCJSeWMvka/PAfMXmjorY/+5wFVN0GOSR+
-        7d7NnCCvtvY4ivemfvO7J5rv8paI1OI+ZEv8bt6IWw8br1J3ls41WkF2y9weW06ngwJQ2C
-        GE9J2AZt3+1eGNQM4LVlK5+E7ryfwY/F8hRbC2aYhjxi+GhaUN38EsL5I87atA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1674219856;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=u1W0wx5GLXqJFqLI02c9LueVs242lVw0159Mgl2bhFE=;
-        b=USf0ngINaW5LREgzu8Y4CtaQnxziEViykdcDhSBl3QuEeT/GvovJ2VWOS0EiPte6HDv/Oq
-        Yyvg5fnu/7otr9AA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     Jens Axboe <axboe@kernel.dk>,
-        Salvatore Bonaccorso <carnil@debian.org>,
-        Pavel Machek <pavel@denx.de>,
-        Vignesh Raghavendra <vigneshr@ti.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+        Fri, 20 Jan 2023 08:24:48 -0500
+Received: from outbound-smtp46.blacknight.com (outbound-smtp46.blacknight.com [46.22.136.58])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9533FBCE06
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Jan 2023 05:24:45 -0800 (PST)
+Received: from mail.blacknight.com (pemlinmail02.blacknight.ie [81.17.254.11])
+        by outbound-smtp46.blacknight.com (Postfix) with ESMTPS id F16BFFAE08
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Jan 2023 13:24:43 +0000 (GMT)
+Received: (qmail 16057 invoked from network); 20 Jan 2023 13:24:43 -0000
+Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
+  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 20 Jan 2023 13:24:43 -0000
+Date:   Fri, 20 Jan 2023 13:24:41 +0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>
-Subject: Re: [ANNOUNCE] 5.10.162-rt78
-Message-ID: <Y8qRTwEnEJz0L4mm@linutronix.de>
-References: <Y8VSslRJZpFbo1/u@uudg.org>
- <40de655e-26f3-aa7b-f1ec-6877396a9f1e@ti.com>
- <Y8krsVFguwWLy+zT@duo.ucw.cz>
- <Y8lCspFtQ0wg6uCy@uudg.org>
- <Y8mwF0m+M1+e/fz/@eldamar.lan>
- <a4f62523-b01e-3986-7914-767f999b4153@kernel.dk>
- <Y8oNTkUVDr7iQWzp@uudg.org>
- <c427d686-c850-4195-011b-93f51faa176d@kernel.dk>
- <Y8qOOxON9Vfsek0l@uudg.org>
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v2] locking/rwbase: Prevent indefinite writer starvation
+Message-ID: <20230120132441.4jjke47rnpikiuf5@techsingularity.net>
+References: <20230117083817.togfwc5cy4g67e5r@techsingularity.net>
+ <Y8avJm1FQI9vB9cv@linutronix.de>
+ <20230117165021.t5m7c2d6frbbfzig@techsingularity.net>
+ <Y8gPhTGkfCbGwoUu@linutronix.de>
+ <20230118173130.4n2b3cs4pxiqnqd3@techsingularity.net>
+ <Y8j+lENBWNWgt4mf@linutronix.de>
+ <20230119110220.kphftcehehhi5l5u@techsingularity.net>
+ <Y8lvwKHmmnikVDgk@linutronix.de>
+ <20230119174101.rddtxk5xlamlnquh@techsingularity.net>
+ <Y8pP3CD1PQ4KWhXF@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-15
 Content-Disposition: inline
-In-Reply-To: <Y8qOOxON9Vfsek0l@uudg.org>
+In-Reply-To: <Y8pP3CD1PQ4KWhXF@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-01-20 09:51:07 [-0300], Luis Claudio R. Goncalves wrote:
-> My question is: do you prefer renumbering the bits or the neat asm hack
-> that Mike proposed? 
+On Fri, Jan 20, 2023 at 09:25:00AM +0100, Sebastian Andrzej Siewior wrote:
+> On 2023-01-19 17:41:01 [+0000], Mel Gorman wrote:
+> > 
+> > Yes, it makes your concern much clearer but I'm not sure it actually matters
+> > in terms of preventing write starvation or in terms of correctness. At
+> > worst, a writer is blocked that could have acquired the lock during a tiny
+> > race but that's a timing issue rather than a correctness issue.
+> 
+> Correct. My concern is that one reader may need to wait 4ms+ for the
+> lock while a following reader (that one that sees the timeout) does not.
+> This can lead to confusion later on.
+> 
 
-That change, that was stable-backported, should have hit the devel tree
-first. Why not sync with that?
+Ok, yes, that is a valid concern I had not considered when thinking in
+terms of correctness or writer starvation. It would be very tricky to
+diagnose if it happened.
 
-> Luis
+> > The race could be closed by moving wait_lock acquisition before the
+> > atomic_sub in rwbase_write_lock() but it expands the scope of the wait_lock
+> > and I'm not sure that's necessary for either correctness or preventing
+> > writer starvation. It's a more straight-forward fix but expanding the
+> > scope of a lock unnecessarily has been unpopular in the past.
+> > 
+> > I think we can close the race that concerns you but I'm not convinced we
+> > need to and changing the scope of wait_lock would need a big comment and
+> > probably deserves a separate patch.
+> 
+> would it work to check the timeout vs 0 before and only apply the
+> timeout check if it is != zero? The writer would need to unconditionally
+> or the lowest bit. That should close gaps at a low price. The timeout
+> variable is always read within the lock so there shouldn't be need for
+> any additional barriers.
+> 
 
-Sebastian
+Yes, as a bonus point, it can be checked early in rwbase_allow_reader_bias
+and is an cheap test for the common case so it's win-win all round.
+
+Patch is now this;
+
+--8<--
+locking/rwbase: Prevent indefinite writer starvation
+
+rw_semaphore and rwlock are explicitly unfair to writers in the presense
+of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
+("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
+
+        The implementation is writer unfair, as it is not feasible to do
+        priority inheritance on multiple readers, but experience has shown
+        that real-time workloads are not the typical workloads which are
+        sensitive to writer starvation.
+
+While atypical, it's also trivial to block writers with PREEMPT_RT
+indefinitely without ever making forward progress. Since LTP-20220121,
+the dio_truncate test case went from having 1 reader to having 16 readers
+and the number of readers is sufficient to prevent the down_write ever
+succeeding while readers exist. Eventually the test is killed after 30
+minutes as a failure.
+
+dio_truncate is not a realtime application but indefinite writer starvation
+is undesirable. The test case has one writer appending and truncating files
+A and B while multiple readers read file A. The readers and writer are
+contending for one file's inode lock which never succeeds as the readers
+keep reading until the writer is done which never happens.
+
+This patch records a timestamp when the first writer is blocked. DL /
+RT tasks can continue to take the lock for read as long as readers exist
+indefinitely. Other readers can acquire the read lock unless a writer
+has been blocked for a minimum of 4ms. This is sufficient to allow the
+dio_truncate test case to complete within the 30 minutes timeout.
+
+Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
+---
+ include/linux/rwbase_rt.h  |  3 +++
+ kernel/locking/rwbase_rt.c | 38 +++++++++++++++++++++++++++++++++++---
+ 2 files changed, 38 insertions(+), 3 deletions(-)
+
+diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
+index 1d264dd08625..b969b1d9bb85 100644
+--- a/include/linux/rwbase_rt.h
++++ b/include/linux/rwbase_rt.h
+@@ -10,12 +10,14 @@
+ 
+ struct rwbase_rt {
+ 	atomic_t		readers;
++	unsigned long		waiter_timeout;
+ 	struct rt_mutex_base	rtmutex;
+ };
+ 
+ #define __RWBASE_INITIALIZER(name)				\
+ {								\
+ 	.readers = ATOMIC_INIT(READER_BIAS),			\
++	.waiter_timeout = 0,					\
+ 	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
+ }
+ 
+@@ -23,6 +25,7 @@ struct rwbase_rt {
+ 	do {							\
+ 		rt_mutex_base_init(&(rwbase)->rtmutex);		\
+ 		atomic_set(&(rwbase)->readers, READER_BIAS);	\
++		(rwbase)->waiter_timeout = 0;			\
+ 	} while (0)
+ 
+ 
+diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+index c201aadb9301..9d5bbf2985de 100644
+--- a/kernel/locking/rwbase_rt.c
++++ b/kernel/locking/rwbase_rt.c
+@@ -39,7 +39,10 @@
+  * major surgery for a very dubious value.
+  *
+  * The risk of writer starvation is there, but the pathological use cases
+- * which trigger it are not necessarily the typical RT workloads.
++ * which trigger it are not necessarily the typical RT workloads. SCHED_OTHER
++ * reader acquisitions will be forced into the slow path if a writer is
++ * blocked for more than RWBASE_RT_WAIT_TIMEOUT jiffies. New DL / RT readers
++ * can still starve a writer indefinitely.
+  *
+  * Fast-path orderings:
+  * The lock/unlock of readers can run in fast paths: lock and unlock are only
+@@ -65,6 +68,27 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
+ 	return 0;
+ }
+ 
++/*
++ * Allow reader bias for SCHED_OTHER tasks with a pending writer for a
++ * minimum of 4ms or 1 tick. This matches RWSEM_WAIT_TIMEOUT for the
++ * generic RWSEM implementation.
++ */
++#define RWBASE_RT_WAIT_TIMEOUT DIV_ROUND_UP(HZ, 250)
++
++static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
++{
++	/*
++	 * Allow reader bias if no writer is blocked or for DL / RT tasks.
++	 * Such tasks should be designed to avoid heavy writer contention
++	 * or indefinite starvation.
++	 */
++	if (!rwb->waiter_timeout || rt_task(current))
++		return true;
++
++	/* Allow reader bias unless a writer timeout has expired. */
++	return time_before(jiffies, rwb->waiter_timeout);
++}
++
+ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 				      unsigned int state)
+ {
+@@ -74,9 +98,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 	raw_spin_lock_irq(&rtm->wait_lock);
+ 	/*
+ 	 * Allow readers, as long as the writer has not completely
+-	 * acquired the semaphore for write.
++	 * acquired the semaphore for write and reader bias is still
++	 * allowed.
+ 	 */
+-	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
++	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
++	    rwbase_allow_reader_bias(rwb)) {
+ 		atomic_inc(&rwb->readers);
+ 		raw_spin_unlock_irq(&rtm->wait_lock);
+ 		return 0;
+@@ -255,6 +281,7 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+ 	for (;;) {
+ 		/* Optimized out for rwlocks */
+ 		if (rwbase_signal_pending_state(state, current)) {
++			rwb->waiter_timeout = 0;
+ 			rwbase_restore_current_state();
+ 			__rwbase_write_unlock(rwb, 0, flags);
+ 			trace_contention_end(rwb, -EINTR);
+@@ -264,12 +291,17 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+ 		if (__rwbase_write_trylock(rwb))
+ 			break;
+ 
++		/* Record timeout when reader bias is ignored. */
++		rwb->waiter_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
++
+ 		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
+ 		rwbase_schedule();
+ 		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
+ 
+ 		set_current_state(state);
+ 	}
++
++	rwb->waiter_timeout = 0;
+ 	rwbase_restore_current_state();
+ 	trace_contention_end(rwb, 0);
+ 
