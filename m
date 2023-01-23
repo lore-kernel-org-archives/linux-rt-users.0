@@ -2,109 +2,155 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AECB3C38142
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Jan 2023 18:06:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D88D2C25B50
+	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Jan 2023 18:07:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233786AbjAWSGJ (ORCPT
+        id S233847AbjAWSHO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 23 Jan 2023 13:06:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46848 "EHLO
+        Mon, 23 Jan 2023 13:07:14 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48722 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233780AbjAWSGI (ORCPT
+        with ESMTP id S233840AbjAWSHJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 23 Jan 2023 13:06:08 -0500
+        Mon, 23 Jan 2023 13:07:09 -0500
 Received: from bird.elm.relay.mailchannels.net (bird.elm.relay.mailchannels.net [23.83.212.17])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B911C30E90;
-        Mon, 23 Jan 2023 10:05:36 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F03230E8B;
+        Mon, 23 Jan 2023 10:06:52 -0800 (PST)
 X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
 Received: from relay.mailchannels.net (localhost [127.0.0.1])
-        by relay.mailchannels.net (Postfix) with ESMTP id 4FCF4921A45;
-        Mon, 23 Jan 2023 17:58:44 +0000 (UTC)
+        by relay.mailchannels.net (Postfix) with ESMTP id 1124040F37;
+        Mon, 23 Jan 2023 17:58:46 +0000 (UTC)
 Received: from pdx1-sub0-mail-a264.dreamhost.com (unknown [127.0.0.6])
         (Authenticated sender: dreamhost)
-        by relay.mailchannels.net (Postfix) with ESMTPA id BB33D922158;
-        Mon, 23 Jan 2023 17:58:43 +0000 (UTC)
-ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1674496723; a=rsa-sha256;
+        by relay.mailchannels.net (Postfix) with ESMTPA id 8F72F4136A;
+        Mon, 23 Jan 2023 17:58:45 +0000 (UTC)
+ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1674496725; a=rsa-sha256;
         cv=none;
-        b=gTdv1el61SZvUySAqF3vXYM8yJRVr/S0bkQJL5uH08tVKKBsz5lN6fEVVoY2Op8bd4CLcJ
-        rIxjNz3I0nwJEVqYfwjHK0ZOzP/jSV+2ysElGGz09+O2drYhusHgBfEh6nXIY76FacURhA
-        MVC49tzA66T3PAAzV+XoCyyqJ/qnBmN2Nr/ZkQUpSi/EK4CcgQqX1391wu4SAFWlLs9cAT
-        Vs9di9mj7gm+yfnuHAT3ZN15ySn+teou7ssozpXyEtRdCIAXBrhCRTmXw9efFs5PUmkia0
-        pCw7y8BVBlcyIFw+HYpf8qkpmLZj7r8zmuejmmEyIBP9uw/hNTYj1KxQwNBrNg==
+        b=Ydk1xQThOhi0rM3HRIH3CfgnoBNFwxmdJ0vqtMHjfhUUpOfX1I34HQfuNvQZtYOPB4qw/q
+        gJGuC22y8ZR4hLS+7K7pcwLnaiJ1h/orbNtYcFHMNcDC9G/725vcm5R/F9Pneh/0g9FvIh
+        m1AR/yVIb3sEDasmpGVDYD9b96QxqInGKHW+lRz19VACHffxuCFkEodhSwZfrD6gjKoW3s
+        JtrnkcQ4lkAeE66fJl0+Zf243f2dOEkbTjzVIcUJJw1TF9e9sumC37Dy3XeSPaB7FCleCH
+        Gj29xhK6Fo5HpId63dSgBjJp3BZBw+kVxP4TzZGFHLmtpSanILQiCIdw6w1Qig==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
  d=mailchannels.net;
-        s=arc-2022; t=1674496723;
+        s=arc-2022; t=1674496725;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:dkim-signature;
-        bh=BufXulOysFl45M9SRAl7NgoF0pjRTbINV3aTpO/3Ll0=;
-        b=zZxNoI1hetwpPD3pqGMk345eWYZh6tKOS95sniBz/yzmYgkNE5MXFISifqBvPxXVNq1UqB
-        CanMdekzeD7Fq46/GBYwK3fl+ANm8JEShYDqpRtlOB4iLiklx8pHd1/WqV4TV6J1oxj0Qt
-        FUElpb7KpbnHe3ISV2R8lMdlPFfrHwwhzR2Wr6xdXYFoiodIturGp7pWGty5Yz+u1REd0r
-        PxOW1dbta4J1l5wrM29P9DdCyNv2Bdb5SY9Exx5k7JiglZwnfC4e1tCeUc/mgZsEk7OHhB
-        AI1BlswawDA1G9KRaOdM4G5ZnyzFnAzpYhneM8JboKp7owMaHKrL9NbNwGxl8w==
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references:dkim-signature;
+        bh=HgAdgrmSZwhL1H/zHHkhQTAR0+DUP7uLvndtCVdk2qo=;
+        b=hm9TdxvZSgsJ9VcBfQGol9clbea7aLbqFyBch1N1Yak7uSrqFHSN70JagnWkDbhuLXP5aH
+        hZVsavS+TFmdblKdUhvOyGpHJdLmhBv+fM5DnTj+HIeyQVGHd5/A0CxZv6Bv0JsPgYFbPK
+        idwzAyIu44hyqufJUrgBZbDZgieYfJYxhwziratNKHV+2igQEVsZDxh90d04JprbEtQ/Eb
+        uRjWZOhVUAvYYCQh3IRTpkGmCdSDDO1ZHHc5JM1BMC2MVsXb+Bw0rKDlpYCElDUQxCX0K5
+        b3d7/K80p6jZ2Pkr3+8LLD/vEYzNmE8ZGSDkJJdjGLhaZdtvb4ey8ZFhix71Rg==
 ARC-Authentication-Results: i=1;
-        rspamd-6f569fcb69-cftxt;
+        rspamd-6f569fcb69-rsl9k;
         auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
 X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
 X-MC-Relay: Neutral
 X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
 X-MailChannels-Auth-Id: dreamhost
-X-Invention-Slimy: 7b43e4ff71ed2569_1674496724060_560391479
-X-MC-Loop-Signature: 1674496724060:1984612872
-X-MC-Ingress-Time: 1674496724060
+X-Vacuous-Harmony: 7ff6a0843d702ea9_1674496725888_2713900432
+X-MC-Loop-Signature: 1674496725888:410151927
+X-MC-Ingress-Time: 1674496725888
 Received: from pdx1-sub0-mail-a264.dreamhost.com (pop.dreamhost.com
  [64.90.62.162])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-        by 100.109.196.205 (trex/6.7.1);
-        Mon, 23 Jan 2023 17:58:44 +0000
+        by 100.99.229.6 (trex/6.7.1);
+        Mon, 23 Jan 2023 17:58:45 +0000
 Received: from localhost.localdomain (ip72-199-50-187.sd.sd.cox.net [72.199.50.187])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
         (No client certificate requested)
         (Authenticated sender: dave@stgolabs.net)
-        by pdx1-sub0-mail-a264.dreamhost.com (Postfix) with ESMTPSA id 4P0yX25qNBzL9;
-        Mon, 23 Jan 2023 09:58:42 -0800 (PST)
+        by pdx1-sub0-mail-a264.dreamhost.com (Postfix) with ESMTPSA id 4P0yX44BZ6zRs;
+        Mon, 23 Jan 2023 09:58:44 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
-        s=dreamhost; t=1674496723;
-        bh=BufXulOysFl45M9SRAl7NgoF0pjRTbINV3aTpO/3Ll0=;
+        s=dreamhost; t=1674496725;
+        bh=HgAdgrmSZwhL1H/zHHkhQTAR0+DUP7uLvndtCVdk2qo=;
         h=From:To:Cc:Subject:Date:Content-Transfer-Encoding;
-        b=YzI3MiKSaptB5+wAH+9AN/mEkKLgbIml37DGffhNydyFQuHHWQmiAw21ZcNWM/wKP
-         GaAmk8JYbuYPYjyU9TwZ7aaW/YlEOzaxOBbuzmKPmr/0hM1AVMffKK7/Ic9ZxED6Ih
-         PDVQF4uRzxHkZygBeMO/Hx9PTJupSk3Ew/2ioWRo48nYFvyRyfxN0+F7+ZyY4DxIqK
-         oBPpws8actnMaHr89Moy+7E9mTTLXQDs5ux3zOeV4cdstPYo/H1ZG0aMOeFiXMO5tp
-         5gYFbnR1N/68ckoY8yvS1nFLLcRRY0JIkiZ9NdxA8cbHqRrHGKX15rZeQSLPgyrnhQ
-         S1koWzu2TVzIQ==
+        b=BvE7YjLYu07x6MeqispuTojP+NhTXef8mnV4Sofnl+MKUwzYVPzX6juCzh0mIZWup
+         EbPGAJNtNn+iqAavu5q/sxAu6I0dcf+rxC8ClRYsLgkFJqFTCBYhld2tr4VMKM5vW9
+         0ly2O5QefatNHFSlAKwKex1KlLhkC8WYJtuyP/1QhbXxhztn4IcTGT1W7hJXl4UpBB
+         I2RxIVpO8cUsE/+4tEGOSsvpFFeND8EtvZUH+/f9jIcDdR+aq48qy0+L34KzM3nP9Q
+         fBYR4zEib4hgAw12w2If4DsBzVuOVG3PHCqseIeJnMXZq1USEqnBB6LUUM4ilFJJF5
+         JKZLyBamvA1GA==
 From:   Davidlohr Bueso <dave@stgolabs.net>
 To:     tglx@linutronix.de
 Cc:     mingo@kernel.org, peterz@infradead.org, bigeasy@linutronix.de,
         dave@stgolabs.net, linux-rt-users@vger.kernel.org,
         linux-kernel@vger.kernel.org
-Subject: [PATCH -tip 0/2] kernel/hrtimer: Ignore slack time for RT tasks
-Date:   Mon, 23 Jan 2023 09:32:04 -0800
-Message-Id: <20230123173206.6764-1-dave@stgolabs.net>
+Subject: [PATCH 2/2] kernel/hrtimer: Ignore slack time for RT tasks
+Date:   Mon, 23 Jan 2023 09:32:06 -0800
+Message-Id: <20230123173206.6764-3-dave@stgolabs.net>
 X-Mailer: git-send-email 2.39.0
+In-Reply-To: <20230123173206.6764-1-dave@stgolabs.net>
+References: <20230123173206.6764-1-dave@stgolabs.net>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+While in theory the timer can be triggered before expires+delta,
+for the cases of RT tasks they really have no business giving
+any lenience for extra slack time, so override any passed value
+by the user and always use zero for schedule_hrtimeout_range()
+calls. Furthermore, this is similar to what the nanosleep(2)
+family already does with current->timer_slack_ns.
 
-Patch 2 simply ignores any user passed slack time in the case of RT/DL
-tasks for schedule_hrtimeout_range, which is aligned to what nanosleep(2)
-already does.
+Signed-off-by: Davidlohr Bueso <dave@stgolabs.net>
+---
+ kernel/time/hrtimer.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
 
-Thanks!
-
-Davidlohr Bueso (2):
-  kernel/hrtimer: Rely on rt_task() for DL tasks too
-  kernel/hrtimer: Ignore slack time for RT tasks
-
- kernel/time/hrtimer.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
-
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 8336c2618ec1..78f2e07d3e7d 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -2270,7 +2270,7 @@ void __init hrtimers_init(void)
+ /**
+  * schedule_hrtimeout_range_clock - sleep until timeout
+  * @expires:	timeout value (ktime_t)
+- * @delta:	slack in expires timeout (ktime_t)
++ * @delta:	slack in expires timeout (ktime_t) for SCHED_OTHER tasks
+  * @mode:	timer mode
+  * @clock_id:	timer clock to be used
+  */
+@@ -2297,6 +2297,13 @@ schedule_hrtimeout_range_clock(ktime_t *expires, u64 delta,
+ 		return -EINTR;
+ 	}
+ 
++	/*
++	 * Override any slack passed by the user if under
++	 * rt contraints.
++	 */
++	if (rt_task(current))
++		delta = 0;
++
+ 	hrtimer_init_sleeper_on_stack(&t, clock_id, mode);
+ 	hrtimer_set_expires_range_ns(&t.timer, *expires, delta);
+ 	hrtimer_sleeper_start_expires(&t, mode);
+@@ -2316,7 +2323,7 @@ EXPORT_SYMBOL_GPL(schedule_hrtimeout_range_clock);
+ /**
+  * schedule_hrtimeout_range - sleep until timeout
+  * @expires:	timeout value (ktime_t)
+- * @delta:	slack in expires timeout (ktime_t)
++ * @delta:	slack in expires timeout (ktime_t) for SCHED_OTHER tasks
+  * @mode:	timer mode
+  *
+  * Make the current task sleep until the given expiry time has
+@@ -2324,7 +2331,8 @@ EXPORT_SYMBOL_GPL(schedule_hrtimeout_range_clock);
+  * the current task state has been set (see set_current_state()).
+  *
+  * The @delta argument gives the kernel the freedom to schedule the
+- * actual wakeup to a time that is both power and performance friendly.
++ * actual wakeup to a time that is both power and performance friendly
++ * for regular (non RT/DL) tasks.
+  * The kernel give the normal best effort behavior for "@expires+@delta",
+  * but may decide to fire the timer earlier, but no earlier than @expires.
+  *
 -- 
 2.39.0
 
