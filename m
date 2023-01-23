@@ -2,64 +2,86 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 62491C05027
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Jan 2023 20:52:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7396DC54E94
+	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Jan 2023 04:54:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229837AbjATUw5 (ORCPT
+        id S231486AbjAWEyd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Jan 2023 15:52:57 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50670 "EHLO
+        Sun, 22 Jan 2023 23:54:33 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50706 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229737AbjATUw4 (ORCPT
+        with ESMTP id S229549AbjAWEyc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Jan 2023 15:52:56 -0500
-Received: from mail-qt1-x82f.google.com (mail-qt1-x82f.google.com [IPv6:2607:f8b0:4864:20::82f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2CB89771;
-        Fri, 20 Jan 2023 12:52:54 -0800 (PST)
-Received: by mail-qt1-x82f.google.com with SMTP id x7so5113757qtv.13;
-        Fri, 20 Jan 2023 12:52:54 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=4YE+s5X2faO+oNvk5Zur/4aie0pupo0tvZpYYK61fck=;
-        b=V0zyASfriUPFws6w7byT4ZFBoa40/J1+JfEdlIo84bAtK6+QaCh2iiSEO8iysVM6v1
-         CBXE4E2HnDkAfh8h2q3n0N9TB0HX6S3FXVoMmMZl8txw9dX43RXQNcHsqrIq60vMWzOH
-         lr4RUpQ6rjEkN/Mopr5BPSXmImw8d3zm2jKNSjdpu7NTTdFitcFOy6lCbzn7I8OuGbig
-         FlmP3knfkGvsj1YTresbpRBJpfY4zZ2hhrJsQGGQibznbHPd1Tiy7gbNcq3PxrNI9m0G
-         2mXJ9PM1nT4GMDYZEc/ecCKA/Tukj5yxNIMBgsSApXdVBi3UyLAU2WMG666ozYNrXhWx
-         irYg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=4YE+s5X2faO+oNvk5Zur/4aie0pupo0tvZpYYK61fck=;
-        b=sJSBPe9w6S7VT9Zlq8//Gjs6EylmEGPQkyLoaIj5FwcnESAqluq5bAsUZygk1+BcEa
-         +Ng+I35pn7JLAKKNC1CM16TQk83u641xYvfwp1rPNOoAIKNjvUQeRDWtbFNPZtpezl4L
-         abSpj20WMRvrFWFkn50qv6ez8/EuI38iXnVmy28AbCffrpRG/H8ZVv+YKuitPEvwcwUR
-         /LoPDifQ5qsDhw9jfGiSDYFcqnGujYxBq7M8jiY24dB/QzoANEm4T0fY61C/+Zhh8dyo
-         LTnWzp8oUEdXXfx/Ole/ewrl4e1hUkvIp37cadb+ZC7ZlWRz04KpaTz3zWd0TkRVDK2U
-         WVZw==
-X-Gm-Message-State: AFqh2ko14jTv2m8B20v0t4sXD/4EyanyF1NHvdbpoxB37YZE4yNQr9S2
-        8ucW1rRB0118+weuvuPWN6A2rwvlosQ=
-X-Google-Smtp-Source: AMrXdXvY9EytmieB+K34iSci8Ih2uasXzCsPnH0ZoVDLaTByHoHGIG74SXHDYxmGhoqGoQ+kbBZomw==
-X-Received: by 2002:a05:622a:5a91:b0:3b6:414f:c2ba with SMTP id fz17-20020a05622a5a9100b003b6414fc2bamr23374386qtb.38.1674247972954;
-        Fri, 20 Jan 2023 12:52:52 -0800 (PST)
-Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-14-76-71-123-7.dsl.bell.ca. [76.71.123.7])
-        by smtp.gmail.com with ESMTPSA id o5-20020a05620a2a0500b006fcc437c2e8sm27381717qkp.44.2023.01.20.12.52.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 20 Jan 2023 12:52:52 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     lkml <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Kate Carcia Poulin <kcarcia@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-2.5
-Date:   Fri, 20 Jan 2023 15:52:20 -0500
-Message-Id: <20230120205220.26218-1-jkacur@redhat.com>
+        Sun, 22 Jan 2023 23:54:32 -0500
+Received: from crane.ash.relay.mailchannels.net (crane.ash.relay.mailchannels.net [23.83.222.43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5DCED16300;
+        Sun, 22 Jan 2023 20:54:28 -0800 (PST)
+X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
+Received: from relay.mailchannels.net (localhost [127.0.0.1])
+        by relay.mailchannels.net (Postfix) with ESMTP id E87C164192D;
+        Mon, 23 Jan 2023 04:54:24 +0000 (UTC)
+Received: from pdx1-sub0-mail-a248.dreamhost.com (unknown [127.0.0.6])
+        (Authenticated sender: dreamhost)
+        by relay.mailchannels.net (Postfix) with ESMTPA id 70D8E64195D;
+        Mon, 23 Jan 2023 04:54:24 +0000 (UTC)
+ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1674449664; a=rsa-sha256;
+        cv=none;
+        b=ImMqazVmDdiYiyy4T8DQDNMqBUBsMhWiBWfed15G8xCACjH45fZCWNGpbN4Qh2nDR0BkGr
+        dndKhye418ojkK2azX7n6aKXBzw2xH7tQW+Aoj7u3ZwwzI0ozD+EStciVxqxW99RYtXxRV
+        faU2iFH+YJa4toYSGUxuB8BHIa08A2CpZwU5Gon5OXTU67R6ubaUintcG8uqqRoWvg205U
+        KD+AwCfhSTRGwe11DIUlWRfXolaEbxZVxpR2eoXBeOpIGxr1D+KDROB8euw1ysj3VMz0g5
+        WNBCMHv5jCQgaYErdpcuB/d4OZ4TfXtOCcUR18tuzhBZcR1Vc2nvvBQgOiao7Q==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=mailchannels.net;
+        s=arc-2022; t=1674449664;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:dkim-signature;
+        bh=vbcZfruUbBzOF8WQf68Hk9Z+hEN7LKtKbqNXJ1lZQkQ=;
+        b=1LXrUbwb8TV9uBaG+JxjwSLz1sd9r5us2V7BaxEw73DGAELn7RXBiANsJ/cITBPPBREREb
+        0BzQCcfBZfqoXUeQFM+WPmoYjRr0u2sVDoh4l7Z2hBMTYPJF+S3khnvoqBaOiTBoW7pUUs
+        sXZXCc33nw9le9ZyZrDucIriB7q42H5QGWyZnxcM4KJA+uHtsS0AsLMVZefsTUj3oc31Ga
+        Fmbb6VMwvinrSYZ+ZRABWfa8ZiLtWUnMLjqqqX45ZISHn40LqfdoGcGk80Xos5NbptYFVF
+        BbbwEq9frMYhC3JexTKikKNTB4cL8w9/PIR4D3WVsurXEFA1c05xnY3zw6XUBA==
+ARC-Authentication-Results: i=1;
+        rspamd-7cf955c847-4t69s;
+        auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
+X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
+X-MC-Relay: Neutral
+X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
+X-MailChannels-Auth-Id: dreamhost
+X-Company-Company: 3003ec916aa51658_1674449664733_1924223447
+X-MC-Loop-Signature: 1674449664733:2878493279
+X-MC-Ingress-Time: 1674449664733
+Received: from pdx1-sub0-mail-a248.dreamhost.com (pop.dreamhost.com
+ [64.90.62.162])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
+        by 100.120.227.175 (trex/6.7.1);
+        Mon, 23 Jan 2023 04:54:24 +0000
+Received: from localhost.localdomain (unknown [104.36.25.250])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        (Authenticated sender: dave@stgolabs.net)
+        by pdx1-sub0-mail-a248.dreamhost.com (Postfix) with ESMTPSA id 4P0d7365CBz32;
+        Sun, 22 Jan 2023 20:54:23 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
+        s=dreamhost; t=1674449664;
+        bh=rkuO71o7esLy5vIPjIKCbuF52AtcXpX1PFhA0SxaUAc=;
+        h=From:To:Cc:Subject:Date:Content-Transfer-Encoding;
+        b=ooshBhQZKSQD4DvBkJ77sV3s0dkNRJ+brFnBlUgMId9eWrWsS9rWJUhRHzWs28qv5
+         GKvPRWhiADu+HBPsddyBLvJikt7s391lArMqJZq2ANgiFm4UkzqgKHcy5eqPgMXFkN
+         v0fe6eGA1pmyZNGOCq4V8TDQRphLqn3Yy0ExpDxN1+GPJpE7yUVNFTmJtZYjkWVR9x
+         y9/wpJFrbe0WI9DJkfz6z44OGIKsNsl2EEOrqxFg5807QRwuUTiRXoiPJdCsCNk/D0
+         mXJjpbxtTOgMoIOVP6nFUteHHQJZVETcxLu1Qu7WlvHIBOEFOd5oC80VB3crNi/pww
+         bXjPakJv3qWcQ==
+From:   Davidlohr Bueso <dave@stgolabs.net>
+To:     tglx@linutronix.de
+Cc:     bigeasy@linutronix.de, dave@stgolabs.net,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: [PATCH] sched/rt: Add a comment for the existence of task_is_realtime()
+Date:   Sun, 22 Jan 2023 20:27:29 -0800
+Message-Id: <20230123042729.30268-1-dave@stgolabs.net>
 X-Mailer: git-send-email 2.39.0
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -67,68 +89,30 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-We haven't had a release in awhile. There aren't a large amount of
-changes here but two significant changes include a fix from John Stultz
-to prevent threads from being affined when -a isn't set, and an enhancement
-from Crystal Wood that adds nanosecond resolution to oslat. Sebastian
-Siewior added a change for determining the number of active CPUs on a system, since calling numa_num_task_cpus() seemed to be giving him inaccurate numbers on certain machines. There are also some clean-ups from Leah Leshchinsky and myself.
+... such that users don't wonder about it when we have rt_task().
 
-Enjoy!
+Signed-off-by: Davidlohr Bueso <dave@stgolabs.net>
+---
+ include/linux/sched/rt.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-Bug reports and patches are always welcome.
+diff --git a/include/linux/sched/rt.h b/include/linux/sched/rt.h
+index 994c25640e15..7a5003c2cf2a 100644
+--- a/include/linux/sched/rt.h
++++ b/include/linux/sched/rt.h
+@@ -18,6 +18,12 @@ static inline int rt_task(struct task_struct *p)
+ 	return rt_prio(p->prio);
+ }
+ 
++/*
++ * Returns true if a task has elevated priority which is the case
++ * for RT tasks (SCHED_RR and SCHED_FIFO) as well as SCHED_DEADLINE.
++ * A task which runs at RT priority due to PI-boosting is not
++ * considered as one with elevated priority.
++ */
+ static inline bool task_is_realtime(struct task_struct *tsk)
+ {
+ 	int policy = tsk->policy;
+-- 
+2.39.0
 
-John Kacur <jkacur@redhat.com>
-
-To fetch
-
-Clone
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
-
-Branch: main
-
-Tag: v2.5
-
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
-
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
-
-
-Crystal Wood (1):
-  oslat: Add command line option for bucket width
-
-John Kacur (7):
-  rt-tests: Remove arbitrary num of threads limits
-  rt-tests: hackbench: Add error checking to connect and getsockname
-  rt-tests: hackbench: Fix compile comparison of different signed ints
-  rt-tests: hackbench: Fix compile warning about fall through
-  rt-tests: rt_numa.h: Remove unused paramter max_cpus
-  rt-tests: hwlatdetect: Fix incorrect comment about testduration
-  rt-tests: Change to version v2.5
-
-John Stultz (1):
-  cyclictest: Fix threads being affined even when -a isn't set
-
-Leah Leshchinsky (2):
-  rt-tests: hwlatdetect.py Covert to f-strings
-  rt-tests: hwlatdetect: Update to integer division
-
-Sebastian Andrzej Siewior (1):
-  rt-numa: Use a reasonable default max CPU value.
-
- Makefile                       |   2 +-
- src/cyclictest/cyclictest.c    |  10 +--
- src/cyclictest/rt_numa.h       |   3 +-
- src/hackbench/hackbench.c      |  17 +++--
- src/hwlatdetect/hwlatdetect.py |  79 +++++++++++------------
- src/lib/rt-numa.c              |  11 +++-
- src/oslat/oslat.8              |   9 ++-
- src/oslat/oslat.c              | 110 +++++++++++++++++++++++----------
- src/pmqtest/pmqtest.c          |   2 +-
- src/ptsematest/ptsematest.c    |   2 +-
- src/sigwaittest/sigwaittest.c  |   2 +-
- src/svsematest/svsematest.c    |   2 +-
- 12 files changed, 158 insertions(+), 91 deletions(-)
