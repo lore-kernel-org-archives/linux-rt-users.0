@@ -2,117 +2,94 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7396DC54E94
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Jan 2023 04:54:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A8795C25B50
+	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Jan 2023 10:23:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231486AbjAWEyd (ORCPT
+        id S231722AbjAWKXk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 22 Jan 2023 23:54:33 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50706 "EHLO
+        Mon, 23 Jan 2023 05:23:40 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50834 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229549AbjAWEyc (ORCPT
+        with ESMTP id S231623AbjAWKXi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 22 Jan 2023 23:54:32 -0500
-Received: from crane.ash.relay.mailchannels.net (crane.ash.relay.mailchannels.net [23.83.222.43])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5DCED16300;
-        Sun, 22 Jan 2023 20:54:28 -0800 (PST)
-X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
-Received: from relay.mailchannels.net (localhost [127.0.0.1])
-        by relay.mailchannels.net (Postfix) with ESMTP id E87C164192D;
-        Mon, 23 Jan 2023 04:54:24 +0000 (UTC)
-Received: from pdx1-sub0-mail-a248.dreamhost.com (unknown [127.0.0.6])
-        (Authenticated sender: dreamhost)
-        by relay.mailchannels.net (Postfix) with ESMTPA id 70D8E64195D;
-        Mon, 23 Jan 2023 04:54:24 +0000 (UTC)
-ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1674449664; a=rsa-sha256;
-        cv=none;
-        b=ImMqazVmDdiYiyy4T8DQDNMqBUBsMhWiBWfed15G8xCACjH45fZCWNGpbN4Qh2nDR0BkGr
-        dndKhye418ojkK2azX7n6aKXBzw2xH7tQW+Aoj7u3ZwwzI0ozD+EStciVxqxW99RYtXxRV
-        faU2iFH+YJa4toYSGUxuB8BHIa08A2CpZwU5Gon5OXTU67R6ubaUintcG8uqqRoWvg205U
-        KD+AwCfhSTRGwe11DIUlWRfXolaEbxZVxpR2eoXBeOpIGxr1D+KDROB8euw1ysj3VMz0g5
-        WNBCMHv5jCQgaYErdpcuB/d4OZ4TfXtOCcUR18tuzhBZcR1Vc2nvvBQgOiao7Q==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
- d=mailchannels.net;
-        s=arc-2022; t=1674449664;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:dkim-signature;
-        bh=vbcZfruUbBzOF8WQf68Hk9Z+hEN7LKtKbqNXJ1lZQkQ=;
-        b=1LXrUbwb8TV9uBaG+JxjwSLz1sd9r5us2V7BaxEw73DGAELn7RXBiANsJ/cITBPPBREREb
-        0BzQCcfBZfqoXUeQFM+WPmoYjRr0u2sVDoh4l7Z2hBMTYPJF+S3khnvoqBaOiTBoW7pUUs
-        sXZXCc33nw9le9ZyZrDucIriB7q42H5QGWyZnxcM4KJA+uHtsS0AsLMVZefsTUj3oc31Ga
-        Fmbb6VMwvinrSYZ+ZRABWfa8ZiLtWUnMLjqqqX45ZISHn40LqfdoGcGk80Xos5NbptYFVF
-        BbbwEq9frMYhC3JexTKikKNTB4cL8w9/PIR4D3WVsurXEFA1c05xnY3zw6XUBA==
-ARC-Authentication-Results: i=1;
-        rspamd-7cf955c847-4t69s;
-        auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
-X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
-X-MC-Relay: Neutral
-X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
-X-MailChannels-Auth-Id: dreamhost
-X-Company-Company: 3003ec916aa51658_1674449664733_1924223447
-X-MC-Loop-Signature: 1674449664733:2878493279
-X-MC-Ingress-Time: 1674449664733
-Received: from pdx1-sub0-mail-a248.dreamhost.com (pop.dreamhost.com
- [64.90.62.162])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-        by 100.120.227.175 (trex/6.7.1);
-        Mon, 23 Jan 2023 04:54:24 +0000
-Received: from localhost.localdomain (unknown [104.36.25.250])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        (Authenticated sender: dave@stgolabs.net)
-        by pdx1-sub0-mail-a248.dreamhost.com (Postfix) with ESMTPSA id 4P0d7365CBz32;
-        Sun, 22 Jan 2023 20:54:23 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
-        s=dreamhost; t=1674449664;
-        bh=rkuO71o7esLy5vIPjIKCbuF52AtcXpX1PFhA0SxaUAc=;
-        h=From:To:Cc:Subject:Date:Content-Transfer-Encoding;
-        b=ooshBhQZKSQD4DvBkJ77sV3s0dkNRJ+brFnBlUgMId9eWrWsS9rWJUhRHzWs28qv5
-         GKvPRWhiADu+HBPsddyBLvJikt7s391lArMqJZq2ANgiFm4UkzqgKHcy5eqPgMXFkN
-         v0fe6eGA1pmyZNGOCq4V8TDQRphLqn3Yy0ExpDxN1+GPJpE7yUVNFTmJtZYjkWVR9x
-         y9/wpJFrbe0WI9DJkfz6z44OGIKsNsl2EEOrqxFg5807QRwuUTiRXoiPJdCsCNk/D0
-         mXJjpbxtTOgMoIOVP6nFUteHHQJZVETcxLu1Qu7WlvHIBOEFOd5oC80VB3crNi/pww
-         bXjPakJv3qWcQ==
-From:   Davidlohr Bueso <dave@stgolabs.net>
-To:     tglx@linutronix.de
-Cc:     bigeasy@linutronix.de, dave@stgolabs.net,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: [PATCH] sched/rt: Add a comment for the existence of task_is_realtime()
-Date:   Sun, 22 Jan 2023 20:27:29 -0800
-Message-Id: <20230123042729.30268-1-dave@stgolabs.net>
-X-Mailer: git-send-email 2.39.0
+        Mon, 23 Jan 2023 05:23:38 -0500
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id EFF891E9EA;
+        Mon, 23 Jan 2023 02:23:36 -0800 (PST)
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 448C1AD7;
+        Mon, 23 Jan 2023 02:24:18 -0800 (PST)
+Received: from [10.34.100.128] (pierre123.nice.arm.com [10.34.100.128])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 93A023F71A;
+        Mon, 23 Jan 2023 02:23:35 -0800 (PST)
+Message-ID: <953300ac-25fa-db8d-c270-d10559a0fa02@arm.com>
+Date:   Mon, 23 Jan 2023 11:23:37 +0100
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.4.2
+Subject: Re: [ANNOUNCE] v6.2-rc3-rt1
+Content-Language: en-US
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>
+References: <Y8A4f9m/ddIUwfZE@linutronix.de>
+From:   Pierre Gondois <pierre.gondois@arm.com>
+In-Reply-To: <Y8A4f9m/ddIUwfZE@linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-... such that users don't wonder about it when we have rt_task().
+Hello Sebastian,
 
-Signed-off-by: Davidlohr Bueso <dave@stgolabs.net>
----
- include/linux/sched/rt.h | 6 ++++++
- 1 file changed, 6 insertions(+)
+On 1/12/23 17:42, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+> 
+> I'm pleased to announce the v6.2-rc3-rt1 patch set.
+> 
+> Changes since v6.1-rc7-rt5:
+> 
+>    - Update to v6.2-rc3
+> 
+> Known issues
+>       - Valentin Schneider reported a few splats on ARM64 in arm_pmu, see
+>            https://lore.kernel.org/all/20210810134127.1394269-1-valentin.schneider@arm.com/T/#mf05c04376f59a543da6cceeb72e162af2de2b648
+>         It is worked on
+>            https://lore.kernel.org/all/20220930111844.1522365-1-mark.rutland@arm.com/
 
-diff --git a/include/linux/sched/rt.h b/include/linux/sched/rt.h
-index 994c25640e15..7a5003c2cf2a 100644
---- a/include/linux/sched/rt.h
-+++ b/include/linux/sched/rt.h
-@@ -18,6 +18,12 @@ static inline int rt_task(struct task_struct *p)
- 	return rt_prio(p->prio);
- }
- 
-+/*
-+ * Returns true if a task has elevated priority which is the case
-+ * for RT tasks (SCHED_RR and SCHED_FIFO) as well as SCHED_DEADLINE.
-+ * A task which runs at RT priority due to PI-boosting is not
-+ * considered as one with elevated priority.
-+ */
- static inline bool task_is_realtime(struct task_struct *tsk)
- {
- 	int policy = tsk->policy;
--- 
-2.39.0
+I think all the splats of the list are now solved and this item can be removed
+from the announce mail, unless you think there are other things to do,
 
+[SPLAT 1/3] arm_pmu: Sleeping spinlocks down armpmu_alloc_atomic()
+https://lore.kernel.org/all/166783778053.34166.14415620612752225909.b4-ty@kernel.org/
+
+[SPLAT 2/3] irqchip/gic-v3-its: Sleeping spinlocks down gic_reserve_range()
+https://lore.kernel.org/lkml/20211027151506.2085066-3-valentin.schneider@arm.com/
+
+[SPLAT 3/3] gpio: dwapb: Sleeping spinlocks down IRQ mapping
+https://lore.kernel.org/all/20220419012810.88417-1-schspa@gmail.com/
+
+Regards,
+Pierre
+
+> 
+>       - It has been reported that the ktimers thread may not be woken up
+>         and instead the timer is handled in softirq context.
+> 
+> You can get this release via the git tree at:
+> 
+>      git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.2-rc3-rt1
+> 
+> The RT patch against v6.2-rc3 can be found here:
+> 
+>      https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patch-6.2-rc3-rt1.patch.xz
+> 
+> The split quilt queue is available at:
+> 
+>      https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patches-6.2-rc3-rt1.tar.xz
+> 
+> Sebastian
