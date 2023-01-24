@@ -2,155 +2,179 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D88D2C25B50
-	for <linux-rt-users@archiver.kernel.org>; Mon, 23 Jan 2023 18:07:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BE596C25B4E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Jan 2023 10:34:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233847AbjAWSHO (ORCPT
+        id S233606AbjAXKeH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 23 Jan 2023 13:07:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48722 "EHLO
+        Tue, 24 Jan 2023 05:34:07 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37472 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233840AbjAWSHJ (ORCPT
+        with ESMTP id S233583AbjAXKeE (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 23 Jan 2023 13:07:09 -0500
-Received: from bird.elm.relay.mailchannels.net (bird.elm.relay.mailchannels.net [23.83.212.17])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F03230E8B;
-        Mon, 23 Jan 2023 10:06:52 -0800 (PST)
-X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
-Received: from relay.mailchannels.net (localhost [127.0.0.1])
-        by relay.mailchannels.net (Postfix) with ESMTP id 1124040F37;
-        Mon, 23 Jan 2023 17:58:46 +0000 (UTC)
-Received: from pdx1-sub0-mail-a264.dreamhost.com (unknown [127.0.0.6])
-        (Authenticated sender: dreamhost)
-        by relay.mailchannels.net (Postfix) with ESMTPA id 8F72F4136A;
-        Mon, 23 Jan 2023 17:58:45 +0000 (UTC)
-ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1674496725; a=rsa-sha256;
-        cv=none;
-        b=Ydk1xQThOhi0rM3HRIH3CfgnoBNFwxmdJ0vqtMHjfhUUpOfX1I34HQfuNvQZtYOPB4qw/q
-        gJGuC22y8ZR4hLS+7K7pcwLnaiJ1h/orbNtYcFHMNcDC9G/725vcm5R/F9Pneh/0g9FvIh
-        m1AR/yVIb3sEDasmpGVDYD9b96QxqInGKHW+lRz19VACHffxuCFkEodhSwZfrD6gjKoW3s
-        JtrnkcQ4lkAeE66fJl0+Zf243f2dOEkbTjzVIcUJJw1TF9e9sumC37Dy3XeSPaB7FCleCH
-        Gj29xhK6Fo5HpId63dSgBjJp3BZBw+kVxP4TzZGFHLmtpSanILQiCIdw6w1Qig==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
- d=mailchannels.net;
-        s=arc-2022; t=1674496725;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references:dkim-signature;
-        bh=HgAdgrmSZwhL1H/zHHkhQTAR0+DUP7uLvndtCVdk2qo=;
-        b=hm9TdxvZSgsJ9VcBfQGol9clbea7aLbqFyBch1N1Yak7uSrqFHSN70JagnWkDbhuLXP5aH
-        hZVsavS+TFmdblKdUhvOyGpHJdLmhBv+fM5DnTj+HIeyQVGHd5/A0CxZv6Bv0JsPgYFbPK
-        idwzAyIu44hyqufJUrgBZbDZgieYfJYxhwziratNKHV+2igQEVsZDxh90d04JprbEtQ/Eb
-        uRjWZOhVUAvYYCQh3IRTpkGmCdSDDO1ZHHc5JM1BMC2MVsXb+Bw0rKDlpYCElDUQxCX0K5
-        b3d7/K80p6jZ2Pkr3+8LLD/vEYzNmE8ZGSDkJJdjGLhaZdtvb4ey8ZFhix71Rg==
-ARC-Authentication-Results: i=1;
-        rspamd-6f569fcb69-rsl9k;
-        auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
-X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
-X-MC-Relay: Neutral
-X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
-X-MailChannels-Auth-Id: dreamhost
-X-Vacuous-Harmony: 7ff6a0843d702ea9_1674496725888_2713900432
-X-MC-Loop-Signature: 1674496725888:410151927
-X-MC-Ingress-Time: 1674496725888
-Received: from pdx1-sub0-mail-a264.dreamhost.com (pop.dreamhost.com
- [64.90.62.162])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-        by 100.99.229.6 (trex/6.7.1);
-        Mon, 23 Jan 2023 17:58:45 +0000
-Received: from localhost.localdomain (ip72-199-50-187.sd.sd.cox.net [72.199.50.187])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        (Authenticated sender: dave@stgolabs.net)
-        by pdx1-sub0-mail-a264.dreamhost.com (Postfix) with ESMTPSA id 4P0yX44BZ6zRs;
-        Mon, 23 Jan 2023 09:58:44 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
-        s=dreamhost; t=1674496725;
-        bh=HgAdgrmSZwhL1H/zHHkhQTAR0+DUP7uLvndtCVdk2qo=;
-        h=From:To:Cc:Subject:Date:Content-Transfer-Encoding;
-        b=BvE7YjLYu07x6MeqispuTojP+NhTXef8mnV4Sofnl+MKUwzYVPzX6juCzh0mIZWup
-         EbPGAJNtNn+iqAavu5q/sxAu6I0dcf+rxC8ClRYsLgkFJqFTCBYhld2tr4VMKM5vW9
-         0ly2O5QefatNHFSlAKwKex1KlLhkC8WYJtuyP/1QhbXxhztn4IcTGT1W7hJXl4UpBB
-         I2RxIVpO8cUsE/+4tEGOSsvpFFeND8EtvZUH+/f9jIcDdR+aq48qy0+L34KzM3nP9Q
-         fBYR4zEib4hgAw12w2If4DsBzVuOVG3PHCqseIeJnMXZq1USEqnBB6LUUM4ilFJJF5
-         JKZLyBamvA1GA==
-From:   Davidlohr Bueso <dave@stgolabs.net>
-To:     tglx@linutronix.de
-Cc:     mingo@kernel.org, peterz@infradead.org, bigeasy@linutronix.de,
-        dave@stgolabs.net, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: [PATCH 2/2] kernel/hrtimer: Ignore slack time for RT tasks
-Date:   Mon, 23 Jan 2023 09:32:06 -0800
-Message-Id: <20230123173206.6764-3-dave@stgolabs.net>
-X-Mailer: git-send-email 2.39.0
-In-Reply-To: <20230123173206.6764-1-dave@stgolabs.net>
-References: <20230123173206.6764-1-dave@stgolabs.net>
+        Tue, 24 Jan 2023 05:34:04 -0500
+Received: from mail-pl1-x631.google.com (mail-pl1-x631.google.com [IPv6:2607:f8b0:4864:20::631])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 468BCC178
+        for <linux-rt-users@vger.kernel.org>; Tue, 24 Jan 2023 02:34:03 -0800 (PST)
+Received: by mail-pl1-x631.google.com with SMTP id d9so14271809pll.9
+        for <linux-rt-users@vger.kernel.org>; Tue, 24 Jan 2023 02:34:03 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=5mQi313Cv+dJA11wKypNOswRAce9Ls2rcLx6HZ6CfVY=;
+        b=g8KOWvONw7VprZCL7iMsDfE1MkerljIw1sSAcF7MgX2mp+udysuYBMx7G8nxH+DzmL
+         7zPoUgzXCriw478dJzbbs2xIYUlg5VyL7lMvmQqt+SlKNXnPT2boGPTEv1UpHE6m17Vi
+         XTE2eNG1NkDLidec7J5vSpm7teD0M59O1u2/NgSFsOq7BHkgxi/VDWtyuHTz+k581bkO
+         YttE1o++Rwp8DV2EChV9+gkYnjw8xCgwzUFVOuor8IEhUkE5JGcxENcCzdcv8Qkx02+i
+         7lGGQY0I9NaJo+nUMaoa2gPFTXTRV60ta8F2HgUk74c7+JSk88lVsbDFvfaiMkO9U5ST
+         EolA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=5mQi313Cv+dJA11wKypNOswRAce9Ls2rcLx6HZ6CfVY=;
+        b=1iLLfYMUZVGZRlSJ3+2aIHy0A0fCdz/kk1muYPnXAmV+2EK7yuQmgaduAkwpX8R+Mm
+         zR7hbyZd4J3wQjdrvv0sbH86Q97pQ8/zSE5XLnEl3TwkM/xpvxs6IIDd95hXCeiArbOS
+         vk9jQ6mJLIpIyPwRrScWJNVmhytC+jTbvYbfAI1CIq9XQJy+Ghi5Xrj6eLIEsxAdHtk3
+         HOp6F4iu+QDi0rypEMl/jzxHyJR98E53ZOKkhgOsTug7uvVRV+Pft8wFTgJzumHx995D
+         ZsFJrq0TI4ggYycq5t5JxUlRdiCAp9DqLRBt3GDyxgJtmzE0m6oE3J299baxlTV6rOwI
+         P/Dw==
+X-Gm-Message-State: AFqh2koFdmgtpMFXO02ExCEuDH/8frAdtzJWUvCS1zGdPKu04byMItNW
+        MvXD19vtVd2pw/6k42YYVNrIoMro19+pY+XL0LjkfU4ryxp2xSA4
+X-Google-Smtp-Source: AMrXdXsi5yxQ/URPis/O2O09f9Fv5gptW86J4sz9BB11M7G8PHA/m5F2u1Mr9jJbA57pTppE/lZwxEQNgrfkROWikIo=
+X-Received: by 2002:a17:90a:730a:b0:229:7d95:a476 with SMTP id
+ m10-20020a17090a730a00b002297d95a476mr3673364pjk.84.1674556442813; Tue, 24
+ Jan 2023 02:34:02 -0800 (PST)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20230119184228.683892-1-krzysztof.kozlowski@linaro.org>
+In-Reply-To: <20230119184228.683892-1-krzysztof.kozlowski@linaro.org>
+From:   Ulf Hansson <ulf.hansson@linaro.org>
+Date:   Tue, 24 Jan 2023 11:33:26 +0100
+Message-ID: <CAPDyKFqwRw5=SK9vckt02eGoo_dtqEpV6D0Nr5YsijoJZQh0eQ@mail.gmail.com>
+Subject: Re: [PATCH v3] cpuidle: psci: Do not suspend topology CPUs on PREEMPT_RT
+To:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Lorenzo Pieralisi <lpieralisi@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Adrien Thierry <athierry@redhat.com>,
+        Brian Masney <bmasney@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-While in theory the timer can be triggered before expires+delta,
-for the cases of RT tasks they really have no business giving
-any lenience for extra slack time, so override any passed value
-by the user and always use zero for schedule_hrtimeout_range()
-calls. Furthermore, this is similar to what the nanosleep(2)
-family already does with current->timer_slack_ns.
+On Thu, 19 Jan 2023 at 19:42, Krzysztof Kozlowski
+<krzysztof.kozlowski@linaro.org> wrote:
+>
+> The runtime Power Management of CPU topology is not compatible with
+> PREEMPT_RT:
+> 1. Core cpuidle path disables IRQs.
+> 2. Core cpuidle calls cpuidle-psci.
+> 3. cpuidle-psci in __psci_enter_domain_idle_state() calls
+>    pm_runtime_put_sync_suspend() and pm_runtime_get_sync() which use
+>    spinlocks (which are sleeping on PREEMPT_RT).
+>
+> Deep sleep modes are not a priority of Realtime kernels because the
+> latencies might become unpredictable.  On the other hand the PSCI CPU
+> idle power domain is a parent of other devices and power domain
+> controllers, thus it cannot be simply skipped (e.g. on Qualcomm SM8250).
+>
+> Disable the runtime PM calls from cpuidle-psci, which effectively stops
+> suspending the cpuidle PSCI domain.  This is a trade-off between making
+> PREEMPT_RT working and still having a proper power domain hierarchy in
+> the system.
 
-Signed-off-by: Davidlohr Bueso <dave@stgolabs.net>
----
- kernel/time/hrtimer.c | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+I think this sounds like a reasonable compromise, at least at this point.
 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 8336c2618ec1..78f2e07d3e7d 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -2270,7 +2270,7 @@ void __init hrtimers_init(void)
- /**
-  * schedule_hrtimeout_range_clock - sleep until timeout
-  * @expires:	timeout value (ktime_t)
-- * @delta:	slack in expires timeout (ktime_t)
-+ * @delta:	slack in expires timeout (ktime_t) for SCHED_OTHER tasks
-  * @mode:	timer mode
-  * @clock_id:	timer clock to be used
-  */
-@@ -2297,6 +2297,13 @@ schedule_hrtimeout_range_clock(ktime_t *expires, u64 delta,
- 		return -EINTR;
- 	}
- 
-+	/*
-+	 * Override any slack passed by the user if under
-+	 * rt contraints.
-+	 */
-+	if (rt_task(current))
-+		delta = 0;
-+
- 	hrtimer_init_sleeper_on_stack(&t, clock_id, mode);
- 	hrtimer_set_expires_range_ns(&t.timer, *expires, delta);
- 	hrtimer_sleeper_start_expires(&t, mode);
-@@ -2316,7 +2323,7 @@ EXPORT_SYMBOL_GPL(schedule_hrtimeout_range_clock);
- /**
-  * schedule_hrtimeout_range - sleep until timeout
-  * @expires:	timeout value (ktime_t)
-- * @delta:	slack in expires timeout (ktime_t)
-+ * @delta:	slack in expires timeout (ktime_t) for SCHED_OTHER tasks
-  * @mode:	timer mode
-  *
-  * Make the current task sleep until the given expiry time has
-@@ -2324,7 +2331,8 @@ EXPORT_SYMBOL_GPL(schedule_hrtimeout_range_clock);
-  * the current task state has been set (see set_current_state()).
-  *
-  * The @delta argument gives the kernel the freedom to schedule the
-- * actual wakeup to a time that is both power and performance friendly.
-+ * actual wakeup to a time that is both power and performance friendly
-+ * for regular (non RT/DL) tasks.
-  * The kernel give the normal best effort behavior for "@expires+@delta",
-  * but may decide to fire the timer earlier, but no earlier than @expires.
-  *
--- 
-2.39.0
+>
+> Cc: Adrien Thierry <athierry@redhat.com>
+> Cc: Brian Masney <bmasney@redhat.com>
+> Cc: linux-rt-users@vger.kernel.org
+> Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+>
+> ---
+>
+> Changes since v1:
+> 1. Re-work commit msg.
+> 2. Add note to Kconfig.
+>
+> Several other patches were dropped, as this is the only one actually
+> needed.  It effectively stops PSCI cpuidle power domains from suspending
+> thus solving all other issues I experienced.
 
+I like this approach better, thanks!
+
+> ---
+>  drivers/cpuidle/Kconfig.arm    | 3 +++
+>  drivers/cpuidle/cpuidle-psci.c | 4 ++--
+>  2 files changed, 5 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/cpuidle/Kconfig.arm b/drivers/cpuidle/Kconfig.arm
+> index 747aa537389b..24429b5bfd1c 100644
+> --- a/drivers/cpuidle/Kconfig.arm
+> +++ b/drivers/cpuidle/Kconfig.arm
+> @@ -24,6 +24,9 @@ config ARM_PSCI_CPUIDLE
+>           It provides an idle driver that is capable of detecting and
+>           managing idle states through the PSCI firmware interface.
+>
+> +         The driver is not yet compatible with PREEMPT_RT: no idle states will
+> +         be entered by CPUs on such kernel.
+
+This isn't entirely correct. In principle your suggested change ends
+up providing the below updated behaviour for PREEMPT_RT.
+
+*) If the idle states are described with the non-hierarchical layout,
+all idle states are still available.
+**) If the idle states are described with the hierarchical layout,
+only the idle states defined per CPU are available, but not the ones
+being shared among a group of CPUs (aka cluster idle states).
+
+Perhaps there is an easier way to summarize what I stated above?
+
+> +
+>  config ARM_PSCI_CPUIDLE_DOMAIN
+>         bool "PSCI CPU idle Domain"
+>         depends on ARM_PSCI_CPUIDLE
+> diff --git a/drivers/cpuidle/cpuidle-psci.c b/drivers/cpuidle/cpuidle-psci.c
+> index 312a34ef28dc..c25592718984 100644
+> --- a/drivers/cpuidle/cpuidle-psci.c
+> +++ b/drivers/cpuidle/cpuidle-psci.c
+> @@ -66,7 +66,7 @@ static __cpuidle int __psci_enter_domain_idle_state(struct cpuidle_device *dev,
+>         /* Do runtime PM to manage a hierarchical CPU toplogy. */
+>         if (s2idle)
+>                 dev_pm_genpd_suspend(pd_dev);
+> -       else
+> +       else if (!IS_ENABLED(CONFIG_PREEMPT_RT))
+
+Rather than doing this (and the below) in
+__psci_enter_domain_idle_state(), I suggest replacing this with a
+bailout point in psci_dt_cpu_init_topology(). That would prevent the
+__psci_enter_domain_idle_state() from being called altogether, which
+is really what we need.
+
+Moreover, I think it would make sense to set the GENPD_FLAG_ALWAYS_ON
+for the corresponding genpd, when CONFIG_PREEMPT_RT is set. See
+psci_pd_init().
+
+>                 pm_runtime_put_sync_suspend(pd_dev);
+>
+>         state = psci_get_domain_state();
+> @@ -77,7 +77,7 @@ static __cpuidle int __psci_enter_domain_idle_state(struct cpuidle_device *dev,
+>
+>         if (s2idle)
+>                 dev_pm_genpd_resume(pd_dev);
+> -       else
+> +       else if (!IS_ENABLED(CONFIG_PREEMPT_RT))
+>                 pm_runtime_get_sync(pd_dev);
+>
+>         cpu_pm_exit();
+> --
+
+Kind regards
+Uffe
