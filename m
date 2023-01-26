@@ -2,104 +2,142 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9BB54C61D97
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Jan 2023 12:45:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EF800C05027
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Jan 2023 14:32:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230282AbjAZMpz (ORCPT
+        id S232076AbjAZOcW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 26 Jan 2023 07:45:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55480 "EHLO
+        Thu, 26 Jan 2023 09:32:22 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40180 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229642AbjAZMpw (ORCPT
+        with ESMTP id S232043AbjAZOcS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 26 Jan 2023 07:45:52 -0500
-Received: from mail-pf1-x429.google.com (mail-pf1-x429.google.com [IPv6:2607:f8b0:4864:20::429])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B425F44BEA
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 04:45:49 -0800 (PST)
-Received: by mail-pf1-x429.google.com with SMTP id s3so997749pfd.12
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 04:45:49 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=sQBrpKdtF81iXahPtF6gU+IPWtlOgCZq7sNUlQBczDo=;
-        b=bMI2xEvHCOBw/DZewO0k/Ohq8kIIP0JsaF9SK+iKCGjS02Wctxn9Cpbg7nMZTWw4eo
-         XMnIG7omfgGfipSH/PwDeD2VN9IbaN33PADGKe7AcdrD6rNcHGvT47rsach+HUEljG11
-         5onzj/nepw/GneyCzttuxs+dCX4TrpY7Qo2m4EwaI7DShRo/h9jt/7IrbPPSRJ6yRP8s
-         rEEuKGWyI8Kaivq9ZRD4r4TddEwUBMmNPsL5gX2Ll5Wo/ek0aXFrJvp43pbAk5mLbujN
-         p4XUwrThc4HV+9qvC8W+r1UfftvM/s+cBSCOkoURSaQHwe/EOwG0H6oXugxuUTu3FXgB
-         DP7A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=sQBrpKdtF81iXahPtF6gU+IPWtlOgCZq7sNUlQBczDo=;
-        b=0BKeBOcxdiJ2E4+nKUq7ZOarwUBRDuFJG2o9mLK2mpynfa1j8bxz9xTXcDS+amU+Ec
-         Pugx0jT+DH5QxpDywNnMgc6nYQPouDDe1UVieKZ8vBbydLwEL2RXgDQkUiSA/wO7mAW0
-         1nnFsWG7efljoDrQCQZV9POAhVnYJgzODGB7cJnjnnOhHDiO+rjSQzUfvsvZZgn2PQnI
-         BvN8PyfyKniAKo7xsFfcA/yEsYf41vBn4RpsKiZr9uc81QDQPMV4fzajMwnwsPKavoyU
-         CCs6snk4ZViPPo2KvvOscvklKEEgQqqZMQfdwBJAKf542vXASpqL1XhAbDpAk++5zGJ+
-         nvJw==
-X-Gm-Message-State: AO0yUKVXhdmnrY7HF2jWQjGEIT/DUDBMZXJ4008VdFeO42otQGqAaUj/
-        rABEw0nrN8qSIKeJnmYSF5JL5Sn6kaUvMriEV2M1hg==
-X-Google-Smtp-Source: AK7set9GuXW5qS1QMdZByaefsiV9jzqn+8eQhW82mxF+fn13Cl4JPjXgS1YfrESUzXLoFDvulLlEMDcFbmdOeUlwdNQ=
-X-Received: by 2002:a63:a5c:0:b0:4d9:8f35:e0c with SMTP id z28-20020a630a5c000000b004d98f350e0cmr858530pgk.89.1674737148966;
- Thu, 26 Jan 2023 04:45:48 -0800 (PST)
+        Thu, 26 Jan 2023 09:32:18 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D3A0B213F
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 06:31:31 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1674743491;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=d9+hNPuB0Ep+JKeSxwD3Jyys+PWBTEAa8vxP5xKzgr0=;
+        b=KM+8ZZNgF6ht9g2dCBlDLM1cKXhrpRjR8lafK83jBSeL2biaAy+DK77JlsfIM5WjZ7tWwH
+        GO36q/slcf751KibSKFNMfUq6MWnBHOGba+onKIfEgQ2/o0+7FzWIZSKAh5DOSjuEb7Cou
+        6qdrTkhtSw4zshbsAf+DAjPZ3MRMz5w=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-564-Fu4le_8kMM6BWQn1Xq9vIw-1; Thu, 26 Jan 2023 09:31:27 -0500
+X-MC-Unique: Fu4le_8kMM6BWQn1Xq9vIw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 254B0183B3C3;
+        Thu, 26 Jan 2023 14:31:27 +0000 (UTC)
+Received: from localhost (unknown [10.22.32.182])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 65F4840C2064;
+        Thu, 26 Jan 2023 14:31:26 +0000 (UTC)
+Date:   Thu, 26 Jan 2023 11:31:25 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>,
+        Salvatore Bonaccorso <carnil@debian.org>,
+        Mark Rutland <mark.rutland@arm.com>
+Subject: [ANNOUNCE] 5.10.162-rt79
+Message-ID: <Y9KOvZH61omPpn/3@uudg.org>
 MIME-Version: 1.0
-References: <20230125113418.455089-1-krzysztof.kozlowski@linaro.org> <ac3ed1da-fcd1-d8e9-7770-8a047f0e392d@linaro.org>
-In-Reply-To: <ac3ed1da-fcd1-d8e9-7770-8a047f0e392d@linaro.org>
-From:   Ulf Hansson <ulf.hansson@linaro.org>
-Date:   Thu, 26 Jan 2023 13:45:12 +0100
-Message-ID: <CAPDyKFr9ePUvi-h_jJByrfsBKp+Mu+oyn=qcgp=Ta_jjygEeLw@mail.gmail.com>
-Subject: Re: [PATCH v4] cpuidle: psci: Do not suspend topology CPUs on PREEMPT_RT
-To:     Daniel Lezcano <daniel.lezcano@linaro.org>
-Cc:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        Lorenzo Pieralisi <lpieralisi@kernel.org>,
-        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-        Adrien Thierry <athierry@redhat.com>,
-        Brian Masney <bmasney@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 25 Jan 2023 at 17:46, Daniel Lezcano <daniel.lezcano@linaro.org> wrote:
->
->
-> Hi Krzysztof,
->
->
-> On 25/01/2023 12:34, Krzysztof Kozlowski wrote:
-> > The runtime Power Management of CPU topology is not compatible with
-> > PREEMPT_RT:
-> > 1. Core cpuidle path disables IRQs.
-> > 2. Core cpuidle calls cpuidle-psci.
-> > 3. cpuidle-psci in __psci_enter_domain_idle_state() calls
-> >     pm_runtime_put_sync_suspend() and pm_runtime_get_sync() which use
-> >     spinlocks (which are sleeping on PREEMPT_RT).
-> >
-> > Deep sleep modes are not a priority of Realtime kernels because the
-> > latencies might become unpredictable.  On the other hand the PSCI CPU
-> > idle power domain is a parent of other devices and power domain
-> > controllers, thus it cannot be simply skipped (e.g. on Qualcomm SM8250).
-> >
-> > Disable the idle callbacks in cpuidle-psci and mark the domain as
-> > always on.  This is a trade-off between making PREEMPT_RT working and
-> > still having a proper power domain hierarchy in the system.
->
-> Wouldn't make sense to rely on the latency constraint framework ?
+I'm pleased to announce the 5.10.162-rt79 stable release.
 
-The main problem is that for runtime PM there is a per device spinlock
-being used, which becomes a sleepable lock on PREEMPT_RT.
+This release contains a single change, a fix to the aarch64 build failure
+I introduced while fixing merge conflicts in 5.10.162-rt78.
 
-In other words, the only simple solution is to avoid the calls to
-runtime PM in the idle path.
+You can get this release via the git tree at:
 
-[...]
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Kind regards
-Uffe
+  branch: v5.10-rt
+  Head SHA1: 10ea07eb47e2f5a82c5dabba993635c73c11592f
+
+Or to build 5.10.162-rt79 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.162.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.162-rt79.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+Changes from v5.10.162-rt78:
+---
+
+Luis Claudio R. Goncalves (1):
+      Linux 5.10.162-rt79
+
+Salvatore Bonaccorso (1):
+      rt: arm64: make _TIF_WORK_MASK bits contiguous
+---
+arch/arm64/include/asm/thread_info.h | 12 ++++++------
+ localversion-rt                      |  2 +-
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+---
+diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
+index 6eb36a2126e8..2afd9ceb66c9 100644
+--- a/arch/arm64/include/asm/thread_info.h
++++ b/arch/arm64/include/asm/thread_info.h
+@@ -70,12 +70,12 @@ void arch_release_task_struct(struct task_struct *tsk);
+ #define TIF_FSCHECK		5	/* Check FS is USER_DS on return */
+ #define TIF_MTE_ASYNC_FAULT	6	/* MTE Asynchronous Tag Check Fault */
+ #define TIF_NOTIFY_SIGNAL	7	/* signal notifications exist */
+-#define TIF_SYSCALL_TRACE	8	/* syscall trace active */
+-#define TIF_SYSCALL_AUDIT	9	/* syscall auditing */
+-#define TIF_SYSCALL_TRACEPOINT	10	/* syscall tracepoint for ftrace */
+-#define TIF_SECCOMP		11	/* syscall secure computing */
+-#define TIF_SYSCALL_EMU		12	/* syscall emulation active */
+-#define TIF_NEED_RESCHED_LAZY	13
++#define TIF_NEED_RESCHED_LAZY	8
++#define TIF_SYSCALL_TRACE	9	/* syscall trace active */
++#define TIF_SYSCALL_AUDIT	10	/* syscall auditing */
++#define TIF_SYSCALL_TRACEPOINT	11	/* syscall tracepoint for ftrace */
++#define TIF_SECCOMP		12	/* syscall secure computing */
++#define TIF_SYSCALL_EMU		13	/* syscall emulation active */
+ #define TIF_MEMDIE		18	/* is terminating due to OOM killer */
+ #define TIF_FREEZE		19
+ #define TIF_RESTORE_SIGMASK	20
+diff --git a/localversion-rt b/localversion-rt
+index 30758e0b2242..cf94a551bf32 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt78
++-rt79
+
