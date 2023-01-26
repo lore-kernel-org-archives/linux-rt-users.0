@@ -2,107 +2,93 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F2DC05027
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Jan 2023 17:41:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 007C1C54EAA
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Jan 2023 22:07:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231743AbjAZRlf (ORCPT
+        id S232176AbjAZWHC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 26 Jan 2023 12:41:35 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44526 "EHLO
+        Thu, 26 Jan 2023 17:07:02 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46228 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232085AbjAZRle (ORCPT
+        with ESMTP id S231527AbjAZWHB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 26 Jan 2023 12:41:34 -0500
-Received: from mta-64-227.siemens.flowmailer.net (mta-64-227.siemens.flowmailer.net [185.136.64.227])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 371227166D
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 09:41:31 -0800 (PST)
-Received: by mta-64-227.siemens.flowmailer.net with ESMTPSA id 20230126174128295799ead16a6e9ceb
-        for <linux-rt-users@vger.kernel.org>;
-        Thu, 26 Jan 2023 18:41:28 +0100
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
- d=siemens.com; i=florian.bezdeka@siemens.com;
- h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
- bh=KO6hf+CPKb+kyZe/tzFWxI+3m1X7vAFdAbD49859oG4=;
- b=GCJi+ZvDjB/eP4upbG8f1swqFfcq6z7+bddmwQYirJEg6Mp1S2a7VNZr7ILeN28J7Kipb1
- 09Vq/EM4z3AKrGhKRpayDMz336f2hrKkldbVeWi9qS/Jn7jbMB9M0Z5yaJKF734BC4yGg/YT
- PiyYJ7w1DJ4lwylzyd8lKf4n0XPFM=;
-Message-ID: <2ad9f8a7528818b9509f62278b42e5bc6d210054.camel@siemens.com>
-Subject: Re: [ANNOUNCE] 5.10.162-rt79
-From:   Florian Bezdeka <florian.bezdeka@siemens.com>
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
-        Salvatore Bonaccorso <carnil@debian.org>,
-        Mark Rutland <mark.rutland@arm.com>
-Cc:     Jan Kiszka <jan.kiszka@siemens.com>
-Date:   Thu, 26 Jan 2023 18:41:27 +0100
-In-Reply-To: <Y9KOvZH61omPpn/3@uudg.org>
-References: <Y9KOvZH61omPpn/3@uudg.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+        Thu, 26 Jan 2023 17:07:01 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A1A525DC3C
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 14:06:19 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1674770778;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=uJ/8nX4zvnH/ty2ST5KcgskeZg0+7IEmI7sIejuxW3M=;
+        b=LoLnXOvooHzULZcI28LEonQXtoveew96/N0Ky5cVJaqNq/5Hhb1zdbNEKAa4Zhoq96Px5E
+        HHuDjEeeFldUnacnh8K1KkSXRV6G6DqxsNih2EppJuYyZX2iN3L3uy88YpP9goDPwpuePH
+        MVUn2dkTRd1BMdDOVGZ6TspqidSMYoQ=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-665-fOk0kKd4MjqCU3v1gWzskg-1; Thu, 26 Jan 2023 17:06:16 -0500
+X-MC-Unique: fOk0kKd4MjqCU3v1gWzskg-1
+Received: by mail-qt1-f199.google.com with SMTP id cn7-20020a05622a248700b003b7f2a89829so1399169qtb.6
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 14:06:16 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=uJ/8nX4zvnH/ty2ST5KcgskeZg0+7IEmI7sIejuxW3M=;
+        b=MYnRSohLG3WIeGDgPsxxnWJO+O0pSprvOgJ79riVmCax0krQtDbNfgrYdZiELPKO4c
+         /7by8hNeGyyiv/cYc+TfLaEVLtV763qaD7KUgLldqL75wGobjoF0jRhRT9IbcnCrhgZq
+         Apcdp9PEfAl9Dgqwi2ucdsFAiKYCRnoSb4H5Puhta7UNYIe78httUo74qv7Nm7qsLSl+
+         frKZCbqTq4c4al/cRCoSFqjiJXJdKLbG/0n/xysvYBPnu0ksakI2dSDX+UAQ4+LwwRrp
+         M+p79nlqGJy2iI+Nyf0uIMCV1DcFyBuBYWBvpne7RlnyTsij6zsazF7LW4UYVMp6l59b
+         gKww==
+X-Gm-Message-State: AO0yUKUiIt7aIvV+b0mKPob6CaDrpnFjPdiNNg8nRhcb9UyOo6iKECMg
+        8U3Pe3s6blugxjH0PohNYpGMO/AaCoZr3qnhjrGUSpVDo9TtM/I1zoWS+w8EIvRCJ1YK0gjcJ9v
+        F2AejlwWvJTeE/D+bN+RZiITMxMk=
+X-Received: by 2002:ac8:5c09:0:b0:3b6:377d:4330 with SMTP id i9-20020ac85c09000000b003b6377d4330mr14060709qti.29.1674770775836;
+        Thu, 26 Jan 2023 14:06:15 -0800 (PST)
+X-Google-Smtp-Source: AK7set9yWYt2rhCoYu5m2yMmMGUlTPpm6onbgSgfZq2E5c1G86CongsU6U+8xg6KgYsC0Zolr+xW1g==
+X-Received: by 2002:ac8:5c09:0:b0:3b6:377d:4330 with SMTP id i9-20020ac85c09000000b003b6377d4330mr14060673qti.29.1674770775515;
+        Thu, 26 Jan 2023 14:06:15 -0800 (PST)
+Received: from fedora (modemcable181.5-202-24.mc.videotron.ca. [24.202.5.181])
+        by smtp.gmail.com with ESMTPSA id br9-20020a05622a1e0900b003b62e8b77e7sm1493538qtb.68.2023.01.26.14.06.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 26 Jan 2023 14:06:14 -0800 (PST)
+Date:   Thu, 26 Jan 2023 17:06:12 -0500
+From:   Adrien Thierry <athierry@redhat.com>
+To:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+Cc:     "Rafael J. Wysocki" <rafael@kernel.org>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Ulf Hansson <ulf.hansson@linaro.org>,
+        Lorenzo Pieralisi <lpieralisi@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        Brian Masney <bmasney@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v4] cpuidle: psci: Do not suspend topology CPUs on
+ PREEMPT_RT
+Message-ID: <Y9L5VFPdDnsiCluu@fedora>
+References: <20230125113418.455089-1-krzysztof.kozlowski@linaro.org>
 MIME-Version: 1.0
-X-Flowmailer-Platform: Siemens
-Feedback-ID: 519:519-68982:519-21489:flowmailer
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20230125113418.455089-1-krzysztof.kozlowski@linaro.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi all, especially to stable-rt maintainers,
+Hi Krzysztof,
 
-On Thu, 2023-01-26 at 11:31 -0300, Luis Claudio R. Goncalves wrote:
-> I'm pleased to announce the 5.10.162-rt79 stable release.
->=20
-> This release contains a single change, a fix to the aarch64 build failure
-> I introduced while fixing merge conflicts in 5.10.162-rt78.
+I tested your patch on the Qdrive3/sa8540p-ride on 6.2.0-rc3-rt1, and it
+fixes the issue I encountered in [1].
 
-The CIP (see [1] for technical infos about CIP) kernel maintainers
-(especially Pavel) noticed this build failure while trying to prepare
-the next 5.10 based rt-cip release.
+Tested-by: Adrien Thierry <athierry@redhat.com>
 
-Looking at the kernel CI logs [2] this build failure was detected by
-kernel-ci as well but it seems the build result did not make it back to
-the maintainers. Is that correct?
+Thank you,
 
-From the CIP projects perspective we would like to improve the
-situation.
+Adrien
 
-From my perspective the following could be done:
+[1] https://lore.kernel.org/all/20220615203605.1068453-1-athierry@redhat.com/
 
-  - Instead of (or in addition to) building and testing released -rt
-    branches enable testing of -rt release candidates
-  - Make sure the build results get back to the maintainers
-
-I'm not sure if every -rt branch has a -rc branch. I'm not familiar
-with the -rt release process yet.
-
-What do you think? Does that make sense?
-
-The discussion did not start yet, but it might be possible that I'm
-able to do such kernel-ci improvements under the CIP umbrella.
-
-Best regards,
-Florian
-
-[1] https://wiki.linuxfoundation.org/civilinfrastructureplatform/start
-[2] https://linux.kernelci.org/build/rt-stable/branch/v5.10-rt/kernel/v5.10=
-.162-rt78/
-
->=20
-> You can get this release via the git tree at:
->=20
->   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
->=20
->   branch: v5.10-rt
->   Head SHA1: 10ea07eb47e2f5a82c5dabba993635c73c11592f
->=20
