@@ -2,44 +2,35 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EF800C05027
-	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Jan 2023 14:32:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F2DC05027
+	for <linux-rt-users@archiver.kernel.org>; Thu, 26 Jan 2023 17:41:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232076AbjAZOcW (ORCPT
+        id S231743AbjAZRlf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 26 Jan 2023 09:32:22 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40180 "EHLO
+        Thu, 26 Jan 2023 12:41:35 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44526 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232043AbjAZOcS (ORCPT
+        with ESMTP id S232085AbjAZRle (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 26 Jan 2023 09:32:18 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D3A0B213F
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 06:31:31 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1674743491;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=d9+hNPuB0Ep+JKeSxwD3Jyys+PWBTEAa8vxP5xKzgr0=;
-        b=KM+8ZZNgF6ht9g2dCBlDLM1cKXhrpRjR8lafK83jBSeL2biaAy+DK77JlsfIM5WjZ7tWwH
-        GO36q/slcf751KibSKFNMfUq6MWnBHOGba+onKIfEgQ2/o0+7FzWIZSKAh5DOSjuEb7Cou
-        6qdrTkhtSw4zshbsAf+DAjPZ3MRMz5w=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-564-Fu4le_8kMM6BWQn1Xq9vIw-1; Thu, 26 Jan 2023 09:31:27 -0500
-X-MC-Unique: Fu4le_8kMM6BWQn1Xq9vIw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 254B0183B3C3;
-        Thu, 26 Jan 2023 14:31:27 +0000 (UTC)
-Received: from localhost (unknown [10.22.32.182])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 65F4840C2064;
-        Thu, 26 Jan 2023 14:31:26 +0000 (UTC)
-Date:   Thu, 26 Jan 2023 11:31:25 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
+        Thu, 26 Jan 2023 12:41:34 -0500
+Received: from mta-64-227.siemens.flowmailer.net (mta-64-227.siemens.flowmailer.net [185.136.64.227])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 371227166D
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jan 2023 09:41:31 -0800 (PST)
+Received: by mta-64-227.siemens.flowmailer.net with ESMTPSA id 20230126174128295799ead16a6e9ceb
+        for <linux-rt-users@vger.kernel.org>;
+        Thu, 26 Jan 2023 18:41:28 +0100
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; s=fm1;
+ d=siemens.com; i=florian.bezdeka@siemens.com;
+ h=Date:From:Subject:To:Message-ID:MIME-Version:Content-Type:Content-Transfer-Encoding:Cc:References:In-Reply-To;
+ bh=KO6hf+CPKb+kyZe/tzFWxI+3m1X7vAFdAbD49859oG4=;
+ b=GCJi+ZvDjB/eP4upbG8f1swqFfcq6z7+bddmwQYirJEg6Mp1S2a7VNZr7ILeN28J7Kipb1
+ 09Vq/EM4z3AKrGhKRpayDMz336f2hrKkldbVeWi9qS/Jn7jbMB9M0Z5yaJKF734BC4yGg/YT
+ PiyYJ7w1DJ4lwylzyd8lKf4n0XPFM=;
+Message-ID: <2ad9f8a7528818b9509f62278b42e5bc6d210054.camel@siemens.com>
+Subject: Re: [ANNOUNCE] 5.10.162-rt79
+From:   Florian Bezdeka <florian.bezdeka@siemens.com>
+To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         stable-rt <stable-rt@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -52,92 +43,66 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Mark Gross <markgross@kernel.org>,
         Pavel Machek <pavel@denx.de>,
         Jeff Brady <jeffreyjbrady@gmail.com>,
-        Luis Goncalves <lgoncalv@redhat.com>,
         Salvatore Bonaccorso <carnil@debian.org>,
         Mark Rutland <mark.rutland@arm.com>
-Subject: [ANNOUNCE] 5.10.162-rt79
-Message-ID: <Y9KOvZH61omPpn/3@uudg.org>
+Cc:     Jan Kiszka <jan.kiszka@siemens.com>
+Date:   Thu, 26 Jan 2023 18:41:27 +0100
+In-Reply-To: <Y9KOvZH61omPpn/3@uudg.org>
+References: <Y9KOvZH61omPpn/3@uudg.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Flowmailer-Platform: Siemens
+Feedback-ID: 519:519-68982:519-21489:flowmailer
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-I'm pleased to announce the 5.10.162-rt79 stable release.
+Hi all, especially to stable-rt maintainers,
 
-This release contains a single change, a fix to the aarch64 build failure
-I introduced while fixing merge conflicts in 5.10.162-rt78.
+On Thu, 2023-01-26 at 11:31 -0300, Luis Claudio R. Goncalves wrote:
+> I'm pleased to announce the 5.10.162-rt79 stable release.
+>=20
+> This release contains a single change, a fix to the aarch64 build failure
+> I introduced while fixing merge conflicts in 5.10.162-rt78.
 
-You can get this release via the git tree at:
+The CIP (see [1] for technical infos about CIP) kernel maintainers
+(especially Pavel) noticed this build failure while trying to prepare
+the next 5.10 based rt-cip release.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Looking at the kernel CI logs [2] this build failure was detected by
+kernel-ci as well but it seems the build result did not make it back to
+the maintainers. Is that correct?
 
-  branch: v5.10-rt
-  Head SHA1: 10ea07eb47e2f5a82c5dabba993635c73c11592f
+From the CIP projects perspective we would like to improve the
+situation.
 
-Or to build 5.10.162-rt79 directly, the following patches should be applied:
+From my perspective the following could be done:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  - Instead of (or in addition to) building and testing released -rt
+    branches enable testing of -rt release candidates
+  - Make sure the build results get back to the maintainers
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.162.xz
+I'm not sure if every -rt branch has a -rc branch. I'm not familiar
+with the -rt release process yet.
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.162-rt79.patch.xz
+What do you think? Does that make sense?
 
-Signing key fingerprint:
+The discussion did not start yet, but it might be possible that I'm
+able to do such kernel-ci improvements under the CIP umbrella.
 
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+Best regards,
+Florian
 
-All keys used for the above files and repositories can be found on the
-following git repository:
+[1] https://wiki.linuxfoundation.org/civilinfrastructureplatform/start
+[2] https://linux.kernelci.org/build/rt-stable/branch/v5.10-rt/kernel/v5.10=
+.162-rt78/
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
-
-Changes from v5.10.162-rt78:
----
-
-Luis Claudio R. Goncalves (1):
-      Linux 5.10.162-rt79
-
-Salvatore Bonaccorso (1):
-      rt: arm64: make _TIF_WORK_MASK bits contiguous
----
-arch/arm64/include/asm/thread_info.h | 12 ++++++------
- localversion-rt                      |  2 +-
- 2 files changed, 7 insertions(+), 7 deletions(-)
----
-diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
-index 6eb36a2126e8..2afd9ceb66c9 100644
---- a/arch/arm64/include/asm/thread_info.h
-+++ b/arch/arm64/include/asm/thread_info.h
-@@ -70,12 +70,12 @@ void arch_release_task_struct(struct task_struct *tsk);
- #define TIF_FSCHECK		5	/* Check FS is USER_DS on return */
- #define TIF_MTE_ASYNC_FAULT	6	/* MTE Asynchronous Tag Check Fault */
- #define TIF_NOTIFY_SIGNAL	7	/* signal notifications exist */
--#define TIF_SYSCALL_TRACE	8	/* syscall trace active */
--#define TIF_SYSCALL_AUDIT	9	/* syscall auditing */
--#define TIF_SYSCALL_TRACEPOINT	10	/* syscall tracepoint for ftrace */
--#define TIF_SECCOMP		11	/* syscall secure computing */
--#define TIF_SYSCALL_EMU		12	/* syscall emulation active */
--#define TIF_NEED_RESCHED_LAZY	13
-+#define TIF_NEED_RESCHED_LAZY	8
-+#define TIF_SYSCALL_TRACE	9	/* syscall trace active */
-+#define TIF_SYSCALL_AUDIT	10	/* syscall auditing */
-+#define TIF_SYSCALL_TRACEPOINT	11	/* syscall tracepoint for ftrace */
-+#define TIF_SECCOMP		12	/* syscall secure computing */
-+#define TIF_SYSCALL_EMU		13	/* syscall emulation active */
- #define TIF_MEMDIE		18	/* is terminating due to OOM killer */
- #define TIF_FREEZE		19
- #define TIF_RESTORE_SIGMASK	20
-diff --git a/localversion-rt b/localversion-rt
-index 30758e0b2242..cf94a551bf32 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt78
-+-rt79
-
+>=20
+> You can get this release via the git tree at:
+>=20
+>   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+>=20
+>   branch: v5.10-rt
+>   Head SHA1: 10ea07eb47e2f5a82c5dabba993635c73c11592f
+>=20
