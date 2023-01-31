@@ -2,121 +2,97 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5EB42C54EAA
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Jan 2023 19:32:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFC61C54EAA
+	for <linux-rt-users@archiver.kernel.org>; Tue, 31 Jan 2023 00:19:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236176AbjA3Tch (ORCPT
+        id S229787AbjAaATX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 30 Jan 2023 14:32:37 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59854 "EHLO
+        Mon, 30 Jan 2023 19:19:23 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52216 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230340AbjA3Tcg (ORCPT
+        with ESMTP id S229533AbjAaATE (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Jan 2023 14:32:36 -0500
-Received: from mail-ej1-x62f.google.com (mail-ej1-x62f.google.com [IPv6:2a00:1450:4864:20::62f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A5FF2131
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Jan 2023 11:32:35 -0800 (PST)
-Received: by mail-ej1-x62f.google.com with SMTP id ud5so34972383ejc.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Jan 2023 11:32:35 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=austral-dynamics-com.20210112.gappssmtp.com; s=20210112;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=+M93Lmdz0j/a45pRb4dU9DSPNh23hcVmI/9LnS66OEI=;
-        b=YuiKwxNIjyyWnZSzbIB7Ire2PgIf39JDawyaoD8VeZ/3v7VQycGmQ0ign3z8+D6a9A
-         xHDEbZzr0KVd3g/XyR6CDdmk5JNB4SNj8JCsJOVozjEvH7YRq6Z5Jn6OWrzx/eHTTNke
-         9eTGRpLr0hO9+CQz2abCCo78JpV/YtxEa1OyegAUC0vtXw1ODU/pmlz3rfvVXFgDqyFz
-         zglZB513C8ga2eY+jDwvt1tbm1FhULn6zE61sifP3jXlHu7rVKllIaf30nPgO6mSGW6Q
-         n5aXqoHoZzrgjfmxKjcQvhYbXU0nW4jtQMq8pY+ovQKIbN31REfjUW1JokQ1pwxqP2ve
-         2/BA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=+M93Lmdz0j/a45pRb4dU9DSPNh23hcVmI/9LnS66OEI=;
-        b=pTjT6tIwQuSZOryJLvNOpGDfRqvaAzvA758hRqUlyJJQ6qGJXURpp29pS6xlcy4j1Y
-         s8EDfE1C02ztcs+giSn1YX7Cjr+RwMWg9K6oriLLh1yKRe0FWWUirb489FSvSXpK5WK4
-         MRZPU3CEnArM0XDJYMFcw9lHFIC7Ekh3OVjnbQH/XAvUKr4WNnbnNva/WQbPfuCIbsPq
-         /C8Qxut1mMoZb9cVRlsbyCysAOG3uGVnJ0XAymZUhl3wg76qKtSMkoZvv8/i9MFj8UwN
-         eD0Tr7jY1Old+jgt2Kre3TNdyVUzd5oo5PeDG5zZQoUKEaDVBroVq3lHnRfxllAyTkbe
-         VDMQ==
-X-Gm-Message-State: AO0yUKVaOQOaM8D8k/z+lLnzFrVLihtFRUoc5sfQTzjnqKbSi7DmfoMX
-        gDL9SJwIle/hbmNnCpbPFE4GBv+To9S+TpSj0/TiucVVhLdH1/JG
-X-Google-Smtp-Source: AK7set+LD7x4vYPWPr7v0ETu/01bF4vWLxKPpy94f23XgWAb388Yf7O25Vwaph9x60CUWe/T76WlsrJ9PuGehR0CZoY=
-X-Received: by 2002:a17:906:6c4:b0:87b:a8bb:8114 with SMTP id
- v4-20020a17090606c400b0087ba8bb8114mr3347110ejb.80.1675107153575; Mon, 30 Jan
- 2023 11:32:33 -0800 (PST)
+        Mon, 30 Jan 2023 19:19:04 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85DA9C659
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Jan 2023 16:18:21 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1675124300;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=39hxHqbfr6Ee10w1IwoFvohjZhArDKGOQzbMUZIMMyg=;
+        b=PNRYcDq0Ifc5i+6BFR4kTbqlHeo6C9Msqa/Q/iduuHUK4pmuzuST11ezJSV5IQ6lvFf5qL
+        Co94VusoK30wzGJGkq+jZ5C4CotYIB2+Oc3zjglq09ZvLe8MsSl3oNp+tYsvNJJ9a4/74y
+        MfaX+6SmJGX7RL/vkP36bLfPaleywco=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-195-wnYBeXxsPdWtxRzFqF5AYA-1; Mon, 30 Jan 2023 19:18:15 -0500
+X-MC-Unique: wnYBeXxsPdWtxRzFqF5AYA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99D40855304;
+        Tue, 31 Jan 2023 00:18:14 +0000 (UTC)
+Received: from localhost (unknown [10.22.34.152])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id C415B492B05;
+        Tue, 31 Jan 2023 00:18:13 +0000 (UTC)
+Date:   Mon, 30 Jan 2023 21:18:12 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Salvatore Bonaccorso <carnil@debian.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.165-rt81
+Message-ID: <Y9heROlmtFkLFUIi@uudg.org>
 MIME-Version: 1.0
-From:   Michel Macena Oliveira <michel@austral-dynamics.com>
-Date:   Mon, 30 Jan 2023 16:32:22 -0300
-Message-ID: <CAKkbJ-wOuKFZzmHL8wwap7160HdeoqQwkppGFwCc3Ah5GP94oA@mail.gmail.com>
-Subject: Out of Memory problem with kernel 5.16.2 and RT ptach
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
-I'm running Linux Mint with kernel version 5.15.0-41-generic. I have installed
-the preempt RT kernel version 5.16.2 with patch-5.16.2-rt19 with the following
-options in the .config file:
+Hello RT-list!
 
--Preemption model: Fully preemptive Kernel
+I'm pleased to announce the 5.10.165-rt81 stable release.
 
--Default CPUFreq governor: Performance
+You can get this release via the git tree at:
 
--Kernel Frequency: 1000 HZ
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
--Disabled HARD LOCKUPS and HUNG TASKS detection.
+  branch: v5.10-rt
+  Head SHA1: 9831945c5ac7aafa7ed18026b149fe119b72c38a
 
-(Until here it's my attempt to follow John Ogness steps to improve the
-preempt RT linux performance, found at:
-https://www.youtube.com/watch?v=NrjXEaTSyrw)
+Or to build 5.10.165-rt81 directly, the following patches should be applied:
 
--flag CONFIG_X86_X32: n
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
--commented lines CONFIG_SYSTEM_REVOCATION_KEYS and   CONFIG_SYSTEM_TRUSTED_KEYS.
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.165.xz
 
-After I successfully installed the preempt RT kernel, I rebooted and
-tried to boot
-the RT Linux, but the system returned "Out of memory. Press any key to
-continue..."
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.165-rt81.patch.xz
 
-I've tried this solution:
-https://bugs.launchpad.net/ubuntu/+source/initramfs-tools/+bug/1970402.
-With the exception that I haven't changed the COMPRESS param.
+Signing key fingerprint:
 
-Is there anything that I'm missing to set up? Also, can you recommend
-a safe  kernel version  candidate to RT patch that is close to my
-current generic kernel version (5.15.0-41-generic)?
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
 
-Finally, how can I remove a preempt RT kernel installation?
+All keys used for the above files and repositories can be found on the
+following git repository:
 
---uname -a output--
-Linux asturian-PC 5.15.0-41-generic #44-Ubuntu SMP Wed Jun 22 14:20:53
-UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
---Some processor info:--
-Architecture:            x86_64
-  CPU op-mode(s):        32-bit, 64-bit
-  Address sizes:         43 bits physical, 48 bits virtual
-  Byte Order:            Little Endian
-CPU(s):                  4
-  On-line CPU(s) list:   0-3
-Vendor ID:               AuthenticAMD
-  Model name:            AMD Athlon 3000G with Radeon Vega Graphics
-    CPU family:          23
-    Model:               24
-    Thread(s) per core:  2
-    Core(s) per socket:  2
-    Socket(s):           1
-    Stepping:            1
-    Frequency boost:     enabled
-    CPU max MHz:         3500,0000
-    CPU min MHz:         1600,0000
---Motherboard--
- Gigabyte A320M-S2H
+Enjoy!
+Luis
 
---Memory--
- DDR4 8 GB
