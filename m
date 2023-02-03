@@ -2,63 +2,63 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5368C64EC3
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Feb 2023 21:16:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 086B1C05027
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Feb 2023 21:16:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233341AbjBCVQE (ORCPT
+        id S233581AbjBCVQF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Feb 2023 16:16:04 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59426 "EHLO
+        Fri, 3 Feb 2023 16:16:05 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59430 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233733AbjBCVP5 (ORCPT
+        with ESMTP id S233741AbjBCVP6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Feb 2023 16:15:57 -0500
-Received: from mail-qt1-x82c.google.com (mail-qt1-x82c.google.com [IPv6:2607:f8b0:4864:20::82c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 893DF3E624
-        for <linux-rt-users@vger.kernel.org>; Fri,  3 Feb 2023 13:15:40 -0800 (PST)
-Received: by mail-qt1-x82c.google.com with SMTP id m26so7017501qtp.9
-        for <linux-rt-users@vger.kernel.org>; Fri, 03 Feb 2023 13:15:40 -0800 (PST)
+        Fri, 3 Feb 2023 16:15:58 -0500
+Received: from mail-qv1-xf2b.google.com (mail-qv1-xf2b.google.com [IPv6:2607:f8b0:4864:20::f2b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1278C3E094
+        for <linux-rt-users@vger.kernel.org>; Fri,  3 Feb 2023 13:15:42 -0800 (PST)
+Received: by mail-qv1-xf2b.google.com with SMTP id jf11so3658062qvb.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 03 Feb 2023 13:15:42 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=DYHFwBql9yDJdrtxm7rhuu/vT39X4ElwB4K31Kfb6+0=;
-        b=q0jYAd+p5MzI8vnZ9bYIxPN0Ho47S8Dv9yz8wrU/Pul84eYYu5ctYheGuj0IMSkM3a
-         FB6YBSKpqVk4atf4agO3TA9B2a8NKnbDLlzvkk+xnKQ4cuAuwl6xwKSn1D//MbZZJPPT
-         Wpf3DfRvyHhDXVvyP6xloWiv+yS3QWx8AFSG0r+mD8nY0mM3I3Mc8B64sUrOku6OhjWB
-         NsurSF+DJn+PYrCw5fxkXPL0r/CTCVe0BZUj/sL2JoXMMGdlf4jf8rST1hTkVY3ubb2w
-         /1+91jPU670QxO6jjP3GZZOMcjRwJa4RsGTzVZp5QFm55FT0lc+aPwv+wIINBgab23C8
-         DtCQ==
+        bh=sbm3UeRZlKObssufKU07+Am1x9iSVkxm/kD5oFGhp0Q=;
+        b=ks+Fbxkm7/lGj8HgblM/c6Qn1KbxAgOiwNrDlyEwkYg/5W/Do6ABNAC2UWWi5fB5CA
+         JqeO545BDCETgP4GvHQf7yG3hbx/DkRZSzCv1sFZWx+8r8K+TfYbirPZwUowRLHmAjqs
+         2qGR5nmL8mnfqga4rUjRLZWZmIy6ApDy0Iikicq5chDhyaUSOd2bvQaQakXljtjPvfXt
+         iFr3vWt+dod+xTFY8iMPQwCeyHpSXjAUWTtL5iY2FBF+WcR3J8Dh1UVdhiRd6o9bOyVh
+         XvXQXSYqCU0e0vvG0iFaHBmZWblEMgdPA6QK7mTGfBYjf/XeyzAaqXrUXZO9yCVHIjFF
+         Li3A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=DYHFwBql9yDJdrtxm7rhuu/vT39X4ElwB4K31Kfb6+0=;
-        b=QDTHKoDawHJUNgT//XanUfVxT9vjSxg4LyhBFcqgDj0eDZwA5cWkqsD9H6AgCD5skw
-         yBUJH0ptPnmN7X+clsoLa11/2WYagbJCI/LLBbspdHJozAHL25Mh6xaR4Gq17YwlNhxS
-         5ev+yUHOTr8MzF68icf2pk23TvNDi8r0HtstTer7o74dfKoAkovyS8N5kqFel/G5cWaF
-         wqeyVAFwm9wCMRE4Ov6FbNZP5DmzdHA1kOfy/TQVUZmKsovK0tUynsYtlJHV560/nLlG
-         Yh413++p9xZ/no6MV6Ll86shDi9I1R21ryrLERaTQzdT+qMHYD6e8IkfyRHtuvFJsbtb
-         kzAA==
-X-Gm-Message-State: AO0yUKXH3r6zYdP51h+112JtbZBSuJ/w7AyOoAbh00wWpRhQM1esdcTd
-        tyQTPffo5x1XPchEUWGPTXsHU4zTGXw=
-X-Google-Smtp-Source: AK7set8WaoqBkbBvmhKbXbe7iqVQkt1esjA4kP7TL6w/w66tYeTcJaeC1suQ5YtGK68mrxL7ys4GIg==
-X-Received: by 2002:a05:622a:13d1:b0:3b6:3596:182b with SMTP id p17-20020a05622a13d100b003b63596182bmr21717166qtk.36.1675458939038;
-        Fri, 03 Feb 2023 13:15:39 -0800 (PST)
+        bh=sbm3UeRZlKObssufKU07+Am1x9iSVkxm/kD5oFGhp0Q=;
+        b=xlR05oTs+XSsfBFsnNQNjpLtjNjCUS1YrfiC8yLiT/r8WYzmc2RctMNigX1UVyOKZE
+         s380r7Yab0JxfBNirS+CyTDVxgTdBK66wCvrEIR79jnm9oXvl25cD2Y7XyrYc4TVLK//
+         h57vh8zUspBcq2VAHUETGbi1mvqxIaeuRrO+HKSNDbO3Tgx0Imzv7Q/qlDy0oF7vTPy/
+         GSl8Totsvoabz0cA+qENOqwiB/gTmU+3hWsRPtGIjGM5f06NL0AqG30JjE4LU1ZOpy9F
+         y7biibvZdlbOpFrIYqtboytZxtypM4ybYAbJAv4qXM/ZhRsgdZAYqUz3geZLWJqZ7dx6
+         BeWQ==
+X-Gm-Message-State: AO0yUKVieGVt6ROqpd0zJzsY4z8tGPLxiy0CWSjk2WsfgkEd/3JmtAHq
+        5ZUSihQritj2KoS7izwsrnTUUKwJ61w=
+X-Google-Smtp-Source: AK7set999o3u7+ykTooqWVHa6bLXSTzWp7tzqwEUog55AEOBxP21btLrEdlvL+ow4F+RLlPiToYAKw==
+X-Received: by 2002:a05:6214:12d0:b0:537:695e:9f13 with SMTP id s16-20020a05621412d000b00537695e9f13mr16853342qvv.34.1675458940553;
+        Fri, 03 Feb 2023 13:15:40 -0800 (PST)
 Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-14-76-71-123-7.dsl.bell.ca. [76.71.123.7])
-        by smtp.gmail.com with ESMTPSA id br15-20020a05620a460f00b00706bc44fda8sm2531004qkb.79.2023.02.03.13.15.37
+        by smtp.gmail.com with ESMTPSA id br15-20020a05620a460f00b00706bc44fda8sm2531004qkb.79.2023.02.03.13.15.39
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 03 Feb 2023 13:15:38 -0800 (PST)
+        Fri, 03 Feb 2023 13:15:39 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 4/8] rteval: rtevalConfig.py: Convert regular strings to f-strings
-Date:   Fri,  3 Feb 2023 16:15:23 -0500
-Message-Id: <20230203211527.71181-4-jkacur@redhat.com>
+Subject: [PATCH 5/8] rteval: xmlout.py: Convert to f-strings where possible
+Date:   Fri,  3 Feb 2023 16:15:24 -0500
+Message-Id: <20230203211527.71181-5-jkacur@redhat.com>
 X-Mailer: git-send-email 2.39.0
 In-Reply-To: <20230203211527.71181-1-jkacur@redhat.com>
 References: <20230203211527.71181-1-jkacur@redhat.com>
@@ -68,62 +68,62 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Convert regular strings to f-strings in rtevalConfig.py
+Convert xmlout.py to f-strings where possible
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/rtevalConfig.py | 10 +++++-----
+ rteval/xmlout.py | 10 +++++-----
  1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-index decd36ed18ab..de88924642ca 100644
---- a/rteval/rtevalConfig.py
-+++ b/rteval/rtevalConfig.py
-@@ -196,7 +196,7 @@ class rtevalConfig:
+diff --git a/rteval/xmlout.py b/rteval/xmlout.py
+index a955fb11c77a..b549cc87a2cc 100644
+--- a/rteval/xmlout.py
++++ b/rteval/xmlout.py
+@@ -67,7 +67,7 @@ class XMLOut:
  
-         # get our system topology info
-         self.__systopology = SysTopology()
--        print(("got system topology: %s" % self.__systopology))
-+        print(f"got system topology: {self.__systopology}")
+     def __del__(self):
+         if self.level > 0:
+-            raise RuntimeError("XMLOut: open blocks at __del__ (last opened '%s')" % self.currtag.name)
++            raise RuntimeError(f"XMLOut: open blocks at __del__ (last opened '{self.currtag.name}')")
+         if self.xmldoc is not None:
+             self.xmldoc.freeDoc()
  
-         # Import the default config first
-         for sect, vals in list(default_config.items()):
-@@ -225,7 +225,7 @@ class rtevalConfig:
-         "Simple method for dumping config when object is used as a string"
-         ret = ""
-         for sect in list(self.__config_data.keys()):
--            ret += "[%s]\n%s\n" % (sect, str(self.__config_data[sect]))
-+            ret += f"[{sect}]\n{str(self.__config_data[sect])}\n"
-         return ret
+@@ -131,7 +131,7 @@ class XMLOut:
+                     self.__parseToXML(n, v)
+                     node.addChild(n)
+         else:
+-            raise TypeError("unhandled type (%s) for value '%s'" % (type(data), str(data)))
++            raise TypeError(f"unhandled type ({str(type(data))}) for value '{str(data)}'")
  
+     def close(self):
+         if self.status == 0:
+@@ -139,7 +139,7 @@ class XMLOut:
+         if self.status == 3:
+             raise RuntimeError("XMLOut: XML document already closed")
+         if self.level > 0:
+-            raise RuntimeError("XMLOut: open blocks at close() (last opened '%s')" % self.currtag.name)
++            raise RuntimeError(f"XMLOut: open blocks at close() (last opened '{self.currtag.name}')")
  
-@@ -240,7 +240,7 @@ class rtevalConfig:
-         for f in ('rteval.conf', '/etc/rteval.conf'):
-             p = os.path.abspath(f)
-             if os.path.exists(p):
--                self.__info("found config file %s" % p)
-+                self.__info(f"found config file {p}")
-                 return p
-         raise RuntimeError("Unable to find configfile")
+         if self.status == 1: # Only set the root node in the doc on created reports (NewReport called)
+             self.xmldoc.setRootElement(self.xmlroot)
+@@ -172,7 +172,7 @@ class XMLOut:
+         root = self.xmldoc.children
+         if root.name != self.roottag:
+             self.status = 3
+-            raise RuntimeError("XMLOut: Loaded report is not a valid %s XML file" % self.roottag)
++            raise RuntimeError(f"XMLOut: Loaded report is not a valid {self.roottag} XML file")
  
-@@ -258,7 +258,7 @@ class rtevalConfig:
-             # Don't try to reread this file if it's already been parsed
-             return
+         if validate_version is True:
+             ver = root.hasProp('version')
+@@ -183,7 +183,7 @@ class XMLOut:
  
--        self.__info("reading config file %s" % cfgfile)
-+        self.__info(f"reading config file {cfgfile}")
-         ini = configparser.ConfigParser()
-         ini.optionxform = str
-         ini.read(cfgfile)
-@@ -321,7 +321,7 @@ class rtevalConfig:
-             # Return a new object with config settings of a given section
-             return self.__config_data[section]
-         except KeyError:
--            raise KeyError("The section '%s' does not exist in the config file" % section)
-+            raise KeyError(f"The section '{section}' does not exist in the config file")
+             if ver.getContent() != self.version:
+                 self.status = 3
+-                raise RuntimeError("XMLOut: Loaded report is not of version %s" % self.version)
++                raise RuntimeError(f"XMLOut: Loaded report is not of version {self.version}")
  
+         self.status = 2 # Confirm that we have loaded a report from file
  
- def unit_test(rootdir):
 -- 
 2.39.0
 
