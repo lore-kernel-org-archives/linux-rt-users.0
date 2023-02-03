@@ -2,63 +2,63 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2902CC636CC
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Feb 2023 21:16:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5368C64EC3
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Feb 2023 21:16:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233723AbjBCVQC (ORCPT
+        id S233341AbjBCVQE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Feb 2023 16:16:02 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59974 "EHLO
+        Fri, 3 Feb 2023 16:16:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59426 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233581AbjBCVPy (ORCPT
+        with ESMTP id S233733AbjBCVP5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Feb 2023 16:15:54 -0500
-Received: from mail-qt1-x82a.google.com (mail-qt1-x82a.google.com [IPv6:2607:f8b0:4864:20::82a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2B719A701A
-        for <linux-rt-users@vger.kernel.org>; Fri,  3 Feb 2023 13:15:39 -0800 (PST)
-Received: by mail-qt1-x82a.google.com with SMTP id m26so7017429qtp.9
-        for <linux-rt-users@vger.kernel.org>; Fri, 03 Feb 2023 13:15:39 -0800 (PST)
+        Fri, 3 Feb 2023 16:15:57 -0500
+Received: from mail-qt1-x82c.google.com (mail-qt1-x82c.google.com [IPv6:2607:f8b0:4864:20::82c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 893DF3E624
+        for <linux-rt-users@vger.kernel.org>; Fri,  3 Feb 2023 13:15:40 -0800 (PST)
+Received: by mail-qt1-x82c.google.com with SMTP id m26so7017501qtp.9
+        for <linux-rt-users@vger.kernel.org>; Fri, 03 Feb 2023 13:15:40 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=up87JT+Oy5cK09OPgZIVT8p4/CiyWa4g1UtMA+kE6c4=;
-        b=kuDCVHy/9FY8KusrhAw1MqMTfhlaCPOvU/Uw+2Xj5Yy7N6/s8fHmIwlaNT9T2GtCx+
-         HbJKacQKKMaM7XcqhQNk65bhsw3YJHxwIsA9UrFaf5M4fZZi1Jgaa/SYdqP3w4/pER5U
-         2yJNyH2YihLtOZdlo38dRlG5x2vwSN+0cg/uPX5lsj7pC5CZTr4bSeOJY+leFNnJIcqS
-         7hS/svLAhyThBC1mEkRu4yhOf4LKHta8Gqmj/N60F/slD1yRC1Z/1QSXXd1XlZQ48Wrx
-         aT7Wcsc5V1Z8EspTMiEO0wFGvRYt0TsAoXJMVStA1Qj88K9CpiDEcL9lR0awEYddxCZH
-         5okA==
+        bh=DYHFwBql9yDJdrtxm7rhuu/vT39X4ElwB4K31Kfb6+0=;
+        b=q0jYAd+p5MzI8vnZ9bYIxPN0Ho47S8Dv9yz8wrU/Pul84eYYu5ctYheGuj0IMSkM3a
+         FB6YBSKpqVk4atf4agO3TA9B2a8NKnbDLlzvkk+xnKQ4cuAuwl6xwKSn1D//MbZZJPPT
+         Wpf3DfRvyHhDXVvyP6xloWiv+yS3QWx8AFSG0r+mD8nY0mM3I3Mc8B64sUrOku6OhjWB
+         NsurSF+DJn+PYrCw5fxkXPL0r/CTCVe0BZUj/sL2JoXMMGdlf4jf8rST1hTkVY3ubb2w
+         /1+91jPU670QxO6jjP3GZZOMcjRwJa4RsGTzVZp5QFm55FT0lc+aPwv+wIINBgab23C8
+         DtCQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=up87JT+Oy5cK09OPgZIVT8p4/CiyWa4g1UtMA+kE6c4=;
-        b=BFE6gczQt4ZQLjZlqjGltRJnIGNHbB363xaCSXOFCVAHzFstDhZI9K7c90mN+kz01j
-         RARU7EFp6ro9+YDTe0T5UuHApWKsive8XJLLDvmYKymonhE/hWnu1O8ZgZkqIGnk5/bA
-         B/TSR2SyiCx5kLynO339qG2makInslOPCEuPJbzDrngeBkqoXWQAhYxSeG/6+oWFN3sC
-         WU24vNIgDMsEjM2PN44z6d6xRApTfq2PgApfxSMUfW7NBam+0csC4QYpcOVM6KhHMAgi
-         WgWuhRK70yRBMZ694TRnDfT8Lhvof5k2R4ghWU9gb0DXUni4Vt1M3sGv+qz2TFbtz2Up
-         1zMw==
-X-Gm-Message-State: AO0yUKXre+sBhWGF8QVWQFNwQtgFKNuaJ4RDiW3APlxAYtAd/bxHEw2r
-        obC/2J2OhQNSx5+3a4OA58aRFC8o/nY=
-X-Google-Smtp-Source: AK7set/SMlUwb/9VgmkkG4sV+isjiKs0fe+0qnENSLmpePPb7/v23Dr8TvN+jkF+XhftN/2jWHjBUw==
-X-Received: by 2002:a05:622a:2ca:b0:3b9:b1a1:73ec with SMTP id a10-20020a05622a02ca00b003b9b1a173ecmr22307637qtx.23.1675458937693;
-        Fri, 03 Feb 2023 13:15:37 -0800 (PST)
+        bh=DYHFwBql9yDJdrtxm7rhuu/vT39X4ElwB4K31Kfb6+0=;
+        b=QDTHKoDawHJUNgT//XanUfVxT9vjSxg4LyhBFcqgDj0eDZwA5cWkqsD9H6AgCD5skw
+         yBUJH0ptPnmN7X+clsoLa11/2WYagbJCI/LLBbspdHJozAHL25Mh6xaR4Gq17YwlNhxS
+         5ev+yUHOTr8MzF68icf2pk23TvNDi8r0HtstTer7o74dfKoAkovyS8N5kqFel/G5cWaF
+         wqeyVAFwm9wCMRE4Ov6FbNZP5DmzdHA1kOfy/TQVUZmKsovK0tUynsYtlJHV560/nLlG
+         Yh413++p9xZ/no6MV6Ll86shDi9I1R21ryrLERaTQzdT+qMHYD6e8IkfyRHtuvFJsbtb
+         kzAA==
+X-Gm-Message-State: AO0yUKXH3r6zYdP51h+112JtbZBSuJ/w7AyOoAbh00wWpRhQM1esdcTd
+        tyQTPffo5x1XPchEUWGPTXsHU4zTGXw=
+X-Google-Smtp-Source: AK7set8WaoqBkbBvmhKbXbe7iqVQkt1esjA4kP7TL6w/w66tYeTcJaeC1suQ5YtGK68mrxL7ys4GIg==
+X-Received: by 2002:a05:622a:13d1:b0:3b6:3596:182b with SMTP id p17-20020a05622a13d100b003b63596182bmr21717166qtk.36.1675458939038;
+        Fri, 03 Feb 2023 13:15:39 -0800 (PST)
 Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-14-76-71-123-7.dsl.bell.ca. [76.71.123.7])
-        by smtp.gmail.com with ESMTPSA id br15-20020a05620a460f00b00706bc44fda8sm2531004qkb.79.2023.02.03.13.15.36
+        by smtp.gmail.com with ESMTPSA id br15-20020a05620a460f00b00706bc44fda8sm2531004qkb.79.2023.02.03.13.15.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 03 Feb 2023 13:15:36 -0800 (PST)
+        Fri, 03 Feb 2023 13:15:38 -0800 (PST)
 Sender: John Kacur <jkacur@gmail.com>
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 3/8] rteval: rtevalXMLRPC.py: Convert regular strings to f-strings
-Date:   Fri,  3 Feb 2023 16:15:22 -0500
-Message-Id: <20230203211527.71181-3-jkacur@redhat.com>
+Subject: [PATCH 4/8] rteval: rtevalConfig.py: Convert regular strings to f-strings
+Date:   Fri,  3 Feb 2023 16:15:23 -0500
+Message-Id: <20230203211527.71181-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.39.0
 In-Reply-To: <20230203211527.71181-1-jkacur@redhat.com>
 References: <20230203211527.71181-1-jkacur@redhat.com>
@@ -68,112 +68,62 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Convert regular strings to f-strings in rtevalXMLRPC.py
+Convert regular strings to f-strings in rtevalConfig.py
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/rtevalXMLRPC.py | 34 ++++++++++++++--------------------
- 1 file changed, 14 insertions(+), 20 deletions(-)
+ rteval/rtevalConfig.py | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/rteval/rtevalXMLRPC.py b/rteval/rtevalXMLRPC.py
-index f24e21a8ed2f..6dce12ad78bb 100644
---- a/rteval/rtevalXMLRPC.py
-+++ b/rteval/rtevalXMLRPC.py
-@@ -33,7 +33,7 @@ from .Log import Log
- class rtevalXMLRPC:
-     def __init__(self, host, logger, mailer=None):
-         self.__host = host
--        self.__url = "http://%s/rteval/API1/" % self.__host
-+        self.__url = f"http://{self.__host}/rteval/API1/"
-         self.__logger = logger
-         self.__mailer = mailer
-         self.__client = rtevalclient.rtevalclient(self.__url)
-@@ -41,7 +41,7 @@ class rtevalXMLRPC:
+diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
+index decd36ed18ab..de88924642ca 100644
+--- a/rteval/rtevalConfig.py
++++ b/rteval/rtevalConfig.py
+@@ -196,7 +196,7 @@ class rtevalConfig:
  
-     def Ping(self):
-         res = None
--        self.__logger.log(Log.DEBUG, "Checking if XML-RPC server '%s' is reachable" % self.__host)
-+        self.__logger.log(Log.DEBUG, f"Checking if XML-RPC server '{self.__host}' is reachable")
-         attempt = 0
-         ping_success = False
-         warning_sent = False
-@@ -52,10 +52,10 @@ class rtevalXMLRPC:
-                 ping_success = True
-             except xmlrpc.client.ProtocolError:
-                 # Server do not support Hello(), but is reachable
--                self.__logger.log(Log.INFO, "Got XML-RPC connection with %s but it did not support Hello()" % self.__host)
-+                self.__logger.log(Log.INFO, f"Got XML-RPC connection with {self.__host} but it did not support Hello()")
-                 res = None
-             except socket.error as err:
--                self.__logger.log(Log.INFO, "Could not establish XML-RPC contact with %s\n%s" % (self.__host, str(err)))
-+                self.__logger.log(Log.INFO, f"Could not establish XML-RPC contact with {self.__host}\n{str(err)}")
+         # get our system topology info
+         self.__systopology = SysTopology()
+-        print(("got system topology: %s" % self.__systopology))
++        print(f"got system topology: {self.__systopology}")
  
-                 # Do attempts handling
-                 attempt += 1
-@@ -63,17 +63,16 @@ class rtevalXMLRPC:
-                     break # To avoid sleeping before we abort
- 
-                 if (self.__mailer is not None) and (not warning_sent):
--                    self.__mailer.SendMessage("[RTEVAL:WARNING] Failed to ping XML-RPC server", "Server %s did not respond." % self.__host)
-+                    self.__mailer.SendMessage("[RTEVAL:WARNING] Failed to ping XML-RPC server", f"Server {self.__host} did not respond.")
-                     warning_sent = True
- 
--                print("Failed pinging XML-RPC server.  Doing another attempt(%i) " % attempt)
-+                print(f"Failed pinging XML-RPC server.  Doing another attempt({attempt}) ")
-                 time.sleep(attempt) #*15) # Incremental sleep - sleep attempts*15 seconds
-                 ping_success = False
- 
-         if res:
--            self.__logger.log(Log.INFO, "Verified XML-RPC connection with %s (XML-RPC API version: %i)" % (res["server"], res["APIversion"]))
--            self.__logger.log(Log.DEBUG, "Recieved greeting: %s" % res["greeting"])
--
-+            self.__logger.log(Log.INFO, f'Verified XML-RPC connection with {res["server"]} (XML-RPC API version: {res["APIversion"]})')
-+            self.__logger.log(Log.DEBUG, f"Recieved greeting: {res['greeting']}")
-         return ping_success
+         # Import the default config first
+         for sect, vals in list(default_config.items()):
+@@ -225,7 +225,7 @@ class rtevalConfig:
+         "Simple method for dumping config when object is used as a string"
+         ret = ""
+         for sect in list(self.__config_data.keys()):
+-            ret += "[%s]\n%s\n" % (sect, str(self.__config_data[sect]))
++            ret += f"[{sect}]\n{str(self.__config_data[sect])}\n"
+         return ret
  
  
-@@ -85,9 +84,9 @@ class rtevalXMLRPC:
-         warning_sent = False
-         while attempt < 6:
-             try:
--                print("Submitting report to %s" % self.__url)
-+                print(f"Submitting report to {self.__url}")
-                 rterid = self.__client.SendReport(xmlreport)
--                print("Report registered with submission id %i" % rterid)
-+                print(f"Report registered with submission id {rterid}")
-                 attempt = 10
-                 exitcode = 0 # Success
-             except socket.error:
-@@ -96,12 +95,10 @@ class rtevalXMLRPC:
-                     break # To avoid sleeping before we abort
+@@ -240,7 +240,7 @@ class rtevalConfig:
+         for f in ('rteval.conf', '/etc/rteval.conf'):
+             p = os.path.abspath(f)
+             if os.path.exists(p):
+-                self.__info("found config file %s" % p)
++                self.__info(f"found config file {p}")
+                 return p
+         raise RuntimeError("Unable to find configfile")
  
-                 if (self.__mailer is not None) and (not warning_sent):
--                    self.__mailer.SendMessage("[RTEVAL:WARNING] Failed to submit report to XML-RPC server",
--                                              "Server %s did not respond.  Not giving up yet."
--                                              % self.__host)
-+                    self.__mailer.SendMessage("[RTEVAL:WARNING] Failed to submit report to XML-RPC server", f"Server {self.__host} did not respond.  Not giving up yet.")
-                     warning_sent = True
+@@ -258,7 +258,7 @@ class rtevalConfig:
+             # Don't try to reread this file if it's already been parsed
+             return
  
--                print("Failed sending report.  Doing another attempt(%i) " % attempt)
-+                print(f"Failed sending report. Making another attempt({attempt}) ")
-                 time.sleep(attempt) #*5*60) # Incremental sleep - sleep attempts*5 minutes
+-        self.__info("reading config file %s" % cfgfile)
++        self.__info(f"reading config file {cfgfile}")
+         ini = configparser.ConfigParser()
+         ini.optionxform = str
+         ini.read(cfgfile)
+@@ -321,7 +321,7 @@ class rtevalConfig:
+             # Return a new object with config settings of a given section
+             return self.__config_data[section]
+         except KeyError:
+-            raise KeyError("The section '%s' does not exist in the config file" % section)
++            raise KeyError(f"The section '{section}' does not exist in the config file")
  
-             except Exception as err:
-@@ -111,12 +108,9 @@ class rtevalXMLRPC:
-         if self.__mailer is not None:
-             # Send final result messages
-             if exitcode == 2:
--                self.__mailer.SendMessage("[RTEVAL:FAILURE] Failed to submit report to XML-RPC server",
--                                          "Server %s did not respond at all after %i attempts."
--                                          % (self.__host, attempt - 1))
-+                self.__mailer.SendMessage("[RTEVAL:FAILURE] Failed to submit report to XML-RPC server", f"Server {self.__host} did not respond at all after {attempt - 1} attempts.")
-             elif (exitcode == 0) and warning_sent:
-                 self.__mailer.SendMessage("[RTEVAL:SUCCESS] XML-RPC server available again",
--                                          "Succeeded to submit the report to %s"
--                                          % self.__host)
-+                                          f"Succeeded to submit the report to {self.__host}")
  
-         return exitcode
+ def unit_test(rootdir):
 -- 
 2.39.0
 
