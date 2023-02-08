@@ -2,100 +2,103 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D6EEC05027
-	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Feb 2023 20:19:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5189DC05027
+	for <linux-rt-users@archiver.kernel.org>; Wed,  8 Feb 2023 21:53:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232077AbjBHUT1 (ORCPT
+        id S232022AbjBHVxd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 8 Feb 2023 15:19:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41104 "EHLO
+        Wed, 8 Feb 2023 16:53:33 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60288 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230252AbjBHUTZ (ORCPT
+        with ESMTP id S231220AbjBHVxc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Feb 2023 15:19:25 -0500
-Received: from outbound-smtp22.blacknight.com (outbound-smtp22.blacknight.com [81.17.249.190])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E06D835267
-        for <linux-rt-users@vger.kernel.org>; Wed,  8 Feb 2023 12:19:20 -0800 (PST)
-Received: from mail.blacknight.com (pemlinmail03.blacknight.ie [81.17.254.16])
-        by outbound-smtp22.blacknight.com (Postfix) with ESMTPS id 212CFBAB49
-        for <linux-rt-users@vger.kernel.org>; Wed,  8 Feb 2023 20:19:19 +0000 (GMT)
-Received: (qmail 14756 invoked from network); 8 Feb 2023 20:19:18 -0000
-Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.198.246])
-  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 8 Feb 2023 20:19:18 -0000
-Date:   Wed, 8 Feb 2023 20:19:17 +0000
-From:   Mel Gorman <mgorman@techsingularity.net>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Linux-RT <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH v4] locking/rwbase: Mitigate indefinite writer starvation
-Message-ID: <20230208201917.o57hd7ktzof6wkfi@techsingularity.net>
-References: <20230120140847.4pjqf3oinemokcyp@techsingularity.net>
- <87ttzyyigk.ffs@tglx>
+        Wed, 8 Feb 2023 16:53:32 -0500
+Received: from mail-ej1-x631.google.com (mail-ej1-x631.google.com [IPv6:2a00:1450:4864:20::631])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CC09A7ED6;
+        Wed,  8 Feb 2023 13:53:31 -0800 (PST)
+Received: by mail-ej1-x631.google.com with SMTP id m2so929771ejb.8;
+        Wed, 08 Feb 2023 13:53:31 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=YcGGbFgEzftpyF+VOMqjhkA2DYYoI9t16vH0JUIgyuc=;
+        b=cg9oxHSR98/LkffcvDkkGQCCtLefB0sqA93hXHygHElmL1cUKTMRrXhq97NJRUJY/A
+         1HV74cpAJFBoEnIYcCflww+F/afJi1mkl8wBTT+ZgBiCk5rBKgXeAo/ipFiy9NaacDNU
+         MFATqc/YfrzWwyJ8uceojDzj0QWAkyajXt3HsGXhOJC5wJoJavIRywW/MKNV01BO5lxJ
+         Pwbq8xYy8HjQ+g69eWQ0TDFC88OLWRH7zFcLkXbWq7HeF11YzgWF8bXtLIewP3G3A/mc
+         UU4DFiH5o/VHc3DO0t0yW8/dUDBk0+n+S+dF2Nkh97tH13BU7YFCLpqzbpVrTOhO6iW/
+         SXcg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=YcGGbFgEzftpyF+VOMqjhkA2DYYoI9t16vH0JUIgyuc=;
+        b=3tO/NjkbSBn7SmshySmPXDSUSClnhtupA9mOWHUpkMXR2bmcWM1XhOiIADQijZND4D
+         fB4JRgg8ZlJHVW1lJ3m13aPnabObn8/F1GBbqh2jBUbC5c3KSB6AVeMh5Lw3U1YsdRPY
+         m3mL6+KyIAu7zfI7VtDu7X+y4y/r2sDN3fAyJk8v2uNskMCI7g0LU4rboPncL845ZfLI
+         AO+K0fY4WZXVCFSLG/2zS9Bwk71aLIRWrV2tUMe9RpYBJV3G/u/ijkhdldeJEGc1oOm0
+         guHmtZNsUBTfxBB+LZM+WT6t6KZ9zKO7hYaGfVQMEOJ4a+KHnaOxY9xFMTa51GuV2SgL
+         ENgA==
+X-Gm-Message-State: AO0yUKXc5t8DnowdMFaDzN36f+IgMOyLymDMPD5lfPZX/zeJooaqo9Hq
+        Snv0Q+T1w/ANQHmnt/p2yLI=
+X-Google-Smtp-Source: AK7set8pkmkQWkfL4XRfxKlhYKYQs7fnwnkKSLN8IQialzdrFeRgKSVaL/BXycnher0m459swtSKDQ==
+X-Received: by 2002:a17:906:db0b:b0:87b:dc07:380f with SMTP id xj11-20020a170906db0b00b0087bdc07380fmr13510054ejb.0.1675893210275;
+        Wed, 08 Feb 2023 13:53:30 -0800 (PST)
+Received: from ?IPV6:2a02:a466:68ed:1:156e:48d2:7a4d:16b3? (2a02-a466-68ed-1-156e-48d2-7a4d-16b3.fixed6.kpn.net. [2a02:a466:68ed:1:156e:48d2:7a4d:16b3])
+        by smtp.gmail.com with ESMTPSA id a22-20020a170906191600b008adc971f5acsm1191431eje.178.2023.02.08.13.53.28
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 08 Feb 2023 13:53:29 -0800 (PST)
+Message-ID: <37bdad51-36bf-c69a-7cb6-3138cacf9474@gmail.com>
+Date:   Wed, 8 Feb 2023 22:53:28 +0100
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-In-Reply-To: <87ttzyyigk.ffs@tglx>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.7.1
+Subject: Re: linux-6.1-rt ?
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Michael Everitt <gentoo@veremit.xyz>
+Cc:     Christian Eggers <ceggers@arri.de>, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+References: <12136223.O9o76ZdvQC@n95hx1g2>
+ <208196df-d0b2-5cf6-29b3-4570a0946e77@veremit.xyz>
+ <Y7/cYsEXHpCEGwwa@linutronix.de>
+Content-Language: en-US
+From:   Ferry Toth <fntoth@gmail.com>
+In-Reply-To: <Y7/cYsEXHpCEGwwa@linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Feb 06, 2023 at 03:30:35PM +0100, Thomas Gleixner wrote:
-> Mel!
-
-Hi :)
-
-I'm not really online for the next several weeks so further responses may
-take ages. It's co-incidence that I'm online at the moment for an unrelated
-matter and glancing through mail.
-
+Op 12-01-2023 om 11:09 schreef Sebastian Andrzej Siewior:
+> On 2023-01-11 09:44:45 [+0000], Michael Everitt wrote:
+>> On 11/01/2023 08:36, Christian Eggers wrote:
+>>> linux-6.1 seems to be the next LTS kernel [1]
+>>>
+>>> Are there any plans to release a -rt version of linux-6.1?
+>>>
+>>> regards
+>>> Christian
+>>>
+>>> [1] https://lore.kernel.org/lkml/Yz%2FZWBeNZvKenEVM@kroah.com/
+>>>
+>>>
+>>
+>> You probably want this: https://www.spinics.net/lists/linux-rt-users/msg26345.html
+>>
+>> You may wish to wait for the maintainer to complete their processes!
 > 
-> On Fri, Jan 20 2023 at 14:08, Mel Gorman wrote:
-> > dio_truncate is not a realtime application but indefinite writer starvation
-> > is undesirable. The test case has one writer appending and truncating files
-> > A and B while multiple readers read file A. The readers and writer are
-> > contending for one file's inode lock which never succeeds as the readers
-> > keep reading until the writer is done which never happens.
-> >
-> > This patch records a timestamp when the first writer is blocked. DL /
+> There is a 6.1-RT but it hasn't been updated for a while. There should
+> be a 6.2-RT later today.
+> As for the link [1] it has not been confirmed nor denied that v6.1 will
+> be a LTS kernel. Once the version 6.1 left its Schrödinger state then
+> there will be an update (or not).
+The cat is alive: https://kernel.org/category/releases.html
+>> Regards,
+>> veremitz/Michael.
 > 
-> git grep 'This patch' Documentation/process/
-> 
+> Sebastian
 
-I'm aware of the rule but tend to forget at times as enforcement varies
-between subsystems. First sentence of the paragraph becomes;
-
-Record a timestamp when the first writer is blocked and force all new
-readers into the slow path upon expiration.
-
-> > RT tasks can continue to take the lock for read as long as readers exist
-> > indefinitely. Other readers can acquire the read lock unless a writer
-> > has been blocked for a minimum of 4ms. This is sufficient to allow the
-> > dio_truncate test case to complete within the 30 minutes timeout.
-> 
-> I'm not opposed to this, but what's the actual reason for this pulled
-> out of thin air timeout?
-> 
-
-No good reason, a value had to be picked. It happens to match the rwsem
-cutoff for optimistic spinning. That at least is some threshold for "a
-lock failed to be acquired within a reasonable time period". It's also
-arbitrary that it happened to be a value that allowed the dio_truncate
-LTP test to complete in a reasonable time.
-
-> What's the downside of actually forcing !RT readers into the slowpath
-> once there is a writer waiting?
-> 
-
-I actually don't know for sure because it's application dependant but at
-minimum, I believe it would be a deviation from how generic rwsems behave
-where a writer optimistically spins for the same duration before forcing
-the handoff. Whether that matters or not depends on the application,
-the ratio between readers/writers and the number of concurrent readers.
-
--- 
-Mel Gorman
-SUSE Labs
