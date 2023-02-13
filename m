@@ -2,76 +2,70 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 76BBFC05027
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Feb 2023 16:33:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC0B7C636CC
+	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Feb 2023 16:17:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232801AbjBJQd1 (ORCPT
+        id S230178AbjBMQRY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 10 Feb 2023 11:33:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51296 "EHLO
+        Mon, 13 Feb 2023 11:17:24 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34772 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232478AbjBJQd0 (ORCPT
+        with ESMTP id S229622AbjBMQRW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Feb 2023 11:33:26 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6FE6928852;
-        Fri, 10 Feb 2023 08:33:22 -0800 (PST)
-Date:   Fri, 10 Feb 2023 17:33:19 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676046800;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=QyUp1WLGWuP1gbtu6LrGxboD7v5Hq+tpy02prCN1rpM=;
-        b=b82i13c2Mmowe7dSEZ5qmeGCb8Gf9IaR9JUMWcZNYfS+mt1Z7g/NlCW5jOcFE6h/1pO6Jj
-        1jSWfwHRJhSvJQ2sNvB2/H33ZxAmTwUTxLdoZuoexpUNVXHub1POUZgQt+u+NiVZnQyL9m
-        2Nk08suuJ5uTSbKyqWSBpczEkvTdroCvPS+WJ6GJ3xSd4uwprp5jba0fxLOLYZNWowGg/c
-        rahGpesQueEaEv48eevS6EyvCkIh99y2CuIIEI1Fly1xHT90wQL3Yb6ZgXIeK4llC8Nh93
-        sL43J1zE6E7EuJrdP9ZwkDYz4DevMiLjFXeDrBlwd2GcROp3qrsBEizysmnQZA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676046800;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=QyUp1WLGWuP1gbtu6LrGxboD7v5Hq+tpy02prCN1rpM=;
-        b=+8t9GxRxMRccpUbAB4+rS6wICtpDoV1SjZsIh+6NibXpS1fWocjMjX8FO3T0pwerL6BnQt
-        hZn3HcNrrivYgEBQ==
-From:   "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-To:     Alison Chaiken <achaiken@aurora.tech>
-Cc:     "Chang, Junxiao" <junxiao.chang@intel.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "Peh, Hock Zhang" <hock.zhang.peh@intel.com>
-Subject: Re: [PATCH] softirq: wake up ktimer thread in softirq context
-Message-ID: <Y+Zxz0iPqnTRYHi1@linutronix.de>
-References: <20221208075604.811710-1-junxiao.chang@intel.com>
- <BN9PR11MB5370BA8A506EB8519DC879C1ECEA9@BN9PR11MB5370.namprd11.prod.outlook.com>
- <Y6H4zqr8bObRFE1g@linutronix.de>
- <CAFzL-7sL6HVDyVbafaxiq7-KN1aDTFUx8az4h0EvxJmuO6SPog@mail.gmail.com>
+        Mon, 13 Feb 2023 11:17:22 -0500
+Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E6D5C1C32E;
+        Mon, 13 Feb 2023 08:17:21 -0800 (PST)
+Received: by mail-ej1-f43.google.com with SMTP id qw12so33225240ejc.2;
+        Mon, 13 Feb 2023 08:17:21 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=gA7h1JSNBcO0xfSrGGH4n2jGYQo5+0WYhkIEf3BTaPE=;
+        b=vQdEookd74o0Oj+FkZdnqrVl9Iob/E6MA7S6BwF4sJhvVLr0eeBlZW2lzVefOL3jsw
+         f8V45N28rdxQHlbN+Toganqn8pTnAOkeY4trzUSwCnt862B8n/yq4Q/ayLoMtRfD/u3W
+         8MzsqIz8mHdJgZ/9Tyi1PIQxJNx2wMi3hYItLpXmyqQp9lVr39pXernylOy7Y6Qa1a6p
+         EMkSv9PreSu2efKBJmrpf/BHpQssBPy3axsCK/41XRYagPHTZAVOQAUw+3RcnOMpSVrz
+         Cbl3XQQdUUwbHIEor4rWrTOLbRejN25fkRsYl3GyftrnarP7FAiXBSuXKQEtV3lzs98c
+         eFNw==
+X-Gm-Message-State: AO0yUKWYgXetV3ViftFxIHFOuM9JWa3tXTEr2ANFIHiMK/wQr3+4kKIj
+        uhjNeLKJ77qDTZ1ABW90buv4tXfd8oh5dWsWfa7xhJ2z
+X-Google-Smtp-Source: AK7set9m0TVaY/mpY+cgnB2X1s/XFPAFuhHBOoEdnJEM9/v05ffr0h0mhjf03IDpINLVbdC1gQwzgy0i3urpG05QAYg=
+X-Received: by 2002:a17:906:e28b:b0:8ad:731:592d with SMTP id
+ gg11-20020a170906e28b00b008ad0731592dmr4833517ejb.5.1676305040534; Mon, 13
+ Feb 2023 08:17:20 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAFzL-7sL6HVDyVbafaxiq7-KN1aDTFUx8az4h0EvxJmuO6SPog@mail.gmail.com>
+References: <20230125113418.455089-1-krzysztof.kozlowski@linaro.org>
+ <Y9L5VFPdDnsiCluu@fedora> <Y+JWd6NfhH0sAlim@fedora> <CAJZ5v0i4t=z2nSP5TraKNcqrSgFT7TgxNJnF0JT6CsrCVOS2_Q@mail.gmail.com>
+In-Reply-To: <CAJZ5v0i4t=z2nSP5TraKNcqrSgFT7TgxNJnF0JT6CsrCVOS2_Q@mail.gmail.com>
+From:   "Rafael J. Wysocki" <rafael@kernel.org>
+Date:   Mon, 13 Feb 2023 17:17:09 +0100
+Message-ID: <CAJZ5v0gjm35J1VFY7T-mhZkdbiKJqiGwaR4ZXmhDYe7Xp19YYA@mail.gmail.com>
+Subject: Re: [PATCH v4] cpuidle: psci: Do not suspend topology CPUs on PREEMPT_RT
+To:     Adrien Thierry <athierry@redhat.com>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>
+Cc:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Ulf Hansson <ulf.hansson@linaro.org>,
+        Lorenzo Pieralisi <lpieralisi@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+        Brian Masney <bmasney@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-02-10 07:32:26 [-0800], Alison Chaiken wrote:
-> 
-> Should users of ktimers adopt Junxiao Chang's patch
-> 
-> https://lore.kernel.org/linux-rt-users/BN9PR11MB5370BA8A506EB8519DC879C1ECEA9@BN9PR11MB5370.namprd11.prod.outlook.com/
-> 
-> from 20 Dec?   It appears to be a bug fix.
+On Thu, Feb 9, 2023 at 6:08 PM Rafael J. Wysocki <rafael@kernel.org> wrote:
+>
+> On Tue, Feb 7, 2023 at 2:47 PM Adrien Thierry <athierry@redhat.com> wrote:
+> >
+> > Is there still something preventing this patch from being picked up?
+>
+> Well, I've been waiting for Daniel to do that.  Or should I pick it up
+> directly?  Daniel?
 
-I know. I have a backlog. I looked at this a while ago but got
-distracted. I hopefully get it done next week. Now that 6.1 is LTS I
-need to bring it in shape before I can hand it over.
-
-> Thanks,
-> Alison Chaiken
-> Aurora Innovation
-
-Sebastian
+Allright, applied as 6.3 material now, thanks!
