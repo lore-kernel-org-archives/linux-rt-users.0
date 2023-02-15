@@ -2,217 +2,115 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE5FEC636CC
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Feb 2023 17:31:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C5D5C636D4
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Feb 2023 22:20:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230073AbjBORbK (ORCPT
+        id S229598AbjBOWUi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 15 Feb 2023 12:31:10 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36482 "EHLO
+        Wed, 15 Feb 2023 17:20:38 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56430 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229504AbjBORbJ (ORCPT
+        with ESMTP id S229493AbjBOWUh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Feb 2023 12:31:09 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E693144A3;
-        Wed, 15 Feb 2023 09:31:02 -0800 (PST)
-Date:   Wed, 15 Feb 2023 18:30:59 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676482260;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=vfwls3jmMnkBa5nyZRMX9xq04XCtdBNjeNQ6TcWm1FI=;
-        b=3tvHami8l+pqUUBu8DbZThFJfmomNE9zeb7xH69jrt24tKs1dYICczUQTI4BSVY9F1124Y
-        rJd4ynFfCiyPRgot3kG625u3aYBHFMyIXXTek5sB0aDL43HJAlgHL8qzvaqplbUnsPKxl2
-        MMjFMDaRNaYA/ydOIwjoE2L7++rtJZH9kswnQqBLNjhPqEOBXfEAgJDCvNVeFWwhsD5OfP
-        zADB/JkCyQJsTjhBRtLHLHI/VsDT7YkuGX5b/3SLmrmShA1XnsnpgVsLxJKzKc4D3NJfkM
-        NERnw945HN0C7hNKjyFeiKyVJRpjqYh6ypN7GCebyvVDjOb1bRBP7BNvg+GLmQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676482260;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=vfwls3jmMnkBa5nyZRMX9xq04XCtdBNjeNQ6TcWm1FI=;
-        b=S8pQAoFXP2vSKvM5e2F0HP/CAeQzWybEYvIOMcFXElQtP0MwPOQFdnyJ1YjqPweqW2sOnF
-        Nz6lvC9vu47+8xBw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Mel Gorman <mgorman@techsingularity.net>,
-        Thomas Gleixner <tglx@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Linux-RT <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH v5] locking/rwbase: Mitigate indefinite writer starvation
-Message-ID: <Y+0W0wgyaJqYHKoj@linutronix.de>
+        Wed, 15 Feb 2023 17:20:37 -0500
+Received: from mail-il1-x12f.google.com (mail-il1-x12f.google.com [IPv6:2607:f8b0:4864:20::12f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 160E6305C1
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Feb 2023 14:20:37 -0800 (PST)
+Received: by mail-il1-x12f.google.com with SMTP id k14so150201ilo.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Feb 2023 14:20:37 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=GvU3woDZfy7bL3b6keToxNTmXhBe1SHBv5aqEUk63Dc=;
+        b=IqHIJG56kxsTbH67dVBNhFBSdZpD1O/bF9EWZX9TKSrfqochcVt+6h4iEKU7BaywKN
+         sJc+sthuyGPBlabgM48MMWS76cVbnO2SQJePMuaJutKyYdXCub21CLGlOxINlUNWLPqX
+         Upx5Crx2BvMwlpSq4+nWEXBRVjwddSEbNTXCM1ZNv6Qba+diLK/tPnMm3pldw3/cdD5Y
+         93sqisgX6x8LRDNPcG/11ESiPWUHImhl1M5evQZnySUR15FllEWoS4F4MHONullMebav
+         QfsU30E2loz4atqJYuliQlA7hLWoHhzpGVBsj4chskiPIGBMnJ1kgfWoOHiD891Dnk2Z
+         MrpQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=GvU3woDZfy7bL3b6keToxNTmXhBe1SHBv5aqEUk63Dc=;
+        b=h47krAGwpu0Rf1mrncjSu3gYM/anUK6ZhjWkzOI47DDl94zw3VRPhcjeE7/JXa/ReG
+         v0rjvvdxkTzMA77WAfrvxwX1YJYqB7jCX1Sk4WyusN2Q0wNUFGUywOB57ZDVcqwq4sD2
+         YQCGDycDH+f7uajSxZKtUnd1SVqp3FuoXdlrAXSUYwCXnOLCWAzngWlRu6GgP0WNW75p
+         ti0PDBgMONviCS13LDxMXwooXvv0f5sCV/xganAde73X8NwApyKedvvlC89Dk5bJArFE
+         IKzsgCOuKkHPeQJQmWck8Fy6ppLC2FXKBnnsVMQ852hwSHyVL2dzFr081c3je5/lWatM
+         dOLA==
+X-Gm-Message-State: AO0yUKUsM+H+XlfNok2YMpqYOP89TVD5TGm7AO7AWGDvv6udhH+9VY3O
+        WFUF7rJ0EPbaOHa4t8tl1Jox/yDe0js=
+X-Google-Smtp-Source: AK7set8Bsge0yUE0merFlSUD5rAC0TG9HAhFgC1wT/hHZP2QRdqYSILRgmg+v9YS/pFwHjDP4zaIzA==
+X-Received: by 2002:a92:c241:0:b0:315:7ecc:5fd8 with SMTP id k1-20020a92c241000000b003157ecc5fd8mr418444ilo.28.1676499635884;
+        Wed, 15 Feb 2023 14:20:35 -0800 (PST)
+Received: from fionn.redhat.com (bras-base-rdwyon0600w-grc-14-76-71-123-7.dsl.bell.ca. [76.71.123.7])
+        by smtp.gmail.com with ESMTPSA id k4-20020a92c244000000b003157c7c43d1sm291927ilo.7.2023.02.15.14.20.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 15 Feb 2023 14:20:35 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH v2 1/1] rt-tests: Makefile: Use sysconfig instead of distutils for PYLIB
+Date:   Wed, 15 Feb 2023 17:20:11 -0500
+Message-Id: <20230215222011.23329-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.39.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Mel Gorman <mgorman@techsingularity.net>
+Use sysconfig instead of distutils for PYLIB
+Version 2 takes into consideration that different versions of python
+produce different results.
 
-rw_semaphore and rwlock are explicitly unfair to writers in the presence
-of readers by design with a PREEMPT_RT configuration. Commit 943f0edb754f
-("locking/rt: Add base code for RT rw_semaphore and rwlock") notes;
-
-        The implementation is writer unfair, as it is not feasible to do
-        priority inheritance on multiple readers, but experience has shown
-        that real-time workloads are not the typical workloads which are
-        sensitive to writer starvation.
-
-While atypical, it's also trivial to block writers with PREEMPT_RT
-indefinitely without ever making forward progress. Since LTP-20220121,
-the dio_truncate test case went from having 1 reader to having 16 readers
-and the number of readers is sufficient to prevent the down_write ever
-succeeding while readers exist. Eventually the test is killed after 30
-minutes as a failure.
-
-dio_truncate is not a realtime application but indefinite writer starvation
-is undesirable. The test case has one writer appending and truncating files
-A and B while multiple readers read file A. The readers and writer are
-contending for one file's inode lock which never succeeds as the readers
-keep reading until the writer is done which never happens.
-
-Record a timestamp when the first writer is blocked and force all new
-readers into the slow path upon expiration. Set the timeout to 4ms or
-one tick which aligns with the generic implementation of rwsem.
-This is sufficient to allow the dio_truncate test case to complete
-within the 30 minutes timeout.
-
-[bigeasy@linutronix.de: Fix overflow, close race against reader, match rwsem
-			timeouts, simplification, don't prefer RT/DL reader
-			as per tglx suggestion.]
-
-Signed-off-by: Mel Gorman <mgorman@techsingularity.net>
-Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
-- v4 https://lore.kernel.org/20230120140847.4pjqf3oinemokcyp@techsingularity.net
-    - Reworded last paragraph of the commit message as Mel's suggestion
-    - RT/DL tasks are no longer excluded from the waiter timeout. There
-      is no reason why this should be done since no RT user relies on
-      rwsem (and would need this kind of behaviour). The critical user
-      from RT perspective replaced rwsem with RCU.
-      Avoiding special treatment avoids this kind of bug with RT
-      readers.
-    - Update comments accordingly.
+ Makefile     |  2 +-
+ get_pylib.py | 16 ++++++++++++++++
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+ create mode 100755 get_pylib.py
 
- include/linux/rwbase_rt.h  |  3 +++
- kernel/locking/rwbase_rt.c | 37 +++++++++++++++++++++++++++++++++----
- 2 files changed, 36 insertions(+), 4 deletions(-)
-
-diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
-index 1d264dd086250..b969b1d9bb85c 100644
---- a/include/linux/rwbase_rt.h
-+++ b/include/linux/rwbase_rt.h
-@@ -10,12 +10,14 @@
+diff --git a/Makefile b/Makefile
+index 4df61ece123b..32a9f41198a4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -34,7 +34,7 @@ CFLAGS ?= -Wall -Wno-nonnull -Wextra
+ CPPFLAGS += -D_GNU_SOURCE -Isrc/include
+ LDFLAGS ?=
  
- struct rwbase_rt {
- 	atomic_t		readers;
-+	unsigned long		waiter_timeout;
- 	struct rt_mutex_base	rtmutex;
- };
+-PYLIB  ?= $(shell python3 -c 'import distutils.sysconfig;  print (distutils.sysconfig.get_python_lib())')
++PYLIB ?= $(shell python3 -m get_pylib)
  
- #define __RWBASE_INITIALIZER(name)				\
- {								\
- 	.readers = ATOMIC_INIT(READER_BIAS),			\
-+	.waiter_timeout = 0,					\
- 	.rtmutex = __RT_MUTEX_BASE_INITIALIZER(name.rtmutex),	\
- }
- 
-@@ -23,6 +25,7 @@ struct rwbase_rt {
- 	do {							\
- 		rt_mutex_base_init(&(rwbase)->rtmutex);		\
- 		atomic_set(&(rwbase)->readers, READER_BIAS);	\
-+		(rwbase)->waiter_timeout = 0;			\
- 	} while (0)
- 
- 
-diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-index c201aadb93017..dfd133672de86 100644
---- a/kernel/locking/rwbase_rt.c
-+++ b/kernel/locking/rwbase_rt.c
-@@ -38,8 +38,10 @@
-  * Implementing the one by one reader boosting/handover mechanism is a
-  * major surgery for a very dubious value.
-  *
-- * The risk of writer starvation is there, but the pathological use cases
-- * which trigger it are not necessarily the typical RT workloads.
-+ * Writer starvation is avoided by forcing all reader acquisitions into the slow
-+ * path once the writer is blocked for more than RWBASE_RT_WAIT_TIMEOUT jiffies.
-+ * The writer owns the rtmutex at the time it sets the timeout which guarantees
-+ * that it will be the new lock owner once all active reader leave.
-  *
-  * Fast-path orderings:
-  * The lock/unlock of readers can run in fast paths: lock and unlock are only
-@@ -65,6 +67,22 @@ static __always_inline int rwbase_read_trylock(struct rwbase_rt *rwb)
- 	return 0;
- }
- 
-+/*
-+ * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick. This
-+ * matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
-+ */
-+#define RWBASE_RT_WAIT_TIMEOUT DIV_ROUND_UP(HZ, 250)
+ # Check for errors, such as python3 not available
+ ifeq (${PYLIB},)
+diff --git a/get_pylib.py b/get_pylib.py
+new file mode 100755
+index 000000000000..56253d589fe4
+--- /dev/null
++++ b/get_pylib.py
+@@ -0,0 +1,16 @@
++#!/usr/bin/python3
 +
-+static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
-+{
-+	/* Allow reader bias if no writer is blocked. */
-+	if (!rwb->waiter_timeout)
-+		return true;
++# This file is used during the make process
 +
-+	/* Allow reader bias unless a writer timeout has expired. */
-+	return time_before(jiffies, rwb->waiter_timeout);
-+}
++import sysconfig
 +
- static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 				      unsigned int state)
- {
-@@ -74,9 +92,11 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 	raw_spin_lock_irq(&rtm->wait_lock);
- 	/*
- 	 * Allow readers, as long as the writer has not completely
--	 * acquired the semaphore for write.
-+	 * acquired the semaphore for write and reader bias is still
-+	 * allowed.
- 	 */
--	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
-+	if (atomic_read(&rwb->readers) != WRITER_BIAS &&
-+	    rwbase_allow_reader_bias(rwb)) {
- 		atomic_inc(&rwb->readers);
- 		raw_spin_unlock_irq(&rtm->wait_lock);
- 		return 0;
-@@ -255,6 +275,7 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
- 	for (;;) {
- 		/* Optimized out for rwlocks */
- 		if (rwbase_signal_pending_state(state, current)) {
-+			rwb->waiter_timeout = 0;
- 			rwbase_restore_current_state();
- 			__rwbase_write_unlock(rwb, 0, flags);
- 			trace_contention_end(rwb, -EINTR);
-@@ -264,12 +285,20 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
- 		if (__rwbase_write_trylock(rwb))
- 			break;
- 
-+		/*
-+		 * Record timeout when reader bias is ignored. Ensure timeout
-+		 * is at least 1 in case of overflow.
-+		 */
-+		rwb->waiter_timeout = (jiffies + RWBASE_RT_WAIT_TIMEOUT) | 1;
++# Older versions of python don't have this scheme
++# but produce the answer we expect with 'posix_prefix'
++# Newer versions of python insert 'local' in the path unless we use rpm_prefix
++SCHEME = 'rpm_prefix'
 +
- 		raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
- 		rwbase_schedule();
- 		raw_spin_lock_irqsave(&rtm->wait_lock, flags);
- 
- 		set_current_state(state);
- 	}
++if not SCHEME in sysconfig.get_scheme_names():
++    SCHEME = 'posix_prefix'
 +
-+	rwb->waiter_timeout = 0;
- 	rwbase_restore_current_state();
- 	trace_contention_end(rwb, 0);
- 
++PYLIB = sysconfig.get_path('purelib', SCHEME)
++print(PYLIB)
 -- 
 2.39.1
 
