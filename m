@@ -2,73 +2,64 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4CDA4C636CC
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Feb 2023 15:05:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EA96C61DA4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Feb 2023 16:54:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229814AbjBPPFt (ORCPT
+        id S229776AbjBPQyS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 16 Feb 2023 10:05:49 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41646 "EHLO
+        Thu, 16 Feb 2023 11:54:18 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49082 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229475AbjBPPFs (ORCPT
+        with ESMTP id S229663AbjBPQyS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 16 Feb 2023 10:05:48 -0500
+        Thu, 16 Feb 2023 11:54:18 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C96AE86B5;
-        Thu, 16 Feb 2023 07:05:47 -0800 (PST)
-Date:   Thu, 16 Feb 2023 16:05:45 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1C13E1731;
+        Thu, 16 Feb 2023 08:54:16 -0800 (PST)
+Date:   Thu, 16 Feb 2023 17:54:13 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676559946;
+        s=2020; t=1676566454;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=pcd9pZdfs4tzgndqobKBzI9fzLihb8+hry0dZC6HYME=;
-        b=1z5GUm5QARNWFKNvZxoVD87irJBdhQMB7eWsWvh4tcKXJwzE4YMsfddOPCEoa6fHeG8cf3
-        E56WwNxmPMPz6x0ccDhWPgaTVH1ieoTiQsUldrqcSIWmAQSaAZOR3AyhPauZVT/HbHEg+H
-        DJE/s8/oW+RcJ8vlMZKgSgBcchPp71d/LD6Eqdmm5bB5r6MfKGV9IKdLDISbPOJoJwgL+6
-        IYcjOGD9F3Ji6sawoKyfq3ESRvF8zbaNMf+HLo0Wclj64zQ3ien6/MyueUSgUjoxxwPs2o
-        sbd3iGg8z9Cj2undSLxCLFBnbqI8ohzPEnDJguQ/pzuqFoeP2wQ1NK/Jvh1iAQ==
+        bh=HgwpfwpBRcdmrw0xHtZT6EgPiXiKo400rbBJ6GT2kY8=;
+        b=hxj7q4wZYxQ8ehd6jCiZfklQLxt5OshDtj9jtgGDz3/iCylW2MYcT2dqA/X6QlgWmzw9Gp
+        VHBTl0By1ImmZhPXvlEPphmFlyARbQT7RM31i6GkEgp4UE62MtEIK5vlvi9i9FiFbR/QFc
+        +dQngc16ayNpFZGKLczaemx/04MTZos1uKGU87+rMyc1H1HgV/1UcP4Nonz6532RGqgyvu
+        1PDkmHRnPG9QUSLs1FLy+piHlkB6s1VNbXV/l/Avxm22HBuNZAhDn7Z6EGEqbh6mDqZsmt
+        8QF6mPlHoYWDDaH7VUEtSs3Qxy3oCfIxQtftKetj2r1Dw0dM2jq2+wuS4+RAUw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676559946;
+        s=2020e; t=1676566454;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=pcd9pZdfs4tzgndqobKBzI9fzLihb8+hry0dZC6HYME=;
-        b=2hTv1TfIl+val479xbO2sCoAzPi4WujoFOPHZT3AX6mDOt6ZSijPl1NAGG6D+EebaIDxcU
-        9gR+FcGH6Rko0mCg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Crystal Wood <swood@redhat.com>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        John Keeping <john@metanate.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: rtmutex, pi_blocked_on, and blk_flush_plug()
-Message-ID: <Y+5GScI95xYeQPvf@linutronix.de>
-References: <4b4ab374d3e24e6ea8df5cadc4297619a6d945af.camel@redhat.com>
- <Y+47FVJ+hI+NA2In@linutronix.de>
+        bh=HgwpfwpBRcdmrw0xHtZT6EgPiXiKo400rbBJ6GT2kY8=;
+        b=ArTJOFIAdKcOe5XUWC382h5tlcaCLfClGZsfw5LYJMBmupEPNpkoluk5maIw1etnDrwKSe
+        YHqNRfl/tp8nZiCw==
+From:   Sebastian Siewior <bigeasy@linutronix.de>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     Clark Williams <williams@redhat.com>,
+        Petr Mladek <pmladek@suse.com>,
+        Sergey Senozhatsky <senozhatsky@chromium.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Michael Thalmeier <michael.thalmeier@hale.at>,
+        Vincent Whitchurch <vincent.whitchurch@axis.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 5.15-rt] printk: ignore consoles without write() callback
+Message-ID: <Y+5ftWNKMv9WJTXT@linutronix.de>
+References: <87zg9d99mp.fsf@jogness.linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <Y+47FVJ+hI+NA2In@linutronix.de>
+In-Reply-To: <87zg9d99mp.fsf@jogness.linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-02-16 15:18:03 [+0100], To Crystal Wood wrote:
-> On 2023-02-09 22:31:57 [-0600], Crystal Wood wrote:
-> > Hello!
-Hi,
+On 2023-02-16 11:45:58 [+0106], John Ogness wrote:
+>  This is only a problem for the PREEMPT_RT tree. Mainline does not have
+>  this problem.
 
-> - spinlock_t invokes schedule_rtlock() which avoids sched_submit_work().
->   This is the behaviour as with !RT because it spins and does not submit
->   work either.
->   rwlock_t should be have the same way but invokes schedule() instead.
->   This looks wrong. And it could deadlock in sched_submit_work().
-
-I have to correct myself. Also for rwlock_t it uses schedule_rtlock()
-which means it does not invoke sched_submit_work().
-
-There there I don't expect any deadlock here.
-
-> > -Crystal
+Is this 5.15 and less or current dev RT and less?
 
 Sebastian
