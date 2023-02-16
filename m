@@ -2,111 +2,67 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B0A81C61DA4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Feb 2023 18:04:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4EB02C636CC
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Feb 2023 22:29:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230234AbjBPSEy (ORCPT
+        id S229558AbjBPW3H (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 16 Feb 2023 13:04:54 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44342 "EHLO
+        Thu, 16 Feb 2023 17:29:07 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35726 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230243AbjBPSEw (ORCPT
+        with ESMTP id S229485AbjBPW3G (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 16 Feb 2023 13:04:52 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EEFFC38662
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Feb 2023 10:04:50 -0800 (PST)
-Date:   Thu, 16 Feb 2023 19:04:47 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676570688;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=DayJwlNUs+70qmX8hWyyyHE/nMhf1bwiKaFvPsUUXiY=;
-        b=oHMI/51X/gv4IiYtbOEvv9j9COX8Z/BZT6wwqKjxT293I5td6lv+PwGs7W199xUrveHSZE
-        g7EAk2njaj32lf/2nKP8kxbXtbyPxQgU2Rud6+vTzCGexLmHOQ8zmAt09rXaDyXTCVKsAo
-        jbp+tXxpxLo/+Xip3SlM87GOUYmKS9HLj8DUrhtig/fdcGSu4kA9sRwlY28Ky3F43mcsjA
-        6LAbtnBE4J0L6XxSKcEe7SEqti8F/g4eVTm+/1Br/rs32GhaP48WukVgnDuCu4ZHTUGCpu
-        2ak+su2Tg7z5DeQg6LAeLLgDn/x8XDdsbfzq7/J0qlupqDR6SHr/gVpK84R0JA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676570688;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=DayJwlNUs+70qmX8hWyyyHE/nMhf1bwiKaFvPsUUXiY=;
-        b=OLerT2/3wijPBPNkoeqeKomLIHhddiJKNUcuxYRNnmKsrak2arsdxtLubiz5qRBCUYG1GM
-        cy15LtrFnEBfeyDA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Richard Weinberger <richard.weinberger@gmail.com>
-Cc:     rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: Scheduling while atomic due to i915 intel_uncore->lock
-Message-ID: <Y+5wPzWeMHnEmf4D@linutronix.de>
-References: <CAFLxGvw0WMxaMqYqJ5WgvVSbKHq2D2xcXTOgMCpgq9nDC-MWTQ@mail.gmail.com>
+        Thu, 16 Feb 2023 17:29:06 -0500
+X-Greylist: delayed 119 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 16 Feb 2023 14:29:04 PST
+Received: from mwweb08oc.mail2world.com (mwweb08oc.mail2world.com [74.202.142.113])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F12013CE11
+        for <linux-rt-users@vger.kernel.org>; Thu, 16 Feb 2023 14:29:04 -0800 (PST)
+Received: from mail pickup service by mwweb08oc.mail2world.com with Microsoft SMTPSVC;
+         Thu, 16 Feb 2023 14:27:04 -0800
+auth-sender: gheskett@shentel.net
+Received: from 204.111.64.149 unverified ([204.111.64.149]) by mwweb08oc.mail2world.com with Mail2World SMTP Server; 
+        Thu, 16 Feb 2023 14:27:04 -0800
+Message-ID: <1b046315-6dd4-bacc-4f3b-38b011bc0c82@shentel.net>
+Date:   Thu, 16 Feb 2023 17:27:03 -0500
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAFLxGvw0WMxaMqYqJ5WgvVSbKHq2D2xcXTOgMCpgq9nDC-MWTQ@mail.gmail.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.6.0
+To:     rt-users <linux-rt-users@vger.kernel.org>
+Content-Language: en-US
+From:   gene heskett <gheskett@shentel.net>
+Subject: sorta related timer comment
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-CTCH-Spam: Unknown
+X-CTCH-RefID: str=0001.0A702F18.63EEADB8.004C,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+X-OriginalArrivalTime: 16 Feb 2023 22:27:04.0927 (UTC) FILETIME=[CC2C9EF0:01D94255]
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-01-31 14:16:48 [+0100], Richard Weinberger wrote:
-> Hi,
-Hi!,
+Sebastion;
 
-> A reliable trigger for the problem is using the Chromium browser when
-> it utilizes OpenGL.
+I should probably point out that there is a group of linuxcnc users who 
+depend on that 1 kilohertz thread while controlling their cnc machinery.
+I personally have even used 4 kilohertz for the servo update loop but 
+only on the faster intel cpu's. Older AMD's don't cut it.
 
-need to try that. OpenGL as in watching a video with HW acceleration
-enabled or is there something else?
+We, several hundred of us planet wide, would not be well served if 250 
+hz became the default, we could crash a machine because we couldn't stop 
+it in time. To save hardware costs, we even use a 25 microsecond thread, 
+but only allow integer math there, driving stepper motors directly in 
+slower home hobby stuff.  We would be well served by arm64 stuff if it 
+can be worked in. I am running a bigger lathe with an rpi4b, 2 gigs of 
+dram but the kernel I'm using is now a 3 years old 4.19-preempt-rt for 
+armhf getting long in the tooth now.
 
-> The root of the problem seems to be that struct intel_uncore->lock is
-> a regular spinlock but
-> taken in atomic context.
-> AFAICT the atomic context is a result of kmap_atomic() and
-> io_mapping_map_atomic_wc()
+Take care & stay well all.
 
-kmap_atomic() should be fine as it does not disable preemption.
-io_mapping_map_atomic_wc() on the other hand does disable preemption.
-
-Now looking at this, it seems to happen eb_relocate_vma(). From staring
-at it, you might be lucky to get away with
-
-diff --git a/include/linux/io-mapping.h b/include/linux/io-mapping.h
-index 09d4f17c8d3b6..5ddc70a4e7e3e 100644
---- a/include/linux/io-mapping.h
-+++ b/include/linux/io-mapping.h
-@@ -162,7 +162,7 @@ static inline void __iomem *
- io_mapping_map_atomic_wc(struct io_mapping *mapping,
- 			 unsigned long offset)
- {
--	preempt_disable();
-+	migrate_disable();
- 	pagefault_disable();
- 	return io_mapping_map_wc(mapping, offset, PAGE_SIZE);
- }
-@@ -172,7 +172,7 @@ io_mapping_unmap_atomic(void __iomem *vaddr)
- {
- 	io_mapping_unmap(vaddr);
- 	pagefault_enable();
--	preempt_enable();
-+	migrate_enable();
- }
- 
- static inline void __iomem *
-
-which is based on 6.2 but you get the idea.
-
-> usage in i915.
-> Converting the said lock to a raw spinlock cures the problem but the
-> overall latency almost doubles.
-
-yeah. I tried that once, too.
-
-> I'm pretty sure the problem exists also on v6.2-rc3-rt1 because there
-> the affected lock is also
-> still a spinlock and used below kmap_atomic() and io_mapping_map_atomic_wc().
-
-Could you please try the hack above and check if it appears to work?
-
-Sebastian
+Cheers, Gene Heskett.
+-- 
+"There are four boxes to be used in defense of liberty:
+  soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author, 1940)
+If we desire respect for the law, we must first make the law respectable.
+  - Louis D. Brandeis
+Genes Web page <http://geneslinuxbox.net:6309/>
