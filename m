@@ -2,116 +2,90 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A9696C05027
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Feb 2023 11:56:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C454C05027
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Feb 2023 17:30:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229848AbjBQL4X (ORCPT
+        id S229863AbjBQRae (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Feb 2023 06:56:23 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36756 "EHLO
+        Fri, 17 Feb 2023 12:30:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34344 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229681AbjBQL4W (ORCPT
+        with ESMTP id S229845AbjBQRad (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Feb 2023 06:56:22 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 216176187D
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Feb 2023 03:55:38 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1676634937;
+        Fri, 17 Feb 2023 12:30:33 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2F6636F3D7;
+        Fri, 17 Feb 2023 09:30:26 -0800 (PST)
+Date:   Fri, 17 Feb 2023 18:30:23 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1676655024;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=00rjiVwOoEBMI8OSm4Q4oRCMoRX6iO5Vz3CEqn9CVGs=;
-        b=G8/MYlYSLoNRbV8vOp3H80T1Rl7z6TUJlERe7oLZvc2bXZmyYFnwAY+hbPdU1axJJqKgD6
-        3Q9smcDzg44qyFNht3pJkELq/DhSqHVhFAASQMNcNnIgwylPyqp6AyhGXrO8uL1mIPy2G6
-        yIkUlSuV9WqVWEP75nGPbgRQvIQvwBI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-247-AyeZuoB7OVqwRC3PGDdtiw-1; Fri, 17 Feb 2023 06:55:34 -0500
-X-MC-Unique: AyeZuoB7OVqwRC3PGDdtiw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7C971101A521;
-        Fri, 17 Feb 2023 11:55:33 +0000 (UTC)
-Received: from localhost (unknown [10.22.16.118])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id B430AC15BA0;
-        Fri, 17 Feb 2023 11:55:32 +0000 (UTC)
-Date:   Fri, 17 Feb 2023 08:55:31 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     John Ogness <john.ogness@linutronix.de>
-Cc:     Sebastian Siewior <bigeasy@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        Petr Mladek <pmladek@suse.com>,
-        Sergey Senozhatsky <senozhatsky@chromium.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Michael Thalmeier <michael.thalmeier@hale.at>,
-        Vincent Whitchurch <vincent.whitchurch@axis.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 5.10-rt] printk: ignore consoles without write() callback
-Message-ID: <Y+9rM7lRDwFrBPDX@uudg.org>
-References: <87zg9d99mp.fsf@jogness.linutronix.de>
- <Y+5ftWNKMv9WJTXT@linutronix.de>
- <87bkls65pf.fsf@jogness.linutronix.de>
- <878rgw65lb.fsf@jogness.linutronix.de>
+        bh=7lH9zWlDYBELps4o96iLqp5tF7DCuj9GJk/BC4jFn4c=;
+        b=BNOhYiI982P04PLbj8/ZUFlARiMwv8ZeGbXDgV3t7O1bAVf8qD7mZ2V6MIR5SskSZvbn6J
+        fZEkt16lsO4Os/vr9xE+cRQoYti9WHyH6atjAJIjYitDK6rmKWRO0NdfmlqdQV5r8IjF6y
+        F0AFnlOgsiZ5HkCutWvXAqOT88n2IeY02rMEvwMXy4l3bil07Gza2meF7DnrdkoEumfkX6
+        i4qjnMmCw20/7TGBbfPJ9A1OgzgojMrsEXYGzlSyyGteljdBWQOdIE0+cxb9wwySw0X389
+        vSdMGYO75ffHW52xMSJJ8wC1fIOON+EnTM8caRfqviNRhR1mMUCkXOj+TkCq6A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1676655024;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=7lH9zWlDYBELps4o96iLqp5tF7DCuj9GJk/BC4jFn4c=;
+        b=bAGR3N4sibHQtaXTEQCF0vlUYlG1B5EHiy8oMXFu9AFZ9i7DUgK5cY7YfEM2v0Yl1tH6I6
+        Y1pG5/IhTktU+WAA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Junxiao Chang <junxiao.chang@intel.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        tglx@linutronix.de, rostedt@goodmis.org, hock.zhang.peh@intel.com
+Subject: Re: [PATCH] softirq: wake up ktimer thread in softirq context
+Message-ID: <Y++5ry75hEI2NWrK@linutronix.de>
+References: <20221208075604.811710-1-junxiao.chang@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <878rgw65lb.fsf@jogness.linutronix.de>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+In-Reply-To: <20221208075604.811710-1-junxiao.chang@intel.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Feb 17, 2023 at 09:53:44AM +0106, John Ogness wrote:
-> The ttynull driver does not provide an implementation for the write()
-> callback. This leads to a NULL pointer dereference in the related
-> printing kthread, which assumes it can call that callback.
+On 2022-12-08 15:56:04 [+0800], Junxiao Chang wrote:
+> Occiaionally timer interrupt might be triggered in softirq context,
+> ktimer thread should be woken up with RT kernel, or else ktimer
+> thread might stay in sleep state although timer interrupt has been
+> triggered.
 > 
-> Do not create kthreads for consoles that do not implement the write()
-> callback. Also, for pr_flush(), ignore consoles that do not implement
-> write() or write_atomic(), since there is no way those consoles can
-> flush their output.
-> 
-> Link: https://lore.kernel.org/lkml/1831554214.546921.1676479103702.JavaMail.zimbra@hale.at
-> Reported-by: Michael Thalmeier <michael.thalmeier@hale.at>
-> Signed-off-by: John Ogness <john.ogness@linutronix.de>
+> This change fixes a latency issue that timer handler is delayed for
+> more than 4ms in network related test.
 
-Thank you! I will apply that to the next 5.10-rt build.
+Sorry for keeping you waiting. Your observation and patch is correct. I'm
+going to apply a slightly modified version of the patch (see below)
+after I reworded the commit message on Monday.
 
-Luis
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index ab1fe34326bab..82f3e68fbe220 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -664,13 +664,12 @@ static inline void __irq_exit_rcu(void)
+ #endif
+ 	account_hardirq_exit(current);
+ 	preempt_count_sub(HARDIRQ_OFFSET);
+-	if (!in_interrupt()) {
+-		if (local_softirq_pending())
+-			invoke_softirq();
++	if (!in_interrupt() && local_softirq_pending())
++		invoke_softirq();
+ 
+-		if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers())
+-			wake_timersd();
+-	}
++	if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers() &&
++	    !(in_nmi() | in_hardirq()))
++		wake_timersd();
+ 
+ 	tick_irq_exit();
+ }
 
-> ---
->  kernel/printk/printk.c | 6 ++++++
->  1 file changed, 6 insertions(+)
-> 
-> diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-> index d2205872304d..64747c72fbea 100644
-> --- a/kernel/printk/printk.c
-> +++ b/kernel/printk/printk.c
-> @@ -2267,6 +2267,10 @@ static int printk_kthread_func(void *data)
->  /* Must be called within console_lock(). */
->  static void start_printk_kthread(struct console *con)
->  {
-> +	/* No need to start a printing thread if the console cannot print. */
-> +	if (!con->write)
-> +		return;
-> +
->  	con->thread = kthread_run(printk_kthread_func, con,
->  				  "pr/%s%d", con->name, con->index);
->  	if (IS_ERR(con->thread)) {
-> @@ -3566,6 +3570,8 @@ bool pr_flush(int timeout_ms, bool reset_on_progress)
->  		for_each_console(con) {
->  			if (!(con->flags & CON_ENABLED))
->  				continue;
-> +			if (!con->write && !con->write_atomic)
-> +				continue;
->  			printk_seq = atomic64_read(&con->printk_seq);
->  			if (printk_seq < seq)
->  				diff += seq - printk_seq;
-> -- 
-> 2.30.2
-> 
----end quoted text---
-
+Sebastian
