@@ -2,85 +2,143 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C6F4FC05027
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 18:21:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A87DC636D6
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 23:55:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231582AbjBTSVz (ORCPT
+        id S232530AbjBTXzj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 20 Feb 2023 13:21:55 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37514 "EHLO
+        Mon, 20 Feb 2023 18:55:39 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60294 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229738AbjBTSVy (ORCPT
+        with ESMTP id S231350AbjBTXzi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Feb 2023 13:21:54 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A7CC1C7D4;
-        Mon, 20 Feb 2023 10:21:53 -0800 (PST)
+        Mon, 20 Feb 2023 18:55:38 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38F7D20D35;
+        Mon, 20 Feb 2023 15:55:37 -0800 (PST)
 From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676917312;
+        s=2020; t=1676937334;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=M2TNSYPxwb1ODjFRyTX0POYdUTVU1KaJqYYoaJTBKBA=;
-        b=EzR9F3DfHz1Ny0/+LBtKFmc2kDfhTjTpFyimjfk1KGacauIbxgb96aGRazsDUDOA+AWag8
-        QkGbwSlHEaJIZFFGhhKJAHcy5x18HlGsQL8tUENDzGN99d3gwgYUqyUNYp/TRK9Ss+v/3q
-        hmy0mKdeTE1jYkwEBbLUK1TT/a0xdGyfLfotO3Q8BgshQCL4Cm4NoLy7/7Aatt3aFEJeSa
-        HBpDPgq45ZJZGdLKWsuDOjvlm/ggNoKGXk3Qh8cFprIb8yomRfJ72Ai9gB3PwE3iaWab4n
-        Jxi9pf7O1D7qLvKrRmm5DpzTQmPyxKTHdKIh+5Xi+JtuDkW2IT/gigYXy3H5lw==
+        bh=VZQezCgdD0D+uTwi8vQExA2xupF4S/Y7SBoqChxjpyY=;
+        b=S7YzGxtw8dhSuWGrI1DzfQ3ZLhXgknk4qBTCrwFwwOTtHmNDV86hYFpIjP2O5VTLj2/Ai/
+        Us+BQd3A+RZYFUBQdNXawr2t0AHgnJ7FAxRHNzxnKszAY3tzcy6LMKe/WzCiKPa3cepwlp
+        SebPe1+B0F/oSWaqshQFQB4gMBnw7V7/kdvFydd/ddKftRnouQCJNq22BFYT3rz1KCMCT9
+        Mr8Ky5au2pD1Afim4LVHgkfDqNmQHyU5T/RxgCXJWqRfQxZUZMripO3xJRppYoWgxGMuPq
+        9BbC2CVyx7zrdM5YeKgUM4RcopKdYXBXVK5Hjx2dfdyK+4KrsEY2bQ7yeREEgA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676917312;
+        s=2020e; t=1676937334;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=M2TNSYPxwb1ODjFRyTX0POYdUTVU1KaJqYYoaJTBKBA=;
-        b=FseAp8FNcz6pg3f/zV9z3wyjunHJR4ysWheg1Io44pXjja4jQPwoAFBpoQyt615vh4dJP0
-        oCrwe2VlO0ocOCDg==
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Crystal Wood <swood@redhat.com>, John Keeping <john@metanate.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>
-Subject: Re: rtmutex, pi_blocked_on, and blk_flush_plug()
-In-Reply-To: <Y/NcnrwKr2u6tamQ@linutronix.de>
-References: <4b4ab374d3e24e6ea8df5cadc4297619a6d945af.camel@redhat.com>
- <Y+47FVJ+hI+NA2In@linutronix.de> <87k00cr7ix.ffs@tglx>
- <Y/NT1/ynarp9cDlS@linutronix.de> <Y/NcnrwKr2u6tamQ@linutronix.de>
-Date:   Mon, 20 Feb 2023 19:21:51 +0100
-Message-ID: <874jrgqjsw.ffs@tglx>
+        bh=VZQezCgdD0D+uTwi8vQExA2xupF4S/Y7SBoqChxjpyY=;
+        b=n5ShpAR5q4MrUmDc7Z3BCgXsWMHpihYiY9Ab1RS7VlJCwGRAzjVvkGih2Rcttg/iZpshsK
+        JwUGXUTza6WUDnDg==
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Mel Gorman <mgorman@techsingularity.net>
+Cc:     Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v5] locking/rwbase: Mitigate indefinite writer starvation
+In-Reply-To: <Y+0W0wgyaJqYHKoj@linutronix.de>
+References: <Y+0W0wgyaJqYHKoj@linutronix.de>
+Date:   Tue, 21 Feb 2023 00:55:33 +0100
+Message-ID: <877cwbq4cq.ffs@tglx>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Feb 20 2023 at 12:42, Sebastian Andrzej Siewior wrote:
-> On 2023-02-20 12:04:56 [+0100], To Thomas Gleixner wrote:
->> The ->pi_blocked_on field is set by __rwbase_read_lock() before
->> schedule() is invoked while blocking on the sleeping lock. By doing this
->> we avoid __blk_flush_plug() and as such will may deadlock because we are
->> going to sleep and made I/O progress earlier which is not globally
->> visibly but might be (s/might be/is/ in the deadlock case) expected by
->> the owner of the lock.
-
-Fair enough.
-
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -1700,6 +1700,13 @@ static __always_inline int __rt_mutex_lock(struct rt_mutex_base *lock,
->  	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
->  		return 0;
+On Wed, Feb 15 2023 at 18:30, Sebastian Andrzej Siewior wrote:
+> diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
+> index 1d264dd086250..b969b1d9bb85c 100644
+> --- a/include/linux/rwbase_rt.h
+> +++ b/include/linux/rwbase_rt.h
+> @@ -10,12 +10,14 @@
 >  
-> +	if (state != TASK_RTLOCK_WAIT) {
+>  struct rwbase_rt {
+>  	atomic_t		readers;
+> +	unsigned long		waiter_timeout;
+
+I'm still not convinced that this timeout has any value and if it has
+then it should be clearly named writer_timeout because that's what it is
+about.
+
+The only reason for this timeout I saw so far is:
+
+> +/*
+> + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick. This
+> + * matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
+
+Clearly RT and !RT have completely different implementations and
+behaviour vs. rwsems and rwlocks. Just because !RT has a timeout does
+not make a good argument.
+
+Just for the record: !RT has the timeout applicable in both directions
+to prevent writer bias via lock stealing. That's not a problem for RT
+because?
+
+Can we finally get a proper justification for this?
+
+> @@ -264,12 +285,20 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+>  		if (__rwbase_write_trylock(rwb))
+>  			break;
+>  
 > +		/*
-> +		 * If we are going to sleep and we have plugged IO queued,
-> +		 * make sure to submit it to avoid deadlocks.
+> +		 * Record timeout when reader bias is ignored. Ensure timeout
+> +		 * is at least 1 in case of overflow.
 > +		 */
-> +		blk_flush_plug(tsk->plug, true);
+> +		rwb->waiter_timeout = (jiffies + RWBASE_RT_WAIT_TIMEOUT) | 1;
+> +
 
-This still leaves the problem vs. io_wq_worker_sleeping() and it's
-running() counterpart after schedule().
+So this has two sillies:
 
-Aside of that for CONFIG_DEBUG_RT_MUTEXES=y builds it flushes on every
-lock operation whether the lock is contended or not.
+   1) It resets the timeout once per loop which is plain wrong
 
-Grmbl.
+   2) The "| 1" is really a sloppy hack
+
+Why not doing the obvious:
+
+static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
+{
+	int r = atomic_read(&rwb->readers);
+
+        if (likely(r < 0))
+        	return true;
+
+        if (r == WRITER_BIAS)
+        	return false;
+
+	/* Allow reader bias unless the writer timeout has expired. */
+	return time_before(jiffies, rwb->writer_timeout);
+}
+
+and with that the "| 1" and all the rwb->timeout = 0 nonsense simply
+goes away and rwbase_read_lock() becomes:
+
+	if (rwbase_allow_reader_bias(rwb)) {
+		// fastpath
+		atomic_inc(&rwb->readers);
+		raw_spin_unlock_irq(&rtm->wait_lock);
+		return 0;
+	}
+        // slowpath
+
+and the writelock slowpath has:
+
+	rwb->writer_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
+
+	for (;;) {
+        	....
+
+No?
+
+Thanks,
+
+        tglx
+
