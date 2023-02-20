@@ -2,109 +2,115 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D7F79C05027
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 11:42:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02E87C05027
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 16:07:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231346AbjBTLm1 (ORCPT
+        id S232144AbjBTQH6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 20 Feb 2023 06:42:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35712 "EHLO
+        Mon, 20 Feb 2023 11:07:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56952 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231340AbjBTLm0 (ORCPT
+        with ESMTP id S231265AbjBTQH5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Feb 2023 06:42:26 -0500
+        Mon, 20 Feb 2023 11:07:57 -0500
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4D0FA1040A;
-        Mon, 20 Feb 2023 03:42:25 -0800 (PST)
-Date:   Mon, 20 Feb 2023 12:42:22 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5CE1C8A4C;
+        Mon, 20 Feb 2023 08:07:56 -0800 (PST)
+Date:   Mon, 20 Feb 2023 17:07:52 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676893343;
+        s=2020; t=1676909274;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=UO5ZIv6WLOFEvDgns9PNAXGt0c83/QH7iEoB+8xr5cE=;
-        b=TpFU0Mzz4cJQmZSdZxnfvdtapdoOFOuLBPxJYP5m2R7hXXLg1d+hLhnT7Zp7WIfmCdGq84
-        /dfUDSsCzXS9SXNvIdYvvA6UhjYGHC6+o4FcqbpE/++E01nLMNT+z6lj/SeEkWLa0p+bHz
-        VK+zdxVJgk582UW0asyf9FmlqsSDz4OT1LpKwWcTVeh1EN7UVtNGmOjZnqXBVJDVlgdXpL
-        C3WwjEFa2jzrn3mD+F08A3I8SqYS94mH6qo66Y9wgP0ui8NE3wRfhAwIrZdGs2SgMnOwgM
-        USDX4exeMwtD5JtfwQstPI1qIEmJS8o1wqsiwFF9pjupuHSIbC3tdZyoRtv51w==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=aihUiQAEYGdNDVVk+BW/pwYwHfkq0+AinKSL9XApArY=;
+        b=Sxp/DeR+VuahpcpFk3ZIiwIC7YqX6L7PR/b+tgkvZib9VaAIHgPtcedb6GtVFQcQ6Mvkq+
+        h8e7BR/Lel1lLj7VA0Bfjd9Yk68kNNe9NceTtuPxCSwes2wekPV0aFo1TOe31d+wbRtJMQ
+        aJt2iGMIZOVLHruYmwpR87zScsBWScYbaSERlunV2RQURfIFEn8PZBoKkbmV/dFQksHu5e
+        XL8Bh3dQySS+vwpLdMR9HqWSEmsdfCZPe94HBxHTrBARdqODp0oBTlF6D11JXCQ52l6mzH
+        TznDTHt66IE/tEyotDOXurBYJn7VrhOWXiAVvbjUi0CVtyWLH9Vlccv9yfU0hg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676893343;
+        s=2020e; t=1676909274;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=UO5ZIv6WLOFEvDgns9PNAXGt0c83/QH7iEoB+8xr5cE=;
-        b=3xB0T8Z9+hNe/WqLw9i7fazxKleH7XCKyMjzYxAt3zXypHgzJ3+gRGWbcx9eFBVN1eOYyk
-        CRoIILg8Y0hL9YDg==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=aihUiQAEYGdNDVVk+BW/pwYwHfkq0+AinKSL9XApArY=;
+        b=+GSbN38bE7NBgyavRO1AjQydQbHXWzhCUPR5LKWkEHHveKw/aKS2X2nJ+EUqAVbu7ErgT6
+        GTizKT6TkFKY+lAA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     Crystal Wood <swood@redhat.com>, John Keeping <john@metanate.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: rtmutex, pi_blocked_on, and blk_flush_plug()
-Message-ID: <Y/NcnrwKr2u6tamQ@linutronix.de>
-References: <4b4ab374d3e24e6ea8df5cadc4297619a6d945af.camel@redhat.com>
- <Y+47FVJ+hI+NA2In@linutronix.de>
- <87k00cr7ix.ffs@tglx>
- <Y/NT1/ynarp9cDlS@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.2-rt3
+Message-ID: <Y/Oa2P9sedRWtc5E@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <Y/NT1/ynarp9cDlS@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-02-20 12:04:56 [+0100], To Thomas Gleixner wrote:
-> The ->pi_blocked_on field is set by __rwbase_read_lock() before
-> schedule() is invoked while blocking on the sleeping lock. By doing this
-> we avoid __blk_flush_plug() and as such will may deadlock because we are
-> going to sleep and made I/O progress earlier which is not globally
-> visibly but might be (s/might be/is/ in the deadlock case) expected by
-> the owner of the lock.
-> 
-> We could trylock and if this fails, flush and do the proper lock.
-> This would ensure that we set pi_blocked_on after we flushed.
+Dear RT folks!
 
-Something like the diff below takes down_read(), down_write() into
-account. read_lock()/ write_lock() is excluded via the state check.
-mutex_t is missing. It needs to be flushed before the pi_blocked_on is
-assigned, before the wait lock is acquired:
+I'm pleased to announce the v6.2-rt3 patch set. 
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 728f434de2bbf..95731d0c9e87f 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1700,6 +1700,13 @@ static __always_inline int __rt_mutex_lock(struct rt_mutex_base *lock,
- 	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
- 		return 0;
+Changes since v6.2-rt2:
+
+  - Always wake the ktimers thread once the hrtimer softirq is raised.
+    If the softirq is running then the wake of the thread will be
+    delayed until the next jiffy tick. Patch by Junxiao Chang.
+
+  - The splats reported by Valentin Schneider have been dealt with and
+    are removed from the "known issues" sections. See
+      https://lore.kernel.org/all/953300ac-25fa-db8d-c270-d10559a0fa02@arm.com/
+
+Known issues
+     None.
+
+The delta patch against v6.2-rt2 is appended below and can be found here:
  
-+	if (state != TASK_RTLOCK_WAIT) {
-+		/*
-+		 * If we are going to sleep and we have plugged IO queued,
-+		 * make sure to submit it to avoid deadlocks.
-+		 */
-+		blk_flush_plug(tsk->plug, true);
-+	}
- 	return rt_mutex_slowlock(lock, NULL, state);
- }
- #endif /* RT_MUTEX_BUILD_MUTEX */
-diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-index c201aadb93017..6c6c88a2d9228 100644
---- a/kernel/locking/rwbase_rt.c
-+++ b/kernel/locking/rwbase_rt.c
-@@ -143,6 +143,14 @@ static __always_inline int rwbase_read_lock(struct rwbase_rt *rwb,
- 	if (rwbase_read_trylock(rwb))
- 		return 0;
- 
-+	if (state != TASK_RTLOCK_WAIT) {
-+		/*
-+		 * If we are going to sleep and we have plugged IO queued,
-+		 * make sure to submit it to avoid deadlocks.
-+		 */
-+		blk_flush_plug(tsk->plug, true);
-+	}
-+
- 	return __rwbase_read_lock(rwb, state);
- }
- 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/incr/patch-6.2-rt2-rt3.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.2-rt3
+
+The RT patch against v6.2 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patch-6.2-rt3.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.2/older/patches-6.2-rt3.tar.xz
+
 Sebastian
+
+
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index ab1fe34326bab..82f3e68fbe220 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -664,13 +664,12 @@ static inline void __irq_exit_rcu(void)
+ #endif
+ 	account_hardirq_exit(current);
+ 	preempt_count_sub(HARDIRQ_OFFSET);
+-	if (!in_interrupt()) {
+-		if (local_softirq_pending())
+-			invoke_softirq();
++	if (!in_interrupt() && local_softirq_pending())
++		invoke_softirq();
+ 
+-		if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers())
+-			wake_timersd();
+-	}
++	if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers() &&
++	    !(in_nmi() | in_hardirq()))
++		wake_timersd();
+ 
+ 	tick_irq_exit();
+ }
+diff --git a/localversion-rt b/localversion-rt
+index c3054d08a1129..1445cd65885cd 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt2
++-rt3
