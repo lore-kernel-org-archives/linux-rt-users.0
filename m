@@ -2,110 +2,85 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2FC8AC05027
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 16:54:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6F4FC05027
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 18:21:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231785AbjBTQyG (ORCPT
+        id S231582AbjBTSVz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 20 Feb 2023 11:54:06 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37948 "EHLO
+        Mon, 20 Feb 2023 13:21:55 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37514 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230062AbjBTQyF (ORCPT
+        with ESMTP id S229738AbjBTSVy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Feb 2023 11:54:05 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 24F8418AAC;
-        Mon, 20 Feb 2023 08:54:04 -0800 (PST)
-Date:   Mon, 20 Feb 2023 17:54:01 +0100
+        Mon, 20 Feb 2023 13:21:54 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A7CC1C7D4;
+        Mon, 20 Feb 2023 10:21:53 -0800 (PST)
+From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676912042;
+        s=2020; t=1676917312;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=MavDyGT1xeppoPKTgqyDw9Ojgq7OmsmvM2dptZkC7PE=;
-        b=u9o0bd8/huXnf95zp/XdhvA0ovWIaj/TbDCcfaLoqQnh5vI3XhsgHAkbEwujkWeHdttibo
-        q0oB6mcfMl8kFCAkNMdTAuYeelFGwufkHoGDw1ad9J4xoO97YZBvxZyYxBa1zaOfkimggR
-        n4KS1+ghZLcFGItXNLTB6SU22vMcb2VtFs2KN1fC/DdG5dLPP2bVPDeoGnjKUhBgbO7qtq
-        944ftxZmNM4KJYsC8KnI2YiLqVI5qoQuxJMTMWUgSQncbuJJxREO+HcCuS4v4R14tUlODg
-        LibVMQsu2DMXd9Wb63LLZCbDJ5Q6tW8MooU7lx4o6Nlql/Q+45bgWy5wuwXIPw==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=M2TNSYPxwb1ODjFRyTX0POYdUTVU1KaJqYYoaJTBKBA=;
+        b=EzR9F3DfHz1Ny0/+LBtKFmc2kDfhTjTpFyimjfk1KGacauIbxgb96aGRazsDUDOA+AWag8
+        QkGbwSlHEaJIZFFGhhKJAHcy5x18HlGsQL8tUENDzGN99d3gwgYUqyUNYp/TRK9Ss+v/3q
+        hmy0mKdeTE1jYkwEBbLUK1TT/a0xdGyfLfotO3Q8BgshQCL4Cm4NoLy7/7Aatt3aFEJeSa
+        HBpDPgq45ZJZGdLKWsuDOjvlm/ggNoKGXk3Qh8cFprIb8yomRfJ72Ai9gB3PwE3iaWab4n
+        Jxi9pf7O1D7qLvKrRmm5DpzTQmPyxKTHdKIh+5Xi+JtuDkW2IT/gigYXy3H5lw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676912042;
+        s=2020e; t=1676917312;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=MavDyGT1xeppoPKTgqyDw9Ojgq7OmsmvM2dptZkC7PE=;
-        b=qNNaa6qfhhcXmAUHrlrjaQrhlxkbeJINQ/6wCOZGeJSL7uvXfkbEplBzCcHurjFyrPKgdV
-        wwM3pJbF+/WnyZAQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.1.12-rt7
-Message-ID: <Y/Olqd9NQkVW5NJ0@linutronix.de>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=M2TNSYPxwb1ODjFRyTX0POYdUTVU1KaJqYYoaJTBKBA=;
+        b=FseAp8FNcz6pg3f/zV9z3wyjunHJR4ysWheg1Io44pXjja4jQPwoAFBpoQyt615vh4dJP0
+        oCrwe2VlO0ocOCDg==
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Crystal Wood <swood@redhat.com>, John Keeping <john@metanate.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>
+Subject: Re: rtmutex, pi_blocked_on, and blk_flush_plug()
+In-Reply-To: <Y/NcnrwKr2u6tamQ@linutronix.de>
+References: <4b4ab374d3e24e6ea8df5cadc4297619a6d945af.camel@redhat.com>
+ <Y+47FVJ+hI+NA2In@linutronix.de> <87k00cr7ix.ffs@tglx>
+ <Y/NT1/ynarp9cDlS@linutronix.de> <Y/NcnrwKr2u6tamQ@linutronix.de>
+Date:   Mon, 20 Feb 2023 19:21:51 +0100
+Message-ID: <874jrgqjsw.ffs@tglx>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+On Mon, Feb 20 2023 at 12:42, Sebastian Andrzej Siewior wrote:
+> On 2023-02-20 12:04:56 [+0100], To Thomas Gleixner wrote:
+>> The ->pi_blocked_on field is set by __rwbase_read_lock() before
+>> schedule() is invoked while blocking on the sleeping lock. By doing this
+>> we avoid __blk_flush_plug() and as such will may deadlock because we are
+>> going to sleep and made I/O progress earlier which is not globally
+>> visibly but might be (s/might be/is/ in the deadlock case) expected by
+>> the owner of the lock.
 
-I'm pleased to announce the v6.1.12-rt7 patch set. 
+Fair enough.
 
-Changes since v6.1.12-rt6:
+> --- a/kernel/locking/rtmutex.c
+> +++ b/kernel/locking/rtmutex.c
+> @@ -1700,6 +1700,13 @@ static __always_inline int __rt_mutex_lock(struct rt_mutex_base *lock,
+>  	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+>  		return 0;
+>  
+> +	if (state != TASK_RTLOCK_WAIT) {
+> +		/*
+> +		 * If we are going to sleep and we have plugged IO queued,
+> +		 * make sure to submit it to avoid deadlocks.
+> +		 */
+> +		blk_flush_plug(tsk->plug, true);
 
-  - Always wake the ktimers thread once the hrtimer softirq is raised.
-    If the softirq is running then the wake of the thread will be
-    delayed until the next jiffy tick. Patch by Junxiao Chang.
+This still leaves the problem vs. io_wq_worker_sleeping() and it's
+running() counterpart after schedule().
 
-Known issues
-     None.
+Aside of that for CONFIG_DEBUG_RT_MUTEXES=y builds it flushes on every
+lock operation whether the lock is contended or not.
 
-The delta patch against v6.1.12-rt6 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.1/incr/patch-6.1.12-rt6-rt7.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.1.12-rt7
-
-The RT patch against v6.1.12 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.1/older/patch-6.1.12-rt7.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.1/older/patches-6.1.12-rt7.tar.xz
-
-Sebastian
-
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index ab1fe34326bab..82f3e68fbe220 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -664,13 +664,12 @@ static inline void __irq_exit_rcu(void)
- #endif
- 	account_hardirq_exit(current);
- 	preempt_count_sub(HARDIRQ_OFFSET);
--	if (!in_interrupt()) {
--		if (local_softirq_pending())
--			invoke_softirq();
-+	if (!in_interrupt() && local_softirq_pending())
-+		invoke_softirq();
- 
--		if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers())
--			wake_timersd();
--	}
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers() &&
-+	    !(in_nmi() | in_hardirq()))
-+		wake_timersd();
- 
- 	tick_irq_exit();
- }
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d806670..045478966e9f1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
+Grmbl.
