@@ -2,143 +2,133 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A87DC636D6
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Feb 2023 23:55:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 33937C61DA3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Feb 2023 08:47:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232530AbjBTXzj (ORCPT
+        id S233570AbjBUIr0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 20 Feb 2023 18:55:39 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60294 "EHLO
+        Tue, 21 Feb 2023 03:47:26 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37352 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231350AbjBTXzi (ORCPT
+        with ESMTP id S230233AbjBUIrZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Feb 2023 18:55:38 -0500
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38F7D20D35;
-        Mon, 20 Feb 2023 15:55:37 -0800 (PST)
-From:   Thomas Gleixner <tglx@linutronix.de>
+        Tue, 21 Feb 2023 03:47:25 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E6BD4234E9;
+        Tue, 21 Feb 2023 00:47:23 -0800 (PST)
+Date:   Tue, 21 Feb 2023 09:47:20 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1676937334;
+        s=2020; t=1676969242;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=VZQezCgdD0D+uTwi8vQExA2xupF4S/Y7SBoqChxjpyY=;
-        b=S7YzGxtw8dhSuWGrI1DzfQ3ZLhXgknk4qBTCrwFwwOTtHmNDV86hYFpIjP2O5VTLj2/Ai/
-        Us+BQd3A+RZYFUBQdNXawr2t0AHgnJ7FAxRHNzxnKszAY3tzcy6LMKe/WzCiKPa3cepwlp
-        SebPe1+B0F/oSWaqshQFQB4gMBnw7V7/kdvFydd/ddKftRnouQCJNq22BFYT3rz1KCMCT9
-        Mr8Ky5au2pD1Afim4LVHgkfDqNmQHyU5T/RxgCXJWqRfQxZUZMripO3xJRppYoWgxGMuPq
-        9BbC2CVyx7zrdM5YeKgUM4RcopKdYXBXVK5Hjx2dfdyK+4KrsEY2bQ7yeREEgA==
+        bh=6ifHJbagiL5YEhYtLCRPf3BHvO+fc4Ql1bGPL7SfJQg=;
+        b=nqdf/4jn7+lWx16zM1bED3vFcRF/5G5eCKGlID/rOFCwWfXOSQKaSy0TH6SIvHe8bm996A
+        YJZjYVY1enUn/xYt3S6JA/DILq7xCH8vgx25rWxVVRRAZfa2Qsp9JphtO+hephshjzJG8d
+        YPK+KkcC4wiMVyyTKvw7gsx7ryeqY/AJqCGHOZxjClD7KB8+Gf9Gsc/NnH6eQ/shpDLbAA
+        59DW58WKV5NLU4Yy/Jfj25hdjsVt+KhXpVVAFwwBswhNQTxX8ct85ChAfgS386OGd+sXNJ
+        /6jPqzVKwqkHQ6gBitJaqjd24h76JARp0FVtL9sml7apHVkcimlrUeq9XhMeKA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1676937334;
+        s=2020e; t=1676969242;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=VZQezCgdD0D+uTwi8vQExA2xupF4S/Y7SBoqChxjpyY=;
-        b=n5ShpAR5q4MrUmDc7Z3BCgXsWMHpihYiY9Ab1RS7VlJCwGRAzjVvkGih2Rcttg/iZpshsK
-        JwUGXUTza6WUDnDg==
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Mel Gorman <mgorman@techsingularity.net>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
+        bh=6ifHJbagiL5YEhYtLCRPf3BHvO+fc4Ql1bGPL7SfJQg=;
+        b=94MONM7HSBIAiimj4nW3tsCZLMWQBsl9BD1FtJRDiva56JZrypdTnAShA6lO2qPGMS7xXF
+        am41Jy2SHt7VFYAQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Mel Gorman <mgorman@techsingularity.net>,
+        Peter Zijlstra <peterz@infradead.org>,
         Ingo Molnar <mingo@kernel.org>,
         Davidlohr Bueso <dave@stgolabs.net>,
         Linux-RT <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
 Subject: Re: [PATCH v5] locking/rwbase: Mitigate indefinite writer starvation
-In-Reply-To: <Y+0W0wgyaJqYHKoj@linutronix.de>
+Message-ID: <Y/SFGM29TXAumoTZ@linutronix.de>
 References: <Y+0W0wgyaJqYHKoj@linutronix.de>
-Date:   Tue, 21 Feb 2023 00:55:33 +0100
-Message-ID: <877cwbq4cq.ffs@tglx>
+ <877cwbq4cq.ffs@tglx>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <877cwbq4cq.ffs@tglx>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Feb 15 2023 at 18:30, Sebastian Andrzej Siewior wrote:
-> diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
-> index 1d264dd086250..b969b1d9bb85c 100644
-> --- a/include/linux/rwbase_rt.h
-> +++ b/include/linux/rwbase_rt.h
-> @@ -10,12 +10,14 @@
->  
->  struct rwbase_rt {
->  	atomic_t		readers;
-> +	unsigned long		waiter_timeout;
+On 2023-02-21 00:55:33 [+0100], Thomas Gleixner wrote:
+> On Wed, Feb 15 2023 at 18:30, Sebastian Andrzej Siewior wrote:
+> > diff --git a/include/linux/rwbase_rt.h b/include/linux/rwbase_rt.h
+> > index 1d264dd086250..b969b1d9bb85c 100644
+> > --- a/include/linux/rwbase_rt.h
+> > +++ b/include/linux/rwbase_rt.h
+> > @@ -10,12 +10,14 @@
+> > =20
+> >  struct rwbase_rt {
+> >  	atomic_t		readers;
+> > +	unsigned long		waiter_timeout;
+>=20
+> I'm still not convinced that this timeout has any value and if it has
+> then it should be clearly named writer_timeout because that's what it is
+> about.
+>=20
+> The only reason for this timeout I saw so far is:
+>=20
+> > +/*
+> > + * Allow reader bias with a pending writer for a minimum of 4ms or 1 t=
+ick. This
+> > + * matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
+>=20
+> Clearly RT and !RT have completely different implementations and
+> behaviour vs. rwsems and rwlocks. Just because !RT has a timeout does
+> not make a good argument.
+>=20
+> Just for the record: !RT has the timeout applicable in both directions
+> to prevent writer bias via lock stealing. That's not a problem for RT
+> because?
 
-I'm still not convinced that this timeout has any value and if it has
-then it should be clearly named writer_timeout because that's what it is
-about.
+Once the writer got the lock, then all further reader and writer queue
+up on rtmutex and will be processed one after the other. It only becomes
+a problem once a writer with elevated priority acquires the lock
+repeatedly to the point that tasks with lower priority starve.
 
-The only reason for this timeout I saw so far is:
+> Can we finally get a proper justification for this?
 
-> +/*
-> + * Allow reader bias with a pending writer for a minimum of 4ms or 1 tick. This
-> + * matches RWSEM_WAIT_TIMEOUT for the generic RWSEM implementation.
+Avoid writer starvation caused by having at least one reader in the
+critical section all the time blocking the writer to make any progress.
+Reader starvation is not an issue because all tasks line up on the
+rtmutex and will be processed in FIFO order.
+Tasks with elevated priority will be preferred and can lead starvation
+of the tasks with lower priority. This is by design and can happen with
+other lock types, too.
 
-Clearly RT and !RT have completely different implementations and
-behaviour vs. rwsems and rwlocks. Just because !RT has a timeout does
-not make a good argument.
+> > @@ -264,12 +285,20 @@ static int __sched rwbase_write_lock(struct rwbas=
+e_rt *rwb,
+> >  		if (__rwbase_write_trylock(rwb))
+> >  			break;
+> > =20
+> > +		/*
+> > +		 * Record timeout when reader bias is ignored. Ensure timeout
+> > +		 * is at least 1 in case of overflow.
+> > +		 */
+> > +		rwb->waiter_timeout =3D (jiffies + RWBASE_RT_WAIT_TIMEOUT) | 1;
+> > +
+>=20
+> So this has two sillies:
+>=20
+>    1) It resets the timeout once per loop which is plain wrong
+>=20
+>    2) The "| 1" is really a sloppy hack
+>=20
+> Why not doing the obvious:
 
-Just for the record: !RT has the timeout applicable in both directions
-to prevent writer bias via lock stealing. That's not a problem for RT
-because?
+Sure. Let me look at this once we agreed on the justification.
 
-Can we finally get a proper justification for this?
-
-> @@ -264,12 +285,20 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
->  		if (__rwbase_write_trylock(rwb))
->  			break;
->  
-> +		/*
-> +		 * Record timeout when reader bias is ignored. Ensure timeout
-> +		 * is at least 1 in case of overflow.
-> +		 */
-> +		rwb->waiter_timeout = (jiffies + RWBASE_RT_WAIT_TIMEOUT) | 1;
-> +
-
-So this has two sillies:
-
-   1) It resets the timeout once per loop which is plain wrong
-
-   2) The "| 1" is really a sloppy hack
-
-Why not doing the obvious:
-
-static bool __sched rwbase_allow_reader_bias(struct rwbase_rt *rwb)
-{
-	int r = atomic_read(&rwb->readers);
-
-        if (likely(r < 0))
-        	return true;
-
-        if (r == WRITER_BIAS)
-        	return false;
-
-	/* Allow reader bias unless the writer timeout has expired. */
-	return time_before(jiffies, rwb->writer_timeout);
-}
-
-and with that the "| 1" and all the rwb->timeout = 0 nonsense simply
-goes away and rwbase_read_lock() becomes:
-
-	if (rwbase_allow_reader_bias(rwb)) {
-		// fastpath
-		atomic_inc(&rwb->readers);
-		raw_spin_unlock_irq(&rtm->wait_lock);
-		return 0;
-	}
-        // slowpath
-
-and the writelock slowpath has:
-
-	rwb->writer_timeout = jiffies + RWBASE_RT_WAIT_TIMEOUT;
-
-	for (;;) {
-        	....
-
-No?
-
-Thanks,
-
-        tglx
-
+=E2=80=A6
+> Thanks,
+>=20
+>         tglx
+Sebastian
