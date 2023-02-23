@@ -2,100 +2,189 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 90A7DC636D6
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Feb 2023 14:40:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CA5C0C61DA4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Feb 2023 15:03:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234840AbjBWOkJ (ORCPT
+        id S234397AbjBWPDa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Feb 2023 09:40:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48204 "EHLO
+        Thu, 23 Feb 2023 10:03:30 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42602 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234311AbjBWOkI (ORCPT
+        with ESMTP id S233805AbjBWPD1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Feb 2023 09:40:08 -0500
-X-Greylist: delayed 360 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 23 Feb 2023 06:40:06 PST
-Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ECE7C57093;
-        Thu, 23 Feb 2023 06:40:05 -0800 (PST)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id ABD2ADAD33;
-        Thu, 23 Feb 2023 15:33:57 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1677162842; h=from:subject:date:message-id:to:cc:mime-version:content-type:
-         in-reply-to:references; bh=gSBnOAKSlwYgZRq5lZL+i93DmKNx4vzN6Q9wkUn3Q5k=;
-        b=gxFRh++8hGnMi3A97kGudlj0tNF002PWwqVliQqG+Q9Fu5eYM3Q6h9ylLfDKxWUJw8/Hh9
-        cAW2HKc1eBrrD8N6ANprgekyaRnJXQSIrYMUEM5857MQ6chxe5+hne57xRvTItGUPWc10c
-        /tbNx0rlrHDiulWdrVq+XE2m8t3ezPnHJ+6wrGsMqteAyWxnLkaQx/jn+z5vVsKH/Hqmp0
-        O10wu8pAx+JsvPdeqv7SwqezScqxAMNYrRnYBmk/A8s4Zak/C6/hOXmuTm71xgq9zPewqw
-        xjcXCPVK8dYsvH1MfmrcwDohKjvgSk1oBB+Q4ytmsxN3LRBeIIVGOicJ1T+haA==
-Date:   Thu, 23 Feb 2023 15:33:56 +0100
-From:   Daniel Wagner <wagi@monom.org>
-To:     Florian Bezdeka <florian.bezdeka@siemens.com>
-Cc:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
-        Salvatore Bonaccorso <carnil@debian.org>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Jan Kiszka <jan.kiszka@siemens.com>
-Subject: Re: [ANNOUNCE] 5.10.162-rt79
-Message-ID: <20230223143356.fa6tqrflmhrcqx33@carbon.lan>
-References: <Y9KOvZH61omPpn/3@uudg.org>
- <2ad9f8a7528818b9509f62278b42e5bc6d210054.camel@siemens.com>
+        Thu, 23 Feb 2023 10:03:27 -0500
+Received: from mail-lj1-x22f.google.com (mail-lj1-x22f.google.com [IPv6:2a00:1450:4864:20::22f])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DA9C483DA
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Feb 2023 07:03:25 -0800 (PST)
+Received: by mail-lj1-x22f.google.com with SMTP id e24so4855759ljj.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Feb 2023 07:03:25 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=RrX+Yxs54zjSMzfv2R4YjLMHZycc3fF+VfLE7hZvGMY=;
+        b=BwjEOgwnArEQ+aFCiDIKDQs533PAqDw8g3bsrtPejeQ/YzW17kMi0BqT5zUrRSCUb4
+         aGILeCz/Qu1RX7mTdRS6IxaQ/CY5bKsjHoil6NNsXBZ2zAXT3ZCSTDfSjNehfDNXgmrS
+         z2GIckcVXoKAbPWtsLBE81gPe1cWRgwnvBHWj5PiZaYxiE9n1RZ6m9ueBXLmTHntMd4N
+         dh7OPy498Q1rTPdaNTpDJg5nohv6tdFail9jAMkgA9n1jzRRAb2rySDmABLkvZ2KcFoP
+         69JOOTANXA0hU0cQk4+J6fxtVzBOgk1ur9CKhoZHVu4xr1zdEryIpl7TdCIrQbPs+HX+
+         mu3w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=RrX+Yxs54zjSMzfv2R4YjLMHZycc3fF+VfLE7hZvGMY=;
+        b=pNE+m74vOoVL/8brgDGDQM0UaTrkHu1wKch8s2aBBDcHAH+BuCf9Vj/JpPxNvvzSg6
+         tWwVTjByv7+9sgPB6s9sooaudyWwIlyynyouOGLWXvXadeCfP35kcYzoYlTM50o2qVhg
+         SQSgTytshNAWOlG21RviXVm4qtNpAIsEy6L2u6qY4cE1iEzDrmBTS4iz2EMXsaLXIOF4
+         RIYVm3kP14hqkb7qzI/V42hEEK7mskLOllhi9va5AmpUMvU3Utszo9by+IEkvo9FDv0h
+         9tQl556onZZjehmU3rf80W4IwfHTch/m/3ooiVmpKzca/VCm3CkTWlmeDTu/8VLlCuFV
+         qVpA==
+X-Gm-Message-State: AO0yUKXn8uzigKlb5/PgxpS9ck2Hzhw7ocBEfFOMGqqHDdwTc0seHYRW
+        hgIomyXKYZV2IZqFFnN9FD5aSCFht1F/0080RHsVTuQvtzM=
+X-Google-Smtp-Source: AK7set+2mnR9SkBONC0wSJ6v8S8U9MSCnbb57rp7DPawkWYzOwpJAdl8ZzcZ7IjOMb3VrSV+jd+MLvWLGms72mTBys4=
+X-Received: by 2002:a05:651c:b9b:b0:295:9dc0:f204 with SMTP id
+ bg27-20020a05651c0b9b00b002959dc0f204mr776388ljb.9.1677164603638; Thu, 23 Feb
+ 2023 07:03:23 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <2ad9f8a7528818b9509f62278b42e5bc6d210054.camel@siemens.com>
-X-Last-TLS-Session-Version: TLSv1.3
+From:   =?UTF-8?B?RnLDqWTDqXJpYyBNYXJ0aW5zb25z?= 
+        <frederic.martinsons@gmail.com>
+Date:   Thu, 23 Feb 2023 16:03:12 +0100
+Message-ID: <CA+cAkeoDrm-33JkuL6nQa7s7foqdCWvwt9Y9PZa5Qj58gATqtQ@mail.gmail.com>
+Subject: Kernel lock during cryptsetup luksClose
+To:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Florian,
+Subject: Kernel lock during cryptsetup luksClose
 
-On Thu, Jan 26, 2023 at 06:41:27PM +0100, Florian Bezdeka wrote:
-> From the CIP projects perspective we would like to improve the
-> situation.
-> 
-> From my perspective the following could be done:
-> 
->   - Instead of (or in addition to) building and testing released -rt
->     branches enable testing of -rt release candidates
->   - Make sure the build results get back to the maintainers
-> 
-> I'm not sure if every -rt branch has a -rc branch. I'm not familiar
-> with the -rt release process yet.
+Hello,
 
-The process so far is, that every stable maintainer updates his tree (merges the
-stable tree) and does a local build and local tests. Usually when merging latest
-upstream stable release there are no or little fallouts. When the maintainer is
-happy he does the release by pushing the changes to the usptream branch. The
-release candiates come only into play when there is something the maintainer is
-not sure how to handle or -rt patches are backported which need some more eyes
-to look on. That means Sebastian's approval :)
+I recently upgraded my system (Marvell Armada-3720) from linux 4.19.255-rt113 to
+linux 4.19.271-rt120 and experienced a blocking issue with cryptsetup.
 
-IIRC, I did give a presentation on the workflow some time ago...
+My sequence is roughly the following:
+  - Boot an initramfs from PXE
+  - Get back a ciphered image from a local HTTP server
+  - Get back the ciphering key of this image (which is itself ciphered)
+  - Decipher the key it via a TPM chip
+  - Decipher the image via cryptsetup luksOpen
+  - Partition the storage and install the image on it
+  - Cleanup operation
 
-https://lpc.events/event/4/contributions/293/attachments/237/416/maintaining-out-of-tree-patches-over-the-long-term.pdf
-https://www.youtube.com/watch?v=2ab4Knwlmo4
+The blocking I see is when I close the LUKS encrypted volume via
+cryptsetup luksClose.
+I manage to have some more traces of cryptsetup luksClose by adding
+--debug to it.
+Below is the correct sequence  in 4.19.255-rt113:
 
-When we started with this process kernelci didn't build these branches but that
-is long time ago.
+# cryptsetup 2.3.7 processing "cryptsetup --verbose --debug luksClose image"
+# Running command close.
+# Locking memory.
+# Installing SIGINT/SIGTERM handler.
+# Unblocking interruption on signal.
+# Allocating crypt device context by device image.
+# Initialising device-mapper backend library.
+# dm version   [ opencount flush ]   [16384] (*1)
+# dm versions   [ opencount flush ]   [16384] (*1)
+# Detected dm-ioctl version 4.39.0.
+# Detected dm-crypt version 1.18.1.
+# Udev is not running. Not using udev synchronisation code.
+# Device-mapper backend running with UDEV support disabled.
+# dm status image  [ opencount noflush ]   [16384] (*1)
+# Releasing device-mapper backend.
+# Trying to open and read device /dev/loop0 with direct-io.
+# Allocating context for crypt device /dev/loop0.
+# Trying to open and read device /dev/loop0 with direct-io.
+# Initialising device-mapper backend library.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm table image  [ opencount flush securedata ]   [16384] (*1)
+# Trying to open and read device /dev/loop0 with direct-io.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm deps image  [ opencount flush ]   [16384] (*1)
+# Crypto backend (OpenSSL 1.1.1s  1 Nov 2022) initialized in
+cryptsetup library version 2.3.7.
+# Detected kernel Linux 4.19.255-rt113-sigfox aarch64.
+# PBKDF pbkdf2-sha256, time_ms 2000 (iterations 0).
+# Reading LUKS header of size 1024 from device /dev/loop0
+# Key length 32, device size 179761 sectors, header size 2050 sectors.
+# Deactivating volume image.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm status image  [ opencount noflush ]   [16384] (*1)
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm table image  [ opencount flush securedata ]   [16384] (*1)
+# Trying to open and read device /dev/loop0 with direct-io.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm remove image  [ opencount flush retryremove ]   [16384] (*1)
+# image: Stacking NODE_DEL
+# image: Processing NODE_DEL
+# Removed /dev/mapper/image
+# Releasing crypt device /dev/loop0 context.
+# Releasing device-mapper backend.
+# Closing read only fd for /dev/loop0.
+# Unlocking memory.
+Command successful.
 
-Personally, I don't mind doing an official -rc for every release and getting
-some additional builds and tests run by kernelci.
+And with 4.19.271-rt120:
+# cryptsetup 2.3.7 processing "cryptsetup --verbose --debug luksClose image"
+# Running command close.
+# Locking memory.
+# Installing SIGINT/SIGTERM handler.
+# Unblocking interruption on signal.
+# Allocating crypt device context by device image.
+# Initialising device-mapper backend library.
+# dm version   [ opencount flush ]   [16384] (*1)
+# dm versions   [ opencount flush ]   [16384] (*1)
+# Detected dm-ioctl version 4.39.0.
+# Detected dm-crypt version 1.18.1.
+# Udev is not running. Not using udev synchronisation code.
+# Device-mapper backend running with UDEV support disabled.
+# dm status image  [ opencount noflush ]   [16384] (*1)
+# Releasing device-mapper backend.
+# Trying to open and read device /dev/loop0 with direct-io.
+# Allocating context for crypt device /dev/loop0.
+# Trying to open and read device /dev/loop0 with direct-io.
+# Initialising device-mapper backend library.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm table image  [ opencount flush securedata ]   [16384] (*1)
+# Trying to open and read device /dev/loop0 with direct-io.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm deps image  [ opencount flush ]   [16384] (*1)
+# Crypto backend (OpenSSL 1.1.1s  1 Nov 2022) initialized in
+cryptsetup library version 2.3.7.
+# Detected kernel Linux 4.19.271-rt120-sigfox aarch64.
+# PBKDF pbkdf2-sha256, time_ms 2000 (iterations 0).
+# Reading LUKS header of size 1024 from device /dev/loop0
+# Key length 32, device size 179761 sectors, header size 2050 sectors.
+# Deactivating volume image.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm status image  [ opencount noflush ]   [16384] (*1)
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm table image  [ opencount flush securedata ]   [16384] (*1)
+# Trying to open and read device /dev/loop0 with direct-io.
+# dm versions   [ opencount flush ]   [16384] (*1)
+# dm remove image  [ opencount flush retryremove ]   [16384] (*1)
 
-Though just piping the results back is the easy thing, the time consuming task
-is to fix those problems. Do you plan to help out here?
 
-Thanks,
-Daniel
+After that line the system is completely blocked.
+
+I perform some dichotomy and found that the problematic commit is:
+https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v4.19-rt&id=7fcfa8b616d360ab9ea1da94c2200f0708e0188b
+introduced in 4.19.255-rt114. Revert this commit on 4.19.271-rt220 makes
+the blocking disappear.
+
+I put the kernel max verbosity (logleve=8 ignore_loglevel for command
+line parameters)
+but I didn't see any kernel traces during this sequence (I have a lot of log
+before loading the initramfs but as soon as it is loaded, it seems the kernel
+became quiet).
+I'll post a follow up if I manage to have more traces.
+
+Does anyone know what could happen ?
+
+I have a reproducible setup and can test several things if someone
+tells me what to look at.
+
+Thanks in advance for any insights you could give.
