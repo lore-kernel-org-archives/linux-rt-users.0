@@ -2,189 +2,384 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CA5C0C61DA4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Feb 2023 15:03:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C9A35C64ED6
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Feb 2023 22:31:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234397AbjBWPDa (ORCPT
+        id S229582AbjBWWbg (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Feb 2023 10:03:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42602 "EHLO
+        Thu, 23 Feb 2023 17:31:36 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34506 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233805AbjBWPD1 (ORCPT
+        with ESMTP id S229436AbjBWWbf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Feb 2023 10:03:27 -0500
-Received: from mail-lj1-x22f.google.com (mail-lj1-x22f.google.com [IPv6:2a00:1450:4864:20::22f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DA9C483DA
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Feb 2023 07:03:25 -0800 (PST)
-Received: by mail-lj1-x22f.google.com with SMTP id e24so4855759ljj.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Feb 2023 07:03:25 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=RrX+Yxs54zjSMzfv2R4YjLMHZycc3fF+VfLE7hZvGMY=;
-        b=BwjEOgwnArEQ+aFCiDIKDQs533PAqDw8g3bsrtPejeQ/YzW17kMi0BqT5zUrRSCUb4
-         aGILeCz/Qu1RX7mTdRS6IxaQ/CY5bKsjHoil6NNsXBZ2zAXT3ZCSTDfSjNehfDNXgmrS
-         z2GIckcVXoKAbPWtsLBE81gPe1cWRgwnvBHWj5PiZaYxiE9n1RZ6m9ueBXLmTHntMd4N
-         dh7OPy498Q1rTPdaNTpDJg5nohv6tdFail9jAMkgA9n1jzRRAb2rySDmABLkvZ2KcFoP
-         69JOOTANXA0hU0cQk4+J6fxtVzBOgk1ur9CKhoZHVu4xr1zdEryIpl7TdCIrQbPs+HX+
-         mu3w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=RrX+Yxs54zjSMzfv2R4YjLMHZycc3fF+VfLE7hZvGMY=;
-        b=pNE+m74vOoVL/8brgDGDQM0UaTrkHu1wKch8s2aBBDcHAH+BuCf9Vj/JpPxNvvzSg6
-         tWwVTjByv7+9sgPB6s9sooaudyWwIlyynyouOGLWXvXadeCfP35kcYzoYlTM50o2qVhg
-         SQSgTytshNAWOlG21RviXVm4qtNpAIsEy6L2u6qY4cE1iEzDrmBTS4iz2EMXsaLXIOF4
-         RIYVm3kP14hqkb7qzI/V42hEEK7mskLOllhi9va5AmpUMvU3Utszo9by+IEkvo9FDv0h
-         9tQl556onZZjehmU3rf80W4IwfHTch/m/3ooiVmpKzca/VCm3CkTWlmeDTu/8VLlCuFV
-         qVpA==
-X-Gm-Message-State: AO0yUKXn8uzigKlb5/PgxpS9ck2Hzhw7ocBEfFOMGqqHDdwTc0seHYRW
-        hgIomyXKYZV2IZqFFnN9FD5aSCFht1F/0080RHsVTuQvtzM=
-X-Google-Smtp-Source: AK7set+2mnR9SkBONC0wSJ6v8S8U9MSCnbb57rp7DPawkWYzOwpJAdl8ZzcZ7IjOMb3VrSV+jd+MLvWLGms72mTBys4=
-X-Received: by 2002:a05:651c:b9b:b0:295:9dc0:f204 with SMTP id
- bg27-20020a05651c0b9b00b002959dc0f204mr776388ljb.9.1677164603638; Thu, 23 Feb
- 2023 07:03:23 -0800 (PST)
-MIME-Version: 1.0
-From:   =?UTF-8?B?RnLDqWTDqXJpYyBNYXJ0aW5zb25z?= 
-        <frederic.martinsons@gmail.com>
-Date:   Thu, 23 Feb 2023 16:03:12 +0100
-Message-ID: <CA+cAkeoDrm-33JkuL6nQa7s7foqdCWvwt9Y9PZa5Qj58gATqtQ@mail.gmail.com>
-Subject: Kernel lock during cryptsetup luksClose
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+        Thu, 23 Feb 2023 17:31:35 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7C04C5FC9;
+        Thu, 23 Feb 2023 14:31:33 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 6A5846179B;
+        Thu, 23 Feb 2023 22:31:35 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5405DC433D2;
+        Thu, 23 Feb 2023 22:31:32 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 5.15.95-rt60
+Date:   Thu, 23 Feb 2023 22:30:53 -0000
+Message-ID: <167719145359.927110.6042354623217506278@puck.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Subject: Kernel lock during cryptsetup luksClose
+Hello RT-list!
 
-Hello,
+I'm pleased to announce the 5.15.95-rt60 stable release.
 
-I recently upgraded my system (Marvell Armada-3720) from linux 4.19.255-rt113 to
-linux 4.19.271-rt120 and experienced a blocking issue with cryptsetup.
+You can get this release via the git tree at:
 
-My sequence is roughly the following:
-  - Boot an initramfs from PXE
-  - Get back a ciphered image from a local HTTP server
-  - Get back the ciphering key of this image (which is itself ciphered)
-  - Decipher the key it via a TPM chip
-  - Decipher the image via cryptsetup luksOpen
-  - Partition the storage and install the image on it
-  - Cleanup operation
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The blocking I see is when I close the LUKS encrypted volume via
-cryptsetup luksClose.
-I manage to have some more traces of cryptsetup luksClose by adding
---debug to it.
-Below is the correct sequence  in 4.19.255-rt113:
+  branch: v5.15-rt
+  Head SHA1: 14158de40ffbfb732e9fefbed801fad50f785fd5
 
-# cryptsetup 2.3.7 processing "cryptsetup --verbose --debug luksClose image"
-# Running command close.
-# Locking memory.
-# Installing SIGINT/SIGTERM handler.
-# Unblocking interruption on signal.
-# Allocating crypt device context by device image.
-# Initialising device-mapper backend library.
-# dm version   [ opencount flush ]   [16384] (*1)
-# dm versions   [ opencount flush ]   [16384] (*1)
-# Detected dm-ioctl version 4.39.0.
-# Detected dm-crypt version 1.18.1.
-# Udev is not running. Not using udev synchronisation code.
-# Device-mapper backend running with UDEV support disabled.
-# dm status image  [ opencount noflush ]   [16384] (*1)
-# Releasing device-mapper backend.
-# Trying to open and read device /dev/loop0 with direct-io.
-# Allocating context for crypt device /dev/loop0.
-# Trying to open and read device /dev/loop0 with direct-io.
-# Initialising device-mapper backend library.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm table image  [ opencount flush securedata ]   [16384] (*1)
-# Trying to open and read device /dev/loop0 with direct-io.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm deps image  [ opencount flush ]   [16384] (*1)
-# Crypto backend (OpenSSL 1.1.1s  1 Nov 2022) initialized in
-cryptsetup library version 2.3.7.
-# Detected kernel Linux 4.19.255-rt113-sigfox aarch64.
-# PBKDF pbkdf2-sha256, time_ms 2000 (iterations 0).
-# Reading LUKS header of size 1024 from device /dev/loop0
-# Key length 32, device size 179761 sectors, header size 2050 sectors.
-# Deactivating volume image.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm status image  [ opencount noflush ]   [16384] (*1)
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm table image  [ opencount flush securedata ]   [16384] (*1)
-# Trying to open and read device /dev/loop0 with direct-io.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm remove image  [ opencount flush retryremove ]   [16384] (*1)
-# image: Stacking NODE_DEL
-# image: Processing NODE_DEL
-# Removed /dev/mapper/image
-# Releasing crypt device /dev/loop0 context.
-# Releasing device-mapper backend.
-# Closing read only fd for /dev/loop0.
-# Unlocking memory.
-Command successful.
+Or to build 5.15.95-rt60 directly, the following patches should be applied:
 
-And with 4.19.271-rt120:
-# cryptsetup 2.3.7 processing "cryptsetup --verbose --debug luksClose image"
-# Running command close.
-# Locking memory.
-# Installing SIGINT/SIGTERM handler.
-# Unblocking interruption on signal.
-# Allocating crypt device context by device image.
-# Initialising device-mapper backend library.
-# dm version   [ opencount flush ]   [16384] (*1)
-# dm versions   [ opencount flush ]   [16384] (*1)
-# Detected dm-ioctl version 4.39.0.
-# Detected dm-crypt version 1.18.1.
-# Udev is not running. Not using udev synchronisation code.
-# Device-mapper backend running with UDEV support disabled.
-# dm status image  [ opencount noflush ]   [16384] (*1)
-# Releasing device-mapper backend.
-# Trying to open and read device /dev/loop0 with direct-io.
-# Allocating context for crypt device /dev/loop0.
-# Trying to open and read device /dev/loop0 with direct-io.
-# Initialising device-mapper backend library.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm table image  [ opencount flush securedata ]   [16384] (*1)
-# Trying to open and read device /dev/loop0 with direct-io.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm deps image  [ opencount flush ]   [16384] (*1)
-# Crypto backend (OpenSSL 1.1.1s  1 Nov 2022) initialized in
-cryptsetup library version 2.3.7.
-# Detected kernel Linux 4.19.271-rt120-sigfox aarch64.
-# PBKDF pbkdf2-sha256, time_ms 2000 (iterations 0).
-# Reading LUKS header of size 1024 from device /dev/loop0
-# Key length 32, device size 179761 sectors, header size 2050 sectors.
-# Deactivating volume image.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm status image  [ opencount noflush ]   [16384] (*1)
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm table image  [ opencount flush securedata ]   [16384] (*1)
-# Trying to open and read device /dev/loop0 with direct-io.
-# dm versions   [ opencount flush ]   [16384] (*1)
-# dm remove image  [ opencount flush retryremove ]   [16384] (*1)
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.95.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.95-rt60.patch.xz
 
 
-After that line the system is completely blocked.
+Enjoy!
+Clark
 
-I perform some dichotomy and found that the problematic commit is:
-https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v4.19-rt&id=7fcfa8b616d360ab9ea1da94c2200f0708e0188b
-introduced in 4.19.255-rt114. Revert this commit on 4.19.271-rt220 makes
-the blocking disappear.
+Changes from v5.15.94-rt59:
+---
 
-I put the kernel max verbosity (logleve=8 ignore_loglevel for command
-line parameters)
-but I didn't see any kernel traces during this sequence (I have a lot of log
-before loading the initramfs but as soon as it is loaded, it seems the kernel
-became quiet).
-I'll post a follow up if I manage to have more traces.
+Aaron Thompson (1):
+      Revert "mm: Always release pages to the buddy allocator in memblock_free_late()."
 
-Does anyone know what could happen ?
+Alex Deucher (1):
+      drm/amd/display: Properly handle additional cases where DCN is not supported
 
-I have a reproducible setup and can test several things if someone
-tells me what to look at.
+Amit Engel (1):
+      nvme-fc: fix a missing queue put in nvmet_fc_ls_create_association
 
-Thanks in advance for any insights you could give.
+Andrew Morton (1):
+      revert "squashfs: harden sanity check in squashfs_read_xattr_id_table"
+
+Andrey Konovalov (1):
+      net: stmmac: do not stop RX_CLK in Rx LPI state for qcs404 SoC
+
+Arnd Bergmann (2):
+      ASoC: cs42l56: fix DT probe
+      platform/x86/amd: pmc: add CONFIG_SERIO dependency
+
+Baowen Zheng (1):
+      flow_offload: fill flags to action structure
+
+Ben Skeggs (1):
+      drm/nouveau/devinit/tu102-: wait for GFW_BOOT_PROGRESS == COMPLETED
+
+Bo Liu (1):
+      ALSA: hda/conexant: add a new hda codec SN6180
+
+Cezary Rojewski (1):
+      ALSA: hda: Do not unset preset when cleaning up codec
+
+Clark Williams (2):
+      Merge tag 'v5.15.95' into v5.15-rt
+      'Linux 5.15.95-rt60'
+
+Cristian Ciocaltea (1):
+      net: stmmac: Restrict warning on disabling DMA store and fwd mode
+
+Dan Carpenter (1):
+      net: sched: sch: Fix off by one in htb_activate_prios()
+
+Darrick J. Wong (2):
+      xfs: purge dquots after inode walk fails during quotacheck
+      xfs: don't leak btree cursor when insrec fails after a split
+
+Dave Chinner (8):
+      xfs: zero inode fork buffer at allocation
+      xfs: fix potential log item leak
+      xfs: detect self referencing btree sibling pointers
+      xfs: set XFS_FEAT_NLINK correctly
+      xfs: validate v5 feature fields
+      xfs: avoid unnecessary runtime sibling pointer endian conversions
+      xfs: don't assert fail on perag references on teardown
+      xfs: assert in xfs_btree_del_cursor should take into account error
+
+Eduard Zingerman (1):
+      selftests/bpf: Verify copy_register_state() preserves parent/live fields
+
+Felix Riemann (1):
+      net: Fix unwanted sign extension in netdev_stats_to_stats64()
+
+Florian Westphal (1):
+      netfilter: nft_tproxy: restrict to prerouting hook
+
+Gaosheng Cui (1):
+      nvmem: core: add error handling for dev_set_name
+
+Greg Kroah-Hartman (2):
+      kvm: initialize all of the kvm_debugregs structure before sending it to userspace
+      Linux 5.15.95
+
+Guillaume Nault (2):
+      ipv6: Fix datagram socket connection with DSCP.
+      ipv6: Fix tcp socket connection with DSCP.
+
+Guo Ren (1):
+      riscv: kprobe: Fixup misaligned load text
+
+Hangyu Hua (1):
+      net: openvswitch: fix possible memory leak in ovs_meter_cmd_set()
+
+Hans de Goede (2):
+      platform/x86: touchscreen_dmi: Add Chuwi Vi8 (CWI501) DMI match
+      platform/x86: amd-pmc: Fix compilation when CONFIG_DEBUGFS is disabled
+
+Hyunwoo Kim (1):
+      net/rose: Fix to not accept on connected socket
+
+Isaac J. Manjarres (1):
+      of: reserved_mem: Have kmemleak ignore dynamically allocated reserved mem
+
+Jakub Kicinski (1):
+      net: mpls: fix stale pointer if allocation fails during device rename
+
+Jakub Sitnicki (1):
+      bpf, sockmap: Don't let sock_map_{close,destroy,unhash} call itself
+
+Jason Xing (3):
+      ixgbe: allow to increase MTU to 3K with XDP enabled
+      i40e: add double of VLAN header when computing the max MTU
+      ixgbe: add double of VLAN header when computing the max MTU
+
+Johannes Zink (1):
+      net: stmmac: fix order of dwmac5 FlexPPS parametrization sequence
+
+Kailang Yang (1):
+      ALSA: hda/realtek - fixed wrong gpio assigned
+
+Kees Cook (1):
+      net: sched: sch: Bounds check priority
+
+Kuniyuki Iwashima (2):
+      tcp: Fix listen() regression in 5.15.88.
+      dccp/tcp: Avoid negative sk_forward_alloc by ipv6_pinfo.pktoptions.
+
+Leo Li (1):
+      drm/amd/display: Fail atomic_check early on normalize_zpos error
+
+Mario Limonciello (3):
+      ACPI / x86: Add support for LPS0 callback handler
+      platform/x86: amd-pmc: Correct usage of SMU version
+      platform/x86/amd: pmc: Disable IRQ1 wakeup for RN/CZN
+
+Masami Hiramatsu (1):
+      kprobes: treewide: Cleanup the error messages for kprobes
+
+Matt Roper (1):
+      drm/i915/gen11: Wa_1408615072/Wa_1407596294 should be on GT list
+
+Michael Chan (1):
+      bnxt_en: Fix mqprio and XDP ring checking logic
+
+Mike Kravetz (1):
+      hugetlb: check for undefined shift on 32 bit architectures
+
+Miko Larsson (1):
+      net/usb: kalmia: Don't pass act_len in usb_bulk_msg error path
+
+Misono Tomohiro (1):
+      selftest/lkdtm: Skip stack-entropy test if lkdtm is not available
+
+Munehisa Kamata (1):
+      sched/psi: Fix use-after-free in ep_remove_wait_queue()
+
+Natalia Petrova (1):
+      i40e: Add checking for null for nlmsg_find_attr()
+
+Paolo Abeni (2):
+      mptcp: fix locking for in-kernel listener creation
+      mptcp: do not wait for bare sockets' timeout
+
+Paul Cercueil (1):
+      mmc: jz4740: Work around bug on JZ4760(B)
+
+Pedro Tammela (3):
+      net/sched: tcindex: update imperfect hash filters respecting rcu
+      net/sched: act_ctinfo: use percpu stats
+      net/sched: tcindex: search key must be 16 bits
+
+Pierre-Louis Bossart (3):
+      ASoC: Intel: sof_rt5682: always set dpcm_capture for amplifiers
+      ASoC: Intel: sof_cs42l42: always set dpcm_capture for amplifiers
+      ASoC: SOF: Intel: hda-dai: fix possible stream_tag leak
+
+Pietro Borrello (1):
+      sctp: sctp_sock_filter(): avoid list_entry() on possibly empty list
+
+Qian Yingjin (1):
+      mm/filemap: fix page end in filemap_get_read_batch
+
+Rafał Miłecki (1):
+      net: bgmac: fix BCM5358 support by setting correct flags
+
+Raviteja Goud Talla (1):
+      drm/i915/gen11: Moving WAs to icl_gt_workarounds_init()
+
+Russell King (Oracle) (3):
+      nvmem: core: fix cleanup after dev_set_name()
+      nvmem: core: fix registration vs use race
+      nvmem: core: fix return value
+
+Ryusuke Konishi (1):
+      nilfs2: fix underflow in second superblock position calculations
+
+Sanket Goswami (1):
+      platform/x86: amd-pmc: Export Idlemask values based on the APU
+
+Seth Jenkins (1):
+      aio: fix mremap after fork null-deref
+
+Shunsuke Mie (1):
+      tools/virtio: fix the vringh test for virtio ring changes
+
+Siddharth Vadapalli (1):
+      net: ethernet: ti: am65-cpsw: Add RX DMA Channel Teardown Quirk
+
+Thomas Gleixner (1):
+      alarmtimer: Prevent starvation by small intervals and SIG_IGN
+
+Vasily Gorbik (1):
+      s390/decompressor: specify __decompress() buf len to avoid overflow
+
+Yang Yingliang (2):
+      mmc: sdio: fix possible resource leaks in some error paths
+      mmc: mmc_spi: fix error handling in mmc_spi_probe()
+---
+Makefile                                           |   2 +-
+ arch/arm/probes/kprobes/core.c                     |   4 +-
+ arch/arm64/kernel/probes/kprobes.c                 |   5 +-
+ arch/csky/kernel/probes/kprobes.c                  |  10 +-
+ arch/mips/kernel/kprobes.c                         |  11 +-
+ arch/riscv/kernel/probes/kprobes.c                 |  17 +-
+ arch/s390/boot/compressed/decompressor.c           |   2 +-
+ arch/s390/kernel/kprobes.c                         |   4 +-
+ arch/x86/kvm/x86.c                                 |   3 +-
+ drivers/acpi/x86/s2idle.c                          |  40 +++++
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c  |  17 +-
+ drivers/gpu/drm/i915/gt/intel_workarounds.c        |  32 ++--
+ .../gpu/drm/nouveau/nvkm/subdev/devinit/tu102.c    |  23 +++
+ drivers/mmc/core/sdio_bus.c                        |  17 +-
+ drivers/mmc/core/sdio_cis.c                        |  12 --
+ drivers/mmc/host/jz4740_mmc.c                      |  10 ++
+ drivers/mmc/host/mmc_spi.c                         |   8 +-
+ drivers/net/ethernet/broadcom/bgmac-bcma.c         |   6 +-
+ drivers/net/ethernet/broadcom/bnxt/bnxt.c          |   8 +-
+ drivers/net/ethernet/intel/i40e/i40e_main.c        |   4 +-
+ drivers/net/ethernet/intel/ixgbe/ixgbe.h           |   2 +
+ drivers/net/ethernet/intel/ixgbe/ixgbe_main.c      |  28 ++--
+ .../ethernet/stmicro/stmmac/dwmac-qcom-ethqos.c    |   2 +
+ drivers/net/ethernet/stmicro/stmmac/dwmac5.c       |   3 +-
+ drivers/net/ethernet/stmicro/stmmac/stmmac_main.c  |   3 +-
+ .../net/ethernet/stmicro/stmmac/stmmac_platform.c  |   2 +-
+ drivers/net/ethernet/ti/am65-cpsw-nuss.c           |  12 +-
+ drivers/net/ethernet/ti/am65-cpsw-nuss.h           |   1 +
+ drivers/net/usb/kalmia.c                           |   8 +-
+ drivers/nvme/target/fc.c                           |   4 +-
+ drivers/nvmem/core.c                               |  41 ++---
+ drivers/of/of_reserved_mem.c                       |   3 +-
+ drivers/platform/x86/Kconfig                       |   1 +
+ drivers/platform/x86/amd-pmc.c                     | 116 ++++++++++++++
+ drivers/platform/x86/touchscreen_dmi.c             |   9 ++
+ fs/aio.c                                           |   4 +
+ fs/nilfs2/ioctl.c                                  |   7 +
+ fs/nilfs2/super.c                                  |   9 ++
+ fs/nilfs2/the_nilfs.c                              |   8 +-
+ fs/squashfs/xattr_id.c                             |   2 +-
+ fs/xfs/libxfs/xfs_ag.c                             |   3 +-
+ fs/xfs/libxfs/xfs_btree.c                          | 175 ++++++++++++++++-----
+ fs/xfs/libxfs/xfs_inode_fork.c                     |  12 +-
+ fs/xfs/libxfs/xfs_sb.c                             |  70 +++++++--
+ fs/xfs/xfs_bmap_item.c                             |   2 +
+ fs/xfs/xfs_icreate_item.c                          |   1 +
+ fs/xfs/xfs_qm.c                                    |   9 +-
+ fs/xfs/xfs_refcount_item.c                         |   2 +
+ fs/xfs/xfs_rmap_item.c                             |   2 +
+ include/linux/acpi.h                               |  10 +-
+ include/linux/hugetlb.h                            |   5 +-
+ include/linux/stmmac.h                             |   1 +
+ include/net/sock.h                                 |  13 ++
+ kernel/kprobes.c                                   |  36 ++---
+ kernel/sched/psi.c                                 |   7 +-
+ kernel/time/alarmtimer.c                           |  33 +++-
+ localversion-rt                                    |   2 +-
+ mm/filemap.c                                       |   5 +-
+ mm/memblock.c                                      |   8 +-
+ net/core/dev.c                                     |   2 +-
+ net/core/sock_map.c                                |  61 +++----
+ net/dccp/ipv6.c                                    |   7 +-
+ net/ipv4/inet_connection_sock.c                    |   1 +
+ net/ipv6/datagram.c                                |   2 +-
+ net/ipv6/tcp_ipv6.c                                |  11 +-
+ net/mpls/af_mpls.c                                 |   4 +
+ net/mptcp/pm_netlink.c                             |  10 +-
+ net/mptcp/protocol.c                               |   9 ++
+ net/mptcp/subflow.c                                |   2 +-
+ net/netfilter/nft_tproxy.c                         |   8 +
+ net/openvswitch/meter.c                            |   4 +-
+ net/rose/af_rose.c                                 |   8 +
+ net/sched/act_bpf.c                                |   2 +-
+ net/sched/act_connmark.c                           |   2 +-
+ net/sched/act_ctinfo.c                             |   6 +-
+ net/sched/act_gate.c                               |   2 +-
+ net/sched/act_ife.c                                |   2 +-
+ net/sched/act_ipt.c                                |   2 +-
+ net/sched/act_mpls.c                               |   2 +-
+ net/sched/act_nat.c                                |   2 +-
+ net/sched/act_pedit.c                              |   2 +-
+ net/sched/act_police.c                             |   2 +-
+ net/sched/act_sample.c                             |   2 +-
+ net/sched/act_simple.c                             |   2 +-
+ net/sched/act_skbedit.c                            |   2 +-
+ net/sched/act_skbmod.c                             |   2 +-
+ net/sched/cls_tcindex.c                            |  34 +++-
+ net/sched/sch_htb.c                                |   5 +-
+ net/sctp/diag.c                                    |   4 +-
+ sound/pci/hda/hda_bind.c                           |   2 +
+ sound/pci/hda/hda_codec.c                          |   1 -
+ sound/pci/hda/patch_conexant.c                     |   1 +
+ sound/pci/hda/patch_realtek.c                      |   2 +-
+ sound/soc/codecs/cs42l56.c                         |   6 -
+ sound/soc/intel/boards/sof_cs42l42.c               |   3 +
+ sound/soc/intel/boards/sof_rt5682.c                |   5 +-
+ sound/soc/sof/intel/hda-dai.c                      |   8 +-
+ .../selftests/bpf/verifier/search_pruning.c        |  36 +++++
+ tools/testing/selftests/lkdtm/stack-entropy.sh     |  16 +-
+ tools/virtio/linux/bug.h                           |   8 +-
+ tools/virtio/linux/build_bug.h                     |   7 +
+ tools/virtio/linux/cpumask.h                       |   7 +
+ tools/virtio/linux/gfp.h                           |   7 +
+ tools/virtio/linux/kernel.h                        |   1 +
+ tools/virtio/linux/kmsan.h                         |  12 ++
+ tools/virtio/linux/scatterlist.h                   |   1 +
+ tools/virtio/linux/topology.h                      |   7 +
+ 107 files changed, 935 insertions(+), 295 deletions(-)
+---
