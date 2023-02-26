@@ -2,88 +2,78 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E2192C7EE2D
-	for <linux-rt-users@archiver.kernel.org>; Sat, 25 Feb 2023 09:13:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A0F8EC64ED6
+	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Feb 2023 10:51:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229520AbjBYJNq (ORCPT
+        id S229585AbjBZKvq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 25 Feb 2023 04:13:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60186 "EHLO
+        Sun, 26 Feb 2023 05:51:46 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57456 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229379AbjBYJNp (ORCPT
+        with ESMTP id S229536AbjBZKvp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 25 Feb 2023 04:13:45 -0500
-Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C1A7911E9D;
-        Sat, 25 Feb 2023 01:13:43 -0800 (PST)
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id 2F90A1C0AB2; Sat, 25 Feb 2023 10:13:41 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ucw.cz; s=gen1;
-        t=1677316421;
+        Sun, 26 Feb 2023 05:51:45 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BB91110260;
+        Sun, 26 Feb 2023 02:51:42 -0800 (PST)
+Date:   Sun, 26 Feb 2023 11:51:38 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1677408700;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=vSGD016VSliM8iYt5hXOdqQTHiF7OfjIaZHqRxtbcps=;
-        b=RbyMdpNrIH7P3FMWlF1hE/phucMmLtKkw+a97ArYLe4bVN+DO4rCZWxfLywxB6v4Wo5Tne
-        qoRyk3O5bhPvoy7jHZ9jqQ/6M+bD/4zpqa0Ob23eFn+nU0VMIXAtCXU4x1GUiDp7jXyRQb
-        mRX8Ufkcx6+AdO8woEwsGvK/MBB6toQ=
-Date:   Sat, 25 Feb 2023 10:13:40 +0100
-From:   Pavel Machek <pavel@ucw.cz>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        bh=sdCgwPEZkdUaTdJD68lLnYRV7pxl7xMKq1uKteKL5Vs=;
+        b=yeiHgmAGD3cKEuxhF8jTpXD05mPtzuEpgImdwC3h08oJGn8u8QLmWkod6P02xWH/iFE6Bl
+        hVz3cRxyp7RpKCTNOU/K2XLuDJZ9LqKafsn6wdcAFheonTfxV8nKAwtOcZpgLAmng8unEV
+        kjHTFZgy56fbEJ156hEHMgm9J6jGg2ZPbRWrlpQnNDev+eLpY+Y5Y0yb5i229twglf1cJ9
+        nvFOV5uu08tQWkGxTs7b9Js0ZWoweYvsSvAY3bZZavvuFNDcBvLuQHiAARqMll/2C1uxNJ
+        5mOAKXZY6UoQyWPr8bgCcctMkpqPnc1llZV/6KEazxRoIA5QenMhYgUI0ejyxg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1677408700;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=sdCgwPEZkdUaTdJD68lLnYRV7pxl7xMKq1uKteKL5Vs=;
+        b=lcLjTCBMD+jQnZV9Vs3BL40xy/kj5mp/WUDovgQuqHRvQR3CkuL8NeaKva70o50tgUOsO6
+        2UbfJj5tvk+mLZCQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Pavel Machek <pavel@ucw.cz>
 Cc:     Michael Everitt <gentoo@veremit.xyz>,
         Christian Eggers <ceggers@arri.de>,
         linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Subject: Re: linux-6.1-rt ?
-Message-ID: <Y/nRRHo1XtRenC6u@duo.ucw.cz>
+Message-ID: <Y/s5ukYRqAzEj1AE@linutronix.de>
 References: <12136223.O9o76ZdvQC@n95hx1g2>
  <208196df-d0b2-5cf6-29b3-4570a0946e77@veremit.xyz>
  <Y7/cYsEXHpCEGwwa@linutronix.de>
+ <Y/nRRHo1XtRenC6u@duo.ucw.cz>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="Hrxy3MuuQA4PAN0i"
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <Y7/cYsEXHpCEGwwa@linutronix.de>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <Y/nRRHo1XtRenC6u@duo.ucw.cz>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2023-02-25 10:13:40 [+0100], Pavel Machek wrote:
+> Hi!
+Hi,
 
---Hrxy3MuuQA4PAN0i
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> Apparently 6.1 left the Schr=C3=B6dinger state, and it is confirmed as LT=
+S.
 
-Hi!
+correct.
 
-> > You probably want this: https://www.spinics.net/lists/linux-rt-users/ms=
-g26345.html
-> >=20
-> > You may wish to wait for the maintainer to complete their processes!
->=20
-> There is a 6.1-RT but it hasn't been updated for a while. There should
-> be a 6.2-RT later today.
-> As for the link [1] it has not been confirmed nor denied that v6.1 will
-> be a LTS kernel. Once the version 6.1 left its Schr=F6dinger state then
-> there will be an update (or not).
+> If there are any news regarding 6.1-rt, world wants to know :-), but
+> maybe that is better discussed on realtime meeting?
 
-Apparently 6.1 left the Schr=F6dinger state, and it is confirmed as LTS.
+There was a v6.1-RT since then (last week). The handover needs to be
+discussed on the realtime meeting, this is correct.
 
-If there are any news regarding 6.1-rt, world wants to know :-), but
-maybe that is better discussed on realtime meeting?
+> Best regards,
+> 								Pavel
 
-Best regards,
-								Pavel
---=20
-People of Russia, stop Putin before his war on Ukraine escalates.
-
---Hrxy3MuuQA4PAN0i
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCY/nRRAAKCRAw5/Bqldv6
-8l4eAJ97T4kgiw4pmSNSrNTNy/kj/TtDtACeK/zt9ibLW+G4i1QJJfwCECa/nJA=
-=92e+
------END PGP SIGNATURE-----
-
---Hrxy3MuuQA4PAN0i--
+Sebastian
