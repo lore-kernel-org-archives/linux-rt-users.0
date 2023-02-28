@@ -2,198 +2,210 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D7493C64ED6
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 13:40:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C3D6C6FA8E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 17:00:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229540AbjB1Nk5 (ORCPT
+        id S229699AbjB1RAL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Feb 2023 08:40:57 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40350 "EHLO
+        Tue, 28 Feb 2023 12:00:11 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58228 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229525AbjB1Nk4 (ORCPT
+        with ESMTP id S229668AbjB1RAI (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Feb 2023 08:40:56 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9D9B52C64F;
-        Tue, 28 Feb 2023 05:40:54 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Tue, 28 Feb 2023 12:00:08 -0500
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E3616199C
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Feb 2023 09:00:03 -0800 (PST)
+Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 3DBC1B80E19;
-        Tue, 28 Feb 2023 13:40:53 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C97A7C433D2;
-        Tue, 28 Feb 2023 13:40:51 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 5.15.96-rt61
-Date:   Tue, 28 Feb 2023 13:39:50 -0000
-Message-ID: <167759159041.179258.17818107373821533412@puck.lan>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 4A3263F303;
+        Tue, 28 Feb 2023 16:50:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1677603052;
+        bh=zBKwsOsmMJIBHlgqGjwQgAoVAkcTWBAIg/Frv8ZwMbg=;
+        h=Message-ID:Date:MIME-Version:From:To:Cc:References:Subject:
+         In-Reply-To:Content-Type;
+        b=qEqhD11EYIs79ZQRdxE6Lwj8eAVG9NczO4fsBZv3c2jDGmZmVBrVNYp0rc/VY7WZN
+         yor/FetfLBty+iK3j306An8FUXj9Svhstlsxp7mxm4WZ5qAereDDDcjrqzY6iLCX0f
+         gQvBH7GDLRBYXJ0Eb463Wt6sTMPMV7r3WdomCeo59P/SI7Flar5e5n+xf9f5CoA7R1
+         O2Y4XOIy6fCe2CtrMeP0Uxz9MtIVn+igGK4sHyHMokV2qGDztFCgQMmrNc+o+mpUa5
+         mnEcHX57eCE2BsmJfmQZN5GSbwthXfPSKwmnSSGs0vY65AZ32WvC2SJ5EtUGDVmteW
+         yt9IPjPWNddjA==
+Message-ID: <55ed233c-86a6-4094-0512-d50be9d1d380@canonical.com>
+Date:   Tue, 28 Feb 2023 11:50:51 -0500
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.7.1
+Content-Language: en-US
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     williams@redhat.com, bigeasy@linutronix.de, rostedt@goodmis.org,
+        tglx@linutronix.de
+References: <fe5974c9-3ed0-938a-f43c-4d301f603e92@canonical.com>
+ <be47fd9c-028a-0b6b-9c7f-877f01e73960@canonical.com>
+ <dea6d0e9-7814-4b8c-44dd-4804cbe48227@canonical.com>
+ <c4fe632e-568b-7c60-c6d2-99e0148680ad@canonical.com>
+Subject: Re: System Hang With 5.15.79-rt54 Patch Set
+In-Reply-To: <c4fe632e-568b-7c60-c6d2-99e0148680ad@canonical.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
-
-I'm pleased to announce the 5.15.96-rt61 stable release.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.15-rt
-  Head SHA1: e73a1e3f64b939150cafb50f528c3b991d7f1c25
-
-Or to build 5.15.96-rt61 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.96.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.96-rt61.patch.xz
 
 
-Enjoy!
-Clark
+On 1/18/23 13:52, Joseph Salisbury wrote:
+>
+>
+> On 1/4/23 15:47, Joseph Salisbury wrote:
+>>
+>>
+>> On 12/15/22 18:39, Joseph Salisbury wrote:
+>>>
+>>>
+>>> On 12/15/22 13:39, Joseph Salisbury wrote:
+>>>> Hello,
+>>>>
+>>>> A bug has been reported[0] against a linux-5.15.y based Ubuntu 
+>>>> kernel that has the 5.15.79-rt54 real-time patch set applied.
+>>>>
+>>>> This bug is causing a system hang when running disk tests with the 
+>>>> stress-ng[1] test suite.  A 'hung task' call trace is being 
+>>>> generated[2] just prior to the system hanging.  It appears the hang 
+>>>> is happening during a call to schedule.
+>>>>
+>>>> To see if this was a regression, I also tested prior real-time 
+>>>> patch sets, going as far back to rt38 and all versions exhibit this 
+>>>> bug. I will test back further to see if this is in fact a 
+>>>> regression and a kernel bisect can be done.  I also confirmed the 
+>>>> same kernel without the rt54 patch set applied does not exhibit 
+>>>> this bug.
+>>>>
+>>>> I will continue to debug this issue, but I wanted to send this 
+>>>> message upstream in case anyone else runs into it.  Any specific 
+>>>> tests, tracing or debugging steps would be greatly appreciated. 
+>>>> Otherwise, I'll report back to this thread with any findings.
+>>>>
+>>>> Thanks,
+>>>>
+>>>> Joe
+>>>>
+>>>>
+>>>> [0] https://bugs.launchpad.net/ubuntu-realtime/+bug/1998536
+>>>> [1] https://github.com/ColinIanKing/stress-ng
+>>>> [2] https://launchpadlibrarian.net/637058129/dmesg_dl110_rt_kernel.txt
+>>>
+>>> I should have also mentioned, I will also test the latest available 
+>>> patch set (6.1-rc7-rt5) to see if it also exhibits the bug.
+>>>
+>>>
+>> This bug/system hang does still happen with the v6.1-rc7 kernel and 
+>> the rt5 real-time patch.  I also confirmed the bug/system hang does 
+>> not happen with just v6.1-rc7 without the real-time patch applied.
+>>
+>> I will bisect through the rt patches to see if I can find the 
+>> specific patch(s) that causes the bug.  I will use the v5.15 kernel 
+>> and it's rt patches, since v5.15 has the patches broken out 
+>> individually, and they can be applied one at a time with 'git am'.
+>>
+>> I'll provide further updates during the bisect.
+>>
+>> Thanks,
+>>
+>> Joe
+>>
+>>
+>
+> I've been bisecting this bug down. It appears the bug has existed back 
+> to v5.15-rc3-rt5. I'll test older versions, but it may be that this 
+> bug has always existed with PREEMPT_RT enabled.
+>
+> I will test some of the real-time patch releases prior to v5.15 to 
+> confirm this issue has always existed or not.
+>
+> This is the current message I see on the console when the system locks 
+> up:
+>
+> [ 4363.605933] INFO: task journal-offline:23780 blocked for more than 
+> 622 seconds.
+> [ 4363.605936]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.605938] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606051] INFO: task stress-ng:23298 blocked for more than 622 
+> seconds.
+> [ 4363.606052]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606053] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606121] INFO: task stress-ng:23299 blocked for more than 622 
+> seconds.
+> [ 4363.606122]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606122] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606183] INFO: task stress-ng:23300 blocked for more than 622 
+> seconds.
+> [ 4363.606184]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606184] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606235] INFO: task stress-ng:23302 blocked for more than 622 
+> seconds.
+> [ 4363.606236]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606237] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606290] INFO: task stress-ng:23305 blocked for more than 622 
+> seconds.
+> [ 4363.606291]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606291] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606346] INFO: task stress-ng:23309 blocked for more than 622 
+> seconds.
+> [ 4363.606347]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606347] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606393] INFO: task stress-ng:23314 blocked for more than 622 
+> seconds.
+> [ 4363.606394]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606394] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606440] INFO: task stress-ng:23319 blocked for more than 622 
+> seconds.
+> [ 4363.606440]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606441] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4363.606484] INFO: task stress-ng:23323 blocked for more than 622 
+> seconds.
+> [ 4363.606485]       Not tainted 5.15.85-051585-realtime #202301172024
+> [ 4363.606486] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
+> disables this message.
+> [ 4708.553134] systemd[1]: Failed to start Journal Service.
+> [ 4770.052389] systemd[1]: systemd-timesyncd.service: Watchdog timeout 
+> (limit 3min)!
+>
+>
+> I'll add more details to this thread as I continue.
+>
+>
+>
+>
 
-Changes from v5.15.95-rt60:
----
+A bisect has not provided additional detail. This issue does not appear 
+to be a regression and appears to have always existed.
 
-Alessandro Astone (2):
-      binder: Address corner cases in deferred copy and fixup
-      binder: Gracefully handle BINDER_TYPE_FDA objects with num_fds=0
+I was able to get additional debug info, by enabling 
+CONFIG_DEBUG_PREEMPT, CONFIG_PROVE_LOCKING and CONFIG_JBD2_DEBUG. 
+Enabling these configs shows a circular locking issue[0] and a call 
+trace[1].
 
-Ankit Nautiyal (1):
-      drm/edid: Fix minimum bpc supported with DSC1.2 for HDMI sink
+I will analyze this data for the next steps.  Any other suggestions 
+would be greatly appreciated.
 
-Arnd Bergmann (1):
-      binder: fix pointer cast warning
+Thanks,
 
-Bitterblue Smith (1):
-      wifi: rtl8xxxu: gen2: Turn on the rate control
+Joe
 
-Christophe Leroy (1):
-      powerpc: use generic version of arch_is_kernel_initmem_freed()
+[0] https://launchpadlibrarian.net/653810449/locking_issue.txt
+[1] https://launchpadlibrarian.net/653810490/call_trace.txt
 
-Clark Williams (2):
-      Merge tag 'v5.15.96' into v5.15-rt
-      'Linux 5.15.96-rt61'
 
-Dave Hansen (1):
-      uaccess: Add speculation barrier to copy_from_user()
-
-Greg Kroah-Hartman (1):
-      Linux 5.15.96
-
-Jason A. Donenfeld (1):
-      random: always mix cycle counter in add_latent_entropy()
-
-Jim Mattson (1):
-      KVM: VMX: Execute IBPB on emulated VM-exit when guest has IBRS
-
-Kees Cook (1):
-      ext4: Fix function prototype mismatch for ext4_feat_ktype
-
-Linus Torvalds (1):
-      bpf: add missing header file include
-
-Lucas Stach (1):
-      drm/etnaviv: don't truncate physical page address
-
-Lukas Wunner (1):
-      wifi: mwifiex: Add missing compatible string for SD8787
-
-Marc Kleine-Budde (1):
-      can: kvaser_usb: hydra: help gcc-13 to figure out cmd_len
-
-Michael Ellerman (4):
-      powerpc/vmlinux.lds: Ensure STRICT_ALIGN_SIZE is at least page aligned
-      powerpc/vmlinux.lds: Add an explicit symbol for the SRWX boundary
-      powerpc/64s/radix: Fix crash with unaligned relocated kernel
-      powerpc/64s/radix: Fix RWX mapping with relocated kernel
-
-Nathan Chancellor (4):
-      kbuild: Add CONFIG_PAHOLE_VERSION
-      scripts/pahole-flags.sh: Use pahole-version.sh
-      lib/Kconfig.debug: Use CONFIG_PAHOLE_VERSION
-      lib/Kconfig.debug: Allow BTF + DWARF5 with pahole 1.21+
-
-Paul Moore (1):
-      audit: update the mailing list in MAINTAINERS
-
-Rahul Tanwar (5):
-      clk: mxl: Switch from direct readl/writel based IO to regmap based IO
-      clk: mxl: Remove redundant spinlocks
-      clk: mxl: Add option to override gate clks
-      clk: mxl: Fix a clk entry by adding relevant flags
-      clk: mxl: syscon_node_to_regmap() returns error pointers
-
-Sean Anderson (2):
-      powerpc: dts: t208x: Mark MAC1 and MAC2 as 10G
-      powerpc: dts: t208x: Disable 10G on MAC1 and MAC2
-
-Sean Christopherson (2):
-      KVM: x86: Fail emulation during EMULTYPE_SKIP on any exception
-      KVM: SVM: Skip WRMSR fastpath on VM-Exit if next RIP isn't valid
-
-Todd Kjos (2):
-      binder: read pre-translated fds from sender buffer
-      binder: defer copies of pre-patched txn data
-
-Vladimir Oltean (1):
-      Revert "net/sched: taprio: make qdisc_leaf() see the per-netdev-queue pfifo child qdiscs"
-
-Zhang Wensheng (1):
-      nbd: fix possible overflow on 'first_minor' in nbd_dev_add()
-
-Zheng Wang (1):
-      drm/i915/gvt: fix double free bug in split_2MB_gtt_entry
----
-MAINTAINERS                                        |   3 +-
- Makefile                                           |   2 +-
- arch/powerpc/boot/dts/fsl/qoriq-fman3-0-10g-2.dtsi |  44 +++
- arch/powerpc/boot/dts/fsl/qoriq-fman3-0-10g-3.dtsi |  44 +++
- arch/powerpc/boot/dts/fsl/t2081si-post.dtsi        |  20 +-
- arch/powerpc/include/asm/sections.h                |  14 +-
- arch/powerpc/kernel/vmlinux.lds.S                  |  14 +-
- arch/powerpc/mm/book3s32/mmu.c                     |   2 +-
- arch/powerpc/mm/book3s64/radix_pgtable.c           |  28 +-
- arch/x86/kvm/svm/svm.c                             |  10 +-
- arch/x86/kvm/vmx/nested.c                          |  11 +
- arch/x86/kvm/vmx/vmx.c                             |   6 +-
- arch/x86/kvm/x86.c                                 |   4 +-
- drivers/android/binder.c                           | 343 +++++++++++++++++++--
- drivers/block/nbd.c                                |  23 +-
- drivers/clk/x86/Kconfig                            |   5 +-
- drivers/clk/x86/clk-cgu-pll.c                      |  23 +-
- drivers/clk/x86/clk-cgu.c                          | 106 ++-----
- drivers/clk/x86/clk-cgu.h                          |  46 +--
- drivers/clk/x86/clk-lgm.c                          |  18 +-
- drivers/gpu/drm/drm_edid.c                         |   3 +-
- drivers/gpu/drm/etnaviv/etnaviv_mmu.c              |   4 +-
- drivers/gpu/drm/i915/gvt/gtt.c                     |  17 +-
- drivers/net/can/usb/kvaser_usb/kvaser_usb_hydra.c  |  33 +-
- drivers/net/wireless/marvell/mwifiex/sdio.c        |   1 +
- .../net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c  |   8 +-
- fs/ext4/sysfs.c                                    |   7 +-
- include/linux/nospec.h                             |   4 +
- include/linux/random.h                             |   6 +-
- init/Kconfig                                       |   4 +
- kernel/bpf/core.c                                  |   3 +-
- lib/Kconfig.debug                                  |   4 +-
- lib/usercopy.c                                     |   7 +
- localversion-rt                                    |   2 +-
- net/sched/sch_taprio.c                             |   8 +-
- scripts/pahole-flags.sh                            |   2 +-
- scripts/pahole-version.sh                          |  13 +
- 37 files changed, 661 insertions(+), 231 deletions(-)
----
