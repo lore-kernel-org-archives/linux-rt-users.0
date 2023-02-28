@@ -2,210 +2,133 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C3D6C6FA8E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 17:00:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E485EC64EC7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 22:50:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229699AbjB1RAL (ORCPT
+        id S229702AbjB1WuG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Feb 2023 12:00:11 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58228 "EHLO
+        Tue, 28 Feb 2023 17:50:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42996 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229668AbjB1RAI (ORCPT
+        with ESMTP id S229566AbjB1WuF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Feb 2023 12:00:08 -0500
-Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E3616199C
-        for <linux-rt-users@vger.kernel.org>; Tue, 28 Feb 2023 09:00:03 -0800 (PST)
-Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
-        (No client certificate requested)
-        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 4A3263F303;
-        Tue, 28 Feb 2023 16:50:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-        s=20210705; t=1677603052;
-        bh=zBKwsOsmMJIBHlgqGjwQgAoVAkcTWBAIg/Frv8ZwMbg=;
-        h=Message-ID:Date:MIME-Version:From:To:Cc:References:Subject:
-         In-Reply-To:Content-Type;
-        b=qEqhD11EYIs79ZQRdxE6Lwj8eAVG9NczO4fsBZv3c2jDGmZmVBrVNYp0rc/VY7WZN
-         yor/FetfLBty+iK3j306An8FUXj9Svhstlsxp7mxm4WZ5qAereDDDcjrqzY6iLCX0f
-         gQvBH7GDLRBYXJ0Eb463Wt6sTMPMV7r3WdomCeo59P/SI7Flar5e5n+xf9f5CoA7R1
-         O2Y4XOIy6fCe2CtrMeP0Uxz9MtIVn+igGK4sHyHMokV2qGDztFCgQMmrNc+o+mpUa5
-         mnEcHX57eCE2BsmJfmQZN5GSbwthXfPSKwmnSSGs0vY65AZ32WvC2SJ5EtUGDVmteW
-         yt9IPjPWNddjA==
-Message-ID: <55ed233c-86a6-4094-0512-d50be9d1d380@canonical.com>
-Date:   Tue, 28 Feb 2023 11:50:51 -0500
+        Tue, 28 Feb 2023 17:50:05 -0500
+Received: from mail-pj1-x102d.google.com (mail-pj1-x102d.google.com [IPv6:2607:f8b0:4864:20::102d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0B8C360BD;
+        Tue, 28 Feb 2023 14:49:48 -0800 (PST)
+Received: by mail-pj1-x102d.google.com with SMTP id qa18-20020a17090b4fd200b0023750b675f5so15251580pjb.3;
+        Tue, 28 Feb 2023 14:49:48 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112; t=1677624588;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=g+Zwi5NkQVNAd3Ci7xkK2t0DH7WVF3Tcbrz6/lTqUQc=;
+        b=PIJGqEMH5yJKExdMBNeASHbvErvT9M8sHs0vvIKON96f1JEb72jtE3OvRye+bmAv+G
+         t3n7Woh97W2teU7RAf+4O0rFLb1P5jRBHZFMnQegX4S4M4KYEaKAIHuN2N8EOp37LJfK
+         YyiDYd8C56owyFC4jpxXWEyimSHP4t63Q81ONF21gT+EvldlrGMDa4ZK2gafcj1vJv2e
+         I3SYUzMaJpamZdzlFU3mAKJE5bmZGZsLvMk7av0Ubl1wQjs+z4qc7Pu+rIuoBv0+eAki
+         MuauQY4XogDMe7sS8ogKAgoJjdwIiqENBcxZqDmyaV9JPj1raeyllEj0Va1CFL1ZrGSv
+         LcHg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112; t=1677624588;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=g+Zwi5NkQVNAd3Ci7xkK2t0DH7WVF3Tcbrz6/lTqUQc=;
+        b=dYwPyi/1AQeMsIAwvHB36CZBQKCuTTorqxSl2eIkT4qCwn7ZYAyqQfOiJNhLzAnwSH
+         EuAPv9B7s2ZHTjpQKeZdDRM2VDW7lOiWehQTnO8261ZJ1qow16ObobYESmzt0SzgCB6+
+         MmSlh9tUBfCR0C0WdUVdaE3Q0ZzJe1yc5AYEq/81RG9uKIG0vy4Ef8UEvsZiztI7WWQ3
+         UNywcUXCNVy9t8u3hoocyuGh2BRjS3+umRV7NtaY5P9E88MWgIl7I3fQu9j8lndijVH/
+         0ej28L9bc8DAfXrkUEihUOVvSXXv8gEdECvdtOWUuEsV1fNvBjdNrMpQ8+VSRitTMIWW
+         koaA==
+X-Gm-Message-State: AO0yUKVeLymwLhC77ganoW8ZFdLuoSMuvMjmVst1PN+BcTxvU7i4brNb
+        u4d6jnj6EKmkeewoCQ+VqswDrqeH24k=
+X-Google-Smtp-Source: AK7set/QFb/pyopNhpRDre6NapurODnHUQ3B1m/bqmjC+Ng5sck2PGs5G1PBU7hrmQDUEL1FdU+JNQ==
+X-Received: by 2002:a05:6a21:6da1:b0:cc:c69b:f7e5 with SMTP id wl33-20020a056a216da100b000ccc69bf7e5mr5558797pzb.9.1677624588092;
+        Tue, 28 Feb 2023 14:49:48 -0800 (PST)
+Received: from blamoreauxMMD6M.vmware.com.com ([2601:600:8380:7f70:5855:8603:f7c2:a87f])
+        by smtp.gmail.com with ESMTPSA id d137-20020a63368f000000b00478c48cf73csm6130915pga.82.2023.02.28.14.49.45
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 28 Feb 2023 14:49:47 -0800 (PST)
+From:   "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>
+To:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc:     blamoreaux@vmware.com, frederic.martinsons@gmail.com,
+        srivatsa@csail.mit.edu, vsirnapalli@vmware.com,
+        amakhalov@vmware.com, keerthanak@vmware.com, ankitja@vmware.com,
+        bordoloih@vmware.com, srivatsab@vmware.com,
+        "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>,
+        Daniel Wagner <wagi@monom.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tejun Heo <tj@kernel.org>
+Subject: [PATCH 4.19-rt] workqueue: Fix deadlock due to recursive locking of pool->lock
+Date:   Tue, 28 Feb 2023 14:49:38 -0800
+Message-Id: <20230228224938.88035-1-brennanlamoreaux@gmail.com>
+X-Mailer: git-send-email 2.32.1 (Apple Git-133)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.7.1
-Content-Language: en-US
-From:   Joseph Salisbury <joseph.salisbury@canonical.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     williams@redhat.com, bigeasy@linutronix.de, rostedt@goodmis.org,
-        tglx@linutronix.de
-References: <fe5974c9-3ed0-938a-f43c-4d301f603e92@canonical.com>
- <be47fd9c-028a-0b6b-9c7f-877f01e73960@canonical.com>
- <dea6d0e9-7814-4b8c-44dd-4804cbe48227@canonical.com>
- <c4fe632e-568b-7c60-c6d2-99e0148680ad@canonical.com>
-Subject: Re: System Hang With 5.15.79-rt54 Patch Set
-In-Reply-To: <c4fe632e-568b-7c60-c6d2-99e0148680ad@canonical.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Upstream commit d8bb65ab70f7 ("workqueue: Use rcuwait for wq_manager_wait")
+replaced the waitqueue with rcuwait in the workqueue code. This change
+involved removing the acquisition of pool->lock in put_unbound_pool(),
+as it also adds the function wq_manager_inactive() which acquires this same
+lock and is called one line later as a parameter to rcu_wait_event().
 
+However, the backport of this commit in the PREEMPT_RT patchset
+4.19.255-rt114 (patch 347) missed the removal of the acquisition of
+pool->lock in put_unbound_pool(). This leads to a deadlock due to
+recursive locking of pool->lock, as shown below in lockdep:
 
-On 1/18/23 13:52, Joseph Salisbury wrote:
->
->
-> On 1/4/23 15:47, Joseph Salisbury wrote:
->>
->>
->> On 12/15/22 18:39, Joseph Salisbury wrote:
->>>
->>>
->>> On 12/15/22 13:39, Joseph Salisbury wrote:
->>>> Hello,
->>>>
->>>> A bug has been reported[0] against a linux-5.15.y based Ubuntu 
->>>> kernel that has the 5.15.79-rt54 real-time patch set applied.
->>>>
->>>> This bug is causing a system hang when running disk tests with the 
->>>> stress-ng[1] test suite.  A 'hung task' call trace is being 
->>>> generated[2] just prior to the system hanging.  It appears the hang 
->>>> is happening during a call to schedule.
->>>>
->>>> To see if this was a regression, I also tested prior real-time 
->>>> patch sets, going as far back to rt38 and all versions exhibit this 
->>>> bug. I will test back further to see if this is in fact a 
->>>> regression and a kernel bisect can be done.  I also confirmed the 
->>>> same kernel without the rt54 patch set applied does not exhibit 
->>>> this bug.
->>>>
->>>> I will continue to debug this issue, but I wanted to send this 
->>>> message upstream in case anyone else runs into it.  Any specific 
->>>> tests, tracing or debugging steps would be greatly appreciated. 
->>>> Otherwise, I'll report back to this thread with any findings.
->>>>
->>>> Thanks,
->>>>
->>>> Joe
->>>>
->>>>
->>>> [0] https://bugs.launchpad.net/ubuntu-realtime/+bug/1998536
->>>> [1] https://github.com/ColinIanKing/stress-ng
->>>> [2] https://launchpadlibrarian.net/637058129/dmesg_dl110_rt_kernel.txt
->>>
->>> I should have also mentioned, I will also test the latest available 
->>> patch set (6.1-rc7-rt5) to see if it also exhibits the bug.
->>>
->>>
->> This bug/system hang does still happen with the v6.1-rc7 kernel and 
->> the rt5 real-time patch.  I also confirmed the bug/system hang does 
->> not happen with just v6.1-rc7 without the real-time patch applied.
->>
->> I will bisect through the rt patches to see if I can find the 
->> specific patch(s) that causes the bug.  I will use the v5.15 kernel 
->> and it's rt patches, since v5.15 has the patches broken out 
->> individually, and they can be applied one at a time with 'git am'.
->>
->> I'll provide further updates during the bisect.
->>
->> Thanks,
->>
->> Joe
->>
->>
->
-> I've been bisecting this bug down. It appears the bug has existed back 
-> to v5.15-rc3-rt5. I'll test older versions, but it may be that this 
-> bug has always existed with PREEMPT_RT enabled.
->
-> I will test some of the real-time patch releases prior to v5.15 to 
-> confirm this issue has always existed or not.
->
-> This is the current message I see on the console when the system locks 
-> up:
->
-> [ 4363.605933] INFO: task journal-offline:23780 blocked for more than 
-> 622 seconds.
-> [ 4363.605936]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.605938] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606051] INFO: task stress-ng:23298 blocked for more than 622 
-> seconds.
-> [ 4363.606052]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606053] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606121] INFO: task stress-ng:23299 blocked for more than 622 
-> seconds.
-> [ 4363.606122]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606122] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606183] INFO: task stress-ng:23300 blocked for more than 622 
-> seconds.
-> [ 4363.606184]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606184] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606235] INFO: task stress-ng:23302 blocked for more than 622 
-> seconds.
-> [ 4363.606236]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606237] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606290] INFO: task stress-ng:23305 blocked for more than 622 
-> seconds.
-> [ 4363.606291]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606291] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606346] INFO: task stress-ng:23309 blocked for more than 622 
-> seconds.
-> [ 4363.606347]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606347] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606393] INFO: task stress-ng:23314 blocked for more than 622 
-> seconds.
-> [ 4363.606394]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606394] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606440] INFO: task stress-ng:23319 blocked for more than 622 
-> seconds.
-> [ 4363.606440]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606441] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4363.606484] INFO: task stress-ng:23323 blocked for more than 622 
-> seconds.
-> [ 4363.606485]       Not tainted 5.15.85-051585-realtime #202301172024
-> [ 4363.606486] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" 
-> disables this message.
-> [ 4708.553134] systemd[1]: Failed to start Journal Service.
-> [ 4770.052389] systemd[1]: systemd-timesyncd.service: Watchdog timeout 
-> (limit 3min)!
->
->
-> I'll add more details to this thread as I continue.
->
->
->
->
+[  252.083713] WARNING: possible recursive locking detected
+[  252.083718] 4.19.269-3.ph3-rt #1-photon Not tainted
+[  252.083721] --------------------------------------------
+[  252.083733] kworker/2:0/33 is trying to acquire lock:
+[  252.083747] 000000000b7b1ceb (&pool->lock/1){....}, at:
+put_unbound_pool+0x10d/0x260
 
-A bisect has not provided additional detail. This issue does not appear 
-to be a regression and appears to have always existed.
+[  252.083857]
+               but task is already holding lock:
+[  252.083860] 000000000b7b1ceb (&pool->lock/1){....}, at:
+put_unbound_pool+0xbd/0x260
 
-I was able to get additional debug info, by enabling 
-CONFIG_DEBUG_PREEMPT, CONFIG_PROVE_LOCKING and CONFIG_JBD2_DEBUG. 
-Enabling these configs shows a circular locking issue[0] and a call 
-trace[1].
+[  252.083876]
+               other info that might help us debug this:
+[  252.083897]  Possible unsafe locking scenario:
 
-I will analyze this data for the next steps.  Any other suggestions 
-would be greatly appreciated.
+[  252.083900]        CPU0
+[  252.083903]        ----
+[  252.083904]   lock(&pool->lock/1);
+[  252.083911]   lock(&pool->lock/1);
+[  252.083919]
+                *** DEADLOCK ***
 
-Thanks,
+[  252.083921]  May be due to missing lock nesting notation
 
-Joe
+Fix this deadlock by removing the pool->lock acquisition in
+put_unbound_pool().
 
-[0] https://launchpadlibrarian.net/653810449/locking_issue.txt
-[1] https://launchpadlibrarian.net/653810490/call_trace.txt
+Signed-off-by: Brennan Lamoreaux (VMware) <brennanlamoreaux@gmail.com>
+Cc: Daniel Wagner <wagi@monom.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Tejun Heo <tj@kernel.org>
+---
+ kernel/workqueue.c | 1 -
+ 1 file changed, 1 deletion(-)
 
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index a9f3cc02bdc1..55ebdd56a5de 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -3394,7 +3394,6 @@ static void put_unbound_pool(struct worker_pool *pool)
+ 	 * Because of how wq_manager_inactive() works, we will hold the
+ 	 * spinlock after a successful wait.
+ 	 */
+-	raw_spin_lock_irq(&pool->lock);
+ 	rcuwait_wait_event(&manager_wait, wq_manager_inactive(pool),
+ 			   TASK_UNINTERRUPTIBLE);
+ 	pool->flags |= POOL_MANAGER_ACTIVE;
+-- 
+2.35.6
 
