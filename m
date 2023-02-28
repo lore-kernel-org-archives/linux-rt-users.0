@@ -2,133 +2,71 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E485EC64EC7
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 22:50:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 04169C64EC7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 23:01:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229702AbjB1WuG (ORCPT
+        id S229525AbjB1XBe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Feb 2023 17:50:06 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42996 "EHLO
+        Tue, 28 Feb 2023 18:01:34 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55924 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229566AbjB1WuF (ORCPT
+        with ESMTP id S229509AbjB1XBd (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Feb 2023 17:50:05 -0500
-Received: from mail-pj1-x102d.google.com (mail-pj1-x102d.google.com [IPv6:2607:f8b0:4864:20::102d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0B8C360BD;
-        Tue, 28 Feb 2023 14:49:48 -0800 (PST)
-Received: by mail-pj1-x102d.google.com with SMTP id qa18-20020a17090b4fd200b0023750b675f5so15251580pjb.3;
-        Tue, 28 Feb 2023 14:49:48 -0800 (PST)
+        Tue, 28 Feb 2023 18:01:33 -0500
+Received: from mail-pf1-x433.google.com (mail-pf1-x433.google.com [IPv6:2607:f8b0:4864:20::433])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2E9D037739
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Feb 2023 15:00:59 -0800 (PST)
+Received: by mail-pf1-x433.google.com with SMTP id c10so6164041pfv.13
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Feb 2023 15:00:59 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112; t=1677624588;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=g+Zwi5NkQVNAd3Ci7xkK2t0DH7WVF3Tcbrz6/lTqUQc=;
-        b=PIJGqEMH5yJKExdMBNeASHbvErvT9M8sHs0vvIKON96f1JEb72jtE3OvRye+bmAv+G
-         t3n7Woh97W2teU7RAf+4O0rFLb1P5jRBHZFMnQegX4S4M4KYEaKAIHuN2N8EOp37LJfK
-         YyiDYd8C56owyFC4jpxXWEyimSHP4t63Q81ONF21gT+EvldlrGMDa4ZK2gafcj1vJv2e
-         I3SYUzMaJpamZdzlFU3mAKJE5bmZGZsLvMk7av0Ubl1wQjs+z4qc7Pu+rIuoBv0+eAki
-         MuauQY4XogDMe7sS8ogKAgoJjdwIiqENBcxZqDmyaV9JPj1raeyllEj0Va1CFL1ZrGSv
-         LcHg==
+        d=gmail.com; s=20210112; t=1677625235;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=/SFaMye/JWCScCwRqF8X9de4bUvOsGh8nKj83uk6VhQ=;
+        b=Djh/Yuwra46PPpnLrvUZjK1md2FxaIrJba8DO1qn90yXkq3zoJC5XLE4CSeXdJtbn5
+         xBTW5hraldp8IswrKYpSV4Sv/DbczoQob5lzBug+VicJepbhY/0yP2Sv7z5uhulcjAWp
+         Q9RvMvqoJpu2CnUbV3ASFj5SrS7xsNbTOAGJsjjanqPv+WjXeC9oSebi6uiGqfW2xeHv
+         0rGAV3Nqw+7rBssRS5arxV2UZSZDYA80yoAb3RUX9SMgIVu/aa18xyHSBf2e2OQCwvpT
+         2LdbGVGqYzzQVDDr0lwJ9d+uPQfcjFoKdGwHwE7bs5pAxXgCfPfakNh/M6uioU6NVZo3
+         b+sw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112; t=1677624588;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=g+Zwi5NkQVNAd3Ci7xkK2t0DH7WVF3Tcbrz6/lTqUQc=;
-        b=dYwPyi/1AQeMsIAwvHB36CZBQKCuTTorqxSl2eIkT4qCwn7ZYAyqQfOiJNhLzAnwSH
-         EuAPv9B7s2ZHTjpQKeZdDRM2VDW7lOiWehQTnO8261ZJ1qow16ObobYESmzt0SzgCB6+
-         MmSlh9tUBfCR0C0WdUVdaE3Q0ZzJe1yc5AYEq/81RG9uKIG0vy4Ef8UEvsZiztI7WWQ3
-         UNywcUXCNVy9t8u3hoocyuGh2BRjS3+umRV7NtaY5P9E88MWgIl7I3fQu9j8lndijVH/
-         0ej28L9bc8DAfXrkUEihUOVvSXXv8gEdECvdtOWUuEsV1fNvBjdNrMpQ8+VSRitTMIWW
-         koaA==
-X-Gm-Message-State: AO0yUKVeLymwLhC77ganoW8ZFdLuoSMuvMjmVst1PN+BcTxvU7i4brNb
-        u4d6jnj6EKmkeewoCQ+VqswDrqeH24k=
-X-Google-Smtp-Source: AK7set/QFb/pyopNhpRDre6NapurODnHUQ3B1m/bqmjC+Ng5sck2PGs5G1PBU7hrmQDUEL1FdU+JNQ==
-X-Received: by 2002:a05:6a21:6da1:b0:cc:c69b:f7e5 with SMTP id wl33-20020a056a216da100b000ccc69bf7e5mr5558797pzb.9.1677624588092;
-        Tue, 28 Feb 2023 14:49:48 -0800 (PST)
+        d=1e100.net; s=20210112; t=1677625235;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=/SFaMye/JWCScCwRqF8X9de4bUvOsGh8nKj83uk6VhQ=;
+        b=2/Ab4GFPR8sVZ1ppFq0TnOqh9xP5fjwiZtZz9poqz6FAYYe3qKs1yf4ZY022gt9csu
+         d6f73zULZo01vOXWJFpzbN2QrBfg1UP40V5pdZhInZ2UrTCthpKdmnyGProCGaRp66jG
+         pJ8+MgwmPnNbIboIdmFG1KvmWnDmG0fIQwp9ltjnzkSSOqBMa+sKbx6WacKfNeJKC1pF
+         ywcH7/ow848o5xviTc7EUR6rtDwbofU8GtR6pQAezbmNWLRpSUEREfFLklUN/El7tD72
+         2gMoj0wQSbvmB6ifCckWefpta/gZjlCluUZW1nGPyo66r3c1wuQTGcYvP4SAnqY62kWE
+         mmcA==
+X-Gm-Message-State: AO0yUKX+027S7SFpwfeTldtLedsGFQg7XezkbVBnpeaLQlo9d1w45v5N
+        W+0pJH5PymcGBt4oXGpSTP8=
+X-Google-Smtp-Source: AK7set9Z23q7ykP8mSP9mcYDouWUXXfghixahsi3EAwVUujEj0iHEuxmJvRyXeQzqsoq+BmyDHaJyQ==
+X-Received: by 2002:aa7:96d0:0:b0:5e5:682:deb7 with SMTP id h16-20020aa796d0000000b005e50682deb7mr3872007pfq.34.1677625235473;
+        Tue, 28 Feb 2023 15:00:35 -0800 (PST)
 Received: from blamoreauxMMD6M.vmware.com.com ([2601:600:8380:7f70:5855:8603:f7c2:a87f])
-        by smtp.gmail.com with ESMTPSA id d137-20020a63368f000000b00478c48cf73csm6130915pga.82.2023.02.28.14.49.45
+        by smtp.gmail.com with ESMTPSA id e16-20020aa78c50000000b005a817f72c21sm6578052pfd.131.2023.02.28.15.00.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Feb 2023 14:49:47 -0800 (PST)
+        Tue, 28 Feb 2023 15:00:35 -0800 (PST)
 From:   "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>
-To:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc:     blamoreaux@vmware.com, frederic.martinsons@gmail.com,
-        srivatsa@csail.mit.edu, vsirnapalli@vmware.com,
-        amakhalov@vmware.com, keerthanak@vmware.com, ankitja@vmware.com,
-        bordoloih@vmware.com, srivatsab@vmware.com,
-        "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tejun Heo <tj@kernel.org>
-Subject: [PATCH 4.19-rt] workqueue: Fix deadlock due to recursive locking of pool->lock
-Date:   Tue, 28 Feb 2023 14:49:38 -0800
-Message-Id: <20230228224938.88035-1-brennanlamoreaux@gmail.com>
+To:     bigeasy@linutronix.de
+Cc:     frederic.martinsons@gmail.com, linux-rt-users@vger.kernel.org
+Subject: Re: Kernel lock during cryptsetup luksClose
+Date:   Tue, 28 Feb 2023 15:00:09 -0800
+Message-Id: <20230228230009.89787-1-brennanlamoreaux@gmail.com>
 X-Mailer: git-send-email 2.32.1 (Apple Git-133)
+In-Reply-To: <Y/yrHe4OIYcWFbNO@linutronix.de>
+References: <Y/yrHe4OIYcWFbNO@linutronix.de>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Upstream commit d8bb65ab70f7 ("workqueue: Use rcuwait for wq_manager_wait")
-replaced the waitqueue with rcuwait in the workqueue code. This change
-involved removing the acquisition of pool->lock in put_unbound_pool(),
-as it also adds the function wq_manager_inactive() which acquires this same
-lock and is called one line later as a parameter to rcu_wait_event().
+I just posted a fix for a workqueue related deadlock in put_unbound_pool in the 4.19-rt kernel here:
+https://lore.kernel.org/linux-rt-users/20230228224938.88035-1-brennanlamoreaux@gmail.com
 
-However, the backport of this commit in the PREEMPT_RT patchset
-4.19.255-rt114 (patch 347) missed the removal of the acquisition of
-pool->lock in put_unbound_pool(). This leads to a deadlock due to
-recursive locking of pool->lock, as shown below in lockdep:
-
-[  252.083713] WARNING: possible recursive locking detected
-[  252.083718] 4.19.269-3.ph3-rt #1-photon Not tainted
-[  252.083721] --------------------------------------------
-[  252.083733] kworker/2:0/33 is trying to acquire lock:
-[  252.083747] 000000000b7b1ceb (&pool->lock/1){....}, at:
-put_unbound_pool+0x10d/0x260
-
-[  252.083857]
-               but task is already holding lock:
-[  252.083860] 000000000b7b1ceb (&pool->lock/1){....}, at:
-put_unbound_pool+0xbd/0x260
-
-[  252.083876]
-               other info that might help us debug this:
-[  252.083897]  Possible unsafe locking scenario:
-
-[  252.083900]        CPU0
-[  252.083903]        ----
-[  252.083904]   lock(&pool->lock/1);
-[  252.083911]   lock(&pool->lock/1);
-[  252.083919]
-                *** DEADLOCK ***
-
-[  252.083921]  May be due to missing lock nesting notation
-
-Fix this deadlock by removing the pool->lock acquisition in
-put_unbound_pool().
-
-Signed-off-by: Brennan Lamoreaux (VMware) <brennanlamoreaux@gmail.com>
-Cc: Daniel Wagner <wagi@monom.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Tejun Heo <tj@kernel.org>
----
- kernel/workqueue.c | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index a9f3cc02bdc1..55ebdd56a5de 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -3394,7 +3394,6 @@ static void put_unbound_pool(struct worker_pool *pool)
- 	 * Because of how wq_manager_inactive() works, we will hold the
- 	 * spinlock after a successful wait.
- 	 */
--	raw_spin_lock_irq(&pool->lock);
- 	rcuwait_wait_event(&manager_wait, wq_manager_inactive(pool),
- 			   TASK_UNINTERRUPTIBLE);
- 	pool->flags |= POOL_MANAGER_ACTIVE;
--- 
-2.35.6
-
+Can you give this a shot and see if it fixes your problem?
