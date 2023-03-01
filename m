@@ -2,118 +2,73 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C3861C64EC7
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Feb 2023 23:10:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EBAB2C64ED6
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Mar 2023 06:24:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229793AbjB1XKF (ORCPT
+        id S229565AbjCAGYo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Feb 2023 18:10:05 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35562 "EHLO
+        Wed, 1 Mar 2023 01:24:44 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53918 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229579AbjB1XKE (ORCPT
+        with ESMTP id S229437AbjCAGYn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Feb 2023 18:10:04 -0500
-X-Greylist: delayed 403 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 28 Feb 2023 15:10:02 PST
-Received: from outgoing2021.csail.mit.edu (outgoing2021.csail.mit.edu [128.30.2.78])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92CA7DBF8;
-        Tue, 28 Feb 2023 15:10:02 -0800 (PST)
-Received: from [128.177.82.146] (helo=srivatsab3MD6R.vmware.com)
-        by outgoing2021.csail.mit.edu with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        (Exim 4.95)
-        (envelope-from <srivatsa@csail.mit.edu>)
-        id 1pX8zx-0058Ry-Ep;
-        Tue, 28 Feb 2023 18:03:05 -0500
-Subject: Re: [PATCH 4.19-rt] workqueue: Fix deadlock due to recursive locking
- of pool->lock
-To:     "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc:     blamoreaux@vmware.com, frederic.martinsons@gmail.com,
-        vsirnapalli@vmware.com, amakhalov@vmware.com,
-        keerthanak@vmware.com, ankitja@vmware.com, bordoloih@vmware.com,
-        srivatsab@vmware.com, Daniel Wagner <wagi@monom.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tejun Heo <tj@kernel.org>
-References: <20230228224938.88035-1-brennanlamoreaux@gmail.com>
-From:   "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Message-ID: <36f64ecf-89cb-3314-35d6-589569d58133@csail.mit.edu>
-Date:   Tue, 28 Feb 2023 15:03:02 -0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
- Gecko/20100101 Thunderbird/78.12.0
+        Wed, 1 Mar 2023 01:24:43 -0500
+Received: from mail-lf1-x129.google.com (mail-lf1-x129.google.com [IPv6:2a00:1450:4864:20::129])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 78A3DEC72
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Feb 2023 22:24:42 -0800 (PST)
+Received: by mail-lf1-x129.google.com with SMTP id s22so16257778lfi.9
+        for <linux-rt-users@vger.kernel.org>; Tue, 28 Feb 2023 22:24:42 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112; t=1677651881;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=oi0bG15H/b3BpOAboVLRVxGrsqqWKyh3K8hsh1fVLGc=;
+        b=lsmzwaCkDtafTeaqlsf0P5xiOHHEU4ftkvl+SB446M7P/XA6AE5rv0r9uqGSdg9iCw
+         Za10BCNMEsuJX1IEnS3KnVOcAlaDn3wQ60hR5/oiuDSlEF1ki2gAAZcO/k80hEikGkfl
+         mz2ol3BmZhjBQLKBYRGFL3ozN1IRdjyUQ8ZzvvMXytIcP+5EMIEvAsQakdH/PFXe/mkh
+         VkAGpvx88G01VBgcC2b0ZXOUcZ/rtPongxF3S2aDGGOBZff5TUiQhprQWFUSjHdzCJkY
+         w+OM3BiSoe/qxyghxTqJa0H/zI5de3wnZTEW8Gzf+9/KgmvGqzeL1B5kBisG3m7KOpff
+         Z02A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112; t=1677651881;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=oi0bG15H/b3BpOAboVLRVxGrsqqWKyh3K8hsh1fVLGc=;
+        b=tCuSK0Ahe+f6Cf7txg3eQmmSepGiOdtOlbQO5X8ceLtVxhdY1P+sUfHk//vgsk40IN
+         RIua22nIPXi+WLIfOysl5EX7yb8Y2RE0jwffLnUuV7nVvSavmSxKcDiTzP86aZcX9ENm
+         jDZaVlumdPqDXbuXoM1hm/PlEZ6YhWSa4jGVZRdVPIBpqErTNjAnv4BNlZR31OmEZ+3Z
+         S9MZnOYwf7e6tIeLVwBJNLL7WPj6iDIOlSEkkFMZnIsfvzQ5KYxYCk8g3ANfyPOtbaaX
+         IqnKm3ySuhxY14rauJ1ePl8RFqQKVcxbwrMLw2PKwotBDEzd2r9NY7TT9HJtUDzYyhWt
+         3fWw==
+X-Gm-Message-State: AO0yUKULB0jtCq0rXKb3haGObHaBcU+EC6MP6F7vK4j3HJYVaMJ0e/jw
+        PFTFa30eWclxI+d5CtoUkBqgNJSO1S0wIqgG388uOC+B
+X-Google-Smtp-Source: AK7set8QE81c93yHSOtf40cWMNGcn+klRFIMheXPuin+avSRsZ7vbruipOYCGcOEM97h+ugNydHcJlTH1Bsdqw0ZVaA=
+X-Received: by 2002:ac2:4437:0:b0:4d5:ca32:6aec with SMTP id
+ w23-20020ac24437000000b004d5ca326aecmr1509564lfl.12.1677651880563; Tue, 28
+ Feb 2023 22:24:40 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <20230228224938.88035-1-brennanlamoreaux@gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+References: <Y/yrHe4OIYcWFbNO@linutronix.de> <20230228230009.89787-1-brennanlamoreaux@gmail.com>
+In-Reply-To: <20230228230009.89787-1-brennanlamoreaux@gmail.com>
+From:   =?UTF-8?B?RnLDqWTDqXJpYyBNYXJ0aW5zb25z?= 
+        <frederic.martinsons@gmail.com>
+Date:   Wed, 1 Mar 2023 07:24:29 +0100
+Message-ID: <CA+cAkerw6kqhibwacCxwtu4u_U3pBYF0xcRrOVZh1T=++vURbw@mail.gmail.com>
+Subject: Re: Kernel lock during cryptsetup luksClose
+To:     "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>
+Cc:     bigeasy@linutronix.de, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2/28/23 2:49 PM, Brennan Lamoreaux (VMware) wrote:
-> Upstream commit d8bb65ab70f7 ("workqueue: Use rcuwait for wq_manager_wait")
-> replaced the waitqueue with rcuwait in the workqueue code. This change
-> involved removing the acquisition of pool->lock in put_unbound_pool(),
-> as it also adds the function wq_manager_inactive() which acquires this same
-> lock and is called one line later as a parameter to rcu_wait_event().
-> 
-> However, the backport of this commit in the PREEMPT_RT patchset
-> 4.19.255-rt114 (patch 347) missed the removal of the acquisition of
-> pool->lock in put_unbound_pool(). This leads to a deadlock due to
-> recursive locking of pool->lock, as shown below in lockdep:
-> 
-> [  252.083713] WARNING: possible recursive locking detected
-> [  252.083718] 4.19.269-3.ph3-rt #1-photon Not tainted
-> [  252.083721] --------------------------------------------
-> [  252.083733] kworker/2:0/33 is trying to acquire lock:
-> [  252.083747] 000000000b7b1ceb (&pool->lock/1){....}, at:
-> put_unbound_pool+0x10d/0x260
-> 
-> [  252.083857]
->                but task is already holding lock:
-> [  252.083860] 000000000b7b1ceb (&pool->lock/1){....}, at:
-> put_unbound_pool+0xbd/0x260
-> 
-> [  252.083876]
->                other info that might help us debug this:
-> [  252.083897]  Possible unsafe locking scenario:
-> 
-> [  252.083900]        CPU0
-> [  252.083903]        ----
-> [  252.083904]   lock(&pool->lock/1);
-> [  252.083911]   lock(&pool->lock/1);
-> [  252.083919]
->                 *** DEADLOCK ***
-> 
-> [  252.083921]  May be due to missing lock nesting notation
-> 
-> Fix this deadlock by removing the pool->lock acquisition in
-> put_unbound_pool().
-> 
-> Signed-off-by: Brennan Lamoreaux (VMware) <brennanlamoreaux@gmail.com>
-> Cc: Daniel Wagner <wagi@monom.org>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Tejun Heo <tj@kernel.org>
+On Wed, 1 Mar 2023 at 00:00, Brennan Lamoreaux (VMware)
+<brennanlamoreaux@gmail.com> wrote:
+>
+> I just posted a fix for a workqueue related deadlock in put_unbound_pool in the 4.19-rt kernel here:
+> https://lore.kernel.org/linux-rt-users/20230228224938.88035-1-brennanlamoreaux@gmail.com
+>
+> Can you give this a shot and see if it fixes your problem?
 
-Reviewed-by: Srivatsa S. Bhat (VMware) <srivatsa@csail.mit.edu>
-
-> ---
->  kernel/workqueue.c | 1 -
->  1 file changed, 1 deletion(-)
-> 
-> diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-> index a9f3cc02bdc1..55ebdd56a5de 100644
-> --- a/kernel/workqueue.c
-> +++ b/kernel/workqueue.c
-> @@ -3394,7 +3394,6 @@ static void put_unbound_pool(struct worker_pool *pool)
->  	 * Because of how wq_manager_inactive() works, we will hold the
->  	 * spinlock after a successful wait.
->  	 */
-> -	raw_spin_lock_irq(&pool->lock);
->  	rcuwait_wait_event(&manager_wait, wq_manager_inactive(pool),
->  			   TASK_UNINTERRUPTIBLE);
->  	pool->flags |= POOL_MANAGER_ACTIVE;
-> 
-
- 
-Regards,
-Srivatsa
-VMware Photon OS
+Hey, thank you for this patch. I currently have no access to my test board.
+But I'll happily test this patch tomorrow for sure.
