@@ -2,84 +2,116 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 72DC0C61DA3
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Mar 2023 22:45:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 985AFC61DA4
+	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Mar 2023 05:40:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232127AbjCCWpO (ORCPT
+        id S229618AbjCEFk6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Mar 2023 17:45:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59644 "EHLO
+        Sun, 5 Mar 2023 00:40:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46880 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232002AbjCCWpK (ORCPT
+        with ESMTP id S229489AbjCEFk5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Mar 2023 17:45:10 -0500
-Received: from mail-ed1-x534.google.com (mail-ed1-x534.google.com [IPv6:2a00:1450:4864:20::534])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B0AE8BB99
-        for <linux-rt-users@vger.kernel.org>; Fri,  3 Mar 2023 14:44:29 -0800 (PST)
-Received: by mail-ed1-x534.google.com with SMTP id ay14so12521252edb.11
-        for <linux-rt-users@vger.kernel.org>; Fri, 03 Mar 2023 14:44:29 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112; t=1677883402;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=k/8YZDa/xNj9vIwpykxaywnQ+ZKYSa6yE7wfu06WSR0=;
-        b=nNi27jG/CVYWapPkmTXVYDatJGGuWJTmag+92DGnvm/Xkfrqtdj9+zgmSxxNxZpX8t
-         am+gkLdjKgrW/fvWpT0Tx1bHV9XOJc3CAvgV+ILEBK7gdlosnybPz6ejPBzMJpwXEsa6
-         Ac/Oa1Mz5bNZbstrqvb1fZGwNQ9fV4/HYqDjaQzQlu11ItmCFroUJEpHuDnsBl6qPvzz
-         Db6yzZ0lgeLujK7Ede9b6GPzSRwtK/yNJmuIDV1zQziBKcY6ER0XlBwTXBPnnwuIO7pR
-         diYPPO2PeQrtlu8Uhdk23/IOisrchwp3x53ez6ZzZpwekd7Tsi+OhWoAG5ci+aFEZfnV
-         yEew==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112; t=1677883402;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=k/8YZDa/xNj9vIwpykxaywnQ+ZKYSa6yE7wfu06WSR0=;
-        b=zx6yP44X2Gb+dEX/ybe8MFPsG7ZpTxkUbLvJ7RKy5YCtA1UXBKnfyF+SsNjuoJiXSf
-         WWIspr4P+X/7DTCrnaz5KFi72atv6kviuPlIhPO7qKrAJcLsLw4XUVK8msrft5Z1cIp8
-         ut0jyhTXqVLrO/8APepew8bAne7H0TKPlnAjrVmuuKcYZpnUGHj7nPBn5rIb+PoIM0bq
-         QxnUuKL3UuZfCK4ACGNeew/fOeYOUpuL5bBj/23cpO6GgVSfHhcY1ePjnYPGZPtkEGN6
-         HMwupFDGpK1vfI9qW6N8PgVUoHdVjYMsZiZiqmv6pR+Owbre1hSFldiDjJ5K47W/h7am
-         KaCQ==
-X-Gm-Message-State: AO0yUKVJHl7I1voLvMtORjvxJVfql5+vgUAzDZ6moFXplR9/3DwDyrHF
-        6HSDs67bkdCyIzBwH3/uD1YIHTJC6aEr9RvBe35z7tAkh3g=
-X-Google-Smtp-Source: AK7set+ZtWF+LfLezwDIhBzzSDkK12lYIuAXAtF4/utAhwAsy+79zJxdcPoUeSwjBiopxsGr6g1Pm11YpkLhnKtWiMI=
-X-Received: by 2002:a50:9f26:0:b0:4c0:1cfa:bfe1 with SMTP id
- b35-20020a509f26000000b004c01cfabfe1mr1935817edf.6.1677881085717; Fri, 03 Mar
- 2023 14:04:45 -0800 (PST)
-MIME-Version: 1.0
-References: <CAAajkiYTEvxpV_Vg6rj6es=rJEidNEpEgWciY2TNqRqzVmb1MQ@mail.gmail.com>
- <ZAJh7aqeAY3NjR5x@uudg.org>
-In-Reply-To: <ZAJh7aqeAY3NjR5x@uudg.org>
-From:   Aaron Simmons <paleozogt@gmail.com>
-Date:   Fri, 3 Mar 2023 15:04:36 -0700
-Message-ID: <CAAajkib1U8RWFRWFb9LiGqXxtGr2JOU6_FOV5gm40xE0sSNPZA@mail.gmail.com>
-Subject: Re: preempt-rt + live patching + arm64
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org
+        Sun, 5 Mar 2023 00:40:57 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 04BAC11163
+        for <linux-rt-users@vger.kernel.org>; Sat,  4 Mar 2023 21:40:11 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1677994811;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=93ewmt7hx/NarRr04m7o90fAGbJeWbKZNPS0BU4Q0G4=;
+        b=QKzCno1ujgYEAm+DjtF/kGtNQIjEx/9IPtZI7PStOnVLMgQgP4+3jL5XNfltysuGNfEC05
+        qUunvemegsc2xc/oBCC3754NUjBvPdAMXOF7WVH1Gsm1JueajmV6miyxqXfGhDBJVs09Db
+        DcnQM7QTtCCb2laNiu9enLVwndwo1vI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-586-J91x9EPvPnKdaPwFWwnw5A-1; Sun, 05 Mar 2023 00:40:00 -0500
+X-MC-Unique: J91x9EPvPnKdaPwFWwnw5A-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C54FC833941;
+        Sun,  5 Mar 2023 05:39:59 +0000 (UTC)
+Received: from [10.22.17.193] (unknown [10.22.17.193])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 5836B2166B29;
+        Sun,  5 Mar 2023 05:39:58 +0000 (UTC)
+Message-ID: <84c1de84ac129de7c7597c48d3ec19ccc0672492.camel@redhat.com>
+Subject: Re: rtmutex, pi_blocked_on, and blk_flush_plug()
+From:   Crystal Wood <swood@redhat.com>
+To:     Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     John Keeping <john@metanate.com>, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
+Date:   Sat, 04 Mar 2023 23:39:57 -0600
+In-Reply-To: <874jrgqjsw.ffs@tglx>
+References: <4b4ab374d3e24e6ea8df5cadc4297619a6d945af.camel@redhat.com>
+         <Y+47FVJ+hI+NA2In@linutronix.de> <87k00cr7ix.ffs@tglx>
+         <Y/NT1/ynarp9cDlS@linutronix.de> <Y/NcnrwKr2u6tamQ@linutronix.de>
+         <874jrgqjsw.ffs@tglx>
+Organization: Red Hat
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.44.4 (3.44.4-2.fc36) 
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-> If the new bit youa re adding is used in _TIF_WORK_MASK amke sure it is
-> contiguous with the other bits in the mask. For reference:
->
->     https://lore.kernel.org/all/Y8lCspFtQ0wg6uCy@uudg.org/
->
+On Mon, 2023-02-20 at 19:21 +0100, Thomas Gleixner wrote:
+> On Mon, Feb 20 2023 at 12:42, Sebastian Andrzej Siewior wrote:
+> > On 2023-02-20 12:04:56 [+0100], To Thomas Gleixner wrote:
+> > > The ->pi_blocked_on field is set by __rwbase_read_lock() before
+> > > schedule() is invoked while blocking on the sleeping lock. By doing
+> > > this
+> > > we avoid __blk_flush_plug() and as such will may deadlock because we
+> > > are
+> > > going to sleep and made I/O progress earlier which is not globally
+> > > visibly but might be (s/might be/is/ in the deadlock case) expected b=
+y
+> > > the owner of the lock.
+>=20
+> Fair enough.
+>=20
+> > --- a/kernel/locking/rtmutex.c
+> > +++ b/kernel/locking/rtmutex.c
+> > @@ -1700,6 +1700,13 @@ static __always_inline int __rt_mutex_lock(struc=
+t
+> > rt_mutex_base *lock,
+> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (likely(rt_mutex_cmp=
+xchg_acquire(lock, NULL, current)))
+> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0return 0;
+> > =C2=A0
+> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (state !=3D TASK_RTLOCK_W=
+AIT) {
+> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0/*
+> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 * If we are going to sleep and we have plugged IO
+> > queued,
+> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 * make sure to submit it to avoid deadlocks.
+> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 */
+> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0blk_flush_plug(tsk->plug, true);
+>=20
+> This still leaves the problem vs. io_wq_worker_sleeping() and it's
+> running() counterpart after schedule().
 
-Ah, this is good info.  Fortunately, TIF_PATCH_PENDING isn't used in
-_TIF_WORK_MASK.  Since TIF_NEED_RESCHED_LAZY *is* used in
-_TIF_WORK_MASK, I'm going to resolve the conflict like this:
-    #define TIF_NOTIFY_SIGNAL      6       /* signal notifications exist */
-    -#define TIF_PATCH_PENDING      7       /* pending live patching update */
-    +#define TIF_NEED_RESCHED_LAZY  7
-    #define TIF_SYSCALL_TRACE      8       /* syscall trace active */
-    #define TIF_SYSCALL_AUDIT      9       /* syscall auditing */
-    #define TIF_SYSCALL_TRACEPOINT 10      /* syscall tracepoint for ftrace */
-    #define TIF_SECCOMP            11      /* syscall secure computing */
-    #define TIF_SYSCALL_EMU                12      /* syscall
-emulation active */
-    +#define TIF_PATCH_PENDING      13      /* pending live patching update */
-    #define TIF_MEMDIE             18      /* is terminating due to
-OOM killer */
+The closest thing I can see to a problem there is io_wqe_dec_running()->
+io_queue_worker_create()->io_wq_cancel_tw_create()->kfree(), but that only
+happens with func =3D=3D create_worker_cont(), and io_wqe_dec_running() use=
+s=20
+create_worker_cb().=20
+
+Are there any workloads I could run to stress out that path (with my
+asserts in place)?
+
+-Scott
+
