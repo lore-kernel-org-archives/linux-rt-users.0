@@ -2,116 +2,74 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 985AFC61DA4
-	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Mar 2023 05:40:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CCB1C64EC4
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 Mar 2023 15:16:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229618AbjCEFk6 (ORCPT
+        id S231622AbjCIPQL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 5 Mar 2023 00:40:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46880 "EHLO
+        Thu, 9 Mar 2023 10:16:11 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51098 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229489AbjCEFk5 (ORCPT
+        with ESMTP id S231267AbjCIPPl (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 5 Mar 2023 00:40:57 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 04BAC11163
-        for <linux-rt-users@vger.kernel.org>; Sat,  4 Mar 2023 21:40:11 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1677994811;
+        Thu, 9 Mar 2023 10:15:41 -0500
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BB51946B2;
+        Thu,  9 Mar 2023 07:15:00 -0800 (PST)
+Date:   Thu, 9 Mar 2023 16:14:57 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1678374898;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=93ewmt7hx/NarRr04m7o90fAGbJeWbKZNPS0BU4Q0G4=;
-        b=QKzCno1ujgYEAm+DjtF/kGtNQIjEx/9IPtZI7PStOnVLMgQgP4+3jL5XNfltysuGNfEC05
-        qUunvemegsc2xc/oBCC3754NUjBvPdAMXOF7WVH1Gsm1JueajmV6miyxqXfGhDBJVs09Db
-        DcnQM7QTtCCb2laNiu9enLVwndwo1vI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-586-J91x9EPvPnKdaPwFWwnw5A-1; Sun, 05 Mar 2023 00:40:00 -0500
-X-MC-Unique: J91x9EPvPnKdaPwFWwnw5A-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C54FC833941;
-        Sun,  5 Mar 2023 05:39:59 +0000 (UTC)
-Received: from [10.22.17.193] (unknown [10.22.17.193])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 5836B2166B29;
-        Sun,  5 Mar 2023 05:39:58 +0000 (UTC)
-Message-ID: <84c1de84ac129de7c7597c48d3ec19ccc0672492.camel@redhat.com>
-Subject: Re: rtmutex, pi_blocked_on, and blk_flush_plug()
-From:   Crystal Wood <swood@redhat.com>
-To:     Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     John Keeping <john@metanate.com>, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
-Date:   Sat, 04 Mar 2023 23:39:57 -0600
-In-Reply-To: <874jrgqjsw.ffs@tglx>
-References: <4b4ab374d3e24e6ea8df5cadc4297619a6d945af.camel@redhat.com>
-         <Y+47FVJ+hI+NA2In@linutronix.de> <87k00cr7ix.ffs@tglx>
-         <Y/NT1/ynarp9cDlS@linutronix.de> <Y/NcnrwKr2u6tamQ@linutronix.de>
-         <874jrgqjsw.ffs@tglx>
-Organization: Red Hat
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.44.4 (3.44.4-2.fc36) 
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=L0ut5A2YxWRkWpdHP5E3GMAlPPVxc9dYMp/47j8do5Y=;
+        b=oItcK2ZHJx1EFmyWZstM8+/1SiiDDnT+KCVGdOMXJZii98FD2zixFOhv/3ma9O4uSWzIWx
+        cbPb1WF6g7WJRlAguElyyqN9TVLPLMh67HBx9jXTu8Zl/q+nYP38ZtiSYrEy196mkONhjH
+        2YDmjwv9aX928iTq4O2fJn20UvI1aoEC+qq56oZ0+V4s6RU3A4Z8f13Fl5As3XBLqUR9Ey
+        FeLtV9doO/MyFlUL19TDJxAzCx/VG3Phtvbhe38Ci48PmYcXEyECNOQXes4q+bmtOrTZpW
+        kNFk6EYnbm5J9hGfViF0swg+9h24lxuJpAN/Qd+oWUWcbhDdN0c66ttRB1AGoA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1678374898;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=L0ut5A2YxWRkWpdHP5E3GMAlPPVxc9dYMp/47j8do5Y=;
+        b=zbeoKVkYjK0oybMOkLY8mWISW0E57aW4ddCF8A+7c98shT+QDjFitQSLNveIwWWGKyrcDw
+        CEPaTaRFqjR0d/AA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.3-rc1-rt1
+Message-ID: <20230309151457.Z5BpEBUp@linutronix.de>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 2023-02-20 at 19:21 +0100, Thomas Gleixner wrote:
-> On Mon, Feb 20 2023 at 12:42, Sebastian Andrzej Siewior wrote:
-> > On 2023-02-20 12:04:56 [+0100], To Thomas Gleixner wrote:
-> > > The ->pi_blocked_on field is set by __rwbase_read_lock() before
-> > > schedule() is invoked while blocking on the sleeping lock. By doing
-> > > this
-> > > we avoid __blk_flush_plug() and as such will may deadlock because we
-> > > are
-> > > going to sleep and made I/O progress earlier which is not globally
-> > > visibly but might be (s/might be/is/ in the deadlock case) expected b=
-y
-> > > the owner of the lock.
->=20
-> Fair enough.
->=20
-> > --- a/kernel/locking/rtmutex.c
-> > +++ b/kernel/locking/rtmutex.c
-> > @@ -1700,6 +1700,13 @@ static __always_inline int __rt_mutex_lock(struc=
-t
-> > rt_mutex_base *lock,
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (likely(rt_mutex_cmp=
-xchg_acquire(lock, NULL, current)))
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0return 0;
-> > =C2=A0
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (state !=3D TASK_RTLOCK_W=
-AIT) {
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0/*
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 * If we are going to sleep and we have plugged IO
-> > queued,
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 * make sure to submit it to avoid deadlocks.
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 */
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0blk_flush_plug(tsk->plug, true);
->=20
-> This still leaves the problem vs. io_wq_worker_sleeping() and it's
-> running() counterpart after schedule().
+Dear RT folks!
 
-The closest thing I can see to a problem there is io_wqe_dec_running()->
-io_queue_worker_create()->io_wq_cancel_tw_create()->kfree(), but that only
-happens with func =3D=3D create_worker_cont(), and io_wqe_dec_running() use=
-s=20
-create_worker_cb().=20
+I'm pleased to announce the v6.3-rc1-rt1 patch set. 
 
-Are there any workloads I could run to stress out that path (with my
-asserts in place)?
+Changes since v6.2-rt3:
 
--Scott
+  - Update to v6.3-rc1
 
+Known issues
+     - Crystal Wood reported that a filesystem (XFS) may deadlock while flushing
+       during schedule.
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.3-rc1-rt1
+
+The RT patch against v6.3-rc1 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/older/patch-6.3-rc1-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/older/patches-6.3-rc1-rt1.tar.xz
+
+Sebastian
