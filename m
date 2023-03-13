@@ -2,69 +2,70 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EA312C6FD19
-	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Mar 2023 09:38:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 99B43C61DA4
+	for <linux-rt-users@archiver.kernel.org>; Mon, 13 Mar 2023 09:41:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229735AbjCMJij (ORCPT
+        id S229999AbjCMJly (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 13 Mar 2023 05:38:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60008 "EHLO
+        Mon, 13 Mar 2023 05:41:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39904 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231179AbjCMJiF (ORCPT
+        with ESMTP id S229933AbjCMJlv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Mar 2023 05:38:05 -0400
+        Mon, 13 Mar 2023 05:41:51 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B6C9557D30;
-        Mon, 13 Mar 2023 02:36:45 -0700 (PDT)
-Date:   Mon, 13 Mar 2023 10:36:41 +0100
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6CEC915540
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Mar 2023 02:41:46 -0700 (PDT)
+Date:   Mon, 13 Mar 2023 10:41:43 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1678700203;
+        s=2020; t=1678700504;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=tMzFh7fvdbobB01BlTluHQ92/K/MC3vwvbvz+/sibis=;
-        b=IG+MwBsbm4dukJ8o8MfpzxtrymmoCoggA/6gpM/Bd2uq17lFnPUPlkqjQc7f5wLdI9rxGF
-        3g41n8Bu+QdldqAkZdxEDZ1TKXlraPuBFxdsciR1O/MoNcyfVAKLhKBh8WS5htV/7C4pdN
-        5jNDgd+QJ9NSoTu/R8gsR54Huhhw+0M9+8460uM3C9NixxWbQb3BK2TDqBAPHC8l1e9z20
-        01aY5TXu5DQW8JuqnXe7v293LmJr04LsaxPmq6meOnU7KdtvB0aHSZGnmsJMhEYaCcjeHY
-        lqG8U6dqDs9HQKX5HFEL/9k/GXrr/hecHRJZhS9QxJCNK0LxMAwoMW6DUY/FQg==
+        bh=Bjz3CMXmxgdt79iVUIHhuGaGQpAej9BpCTSeRwOvq0M=;
+        b=2N5pUfG/W6uh3f04RHOwq8q39KWnKb3le96fMK482e9/6+VCV9b8wB4FRlPpJBmi0fwj9x
+        z170Fnjuj0YE5zU3z3YYSMli+u5DeQoi2j2AnDeOldG1g0df7iP1oxA5Y8u/nmWD+TMShJ
+        yCtcfDwmOubjg9OvJflwjdoGom6IkzbhcbY7lBbOwhmS4X0R9il0bMBMu3tRuU8NRD/cLx
+        yLXHF0fer6LHLUzlh7yhmLS0z4aZf6PMtwZkAx5v8APbD2T0opox3FBB1NNo6Qi3vi/7Om
+        LlKzVTtUkOwd60Dsy2T4YIyqOY9mLuNHr2dk/4oQyO7ytpIYtG6VCLWC76ofJw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1678700203;
+        s=2020e; t=1678700504;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=tMzFh7fvdbobB01BlTluHQ92/K/MC3vwvbvz+/sibis=;
-        b=4lNmV8XuV8YZWXX1KunLeqSeagXcFlHwTaIeQfniYqnaR4I6BPcA9h16vZTlEfDoy/K9Gj
-        R0Q/m/SxUR5tGDCw==
+        bh=Bjz3CMXmxgdt79iVUIHhuGaGQpAej9BpCTSeRwOvq0M=;
+        b=0a6Sv6JJrV1XEAkn7CZojOspkQIXCdR2zOBemK5TZhzjMxUq0HsVm1gX/wbfRLK04ZqEwC
+        qORFcRzWYH6EDSBw==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>,
-        Daniel Wagner <wagi@monom.org>
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        blamoreaux@vmware.com, frederic.martinsons@gmail.com,
-        srivatsa@csail.mit.edu, vsirnapalli@vmware.com,
-        amakhalov@vmware.com, keerthanak@vmware.com, ankitja@vmware.com,
-        bordoloih@vmware.com, srivatsab@vmware.com,
-        Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 4.19-rt] workqueue: Fix deadlock due to recursive locking
- of pool->lock
-Message-ID: <20230313093641.pxvwFHCJ@linutronix.de>
-References: <20230228224938.88035-1-brennanlamoreaux@gmail.com>
+To:     =?utf-8?B?RnLDqWTDqXJpYw==?= Martinsons 
+        <frederic.martinsons@gmail.com>
+Cc:     "Brennan Lamoreaux (VMware)" <brennanlamoreaux@gmail.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: Kernel lock during cryptsetup luksClose
+Message-ID: <20230313094143.5t28jqkB@linutronix.de>
+References: <Y/yrHe4OIYcWFbNO@linutronix.de>
+ <20230228230009.89787-1-brennanlamoreaux@gmail.com>
+ <CA+cAkerw6kqhibwacCxwtu4u_U3pBYF0xcRrOVZh1T=++vURbw@mail.gmail.com>
+ <CA+cAkerXmfVYAKoO7FU8aPwvZQ5hDPH_-RZgF1==H1LwtteovA@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20230228224938.88035-1-brennanlamoreaux@gmail.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CA+cAkerXmfVYAKoO7FU8aPwvZQ5hDPH_-RZgF1==H1LwtteovA@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-02-28 14:49:38 [-0800], Brennan Lamoreaux (VMware) wrote:
-> Upstream commit d8bb65ab70f7 ("workqueue: Use rcuwait for wq_manager_wait")
-> replaced the waitqueue with rcuwait in the workqueue code. This change
-> involved removing the acquisition of pool->lock in put_unbound_pool(),
-> as it also adds the function wq_manager_inactive() which acquires this same
-> lock and is called one line later as a parameter to rcu_wait_event().
+On 2023-03-02 09:06:41 [+0100], Fr=C3=A9d=C3=A9ric Martinsons wrote:
+>=20
+> For my curiosity, do you know why I fell in this case ? The bug
+> requires specific timing or it only
+> appears during usage of device mapper in kernel ?
 
-Daniel, I double checked and this patch is correct - the backport was
-faulty. Could you please pick it up and release an update?
+It always happens if a specific worker pool is removed and this happens
+on luksClose. The problem was introduced by a backport, which touched
+this corner.
 
 Sebastian
