@@ -2,106 +2,113 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4EFA6C6FD1F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 14 Mar 2023 17:12:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AC2A3C7618B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Mar 2023 16:49:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230420AbjCNRMt (ORCPT
+        id S232135AbjCOQtV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 14 Mar 2023 13:12:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40882 "EHLO
+        Wed, 15 Mar 2023 12:49:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33448 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231143AbjCNRMi (ORCPT
+        with ESMTP id S232106AbjCOQtQ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Mar 2023 13:12:38 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6F431ADC2A;
-        Tue, 14 Mar 2023 10:12:34 -0700 (PDT)
-Date:   Tue, 14 Mar 2023 18:12:31 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1678813952;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=zoXVxWY2RdbpAngboxJV6HcjSFULgSyzrd+jPOr62qw=;
-        b=ic5qX8K28DPh4A1SReQAfb52iaiU44STnCj0r+1mF1t/9m46edlxE0jRwvafLuOzGXfujw
-        izzkcTLH+jJTrZUbSIb3EqNc5iOsUisI9F506WVyAwup0t6RfhI0MHsU2WzhkEPGAZUCiH
-        u1LvDxtNWXjX+9zgOCHxfLjPui+J1/xoq8bd8GBNOYuRjcXAOsa4eRGBy77/26vV9dM/oc
-        Q5MUaTAuE7DCw3063AJspuIt865jvU5QYqK05ZtIAnmlWJSKbUMC6cLvgbm4aQ1ZxMg/cm
-        4+X8fJpPvrKuWGXio5Xk+pRq5YciKA2a4u+rd/KTBMVfftGJiKVxQnpnT5csfQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1678813952;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=zoXVxWY2RdbpAngboxJV6HcjSFULgSyzrd+jPOr62qw=;
-        b=Hm2fE8egrzz2LImXg9YyZI/bqqxdwwnc/3yBprHNJXsZ5gGkn3yB6Bhl1seDoqJ6He5CHb
-        InMunxgqbbMd4aDg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Wed, 15 Mar 2023 12:49:16 -0400
+Received: from mail-ed1-x52e.google.com (mail-ed1-x52e.google.com [IPv6:2a00:1450:4864:20::52e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7326434C27
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Mar 2023 09:49:14 -0700 (PDT)
+Received: by mail-ed1-x52e.google.com with SMTP id fd5so44145772edb.7
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Mar 2023 09:49:14 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1678898953;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=1MDMGCcobqwi/a1l36yEQFELeDyhrLe4cYbKsHJruU0=;
+        b=Jue10VCE7pDR/X9n255Txry2emurXDGYizex363AJ1dlTCcwKfWx/POZeXjLPpi44P
+         le8JKKoxhZrZcv8PCtAn0yA4ppGgEhv1s5Pe8OZY3NeWH15o1tXl0UIwAWXF7b5YhyL6
+         31A45AdfR30DFSfFXb8ncHVu2U57qPdy+udRDHWgMdLjdyyfm/nx+1YYSbww60UuXKQN
+         m1dLTkS3NWkbJOnFpDng10ymPi3HlsReR1tud1HxvJX5L/VkpoYnrEb73lvl6VNY3qEt
+         DvAojHfEYviiPRqzndrxvkruoWTltwUNGEGlXskulg0k1IDFYB7Ikiw1Pf3FejxqRork
+         OnAA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112; t=1678898953;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=1MDMGCcobqwi/a1l36yEQFELeDyhrLe4cYbKsHJruU0=;
+        b=B6zrrXf32apHF439xJ6+KQA+iq5ryHvbbEW2f5FCXgVZMrnYdXkXr4M9AVpWIZJUtm
+         vu8XCZEkx3urO9JCxjQwAl7yy0ysROmdmxvSpxG5HIpCTc9qJr9a4Bq8ZwSaHd3hNIks
+         lHAB6oX+MKzE1Zeo1KF5EsISnTLinfJSKU7Jr1qRKwxoy/cWgNtsDXHkPVvjo2EEHbTC
+         NY82MVNKfYQYU0GwclAgsXBlw8EZ/CzyR0N8F7z/0XMRhgVt7wFSsBdAkCyPF4TOBO0+
+         P5ZBvq7cXGJqDV/nHbrZf2KYeln64Gu280EY1bmMwI4W3Q4FoQBUQ3g/W3pO5JvaMkOV
+         Rcsg==
+X-Gm-Message-State: AO0yUKX+aZFSbcLpm7G0+ikIZa68Tox8S5twiwyZbZsjXnFWoZW6jHx1
+        E18hgNwp+Y20sgxg/2SIFZ6p/Q==
+X-Google-Smtp-Source: AK7set/rJ5tb8Yd5Dgalq9MKDJHRISIAqLP7XW1qLne7XCFLEiRjRePOazibNExw7HNsa9vzJiJq0g==
+X-Received: by 2002:a17:906:facf:b0:8f4:809e:faee with SMTP id lu15-20020a170906facf00b008f4809efaeemr58817ejb.19.1678898952955;
+        Wed, 15 Mar 2023 09:49:12 -0700 (PDT)
+Received: from krzk-bin.. ([2a02:810d:15c0:828:940e:8615:37dc:c2bd])
+        by smtp.gmail.com with ESMTPSA id u10-20020a170906068a00b008e3bf17fb2asm2786972ejb.19.2023.03.15.09.49.11
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 15 Mar 2023 09:49:12 -0700 (PDT)
+From:   Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+To:     Andy Gross <agross@kernel.org>,
+        Bjorn Andersson <andersson@kernel.org>,
+        Konrad Dybcio <konrad.dybcio@linaro.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Viresh Kumar <viresh.kumar@linaro.org>,
+        linux-arm-msm@vger.kernel.org, linux-pm@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Cc:     Adrien Thierry <athierry@redhat.com>,
+        Brian Masney <bmasney@redhat.com>,
         linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] v6.3-rc2-rt3
-Message-ID: <20230314171231.jwtham4a@linutronix.de>
-References: <20230314170502.OHw1_FK3@linutronix.de>
+        Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+Subject: [RFC PATCH] cpufreq: qcom-cpufreq-hw: allow work to be done on other CPU for PREEMPT_RT
+Date:   Wed, 15 Mar 2023 17:49:10 +0100
+Message-Id: <20230315164910.302265-1-krzysztof.kozlowski@linaro.org>
+X-Mailer: git-send-email 2.34.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20230314170502.OHw1_FK3@linutronix.de>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-03-14 18:05:04 [+0100], To Thomas Gleixner wrote:
-> Dear RT folks!
->=20
-> I'm pleased to announce the v6.3-rc2-rt3 patch set.=20
->=20
-> Changes since v6.3-rc2-rt2:
->=20
->   - The i915 and other driver using io_mapping_map_atomic_wc() function
->     could deadlock. Reported by Richard Weinberger.
->=20
->   - A larger printk rework by John Ogness. This printk series is based
->     on the latest work by John and most of the patches have been
->     submitted for upstream review.
->     As in the previous version the concept of an atomic console
->     remained. That means a crash (BUG(), panic(), =E2=80=A6) without a at=
-omic
->     console driver remains invisible on PREEMPT_RT. The only available
->     atomic console driver is the 8250 UART and has been tested on X86.
->=20
-> Known issues
->      - Crystal Wood reported that a filesystem (XFS) may deadlock while
->        flushing during schedule.
->=20
-> The delta patch against v6.3-rc2-rt2 is appended below and can be found h=
-ere:
-> =20
->      https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/incr/patch-6=
-=2E3-rc2-rt2-rt3.patch.xz
->=20
-> You can get this release via the git tree at:
->=20
->     git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v=
-6.3-rc2-rt3
->=20
-> The RT patch against v6.3-rc2 can be found here:
->=20
->     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/older/patch-6=
-=2E3-rc2-rt3.patch.xz
->=20
-> The split quilt queue is available at:
->=20
->     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/older/patches=
--6.3-rc2-rt3.tar.xz
+Qualcomm cpufreq driver configures interrupts with affinity to each
+cluster, e.g.  dcvsh-irq-0, dcvsh-irq-4 and dcvsh-irq-7 on SM8250.
+Triggered interrupt will schedule delayed work, but, since workqueue
+prefers local CPUs, it might get executed on a CPU dedicated to realtime
+tasks causing unexpected latencies in realtime workload.
 
-This email didn't pass the size restriction on linux-rt-users@ so this
-is just a small ping that this release happened. The whole email is in
-the archive:
-	https://lore.kernel.org/20230314170502.OHw1_FK3@linutronix.de
-=20
-Sebastian
+Use unbound workqueue for such case.  This might come with performance
+or energy penalty, e.g. because of cache miss or when other CPU is
+sleeping.
+
+Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+---
+ drivers/cpufreq/qcom-cpufreq-hw.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/cpufreq/qcom-cpufreq-hw.c b/drivers/cpufreq/qcom-cpufreq-hw.c
+index 2f581d2d617d..c5ff8d25fabb 100644
+--- a/drivers/cpufreq/qcom-cpufreq-hw.c
++++ b/drivers/cpufreq/qcom-cpufreq-hw.c
+@@ -390,7 +390,16 @@ static irqreturn_t qcom_lmh_dcvs_handle_irq(int irq, void *data)
+ 
+ 	/* Disable interrupt and enable polling */
+ 	disable_irq_nosync(c_data->throttle_irq);
+-	schedule_delayed_work(&c_data->throttle_work, 0);
++
++	/*
++	 * Workqueue prefers local CPUs and since interrupts have set affinity,
++	 * the work might execute on a CPU dedicated to realtime tasks.
++	 */
++	if (IS_ENABLED(CONFIG_PREEMPT_RT))
++		queue_delayed_work_on(WORK_CPU_UNBOUND, system_unbound_wq,
++				      &c_data->throttle_work, 0);
++	else
++		schedule_delayed_work(&c_data->throttle_work, 0);
+ 
+ 	if (qcom_cpufreq.soc_data->reg_intr_clr)
+ 		writel_relaxed(GT_IRQ_STATUS,
+-- 
+2.34.1
+
