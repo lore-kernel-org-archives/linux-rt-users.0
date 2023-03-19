@@ -2,112 +2,95 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A8B76C6FD1D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Mar 2023 08:14:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C848C7618A
+	for <linux-rt-users@archiver.kernel.org>; Sun, 19 Mar 2023 23:32:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229804AbjCQIOl (ORCPT
+        id S229677AbjCSXck (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Mar 2023 04:14:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42856 "EHLO
+        Sun, 19 Mar 2023 19:32:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48172 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229908AbjCQIOd (ORCPT
+        with ESMTP id S229655AbjCSXci (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Mar 2023 04:14:33 -0400
-Received: from mail-ed1-x530.google.com (mail-ed1-x530.google.com [IPv6:2a00:1450:4864:20::530])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 334EF4741A
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Mar 2023 01:13:50 -0700 (PDT)
-Received: by mail-ed1-x530.google.com with SMTP id eg48so17083088edb.13
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Mar 2023 01:13:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1679040824;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=NTkt885oytfYo9Lb68dSckMe6EvhfqmYNTcED2Zhid4=;
-        b=ck1t9nOjPrcc1xukWzZfjhW3Xy1y9jpxRdwbuxWkBc0Zvp/Ezztq+X4SBD/Y4ASzlQ
-         zriqdhO/8JOPDCLmj5c6++19KOLUHljtKGL6zLnR8PkyJWjYq6+Av5VZol6wWb7E2Gpu
-         MZNWZWviB/7MagoiFcNlqx1eGAAO7xlOBiShKxfYd246jd7Yx3OJ2PTeespuWYwr+Z9T
-         DtA79IbYkXPlAvBBhFty1ePYKCLwan5I3DdiNr52bup6jpHitEmddslhINbvREE7114H
-         zhN9Abs673CEDQFu3pgsCpMkmbMAoizArFKk3Pp3J5ofDs/cloqsRNAYawDLUPzM6tQ3
-         5A6g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112; t=1679040824;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=NTkt885oytfYo9Lb68dSckMe6EvhfqmYNTcED2Zhid4=;
-        b=Zdw9tBkbmnsZpkK4SzYGnE+2FUcw24cSSVaEGgvkvHz7MdmiBjLqwVbyTRbGzWLhom
-         XnlLdXmJS+ksIC18gnyOm+rNJTyZLr0rfyYO6Ln7jIqMha2KyO5QxyEuNuIURLuRADjW
-         fMVY+ky418PKAtUEm6YKQDEbS+YGm9kA9o1nrEnxuvvlXDEXOJccDDQpeJ40OFGAQazg
-         tGG7pkRa/WF2XphsUJrt0w7u4zy+m0e9vaWzahXQGb9IVR2xLZxwFEkhUjjP2d1E7k6d
-         e3ZKai10skphVMFgBaaTMB/FCqzc399RVXaAtUrDMvKqTm0zOpiXkGWypqKQLvmJgBNE
-         N95A==
-X-Gm-Message-State: AO0yUKVC9UwsjxOB4Mrr6ZQ/L50W97qU7ZIp1qddLd3RUfpOoIN3qltC
-        YD4s4PWNcD/U5hMsvaeCUKu4Ow==
-X-Google-Smtp-Source: AK7set+CF7YjQa2Ct2Oo7/j0ML04WAmz9uR1EGipCzOXucb3MWLgpSH22pA/XuGe+u8cXw7Q7KJmuQ==
-X-Received: by 2002:a17:906:2357:b0:931:829c:9d58 with SMTP id m23-20020a170906235700b00931829c9d58mr2026395eja.23.1679040823826;
-        Fri, 17 Mar 2023 01:13:43 -0700 (PDT)
-Received: from ?IPV6:2a02:810d:15c0:828:848a:1971:93e0:b465? ([2a02:810d:15c0:828:848a:1971:93e0:b465])
-        by smtp.gmail.com with ESMTPSA id u27-20020a50951b000000b004bf999f8e57sm710282eda.19.2023.03.17.01.13.42
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 17 Mar 2023 01:13:43 -0700 (PDT)
-Message-ID: <a0e1b3b9-b333-e0ac-ac46-c15a01b356e6@linaro.org>
-Date:   Fri, 17 Mar 2023 09:13:42 +0100
+        Sun, 19 Mar 2023 19:32:38 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C06431968A
+        for <linux-rt-users@vger.kernel.org>; Sun, 19 Mar 2023 16:31:53 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1679268712;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=/0axrHMSXDjg2C1CC/vsX8eLd+F8Hj2Y/pL1QGxJv9E=;
+        b=T7bFspMQ0vUhWdlylwyzePo6Be8Olel3psiws75iZTgK9LqEhSqKJjEI73MTZbQn/QTlkQ
+        8IfzQAK6RjiF/3aKSiSFvWrWciDdYhpwXgg7avHfg1K+nntg93Kr+Nw1eHwgYQcsJ7pHR3
+        UJ5dL/9+8v2u4Xj0dhaqUQyKzjlqfno=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-298-Ztbdl2HEMrCK4-6G4XBsLA-1; Sun, 19 Mar 2023 19:31:47 -0400
+X-MC-Unique: Ztbdl2HEMrCK4-6G4XBsLA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D36318533DC;
+        Sun, 19 Mar 2023 23:31:46 +0000 (UTC)
+Received: from localhost (unknown [10.22.16.83])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id CA1E735454;
+        Sun, 19 Mar 2023 23:31:45 +0000 (UTC)
+Date:   Sun, 19 Mar 2023 20:31:44 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.175-rt84
+Message-ID: <ZBebYGllb3f9sOOS@uudg.org>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.9.0
-Subject: Re: [RFC PATCH] cpufreq: qcom-cpufreq-hw: allow work to be done on
- other CPU for PREEMPT_RT
-Content-Language: en-US
-To:     Hillf Danton <hdanton@sina.com>
-Cc:     Andy Gross <agross@kernel.org>,
-        Bjorn Andersson <andersson@kernel.org>,
-        Konrad Dybcio <konrad.dybcio@linaro.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        linux-arm-msm@vger.kernel.org, linux-pm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Adrien Thierry <athierry@redhat.com>,
-        Brian Masney <bmasney@redhat.com>,
-        linux-rt-users@vger.kernel.org
-References: <20230315164910.302265-1-krzysztof.kozlowski@linaro.org>
- <20230316235705.2235-1-hdanton@sina.com>
-From:   Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
-In-Reply-To: <20230316235705.2235-1-hdanton@sina.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 17/03/2023 00:57, Hillf Danton wrote:
-> On 16 Mar 2023 13:28:18 +0100 Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
->> On 15/03/2023 17:49, Krzysztof Kozlowski wrote:
->>> Qualcomm cpufreq driver configures interrupts with affinity to each
->>> cluster, e.g.  dcvsh-irq-0, dcvsh-irq-4 and dcvsh-irq-7 on SM8250.
->>> Triggered interrupt will schedule delayed work, but, since workqueue
->>> prefers local CPUs, it might get executed on a CPU dedicated to realtime
->>> tasks causing unexpected latencies in realtime workload.
->>>
->>> Use unbound workqueue for such case.  This might come with performance
->>> or energy penalty, e.g. because of cache miss or when other CPU is
->>> sleeping.
->>>
->>> Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
->>> ---
->>>  drivers/cpufreq/qcom-cpufreq-hw.c | 11 ++++++++++-
->>
->> Let me also paste impact of this patch - rtla osnoise on entirely idle
->> system (cores 2-7 isolated for Realtime):
-> 
-> Are cores 2-7 the non-housekeeping CPUs[1]?
+Hello RT-list!
 
-Yes, since their are isolated for Realtime this is synonymous.
+I'm pleased to announce the 5.10.175-rt84 stable release.
 
-> 
-> [1] https://lore.kernel.org/lkml/20230223150624.GA29739@lst.de/
+You can get this release via the git tree at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
+  branch: v5.10-rt
+  Head SHA1: 1c5659f2537a53385ff1504414f2535ae12f477b
 
-Best regards,
-Krzysztof
+Or to build 5.10.175-rt84 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.175.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.175-rt84.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
