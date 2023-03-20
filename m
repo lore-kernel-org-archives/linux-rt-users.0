@@ -2,93 +2,102 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3B41C6FD1F
-	for <linux-rt-users@archiver.kernel.org>; Sun, 19 Mar 2023 23:40:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9181DC7618A
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Mar 2023 08:04:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229619AbjCSXkU (ORCPT
+        id S229890AbjCTIEQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 19 Mar 2023 19:40:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56282 "EHLO
+        Mon, 20 Mar 2023 04:04:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46554 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229596AbjCSXkR (ORCPT
+        with ESMTP id S229762AbjCTIEP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 19 Mar 2023 19:40:17 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9589ED507
-        for <linux-rt-users@vger.kernel.org>; Sun, 19 Mar 2023 16:39:31 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1679269170;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=kzVjkgShYRymTWICVbKBF3/OVB1io04N68cLL010wmw=;
-        b=Aq7Bhtbug0ysJwAqvpTNX7yOT529WhwXLrNny/k63pmeDMeEw89bRirJFrISZBnZdBRizs
-        eGg9ZJIlbrZoWG9TbNFfTqV5c1OnQoYBAdYGjC2N+CevHes9LJOzwWfj3w2X0+/UTE0R4P
-        pnJ3UHwmGxKZReUXRiNVDKmp28rNN58=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-596-49QM-TVlN7Gb6YvW5-LD1w-1; Sun, 19 Mar 2023 19:39:25 -0400
-X-MC-Unique: 49QM-TVlN7Gb6YvW5-LD1w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        Mon, 20 Mar 2023 04:04:15 -0400
+Received: from mout-p-102.mailbox.org (mout-p-102.mailbox.org [80.241.56.152])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6736A3C07;
+        Mon, 20 Mar 2023 01:04:12 -0700 (PDT)
+Received: from smtp2.mailbox.org (smtp2.mailbox.org [IPv6:2001:67c:2050:b231:465::2])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange ECDHE (P-384) server-signature RSA-PSS (4096 bits) server-digest SHA256)
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7907A800B23;
-        Sun, 19 Mar 2023 23:39:24 +0000 (UTC)
-Received: from localhost (unknown [10.22.16.83])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 1271540C20FA;
-        Sun, 19 Mar 2023 23:39:23 +0000 (UTC)
-Date:   Sun, 19 Mar 2023 20:39:23 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.310-rt145
-Message-ID: <ZBedK5cf26Hq8asW@uudg.org>
+        by mout-p-102.mailbox.org (Postfix) with ESMTPS id 4Pg6h80ytJz9sx1;
+        Mon, 20 Mar 2023 09:04:08 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=steffen.cc; s=MBO0001;
+        t=1679299448;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=bTYHukQgUX4nzP26XOdQWPxkwbbqFAk7D0BpCeYCkSE=;
+        b=kOMYnrqhCvK5YtABjE7vZcjQbdzAKuibr4CkPWDpinjcWO3NPh0elKeCpku3eglaXAY8LH
+        atk5d3oeqiH/vEb20+PJGadSjC5o03eQ7hkAjrFeoae3v+T/qmZWgJ6jnbQAdexRTJt1dt
+        DC36HewVs5jr9y0sMaJGkXOblANyMP02CqGzZBxc/s0e+H6gIeXtf9Dnukn9/uHeFPZxo4
+        lp91q8Bv1oGqvxFZZJjTvD/26C7Go6dUqXVUkoDPbfvu3vgAY5Se55Vf6u39saY3zAcCQB
+        CGnNvOARSgd5vlykhmo1n/wxSVQohL+a5peLTQ2hQMl+fJgfG2JXWCFr9QxL7g==
+From:   linux@steffen.cc
+To:     "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc:     Steffen Dirkwinkel <s.dirkwinkel@beckhoff.com>
+Subject: [PATCH v5.10-rt] kernel: fork: set wake_q_sleeper.next=NULL again in dup_task_struct
+Date:   Mon, 20 Mar 2023 09:03:47 +0100
+Message-Id: <20230320080347.32434-1-linux@steffen.cc>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Content-Transfer-Encoding: 8bit
+X-Rspamd-Queue-Id: 4Pg6h80ytJz9sx1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+From: Steffen Dirkwinkel <s.dirkwinkel@beckhoff.com>
 
-I'm pleased to announce the 4.14.310-rt145 stable release.
+Without this we get system hangs within a couple of days.
+It's also reproducible in minutes with "stress-ng --exec 20".
 
-You can get this release via the git tree at:
+Example error in dmesg:
+INFO: task stress-ng:163916 blocked for more than 120 seconds.
+      Not tainted 5.10.168-rt83 #2
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+task:stress-ng       state:D stack:    0 pid:163916 ppid: 72833 flags:0x00004000
+Call Trace:
+ __schedule+0x2bd/0x940
+ preempt_schedule_lock+0x23/0x50
+ rt_spin_lock_slowlock_locked+0x117/0x2c0
+ rt_spin_lock_slowlock+0x51/0x80
+ rt_write_lock+0x1e/0x1c0
+ do_exit+0x3ac/0xb20
+ do_group_exit+0x39/0xb0
+ get_signal+0x145/0x960
+ ? wake_up_new_task+0x21f/0x3c0
+ arch_do_signal_or_restart+0xf1/0x830
+ ? __x64_sys_futex+0x146/0x1d0
+ exit_to_user_mode_prepare+0x116/0x1a0
+ syscall_exit_to_user_mode+0x28/0x190
+ entry_SYSCALL_64_after_hwframe+0x61/0xc6
+RIP: 0033:0x7f738d9074a7
+RSP: 002b:00007ffdafda3cb0 EFLAGS: 00000246 ORIG_RAX: 00000000000000ca
+RAX: fffffffffffffe00 RBX: 00000000000000ca RCX: 00007f738d9074a7
+RDX: 0000000000028051 RSI: 0000000000000000 RDI: 00007f738be949d0
+RBP: 00007ffdafda3d88 R08: 0000000000000000 R09: 00007f738be94700
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000028051
+R13: 00007f738be949d0 R14: 00007ffdafda51e0 R15: 00007f738be94700
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Fixes: 1ba44dcf789d ("Merge tag 'v5.10.162' into v5.10-rt")
+Signed-off-by: Steffen Dirkwinkel <s.dirkwinkel@beckhoff.com>
+---
+ kernel/fork.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-  branch: v4.14-rt
-  Head SHA1: ba340b0a1efff3cd4efdc5df2d3f469780e21c2e
-
-Or to build 4.14.310-rt145 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.310.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.310-rt145.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
+diff --git a/kernel/fork.c b/kernel/fork.c
+index c6e0d555fca9..0c4c20eb762c 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -949,6 +949,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
+ 	tsk->splice_pipe = NULL;
+ 	tsk->task_frag.page = NULL;
+ 	tsk->wake_q.next = NULL;
++	tsk->wake_q_sleeper.next = NULL;
+ 	tsk->pf_io_worker = NULL;
+ 
+ 	account_kernel_stack(tsk, 1);
+-- 
+2.40.0
 
