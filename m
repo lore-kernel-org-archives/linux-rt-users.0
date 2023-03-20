@@ -2,129 +2,147 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C71A1C7618D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Mar 2023 11:13:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CB79C6FD1C
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Mar 2023 19:42:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229886AbjCTLNz (ORCPT
+        id S230436AbjCTTmm (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 20 Mar 2023 07:13:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56948 "EHLO
+        Mon, 20 Mar 2023 15:42:42 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37642 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229716AbjCTLNd (ORCPT
+        with ESMTP id S229671AbjCTTmX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Mar 2023 07:13:33 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1F64EAF2F
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Mar 2023 04:10:07 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1679310607;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=OfUmrG9y5/ZvplO9T6vCmmlrfIFkSsUHLev6hD28Uqg=;
-        b=aIN0aPpE5eRkr6qFV5X9bc0XzpWflcYJHVYr4E95b8V5+E9/qhdl01bXZ0whq5HQO/VQ/4
-        BC4FX+3YFFXNlwB70UeiGuhEOox6LJ47yRflNA8MetOYqQFEsb/pn3kdWinuPLvIBHG23p
-        to1yMcRIxQ/CTyObR7nnlg3eXZGRpio=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-453-xrnWbsS3Nyq-z2HMAtD-qg-1; Mon, 20 Mar 2023 07:10:05 -0400
-X-MC-Unique: xrnWbsS3Nyq-z2HMAtD-qg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 65E883806638;
-        Mon, 20 Mar 2023 11:10:05 +0000 (UTC)
-Received: from localhost (unknown [10.22.32.190])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 1D1801121315;
-        Mon, 20 Mar 2023 11:10:04 +0000 (UTC)
-Date:   Mon, 20 Mar 2023 08:10:04 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     linux@steffen.cc
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Steffen Dirkwinkel <s.dirkwinkel@beckhoff.com>
-Subject: Re: [PATCH v5.10-rt] kernel: fork: set wake_q_sleeper.next=NULL
- again in dup_task_struct
-Message-ID: <ZBg+3pGG9v+hQFYI@uudg.org>
-References: <20230320080347.32434-1-linux@steffen.cc>
-MIME-Version: 1.0
+        Mon, 20 Mar 2023 15:42:23 -0400
+Received: from EUR04-HE1-obe.outbound.protection.outlook.com (mail-he1eur04on2092.outbound.protection.outlook.com [40.107.7.92])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2B4927EE9;
+        Mon, 20 Mar 2023 12:37:39 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=ZlJj2lu82ih+qIpxGHJLtl+Q2I29K6ZFTOFa9AuDrRh9wHqMreBTYJF/4GIFfQNfi1UrVj7OiARuOgVXxOoHZwUTS+C9fhxUeXYudXADqMuPwpFbnlMEIEtu7UB82GCHyO9MAFmHWjfWej9W6Tuqt91v9n0RWIKtTrGahrB+HLZE+sBQhBnCtXTzGBUsTlLzCw2F+iLkIP97aoJwKxN6pXUCMWqwpNKm2Sc2g7IG7P2vrbzMN2PB/XAU3mI09NqIVNahL1rv1LFB9MBH/dg7NfRdwKl+ovEeJMghlzQY5fa/y4LIEMMIJTByfv2AWLol7pSluCUIQ8m74QTFPoQ9bw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=Muo2np+Qx9uuiVhiT07EL+FyvdusUbyAGr9wSm3sqD0=;
+ b=AcQNyofHbLGQrznApPoZP6XhDBPTbA6k4MPtPyimdgAZLVPIL4T/j3XsoDTw6i0816ABKCiIr8+PRhjsPkrLGsWVJ3lUDW/36a6CtnFPcqCtwr3Wr6KDNi3l87NWywSVU5jurbiH610PFfjUYQcoeGWVxu5G4xUnHkGwwLIeYKpu75o5ZkHkk9VBJYWa207Kvtc2J22NbY7B4fuUGC5uMuNLb6elHKBXFw8qrY4DOwfl7xI66o1p8csxpDaFmsc6wITA2z1KCUML0oWL6et+c17+v0da99l7WtaemuMrNPtFNDp7syyJB+eYPbC35Ij/VjWBoc2gVeG3DqFVPpeyZA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=concurrent-rt.com; dmarc=pass action=none
+ header.from=concurrent-rt.com; dkim=pass header.d=concurrent-rt.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bksv.onmicrosoft.com;
+ s=selector2-bksv-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Muo2np+Qx9uuiVhiT07EL+FyvdusUbyAGr9wSm3sqD0=;
+ b=I0jgf+M1tR2RAafh31gJMGsEDAAmGaiFgH9E/HnRshkQ5BCnLOobcTk1sEy1bustp9WWiHSYtA6JaiPFGFG7f00V4pjWidSciaxTRu3Hs/tSsXqhK2sF7BRRX42xEQGoZG2/TKbBsvFUovSY1sKOj8QhL2rVtu9i8beaK4qBgVGwcqJ/512oC0y9g1uQS5hB2mxguYtj1D6CIe9XeeYIDzwXzCN/4cC7NSvwKozMixX0Nb4ytVVMexQ9c96JprsW/5pUBDATj0zvDkqTEAM1AUHCUOZajBKD0/QvIHxCZMEFAvF1j/O05+H33Mp/9aeYqn2jWsvwSVMJBiEO/rLgeA==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=concurrent-rt.com;
+Received: from VI1PR09MB3582.eurprd09.prod.outlook.com (2603:10a6:803:13b::17)
+ by AM0PR09MB4065.eurprd09.prod.outlook.com (2603:10a6:208:1a1::24) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6178.37; Mon, 20 Mar
+ 2023 19:37:32 +0000
+Received: from VI1PR09MB3582.eurprd09.prod.outlook.com
+ ([fe80::33c6:e01c:20d0:45d]) by VI1PR09MB3582.eurprd09.prod.outlook.com
+ ([fe80::33c6:e01c:20d0:45d%7]) with mapi id 15.20.6178.037; Mon, 20 Mar 2023
+ 19:37:36 +0000
+Date:   Mon, 20 Mar 2023 15:37:31 -0400
+From:   Joe Korty <joe.korty@concurrent-rt.com>
+To:     lgoncalv@redhat.com
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: [PATCH 5.10.162-rt78] Restore initialization of wake_q_sleeper.next
+ in fork.c
+Message-ID: <20230320193731.GA36840@zipoli.concurrent-rt.com>
+Reply-To: Joe Korty <joe.korty@concurrent-rt.com>
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20230320080347.32434-1-linux@steffen.cc>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-ClientProxiedBy: BN9PR03CA0428.namprd03.prod.outlook.com
+ (2603:10b6:408:113::13) To VI1PR09MB3582.eurprd09.prod.outlook.com
+ (2603:10a6:803:13b::17)
+MIME-Version: 1.0
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: VI1PR09MB3582:EE_|AM0PR09MB4065:EE_
+X-MS-Office365-Filtering-Correlation-Id: 3e9d07cb-ef5e-4ab4-c2cc-08db297a8ecb
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: XyAbmpGI+1vG9goboFTKC/By/I5rVc/dVxYmtMj2RmmQTP18bAvjJ+VdgUwnPfK7XbRxrwWCc7n378iPECYbddG1DfYsTHs5eegsaE6q6uc4zgSQfmdNL6S9TjPFHEWOkLJzE3s/DE79nRDxjLutTEhJUMsmLTv8EcCYPmcEO1ONvFjxGDY+u9LXbAuOcUpHkMTTIv4rGB+VB1DuSOmbPmTWrXUxxaUgol6wYnHAK4Mci/iTlgaz/iWvAjvsWLacdZh4duyP77NiSnvZEUc2MZX2p3cPsTihDVr1fAJ+V9EMMJg9EqsoVT5ZgGjiI74MuxU/lhrYDL8w48PzU9rnsiVASifXAb420JyuRBqCcAHQ8EuWoooMMCDmZXy0LOrvVVR6yvAgWhn8nCrTtCMKzfNm90SNhmauWyQAHcJ+ftnWmwBi6qV2qIDNHP50ncDRy/Nki7iNmpTcrxGNIEngeGpkdXgaBipdLuoMeqQSc/djuAyevPL7ZHvRTvaYASoFTTtEBY6bmWPBCBRC8rl74JUCiFIlqaNWNblzXeaJbEtRcEoo3PaCQLcqtz/FFFpPHQXNVnpxv/XRxO0BwzBZle1EcBpZSMEG3xG9a+q/XDwBOlYSHy/8hMPnc1tGMlP37IEI1Tj+w8qX/uwhiAXe1T0NVFPpeuvH0wfncFOTcC3/OYrBOwF4gzjmLPEMgDQv
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:VI1PR09MB3582.eurprd09.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230025)(4636009)(366004)(136003)(39860400002)(396003)(376002)(346002)(451199018)(83380400001)(478600001)(6512007)(52116002)(6486002)(6506007)(316002)(1076003)(26005)(186003)(5660300002)(6666004)(3450700001)(33656002)(86362001)(38350700002)(38100700002)(8936002)(2906002)(66946007)(41300700001)(44832011)(6916009)(8676002)(4326008)(66476007)(66556008);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?AWB8opotYcmDIw8fNiCZ7+VtigD2HO9DecfIwzzleICLkmD/sgR5Jf7tisNC?=
+ =?us-ascii?Q?rBybFqa8jbZuPrEcEaTngJ79T6915WFhuNihDh8DDKVF1IV/cUyYal7VXkQz?=
+ =?us-ascii?Q?j4WGT5jFIW+vmgDBVwSwBWgpGnhECQLv7HiGih4scHrVBgPcZvYcFIo0jTKJ?=
+ =?us-ascii?Q?1TKppS60/g66I1kDjb0oPYPkCfAb6egw/5ZHCSNdDxvMomWjQ0tZSfB4dR2M?=
+ =?us-ascii?Q?f5j0w+JuatCHUvfSqjDKbQZCsJ/ocyzHDUaHDp2rljf/ZVo/gy9Wlq7wawCC?=
+ =?us-ascii?Q?d4CMLUg2LVTSSCaW5hIcH6sEmXu6EriS/ulIZLfgS+8l11dvxV2r/yUt0OOU?=
+ =?us-ascii?Q?XXoTp22huIOYiL9WKqgrOp10Aj7zslcS50dR5SXJo1SfsOABWNpMRdPRoqve?=
+ =?us-ascii?Q?IvBRnAqxQhMrJbElOBYwPQTM3JXM8ZrFqxyODsXvgOZ0rLzJ8KWUO6RzYGdZ?=
+ =?us-ascii?Q?HHoVSmNaJZz/qiZ4H6Hc1iujIEmpStqo8q+Ri46Dq0MTPaCq0H9OGDPByMZq?=
+ =?us-ascii?Q?Ufd3/NeEpXqCUV0rbu7/eH6rqQo90MHFfBJjQf8qpOhzpb2nmlvL28bMyUuC?=
+ =?us-ascii?Q?h53oWfoiDqo5sf2sf97hRrnfOOeLpZkHuO5jMNlcxTPs3g2NOE1HKjb49L28?=
+ =?us-ascii?Q?q35jUPNqQjQaVzduHdaXXEd9zsGk8jjkfQ6IeDZ1Z+fGuH7nS0OfmJmA/auC?=
+ =?us-ascii?Q?HDmwscoLSI9ysyBm8a357gAPINjUgaeHJmD2Y49x0vUvjpGGDb0KciZDcRRX?=
+ =?us-ascii?Q?cuZVJy2Ujs40OkxT39nLo8VdbPUyJQRd5WlGhf791TjFgrFwVCP/vyN0+asi?=
+ =?us-ascii?Q?E3Q85tRDpwKBUF8Djl1rt57MmpVXV/oxsERrlOCSdGek5SkwhjsBeV2iqyd0?=
+ =?us-ascii?Q?SjJnDkVkHsOBrsRRzjDhafJmzKKMRpCKJBQPApsKBbu68NLfDNl9HeNED71K?=
+ =?us-ascii?Q?rhZnefOHqtspbjTol/QIDWLOnKf+WzEaUXzSZelQRtr1dld5aUIpZvrrPvH2?=
+ =?us-ascii?Q?a15BE7/fn46gJCH0RfWFlaPy7z02zGMFBFbdf/5yYHSGT9FXCW/yhwoV40ki?=
+ =?us-ascii?Q?vHPuyNMJsuxyH7+sGWlcaoZNYS+KuVLWARK32eTxxBVzY3CZs6L0vqERJceT?=
+ =?us-ascii?Q?dU9v0WBjtILgtcbooRZzcQoNYilDMYpsRELs7XlIz2kYLEZgWEFdFGzM5SEt?=
+ =?us-ascii?Q?/rP/eWRMypMvaha3k/8UH1xDlTgGOUDcoQ0Ypyiwv3Iwo7weCR2wjy0hZ9c6?=
+ =?us-ascii?Q?wLKyguGZTpEA/nXiXNVvUpm+OC8MUQ4Ucil6MxNlYVu51IE6pjyPYjmynw8l?=
+ =?us-ascii?Q?tjUoQA3ajkVdJlby/0FEqfhPLJVWezeOKO6xWZWprHjemWKpAUcSRs9INJaP?=
+ =?us-ascii?Q?0SyXbU4AnFI8toZprmGqcYH3pfcvg5jxFYaNkEPH/fWr4xq6IGp3Qa2TUs7q?=
+ =?us-ascii?Q?2mGSDjUdW51ra3SPoUMqDzKYwI69t8ZdY+SDVTlNv/jNtorVGHpah5J6kTHj?=
+ =?us-ascii?Q?HMLh2G5v3g0sW7niaRWQIu5d58zlb0gpm/43QgJtBdXEFk3HpLg89sa9GW3i?=
+ =?us-ascii?Q?ep/MDWq3X0+d0jYELFTcsUDIkXV+ZMdlLDp8M5u02ii9KLLDMvN+0G4bXvly?=
+ =?us-ascii?Q?ww=3D=3D?=
+X-OriginatorOrg: concurrent-rt.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 3e9d07cb-ef5e-4ab4-c2cc-08db297a8ecb
+X-MS-Exchange-CrossTenant-AuthSource: VI1PR09MB3582.eurprd09.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 20 Mar 2023 19:37:36.2930
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 6cce74a3-3975-45e0-9893-b072988b30b6
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: eHoJstBkKA2Ia8PbA+MsOGRBbdtwZhDOONENR31U7M4EEZQTjtBYM8FOYEWDBWmG+heD0Dr/VBQ8choUoIOr7lvvPrt30d7mXcXfDJFBpvs=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR09MB4065
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Mar 20, 2023 at 09:03:47AM +0100, linux@steffen.cc wrote:
-> From: Steffen Dirkwinkel <s.dirkwinkel@beckhoff.com>
-> 
-> Without this we get system hangs within a couple of days.
-> It's also reproducible in minutes with "stress-ng --exec 20".
-> 
-> Example error in dmesg:
-> INFO: task stress-ng:163916 blocked for more than 120 seconds.
->       Not tainted 5.10.168-rt83 #2
-> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-> task:stress-ng       state:D stack:    0 pid:163916 ppid: 72833 flags:0x00004000
-> Call Trace:
->  __schedule+0x2bd/0x940
->  preempt_schedule_lock+0x23/0x50
->  rt_spin_lock_slowlock_locked+0x117/0x2c0
->  rt_spin_lock_slowlock+0x51/0x80
->  rt_write_lock+0x1e/0x1c0
->  do_exit+0x3ac/0xb20
->  do_group_exit+0x39/0xb0
->  get_signal+0x145/0x960
->  ? wake_up_new_task+0x21f/0x3c0
->  arch_do_signal_or_restart+0xf1/0x830
->  ? __x64_sys_futex+0x146/0x1d0
->  exit_to_user_mode_prepare+0x116/0x1a0
->  syscall_exit_to_user_mode+0x28/0x190
->  entry_SYSCALL_64_after_hwframe+0x61/0xc6
-> RIP: 0033:0x7f738d9074a7
-> RSP: 002b:00007ffdafda3cb0 EFLAGS: 00000246 ORIG_RAX: 00000000000000ca
-> RAX: fffffffffffffe00 RBX: 00000000000000ca RCX: 00007f738d9074a7
-> RDX: 0000000000028051 RSI: 0000000000000000 RDI: 00007f738be949d0
-> RBP: 00007ffdafda3d88 R08: 0000000000000000 R09: 00007f738be94700
-> R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000028051
-> R13: 00007f738be949d0 R14: 00007ffdafda51e0 R15: 00007f738be94700
-> 
-> Fixes: 1ba44dcf789d ("Merge tag 'v5.10.162' into v5.10-rt")
+In the transition from 5.10.158-rt77 to 5.10.162-rt78,
+the initialization of task_struct::wake_q_sleeper.next
+was dropped.  Restore it.
 
-Thank you for spotting and investigating that!
+This appears to be only a problem in 5.10.  5.15 does not
+have wake_q_sleeper; 4.19 does have it but its initialization
+there is still present.
 
-I dropped that specific line while fixing a small merge conflict from
+The 5.10.162-rt78 patch that damaged fork.c is:
 
-    788d0824269b io_uring: import 5.15-stable io_uring
+   0170-locking-rtmutex-add-sleeping-lock-implementation.patch
 
-Interestingly enough, I didn't see that problem while running stress-ng.
-I may need to add a few more, different, systems to my test base.
+I do not have a simple test that brings out this problem.
+My test consists of a shell script and eight binaries,
+all of which were written in Ada.  strace shows that it
+does a few thousand forks in rapid succession.  One of the
+forks stalls out, after which no fork after that returns.
+Eventually the 122 second stallout occurs and a large
+number of threads are shown to be waiting for tasklist
+lock, either in do_exit or in copy_process.  The kernel
+.config has rt and many debug features enabled, lockdep
+included.
 
-Anyway, I will add this fix to the next build.
+Signed-off-by: Joe Korty <joe.korty@concurrent-rt.com
 
-Luis
-
-
-> Signed-off-by: Steffen Dirkwinkel <s.dirkwinkel@beckhoff.com>
-> ---
->  kernel/fork.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index c6e0d555fca9..0c4c20eb762c 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -949,6 +949,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
->  	tsk->splice_pipe = NULL;
->  	tsk->task_frag.page = NULL;
->  	tsk->wake_q.next = NULL;
-> +	tsk->wake_q_sleeper.next = NULL;
->  	tsk->pf_io_worker = NULL;
->  
->  	account_kernel_stack(tsk, 1);
-> -- 
-> 2.40.0
-> 
----end quoted text---
-
+Index: b/kernel/fork.c
+===================================================================
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -960,6 +960,7 @@ static struct task_struct *dup_task_stru
+ 	tsk->splice_pipe = NULL;
+ 	tsk->task_frag.page = NULL;
+ 	tsk->wake_q.next = NULL;
++	tsk->wake_q_sleeper.next = NULL;
+ 	tsk->pf_io_worker = NULL;
+ 
+ 	account_kernel_stack(tsk, 1);
