@@ -2,64 +2,42 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 098FAC74A5B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Mar 2023 10:25:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D92DC74A5B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Mar 2023 10:57:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230158AbjCUKY6 (ORCPT
+        id S230402AbjCUK5m (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 21 Mar 2023 06:24:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42696 "EHLO
+        Tue, 21 Mar 2023 06:57:42 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32904 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230232AbjCUKYy (ORCPT
+        with ESMTP id S230387AbjCUK5k (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Mar 2023 06:24:54 -0400
-Received: from mail-ed1-x52d.google.com (mail-ed1-x52d.google.com [IPv6:2a00:1450:4864:20::52d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 45AD0CC31
-        for <linux-rt-users@vger.kernel.org>; Tue, 21 Mar 2023 03:24:49 -0700 (PDT)
-Received: by mail-ed1-x52d.google.com with SMTP id eg48so57486678edb.13
-        for <linux-rt-users@vger.kernel.org>; Tue, 21 Mar 2023 03:24:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1679394287;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=IojLlT21b+GTCHUtZS1AK6pqmw384n2x7uObuVhtqoc=;
-        b=UKXfMgENBu09lAoUSD7nvesPp0S9T1AzoiAdAZHyKn0WHgV3DqQ4FU8TJ10FzPwKXm
-         8D4JVetj2hzKVtpPDJK7+hkKLlUWAFNFXGfGSMAStSZABMIEUNHo/+TUqItMgDPM5uFl
-         hYLBeuTdHDlesRIrQL3alAhd6tijHEAxfDlvR+Pxe1QeJWkO9ExTUFCwXmfiL3vctEp/
-         qvj0W60irEm66vsi+17rc6DbP0XkD0f9x1pM3YLvPCoSx8SwELSOhJIqjHJG1UR/UOJ+
-         rTqNl5BG/aMw8NiBkYU0dVnQ1GZQ3wxpB0xNyg9a8nvj0cHsuMUf0Wz4uKsmXHxisRBg
-         S3ig==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112; t=1679394287;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=IojLlT21b+GTCHUtZS1AK6pqmw384n2x7uObuVhtqoc=;
-        b=VKdhsFU0egBk4q5QQKJ3YDebIJRUYZeIx/pTElbcFs1qVo/QrHtDkxg8U5mMIE9g7b
-         NXBMxUuXG1Iqr3IWo5Yer59cirmPdW/+L9kgRZEypdr9y2nATzBcapPwNkfX3YMDp1HG
-         NMhtd/F9+2QvI8CIkgyoGj0+Wg0fbxjvw4eaVGGSZ+U3vU4NXROLGwiFU4aC0Td1CXIP
-         N/0MNFPa2U2edIKCix8ZwC1TSiJ16sjjcDF4CY4gXeO7u844rOCfrIMzXuBIErfRcE+M
-         iKkMUk+u5Gk7xa7nzgYudFijJOjd9bv8dZwPzxoyxujf5V6ug1nYGxQmFq5V1IYNUQdL
-         q5Ig==
-X-Gm-Message-State: AO0yUKWTWWn9Xiv8akVUGGe493+E84PTItoAbVi2fOAJ5Fggy+BMoxq3
-        bL4EWK/rcbtsGnsvUK9f6yPXEg==
-X-Google-Smtp-Source: AK7set+Re3gHO4/eHWbeE7YoEV3C+eK0AvkdSnJPHMcJRgk8nhROk37jPOCG3x6x2FoLieODZrSWQw==
-X-Received: by 2002:a17:906:30d2:b0:8ab:4c4:d0f6 with SMTP id b18-20020a17090630d200b008ab04c4d0f6mr2023868ejb.56.1679394287704;
-        Tue, 21 Mar 2023 03:24:47 -0700 (PDT)
-Received: from ?IPV6:2a02:810d:15c0:828:2142:d8da:5ae4:d817? ([2a02:810d:15c0:828:2142:d8da:5ae4:d817])
-        by smtp.gmail.com with ESMTPSA id ia9-20020a170907a06900b00932b3e2c015sm4696908ejc.51.2023.03.21.03.24.46
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 21 Mar 2023 03:24:47 -0700 (PDT)
-Message-ID: <ba547675-59f2-84a9-82f3-93f6cb131799@linaro.org>
-Date:   Tue, 21 Mar 2023 11:24:46 +0100
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.9.0
-Subject: Re: [RFC PATCH] cpufreq: qcom-cpufreq-hw: allow work to be done on
- other CPU for PREEMPT_RT
-Content-Language: en-US
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Tue, 21 Mar 2023 06:57:40 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0194B2FCF4;
+        Tue, 21 Mar 2023 03:57:37 -0700 (PDT)
+Date:   Tue, 21 Mar 2023 11:57:34 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1679396256;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=X2c2FXwkwu2a7pTgBYID1e1ZvubF8W+pwt+MlZiF2uo=;
+        b=CFXmA3oRucB6khZI3QyKBsXLWjR3X/BjTrO4bj0BnyQeI6DWirDRdQQ1tu0Q1bDYvMb2nM
+        p0BSv5EYMqiV24QOUUPN5PU7pyBqu4r8Eb0A2Quz21xTPKTiBx0mDZopMzVhDIoyOs4ubm
+        EPYVlfF0m+P/CWXFne/En2wqF8yeue6iHGN0HTk959dZ1P6mHKYTaOg6luPRSOOivBFvz/
+        sJEFcVRNq0Q1wf9vGGnudhc3P+TYR4ZAdLWcmrdvh2oK+YNSxgfzG0KGHV3423bIItiQD/
+        koIpufbjMNMbhkBzf899oqZxl4j70eYPYjBnUFUp/LNrcYFwOZdoayF/FAUNgQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1679396256;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=X2c2FXwkwu2a7pTgBYID1e1ZvubF8W+pwt+MlZiF2uo=;
+        b=moZ61AqTHHrhIAi7KhS6vSjXYjNisECyrkxQR+hn325W+DbQvsHHN9/jCm6LKtEp++2HBo
+        REsQ/peqMk8JMFCg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
 Cc:     Andy Gross <agross@kernel.org>,
         Bjorn Andersson <andersson@kernel.org>,
         Konrad Dybcio <konrad.dybcio@linaro.org>,
@@ -69,73 +47,65 @@ Cc:     Andy Gross <agross@kernel.org>,
         linux-kernel@vger.kernel.org, Adrien Thierry <athierry@redhat.com>,
         Brian Masney <bmasney@redhat.com>,
         linux-rt-users@vger.kernel.org
+Subject: Re: [RFC PATCH] cpufreq: qcom-cpufreq-hw: allow work to be done on
+ other CPU for PREEMPT_RT
+Message-ID: <20230321105734.Z7F3Uvf1@linutronix.de>
 References: <20230315164910.302265-1-krzysztof.kozlowski@linaro.org>
  <20230321100456.0_DhhkZJ@linutronix.de>
-From:   Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
-In-Reply-To: <20230321100456.0_DhhkZJ@linutronix.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+ <ba547675-59f2-84a9-82f3-93f6cb131799@linaro.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <ba547675-59f2-84a9-82f3-93f6cb131799@linaro.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 21/03/2023 11:04, Sebastian Andrzej Siewior wrote:
-> On 2023-03-15 17:49:10 [+0100], Krzysztof Kozlowski wrote:
->> Qualcomm cpufreq driver configures interrupts with affinity to each
->> cluster, e.g.  dcvsh-irq-0, dcvsh-irq-4 and dcvsh-irq-7 on SM8250.
->> Triggered interrupt will schedule delayed work, but, since workqueue
->> prefers local CPUs, it might get executed on a CPU dedicated to realtime
->> tasks causing unexpected latencies in realtime workload.
->>
->> Use unbound workqueue for such case.  This might come with performance
->> or energy penalty, e.g. because of cache miss or when other CPU is
->> sleeping.
+On 2023-03-21 11:24:46 [+0100], Krzysztof Kozlowski wrote:
+> >> --- a/drivers/cpufreq/qcom-cpufreq-hw.c
+> >> +++ b/drivers/cpufreq/qcom-cpufreq-hw.c
+> >> @@ -390,7 +390,16 @@ static irqreturn_t qcom_lmh_dcvs_handle_irq(int irq, void *data)
+> >>  
+> >>  	/* Disable interrupt and enable polling */
+> >>  	disable_irq_nosync(c_data->throttle_irq);
+> >> -	schedule_delayed_work(&c_data->throttle_work, 0);
+> >> +
+> >> +	/*
+> >> +	 * Workqueue prefers local CPUs and since interrupts have set affinity,
+> >> +	 * the work might execute on a CPU dedicated to realtime tasks.
+> >> +	 */
+> >> +	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+> >> +		queue_delayed_work_on(WORK_CPU_UNBOUND, system_unbound_wq,
+> >> +				      &c_data->throttle_work, 0);
+> >> +	else
+> >> +		schedule_delayed_work(&c_data->throttle_work, 0);
+> > 
+> > You isolated CPUs and use this on PREEMPT_RT. And this special use-case
+> > is your reasoning to make this change and let it depend on PREEMPT_RT?
+> > 
+> > If you do PREEMPT_RT and you care about latency I would argue that you
+> > either disable cpufreq and set it to PERFORMANCE so that the highest
+> > available frequency is set once and not changed afterwards.
 > 
-> I miss the point where it explains that only PREEMPT_RT is affected by
-> this.
+> The cpufreq is set to performance. It will be changed anyway because
+> underlying FW notifies through such interrupts about thermal mitigation
+> happening.
 
-I assume "realtime tasks" implies this, but I can make it clearer.
+I still fail to understand why this is PREEMPT_RT specific and not a
+problem in general when it comes not NO_HZ_FULL and/ or CPU isolation.
+However the thermal notifications have nothing to do with cpufreq.
 
-> 
->> Signed-off-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
->> ---
->>  drivers/cpufreq/qcom-cpufreq-hw.c | 11 ++++++++++-
->>  1 file changed, 10 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/cpufreq/qcom-cpufreq-hw.c b/drivers/cpufreq/qcom-cpufreq-hw.c
->> index 2f581d2d617d..c5ff8d25fabb 100644
->> --- a/drivers/cpufreq/qcom-cpufreq-hw.c
->> +++ b/drivers/cpufreq/qcom-cpufreq-hw.c
->> @@ -390,7 +390,16 @@ static irqreturn_t qcom_lmh_dcvs_handle_irq(int irq, void *data)
->>  
->>  	/* Disable interrupt and enable polling */
->>  	disable_irq_nosync(c_data->throttle_irq);
->> -	schedule_delayed_work(&c_data->throttle_work, 0);
->> +
->> +	/*
->> +	 * Workqueue prefers local CPUs and since interrupts have set affinity,
->> +	 * the work might execute on a CPU dedicated to realtime tasks.
->> +	 */
->> +	if (IS_ENABLED(CONFIG_PREEMPT_RT))
->> +		queue_delayed_work_on(WORK_CPU_UNBOUND, system_unbound_wq,
->> +				      &c_data->throttle_work, 0);
->> +	else
->> +		schedule_delayed_work(&c_data->throttle_work, 0);
-> 
-> You isolated CPUs and use this on PREEMPT_RT. And this special use-case
-> is your reasoning to make this change and let it depend on PREEMPT_RT?
-> 
-> If you do PREEMPT_RT and you care about latency I would argue that you
-> either disable cpufreq and set it to PERFORMANCE so that the highest
-> available frequency is set once and not changed afterwards.
+> The only other solution is to disable the cpufreq device, e.g. by not
+> compiling it.
 
-The cpufreq is set to performance. It will be changed anyway because
-underlying FW notifies through such interrupts about thermal mitigation
-happening.
+People often disable cpufreq because _usually_ the system boots at
+maximum performance. There are however exceptions and even x86 system
+are configured sometimes to a lower clock speed by the firmware/ BIOS.
+In this case it is nice to have a cpufreq so it is possible to set the
+system during boot to a higher clock speed. And then remain idle unless
+the cpufreq governor changed.
 
-The only other solution is to disable the cpufreq device, e.g. by not
-compiling it.
+> Best regards,
+> Krzysztof
 
-Best regards,
-Krzysztof
-
+Sebastian
