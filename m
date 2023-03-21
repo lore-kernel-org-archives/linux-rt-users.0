@@ -2,107 +2,115 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E84D6C6FD1D
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Mar 2023 13:39:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9FB87C6FD1D
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Mar 2023 16:11:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231131AbjCUNj2 (ORCPT
+        id S229849AbjCUQLr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 21 Mar 2023 09:39:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35634 "EHLO
+        Tue, 21 Mar 2023 12:11:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38028 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230496AbjCUNj1 (ORCPT
+        with ESMTP id S229583AbjCUQLq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Mar 2023 09:39:27 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4CB511A7;
-        Tue, 21 Mar 2023 06:39:26 -0700 (PDT)
-Date:   Tue, 21 Mar 2023 14:39:22 +0100
+        Tue, 21 Mar 2023 12:11:46 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0B1D4D297;
+        Tue, 21 Mar 2023 09:11:44 -0700 (PDT)
+Date:   Tue, 21 Mar 2023 17:11:40 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1679405963;
+        s=2020; t=1679415102;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=uW5fpG7UdO7junfYXzpr1VASUwkYgjePEMEZI0s2uKU=;
-        b=nAS1PiYdPQp25hSPtZD9qb4LVvIfl5+Iq5YN9Mxy/T1EHmDnbg8pR/VShA4l3+N1ogc6aW
-        VwtM2UDEZYA6VEkgWdZEDkmtWRDDukXVPXLHXTbLyH6ZbjoAJ9Cfs5RNZleYiuxWbLLgIz
-        1sA8e5lPAUKvng31ckchCFGaRylR3MWgiUqvqFPZFhGgEtSm+7G2BcaFlLjBdm8CtUZKbR
-        3qpTBNFWDOtkTbPA45Uc3zYiQeeDTJQCf42V2Lq7jvmRwTnHCalrc8CIeNA59l2+sM/kZT
-        lmWt30xKc70YatBYQPgSqUoUNbdlTLtiQnQbj5RrCjiGXUR/tmB3GkxlH4nR2w==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=nG0bOzqdgsuZ4sSUc4UXldoJdmKCghe+OL+gnubJm/U=;
+        b=jJpuOhRcELM19ikq6o6peDpFolcfScaGLaNM8vHLDcS+6bhoPiMD9/Nbn0JpO/CDxxI2FU
+        9wBfiBLoe74DbcBzGjsjoFkfQr1BkdAPS89Eej/gCIT23RwHvL9h+7N/I97Y0E4bOoKANQ
+        o5SIznCLfxG2O5r08hvJLbtTL8OvhY/+4sTz+foiwCuyRV0QATb+2TNKYiRWMde6YIc1el
+        LQTMRYo03ZymIHkFNgw032Oa2688gQrhloXvi7Ek1t7xgps+piG2tlwLSmu2qfSz97c7MK
+        POAo02BCl9ZZyYCFE36z4DlW6iOanWfX3fal6XtLxMOheYb77migsFkeey0Y8Q==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1679405963;
+        s=2020e; t=1679415102;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=uW5fpG7UdO7junfYXzpr1VASUwkYgjePEMEZI0s2uKU=;
-        b=MuC8fJg05kjTXLdb4HxI+i197gCnckEYTxojaKeYuFelpshq39C3x6bX0kq2UQSeu12Sg0
-        dPtD75Vt7oRPDUAA==
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=nG0bOzqdgsuZ4sSUc4UXldoJdmKCghe+OL+gnubJm/U=;
+        b=HtVblRZN8VEhdTg0yUDC5F1Pr7yJQqO2u1qqfa0HDbzNzKDXpPob2YLcxvbYynx/fl03aE
+        QwNqIet1mEWH2rDA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
-Cc:     Andy Gross <agross@kernel.org>,
-        Bjorn Andersson <andersson@kernel.org>,
-        Konrad Dybcio <konrad.dybcio@linaro.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        linux-arm-msm@vger.kernel.org, linux-pm@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Adrien Thierry <athierry@redhat.com>,
-        Brian Masney <bmasney@redhat.com>,
-        linux-rt-users@vger.kernel.org,
-        Frederic Weisbecker <fweisbec@gmail.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>
-Subject: Re: [RFC PATCH] cpufreq: qcom-cpufreq-hw: allow work to be done on
- other CPU for PREEMPT_RT
-Message-ID: <20230321133922.ontdC41h@linutronix.de>
-References: <20230315164910.302265-1-krzysztof.kozlowski@linaro.org>
- <20230321100456.0_DhhkZJ@linutronix.de>
- <ba547675-59f2-84a9-82f3-93f6cb131799@linaro.org>
- <20230321105734.Z7F3Uvf1@linutronix.de>
- <3e227a63-a45f-8c20-f697-b263121ec173@linaro.org>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     Mel Gorman <mgorman@techsingularity.net>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Davidlohr Bueso <dave@stgolabs.net>,
+        Linux-RT <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: [PATCH v6] locking/rwbase: Mitigate indefinite writer starvation.
+Message-ID: <20230321161140.HMcQEhHb@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <3e227a63-a45f-8c20-f697-b263121ec173@linaro.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-03-21 12:27:42 [+0100], Krzysztof Kozlowski wrote:
-> > I still fail to understand why this is PREEMPT_RT specific and not a
-> > problem in general when it comes not NO_HZ_FULL and/ or CPU isolation.
-> 
-> Hm, good point, I actually don't know what is the workqueue
-> recommendation for NO_HZ_FULL CPUs - is still locality of the workqueue
-> preferred?
+The rw_semaphore and rwlock_t locks are unfair to writers. Readers can
+indefinitely acquire the lock unless the writer fully acquired the lock.
+This can never happen if there is always a reader in the critical
+section owning the lock.
 
-If you isolate a CPU you want the kernel to stay away from it. The idea
-is that something is done on that CPU and the kernel should leave it
-alone. That is why the HZ tick avoided. That is why timers migrate to
-the "housekeeping" CPU and do not fire on the CPU that it was programmed
-on (unless the timer has to fire on this CPU).
+Mel Gorman reported that since LTP-20220121 the dio_truncate test case
+went from having 1 reader to having 16 reader and the number of readers
+is sufficient to prevent the down_write ever succeeding while readers
+exist. Eventually the test is killed after 30 minutes as a failure.
 
-> And how such code would look like?
-> if (tick_nohz_tick_stopped())?
+Mel proposed a timeout to limit how long a writer can be blocked until
+the reader is forced into the slowpath.
+Thomas argued that there is no added value by providing this timeout.
+From PREEMPT_RT point of view, there are no critical rw_semaphore or
+rwlock_t locks left where the reader must be prefer.
 
-Yeah closer :) The CPU-mask for workqueues can still be different on
-non-NOHZ-full CPUs. Still you interrupt the CPU doing in-userland work
-and this is not desired.
+Mitigate indefinite writer starvation by forcing the READER into the
+slowpath once the WRITER attempts to acquire the lock.
 
-You have a threaded-IRQ which does nothing but schedules a worker. Why?
-Why not sleep and remain in that threaded IRQ until the work is done?
-You _can_ sleep in the threaded IRQ if you have to. Force-threaded is
-different but this is one is explicit threaded so you could do it.
-	
-> > However the thermal notifications have nothing to do with cpufreq.
-> 
-> They have. The FW notifies that thermal mitigation is happening and
-> maximum allowed frequency is now XYZ. The cpufreq receives this and sets
-> maximum allowed scaling frequency for governor.
+Reported-by: Mel Gorman <mgorman@techsingularity.net>
+Link: https://lore.kernel.org/877cwbq4cq.ffs@tglx
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+- v5..v6: https://lore.kernel.org/all/Y+0W0wgyaJqYHKoj@linutronix.de/
+  - dropped the timeout and forcing reader into the slowpath once a
+    writer is waiting.
 
-I see. So the driver is doing something in worst case. This interrupt,
-you have per-CPU and you need to do this CPU? I mean could you change
-the affinity of the interrupt to another CPU?
+- v4..v5 https://lore.kernel.org/20230120140847.4pjqf3oinemokcyp@techsingularity.net
+  - Reworded last paragraph of the commit message as Mel's suggestion
+  - RT/DL tasks are no longer excluded from the waiter timeout. There
+    is no reason why this should be done since no RT user relies on
+    rwsem (and would need this kind of behaviour). The critical user
+    from RT perspective replaced rwsem with RCU.
+    Avoiding special treatment avoids this kind of bug with RT
+    readers.
+  - Update comments accordingly.
 
-> Best regards,
-> Krzysztof
+ kernel/locking/rwbase_rt.c | 9 ---------
+ 1 file changed, 9 deletions(-)
 
-Sebastian
+diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+index c201aadb93017..25ec0239477c2 100644
+--- a/kernel/locking/rwbase_rt.c
++++ b/kernel/locking/rwbase_rt.c
+@@ -72,15 +72,6 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 	int ret;
+ 
+ 	raw_spin_lock_irq(&rtm->wait_lock);
+-	/*
+-	 * Allow readers, as long as the writer has not completely
+-	 * acquired the semaphore for write.
+-	 */
+-	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
+-		atomic_inc(&rwb->readers);
+-		raw_spin_unlock_irq(&rtm->wait_lock);
+-		return 0;
+-	}
+ 
+ 	/*
+ 	 * Call into the slow lock path with the rtmutex->wait_lock
+-- 
+2.40.0
+
