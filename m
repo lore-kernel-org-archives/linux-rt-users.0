@@ -2,115 +2,78 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9FB87C6FD1D
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Mar 2023 16:11:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D50EC6FD1F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Mar 2023 09:35:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229849AbjCUQLr (ORCPT
+        id S230221AbjCVJfM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 21 Mar 2023 12:11:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38028 "EHLO
+        Wed, 22 Mar 2023 05:35:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35740 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229583AbjCUQLq (ORCPT
+        with ESMTP id S229812AbjCVJfL (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Mar 2023 12:11:46 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0B1D4D297;
-        Tue, 21 Mar 2023 09:11:44 -0700 (PDT)
-Date:   Tue, 21 Mar 2023 17:11:40 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1679415102;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=nG0bOzqdgsuZ4sSUc4UXldoJdmKCghe+OL+gnubJm/U=;
-        b=jJpuOhRcELM19ikq6o6peDpFolcfScaGLaNM8vHLDcS+6bhoPiMD9/Nbn0JpO/CDxxI2FU
-        9wBfiBLoe74DbcBzGjsjoFkfQr1BkdAPS89Eej/gCIT23RwHvL9h+7N/I97Y0E4bOoKANQ
-        o5SIznCLfxG2O5r08hvJLbtTL8OvhY/+4sTz+foiwCuyRV0QATb+2TNKYiRWMde6YIc1el
-        LQTMRYo03ZymIHkFNgw032Oa2688gQrhloXvi7Ek1t7xgps+piG2tlwLSmu2qfSz97c7MK
-        POAo02BCl9ZZyYCFE36z4DlW6iOanWfX3fal6XtLxMOheYb77migsFkeey0Y8Q==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1679415102;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=nG0bOzqdgsuZ4sSUc4UXldoJdmKCghe+OL+gnubJm/U=;
-        b=HtVblRZN8VEhdTg0yUDC5F1Pr7yJQqO2u1qqfa0HDbzNzKDXpPob2YLcxvbYynx/fl03aE
-        QwNqIet1mEWH2rDA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     Mel Gorman <mgorman@techsingularity.net>,
+        Wed, 22 Mar 2023 05:35:11 -0400
+X-Greylist: delayed 370 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 22 Mar 2023 02:35:10 PDT
+Received: from outbound-smtp08.blacknight.com (outbound-smtp08.blacknight.com [46.22.139.13])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 27ECA5B5F9
+        for <linux-rt-users@vger.kernel.org>; Wed, 22 Mar 2023 02:35:08 -0700 (PDT)
+Received: from mail.blacknight.com (pemlinmail01.blacknight.ie [81.17.254.10])
+        by outbound-smtp08.blacknight.com (Postfix) with ESMTPS id D5CA31C3A51
+        for <linux-rt-users@vger.kernel.org>; Wed, 22 Mar 2023 09:28:56 +0000 (GMT)
+Received: (qmail 16978 invoked from network); 22 Mar 2023 09:28:56 -0000
+Received: from unknown (HELO techsingularity.net) (mgorman@techsingularity.net@[84.203.21.103])
+  by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated); 22 Mar 2023 09:28:56 -0000
+Date:   Wed, 22 Mar 2023 09:28:48 +0000
+From:   Mel Gorman <mgorman@techsingularity.net>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Peter Zijlstra <peterz@infradead.org>,
         Ingo Molnar <mingo@kernel.org>,
         Davidlohr Bueso <dave@stgolabs.net>,
         Linux-RT <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH v6] locking/rwbase: Mitigate indefinite writer starvation.
-Message-ID: <20230321161140.HMcQEhHb@linutronix.de>
+Subject: Re: [PATCH v6] locking/rwbase: Mitigate indefinite writer starvation.
+Message-ID: <20230322092848.hjlehutudsoz2hlz@techsingularity.net>
+References: <20230321161140.HMcQEhHb@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-15
 Content-Disposition: inline
+In-Reply-To: <20230321161140.HMcQEhHb@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The rw_semaphore and rwlock_t locks are unfair to writers. Readers can
-indefinitely acquire the lock unless the writer fully acquired the lock.
-This can never happen if there is always a reader in the critical
-section owning the lock.
+On Tue, Mar 21, 2023 at 05:11:40PM +0100, Sebastian Andrzej Siewior wrote:
+> The rw_semaphore and rwlock_t locks are unfair to writers. Readers can
+> indefinitely acquire the lock unless the writer fully acquired the lock.
+> This can never happen if there is always a reader in the critical
+> section owning the lock.
+> 
+> Mel Gorman reported that since LTP-20220121 the dio_truncate test case
+> went from having 1 reader to having 16 reader and the number of readers
+> is sufficient to prevent the down_write ever succeeding while readers
+> exist. Eventually the test is killed after 30 minutes as a failure.
+> 
+> Mel proposed a timeout to limit how long a writer can be blocked until
+> the reader is forced into the slowpath.
+> Thomas argued that there is no added value by providing this timeout.
+> From PREEMPT_RT point of view, there are no critical rw_semaphore or
+> rwlock_t locks left where the reader must be prefer.
+> 
 
-Mel Gorman reported that since LTP-20220121 the dio_truncate test case
-went from having 1 reader to having 16 reader and the number of readers
-is sufficient to prevent the down_write ever succeeding while readers
-exist. Eventually the test is killed after 30 minutes as a failure.
+s/prefer/preferred/
 
-Mel proposed a timeout to limit how long a writer can be blocked until
-the reader is forced into the slowpath.
-Thomas argued that there is no added value by providing this timeout.
-From PREEMPT_RT point of view, there are no critical rw_semaphore or
-rwlock_t locks left where the reader must be prefer.
+> Mitigate indefinite writer starvation by forcing the READER into the
+> slowpath once the WRITER attempts to acquire the lock.
+> 
+> Reported-by: Mel Gorman <mgorman@techsingularity.net>
+> Link: https://lore.kernel.org/877cwbq4cq.ffs@tglx
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Mitigate indefinite writer starvation by forcing the READER into the
-slowpath once the WRITER attempts to acquire the lock.
+Acked-by: Mel Gorman <mgorman@techsingularity.net>
 
-Reported-by: Mel Gorman <mgorman@techsingularity.net>
-Link: https://lore.kernel.org/877cwbq4cq.ffs@tglx
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
-- v5..v6: https://lore.kernel.org/all/Y+0W0wgyaJqYHKoj@linutronix.de/
-  - dropped the timeout and forcing reader into the slowpath once a
-    writer is waiting.
+Thanks Sebastian and Thomas!
 
-- v4..v5 https://lore.kernel.org/20230120140847.4pjqf3oinemokcyp@techsingularity.net
-  - Reworded last paragraph of the commit message as Mel's suggestion
-  - RT/DL tasks are no longer excluded from the waiter timeout. There
-    is no reason why this should be done since no RT user relies on
-    rwsem (and would need this kind of behaviour). The critical user
-    from RT perspective replaced rwsem with RCU.
-    Avoiding special treatment avoids this kind of bug with RT
-    readers.
-  - Update comments accordingly.
-
- kernel/locking/rwbase_rt.c | 9 ---------
- 1 file changed, 9 deletions(-)
-
-diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
-index c201aadb93017..25ec0239477c2 100644
---- a/kernel/locking/rwbase_rt.c
-+++ b/kernel/locking/rwbase_rt.c
-@@ -72,15 +72,6 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
- 	int ret;
- 
- 	raw_spin_lock_irq(&rtm->wait_lock);
--	/*
--	 * Allow readers, as long as the writer has not completely
--	 * acquired the semaphore for write.
--	 */
--	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
--		atomic_inc(&rwb->readers);
--		raw_spin_unlock_irq(&rtm->wait_lock);
--		return 0;
--	}
- 
- 	/*
- 	 * Call into the slow lock path with the rtmutex->wait_lock
 -- 
-2.40.0
-
+Mel Gorman
+SUSE Labs
