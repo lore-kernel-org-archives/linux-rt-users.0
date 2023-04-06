@@ -2,151 +2,274 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 08E03C76195
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Mar 2023 09:40:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18C29C7618D
+	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Apr 2023 21:22:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232349AbjC1Jj7 (ORCPT
+        id S236825AbjDFVWs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Mar 2023 05:39:59 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53358 "EHLO
+        Thu, 6 Apr 2023 17:22:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49600 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232477AbjC1Jjr (ORCPT
+        with ESMTP id S231316AbjDFVWo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Mar 2023 05:39:47 -0400
-Received: from EUR01-VE1-obe.outbound.protection.outlook.com (mail-ve1eur01on2089.outbound.protection.outlook.com [40.107.14.89])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3BC3C619C;
-        Tue, 28 Mar 2023 02:39:41 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=ST2DARC6q9TIlaGSAlqhNDvcG/154bReRC24ZUFT33wKnD+IAToYsp4lSgocg5SvgtuTAR5kN9tEEa/0SBq7QFvGX5/8s6CH0E7xHcYKXD1cboRwTcrbBQY2BLFo1sbVKiN4U3lds18GUg1iUtDZUZQpSkzo0wD3g591j+Xu2zPKs6SS94BWZhI2WEFOTV3FDY/EV/ZRWzcockHFxKx3P6xyK1gUZs1nJ6TMeJ+nj55eXorFym/gcTPsGPli6L1JjY6j3a2bVGMyCXgQ9hdFk6MhR40gKyFJoAGW83T5sFKALVNHAY3w22smpfNus2iLWUcWhLFfxxPtrZlUWOK2JA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=uqnHQP3h0RGkaQfzjAwhjGtSU6JGxmB3YE2JSZoAE/c=;
- b=AMmfCr5ulUFKbYzaz1TSKnDrcTZxipTa78RW5doQzpCph7OAEjTqY9MzDLa7Bovl1iqLmHGyDbkn/zU6242ir9X/wPxkXDIji0+fAf1DyS4QmCP7Ama5t8JkCsXwYnAiLBY/ChcP13El+bnIPXlpVTgSmIGzl2aDN0QnjIui3zoBESfuyjuif/pVULncgPThCwO6EhcKrxHECfGCEuWE74JfDy32zh6lKHEumhfXBohaYJpu0PWeOKqO+hJJwJ0dckxUsFWmqPUYraxQODAzH6a5/lz5iPihDu4N8NtIUt5UHHsAU/6JgYzL28lEAl/bryuEs3ZZsJ2Ss8AR1rDfXg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=siemens.com; dmarc=pass action=none header.from=siemens.com;
- dkim=pass header.d=siemens.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=siemens.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=uqnHQP3h0RGkaQfzjAwhjGtSU6JGxmB3YE2JSZoAE/c=;
- b=SwKWzSg8uWGDXtOqJOsM8BxV3vxjmS9GsfvqgEyVWYIGEf9/A0dNc6oS7UDEVaYjGsSXPnPSHW5l5Ry3uZ9NTOx/rSCKFySDahMF/4h3mDXBFsxVuXDSDdwFNEsDSqw+sZ3nA1vD00G64DDl3UISDhz9dza7K9fSQf4lzL9bscpLYdp7ofGP8HMfwMjIhyFIzCXqw6WEZhLlxviEMXWEyZts5ybgZFqq5NrgTuckJ9jDdTR8zR/FKFqt5Z0eTf/zFJeP9IXWhrvX7S4ZFNsdYB5sKqb//Wkffwf1nbqcI5R8FpXErik5LqQOaH26AN6jOlMgtmy+GJs9alURE35rhQ==
-Received: from AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:20b:47b::22)
- by GV1PR10MB6123.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:150:99::12) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6254.16; Tue, 28 Mar
- 2023 09:39:38 +0000
-Received: from AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::a5de:aa91:6d51:426e]) by AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM
- ([fe80::a5de:aa91:6d51:426e%2]) with mapi id 15.20.6254.018; Tue, 28 Mar 2023
- 09:39:38 +0000
-From:   "Bouska, Zdenek" <zdenek.bouska@siemens.com>
-To:     Will Deacon <will@kernel.org>,
-        Catalin Marinas <catalin.marinas@arm.com>
-CC:     Thomas Gleixner <tglx@linutronix.de>,
-        "linux-arm-kernel@lists.infradead.org" 
-        <linux-arm-kernel@lists.infradead.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "Kiszka, Jan" <jan.kiszka@siemens.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Nishanth Menon <nm@ti.com>, Puranjay Mohan <p-mohan@ti.com>
-Subject: Re: Unfair qspinlocks on ARM64 without LSE atomics => 3ms delay in
- interrupt handling
-Thread-Topic: Unfair qspinlocks on ARM64 without LSE atomics => 3ms delay in
- interrupt handling
-Thread-Index: AQHZXitnsElEVi8SeUyEotrWHWfO2q8KKDUAgAAS5ICABBn0BA==
-Date:   Tue, 28 Mar 2023 09:39:38 +0000
-Message-ID: <AS1PR10MB5675DC0F58D71A8C82B49B14EB8B9@AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM>
-References: <AS1PR10MB56750EFD7BEA779D033A68CBEB849@AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM>
- <ZB3XaNtVqGtYHHBw@arm.com> <20230324180904.GA28266@willie-the-truck>
-In-Reply-To: <20230324180904.GA28266@willie-the-truck>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-msip_labels: MSIP_Label_9d258917-277f-42cd-a3cd-14c4e9ee58bc_Enabled=True;MSIP_Label_9d258917-277f-42cd-a3cd-14c4e9ee58bc_SiteId=38ae3bcd-9579-4fd4-adda-b42e1495d55a;MSIP_Label_9d258917-277f-42cd-a3cd-14c4e9ee58bc_SetDate=2023-03-28T09:39:37.487Z;MSIP_Label_9d258917-277f-42cd-a3cd-14c4e9ee58bc_Name=C1
- -
- Restricted;MSIP_Label_9d258917-277f-42cd-a3cd-14c4e9ee58bc_ContentBits=0;MSIP_Label_9d258917-277f-42cd-a3cd-14c4e9ee58bc_Method=Standard;
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=siemens.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: AS1PR10MB5675:EE_|GV1PR10MB6123:EE_
-x-ms-office365-filtering-correlation-id: 41dfc1d3-121f-4ca6-6c73-08db2f705922
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: qifdzfhjQ9Gsj73aWEhAKoKGoH2sPFxJA0qSLhhRHIbtwk95sLN6t+LOtZZ99SVtzE8I54UJQlxw9d7oTJX7M7b9QdHJt878Nmejis/p4SbCb2nRSamZ3tWVeXgPb4mP14YWCyQVCL8d9RvYnMw+F+QM6jLwn/vE1JXb/9W3sEfjAyWlvIPrJHEA5yqhR3vc1p5u45SfEMXOZaOvmnsuPYs/QamhY84Zyhtgka/B+ZsJ7kvyBand5o6mS9ceBYVk86PXjQgMxyv5G1qs/leaqKeUPehMjHRzmqUwRKAz8zSAonK7dsngIEYxhr6mWFjORdvGlObUxD0Ki05yGEJNSEym9UrCcEVTXxqCdEYdrO9jZR/iPq1oKg7LG8k02CujTVGAorg3xEhuG4DUiIu6RD2nlNEMBRDG5zp+TxfNO1IYyIFP5g6pIGh2RiJb3ek3OZN8TNzFmCRtlcQ38GPzP0tiRmkowchjyaMb2JQHmDaSBmxo621gmS8Wwn/6g2cy4IWMmkhMIgIoXJnD3blB6iFjZckrF5LvaIvr/mz+CNMBjhYkKr9pr79t9y4xiWxqi7w04GXOr0HsoFEj5hIPUPJZqYVgTfgbDUCg/vx5DMY=
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230028)(4636009)(346002)(136003)(366004)(39860400002)(376002)(396003)(451199021)(9686003)(6506007)(41300700001)(55016003)(186003)(966005)(7696005)(71200400001)(478600001)(54906003)(316002)(110136005)(38100700002)(4326008)(64756008)(66476007)(66446008)(2906002)(4744005)(76116006)(66946007)(66556008)(91956017)(8676002)(33656002)(52536014)(86362001)(38070700005)(82960400001)(5660300002)(8936002)(122000001);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-2?Q?mdYb3OwvF6sovYwODOsv2buZDdAnbChD0n1mNtWMJ4umDlR3myfgqwnF6F?=
- =?iso-8859-2?Q?GfzOxU4sBybbyTDp4M7SwzGRWGv8T2cmk6ur5/tY8+tVinO7bxXyk8E71A?=
- =?iso-8859-2?Q?qef6g17XsLzUWqY//+Ko+4RszUATQ+Ob1TYPORE4j4VRyB3QndfzGG29ty?=
- =?iso-8859-2?Q?vU2bXRVZ8h4GsG5h2ZPnIzvkr0Agf7lOqYy/jITrIxhoa0Pp1qlUiBLP29?=
- =?iso-8859-2?Q?unS/2GSzDwZJLuKCZqmEc1UYvX8uEnmX0WzvYPQ8P47E/R8JNOGuNXcBca?=
- =?iso-8859-2?Q?IBxlTTj5klay9QNw+MoLhybigwsZ6x8Z/kqq01F1O5K1aLJ82ZTA5bFcEx?=
- =?iso-8859-2?Q?ryOOB476EFcFsb5jfEbX25j1AJolXyBBVye7Mquu7kBPm9b0IRYccqEByp?=
- =?iso-8859-2?Q?X97uZwq+j+iMe5ue3LqMa7sj+mSHuTSJSTlvQIPdIqLg7VC5sr7cx0z76M?=
- =?iso-8859-2?Q?xst5VQlIWKyZqccGb59GyZJ7M9Vd5khUjZymwTR3PIDsJdwH123TSMQ5FL?=
- =?iso-8859-2?Q?oQMFR7iQL/JumJvfJZCjyfZmF0F2nmDOgEoEtlQS2xTA45rG1FFAsRmMZ2?=
- =?iso-8859-2?Q?gANOpgJ6c7WGjcrMwIm6FucWvhXfOVKuDdLyRM86iKkSdAdz8ilKYdW+eB?=
- =?iso-8859-2?Q?gpC5TSHouXpO//uSHrfnNqQ0KbUWfCCAStjmrls80C0lgRWqip8o4ukHqW?=
- =?iso-8859-2?Q?WDWCWP5DgHEFgN7kXRrvPeKHy1oki8fPfDuuoFtk/S/SU3tNoqxGR/gtCe?=
- =?iso-8859-2?Q?WjfTo7a1GwUnHxuPb8rOtF2b+mmYyrZrPz/oLRx2ffG4i4fFwE4wJnkbQT?=
- =?iso-8859-2?Q?ThV9r2D6QmxfVPAFy29cH7zihMhv4RV/bsUhMoW355Z34b01g6FGB4ce5C?=
- =?iso-8859-2?Q?NxpX9YyJhupncZ76njTzECka44cl03eW+qzxfu4RJHw7DnTjpmGS0/3V4D?=
- =?iso-8859-2?Q?sRBnwUsgv4KFVCsXWaNAbs5GjulZHIUlATaHBWAm+5xFIibkXTP32tm7AS?=
- =?iso-8859-2?Q?kB6ohGaZZl94hwJiXXnyrUV8+6q5WKG+MVzHhGRTxNbOXrZzObED5XwC7Z?=
- =?iso-8859-2?Q?Sxf4YvYOacblTq8Oy/3FJ6qCz2Zeyd7nYxUBt8Afkw0ACNjiLYvPRJyEzk?=
- =?iso-8859-2?Q?khZor/q+TesygXg8MLG7KXCstGcuTL+L6C1HhZs/elnikqyinNyZU52z9u?=
- =?iso-8859-2?Q?9RZuLWNd0i80MTaQ0ZEauqOJCKYPoVg978bcAf1KJb9U+mw8cem7qoO32V?=
- =?iso-8859-2?Q?XSQYobeSDcVZW0TcdXctajYP94hssd4iEy7qDlmUcgOOjTUue1feOvioFb?=
- =?iso-8859-2?Q?iCSjjy2V0bN3G/TreuSNf8GkGSjpcefEl9LZc3fSjs2y5Acp6dklg4KVmA?=
- =?iso-8859-2?Q?4E9etoCJZVxlffde7+PqZHMBBO6A4ET1MO670VYeSosKKK33n2jhjvo2IH?=
- =?iso-8859-2?Q?EZup1fpsnW5JrA3sebtvAs9WgTR2B02TFFf+cF/sXgLn3AibkFXQT9laPP?=
- =?iso-8859-2?Q?nAmksZ7hc02lHvkS1G4eewzPjcgMiF6tXxK6hrICSwgnHtXkl3ls4OmkZY?=
- =?iso-8859-2?Q?PDNHdLODuu4TRegyow74n7zHIVW3LL0QPAZni/Go+GYw1DZpbn2wA5z0Av?=
- =?iso-8859-2?Q?lND/s64Wi7ck7s4k9ytCQ1io+mVZN6HG9r/EDel0MYP8c88zvhqIHmHqAv?=
- =?iso-8859-2?Q?XHz0PflMMnN9J6cwrTA=3D?=
-Content-Type: text/plain; charset="iso-8859-2"
-Content-Transfer-Encoding: quoted-printable
+        Thu, 6 Apr 2023 17:22:44 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3ABDFA275;
+        Thu,  6 Apr 2023 14:22:42 -0700 (PDT)
+Date:   Thu, 6 Apr 2023 23:22:40 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1680816161;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=jKt28xVhGx+GsxyYmoh7wHS36qYx1kF/bzeTQ6uwioM=;
+        b=gYdaiMSon+fukxtJAijz5OrsUgKL/FdBUc5QItYKZBnUEUIboXOCdou/2xn++vSsFKHB/3
+        utZ8wYKIBO1utYZZO7IchhAD+sXAB6do3yuMTOoNMRpyiLYInTIecHzP/rdQIEF5220HRa
+        nbXUEjmBXhgtRWwDJ/9G+1fPKypwQzgcfW0qrCrQqebos9WJ9EqYjynRtI8aeeduOC2HIf
+        3uQoGcwteDX4DMsuau7Q3qeTgLqBFV8gaWfFppSqD8zCMi9UK5//l2GvSR6JpfFBWAAsHJ
+        NS/f5O2QgzmCekTz1xyWWO6BdWuGRGMJwY9h/2jrcpJi4fETsKvlOuUhX0GTkw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1680816161;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=jKt28xVhGx+GsxyYmoh7wHS36qYx1kF/bzeTQ6uwioM=;
+        b=kAsmI2BXmaeY/OHdRQdCdyIIkZT/gMt/elajmdB8AzeC+Nri8AM6v3PxyPz+sxfhmQwr/4
+        JrFDdKKByF56B7Cg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.3-rc5-rt8
+Message-ID: <20230406212240.FBSL4HBN@linutronix.de>
 MIME-Version: 1.0
-X-OriginatorOrg: siemens.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AS1PR10MB5675.EURPRD10.PROD.OUTLOOK.COM
-X-MS-Exchange-CrossTenant-Network-Message-Id: 41dfc1d3-121f-4ca6-6c73-08db2f705922
-X-MS-Exchange-CrossTenant-originalarrivaltime: 28 Mar 2023 09:39:38.1032
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 38ae3bcd-9579-4fd4-adda-b42e1495d55a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 8fFIkn37dY/09pDNo1i/+LjeBne4LmyKrkXOMWFcJo+PMB1QjVjxDtXVAfefoYQI2WBobawdFabZ8H/oaluPpWf95INIdGnnP2Vybb5KJcY=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: GV1PR10MB6123
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-> > A longer cpu_relax() here would improve things (on arm64 this function=
-=0A=
-> > is a no-op) but maybe Thomas or Will have a better idea.=0A=
->=0A=
-> I had a pretty gross cpu_relax() implementation using wfe somewhere on=0A=
-> LKML, so you could try that if you can dig it up.=0A=
-=0A=
-Do you mean cpu_relax() implementation from this email [1] from=0A=
-Fri, 28 Jul 2017 ?=0A=
-=0A=
-I tried to rebase it on recent Linux, but it did not even boot for me.=0A=
-Only this was printed:=0A=
-[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd034]=0A=
-[    0=0A=
-=0A=
-But cpu_relax() implementation from [1] fixes my problem if I use it=0A=
-only in irq_finalize_oneshot().=0A=
-=0A=
-[1] https://lore.kernel.org/lkml/20170728092831.GA24839@arm.com/=0A=
-=0A=
-Zdenek Bouska=0A=
-=0A=
---=0A=
-Siemens, s.r.o=0A=
-Siemens Advanta Development=
+Dear RT folks!
+
+I'm pleased to announce the v6.3-rc5-rt8 patch set. 
+
+Changes since v6.3-rc5-rt7:
+
+  - Optimise the rtmutex slowpath with DEBUG_RT_MUTEXES enabled to not
+    always invoke blk_flush_plug() if the lock can be acquired without
+    blocking.
+
+  - Cache one struct sigqueue on signal reception and use this cache
+    while sending a signal. This improves latency for signal heavy
+    applications.
+
+  - Improve the comment in ptrace_stop() regarding the current situation
+    and PREEMPT_RT.
+
+Known issues
+     None
+
+The delta patch against v6.3-rc5-rt7 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/incr/patch-6.3-rc5-rt7-rt8.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.3-rc5-rt8
+
+The RT patch against v6.3-rc5 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/older/patch-6.3-rc5-rt8.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.3/older/patches-6.3-rc5-rt8.tar.xz
+
+Sebastian
+
+diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+index 20099268fa257..a39be9f9ba966 100644
+--- a/include/linux/sched/signal.h
++++ b/include/linux/sched/signal.h
+@@ -22,6 +22,7 @@ struct sighand_struct {
+ 	refcount_t		count;
+ 	wait_queue_head_t	signalfd_wqh;
+ 	struct k_sigaction	action[_NSIG];
++	struct sigqueue		*sigqueue_cache;
+ };
+ 
+ /*
+@@ -349,6 +350,7 @@ extern int send_sig(int, struct task_struct *, int);
+ extern int zap_other_threads(struct task_struct *p);
+ extern struct sigqueue *sigqueue_alloc(void);
+ extern void sigqueue_free(struct sigqueue *);
++extern void sigqueue_free_cached_entry(struct sigqueue *q);
+ extern int send_sigqueue(struct sigqueue *, struct pid *, enum pid_type);
+ extern int do_sigaction(int, struct k_sigaction *, struct k_sigaction *);
+ 
+diff --git a/kernel/fork.c b/kernel/fork.c
+index c0257cbee0931..e0988e952b707 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1661,6 +1661,7 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
+ 	RCU_INIT_POINTER(tsk->sighand, sig);
+ 	if (!sig)
+ 		return -ENOMEM;
++	sig->sigqueue_cache = NULL;
+ 
+ 	refcount_set(&sig->count, 1);
+ 	spin_lock_irq(&current->sighand->siglock);
+@@ -1677,7 +1678,17 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
+ void __cleanup_sighand(struct sighand_struct *sighand)
+ {
+ 	if (refcount_dec_and_test(&sighand->count)) {
++		struct sigqueue *sigqueue = NULL;
++
+ 		signalfd_cleanup(sighand);
++		spin_lock_irq(&sighand->siglock);
++		if (sighand->sigqueue_cache) {
++			sigqueue = sighand->sigqueue_cache;
++			sighand->sigqueue_cache = NULL;
++		}
++		spin_unlock_irq(&sighand->siglock);
++
++		sigqueue_free_cached_entry(sigqueue);
+ 		/*
+ 		 * sighand_cachep is SLAB_TYPESAFE_BY_RCU so we can free it
+ 		 * without an RCU grace period, see __lock_task_sighand().
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index c1bc2cb1522cb..08c599a5089a2 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1698,9 +1698,18 @@ static int __sched rt_mutex_slowlock(struct rt_mutex_base *lock,
+ static __always_inline int __rt_mutex_lock(struct rt_mutex_base *lock,
+ 					   unsigned int state)
+ {
++	/*
++	 * With DEBUG enabled cmpxchg trylock will always fail. Instead of
++	 * invoking blk_flush_plug() try the trylock-slowpath first which will
++	 * succeed if the lock is not contended.
++	 */
++#ifdef CONFIG_DEBUG_RT_MUTEXES
++	if (likely(rt_mutex_slowtrylock(lock)))
++		return 0;
++#else
+ 	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+ 		return 0;
+-
++#endif
+ 	/*
+ 	 * If we are going to sleep and we have plugged IO queued, make sure to
+ 	 * submit it to avoid deadlocks.
+diff --git a/kernel/signal.c b/kernel/signal.c
+index b190366f5c98b..138d68cfc204d 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -432,7 +432,18 @@ __sigqueue_alloc(int sig, struct task_struct *t, gfp_t gfp_flags,
+ 		return NULL;
+ 
+ 	if (override_rlimit || likely(sigpending <= task_rlimit(t, RLIMIT_SIGPENDING))) {
+-		q = kmem_cache_alloc(sigqueue_cachep, gfp_flags);
++
++		if (!sigqueue_flags) {
++			struct sighand_struct *sighand = t->sighand;
++
++			lockdep_assert_held(&sighand->siglock);
++			if (sighand->sigqueue_cache) {
++				q = sighand->sigqueue_cache;
++				sighand->sigqueue_cache = NULL;
++			}
++		}
++		if (!q)
++			q = kmem_cache_alloc(sigqueue_cachep, gfp_flags);
+ 	} else {
+ 		print_dropped_signal(sig);
+ 	}
+@@ -447,14 +458,43 @@ __sigqueue_alloc(int sig, struct task_struct *t, gfp_t gfp_flags,
+ 	return q;
+ }
+ 
+-static void __sigqueue_free(struct sigqueue *q)
++static bool sigqueue_cleanup_accounting(struct sigqueue *q)
+ {
+ 	if (q->flags & SIGQUEUE_PREALLOC)
+-		return;
++		return false;
+ 	if (q->ucounts) {
+ 		dec_rlimit_put_ucounts(q->ucounts, UCOUNT_RLIMIT_SIGPENDING);
+ 		q->ucounts = NULL;
+ 	}
++	return true;
++}
++
++static void __sigqueue_free(struct sigqueue *q)
++{
++	if (!sigqueue_cleanup_accounting(q))
++		return;
++	kmem_cache_free(sigqueue_cachep, q);
++}
++
++void sigqueue_free_cached_entry(struct sigqueue *q)
++{
++	if (!q)
++		return;
++	kmem_cache_free(sigqueue_cachep, q);
++}
++
++static void sigqueue_cache_or_free(struct sigqueue *q)
++{
++	struct sighand_struct *sighand = current->sighand;
++
++	if (!sigqueue_cleanup_accounting(q))
++		return;
++
++	lockdep_assert_held(&sighand->siglock);
++	if (!sighand->sigqueue_cache) {
++		sighand->sigqueue_cache = q;
++		return;
++	}
+ 	kmem_cache_free(sigqueue_cachep, q);
+ }
+ 
+@@ -594,7 +634,7 @@ static void collect_signal(int sig, struct sigpending *list, kernel_siginfo_t *i
+ 			(info->si_code == SI_TIMER) &&
+ 			(info->si_sys_private);
+ 
+-		__sigqueue_free(first);
++		sigqueue_cache_or_free(first);
+ 	} else {
+ 		/*
+ 		 * Ok, it wasn't in the queue.  This must be
+@@ -2296,8 +2336,24 @@ static int ptrace_stop(int exit_code, int why, unsigned long message,
+ 		do_notify_parent_cldstop(current, false, why);
+ 
+ 	/*
+-	 * Don't want to allow preemption here, because
+-	 * sys_ptrace() needs this task to be inactive.
++	 * The previous do_notify_parent_cldstop() invocation woke ptracer.
++	 * One a PREEMPTION kernel this can result in preemption requirement
++	 * which will be fulfilled after read_unlock() and the ptracer will be
++	 * put on the CPU.
++	 * The ptracer is in wait_task_inactive(, __TASK_TRACED) waiting for
++	 * this task wait in schedule(). If this task gets preempted then it
++	 * remains enqueued on the runqueue. The ptracer will observe this and
++	 * then sleep for a delay of one HZ tick. In the meantime this task
++	 * gets scheduled, enters schedule() and will wait for the ptracer.
++	 *
++	 * This preemption point is not bad from correctness point of view but
++	 * extends the runtime by one HZ tick time due to the ptracer's sleep.
++	 * The preempt-disable section ensures that there will be no preemption
++	 * between unlock and schedule() and so improving the performance since
++	 * the ptracer has no reason to sleep.
++	 *
++	 * This optimisation is not doable on PREEMPT_RT due to the spinlock_t
++	 * within the preempt-disable section.
+ 	 */
+ 	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
+ 		preempt_disable();
+diff --git a/localversion-rt b/localversion-rt
+index 045478966e9f1..700c857efd9ba 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt7
++-rt8
