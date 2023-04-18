@@ -2,92 +2,75 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 92259C77B71
-	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Apr 2023 03:23:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AAA22C77B75
+	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Apr 2023 15:08:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229560AbjDRDX2 (ORCPT
+        id S231181AbjDRPId (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Apr 2023 23:23:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52192 "EHLO
+        Tue, 18 Apr 2023 11:08:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34040 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229517AbjDRDX1 (ORCPT
+        with ESMTP id S229564AbjDRPIc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Apr 2023 23:23:27 -0400
-Received: from mail-ed1-x533.google.com (mail-ed1-x533.google.com [IPv6:2a00:1450:4864:20::533])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 778A51996
-        for <linux-rt-users@vger.kernel.org>; Mon, 17 Apr 2023 20:23:25 -0700 (PDT)
-Received: by mail-ed1-x533.google.com with SMTP id 4fb4d7f45d1cf-506b2a08877so663863a12.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 17 Apr 2023 20:23:25 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=vmn-com-au.20221208.gappssmtp.com; s=20221208; t=1681788204; x=1684380204;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=/O0ywaHNM2L+fze9eJoQ+O4a4k7b1EgMxTM8ShjvNyY=;
-        b=3yKQTJVZIZzrT9z2t/OzQ3/kB902rV0r5KnF5f3etVTtiHEZ6Z6liwHKx5rbCJKoU2
-         RnW1vkS5MTpD7hlP36H7jdwQGz74eK/zLDaYzVJPxgYguGuRFNBbDh8Z8idtTUMY5lxS
-         tjC6gJYe07MCcS+2F3AYS5h/whzyxcErqtH7cZngVS3PDiTJJkwJempvdrSowPO/RrNt
-         ng83TPsoL71Wa3VEZq/AckzIHKsfqEgARbIqi9u+6VfD1L116Tk3bcBxHcKX432R0tXr
-         N88wlXB1x2064K4XdVKZ7+76YPEbUmEBkDwHlIMRbEJ2pU5l6M2L0f4WlIS8NokEuzVF
-         OoSg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1681788204; x=1684380204;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=/O0ywaHNM2L+fze9eJoQ+O4a4k7b1EgMxTM8ShjvNyY=;
-        b=hiZNA59bTVEDMOxxFjIA1ym/18Yxdkx+1UOCfW9v2sHvJQYbuzJcMxpQ2j8QCpxMvE
-         Bl2gOFpb9us/5QCCVfHIEHDyaPdh75azX5kuVheMIpARw1b4rDB0SXDyqbuE5316TMmr
-         vWHt4vM8/l5CKRI9WizdlJKFoDmvVjvk75S9goDZ4926PlRmq82ymsnrvURsO0nhKLJ4
-         KT+5DHpjaIdEL2MpkRclYiw/l/CJFQPZyY+9XA6xX30lT7bSbr94k8bjScTrk1BCB3qO
-         oB2OEqP9ifQqc5H2rVqlm5PAXZ7b6K1aHz4+nEvvwXOGJGnD8iHWqrJ2d4isBNyQJ/HL
-         aIHg==
-X-Gm-Message-State: AAQBX9cZ//YVLVOVNkJHdnLu6XIOr6OT06gNxXG0qAxtkrmYGWquuzIN
-        u+Sj0F9v48SkkZz7AIUtvQalUgvkAUIVKxPlkOe7S7rf8iSyldLG7Ts=
-X-Google-Smtp-Source: AKy350aejZo9bVuPbqnoN6kcFwFISH69nTub5h8M1F9dNftvmoEMeELck9DOFWNTfwgiK+MhHKTz5mIFhzd6mzCMqSU=
-X-Received: by 2002:aa7:d844:0:b0:506:8d8f:4715 with SMTP id
- f4-20020aa7d844000000b005068d8f4715mr839304eds.7.1681788203549; Mon, 17 Apr
- 2023 20:23:23 -0700 (PDT)
+        Tue, 18 Apr 2023 11:08:32 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A376C97;
+        Tue, 18 Apr 2023 08:08:31 -0700 (PDT)
+Date:   Tue, 18 Apr 2023 17:08:28 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1681830510;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=75KsEmvYQy/DSB/q8qRWT5/I9jFfd1OWuZ0WyNDPhU0=;
+        b=MszvwWBrJMT7c5nIIB+BI++c5db8pjJizdbkLiUzT0Po4EkdqKQk422EL2PSTtuc5bh9vy
+        2+/iR4qLemxJRRvEchiyIiEYVAI9BpyADXts4+xsNLMIl2aKrv1zCnQuq+RNQ7DhF45Db/
+        2v7bwZ4p+KdKpyzPnJpvv6kLf5ZJlAogt0uFz4j9hy24Zmg9X1G3v4NyeOQ0TNY7N3udoA
+        Hz09mi2q/BL3sP9Yi9TeClL6ZNsHrG6IYuAdx2yKHcuTUp1a57fFg65CCjceCel0t8eVBm
+        aWmclGjiMpeh8cloCSmxvpRWtn2uqWxE0aoRp/tPZ7zlsifukLQpjdv9M+cw+w==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1681830510;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=75KsEmvYQy/DSB/q8qRWT5/I9jFfd1OWuZ0WyNDPhU0=;
+        b=IolrOAjHEHrNTeUuEBjIJFKs2aK5/iv5uGURxzS5/hwpHG2zIQMB6ZV42n0XMoGY9TJueN
+        6VOxUK/7uk077SBw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Vlastimil Babka <vbabka@suse.cz>
+Cc:     John Ogness <john.ogness@linutronix.de>,
+        Pierre Gondois <pierre.gondois@arm.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] v6.3-rc2-rt3
+Message-ID: <20230418150828.tNv46UyK@linutronix.de>
+References: <20230314170502.OHw1_FK3@linutronix.de>
+ <20230314171231.jwtham4a@linutronix.de>
+ <9ee941ae-ae22-f14b-4e69-f81b29bbba4b@arm.com>
+ <87ttxiefpd.fsf@jogness.linutronix.de>
+ <73b5657a-4c47-980a-e709-cd6a880c067c@suse.cz>
+ <87pm86ece2.fsf@jogness.linutronix.de>
+ <c49c2984-10a3-de8e-c12b-9a3833270a11@suse.cz>
 MIME-Version: 1.0
-From:   Rod Webster <rod@vmn.com.au>
-Date:   Tue, 18 Apr 2023 13:23:12 +1000
-Message-ID: <CANV1gkc9KvkGNPkEsjXCiV4mUcdrrPcaQ1ueRri9ypjvJbU94g@mail.gmail.com>
-Subject: Excessive network latency when using Realtek R8168/R8111 et al NIC
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <c49c2984-10a3-de8e-c12b-9a3833270a11@suse.cz>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi guys,
-I hope this is the right place to report an issue
+On 2023-04-14 17:38:56 [+0200], Vlastimil Babka wrote:
+> What I meant that in the linked thread a solution seems to be forming in the
+> form of annotation for lockdep/CONFIG_PROVE_RAW_LOCK_NESTING to make it
+> aware that on CONFIG_PREEMPT_RT the problem it sees is side-stepped so it
+> shouldn't warn about it on !PREEMPT_RT, and maybe that solution could be
+> used for the printk issue as well (I admit I didn't check the code, just by
+> reading your mail it sounded very similar).
 
-We are linuxcnc users and as such we are long term users of PREEMPT_RT
-on x86 (and some other platforms)
+Yes, you right and it would work and I would include it. Once the
+DEBUG_OBJECT part is merged (the LD_LOCK_WAIT logic is missing) I would
+add something here.
 
-A number of PC's in use by our members have recently been experiencing
-excessive Real Time network latency since the 5.10 kernel and above.
-
-We are excited to see this seems to have been mostly resolved with the
-6.3 kernel compiled from patched kernel.org source.
-
-But we are also experiencing excessive Real time network latency on
-some NIC hardware, mostly with  Realtek NIC's in this list.
-
-https://www.realtek.com/en/component/zoo/category/network-interface-controllers-10-100-1000m-gigabit-ethernet-pci-express-software
-Many modern industrial PC's are using Realtek NIC drivers that cannot
-be changed out so this is a problem for us.
-
-It's our understanding that the R8169 kernel driver module should
-provide support for this hardware. It does indeed do this but real
-time network latency is unacceptable. Debian offers  a R8168-dkms
-driver.  I understand it is being deprecated in favor of the R8169
-kernel module driver.
-
-Installing the R8168-dkms driver on the 6.3 kernel improves RT network
-latency/jitter by 400% over the R8169 driver.
-
-We are users not kernel developers. How can we escalate this issue so
-acceptable RT performance is restored?
-
-end
--Regards
--Rod Webster
+Sebastian
