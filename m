@@ -2,31 +2,40 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 926DBC77B60
-	for <linux-rt-users@archiver.kernel.org>; Sun, 30 Apr 2023 20:07:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 254B0C77B7F
+	for <linux-rt-users@archiver.kernel.org>; Mon,  8 May 2023 17:34:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231809AbjD3UHV (ORCPT
+        id S233638AbjEHRe4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 30 Apr 2023 16:07:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52814 "EHLO
+        Mon, 8 May 2023 13:34:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44734 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231745AbjD3UHS (ORCPT
+        with ESMTP id S229457AbjEHRez (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 30 Apr 2023 16:07:18 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67D6A9F;
-        Sun, 30 Apr 2023 13:07:16 -0700 (PDT)
+        Mon, 8 May 2023 13:34:55 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 995AE5BBA;
+        Mon,  8 May 2023 10:34:54 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 4C9F860C66;
-        Sun, 30 Apr 2023 20:07:13 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8C785C433EF;
-        Sun, 30 Apr 2023 20:07:12 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.1.26-rt8
-Date:   Sun, 30 Apr 2023 19:54:05 -0000
-Message-ID: <168288444561.1670862.5803236652050905311@demetrius>
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 2D7D461EB2;
+        Mon,  8 May 2023 17:34:54 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C0FB4C433D2;
+        Mon,  8 May 2023 17:34:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1683567293;
+        bh=qihO2vZPSWwKhKsG3TjRVrRpD5os+x4CtOB23qfQsGs=;
+        h=Subject:From:To:Date:From;
+        b=pmxQueRUuo76pKAIbj+ovStw/KsJUZeGgJxpG1Aphl+H8A8xNtBZgZbWk1YnAUml4
+         nCIXbAL68Dj32FMEgrPLb5yYYKNPBx9jP4ztse41PiJbbeskMLj/cq+RN6EV3V1DlT
+         7eQV2DF7AYzEHz7vJMDRf1sG+bD6annXYX/miGCE1NouLZqhDLEFU63KxtTxLb+n0T
+         /yuFdeGTHlQwmlD4MFMvlwKoBMUljS4JHfjPSlinu4OQVsBzIVlXXO0RUW6E5skPI0
+         qQi38wPKsr9SzhtLnNFL0ISyaC6C8uijuSyFcZlasqU1aaLezL0OJs1X/VI4i8wCyN
+         +Jq4/iB3WEaMg==
+Message-ID: <b3019873cbb55ed384127f123d9f597b43fe457b.camel@kernel.org>
+Subject: [ANNOUNCE] 5.4.242-rt81
+From:   Tom Zanussi <zanussi@kernel.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -34,47 +43,46 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Daniel Wagner <wagi@monom.org>,
         Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Date:   Mon, 08 May 2023 12:34:50 -0500
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.44.1-0ubuntu1 
+MIME-Version: 1.0
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
+Hello RT Folks!
 
-I'm pleased to announce the 6.1.26-rt8 stable release.
+I'm pleased to announce the 5.4.242-rt81 stable release.
 
-I'm sorry for the confusion and long interval between releases.
-As best I can tell, I did a "partial" release of v6.1.19-rt8 and
-then got diverted by work issues, then came back and did v6.1.26-rt8,
-to the great confusion of all concerned (especially me).
-
-The tags should be right (i.e. no v6.1.19-rt8), but there did exist a
-v6.1.19-rt8 set of files up on kernel.org. If you picked up one of those
-tarballs, please upgrade to the v6.1.26-rt8 version as I've removed the
-v6.1.19 set of tar files from the release dir. 
-
-If you have any questions/concerns, please contact me and I'll try to
-address them.
+This release is just an update to the new stable 5.4.242
+version and no RT specific changes have been made.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v6.1-rt
-  Head SHA1: 48e5445f07d6aadb97fd2d6cb34f378ff7f2cbe0
+  branch: v5.4-rt
+  Head SHA1: 4a0638626d58e1334f70a086191e3d5e25f2c738
 
-Or to build 6.1.26-rt8 directly, the following patches should be applied:
+Or to build 5.4.242-rt81 directly, the following patches should be
+applied:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.26.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.242.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.26-rt8.patch.xz
+=20
+https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.242-rt81.=
+patch.xz
 
 
 Enjoy!
-Clark
+
+   Tom
 
