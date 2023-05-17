@@ -2,137 +2,149 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1FE8FC77B75
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 May 2023 13:07:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D980FC77B75
+	for <linux-rt-users@archiver.kernel.org>; Wed, 17 May 2023 14:37:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230347AbjEQNHd (ORCPT
+        id S231984AbjEQOhf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 17 May 2023 09:07:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45764 "EHLO
+        Wed, 17 May 2023 10:37:35 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60806 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229746AbjEQNHc (ORCPT
+        with ESMTP id S231338AbjEQOhe (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 May 2023 09:07:32 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9B162E63
-        for <linux-rt-users@vger.kernel.org>; Wed, 17 May 2023 06:06:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1684328806;
+        Wed, 17 May 2023 10:37:34 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E09B35B92
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 May 2023 07:37:10 -0700 (PDT)
+Date:   Wed, 17 May 2023 16:37:06 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1684334228;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=ricdlEvGEUBLNA0MniTa/NJPkEIbLbsrJ3rrWmsjOC8=;
-        b=P8gzYDSiEl7RudGTLBEuhcp25uhVNZZn4RyzvLlabxm4npHuQoE6+pXEHOgin+6jk/TWlF
-        D4qVd+bYVlZq6rDS6apFTBCvPcpfT6V7HW638aybFVl/EJ4lq3d589JPd/tn7V9f88J3ua
-        txr8ndDzkY+nla9CUHQ+8W2kiDggzoA=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-206-I_4TdqUoMhGbrdvh5kWDUg-1; Wed, 17 May 2023 09:06:42 -0400
-X-MC-Unique: I_4TdqUoMhGbrdvh5kWDUg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 852211C0512D;
-        Wed, 17 May 2023 13:06:41 +0000 (UTC)
-Received: from localhost (unknown [10.22.32.104])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 26A882166B31;
-        Wed, 17 May 2023 13:06:39 +0000 (UTC)
-Date:   Wed, 17 May 2023 10:06:39 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     Pavel Machek <pavel@denx.de>
-Cc:     nobuhiro1.iwamatsu@toshiba.co.jp, jan.kiszka@siemens.com,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+        bh=szd4rfowkM/hJpYfSQx/uqFKrLlX1Tg1wxKUvyan//k=;
+        b=DO9hqs5af4K70pB4ggvqwsN3B/7MtKw3MCYP1l4tiXfkHBcU9+t3MMV3W8461/BE9OZJVm
+        yDFFSPzcmzUp8SeKtOf0XbBzkDIwRvcBGaIM1a1oSmGOG1q2U52OFe9+f29OQKX7KjY7oW
+        40pVkL4aHgow1KFZaoYb+5fXlHcC02YRkL65RpnVKAEu7NXbThQQF5/RNovpIPa4xsx99m
+        SQkgTvP1TbMwTpy742Bd4loZjVMfJM3WPQql7cfftyQz3xobNSPDK+4U417ZaUZHbNsWmD
+        28v7U2FWD7FkHrWAjNdRUDG/V+g6Dwk4YCApimuKnVMEeaTqPrkkcuKMFaCjGw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1684334228;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=szd4rfowkM/hJpYfSQx/uqFKrLlX1Tg1wxKUvyan//k=;
+        b=7XWPBV7vPrwWeF5kDcxYMIaEx4xvMalDMYi/C8+IFpqulJWMIje1feQRIdGL9Qmr4A1jy1
+        NqRp3XSGXQ3ukyDQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Ard Biesheuvel <ardb@kernel.org>
+Cc:     Pavel Pisa <pisa@cmp.felk.cvut.cz>, linux-rt-users@vger.kernel.org,
+        Pavel Hronek <hronepa1@fel.cvut.cz>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>
-Subject: Re: 5.10.179-rt87 (was Re: [ANNOUNCE] 5.10.175-rt84)
-Message-ID: <ZGTRX5hb0rK7MQSW@uudg.org>
-References: <ZBebYGllb3f9sOOS@uudg.org>
- <ZGS2sTPKvvNHyzGH@duo.ucw.cz>
+        Peter Zijlstra <peterz@infradead.org>
+Subject: Re: Preemp-RT kernel builds from 6.3 on fails on Xilinx Zynq 7Z010
+Message-ID: <20230517143706.6hi48xeo@linutronix.de>
+References: <202305142217.46875.pisa@cmp.felk.cvut.cz>
+ <20230516163352.jaNEyMPF@linutronix.de>
+ <CAMj1kXHs0-sxieh_9235Y+QEUzftvPCJLp37Qp3vKXKmO1i=zw@mail.gmail.com>
+ <20230517085411.eTVSySWx@linutronix.de>
+ <CAMj1kXEG1F5RgzhjWfELfh8REQoOGjEH065aHwzHVP9DVEt7Bw@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="0l8oaj5e51kAaOmh"
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <ZGS2sTPKvvNHyzGH@duo.ucw.cz>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CAMj1kXEG1F5RgzhjWfELfh8REQoOGjEH065aHwzHVP9DVEt7Bw@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-
---0l8oaj5e51kAaOmh
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Wed, May 17, 2023 at 01:12:49PM +0200, Pavel Machek wrote:
-> Hi!
+On 2023-05-17 13:05:32 [+0200], Ard Biesheuvel wrote:
+> For context, these changes give a substantial performance boost on the
+> RX path to IPsec or WireGuard using SIMD based software crypto.
 >=20
-> > I'm pleased to announce the 5.10.175-rt84 stable release.
-> >=20
-> > You can get this release via the git tree at:
+> > =E2=80=A6
+> > > Please take a look, and confirm whether or not we still need to drop
+> > > the get_cpu() call from vfp_sync_hwstate()
+> >
+> > Yes, it needs to be dealt with. At the time vfp_sync_hwstate() the
+> > context is fully preemptible. So that get_cpu() needs to be removed
+> > before local_bh_disable(). But=E2=80=A6
+> >
+> > If I understand the logic right, then the VFP state is saved on context
+> > switch and the FPU access is disabled but the content remains and is in
+> > sync with vfp_current_hw_state. Upon first usage (after the context
+> > switch) in userland there is an exception at which point the access to
+> > the FPU is enabled (FPEXC_EX) and the FPU content is loaded unless it is
+> > in sync as per vfp_current_hw_state.
+> >
 >=20
-> Are there any plans for new -rt release?
+> Exactly. On UP we lazily preserve the user space FP state, and on SMP
+> we always preserve it on a context switch. Then, only when user space
+> actually tries to use the SIMD context, the correct data is copied in.
+> That way, we don't take the performance hit for tasks that are blocked
+> in the kernel.
 >=20
-> Last I see is:
+> > That means it relies on disabled preemption while operating on
+> > vfp_current_hw_state.
 >=20
-> Author: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-> Date:   Fri Mar 24 11:52:56 2023 -0300
->     Linux 5.10.176-rt86
+> In general, this code relies on preserving/restoring the VFP context
+> to/from memory to be a critical section, as it needs to run to
+> completion once it is started.
 >=20
-> There's pending one in rt-next:
+> > On PREEMPT_RT softirqs are only handled in process
+> > context (for instance at the end of the threaded interrupt). Therefore
+> > it is sufficient to disable preemption instead of BH. It would need
+> > something like x86's fpregs_lock().
 >=20
-> commit 5f84852113c1391abe8c38defdda562640bb3808 (origin/v5.10-rt-next)
-> Author: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-> Date:   Fri May 5 14:40:10 2023 -0300
->     Linux 5.10.179-rt87
+> I think this is not the only issue, to be honest. We cannot preempt
+> tasks while they are using the SIMD unit in kernel mode, as the kernel
+> mode context is never preserved/restored. So we at least need to
+> disable preemption again in kernel_neon_begin() [which now relies on
+> BH disable to disable preemption but as you point out, that is only
+> the case on !RT]
 >=20
-> ...but "real" release would be useful for us, as we could base our
-> -cip-rt on that.
+> Given this, I wonder whether supporting kernel mode NEON on PREEMPT_RT
+> is worth it to begin with. AIUI, the alternative is to disable both
+> preemption and BH when touching the VFP state.
+
+Only preemption on RT. So it is debatable if it makes sense to use NEON
+on RT. The preempt-off section is limited to PAGE_SIZE due the scatter/
+gather walk if I remember correctly.
+
+> > Otherwise vfp_entry() can get preempted after decisions based on
+> > vfp_current_hw_state have been made. Also kernel_neon_begin() could get
+> > preempted after enabling FPU. I think based on current logic, after
+> > kernel_neon_begin() a task can get preempted on PREEMPT_RT and since
+> > vfp_current_hw_state is NULL the registers won't be saved and a zero set
+> > of registers will be loaded once the neon task gets back on the CPU (it
+> > seems that VFP exceptions in kernel mode are treated the same way as
+> > those in user mode).
+> >
+> > What do you think?
+> >
 >=20
-> Thanks and best regards,
-> 								Pavel
+> Indeed. kernel_neon_begin() no longer disabling preemption is
+> definitely wrong on PREEMPT_RT. The question is whether we want to
+> untangle this or just make PREEMPT_RT and KERNEL_MODE_NEON mutually
+> exclusive. This, by itself, makes quite a lot of sense, actually,
+> given that on actual 32-bit hardware, the SIMD speedup is not that
+> spectacular (the AES and other crypto instructions, which do give an
+> order of magnitude speedup are only implemented on 64-bit cores, which
+> usually run a 64-bit kernel). So if real-time behavior is a
+> requirement, using ordinary crypto implemented in C (which does not
+> require preemption to be disabled) is likely preferred anyway.
 
-Hi Pavel,
+I have no opinion which can be backed up by numbers. So I have no
+problem to go along with it and disable KERNEL_MODE_NEON since it is
+simpler and the benefit is questionable.
 
-We are submitting our stable v5.10-rt kernels to kernel-ci now, to avoid
-problems our local tests were not able to uncover. The process is new for
-me and, while trying to streamline the process on our side, I seem to have
-hit a problem. Please allow me two more days and you shall have the release
-in hand.
+So patch
+- #1 KERNEL_MODE_NEON depends on !RT
+- #2 disable BH followed by preemption in vfp_sync_hwstate() and
+  vfp_entry().
 
-Best regards,
-Luis
+if so, let me prepare something unless you want to :)
 
-
---0l8oaj5e51kAaOmh
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAmRk0V8ACgkQ85SkI/jm
-fCZmFw/+JRazR6H+Er/SohhaI8jiXtsrNABOCzMeDxiEF7DG3IQmJU5RM1kQ6iAw
-sRDmF1NFpEKKcumDbwn1J1OCmVPb8opUI+D/Yu3y2asuK6q34g8yYydTwYzSSsVb
-hjn1oL9D8XL78sAPIPcPxHdE2xKzSzLpMQ7T3CHHBODgGKwHnWTmm1ZvZ2xBIUlA
-coVEddcf6kw6WhN9hQnpDAXRc2C7G8zlu1zyvc62pXEsS3cw3aiPf6HabQxkvQwy
-tkIrkNB+fUxlz6mBlFqOIUxJp1kbAp/5rqFeQRs1HEUdoQli/njSHe/iQY3dM6w3
-tV2k28OpKWi9E+0pet51cV//WvoLGnlKUZjlXilwCWqNBBiKhJxmsVDdbzE3UVIO
-Lrv00CdoWHK98zvxBIbTnsXJF6CKSnD0prlLpZinOse2/VMGOKXjyWqttxVt7efF
-KvJ6MjGGp7uZN//M3tmc1i4ZWLWkkSUZRpWZuyKy480J8MG9PTH3HMrHvmp03KmD
-1JzEV6JUJGlD758WwJuvoVekl4t5QshqDY3VkxNN+7u4sipUqG7lqrA0TiFsqVYR
-Ez0sYGwlbq2BV0mJKyr6ai+dXK3/s4a2XADHr7O02lQ8RG1WEksTuK2ajzOkL34N
-xBamXkeVZE2CBlOtYf27ffa/e+AvikQcid9FUSUkfJXAmx1UMg4=
-=cGnq
------END PGP SIGNATURE-----
-
---0l8oaj5e51kAaOmh--
-
+Sebastian
