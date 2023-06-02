@@ -2,106 +2,99 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C9C8C7EE2A
-	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Jun 2023 02:28:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5A3C0C7EE29
+	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Jun 2023 21:06:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233490AbjFBC2Q (ORCPT
+        id S236304AbjFBVG1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 1 Jun 2023 22:28:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46132 "EHLO
+        Fri, 2 Jun 2023 17:06:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36230 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233462AbjFBC2P (ORCPT
+        with ESMTP id S236115AbjFBVG0 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 1 Jun 2023 22:28:15 -0400
-Received: from mail-pl1-x62a.google.com (mail-pl1-x62a.google.com [IPv6:2607:f8b0:4864:20::62a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CB99119B;
-        Thu,  1 Jun 2023 19:28:12 -0700 (PDT)
-Received: by mail-pl1-x62a.google.com with SMTP id d9443c01a7336-1b038064d97so22502925ad.0;
-        Thu, 01 Jun 2023 19:28:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1685672892; x=1688264892;
-        h=content-transfer-encoding:subject:from:cc:to:content-language
-         :user-agent:mime-version:date:message-id:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=iH1ysj30mF85sJI8Hu+UweQ/IViEKpx4ySqfGsRzxAs=;
-        b=n9hmECaPd+ti6J6O3CLn/hnZa9po4lvtqeG9t7fTWbd6d+18sta9hEaL45qSB+zkh5
-         8ZA/GPZH2HTvbxXe0YEj8500pOBEml8Zp3HSPng4Oj7Pl59f6GLyb55gLV4ao6wzfqT3
-         tnMcUM2jZiArcSWQGP1seAeIOhtbmO7k1SHOl4kZm2AcTmBnjQMqWv4MqBFcBeEp/NkL
-         01ymX7ULoR8wtEItTDxzxIV1jrplntVc/AKf87k4fN2AOOMY+9tUWRzvyNWwIzejLCVy
-         jXpBwL287rwNs0q7Uog2OFXH9ZB8Ksd3mgLBjHPGE+p/d6oaRRnGQILxkKYZtg9/vJ9l
-         Rwwg==
+        Fri, 2 Jun 2023 17:06:26 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BB7FAE74
+        for <linux-rt-users@vger.kernel.org>; Fri,  2 Jun 2023 14:05:31 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1685739930;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=YYvHvicuiJnDpTYP2tiCP38QQvuOnsXoIl7s38NiVeg=;
+        b=DlBSu0vBs7yHOKe/mecjnkTHxGXNb/Ay1VN0DPK/7+9xK4xL2Qi2PhM+aks14zVG6tofBK
+        q6Q9GatX287H/SuL2z/JxGonX1VE6AGZvfoLjOD/8lzbd8p8noBmpXU3/W15A8XwIK/7Oc
+        IfdUAcB8TGpPhTV6HojNhDwKtHkAqgM=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-617-_bFGP02OOaGLCXYuroCz0w-1; Fri, 02 Jun 2023 17:05:29 -0400
+X-MC-Unique: _bFGP02OOaGLCXYuroCz0w-1
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-62609400a3bso35582236d6.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 Jun 2023 14:05:29 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1685672892; x=1688264892;
-        h=content-transfer-encoding:subject:from:cc:to:content-language
-         :user-agent:mime-version:date:message-id:x-gm-message-state:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=iH1ysj30mF85sJI8Hu+UweQ/IViEKpx4ySqfGsRzxAs=;
-        b=S8irZSA61SUHiyYV7LHQBxznHmkG5fbcjdmbobQD5bNO0/GhYgyo0QtSdr4qBAHVyc
-         jS7czVdaUCd1IBkT8l5sGQxhIR2tSCBapamEjUvka8T19F94EhxjmewZBdVECjxMrqZO
-         ldF5p5Dsn4uZKnFQhSAc1ct40A97Dl51/TbQ4gNga7OFlvNWQdV3oBFUsN+LaqPoXa1V
-         fGCgL1ebNccnsV7gG8eUgMYUxBeFl1m2PSamFxvJ23IB++X5mnRANJeXavOkGi5vYrp4
-         6eaCYI9/xfGdT82plX4LqKUUBDaMT3o/sJ09agKHN4msUXkBuAiHpa49VphgEkBgsDfH
-         pZhg==
-X-Gm-Message-State: AC+VfDym6yzNdSors8W7ZDLK+2CBfYW48ZIIezQLGvSl5EuFrXEmeSIG
-        oezdcrGEF9TTLnRNEpBK2wNbP+zGYP0=
-X-Google-Smtp-Source: ACHHUZ4e6+vRjrIpsaHlh4EAancrsEHwVNsQVko2QUD7knU+Nwo4iXkRehTnlgoYJZYQRmAB6kY9Vw==
-X-Received: by 2002:a17:902:d2c5:b0:1b1:76c2:2966 with SMTP id n5-20020a170902d2c500b001b176c22966mr850675plc.20.1685672891925;
-        Thu, 01 Jun 2023 19:28:11 -0700 (PDT)
-Received: from [192.168.43.80] (subs28-116-206-12-49.three.co.id. [116.206.12.49])
-        by smtp.gmail.com with ESMTPSA id t21-20020a170902b21500b001ac45598b59sm76827plr.163.2023.06.01.19.28.09
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 01 Jun 2023 19:28:11 -0700 (PDT)
-Message-ID: <9f12c322-fb62-26f0-46d1-61936a419468@gmail.com>
-Date:   Fri, 2 Jun 2023 09:27:48 +0700
+        d=1e100.net; s=20221208; t=1685739929; x=1688331929;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=YYvHvicuiJnDpTYP2tiCP38QQvuOnsXoIl7s38NiVeg=;
+        b=chooNyGgZCk7zpxEc61/P2m0meV0CU6yAEv2fxgbbq62fXD+EV6jqHUBpQixgTvBF3
+         Zt+CBt+PE04A46qrAxXEK37kBSzXdB2pQJe4F5G1SlRSsquNz8qx7DVtoFpBsIguAiHq
+         K82mj54gQ4K29MTkipLlnCtTv5N5MeVgwiva5cZE9QmNw2k/r1+CramPsGZNyz8LICQo
+         m1n9CYxZvW9unHZuuDfBxdnjnbCTh61Q7FhyyP1+61lYRHiA2JLJ41ndu0wTH4J+ZoIT
+         /YegbqObEp0YcJHGcKkHs3r6/Uqa5lcOm/Bo+/5CUf9vykAaAn29FwXCXhxwMuSnt0Vf
+         Gyig==
+X-Gm-Message-State: AC+VfDzawLyBG9uhBqpZKbLwxicazcvYoNOML0WVfLzFx2CH0Uzov4NE
+        Gx/ESEaKssQmG6kiTYj/fGjaT3vvTJ+e15OHmgGEx/jfDGyVwX3x0jA8p0MrA21pAJjTl3T1khI
+        9dE92PMOHZ2TnCwVK8R0w1oQEhYR7lCRKxOI=
+X-Received: by 2002:a05:6214:19e6:b0:629:58a7:9a9d with SMTP id q6-20020a05621419e600b0062958a79a9dmr3436439qvc.10.1685739929090;
+        Fri, 02 Jun 2023 14:05:29 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ4aO95X+sZmwllpIpZLiIz7NBg/t92AYrb1JbmSbRxu/ai09B2atK6PpPtc6N5Up8OjtCi8Pw==
+X-Received: by 2002:a05:6214:19e6:b0:629:58a7:9a9d with SMTP id q6-20020a05621419e600b0062958a79a9dmr3436420qvc.10.1685739928846;
+        Fri, 02 Jun 2023 14:05:28 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-56.dsl.bell.ca. [184.147.141.56])
+        by smtp.gmail.com with ESMTPSA id e11-20020ad450cb000000b00626234be222sm1288209qvq.57.2023.06.02.14.05.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 02 Jun 2023 14:05:28 -0700 (PDT)
+Date:   Fri, 2 Jun 2023 17:05:06 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Marcelo Tosatti <mtosatti@redhat.com>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] oslat: remove newline from tracemark message
+In-Reply-To: <ZHj54pQWZ/RfAE/l@tpad>
+Message-ID: <f0f98a79-be73-bbe9-ea2c-b99a8166691@redhat.com>
+References: <ZHj54pQWZ/RfAE/l@tpad>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.11.0
-Content-Language: en-US
-To:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux Regressions <regressions@lists.linux.dev>,
-        Linux Kernel Network Developers <netdev@vger.kernel.org>,
-        Linux Real Time <linux-rt-users@vger.kernel.org>
-Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
-        Paolo Abeni <pabeni@redhat.com>, SamW <proaudiomanuk@gmail.com>
-From:   Bagas Sanjaya <bagasdotme@gmail.com>
-Subject: Fwd: commit 6e98b09da931a00bf4e0477d0fa52748bf28fcce suspect causing
- full system lockup
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
 
-I notice a regression report on Bugzilla [1]. Quoting from it:
 
-> 6e98b09da931a00bf4e0477d0fa52748bf28fcce
-> OS slackware64-current fully upto date, on an AMD 990fx motherboard with a 
-> Realtek Semiconductor Co., Ltd. RTL8111/8168/8411 PCI Express Gigabit Ethernet Controller (rev 09).
-> Linux-rt-devel-rc2-rt1 and linux-rt-devel-6.4-rc3-rt2 had same issue, previous linux-rt-devel-6.3.3-rt15 worked with no issue.
+On Thu, 1 Jun 2023, Marcelo Tosatti wrote:
+
 > 
-> Hello I suspect this series of commits is causing the full system lock im having when using the r8169 driver with linux-rt-devel-6.4-rc3-rt2. With the driver enabled my system locks up with a few mins of booting and logging into desktop. I have to use power off button and reboot to older kernel. With the r8169 driver blacklisted the kernel works perfectly.
-> My syslog attachment shows the driver errors and after looking at commits I saw the above numbered as being the most likly cause.
-> A member of oftc linux-rt irc channel looked and gave the comment posted below.
-> "tell the driver maintainers they must not enable the irq in the napi poll function"
-> He said it looked like that could be causing the errors and then full system lockup.
-> please contact me if any further information is required.
+> Remove the newline from the trace mark message: it breaks 
+> tools that expect the trace files to contain the standard 
+> trace format on each new trace line.
 > 
-> My fix has been blacklist r8169 and use the r8168 driver from relatek with a patch to enable builfing with the 6.4 kernel.
-> Thank you for your time
-> SamW
+> Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+> 
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index b680f1e..99f86b8 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -337,8 +337,7 @@ static void insert_bucket(struct thread *t, stamp_t value)
+>  	lat = (value * g.unit_per_us + t->counter_mhz - 1) / t->counter_mhz;
+>  	us = (double)lat / g.unit_per_us;
+>  	if (!g.preheat && g.trace_threshold && us >= g.trace_threshold) {
+> -		char *line = "%s: Trace threshold (%d us) triggered on cpu %d with %.*f us!\n"
+> -		    "Stopping the test.\n";
+> +		char *line = "%s: Trace threshold (%d us) triggered on cpu %d with %.*f us!\n";
+>  		tracemark(line, g.app_name, g.trace_threshold, t->core_i,
+>  			  g.precision, us);
+>  		err_quit(line, g.app_name, g.trace_threshold, t->core_i,
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
-See Bugzilla for the full thread and attached syslog.
-
-Anyway, I'm adding it to regzbot:
-
-#regzbot introduced: 6e98b09da931a0 https://bugzilla.kernel.org/show_bug.cgi?id=217519
-#regzbot title: Networking pull for v6.4 causes full system lockup on RTL8111/8168/8411
-
-Thanks.
-
-[1]: https://bugzilla.kernel.org/show_bug.cgi?id=217519
-
--- 
-An old man doll... just what I always wanted! - Clara
