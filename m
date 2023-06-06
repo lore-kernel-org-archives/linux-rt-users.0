@@ -2,98 +2,110 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A780DC77B73
-	for <linux-rt-users@archiver.kernel.org>; Mon,  5 Jun 2023 19:32:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5630CC7EE23
+	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Jun 2023 01:36:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232674AbjFETcT (ORCPT
+        id S233736AbjFFBgE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 5 Jun 2023 15:32:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50074 "EHLO
+        Mon, 5 Jun 2023 21:36:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57352 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229878AbjFETcS (ORCPT
+        with ESMTP id S230089AbjFFBgC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Jun 2023 15:32:18 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 28350EA
-        for <linux-rt-users@vger.kernel.org>; Mon,  5 Jun 2023 12:31:31 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1685993490;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=or+CwxyfE3JarrZVAyd0095fleruhUiV8jxzauwTihM=;
-        b=SCouVdXzPOE8NrY1+vygHQY096wfL0VZwJ6KYJwvFr5JU/0X9y4EOlWtsHnaXRl7W7hF8e
-        4pIpyEqiKd69X13cODybSL2EIc8OF1UPRHMcp26mE3cvsZjRwHAQRlY4XQUvKktK5vdPY2
-        Xi6pw82VRJQ2xo3A7QY7BPmdx/TWUsU=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-247-IFKLay1KP226hr8MOKCN9A-1; Mon, 05 Jun 2023 15:31:29 -0400
-X-MC-Unique: IFKLay1KP226hr8MOKCN9A-1
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-75ebb50993fso144322585a.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 05 Jun 2023 12:31:28 -0700 (PDT)
+        Mon, 5 Jun 2023 21:36:02 -0400
+Received: from mail-oi1-x22c.google.com (mail-oi1-x22c.google.com [IPv6:2607:f8b0:4864:20::22c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2574DC;
+        Mon,  5 Jun 2023 18:36:01 -0700 (PDT)
+Received: by mail-oi1-x22c.google.com with SMTP id 5614622812f47-392116b8f31so3074589b6e.2;
+        Mon, 05 Jun 2023 18:36:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1686015361; x=1688607361;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=XpR3P96jv7SCbbRT9L5gH5HvCTvECFvcY1akf5QQvZI=;
+        b=ZgnMWNz7zw07iop91hw4lWFpbR/jj8HOAVd8tmOEFdyhyQFdn+zGX23B89n9IbVy9U
+         kJemcIDDqBGZz//Mq5LC980MwTFBmQQcrkjyRdv+iTfj2qCYp7Kt9m7uAu7lTt56vhEO
+         bJPFKRarCj0tSS5IJNCxgiGNoaGwCFjvDuh3iHbDg0QA1urjm14KAQDIxm4D26VhGEyH
+         xH3PRchBfbdyBB8tD6hmgxvCFeOI1RcwdS2FFR6tRWhsuIpjq+ZKjxU8t48a1djVC+cw
+         1Q2TAwm87bReqjiKnrTFqbhtlyosX7iR/tGfi05XUKXlkaMij1SqSrVG1AziMxSf4Qi3
+         bjpA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1685993488; x=1688585488;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=or+CwxyfE3JarrZVAyd0095fleruhUiV8jxzauwTihM=;
-        b=kcDI7CnePDZrc/tBxGggXBPpV3GOx/3/ujzAVxwDm6L9T28A6Zcdf+xDpdFIG2gJVk
-         +dTReLphDlbpB9vjw6TVZFDSqlGJgF5kEymSO8EsHLa8xOvNQqgMjtSM59RqHPtuAFMQ
-         rsX+DYUS84cigIUteyWsVry9Lm3PPt2gKgA6s6V497gRuH2/Tg/6Wj5Wk1VjsHKIQ+oh
-         wcwPwT6aVFIIpH2mA13/iKrBVf1j9DXtJuCRUeaNG5vsLgec17u5tY1kyK3hKgR0Zvcj
-         +/TneDATQt+vBh7Alqf6WMLMNlWC59LvdUNt/2zgr0W3qhbC1Ggd/G+p1mScVAQlfby0
-         KMrQ==
-X-Gm-Message-State: AC+VfDyjdqw0O3cdRXERBaVO/qSWeWWn+xLqH1ghMPgS+6ErjkosLdZ9
-        GA9e1ZPavZNSM0iLSJZ1O8NlEsWnULTqEC0LkslCIGsS65YUku114vLqWYsH5DF9aJdccVKJpKE
-        NgvUDn4ZFN0rFxJrn0BbztNljsH4=
-X-Received: by 2002:a05:620a:3984:b0:75e:bf7e:e17e with SMTP id ro4-20020a05620a398400b0075ebf7ee17emr759693qkn.6.1685993488566;
-        Mon, 05 Jun 2023 12:31:28 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ52LtRvofqfQUQa+szNWXH+QqkU8Pb4QETq1VyLtXl6K8dvEmq1WhbFXDP4O3yeJBKedKOJKw==
-X-Received: by 2002:a05:620a:3984:b0:75e:bf7e:e17e with SMTP id ro4-20020a05620a398400b0075ebf7ee17emr759677qkn.6.1685993488311;
-        Mon, 05 Jun 2023 12:31:28 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-56.dsl.bell.ca. [184.147.141.56])
-        by smtp.gmail.com with ESMTPSA id u26-20020ae9c01a000000b0075d4d5617cdsm2894567qkk.66.2023.06.05.12.31.27
+        d=1e100.net; s=20221208; t=1686015361; x=1688607361;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=XpR3P96jv7SCbbRT9L5gH5HvCTvECFvcY1akf5QQvZI=;
+        b=XH4EffOCdQskzUzgk/m9HisuLVuVIC+UaHAstWeSgge5RGgtgFxM3US6AMz0JVxopY
+         B1BMQ3buI7U6XxFPdaugsiNpvZkHPqY9nzKULzoGWLwhheJ5Im4Olo3i3EHnZFoRTQbF
+         NGhPyDOrJ/FEcYSUx9cSdqtbc7mn3V5+ugHOX+su8/mRBHvEoKuBr+ZDDoemMvAUcBlv
+         znKzYpn5SiSbIN+TpKCPvTItHrZt0I5fWd44lemtPCgG0TJs9BgpjYvpN+cNYYI65U/S
+         LjPjeO3lgnnEO1D/k3LqUGX0JWnaBtMUJUUXGhMx7fIlcItenKGyqwrbJkJFHkvZLYqJ
+         qRAQ==
+X-Gm-Message-State: AC+VfDyoVByvdRU+F2uEOwJ5JjZoBZf82cbI8IrxB+QhNnNGVlBaciry
+        d4mMORqlgWpkKGXCDckXHdQ=
+X-Google-Smtp-Source: ACHHUZ5oS6qs4j0ZcaYF5n2D3KQf9+yBhNSKgYie6iczVtetpf7zaE0ckCqefaWMmXgCdyVT5d6mTw==
+X-Received: by 2002:aca:f1a:0:b0:39a:ca93:53d2 with SMTP id 26-20020aca0f1a000000b0039aca9353d2mr322736oip.10.1686015360840;
+        Mon, 05 Jun 2023 18:36:00 -0700 (PDT)
+Received: from debian.me (subs32-116-206-28-36.three.co.id. [116.206.28.36])
+        by smtp.gmail.com with ESMTPSA id 3-20020aa79243000000b0065a1b05193asm2549852pfp.185.2023.06.05.18.36.00
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 05 Jun 2023 12:31:28 -0700 (PDT)
-Date:   Mon, 5 Jun 2023 15:31:27 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Anubhav Shelat <ashelat@redhat.com>
-cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2 02/10] rteval: Use f-strings in rtevalConfig
-In-Reply-To: <20230601202734.813515-3-ashelat@redhat.com>
-Message-ID: <96a49d9e-a1b0-6e64-72ce-e1c02f70fbbf@redhat.com>
-References: <20230601202734.813515-1-ashelat@redhat.com> <20230601202734.813515-3-ashelat@redhat.com>
+        Mon, 05 Jun 2023 18:36:00 -0700 (PDT)
+Received: by debian.me (Postfix, from userid 1000)
+        id 0C10E1069AF; Tue,  6 Jun 2023 08:35:56 +0700 (WIB)
+Date:   Tue, 6 Jun 2023 08:35:56 +0700
+From:   Bagas Sanjaya <bagasdotme@gmail.com>
+To:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Linux Regressions <regressions@lists.linux.dev>,
+        Linux Kernel Network Developers <netdev@vger.kernel.org>,
+        Linux Real Time <linux-rt-users@vger.kernel.org>
+Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
+        Paolo Abeni <pabeni@redhat.com>, SamW <proaudiomanuk@gmail.com>
+Subject: Re: Fwd: commit 6e98b09da931a00bf4e0477d0fa52748bf28fcce suspect
+ causing full system lockup
+Message-ID: <ZH6NfCe-WbvukFsJ@debian.me>
+References: <9f12c322-fb62-26f0-46d1-61936a419468@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/signed; micalg=pgp-sha512;
+        protocol="application/pgp-signature"; boundary="NLJN2ITb1fArYsZS"
+Content-Disposition: inline
+In-Reply-To: <9f12c322-fb62-26f0-46d1-61936a419468@gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
+--NLJN2ITb1fArYsZS
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-On Thu, 1 Jun 2023, Anubhav Shelat wrote:
+On Fri, Jun 02, 2023 at 09:27:48AM +0700, Bagas Sanjaya wrote:
+> Anyway, I'm adding it to regzbot:
+>=20
+> #regzbot introduced: 6e98b09da931a0 https://bugzilla.kernel.org/show_bug.=
+cgi?id=3D217519
+> #regzbot title: Networking pull for v6.4 causes full system lockup on RTL=
+8111/8168/8411
+>=20
 
-> Use f-strings in rtevalConfig.py
-> 
-> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
-> ---
->  rteval/rtevalConfig.py | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-> index de88924642ca..41f1a567720f 100644
-> --- a/rteval/rtevalConfig.py
-> +++ b/rteval/rtevalConfig.py
-> @@ -115,7 +115,7 @@ class rtevalCfgSection:
->          "Simple method for dumping config when object is used as a string"
->          if not self.__cfgdata:
->              return "# empty"
-> -        return "\n".join(["%s: %s" % (k, v) for k, v in list(self.__cfgdata.items())]) + "\n"
-> +        return "\n".join([f"{k}: {v}" for k, v in list(self.__cfgdata.items())]) + "\n"
->  
->  
->      def __setattr__(self, key, val):
-> -- 
+Closing as there is already a confirmed fix (see Bugzilla):
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+#regzbot resolved: d6c36cbc5e533f
 
+Thanks.
+
+--=20
+An old man doll... just what I always wanted! - Clara
+
+--NLJN2ITb1fArYsZS
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQSSYQ6Cy7oyFNCHrUH2uYlJVVFOowUCZH6NdwAKCRD2uYlJVVFO
+o+7tAP0a3YFgJGGHZy3B4JvneA+tB3lEMl8UXLMzavt/BnCnUQD9GbssiUMLtzBb
+dC8nEXgn6KRFlEoGuT2zpF7hOzycJA0=
+=KTvF
+-----END PGP SIGNATURE-----
+
+--NLJN2ITb1fArYsZS--
