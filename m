@@ -2,110 +2,108 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5630CC7EE23
-	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Jun 2023 01:36:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E63CBC77B73
+	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Jun 2023 09:49:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233736AbjFFBgE (ORCPT
+        id S237317AbjFFJtQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 5 Jun 2023 21:36:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57352 "EHLO
+        Tue, 6 Jun 2023 05:49:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54522 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230089AbjFFBgC (ORCPT
+        with ESMTP id S237540AbjFFJtB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Jun 2023 21:36:02 -0400
-Received: from mail-oi1-x22c.google.com (mail-oi1-x22c.google.com [IPv6:2607:f8b0:4864:20::22c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2574DC;
-        Mon,  5 Jun 2023 18:36:01 -0700 (PDT)
-Received: by mail-oi1-x22c.google.com with SMTP id 5614622812f47-392116b8f31so3074589b6e.2;
-        Mon, 05 Jun 2023 18:36:01 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1686015361; x=1688607361;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=XpR3P96jv7SCbbRT9L5gH5HvCTvECFvcY1akf5QQvZI=;
-        b=ZgnMWNz7zw07iop91hw4lWFpbR/jj8HOAVd8tmOEFdyhyQFdn+zGX23B89n9IbVy9U
-         kJemcIDDqBGZz//Mq5LC980MwTFBmQQcrkjyRdv+iTfj2qCYp7Kt9m7uAu7lTt56vhEO
-         bJPFKRarCj0tSS5IJNCxgiGNoaGwCFjvDuh3iHbDg0QA1urjm14KAQDIxm4D26VhGEyH
-         xH3PRchBfbdyBB8tD6hmgxvCFeOI1RcwdS2FFR6tRWhsuIpjq+ZKjxU8t48a1djVC+cw
-         1Q2TAwm87bReqjiKnrTFqbhtlyosX7iR/tGfi05XUKXlkaMij1SqSrVG1AziMxSf4Qi3
-         bjpA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1686015361; x=1688607361;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=XpR3P96jv7SCbbRT9L5gH5HvCTvECFvcY1akf5QQvZI=;
-        b=XH4EffOCdQskzUzgk/m9HisuLVuVIC+UaHAstWeSgge5RGgtgFxM3US6AMz0JVxopY
-         B1BMQ3buI7U6XxFPdaugsiNpvZkHPqY9nzKULzoGWLwhheJ5Im4Olo3i3EHnZFoRTQbF
-         NGhPyDOrJ/FEcYSUx9cSdqtbc7mn3V5+ugHOX+su8/mRBHvEoKuBr+ZDDoemMvAUcBlv
-         znKzYpn5SiSbIN+TpKCPvTItHrZt0I5fWd44lemtPCgG0TJs9BgpjYvpN+cNYYI65U/S
-         LjPjeO3lgnnEO1D/k3LqUGX0JWnaBtMUJUUXGhMx7fIlcItenKGyqwrbJkJFHkvZLYqJ
-         qRAQ==
-X-Gm-Message-State: AC+VfDyoVByvdRU+F2uEOwJ5JjZoBZf82cbI8IrxB+QhNnNGVlBaciry
-        d4mMORqlgWpkKGXCDckXHdQ=
-X-Google-Smtp-Source: ACHHUZ5oS6qs4j0ZcaYF5n2D3KQf9+yBhNSKgYie6iczVtetpf7zaE0ckCqefaWMmXgCdyVT5d6mTw==
-X-Received: by 2002:aca:f1a:0:b0:39a:ca93:53d2 with SMTP id 26-20020aca0f1a000000b0039aca9353d2mr322736oip.10.1686015360840;
-        Mon, 05 Jun 2023 18:36:00 -0700 (PDT)
-Received: from debian.me (subs32-116-206-28-36.three.co.id. [116.206.28.36])
-        by smtp.gmail.com with ESMTPSA id 3-20020aa79243000000b0065a1b05193asm2549852pfp.185.2023.06.05.18.36.00
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 05 Jun 2023 18:36:00 -0700 (PDT)
-Received: by debian.me (Postfix, from userid 1000)
-        id 0C10E1069AF; Tue,  6 Jun 2023 08:35:56 +0700 (WIB)
-Date:   Tue, 6 Jun 2023 08:35:56 +0700
-From:   Bagas Sanjaya <bagasdotme@gmail.com>
-To:     Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Linux Regressions <regressions@lists.linux.dev>,
-        Linux Kernel Network Developers <netdev@vger.kernel.org>,
-        Linux Real Time <linux-rt-users@vger.kernel.org>
-Cc:     Linus Torvalds <torvalds@linux-foundation.org>,
-        Paolo Abeni <pabeni@redhat.com>, SamW <proaudiomanuk@gmail.com>
-Subject: Re: Fwd: commit 6e98b09da931a00bf4e0477d0fa52748bf28fcce suspect
- causing full system lockup
-Message-ID: <ZH6NfCe-WbvukFsJ@debian.me>
-References: <9f12c322-fb62-26f0-46d1-61936a419468@gmail.com>
+        Tue, 6 Jun 2023 05:49:01 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C4EA010C0;
+        Tue,  6 Jun 2023 02:48:58 -0700 (PDT)
+Date:   Tue, 6 Jun 2023 11:48:55 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1686044936;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KSa4OY9dsWXX7LG19K4ps06QwMPn/kJbzHoa0LvQ/dI=;
+        b=kD6EPcw8dfX8tpFG4VG8J3fP0j3U6yVTftzZul3WT4zmlELTbQOT5cnUQvQlKUhdLh8Hbg
+        t2OO5xKtxJTTdTicNTD8UGPPkCzPzIQvZKnNI8YEii8e8jLBYMpAcQQV+n8ePSaC7/g5D2
+        trt7kdkXsSUDhsQjZt7B5In/yPv4E1/WFQQq53FoxYk+IhBPgegvZdsYLz1bXSNbS4TPeo
+        gGWXdfdr+d/HxR0UacwZmwpBVqmk5tGfRLL22eTzC/T+ETyO6b8TMD1fUgtM5ELXmA6ahr
+        bJ6XpGSE1SNRCHxt1iVHrY4297Kn3R/jdmvng2cLleiSojDUFJQtA4W8M5qvQw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1686044936;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=KSa4OY9dsWXX7LG19K4ps06QwMPn/kJbzHoa0LvQ/dI=;
+        b=CAkW+0ZxzgX8EbTa5o4RZs12jtVQjzM2EIG7LLHwHbFe93r/jfHiMwkAhjXeMdJrnwnkyz
+        r7nurGx2ELrFK0Ag==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>
+Subject: Re: [ANNOUNCE] 5.10.180-rt88
+Message-ID: <20230606094855.v8zhk78I@linutronix.de>
+References: <ZHZSlJFnTK1IpXeg@uudg.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="NLJN2ITb1fArYsZS"
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <9f12c322-fb62-26f0-46d1-61936a419468@gmail.com>
+In-Reply-To: <ZHZSlJFnTK1IpXeg@uudg.org>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2023-05-30 16:46:28 [-0300], Luis Claudio R. Goncalves wrote:
+> Hello RT-list!
+Hi,
 
---NLJN2ITb1fArYsZS
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> Support for deferred printing was removed in v5.10-rc1-rt1 by commit
+> 9153e3c5cb0c9 ("printk: remove deferred printing").
 
-On Fri, Jun 02, 2023 at 09:27:48AM +0700, Bagas Sanjaya wrote:
-> Anyway, I'm adding it to regzbot:
->=20
-> #regzbot introduced: 6e98b09da931a0 https://bugzilla.kernel.org/show_bug.=
-cgi?id=3D217519
-> #regzbot title: Networking pull for v6.4 causes full system lockup on RTL=
-8111/8168/8411
->=20
+Sorry for not getting back to earlier, where you proposed the change.
 
-Closing as there is already a confirmed fix (see Bugzilla):
+> diff --git a/include/linux/printk.h b/include/linux/printk.h
+> index 83c7734e98025..92e0656841128 100644
+> --- a/include/linux/printk.h
+> +++ b/include/linux/printk.h
+> @@ -609,7 +609,7 @@ static inline void print_hex_dump_debug(const char *prefix_str, int prefix_type,
+>  #define print_hex_dump_bytes(prefix_str, prefix_type, buf, len)	\
+>  	print_hex_dump_debug(prefix_str, prefix_type, 16, 1, buf, len, true)
+>  
+> -#ifdef CONFIG_PRINTK
+> +#if defined(CONFIG_PRINTK) && !defined(CONFIG_PREEMPT_RT)
+>  extern void __printk_safe_enter(void);
+>  extern void __printk_safe_exit(void);
 
-#regzbot resolved: d6c36cbc5e533f
+This needs to go entirely. The "new" printk code does not need this safe
+functions also for !RT.
 
-Thanks.
+> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+> index 5f1c50a6bebc5..7e65e3ef16e3a 100644
+> --- a/mm/page_alloc.c
+> +++ b/mm/page_alloc.c
+> @@ -6057,7 +6057,6 @@ static void __build_all_zonelists(void *data)
+>  	 * tty_insert_flip_string_and_push_buffer() on other CPU might be
+>  	 * calling kmalloc(GFP_ATOMIC | __GFP_NOWARN) with port->lock held.
+>  	 */
+> -	printk_deferred_enter();
 
---=20
-An old man doll... just what I always wanted! - Clara
+That is okay. However the commit, that introduced this
+	a992c387b4118 ("mm/page_alloc: fix potential deadlock on zonelist_update_seq seqlock")
 
---NLJN2ITb1fArYsZS
-Content-Type: application/pgp-signature; name="signature.asc"
+also added a local_irq_safe a little higher up and it has to go, too.
+The code as-is should produce warnings once it enters this path.
 
------BEGIN PGP SIGNATURE-----
+>  	write_seqlock(&zonelist_update_seq);
+>  
+>  #ifdef CONFIG_NUMA
 
-iHUEABYKAB0WIQSSYQ6Cy7oyFNCHrUH2uYlJVVFOowUCZH6NdwAKCRD2uYlJVVFO
-o+7tAP0a3YFgJGGHZy3B4JvneA+tB3lEMl8UXLMzavt/BnCnUQD9GbssiUMLtzBb
-dC8nEXgn6KRFlEoGuT2zpF7hOzycJA0=
-=KTvF
------END PGP SIGNATURE-----
-
---NLJN2ITb1fArYsZS--
+Sebastian
