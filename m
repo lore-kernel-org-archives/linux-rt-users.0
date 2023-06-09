@@ -2,96 +2,117 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DF0AC83005
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jun 2023 01:02:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38D64C7EE25
+	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jun 2023 01:11:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236992AbjFIBCk (ORCPT
+        id S237031AbjFIBLy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Jun 2023 21:02:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57608 "EHLO
+        Thu, 8 Jun 2023 21:11:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33128 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237066AbjFIBCi (ORCPT
+        with ESMTP id S235563AbjFIBLt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Jun 2023 21:02:38 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 59EC42712
-        for <linux-rt-users@vger.kernel.org>; Thu,  8 Jun 2023 18:02:35 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Thu, 8 Jun 2023 21:11:49 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 166CE125
+        for <linux-rt-users@vger.kernel.org>; Thu,  8 Jun 2023 18:11:11 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1686273070;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=2HTjxfXRs9/sIRuYG4/H8vlV2W5zqxFh+rpFVOJDPzE=;
+        b=aV9Nb+Cmc8z2EmO+J8X4da/GRAYtTdP+Ni2zubUiTjbIzhvzTfiOcwuZ2Us2Fz4WLDGyvl
+        hvHvytaX946lULR/LDzLqcqFTB3x88pp5tsPf+n1peWLU4p17nXR7PqycTZd6ZuRfU9X3i
+        lI0AMflnTou0I7+9t+96SzV9u2R+/gc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-369-thxdYsb8NTaDm4Ew1yyieA-1; Thu, 08 Jun 2023 21:11:06 -0400
+X-MC-Unique: thxdYsb8NTaDm4Ew1yyieA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id D032965281
-        for <linux-rt-users@vger.kernel.org>; Fri,  9 Jun 2023 01:02:34 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C94EFC433D2;
-        Fri,  9 Jun 2023 01:02:33 +0000 (UTC)
-Date:   Thu, 8 Jun 2023 21:02:32 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     Linux RT Users <linux-rt-users@vger.kernel.org>,
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 421D3802355;
+        Fri,  9 Jun 2023 01:11:06 +0000 (UTC)
+Received: from localhost (unknown [10.22.32.12])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 748692026D6A;
+        Fri,  9 Jun 2023 01:11:05 +0000 (UTC)
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v6.4-rc5-rt4] rt: vmd: make cfg_lock a raw spinlock
-Message-ID: <20230608210232.056e731f@gandalf.local.home>
-In-Reply-To: <ZIJwNBZa0UUTAx5i@uudg.org>
-References: <ZIJwNBZa0UUTAx5i@uudg.org>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [PATCH RT 0/3] Linux v5.10.180-rt89-rc1
+Date:   Thu,  8 Jun 2023 22:11:01 -0300
+Message-Id: <20230609011104.967128-1-lgoncalv@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 8 Jun 2023 21:20:04 -0300
-"Luis Claudio R. Goncalves" <lgoncalv@redhat.com> wrote:
+Dear RT Folks,
 
-> Sebastian, Steven,
-> 
-> I don't know if this is the best solution for the problem, but surely the
-> simplest one. If this patch makes sense, it could probably go upstream as
-> the changes only affect RT.
-> 
-> -------
-> 
-> rt: vmd: make cfg_lock a raw spinlock
-> 
-> This call sequence triggers the backtrace listed below:
-> 
->     pci_user_read_config_dword()  --->  vmd_pci_read()
+This is the RT stable review cycle of patch 5.10.180-rt89-rc1.
 
-Since pci_user_read_config_dword() (and all other sizes) uses
-raw_spin_lock(), I guess there's really no other choice than to have
-vmd_pci_read() do the same.
+Please scream at me if I messed something up. Please test the patches
+too.
 
--- Steve
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main
+release on 2023-06-15.
+
+To build 5.10.180-rt89-rc1 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.180.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.180-rt89-rc1.patch.xz
+
+Signing key fingerprint:
+
+  4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+Changes from v5.10.180-rt88:
 
 
-> 
-> The first function, pci_user_read_config_dword(), takes a raw_spin_lock
-> (a classic spin lock) and disables preemption and interrupts. Then
-> vmd_pci_read() takes a RT spinlock (a rtmutex), which can sleep, hence
-> the complaint about a sleeping function being called from atomic context.
-> 
-> 
-> [  168.466387] LTP: starting read_all_proc (read_all -d /proc -q -r 3)
-> [  168.614389] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:48
-> [  168.614393] in_atomic(): 1, irqs_disabled(): 1, non_block: 0, pid: 10268, name: read_all
-> [  168.614395] preempt_count: 1, expected: 0
-> [  168.614396] RCU nest depth: 0, expected: 0
-> [  168.614397] INFO: lockdep is turned off.
-> [  168.614398] irq event stamp: 0
-> [  168.614398] hardirqs last  enabled at (0): [<0000000000000000>] 0x0
-> [  168.614402] hardirqs last disabled at (0): [<ffffffffa4b0f3bf>] copy_process+0x80f/0x1990
-> [  168.614411] softirqs last  enabled at (0): [<ffffffffa4b0f3bf>] copy_process+0x80f/0x1990
-> [  168.614414] softirqs last disabled at (0): [<0000000000000000>] 0x0
-> [  168.614415] Preemption disabled at:
-> [  168.614416] [<0000000000000000>] 0x0
-> [  168.614418] CPU: 19 PID: 10268 Comm: read_all Tainted: G        W          6.4.0-rc5-rt4 #2
-> [  168.614421] Hardware name: Dell Inc. Precision 7820 Tower/0804P1, BIOS 2.6.3 05/04/2020
-> [  168.614422] Call Trace:
-> [  168.614424]  <TASK>
-> [  168.614425]  dump_stack_lvl+0x47/0x80
-> [  168.614433]  __might_resched+0x19b/0x250
-> [  168.614441]  rt_spin_lock+0x4c/0x100
-> [  168.614446]  ? vmd_pci_read+0x85/0xf0
-> [  168.614453]  vmd_pci_read+0x85/0xf0
-> [  168.614456]  pci_user_read_config_dword+0x78/0x100
+Luis Claudio R. Goncalves (3):
+  Revert "printk: declare printk_deferred_{enter,safe}() in
+    include/linux/printk.h"
+  Revert "mm/page_alloc: fix potential deadlock on
+    zonelist_update_seqseqlock"
+  Linux 5.10.180-rt89-rc1
+
+ include/linux/printk.h | 19 -------------------
+ localversion-rt        |  2 +-
+ mm/page_alloc.c        | 14 --------------
+ 3 files changed, 1 insertion(+), 34 deletions(-)
+
+-- 
+2.40.1
+
