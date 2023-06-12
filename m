@@ -2,76 +2,66 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4AEE4C83003
-	for <linux-rt-users@archiver.kernel.org>; Fri,  9 Jun 2023 01:12:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 00FBFC88CB2
+	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Jun 2023 15:45:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235413AbjFIBMF (ORCPT
+        id S239683AbjFLPps (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Jun 2023 21:12:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33166 "EHLO
+        Mon, 12 Jun 2023 11:45:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38494 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237307AbjFIBMD (ORCPT
+        with ESMTP id S239708AbjFLPpp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Jun 2023 21:12:03 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 39FA71B9
-        for <linux-rt-users@vger.kernel.org>; Thu,  8 Jun 2023 18:11:15 -0700 (PDT)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-513-H0rTBmLaMEGFSZDmjxQi5g-1; Thu, 08 Jun 2023 21:11:10 -0400
-X-MC-Unique: H0rTBmLaMEGFSZDmjxQi5g-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        Mon, 12 Jun 2023 11:45:45 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 31279172B;
+        Mon, 12 Jun 2023 08:45:29 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C8912801589;
-        Fri,  9 Jun 2023 01:11:09 +0000 (UTC)
-Received: from localhost (unknown [10.22.32.12])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 540F51121314;
-        Fri,  9 Jun 2023 01:11:09 +0000 (UTC)
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
+        by dfw.source.kernel.org (Postfix) with ESMTPS id B3714623CA;
+        Mon, 12 Jun 2023 15:45:28 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E6360C433D2;
+        Mon, 12 Jun 2023 15:45:27 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.1.33-rt11
+Date:   Mon, 12 Jun 2023 15:44:10 -0000
+Message-ID: <168658465081.107634.18340630132654176106@demetrius>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@suse.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [PATCH RT 3/3] Linux 5.10.180-rt89-rc1
-Date:   Thu,  8 Jun 2023 22:11:04 -0300
-Message-Id: <20230609011104.967128-4-lgoncalv@redhat.com>
-In-Reply-To: <20230609011104.967128-1-lgoncalv@redhat.com>
-References: <20230609011104.967128-1-lgoncalv@redhat.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-v5.10.180-rt89-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Hello RT-list!
 
------------
+I'm pleased to announce the 6.1.33-rt11 stable release. This is a merge of the v6.1.33
+stable update into the v6.1-rt tree.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v6.1-rt
+  Head SHA1: 3f9ca5f166e5796bd21176f356a479e505ce7760
+
+Or to build 6.1.33-rt11 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.33.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.33-rt11.patch.xz
 
 
-Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/localversion-rt b/localversion-rt
-index 666227d921a3d..d1173dc87024f 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt88
-+-rt89-rc1
--- 
-2.40.1
-
+Enjoy!
+Clark
