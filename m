@@ -2,98 +2,87 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBCF3C7EE2F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 12 Jun 2023 19:00:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CEBFEB64D0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Jun 2023 18:09:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235736AbjFLTAb (ORCPT
+        id S231513AbjFMSJR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 12 Jun 2023 15:00:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39250 "EHLO
+        Tue, 13 Jun 2023 14:09:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50446 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234745AbjFLTAa (ORCPT
+        with ESMTP id S232223AbjFMSJP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 12 Jun 2023 15:00:30 -0400
+        Tue, 13 Jun 2023 14:09:15 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 00E86E7B
-        for <linux-rt-users@vger.kernel.org>; Mon, 12 Jun 2023 11:59:51 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BB4FC19B3
+        for <linux-rt-users@vger.kernel.org>; Tue, 13 Jun 2023 11:08:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1686596391;
+        s=mimecast20190719; t=1686679722;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=c9VA8lqPLv3C/ebsM0wX6c+i+nfOBnQcvzmFEEseK8Q=;
-        b=ck6k5QUmiTh40f0xIxtflBSpnGk0wXVvFZ169NEveuRrHhuwr9ULEdAMIcLQST1WbEJe2c
-        bPatxPR8pa07zjU92C2oc2QfBjH6SJrqb0pAtAW18vByPgmnsWudEKABTPOjvS42/rIqVj
-        Mf7PyTf3AEBndz6FlJiCbNHIaA/u89k=
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
- [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-7-oH5ua5HSOyqfw_ZYs6aYHA-1; Mon, 12 Jun 2023 14:59:49 -0400
-X-MC-Unique: oH5ua5HSOyqfw_ZYs6aYHA-1
-Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-75d4d5eda29so23939385a.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 12 Jun 2023 11:59:49 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1686596389; x=1689188389;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=c9VA8lqPLv3C/ebsM0wX6c+i+nfOBnQcvzmFEEseK8Q=;
-        b=BBlC/kZQVK2Z5JPfy5AIT7MsERFH6ckGEXbnDKPYo45uDNTGyU6DuZ05pBHGOv5rBR
-         +PaWhjTQRY5mgB6urZ7bPbZp1S0xGKvExZfndgq//gH3zqcNNMzTlZWFwbYIFbF2nvog
-         G28SX1dCzDI5yFIza9Me7A+8Jnozb0rs//NactRcH3DMOLLgJ2b9gnr0UVxwh34Xu9Uj
-         mGFhG2IX+AHwWtNCxZMw0XuAhdzOrQBOi/ANvkGqRBY8MFLcKqEHF/UOfLusQGHGhciE
-         vlRdjfWEdTZ2MNM7JELnl3R8e9LG8rvPEUPCJDDNpH2tdUUSM4NJcVt20dj7LnVRUR4R
-         b4DQ==
-X-Gm-Message-State: AC+VfDwKsPv3i6ZsJLGi3Gztf0nUOMRIK7Fk4ODUkatTNcyRtbXDpHQ6
-        axIEF/mYOJywws72fcFQbK6aGISr7Ye06Sz3HtkQIclFEk6AaI/5dBLfCrzJ3qHeI+w+Kx4h8XK
-        SYtvNa8thow3Bm8VNCYCePN9lmCtlSrjIq0w=
-X-Received: by 2002:a05:620a:1d04:b0:75d:6b8e:b26c with SMTP id dl4-20020a05620a1d0400b0075d6b8eb26cmr11628644qkb.22.1686596389363;
-        Mon, 12 Jun 2023 11:59:49 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ51ou7cX4cd8FWa756Z7wQSMg0yzMlbK1ZtKCabfZbQt6H7tZaIbVxN6YdzodGLk4ZUBpIZig==
-X-Received: by 2002:a05:620a:1d04:b0:75d:6b8e:b26c with SMTP id dl4-20020a05620a1d0400b0075d6b8eb26cmr11628632qkb.22.1686596389097;
-        Mon, 12 Jun 2023 11:59:49 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-56.dsl.bell.ca. [184.147.141.56])
-        by smtp.gmail.com with ESMTPSA id x12-20020ae9f80c000000b007578b6d060bsm233579qkh.126.2023.06.12.11.59.48
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 12 Jun 2023 11:59:48 -0700 (PDT)
-Date:   Mon, 12 Jun 2023 14:59:48 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Anubhav Shelat <ashelat@redhat.com>
-cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2 08/10] rteval: Use f-strings in tools.py
-In-Reply-To: <20230601202734.813515-9-ashelat@redhat.com>
-Message-ID: <f5cb51f-1dc7-ce4-f5a9-3a3563e5b851@redhat.com>
-References: <20230601202734.813515-1-ashelat@redhat.com> <20230601202734.813515-9-ashelat@redhat.com>
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=kdP/31k7zZmBtOFLfVi5hBuMNSFO6/tqAmpgCZTX1Mw=;
+        b=h6aD3nlEZ7dlu+jZmfLqzebSWbltTv3KpQTUsaMAlX2P4ZCZMu5IwHoRlemwVKs9Jg8U/G
+        0JZG+EACC4XWMtuDxKORrRNLF8Fz4WrXlvXaVEm6iRSy7bN3ejKvFs0ZtN8K4GY2VtfSc9
+        jppFVUltSR+JchtHUjIfCFO2CgkrQP8=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-57-mSWJNGHrMSWy2gkBz4clnw-1; Tue, 13 Jun 2023 14:08:40 -0400
+X-MC-Unique: mSWJNGHrMSWy2gkBz4clnw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 24A2A3850550
+        for <linux-rt-users@vger.kernel.org>; Tue, 13 Jun 2023 18:08:38 +0000 (UTC)
+Received: from ashelat.remote.csb (unknown [10.22.11.5])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 0612C40CFD01;
+        Tue, 13 Jun 2023 18:08:37 +0000 (UTC)
+From:   Anubhav Shelat <ashelat@redhat.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH] rteval-cmd: If no kernel version is provided to -S/--source-download, download default kernel version
+Date:   Tue, 13 Jun 2023 14:08:28 -0400
+Message-Id: <20230613180828.1235964-1-ashelat@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Previously, the usuage was "./rteval-cmd -S [KERNEL_VERSION]", and
+rteval-cmd would throw an error if no kernel version was provided.
+Now, rteval-cmd will download the default kernel version, as specified
+in rteval/modules/loads/kcompile.py.
 
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+---
+ rteval-cmd | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-On Thu, 1 Jun 2023, Anubhav Shelat wrote:
-
-> Use f-strings in tools.py
-> 
-> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
-> ---
->  rteval/sysinfo/tools.py | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/rteval/sysinfo/tools.py b/rteval/sysinfo/tools.py
-> index 3993da413d8a..aa00b3d3eafc 100644
-> --- a/rteval/sysinfo/tools.py
-> +++ b/rteval/sysinfo/tools.py
-> @@ -40,5 +40,5 @@ def getcmdpath(which):
->                  pathSave[which] = cmdfile
->                  break
->          if not pathSave[which]:
-> -            raise RuntimeError("Command '%s' is unknown on this system" % which)
-> +            raise RuntimeError(f"Command '{which}' is unknown on this system")
->      return pathSave[which]
-> -- 
-> 2.31.1
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+diff --git a/rteval-cmd b/rteval-cmd
+index cf9326e7dfdd..cbba9cd2e451 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -168,11 +168,13 @@ def parse_options(cfg, parser, cmdargs):
+                       help='print rteval version and exit')
+     # if the -S/--source-download option doesn't include the version, set version to default
+     ind = None
+-    if sys.argv.count("-S") > 0: ind = sys.argv.index("-S")
+-    elif sys.argv.count("--source-download") > 0: ind = sys.argv.index("--source-download")
++    if sys.argv.count("-S") > 0:
++        ind = sys.argv.index("-S")
++    elif sys.argv.count("--source-download") > 0:
++        ind = sys.argv.index("--source-download")
+     if ind != None:
+-        if ind+1 == len(sys.argv): 
+-            sys.argv.insert(ind+1, ModuleParameters()["source"]["default"].strip(".tar.xz"))
++        if ind+1 == len(sys.argv):
++            sys.argv.insert(ind+1, ModuleParameters()["source"]["default"].replace(".tar.xz", ""))
+         cmdargs.append(sys.argv[ind+1])
+ 
+     parser.add_option("-S", "--source-download", dest="rteval___srcdownload",
+-- 
+2.31.1
 
