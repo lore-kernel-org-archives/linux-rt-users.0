@@ -2,98 +2,183 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D747FEB64D0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Jun 2023 18:09:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 51827EB64DA
+	for <linux-rt-users@archiver.kernel.org>; Sun, 18 Jun 2023 21:52:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232223AbjFMSJb (ORCPT
+        id S229543AbjFRVwn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 13 Jun 2023 14:09:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50460 "EHLO
+        Sun, 18 Jun 2023 17:52:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39820 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229618AbjFMSJa (ORCPT
+        with ESMTP id S229471AbjFRVwl (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 13 Jun 2023 14:09:30 -0400
+        Sun, 18 Jun 2023 17:52:41 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0171C13E
-        for <linux-rt-users@vger.kernel.org>; Tue, 13 Jun 2023 11:08:49 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 89B4E10E
+        for <linux-rt-users@vger.kernel.org>; Sun, 18 Jun 2023 14:52:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1686679729;
+        s=mimecast20190719; t=1687125119;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=CNp5pGeqz8vwux/ABY4mJ1Tdkr7ToDk8h93RvLSz5Zg=;
-        b=ftOpchhqqUoJkboPNyq6l5bKgbEPySBQ8j+5CU0Wv9G3CRGmcg3b1eBmOjeDqysjpNDi6j
-        dHVMQko4Zbp6VPgJ3yywjd+NTvj50DIe6NPyQhaKJpSZlA0xWIfObQ7hVa9uLM7VHpto/Q
-        MUa8jxzkQFxxC6vp3CNYWnO/Bl3mCuk=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=wZLdjHcab2BcEUayDGFasfyZtj2UYXOAR0yUXAOl+LM=;
+        b=EwRF4DsW7rKDoSMT1DjDdC3WnF91zmdB0JMvADBy8lbJoDhJ9N0xFFgzlaIDi95EMhgJH9
+        OxiX2xXdqbKwY7Ovq3+/O9nAo6Nx65ZnxQeaViYZk7yke42buAgHXtZnmKserSae18DXYQ
+        wG8QYO+fo7Da9/ScZNx6ttJ4PETLf2Y=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-594-Znvi2K72MK2NNZ5RsKKLwA-1; Tue, 13 Jun 2023 14:08:48 -0400
-X-MC-Unique: Znvi2K72MK2NNZ5RsKKLwA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-300-2SUG0_mZO4qACebW0T-EiA-1; Sun, 18 Jun 2023 17:51:55 -0400
+X-MC-Unique: 2SUG0_mZO4qACebW0T-EiA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 97E50811E7F
-        for <linux-rt-users@vger.kernel.org>; Tue, 13 Jun 2023 18:08:47 +0000 (UTC)
-Received: from ashelat.remote.csb (unknown [10.22.11.5])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 789CD40CFD00;
-        Tue, 13 Jun 2023 18:08:47 +0000 (UTC)
-From:   Anubhav Shelat <ashelat@redhat.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH] rteval: osinfo.py: Added code to use 'sos report' instead of sosreport.
-Date:   Tue, 13 Jun 2023 14:08:30 -0400
-Message-Id: <20230613180828.1235964-2-ashelat@redhat.com>
-In-Reply-To: <20230613180828.1235964-1-ashelat@redhat.com>
-References: <20230613180828.1235964-1-ashelat@redhat.com>
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 83B7338035A6;
+        Sun, 18 Jun 2023 21:51:54 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.8])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id A75D9C1603B;
+        Sun, 18 Jun 2023 21:51:53 +0000 (UTC)
+Date:   Sun, 18 Jun 2023 18:51:52 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Pavel Machek <pavel@denx.de>,
+        Jeff Brady <jeffreyjbrady@gmail.com>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.180-rt89
+Message-ID: <ZI98eLwx3ykPh2d9@uudg.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-sosreport is deprecated, so if available on the system osinfo will try
-to use the sos command instead.
+Hello RT-list!
 
-Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+I'm pleased to announce the 5.10.180-rt89 stable release.
+
+This release is a RT-only update. All the changes here are specific to RT.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: cb0ca150b57efd9e879e56c8f9834d98182aa394
+
+Or to build 5.10.180-rt89 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.180.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.180-rt89.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+  git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Testing performed under the tag v5.10.180-rt89-rc1 at:
+
+  https://linux.kernelci.org/test/job/rt-stable/branch/v5.10-rt-next/kernel/v5.10.180-rt89-rc1/
+
+Enjoy!
+Luis
+
+Changes from v5.10.180-rt88:
 ---
- rteval/sysinfo/osinfo.py | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/rteval/sysinfo/osinfo.py b/rteval/sysinfo/osinfo.py
-index 83dc78b96fdd..0c570c0e395b 100644
---- a/rteval/sysinfo/osinfo.py
-+++ b/rteval/sysinfo/osinfo.py
-@@ -62,12 +62,14 @@ class OSInfo:
+Luis Claudio R. Goncalves (3):
+      Revert "printk: declare printk_deferred_{enter,safe}() in include/linux/printk.h"
+      Revert "mm/page_alloc: fix potential deadlock on zonelist_update_seqseqlock"
+      Linux 5.10.180-rt89
+---
+include/linux/printk.h | 19 -------------------
+ localversion-rt        |  2 +-
+ mm/page_alloc.c        | 14 --------------
+ 3 files changed, 1 insertion(+), 34 deletions(-)
+---
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index 92e0656841128..7e4352467d831 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -609,23 +609,4 @@ static inline void print_hex_dump_debug(const char *prefix_str, int prefix_type,
+ #define print_hex_dump_bytes(prefix_str, prefix_type, buf, len)	\
+ 	print_hex_dump_debug(prefix_str, prefix_type, 16, 1, buf, len, true)
  
+-#if defined(CONFIG_PRINTK) && !defined(CONFIG_PREEMPT_RT)
+-extern void __printk_safe_enter(void);
+-extern void __printk_safe_exit(void);
+-/*
+- * The printk_deferred_enter/exit macros are available only as a hack for
+- * some code paths that need to defer all printk console printing. Interrupts
+- * must be disabled for the deferred duration.
+- */
+-#define printk_deferred_enter __printk_safe_enter
+-#define printk_deferred_exit __printk_safe_exit
+-#else /* defined(CONFIG_PRINTK) && !defined(CONFIG_PREEMPT_RT) */
+-static inline void printk_deferred_enter(void)
+-{
+-}
+-static inline void printk_deferred_exit(void)
+-{
+-}
+-#endif
+-
+ #endif
+diff --git a/localversion-rt b/localversion-rt
+index 666227d921a3d..d2a40223e4b77 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt88
++-rt89
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 7e65e3ef16e3a..3760a06932a6e 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -6043,20 +6043,7 @@ static void __build_all_zonelists(void *data)
+ 	int nid;
+ 	int __maybe_unused cpu;
+ 	pg_data_t *self = data;
+-	unsigned long flags;
  
-     def run_sysreport(self, repdir):
--        if os.path.exists('/usr/sbin/sosreport'):
-+        if os.path.exists('/usr/sbin/sos'):
-+            exe = '/usr/sbin/sos report'
-+        elif os.path.exists('/usr/sbin/sosreport'):
-             exe = '/usr/sbin/sosreport'
-         elif os.path.exists('/usr/sbin/sysreport'):
-             exe = '/usr/sbin/sysreport'
-         else:
--            raise RuntimeError("Can't find sosreport/sysreport")
-+            raise RuntimeError("Can't find sos/sosreport/sysreport")
+-	/*
+-	 * Explicitly disable this CPU's interrupts before taking seqlock
+-	 * to prevent any IRQ handler from calling into the page allocator
+-	 * (e.g. GFP_ATOMIC) that could hit zonelist_iter_begin and livelock.
+-	 */
+-	local_irq_save(flags);
+-	/*
+-	 * Explicitly disable this CPU's synchronous printk() before taking
+-	 * seqlock to prevent any printk() from trying to hold port->lock, for
+-	 * tty_insert_flip_string_and_push_buffer() on other CPU might be
+-	 * calling kmalloc(GFP_ATOMIC | __GFP_NOWARN) with port->lock held.
+-	 */
+ 	write_seqlock(&zonelist_update_seq);
  
-         self.__logger.log(Log.DEBUG, f"report tool: {exe}")
-         options = ['-k', 'rpm.rpmva=off',
-@@ -75,8 +77,8 @@ class OSInfo:
-                    '--batch']
+ #ifdef CONFIG_NUMA
+@@ -6091,7 +6078,6 @@ static void __build_all_zonelists(void *data)
+ 	}
  
-         self.__logger.log(Log.INFO, "Generating SOS report")
--        self.__logger.log(Log.INFO, f"using command {' '.join([exe]+options)}")
--        subprocess.call([exe] + options)
-+        self.__logger.log(Log.INFO, f"using command {' '.join(exe.split()+options)}")
-+        subprocess.call(exe.split() + options)
-         for s in glob('/tmp/s?sreport-rteval-*'):
-             self.__logger.log(Log.DEBUG, f"moving {s} to {repdir}")
-             shutil.move(s, repdir)
--- 
-2.31.1
+ 	write_sequnlock(&zonelist_update_seq);
+-	local_irq_restore(flags);
+ }
+ 
+ static noinline void __init
 
