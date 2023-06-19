@@ -2,42 +2,42 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51827EB64DA
-	for <linux-rt-users@archiver.kernel.org>; Sun, 18 Jun 2023 21:52:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BF5FEB64DA
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Jun 2023 13:33:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229543AbjFRVwn (ORCPT
+        id S231194AbjFSNdS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 18 Jun 2023 17:52:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39820 "EHLO
+        Mon, 19 Jun 2023 09:33:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38302 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229471AbjFRVwl (ORCPT
+        with ESMTP id S231702AbjFSNdL (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 18 Jun 2023 17:52:41 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 89B4E10E
-        for <linux-rt-users@vger.kernel.org>; Sun, 18 Jun 2023 14:52:00 -0700 (PDT)
+        Mon, 19 Jun 2023 09:33:11 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1576FCA
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Jun 2023 06:32:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1687125119;
+        s=mimecast20190719; t=1687181544;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=wZLdjHcab2BcEUayDGFasfyZtj2UYXOAR0yUXAOl+LM=;
-        b=EwRF4DsW7rKDoSMT1DjDdC3WnF91zmdB0JMvADBy8lbJoDhJ9N0xFFgzlaIDi95EMhgJH9
-        OxiX2xXdqbKwY7Ovq3+/O9nAo6Nx65ZnxQeaViYZk7yke42buAgHXtZnmKserSae18DXYQ
-        wG8QYO+fo7Da9/ScZNx6ttJ4PETLf2Y=
+        bh=IUyPzN8rj0g+BGc2421cvQpeD4oh7TotkjT0PBc1A7M=;
+        b=diYFXxj6tcUZfi9Cf4M7PQH1Jw49E6mQxqcv/IUDfRKKkiM+QThFjsLyBj87AsHpDTvBbx
+        wAnsZmYGBpStLz/TQY14cNIka3r2K/NCR0tdPJ2LciQnPMEmtLp7GUdyZcDkcXeCs1V8pF
+        VyYxSLFcZhsjxMDGP+ebgDpNRycgmvc=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-300-2SUG0_mZO4qACebW0T-EiA-1; Sun, 18 Jun 2023 17:51:55 -0400
-X-MC-Unique: 2SUG0_mZO4qACebW0T-EiA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-609-G5ePdKLNNFyndmZ-rNQ-PQ-1; Mon, 19 Jun 2023 09:32:19 -0400
+X-MC-Unique: G5ePdKLNNFyndmZ-rNQ-PQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 83B7338035A6;
-        Sun, 18 Jun 2023 21:51:54 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E22A3C0ED4B;
+        Mon, 19 Jun 2023 13:32:18 +0000 (UTC)
 Received: from localhost (unknown [10.22.8.8])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id A75D9C1603B;
-        Sun, 18 Jun 2023 21:51:53 +0000 (UTC)
-Date:   Sun, 18 Jun 2023 18:51:52 -0300
+        by smtp.corp.redhat.com (Postfix) with ESMTP id C5C17492C1B;
+        Mon, 19 Jun 2023 13:32:17 +0000 (UTC)
+Date:   Mon, 19 Jun 2023 10:32:16 -0300
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -50,39 +50,42 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
         Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.180-rt89
-Message-ID: <ZI98eLwx3ykPh2d9@uudg.org>
+Subject: [ANNOUNCE] 4.14.318-rt150
+Message-ID: <ZJBY4M7OphS5TdaY@uudg.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hello RT-list!
 
-I'm pleased to announce the 5.10.180-rt89 stable release.
+I'm pleased to announce the 4.14.318-rt150 stable release.
 
-This release is a RT-only update. All the changes here are specific to RT.
+This release is just an update to the new stable 4.14.318
+version and no RT specific changes have been made.
+
+This release has been tested under the tag v4.14.318-rt150-rc1 at:
+
+  https://linux.kernelci.org/test/job/rt-stable/branch/v4.14-rt-next/kernel/v4.14.318-rt150-rc1/
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.10-rt
-  Head SHA1: cb0ca150b57efd9e879e56c8f9834d98182aa394
+  branch: v4.14-rt
+  Head SHA1: 2b72b2d92cb5341e82ca200af6dfef63252f6d43
 
-Or to build 5.10.180-rt89 directly, the following patches should be applied:
+Or to build 4.14.318-rt150 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.180.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.318.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.180-rt89.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.318-rt150.patch.xz
 
 Signing key fingerprint:
 
@@ -91,94 +94,8 @@ Signing key fingerprint:
 All keys used for the above files and repositories can be found on the
 following git repository:
 
-  git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Testing performed under the tag v5.10.180-rt89-rc1 at:
-
-  https://linux.kernelci.org/test/job/rt-stable/branch/v5.10-rt-next/kernel/v5.10.180-rt89-rc1/
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
 Enjoy!
 Luis
-
-Changes from v5.10.180-rt88:
----
-
-Luis Claudio R. Goncalves (3):
-      Revert "printk: declare printk_deferred_{enter,safe}() in include/linux/printk.h"
-      Revert "mm/page_alloc: fix potential deadlock on zonelist_update_seqseqlock"
-      Linux 5.10.180-rt89
----
-include/linux/printk.h | 19 -------------------
- localversion-rt        |  2 +-
- mm/page_alloc.c        | 14 --------------
- 3 files changed, 1 insertion(+), 34 deletions(-)
----
-diff --git a/include/linux/printk.h b/include/linux/printk.h
-index 92e0656841128..7e4352467d831 100644
---- a/include/linux/printk.h
-+++ b/include/linux/printk.h
-@@ -609,23 +609,4 @@ static inline void print_hex_dump_debug(const char *prefix_str, int prefix_type,
- #define print_hex_dump_bytes(prefix_str, prefix_type, buf, len)	\
- 	print_hex_dump_debug(prefix_str, prefix_type, 16, 1, buf, len, true)
- 
--#if defined(CONFIG_PRINTK) && !defined(CONFIG_PREEMPT_RT)
--extern void __printk_safe_enter(void);
--extern void __printk_safe_exit(void);
--/*
-- * The printk_deferred_enter/exit macros are available only as a hack for
-- * some code paths that need to defer all printk console printing. Interrupts
-- * must be disabled for the deferred duration.
-- */
--#define printk_deferred_enter __printk_safe_enter
--#define printk_deferred_exit __printk_safe_exit
--#else /* defined(CONFIG_PRINTK) && !defined(CONFIG_PREEMPT_RT) */
--static inline void printk_deferred_enter(void)
--{
--}
--static inline void printk_deferred_exit(void)
--{
--}
--#endif
--
- #endif
-diff --git a/localversion-rt b/localversion-rt
-index 666227d921a3d..d2a40223e4b77 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt88
-+-rt89
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 7e65e3ef16e3a..3760a06932a6e 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -6043,20 +6043,7 @@ static void __build_all_zonelists(void *data)
- 	int nid;
- 	int __maybe_unused cpu;
- 	pg_data_t *self = data;
--	unsigned long flags;
- 
--	/*
--	 * Explicitly disable this CPU's interrupts before taking seqlock
--	 * to prevent any IRQ handler from calling into the page allocator
--	 * (e.g. GFP_ATOMIC) that could hit zonelist_iter_begin and livelock.
--	 */
--	local_irq_save(flags);
--	/*
--	 * Explicitly disable this CPU's synchronous printk() before taking
--	 * seqlock to prevent any printk() from trying to hold port->lock, for
--	 * tty_insert_flip_string_and_push_buffer() on other CPU might be
--	 * calling kmalloc(GFP_ATOMIC | __GFP_NOWARN) with port->lock held.
--	 */
- 	write_seqlock(&zonelist_update_seq);
- 
- #ifdef CONFIG_NUMA
-@@ -6091,7 +6078,6 @@ static void __build_all_zonelists(void *data)
- 	}
- 
- 	write_sequnlock(&zonelist_update_seq);
--	local_irq_restore(flags);
- }
- 
- static noinline void __init
 
