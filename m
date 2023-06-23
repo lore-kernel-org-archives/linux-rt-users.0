@@ -2,400 +2,172 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1478BEB64D7
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jun 2023 16:01:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BA276EB64D7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jun 2023 17:15:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230042AbjFWQB5 (ORCPT
+        id S231732AbjFWRP3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 23 Jun 2023 12:01:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60676 "EHLO
+        Fri, 23 Jun 2023 13:15:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44382 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229451AbjFWQB4 (ORCPT
+        with ESMTP id S231145AbjFWRP1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Jun 2023 12:01:56 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38D212130
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2023 09:01:09 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1687536068;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=v3u310FtnYPdz6UFGr9XcZ/VswjYfAHcEw0QPlJKinQ=;
-        b=LN4MvdrS8robf1E4yfLHgVRRp7TLADWY0Q0Q2oygmWhqBiakOyiXbf5x43O6BCugc3A0Xd
-        hfDnUQsnZe8PQf7zlc+VUhUbDBHHLsdLvcCMfDGFOSS/wHhuAgUO02o4t03aHxpyQVCAOX
-        /ly76+LiYWvB6iMo+uYwSs0l7zi8zfA=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-648-g2BOpnSxPqylD6KrXYFZzg-1; Fri, 23 Jun 2023 12:01:03 -0400
-X-MC-Unique: g2BOpnSxPqylD6KrXYFZzg-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-7654e1f86aeso68328685a.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2023 09:01:03 -0700 (PDT)
+        Fri, 23 Jun 2023 13:15:27 -0400
+Received: from mail-qk1-x734.google.com (mail-qk1-x734.google.com [IPv6:2607:f8b0:4864:20::734])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 332861731
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2023 10:15:23 -0700 (PDT)
+Received: by mail-qk1-x734.google.com with SMTP id af79cd13be357-76244657caeso78271385a.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2023 10:15:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sr-research.com; s=google; t=1687540522; x=1690132522;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=p8EJZk8Ddip/tfpD/j4Qc6TvxGgfui5VkAjbM20cUpg=;
+        b=dZloRJ0HqtwR46TviXbz85CGgYkdaNMvqkgEX+NM9ikgQa/znLbUlwHxEZdnqdwFio
+         pS35XndqRHGXbtndTBy9nY5wG7U6dfYXtUEs/5l2XDtOMEZDvd5XQdmy9AIClpoQPlGl
+         Rfb16Ng8zHWndfPpW7om3MJuuD2ty9SeWQssI=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1687536063; x=1690128063;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=v3u310FtnYPdz6UFGr9XcZ/VswjYfAHcEw0QPlJKinQ=;
-        b=LnuAYFMiWFxPjzRRnshfG1qvcqlRIuEjSRAmVt//8+Qh+2oTAWQkz24ndDZkPW0So3
-         HfU0aJTkNu8POtUIBoLXkX0nyHqKSXZPjOai+Ja5aSQZO9cXvSA9/shBbqtVYe8Clz9X
-         T/u2KQY1OPWR8H2nhl8utl+OcWYwGFxgyp/eo5dC3y2Q746TOHR1KoMnLCaYWW5HH48f
-         SVe9o5WOsN+0y1pPpVrXeMjh59aE3w7OXgvbKyHTTWdtsSmI1PboIwPoOYy3AX/agDzt
-         EbVT1SrOIpndWvQfofVDKEHejd/31QEU8EK9JxIYKLaTJLWPGdt7wEDm3Fc0wczzfgg5
-         7/Mg==
-X-Gm-Message-State: AC+VfDzv+3lxikh57yIfY0yApd0GJfxdpTY2nvJfIiHr/9VXrTMZWJKw
-        cm+bjiRpOERw3ixc3bpb2pcHQcJFBGfVrE1WC+s29I/nG2uS9Y9QMWUAsevF9heMp42Tn8AL1cm
-        zlprlBjpXqr0cQ4o0nr0AqeLLBok=
-X-Received: by 2002:a05:620a:479b:b0:765:3f8b:2989 with SMTP id dt27-20020a05620a479b00b007653f8b2989mr4338277qkb.47.1687536063321;
-        Fri, 23 Jun 2023 09:01:03 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ5nh6b/KLMn+WNnylHi5GUxjE1SfvuiS8OvKZrMGqnfTB1eiI0xNqkhl7gd668dgg1rXHqrtg==
-X-Received: by 2002:a05:620a:479b:b0:765:3f8b:2989 with SMTP id dt27-20020a05620a479b00b007653f8b2989mr4338195qkb.47.1687536062146;
-        Fri, 23 Jun 2023 09:01:02 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-56.dsl.bell.ca. [184.147.141.56])
-        by smtp.gmail.com with ESMTPSA id j6-20020a37c246000000b00763bcec87cesm3434310qkm.26.2023.06.23.09.01.01
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Jun 2023 09:01:01 -0700 (PDT)
-Date:   Fri, 23 Jun 2023 12:00:17 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Anubhav Shelat <ashelat@redhat.com>
-cc:     linux-rt-users@vger.kernel.org, kcarcia@redhat.com
-Subject: Re: [PATCH] rteval: Changed files to use argparse library instead
- of optparse
-In-Reply-To: <20230622164221.248271-1-ashelat@redhat.com>
-Message-ID: <1785842-e26-5e19-aa24-1e65afeef24b@redhat.com>
-References: <20230622164221.248271-1-ashelat@redhat.com>
+        d=1e100.net; s=20221208; t=1687540522; x=1690132522;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=p8EJZk8Ddip/tfpD/j4Qc6TvxGgfui5VkAjbM20cUpg=;
+        b=TEsS+Z9H3YbHNhfnINFMEHoOL7oGwEwqqMAMlSSEH5k3FQyAgcraVN+GYKB7j9ClPy
+         Yx+7K3AvWR02Y0tOu3nIqwSgJTtLOXCis4ju5Ul4vPak59BayCXXR/TvWhkpRZNcxuYc
+         sY71dBxgJ/yTEK6FOvlGiX0wI+tncZQhfuF2FE4KSNbc0RnbP7g/ZQToLg6l4AiAqIxN
+         G4T5H4QE+/BjL9eThxqJu47r5rTLka9ah6fZ7WYeNPwkgeIyLTWoS/ejXQXWalJJ2D9Y
+         XGpSK4jCOReqP7AkrU4ydNEbkuMqkj8nA92EWm7idFwRBnv9XAIoLfmDFLeM67cXINv0
+         c/mA==
+X-Gm-Message-State: AC+VfDxJlIhFg3VJ/p1X2PstA20vlgkRkfDR+Y9zydtzWNs3g6r7QCGa
+        kZ3Zpjzk4LLuuL3oXhThmqDCUxxy4+C+a6wuCJ8bm4+k6/0UPS6FiEs=
+X-Google-Smtp-Source: ACHHUZ6oPb1SArWyNfkQlIUwMu1R5HMne2m3lWPBeNy4o8aYrFYZtw1zxEjw4AX6T8ro8ykPNi7Y7PKCiQgQ7Y30gE0=
+X-Received: by 2002:ad4:5769:0:b0:632:10b1:7cf with SMTP id
+ r9-20020ad45769000000b0063210b107cfmr9472576qvx.36.1687540522115; Fri, 23 Jun
+ 2023 10:15:22 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+From:   Martin Hicks <martin@sr-research.com>
+Date:   Fri, 23 Jun 2023 13:15:11 -0400
+Message-ID: <CAMkvodZZKriPgWVwQ7R6ZS9eSbmmE3FC3f35QLg6u40NsnGJpg@mail.gmail.com>
+Subject: POSIX timer wakeups not preempting RT threads
+To:     linux-rt-users@vger.kernel.org
+Content-Type: multipart/mixed; boundary="0000000000005dd48305fecf2595"
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+--0000000000005dd48305fecf2595
+Content-Type: text/plain; charset="UTF-8"
 
+Hi,
 
-On Thu, 22 Jun 2023, Anubhav Shelat wrote:
+I'm just getting started with RT linux, and am porting an existing
+threaded application from another RTOS.
 
-> Replaced optparse.OptionParser() with argparse.ArgumentParser() and optparse.add_options() with argparse.add_arguments().
-> Added/changed code to assign the cmd_opts and cmd_args variables in rteval-cmd correctly to get the -Z/--summarize and
-> -H/--raw-histogram working correctly.
-> Note: the rteval/server files haven't been tested since server is
-> disabled.
-> 
-> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
-> ---
->  rteval-cmd                  | 88 ++++++++++++++++++++++---------------
->  rteval/modules/__init__.py  | 12 +++--
->  rteval/rtevalConfig.py      |  4 +-
->  server/rteval_testserver.py | 11 ++---
->  server/unittest.py          |  8 ++--
->  5 files changed, 70 insertions(+), 53 deletions(-)
-> 
-> diff --git a/rteval-cmd b/rteval-cmd
-> index cbba9cd2e451..96854e05f746 100755
-> --- a/rteval-cmd
-> +++ b/rteval-cmd
-> @@ -40,7 +40,7 @@ import os
->  import time
->  import re
->  import shutil
-> -import optparse
-> +import argparse
->  import tempfile
->  import requests
->  import lxml.etree
-> @@ -115,55 +115,55 @@ def parse_options(cfg, parser, cmdargs):
->      # thus they are prefixed with 'rteval___'.
->      # See rteval/rtevalConfig::UpdateFromOptionParser() method for more info
->      #
-> -    parser.add_option("-d", "--duration", dest="rteval___duration",
-> -                      type="string", default=rtevcfg.duration, metavar="DURATION",
-> -                      help="specify length of test run (default: %default)")
-> -    parser.add_option("-v", "--verbose", dest="rteval___verbose",
-> +    parser.add_argument("-d", "--duration", dest="rteval___duration",
-> +                      type=str, default=rtevcfg.duration, metavar="DURATION",
-> +                      help=f"specify length of test run (default: {rtevcfg.duration})")
-> +    parser.add_argument("-v", "--verbose", dest="rteval___verbose",
->                        action="store_true", default=rtevcfg.verbose,
-> -                      help="turn on verbose prints (default: %default)")
-> -    parser.add_option("-q", "--quiet", dest="rteval___quiet",
-> +                      help=f"turn on verbose prints (default: {rtevcfg.verbose})")
-> +    parser.add_argument("-q", "--quiet", dest="rteval___quiet",
->                        action="store_true", default=rtevcfg.quiet,
-> -                      help="turn on quiet mode (default: %default)")
-> -    parser.add_option("-w", "--workdir", dest="rteval___workdir",
-> -                      type="string", default=rtevcfg.workdir, metavar="DIRECTORY",
-> -                      help="top directory for rteval data (default: %default)")
-> -    parser.add_option("-l", "--loaddir", dest="rteval___srcdir",
-> -                      type="string", default=rtevcfg.srcdir, metavar="DIRECTORY",
-> -                      help="directory for load source tarballs (default: %default)")
-> -    parser.add_option("-i", "--installdir", dest="rteval___installdir",
-> -                      type="string", default=rtevcfg.installdir, metavar="DIRECTORY",
-> -                      help="place to locate installed templates (default: %default)")
-> -    parser.add_option("-s", "--sysreport", dest="rteval___sysreport",
-> +                      help=f"turn on quiet mode (default: {rtevcfg.quiet})")
-> +    parser.add_argument("-w", "--workdir", dest="rteval___workdir",
-> +                      type=str, default=rtevcfg.workdir, metavar="DIRECTORY",
-> +                      help=f"top directory for rteval data (default: {rtevcfg.workdir})")
-> +    parser.add_argument("-l", "--loaddir", dest="rteval___srcdir",
-> +                      type=str, default=rtevcfg.srcdir, metavar="DIRECTORY",
-> +                      help=f"directory for load source tarballs (default: {rtevcfg.srcdir})")
-> +    parser.add_argument("-i", "--installdir", dest="rteval___installdir",
-> +                      type=str, default=rtevcfg.installdir, metavar="DIRECTORY",
-> +                      help=f"place to locate installed templates (default: {rtevcfg.installdir})")
-> +    parser.add_argument("-s", "--sysreport", dest="rteval___sysreport",
->                        action="store_true", default=rtevcfg.sysreport,
-> -                      help='run sysreport to collect system data (default: %default)')
-> -    parser.add_option("-D", '--debug', dest='rteval___debugging',
-> +                      help=f'run sysreport to collect system data (default: {rtevcfg.sysreport})')
-> +    parser.add_argument("-D", '--debug', dest='rteval___debugging',
->                        action='store_true', default=rtevcfg.debugging,
-> -                      help='turn on debug prints (default: %default)')
-> +                      help=f'turn on debug prints (default: {rtevcfg.debugging})')
->      #parser.add_option("-X", '--xmlrpc-submit', dest='rteval___xmlrpc',
->      #                  action='store', default=rtevcfg.xmlrpc, metavar='HOST',
->      #                  help='Hostname to XML-RPC server to submit reports')
->      #parser.add_option("-P", "--xmlrpc-no-abort", dest="rteval___xmlrpc_noabort",
->      #                  action='store_true', default=False,
->      #                  help="Do not abort if XML-RPC server do not respond to ping request");
-> -    parser.add_option("-Z", '--summarize', dest='rteval___summarize',
-> +    parser.add_argument("-Z", '--summarize', dest='rteval___summarize',
->                        action='store_true', default=False,
->                        help='summarize an already existing XML report')
-> -    parser.add_option("-H", '--raw-histogram', dest='rteval___rawhistogram',
-> +    parser.add_argument("-H", '--raw-histogram', dest='rteval___rawhistogram',
->                        action='store_true', default=False,
->                        help='Generate raw histogram data for an already existing XML report')
-> -    parser.add_option("-f", "--inifile", dest="rteval___inifile",
-> -                      type='string', default=None, metavar="FILE",
-> +    parser.add_argument("-f", "--inifile", dest="rteval___inifile",
-> +                      type=str, default=None, metavar="FILE",
->                        help="initialization file for configuring loads and behavior")
-> -    parser.add_option("-a", "--annotate", dest="rteval___annotate",
-> -                      type="string", default=None, metavar="STRING",
-> +    parser.add_argument("-a", "--annotate", dest="rteval___annotate",
-> +                      type=str, default=None, metavar="STRING",
->                        help="Add a little annotation which is stored in the report")
-> -    parser.add_option("-L", "--logging", dest="rteval___logging",
-> +    parser.add_argument("-L", "--logging", dest="rteval___logging",
->                        action='store_true', default=False,
->                        help='log the output of the loads in the report directory')
-> -    parser.add_option("-O", "--onlyload", dest="rteval___onlyload",
-> +    parser.add_argument("-O", "--onlyload", dest="rteval___onlyload",
->                        action='store_true', default=False,
->                        help="only run the loads (don't run measurement threads)")
-> -    parser.add_option("-V", "--version", dest="rteval___version",
-> +    parser.add_argument("-V", "--version", dest="rteval___version",
->                        action='store_true', default=False,
->                        help='print rteval version and exit')
->      # if the -S/--source-download option doesn't include the version, set version to default
-> @@ -177,15 +177,33 @@ def parse_options(cfg, parser, cmdargs):
->              sys.argv.insert(ind+1, ModuleParameters()["source"]["default"].replace(".tar.xz", ""))
->          cmdargs.append(sys.argv[ind+1])
->  
-> -    parser.add_option("-S", "--source-download", dest="rteval___srcdownload",
-> -                        type="string", default=None, metavar="KERNEL_VERSION",
-> +    parser.add_argument("-S", "--source-download", dest="rteval___srcdownload",
-> +                        type=str, default=None, metavar="KERNEL_VERSION",
->                          help='download a source kernel from kernel.org and exit (if no version is provided, downloads default kernel)')
->  
->  
->      if not cmdargs:
->          cmdargs = ["--help"]
->  
-> -    (cmd_opts, cmd_args) = parser.parse_args(args=cmdargs)
-> +    # if -Z/--summarize is specified, add the files to be summarized to cmd_args, and add -Z to cmd_opts
-> +    cmd_args = []
-> +    if (sys.argv.count('-Z')+sys.argv.count('--summarize')) > 0:
-> +        try:
-> +            ind = cmdargs.index('-Z')
-> +        except ValueError:
-> +            ind = cmdargs.index('--summarize')
-> +        cmd_args = cmdargs[ind+1:]
-> +        cmdargs = cmdargs[:ind+1]
-> +    # if -H/--raw-histogram is specified, add the files to be summarized to cmd_args, and add -Z to cmd_opts
-> +    elif (sys.argv.count('-H')+sys.argv.count('--raw-histogram')) > 0:
-> +        try:
-> +            ind = cmdargs.index('-H')
-> +        except ValueError:
-> +            ind = cmdargs.index('--raw-histogram')
-> +        cmd_args = cmdargs[ind+1:]
-> +        cmdargs = cmdargs[:ind+1]
-> +    cmd_opts = parser.parse_args(args=cmdargs)
-> +
->      if cmd_opts.rteval___version:
->          print(f"rteval version {RTEVAL_VERSION}")
->          sys.exit(0)
-> @@ -207,7 +225,7 @@ def parse_options(cfg, parser, cmdargs):
->          cmd_opts.rteval___duration = float(v) * mult
->  
->      # Update the config object with the parsed arguments
-> -    cfg.UpdateFromOptionParser(parser)
-> +    cfg.UpdateFromOptionParser(cmd_opts)
->  
->      return cmd_args
->  
-> @@ -277,7 +295,7 @@ if __name__ == '__main__':
->          measuremods = MeasurementModules(config, logger=logger)
->  
->          # parse command line options
-> -        parser = optparse.OptionParser()
-> +        parser = argparse.ArgumentParser()
->          loadmods.SetupModuleOptions(parser)
->          measuremods.SetupModuleOptions(parser)
->          cmd_args = parse_options(config, parser, sys.argv[1:])
-> diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
-> index d52dd597186a..253e72abf8aa 100644
-> --- a/rteval/modules/__init__.py
-> +++ b/rteval/modules/__init__.py
-> @@ -25,7 +25,7 @@
->  import time
->  from datetime import datetime
->  import threading
-> -import optparse
-> +import argparse
->  import libxml2
->  from rteval.Log import Log
->  from rteval.rtevalConfig import rtevalCfgSection
-> @@ -294,12 +294,11 @@ the information provided by the module"""
->      def SetupModuleOptions(self, parser, config):
->          """Sets up a separate optptarse OptionGroup per module with its supported parameters"""
->  
-> -        grparser = optparse.OptionGroup(parser, "Group Options for %s modules" % self.__modtype)
-> -        grparser.add_option('--%s-cpulist' % self.__modtype,
-> +        grparser = parser.add_argument_group("Group Options for %s modules" % self.__modtype)
-> +        grparser.add_argument('--%s-cpulist' % self.__modtype,
->                              dest='%s___cpulist' % self.__modtype, action='store', default="",
->                              help='CPU list where %s modules will run' % self.__modtype,
->                              metavar='LIST')
-> -        parser.add_option_group(grparser)
->  
->          for (modname, mod) in list(self.__modsloaded.items()):
->              opts = mod.ModuleParameters()
-> @@ -313,7 +312,7 @@ the information provided by the module"""
->                  # Ignore if a section is not found
->                  cfg = None
->  
-> -            grparser = optparse.OptionGroup(parser, "Options for the %s module" % shortmod)
-> +            grparser = parser.add_argument_group("Options for the %s module" % shortmod)
->              for (o, s) in list(opts.items()):
->                  descr = 'descr' in s and s['descr'] or ""
->                  metavar = 'metavar' in s and s['metavar'] or None
-> @@ -328,14 +327,13 @@ the information provided by the module"""
->                      default = 'default' in s and s['default'] or None
->  
->  
-> -                grparser.add_option('--%s-%s' % (shortmod, o),
-> +                grparser.add_argument('--%s-%s' % (shortmod, o),
->                                      dest="%s___%s" % (shortmod, o),
->                                      action='store',
->                                      help='%s%s' % (descr,
->                                                     default and ' (default: %s)' % default or ''),
->                                      default=default,
->                                      metavar=metavar)
-> -            parser.add_option_group(grparser)
->  
->  
->      def InstantiateModule(self, modname, modcfg, modroot=None):
-> diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-> index 41f1a567720f..ec14a13adcd9 100644
-> --- a/rteval/rtevalConfig.py
-> +++ b/rteval/rtevalConfig.py
-> @@ -286,11 +286,11 @@ class rtevalConfig:
->          return self.__config_files.__contains__(fname)
->  
->  
-> -    def UpdateFromOptionParser(self, parser):
-> +    def UpdateFromOptionParser(self, cmd_opts):
->          "Parse through the command line options and update the appropriate config settings"
->  
->          last_sect = None
-> -        for sk, v in sorted(vars(parser.values).items()):
-> +        for sk, v in sorted(vars(cmd_opts).items()):
->              # optparse key template: {sectionname}___{key}
->              k = sk.split('___')
->              if k[0] != last_sect:
-> diff --git a/server/rteval_testserver.py b/server/rteval_testserver.py
-> index 3f0c3c73733c..6cac85bcfe52 100644
-> --- a/server/rteval_testserver.py
-> +++ b/server/rteval_testserver.py
-> @@ -31,6 +31,7 @@ import signal
->  from xmlrpc.server import SimpleXMLRPCServer
->  from xmlrpc.server import SimpleXMLRPCRequestHandler
->  from optparse import OptionParser
-> +import argparse
->  
->  import xmlrpc_API1
->  from Logger import Logger
-> @@ -110,16 +111,16 @@ rtevalserver = None
->  #
->  
->  if __name__ == '__main__':
-> -    parser = OptionParser(version="%prog v0.1")
-> +    parser = argparse.ArgumentParser(version="%prog v0.1")
->  
-> -    parser.add_option("-L", "--listen", action="store", dest="listen", default=LISTEN,
-> +    parser.add_argument("-L", "--listen", action="store", dest="listen", default=LISTEN,
->                        help="Which interface to listen to [default: %default]", metavar="IPADDR")
-> -    parser.add_option("-P", "--port", action="store", type="int", dest="port", default=PORT,
-> +    parser.add_argument("-P", "--port", action="store", type="int", dest="port", default=PORT,
->                        help="Which port to listen to [default: %default]",  metavar="PORT")
-> -    parser.add_option("-l", "--log", action="store", dest="logfile", default=None,
-> +    parser.add_argument("-l", "--log", action="store", dest="logfile", default=None,
->                        help="Where to log requests.", metavar="FILE")
->  
-> -    (options, args) = parser.parse_args()
-> +    options = parser.parse_args()
->  
->      logger = Logger(options.logfile, "RTeval")
->      rtevalserver = RTevald(options, logger)
-> diff --git a/server/unittest.py b/server/unittest.py
-> index 4d53f46590ce..7dcdef08c098 100644
-> --- a/server/unittest.py
-> +++ b/server/unittest.py
-> @@ -1,5 +1,5 @@
->  import sys, threading, time, signal, libxml2
-> -from optparse import OptionParser
-> +import argparse
->  from rteval_testserver import RTevald
->  from Logger import Logger
->  
-> @@ -14,10 +14,10 @@ class ServerThread(threading.Thread):
->          self.port = port
->          self.log = Logger('unit-test-server.log','rteval-xmlrpc-testsrv')
->  
-> -        parser = OptionParser()
-> -        parser.add_option("-L", "--listen", action="store", dest="listen", default="127.0.0.1",
-> +        parser = argparse.ArgumentParser()
-> +        parser.add_argument("-L", "--listen", action="store", dest="listen", default="127.0.0.1",
->                            help="Which interface to listen to [default: %default]", metavar="IPADDR")
-> -        parser.add_option("-P", "--port", action="store", type="int", dest="port", default=self.port,
-> +        parser.add_argument("-P", "--port", action="store", type="int", dest="port", default=self.port,
->                            help="Which port to listen to [default: %default]",  metavar="PORT")
->  
->          (options, args) = parser.parse_args()
-> -- 
-> 2.39.3
-> 
-> 
+I'm looking at using a POSIX timer to cause an action to be run every
+500us, but I'm seeing that when the hrtimer fires while the CPU is
+busy running another SCHED_RR/SCHED_FIFO process that the hrtimer is
+deferred until the process releases the CPU.  I'm using SIGEV_SIGNAL
+to deliver the timer expiry to a thread that's running at a higher RT
+Priority than the other tasks, but no preemption seems to occur.
 
-This patch does not apply cleanly
+If the "other" tasks are running with SCHED_OTHER then the signal is
+delivered immediately.
 
-git am a1.patch
-Applying: rteval: Changed files to use argparse library instead of 
-optparse
-error: patch failed: rteval-cmd:115
-error: rteval-cmd: patch does not apply
-Patch failed at 0001 rteval: Changed files to use argparse library instead 
-of optparse
+I've tried using 'cset shield -c 1' and without (just pinning use
+taskset -c 1), and modified priorities and scheduler with chrt.
+The test is running on x86_64 with 6.3.9-rt15. PREEMPT_RT is enabled.
 
-I suspect you are not building this against upstream, but against your 
-local repo.
+A simple test that illustrates the idea is attached.
+Is this supposed to work?
 
-Remember that 
-rteval-cmd: If no kernel version is provided to -S/--source-download, 
-download default kernel version
+mh
 
-was not accepted upstream, I suspect you are generating a patch that 
-applies against the above. 
+--0000000000005dd48305fecf2595
+Content-Type: text/x-csrc; charset="US-ASCII"; name="test-rt.c"
+Content-Disposition: attachment; filename="test-rt.c"
+Content-Transfer-Encoding: base64
+Content-ID: <f_lj8u0fnq0>
+X-Attachment-Id: f_lj8u0fnq0
 
-John
-
+I2RlZmluZSBfR05VX1NPVVJDRQojaW5jbHVkZSA8c3RkaW8uaD4KI2luY2x1ZGUgPHB0aHJlYWQu
+aD4KI2luY2x1ZGUgPHNpZ25hbC5oPgojaW5jbHVkZSA8c3RyaW5nLmg+CiNpbmNsdWRlIDx1bmlz
+dGQuaD4KI2luY2x1ZGUgPGVycm5vLmg+CiNpbmNsdWRlIDxmY250bC5oPgojaW5jbHVkZSA8c3Rk
+bGliLmg+CiNpbmNsdWRlIDxtYXRoLmg+CgojZGVmaW5lIFRJTUVSX1BSSU9SSVRZIDEwCiNkZWZp
+bmUgV09SS0VSX1BSSU9SSVRZIDkKCiNkZWZpbmUgT05FX0tIWiAoMTAwMDAwMEwpCiNkZWZpbmUg
+S0haKG4pICBPTkVfS0haL24KCiNkZWZpbmUgV09SS0VSUyAyCnZvbGF0aWxlIGRvdWJsZSB3b3Jr
+ZXJfZGF0YVtXT1JLRVJTXTsKCiNkZWZpbmUgV09SS19JTlRFUlZBTCAyMCAgLyogbXMgdG8gd29y
+ayBwZXIgc2VjICovCgpkb3VibGUgY3VycmVudF90aW1lX2RvdWJsZSh2b2lkKQp7CiAgICBzdHJ1
+Y3QgdGltZXNwZWMgdHM7CgogICAgY2xvY2tfZ2V0dGltZShDTE9DS19NT05PVE9OSUMsICZ0cyk7
+CiAgICByZXR1cm4gdHMudHZfc2VjKjFlNiArIHRzLnR2X25zZWMvMTAwMC4wOwp9Cgp2b2lkICp3
+b3JrZXJfZnVuYyh2b2lkICphcmcpCnsKICB1bnNpZ25lZCBsb25nIG51bSA9ICh1bnNpZ25lZCBs
+b25nKWFyZzsKICBjaGFyIHRocmVhZF9uYW1lWzE2XTsKICBpbnQgaW5pdF9zbGVlcCA9IHJhbmRv
+bSgpICUgMTAwMDsKICBpbnQgcmV0OwoKICBzbnByaW50Zih0aHJlYWRfbmFtZSwgMTYsICJ3b3Jr
+ZXJfJWxkIiwgbnVtKTsKICBpZiAoKHJldCA9IHB0aHJlYWRfc2V0bmFtZV9ucChwdGhyZWFkX3Nl
+bGYoKSwgdGhyZWFkX25hbWUpKSAhPSAwKSB7CiAgICBwcmludGYoIndvcmtlciAlbGQ6IEZhaWxl
+ZCBzZXRuYW1lOiAlc1xuIiwgbnVtLCBzdHJlcnJvcihyZXQpKTsKICAgIHJldHVybiBOVUxMOwog
+IH0KCiAgc3RydWN0IHNjaGVkX3BhcmFtIHBhcmFtID0gey5zY2hlZF9wcmlvcml0eSA9IFdPUktF
+Ul9QUklPUklUWX07CiAgaWYgKHNjaGVkX3NldHNjaGVkdWxlcigwLCBTQ0hFRF9SUiwgJnBhcmFt
+KSA9PSAtMSkgewogICAgcHJpbnRmKCJ3b3JrZXIgJWxkOiBGYWlsZWQgc2NoZWRfc2V0c2NoZWR1
+bGVyKCk6ICVzXG4iLCBudW0sIHN0cmVycm9yKGVycm5vKSk7CiAgICByZXR1cm4gTlVMTDsKICB9
+CgogIHdvcmtlcl9kYXRhW251bV0gPSBpbml0X3NsZWVwOwogIHByaW50ZigiV29ya2VyICVsZCBz
+dGFydGVkLiBJbml0IHNsZWVwICVkXG4iLCBudW0sIGluaXRfc2xlZXApOwogIHVzbGVlcChpbml0
+X3NsZWVwKjEwMDApOwoKICBmb3IgKDs7KSB7CiAgICBkb3VibGUgd29ya19zdGFydCA9IGN1cnJl
+bnRfdGltZV9kb3VibGUoKTsKICAgIGludCBpOwoKICAgIGRvIHsKICAgICAgZm9yIChpID0gMDsg
+aSA8IDEwMDAwMDsgaSsrKQogICAgICAgIHdvcmtlcl9kYXRhW251bV0gKj0gTV9QSTsKICAgIH0g
+d2hpbGUgKGN1cnJlbnRfdGltZV9kb3VibGUoKSAtIHdvcmtfc3RhcnQgPCBXT1JLX0lOVEVSVkFM
+KjEwMDApOwogICAgdXNsZWVwKCgxMDAwLVdPUktfSU5URVJWQUwpKjEwMDApOwogIH0KfQoKCgpp
+bnQgdGltZXJfcGlwZVsyXTsKI2RlZmluZSBUSU1FUl9FWFBJUlkgMHg1NQoKLyoKICogSW52b2tl
+ZCBlYWNoIHRpbWUgdGhlIGl0aW1lciBleHBpcmVzCiAqLwp2b2lkIHRpbWVyX2hhbmRsZXIoaW50
+IHNpZywgc2lnaW5mb190ICppbmZvLCB2b2lkICp1Y29udGV4dCkKewogIGNoYXIgbXNnID0gVElN
+RVJfRVhQSVJZOwogIGludCByZXQgPSB3cml0ZSh0aW1lcl9waXBlWzFdLCAmbXNnLCBzaXplb2Yo
+bXNnKSk7CiAgaWYgKHJldCAhPSAxKQogICAgcHJpbnRmKCJwaXBlIHdyaXRlIGZhaWxlZDogJXNc
+biIsIHN0cmVycm9yKGVycm5vKSk7Cn0KCgp2b2lkICpjcmVhdGVfdGltZXJfdGhyZWFkKHZvaWQg
+KmFyZykKewogIHN0cnVjdCBzaWdldmVudCBldmVudDsKICBzdHJ1Y3QgaXRpbWVyc3BlYyBpdGlt
+ZTsKICB0aW1lcl90IHRpbWVyX2lkOwogIHNpZ3NldF90IHNldDsKICBzdHJ1Y3Qgc2lnYWN0aW9u
+IHNhOwogIGludCByZXQ7CiAgZG91YmxlIGxhc3RfZXhwaXJ5OwoKICBwdGhyZWFkX3NldG5hbWVf
+bnAocHRocmVhZF9zZWxmKCksICJ0aW1lcl90aHJlYWQiKTsKCiAgc3RydWN0IHNjaGVkX3BhcmFt
+IHBhcmFtID0gey5zY2hlZF9wcmlvcml0eSA9IFRJTUVSX1BSSU9SSVRZfTsKICBpZiAoc2NoZWRf
+c2V0c2NoZWR1bGVyKDAsIFNDSEVEX1JSLCAmcGFyYW0pID09IC0xKSB7CiAgICBwcmludGYoInRp
+bWVyX3RocmVhZDogRmFpbGVkIHNjaGVkX3NldHNjaGVkdWxlcigpOiAlc1xuIiwgc3RyZXJyb3Io
+ZXJybm8pKTsKICAgIHJldHVybiBOVUxMOwogIH0KCiAgLyogU2V0IHVwIHBpcGUgdG8gY29tbXVu
+aWNhdGUgYmV0d2VlbiB0aW1lciBoYW5kbGVyIGFuZCB0aGlzIGZ1bmN0aW9uICovCiAgaWYgKHBp
+cGUodGltZXJfcGlwZSkpCiAgICBwZXJyb3IoInBpcGUiKTsKCiAgZXZlbnQuc2lnZXZfbm90aWZ5
+ID0gU0lHRVZfU0lHTkFMOwogIGV2ZW50LnNpZ2V2X3NpZ25vID0gU0lHUlRNSU4rMTsKICBldmVu
+dC5zaWdldl9ub3RpZnlfYXR0cmlidXRlcyA9IE5VTEw7CiAgZXZlbnQuc2lnZXZfdmFsdWUuc2l2
+YWxfcHRyID0gJnRpbWVyX2lkOwoKICBpZiAodGltZXJfY3JlYXRlKENMT0NLX1JFQUxUSU1FLCAm
+ZXZlbnQsICZ0aW1lcl9pZCkpCiAgICBwZXJyb3IoInRpbWVyX2NyZWF0ZSIpOwoKICAvKiBTZXQg
+dXAgc2lnbmFsIHRvIGJlIGhhbmRsZWQgYnkgdGhpcyB0aHJlYWQgKi8KICBzaWdlbXB0eXNldCgm
+c2V0KTsKICBzaWdhZGRzZXQoJnNldCwgU0lHUlRNSU4rMSk7CiAgaWYgKChyZXQgPSBwdGhyZWFk
+X3NpZ21hc2soU0lHX1VOQkxPQ0ssICZzZXQsIE5VTEwpKSAhPSAwKQogICAgcHJpbnRmKCJGYWls
+ZWQgcHRocmVhZF9zaWdtYXNrKCk6ICVzXG4iLCBzdHJlcnJvcihyZXQpKTsKICBtZW1zZXQoJnNh
+LCAwLCBzaXplb2Yoc2EpKTsKICBzYS5zYV9mbGFncyA9IFNBX1NJR0lORk87CiAgc2Euc2Ffc2ln
+YWN0aW9uID0gdGltZXJfaGFuZGxlcjsKICBpZiAoc2lnYWN0aW9uKFNJR1JUTUlOKzEsICZzYSwg
+TlVMTCkgPT0gLTEpCiAgICBwcmludGYoIkZhaWxlZCBzaWdhY3Rpb24oKTogJXNcbiIsIHN0cmVy
+cm9yKGVycm5vKSk7CgogIGl0aW1lLml0X3ZhbHVlLnR2X3NlYyA9IDA7CiAgaXRpbWUuaXRfdmFs
+dWUudHZfbnNlYyA9IEtIWigyKTsKICBpdGltZS5pdF9pbnRlcnZhbC50dl9zZWMgPSAwOwogIGl0
+aW1lLml0X2ludGVydmFsLnR2X25zZWMgPSBLSFooMik7CiAgdGltZXJfc2V0dGltZSh0aW1lcl9p
+ZCwgMCwgJml0aW1lLCBOVUxMKTsKCiAgbGFzdF9leHBpcnkgPSBjdXJyZW50X3RpbWVfZG91Ymxl
+KCk7CiAgZm9yICg7OykgewogICAgY2hhciBtc2c7CiAgICBpbnQgYnl0ZXNfcmVhZCA9IHJlYWQo
+dGltZXJfcGlwZVswXSwgJm1zZywgc2l6ZW9mKG1zZykpOwoKICAgIGlmIChieXRlc19yZWFkID09
+IC0xICYmIGVycm5vID09IEVJTlRSKQogICAgICAgIGNvbnRpbnVlOwogICAgZWxzZSBpZiAoYnl0
+ZXNfcmVhZCAhPSAxKSB7CiAgICAgIHByaW50ZigiUmVhZCBlcnJvciwgYnl0ZXNfcmVhZD0lZCAo
+JXMpXG4iLCBieXRlc19yZWFkLCBzdHJlcnJvcihlcnJubykpOwogICAgICBleGl0KDEpOwogICAg
+fQogICAgaWYgKG1zZyA9PSBUSU1FUl9FWFBJUlkpIHsKICAgICAgZG91YmxlIGN1cl90aW1lID0g
+Y3VycmVudF90aW1lX2RvdWJsZSgpOwogICAgICBpZiAoY3VyX3RpbWUgLSBsYXN0X2V4cGlyeSA+
+IDEwMDApCiAgICAgICAgcHJpbnRmKCJkZWxheWVkIHRpbWVyIGV4cGlyeSAlZlxuIiwgY3VyX3Rp
+bWUgLSBsYXN0X2V4cGlyeSk7CiAgICAgIGxhc3RfZXhwaXJ5ID0gY3VyX3RpbWU7CiAgICB9IGVs
+c2UKICAgICAgcHJpbnRmKCJVbmtub3duIG1lc3NhZ2U6ICVoaHVcbiIsIG1zZyk7CiAgfQoKfQoK
+aW50IG1haW4odm9pZCkKewogIHNpZ3NldF90IHNldDsKICBpbnQgcmV0OwogIHB0aHJlYWRfdCB3
+b3JrZXJzW1dPUktFUlNdOwogIHB0aHJlYWRfdCB0aW1lcl90aWQ7CiAgdW5zaWduZWQgbG9uZyBp
+OwoKICBzcmFuZG9tKChpbnQpY3VycmVudF90aW1lX2RvdWJsZSgpKTsKCiAgLyogQmxvY2sgU0lH
+UlRNSU4rMSB0byBhbGwgdGhyZWFkcyAtIHVuYmxvY2sgbGF0ZXIgaW4gdGltZXIgdGhyZWFkICov
+CiAgc2lnZW1wdHlzZXQoJnNldCk7CiAgc2lnYWRkc2V0KCZzZXQsIFNJR1JUTUlOKzEpOwogIGlm
+ICgocmV0ID0gcHRocmVhZF9zaWdtYXNrKFNJR19CTE9DSywgJnNldCwgTlVMTCkpICE9IDApCiAg
+ICBwcmludGYoIkZhaWxlZCBzaWdtYXNrKCk6ICVzXG4iLCBzdHJlcnJvcihyZXQpKTsKCiAgZm9y
+IChpID0gMDsgaSA8IFdPUktFUlM7IGkrKykKICAgIGlmICgocmV0ID0gcHRocmVhZF9jcmVhdGUo
+JndvcmtlcnNbaV0sIE5VTEwsIHdvcmtlcl9mdW5jLCAodm9pZCAqKWkpKSAhPSAwKSB7CiAgICAg
+IGVycm5vID0gcmV0OwogICAgICBwZXJyb3IoInB0aHJlYWRfY3JlYXRlKHdvcmtlcikiKTsKICAg
+IH0KCiAgLyogTm93IGNyZWF0ZSB0aW1lciB0aHJlYWQgKi8KICBpZiAoKHJldCA9IHB0aHJlYWRf
+Y3JlYXRlKCZ0aW1lcl90aWQsIE5VTEwsIGNyZWF0ZV90aW1lcl90aHJlYWQsIE5VTEwpKSAhPSAw
+KSB7CiAgICBlcnJubyA9IHJldDsKICAgIHBlcnJvcigicHRocmVhZF9jcmVhdGUodGltZXIpIik7
+CiAgfQoKICAvL3NsZWVwKDMwKTsKICBwYXVzZSgpOwogIHJldHVybiAwOwp9Cg==
+--0000000000005dd48305fecf2595--
