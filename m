@@ -2,268 +2,400 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7C7BEB64DA
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jun 2023 01:00:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1478BEB64D7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Jun 2023 16:01:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230289AbjFWBAQ (ORCPT
+        id S230042AbjFWQB5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 22 Jun 2023 21:00:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57558 "EHLO
+        Fri, 23 Jun 2023 12:01:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60676 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230270AbjFWBAP (ORCPT
+        with ESMTP id S229451AbjFWQB4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Jun 2023 21:00:15 -0400
-Received: from mx0b-0064b401.pphosted.com (mx0b-0064b401.pphosted.com [205.220.178.238])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ACCBD186
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Jun 2023 18:00:13 -0700 (PDT)
-Received: from pps.filterd (m0250811.ppops.net [127.0.0.1])
-        by mx0a-0064b401.pphosted.com (8.17.1.22/8.17.1.22) with ESMTP id 35N0f7Bb000344;
-        Fri, 23 Jun 2023 00:57:58 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=windriver.com;
-         h=date:from:to:cc:subject:message-id:content-type:mime-version;
-         s=PPS06212021; bh=d1bWmr0gi+9R+liEsC23yDmnAzXGhilrhJ6WwcRbbI4=; b=
-        Uhw28MtSJCdgpYLC23acOWtCfre4F7dRwJh03+NXUCH6iz713LQT7WfYg1dckUXk
-        xKyQNrq7p2tG5xPZFDsVcW+3qLRHnOgGlneSJHwKV//rYC9GA5eVEqeuuuehUjVK
-        YnW1l9NCDO8SALrBoJWk+IyAyOoF8EPphS0M5CukW1CCdEtGPyqc5YyHvxC40lPl
-        /GUAhkrsV58hIb7eKL1hWu2hgpBbiobjcehG24egdrnxTzoZRYk/tKWkGhwzN4bF
-        Dve4yjIHWFh+RAuktIAKZg1JRcwh1BToyKDoUgTRgaNjSvOyIvUb+vKSIjnm8MWa
-        NmWh+1Z8Bv+YyL+fonLf1g==
-Received: from nam12-mw2-obe.outbound.protection.outlook.com (mail-mw2nam12lp2044.outbound.protection.outlook.com [104.47.66.44])
-        by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 3rcxskg3h6-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Fri, 23 Jun 2023 00:57:58 +0000 (GMT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=j3YQfND+ILD0LUXxqIC9bF7wCeoVloE902REjSg0/YIeBC+emFNz0hF1DkVwyBo53QKz/xR1oZwyYSE4pyYgPP8rhaQut4SysM12NVimK/bOdPB4WqT/DIF7IT8juQfKZmBsiaw6zdJZ0saYQ2usPGONJybgSomQUY+pPYs4urKT0wiT4h+s0VBcjGeRRJq9oE8TFXa+AqSKWs50OTz6ielKfH23kamESsfj5d1h73iu7JpzDHviVtx70PiEC1Qij2+5AoQicj6qLg9m7H7V1ZzyKMIXlY9WWI/UEV63oSHnw4kKQ1lAfvr8M5RX3tXDlu5tG7+fd8agKutyRVdXQw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=d1bWmr0gi+9R+liEsC23yDmnAzXGhilrhJ6WwcRbbI4=;
- b=GbGOalZ5lwCKezotbcplAAOLRyURg59tong9jKPApIEcR6SpTR/94bzEmxGND2CaHGWLSGldOmDJSgvm++z5JnOZsS9SXnMjNrV+JhIbSrk9xOmrzlOMJfE8g0t1hPwWl2BJeRUPSfzbkVx37yfFO1pG7QYGm79xUgD//cOKr6JUtcKOd2q2E+O0SWNDb1p9SY98G46HMQPddcCt/5wNargpEFFcdVNDwWONtSw++FooE/Dlk4ALjTnBup14QS+Pbrx+lPzyuKkW96DpRRUkeP262UGDXnitWEL8tDNdMeTEOKqLpnvLub552Gjj5kLr9fM3oHedQj9J15aZeK1HTQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=windriver.com; dmarc=pass action=none
- header.from=windriver.com; dkim=pass header.d=windriver.com; arc=none
-Received: from IA0PR11MB7378.namprd11.prod.outlook.com (2603:10b6:208:432::8)
- by SA1PR11MB6920.namprd11.prod.outlook.com (2603:10b6:806:2bb::9) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6521.23; Fri, 23 Jun
- 2023 00:57:54 +0000
-Received: from IA0PR11MB7378.namprd11.prod.outlook.com
- ([fe80::61d5:7319:52f0:cc4b]) by IA0PR11MB7378.namprd11.prod.outlook.com
- ([fe80::61d5:7319:52f0:cc4b%7]) with mapi id 15.20.6521.024; Fri, 23 Jun 2023
- 00:57:54 +0000
-Date:   Thu, 22 Jun 2023 20:57:50 -0400
-From:   Paul Gortmaker <paul.gortmaker@windriver.com>
-To:     Chris Wilson <chris@chris-wilson.co.uk>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniele Ceraolo Spurio <daniele.ceraolospurio@intel.com>
-Cc:     linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org
-Subject: [RFC] tentative fix for drm/i915/gt regression on preempt-rt
-Message-ID: <ZJTuDi1HNp9L2zxY@windriver.com>
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-ClientProxiedBy: YT2PR01CA0021.CANPRD01.PROD.OUTLOOK.COM
- (2603:10b6:b01:38::26) To IA0PR11MB7378.namprd11.prod.outlook.com
- (2603:10b6:208:432::8)
+        Fri, 23 Jun 2023 12:01:56 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 38D212130
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2023 09:01:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1687536068;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=v3u310FtnYPdz6UFGr9XcZ/VswjYfAHcEw0QPlJKinQ=;
+        b=LN4MvdrS8robf1E4yfLHgVRRp7TLADWY0Q0Q2oygmWhqBiakOyiXbf5x43O6BCugc3A0Xd
+        hfDnUQsnZe8PQf7zlc+VUhUbDBHHLsdLvcCMfDGFOSS/wHhuAgUO02o4t03aHxpyQVCAOX
+        /ly76+LiYWvB6iMo+uYwSs0l7zi8zfA=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-648-g2BOpnSxPqylD6KrXYFZzg-1; Fri, 23 Jun 2023 12:01:03 -0400
+X-MC-Unique: g2BOpnSxPqylD6KrXYFZzg-1
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-7654e1f86aeso68328685a.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2023 09:01:03 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20221208; t=1687536063; x=1690128063;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=v3u310FtnYPdz6UFGr9XcZ/VswjYfAHcEw0QPlJKinQ=;
+        b=LnuAYFMiWFxPjzRRnshfG1qvcqlRIuEjSRAmVt//8+Qh+2oTAWQkz24ndDZkPW0So3
+         HfU0aJTkNu8POtUIBoLXkX0nyHqKSXZPjOai+Ja5aSQZO9cXvSA9/shBbqtVYe8Clz9X
+         T/u2KQY1OPWR8H2nhl8utl+OcWYwGFxgyp/eo5dC3y2Q746TOHR1KoMnLCaYWW5HH48f
+         SVe9o5WOsN+0y1pPpVrXeMjh59aE3w7OXgvbKyHTTWdtsSmI1PboIwPoOYy3AX/agDzt
+         EbVT1SrOIpndWvQfofVDKEHejd/31QEU8EK9JxIYKLaTJLWPGdt7wEDm3Fc0wczzfgg5
+         7/Mg==
+X-Gm-Message-State: AC+VfDzv+3lxikh57yIfY0yApd0GJfxdpTY2nvJfIiHr/9VXrTMZWJKw
+        cm+bjiRpOERw3ixc3bpb2pcHQcJFBGfVrE1WC+s29I/nG2uS9Y9QMWUAsevF9heMp42Tn8AL1cm
+        zlprlBjpXqr0cQ4o0nr0AqeLLBok=
+X-Received: by 2002:a05:620a:479b:b0:765:3f8b:2989 with SMTP id dt27-20020a05620a479b00b007653f8b2989mr4338277qkb.47.1687536063321;
+        Fri, 23 Jun 2023 09:01:03 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ5nh6b/KLMn+WNnylHi5GUxjE1SfvuiS8OvKZrMGqnfTB1eiI0xNqkhl7gd668dgg1rXHqrtg==
+X-Received: by 2002:a05:620a:479b:b0:765:3f8b:2989 with SMTP id dt27-20020a05620a479b00b007653f8b2989mr4338195qkb.47.1687536062146;
+        Fri, 23 Jun 2023 09:01:02 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-07-184-147-141-56.dsl.bell.ca. [184.147.141.56])
+        by smtp.gmail.com with ESMTPSA id j6-20020a37c246000000b00763bcec87cesm3434310qkm.26.2023.06.23.09.01.01
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 23 Jun 2023 09:01:01 -0700 (PDT)
+Date:   Fri, 23 Jun 2023 12:00:17 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Anubhav Shelat <ashelat@redhat.com>
+cc:     linux-rt-users@vger.kernel.org, kcarcia@redhat.com
+Subject: Re: [PATCH] rteval: Changed files to use argparse library instead
+ of optparse
+In-Reply-To: <20230622164221.248271-1-ashelat@redhat.com>
+Message-ID: <1785842-e26-5e19-aa24-1e65afeef24b@redhat.com>
+References: <20230622164221.248271-1-ashelat@redhat.com>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: IA0PR11MB7378:EE_|SA1PR11MB6920:EE_
-X-MS-Office365-Filtering-Correlation-Id: c1d556c2-38d1-4050-45fa-08db7384e096
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: mORdDLh06RlMXSXDKy4Hlsi9blS3vT6NZYDMtZf5RGV4dgCjJU9fEHFsmEjeq95yBh+YKPHIWM1M7ASk4LoEgPQ2KjhinJmy7cDhEGutiGMzcZ36wt5qTgWWwdintqacUXVX7dTnt9iP/1VyL/qaK2UULolKvp3/bxmL0a3QNtp2DGcXbW5ubA0qBYlWp0JjY+PxHhM+h6ieU/yuyh4s9rbPucLsYGh858IvGM3LwkEmgUoG6WdpoQtFuQIizNggORGd7LHxIzoYIcA+OC6N20ydXEagyZ0lsDGx6GbHC1Ad14xGe0ZMEGe+t6W/kA+hnkZTYdgw5wV5Tvh/t46/ILE2GbR2xp4/l1wvwilvnxuZA/eHQubzHMY3EJMfBQeKzmo7GjzJjacO8b2wFHatqR3GFX+CPZmOvivDkcPgnU1nD9rDfPag4O4rcavggC8MZAU6OYFLFK+1eCX4tPI9RWSasyitb0XCmkuqPRgvd+WKyJOe6djKoNlzp//4m5qxKdhq+YVskkiO4rxQIYbLaxgovDsBY5CmQ+HbL+yg79jOrbNSCeB5vZIPCP8/9sPHBSBm7mxUT6j5mhdoBQ7hvg==
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:IA0PR11MB7378.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230028)(4636009)(396003)(366004)(136003)(346002)(376002)(39850400004)(451199021)(26005)(66476007)(66556008)(8936002)(8676002)(66946007)(4326008)(478600001)(316002)(5660300002)(36756003)(44832011)(2906002)(110136005)(966005)(86362001)(41300700001)(38100700002)(6486002)(186003)(6512007)(6506007)(53546011)(6666004)(83380400001)(2616005);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?6h9ayrWdTflwTgG+6KeEeS2WOYggUr4xApVhAWWlnAYuWg4oM8e41XF6vl2J?=
- =?us-ascii?Q?QHJqbUg+HOHmaChGfqMqV/9FtxvDEIBdFFxyXzBzym3IkWmW4FPszCFuD1xK?=
- =?us-ascii?Q?Y/Uehj57CxNhU0BXQ2KipiDfUnS4pfvWNhyz+ygb6gsh1WjHNDyUJr935urM?=
- =?us-ascii?Q?q/emqIW3O5UYawTviPnquTB0xzKNP9lqDpdxDYH2YhNAll+cWh1Mwmg9fbsi?=
- =?us-ascii?Q?7vGPX8Iyf0YPR8IOMeGBGkw4pOuf1r3fecdDG/Ve8LLBJcLijvHOx8wFgCOx?=
- =?us-ascii?Q?FEUPk45wWoHDaq1wtgMM7Ai8fW1aiRM4YOOpMm7q4P2CaQZw5PA+4KqlatRk?=
- =?us-ascii?Q?XJ+1x0Qvj/EVAGmf0mX81TOEyVNKo5XMAuLHG6j67P2diyde1qNHWhmNPuD3?=
- =?us-ascii?Q?ghOACfJBIieP3Bkeq25xYvNH+ZzD9KF6AWHhJjFhUxbokixQpCBOeuJB5XmL?=
- =?us-ascii?Q?gavVZvWA5yvAfCEZMOGySgTG7I6HbCjy1GqlKS99kLgPaab0fLZ18f/uHNLX?=
- =?us-ascii?Q?lI9k09YJ7HOH7q80Dh6T6c22PLY+GaiTHNPSXzWcoAa18hj0hGFsqNfcUAHP?=
- =?us-ascii?Q?XJ387TUhbjGF9PsbT8HfAtn0kTsAQpLWOjeoLcbLP9GLMpr8xqx/zpGiOeYl?=
- =?us-ascii?Q?vqYqfLfbeEcTc8FXXo8UST65kewTEdkeVa0cyZviIRY4xu62qzuS27W22K9J?=
- =?us-ascii?Q?pl4ieVv13htezewoHQzkBajvFcorvCoTobOre7Iz1iISYcOB1IvyoDSgIn7z?=
- =?us-ascii?Q?YZSDlRw4kg2k8+SYBJt7QsLsGfubEb6liXaVCCRXGSZiCyadyN5wxjnLuis/?=
- =?us-ascii?Q?gIStu6XmgA0I+Uil9D+6aiFzJZhI2Y6UpxYlnQ7ckdmUQiKZbNCyRvPUYFsj?=
- =?us-ascii?Q?a4VnOJviaLLeXI82POm80zc4LzwPdJg7i+pR3O5IWNAIbRiIlYaxLXj+Wo4y?=
- =?us-ascii?Q?0rr+hK+NBbRiMIcPLEzgyOTbhDIaaHr4572vp9rNwcaRGxjLqZhBO8bmZr/n?=
- =?us-ascii?Q?PMkjyfYFDUCRiJqUA6zhOi+J6yPaMrtSujUkzCj0XuRUIopCRkbIhU9c/KwJ?=
- =?us-ascii?Q?ZbsvkBhyxjzQjU61eimOMKiw44osYwzzeTXdYbJxFq5BsqYshm5x9knHYBCQ?=
- =?us-ascii?Q?OCBD9ABpKx76vZka0riGNRh81CBM0s3xTCo97Q21ZfPCTTX7QI1ho2VRNMAP?=
- =?us-ascii?Q?gGZKZJgSW5PN3PuhpDotWJXy1LFdSvB/Cgieq6NjZoCdKKMqwLlimbfweR6z?=
- =?us-ascii?Q?2mQkcP5d55ELZhrzyBnZxdg5qs4MwdmogBDvhE2GVRjvUFNYVyImyhKNLdcW?=
- =?us-ascii?Q?qdmACVvGSVCHCza0owiaRAVKu109R6HOwEYoIsqNqBPa/PW1hcXQ89ym6P0Z?=
- =?us-ascii?Q?uzJYMXk7iBBQxbMWvLS1GibiFg+FTG/lqE/yjlD9UGp4jWoMyq81ZdNFqjtN?=
- =?us-ascii?Q?UK36561IjDECZ1WEFZAkWH6RhpEHHtumnk1J0B2G2SdcSNUBwl5kuH4dWBLC?=
- =?us-ascii?Q?hLWiodI2LTMYhE1XHLLL5bP4yCVb6It7O15kRCfn/kqDwRCqqTB2WguVN/Ah?=
- =?us-ascii?Q?eYsu7BYSP5aCLkRGCD1af4rnOI5NoAX28ju+/LeVNickUDY/COev9at3Shvx?=
- =?us-ascii?Q?IQ=3D=3D?=
-X-OriginatorOrg: windriver.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: c1d556c2-38d1-4050-45fa-08db7384e096
-X-MS-Exchange-CrossTenant-AuthSource: IA0PR11MB7378.namprd11.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 23 Jun 2023 00:57:54.5663
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 8ddb2873-a1ad-4a18-ae4e-4644631433be
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: KBJBjTclrJ6sB59lSzwmEkJnArZ0QiZbM3bdS72+e9oCI9I8009Qror6txd1z/R1q63p8Gqrr6Lwilx7jRc2VJ6hvgJINSNIeQxpsIcafsI=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA1PR11MB6920
-X-Proofpoint-ORIG-GUID: U4_i1HAL3vq_w3VIF6Kh3RN2QZwrblMo
-X-Proofpoint-GUID: U4_i1HAL3vq_w3VIF6Kh3RN2QZwrblMo
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.254,Aquarius:18.0.957,Hydra:6.0.591,FMLib:17.11.176.26
- definitions=2023-06-22_18,2023-06-22_02,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 spamscore=0 impostorscore=0
- mlxscore=0 malwarescore=0 clxscore=1011 bulkscore=0 mlxlogscore=999
- lowpriorityscore=0 adultscore=0 suspectscore=0 phishscore=0
- priorityscore=1501 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2305260000 definitions=main-2306230006
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Back in September, I reported a PM regression pinpointed by bisect:
 
-https://lore.kernel.org/linux-rt-users/20220916181934.GA16961@windriver.com/T/#u
 
-Around Feb, I checked and didn't see any relevant mainline changes, so I
-decided to take a look at it myself, which is when I saw the eight patches
-from Sebastian that included a trial of converting the uncore->lock to raw:
+On Thu, 22 Jun 2023, Anubhav Shelat wrote:
 
-https://lore.kernel.org/all/20211006164628.s2mtsdd2jdbfyf7g@linutronix.de/
+> Replaced optparse.OptionParser() with argparse.ArgumentParser() and optparse.add_options() with argparse.add_arguments().
+> Added/changed code to assign the cmd_opts and cmd_args variables in rteval-cmd correctly to get the -Z/--summarize and
+> -H/--raw-histogram working correctly.
+> Note: the rteval/server files haven't been tested since server is
+> disabled.
+> 
+> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+> ---
+>  rteval-cmd                  | 88 ++++++++++++++++++++++---------------
+>  rteval/modules/__init__.py  | 12 +++--
+>  rteval/rtevalConfig.py      |  4 +-
+>  server/rteval_testserver.py | 11 ++---
+>  server/unittest.py          |  8 ++--
+>  5 files changed, 70 insertions(+), 53 deletions(-)
+> 
+> diff --git a/rteval-cmd b/rteval-cmd
+> index cbba9cd2e451..96854e05f746 100755
+> --- a/rteval-cmd
+> +++ b/rteval-cmd
+> @@ -40,7 +40,7 @@ import os
+>  import time
+>  import re
+>  import shutil
+> -import optparse
+> +import argparse
+>  import tempfile
+>  import requests
+>  import lxml.etree
+> @@ -115,55 +115,55 @@ def parse_options(cfg, parser, cmdargs):
+>      # thus they are prefixed with 'rteval___'.
+>      # See rteval/rtevalConfig::UpdateFromOptionParser() method for more info
+>      #
+> -    parser.add_option("-d", "--duration", dest="rteval___duration",
+> -                      type="string", default=rtevcfg.duration, metavar="DURATION",
+> -                      help="specify length of test run (default: %default)")
+> -    parser.add_option("-v", "--verbose", dest="rteval___verbose",
+> +    parser.add_argument("-d", "--duration", dest="rteval___duration",
+> +                      type=str, default=rtevcfg.duration, metavar="DURATION",
+> +                      help=f"specify length of test run (default: {rtevcfg.duration})")
+> +    parser.add_argument("-v", "--verbose", dest="rteval___verbose",
+>                        action="store_true", default=rtevcfg.verbose,
+> -                      help="turn on verbose prints (default: %default)")
+> -    parser.add_option("-q", "--quiet", dest="rteval___quiet",
+> +                      help=f"turn on verbose prints (default: {rtevcfg.verbose})")
+> +    parser.add_argument("-q", "--quiet", dest="rteval___quiet",
+>                        action="store_true", default=rtevcfg.quiet,
+> -                      help="turn on quiet mode (default: %default)")
+> -    parser.add_option("-w", "--workdir", dest="rteval___workdir",
+> -                      type="string", default=rtevcfg.workdir, metavar="DIRECTORY",
+> -                      help="top directory for rteval data (default: %default)")
+> -    parser.add_option("-l", "--loaddir", dest="rteval___srcdir",
+> -                      type="string", default=rtevcfg.srcdir, metavar="DIRECTORY",
+> -                      help="directory for load source tarballs (default: %default)")
+> -    parser.add_option("-i", "--installdir", dest="rteval___installdir",
+> -                      type="string", default=rtevcfg.installdir, metavar="DIRECTORY",
+> -                      help="place to locate installed templates (default: %default)")
+> -    parser.add_option("-s", "--sysreport", dest="rteval___sysreport",
+> +                      help=f"turn on quiet mode (default: {rtevcfg.quiet})")
+> +    parser.add_argument("-w", "--workdir", dest="rteval___workdir",
+> +                      type=str, default=rtevcfg.workdir, metavar="DIRECTORY",
+> +                      help=f"top directory for rteval data (default: {rtevcfg.workdir})")
+> +    parser.add_argument("-l", "--loaddir", dest="rteval___srcdir",
+> +                      type=str, default=rtevcfg.srcdir, metavar="DIRECTORY",
+> +                      help=f"directory for load source tarballs (default: {rtevcfg.srcdir})")
+> +    parser.add_argument("-i", "--installdir", dest="rteval___installdir",
+> +                      type=str, default=rtevcfg.installdir, metavar="DIRECTORY",
+> +                      help=f"place to locate installed templates (default: {rtevcfg.installdir})")
+> +    parser.add_argument("-s", "--sysreport", dest="rteval___sysreport",
+>                        action="store_true", default=rtevcfg.sysreport,
+> -                      help='run sysreport to collect system data (default: %default)')
+> -    parser.add_option("-D", '--debug', dest='rteval___debugging',
+> +                      help=f'run sysreport to collect system data (default: {rtevcfg.sysreport})')
+> +    parser.add_argument("-D", '--debug', dest='rteval___debugging',
+>                        action='store_true', default=rtevcfg.debugging,
+> -                      help='turn on debug prints (default: %default)')
+> +                      help=f'turn on debug prints (default: {rtevcfg.debugging})')
+>      #parser.add_option("-X", '--xmlrpc-submit', dest='rteval___xmlrpc',
+>      #                  action='store', default=rtevcfg.xmlrpc, metavar='HOST',
+>      #                  help='Hostname to XML-RPC server to submit reports')
+>      #parser.add_option("-P", "--xmlrpc-no-abort", dest="rteval___xmlrpc_noabort",
+>      #                  action='store_true', default=False,
+>      #                  help="Do not abort if XML-RPC server do not respond to ping request");
+> -    parser.add_option("-Z", '--summarize', dest='rteval___summarize',
+> +    parser.add_argument("-Z", '--summarize', dest='rteval___summarize',
+>                        action='store_true', default=False,
+>                        help='summarize an already existing XML report')
+> -    parser.add_option("-H", '--raw-histogram', dest='rteval___rawhistogram',
+> +    parser.add_argument("-H", '--raw-histogram', dest='rteval___rawhistogram',
+>                        action='store_true', default=False,
+>                        help='Generate raw histogram data for an already existing XML report')
+> -    parser.add_option("-f", "--inifile", dest="rteval___inifile",
+> -                      type='string', default=None, metavar="FILE",
+> +    parser.add_argument("-f", "--inifile", dest="rteval___inifile",
+> +                      type=str, default=None, metavar="FILE",
+>                        help="initialization file for configuring loads and behavior")
+> -    parser.add_option("-a", "--annotate", dest="rteval___annotate",
+> -                      type="string", default=None, metavar="STRING",
+> +    parser.add_argument("-a", "--annotate", dest="rteval___annotate",
+> +                      type=str, default=None, metavar="STRING",
+>                        help="Add a little annotation which is stored in the report")
+> -    parser.add_option("-L", "--logging", dest="rteval___logging",
+> +    parser.add_argument("-L", "--logging", dest="rteval___logging",
+>                        action='store_true', default=False,
+>                        help='log the output of the loads in the report directory')
+> -    parser.add_option("-O", "--onlyload", dest="rteval___onlyload",
+> +    parser.add_argument("-O", "--onlyload", dest="rteval___onlyload",
+>                        action='store_true', default=False,
+>                        help="only run the loads (don't run measurement threads)")
+> -    parser.add_option("-V", "--version", dest="rteval___version",
+> +    parser.add_argument("-V", "--version", dest="rteval___version",
+>                        action='store_true', default=False,
+>                        help='print rteval version and exit')
+>      # if the -S/--source-download option doesn't include the version, set version to default
+> @@ -177,15 +177,33 @@ def parse_options(cfg, parser, cmdargs):
+>              sys.argv.insert(ind+1, ModuleParameters()["source"]["default"].replace(".tar.xz", ""))
+>          cmdargs.append(sys.argv[ind+1])
+>  
+> -    parser.add_option("-S", "--source-download", dest="rteval___srcdownload",
+> -                        type="string", default=None, metavar="KERNEL_VERSION",
+> +    parser.add_argument("-S", "--source-download", dest="rteval___srcdownload",
+> +                        type=str, default=None, metavar="KERNEL_VERSION",
+>                          help='download a source kernel from kernel.org and exit (if no version is provided, downloads default kernel)')
+>  
+>  
+>      if not cmdargs:
+>          cmdargs = ["--help"]
+>  
+> -    (cmd_opts, cmd_args) = parser.parse_args(args=cmdargs)
+> +    # if -Z/--summarize is specified, add the files to be summarized to cmd_args, and add -Z to cmd_opts
+> +    cmd_args = []
+> +    if (sys.argv.count('-Z')+sys.argv.count('--summarize')) > 0:
+> +        try:
+> +            ind = cmdargs.index('-Z')
+> +        except ValueError:
+> +            ind = cmdargs.index('--summarize')
+> +        cmd_args = cmdargs[ind+1:]
+> +        cmdargs = cmdargs[:ind+1]
+> +    # if -H/--raw-histogram is specified, add the files to be summarized to cmd_args, and add -Z to cmd_opts
+> +    elif (sys.argv.count('-H')+sys.argv.count('--raw-histogram')) > 0:
+> +        try:
+> +            ind = cmdargs.index('-H')
+> +        except ValueError:
+> +            ind = cmdargs.index('--raw-histogram')
+> +        cmd_args = cmdargs[ind+1:]
+> +        cmdargs = cmdargs[:ind+1]
+> +    cmd_opts = parser.parse_args(args=cmdargs)
+> +
+>      if cmd_opts.rteval___version:
+>          print(f"rteval version {RTEVAL_VERSION}")
+>          sys.exit(0)
+> @@ -207,7 +225,7 @@ def parse_options(cfg, parser, cmdargs):
+>          cmd_opts.rteval___duration = float(v) * mult
+>  
+>      # Update the config object with the parsed arguments
+> -    cfg.UpdateFromOptionParser(parser)
+> +    cfg.UpdateFromOptionParser(cmd_opts)
+>  
+>      return cmd_args
+>  
+> @@ -277,7 +295,7 @@ if __name__ == '__main__':
+>          measuremods = MeasurementModules(config, logger=logger)
+>  
+>          # parse command line options
+> -        parser = optparse.OptionParser()
+> +        parser = argparse.ArgumentParser()
+>          loadmods.SetupModuleOptions(parser)
+>          measuremods.SetupModuleOptions(parser)
+>          cmd_args = parse_options(config, parser, sys.argv[1:])
+> diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+> index d52dd597186a..253e72abf8aa 100644
+> --- a/rteval/modules/__init__.py
+> +++ b/rteval/modules/__init__.py
+> @@ -25,7 +25,7 @@
+>  import time
+>  from datetime import datetime
+>  import threading
+> -import optparse
+> +import argparse
+>  import libxml2
+>  from rteval.Log import Log
+>  from rteval.rtevalConfig import rtevalCfgSection
+> @@ -294,12 +294,11 @@ the information provided by the module"""
+>      def SetupModuleOptions(self, parser, config):
+>          """Sets up a separate optptarse OptionGroup per module with its supported parameters"""
+>  
+> -        grparser = optparse.OptionGroup(parser, "Group Options for %s modules" % self.__modtype)
+> -        grparser.add_option('--%s-cpulist' % self.__modtype,
+> +        grparser = parser.add_argument_group("Group Options for %s modules" % self.__modtype)
+> +        grparser.add_argument('--%s-cpulist' % self.__modtype,
+>                              dest='%s___cpulist' % self.__modtype, action='store', default="",
+>                              help='CPU list where %s modules will run' % self.__modtype,
+>                              metavar='LIST')
+> -        parser.add_option_group(grparser)
+>  
+>          for (modname, mod) in list(self.__modsloaded.items()):
+>              opts = mod.ModuleParameters()
+> @@ -313,7 +312,7 @@ the information provided by the module"""
+>                  # Ignore if a section is not found
+>                  cfg = None
+>  
+> -            grparser = optparse.OptionGroup(parser, "Options for the %s module" % shortmod)
+> +            grparser = parser.add_argument_group("Options for the %s module" % shortmod)
+>              for (o, s) in list(opts.items()):
+>                  descr = 'descr' in s and s['descr'] or ""
+>                  metavar = 'metavar' in s and s['metavar'] or None
+> @@ -328,14 +327,13 @@ the information provided by the module"""
+>                      default = 'default' in s and s['default'] or None
+>  
+>  
+> -                grparser.add_option('--%s-%s' % (shortmod, o),
+> +                grparser.add_argument('--%s-%s' % (shortmod, o),
+>                                      dest="%s___%s" % (shortmod, o),
+>                                      action='store',
+>                                      help='%s%s' % (descr,
+>                                                     default and ' (default: %s)' % default or ''),
+>                                      default=default,
+>                                      metavar=metavar)
+> -            parser.add_option_group(grparser)
+>  
+>  
+>      def InstantiateModule(self, modname, modcfg, modroot=None):
+> diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
+> index 41f1a567720f..ec14a13adcd9 100644
+> --- a/rteval/rtevalConfig.py
+> +++ b/rteval/rtevalConfig.py
+> @@ -286,11 +286,11 @@ class rtevalConfig:
+>          return self.__config_files.__contains__(fname)
+>  
+>  
+> -    def UpdateFromOptionParser(self, parser):
+> +    def UpdateFromOptionParser(self, cmd_opts):
+>          "Parse through the command line options and update the appropriate config settings"
+>  
+>          last_sect = None
+> -        for sk, v in sorted(vars(parser.values).items()):
+> +        for sk, v in sorted(vars(cmd_opts).items()):
+>              # optparse key template: {sectionname}___{key}
+>              k = sk.split('___')
+>              if k[0] != last_sect:
+> diff --git a/server/rteval_testserver.py b/server/rteval_testserver.py
+> index 3f0c3c73733c..6cac85bcfe52 100644
+> --- a/server/rteval_testserver.py
+> +++ b/server/rteval_testserver.py
+> @@ -31,6 +31,7 @@ import signal
+>  from xmlrpc.server import SimpleXMLRPCServer
+>  from xmlrpc.server import SimpleXMLRPCRequestHandler
+>  from optparse import OptionParser
+> +import argparse
+>  
+>  import xmlrpc_API1
+>  from Logger import Logger
+> @@ -110,16 +111,16 @@ rtevalserver = None
+>  #
+>  
+>  if __name__ == '__main__':
+> -    parser = OptionParser(version="%prog v0.1")
+> +    parser = argparse.ArgumentParser(version="%prog v0.1")
+>  
+> -    parser.add_option("-L", "--listen", action="store", dest="listen", default=LISTEN,
+> +    parser.add_argument("-L", "--listen", action="store", dest="listen", default=LISTEN,
+>                        help="Which interface to listen to [default: %default]", metavar="IPADDR")
+> -    parser.add_option("-P", "--port", action="store", type="int", dest="port", default=PORT,
+> +    parser.add_argument("-P", "--port", action="store", type="int", dest="port", default=PORT,
+>                        help="Which port to listen to [default: %default]",  metavar="PORT")
+> -    parser.add_option("-l", "--log", action="store", dest="logfile", default=None,
+> +    parser.add_argument("-l", "--log", action="store", dest="logfile", default=None,
+>                        help="Where to log requests.", metavar="FILE")
+>  
+> -    (options, args) = parser.parse_args()
+> +    options = parser.parse_args()
+>  
+>      logger = Logger(options.logfile, "RTeval")
+>      rtevalserver = RTevald(options, logger)
+> diff --git a/server/unittest.py b/server/unittest.py
+> index 4d53f46590ce..7dcdef08c098 100644
+> --- a/server/unittest.py
+> +++ b/server/unittest.py
+> @@ -1,5 +1,5 @@
+>  import sys, threading, time, signal, libxml2
+> -from optparse import OptionParser
+> +import argparse
+>  from rteval_testserver import RTevald
+>  from Logger import Logger
+>  
+> @@ -14,10 +14,10 @@ class ServerThread(threading.Thread):
+>          self.port = port
+>          self.log = Logger('unit-test-server.log','rteval-xmlrpc-testsrv')
+>  
+> -        parser = OptionParser()
+> -        parser.add_option("-L", "--listen", action="store", dest="listen", default="127.0.0.1",
+> +        parser = argparse.ArgumentParser()
+> +        parser.add_argument("-L", "--listen", action="store", dest="listen", default="127.0.0.1",
+>                            help="Which interface to listen to [default: %default]", metavar="IPADDR")
+> -        parser.add_option("-P", "--port", action="store", type="int", dest="port", default=self.port,
+> +        parser.add_argument("-P", "--port", action="store", type="int", dest="port", default=self.port,
+>                            help="Which port to listen to [default: %default]",  metavar="PORT")
+>  
+>          (options, args) = parser.parse_args()
+> -- 
+> 2.39.3
+> 
+> 
 
-With a focus on just the suspend/resume regression reported through me, I
-thought I had a way to perhaps at least fix that one issue.  I didn't have
-the right hardware to reproduce it, but I was pretty sure it was clear what
-was happening (as per details in the commit log)
+This patch does not apply cleanly
 
-I was pretty sure my change would fix the BUG() but since I've never touched
-i915 before, I couldn't quite be 100% confident my reasoning wasn't opening
-a door to some other locking issue.  So I put it in our internal soak pool
-late March and since it fixed the BUG() and didn't trigger any new splat,
-I'd largely forgot about it.
+git am a1.patch
+Applying: rteval: Changed files to use argparse library instead of 
+optparse
+error: patch failed: rteval-cmd:115
+error: rteval-cmd: patch does not apply
+Patch failed at 0001 rteval: Changed files to use argparse library instead 
+of optparse
 
-OK, with all that context, I'll finally get to the point.  It would be nice
-if others who have worked on i915/rt can take a look at it and pick it apart.
+I suspect you are not building this against upstream, but against your 
+local repo.
 
-This is still the v5.15-rt version, but I just checked mainline and also
-linux-rt-devel and I'm not seeing any reason to believe it was fixed yet.
+Remember that 
+rteval-cmd: If no kernel version is provided to -S/--source-download, 
+download default kernel version
 
-(Oh, and I'm told the impacted board is NUC7i5DNK1E -- and others?)
+was not accepted upstream, I suspect you are generating a patch that 
+applies against the above. 
 
-Thanks,
-Paul.
-
---
-
-From 20200bee7252d4c9c2a748a9e90fba33f2da9734 Mon Sep 17 00:00:00 2001
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Date: Thu, 9 Feb 2023 21:42:25 -0500
-Subject: [PATCH] drm/i915/gt: don't use preempt_disable/enable around reset
- call
-
-It turns out that a relatively recent commit breaks PM-suspend
-operations on preempt-rt, on multiple versions, due to all the
-linux-stable backports, including this v5.15 one:
-
-  commit 0ee5874dad61d2b154a9e3db196fc33e8208ce1b
-  Author: Chris Wilson <chris@chris-wilson.co.uk>
-  Date:   Tue Jul 12 16:21:32 2022 +0100
-
-    drm/i915/gt: Serialize GRDOM access between multiple engine resets
-
-    [ Upstream commit b24dcf1dc507f69ed3b5c66c2b6a0209ae80d4d4 ]
-
-Below is an example of the regression on v5.15-rt, with backport:
-
-  BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
-  in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 45092, name: kworker/u8:4
-  preempt_count: 1, expected: 0
-  RCU nest depth: 0, expected: 0
-  INFO: lockdep is turned off.
-  Preemption disabled at:
-  [<ffffffffc0636522>] __intel_gt_reset+0x92/0x100 [i915]
-  CPU: 3 PID: 45092 Comm: kworker/u8:4 Tainted: G        W  O      5.15.59-rt48-preempt-rt #1
-  Hardware name: Intel(R) Client Systems NUC7i5DNKE/NUC7i5DNB, BIOS DNKBLi5v.86A.0064.2019.0523.1933 05/23/2019
-  Workqueue: events_unbound async_run_entry_fn
-  Call Trace:
-   <TASK>
-   show_stack+0x52/0x5c
-   dump_stack_lvl+0x5b/0x86
-   dump_stack+0x10/0x16
-   __might_resched.cold+0xf7/0x12f
-   ? __gen6_reset_engines.constprop.0+0x80/0x80 [i915]
-   rt_spin_lock+0x4e/0xf0
-   ? gen8_reset_engines+0x2e/0x1e0 [i915]
-   gen8_reset_engines+0x2e/0x1e0 [i915]
-   ? __gen6_reset_engines.constprop.0+0x80/0x80 [i915]
-   __intel_gt_reset+0x9d/0x100 [i915]
-   gt_sanitize+0x16c/0x190 [i915]
-   intel_gt_suspend_late+0x3d/0xc0 [i915]
-   i915_gem_suspend_late+0x57/0x130 [i915]
-   i915_drm_suspend_late+0x38/0x110 [i915]
-   i915_pm_suspend_late+0x1d/0x30 [i915]
-   pm_generic_suspend_late+0x28/0x40
-   pci_pm_suspend_late+0x37/0x50
-   ? pci_pm_poweroff_late+0x50/0x50
-   dpm_run_callback.cold+0x3c/0xa8
-   __device_suspend_late+0xa4/0x1e0
-   async_suspend_late+0x20/0xa0
-   async_run_entry_fn+0x28/0xc0
-   process_one_work+0x239/0x6c0
-   worker_thread+0x58/0x3e0
-   kthread+0x1a9/0x1d0
-   ? process_one_work+0x6c0/0x6c0
-   ? set_kthread_struct+0x50/0x50
-   ret_from_fork+0x1f/0x30
-   </TASK>
-  PM: late suspend of devices complete after 26.497 msecs
-
-This happens, because the reset code now takes uncore->lock and that reacts
-badly with commit ade8a0f59844 ("drm/i915: Make all GPU resets atomic")
-
-Specifically this part, called out above with "Preemption disabled at:"
-
-+         preempt_disable();
-+         ret = reset(i915, engine_mask, retry);
-+         preempt_enable();
-
-A conversion to raw lock was considered independently in:
-
-https://lore.kernel.org/all/20211006164628.s2mtsdd2jdbfyf7g@linutronix.de/
-
-...but was ruled out for latency reasons.  However I believe there is a
-more simple solution, at least for this recent regression.  If we now have
-the uncore->lock now wrapping the reset functions from b24dcf1dc507 (and
-backports) then we aren't in any way relying on the added calls to
-preempt_dis/enable() above to ensure non-conflicting resets or similar.
-
-Hence we can "downgrade" them to migrate_dis/enable() so the reset
-functions can run as-is, without any raw lock conversions or similar.
-
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-
-diff --git a/drivers/gpu/drm/i915/gt/intel_reset.c b/drivers/gpu/drm/i915/gt/intel_reset.c
-index 9dc244b70ce4..341833c364fe 100644
---- a/drivers/gpu/drm/i915/gt/intel_reset.c
-+++ b/drivers/gpu/drm/i915/gt/intel_reset.c
-@@ -736,9 +736,9 @@ int __intel_gt_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask)
- 	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
- 	for (retry = 0; ret == -ETIMEDOUT && retry < retries; retry++) {
- 		GT_TRACE(gt, "engine_mask=%x\n", engine_mask);
--		preempt_disable();
-+		migrate_disable();
- 		ret = reset(gt, engine_mask, retry);
--		preempt_enable();
-+		migrate_enable();
- 	}
- 	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
- 
--- 
-2.17.1
+John
 
