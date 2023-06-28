@@ -2,15 +2,15 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D263EB64D7
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jun 2023 19:52:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A9B98EB64DC
+	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jun 2023 19:52:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231346AbjF1Twn (ORCPT
+        id S231387AbjF1Two (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 28 Jun 2023 15:52:43 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([170.10.133.124]:28114 "EHLO
+        Wed, 28 Jun 2023 15:52:44 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([170.10.129.124]:48766 "EHLO
         us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S230447AbjF1Twk (ORCPT
+        by vger.kernel.org with ESMTP id S229487AbjF1Twk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 28 Jun 2023 15:52:40 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
@@ -19,29 +19,29 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=YNeAFbAr0yUDhqGYCz2RWk015OyiEGgCkWmpmZujbNQ=;
-        b=FpznHH+G93K6hLE5DWOxru4poYlfIAza3qwMBOe6MzQNSBr6pF8hBteWcC928kH+bo/vqG
-        4M30P/6JJBeTGSLUhMR+O4mtAtYvoiuZKGGdD25mMjX1frPJZYa2cXExJtdqKFTAVc1z20
-        IVxeU0mOdTbcDVCKBdLfqHlQFFDfMvw=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=2zzzjOJ1AUxeWP9V+iQphjyJX1hA7U6SpJDWFf2qUtk=;
+        b=OX0Ec+Sw/3ZMjja0PdbrK+li/kjY2Ov8XVLhfKNVkRvLv69uGsdSako+rvn1umSUQKBl83
+        YEPvA/bCgf3dH0cGIS9H7H7Z5pgxB9UEJ1mWRqUnJd58cjh5Zjq3UAhu6/RaOBDM+bCnYo
+        /hkKRBXu54OSJOup8np0hTpFi+OUy1Y=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-12-BRrvHF_DNmehk9mjZnCNng-1; Wed, 28 Jun 2023 15:51:48 -0400
-X-MC-Unique: BRrvHF_DNmehk9mjZnCNng-1
+ us-mta-533-Z_uovMJTMR6rt32FWEWmTA-1; Wed, 28 Jun 2023 15:51:48 -0400
+X-MC-Unique: Z_uovMJTMR6rt32FWEWmTA-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4793E38149AA
-        for <linux-rt-users@vger.kernel.org>; Wed, 28 Jun 2023 19:51:48 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E1DDC8DBAE3
+        for <linux-rt-users@vger.kernel.org>; Wed, 28 Jun 2023 19:51:47 +0000 (UTC)
 Received: from ashelat.remote.csb (unknown [10.22.34.222])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 29F0DF5CDF;
-        Wed, 28 Jun 2023 19:51:48 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id BD7BDF41C9;
+        Wed, 28 Jun 2023 19:51:47 +0000 (UTC)
 From:   Anubhav Shelat <ashelat@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH 3/3] rteval/server: edited files to use optparse instead of argparse
-Date:   Wed, 28 Jun 2023 15:51:45 -0400
-Message-Id: <20230628195145.636652-4-ashelat@redhat.com>
+Subject: [PATCH 1/3] rteval: added code to download default kernel version if no version is specified
+Date:   Wed, 28 Jun 2023 15:51:43 -0400
+Message-Id: <20230628195145.636652-2-ashelat@redhat.com>
 In-Reply-To: <20230628195145.636652-1-ashelat@redhat.com>
 References: <20230628195145.636652-1-ashelat@redhat.com>
 MIME-Version: 1.0
@@ -51,101 +51,46 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-rteval/server: edited files to use optparse instead of argparse.
-Note: Since server is diabled, these changes have not been tested.
+Previously, the usuage was "./rteval-cmd -S [KERNEL_VERSION]", and
+rteval-cmd would throw an error if no kernel version was provided.
+Now, rteval-cmd will download the default kernel version, as specified
+in rteval/modules/loads/kcompile.py.
 
 Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 ---
- server/remove_rtevalrun          | 16 ++++++++--------
- server/rteval_testserver.py      |  1 -
- server/testclient_sendreportfile | 10 +++++-----
- 3 files changed, 13 insertions(+), 14 deletions(-)
+ rteval-cmd | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/server/remove_rtevalrun b/server/remove_rtevalrun
-index cee699e27c9f..7d83f71ea644 100755
---- a/server/remove_rtevalrun
-+++ b/server/remove_rtevalrun
-@@ -29,7 +29,7 @@
+diff --git a/rteval-cmd b/rteval-cmd
+index f715fec1e21c..ae94bd98cc11 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -166,7 +166,7 @@ def parse_options(cfg, parser, cmdargs):
+     parser.add_argument("-V", "--version", dest="rteval___version",
+                       action='store_true', default=False,
+                       help='print rteval version and exit')
+-    parser.add_argument("-S", "--source-download", dest="rteval___srcdownload",
++    parser.add_argument("-S", "--source-download", nargs="*", dest="rteval___srcdownload",
+                         type=str, default=None, metavar="KERNEL_VERSION",
+                         help='download a source kernel from kernel.org and exit')
  
- import sys
- import getpass
--from optparse import OptionParser
-+from argparse import ArgumentParser
- from database import Database
+@@ -191,8 +191,16 @@ def parse_options(cfg, parser, cmdargs):
+             ind = cmdargs.index('--raw-histogram')
+         cmd_args = cmdargs[ind+1:]
+         cmdargs = cmdargs[:ind+1]
++
+     cmd_opts = parser.parse_args(args=cmdargs)
  
- def do_delete(dbc, table, rterid):
-@@ -45,20 +45,20 @@ def do_delete(dbc, table, rterid):
- 
- 
- if __name__ == '__main__':
--    parser = OptionParser(version="%prog v0.1")
-+    parser = ArgumentParser(version="%prog v0.1")
- 
--    parser.add_option("-H", "--host", action="store", dest="dbhost", default="localhost",
-+    parser.add_argument("-H", "--host", action="store", dest="dbhost", default="localhost",
-                       help="Database server to connect to (default: %default)",
-                       metavar="HOST")
--    parser.add_option("-p", "--port", action="store", dest="dbport", default="5432",
-+    parser.add_argument("-p", "--port", action="store", dest="dbport", default="5432",
-                       help="Database server port to use (default: %default)", metavar="PORT")
--    parser.add_option("-U", "--user", action="store", dest="dbuser", default="rtevaladmin",
-+    parser.add_argument("-U", "--user", action="store", dest="dbuser", default="rtevaladmin",
-                       help="Database user to connect as (default: %default)", metavar="USERNAME")
--    parser.add_option("-d", "--database", action="store", dest="dbname", default="rteval",
-+    parser.add_argument("-d", "--database", action="store", dest="dbname", default="rteval",
-                       help="Database to use (default: %default)", metavar="DATABASE")
--    parser.add_option("-r", "--rterid", action="store", dest="rterid", default=None,
-+    parser.add_argument("-r", "--rterid", action="store", dest="rterid", default=None,
-                       help="rteval run id to remove from the database", metavar="INTEGER")
--    (opts, args) = parser.parse_args()
-+    opts = parser.parse_args()
- 
-     if opts.rterid is None:
-         print "%s:  Missing --rterid value" % sys.argv[0]
-diff --git a/server/rteval_testserver.py b/server/rteval_testserver.py
-index 6cac85bcfe52..c7f9ce954b21 100644
---- a/server/rteval_testserver.py
-+++ b/server/rteval_testserver.py
-@@ -30,7 +30,6 @@ import sys
- import signal
- from xmlrpc.server import SimpleXMLRPCServer
- from xmlrpc.server import SimpleXMLRPCRequestHandler
--from optparse import OptionParser
- import argparse
- 
- import xmlrpc_API1
-diff --git a/server/testclient_sendreportfile b/server/testclient_sendreportfile
-index 08317b263f76..dc69a199122c 100755
---- a/server/testclient_sendreportfile
-+++ b/server/testclient_sendreportfile
-@@ -28,22 +28,22 @@
- 
- import sys
- import libxml2
--from optparse import OptionParser
-+from argparse import ArgumentParser
- 
- sys.path.append('../rteval')
- import rtevalclient
- 
- if __name__ == '__main__':
--    parser = OptionParser(version="%prog v0.1")
-+    parser = ArgumentParser(version="%prog v0.1")
- 
--    parser.add_option("-r", "--report", action="store", dest="report", default="summary.xml",
-+    parser.add_argument("-r", "--report", action="store", dest="report", default="summary.xml",
-                       help="Which XML report to send to the XML-RPC server  (default: %default)",
-                       metavar="FILE")
--    parser.add_option("-X", "--xmlrpc-submit", dest="xmlrpchost", default="localhost:65432",
-+    parser.add_argument("-X", "--xmlrpc-submit", dest="xmlrpchost", default="localhost:65432",
-                       help="Hostname to the XML-RPC server to send the data (default: %default)",
-                       metavar="HOST[:PORT]")
- 
--    (opts, args) = parser.parse_args()
-+    opts = parser.parse_args()
- 
-     d = libxml2.parseFile(opts.report)
- 
++    # if no kernel version was provided for --source-download, set version to default
++    if (sys.argv.count('-S')+sys.argv.count('--source-download')) > 0:
++        if cmd_opts.rteval___srcdownload == []:
++            cmd_opts.rteval___srcdownload = ModuleParameters()["source"]["default"].replace(".tar.xz", "")
++        else:
++            cmd_opts.rteval___srcdownload = cmd_opts.rteval___srcdownload[0]
++
+     if cmd_opts.rteval___version:
+         print(f"rteval version {RTEVAL_VERSION}")
+         sys.exit(0)
 -- 
 2.39.3
 
