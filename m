@@ -2,41 +2,40 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 56683EB64D9
-	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Jun 2023 16:57:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 15489EB64D9
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Jun 2023 18:16:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232060AbjF2Q5p (ORCPT
+        id S232054AbjF2SQR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 29 Jun 2023 12:57:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49514 "EHLO
+        Thu, 29 Jun 2023 14:16:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40728 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230455AbjF2Q5o (ORCPT
+        with ESMTP id S232039AbjF2SQP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Jun 2023 12:57:44 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2EE182D4C;
-        Thu, 29 Jun 2023 09:57:44 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        Thu, 29 Jun 2023 14:16:15 -0400
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F9DE2D50;
+        Thu, 29 Jun 2023 11:16:14 -0700 (PDT)
+Received: from canonical.com (1.general.jsalisbury.us.vpn [10.172.66.188])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+         key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 9E8F0615A9;
-        Thu, 29 Jun 2023 16:57:43 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2B82EC433C0;
-        Thu, 29 Jun 2023 16:57:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1688057863;
-        bh=duJXJuih7Fd3L+sgCuJfNa9TCg06mFFsR8D0muRvx2Y=;
-        h=Subject:From:To:Date:From;
-        b=KCaKLksZdZg9s6mxr5KI3lnYwYA0JOF+TZ72sjdhCupspwO+h8LaTByFjuW+dqiRA
-         ScXv+ABQj7tfqDVaYIWXqDL3MA9kR8CunaiMvTCiBQLliAhoZ40ZwxOe6OQTPCwAJ2
-         uQHkXtrW0GsiQgQA9pRJEr45ym84Xr3F8fJrVIAcSW9QdbRlpkbUAJSY71moK8npvt
-         y+q9kE413xrqHHC7txDk8SSw0rxCr+ys6K4iF3PgV3Q14AZSlcVfGx5Rf2M5pCVaKT
-         V2UB1Os72lf6/CqecRKR5u6gazpwAXHMxo0eWX6Iko7nBFP/X8cKLE78C/FzOWC2XD
-         U1udr4XAcGYCA==
-Message-ID: <b90fda7ccdf3b2bc821d42bf54b857a041009a38.camel@kernel.org>
-Subject: [ANNOUNCE] 5.4.248-rt83
-From:   Tom Zanussi <zanussi@kernel.org>
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 2B7C4414C5;
+        Thu, 29 Jun 2023 18:16:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1688062571;
+        bh=kdUlI6qXXtcT0LP53F8x4iayz3UG3VFxio0LjzvxI2o=;
+        h=From:Subject:Date:Message-ID:To;
+        b=QSY7y049WxiN7PBPbj1QyIDeefcnHqDmH+VGhIZTQl8qX5/nXA/GYVkA/YxUYQt3y
+         LUcKk43NhWs3i83PMXSQxJLT+rxmki3I35C4qg8BMs9WCFA4Z4fiRJKcENVqFD8wXv
+         rcYzWJQy1lm55Tj/t1ctWfVVp2wyhxvuupkBsiUrOaYJq4alYYnnBIlODr20Nkpu4X
+         ttaXmXm7xahrPJy2Lo7zfjo5pKX67p2abGvmT69q2TvdVUi75lWkrpZU8zQyJMJQ2l
+         2fD3zS8kwxzHJqoZEE1FQhVpxFYu3Qx1grWpX/PC5QDTxhjMyNu29SkHCALbxvO+oI
+         WhKb2FK94JSCA==
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+Subject: [ANNOUNCE] 5.15.119-rt65
+Date:   Thu, 29 Jun 2023 18:15:24 -0000
+Message-ID: <168806252410.91340.17223192962525233289@jupiter.home.arpa>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -44,44 +43,34 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
-        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Thu, 29 Jun 2023 11:57:39 -0500
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.44.1-0ubuntu1 
-MIME-Version: 1.0
+        Pavel Machek <pavel@denx.de>,
+        Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Hello RT-list!
 
-I'm pleased to announce the 5.4.248-rt83 stable release.
-
-This release is just an update to the new stable 5.4.248
-version and no RT specific changes have been made.
+I'm pleased to announce the 5.15.119-rt65 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.4-rt
-  Head SHA1: b7c31a429c09685c2e24d64c119370a78cec1207
+  branch: v5.15-rt
+  Head SHA1: b850a37ed7e1bbe756c67b97b5428e1868825a9f
 
-Or to build 5.4.248-rt83 directly, the following patches should be applied:
+Or to build 5.15.119-rt65 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.248.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.119.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.248-rt8=
-3.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.119-rt65.patch.xz
 
 
 Enjoy!
-
-   Tom
-
+Joseph Salisbury
