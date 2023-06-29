@@ -2,94 +2,86 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8ABCEB64DC
-	for <linux-rt-users@archiver.kernel.org>; Wed, 28 Jun 2023 21:58:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 56683EB64D9
+	for <linux-rt-users@archiver.kernel.org>; Thu, 29 Jun 2023 16:57:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230254AbjF1V6n (ORCPT
+        id S232060AbjF2Q5p (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 28 Jun 2023 17:58:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40142 "EHLO
+        Thu, 29 Jun 2023 12:57:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49514 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230081AbjF1V6k (ORCPT
+        with ESMTP id S230455AbjF2Q5o (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 28 Jun 2023 17:58:40 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 77B8226B7
-        for <linux-rt-users@vger.kernel.org>; Wed, 28 Jun 2023 14:57:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1687989473;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=f73iKQ8oknHVQAXx+9lX0M2BGZl9bM4axPbqe5LpIhM=;
-        b=THpJvzLinRfVe0bpG08IbYJK06UeyHCGBjnq76pLGo275qLlZ5hkAOonCT8Mg2gxTQv9D1
-        90cYTo54d1/tZP5NZ73PsdYhppd1NqXqF3KkhOdZRaUq6DkmquKASv0hQCX9/6My0+4DcO
-        G5ADsNuxgFEsnVSPqPf0WIMVdDRo2EA=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-503-JTR3fevFOIeapdBhiJFdqA-1; Wed, 28 Jun 2023 17:57:51 -0400
-X-MC-Unique: JTR3fevFOIeapdBhiJFdqA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        Thu, 29 Jun 2023 12:57:44 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2EE182D4C;
+        Thu, 29 Jun 2023 09:57:44 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9AE821C04B59
-        for <linux-rt-users@vger.kernel.org>; Wed, 28 Jun 2023 21:57:51 +0000 (UTC)
-Received: from ashelat.remote.csb (unknown [10.22.34.222])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 74D13111F3B0;
-        Wed, 28 Jun 2023 21:57:51 +0000 (UTC)
-From:   Anubhav Shelat <ashelat@redhat.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     kcarcia@redhat.com, Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH 1/1] Fixed bug in kcompile where run would fail if kcompile-source version had the form x.y instead of x.y.z
-Date:   Wed, 28 Jun 2023 17:57:31 -0400
-Message-Id: <20230628215730.738234-1-ashelat@redhat.com>
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 9E8F0615A9;
+        Thu, 29 Jun 2023 16:57:43 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2B82EC433C0;
+        Thu, 29 Jun 2023 16:57:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1688057863;
+        bh=duJXJuih7Fd3L+sgCuJfNa9TCg06mFFsR8D0muRvx2Y=;
+        h=Subject:From:To:Date:From;
+        b=KCaKLksZdZg9s6mxr5KI3lnYwYA0JOF+TZ72sjdhCupspwO+h8LaTByFjuW+dqiRA
+         ScXv+ABQj7tfqDVaYIWXqDL3MA9kR8CunaiMvTCiBQLliAhoZ40ZwxOe6OQTPCwAJ2
+         uQHkXtrW0GsiQgQA9pRJEr45ym84Xr3F8fJrVIAcSW9QdbRlpkbUAJSY71moK8npvt
+         y+q9kE413xrqHHC7txDk8SSw0rxCr+ys6K4iF3PgV3Q14AZSlcVfGx5Rf2M5pCVaKT
+         V2UB1Os72lf6/CqecRKR5u6gazpwAXHMxo0eWX6Iko7nBFP/X8cKLE78C/FzOWC2XD
+         U1udr4XAcGYCA==
+Message-ID: <b90fda7ccdf3b2bc821d42bf54b857a041009a38.camel@kernel.org>
+Subject: [ANNOUNCE] 5.4.248-rt83
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Date:   Thu, 29 Jun 2023 11:57:39 -0500
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.44.1-0ubuntu1 
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Fixed bug in kcompile where run would fail if kcompile-source version
-had the form x.y instead of x.y.z
+Hello RT Folks!
 
-Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
----
- rteval/modules/loads/kcompile.py | 13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+I'm pleased to announce the 5.4.248-rt83 stable release.
 
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index 35ee5cbbb52d..445575fb137a 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -175,8 +175,11 @@ class Kcompile(CommandLineLoad):
-         if 'rc' in self._cfg.source:
-             tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\-[a-z]*\d{1,2}", self._cfg.source).group(0)
-         else:
--            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\.*\d{1,2}", self._cfg.source).group(0)
--
-+            try:
-+                tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\.*\d{1,2}", self._cfg.source).group(0)
-+            except AttributeError:
-+                # if the kernel version has the form x.x instead of x.x.x
-+                tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}", self._cfg.source).group(0)
-         # either a tar.xz or tar.gz might exist. Check for both.
-         xz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.xz" )
-         gz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.gz" )
-@@ -193,7 +196,11 @@ class Kcompile(CommandLineLoad):
-         # find our source tarball
-         if self._cfg.source:
-             self.source = self._find_tarball()
--            kernel_prefix = re.search(r"linux-\d{1,2}\.\d{1,3}\.*\d{1,2}", self.source).group(0)
-+            try:
-+                kernel_prefix = re.search(r"linux-\d{1,2}\.\d{1,3}\.*\d{1,2}", self.source).group(0)
-+            except AttributeError:
-+                # if the kernel version has the form x.x instead of x.x.x
-+                kernel_prefix = re.search(r"linux-\d{1,2}\.\d{1,3}", self.source).group(0)
-         else:
-             tarfiles = glob.glob(os.path.join(self.srcdir, f"{DEFAULT_KERNEL_PREFIX}*"))
-             if tarfiles:
--- 
-2.39.3
+This release is just an update to the new stable 5.4.248
+version and no RT specific changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.4-rt
+  Head SHA1: b7c31a429c09685c2e24d64c119370a78cec1207
+
+Or to build 5.4.248-rt83 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.248.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.248-rt8=
+3.patch.xz
+
+
+Enjoy!
+
+   Tom
 
