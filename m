@@ -2,49 +2,49 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 59F93EB64DD
-	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jun 2023 09:23:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0631EB64D7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 30 Jun 2023 09:23:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232364AbjF3JW6 (ORCPT
+        id S232444AbjF3JXA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 30 Jun 2023 05:22:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58974 "EHLO
+        Fri, 30 Jun 2023 05:23:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59496 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232545AbjF3JWo (ORCPT
+        with ESMTP id S232563AbjF3JWp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 30 Jun 2023 05:22:44 -0400
+        Fri, 30 Jun 2023 05:22:45 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 32C343A8B
-        for <linux-rt-users@vger.kernel.org>; Fri, 30 Jun 2023 02:20:59 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7E01035B0
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Jun 2023 02:20:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
         s=mimecast20190719; t=1688116837;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=J47Cwegspn/5IUDzU9Pfhu8LTjXAfTcRkBMtXqcteeA=;
-        b=CWWQA4rdQp63xhR25cDz7edGJVxVb/E4p6PeBtADyqpD3DJj2vfjaZxadjGoU3HXlWTzqL
-        tEaO5EW2i6depUDWtwCZ4djv12vChg6NykWtH+y3mwa271iq6DHqjFW8FdnLDhFEEfwZKg
-        TJr7ybrSJOZw7e4KdjtdzVcFmvCNoqo=
+        bh=f3tMRVpZxvOfTdQ/kvXFloJOtsCjvgOA3FpDw9MKwGY=;
+        b=Pr/ZtxY/sQ3atDoM0A4fYmFIXPMDIvOzm8mPFGA0Zke0emmbTrLh5HADRt0og8gbQftUOm
+        BLLcJzvZEnUKHgQQ9qcVDMd1ON3lT98EyI/jtaSYW4x+uzE/918ldOqM6cJb03E2KHQhNT
+        pgfVUOJDjkTRhHPX8wRQuRWM1w6aqsQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-435-b8eQJwCRPxe8V3NNqCEzhQ-1; Fri, 30 Jun 2023 05:20:36 -0400
-X-MC-Unique: b8eQJwCRPxe8V3NNqCEzhQ-1
+ us-mta-433-2hM7KjZ-NBy_qOBrV0vE6g-1; Fri, 30 Jun 2023 05:20:35 -0400
+X-MC-Unique: 2hM7KjZ-NBy_qOBrV0vE6g-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DBCAB1044590
-        for <linux-rt-users@vger.kernel.org>; Fri, 30 Jun 2023 09:20:35 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5730800CA9
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Jun 2023 09:20:34 +0000 (UTC)
 Received: from fedora.redhat.com (unknown [10.45.224.109])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 290B340C6CCD;
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 5573340C6CD2;
         Fri, 30 Jun 2023 09:20:34 +0000 (UTC)
 From:   Tomas Glozar <tglozar@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 3/6] rteval: Exclude isolcpus from kcompile by default
-Date:   Fri, 30 Jun 2023 11:19:04 +0200
-Message-ID: <20230630091951.916865-4-tglozar@redhat.com>
+Subject: [PATCH 2/6] rteval: Report isolated CPUs
+Date:   Fri, 30 Jun 2023 11:19:03 +0200
+Message-ID: <20230630091951.916865-3-tglozar@redhat.com>
 In-Reply-To: <20230630091951.916865-1-tglozar@redhat.com>
 References: <20230630091951.916865-1-tglozar@redhat.com>
 MIME-Version: 1.0
@@ -54,49 +54,80 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Allows correct calculation of make job count that does not include
-isolated CPUs, on which the loads won't be scheduled.
+Add a flag for whether a CPU is isolated in CPUtopology and display
+the number of isolated CPUs in text report.
 
 Signed-off-by: Tomas Glozar <tglozar@redhat.com>
 ---
- rteval/modules/loads/kcompile.py | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ rteval/rteval_text.xsl        |  4 ++++
+ rteval/sysinfo/cputopology.py | 11 +++++++++++
+ 2 files changed, 15 insertions(+)
 
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index 35ee5cb..30c5965 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -37,6 +37,7 @@ from rteval.systopology import CpuList, SysTopology
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index 7ecfac6..0ef649b 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -59,6 +59,10 @@
+ 	<xsl:value-of select="SystemInfo/CPUtopology/@num_cpu_cores"/>
+ 	<xsl:text> (online: </xsl:text>
+ 	<xsl:value-of select="SystemInfo/CPUtopology/@num_cpu_cores_online"/>
++    <xsl:if test="SystemInfo/CPUtopology/@num_cpu_cores_isolated != 0">
++      <xsl:text>, isolated: </xsl:text>
++      <xsl:value-of select="SystemInfo/CPUtopology/@num_cpu_cores_isolated"/>
++    </xsl:if>
+ 	<xsl:text>)</xsl:text>
+       </xsl:when>
+       <xsl:when test="hardware/cpu_topology">
+diff --git a/rteval/sysinfo/cputopology.py b/rteval/sysinfo/cputopology.py
+index 2bb6323..f60b059 100644
+--- a/rteval/sysinfo/cputopology.py
++++ b/rteval/sysinfo/cputopology.py
+@@ -25,6 +25,7 @@
  
- expand_cpulist = CpuList.expand_cpulist
- compress_cpulist = CpuList.compress_cpulist
-+nonisolated_cpulist = CpuList.nonisolated_cpulist
+ import os
+ import libxml2
++from rteval.systopology import SysTopology
  
- DEFAULT_KERNEL_PREFIX = "linux-6.1"
+ class CPUtopology:
+     "Retrieves an overview over the installed CPU cores and the system topology"
+@@ -34,6 +35,7 @@ class CPUtopology:
+         self.__cputop_n = None
+         self.__cpu_cores = 0
+         self.__online_cores = 0
++        self.__isolated_cores = 0
+         self.__cpu_sockets = 0
  
-@@ -55,17 +56,20 @@ class KBuildJob:
-         if not os.path.isdir(self.objdir):
-             os.mkdir(self.objdir)
+     def __read(self, dirname, fname):
+@@ -51,6 +53,10 @@ class CPUtopology:
  
-+        # Exclude isolated CPUs if cpulist not set
-+        cpus_available = len(nonisolated_cpulist(self.node.cpus.cpulist))
+         self.__cputop_n = libxml2.newNode('CPUtopology')
+ 
++        # Get list of isolated CPUs from SysTopology
++        systopology = SysTopology()
++        isolated_cpus = {'cpu' + n for n in systopology.isolated_cpus_str()}
 +
-         if os.path.exists('/usr/bin/numactl') and not cpulist:
-             # Use numactl
-             self.binder = f'numactl --cpunodebind {int(self.node)}'
--            self.jobs = self.calc_jobs_per_cpu() * len(self.node)
-+            self.jobs = self.calc_jobs_per_cpu() * cpus_available
-         elif cpulist:
-             # Use taskset
-             self.jobs = self.calc_jobs_per_cpu() * len(cpulist)
-             self.binder = f'taskset -c {compress_cpulist(cpulist)}'
-         else:
-             # Without numactl calculate number of jobs from the node
--            self.jobs = self.calc_jobs_per_cpu() * len(self.node)
-+            self.jobs = self.calc_jobs_per_cpu() * cpus_available
+         cpusockets = []
+         for dirname in os.listdir(self.sysdir):
+             # Only parse directories which starts with 'cpu'
+@@ -82,6 +88,10 @@ class CPUtopology:
+                                                       'physical_package_id')
+                             cpu_n.newProp('physical_package_id', str(phys_pkg_id))
+                             cpusockets.append(phys_pkg_id)
++                            is_isolated = dirname in isolated_cpus
++                            if is_isolated:
++                             self.__isolated_cores += 1
++                            cpu_n.newProp('isolated', str(int(dirname in isolated_cpus)))
+                         break
  
-         self.runcmd = f"make O={self.objdir} -C {self.kdir} -j{self.jobs}"
-         self.cleancmd = f"make O={self.objdir} -C {self.kdir} clean allmodconfig"
+         # Count unique CPU sockets
+@@ -97,6 +107,7 @@ class CPUtopology:
+         # Summarise the core counts
+         self.__cputop_n.newProp('num_cpu_cores', str(self.__cpu_cores))
+         self.__cputop_n.newProp('num_cpu_cores_online', str(self.__online_cores))
++        self.__cputop_n.newProp('num_cpu_cores_isolated', str(self.__isolated_cores))
+         self.__cputop_n.newProp('num_cpu_sockets', str(self.__cpu_sockets))
+ 
+         return self.__cputop_n
 -- 
 2.41.0
 
