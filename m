@@ -2,142 +2,152 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B44BEB64DC
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jul 2023 13:21:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B1E70EB64DC
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jul 2023 14:29:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231396AbjGCNVC (ORCPT
+        id S229764AbjGCO3s (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Jul 2023 09:21:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45368 "EHLO
+        Mon, 3 Jul 2023 10:29:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51434 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231377AbjGCNVC (ORCPT
+        with ESMTP id S229818AbjGCO3R (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Jul 2023 09:21:02 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 81121DD
-        for <linux-rt-users@vger.kernel.org>; Mon,  3 Jul 2023 06:20:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1688390419;
+        Mon, 3 Jul 2023 10:29:17 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CCE27E59;
+        Mon,  3 Jul 2023 07:29:15 -0700 (PDT)
+Date:   Mon, 3 Jul 2023 16:29:08 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1688394553;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=SxGJA6rkwn8pNlDZg9LvOInkCnegg1nUaKU0FcN4qDA=;
-        b=LYY9uBEzLSnfkshHxkxaCBE1dLmGeZvFMvY9f3w567M8B2Mg2WSQvKd1ZqUQ1FVdmUznKu
-        sStpfA7YJZ+waq74AIZUskY4j6hOqYEScxHZv2BQOwRT2pHbK3m1H9MWBmzkuGesgb6/u/
-        5U+a/I8O9+g5sHv4t7JcNEznFLs6hAc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-611-FsgX71PKNtKDEEGBYxKSng-1; Mon, 03 Jul 2023 09:20:16 -0400
-X-MC-Unique: FsgX71PKNtKDEEGBYxKSng-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4BB40858EED;
-        Mon,  3 Jul 2023 13:20:16 +0000 (UTC)
-Received: from fedora (unknown [10.22.8.203])
-        by smtp.corp.redhat.com (Postfix) with SMTP id 7648B4CD0C6;
-        Mon,  3 Jul 2023 13:20:04 +0000 (UTC)
-Date:   Mon, 3 Jul 2023 10:20:03 -0300
-From:   Wander Lairson Costa <wander@redhat.com>
-To:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        bigeasy@linutronix.de, juri.lelli@redhat.com
+        bh=/4eXTSstuIJtNfCSirswPN+SDcANih1rBvCVlFV4lb4=;
+        b=Hy/0MJ7RO7NXMGP8iuM0zBhLtQFzhh2IcLKMKCoPxX90Zf0UbbR3ZrIKwIsp3qaxkKfkHw
+        d/ESnbEiW7oo784QU2dG6sMXeQmbBhHwde1mkVw8KpOda0X34/59ks1zp6OwZrCECChPoK
+        DbecWG+j0rSXCXd9+a+lX1rHQxxUFvz4vOHA3Fj9mlDky+sEYUEW0W0itWYqA0wwXQ4mEq
+        qSgwlZaT3IhJ63ujd7ti+o+TyiTjoSrvkv8iBoAUU/0IAF4OFMKHUNDYxspnppOP3LnuAo
+        SvH1a8nj82qrgfthfBggc5fZnr0FjROFvfdET955is1hp8rzscv+cgKnKrdTWg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1688394553;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=/4eXTSstuIJtNfCSirswPN+SDcANih1rBvCVlFV4lb4=;
+        b=EzUh5gfl6vKO4+59Fotn/unNfk2mVlawDqvGPIgo5E3VDXYDEwJmsK8Mf2v+C55F1h678m
+        zfBXwIpQuHawyZAA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Wander Lairson Costa <wander@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        juri.lelli@redhat.com
 Subject: Re: Splat in kernel RT while processing incoming network packets
-Message-ID: <5fq2oq6naaus3r5ppuktjdvkluovqbgf3fh4goww3sfz2dajvw@eiymjk53pqji>
+Message-ID: <20230703142908.RcxjjF_E@linutronix.de>
 References: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 In-Reply-To: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Jul 03, 2023 at 09:47:26AM -0300, Wander Lairson Costa wrote:
+On 2023-07-03 09:47:26 [-0300], Wander Lairson Costa wrote:
 > Dear all,
-> 
+Hi,
+
 > I am writing to report a splat issue we encountered while running the
 > Real-Time (RT) kernel in conjunction with Network RPS (Receive Packet
 > Steering).
-> 
-> During some testing of the RT kernel version 6.4.0 with Network RPS enabled,
-> we observed a splat occurring in the SoftIRQ subsystem. The splat message is as
+>=20
+> During some testing of the RT kernel version 6.4.0 with Network RPS enabl=
+ed,
+> we observed a splat occurring in the SoftIRQ subsystem. The splat message=
+ is as
 > follows:
-> 
+>=20
 > [   37.168920] ------------[ cut here ]------------
-> [   37.168925] WARNING: CPU: 0 PID: 0 at kernel/softirq.c:291 do_softirq_post_smp_call_flush+0x2d/0x60
-> [   37.168935] Modules linked in: xt_conntrack(E) ...
-> [   37.168976] Unloaded tainted modules: intel_cstate(E):4 intel_uncore(E):3
-> [   37.168994] CPU: 0 PID: 0 Comm: swapper/0 Tainted: G            E     -------  ---  6.4.0-0.rc2.23.test.eln127.x86_64+rt #1
-> [   37.168996] Hardware name: Red Hat KVM, BIOS 1.15.0-2.module+el8.6.0+14757+c25ee005 04/01/2014
-> [   37.168998] RIP: 0010:do_softirq_post_smp_call_flush+0x2d/0x60
-> [   37.169001] Code: 00 0f 1f 44 00 00 53 89 fb 48 c7 c7 f7 98 be 96 e8 d8 97 d2 00 65 66 8b 05 f8 36 ...
-> [   37.169002] RSP: 0018:ffffffff97403eb0 EFLAGS: 00010002
-> [   37.169004] RAX: 0000000000000008 RBX: 0000000000000000 RCX: 0000000000000003
-> [   37.169005] RDX: ffff992db7a34840 RSI: ffffffff96be98f7 RDI: ffffffff96bc23d8
-> [   37.169006] RBP: ffffffff97410000 R08: ffff992db7a34840 R09: ffff992c87f8dbc0
-> [   37.169007] R10: 00000000fffbfc67 R11: 0000000000000018 R12: 0000000000000000
-> [   37.169008] R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
-> [   37.169011] FS:  0000000000000000(0000) GS:ffff992db7a00000(0000) knlGS:0000000000000000
-> [   37.169013] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> [   37.169014] CR2: 00007f028b8da3f8 CR3: 0000000118f44001 CR4: 0000000000370eb0
-> [   37.169015] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> [   37.169015] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-> [   37.169016] Call Trace:
-> [   37.169018]  <TASK>
-> [   37.169020]  flush_smp_call_function_queue+0x78/0x80
-> [   37.169026]  do_idle+0xb2/0xd0
-> [   37.169030]  cpu_startup_entry+0x1d/0x20
-> [   37.169032]  rest_init+0xd1/0xe0
-> [   37.169037]  arch_call_rest_init+0xe/0x30
-> [   37.169044]  start_kernel+0x342/0x420
-> [   37.169046]  x86_64_start_reservations+0x18/0x30
-> [   37.169051]  x86_64_start_kernel+0x96/0xa0
-> [   37.169054]  secondary_startup_64_no_verify+0x10b/0x10b
-> [   37.169059]  </TASK>
+> [   37.168925] WARNING: CPU: 0 PID: 0 at kernel/softirq.c:291 do_softirq_=
+post_smp_call_flush+0x2d/0x60
+=E2=80=A6
 > [   37.169060] ---[ end trace 0000000000000000 ]---
-> 
+>=20
 > It comes from [1].
-> 
-> The issue lies in the mechanism of RPS to defer network packets processing to
-> other CPUs. It sends an IPI to the to the target CPU. The registered callback
-> is rps_trigger_softirq, which will raise a softirq, leading to the following
+>=20
+> The issue lies in the mechanism of RPS to defer network packets processin=
+g to
+> other CPUs. It sends an IPI to the to the target CPU. The registered call=
+back
+> is rps_trigger_softirq, which will raise a softirq, leading to the follow=
+ing
 > scenario:
-> 
+>=20
 > CPU0                                    CPU1
 > | netif_rx()                            |
-> | | enqueue_to_backlog(cpu=1)           |
+> | | enqueue_to_backlog(cpu=3D1)           |
 > | | | net_rps_send_ipi()                |
 > |                                       | flush_smp_call_function_queue()
-> |                                       | | was_pending = local_softirq_pending()
-> |                                       | | __flush_smp_call_function_queue()
+> |                                       | | was_pending =3D local_softirq=
+_pending()
+> |                                       | | __flush_smp_call_function_que=
+ue()
 > |                                       | | rps_trigger_softirq()
 > |                                       | | | __raise_softirq_irqoff()
-> |                                       | | do_softirq_post_smp_call_flush()
-> 
-> That has the undesired side effect of raising a softirq in a function call,
+> |                                       | | do_softirq_post_smp_call_flus=
+h()
+>=20
+> That has the undesired side effect of raising a softirq in a function cal=
+l,
 > leading to the aforementioned splat.
-> 
-> The kernel version is kernel-ark [1], os-build-rt branch. It is essentially the
 
-Correction: kernel-ark [2]
+correct.
 
+> The kernel version is kernel-ark [1], os-build-rt branch. It is essential=
+ly the
 > upstream kernel with the PREEMPT_RT patches, and with RHEL configs. I can
 > provide the .config.
-> 
-> The only solution I imagined so far was to modify RPS to process packtes in a
-> kernel thread in RT. But I wonder how would be that be different than processing
+
+It is fine, I see it.
+
+> The only solution I imagined so far was to modify RPS to process packtes =
+in a
+> kernel thread in RT. But I wonder how would be that be different than pro=
+cessing
 > them in ksoftirqd.
-> 
+>=20
 > Any inputs on the issue?
-> 
+
+Not sure how to proceed. One thing you could do is a hack similar like
+net-Avoid-the-IPI-to-free-the.patch which does it for defer_csd.
+On the other hand we could drop net-Avoid-the-IPI-to-free-the.patch and
+remove the warning because we have now commit
+   d15121be74856 ("Revert "softirq: Let ksoftirqd do its job"")
+
+Prior that, raising softirq from hardirq would wake ksoftirqd which in
+turn would collect all pending softirqs. As a consequence all following
+softirqs (networking, =E2=80=A6) would run as SCHED_OTHER and compete with
+SCHED_OTHER tasks for resources. Not good because the networking work is
+no longer processed within the networking interrupt thread. Also not a
+DDoS kind of situation where one could want to delay processing.
+
+With that change, this isn't the case anymore. Only an "unrelated" IRQ
+thread could pick up the networking work which is less then ideal. That
+is because the global softirq set is added, ksoftirq is marked for a
+wakeup and could be delayed because other tasks are busy. Then the disk
+interrupt (for instance) could pick it up as part of its threaded
+interrupt.
+
+Now that I think about, we could make the backlog pseudo device a
+thread. NAPI threading enables one thread but here we would need one
+thread per-CPU. So it would remain kind of special. But we would avoid
+clobbering the global state and delay everything to ksoftird. Processing
+it in ksoftirqd might not be ideal from performance point of view.
+
 > [1] https://elixir.bootlin.com/linux/latest/source/kernel/softirq.c#L306
-> 
-
-[2] https://gitlab.com/cki-project/kernel-ark
-
+>=20
 > Cheers,
 > Wander
-> 
 
+Sebastian
