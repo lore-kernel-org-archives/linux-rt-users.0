@@ -2,124 +2,161 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06AD8EB64DD
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jul 2023 16:13:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A96A7C001DD
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jul 2023 21:16:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229651AbjGCQNE (ORCPT
+        id S230211AbjGCVQw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Jul 2023 12:13:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46702 "EHLO
+        Mon, 3 Jul 2023 17:16:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49126 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231271AbjGCQNC (ORCPT
+        with ESMTP id S230011AbjGCVQv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Jul 2023 12:13:02 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 66C81E42
-        for <linux-rt-users@vger.kernel.org>; Mon,  3 Jul 2023 09:13:01 -0700 (PDT)
-Date:   Mon, 3 Jul 2023 18:12:56 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1688400779;
+        Mon, 3 Jul 2023 17:16:51 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C3AD9E5B
+        for <linux-rt-users@vger.kernel.org>; Mon,  3 Jul 2023 14:16:05 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1688418965;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=GTWs3yvxjJuG+efxP6o79ftGKgxb9vr275lqvsa3TWA=;
-        b=KaQESnQ4Cwfb81EODs55mATgUy6PIpLAkrcBPyuGQ6yiCmC6fNm/NAt2PqGVvjkIK9nTjY
-        qygwFQyWWf8uyTKfzSkKUq7AheAVrDV6WfhrekZNUdtOYuL/3FsDuLlq0DiqoBpdLgdQkQ
-        HtvGlXQoK2h2EgZ2tfs37rHtPXiI2YxioqNxFfny92dS0URWRM911r2obmR9nmimP9LvET
-        UfPV01bqXdmYZsYUtF34euSQtlCt6QfHRkNKEVLmj6fKGzsxEURQBV9yxk+WeMe1Fe+sDy
-        plnw1DTxEyVgIBs3/R/N6+d1Mi/1/LNM0Hu9CYVrvkGRqI4G1K1gDUKeC/xlnQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1688400779;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=GTWs3yvxjJuG+efxP6o79ftGKgxb9vr275lqvsa3TWA=;
-        b=DKYY8TLwd3V5UFLCLimMntz51WJW5g5yzX8h9rF313F8NThVrH1BGXFqaKKO8CRwzxLPaZ
-        CmZUVcBLJNHWyGBg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Tvrtko Ursulin <tvrtko.ursulin@linux.intel.com>
-Cc:     Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Chris Wilson <chris@chris-wilson.co.uk>,
-        Daniele Ceraolo Spurio <daniele.ceraolospurio@intel.com>,
-        linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org,
-        Jani Nikula <jani.nikula@linux.intel.com>,
-        Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
-        Rodrigo Vivi <rodrigo.vivi@intel.com>,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC] tentative fix for drm/i915/gt regression on preempt-rt
-Message-ID: <20230703161256.21Qmrm9d@linutronix.de>
-References: <20230630130949.coN0sVU4@linutronix.de>
- <5af9b5cb-2342-8de3-07f2-86f2be6201eb@linux.intel.com>
+        bh=NENXXCiC7OAFQilxnhjqx6Ufv54FNd/+AfsLgRs78Ig=;
+        b=dYJ41Z8Gr1ezl5/n5TfQ1iY5d+mwbEZN9X5ShBBU+BJ9ZIVMey5HaJUHs6a9TUzWMl4XyU
+        JREA0BVKwvUVMtFQXXBJiiqL6DUAB9ywQAqykKjF9iLtBPZvHMq3pPPlQ57RmMBJ3V5Ap4
+        GpfwPcG6x0cKLPQXagpDrhTBB2sG0xY=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-106-PK909c3uPwCditIylMbwqA-1; Mon, 03 Jul 2023 17:16:01 -0400
+X-MC-Unique: PK909c3uPwCditIylMbwqA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 530193C01DEC;
+        Mon,  3 Jul 2023 21:16:01 +0000 (UTC)
+Received: from fedora (unknown [10.22.8.203])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 90257492C13;
+        Mon,  3 Jul 2023 21:15:59 +0000 (UTC)
+Date:   Mon, 3 Jul 2023 18:15:58 -0300
+From:   Wander Lairson Costa <wander@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Paolo Abeni <pabeni@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        juri.lelli@redhat.com
+Subject: Re: Splat in kernel RT while processing incoming network packets
+Message-ID: <x6d2ae4ss4wvvuib2hmop6ztysjsbyno7gbjkyek5xng2kmgyd@yfmnfognlj5n>
+References: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
+ <20230703142908.RcxjjF_E@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <5af9b5cb-2342-8de3-07f2-86f2be6201eb@linux.intel.com>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20230703142908.RcxjjF_E@linutronix.de>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-07-03 16:30:01 [+0100], Tvrtko Ursulin wrote:
+On Mon, Jul 03, 2023 at 04:29:08PM +0200, Sebastian Andrzej Siewior wrote:
+> On 2023-07-03 09:47:26 [-0300], Wander Lairson Costa wrote:
+> > Dear all,
 > Hi,
-Hi,
+> 
+> > I am writing to report a splat issue we encountered while running the
+> > Real-Time (RT) kernel in conjunction with Network RPS (Receive Packet
+> > Steering).
+> > 
+> > During some testing of the RT kernel version 6.4.0 with Network RPS enabled,
+> > we observed a splat occurring in the SoftIRQ subsystem. The splat message is as
+> > follows:
+> > 
+> > [   37.168920] ------------[ cut here ]------------
+> > [   37.168925] WARNING: CPU: 0 PID: 0 at kernel/softirq.c:291 do_softirq_post_smp_call_flush+0x2d/0x60
+> …
+> > [   37.169060] ---[ end trace 0000000000000000 ]---
+> > 
+> > It comes from [1].
+> > 
+> > The issue lies in the mechanism of RPS to defer network packets processing to
+> > other CPUs. It sends an IPI to the to the target CPU. The registered callback
+> > is rps_trigger_softirq, which will raise a softirq, leading to the following
+> > scenario:
+> > 
+> > CPU0                                    CPU1
+> > | netif_rx()                            |
+> > | | enqueue_to_backlog(cpu=1)           |
+> > | | | net_rps_send_ipi()                |
+> > |                                       | flush_smp_call_function_queue()
+> > |                                       | | was_pending = local_softirq_pending()
+> > |                                       | | __flush_smp_call_function_queue()
+> > |                                       | | rps_trigger_softirq()
+> > |                                       | | | __raise_softirq_irqoff()
+> > |                                       | | do_softirq_post_smp_call_flush()
+> > 
+> > That has the undesired side effect of raising a softirq in a function call,
+> > leading to the aforementioned splat.
+> 
+> correct.
+> 
+> > The kernel version is kernel-ark [1], os-build-rt branch. It is essentially the
+> > upstream kernel with the PREEMPT_RT patches, and with RHEL configs. I can
+> > provide the .config.
+> 
+> It is fine, I see it.
+> 
+> > The only solution I imagined so far was to modify RPS to process packtes in a
+> > kernel thread in RT. But I wonder how would be that be different than processing
+> > them in ksoftirqd.
+> > 
+> > Any inputs on the issue?
+> 
+> Not sure how to proceed. One thing you could do is a hack similar like
+> net-Avoid-the-IPI-to-free-the.patch which does it for defer_csd.
 
->=20
-> Atomic requirement from that commit text is likely referring to removing =
-the
-> old big sleeping mutex we had in the reset path. So it looks plausible th=
-at
-> preempt_disable() section is not strictly needed and perhaps motivation
-> simply was, given those 20-50us polls on hw registers involved, to make t=
-hem
-> happen as fast as possible and so minimize visual glitching during resets.
->=20
-> Although that reasoning would only apply on some hw generations, where the
-> irqsave spinlock is not held across the whole sequence anyway.
->=20
-> And I suspect those same platforms would be the annoying ones, if one sim=
-ply
-> wanted to try without the preempt_disable section, given our wait_for_ato=
-mic
-> macro will complain loudly if not used from an atomic context.
+At first sight it seems straightforward to implement.
 
-It does not complain on RT, I did patch it out.
-   https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tr=
-ee/patches/0005-drm-i915-Don-t-check-for-atomic-context-on-PREEMPT_R.patch?=
-h=3Dlinux-6.4.y-rt-patches
+> On the other hand we could drop net-Avoid-the-IPI-to-free-the.patch and
+> remove the warning because we have now commit
+>    d15121be74856 ("Revert "softirq: Let ksoftirqd do its job"")
 
-Interesting, the link there refers to an older posting but this patch is
-not included. For the other I didn't receive feedback at which point I
-stopped pushing and put it on the list for later=E2=80=A6
+But I am more in favor of a solution that removes code than one that
+adds more :)
 
-> But I think we do have a macro for short register waits which works with
-> preempting enabled. I will try and cook up a patch and submit to our CI
-> during the week, then see what happens.
->
-> Or even moving the preempt_disable down so it just encompasses the regist=
-er
-> write + wait. That would then be under the spinlock which is presumable o=
-kay
-> on RT? (Yes I know it wouldn't' solve one half of your "complaint" but le=
-ts
-> just entertain the idea for now.)
+> 
+> Prior that, raising softirq from hardirq would wake ksoftirqd which in
+> turn would collect all pending softirqs. As a consequence all following
+> softirqs (networking, …) would run as SCHED_OTHER and compete with
+> SCHED_OTHER tasks for resources. Not good because the networking work is
+> no longer processed within the networking interrupt thread. Also not a
+> DDoS kind of situation where one could want to delay processing.
+> 
+> With that change, this isn't the case anymore. Only an "unrelated" IRQ
+> thread could pick up the networking work which is less then ideal. That
+> is because the global softirq set is added, ksoftirq is marked for a
+> wakeup and could be delayed because other tasks are busy. Then the disk
+> interrupt (for instance) could pick it up as part of its threaded
+> interrupt.
+> 
+> Now that I think about, we could make the backlog pseudo device a
+> thread. NAPI threading enables one thread but here we would need one
+> thread per-CPU. So it would remain kind of special. But we would avoid
+> clobbering the global state and delay everything to ksoftird. Processing
+> it in ksoftirqd might not be ideal from performance point of view.
 
-You can't
-	preempt_disable();
-	spin_lock();
+Before sending this to the ML, I talked to Paolo about using NAPI
+thread. He explained that it is implemented per interface. For example,
+for this specific case, it happened on the loopback interface, which
+doesn't implement NAPI. I am cc'ing him, so the can correct me if I am
+saying something wrong.
 
-You could
-	spin_lock();
-	preempt_disable();
+> 
+> > [1] https://elixir.bootlin.com/linux/latest/source/kernel/softirq.c#L306
+> > 
+> > Cheers,
+> > Wander
+> 
+> Sebastian
+> 
 
-But if there is no need then there is no need ;)
-What I worry a bit the udelays=E2=80=A6
-
-Thanks!
-
-> Regards,
->=20
-> Tvrtko
-
-Sebastian
