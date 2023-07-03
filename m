@@ -2,152 +2,122 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1E70EB64DC
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jul 2023 14:29:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C9DBEEB64DC
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jul 2023 15:30:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229764AbjGCO3s (ORCPT
+        id S230194AbjGCPaK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Jul 2023 10:29:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51434 "EHLO
+        Mon, 3 Jul 2023 11:30:10 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59460 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229818AbjGCO3R (ORCPT
+        with ESMTP id S230459AbjGCPaI (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Jul 2023 10:29:17 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CCE27E59;
-        Mon,  3 Jul 2023 07:29:15 -0700 (PDT)
-Date:   Mon, 3 Jul 2023 16:29:08 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1688394553;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=/4eXTSstuIJtNfCSirswPN+SDcANih1rBvCVlFV4lb4=;
-        b=Hy/0MJ7RO7NXMGP8iuM0zBhLtQFzhh2IcLKMKCoPxX90Zf0UbbR3ZrIKwIsp3qaxkKfkHw
-        d/ESnbEiW7oo784QU2dG6sMXeQmbBhHwde1mkVw8KpOda0X34/59ks1zp6OwZrCECChPoK
-        DbecWG+j0rSXCXd9+a+lX1rHQxxUFvz4vOHA3Fj9mlDky+sEYUEW0W0itWYqA0wwXQ4mEq
-        qSgwlZaT3IhJ63ujd7ti+o+TyiTjoSrvkv8iBoAUU/0IAF4OFMKHUNDYxspnppOP3LnuAo
-        SvH1a8nj82qrgfthfBggc5fZnr0FjROFvfdET955is1hp8rzscv+cgKnKrdTWg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1688394553;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=/4eXTSstuIJtNfCSirswPN+SDcANih1rBvCVlFV4lb4=;
-        b=EzUh5gfl6vKO4+59Fotn/unNfk2mVlawDqvGPIgo5E3VDXYDEwJmsK8Mf2v+C55F1h678m
-        zfBXwIpQuHawyZAA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Wander Lairson Costa <wander@redhat.com>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        juri.lelli@redhat.com
-Subject: Re: Splat in kernel RT while processing incoming network packets
-Message-ID: <20230703142908.RcxjjF_E@linutronix.de>
-References: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
+        Mon, 3 Jul 2023 11:30:08 -0400
+Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 29716E67
+        for <linux-rt-users@vger.kernel.org>; Mon,  3 Jul 2023 08:30:07 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1688398207; x=1719934207;
+  h=message-id:date:mime-version:subject:to:cc:references:
+   from:in-reply-to:content-transfer-encoding;
+  bh=uyGwRS+nY7W/8//fBcX/32H/jEj3LS6U/pum37IbKPw=;
+  b=ijkeHTvYNVn20SsYcMm4aZw3QCOCVCaR1YL9QZRaQ5OUoGYH/o1/E1c+
+   HOUYy7c0Xcx3/HDUfbQBoMGOvImZHyr975PUKO3sYNZIR5FkyLMD27doT
+   5ZFrx1LeUz0WJGkad40nYf52wMW3W9eGepUolCpIG8cgW7ZUHVq3moKgU
+   UGtx8ade520nV7NYr6AUMdID1czj0dfU5IlGUTx/lW47O5EFvaHY8rkil
+   NtxbkXmvqOUhIWEN3K+WcBNsAkRpNONZY6d2dlSOTAuaZsIZQ0qyiNjLw
+   kvRpIuaTtAukqkt5eP2KMwUMCwtumzNGQYx4yS6hBxWlV6M/p3wWXcVi4
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10760"; a="366394168"
+X-IronPort-AV: E=Sophos;i="6.01,178,1684825200"; 
+   d="scan'208";a="366394168"
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Jul 2023 08:30:06 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10760"; a="892574979"
+X-IronPort-AV: E=Sophos;i="6.01,178,1684825200"; 
+   d="scan'208";a="892574979"
+Received: from dryan13-mobl.ger.corp.intel.com (HELO [10.213.232.206]) ([10.213.232.206])
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Jul 2023 08:30:03 -0700
+Message-ID: <5af9b5cb-2342-8de3-07f2-86f2be6201eb@linux.intel.com>
+Date:   Mon, 3 Jul 2023 16:30:01 +0100
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.11.0
+Subject: Re: [RFC] tentative fix for drm/i915/gt regression on preempt-rt
+Content-Language: en-US
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc:     Chris Wilson <chris@chris-wilson.co.uk>,
+        Daniele Ceraolo Spurio <daniele.ceraolospurio@intel.com>,
+        linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org,
+        Jani Nikula <jani.nikula@linux.intel.com>,
+        Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+        Rodrigo Vivi <rodrigo.vivi@intel.com>,
+        Thomas Gleixner <tglx@linutronix.de>
+References: <20230630130949.coN0sVU4@linutronix.de>
+From:   Tvrtko Ursulin <tvrtko.ursulin@linux.intel.com>
+Organization: Intel Corporation UK Plc
+In-Reply-To: <20230630130949.coN0sVU4@linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-07-03 09:47:26 [-0300], Wander Lairson Costa wrote:
-> Dear all,
+
 Hi,
 
-> I am writing to report a splat issue we encountered while running the
-> Real-Time (RT) kernel in conjunction with Network RPS (Receive Packet
-> Steering).
->=20
-> During some testing of the RT kernel version 6.4.0 with Network RPS enabl=
-ed,
-> we observed a splat occurring in the SoftIRQ subsystem. The splat message=
- is as
-> follows:
->=20
-> [   37.168920] ------------[ cut here ]------------
-> [   37.168925] WARNING: CPU: 0 PID: 0 at kernel/softirq.c:291 do_softirq_=
-post_smp_call_flush+0x2d/0x60
-=E2=80=A6
-> [   37.169060] ---[ end trace 0000000000000000 ]---
->=20
-> It comes from [1].
->=20
-> The issue lies in the mechanism of RPS to defer network packets processin=
-g to
-> other CPUs. It sends an IPI to the to the target CPU. The registered call=
-back
-> is rps_trigger_softirq, which will raise a softirq, leading to the follow=
-ing
-> scenario:
->=20
-> CPU0                                    CPU1
-> | netif_rx()                            |
-> | | enqueue_to_backlog(cpu=3D1)           |
-> | | | net_rps_send_ipi()                |
-> |                                       | flush_smp_call_function_queue()
-> |                                       | | was_pending =3D local_softirq=
-_pending()
-> |                                       | | __flush_smp_call_function_que=
-ue()
-> |                                       | | rps_trigger_softirq()
-> |                                       | | | __raise_softirq_irqoff()
-> |                                       | | do_softirq_post_smp_call_flus=
-h()
->=20
-> That has the undesired side effect of raising a softirq in a function cal=
-l,
-> leading to the aforementioned splat.
+On 30/06/2023 14:09, Sebastian Andrzej Siewior wrote:
+> On 2023-06-22 20:57:50 [-0400], Paul Gortmaker wrote:
+> [ longer report about what is broken.]
+> 
+> Commit ade8a0f598443 ("drm/i915: Make all GPU resets atomic") introduces
+> a preempt_disable() section around the invocation of the reset callback.
+> I can't find an explanation why this is needed. There was a comment
+> saying
+> | * We want to perform per-engine reset from atomic context (e.g.
+> | * softirq), which imposes the constraint that we cannot sleep.
+> 
+> but it does not state the problem with being preempted while waiting for
+> the reset. The commit itself does not explain why an atomic reset is
+> needed, it just states that it is a requirement now. On !RT we could
+> pull packets from a NICs and forward them other NICs for 2ms.
+> 
+> I've been looking over the reset callbacks and gen8_reset_engines() +
+> gen6_reset_engines() acquire a spinlock_t. Since this becomes a sleeping
+> lock on PREEMPT_RT it must not be acquired with disabled preemption.
+> i915_do_reset() acquires no lock but then has two udelay()s of 50us
+> each. Not good latency wise in a preempt-off section.
+> 
+> Could someone please explain why atomic is needed during reset, what
+> problems are introduced by a possible preemption?
 
-correct.
+Atomic requirement from that commit text is likely referring to removing 
+the old big sleeping mutex we had in the reset path. So it looks 
+plausible that preempt_disable() section is not strictly needed and 
+perhaps motivation simply was, given those 20-50us polls on hw registers 
+involved, to make them happen as fast as possible and so minimize visual 
+glitching during resets.
 
-> The kernel version is kernel-ark [1], os-build-rt branch. It is essential=
-ly the
-> upstream kernel with the PREEMPT_RT patches, and with RHEL configs. I can
-> provide the .config.
+Although that reasoning would only apply on some hw generations, where 
+the irqsave spinlock is not held across the whole sequence anyway.
 
-It is fine, I see it.
+And I suspect those same platforms would be the annoying ones, if one 
+simply wanted to try without the preempt_disable section, given our 
+wait_for_atomic macro will complain loudly if not used from an atomic 
+context.
 
-> The only solution I imagined so far was to modify RPS to process packtes =
-in a
-> kernel thread in RT. But I wonder how would be that be different than pro=
-cessing
-> them in ksoftirqd.
->=20
-> Any inputs on the issue?
+But I think we do have a macro for short register waits which works with 
+preempting enabled. I will try and cook up a patch and submit to our CI 
+during the week, then see what happens.
 
-Not sure how to proceed. One thing you could do is a hack similar like
-net-Avoid-the-IPI-to-free-the.patch which does it for defer_csd.
-On the other hand we could drop net-Avoid-the-IPI-to-free-the.patch and
-remove the warning because we have now commit
-   d15121be74856 ("Revert "softirq: Let ksoftirqd do its job"")
+Or even moving the preempt_disable down so it just encompasses the 
+register write + wait. That would then be under the spinlock which is 
+presumable okay on RT? (Yes I know it wouldn't' solve one half of your 
+"complaint" but lets just entertain the idea for now.)
 
-Prior that, raising softirq from hardirq would wake ksoftirqd which in
-turn would collect all pending softirqs. As a consequence all following
-softirqs (networking, =E2=80=A6) would run as SCHED_OTHER and compete with
-SCHED_OTHER tasks for resources. Not good because the networking work is
-no longer processed within the networking interrupt thread. Also not a
-DDoS kind of situation where one could want to delay processing.
+Regards,
 
-With that change, this isn't the case anymore. Only an "unrelated" IRQ
-thread could pick up the networking work which is less then ideal. That
-is because the global softirq set is added, ksoftirq is marked for a
-wakeup and could be delayed because other tasks are busy. Then the disk
-interrupt (for instance) could pick it up as part of its threaded
-interrupt.
-
-Now that I think about, we could make the backlog pseudo device a
-thread. NAPI threading enables one thread but here we would need one
-thread per-CPU. So it would remain kind of special. But we would avoid
-clobbering the global state and delay everything to ksoftird. Processing
-it in ksoftirqd might not be ideal from performance point of view.
-
-> [1] https://elixir.bootlin.com/linux/latest/source/kernel/softirq.c#L306
->=20
-> Cheers,
-> Wander
-
-Sebastian
+Tvrtko
