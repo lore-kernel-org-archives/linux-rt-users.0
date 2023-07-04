@@ -2,178 +2,128 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0253BEB64D9
-	for <linux-rt-users@archiver.kernel.org>; Tue,  4 Jul 2023 10:30:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D179C001B0
+	for <linux-rt-users@archiver.kernel.org>; Tue,  4 Jul 2023 14:48:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230114AbjGDKa2 (ORCPT
+        id S231603AbjGDOsG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 4 Jul 2023 06:30:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50450 "EHLO
+        Tue, 4 Jul 2023 10:48:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56832 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230090AbjGDKaZ (ORCPT
+        with ESMTP id S231639AbjGDOr4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 4 Jul 2023 06:30:25 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C2354139
-        for <linux-rt-users@vger.kernel.org>; Tue,  4 Jul 2023 03:29:39 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1688466579;
+        Tue, 4 Jul 2023 10:47:56 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 15E9D10CF;
+        Tue,  4 Jul 2023 07:47:54 -0700 (PDT)
+Date:   Tue, 4 Jul 2023 16:47:49 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1688482072;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=aGCDGT+5Ucs9GzX8ozVZ9woiFPUsyRi+dQCqsu34VxI=;
-        b=DJ1GB5cH/GiPhvv+GWI9SFbpBBgWnj7VThvjwfrgyH2vJ9p6CW1zljVufkz5kZjNmA3cNC
-        FpJLzUsKKOhPVPIWPCF6hAug4osHt7tmU54J9eCm34/+LwEEjtaouV8OsZQubieU5CLu/y
-        AXve9aO2yOjX829ZmK7eXd0DI3x4dUo=
-Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
- [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-556-ZUsti2TlMyKr2ssgWp8lbA-1; Tue, 04 Jul 2023 06:29:38 -0400
-X-MC-Unique: ZUsti2TlMyKr2ssgWp8lbA-1
-Received: by mail-qt1-f200.google.com with SMTP id d75a77b69052e-4032a3ad8c0so10964011cf.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 04 Jul 2023 03:29:37 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1688466577; x=1691058577;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=aGCDGT+5Ucs9GzX8ozVZ9woiFPUsyRi+dQCqsu34VxI=;
-        b=QyRXYwDAXfLlKuVE36+Sz0ePOPdwk1GTsOuAYUDw0LGtYfIczTKdAQykEQSXK5geUn
-         9O/UCjwZ/bJVxiYvLjsLXaJuWp92xFC6FITUF2PL7DVO7n6iPC+HoLds780yIMptY2fE
-         Qk+S4xJ731yWGjX2W0vfkKBYh9+Betu0nFlLhG+Yk5vk2r4LhxX9XTWr55kJiL8WCPmA
-         HNfKIbtz6AmK0sePXwqA/PCNSRBWq+KilRYCJWkYS+S16c4INo58pCE0qxly6Ps5LR19
-         SWW1dJnC0oKDxNXArAWPLsCM8jNNfDegB4tfbF4ufzNOgoAD9ozrImQyBGR2qxU7K49q
-         3jTQ==
-X-Gm-Message-State: AC+VfDwGMUW2sVW0FAyBwYLhOFaft4FqmxJPmcw1PudBkI4Mr/j8kpH3
-        wvSoeMDuNyqUwsIPkve8+yjvC7wt+rtGUPB5wCTeRql7LYJnvFneKW8gqv/NIUoWhRYnvlfm/xg
-        LnnWjnok6x14NVOs8ktLNMSFbFcE=
-X-Received: by 2002:a05:622a:1a27:b0:400:9ed9:7267 with SMTP id f39-20020a05622a1a2700b004009ed97267mr17522916qtb.3.1688466577561;
-        Tue, 04 Jul 2023 03:29:37 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ5tUC0KAgufhRmOnB/HlqSyhLnELu52kXhmvyJ7YtGn5n3b7mX3zN3T24Wbw+mriewLuWMeVg==
-X-Received: by 2002:a05:622a:1a27:b0:400:9ed9:7267 with SMTP id f39-20020a05622a1a2700b004009ed97267mr17522902qtb.3.1688466577256;
-        Tue, 04 Jul 2023 03:29:37 -0700 (PDT)
-Received: from gerbillo.redhat.com (146-241-247-156.dyn.eolo.it. [146.241.247.156])
-        by smtp.gmail.com with ESMTPSA id e12-20020ac84b4c000000b003ff654694b6sm7636702qts.46.2023.07.04.03.29.35
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 04 Jul 2023 03:29:36 -0700 (PDT)
-Message-ID: <a4ed5a8cc35f34a3cb11aded76b0f289c658c1a7.camel@redhat.com>
-Subject: Re: Splat in kernel RT while processing incoming network packets
-From:   Paolo Abeni <pabeni@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Wander Lairson Costa <wander@redhat.com>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        bh=3Qmq4SKQQ7gKHnn/JkJpEXp7Z561AjgrQQ8nebwxnbE=;
+        b=0gvl+bGOgGOiLURH54fDatcGdd8MjBgZfcnwAwVVkf4gA28kMPlkVBrHMQrLLpxDDB+UYi
+        GNDhJsej80SMFtSO1xhs2KUl0aWkEtXlREvKJFEnNhO7O1K9dbnzTPEUgkqOv3yfjLCR1s
+        XmIl1FdHF94pwmvJA1cCpoQRzAOayNYxOo9500ZDoZI/it6qT4QsHtUCZMXsiolTUDVxt2
+        jodh7JYw4ndQYh8znHGZxUTp2g4urPTMcoPfnIuOPVwrWqYcCPR5cYGPL/ZpH1xy1F63G9
+        K1qCqiJQYyzo/kTCQvGXl09aAYF4FUvBwXkGIm5tBqiHYf+Cs56oGFPcz4QyKw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1688482072;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=3Qmq4SKQQ7gKHnn/JkJpEXp7Z561AjgrQQ8nebwxnbE=;
+        b=9mNXV1XDq2TewPCvWKvPq+HGiD4Uwo/9ihdfKiFM7wmzHiZR8QuJj3F5TBoh8n8HQFK8C/
+        +49i+Kxn/2aZ1hCQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Paolo Abeni <pabeni@redhat.com>
+Cc:     Wander Lairson Costa <wander@redhat.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         juri.lelli@redhat.com
-Date:   Tue, 04 Jul 2023 12:29:33 +0200
-In-Reply-To: <20230704100527.75hMNZ35@linutronix.de>
+Subject: Re: Splat in kernel RT while processing incoming network packets
+Message-ID: <20230704144749.wJUlub6-@linutronix.de>
 References: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
-         <20230703142908.RcxjjF_E@linutronix.de>
-         <x6d2ae4ss4wvvuib2hmop6ztysjsbyno7gbjkyek5xng2kmgyd@yfmnfognlj5n>
-         <20230704100527.75hMNZ35@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.46.4 (3.46.4-1.fc37) 
+ <20230703142908.RcxjjF_E@linutronix.de>
+ <x6d2ae4ss4wvvuib2hmop6ztysjsbyno7gbjkyek5xng2kmgyd@yfmnfognlj5n>
+ <20230704100527.75hMNZ35@linutronix.de>
+ <a4ed5a8cc35f34a3cb11aded76b0f289c658c1a7.camel@redhat.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <a4ed5a8cc35f34a3cb11aded76b0f289c658c1a7.camel@redhat.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 2023-07-04 at 12:05 +0200, Sebastian Andrzej Siewior wrote:
-> On 2023-07-03 18:15:58 [-0300], Wander Lairson Costa wrote:
-> > > Not sure how to proceed. One thing you could do is a hack similar lik=
-e
-> > > net-Avoid-the-IPI-to-free-the.patch which does it for defer_csd.
-> >=20
-> > At first sight it seems straightforward to implement.
-> >=20
-> > > On the other hand we could drop net-Avoid-the-IPI-to-free-the.patch a=
-nd
-> > > remove the warning because we have now commit
-> > >    d15121be74856 ("Revert "softirq: Let ksoftirqd do its job"")
-> >=20
-> > But I am more in favor of a solution that removes code than one that
-> > adds more :)
+On 2023-07-04 12:29:33 [+0200], Paolo Abeni wrote:
+> Just to hopefully clarify the networking side of it, napi instances !=3D
+> network backlog (used by RPS). The network backlog (RPS) is available
+> for all the network devices, including the loopback and all the virtual
+> ones.=C2=A0
+
+Yes.
+
+> The napi instances (and the threaded mode) are available only on
+> network device drivers implementing the napi model. The loopback driver
+> does not implement the napi model, as most virtual devices and even
+> some H/W NICs (mostily low end ones).
+
+Yes.
+
+> The network backlog can't run in threaded mode: there is no API/sysctl
+> nor infrastructure for that. The backlog processing threaded mode could
+> be implemented, even if should not be completely trivial and it sounds
+> a bit weird to me.
+
+Yes, I mean that this needs to be done.
+
 >=20
-> Raising the softirq from anonymous (hardirq context) is not ideal for
-> the reasons I stated below.
+> Just for the records, I mentioned the following in the bz:
 >=20
-> > > Prior that, raising softirq from hardirq would wake ksoftirqd which i=
-n
-> > > turn would collect all pending softirqs. As a consequence all followi=
-ng
-> > > softirqs (networking, =E2=80=A6) would run as SCHED_OTHER and compete=
- with
-> > > SCHED_OTHER tasks for resources. Not good because the networking work=
- is
-> > > no longer processed within the networking interrupt thread. Also not =
-a
-> > > DDoS kind of situation where one could want to delay processing.
-> > >=20
-> > > With that change, this isn't the case anymore. Only an "unrelated" IR=
-Q
-> > > thread could pick up the networking work which is less then ideal. Th=
-at
-> > > is because the global softirq set is added, ksoftirq is marked for a
-> > > wakeup and could be delayed because other tasks are busy. Then the di=
-sk
-> > > interrupt (for instance) could pick it up as part of its threaded
-> > > interrupt.
-> > >=20
-> > > Now that I think about, we could make the backlog pseudo device a
-> > > thread. NAPI threading enables one thread but here we would need one
-> > > thread per-CPU. So it would remain kind of special. But we would avoi=
-d
-> > > clobbering the global state and delay everything to ksoftird. Process=
-ing
-> > > it in ksoftirqd might not be ideal from performance point of view.
-> >=20
-> > Before sending this to the ML, I talked to Paolo about using NAPI
-> > thread. He explained that it is implemented per interface. For example,
-> > for this specific case, it happened on the loopback interface, which
-> > doesn't implement NAPI. I am cc'ing him, so the can correct me if I am
-> > saying something wrong.
+> It looks like flush_smp_call_function_queue() has 2 only callers,
+> migration, and do_idle().
 >=20
-> It is per NAPI-queue/instance and you could have multiple instances per
-> interface. However loopback has one and you need per-CPU threads if you
-> want to RPS your skbs to any CPU.
+> What about moving softirq processing from
+> flush_smp_call_function_queue() into cpu_stopper_thread(), outside the
+> unpreemptable critical section?
 
-Just to hopefully clarify the networking side of it, napi instances !=3D
-network backlog (used by RPS). The network backlog (RPS) is available
-for all the network devices, including the loopback and all the virtual
-ones.=C2=A0
+This doesn't solve anything. You schedule softirq from hardirq and from
+this moment on you are in "anonymous context" and we solve this by
+processing it in ksoftirqd.
+For !RT you process it while leaving the hardirq. For RT, we can't.
+Processing it in the context of the currently running process (say idle
+as in the reported backtrace or an another running user task) would lead
+to processing network related that originated somewhere at someone
+else's expense. Assume you have a high prio RT task running, not related
+to networking at all, and suddenly you throw a bunch of skbs on it.
 
-The napi instances (and the threaded mode) are available only on
-network device drivers implementing the napi model. The loopback driver
-does not implement the napi model, as most virtual devices and even
-some H/W NICs (mostily low end ones).
+Therefore it is preferred to process them within the interrupt thread in
+which the softirq was raised/ within its origin.
 
-The network backlog can't run in threaded mode: there is no API/sysctl
-nor infrastructure for that. The backlog processing threaded mode could
-be implemented, even if should not be completely trivial and it sounds
-a bit weird to me.
+The other problem with ksoftirqd processing is that everything is added
+to a global state and then left for ksoftirqd to process. The global
+state is considered by every local_bh_enable() instance so random
+interrupt thread could process it or even a random task doing a syscall
+involving spin_lock_bh().
 
+The NAPI-threads are nice in a way that they don't clobber the global
+state.
+For RPS we would need either per-CPU threads or serve this in
+ksoftirqd/X. The additional thread per-CPU makes only sense if it runs
+at higher priority. However without the priority it would be no
+different to ksoftirqd unless it does only the backlog's work.
 
-Just for the records, I mentioned the following in the bz:
+puh. I'm undecided here. We might want to throw it into ksoftirqd,
+remove the warning. But then this will be processed with other softirqs
+(like USB due to tasklet) and at some point and might be picked up by
+another interrupt thread.
 
-It looks like flush_smp_call_function_queue() has 2 only callers,
-migration, and do_idle().
+> Cheers,
+>=20
+> Paolo
 
-What about moving softirq processing from
-flush_smp_call_function_queue() into cpu_stopper_thread(), outside the
-unpreemptable critical section?
-
-I *think*/wild guess the call from do_idle() could be just removed (at
-least for RT build), as according to:
-
-commit b2a02fc43a1f40ef4eb2fb2b06357382608d4d84
-Author: Peter Zijlstra <peterz@infradead.org>
-Date:   Tue May 26 18:11:01 2020 +0200
-
-	smp: Optimize send_call_function_single_ipi()
-
-is just an optimization.
-
-Cheers,
-
-Paolo
-
+Sebastian
