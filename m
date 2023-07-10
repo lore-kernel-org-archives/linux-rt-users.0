@@ -2,169 +2,163 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 13905EB64DC
-	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Jul 2023 07:22:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D1F1EB64D9
+	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Jul 2023 10:12:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230034AbjGJHWX (ORCPT
+        id S233336AbjGJKMe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 10 Jul 2023 03:22:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33614 "EHLO
+        Mon, 10 Jul 2023 06:12:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56460 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230049AbjGJHWT (ORCPT
+        with ESMTP id S233313AbjGJKMM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 10 Jul 2023 03:22:19 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 06229EB
-        for <linux-rt-users@vger.kernel.org>; Mon, 10 Jul 2023 00:21:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1688973691;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=jEfNU3mvKWLTx66KLJD7IWl55ixvFZkA0OwvpmJNf9U=;
-        b=JgOdHE3qIh/76z+1L8P3Flr+mr0Y2bAIa0bgGxJ2FDd+2tD8jAfsZH2NyAo4Kkslw0269m
-        SDmZ5LEuVPO37S4xMJxeV7iPQ0WLXYlATL86UnrYcREN1hnjQTzwJ3c25mveOr8CTUleMY
-        s3UxwvAgYt9nhSs9xAAI9ZAC1SwsYtQ=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-634-k9EclFEJO5WDU9nlY3T63Q-1; Mon, 10 Jul 2023 03:21:30 -0400
-X-MC-Unique: k9EclFEJO5WDU9nlY3T63Q-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-7659c6caeaeso555492885a.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 10 Jul 2023 00:21:30 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1688973690; x=1691565690;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=jEfNU3mvKWLTx66KLJD7IWl55ixvFZkA0OwvpmJNf9U=;
-        b=HvcxEyB2Gho9F6DRXUJNDNXYZkB08jxUmpH6p1rKtCzR8TaVO/PGXhjhR8kq9l9Kph
-         TdZQLsbrmeeDbBEXF+QczV3+wjXnncZY0WayXPnyffjDDQMBUtHwKFcTTxfwAKsUVI9f
-         nSQZuExc6yd9wmNt6NxBwNCDLzQr4s9Z/KuAxERIbLYty6vKa5MUPoc83pQL4gOhgPcD
-         0tvZ9mqle4n7i/L/d/eVBCY4YClpGaYu7aMSm/2iV0RlbH+E9cECERAHFjcBVArT5Sbd
-         B6B7UZ9hAmei/3N7QJqO+P2IHFSHyJGyfkBsTP+VtOc88cK9gqHFEfqgkIOKfR7ztvQT
-         wZ9w==
-X-Gm-Message-State: ABy/qLadmWyx6kWZ8Z75oqj/zLI3BAsiXT2jNzxJV0Ehld1k+m67Dnt9
-        SFWtX5VMKPabaQ/kSLFbgKQvtMORDFAkTvICd4++lTEwCjE51bK3O8nKLI3TjYkV9ju79gH2Ue/
-        yFvCVk+yVBE7phCbh/7uysuwAu6E=
-X-Received: by 2002:a0c:df90:0:b0:636:b633:9fd6 with SMTP id w16-20020a0cdf90000000b00636b6339fd6mr10623075qvl.17.1688973689957;
-        Mon, 10 Jul 2023 00:21:29 -0700 (PDT)
-X-Google-Smtp-Source: APBJJlFNfYcRBHjYhKj1QikGAcGRp5e+PzgD9u/dm5HHUeQoUMkiA2Pt/L3p+zDXfFFfx2A0gdEsTw==
-X-Received: by 2002:a0c:df90:0:b0:636:b633:9fd6 with SMTP id w16-20020a0cdf90000000b00636b6339fd6mr10623066qvl.17.1688973689613;
-        Mon, 10 Jul 2023 00:21:29 -0700 (PDT)
-Received: from localhost.localdomain ([176.206.37.158])
-        by smtp.gmail.com with ESMTPSA id h11-20020a0cf40b000000b0062fffa42cc5sm5263903qvl.79.2023.07.10.00.21.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 10 Jul 2023 00:21:28 -0700 (PDT)
-Date:   Mon, 10 Jul 2023 09:21:25 +0200
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Mon, 10 Jul 2023 06:12:12 -0400
+Received: from mout.gmx.net (mout.gmx.net [212.227.15.18])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 807BB30CB;
+        Mon, 10 Jul 2023 03:10:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.de;
+ s=s31663417; t=1688983789; x=1689588589; i=efault@gmx.de;
+ bh=vWxlwa4RN2N9hCfbf+/JCap4SdbQGfrMduX8vY3ZB1Q=;
+ h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+ b=acKTHLDGhEpYgiiLy05zde2QBnjexFuWwDShuva21z5qMEuZfxFfKmBWsRzizkCJh9ugjMm
+ sLsmL1eczBjg8lHlHU3UQPsoD3at85qzTvgop9Va/Ps1dnRp60gDh3jUfUuDFW7ZavmHfOLdA
+ NBxkzMQDF/tNCG2IFrMOtScXiOq6xQWpBywATC76t+CDawDEBNAKpAPtEfc4MNnKPI1c730Jq
+ agh8L64VC+evOa5O3R6NfTbdCzmmnsrN+nEg/P8tBUVS+YgzGPNd3eVet9TIe6I8EDwqwmy25
+ LsnarIp/VPY9lcB3oojhiDOJ0kDd+dP+Zf5Ud+jTiSboCUbbvABg==
+X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
+Received: from homer.fritz.box ([212.114.172.150]) by mail.gmx.net (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MXp9i-1qUqVF0shw-00Y7JF; Mon, 10
+ Jul 2023 12:09:49 +0200
+Message-ID: <ae3f172d49bcf1af3c0e566bbc4f2967c9e65f2e.camel@gmx.de>
+Subject: Re: [RT] i915 sleeping function from atomic in gen6_reset_engines()
+From:   Mike Galbraith <efault@gmx.de>
+To:     Juri Lelli <juri.lelli@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [RT] i915 sleeping function from atomic in gen6_reset_engines()
-Message-ID: <ZKuxdVJcsHdcbmYs@localhost.localdomain>
+Date:   Mon, 10 Jul 2023 12:09:48 +0200
+In-Reply-To: <ZKuxdVJcsHdcbmYs@localhost.localdomain>
 References: <Y86wDg/EZfJOnlwJ@localhost.localdomain>
+         <ZKuxdVJcsHdcbmYs@localhost.localdomain>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <Y86wDg/EZfJOnlwJ@localhost.localdomain>
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:K+FXX+fFHhKvdViZsyA5JZWWh9/pnar6JS32Z8a7OeoTL9Zsocn
+ BS417dzkhMqTFL0uDks1APmPaQ0etEePvvL2zRlS16uLLMhavZN7tDwlgVyNXVB8CY35JOj
+ 1ZumGsh1v/rS/qL85Fw76WlasM0OzgeKNI8FIJX9oa4UkaFYslQUAfo6G7ClN1S0x51c+QC
+ SJD/RfXTwXOy2oVlhpg6g==
+UI-OutboundReport: notjunk:1;M01:P0:764qi3taeGo=;IPreEhDeXoRwmgwZLw/CaoiHSZv
+ IiaESumeUfAeiOlhg731rUmN9cicxfO/w+GWAGbjIkl2n6uOF42BKZddbdAjcwfrRBUqK3+bn
+ yeD/3HxSEWVPLDj0RNMzhzKcyBd55Y8A/73o258s8OJtLs0/pHetS6tmefpzNMYJ1f3ibfpN9
+ iVKXzsgJcA19U/2S95R6HyRPbYAw6f2c3RcsmxSaZ+YBgg8KLh2QTQCzsqJ3HNZ0WsY5yv4L0
+ JfL4N1nF6rWb8HZI7MSzwKC9MqNjVsqY/5qPNrrqmsO9iP0RFW+Vya9tQB/WR6UPsTTTgwNYW
+ DE400zYGHznABmZhQVrlqe6FSIpwz0zeFSMnhzxfhy99mhWi1FJ5Bp8g2lP3fM0Znf2+g4Wi4
+ 2mFm9taXpr5zvOA+D2ClMiANpoHm3zGs5WrJ6PpEIFUV1XEaoFAJYA5e1pw88PFOC2T9vdLY0
+ 2TnK0OQ5M12EG0ppque55S9MbuUFnE5++RQxqaF6K94/eYqWYh3eI0GrhfimRFqkZ4z3BIFUO
+ 9OQIbQ9cg2nPs8FvhK78s6c9yi8AdsIoPilABq0YZW5w6qwu8XpltKkpxYGodkXb2uJ3Wr1yN
+ 0sNyLOPzHksyAd9YTMQBl59kJp1BNNgXwXxFMpxt8NFYxIFQIVsWZGp8diY8NdkNcWxoNFve0
+ HzcZ9nFCXQmsyzMUHvQy+A/AL/bCWSFrZ5Sih9NrBMKuHKE+wXYWSKGQBhqaNqH/AgEY/23rL
+ MYFbDqTmpzpEM40TwVwGe0/OhWBjjivvhX9MCEvob/I3KX0IPTAiLhmqfvdkP4fqIpIL8ngjH
+ 1eiO0Fb8QJNSaLkSL2T7UgwrlKMquY7z6RCionn6v0CibxO3DOcfHH7d3maUCZMz/HGtARNx7
+ ah3TFnlawkIiHrdk+9/tUgNHxOOfi2R/bEI9zZOjzfV+5+Kahjm5ZHdXNIP8Q7b833Te4IUB8
+ ihdeVYVjAXveQayJkxGqTHvfuZA=
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi!
+On Mon, 2023-07-10 at 09:21 +0200, Juri Lelli wrote:
+> Hi!
+>
+> On 23/01/23 17:04, Juri Lelli wrote:
+> > Hi,
+> >
+> > I've just noticed the following while testing v6.2-rc3-rt1.
+>
+> I'm still seeing the following on v6.4-rt6.
+>
+> I believe 20211006164628.s2mtsdd2jdbfyf7g@linutronix.de=C2=A0should cure=
+ it,
+> but I don't think it did go anywhere?
 
-On 23/01/23 17:04, Juri Lelli wrote:
-> Hi,
-> 
-> I've just noticed the following while testing v6.2-rc3-rt1.
+The raw lock cyclictest deltas don't look great.  I shut it up with the
+below.  For my i915 equipped lappy, a raw lock fix would be just fine,
+its cyclictest numbers already being well south of 'oh dear'.
 
-I'm still seeing the following on v6.4-rt6.
+Subject: drm,i915: Don't disable preemption in __intel_gt_reset() for PREE=
+MPT_RT
+From: Mike Galbraith <efault@gmx.de>
+Date: Wed Dec  7 10:13:21 CET 2022
 
-I believe 20211006164628.s2mtsdd2jdbfyf7g@linutronix.de should cure it,
-but I don't think it did go anywhere?
+ BUG: sleeping function called from invalid context at kernel/locking/spin=
+lock_rt.c:46
+ in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 330, name: systemd=
+-udevd
+ preempt_count: 1, expected: 0
+ RCU nest depth: 0, expected: 0
+ Preemption disabled at:
+ [<ffffffffa090e08e>] __intel_gt_reset+0x6e/0xe0 [i915]
+ CPU: 0 PID: 330 Comm: systemd-udevd Tainted: G          I E      6.1.0.g8=
+ed710d-master-rt #27
+ Hardware name: HP HP Spectre x360 Convertible/804F, BIOS F.47 11/22/2017
+ Call Trace:
+  <TASK>
+  dump_stack_lvl+0x33/0x46
+  ? __intel_gt_reset+0x6e/0xe0 [i915]
+  __might_resched+0x162/0x1b0
+  ? __gen11_reset_engines.isra.21+0x2d0/0x2d0 [i915]
+  rt_spin_lock+0x2d/0x70
+  gen8_reset_engines+0x33/0x220 [i915]
+  ? __gen11_reset_engines.isra.21+0x2d0/0x2d0 [i915]
+  __intel_gt_reset+0x79/0xe0 [i915]
+  sanitize_gpu.part.17+0x2d/0x40 [i915]
+  i915_driver_probe+0x7b8/0xf20 [i915]
+  ...
 
-> # lspci -k | grep -EA3 'VGA|3D|Display'
-> 00:02.0 VGA compatible controller: Intel Corporation Xeon E3-1200 v3 Processor Integrated Graphics Controller (rev 06)
->         DeviceName:  Onboard IGD
->         Subsystem: Dell Device 0620
->         Kernel driver in use: i915
->  
-> ---
-> 
-> [   11.960670] BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
-> [   11.960672] in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 429, name: systemd-udevd
-> [   11.960673] preempt_count: 1, expected: 0
-> [   11.960674] RCU nest depth: 0, expected: 0
-> [   11.960674] 2 locks held by systemd-udevd/429:
-> [   11.960675]  #0: ffff8e1f022b71b0 (&dev->mutex){....}-{3:3}, at: __driver_attach+0xcb/0x1d0
-> [   11.960684]  #1: ffff8e1e27d32ed8 (&uncore->lock){+.+.}-{2:2}, at: gen6_reset_engines+0x1b/0x50 [i915]
-> [   11.960897] Preemption disabled at:
-> [   11.960898] [<ffffffffc07d5d62>] __intel_gt_reset+0x92/0x100 [i915]
-> [   11.961024] CPU: 3 PID: 429 Comm: systemd-udevd Not tainted 6.2.0-rc3-rt1 #1
-> [   11.961025] Hardware name: Dell Inc. PowerEdge T20/0VD5HY, BIOS A03 11/25/2013
-> [   11.961026] Call Trace:
-> [   11.961027]  <TASK>
-> [   11.961029]  ? __intel_gt_reset+0x92/0x100 [i915]
-> [   11.961155]  dump_stack_lvl+0x57/0x81
-> [   11.961160]  __might_resched.cold+0xf4/0x12f
-> [   11.961165]  rt_spin_lock+0x4a/0xe0
-> [   11.961169]  ? gen6_reset_engines+0x1b/0x50 [i915]
-> [   11.961294]  ? __pfx_gen6_reset_engines+0x10/0x10 [i915]
-> [   11.961453]  gen6_reset_engines+0x1b/0x50 [i915]
-> [   11.961579]  __intel_gt_reset+0xa0/0x100 [i915]
-> [   11.961708]  i915_driver_mmio_probe+0x126/0x220 [i915]
-> [   11.961815]  ? intel_gt_probe_all+0x70/0x280 [i915]
-> [   11.961939]  i915_driver_probe+0xd4/0x3c0 [i915]
-> [   11.962047]  ? i915_pci_probe+0x87/0x1b0 [i915]
-> [   11.962160]  local_pci_probe+0x45/0x80
-> [   11.962167]  pci_call_probe+0x56/0x170
-> [   11.962173]  pci_device_probe+0x79/0xf0
-> [   11.962175]  ? driver_sysfs_add+0x73/0xd0
-> [   11.962179]  really_probe+0xe1/0x390
-> [   11.962181]  ? pm_runtime_barrier+0x50/0x90
-> [   11.962187]  __driver_probe_device+0x78/0x180
-> [   11.962191]  driver_probe_device+0x1e/0x90
-> [   11.962195]  __driver_attach+0xd6/0x1d0
-> [   11.962197]  ? __pfx___driver_attach+0x10/0x10
-> [   11.962201]  bus_for_each_dev+0x7b/0xc0
-> [   11.962206]  bus_add_driver+0x1b2/0x200
-> [   11.962212]  driver_register+0x8f/0xf0
-> [   11.962215]  i915_init+0x20/0x80 [i915]
-> [   11.962337]  ? __pfx_init_module+0x10/0x10 [i915]
-> [   11.962461]  do_one_initcall+0x47/0x190
-> [   11.962467]  ? rcu_read_lock_sched_held+0x43/0x80
-> [   11.962471]  ? trace_kmalloc+0x3c/0x160
-> [   11.962473]  ? kmalloc_trace+0x44/0x60
-> [   11.962476]  do_init_module+0x4c/0x200
-> [   11.962480]  __do_sys_finit_module+0xb4/0x130
-> [   11.962497]  do_syscall_64+0x5c/0x90
-> [   11.962505]  ? do_syscall_64+0x69/0x90
-> [   11.962507]  ? lockdep_hardirqs_on+0x79/0x100
-> [   11.962511]  ? do_syscall_64+0x69/0x90
-> [   11.962513]  ? do_syscall_64+0x69/0x90
-> [   11.962515]  ? lockdep_hardirqs_on+0x79/0x100
-> [   11.962518]  ? do_syscall_64+0x69/0x90
-> [   11.962520]  ? lockdep_hardirqs_on+0x79/0x100
-> [   11.962523]  entry_SYSCALL_64_after_hwframe+0x72/0xdc
-> [   11.962526] RIP: 0033:0x7fa35d020e5d
-> [   11.962529] Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 90 f3 0f 1e fa 48 89 f8 48 89 f7 48 89
->                      d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73
-> 		     01 c3 48 8b 0d 93 af 1b 00 f7 d8 64 89 01 48
-> [   11.962530] RSP: 002b:00007ffd62f23a78 EFLAGS: 00000246 ORIG_RAX: 0000000000000139
-> [   11.962532] RAX: ffffffffffffffda RBX: 000056058a1429e0 RCX: 00007fa35d020e5d
-> [   11.962533] RDX: 0000000000000000 RSI: 00007fa35d25232c RDI: 0000000000000017
-> [   11.962534] RBP: 0000000000020000 R08: 0000000000000000 R09: 0000000000000002
-> [   11.962534] R10: 0000000000000017 R11: 0000000000000246 R12: 00007fa35d25232c
-> [   11.962535] R13: 000056058a147360 R14: 0000000000000007 R15: 000056058a12b790
-> [   11.962548]  </TASK>
-> [   11.964024] i915 0000:00:02.0: vgaarb: deactivate vga console
-> [   11.974095] Console: switching to colour dummy device 80x25
-> [   11.981308] i915 0000:00:02.0: vgaarb: changed VGA decodes: olddecodes=io+mem,decodes=io+mem:owns=io+mem
-> [   12.041808] [drm] Initialized i915 1.6.0 20201103 for 0000:00:02.0 on minor 0
-> 
-> ---
+Replace the preempt_disable()/enable() with a local_lock()/unlock().
 
-Thanks,
-Juri
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+=2D--
+ drivers/gpu/drm/i915/gt/intel_reset.c |   13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+=2D-- a/drivers/gpu/drm/i915/gt/intel_reset.c
++++ b/drivers/gpu/drm/i915/gt/intel_reset.c
+@@ -6,6 +6,7 @@
+ #include <linux/sched/mm.h>
+ #include <linux/stop_machine.h>
+ #include <linux/string_helpers.h>
++#include <linux/local_lock.h>
+
+ #include "display/intel_display_reset.h"
+ #include "display/intel_overlay.h"
+@@ -766,6 +767,14 @@ wa_14015076503_end(struct intel_gt *gt,
+ 			 HECI_H_GS1_ER_PREP, 0);
+ }
+
++struct reset_lock {
++	local_lock_t lock;
++};
++
++static DEFINE_PER_CPU(struct reset_lock, reset_lock) =3D {
++	.lock	=3D INIT_LOCAL_LOCK(lock),
++};
++
+ int __intel_gt_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask=
+)
+ {
+ 	const int retries =3D engine_mask =3D=3D ALL_ENGINES ? RESET_MAX_RETRIES=
+ : 1;
+@@ -788,9 +797,9 @@ int __intel_gt_reset(struct intel_gt *gt
+ 		reset_mask =3D wa_14015076503_start(gt, engine_mask, !retry);
+
+ 		GT_TRACE(gt, "engine_mask=3D%x\n", reset_mask);
+-		preempt_disable();
++		local_lock(&reset_lock.lock);
+ 		ret =3D reset(gt, reset_mask, retry);
+-		preempt_enable();
++		local_unlock(&reset_lock.lock);
+
+ 		wa_14015076503_end(gt, reset_mask);
+ 	}
 
