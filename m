@@ -2,118 +2,96 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 70C12EB64D9
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Jul 2023 13:22:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 09788C001DE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jul 2023 07:55:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232819AbjGLNWe (ORCPT
+        id S232979AbjGMHzq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 12 Jul 2023 09:22:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48630 "EHLO
+        Thu, 13 Jul 2023 03:55:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36072 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229596AbjGLNWb (ORCPT
+        with ESMTP id S233222AbjGMHzj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 Jul 2023 09:22:31 -0400
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 2A3E8C0;
-        Wed, 12 Jul 2023 06:22:30 -0700 (PDT)
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 326EAD75;
-        Wed, 12 Jul 2023 06:23:12 -0700 (PDT)
-Received: from [10.57.36.71] (unknown [10.57.36.71])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id D6A363F67D;
-        Wed, 12 Jul 2023 06:22:27 -0700 (PDT)
-Message-ID: <06877064-51df-d162-0da2-aaa710e0fefe@arm.com>
-Date:   Wed, 12 Jul 2023 14:22:26 +0100
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0)
- Gecko/20100101 Thunderbird/102.12.0
-Subject: Re: [PATCH] coresight: etm3x: convert struct etm_drvdata's spinlock
- to raw_spinlock
-To:     James Clark <james.clark@arm.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        quanyang.wang@windriver.com
-Cc:     Alexander Shishkin <alexander.shishkin@linux.intel.com>,
-        Tingwei Zhang <tingwei@codeaurora.org>,
-        Mathieu Poirier <mathieu.poirier@linaro.org>,
-        Kim Phillips <kim.phillips@arm.com>,
-        Sebastian Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        Thu, 13 Jul 2023 03:55:39 -0400
+X-Greylist: delayed 492 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 13 Jul 2023 00:55:28 PDT
+Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C1D2170E;
+        Thu, 13 Jul 2023 00:55:28 -0700 (PDT)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id E1606DE5A0;
+        Thu, 13 Jul 2023 09:47:10 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+        t=1689234434; h=from:subject:date:message-id:to:cc:mime-version:
+         content-transfer-encoding; bh=GKBVYJpSmfoLCuPfe168qbJEbjBAcNV+XFnUZ5B7gNY=;
+        b=DuQ5rr8T+akZvwCZqiFmxR+OSw4dv2sPi1RA6SGDGh7k5HHUD0VGhxkVpIavCtyDPOLZhv
+        PbOMgO4yhrNIEYm5r46XkFCfSoLDz1NMSBVw3rpLOTHP47DGbgMY1SLhiVhhZ9gAt0FcWU
+        vZ48NuM/6hoqZeHgiMCyHwT4jy9CyEA/4xthXqsb1OO8yjTMzG+NkMy8YN4lIaEWzwem7m
+        6CRhd8TCo674k76yZdqQTpFPQ8krUJuupoRbcvL/9TBAc1RCKOGUTKmTU/SWrU8WUQBZe/
+        +yRWK29zzPyzEPrrwb/RfsEH8B1QwpnORM3pPMMoghFyrsmyhuNQquTIQPHm8w==
+From:   Daniel Wagner <wagi@monom.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        <linux-rt-users@vger.kernel.org>, <stable-rt@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org, coresight@lists.linaro.org,
-        linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
-References: <20230711070536.3944458-1-quanyang.wang@windriver.com>
- <2023071134-mardi-lyricist-e5b0@gregkh>
- <85a706fb-1072-0c59-e08c-8bb27e069991@arm.com>
-From:   Suzuki K Poulose <suzuki.poulose@arm.com>
-In-Reply-To: <85a706fb-1072-0c59-e08c-8bb27e069991@arm.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>
+Cc:     Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 0/1] Linux v4.19.288-rt126-rc1
+Date:   Thu, 13 Jul 2023 09:47:06 +0200
+Message-ID: <20230713074707.1188-1-wagi@monom.org>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 11/07/2023 16:45, James Clark wrote:
-> 
-> 
-> On 11/07/2023 15:05, Greg Kroah-Hartman wrote:
->> On Tue, Jul 11, 2023 at 03:05:36PM +0800, quanyang.wang@windriver.com wrote:
->>> From: Quanyang Wang <quanyang.wang@windriver.com>
->>>
->>> For PREEMPT_RT kernel, spinlock_t locks become sleepable. The functions
->>> etm_dying_cpu and etm_starting_cpu which call spin_lock/unlock run in
->>> an irq-disabled context, this will trigger the following calltrace:
->>>
->>>      BUG: sleeping function called from invalid context at kernel/locking/spinlock_rt.c:46
->>>      in_atomic(): 1, irqs_disabled(): 128, non_block: 0, pid: 25, name: migration/1
->>>      preempt_count: 1, expected: 0
->>>      RCU nest depth: 0, expected: 0
->>>      1 lock held by migration/1/25:
->>>       #0: 82a7587c (&drvdata->spinlock){....}-{2:2}, at: etm_dying_cpu+0x28/0x54
->>>      Preemption disabled at:
->>>      [<801ec760>] cpu_stopper_thread+0x94/0x120
->>>      CPU: 1 PID: 25 Comm: migration/1 Not tainted 6.1.35-rt10-yocto-preempt-rt #30
->>>      Hardware name: Xilinx Zynq Platform
->>>      Stopper: multi_cpu_stop+0x0/0x174 <- __stop_cpus.constprop.0+0x48/0x88
->>>       unwind_backtrace from show_stack+0x18/0x1c
->>>       show_stack from dump_stack_lvl+0x58/0x70
->>>       dump_stack_lvl from __might_resched+0x14c/0x1c0
->>>       __might_resched from rt_spin_lock+0x4c/0x84
->>>       rt_spin_lock from etm_dying_cpu+0x28/0x54
->>>       etm_dying_cpu from cpuhp_invoke_callback+0x140/0x33c
->>>       cpuhp_invoke_callback from __cpuhp_invoke_callback_range+0xa4/0x104
->>>       __cpuhp_invoke_callback_range from take_cpu_down+0x7c/0xa8
->>>       take_cpu_down from multi_cpu_stop+0x15c/0x174
->>>       multi_cpu_stop from cpu_stopper_thread+0x9c/0x120
->>>       cpu_stopper_thread from smpboot_thread_fn+0x31c/0x360
->>>       smpboot_thread_fn from kthread+0x100/0x124
->>>       kthread from ret_from_fork+0x14/0x2c
->>>
->>> Convert struct etm_drvdata's spinlock to raw_spinlock to fix it.
->>
->> wait, why will a raw_spinlock fix this?  Why not fix the root problem
->> here, that of calling these locks inproperly in irq context?
->>
->> How is changing to a raw_spinlock going to fix the above splat?
->>
->> thanks,
->>
->> greg k-h
->>
-> 
-> If it's just etm_starting_cpu() and etm_dying_cpu() as mentioned in the
-> commit message then can those spinlocks be removed?
-> 
-> Surely there can't be any concurrent access to the per-cpu data when the
-> hotplug callbacks are called?
+Dear RT Folks,
 
-Accessing the per-cpu data is not a problem. The spinlocks are there to
-protect the accesses to drvdata->mode. etm_starting_cpu() would try to
-enable the etm (i.e., start the tracing) if the mode is not DISABLED.
-Especially for SYSFS mode, this could be controlled from a different
-CPU, affecting the mode. I think we may still be able to avoid this
-lock, by allowing the modifications to the mode performed via
-enable_hw/disable_hw on the CPU. That way, there cannot be concurrent
-modifications to the mode for a given ETM bound to the CPU.
+This is the RT stable review cycle of patch 4.19.288-rt126-rc1.
 
-Suzuki
+Please scream at me if I messed something up. Please test the patches
+too.
+
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main
+release on 2023-07-20.
+
+To build 4.19.288-rt126-rc1 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.288.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.288-rt126-rc1.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
+
+Changes from v4.19.284-rt125:
+
+
+Daniel Wagner (1):
+  Linux 4.19.288-rt126
+
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+-- 
+2.41.0
 
