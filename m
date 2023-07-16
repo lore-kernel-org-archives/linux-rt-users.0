@@ -2,70 +2,151 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DEE09C001DC
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jul 2023 07:56:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 25AA6C001E0
+	for <linux-rt-users@archiver.kernel.org>; Sun, 16 Jul 2023 19:30:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233325AbjGMHzu (ORCPT
+        id S229575AbjGPTae (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Jul 2023 03:55:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36064 "EHLO
+        Sun, 16 Jul 2023 15:30:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48964 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233158AbjGMHzl (ORCPT
+        with ESMTP id S229774AbjGPTac (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Jul 2023 03:55:41 -0400
-Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 080DF2713;
-        Thu, 13 Jul 2023 00:55:33 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id EECF8DE5A3;
-        Thu, 13 Jul 2023 09:47:14 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1689234435; h=from:subject:date:message-id:to:cc:mime-version:
-         content-transfer-encoding:in-reply-to:references;
-        bh=JVx/wMmu2mafrXhkeZJ9fNSWsicdmXECOnuVK0+2598=;
-        b=mMD8MnrVy0aqEPXhB+UqtB2KUM+5tY3yiV0+J2y/kcWGucg2ZY/HrT3sbAzp2e4WLd4l0+
-        PsyPRLWao0s28B1zeUebjKUtASMp1e/9zZA64wOvgXme5nxSYeZn6IM072RqpPMjxEdNNs
-        jK9+kyQ/06ezMcil7dPnby4gTYCJfmHy57Qw2X6eqWM+Hur42M5YwuUangwAoTw7DT5vSy
-        Zw7hVTuaObx4eWvyNOuHIopp4Dm/XdxPx1GA0K5+29k9lcElLPMnrI2n6zm60Pe7XAeFPL
-        Y9oope3OxIOScSPOxbYWfTyl8XvEjgxeNj/FXZ0b/t5FlgRr++Q0r7GUDs7Kxw==
-From:   Daniel Wagner <wagi@monom.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        <linux-rt-users@vger.kernel.org>, <stable-rt@vger.kernel.org>,
+        Sun, 16 Jul 2023 15:30:32 -0400
+Received: from mail-ed1-f47.google.com (mail-ed1-f47.google.com [209.85.208.47])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1134810C8;
+        Sun, 16 Jul 2023 12:30:23 -0700 (PDT)
+Received: by mail-ed1-f47.google.com with SMTP id 4fb4d7f45d1cf-51e344efd75so7839383a12.1;
+        Sun, 16 Jul 2023 12:30:23 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20221208; t=1689535822; x=1692127822;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=EYgTh4UluVTTQv27Q2ko0QEvRe4/XHgdd+kzU79fnVQ=;
+        b=EJIQTv0K5PWMAg95jSR91rtam0EY5dRXgeOr6suNt3qran9oY+c/OJOA85mNIWEZpc
+         Ft1qpb+f5rneKZQIGSnFng2TwsF05ml74x8nIin8UaCer+w3WRXqIkruiEfQAx3oA+mV
+         o+xTo/7PGU6TmEuOk0r0MdVV5OVUOpM6JhLWDaPxeHfG6no7E6l9TygE9HFEQ2siWnUK
+         N+6BFzlvV0NTjdOLLTK2k7UD+DH9s8BdjHtPX0rUGD8c8u+1G5FDuEE19vXmkN8HdsZB
+         wjF+xqBDYLi3PUWSeCtCfhT/IDAaGh/W3FhhZsdP7auB99y55B7gZK77yPIGEXN1yhW9
+         zxMQ==
+X-Gm-Message-State: ABy/qLaCoeltpg2FVicjCAGpMU9porgbPM4Bj7jgRX8XpYNoko78w592
+        IPfdaxF6dN9WFB5dPyA4uCPXi9udr+OBarsX
+X-Google-Smtp-Source: APBJJlFbFBmIatukk4wR0sEnnn06fxBdrEH6eEw3rDI6U9lb/4+hi3X9YdulVLhtSzmkSly9eU7itw==
+X-Received: by 2002:a05:6402:524e:b0:51d:cf7b:c9f0 with SMTP id t14-20020a056402524e00b0051dcf7bc9f0mr10707316edd.12.1689535821755;
+        Sun, 16 Jul 2023 12:30:21 -0700 (PDT)
+Received: from costa-tp.bos2.lab ([2a00:a040:1a3:c11b:3ae6:1732:e587:a81f])
+        by smtp.gmail.com with ESMTPSA id q6-20020aa7cc06000000b00521953ce6e0sm119846edt.93.2023.07.16.12.30.19
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 16 Jul 2023 12:30:20 -0700 (PDT)
+From:   Costa Shulyupin <costa.shul@redhat.com>
+To:     linux-rt-users@vger.kernel.org,
+        Daniel Bristot de Oliveira <bristot@kernel.org>
+Cc:     Costa Shulyupin <costa.shul@redhat.com>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
-Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 1/1] Linux 4.19.288-rt126
-Date:   Thu, 13 Jul 2023 09:47:07 +0200
-Message-ID: <20230713074707.1188-2-wagi@monom.org>
-In-Reply-To: <20230713074707.1188-1-wagi@monom.org>
-References: <20230713074707.1188-1-wagi@monom.org>
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        linux-kernel@vger.kernel.org (open list:TRACING),
+        linux-trace-kernel@vger.kernel.org (open list:TRACING),
+        linux-doc@vger.kernel.org (open list:DOCUMENTATION)
+Subject: [PATCH] tracing/timerlat: Add latency threshold
+Date:   Sun, 16 Jul 2023 22:30:00 +0300
+Message-ID: <20230716193000.231406-1-costa.shul@redhat.com>
+X-Mailer: git-send-email 2.41.0
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-v4.19.288-rt126-rc1 stable review patch.
-If anyone has any objections, please let me know.
+The timerlat tracer generates a huge amount of traces.
+This affects the performance of the system and
+the delays we are trying to measure with timerlat.
+However, we are often interested in spikes of delay
+rather than small values.
 
------------
+The patch effectively filters out irrelevant traces
+before they are generated and produces more reliable
+data.
 
+This patch helped to debug a very big problem
+and find this solution:
+https://lore.kernel.org/lkml/20221208075604.811710-1-junxiao.chang@intel.com/
 
-Signed-off-by: Daniel Wagner <wagi@monom.org>
+Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ Documentation/trace/timerlat-tracer.rst |  1 +
+ kernel/trace/trace_osnoise.c            | 17 +++++++++++++++++
+ 2 files changed, 18 insertions(+)
 
-diff --git a/localversion-rt b/localversion-rt
-index 9d0cfbcac7f4..a44fd6cdf249 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt125
-+-rt126
+diff --git a/Documentation/trace/timerlat-tracer.rst b/Documentation/trace/timerlat-tracer.rst
+index 53a56823e903..71b1c63ca403 100644
+--- a/Documentation/trace/timerlat-tracer.rst
++++ b/Documentation/trace/timerlat-tracer.rst
+@@ -68,6 +68,7 @@ directory. The timerlat configs are:
+ 
+  - cpus: CPUs at which a timerlat thread will execute.
+  - timerlat_period_us: the period of the timerlat thread.
++ - timerlat_threshold_ns: filter out timer latencies below the threshold
+  - stop_tracing_us: stop the system tracing if a
+    timer latency at the *irq* context higher than the configured
+    value happens. Writing 0 disables this option.
+diff --git a/kernel/trace/trace_osnoise.c b/kernel/trace/trace_osnoise.c
+index bd0d01d00fb9..43284a1e8bea 100644
+--- a/kernel/trace/trace_osnoise.c
++++ b/kernel/trace/trace_osnoise.c
+@@ -346,6 +346,7 @@ static struct osnoise_data {
+ 	u64	stop_tracing_total;	/* stop trace in the final operation (report/thread) */
+ #ifdef CONFIG_TIMERLAT_TRACER
+ 	u64	timerlat_period;	/* timerlat period */
++	u64	timerlat_threshold_ns;
+ 	u64	print_stack;		/* print IRQ stack if total > */
+ 	int	timerlat_tracer;	/* timerlat tracer */
+ #endif
+@@ -358,6 +359,7 @@ static struct osnoise_data {
+ #ifdef CONFIG_TIMERLAT_TRACER
+ 	.print_stack			= 0,
+ 	.timerlat_period		= DEFAULT_TIMERLAT_PERIOD,
++	.timerlat_threshold_ns		= 0,
+ 	.timerlat_tracer		= 0,
+ #endif
+ };
+@@ -597,6 +599,10 @@ static void trace_timerlat_sample(struct timerlat_sample *sample)
+ 	struct osnoise_instance *inst;
+ 	struct trace_buffer *buffer;
+ 
++	if (osnoise_data.timerlat_threshold_ns &&
++	    sample->timer_latency < osnoise_data.timerlat_threshold_ns)
++		return;
++
+ 	rcu_read_lock();
+ 	list_for_each_entry_rcu(inst, &osnoise_instances, list) {
+ 		buffer = inst->tr->array_buffer.buffer;
+@@ -2663,6 +2669,11 @@ static struct trace_min_max_param timerlat_period = {
+ 	.min	= &timerlat_min_period,
+ };
+ 
++static struct trace_min_max_param timerlat_threshold = {
++	.lock	= &interface_lock,
++	.val	= &osnoise_data.timerlat_threshold_ns,
++};
++
+ static const struct file_operations timerlat_fd_fops = {
+ 	.open		= timerlat_fd_open,
+ 	.read		= timerlat_fd_read,
+@@ -2759,6 +2770,12 @@ static int init_timerlat_tracefs(struct dentry *top_dir)
+ 	if (!tmp)
+ 		return -ENOMEM;
+ 
++	tmp = tracefs_create_file("timerlat_threshold_ns", TRACE_MODE_WRITE,
++				  top_dir, &timerlat_threshold,
++				  &trace_min_max_fops);
++	if (!tmp)
++		return -ENOMEM;
++
+ 	retval = osnoise_create_cpu_timerlat_fd(top_dir);
+ 	if (retval)
+ 		return retval;
 -- 
 2.41.0
 
