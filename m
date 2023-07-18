@@ -2,178 +2,88 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D849C001DF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jul 2023 15:36:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4DCD5EB64DC
+	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jul 2023 15:48:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230196AbjGQPgI (ORCPT
+        id S232866AbjGRPsB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Jul 2023 11:36:08 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39680 "EHLO
+        Tue, 18 Jul 2023 11:48:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44084 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230033AbjGQPgG (ORCPT
+        with ESMTP id S233754AbjGRPr6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jul 2023 11:36:06 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2F83FA;
-        Mon, 17 Jul 2023 08:36:05 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+        Tue, 18 Jul 2023 11:47:58 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1CA959E
+        for <linux-rt-users@vger.kernel.org>; Tue, 18 Jul 2023 08:47:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1689695231;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=480NlqUGmbq+n+c1X09ptFbsDhIT60LlAtLVYgmyiVo=;
+        b=fJaPaIUe66DiZIpcgelicoRLjUAj+Og8v1TxA0UkIeedHMq7vuxzaJALDiAnvjpiHrQR5Q
+        BASwzi+r+mePzxXJFvWy3TqbbXnsOK9qmCL3no/jG58Lxzi2U3+kLJRd9wvjSFhz5EcIYc
+        5VB8YANSzvwCXcTfaVgfJLj1ybVX1w0=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-77-rU7fkIXfPN-8bk23qsVxjA-1; Tue, 18 Jul 2023 11:13:44 -0400
+X-MC-Unique: rU7fkIXfPN-8bk23qsVxjA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 2E3236112B;
-        Mon, 17 Jul 2023 15:36:05 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B1921C433C7;
-        Mon, 17 Jul 2023 15:36:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1689608164;
-        bh=0KH5QZtva041A6q7/f5OP+yi5SzktuvZ1Reqbp3ZKbY=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=JNynSVfFOXQtpLLV2T55ySh4UwU/qNfGCss1eZBxmRCgoefhlXiH39pvQsTZS/WTQ
-         X9iZpTLnnA9cYONCEHUJqXr9DAWX9vBTOjiv/vOWLxwy6lm8GFzmCDp4lpiRf48Q99
-         rIKNZNBI/a2IzlIEZvfK9MePH239Ydv7qY/dCMpxnYHFyq0UlIzqcuo6/yr4cD2m94
-         PNnVLy/uKsVpSJeUGnc1yAWtUYaknmaMZRglJEV4SHwItbSidsalQlkZzaiscyWVB+
-         3cYOkLlP+X4AArc7Figug4vChnieHQUjVQfgOnTMqAD6VzRTCcYjj2LDQiuSAvhy67
-         +Hm5JRNvHZf+w==
-Message-ID: <9b212c49-ab51-0cd9-5871-c145c5f41b48@kernel.org>
-Date:   Mon, 17 Jul 2023 17:36:00 +0200
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4A1D42800619;
+        Tue, 18 Jul 2023 15:05:34 +0000 (UTC)
+Received: from localhost (unknown [10.22.34.214])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 03B4E2166B25;
+        Tue, 18 Jul 2023 15:05:33 +0000 (UTC)
+Date:   Tue, 18 Jul 2023 12:05:33 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     =?iso-8859-1?Q?Andr=E9?= Pribil <Andre.Pribil@hms-networks.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: [preempt-rt] BUG: 4.14 patch uses CONFIG_PREEMPT_RT
+Message-ID: <ZLaqPZ5KGJyV40eI@uudg.org>
+References: <AM5PR10MB1620935083DA304465514B0DBD36A@AM5PR10MB1620.EURPRD10.PROD.OUTLOOK.COM>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-Subject: Re: [PATCH] tracing/timerlat: Add latency threshold
-Content-Language: en-US, pt-BR, it-IT
-To:     Costa Shulyupin <costa.shul@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        "open list:TRACING" <linux-kernel@vger.kernel.org>,
-        "open list:TRACING" <linux-trace-kernel@vger.kernel.org>,
-        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>
-References: <20230716193000.231406-1-costa.shul@redhat.com>
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <20230716193000.231406-1-costa.shul@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <AM5PR10MB1620935083DA304465514B0DBD36A@AM5PR10MB1620.EURPRD10.PROD.OUTLOOK.COM>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Costa,
-
-On 7/16/23 21:30, Costa Shulyupin wrote:
-> The timerlat tracer generates a huge amount of traces.
-> This affects the performance of the system and
-> the delays we are trying to measure with timerlat.
-
-More explanations in the code, but that is not the dominant factor,
-neither relevant for large spikes.
-
-> However, we are often interested in spikes of delay
-> rather than small values.
-
-That is why the stop tracing exists. One can set stop tracing,
-ignore the trace buffer while tracing is on. Once tracing
-turns off, tail the trace.
-
-rtla timerlat has the --aa-only that ignores the trace until
-the tracing stops, and then do the auto-analysis based on the
-tail of the trace.
-
+On Wed, Jul 12, 2023 at 10:16:57AM +0000, André Pribil wrote:
+> Hi,
 > 
-> The patch effectively filters out irrelevant traces
-> before they are generated and produces more reliable
-> data.
-
-More in the code, but it is not more reliable data... did
-you mean human-readable data?
-
+> I think there is a flaw in the current preempt-rt 4.14 patch (probably since v4.14.302-rt142).
 > 
-> This patch helped to debug a very big problem
-> and find this solution:
-> https://lore.kernel.org/lkml/20221208075604.811710-1-junxiao.chang@intel.com/
-
-Can you explain more about this? Because AFAICT, the patch above is
-dealing with a SOFT timer. timerlat uses a HARD timer, so timerlat
-is not affected by that bug... so I might be missing a point here.
-
+> The "0515-timers-Prepare-support-for-PREEMPT_RT.patch" uses at two location the 
+> following configure option:
+>   #ifdef CONFIG_PREEMPT_RT
 > 
-> Signed-off-by: Costa Shulyupin <costa.shul@redhat.com>
-> ---
->  Documentation/trace/timerlat-tracer.rst |  1 +
->  kernel/trace/trace_osnoise.c            | 17 +++++++++++++++++
->  2 files changed, 18 insertions(+)
+> I guess that "CONFIG_PREEMPT_RT" is not defined for the 4.14-rt kernel and should be 
+> "CONFIG_PREEMPT_RT_FULL" instead, or?
+
+Thank you for spotting this!
+
+I will soon release a RC with the specific change you mentioned and the
+backport of this commit from v4.19-rt that has been in my list for a while:
+
+    67821680a2b8 rt: PREEMPT_RT safety net for backported patches
+
+Luis
+
+> The problem that I was facing was that a tcdrain() call from userspace was spinning forever.
+> I traced this down to an endless loop in del_timer_sync().
+> After replacing "CONFIG_PREEMPT_RT" with "CONFIG_PREEMPT_RT_FULL", the problem
+> seems to be fixed.
 > 
-> diff --git a/Documentation/trace/timerlat-tracer.rst b/Documentation/trace/timerlat-tracer.rst
-> index 53a56823e903..71b1c63ca403 100644
-> --- a/Documentation/trace/timerlat-tracer.rst
-> +++ b/Documentation/trace/timerlat-tracer.rst
-> @@ -68,6 +68,7 @@ directory. The timerlat configs are:
->  
->   - cpus: CPUs at which a timerlat thread will execute.
->   - timerlat_period_us: the period of the timerlat thread.
-> + - timerlat_threshold_ns: filter out timer latencies below the threshold
+> Regards,
+> Andre
+> 
+---end quoted text---
 
-All the interface is in us....
-
->   - stop_tracing_us: stop the system tracing if a
->     timer latency at the *irq* context higher than the configured
->     value happens. Writing 0 disables this option.
-> diff --git a/kernel/trace/trace_osnoise.c b/kernel/trace/trace_osnoise.c
-> index bd0d01d00fb9..43284a1e8bea 100644
-> --- a/kernel/trace/trace_osnoise.c
-> +++ b/kernel/trace/trace_osnoise.c
-> @@ -346,6 +346,7 @@ static struct osnoise_data {
->  	u64	stop_tracing_total;	/* stop trace in the final operation (report/thread) */
->  #ifdef CONFIG_TIMERLAT_TRACER
->  	u64	timerlat_period;	/* timerlat period */
-> +	u64	timerlat_threshold_ns;
-
-comment....
-
->  	u64	print_stack;		/* print IRQ stack if total > */
->  	int	timerlat_tracer;	/* timerlat tracer */
->  #endif
-> @@ -358,6 +359,7 @@ static struct osnoise_data {
->  #ifdef CONFIG_TIMERLAT_TRACER
->  	.print_stack			= 0,
->  	.timerlat_period		= DEFAULT_TIMERLAT_PERIOD,
-> +	.timerlat_threshold_ns		= 0,
->  	.timerlat_tracer		= 0,
->  #endif
->  };
-> @@ -597,6 +599,10 @@ static void trace_timerlat_sample(struct timerlat_sample *sample)
->  	struct osnoise_instance *inst;
->  	struct trace_buffer *buffer;
->  
-> +	if (osnoise_data.timerlat_threshold_ns &&
-> +	    sample->timer_latency < osnoise_data.timerlat_threshold_ns)
-> +		return;
-> +
-
-From the entire timerlat machinery, skipping the print is not the
-dominant factor. It can save a few nanoseconds, but the values are already
-produced at this point... so why not?
-
-You mentioned that this is useful for large spikes, so... it will not be the few
-ns to cause problems.
-
-And I'm not convinced that it produces more reliable results.
-For example, if you find a large latency in the thread context, but skip
-the IRQ context trace, you will lose useful data.... so your analysis is
-prone to be less reliable.
-
-Did you mean readable? improve the readability... That I can see.
-
-Also, for debugging purposes, one needs to enable more events... at least
-the osnoise: ones. These events happen more frequently than the timerlat
-ones... and they are not being filtered here... Filtering them using the
-event filtering interface will not help either, e.g., hiding 1k one us
-interrupts bomb will mask you a 1ms delay...
-
-So, as I said, I am not convinced that adding this interface file is
-better than setting the stop-tracing option... and then waiting for
-the trace to stop... parsing only the tail of the buffer.
-
-Thoughts?
-
--- Daniel
