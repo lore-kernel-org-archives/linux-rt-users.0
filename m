@@ -2,67 +2,67 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D77CC001DF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jul 2023 13:43:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C672C001DF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jul 2023 13:46:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231352AbjGYNnQ (ORCPT
+        id S231513AbjGYNqK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 25 Jul 2023 09:43:16 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37102 "EHLO
+        Tue, 25 Jul 2023 09:46:10 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39916 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231724AbjGYNnM (ORCPT
+        with ESMTP id S231553AbjGYNqB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Jul 2023 09:43:12 -0400
+        Tue, 25 Jul 2023 09:46:01 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 05A2D1BF8
-        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:42:21 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D0C951BFF
+        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:44:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1690292541;
+        s=mimecast20190719; t=1690292654;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=1Guvedz68P7r5rhpwlglfAC5MurinaFM41wEjRk+T+s=;
-        b=C4XoD7vUYOGR/79gl5Jb/pt06p4Kt0tuAOnR9rjT9H5Fc/z5VOvJl8CdEC7WRrEQBaIufA
-        mXnZNy66OW8ylw50Muyr4o7sKGEuNivIvctO+c1teq5bg7XNQ3agm3iFtxzRRSkOPjfHht
-        f7U0NNjH4V1sBR8eS/XHDaD08kj4R/Y=
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=qCrA2bu8QS14GFwyJdzUeCRI3N7mxjxGm0oZQmXU7ck=;
+        b=fNGVZl2wqqF0lzMhp0oeE4Xvmy7zR9e3U7ouMANIRGQNw6TGknFRkw4kIPptcwQPWpG9Ra
+        JGfSWcDCpruXTKGNZ5Tcjvg0eTrtad9MW22cnilOV/2qyEC43YUlQO3ZMOucM9nJrFytyt
+        NosPQgGAvUCXxwzU5Fv5EhSqqfVVOtQ=
+Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
+ [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-93-aYisuI5-MGeIOMQQkVukng-1; Tue, 25 Jul 2023 09:42:19 -0400
-X-MC-Unique: aYisuI5-MGeIOMQQkVukng-1
-Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7623d5cb0caso680810185a.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:42:19 -0700 (PDT)
+ us-mta-261-UXld4tR_MRi9ToQWd1Vx7A-1; Tue, 25 Jul 2023 09:44:12 -0400
+X-MC-Unique: UXld4tR_MRi9ToQWd1Vx7A-1
+Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-403fe35b393so63724091cf.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:44:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1690292539; x=1690897339;
+        d=1e100.net; s=20221208; t=1690292652; x=1690897452;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=1Guvedz68P7r5rhpwlglfAC5MurinaFM41wEjRk+T+s=;
-        b=l2F1hKM3i+Xg9pNnJEOXu6U0HfEUMaWZu0JPTqk8jG2+QogeIo5TNRuAUnuipEDwRH
-         dXqRWMRu9ILBylh2YfxHi+NJ75FQIq0202U7Wjx1zV4XRabRKIBZt8TTfKMgVKPmu+F/
-         b3IUoxIPWzK68pb4UpH2JoXFiRr9wfgLOVt4V7eGjYJxtQo5SE0ZVkxWtm/vWv52kTgG
-         8LKfraCObhCyxDKqf3PvNvW6+mmzttwYXnGRBMNtG8gTKKKw5RqkH+oVpoI/YeksSqvI
-         UsGaN+ePLfjjTZD+7E0qiIWMGNT5SogMUFrKqOPfDqP5H0sbq23463g5TYcOIzrlffjG
-         7rgw==
-X-Gm-Message-State: ABy/qLZJtoQ2Tj1WT5n8YudvPSZaDvE8Mkl0VoPo/dIB1mJxL3yuv+PP
-        NNQHFSl8s8tatPT15sTG7GM+GfWN2F1BlHgLfYASwGTmqbBMMmGbjRDZZPk9+KSdiS7ll3+Lzmq
-        sWtBDKbiVF2WmfmtYrMHijxZjEU1tfS0bwJY=
-X-Received: by 2002:a05:620a:4f0:b0:76a:d7cd:701b with SMTP id b16-20020a05620a04f000b0076ad7cd701bmr2747253qkh.6.1690292539226;
-        Tue, 25 Jul 2023 06:42:19 -0700 (PDT)
-X-Google-Smtp-Source: APBJJlFUBCnMarzhXSHyEb4yUqGkOiA7j25zWl/o9AG/cxaIsaFC5j/jHBTIeafddOGVYbI6qKqJtA==
-X-Received: by 2002:a05:620a:4f0:b0:76a:d7cd:701b with SMTP id b16-20020a05620a04f000b0076ad7cd701bmr2747242qkh.6.1690292538982;
-        Tue, 25 Jul 2023 06:42:18 -0700 (PDT)
+        bh=qCrA2bu8QS14GFwyJdzUeCRI3N7mxjxGm0oZQmXU7ck=;
+        b=MK6GFGa1XnzOqIVezsSO1j6vAwGSDcNZ3fRUZfZ/0cB6/ROVv2T2UVVchBIHg1suqJ
+         0PwxwUwgP8g36ur6TyDtYBl8qVhpKNxFgmH5Ny25h2XDTmSdE8/0ZzYgI6PMA4bUJzjB
+         5wp1ZLDXE9nzrJSPoUXuh5N9TLVHoh1Dpp69X8N0w1/xlfpmaj/rFqKfG3EVWdPn1K2F
+         agMzKCabt27QVKpLXCo2gfaGprE1fQuiCkxnEADvOCOV+Q9PGkjNxVeivCFSjNVrrEwO
+         w628g3Sej6/HpER2kv3s6rZYOIG6f0S9rkm6YYTCrMPtodhJV+EtPXbEwwfT/n4ToGhP
+         W3KQ==
+X-Gm-Message-State: ABy/qLbRN3qd/JrhVpQKVWz2Lz7hVQI51SjE9CZRSvnB/sNk6NdXXnlq
+        h8qxWijEPEWoOAptuLoqgL+Hc3F4kqNeiNRnN5qmWuEaIKzRcgRDaSWsf3lPQ1omq6zON3Y82x5
+        /ft6TlOakFpHppd6rtGEKU2eZRos=
+X-Received: by 2002:a05:622a:d1:b0:405:5b23:8866 with SMTP id p17-20020a05622a00d100b004055b238866mr2982271qtw.52.1690292651789;
+        Tue, 25 Jul 2023 06:44:11 -0700 (PDT)
+X-Google-Smtp-Source: APBJJlFOZrqFMlFfcM1GiQIdDtEGC/buNKKm8bM1K0exQMKpdn6CRM4Gtz7LFw7SPSYIzkuxoOENAQ==
+X-Received: by 2002:a05:622a:d1:b0:405:5b23:8866 with SMTP id p17-20020a05622a00d100b004055b238866mr2982258qtw.52.1690292651501;
+        Tue, 25 Jul 2023 06:44:11 -0700 (PDT)
 Received: from fionn ([184.147.142.236])
-        by smtp.gmail.com with ESMTPSA id q29-20020a05620a039d00b00767177a5bebsm3633856qkm.56.2023.07.25.06.42.18
+        by smtp.gmail.com with ESMTPSA id o9-20020ac872c9000000b00403c1a19a2bsm4016835qtp.92.2023.07.25.06.44.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 25 Jul 2023 06:42:18 -0700 (PDT)
-Date:   Tue, 25 Jul 2023 09:42:09 -0400 (EDT)
+        Tue, 25 Jul 2023 06:44:11 -0700 (PDT)
+Date:   Tue, 25 Jul 2023 09:44:02 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Tomas Glozar <tglozar@redhat.com>
 cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 4/6] rteval: Exclude isolcpus from stressng by default
-In-Reply-To: <20230630091951.916865-5-tglozar@redhat.com>
-Message-ID: <30732a3-781f-342e-3d89-cb9ad7e2a128@redhat.com>
-References: <20230630091951.916865-1-tglozar@redhat.com> <20230630091951.916865-5-tglozar@redhat.com>
+Subject: Re: [PATCH 5/6] rteval: Fix CPU count calculation for hackbench
+In-Reply-To: <20230630091951.916865-6-tglozar@redhat.com>
+Message-ID: <355b14cf-fd7-6551-ea58-815d8385d6a2@redhat.com>
+References: <20230630091951.916865-1-tglozar@redhat.com> <20230630091951.916865-6-tglozar@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -73,41 +73,44 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Fri, 30 Jun 2023, Tomas Glozar wrote:
 
-> Note: this has little effect now, because the cpus variables is only
-> used for removing empty nodes unless a cpulist is specified by the user.
-> However, this can change in the future.
+> Use count from cpulist when specified and all CPUs on node excluding
+> offline ones and isolated ones if not specified.
 > 
 > Signed-off-by: Tomas Glozar <tglozar@redhat.com>
 > ---
->  rteval/modules/loads/stressng.py | 5 +++++
->  1 file changed, 5 insertions(+)
+>  rteval/modules/loads/hackbench.py | 6 +++++-
+>  1 file changed, 5 insertions(+), 1 deletion(-)
 > 
-> diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
-> index 85cb473..800fdec 100644
-> --- a/rteval/modules/loads/stressng.py
-> +++ b/rteval/modules/loads/stressng.py
-> @@ -9,6 +9,7 @@ from rteval.Log import Log
+> diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
+> index 14e60d1..f5a547e 100644
+> --- a/rteval/modules/loads/hackbench.py
+> +++ b/rteval/modules/loads/hackbench.py
+> @@ -38,6 +38,7 @@ from rteval.Log import Log
 >  from rteval.systopology import CpuList, SysTopology
 >  
 >  expand_cpulist = CpuList.expand_cpulist
-> +nonisolated_cpulist = CpuList.nonisolated_cpulist
+> +isolated_cpulist = CpuList.isolated_cpulist
 >  
->  class Stressng(CommandLineLoad):
->      " This class creates a load module that runs stress-ng "
-> @@ -69,6 +70,10 @@ class Stressng(CommandLineLoad):
+>  class Hackbench(CommandLineLoad):
+>      def __init__(self, config, logger):
+> @@ -77,9 +78,12 @@ class Hackbench(CommandLineLoad):
 >              # if a cpulist was specified, only allow cpus in that list on the node
 >              if self.cpulist:
->                  cpus[n] = [c for c in cpus[n] if c in expand_cpulist(self.cpulist)]
+>                  self.cpus[n] = [c for c in self.cpus[n] if c in expand_cpulist(self.cpulist)]
 > +            # if a cpulist was not specified, exclude isolated cpus
 > +            else:
-> +                cpus[n] = CpuList.nonisolated_cpulist(cpus[n])
-> +
+> +                self.cpus[n] = CpuList.nonisolated_cpulist(self.cpus[n])
 >  
->          # remove nodes with no cpus available for running
->          for node, cpu in cpus.items():
+>              # track largest number of cpus used on a node
+> -            node_biggest = len(sysTop.getcpus(int(n)))
+> +            node_biggest = len(self.cpus[n])
+>              if node_biggest > biggest:
+>                  biggest = node_biggest
+>  
 > -- 
 > 2.41.0
 > 
 > 
+
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
