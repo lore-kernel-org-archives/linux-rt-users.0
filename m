@@ -2,66 +2,66 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 99EA7C0015E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jul 2023 13:35:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 81C40C0015E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jul 2023 13:38:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230479AbjGYNfA (ORCPT
+        id S231180AbjGYNiD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 25 Jul 2023 09:35:00 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60316 "EHLO
+        Tue, 25 Jul 2023 09:38:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33956 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230484AbjGYNe7 (ORCPT
+        with ESMTP id S229541AbjGYNiC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Jul 2023 09:34:59 -0400
+        Tue, 25 Jul 2023 09:38:02 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BD5A91BEE
-        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:34:11 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 075CA1FCC
+        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:37:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1690292051;
+        s=mimecast20190719; t=1690292227;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=zXkljr30gROp885XbZPEyXB5vjDgY8rjsoj9/PhP8Y0=;
-        b=MNGR+6i6IA3MqTj+CCgvvNJyFhTHwBbWRYN23RjC+MWQF+8eIJQ6GhzLNqiZMuF6JtrLae
-        O0YhsUC2I0kohKwV/cg8SER9FoyTTh6cg3IQru+Tz2UUh4C0t6nIspaszkrzWnbdNRBK0X
-        vVlFuHxFzm+As/meFlGIW8ObHdD2RPg=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=psTehX6rjlDvBL0xUbcPIFkR+n5Pp008j8veRIrGdQI=;
+        b=i+OyPvT376TMcbQQyZ2Kz8xoxPLnFr+izeQdb8yFfDvA3/afmzpPb9XSui6aFp3TgFVRRz
+        pI2xuLNx2FfENIhxp0kv/QlIHwg28m9FGMb36EG2aAGi3SW6yRKU33Txhd9cwMGmZ2hnWZ
+        bf8FX7KIBSDkT3J1j/am0tPagKjbMZk=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-18-WLoNyPhbPhSxUjf-VoYToQ-1; Tue, 25 Jul 2023 09:34:06 -0400
-X-MC-Unique: WLoNyPhbPhSxUjf-VoYToQ-1
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-7683cdabcb7so763321485a.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:34:05 -0700 (PDT)
+ us-mta-362-oQmCGMHtNSOc3G4mmG7aCw-1; Tue, 25 Jul 2023 09:37:04 -0400
+X-MC-Unique: oQmCGMHtNSOc3G4mmG7aCw-1
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-7659924cf20so601965485a.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jul 2023 06:37:03 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1690292044; x=1690896844;
+        d=1e100.net; s=20221208; t=1690292223; x=1690897023;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=zXkljr30gROp885XbZPEyXB5vjDgY8rjsoj9/PhP8Y0=;
-        b=J2k1Ed2Dp872q85EVf7B4idXf/WdQEC2vziKtPL+YgarxfMFybH31MJgUOCI/3vCjY
-         xZY8FP31eLTSySGX6qK/+Cefcx/2c6aMVlW/MzQbjw1krVuXNNjALxzU99z6cgGsF3V+
-         Ptz1QVgC6sTznQVZ0Kh6cPHnYj4lDrYFC+OyfQD74pDFsfnbVgeRrkalUqH1p7kSsIpA
-         2ktli0svMaf+JY3FKENwqGZOYzlWqk3P8+XIHFEw83LfIH4DC81OV4HHVTTT8H031ELH
-         PzLDhF1wTzsSC1mIuQC+7oTIPQhwZeLBhB9JNlXxiWm8CdMAVL0tADgokkojpmr7eqtd
-         rmbQ==
-X-Gm-Message-State: ABy/qLbe+hIUZX/nvOVawzpfbry/vj0nJnQlgrxlF+Ugx7xIKlrOvjpu
-        yhOTpJ2YHNGF2WXpUMxqnML2Hx8q5P4tLJjIUTtiC5d77RSdfnZ6tKGqTE6rPaIPBgz6vNV/+Qh
-        1pdjT8I2MZFqIogrT+6Ncn9qacq7Vt11erSA=
-X-Received: by 2002:a05:620a:205d:b0:763:e942:f78a with SMTP id d29-20020a05620a205d00b00763e942f78amr2730171qka.32.1690292044561;
-        Tue, 25 Jul 2023 06:34:04 -0700 (PDT)
-X-Google-Smtp-Source: APBJJlGaKvo6gKowtLKAt31wqHVO3jTVIyS63tP2nHgKZMNU6P1EtfhAQ2BTOmhS9xVsZRwSquA3Ig==
-X-Received: by 2002:a05:620a:205d:b0:763:e942:f78a with SMTP id d29-20020a05620a205d00b00763e942f78amr2730154qka.32.1690292044110;
-        Tue, 25 Jul 2023 06:34:04 -0700 (PDT)
+        bh=psTehX6rjlDvBL0xUbcPIFkR+n5Pp008j8veRIrGdQI=;
+        b=M/cOWSjmZe2PG7lzxdZVm4FG9q0rCoWGlkldP8SMVDXf3ecMx4An1VGcZsFVpNqP/X
+         Mv3w3EcOqVU0zEO/2ZnQGz4Fkb/8j8JQ12/86pQPQB2Wj9e/uRD+J/wc8X7goJ6FkDu4
+         hT+HAKLc1KasLr9TGLp4kylA4EeHlHjxmAb76hT69GCGQinaP/NpVmCryxNoXHeAxkVo
+         KIsngsjQXpN3YKZXGJrw2rnRVTshtP41G+0fBUys5WDaBfZDcYW21WihStwSN5v/Vjms
+         0OQrsW/0lyRz/su8EJ3ajmebBCw8OarpXVoBpR6VQlDaj6pwe0ru4QYw9fAKfZc1crkK
+         EcKQ==
+X-Gm-Message-State: ABy/qLaJb3RxejtFr0p4FqR1qWDPNkV921rIQk2wYyjkeNoogS7yLPqZ
+        1T+BToQR913rIVXDd47Gy3OCGDrxFrI+B5U1RX2ri5VINY2uv1J4FoHFICKeslcLErhE/BFZe7h
+        GYw5P+/Q6AhfF/FdcrG1Lfz+MF44=
+X-Received: by 2002:a05:620a:4549:b0:767:47dd:15f with SMTP id u9-20020a05620a454900b0076747dd015fmr3448189qkp.15.1690292223147;
+        Tue, 25 Jul 2023 06:37:03 -0700 (PDT)
+X-Google-Smtp-Source: APBJJlH3zbB8XvL/HnYf3Oz42TY8k00pDQ1v+GUQ5JiNKjf5cbwPBV8qA9spkNp3sbQXYU8APfkcrA==
+X-Received: by 2002:a05:620a:4549:b0:767:47dd:15f with SMTP id u9-20020a05620a454900b0076747dd015fmr3448169qkp.15.1690292222826;
+        Tue, 25 Jul 2023 06:37:02 -0700 (PDT)
 Received: from fionn ([184.147.142.236])
-        by smtp.gmail.com with ESMTPSA id c6-20020ae9e206000000b00767d8e12ce3sm3677965qkc.49.2023.07.25.06.34.03
+        by smtp.gmail.com with ESMTPSA id y24-20020a37e318000000b00767d7fa3d05sm3612061qki.136.2023.07.25.06.37.02
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 25 Jul 2023 06:34:03 -0700 (PDT)
-Date:   Tue, 25 Jul 2023 09:33:34 -0400 (EDT)
+        Tue, 25 Jul 2023 06:37:02 -0700 (PDT)
+Date:   Tue, 25 Jul 2023 09:36:53 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Tomas Glozar <tglozar@redhat.com>
-cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
+cc:     linux-rt-users@vger.kernel.org
 Subject: Re: [PATCH 1/6] rteval: Detect isolcpus in systopology
 In-Reply-To: <20230630091951.916865-2-tglozar@redhat.com>
-Message-ID: <7280cd6-361b-b973-491e-a41a8f07bcf@redhat.com>
+Message-ID: <3617d394-6ab-78d1-d5eb-51e1c188fc7a@redhat.com>
 References: <20230630091951.916865-1-tglozar@redhat.com> <20230630091951.916865-2-tglozar@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -167,9 +167,4 @@ On Fri, 30 Jun 2023, Tomas Glozar wrote:
 > 
 > 
 Signed-off-by: John Kacur <jkacur@redhat.com>
---
-The code is good, but I don't love the name "default_cpus", but it will 
-do. isolated_cpus_str() and default_cpus_str() require docstrings.
-I'm signing off on this to move it forward so please send that in a 
-separate patch.
 
