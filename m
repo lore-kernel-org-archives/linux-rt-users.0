@@ -2,106 +2,81 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25AFFC001DC
-	for <linux-rt-users@archiver.kernel.org>; Wed, 26 Jul 2023 06:11:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 869FEC0015E
+	for <linux-rt-users@archiver.kernel.org>; Wed, 26 Jul 2023 08:33:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231909AbjGZGLY (ORCPT
+        id S231329AbjGZIdc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 26 Jul 2023 02:11:24 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45160 "EHLO
+        Wed, 26 Jul 2023 04:33:32 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39964 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231856AbjGZGLR (ORCPT
+        with ESMTP id S233291AbjGZIcg (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 26 Jul 2023 02:11:17 -0400
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.19])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E94F910B;
-        Tue, 25 Jul 2023 23:11:14 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.de;
- s=s31663417; t=1690351846; x=1690956646; i=efault@gmx.de;
- bh=pmVD+3FXDOIySM8L/dNVyDU03+BJJU6WxydMHdkVqZ0=;
- h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
- b=L9/WgD5qRZoyhQciRjHMRO9sSnxjcz5swVMd1/QFzRpD1eT/PDbsylHUr5lHL9FLA73259S
- JsKWhan/cZNzMQxqrgg7n6uuU2BJdBFGbcPjfs8MTd90a5jz1WHezGnvQSmwdb02Sghwbsxh7
- +IWcBnM3u9KG8hjk5agzYPeKU9CDCLcCJ9+XKfmMSSneEJsDQ1DlgULbpI1ZXsztJp/wRkdzR
- Nz1tDf2TqCTOAuUsuKLpuSVYn+6tqbP+cpy56SiXaGEXpGlBl5mPZzhasP32vZ4hJ8ZTcipZ0
- Oq1NZWOi6XqWYhSL2VbadnrwSub9ewwMZzZgu9kNUuiCsde1lsZA==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from homer.fritz.box ([185.146.50.218]) by mail.gmx.net (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MhD6W-1pu8rn3JQI-00eJDn; Wed, 26
- Jul 2023 08:10:45 +0200
-Message-ID: <e368f2c848d77fbc8d259f44e2055fe469c219cf.camel@gmx.de>
-Subject: Re: 'perf test sigtrap' failing on PREEMPT_RT_FULL
-From:   Mike Galbraith <efault@gmx.de>
-To:     Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Marco Elver <elver@google.com>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        linux-rt-users@vger.kernel.org,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        ThomasGleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date:   Wed, 26 Jul 2023 08:10:45 +0200
-In-Reply-To: <ZMAtZ2t43GXoF6tM@kernel.org>
-References: <ZMAtZ2t43GXoF6tM@kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+        Wed, 26 Jul 2023 04:32:36 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8F89549D3
+        for <linux-rt-users@vger.kernel.org>; Wed, 26 Jul 2023 01:22:29 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1690359748;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=8Foepon5LXKDoKtwDtPISEDa0IltaOMc6AW/oxukkyU=;
+        b=JmpaisWqJmOEpDvqzLBKTxdRLSHtisarGC9D6d9ukFb2FOGAJ43ctyVNq8qDAZaIPo20bn
+        Shp0iK1weyRX3Qe7IZVhrmuBD7IPhvF0YEr/0IsamE84Qe/hRXezc4c1Lh3iKW/wENveHr
+        jN2j/guceclbDiZf7H0urksKyE+Tqkk=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-34-t-I07g5XPWa2wi-NF--zmA-1; Wed, 26 Jul 2023 04:22:26 -0400
+X-MC-Unique: t-I07g5XPWa2wi-NF--zmA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1B65E1066556
+        for <linux-rt-users@vger.kernel.org>; Wed, 26 Jul 2023 08:22:26 +0000 (UTC)
+Received: from fedora.. (unknown [10.43.17.54])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 7CF3A200B41D;
+        Wed, 26 Jul 2023 08:22:25 +0000 (UTC)
+From:   tglozar@redhat.com
+To:     linux-rt-users@vger.kernel.org
+Cc:     jkacur@redhat.com, Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH] rteval: Add missing docstrings in SysTopology
+Date:   Wed, 26 Jul 2023 10:22:12 +0200
+Message-ID: <20230726082212.258414-1-tglozar@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:tFomh51HarlLrgYqs7Ahj091uxhl/LdMRpz1QiGrQjsN/9ZogOx
- erWuxuhIFuYrlbmka9NLGZg+1UsO5YoXPO/5Pos04fTfn3s3RghWEIZnISxYVPwql5CNb/c
- MexrGU3SAkDAI7Qirt9Y7g6NySDaXFBAlLm1NNrs+y642B1d9km7Fej1gmZoZ4mh44shNdI
- 86mk0PrwAYFbRTLAB17LA==
-UI-OutboundReport: notjunk:1;M01:P0:BqEQPilMj9A=;r6kvVaW4pGDCM5z55y/bkn7s5k7
- SkCvS3t2AUokSHUomifXqYXRFdzvpbj0zBTTvC5mmQluq7Y7YiroJ0JgafkDMfg/BTqF4vLVs
- 7wX7Lp5vBTlsstq+zpebgqKoez8sPo8fYaTNSr7T3NHApKijEilUqmBVqBIuuvLFo6hdjheMB
- ldVfOgybGMswB3M1tVVIxot9I7jzskGZdb1NDzMSq8WtEa3BjVV0OqCHmjGV0UTi7AnLcMWwG
- HfqdWjs+fbDgSMWQSpLqXgsK2OUjIQYQIb9aTwjlnZSwo3oxe3Fx01mKdkB/0b53YTEHxzGEb
- mqqzXBVdugEKutBrYmjEa1pIIGQIXb7jqgPkVu3BLGXIcmRIaAN3V+yTrhjBkPjWojINd5xU4
- nnnYzrhIYtT9EewTJPAnY/x75aaXZYypeOXu7zQ5JKAm1SvriN4BQTE5hf6s3pAFOjG8R/WPq
- 7c+ZqKT0BjtoJkI92fgMaQObP6zz3wdOAO6UGv68ZaM58kLSk5mXsRqhqvnKvBKLcJ3K+C7Fx
- p95WZjGWuhjvf6SN5sBsJ3aJAkIYQVyHYE+QPf2Dwxf9wwrscTETAFTXNP6C6zw3eKlpKni8/
- k7dG2J9kT5slwEJf3iHt5JNjWLgVFgf2d0+O+zA4LyW1VD4ouXTZ8XTf3B3jkQxGJeX2F7S6/
- JMvy/QKSN1aVRsvbvB3xWKT0ry4qITPnJAfJ3dEawGufrn7jXmeNsuDy9Qts9BnxJaoIZFmo5
- DDZAXioZOprqS/Xmm9J8/vF8IYHdc1yZQMrczXBiMCPDoGhYYZWYjHgHb/7OIjkDzxBMnb8vR
- n1MB9U9XDZaH0NntfSEoo0DsUy1VJ4xyvKtZ3KF11IOIS6Bq1lfDW5kxPhufC787pqtguhg/5
- LN1pa2dvHAc28gdoQroTIAcrvonjPxitCW0PIVfaE8O6LfEg1ruWQSy//6hLnzYcN6GM7iRSv
- AD91QQcNF5Glx7qfvltHaFiMB8s=
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 2023-07-25 at 17:15 -0300, Arnaldo Carvalho de Melo wrote:
-> Hi Marco, Peter,
->
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0I got a report that 'per=
-f test sigtrap' test failed on a
-> PREEMPT_RT_FULL kernel, one that had up to:
->
-> commit 97ba62b278674293762c3d91f724f1bb922f04e0
-> Author: Marco Elver <elver@google.com>
-> Date:=C2=A0=C2=A0 Thu Apr 8 12:36:01 2021 +0200
->
-> =C2=A0=C2=A0=C2=A0 perf: Add support for SIGTRAP on perf events
-> ...
+From: Tomas Glozar <tglozar@redhat.com>
 
-> [=C2=A0=C2=A0 52.848925] BUG: scheduling while atomic: perf/6549/0x00000=
-002
+Add docstrings for isolated_cpus_str and default_cpus_str.
 
-Had bf9ad37dc8a not been reverted due to insufficient beauty, you could
-trivially make the sigtrap test a happy camper (wart tested in tip-rt).
+Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+---
+ rteval/systopology.py | 2 ++
+ 1 file changed, 2 insertions(+)
 
-	-Mike
-
-@@ -1829,6 +1869,9 @@ int send_sig_perf(void __user *addr, u32
- 				     TRAP_PERF_FLAG_ASYNC :
- 				     0;
-
-+	if (force_sig_delayed(&info, current))
-+		return 0;
-+
- 	return send_sig_info(info.si_signo, &info, current);
- }
-
-
+diff --git a/rteval/systopology.py b/rteval/systopology.py
+index 19443f9..a991e70 100644
+--- a/rteval/systopology.py
++++ b/rteval/systopology.py
+@@ -407,10 +407,12 @@ class SysTopology:
+         return cpulist
+ 
+     def isolated_cpus_str(self):
++        """ return a list of strings of numbers of all isolated cpus """
+         cpulist = [str(cpu) for cpu in self.isolated_cpus()]
+         return cpulist
+ 
+     def default_cpus_str(self):
++        """ return a list of strings of numbers of all default schedulable cpus """
+         cpulist = [str(cpu) for cpu in self.default_cpus()]
+         return cpulist
+ 
+-- 
+2.39.3
 
