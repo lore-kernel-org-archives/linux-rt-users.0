@@ -2,81 +2,92 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D0FAC001DB
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Aug 2023 13:41:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D3B17C001DF
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Aug 2023 19:31:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231265AbjHGNlP (ORCPT
+        id S229825AbjHGTbP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 7 Aug 2023 09:41:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55544 "EHLO
+        Mon, 7 Aug 2023 15:31:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53830 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234258AbjHGNlD (ORCPT
+        with ESMTP id S229462AbjHGTbP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Aug 2023 09:41:03 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F2D681737;
-        Mon,  7 Aug 2023 06:40:40 -0700 (PDT)
-Date:   Mon, 7 Aug 2023 15:40:34 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1691415635;
+        Mon, 7 Aug 2023 15:31:15 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0BEA21717
+        for <linux-rt-users@vger.kernel.org>; Mon,  7 Aug 2023 12:30:28 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1691436628;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=8HbwuGRoab64jNr6WfTTqfse3Fi51ai1CDmJlXYwjDI=;
-        b=K+GSUUxN/SLGCwYcKI+dNuDFK2JX8h0eJC5sHSYSF45eiRsIFA2c6xKudioIIg+KEGFuxS
-        Wr74ss3mj84mdnknrVva7TeA8mqAh/yXYuo3HIYLrMf1kQ1TT+oxy3ohhmTGm6UW0jD+Tl
-        HUKczPlLZL8/6bfbVEp43lwC08c5OLfANRTHaK5EFfkoVprnKkMoJLUQFsAgtWSzekcVmL
-        /N3wFh4B6tg73yow8OWb8EGTq6VHyXp7XoLf2PWoGRoGvVRP4Ske3ca4erK9db6r12tlY1
-        UgRolJ0Ih0IlBKXUapFnuFky53oohSEu/Bxh6qV3TDebD4DcKytOj6yVqLoWhQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1691415635;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=8HbwuGRoab64jNr6WfTTqfse3Fi51ai1CDmJlXYwjDI=;
-        b=zOaBCsAA2Y43ouiK+7lmeg+9dLuINEyURwR4vvjS43Sgxto7FxXUL4nlpWw8U61Bn50Y5v
-        A3VooxwtorSYj5Dw==
-From:   Sebastian Siewior <bigeasy@linutronix.de>
-To:     quanyang.wang@windriver.com
-Cc:     Suzuki K Poulose <suzuki.poulose@arm.com>,
-        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Tingwei Zhang <tingwei@codeaurora.org>,
-        Mathieu Poirier <mathieu.poirier@linaro.org>,
-        Kim Phillips <kim.phillips@arm.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org, coresight@lists.linaro.org,
-        linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] coresight: etm3x: convert struct etm_drvdata's spinlock
- to raw_spinlock
-Message-ID: <20230807134034.CBCA22uP@linutronix.de>
-References: <20230711070536.3944458-1-quanyang.wang@windriver.com>
+        bh=uBw4mbV0n5CHJTT93sh7px+x2h6v80hNyKF0sUR1CQ0=;
+        b=fo+Y4E+TMAAQChkGyWimW0oM/b9cE9OQfn42VSz/lrkPDQPiWF4NPIhUGhCOiZaNgTbLQG
+        iQ+EGPSd2NI+aGOPtQtbct02y5WlpaZYH9RdZveXbJjHH8UWXPlSfokdEMsKgtZ0SYWVM2
+        7UqeTX8ogyhtrRgmd7LR9Au6Q/tcwq8=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-62-A9OC5HvSN8qtdlehNjxwYQ-1; Mon, 07 Aug 2023 15:19:11 -0400
+X-MC-Unique: A9OC5HvSN8qtdlehNjxwYQ-1
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-63cf9d48006so59431186d6.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 Aug 2023 12:18:54 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20221208; t=1691435933; x=1692040733;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=uBw4mbV0n5CHJTT93sh7px+x2h6v80hNyKF0sUR1CQ0=;
+        b=DMfu2sQ9PYG70gtgKV3cqO3h+Vlf/wVO6s51gERqZYU5x1W//gyzig+ULWvJXRWjgS
+         7isvhb9vxe4gA/ZbtGzra4kpCdhMx23LFABxasPNcY9Fi1qgONYgmI/rm/UzO1rgmajP
+         myI1DQEo3580kp29DoiFrdfvp7dJMDTee8KVlHjtrGb1qEonPcCfonAhlsDrkPyYXBxi
+         YkvykFstJ3QoOyUZNe4Er1vqj6JoEo7qY4JjgqCpFjmA4AZC6y0651QM/BCN9eTejGQS
+         IQxztpTjhpgroML/32ycNOwgPlBMUGjFhmasdvzGDikXwry6Ua1HJfqyGiznAmMcJHUo
+         hTqw==
+X-Gm-Message-State: AOJu0YxgEbFFFefuMGWFkSA6F8n6QI9iWUQpoa9CUR4qbuQXaxptqsLs
+        lmgCQUZp7T6R4nYROKAD9qb/6JbkFxqHUIMqJiPXVGesM1h2tr2UYMq4CMKTrzRXnaM8Q7QrKks
+        tBU8sDNJCh0XvPRjcUcgEv67T/4U=
+X-Received: by 2002:a0c:e0cc:0:b0:633:45e2:5603 with SMTP id x12-20020a0ce0cc000000b0063345e25603mr9893924qvk.60.1691435933472;
+        Mon, 07 Aug 2023 12:18:53 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHf08IuAF1M+sWXoajzIojAHG+tZ0mzMymTkRHCnxLwdLNIOx7LjEpAHQQPbeGpQrMmO5ygPQ==
+X-Received: by 2002:a0c:e0cc:0:b0:633:45e2:5603 with SMTP id x12-20020a0ce0cc000000b0063345e25603mr9893910qvk.60.1691435933263;
+        Mon, 07 Aug 2023 12:18:53 -0700 (PDT)
+Received: from thinkpad2021 ([64.99.149.73])
+        by smtp.gmail.com with ESMTPSA id b12-20020a0cf04c000000b00631f02c2279sm3069007qvl.90.2023.08.07.12.18.52
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 07 Aug 2023 12:18:52 -0700 (PDT)
+Date:   Mon, 7 Aug 2023 15:18:50 -0400
+From:   "John B. Wyatt IV" <jwyatt@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org,
+        linux-kernel@vger.kernel.org, jlelli@redhat.com,
+        vschneid@redhat.com, pauld@redhat.com, rt-maint@redhat.com
+Subject: Re: [preempt-rt] BUG: sleeping function called from invalid context
+ at drivers/gpu/drm/i915/gt/uc/intel_guc.h
+Message-ID: <ZNFDmq43NqttzJca@thinkpad2021>
+References: <ZKyngsXKztAU9J3r@thinkpad2021>
+ <20230807133354.-t5iv19T@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20230711070536.3944458-1-quanyang.wang@windriver.com>
+In-Reply-To: <20230807133354.-t5iv19T@linutronix.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-07-11 15:05:36 [+0800], quanyang.wang@windriver.com wrote:
-> diff --git a/drivers/hwtracing/coresight/coresight-etm3x-core.c b/drivers/hwtracing/coresight/coresight-etm3x-core.c
-> index 116a91d90ac2..af34fb82f4bb 100644
-> --- a/drivers/hwtracing/coresight/coresight-etm3x-core.c
-> +++ b/drivers/hwtracing/coresight/coresight-etm3x-core.c
-> @@ -518,7 +518,7 @@ static int etm_enable_sysfs(struct coresight_device *csdev)
->  	struct etm_enable_arg arg = { };
->  	int ret;
->  
-> -	spin_lock(&drvdata->spinlock);
-> +	raw_spin_lock(&drvdata->spinlock);
->  
->  	/* sysfs needs to allocate and set a trace ID */
->  	ret = etm_read_alloc_trace_id(drvdata);
+On Mon, Aug 07, 2023 at 03:33:54PM +0200, Sebastian Andrzej Siewior wrote:
+> 
+> Could you try v6.4.6-rt8+ and check if it still there or gone?
+> 
+> Sebastian
+>
 
-This is not going to work because etm_read_alloc_trace_id() acquires
-later in the call chain id_map_lock which is a spinlock_t.
-This should also lead to a splat like the one you complain about.
+Just checked. I do not see the call traces in dmesg now.
 
-Sebastian
+This also resolves a long (20+ minute) boot issue I had + stuttering in
+the graphical interface.
+
+Thank you for asking about that Sebastian.
+
+John
+
