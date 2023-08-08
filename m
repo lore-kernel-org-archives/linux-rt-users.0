@@ -2,109 +2,120 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CCF11C41513
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 20:09:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 391A5C001DB
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 20:46:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234433AbjHHUJP (ORCPT
+        id S235063AbjHHUqu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 8 Aug 2023 16:09:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59904 "EHLO
+        Tue, 8 Aug 2023 16:46:50 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49720 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231822AbjHHUI4 (ORCPT
+        with ESMTP id S231597AbjHHUqT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 8 Aug 2023 16:08:56 -0400
+        Tue, 8 Aug 2023 16:46:19 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 73A88900C
-        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 11:30:20 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 79C1735C76
+        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 09:36:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691519419;
+        s=mimecast20190719; t=1691512528;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=2FZ1uLC5x3O7S5Br75v2XQetXm23G3bROYwQEzamdls=;
-        b=CvDbGmg1956NXwyfyRz/Xc7dAoQXJTuaXwFmRrGB/ISfSO/U2buPNWH8+0zNqAN/OwlCEr
-        MIALiAThQpED1oYp41RSsVZd13OFxhKLREZos2egdad/5xAb6p4EyCw83F9RnjXGJ40Ttw
-        sxzy+mnnFM3yJOKRNHm9p9q1StBrBdk=
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
- [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-588-yNL7xhq3NtmVlEU3w66Izg-1; Tue, 08 Aug 2023 14:30:18 -0400
-X-MC-Unique: yNL7xhq3NtmVlEU3w66Izg-1
-Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-63cd05c0415so73827396d6.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 08 Aug 2023 11:30:18 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1691519417; x=1692124217;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=2FZ1uLC5x3O7S5Br75v2XQetXm23G3bROYwQEzamdls=;
-        b=S/SpXTDRIlh/B0KoSLvet8VXgipMBkSnTvpD6dR4dDBJObHPPNk/0YnytUwRcHUz+E
-         W6k6TX4k0v0NwJ8rSI4oACvF16xuJ/vZHHZqUXAzFHXI9CBy18qqpv1gKB8xysS+SwFi
-         TxMbCde5O4eBV8BVxjLhaQjw5JQlO7b/vr5NBVf2riFzn4GVVuW1hoV/Fwl6oW5f4G8r
-         HtaU0yl4S3f58UpXMEDwTZYTTnmOTU/75vDmrNFbPXgIqvvjYytU4b8q1d7KB0iv0n7n
-         lod8hJV4V7A1PKzpBBKvrcsdPQh6KH6oTKvN8Ff9ogZ52eBDkWF+YqiNwrNAtlFVngxq
-         /vcg==
-X-Gm-Message-State: AOJu0YyZDzp8LL4RMkBG1+AyRaMCCZvbNXtL84tdFu5ST8gYVhjD02Yl
-        Qxaunzbcv+sx5GYgDHpwD1gwVS+T54ttVnGwQGB4UV43xHEhgrmFfh2H0TxtS8cZIhoegidqwQf
-        bYYW00v2hS50Qwgbm+7OF1ze299NMkeaFBAY=
-X-Received: by 2002:a05:6214:3d09:b0:63c:fbdd:4592 with SMTP id ol9-20020a0562143d0900b0063cfbdd4592mr313466qvb.31.1691519417827;
-        Tue, 08 Aug 2023 11:30:17 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEST5VKoNmoiSuA05MiEPFDufrcnPLnBi1I4f5HxQMo1ydtCvUXUGVK3cWSXboCh/gBj4iQJA==
-X-Received: by 2002:a05:6214:3d09:b0:63c:fbdd:4592 with SMTP id ol9-20020a0562143d0900b0063cfbdd4592mr313453qvb.31.1691519417622;
-        Tue, 08 Aug 2023 11:30:17 -0700 (PDT)
-Received: from fionn ([184.147.140.157])
-        by smtp.gmail.com with ESMTPSA id p11-20020a0c9a0b000000b0063d30c10f1esm3892985qvd.70.2023.08.08.11.30.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 08 Aug 2023 11:30:17 -0700 (PDT)
-Date:   Tue, 8 Aug 2023 14:29:57 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Tomas Glozar <tglozar@redhat.com>
-cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rteval: Correct Python version in doc/rteval.txt
-In-Reply-To: <20230808115201.43187-1-tglozar@redhat.com>
-Message-ID: <d98aab0-3f8b-ec8e-e8b1-b9c7dc47852@redhat.com>
-References: <20230808115201.43187-1-tglozar@redhat.com>
+        bh=6LS2zS5fEeZyQMoa9x435JxujVLCIf5qEHRucYOerao=;
+        b=glM1CLEY0HbQdKfJ6hBbq+aegSkTVWiu+Ea9FKxQ9kmjPN/ShJp1HQhb3J+MfAdU6+Y8h3
+        mzhCT2j5UQWL1abAKfozj7qlCUINV0P6BSMopa5W6S6RkinnhAektzMCvbkmJGaJspR9tH
+        RTNW2cvE7bOumYhYF2cpvhtIo5sQLWo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-212-ELNwsg0cOR6VxhpT196nrw-1; Tue, 08 Aug 2023 12:35:24 -0400
+X-MC-Unique: ELNwsg0cOR6VxhpT196nrw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2FE45800159;
+        Tue,  8 Aug 2023 16:35:24 +0000 (UTC)
+Received: from localhost (unknown [10.22.32.66])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D85E4492C13;
+        Tue,  8 Aug 2023 16:35:23 +0000 (UTC)
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Mark Gross <markgross@kernel.org>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Cc:     Clark Williams <clark.williams@gmail.com>,
+        Clark Williams <williams@redhat.com>
+Subject: [PATCH RT 2/3] rt: PREEMPT_RT safety net for backported patches
+Date:   Tue,  8 Aug 2023 13:35:19 -0300
+Message-ID: <20230808163520.305842-3-lgoncalv@redhat.com>
+In-Reply-To: <20230808163520.305842-1-lgoncalv@redhat.com>
+References: <20230808163520.305842-1-lgoncalv@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+From: Clark Williams <clark.williams@gmail.com>
+
+v4.14.320-rt152-rc1 stable review patch.
+If anyone has any objections, please let me know.
+
+-----------
 
 
-On Tue, 8 Aug 2023, Tomas Glozar wrote:
+[ commit 67821680a2b828aa405a2db5d7dbd812a3684fcf from v4.19-rt ]
 
-> doc/rteval.txt specifies that rteval is a Python 2.x program. This is
-> not true, since rteval no longer works with Python 2.x:
-> $ python2 rteval-cmd
->   File "rteval-cmd", line 67
->     print(f"Don't know how to summarize {repfile} (tarfile open failed)")
->                                                                        ^
-> SyntaxError: invalid syntax
-> 
-> Replace "Python 2.x" with "Python 3.x".
-> 
-> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
-> ---
->  doc/rteval.txt | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/doc/rteval.txt b/doc/rteval.txt
-> index 7342866..569168e 100644
-> --- a/doc/rteval.txt
-> +++ b/doc/rteval.txt
-> @@ -21,7 +21,7 @@ of a network packet). To give a realtime application the best chance
->  of meeting its deadline(s), a realtime OS must minimize the time
->  between event occurance and the servicing of that event (latency). 
->  
-> -This paper describes the 'rteval' program, a Python 2.x program
-> +This paper describes the 'rteval' program, a Python 3.x program
->  developed at Red Hat to help quantify realtime performance on the
->  Realtime kernel. Rteval is an attempt to put together a synthetic
->  benchmark which mimics a well behaved realtime application, running on
-> -- 
-> 2.39.3
-> 
-> 
-Thanks for the clean-up
-Signed-off-by: John Kacur <jkacur@redhat.com>
+While doing some 4.19-rt cleanup work, I stumbled across the fact that parts of
+two backported patches were dependent on CONFIG_PREEMPT_RT, rather than
+the CONFIG_PREEMPT_RT_FULL used in 4.19 and earlier RT series.  The commits
+in the linux-stable-rt v4.19-rt branch are:
+
+dad4c6a33bf4e mm: slub: Don't resize the location tracking cache on PREEMPT_RT
+e626b6f873f2c net: Treat __napi_schedule_irqoff() as __napi_schedule() on PREEMPT_RT
+
+Discussing this at the Stable RT maintainers meeting, Steven Rostedt suggested that
+we automagically select CONFIG_PREEMPT_RT if CONFIG_PREEMPT_RT_FULL is on, giving
+us a safety net for any subsequently backported patches. Here's my first cut at
+that patch.
+
+I suspect we'll need a similar patch for stable RT kernels < 4.19.
+
+Suggested-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Clark Williams <williams@redhat.com>
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+---
+ kernel/Kconfig.preempt | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+index 11dbe26a8279..97875b4eb569 100644
+--- a/kernel/Kconfig.preempt
++++ b/kernel/Kconfig.preempt
+@@ -6,6 +6,9 @@ config PREEMPT_RT_BASE
+ 	bool
+ 	select PREEMPT
+ 
++config PREEMPT_RT
++       bool
++
+ config HAVE_PREEMPT_LAZY
+ 	bool
+ 
+@@ -78,6 +81,7 @@ config PREEMPT_RT_FULL
+ 	depends on IRQ_FORCED_THREADING
+ 	select PREEMPT_RT_BASE
+ 	select PREEMPT_RCU
++	select PREEMPT_RT
+ 	help
+ 	  All and everything
+ 
+-- 
+2.41.0
 
