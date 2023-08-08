@@ -2,92 +2,83 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D3B17C001DF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Aug 2023 19:31:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0333BC001DB
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 16:40:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229825AbjHGTbP (ORCPT
+        id S233232AbjHHQk4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 7 Aug 2023 15:31:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53830 "EHLO
+        Tue, 8 Aug 2023 12:40:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38852 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229462AbjHGTbP (ORCPT
+        with ESMTP id S230332AbjHHQkG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Aug 2023 15:31:15 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0BEA21717
-        for <linux-rt-users@vger.kernel.org>; Mon,  7 Aug 2023 12:30:28 -0700 (PDT)
+        Tue, 8 Aug 2023 12:40:06 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C4FDA1558F
+        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 08:54:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691436628;
+        s=mimecast20190719; t=1691510019;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=uBw4mbV0n5CHJTT93sh7px+x2h6v80hNyKF0sUR1CQ0=;
-        b=fo+Y4E+TMAAQChkGyWimW0oM/b9cE9OQfn42VSz/lrkPDQPiWF4NPIhUGhCOiZaNgTbLQG
-        iQ+EGPSd2NI+aGOPtQtbct02y5WlpaZYH9RdZveXbJjHH8UWXPlSfokdEMsKgtZ0SYWVM2
-        7UqeTX8ogyhtrRgmd7LR9Au6Q/tcwq8=
-Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
- [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-62-A9OC5HvSN8qtdlehNjxwYQ-1; Mon, 07 Aug 2023 15:19:11 -0400
-X-MC-Unique: A9OC5HvSN8qtdlehNjxwYQ-1
-Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-63cf9d48006so59431186d6.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 07 Aug 2023 12:18:54 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1691435933; x=1692040733;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=uBw4mbV0n5CHJTT93sh7px+x2h6v80hNyKF0sUR1CQ0=;
-        b=DMfu2sQ9PYG70gtgKV3cqO3h+Vlf/wVO6s51gERqZYU5x1W//gyzig+ULWvJXRWjgS
-         7isvhb9vxe4gA/ZbtGzra4kpCdhMx23LFABxasPNcY9Fi1qgONYgmI/rm/UzO1rgmajP
-         myI1DQEo3580kp29DoiFrdfvp7dJMDTee8KVlHjtrGb1qEonPcCfonAhlsDrkPyYXBxi
-         YkvykFstJ3QoOyUZNe4Er1vqj6JoEo7qY4JjgqCpFjmA4AZC6y0651QM/BCN9eTejGQS
-         IQxztpTjhpgroML/32ycNOwgPlBMUGjFhmasdvzGDikXwry6Ua1HJfqyGiznAmMcJHUo
-         hTqw==
-X-Gm-Message-State: AOJu0YxgEbFFFefuMGWFkSA6F8n6QI9iWUQpoa9CUR4qbuQXaxptqsLs
-        lmgCQUZp7T6R4nYROKAD9qb/6JbkFxqHUIMqJiPXVGesM1h2tr2UYMq4CMKTrzRXnaM8Q7QrKks
-        tBU8sDNJCh0XvPRjcUcgEv67T/4U=
-X-Received: by 2002:a0c:e0cc:0:b0:633:45e2:5603 with SMTP id x12-20020a0ce0cc000000b0063345e25603mr9893924qvk.60.1691435933472;
-        Mon, 07 Aug 2023 12:18:53 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHf08IuAF1M+sWXoajzIojAHG+tZ0mzMymTkRHCnxLwdLNIOx7LjEpAHQQPbeGpQrMmO5ygPQ==
-X-Received: by 2002:a0c:e0cc:0:b0:633:45e2:5603 with SMTP id x12-20020a0ce0cc000000b0063345e25603mr9893910qvk.60.1691435933263;
-        Mon, 07 Aug 2023 12:18:53 -0700 (PDT)
-Received: from thinkpad2021 ([64.99.149.73])
-        by smtp.gmail.com with ESMTPSA id b12-20020a0cf04c000000b00631f02c2279sm3069007qvl.90.2023.08.07.12.18.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 07 Aug 2023 12:18:52 -0700 (PDT)
-Date:   Mon, 7 Aug 2023 15:18:50 -0400
-From:   "John B. Wyatt IV" <jwyatt@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org, intel-gfx@lists.freedesktop.org,
-        linux-kernel@vger.kernel.org, jlelli@redhat.com,
-        vschneid@redhat.com, pauld@redhat.com, rt-maint@redhat.com
-Subject: Re: [preempt-rt] BUG: sleeping function called from invalid context
- at drivers/gpu/drm/i915/gt/uc/intel_guc.h
-Message-ID: <ZNFDmq43NqttzJca@thinkpad2021>
-References: <ZKyngsXKztAU9J3r@thinkpad2021>
- <20230807133354.-t5iv19T@linutronix.de>
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=mQ6k3dv+oTuBGdhIsWHtsf0MK4U2RHr3iubL52JwIPY=;
+        b=KOYLV9A3OhZB2VoAM6MTCw7WT5RLs4oGS2q1LEMloYgZc3FakpEf1EsDpyBPqjtGfpkLN2
+        BTVCVd/ehiUtMygdnKUqFPqwykWntOfPa/eG6a8Z9ppau8iS4MkJTBmnpv4MsiDpjJbSRX
+        yPlYtUrrmb8LQunnCunDPF8zomv8CoU=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-687-i5HNqAB1MQu6RDNDKK2_Hg-1; Tue, 08 Aug 2023 07:52:41 -0400
+X-MC-Unique: i5HNqAB1MQu6RDNDKK2_Hg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2EE3885CCE3
+        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 11:52:41 +0000 (UTC)
+Received: from fedora.. (unknown [10.43.17.54])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 90533140E963;
+        Tue,  8 Aug 2023 11:52:40 +0000 (UTC)
+From:   Tomas Glozar <tglozar@redhat.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     jkacur@redhat.com, Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH] rteval: Correct Python version in doc/rteval.txt
+Date:   Tue,  8 Aug 2023 13:52:01 +0200
+Message-ID: <20230808115201.43187-1-tglozar@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20230807133354.-t5iv19T@linutronix.de>
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Aug 07, 2023 at 03:33:54PM +0200, Sebastian Andrzej Siewior wrote:
-> 
-> Could you try v6.4.6-rt8+ and check if it still there or gone?
-> 
-> Sebastian
->
+doc/rteval.txt specifies that rteval is a Python 2.x program. This is
+not true, since rteval no longer works with Python 2.x:
+$ python2 rteval-cmd
+  File "rteval-cmd", line 67
+    print(f"Don't know how to summarize {repfile} (tarfile open failed)")
+                                                                       ^
+SyntaxError: invalid syntax
 
-Just checked. I do not see the call traces in dmesg now.
+Replace "Python 2.x" with "Python 3.x".
 
-This also resolves a long (20+ minute) boot issue I had + stuttering in
-the graphical interface.
+Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+---
+ doc/rteval.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thank you for asking about that Sebastian.
-
-John
+diff --git a/doc/rteval.txt b/doc/rteval.txt
+index 7342866..569168e 100644
+--- a/doc/rteval.txt
++++ b/doc/rteval.txt
+@@ -21,7 +21,7 @@ of a network packet). To give a realtime application the best chance
+ of meeting its deadline(s), a realtime OS must minimize the time
+ between event occurance and the servicing of that event (latency). 
+ 
+-This paper describes the 'rteval' program, a Python 2.x program
++This paper describes the 'rteval' program, a Python 3.x program
+ developed at Red Hat to help quantify realtime performance on the
+ Realtime kernel. Rteval is an attempt to put together a synthetic
+ benchmark which mimics a well behaved realtime application, running on
+-- 
+2.39.3
 
