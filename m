@@ -2,162 +2,108 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BC22C001B0
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 19:31:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A781C001DB
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 19:34:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230518AbjHHTa7 (ORCPT
+        id S236327AbjHHTeB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 8 Aug 2023 15:30:59 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53122 "EHLO
+        Tue, 8 Aug 2023 15:34:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52644 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230351AbjHHTaf (ORCPT
+        with ESMTP id S236326AbjHHTdk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 8 Aug 2023 15:30:35 -0400
-Received: from mail-ot1-x334.google.com (mail-ot1-x334.google.com [IPv6:2607:f8b0:4864:20::334])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 06ED06D4E7
-        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 11:56:58 -0700 (PDT)
-Received: by mail-ot1-x334.google.com with SMTP id 46e09a7af769-6bd066b0fd4so741400a34.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 08 Aug 2023 11:56:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1691521017; x=1692125817;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=oS1lxaVaW2zqCxh+qE8+HF6DMnR+OTewXJQpYFRU8zk=;
-        b=GfiWcUX/Iz1C1OH0WHIK9ZZAadRlURaJcgk3cHUXcx/Xu0IyS+/b9kq0P/MN1rE8iL
-         4g0bvcAP7Xh1f0Jj68vIaOwp+vgk1JvuQhoQUJUt3bVLar9OtGlxqJyzgAlRRZb0Efkf
-         sKxA8c0Oi8NImQYtJ+MSUCMJO+ojW6M5y8IsuSEQ60haG+9smHC1MKgeEG7Xtvcpq8SJ
-         GV6Q+DdxU5OQxUS3s4nTk6in2h1qmb77kVNhr9RJgoGD7coEAA8kZ/VkxcpNbPbCuvZV
-         6WFa72dOv8tcSftR0RfumIpsE0QQJRYDQR+deUwDlOA1RROuJcCVSZYRCJiKXLrSbwU6
-         uQzQ==
+        Tue, 8 Aug 2023 15:33:40 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 24A5B2D5E
+        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 11:58:39 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1691521118;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=qHUrSn/4FHcytXUlMEVnt9uArhOzFLfCV0XsRhN2Ld0=;
+        b=DXNhf6wXYzrYooArSjQOtzx0MMA1EoW6gpIPMHyvJThRCNcoiUnprvLa4c6OufL/e4eMk6
+        CvvyurDwm9Ns1iF1UzJh3waFRuQdVRSVF/P8lVNnuqn3k9dG6rQQ5ICrN/Tcq9vJTCcebc
+        sUVb9e7lCctwDggBGdWznvEs6On2sqI=
+Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
+ [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-600-WddCEoduNTaKZgU-amI88g-1; Tue, 08 Aug 2023 14:58:36 -0400
+X-MC-Unique: WddCEoduNTaKZgU-amI88g-1
+Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-40ff89fcb76so48872111cf.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 08 Aug 2023 11:58:36 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1691521017; x=1692125817;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=oS1lxaVaW2zqCxh+qE8+HF6DMnR+OTewXJQpYFRU8zk=;
-        b=BbEHy/DuDdSO6of2gdh0+R1DS25IU0eQy+fQgo+jx5dXV+reCJmH1tUfLVS/27Apvm
-         EjRpg5Celr9wPc5Bj7LL/yrAMdkfjFi8LxpmEKuHC9breIxqS+1EBs3yuEEe/t2i2yV2
-         9bhk2mx/dt/xiZlmoFLrHYyWOmDG/dXRuwx3BM1DzmGYOlCJAQaG4gO496cXTpljCgQ3
-         mIxZJa+9mnkpgQ9wTUCm4BAjrU4PM9UpgAbjtwIoQov4xfeuFgcNpptaE9oW84XFoNxT
-         8MjXUDgcZInehG+x6wBDAeK253Or3t2BpswX20IkAkQbR4q0uQ+R7WWB/i11Kv1BHJIC
-         BMZw==
-X-Gm-Message-State: AOJu0YwMlDQ9fvgZ98U11NIqcD7aruZ+oxd7+aPcLcsa/iDGJpruL9e4
-        PMh/INx3o2hec2y0e9LXfHaDq8hEuOk=
-X-Google-Smtp-Source: AGHT+IHyJ+QAJz1h2mvwQ2WSccylRvYc+4pKIW90ov3zJOM4ygMazi1XZJEemtdcOEzD8X4dYAO31w==
-X-Received: by 2002:a05:6358:3407:b0:133:ac7:c84b with SMTP id h7-20020a056358340700b001330ac7c84bmr211739rwd.12.1691521017439;
-        Tue, 08 Aug 2023 11:56:57 -0700 (PDT)
-Received: from localhost.localdomain (bras-base-rdwyon0600w-grc-06-184-147-140-157.dsl.bell.ca. [184.147.140.157])
-        by smtp.gmail.com with ESMTPSA id a9-20020ac86109000000b004054db6da1bsm3619276qtm.53.2023.08.08.11.56.56
+        d=1e100.net; s=20221208; t=1691521116; x=1692125916;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=qHUrSn/4FHcytXUlMEVnt9uArhOzFLfCV0XsRhN2Ld0=;
+        b=PYnpu9TUtaHzXX1kmRgzDpT7FIWWWgBAeteEGU9tZE4yEc3oyatBAN18LKlGSa9shR
+         dAsSQ68hge4+x+emgpnix8LW+YHLX+NnBom0TuSvctAHpO2U+ZhCEturnrgM7ImZlSGt
+         OyLCfyJQn7WGgBD0c9Y8pOuVNs0Q+NZz59WN44RYl/+qvyTOc4cyQFVWSanua+Qyd7wB
+         S5rhgWLpX6vcAXVLiNrdAjAczuaB03zL/3tCnHPOfWeGb2cOkes5z+zYKH/vHlIzRIzl
+         nMDrYzCMTwxCqb+6Bd3BP4Y1nNHHhzi9cgeewfJ1P9FgWE8v0FwimQ+2vTMlzQtmmqcQ
+         Okbg==
+X-Gm-Message-State: AOJu0YxqzNr9Dzcd4AosW2Xr+4AEIAom5biutIFIFQ5wNinTMkpZu0dc
+        KIcPS5Zmy6VkgsDN3/mofR4FFYiKaj4pu4QZCxsU3MAjKyyDYZKOFF9zOvN03zP6fU5p6/Dkct+
+        558fnrPEeFdhPCYwU4hLW89kHKjw=
+X-Received: by 2002:ac8:59ce:0:b0:40f:2e2c:6df4 with SMTP id f14-20020ac859ce000000b0040f2e2c6df4mr868434qtf.6.1691521116040;
+        Tue, 08 Aug 2023 11:58:36 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHRhJYCNPYGTdH3qNjuGQSm4p27eSdnv09CbLZ6Z3TNY2byM4wmXmOie10Qp5PErivbDiEygQ==
+X-Received: by 2002:ac8:59ce:0:b0:40f:2e2c:6df4 with SMTP id f14-20020ac859ce000000b0040f2e2c6df4mr868422qtf.6.1691521115840;
+        Tue, 08 Aug 2023 11:58:35 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-157.dsl.bell.ca. [184.147.140.157])
+        by smtp.gmail.com with ESMTPSA id a5-20020aed2785000000b00407ffb2c24dsm3568046qtd.63.2023.08.08.11.58.35
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 08 Aug 2023 11:56:56 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
+        Tue, 08 Aug 2023 11:58:35 -0700 (PDT)
+Date:   Tue, 8 Aug 2023 14:58:34 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     RT <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests: oslat: Fix compile warnings
-Date:   Tue,  8 Aug 2023 14:55:55 -0400
-Message-Id: <20230808185555.53613-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.40.1
+To:     Anubhav Shelat <ashelat@redhat.com>
+cc:     linux-rt-users@vger.kernel.org, kcarcia@redhat.com
+Subject: Re: [PATCH] cyclicdeadline: removed unnesessary text in usage
+ message
+In-Reply-To: <20230728152955.48977-1-ashelat@redhat.com>
+Message-ID: <30b8b1e0-f73c-cd85-257e-3eec5a86f5ad@redhat.com>
+References: <20230728152955.48977-1-ashelat@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Fix comile warnings in oslat
 
+
+On Fri, 28 Jul 2023, Anubhav Shelat wrote:
+
+> removed unnesessary text in usage message
+> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+> ---
+>  src/sched_deadline/cyclicdeadline.c | 3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
+> 
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index fbe3a75c60b8..4b4050fcbbb7 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -685,7 +685,6 @@ static void usage(int error)
+>  	       "-a [CPUSET] --affinity     Comma/hyphen separated list of CPUs to run deadline\n"
+>  	       "                           tasks on. An empty CPUSET runs on all CPUs a deadline\n"
+>  	       "                           task.\n"
+> -	       "                           on CPU 4, and thread #5 on CPU 5.\n"
+>  	       "-D TIME  --duration        Specify a length for the test run.\n"
+>  	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
+>  	       "                           days\n"
+> @@ -1234,7 +1233,7 @@ int main(int argc, char **argv)
+>  		percent = nr_cpus * 80 / nr_threads;
+>  	}
+>  
+> -	/* Set up the data while sill in SCHED_FIFO */
+> +	/* Set up the data while still in SCHED_FIFO */
+>  	for (i = 0; i < nr_threads; i++) {
+>  		sd = &sched_data[i];
+>  		/*
+> -- 
+> 2.39.3
+> 
+> 
 Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/oslat/oslat.c | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
-
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 99f86b858e33..4bdca643da72 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -220,7 +220,7 @@ struct global {
- 
- static struct global g;
- 
--static void workload_nop(char *dst, char *src, size_t size)
-+static void workload_nop(char *dst __attribute__ ((unused)), char *src __attribute__ ((unused)), size_t size __attribute__ ((unused)))
- {
- 	/* Nop */
- }
-@@ -474,7 +474,8 @@ static double bucket_to_lat(int bucket)
- 
- void calculate(struct thread *t)
- {
--	int i, j;
-+	int j;
-+	unsigned int i;
- 	double sum;
- 	uint64_t count;
- 
-@@ -493,7 +494,8 @@ void calculate(struct thread *t)
- 
- static void write_summary(struct thread *t)
- {
--	int i, j, k, print_dotdotdot = 0;
-+	int j, print_dotdotdot = 0;
-+	unsigned long int i, k;
- 	char bucket_name[64];
- 
- 	calculate(t);
-@@ -536,12 +538,13 @@ static void write_summary(struct thread *t)
- static void write_summary_json(FILE *f, void *data)
- {
- 	struct thread *t = data;
--	int i, j, comma;
-+	int j, comma;
-+	unsigned long int i;
- 
- 	fprintf(f, "  \"num_threads\": %d,\n", g.n_threads);
- 	fprintf(f, "  \"thread\": {\n");
- 	for (i = 0; i < g.n_threads; ++i) {
--		fprintf(f, "    \"%u\": {\n", i);
-+		fprintf(f, "    \"%lu\": {\n", i);
- 		fprintf(f, "      \"cpu\": %d,\n", t[i].core_i);
- 		fprintf(f, "      \"freq\": %d,\n", t[i].counter_mhz);
- 		fprintf(f, "      \"min\": %" PRIu64 ",\n", t[i].minlat);
-@@ -568,7 +571,7 @@ static void write_summary_json(FILE *f, void *data)
- 
- static void run_expt(struct thread *threads, int runtime_secs, bool preheat)
- {
--	int i;
-+	unsigned long int i;
- 
- 	g.runtime_secs = runtime_secs;
- 	g.preheat = preheat;
-@@ -593,7 +596,7 @@ static void run_expt(struct thread *threads, int runtime_secs, bool preheat)
- 		pthread_join(threads[i].thread_id, NULL);
- }
- 
--static void handle_alarm(int code)
-+static void handle_alarm(int code __attribute__ ((unused)))
- {
- 	g.cmd = STOP;
- }
-@@ -839,7 +842,7 @@ void dump_globals(void)
- 
- static void record_bias(struct thread *t)
- {
--	int i;
-+	unsigned long int i;
- 	uint64_t bias = (uint64_t)-1;
- 
- 	if (!g.enable_bias)
-@@ -858,7 +861,8 @@ static void record_bias(struct thread *t)
- int main(int argc, char *argv[])
- {
- 	struct thread *threads;
--	int i, n_cores;
-+	int n_cores;
-+	unsigned long int i;
- 	struct bitmask *cpu_set = NULL;
- 
- #ifdef FRC_MISSING
--- 
-2.40.1
 
