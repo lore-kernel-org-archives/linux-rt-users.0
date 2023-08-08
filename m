@@ -2,68 +2,67 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A781C001DB
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 19:34:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCF11C41513
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Aug 2023 20:09:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236327AbjHHTeB (ORCPT
+        id S234433AbjHHUJP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 8 Aug 2023 15:34:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52644 "EHLO
+        Tue, 8 Aug 2023 16:09:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59904 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S236326AbjHHTdk (ORCPT
+        with ESMTP id S231822AbjHHUI4 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 8 Aug 2023 15:33:40 -0400
+        Tue, 8 Aug 2023 16:08:56 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 24A5B2D5E
-        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 11:58:39 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 73A88900C
+        for <linux-rt-users@vger.kernel.org>; Tue,  8 Aug 2023 11:30:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691521118;
+        s=mimecast20190719; t=1691519419;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=qHUrSn/4FHcytXUlMEVnt9uArhOzFLfCV0XsRhN2Ld0=;
-        b=DXNhf6wXYzrYooArSjQOtzx0MMA1EoW6gpIPMHyvJThRCNcoiUnprvLa4c6OufL/e4eMk6
-        CvvyurDwm9Ns1iF1UzJh3waFRuQdVRSVF/P8lVNnuqn3k9dG6rQQ5ICrN/Tcq9vJTCcebc
-        sUVb9e7lCctwDggBGdWznvEs6On2sqI=
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
- [209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=2FZ1uLC5x3O7S5Br75v2XQetXm23G3bROYwQEzamdls=;
+        b=CvDbGmg1956NXwyfyRz/Xc7dAoQXJTuaXwFmRrGB/ISfSO/U2buPNWH8+0zNqAN/OwlCEr
+        MIALiAThQpED1oYp41RSsVZd13OFxhKLREZos2egdad/5xAb6p4EyCw83F9RnjXGJ40Ttw
+        sxzy+mnnFM3yJOKRNHm9p9q1StBrBdk=
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-600-WddCEoduNTaKZgU-amI88g-1; Tue, 08 Aug 2023 14:58:36 -0400
-X-MC-Unique: WddCEoduNTaKZgU-amI88g-1
-Received: by mail-qt1-f198.google.com with SMTP id d75a77b69052e-40ff89fcb76so48872111cf.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 08 Aug 2023 11:58:36 -0700 (PDT)
+ us-mta-588-yNL7xhq3NtmVlEU3w66Izg-1; Tue, 08 Aug 2023 14:30:18 -0400
+X-MC-Unique: yNL7xhq3NtmVlEU3w66Izg-1
+Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-63cd05c0415so73827396d6.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 08 Aug 2023 11:30:18 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1691521116; x=1692125916;
+        d=1e100.net; s=20221208; t=1691519417; x=1692124217;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=qHUrSn/4FHcytXUlMEVnt9uArhOzFLfCV0XsRhN2Ld0=;
-        b=PYnpu9TUtaHzXX1kmRgzDpT7FIWWWgBAeteEGU9tZE4yEc3oyatBAN18LKlGSa9shR
-         dAsSQ68hge4+x+emgpnix8LW+YHLX+NnBom0TuSvctAHpO2U+ZhCEturnrgM7ImZlSGt
-         OyLCfyJQn7WGgBD0c9Y8pOuVNs0Q+NZz59WN44RYl/+qvyTOc4cyQFVWSanua+Qyd7wB
-         S5rhgWLpX6vcAXVLiNrdAjAczuaB03zL/3tCnHPOfWeGb2cOkes5z+zYKH/vHlIzRIzl
-         nMDrYzCMTwxCqb+6Bd3BP4Y1nNHHhzi9cgeewfJ1P9FgWE8v0FwimQ+2vTMlzQtmmqcQ
-         Okbg==
-X-Gm-Message-State: AOJu0YxqzNr9Dzcd4AosW2Xr+4AEIAom5biutIFIFQ5wNinTMkpZu0dc
-        KIcPS5Zmy6VkgsDN3/mofR4FFYiKaj4pu4QZCxsU3MAjKyyDYZKOFF9zOvN03zP6fU5p6/Dkct+
-        558fnrPEeFdhPCYwU4hLW89kHKjw=
-X-Received: by 2002:ac8:59ce:0:b0:40f:2e2c:6df4 with SMTP id f14-20020ac859ce000000b0040f2e2c6df4mr868434qtf.6.1691521116040;
-        Tue, 08 Aug 2023 11:58:36 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHRhJYCNPYGTdH3qNjuGQSm4p27eSdnv09CbLZ6Z3TNY2byM4wmXmOie10Qp5PErivbDiEygQ==
-X-Received: by 2002:ac8:59ce:0:b0:40f:2e2c:6df4 with SMTP id f14-20020ac859ce000000b0040f2e2c6df4mr868422qtf.6.1691521115840;
-        Tue, 08 Aug 2023 11:58:35 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-157.dsl.bell.ca. [184.147.140.157])
-        by smtp.gmail.com with ESMTPSA id a5-20020aed2785000000b00407ffb2c24dsm3568046qtd.63.2023.08.08.11.58.35
+        bh=2FZ1uLC5x3O7S5Br75v2XQetXm23G3bROYwQEzamdls=;
+        b=S/SpXTDRIlh/B0KoSLvet8VXgipMBkSnTvpD6dR4dDBJObHPPNk/0YnytUwRcHUz+E
+         W6k6TX4k0v0NwJ8rSI4oACvF16xuJ/vZHHZqUXAzFHXI9CBy18qqpv1gKB8xysS+SwFi
+         TxMbCde5O4eBV8BVxjLhaQjw5JQlO7b/vr5NBVf2riFzn4GVVuW1hoV/Fwl6oW5f4G8r
+         HtaU0yl4S3f58UpXMEDwTZYTTnmOTU/75vDmrNFbPXgIqvvjYytU4b8q1d7KB0iv0n7n
+         lod8hJV4V7A1PKzpBBKvrcsdPQh6KH6oTKvN8Ff9ogZ52eBDkWF+YqiNwrNAtlFVngxq
+         /vcg==
+X-Gm-Message-State: AOJu0YyZDzp8LL4RMkBG1+AyRaMCCZvbNXtL84tdFu5ST8gYVhjD02Yl
+        Qxaunzbcv+sx5GYgDHpwD1gwVS+T54ttVnGwQGB4UV43xHEhgrmFfh2H0TxtS8cZIhoegidqwQf
+        bYYW00v2hS50Qwgbm+7OF1ze299NMkeaFBAY=
+X-Received: by 2002:a05:6214:3d09:b0:63c:fbdd:4592 with SMTP id ol9-20020a0562143d0900b0063cfbdd4592mr313466qvb.31.1691519417827;
+        Tue, 08 Aug 2023 11:30:17 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEST5VKoNmoiSuA05MiEPFDufrcnPLnBi1I4f5HxQMo1ydtCvUXUGVK3cWSXboCh/gBj4iQJA==
+X-Received: by 2002:a05:6214:3d09:b0:63c:fbdd:4592 with SMTP id ol9-20020a0562143d0900b0063cfbdd4592mr313453qvb.31.1691519417622;
+        Tue, 08 Aug 2023 11:30:17 -0700 (PDT)
+Received: from fionn ([184.147.140.157])
+        by smtp.gmail.com with ESMTPSA id p11-20020a0c9a0b000000b0063d30c10f1esm3892985qvd.70.2023.08.08.11.30.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 08 Aug 2023 11:58:35 -0700 (PDT)
-Date:   Tue, 8 Aug 2023 14:58:34 -0400 (EDT)
+        Tue, 08 Aug 2023 11:30:17 -0700 (PDT)
+Date:   Tue, 8 Aug 2023 14:29:57 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
-To:     Anubhav Shelat <ashelat@redhat.com>
-cc:     linux-rt-users@vger.kernel.org, kcarcia@redhat.com
-Subject: Re: [PATCH] cyclicdeadline: removed unnesessary text in usage
- message
-In-Reply-To: <20230728152955.48977-1-ashelat@redhat.com>
-Message-ID: <30b8b1e0-f73c-cd85-257e-3eec5a86f5ad@redhat.com>
-References: <20230728152955.48977-1-ashelat@redhat.com>
+To:     Tomas Glozar <tglozar@redhat.com>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] rteval: Correct Python version in doc/rteval.txt
+In-Reply-To: <20230808115201.43187-1-tglozar@redhat.com>
+Message-ID: <d98aab0-3f8b-ec8e-e8b1-b9c7dc47852@redhat.com>
+References: <20230808115201.43187-1-tglozar@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -72,38 +71,40 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Fri, 28 Jul 2023, Anubhav Shelat wrote:
+On Tue, 8 Aug 2023, Tomas Glozar wrote:
 
-> removed unnesessary text in usage message
-> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
-> ---
->  src/sched_deadline/cyclicdeadline.c | 3 +--
->  1 file changed, 1 insertion(+), 2 deletions(-)
+> doc/rteval.txt specifies that rteval is a Python 2.x program. This is
+> not true, since rteval no longer works with Python 2.x:
+> $ python2 rteval-cmd
+>   File "rteval-cmd", line 67
+>     print(f"Don't know how to summarize {repfile} (tarfile open failed)")
+>                                                                        ^
+> SyntaxError: invalid syntax
 > 
-> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index fbe3a75c60b8..4b4050fcbbb7 100644
-> --- a/src/sched_deadline/cyclicdeadline.c
-> +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -685,7 +685,6 @@ static void usage(int error)
->  	       "-a [CPUSET] --affinity     Comma/hyphen separated list of CPUs to run deadline\n"
->  	       "                           tasks on. An empty CPUSET runs on all CPUs a deadline\n"
->  	       "                           task.\n"
-> -	       "                           on CPU 4, and thread #5 on CPU 5.\n"
->  	       "-D TIME  --duration        Specify a length for the test run.\n"
->  	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
->  	       "                           days\n"
-> @@ -1234,7 +1233,7 @@ int main(int argc, char **argv)
->  		percent = nr_cpus * 80 / nr_threads;
->  	}
+> Replace "Python 2.x" with "Python 3.x".
+> 
+> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+> ---
+>  doc/rteval.txt | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/doc/rteval.txt b/doc/rteval.txt
+> index 7342866..569168e 100644
+> --- a/doc/rteval.txt
+> +++ b/doc/rteval.txt
+> @@ -21,7 +21,7 @@ of a network packet). To give a realtime application the best chance
+>  of meeting its deadline(s), a realtime OS must minimize the time
+>  between event occurance and the servicing of that event (latency). 
 >  
-> -	/* Set up the data while sill in SCHED_FIFO */
-> +	/* Set up the data while still in SCHED_FIFO */
->  	for (i = 0; i < nr_threads; i++) {
->  		sd = &sched_data[i];
->  		/*
+> -This paper describes the 'rteval' program, a Python 2.x program
+> +This paper describes the 'rteval' program, a Python 3.x program
+>  developed at Red Hat to help quantify realtime performance on the
+>  Realtime kernel. Rteval is an attempt to put together a synthetic
+>  benchmark which mimics a well behaved realtime application, running on
 > -- 
 > 2.39.3
 > 
 > 
+Thanks for the clean-up
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
