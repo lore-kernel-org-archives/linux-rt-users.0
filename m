@@ -2,68 +2,67 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7C26C001B0
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 18:50:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 79049C001B0
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 18:55:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229978AbjHISuX (ORCPT
+        id S232254AbjHISz2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 14:50:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54568 "EHLO
+        Wed, 9 Aug 2023 14:55:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40612 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229750AbjHISuW (ORCPT
+        with ESMTP id S231682AbjHISz1 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2023 14:50:22 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D1263E51
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 11:49:36 -0700 (PDT)
+        Wed, 9 Aug 2023 14:55:27 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AAC79E51
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 11:54:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691606976;
+        s=mimecast20190719; t=1691607282;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=M3hwuZLsjMaO38wOrc+ida9dV7fTe7F70taOG49zzTM=;
-        b=VpH/k/t5JA6pGqpmnyM7ZhVECRq1zonpR3HfCxUihpuiCmCn1YWxezrbCAGMkM90rJvQmK
-        L/uLbia7jZ7jCGk2UivtAZTXgeD1oCQHNJoqsrLFBHcafIzLvdVQbtaIXu47ElV8f1LpQJ
-        PexA+r/aXw5CSo7n1fYf0acJ/t8XycI=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=YJQ5AejF+uOMP0CqB8cdfgb4TV1nPoV1kkRYl+nwK6Q=;
+        b=XjC529aDE3tDUtOlV3iQ8MEg2dA1di63YPtVwY7TqLwHpBVt9rW3+gGTtgtL1sivu0RjOO
+        aEcPIwDZrWnlO/tVybM/SfOwFOiqhOZ+1Qou+4Kz2zbGzceL3VeY7oXKAZ+nNsXfr1qAVn
+        HHGXj4rtFiLpOhSdt11DsnSPaZKV+2w=
+Received: from mail-yw1-f198.google.com (mail-yw1-f198.google.com
+ [209.85.128.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-163-wDsKdPBHPCqpl-jzRFBS6g-1; Wed, 09 Aug 2023 14:49:34 -0400
-X-MC-Unique: wDsKdPBHPCqpl-jzRFBS6g-1
-Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-40ff512f8a8so448071cf.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Aug 2023 11:49:34 -0700 (PDT)
+ us-mta-26-HGDd8vAAPFCUihGiP8eE2A-1; Wed, 09 Aug 2023 14:54:39 -0400
+X-MC-Unique: HGDd8vAAPFCUihGiP8eE2A-1
+Received: by mail-yw1-f198.google.com with SMTP id 00721157ae682-583a89cccf6so2695267b3.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Aug 2023 11:54:39 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1691606974; x=1692211774;
+        d=1e100.net; s=20221208; t=1691607279; x=1692212079;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=M3hwuZLsjMaO38wOrc+ida9dV7fTe7F70taOG49zzTM=;
-        b=gvaTmYe45J4HQTXygzqrqAikCiUY2gDThHOFjtzKNGz8eDtHRt1++4A4fCAA+5lPQS
-         cUf5vy1l3znNT55BOk/RD1C9V+rDujfhDcpRNgVF8YsIYhoOjoqfap0Tyr/Ya0eaEuvo
-         VXxc3OET8x/QT6NJn3YOmu3/BN3jo7d2ZdWrsg3zyjMEME9jOpc/I19Vm/m4wpkdUCj5
-         lWUsdnCpKGz9V+pBWCCTinjB6TXk3PJB+t2QTWWv4IpXQ+ANOeD0hm/qI6sgISuNSjcN
-         iRpUyjD16tW1lwwsTc/V0GkQ8TQZuFUcP59tUNVTzxs2uu6pN+uKM79dL30TASMUlKsY
-         p9AA==
-X-Gm-Message-State: AOJu0Yz7OIei07aoSVKEP4MgloNePV8jufp1y4PU/IOPHuBfZLtzP0Xs
-        mZE+xBFhVs4TNsB4Eg5qiaXQl34rSfD8zeptzrr672V+3zrWRBHjv9fWlye+lYbbo3KPboBU32f
-        CJOeku7Z7nXyFNXY5GjM2vH1QT9s=
-X-Received: by 2002:ac8:5ac5:0:b0:40e:6f1:3d38 with SMTP id d5-20020ac85ac5000000b0040e06f13d38mr233761qtd.8.1691606974275;
-        Wed, 09 Aug 2023 11:49:34 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEzpoTg4lqsw5if4VaWq500G34reiyXBzIQuKd5GjSSqStpKeDhhWD0iICJfXLbUjgo1ZjAUA==
-X-Received: by 2002:ac8:5ac5:0:b0:40e:6f1:3d38 with SMTP id d5-20020ac85ac5000000b0040e06f13d38mr233753qtd.8.1691606974052;
-        Wed, 09 Aug 2023 11:49:34 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-157.dsl.bell.ca. [184.147.140.157])
-        by smtp.gmail.com with ESMTPSA id g22-20020ac870d6000000b004054b435f8csm4180345qtp.65.2023.08.09.11.49.33
+        bh=YJQ5AejF+uOMP0CqB8cdfgb4TV1nPoV1kkRYl+nwK6Q=;
+        b=cudk+4seozX8yXk6HNVVCort0w536sRsjYj7QcORtSkVc7T7unPgYdeUqO4CW5pk8l
+         jDT6ot+PCEGFTjiAugrx8e8y0pSu0TApFJEyiKSV59/hoCfoSFf6w8yMK0i1jzDiaAcj
+         ABUPvfc5FELQnf+PpTJM6OPhcrE7HEYSJgk3IXoYt/XdGCV06F0AhLfRaAhagaNKSBh7
+         zTvzwEUCGpH+3AzBUaDhU2ELWT/nPH/2CH7nikW+A6a/7IpQ3nthNmmR45MhmuCtqAbk
+         CI0qIojTsBV113QWq4i6AVKShLHFHHw8KTSwQ3nlaLDTsHjENp5rhHhcfiYA3wmnZJ7q
+         Qixg==
+X-Gm-Message-State: AOJu0YzdZX693PskCgW215+NAWu0qbQpphJUevfXnP+vZqyLi0dtIiM8
+        xW6aFMnY7v4hEbwr/iFRnMbILinpoy1SpJk05q/q4rp7eWaaJusszh7vaog8qyQQnYait0LqeyK
+        IOqAfFJ3F/NTLyKR5sr11689ME3i6erjxtdQ=
+X-Received: by 2002:a81:92d7:0:b0:56d:34:893c with SMTP id j206-20020a8192d7000000b0056d0034893cmr186922ywg.4.1691607278916;
+        Wed, 09 Aug 2023 11:54:38 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEygP5Q187AccAxMT1C8G5Y1P0hvmQ/zGovFpSaHWj7NVW6i+SpbCy7DUMhUzztiVvjARe6wA==
+X-Received: by 2002:a81:92d7:0:b0:56d:34:893c with SMTP id j206-20020a8192d7000000b0056d0034893cmr186906ywg.4.1691607278522;
+        Wed, 09 Aug 2023 11:54:38 -0700 (PDT)
+Received: from fionn ([184.147.140.157])
+        by smtp.gmail.com with ESMTPSA id d26-20020a0cb2da000000b0062ffec0a18esm3441656qvf.84.2023.08.09.11.54.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 09 Aug 2023 11:49:33 -0700 (PDT)
-Date:   Wed, 9 Aug 2023 14:49:32 -0400 (EDT)
+        Wed, 09 Aug 2023 11:54:37 -0700 (PDT)
+Date:   Wed, 9 Aug 2023 14:54:28 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Eder Zulian <ezulian@redhat.com>
 cc:     linux-rt-users@vger.kernel.org, williams@redhat.com
-Subject: Re: [PATCH] rt-tests: cyclictest: Suppress compiler warnings for
- unused variables
-In-Reply-To: <20230808223904.290605-1-ezulian@redhat.com>
-Message-ID: <cbbb28e6-4c55-e16d-7afa-d4c4f61bc4a@redhat.com>
-References: <20230808223904.290605-1-ezulian@redhat.com>
+Subject: Re: [PATCH] rt-tests: Add __pycache__/ to .gitignore
+In-Reply-To: <20230808211615.281193-1-ezulian@redhat.com>
+Message-ID: <46d4f510-6984-d3c9-829e-84aa84d0ff65@redhat.com>
+References: <20230808211615.281193-1-ezulian@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
@@ -72,52 +71,27 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Wed, 9 Aug 2023, Eder Zulian wrote:
+On Tue, 8 Aug 2023, Eder Zulian wrote:
 
-> Using an attribute to inform the compiler that variables are expect to be unused so it will not issue a warning.
+> Add __pycache__/ to .gitignore so that it will be ignored by git.
 > 
 > Signed-off-by: Eder Zulian <ezulian@redhat.com>
 > ---
->  src/cyclictest/cyclictest.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
+>  .gitignore | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 7b0f80f..86cec0e 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1610,11 +1610,13 @@ static void rstat_print_stat(struct thread_param *par, int index, int verbose, i
->  }
->  
->  
-> +#define UNUSED __attribute__((__unused__))
-> +
->  /*
->   * thread that creates a named fifo and hands out run stats when someone
->   * reads from the fifo.
->   */
-> -static void *fifothread(void *param)
-> +static void *fifothread(UNUSED void *param)
->  {
->  	int ret;
->  	int fd;
-> @@ -1795,7 +1797,7 @@ rstat_err:
->  	return;
->  }
->  
-> -static void write_stats(FILE *f, void *data)
-> +static void write_stats(FILE *f, UNUSED void *data)
->  {
->  	struct thread_param **par = parameters;
->  	unsigned int i, j, comma;
+> diff --git a/.gitignore b/.gitignore
+> index 61fb49c..7fef7de 100644
+> --- a/.gitignore
+> +++ b/.gitignore
+> @@ -47,3 +47,4 @@ tags
+>  TAGS
+>  cscope.*
+>  src/cyclictest/__pycache__/
+> +__pycache__/
 > -- 
 > 2.39.3
 > 
 > 
-
-Just like in the kernel, we try to avoid preprocessor trickery,
-so just put the attribute directly in the function header.
-
-Watch the unwrapped lines in your commit messages.
-
-John
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
