@@ -2,49 +2,49 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E6E0C04A94
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:19:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 60A96C04FE0
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:19:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233463AbjHITTE (ORCPT
+        id S233571AbjHITTF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 15:19:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46280 "EHLO
+        Wed, 9 Aug 2023 15:19:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46454 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233525AbjHITS4 (ORCPT
+        with ESMTP id S233362AbjHITS5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2023 15:18:56 -0400
+        Wed, 9 Aug 2023 15:18:57 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4D90D2129
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:18:05 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5E6D335AC
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:18:03 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691608684;
+        s=mimecast20190719; t=1691608681;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=qZP1gDRsvaUAhBVmd+QbR6QR62LSv4kjAvYcd/5y4P8=;
-        b=UTn81VjuQcw6ZQRjEtqIdxI2p5EDoUHwAw7V+qgn0CO9MERZUcyHBl/1LNQpPhKX6aIO/L
-        s1M5GArk6s1qYyd4qTxCbhUDHSOJgVdYJPUyJCnzqJWaGTIEw4rdcABUYh4PQ3jlcadW3N
-        eN3tXsQ0RQ8mrPz7pvGDNNaZgsx2eKc=
+        bh=vG4Qts1hNiHM9IQcH4ojbP2TdPnUZfMzNUOwKWFYc3A=;
+        b=HQ+jw6FklN1eRmmQWIPjv39lCDc3xbfWuh+1NfPCbZUMie3siSuishoR0M4o8dHcGD08Am
+        RnLEzknyL9no8vjRz52DVAVgHaRZPHF5fftjxBcZ/MYHBl+Xx82+4VusqYQwJluE4WNiNR
+        cqTq8/n7iYJ9DXVW90W9CM02fX6NuZ0=
 Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-577-A08z_NqXM3qxSw7PVbAxiQ-1; Wed, 09 Aug 2023 15:18:03 -0400
-X-MC-Unique: A08z_NqXM3qxSw7PVbAxiQ-1
+ us-mta-139-Y57J4FvsMPqBxFTMEiFk8Q-1; Wed, 09 Aug 2023 15:17:59 -0400
+X-MC-Unique: Y57J4FvsMPqBxFTMEiFk8Q-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ED38C3815EF5
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:18:02 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 465211C05133
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:17:59 +0000 (UTC)
 Received: from ezulian.remote.csb (unknown [10.39.192.197])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 0AC5F40BC780;
-        Wed,  9 Aug 2023 19:18:01 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 358B640BC780;
+        Wed,  9 Aug 2023 19:17:58 +0000 (UTC)
 From:   Eder Zulian <ezulian@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     jkacur@redhat.com, williams@redhat.com, ezulian@redhat.com
-Subject: [PATCH 83/86] rteval: Replace GPL license notice with SPDX tag in testclient.py
-Date:   Wed,  9 Aug 2023 21:15:45 +0200
-Message-Id: <20230809191548.359938-84-ezulian@redhat.com>
+Subject: [PATCH 80/86] rteval: Replace GPL license notice with SPDX tag in rteval_xmlrpc.py
+Date:   Wed,  9 Aug 2023 21:15:42 +0200
+Message-Id: <20230809191548.359938-81-ezulian@redhat.com>
 In-Reply-To: <20230809191548.359938-1-ezulian@redhat.com>
 References: <20230809191548.359938-1-ezulian@redhat.com>
 MIME-Version: 1.0
@@ -54,23 +54,22 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Replace GPL boilerplate with SPDX-License-Identifier tag in testclient.py.
+Replace GPL boilerplate with SPDX-License-Identifier tag in rteval_xmlrpc.py.
 
 Signed-off-by: Eder Zulian <ezulian@redhat.com>
 ---
- server/testclient.py | 21 +--------------------
+ server/rteval_xmlrpc.py | 21 +--------------------
  1 file changed, 1 insertion(+), 20 deletions(-)
 
-diff --git a/server/testclient.py b/server/testclient.py
-index 4a3cfd6..dc9745b 100644
---- a/server/testclient.py
-+++ b/server/testclient.py
-@@ -1,3 +1,4 @@
+diff --git a/server/rteval_xmlrpc.py b/server/rteval_xmlrpc.py
+index 0fd09b8..b63b7d8 100644
+--- a/server/rteval_xmlrpc.py
++++ b/server/rteval_xmlrpc.py
+@@ -1,29 +1,10 @@
 +# SPDX-License-Identifier: GPL-2.0-or-later
  #
- #   testclient.py
- #   XML-RPC test client for testing the supported XML-RPC API 
-@@ -5,26 +6,6 @@
+ #   rteval_xmlrpc.py
+ #   XML-RPC handler for mod_python which will receive requests
  #
  #   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
  #
@@ -95,8 +94,8 @@ index 4a3cfd6..dc9745b 100644
 -#   are deemed to be part of the source code.
 -#
  
- import sys
- import libxml2
+ import types
+ from mod_python import apache
 -- 
 2.39.3
 
