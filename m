@@ -2,49 +2,49 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00190C001DE
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:19:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2AD03C0015E
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:20:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233525AbjHITTG (ORCPT
+        id S232667AbjHITUV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 15:19:06 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38478 "EHLO
+        Wed, 9 Aug 2023 15:20:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56086 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233461AbjHITTA (ORCPT
+        with ESMTP id S231468AbjHITUU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2023 15:19:00 -0400
+        Wed, 9 Aug 2023 15:20:20 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85EC13A81
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:18:08 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 70FE83C06
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:19:22 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691608687;
+        s=mimecast20190719; t=1691608761;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=ZzmSAR0M0OMGX9sJ1SXQmz0oayE/NSriX7Ha0dYRZmg=;
-        b=VcoJW0FuCcotF6B8WNRULcgdgkpF4ShPva7tC7NDAdnOhfzx7DK/etri1MNye97Tr8a7iI
-        5H41JZC4ltrCzlvP9XY/iKeLIdYsPm6Dr81dYGzY467+UG2JjjMyqAZrGqUseXlXYnAlA1
-        19CNz6DZkSqJ7b2CgKIAaP79DXI13H4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-631-UBmW5nCmOL2bg1JSfuyswQ-1; Wed, 09 Aug 2023 15:18:06 -0400
-X-MC-Unique: UBmW5nCmOL2bg1JSfuyswQ-1
+        bh=TlwYXcsBJ+pq3jf9+htqfrD3cVz/r2ZCzVWOTQcdxxM=;
+        b=MchgVOzSTKQeV535xiUq6+7To2aclvkkM95KcaPNrnvznqTayjDlzv+ZzwEk1dGKH3QqeM
+        SNi1xWOlEYUJUwD+lOoX4xZeaSTEDGjIUwbeWMU1pL4sV95V2/UZwDEbBOhvNJlrnH1H8Q
+        adxlg8gjnxAF9wc0f/JNvaDqQW8yNpg=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-125-iAD_KEqyNiCb2eYbKE_AFA-1; Wed, 09 Aug 2023 15:16:09 -0400
+X-MC-Unique: iAD_KEqyNiCb2eYbKE_AFA-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 71CBA85651F
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:18:06 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F2193C0C4B2
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:16:09 +0000 (UTC)
 Received: from ezulian.remote.csb (unknown [10.39.192.197])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 8A10540BC780;
-        Wed,  9 Aug 2023 19:18:05 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 70B7C40C6F4E;
+        Wed,  9 Aug 2023 19:16:07 +0000 (UTC)
 From:   Eder Zulian <ezulian@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     jkacur@redhat.com, williams@redhat.com, ezulian@redhat.com
-Subject: [PATCH 86/86] rteval: Replace GPL license notice with SPDX tag in unittest.py
-Date:   Wed,  9 Aug 2023 21:15:48 +0200
-Message-Id: <20230809191548.359938-87-ezulian@redhat.com>
+Subject: [PATCH 04/86] rteval: Add SPDX-License-Identifier tag to rteval_histogram_raw.xsl
+Date:   Wed,  9 Aug 2023 21:14:26 +0200
+Message-Id: <20230809191548.359938-5-ezulian@redhat.com>
 In-Reply-To: <20230809191548.359938-1-ezulian@redhat.com>
 References: <20230809191548.359938-1-ezulian@redhat.com>
 MIME-Version: 1.0
@@ -54,39 +54,25 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Replace GPL boilerplate with SPDX-License-Identifier tag in unittest.py.
+Add the SPDX-License-Identifier tag to rteval_histogram_raw.xsl.
+
+As this file does not contain direct license references it falls under the project license, i.e., GPL v2 or later.
 
 Signed-off-by: Eder Zulian <ezulian@redhat.com>
 ---
- unit-tests/unittest.py | 14 ++------------
- 1 file changed, 2 insertions(+), 12 deletions(-)
- mode change 100755 => 100644 unit-tests/unittest.py
+ rteval/rteval_histogram_raw.xsl | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/unit-tests/unittest.py b/unit-tests/unittest.py
-old mode 100755
-new mode 100644
-index d4fe31e..a60af16
---- a/unit-tests/unittest.py
-+++ b/unit-tests/unittest.py
-@@ -1,16 +1,6 @@
- #!/usr/bin/env python3
--# Copyright (c) 2010 Red Hat, Inc. All rights reserved. This copyrighted material
--# is made available to anyone wishing to use, modify, copy, or
--# redistribute it subject to the terms and conditions of the GNU General
--# Public License v.2.
--#
--# This program is distributed in the hope that it will be useful, but WITHOUT ANY
--# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
--# PARTICULAR PURPOSE. See the GNU General Public License for more details.
--#
--# You should have received a copy of the GNU General Public License
--# along with this program; if not, write to the Free Software
--# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-+# SPDX-License-Identifier: GPL-2.0-only
-+# Copyright (c) 2010 Red Hat, Inc. All rights reserved.
- #
- # Author: David Sommerseth <davids@redhat.com>
- #
+diff --git a/rteval/rteval_histogram_raw.xsl b/rteval/rteval_histogram_raw.xsl
+index 9aadcc3..038419b 100644
+--- a/rteval/rteval_histogram_raw.xsl
++++ b/rteval/rteval_histogram_raw.xsl
+@@ -1,4 +1,5 @@
+ <?xml version="1.0"?>
++<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+ <xsl:stylesheet  version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+   <xsl:output method="text" version="1.0" encoding="UTF-8" indent="no"/>
+ 
 -- 
 2.39.3
 
