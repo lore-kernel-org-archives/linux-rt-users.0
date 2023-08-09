@@ -2,49 +2,49 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2AA4C0015E
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:18:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44CAFC001E0
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:18:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231971AbjHITSi (ORCPT
+        id S232396AbjHITSi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Wed, 9 Aug 2023 15:18:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36470 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46250 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232196AbjHITSf (ORCPT
+        with ESMTP id S232013AbjHITSh (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2023 15:18:35 -0400
+        Wed, 9 Aug 2023 15:18:37 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 666253A9A
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:37 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6E7A33A88
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691608639;
+        s=mimecast20190719; t=1691608619;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=VxH04het41q+l00uW+VeFaZWlYMD+Rs9e6PpJ791LdQ=;
-        b=XhPx9iJCE1oPO7z2/2rUpVLY4Q6FDSC5xuPV0tByPF6AC/fPsN85z+f2L7cxlcpcSQ5kVA
-        8hWIx00dGZ9EyKpd8T2ockIMQo6y+zwEtVetI+45NHl79dCeyVPRFHhW5/B55D1D2/G3uP
-        +i8FB/FGs56rs5zthTtn4nZQ7DsUGKs=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-50-T174Tr_qODqsBYuRmHI7MA-1; Wed, 09 Aug 2023 15:17:17 -0400
-X-MC-Unique: T174Tr_qODqsBYuRmHI7MA-1
+        bh=Jl6rFrrRpnOYy21WhY6pNV3ZpHRvdToMFtc608j9AkY=;
+        b=Se2pLMmuyys16ou5svJXRwaHeHu7zyENO6ogipQpY7NHKGhstsTc27BuijXQjaWu4scLHo
+        0M3f5dot+1Fq5GtDFotD9HowNJYdUZK4fvWBttwiJq+pvY/z9gltp0oswgO9WjjXkyz0SK
+        mNnYN6GO5FeohAASnxmnA84xvdjJ/GA=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-304-EiRtFa2uMj2DxOhqHm24Ww-1; Wed, 09 Aug 2023 15:16:56 -0400
+X-MC-Unique: EiRtFa2uMj2DxOhqHm24Ww-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7DEF4101A59C
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:17:17 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2623428EA6F8
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:16:56 +0000 (UTC)
 Received: from ezulian.remote.csb (unknown [10.39.192.197])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 9141940C6F4E;
-        Wed,  9 Aug 2023 19:17:16 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 3628C40D2839;
+        Wed,  9 Aug 2023 19:16:55 +0000 (UTC)
 From:   Eder Zulian <ezulian@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     jkacur@redhat.com, williams@redhat.com, ezulian@redhat.com
-Subject: [PATCH 46/86] rteval: Replace GPL license notice with SPDX tag in systopology.py
-Date:   Wed,  9 Aug 2023 21:15:08 +0200
-Message-Id: <20230809191548.359938-47-ezulian@redhat.com>
+Subject: [PATCH 42/86] rteval: Replace GPL license notice with SPDX tag in memory.py
+Date:   Wed,  9 Aug 2023 21:15:04 +0200
+Message-Id: <20230809191548.359938-43-ezulian@redhat.com>
 In-Reply-To: <20230809191548.359938-1-ezulian@redhat.com>
 References: <20230809191548.359938-1-ezulian@redhat.com>
 MIME-Version: 1.0
@@ -54,23 +54,23 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Replace GPL boilerplate with SPDX-License-Identifier tag in systopology.py.
+Replace GPL boilerplate with SPDX-License-Identifier tag in memory.py.
 
 Signed-off-by: Eder Zulian <ezulian@redhat.com>
 ---
- rteval/systopology.py | 21 +--------------------
+ rteval/sysinfo/memory.py | 21 +--------------------
  1 file changed, 1 insertion(+), 20 deletions(-)
 
-diff --git a/rteval/systopology.py b/rteval/systopology.py
-index a991e70..aca2dfd 100644
---- a/rteval/systopology.py
-+++ b/rteval/systopology.py
+diff --git a/rteval/sysinfo/memory.py b/rteval/sysinfo/memory.py
+index cc2fa2c..982ca83 100644
+--- a/rteval/sysinfo/memory.py
++++ b/rteval/sysinfo/memory.py
 @@ -1,28 +1,9 @@
  # -*- coding: utf-8 -*-
 +# SPDX-License-Identifier: GPL-2.0-or-later
  #
- #   Copyright 2016 - Clark Williams <williams@redhat.com>
- #   Copyright 2021 - John Kacur <jkacur@redhat.com>
+ #   Copyright 2009 - 2013   Clark Williams <williams@redhat.com>
+ #   Copyright 2012 - 2013   David Sommerseth <davids@redhat.com>
  #
 -#   This program is free software; you can redistribute it and/or modify
 -#   it under the terms of the GNU General Public License as published by
@@ -92,9 +92,9 @@ index a991e70..aca2dfd 100644
 -#   including keys needed to generate an equivalently functional executable
 -#   are deemed to be part of the source code.
 -#
- """ Module for querying cpu cores and nodes """
  
- import os
+ from glob import glob
+ import libxml2
 -- 
 2.39.3
 
