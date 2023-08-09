@@ -2,49 +2,49 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5569EC04A94
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B216BC001E0
 	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:18:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233379AbjHITSr (ORCPT
+        id S233411AbjHITSs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 15:18:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38354 "EHLO
+        Wed, 9 Aug 2023 15:18:48 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45982 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233113AbjHITSo (ORCPT
+        with ESMTP id S232373AbjHITSo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 9 Aug 2023 15:18:44 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5DCB12D7D
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:50 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EC5432D4A
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691608606;
+        s=mimecast20190719; t=1691608679;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=O0IwHnfxrOdYmEctvy5Ra6KRsxvrOEtE9XC5HvEweJU=;
-        b=KtRb/Dt9KjL15+7NfdRCybMCqYjRvEC4cq6/2+E1+56hXQDBz0wIsnlMuMZZE84aCbNYkD
-        q/ghsOE/dnba6Y2f9EnMsjz0NGdzZPKKRf7QmafUlv/bcr0Riy+tRTSzhZXSbbHwZ5GYCk
-        5j/VWwG3vUtFZVdrWWhdC4tKy5b5ceg=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-157-OkyVXIDONy-Q-F-kWit08A-1; Wed, 09 Aug 2023 15:16:45 -0400
-X-MC-Unique: OkyVXIDONy-Q-F-kWit08A-1
+        bh=giZX5x/mWeRbpC5ubbblLAEA84NIP6BAUMLel4k0AlE=;
+        b=QrjMnXghvZyfFMRvlUknH+we1eYXwWD5AqSsIRsR0EozURg0INRyJmHvUkfMmOeAvD6zxV
+        wRSCpVqAVbaufeaosE9LPKPHB+ZBXW4PJXZXdEFV+bdMo2S5DLJif+J0rnGM+ll9AhfyiD
+        UWflfsluUPucTtnKAIiCAPNgZ+nRQt0=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-333-z-QdAx-DP-mEzV2ublZD4Q-1; Wed, 09 Aug 2023 15:17:57 -0400
+X-MC-Unique: z-QdAx-DP-mEzV2ublZD4Q-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08BA9801CF3
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:16:45 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BBB2928EA6EE
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:17:56 +0000 (UTC)
 Received: from ezulian.remote.csb (unknown [10.39.192.197])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 1AE6A40D2839;
-        Wed,  9 Aug 2023 19:16:43 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D778E40C6E8A;
+        Wed,  9 Aug 2023 19:17:55 +0000 (UTC)
 From:   Eder Zulian <ezulian@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     jkacur@redhat.com, williams@redhat.com, ezulian@redhat.com
-Subject: [PATCH 33/86] rteval: Replace GPL license notice with SPDX tag in rtevalConfig.py
-Date:   Wed,  9 Aug 2023 21:14:55 +0200
-Message-Id: <20230809191548.359938-34-ezulian@redhat.com>
+Subject: [PATCH 78/86] rteval: Replace GPL license notice with SPDX tag in remove_rtevalrun
+Date:   Wed,  9 Aug 2023 21:15:40 +0200
+Message-Id: <20230809191548.359938-79-ezulian@redhat.com>
 In-Reply-To: <20230809191548.359938-1-ezulian@redhat.com>
 References: <20230809191548.359938-1-ezulian@redhat.com>
 MIME-Version: 1.0
@@ -54,25 +54,26 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Replace GPL boilerplate with SPDX-License-Identifier tag in rtevalConfig.py.
+Replace GPL boilerplate with SPDX-License-Identifier tag in remove_rtevalrun.
 
 Signed-off-by: Eder Zulian <ezulian@redhat.com>
 ---
- rteval/rtevalConfig.py | 21 +--------------------
+ server/remove_rtevalrun | 21 +--------------------
  1 file changed, 1 insertion(+), 20 deletions(-)
 
-diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
-index d0115a0..030d420 100644
---- a/rteval/rtevalConfig.py
-+++ b/rteval/rtevalConfig.py
-@@ -1,3 +1,4 @@
+diff --git a/server/remove_rtevalrun b/server/remove_rtevalrun
+index 7d83f71..8772b33 100755
+--- a/server/remove_rtevalrun
++++ b/server/remove_rtevalrun
+@@ -1,4 +1,5 @@
+ #!/usr/bin/python3 -tt
 +# SPDX-License-Identifier: GPL-2.0-or-later
  #
- #   rteval - script for evaluating platform suitability for RT Linux
+ #   remove_rtevalrun
+ #   A script intended to be run on the database server, which
+@@ -6,26 +7,6 @@
  #
-@@ -10,26 +11,6 @@
- #   Copyright 2009,2010   Clark Williams <williams@redhat.com>
- #   Copyright 2009,2010   David Sommerseth <davids@redhat.com>
+ #   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
  #
 -#   This program is free software; you can redistribute it and/or modify
 -#   it under the terms of the GNU General Public License as published by
@@ -84,9 +85,9 @@ index d0115a0..030d420 100644
 -#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 -#   GNU General Public License for more details.
 -#
--#   You should have received a copy of the GNU General Public License
--#   along with this program; if not, write to the Free Software
--#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+-#   You should have received a copy of the GNU General Public License along
+-#   with this program; if not, write to the Free Software Foundation, Inc.,
+-#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 -#
 -#   For the avoidance of doubt the "preferred form" of this code is one which
 -#   is in an open unpatent encumbered format. Where cryptographic key signing
@@ -94,9 +95,9 @@ index d0115a0..030d420 100644
 -#   including keys needed to generate an equivalently functional executable
 -#   are deemed to be part of the source code.
 -#
- import os
+ 
  import sys
- import configparser
+ import getpass
 -- 
 2.39.3
 
