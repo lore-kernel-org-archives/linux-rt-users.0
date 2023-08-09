@@ -2,75 +2,76 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 132FDC04FE0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AEFE1C001DE
 	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:24:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233836AbjHITYz (ORCPT
+        id S233971AbjHITY4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 15:24:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44656 "EHLO
+        Wed, 9 Aug 2023 15:24:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45068 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233831AbjHITYk (ORCPT
+        with ESMTP id S233907AbjHITYk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 9 Aug 2023 15:24:40 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CFD1930FD
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:15 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AB30D2D7F
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691608601;
+        s=mimecast20190719; t=1691608638;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=R3J7zsVsdBf5SkDzIogMjFuT6skVyNqC8eI0DdddJ5E=;
-        b=WTU2jZ3jm0rA1IiK+8V+6GvVSaOR7GzcYwtFsIQkfJaVNNc7C0e9rXoO/nQg/aSHtaDv1o
-        E980zY4N/yQMpVwxzYOLm09LPL8/qHNH+d69xaYJR+DxXtY4WfINPyr3CscOL2vLxDP/VW
-        NLgiEcRiHfOS89ClAIVsV1uVzq5ViRg=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-110-PUIDFPFlOTyeJ-7pYqR-sA-1; Wed, 09 Aug 2023 15:16:40 -0400
-X-MC-Unique: PUIDFPFlOTyeJ-7pYqR-sA-1
+        bh=i5cotUFGOCHqIy3vznQT/RZWXdqiZ9Z5mM1+bX6N/tE=;
+        b=biroKuR6V0lojdtez9odg4HjXVnNIAx9PLBMVfKe39EmeJcVN2mKykJc51QgklNtevlQx9
+        23GBFRKMbBLHqu4Y4iJAz140drVOqiclIFqbXx2GKuPWVjEV96iJCNIqFhEl0ZIJ1VrtiU
+        HTJYGtZJE1+aJIRzWfLBjoJqd2dT/mc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-596-m0BeQHI_POOedn7OSltvxg-1; Wed, 09 Aug 2023 15:17:16 -0400
+X-MC-Unique: m0BeQHI_POOedn7OSltvxg-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 09B141C07259
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:16:40 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 496A3185A78B
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:17:16 +0000 (UTC)
 Received: from ezulian.remote.csb (unknown [10.39.192.197])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 215D540C125C;
-        Wed,  9 Aug 2023 19:16:38 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id F070E40D2839;
+        Wed,  9 Aug 2023 19:16:58 +0000 (UTC)
 From:   Eder Zulian <ezulian@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     jkacur@redhat.com, williams@redhat.com, ezulian@redhat.com
-Subject: [PATCH 29/86] rteval: Replace GPL license notice with SPDX tag in kcompile.py
-Date:   Wed,  9 Aug 2023 21:14:51 +0200
-Message-Id: <20230809191548.359938-30-ezulian@redhat.com>
+Subject: [PATCH 45/86] rteval: Replace GPL license notice with SPDX tag in tools.py
+Date:   Wed,  9 Aug 2023 21:15:07 +0200
+Message-Id: <20230809191548.359938-46-ezulian@redhat.com>
 In-Reply-To: <20230809191548.359938-1-ezulian@redhat.com>
 References: <20230809191548.359938-1-ezulian@redhat.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Replace GPL boilerplate with SPDX-License-Identifier tag in kcompile.py.
+Replace GPL boilerplate with SPDX-License-Identifier tag in tools.py.
 
 Signed-off-by: Eder Zulian <ezulian@redhat.com>
 ---
- rteval/modules/loads/kcompile.py | 21 +--------------------
+ rteval/sysinfo/tools.py | 21 +--------------------
  1 file changed, 1 insertion(+), 20 deletions(-)
 
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index 316791e..8be79ce 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
+diff --git a/rteval/sysinfo/tools.py b/rteval/sysinfo/tools.py
+index aa00b3d..ebeb15d 100644
+--- a/rteval/sysinfo/tools.py
++++ b/rteval/sysinfo/tools.py
 @@ -1,28 +1,9 @@
+ # -*- coding: utf-8 -*-
 +# SPDX-License-Identifier: GPL-2.0-or-later
+ """ This Module consists of the single function getcmdpath() """
  #
- #   Copyright 2009 - 2013   Clark Williams <williams@redhat.com>
- #   Copyright 2012 - 2013   David Sommerseth <davids@redhat.com>
- #   Copyright 2014 - 2017   Clark Williams <williams@redhat.com>
+ #   Copyright 2012 - 2013   Raphaël Beamonte <raphael.beamonte@gmail.com>
  #
 -#   This program is free software; you can redistribute it and/or modify
 -#   it under the terms of the GNU General Public License as published by
@@ -93,8 +94,8 @@ index 316791e..8be79ce 100644
 -#   are deemed to be part of the source code.
 -#
  
- import sys
  import os
+ import os.path
 -- 
 2.39.3
 
