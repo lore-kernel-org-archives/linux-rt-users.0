@@ -2,67 +2,81 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9389AC41513
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 08:17:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C91F4C41513
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 10:56:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230351AbjHIIRr (ORCPT
+        id S232501AbjHIK43 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 04:17:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38222 "EHLO
+        Wed, 9 Aug 2023 06:56:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33558 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230295AbjHIIRq (ORCPT
+        with ESMTP id S232375AbjHIK42 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2023 04:17:46 -0400
+        Wed, 9 Aug 2023 06:56:28 -0400
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AEB82170B;
-        Wed,  9 Aug 2023 01:17:45 -0700 (PDT)
-Date:   Wed, 9 Aug 2023 10:17:38 +0200
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54E4B1FF6;
+        Wed,  9 Aug 2023 03:56:27 -0700 (PDT)
+Date:   Wed, 9 Aug 2023 12:56:23 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1691569063;
+        s=2020; t=1691578585;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=5byFkB6AEl/SCO6D7dce++lzSb3+3EftvzA1txVTvgY=;
-        b=X92I64+L0ZzpoiFWx0pObA41nlOqyyx2Sey7L2wkLFLznc3MUA0/+S6D4FgL9zO9npX7y1
-        9OxQuIUd81wdfxIhK0jN7ZXVCdK+o6c6S6ahmel0fo5OKBC+nYzNiE6zgh+z9HjjTQCkbV
-        driVvbaBhHIyRZohg6rbjUd7fiVEvamYIZPWuFUDG6gKXOIYBIflL1G5ra4PEgUmbVtrno
-        HrZcsc1xB8CTipoNcAE2S8w64MKffv4hrI7Iy+88AuVlrtqYVD5x8wReUFgk5OtX/tPEDQ
-        snABdV9PZzdTsvNcROQcOXfpbH1dH3McA0wLe/unFAi4zKeWSzza0/JsDuO0uw==
+        bh=7otBgQNwEPlGGa7A34K/b+UVvvmPFarUTBRcW4oPvA4=;
+        b=QLYmo36x2dYs13WAINYDsixXwTkt4dYB9Z6i4Gw61GUY4iIZUapC5EDNxvM71T3xPjGLkq
+        tG1W2JIzxJqoWl0WrPdopEQ8lSALan7+VyLBc4Fu8Oj6ChOt8SsZ04Z5s/0OzrK0TnSf9I
+        vn3sEZ3rmSZ3IqDB5XgiD/F7xh0qDl/FpXufLyAten1m8GO6v0/xTUG5PfudBWT44/G2aV
+        i72oAjjcw7OwUXzxXPCrSoAIziCThCd/YyejD9/vk7oezxqRyOJgTrIc+1r2wBYRa44bld
+        hvIcw7IiCnjRS0+xRE9U8mhskhvYsgPhKsIJ8TzoKlr1HtJf30VY08Uv/1l2ZQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1691569063;
+        s=2020e; t=1691578585;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=5byFkB6AEl/SCO6D7dce++lzSb3+3EftvzA1txVTvgY=;
-        b=sw5Lzb9ZWTgYfnqDTyzvhlaKN4lEURUKjdmxtWiedrZ2yYHS/RmOIMbQ4PdLHmDE7phbNI
-        oYxkeARO8WtPKQDQ==
+        bh=7otBgQNwEPlGGa7A34K/b+UVvvmPFarUTBRcW4oPvA4=;
+        b=CO/odTV2XRsNcMLrQW/O+7oYfRENV3nfWwFs96dBAyAm3shjrK083wze+INr5yXtWTZsLn
+        HSdiYzIjnHVPDNDg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Mark Gross <markgross@kernel.org>
-Subject: Re: [PATCH RT 0/3] Linux v4.14.320-rt152-rc1
-Message-ID: <20230809081738.qhWKi8Os@linutronix.de>
-References: <20230808163520.305842-1-lgoncalv@redhat.com>
+To:     Wander Lairson Costa <wander@redhat.com>
+Cc:     Paolo Abeni <pabeni@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, juri.lelli@redhat.com
+Subject: Re: Splat in kernel RT while processing incoming network packets
+Message-ID: <20230809105623.DSEPQ9LC@linutronix.de>
+References: <bkw2aao62e3ppg7332dbhycgzdwr7k5brezj3bcij6zewphmnd@eigmbvjh6wuu>
+ <20230703142908.RcxjjF_E@linutronix.de>
+ <x6d2ae4ss4wvvuib2hmop6ztysjsbyno7gbjkyek5xng2kmgyd@yfmnfognlj5n>
+ <20230704100527.75hMNZ35@linutronix.de>
+ <a4ed5a8cc35f34a3cb11aded76b0f289c658c1a7.camel@redhat.com>
+ <20230704144749.wJUlub6-@linutronix.de>
+ <6cmltsaeqjcekglutpnp4lxyqnjng5m4w73ae4btwrivuxvptf@zmhahab7643i>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20230808163520.305842-1-lgoncalv@redhat.com>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <6cmltsaeqjcekglutpnp4lxyqnjng5m4w73ae4btwrivuxvptf@zmhahab7643i>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-08-08 13:35:17 [-0300], Luis Claudio R. Goncalves wrote:
-> Dear RT Folks,
-> 
-> This is the RT stable review cycle of patch 4.14.320-rt152-rc1.
-> 
-> Please scream at me if I messed something up. Please test the patches
-> too.
+On 2023-07-05 12:59:28 [-0300], Wander Lairson Costa wrote:
+> Maybe, under RT, some softirq should run in the context of the "target"
+> process. For NET_RX, for example, the softirq's would run in the context
+> of the packet recipient process. Each task_struct would have a list of
+> pending softirq, which would be checked in a few points, like on scheduli=
+ng,
+> when the process enters in the kernel, softirq raise, etc. The default
+> target process would be ksoftirqd. Does this idea make sense?
 
-Looks good, just a nitpick: If you add 2/3 you don't need 1/3.
+We had something similar. The softirq runs in the context of the task
+that raised it. So the networking driver raised NET_RX and it was
+processed in its context (and still is). The only difference now is that
+we no longer have a task based "raised bit" but a per-CPU.
+
+For RPS you already pulled the skb from the NIC, you need to process it
+and this isn't handled in the task's context but on a specific CPU.
+
+Let me look at per-CPU backlog thread or ripping the warning out=E2=80=A6
 
 Sebastian
