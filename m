@@ -2,49 +2,49 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D163DC0015E
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:18:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DDB89C001DE
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:18:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233371AbjHITSu (ORCPT
+        id S233481AbjHITSv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 15:18:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46236 "EHLO
+        Wed, 9 Aug 2023 15:18:51 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46740 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233241AbjHITSp (ORCPT
+        with ESMTP id S232673AbjHITSp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 9 Aug 2023 15:18:45 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 013E826B6
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:46 -0700 (PDT)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9AF9D2127
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:17:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691608660;
+        s=mimecast20190719; t=1691608652;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=xdilsvYVVZ1iur+GjTP103VbDMlHZZP/E1SDeLF4gw8=;
-        b=IcnRCEK5TB3GwnENjpV8I+auKhWjZ6ZLx1lwqvCLy7FvZKjwBX6a7FfX1eFFWMuTjHZA5d
-        vKkbPyfZpWR/BEB5iSepJ57si74m8YueBXT+aseGl4l4pMFdsP1e85TME6y7VreQI7hn1O
-        jcm1FFqzZQ5+PLeAwtZsDxH6F/oPyrY=
+        bh=U9++SGIp0tatJ0x5BK+aIPvIWjgnaNEdwSYg2yREoSQ=;
+        b=ZVVzuIncVdRjho+Uw8/6bC43n2Jxh+NsdyKeBbC9O6w2UpqLwgaYizM1ZvwzZEmyozSR9C
+        sbOy+nI291Za2FbVezFbwP5BqyjjeEI1I9IBkE6df/qCtIgYCIbnJKwkh4ZYhTNhxwA9OI
+        4dKNEYJMqyw5OQyITJMLv9xgBdkeHi8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-660-Ws0lpxIrMMmDwCITSUo5iw-1; Wed, 09 Aug 2023 15:17:38 -0400
-X-MC-Unique: Ws0lpxIrMMmDwCITSUo5iw-1
+ us-mta-97-Oi66_7TeO4mjKfq71997Iw-1; Wed, 09 Aug 2023 15:17:31 -0400
+X-MC-Unique: Oi66_7TeO4mjKfq71997Iw-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 71BCF185A793
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:17:38 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0928985CCE6
+        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:17:31 +0000 (UTC)
 Received: from ezulian.remote.csb (unknown [10.39.192.197])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 7E68740C6F4E;
-        Wed,  9 Aug 2023 19:17:37 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 1264140C125C;
+        Wed,  9 Aug 2023 19:17:29 +0000 (UTC)
 From:   Eder Zulian <ezulian@redhat.com>
 To:     linux-rt-users@vger.kernel.org
 Cc:     jkacur@redhat.com, williams@redhat.com, ezulian@redhat.com
-Subject: [PATCH 63/86] rteval: Replace GPL license notice with SPDX tag in eurephia_values_struct.h
-Date:   Wed,  9 Aug 2023 21:15:25 +0200
-Message-Id: <20230809191548.359938-64-ezulian@redhat.com>
+Subject: [PATCH 57/86] rteval: Replace GPL license notice with SPDX tag in configparser.c
+Date:   Wed,  9 Aug 2023 21:15:19 +0200
+Message-Id: <20230809191548.359938-58-ezulian@redhat.com>
 In-Reply-To: <20230809191548.359938-1-ezulian@redhat.com>
 References: <20230809191548.359938-1-ezulian@redhat.com>
 MIME-Version: 1.0
@@ -54,23 +54,25 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Replace GPL boilerplate with SPDX-License-Identifier tag in eurephia_values_struct.h.
+Replace GPL boilerplate with SPDX-License-Identifier tag in configparser.c.
 
 Signed-off-by: Eder Zulian <ezulian@redhat.com>
 ---
- server/parser/eurephia_values_struct.h | 15 +--------------
+ server/parser/configparser.c | 15 +--------------
  1 file changed, 1 insertion(+), 14 deletions(-)
 
-diff --git a/server/parser/eurephia_values_struct.h b/server/parser/eurephia_values_struct.h
-index 7eb8b74..6ea530a 100644
---- a/server/parser/eurephia_values_struct.h
-+++ b/server/parser/eurephia_values_struct.h
-@@ -1,22 +1,9 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
- /* eurephia_values.h  --  eurephiaVALUES struct typedef
+diff --git a/server/parser/configparser.c b/server/parser/configparser.c
+index 3b95c20..4eaf318 100644
+--- a/server/parser/configparser.c
++++ b/server/parser/configparser.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-only
+ /*  configparser.c - Read and parse config files
   *
-  *  GPLv2 only - Copyright (C) 2008
-  *               David Sommerseth <dazo@users.sourceforge.net>
+  *  This code is based on the fragments from the eurephia project.
+@@ -5,20 +6,6 @@
+  *  GPLv2 Copyright (C) 2009
+  *  David Sommerseth <davids@redhat.com>
   *
 - *  This program is free software; you can redistribute it and/or
 - *  modify it under the terms of the GNU General Public License
