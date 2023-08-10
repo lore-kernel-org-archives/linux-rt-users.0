@@ -2,49 +2,48 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6616EC001B0
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Aug 2023 19:52:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CDA9CC001DE
+	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Aug 2023 09:02:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229881AbjHITwa (ORCPT
+        id S233046AbjHJJCS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 9 Aug 2023 15:52:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55874 "EHLO
+        Thu, 10 Aug 2023 05:02:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56328 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229478AbjHITwa (ORCPT
+        with ESMTP id S229820AbjHJJCR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2023 15:52:30 -0400
+        Thu, 10 Aug 2023 05:02:17 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2394FCE
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 12:51:43 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 719B62115
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Aug 2023 02:01:30 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1691610702;
+        s=mimecast20190719; t=1691658089;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding;
-        bh=s/rks1o0E/kOPM8b88bWtSmH/gMw6P24fETtoc5hpl0=;
-        b=KEOVh1ZwjIYrnhaHrzeIoGFzvCYqnJQxWhOtO+w5hG4pQiJSIyRRYlk0yXIgAfc8zaG5hN
-        iONSOmHiFuS4YwtiOOmAvBTJTJtqyK/VSLpnaMHkMB06c75WVeJZ5YT/5xJFq/wFVfWtZu
-        xZTQpVSXmRBRb2L8ynhd9u0SLF1zwwU=
+        bh=G7DsU+JM1+qVisOKCfMjCLMQ1ZKWjJFBR+4H3UcrSYM=;
+        b=B1cEyUAuFtc/LrUbePbS7KO9zyWRZ/4LpilFSC9/feuYpm/x8X241bo7+ugvnYK6a4Mt0g
+        Oj1J+1OcFtSUGvdlKlvivI0d9hFeam4iIW4YdgSa5mdHFf0d1PQZ6azXAOHw+enlChfWt4
+        lKwPLNyB3zQoOrj/tt8YqdWTZAtygz4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-178-RMRYrzXtORyFBJWCs4Qt2g-1; Wed, 09 Aug 2023 15:48:32 -0400
-X-MC-Unique: RMRYrzXtORyFBJWCs4Qt2g-1
+ us-mta-677-Gmnlb7ppOoOqCu6sHDXDkw-1; Thu, 10 Aug 2023 05:01:28 -0400
+X-MC-Unique: Gmnlb7ppOoOqCu6sHDXDkw-1
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 356CA800CA6
-        for <linux-rt-users@vger.kernel.org>; Wed,  9 Aug 2023 19:48:32 +0000 (UTC)
-Received: from ashelat.remote.csb (unknown [10.22.32.138])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 01049492C13;
-        Wed,  9 Aug 2023 19:48:31 +0000 (UTC)
-From:   Anubhav Shelat <ashelat@redhat.com>
-To:     jkacur@redhat.com
-Cc:     linux-rt-users@vger.kernel.org, kcarcia@redhat.com,
-        williams@redhat.com, Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH v2] rt-error: added conditional to info() and debug()
-Date:   Wed,  9 Aug 2023 15:48:11 -0400
-Message-Id: <20230809194810.169162-1-ashelat@redhat.com>
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3EACF85C6E2
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Aug 2023 09:01:28 +0000 (UTC)
+Received: from fedora.redhat.com (unknown [10.45.224.106])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 93FC2401E6A;
+        Thu, 10 Aug 2023 09:01:27 +0000 (UTC)
+From:   Tomas Glozar <tglozar@redhat.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     jkacur@redhat.com, Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH 0/3] rteval: Add cmdline option to run measurements on isolcpus by default
+Date:   Thu, 10 Aug 2023 11:01:20 +0200
+Message-ID: <20230810090123.151924-1-tglozar@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
@@ -52,245 +51,24 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This change was motivated by the desire to clean up the output of
-cyclicdeadline, and include the extra info only when requested.
+A common usecase for rteval is estimating the performance of workloads
+running on isolated CPUs. rteval does not run measurement on isolated CPUs by
+default (i.e. without --measurement-cpulist specified).
 
-Instead of having to check if the program is in debugging mode, the
-rt-error functions will automatically check by passing in an argument.
+Add option --measurement-run-on-isolcpus that adds isolated CPUs to the default
+cpulist together with rteval.conf [measurement] option run-on-isolcpus with
+the same effect.
 
-The other changes in this patch edit the function calls to debug() and
-info() to work with the changes in rt-error.
+Tomas Glozar (3):
+  rteval: Allow arguments specific to module group
+  rteval: Add run_on_isolcpus option to measurements
+  rteval: Support run-on-isolcpus in cyclictest
 
-Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
----
- src/cyclictest/cyclictest.c         | 13 +++++--------
- src/include/rt-error.h              |  4 ++--
- src/lib/rt-error.c                  | 28 ++++++++++++++++------------
- src/lib/rt-utils.c                  |  2 +-
- src/pi_tests/pi_stress.c            |  4 ++--
- src/sched_deadline/cyclicdeadline.c | 26 +++++++++++++++++++-------
- 6 files changed, 45 insertions(+), 32 deletions(-)
+ rteval/modules/__init__.py               | 18 ++++++++++--------
+ rteval/modules/measurement/__init__.py   | 17 ++++++++++++++---
+ rteval/modules/measurement/cyclictest.py | 12 ++++++++++--
+ 3 files changed, 34 insertions(+), 13 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 7b0f80fe5a1e..4a7108ea2c8f 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1950,10 +1950,8 @@ int main(int argc, char **argv)
- 		for (k=0; k < times; k++)
- 			clock_gettime(clock, &time[k]);
- 
--		if (ct_debug) {
--			info("For %d consecutive calls to clock_gettime():\n", times);
--			info("time, delta time (nsec)\n");
--		}
-+		info(ct_debug, "For %d consecutive calls to clock_gettime():\n", times);
-+		info(ct_debug, "time, delta time (nsec)\n");
- 
- 		prev = time[0];
- 		for (k=1; k < times; k++) {
-@@ -1964,10 +1962,9 @@ int main(int argc, char **argv)
- 			if (diff && (diff < min_non_zero_diff))
- 				min_non_zero_diff = diff;
- 
--			if (ct_debug)
--				info("%ld.%06ld  %5llu\n",
--				     time[k].tv_sec, time[k].tv_nsec,
--				     (unsigned long long)diff);
-+			info(ct_debug, "%ld.%06ld  %5llu\n",
-+					time[k].tv_sec, time[k].tv_nsec,
-+					(unsigned long long)diff);
- 		}
- 
- 		free(time);
-diff --git a/src/include/rt-error.h b/src/include/rt-error.h
-index d205e49ff041..7c4a9db55a52 100644
---- a/src/include/rt-error.h
-+++ b/src/include/rt-error.h
-@@ -11,8 +11,8 @@ void err_exit(int err, char *fmt, ...) __attribute__((noreturn));
- void err_msg(char *fmt, ...);
- void err_msg_n(int err, char *fmt, ...);
- void err_quit(char *fmt, ...) __attribute__((noreturn));
--void debug(char *fmt, ...);
--void info(char *fmt, ...);
-+void debug(int enable, char *fmt, ...);
-+void info(int enable, char *fmt, ...);
- void warn(char *fmt, ...);
- void fatal(char *fmt, ...) __attribute__((noreturn));
- void err_doit(int err, const char *fmt, va_list ap);
-diff --git a/src/lib/rt-error.c b/src/lib/rt-error.c
-index 616f70b044e0..9f0827530ccb 100644
---- a/src/lib/rt-error.c
-+++ b/src/lib/rt-error.c
-@@ -47,24 +47,28 @@ void err_quit(char *fmt, ...)
- 	exit(1);
- }
- 
--void debug(char *fmt, ...)
-+void debug(int enable, char *fmt, ...)
- {
--	va_list ap;
-+	if (enable) {
-+		va_list ap;
- 
--	va_start(ap, fmt);
--	fputs("DEBUG: ", stderr);
--	err_doit(0, fmt, ap);
--	va_end(ap);
-+		va_start(ap, fmt);
-+		fputs("DEBUG: ", stderr);
-+		err_doit(0, fmt, ap);
-+		va_end(ap);
-+	}
- }
- 
--void info(char *fmt, ...)
-+void info(int enable, char *fmt, ...)
- {
--	va_list ap;
-+	if (enable) {
-+		va_list ap;
- 
--	va_start(ap, fmt);
--	fputs("INFO: ", stderr);
--	err_doit(0, fmt, ap);
--	va_end(ap);
-+		va_start(ap, fmt);
-+		fputs("INFO: ", stderr);
-+		err_doit(0, fmt, ap);
-+		va_end(ap);
-+	}
- }
- 
- void warn(char *fmt, ...)
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 6c0235d0d2e0..14dac5608037 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -109,7 +109,7 @@ int mount_debugfs(char *path)
- 	/* if it's already mounted just return */
- 	prefix = get_debugfileprefix();
- 	if (strlen(prefix) != 0) {
--		info("debugfs mountpoint: %s\n", prefix);
-+		info(1, "debugfs mountpoint: %s\n", prefix);
- 		return 0;
- 	}
- 	if (!mountpoint)
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index cba1ad92ac2d..9ce7d66751da 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -71,9 +71,9 @@
- #define DOWN_ONE "\033[1B"
- 
- #define pi_info(fmt, arg...) \
--	do { if (verbose) info(fmt, ## arg); } while (0)
-+	do { info(verbose, fmt, ## arg); } while (0)
- #define pi_debug(fmt, arg...) \
--	do { if (debugging) debug(fmt, ## arg); } while (0)
-+	do { debug(debugging, fmt, ## arg); } while (0)
- #define pi_error(fmt, arg...) \
- 	do { err_msg(fmt, ## arg); have_errors = 1; } while (0)
- 
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 39de1b799458..ef00a0d6b2dd 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -80,6 +80,8 @@ struct sched_data {
- };
- 
- static int shutdown;
-+static int info_enable;
-+static int debug_enable;
- static int tracelimit;
- static int trace_marker;
- static pthread_mutex_t break_thread_id_lock = PTHREAD_MUTEX_INITIALIZER;
-@@ -698,6 +700,8 @@ static void usage(int error)
- 	       "-q       --quiet           print a summary only on exit\n"
- 	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
- 	       "         --tracemark       write a trace mark when -b latency is exceeded\n"
-+		   "		 --debug		   Print debugging info for cyclicdeadline\n"
-+		   "		 --verbose		   Print useful information about the test\n"
- 	       );
- 	exit(error);
- }
-@@ -794,8 +798,8 @@ void *run_deadline(void *data)
- 	u64 period;
- 	int ret;
- 
--	printf("deadline thread %ld\n", tid);
--
-+	debug(debug_enable, "deadline thread %ld\n", tid);
-+	// set up for each measurment thread
- 	stat->tid = tid;
- 
- 	ret = sched_getattr(0, &attr, sizeof(attr), 0);
-@@ -811,7 +815,7 @@ void *run_deadline(void *data)
- 	attr.sched_runtime = sd->runtime_us * 1000;
- 	attr.sched_deadline = sd->deadline_us * 1000;
- 
--	printf("thread[%d] runtime=%lldus deadline=%lldus\n",
-+	debug(debug_enable, "thread[%d] runtime=%lldus deadline=%lldus\n",
- 	      gettid(), sd->runtime_us, sd->deadline_us);
- 
- 	ret = sched_setattr(0, &attr, 0);
-@@ -1083,7 +1087,7 @@ static void write_stats(FILE *f, void *data)
- enum options_values {
- 	OPT_AFFINITY=1, OPT_DURATION, OPT_HELP, OPT_INTERVAL,
- 	OPT_JSON, OPT_STEP, OPT_THREADS, OPT_QUIET,
--	OPT_BREAKTRACE, OPT_TRACEMARK,
-+	OPT_BREAKTRACE, OPT_TRACEMARK, OPT_INFO, OPT_DEBUG,
- };
- 
- int main(int argc, char **argv)
-@@ -1124,6 +1128,8 @@ int main(int argc, char **argv)
- 			{ "quiet",	no_argument,		NULL,	OPT_QUIET },
- 			{ "breaktrace",       required_argument, NULL, OPT_BREAKTRACE },
- 			{ "tracemark",	     no_argument,	NULL, OPT_TRACEMARK },
-+			{ "verbose",	no_argument,	NULL,	OPT_INFO},
-+			{ "debug",	no_argument, 	NULL, 	OPT_DEBUG},
- 			{ NULL,		0,			NULL,	0   },
- 		};
- 		c = getopt_long(argc, argv, "a::c:D:hi:s:t:b:q", options, NULL);
-@@ -1176,6 +1182,12 @@ int main(int argc, char **argv)
- 		case OPT_TRACEMARK:
- 			trace_marker = 1;
- 			break;
-+		case OPT_INFO:
-+			info_enable = 1;
-+			break;
-+		case OPT_DEBUG:
-+			debug_enable = 1;
-+			break;
- 		default:
- 			usage(1);
- 		}
-@@ -1250,7 +1262,7 @@ int main(int argc, char **argv)
- 		sd->runtime_us = runtime;
- 		sd->deadline_us = interval;
- 
--		printf("interval: %lld:%lld\n", sd->runtime_us, sd->deadline_us);
-+		info(info_enable, "interval: %lld:%lld\n", sd->runtime_us, sd->deadline_us);
- 
- 		/* Make sure that we can make our deadlines */
- 		start_period = get_time_us();
-@@ -1260,7 +1272,7 @@ int main(int argc, char **argv)
- 			fatal("Failed to perform task within runtime: Missed by %lld us\n",
- 			      end_period - start_period - sd->runtime_us);
- 
--		printf("  Tested at %lldus of %lldus\n",
-+		info(info_enable, "  Tested at %lldus of %lldus\n",
- 		       end_period - start_period, sd->runtime_us);
- 
- 		interval += step;
-@@ -1303,7 +1315,7 @@ int main(int argc, char **argv)
- 		system("cat /sys/fs/cgroup/cpuset/my_cpuset/tasks");
- 	}
- 
--	printf("main thread %d\n", gettid());
-+	debug(debug_enable, "main thread %d\n", gettid());
- 
- 	if (shutdown)
- 		fatal("failed to setup child threads at step 2");
 -- 
-2.39.3
+2.41.0
 
