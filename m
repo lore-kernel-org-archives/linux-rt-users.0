@@ -2,169 +2,102 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E860C001B0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Aug 2023 19:09:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C694AC001B0
+	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Aug 2023 09:53:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234929AbjHJTJC (ORCPT
+        id S234426AbjHKJxX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 10 Aug 2023 15:09:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41266 "EHLO
+        Fri, 11 Aug 2023 05:53:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32938 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231231AbjHJTJB (ORCPT
+        with ESMTP id S231476AbjHKJxW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 10 Aug 2023 15:09:01 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3DD0F90;
-        Thu, 10 Aug 2023 12:09:01 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+        Fri, 11 Aug 2023 05:53:22 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D26E22D52
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Aug 2023 02:52:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1691747565;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=JIBQNdn5gJw9CfPBmwfXP8HD/eN8kJoHKJNetKw23pk=;
+        b=I8P+ny20Hq2PmfUYcISWzjNTebLgtjexaDbTLz8LK1XFwbbfRd8xePlGFIzIKE7txp/k4v
+        nCD93fTKZPYKoGay3TPJszgZ4ks//6q94M575o/4yIPKJukmLIM8uXC+dvo3TPMRoGw8OB
+        NZgbR2jTSuZafVrlFRNVGeBIFdG44aE=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-317-1hMbateMMJuDMnJmpZtIDg-1; Fri, 11 Aug 2023 05:52:43 -0400
+X-MC-Unique: 1hMbateMMJuDMnJmpZtIDg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id C5A3F666A3;
-        Thu, 10 Aug 2023 19:09:00 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 2229BC433C7;
-        Thu, 10 Aug 2023 19:09:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1691694540;
-        bh=Oi7cQ2Coc+w2eRImA7LKy7Tv7W4x0/pEx/hFmFxWWY4=;
-        h=From:Date:Subject:To:Cc:Reply-To:From;
-        b=jqUWcBesFjkeEEvNGvxmlBPgNV4l5kJJXzmwfZUtOO2h7Voaq2+KUwxqFgxxHUcIM
-         OlX2P3gLDwOE4uwawibqQ1rWZRs6iWRY0qLThpoMY17NXhd6oLQ8A+4nf/sTQCCpYY
-         OG/fpZvT7WHqDau8s0CrZT2PpZfG8OAcrHrAF5H96tS8cll2RR75tiRPZFBOtEhhyV
-         HwPpB4V8YNIRU9OiKa5JP25ZtWWsAMoqsuqYkvGD4JTKTib4E+7t8EOJ1exYMi3O+3
-         XLclUcu42FDLf/MDaZqp7UqYNIlDSJpI986sFQ3D3M0crLBrawi3SCuWZlpIU1A7mx
-         lhWja/BCfbIdQ==
-Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-        by smtp.lore.kernel.org (Postfix) with ESMTP id F35CEC001E0;
-        Thu, 10 Aug 2023 19:08:59 +0000 (UTC)
-From:   Zachary Goldstein via B4 Relay 
-        <devnull+zachary.goldstein.concurrent-rt.com@kernel.org>
-Date:   Thu, 10 Aug 2023 15:05:34 -0400
-Subject: [PATCH RT] mm/memcg: Fix recursive locking on refill_stock() on
- PREEMPT_RT
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 801941C07547
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Aug 2023 09:52:43 +0000 (UTC)
+Received: from fedora.redhat.com (unknown [10.45.224.153])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id D99082026D4B;
+        Fri, 11 Aug 2023 09:52:42 +0000 (UTC)
+From:   Tomas Glozar <tglozar@redhat.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     jkacur@redhat.com, Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH v2 1/3] rteval: Allow arguments specific to module group
+Date:   Fri, 11 Aug 2023 11:52:26 +0200
+Message-ID: <20230811095228.200772-2-tglozar@redhat.com>
+In-Reply-To: <20230811095228.200772-1-tglozar@redhat.com>
+References: <20230811095228.200772-1-tglozar@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20230809-memcg-fix-recursive-lock-v1-1-0870815484c6@concurrent-rt.com>
-X-B4-Tracking: v=1; b=H4sIAP001WQC/x2NQQ6CMBBFr0Jm7ZgCMYLHMO6Mi3b8QqMUMsWGh
- HB3i8uXl//+ShHqEelSrKRIPvoxZCgPBUlvQwf2z8xUmao2jWl5wCAdv/zCCvlq9An8GeXNEGl
- EHM5tXVOeOxvBTm2Qfg+k07E0rDMHLPPuJ0Wu/K/vdL3RY9t+pvjoHI4AAAA=
-To:     linux-mm@kvack.org, cgroups@vger.kernel.org
-Cc:     Johannes Weiner <hannes@cmpxchg.org>,
-        Michal Hocko <mhocko@kernel.org>,
-        Vladimir Davydov <vdavydov.dev@gmail.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Zachary Goldstein <zachary.goldstein@concurrent-rt.com>
-X-Mailer: b4 0.12.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1691694539; l=3174;
- i=zachary.goldstein@concurrent-rt.com; s=20230809; h=from:subject:message-id;
- bh=iGCY5O8pU90PvwzpSq10zAF0Xf00Oq3bpeBOxq/cAek=;
- b=0aJq6ecGEBSIY9wfC7XKUKq9WBhQh5kGwH74a64bwReInzEPOAdFARO74YqaxHYeNuO34f2AC
- CjAntrJQVhPBUN9HNANwJ+l3vOvu1T13Y/zZGi+XgFi0NP+BRcVYOjS
-X-Developer-Key: i=zachary.goldstein@concurrent-rt.com; a=ed25519;
- pk=GLF18lQ96tRolyWMpDtJzDQ9bi7+1+rMHript5TFdSg=
-X-Endpoint-Received: by B4 Relay for zachary.goldstein@concurrent-rt.com/20230809 with auth_id=74
-X-Original-From: Zachary Goldstein <zachary.goldstein@concurrent-rt.com>
-Reply-To: <zachary.goldstein@concurrent-rt.com>
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Zachary Goldstein <zachary.goldstein@concurrent-rt.com>
+Return grparser from ModuleContainer.SetupModuleOptions, which allows it
+to be used to setup additional options in *Modules class.
 
-5.10 suffers from the same recursive locking issue that
-commit a848d25434de4 ("mm/memcg: Opencode the inner part of
-obj_cgroup_uncharge_pages() in drain_obj_stock()") fixes.
-
-Modified description from the commit to reflect this patch changes:
-
-Provide the inner part of refill_stock() as __refill_stock() without
-disabling interrupts. This eases the integration of local_lock_t where
-recursive locking must be avoided.
-Open code __memcg_kmem_uncharge() in drain_obj_stock() and
-obj_cgroup_release() and use __refill_stock(). The caller of
-drain_obj_stock() and obj_cgroup_release() already disables interrupts.
-
-Signed-off-by: Zachary Goldstein <zachary.goldstein@concurrent-rt.com>
+Signed-off-by: Tomas Glozar <tglozar@redhat.com>
 ---
- mm/memcontrol.c | 28 +++++++++++++++++++++-------
- 1 file changed, 21 insertions(+), 7 deletions(-)
+ rteval/modules/__init__.py | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
 
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 5dd77e260c25..d61918cc44c1 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -260,6 +260,8 @@ struct cgroup_subsys_state *vmpressure_to_css(struct vmpressure *vmpr)
- #ifdef CONFIG_MEMCG_KMEM
- static DEFINE_SPINLOCK(objcg_lock);
+diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+index 794135d..f4fd160 100644
+--- a/rteval/modules/__init__.py
++++ b/rteval/modules/__init__.py
+@@ -312,7 +312,7 @@ the information provided by the module"""
+                 # Ignore if a section is not found
+                 cfg = None
  
-+static void __refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages);
+-            grparser = parser.add_argument_group("Options for the %s module" % shortmod)
++            modgrparser = parser.add_argument_group("Options for the %s module" % shortmod)
+             for (o, s) in list(opts.items()):
+                 descr = 'descr' in s and s['descr'] or ""
+                 metavar = 'metavar' in s and s['metavar'] or None
+@@ -327,13 +327,15 @@ the information provided by the module"""
+                     default = 'default' in s and s['default'] or None
+ 
+ 
+-                grparser.add_argument('--%s-%s' % (shortmod, o),
+-                                    dest="%s___%s" % (shortmod, o),
+-                                    action='store',
+-                                    help='%s%s' % (descr,
+-                                                   default and ' (default: %s)' % default or ''),
+-                                    default=default,
+-                                    metavar=metavar)
++                modgrparser.add_argument('--%s-%s' % (shortmod, o),
++                                         dest="%s___%s" % (shortmod, o),
++                                         action='store',
++                                         help='%s%s' % (descr,
++                                                        default and ' (default: %s)' % default or ''),
++                                         default=default,
++                                         metavar=metavar)
 +
- static void obj_cgroup_release(struct percpu_ref *ref)
- {
- 	struct obj_cgroup *objcg = container_of(ref, struct obj_cgroup, refcnt);
-@@ -294,8 +296,12 @@ static void obj_cgroup_release(struct percpu_ref *ref)
++            return grparser
  
- 	spin_lock_irqsave(&objcg_lock, flags);
- 	memcg = obj_cgroup_memcg(objcg);
--	if (nr_pages)
--		__memcg_kmem_uncharge(memcg, nr_pages);
-+	if (nr_pages) {
-+		if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
-+			page_counter_uncharge(&memcg->kmem, nr_pages);
-+
-+		__refill_stock(memcg, nr_pages);
-+	}
- 	list_del(&objcg->list);
- 	mem_cgroup_put(memcg);
- 	spin_unlock_irqrestore(&objcg_lock, flags);
-@@ -2319,12 +2325,9 @@ static void drain_local_stock(struct work_struct *dummy)
-  * Cache charges(val) to local per_cpu area.
-  * This will be consumed by consume_stock() function, later.
-  */
--static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
-+static void __refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
- {
- 	struct memcg_stock_pcp *stock;
--	unsigned long flags;
--
--	local_lock_irqsave(&memcg_stock.lock, flags);
  
- 	stock = this_cpu_ptr(&memcg_stock);
- 	if (stock->cached != memcg) { /* reset if necessary */
-@@ -2336,7 +2339,14 @@ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
- 
- 	if (stock->nr_pages > MEMCG_CHARGE_BATCH)
- 		drain_stock(stock);
-+}
- 
-+static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
-+{
-+	unsigned long flags;
-+
-+	local_lock_irqsave(&memcg_stock.lock, flags);
-+	__refill_stock(memcg, nr_pages);
- 	local_unlock_irqrestore(&memcg_stock.lock, flags);
- }
- 
-@@ -3179,7 +3189,11 @@ static void drain_obj_stock(struct memcg_stock_pcp *stock)
- 				goto retry;
- 			rcu_read_unlock();
- 
--			__memcg_kmem_uncharge(memcg, nr_pages);
-+			if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
-+				page_counter_uncharge(&memcg->kmem, nr_pages);
-+
-+			__refill_stock(memcg, nr_pages);
-+
- 			css_put(&memcg->css);
- 		}
- 
-
---
-2.39.2
+     def InstantiateModule(self, modname, modcfg, modroot=None):
+-- 
+2.41.0
 
