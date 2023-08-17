@@ -2,73 +2,88 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4776CC001E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Aug 2023 06:59:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C0C2FC2FC20
+	for <linux-rt-users@archiver.kernel.org>; Thu, 17 Aug 2023 09:13:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242220AbjHPG6q (ORCPT
+        id S1349338AbjHQJM6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 16 Aug 2023 02:58:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43938 "EHLO
+        Thu, 17 Aug 2023 05:12:58 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44752 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242223AbjHPG6d (ORCPT
+        with ESMTP id S1349354AbjHQJM3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 16 Aug 2023 02:58:33 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 15D601FC7
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Aug 2023 23:57:52 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1692169071;
+        Thu, 17 Aug 2023 05:12:29 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9450B2D63;
+        Thu, 17 Aug 2023 02:12:27 -0700 (PDT)
+Date:   Thu, 17 Aug 2023 11:12:24 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1692263546;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=MrvngQBbFE1c0Hh7ZgNXeBqnlL0aLXn38H8xSna1pQM=;
-        b=SdSbZdKo946EhzM4nEdWj6WmS7uLjommJHZ3sUQP7oaTAA3bdhLNTkjmUnJcFIiIhArKRo
-        d0YPphEMtXrmtKNUE9Y4iZuRflScgpYb7qoocn1k8R/Oe9VfzhKcHbWPNGsfwvgivoNAaK
-        CK4DfqpdwvDVqCncy8T8q8gtDpgEnnU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-38-Vo6JI0a4PUOHzhExFYWv_w-1; Wed, 16 Aug 2023 02:57:48 -0400
-X-MC-Unique: Vo6JI0a4PUOHzhExFYWv_w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 21B3F80006E
-        for <linux-rt-users@vger.kernel.org>; Wed, 16 Aug 2023 06:57:47 +0000 (UTC)
-Received: from fedora.. (unknown [10.43.17.54])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 860D640C207A;
-        Wed, 16 Aug 2023 06:57:46 +0000 (UTC)
-From:   Tomas Glozar <tglozar@redhat.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     jkacur@redhat.com, Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH 0/2] rteval: Default to higher cyclictest bucket count on non-RT kernels
-Date:   Wed, 16 Aug 2023 08:57:38 +0200
-Message-ID: <20230816065740.283407-1-tglozar@redhat.com>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=fp7L9O2Ivmey6Olx0dpGU5sez7ZYHKV4H6RchIR6KxA=;
+        b=JRdvd/eKLOliRx3lLc3OTMoAtNH1lR95NU3kcFTs1+Vaz47YIH89WQJPPE5N1faSoHxq73
+        uhQWcYl6nLdHRjQO0zajRdGpuJiacZ/gp36u9wC8rnaHp+fh7DxjxzW+CTL6PbVe4WWyWY
+        M0CsF45ETpn5soMKQ5N8ezKyIjyM/kX+L5Hj+IsGfHi7AtA/t+R0sIQCr9efIz/d2AkJOJ
+        pJ5Ip7SRtoTJjT7UnOMhWaFE/dOJ4m4RPuPoZhChn40GDt53KYlcjF8306Of2pjgh9V10n
+        o/++k/BAXpNjnCTB30pRGmI4G2neZ4jgT3CIJ8Sd0Q1MXmT8PMCBVs9f4WERaA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1692263546;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=fp7L9O2Ivmey6Olx0dpGU5sez7ZYHKV4H6RchIR6KxA=;
+        b=WWdAKbwMGiTgZxy+lMApDQ7tAQ4WREZhUatRs9g13frtT7w+0rU0CqNuzffADX+rcJww7v
+        cJT1/UjiLILE95Dw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     zachary.goldstein@concurrent-rt.com,
+        "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+        stable-rt@vger.kernel.org
+Cc:     linux-mm@kvack.org, cgroups@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Vladimir Davydov <vdavydov.dev@gmail.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH RT] mm/memcg: Fix recursive locking on refill_stock() on
+ PREEMPT_RT
+Message-ID: <20230817091224.nqKGjRlK@linutronix.de>
+References: <20230809-memcg-fix-recursive-lock-v1-1-0870815484c6@concurrent-rt.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20230809-memcg-fix-recursive-lock-v1-1-0870815484c6@concurrent-rt.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-When running rteval on non-RT systems, the default number of cyclictest
-buckets is not enough to get useful statistics out of it.
+On 2023-08-10 15:05:34 [-0400], Zachary Goldstein via B4 Relay wrote:
+> From: Zachary Goldstein <zachary.goldstein@concurrent-rt.com>
+> 
+> 5.10 suffers from the same recursive locking issue that
+> commit a848d25434de4 ("mm/memcg: Opencode the inner part of
+> obj_cgroup_uncharge_pages() in drain_obj_stock()") fixes.
 
-To make testing of rteval easier on such systems, this patchset
-proposes to set the default value of --cyclictest-buckets to 50000
-when a non-RT kernel is detected.
+This is the commit id from the stable-rt tree for the v5.15 series.
+The original commit was af9a3b69e84be ("mm/memcg: opencode the inner
+part of obj_cgroup_uncharge_pages() in drain_obj_stock()").
 
-This is a value that should, at least when tested on my machine,
-not overflow in a typical run on a non-RT kernel.
+> Modified description from the commit to reflect this patch changes:
+> 
+> Provide the inner part of refill_stock() as __refill_stock() without
+> disabling interrupts. This eases the integration of local_lock_t where
+> recursive locking must be avoided.
+> Open code __memcg_kmem_uncharge() in drain_obj_stock() and
+> obj_cgroup_release() and use __refill_stock(). The caller of
+> drain_obj_stock() and obj_cgroup_release() already disables interrupts.
+> 
+> Signed-off-by: Zachary Goldstein <zachary.goldstein@concurrent-rt.com>
 
-Tomas Glozar (2):
-  rteval: Support custom argument default value help
-  rteval: Set higher cyclictest bucket count on non-RT kernels
+I would prefer a proper backport similar to the commit you mentioned.
+This would include keeping the author ship and so on.
+The change itself looks okay.
 
- rteval/modules/__init__.py               | 3 ++-
- rteval/modules/measurement/cyclictest.py | 3 ++-
- 2 files changed, 4 insertions(+), 2 deletions(-)
-
--- 
-2.41.0
-
+Sebastian
