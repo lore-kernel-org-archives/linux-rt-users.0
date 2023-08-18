@@ -2,78 +2,138 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C74EC7112B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 09:43:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B2E68C71156
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 13:44:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1359310AbjHRJnV (ORCPT
+        id S1377244AbjHRNoR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Aug 2023 05:43:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55552 "EHLO
+        Fri, 18 Aug 2023 09:44:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60190 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233355AbjHRJmz (ORCPT
+        with ESMTP id S1377249AbjHRNnw (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2023 05:42:55 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 653A8121
-        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 02:42:54 -0700 (PDT)
-Date:   Fri, 18 Aug 2023 11:42:49 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1692351772;
+        Fri, 18 Aug 2023 09:43:52 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F09ED3589
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 06:43:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1692366188;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=RSJexWM+tdYY5BgLMQOevh7vzAWYQDtpzPD2CJ3NG2U=;
-        b=FLga2JpM6gwEs2MTvm8w7N1tmiNYypObQhHqJdpQaIUYf1Bm95/BolR+NS9IVkLXLtEioK
-        z/w7MC3odczPvwQ6y47dGXN95IdRAAWuLJ0q6nCGD630kdGo33mvOOGUWGP8qkQ2IGs+YD
-        sFZX9SvHtLIkTjiSFJ2Y5O9/bVM0e66LQY6lrL9owBPG0t1+aEtV1OVhHvuVNW2DtaEPwN
-        CNNS4A8pJHXEAdUBlusE+WKfeIQ/FYCU2tGjy6Wjb5LZZzgKsihOSkB+Q9ksBuua4/gmyR
-        aLnH2W2u8jS3qq7NNEmaXziX5HteN98NFLF5SiU6AmP11dGBbOEN+g63ncJrdQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1692351772;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=RSJexWM+tdYY5BgLMQOevh7vzAWYQDtpzPD2CJ3NG2U=;
-        b=yUdRQFMqCcbGIGiWgnqWUmNIOvl+47KeasSGkXnc1/i/72uu7kUCUTuN8GY3MMjkg0qX7l
-        i3OhTurMIR+UROCg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Kegl Rohit <keglrohit@gmail.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: rcu stall caused by rt task with high minor page fault rate
-Message-ID: <20230818094249.ZH2yxSBA@linutronix.de>
-References: <CAMeyCbgGgxpF5Nk=dZXEBS92VxUBR_OcRQqdQdEJAAzqcbP+fQ@mail.gmail.com>
+         to:to:cc:mime-version:mime-version:content-type:content-type;
+        bh=e934zJ4Y+NrdVCj0YwCdAAjU2Txt7SiE8zuv/ETVT0Y=;
+        b=LZDrny/HrJ1ZII7rO1YXtF/xYA7gbzJczbxPDWkeyjL2SNlepcGdmeic0qvUVfOY425FJX
+        AcmPF8bc0pUvhq71Kbmxo1g/2C5885ySB+TA/EF82zSsjZv1uVO3ooL4q6orSxp5pRzghy
+        XxMFwRkFtkNi5jWF5b+5vCcIoAxy02I=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-623-Nf-6TaWjNvmF6Y5NseGhxA-1; Fri, 18 Aug 2023 09:43:04 -0400
+X-MC-Unique: Nf-6TaWjNvmF6Y5NseGhxA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4179E8011AD;
+        Fri, 18 Aug 2023 13:43:04 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.104])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id A7E57492C13;
+        Fri, 18 Aug 2023 13:43:03 +0000 (UTC)
+Date:   Fri, 18 Aug 2023 10:43:02 -0300
+From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable-rt <stable-rt@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Mark Gross <markgross@kernel.org>,
+        Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 4.14.320-rt152
+Message-ID: <ZN91PvQbpc3jE/zd@uudg.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAMeyCbgGgxpF5Nk=dZXEBS92VxUBR_OcRQqdQdEJAAzqcbP+fQ@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-05-30 12:51:48 [+0200], Kegl Rohit wrote:
-> Hello!
-Hi,
+Hello RT-list!
 
-> But for my understanding RCU_BOOST should help here, even if the rt
-> app is not implemented correctly?
+I'm pleased to announce the 4.14.320-rt152 stable release.
 
-RCU_BOOST will help to move a task outside of its rcu_read() section if
-it got preempted there. Otherwise the RCU machine can't make progress
-and free after a grace period. If a task with low priority is stuck in
-such a section, then RCU_BOOST will help to move it out. This requires
-that the high-priority task gets into a RCU section for it work (usually
-not a problem but wouldn't happen if a task loops 100% in userland).
+This release is an RT-only update. All the changes here are specific to RT.
 
-From you describe, your RCU warning came probably from the fact that
-your application is consuming 100% of the CPU. Your RT task needs to
-rest from to time so that other kernel threads get their turn.
+You can get this release via the git tree at:
 
-By enabling callback offloading and moving that RCU thread another CPU
-you ensure that the completion callbacks get invoked.
-Then you need to ensure that RCU can assure that it makes progress. This
-is probably what triggers here. There is another thread for that but
-this one can only be offloaded with CONFIG_NOHZ_FULL.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-> Thanks in advance!
+  branch: v4.14-rt
+  Head SHA1: 3b05adff8894f6d2f56f54faf7876b15e9442dad
 
-Sebastian
+Or to build 4.14.320-rt152 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.320.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.320-rt152.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
+Changes from v4.14.320-rt151:
+---
+
+Clark Williams (1):
+      rt: PREEMPT_RT safety net for backported patches
+
+Luis Claudio R. Goncalves (1):
+      Linux 4.14.320-rt152
+---
+kernel/Kconfig.preempt | 4 ++++
+ localversion-rt        | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+---
+diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+index 11dbe26a8279..97875b4eb569 100644
+--- a/kernel/Kconfig.preempt
++++ b/kernel/Kconfig.preempt
+@@ -6,6 +6,9 @@ config PREEMPT_RT_BASE
+ 	bool
+ 	select PREEMPT
+ 
++config PREEMPT_RT
++       bool
++
+ config HAVE_PREEMPT_LAZY
+ 	bool
+ 
+@@ -78,6 +81,7 @@ config PREEMPT_RT_FULL
+ 	depends on IRQ_FORCED_THREADING
+ 	select PREEMPT_RT_BASE
+ 	select PREEMPT_RCU
++	select PREEMPT_RT
+ 	help
+ 	  All and everything
+ 
+diff --git a/localversion-rt b/localversion-rt
+index 7c59c4689f8b..2fd0f636104d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt151
++-rt152
+
