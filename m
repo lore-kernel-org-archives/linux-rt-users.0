@@ -2,70 +2,74 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BB7B9C71136
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 08:09:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2671DC7112B
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 09:11:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1358446AbjHRIIn (ORCPT
+        id S1358903AbjHRJK4 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Aug 2023 04:08:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57074 "EHLO
+        Fri, 18 Aug 2023 05:10:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39072 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1358437AbjHRIIk (ORCPT
+        with ESMTP id S1358986AbjHRJKy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2023 04:08:40 -0400
-Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C13FE2D5D;
-        Fri, 18 Aug 2023 01:08:38 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 315EEE1A0F;
-        Fri, 18 Aug 2023 10:08:36 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-        t=1692346116; h=from:subject:date:message-id:to:cc:mime-version:
-         content-transfer-encoding:in-reply-to:references;
-        bh=LyWtB6snaCP89bsxLTQfGWH/fBUWtv9xx69GMobeI1U=;
-        b=aAoxmR4ceHulyCPrnuz6Gh73ZJQJPeGqFISUeA8xQqPlRE8bBXwzbhX2d77DBXbRq+PL9Z
-        Xw3t3/rbC+z1HBIKLkoQtoSEiQ/uel5IrTSyyRrdv7gV7RspYYwu5+DHR7zPpj8oKsYI8Y
-        06SFE5jms3AOF0yRtJtKhqMsiA05D28FJVAhg99TkUPlCCAlnmJu4AIu2pgqYprioXodU7
-        W8xmIgcyB/1CxdCbx5IQ1cdABrZFxYAec3QpykeuScOd0HEFoVUBa15uOYCptPNozik2YK
-        wGocU627WagdlOIQr66d0CleHX6D/GGRGpfgNzFiwmW0QSf2dp1ZvUeXjbepLg==
-From:   Daniel Wagner <wagi@monom.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        <linux-rt-users@vger.kernel.org>, <stable-rt@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
-Cc:     Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 1/1] Linux 4.19.292-rt128
-Date:   Fri, 18 Aug 2023 10:08:33 +0200
-Message-ID: <20230818080833.31189-2-wagi@monom.org>
-In-Reply-To: <20230818080833.31189-1-wagi@monom.org>
-References: <20230818080833.31189-1-wagi@monom.org>
+        Fri, 18 Aug 2023 05:10:54 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B05C5FE
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 02:10:53 -0700 (PDT)
+Date:   Fri, 18 Aug 2023 11:10:51 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1692349852;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=366j56/vZn5QvNYPy+FACrsn4iWOIMJR1+vJsRL/oFI=;
+        b=ClhyigUpp/6CnXzfsJ1LT7GeLmwFGiiOQJybnMVd+6MDPPy9NIAL2O+f7UGOEuE2lFtQ9e
+        3GTZ3ngMqqckDk4JcIF1y+gu49dX447omnVUvTLog1ay2kEgWOOn3vLgZ55JaxO7MyJ0/v
+        Ue6CyH4jejuaNupu1tNOD8aH2XJSifnYNyCZa1bGtfVGTOfpMz0H5YNgulBnDRCOVqeFd/
+        FTYZNVF1lfP0BgkA5oh/HlLLDqcP5tk8DOp+0WrWUJ83u3p9zdmmtjF8IIowZiy4/0zEvj
+        do2xN8EcUle7WGOFtptFt445e00W5iZaHTy+VJjreVXjzdrh565E79VmAfnpSA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1692349852;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=366j56/vZn5QvNYPy+FACrsn4iWOIMJR1+vJsRL/oFI=;
+        b=7fMjiHIER9J2Z0WHDOLgwA4GYMme273ghbdxvvmGEaxariAs7WeAyUY65rPF8ma5vTQckD
+        7eryqojLTlrFfsDQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     =?utf-8?B?SsO2cmc=?= Sommer <joerg.sommer@navimatix.de>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: Wrong link target for 5.15-rt on website
+Message-ID: <20230818091051.JktEDnLS@linutronix.de>
+References: <VI1PR0102MB3136359075B0312101B31333FC17A@VI1PR0102MB3136.eurprd01.prod.exchangelabs.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <VI1PR0102MB3136359075B0312101B31333FC17A@VI1PR0102MB3136.eurprd01.prod.exchangelabs.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-v4.19.292-rt128-rc1 stable review patch.
-If anyone has any objections, please let me know.
+On 2023-08-14 08:58:32 [+0000], J=C3=B6rg Sommer wrote:
+> Hi,
+Hi,
 
------------
+> at the page
+> https://wiki.linuxfoundation.org/realtime/preempt_rt_versions, the
+> link for 5.15-rt on the right side points
+> to=C2=A0https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10 and not =
+to
+> 5.15. Can someone fix this?
 
+Just looked at it and it seems to have been already corrected.
 
-Signed-off-by: Daniel Wagner <wagi@monom.org>
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> Kind regards
+>=20
+> J=C3=B6rg Sommer
+>=20
+> Software Developer / Programmierer
 
-diff --git a/localversion-rt b/localversion-rt
-index c85940d40a67..6d2a676e2033 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt127
-+-rt128
--- 
-2.41.0
-
+Sebastian
