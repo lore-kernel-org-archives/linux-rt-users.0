@@ -2,138 +2,66 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2E68C71156
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 13:44:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A996C77B7F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 15:50:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1377244AbjHRNoR (ORCPT
+        id S1378318AbjHRPtw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Aug 2023 09:44:17 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60190 "EHLO
+        Fri, 18 Aug 2023 11:49:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59890 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1377249AbjHRNnw (ORCPT
+        with ESMTP id S1378311AbjHRPtd (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2023 09:43:52 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F09ED3589
-        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 06:43:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1692366188;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=e934zJ4Y+NrdVCj0YwCdAAjU2Txt7SiE8zuv/ETVT0Y=;
-        b=LZDrny/HrJ1ZII7rO1YXtF/xYA7gbzJczbxPDWkeyjL2SNlepcGdmeic0qvUVfOY425FJX
-        AcmPF8bc0pUvhq71Kbmxo1g/2C5885ySB+TA/EF82zSsjZv1uVO3ooL4q6orSxp5pRzghy
-        XxMFwRkFtkNi5jWF5b+5vCcIoAxy02I=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-623-Nf-6TaWjNvmF6Y5NseGhxA-1; Fri, 18 Aug 2023 09:43:04 -0400
-X-MC-Unique: Nf-6TaWjNvmF6Y5NseGhxA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        Fri, 18 Aug 2023 11:49:33 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 21038D1;
+        Fri, 18 Aug 2023 08:49:32 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4179E8011AD;
-        Fri, 18 Aug 2023 13:43:04 +0000 (UTC)
-Received: from localhost (unknown [10.22.8.104])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id A7E57492C13;
-        Fri, 18 Aug 2023 13:43:03 +0000 (UTC)
-Date:   Fri, 18 Aug 2023 10:43:02 -0300
-From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+        by dfw.source.kernel.org (Postfix) with ESMTPS id B0D3367DF2;
+        Fri, 18 Aug 2023 15:49:31 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F21CDC433C8;
+        Fri, 18 Aug 2023 15:49:30 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.1.46-rt13
+Date:   Fri, 18 Aug 2023 15:48:18 -0000
+Message-ID: <169237369832.691481.13351444607835949475@demetrius>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        stable-rt <stable-rt@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@suse.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
-        Mark Gross <markgross@kernel.org>,
-        Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.320-rt152
-Message-ID: <ZN91PvQbpc3jE/zd@uudg.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+        Pavel Machek <pavel@denx.de>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hello RT-list!
 
-I'm pleased to announce the 4.14.320-rt152 stable release.
-
-This release is an RT-only update. All the changes here are specific to RT.
+I'm pleased to announce the 6.1.46-rt13 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.14-rt
-  Head SHA1: 3b05adff8894f6d2f56f54faf7876b15e9442dad
+  branch: v6.1-rt
+  Head SHA1: 3ba4bc39d170fb7191c4898ef84416417a0e9f19
 
-Or to build 4.14.320-rt152 directly, the following patches should be applied:
+Or to build 6.1.46-rt13 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.320.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.46.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.320-rt152.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.46-rt13.patch.xz
 
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
 Enjoy!
-Luis
-
-Changes from v4.14.320-rt151:
----
-
-Clark Williams (1):
-      rt: PREEMPT_RT safety net for backported patches
-
-Luis Claudio R. Goncalves (1):
-      Linux 4.14.320-rt152
----
-kernel/Kconfig.preempt | 4 ++++
- localversion-rt        | 2 +-
- 2 files changed, 5 insertions(+), 1 deletion(-)
----
-diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-index 11dbe26a8279..97875b4eb569 100644
---- a/kernel/Kconfig.preempt
-+++ b/kernel/Kconfig.preempt
-@@ -6,6 +6,9 @@ config PREEMPT_RT_BASE
- 	bool
- 	select PREEMPT
- 
-+config PREEMPT_RT
-+       bool
-+
- config HAVE_PREEMPT_LAZY
- 	bool
- 
-@@ -78,6 +81,7 @@ config PREEMPT_RT_FULL
- 	depends on IRQ_FORCED_THREADING
- 	select PREEMPT_RT_BASE
- 	select PREEMPT_RCU
-+	select PREEMPT_RT
- 	help
- 	  All and everything
- 
-diff --git a/localversion-rt b/localversion-rt
-index 7c59c4689f8b..2fd0f636104d 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt151
-+-rt152
-
+Clark
