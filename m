@@ -2,74 +2,78 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2671DC7112B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 09:11:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C74EC7112B
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Aug 2023 09:43:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1358903AbjHRJK4 (ORCPT
+        id S1359310AbjHRJnV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Aug 2023 05:10:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39072 "EHLO
+        Fri, 18 Aug 2023 05:43:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55552 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1358986AbjHRJKy (ORCPT
+        with ESMTP id S233355AbjHRJmz (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2023 05:10:54 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B05C5FE
-        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 02:10:53 -0700 (PDT)
-Date:   Fri, 18 Aug 2023 11:10:51 +0200
+        Fri, 18 Aug 2023 05:42:55 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 653A8121
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 02:42:54 -0700 (PDT)
+Date:   Fri, 18 Aug 2023 11:42:49 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1692349852;
+        s=2020; t=1692351772;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=366j56/vZn5QvNYPy+FACrsn4iWOIMJR1+vJsRL/oFI=;
-        b=ClhyigUpp/6CnXzfsJ1LT7GeLmwFGiiOQJybnMVd+6MDPPy9NIAL2O+f7UGOEuE2lFtQ9e
-        3GTZ3ngMqqckDk4JcIF1y+gu49dX447omnVUvTLog1ay2kEgWOOn3vLgZ55JaxO7MyJ0/v
-        Ue6CyH4jejuaNupu1tNOD8aH2XJSifnYNyCZa1bGtfVGTOfpMz0H5YNgulBnDRCOVqeFd/
-        FTYZNVF1lfP0BgkA5oh/HlLLDqcP5tk8DOp+0WrWUJ83u3p9zdmmtjF8IIowZiy4/0zEvj
-        do2xN8EcUle7WGOFtptFt445e00W5iZaHTy+VJjreVXjzdrh565E79VmAfnpSA==
+        bh=RSJexWM+tdYY5BgLMQOevh7vzAWYQDtpzPD2CJ3NG2U=;
+        b=FLga2JpM6gwEs2MTvm8w7N1tmiNYypObQhHqJdpQaIUYf1Bm95/BolR+NS9IVkLXLtEioK
+        z/w7MC3odczPvwQ6y47dGXN95IdRAAWuLJ0q6nCGD630kdGo33mvOOGUWGP8qkQ2IGs+YD
+        sFZX9SvHtLIkTjiSFJ2Y5O9/bVM0e66LQY6lrL9owBPG0t1+aEtV1OVhHvuVNW2DtaEPwN
+        CNNS4A8pJHXEAdUBlusE+WKfeIQ/FYCU2tGjy6Wjb5LZZzgKsihOSkB+Q9ksBuua4/gmyR
+        aLnH2W2u8jS3qq7NNEmaXziX5HteN98NFLF5SiU6AmP11dGBbOEN+g63ncJrdQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1692349852;
+        s=2020e; t=1692351772;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=366j56/vZn5QvNYPy+FACrsn4iWOIMJR1+vJsRL/oFI=;
-        b=7fMjiHIER9J2Z0WHDOLgwA4GYMme273ghbdxvvmGEaxariAs7WeAyUY65rPF8ma5vTQckD
-        7eryqojLTlrFfsDQ==
+        bh=RSJexWM+tdYY5BgLMQOevh7vzAWYQDtpzPD2CJ3NG2U=;
+        b=yUdRQFMqCcbGIGiWgnqWUmNIOvl+47KeasSGkXnc1/i/72uu7kUCUTuN8GY3MMjkg0qX7l
+        i3OhTurMIR+UROCg==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     =?utf-8?B?SsO2cmc=?= Sommer <joerg.sommer@navimatix.de>
-Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: Re: Wrong link target for 5.15-rt on website
-Message-ID: <20230818091051.JktEDnLS@linutronix.de>
-References: <VI1PR0102MB3136359075B0312101B31333FC17A@VI1PR0102MB3136.eurprd01.prod.exchangelabs.com>
+To:     Kegl Rohit <keglrohit@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: rcu stall caused by rt task with high minor page fault rate
+Message-ID: <20230818094249.ZH2yxSBA@linutronix.de>
+References: <CAMeyCbgGgxpF5Nk=dZXEBS92VxUBR_OcRQqdQdEJAAzqcbP+fQ@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <VI1PR0102MB3136359075B0312101B31333FC17A@VI1PR0102MB3136.eurprd01.prod.exchangelabs.com>
+In-Reply-To: <CAMeyCbgGgxpF5Nk=dZXEBS92VxUBR_OcRQqdQdEJAAzqcbP+fQ@mail.gmail.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2023-08-14 08:58:32 [+0000], J=C3=B6rg Sommer wrote:
-> Hi,
+On 2023-05-30 12:51:48 [+0200], Kegl Rohit wrote:
+> Hello!
 Hi,
 
-> at the page
-> https://wiki.linuxfoundation.org/realtime/preempt_rt_versions, the
-> link for 5.15-rt on the right side points
-> to=C2=A0https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.10 and not =
-to
-> 5.15. Can someone fix this?
+> But for my understanding RCU_BOOST should help here, even if the rt
+> app is not implemented correctly?
 
-Just looked at it and it seems to have been already corrected.
+RCU_BOOST will help to move a task outside of its rcu_read() section if
+it got preempted there. Otherwise the RCU machine can't make progress
+and free after a grace period. If a task with low priority is stuck in
+such a section, then RCU_BOOST will help to move it out. This requires
+that the high-priority task gets into a RCU section for it work (usually
+not a problem but wouldn't happen if a task loops 100% in userland).
 
-> Kind regards
->=20
-> J=C3=B6rg Sommer
->=20
-> Software Developer / Programmierer
+From you describe, your RCU warning came probably from the fact that
+your application is consuming 100% of the CPU. Your RT task needs to
+rest from to time so that other kernel threads get their turn.
+
+By enabling callback offloading and moving that RCU thread another CPU
+you ensure that the completion callbacks get invoked.
+Then you need to ensure that RCU can assure that it makes progress. This
+is probably what triggers here. There is another thread for that but
+this one can only be offloaded with CONFIG_NOHZ_FULL.
+
+> Thanks in advance!
 
 Sebastian
