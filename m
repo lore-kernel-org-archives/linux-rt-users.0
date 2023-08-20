@@ -2,175 +2,157 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B56BEE49A0
-	for <linux-rt-users@archiver.kernel.org>; Sat, 19 Aug 2023 02:46:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F84DEE4993
+	for <linux-rt-users@archiver.kernel.org>; Sun, 20 Aug 2023 17:36:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244332AbjHSCqB (ORCPT
+        id S230046AbjHTRgi (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 18 Aug 2023 22:46:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58118 "EHLO
+        Sun, 20 Aug 2023 13:36:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54702 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244317AbjHSCpk (ORCPT
+        with ESMTP id S231533AbjHTRgd (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2023 22:45:40 -0400
-Received: from mx0b-0064b401.pphosted.com (mx0b-0064b401.pphosted.com [205.220.178.238])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DA2793ABC
-        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2023 19:45:36 -0700 (PDT)
-Received: from pps.filterd (m0250812.ppops.net [127.0.0.1])
-        by mx0a-0064b401.pphosted.com (8.17.1.22/8.17.1.22) with ESMTP id 37J2DdTL010121;
-        Sat, 19 Aug 2023 02:45:28 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=windriver.com;
-         h=from:to:cc:subject:date:message-id:in-reply-to:references
-        :mime-version:content-transfer-encoding:content-type; s=
-        PPS06212021; bh=F6XLMTMDcRbg9dNFL2bcqCk37cA4OkuWdWbb3K74d2U=; b=
-        FJr3fJ5iNIBC+IQllsA7S4yytuMCs60+mXqHhpbfwT1px3BKpsgaiESvyGQdbGMc
-        80OhJ/5aXja3Q+o8JYv1NEn9V3GVuTmMqzaRic7/sSrfVulPLdG1qidBqceISrFB
-        CUa2SyzdTwih0DVpAgwYtrMaUZLRK/IiZ2bKhj3xtP2WtP84Q9BY8YZOQnQY/Pnz
-        G5/peXM62Z44RukFtDGrZ82EgF9C3KKpgcXc3iNMzSBfEPD0vU3b7SKKpu5VG77Y
-        zTHvYrk+rb3PWyk+H2+nH+N8CmfW5xUc1eI43bYYBvmWT8pIOeM0504ceZuKJkXC
-        jkzDTI1BjRxbrUe/kQbaqw==
-Received: from ala-exchng01.corp.ad.wrs.com (ala-exchng01.wrs.com [147.11.82.252])
-        by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 3sjmq5g0mc-2
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT);
-        Sat, 19 Aug 2023 02:45:27 +0000 (GMT)
-Received: from ala-exchng01.corp.ad.wrs.com (147.11.82.252) by
- ala-exchng01.corp.ad.wrs.com (147.11.82.252) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.27; Fri, 18 Aug 2023 19:45:27 -0700
-Received: from yow-lpggp3.wrs.com (128.224.137.13) by
- ala-exchng01.corp.ad.wrs.com (147.11.82.252) with Microsoft SMTP Server id
- 15.1.2507.27 via Frontend Transport; Fri, 18 Aug 2023 19:45:26 -0700
-From:   <paul.gortmaker@windriver.com>
-To:     Clark Williams <williams@redhat.com>,
-        Joseph Salisbury <joseph.salisbury@canonical.com>
-CC:     <linux-rt-users@vger.kernel.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Tvrtko Ursulin <tvrtko.ursulin@intel.com>
-Subject: [PATCH 1/1] drm/i915: Do not disable preemption for resets
-Date:   Fri, 18 Aug 2023 22:45:25 -0400
-Message-ID: <20230819024525.2056048-2-paul.gortmaker@windriver.com>
-X-Mailer: git-send-email 2.40.0
-In-Reply-To: <20230819024525.2056048-1-paul.gortmaker@windriver.com>
-References: <20230819024525.2056048-1-paul.gortmaker@windriver.com>
+        Sun, 20 Aug 2023 13:36:33 -0400
+Received: from out162-62-58-211.mail.qq.com (out162-62-58-211.mail.qq.com [162.62.58.211])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1F631199;
+        Sun, 20 Aug 2023 10:31:51 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=foxmail.com;
+        s=s201512; t=1692552708;
+        bh=zxFXhwDqIpdERvzCzYZLMU4dKm/60bg0p1VB86108kw=;
+        h=Date:Subject:To:Cc:References:From:In-Reply-To;
+        b=ZwpW0dFsKbmdzT+IPWF04YdDLKajYJg9G+VmNvAov17sfxFpP+XLhdgSGXpruZXol
+         JP1DF+GiJiRjlOGrXSaFLyDLOdqB6lXwgLe9m706sdW3e6CCeLcipVzYvdjqOASfWM
+         2F1HtLXcATrDqjAfgKcXuqmip3Xb1VuL5wY5hnTA=
+Received: from [IPV6:240e:331:c54:6700:63d6:d559:9412:6535] ([240e:331:c54:6700:63d6:d559:9412:6535])
+        by newxmesmtplogicsvrszc5-0.qq.com (NewEsmtp) with SMTP
+        id 5CF11E86; Mon, 21 Aug 2023 01:23:15 +0800
+X-QQ-mid: xmsmtpt1692552195tepjhx5no
+Message-ID: <tencent_C80D3EE7563151B306E94C2AA7BF3023F80A@qq.com>
+X-QQ-XMAILINFO: MR/iVh5QLeieiZvg7Y8RvyLZC1x+cVc4V+CgM4zVX23AWMRR5lb9+/P0RYXRbp
+         RyQRLt+9D1lpO3Af3SEOIwCTK2pvfOVi4SQ8bSXRLCZj1LDz97VUqHJykrSDL5NO1U3Zo8IBUgGA
+         5O133J1Rp8MVdGA87AfdPn/bxc+dJ/b3yCoL3S85P6O+K3Fw+0L8+oN0cDxcwA+n6fn0HK3oNraJ
+         Kf7cY83+AXD5hm3d9gB88h1AtLyM/5ACK6J4XUoqyhOr0d/DsM7DSMvScWb/92HXi7SCivc1kuui
+         cBlhtzTIlj7qgzYVU25Z316S6h/qB6mlB6pXAkB9SdxQFIZ9sEI8R4kOMN3G8hHQys9TbqZvnodB
+         MeJsbnHyZbJJ3L/x9gj7XJExlfe6dxVAvqSrudFO8nXDnIRgujJnl6MeBc+FNJPK16rtOY64PZws
+         kqqwL3YrpcHkVgS4fnlWkkvHQiZgJSUgTW4Ka3uVFBVNtI3f/B46bvo8YAFQl/csgxoxSOEkcM3o
+         de1/ZnZcPH3gjPqVo/rOmsD+dCBc2W5HHIk5mZGsxJBSMJ5SaCxpE+e87Ex6589pZXq2ydmv4NWf
+         C0L44J/geF9q9YM+xSep5vF8DjyjLL6aVI9HbYa0JDPcFaYMG6bseKpG6JDmYJavwu9NhGoAlWR3
+         4tFPyzuTdKPiaL0wriH/e0WgMEgBxvH7Yg1b336LxkGhI0WTB4Gq3T3mz1kdo2U84nPU7nEP2lcr
+         ugQ8OnqDCiT5Reg+MlO7HUKewsgPglzgZqr/KKKZyYCRiqmBZnLSpT+RH0HScNSgPFHCCOWntXHE
+         EagbgIQaYjz15chgxhgpOKpV8wSM4tNGEfkNZ+JSBeheait0u7Lxzktv1xwEOnBqsd2LsPOGMmdA
+         zxoCgpU9YIV8uebw5CclWHMOr1Bak121FVfklIvd8chUaBdtFUFvCd+lSI2N70JCxG4g2bpXep+B
+         +AAWbdpf+i9JuafBD6XSSgA8JtzUbGxQtTO1bCjD5SZqkxPzRu383FwAwoAH2l6YjlkdXL03w=
+X-QQ-XMRINFO: OWPUhxQsoeAVDbp3OJHYyFg=
+X-OQ-MSGID: <50df2dd1-833c-0fcc-9689-4ff5db961062@foxmail.com>
+Date:   Mon, 21 Aug 2023 01:23:15 +0800
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-Proofpoint-GUID: RRopMn830BCK2FPtTRU_WrT-oAFwea1J
-X-Proofpoint-ORIG-GUID: RRopMn830BCK2FPtTRU_WrT-oAFwea1J
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.267,Aquarius:18.0.957,Hydra:6.0.601,FMLib:17.11.176.26
- definitions=2023-08-18_29,2023-08-18_01,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
- malwarescore=0 spamscore=0 bulkscore=0 phishscore=0 suspectscore=0
- impostorscore=0 clxscore=1015 adultscore=0 mlxlogscore=999
- lowpriorityscore=0 mlxscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.19.0-2306200000 definitions=main-2308190025
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.11.0
+Subject: Re: [PATCH] tick/rcu: fix false positive "softirq work is pending"
+ messages on RT
+Content-Language: en-US
+To:     paul.gortmaker@windriver.com, LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Paul E . McKenney" <paulmck@kernel.org>,
+        Frederic Weisbecker <frederic@kernel.org>
+References: <20230818200757.1808398-1-paul.gortmaker@windriver.com>
+From:   Wen Yang <wenyang.linux@foxmail.com>
+In-Reply-To: <20230818200757.1808398-1-paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tvrtko Ursulin <tvrtko.ursulin@intel.com>
 
-[commit 40cd2835ced288789a685aa4aa7bc04b492dcd45 in linux-rt-devel]
+On 2023/8/19 04:07, paul.gortmaker@windriver.com wrote:
+> From: Paul Gortmaker <paul.gortmaker@windriver.com>
+>
+> In commit 0345691b24c0 ("tick/rcu: Stop allowing RCU_SOFTIRQ in idle")
+> the new function report_idle_softirq() was created by breaking code out
+> of the existing can_stop_idle_tick() for kernels v5.18 and newer.
+>
+> In doing so, the code essentially went from a one conditional:
+>
+> 	if (a && b && c)
+> 		warn();
+>
+> to a three conditional:
+>
+> 	if (!a)
+> 		return;
+> 	if (!b)
+> 		return;
+> 	if (!c)
+> 		return;
+> 	warn();
+>
+> However, it seems one of the conditionals didn't get a "!" removed.
+> Compare the instance of local_bh_blocked() in the old code:
+>
+> -               if (ratelimit < 10 && !local_bh_blocked() &&
+> -                   (local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK)) {
+> -                       pr_warn("NOHZ tick-stop error: Non-RCU local softirq work is pending, handler #%02x!!!\n",
+> -                               (unsigned int) local_softirq_pending());
+> -                       ratelimit++;
+> -               }
+>
+> ...to the usage in the new (5.18+) code:
+>
+> +       /* On RT, softirqs handling may be waiting on some lock */
+> +       if (!local_bh_blocked())
+> +               return false;
+>
+> It seems apparent that the "!" should be removed from the new code.
+>
+> This issue lay dormant until another fixup for the same commit was added
+> in commit a7e282c77785 ("tick/rcu: Fix bogus ratelimit condition").
+> This commit realized the ratelimit was essentially set to zero instead
+> of ten, and hence *no* softirq pending messages would ever be issued.
+>
+> Once this commit was backported via linux-stable, both the v6.1 and v6.4
+> preempt-rt kernels started printing out 10 instances of this at boot:
+>
+>    NOHZ tick-stop error: local softirq work is pending, handler #80!!!
+>
+> Just to double check my understanding of things, I confirmed that the
+> v5.18-rt did print the pending-80 messages with a cherry pick of the
+> ratelimit fix, and then confirmed no pending softirq messages were
+> printed with a revert of mainline's 034569 on a v5.18-rt baseline.
+>
+> Finally I confirmed it fixed the issue on v6.1-rt and v6.4-rt, and
+> also didn't break anything on a defconfig of mainline master of today.
+>
+> Fixes: 0345691b24c0 ("tick/rcu: Stop allowing RCU_SOFTIRQ in idle")
+> Cc: Wen Yang <wenyang.linux@foxmail.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Paul E. McKenney <paulmck@kernel.org>
+> Cc: Frederic Weisbecker <frederic@kernel.org>
+> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+>
+> diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+> index 2b865cb77feb..b52e1861b913 100644
+> --- a/kernel/time/tick-sched.c
+> +++ b/kernel/time/tick-sched.c
+> @@ -1050,7 +1050,7 @@ static bool report_idle_softirq(void)
+>   		return false;
+>   
+>   	/* On RT, softirqs handling may be waiting on some lock */
+> -	if (!local_bh_blocked())
+> +	if (local_bh_blocked())
+>   		return false;
+>   
+>   	pr_warn("NOHZ tick-stop error: local softirq work is pending, handler #%02x!!!\n",
 
-Commit ade8a0f59844 ("drm/i915: Make all GPU resets atomic") added a
-preempt disable section over the hardware reset callback to prepare the
-driver for being able to reset from atomic contexts.
 
-In retrospect I can see that the work item at a time was about removing
-the struct mutex from the reset path. Code base also briefly entertained
-the idea of doing the reset under stop_machine in order to serialize
-userspace mmap and temporary glitch in the fence registers (see
-eb8d0f5af4ec ("drm/i915: Remove GPU reset dependence on struct_mutex"),
-but that never materialized and was soon removed in 2caffbf11762
-("drm/i915: Revoke mmaps and prevent access to fence registers across
-reset") and replaced with a SRCU based solution.
+Good catch!
 
-As such, as far as I can see, today we still have a requirement that
-resets must not sleep (invoked from submission tasklets), but no need to
-support invoking them from a truly atomic context.
+Reviewed-by: Wen Yang <wenyang.linux@foxmail.com>
 
-Given that the preemption section is problematic on RT kernels, since the
-uncore lock becomes a sleeping lock and so is invalid in such section,
-lets try and remove it. Potential downside is that our short waits on GPU
-to complete the reset may get extended if CPU scheduling interferes, but
-in practice that probably isn't a deal breaker.
-
-In terms of mechanics, since the preemption disabled block is being
-removed we just need to replace a few of the wait_for_atomic macros into
-busy looping versions which will work (and not complain) when called from
-non-atomic sections.
-
-Signed-off-by: Tvrtko Ursulin <tvrtko.ursulin@intel.com>
-Cc: Chris Wilson <chris.p.wilson@intel.com>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Link: https://lore.kernel.org/r/20230705093025.3689748-1-tvrtko.ursulin@linux.intel.com
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-[PG: backport from v6.4-rt ; minor context fixup caused by b7d70b8b06ed]
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
- drivers/gpu/drm/i915/gt/intel_reset.c | 12 +++++-------
- 1 file changed, 5 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/gpu/drm/i915/gt/intel_reset.c b/drivers/gpu/drm/i915/gt/intel_reset.c
-index 10b930eaa8cb..6108a449cd19 100644
---- a/drivers/gpu/drm/i915/gt/intel_reset.c
-+++ b/drivers/gpu/drm/i915/gt/intel_reset.c
-@@ -174,13 +174,13 @@ static int i915_do_reset(struct intel_gt *gt,
- 	/* Assert reset for at least 20 usec, and wait for acknowledgement. */
- 	pci_write_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
- 	udelay(50);
--	err = wait_for_atomic(i915_in_reset(pdev), 50);
-+	err = _wait_for_atomic(i915_in_reset(pdev), 50, 0);
- 
- 	/* Clear the reset request. */
- 	pci_write_config_byte(pdev, I915_GDRST, 0);
- 	udelay(50);
- 	if (!err)
--		err = wait_for_atomic(!i915_in_reset(pdev), 50);
-+		err = _wait_for_atomic(!i915_in_reset(pdev), 50, 0);
- 
- 	return err;
- }
-@@ -200,7 +200,7 @@ static int g33_do_reset(struct intel_gt *gt,
- 	struct pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
- 
- 	pci_write_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
--	return wait_for_atomic(g4x_reset_complete(pdev), 50);
-+	return _wait_for_atomic(g4x_reset_complete(pdev), 50, 0);
- }
- 
- static int g4x_do_reset(struct intel_gt *gt,
-@@ -217,7 +217,7 @@ static int g4x_do_reset(struct intel_gt *gt,
- 
- 	pci_write_config_byte(pdev, I915_GDRST,
- 			      GRDOM_MEDIA | GRDOM_RESET_ENABLE);
--	ret =  wait_for_atomic(g4x_reset_complete(pdev), 50);
-+	ret =  _wait_for_atomic(g4x_reset_complete(pdev), 50, 0);
- 	if (ret) {
- 		GT_TRACE(gt, "Wait for media reset failed\n");
- 		goto out;
-@@ -225,7 +225,7 @@ static int g4x_do_reset(struct intel_gt *gt,
- 
- 	pci_write_config_byte(pdev, I915_GDRST,
- 			      GRDOM_RENDER | GRDOM_RESET_ENABLE);
--	ret =  wait_for_atomic(g4x_reset_complete(pdev), 50);
-+	ret =  _wait_for_atomic(g4x_reset_complete(pdev), 50, 0);
- 	if (ret) {
- 		GT_TRACE(gt, "Wait for render reset failed\n");
- 		goto out;
-@@ -718,9 +718,7 @@ int __intel_gt_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask)
- 	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
- 	for (retry = 0; ret == -ETIMEDOUT && retry < retries; retry++) {
- 		GT_TRACE(gt, "engine_mask=%x\n", engine_mask);
--		preempt_disable();
- 		ret = reset(gt, engine_mask, retry);
--		preempt_enable();
- 	}
- 	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
- 
--- 
-2.40.0
+--
+Thanks,
+Wen
 
