@@ -2,157 +2,148 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F84DEE4993
-	for <linux-rt-users@archiver.kernel.org>; Sun, 20 Aug 2023 17:36:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57283EE49A0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 21 Aug 2023 22:03:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230046AbjHTRgi (ORCPT
+        id S230329AbjHUWDO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 20 Aug 2023 13:36:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54702 "EHLO
+        Mon, 21 Aug 2023 18:03:14 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38244 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231533AbjHTRgd (ORCPT
+        with ESMTP id S229462AbjHUWDN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 20 Aug 2023 13:36:33 -0400
-Received: from out162-62-58-211.mail.qq.com (out162-62-58-211.mail.qq.com [162.62.58.211])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1F631199;
-        Sun, 20 Aug 2023 10:31:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=foxmail.com;
-        s=s201512; t=1692552708;
-        bh=zxFXhwDqIpdERvzCzYZLMU4dKm/60bg0p1VB86108kw=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To;
-        b=ZwpW0dFsKbmdzT+IPWF04YdDLKajYJg9G+VmNvAov17sfxFpP+XLhdgSGXpruZXol
-         JP1DF+GiJiRjlOGrXSaFLyDLOdqB6lXwgLe9m706sdW3e6CCeLcipVzYvdjqOASfWM
-         2F1HtLXcATrDqjAfgKcXuqmip3Xb1VuL5wY5hnTA=
-Received: from [IPV6:240e:331:c54:6700:63d6:d559:9412:6535] ([240e:331:c54:6700:63d6:d559:9412:6535])
-        by newxmesmtplogicsvrszc5-0.qq.com (NewEsmtp) with SMTP
-        id 5CF11E86; Mon, 21 Aug 2023 01:23:15 +0800
-X-QQ-mid: xmsmtpt1692552195tepjhx5no
-Message-ID: <tencent_C80D3EE7563151B306E94C2AA7BF3023F80A@qq.com>
-X-QQ-XMAILINFO: MR/iVh5QLeieiZvg7Y8RvyLZC1x+cVc4V+CgM4zVX23AWMRR5lb9+/P0RYXRbp
-         RyQRLt+9D1lpO3Af3SEOIwCTK2pvfOVi4SQ8bSXRLCZj1LDz97VUqHJykrSDL5NO1U3Zo8IBUgGA
-         5O133J1Rp8MVdGA87AfdPn/bxc+dJ/b3yCoL3S85P6O+K3Fw+0L8+oN0cDxcwA+n6fn0HK3oNraJ
-         Kf7cY83+AXD5hm3d9gB88h1AtLyM/5ACK6J4XUoqyhOr0d/DsM7DSMvScWb/92HXi7SCivc1kuui
-         cBlhtzTIlj7qgzYVU25Z316S6h/qB6mlB6pXAkB9SdxQFIZ9sEI8R4kOMN3G8hHQys9TbqZvnodB
-         MeJsbnHyZbJJ3L/x9gj7XJExlfe6dxVAvqSrudFO8nXDnIRgujJnl6MeBc+FNJPK16rtOY64PZws
-         kqqwL3YrpcHkVgS4fnlWkkvHQiZgJSUgTW4Ka3uVFBVNtI3f/B46bvo8YAFQl/csgxoxSOEkcM3o
-         de1/ZnZcPH3gjPqVo/rOmsD+dCBc2W5HHIk5mZGsxJBSMJ5SaCxpE+e87Ex6589pZXq2ydmv4NWf
-         C0L44J/geF9q9YM+xSep5vF8DjyjLL6aVI9HbYa0JDPcFaYMG6bseKpG6JDmYJavwu9NhGoAlWR3
-         4tFPyzuTdKPiaL0wriH/e0WgMEgBxvH7Yg1b336LxkGhI0WTB4Gq3T3mz1kdo2U84nPU7nEP2lcr
-         ugQ8OnqDCiT5Reg+MlO7HUKewsgPglzgZqr/KKKZyYCRiqmBZnLSpT+RH0HScNSgPFHCCOWntXHE
-         EagbgIQaYjz15chgxhgpOKpV8wSM4tNGEfkNZ+JSBeheait0u7Lxzktv1xwEOnBqsd2LsPOGMmdA
-         zxoCgpU9YIV8uebw5CclWHMOr1Bak121FVfklIvd8chUaBdtFUFvCd+lSI2N70JCxG4g2bpXep+B
-         +AAWbdpf+i9JuafBD6XSSgA8JtzUbGxQtTO1bCjD5SZqkxPzRu383FwAwoAH2l6YjlkdXL03w=
-X-QQ-XMRINFO: OWPUhxQsoeAVDbp3OJHYyFg=
-X-OQ-MSGID: <50df2dd1-833c-0fcc-9689-4ff5db961062@foxmail.com>
-Date:   Mon, 21 Aug 2023 01:23:15 +0800
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.11.0
+        Mon, 21 Aug 2023 18:03:13 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EA09510E;
+        Mon, 21 Aug 2023 15:03:11 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits))
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 8815861852;
+        Mon, 21 Aug 2023 22:03:11 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E1FB5C433C7;
+        Mon, 21 Aug 2023 22:03:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1692655390;
+        bh=7mI/Dpv56bJFyiF6iBL/qZbmXzVgX6Ik3OS7+PdxP9I=;
+        h=Date:From:To:Cc:Subject:Reply-To:References:In-Reply-To:From;
+        b=p9oa17276g38os9BcSTPlIk+EzCorxqO/ucnXPZEMikGQpXKXa1DM8IZ/mdC9dAGK
+         57KvmX0TUcdU8DcPrB4rnuDs0f7MU42JrNkK5UPPNBVXVnQAXF01ODhP6JtPpo/FKk
+         7uvJ1KaO3PPFmDIROhQpIahnbu30WFofE+xSyIjhSryNAngSX7+b/yB2KW7zUCgmsK
+         HCOeBc6QrtA5uV5AOpNy5s6mXP50+m4vZYhgtB++Nm3dG23qmFW5fTnfjAyOazgyml
+         b3cgcS1nfPs54VkZad9EtBcOYPb6RUdOCfpVKTs0UT01zZ0jLKSZ67RqThghRGTQNL
+         77byE4LBJN0TA==
+Received: by paulmck-ThinkPad-P17-Gen-1.home (Postfix, from userid 1000)
+        id 83EB3CE02C9; Mon, 21 Aug 2023 15:03:10 -0700 (PDT)
+Date:   Mon, 21 Aug 2023 15:03:10 -0700
+From:   "Paul E. McKenney" <paulmck@kernel.org>
+To:     Wen Yang <wenyang.linux@foxmail.com>
+Cc:     paul.gortmaker@windriver.com, LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Frederic Weisbecker <frederic@kernel.org>
 Subject: Re: [PATCH] tick/rcu: fix false positive "softirq work is pending"
  messages on RT
-Content-Language: en-US
-To:     paul.gortmaker@windriver.com, LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
-        Frederic Weisbecker <frederic@kernel.org>
+Message-ID: <ff5263ec-96a8-4e8e-96af-de6ab8a17750@paulmck-laptop>
+Reply-To: paulmck@kernel.org
 References: <20230818200757.1808398-1-paul.gortmaker@windriver.com>
-From:   Wen Yang <wenyang.linux@foxmail.com>
-In-Reply-To: <20230818200757.1808398-1-paul.gortmaker@windriver.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+ <tencent_C80D3EE7563151B306E94C2AA7BF3023F80A@qq.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <tencent_C80D3EE7563151B306E94C2AA7BF3023F80A@qq.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Mon, Aug 21, 2023 at 01:23:15AM +0800, Wen Yang wrote:
+> 
+> On 2023/8/19 04:07, paul.gortmaker@windriver.com wrote:
+> > From: Paul Gortmaker <paul.gortmaker@windriver.com>
+> > 
+> > In commit 0345691b24c0 ("tick/rcu: Stop allowing RCU_SOFTIRQ in idle")
+> > the new function report_idle_softirq() was created by breaking code out
+> > of the existing can_stop_idle_tick() for kernels v5.18 and newer.
+> > 
+> > In doing so, the code essentially went from a one conditional:
+> > 
+> > 	if (a && b && c)
+> > 		warn();
+> > 
+> > to a three conditional:
+> > 
+> > 	if (!a)
+> > 		return;
+> > 	if (!b)
+> > 		return;
+> > 	if (!c)
+> > 		return;
+> > 	warn();
+> > 
+> > However, it seems one of the conditionals didn't get a "!" removed.
+> > Compare the instance of local_bh_blocked() in the old code:
+> > 
+> > -               if (ratelimit < 10 && !local_bh_blocked() &&
+> > -                   (local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK)) {
+> > -                       pr_warn("NOHZ tick-stop error: Non-RCU local softirq work is pending, handler #%02x!!!\n",
+> > -                               (unsigned int) local_softirq_pending());
+> > -                       ratelimit++;
+> > -               }
+> > 
+> > ...to the usage in the new (5.18+) code:
+> > 
+> > +       /* On RT, softirqs handling may be waiting on some lock */
+> > +       if (!local_bh_blocked())
+> > +               return false;
+> > 
+> > It seems apparent that the "!" should be removed from the new code.
+> > 
+> > This issue lay dormant until another fixup for the same commit was added
+> > in commit a7e282c77785 ("tick/rcu: Fix bogus ratelimit condition").
+> > This commit realized the ratelimit was essentially set to zero instead
+> > of ten, and hence *no* softirq pending messages would ever be issued.
+> > 
+> > Once this commit was backported via linux-stable, both the v6.1 and v6.4
+> > preempt-rt kernels started printing out 10 instances of this at boot:
+> > 
+> >    NOHZ tick-stop error: local softirq work is pending, handler #80!!!
+> > 
+> > Just to double check my understanding of things, I confirmed that the
+> > v5.18-rt did print the pending-80 messages with a cherry pick of the
+> > ratelimit fix, and then confirmed no pending softirq messages were
+> > printed with a revert of mainline's 034569 on a v5.18-rt baseline.
+> > 
+> > Finally I confirmed it fixed the issue on v6.1-rt and v6.4-rt, and
+> > also didn't break anything on a defconfig of mainline master of today.
+> > 
+> > Fixes: 0345691b24c0 ("tick/rcu: Stop allowing RCU_SOFTIRQ in idle")
+> > Cc: Wen Yang <wenyang.linux@foxmail.com>
+> > Cc: Thomas Gleixner <tglx@linutronix.de>
+> > Cc: Peter Zijlstra <peterz@infradead.org>
+> > Cc: Paul E. McKenney <paulmck@kernel.org>
+> > Cc: Frederic Weisbecker <frederic@kernel.org>
+> > Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+> > 
+> > diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+> > index 2b865cb77feb..b52e1861b913 100644
+> > --- a/kernel/time/tick-sched.c
+> > +++ b/kernel/time/tick-sched.c
+> > @@ -1050,7 +1050,7 @@ static bool report_idle_softirq(void)
+> >   		return false;
+> >   	/* On RT, softirqs handling may be waiting on some lock */
+> > -	if (!local_bh_blocked())
+> > +	if (local_bh_blocked())
+> >   		return false;
+> >   	pr_warn("NOHZ tick-stop error: local softirq work is pending, handler #%02x!!!\n",
+> 
+> Good catch!
+> 
+> Reviewed-by: Wen Yang <wenyang.linux@foxmail.com>
 
-On 2023/8/19 04:07, paul.gortmaker@windriver.com wrote:
-> From: Paul Gortmaker <paul.gortmaker@windriver.com>
->
-> In commit 0345691b24c0 ("tick/rcu: Stop allowing RCU_SOFTIRQ in idle")
-> the new function report_idle_softirq() was created by breaking code out
-> of the existing can_stop_idle_tick() for kernels v5.18 and newer.
->
-> In doing so, the code essentially went from a one conditional:
->
-> 	if (a && b && c)
-> 		warn();
->
-> to a three conditional:
->
-> 	if (!a)
-> 		return;
-> 	if (!b)
-> 		return;
-> 	if (!c)
-> 		return;
-> 	warn();
->
-> However, it seems one of the conditionals didn't get a "!" removed.
-> Compare the instance of local_bh_blocked() in the old code:
->
-> -               if (ratelimit < 10 && !local_bh_blocked() &&
-> -                   (local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK)) {
-> -                       pr_warn("NOHZ tick-stop error: Non-RCU local softirq work is pending, handler #%02x!!!\n",
-> -                               (unsigned int) local_softirq_pending());
-> -                       ratelimit++;
-> -               }
->
-> ...to the usage in the new (5.18+) code:
->
-> +       /* On RT, softirqs handling may be waiting on some lock */
-> +       if (!local_bh_blocked())
-> +               return false;
->
-> It seems apparent that the "!" should be removed from the new code.
->
-> This issue lay dormant until another fixup for the same commit was added
-> in commit a7e282c77785 ("tick/rcu: Fix bogus ratelimit condition").
-> This commit realized the ratelimit was essentially set to zero instead
-> of ten, and hence *no* softirq pending messages would ever be issued.
->
-> Once this commit was backported via linux-stable, both the v6.1 and v6.4
-> preempt-rt kernels started printing out 10 instances of this at boot:
->
->    NOHZ tick-stop error: local softirq work is pending, handler #80!!!
->
-> Just to double check my understanding of things, I confirmed that the
-> v5.18-rt did print the pending-80 messages with a cherry pick of the
-> ratelimit fix, and then confirmed no pending softirq messages were
-> printed with a revert of mainline's 034569 on a v5.18-rt baseline.
->
-> Finally I confirmed it fixed the issue on v6.1-rt and v6.4-rt, and
-> also didn't break anything on a defconfig of mainline master of today.
->
-> Fixes: 0345691b24c0 ("tick/rcu: Stop allowing RCU_SOFTIRQ in idle")
-> Cc: Wen Yang <wenyang.linux@foxmail.com>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Paul E. McKenney <paulmck@kernel.org>
-> Cc: Frederic Weisbecker <frederic@kernel.org>
-> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
->
-> diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-> index 2b865cb77feb..b52e1861b913 100644
-> --- a/kernel/time/tick-sched.c
-> +++ b/kernel/time/tick-sched.c
-> @@ -1050,7 +1050,7 @@ static bool report_idle_softirq(void)
->   		return false;
->   
->   	/* On RT, softirqs handling may be waiting on some lock */
-> -	if (!local_bh_blocked())
-> +	if (local_bh_blocked())
->   		return false;
->   
->   	pr_warn("NOHZ tick-stop error: local softirq work is pending, handler #%02x!!!\n",
+Frederic would normally take this, but he appears to be out.  So I am
+(probably only temporarily) queueing this in -rcu for more testing
+coverage.
 
-
-Good catch!
-
-Reviewed-by: Wen Yang <wenyang.linux@foxmail.com>
-
---
-Thanks,
-Wen
-
+							Thanx, Paul
