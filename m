@@ -2,200 +2,496 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7647BC001DB
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Aug 2023 15:58:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32FABC3DA6F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Aug 2023 17:02:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241155AbjHYP55 (ORCPT
+        id S1344031AbjHYRBn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 25 Aug 2023 11:57:57 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43258 "EHLO
+        Fri, 25 Aug 2023 13:01:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33530 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240880AbjHYP5m (ORCPT
+        with ESMTP id S1344157AbjHYRBd (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Aug 2023 11:57:42 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 190BC2107;
-        Fri, 25 Aug 2023 08:57:40 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 7D759623D6;
-        Fri, 25 Aug 2023 15:57:39 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 68138C433C7;
-        Fri, 25 Aug 2023 15:57:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1692979058;
-        bh=YIBUTi9Nfx2a2nBnXKRy+WN0ODLTmjLzZ6xsub9JD4g=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=a3MQNABnxGd3SVcN0pBGkJAt8AeRh1/XNuIaLuDPNxaIuY6pgIs1mZ/+bUV7u4zwy
-         VyeXm4v6U37llEuR4Nr7gRmTonziTArj+KjqsSmeOChFIkCkH7+1xSbqTDPLezSY3x
-         n8U/FjYazGM5Qr5Y0kwky4UPexaf9UiN+PDEj9pkpJ7YWD0UmXtdO137cBFo+UuPXH
-         pI8BELZfoNubkbLZQ2bzkb0kZFCU+dajpeZ/Bu1p44UFgywy/fyKL6UKcB1Vk1MyV6
-         rcuMm/3VEm/K4nGBqbQ335II2t/j9+LnhoVixk+l6jJiDdHZ/dPayab22XkAq3V2Z0
-         YZMANtmIAhLwA==
-Message-ID: <c53cb40d-86c2-0325-4103-af135fd0e680@kernel.org>
-Date:   Fri, 25 Aug 2023 17:57:22 +0200
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-Subject: Re: [ANNOUNCEMENT] CFP: Real-time and Scheduling MC at LPC
-To:     Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
+        Fri, 25 Aug 2023 13:01:33 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5AD6DE67;
+        Fri, 25 Aug 2023 10:01:30 -0700 (PDT)
+Date:   Fri, 25 Aug 2023 19:01:24 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1692982888;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=9DoCH/WQWItSPiJO2kaxLvtZItgPRC1Yh4Kw2UieuU4=;
+        b=nWk93G6/ZEt8iiXvmVdc1to6xXlSZ5G7m8QDp5NRcEYk3Feq6t5BSpRhBjeX6pWVhjqRFo
+        8FhJT36Ghf2AO39HgKfsNH0ADfi1NwH64huvmKcH5EMu5hg9nBIvl6u2uPQoippSoWJ2D9
+        pn9t12c80Z6yuFIKTihkizwZorHGUFb4cDRtFrbSzsziAG4G/IqOpVmP6OG+VAz0R5kh4k
+        8i6FuvPOWeGrr1FyHS/UNz7osuYna5eN6cB90dcNswKiIROaoMBzUvQu6rsP73l+bFyEhB
+        6EljEGY0c5YiPCJB+aW0pCkgZt0KEF+MKNGO1flXhZWHDPKkOG1nCWHjzkDFZQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1692982888;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=9DoCH/WQWItSPiJO2kaxLvtZItgPRC1Yh4Kw2UieuU4=;
+        b=GHxLbTRapJcdpoBxk+lelqZ1ktYw1zH2zMFlhRS04QJgxq5Z4aQZyhS6DZhgVW4/gJrdcu
+        qOPp30caxSOGmIAg==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
         Steven Rostedt <rostedt@goodmis.org>
-Cc:     Abel Wu <wuyun.abel@bytedance.com>,
-        Alexey Dobriyan <adobriyan@gmail.com>,
-        Barry Song <song.bao.hua@hisilicon.com>,
-        Chengming Zhou <zhouchengming@bytedance.com>,
-        Christoph Hellwig <hch@lst.de>,
-        "David S. Miller" <davem@davemloft.net>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        Frederic Weisbecker <frederic@kernel.org>,
-        Hao Jia <jiahao.os@bytedance.com>,
-        Huaixin Chang <changhuaixin@linux.alibaba.com>,
-        Huang Ying <ying.huang@intel.com>,
-        "Joel Fernandes (Google)" <joel@joelfernandes.org>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        Josh Don <joshdon@google.com>,
-        Konstantin Khlebnikov <khlebnikov@yandex-team.ru>,
-        Lukasz Luba <lukasz.luba@arm.com>,
-        Mark Rutland <mark.rutland@arm.com>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Nicholas Piggin <npiggin@gmail.com>,
-        Odin Ugedal <odin@uged.al>,
-        Patrick Bellasi <patrick.bellasi@arm.com>,
-        Peng Wang <rocking@linux.alibaba.com>,
-        Phil Auld <pauld@redhat.com>,
-        Qais Yousef <qais.yousef@arm.com>, Qian Cai <cai@lca.pw>,
-        Quentin Perret <qperret@google.com>,
-        "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>,
-        Ricardo Neri <ricardo.neri-calderon@linux.intel.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Suren Baghdasaryan <surenb@google.com>,
-        Valentin Schneider <vschneid@redhat.com>,
-        Vincent Donnefort <vincent.donnefort@arm.com>,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        Waiman Long <longman@redhat.com>,
-        Will Deacon <will@kernel.org>,
-        Yafang Shao <laoar.shao@gmail.com>,
-        YueHaibing <yuehaibing@huawei.com>,
-        Zhen Ni <nizhen@uniontech.com>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Arnaldo Carvalho de Melo <acme@redhat.com>,
-        Marcelo Tosatti <mtosatti@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Mel Gorman <mgorman@suse.de>, Ben Segall <bsegall@google.com>,
-        John Stultz <jstultz@google.com>,
-        David Vernet <void@manifault.com>,
-        Vlastimil Babka <vbabka@suse.cz>, Chris Mason <clm@fb.com>,
-        Tejun Heo <tj@kernel.org>,
-        Luca Abeni <luca.abeni@santannapisa.it>,
-        John Kacur <jkacur@redhat.com>,
-        John Ogness <john.ogness@linutronix.de>,
-        "paulmck@kernel.org" <paulmck@kernel.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Vineeth Remanan Pillai <vineeth@bitbyteword.org>,
-        Kate Carcia <kcarcia@redhat.com>,
-        Kate Stewart <kstewart@linuxfoundation.org>,
-        Min Yu <myu@linuxfoundation.org>,
-        Shuah Khan <skhan@linuxfoundation.org>,
-        =?UTF-8?Q?Luis_Claudio_R=2e_Gon=c3=a7alves?= <lclaudio@redhat.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Mark Brown <mark.brown@linaro.org>,
-        joseph.salisbury@canonical.com,
-        Morten Rasmussen <Morten.Rasmussen@arm.com>,
-        Kees Cook <keescook@chromium.org>,
-        Julia Lawall <julia.lawall@inria.fr>,
-        Guenter Roeck <linux@roeck-us.net>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-References: <d6113bec-6591-2efc-2255-66867e5db899@kernel.org>
-Content-Language: en-US, pt-BR, it-IT
-From:   Daniel Bristot de Oliveira <bristot@kernel.org>
-In-Reply-To: <d6113bec-6591-2efc-2255-66867e5db899@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Subject: [ANNOUNCE] v6.5-rc7-rt4
+Message-ID: <20230825170124.VjXbTg_w@linutronix.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello
+Dear RT folks!
 
-This is a gentle reminder about RT and SCHED MC. We will have to send the
-schedule on the next weeks. Please, submit your topic ASAP.
+I'm pleased to announce the v6.5-rc7-rt4 patch set. 
 
-Thanks!
+Changes since v6.5-rc7-rt3:
 
-On 6/20/23 19:13, Daniel Bristot de Oliveira wrote:
-> The real-time and scheduling micro-conference joins these two
-> intrinsically connected communities to discuss the next steps together.
-> 
-> Over the past decade, many parts of PREEMPT_RT have been included
-> in the official Linux codebase. Examples include real-time mutexes,
-> high-resolution timers, lockdep, ftrace, RCU_PREEMPT, threaded interrupt
-> handlers, and more. The number of patches that need integration has been
-> significantly reduced, and the rest is mature enough to make their way
-> into mainline Linux.
-> 
-> The scheduler is at the core of Linux performance. With different
-> topologies and workloads, giving the user the best experience possible is
-> challenging, from low latency to high throughput and from small
-> power-constrained devices to HPC, where CPU isolation is critical.
-> 
-> The following accomplishments have been made as a result of last
-> year’s micro-conference:
-> 
->  - Progress on rtla/osnoise to support any workload [1]
->  - Progress on adding tracepoints for IPI [2]
->  - Improvements in RCU to reduce noise
->  - Progress on the latency-nice patch set [3]
-> 
-> Ideas of topics to be discussed include (but are not limited to):
-> 
->  - Improve responsiveness for CFS tasks - e.g., latency-nice patch
->  - The new EEVDF scheduler proposal [4]
->  - Impact of new topology on CFS including hybrid or heterogeneous system
->  - Taking into account task profile with IPCC or uclamp
->  - Improvements in CPU Isolation
->  - The status of PREEMPT_RT
->  - Locking improvements - e.g., proxy execution [5]
->  - Improvements on SCHED_DEADLINE
->  - Tooling for debugging scheduling and real-time
-> 
-> It is fine if you have a new topic that is not on the list.
-> People are encouraged to submit any topic related to real-time
-> and scheduling.
-> 
-> Please consider that the goal is to discuss open problems, preferably
-> with patch set submissions already in discussion on LKML. The
-> presentations are very short, and the main portion of the time should
-> be given to the debate - thus, the importance of having an
-> open and relevant problem, with people in the community engaged
-> in the solution.
-> 
-> Submissions are made via LPC submission systems, selecting *Track Real-time
-> and Scheduling MC*
-> 
-> Please, forward this email for people interested on this subject (it not easy to
-> build the Cc: list for this email without forgetting important people :-))!
-> 
-> [1] https://lore.kernel.org/lkml/f5cfbd37aefd419eefe9243b4d2fc38ed5753fe4.1668692096.git.bristot@kernel.org/
-> [2] https://lore.kernel.org/lkml/20230307143558.294354-1-vschneid@redhat.com/T/
-> [3] https://lore.kernel.org/lkml/20230224093454.956298-3-vincent.guittot@linaro.org/
-> [4] https://lore.kernel.org/lkml/20230328092622.062917921@infradead.org/T/
-> [5] https://lore.kernel.org/lkml/20230411042511.1606592-1-jstultz@google.com/
-> 
-> Thanks!
-> 
-> -- Organizers:
->  - Daniel Bristot de Oliveira
->  - Juri Lelli
->  - Vincent Guittot
->  - Steven Rostedt
+  - The locking patches for flushed queued I/O on lock contention have
+    been updated. The last version from the upstream discussion has been
+    picked up and updated based on ongoing discussion.
 
+Known issues
+     None
+
+The delta patch against v6.5-rc7-rt3 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.5/incr/patch-6.5-rc7-rt3-rt4.patch.xz
+
+You can get this release via the git tree at:
+
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.5-rc7-rt4
+
+The RT patch against v6.5-rc7 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.5/older/patch-6.5-rc7-rt4.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.5/older/patches-6.5-rc7-rt4.tar.xz
+
+Sebastian
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 7b235881a0ad0..b4a34e80ffea6 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -304,11 +304,6 @@ extern long schedule_timeout_idle(long timeout);
+ asmlinkage void schedule(void);
+ extern void schedule_preempt_disabled(void);
+ asmlinkage void preempt_schedule_irq(void);
+-
+-extern void sched_submit_work(void);
+-extern void sched_resume_work(void);
+-extern void schedule_rtmutex(void);
+-
+ #ifdef CONFIG_PREEMPT_RT
+  extern void schedule_rtlock(void);
+ #endif
+@@ -911,6 +906,9 @@ struct task_struct {
+ 	 * ->sched_remote_wakeup gets used, so it can be in this word.
+ 	 */
+ 	unsigned			sched_remote_wakeup:1;
++#ifdef CONFIG_RT_MUTEXES
++	unsigned			sched_rt_mutex:1;
++#endif
+ 
+ 	/* Bit to tell LSMs we're in execve(): */
+ 	unsigned			in_execve:1;
+diff --git a/include/linux/sched/rt.h b/include/linux/sched/rt.h
+index 994c25640e156..b2b9e6eb96830 100644
+--- a/include/linux/sched/rt.h
++++ b/include/linux/sched/rt.h
+@@ -30,6 +30,10 @@ static inline bool task_is_realtime(struct task_struct *tsk)
+ }
+ 
+ #ifdef CONFIG_RT_MUTEXES
++extern void rt_mutex_pre_schedule(void);
++extern void rt_mutex_schedule(void);
++extern void rt_mutex_post_schedule(void);
++
+ /*
+  * Must hold either p->pi_lock or task_rq(p)->lock.
+  */
+diff --git a/kernel/futex/pi.c b/kernel/futex/pi.c
+index ce2889f123755..f8e65b27d9d6b 100644
+--- a/kernel/futex/pi.c
++++ b/kernel/futex/pi.c
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ 
+ #include <linux/slab.h>
++#include <linux/sched/rt.h>
+ #include <linux/sched/task.h>
+ 
+ #include "futex.h"
+@@ -1002,6 +1003,12 @@ int futex_lock_pi(u32 __user *uaddr, unsigned int flags, ktime_t *time, int tryl
+ 		goto no_block;
+ 	}
+ 
++	/*
++	 * Must be done before we enqueue the waiter, here is unfortunately
++	 * under the hb lock, but that *should* work because it does nothing.
++	 */
++	rt_mutex_pre_schedule();
++
+ 	rt_mutex_init_waiter(&rt_waiter);
+ 
+ 	/*
+@@ -1052,6 +1059,10 @@ int futex_lock_pi(u32 __user *uaddr, unsigned int flags, ktime_t *time, int tryl
+ 	if (ret && !rt_mutex_cleanup_proxy_lock(&q.pi_state->pi_mutex, &rt_waiter))
+ 		ret = 0;
+ 
++	/*
++	 * Waiter is unqueued.
++	 */
++	rt_mutex_post_schedule();
+ no_block:
+ 	/*
+ 	 * Fixup the pi_state owner and possibly acquire the lock if we
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 08a4555076f73..4a10e8c16fd2b 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -307,15 +307,11 @@ static int __sched rt_mutex_slowtrylock(struct rt_mutex_base *lock);
+ static __always_inline bool rt_mutex_try_acquire(struct rt_mutex_base *lock)
+ {
+ 	/*
+-	 * With debug enabled rt_mutex_cmpxchg trylock() will always fail,
+-	 * which will unconditionally invoke sched_submit/resume_work() in
+-	 * the slow path of __rt_mutex_lock() and __ww_rt_mutex_lock() even
+-	 * in the non-contended case.
++	 * With debug enabled rt_mutex_cmpxchg trylock() will always fail.
+ 	 *
+-	 * Avoid that by using rt_mutex_slow_trylock() which is covered by
+-	 * the debug code and can acquire a non-contended rtmutex. On
+-	 * success the callsite avoids the sched_submit/resume_work()
+-	 * dance.
++	 * Avoid unconditionally taking the slow path by using
++	 * rt_mutex_slow_trylock() which is covered by the debug code and can
++	 * acquire a non-contended rtmutex.
+ 	 */
+ 	return rt_mutex_slowtrylock(lock);
+ }
+@@ -1636,7 +1632,7 @@ static int __sched rt_mutex_slowlock_block(struct rt_mutex_base *lock,
+ 		raw_spin_unlock_irq(&lock->wait_lock);
+ 
+ 		if (!owner || !rtmutex_spin_on_owner(lock, waiter, owner))
+-			schedule_rtmutex();
++			rt_mutex_schedule();
+ 
+ 		raw_spin_lock_irq(&lock->wait_lock);
+ 		set_current_state(state);
+@@ -1665,7 +1661,7 @@ static void __sched rt_mutex_handle_deadlock(int res, int detect_deadlock,
+ 	WARN(1, "rtmutex deadlock detected\n");
+ 	while (1) {
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		schedule_rtmutex();
++		rt_mutex_schedule();
+ 	}
+ }
+ 
+@@ -1761,10 +1757,13 @@ static int __sched rt_mutex_slowlock(struct rt_mutex_base *lock,
+ 	int ret;
+ 
+ 	/*
+-	 * The task is about to sleep. Invoke sched_submit_work() before
+-	 * blocking as that might take locks and corrupt tsk::pi_blocked_on.
++	 * Do all pre-schedule work here, before we queue a waiter and invoke
++	 * PI -- any such work that trips on rtlock (PREEMPT_RT spinlock) would
++	 * otherwise recurse back into task_blocks_on_rt_mutex() through
++	 * rtlock_slowlock() and will then enqueue a second waiter for this
++	 * same task and things get really confusing real fast.
+ 	 */
+-	sched_submit_work();
++	rt_mutex_pre_schedule();
+ 
+ 	/*
+ 	 * Technically we could use raw_spin_[un]lock_irq() here, but this can
+@@ -1777,8 +1776,8 @@ static int __sched rt_mutex_slowlock(struct rt_mutex_base *lock,
+ 	raw_spin_lock_irqsave(&lock->wait_lock, flags);
+ 	ret = __rt_mutex_slowlock_locked(lock, ww_ctx, state);
+ 	raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
++	rt_mutex_post_schedule();
+ 
+-	sched_resume_work();
+ 	return ret;
+ }
+ 
+diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+index 5be92ca5afabc..b5e881250fec5 100644
+--- a/kernel/locking/rwbase_rt.c
++++ b/kernel/locking/rwbase_rt.c
+@@ -71,6 +71,7 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 	struct rt_mutex_base *rtm = &rwb->rtmutex;
+ 	int ret;
+ 
++	rwbase_pre_schedule();
+ 	raw_spin_lock_irq(&rtm->wait_lock);
+ 
+ 	/*
+@@ -125,29 +126,19 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 		rwbase_rtmutex_unlock(rtm);
+ 
+ 	trace_contention_end(rwb, ret);
++	rwbase_post_schedule();
+ 	return ret;
+ }
+ 
+ static __always_inline int rwbase_read_lock(struct rwbase_rt *rwb,
+ 					    unsigned int state)
+ {
+-	int ret;
+-
+ 	lockdep_assert(!current->pi_blocked_on);
+ 
+ 	if (rwbase_read_trylock(rwb))
+ 		return 0;
+ 
+-	/*
+-	 * The task is about to sleep. For rwsems this submits work as that
+-	 * might take locks and corrupt tsk::pi_blocked_on. Must be
+-	 * explicit here because __rwbase_read_lock() cannot invoke
+-	 * rt_mutex_slowlock(). NOP for rwlocks.
+-	 */
+-	rwbase_sched_submit_work();
+-	ret = __rwbase_read_lock(rwb, state);
+-	rwbase_sched_resume_work();
+-	return ret;
++	return __rwbase_read_lock(rwb, state);
+ }
+ 
+ static void __sched __rwbase_read_unlock(struct rwbase_rt *rwb,
+@@ -243,16 +234,15 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+ 	struct rt_mutex_base *rtm = &rwb->rtmutex;
+ 	unsigned long flags;
+ 
+-	/*
+-	 * Take the rtmutex as a first step. For rwsem this will also
+-	 * invoke sched_submit_work() to flush IO and workers.
+-	 */
++	/* Take the rtmutex as a first step */
+ 	if (rwbase_rtmutex_lock_state(rtm, state))
+ 		return -EINTR;
+ 
+ 	/* Force readers into slow path */
+ 	atomic_sub(READER_BIAS, &rwb->readers);
+ 
++	rt_mutex_pre_schedule();
++
+ 	raw_spin_lock_irqsave(&rtm->wait_lock, flags);
+ 	if (__rwbase_write_trylock(rwb))
+ 		goto out_unlock;
+@@ -264,6 +254,7 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+ 		if (rwbase_signal_pending_state(state, current)) {
+ 			rwbase_restore_current_state();
+ 			__rwbase_write_unlock(rwb, 0, flags);
++			rt_mutex_post_schedule();
+ 			trace_contention_end(rwb, -EINTR);
+ 			return -EINTR;
+ 		}
+@@ -282,6 +273,7 @@ static int __sched rwbase_write_lock(struct rwbase_rt *rwb,
+ 
+ out_unlock:
+ 	raw_spin_unlock_irqrestore(&rtm->wait_lock, flags);
++	rt_mutex_post_schedule();
+ 	return 0;
+ }
+ 
+diff --git a/kernel/locking/rwsem.c b/kernel/locking/rwsem.c
+index e304db9ebfd95..2340b6d90ec6f 100644
+--- a/kernel/locking/rwsem.c
++++ b/kernel/locking/rwsem.c
+@@ -1415,12 +1415,6 @@ static inline void __downgrade_write(struct rw_semaphore *sem)
+ #define rwbase_rtmutex_lock_state(rtm, state)		\
+ 	__rt_mutex_lock(rtm, state)
+ 
+-#define rwbase_sched_submit_work()			\
+-	sched_submit_work()
+-
+-#define rwbase_sched_resume_work()			\
+-	sched_resume_work()
+-
+ #define rwbase_rtmutex_slowlock_locked(rtm, state)	\
+ 	__rt_mutex_slowlock_locked(rtm, NULL, state)
+ 
+@@ -1433,8 +1427,14 @@ static inline void __downgrade_write(struct rw_semaphore *sem)
+ #define rwbase_signal_pending_state(state, current)	\
+ 	signal_pending_state(state, current)
+ 
++#define rwbase_pre_schedule()				\
++	rt_mutex_pre_schedule()
++
+ #define rwbase_schedule()				\
+-	schedule()
++	rt_mutex_schedule()
++
++#define rwbase_post_schedule()				\
++	rt_mutex_post_schedule()
+ 
+ #include "rwbase_rt.c"
+ 
+diff --git a/kernel/locking/spinlock_rt.c b/kernel/locking/spinlock_rt.c
+index 9fe282cd145d9..38e292454fccb 100644
+--- a/kernel/locking/spinlock_rt.c
++++ b/kernel/locking/spinlock_rt.c
+@@ -161,9 +161,6 @@ rwbase_rtmutex_lock_state(struct rt_mutex_base *rtm, unsigned int state)
+ 	return 0;
+ }
+ 
+-static __always_inline void rwbase_sched_submit_work(void) { }
+-static __always_inline void rwbase_sched_resume_work(void) { }
+-
+ static __always_inline int
+ rwbase_rtmutex_slowlock_locked(struct rt_mutex_base *rtm, unsigned int state)
+ {
+@@ -189,9 +186,13 @@ static __always_inline int  rwbase_rtmutex_trylock(struct rt_mutex_base *rtm)
+ 
+ #define rwbase_signal_pending_state(state, current)	(0)
+ 
++#define rwbase_pre_schedule()
++
+ #define rwbase_schedule()				\
+ 	schedule_rtlock()
+ 
++#define rwbase_post_schedule()
++
+ #include "rwbase_rt.c"
+ /*
+  * The common functions which get wrapped into the rwlock API.
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 2276b5d882380..fe944fa1efc4d 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6779,11 +6779,18 @@ void __noreturn do_task_dead(void)
+ 		cpu_relax();
+ }
+ 
+-void sched_submit_work(void)
++static inline void sched_submit_work(struct task_struct *tsk)
+ {
+-	struct task_struct *tsk = current;
+-	unsigned int task_flags = tsk->flags;
++	static DEFINE_WAIT_OVERRIDE_MAP(sched_map, LD_WAIT_CONFIG);
++	unsigned int task_flags;
+ 
++	/*
++	 * Establish LD_WAIT_CONFIG context to ensure none of the code called
++	 * will use a blocking primitive -- which would lead to recursion.
++	 */
++	lock_map_acquire_try(&sched_map);
++
++	task_flags = tsk->flags;
+ 	/*
+ 	 * If a worker goes to sleep, notify and ask workqueue whether it
+ 	 * wants to wake up a task to maintain concurrency.
+@@ -6807,12 +6814,12 @@ void sched_submit_work(void)
+ 	 * make sure to submit it to avoid deadlocks.
+ 	 */
+ 	blk_flush_plug(tsk->plug, true);
++
++	lock_map_release(&sched_map);
+ }
+ 
+-void sched_resume_work(void)
++static void sched_update_worker(struct task_struct *tsk)
+ {
+-	struct task_struct *tsk = current;
+-
+ 	if (tsk->flags & (PF_WQ_WORKER | PF_IO_WORKER)) {
+ 		if (tsk->flags & PF_WQ_WORKER)
+ 			wq_worker_running(tsk);
+@@ -6821,7 +6828,7 @@ void sched_resume_work(void)
+ 	}
+ }
+ 
+-static void schedule_loop(unsigned int sched_mode)
++static __always_inline void __schedule_loop(unsigned int sched_mode)
+ {
+ 	do {
+ 		preempt_disable();
+@@ -6832,18 +6839,19 @@ static void schedule_loop(unsigned int sched_mode)
+ 
+ asmlinkage __visible void __sched schedule(void)
+ {
+-	if (!task_is_running(current))
+-		sched_submit_work();
+-	schedule_loop(SM_NONE);
+-	sched_resume_work();
++	struct task_struct *tsk = current;
++
++#ifdef CONFIG_RT_MUTEXES
++	lockdep_assert(!tsk->sched_rt_mutex);
++#endif
++
++	if (!task_is_running(tsk))
++		sched_submit_work(tsk);
++	__schedule_loop(SM_NONE);
++	sched_update_worker(tsk);
+ }
+ EXPORT_SYMBOL(schedule);
+ 
+-void schedule_rtmutex(void)
+-{
+-	schedule_loop(SM_NONE);
+-}
+-
+ /*
+  * synchronize_rcu_tasks() makes sure that no task is stuck in preempted
+  * state (have scheduled out non-voluntarily) by making sure that all
+@@ -6903,7 +6911,7 @@ void __sched schedule_preempt_disabled(void)
+ #ifdef CONFIG_PREEMPT_RT
+ void __sched notrace schedule_rtlock(void)
+ {
+-	schedule_loop(SM_RTLOCK_WAIT);
++	__schedule_loop(SM_RTLOCK_WAIT);
+ }
+ NOKPROBE_SYMBOL(schedule_rtlock);
+ #endif
+@@ -7128,6 +7136,32 @@ static void __setscheduler_prio(struct task_struct *p, int prio)
+ 
+ #ifdef CONFIG_RT_MUTEXES
+ 
++/*
++ * Would be more useful with typeof()/auto_type but they don't mix with
++ * bit-fields. Since it's a local thing, use int. Keep the generic sounding
++ * name such that if someone were to implement this function we get to compare
++ * notes.
++ */
++#define fetch_and_set(x, v) ({ int _x = (x); (x) = (v); _x; })
++
++void rt_mutex_pre_schedule(void)
++{
++	lockdep_assert(!fetch_and_set(current->sched_rt_mutex, 1));
++	sched_submit_work(current);
++}
++
++void rt_mutex_schedule(void)
++{
++	lockdep_assert(current->sched_rt_mutex);
++	__schedule_loop(SM_NONE);
++}
++
++void rt_mutex_post_schedule(void)
++{
++	sched_update_worker(current);
++	lockdep_assert(fetch_and_set(current->sched_rt_mutex, 0));
++}
++
+ static inline int __rt_effective_prio(struct task_struct *pi_task, int prio)
+ {
+ 	if (pi_task)
+diff --git a/localversion-rt b/localversion-rt
+index 1445cd65885cd..ad3da1bcab7e8 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt3
++-rt4
