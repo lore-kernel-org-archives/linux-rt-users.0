@@ -2,42 +2,42 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 065D1C83F12
-	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Aug 2023 22:37:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B8DEC83F15
+	for <linux-rt-users@archiver.kernel.org>; Mon, 28 Aug 2023 23:57:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233889AbjH1WhZ (ORCPT
+        id S234426AbjH1X44 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 28 Aug 2023 18:37:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59844 "EHLO
+        Mon, 28 Aug 2023 19:56:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51110 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233896AbjH1WhY (ORCPT
+        with ESMTP id S234467AbjH1X4u (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 28 Aug 2023 18:37:24 -0400
+        Mon, 28 Aug 2023 19:56:50 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 412D9D2
-        for <linux-rt-users@vger.kernel.org>; Mon, 28 Aug 2023 15:36:38 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 79C14131
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Aug 2023 16:56:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1693262197;
+        s=mimecast20190719; t=1693266960;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:mime-version:mime-version:content-type:content-type;
-        bh=x0WrWIrJdKQexUzOSkzL5xgVm52oMggI5IfEY5JG+IQ=;
-        b=X0uyMKqXla4X48apsfdphgb6erWWb1cICr9iUCFYPOJTWtIM+Fzh29J7PiXd18Awn+lASn
-        IWLY/a+gA8AcGRsmNBmawMTiDm25gvBASIuxIj3VNy0ky/qc35XFn37dWgfpFwPaGzAtEZ
-        mLIpXtUFqXrdEuAU98sB6IidXbqk7EA=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-176-jvzyGiVsOgmjHXX69O6m_A-1; Mon, 28 Aug 2023 18:36:35 -0400
-X-MC-Unique: jvzyGiVsOgmjHXX69O6m_A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+        bh=ALnMfmrHHVOoMDKlXKGvleZgLroHOuLCEmICtk5Z3tM=;
+        b=aMn2suKxzYDja5zJzsfw4kM2nBpgJxSOrzQoTVPLqoqOzqzL79WMk7Ppc6pjjyjwSHN+sj
+        CAZxOVoBDQiLbjpF+lmWhXidaVsHSBFjfeJ2Kcvq4g6kQVdx7aRyHj65G5wVOoeusm7K4f
+        +JG5IoloueifMkjGgX/mR1YD4QuIv5o=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-244-7kcOiANfOnGdhhFGP9dzyQ-1; Mon, 28 Aug 2023 19:55:56 -0400
+X-MC-Unique: 7kcOiANfOnGdhhFGP9dzyQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E96733801BD0;
-        Mon, 28 Aug 2023 22:36:34 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41561101A528;
+        Mon, 28 Aug 2023 23:55:56 +0000 (UTC)
 Received: from localhost (unknown [10.22.32.117])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 10D24140E962;
-        Mon, 28 Aug 2023 22:36:33 +0000 (UTC)
-Date:   Mon, 28 Aug 2023 19:36:33 -0300
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 5A33D40C2063;
+        Mon, 28 Aug 2023 23:55:55 +0000 (UTC)
+Date:   Mon, 28 Aug 2023 20:55:54 -0300
 From:   "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -50,40 +50,38 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Mark Gross <markgross@kernel.org>,
-        Pavel Machek <pavel@denx.de>,
-        Jeff Brady <jeffreyjbrady@gmail.com>,
         Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.192-rt92
-Message-ID: <ZO0hcedb0m3Ey0Dy@uudg.org>
+Subject: [ANNOUNCE] 4.14.323-rt153
+Message-ID: <ZO00Cp6g8EuJREih@uudg.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hello RT-list!
 
-I'm pleased to announce the 5.10.192-rt92 stable release.
+I'm pleased to announce the 4.14.323-rt153 stable release.
 
-This release is just an update to the new stable 5.10.192
+This release is just an update to the new stable 4.14.323
 version and no RT specific changes have been made.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.10-rt
-  Head SHA1: a7fe2ad8ced572fc9fe4fc75168b9857e2d7e1ae
+  branch: v4.14-rt
+  Head SHA1: 294cef4c51977f3cb87443eabef739748f6d674b
 
-Or to build 5.10.192-rt92 directly, the following patches should be applied:
+Or to build 4.14.323-rt153 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.192.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.323.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.192-rt92.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.323-rt153.patch.xz
 
 Signing key fingerprint:
 
