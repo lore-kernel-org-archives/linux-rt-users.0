@@ -2,199 +2,92 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 78A7BC83F01
-	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Aug 2023 14:33:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8711FC83F37
+	for <linux-rt-users@archiver.kernel.org>; Thu, 31 Aug 2023 20:28:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240377AbjHaOdP (ORCPT
+        id S1347347AbjHaU2S (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 31 Aug 2023 10:33:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53368 "EHLO
+        Thu, 31 Aug 2023 16:28:18 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38366 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229834AbjHaOdN (ORCPT
+        with ESMTP id S238211AbjHaU2P (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 31 Aug 2023 10:33:13 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 10793113;
-        Thu, 31 Aug 2023 07:33:10 -0700 (PDT)
-Date:   Thu, 31 Aug 2023 16:33:05 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1693492387;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=0dLfExl6OyA1FL3EWUqd5FLAlpEdUZJdWxajYdG4idU=;
-        b=HI3VBQChi75w7aynRgrXHxDObDpd9ObRuGmYsA6ap61TBVQYMVMoneVAz/2f7/RYU4xexC
-        fTtHXxfDT9B2GK7K7gdzTB0hQWpN5Sdv0vyF4jY7/w65oDi1eVuWP2XZKO+incCIaz3ShD
-        JOOHl5V+mdb9QR1LgJ/84FPXFjsNh6LPFz2+GvLZbBRet3nNGIqu/n3VAiBVtjNkr/XHbL
-        j5kJikPw5/P0hoCnYeAj4g+cL9wyQDHeI4ya51aGU0BjYS+8dFywdA8YrtaOSaLJ/SzPGS
-        2ZY34jJ9mZLxPKP4HkAK2q3IdNpmM8Yp33DmSXHxZW2+YWjW/L249uaWsoI8+w==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1693492387;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=0dLfExl6OyA1FL3EWUqd5FLAlpEdUZJdWxajYdG4idU=;
-        b=U48J36C0YRMg4kwOf9F+Za6KZ8JGVpgnb9OA7FhRR/Oiwmj5MzSfgDUhU1+qik4hrmnnIx
-        tY9Jxudjo1o6NcAw==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.5-rt6
-Message-ID: <20230831143305.sfEVXv7Y@linutronix.de>
+        Thu, 31 Aug 2023 16:28:15 -0400
+Received: from mail-qt1-x82d.google.com (mail-qt1-x82d.google.com [IPv6:2607:f8b0:4864:20::82d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AE97310D1
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Aug 2023 13:28:07 -0700 (PDT)
+Received: by mail-qt1-x82d.google.com with SMTP id d75a77b69052e-4108a8f0de7so6962541cf.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Aug 2023 13:28:07 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1693513686; x=1694118486; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=Bce4gBSUS/HEj8R8SA5eySaeSaHl1B/2bU2j9713QSg=;
+        b=JSozqzY/gcz+n3/oZcUfTP6SHK3cepJKirSnZV7tKJ9BzflTccRLYDreT29QkyLJsn
+         oasoxd3n0Iox25EPRlvqgwLmJScKeG3dF7jRgnZNHzv1f2aPDT3/HRBOsq1YzcBqVrEQ
+         WlHg8okLuwxFwL1l/ciZ5RUd3sTWv0V9nxnrsmMDV4A1d3LtkZeYwy/y0CaRPLkKnlY8
+         yDGrlbYgT9OYad1tP+yuwmNsBE4wGhpj4IzFg6j+TeAdVzVr3Mt4BtiyOLE/QRqNsaUs
+         46Urhbvd6USQXRuR0w5TCKSL2CmeNKbxduj2egbT93+xqf6XVJhOEnJfDNr1LBcBc7D5
+         RJ6w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20221208; t=1693513686; x=1694118486;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Bce4gBSUS/HEj8R8SA5eySaeSaHl1B/2bU2j9713QSg=;
+        b=hEEsShDQAGh5e771xITnFG/WI8gcuvt0Z5rpxlCCxFGimr+ZirWFqL5SAxcNIsTcug
+         VYZjb2LVRuSzUz8ReDgpaWEt4JBDUMBNdCnLoOUASTSk6X6+NaRuyan7qf7R/zusxLdI
+         r3ch72NulEclrPTQPB89DDkXcKLFcfTCN07i+s+LvOCeCqiFUEt2H9qbESpzWs2/w4h7
+         mZ+SFE7D3L/tK80FiOUOPVEq5sZRAPsQLojTYyW74Ntafxkj80czcfZ+1JH0uCKbcDN0
+         BReY9I5Dwf85QYpkrTooZ/qQnvh7Sd1zFapUXduD9xvIUvzxvhSC9J1v5gD86GzmPJSf
+         63kg==
+X-Gm-Message-State: AOJu0YzKxuKT7uV4o/7SOL8LRR7kCW3ilc7zDQ+Yr0Qp5YZ0bjlI8OB3
+        uhkTof/QOy8jeRboBArxa4djBaHTFX4=
+X-Google-Smtp-Source: AGHT+IGJWQbqOKF92ceJQaizkPZaUPOQE21tUvgIcd+vwQ3wlJoc2mDhhHKeQitJtcVBrYl4We7VUg==
+X-Received: by 2002:ac8:5804:0:b0:410:31c4:f460 with SMTP id g4-20020ac85804000000b0041031c4f460mr576761qtg.1.1693513686402;
+        Thu, 31 Aug 2023 13:28:06 -0700 (PDT)
+Received: from fionn.redhat.com ([174.88.88.227])
+        by smtp.gmail.com with ESMTPSA id x22-20020ac86b56000000b004108d49f391sm887748qts.48.2023.08.31.13.28.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 31 Aug 2023 13:28:05 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rteval: return empty string in compress_cpulist for an  empty list
+Date:   Thu, 31 Aug 2023 16:27:41 -0400
+Message-Id: <20230831202741.200657-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.40.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+If an empty list is passed to the function compress_cpulist in
+systopology.py, return an empty string, or else an IndexError will be
+triggered.
 
-I'm pleased to announce the v6.5-rt6 patch set. 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/systopology.py | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Changes since v6.5-rt5:
+diff --git a/rteval/systopology.py b/rteval/systopology.py
+index aca2dfd03e95..62ad3558e2e5 100644
+--- a/rteval/systopology.py
++++ b/rteval/systopology.py
+@@ -147,6 +147,8 @@ class CpuList:
+     @staticmethod
+     def compress_cpulist(cpulist):
+         """ return a string representation of cpulist """
++        if not cpulist:
++            return ""
+         if isinstance(cpulist[0], int):
+             return ",".join(str(e) for e in cpulist)
+         return ",".join(cpulist)
+-- 
+2.40.1
 
-  - An error in the Futex requeue-PI has been noticed after the recent
-    rework.
-
-  - The "NOHZ tick-stop error" was printed in legetime cases. Patch by
-    Paul Gortmaker.
-
-Known issues
-     None
-
-The delta patch against v6.5-rt5 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.5/incr/patch-6.5-rt5-rt6.patch.xz
-
-You can get this release via the git tree at:
-
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.5-rt6
-
-The RT patch against v6.5 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.5/older/patch-6.5-rt6.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.5/older/patches-6.5-rt6.tar.xz
-
-Sebastian
-
-diff --git a/kernel/futex/futex.h b/kernel/futex/futex.h
-index b5379c0e6d6d1..58fbc34a59811 100644
---- a/kernel/futex/futex.h
-+++ b/kernel/futex/futex.h
-@@ -254,6 +254,29 @@ double_unlock_hb(struct futex_hash_bucket *hb1, struct futex_hash_bucket *hb2)
- 		spin_unlock(&hb2->lock);
- }
- 
-+static inline void futex_trylock_hblock(spinlock_t *lock)
-+{
-+	do {
-+		ktime_t chill_time;;
-+
-+		/*
-+		 * Current is not longer pi_blocked_on if it owns the lock. It
-+		 * can still have pi_blocked_on set if the lock acquiring was
-+		 * interrupted by signal or timeout. The trylock operation does
-+		 * not clobber pi_blocked_on so it is the only option.
-+		 * Should the try-lock operation fail then it needs leave the CPU
-+		 * to avoid a busy loop in case it is the task with the highest
-+		 * priority.
-+		 */
-+		if (spin_trylock(lock))
-+			return;
-+
-+		chill_time = ktime_set(0, NSEC_PER_MSEC);
-+		set_current_state(TASK_UNINTERRUPTIBLE);
-+		schedule_hrtimeout(&chill_time, HRTIMER_MODE_REL_HARD);
-+	} while (1);
-+}
-+
- /* syscalls */
- 
- extern int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags, u32
-diff --git a/kernel/futex/pi.c b/kernel/futex/pi.c
-index f8e65b27d9d6b..1440fdcdbfd8c 100644
---- a/kernel/futex/pi.c
-+++ b/kernel/futex/pi.c
-@@ -1046,7 +1046,10 @@ int futex_lock_pi(u32 __user *uaddr, unsigned int flags, ktime_t *time, int tryl
- 	ret = rt_mutex_wait_proxy_lock(&q.pi_state->pi_mutex, to, &rt_waiter);
- 
- cleanup:
--	spin_lock(q.lock_ptr);
-+	rt_mutex_post_schedule();
-+
-+	futex_trylock_hblock(q.lock_ptr);
-+
- 	/*
- 	 * If we failed to acquire the lock (deadlock/signal/timeout), we must
- 	 * first acquire the hb->lock before removing the lock from the
-@@ -1058,11 +1061,6 @@ int futex_lock_pi(u32 __user *uaddr, unsigned int flags, ktime_t *time, int tryl
- 	 */
- 	if (ret && !rt_mutex_cleanup_proxy_lock(&q.pi_state->pi_mutex, &rt_waiter))
- 		ret = 0;
--
--	/*
--	 * Waiter is unqueued.
--	 */
--	rt_mutex_post_schedule();
- no_block:
- 	/*
- 	 * Fixup the pi_state owner and possibly acquire the lock if we
-diff --git a/kernel/futex/requeue.c b/kernel/futex/requeue.c
-index cba8b1a6a4cc2..26888cfa74449 100644
---- a/kernel/futex/requeue.c
-+++ b/kernel/futex/requeue.c
-@@ -850,8 +850,8 @@ int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 		pi_mutex = &q.pi_state->pi_mutex;
- 		ret = rt_mutex_wait_proxy_lock(pi_mutex, to, &rt_waiter);
- 
--		/* Current is not longer pi_blocked_on */
--		spin_lock(q.lock_ptr);
-+		futex_trylock_hblock(q.lock_ptr);
-+
- 		if (ret && !rt_mutex_cleanup_proxy_lock(pi_mutex, &rt_waiter))
- 			ret = 0;
- 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 4a10e8c16fd2b..e56585ef489c8 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1166,10 +1166,13 @@ try_to_take_rt_mutex(struct rt_mutex_base *lock, struct task_struct *task,
- 	 * Clear @task->pi_blocked_on. Requires protection by
- 	 * @task->pi_lock. Redundant operation for the @waiter == NULL
- 	 * case, but conditionals are more expensive than a redundant
--	 * store.
-+	 * store. But then there is FUTEX and if rt_mutex_wait_proxy_lock()
-+	 * did not acquire the lock it try-locks another lock before it clears
-+	 * @task->pi_blocked_on so we mustn't clear it here premature.
- 	 */
- 	raw_spin_lock(&task->pi_lock);
--	task->pi_blocked_on = NULL;
-+	if (waiter)
-+		task->pi_blocked_on = NULL;
- 	/*
- 	 * Finish the lock acquisition. @task is the new owner. If
- 	 * other waiters exist we have to insert the highest priority
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index b417fe6e43f6d..3bea1d0f20169 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -1045,7 +1045,7 @@ static bool report_idle_softirq(void)
- 		return false;
- 
- 	/* On RT, softirqs handling may be waiting on some lock */
--	if (!local_bh_blocked())
-+	if (local_bh_blocked())
- 		return false;
- 
- 	pr_warn("NOHZ tick-stop error: local softirq work is pending, handler #%02x!!!\n",
-diff --git a/localversion-rt b/localversion-rt
-index 0efe7ba1930e1..8fc605d806670 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt5
-+-rt6
