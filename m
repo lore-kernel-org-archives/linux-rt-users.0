@@ -2,79 +2,94 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2EA25CA0FE1
-	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Sep 2023 09:56:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C45CACA0FF3
+	for <linux-rt-users@archiver.kernel.org>; Fri,  1 Sep 2023 19:06:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238966AbjIAJ4u (ORCPT
+        id S1345932AbjIATGL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 1 Sep 2023 05:56:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57582 "EHLO
+        Fri, 1 Sep 2023 15:06:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41016 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229616AbjIAJ4s (ORCPT
+        with ESMTP id S229824AbjIATGK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Sep 2023 05:56:48 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74371E8;
-        Fri,  1 Sep 2023 02:56:42 -0700 (PDT)
-From:   Thomas Gleixner <tglx@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1693562200;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=YMH/L366w3EUFTFROQVC1b+RZIO8d4sE9aBa+kTdubg=;
-        b=l4QjJqf8C2duh9CCrH6p1UEA1uDTQ3rWpR4M0hWfDgLtZujt75pd8TEKmk2jdsXKfXWf91
-        xj/oAWtUBqc+wssnoI2RirLYinOpIUfDNXLJ3Ln08zsFiUr7Y2u57jSZ1Tpab2EY2Q4UGO
-        DNFq4JErv4Ytg4QnCJwPEpfyN5g+ZhfmpdCh+Ni52viwrR9W8dCoRNUshibT3FENAc/Ilp
-        4VfYHwAJYhGfZoMwRSmCpsqmKuX/SC5D8vlcO4aGyMT8itjl88JSzD517XDFWRPIzCDWGx
-        yQ3ulGTEZZu9GNWLsw1nBicq8lZBlIBVwJMFHv8mnwTxhGjEA7IsvsdINMjXOQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1693562200;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=YMH/L366w3EUFTFROQVC1b+RZIO8d4sE9aBa+kTdubg=;
-        b=ezIF1IxZ7GZmbwpNO+Uv7Co/L/pOGgJdB1zHZWGt5G8sxG40xuQg1evnhuTOLsJGgOcppe
-        037++pEMh0vfMXAA==
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Frederic Weisbecker <frederic@kernel.org>
-Cc:     "Paul E. McKenney" <paulmck@kernel.org>,
-        Wen Yang <wenyang.linux@foxmail.com>,
-        paul.gortmaker@windriver.com, LKML <linux-kernel@vger.kernel.org>,
+        Fri, 1 Sep 2023 15:06:10 -0400
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A1A2BE56;
+        Fri,  1 Sep 2023 12:06:07 -0700 (PDT)
+Received: from canonical.com (1.general.jsalisbury.us.vpn [10.172.66.188])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id BEBA43F203;
+        Fri,  1 Sep 2023 19:06:05 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+        s=20210705; t=1693595166;
+        bh=PCEEHPOH5Byzgh9I0eb01hieWBTp2uIfmm719xA53Fo=;
+        h=From:Subject:Date:Message-ID:To;
+        b=vIH5JELg028v4JUFJT3BXtNJlDhJrVmt2OlyfgMC/lzwq7gz8D0qygmltzclpHY1o
+         M3A9tDv7gLX//6MjWKBajvo+7mtIyjJrrMG12toCUKcEV/xz39/3SzQ+RMDz/H9YiG
+         02Yi/RnnJsshm3VnN6ouDAOhtSGPs4Ftu+hNdC1nNhq3Sg9w9otHl0QInGHcV7wfGS
+         n6enQRuRXF9lcsQncp5Bz2mAh9qQsU/i+HbaLvSUYTJr12bd2P3frIoDkpOSn9wLQn
+         5sM995ba5ucnjjQrdEoJ9TQj6mzkHIXeaiqlZdyRZcvNnkDJefSlf7GFnE9pJ2Lvux
+         sTWxLjkn331OQ==
+From:   Joseph Salisbury <joseph.salisbury@canonical.com>
+Subject: [ANNOUNCE] 5.15.129-rt67
+Date:   Fri, 01 Sep 2023 18:59:44 -0000
+Message-ID: <169359478488.962731.2224863377696117508@jupiter.home.arpa>
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] tick/rcu: fix false positive "softirq work is pending"
- messages on RT
-In-Reply-To: <20230831133214.XF2yjiEb@linutronix.de>
-References: <20230818200757.1808398-1-paul.gortmaker@windriver.com>
- <tencent_C80D3EE7563151B306E94C2AA7BF3023F80A@qq.com>
- <ff5263ec-96a8-4e8e-96af-de6ab8a17750@paulmck-laptop>
- <ZOy3S8ajaV8YWtE-@2a01cb09806c67d6fe4a366cc09da8f8.ipv6.abo.wanadoo.fr>
- <20230831133214.XF2yjiEb@linutronix.de>
-Date:   Fri, 01 Sep 2023 11:56:39 +0200
-Message-ID: <87il8u43oo.ffs@tglx>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>,
+        Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Aug 31 2023 at 15:32, Sebastian Andrzej Siewior wrote:
+Hello RT-list!
 
-> On 2023-08-28 17:03:39 [+0200], Frederic Weisbecker wrote:
->> > Frederic would normally take this, but he appears to be out.  So I am
->> > (probably only temporarily) queueing this in -rcu for more testing
->> > coverage.
->>=20
->> I'm back, I should relay this to Thomas to avoid conflicts with
->> timers changes.
->
-> I somehow missed this thread and I do see this if I enable NO_HZ. I lost
-> it=E2=80=A6
-> Anyway, I'm going to pick it up for RT and ping the timer department
-> after the merge window.
+I'm pleased to announce the 5.15.129-rt67 stable release.
 
-It's queued in timers/urgent and will hit Linus tree before rc1
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.15-rt
+  Head SHA1: 9157353f3ecf223b612ee734907ccefc4fa50760
+
+Or to build 5.15.129-rt67 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.129.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.129-rt67.patch.xz
+
+This will be the last release prior to moving to the release candidate workflow.
+
+
+Enjoy!
+Joseph Salisbury
+
+Changes from v5.15.125-rt66:
+---
+
+Joseph Salisbury (1):
+      Linux 5.15.129-rt67
+---
+localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+---
+diff --git a/localversion-rt b/localversion-rt
+index d42c0971b041..5513b842ced2 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt66
++-rt67
