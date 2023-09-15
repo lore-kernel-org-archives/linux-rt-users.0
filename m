@@ -2,67 +2,67 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D047EEEC01
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Sep 2023 19:03:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D05FEEEC01
+	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Sep 2023 19:08:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236420AbjIOTD3 (ORCPT
+        id S236601AbjIOTHq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Sep 2023 15:03:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34102 "EHLO
+        Fri, 15 Sep 2023 15:07:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52494 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S237130AbjIOTDV (ORCPT
+        with ESMTP id S237132AbjIOTHf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Sep 2023 15:03:21 -0400
+        Fri, 15 Sep 2023 15:07:35 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 9AD552D70
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Sep 2023 12:01:57 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTP id D121898
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Sep 2023 12:06:45 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1694804516;
+        s=mimecast20190719; t=1694804805;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
         bh=gr3IcVDrUksE4OkReViBIh7teenFZJMsoBJdO/8jGWU=;
-        b=AHd4W7NqZv+dAGlivTA4S8uVU/y6wleP8WAfIGehoPe+gAQ1Rsyk+nykXdcNy/eZkKSUk3
-        YzKMBQ75f2L6zUbGjRTai0lgHMdkmETQuyGDGZHPG/D/iw/dDzKUJvaIxiU9KDDZrsYsPy
-        Ogj46NWCNf2ByDXCK4bqkH3FXxc/ASM=
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
- [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+        b=LwUP/OdHzbPkNaqztyAfZU+vwUkimOWqB2ODHjM8YUBjX0v+QcwBNNGBY36C7etnonIX7S
+        iR5oskGeLuEjca5iyj/kX5Iwt4uWMuZwex7sT1q+PQJEdbnoQweKSfe37+eP6YZ9sfdgmE
+        SRiXGnIk/pbUf7p7WoZJtOdQ0dp61eQ=
+Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com
+ [209.85.167.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-223-Q7AMYSZrPsu1jXNLhpy5tQ-1; Fri, 15 Sep 2023 15:01:55 -0400
-X-MC-Unique: Q7AMYSZrPsu1jXNLhpy5tQ-1
-Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-76efd8bf515so282700685a.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Sep 2023 12:01:55 -0700 (PDT)
+ us-mta-671-Cnh9B5r4MzqC5yS7pRCHXw-1; Fri, 15 Sep 2023 15:06:43 -0400
+X-MC-Unique: Cnh9B5r4MzqC5yS7pRCHXw-1
+Received: by mail-oi1-f198.google.com with SMTP id 5614622812f47-3ac97a6abf6so4068301b6e.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Sep 2023 12:06:43 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1694804514; x=1695409314;
+        d=1e100.net; s=20230601; t=1694804803; x=1695409603;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
         bh=gr3IcVDrUksE4OkReViBIh7teenFZJMsoBJdO/8jGWU=;
-        b=RH0L5vVy4VWvFVgIphnxA/9R6vuxp42o/lQFHVTQrx36/vim5Qllrxc1/wPHz29cmJ
-         dy69nfJyQ6+ht1E9ZkoGY0xpbEudjmjNz6Z78+EXGo4dv++d5m+Hkc9RZ/O2ZrSwIrk2
-         h6ssmWcEpp3nzDTONao8VkC/jjhw6UpS8Ihz36VExtIUYcWcfM6aImIPzNmhp2cTjEz6
-         QJYQFYEnmbett4z4fVffdBOoej33een/sBdyPCS1puXwJZeWSW1JB+f/GBLoQJ1Pd92N
-         LB5QOjS3RIHwDRyM8ACqkt5NZ1kIYTUIMozDphDx7D8oY0PiODQk5fzugoAcu0p2Enlo
-         m8HQ==
-X-Gm-Message-State: AOJu0YwqkYrAvU57slVbAJZ4hn6MkQgPTkObNsTO85xlXGV25v3isuhx
-        T6Eh+u/ZJYFGSFfyKeHyiuHmkKbHuamwLIZ7l0tTi1/a5qo8OtAzN6lBXu8o7AgRtzmOIP5uU1C
-        /Ai8r0B2qcta9RrycQGOl8kYsxkG0LhapXuA=
-X-Received: by 2002:a05:620a:4553:b0:765:734b:1792 with SMTP id u19-20020a05620a455300b00765734b1792mr7572727qkp.23.1694804514433;
-        Fri, 15 Sep 2023 12:01:54 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEvpdUZsc8kEOC/Ffz4pR6/tnD+MoIeCR8tvYjpU6KCnr1Aog6Kk578fFElTs+Bbk1N/fBG0g==
-X-Received: by 2002:a05:620a:4553:b0:765:734b:1792 with SMTP id u19-20020a05620a455300b00765734b1792mr7572702qkp.23.1694804514203;
-        Fri, 15 Sep 2023 12:01:54 -0700 (PDT)
-Received: from fionn ([174.88.88.130])
-        by smtp.gmail.com with ESMTPSA id h16-20020a05620a13f000b0076d6a08ac98sm1410472qkl.76.2023.09.15.12.01.53
+        b=CJQj2HxC2aMJhRxPEJO4wokZmDdcM9Ak8j+a8/zTOKfDYm7RckJ66pEjanAfRC1dBM
+         UP23jn9qxGNT5JCrJKyIOlJtD/Vl0SS3kckf8lgyX56Xfy+9zGB6sIFLkZAxG0J3jaKt
+         5iODolt09GiqHmOZLFDA/EcJ7zie6a3opFOzfwiS0BBkLN7k6mlzVBo0ZrDstEybj3cZ
+         +AF1d2PPZSl9HY5FBSY6Q2lCIF+h0ohWjHQU2CqS3Imv61Dbpl7SMwNfTqzNPknbKjXa
+         ECT9pljWuHBsoHTZ+fEas3sMXU0kp9zEjmBrKaKOn1jRgwVX9lUGMxRYNwuIjrAIbvz0
+         TuYQ==
+X-Gm-Message-State: AOJu0YzWTeCB6KFNfKoXopmKuKfETS73do8eTjYHi/OH1X8hXDuiUwLR
+        5LNjxLFyM4Y1/P46NyRZX1Xa+VRNtxaqhS1VDnu2WD7TLDKUchhaMOQOp2l5nxRnLrGmbV4Rk8+
+        /+4J+EuCjr31NCLXVMgaiXF07q7I=
+X-Received: by 2002:a05:6808:c:b0:3a1:d075:348b with SMTP id u12-20020a056808000c00b003a1d075348bmr2356227oic.59.1694804803181;
+        Fri, 15 Sep 2023 12:06:43 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFg5EMrXf9VUVDhjwDf/8EC37m4bJgQ2uQuhLXrwG3dyAvxJHesD8Pszr+XrZmlMBRrkyE08g==
+X-Received: by 2002:a05:6808:c:b0:3a1:d075:348b with SMTP id u12-20020a056808000c00b003a1d075348bmr2356215oic.59.1694804802935;
+        Fri, 15 Sep 2023 12:06:42 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-15-174-88-88-130.dsl.bell.ca. [174.88.88.130])
+        by smtp.gmail.com with ESMTPSA id o5-20020ac85545000000b004179e79069asm313742qtr.21.2023.09.15.12.06.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 15 Sep 2023 12:01:53 -0700 (PDT)
-Date:   Fri, 15 Sep 2023 15:01:39 -0400 (EDT)
+        Fri, 15 Sep 2023 12:06:42 -0700 (PDT)
+Date:   Fri, 15 Sep 2023 15:06:33 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     Tomas Glozar <tglozar@redhat.com>
 cc:     linux-rt-users@vger.kernel.org
 Subject: Re: [PATCH v2 2/3] rteval: Add run_on_isolcpus option to
  measurements
 In-Reply-To: <20230811095228.200772-3-tglozar@redhat.com>
-Message-ID: <8e40bb39-a52b-9a58-23d3-0bfeb88abf@redhat.com>
+Message-ID: <f59349b5-bae5-115c-67c8-95f68502fad@redhat.com>
 References: <20230811095228.200772-1-tglozar@redhat.com> <20230811095228.200772-3-tglozar@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
