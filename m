@@ -2,76 +2,108 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36D8FCD37B4
-	for <linux-rt-users@archiver.kernel.org>; Sun, 17 Sep 2023 21:07:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AED99C46CA1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Sep 2023 15:17:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231650AbjIQVGv (ORCPT
+        id S229946AbjIRPRj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 17 Sep 2023 17:06:51 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56038 "EHLO
+        Mon, 18 Sep 2023 11:17:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40478 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239729AbjIQVGo (ORCPT
+        with ESMTP id S229953AbjIRPRi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 17 Sep 2023 17:06:44 -0400
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E93E6B6;
-        Sun, 17 Sep 2023 14:06:38 -0700 (PDT)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 650ACC433C8;
-        Sun, 17 Sep 2023 21:06:38 +0000 (UTC)
-From:   Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.1.46-rt14
-Date:   Sun, 17 Sep 2023 21:01:53 -0000
-Message-ID: <169498451329.185247.13540432080486970560@demetrius>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>,
-        Joseph Salisbury <joseph.salisbury@canonical.com>
+        Mon, 18 Sep 2023 11:17:38 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C946DDB
+        for <linux-rt-users@vger.kernel.org>; Mon, 18 Sep 2023 08:16:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1695050205;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=EEA6VDQPJOXu5AXx1LQuhsOW5LNyWyh2/a6/SrXAAHY=;
+        b=KY6CTCb3ehc38la0GYMDp0xGRoYZvWLdVbV8/p1Ne9Ycx6nzxTkY5ZU6Dkw/ZJHZxyg8rm
+        1LenRiTEGDAe0nA5hMPZ2KzEuMx3PlCIQWoXWp0K+QD/GrMBTLZJ/tPDDq7eGkKmLKO9HU
+        g1gL1pF0HzRHQjkGvTUqU+10aZAJZzk=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-80-hzDBk8sePtaUmvA9_MgzWA-1; Mon, 18 Sep 2023 11:15:40 -0400
+X-MC-Unique: hzDBk8sePtaUmvA9_MgzWA-1
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-65825867403so7434006d6.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 18 Sep 2023 08:15:40 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1695050140; x=1695654940;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=EEA6VDQPJOXu5AXx1LQuhsOW5LNyWyh2/a6/SrXAAHY=;
+        b=LS7K8IRkdbsvPLDGxlPQanJ8BqHeqvis99gFA8SeVssf0LlqDro5aL9pvq8Colxze9
+         sP+18L3t+Qcx0ZjwzGM9j0y2RHj/+xulwlLGHuvt062QJq7mEa/HGe6ASm42YXrhbVsn
+         IBM3Y2VI1RpNWGRTCz6ivACGf8zAvnkHyL4r5e39bR5cALjzKrPF3mHc1ZkvYpffEIdu
+         k2gRkYyYVSn0ij7vwg0oo7JzYS9/pcE1DHPCHH9tkpyYc98U7JEh1EuUwjyPurIUvWak
+         Q5H3kQlpPGOeKIQcLMvx1DIExvXgYbtgvc5SlVTB9qzwqE4EhLIjPOgMGs9cEkLm6QB/
+         DNEA==
+X-Gm-Message-State: AOJu0YwWOcLbxT/MmdcfTvgfkuzj3Q7GewVVKl1nSTQRLiFib1UOVydg
+        MoVbaC8yOnTGbWL36GCdczs0QoeDjKBQ0KbeyOR9Uxg+7nd3Q8gqeNeJJqhMK6CNLveXR8XVVKw
+        nPt6ae4+TXrV56ro0rkEuSXeLrK8=
+X-Received: by 2002:a0c:f509:0:b0:658:3d4e:a0c8 with SMTP id j9-20020a0cf509000000b006583d4ea0c8mr729848qvm.9.1695050139872;
+        Mon, 18 Sep 2023 08:15:39 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IE7LHlWGAtDrgC+YxUkWDTqe5EeR+36z8ClbI8BS+l4693zIwW9hZbgyKUsLhTydyMZh6+DiA==
+X-Received: by 2002:a0c:f509:0:b0:658:3d4e:a0c8 with SMTP id j9-20020a0cf509000000b006583d4ea0c8mr729833qvm.9.1695050139598;
+        Mon, 18 Sep 2023 08:15:39 -0700 (PDT)
+Received: from fionn ([174.88.88.130])
+        by smtp.gmail.com with ESMTPSA id j17-20020a0cf311000000b0065635a05e64sm2659035qvl.20.2023.09.18.08.15.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 18 Sep 2023 08:15:39 -0700 (PDT)
+Date:   Mon, 18 Sep 2023 11:12:13 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     Eder Zulian <ezulian@redhat.com>
+cc:     linux-rt-users@vger.kernel.org, williams@redhat.com
+Subject: Re: [PATCH v2] rt-tests: cyclictest: Remove warnings due different
+ signedness in comparison
+In-Reply-To: <20230811154247.481194-1-ezulian@redhat.com>
+Message-ID: <e4f72415-a77-11dd-c2fc-14bb45e6c7c6@redhat.com>
+References: <20230811154247.481194-1-ezulian@redhat.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT-list!
-
-I'm pleased to announce the 6.1.46-rt14 stable release.
-
-Note that this is strictly changes to PREEMPT_RT behavior with the following
-commits:
-
-7929a9185c2f drm/i915: Do not disable preemption for resets
-2363ffd65d1b posix-timers: Ensure timer ID search-loop limit is valid
-c3c53a6d672c bpf: Remove in_atomic() from bpf_link_put().
-72ec563d9da5 mm/page_alloc: Use write_seqlock_irqsave() instead write_seqlock() + local_irq_save().
-61974a5bf1e6 seqlock: Do the lockdep annotation before locking in do_write_seqcount_begin_nested()
-7b941399a8c6 sched: avoid false lockdep splat in put_task_struct()
-be37e65220e2 debugobjects,locking: Annotate debug_object_fill_pool() wait type violation
-e5914bbc08e8 kernel/fork: beware of __put_task_struct calling context
-54aba8b15687 revert: "softirq: Let ksoftirqd do its job"
-c5c286db3c5a locking/rwbase: Mitigate indefinite writer starvation
-423c54970a75 io-mapping: don't disable preempt on RT in io_mapping_map_atomic_wc().
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v6.1-rt
-  Head SHA1: 73daa37b7cb8a876b209fcc744fca7da07f2ce1b
-
-Or to build 6.1.46-rt14 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.46.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.46-rt14.patch.xz
 
 
-Enjoy!
-Clark
+On Fri, 11 Aug 2023, Eder Zulian wrote:
+
+> Type casting used to remove compiler warnings due to comparison of
+> integer expressions of different signedness.
+> 
+> Signed-off-by: Eder Zulian <ezulian@redhat.com>
+> ---
+> v2: Cleaned up coding style and addressed review comments
+> 
+>  src/cyclictest/cyclictest.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 4a7108e..179ae8b 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -317,8 +317,10 @@ static int raise_soft_prio(int policy, const struct sched_param *param)
+>  		return err;
+>  	}
+>  
+> -	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? policy_max : rlim.rlim_cur;
+> -	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? policy_max : rlim.rlim_max;
+> +	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? (unsigned int)policy_max
+> +						    : rlim.rlim_cur;
+> +	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? (unsigned int)policy_max
+> +						    : rlim.rlim_max;
+>  
+>  	if (prio > soft_max && prio <= hard_max) {
+>  		rlim.rlim_cur = prio;
+> -- 
+> 2.39.3
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+
