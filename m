@@ -2,108 +2,75 @@ Return-Path: <linux-rt-users-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AED99C46CA1
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Sep 2023 15:17:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38E34CD3435
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Sep 2023 04:02:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229946AbjIRPRj (ORCPT
+        id S231319AbjISECw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Sep 2023 11:17:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40478 "EHLO
+        Tue, 19 Sep 2023 00:02:52 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59962 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229953AbjIRPRi (ORCPT
+        with ESMTP id S229962AbjISECv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Sep 2023 11:17:38 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C946DDB
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Sep 2023 08:16:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1695050205;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=EEA6VDQPJOXu5AXx1LQuhsOW5LNyWyh2/a6/SrXAAHY=;
-        b=KY6CTCb3ehc38la0GYMDp0xGRoYZvWLdVbV8/p1Ne9Ycx6nzxTkY5ZU6Dkw/ZJHZxyg8rm
-        1LenRiTEGDAe0nA5hMPZ2KzEuMx3PlCIQWoXWp0K+QD/GrMBTLZJ/tPDDq7eGkKmLKO9HU
-        g1gL1pF0HzRHQjkGvTUqU+10aZAJZzk=
-Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
- [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-80-hzDBk8sePtaUmvA9_MgzWA-1; Mon, 18 Sep 2023 11:15:40 -0400
-X-MC-Unique: hzDBk8sePtaUmvA9_MgzWA-1
-Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-65825867403so7434006d6.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Sep 2023 08:15:40 -0700 (PDT)
+        Tue, 19 Sep 2023 00:02:51 -0400
+Received: from mail-pg1-x52d.google.com (mail-pg1-x52d.google.com [IPv6:2607:f8b0:4864:20::52d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5CB0DFD;
+        Mon, 18 Sep 2023 21:02:46 -0700 (PDT)
+Received: by mail-pg1-x52d.google.com with SMTP id 41be03b00d2f7-578a3069f1eso748741a12.1;
+        Mon, 18 Sep 2023 21:02:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1695096166; x=1695700966; darn=vger.kernel.org;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=alx+2MuWN41HhyE2x8kbrjTxvAUn40IVJk0e71UdPo4=;
+        b=ErRrOR/FqIoNNMuwtHKaGmg35bbxikZOT42pG1a9yfAYat/gw0cGd4Xdh+JRnUR3wc
+         vIocA5JqiTOzFHHfat75DwI7ix7NTOrOQOissZkncoceRyuVidX0IHORAaz9S1xxxKWN
+         tPQZL6iMt94To5JdvCm8he5eUpy7qvvo9aFXHQFOLTpEmUUAcGdxkoED0mXw8NJV55PF
+         W7WIHJHIGQNHntlYEZzSThJuVd0dFxj4MYiFkKJ0agBcTBY+FMsLWADqd9MSsu+WVAl/
+         926ry6ZwPGBzSGAeLh7x2etf6CPf+3kxw2OgRxeeaUDGcRnuIm0NCif5YcI3JPRm4HeP
+         jHMg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1695050140; x=1695654940;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=EEA6VDQPJOXu5AXx1LQuhsOW5LNyWyh2/a6/SrXAAHY=;
-        b=LS7K8IRkdbsvPLDGxlPQanJ8BqHeqvis99gFA8SeVssf0LlqDro5aL9pvq8Colxze9
-         sP+18L3t+Qcx0ZjwzGM9j0y2RHj/+xulwlLGHuvt062QJq7mEa/HGe6ASm42YXrhbVsn
-         IBM3Y2VI1RpNWGRTCz6ivACGf8zAvnkHyL4r5e39bR5cALjzKrPF3mHc1ZkvYpffEIdu
-         k2gRkYyYVSn0ij7vwg0oo7JzYS9/pcE1DHPCHH9tkpyYc98U7JEh1EuUwjyPurIUvWak
-         Q5H3kQlpPGOeKIQcLMvx1DIExvXgYbtgvc5SlVTB9qzwqE4EhLIjPOgMGs9cEkLm6QB/
-         DNEA==
-X-Gm-Message-State: AOJu0YwWOcLbxT/MmdcfTvgfkuzj3Q7GewVVKl1nSTQRLiFib1UOVydg
-        MoVbaC8yOnTGbWL36GCdczs0QoeDjKBQ0KbeyOR9Uxg+7nd3Q8gqeNeJJqhMK6CNLveXR8XVVKw
-        nPt6ae4+TXrV56ro0rkEuSXeLrK8=
-X-Received: by 2002:a0c:f509:0:b0:658:3d4e:a0c8 with SMTP id j9-20020a0cf509000000b006583d4ea0c8mr729848qvm.9.1695050139872;
-        Mon, 18 Sep 2023 08:15:39 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IE7LHlWGAtDrgC+YxUkWDTqe5EeR+36z8ClbI8BS+l4693zIwW9hZbgyKUsLhTydyMZh6+DiA==
-X-Received: by 2002:a0c:f509:0:b0:658:3d4e:a0c8 with SMTP id j9-20020a0cf509000000b006583d4ea0c8mr729833qvm.9.1695050139598;
-        Mon, 18 Sep 2023 08:15:39 -0700 (PDT)
-Received: from fionn ([174.88.88.130])
-        by smtp.gmail.com with ESMTPSA id j17-20020a0cf311000000b0065635a05e64sm2659035qvl.20.2023.09.18.08.15.38
+        d=1e100.net; s=20230601; t=1695096166; x=1695700966;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=alx+2MuWN41HhyE2x8kbrjTxvAUn40IVJk0e71UdPo4=;
+        b=Xo7AHTsNAJMemJ6C/fTvwQAKGJUgDOxdcaK+KIbyoQhd+bvaeUqyPjizRqSwXSynhA
+         wsIFYTDRIUe7ubGiJ+sxMY8BSqI3umnolExqMJcJgK07sGjqorJvKV45hAJAOIS0WRdY
+         QccWM5jiBwMqtqZXU7Dpw/YHHXMM+Bv/KIRo1EfTZ5DdAEpd0jj25K6SALvgFMNUu2b8
+         1EALuzI6aY6LQHXmY5mfKwNc0ltxedX2jbeMfs3JtWXTv6w+Ej7h4LPwWEEzonwXYAk5
+         mL7f/W++imWS3ZXchIAaaIyoVZEUwsP59ZCHIszcY5TQO/v92pWWTtrh4sCtEyc0v6kQ
+         GLuA==
+X-Gm-Message-State: AOJu0YyQc4/RKNbe4xo3vfKCYgdk2uj2wvEK51+2B0VkAPwLKDDQXdoU
+        h/JBIITk5jnSJPhrxKsMkLI=
+X-Google-Smtp-Source: AGHT+IGWNxO5IbS2lhd33UVyJK93tGxLypjLjrUvmIXcHYHrcvpQV72dRDq3ROAtaLn8Df2QEy4YEw==
+X-Received: by 2002:a05:6a21:9989:b0:140:253b:b658 with SMTP id ve9-20020a056a21998900b00140253bb658mr11243738pzb.57.1695096165688;
+        Mon, 18 Sep 2023 21:02:45 -0700 (PDT)
+Received: from Laptop-X1 ([43.228.180.230])
+        by smtp.gmail.com with ESMTPSA id a26-20020aa780da000000b0068fe6ad4e18sm7798708pfn.157.2023.09.18.21.02.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 18 Sep 2023 08:15:39 -0700 (PDT)
-Date:   Mon, 18 Sep 2023 11:12:13 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Eder Zulian <ezulian@redhat.com>
-cc:     linux-rt-users@vger.kernel.org, williams@redhat.com
-Subject: Re: [PATCH v2] rt-tests: cyclictest: Remove warnings due different
- signedness in comparison
-In-Reply-To: <20230811154247.481194-1-ezulian@redhat.com>
-Message-ID: <e4f72415-a77-11dd-c2fc-14bb45e6c7c6@redhat.com>
-References: <20230811154247.481194-1-ezulian@redhat.com>
+        Mon, 18 Sep 2023 21:02:44 -0700 (PDT)
+Date:   Tue, 19 Sep 2023 12:02:41 +0800
+From:   Hangbin Liu <liuhangbin@gmail.com>
+To:     Clark Williams <clrkwllms@kernel.org>
+Cc:     stable-rt@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Please help backport 3c107f36db06 selftests/net: mv bpf/nat6to4.c to
+ net folder to v6.1-rt
+Message-ID: <ZQkdYYWScEnqagU1@Laptop-X1>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Clark,
 
+Is it OK to backport 3c107f36db06 ("selftests/net: mv bpf/nat6to4.c to net folder")
+to v6.1-rt? The selftest always failed[1] with error like "./nat6to4.o: Permission denied".
+The issue has been fixed and backported to all stable kernels except v6.1-rt[2].
 
-On Fri, 11 Aug 2023, Eder Zulian wrote:
+https://datawarehouse.cki-project.org/issue/1758
+https://datawarehouse.cki-project.org/kcidb/checkouts/104785#issue-1758
 
-> Type casting used to remove compiler warnings due to comparison of
-> integer expressions of different signedness.
-> 
-> Signed-off-by: Eder Zulian <ezulian@redhat.com>
-> ---
-> v2: Cleaned up coding style and addressed review comments
-> 
->  src/cyclictest/cyclictest.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 4a7108e..179ae8b 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -317,8 +317,10 @@ static int raise_soft_prio(int policy, const struct sched_param *param)
->  		return err;
->  	}
->  
-> -	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? policy_max : rlim.rlim_cur;
-> -	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? policy_max : rlim.rlim_max;
-> +	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? (unsigned int)policy_max
-> +						    : rlim.rlim_cur;
-> +	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? (unsigned int)policy_max
-> +						    : rlim.rlim_max;
->  
->  	if (prio > soft_max && prio <= hard_max) {
->  		rlim.rlim_cur = prio;
-> -- 
-> 2.39.3
-> 
-> 
-Signed-off-by: John Kacur <jkacur@redhat.com>
-
+Thanks
+Hangbin
