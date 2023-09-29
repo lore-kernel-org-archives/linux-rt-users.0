@@ -1,156 +1,65 @@
-Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 172568C13
-	for <linux-rt-users@vger.kernel.org>; Fri, 29 Sep 2023 20:39:54 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D06F51A7
-	for <linux-rt-users@vger.kernel.org>; Fri, 29 Sep 2023 13:39:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696019993;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=aTxHeJJZooLm0LnqykCD+3TI4+Q/DSXoZTkzlwvMAIE=;
-	b=JQwIP6CVD5fsLe85TG2SHl96Z0Zev8LDYDrE8z6dqQQGfddDIjKwFRHebz5hvB5OjqBAQB
-	BOFJ+bKo/AIkiRw8FHfpdOilOzrbFSJ8eMlj+o7oJ4wMTzjCTVzI3Yb9cUr9O59Fyb2uM5
-	oN5qif99MeYnYll229GnGKpvglk9Pm8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-687-vrCNtTJtPxik9U9WrzXkkQ-1; Fri, 29 Sep 2023 16:39:47 -0400
-X-MC-Unique: vrCNtTJtPxik9U9WrzXkkQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68FFF185A797;
-	Fri, 29 Sep 2023 20:39:45 +0000 (UTC)
-Received: from localhost (unknown [10.22.10.252])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 94421170E9;
-	Fri, 29 Sep 2023 20:39:43 +0000 (UTC)
-Date: Fri, 29 Sep 2023 17:39:42 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Wang Yong <wang.yong12@zte.com.cn>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.194-rt95
-Message-ID: <ZRc2DtDvnsK7wVwR@uudg.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60FD16728D
+	for <linux-rt-users@vger.kernel.org>; Fri, 29 Sep 2023 22:00:44 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F3B69C433C9;
+	Fri, 29 Sep 2023 22:00:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1696024843;
+	bh=89jTrq1DyohzStlU5zc3Tha8Xsv29TxLnDk3KQTTdzE=;
+	h=Subject:From:To:Date:From;
+	b=MM/syiKFglXQ2lEg2hwnIyLOvfZzpDjt2OwuGkl2+VUgjORKteY3mcRFPB8Jsd10V
+	 mMXHWo30aPjHxRI2nW6UCqH3p/oPymhziDnygYUjUBQPzEAcWFcPVFacORiRlWPNkt
+	 3LLRLYiGTHvGn4edq36bHpWJnYumjkp0HSHMtLqvNTU63j2OUkAK0P1RfTl00GqMv5
+	 QwdOHvaZWOcJpFprSoO5EGH2005kvg5clIc2CKb5g6HXcnNtl3bXfa+UcW5Xv8brNn
+	 W9PAY7JfSSmM9Ij/+FEMYQfL8O4RMluwApUzIba5N7I8G0o+N095uYCUctAmksRroy
+	 zUlX3KUM8s2TQ==
+Message-ID: <666b831988329de027e63def44296a7b5a34149e.camel@kernel.org>
+Subject: [ANNOUNCE] 5.4.257-rt87
+From: Tom Zanussi <zanussi@kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users
+ <linux-rt-users@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, 
+ Thomas Gleixner <tglx@linutronix.de>, Carsten Emde <C.Emde@osadl.org>, John
+ Kacur <jkacur@redhat.com>, Sebastian Andrzej Siewior
+ <bigeasy@linutronix.de>, Daniel Wagner <wagi@monom.org>, Clark Williams
+ <williams@redhat.com>,  "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+ Tom Zanussi <zanussi@kernel.org>
+Date: Fri, 29 Sep 2023 17:00:37 -0500
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.44.4-0ubuntu2 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_NONE,
-	RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,SPF_HELO_NONE,SPF_NONE
-	autolearn=unavailable autolearn_force=no version=3.4.6
-X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
-	lindbergh.monkeyblade.net
 
-Hello RT-list!
+Hello RT Folks!
 
-I'm pleased to announce the 5.10.194-rt95 stable release.
+I'm pleased to announce the 5.4.257-rt87 stable release.
 
-This release is an RT-only update. All the changes here are specific to RT.
+This release is just an update to the new stable 5.4.257
+version and no RT specific changes have been made.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.10-rt
-  Head SHA1: e9e1d0b892ed4e46c4d83b53f0f39880e37f8d92
+  branch: v5.4-rt
+  Head SHA1: 78f7ec6fa8bdf48ab8fcbccef05f9cb882c124ce
 
-Or to build 5.10.194-rt95 directly, the following patches should be applied:
+Or to build 5.4.257-rt87 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.194.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.257.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.194-rt95.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.257-rt8=
+7.patch.xz
 
 Enjoy!
-Luis
 
-Changes from v5.10.194-rt94:
----
-
-Luis Claudio R. Goncalves (1):
-      Linux 5.10.194-rt95
-
-Wang Yong (1):
-      arm64: signal: Use ARCH_RT_DELAYS_SIGNAL_SEND
----
-arch/arm64/include/asm/signal.h | 12 ++++++++++++
- arch/arm64/kernel/signal.c      |  9 +++++++++
- localversion-rt                 |  2 +-
- 3 files changed, 22 insertions(+), 1 deletion(-)
----
-diff --git a/arch/arm64/include/asm/signal.h b/arch/arm64/include/asm/signal.h
-new file mode 100644
-index 0000000000000..0fb418cf4c17a
---- /dev/null
-+++ b/arch/arm64/include/asm/signal.h
-@@ -0,0 +1,12 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef __ARM64_ASM_SIGNAL_H
-+#define __ARM64_ASM_SIGNAL_H
-+
-+#include <uapi/asm/signal.h>
-+#include <uapi/asm/siginfo.h>
-+
-+#if defined(CONFIG_PREEMPT_RT)
-+#define ARCH_RT_DELAYS_SIGNAL_SEND
-+#endif
-+
-+#endif
-diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index 94eed0dc3afcd..5b08f55ec85d9 100644
---- a/arch/arm64/kernel/signal.c
-+++ b/arch/arm64/kernel/signal.c
-@@ -929,6 +929,15 @@ asmlinkage void do_notify_resume(struct pt_regs *regs,
- 		} else {
- 			local_daif_restore(DAIF_PROCCTX);
- 
-+#ifdef ARCH_RT_DELAYS_SIGNAL_SEND
-+			if (unlikely(current->forced_info.si_signo)) {
-+				struct task_struct *t = current;
-+
-+				force_sig_info(&t->forced_info);
-+				t->forced_info.si_signo = 0;
-+			}
-+#endif
-+
- 			if (thread_flags & _TIF_UPROBE)
- 				uprobe_notify_resume(regs);
- 
-diff --git a/localversion-rt b/localversion-rt
-index 8d02a9bac5002..5a28f0a65d160 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt94
-+-rt95
+   Tom
 
