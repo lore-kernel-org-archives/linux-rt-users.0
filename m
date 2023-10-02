@@ -1,43 +1,37 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46629CA78
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 09:45:55 +0000 (UTC)
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8C23FBD;
-	Mon,  2 Oct 2023 02:45:50 -0700 (PDT)
-Date: Mon, 2 Oct 2023 11:45:45 +0200
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF88F6AD6
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 10:03:07 +0000 (UTC)
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8FB719F
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 03:03:05 -0700 (PDT)
+Date: Mon, 2 Oct 2023 12:02:57 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1696239949;
+	s=2020; t=1696240983;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=3MowVRzXm2YmsrA98gyFla3NvwCXHpDETpA/BOhEMPU=;
-	b=gAI7FKDcl7edDdPfBzsFVSpJc34CmE9A+nAyBWxAOAPTtFaYvtU6dPe6TjFh3IK61fI6AU
-	yFLYeDKGq4oABD0TmyTJP6tAjciizmVA23pTzFliygN+OKhuj4isj46Oqi/wx5xhY5FGq9
-	pAWvJZ2Op8sf8lG4yjSkKEdFA+kIgF3xEhCj8qJY4Qfi18u5cIN1bl1gzmO0NF2OM7aHcf
-	Q0bCgm+PBUFMpjvkf14JokGkx1fq3/8rAvoQG1RXNVX7azDY3GBcAy/VarkfsU9uNWYOhF
-	3qPX/vGFD2BWVgE65wSiz4AC1gCAd9uHAlaV6nBZ6zGzLelbHbSBB8FPDgFUCw==
+	bh=v+JwY/Zv1tfC24PpjG7v95bEOjOfUJWKpZhpSR68S08=;
+	b=Jm2A5ab0h8o6Hi472ZTAlhiaQjQLOOFPCQpDNN70pVgxtIBnS2/ZikV2S0FK/RP91BPUDq
+	R6GHZlwrJ3xdrHh/eosktFvol3zfV/1T5QnSEA2eZqmCCgAzStKV9JoZPV/27EBccAfwqj
+	epp1BJHEFLC9DxrOtUoYoYmIQxNUmOqOBW1+jKMERq1giXc/a8QSi+HHLkMu4rY00Ty4SM
+	r3BNyHb5VRr4J4ED5va/14kTgxTEuxNSYTgS7syicgHdqomT1uibos7nWAtR8WaKiYt61x
+	DUWv9+U6v32Ue7Z3hfUFTPRfjQO5YJlJ8ULHeUAL73hLlZTcGG9cOEX6lVn/Eg==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1696239949;
+	s=2020e; t=1696240983;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=3MowVRzXm2YmsrA98gyFla3NvwCXHpDETpA/BOhEMPU=;
-	b=99oP8AnvLnyr5rF47HaRFQOrD+W0yp/XmL++TI5qSNa4Jlmv58Hqr70lTIliUVnFQAyCby
-	HlPX71sSM3K7O3Bw==
+	bh=v+JwY/Zv1tfC24PpjG7v95bEOjOfUJWKpZhpSR68S08=;
+	b=mn1aQpBICNGnGZIBIyt/l0fp7yBGW4aTNj8+73n3Yw5Js1kDkNkTHlyqTebX+htm9X8ukj
+	LBPugzpqg45pYiBQ==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: "John B. Wyatt IV" <jwyatt@redhat.com>
-Cc: linux-rt-users@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
-	kernel-rts-sst <kernel-rts-sst@redhat.com>, jlelli@redhat.com
-Subject: Re: Crash with 6.6.0-rc1-rt1 and several i915 locking call traces
- with v6.5.2-rt8 and gnome-shell on Alder Lake laptop
-Message-ID: <F4pA9qG-zsUd2s-KZZ8oHrbd@linutronix.de>
-References: <ZQttJ8W9UFP46E1b@thinkpad2021>
- <20230922110720.AZ03l3A9@linutronix.de>
- <ZRaONA0LSFumpyja@thinkpad2021>
+To: g.medini@eurosoft.it
+Cc: linux-rt-users@vger.kernel.org
+Subject: Re: High latency of a system based on 5.19 rt
+Message-ID: <20231002100257.FQFcIFo9@linutronix.de>
+References: <S1JV78$805284328FE38E68AC9E7D23F35846D8@eurosoft.it>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -46,48 +40,41 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <ZRaONA0LSFumpyja@thinkpad2021>
+In-Reply-To: <S1JV78$805284328FE38E68AC9E7D23F35846D8@eurosoft.it>
 X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_BLOCKED,
 	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-On 2023-09-29 04:43:32 [-0400], John B. Wyatt IV wrote:
-> For stock (non-rt) I do not see it with 6.6-rc2. This was compiled
-> with the Stream 9 debug config.
->=20
-> I was able to reproduce similar call traces once I tested again
-> with 6.6-rc3-rt5 at [4] and [5].
->=20
-> What would be the best way to determine if the warning is wrongly
-> triggered?
+On 2023-09-25 18:30:44 [+0200], g.medini@eurosoft.it wrote:
+> 
+>    Hi All, I'm struggling with a realtime issue I have.
+Hi,
 
-I looked at the traces in this email and they originate from a
-might_sleep() in guc_context_set_prio(). The reason is that they check
-at the atomic/interrupt state to figure out if they can sleep or not.
-Both checks don't work on RT as intended and the former has a not to not
-be used in drivers=E2=80=A6
+>    Using trace I've found a problem related to CONFIG_X86_DEBUG_FPU that was introducing very large latency.
 
-The snippet below should cure this. Could you test, please.
+Do you have a trace and numeric value of "very large latency" for
+CONFIG_X86_DEBUG_FPU?
+
+>    Removing this I have another one where the solution is not so trivial.
+> 
+>    The problem I've actually seems related to i915 driver.
+> 
+>    With a particular load for the graphic card (basically using ALT-TAB to switch from graphical windows or pressing the Win like button to resize all the graphical windows to the screen) I see an huge latency that gives problem to an rt task I need for my application.
+> 
+>    I've tried everything to optimize the sytem.
+> 
+>    As expected I find little enhancement that help me to mitigate the problem (core isolation and so on) but the basic problem remain the same (it happens with X11 and Wayland also).
+
+What is the latency problem? The wake up trace shows a wake up from
+gnome to irq-work. Is the graphic/ i915 lagging or something else?
+
+>    Hoping someone can help me.
+> 
+>    Gianluca
+> 
+>    Cordiali saluti
+>    Best regards
 
 Sebastian
-
-
-diff --git a/drivers/gpu/drm/i915/gt/uc/intel_guc.h b/drivers/gpu/drm/i915/=
-gt/uc/intel_guc.h
-index 8dc291ff00935..5b8d084c9c58c 100644
---- a/drivers/gpu/drm/i915/gt/uc/intel_guc.h
-+++ b/drivers/gpu/drm/i915/gt/uc/intel_guc.h
-@@ -317,7 +317,7 @@ static inline int intel_guc_send_busy_loop(struct intel=
-_guc *guc,
- {
- 	int err;
- 	unsigned int sleep_period_ms =3D 1;
--	bool not_atomic =3D !in_atomic() && !irqs_disabled();
-+	bool not_atomic =3D !in_atomic() && !irqs_disabled() && !rcu_preempt_dept=
-h();
-=20
- 	/*
- 	 * FIXME: Have caller pass in if we are in an atomic context to avoid
