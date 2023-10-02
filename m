@@ -1,64 +1,43 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93E631944C
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 13:57:40 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C8725D9
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 06:57:38 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696255058;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 640492106
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 14:16:14 +0000 (UTC)
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 255B9B7
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 07:16:13 -0700 (PDT)
+Date: Mon, 2 Oct 2023 16:16:11 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1696256171;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=M8WYdzef3dhUYZw3DH0bBi+1f62S5ySyKU54RTq989w=;
-	b=TOGQCjjkkzr5UntYDftf7RyCoD2WoWZ96I54es7YeU9e9bY2APPldTS+t7DcUMIsBl2eR0
-	QgS5sAw/rxr/PS4vDJBLIvebpQ3ZgiaR/0wOD7QiPYDIIFfHHrdrX1e9RBW58EkUIdga2G
-	JwyPdjaG/nvdPhPDrgs9cwjtRGULNKY=
-Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
- [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-625-Bndkv5YxOe63XXYfXqdc3g-1; Mon, 02 Oct 2023 09:57:36 -0400
-X-MC-Unique: Bndkv5YxOe63XXYfXqdc3g-1
-Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-4180de770f5so209487691cf.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 02 Oct 2023 06:57:36 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1696255056; x=1696859856;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :mime-version:references:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=M8WYdzef3dhUYZw3DH0bBi+1f62S5ySyKU54RTq989w=;
-        b=tTF/CPU2w+m81uTt7l7OeF2mpchQrX1OQEdJ7y0q1kxge9wizF3RcPoxLnfBK+qLKe
-         hnHI9SnwuTry2bEJs/dyVrJYd2Nc/f1ztXmy6MfCV0kWZr5g7QTXWSMDq7H2uxFBVX1+
-         eXZAAEALDTIOgDZBeDWePChc67M42gTg+gVS2er08EdFpHScilDLb4Iw3aIzmzprpNXZ
-         q1Af1Yof7tGifH+++DGgAf+pJ51grOABbwepYo8ha4V2lAm+Uf9Yg1fCGwf6Itike9s4
-         kbVLWA3SENVqMTr0Pd9cYlDZjz2vTlINd20H/TJ0+KYyZY3Gt1AXM2rjUw/iKhxrqLlE
-         XwGg==
-X-Gm-Message-State: AOJu0YxnaCpIsscYZnN/lraK/CESZuf312Ho5xs+G+TCvibj3ygmiRdj
-	V36a8gtVquvcSJKXOPz68rZ22ZBqgmSOy0zrCuXYmrHLxkQhDqMHvKpTWjM6HjC7wZPQEGczjk5
-	/J8ndhHza/NQJuHNzh3qXbcsMUzxifJPhcKQ=
-X-Received: by 2002:ac8:58c5:0:b0:418:4e7:b82c with SMTP id u5-20020ac858c5000000b0041804e7b82cmr15356416qta.57.1696255056001;
-        Mon, 02 Oct 2023 06:57:36 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFFqqH2hLZLdUz2hZHgPn/1hd6wxw8eYP65VHIjQN4f059HcEmEoL26OMfQzDI+qIGKcMwU0g==
-X-Received: by 2002:ac8:58c5:0:b0:418:4e7:b82c with SMTP id u5-20020ac858c5000000b0041804e7b82cmr15356401qta.57.1696255055721;
-        Mon, 02 Oct 2023 06:57:35 -0700 (PDT)
-Received: from thinkpad2021 ([64.99.149.73])
-        by smtp.gmail.com with ESMTPSA id i6-20020ac813c6000000b0041817637873sm5831638qtj.9.2023.10.02.06.57.35
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Oct 2023 06:57:35 -0700 (PDT)
-Date: Mon, 2 Oct 2023 09:57:33 -0400
-From: "John B. Wyatt IV" <jwyatt@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
-	kernel-rts-sst <kernel-rts-sst@redhat.com>, jlelli@redhat.com
-Subject: Re: Crash with 6.6.0-rc1-rt1 and several i915 locking call traces
- with v6.5.2-rt8 and gnome-shell on Alder Lake laptop
-Message-ID: <ZRrMTfZsM9bv4GiF@thinkpad2021>
-References: <ZQttJ8W9UFP46E1b@thinkpad2021>
- <20230922110720.AZ03l3A9@linutronix.de>
- <ZRaONA0LSFumpyja@thinkpad2021>
- <F4pA9qG-zsUd2s-KZZ8oHrbd@linutronix.de>
+	bh=YH8HLLDDD0bnVjUytmpHyaUWwvPTWeEJatiz066/y8g=;
+	b=oDVGag0WKJFIbttxT+aaa7SLKcREz5S2JZVoM4yPvlMq11LloQfCxU+cUdOx+OE0ECdekP
+	qRS6fUGJU15mBstgFtkogyWBBCI6h+KKnXzs7hEoduDAaVW9lsynTlKUViKkWa9imQyKNn
+	fx0mWx3ngKV+DuKS8fXGYB8qRWvhKLfeqc0yQDuIEwL/bR0LxrETi7q9J2Z0VxA8DusH1v
+	LK8iI/LBJieJHcmOAPlex/TpHZyYos6gkLBJqFf3Chkji9uU+nOxT++ktoKlfN1RVhbezV
+	3R3+fQzPEpOGJIddr5sFMr1zVkvtF83H6DFPF2WkkqZ29KfkRrKKSCI57biWmQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1696256171;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YH8HLLDDD0bnVjUytmpHyaUWwvPTWeEJatiz066/y8g=;
+	b=Jw4A4IIB/wu/Wroi4I5mB2Pvhz6fJkr/3vFe6uRVT/aOuWApIiIw8PgspF5+Uv1qVVY5uZ
+	hKs7sD5GKK0F6kCg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Mike Galbraith <efault@gmx.de>
+Cc: Clark Williams <williams@redhat.com>, "g.medini" <g.medini@eurosoft.it>,
+	RT <linux-rt-users@vger.kernel.org>
+Subject: Re: High latency of a system based on 5.19 rt
+Message-ID: <20231002141611.f1H8qyiR@linutronix.de>
+References: <S1JV78$805284328FE38E68AC9E7D23F35846D8@eurosoft.it>
+ <f9fd60d19937c4e22407738f2d78b3ca4a7887d8.camel@gmx.de>
+ <CAMLffL8=zW0Bv47R=r3=Lh9==OjDrM=FTJZgmm6PYGOyTedeBA@mail.gmail.com>
+ <8eb75f2118086edf828ac059999fd52b64382576.camel@gmx.de>
+ <20231002100542.59fbxJ0f@linutronix.de>
+ <8586b9812dccc6248e0518efaf973c4467324b70.camel@gmx.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -67,28 +46,28 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <F4pA9qG-zsUd2s-KZZ8oHrbd@linutronix.de>
-X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_NONE,
-	RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,SPF_HELO_NONE,SPF_NONE
-	autolearn=unavailable autolearn_force=no version=3.4.6
+In-Reply-To: <8586b9812dccc6248e0518efaf973c4467324b70.camel@gmx.de>
+X-Spam-Status: No, score=-4.4 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_MED,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-On Mon, Oct 02, 2023 at 11:45:45AM +0200, Sebastian Andrzej Siewior wrote:
-> I looked at the traces in this email and they originate from a
-> might_sleep() in guc_context_set_prio(). The reason is that they check
-> at the atomic/interrupt state to figure out if they can sleep or not.
-> Both checks don't work on RT as intended and the former has a not to not
-> be used in drivers…
+On 2023-10-02 13:58:57 [+0200], Mike Galbraith wrote:
+> > Why not perform all wakes from hardirq then?
 > 
-> The snippet below should cure this. Could you test, please.
+> Sounds good to me iff we're talking about a dinky irq width delta.
 > 
-> Sebastian
->
+> Threads bundling up what are otherwise irq context cycles is loaded
+> with goodness, but static priority leaves you holding a bill and paying
+> context switch fees on top.  Pick your poison carefully applies I
+> suppose.  A tiny swig of hemlock can't do _too_ much harm, right ;-)
 
-I tested this at both boot and suspend/resume. No call traces reported.
+A swarm of wake-ups for SCHED_OTHER at prio 50+ will delay your threaded
+interrupt handler and everything else that runs 50 and lower.
+Since SCHED_OTHER is less important than any RT task, the delay is
+usually of lower concern.
 
-Thank you Sebastian.
+> 	-Mike
 
+Sebastian
