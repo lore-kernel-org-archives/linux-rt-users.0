@@ -1,74 +1,138 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 888388F5F
-	for <linux-rt-users@vger.kernel.org>; Sat, 30 Sep 2023 10:14:44 +0000 (UTC)
-Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DF3AD193;
-	Sat, 30 Sep 2023 03:14:42 -0700 (PDT)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id CCC4EE1A35;
-	Sat, 30 Sep 2023 12:14:37 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1696068880; h=from:subject:date:message-id:to:mime-version:content-type;
-	bh=UzIsXYxD9P3Gza5w3hSEkk1WbUWtORPdo3SRq6tAE4M=;
-	b=vTeQb9p8Ieqgw9yX6jxPFejPEOksfbdUMHrpyrRsQLVIRnyprAqKAa5swsVDe5MV5nP/8O
-	muo3SDNi8J1/KBrXLWdKbpEpMGcLNouhV4xWHlYxhMN9XlA4fta0RMv9bJaXoalFTTeslV
-	dY+KPuyjyBEQT6IBGubZDRVovDMVpHUtZTLLZNbk5EXqMBx5rYnpDQIWmwzEF+AfC0uUFJ
-	FOr2I/uCfUMQuh2+KYbAodgBzR78g3LZQLyU3OG4RVPZuK6N1n6o6eGj8JMlzf64UiGIoO
-	S2wB/4QCZlVu4Y5FLoBB8zI+pWbGfm2dL02kZnpizknlvsy9U6MLym/26CKdnA==
-Date: Sat, 30 Sep 2023 12:14:35 +0200
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
-	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Tom Zanussi <tom.zanussi@linux.intel.com>, Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.19.295-rt129
-Message-ID: <169606876208.5638.944952312238125046@beryllium.lan>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 61D7A1C2D
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Oct 2023 08:50:32 +0000 (UTC)
+X-Greylist: delayed 564 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 02 Oct 2023 01:50:29 PDT
+Received: from smtpx.fel.cvut.cz (smtpx.feld.cvut.cz [147.32.210.153])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 071DEF2;
+	Mon,  2 Oct 2023 01:50:28 -0700 (PDT)
+Received: from localhost (styx2022 [192.168.200.17])
+	by smtpx.fel.cvut.cz (Postfix) with ESMTP id 8B9BBBC51;
+	Mon,  2 Oct 2023 10:40:45 +0200 (CEST)
+X-Virus-Scanned: IMAP STYX AMAVIS
+Authentication-Results: styx2022.feld.cvut.cz (amavisd-new);
+	dkim=pass (2048-bit key) header.d=fel.cvut.cz
+Received: from smtpx.fel.cvut.cz ([192.168.200.2])
+	by localhost (styx2022.feld.cvut.cz [192.168.200.17]) (amavisd-new, port 10060)
+	with ESMTP id VeoQq_FYZ6hg; Mon,  2 Oct 2023 10:40:43 +0200 (CEST)
+Received: from baree.pikron.com (ip-78-102-109-231.bb.vodafone.cz [78.102.109.231])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: pisa)
+	by smtpx.fel.cvut.cz (Postfix) with ESMTPSA id D630ABC50;
+	Mon,  2 Oct 2023 10:40:42 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=fel.cvut.cz;
+	s=felmail; t=1696236043;
+	bh=So+n1rsgSozm5YSNGHfkXoo7rKyW0sz8qafJxc8NqIY=;
+	h=From:To:Subject:Date:Cc:From;
+	b=Ket0m0XZD5XZ/iKtFpltbope0HGY+XUEYZzDyjZF8nvPRJ/QQG2l7j60Md3+6zSfT
+	 ZqbSOcCJT5QbAc/m8Hr/g5GB30rqOq++1K1dMOojqmvGYlNItXI/OH9wB5B9pi6vIa
+	 wUX4ZkCJBZAU6oBJAJLHzoQgEKtwl68vyoxpeequCkipnw5U3pqyhzecXcPMzabXoF
+	 F+FA8qfmLfXyuwpC/hop01mimfBq0VSRr1N+6HYKCnxmhEMW9ObZdbP/InO1VGnKmn
+	 UdYrcNi6wyC0JjhNbdVYLFnLO22GruS72E3d9xAbBx7r4Ely1g5DfICfEiXVJzlL48
+	 lKrHAdDg3BFDw==
+From: Pavel Pisa <pisa@fel.cvut.cz>
+To: linux-can@vger.kernel.org,
+ Oliver Hartkopp <socketcan@hartkopp.net>,
+ linux-rt-users@vger.kernel.org
+Subject: Outstanding latency increase in kernel CAN gateway caught by CANlatester daily builds at 2023-10-02
+Date: Mon, 2 Oct 2023 10:40:49 +0200
+User-Agent: KMail/1.9.10
+Cc: Ondrej Ille <ondrej.ille@gmail.com>,
+ =?iso-8859-2?q?Mat=ECj_Vasilevski?= <matej.vasilevski@gmail.com>,
+ Pavel Hronek <hronepa1@fel.cvut.cz>,
+ =?iso-8859-2?q?Ji=F8=ED_Nov=E1k?= <jnovak@fel.cvut.cz>,
+ Carsten Emde <c.emde@osadl.org>,
+ Jan Altenberg <Jan.Altenberg@osadl.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Last-TLS-Session-Version: TLSv1.3
-X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_BLOCKED,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.6
+Message-Id: <202310021040.49367.pisa@fel.cvut.cz>
+Content-Type: Text/Plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+X-Spam-Status: No, score=-0.6 required=5.0 tests=BAYES_05,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-Hello RT-list!
+Hello Oliver and others,
 
-I'm pleased to announce the 4.19.295-rt129 stable release.
+two consecutive daily runs of our CAN latency system
 
-This is just an update to the v4.19.295 stable release. No RT
-specific changes.
+  https://canbus.pages.fel.cvut.cz/#can-bus-channels-mutual-latency-testing
 
-You can get this release via the git tree at:
+shows extreme increase in latency of the kernel CAN gateway under the load.
+The first run with increased latency (run-DATE-TIME-KERNEL-OPTIONS)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+  
+run-231002-045216-hist+6.6.0-rc3-rt5-ge31516c1e553+flood-kern-prio-fd-load.jsonn
 
-  branch: v4.19-rt
-  Head SHA1: b285af6da7f3b111dd0c285492defb01a4dc91ad
+previous one consistent with daily runs form May
 
-Or to build 4.19.295-rt129 directly, the following patches should be applied:
+  
+run-231001-045220-hist+6.6.0-rc3-rt5-ge31516c1e553+flood-kern-prio-fd-load.json
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+The history of the monitoring for kernel gateway under the load for latest RT 
+kernels,
+branch run on "linux-rt-devel/for-kbuild-bot/current-stable" branch
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.295.xz
+  
+https://canbus.pages.fel.cvut.cz/can-latester/inspect.html?kernel=rt&load=1&flood=1&fd=1&prio=1&kern=1
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.295-rt129.patch.xz
+Monitoring of latency when userspace application is used to forward
+data from one to another CAN interface does not show similar excess
 
-Signing key fingerprint:
+  
+https://canbus.pages.fel.cvut.cz/can-latester/inspect.html?kernel=rt&load=1&flood=1&fd=1&prio=1&kern=0
 
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+It is interesting that when priority of CAN controller interrupt service 
+routines
+are not boosted then problem does not appear. Priority 90 is set for each 
+irq/[0-9]+-can[0-9]
+thread by
 
-All keys used for the above files and repositories can be found on the
-following git repository:
+  chrt -f --pid 90 $pid
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+The device under the test as well as messages generation and monitoring
+system are MZ_APO boards (AMD/XlinX Zynq XC7Z010) with CTU CAN FD IP core
+CAN controller configured for 10 ns frames timestamping.
 
-Enjoy!
-Daniel
+The problem can be in configuration of our system, CTU CAN FD IP core driver
+or specific to Zynq ARM platform. But it is generally suspicious because
+after initial tuning of the test system there has not been modifications
+for long time. Monitoring system is running 6.2.0-rt3-00007-ge3a16816f987
+kernel for all time and no problem with some Rx buffers overflow
+on the tester side is reported for time covering all tests in the question.
+
+Please, report if you have some idea which change between reported
+versions from 2023-10-01 and 2023-10-02 could be reason for the change.
+I plan to keep eye on results till end of the week and if the problem
+continues then I start to investigate more by beginning of the next week
+when I should find a little more time. I am quite busy by preparation for
+conference and teaching this week so I do not expect to find much time.
+
+Best wishes,
+
+                Pavel
+-- 
+                Pavel Pisa
+    phone:      +420 603531357
+    e-mail:     pisa@cmp.felk.cvut.cz
+    Department of Control Engineering FEE CVUT
+    Karlovo namesti 13, 121 35, Prague 2
+    university: http://control.fel.cvut.cz/
+    personal:   http://cmp.felk.cvut.cz/~pisa
+    social:     https://social.kernel.org/ppisa
+    projects:   https://www.openhub.net/accounts/ppisa
+    CAN related:http://canbus.pages.fel.cvut.cz/
+    RISC-V education: https://comparch.edu.cvut.cz/
+    Open Technologies Research Education and Exchange Services
+    https://gitlab.fel.cvut.cz/otrees/org/-/wikis/home
