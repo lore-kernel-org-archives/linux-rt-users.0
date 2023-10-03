@@ -1,235 +1,198 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 501B929415
-	for <linux-rt-users@vger.kernel.org>; Tue,  3 Oct 2023 16:52:56 +0000 (UTC)
-Received: from mail-qv1-xf31.google.com (mail-qv1-xf31.google.com [IPv6:2607:f8b0:4864:20::f31])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 717179E
-	for <linux-rt-users@vger.kernel.org>; Tue,  3 Oct 2023 09:52:54 -0700 (PDT)
-Received: by mail-qv1-xf31.google.com with SMTP id 6a1803df08f44-65b162328edso6601386d6.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 Oct 2023 09:52:54 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFEEE3E461;
+	Tue,  3 Oct 2023 22:11:30 +0000 (UTC)
+Received: from mail-ej1-x629.google.com (mail-ej1-x629.google.com [IPv6:2a00:1450:4864:20::629])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E9CD4A1;
+	Tue,  3 Oct 2023 15:11:28 -0700 (PDT)
+Received: by mail-ej1-x629.google.com with SMTP id a640c23a62f3a-9b1ebc80d0aso260685766b.0;
+        Tue, 03 Oct 2023 15:11:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1696351973; x=1696956773; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=j3hmNPSrsT2h5lRTa3Pb49GXuaROWcAVdjwyYbsIhME=;
-        b=Nd9j9pTqjyHN4LQR7WNbKGDblDLcGiZ2pfpQqbK9Q5VJMP63DSoIDcdPB+K3bYCb3m
-         vilmqkVjerhjNV5IEbwvTVM1hti7C5QpM6fz9c88QaxYtGoEEpBcz9mvQYIQNXLfS8OI
-         ZBYbBlhyvlO1vjCEYpXtXRFXPIqA8BwTe5veoD31R6+AZo1YNhglvv+cdZBDaWr3qC2h
-         LL7cfp4u6+/vH44cSA5j9EDBp8UzoqWEf0Vjj716wvh49QwK9v1nLR7hvRtlyQgY3Kq5
-         n434mzVjhWrr0JJ2g6fJcNFKMxCwgTZxOas1uj6T5WGTw9ehNGf+Z/k5HFWJVMWkHT0+
-         z6DQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1696351973; x=1696956773;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1696371087; x=1696975887; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=j3hmNPSrsT2h5lRTa3Pb49GXuaROWcAVdjwyYbsIhME=;
-        b=hnNRJycGTkozzL4FYdMPytRi/PHWgEp/WmpjL1V883F1a+726cBd8xeeWthfx/7C2B
-         RPM+u45oIzgj0xaL9cve9//KLy9djl1SU+D9ZWzrSxa3YP4hpDSoYu3zj4CqINpw3JFF
-         qUiYBGV3mIdkWSxGtKud6i4BdZAervU7yp398S5aD05xfNwRCKrpVTfA9FQ3YWzU0OEj
-         MnkYDp7KfyFKSujhMC5u7OLDhC9dI1aGwB1fUo5SG5A7ujQfCBWT9iMoR64Zw0r6BH8U
-         UGKPRtga+Lqzo8GNur1hCQUOn9zeZTcF9ce3jiqXO0+LfoJ3hRvh5UMXnynVyIuG72Y3
-         /sjg==
-X-Gm-Message-State: AOJu0Yw2gZ5gNe76B+YHmmHWGgFWPZ0MrBmgfvWpuC8zAkz8kUZXw2oP
-	vlsmIGiwKwORnzgHd1LeGz4TDCBaXks=
-X-Google-Smtp-Source: AGHT+IE4R5OwQ/MZ1UQMSnSXKQ0bqnKadsHzEufRhoAez7Hwuf96NlLSd/qwNEEgWfP94q4zMkFJDg==
-X-Received: by 2002:a0c:aa08:0:b0:647:42ac:d7f2 with SMTP id d8-20020a0caa08000000b0064742acd7f2mr11615638qvb.63.1696351973004;
-        Tue, 03 Oct 2023 09:52:53 -0700 (PDT)
-Received: from fionn.redhat.com ([174.88.88.29])
-        by smtp.gmail.com with ESMTPSA id d6-20020a0cf0c6000000b006583270ea64sm615774qvl.139.2023.10.03.09.52.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 03 Oct 2023 09:52:52 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	Kate Carcia Poulin <kcarcia@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rteval-v3.7
-Date: Tue,  3 Oct 2023 12:52:36 -0400
-Message-Id: <20231003165236.22558-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.40.1
+        bh=NwfmzZmTkmxxJS6uLVFK/hJDI9dOhPuDmbdy9/UEN4k=;
+        b=k2wpdmPnpWjF7oJdlPirN0/moX0NFL65kU2u7eAzgk5H6XQuP8nplulbr3clsf9SXj
+         AucssOx/IXLsai3ITk9fYXvttJM9+tRvqbWoZmxIyK1GZ12iredZeBowrUC+8SV8i9Jx
+         BcszPU5X/CZz0E+yPkGbI66q2rDs9yaY2wb0W71RJor+WY10OE/MWUl4VEzf+pGTgYhd
+         Wg6o4L1DZkoPHYtxVC4nDZW23h91Lf3ocLDEx1KM6L4gwMUc0uTl/d0sUoRnpEgeb05v
+         th0n0EiJGxqpdkLK5xLy63Q5gD445NXdiyLTtoXq4FnHAQbjvYd4EiqjY8/oMsWSH4+X
+         d6CQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1696371087; x=1696975887;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=NwfmzZmTkmxxJS6uLVFK/hJDI9dOhPuDmbdy9/UEN4k=;
+        b=itqIDPp8n6IS0LluUcH1lPT3B6u14UjN2e+XLcQ4uYRroGMqpVnEVt/bykJivcdipn
+         1y6Bi24fcRwQmacKcATqmTJBrWCLVUBQgJgaV+6fXAiPUEaPZnEr73grvm7x5ueTsGjr
+         QgUeH7uWOhFOwS1jtqB7yRPXKacxJIIwkaMJcMfZw7pHYh/o+7Di+BQGaCGY5alJZQWA
+         QXtKYQqzXbo0tPw506VWNJWbiVrdfRRRGThx8CWG6/krkvXo9BdpmJ8IDI8RXolj6MWU
+         55YBR204CK6BaLmje26WHuWq8IOF+OeShktkx2B9Ri6OIxnE0lspuSiLGWwpd1zZDy6f
+         B8bg==
+X-Gm-Message-State: AOJu0Yz/rKixA64A3qQKcfvWIkgGIMq//HkE0282JEoS28D51jKGHqgl
+	Grdqe1mjESfCFFiy9Vwqrn0rS997DEG3p9kmQTo=
+X-Google-Smtp-Source: AGHT+IGjAcqAulJJqUO3QyO9rB/A5TFQSmSYm5cJLN5VuTFzhp6QqiOiE03L/C40OvkYVZfeGNFi0hS0Hfb6Rs4S8L4=
+X-Received: by 2002:a17:907:2cef:b0:9ae:6355:5ef4 with SMTP id
+ hz15-20020a1709072cef00b009ae63555ef4mr395664ejc.3.1696371087041; Tue, 03 Oct
+ 2023 15:11:27 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Spam-Status: No, score=-1.0 required=5.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_EF,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,
-	SPF_PASS,URI_NOVOWEL autolearn=no autolearn_force=no version=3.4.6
+References: <20231002135242.247536-1-asavkov@redhat.com>
+In-Reply-To: <20231002135242.247536-1-asavkov@redhat.com>
+From: Andrii Nakryiko <andrii.nakryiko@gmail.com>
+Date: Tue, 3 Oct 2023 15:11:15 -0700
+Message-ID: <CAEf4BzbM1z-ccRq-gH7UkVrSa6Vhewu3R7wV3sHW6BKxhm9k2Q@mail.gmail.com>
+Subject: Re: [RFC PATCH] tracing: change syscall number type in struct syscall_trace_*
+To: Artem Savkov <asavkov@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Masami Hiramatsu <mhiramat@kernel.org>, 
+	linux-kernel@vger.kernel.org, linux-trace-kernel@vger.kernel.org, 
+	Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, 
+	Andrii Nakryiko <andrii@kernel.org>, bpf@vger.kernel.org, netdev@vger.kernel.org, 
+	Thomas Gleixner <tglx@linutronix.de>, linux-rt-users@vger.kernel.org, 
+	Jiri Olsa <jolsa@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,FREEMAIL_FROM,
+	RCVD_IN_DNSWL_NONE,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-I am pleased to announce version 3.7 of rteval
+On Mon, Oct 2, 2023 at 6:53=E2=80=AFAM Artem Savkov <asavkov@redhat.com> wr=
+ote:
+>
+> linux-rt-devel tree contains a patch that adds an extra member to struct
 
-Some highlights
-- You can use rteval to download the kernel for the kcompile load module.
-- deprecated optparse was replaced with argparse
-- SPDX License-Identifiers
-- isolcpu fixes
-- Addition of --measurement-run-on-isolcpus, to run the measurement
-  modules on automatically detected isolated cpus
-- Various fixes
+can you please point to the patch itself that makes that change?
 
-Thanks to everyone who participated!
-
-John Kacur
-
-To fetch
-
-Clone
-git://git.kernel.org/pub/scm/utils/rteval/rteval.git
-
-Branch: main
-Tag: v3.7
-
-Tarballs available here:
-https://kernel.org/pub/linux/utils/rteval
-
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rteval/older
-
-
-Anubhav Shelat (17):
-  rteval: Use f-strings in rtevalclient.py
-  rteval: Use f-strings in rtevalConfig
-  Added code to check if the proc/net/if_inet6 file exists while loading
-    IPv6 addresses in the IPv6Addresses class
-  rteval: Use f-strings in cputopology
-  rteval: Use f-strings in kernel.py
-  rteval: Use f-strings in memory.py
-  rteval: Use f-strings in osinfo
-  rteval: Use f-strings in services.py
-  rteval: Use f-strings in tools.py
-  rteval: osinfo.py: Added code to use 'sos report' instead of
-    sosreport.
-  rteval: Changed files to use argparse library instead of optparse
-  rteval-cmd: added code to handle downloading kernel versions of the
-    x.x
-  rteval: added code to download default kernel version if no version is
-    specified
-  rteval: fixed comments
-  rteval/server: edited files to use optparse instead of argparse
-  Fixed bug in kcompile where run would fail if kcompile-source version
-    had the form x.y instead of x.y.z
-  Edited code from previous commit to exclude try-except block
-
-Eder Zulian (1):
-  rteval: Add SPDX-License-Identifier to rteval
-
-John Kacur (3):
-  rteval: Fix the unit test in osinfo
-  rteval: return empty string in compress_cpulist for an empty list
-  rteval: Update version to v3.7
-
-Tomas Glozar (11):
-  rteval: Detect isolcpus in systopology
-  rteval: Report isolated CPUs
-  rteval: Exclude isolcpus from kcompile by default
-  rteval: Exclude isolcpus from stressng by default
-  rteval: Fix CPU count calculation for hackbench
-  rteval: Exclude isolcpus from loads report
-  rteval: Add missing docstrings in SysTopology
-  rteval: Correct Python version in doc/rteval.txt
-  rteval: Allow arguments specific to module group
-  rteval: Add run_on_isolcpus option to measurements
-  rteval: Support run-on-isolcpus in cyclictest
-
- Makefile                                 |   1 +
- doc/rteval.txt                           |   2 +-
- rteval-cmd                               | 119 ++++++++++++-----------
- rteval.spec                              |   2 +-
- rteval/Log.py                            |  21 +---
- rteval/__init__.py                       |  21 +---
- rteval/modules/__init__.py               |  51 +++-------
- rteval/modules/loads/__init__.py         |  23 +----
- rteval/modules/loads/hackbench.py        |  27 ++---
- rteval/modules/loads/kcompile.py         |  33 ++-----
- rteval/modules/loads/stressng.py         |   6 ++
- rteval/modules/measurement/__init__.py   |  38 +++-----
- rteval/modules/measurement/cyclictest.py |  33 +++----
- rteval/modules/measurement/sysstat.py    |  21 +---
- rteval/rtevalConfig.py                   |  29 +-----
- rteval/rtevalMailer.py                   |  21 +---
- rteval/rtevalReport.py                   |  21 +---
- rteval/rtevalXMLRPC.py                   |  21 +---
- rteval/rteval_dmi.xsl                    |   1 +
- rteval/rteval_histogram_raw.xsl          |   1 +
- rteval/rteval_text.xsl                   |   5 +
- rteval/rtevalclient.py                   |  23 +----
- rteval/sysinfo/__init__.py               |  21 +---
- rteval/sysinfo/cmdline.py                |   1 +
- rteval/sysinfo/cputopology.py            |  36 +++----
- rteval/sysinfo/dmi.py                    |  21 +---
- rteval/sysinfo/kernel.py                 |  25 +----
- rteval/sysinfo/memory.py                 |  29 +-----
- rteval/sysinfo/newnet.py                 |  29 +++---
- rteval/sysinfo/osinfo.py                 |  43 +++-----
- rteval/sysinfo/services.py               |  33 ++-----
- rteval/sysinfo/tools.py                  |  23 +----
- rteval/systopology.py                    |  72 ++++++++++----
- rteval/version.py                        |  23 +----
- rteval/xmlout.py                         |  21 +---
- server/Logger.py                         |   1 +
- server/Makefile.am                       |  21 +---
- server/apache-rteval-wsgi.conf.tpl       |  21 +---
- server/apache-rteval.conf.tpl            |  21 +---
- server/configure.ac                      |  21 +---
- server/database.py                       |  21 +---
- server/gen_config.sh                     |   1 +
- server/parser/Makefile.am                |  21 +---
- server/parser/argparser.c                |   9 +-
- server/parser/argparser.h                |   9 +-
- server/parser/configparser.c             |  15 +--
- server/parser/configparser.h             |  15 +--
- server/parser/eurephia_nullsafe.c        |  15 +--
- server/parser/eurephia_nullsafe.h        |  15 +--
- server/parser/eurephia_values.c          |  14 +--
- server/parser/eurephia_values.h          |  15 +--
- server/parser/eurephia_values_struct.h   |  15 +--
- server/parser/eurephia_xml.c             |  15 +--
- server/parser/eurephia_xml.h             |  15 +--
- server/parser/log.c                      |   9 +-
- server/parser/log.h                      |   9 +-
- server/parser/parsethread.c              |   9 +-
- server/parser/parsethread.h              |   9 +-
- server/parser/pgsql.c                    |   9 +-
- server/parser/pgsql.h                    |   9 +-
- server/parser/rteval-parserd.c           |   9 +-
- server/parser/statuses.h                 |   9 +-
- server/parser/threadinfo.h               |   9 +-
- server/parser/xmlparser.c                |   9 +-
- server/parser/xmlparser.h                |   9 +-
- server/parser/xmlparser.xsl              |  15 +--
- server/remove_rtevalrun                  |  37 ++-----
- server/rteval_testserver.py              |  33 ++-----
- server/rteval_xmlrpc.py                  |  21 +---
- server/rteval_xmlrpc.wsgi                |  21 +---
- server/rtevaldb.py                       |  21 +---
- server/sql/delta-1.0_1.1.sql             |   1 +
- server/sql/delta-1.1_1.2.sql             |   1 +
- server/sql/delta-1.2_1.3.sql             |   1 +
- server/sql/delta-1.3_1.4.sql             |   1 +
- server/sql/delta-1.4_1.5.sql             |   1 +
- server/sql/rteval-1.0.sql                |   1 +
- server/sql/rteval-1.1.sql                |   1 +
- server/sql/rteval-1.2.sql                |   1 +
- server/sql/rteval-1.3.sql                |   1 +
- server/sql/rteval-1.4.sql                |   1 +
- server/sql/rteval-1.5.sql                |   1 +
- server/testclient.py                     |  21 +---
- server/testclient_sendreportfile         |  31 ++----
- server/unittest.py                       |   9 +-
- server/xmlrpc_API1.py                    |  21 +---
- setup.py                                 |   1 +
- unit-tests/unittest.py                   |  14 +--
- 88 files changed, 346 insertions(+), 1186 deletions(-)
- mode change 100755 => 100644 unit-tests/unittest.py
-
--- 
-2.40.1
-
+> trace_entry. This causes the offset of args field in struct
+> trace_event_raw_sys_enter be different from the one in struct
+> syscall_trace_enter:
+>
+> struct trace_event_raw_sys_enter {
+>         struct trace_entry         ent;                  /*     0    12 *=
+/
+>
+>         /* XXX last struct has 3 bytes of padding */
+>         /* XXX 4 bytes hole, try to pack */
+>
+>         long int                   id;                   /*    16     8 *=
+/
+>         long unsigned int          args[6];              /*    24    48 *=
+/
+>         /* --- cacheline 1 boundary (64 bytes) was 8 bytes ago --- */
+>         char                       __data[];             /*    72     0 *=
+/
+>
+>         /* size: 72, cachelines: 2, members: 4 */
+>         /* sum members: 68, holes: 1, sum holes: 4 */
+>         /* paddings: 1, sum paddings: 3 */
+>         /* last cacheline: 8 bytes */
+> };
+>
+> struct syscall_trace_enter {
+>         struct trace_entry         ent;                  /*     0    12 *=
+/
+>
+>         /* XXX last struct has 3 bytes of padding */
+>
+>         int                        nr;                   /*    12     4 *=
+/
+>         long unsigned int          args[];               /*    16     0 *=
+/
+>
+>         /* size: 16, cachelines: 1, members: 3 */
+>         /* paddings: 1, sum paddings: 3 */
+>         /* last cacheline: 16 bytes */
+> };
+>
+> This, in turn, causes perf_event_set_bpf_prog() fail while running bpf
+> test_profiler testcase because max_ctx_offset is calculated based on the
+> former struct, while off on the latter:
+>
+>   10488         if (is_tracepoint || is_syscall_tp) {
+>   10489                 int off =3D trace_event_get_offsets(event->tp_eve=
+nt);
+>   10490
+>   10491                 if (prog->aux->max_ctx_offset > off)
+>   10492                         return -EACCES;
+>   10493         }
+>
+> This patch changes the type of nr member in syscall_trace_* structs to
+> be long so that "args" offset is equal to that in struct
+> trace_event_raw_sys_enter.
+>
+> Signed-off-by: Artem Savkov <asavkov@redhat.com>
+> ---
+>  kernel/trace/trace.h          | 4 ++--
+>  kernel/trace/trace_syscalls.c | 7 ++++---
+>  2 files changed, 6 insertions(+), 5 deletions(-)
+>
+> diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+> index 77debe53f07cf..cd1d24df85364 100644
+> --- a/kernel/trace/trace.h
+> +++ b/kernel/trace/trace.h
+> @@ -135,13 +135,13 @@ enum trace_type {
+>   */
+>  struct syscall_trace_enter {
+>         struct trace_entry      ent;
+> -       int                     nr;
+> +       long                    nr;
+>         unsigned long           args[];
+>  };
+>
+>  struct syscall_trace_exit {
+>         struct trace_entry      ent;
+> -       int                     nr;
+> +       long                    nr;
+>         long                    ret;
+>  };
+>
+> diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.=
+c
+> index de753403cdafb..c26939119f2e4 100644
+> --- a/kernel/trace/trace_syscalls.c
+> +++ b/kernel/trace/trace_syscalls.c
+> @@ -101,7 +101,7 @@ find_syscall_meta(unsigned long syscall)
+>         return NULL;
+>  }
+>
+> -static struct syscall_metadata *syscall_nr_to_meta(int nr)
+> +static struct syscall_metadata *syscall_nr_to_meta(long nr)
+>  {
+>         if (IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR))
+>                 return xa_load(&syscalls_metadata_sparse, (unsigned long)=
+nr);
+> @@ -132,7 +132,8 @@ print_syscall_enter(struct trace_iterator *iter, int =
+flags,
+>         struct trace_entry *ent =3D iter->ent;
+>         struct syscall_trace_enter *trace;
+>         struct syscall_metadata *entry;
+> -       int i, syscall;
+> +       int i;
+> +       long syscall;
+>
+>         trace =3D (typeof(trace))ent;
+>         syscall =3D trace->nr;
+> @@ -177,7 +178,7 @@ print_syscall_exit(struct trace_iterator *iter, int f=
+lags,
+>         struct trace_seq *s =3D &iter->seq;
+>         struct trace_entry *ent =3D iter->ent;
+>         struct syscall_trace_exit *trace;
+> -       int syscall;
+> +       long syscall;
+>         struct syscall_metadata *entry;
+>
+>         trace =3D (typeof(trace))ent;
+> --
+> 2.41.0
+>
+>
