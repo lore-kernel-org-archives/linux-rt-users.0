@@ -1,48 +1,35 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E13412B7D
-	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 12:56:00 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C09DC9
-	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 05:55:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696424157;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B274619BD5
+	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 16:07:00 +0000 (UTC)
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 00ECABF;
+	Wed,  4 Oct 2023 09:06:58 -0700 (PDT)
+Date: Wed, 4 Oct 2023 18:06:55 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1696435617;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zd7dDQrkdg8NYwSdUP30Izn8MjE92lW/tVkoCZd/bK0=;
-	b=boDWgnkH6A9nLnpgbK8GY7zqlHaT8t0NQrJHPg53yx4ThCdqNXWLmowF2iArZO09yXX4rz
-	tkEkeVMjypGtDUBd29143NH3y19VDcdjlC5Cp8sBcSN0p3QpBV5dbnBrSF+CN1A2+f7vyz
-	OnVXAdxWZiHSnJfyKr17E2o+zfMgF+Q=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-441-6a6H2pFoPvuCDR2JEXASjw-1; Wed, 04 Oct 2023 08:55:53 -0400
-X-MC-Unique: 6a6H2pFoPvuCDR2JEXASjw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DE4A380673C;
-	Wed,  4 Oct 2023 12:55:52 +0000 (UTC)
-Received: from alecto.usersys.redhat.com (unknown [10.43.17.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE17B10EE402;
-	Wed,  4 Oct 2023 12:55:50 +0000 (UTC)
-Date: Wed, 4 Oct 2023 14:55:47 +0200
-From: Artem Savkov <asavkov@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Masami Hiramatsu <mhiramat@kernel.org>, linux-kernel@vger.kernel.org,
-	linux-trace-kernel@vger.kernel.org,
-	Alexei Starovoitov <ast@kernel.org>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Andrii Nakryiko <andrii@kernel.org>, bpf@vger.kernel.org,
-	netdev@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org, Jiri Olsa <jolsa@kernel.org>
-Subject: Re: [RFC PATCH] tracing: change syscall number type in struct
- syscall_trace_*
-Message-ID: <20231004125547.GA409268@alecto.usersys.redhat.com>
-References: <20231002135242.247536-1-asavkov@redhat.com>
- <20231003213844.1de0c138@gandalf.local.home>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=/mvQ3LQWM+yhOAQ4tE2ke6BtCBZK3qVmsmkWeNUxwjU=;
+	b=D834bHwVbxR9ipp3ib+2LAiFv+XvppnnkH5+kDBspJWd5betvqnDysg3oT17dsy7V4LjJ0
+	9XcBdqcDcjJYxsO6EgSbdKd/B2LT02lACYA/zebQhFE+yRk+fcAvvpNEhxhkVbPjjsBxPV
+	awPuMIMnOhA3p0dGW3PvxDUT9a4y4bAGExhqqOT3eFQuuZS5R8lX2ISW357PxNE2fU10eI
+	RwLpFrksxyVlKhTXLkfgsDQkotZEK3+YASP+XL2xrVW9HDU4QxhhuYts1ziH6Se7qKI13Q
+	KF3ptUGZr9rs82jnyzhzcf7/WytnrisZJwP6ihTOCqQ5nAijyNRB3fEJF8l/uw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1696435617;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=/mvQ3LQWM+yhOAQ4tE2ke6BtCBZK3qVmsmkWeNUxwjU=;
+	b=gY3oPh0wfRPWSdir5KxH2LBvmzM4d7LbHt98ze07+k9pT6yQZc5kaD8E7s0Cuy9f6j3Oa5
+	S72kTuAgvRp+u5AQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.6-rc4-rt7
+Message-ID: <20231004160655.0D-7XFo_@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -51,93 +38,49 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20231003213844.1de0c138@gandalf.local.home>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,
-	RCVD_IN_DNSWL_BLOCKED,RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,
-	SPF_HELO_NONE,SPF_NONE autolearn=unavailable autolearn_force=no
+X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_BLOCKED,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-On Tue, Oct 03, 2023 at 09:38:44PM -0400, Steven Rostedt wrote:
-> On Mon,  2 Oct 2023 15:52:42 +0200
-> Artem Savkov <asavkov@redhat.com> wrote:
-> 
-> > linux-rt-devel tree contains a patch that adds an extra member to struct
-> > trace_entry. This causes the offset of args field in struct
-> > trace_event_raw_sys_enter be different from the one in struct
-> > syscall_trace_enter:
-> 
-> This patch looks like it's fixing the symptom and not the issue. No code
-> should rely on the two event structures to be related. That's an unwanted
-> coupling, that will likely cause issues down the road (like the RT patch
-> you mentioned).
+Dear RT folks!
 
-I agree, but I didn't see a better solution and that was my way of
-starting conversation, thus the RFC.
+I'm pleased to announce the v6.6-rc4-rt7 patch set. 
 
-> > 
-> > struct trace_event_raw_sys_enter {
-> >         struct trace_entry         ent;                  /*     0    12 */
-> > 
-> >         /* XXX last struct has 3 bytes of padding */
-> >         /* XXX 4 bytes hole, try to pack */
-> > 
-> >         long int                   id;                   /*    16     8 */
-> >         long unsigned int          args[6];              /*    24    48 */
-> >         /* --- cacheline 1 boundary (64 bytes) was 8 bytes ago --- */
-> >         char                       __data[];             /*    72     0 */
-> > 
-> >         /* size: 72, cachelines: 2, members: 4 */
-> >         /* sum members: 68, holes: 1, sum holes: 4 */
-> >         /* paddings: 1, sum paddings: 3 */
-> >         /* last cacheline: 8 bytes */
-> > };
-> > 
-> > struct syscall_trace_enter {
-> >         struct trace_entry         ent;                  /*     0    12 */
-> > 
-> >         /* XXX last struct has 3 bytes of padding */
-> > 
-> >         int                        nr;                   /*    12     4 */
-> >         long unsigned int          args[];               /*    16     0 */
-> > 
-> >         /* size: 16, cachelines: 1, members: 3 */
-> >         /* paddings: 1, sum paddings: 3 */
-> >         /* last cacheline: 16 bytes */
-> > };
-> > 
-> > This, in turn, causes perf_event_set_bpf_prog() fail while running bpf
-> > test_profiler testcase because max_ctx_offset is calculated based on the
-> > former struct, while off on the latter:
-> 
-> The above appears to be pointing to the real bug. The "is calculated based
-> on the former struct while off on the latter" Why are the two being used
-> together? They are supposed to be *unrelated*!
-> 
-> 
-> > 
-> >   10488         if (is_tracepoint || is_syscall_tp) {
-> >   10489                 int off = trace_event_get_offsets(event->tp_event);
-> 
-> So basically this is clumping together the raw_syscalls with the syscalls
-> events as if they are the same. But the are not. They are created
-> differently. It's basically like using one structure to get the offsets of
-> another structure. That would be a bug anyplace else in the kernel. Sounds
-> like it's a bug here too.
-> 
-> I think the issue is with this code, not the tracing code.
-> 
-> We could expose the struct syscall_trace_enter and syscall_trace_exit if
-> the offsets to those are needed.
+Changes since v6.6-rc4-rt6:
 
-I don't think we need syscall_trace_* offsets, looks like
-trace_event_get_offsets() should return offset trace_event_raw_sys_enter
-instead. I am still trying to figure out how all of this works together.
-Maybe Alexei or Andrii have more context here.
+  - Lockdep complained about SRCU locking if printk was used from NMI.
 
--- 
- Artem
+  - The i915 driver could create a locking related splat during suspend/
+    resume. Reported by John B. Wyatt IV.
 
+  - A new version of printk. This is an update to the current
+    development version. Large patch series provided by John Ogness.
+
+Known issues
+     None
+
+The delta patch against v6.6-rc4-rt6 is not appended below due to its
+size. It and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/incr/patch-6.6-rc4-rt6-rt7.patch.xz
+
+and as web based diff:
+     
+     https://git.kernel.org/rt/linux-rt-devel/d/v6.6-rc4-rt7/v6.6-rc4-rt6
+
+You can get this release via the git tree at:
+
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.6-rc4-rt7
+
+The RT patch against v6.6-rc4 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patch-6.6-rc4-rt7.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patches-6.6-rc4-rt7.tar.xz
+
+Sebastian
