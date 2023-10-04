@@ -1,40 +1,38 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FDA163CB
-	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 07:03:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E13412B7D
+	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 12:56:00 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6BA02AD
-	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 00:03:08 -0700 (PDT)
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C09DC9
+	for <linux-rt-users@vger.kernel.org>; Wed,  4 Oct 2023 05:55:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696402987;
+	s=mimecast20190719; t=1696424157;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=kDu6btx99QXs0kSLMHh2AKh2KZqG8BWNFgkrbgEVHdw=;
-	b=fyWBgOfTQkDbZ1e6NNJtWVmBlXHDvQMx7Dc743WDQKMCy/25uejtDHLKRMF1hw3peo8Y/I
-	jC6+kHlFU6uCOCVW2rUXJhh7/9fRoZ0vCx8Qr7rCRCI39YRh+bNXSf7K7bCd3Tb3PEUjpd
-	p71jvCo7DO3Us/lXXiayysglyQPK08k=
+	bh=zd7dDQrkdg8NYwSdUP30Izn8MjE92lW/tVkoCZd/bK0=;
+	b=boDWgnkH6A9nLnpgbK8GY7zqlHaT8t0NQrJHPg53yx4ThCdqNXWLmowF2iArZO09yXX4rz
+	tkEkeVMjypGtDUBd29143NH3y19VDcdjlC5Cp8sBcSN0p3QpBV5dbnBrSF+CN1A2+f7vyz
+	OnVXAdxWZiHSnJfyKr17E2o+zfMgF+Q=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-283-uQEUgsEkNvisFnqZy2eq6Q-1; Wed, 04 Oct 2023 03:03:02 -0400
-X-MC-Unique: uQEUgsEkNvisFnqZy2eq6Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-441-6a6H2pFoPvuCDR2JEXASjw-1; Wed, 04 Oct 2023 08:55:53 -0400
+X-MC-Unique: 6a6H2pFoPvuCDR2JEXASjw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68D80382135E;
-	Wed,  4 Oct 2023 07:03:01 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DE4A380673C;
+	Wed,  4 Oct 2023 12:55:52 +0000 (UTC)
 Received: from alecto.usersys.redhat.com (unknown [10.43.17.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E9D2140E950;
-	Wed,  4 Oct 2023 07:02:59 +0000 (UTC)
-Date: Wed, 4 Oct 2023 09:02:57 +0200
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE17B10EE402;
+	Wed,  4 Oct 2023 12:55:50 +0000 (UTC)
+Date: Wed, 4 Oct 2023 14:55:47 +0200
 From: Artem Savkov <asavkov@redhat.com>
-To: Andrii Nakryiko <andrii.nakryiko@gmail.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Masami Hiramatsu <mhiramat@kernel.org>,
-	linux-kernel@vger.kernel.org, linux-trace-kernel@vger.kernel.org,
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Masami Hiramatsu <mhiramat@kernel.org>, linux-kernel@vger.kernel.org,
+	linux-trace-kernel@vger.kernel.org,
 	Alexei Starovoitov <ast@kernel.org>,
 	Daniel Borkmann <daniel@iogearbox.net>,
 	Andrii Nakryiko <andrii@kernel.org>, bpf@vger.kernel.org,
@@ -42,9 +40,9 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
 	linux-rt-users@vger.kernel.org, Jiri Olsa <jolsa@kernel.org>
 Subject: Re: [RFC PATCH] tracing: change syscall number type in struct
  syscall_trace_*
-Message-ID: <20231004070257.GA311687@alecto.usersys.redhat.com>
+Message-ID: <20231004125547.GA409268@alecto.usersys.redhat.com>
 References: <20231002135242.247536-1-asavkov@redhat.com>
- <CAEf4BzbM1z-ccRq-gH7UkVrSa6Vhewu3R7wV3sHW6BKxhm9k2Q@mail.gmail.com>
+ <20231003213844.1de0c138@gandalf.local.home>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -53,9 +51,8 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAEf4BzbM1z-ccRq-gH7UkVrSa6Vhewu3R7wV3sHW6BKxhm9k2Q@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+In-Reply-To: <20231003213844.1de0c138@gandalf.local.home>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,
 	RCVD_IN_DNSWL_BLOCKED,RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,
@@ -64,135 +61,82 @@ X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-On Tue, Oct 03, 2023 at 03:11:15PM -0700, Andrii Nakryiko wrote:
-> On Mon, Oct 2, 2023 at 6:53 AM Artem Savkov <asavkov@redhat.com> wrote:
-> >
-> > linux-rt-devel tree contains a patch that adds an extra member to struct
+On Tue, Oct 03, 2023 at 09:38:44PM -0400, Steven Rostedt wrote:
+> On Mon,  2 Oct 2023 15:52:42 +0200
+> Artem Savkov <asavkov@redhat.com> wrote:
 > 
-> can you please point to the patch itself that makes that change?
-
-Of course, some context would be useful. The patch in question is b1773eac3f29c
-("sched: Add support for lazy preemption") from rt-devel tree [0]. It came up
-a couple of times before: [1] [2] [3] [4].
-
-[0] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/commit/?id=b1773eac3f29cbdcdfd16e0339f1a164066e9f71
-[1] https://lore.kernel.org/linux-rt-users/20200221153541.681468-1-jolsa@kernel.org/t/#u
-[2] https://github.com/iovisor/bpftrace/commit/a2e3d5dbc03ceb49b776cf5602d31896158844a7
-[3] https://lore.kernel.org/bpf/xunyjzy64q9b.fsf@redhat.com/t/#u
-[4] https://lore.kernel.org/bpf/20230727150647.397626-1-ykaliuta@redhat.com/t/#u
-
+> > linux-rt-devel tree contains a patch that adds an extra member to struct
 > > trace_entry. This causes the offset of args field in struct
 > > trace_event_raw_sys_enter be different from the one in struct
 > > syscall_trace_enter:
-> >
+> 
+> This patch looks like it's fixing the symptom and not the issue. No code
+> should rely on the two event structures to be related. That's an unwanted
+> coupling, that will likely cause issues down the road (like the RT patch
+> you mentioned).
+
+I agree, but I didn't see a better solution and that was my way of
+starting conversation, thus the RFC.
+
+> > 
 > > struct trace_event_raw_sys_enter {
 > >         struct trace_entry         ent;                  /*     0    12 */
-> >
+> > 
 > >         /* XXX last struct has 3 bytes of padding */
 > >         /* XXX 4 bytes hole, try to pack */
-> >
+> > 
 > >         long int                   id;                   /*    16     8 */
 > >         long unsigned int          args[6];              /*    24    48 */
 > >         /* --- cacheline 1 boundary (64 bytes) was 8 bytes ago --- */
 > >         char                       __data[];             /*    72     0 */
-> >
+> > 
 > >         /* size: 72, cachelines: 2, members: 4 */
 > >         /* sum members: 68, holes: 1, sum holes: 4 */
 > >         /* paddings: 1, sum paddings: 3 */
 > >         /* last cacheline: 8 bytes */
 > > };
-> >
+> > 
 > > struct syscall_trace_enter {
 > >         struct trace_entry         ent;                  /*     0    12 */
-> >
+> > 
 > >         /* XXX last struct has 3 bytes of padding */
-> >
+> > 
 > >         int                        nr;                   /*    12     4 */
 > >         long unsigned int          args[];               /*    16     0 */
-> >
+> > 
 > >         /* size: 16, cachelines: 1, members: 3 */
 > >         /* paddings: 1, sum paddings: 3 */
 > >         /* last cacheline: 16 bytes */
 > > };
-> >
+> > 
 > > This, in turn, causes perf_event_set_bpf_prog() fail while running bpf
 > > test_profiler testcase because max_ctx_offset is calculated based on the
 > > former struct, while off on the latter:
-> >
+> 
+> The above appears to be pointing to the real bug. The "is calculated based
+> on the former struct while off on the latter" Why are the two being used
+> together? They are supposed to be *unrelated*!
+> 
+> 
+> > 
 > >   10488         if (is_tracepoint || is_syscall_tp) {
 > >   10489                 int off = trace_event_get_offsets(event->tp_event);
-> >   10490
-> >   10491                 if (prog->aux->max_ctx_offset > off)
-> >   10492                         return -EACCES;
-> >   10493         }
-> >
-> > This patch changes the type of nr member in syscall_trace_* structs to
-> > be long so that "args" offset is equal to that in struct
-> > trace_event_raw_sys_enter.
-> >
-> > Signed-off-by: Artem Savkov <asavkov@redhat.com>
-> > ---
-> >  kernel/trace/trace.h          | 4 ++--
-> >  kernel/trace/trace_syscalls.c | 7 ++++---
-> >  2 files changed, 6 insertions(+), 5 deletions(-)
-> >
-> > diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-> > index 77debe53f07cf..cd1d24df85364 100644
-> > --- a/kernel/trace/trace.h
-> > +++ b/kernel/trace/trace.h
-> > @@ -135,13 +135,13 @@ enum trace_type {
-> >   */
-> >  struct syscall_trace_enter {
-> >         struct trace_entry      ent;
-> > -       int                     nr;
-> > +       long                    nr;
-> >         unsigned long           args[];
-> >  };
-> >
-> >  struct syscall_trace_exit {
-> >         struct trace_entry      ent;
-> > -       int                     nr;
-> > +       long                    nr;
-> >         long                    ret;
-> >  };
-> >
-> > diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
-> > index de753403cdafb..c26939119f2e4 100644
-> > --- a/kernel/trace/trace_syscalls.c
-> > +++ b/kernel/trace/trace_syscalls.c
-> > @@ -101,7 +101,7 @@ find_syscall_meta(unsigned long syscall)
-> >         return NULL;
-> >  }
-> >
-> > -static struct syscall_metadata *syscall_nr_to_meta(int nr)
-> > +static struct syscall_metadata *syscall_nr_to_meta(long nr)
-> >  {
-> >         if (IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR))
-> >                 return xa_load(&syscalls_metadata_sparse, (unsigned long)nr);
-> > @@ -132,7 +132,8 @@ print_syscall_enter(struct trace_iterator *iter, int flags,
-> >         struct trace_entry *ent = iter->ent;
-> >         struct syscall_trace_enter *trace;
-> >         struct syscall_metadata *entry;
-> > -       int i, syscall;
-> > +       int i;
-> > +       long syscall;
-> >
-> >         trace = (typeof(trace))ent;
-> >         syscall = trace->nr;
-> > @@ -177,7 +178,7 @@ print_syscall_exit(struct trace_iterator *iter, int flags,
-> >         struct trace_seq *s = &iter->seq;
-> >         struct trace_entry *ent = iter->ent;
-> >         struct syscall_trace_exit *trace;
-> > -       int syscall;
-> > +       long syscall;
-> >         struct syscall_metadata *entry;
-> >
-> >         trace = (typeof(trace))ent;
-> > --
-> > 2.41.0
-> >
-> >
 > 
+> So basically this is clumping together the raw_syscalls with the syscalls
+> events as if they are the same. But the are not. They are created
+> differently. It's basically like using one structure to get the offsets of
+> another structure. That would be a bug anyplace else in the kernel. Sounds
+> like it's a bug here too.
+> 
+> I think the issue is with this code, not the tracing code.
+> 
+> We could expose the struct syscall_trace_enter and syscall_trace_exit if
+> the offsets to those are needed.
+
+I don't think we need syscall_trace_* offsets, looks like
+trace_event_get_offsets() should return offset trace_event_raw_sys_enter
+instead. I am still trying to figure out how all of this works together.
+Maybe Alexei or Andrii have more context here.
 
 -- 
  Artem
