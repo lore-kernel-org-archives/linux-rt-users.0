@@ -1,56 +1,56 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9691338F93
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 18:41:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CF4F38FA0
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 18:41:33 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MhIYSyT0"
-Received: from mail-ot1-x32a.google.com (mail-ot1-x32a.google.com [IPv6:2607:f8b0:4864:20::32a])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D3A9FB6
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 11:41:30 -0700 (PDT)
-Received: by mail-ot1-x32a.google.com with SMTP id 46e09a7af769-6c7bbfb7a73so1598696a34.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 06 Oct 2023 11:41:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nrZRRods"
+Received: from mail-qk1-x735.google.com (mail-qk1-x735.google.com [IPv6:2607:f8b0:4864:20::735])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E66BEC2
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 11:41:31 -0700 (PDT)
+Received: by mail-qk1-x735.google.com with SMTP id af79cd13be357-77428e40f71so153167585a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Oct 2023 11:41:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1696617690; x=1697222490; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=faJ/gIIDuCFQlxulFEiad3gDSOvV+m0iud/HQw9l73E=;
-        b=MhIYSyT0ZlvJ1606HEHdE/8x/oLrbG4wJh5Inu527oxC/1vIdkUkMvLZGiqZT/7U1V
-         eRBvb5MIzhRU3VUr1zaERlJCH38OkOKNhiO3yJaTreTQR6VZB2xiPvmqtVbOo4WWRquF
-         9qnU70UsEZkYp/EYmGSh1xr/TWXfLi43OHgXQPtE2nmqXJTzvuSVONEMa1qwFb2bNqa7
-         HmsGlX5yHxQQTbJkSX2Aq1OtdMSjA38IIIi/75BW62vo9uX9DfWRLFK9+N8K4EQAgKt0
-         xmDwZo+1nW4OHn1SqhGv542UetPUnKTAQ9jMjT59B2w4ZfLYmqV3kiW9Jnzpdtb4EXYl
-         qRdw==
+        bh=Jm3fLMicBeA8ArQnrDOrAt88qAd/Ud/EaM6GzE91cyc=;
+        b=nrZRRods2mKr/260uPWuEgczpm848zx1CpqTWPuFx1gpV84r68fWk/WHBKtUbpNqny
+         2Xq5wVx4l7KDudLlXOJAuxzucScXleQwb+5lXFezmKwNnLL6MCJbUcrtw/DBmi/YBSk6
+         fKyjFE0FrUo0hrfWKL/FVNnpJNyo8eP8lkIiah+Ik9b9TolhruK2sABy7cnVI1lcqesp
+         zZvm/b3MC11LA8xwkI9ZuO3w7bi8HgYPl3crezXblEIr1HNgYcxRJQxyA/7LR/+ZE0L8
+         mim6s/zFVWYUkjV9uVSyextWFpBVpwPELjV/VsKJ3fa0mk17tej/cB9aWRipJwoRKjN9
+         IhFw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1696617690; x=1697222490;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=faJ/gIIDuCFQlxulFEiad3gDSOvV+m0iud/HQw9l73E=;
-        b=foP1iQsdG47bvxc55LhoBZN3+hyOkmNNpkSEKOhTmZC+zCQ6Iamm+Xvl37uCzBTav8
-         rv8/GpgL1FQ+2nWTp9ZoHRJEbCtMIBgYZdaWABYfzJtbzbvqRiVyKIpuzdYMiKkq7ZJL
-         9bjniPl2v4ffOfnM8VEX4x/PeGqhincQDOpMY4CdqPiqMB7eJqesaQL0ORO0sEAa+cBM
-         9xKGVDTntk3DMAvbXWxp2GPHotFgMq6M1eyMetbFCV+HhNhmnTLzfszg8OCykddoPAL9
-         GCnlHTlbZ+ACV5KDEmmE/ktj4DsSADl/n5jMZBFBiDADHQKnyPKS00Pn+A0vKouLBn0G
-         9lmw==
-X-Gm-Message-State: AOJu0YwdUe8LN3ii1LONttWsFLJ1tEK8BTHeDWoNBZ97RCYfDd12K71n
-	SJe7W5rpIXVkFpAUOua8k6b9einOgB8=
-X-Google-Smtp-Source: AGHT+IFa7DLhcrxNhzS1+QO/ku8WOk5AyL2QEjLsvY2PBKzG17+crgeyGRUqtzIsgKw8NAIOilhoTg==
-X-Received: by 2002:a05:6870:ac1f:b0:1b3:8d35:c85f with SMTP id kw31-20020a056870ac1f00b001b38d35c85fmr9853191oab.1.1696617689737;
-        Fri, 06 Oct 2023 11:41:29 -0700 (PDT)
+        bh=Jm3fLMicBeA8ArQnrDOrAt88qAd/Ud/EaM6GzE91cyc=;
+        b=GK3DBmATZugjirayp/byegLe3GYK9ytzgfeac1xTX/HZzlFpUoLZBh/79gQL6FaPou
+         Lq8zp8cRpCXPapI1xgPXrv+lMz7zNvgJkdU/8fMtql5cSq93a8EpKjmhzLPRvxd4fVvL
+         UlA0PFUEhfYE3Ku0hr4DKEFJtgblyPx5ynVRJAzd/teOtfffJRbw9KbJYpQ7+w6ngS+m
+         1wAHNiSc5d3hEQfW4luKxHhQu0J2MdtKqt5Ulgq+lBPHRtoLIywaNf5PSdQ2eRBP3VaD
+         2Tn7WsrBjh3hB1Sg6TaJbo+v0DmHy+mcF918UpZUu43xHyw7Pddjj+vA1IU3ma8kx7AF
+         lxxw==
+X-Gm-Message-State: AOJu0YwjZCNK7aHUNxPZ30+DSTlGshp8kf8JQWke6St0ImS2BVuV5O7E
+	vVifUaspgwiGtWyiq4ph8FuYOt1d1y0=
+X-Google-Smtp-Source: AGHT+IHai0dNt+hVNqPbJUBwSv6NJGBYS1Sd1RA15skDJ9e8ZYHIhtaZzWI4WpctJuK5HGiFWs8fZg==
+X-Received: by 2002:ad4:4aeb:0:b0:668:f33b:39a8 with SMTP id cp11-20020ad44aeb000000b00668f33b39a8mr8913595qvb.24.1696617690627;
+        Fri, 06 Oct 2023 11:41:30 -0700 (PDT)
 Received: from fionn.redhat.com ([174.88.88.29])
-        by smtp.gmail.com with ESMTPSA id y8-20020a0ce048000000b0065b11053445sm1593012qvk.54.2023.10.06.11.41.28
+        by smtp.gmail.com with ESMTPSA id y8-20020a0ce048000000b0065b11053445sm1593012qvk.54.2023.10.06.11.41.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Oct 2023 11:41:29 -0700 (PDT)
+        Fri, 06 Oct 2023 11:41:30 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 08/17] rt-tests: sigwaittest: Fix some warnings
-Date: Fri,  6 Oct 2023 14:40:02 -0400
-Message-Id: <20231006184011.26699-8-jkacur@redhat.com>
+Subject: [PATCH 09/17] rt-tests: rt-migrate-test: Fix some warnings
+Date: Fri,  6 Oct 2023 14:40:03 -0400
+Message-Id: <20231006184011.26699-9-jkacur@redhat.com>
 X-Mailer: git-send-email 2.40.1
 In-Reply-To: <20231006184011.26699-1-jkacur@redhat.com>
 References: <20231006184011.26699-1-jkacur@redhat.com>
@@ -68,43 +68,45 @@ X-Spam-Status: No, score=-1.5 required=5.0 tests=BAYES_00,DKIM_SIGNED,
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-Fix some warnings about unused parameters and comparisons of integers of
-different signedness
+- Use attribute unused where appropriate
+- Change unsigned int to int for comparision
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/sigwaittest/sigwaittest.c | 6 +++---
+ src/rt-migrate-test/rt-migrate-test.c | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-index 728176a0b385..818e3a8e680a 100644
---- a/src/sigwaittest/sigwaittest.c
-+++ b/src/sigwaittest/sigwaittest.c
-@@ -384,13 +384,13 @@ static void process_options(int argc, char *argv[])
+diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+index 883e60e21bff..7b1917df12a3 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -44,7 +44,7 @@ static void setup_ftrace_marker(void)
+ 		"/debugfs/tracing/trace_marker",
+ 	};
+ 	int ret;
+-	int i;
++	unsigned int i;
  
- static int volatile mustshutdown;
- 
--static void sighand(int sig)
-+static void sighand(int sig __attribute__ ((unused)))
- {
- 	mustshutdown = 1;
+ 	for (i = 0; i < (sizeof(files) / sizeof(char *)); i++) {
+ 		ret = stat(files[i], &st);
+@@ -354,7 +354,7 @@ static void print_results(void)
+ 	}
  }
  
- static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
--		       int verbose, int quiet)
-+		       int verbose __attribute__ ((unused)), int quiet)
+-static void write_stats(FILE *f, void *data)
++static void write_stats(FILE *f, void *data __attribute__ ((unused)))
  {
  	int i;
+ 	int t;
+@@ -489,7 +489,7 @@ static int check_times(int l)
+ 	return 0;
+ }
  
-@@ -435,7 +435,7 @@ static void write_stats(FILE *f, void *data)
+-static void stop_log(int sig)
++static void stop_log(int sig __attribute__ ((unused)))
  {
- 	struct params_stats *ps = data;
- 	struct params *s, *r;
--	unsigned int i;
-+	int i;
- 
- 	fprintf(f, "  \"num_threads\": %d,\n", num_threads);
- 	fprintf(f, "  \"thread\": {\n");
+ 	stop = 1;
+ }
 -- 
 2.40.1
 
