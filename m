@@ -1,156 +1,99 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FF622943A
-	for <linux-rt-users@vger.kernel.org>; Thu,  5 Oct 2023 14:36:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43BFD1A29F
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 18:41:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WE0QDp4O"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0DBD23AB8
-	for <linux-rt-users@vger.kernel.org>; Thu,  5 Oct 2023 07:36:04 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696516564;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=+O64Js8IxZtTR27yFO6KKwoMlU4zaA+NA8IDEiNEsMA=;
-	b=WE0QDp4OkQrcFbixAbDMchgUWDU+1DTZUfdtVs7y9wj/y0v8aQ558h26wWfeU8gxeY08KG
-	rtq6i8u8rAvMhcO3F1i8Gd/iGYva4Ls01LFFFIAJhotbBpOxyYzq4kJ4IG2hUaHGPfpnBc
-	1gkoB+iiDlGGOBFN2Hir/G+C/1tzF1U=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-455-IQ-JXcVRMOuc1JjV0SXWSQ-1; Thu, 05 Oct 2023 08:34:17 -0400
-X-MC-Unique: IQ-JXcVRMOuc1JjV0SXWSQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30E221E441DB;
-	Thu,  5 Oct 2023 12:34:17 +0000 (UTC)
-Received: from alecto.usersys.redhat.com (unknown [10.43.17.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 63A55140E953;
-	Thu,  5 Oct 2023 12:34:15 +0000 (UTC)
-Date: Thu, 5 Oct 2023 14:34:13 +0200
-From: Artem Savkov <asavkov@redhat.com>
-To: Alexei Starovoitov <ast@kernel.org>,
-	Andrii Nakryiko <andrii@kernel.org>
-Cc: Masami Hiramatsu <mhiramat@kernel.org>, linux-kernel@vger.kernel.org,
-	linux-trace-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Daniel Borkmann <daniel@iogearbox.net>, bpf@vger.kernel.org,
-	netdev@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org, Jiri Olsa <jolsa@kernel.org>
-Subject: Re: [RFC PATCH] tracing: change syscall number type in struct
- syscall_trace_*
-Message-ID: <20231005123413.GA488417@alecto.usersys.redhat.com>
-References: <20231002135242.247536-1-asavkov@redhat.com>
- <20231003213844.1de0c138@gandalf.local.home>
- <20231004125547.GA409268@alecto.usersys.redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZfJmuBJj"
+Received: from mail-yb1-xb30.google.com (mail-yb1-xb30.google.com [IPv6:2607:f8b0:4864:20::b30])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1A834B6
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 11:41:24 -0700 (PDT)
+Received: by mail-yb1-xb30.google.com with SMTP id 3f1490d57ef6-d81b42a3108so2787179276.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Oct 2023 11:41:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1696617683; x=1697222483; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=abc9jH7p9op4GCd1YvdShfPjRo+5a1KLFVgcNDm4/nA=;
+        b=ZfJmuBJj467m3/p3ncaQn/bKPYXZoS+p43Jr92FbFxC5elU24G6cBhnDlQzV0TuYsv
+         ZYCOrC6hOXeiFOtO+cRdKgCWN3ZA67AQnaacoFXmTnuOD64KS4Yf2Wqle7OjgmBI7MTk
+         GzlEuJPMkADAqQBw6EsLdL1SPHiEOc6CN3xFOydLVhnd7OwT+n/5W1bTTHxklUtMxAn6
+         mXzPTZtkisVp4UsGjhL0BQOLQBmFkIJmpsJkGGTM8FhWQi0Uk60eaMHIQm6q3/Lg0Rcz
+         PgGYbvRvjZfivF351Nrik2qlS/bII1BqzzpxpbnM+ddJ4tXcv/qSkuIh7jwYV8ADP7FI
+         EFQg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1696617683; x=1697222483;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=abc9jH7p9op4GCd1YvdShfPjRo+5a1KLFVgcNDm4/nA=;
+        b=tTBghbPaSNMx11cqgpJntz2tFDaRrk+Wg75wzGo8+kzukD/dMFom5vQyRmUhwbcNRs
+         m6TbCt1IfyReQjjbDAecs9jYvsgzsW7PXRdYjIcSxgLXkrUZV/Vk+A0qv0U5Sga5NDaq
+         KwBlYYB6UtmQCGmHvVpIgzAYPjdsQBnvlPf2D1PPVt19u7Cc1nz7VxPwrmpbyfePP9FH
+         UMHIhadRWF0HdpOGf9Pd2g0ah8/eAxLXDK7QGYi1kmDV41vjvo5bciiCMnppLPxiACQ3
+         6SxoR70KFlAYVX/IxxSl3q+t3GXhyWmp/csGwXTQR1xRsEwQus1C3hqAoGt8G99B5xZK
+         NzMQ==
+X-Gm-Message-State: AOJu0YxtT/e6fF9alVzufBLNkYHwgopN+C49eHNVDlf/aLgSKPvEaNbp
+	MSu/JU9TgSHfhvPl3WVB2thkuG1K5jc=
+X-Google-Smtp-Source: AGHT+IEt+K5JvZ7Gm21ec365gRb0m1/5H0RQLNSqaEBmShGTNjE41NZEJ3TlpmFT12SiNCGAsFm+hQ==
+X-Received: by 2002:a25:8441:0:b0:d78:134:9477 with SMTP id r1-20020a258441000000b00d7801349477mr8597388ybm.58.1696617682702;
+        Fri, 06 Oct 2023 11:41:22 -0700 (PDT)
+Received: from fionn.redhat.com ([174.88.88.29])
+        by smtp.gmail.com with ESMTPSA id y8-20020a0ce048000000b0065b11053445sm1593012qvk.54.2023.10.06.11.41.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 06 Oct 2023 11:41:22 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	Eder Zulian <ezulian@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 01/17] rt-tests: cyclictest: Remove warnings due different signedness in comparison
+Date: Fri,  6 Oct 2023 14:39:55 -0400
+Message-Id: <20231006184011.26699-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.40.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20231004125547.GA409268@alecto.usersys.redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_NONE,
-	RCVD_IN_MSPIKE_H3,RCVD_IN_MSPIKE_WL,SPF_HELO_NONE,SPF_NONE
-	autolearn=unavailable autolearn_force=no version=3.4.6
+Content-Transfer-Encoding: 8bit
+X-Spam-Status: No, score=-1.5 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_EF,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-On Wed, Oct 04, 2023 at 02:55:47PM +0200, Artem Savkov wrote:
-> On Tue, Oct 03, 2023 at 09:38:44PM -0400, Steven Rostedt wrote:
-> > On Mon,  2 Oct 2023 15:52:42 +0200
-> > Artem Savkov <asavkov@redhat.com> wrote:
-> > 
-> > > linux-rt-devel tree contains a patch that adds an extra member to struct
-> > > trace_entry. This causes the offset of args field in struct
-> > > trace_event_raw_sys_enter be different from the one in struct
-> > > syscall_trace_enter:
-> > 
-> > This patch looks like it's fixing the symptom and not the issue. No code
-> > should rely on the two event structures to be related. That's an unwanted
-> > coupling, that will likely cause issues down the road (like the RT patch
-> > you mentioned).
-> 
-> I agree, but I didn't see a better solution and that was my way of
-> starting conversation, thus the RFC.
-> 
-> > > 
-> > > struct trace_event_raw_sys_enter {
-> > >         struct trace_entry         ent;                  /*     0    12 */
-> > > 
-> > >         /* XXX last struct has 3 bytes of padding */
-> > >         /* XXX 4 bytes hole, try to pack */
-> > > 
-> > >         long int                   id;                   /*    16     8 */
-> > >         long unsigned int          args[6];              /*    24    48 */
-> > >         /* --- cacheline 1 boundary (64 bytes) was 8 bytes ago --- */
-> > >         char                       __data[];             /*    72     0 */
-> > > 
-> > >         /* size: 72, cachelines: 2, members: 4 */
-> > >         /* sum members: 68, holes: 1, sum holes: 4 */
-> > >         /* paddings: 1, sum paddings: 3 */
-> > >         /* last cacheline: 8 bytes */
-> > > };
-> > > 
-> > > struct syscall_trace_enter {
-> > >         struct trace_entry         ent;                  /*     0    12 */
-> > > 
-> > >         /* XXX last struct has 3 bytes of padding */
-> > > 
-> > >         int                        nr;                   /*    12     4 */
-> > >         long unsigned int          args[];               /*    16     0 */
-> > > 
-> > >         /* size: 16, cachelines: 1, members: 3 */
-> > >         /* paddings: 1, sum paddings: 3 */
-> > >         /* last cacheline: 16 bytes */
-> > > };
-> > > 
-> > > This, in turn, causes perf_event_set_bpf_prog() fail while running bpf
-> > > test_profiler testcase because max_ctx_offset is calculated based on the
-> > > former struct, while off on the latter:
-> > 
-> > The above appears to be pointing to the real bug. The "is calculated based
-> > on the former struct while off on the latter" Why are the two being used
-> > together? They are supposed to be *unrelated*!
-> > 
-> > 
-> > > 
-> > >   10488         if (is_tracepoint || is_syscall_tp) {
-> > >   10489                 int off = trace_event_get_offsets(event->tp_event);
-> > 
-> > So basically this is clumping together the raw_syscalls with the syscalls
-> > events as if they are the same. But the are not. They are created
-> > differently. It's basically like using one structure to get the offsets of
-> > another structure. That would be a bug anyplace else in the kernel. Sounds
-> > like it's a bug here too.
-> > 
-> > I think the issue is with this code, not the tracing code.
-> > 
-> > We could expose the struct syscall_trace_enter and syscall_trace_exit if
-> > the offsets to those are needed.
-> 
-> I don't think we need syscall_trace_* offsets, looks like
-> trace_event_get_offsets() should return offset trace_event_raw_sys_enter
-> instead. I am still trying to figure out how all of this works together.
-> Maybe Alexei or Andrii have more context here.
+From: Eder Zulian <ezulian@redhat.com>
 
-Turns out it is even more confusing. The tests dereference the context as
-struct trace_event_raw_sys_enter so bpf verifier sets max_ctx_offset
-based on that, then perf_event_set_bpf_prog() checks this offset against
-the one in struct syscall_trace_enter, but what bpf prog really gets is
-a pointer to struct syscall_tp_t from kernel/trace/trace_syscalls.c.
+Type casting used to remove compiler warnings due to comparison of
+integer expressions of different signedness.
 
-I don't know the history behind these decisions, but should the tests
-dereference context as struct syscall_trace_enter instead and struct
-syscall_tp_t be changed to have syscall_nr as int?
+Signed-off-by: Eder Zulian <ezulian@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 4a7108ea2c8f..179ae8b2004b 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -317,8 +317,10 @@ static int raise_soft_prio(int policy, const struct sched_param *param)
+ 		return err;
+ 	}
+ 
+-	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? policy_max : rlim.rlim_cur;
+-	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? policy_max : rlim.rlim_max;
++	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? (unsigned int)policy_max
++						    : rlim.rlim_cur;
++	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? (unsigned int)policy_max
++						    : rlim.rlim_max;
+ 
+ 	if (prio > soft_max && prio <= hard_max) {
+ 		rlim.rlim_cur = prio;
 -- 
- Artem
+2.40.1
 
