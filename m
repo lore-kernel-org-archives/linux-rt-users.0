@@ -1,112 +1,152 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37FC538F90
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 19:33:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C3C53B28E
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 20:04:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GpdyMOru"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B959F83
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 12:33:11 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696620790;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=X7T4WIX8f2DoU/3FGo0Esr5y1o8zcldnkEtpbLsxuTI=;
-	b=GpdyMOruIjOHo+gT5CBVWdMXKgXxP4WOGN3QEbokDTTGgF4sIaXKlnhlEe8uxAhhAcz+/2
-	ug8Yf29R0kw6oEK8gnH56wZdCaA0wZvo7T1mi2ouyaXMbOK1NQcsSG3TTCMQx88GNOhftV
-	CCFpayapR9PWdy0WFZww6Adbs+TsySU=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-609-R9Zw94dDPvO3CKKR3e-z_A-1; Fri, 06 Oct 2023 15:33:04 -0400
-X-MC-Unique: R9Zw94dDPvO3CKKR3e-z_A-1
-Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-65b0249818dso25392496d6.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 06 Oct 2023 12:33:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YEHqDEee"
+Received: from mail-qk1-x730.google.com (mail-qk1-x730.google.com [IPv6:2607:f8b0:4864:20::730])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A35DF83
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 13:04:15 -0700 (PDT)
+Received: by mail-qk1-x730.google.com with SMTP id af79cd13be357-7741c2e76a3so152393385a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Oct 2023 13:04:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1696622654; x=1697227454; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=8EUQFngGRPxXgmPI7a/2AWRCEGawT7JEWVMNf/9QP1k=;
+        b=YEHqDEeek/ChVuip/QGS3v1mT1LSUZubEIdDwJdIFfTn0YJ9mXcsHM17gqFFdaDVe7
+         Sm5H06omGe3EYqH62AqVFQ2oKD0lsCJEghhoqnrhWZjVlwau40B2ObE5SVfmIaDuNqvN
+         Kq4ESmOlx9Pn5OrqZlNFCFmyzt1LOChHzBIXcQ1U1zX060AhcrwZ9/wnuJ+jH4tllRHn
+         /bncta+4Kjg9oAHrd3F88ISaoFF6dr3q8HBRex/QhhvQLReY7ZS1Vdu/+3H9twnpXA3i
+         c4ZMZiZCBVtrROhFuH8CsWtoV60/t45VhIozI+m6ZMBQcXuT+j5LGPjzOiMlzbj0somP
+         u2PA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1696620784; x=1697225584;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=X7T4WIX8f2DoU/3FGo0Esr5y1o8zcldnkEtpbLsxuTI=;
-        b=WwIIDyMJaf8slbXYuLeqZ/W8nsSPYQbs8LgICb+ckZZmohFbq+FKFLBzwGvoVtxvG2
-         z9BoMGEe+SGT4Fp8IwudLqjuuYPfUZ3GW2KSlvsEYUN4UVIAYFX43crktxxLfKybpALr
-         L7zDWW7YWoVF4/ySH/n7nadyyc2iZXQNPXy/+cKzSl9kB17IZIAJJ6Ev8OJL3LLau36N
-         CuBmHif/KEgIgxRLzvvzefNkrEjKNG42u7ZSSiPpu9eyPqFJDJUwaAy4W8Q/6lcu+V57
-         IkhMfjAbtmJE0prlPDZo7EDXPKluMzkWx72/XHQ/+KiKbOBB84ZuDgrf4U7kaLnzpnLQ
-         dd7g==
-X-Gm-Message-State: AOJu0YxDpVp0xFz5JHWGVTafeO7zHY/wI0UNIm4hzut1S7m9b4m5iZ5F
-	dFpH7JI1BUXjDdOiRq+Hyz8boNeXuK+VIeflKJlJRTR1RXZOhE+GagnpJxGerfCVNOYRti2aHeG
-	vDw3MZ98FvNCa2h92pv5DbdfdSBX7SsQhrJ8=
-X-Received: by 2002:a0c:aa9a:0:b0:65b:771:f2ea with SMTP id f26-20020a0caa9a000000b0065b0771f2eamr4073532qvb.53.1696620784114;
-        Fri, 06 Oct 2023 12:33:04 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IE9JglcXyGL1bnYZpONW7Rig0eZZtu+M04Ywjy3spPTfkHI3KRgkaOFWvP488GGDdHC2vzijg==
-X-Received: by 2002:a0c:aa9a:0:b0:65b:771:f2ea with SMTP id f26-20020a0caa9a000000b0065b0771f2eamr4073517qvb.53.1696620783808;
-        Fri, 06 Oct 2023 12:33:03 -0700 (PDT)
-Received: from fionn ([174.88.88.29])
-        by smtp.gmail.com with ESMTPSA id e9-20020a0cf349000000b0063f88855ef2sm1588196qvm.101.2023.10.06.12.33.03
+        d=1e100.net; s=20230601; t=1696622654; x=1697227454;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=8EUQFngGRPxXgmPI7a/2AWRCEGawT7JEWVMNf/9QP1k=;
+        b=AlHrnQK9cnaUSTdoaGZ9Ks+AL3HOIvIoafzSolhdNo0T5KYISxwpum75A2lfLhaSbn
+         e7e61JYjvv7ArQv1KZ9JXvCVSmMQdAlKxB5bVkCXEYLZU7p89mAq4a6wrj/1hpbIPkCP
+         KfkBgDHuGhrtZqmcTvo5lcxup9Z/4O66aIRzfcxdPgzmbUzJusSpUkuOM8Rc9Ptd5cmz
+         hYg5KeJlifO8WukEWsbEmVCdhhlxegSES4QBZc8dSnZ/WsQ7RpzCR+KiLT00gxxiEqrV
+         mhvTM2I1llnmQjXM4z0vIrizK0o+FfWfl0eMu4OH9CzjTevhmiR708PSU5UTdKulYdhs
+         E/6A==
+X-Gm-Message-State: AOJu0YwEHoWEjpxc7IZql3o+ZJsAkhVP1j0pJO9dQtLiV1TXvp7s5iL+
+	Blue7o2wzCbNVN8nY5aQ8c21UetGhxw=
+X-Google-Smtp-Source: AGHT+IEXAV/il9oY+L90lpTBQvcreOoUB039mswqOVnNkoO3QnNaDEyJplvmk4q5TEcods4+sgLS/A==
+X-Received: by 2002:a05:620a:3728:b0:76d:5126:65d8 with SMTP id de40-20020a05620a372800b0076d512665d8mr9500023qkb.6.1696622654352;
+        Fri, 06 Oct 2023 13:04:14 -0700 (PDT)
+Received: from fionn.redhat.com ([174.88.88.29])
+        by smtp.gmail.com with ESMTPSA id a12-20020a05620a102c00b007759a81d88esm1541311qkk.50.2023.10.06.13.04.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Oct 2023 12:33:03 -0700 (PDT)
-Date: Fri, 6 Oct 2023 15:32:54 -0400 (EDT)
+        Fri, 06 Oct 2023 13:04:13 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
-To: Yann Collette <ycollette.nospam@free.fr>
-cc: linux-rt-users@vger.kernel.org
-Subject: Re: rt-tests build failure on Fedora 39 with Python 3.12
-In-Reply-To: <32e50f01-ec19-74b5-227e-06f27af0f174@free.fr>
-Message-ID: <38ff8847-e8bc-517e-484d-16702d99dae5@redhat.com>
-References: <95ddebbf-25cf-d692-17f4-a7ecaceb9f6f@free.fr> <fc9828e0-8269-b85a-a732-1be188939b41@redhat.com> <32e50f01-ec19-74b5-227e-06f27af0f174@free.fr>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	Kate Carcia Poulin <kcarcia@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] rt-tests-2.6
+Date: Fri,  6 Oct 2023 16:03:45 -0400
+Message-Id: <20231006200345.53658-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.40.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463756542-476287246-1696620783=:8283"
-X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_NONE,
-	RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,SPF_HELO_NONE,SPF_NONE
-	autolearn=ham autolearn_force=no version=3.4.6
+Content-Transfer-Encoding: 8bit
+X-Spam-Status: No, score=-1.5 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_EF,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+I am pleased to announce rt-tests-2.6
 
----1463756542-476287246-1696620783=:8283
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Clone one of the following
+git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
 
+Branch: main
+Tag: v2.6
 
+Tarballs are available here:
+https://kernel.org/pub/linux/utils/rt-tests
 
-On Fri, 6 Oct 2023, Yann Collette wrote:
+Older version tarballs are available here:
+https://kernel.org/pub/linux/utils/rt-tests/older
 
-> I was using the source from the 2.5 release.
+Anubhav Shelat (3):
+  cyclicdeadline: removed unnesessary text in usage message
+  cyclicdeadline: removed extra pthread_barrier_wait() calls
+  rt-error: added conditional to info() and debug()
 
-Just go ahead and compile from the main branch in git and
-you should be fine
+Costa Shulyupin (1):
+  rt-tests: hwlatdetect: Add field cpu to samples output
 
-John
+Eder Zulian (2):
+  rt-tests: Add __pycache__/ to .gitignore
+  rt-tests: cyclictest: Remove warnings due different signedness in
+    comparison
 
-> 
-> Yann
-> 
-> Le 06/10/2023 à 20:44, John Kacur a écrit :
-> >
-> > On Wed, 4 Oct 2023, Yann Collette wrote:
-> >
-> >> Hello,
-> >>
-> >>
-> >> Rt-tests fails to build on Fedora 39 with python 3.12. The distutils module
-> >> has been removed from python 3.12.
-> >>
-> >> Is there a place where I can report the problem ?
-> > This was fixed upstream, are you using the source from Fedora?
-> >
-> > John
-> >
-> 
-> 
-> 
----1463756542-476287246-1696620783=:8283--
+John Kacur (20):
+  rt-tests: deadline_test: Fix spelling to "single" in comment
+  rt-tests: Makefile: Use sysconfig instead of distutils for PYLIB
+  rt-tests: oslat: Fix compile warnings
+  rt-tests: cyclictest: Suppress unused parameters warning
+  rt-tests: ssdd: Suppress unused parameters warning
+  rt-tests: queuelat: Suppress unused parameters warning
+  rt-tests: cyclicdeadline: Suppress unused parameter warning
+  rt-tests: svsematest: Suppress unused paramters warning
+  rt-tests: pip_stress: Removed unused parameter
+  rt-tests: sigwaittest: Fix some warnings
+  rt-tests: rt-migrate-test: Fix some warnings
+  rt-tests: signaltest Fix unused parameter warning
+  rt-tests: cyclicdeadline: Fix comparison of different signedness
+  rt-tests: cyclictest: Fix comparison of different signedness
+  rt-tests: rt-utils: Suppress warnings about fallthrough
+  rt-tests: rt-numa: Fix comparison of different signedness
+  rt-tests: pi_stress: Fix various warnings
+  rt-tests: pmqtest: Fix various warnings
+  rt-tests: ptsematest: Fix unused paramter warnings
+  rt-tests: Change to version v2.6
+
+Marcelo Tosatti (2):
+  cyclictest: remove inclusion of unnecessary headers
+  oslat: remove newline from tracemark message
+
+ .gitignore                            |  1 +
+ Makefile                              |  4 +--
+ get_pylib.py                          | 16 +++++++++++
+ src/cyclictest/cyclictest.c           | 29 +++++++++----------
+ src/hwlatdetect/hwlatdetect.py        |  5 ++--
+ src/include/pip_stress.h              |  2 +-
+ src/include/rt-error.h                |  4 +--
+ src/lib/rt-error.c                    | 28 ++++++++++--------
+ src/lib/rt-numa.c                     |  2 +-
+ src/lib/rt-utils.c                    |  5 +++-
+ src/oslat/oslat.c                     | 25 +++++++++-------
+ src/pi_tests/pi_stress.c              | 14 ++++-----
+ src/pi_tests/pip_stress.c             |  6 ++--
+ src/pmqtest/pmqtest.c                 |  9 +++---
+ src/ptsematest/ptsematest.c           |  9 +++---
+ src/queuelat/queuelat.c               |  2 +-
+ src/rt-migrate-test/rt-migrate-test.c |  6 ++--
+ src/sched_deadline/cyclicdeadline.c   | 41 ++++++++++++++-------------
+ src/sched_deadline/deadline_test.c    |  2 +-
+ src/signaltest/signaltest.c           |  4 +--
+ src/sigwaittest/sigwaittest.c         |  6 ++--
+ src/ssdd/ssdd.c                       |  4 +--
+ src/svsematest/svsematest.c           |  7 ++---
+ 23 files changed, 129 insertions(+), 102 deletions(-)
+ create mode 100755 get_pylib.py
+
+-- 
+2.40.1
 
