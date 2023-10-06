@@ -1,56 +1,56 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E82861A29F
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 18:41:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB4F437C95
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 18:41:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mk0HmTyd"
-Received: from mail-oa1-x36.google.com (mail-oa1-x36.google.com [IPv6:2001:4860:4864:20::36])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 97E44BF
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 11:41:26 -0700 (PDT)
-Received: by mail-oa1-x36.google.com with SMTP id 586e51a60fabf-1dd1714b9b6so1573856fac.0
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eUrRU8/x"
+Received: from mail-qv1-xf30.google.com (mail-qv1-xf30.google.com [IPv6:2607:f8b0:4864:20::f30])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 019B6B6
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 11:41:27 -0700 (PDT)
+Received: by mail-qv1-xf30.google.com with SMTP id 6a1803df08f44-65b0c9fb673so12838066d6.1
         for <linux-rt-users@vger.kernel.org>; Fri, 06 Oct 2023 11:41:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1696617685; x=1697222485; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=iWhzDvKh0xVCCh7ema8mg7INwO+/SotONhh1TeXO3uw=;
-        b=mk0HmTydjj2athF+ARWORw+RyeitbUT3O5tGKTqNaTqjb/9JdWgYQenJ2+4rvv8GLn
-         28V9EGw+kvg9uBkJmEBKG6BaijKztM2Ff+85CLvwOeRS3IcQ31Hgu1jef7G/k+QnwMp+
-         uyjeG7Uj8X6GM90ak929DOLMyJIZgjx3fRlOCeoEfvcXUjHPVCGGNrPC+Jy+Z1w6D62S
-         Q6q1CVlKaczW0Sr8v5Z0uPcUQVvKF2IMzPFCKfmLfDkDBzVce8u9cW12z2MRdcfA89X+
-         UKogUe7mEE3NnoRBbb2uaO+ip3GjUPincAR18RCJKjfy+8FlA4wd5lkH/tNgaoxoOB1d
-         ceqw==
+        bh=UeMSAFzQ1UToFRPwQ8pnGusBeLD2OJJdVLWknq1yrrs=;
+        b=eUrRU8/xst2dd0mvOwQMULFSYItg5zQvHMxSuMWXjeeud3ndEJguZVfmGgtvMFxoFM
+         xKLQ69IP80a2oi26D0eaw2HHS3Qq9m6cPYDFG7RgeN6J2F9L8/v+pB7NwPeStziN8fhQ
+         1g42XGUmKK7BK8GyAvwvKYV2gaO5NxXHzgeF0Ze6TGu9WqSaMyjttBx/avYQW1OR8mPV
+         gylOjNDeuI0S0Zt7rWhbksFPeh6efHqRMxCyluYboFbzqEAr81oW8UBgx2hQsOlE/M+R
+         aRiG1Jb30GvtmI3vwyNfFhl0MUOGvi73eu1Tl6HeD9Z4K2l7gNnQ+363UeaeTu2vG+IW
+         +t5w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1696617685; x=1697222485;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=iWhzDvKh0xVCCh7ema8mg7INwO+/SotONhh1TeXO3uw=;
-        b=HJ4LCaXImtbWXQC9woY/MuMWhFATAGeoio3Vod5RzVvEfRsz19HePaNr08TPKjbzrB
-         uOjzfNTNABS6ummN31vajWDm+yhsVMF8SdukTS8uBKhYdTTi03zvNngGXkQSYi5Mn7gg
-         zvK3Iz1N9tgUM1H+l2jTi+xopJngaQEtrLMzCj4kjMwGyusbc4n8iY8PKwYVknJb6mNU
-         FqngeoS0AHStSWB6C1U3oNStfbfbj4Pyday2NVtIl4jtq/BbvnqM7CbtIrP0MD6mAWNO
-         3sZNCsYLd3ccJWQxlnMOfXqXlY5eiM0eHy2qhaoD4zxnkLcErFojAhYndUedhhbO5lOm
-         S1LQ==
-X-Gm-Message-State: AOJu0YyfKpW2a9qY0ElrdsLt6wGybMJwQDQ+NJ3b7SEDYS+7xlOOgVek
-	7J/ib8p0SPtphoAhu5E6mE8759FhqR4=
-X-Google-Smtp-Source: AGHT+IFwf/0DIFMr8DoLhypMSo28kP8QWu6i++IBFqyR8+nq1oIZuc+O7oVKdESyuYtOQZpPTJJZ5w==
-X-Received: by 2002:a05:6870:14c1:b0:1bf:df47:7b5e with SMTP id l1-20020a05687014c100b001bfdf477b5emr9915072oab.16.1696617684825;
-        Fri, 06 Oct 2023 11:41:24 -0700 (PDT)
+        bh=UeMSAFzQ1UToFRPwQ8pnGusBeLD2OJJdVLWknq1yrrs=;
+        b=thoL8iOcTRBQatPJQyzX6cEOBQi3kJWCNQ5p/APdvtWlaKNAUy7H97LzGKNEyvRW6F
+         3SMNQnbcJo/6Bedcrkr5sWqxUkwwilaG9CMFQRXX0I/AT+OJ1St3eHg36f2R+ufgi4Jh
+         X0Vzi+OY4dOKbGEuOdVIRtqmUk2oiqB2kczjzOrZJoOUlE5WbczQmmzdSLzkuKU7ty2N
+         N7zjLBbxppKUHHrVELVAFFMlNErIfJTHoLnI4WXWIvPmUSJLzA3+1q1a/c7tEqrby9Vq
+         0lZ1YK1eCDF5MKXAbMuYX5K7R0RI/+0CMyGZkFlUlLFqTWjo9xVp4CNBkwewST2H0ipW
+         w2gg==
+X-Gm-Message-State: AOJu0YyX3/R98WvODxB4zViKr1leCObySXWCTT4VFu7a46q3ToD5zLd0
+	dV6oAoukODzze6XFpyFtmkyePHzJUew=
+X-Google-Smtp-Source: AGHT+IGlx1P9Y5/kGg9mszXLWi3eWViKO9m3Ij+2VzMMQK2T7+TJ4Lj1xCXYz0tJDgsKgMNBBlN8KQ==
+X-Received: by 2002:a05:6214:807:b0:65a:e23c:8861 with SMTP id df7-20020a056214080700b0065ae23c8861mr8496607qvb.9.1696617685617;
+        Fri, 06 Oct 2023 11:41:25 -0700 (PDT)
 Received: from fionn.redhat.com ([174.88.88.29])
-        by smtp.gmail.com with ESMTPSA id y8-20020a0ce048000000b0065b11053445sm1593012qvk.54.2023.10.06.11.41.23
+        by smtp.gmail.com with ESMTPSA id y8-20020a0ce048000000b0065b11053445sm1593012qvk.54.2023.10.06.11.41.24
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Oct 2023 11:41:24 -0700 (PDT)
+        Fri, 06 Oct 2023 11:41:25 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 03/17] rt-tests: ssdd: Suppress unused parameters warning
-Date: Fri,  6 Oct 2023 14:39:57 -0400
-Message-Id: <20231006184011.26699-3-jkacur@redhat.com>
+Subject: [PATCH 04/17] rt-tests: queuelat: Suppress unused parameters warning
+Date: Fri,  6 Oct 2023 14:39:58 -0400
+Message-Id: <20231006184011.26699-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.40.1
 In-Reply-To: <20231006184011.26699-1-jkacur@redhat.com>
 References: <20231006184011.26699-1-jkacur@redhat.com>
@@ -68,35 +68,26 @@ X-Spam-Status: No, score=-1.5 required=5.0 tests=BAYES_00,DKIM_SIGNED,
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-Suppress unused parameters warning in ssdd with __attribute__ ((unused))
+Suppress unused paramters warning in queuelat
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/ssdd/ssdd.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ src/queuelat/queuelat.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-index c5307648a82d..cad901b563d8 100644
---- a/src/ssdd/ssdd.c
-+++ b/src/ssdd/ssdd.c
-@@ -64,8 +64,6 @@ static const char *get_state_name(int state)
- 	return state_name[state];
+diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
+index ead8ee5f4898..c549cd8381ab 100644
+--- a/src/queuelat/queuelat.c
++++ b/src/queuelat/queuelat.c
+@@ -519,7 +519,7 @@ void main_loop(void)
+ 	free(src);
  }
  
--#define unused __attribute__((unused))
--
- static int quiet;
- static char jsonfile[MAX_PATH];
- 
-@@ -154,7 +152,7 @@ static pid_t parent;
- static int nforks = 10;
- static int nsteps = 10000;
- 
--static void sigchld(int sig, unused siginfo_t *info, unused void *arg)
-+static void sigchld(int sig __attribute__ ((unused)), siginfo_t *info __attribute__ ((unused)), void *arg __attribute__ ((unused)))
+-void sig_handler(int sig)
++void sig_handler(int sig __attribute__ ((unused)))
  {
- 	got_sigchld = 1;
- }
+ 	print_exit_info();
+ 	exit(0);
 -- 
 2.40.1
 
