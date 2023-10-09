@@ -1,63 +1,97 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 494756AA8
-	for <linux-rt-users@vger.kernel.org>; Sat,  7 Oct 2023 06:25:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: from smtp5-g21.free.fr (smtp5-g21.free.fr [IPv6:2a01:e0c:1:1599::14])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C9A67C5
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Oct 2023 23:25:31 -0700 (PDT)
-Received: from [IPV6:2a01:e0a:244:b080:a267:71a:64f0:86b8] (unknown [IPv6:2a01:e0a:244:b080:a267:71a:64f0:86b8])
-	by smtp5-g21.free.fr (Postfix) with ESMTP id 649015FFAF;
-	Sat,  7 Oct 2023 08:25:29 +0200 (CEST)
-Message-ID: <9a7883cf-19a1-652c-9f64-ec243c5582d4@free.fr>
-Date: Sat, 7 Oct 2023 08:25:29 +0200
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6AE0F1173D
+	for <linux-rt-users@vger.kernel.org>; Mon,  9 Oct 2023 23:19:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bbT72ja9"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B539F9E
+	for <linux-rt-users@vger.kernel.org>; Mon,  9 Oct 2023 16:19:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1696893594;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=Ra59s6ELCEBLlS89Z2HAfelqi5/68EEl27Q4FvjToO4=;
+	b=bbT72ja9KJ3V6lkoy7/16gmg1HhUYc4dICsjWl6zy9LGeA36HJWjH5jTZwfE/z6kP2rWjE
+	isvdr/DB1CD/PSWyadj15glWoKvysOLCiIjTv3T3TpKe8+QuU2r6zRg8zIdVN66gv6x9lq
+	50kv3S1rbAy93RVLrc+vMOssWO5AHLo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-367-7Rcrwmj9M4-f5kjXXYEM-g-1; Mon, 09 Oct 2023 19:19:34 -0400
+X-MC-Unique: 7Rcrwmj9M4-f5kjXXYEM-g-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB3BE8039C1;
+	Mon,  9 Oct 2023 23:19:33 +0000 (UTC)
+Received: from localhost (unknown [10.22.33.188])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D80851C060AE;
+	Mon,  9 Oct 2023 23:19:32 +0000 (UTC)
+Date: Mon, 9 Oct 2023 20:19:31 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 4.14.326-rt155
+Message-ID: <ZSSKg0eQftFhia9j@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.15.1
-Subject: Re: rt-tests build failure on Fedora 39 with Python 3.12
-From: Yann Collette <ycollette.nospam@free.fr>
-To: John Kacur <jkacur@redhat.com>
-Cc: linux-rt-users@vger.kernel.org
-References: <95ddebbf-25cf-d692-17f4-a7ecaceb9f6f@free.fr>
- <fc9828e0-8269-b85a-a732-1be188939b41@redhat.com>
- <32e50f01-ec19-74b5-227e-06f27af0f174@free.fr>
-Content-Language: en-US
-In-Reply-To: <32e50f01-ec19-74b5-227e-06f27af0f174@free.fr>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Status: No, score=-4.7 required=5.0 tests=BAYES_00,FREEMAIL_FROM,
-	NICE_REPLY_A,RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.6
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
+X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,
+	RCVD_IN_DNSWL_BLOCKED,RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,
+	SPF_HELO_NONE,SPF_NONE autolearn=ham autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-Works fine with 2.6. Thanks a lot for this release !
+Hello RT-list!
 
-Le 06/10/2023 à 21:13, Yann Collette a écrit :
-> I was using the source from the 2.5 release.
->
-> Yann
->
-> Le 06/10/2023 à 20:44, John Kacur a écrit :
->>
->> On Wed, 4 Oct 2023, Yann Collette wrote:
->>
->>> Hello,
->>>
->>>
->>> Rt-tests fails to build on Fedora 39 with python 3.12. The distutils 
->>> module
->>> has been removed from python 3.12.
->>>
->>> Is there a place where I can report the problem ?
->> This was fixed upstream, are you using the source from Fedora?
->>
->> John
->>
->
+I'm pleased to announce the 4.14.326-rt155 stable release.
+
+This release is an update to the new stable 4.14.326-rt155
+version and no RT-specific changes have been performed.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.14-rt
+  Head SHA1: 1d10d09bd19b5eb5e90c5585afb308207e9c683f
+
+Or to build 4.14.326-rt155 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.326.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.326-rt155.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
