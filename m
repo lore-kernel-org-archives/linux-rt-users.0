@@ -1,163 +1,163 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F289238DFD
-	for <linux-rt-users@vger.kernel.org>; Thu, 12 Oct 2023 19:23:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9EFEF3D03E;
+	Thu, 12 Oct 2023 23:33:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="MHh+nwGw"
-Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 44C1DFC;
-	Thu, 12 Oct 2023 12:23:17 -0700 (PDT)
-Received: from [10.172.66.188] (1.general.jsalisbury.us.vpn [10.172.66.188])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 3656C3F6C3;
-	Thu, 12 Oct 2023 19:23:13 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1697138593;
-	bh=20vMW8rXM/m+fods5+JgqlCOx1Ds3mHKLfQHeyOZVXE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type;
-	b=MHh+nwGwBCZvPqrUJpwWZHVLOTXlxWkZ/xyXiRvIHzjjdcrFdkVG4jeiUyMbJAuOL
-	 VmvjPT6MWCdjedo6fBAQPq5HeS8jMScwIJxNahjoIvrfnrK+brBHzUT9qUBYetDhQd
-	 gCescUCDJNSk0wkrbw5wswD5BeXpY1GDYAkfVpDJ4h8Gw4GdZNDiHKqaFB7eWOJqC/
-	 EcW/uiiq27Rf145fKW2rzzNPOUqufrl749OkDjWkxrfyqMjhPKCno4VjeSxn9PNVeF
-	 3lerhZeFDT6PZLm4eLtkVFSfcxF0qjrxJiR5VQuz/ZTKBOiqtK1hmNm7pG0Av4UP5G
-	 ppDpUGnKnY/Yg==
-Message-ID: <f3604bef-6834-4b69-8708-7d3f6727a873@canonical.com>
-Date: Thu, 12 Oct 2023 15:23:11 -0400
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dlyQ8TTK"
+Received: from mail-ed1-x529.google.com (mail-ed1-x529.google.com [IPv6:2a00:1450:4864:20::529])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D6DCEA9;
+	Thu, 12 Oct 2023 16:33:04 -0700 (PDT)
+Received: by mail-ed1-x529.google.com with SMTP id 4fb4d7f45d1cf-53e2dc8fa02so1047136a12.2;
+        Thu, 12 Oct 2023 16:33:04 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1697153583; x=1697758383; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=naelrzab06bC9MMj4BGYD3OPqUStfN/T5v5pDuFLbLk=;
+        b=dlyQ8TTKBsiPgdtUU8mgHMtGCQhTsCDGjcC5ztMpBg8aWlPcEXhKFCxYAcRS/xbSGC
+         /KiHZafSMUXB+jaf4AEbXtfKo9GS+ndS0hStSCIAXISRDB6/UIhPwKt9ejxPA/OawkFZ
+         rf/X2CToDLl65xYUQfryZ/REIvkQ5653DP6GfZUN9gf8GUGDTZPMTe2FCDsITScwb6aM
+         gOhktB8XvMIJ0vCJMm/2tbllG6NlT7nHKIZsOUIu0z79rzHJ1GyxoJoTA1yZuT3te7II
+         oJSLqMGRr0Uv9BIjYpw1NIh26i4Gnfj5v/YJsZmICeMS/cuexREYj0BiUga2B7zB3rlm
+         5mMw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1697153583; x=1697758383;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=naelrzab06bC9MMj4BGYD3OPqUStfN/T5v5pDuFLbLk=;
+        b=XcPTA8QVU2LUG9kQM+Kw4jUx7xL7kDvCkxqof8gUyvMDC10Ke0SHj/Qn34yE2OdvsK
+         uFrvvdzy1yX3fdArW6+9s1bgEHMjvfaY6aAc3XgIzqUsq3CqrEaetqcAdzTd36x1ypoA
+         BAWyE+pSJd+BREb0a4KBiQEJGfJJc0A3SUc6kdjvOUBa7hCkKjwusyQ0rBOluxeLWAP3
+         fyK0F4ak2KKFTI54+okjRlD/LWfJPHaeTi7PO7IgBtFXAcOTRzdmECS3mLySIPPKzJYL
+         gMZcskk5S5oWLNFdIX36SrykKnIjIMbmcx5Z1z10znHtVXi6pgZEXpTEcnrdX/KUw4jk
+         z7uA==
+X-Gm-Message-State: AOJu0YznNrCwp2PboZtHnHcPlcz8dVNXHW7Lo45SQvyxnqWpy8ZABbMB
+	/djDH99bp0hcKvtAIgrGTIf8r6fEGTV+QjUqpzg++V9yZ0Y=
+X-Google-Smtp-Source: AGHT+IFktL1z+8uHtW7sSg/mm9ANSBxBw4G5ovXgGC7Jm0VRroUoXsw5G2EjR4YxqJnT4kE5+ExsDa7iJAWGsPaEWEM=
+X-Received: by 2002:aa7:c302:0:b0:533:97c:8414 with SMTP id
+ l2-20020aa7c302000000b00533097c8414mr23598044edq.7.1697153583101; Thu, 12 Oct
+ 2023 16:33:03 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Question Regarding isolcpus
-Content-Language: en-US
-To: Waiman Long <longman@redhat.com>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Frederic Weisbecker <frederic@kernel.org>
-Cc: linux-rt-users@vger.kernel.org, cgroups@vger.kernel.org
-References: <5afe86b4-bae3-2fa8-ec33-9686d3c18255@canonical.com>
- <20230928083909.KySJvo1d@linutronix.de>
- <11efaeb8-eac1-4a12-8283-6e9ce168e809@canonical.com>
- <f7c9b6a6-3c60-431d-3f91-3dc9b012adc6@redhat.com>
-From: Joseph Salisbury <joseph.salisbury@canonical.com>
-Autocrypt: addr=joseph.salisbury@canonical.com; keydata=
- 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
- p24lPxLL08SuCEzuBw==
-In-Reply-To: <f7c9b6a6-3c60-431d-3f91-3dc9b012adc6@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Status: No, score=-4.4 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_MED,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.6
+References: <20231005123413.GA488417@alecto.usersys.redhat.com>
+ <20231012114550.152846-1-asavkov@redhat.com> <20231012094444.0967fa79@gandalf.local.home>
+In-Reply-To: <20231012094444.0967fa79@gandalf.local.home>
+From: Andrii Nakryiko <andrii.nakryiko@gmail.com>
+Date: Thu, 12 Oct 2023 16:32:51 -0700
+Message-ID: <CAEf4BzZKWkJjOjw8x_eL_hsU-QzFuSzd5bkBH2EHtirN2hnEgA@mail.gmail.com>
+Subject: Re: [RFC PATCH bpf-next] bpf: change syscall_nr type to int in struct syscall_tp_t
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Artem Savkov <asavkov@redhat.com>, Alexei Starovoitov <ast@kernel.org>, 
+	Daniel Borkmann <daniel@iogearbox.net>, Andrii Nakryiko <andrii@kernel.org>, bpf@vger.kernel.org, 
+	netdev@vger.kernel.org, Masami Hiramatsu <mhiramat@kernel.org>, linux-kernel@vger.kernel.org, 
+	linux-trace-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, 
+	linux-rt-users@vger.kernel.org, Jiri Olsa <jolsa@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,FREEMAIL_FROM,
+	RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
+On Thu, Oct 12, 2023 at 6:43=E2=80=AFAM Steven Rostedt <rostedt@goodmis.org=
+> wrote:
+>
+> On Thu, 12 Oct 2023 13:45:50 +0200
+> Artem Savkov <asavkov@redhat.com> wrote:
+>
+> > linux-rt-devel tree contains a patch (b1773eac3f29c ("sched: Add suppor=
+t
+> > for lazy preemption")) that adds an extra member to struct trace_entry.
+> > This causes the offset of args field in struct trace_event_raw_sys_ente=
+r
+> > be different from the one in struct syscall_trace_enter:
+> >
+> > struct trace_event_raw_sys_enter {
+> >         struct trace_entry         ent;                  /*     0    12=
+ */
+> >
+> >         /* XXX last struct has 3 bytes of padding */
+> >         /* XXX 4 bytes hole, try to pack */
+> >
+> >         long int                   id;                   /*    16     8=
+ */
+> >         long unsigned int          args[6];              /*    24    48=
+ */
+> >         /* --- cacheline 1 boundary (64 bytes) was 8 bytes ago --- */
+> >         char                       __data[];             /*    72     0=
+ */
+> >
+> >         /* size: 72, cachelines: 2, members: 4 */
+> >         /* sum members: 68, holes: 1, sum holes: 4 */
+> >         /* paddings: 1, sum paddings: 3 */
+> >         /* last cacheline: 8 bytes */
+> > };
+> >
+> > struct syscall_trace_enter {
+> >         struct trace_entry         ent;                  /*     0    12=
+ */
+> >
+> >         /* XXX last struct has 3 bytes of padding */
+> >
+> >         int                        nr;                   /*    12     4=
+ */
+> >         long unsigned int          args[];               /*    16     0=
+ */
+> >
+> >         /* size: 16, cachelines: 1, members: 3 */
+> >         /* paddings: 1, sum paddings: 3 */
+> >         /* last cacheline: 16 bytes */
+> > };
+> >
+> > This, in turn, causes perf_event_set_bpf_prog() fail while running bpf
+> > test_profiler testcase because max_ctx_offset is calculated based on th=
+e
+> > former struct, while off on the latter:
+> >
+> >   10488         if (is_tracepoint || is_syscall_tp) {
+> >   10489                 int off =3D trace_event_get_offsets(event->tp_e=
+vent);
+> >   10490
+> >   10491                 if (prog->aux->max_ctx_offset > off)
+> >   10492                         return -EACCES;
+> >   10493         }
+> >
+> > What bpf program is actually getting is a pointer to struct
+> > syscall_tp_t, defined in kernel/trace/trace_syscalls.c. This patch fixe=
+s
+> > the problem by aligning struct syscall_tp_t with with struct
+> > syscall_trace_(enter|exit) and changing the tests to use these structs
+> > to dereference context.
+> >
+> > Signed-off-by: Artem Savkov <asavkov@redhat.com>
+>
 
+I think these changes make sense regardless, can you please resend the
+patch without RFC tag so that our CI can run tests for it?
 
-On 10/12/23 15:10, Waiman Long wrote:
-> On 10/12/23 13:27, Joseph Salisbury wrote:
->>
->>
->> On 9/28/23 04:39, Sebastian Andrzej Siewior wrote:
->>> On 2023-09-26 12:45:14 [-0400], Joseph Salisbury wrote:
->>>> Hi All,
->>> Hi,
->>>
->>>> I have a question regarding the isolcpus parameter.  I've been 
->>>> seeing this
->>>> parameter commonly used. However, in the kernel.org documentation[0],
->>>> isolcpus is listed as depreciated.
->>>>
->>>> Is it the case that isolcpus should not be used at all? I've seen 
->>>> it used
->>>> in conjunction with taskset.  However, should we now be telling rt 
->>>> users to
->>>> use only cpusets in cgroups?  I see that CPUAffinity can be set in
->>>> /etc/systemd/system.conf.  Is that the preferred method, so the 
->>>> process
->>>> scheduler will automatically migrate processes between the cpusets 
->>>> in the
->>>> cgroup cpuset or the list set by CPUAffinity?
->>> Frederic might know if there is an actual timeline to remove it. The
->>> suggestions since then is to use cpusets which should be more flexible.
->>> There was also some work (which went into v6.1 I think) to be able to
->>> reconfigure the partitions at run-time while isolcpus= is a boot time
->>> option.
->>>  From what I remember, you have a default/system cpuset which all tasks
->>> use by default and then you can add another cpuset for the "isolated"
->>> CPUs. Based on the partition it can be either the default one or
->>> isolated [0]. The latter would exclude the CPUs from load balancing
->>> which is what isolcpus= does.
->>>
->>> [0] f28e22441f353 ("cgroup/cpuset: Add a new isolated cpus.partition 
->>> type")
->>
->> This question may be for the cgroups folks.  The kernel.org 
->> documentation has a WARNING which states: "cgroup2 doesn't yet 
->> support control of realtime processes and the cpu controller can only 
->> be enabled when all RT processes are in the root cgroup "[0]. Does 
->> this mean real-time processes are only supported on cgroupsV1?
->>
->> Also, this warning is stated for the "CPU" Controller, but there is 
->> no mention of this for a "cpuset" controller. Does this imply that 
->> real-time processes are supported with "cpuset" controllers?
+> Thanks for doing a proper fix.
 >
-> Yes, the quoted description applies only to cpu controller. Even for 
-> v1 cpu controller, the realtime support is problematic and there is no 
-> easy solution to that. That is why cgroup v2 doesn't support it.
->
-> For other controllers, whether the processes are RT or not are 
-> irrelevant. They are equally supported.
->
-> Cheers,
-> Longman
-Thanks for the feedback, Longman!
+> Acked-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+
+But looking at [0] and briefly reading some of the discussions you,
+Steven, had. I'm just wondering if it would be best to avoid
+increasing struct trace_entry altogether? It seems like preempt_count
+is actually a 4-bit field in trace context, so it doesn't seem like we
+really need to allocate an entire byte for both preempt_count and
+preempt_lazy_count. Why can't we just combine them and not waste 8
+extra bytes for each trace event in a ring buffer?
+
+  [0] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git=
+/commit/?id=3Db1773eac3f29cbdcdfd16e0339f1a164066e9f71
 
 >
->
-
+> -- Steve
