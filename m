@@ -1,65 +1,137 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C929B15E94;
-	Fri, 13 Oct 2023 14:00:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3004EC433C7;
-	Fri, 13 Oct 2023 14:00:25 +0000 (UTC)
-Date: Fri, 13 Oct 2023 10:00:23 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Artem Savkov <asavkov@redhat.com>
-Cc: Andrii Nakryiko <andrii.nakryiko@gmail.com>, Alexei Starovoitov
- <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Andrii Nakryiko
- <andrii@kernel.org>, bpf@vger.kernel.org, netdev@vger.kernel.org, Masami
- Hiramatsu <mhiramat@kernel.org>, linux-kernel@vger.kernel.org,
- linux-trace-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
- linux-rt-users@vger.kernel.org, Jiri Olsa <jolsa@kernel.org>
-Subject: Re: [RFC PATCH bpf-next] bpf: change syscall_nr type to int in
- struct syscall_tp_t
-Message-ID: <20231013100023.5b0943ec@rorschach.local.home>
-In-Reply-To: <ZSjdPqQiPdqa-UTs@wtfbox.lan>
-References: <20231005123413.GA488417@alecto.usersys.redhat.com>
-	<20231012114550.152846-1-asavkov@redhat.com>
-	<20231012094444.0967fa79@gandalf.local.home>
-	<CAEf4BzZKWkJjOjw8x_eL_hsU-QzFuSzd5bkBH2EHtirN2hnEgA@mail.gmail.com>
-	<ZSjdPqQiPdqa-UTs@wtfbox.lan>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4A481BDE2
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Oct 2023 18:08:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="M+vs8oVt"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B1CABCE
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Oct 2023 11:08:00 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1697220479;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rxD3yLMaugMz9laL1n30S34EuHC+wt57e2tE4WPzG4Y=;
+	b=M+vs8oVtBFaGZI2mjl+O3vtXtQ8OINHcXMrqpzLevf+z93T/YmeO4oDTsUiVPdmsMmXAAf
+	5UcvPrlHpLwBzfDA1FbFeqG42dRyOrPxxOXWPkXbBktooorQIifebknPo4JCpuGUXYaIxz
+	Fnl1nsk4PRvCfCxV6/mAmbgy+Nslc50=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-281-LaywYfrTMtOfvvDJh-Eetg-1; Fri, 13 Oct 2023 14:07:56 -0400
+X-MC-Unique: LaywYfrTMtOfvvDJh-Eetg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0096B3C0DDA6;
+	Fri, 13 Oct 2023 18:07:56 +0000 (UTC)
+Received: from [10.22.17.138] (unknown [10.22.17.138])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A55F911301CF;
+	Fri, 13 Oct 2023 18:07:55 +0000 (UTC)
+Message-ID: <38a0078f-c9f7-47cd-686c-025b0fa09c88@redhat.com>
+Date: Fri, 13 Oct 2023 14:07:55 -0400
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.14.0
+Subject: Re: Question Regarding isolcpus
+Content-Language: en-US
+To: Joseph Salisbury <joseph.salisbury@canonical.com>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Frederic Weisbecker <frederic@kernel.org>
+Cc: linux-rt-users@vger.kernel.org, cgroups@vger.kernel.org
+References: <5afe86b4-bae3-2fa8-ec33-9686d3c18255@canonical.com>
+ <20230928083909.KySJvo1d@linutronix.de>
+ <11efaeb8-eac1-4a12-8283-6e9ce168e809@canonical.com>
+ <f7c9b6a6-3c60-431d-3f91-3dc9b012adc6@redhat.com>
+ <f3604bef-6834-4b69-8708-7d3f6727a873@canonical.com>
+From: Waiman Long <longman@redhat.com>
+In-Reply-To: <f3604bef-6834-4b69-8708-7d3f6727a873@canonical.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Spam-Status: No, score=-5.4 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,NICE_REPLY_A,
+	RCVD_IN_DNSWL_BLOCKED,RCVD_IN_MSPIKE_H4,RCVD_IN_MSPIKE_WL,
+	SPF_HELO_NONE,SPF_NONE autolearn=ham autolearn_force=no version=3.4.6
+X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
+	lindbergh.monkeyblade.net
 
-On Fri, 13 Oct 2023 08:01:34 +0200
-Artem Savkov <asavkov@redhat.com> wrote:
+On 10/12/23 15:23, Joseph Salisbury wrote:
+>
+>
+> On 10/12/23 15:10, Waiman Long wrote:
+>> On 10/12/23 13:27, Joseph Salisbury wrote:
+>>>
+>>>
+>>> On 9/28/23 04:39, Sebastian Andrzej Siewior wrote:
+>>>> On 2023-09-26 12:45:14 [-0400], Joseph Salisbury wrote:
+>>>>> Hi All,
+>>>> Hi,
+>>>>
+>>>>> I have a question regarding the isolcpus parameter.  I've been 
+>>>>> seeing this
+>>>>> parameter commonly used. However, in the kernel.org documentation[0],
+>>>>> isolcpus is listed as depreciated.
+>>>>>
+>>>>> Is it the case that isolcpus should not be used at all? I've seen 
+>>>>> it used
+>>>>> in conjunction with taskset.  However, should we now be telling rt 
+>>>>> users to
+>>>>> use only cpusets in cgroups?  I see that CPUAffinity can be set in
+>>>>> /etc/systemd/system.conf.  Is that the preferred method, so the 
+>>>>> process
+>>>>> scheduler will automatically migrate processes between the cpusets 
+>>>>> in the
+>>>>> cgroup cpuset or the list set by CPUAffinity?
+>>>> Frederic might know if there is an actual timeline to remove it. The
+>>>> suggestions since then is to use cpusets which should be more 
+>>>> flexible.
+>>>> There was also some work (which went into v6.1 I think) to be able to
+>>>> reconfigure the partitions at run-time while isolcpus= is a boot time
+>>>> option.
+>>>>  From what I remember, you have a default/system cpuset which all 
+>>>> tasks
+>>>> use by default and then you can add another cpuset for the "isolated"
+>>>> CPUs. Based on the partition it can be either the default one or
+>>>> isolated [0]. The latter would exclude the CPUs from load balancing
+>>>> which is what isolcpus= does.
+>>>>
+>>>> [0] f28e22441f353 ("cgroup/cpuset: Add a new isolated 
+>>>> cpus.partition type")
+>>>
+>>> This question may be for the cgroups folks.  The kernel.org 
+>>> documentation has a WARNING which states: "cgroup2 doesn't yet 
+>>> support control of realtime processes and the cpu controller can 
+>>> only be enabled when all RT processes are in the root cgroup "[0]. 
+>>> Does this mean real-time processes are only supported on cgroupsV1?
+>>>
+>>> Also, this warning is stated for the "CPU" Controller, but there is 
+>>> no mention of this for a "cpuset" controller. Does this imply that 
+>>> real-time processes are supported with "cpuset" controllers?
+>>
+>> Yes, the quoted description applies only to cpu controller. Even for 
+>> v1 cpu controller, the realtime support is problematic and there is 
+>> no easy solution to that. That is why cgroup v2 doesn't support it.
+>>
+>> For other controllers, whether the processes are RT or not are 
+>> irrelevant. They are equally supported.
+>>
+>> Cheers,
+>> Longman
+> Thanks for the feedback, Longman!
+>
+One further tidbit is the fact that the deadline scheduling policy can 
+be used as a replacement of using cgroup v1 cpu controller RT knobs to 
+place a limit one how many RT tasks can run on a CPU.
 
-> > But looking at [0] and briefly reading some of the discussions you,
-> > Steven, had. I'm just wondering if it would be best to avoid
-> > increasing struct trace_entry altogether? It seems like preempt_count
-> > is actually a 4-bit field in trace context, so it doesn't seem like we
-> > really need to allocate an entire byte for both preempt_count and
-> > preempt_lazy_count. Why can't we just combine them and not waste 8
-> > extra bytes for each trace event in a ring buffer?
-> > 
-> >   [0] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/commit/?id=b1773eac3f29cbdcdfd16e0339f1a164066e9f71  
-> 
-> I agree that avoiding increase in struct trace_entry size would be very
-> desirable, but I have no knowledge whether rt developers had reasons to
-> do it like this.
-> 
-> Nevertheless I think the issue with verifier running against a wrong
-> struct still needs to be addressed.
+Cheers,
+Longman
 
-Correct. My Ack is based on the current way things are done upstream.
-It was just that linux-rt showed the issue, where the code was not as
-robust as it should have been. To me this was a correctness issue, not
-an issue that had to do with how things are done in linux-rt.
-
-As for the changes in linux-rt, they are not upstream yet. I'll have my
-comments on that code when that happens.
-
--- Steve
