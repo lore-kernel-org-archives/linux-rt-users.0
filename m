@@ -1,340 +1,209 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9309F1869
-	for <linux-rt-users@vger.kernel.org>; Sat, 14 Oct 2023 07:24:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3AF2524C
+	for <linux-rt-users@vger.kernel.org>; Sat, 14 Oct 2023 10:58:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hMt8azZo"
-Received: from mail-ed1-x534.google.com (mail-ed1-x534.google.com [IPv6:2a00:1450:4864:20::534])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C8FEAC0;
-	Sat, 14 Oct 2023 00:24:18 -0700 (PDT)
-Received: by mail-ed1-x534.google.com with SMTP id 4fb4d7f45d1cf-53e84912038so62695a12.1;
-        Sat, 14 Oct 2023 00:24:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1697268257; x=1697873057; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-language:in-reply-to:mime-version
-         :user-agent:date:message-id:from:references:cc:to:subject:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=9g+w5MX0AKhZnCoQypgKE2zzhoatHBL13oTz7m037r8=;
-        b=hMt8azZoVr/t4VYiEjnpfcWGNadFNXSU/g1WJk4y+IEjj8cVyqKx9VeXXK4qzEMWIF
-         A/c+x2a5Qb5Otxm7SMBOCs0g75vZt9yeSbtCxfmogfZEX8XkW0hjNaUVXeX3YUkGhvaQ
-         1m9UTZWqNmAoxAEYfcIfZaKRE3lJ2TMNQBAj+sJOdy1IgXhRPtVUWQgJdFELlUynGO+w
-         A3cIPhiEsJFhat7WltPmcvQXZZAXZmp0ArMnLyrR9v3z14Nd1LzQyG4H6jGkNdgA/Xcf
-         AtajCTcEnhya7u6heBSbNWq9BBsxlwit8JGS97KWqCsquMqv8Tr0r/PhITaFu5Y4CgPJ
-         n69w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1697268257; x=1697873057;
-        h=content-transfer-encoding:content-language:in-reply-to:mime-version
-         :user-agent:date:message-id:from:references:cc:to:subject
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=9g+w5MX0AKhZnCoQypgKE2zzhoatHBL13oTz7m037r8=;
-        b=bOVAu16uxtgaZn35o/EvZMUN1XOLmwgZ0qAlIClNEMJANdTQfioF5zuaqkNx/x8U+2
-         MKByJzFJH+uzmpSL40++O6Dc4cH98TOhzrQUXhQRaqLeDv6Z/qQDPz/39bB+177424wT
-         vTcvmOydjDvNhLG4VLb3FgK/zg9JQM8rqzCoqNOSV6CW/lLXZR5OKPpJDLqKOaNuXm5o
-         ahqsvBOTqdRMkOUmPVuvEKWt7B0zyEUA7ztKhoy92ApHnCsKXuyEFIWU2Q4GkGk5uWiW
-         G9Sbna3tsPAt3DiY8uXr3HE5QoQXLs1F5byef20xHKcNjKP4Do2NTtx4IgIgwLFe3YJG
-         xZXg==
-X-Gm-Message-State: AOJu0YyiGMacUDtdsOqy/OCUmb9dT67MwPHa0IgfgRrYsiYZr6QlE4UC
-	DFrOZ7/V7IytIrrObffG8aI5978oS+I=
-X-Google-Smtp-Source: AGHT+IFPubWEnf/XLwzrB51HUV4vECCuYnfYJGU/FBmBCDY9z0ig1RQsUhEvZx+dnEBmUC5KlCQLuQ==
-X-Received: by 2002:a17:906:1ba9:b0:9ae:57b8:ad1b with SMTP id r9-20020a1709061ba900b009ae57b8ad1bmr24027571ejg.21.1697268256942;
-        Sat, 14 Oct 2023 00:24:16 -0700 (PDT)
-Received: from [192.168.1.10] ([95.43.220.235])
-        by smtp.googlemail.com with ESMTPSA id m10-20020a170906234a00b009ae587ce133sm579902eja.188.2023.10.14.00.24.16
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Sat, 14 Oct 2023 00:24:16 -0700 (PDT)
-Subject: Re: [PATCH] media: rc: pwm-ir-tx: use hrtimer for edge generation
-To: Sean Young <sean@mess.org>
-Cc: mchehab@kernel.org, linux-media@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-References: <1696501739-29861-1-git-send-email-ivo.g.dimitrov.75@gmail.com>
- <ZSklLLWaxpS98Agc@gofer.mess.org>
-From: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
-Message-ID: <aab72699-a03d-5bb8-089b-01139d62d09f@gmail.com>
-Date: Sat, 14 Oct 2023 10:24:06 +0300
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Firefox/60.0 Thunderbird/60.6.1
+	dkim=pass (2048-bit key) header.d=hartkopp.net header.i=@hartkopp.net header.b="QHxiSV4T";
+	dkim=permerror (0-bit key) header.d=hartkopp.net header.i=@hartkopp.net header.b="Bu17cws7"
+Received: from mo4-p01-ob.smtp.rzone.de (mo4-p01-ob.smtp.rzone.de [85.215.255.51])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 616ECCC;
+	Sat, 14 Oct 2023 03:58:35 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1697281081; cv=none;
+    d=strato.com; s=strato-dkim-0002;
+    b=SQE19xob7peOp7Dw/OZsdbRb1t1wjY8zV6FUizOH+2TiFySqVMXAZ0hJGTAbAx8j1n
+    8+sdAGY+BqC0LJdUNMTf0lRhpMfWttoLmna6KWSL+DQkyvfAucOlOV4twM2HGEKtvDtw
+    srOG/E5r5htyBP7pc7PBdWsqMhRTRO5UQHOYFf6yYQpNRz7jhuMW5yNU6P8XhRqLXeTm
+    rdELqvjto+y3CQlq3QU4mbRvjOrQYwp7bkIjF/m7TJwGvrwfMnQsGwnXh/9rAAh9U7x8
+    NmrhEeqzid2YFA/gi+8WD4ioC8DGkGLb3YeUVNxHzYMK+o+3of2sDheEBvtFUs7UyfPb
+    GB/w==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; t=1697281081;
+    s=strato-dkim-0002; d=strato.com;
+    h=In-Reply-To:From:References:Cc:To:Subject:Date:Message-ID:Cc:Date:
+    From:Subject:Sender;
+    bh=gwi0R5uaAP/yKQNCwjcNZyGWLm8ODytPmaUJ975+HeQ=;
+    b=bF02/dIgaYA/Srdkk4Wq15hv+qqI9eWtB219Yb14JA6fCJmI6KcdEZRhvPD6v2RfnV
+    rpaflL71fuujWz5s6YDBx+ohgNRCcJAYDjdf74H+kx/YPdb0edd0yKC+2Twm0BunIofR
+    NuLQgGc14fS03Qh/guL75AJKVPYM5+Y7CCO0EIxOdRtmt0OvDNIxRD62Mj+8XJQhWIPW
+    27LQW45wfSSLElver14Zsaq2/e4vx37WJ7Q9+6WQmP6AoKizr3oO3jqGPXIDh4aQFPNW
+    jAysTllEJodN5PKPiN+1xQTVRqEP+EHgqfk91YtzpRn5HiBnC6F14b8+x3lIBUoBYErc
+    lt3g==
+ARC-Authentication-Results: i=1; strato.com;
+    arc=none;
+    dkim=none
+X-RZG-CLASS-ID: mo01
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1697281081;
+    s=strato-dkim-0002; d=hartkopp.net;
+    h=In-Reply-To:From:References:Cc:To:Subject:Date:Message-ID:Cc:Date:
+    From:Subject:Sender;
+    bh=gwi0R5uaAP/yKQNCwjcNZyGWLm8ODytPmaUJ975+HeQ=;
+    b=QHxiSV4TG/kmqQEWvUJ6ZNZAAbsTjWKSBXk8ZUpuDAN3bZnjbWrZeSXQNJRd/h4OwX
+    TPsPDcpgHGo14yH9bYULFz6nfhD3gy1zz/1QybqiQasvbD45cVAjnrbDsCXF3Grel2q5
+    /I1qtZ2ga2/M4FHR7B+gvOBx/h+0cU7gXVT6vbN0F26ljf8jQIXyjPF133gUzxtCzzY7
+    WHCDC2y67b6R5PIz2Vrs6MSrMUjcmdcy2P31OfR8/g+iAZToNZlPV45tNjUmdWmGY8/L
+    i/97wA/d5z6eA5+mcH5NUBV+aEf2iwXLb2tMlcxtuoeJZ0dHm4RKZKg4FsNrskEwEaGz
+    zX6Q==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; t=1697281081;
+    s=strato-dkim-0003; d=hartkopp.net;
+    h=In-Reply-To:From:References:Cc:To:Subject:Date:Message-ID:Cc:Date:
+    From:Subject:Sender;
+    bh=gwi0R5uaAP/yKQNCwjcNZyGWLm8ODytPmaUJ975+HeQ=;
+    b=Bu17cws7f7RNas6y9ysQwBg/F9xOX+IOp24z5UgzQ8jAJiz7X1QFTF3/I/MhbJM4oC
+    6YLE8SmdSRUwGoqTpYAA==
+X-RZG-AUTH: ":P2MHfkW8eP4Mre39l357AZT/I7AY/7nT2yrDxb8mjG14FZxedJy6qgO1qCHSa1GLptZHusl129OHEdFq0USEbDUQnQ=="
+Received: from [IPV6:2a00:6020:4a8e:5000::923]
+    by smtp.strato.de (RZmta 49.8.2 AUTH)
+    with ESMTPSA id j046cdz9EAw1JSt
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
+	(Client did not present a certificate);
+    Sat, 14 Oct 2023 12:58:01 +0200 (CEST)
+Message-ID: <383f33ac-3254-4277-a9a9-8f7104851d49@hartkopp.net>
+Date: Sat, 14 Oct 2023 12:57:53 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <ZSklLLWaxpS98Agc@gofer.mess.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-GB
-Content-Transfer-Encoding: 8bit
-X-Spam-Status: No, score=-5.2 required=5.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,FREEMAIL_ENVFROM_END_DIGIT,
-	FREEMAIL_FROM,NICE_REPLY_A,RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.6
+User-Agent: Mozilla Thunderbird
+Subject: Re: Outstanding latency increase in kernel CAN gateway caught by
+ CANlatester daily builds at 2023-10-02
+To: Pavel Pisa <pisa@fel.cvut.cz>, linux-can@vger.kernel.org,
+ linux-rt-users@vger.kernel.org
+Cc: Ondrej Ille <ondrej.ille@gmail.com>,
+ =?UTF-8?Q?Mat=C4=9Bj_Vasilevski?= <matej.vasilevski@gmail.com>,
+ Pavel Hronek <hronepa1@fel.cvut.cz>, =?UTF-8?B?SmnFmcOtIE5vdsOhaw==?=
+ <jnovak@fel.cvut.cz>, Carsten Emde <c.emde@osadl.org>,
+ Jan Altenberg <Jan.Altenberg@osadl.org>
+References: <202310021040.49367.pisa@fel.cvut.cz>
+Content-Language: en-US
+From: Oliver Hartkopp <socketcan@hartkopp.net>
+In-Reply-To: <202310021040.49367.pisa@fel.cvut.cz>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Spam-Status: No, score=-2.1 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_BLOCKED,
+	RCVD_IN_MSPIKE_H5,RCVD_IN_MSPIKE_WL,SPF_HELO_PASS,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
-Hi,
+Hello Pavel,
 
-On 13.10.23 г. 14:08 ч., Sean Young wrote:
-> On Thu, Oct 05, 2023 at 01:28:59PM +0300, Ivaylo Dimitrov wrote:
->> usleep_range() seems to suffer from scheduling latency of up to 400 us on
->> some platforms (like OMAP) which makes it unusable for IR pulses edge
->> timings. In the same time pwm_ir_trx() is called in a context with priority
->> which might not be suitable for real-time IR pulses generation.
->>
->> Fix that by using hrtimer and a thread with sched_set_fifo() priority. That
->> way scheduling latency is compensated by the fact that PWM is controlled in
->> the thread after a completion is signalled in hrtimer function - we have
->> more or less the same latency for every edge. If completion comes earlier
->> than needed, we do udelay() till the exact time for the next edge. That
->> way pulse width generation is robust and precise and mostly independent of
->> the system load.
->>
->> Tests on Nokia N900 showed that udelay() is called with up to 200 us in
->> worst cases, usually times are less that 100 us.
+is there any news on this latency issue?
+
+I've not seen any can-gw related changes between 6.2 and 6.6.
+
+The only change for linux/net/can/gw.c is this patch:
+
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=2a30b2bd01c23a7eeace3a3f82c2817227099805
+
+Which should intentionally cause a problem when the cangw tool is used 
+in a wrong way:
+
+From: Oliver Hartkopp <socketcan@hartkopp.net>
+Date: Wed, 25 Jan 2023 06:54:07 +0100
+Subject: can: gw: give feedback on missing CGW_FLAGS_CAN_IIF_TX_OK flag
+
+To send CAN traffic back to the incoming interface a special flag has to
+be set. When creating a routing job for identical interfaces without this
+flag the rule is created but has no effect.
+
+This patch adds an error return value in the case that the CAN interfaces
+are identical but the CGW_FLAGS_CAN_IIF_TX_OK flag was not set.
+
+Reported-by: Jannik Hartung <jannik.hartung@tu-bs.de>
+Signed-off-by: Oliver Hartkopp <socketcan@hartkopp.net>
+Link: 
+https://lore.kernel.org/all/20230125055407.2053-1-socketcan@hartkopp.net
+Signed-off-by: Marc Kleine-Budde <mkl@pengutronix.de>
+---
+  net/can/gw.c | 7 +++++++
+  1 file changed, 7 insertions(+)
+
+diff --git a/net/can/gw.c b/net/can/gw.c
+index 23a3d89cad81d..37528826935e7 100644
+--- a/net/can/gw.c
++++ b/net/can/gw.c
+@@ -1139,6 +1139,13 @@ static int cgw_create_job(struct sk_buff *skb, 
+struct nlmsghdr *nlh,
+  	if (gwj->dst.dev->type != ARPHRD_CAN)
+  		goto out;
+
++	/* is sending the skb back to the incoming interface intended? */
++	if (gwj->src.dev == gwj->dst.dev &&
++	    !(gwj->flags & CGW_FLAGS_CAN_IIF_TX_OK)) {
++		err = -EINVAL;
++		goto out;
++	}
++
+  	ASSERT_RTNL();
+
+  	err = cgw_register_filter(net, gwj);
+
+Please let me know if I can help on this topic.
+So far it looks like a RT/configuration problem to me.
+
+Best regards,
+Oliver
+
+On 02.10.23 10:40, Pavel Pisa wrote:
+> Hello Oliver and others,
 > 
-> Cc the RT folks, I would like some input on this. How bad is this for
-> linux-rt or non-linux-rt for latency? Is this a problem, and if so is there
-> an #ifdef we can use to avoid it in certain builds?
+> two consecutive daily runs of our CAN latency system
 > 
-
-I was rather thinking of conditionally enabling that only if the new API 
-pwm_can_sleep() (or whatever name you come-up in the end) is in-place 
-and returns true.
-
-BTW, we can reduce the time we do udelay() to few us, by waiting for 
-completion twice for the first edge(that way compensating for the 
-hrtimer setup time), but I didn't do that on purpose, for the sake of 
-precision I would prefer to do usleep() a bit longer, than to have bad 
-edge timings.
-
-But yeah, lets see what more experienced have to say.
-
->> Signed-off-by: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
->> ---
->>   drivers/media/rc/pwm-ir-tx.c | 122 ++++++++++++++++++++++++++++++++++++++++---
->>   1 file changed, 115 insertions(+), 7 deletions(-)
->>
->> diff --git a/drivers/media/rc/pwm-ir-tx.c b/drivers/media/rc/pwm-ir-tx.c
->> index 7732054c..cb6ce73 100644
->> --- a/drivers/media/rc/pwm-ir-tx.c
->> +++ b/drivers/media/rc/pwm-ir-tx.c
->> @@ -4,6 +4,7 @@
->>    */
->>   
->>   #include <linux/kernel.h>
->> +#include <linux/kthread.h>
->>   #include <linux/module.h>
->>   #include <linux/pwm.h>
->>   #include <linux/delay.h>
->> @@ -17,8 +18,16 @@
->>   
->>   struct pwm_ir {
->>   	struct pwm_device *pwm;
->> +	struct hrtimer timer;
->> +	struct task_struct *tx_thread;
->> +	wait_queue_head_t tx_wq;
->> +	struct completion tx_done;
->> +	struct completion edge;
->>   	unsigned int carrier;
->>   	unsigned int duty_cycle;
->> +	unsigned int *txbuf;
->> +	unsigned int count;
->> +	unsigned int index;
->>   };
->>   
->>   static const struct of_device_id pwm_ir_of_match[] = {
->> @@ -48,12 +57,41 @@ static int pwm_ir_set_carrier(struct rc_dev *dev, u32 carrier)
->>   	return 0;
->>   }
->>   
->> -static int pwm_ir_tx(struct rc_dev *dev, unsigned int *txbuf,
->> -		     unsigned int count)
->> +static enum hrtimer_restart pwm_ir_timer_cb(struct hrtimer *timer)
->> +{
->> +	struct pwm_ir *pwm_ir = container_of(timer, struct pwm_ir, timer);
->> +	ktime_t now;
->> +
->> +	/*
->> +	 * If we happen to hit an odd latency spike, loop through the
->> +	 * pulses until we catch up.
->> +	 */
->> +	do {
->> +		u64 edge;
->> +
->> +		complete(&pwm_ir->edge);
->> +
->> +		if (pwm_ir->index >= pwm_ir->count)
->> +			return HRTIMER_NORESTART;
->> +
->> +		edge = US_TO_NS(pwm_ir->txbuf[pwm_ir->index]);
->> +		hrtimer_add_expires_ns(timer, edge);
->> +
->> +		pwm_ir->index++;
->> +
->> +		now = timer->base->get_time();
->> +
->> +	} while (hrtimer_get_expires_tv64(timer) < now);
->> +
->> +	return HRTIMER_RESTART;
->> +}
->> +
->> +static void _pwm_ir_tx(struct pwm_ir *pwm_ir)
->>   {
->> -	struct pwm_ir *pwm_ir = dev->priv;
->>   	struct pwm_device *pwm = pwm_ir->pwm;
->>   	struct pwm_state state;
->> +	unsigned int *txbuf = pwm_ir->txbuf;
->> +	unsigned int count = pwm_ir->count;
->>   	int i;
->>   	ktime_t edge;
->>   	long delta;
->> @@ -63,6 +101,8 @@ static int pwm_ir_tx(struct rc_dev *dev, unsigned int *txbuf,
->>   	state.period = DIV_ROUND_CLOSEST(NSEC_PER_SEC, pwm_ir->carrier);
->>   	pwm_set_relative_duty_cycle(&state, pwm_ir->duty_cycle, 100);
->>   
->> +	hrtimer_start(&pwm_ir->timer, 0, HRTIMER_MODE_REL);
->> +	wait_for_completion(&pwm_ir->edge);
->>   	edge = ktime_get();
->>   
->>   	for (i = 0; i < count; i++) {
->> @@ -70,14 +110,50 @@ static int pwm_ir_tx(struct rc_dev *dev, unsigned int *txbuf,
->>   		pwm_apply_state(pwm, &state);
->>   
->>   		edge = ktime_add_us(edge, txbuf[i]);
->> +		wait_for_completion(&pwm_ir->edge);
->> +
->>   		delta = ktime_us_delta(edge, ktime_get());
->> +
->>   		if (delta > 0)
->> -			usleep_range(delta, delta + 10);
->> +			udelay(delta);
+>    https://canbus.pages.fel.cvut.cz/#can-bus-channels-mutual-latency-testing
 > 
-> So you're sleeping if the timer arrives early, but what about if it arrives
-> late? No amount of sleeping will here there.
-
-If it arrives late, nothing we can do, we just change the pwm state 
-immediately and move on, waiting for the next edge. Why shall we delay 
-more if we are already late?
-
+> shows extreme increase in latency of the kernel CAN gateway under the load.
+> The first run with increased latency (run-DATE-TIME-KERNEL-OPTIONS)
 > 
->>   	}
->>   
->>   	state.enabled = false;
->>   	pwm_apply_state(pwm, &state);
->>   
->> +	pwm_ir->count = 0;
->> +}
->> +
->> +static int pwm_ir_thread(void *data)
->> +{
->> +	struct pwm_ir *pwm_ir = data;
->> +
->> +	for (;;) {
->> +		wait_event_idle(pwm_ir->tx_wq,
->> +				kthread_should_stop() || pwm_ir->count);
->> +
->> +		if (kthread_should_stop())
->> +			break;
->> +
->> +		_pwm_ir_tx(pwm_ir);
->> +		complete(&pwm_ir->tx_done);
->> +	}
->> +
->> +	return 0;
->> +}
+>    
+> run-231002-045216-hist+6.6.0-rc3-rt5-ge31516c1e553+flood-kern-prio-fd-load.jsonn
 > 
-> Rather than creating a new thread, we could use re-use the process that
-> is doing the TX, i.e. put this in pwm_ir_tx() itself. That should work,
-> right?
+> previous one consistent with daily runs form May
 > 
-
-It will work, definitely, but that would mean calling sched_set_fifo() 
-on the process/thread that is doing the TX, and I don't think this is a 
-good idea. I think this would open a DOS security hole, like, process 
-sending TX buffer and doing a busy loop will more or less freeze the 
-system for the duration of the TX buffer, no? Not necessarily a 
-malicious process, just a badly written one.
-
-Unless I miss something and pwm_ir_tx() is executed in another context, 
-not in the userspace process doing write() (or ioctl() or whatever).
-
->> +
->> +static int pwm_ir_tx(struct rc_dev *dev, unsigned int *txbuf,
->> +		     unsigned int count)
->> +{
->> +	struct pwm_ir *pwm_ir = dev->priv;
->> +
->> +	pwm_ir->txbuf = txbuf;
->> +	pwm_ir->count = count;
->> +	pwm_ir->index = 0;
->> +
->> +	wake_up(&pwm_ir->tx_wq);
->> +	wait_for_completion(&pwm_ir->tx_done);
->> +
->>   	return count;
->>   }
->>   
->> @@ -91,12 +167,24 @@ static int pwm_ir_probe(struct platform_device *pdev)
->>   	if (!pwm_ir)
->>   		return -ENOMEM;
->>   
->> +	platform_set_drvdata(pdev, pwm_ir);
->> +
->>   	pwm_ir->pwm = devm_pwm_get(&pdev->dev, NULL);
->>   	if (IS_ERR(pwm_ir->pwm))
->>   		return PTR_ERR(pwm_ir->pwm);
->>   
->> -	pwm_ir->carrier = 38000;
->> +	/* Use default, in case userspace does not set the carrier */
->> +	pwm_ir->carrier = DIV_ROUND_CLOSEST_ULL(pwm_get_period(pwm_ir->pwm),
->> +						NSEC_PER_SEC);
->>   	pwm_ir->duty_cycle = 50;
->> +	pwm_ir->count = 0;
->> +
->> +	init_waitqueue_head(&pwm_ir->tx_wq);
->> +	init_completion(&pwm_ir->edge);
->> +	init_completion(&pwm_ir->tx_done);
->> +
->> +	hrtimer_init(&pwm_ir->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
->> +	pwm_ir->timer.function = pwm_ir_timer_cb;
->>   
->>   	rcdev = devm_rc_allocate_device(&pdev->dev, RC_DRIVER_IR_RAW_TX);
->>   	if (!rcdev)
->> @@ -110,14 +198,34 @@ static int pwm_ir_probe(struct platform_device *pdev)
->>   	rcdev->s_tx_carrier = pwm_ir_set_carrier;
->>   
->>   	rc = devm_rc_register_device(&pdev->dev, rcdev);
->> -	if (rc < 0)
->> +	if (rc < 0) {
->>   		dev_err(&pdev->dev, "failed to register rc device\n");
->> +		return rc;
->> +	}
->> +
->> +	pwm_ir->tx_thread = kthread_create(pwm_ir_thread, pwm_ir, "%s/tx",
->> +					   dev_name(&pdev->dev));
->> +	if (IS_ERR(pwm_ir->tx_thread))
->> +		return PTR_ERR(pwm_ir->tx_thread);
->>   
->> -	return rc;
->> +	sched_set_fifo(pwm_ir->tx_thread);
->> +	wake_up_process(pwm_ir->tx_thread);
->> +
->> +	return 0;
->> +}
->> +
->> +static int pwm_ir_remove(struct platform_device *pdev)
->> +{
->> +	struct pwm_ir *pwm_ir = platform_get_drvdata(pdev);
->> +
->> +	kthread_stop(pwm_ir->tx_thread);
->> +
->> +	return 0;
->>   }
->>   
->>   static struct platform_driver pwm_ir_driver = {
->>   	.probe = pwm_ir_probe,
->> +	.remove = pwm_ir_remove,
->>   	.driver = {
->>   		.name	= DRIVER_NAME,
->>   		.of_match_table = pwm_ir_of_match,
->> -- 
->> 1.9.1
+>    
+> run-231001-045220-hist+6.6.0-rc3-rt5-ge31516c1e553+flood-kern-prio-fd-load.json
+> 
+> The history of the monitoring for kernel gateway under the load for latest RT
+> kernels,
+> branch run on "linux-rt-devel/for-kbuild-bot/current-stable" branch
+> 
+>    
+> https://canbus.pages.fel.cvut.cz/can-latester/inspect.html?kernel=rt&load=1&flood=1&fd=1&prio=1&kern=1
+> 
+> Monitoring of latency when userspace application is used to forward
+> data from one to another CAN interface does not show similar excess
+> 
+>    
+> https://canbus.pages.fel.cvut.cz/can-latester/inspect.html?kernel=rt&load=1&flood=1&fd=1&prio=1&kern=0
+> 
+> It is interesting that when priority of CAN controller interrupt service
+> routines
+> are not boosted then problem does not appear. Priority 90 is set for each
+> irq/[0-9]+-can[0-9]
+> thread by
+> 
+>    chrt -f --pid 90 $pid
+> 
+> The device under the test as well as messages generation and monitoring
+> system are MZ_APO boards (AMD/XlinX Zynq XC7Z010) with CTU CAN FD IP core
+> CAN controller configured for 10 ns frames timestamping.
+> 
+> The problem can be in configuration of our system, CTU CAN FD IP core driver
+> or specific to Zynq ARM platform. But it is generally suspicious because
+> after initial tuning of the test system there has not been modifications
+> for long time. Monitoring system is running 6.2.0-rt3-00007-ge3a16816f987
+> kernel for all time and no problem with some Rx buffers overflow
+> on the tester side is reported for time covering all tests in the question.
+> 
+> Please, report if you have some idea which change between reported
+> versions from 2023-10-01 and 2023-10-02 could be reason for the change.
+> I plan to keep eye on results till end of the week and if the problem
+> continues then I start to investigate more by beginning of the next week
+> when I should find a little more time. I am quite busy by preparation for
+> conference and teaching this week so I do not expect to find much time.
+> 
+> Best wishes,
+> 
+>                  Pavel
