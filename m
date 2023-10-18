@@ -1,129 +1,253 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8957A1F95A
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 14:03:50 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3550B37C8F
+	for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 14:30:30 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Jn5cYyjj"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4E51683
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 07:03:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1697637828;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="e2A9kBAA";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="IKikuqjr"
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A68DA12B;
+	Wed, 18 Oct 2023 07:30:27 -0700 (PDT)
+Date: Wed, 18 Oct 2023 16:30:24 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1697639425;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=64NQoZv/RpZSheqiA+hJnGh+MGFDcZ2ug7XNOtYHdfQ=;
-	b=Jn5cYyjjrzbNOxcDRWG2SY+JWFuhT2BOFxwtsO/s7yXgcfZY60/BDYjZI/hAeGOE74/jma
-	iXHt8NavYf/dCVkSw9uaMEUvNQmDf3K2NWSyL3nsp31bweEHjYCEHtcqfJkwWuUjBVFUwz
-	ldyLTexWHCvPVtUJZy1XEDGzMhcDJWc=
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
- [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-588--2I_b2GSMY6qCuURGzUiFg-1; Wed, 18 Oct 2023 10:03:36 -0400
-X-MC-Unique: -2I_b2GSMY6qCuURGzUiFg-1
-Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-7788f23ebe7so160046885a.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 07:03:31 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1697637810; x=1698242610;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=64NQoZv/RpZSheqiA+hJnGh+MGFDcZ2ug7XNOtYHdfQ=;
-        b=FtMRPbCkWCcgGXP/wzc6VMHPsR/Id7pe4qNovWuizxHVAp95Nld6F+j6LCFeDDOkaw
-         JTV+sn7GyuafYEO3bR73oykcqd92UJx6I40T+FgPL8ObT0JRufX/7HDB9BXH6FLW7unB
-         KmG/Tp4SqAoudR3wm4xLVoCM2hsH4MMlIyXToJrd71+6dbpUPMkwjvgUIoMTykwE0/1j
-         y60xENl5AhskYDA5JUHHKgEZGtJFUpFHSwgzZaT9ZrbzA4HGOwr+Npv1sKuMnujitdXe
-         2dy2q737FvNmo5zpUPf3n2fe7tfRjeCXeiLQIzk0AeqVNN9IVgEa6Yv/5ZYG43U3lTrb
-         zdmw==
-X-Gm-Message-State: AOJu0YxzuEk3y+7IDJ6UF/jYyRhuEpdyceop+ujwAX9Hfr9qSJAATxOM
-	EKtZFZkxiTVydriGJVE/DOJm4h7vOAMdhpi+AYkLDlMSVKt4NOS2ksaL9ET1PdLoIO64+1L5JZg
-	adFkJtJSDFsGgqlhWZSFOfheMmheJPGNg6jg=
-X-Received: by 2002:a05:620a:3955:b0:775:8e5b:2bb6 with SMTP id qs21-20020a05620a395500b007758e5b2bb6mr5799689qkn.34.1697637810591;
-        Wed, 18 Oct 2023 07:03:30 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFOPTB0xCMg5drw0pZxGtwMHKtInWIfPCNnzBm7ImPVVMXS/Yv7tsYjfK87Ej2GiS4TBncrtA==
-X-Received: by 2002:a05:620a:3955:b0:775:8e5b:2bb6 with SMTP id qs21-20020a05620a395500b007758e5b2bb6mr5799660qkn.34.1697637810228;
-        Wed, 18 Oct 2023 07:03:30 -0700 (PDT)
-Received: from fionn ([174.88.88.29])
-        by smtp.gmail.com with ESMTPSA id c2-20020a0ceb42000000b0064723b94a23sm1360587qvq.27.2023.10.18.07.03.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Oct 2023 07:03:29 -0700 (PDT)
-Date: Wed, 18 Oct 2023 10:03:12 -0400 (EDT)
-From: John Kacur <jkacur@redhat.com>
-To: Mathias Krause <minipli@grsecurity.net>
-cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] Revert "rt-tests: Makefile: ctags: Change obsolete extra
- to extras"
-In-Reply-To: <01a0d368-5bd5-4c63-bea7-753205d710fa@grsecurity.net>
-Message-ID: <96accbe3-1755-8b4-ecb2-3dd4e7c320f1@redhat.com>
-References: <20230926110409.1244298-1-minipli@grsecurity.net> <01a0d368-5bd5-4c63-bea7-753205d710fa@grsecurity.net>
+	bh=pkP/X9V4BRzXP+KA1z4swAloH4uUhoVIL/ZvP/gPtak=;
+	b=e2A9kBAAPgYWoXZFBb2SNE2WNH+qQChpdp6gtfb+Dpq57XasHpfr7ypk0yDLnx3U0lev56
+	Z9JoQ1NPvfzYA6vZSZEN9QEic8OC/GcHslM15bQqODgFr8Mfniq29pI1kw7vCcSqkqE/oz
+	hsLjXfeJhMbrrE7+LTnVV7HIjtJfHPEPoJdR1xkYsZ3HnC/hMQLtJcEE4NPKBJwVA8Qgce
+	AE9wPhqHrNUA5+Ge/SfvuawbBLunPMBjoH3UHwZMKXsuubVH8+WSNVrXOC1bxA/CZm2yi8
+	bi3vToU48VTFXaHh/rm2CEcnCHxqbUPXPLaTLGKrIyYgke7IydrExtJHCfDy2Q==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1697639425;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=pkP/X9V4BRzXP+KA1z4swAloH4uUhoVIL/ZvP/gPtak=;
+	b=IKikuqjrWpHbH1cMa7lab7VCZmDwnr16FJkdnMgVtJs9LwL7yw++CuM59yrBBs/y5OK+Sh
+	mUpARtNF8jm6CBDg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Pierre Gondois <pierre.gondois@arm.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v6.6-rc4-rt7
+Message-ID: <20231018143024.79vRO3R3@linutronix.de>
+References: <20231004160655.0D-7XFo_@linutronix.de>
+ <70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Spam-Status: No, score=-0.6 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,
-	RCVD_IN_DNSWL_BLOCKED,RCVD_IN_MSPIKE_H3,RCVD_IN_MSPIKE_WL,
-	RCVD_IN_SORBS_WEB,SPF_HELO_NONE,SPF_NONE autolearn=no
-	autolearn_force=no version=3.4.6
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com>
+X-Spam-Status: No, score=-4.4 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,RCVD_IN_DNSWL_MED,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.6
 X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
 	lindbergh.monkeyblade.net
 
+On 2023-10-10 11:23:59 [+0200], Pierre Gondois wrote:
+> Hello,
+Hi,
 
+> The issue seems to be related to this patchset:
+> https://lore.kernel.org/all/20230112194314.845371875@infradead.org/
+> but as I was unable to really diagnose the issue, it might aswell be
+> something else.
 
-On Wed, 18 Oct 2023, Mathias Krause wrote:
+Is it easy to figure when this faulty behaviour was introduced?
 
-> On 26.09.23 13:04, Mathias Krause wrote:
-> > Commit 974241c78a6f ("rt-tests: Makefile: ctags: Change obsolete extra to
-> > extras") not only broke the generation of tags files -- at least for exuberant
-> > ctags version 5.9 as shipped in Debian -- but it also added -Wextra to CFLAGS,
-> > leading to many warnings.
-> > 
-> > Simply revert the commit to undo the unintended change and unbreak ctags file
-> > generation.
-> > 
-> > Signed-off-by: Mathias Krause <minipli@grsecurity.net>
-> > ---
-> >  Makefile | 4 ++--
-> >  1 file changed, 2 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/Makefile b/Makefile
-> > index 32a9f41198a4..3b9e90d528e5 100644
-> > --- a/Makefile
-> > +++ b/Makefile
-> > @@ -30,7 +30,7 @@ prefix  ?= /usr/local
-> >  bindir  ?= $(prefix)/bin
-> >  mandir	?= $(prefix)/share/man
-> >  
-> > -CFLAGS ?= -Wall -Wno-nonnull -Wextra
-> > +CFLAGS ?= -Wall -Wno-nonnull
-> >  CPPFLAGS += -D_GNU_SOURCE -Isrc/include
-> >  LDFLAGS ?=
-> >  
-> > @@ -253,4 +253,4 @@ help:
-> >  
-> >  .PHONY: tags
-> >  tags:
-> > -	ctags -R --extras=+f --c-kinds=+p --exclude=tmp --exclude=BUILD *
-> > +	ctags -R --extra=+f --c-kinds=+p --exclude=tmp --exclude=BUILD *
-> 
-> 
-> Ping?
-> 
-> Can this be merged to fix ctags, at least?:
+> It seems the memory/registers get corrupted, cf the recurring error
+> messages:
+> - Undefined instruction
+> - Unable to handle kernel paging request at virtual address
+> - Mem abort info
+> Splats seem to happen while taking IRQs while going out of idle or
+> when handling a syscall. More splat variations could be generated,
+> but 5 should be enough I believe.
+>=20
+> When running a non-PREEMPT_RT kernel, splats don't appear, so the issue
+> might be related to the way locks are handled in PREEMPT_RT. I don't
+> deeply understand the relation between rcu/irq/tracing so far, if someone
+> has an idea of what could happen, this would be helpful :)
 
-Sorry, but the problem is that Debian is using an 
-old version of ctags. You can either just edit the Makefile to build on 
-Debian, or compile a more modern version of ctags by hand, I'm sure there 
-are some other solutions as well.
+I've been looking at these splats. Do you have auth-pointer or shadow
+stack enabled?
 
-As for the warnings, we want to see those. People including myself have 
-sent in patches to fix the cause of the warnings, but simply hiding them
-isn't the solution.
+> Regards,
+> Pierre
+>=20
+> Splats:
+> [splat-1]
+> [...] Internal error: Oops - Undefined instruction: 0000000002000000 [#1]=
+ PREEMPT_RT SMP
+=E2=80=A6
+> All code
+> =3D=3D=3D=3D=3D=3D=3D=3D
+>    0:   a8c47bfd        ldp     x29, x30, [sp], #64
+>    4:   d50323bf        autiasp
+>    8:   d65f03c0        ret
+>    c:   d503201f        nop
+>   10:*  d503233f        paciasp         <-- trapping instruction
 
-Thanks
+paciasp is the undefined instruction. I don't see paciasp to be patched
+out if not supported by the CPU so it is a NOP if not supported. What
+could go wrong here?
 
-John
+> [splat-2]
+> [...] Unable to handle kernel paging request at virtual address 001c71c71=
+c71d434
+=E2=80=A6
+> [...] pc : ttwu_do_activate (kernel/sched/core.c:3855)
+> [...] lr : ttwu_do_activate (kernel/sched/sched.h:1363 kernel/sched/sched=
+=2Eh:1507 kernel/sched/core.c:3846)
+=E2=80=A6
+> [...] x20: ffff80008000bcd8 x19: ffff00097eedebc0 x18: 071c71c71c71c71c
+> [...] x8 : 00000000000645ab x7 : ffff800080149d58 x6 : 0000000000000000
 
+=E2=80=A6
+> All code
+> =3D=3D=3D=3D=3D=3D=3D=3D
+>    0:   f001dd89        adrp    x9, 0x3bb3000
+>    4:   f9068668        str     x8, [x19, #3336]
+>    8:   f9418129        ldr     x9, [x9, #768]
+>    c:   d341fd08        lsr     x8, x8, #1
+>   10:*  f9068e68        str     x8, [x19, #3352]                <-- trapp=
+ing instruction
+
+So this reads as
+	store x8 to x19 + #3352, 0xffff00097eedebc0 + 3352
+	store 0x00000000000645ab to 0xffff00097eedf8d8
+
+But the kernel complains about 001c71c71c71d434 which is not exactly
+what I computed. But it is familiar to x18. Looking at those two
+ 0x07 1c71c71c71 c71c
+ 0x00 1c71c71c71 d434
+
+the pattern in the middle is the same. And 0xd434 - 0xc71c =3D 0xd18 which
+is 3352.=20
+
+x18 is the shadow stack (?) and contains the same value in splat-1 and
+is zero in splat-3 and splat-4.
+
+> [splat-3]
+> [...] Mem abort info:
+> [...]   ESR =3D 0x0000000096000045
+> [...]   EC =3D 0x25: DABT (current EL), IL =3D 32 bits
+> [...]   SET =3D 0, FnV =3D 0
+> [...]   EA =3D 0, S1PTW =3D 0
+> [...]   FSC =3D 0x05: level 1 translation fault
+> [...] Data abort info:
+> [...]   ISV =3D 0, ISS =3D 0x00000045, ISS2 =3D 0x00000000
+> [...]   CM =3D 0, WnR =3D 1, TnD =3D 0, TagAccess =3D 0
+> [...]   GCS =3D 0, Overlay =3D 0, DirtyBit =3D 0, Xs =3D 0
+> [...] swapper pgtable: 4k pages, 48-bit VAs, pgdp=3D00000000ed344000
+> [...] [ffff800886adb8b8] pgd=3D10000009fffff003, p4d=3D10000009fffff003, =
+pud=3D0000000000000000
+> [...] Internal error: Oops: 0000000096000045 [#1] PREEMPT_RT SMP
+> [...] Modules linked in:
+> [...] CPU: 1 PID: 264 Comm: rtla-static Not tainted 6.6.0-rc4-rt8-00102-g=
+97b0e2d47443 #1193
+> [...] Hardware name: ARM LTD ARM Juno Development Platform/ARM Juno Devel=
+opment Platform, BIOS EDK II Oct  4 2023
+> [...] pstate: 204000c5 (nzCv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=3D--)
+> [...] pc : rcu_is_watching (kernel/rcu/tree.c:695)
+> [...] lr : trace_irq_disable (./include/trace/events/preemptirq.h:36)
+> [...] sp : ffff800086adb8d0
+> [...] x29: ffff800086adb8e0 x28: ffff0008062a4ec0 x27: 0000000000000030
+> All code
+> =3D=3D=3D=3D=3D=3D=3D=3D
+>    0:   54fffb61        b.ne    0xffffffffffffff6c  // b.any
+>    4:   17ffffe4        b       0xffffffffffffff94
+>    8:   d503201f        nop
+>    c:   d503233f        paciasp
+>   10:*  a9be7bfd        stp     x29, x30, [sp, #-32]!           <-- trapp=
+ing instruction
+
+This looks like a stack entry. So this looks sane and if SP is correct
+then nothing should go wrong. The fault says "translation fault" so my
+guess would be that SP is not correct and we have to page tables backing
+ffff800086adb8d0.
+
+> [splat-4]
+> [...] Mem abort info:
+> [...]   ESR =3D 0x0000000096000045
+> [...]   EC =3D 0x25: DABT (current EL), IL =3D 32 bits
+> [...]   SET =3D 0, FnV =3D 0
+> [...]   EA =3D 0, S1PTW =3D 0
+> [...]   FSC =3D 0x05: level 1 translation fault
+> [...] Data abort info:
+> [...]   ISV =3D 0, ISS =3D 0x00000045, ISS2 =3D 0x00000000
+> [...]   CM =3D 0, WnR =3D 1, TnD =3D 0, TagAccess =3D 0
+> [...]   GCS =3D 0, Overlay =3D 0, DirtyBit =3D 0, Xs =3D 0
+=E2=80=A6
+> [...] lr : trace_irq_disable (./include/trace/events/preemptirq.h:36)
+> [...] sp : ffff800086adb8d0
+> [...] x29: ffff800086adb8e0 x28: ffff0008062a4ec0 x27: 0000000000000030
+=E2=80=A6
+>    c:   d503233f        paciasp
+>   10:*  a9be7bfd        stp     x29, x30, [sp, #-32]!           <-- trapp=
+ing instruction
+
+This seems to be same as splat-3 including register.
+
+> [splat-5]
+> [...] Internal error: Oops - Undefined instruction: 0000000002000000 [#1]=
+ PREEMPT_RT SMP
+> [...] Modules linked in:
+> [...] CPU: 2 PID: 40 Comm: rcuc/2 Not tainted 6.6.0-rc4-rt8-00102-g97b0e2=
+d47443 #1194
+> [...] Hardware name: ARM LTD ARM Juno Development Platform/ARM Juno Devel=
+opment Platform, BIOS EDK II Oct  4 2023
+> [...] pstate: 804000c5 (Nzcv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=3D--)
+> [...] pc : trace_pelt_irq_tp (./include/trace/events/sched.h:?)
+> [...] lr : irqtime_account_irq (kernel/sched/cputime.c:64)
+> [...] sp : ffff8000851d3ce0
+> [...] x29: ffff8000851d3ce0 x28: 0000000000000020 x27: ffff800083ce4e80
+> [...] x26: ffff800083d46180 x25: 000000000000000a x24: 0000000000000000
+> [...] x23: 0000000000000007 x22: 0000000000000000 x21: ffff00097eeebf50
+> [...] x20: 0000000000002a08 x19: ffff00080092b480 x18: ffff8000850fd038
+> [...] x17: ffff800084e05000 x16: ffff800084445bf0 x15: 0000000008a87beb
+> [...] x14: 000000003bb0a251 x13: 0000000000000006 x12: 0000000934346b33
+> [...] x11: 0000000100000000 x10: 0000000000000001 x9 : 0000000014443054
+> [...] x8 : ffff00097eeebeb0 x7 : ffff80008012d608 x6 : 0000000000000000
+> [...] x5 : 0000000000000000 x4 : 0000000000000000 x3 : ffff8000851d3d80
+> [...] x2 : ffff00080092b480 x1 : 0000000000000000 x0 : 000000b814aa1780
+> [...] Call trace:
+> [...] trace_pelt_irq_tp (./include/trace/events/sched.h:?)
+> [...] __do_softirq (./include/linux/vtime.h:? kernel/softirq.c:593)
+> [...] __local_bh_enable_ip (kernel/softirq.c:?)
+> [...] local_bh_enable (./include/linux/bottom_half.h:34)
+> [...] rcu_cpu_kthread (kernel/rcu/tree.c:2493)
+> [...] smpboot_thread_fn (kernel/smpboot.c:?)
+> [...] kthread (kernel/kthread.c:389)
+> [...] ret_from_fork (arch/arm64/kernel/entry.S:854)
+> [...] Code: 17ffffc2 d4210000 17ffffe4 d503201f (819e3608)
+> All code
+> =3D=3D=3D=3D=3D=3D=3D=3D
+>    0:   17ffffc2        b       0xffffffffffffff08
+>    4:   d4210000        brk     #0x800
+>    8:   17ffffe4        b       0xffffffffffffff98
+>    c:   d503201f        nop
+>   10:*  819e3608        .inst   0x819e3608 ; undefined          <-- trapp=
+ing instruction
+
+Knowing what PC is could help to figure out if this is really
+trace_pelt_irq_tp. The brk opcode could be a warning since it jumps back
+afterwards. But the trapping code a different/ wrong page that is mapped
+here. Or it jumped too far.
+I don't know why trace_pelt_irq_tp is visible here. This should be just
+a nop which is patched at runtime to some underscroll function ;) I
+might be missing something.
+
+Sebastian
