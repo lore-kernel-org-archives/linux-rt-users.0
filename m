@@ -1,30 +1,30 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7FE39CA4D
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 19:48:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A87E64736A;
+	Wed, 18 Oct 2023 19:48:49 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="Ln+uLWOU"
+	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="fYLAOCbR"
 Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7741F133;
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3D081130;
 	Wed, 18 Oct 2023 12:48:47 -0700 (PDT)
 Received: from smtp.gmail.com (1.general.jsalisbury.us.vpn [10.172.66.188])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 001884166C;
-	Wed, 18 Oct 2023 19:48:41 +0000 (UTC)
+	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id ABAEF41667;
+	Wed, 18 Oct 2023 19:48:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1697658523;
-	bh=/IVYZ1A9AUMVA/ZaFju9t9TXf8Tzupe5AWHRYxLqdYI=;
+	s=20210705; t=1697658521;
+	bh=x1vuTobz6AdxAjlPU1eH9Ke51tMpmFPrUXI+1Z0eGFM=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
 	 MIME-Version;
-	b=Ln+uLWOUDIQFyId+viJZjW4JnD553+0BKtsBfFdk/KnQt7Hhkvc/iQP2SWfH5Li5K
-	 UbWSRfa61088kygrFctzraqM9+DXZZirJWONz2zvScjX9kCFerhGDxQnGwbXS4X7Gd
-	 EtUANnPo4ReoSScFYc5VRQMj96RBO5ZbC4VyeeeRkA+Oz0qXvuj7BixudGt5rIuL+F
-	 i6Z6DOG7TW0gdcPO50IIYE986ZHPP30fMB023pbYOc51fTIOQMQlN1/+K+Ez/6d6Ns
-	 C3LUmO2zwm7HiTGtpVQpml7g9mxXlDOfK54/31CayVxUegDscZOce2Sr9wEz62IKx8
-	 uHZnZt+OKr6Dg==
+	b=fYLAOCbRocIJZchcDE/SIoJac0k+h3qEA6Wnk1Xye7dFQAkO97T+PiLx+oZW1yinN
+	 MdIFI6SYUGSM1lEp9nhXUSOcy9JpKT/Jv4s1x9KiyDCLhtAGr/bF91uSAhQwWLw/6A
+	 Rv6OJdWz14GZC5FizdnNl/hfewxY/kKjlKiX2qq1DjkaJS+97+YZfJXJZrnH+aItHC
+	 2c/Zoqu+anqXvgFC8pqu8P+m4K8PSOtOJwBvwVasI8r7dPi7cJEpBNOrTtT67bR2fT
+	 nYD6cd94NmcJ7s2hYmkjTgDZo5wribfKURPoGYJ6Dl76cQqIQdEZ7K8DMap9B7AUK2
+	 MwqzhKCZpf5Dg==
 From: Joseph Salisbury <joseph.salisbury@canonical.com>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -38,10 +38,16 @@ To: LKML <linux-kernel@vger.kernel.org>,
 	Clark Williams <williams@redhat.com>,
 	Pavel Machek <pavel@denx.de>,
 	Joseph Salisbury <joseph.salisbury@canonical.com>
-Cc: Ido Schimmel <idosch@nvidia.com>
-Subject: [PATCH RT 04/12] debugobject: Ensure pool refill (again)
-Date: Wed, 18 Oct 2023 15:48:25 -0400
-Message-Id: <20231018194833.651674-5-joseph.salisbury@canonical.com>
+Cc: Paolo Abeni <pabeni@redhat.com>,
+	Jason Xing <kerneljasonxing@gmail.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Eric Dumazet <edumazet@google.com>,
+	"Paul E. McKenney" <paulmck@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	netdev@vger.kernel.org
+Subject: [PATCH RT 03/12] Revert "softirq: Let ksoftirqd do its job"
+Date: Wed, 18 Oct 2023 15:48:24 -0400
+Message-Id: <20231018194833.651674-4-joseph.salisbury@canonical.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20231018194833.651674-1-joseph.salisbury@canonical.com>
 References: <20231018194833.651674-1-joseph.salisbury@canonical.com>
@@ -53,7 +59,7 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Paolo Abeni <pabeni@redhat.com>
 
 v5.15.133-rt70-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -61,86 +67,110 @@ If anyone has any objections, please let me know.
 -----------
 
 
-The recent fix to ensure atomicity of lookup and allocation inadvertently
-broke the pool refill mechanism.
+This reverts the following commits:
 
-Prior to that change debug_objects_activate() and debug_objecs_assert_init()
-invoked debug_objecs_init() to set up the tracking object for statically
-initialized objects. That's not longer the case and debug_objecs_init() is
-now the only place which does pool refills.
+  4cd13c21b207 ("softirq: Let ksoftirqd do its job")
+  3c53776e29f8 ("Mark HI and TASKLET softirq synchronous")
+  1342d8080f61 ("softirq: Don't skip softirq execution when softirq thread is parking")
 
-Depending on the number of statically initialized objects this can be
-enough to actually deplete the pool, which was observed by Ido via a
-debugobjects OOM warning.
+in a single change to avoid known bad intermediate states introduced by a
+patch series reverting them individually.
 
-Restore the old behaviour by adding explicit refill opportunities to
-debug_objects_activate() and debug_objecs_assert_init().
+Due to the mentioned commit, when the ksoftirqd threads take charge of
+softirq processing, the system can experience high latencies.
 
-Fixes: 63a759694eed ("debugobject: Prevent init race with static objects")
-Reported-by: Ido Schimmel <idosch@nvidia.com>
+In the past a few workarounds have been implemented for specific
+side-effects of the initial ksoftirqd enforcement commit:
+
+commit 1ff688209e2e ("watchdog: core: make sure the watchdog_worker is not deferred")
+commit 8d5755b3f77b ("watchdog: softdog: fire watchdog even if softirqs do not get to run")
+commit 217f69743681 ("net: busy-poll: allow preemption in sk_busy_loop()")
+commit 3c53776e29f8 ("Mark HI and TASKLET softirq synchronous")
+
+But the latency problem still exists in real-life workloads, see the link
+below.
+
+The reverted commit intended to solve a live-lock scenario that can now be
+addressed with the NAPI threaded mode, introduced with commit 29863d41bb6e
+("net: implement threaded-able napi poll loop support"), which is nowadays
+in a pretty stable status.
+
+While a complete solution to put softirq processing under nice resource
+control would be preferable, that has proven to be a very hard task. In
+the short term, remove the main pain point, and also simplify a bit the
+current softirq implementation.
+
+Signed-off-by: Paolo Abeni <pabeni@redhat.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Tested-by: Ido Schimmel <idosch@nvidia.com>
-Link: https://lore.kernel.org/r/871qk05a9d.ffs@tglx
-
-(cherry picked from commit 0af462f19e635ad522f28981238334620881badc)
+Tested-by: Jason Xing <kerneljasonxing@gmail.com>
+Reviewed-by: Jakub Kicinski <kuba@kernel.org>
+Reviewed-by: Eric Dumazet <edumazet@google.com>
+Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: "Paul E. McKenney" <paulmck@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: netdev@vger.kernel.org
+Link: https://lore.kernel.org/netdev/305d7742212cbe98621b16be782b0562f1012cb6.camel@redhat.com
+Link: https://lore.kernel.org/r/57e66b364f1b6f09c9bc0316742c3b14f4ce83bd.1683526542.git.pabeni@redhat.com
+(cherry picked from commit d15121be7485655129101f3960ae6add40204463)
 Signed-off-by: Joseph Salisbury <joseph.salisbury@canonical.com>
 ---
- lib/debugobjects.c | 21 +++++++++++++++------
- 1 file changed, 15 insertions(+), 6 deletions(-)
+ kernel/softirq.c | 22 ++--------------------
+ 1 file changed, 2 insertions(+), 20 deletions(-)
 
-diff --git a/lib/debugobjects.c b/lib/debugobjects.c
-index 579406c1e9ed..4c39678c03ee 100644
---- a/lib/debugobjects.c
-+++ b/lib/debugobjects.c
-@@ -590,6 +590,16 @@ static struct debug_obj *lookup_object_or_alloc(void *addr, struct debug_bucket
- 	return NULL;
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 41f470929e99..398951403331 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -80,21 +80,6 @@ static void wakeup_softirqd(void)
+ 		wake_up_process(tsk);
  }
  
-+static void debug_objects_fill_pool(void)
-+{
-+	/*
-+	 * On RT enabled kernels the pool refill must happen in preemptible
-+	 * context:
-+	 */
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible())
-+		fill_pool();
-+}
-+
- static void
- __debug_object_init(void *addr, const struct debug_obj_descr *descr, int onstack)
+-/*
+- * If ksoftirqd is scheduled, we do not want to process pending softirqs
+- * right now. Let ksoftirqd handle this at its own rate, to get fairness,
+- * unless we're doing some of the synchronous softirqs.
+- */
+-#define SOFTIRQ_NOW_MASK ((1 << HI_SOFTIRQ) | (1 << TASKLET_SOFTIRQ))
+-static bool ksoftirqd_running(unsigned long pending)
+-{
+-	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
+-
+-	if (pending & SOFTIRQ_NOW_MASK)
+-		return false;
+-	return tsk && task_is_running(tsk) && !__kthread_should_park(tsk);
+-}
+-
+ #ifdef CONFIG_TRACE_IRQFLAGS
+ DEFINE_PER_CPU(int, hardirqs_enabled);
+ DEFINE_PER_CPU(int, hardirq_context);
+@@ -236,7 +221,7 @@ void __local_bh_enable_ip(unsigned long ip, unsigned int cnt)
+ 		goto out;
+ 
+ 	pending = local_softirq_pending();
+-	if (!pending || ksoftirqd_running(pending))
++	if (!pending)
+ 		goto out;
+ 
+ 	/*
+@@ -419,9 +404,6 @@ static inline bool should_wake_ksoftirqd(void)
+ 
+ static inline void invoke_softirq(void)
  {
-@@ -598,12 +608,7 @@ __debug_object_init(void *addr, const struct debug_obj_descr *descr, int onstack
- 	struct debug_obj *obj;
- 	unsigned long flags;
+-	if (ksoftirqd_running(local_softirq_pending()))
+-		return;
+-
+ 	if (!force_irqthreads() || !__this_cpu_read(ksoftirqd)) {
+ #ifdef CONFIG_HAVE_IRQ_EXIT_ON_IRQ_STACK
+ 		/*
+@@ -455,7 +437,7 @@ asmlinkage __visible void do_softirq(void)
  
--	/*
--	 * On RT enabled kernels the pool refill must happen in preemptible
--	 * context:
--	 */
--	if (!IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible())
--		fill_pool();
-+	debug_objects_fill_pool();
+ 	pending = local_softirq_pending();
  
- 	db = get_bucket((unsigned long) addr);
+-	if (pending && !ksoftirqd_running(pending))
++	if (pending)
+ 		do_softirq_own_stack();
  
-@@ -688,6 +693,8 @@ int debug_object_activate(void *addr, const struct debug_obj_descr *descr)
- 	if (!debug_objects_enabled)
- 		return 0;
- 
-+	debug_objects_fill_pool();
-+
- 	db = get_bucket((unsigned long) addr);
- 
- 	raw_spin_lock_irqsave(&db->lock, flags);
-@@ -897,6 +904,8 @@ void debug_object_assert_init(void *addr, const struct debug_obj_descr *descr)
- 	if (!debug_objects_enabled)
- 		return;
- 
-+	debug_objects_fill_pool();
-+
- 	db = get_bucket((unsigned long) addr);
- 
- 	raw_spin_lock_irqsave(&db->lock, flags);
+ 	local_irq_restore(flags);
 -- 
 2.34.1
 
