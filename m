@@ -1,92 +1,91 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05F2663DF
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Oct 2023 06:53:42 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 194E3225BB;
+	Thu, 19 Oct 2023 12:38:27 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=grsecurity.net header.i=@grsecurity.net header.b="mHh4X4wQ"
-Received: from mail-lf1-x12b.google.com (mail-lf1-x12b.google.com [IPv6:2a00:1450:4864:20::12b])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 02936116
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 23:53:41 -0700 (PDT)
-Received: by mail-lf1-x12b.google.com with SMTP id 2adb3069b0e04-507ad511315so5844522e87.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2023 23:53:40 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=grsecurity.net; s=grsec; t=1697698419; x=1698303219; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=tG70djhUedPAsAwnt2zcRkO2G2Mxu4PgM5Jm6RKFFCk=;
-        b=mHh4X4wQPzJdFxw1iVGnWz2dCyC3va+TdYsUF9m7lMjCV+FyzEbmxPLDbxlANTk+5A
-         ihTDo/AhSvVSVX371GYesSSy3T+wS497VBPcoBIN/VTy5kYOOidQWUAA/0FG9c2KCgpb
-         p91ta1BTZ55y6rg/BssK6nMkSPmSt9EuQV5J5N+GnXY3UHz/FVCKUjQEKbgoI3J9v92S
-         iLtC0fhkBDkRWeElxeHoo9BEHYDiAMcGfhnWuYsaS5RTsq1ChHxzC+FYAt84AXPHBcVS
-         nx/6Q61zzjBHxNcQxWelk5qg0cU4lczRG8XckOJlXPzzoqXsg5Ys3surpr5x18LS9Iwt
-         UV+Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1697698419; x=1698303219;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=tG70djhUedPAsAwnt2zcRkO2G2Mxu4PgM5Jm6RKFFCk=;
-        b=jlyQeOT6B52m2bHWPvcDrNUHqifFWFBiMRKrHEFn9KET10wSX4XRXPdCZs6pCRezc7
-         pDjY8Bw1I//tY4enOV21rnLfFvqGWVJBUrrxEZmQOA/iKh732Ra0ZZ+/TvpuWS5rMpCr
-         4NBZ7Pfgk1MziEoLX4jn1msePDvva+7yjWEI6KtCRoPM+uyyjREIBot6maUHrhiXFVxF
-         HhChmMhV68T0/+kq77LfUlZrXxVjfvlKi4vOlamUaf50nAU3VKacoRh8ySVobqXTaUPh
-         n4jfthkmrbI9x69FyCdYOWfYkkYDj4ifewVVToKrVoCrzni6Bu3mhLgXEh5rxRu3MUN1
-         03qg==
-X-Gm-Message-State: AOJu0YzA2IsTH58PSPLq3hv2N+87IG05n7XP/gn9ODt+Y+Vu+5EUZsDe
-	aUlw2XCrYh82QMOwCMJmP3eoPMJaqyGD9M8BbiE=
-X-Google-Smtp-Source: AGHT+IFs3eQZjhtCN1NY4rpQPWdlX/L7Ie/kMf/636rnKtygv27eo/lGcYBYYqgBUIJYOX6eCOhMvA==
-X-Received: by 2002:ac2:41ca:0:b0:503:3781:ac32 with SMTP id d10-20020ac241ca000000b005033781ac32mr689607lfi.41.1697698419129;
-        Wed, 18 Oct 2023 23:53:39 -0700 (PDT)
-Received: from bell.fritz.box (p200300f6af16d50092b8d27f8e422e4b.dip0.t-ipconnect.de. [2003:f6:af16:d500:92b8:d27f:8e42:2e4b])
-        by smtp.gmail.com with ESMTPSA id p20-20020a50cd94000000b0053443c8fd90sm3998894edi.24.2023.10.18.23.53.38
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Oct 2023 23:53:38 -0700 (PDT)
-From: Mathias Krause <minipli@grsecurity.net>
-To: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Cc: linux-rt-users@vger.kernel.org,
-	Mathias Krause <minipli@grsecurity.net>
-Subject: [PATCH] rt-tests: Makefile: Restore support for Exuberant Ctags
-Date: Thu, 19 Oct 2023 08:53:28 +0200
-Message-Id: <20231019065328.932835-1-minipli@grsecurity.net>
-X-Mailer: git-send-email 2.30.2
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="k+NDV373";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="OfO34BnV"
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C2CD991;
+	Thu, 19 Oct 2023 05:38:25 -0700 (PDT)
+Date: Thu, 19 Oct 2023 14:38:23 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1697719104;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=7LTOgvvgFPD5ufvV7EQ4wtiesMfWF1h3o5jKZf9gNXU=;
+	b=k+NDV373QwVvGeZ4Q/jjpVz5K3HyK4r5qTJKPfuq3hFqGbzUTlX3YX3Yy60FC9A96l1v2E
+	2jk6hZxnxJIwTdaJG3UVGhUTeo5TcSCo4L7E/HPJTZgqkLH3ufik7p6eF+tZO38Z35b1vB
+	6r7S6hdxjF51MBNnwtFgNiT6qoFYnbbvw8mOUvO/x16mHJq1PYiNuetX7LzC999QtZQpak
+	4oE+8wVLIPgs/8u9E0kuX+OanApLMr/tL8NLT409hIdRb0I0PwtMEoPzbkP5Ouxnw67YAr
+	bajQHCqdWejF0irmD7S3IK/GSEN1c/+J0je+n5Z4g6ozrJK8BM1+tKy8VzJD2g==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1697719104;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=7LTOgvvgFPD5ufvV7EQ4wtiesMfWF1h3o5jKZf9gNXU=;
+	b=OfO34BnVcotF+4StcSrq2xZ7lSzDa+Bf6v2CRzvsrEP8ZhQ2UE8UDLRoz9qIuCRttO+9RU
+	UNGFAA+NsxmEd7Cg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Alan Stern <stern@rowland.harvard.edu>
+Cc: "Li, Meng" <Meng.Li@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	USB mailing list <linux-usb@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: USB: add check to detect host controller hardware removal
+Message-ID: <20231019123823.4fjUs8Rl@linutronix.de>
+References: <PH0PR11MB5191464B2F01511D2ADECB3BF1D2A@PH0PR11MB5191.namprd11.prod.outlook.com>
+ <9a1074e2-c1ae-485b-b5e7-a34442c98c0b@rowland.harvard.edu>
+ <20231016125624.1096766a@gandalf.local.home>
+ <62fdcf97-11c6-4dee-8db1-74752d6949f3@rowland.harvard.edu>
+ <PH0PR11MB5191924ECC92A8F67891D614F1D6A@PH0PR11MB5191.namprd11.prod.outlook.com>
+ <d6d9478c-585b-4f51-a076-dc2955c6b2b0@rowland.harvard.edu>
+ <PH0PR11MB51911132F6CB7DF0C41F15DEF1D5A@PH0PR11MB5191.namprd11.prod.outlook.com>
+ <1f8fe9f9-d8d6-48d9-8c7d-1215d10ece91@rowland.harvard.edu>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <1f8fe9f9-d8d6-48d9-8c7d-1215d10ece91@rowland.harvard.edu>
 
-Commit 974241c78a6f ("rt-tests: Makefile: ctags: Change obsolete extra
-to extras") is Universal Ctags specific and broke Exuberant Ctags.
+On 2023-10-18 11:20:46 [-0400], Alan Stern wrote:
+>=20
+> If you hadn't removed the card suddenly, the exception would not have=20
+> occurred.  So the logical conclusion isn't that we should get rid of the=
+=20
+> usb_hcd_irq(0, hcd) call -- the logical conclusion is that you shouldn't=
+=20
+> remove PCIe cards while the system is running.  Not unless your computer=
+=20
+> uses the special hardware from Stratus Technologies.
 
-Restore support for Exuberant Ctags by automatically detecting which
-variant to use.
+So the card was removed and the kernel complained that it can't access
+the memory behind the PCI-bar?
 
-Signed-off-by: Mathias Krause <minipli@grsecurity.net>
----
- Makefile | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+How odd=E2=80=A6
 
-diff --git a/Makefile b/Makefile
-index 223a839151ec..8d3268d19901 100644
---- a/Makefile
-+++ b/Makefile
-@@ -251,6 +251,11 @@ help:
- 	@echo "    tarball   :  make a rt-tests tarball suitable for release"
- 	@echo "    help      :  print this message"
- 
-+# Universal Ctags warns about the backward compatible option '--extra' and
-+# wants it to be called '--extras'.
-+CTAGS_BIN = ctags
-+CTAGS_EXTRA := $(shell $(CTAGS_BIN) --version 2>&1 | grep -iq universal && echo extras || echo extra)
-+
- .PHONY: tags
- tags:
--	ctags -R --extras=+f --c-kinds=+p --exclude=tmp --exclude=BUILD *
-+	$(CTAGS_BIN) -R --$(CTAGS_EXTRA)=+f --c-kinds=+p --exclude=tmp --exclude=BUILD *
--- 
-2.30.2
+> > so I think we don't need to add usb_hcd_irq(0, hcd) on the logical path=
+ of unbinding pcie driver.
+>=20
+> What about cardbus or PCMCIA cards?  Removing one of those cards=20
+> suddenly, while the system is running, is a perfectly reasonable thing=20
+> to do and it will not cause any hardware damage.  So I think we should=20
+> keep the usb_hcd_irq(0, hcd) call.
 
+Don't you invoke pci_driver::remove in such case to properly let the
+physical device go? This can also be tested via unbind from sysfs.
+
+> Alan Stern
+
+Sebastian
