@@ -1,57 +1,52 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 23DD23AC22
-	for <linux-rt-users@vger.kernel.org>; Fri, 27 Oct 2023 19:25:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 466326AB7
+	for <linux-rt-users@vger.kernel.org>; Mon, 30 Oct 2023 14:51:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="W4XxPT/d"
-Received: from mail-ot1-x333.google.com (mail-ot1-x333.google.com [IPv6:2607:f8b0:4864:20::333])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A7651A1
-	for <linux-rt-users@vger.kernel.org>; Fri, 27 Oct 2023 12:25:07 -0700 (PDT)
-Received: by mail-ot1-x333.google.com with SMTP id 46e09a7af769-6ce2b6cb933so1514811a34.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Oct 2023 12:25:07 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1698434706; x=1699039506; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=/66J7KziCcE+KPHsYjkX3vxxi2ndJJc+rH/xzURQ0NU=;
-        b=W4XxPT/djWx3JD9dp4P842uRDpFUk0+sdw2HJRI8VY+vR6iVWdWu6Xt6AglCUL3FoH
-         aeB7ehXeRtwkMYSZb5BKGncj1n2FUNui6AHfwfFXS8if6GnaC+5J2/UOHjyU0i1bj+si
-         lN2vCemp2Ns1rYjGy1VHwk6/kCdXakYztJAJvqdd0zPQvwfUKXS832q5i6bSUIdNDqwR
-         1Z51sSpgobAsd6OlLJQ+wxFazw9SG829qDATXbwVXWSI5XZ+RAuHZ+w6CbTbeD60W1tZ
-         O1Slo+K+bowoda6ujmebRa56A0K0IoeFEZB67spWRFaiX2Ghj87+BDmIgLTUvPluOVDW
-         WUDQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698434706; x=1699039506;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=/66J7KziCcE+KPHsYjkX3vxxi2ndJJc+rH/xzURQ0NU=;
-        b=NmPGN+8JlNnQ0s2bINpyta4MuekqFcoqOarpFbvp6+N9kZtUSQJx3CINS++eY619tp
-         Gg8v+ocwYs0zYX5b4AwZPcQs+972FZzEow/90EZ6/IMyhvSZG16IxWvuuc+VXFeXRxQl
-         IU3bxvyFF2soJsMWSMdLitinq+fNDbZneWzBLwsBZNOWPZ9FDGv0kzZCzGfvEikRpC/c
-         eXxtAMM+1TWALIEYsfcLyaHwhIO7CaZAkuFPnskDRE7qtI0kHIJQQDNXXAVr+BeW2NwH
-         +KYbCJtgvMA8EKj3ONMT7JKlys5BbVlxtallLcXs+a+EuREa2SheTg51hDIorQnTnneg
-         0GTw==
-X-Gm-Message-State: AOJu0YwOe8b6JyWiYId2iBLaC0Kk27ziJ0yJT/UPHpXSsKUdFBC2Idvq
-	9OY+mfjIJgpX14h7MSYVRXjC0e/Cup+4Bg==
-X-Google-Smtp-Source: AGHT+IGs1HqrEy2DEL+q/nFJ+phdL2twNYUvdkOc8CiGz+6jOZcCcqTN+g1HUF8LwqZoh4QMflRJGw==
-X-Received: by 2002:a05:6870:581f:b0:1e9:fb1e:8704 with SMTP id r31-20020a056870581f00b001e9fb1e8704mr4044002oap.21.1698434705965;
-        Fri, 27 Oct 2023 12:25:05 -0700 (PDT)
-Received: from fionn.redhat.com ([174.88.88.29])
-        by smtp.gmail.com with ESMTPSA id dk19-20020a056214093300b0066cfb9cc087sm856083qvb.134.2023.10.27.12.25.05
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 27 Oct 2023 12:25:05 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	Kate Carcia Poulin <kcarcia@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests: Remove remaining unnecessary texts after adding SPDX licenses
-Date: Fri, 27 Oct 2023 15:24:46 -0400
-Message-ID: <20231027192446.42936-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.41.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J1+GPsoz"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92B54CC
+	for <linux-rt-users@vger.kernel.org>; Mon, 30 Oct 2023 07:51:41 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698677500;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=iZM5Ir1agMVPmsp/0h/z8SE5MvN1kGhnLqtdaxL5v4U=;
+	b=J1+GPsozz9/OM8cy7eQjoKcLJcATv6x4lPNAgCf5yyvtEZAtQKjHTGg4gHCXYHrkdTXl2o
+	jmu6scbKFOk3aZz5W6xBTSnMhqdryjmaGiWfct7zPXFANQKftBVjlZep3W3+9CZz8wnl/a
+	RuajE0Gxh98Yl0uhl4Ww2nFmVPD6cHs=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-42-ZvuMTU3_O-aBrCNMZjNOXQ-1; Mon,
+ 30 Oct 2023 10:51:32 -0400
+X-MC-Unique: ZvuMTU3_O-aBrCNMZjNOXQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61BD61C01B2C;
+	Mon, 30 Oct 2023 14:51:31 +0000 (UTC)
+Received: from vschneid-thinkpadt14sgen2i.remote.csb (unknown [10.39.194.198])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0EA81492BE0;
+	Mon, 30 Oct 2023 14:51:28 +0000 (UTC)
+From: Valentin Schneider <vschneid@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Dietmar Eggemann <dietmar.eggemann@arm.com>,
+	Ingo Molnar <mingo@redhat.com>,
+	Juri Lelli <juri.lelli@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Vincent Guittot <vincent.guittot@linaro.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH] sched/fair: Make the BW replenish timer expire in hardirq context for PREEMPT_RT
+Date: Mon, 30 Oct 2023 15:51:04 +0100
+Message-ID: <20231030145104.4107573-1-vschneid@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -59,55 +54,64 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
 
-Remove remaining unnecessary texts after adding SPDX licenses
+Consider the following scenario under PREEMPT_RT:
+o A CFS task p0 gets throttled while holding read_lock(&lock)
+o A task p1 blocks on write_lock(&lock), making further readers enter the
+  slowpath
+o A ktimers or ksoftirqd task blocks on read_lock(&lock)
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+If the cfs_bandwidth.period_timer to replenish p0's runtime is enqueued on
+the same CPU as one where ktimers/ksoftirqd is blocked on read_lock(&lock),
+this creates a circular dependency.
+
+This has been observed to happen with:
+o fs/eventpoll.c::ep->lock
+o net/netlink/af_netlink.c::nl_table_lock (after hand-fixing the above)
+but can trigger with any rwlock that can be acquired in both process and
+softirq contexts.
+
+The linux-rt tree has had
+  1ea50f9636f0 ("softirq: Use a dedicated thread for timer wakeups.")
+which helped this scenario for non-rwlock locks by ensuring the throttled
+task would get PI'd to FIFO1 (ktimers' default priority). Unfortunately,
+rwlocks cannot sanely do PI as they allow multiple readers.
+
+Make the period_timer expire in hardirq context under PREEMPT_RT. The
+callback for this timer can end up doing a lot of work, but this is
+mitigated somewhat when using nohz_full / CPU isolation: the timers *are*
+pinned, but on the CPUs the taskgroups are created on, which is usually
+going to be HK CPUs.
+
+Link: https://lore.kernel.org/all/xhsmhttqvnall.mognet@vschneid.remote.csb/
+Signed-off-by: Valentin Schneider <vschneid@redhat.com>
 ---
- src/signaltest/signaltest.c   |  4 ----
- src/sigwaittest/sigwaittest.c | 14 --------------
- 2 files changed, 18 deletions(-)
+ kernel/sched/fair.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index 4737c253b1af..5412c50f7e17 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -5,10 +5,6 @@
-  *
-  * (C) 2007 Thomas Gleixner <tglx@linutronix.de>
-  *
-- * This program is free software; you can redistribute it and/or
-- * modify it under the terms of the GNU General Public License Version
-- * 2 as published by the Free Software Foundation;
-- *
-  */
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 8767988242ee3..15cf7de865a97 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -6236,7 +6236,7 @@ void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b, struct cfs_bandwidth *paren
+ 	cfs_b->hierarchical_quota = parent ? parent->hierarchical_quota : RUNTIME_INF;
  
- #include <fcntl.h>
-diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-index 818e3a8e680a..55855769c63b 100644
---- a/src/sigwaittest/sigwaittest.c
-+++ b/src/sigwaittest/sigwaittest.c
-@@ -5,20 +5,6 @@
-  *
-  * Copyright (C) 2009 Carsten Emde <C.Emde@osadl.org>
-  *
-- * This program is free software; you can redistribute it and/or modify
-- * it under the terms of the GNU General Public License as published by
-- * the Free Software Foundation either version 2 of the License, or
-- * (at your option) any later version.
-- *
-- * This program is distributed in the hope that it will be useful,
-- * but WITHOUT ANY WARRANTY; without even the implied warranty of
-- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-- * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-- * USA.
-  */
+ 	INIT_LIST_HEAD(&cfs_b->throttled_cfs_rq);
+-	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
++	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED_HARD);
+ 	cfs_b->period_timer.function = sched_cfs_period_timer;
  
- #include <stdio.h>
+ 	/* Add a random offset so that timers interleave */
+@@ -6263,7 +6263,7 @@ void start_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
+ 
+ 	cfs_b->period_active = 1;
+ 	hrtimer_forward_now(&cfs_b->period_timer, cfs_b->period);
+-	hrtimer_start_expires(&cfs_b->period_timer, HRTIMER_MODE_ABS_PINNED);
++	hrtimer_start_expires(&cfs_b->period_timer, HRTIMER_MODE_ABS_PINNED_HARD);
+ }
+ 
+ static void destroy_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
 -- 
 2.41.0
 
