@@ -1,52 +1,38 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 576011CF90
-	for <linux-rt-users@vger.kernel.org>; Thu,  2 Nov 2023 16:19:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C36931A585
+	for <linux-rt-users@vger.kernel.org>; Fri,  3 Nov 2023 15:04:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="W4tBgJ39";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="kqzWP+CB"
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E4D0513D;
-	Thu,  2 Nov 2023 09:19:52 -0700 (PDT)
-Date: Thu, 2 Nov 2023 17:19:49 +0100
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="VEKbimh/";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="JoPZsWTA"
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F9A91B2;
+	Fri,  3 Nov 2023 08:04:20 -0700 (PDT)
+Date: Fri, 3 Nov 2023 16:04:16 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1698941991;
+	s=2020; t=1699023857;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wvFTteVbImxdySo7jFzcYlYpzDRgsvn6yjCySuFzuTA=;
-	b=W4tBgJ39n+qAv+2rq/lBP9MtwEYtvfMqMMY5ZPBN6Ml1YrfSv8jqA3iBTY3pWUROgl2uk2
-	gBkcEXmhUy7OUo7QJNzo0GxSIK7vOWuU3oRxEtqZ9MYo62hrMs565r+7ALTpDG6137GXZQ
-	JMz18ogKSAEYdVecdAFXfx6emFN5W6Bzyljt5KYp7UvNsz2caQekcU6SSz/vzg83CkF/3i
-	y7UNTgZoRxExA3AGPXKeofTBUPe6vZolDA3vUkLbwjDhE3QU11FEu5NKeft/Pw0GgX0Qv5
-	SnaB2jSmF8HzAKHwVrTUfL47Af53eLQ4n1T4HQNwi60Th9C/NqPkgifkv1hGUw==
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=zw3qdAaPAqZS90DNMKf7YEZVCL6zjF1E8Lua1o2VnB4=;
+	b=VEKbimh/tSJMSsyHMfmFvBox5+ECnWsOWM9p/r7dTTImfhTu11KUE0ET3Ij9oit6B8Zrpn
+	ydBabE/+QwbRpN8CWM1AH19/nxq6/VzF8YU8DSIYZUN5KLq0N2aUJft6b3eyR/nhU8ElA/
+	5aF784S9ddvQ7xf3Ja4UWtWpRvV3/yo0GW4dIjkA8bsTlWXMPLPzPYHPI1+H7MNu8L1/9s
+	1DJLyJJGg7/FegppOIYVF2Go8cRptu1aN92xWLmM68X1QX9EhSkvYME2ztJ1jfZD9XkCf+
+	SjNIrcQ3Svb6szFXKEKkzFaYxcYQYgNRXoWDuafqQG+M5dUQZLigY4Ssums9aA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1698941991;
+	s=2020e; t=1699023857;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wvFTteVbImxdySo7jFzcYlYpzDRgsvn6yjCySuFzuTA=;
-	b=kqzWP+CBNF9w1Lcir2gCG+4QbYWBS0ORPIlD4oJyaKXzYzgn3OtC02M0sNlsF9OsPfN9LL
-	D3AYxz34xQfDWzDA==
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=zw3qdAaPAqZS90DNMKf7YEZVCL6zjF1E8Lua1o2VnB4=;
+	b=JoPZsWTAQAJGoMBzJJgw7YwAiYbMIdR/C93IIpb9+4rYlPm7mKr+iBQEX1bD3xkSrZZMkn
+	zMj1CnK2fQZ0o4BQ==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Valentin Schneider <vschneid@redhat.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Daniel Bristot de Oliveira <bristot@redhat.com>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Ingo Molnar <mingo@redhat.com>, Juri Lelli <juri.lelli@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: Re: [PATCH] sched/fair: Make the BW replenish timer expire in
- hardirq context for PREEMPT_RT
-Message-ID: <20231102161949.IdSqSK2E@linutronix.de>
-References: <20231030145104.4107573-1-vschneid@redhat.com>
- <20231031160120.GE15024@noisy.programming.kicks-ass.net>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.6-rt12
+Message-ID: <20231103150416.n8dAWMix@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -55,35 +41,56 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20231031160120.GE15024@noisy.programming.kicks-ass.net>
 
-On 2023-10-31 17:01:20 [+0100], Peter Zijlstra wrote:
-> On Mon, Oct 30, 2023 at 03:51:04PM +0100, Valentin Schneider wrote:
-> > task would get PI'd to FIFO1 (ktimers' default priority). Unfortunately,
-> > rwlocks cannot sanely do PI as they allow multiple readers.
-=E2=80=A6
+Dear RT folks!
 
-> I'm thinking working on that is saner than adding this O(n) cgroup loop
-> to hard-irq context. Hmm?
+I'm pleased to announce the v6.6-rt12 patch set. 
 
-I have plans to get rid of the softirq issue and the argument for "bad"
-or inefficient rwlocks is usually "get rid of rwlocks then". So=E2=80=A6
+Changes since v6.6-rt11:
 
-Then I looked at the patch and it only swapped the flag nothing else and
-this hardly works. So I looked at sched_cfs_period_timer():
-| static enum hrtimer_restart sched_cfs_period_timer(struct hrtimer *timer)
-| {
-=E2=80=A6
-|         raw_spin_lock_irqsave(&cfs_b->lock, flags);
-=E2=80=A6
-|         raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
-|=20
-|         return idle ? HRTIMER_NORESTART : HRTIMER_RESTART;
-|}
+  - Add an export back which was accidentally removed with PREEMPT_AUTO
+    resulting in a compile failure of kcsan_test if compiled as a
+    module. 
 
-Judging by this, the whole callback runs already with disabled
-interrupts. At least now it enabled interrupts if multiple callbacks are
-invoked=E2=80=A6
+Known issues
+     Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
+     hist" as trigger. It is not yet understood. The report is at
+	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
+
+The delta patch against v6.6-rt11 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/incr/patch-6.6-rt11-rt12.patch.xz
+
+You can get this release via the git tree at:
+
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.6-rt12
+
+The RT patch against v6.6 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patch-6.6-rt12.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patches-6.6-rt12.tar.xz
 
 Sebastian
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 21b50e61d0014..0110026914efb 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -8930,6 +8930,7 @@ static void __init preempt_dynamic_init(void)
+ 		WARN_ON_ONCE(preempt_dynamic_mode == preempt_dynamic_undefined); \
+ 		return preempt_dynamic_mode == preempt_dynamic_##mode;		 \
+ 	}									 \
++	EXPORT_SYMBOL_GPL(preempt_model_##mode)
+ 
+ PREEMPT_MODEL_ACCESSOR(none);
+ PREEMPT_MODEL_ACCESSOR(voluntary);
+diff --git a/localversion-rt b/localversion-rt
+index 05c35cb580779..6e44e540b927b 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt11
++-rt12
