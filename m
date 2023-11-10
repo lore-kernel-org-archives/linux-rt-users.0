@@ -1,313 +1,116 @@
 Received: from lindbergh.monkeyblade.net (lindbergh.monkeyblade.net [23.128.96.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BBD861D544
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Nov 2023 15:32:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8AED3588A
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Nov 2023 21:04:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="AVSJcxZ0";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NI6/hrxl"
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 562A73AE2F;
-	Fri, 10 Nov 2023 07:32:33 -0800 (PST)
-Date: Fri, 10 Nov 2023 16:32:29 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1699630350;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dz2ee/MC"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E992A93
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Nov 2023 13:04:16 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1699650256;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=5pONqvq00ZWF43iaVMB/aICHR3Gy9ZQ2cA4AU79+avw=;
-	b=AVSJcxZ0BIrak3EOz0DPbG025+17yvRHntHyW/MInhViNlBEyO9OaVnnxvs/zpkTI1krYe
-	UaJkaoTS3DKrJ55tTLZN9Fok/yfr7lAEafLpn/zTEeF7tjiR5BSV48XN2KM9rnqoRakld7
-	22cXz0LIroJwob+HpxgfgyH5EA1BYmcBzU4xlaVu+o313u06Mjy9xAPq0oqnF3T15XCzII
-	ajh2oPOCKItoo9qL6TBPyTlF7QgvZwZVY/JOD1ZoHHxTjno0rICV2vFoi8upbBRQhLsRNt
-	kGHEls9NLSzw2Qt2mbEmMrDmqQzrIEv2ETJGM/T5DfKsCMIy7HRIjObPdU2syw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1699630350;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=5pONqvq00ZWF43iaVMB/aICHR3Gy9ZQ2cA4AU79+avw=;
-	b=NI6/hrxldYS+udzE50hjCw5dwcgEOJirkhTXJPk7TpX4ZFMAL8Yds/BDybwfGA0F9nsjhw
-	r6iYfZGlUbapU5Aw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.6-rt14
-Message-ID: <20231110153229.9CLWVN0E@linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9pK2WeJE/P4eNb2lOm/+iFiXlEP9adU28JudIZ4Mq3A=;
+	b=dz2ee/MCQCiaHb4dofIaOZSrdSeiv9yjIYV0zabnclaU1bak7e2s28op3SagM7M+GrEA2C
+	IUWCUWM+a3KRyaNC1hQu1HORSvj+vkwr6oDxb+Nhkza3chV5o8U7rV+ADIu+ofh9YAJQMg
+	ssNfLjsXxe+dV1KR2kDIka86QIkIJUo=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-80-ZjJbwCkiMEeUXCh-eXYE2w-1; Fri, 10 Nov 2023 16:04:14 -0500
+X-MC-Unique: ZjJbwCkiMEeUXCh-eXYE2w-1
+Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-77892f2ee51so252309985a.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Nov 2023 13:04:14 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699650254; x=1700255054;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=9pK2WeJE/P4eNb2lOm/+iFiXlEP9adU28JudIZ4Mq3A=;
+        b=XXHF3N8PC5hzzWq1ZtZ8b32DRC4VpzGAqrsrUKf7yZsLM96XEhwgdDEKYH299zgggy
+         VqBcG1SqM0FLPWadkXCsIgE5DDtwh3+PEqVIILOwrruS8ik0D57Dd2oezsEifPN06zVt
+         ConZd8Ypgd1Uhc1QyaAbqCSWS7rX0q1rD+FmeFjWPOqKlztXg9Twslpi19/HEyZqeWS7
+         gJMk6T4MgwQ9aRUGRJH9OSlRjo99zczPpUhsylxjNM9Gv5JOim9hjhD9EmJxz/21QoEB
+         52ILLaW9l5z3173aM7iuqoxaa1937hdwJDrn+uxIM/FiwvdGDXYh+DKCQ0iDquKzZ0lQ
+         KcOA==
+X-Gm-Message-State: AOJu0Yz3z2AhgylhhU3FRD7Jru0tOsqF1BMYf6SJTGRg10Cw6AWV6+Ez
+	Hv5s1DV+azPlcO6ScZrg8aCK9Ni+FTYzMiCj2zu6ij8/PZIM72Xo10H67roNHBALOUmkN5vw+91
+	t87jvNlAUAMMSrJTmIkgqayllgBc=
+X-Received: by 2002:a05:620a:2682:b0:76c:af30:3281 with SMTP id c2-20020a05620a268200b0076caf303281mr442825qkp.10.1699650254084;
+        Fri, 10 Nov 2023 13:04:14 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEbAKz8ahgmxEGDZe4mYyxrzrfc7FYIBTw9vBsW9QcbaASAcEqhOX8ZKKXV3blkHr+vSCeWzQ==
+X-Received: by 2002:a05:620a:2682:b0:76c:af30:3281 with SMTP id c2-20020a05620a268200b0076caf303281mr442805qkp.10.1699650253788;
+        Fri, 10 Nov 2023 13:04:13 -0800 (PST)
+Received: from fionn ([174.88.88.29])
+        by smtp.gmail.com with ESMTPSA id tn12-20020a05620a3c0c00b0076cb3690ae7sm85750qkn.68.2023.11.10.13.04.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 10 Nov 2023 13:04:13 -0800 (PST)
+Date: Fri, 10 Nov 2023 16:03:40 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+cc: RT <linux-rt-users@vger.kernel.org>, Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] rteval: Change the default kernel for kcompile to
+ linux-6.6.1
+In-Reply-To: <20231110102041.EN_qugjR@linutronix.de>
+Message-ID: <3cec72ea-5997-6d25-cfbf-fe23b86b265e@redhat.com>
+References: <20231109204554.98770-1-jkacur@redhat.com> <20231110102041.EN_qugjR@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 
-Dear RT folks!
 
-I'm pleased to announce the v6.6-rt14 patch set. 
 
-Changes since v6.6-rt13:
+On Fri, 10 Nov 2023, Sebastian Andrzej Siewior wrote:
 
-  - The kernel test robot reported a compile warning in the !PRINTK
-    case. Patch by John Ogness.
+> On 2023-11-09 15:45:54 [-0500], John Kacur wrote:
+> > diff --git a/Makefile b/Makefile
+> > index b73e8c13f3e5..14f74e087eff 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -18,7 +18,7 @@ PREFIX  :=      /usr
+> >  DATADIR	:=	$(DESTDIR)/$(PREFIX)/share
+> >  LOADDIR	:=	loadsource
+> >  
+> > -KLOAD	:=	$(LOADDIR)/linux-6.1.8.tar.xz
+> > +KLOAD	:=	$(LOADDIR)/linux-6.6.1.tar.xz
+> >  BLOAD	:=	$(LOADDIR)/dbench-4.0.tar.gz
+> >  LOADS	:=	$(KLOAD) $(BLOAD)
+> 
+> Instead of doing this every now and then you could first limit it to one
+> place and then build the remaining version coding from that point.
+> Once that works, step two would be to grab the current version number
+> from
+> 	https://www.kernel.org/finger_banner
+> 
+> \o/
+> 
+> Sebastian
+> 
+> 
 
-  - The PREEMPT_RT patch can be enabled on RiscV. It has been reported
-    by a few people that it works without any warnings. Tests by a wider 
-    user base is appreciated.
+We have to use a default kernel version that we know works with our 
+current tool chain. Usually when I update the version it's because the 
+older kernel doesn't compile on the latest distribution. For that reason 
+though, we also can't just fetch the latest and greatest that we haven't 
+tested.
 
-Known issues
-     Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
-     hist" as trigger. It is not yet understood. The report is at
-	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
+We have added tools in rteval to make fetching the kernel easier, 
+especially for upstream.
 
-The delta patch against v6.6-rt13 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/incr/patch-6.6-rt13-rt14.patch.xz
+rteval -S [kernel-version]
 
-You can get this release via the git tree at:
+will either fetch the kernel-version, or if that is omitted, it will fetch 
+the default-kernel version for rteval from kernel.org
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.6-rt14
+I guess what we're lacking is an option to have kcompile use an indicated 
+kernel-version. This could be useful also for testing the version with 
+rteval.
 
-The RT patch against v6.6 can be found here:
+John
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patch-6.6-rt14.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patches-6.6-rt14.tar.xz
-
-Sebastian
-
-diff --git a/arch/riscv/Kconfig b/arch/riscv/Kconfig
-index 9c48fecc67191..ecf9db99a9272 100644
---- a/arch/riscv/Kconfig
-+++ b/arch/riscv/Kconfig
-@@ -48,6 +48,7 @@ config RISCV
- 	select ARCH_SUPPORTS_HUGETLBFS if MMU
- 	select ARCH_SUPPORTS_PAGE_TABLE_CHECK if MMU
- 	select ARCH_SUPPORTS_PER_VMA_LOCK if MMU
-+	select ARCH_SUPPORTS_RT
- 	select ARCH_USE_MEMTEST
- 	select ARCH_USE_QUEUED_RWLOCKS
- 	select ARCH_USES_CFI_TRAPS if CFI_CLANG
-@@ -135,6 +136,7 @@ config RISCV
- 	select HAVE_PERF_USER_STACK_DUMP
- 	select HAVE_POSIX_CPU_TIMERS_TASK_WORK
- 	select HAVE_PREEMPT_DYNAMIC_KEY if !XIP_KERNEL
-+	select HAVE_PREEMPT_AUTO
- 	select HAVE_REGS_AND_STACK_ACCESS_API
- 	select HAVE_RETHOOK if !XIP_KERNEL
- 	select HAVE_RSEQ
-diff --git a/arch/riscv/include/asm/cpufeature.h b/arch/riscv/include/asm/cpufeature.h
-index d0345bd659c94..23fed53b88157 100644
---- a/arch/riscv/include/asm/cpufeature.h
-+++ b/arch/riscv/include/asm/cpufeature.h
-@@ -30,6 +30,4 @@ DECLARE_PER_CPU(long, misaligned_access_speed);
- /* Per-cpu ISA extensions. */
- extern struct riscv_isainfo hart_isa[NR_CPUS];
- 
--void check_unaligned_access(int cpu);
--
- #endif
-diff --git a/arch/riscv/include/asm/thread_info.h b/arch/riscv/include/asm/thread_info.h
-index 1833beb00489c..c5aebcdafd7b2 100644
---- a/arch/riscv/include/asm/thread_info.h
-+++ b/arch/riscv/include/asm/thread_info.h
-@@ -85,6 +85,7 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src);
-  * - pending work-to-be-done flags are in lowest half-word
-  * - other flags in upper half-word(s)
-  */
-+#define TIF_ARCH_RESCHED_LAZY	0	/* Lazy rescheduling */
- #define TIF_NOTIFY_RESUME	1	/* callback before returning to user */
- #define TIF_SIGPENDING		2	/* signal pending */
- #define TIF_NEED_RESCHED	3	/* rescheduling necessary */
-@@ -99,6 +100,7 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src);
- #define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
- #define _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
- #define _TIF_UPROBE		(1 << TIF_UPROBE)
-+#define _TIF_ARCH_RESCHED_LAZY	(1 << TIF_ARCH_RESCHED_LAZY)
- 
- #define _TIF_WORK_MASK \
- 	(_TIF_NOTIFY_RESUME | _TIF_SIGPENDING | _TIF_NEED_RESCHED | \
-diff --git a/arch/riscv/kernel/cpufeature.c b/arch/riscv/kernel/cpufeature.c
-index 1cfbba65d11ae..07c7baac014db 100644
---- a/arch/riscv/kernel/cpufeature.c
-+++ b/arch/riscv/kernel/cpufeature.c
-@@ -8,6 +8,7 @@
- 
- #include <linux/acpi.h>
- #include <linux/bitmap.h>
-+#include <linux/cpuhotplug.h>
- #include <linux/ctype.h>
- #include <linux/log2.h>
- #include <linux/memory.h>
-@@ -29,6 +30,7 @@
- 
- #define MISALIGNED_ACCESS_JIFFIES_LG2 1
- #define MISALIGNED_BUFFER_SIZE 0x4000
-+#define MISALIGNED_BUFFER_ORDER get_order(MISALIGNED_BUFFER_SIZE)
- #define MISALIGNED_COPY_SIZE ((MISALIGNED_BUFFER_SIZE / 2) - 0x80)
- 
- unsigned long elf_hwcap __read_mostly;
-@@ -556,24 +558,19 @@ unsigned long riscv_get_elf_hwcap(void)
- 	return hwcap;
- }
- 
--void check_unaligned_access(int cpu)
-+static int check_unaligned_access(void *param)
- {
-+	int cpu = smp_processor_id();
- 	u64 start_cycles, end_cycles;
- 	u64 word_cycles;
- 	u64 byte_cycles;
- 	int ratio;
- 	unsigned long start_jiffies, now;
--	struct page *page;
-+	struct page *page = param;
- 	void *dst;
- 	void *src;
- 	long speed = RISCV_HWPROBE_MISALIGNED_SLOW;
- 
--	page = alloc_pages(GFP_NOWAIT, get_order(MISALIGNED_BUFFER_SIZE));
--	if (!page) {
--		pr_warn("Can't alloc pages to measure memcpy performance");
--		return;
--	}
--
- 	/* Make an unaligned destination buffer. */
- 	dst = (void *)((unsigned long)page_address(page) | 0x1);
- 	/* Unalign src as well, but differently (off by 1 + 2 = 3). */
-@@ -626,7 +623,7 @@ void check_unaligned_access(int cpu)
- 		pr_warn("cpu%d: rdtime lacks granularity needed to measure unaligned access speed\n",
- 			cpu);
- 
--		goto out;
-+		return 0;
- 	}
- 
- 	if (word_cycles < byte_cycles)
-@@ -640,18 +637,83 @@ void check_unaligned_access(int cpu)
- 		(speed == RISCV_HWPROBE_MISALIGNED_FAST) ? "fast" : "slow");
- 
- 	per_cpu(misaligned_access_speed, cpu) = speed;
--
--out:
--	__free_pages(page, get_order(MISALIGNED_BUFFER_SIZE));
--}
--
--static int check_unaligned_access_boot_cpu(void)
--{
--	check_unaligned_access(0);
- 	return 0;
- }
- 
--arch_initcall(check_unaligned_access_boot_cpu);
-+static void check_unaligned_access_nonboot_cpu(void *param)
-+{
-+	unsigned int cpu = smp_processor_id();
-+	struct page **pages = param;
-+
-+	if (smp_processor_id() != 0)
-+		check_unaligned_access(pages[cpu]);
-+}
-+
-+static int riscv_online_cpu(unsigned int cpu)
-+{
-+	static struct page *buf;
-+
-+	/* We are already set since the last check */
-+	if (per_cpu(misaligned_access_speed, cpu) != RISCV_HWPROBE_MISALIGNED_UNKNOWN)
-+		return 0;
-+
-+	buf = alloc_pages(GFP_KERNEL, MISALIGNED_BUFFER_ORDER);
-+	if (!buf) {
-+		pr_warn("Allocation failure, not measuring misaligned performance\n");
-+		return -ENOMEM;
-+	}
-+
-+	check_unaligned_access(buf);
-+	__free_pages(buf, MISALIGNED_BUFFER_ORDER);
-+	return 0;
-+}
-+
-+/* Measure unaligned access on all CPUs present at boot in parallel. */
-+static int check_unaligned_access_all_cpus(void)
-+{
-+	unsigned int cpu;
-+	unsigned int cpu_count = num_possible_cpus();
-+	struct page **bufs = kzalloc(cpu_count * sizeof(struct page *),
-+				     GFP_KERNEL);
-+
-+	if (!bufs) {
-+		pr_warn("Allocation failure, not measuring misaligned performance\n");
-+		return 0;
-+	}
-+
-+	/*
-+	 * Allocate separate buffers for each CPU so there's no fighting over
-+	 * cache lines.
-+	 */
-+	for_each_cpu(cpu, cpu_online_mask) {
-+		bufs[cpu] = alloc_pages(GFP_KERNEL, MISALIGNED_BUFFER_ORDER);
-+		if (!bufs[cpu]) {
-+			pr_warn("Allocation failure, not measuring misaligned performance\n");
-+			goto out;
-+		}
-+	}
-+
-+	/* Check everybody except 0, who stays behind to tend jiffies. */
-+	on_each_cpu(check_unaligned_access_nonboot_cpu, bufs, 1);
-+
-+	/* Check core 0. */
-+	smp_call_on_cpu(0, check_unaligned_access, bufs[0], true);
-+
-+	/* Setup hotplug callback for any new CPUs that come online. */
-+	cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "riscv:online",
-+				  riscv_online_cpu, NULL);
-+
-+out:
-+	for_each_cpu(cpu, cpu_online_mask) {
-+		if (bufs[cpu])
-+			__free_pages(bufs[cpu], MISALIGNED_BUFFER_ORDER);
-+	}
-+
-+	kfree(bufs);
-+	return 0;
-+}
-+
-+arch_initcall(check_unaligned_access_all_cpus);
- 
- #ifdef CONFIG_RISCV_ALTERNATIVE
- /*
-diff --git a/arch/riscv/kernel/smpboot.c b/arch/riscv/kernel/smpboot.c
-index 1b8da4e40a4d6..2cb5e651412cb 100644
---- a/arch/riscv/kernel/smpboot.c
-+++ b/arch/riscv/kernel/smpboot.c
-@@ -246,7 +246,6 @@ asmlinkage __visible void smp_callin(void)
- 
- 	numa_add_cpu(curr_cpuid);
- 	set_cpu_online(curr_cpuid, 1);
--	check_unaligned_access(curr_cpuid);
- 
- 	if (has_vector()) {
- 		if (riscv_v_setup_vsize())
-diff --git a/kernel/printk/internal.h b/kernel/printk/internal.h
-index db8329091bb82..a3ae0710346cd 100644
---- a/kernel/printk/internal.h
-+++ b/kernel/printk/internal.h
-@@ -178,7 +178,7 @@ static inline void nbcon_seq_force(struct console *con, u64 seq) { }
- static inline bool nbcon_alloc(struct console *con) { return false; }
- static inline void nbcon_init(struct console *con) { }
- static inline void nbcon_free(struct console *con) { }
--enum nbcon_prio nbcon_get_default_prio(void) { return NBCON_PRIO_NONE; }
-+static inline enum nbcon_prio nbcon_get_default_prio(void) { return NBCON_PRIO_NONE; }
- static inline void nbcon_atomic_flush_all(void) { }
- static bool nbcon_atomic_emit_next_record(struct console *con) { return false; }
- 
-diff --git a/localversion-rt b/localversion-rt
-index 9f7d0bdbffb18..08b3e75841adc 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt13
-+-rt14
