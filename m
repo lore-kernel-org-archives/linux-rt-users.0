@@ -1,87 +1,66 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KWxD8KZA"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E6533BB
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 Nov 2023 17:23:52 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="REtkRTWT"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 272EFBD
+	for <linux-rt-users@vger.kernel.org>; Wed, 22 Nov 2023 01:42:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700616232;
+	s=mimecast20190719; t=1700646130;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=IQdeSSYHI2sO+7xQTkbmGKh8goljY3WBX8zI0hcvDo0=;
-	b=KWxD8KZAiqHL/ErFrwxj2aqhR4fESdOn7xaqhOZCdaNvmoWaiZ+0XJ5nJF/kCXQXry2Zs/
-	p1YPjAoCJa0EtH6Fnylqk8E/z6AoH7dEW2O+4Mxg+r9gRbkPcDlL62kYkm0NL6ZEIDw+0t
-	AqUlJzlhF3szOgdb/iA3+ga02PVpUyY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YD2HIfXr37MdyhlBF+IPzSWEmco8f7sGmYRWr8IBCHk=;
+	b=REtkRTWTJB8h+j4tmpwqkkf+XqkKJJKPhfITjm7OynfZtfG5See6TYTMdjrXYNONy2DsoM
+	jf8NOU8on0/gjt17KyufLREaTw9hWzr1oCRx2AWjwZ4Z1z+5wnbdHJpo/PPWdVww/EORBk
+	hKtC95vziLW3wtXuaENPdIcxPYSYrrs=
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
+ [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-185-TceuUw7jPneGJNJQ7_-txw-1; Tue, 21 Nov 2023 20:23:49 -0500
-X-MC-Unique: TceuUw7jPneGJNJQ7_-txw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B5C40185A781;
-	Wed, 22 Nov 2023 01:23:48 +0000 (UTC)
-Received: from localhost (unknown [10.22.8.167])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2E75640C6EBA;
-	Wed, 22 Nov 2023 01:23:48 +0000 (UTC)
-Date: Tue, 21 Nov 2023 22:23:47 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 4.14.330-rt157
-Message-ID: <ZV1YI84M0ynM8Eg9@uudg.org>
+ us-mta-584-ku0ieFNZOIerl2XHNoaFRA-1; Wed, 22 Nov 2023 04:42:09 -0500
+X-MC-Unique: ku0ieFNZOIerl2XHNoaFRA-1
+Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-a029b93e484so95561166b.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 22 Nov 2023 01:42:08 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1700646127; x=1701250927;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=YD2HIfXr37MdyhlBF+IPzSWEmco8f7sGmYRWr8IBCHk=;
+        b=JpRTUUgWd+RzT9rOBUV9RoILSdVK96P+mSbi7O0J62GH1HMuAxyBPNdyPKgYZsGHEy
+         odsb5vDH6Rz/LY4AlxwvXaAl9WEXbvw4J/0Awx7K1Ke4FhRljPMQb3SdtWpbetpHrO9Y
+         AqXL988KZVf/CtcEmfYAMWCXL42uOyiBIsX5bvbvci3kFyawJPW74jCd+rWBAkyc8/cB
+         DgsHfrslXYPD9/4e3yiDubYJ6VmKEtWD3sSTdntzqR9+ZTdUoAUisqmSmYrERolX2cRF
+         /R9+fSJzlYPigeS9y6/gmg9JP8jbr1JyrdZ2ppg7te/WfqdaFYcItco0DNnyLx79LBTS
+         rnzQ==
+X-Gm-Message-State: AOJu0Yz9iqO2DNBHeB0IJhDoBAJtOon1rOq035FNKQ7C938WDMfu+MFi
+	jVevZN6Vs/EsFLP2TA7GMCOyPphe01O79WdSADovaEEYOEDQt+ZYVm6oyfw7MDmpSGyGNM/o9ed
+	kxkn715BvIiMcebn+3/sH4py+kY3a58JEidASWIXAlbbhZrGUm3kVbw==
+X-Received: by 2002:a17:906:c3a4:b0:a03:9671:14d5 with SMTP id t36-20020a170906c3a400b00a03967114d5mr1185917ejz.32.1700646127355;
+        Wed, 22 Nov 2023 01:42:07 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEMjT5GLB9WLaONvEIogYI/7gi1srQBXhIMvL8cK18KPCJAvGqZuWM88EeCwnSWsCjPz8egkCIbEel71yoJMFA=
+X-Received: by 2002:a17:906:c3a4:b0:a03:9671:14d5 with SMTP id
+ t36-20020a170906c3a400b00a03967114d5mr1185899ejz.32.1700646127011; Wed, 22
+ Nov 2023 01:42:07 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+References: <20231114121808.154654-1-tglozar@redhat.com> <20231114121808.154654-4-tglozar@redhat.com>
+In-Reply-To: <20231114121808.154654-4-tglozar@redhat.com>
+From: Tomas Glozar <tglozar@redhat.com>
+Date: Wed, 22 Nov 2023 10:41:56 +0100
+Message-ID: <CAP4=nvQqM+O3UXuHa0bG2FHMFwrbKG9-bfouewT5vvTj67pT1Q@mail.gmail.com>
+Subject: Re: [PATCH 3/3] rteval: Convert CpuList class to a module
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com
+Content-Type: text/plain; charset="UTF-8"
 
-Hello RT-list!
+I discovered that I missed some calls to expand_cpulist and
+compress_cpulist in rteval-cmd, making rteval fail when run with
+--measurement-cpulist.
 
-I'm pleased to announce the 4.14.330-rt157 stable release.
+I will send a v2 with that fixed.
 
-This release is just an update to the new stable 4.14.330
-version and no RT changes have been made.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: 7c25b98670e2f172f2813e18a39c02bf13b9849e
-
-Or to build 4.14.330-rt157 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.330.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.330-rt157.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
+Tomas
 
