@@ -1,151 +1,88 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="e9jj7Qax"
-Received: from mail-ed1-x52f.google.com (mail-ed1-x52f.google.com [IPv6:2a00:1450:4864:20::52f])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BB3D2BE
-	for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2023 09:56:05 -0800 (PST)
-Received: by mail-ed1-x52f.google.com with SMTP id 4fb4d7f45d1cf-54744e66d27so515a12.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2023 09:56:05 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1700502964; x=1701107764; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=xLJOaSiMX4j029aOHc7oApRw+KVD1nkO9hjnIeQA3ws=;
-        b=e9jj7QaxGuoKYKJ/edph7ZXHgkEd1MqMMRfIhh+50RWMP30+7dG23wkhLc0gI3gL2j
-         bRlLvI7ubsRmP3mOJqGkZ9eQyrtjaQWU8UwawZbBxvI2gn1iymZOGxrrWTlWHuU0ycv5
-         Wkm+UYSGSlB5KqYbbsUupnF5M+wySXNuYLTM3/tZj0B21dqGBdrsllA90Bv/6dKmSPvG
-         Me6nNg2X+D65Yjm7J0ksXPWJCOqobHtBI2JaC/u8MGXHV9sC8OWU8+zrvs5dej47ibxr
-         RkXyMFOFAt8EHPCJeoJb7hBoi6P1I5PhOqrPJC771//Y6dlAMI/Ng33rtW/z1Xn0EdEu
-         KNXQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1700502964; x=1701107764;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=xLJOaSiMX4j029aOHc7oApRw+KVD1nkO9hjnIeQA3ws=;
-        b=N+W1kn5KNqLImc7JnuL29AnGtc/c1fbSx2jtjnU/CdVbYn8VQSokZyb5sI9sQZqZAg
-         mgWGu2bQQ3jDxhw5t7w/4tibZXGJk6lNldJGfCiCjWoK4njbZsx/psX+OkJbYoQh1DAx
-         tEejzqWhLILnVO9q1+0kBuKiSd+pU3+Yw9nsxZUBQ5Bl2C9uUihpSwsAf6hB4tT1DszN
-         XnHjKhgUDsiIMB+gVFRCYExYkFdPHEk+WRLvyO4llNeD6ywC0A1500SIrOSlwMw9nhho
-         skTTihBNGLTDgupVe0xFMkKNeOV5OiUxF07Q4MI+jBsQYiaKT0ZEZlh1mHhtqgNrgXVy
-         uLGw==
-X-Gm-Message-State: AOJu0YyvyOTNjxXwcK7dzCzvfvpN6lerPzQK23n88kN0DOFnQNX0004p
-	7bLleZRG3BOMtxQvRzZGUj7d1ChzKZf1ZG5nJSkqyw==
-X-Google-Smtp-Source: AGHT+IGIb/35Hbinv4Qtgi95bh0B0EBvf1zLhZKPE3sBN4r4pQW5rheUbkcq+eL5EJQgnl8zIDYfaHDK3f1/wJQXPPw=
-X-Received: by 2002:a05:6402:3784:b0:544:24a8:ebd with SMTP id
- et4-20020a056402378400b0054424a80ebdmr272603edb.4.1700502963990; Mon, 20 Nov
- 2023 09:56:03 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DhZxIzTb"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BA6421BC
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 Nov 2023 17:01:29 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1700614889;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=/FxUcstQgrYUJ8g8gi/zeZbuKlDUSNBAqxK37Zwps/0=;
+	b=DhZxIzTbL5BgT6FBtl/PsqrgCzwhpOCR611y2qKUwiu/ETrVjxsiOlLidOTAuDHJxaUpmC
+	MpvIHqNtd2NI4Ii2f1DuFq6XbgWVh82puls1+KgcKwDj+KORIcL8sbApYirfiqz08FtMVL
+	8kbaAk1Aeac/EYt1qbPZrgER+yNdaRY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-582-Q127aqWFMH-YmbjCsyPiZA-1; Tue, 21 Nov 2023 20:01:25 -0500
+X-MC-Unique: Q127aqWFMH-YmbjCsyPiZA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1395C185A780;
+	Wed, 22 Nov 2023 01:01:25 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.167])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 308831121306;
+	Wed, 22 Nov 2023 01:01:24 +0000 (UTC)
+Date: Tue, 21 Nov 2023 22:01:23 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.201-rt98
+Message-ID: <ZV1S4yDcPKwj5_N1@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20231115210509.481514-1-vschneid@redhat.com> <20231115210509.481514-2-vschneid@redhat.com>
-In-Reply-To: <20231115210509.481514-2-vschneid@redhat.com>
-From: Eric Dumazet <edumazet@google.com>
-Date: Mon, 20 Nov 2023 18:55:50 +0100
-Message-ID: <CANn89iJPxrXi35=_OJqLsJjeNU9b8EFb_rk+EEMVCMiAOd2=5A@mail.gmail.com>
-Subject: Re: [PATCH v2 1/2] tcp/dcpp: Un-pin tw_timer
-To: Valentin Schneider <vschneid@redhat.com>
-Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, David Ahern <dsahern@kernel.org>, 
-	Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar <tglozar@redhat.com>, 
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Thomas Gleixner <tglx@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
 
-On Wed, Nov 15, 2023 at 10:05=E2=80=AFPM Valentin Schneider <vschneid@redha=
-t.com> wrote:
->
-> The TCP timewait timer is proving to be problematic for setups where sche=
-duler
-> CPU isolation is achieved at runtime via cpusets (as opposed to staticall=
-y via
-> isolcpus=3Ddomains).
->
-> What happens there is a CPU goes through tcp_time_wait(), arming the time=
-_wait
-> timer, then gets isolated. TCP_TIMEWAIT_LEN later, the timer fires, causi=
-ng
-> interference for the now-isolated CPU. This is conceptually similar to th=
-e issue
-> described in
->   e02b93124855 ("workqueue: Unbind kworkers before sending them to exit()=
-")
->
-> Keep softirqs disabled, but make the timer un-pinned and arm it *after* t=
-he
-> hashdance.
->
-> This introduces the following (non-fatal) race:
->
->   CPU0                        CPU1
->     allocates a tw
->     insert it in hash table
->                                 finds the TW and removes it
->                                 (timer cancel does nothing)
->     arms a TW timer, lasting
->
-> This partially reverts
->   ed2e92394589 ("tcp/dccp: fix timewait races in timer handling")
-> and
->   ec94c2696f0b ("tcp/dccp: avoid one atomic operation for timewait hashda=
-nce")
->
-> This also reinstores a comment from
->   ec94c2696f0b ("tcp/dccp: avoid one atomic operation for timewait hashda=
-nce")
-> as inet_twsk_hashdance() had a "Step 1" and "Step 3" comment, but the "St=
-ep
-> 2" had gone missing.
->
-> Link: https://lore.kernel.org/all/ZPhpfMjSiHVjQkTk@localhost.localdomain/
-> Signed-off-by: Valentin Schneider <vschneid@redhat.com>
-> ---
->  net/dccp/minisocks.c          | 16 +++++++---------
->  net/ipv4/inet_timewait_sock.c | 20 +++++++++++++++-----
->  net/ipv4/tcp_minisocks.c      | 16 +++++++---------
->  3 files changed, 29 insertions(+), 23 deletions(-)
->
-> diff --git a/net/dccp/minisocks.c b/net/dccp/minisocks.c
-> index 64d805b27adde..2f0fad4255e36 100644
-> --- a/net/dccp/minisocks.c
-> +++ b/net/dccp/minisocks.c
-> @@ -53,16 +53,14 @@ void dccp_time_wait(struct sock *sk, int state, int t=
-imeo)
->                 if (state =3D=3D DCCP_TIME_WAIT)
->                         timeo =3D DCCP_TIMEWAIT_LEN;
->
-> -               /* tw_timer is pinned, so we need to make sure BH are dis=
-abled
-> -                * in following section, otherwise timer handler could ru=
-n before
-> -                * we complete the initialization.
-> -                */
-> -               local_bh_disable();
-> -               inet_twsk_schedule(tw, timeo);
-> -               /* Linkage updates.
-> -                * Note that access to tw after this point is illegal.
-> -                */
-> +              local_bh_disable();
-> +
-> +               // Linkage updates
->                 inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
-> +               inet_twsk_schedule(tw, timeo);
+Hello RT-list!
 
-We could arm a timer there, while another thread/cpu found the TW in
-the ehash table.
+I'm pleased to announce the 5.10.201-rt98 stable release.
 
+This release is just an update to the new stable 5.10.201
+version and no RT changes have been made.
 
+You can get this release via the git tree at:
 
-> +               // Access to tw after this point is illegal.
-> +               inet_twsk_put(tw);
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-This would eventually call inet_twsk_free() while the timer is armed.
+  branch: v5.10-rt
+  Head SHA1: 3a93f0a0d49dd0db4c6876ca9a7369350e64320e
 
-I think more work is needed.
+Or to build 5.10.201-rt98 directly, the following patches should be applied:
 
-Perhaps make sure that a live timer owns a reference on tw->tw_refcnt
-(This is not the case atm)
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.201.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.201-rt98.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
