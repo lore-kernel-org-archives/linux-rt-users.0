@@ -1,160 +1,137 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Cy0JV52J"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3F47FA3
-	for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:21:26 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700756485;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wspGvWvjSaUYwRwuRXVEd/03EhWXlKqTevCRJ0Mh7bE=;
-	b=Cy0JV52JQ/GvLARCjhZbBYWooYX/APE0uaxeRHOxc+K61M2QSxP8aA1rV+7GSfXKGTz7Tz
-	ni/xtFakcDmzpMZj86AqV9FyDKaBJiZNTJ4PcvXCpLW+4AhzXHPgbMXcvWVmNnpDZrsc3z
-	4W0a6AZBhTv/ApiBJiJRoa3XPDsR7Z4=
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-561-EJxYhtpaN0mj10NGoT9o4w-1; Thu, 23 Nov 2023 11:21:24 -0500
-X-MC-Unique: EJxYhtpaN0mj10NGoT9o4w-1
-Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6757f3d7911so9936316d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:21:24 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="pTAB8MJV"
+Received: from mail-ed1-x52c.google.com (mail-ed1-x52c.google.com [IPv6:2a00:1450:4864:20::52c])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43D0C19D
+	for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:32:26 -0800 (PST)
+Received: by mail-ed1-x52c.google.com with SMTP id 4fb4d7f45d1cf-54744e66d27so15055a12.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:32:26 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1700757145; x=1701361945; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=kHnx14cr1yCK8qle9tu2EE/pgUOBSdUP8QNopUBV1ok=;
+        b=pTAB8MJVLfCdKrBFt3EDg5XJN+BVkaCDpdEBi6MO4zb45FMBKy+MXcjfoRdWcpYcB6
+         9kHJ+ZHf/sBinz8UeEqoBleBmmzneFnTJcRxBtYx9Ht34zhCroTZoVgHibgyjrlTwIKB
+         zQgsjxRdrFZFF/wBeDXXhhjpmDbxzrzA+Ln1VPP+hs5VAmbzU3BXaMCxpTLHYRcgtZRU
+         NiWEo4aRf/qHUx3C/JXxXEyRfZI7C4mNIi0PnFpXhXxikU6xF2QdTy7ZJlFnPSHCHVJG
+         0+bhYEUmdICIRUuhX0dJr0GpDqRv097OgbWFkGy55fOOBL4zzJlMS7CSifvzSy+ZVUl7
+         m4hg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1700756483; x=1701361283;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=wspGvWvjSaUYwRwuRXVEd/03EhWXlKqTevCRJ0Mh7bE=;
-        b=heYogF4/ZmBfVorMJZbtJbmMceUFy2A3dOZmLzXD5RjaE5L3s2eQycmbdGJGLZjohh
-         1lINRnkfMrcHtVjGk5rxKP8BkqiRnHKUXq2tqS2X07mpzjoEPQlbnKzmC77kDexmeUv5
-         wR5FHITtwdmnj3psnVmvHw6waEH5791s8jEx1/oCaWp0CMwTQI4Ke7a3z6TcpapVycu3
-         J7WZLgy0800Q9OdOG4J//tNvgwUDubNJ1sD+lDdP2umxfHT1rc6g0lijcRU6dtxcLE2w
-         j4hsFSywKc42bJ09LqX/bOhIu8UEZXD5D9HPdV/b2vD1lEp1dlmXYzaI1ukF2YeB5u0O
-         IcWA==
-X-Gm-Message-State: AOJu0YwvV1DBM4PH0rKhP2JlQbTAqs9Up7rRDKXn8IIZlFZ9IT/bsVrZ
-	hvFxVKBb0B4FKAvX6XxmYQyYw2B3dH1D/oPt/ZCn1XP59gwzoM79D741en8BTXTrkiGQDJXwQyo
-	w4PldYQWyG4d2+y+vke+V/SJoI5N23PJWoYo=
-X-Received: by 2002:a05:6214:2602:b0:679:d31a:83cd with SMTP id gu2-20020a056214260200b00679d31a83cdmr6701745qvb.60.1700756483465;
-        Thu, 23 Nov 2023 08:21:23 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IF/O9027B8N2I/In6Zqb7uYvYFMp1A2etpDseScEhFB6ZMTAI+nzcBdgk7XwkKTfvuOI9RyHQ==
-X-Received: by 2002:a05:6214:2602:b0:679:d31a:83cd with SMTP id gu2-20020a056214260200b00679d31a83cdmr6701729qvb.60.1700756483208;
-        Thu, 23 Nov 2023 08:21:23 -0800 (PST)
-Received: from fionn ([174.88.88.134])
-        by smtp.gmail.com with ESMTPSA id m2-20020ad45042000000b0067a10a23a9csm3388qvq.49.2023.11.23.08.21.22
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 23 Nov 2023 08:21:22 -0800 (PST)
-Date: Thu, 23 Nov 2023 11:20:57 -0500 (EST)
-From: John Kacur <jkacur@redhat.com>
-To: Tomas Glozar <tglozar@redhat.com>
-cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2 2/3] rteval: Minor improvements to CpuList class
-In-Reply-To: <20231123072436.270267-3-tglozar@redhat.com>
-Message-ID: <7b393164-b0fa-5c2f-45f9-6289ad8813fc@redhat.com>
-References: <20231123072436.270267-1-tglozar@redhat.com> <20231123072436.270267-3-tglozar@redhat.com>
+        d=1e100.net; s=20230601; t=1700757145; x=1701361945;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=kHnx14cr1yCK8qle9tu2EE/pgUOBSdUP8QNopUBV1ok=;
+        b=NJ+5NvVtLDiWU9zEPw6zL2On7zmc9aMx2fkpC2eELPY79xf0dwdN61/2bgh8ZMHr3e
+         zoCbxZU+bNArEu/E9mfR/no0oCb2mEVb558t9nTJ1GdPgAwPSkMVIBhQSkBywL5lWjLj
+         V++E2wFjI6gFI2kWCUWj+KthaHpicLH5Y1Sftl+4v45UDNFvoxPgbK7b3W/B6/Wnntu5
+         fA67TCOIkWvl+UbE0S/fl4OIv8gkOLxyXn7ZL0UvTkD+sJrEPsfT1S6z8wtoVL3mLZ+k
+         +Jj02jQK/iDEODa/kyf0QJk4ksdc1lavIm6DgXCNhbUjv0ge/nVUNTW9y3c+THe9YJYs
+         piTg==
+X-Gm-Message-State: AOJu0Yzsfmw30YcHjUp9scn2yZt0+38l6oqSSrwkZ5sh31WqvwFSxarB
+	Db1Iz2fVOzKnSyCX4oy+J7cbhB0nGdYSrVM9T1liHmHZR3CE8KIIIftvVQ==
+X-Google-Smtp-Source: AGHT+IERAzT2DH14wnLepk/HR1XspkDfoaCAepJVb9iyd7gTXAqiNiKYOdIkOlYeflAbx8t1ArAm/oe72C+mWNV5/sc=
+X-Received: by 2002:a05:6402:35ca:b0:544:24a8:ebd with SMTP id
+ z10-20020a05640235ca00b0054424a80ebdmr390780edc.4.1700757144364; Thu, 23 Nov
+ 2023 08:32:24 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+References: <20231115210509.481514-1-vschneid@redhat.com> <20231115210509.481514-2-vschneid@redhat.com>
+ <CANn89iJPxrXi35=_OJqLsJjeNU9b8EFb_rk+EEMVCMiAOd2=5A@mail.gmail.com> <CAD235PRWd+zF1xpuXWabdgMU01XNpvtvGorBJbLn9ny2G_TSuw@mail.gmail.com>
+In-Reply-To: <CAD235PRWd+zF1xpuXWabdgMU01XNpvtvGorBJbLn9ny2G_TSuw@mail.gmail.com>
+From: Eric Dumazet <edumazet@google.com>
+Date: Thu, 23 Nov 2023 17:32:10 +0100
+Message-ID: <CANn89iKRSKz0e8v+Z-UsKGs4fQWDt6eTAw71VENbSmfkEicTPA@mail.gmail.com>
+Subject: Re: [PATCH v2 1/2] tcp/dcpp: Un-pin tw_timer
+To: Valentin Schneider <vschneid@redhat.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, David Ahern <dsahern@kernel.org>, 
+	Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar <tglozar@redhat.com>, 
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
+On Thu, Nov 23, 2023 at 3:34=E2=80=AFPM Valentin Schneider <vschneid@redhat=
+.com> wrote:
+>
+> Hi Eric,
+>
+> On Mon, 20 Nov 2023 at 18:56, Eric Dumazet <edumazet@google.com> wrote:
+> >
+> > On Wed, Nov 15, 2023 at 10:05=E2=80=AFPM Valentin Schneider <vschneid@r=
+edhat.com> wrote:
+> > >
+> > > @@ -53,16 +53,14 @@ void dccp_time_wait(struct sock *sk, int state, i=
+nt timeo)
+> > >                 if (state =3D=3D DCCP_TIME_WAIT)
+> > >                         timeo =3D DCCP_TIMEWAIT_LEN;
+> > >
+> > > -               /* tw_timer is pinned, so we need to make sure BH are=
+ disabled
+> > > -                * in following section, otherwise timer handler coul=
+d run before
+> > > -                * we complete the initialization.
+> > > -                */
+> > > -               local_bh_disable();
+> > > -               inet_twsk_schedule(tw, timeo);
+> > > -               /* Linkage updates.
+> > > -                * Note that access to tw after this point is illegal=
+.
+> > > -                */
+> > > +              local_bh_disable();
+> > > +
+> > > +               // Linkage updates
+> > >                 inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
+> > > +               inet_twsk_schedule(tw, timeo);
+> >
+> > We could arm a timer there, while another thread/cpu found the TW in
+> > the ehash table.
+> >
+> >
+> >
+> > > +               // Access to tw after this point is illegal.
+> > > +               inet_twsk_put(tw);
+> >
+> > This would eventually call inet_twsk_free() while the timer is armed.
+> >
+> > I think more work is needed.
+> >
+> > Perhaps make sure that a live timer owns a reference on tw->tw_refcnt
+> > (This is not the case atm)
+> >
+>
+> I thought that was already the case, per inet_twsk_hashdance():
+>
+> /* tw_refcnt is set to 3 because we have :
+>  * - one reference for bhash chain.
+>  * - one reference for ehash chain.
+>  * - one reference for timer.
+>
+> and
+>
+> tw_timer_handler()
+> `\
+>   inet_twsk_kill()
+>   `\
+>     inet_twsk_put()
+>
+> So AFAICT, after we go through the hashdance, there's a reference on
+> tw_refcnt held by the tw_timer.
+> inet_twsk_deschedule_put() can race with arming the timer, but it only
+> calls inet_twsk_kill() if the timer
+> was already armed & has been deleted, so there's no risk of calling it
+> twice... If I got it right :-)
+>
 
+Again, I think you missed some details.
 
-On Thu, 23 Nov 2023, tglozar@redhat.com wrote:
+I am OOO for a few days, I do not have time to elaborate.
 
-> From: Tomas Glozar <tglozar@redhat.com>
-> 
-> - Remove unnecessary if-else from online_file_exists
-> - Use cpupath in online_file_exists
-> - Check for cpu0 instead of cpu1 in online_file_exists
-
-The reason we check cpu1 is that on some hardware where you can't turn off 
-cpu0, the online file also doesn't exist even though it is available for 
-other cpus. We only want to learn whether we can use it in general or not.
-
-For example on my laptop
-
-[jkacur@fionn rteval]$ ls /sys/devices/system/cpu/cpu0/online
-ls: cannot access '/sys/devices/system/cpu/cpu0/online': No such file or 
-directory
-[jkacur@fionn rteval]$ ls /sys/devices/system/cpu/cpu1/online 
-/sys/devices/system/cpu/cpu1/online
-
-John
-
-> - In is_online, remove check for n in cpuset and make it static
-> - Mark also the remaining methods static since they do not rely on
-> any fields of the class
-> 
-> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
-> ---
->  rteval/systopology.py | 26 ++++++++++++--------------
->  1 file changed, 12 insertions(+), 14 deletions(-)
-> 
-> diff --git a/rteval/systopology.py b/rteval/systopology.py
-> index ea8e242..97d3dc4 100644
-> --- a/rteval/systopology.py
-> +++ b/rteval/systopology.py
-> @@ -82,12 +82,14 @@ class CpuList:
->      def __len__(self):
->          return len(self.cpulist)
->  
-> +    def getcpulist(self):
-> +        """ return the list of cpus tracked """
-> +        return self.cpulist
-> +
->      @staticmethod
->      def online_file_exists():
->          """ Check whether machine / kernel is configured with online file """
-> -        if os.path.exists('/sys/devices/system/cpu/cpu1/online'):
-> -            return True
-> -        return False
-> +        return os.path.exists(os.path.join(CpuList.cpupath, "cpu0/online"))
->  
->      @staticmethod
->      def isolated_file_exists():
-> @@ -147,14 +149,9 @@ class CpuList:
->                  result.append(a)
->          return [int(i) for i in list(set(result))]
->  
-> -    def getcpulist(self):
-> -        """ return the list of cpus tracked """
-> -        return self.cpulist
-> -
-> -    def is_online(self, n):
-> +    @staticmethod
-> +    def is_online(n):
->          """ check whether cpu n is online """
-> -        if n not in self.cpulist:
-> -            raise RuntimeError(f"invalid cpu number {n}")
->          path = os.path.join(CpuList.cpupath, f'cpu{n}')
->  
->          # Some hardware doesn't allow cpu0 to be turned off
-> @@ -163,16 +160,17 @@ class CpuList:
->  
->          return sysread(path, "online") == "1"
->  
-> -    def online_cpulist(self, cpulist):
-> +    @staticmethod
-> +    def online_cpulist(cpulist):
->          """ Given a cpulist, return a cpulist of online cpus """
->          # This only works if the sys online files exist
-> -        if not self.online_file_exists():
-> +        if not CpuList.online_file_exists():
->              return cpulist
->          newlist = []
->          for cpu in cpulist:
-> -            if not self.online_file_exists() and cpu == '0':
-> +            if not CpuList.online_file_exists() and cpu == '0':
->                  newlist.append(cpu)
-> -            elif self.is_online(int(cpu)):
-> +            elif CpuList.is_online(int(cpu)):
->                  newlist.append(cpu)
->          return newlist
->  
-> -- 
-> 2.41.0
-> 
-> 
-> 
-
+You will need to properly track active timer by elevating
+tw->tw_refcnt, or I guarantee something wrong will happen.
