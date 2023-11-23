@@ -1,40 +1,46 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="pTAB8MJV"
-Received: from mail-ed1-x52c.google.com (mail-ed1-x52c.google.com [IPv6:2a00:1450:4864:20::52c])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43D0C19D
-	for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:32:26 -0800 (PST)
-Received: by mail-ed1-x52c.google.com with SMTP id 4fb4d7f45d1cf-54744e66d27so15055a12.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:32:26 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1700757145; x=1701361945; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=kHnx14cr1yCK8qle9tu2EE/pgUOBSdUP8QNopUBV1ok=;
-        b=pTAB8MJVLfCdKrBFt3EDg5XJN+BVkaCDpdEBi6MO4zb45FMBKy+MXcjfoRdWcpYcB6
-         9kHJ+ZHf/sBinz8UeEqoBleBmmzneFnTJcRxBtYx9Ht34zhCroTZoVgHibgyjrlTwIKB
-         zQgsjxRdrFZFF/wBeDXXhhjpmDbxzrzA+Ln1VPP+hs5VAmbzU3BXaMCxpTLHYRcgtZRU
-         NiWEo4aRf/qHUx3C/JXxXEyRfZI7C4mNIi0PnFpXhXxikU6xF2QdTy7ZJlFnPSHCHVJG
-         0+bhYEUmdICIRUuhX0dJr0GpDqRv097OgbWFkGy55fOOBL4zzJlMS7CSifvzSy+ZVUl7
-         m4hg==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F61b8LN1"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67DE69E
+	for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:45:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1700757944;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=lBjBl6RiMXteiisXslLo0Yh7FdmVurXCHqt4qx72G+0=;
+	b=F61b8LN1fw9RSOHOBPofBEDLo3TNlgHHb1FVnQXubc3nv4k/CWKVHb3PqTiYQ6BiyYp40o
+	hyCau9FYPSa9M9k1mgLSBuylBH41Fdpe0ORueDmg/q7oxdGqlN3HBtfd/sXhHQz12llMrK
+	ylKlqT0rlxOAqRKNMJZBeI5vlw/gHFg=
+Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com
+ [209.85.218.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-190-iE1S-nl7Md-JO7AYJk16vg-1; Thu, 23 Nov 2023 11:45:42 -0500
+X-MC-Unique: iE1S-nl7Md-JO7AYJk16vg-1
+Received: by mail-ej1-f70.google.com with SMTP id a640c23a62f3a-a01efffd9e4so67833666b.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2023 08:45:42 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1700757145; x=1701361945;
+        d=1e100.net; s=20230601; t=1700757941; x=1701362741;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=kHnx14cr1yCK8qle9tu2EE/pgUOBSdUP8QNopUBV1ok=;
-        b=NJ+5NvVtLDiWU9zEPw6zL2On7zmc9aMx2fkpC2eELPY79xf0dwdN61/2bgh8ZMHr3e
-         zoCbxZU+bNArEu/E9mfR/no0oCb2mEVb558t9nTJ1GdPgAwPSkMVIBhQSkBywL5lWjLj
-         V++E2wFjI6gFI2kWCUWj+KthaHpicLH5Y1Sftl+4v45UDNFvoxPgbK7b3W/B6/Wnntu5
-         fA67TCOIkWvl+UbE0S/fl4OIv8gkOLxyXn7ZL0UvTkD+sJrEPsfT1S6z8wtoVL3mLZ+k
-         +Jj02jQK/iDEODa/kyf0QJk4ksdc1lavIm6DgXCNhbUjv0ge/nVUNTW9y3c+THe9YJYs
-         piTg==
-X-Gm-Message-State: AOJu0Yzsfmw30YcHjUp9scn2yZt0+38l6oqSSrwkZ5sh31WqvwFSxarB
-	Db1Iz2fVOzKnSyCX4oy+J7cbhB0nGdYSrVM9T1liHmHZR3CE8KIIIftvVQ==
-X-Google-Smtp-Source: AGHT+IERAzT2DH14wnLepk/HR1XspkDfoaCAepJVb9iyd7gTXAqiNiKYOdIkOlYeflAbx8t1ArAm/oe72C+mWNV5/sc=
-X-Received: by 2002:a05:6402:35ca:b0:544:24a8:ebd with SMTP id
- z10-20020a05640235ca00b0054424a80ebdmr390780edc.4.1700757144364; Thu, 23 Nov
- 2023 08:32:24 -0800 (PST)
+        bh=lBjBl6RiMXteiisXslLo0Yh7FdmVurXCHqt4qx72G+0=;
+        b=cknCFTw8mt6TOMp/XbfTray8PgaaJiLaprq+ew73UU3EiXCq9fP+9V8GfGLPUXKYT+
+         m6l4C6y6km2hHhx5mtp8cRJ+6Fm0EhoJZKG7ifrgQJjrkfm3VtFEIV4RKnXqbGRUcpsh
+         HkA2+1SuzQa7NxcvEPgYWNdX0eaIaqTfKgKIf7wXqWgXcbTTGDQIeaoXJc5A4vzckVUT
+         2C9sNg1r0SBvfXaOd/+FvQ+Vpf0Z0mxGIDVSv+xu1LorIsWVIWT+q8Ix02PLH+c5LOOD
+         hMri1879pRmFEVjn8JRbKOMTGI+4vno/Gi08kaYePcHVUmAIfBPrOr+LFQju5STJXD+B
+         /Nig==
+X-Gm-Message-State: AOJu0Yw/cPf8z/baN+FHr+qeQmE8s2sqQ02W8EYr/as+vL99miw7p3hp
+	ZZ8zbrAQcL3jGOMYfffTS1mwSUelAT3ndKjiCWtF4fpwGfDhApU6M5J+bUcVnfRvnphqADx6+cn
+	UDc64QRROTq4QQZGiSYBoH9ov3qkaNXuGLO/RRWGhP68=
+X-Received: by 2002:a17:906:14d:b0:9e0:5d5c:aa6d with SMTP id 13-20020a170906014d00b009e05d5caa6dmr4276185ejh.20.1700757941731;
+        Thu, 23 Nov 2023 08:45:41 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFfaOoZK8ZVUHRmRcmkEFqZf7x8Mab1KDGr4SWVV+OmpRRd1SIVYmQoomns8qprSr9GXpfGYdGZr2ToP/DcJ7w=
+X-Received: by 2002:a17:906:14d:b0:9e0:5d5c:aa6d with SMTP id
+ 13-20020a170906014d00b009e05d5caa6dmr4276162ejh.20.1700757941494; Thu, 23 Nov
+ 2023 08:45:41 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -42,13 +48,14 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 References: <20231115210509.481514-1-vschneid@redhat.com> <20231115210509.481514-2-vschneid@redhat.com>
- <CANn89iJPxrXi35=_OJqLsJjeNU9b8EFb_rk+EEMVCMiAOd2=5A@mail.gmail.com> <CAD235PRWd+zF1xpuXWabdgMU01XNpvtvGorBJbLn9ny2G_TSuw@mail.gmail.com>
-In-Reply-To: <CAD235PRWd+zF1xpuXWabdgMU01XNpvtvGorBJbLn9ny2G_TSuw@mail.gmail.com>
-From: Eric Dumazet <edumazet@google.com>
-Date: Thu, 23 Nov 2023 17:32:10 +0100
-Message-ID: <CANn89iKRSKz0e8v+Z-UsKGs4fQWDt6eTAw71VENbSmfkEicTPA@mail.gmail.com>
+ <CANn89iJPxrXi35=_OJqLsJjeNU9b8EFb_rk+EEMVCMiAOd2=5A@mail.gmail.com>
+ <CAD235PRWd+zF1xpuXWabdgMU01XNpvtvGorBJbLn9ny2G_TSuw@mail.gmail.com> <CANn89iKRSKz0e8v+Z-UsKGs4fQWDt6eTAw71VENbSmfkEicTPA@mail.gmail.com>
+In-Reply-To: <CANn89iKRSKz0e8v+Z-UsKGs4fQWDt6eTAw71VENbSmfkEicTPA@mail.gmail.com>
+From: Valentin Schneider <vschneid@redhat.com>
+Date: Thu, 23 Nov 2023 17:45:29 +0100
+Message-ID: <CAD235PTyEce0S-22vg=opQdq0MUwEovdx5henU=9Mwh3Rf8QrA@mail.gmail.com>
 Subject: Re: [PATCH v2 1/2] tcp/dcpp: Un-pin tw_timer
-To: Valentin Schneider <vschneid@redhat.com>
+To: Eric Dumazet <edumazet@google.com>
 Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
 	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
 	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, David Ahern <dsahern@kernel.org>, 
@@ -57,81 +64,40 @@ Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Nov 23, 2023 at 3:34=E2=80=AFPM Valentin Schneider <vschneid@redhat=
-.com> wrote:
+On Thu, 23 Nov 2023 at 17:32, Eric Dumazet <edumazet@google.com> wrote:
 >
-> Hi Eric,
->
-> On Mon, 20 Nov 2023 at 18:56, Eric Dumazet <edumazet@google.com> wrote:
+> On Thu, Nov 23, 2023 at 3:34=E2=80=AFPM Valentin Schneider <vschneid@redh=
+at.com> wrote:
+> > I thought that was already the case, per inet_twsk_hashdance():
 > >
-> > On Wed, Nov 15, 2023 at 10:05=E2=80=AFPM Valentin Schneider <vschneid@r=
-edhat.com> wrote:
-> > >
-> > > @@ -53,16 +53,14 @@ void dccp_time_wait(struct sock *sk, int state, i=
-nt timeo)
-> > >                 if (state =3D=3D DCCP_TIME_WAIT)
-> > >                         timeo =3D DCCP_TIMEWAIT_LEN;
-> > >
-> > > -               /* tw_timer is pinned, so we need to make sure BH are=
- disabled
-> > > -                * in following section, otherwise timer handler coul=
-d run before
-> > > -                * we complete the initialization.
-> > > -                */
-> > > -               local_bh_disable();
-> > > -               inet_twsk_schedule(tw, timeo);
-> > > -               /* Linkage updates.
-> > > -                * Note that access to tw after this point is illegal=
-.
-> > > -                */
-> > > +              local_bh_disable();
-> > > +
-> > > +               // Linkage updates
-> > >                 inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
-> > > +               inet_twsk_schedule(tw, timeo);
+> > /* tw_refcnt is set to 3 because we have :
+> >  * - one reference for bhash chain.
+> >  * - one reference for ehash chain.
+> >  * - one reference for timer.
 > >
-> > We could arm a timer there, while another thread/cpu found the TW in
-> > the ehash table.
+> > and
 > >
+> > tw_timer_handler()
+> > `\
+> >   inet_twsk_kill()
+> >   `\
+> >     inet_twsk_put()
 > >
-> >
-> > > +               // Access to tw after this point is illegal.
-> > > +               inet_twsk_put(tw);
-> >
-> > This would eventually call inet_twsk_free() while the timer is armed.
-> >
-> > I think more work is needed.
-> >
-> > Perhaps make sure that a live timer owns a reference on tw->tw_refcnt
-> > (This is not the case atm)
+> > So AFAICT, after we go through the hashdance, there's a reference on
+> > tw_refcnt held by the tw_timer.
+> > inet_twsk_deschedule_put() can race with arming the timer, but it only
+> > calls inet_twsk_kill() if the timer
+> > was already armed & has been deleted, so there's no risk of calling it
+> > twice... If I got it right :-)
 > >
 >
-> I thought that was already the case, per inet_twsk_hashdance():
+> Again, I think you missed some details.
 >
-> /* tw_refcnt is set to 3 because we have :
->  * - one reference for bhash chain.
->  * - one reference for ehash chain.
->  * - one reference for timer.
+> I am OOO for a few days, I do not have time to elaborate.
 >
-> and
->
-> tw_timer_handler()
-> `\
->   inet_twsk_kill()
->   `\
->     inet_twsk_put()
->
-> So AFAICT, after we go through the hashdance, there's a reference on
-> tw_refcnt held by the tw_timer.
-> inet_twsk_deschedule_put() can race with arming the timer, but it only
-> calls inet_twsk_kill() if the timer
-> was already armed & has been deleted, so there's no risk of calling it
-> twice... If I got it right :-)
+> You will need to properly track active timer by elevating
+> tw->tw_refcnt, or I guarantee something wrong will happen.
 >
 
-Again, I think you missed some details.
+Gotcha, let me dig into this then!
 
-I am OOO for a few days, I do not have time to elaborate.
-
-You will need to properly track active timer by elevating
-tw->tw_refcnt, or I guarantee something wrong will happen.
