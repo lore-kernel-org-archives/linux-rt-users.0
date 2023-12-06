@@ -1,54 +1,69 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="Kw9ugRFt"
-Received: from smtp-relay-canonical-1.canonical.com (smtp-relay-canonical-1.canonical.com [185.125.188.121])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3AB5DA9;
-	Tue,  5 Dec 2023 09:04:48 -0800 (PST)
-Received: from canonical.com (1.general.jsalisbury.us.vpn [10.172.66.188])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WjQGRV3f"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 18F2FDC
+	for <linux-rt-users@vger.kernel.org>; Wed,  6 Dec 2023 12:55:12 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1701896111;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=VdsUqga0xq19R+aNlrYg9gFVfnsH/ocOqno+VOJyw30=;
+	b=WjQGRV3fymcudHmmn9Rm8jxubQwtl+brhG+JvHgL8Bt+QJRxObuhbzYgiijaPHBD33bLcx
+	VYYjRtuDeIySlwPhSpWs/McCcJacHkvr1tNNglm2d8aLaca74rGP929uFwO9F82CGIIWYK
+	K4jNBvtRdjqlwg0tKCQH/qErnD8qi+0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-255-Kq0icVOxOTO6RyqFrGhTNA-1; Wed, 06 Dec 2023 15:55:09 -0500
+X-MC-Unique: Kq0icVOxOTO6RyqFrGhTNA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-relay-canonical-1.canonical.com (Postfix) with ESMTPSA id DA3963FF90;
-	Tue,  5 Dec 2023 17:04:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1701795886;
-	bh=L3Hv3hhw1XNFiYnm+KfMClgCTUgvdYKgMHhrQDcGnsY=;
-	h=From:Subject:Date:Message-ID:To;
-	b=Kw9ugRFtyuC8g+dOZ3qEddvVOmywyGLBZH8KhRfX4H3iHYgVd6Gc1m271XwrJB3vZ
-	 atGtw/8eZwyL6dlE8OI/xNmRyaeScY5tHu3aX8YS652asZtS5UBeUcMr2GzsUvrgXZ
-	 Q7TC/aWSnRJjDPBZwLZFpV5Y1LMLdeZ2RAT/nZSJNcWpYO0Qu2Uf456lWx3R0hJWd4
-	 WViVU2Mz9HUnacS8AHjKoTtqQYdTL/o31l3eZ7L8ErypCptsu3z3V+WkMzQ/DZmRgB
-	 tWGVjVOCmyuNyd4arQ3gTTN6RzHl4Y8suoLoFvCbqDlPHnSAW8uEgQ9JgD3WCJStek
-	 Uex5ttJ92xWgg==
-From: Joseph Salisbury <joseph.salisbury@canonical.com>
-Subject: [ANNOUNCE] 5.15.141-rt72
-Date: Tue, 05 Dec 2023 17:00:32 -0000
-Message-ID: <170179563245.1513973.4035707288173577889@jupiter.home.arpa>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9407A85A58F
+	for <linux-rt-users@vger.kernel.org>; Wed,  6 Dec 2023 20:55:09 +0000 (UTC)
+Received: from p1g2.redhat.com (unknown [10.2.17.63])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6257B2026D66;
+	Wed,  6 Dec 2023 20:55:09 +0000 (UTC)
+From: Crystal Wood <crwood@redhat.com>
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org
+Subject: [PATCH 0/4] rt-tests: cyclicdeadline: Add histogram support
+Date: Wed,  6 Dec 2023 14:55:04 -0600
+Message-ID: <20231206205508.17148-1-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-Hello RT-list!
+Add histogram support to cyclicdeadline, with the goal of supporting
+cyclicdeadline in rteval.  New output-compatible (except for the change
+in patch 2/4) histogram code is used, to ease sharing.  The new code is
+intended to also be usable by other measurers such as oslat.
 
-I'm pleased to announce the 5.15.141-rt72 stable release.
+Crystal Wood (4):
+  rt-tests: Fix warnings
+  rt-tests: cyclictest: Remove histogram totals
+  rt-tests: cyclictest: Replace histogram code with library
+  rt-tests: cyclicdeadline: Add histogram support
 
-You can get this release via the git tree at:
+ Makefile                            |   5 +-
+ src/cyclictest/cyclictest.c         |  94 ++++-----------
+ src/hackbench/hackbench.c           |   2 +-
+ src/include/histogram.h             |  42 +++++++
+ src/lib/histogram.c                 | 174 ++++++++++++++++++++++++++++
+ src/sched_deadline/cyclicdeadline.c | 119 ++++++++++++++++---
+ src/sched_deadline/deadline_test.c  |  10 +-
+ src/sigwaittest/sigwaittest.c       |   6 +-
+ 8 files changed, 357 insertions(+), 95 deletions(-)
+ create mode 100644 src/include/histogram.h
+ create mode 100644 src/lib/histogram.c
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+-- 
+2.43.0
 
-  branch: v5.15-rt
-  Head SHA1: e9e280348657bf29b5f35e37e34e4da26821116c
-
-Or to build 5.15.141-rt72 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.141.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.141-rt72.patch.xz
-
-
-Enjoy!
-Joseph Salisbury
