@@ -1,19 +1,20 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="idsvjSmY"
-X-Greylist: delayed 605 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 07 Dec 2023 07:14:03 PST
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D371D54;
-	Thu,  7 Dec 2023 07:14:03 -0800 (PST)
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 44D5FE1A06;
-	Thu,  7 Dec 2023 15:58:18 +0100 (CET)
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="mB0wlUBd"
+X-Greylist: delayed 597 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 07 Dec 2023 07:23:58 PST
+Received: from mail.nearlyone.de (mail.nearlyone.de [IPv6:2a01:4f8:1c1e:abde::1])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 64A8810C2;
+	Thu,  7 Dec 2023 07:23:58 -0800 (PST)
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 6CADBE1A67;
+	Thu,  7 Dec 2023 15:58:23 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1701961101; h=from:subject:date:message-id:to:cc:mime-version:
-	 content-transfer-encoding; bh=AKSiP3OsX4Hs2dJd6uAz8w7V1S9HQFgrRDQK5AO7PKE=;
-	b=idsvjSmYdOIiXWH13f6Nu1MC0gH3A8QlkW9xyx1Gb6B6LrhS+3i8SDsunQP/TY5Tpb6KGL
-	acTd+r4zxCgXpQR1WAddgGvtI9r7OZ4WEbbHYO0hBqB8a1z5a1im8hPZ3DvwPfwPmv8WGo
-	i2r8qZyPr4fns3rOZBhrEiGQIwjg5c6/FzPd/ma80Y+VmMAHPGXFsjl0UkxT7xtdwlBoxN
-	9wEVS+1mYcwZBYCy3ukc/XAM+xdRtAQkzKg46JD4oKuN036E90SmnR4Vl17iQ4K8MCl4V7
-	WLKf97+nHDjlyuOvSXOsAGa1Mp8ogxJnmM6S1YLe4FI82lqkHso2/WzT5S3DRQ==
+	t=1701961103; h=from:subject:date:message-id:to:cc:mime-version:
+	 content-transfer-encoding:in-reply-to:references;
+	bh=oz0c7Is7QI/c/jVxuy5gKuSAUsDwxVIB55INpmNanLE=;
+	b=mB0wlUBd7Fk2NmKgefjKbOHRxPqLP2x7XGKAwqp4WafXUwXeaCLzzWmtRRZyo3SFKC+SOI
+	TkqXRZYng0a/OaSBl3wU9JO3n0bxBp3N3hgxlL8vPDd3q24MCFxbXXQCWFq2gw9ZwolxmM
+	RBn8XVxqZ2OEAHcWvr0hc+Azd5qAKlkzJPJj6u8KVb4TlPOzOqcSEyaj/GLoavfkqEl2Pj
+	K2oWZsfMtzIcgKEFrATwKwKBtTru82M6P1bG8tefXP6RXzF1+Bx54YvSBMvJJCsP/oiZqx
+	O++OJIVeyWJCanOz3+IvvsZHtB9OSK7Xdiyj41OoUQHA9ZJC45QsxkELLKzX5Q==
 From: Daniel Wagner <wagi@monom.org>
 To: LKML <linux-kernel@vger.kernel.org>,
 	 <linux-rt-users@vger.kernel.org>,
@@ -24,9 +25,11 @@ To: LKML <linux-kernel@vger.kernel.org>,
 	Tom Zanussi <tom.zanussi@linux.intel.com>,
 	Clark Williams <williams@redhat.com>
 Cc: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 0/2] Linux v4.19.299-rt130-rc1
-Date: Thu,  7 Dec 2023 15:58:13 +0100
-Message-ID: <20231207145815.30461-1-wagi@monom.org>
+Subject: [PATCH RT 2/2] Linux 4.19.299-rt130
+Date: Thu,  7 Dec 2023 15:58:15 +0100
+Message-ID: <20231207145815.30461-3-wagi@monom.org>
+In-Reply-To: <20231207145815.30461-1-wagi@monom.org>
+References: <20231207145815.30461-1-wagi@monom.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -36,45 +39,24 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Last-TLS-Session-Version: TLSv1.3
 
-Dear RT Folks,
+v4.19.299-rt130-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-This is the RT stable review cycle of patch 4.19.299-rt130-rc1.
-
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release is also available on kernel.org
-
-  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-on the v4.19-rt-next branch.
-
-If all goes well, this patch will be converted to the next main
-release on 2023-12-14.
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.295-rt129:
+-----------
 
 
-Daniel Wagner (2):
-  Revert "sched/rt: Provide migrate_disable/enable() inlines"
-  Linux 4.19.299-rt130
+Signed-off-by: Daniel Wagner <wagi@monom.org>
+---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
- include/linux/preempt.h | 30 ------------------------------
- localversion-rt         |  2 +-
- 2 files changed, 1 insertion(+), 31 deletions(-)
-
+diff --git a/localversion-rt b/localversion-rt
+index 90303f5aabcf..6fa797e5b850 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt129
++-rt130
 -- 
 2.42.0
 
