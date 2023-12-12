@@ -1,91 +1,294 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b="FfBJ/FB7"
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.15])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F55695
-	for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2023 04:42:11 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.de; s=s31663417;
-	t=1702384928; x=1702989728; i=efault@gmx.de;
-	bh=goBhFucCfUZlzvMgRm9Ad/rfqb+5k/jPzPFomuBjX/U=;
-	h=X-UI-Sender-Class:Subject:From:To:Date:In-Reply-To:References;
-	b=FfBJ/FB7kzLHK24zv5qLmHBShXZ5KSfHBpNdoMfW2EIRe4hvp7foSt1D3ngSLXSx
-	 dZx48152F3SaLAc7H0723mn0f2tLLDJGGMqQ03ljSZ1F9ftCXUml/NBw8A+Z+BVeK
-	 E/vSKXnZ89RJtwKNDXuWigUvEK0Cwon+kpRz7++kJcDDkMG/kr5kPgkKa6Y54jHyh
-	 E646z8OUPlkja7lpx92RhfuubDtsS22EHudHB/MP/LkNVZW7YoPH+KP0v61TaoyhB
-	 8GGg/XD6PY2F1JeHRlnISxonnlTsD8EzRiF5ij1BjoJorWY8p4p9nswArRvUqrD3u
-	 OMn6bSiLhs/mUOR03A==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from homer.fritz.box ([185.221.148.35]) by mail.gmx.net (mrgmx004
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MAfUo-1r24mu3OzQ-00B7PG; Tue, 12
- Dec 2023 13:42:08 +0100
-Message-ID: <da41b939c1f2bbc9735250301ba3c4e735dfb313.camel@gmx.de>
-Subject: Re: i2c jitter is worse in PREEMPT_RT kernel than stock Raspberry
- Pi kernel
-From: Mike Galbraith <efault@gmx.de>
-To: mfranklin@comfiletech.com, linux-rt-users@vger.kernel.org
-Date: Tue, 12 Dec 2023 13:42:08 +0100
-In-Reply-To: <44fb3d4d-6303-4287-b2ac-7898cc237c47@comfiletech.com>
-References: <44fb3d4d-6303-4287-b2ac-7898cc237c47@comfiletech.com>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DUX+KJXc"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 17807D0
+	for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2023 12:23:00 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1702412579;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=wNsRlllUNc7ducrs+L5EngCRTyE0Z+clOF/7dDm1/r0=;
+	b=DUX+KJXc72eCabOcS/kRwYXdonhaozf84oCEtTzsLf1vA4me6n/fEf4/FYL7P025sAt/nX
+	uLKVrHwlHuJg5bJv1UK1930141rbjrQo7UCI1zR7pc6M5ypM/zLbYos57jveHYQHDUrU+W
+	S7f9TMyuX/p8lSaYbuMoA4aWQnwc3Zk=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-344-rlNzWFheO1uESxvHS1yzoQ-1; Tue, 12 Dec 2023 15:22:57 -0500
+X-MC-Unique: rlNzWFheO1uESxvHS1yzoQ-1
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-67aec8cce57so66580866d6.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2023 12:22:56 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1702412576; x=1703017376;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=wNsRlllUNc7ducrs+L5EngCRTyE0Z+clOF/7dDm1/r0=;
+        b=LTchE15rNrXaE/IHLb4grNbd9NatlExfOzBTMrTE7P7ElR6W4OAn4+FVKpzudUk0YZ
+         mICtNlX3rEhNI9t0w1NVMsxlR3lFeHOFHhabRHq269rvFjIXyPWoPFhay6JroXhA7cNh
+         tFOQFMx/3Y032M/5aANmV2K0k8WUZ78Px6GIbHcDFGaCwEFWjq2jcwcgKVfT9dbThnFN
+         whb1A+dTmrsMAcVZUP7TlvFty5oxC2CLU+Zjjsw1EDfxcy0m1ysduDYhwIkR4TGgvf5M
+         YMz+4TdYGBms/SpI4YGs+XI6ncSXLtb2hRdttBd1vZFNzmZoHvvACo19Jb+PxGRcjfG7
+         Q+aQ==
+X-Gm-Message-State: AOJu0Yzbb9HzbtdokLZGjKIM8zLoU/yMW7Nr+B/mDWb8D3Jetmj9iFKR
+	v9ZjgCJ7Oz+6y3kh4/oGMEwX4D5r5eDSKqRTG4bXfxSYr+Sf5SNp5UG1EKgtucDAoKMbSl5qGtK
+	/AM2/loITcBAA5HUO8jgPkXFRmI3OOC7EvN8=
+X-Received: by 2002:a05:622a:1a15:b0:425:8959:8acb with SMTP id f21-20020a05622a1a1500b0042589598acbmr8904126qtb.43.1702412576325;
+        Tue, 12 Dec 2023 12:22:56 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IELQOKkgC/Btq9R+ReYVYGhzcQEPDc2duzV3sXEk7OC7JP4+Ail5L1gwRoiQi8fYvtQSA010Q==
+X-Received: by 2002:a05:622a:1a15:b0:425:8959:8acb with SMTP id f21-20020a05622a1a1500b0042589598acbmr8904120qtb.43.1702412576008;
+        Tue, 12 Dec 2023 12:22:56 -0800 (PST)
+Received: from fionn ([174.88.88.134])
+        by smtp.gmail.com with ESMTPSA id t11-20020ac86a0b000000b00423b8a53641sm4334672qtr.29.2023.12.12.12.22.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 Dec 2023 12:22:55 -0800 (PST)
+Date: Tue, 12 Dec 2023 15:22:46 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Tomas Glozar <tglozar@redhat.com>
+cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 1/4] rteval: Refactor collapse_cpulist in systopology
+In-Reply-To: <20231129093457.17984-2-tglozar@redhat.com>
+Message-ID: <ecc75cd2-d064-1d3d-3bbd-30f736b62fa4@redhat.com>
+References: <20231129093457.17984-1-tglozar@redhat.com> <20231129093457.17984-2-tglozar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:h0RPt3rsv2d9FN6UAAimhuSV5lJtteYsIlv2uVTdIMPw/WA4c1/
- wfEQbu6lmVBrcgWw4DMzAxL3giXLuddelN2XGc9EfryX+JKljCg/QtexfTAmasZJhqOzEme
- 2y76JfiAMs0W0SAEXv0W5/U4mi/ckdoK6LszUE3yzfXfnIepN7djd6JXwAI/Pev5vuw33Wx
- 2t2ppK64Hf5Ef+OM9rQrA==
-UI-OutboundReport: notjunk:1;M01:P0:4MvgCOQxybs=;q/UjmQP9CapEqe5Bfm0qnPzvYoK
- 4Hv6BnR82Ml0jV2MBejMvp7ia9VC3nG+EzNfVFpunOU/Hz97kkyz5iETMn0HxWFpidOjwv41e
- cRI4Hvj2CAXcQLwvwkhsoUimdcppgglLzGOr6iZkBydoWYD8N4lGRZdU3f+TbYoU9zLEEtzZt
- 7lmnj7JR5irxPOZQTlC/7610k1O1es2dkzDCY67nCZmuDRokWi9JTrsG/pqG5dV/SZOJToPEw
- QwId2DFHTeipHMiWzr3osKxd77H/uK9HHW7cFcu2gxCJlgKPOpeF74MxUdenMeYClIAsefmJV
- 6S8Ln1Sdaf1sYTB/ZhpE4UiV6/szqtzah9TbLItIbD4BBubr78F04dS3CpvOJUv29CkgjrNDH
- Iny2nFYloDIvtWuwRYjVnDfnEOrihGODqYLU0D1GQpTQrU581SFaEOAgLVpEzMdr+0zWaoCtu
- CWHXzwBqT7fqwxQRTBWQTVxA05jZiwoyxxa8cwrA7qlSvX6X9TPfbdXxVb4cRKhAreVd3g29u
- x6wLh5emnUa/Aq3TXs77cjZguQy3GpLfe6RSmYJU+FpuDvZh4GGRTXooUYahToIcf4KgfJJ01
- 8Y+Ol19eVJgVfJ1wz5Xzrbo93PciaSAmyfaKWlnQBZqa754bzRbpJpbkxM4kVu81YkMZxcluc
- ySQcggPG5ApKJ8K/a7diXosfr+/bXNnTw/Y+ILpjfUmYJCrbMFRJBka4CnJURsrRHi5LYhFto
- I2/kc5bJGGdzRvdvuPBwITOkYORG55MzIhg/fYKTO3i8i2/M2FNy3pR6UT+DEwgT23c+8po15
- H7l0eau6SDpoVL0sSzJoDa0lDPG1FPSRu0SE1G4yxKo/6Yuk3nSCG9PK79ixZPzGtcgdjSXyF
- nOCOYXqKlLSvGG3uToCBtBu6yOKtYFu0QN/cKX18DyW6jbgNbUXl3sGKOpdrlm7vz1MQZgtZ3
- V1xyNw==
-
-On Tue, 2023-12-12 at 11:53 +0900, Michael Franklin wrote:
-> Hello,
-
-Greetings,
+Content-Type: text/plain; charset=US-ASCII
 
 
-<snip proggy etc>
 
+On Wed, 29 Nov 2023, tglozar@redhat.com wrote:
 
-> Interestingly, in the stock kernel, `htop` shows that most CPU activity
-> is concentrated on core 3 (which is what I expected and preferred),
-> while in the realtime kernel, the CPU activity is distributed across all
-> cores, despite booting with `isolcpus=3D3` and running the test program
-> with `task set -cp 3 $(pidof i2ctest)` in both kernels.
->
-> Q1:=C2=A0 Why is i2c communication is more jittery in the realtime kerne=
-l
-> than the stock kernel?
+> From: Tomas Glozar <tglozar@redhat.com>
+> 
+> Instead of having duplicate code in two functions, one top-level and
+> one member function of CpuList, have only one static function in
+> CpuList.
+> 
+> Additionally re-write the implementation to use a more straight forward
+> one-pass algorithm.
+> 
+> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+> ---
+>  rteval-cmd                               |  4 +-
+>  rteval/modules/loads/__init__.py         |  4 +-
+>  rteval/modules/measurement/__init__.py   |  4 +-
+>  rteval/modules/measurement/cyclictest.py |  6 +--
+>  rteval/systopology.py                    | 68 ++++++++----------------
+>  5 files changed, 30 insertions(+), 56 deletions(-)
+> 
+> diff --git a/rteval-cmd b/rteval-cmd
+> index 6f613a3..7c41429 100755
+> --- a/rteval-cmd
+> +++ b/rteval-cmd
+> @@ -30,7 +30,7 @@ from rteval import RtEval, rtevalConfig
+>  from rteval.modules.loads import LoadModules
+>  from rteval.modules.measurement import MeasurementModules
+>  from rteval.version import RTEVAL_VERSION
+> -from rteval.systopology import CpuList, SysTopology, collapse_cpulist
+> +from rteval.systopology import CpuList, SysTopology
+>  from rteval.modules.loads.kcompile import ModuleParameters
+>  
+>  compress_cpulist = CpuList.compress_cpulist
+> @@ -211,7 +211,7 @@ def remove_offline(cpulist):
+>      """ return cpulist in collapsed compressed form with only online cpus """
+>      tmplist = expand_cpulist(cpulist)
+>      tmplist = SysTopology().online_cpulist(tmplist)
+> -    return collapse_cpulist(tmplist)
+> +    return CpuList.collapse_cpulist(tmplist)
+>  
+>  
+>  if __name__ == '__main__':
+> diff --git a/rteval/modules/loads/__init__.py b/rteval/modules/loads/__init__.py
+> index aca0c9f..13fba1e 100644
+> --- a/rteval/modules/loads/__init__.py
+> +++ b/rteval/modules/loads/__init__.py
+> @@ -11,7 +11,7 @@ import libxml2
+>  from rteval.Log import Log
+>  from rteval.rtevalConfig import rtevalCfgSection
+>  from rteval.modules import RtEvalModules, rtevalModulePrototype
+> -from rteval.systopology import collapse_cpulist, CpuList, SysTopology as SysTop
+> +from rteval.systopology import CpuList, SysTopology as SysTop
+>  
+>  class LoadThread(rtevalModulePrototype):
+>      def __init__(self, name, config, logger=None):
+> @@ -120,7 +120,7 @@ class LoadModules(RtEvalModules):
+>              cpulist = CpuList(cpulist).cpulist
+>          else:
+>              cpulist = SysTop().default_cpus()
+> -        rep_n.newProp("loadcpus", collapse_cpulist(cpulist))
+> +        rep_n.newProp("loadcpus", CpuList.collapse_cpulist(cpulist))
+>  
+>          return rep_n
+>  
+> diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
+> index 2a0556b..41b8022 100644
+> --- a/rteval/modules/measurement/__init__.py
+> +++ b/rteval/modules/measurement/__init__.py
+> @@ -5,7 +5,7 @@
+>  
+>  import libxml2
+>  from rteval.modules import RtEvalModules, ModuleContainer
+> -from rteval.systopology import collapse_cpulist, CpuList, SysTopology as SysTop
+> +from rteval.systopology import CpuList, SysTopology as SysTop
+>  
+>  class MeasurementProfile(RtEvalModules):
+>      """Keeps and controls all the measurement modules with the same measurement profile"""
+> @@ -187,7 +187,7 @@ measurement profiles, based on their characteristics"""
+>              cpulist = CpuList(cpulist).cpulist
+>          else:
+>              cpulist = SysTop().online_cpus() if run_on_isolcpus else SysTop().default_cpus()
+> -        rep_n.newProp("measurecpus", collapse_cpulist(cpulist))
+> +        rep_n.newProp("measurecpus", CpuList.collapse_cpulist(cpulist))
+>  
+>          for mp in self.__measureprofiles:
+>              mprep_n = mp.MakeReport()
+> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+> index 0af1d31..1b14e7e 100644
+> --- a/rteval/modules/measurement/cyclictest.py
+> +++ b/rteval/modules/measurement/cyclictest.py
+> @@ -17,7 +17,7 @@ import libxml2
+>  from rteval.Log import Log
+>  from rteval.modules import rtevalModulePrototype
+>  from rteval.systopology import cpuinfo
+> -from rteval.systopology import CpuList, SysTopology, collapse_cpulist
+> +from rteval.systopology import CpuList, SysTopology
+>  
+>  expand_cpulist = CpuList.expand_cpulist
+>  
+> @@ -203,7 +203,7 @@ class Cyclictest(rtevalModulePrototype):
+>              # Only include online cpus
+>              self.__cpus = CpuList(self.__cpus).cpulist
+>              # Reset cpulist from the newly calculated self.__cpus
+> -            self.__cpulist = collapse_cpulist(self.__cpus)
+> +            self.__cpulist = CpuList.collapse_cpulist(self.__cpus)
+>              self.__cpus = [str(c) for c in self.__cpus]
+>              self.__sparse = True
+>              if self.__run_on_isolcpus:
+> @@ -220,7 +220,7 @@ class Cyclictest(rtevalModulePrototype):
+>              self.__cpus = [c for c in self.__cpus if c in cpuset or self.__run_on_isolcpus and c in isolcpus]
+>              if self.__run_on_isolcpus:
+>                  self.__sparse = True
+> -                self.__cpulist = collapse_cpulist(self.__cpus)
+> +                self.__cpulist = CpuList.collapse_cpulist([int(c) for c in self.__cpus])
+>  
+>          # Sort the list of cpus to align with the order reported by cyclictest
+>          self.__cpus.sort(key=int)
+> diff --git a/rteval/systopology.py b/rteval/systopology.py
+> index 62ad355..ea8e242 100644
+> --- a/rteval/systopology.py
+> +++ b/rteval/systopology.py
+> @@ -10,25 +10,6 @@ import os
+>  import os.path
+>  import glob
+>  
+> -# Utility version of collapse_cpulist that doesn't require a CpuList object
+> -def collapse_cpulist(cpulist):
+> -    """ Collapse a list of cpu numbers into a string range
+> -        of cpus (e.g. 0-5, 7, 9) """
+> -    if len(cpulist) == 0:
+> -        return ""
+> -    idx = CpuList.longest_sequence(cpulist)
+> -    if idx == 0:
+> -        seq = str(cpulist[0])
+> -    else:
+> -        if idx == 1:
+> -            seq = f"{cpulist[0]},{cpulist[idx]}"
+> -        else:
+> -            seq = f"{cpulist[0]}-{cpulist[idx]}"
+> -
+> -    rest = collapse_cpulist(cpulist[idx+1:])
+> -    if rest == "":
+> -        return seq
+> -    return ",".join((seq, rest))
+>  
+>  def sysread(path, obj):
+>      """ Helper function for reading system files """
+> @@ -93,7 +74,7 @@ class CpuList:
+>          self.cpulist.sort()
+>  
+>      def __str__(self):
+> -        return self.__collapse_cpulist(self.cpulist)
+> +        return self.collapse_cpulist(self.cpulist)
+>  
+>      def __contains__(self, cpu):
+>          return cpu in self.cpulist
+> @@ -114,35 +95,28 @@ class CpuList:
+>          return os.path.exists(os.path.join(CpuList.cpupath, "isolated"))
+>  
+>      @staticmethod
+> -    def longest_sequence(cpulist):
+> -        """ return index of last element of a sequence that steps by one """
+> -        lim = len(cpulist)
+> -        for idx, _ in enumerate(cpulist):
+> -            if idx+1 == lim:
+> -                break
+> -            if int(cpulist[idx+1]) != (int(cpulist[idx])+1):
+> -                return idx
+> -        return lim - 1
+> -
+> -    def __collapse_cpulist(self, cpulist):
+> -        """ Collapse a list of cpu numbers into a string range
+> +    def collapse_cpulist(cpulist):
+> +        """
+> +        Collapse a list of cpu numbers into a string range
+>          of cpus (e.g. 0-5, 7, 9)
+>          """
+> -        if len(cpulist) == 0:
+> -            return ""
+> -        idx = self.longest_sequence(cpulist)
+> -        if idx == 0:
+> -            seq = str(cpulist[0])
+> -        else:
+> -            if idx == 1:
+> -                seq = f"{cpulist[0]},{cpulist[idx]}"
+> +        cur_range = [None, None]
+> +        result = []
+> +        for cpu in cpulist + [None]:
+> +            if cur_range[0] is None:
+> +                cur_range[0] = cur_range[1] = cpu
+> +                continue
+> +            if cpu is not None and cpu == cur_range[1] + 1:
+> +                # Extend currently processed range
+> +                cur_range[1] += 1
+>              else:
+> -                seq = f"{cpulist[0]}-{cpulist[idx]}"
+> -
+> -        rest = self.__collapse_cpulist(cpulist[idx+1:])
+> -        if rest == "":
+> -            return seq
+> -        return ",".join((seq, rest))
+> +                # Range processing finished, add range to string
+> +                result.append(f"{cur_range[0]}-{cur_range[1]}"
+> +                              if cur_range[0] != cur_range[1]
+> +                              else str(cur_range[0]))
+> +                # Reset
+> +                cur_range[0] = cur_range[1] = cpu
+> +        return ",".join(result)
+>  
+>      @staticmethod
+>      def compress_cpulist(cpulist):
+> @@ -428,7 +402,7 @@ if __name__ == "__main__":
+>  
+>          onlcpus = s.online_cpus()
+>          print(f'onlcpus = {onlcpus}')
+> -        onlcpus = collapse_cpulist(onlcpus)
+> +        onlcpus = CpuList.collapse_cpulist(onlcpus)
+>          print(f'onlcpus = {onlcpus}')
+>  
+>          onlcpus_str = s.online_cpus_str()
+> -- 
+> 2.39.3
+> 
 
-I'd speculate it's primarily due to threaded IRQ handling being both
-more expensive and preemptible.
+I don't necessarily find the iterative version of the function more 
+readable than the recursive one, although I'm sure it is more 
+efficient. This is all fine, although not all the refractoring here
+is necessary to implement the new feature. Sometimes I would
+prefer those efforts to come later.
 
-> Q2:=C2=A0 Why is activity distributed across all cores in the realtime
-> kernel, but more concentrated on core 3 in the stock kernel?
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
-I don't see that.  Using isolcpus or not, the test proggy wakes only on
-CPU3 (as it had damn well better), and box wide affinity i2c IRQ thread
-wakes on CPU0.
-
-Booting the non-rt kernel with 'threadirqs' behaves the same, and I
-suspect will jitter about the same should you try it.  You're isolating
-the test proggy, but for the rt kernel the IRQ thread is left dangling
-in the breeze to be perturbed by other IRQ threads or whatnot.
-
-	-Mike
