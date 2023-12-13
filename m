@@ -1,96 +1,232 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b="t0uP+6uq"
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.21])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 29623EA
-	for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 00:15:18 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.de; s=s31663417;
-	t=1702455315; x=1703060115; i=efault@gmx.de;
-	bh=S2n+L6alJrfHl/YQN/gnze72S0dBnC7YtERcDhT2QkI=;
-	h=X-UI-Sender-Class:Subject:From:To:Date:In-Reply-To:References;
-	b=t0uP+6uqDzjbTOVhUVGalQsCSpEmsnei3Bx8vG6LNB/60IYfQTWLAdgzX1xPZao3
-	 xP2BXuu95cFcq7GBMbuPcd14qu1o0POvoPyvrK7Zwcvh0tl5qy1Y8qoIwhb2neA0f
-	 Vp/izhQrIKhWE32r/0RkDDrCzsfLe3i47hXemn5amD28sDaNqsKYbZUMPaYwZ49Tp
-	 Fqk/3VXPcTU5HiNo6e8bdpQfed9C5nsKG2om79ghndyZmpJx5e+mJ9EptE3H7OBWe
-	 kMan4a9Lu/xzoy4cFmq6HcHLqALFUaFzEQfCRMTCRueXjkWcmXUUuYX9EPMexFD4y
-	 FmXRsE5v1Pu4CPpWvA==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from homer.fritz.box ([185.191.217.104]) by mail.gmx.net (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1N49hB-1rLtAZ3xnl-01067S; Wed, 13
- Dec 2023 09:15:15 +0100
-Message-ID: <3457c4604d0b0318e26336b24a0b36808080a25e.camel@gmx.de>
-Subject: Re: i2c jitter is worse in PREEMPT_RT kernel than stock Raspberry
- Pi kernel
-From: Mike Galbraith <efault@gmx.de>
-To: mfranklin@comfiletech.com, linux-rt-users@vger.kernel.org
-Date: Wed, 13 Dec 2023 09:15:14 +0100
-In-Reply-To: <3feecb7c-72a9-4778-930f-764495a91448@comfiletech.com>
-References: <44fb3d4d-6303-4287-b2ac-7898cc237c47@comfiletech.com>
-	 <da41b939c1f2bbc9735250301ba3c4e735dfb313.camel@gmx.de>
-	 <3feecb7c-72a9-4778-930f-764495a91448@comfiletech.com>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OJ/hxY71"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1436AD4F
+	for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 07:42:12 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1702482132;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=T6rTvqKZcnu/AGV6OJJnDpYQxDDSQZglpsOUS86ThYo=;
+	b=OJ/hxY71UYDQ12WQ2Xk7+rFmemJidP2J4DD9T8IADFv/SCEkXJ29IhxYinMcjlLLW9Cl1X
+	g77V5Ez03v5Q1Nzy9Kd+1oB/46stRBdZ1XEf0+KmrfP6grbx4j8vp0YE4yxlaOGeoSxZ+j
+	Xkm5299KVoYbZtgiDRglFn4y1VqVDQA=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-146-F5foabGuMgyClMr_ZZabLQ-1; Wed, 13 Dec 2023 10:42:09 -0500
+X-MC-Unique: F5foabGuMgyClMr_ZZabLQ-1
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-67ac11bfa46so89240206d6.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 07:42:09 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1702482129; x=1703086929;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=T6rTvqKZcnu/AGV6OJJnDpYQxDDSQZglpsOUS86ThYo=;
+        b=BATTrybRi0CZpD8Lv3XWNueaRoVoboGd0E4+UIJ63cIq0/OJSdaUP50wls5swOCt7B
+         Zw6a+7bs8pw77DAZMDjXJnpfRL3YgEjg9jQyQo2NOe+ZhL4peyUZ/4QQ4uT+pnXEAo4M
+         SMxEFQXzvya0XGkqjSiVJth2ehpUi8+YokKQ1qbquHxik/XVdh6j7LUISBPrt4ycK8Rb
+         UsMDhRHLd9nBdP3VIQ8P/IjwswoP6c+mBAsXym2fmqNOZIMfB5z4IBKbfEEzzP7EVcXF
+         RK++G3M0voawn7TxOagPRuM2OYkulFZvgPB+Pbm+TjDzu91yYBWEYxPpAd70ECPprZFD
+         okaQ==
+X-Gm-Message-State: AOJu0YwMXwmOl/6Kw9XVg6BCWIMJaE+c1IQM7g4MPrvRMpZBoZhZOzx6
+	Yx0Bw3Z18LKhhqqlXQZlhX0NPpmuwNwdZBdnU8uoIQX4HMfOkLkx4+CBKotlqcAcBQYS6Hd5erW
+	ddN9kJbs4mE6nM//Mcx3migLpcbwox2Ax2AE=
+X-Received: by 2002:ad4:4b66:0:b0:67a:b136:197d with SMTP id m6-20020ad44b66000000b0067ab136197dmr8848977qvx.91.1702482128938;
+        Wed, 13 Dec 2023 07:42:08 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEJBAMXIt+W1cY+aa29BZm7Ip0nnnYKedB23tZEf0azk4/YM+w2QMsbciJUn0E/9CL2rVGnxw==
+X-Received: by 2002:ad4:4b66:0:b0:67a:b136:197d with SMTP id m6-20020ad44b66000000b0067ab136197dmr8848969qvx.91.1702482128679;
+        Wed, 13 Dec 2023 07:42:08 -0800 (PST)
+Received: from fionn ([174.88.88.134])
+        by smtp.gmail.com with ESMTPSA id d17-20020a0cea91000000b0067eabe0116dsm4885424qvp.72.2023.12.13.07.42.08
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 13 Dec 2023 07:42:08 -0800 (PST)
+Date: Wed, 13 Dec 2023 10:41:59 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Crystal Wood <crwood@redhat.com>
+cc: linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 1/4] rt-tests: Fix warnings
+In-Reply-To: <20231206205508.17148-2-crwood@redhat.com>
+Message-ID: <0ac949ff-3c02-84b2-e367-c338d0e87174@redhat.com>
+References: <20231206205508.17148-1-crwood@redhat.com> <20231206205508.17148-2-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-X-Provags-ID: V03:K1:XYhxr/hL6onrCpSjylDPAYo2cjeiFZ3PfVFD29fuedNM8/0Mv2L
- B8K5ded2aK4RhgRIbIrD26+sr1fF+8ZkpnlQskf4yuxgZTqEfzlUjTKlzs95GAwX6EhpoqQ
- KoxBiKIQ3bX8aexGy7D7lhY54iJA9XQF5coP5b/bYoyO7BSf9HPQZsVzy660DHSgYzJkftV
- EUYO0KUonQTKBi76+OD4Q==
-UI-OutboundReport: notjunk:1;M01:P0:LxjWUe7BD1Y=;Rh5UK6pxMfQKRzoAI8rzYVKKm4n
- fJSgm29zGdeDSbgFmFicbjpqR0yN14itcuIOUyLyxub7+bSGzVCwlLeLkSkbWwSwWHQ5rCS78
- XUOPjQ34uFA0JLTY6N4E+hFJI/9i3Frzxws17qo4J0yTs+J00d3WCTSBWVLzqaNZT0sJTo1TF
- DOhyQXnQEB7NRSdiqA3AvuxgP6BZOrHEmibiMgfFDH0CRcEsqJvymS2tk3KQSJrh8FkqTIxlP
- aI20PrnTFit+ieozvt4xIgSquK1YU0sd0v2zaXrCuYCG6p2wOI/9DRrH2FDsyYi7Kkjl1IQ3d
- Vcl+2VlF2Wi+6LbE0Ea7YNoCIdJ4xMpLs4M0I0Gdy1rndJIMaCva0lLJXdCxu1M/bKS6ZOwoi
- gUU/SHb/dXTbuutQHQBUwRj6oMmxeM7KDQpSTHhaoqW1Bn8RYqFJKxjCeBDzYLkVgRUtWZ+Ta
- qMq0oMzlZBPTbGAq+gj8PGuQTBI84ZtNRLsGWjT3jbYa4MgW1zje18h4Od7YoQCbx8zN/n8q3
- HMQeZxL1whaefJI08okOxh+UCMP/wp/uj+0lBghkWYfeisQiJcl7zVsu6qdf7hczc43hBWg23
- 1ESEh4iey2rASeebTrudRKx9+oJP5JPrJEakIWxLowzInz2z1KiB2AS/Al9wDK5ck+wNnZWy4
- fAyU2QEhq9qGPEqp8G6wR+mJ3gsGvis98V5G2Z5eUC82G1yyxVmVqZXY7YpsvMJyOyzhZ+hgU
- zq88Qov1LqPQfa3Sze9o5CBqXDOe96vXbkDCZqxwSjy13D35E8lLi+HLHe02AJUDbINsIkbBG
- cSRccdZU+5Yig4dSgOznkaolRYUju82NnzRzbtt7dlp/3tifAONP7Qz4ybu0/+oC/Q8lawa++
- YJMvXc9rggvm7cFClhkWftWl7+NMq5I7+7uf9KGyZlkfkPF7OpEeW9XMNMKYuslL2M26I80IW
- E6pvZg==
+Content-Type: text/plain; charset=US-ASCII
 
-T24gV2VkLCAyMDIzLTEyLTEzIGF0IDEyOjMzICswOTAwLCBNaWNoYWVsIEZyYW5rbGluIHdyb3Rl
-Og0KPiANCj4gSSB0ZXN0ZWQgdGhlIHN0b2NrIGtlcm5lbCB3aXRoIGB0aHJlYWRpcnFzYCBhbmQg
-aW5kZWVkIHRoZSBqaXR0ZXIgd2FzIHdvcnNlLCBidXQgdGhlIFJUIGtlcm5lbCBzdGlsbCANCj4g
-c2VlbWVkIHRvIGJlIG1vcmUgaml0dGVyeS4NCj4gDQo+IEhvd2V2ZXIsIGJhc2VkIG9uIHdoYXQg
-eW91IG1lbnRpb25lZCwgSSBkZWNpZGVkIHRvIGxvb2sgZnVydGhlciBpbnRlcnJ1cHRzL0lSUSBi
-ZWhhdmlvciwgYW5kIGZvdW5kIA0KPiB0aGlzIGluIC9wcm9jL2ludGVycnVwdHM6DQo+IA0KPiBQ
-UkVFTVBUX1JUIGtlcm5lbDoNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBDUFUwwqDCoMKgwqDC
-oMKgIENQVTHCoMKgwqDCoMKgwqAgQ1BVMsKgwqDCoMKgwqDCoCBDUFUzDQo+IDEwOTrCoMKgIDIy
-NjI1ODE1wqDCoMKgwqDCoMKgwqDCoMKgIDDCoMKgwqDCoMKgwqDCoMKgwqAgMMKgwqDCoMKgwqDC
-oMKgwqDCoCAwwqAgcnAxX2lycV9jaGlwwqDCoCA4IExldmVswqDCoMKgwqAgMWYwMDA3NDAwMC5p
-MmMNCj4gSVBJMDrCoMKgwqDCoCAxOTY0MMKgwqAgMTIwMTg0MzDCoMKgwqAgNjg3MDM5OMKgwqDC
-oCA1NTQ4OTA4wqDCoMKgwqDCoMKgIFJlc2NoZWR1bGluZyBpbnRlcnJ1cHRzDQo+IElQSTE6wqDC
-oMKgwqDCoMKgIDcxM8KgwqDCoMKgwqAgMjYyOTXCoMKgwqDCoMKgIDE4MTA0wqDCoMKgwqDCoMKg
-wqAgMzY3wqDCoMKgwqDCoMKgIEZ1bmN0aW9uIGNhbGwgaW50ZXJydXB0cw0KPiANCj4gU3RvY2sg
-S2VybmVsOg0KPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIENQVTDCoMKgwqDCoMKgwqAgQ1BVMcKg
-wqDCoMKgwqDCoCBDUFUywqDCoMKgwqDCoMKgIENQVTMNCj4gMTA5OsKgwqAgMTExMjkyNDfCoMKg
-wqDCoMKgwqDCoMKgwqAgMMKgwqDCoMKgwqDCoMKgwqDCoCAwwqDCoMKgwqDCoMKgwqDCoMKgIDDC
-oCBycDFfaXJxX2NoaXDCoMKgIDggTGV2ZWzCoMKgwqDCoCAxZjAwMDc0MDAwLmkyYw0KPiBJUEkw
-OsKgwqDCoMKgwqDCoCA1ODLCoMKgwqDCoMKgwqDCoCA2MjDCoMKgwqDCoMKgwqDCoCA1NzLCoMKg
-wqDCoMKgwqDCoCA2OTTCoMKgwqDCoMKgwqAgUmVzY2hlZHVsaW5nIGludGVycnVwdHMNCj4gSVBJ
-MTrCoMKgwqDCoCA0MDA2McKgwqDCoMKgwqAgMTIzNjDCoMKgwqDCoCAxMDg5NDbCoMKgwqAgNTQ3
-NTQzN8KgwqDCoMKgwqDCoCBGdW5jdGlvbiBjYWxsIGludGVycnVwdHMNCj4gDQo+IFN0b2NrIEtl
-cm5lbCB3aXRoIGB0aHJlYWRpcnFzYDoNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBDUFUwwqDC
-oMKgwqDCoMKgIENQVTHCoMKgwqDCoMKgwqAgQ1BVMsKgwqDCoMKgwqDCoCBDUFUzDQo+IDEwOTrC
-oMKgIDIxNzc0MTI4wqDCoMKgwqDCoMKgwqDCoMKgIDDCoMKgwqDCoMKgwqDCoMKgwqAgMMKgwqDC
-oMKgwqDCoMKgwqDCoCAwwqAgcnAxX2lycV9jaGlwwqDCoCA4IExldmVswqDCoMKgwqAgMWYwMDA3
-NDAwMC5pMmMNCj4gSVBJMDrCoMKgwqDCoMKgwqAgNjc0wqDCoMKgwqDCoMKgwqAgNjU3wqDCoMKg
-wqDCoMKgwqAgNjg3wqDCoMKgwqDCoMKgwqAgNjE3wqDCoMKgwqDCoMKgIFJlc2NoZWR1bGluZyBp
-bnRlcnJ1cHRzDQo+IElQSTE6wqDCoMKgwqAgNTg2NTXCoMKgwqDCoCAxMjc1MjfCoMKgIDIxMzMx
-MjM4wqDCoMKgIDU3ODAzODDCoMKgwqDCoMKgwqAgRnVuY3Rpb24gY2FsbCBpbnRlcnJ1cHRzDQo+
-IA0KPiBUaGVyZSB5b3UgY2FuIHNlZSB0aGF0LCBpbiB0aGUgUFJFRU1QVF9SVCBrZXJuZWwsIHRo
-ZXJlIGFyZSBhIHZlcnkgbGFyZ2UgbnVtYmVyIG9mICdSZXNjaGVkdWxpbmcgDQo+IGludGVycnVw
-dHMnIGFuZCBvbmx5IGEgZmV3ICdGdW5jdGlvbiBjYWxsIGludGVycnVwdHMnLsKgIEhvd2V2ZXIs
-IGluIHRoZSBzdG9jayBrZXJuZWwgaXQgaXMgdGhlIA0KPiBvcHBvc2l0ZSAtLSBhIGxhcmdlIG51
-bWJlciBvZiAnRnVuY3Rpb24gY2FsbCBpbnRlcnJ1cHRzJyBhbmQgYSBmZXcgJ1Jlc2NoZWR1bGlu
-ZyBpbnRlcnJ1cHRzJy4NCg0KUGFydCBvZiB0aGF0IGlzIG1pdGlnYXRpb24gYWxhIDUzOWZiYjVi
-ZTAsIGFuZCBwYXJ0IGlzIFJUIGJlaW5nIGl0cw0KbmF0dXJhbGx5IHR3aXRjaHkgc2VsZi4NCg0K
-DQoJLU1pa2UNCg==
+
+
+On Wed, 6 Dec 2023, Crystal Wood wrote:
+
+> Numerous places threw sign comparison warnings; we could fix them but
+> it's kind of an obnoxious warning that requires casts to deal with things
+> such as ARRAY_SIZE() while still being able to check for the user
+> entering a negative number.
+> 
+> -Wunused-parameter is another obnoxious warning as it flags perfectly
+> reasonable code that takes unneeded parameters in order to comply with
+> a function pointer interface or similar; however, all of the instances
+> that were flagged here were actual dead parameters, so just fix them.
+> 
+> Add volatile to timer_started in hackbench so that it doesn't get
+> clobbered by longjmp().
+> 
+> Signed-off-by: Crystal Wood <crwood@redhat.com>
+> --
+> Let me know if you'd rather I fix the sign warnings.
+> ---
+>  Makefile                            |  2 +-
+>  src/hackbench/hackbench.c           |  2 +-
+>  src/sched_deadline/cyclicdeadline.c |  6 +++---
+>  src/sched_deadline/deadline_test.c  | 10 +++++-----
+>  src/sigwaittest/sigwaittest.c       |  6 +++---
+>  5 files changed, 13 insertions(+), 13 deletions(-)
+> 
+> diff --git a/Makefile b/Makefile
+> index 2808c212058a..ad481a73cf93 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -31,7 +31,7 @@ prefix  ?= /usr/local
+>  bindir  ?= $(prefix)/bin
+>  mandir	?= $(prefix)/share/man
+>  
+> -CFLAGS ?= -Wall -Wno-nonnull -Wextra
+> +CFLAGS ?= -Wall -Wno-nonnull -Wextra -Wno-sign-compare
+>  CPPFLAGS += -D_GNU_SOURCE -Isrc/include
+>  LDFLAGS ?=
+>  
+> diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+> index 69dd5f087fb6..4430db0e4ed6 100644
+> --- a/src/hackbench/hackbench.c
+> +++ b/src/hackbench/hackbench.c
+> @@ -494,7 +494,7 @@ int main(int argc, char *argv[])
+>  	struct timeval start, stop, diff;
+>  	int readyfds[2], wakefds[2];
+>  	char dummy;
+> -	int timer_started = 0;
+> +	volatile int timer_started = 0;
+>  	struct sched_param sp;
+>  
+>  	process_options (argc, argv);
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index 9bdc4b5deaf1..097e2e5d4580 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -750,7 +750,7 @@ static void print_stat(FILE *fp, struct sched_data *sd, int index, int verbose,
+>  	}
+>  }
+>  
+> -static u64 do_runtime(long tid, struct sched_data *sd, u64 period)
+> +static u64 do_runtime(struct sched_data *sd, u64 period)
+>  {
+>  	struct thread_stat *stat = &sd->stat;
+>  	u64 next_period = period + sd->deadline_us;
+> @@ -833,7 +833,7 @@ void *run_deadline(void *data)
+>  	period = get_time_us();
+>  
+>  	while (!shutdown) {
+> -		period = do_runtime(tid, sd, period);
+> +		period = do_runtime(sd, period);
+>  		if (tracelimit && (stat->max > tracelimit)) {
+>  			shutdown++;
+>  			pthread_mutex_lock(&break_thread_id_lock);
+> @@ -1266,7 +1266,7 @@ int main(int argc, char **argv)
+>  
+>  		/* Make sure that we can make our deadlines */
+>  		start_period = get_time_us();
+> -		do_runtime(gettid(), sd, start_period);
+> +		do_runtime(sd, start_period);
+>  		end_period = get_time_us();
+>  		if (end_period - start_period > sd->runtime_us)
+>  			fatal("Failed to perform task within runtime: Missed by %lld us\n",
+> diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+> index cd8ef01f7d68..ca2da476ec95 100644
+> --- a/src/sched_deadline/deadline_test.c
+> +++ b/src/sched_deadline/deadline_test.c
+> @@ -1181,7 +1181,7 @@ static int read_ctx_switches(int *vol, int *nonvol, int *migrate)
+>   *  @data->total_time - Total time it took to complete all loops
+>   *  @data->nr_periods - Number of periods that were executed.
+>   */
+> -static u64 do_runtime(long tid, struct sched_data *data, u64 period)
+> +static u64 do_runtime(struct sched_data *data, u64 period)
+>  {
+>  	u64 next_period = period + data->deadline_us;
+>  	u64 now = get_time_us();
+> @@ -1354,7 +1354,7 @@ void *run_deadline(void *data)
+>  	period = get_time_us();
+>  
+>  	while (!done) {
+> -		period = do_runtime(tid, sched_data, period);
+> +		period = do_runtime(sched_data, period);
+>  		sched_yield();
+>  	}
+>  	ret = sched_getattr(0, &attr, sizeof(attr), 0);
+> @@ -1714,7 +1714,7 @@ static u64 calculate_loops_per_ms(u64 *overhead)
+>  	do_sleep(1000);
+>  
+>  	start = get_time_us();
+> -	do_runtime(0, &sd, start + sd.deadline_us);
+> +	do_runtime(&sd, start + sd.deadline_us);
+>  	end = get_time_us();
+>  
+>  	diff = end - start;
+> @@ -1743,7 +1743,7 @@ static u64 calculate_loops_per_ms(u64 *overhead)
+>  	do_sleep(1000);
+>  
+>  	start = get_time_us();
+> -	do_runtime(0, &sd, start + sd.deadline_us);
+> +	do_runtime(&sd, start + sd.deadline_us);
+>  	end = get_time_us();
+>  
+>  	odiff = end - start;
+> @@ -1962,7 +1962,7 @@ int main(int argc, char **argv)
+>  
+>  		/* Make sure that we can make our deadlines */
+>  		start_period = get_time_us();
+> -		do_runtime(gettid(), sd, start_period);
+> +		do_runtime(sd, start_period);
+>  		end_period = get_time_us();
+>  		if (end_period - start_period > sd->runtime_us) {
+>  			printf("Failed to perform task within runtime: Missed by %lld us\n",
+> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+> index 55855769c63b..8c1c16fb3081 100644
+> --- a/src/sigwaittest/sigwaittest.c
+> +++ b/src/sigwaittest/sigwaittest.c
+> @@ -375,7 +375,7 @@ static void sighand(int sig __attribute__ ((unused)))
+>  	mustshutdown = 1;
+>  }
+>  
+> -static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
+> +static void print_stat(struct params *receiver, struct params *sender,
+>  		       int verbose __attribute__ ((unused)), int quiet)
+>  {
+>  	int i;
+> @@ -644,7 +644,7 @@ int main(int argc, char *argv[])
+>  			    sender[i].shutdown;
+>  
+>  		if (receiver[0].samples > oldsamples || mustshutdown) {
+> -			print_stat(stdout, receiver, sender, 0, quiet);
+> +			print_stat(receiver, sender, 0, quiet);
+>  			if (!quiet)
+>  				printf("\033[%dA", num_threads*2);
+>  		}
+> @@ -664,7 +664,7 @@ int main(int argc, char *argv[])
+>  	if (!quiet)
+>  		printf("\033[%dB", num_threads*2 + 2);
+>  	else
+> -		print_stat(stdout, receiver, sender, 0, 0);
+> +		print_stat(receiver, sender, 0, 0);
+>  
+>  	for (i = 0; i < num_threads; i++) {
+>  		receiver[i].shutdown = 1;
+> -- 
+> 2.43.0
+> 
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+
