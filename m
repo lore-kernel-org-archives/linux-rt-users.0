@@ -1,141 +1,96 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=comfiletech-com.20230601.gappssmtp.com header.i=@comfiletech-com.20230601.gappssmtp.com header.b="PN6+U8J+"
-Received: from mail-oi1-x234.google.com (mail-oi1-x234.google.com [IPv6:2607:f8b0:4864:20::234])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D7B53BE
-	for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2023 20:37:34 -0800 (PST)
-Received: by mail-oi1-x234.google.com with SMTP id 5614622812f47-3b9e2a014e8so4486977b6e.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2023 20:37:34 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=comfiletech-com.20230601.gappssmtp.com; s=20230601; t=1702442254; x=1703047054; darn=vger.kernel.org;
-        h=content-transfer-encoding:in-reply-to:reply-to:organization
-         :references:to:from:content-language:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=leD7Pf0I0hmZhDRQWiuY34fSRheLxYj0uvbQr6gjd0c=;
-        b=PN6+U8J+bLOQ5CmLGO71dljtTKmBnd8kiu/tpp3QVZ2F1neQEzOavmKprSiRsQQ5Pb
-         4jfnKwwqxULTbE+eB7/lnbR7Gyw13VCdg1s5PnucnVQ/SAQI1Qk/AQFTsge23cpSCbPx
-         E+Sq4/9cENUys3SltmDyLz3x1qBJyxNQNwvP+uL3WhUZJDWmdp9t/bbniaNtUxGpr9mE
-         aLJ1zVI9tT0QJufaDjpH9JjWrrd9zDbyiXSearVrdjYbTLWz79s7M18Kt3R9jk3TPM+b
-         1fYp1Kij+ihckOrIMSmgxVUrcwdNqUrWBEs+Nwgah3JXHD9wITuaTwpr5nwOahgLLheY
-         jjDA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702442254; x=1703047054;
-        h=content-transfer-encoding:in-reply-to:reply-to:organization
-         :references:to:from:content-language:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=leD7Pf0I0hmZhDRQWiuY34fSRheLxYj0uvbQr6gjd0c=;
-        b=K7gPSi/xzwmBMEjDBBovuNpUIFQDbVhDTrnH7E1bEE8NyQ6bQbJDEDVCfEXXoqk6gA
-         ZgP352aC0+hzduToFBbaefpz45a1+qegTTmR6Q9abUhMd2XES+cUdNLgQpcL5aNnAq7/
-         GfAtDEMwec7zEBeSQsWb9Tf/mMc2XEG5EdalJ1lM10Ubkxzvy8quTq6+iQ0iuYcDwpga
-         x0uFWq54EUdTJJIb0sDur8twbIKusVPN7cC6YVtH5tIkZJlrfomQxcNZ/w3OICeDVpVb
-         rIYcnTVuhem3gwrDutzebRdCjigD1++BovjVWIi2Gla02+PUHAO99ddPM1M/zpp6H37c
-         927Q==
-X-Gm-Message-State: AOJu0Yxzqi92jBniISxZHcKLJR6j75HRilMvMaTtXg1G6e9stF9MbfMa
-	bhspZKvNas7U6TzwhggAbMOfpiYF5wHYoMmYPV8=
-X-Google-Smtp-Source: AGHT+IFsEGCHZ3a8urMxKv9PNCycHy7oRpJF1j8L+slbVey7F8q0QyPclOZziZIiK2EI+ImF37JWfQ==
-X-Received: by 2002:a05:6808:1183:b0:3b8:b063:6bb2 with SMTP id j3-20020a056808118300b003b8b0636bb2mr9158716oil.97.1702442254149;
-        Tue, 12 Dec 2023 20:37:34 -0800 (PST)
-Received: from [192.168.0.11] ([115.94.64.218])
-        by smtp.gmail.com with ESMTPSA id e10-20020aa7980a000000b006cef6293132sm6737042pfl.101.2023.12.12.20.37.32
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 12 Dec 2023 20:37:33 -0800 (PST)
-Message-ID: <e9f551e9-a0ae-4e10-8a77-54f91dfed700@comfiletech.com>
-Date: Wed, 13 Dec 2023 13:37:31 +0900
+	dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b="t0uP+6uq"
+Received: from mout.gmx.net (mout.gmx.net [212.227.17.21])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 29623EA
+	for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 00:15:18 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.de; s=s31663417;
+	t=1702455315; x=1703060115; i=efault@gmx.de;
+	bh=S2n+L6alJrfHl/YQN/gnze72S0dBnC7YtERcDhT2QkI=;
+	h=X-UI-Sender-Class:Subject:From:To:Date:In-Reply-To:References;
+	b=t0uP+6uqDzjbTOVhUVGalQsCSpEmsnei3Bx8vG6LNB/60IYfQTWLAdgzX1xPZao3
+	 xP2BXuu95cFcq7GBMbuPcd14qu1o0POvoPyvrK7Zwcvh0tl5qy1Y8qoIwhb2neA0f
+	 Vp/izhQrIKhWE32r/0RkDDrCzsfLe3i47hXemn5amD28sDaNqsKYbZUMPaYwZ49Tp
+	 Fqk/3VXPcTU5HiNo6e8bdpQfed9C5nsKG2om79ghndyZmpJx5e+mJ9EptE3H7OBWe
+	 kMan4a9Lu/xzoy4cFmq6HcHLqALFUaFzEQfCRMTCRueXjkWcmXUUuYX9EPMexFD4y
+	 FmXRsE5v1Pu4CPpWvA==
+X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
+Received: from homer.fritz.box ([185.191.217.104]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1N49hB-1rLtAZ3xnl-01067S; Wed, 13
+ Dec 2023 09:15:15 +0100
+Message-ID: <3457c4604d0b0318e26336b24a0b36808080a25e.camel@gmx.de>
+Subject: Re: i2c jitter is worse in PREEMPT_RT kernel than stock Raspberry
+ Pi kernel
+From: Mike Galbraith <efault@gmx.de>
+To: mfranklin@comfiletech.com, linux-rt-users@vger.kernel.org
+Date: Wed, 13 Dec 2023 09:15:14 +0100
+In-Reply-To: <3feecb7c-72a9-4778-930f-764495a91448@comfiletech.com>
+References: <44fb3d4d-6303-4287-b2ac-7898cc237c47@comfiletech.com>
+	 <da41b939c1f2bbc9735250301ba3c4e735dfb313.camel@gmx.de>
+	 <3feecb7c-72a9-4778-930f-764495a91448@comfiletech.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: i2c jitter is worse in PREEMPT_RT kernel than stock Raspberry Pi
- kernel
-Content-Language: en-US
-From: Michael Franklin <mfranklin@comfiletech.com>
-To: Mike Galbraith <efault@gmx.de>, linux-rt-users@vger.kernel.org
-References: <44fb3d4d-6303-4287-b2ac-7898cc237c47@comfiletech.com>
- <da41b939c1f2bbc9735250301ba3c4e735dfb313.camel@gmx.de>
- <3feecb7c-72a9-4778-930f-764495a91448@comfiletech.com>
-Organization: COMFILE Technology
-Reply-To: mfranklin@comfiletech.com
-In-Reply-To: <3feecb7c-72a9-4778-930f-764495a91448@comfiletech.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: base64
+X-Provags-ID: V03:K1:XYhxr/hL6onrCpSjylDPAYo2cjeiFZ3PfVFD29fuedNM8/0Mv2L
+ B8K5ded2aK4RhgRIbIrD26+sr1fF+8ZkpnlQskf4yuxgZTqEfzlUjTKlzs95GAwX6EhpoqQ
+ KoxBiKIQ3bX8aexGy7D7lhY54iJA9XQF5coP5b/bYoyO7BSf9HPQZsVzy660DHSgYzJkftV
+ EUYO0KUonQTKBi76+OD4Q==
+UI-OutboundReport: notjunk:1;M01:P0:LxjWUe7BD1Y=;Rh5UK6pxMfQKRzoAI8rzYVKKm4n
+ fJSgm29zGdeDSbgFmFicbjpqR0yN14itcuIOUyLyxub7+bSGzVCwlLeLkSkbWwSwWHQ5rCS78
+ XUOPjQ34uFA0JLTY6N4E+hFJI/9i3Frzxws17qo4J0yTs+J00d3WCTSBWVLzqaNZT0sJTo1TF
+ DOhyQXnQEB7NRSdiqA3AvuxgP6BZOrHEmibiMgfFDH0CRcEsqJvymS2tk3KQSJrh8FkqTIxlP
+ aI20PrnTFit+ieozvt4xIgSquK1YU0sd0v2zaXrCuYCG6p2wOI/9DRrH2FDsyYi7Kkjl1IQ3d
+ Vcl+2VlF2Wi+6LbE0Ea7YNoCIdJ4xMpLs4M0I0Gdy1rndJIMaCva0lLJXdCxu1M/bKS6ZOwoi
+ gUU/SHb/dXTbuutQHQBUwRj6oMmxeM7KDQpSTHhaoqW1Bn8RYqFJKxjCeBDzYLkVgRUtWZ+Ta
+ qMq0oMzlZBPTbGAq+gj8PGuQTBI84ZtNRLsGWjT3jbYa4MgW1zje18h4Od7YoQCbx8zN/n8q3
+ HMQeZxL1whaefJI08okOxh+UCMP/wp/uj+0lBghkWYfeisQiJcl7zVsu6qdf7hczc43hBWg23
+ 1ESEh4iey2rASeebTrudRKx9+oJP5JPrJEakIWxLowzInz2z1KiB2AS/Al9wDK5ck+wNnZWy4
+ fAyU2QEhq9qGPEqp8G6wR+mJ3gsGvis98V5G2Z5eUC82G1yyxVmVqZXY7YpsvMJyOyzhZ+hgU
+ zq88Qov1LqPQfa3Sze9o5CBqXDOe96vXbkDCZqxwSjy13D35E8lLi+HLHe02AJUDbINsIkbBG
+ cSRccdZU+5Yig4dSgOznkaolRYUju82NnzRzbtt7dlp/3tifAONP7Qz4ybu0/+oC/Q8lawa++
+ YJMvXc9rggvm7cFClhkWftWl7+NMq5I7+7uf9KGyZlkfkPF7OpEeW9XMNMKYuslL2M26I80IW
+ E6pvZg==
 
-
-
-Michael Franklin
-Software Engineer
-COMFILE Technology
-82-2-711-2592 ext 510
-Skype: MFranklinAtComfile
-On 12/13/2023 12:33 PM, Michael Franklin wrote:
-> On 12/12/2023 9:42 PM, Mike Galbraith wrote:
->> On Tue, 2023-12-12 at 11:53 +0900, Michael Franklin wrote:
->>
->>> Interestingly, in the stock kernel, `htop` shows that most CPU activity
->>> is concentrated on core 3 (which is what I expected and preferred),
->>> while in the realtime kernel, the CPU activity is distributed across all
->>> cores, despite booting with `isolcpus=3` and running the test program
->>> with `task set -cp 3 $(pidof i2ctest)` in both kernels.
->>>
->>> Q1:  Why is i2c communication is more jittery in the realtime kernel
->>> than the stock kernel?
->>
->> I'd speculate it's primarily due to threaded IRQ handling being both
->> more expensive and preemptible.
->>
->>> Q2:  Why is activity distributed across all cores in the realtime
->>> kernel, but more concentrated on core 3 in the stock kernel?
->>
->> I don't see that.  Using isolcpus or not, the test proggy wakes only on
->> CPU3 (as it had damn well better), and box wide affinity i2c IRQ thread
->> wakes on CPU0.
->>
->> Booting the non-rt kernel with 'threadirqs' behaves the same, and I
->> suspect will jitter about the same should you try it.  You're isolating
->> the test proggy, but for the rt kernel the IRQ thread is left dangling
->> in the breeze to be perturbed by other IRQ threads or whatnot.
->>
->>     -Mike
-> 
-> Thanks.
-> 
-> I tested the stock kernel with `threadirqs` and indeed the jitter was worse, but the RT kernel still 
-> seemed to be more jittery.
-> 
-> However, based on what you mentioned, I decided to look further interrupts/IRQ behavior, and found 
-> this in /proc/interrupts:
-> 
-> PREEMPT_RT kernel:
->             CPU0       CPU1       CPU2       CPU3
-> 109:   22625815          0          0          0  rp1_irq_chip   8 Level     1f00074000.i2c
-> IPI0:     19640   12018430    6870398    5548908       Rescheduling interrupts
-> IPI1:       713      26295      18104        367       Function call interrupts
-> 
-> Stock Kernel:
->             CPU0       CPU1       CPU2       CPU3
-> 109:   11129247          0          0          0  rp1_irq_chip   8 Level     1f00074000.i2c
-> IPI0:       582        620        572        694       Rescheduling interrupts
-> IPI1:     40061      12360     108946    5475437       Function call interrupts
-> 
-> Stock Kernel with `threadirqs`:
->             CPU0       CPU1       CPU2       CPU3
-> 109:   21774128          0          0          0  rp1_irq_chip   8 Level     1f00074000.i2c
-> IPI0:       674        657        687        617       Rescheduling interrupts
-> IPI1:     58655     127527   21331238    5780380       Function call interrupts
-> 
-> There you can see that, in the PREEMPT_RT kernel, there are a very large number of 'Rescheduling 
-> interrupts' and only a few 'Function call interrupts'.  However, in the stock kernel it is the 
-> opposite -- a large number of 'Function call interrupts' and a few 'Rescheduling interrupts'.
-> 
-> Adding `threadirqs` to the stock kenel seemed to just distribute many of the Function call 
-> interrupts over more cores.
-> 
-> Is there anything that can be done about the large number of Rescheduling interrupts in the 
-> PREEMPT_RT kernel?
-
-I was able to reduce the number of Rescheduling interrupts on the isolated core by `echo -1 > 
-/proc/sys/kernel/sched_rt_runtime_us` but there are still too many Rescheduling interrupts relative 
-to Function call interrupts on the other 3 cores and the jitter is still pretty bad.
-
+T24gV2VkLCAyMDIzLTEyLTEzIGF0IDEyOjMzICswOTAwLCBNaWNoYWVsIEZyYW5rbGluIHdyb3Rl
+Og0KPiANCj4gSSB0ZXN0ZWQgdGhlIHN0b2NrIGtlcm5lbCB3aXRoIGB0aHJlYWRpcnFzYCBhbmQg
+aW5kZWVkIHRoZSBqaXR0ZXIgd2FzIHdvcnNlLCBidXQgdGhlIFJUIGtlcm5lbCBzdGlsbCANCj4g
+c2VlbWVkIHRvIGJlIG1vcmUgaml0dGVyeS4NCj4gDQo+IEhvd2V2ZXIsIGJhc2VkIG9uIHdoYXQg
+eW91IG1lbnRpb25lZCwgSSBkZWNpZGVkIHRvIGxvb2sgZnVydGhlciBpbnRlcnJ1cHRzL0lSUSBi
+ZWhhdmlvciwgYW5kIGZvdW5kIA0KPiB0aGlzIGluIC9wcm9jL2ludGVycnVwdHM6DQo+IA0KPiBQ
+UkVFTVBUX1JUIGtlcm5lbDoNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBDUFUwwqDCoMKgwqDC
+oMKgIENQVTHCoMKgwqDCoMKgwqAgQ1BVMsKgwqDCoMKgwqDCoCBDUFUzDQo+IDEwOTrCoMKgIDIy
+NjI1ODE1wqDCoMKgwqDCoMKgwqDCoMKgIDDCoMKgwqDCoMKgwqDCoMKgwqAgMMKgwqDCoMKgwqDC
+oMKgwqDCoCAwwqAgcnAxX2lycV9jaGlwwqDCoCA4IExldmVswqDCoMKgwqAgMWYwMDA3NDAwMC5p
+MmMNCj4gSVBJMDrCoMKgwqDCoCAxOTY0MMKgwqAgMTIwMTg0MzDCoMKgwqAgNjg3MDM5OMKgwqDC
+oCA1NTQ4OTA4wqDCoMKgwqDCoMKgIFJlc2NoZWR1bGluZyBpbnRlcnJ1cHRzDQo+IElQSTE6wqDC
+oMKgwqDCoMKgIDcxM8KgwqDCoMKgwqAgMjYyOTXCoMKgwqDCoMKgIDE4MTA0wqDCoMKgwqDCoMKg
+wqAgMzY3wqDCoMKgwqDCoMKgIEZ1bmN0aW9uIGNhbGwgaW50ZXJydXB0cw0KPiANCj4gU3RvY2sg
+S2VybmVsOg0KPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIENQVTDCoMKgwqDCoMKgwqAgQ1BVMcKg
+wqDCoMKgwqDCoCBDUFUywqDCoMKgwqDCoMKgIENQVTMNCj4gMTA5OsKgwqAgMTExMjkyNDfCoMKg
+wqDCoMKgwqDCoMKgwqAgMMKgwqDCoMKgwqDCoMKgwqDCoCAwwqDCoMKgwqDCoMKgwqDCoMKgIDDC
+oCBycDFfaXJxX2NoaXDCoMKgIDggTGV2ZWzCoMKgwqDCoCAxZjAwMDc0MDAwLmkyYw0KPiBJUEkw
+OsKgwqDCoMKgwqDCoCA1ODLCoMKgwqDCoMKgwqDCoCA2MjDCoMKgwqDCoMKgwqDCoCA1NzLCoMKg
+wqDCoMKgwqDCoCA2OTTCoMKgwqDCoMKgwqAgUmVzY2hlZHVsaW5nIGludGVycnVwdHMNCj4gSVBJ
+MTrCoMKgwqDCoCA0MDA2McKgwqDCoMKgwqAgMTIzNjDCoMKgwqDCoCAxMDg5NDbCoMKgwqAgNTQ3
+NTQzN8KgwqDCoMKgwqDCoCBGdW5jdGlvbiBjYWxsIGludGVycnVwdHMNCj4gDQo+IFN0b2NrIEtl
+cm5lbCB3aXRoIGB0aHJlYWRpcnFzYDoNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBDUFUwwqDC
+oMKgwqDCoMKgIENQVTHCoMKgwqDCoMKgwqAgQ1BVMsKgwqDCoMKgwqDCoCBDUFUzDQo+IDEwOTrC
+oMKgIDIxNzc0MTI4wqDCoMKgwqDCoMKgwqDCoMKgIDDCoMKgwqDCoMKgwqDCoMKgwqAgMMKgwqDC
+oMKgwqDCoMKgwqDCoCAwwqAgcnAxX2lycV9jaGlwwqDCoCA4IExldmVswqDCoMKgwqAgMWYwMDA3
+NDAwMC5pMmMNCj4gSVBJMDrCoMKgwqDCoMKgwqAgNjc0wqDCoMKgwqDCoMKgwqAgNjU3wqDCoMKg
+wqDCoMKgwqAgNjg3wqDCoMKgwqDCoMKgwqAgNjE3wqDCoMKgwqDCoMKgIFJlc2NoZWR1bGluZyBp
+bnRlcnJ1cHRzDQo+IElQSTE6wqDCoMKgwqAgNTg2NTXCoMKgwqDCoCAxMjc1MjfCoMKgIDIxMzMx
+MjM4wqDCoMKgIDU3ODAzODDCoMKgwqDCoMKgwqAgRnVuY3Rpb24gY2FsbCBpbnRlcnJ1cHRzDQo+
+IA0KPiBUaGVyZSB5b3UgY2FuIHNlZSB0aGF0LCBpbiB0aGUgUFJFRU1QVF9SVCBrZXJuZWwsIHRo
+ZXJlIGFyZSBhIHZlcnkgbGFyZ2UgbnVtYmVyIG9mICdSZXNjaGVkdWxpbmcgDQo+IGludGVycnVw
+dHMnIGFuZCBvbmx5IGEgZmV3ICdGdW5jdGlvbiBjYWxsIGludGVycnVwdHMnLsKgIEhvd2V2ZXIs
+IGluIHRoZSBzdG9jayBrZXJuZWwgaXQgaXMgdGhlIA0KPiBvcHBvc2l0ZSAtLSBhIGxhcmdlIG51
+bWJlciBvZiAnRnVuY3Rpb24gY2FsbCBpbnRlcnJ1cHRzJyBhbmQgYSBmZXcgJ1Jlc2NoZWR1bGlu
+ZyBpbnRlcnJ1cHRzJy4NCg0KUGFydCBvZiB0aGF0IGlzIG1pdGlnYXRpb24gYWxhIDUzOWZiYjVi
+ZTAsIGFuZCBwYXJ0IGlzIFJUIGJlaW5nIGl0cw0KbmF0dXJhbGx5IHR3aXRjaHkgc2VsZi4NCg0K
+DQoJLU1pa2UNCg==
