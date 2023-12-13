@@ -1,55 +1,55 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OJ/hxY71"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1436AD4F
-	for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 07:42:12 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="M1FvaFC6"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2E49EAC
+	for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 07:58:45 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1702482132;
+	s=mimecast20190719; t=1702483124;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=T6rTvqKZcnu/AGV6OJJnDpYQxDDSQZglpsOUS86ThYo=;
-	b=OJ/hxY71UYDQ12WQ2Xk7+rFmemJidP2J4DD9T8IADFv/SCEkXJ29IhxYinMcjlLLW9Cl1X
-	g77V5Ez03v5Q1Nzy9Kd+1oB/46stRBdZ1XEf0+KmrfP6grbx4j8vp0YE4yxlaOGeoSxZ+j
-	Xkm5299KVoYbZtgiDRglFn4y1VqVDQA=
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=3KgIPCerlB8my+gs3n3QnQ8SsldsDoE8GMwOTyHwYjQ=;
+	b=M1FvaFC63qDSueTbp48mD9/BbCxevsL1sTSx2VfHN4NFHKqca0q/Otltcwr3DyRZ7O1mKS
+	QpUCODMksOUBoQpJfkW73DedX6s0OQBlir8njovlhfLJYM8MwotnLn9U3S8si1Y0niOMVJ
+	GL6Pns9UV2CSvIID4l2BJi1qe5885ho=
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-146-F5foabGuMgyClMr_ZZabLQ-1; Wed, 13 Dec 2023 10:42:09 -0500
-X-MC-Unique: F5foabGuMgyClMr_ZZabLQ-1
-Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-67ac11bfa46so89240206d6.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 07:42:09 -0800 (PST)
+ us-mta-675-bHQ-ZabEN7m_8BNrdEkctA-1; Wed, 13 Dec 2023 10:58:40 -0500
+X-MC-Unique: bHQ-ZabEN7m_8BNrdEkctA-1
+Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-77f38f2f6fbso1102355885a.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 13 Dec 2023 07:58:40 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702482129; x=1703086929;
+        d=1e100.net; s=20230601; t=1702483120; x=1703087920;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=T6rTvqKZcnu/AGV6OJJnDpYQxDDSQZglpsOUS86ThYo=;
-        b=BATTrybRi0CZpD8Lv3XWNueaRoVoboGd0E4+UIJ63cIq0/OJSdaUP50wls5swOCt7B
-         Zw6a+7bs8pw77DAZMDjXJnpfRL3YgEjg9jQyQo2NOe+ZhL4peyUZ/4QQ4uT+pnXEAo4M
-         SMxEFQXzvya0XGkqjSiVJth2ehpUi8+YokKQ1qbquHxik/XVdh6j7LUISBPrt4ycK8Rb
-         UsMDhRHLd9nBdP3VIQ8P/IjwswoP6c+mBAsXym2fmqNOZIMfB5z4IBKbfEEzzP7EVcXF
-         RK++G3M0voawn7TxOagPRuM2OYkulFZvgPB+Pbm+TjDzu91yYBWEYxPpAd70ECPprZFD
-         okaQ==
-X-Gm-Message-State: AOJu0YwMXwmOl/6Kw9XVg6BCWIMJaE+c1IQM7g4MPrvRMpZBoZhZOzx6
-	Yx0Bw3Z18LKhhqqlXQZlhX0NPpmuwNwdZBdnU8uoIQX4HMfOkLkx4+CBKotlqcAcBQYS6Hd5erW
-	ddN9kJbs4mE6nM//Mcx3migLpcbwox2Ax2AE=
-X-Received: by 2002:ad4:4b66:0:b0:67a:b136:197d with SMTP id m6-20020ad44b66000000b0067ab136197dmr8848977qvx.91.1702482128938;
-        Wed, 13 Dec 2023 07:42:08 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEJBAMXIt+W1cY+aa29BZm7Ip0nnnYKedB23tZEf0azk4/YM+w2QMsbciJUn0E/9CL2rVGnxw==
-X-Received: by 2002:ad4:4b66:0:b0:67a:b136:197d with SMTP id m6-20020ad44b66000000b0067ab136197dmr8848969qvx.91.1702482128679;
-        Wed, 13 Dec 2023 07:42:08 -0800 (PST)
+        bh=3KgIPCerlB8my+gs3n3QnQ8SsldsDoE8GMwOTyHwYjQ=;
+        b=leDYghvsGfeIcEvRUZaItkhbXRyucecBHeVQfeyr1GRkxsDSKnN2jW0P0DE3ts/g2q
+         4WqoFT5NAe+XEYdFOXbJjO2tx162vTifqgN8pXM9pNZ2bs5HCxt1X4tUqDXVng0WQHLB
+         wc/AtDEG3IQCGjtmiAm4Y+7TCx/6EJ7SaVm9FBDlZVE/fqyoAuKH5KxlEKAxO1u5pAPv
+         I/HyTvKBTZhPrw+hJgSFrCKXSciBK/U4VQG7VQ16lRcafdb0ndAflmIgmXnXHhi5jTIx
+         RKbYgCmHNniX9DXPfohgAz2o59dcvF8E6mNhdaFNe0dtnHu3gVneHriHNcx4HZkjrdbx
+         V52g==
+X-Gm-Message-State: AOJu0YyiIZ7XeqFCOIsidcorrDjJpmOg+373XD7QzqiUjvRjnf5eCQh5
+	1r9BaIY8BoqLVQcbEiUs4voAwoDiM+SmOMUSlf8yA51UU2Rx8jYE/4G3BZLGyPvQ0mBqD4RK/3D
+	sHSHrpke7MC/cr3oxxAbjyHPqvscE65efjRE=
+X-Received: by 2002:a05:620a:288b:b0:77d:72a3:aa82 with SMTP id j11-20020a05620a288b00b0077d72a3aa82mr14197145qkp.6.1702483119965;
+        Wed, 13 Dec 2023 07:58:39 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFWqmQuO9gWj98G/VpG861Vv0JjdFKic1H+YVvOqTFdy2vmgTC4hbFri2+Mdi+ZYoHOMuh3RA==
+X-Received: by 2002:a05:620a:288b:b0:77d:72a3:aa82 with SMTP id j11-20020a05620a288b00b0077d72a3aa82mr14197132qkp.6.1702483119720;
+        Wed, 13 Dec 2023 07:58:39 -0800 (PST)
 Received: from fionn ([174.88.88.134])
-        by smtp.gmail.com with ESMTPSA id d17-20020a0cea91000000b0067eabe0116dsm4885424qvp.72.2023.12.13.07.42.08
+        by smtp.gmail.com with ESMTPSA id w4-20020a05620a148400b0077f601d5162sm3597313qkj.101.2023.12.13.07.58.39
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 13 Dec 2023 07:42:08 -0800 (PST)
-Date: Wed, 13 Dec 2023 10:41:59 -0500 (EST)
+        Wed, 13 Dec 2023 07:58:39 -0800 (PST)
+Date: Wed, 13 Dec 2023 10:58:30 -0500 (EST)
 From: John Kacur <jkacur@redhat.com>
 To: Crystal Wood <crwood@redhat.com>
 cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 1/4] rt-tests: Fix warnings
-In-Reply-To: <20231206205508.17148-2-crwood@redhat.com>
-Message-ID: <0ac949ff-3c02-84b2-e367-c338d0e87174@redhat.com>
-References: <20231206205508.17148-1-crwood@redhat.com> <20231206205508.17148-2-crwood@redhat.com>
+Subject: Re: [PATCH 2/4] rt-tests: cyclictest: Remove histogram totals
+In-Reply-To: <20231206205508.17148-3-crwood@redhat.com>
+Message-ID: <7a911e4a-7990-bf89-7a7b-67a059a4dbf1@redhat.com>
+References: <20231206205508.17148-1-crwood@redhat.com> <20231206205508.17148-3-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -62,171 +62,60 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Wed, 6 Dec 2023, Crystal Wood wrote:
 
-> Numerous places threw sign comparison warnings; we could fix them but
-> it's kind of an obnoxious warning that requires casts to deal with things
-> such as ARRAY_SIZE() while still being able to check for the user
-> entering a negative number.
-> 
-> -Wunused-parameter is another obnoxious warning as it flags perfectly
-> reasonable code that takes unneeded parameters in order to comply with
-> a function pointer interface or similar; however, all of the instances
-> that were flagged here were actual dead parameters, so just fix them.
-> 
-> Add volatile to timer_started in hackbench so that it doesn't get
-> clobbered by longjmp().
+> The Total: line does not seem to contribute much value, as it should just
+> be the number of buckets minus the number of overflows.  Unless someone
+> complains, remove it to simplify moving to common histogram code.
 > 
 > Signed-off-by: Crystal Wood <crwood@redhat.com>
-> --
-> Let me know if you'd rather I fix the sign warnings.
 > ---
->  Makefile                            |  2 +-
->  src/hackbench/hackbench.c           |  2 +-
->  src/sched_deadline/cyclicdeadline.c |  6 +++---
->  src/sched_deadline/deadline_test.c  | 10 +++++-----
->  src/sigwaittest/sigwaittest.c       |  6 +++---
->  5 files changed, 13 insertions(+), 13 deletions(-)
+>  src/cyclictest/cyclictest.c | 14 +-------------
+>  1 file changed, 1 insertion(+), 13 deletions(-)
 > 
-> diff --git a/Makefile b/Makefile
-> index 2808c212058a..ad481a73cf93 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -31,7 +31,7 @@ prefix  ?= /usr/local
->  bindir  ?= $(prefix)/bin
->  mandir	?= $(prefix)/share/man
->  
-> -CFLAGS ?= -Wall -Wno-nonnull -Wextra
-> +CFLAGS ?= -Wall -Wno-nonnull -Wextra -Wno-sign-compare
->  CPPFLAGS += -D_GNU_SOURCE -Isrc/include
->  LDFLAGS ?=
->  
-> diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
-> index 69dd5f087fb6..4430db0e4ed6 100644
-> --- a/src/hackbench/hackbench.c
-> +++ b/src/hackbench/hackbench.c
-> @@ -494,7 +494,7 @@ int main(int argc, char *argv[])
->  	struct timeval start, stop, diff;
->  	int readyfds[2], wakefds[2];
->  	char dummy;
-> -	int timer_started = 0;
-> +	volatile int timer_started = 0;
->  	struct sched_param sp;
->  
->  	process_options (argc, argv);
-> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index 9bdc4b5deaf1..097e2e5d4580 100644
-> --- a/src/sched_deadline/cyclicdeadline.c
-> +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -750,7 +750,7 @@ static void print_stat(FILE *fp, struct sched_data *sd, int index, int verbose,
->  	}
->  }
->  
-> -static u64 do_runtime(long tid, struct sched_data *sd, u64 period)
-> +static u64 do_runtime(struct sched_data *sd, u64 period)
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index a8039b49feb6..93ce201e9fca 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1407,12 +1407,9 @@ static void print_tids(struct thread_param *par[], int nthreads)
+>  static void print_hist(struct thread_param *par[], int nthreads)
 >  {
->  	struct thread_stat *stat = &sd->stat;
->  	u64 next_period = period + sd->deadline_us;
-> @@ -833,7 +833,7 @@ void *run_deadline(void *data)
->  	period = get_time_us();
+>  	int i, j;
+> -	unsigned long long int log_entries[nthreads+1];
+>  	unsigned long maxmax, alloverflows;
+>  	FILE *fd;
 >  
->  	while (!shutdown) {
-> -		period = do_runtime(tid, sd, period);
-> +		period = do_runtime(sd, period);
->  		if (tracelimit && (stat->max > tracelimit)) {
->  			shutdown++;
->  			pthread_mutex_lock(&break_thread_id_lock);
-> @@ -1266,7 +1266,7 @@ int main(int argc, char **argv)
->  
->  		/* Make sure that we can make our deadlines */
->  		start_period = get_time_us();
-> -		do_runtime(gettid(), sd, start_period);
-> +		do_runtime(sd, start_period);
->  		end_period = get_time_us();
->  		if (end_period - start_period > sd->runtime_us)
->  			fatal("Failed to perform task within runtime: Missed by %lld us\n",
-> diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-> index cd8ef01f7d68..ca2da476ec95 100644
-> --- a/src/sched_deadline/deadline_test.c
-> +++ b/src/sched_deadline/deadline_test.c
-> @@ -1181,7 +1181,7 @@ static int read_ctx_switches(int *vol, int *nonvol, int *migrate)
->   *  @data->total_time - Total time it took to complete all loops
->   *  @data->nr_periods - Number of periods that were executed.
->   */
-> -static u64 do_runtime(long tid, struct sched_data *data, u64 period)
-> +static u64 do_runtime(struct sched_data *data, u64 period)
->  {
->  	u64 next_period = period + data->deadline_us;
->  	u64 now = get_time_us();
-> @@ -1354,7 +1354,7 @@ void *run_deadline(void *data)
->  	period = get_time_us();
->  
->  	while (!done) {
-> -		period = do_runtime(tid, sched_data, period);
-> +		period = do_runtime(sched_data, period);
->  		sched_yield();
->  	}
->  	ret = sched_getattr(0, &attr, sizeof(attr), 0);
-> @@ -1714,7 +1714,7 @@ static u64 calculate_loops_per_ms(u64 *overhead)
->  	do_sleep(1000);
->  
->  	start = get_time_us();
-> -	do_runtime(0, &sd, start + sd.deadline_us);
-> +	do_runtime(&sd, start + sd.deadline_us);
->  	end = get_time_us();
->  
->  	diff = end - start;
-> @@ -1743,7 +1743,7 @@ static u64 calculate_loops_per_ms(u64 *overhead)
->  	do_sleep(1000);
->  
->  	start = get_time_us();
-> -	do_runtime(0, &sd, start + sd.deadline_us);
-> +	do_runtime(&sd, start + sd.deadline_us);
->  	end = get_time_us();
->  
->  	odiff = end - start;
-> @@ -1962,7 +1962,7 @@ int main(int argc, char **argv)
->  
->  		/* Make sure that we can make our deadlines */
->  		start_period = get_time_us();
-> -		do_runtime(gettid(), sd, start_period);
-> +		do_runtime(sd, start_period);
->  		end_period = get_time_us();
->  		if (end_period - start_period > sd->runtime_us) {
->  			printf("Failed to perform task within runtime: Missed by %lld us\n",
-> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-> index 55855769c63b..8c1c16fb3081 100644
-> --- a/src/sigwaittest/sigwaittest.c
-> +++ b/src/sigwaittest/sigwaittest.c
-> @@ -375,7 +375,7 @@ static void sighand(int sig __attribute__ ((unused)))
->  	mustshutdown = 1;
->  }
->  
-> -static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
-> +static void print_stat(struct params *receiver, struct params *sender,
->  		       int verbose __attribute__ ((unused)), int quiet)
->  {
->  	int i;
-> @@ -644,7 +644,7 @@ int main(int argc, char *argv[])
->  			    sender[i].shutdown;
->  
->  		if (receiver[0].samples > oldsamples || mustshutdown) {
-> -			print_stat(stdout, receiver, sender, 0, quiet);
-> +			print_stat(receiver, sender, 0, quiet);
->  			if (!quiet)
->  				printf("\033[%dA", num_threads*2);
+> -	bzero(log_entries, sizeof(log_entries));
+> -
+>  	if (use_histfile) {
+>  		fd = fopen(histfile, "w");
+>  		if (!fd) {
+> @@ -1434,21 +1431,12 @@ static void print_hist(struct thread_param *par[], int nthreads)
+>  			fprintf(fd, "%06lu", curr_latency);
+>  			if (j < nthreads - 1)
+>  				fprintf(fd, "\t");
+> -			log_entries[j] += curr_latency;
+>  			allthreads += curr_latency;
 >  		}
-> @@ -664,7 +664,7 @@ int main(int argc, char *argv[])
->  	if (!quiet)
->  		printf("\033[%dB", num_threads*2 + 2);
->  	else
-> -		print_stat(stdout, receiver, sender, 0, 0);
-> +		print_stat(receiver, sender, 0, 0);
->  
->  	for (i = 0; i < num_threads; i++) {
->  		receiver[i].shutdown = 1;
+> -		if (histofall && nthreads > 1) {
+> +		if (histofall && nthreads > 1)
+>  			fprintf(fd, "\t%06llu", allthreads);
+> -			log_entries[nthreads] += allthreads;
+> -		}
+>  		fprintf(fd, "\n");
+>  	}
+> -	fprintf(fd, "# Total:");
+> -	for (j = 0; j < nthreads; j++)
+> -		fprintf(fd, " %09llu", log_entries[j]);
+> -	if (histofall && nthreads > 1)
+> -		fprintf(fd, " %09llu", log_entries[nthreads]);
+> -	fprintf(fd, "\n");
+>  	fprintf(fd, "# Min Latencies:");
+>  	for (j = 0; j < nthreads; j++)
+>  		fprintf(fd, " %05lu", par[j]->stats->min);
 > -- 
 > 2.43.0
 > 
 > 
-> 
+
+-Tested with rteval
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
