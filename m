@@ -1,46 +1,46 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="M58apNoc"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QxlvF+2B"
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A67F6B9
-	for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 00:09:13 -0800 (PST)
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 32E24BD
+	for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 00:28:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1702541352;
+	s=mimecast20190719; t=1702542514;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=R8Dml4THeBIcIr8U8OO/Kb9Yeg+qxdtD8lSB3p5ekjs=;
-	b=M58apNocXvGdvH4wJE0JDxDIU47VBQcrQb4NVsBERWtMUG/QK+z+YglGovIeuzl/mmwLnT
-	zqnlzu9owhxS4sa+nHW5c6u+ttcWythVXlTmeQ+02XXMlANNIO3+EYut/J7ztbUeH4rnRl
-	gxxl2VzI+XACsQjZ3AsrD6lMzItQh9k=
-Received: from mail-ej1-f71.google.com (mail-ej1-f71.google.com
- [209.85.218.71]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=9ql6CGAoLhvjjLIdaszj6XYwM/l17I70imqN3WyxG7k=;
+	b=QxlvF+2BZEOEAcIRa4qoqUvjlzpuNzK3MOibPAus1XiO1IbTaJUIodm/85ax9jcnWvDRyT
+	X7aF0aZ3aXNyHBahk8FO1pw1dV1DEj5BxYMGtcYhNDAWNwmK2doEXgp5UyMSkZ/lM76i9u
+	PPzHOiMNfkjlhrqkPRriG+6+SBDZAKk=
+Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
+ [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-617-F60esVgGPBCwuFfruL4UAQ-1; Thu, 14 Dec 2023 03:09:11 -0500
-X-MC-Unique: F60esVgGPBCwuFfruL4UAQ-1
-Received: by mail-ej1-f71.google.com with SMTP id a640c23a62f3a-a1db7b26269so462040266b.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 00:09:11 -0800 (PST)
+ us-mta-659-suNQ_X4BPOmUaZk9AxgwlA-1; Thu, 14 Dec 2023 03:28:31 -0500
+X-MC-Unique: suNQ_X4BPOmUaZk9AxgwlA-1
+Received: by mail-ej1-f69.google.com with SMTP id a640c23a62f3a-a0c510419caso207919266b.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 00:28:31 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702541350; x=1703146150;
+        d=1e100.net; s=20230601; t=1702542510; x=1703147310;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=R8Dml4THeBIcIr8U8OO/Kb9Yeg+qxdtD8lSB3p5ekjs=;
-        b=lYMrUx5ABazN+9h3DhNAQ1qQXyn9bdLPHd4A33JPXABzMyVX5ETSOyRpLs4GQ7gh/Y
-         IjxmNmwCJTlvUAkRLfEtRkX3scHxApy/oUywp1sF3KPiIhAHGWWYeOYsFAkHMtTplJ9k
-         byr9pLZ8+k0vmmbnt/TU/6z0kAueNKp7gq3OzBZzTe1ruT8AcUshaOL3V+nIdkONlKPE
-         WP1hzj88d0SL1ZbY4U4u2TioCPnOZ7VwGhlreG4oz9BOfihY7uLOwYyj01AebN83O+TJ
-         fzFZ6Vy6ZGtIACF067TtDPbl1mMcJNup8Dp2zeeSaZShJEWlMKW6wBd8WatTvysQaauE
-         ot/w==
-X-Gm-Message-State: AOJu0YwPdC9yRk/uoBo5geT58z+QUzze2k3NRIeeX1WjGgRY+lrzvDLy
-	MZ2fejWt9mPmdeUyuw/DihZoRmLXOUiRWO9DUa/JrUc7RofKlSk5jKLtMX0mSAFlo11C+3JHFEH
-	Ca2uW3HVAO45c8UroCJnP3rzScBKspmaiOW5qcHYVJD9mtW42XHKSuA==
-X-Received: by 2002:a17:906:5346:b0:a02:a2cc:66b8 with SMTP id j6-20020a170906534600b00a02a2cc66b8mr4560603ejo.14.1702541350042;
-        Thu, 14 Dec 2023 00:09:10 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHU0ajE+kj2sEBZ2jYrSVMqvjT+y0O3osIBEhOvccHhnIuXzQOyH2DFgc7YfZlUVDYFoTst9aFOrwbZiINwNYk=
-X-Received: by 2002:a17:906:5346:b0:a02:a2cc:66b8 with SMTP id
- j6-20020a170906534600b00a02a2cc66b8mr4560595ejo.14.1702541349752; Thu, 14 Dec
- 2023 00:09:09 -0800 (PST)
+        bh=9ql6CGAoLhvjjLIdaszj6XYwM/l17I70imqN3WyxG7k=;
+        b=O7zLRXGQFNVV3Yd7RVxsMiDycHdzCsl+uWXLzknw/PfSufAGN84c+5RVNNcE+Qg+iu
+         XDU8nVv92x/CGVolwLr3tzYgH31ILrY/f5+o4lrZoALiE5iUF6NOHyMQS0fMG02I2UqK
+         vtPeDKMriQN8YIyozQ2C7SZgu5wThP0rH2AHrrkcfPGgmVqnp5afs4DyCq95nhJ945Zw
+         nUeNaH1hov0cfpKx1zqI29orWH0frdmtDKr6gx8KFjq38JFFle5oOSNb+Y3Ai7yAJmCL
+         /2OCBF9fn+D8/cV5MJ9Z+QgX3GzloWgcoWc31/in5ZJ+JE8CYkwlvVwaKVl+JF+n8wJG
+         y5qg==
+X-Gm-Message-State: AOJu0YzVHRupzUQLoHMOcVZ7/1JVaS8fH/BecTgbtpNV5R4eJeB+/Pj7
+	t/XBLiwahn6XlUMBfvQNQuJfNf+6615Sv+mvdC2N6o9XozrE3sxlNw666iELmMRqtcQbyYFQVDt
+	sSxKCYmNjH4Jyk7XRR8HQdlsIb3HE8yKRmHytZ4kzNaUqApKU+NKz+g==
+X-Received: by 2002:a17:906:690:b0:a19:a1ba:8ceb with SMTP id u16-20020a170906069000b00a19a1ba8cebmr3907440ejb.137.1702542510503;
+        Thu, 14 Dec 2023 00:28:30 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IG6yhbksCdnNsb9qlN+pSvgXQt0kXnWcMUn/hfPM2A642CSLarWttprU9RdQDWN5oi3XfIkmPfmekg8iBVZI/k=
+X-Received: by 2002:a17:906:690:b0:a19:a1ba:8ceb with SMTP id
+ u16-20020a170906069000b00a19a1ba8cebmr3907438ejb.137.1702542510242; Thu, 14
+ Dec 2023 00:28:30 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -51,8 +51,8 @@ References: <20231129093457.17984-1-tglozar@redhat.com> <20231129093457.17984-4-
  <2ba0bf80-818c-6277-1a3c-f8e007a738ff@redhat.com>
 In-Reply-To: <2ba0bf80-818c-6277-1a3c-f8e007a738ff@redhat.com>
 From: Tomas Glozar <tglozar@redhat.com>
-Date: Thu, 14 Dec 2023 09:08:58 +0100
-Message-ID: <CAP4=nvTu9C2rCvze8ARV7Ynmor0d9ExK_jzkXaOv5UOofjotdQ@mail.gmail.com>
+Date: Thu, 14 Dec 2023 09:28:19 +0100
+Message-ID: <CAP4=nvQcqF+mfvdaM8tUChBH9TXM8LNJ6FbiKL+e1SViAE519w@mail.gmail.com>
 Subject: Re: [PATCH 3/4] rteval: Convert CpuList class to a module
 To: John Kacur <jkacur@redhat.com>
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -62,32 +62,24 @@ Content-Transfer-Encoding: quoted-printable
 =C3=BAt 12. 12. 2023 v 22:46 odes=C3=ADlatel John Kacur <jkacur@redhat.com>=
  napsal:
 >
-> If you're removing the CpuList class then CpuList, or Cpulist is availabl=
-e
-> instead of cpulist_utils
+> You don't have to do it in this patch, but some builtin testing would be
+> nice under this
+> if __name__ =3D=3D "__main__":
 >
 
-cpulist_utils is a module, unlike CpuList which is a class; these have
-different spelling conventions for case, see
-https://peps.python.org/pep-0008/#package-and-module-names.
+Yeah that's definitely a good idea, moving the cpulist logic into a
+separate module will allow for more elegant unit tests directly in the
+file.
 
->
-> Instead of removing these, you could change them to
->
-> compress_cpulist =3D cpulist_utils.compress_cpulist
-> expand_cpulist =3D cpulist_utils.expand_cpulist
->
-> and then you don't need to make all of the rest of
-> the related changes in the file
->
+In the future, we might also consider moving tests into separate files
+using some kind of unit test library like pytest [1] or the builtin
+unit test [2] module. If I understand it correctly, currently you have
+to run tests manually for each module that has them, and you also have
+to check the results manually; changing that to a more systematic and
+automated approach should make development easier and prevent bugs.
 
-Or I could directly import them like this:
-from rteval.cpulist_utils import compress_cpulist, expand_cpulist
-
-The reason why I did the change like this was that I wanted the usage
-of cpulist_utils functions to be consistent throughout the entire
-rteval source code. In systopology.py and other files, CpuList.* is
-used directly (which became cpulist_utils.* in this patch).
+[1] - https://docs.pytest.org/en/7.4.x/
+[2] - https://docs.python.org/3/library/unittest.html
 
 Tomas
 
