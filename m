@@ -1,100 +1,271 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Lyl0kq7J"
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0B0AD11D
-	for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 07:05:17 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hk3ojsX2"
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 93C2A10F
+	for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 07:48:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1702566317;
+	s=mimecast20190719; t=1702568895;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=4wH7HbVrtY1pXGV5VxKYPf02/FvPwaTJtnnrflVFbvg=;
-	b=Lyl0kq7JbavlavdtwHHXiZ8xaMTlsORDpG/mWia7zLg5Ihol6jKcqAPsRVerSVxjr08hus
-	1XNAy6J0KEUuxWjoXTxpTl9GtPexLP2hWSwNczBCE43dJsToKdS4J5z7bYSWt6XN7NaeAx
-	w9wwO8sA1+kpjbS9offLtBcymBrr4Bg=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=fXfmWkavrJRyhXx6zJJnOgmgh+1vgUfkeOh9wR7+wns=;
+	b=hk3ojsX2x/oImjB6rGBaqQ0GT7CcRjKR1UsGCfueCDkWLSJ+VnMuOEye1YUjhKh5x4U1Ok
+	clXQVp1OI72rfIR+uAUa3e1eXoi0lvN4t9Ncux6zotFyix56mMAF18uBg/PfdgabCiY/pw
+	GVYi44D6kU2wpYx457bYE8eAHBTcKhM=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-96-IbgwpVRdNNuJz7ZL0xPgsw-1; Thu, 14 Dec 2023 10:05:15 -0500
-X-MC-Unique: IbgwpVRdNNuJz7ZL0xPgsw-1
-Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-67a9a237908so73827926d6.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 07:05:14 -0800 (PST)
+ us-mta-357-7WJLUq5xN2-zGxJiiGoXgg-1; Thu, 14 Dec 2023 10:48:13 -0500
+X-MC-Unique: 7WJLUq5xN2-zGxJiiGoXgg-1
+Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-42582386297so105869741cf.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Dec 2023 07:48:13 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702566314; x=1703171114;
+        d=1e100.net; s=20230601; t=1702568893; x=1703173693;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=4wH7HbVrtY1pXGV5VxKYPf02/FvPwaTJtnnrflVFbvg=;
-        b=ux8PrLlelC4iiAhvOk4ke04jj3f1ZYuMr6mOmOfvOxQAgiIpRjSk5bXswyzRnGYRvL
-         0mgbwf49TApmf0XdPK3jG8glULa0VNPEUicxuwoqE0zYWbKUzxAH0nzKCPtPviTFoAE0
-         kvw2EAcbMrl4E8ekegfL/Zh2vksf8mpbk79RpJLquHuBqlqkCvy8LkJg3Haf0hv3vgyF
-         kiuxLHxW1HTxTeK6CZr5tUq/aQbuqAZaB1k8QLgIWK3YFknyOu/V2tVg+YzWB9AaBGaf
-         L+EixkyJqb31Mklv1vs787N8Nscf896nNNe6WqQU2MOGseqmQX7/L2vyB35kb4lbJfZg
-         7XSQ==
-X-Gm-Message-State: AOJu0YzczcNzAl8f83U3LIaVIGOmT0a3DPcEI79L1TLXWom6vtr0z9Yv
-	2hjv6SzVq/90T/BKp9oy5z4zGgqR5KKiDdTv1XA6gsMXYzOzi872yaF6Ys1A625K+2OkXus6q0r
-	p4GRClftJM9/XTG4S6Ww5f8SLbjYZx3dTW+w=
-X-Received: by 2002:ad4:5c62:0:b0:67f:539:b64 with SMTP id i2-20020ad45c62000000b0067f05390b64mr1923933qvh.35.1702566314387;
-        Thu, 14 Dec 2023 07:05:14 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEgrkt00sQkCQJcEzOIFZIuM1owX2HzvWeOhu6xrDmtDZ3jVvRfKicMO+dFBoCNwL4Q0WM7bw==
-X-Received: by 2002:ad4:5c62:0:b0:67f:539:b64 with SMTP id i2-20020ad45c62000000b0067f05390b64mr1923917qvh.35.1702566314091;
-        Thu, 14 Dec 2023 07:05:14 -0800 (PST)
+        bh=fXfmWkavrJRyhXx6zJJnOgmgh+1vgUfkeOh9wR7+wns=;
+        b=Y6CSVKQgA5g6DlQf4TTMTyUSY9j1PMKenQgNEuFZ1WluoJQeumHnElhbfJRFxWcHXE
+         69C29bTFU1xpu9Z9xCTyiAeYxHw09RqwcQz07dBbTvBGRDV5+Njoc1Y9ilhlZy1a9trh
+         9oq9SPBqjd2/6a/Ebyv2ExxwY23GkHG9EOphQgmX6WThTydjiAP3iL5M+xDaHF3dHDLT
+         cp2hVAGAgzLe1/cdROuAyGutkM4NfMP+a6vuBAM0o/93tFGLkk4BVX1Ps1Gku457tVos
+         jBOiRwvo4xhiZV9vPOvmDdlfp9NhrwTUmWLR1Qa3alEu40ve6aftMjlTRmDArb5ITslM
+         qoJA==
+X-Gm-Message-State: AOJu0Yxzh1OzUYQTevpvHe3dXafwTLLCbWNo2b9Q1eGTqfFz9KyUvvSu
+	RuOtKEnyIVGEKlB9kC971QVKR/SYFEzt9hOc/XzaZukYfh+qmBgsBVGb2oevqi0edH4vp/QHbDT
+	kh6jTD0chlEqtKAVieR2D9Pf3gls=
+X-Received: by 2002:a05:622a:1a09:b0:421:ba87:43f9 with SMTP id f9-20020a05622a1a0900b00421ba8743f9mr13744611qtb.33.1702568892930;
+        Thu, 14 Dec 2023 07:48:12 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IECVj9VQAQGBsg/Jhs0K6lPu642NhkkcsRhj5QtzKWh1eWbVavg2MqjLA/IuxIRGk+PjSbgrg==
+X-Received: by 2002:a05:622a:1a09:b0:421:ba87:43f9 with SMTP id f9-20020a05622a1a0900b00421ba8743f9mr13744600qtb.33.1702568892593;
+        Thu, 14 Dec 2023 07:48:12 -0800 (PST)
 Received: from fionn ([174.88.88.134])
-        by smtp.gmail.com with ESMTPSA id a17-20020a0cefd1000000b0067f082a2486sm658611qvt.73.2023.12.14.07.05.13
+        by smtp.gmail.com with ESMTPSA id h26-20020ac8549a000000b004254304015csm5844892qtq.85.2023.12.14.07.48.12
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 14 Dec 2023 07:05:13 -0800 (PST)
-Date: Thu, 14 Dec 2023 10:05:04 -0500 (EST)
+        Thu, 14 Dec 2023 07:48:12 -0800 (PST)
+Date: Thu, 14 Dec 2023 10:48:03 -0500 (EST)
 From: John Kacur <jkacur@redhat.com>
-To: Tomas Glozar <tglozar@redhat.com>
-cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 3/4] rteval: Convert CpuList class to a module
-In-Reply-To: <CAP4=nvQcqF+mfvdaM8tUChBH9TXM8LNJ6FbiKL+e1SViAE519w@mail.gmail.com>
-Message-ID: <6a2ffb2b-84c7-3667-7bf7-dd174f12c0f6@redhat.com>
-References: <20231129093457.17984-1-tglozar@redhat.com> <20231129093457.17984-4-tglozar@redhat.com> <2ba0bf80-818c-6277-1a3c-f8e007a738ff@redhat.com> <CAP4=nvQcqF+mfvdaM8tUChBH9TXM8LNJ6FbiKL+e1SViAE519w@mail.gmail.com>
+To: Crystal Wood <crwood@redhat.com>
+cc: linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 1/4] rt-tests: Fix warnings
+In-Reply-To: <20231206205508.17148-2-crwood@redhat.com>
+Message-ID: <0b4a2f01-2978-9409-7f2b-fa8ed9c18a9e@redhat.com>
+References: <20231206205508.17148-1-crwood@redhat.com> <20231206205508.17148-2-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463771134-628916627-1702566313=:12108"
-
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
----1463771134-628916627-1702566313=:12108
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Thu, 14 Dec 2023, Tomas Glozar wrote:
+On Wed, 6 Dec 2023, Crystal Wood wrote:
 
-> út 12. 12. 2023 v 22:46 odesílatel John Kacur <jkacur@redhat.com> napsal:
-> >
-> > You don't have to do it in this patch, but some builtin testing would be
-> > nice under this
-> > if __name__ == "__main__":
-> >
+> Numerous places threw sign comparison warnings; we could fix them but
+> it's kind of an obnoxious warning that requires casts to deal with things
+> such as ARRAY_SIZE() while still being able to check for the user
+> entering a negative number.
 > 
-> Yeah that's definitely a good idea, moving the cpulist logic into a
-> separate module will allow for more elegant unit tests directly in the
-> file.
+> -Wunused-parameter is another obnoxious warning as it flags perfectly
+> reasonable code that takes unneeded parameters in order to comply with
+> a function pointer interface or similar; however, all of the instances
+> that were flagged here were actual dead parameters, so just fix them.
 > 
-> In the future, we might also consider moving tests into separate files
-> using some kind of unit test library like pytest [1] or the builtin
-> unit test [2] module. If I understand it correctly, currently you have
-> to run tests manually for each module that has them, and you also have
-> to check the results manually; changing that to a more systematic and
-> automated approach should make development easier and prevent bugs.
+> Add volatile to timer_started in hackbench so that it doesn't get
+> clobbered by longjmp().
 > 
-> [1] - https://docs.pytest.org/en/7.4.x/
-> [2] - https://docs.python.org/3/library/unittest.html
+> Signed-off-by: Crystal Wood <crwood@redhat.com>
+> --
+> Let me know if you'd rather I fix the sign warnings.
+> ---
+>  Makefile                            |  2 +-
+>  src/hackbench/hackbench.c           |  2 +-
+>  src/sched_deadline/cyclicdeadline.c |  6 +++---
+>  src/sched_deadline/deadline_test.c  | 10 +++++-----
+>  src/sigwaittest/sigwaittest.c       |  6 +++---
+>  5 files changed, 13 insertions(+), 13 deletions(-)
 > 
-> Tomas
+> diff --git a/Makefile b/Makefile
+> index 2808c212058a..ad481a73cf93 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -31,7 +31,7 @@ prefix  ?= /usr/local
+>  bindir  ?= $(prefix)/bin
+>  mandir	?= $(prefix)/share/man
+>  
+> -CFLAGS ?= -Wall -Wno-nonnull -Wextra
+> +CFLAGS ?= -Wall -Wno-nonnull -Wextra -Wno-sign-compare
+>  CPPFLAGS += -D_GNU_SOURCE -Isrc/include
+>  LDFLAGS ?=
+>  
+> diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+> index 69dd5f087fb6..4430db0e4ed6 100644
+> --- a/src/hackbench/hackbench.c
+> +++ b/src/hackbench/hackbench.c
+> @@ -494,7 +494,7 @@ int main(int argc, char *argv[])
+>  	struct timeval start, stop, diff;
+>  	int readyfds[2], wakefds[2];
+>  	char dummy;
+> -	int timer_started = 0;
+> +	volatile int timer_started = 0;
+>  	struct sched_param sp;
+>  
+>  	process_options (argc, argv);
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index 9bdc4b5deaf1..097e2e5d4580 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -750,7 +750,7 @@ static void print_stat(FILE *fp, struct sched_data *sd, int index, int verbose,
+>  	}
+>  }
+>  
+> -static u64 do_runtime(long tid, struct sched_data *sd, u64 period)
+> +static u64 do_runtime(struct sched_data *sd, u64 period)
+>  {
+>  	struct thread_stat *stat = &sd->stat;
+>  	u64 next_period = period + sd->deadline_us;
+> @@ -833,7 +833,7 @@ void *run_deadline(void *data)
+>  	period = get_time_us();
+>  
+>  	while (!shutdown) {
+> -		period = do_runtime(tid, sd, period);
+> +		period = do_runtime(sd, period);
+>  		if (tracelimit && (stat->max > tracelimit)) {
+>  			shutdown++;
+>  			pthread_mutex_lock(&break_thread_id_lock);
+> @@ -1266,7 +1266,7 @@ int main(int argc, char **argv)
+>  
+>  		/* Make sure that we can make our deadlines */
+>  		start_period = get_time_us();
+> -		do_runtime(gettid(), sd, start_period);
+> +		do_runtime(sd, start_period);
+>  		end_period = get_time_us();
+>  		if (end_period - start_period > sd->runtime_us)
+>  			fatal("Failed to perform task within runtime: Missed by %lld us\n",
+> diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+> index cd8ef01f7d68..ca2da476ec95 100644
+> --- a/src/sched_deadline/deadline_test.c
+> +++ b/src/sched_deadline/deadline_test.c
+> @@ -1181,7 +1181,7 @@ static int read_ctx_switches(int *vol, int *nonvol, int *migrate)
+>   *  @data->total_time - Total time it took to complete all loops
+>   *  @data->nr_periods - Number of periods that were executed.
+>   */
+> -static u64 do_runtime(long tid, struct sched_data *data, u64 period)
+> +static u64 do_runtime(struct sched_data *data, u64 period)
+>  {
+>  	u64 next_period = period + data->deadline_us;
+>  	u64 now = get_time_us();
+> @@ -1354,7 +1354,7 @@ void *run_deadline(void *data)
+>  	period = get_time_us();
+>  
+>  	while (!done) {
+> -		period = do_runtime(tid, sched_data, period);
+> +		period = do_runtime(sched_data, period);
+>  		sched_yield();
+>  	}
+>  	ret = sched_getattr(0, &attr, sizeof(attr), 0);
+> @@ -1714,7 +1714,7 @@ static u64 calculate_loops_per_ms(u64 *overhead)
+>  	do_sleep(1000);
+>  
+>  	start = get_time_us();
+> -	do_runtime(0, &sd, start + sd.deadline_us);
+> +	do_runtime(&sd, start + sd.deadline_us);
+>  	end = get_time_us();
+>  
+>  	diff = end - start;
+> @@ -1743,7 +1743,7 @@ static u64 calculate_loops_per_ms(u64 *overhead)
+>  	do_sleep(1000);
+>  
+>  	start = get_time_us();
+> -	do_runtime(0, &sd, start + sd.deadline_us);
+> +	do_runtime(&sd, start + sd.deadline_us);
+>  	end = get_time_us();
+>  
+>  	odiff = end - start;
+> @@ -1962,7 +1962,7 @@ int main(int argc, char **argv)
+>  
+>  		/* Make sure that we can make our deadlines */
+>  		start_period = get_time_us();
+> -		do_runtime(gettid(), sd, start_period);
+> +		do_runtime(sd, start_period);
+>  		end_period = get_time_us();
+>  		if (end_period - start_period > sd->runtime_us) {
+>  			printf("Failed to perform task within runtime: Missed by %lld us\n",
+> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+> index 55855769c63b..8c1c16fb3081 100644
+> --- a/src/sigwaittest/sigwaittest.c
+> +++ b/src/sigwaittest/sigwaittest.c
+> @@ -375,7 +375,7 @@ static void sighand(int sig __attribute__ ((unused)))
+>  	mustshutdown = 1;
+>  }
+>  
+> -static void print_stat(FILE *fp, struct params *receiver, struct params *sender,
+> +static void print_stat(struct params *receiver, struct params *sender,
+>  		       int verbose __attribute__ ((unused)), int quiet)
+>  {
+>  	int i;
+> @@ -644,7 +644,7 @@ int main(int argc, char *argv[])
+>  			    sender[i].shutdown;
+>  
+>  		if (receiver[0].samples > oldsamples || mustshutdown) {
+> -			print_stat(stdout, receiver, sender, 0, quiet);
+> +			print_stat(receiver, sender, 0, quiet);
+>  			if (!quiet)
+>  				printf("\033[%dA", num_threads*2);
+>  		}
+> @@ -664,7 +664,7 @@ int main(int argc, char *argv[])
+>  	if (!quiet)
+>  		printf("\033[%dB", num_threads*2 + 2);
+>  	else
+> -		print_stat(stdout, receiver, sender, 0, 0);
+> +		print_stat(receiver, sender, 0, 0);
+>  
+>  	for (i = 0; i < num_threads; i++) {
+>  		receiver[i].shutdown = 1;
+> -- 
+> 2.43.0
+> 
+> 
+> 
 
-Indeed, that would be welcome, but I still wouldn't remove the 
-quick and dirty tests that are already available.
+I tested this with rteval, and it works fine
+checkpatch in the linux kernel flags a few minor things.
+Would you mind fixing those up before I apply the patch?
 
-John
----1463771134-628916627-1702566313=:12108--
+WARNING: Improper SPDX comment style for 'src/include/histogram.h', please 
+use '/*' instead
+#227: FILE: src/include/histogram.h:1:
++// SPDX-License-Identifier: GPL-2.0-or-later
+
+(Yes, I know there are other files in rt-tests that also aren't using
+the recommended commenting style, you probably copied from there.)
+
+WARNING: Missing or malformed SPDX-License-Identifier tag in line 1
+#227: FILE: src/include/histogram.h:1:
++// SPDX-License-Identifier: GPL-2.0-or-later
+
+WARNING: braces {} are not necessary for any arm of this statement
+#333: FILE: src/lib/histogram.c:59:
++	if (h->oflow_magnitude + extra > h->oflow_magnitude) {
+[...]
++	} else {
+[...]
+
+ERROR: trailing whitespace
+#338: FILE: src/lib/histogram.c:64:
++^I^I$
+
+WARNING: braces {} are not necessary for any arm of this statement
+#340: FILE: src/lib/histogram.c:66:
++		if (h->oflow_count < h->oflow_bufsize) {
+[...]
++		} else {
+[...]
+
+total: 1 errors, 5 warnings, 394 lines checked
+
+Thanks
+
+John Kacur
 
