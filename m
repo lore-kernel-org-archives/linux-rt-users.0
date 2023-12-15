@@ -1,37 +1,37 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8008746424;
-	Fri, 15 Dec 2023 15:09:47 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B009E3C47B;
+	Fri, 15 Dec 2023 16:13:27 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="3Vqt1LyQ";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="3myDaELf"
-Date: Fri, 15 Dec 2023 16:09:44 +0100
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="W3DH24QC";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="V1wlmLzX"
+Date: Fri, 15 Dec 2023 17:13:23 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1702652985;
+	s=2020; t=1702656805;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=uU9y32udg0gE80/DPZvLdSMnmpu0dhe+V1zkwS/R9PQ=;
-	b=3Vqt1LyQlMMAfzrQZtAyvyNgzOm9WLdla9Lpl8PyZ7a+iq0sYgmNp4Aex/pnA0j1cpQnK5
-	8EvSI6zisSiGitQDSZftoGQcdxtQFmcXFGgTxjTDKBEhZedHD/zSl4Oz3D61wzH9F/6ppN
-	wCdFnjcNK7noRHvbU1OxgRAx7un5PV7xOXckFDuIc9gwY607k/NYModH0Bss5jo6Qe8i8j
-	ILANTD8O8soTYjaNbQejIJRgDv5U/8zDYZHxY+NLkwkK0E+lcVQwqwRsdNr8/SO9qyTmzo
-	DaQSnPsFBfMHpHtqestXdYi5+3IaFog8wgQTqHzUMdBNAuf9XcuykIgBHO9ZOg==
+	bh=OaWXGcSiw4iLQdaoa2uzAfzlk/QEDXGhjweYSMndgv0=;
+	b=W3DH24QCxeZTtC0ETWl2t6HA8IxRxbwPoqjQKpuDDvjlTTHyB9ZYwoJldk1XDivz7Uy+0B
+	E1AboATV0TyHLDcTzUxAr556x/1R2E+KJfy4CVw7w+cy+n0OCG6iDsq5f3uOCUWoSsq5j8
+	rGIlLc7tLL8fx+8crlM/erUknSkNdhCf3dgdQm2vde/MFuILBWvdDLggDRuwNs45EJMZq2
+	OXyFZBN5DYOlbpwrOA+Di/CpZLNP0Yq37RZIfUznJFE2m112UfLK6SH1QX2E7G2oJM8MEm
+	87G5+mGDbeS2bBktJ+OIWi7HoXK7ngT/O7FRR02eZ1mY3USC6F8KX8EWDoEmEA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1702652985;
+	s=2020e; t=1702656805;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=uU9y32udg0gE80/DPZvLdSMnmpu0dhe+V1zkwS/R9PQ=;
-	b=3myDaELfqnW5X+b1OHHpspXcjEaSWyhXuL+LDhJ7mL/E4NIlCRJrq5sFPw/FnqqVtz9sGU
-	LAa1hJKLoVbP01Bg==
+	bh=OaWXGcSiw4iLQdaoa2uzAfzlk/QEDXGhjweYSMndgv0=;
+	b=V1wlmLzXoibd6eREqLA97oOsog3FWJz1WVvSLfonjAa8oaCswoXBO+XhlMgoDii3IWARQZ
+	ig8IsXJ7zYiTpUCA==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: Thomas Gleixner <tglx@linutronix.de>
 Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.6.7-rt18
-Message-ID: <20231215150944.nDRV_91j@linutronix.de>
+Subject: [ANNOUNCE] v6.7-rc5-rt5
+Message-ID: <20231215161323.hasozaSP@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -43,9 +43,9 @@ Content-Disposition: inline
 
 Dear RT folks!
 
-I'm pleased to announce the v6.6.7-rt18 patch set. 
+I'm pleased to announce the v6.7-rc5-rt5 patch set. 
 
-Changes since v6.6.7-rt17:
+Changes since v6.7-rc5-rt4:
 
   - Update the printk code to the latest version which has been posted
     upstream for review.
@@ -55,26 +55,26 @@ Known issues
      hist" as trigger. It is not yet understood. The report is at
 	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
 
-The delta patch against v6.6.7-rt17 is appended below and can be found here:
+The delta patch against v6.7-rc5-rt4 is appended below and can be found here:
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/incr/patch-6.6.7-rt17-rt18.patch.xz
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.7/incr/patch-6.7-rc5-rt4-rt5.patch.xz
 
 You can get this release via the git tree at:
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.6.7-rt18
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.7-rc5-rt5
 
-The RT patch against v6.6.7 can be found here:
+The RT patch against v6.7-rc5 can be found here:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patch-6.6.7-rt18.patch.xz
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.7/older/patch-6.7-rc5-rt5.patch.xz
 
 The split quilt queue is available at:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/patches-6.6.7-rt18.tar.xz
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.7/older/patches-6.7-rc5-rt5.tar.xz
 
 Sebastian
 
 diff --git a/drivers/tty/serial/8250/8250_core.c b/drivers/tty/serial/8250/8250_core.c
-index eab9b37344a5e..30434718fad80 100644
+index ba6de401c458e..6b89e9c2374a5 100644
 --- a/drivers/tty/serial/8250/8250_core.c
 +++ b/drivers/tty/serial/8250/8250_core.c
 @@ -617,9 +617,18 @@ static bool univ8250_console_write_thread(struct console *co,
@@ -110,10 +110,10 @@ index eab9b37344a5e..30434718fad80 100644
  	.device		= uart_console_device,
  	.setup		= univ8250_console_setup,
 diff --git a/drivers/tty/serial/8250/8250_port.c b/drivers/tty/serial/8250/8250_port.c
-index 478b23c207169..437a7d3d34cde 100644
+index c8d15f659de98..3b26105f01570 100644
 --- a/drivers/tty/serial/8250/8250_port.c
 +++ b/drivers/tty/serial/8250/8250_port.c
-@@ -3517,13 +3517,11 @@ bool serial8250_console_write_thread(struct uart_8250_port *up,
+@@ -3509,13 +3509,11 @@ bool serial8250_console_write_thread(struct uart_8250_port *up,
  	if (!nbcon_enter_unsafe(wctxt))
  		return false;
  
@@ -129,7 +129,7 @@ index 478b23c207169..437a7d3d34cde 100644
  	if (up->canary && (up->canary != serial_port_in(port, UART_SCR))) {
  		serial8250_console_restore(up);
  		up->canary = 0;
-@@ -3571,30 +3569,25 @@ bool serial8250_console_write_thread(struct uart_8250_port *up,
+@@ -3563,30 +3561,25 @@ bool serial8250_console_write_thread(struct uart_8250_port *up,
  	while (!nbcon_enter_unsafe(wctxt))
  		nbcon_reacquire(wctxt);
  
@@ -166,7 +166,7 @@ index 478b23c207169..437a7d3d34cde 100644
  	return (nbcon_exit_unsafe(wctxt) && done);
  }
  
-@@ -3614,12 +3607,14 @@ bool serial8250_console_write_atomic(struct uart_8250_port *up,
+@@ -3606,12 +3599,14 @@ bool serial8250_console_write_atomic(struct uart_8250_port *up,
  		return false;
  
  	/*
@@ -183,7 +183,7 @@ index 478b23c207169..437a7d3d34cde 100644
  	if (up->canary && (up->canary != serial_port_in(port, UART_SCR))) {
  		serial8250_console_restore(up);
  		up->canary = 0;
-@@ -3629,14 +3624,11 @@ bool serial8250_console_write_atomic(struct uart_8250_port *up,
+@@ -3621,14 +3616,11 @@ bool serial8250_console_write_atomic(struct uart_8250_port *up,
  		uart_console_write(port, "\n", 1, serial8250_console_putchar);
  	uart_console_write(port, wctxt->outbuf, wctxt->len, serial8250_console_putchar);
  
@@ -201,10 +201,10 @@ index 478b23c207169..437a7d3d34cde 100644
  }
  #endif /* CONFIG_SERIAL_8250_LEGACY_CONSOLE */
 diff --git a/include/linux/console.h b/include/linux/console.h
-index 87e787ffb6531..f8a0628678886 100644
+index ac14ff49e86bb..79ef2fd2bd155 100644
 --- a/include/linux/console.h
 +++ b/include/linux/console.h
-@@ -299,7 +299,8 @@ struct nbcon_write_context {
+@@ -306,7 +306,8 @@ struct nbcon_write_context {
   *
   * @write_atomic:	Write callback for atomic context
   * @write_thread:	Write callback for non-atomic context
@@ -214,7 +214,7 @@ index 87e787ffb6531..f8a0628678886 100644
   * @nbcon_state:	State for nbcon consoles
   * @nbcon_seq:		Sequence number of the next record for nbcon to print
   * @pbufs:		Pointer to nbcon private buffer
-@@ -332,7 +333,8 @@ struct console {
+@@ -339,7 +340,8 @@ struct console {
  						struct nbcon_write_context *wctxt);
  	bool			(*write_thread)(struct console *con,
  						struct nbcon_write_context *wctxt);
@@ -259,7 +259,7 @@ index 196a4cf3ccb76..7a942e987b165 100644
  }
  
 diff --git a/include/linux/serial_core.h b/include/linux/serial_core.h
-index 18ce60b40f1ed..245c11753effd 100644
+index 198d8088a9984..a49ce4bf7fae8 100644
 --- a/include/linux/serial_core.h
 +++ b/include/linux/serial_core.h
 @@ -595,7 +595,7 @@ struct uart_port {
@@ -347,10 +347,10 @@ index 18ce60b40f1ed..245c11753effd 100644
  }
  
 diff --git a/kernel/panic.c b/kernel/panic.c
-index 42890ffc7ae98..9215df21d8c2c 100644
+index 88902355600f5..9fa44bc38f466 100644
 --- a/kernel/panic.c
 +++ b/kernel/panic.c
-@@ -366,6 +366,8 @@ void panic(const char *fmt, ...)
+@@ -370,6 +370,8 @@ void panic(const char *fmt, ...)
  	 */
  	atomic_notifier_call_chain(&panic_notifier_list, 0, buf);
  
@@ -359,7 +359,7 @@ index 42890ffc7ae98..9215df21d8c2c 100644
  	panic_print_sys_info(false);
  
  	kmsg_dump(KMSG_DUMP_PANIC);
-@@ -443,6 +445,12 @@ void panic(const char *fmt, ...)
+@@ -447,6 +449,12 @@ void panic(const char *fmt, ...)
  	/* Do not scroll important messages printed above */
  	suppress_printk = 1;
  
@@ -418,7 +418,7 @@ index a3ae0710346cd..7db6992c54f38 100644
  #endif /* CONFIG_PRINTK */
  
 diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
-index a9be219673dbf..1b1b585b1675b 100644
+index 0bd5ee1b5b282..1b1b585b1675b 100644
 --- a/kernel/printk/nbcon.c
 +++ b/kernel/printk/nbcon.c
 @@ -144,39 +144,6 @@ static inline bool nbcon_state_try_cmpxchg(struct console *con, struct nbcon_sta
@@ -563,7 +563,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  		 */
  		nbcon_context_release(ctxt);
  		return false;
-@@ -1013,36 +989,23 @@ static bool nbcon_emit_next_record(struct nbcon_write_context *wctxt, bool use_a
+@@ -1013,29 +989,23 @@ static bool nbcon_emit_next_record(struct nbcon_write_context *wctxt, bool use_a
   */
  static bool nbcon_kthread_should_wakeup(struct console *con, struct nbcon_context *ctxt)
  {
@@ -592,13 +592,6 @@ index a9be219673dbf..1b1b585b1675b 100644
 -
 -		nbcon_state_read(con, &cur);
 -
--		/*
--		 * Some other CPU is using the console. Patiently poll
--		 * to see if it becomes available. This is more efficient
--		 * than having every release trigger an irq_work to wake
--		 * the kthread.
--		 */
--		msleep(1);
 -	} while (cur.prio != NBCON_PRIO_NONE);
 +	if (!is_usable)
 +		return false;
@@ -609,7 +602,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  
  	return prb_read_valid(prb, ctxt->seq, NULL);
  }
-@@ -1059,16 +1022,12 @@ static int nbcon_kthread_func(void *__console)
+@@ -1052,16 +1022,12 @@ static int nbcon_kthread_func(void *__console)
  		.ctxt.prio	= NBCON_PRIO_NORMAL,
  	};
  	struct nbcon_context *ctxt = &ACCESS_PRIVATE(&wctxt, ctxt);
@@ -626,7 +619,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  wait_for_event:
  	/*
  	 * Guarantee this task is visible on the rcuwait before
-@@ -1099,14 +1058,13 @@ static int nbcon_kthread_func(void *__console)
+@@ -1092,14 +1058,13 @@ static int nbcon_kthread_func(void *__console)
  		con_flags = console_srcu_read_flags(con);
  
  		if (console_is_usable(con, con_flags, false)) {
@@ -644,7 +637,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  
  			if (nbcon_context_try_acquire(ctxt)) {
  				/*
-@@ -1119,16 +1077,11 @@ static int nbcon_kthread_func(void *__console)
+@@ -1112,16 +1077,11 @@ static int nbcon_kthread_func(void *__console)
  				}
  			}
  
@@ -662,7 +655,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  	} while (backlog);
  
  	goto wait_for_event;
-@@ -1214,9 +1167,9 @@ static __ref unsigned int *nbcon_get_cpu_emergency_nesting(void)
+@@ -1207,9 +1167,9 @@ static __ref unsigned int *nbcon_get_cpu_emergency_nesting(void)
  
  /**
   * nbcon_atomic_emit_one - Print one record for an nbcon console using the
@@ -675,7 +668,7 @@ index a9be219673dbf..1b1b585b1675b 100644
   *
   * Return:	False if the given console could not print a record or there
   *		are no more records to print, otherwise true.
-@@ -1248,6 +1201,7 @@ static bool nbcon_atomic_emit_one(struct nbcon_write_context *wctxt)
+@@ -1241,6 +1201,7 @@ static bool nbcon_atomic_emit_one(struct nbcon_write_context *wctxt)
   * nbcon_get_default_prio - The appropriate nbcon priority to use for nbcon
   *				printing on the current CPU
   *
@@ -683,7 +676,7 @@ index a9be219673dbf..1b1b585b1675b 100644
   * Return:	The nbcon_prio to use for acquiring an nbcon console in this
   *		context for printing.
   */
-@@ -1269,51 +1223,51 @@ enum nbcon_prio nbcon_get_default_prio(void)
+@@ -1262,51 +1223,51 @@ enum nbcon_prio nbcon_get_default_prio(void)
   * nbcon_atomic_emit_next_record - Print one record for an nbcon console
   *					using the write_atomic() callback
   * @con:	The console to print on
@@ -766,7 +759,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  
  	return progress;
  }
-@@ -1328,7 +1282,6 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
+@@ -1321,7 +1282,6 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
  {
  	struct nbcon_write_context wctxt = { };
  	struct nbcon_context *ctxt = &ACCESS_PRIVATE(&wctxt, ctxt);
@@ -774,7 +767,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  	struct console *con;
  	bool any_progress;
  	int cookie;
-@@ -1339,6 +1292,7 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
+@@ -1332,6 +1292,7 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
  		cookie = console_srcu_read_lock();
  		for_each_console_srcu(con) {
  			short flags = console_srcu_read_flags(con);
@@ -782,7 +775,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  
  			if (!(flags & CON_NBCON))
  				continue;
-@@ -1352,10 +1306,26 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
+@@ -1345,10 +1306,26 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
  			memset(ctxt, 0, sizeof(*ctxt));
  			ctxt->console			= con;
  			ctxt->spinwait_max_us		= 2000;
@@ -810,7 +803,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  		}
  		console_srcu_read_unlock(cookie);
  	} while (any_progress);
-@@ -1368,8 +1338,6 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
+@@ -1361,8 +1338,6 @@ static void __nbcon_atomic_flush_all(u64 stop_seq, bool allow_unsafe_takeover)
   * Flush the backlog up through the currently newest record. Any new
   * records added while flushing will not be flushed. This is to avoid
   * one CPU printing unbounded because other CPUs continue to add records.
@@ -819,7 +812,7 @@ index a9be219673dbf..1b1b585b1675b 100644
   */
  void nbcon_atomic_flush_all(void)
  {
-@@ -1382,8 +1350,6 @@ void nbcon_atomic_flush_all(void)
+@@ -1375,8 +1350,6 @@ void nbcon_atomic_flush_all(void)
   *
   * Flush the backlog up through the currently newest record. Unsafe hostile
   * takeovers will be performed, if necessary.
@@ -828,7 +821,7 @@ index a9be219673dbf..1b1b585b1675b 100644
   */
  void nbcon_atomic_flush_unsafe(void)
  {
-@@ -1424,18 +1390,22 @@ void nbcon_cpu_emergency_enter(void)
+@@ -1417,18 +1390,22 @@ void nbcon_cpu_emergency_enter(void)
  void nbcon_cpu_emergency_exit(void)
  {
  	unsigned int *cpu_emergency_nesting;
@@ -852,7 +845,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  }
  
  /**
-@@ -1596,7 +1566,7 @@ static inline bool uart_is_nbcon(struct uart_port *up)
+@@ -1589,7 +1566,7 @@ static inline bool uart_is_nbcon(struct uart_port *up)
  }
  
  /**
@@ -861,7 +854,7 @@ index a9be219673dbf..1b1b585b1675b 100644
   * @up:		The uart port whose @lock was locked
   *
   * The uart_port_lock() wrappers will first lock the spin_lock @up->lock.
-@@ -1608,7 +1578,7 @@ static inline bool uart_is_nbcon(struct uart_port *up)
+@@ -1601,7 +1578,7 @@ static inline bool uart_is_nbcon(struct uart_port *up)
   * nbcon consoles acquired via the port lock wrapper always use priority
   * NBCON_PRIO_NORMAL.
   */
@@ -870,7 +863,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  {
  	struct console *con = up->cons;
  	struct nbcon_context ctxt;
-@@ -1629,10 +1599,10 @@ void nbcon_handle_port_lock(struct uart_port *up)
+@@ -1622,10 +1599,10 @@ void nbcon_handle_port_lock(struct uart_port *up)
  
  	con->locked_port = true;
  }
@@ -883,7 +876,7 @@ index a9be219673dbf..1b1b585b1675b 100644
   * @up:		The uart port whose @lock is about to be unlocked
   *
   * The uart_port_unlock() wrappers will first call this function to implement
-@@ -1645,7 +1615,7 @@ EXPORT_SYMBOL_GPL(nbcon_handle_port_lock);
+@@ -1638,7 +1615,7 @@ EXPORT_SYMBOL_GPL(nbcon_handle_port_lock);
   * nbcon consoles acquired via the port lock wrapper always use priority
   * NBCON_PRIO_NORMAL.
   */
@@ -892,7 +885,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  {
  	struct console *con = up->cons;
  	struct nbcon_context ctxt = {
-@@ -1653,17 +1623,15 @@ void nbcon_handle_port_unlock(struct uart_port *up)
+@@ -1646,17 +1623,15 @@ void nbcon_handle_port_unlock(struct uart_port *up)
  		.prio		= NBCON_PRIO_NORMAL,
  	};
  
@@ -913,7 +906,7 @@ index a9be219673dbf..1b1b585b1675b 100644
  /**
   * printk_kthread_shutdown - shutdown all threaded printers
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index cff34b06fabfa..ddf79752c80cf 100644
+index ff02cb20ac35f..90e951bd02524 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
 @@ -470,6 +470,13 @@ static DEFINE_MUTEX(syslog_lock);
@@ -943,7 +936,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  DECLARE_WAIT_QUEUE_HEAD(log_wait);
  
  static DECLARE_WAIT_QUEUE_HEAD(legacy_wait);
-@@ -1888,7 +1889,7 @@ static bool console_waiter;
+@@ -1887,7 +1888,7 @@ static bool console_waiter;
   * there may be a waiter spinning (like a spinlock). Also it must be
   * ready to hand over the lock at the end of the section.
   */
@@ -952,7 +945,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  {
  	/*
  	 * Do not use spinning in panic(). The panic CPU wants to keep the lock.
-@@ -1927,7 +1928,7 @@ static void console_lock_spinning_enable(void)
+@@ -1926,7 +1927,7 @@ static void console_lock_spinning_enable(void)
   *
   * Return: 1 if the lock rights were passed, 0 otherwise.
   */
@@ -961,7 +954,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  {
  	int waiter;
  
-@@ -2332,35 +2333,36 @@ int vprintk_store(int facility, int level,
+@@ -2331,35 +2332,36 @@ int vprintk_store(int facility, int level,
  	return ret;
  }
  
@@ -1017,7 +1010,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  
  	if (level == LOGLEVEL_SCHED) {
  		level = LOGLEVEL_DEFAULT;
-@@ -2372,29 +2374,40 @@ asmlinkage int vprintk_emit(int facility, int level,
+@@ -2371,29 +2373,40 @@ asmlinkage int vprintk_emit(int facility, int level,
  
  	printed_len = vprintk_store(facility, level, dev_info, fmt, args);
  
@@ -1080,7 +1073,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  		}
  	}
  
-@@ -2407,9 +2420,18 @@ asmlinkage int vprintk_emit(int facility, int level,
+@@ -2406,9 +2419,18 @@ asmlinkage int vprintk_emit(int facility, int level,
  		 * printing of all remaining records to all consoles so that
  		 * this context can return as soon as possible. Hopefully
  		 * another printk() caller will take over the printing.
@@ -1100,7 +1093,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  			/*
  			 * Try to acquire and then immediately release the
  			 * console semaphore. The release will print out
-@@ -2420,13 +2442,15 @@ asmlinkage int vprintk_emit(int facility, int level,
+@@ -2419,13 +2441,15 @@ asmlinkage int vprintk_emit(int facility, int level,
  			if (console_trylock_spinning())
  				console_unlock();
  		}
@@ -1120,7 +1113,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  	return printed_len;
  }
  EXPORT_SYMBOL(vprintk_emit);
-@@ -2473,6 +2497,7 @@ static u64 syslog_seq;
+@@ -2472,6 +2496,7 @@ static u64 syslog_seq;
  
  static bool pr_flush(int timeout_ms, bool reset_on_progress) { return true; }
  static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progress) { return true; }
@@ -1128,7 +1121,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  static inline void nbcon_legacy_kthread_create(void) { }
  static inline void wake_up_legacy_kthread(void) { }
  #endif /* CONFIG_PRINTK */
-@@ -2704,7 +2729,6 @@ void resume_console(void)
+@@ -2711,7 +2736,6 @@ void resume_console(void)
  	 * Since this runs in task context, wake the threaded printers
  	 * directly rather than scheduling irq_work to do it.
  	 */
@@ -1136,7 +1129,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  	cookie = console_srcu_read_lock();
  	for_each_console_srcu(con) {
  		flags = console_srcu_read_flags(con);
-@@ -2793,6 +2817,8 @@ static void __console_unlock(void)
+@@ -2800,6 +2824,8 @@ static void __console_unlock(void)
  	up_console_sem();
  }
  
@@ -1145,7 +1138,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  #ifdef CONFIG_PRINTK
  
  /*
-@@ -2955,7 +2981,18 @@ static bool console_emit_next_record(struct console *con, bool *handover, int co
+@@ -2962,7 +2988,18 @@ static bool console_emit_next_record(struct console *con, bool *handover, int co
  		con->dropped = 0;
  	}
  
@@ -1165,7 +1158,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  		/*
  		 * While actively printing out messages, if another printk()
  		 * were to occur on another CPU, it may wait for this one to
-@@ -2971,20 +3008,16 @@ static bool console_emit_next_record(struct console *con, bool *handover, int co
+@@ -2978,20 +3015,16 @@ static bool console_emit_next_record(struct console *con, bool *handover, int co
  
  		/* Do not trace print latency. */
  		stop_critical_timings();
@@ -1191,7 +1184,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  		printk_safe_exit_irqrestore(flags);
  	}
  skip:
-@@ -3055,21 +3088,25 @@ static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handove
+@@ -3062,21 +3095,25 @@ static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handove
  			any_usable = true;
  
  			if (flags & CON_NBCON) {
@@ -1225,7 +1218,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  			/* Track the next of the highest seq flushed. */
  			if (printk_seq > *next_seq)
  				*next_seq = printk_seq;
-@@ -3095,7 +3132,7 @@ static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handove
+@@ -3102,7 +3139,7 @@ static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handove
  	return false;
  }
  
@@ -1234,7 +1227,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  {
  	bool do_cond_resched;
  	bool handover;
-@@ -3138,8 +3175,6 @@ static u64 console_flush_and_unlock(void)
+@@ -3145,8 +3182,6 @@ static u64 console_flush_and_unlock(void)
  		 * fails, another context is already handling the printing.
  		 */
  	} while (prb_read_valid(prb, next_seq, NULL) && console_trylock());
@@ -1243,7 +1236,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  }
  
  /**
-@@ -3300,8 +3335,7 @@ void console_flush_on_panic(enum con_flush_mode mode)
+@@ -3307,8 +3342,7 @@ void console_flush_on_panic(enum con_flush_mode mode)
  		console_srcu_read_unlock(cookie);
  	}
  
@@ -1253,7 +1246,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  
  	if (printing_via_unlock)
  		console_flush_all(false, &next_seq, &handover);
-@@ -3385,7 +3419,7 @@ void console_start(struct console *console)
+@@ -3392,7 +3426,7 @@ void console_start(struct console *console)
  EXPORT_SYMBOL(console_start);
  
  #ifdef CONFIG_PRINTK
@@ -1262,7 +1255,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  {
  	bool available = false;
  	struct console *con;
-@@ -3431,11 +3465,10 @@ static bool printer_should_wake(u64 seq)
+@@ -3438,11 +3472,10 @@ static bool printer_should_wake(u64 seq)
  
  static int nbcon_legacy_kthread_func(void *unused)
  {
@@ -1275,7 +1268,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  
  		if (kthread_should_stop())
  			break;
-@@ -3444,8 +3477,9 @@ static int nbcon_legacy_kthread_func(void *unused)
+@@ -3451,8 +3484,9 @@ static int nbcon_legacy_kthread_func(void *unused)
  			continue;
  
  		console_lock();
@@ -1286,7 +1279,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  	return 0;
  }
  
-@@ -3608,11 +3642,20 @@ static void console_init_seq(struct console *newcon, bool bootcon_registered)
+@@ -3615,11 +3649,20 @@ static void console_init_seq(struct console *newcon, bool bootcon_registered)
  
  				newcon->seq = prb_next_seq(prb);
  				for_each_console(con) {
@@ -1311,7 +1304,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  				}
  			}
  
-@@ -3730,6 +3773,7 @@ void register_console(struct console *newcon)
+@@ -3737,6 +3780,7 @@ void register_console(struct console *newcon)
  	console_init_seq(newcon, bootcon_registered);
  
  	if (newcon->flags & CON_NBCON) {
@@ -1319,7 +1312,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  		nbcon_init(newcon);
  	} else {
  		have_legacy_console = true;
-@@ -3791,8 +3835,10 @@ EXPORT_SYMBOL(register_console);
+@@ -3798,8 +3842,10 @@ EXPORT_SYMBOL(register_console);
  /* Must be called under console_list_lock(). */
  static int unregister_console_locked(struct console *console)
  {
@@ -1331,7 +1324,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  	struct console *c;
  	int res;
  
-@@ -3842,24 +3888,24 @@ static int unregister_console_locked(struct console *console)
+@@ -3849,24 +3895,24 @@ static int unregister_console_locked(struct console *console)
  		res = console->exit(console);
  
  	/*
@@ -1371,7 +1364,7 @@ index cff34b06fabfa..ddf79752c80cf 100644
  
  	/*
  	 * When the last boot console unregisters, start up the
-@@ -4233,22 +4279,8 @@ void defer_console_output(void)
+@@ -4240,22 +4286,8 @@ void defer_console_output(void)
  	__wake_up_klogd(val);
  }
  
@@ -1641,9 +1634,9 @@ index b48b44ecbe6da..52626d0f1fa37 100644
 +
  #endif /* _KERNEL_PRINTK_RINGBUFFER_H */
 diff --git a/localversion-rt b/localversion-rt
-index 1e584b47c987e..9e7cd66d9f44f 100644
+index ad3da1bcab7e8..0efe7ba1930e1 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt17
-+-rt18
+--rt4
++-rt5
