@@ -1,144 +1,91 @@
-Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com [209.85.160.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8CDC4E1B3
-	for <linux-rt-users@vger.kernel.org>; Wed, 20 Dec 2023 22:58:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DAF3C2E836
+	for <linux-rt-users@vger.kernel.org>; Fri, 22 Dec 2023 20:16:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="V7hGOejt"
-Received: by mail-qt1-f179.google.com with SMTP id d75a77b69052e-42788536cddso898131cf.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 20 Dec 2023 14:58:59 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1703113138; x=1703717938; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Y0gjTRcq3CQfpV4Cp74tfDacn2mItIie98i0d5rr0C8=;
-        b=V7hGOejtgS6rn9SWJFUSmTe5I6/3IQ96pK4D+aZQ/vI6ARfFw6XinefypE9DlNLmqB
-         MujjHIFUc7KbwouTGbqF7WQCKubrEuK5CmxAiPGuSZpdIeXZ5P3vMW5lTrVAER1j1E3t
-         yc3ojPnwds2n5v838QimodySIKS7+qX1hML132yCCBIFbLF5ncR/DEWO9x/dmhAepnWD
-         TiQiuM9xilJgEXvmAJR1dKT8DFaQ++0NQz/+0JBYhXQpwfOVScsuSHsu58TFl2JSvG4x
-         0LQXmIxgKDskIxsNKx2w5JBPtfDjivsVXgpvE01J8DdqJZrO2KIJv4Zc6YslhpHRMNYf
-         FsvQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1703113138; x=1703717938;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=Y0gjTRcq3CQfpV4Cp74tfDacn2mItIie98i0d5rr0C8=;
-        b=DuGMJvGfnAih15TF3S9LyVBHzbEQsLt2dwOIVz/aQb5OY658Gc1VP072pSd0kSaTbG
-         rtKOhaOgQlxmFg0kPQNf6hkh+2iBAy+XQUZBA4trngc7BDZGOYQ0tnRUl335LTSY9NoW
-         4VlhmfU9Bd63Yog0js0kMeSO9cLfTxdmXTP+8LfvyLFiiYcU5T2jnK3okvFRfRGHGXLl
-         7OO9mzI32nvscdNoyb3m+QkKrMZ+/MylC0JGBgY0R/1D2TIm0rMntagTFqKxfimYy01p
-         uCtXSTVhpoMWK5e/YC44rXNS01+OM2Ys7G7NDx7kYTeKsFhuVe892rWXDCjvRPvKf4Wj
-         yj+Q==
-X-Gm-Message-State: AOJu0YxNjbypIe9xUU2ECZ+OhdruZ22410P+ZaK3nZj1Dkpued38IhiH
-	3r5rKL8WEeimP7xa+Xk9b5D/Gy0+24c=
-X-Google-Smtp-Source: AGHT+IHQg/0q5rQty2vCl7mjCp4t8HS8WYgcoCu9ruW0M/mdu4cuCARHZAVqHdKbb+YXFj11jZwBSA==
-X-Received: by 2002:a05:622a:138b:b0:425:4043:18bf with SMTP id o11-20020a05622a138b00b00425404318bfmr27591210qtk.114.1703113137757;
-        Wed, 20 Dec 2023 14:58:57 -0800 (PST)
-Received: from fionn.home ([174.88.88.134])
-        by smtp.gmail.com with ESMTPSA id eo12-20020a05622a544c00b00427692bc384sm277488qtb.66.2023.12.20.14.58.56
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 20 Dec 2023 14:58:57 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/2] rteval: Disable use of python-dmidecode
-Date: Wed, 20 Dec 2023 17:58:25 -0500
-Message-ID: <20231220225825.171222-2-jkacur@redhat.com>
-X-Mailer: git-send-email 2.42.0
-In-Reply-To: <20231220225825.171222-1-jkacur@redhat.com>
-References: <20231220225825.171222-1-jkacur@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="D5rmGmKN"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1703276165;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=8xtxj/V4QGdZ/hKKDXa1uzZd1V/LLe/jGwDV19XAKAY=;
+	b=D5rmGmKNGvdEKtCb26dI6V8pXY69HahmwIh+yZ1/ptoxRyXJsO2yCTSZ1atpd/vheXQe6k
+	of8y5iCUArCKGmM2/DH7aby60WkPVn8GyFX67EqfRIIaIkniyosFpGKPjNzh7CxIVr4zvA
+	b8QgFsWpzLZmKDqIexawkhrsrZ68GEM=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-522-AZyB6zB4MY2mwLq-md5MGA-1; Fri,
+ 22 Dec 2023 15:16:03 -0500
+X-MC-Unique: AZyB6zB4MY2mwLq-md5MGA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 026EC280D46A;
+	Fri, 22 Dec 2023 20:16:03 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.75])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 29D60492BE6;
+	Fri, 22 Dec 2023 20:16:01 +0000 (UTC)
+Date: Fri, 22 Dec 2023 17:16:01 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 4.14.333-rt158
+Message-ID: <ZYXugVo4O53IWwE3@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
-python-dmidecode is not being maintained upstream.
-For now just disable it's use in rteval since it is useful but not
-essential information for running rteval
+Hello RT-list!
 
-In the future look at generating this info directly using dmidecode.
+I'm pleased to announce the 4.14.333-rt158 stable release.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- README                | 6 ------
- doc/installing.txt    | 9 ---------
- rteval/sysinfo/dmi.py | 4 ++--
- 3 files changed, 2 insertions(+), 17 deletions(-)
+This release is just an update to the new stable 4.14.333 version
+and no RT-specific changes have been performed.
 
-diff --git a/README b/README
-index a5cf98344a46..b352d7f66ad2 100644
---- a/README
-+++ b/README
-@@ -19,15 +19,9 @@ Rteval requires the following packages to run:
- Python >= 3.0
-     http://www.python.org/download/
- 
--python-ethtool
--    git://git.kernel.org/pub/scm/linux/kernel/git/acme/python-ethtool.git
--
- python-lxml
-   http://lxml.de/
- 
--python-dmidecode
--    http://www.ohloh.net/p/python-dmidecode
--
- libxml2-python
-     http://xmlsoft.org/
- 
-diff --git a/doc/installing.txt b/doc/installing.txt
-index ff2d43cb9481..227249bbc9ed 100644
---- a/doc/installing.txt
-+++ b/doc/installing.txt
-@@ -1,18 +1,10 @@
- The rteval utility requires some external software libraries to run
- properly. These are:
- 
--python-ethtool
--  A python library to query network interfaces
--  git://git.kernel.org/pub/scm/linux/kernel/git/acme/python-ethtool.git
--
- python-lxml
-   A python library to parse XML files and XSLT stylesheets
-   http://lxml.de/
- 
--python-dmidecode
--  A python library used to access DMI table information
--  http://www.autonomy.net.au/display/pydmi/Home
--
- libxml2-python
-   A python library to parse XML files
-   http://xmlsoft.org/
-@@ -22,7 +14,6 @@ rt-tests
-   git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
- 
- 
--$ sudo yum install python-{dmidecode,ethtool)
- $ git clone \
-   git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
- $ cd rt-tests && sudo make prefix=/usr install
-diff --git a/rteval/sysinfo/dmi.py b/rteval/sysinfo/dmi.py
-index e8285d263fe6..c01a0eef1435 100644
---- a/rteval/sysinfo/dmi.py
-+++ b/rteval/sysinfo/dmi.py
-@@ -15,8 +15,8 @@ from rteval import xmlout
- from rteval import rtevalConfig
- 
- try:
--    import dmidecode
--    dmidecode_avail = True
-+    # import dmidecode
-+    dmidecode_avail = False
- except ModuleNotFoundError:
-     dmidecode_avail = False
- 
--- 
-2.42.0
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.14-rt
+  Head SHA1: 33cbc8b5610cf1ec35407cc3434385dadb71b8ed
+
+Or to build 4.14.333-rt158 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.333.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.333-rt158.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
