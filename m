@@ -1,135 +1,41 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDF312E859
-	for <linux-rt-users@vger.kernel.org>; Fri, 22 Dec 2023 20:41:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hQdAZ3bl"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1703277674;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=ZVKuVqui5GBClDiAGi7QmgUs8/59xw2Hq2GF0X1cLYg=;
-	b=hQdAZ3blsWwp/sslG6Pnnag+5u/RAAebLEfQTtwNG/oc//Ui4dksznPFLLUSFAjh39eTc0
-	xqmba2qhm8E9c6QcglPLzvjOSQzFokJc/WUpzj5Cxn4pZHHYE16NcY+mPMvqbbpAU2CuNA
-	z9yy+39eTYivFVxxKEJJr9F3o+eqIx0=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-404-gEVoSHwdNlGi4dQp19aYoQ-1; Fri, 22 Dec 2023 15:41:09 -0500
-X-MC-Unique: gEVoSHwdNlGi4dQp19aYoQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC064185A780;
-	Fri, 22 Dec 2023 20:41:08 +0000 (UTC)
-Received: from localhost (unknown [10.22.8.75])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5ACF2492BE6;
-	Fri, 22 Dec 2023 20:41:08 +0000 (UTC)
-Date: Fri, 22 Dec 2023 17:41:07 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.204-rt100
-Message-ID: <ZYX0Y_lbe8hNUNnj@uudg.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 08ADA6133;
+	Fri, 29 Dec 2023 05:48:08 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6FA51C433CC;
+	Fri, 29 Dec 2023 05:48:08 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.1.69-rt21
+Date: Fri, 29 Dec 2023 05:47:26 -0000
+Message-ID: <170382884651.606997.17659515955119736352@demetrius>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
 Hello RT-list!
 
-I'm pleased to announce the 5.10.204-rt100 stable release.
+I'm pleased to announce the 6.1.69-rt21 stable release.
 
-This release is an RT-only update.
-The only change in this release is specific to RT:
-
-    rt: mm/page_alloc: backport missing bits from __build_all_zonelists() fix
-    
-    A while ago upstream landed commit a2ebb51575828 ("mm/page_alloc: use
-    write_seqlock_irqsave() instead write_seqlock() + local_irq_save().")
-    to fix a problem that had already been worked on v5.10-rt via commit
-    7bdd3bd5143a4 ("Revert "mm/page_alloc: fix potential deadlock on
-    zonelist_update_seqseqlock""). Sebastian pointed out it was important
-    to backport the missing elements of a2ebb51575828 for code consistency.
-    
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v5.10-rt
-  Head SHA1: 3f1186be09688c4aedf2d61176990651cf996c75
+  branch: v6.1-rt
+  Head SHA1: 5980751eda1c1ebf05a4b00d8114be76b18d4a3e
 
-Or to build 5.10.204-rt100 directly, the following patches should be applied:
+Or to build 6.1.69-rt21 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.204.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.69.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.204-rt100.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.69-rt21.patch.xz
 
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
 Enjoy!
-Luis
-
-Changes from v5.10.204-rt99:
----
-
-Luis Claudio R. Goncalves (1):
-      rt: mm/page_alloc: backport missing bits from __build_all_zonelists() fix
----
- mm/page_alloc.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
----
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 39d1782b398f..cd1e8d0b2269 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -6043,8 +6043,9 @@ static void __build_all_zonelists(void *data)
- 	int nid;
- 	int __maybe_unused cpu;
- 	pg_data_t *self = data;
-+	unsigned long flags;
- 
--	write_seqlock(&zonelist_update_seq);
-+	write_seqlock_irqsave(&zonelist_update_seq, flags);
- 
- #ifdef CONFIG_NUMA
- 	memset(node_load, 0, sizeof(node_load));
-@@ -6077,7 +6078,7 @@ static void __build_all_zonelists(void *data)
- #endif
- 	}
- 
--	write_sequnlock(&zonelist_update_seq);
-+	write_sequnlock_irqrestore(&zonelist_update_seq, flags);
- }
- 
- static noinline void __init
+Clark
 
