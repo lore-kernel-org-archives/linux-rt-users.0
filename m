@@ -1,71 +1,58 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from smtp-relay-canonical-1.canonical.com (smtp-relay-canonical-1.canonical.com [185.125.188.121])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6D98156CD;
-	Tue,  2 Jan 2024 17:11:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B8C51C6AE;
+	Wed,  3 Jan 2024 18:45:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Zhw80pVc"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 321F7C433C9;
-	Tue,  2 Jan 2024 17:11:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1704215479;
-	bh=fGDoyBWpQ4vyftas01itKV4YkyJNRhIlMm6bq0RArWs=;
-	h=Date:From:To:Cc:Subject:From;
-	b=Zhw80pVcsrSV9rIuQix/zS3dCk4L3xt99s7fAReA1t8t1UEpuXr9sss1jkhzoVWi3
-	 RE+t6FtD1xxskimHWJZBRg4zbAQh2UdsUOHPTUzUejr7CFNp5z1u1UwGHE6GsOKdr5
-	 yBY4kJLfCDi7FhJvpTwl2rvyC3utlZ7gSza8XXcXMB6EdsYQzKDG7JSE0ohZZlAlH+
-	 gMk6rENRRKze4RL92L9ug56ydLoCK7PvjRLrRU6sv5tz5+G6NYKOMFgOG3FkxsVLkz
-	 vXRGXLXIxZhfb1XTLNbhsIkjC7fy4ckn6izJIJ+mR2i8l8lXwE/BVIu8ia0ZJ855RF
-	 YlDQC5Rn1aeKw==
-Message-ID: <be6876e5-ed73-415b-8f7f-df1a97e9118d@kernel.org>
-Date: Tue, 2 Jan 2024 18:11:15 +0100
+	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="dGO7Ca/T"
+Received: from canonical.com (1.general.jsalisbury.us.vpn [10.172.66.188])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-relay-canonical-1.canonical.com (Postfix) with ESMTPSA id F15373F6D7;
+	Wed,  3 Jan 2024 18:36:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+	s=20210705; t=1704306980;
+	bh=8uE8EdR+iQ3/vRgCWahopVKlj6kNvivr4rCWFetI0C8=;
+	h=From:Subject:Date:Message-ID:To;
+	b=dGO7Ca/T/cK5nbJ8v11AJCIVB79pYTju/ZBTsWTa0dcP4xHRZdd9iX0mwIRLrFxiB
+	 PykW5bqQVLVsYV00TGJz5LEuC6chbPSh8OsSiMjfR47w8qzX2XalBLOHeRpsTXHmnz
+	 Uyx9tq7eNwnT2pJ4Du24BUSxqhF5omqyP1ZW8BZx0RhxGKQs1gvetFphRISyCLIJva
+	 xKNIdSYq+7FYQoySau5eollE7PLnocHagweoce9kfNu+snj/4/50CbYdKYLJ1NqqK1
+	 pIKOWYl5cB9fCco3qoJMATe5D9w4Y6VhpytfpmGq87stHyLyryWZ8eRbUJpDcJWePz
+	 /js+SQQJpyVAA==
+From: Joseph Salisbury <joseph.salisbury@canonical.com>
+Subject: [ANNOUNCE] 5.15.145-rt73
+Date: Wed, 03 Jan 2024 18:31:56 -0000
+Message-ID: <170430671676.71812.4178110289387133033@jupiter.home.arpa>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Content-Language: en-US, pt-BR, it-IT
-From: Daniel Bristot de Oliveira <bristot@kernel.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
- LKML <linux-kernel@vger.kernel.org>
-Cc: Min Yu <myu@linuxfoundation.org>,
- Kate Stewart <kstewart@linuxfoundation.org>
-Subject: [CFP] Real-Time Linux Summit at Embedded Open Source Summit in
- Seattle, April 16-18
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
 
-Hello Real-time Linux community,
+Hello RT-list!
 
-We're excited to announce that there will be a Real-Time Linux Summit as part
-of the umbrella conference of Embedded Open Source Summit in Seattle,
-April 16-18.
+I'm pleased to announce the 5.15.145-rt73 stable release.
 
-The Real-Time Linux Summit is intended to gather developers and users of
-Linux as a Real-Time Operating System. The main intent is to provide room
-for discussion between developers, tooling experts, and users, in a friendly
-environment.
+You can get this release via the git tree at:
 
-The Call for Proposal (CFP) is now open through January 14th.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-We are looking for proposals for topics in the following areas
+  branch: v5.15-rt
+  Head SHA1: 1d5fbef92eb36251829a2016062df2e7560b6067
 
- - Best practices for writing Linux drivers to work with real-time
- - Lessons learned setting up and configuring systems with real-time
- - Working with real-time Linux in containerized systems
- - Working with real-time Linux and hypervisors
- - Lessons learned debugging and analyzing latencies
- -  Best practices using Linux on safety-critical systems
- - Future evolution of real-time Linux
+Or to build 5.15.145-rt73 directly, the following patches should be applied:
 
-Please consider submitting a talk proposal for consideration. Details on the
-CFP can be found here:
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
 
-	https://events.linuxfoundation.org/embedded-open-source-summit/program/cfp/
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.145.xz
 
-Please help us spread the word about this conference and CFP
-within your network.
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.145-rt73.patch.xz
 
--- Daniel
+
+Enjoy!
+Joseph Salisbury
