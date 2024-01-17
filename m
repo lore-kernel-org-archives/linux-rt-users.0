@@ -1,93 +1,63 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.12])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A7DC78F47;
-	Wed, 17 Jan 2024 06:52:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 269B1D26B;
+	Wed, 17 Jan 2024 08:24:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705474362; cv=none; b=iDDpFRmDorX2xxMwf9ED+F1Ge8FSydli2c3es2DqAxPgIuxJ9yA7E1uRhpdx+bD0ihWKvRZ5SVf2WsUIXJnc6mG3zo+Pg54mKXnNu4lMPqSYMvlQDbqHeHFK4jCcQatEgnsE6BzZpdwiKjBZupVwwmEelKWwH3R0g4NJQ/I7UaA=
+	t=1705479844; cv=none; b=OO9ckrjye31NGVrQMXVKsaLSQiwF1laU2j4RJ8/cpGrtuoCkzAUyK68HZdcnpE6sRwaHZTLc1+jVcep9FDpKHbsizrC4YHBfxCjtdnadAUi8pVnPbaTjAKhtDWaLfgsXiahfMWphJQ51yBJQku8O88+DYCeyz/iR41GFa4QdHE4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705474362; c=relaxed/simple;
-	bh=KtZv8F8FHVAovFoALPdwWBhpOPjZ1RcvIXZt7uUSRaE=;
-	h=DKIM-Signature:X-IronPort-AV:X-IronPort-AV:Received:X-ExtLoop1:
-	 X-IronPort-AV:X-IronPort-AV:Received:From:To:Cc:Subject:Date:
-	 Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding; b=joyJQoN2PP7PxzTL+G2N6KvYuFbYQwSEXW8CKfGzx0zNFtlQLaK1xLPr1kT1tUj1Zr52Vnay+6Lq12XWC1F7qLSnNvzhpNIU/e8kcs/IassOLv5avFJAq4ddlQ5oKd71Lp8dBewqc8ghzMYV199njiXik/wle0tkSG+1GegUGbI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=kpFaKOcn; arc=none smtp.client-ip=198.175.65.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	s=arc-20240116; t=1705479844; c=relaxed/simple;
+	bh=iUePzbB8NYoCvTcIh+hge5pvpFVFIrDhBmMxgFJcphw=;
+	h=From:DKIM-Signature:DKIM-Signature:To:Cc:Subject:In-Reply-To:
+	 References:Date:Message-ID:MIME-Version:Content-Type; b=BrZNskASQKjpwZxJ2akvTB5GBwo9ChBg3BPwNmepPsPEeAEIq+ROM6sTG8euoLo9KxFq2SUhM47R91iyjc20WZpDyduIpKZ07wKAiBGeG7bh8hlbLPvfDFdSkocnwyviIG/pof2vekpbvNVR7dl56XKb0fsbuGvdQyh8HJYhWJs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=oOJ/2NXY; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=D0ZpV7qM; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="kpFaKOcn"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1705474361; x=1737010361;
-  h=from:to:cc:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=KtZv8F8FHVAovFoALPdwWBhpOPjZ1RcvIXZt7uUSRaE=;
-  b=kpFaKOcnyl/3gioIXLm0rWiDw4WDlpI4AoswKXQifvwnYVtyZZuDwU54
-   Q8JGAftIIlAmTX1OzLWHgsLosnViP6ctSeFPUZBa4pA39ekPaBUPiI2VJ
-   3JFWnIk1YigrvskRZmasmU3SvVai+VoMOMmFViGcBeFtUH1dhu2OBnQJm
-   pwqg+nFy3eAB/0m218rdgRpbn+tVkyUfmbk+jDcc4/z2CrQ8t11vzDjsw
-   sg7TEtUGa3IbP1ZNtws+PrxIGM1DKrK969p4kudlbaEBwy7DsvCQQu4u0
-   LidPhTOm2IHdpZw6wDtBDfoNBnN3ZMuHjHXFwyOPMjQNll4Y4Z/i2hy+T
-   g==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10955"; a="7467391"
-X-IronPort-AV: E=Sophos;i="6.05,200,1701158400"; 
-   d="scan'208";a="7467391"
-Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by orvoesa104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Jan 2024 22:52:39 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10955"; a="733881873"
-X-IronPort-AV: E=Sophos;i="6.05,200,1701158400"; 
-   d="scan'208";a="733881873"
-Received: from junxiaochang.bj.intel.com ([10.238.157.86])
-  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Jan 2024 22:52:35 -0800
-From: Junxiao Chang <junxiao.chang@intel.com>
-To: bigeasy@linutronix.de,
-	tglx@linutronix.de,
-	rostedt@goodmis.org,
-	linux-kernel@vger.kernel.org
-Cc: john.ogness@linutronix.de,
-	hao3.li@intel.com,
-	lili.li@intel.com,
-	jianfeng.gao@intel.com,
-	linux-rt-users@vger.kernel.org
-Subject: [PATCH] printk: nbcon: check uart port is nbcon or not in nbcon_release
-Date: Wed, 17 Jan 2024 14:52:26 +0800
-Message-Id: <20240117065226.4166127-1-junxiao.chang@intel.com>
-X-Mailer: git-send-email 2.34.1
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="oOJ/2NXY";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="D0ZpV7qM"
+From: John Ogness <john.ogness@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1705479840;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iUePzbB8NYoCvTcIh+hge5pvpFVFIrDhBmMxgFJcphw=;
+	b=oOJ/2NXYekBGIotxEtql5Rugex2jljT0JAWyVNIVc0tIlmvMa419NfsbNURwM6TmvRva/Y
+	qTtuGnn4F7csZ3wG0ITweoDvcm6vPuMz0G+ppQ//93RtkjCtOcahI2ZZOeAXHBSKsRMjXA
+	eLSPopizFaB0GYhbofTNHolUCJbKkFjEVoeKIl4FYeiXZzwwzEyPTQ0tbxds2gnwZBGfkP
+	D/U2qi0Z/PWOt2u2aEFXTaOGMV+K8GTWiERAK2DlE19nZKKCfkDi0Fonu9z+mRgRAAtfRb
+	U+T9dRhEgQAPcJ4OAAacgJiMhDxTCYU7IiatWm7AmG05zjevCHb5ELR4xk9AGQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1705479840;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iUePzbB8NYoCvTcIh+hge5pvpFVFIrDhBmMxgFJcphw=;
+	b=D0ZpV7qMwilWr3E0PEMjGIK/quaatGP+/AsJ6qCCPesMTgZfS4MbhNY3dz0Iuw1KQTBzP8
+	n8iUFk+oQ/HU5+Ag==
+To: Junxiao Chang <junxiao.chang@intel.com>, bigeasy@linutronix.de,
+ tglx@linutronix.de, rostedt@goodmis.org, linux-kernel@vger.kernel.org
+Cc: hao3.li@intel.com, lili.li@intel.com, jianfeng.gao@intel.com,
+ linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] printk: nbcon: check uart port is nbcon or not in
+ nbcon_release
+In-Reply-To: <20240117065226.4166127-1-junxiao.chang@intel.com>
+References: <20240117065226.4166127-1-junxiao.chang@intel.com>
+Date: Wed, 17 Jan 2024 09:29:57 +0106
+Message-ID: <871qagtlk2.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 
-Different uart ports might have same console pointer, not all of
-uart ports are nbcon. When uart port is shutdown, only release
-nbcon if it is nbcon. There is same nbcon checking in API
-nbcon_acquire.
+On 2024-01-17, Junxiao Chang <junxiao.chang@intel.com> wrote:
+> Different uart ports might have same console pointer,
 
-Fixes: 6424f396c49e ("printk: nbcon: Implement processing in port->lock wrapper")
-Signed-off-by: Junxiao Chang <junxiao.chang@intel.com>
----
- kernel/printk/nbcon.c | 3 +++
- 1 file changed, 3 insertions(+)
+Please explain how this is possible. It would be a major bug.
 
-diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
-index 1b1b585b1675b..e53b8bebbb57e 100644
---- a/kernel/printk/nbcon.c
-+++ b/kernel/printk/nbcon.c
-@@ -1623,6 +1623,9 @@ void nbcon_release(struct uart_port *up)
- 		.prio		= NBCON_PRIO_NORMAL,
- 	};
- 
-+	if (!uart_is_nbcon(up))
-+		return;
-+
- 	if (!con->locked_port)
- 		return;
- 
--- 
-2.34.1
-
+John
