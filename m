@@ -1,87 +1,95 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5C081DA35;
-	Wed, 17 Jan 2024 10:03:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF38E1429A;
+	Wed, 17 Jan 2024 10:24:50 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705485817; cv=none; b=JIsj0rL17ehzYC6tvt5m87sFanDb87elQKQ9tGncT9DmXHkHZW9DKeZ9luDvBRh6Sx9PiUq+z0DdNxYqCD8AQKlV1jIo3/XEtoM12YDOvS2a4cf57P/L0ucbZ6YEPKiMN0E9kLMQsNYKJ93DJmcVrQ2BMZcnWHKGH+OokNBQ7N0=
+	t=1705487092; cv=none; b=smRpuxlHQHLrswI6FjHhYQy9JuvJLgbm7D7dDLRJ8G8wIARmErgkJ547GW36tpzULwC59CyLoruIFxjGbsUh9oOeowA6VqnLK+LhtefZFxwN0OFGACafWKw+T4mNonmmX7wfswgKp5TkJi1uu8ky6nvi9Qai+tb2JWGcMmCGzwg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705485817; c=relaxed/simple;
-	bh=CUFmMxfNLORzIKiq952Jyw/HdLoR8XCLYDcnFC2DXz8=;
-	h=From:DKIM-Signature:DKIM-Signature:To:Cc:Subject:In-Reply-To:
-	 References:Date:Message-ID:MIME-Version:Content-Type; b=gUeh5HWuuhGV7wKXp/0BvkYzrxqLB51h07QxWSThcaT1aS341w1ccgD2+s0dXycIFYT4vTi0XM+ybMP1O2TJ/jx/Tu3toEUbBhoOsMsga3v2gxr9GTrLZTAjkZFTqtrsHMhGwCSCBFalz86qxLf+ke9VlI1gJTdUpRhxoP6XEbs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ZZXmJ4Ul; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=0k/sjsjK; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1705487092; c=relaxed/simple;
+	bh=YqEOUrfg8We4Z/uU2D6sdtwX7hJPwc174WZj5eopShE=;
+	h=Date:DKIM-Signature:DKIM-Signature:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:
+	 In-Reply-To; b=ZKAFhB9hTbNFKaYYHas9RRNjGVX6byF3Tk9cMvCa1IBNMihAHmKdnrWEMX8jLIVnPCUgBydEmsRISm2YHXLSGDBgIlrPF0vCp+YiXIyyg4wpUmKtaxEF47IcWZMT8WN6BM2unirodnoR+VchBaTop2aPlXtAugVOy+tOo3nA5T0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=4LowLd/C; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=pfH6KXdN; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ZZXmJ4Ul";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="0k/sjsjK"
-From: John Ogness <john.ogness@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="4LowLd/C";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="pfH6KXdN"
+Date: Wed, 17 Jan 2024 11:24:46 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1705485807;
+	s=2020; t=1705487088;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=HCc9tibi82Pbj/50pOz8Sj6mdn1A2UjXuVfV339QXA8=;
-	b=ZZXmJ4UlQeBoTS4g16SsNQJ+AVWCmnLGY1sIC3TaHan/EhbZoed4jD4FMjI/teA0BqooZT
-	/R2yJQ8qJHLj1v/CQjmLZMYU+q66J/630pLOiQVBT0LceKRi1+6iEuSDdYUIM2CO9d4NNd
-	qrlOALJPdr0kfUnX3VeR7wN/I5NYaoAtfjvAghpFAFAYUaNTx+agqKQICvuAqWsIFL684q
-	SoSM7T7ReJFXRHHLz3FxFet4j7UYaGg3/TPjAQim6F6sqOcrNPDkgPbhzu35KQAO7ZEHd5
-	IC1yvSQj0URVDQtY6ZdboR3wWkFkiOGf4H/cGoHKDnVRXVR+NSSQat+0Sp8+gw==
+	bh=6wBPLNOGkBTQln7J8+pZY7EWcp+BxJ8kTDDAKHKqHnc=;
+	b=4LowLd/Ctq9/yY2o9Mk2IN7dxb7PoHxtXsmEGqeiOEudD+YT449Frgd7m4wWGY87Mi4MJP
+	bOH73ORPXFrFc39CtbP2LbfVvGWb8YlwujTcBB2ooOz5NjKljqWaF1ftqQC+Qaqnhmix9/
+	FJDjXN/rr3A4C1K04PfPsJ7HGXUUiebFRYJo7wqYTjqVjKWXx6xFGDiJeaGSWIhbXw2Yu9
+	MNuSMiJfEXXvo1K1bDG5bOWAAsw7dBQzg5P8LzTeX8FIp5gKVI5ARXxpL60psIyvuKIH5e
+	xEc6/ISy/o5Yvur+7d+u8Df/bSKWLq1tgoH3qD6XtFm6CnZzkRa8C1/CDtZPNQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1705485807;
+	s=2020e; t=1705487088;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=HCc9tibi82Pbj/50pOz8Sj6mdn1A2UjXuVfV339QXA8=;
-	b=0k/sjsjKP0Eln9OzFwC1CgeKauAHsB01SWuXb5eGvwSJ3g5ZBS9ssUYVBQxL1OIWaAfTmW
-	PMyLyQ+xvmjbAJBg==
-To: "Chang, Junxiao" <junxiao.chang@intel.com>, "bigeasy@linutronix.de"
- <bigeasy@linutronix.de>, "tglx@linutronix.de" <tglx@linutronix.de>,
- "rostedt@goodmis.org" <rostedt@goodmis.org>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: "Li, Hao3" <hao3.li@intel.com>, "Li, Lili" <lili.li@intel.com>, "Gao,
- Jianfeng" <jianfeng.gao@intel.com>, "linux-rt-users@vger.kernel.org"
- <linux-rt-users@vger.kernel.org>
-Subject: RE: [PATCH] printk: nbcon: check uart port is nbcon or not in
+	bh=6wBPLNOGkBTQln7J8+pZY7EWcp+BxJ8kTDDAKHKqHnc=;
+	b=pfH6KXdNuyuUlu4tjxmYhK4BphXthBi+yKxa1nA/aao7HlZ7Z6pKTnYbI3Qu2PeJqwLgRk
+	OaV0gpKRIQefNCBw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: "Chang, Junxiao" <junxiao.chang@intel.com>,
+	"tglx@linutronix.de" <tglx@linutronix.de>,
+	"rostedt@goodmis.org" <rostedt@goodmis.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"Li, Hao3" <hao3.li@intel.com>, "Li, Lili" <lili.li@intel.com>,
+	"Gao, Jianfeng" <jianfeng.gao@intel.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: RE: [PATCH] printk: nbcon: check uart port is nbcon or not in
  nbcon_release
-In-Reply-To: <BN9PR11MB5370065F4E7443FEA156347EEC722@BN9PR11MB5370.namprd11.prod.outlook.com>
+Message-ID: <20240117102446.itexUYMc@linutronix.de>
 References: <20240117065226.4166127-1-junxiao.chang@intel.com>
  <871qagtlk2.fsf@jogness.linutronix.de>
  <BN9PR11MB5370065F4E7443FEA156347EEC722@BN9PR11MB5370.namprd11.prod.outlook.com>
-Date: Wed, 17 Jan 2024 11:09:24 +0106
-Message-ID: <87y1cos2dv.fsf@jogness.linutronix.de>
+ <87y1cos2dv.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <87y1cos2dv.fsf@jogness.linutronix.de>
 
-On 2024-01-17, "Chang, Junxiao" <junxiao.chang@intel.com> wrote:
-> There are several serial ports in one Intel ADL hardware, they are
-> enumerated as ttyS0, ttyS1, ttyS4, and so on. Multiple console options
-> might be appended to kernel command line. For example,
-> "console=ttyS0,115200n8 console=ttyS4,115200n8
-> console=ttyS5,115200n8".
->
-> In this case, several uarts "cons" pointers are same.
+On 2024-01-17 11:09:24 [+0106], John Ogness wrote:
+> On 2024-01-17, "Chang, Junxiao" <junxiao.chang@intel.com> wrote:
+> > There are several serial ports in one Intel ADL hardware, they are
+> > enumerated as ttyS0, ttyS1, ttyS4, and so on. Multiple console options
+> > might be appended to kernel command line. For example,
+> > "console=ttyS0,115200n8 console=ttyS4,115200n8
+> > console=ttyS5,115200n8".
+> >
+> > In this case, several uarts "cons" pointers are same.
+> 
+> So I ask again. Please explain how this is possible.
 
-Typically a UART driver will register the console structure in the
-driver's initcall(), which is only called once per driver. This is why
-it is usually not possible to have multiple UART consoles.
+I have here
+| 00:03: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+| 00:04: ttyS1 at I/O 0x2f8 (irq = 3, base_baud = 115200) is a 16550A
 
-If a driver _does_ allow registering consoles for multiple devices, then
-it must allocate separate console structs for each registration.
+and I have
 
-Note that register_console() will generate a warning and abort if a
-driver attempts to register the same console struct twice:
+| root        2315  0.0  0.0   5480  1792 ttyS0    Ss+  11:19   0:00 /sbin/agetty -o -p -- \u --keep-baud 115200,57600,38400,9600 - vt220
+| root        2502  0.1  0.0   5480  1792 ttyS1    Ss+  11:20   0:00 /sbin/agetty -o -p -- \u --keep-baud 115200,57600,38400,9600 - vt220
 
-    WARN(con == newcon, "console '%s%d' already registered\n",
-         con->name, con->index)
+and I can stop both of them without any trouble. 
+Can this be reproduced on an ordinary x86 hardware given they have more
+than one UART (up to four).
+Is any of this ADL hardware upstream?
 
-So I ask again. Please explain how this is possible.
+> John
 
-John
+Sebastian
