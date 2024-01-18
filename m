@@ -1,95 +1,89 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86D261EB57;
-	Wed, 17 Jan 2024 13:42:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A847F13FF8
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Jan 2024 09:18:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705498956; cv=none; b=GPzlaz/iYWq7Ug5BsaISMmLbxdEYnlYDVRAvpiSyWgbLux9uktN1meGgI2slgLtXfP+Izpc52AU1NzNDqS5+cDFjhnZb7qkVC61SvOrcWVaOlVFuVAXB/ORR2eEO5ZL55QWcaNXmvApQU7bPCuLfysdG+znBRELnqQY6fU+vo84=
+	t=1705569508; cv=none; b=pSUOp99vaVDmpu7jnVF4NAmPCL2ARLNKcX3Y3ERhl+BDMOvoG/gHYtY9ImfVRaHmZL/eOvB/Ja3t55YaX04bytF+z3FM0Y9prstqWzoRRBt/JR33vZoxPYmDMQucbN5Qsy/lfM+QsRDiUcGcEeSHnYVMQ7y0GphO/mRpmn6mSEU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705498956; c=relaxed/simple;
-	bh=dyRNCFjn8d4+GiBuo7xutiy2wG0X8ur1DJVGIRCZJ3c=;
-	h=From:DKIM-Signature:DKIM-Signature:To:Cc:Subject:In-Reply-To:
-	 References:Date:Message-ID:MIME-Version:Content-Type; b=paSIcQI5NBi8groEzCk/hwwfIM/abyaavqQjMfmUDPRNciamPnziOk1I+X1KX6iBkt0CZ+HPixIGziaG+yEOs0pl0+4pv5KuoRa5QUOMQpUVZxDyD477pq5LdaDdSPyzHUpZ1MGKm0BJ0JyURMiGdg+S5RcgG8NItiBJQSujw+A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=gj/UOBnl; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Re46DMnb; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1705569508; c=relaxed/simple;
+	bh=a94T6nBqRyHt1I27LxTlw2NY5Ow7opRgWfZu2TL/BgM=;
+	h=DKIM-Signature:Received:X-MC-Unique:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:MIME-Version:Content-Transfer-Encoding:
+	 X-Scanned-By; b=rGhBKcIKu+UKI7Wc2xAGfOyuclRWb67vPHVDbyM3/FYbQs8ub7KcTnsIB42GCh3bjRnYKj0MfEVUpHvxL0JJNlXb6fM9WwCB6KmlUi20peCoc28t/HZPF7189zlCjByhWg+uqglNoDWsuoqY23MKlWxVzwJKo3pfgy/yIrsb6fQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eHJ1yqOw; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="gj/UOBnl";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Re46DMnb"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1705498952;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eHJ1yqOw"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1705569505;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4ZC+51fURMNsrZMs60syMJyw2GHfrcZPYF5r36IEGtU=;
-	b=gj/UOBnl59bxLYbK/mOcWgN3nHx2wu65J9WrhSK4j3mEz8VfdDi1sW8nt4eyYGKlLU2q1c
-	iK1QXiPzdJoZp9aNAAIlR5pSymLFc9bnvEWOoeawh224ZkyO5E3m73FxVj9hmcfSy8muAE
-	C5VcxRuOIFJoaY9rvwM689VwI38MZJ0pNp2dpq+VQOD39ocFITK1ncrBklkO2anS6Q1QKL
-	8cCWSmMsmIYarXkWBTW3z5qAyNLh4ww5nVuNsNlCIOPccVkj+vPqYYsUziDbIPA85EdHBl
-	XThd5sRsLJlSxNe5lXwNqCKwUfUBLQaBYTykE0Pw+xGq9wa/uklxkw+bkXRBOw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1705498952;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4ZC+51fURMNsrZMs60syMJyw2GHfrcZPYF5r36IEGtU=;
-	b=Re46DMnbHsx4PlSNwrmlTmf1m/xT045rSGqgiL1DVcJvUkT36SXyNPtAV9UWnlPwTmNFwG
-	8PYUvCxtrtmD4nBA==
-To: "Chang, Junxiao" <junxiao.chang@intel.com>, Sebastian Andrzej Siewior
- <bigeasy@linutronix.de>
-Cc: "tglx@linutronix.de" <tglx@linutronix.de>, "rostedt@goodmis.org"
- <rostedt@goodmis.org>, "linux-kernel@vger.kernel.org"
- <linux-kernel@vger.kernel.org>, "Li, Hao3" <hao3.li@intel.com>, "Li, Lili"
- <lili.li@intel.com>, "Gao, Jianfeng" <jianfeng.gao@intel.com>,
- "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: RE: [PATCH] printk: nbcon: check uart port is nbcon or not in
- nbcon_release
-In-Reply-To: <BN9PR11MB53709FD2BC70878B49059107EC722@BN9PR11MB5370.namprd11.prod.outlook.com>
-References: <20240117065226.4166127-1-junxiao.chang@intel.com>
- <871qagtlk2.fsf@jogness.linutronix.de>
- <BN9PR11MB5370065F4E7443FEA156347EEC722@BN9PR11MB5370.namprd11.prod.outlook.com>
- <87y1cos2dv.fsf@jogness.linutronix.de>
- <20240117102446.itexUYMc@linutronix.de>
- <BN9PR11MB53709FD2BC70878B49059107EC722@BN9PR11MB5370.namprd11.prod.outlook.com>
-Date: Wed, 17 Jan 2024 14:48:28 +0106
-Message-ID: <87r0igrs8r.fsf@jogness.linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=cGMyuSRpFMoUbW96T8gG9qfHG5FU6pKSATK3376Y3No=;
+	b=eHJ1yqOwdWa2pH7sOBMIsPN6vEjBYvd9B8tFk+P9ZccP176TarWhYAaClfvtlDcvwdzs2e
+	yPGvUDTBXg+mklTYYZNuS43JyKd5rgk3ADalSML2ddtZ/eTyFTguufsVH4yxHbLV9DUtym
+	nnEuT254X23X4FJ7op/cLhOAYBhn7jI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-625-5-VJlw5MOcO5LCDYyHo2pw-1; Thu, 18 Jan 2024 04:18:19 -0500
+X-MC-Unique: 5-VJlw5MOcO5LCDYyHo2pw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5D208353E0
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Jan 2024 09:18:18 +0000 (UTC)
+Received: from fedora.redhat.com (unknown [10.45.224.123])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C612D1C05E0E;
+	Thu, 18 Jan 2024 09:18:17 +0000 (UTC)
+From: tglozar@redhat.com
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH v2 0/2] rteval: Add relative cpusets
+Date: Thu, 18 Jan 2024 10:18:08 +0100
+Message-ID: <20240118091810.127396-1-tglozar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 
-On 2024-01-17, "Chang, Junxiao" <junxiao.chang@intel.com> wrote:
-> As you mentioned, same console driver is only registered once. 8250
-> console driver is registered once, its "struct console *newcon"
-> parameter is address of "univ8250_console" which is defined in
-> drivers\tty\serial\8250\8250_core.c.
->
-> However, in each serial port device is registered, their cons pointer(
-> "struct console *cons;" in "struct uart_port") will be assigned with
-> same cons in API serial_core_add_one_port:
->
-> 	uport->cons = drv->cons;
->
-> That is, multiple similar 8250 uart_port devices have same console
-> pointer which points to above univ8250_console.
+From: Tomas Glozar <tglozar@redhat.com>
 
-Ah. This explains the "(port)->cons->index == (port)->line" check in
-uart_console(). Thank you for clarifying.
+Note: this contains only original patch 3 and 4; 1 and 2 have already
+been applied.
 
-> BTW, this issue couldn't be reproduced with v6.6.7-rt17 kernel.
+v2: Implemented feedback for two remaining patches, namely keeping
+the assignment of short names of functions from cpulist_utils in
+rteval-cmd and other places. The original patch changed this to
+always use the full cpulist_utils.<name> syntax, which had some
+formatting issues with lines being too long and also made the patch
+some tens of lines larger.
 
-The reason for the change is because console registration/unregistration
-is not related to the port lock. There is a potential race condition if
-nbcon unlocking is based on the UART port still being registered as a
-console.
+Tomas Glozar (2):
+  rteval: Convert CpuList class to a module
+  rteval: Add relative cpulists for measurements
 
-We could move the @locked_port flag to the struct uart_port. (Probably
-renaming it to @nbcon_locked_port.) I think that would be the
-appropriate fix.
+ rteval-cmd                               |  34 ++--
+ rteval/cpulist_utils.py                  | 161 ++++++++++++++++++
+ rteval/modules/loads/__init__.py         |   8 +-
+ rteval/modules/loads/hackbench.py        |   9 +-
+ rteval/modules/loads/kcompile.py         |  11 +-
+ rteval/modules/loads/stressng.py         |   8 +-
+ rteval/modules/measurement/__init__.py   |  11 +-
+ rteval/modules/measurement/cyclictest.py |  53 +-----
+ rteval/systopology.py                    | 198 ++++++-----------------
+ 9 files changed, 259 insertions(+), 234 deletions(-)
+ create mode 100644 rteval/cpulist_utils.py
 
-John
+-- 
+2.43.0
+
