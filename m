@@ -1,91 +1,78 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.10])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 405734432;
-	Tue, 23 Jan 2024 05:41:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.10
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5F626A01D;
+	Tue, 23 Jan 2024 16:51:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705988462; cv=none; b=sWjU/OK6gRJ096pADm2JDTRnX4JP9kPn9iiRuvaCixe6lzyqcTkJ92XVMOiMBIcufp0BTtkp2uIS4l4umePLOgXwpGv6S2nl2uSwrSp40AhYI5ZrnFZW+y4M3lbiSNoDYvGWc4uLerBm9v7ycMsBT8uRk7+XXkV6is1T+4c5kI0=
+	t=1706028702; cv=none; b=XcLdh7gZTy7jpqHU7130mmBt2JYrGkae86HiqsNsI2NSt/4qXzoxHwJueBdL1tPL3jqnjaWyIrW+1V8NzHG3Ljzw4RSpVw+RnqAfY6ViRU9ByKquh7WTCFWtOdlVNFcwJZoVwwD8nADdOgGWOOUdkSf5D87hh6fOgvVtD3eoBwg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705988462; c=relaxed/simple;
-	bh=gdiyFjvMqWMG/af6i2COjazfjxZBQgaYcm1PP8azrvk=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ABGPyMgZ1wyz0rPGM+d7sU6mGrzXiqX3jWBxw44D+UtsJpFIuHeddD5mmnCLInLIReRA5lXgREJUajC+BMnvmLGCDU8vfX+KEo7XhoECGP4CvtWn/0AT5UQZmrsXLiVkNDjmXsJYSVWKY3x3BXpXeDvHqETc/iGQKKxbqAqJDQg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=IWC6hzHt; arc=none smtp.client-ip=198.175.65.10
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	s=arc-20240116; t=1706028702; c=relaxed/simple;
+	bh=k3bJeIIb5jdM0JrTRo4Y2HnZMCOTaMAv+5vtQS4HJlk=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=uOrsYELZcueLEuqTc7DkArbeJXDeV+ANnuicvXn2hgX0gYs4zuIqmSV2/XRQIuuE3YxqMkxMsl3vq+jLkRllVr1L2UYwAFIZnPwHe4NspGoNjYEMbxK5wzhqVXWEkLROfhYsCUZ3i8jRPK+LAxbFi+Ol+deEW6mFX4Mb0hsMTgg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=WZNluWex; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=mZRw/UG+; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="IWC6hzHt"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1705988462; x=1737524462;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=gdiyFjvMqWMG/af6i2COjazfjxZBQgaYcm1PP8azrvk=;
-  b=IWC6hzHt+hGgDxM8mnhmOKjK757opWdvGQIPrJ3S1sCrDPlWBKRCNmyI
-   WkGNJg1nbwrHGt0hybHhtSNKtWLhEcm1GOdFE6qIUV5EwZNj3Q1o5BAt9
-   FWKtG/ludALKUDMf4YAMM+By83qOCitlD3yGyrrHi9ZzIdJprr8XHxyXa
-   npxwAFEokZiWIetHfUHRqzC54fEfMtHWKtt/xQ21kPIr/6WZX6hvgJ4WN
-   6CCgWYvGTQuC6+duNL7wvvSsWTgbdfhYjVn2jQa0TDFo+2NopWKIuscQ9
-   uX+ctZsI+4jgHf/75tq1fX5Zv4NGM8tVCJKtFll+SYteqZsQeKimV+oeW
-   A==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10961"; a="14770175"
-X-IronPort-AV: E=Sophos;i="6.05,213,1701158400"; 
-   d="scan'208";a="14770175"
-Received: from fmviesa003.fm.intel.com ([10.60.135.143])
-  by orvoesa102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jan 2024 21:40:51 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.05,213,1701158400"; 
-   d="scan'208";a="1472008"
-Received: from junxiaochang.bj.intel.com ([10.238.157.86])
-  by fmviesa003-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Jan 2024 21:40:47 -0800
-From: Junxiao Chang <junxiao.chang@intel.com>
-To: bigeasy@linutronix.de,
-	tglx@linutronix.de,
-	rostedt@goodmis.org,
-	linux-kernel@vger.kernel.org
-Cc: john.ogness@linutronix.de,
-	hao3.li@intel.com,
-	lili.li@intel.com,
-	jianfeng.gao@intel.com,
-	linux-rt-users@vger.kernel.org
-Subject: [PATCH 2/2] printk: nbcon: check uart port is nbcon or not in nbcon_release
-Date: Tue, 23 Jan 2024 13:40:33 +0800
-Message-Id: <20240123054033.183114-3-junxiao.chang@intel.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240123054033.183114-1-junxiao.chang@intel.com>
-References: <BN9PR11MB5370AED9C562F9DA75093557EC742@BN9PR11MB5370.namprd11.prod.outlook.com>
- <20240123054033.183114-1-junxiao.chang@intel.com>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="WZNluWex";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="mZRw/UG+"
+Date: Tue, 23 Jan 2024 17:51:37 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1706028699;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=ypjlCiyqDBcFmHfRo5K26CO3Vwl7VLB/wa7hfqhAprw=;
+	b=WZNluWexZk3v3SZmkkuisgc8BaO8N6uTafF5FN3hq78+7HbehZ+LYV/sK9ExX+9JB8cXMA
+	hO4UmzSdNKZg0wkYSfBU1nWa0VZQhyVI/rOeZDR79eQmI3i4gc0d++PF8PXgXvee/GKq9k
+	qiIiWWCs9Z0fFA+rr9c+yaOxukHTQYDCTaq+iCOEF2aKO+SfMRBQNP4TWTrxyIysZJRZS1
+	O7XCYubSDiLYxvkt7MpYCZAae48I20xhrL3YgzE/Qjs5D0ofTmyQXgESF2udx0uZ0ek0zt
+	hJNByTVVY6tsmyAbwadj3C8uUmRI3Z2kNXImVMOMNs0IzapvUcTlweLgdGR0dg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1706028699;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=ypjlCiyqDBcFmHfRo5K26CO3Vwl7VLB/wa7hfqhAprw=;
+	b=mZRw/UG+mCnQAKsrhuipL7tpnNps9HnA9xbf3+U79hJP25maXZRaCWzwUeDvXdTOvJnE65
+	Xf0+w1yq3kC5CXCQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.8-rc1-rt1
+Message-ID: <20240123165137.rezlkolk@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Try to release nbcon only if current uart port is nbcon, as it does
-in nbcon_acquire.
+Dear RT folks!
 
-Signed-off-by: Junxiao Chang <junxiao.chang@intel.com>
----
- kernel/printk/nbcon.c | 3 +++
- 1 file changed, 3 insertions(+)
+I'm pleased to announce the v6.8-rc1-rt1 patch set. 
 
-diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
-index b53d93585ee71..d8c6f30adde8b 100644
---- a/kernel/printk/nbcon.c
-+++ b/kernel/printk/nbcon.c
-@@ -1623,6 +1623,9 @@ void nbcon_release(struct uart_port *up)
- 		.prio		= NBCON_PRIO_NORMAL,
- 	};
- 
-+	if (!uart_is_nbcon(up))
-+		return;
-+
- 	if (!up->nbcon_locked_port)
- 		return;
- 
--- 
-2.34.1
+Changes since v6.7-rt6
 
+  - Rebase to v6.8-rc1.
+
+Known issues
+     Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
+     hist" as trigger. It is not yet understood. The report is at
+	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
+
+You can get this release via the git tree at:
+
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.8-rc1-rt1
+
+The RT patch against v6.8-rc1 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patch-6.8-rc1-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patches-6.8-rc1-rt1.tar.xz
+
+Sebastian
