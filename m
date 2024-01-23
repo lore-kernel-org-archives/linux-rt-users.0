@@ -1,68 +1,68 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3E951FD1
-	for <linux-rt-users@vger.kernel.org>; Tue, 23 Jan 2024 20:35:37 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B58662109
+	for <linux-rt-users@vger.kernel.org>; Tue, 23 Jan 2024 20:36:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706042139; cv=none; b=jqn6uFoJnPIFEcKIDC/vhOxXmCbdy4MD4TRqJLOp25IaYiOjLizBZ8Fr7cP3f1+8W+VhuL/S2uf4h2Wmh/aodM6ODfuDiI3ooKVKH4db/mOLAk2akteTtl9lB95wECaxzU2HM8pm29dHvRZxvrvJnnLH5zUt9u4sbneP11puTgI=
+	t=1706042173; cv=none; b=QVxx/Ct/6zNNJyGU4um8PPW2rnAcGyWXewfaU5XCjPcWas7yi0Z4yOzm91Vz+Pqg2TihbYA6dFEnwyVSrsmnOafQ5ukdEAmNt7Nkmq2nJohqjwQdWtXhtboBOcZTRqHurAqZect88/FxcVlcewObfJ15gXZzCUPzyicj/K9PCQA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706042139; c=relaxed/simple;
-	bh=Yow0PCCUokWNkX4unT5HgmqTCavAlqiaUHtvqmx+i7E=;
+	s=arc-20240116; t=1706042173; c=relaxed/simple;
+	bh=338hjIbrRkxQnUYHJT8Nm+K0YfOKQtvp2ncb89FWgrA=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=QV0lLcnueOWruOM5yKEwzjcZ4JptCb0TQEqaNYwQ3FfcNrpiI9ViMfzmZvnPAz9HvvZ4Mf6n5X4ktPTddOSG+TuY0etPFf1grz/t5n78zAHT+vVuFopSmPKsguJtFZimVEMvQRl9Jyf+dUtOcKQnVPy7ua5mqkeEFJjhRz8E9+4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UypZhQ74; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=aVobDZFIpboNz7WhIUdY0D6xHVb5IXhYSMzFP0laqPy1l7CiX2mWETzSHaam6Bf1/RscTcfoyo8g+ip05V9YAWuXvmPOvKriaPfqrL0EL4W20I8o4iDnideqSibpH7mtXAyOuLnSEsPI2dgo04ZBlnqcp0mqYN23/Zdc3+yde8s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Di4hyX6L; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UypZhQ74"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Di4hyX6L"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706042136;
+	s=mimecast20190719; t=1706042171;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=bgOxhouOAO5fcUydBT+qADF04/ca0oNLIjSt5jC87Lg=;
-	b=UypZhQ74ukcswHqwl2xkNzetPYmVHXa4KhBvLwfO7ipCCkDTeGQc7iJgPaHbVfWHi/qNIa
-	iORi5EAtMeCTwYNvavOFQTR8x1zsZw/PyiUGgUMXI0XtB5Z7XPM7qJsYg45dn7B83sNTl5
-	6gzYqVnMf0SpDRuu+WvL7lfBg0XCFmE=
+	bh=nMFkE+AtfuU7UIFZsCImUacvuKyTYH720O3Xvd2ptN4=;
+	b=Di4hyX6LamllzTeDB6F96Dw9zreLe4LGLuCMTjmyUA+XI50jWgsdMUn51405rEbymw+PXY
+	8Mk7X8U7xh/zavmQQ4dqcWgZajQKzeSuKtx/QVqXLRvb2+gGF4g6g0kvC/Aisoiwk60dKu
+	JDt4mjX6eynSoNJnzM4wzWzNZRLyuJc=
 Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
  [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-13-FzN1XcWCPRSDjQGM9GNsbA-1; Tue, 23 Jan 2024 15:35:35 -0500
-X-MC-Unique: FzN1XcWCPRSDjQGM9GNsbA-1
-Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-680c651928eso74857126d6.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 23 Jan 2024 12:35:35 -0800 (PST)
+ us-mta-651-4D94E4VUM-6VjmX98ISiDA-1; Tue, 23 Jan 2024 15:36:09 -0500
+X-MC-Unique: 4D94E4VUM-6VjmX98ISiDA-1
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-68578a962ddso48094726d6.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 23 Jan 2024 12:36:09 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706042134; x=1706646934;
+        d=1e100.net; s=20230601; t=1706042169; x=1706646969;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=bgOxhouOAO5fcUydBT+qADF04/ca0oNLIjSt5jC87Lg=;
-        b=E7pjY9CwsxBzpzHHSAdYxXVrajdgKAAavb4uMdIilmEG23Nl9Y6N1JAqWUWLqDoQIH
-         iN6Aq99ltC5RTYjMlviMBCdFgN47al0Z2TJCABvZtqtogqJHH0tEpUHI8VdBK2/WtfK2
-         Mt1gAi3iX1Yvvy9kDm6NGM70dsF4preRBT2tQRP33xGHnwGX5znEw95bUNGBzTRGAGMG
-         GirlRp86aQn6M9KiST9DJMo680OTM/1p7NVtRzG940t/PDKKjYz92mqB0SDJ1ZHXkq2W
-         +Vriz0IGlAsgf3PQeDEowhnoGiTU2TgIiJfKk7cGm0nWs8d+NRY9t0ithl7iAFDPksSf
-         irLA==
-X-Gm-Message-State: AOJu0YxdtbydDoV6ND4vR61S1EOTqbIIfvMa/ncCUQhFGxZamRX0D4uM
-	+pY4VROzYL3xU9eKu3iXI1ZjWREItIamOUjRhO/jgGeKPuLMiqHNqLCQtPN20esyRnSekKxBSsJ
-	Ly1fUSCSd2fMN8jH8fuLR5uvBrAy2+obErVBp+6zEl6g2TR1YVnZ0JCmymIAbqzurD91yyaAa
-X-Received: by 2002:ad4:5ce7:0:b0:686:309e:14d2 with SMTP id iv7-20020ad45ce7000000b00686309e14d2mr1927057qvb.119.1706042134721;
-        Tue, 23 Jan 2024 12:35:34 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHIDthxVBS//OYkPDCEpUm8T+GdEJIrlKinGG4ZXG6AgCvDDu9HD5UT3l4r36bQDoBzTLpFKQ==
-X-Received: by 2002:ad4:5ce7:0:b0:686:309e:14d2 with SMTP id iv7-20020ad45ce7000000b00686309e14d2mr1927051qvb.119.1706042134454;
-        Tue, 23 Jan 2024 12:35:34 -0800 (PST)
+        bh=nMFkE+AtfuU7UIFZsCImUacvuKyTYH720O3Xvd2ptN4=;
+        b=FZ62UjCmBUC1c7u/b6T/E17zedjViU2ZctqHrmmDNGf+8Keg47A0TSED8mx3dGaF6p
+         PJaYXIzig1+U+PRMIb9NuGpMehQRRwSA7P4HKPYFuwG4iJxRUroTWMzB8X8mqLqaRH7l
+         JqGjpIvZ2UWH/4Dh2XL39L1IuF9GESEBeVnk5FyN1BGLcf8CvA/0G5dOx/4clPznQz3w
+         m+vA1dQFi6qgHV6FK1fIheQQn1ZoaPkYwFoxqjvhNgQJwqdigmQH45N5Q/7chMTle/p7
+         LQSPbllapxxFLNxQnIoDfwWW4XW6pVSZUCj0uJDIGAsCwTDpmrGhtD7zy/weLk20raLl
+         AHBg==
+X-Gm-Message-State: AOJu0Yw0wec0/dXihKDOlaw+bAAIMbVikImO6ST7Gg9wbGDDeNAfOw0I
+	cGd2YzYWeB6yL6YiGLRjTlQ6+4RZhrFvb/vVwi5fGHtQPi2CTdjAiYrFLpteKCwQabYT44bwg5P
+	1BS3YMX62M03aOV1jwWloFZ6sKq8tgallWIdcYxhFxDJr+UDMGwlh5CH+fmgFlWaUfOhmYgGq
+X-Received: by 2002:a05:6214:5089:b0:686:ab99:cceb with SMTP id kk9-20020a056214508900b00686ab99ccebmr486201qvb.12.1706042168936;
+        Tue, 23 Jan 2024 12:36:08 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHPBihCUft0NPkUCLE8B+8bgsrA0XqH54DYzG9Pvb1tmyZkl7NQEYH/OIEhexoMoUaEjBtOBQ==
+X-Received: by 2002:a05:6214:5089:b0:686:ab99:cceb with SMTP id kk9-20020a056214508900b00686ab99ccebmr486193qvb.12.1706042168745;
+        Tue, 23 Jan 2024 12:36:08 -0800 (PST)
 Received: from fionn ([174.88.88.13])
-        by smtp.gmail.com with ESMTPSA id lr7-20020a0562145bc700b006869485d9eesm1940102qvb.82.2024.01.23.12.35.33
+        by smtp.gmail.com with ESMTPSA id e16-20020a37ac10000000b007816dc2ef52sm3405380qkm.8.2024.01.23.12.36.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Jan 2024 12:35:34 -0800 (PST)
-Date: Tue, 23 Jan 2024 15:35:25 -0500 (EST)
+        Tue, 23 Jan 2024 12:36:08 -0800 (PST)
+Date: Tue, 23 Jan 2024 15:35:59 -0500 (EST)
 From: John Kacur <jkacur@redhat.com>
 To: Chris White <chwhite@redhat.com>
 cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rteval: Add interactive source-to-image Dockerfile
-In-Reply-To: <20231204203416.16713-1-chwhite@redhat.com>
-Message-ID: <bed0d3cc-9707-fa2d-0eb1-ff5c26de40f3@redhat.com>
-References: <20231204203416.16713-1-chwhite@redhat.com>
+Subject: Re: [PATCH] rt-tests: Add interactive source-to-image Dockerfile
+In-Reply-To: <20231204225840.17042-1-chwhite@redhat.com>
+Message-ID: <66d90617-d862-3db6-a330-e260f65a4492@redhat.com>
+References: <20231204225840.17042-1-chwhite@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -75,97 +75,45 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Mon, 4 Dec 2023, Chris White wrote:
 
-> This Dockerfile sets up a base image for rteval, copies the code,
-> and installs it, providing an interactive container for testing
-> rteval directly.
+> This Dockerfile sets up a base image for rt-tests, copies the code,
+> and installs it, providing an interactive container for testing the
+> various applications packaged.
 > 
 > Signed-off-by: Chris White <chwhite@redhat.com>
 > ---
->  .dockerignore |  1 +
->  Dockerfile    | 69 +++++++++++++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 70 insertions(+)
->  create mode 100644 .dockerignore
+>  Dockerfile | 26 ++++++++++++++++++++++++++
+>  1 file changed, 26 insertions(+)
 >  create mode 100644 Dockerfile
 > 
-> diff --git a/.dockerignore b/.dockerignore
-> new file mode 100644
-> index 0000000..2d2ecd6
-> --- /dev/null
-> +++ b/.dockerignore
-> @@ -0,0 +1 @@
-> +.git/
 > diff --git a/Dockerfile b/Dockerfile
 > new file mode 100644
-> index 0000000..45f6434
+> index 0000000..92f680e
 > --- /dev/null
 > +++ b/Dockerfile
-> @@ -0,0 +1,69 @@
+> @@ -0,0 +1,26 @@
 > +# Use CentOS Stream 9 as base image
 > +FROM centos:stream9
 > +
-> +ARG KERNEL_VERSION=linux-6.6.1.tar.xz
-> +
-> +
-> +# Copy current directory to /opt/rteval/
-> +COPY . /opt/rteval/
-> +
-> +# Install everything in one layer to shrink the image size
-> +# 1: Install needed dependencies and pull kernel source
-> +# 2: install rteval and fix bad symlink
-> +# 3: Remove uneeded packages and shrink the image
+> +# Install required packages for RT-Tests
 > +RUN dnf -y update && \
 > +    dnf install -y \
-> +        python3-devel \
-> +        python3-lxml \
-> +        python3-libxml2 \
-> +        python3-dmidecode \
-> +        python3-requests \
-> +        realtime-tests \
-> +        sysstat \
-> +        xz \
-> +        bzip2 \
-> +        tar \
-> +        gzip \
-> +        m4 \
-> +        make \
-> +        gawk \
-> +        kernel-headers \
-> +        sos \
-> +        numactl \
 > +        gcc \
-> +        binutils \
-> +        gcc-c++ \
-> +        flex \
-> +        bison \
-> +        bc \
-> +        elfutils \
-> +        elfutils-libelf-devel \
-> +        openssl \
-> +        openssl-devel \
-> +        stress-ng \
-> +        perl-interpreter \
-> +        perl-devel \
-> +        perl-generators \
-> +        libmpc \
-> +        libmpc-devel \
-> +        dwarves \
-> +        wget \
-> +        procps-ng && \
-> +    cd /opt/rteval && \
-> +    wget -P loadsource https://www.kernel.org/pub/linux/kernel/v6.x/${KERNEL_VERSION} && \
+> +        make \
+> +        numactl-devel \
+> +        util-linux \
+> +        git && \
+> +    git clone https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git /opt/rt-tests && \
+> +    cd /opt/rt-tests && \
+> +    make && \
 > +    make install && \
-> +    make clean && \
-> +    rm -f /usr/local/bin/rteval && \
-> +    ln -s /opt/rteval/rteval-cmd /usr/bin/rteval && \
 > +    dnf remove -y \
-> +        gcc-c++ \
-> +        python3-devel \
-> +        perl-devel && \
+> +        git \
+> +        make && \
 > +    dnf clean all
 > +
 > +
-> +# Set the working directory to /root
-> +WORKDIR /root
+> +# Set the working directory to the RT-Tests directory
+> +WORKDIR /opt/rt-tests
 > +
 > +# Set the entrypoint to a shell
 > +ENTRYPOINT ["/bin/bash"]
