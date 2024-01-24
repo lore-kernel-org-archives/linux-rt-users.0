@@ -1,104 +1,72 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF0021802E;
-	Wed, 24 Jan 2024 09:48:47 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A24418B02;
+	Wed, 24 Jan 2024 09:57:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706089729; cv=none; b=KFsIaOz97fiJEiqnvhGhl7cm3NqATvHgNM8f7jlvogwkOHxDnBUfI0bQUV7fIdw5TvZhiz0y1MWwtLCIIPQmbM2foxKc+vWdBd8+bhSYP4Fmbe5RXXn/uyOs7TWiveHABl5qVxF/lhVM1YzyWs9MIHk1/xym9lIQhUuczyNaZ8k=
+	t=1706090269; cv=none; b=UhH8mHu7HYw7VaC0gsGA+eRj/JACf86YmuwrNi2iwJ3PRdb1Vqg3zfv3Zkf3yxtaSFtNnvrV4/63ei61OVTDARY/8Ocs5EjFf7upYMg8LtxNqL4DH6UxYsVS9LdLnjYfldSeVIHxubnFkBYGmv3PuHQUWs20WI58ADK3y1BFR28=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706089729; c=relaxed/simple;
-	bh=Sjiggc9hkp7vO14FeTQLrBBVejAbxEkPLML7a37rMKg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=UPyeNriFR7ntC3z+HHpXnbgSaOhLYNc6SC+1OXvL74DXYG4zydaJ11BMoxI4qnB8AYfPwqep7uh/2KdssxSgCqk5Hy6Ddhu1rH/DmWkljeqq+Pr0tp7cgxW0dubePGs36B089LSY8v92ffVCFkrT2l4Jdm0/yevh53PeS8IqTyo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=u0CscK2a; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=rJb798b+; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1706090269; c=relaxed/simple;
+	bh=3wmf3wu6pEhYmgZge+vax11EPN8UmQlBJ3MKJwRgPqg=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=CfjTCubJcNcHERzdQGxuuGEG6NGc5jsQ3JcS5SWVtQ/trL/TF2cK65HLuDFJsIA6fWtgvlir9/0tyXUn65oClnUUd+RFc9qQ3eP6NejsHFG1GTQHNc40mir2yixT+aH69SfOPz/IRPMZA9kajQofJFcFnUVrs11SnoSb0N2H1N4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ijr98ALA; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=JuE8dMyG; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="u0CscK2a";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="rJb798b+"
-Date: Wed, 24 Jan 2024 10:48:43 +0100
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ijr98ALA";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="JuE8dMyG"
+From: John Ogness <john.ogness@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1706089725;
+	s=2020; t=1706090265;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=kHoOnI11BiHLHgLsYhCo+j3C2xme3YS/1KU+DJN93tw=;
-	b=u0CscK2avvuVXP+urhisBRY0urTPjA1KhHiU44hlXScwk41TZ52d0608i43pSk6heLAvap
-	Nnw6oubLiMWI/idXk/hxlEEEYnjalpTg67E/C3zYqXTT+Jqm6yA9hej2qOj5U+Han24J4M
-	jT3QrQQ9ytUL9o9AwFyrXZ7ibvBmDr6CXKaOcWJZCL0KOTtucjMUrvMGAETSsr9WzZirXP
-	wzxSSuDEVJ8eISkkd3GXh20e+WevMwWCjy4Qn31xV5pPsmhxltdN4tKLIpWV/tcqNptqo+
-	IaqWtfSaxC++R22+zJB3ixKAZbwIW6YCiKPyAz6DkC9iorjrY+T/f40ova5IRw==
+	bh=3wmf3wu6pEhYmgZge+vax11EPN8UmQlBJ3MKJwRgPqg=;
+	b=ijr98ALAOMm+t8LvziczWeSUz9wq06w/YopVNxVBw66PvgsdRX0VIYvHIMptN1Ws1LdMF3
+	Hr8m/aaj0YBlzl8GTC9N5tuT74SijcaVho8xhgPVYK604MMuMTRZJlUPNKJK8O1DeQtbbk
+	ckCoUkG6UU9fNkjkqNx9DqgygCuTNDjIeNoEypTPKYNwF5p6d2W41StumFcHARc2eGOp6R
+	k+JYowCM3HWCBztcI56Ld67Jr1d6de0g9ViYDxg1GXipfI4SPeMvP6QlZDwK5p9NII0XVB
+	Z+bgzCD8+BzeQZxh3Jp6D7zCe3WtBJYGJ3dxdg70SJm5AflBFZhq19zj7TS2OA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1706089725;
+	s=2020e; t=1706090265;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=kHoOnI11BiHLHgLsYhCo+j3C2xme3YS/1KU+DJN93tw=;
-	b=rJb798b+AKo8nedTM0XuZsJt3WO/06RZxc9BC4JLI+ntoERMUx3rW3RuBStRKcBZiwOxyi
-	q8qalIIGYrPbMeBA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Clark Williams <williams@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Pavel Machek <pavel@denx.de>,
-	Joseph Salisbury <joseph.salisbury@canonical.com>
-Subject: Re: [ANNOUNCE] 6.6.12-rt20
-Message-ID: <20240124094843.K-b1_mn7@linutronix.de>
-References: <170561158585.591793.15929255265114320850@demetrius>
+	bh=3wmf3wu6pEhYmgZge+vax11EPN8UmQlBJ3MKJwRgPqg=;
+	b=JuE8dMyG1DzirAos71dCRDjOy5/p1omOuBndfeO5yDfRmn3PjR1Y4ky6aesAnUtAKEnMcw
+	fHO0dp4q6MSbhsCA==
+To: Junxiao Chang <junxiao.chang@intel.com>, bigeasy@linutronix.de,
+ tglx@linutronix.de, rostedt@goodmis.org, linux-kernel@vger.kernel.org
+Cc: hao3.li@intel.com, lili.li@intel.com, jianfeng.gao@intel.com,
+ linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 2/2] printk: nbcon: check uart port is nbcon or not in
+ nbcon_release
+In-Reply-To: <20240123054033.183114-3-junxiao.chang@intel.com>
+References: <BN9PR11MB5370AED9C562F9DA75093557EC742@BN9PR11MB5370.namprd11.prod.outlook.com>
+ <20240123054033.183114-1-junxiao.chang@intel.com>
+ <20240123054033.183114-3-junxiao.chang@intel.com>
+Date: Wed, 24 Jan 2024 11:03:39 +0106
+Message-ID: <87il3j9hpo.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <170561158585.591793.15929255265114320850@demetrius>
+Content-Type: text/plain
 
-On 2024-01-18 20:59:45 [-0000], Clark Williams wrote:
-> Hello RT-list!
-Hi Clark,
+On 2024-01-23, Junxiao Chang <junxiao.chang@intel.com> wrote:
+> Try to release nbcon only if current uart port is nbcon, as it does
+> in nbcon_acquire.
 
-> I'm pleased to announce the 6.6.12-rt20 stable release.
+The release needs to undo what acquire did. Why should it have its own
+checks that would cause it to _not_ undo what acquire did?
 
-I've been looking over it and it looks okay. Then I compared how it
-would do it vs your outcome and noticed this:
+Keep in mind that an nbcon console could be unregistered while another
+CPU is holding the nbcon lock. The port lock (and nbcon lock) are
+protecting access to the hardware. They are not related to console
+registration/unregistration.
 
---- a/arch/riscv/kernel/cpufeature.c
-+++ b/arch/riscv/kernel/cpufeature.c
-@@ -575,12 +575,6 @@ static int check_unaligned_access(void *param)
- 	if (per_cpu(misaligned_access_speed, cpu) != RISCV_HWPROBE_MISALIGNED_UNKNOWN)
- 		return;
- 
--	page = alloc_pages(GFP_NOWAIT, get_order(MISALIGNED_BUFFER_SIZE));
--	if (!page) {
--		pr_warn("Can't alloc pages to measure memcpy performance");
--		return;
--	}
--
- 	/* Make an unaligned destination buffer. */
- 	dst = (void *)((unsigned long)page_address(page) | 0x1);
- 	/* Unalign src as well, but differently (off by 1 + 2 = 3). */
-
-You shouldn't allocate that page. Nobody will free it, that page is
-passed via an argument now. Please drop hunk.
-
-While at it, do you think you can drop patch
-   preempt-Put-preempt_enable-within-an-instrumentation.patch
-
-or revert commit
-   c15abad8f7159 ("preempt: Put preempt_enable() within an instrumentation*() section.")
-
-I've been looking over it and it is fixed as of v6.6 so this patch is no
-longer needed.
-
-> Enjoy!
-> Clark
-
-Sebastian
+John
