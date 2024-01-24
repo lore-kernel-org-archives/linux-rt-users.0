@@ -1,76 +1,62 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pg1-f177.google.com (mail-pg1-f177.google.com [209.85.215.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6CBE18E00;
-	Wed, 24 Jan 2024 10:05:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 819A562A1B
+	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jan 2024 12:28:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706090729; cv=none; b=YHDG1giyTXvjUv1msRhLitCg+f0eDbde2dn8U/eVD9W5e5stOJTgHv/dczCOZsF1l+qzqRt41RYYiPzeOXh/Yzuopw2lYRPQaBEmhiRLUiAho0WF9+8jGG8RR7VTsatnFFyDXjtiC9eUtA/4exhKuIgJKe4ZNHtAPifEg++BNII=
+	t=1706099327; cv=none; b=qmNiMRyZUlEt6PHuhYwrBadR44xg1/oTamC4y63NX7TOWJNghSPrJYjHepi3lQOJdUe7A3VYTEnlrHPSx3tvQKJ6DgwidxaV6fSKsRkd5DcJXtDuSSI7WplX/kNrXhj7Sg25TNYPbjgJy6ftIcncCTkWwFJ2j4avuhGmjbHHrxU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706090729; c=relaxed/simple;
-	bh=0KezyqRF9YchXDd4bxWas5poKmjepqlImiHTbBdZrM4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Y2VMxnU5dZwUR+78gkikHdNQ1szSNO4VEyQ9osL9imq8O8D0yyFt54zwOyn5I1MQXmHHNmDcu5r91O0iBEVr6v2xQd6jm75lH45oScL7FrEBFM/YLLPI2iOWWIZgwTHj4ZkmVpj7y2B5uy4KSoRIGAKCqQ+AqYh/kbfxlV1eP24=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=wImRTpti; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=IOK4QaPO; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1706099327; c=relaxed/simple;
+	bh=z2gFosycv/4d8F4IH6M5EFvOMVfX/xiPl+lWjQfsKQI=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=V0ELbfTeLVretlIdQwZSOLIstTgzs/Xd+EluhCCSqRA7cm2IrlLFEXSZi6YZ9XkJ9Zpt7XG4SPdff8z8fPWgWfC6iZWHpEuURO6nC+eshxF4XAF+ICDtbd0NRKBL/tJ1IUg5VehT1GYTVKPhNM5YHluix4Q3LA8xwIOraLJ7eQA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TB4D6MV/; arc=none smtp.client-ip=209.85.215.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="wImRTpti";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="IOK4QaPO"
-Date: Wed, 24 Jan 2024 11:05:24 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1706090725;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WTilLq0oXbltZtjofTkiTqw+ozvdtSJ/BvaTTO3IVgc=;
-	b=wImRTptiZtvuvgCwAOgsYIqGgIgGgIj1h39yTiFvQ1u9BJIEQ9mi2kYrccIIt5KU2tdmVC
-	37GOZHA5sQWl+wxHI+O3Vn/L2zPFvHvgUdvcLnnLiGf3y00rfdatmPWGixARhL0r+uh7K0
-	87YYY6SmYx7p6Lz7/2QqXPrwD8nop2NxmyACQu5T94fcF2QVLQ3NcXpjazHAIKxW3uiXT9
-	MQvo8PiUXIkvz/JPQcWxfgY1606Hsq0K93FzzyhfyBY+nbSfLyiIwdld9qhD8I33xalQ/u
-	yPIwziWijKaSNH3Ip4f20ZSU3JMS6LgziAUf8j3iOJj+G+v0LmQrhzgVSX4INg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1706090725;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WTilLq0oXbltZtjofTkiTqw+ozvdtSJ/BvaTTO3IVgc=;
-	b=IOK4QaPOSTWxQ4nzStRhEHT3ekqrsmzv6CPZSINo4mXJVOYxtsR/fH3IL5M6i2pHTL6yJd
-	Dv909blqai0IOUCw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: John Ogness <john.ogness@linutronix.de>
-Cc: Junxiao Chang <junxiao.chang@intel.com>, tglx@linutronix.de,
-	rostedt@goodmis.org, linux-kernel@vger.kernel.org,
-	hao3.li@intel.com, lili.li@intel.com, jianfeng.gao@intel.com,
-	linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 1/2] printk: nbcon: move locked_port flag to struct
- uart_port
-Message-ID: <20240124100524.ZyAPfPU5@linutronix.de>
-References: <BN9PR11MB5370AED9C562F9DA75093557EC742@BN9PR11MB5370.namprd11.prod.outlook.com>
- <20240123054033.183114-1-junxiao.chang@intel.com>
- <20240123054033.183114-2-junxiao.chang@intel.com>
- <87le8f9i75.fsf@jogness.linutronix.de>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TB4D6MV/"
+Received: by mail-pg1-f177.google.com with SMTP id 41be03b00d2f7-5ce9555d42eso4509538a12.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Jan 2024 04:28:46 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706099325; x=1706704125; darn=vger.kernel.org;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=z2gFosycv/4d8F4IH6M5EFvOMVfX/xiPl+lWjQfsKQI=;
+        b=TB4D6MV/gW8RcTtmw6cNWiWA5411XUFQ6jHQGhOraOTDYyiEnxWtg5G7P8OqPdU4hb
+         AxaEiBxlUsk4V6nIQPBC+lfB56iRIy/5LJhhTrHbdsrMSyqve5u3Uu89PORbWPG5LR+Y
+         8/+dCURDewbEds4hmcwoCmCRlqK5n2X5CNGGalF2y5r8Ubkoa/Ttw9CCcLBJdFiGy/dv
+         Bl0MFCpWQJRomQo+HCsLh+UisTVLzMc6IC1yGQot1zQFdsIM1mxok72r7hU7l1xVWnOq
+         eAro1x5TZmaM5PzgUbY5Dhl8kaJGuS3SOuA4EM5R4OWILMz83XjiN+Nq0UAtjKIETzND
+         2eXg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706099325; x=1706704125;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=z2gFosycv/4d8F4IH6M5EFvOMVfX/xiPl+lWjQfsKQI=;
+        b=UoNfXkChem35bn0rnXl0rGpVFYFtQS54RRNx3MVSvO4NAuMWdvHpoRAy5l4E4ZYg9C
+         HrMxgUoWHENH0RHAGHFznNCfpVRWeq+oFL3k2wqVzA/rykXKEvz+iHzw2GNfajA0tL0I
+         4ScmQeb39aplRb7y0R3USaHx8bGvxPK7FUKXpJOJp11y71BymD8JETGJhQP7UuVjWbpz
+         XIUKWcovmmY0YRsc5UZqZ5S2aJcZlLRX1ACkpbVB4kN9dM0WQyYuaxbC6YUUrD9ixJaO
+         TElUutOOxvmdKz0eHke3xQIHCW//mOztaZNbcUQDgp0mAkYKHtLfhDDrf02kHz9bjC82
+         VKTA==
+X-Gm-Message-State: AOJu0YyAGQdzDpf9XdS8GtgohpAVektXNLxVZJtvXXdiBw/oTw5rHv9L
+	BCy6Oyhol6ZpxoMU4KH5ir4UG1sgbfJup8x0ezkwjJ35kJZwMALpVbZr+wzV+gzcmd8X6VNridP
+	2xOIUxXMdbSJacX0sqPDMGs8jYxO/jVAesyA=
+X-Google-Smtp-Source: AGHT+IFY4uWP6ynP4+fy/cYkW9gzIl4IAtBYB4xI9Y4hgZ/Fs+j1ttayJ+hri9yi/l88giHA0pwc0x6bZSxwvyJ2YvY=
+X-Received: by 2002:a05:6a20:4da6:b0:199:9c7e:a58b with SMTP id
+ gj38-20020a056a204da600b001999c7ea58bmr749537pzb.118.1706099325459; Wed, 24
+ Jan 2024 04:28:45 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <87le8f9i75.fsf@jogness.linutronix.de>
+From: =?UTF-8?B?5p2o5pil5Yip?= <z0node@gmail.com>
+Date: Wed, 24 Jan 2024 20:28:34 +0800
+Message-ID: <CAGDYfxCm1ci2m85-rNa+JvhhCvT=RwrYvvSwxLyW4pPdhRo39g@mail.gmail.com>
+Subject: unsubscribe linux-kernel
+To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-On 2024-01-24 10:53:10 [+0106], John Ogness wrote:
-> On 2024-01-23, Junxiao Chang <junxiao.chang@intel.com> wrote:
-> > Console pointer in uart_port might be shared among multiple uart
-> > ports.
-> 
-> I still want to investigate why the pointer is shared. This sounds
-> sloppy or dangerous.
-
-I have x86 a server box and PNP enumerates two UARTs (8250). Only one is
-wired up but both can be specified as console=.
-What do I need to do to reproduce this here? Using console= twice does
-not do the trick.
-
-Sebastian
+unsubscribe linux-kernel
