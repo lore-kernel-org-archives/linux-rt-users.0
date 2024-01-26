@@ -1,46 +1,62 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70E0B1DFEA;
-	Fri, 26 Jan 2024 16:37:29 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 690141EA71;
+	Fri, 26 Jan 2024 16:39:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706287051; cv=none; b=BXw4abH4GJTrdBQzzUji+Cg0JwvTAEOHBYJJBNfyNqVggm7ddFfpcLnHPDK08+tCs+Lp1M4HYONHpihaQbo3HcE2esOYyx+gimUBaZCfJd9Q0R7uu+QgdR82W/ASCeZLc662LrqnIWbQi2POFHNU5GYAImlvu+dDFzAsNZF+CYY=
+	t=1706287147; cv=none; b=jaTSnfMjxgU5fACmw06yBGnXO9LuxI6OVch+K2aikmWy60aO+H6b7PZ4T3VKMHoMhLyOJLWZRD00zJZAAWeZseewFTxARLXjm+WxMC5MJVoV8QHG7fVy9UXszN+8QCB+61CD8JMGVg2uqS56I3ZwzZhC9qYMJKeFpcNoFUHDT3M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706287051; c=relaxed/simple;
-	bh=+Xme+ikfMEKMTsKLOA+gQptcLYSTs2t0fjbp0qPxyW8=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=f3ovrXtg7JsW1eIOH1Iz/GK2Z/4YQghxkIQLl1est7YxzIkl+RYAKfqDRA2bHYkYA1cEX7mG3JB3CHotpHHCVdat4pmdOY44A/GEeL73PifmKdDkitpKOwncv6F5ljtvNepB/+CgDU1nlc8kuZOHA3saRqvZ9if0z5tfRGeLVoM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Jcz5+gQl; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=6ZpWjxSA; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1706287147; c=relaxed/simple;
+	bh=W6zuI3waGCTeb1d5uZ/dpw3FaWqNORW14aFUWEAngEE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=BbDU8NBfFZFzgQHVqlhAKKhxpaQkefHJT1aVjLPl6sDj9U/Wcc1AB/SQNKjK45ke9SUC35btaoQnDhVMuMZbyTz1mj/0c0tZSVN1mobD5yVPMUQChjWV665ccF07r/tZasqQbPCCcheexeTCnJeSsW9Sc2SJkr4qbqQKXLjP7fk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=suoHG8Yj; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=g9ay6JgM; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Jcz5+gQl";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="6ZpWjxSA"
-Date: Fri, 26 Jan 2024 17:37:25 +0100
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="suoHG8Yj";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="g9ay6JgM"
+Date: Fri, 26 Jan 2024 17:39:02 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1706287047;
+	s=2020; t=1706287144;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=ESlukLMkM/rsc2x1VVf3cll5G9fPHn1HY7uNw+yziRs=;
-	b=Jcz5+gQl+Sc+KwAviV8VDgCniva/xd5/TrQ591Hlz6VHEZYZ38FM4a9o4aT5WuUTUbe6Yi
-	63KKIk0xmDcbXnerYCz9exDoAoCPdKDoWR5Ojte9Az1tcP8IyLevXMz6DbTi6W4zzJsSmZ
-	2hjYbGDtanhLWaV3EHAUsTtzmLS2NZ2V2GwfpmSpd0Jwm3SFfsxEvzYJFlhZok/LxN5wne
-	yacvYkk0xB66ZXmhLxltmHrEpOqmv2Qd6cCsOcg+012ve+73fbH9bOZlccc6Isu3y25jpP
-	Gr+UXBs4SOLD/Krjrq4PoS4nTdAeUQdIMmA0H+4BFt6b3MuUvjXLkPic4BkJrA==
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=INxBiFoIM0vVgBRcOPAgwcpiyMf5guNzuz9/BtuX01s=;
+	b=suoHG8Yjrsnyy9fKG2eNlHJPI/WDfVqi3DUPuoIesdsa6HzYh4vh6jVU8Tt5wnHaBWoL3N
+	o94wJ+lPdUFpA+ZYlt38LURzyFHZwS5DmimXkZqADr3Y1pWbe3A1sThjDMnaFf/k0QRQ9S
+	oWeZe5EyK5E4FLK6ORrSo1iy0yeIdfZ6iSJHkhcEbcAliO5MS0yUlZZg6N1sDRj1opqNkR
+	g5johSYKqObBKShbUNkt99xrHwHNK9N+zM+eKRpJAqgvPuRbe9P29gNG00X7pFV7m50O4l
+	zuaYPfSVyhD19MC2ty8VFy1m7P+nv3eLFGEBUfjD8odkTAtL4IV5Nl9q8Z1lyA==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1706287047;
+	s=2020e; t=1706287144;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=ESlukLMkM/rsc2x1VVf3cll5G9fPHn1HY7uNw+yziRs=;
-	b=6ZpWjxSAwE7n7UO/l8Sb7qAy+zJcvA2Qok2jbwkuQBu5wninAJOUtFx0lcDA880YkgOImI
-	Xg8ojX4aKZJwxtAg==
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=INxBiFoIM0vVgBRcOPAgwcpiyMf5guNzuz9/BtuX01s=;
+	b=g9ay6JgMiiczzoQX1jwdqetoycDOd41Kr0ZPLAr75ixLUTcCMw0bpbGv5eEs49Sln7xj1/
+	W4snYgg6zIXtgqCA==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.8-rc1-rt2
-Message-ID: <20240126163725.kQgJktTk@linutronix.de>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: "Chang, Junxiao" <junxiao.chang@intel.com>,
+	"tglx@linutronix.de" <tglx@linutronix.de>,
+	"rostedt@goodmis.org" <rostedt@goodmis.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"Li, Hao3" <hao3.li@intel.com>, "Li, Lili" <lili.li@intel.com>,
+	"Gao, Jianfeng" <jianfeng.gao@intel.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 1/2] printk: nbcon: move locked_port flag to struct
+ uart_port
+Message-ID: <20240126163902.d3SiJco8@linutronix.de>
+References: <BN9PR11MB5370AED9C562F9DA75093557EC742@BN9PR11MB5370.namprd11.prod.outlook.com>
+ <20240123054033.183114-1-junxiao.chang@intel.com>
+ <20240123054033.183114-2-junxiao.chang@intel.com>
+ <87le8f9i75.fsf@jogness.linutronix.de>
+ <20240124100524.ZyAPfPU5@linutronix.de>
+ <BN9PR11MB53701E5CF2737908FA9EB532EC7A2@BN9PR11MB5370.namprd11.prod.outlook.com>
+ <20240125133523.W7aDeBqt@linutronix.de>
+ <87il3gv845.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -49,132 +65,19 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+In-Reply-To: <87il3gv845.fsf@jogness.linutronix.de>
 
-Dear RT folks!
+On 2024-01-26 09:04:34 [+0106], John Ogness wrote:
+> Hi Sebastian,
+Hi,
 
-I'm pleased to announce the v6.8-rc1-rt2 patch set. 
+> Please add this one patch to the 6.6-rt and later queues. The 2nd patch
+> in this series is not needed.
+Okay. I just dropped a v6.8-RT with this included and I am going to poke
+Clark regarding v6.6 next week.
 
-Changes since v6.8-rc1-rt1:
-
-  - Junxiao Chang reported an unbalanced invocation of the acquire/
-    release functions for the non-BLK console. Only the 8250 serial
-    driver is affected if more than one ttyS console is passed as boot
-    argument to console=. Patch by Junxiao Chang.
-
-  - On ARM with HIGHMEM, HIGHPTE and LPAE enabled a sleeping while
-    atomic warning can be triggered from the FUTEX code (and other
-    users).
-
-Known issues
-     Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
-     hist" as trigger. It is not yet understood. The report is at
-	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
-
-The delta patch against v6.8-rc1-rt1 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/incr/patch-6.8-rc1-rt1-rt2.patch.xz
-
-You can get this release via the git tree at:
-
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.8-rc1-rt2
-
-The RT patch against v6.8-rc1 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patch-6.8-rc1-rt2.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patches-6.8-rc1-rt2.tar.xz
+> Thanks.
+> 
+> John
 
 Sebastian
-
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 24709aee69ee0..25424a7468d95 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -99,7 +99,7 @@ config ARM
- 	select HAVE_DYNAMIC_FTRACE_WITH_REGS if HAVE_DYNAMIC_FTRACE
- 	select HAVE_EFFICIENT_UNALIGNED_ACCESS if (CPU_V6 || CPU_V6K || CPU_V7) && MMU
- 	select HAVE_EXIT_THREAD
--	select HAVE_FAST_GUP if ARM_LPAE
-+	select HAVE_FAST_GUP if ARM_LPAE && !(PREEMPT_RT && HIGHPTE)
- 	select HAVE_FTRACE_MCOUNT_RECORD if !XIP_KERNEL
- 	select HAVE_FUNCTION_ERROR_INJECTION
- 	select HAVE_FUNCTION_GRAPH_TRACER
-diff --git a/include/linux/console.h b/include/linux/console.h
-index 79ef2fd2bd155..467dee94f73a5 100644
---- a/include/linux/console.h
-+++ b/include/linux/console.h
-@@ -311,7 +311,6 @@ struct nbcon_write_context {
-  * @nbcon_state:	State for nbcon consoles
-  * @nbcon_seq:		Sequence number of the next record for nbcon to print
-  * @pbufs:		Pointer to nbcon private buffer
-- * @locked_port:	True, if the port lock is locked by nbcon
-  * @kthread:		Printer kthread for this console
-  * @rcuwait:		RCU-safe wait object for @kthread waking
-  * @irq_work:		Defer @kthread waking to IRQ work context
-@@ -345,7 +344,6 @@ struct console {
- 	atomic_t		__private nbcon_state;
- 	atomic_long_t		__private nbcon_seq;
- 	struct printk_buffers	*pbufs;
--	bool			locked_port;
- 	struct task_struct	*kthread;
- 	struct rcuwait		rcuwait;
- 	struct irq_work		irq_work;
-diff --git a/include/linux/serial_core.h b/include/linux/serial_core.h
-index 04e9b12d22002..4d45b8f9ec9ee 100644
---- a/include/linux/serial_core.h
-+++ b/include/linux/serial_core.h
-@@ -488,6 +488,7 @@ struct uart_port {
- 	struct uart_icount	icount;			/* statistics */
- 
- 	struct console		*cons;			/* struct console, if any */
-+	bool			nbcon_locked_port;	/* True, if the port is locked by nbcon */
- 	/* flags must be updated while holding port mutex */
- 	upf_t			flags;
- 
-diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
-index 1b1b585b1675b..b53d93585ee71 100644
---- a/kernel/printk/nbcon.c
-+++ b/kernel/printk/nbcon.c
-@@ -1586,7 +1586,7 @@ void nbcon_acquire(struct uart_port *up)
- 	if (!uart_is_nbcon(up))
- 		return;
- 
--	WARN_ON_ONCE(con->locked_port);
-+	WARN_ON_ONCE(up->nbcon_locked_port);
- 
- 	do {
- 		do {
-@@ -1597,7 +1597,7 @@ void nbcon_acquire(struct uart_port *up)
- 
- 	} while (!nbcon_context_enter_unsafe(&ctxt));
- 
--	con->locked_port = true;
-+	up->nbcon_locked_port = true;
- }
- EXPORT_SYMBOL_GPL(nbcon_acquire);
- 
-@@ -1623,13 +1623,13 @@ void nbcon_release(struct uart_port *up)
- 		.prio		= NBCON_PRIO_NORMAL,
- 	};
- 
--	if (!con->locked_port)
-+	if (!up->nbcon_locked_port)
- 		return;
- 
- 	if (nbcon_context_exit_unsafe(&ctxt))
- 		nbcon_context_release(&ctxt);
- 
--	con->locked_port = false;
-+	up->nbcon_locked_port = false;
- }
- EXPORT_SYMBOL_GPL(nbcon_release);
- 
-diff --git a/localversion-rt b/localversion-rt
-index 6f206be67cd28..c3054d08a1129 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt1
-+-rt2
