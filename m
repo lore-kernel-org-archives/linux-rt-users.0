@@ -1,48 +1,76 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D8131272C4;
-	Tue, 30 Jan 2024 17:00:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 628B0383BA;
+	Tue, 30 Jan 2024 19:35:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706634005; cv=none; b=bJKp5NnNAb1zNJaP7tgF14o+YjYmKfrbQTPI0aEeT/zwy/smNM38NY+pGH9m3FXFTwlmtlL7hpDJCujqD6kpZiZCHoIeLpgVKpdvj4xJEDhSxXfHkYutImtNdLvl5g+On69/jlucnDMxyKZIRUvez8XxnW2zQzQ6tRH82tBYUyg=
+	t=1706643356; cv=none; b=SqYkZkCx2g5LwoXzaa9iMBRo6EoW8cOI9WtIDxT09vuqKAtbGqNAS7gT1pxatnTU7T7+emq8mp6ttJ1cOIsFl4H4Co8YTPE5KQtrGijMAe87rElzDEskR8RJdkTszFFQL6Qe7H8kes3H6lwMBs98IJWCFKFNqeC3xFxYZDrGTAA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706634005; c=relaxed/simple;
-	bh=2WJh7xiolJHBkaD2cGzkF3zsZN4p5AMCNX9/AYUfBmY=;
-	h=From:Subject:Date:Message-ID:To; b=Q3xGuXBdJlqWTpJu7mO7JROywU63dUvgLEl3WhyJ7fx4q/o/fIBfBNY3UHFTwTpyRaDg0+AQOEhmQ1TM1hr1OaR3AP+H9WcZYvudawNmCmRLpiifFqDzXWc3l4WhLUDOsJvZhVcieRZXWOrV4WKQJcDecU0YLSfLs5igPW00osE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 120B3C43399;
-	Tue, 30 Jan 2024 17:00:04 +0000 (UTC)
-From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.1.75-rt23
-Date: Tue, 30 Jan 2024 16:59:38 -0000
-Message-ID: <170663397812.1314437.1686905275956809283@demetrius>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
+	s=arc-20240116; t=1706643356; c=relaxed/simple;
+	bh=AqtvsA+TojyvEdhqjAUAJv/36H4xYBLJGbhhgrw1/Gk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=qdavwlTFxEQOjkim9ncqjDMg5rHWsGhPjZcHpvRw5aZXwg4AQZOQ+aM8RSCegBgZYx1E6yAN+f8Fzj61AamZOwHUxF+5QPEPJMTY2n/z+hyrnbFKLFOTfKPO8jo5PmFQF0yDXKrIJxsGM7qcxT9IRz4KatKG4eMb77Fbay8wuq0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de; spf=fail smtp.mailfrom=denx.de; arc=none smtp.client-ip=46.255.230.98
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=denx.de
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+	id 4EF821C006B; Tue, 30 Jan 2024 20:35:52 +0100 (CET)
+Date: Tue, 30 Jan 2024 20:35:51 +0100
+From: Pavel Machek <pavel@denx.de>
+To: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>
+Subject: Re: [ANNOUNCE] 5.10.204-rt100
+Message-ID: <ZblPl7XCGo648oeU@duo.ucw.cz>
+References: <ZYX0Y_lbe8hNUNnj@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-
-Hello RT-list!
-
-I'm pleased to announce the 6.1.75-rt23 stable release.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v6.1-rt
-  Head SHA1: feaccee7987b202020fb8e13d33a793930a55045
-
-Or to build 6.1.75-rt23 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.75.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.75-rt23.patch.xz
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="dQZEVK1Sbqb2AdcB"
+Content-Disposition: inline
+In-Reply-To: <ZYX0Y_lbe8hNUNnj@uudg.org>
 
 
-Enjoy!
-Clark
+--dQZEVK1Sbqb2AdcB
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Hi!
+
+We (as in cip project), are trying to do -cip-rt releases
+once a month. Are there any plans for 5.10-rt release any time soon?
+That would help us ;-).
+
+Best regards,
+								Pavel
+--=20
+DENX Software Engineering GmbH,        Managing Director: Erika Unter
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+
+--dQZEVK1Sbqb2AdcB
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZblPlwAKCRAw5/Bqldv6
+8vNUAKCiLApgpsqWVf3R1ShJfn+RutJ4iQCfTL76BjjVp/5InUQFgR01/clhxRM=
+=0Mw+
+-----END PGP SIGNATURE-----
+
+--dQZEVK1Sbqb2AdcB--
