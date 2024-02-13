@@ -1,116 +1,241 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37A904C635
-	for <linux-rt-users@vger.kernel.org>; Mon, 12 Feb 2024 21:23:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8D5117556
+	for <linux-rt-users@vger.kernel.org>; Tue, 13 Feb 2024 07:22:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707772992; cv=none; b=j5bhPL2E4k8rSdq1yJfvCJjW4liUEwT+/RvaHRXpJZLrL/x1y85F/lroIxYgDY46jJe8Yx10+YkSnO0uY89wqR5Rpx0SdULLgvVu/xpXug9Ambhqh/nvu/BSXdspg8eNp4taF9WO8LIe8/6k3TJvGr9E2f/B8mHUYO5zbI8SY9s=
+	t=1707808952; cv=none; b=sZVbbFAZ0W8BzvZzpNEoI0kBdHWhrxvS5oUrTiqMCX1V82zNcVj6wXM0VQuoIdZj57pTHAqu9IbXfeERzTfIXABv+KBgFReNBiXxNuK5A6D2D/IfYYo7BpB0gisarQ9FzmxJ77TUElLbx6iN4w2lbFzdoP09JKZ2fnUmy4THGEA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707772992; c=relaxed/simple;
-	bh=GaIow7DABO7d1iaUez27x56iIoIwRTb+Q1jWvdo15Uk=;
+	s=arc-20240116; t=1707808952; c=relaxed/simple;
+	bh=ozeZ7FqGPCKUWXvXyQuga6WAhbDvE50uGIz70z7K9Zg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=o2LFLZU/YdvWQCvssglI4nbwM51VCmGyzXQKiHg03kzwPz3C5Cmu+vDWf1yY39Ii5HMQCwQszoLzsX5FD4zCq/yqRV9yVxNTLP188S62cYXCqXKJDQThFa3tTndsIZiOkpVjbYheGWFnHUzoQjJpCoYKlB2VQrUn8km+I07H7Y4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d+Bnm3FK; arc=none smtp.client-ip=170.10.133.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=e4pLK/uM5H/WiKKSSC0IqAwAiaYhtwpx3AlLoF4uSxHcDNlwQ+B9XlM6AVUAXUqI0QSr29KdUoTvy1TAZiyziiZlBDkCJLkVh3v0tfHgtQok8tzLptnebuUHM9tzyulehTqs6ttddHKdiaSDbTHr/tN941XdA0/fpRtk7QyhTAQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VmxCKeWS; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d+Bnm3FK"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VmxCKeWS"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707772989;
+	s=mimecast20190719; t=1707808948;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=GaIow7DABO7d1iaUez27x56iIoIwRTb+Q1jWvdo15Uk=;
-	b=d+Bnm3FKLPY7Eom/Uda70rN69k5PzhXGTOKTqtxQoJXzavPGTPDrZZhU1kz21H0S2FdYtP
-	R7bal3SpO0n4Y0PjVIiq8fpbZ/zImQ9hYwG6UJ4jIzSwrQBm7wflJQ2mrGfylQ8Hg1PIjL
-	lgWFrsFdxt/t2m0mR8sMw4rHN6/cLGg=
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=DGhe/YEZnEtGdd9u8LC35GLq72EBNiME+lxjrDlx7s4=;
+	b=VmxCKeWSM22xvX9CD2n/jZZBC5m+q8wXxEYejrgtn9wkIHdQhG9YmcGUjtlCW0C3f7/60R
+	65VQrSlryCIv292n3kyqyEhb26evNddczz4UohNjj8gVtL7eX4Ydj7Em3rRX9G319v4WrL
+	FgEEIDY/Ys+IoxvNmgdkfDpCHLpDvM8=
+Received: from mail-oi1-f199.google.com (mail-oi1-f199.google.com
+ [209.85.167.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-414-vtqgOAxRP_eIWQ6BOABiaw-1; Mon, 12 Feb 2024 16:23:08 -0500
-X-MC-Unique: vtqgOAxRP_eIWQ6BOABiaw-1
-Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-785947d659cso401291985a.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 12 Feb 2024 13:23:08 -0800 (PST)
+ us-mta-99--sKhxuJvO4ilpCus_gMnGg-1; Tue, 13 Feb 2024 02:22:25 -0500
+X-MC-Unique: -sKhxuJvO4ilpCus_gMnGg-1
+Received: by mail-oi1-f199.google.com with SMTP id 5614622812f47-3c042e4288eso729538b6e.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 12 Feb 2024 23:22:25 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707772988; x=1708377788;
+        d=1e100.net; s=20230601; t=1707808944; x=1708413744;
         h=in-reply-to:content-transfer-encoding:content-disposition
          :mime-version:references:message-id:subject:cc:to:from:date
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=GaIow7DABO7d1iaUez27x56iIoIwRTb+Q1jWvdo15Uk=;
-        b=kPH5oTIFsZiAoy8xcN1XnqxtDuEFE5nDNW8xPnRJCZUlNMOTx3XfWWnfLQV1P6lZ9j
-         J6MqSahwHVl69+xPoTseycBY8rGME6xeRtwcJVDY4Xtc25nOCTfPRLYcNc+1fUDWt5uO
-         1LNJQvsEVcqqfejxxr33uxmTXduEOYmr4ptWXKfDHmVxCGe+nml4P4VInbwGLQX46YDs
-         q8p0Qx8lnjIWiz67BR8N+JYpC6BX+qxkKnw6fdF4tO5nfmtsrP//QMZB9kIxeC2an3he
-         2PLJcSp4ut2m7RfjdGJRvM4FW8MmGFgLn8EyEcTA6WrpxxCcNBdrLMc7ipHJ2WO8xFF1
-         aosQ==
-X-Gm-Message-State: AOJu0YxlLILnYbEq1gr3Yu9+ceQfrbDsl1lI37UWVSClzR5kE3LycitG
-	mUd+Zr/4QGEXttQwC2q8NqfrzJAtJnRkgyhZzLk2o5VG18yurpBdbzSq1LRV5OH0AhIx99Ru5WZ
-	TTzGzj4KEjClcaPK/4rRoAfxrUFE03JKIc3yRe9xyYTJeEDDBodg4LyxfOr7dzttN
-X-Received: by 2002:a05:620a:e81:b0:785:5b28:eaba with SMTP id w1-20020a05620a0e8100b007855b28eabamr6371310qkm.4.1707772987741;
-        Mon, 12 Feb 2024 13:23:07 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGwMX5DViKV5i8GevVnlP/Ta/Jb6WOrk812GKH9d/JcuehM7OyZ6wIF2DEXwb36IuE6jclwyw==
-X-Received: by 2002:a05:620a:e81:b0:785:5b28:eaba with SMTP id w1-20020a05620a0e8100b007855b28eabamr6371296qkm.4.1707772987503;
-        Mon, 12 Feb 2024 13:23:07 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXoHuKZM1foE0J/pCIYf5+fl4/eTb61+FMWlU637I5jHF/5yZb0g4g6I0QIpAXXvdIVX7qiHsk8d5/Wzu8JOl1kl23GUkXag4OEcB35S/GC0KW56WT2Qaqy70NdAfdhLRgzDaUWinipv2H/MAHphYXTsgINdUqZUVstoQxYWse23GLL3x20LBP/VRo9rdIkR/lY7w0wYhmyl+tdMHMx1Nc51z8XW6ct67J1TnpkYmUcg6RMthCCO2T9RDHDOzmodVxgoA==
-Received: from thinkpad2021 ([71.217.33.204])
-        by smtp.gmail.com with ESMTPSA id x2-20020a05620a14a200b00785d9e3b744sm818978qkj.108.2024.02.12.13.23.06
+        bh=DGhe/YEZnEtGdd9u8LC35GLq72EBNiME+lxjrDlx7s4=;
+        b=LM+pshwEMNuGe4kAUHNNEy9THRw65akDECZns+jipLyw1aaTEB6R1WZc/zNo6WXzfy
+         jfM1Mmi00RjVzjco00JE4SZT33iI7xZa1OoSQ64PkTt7zlcx0w08rnjiFOW/Ke0u+wuo
+         3w+drXII2hN+B+T6CirRwVaaO7mEw4vD7xFn+Xq5MKVZbu7Hu2UwcVQjZBWBqFCSLe01
+         GeMPIKyWwAIClkyePztkiEpx34zcJLjhmux+rSa9EOJgGnyyu9XU8R2UEH+Md0i4UIuB
+         jzJ/ikFgBMVHOrKoB6G+h34Tz5EMNPOLoSWenKAmlUrM+v3XLyIAP7JkuAXxS4TYTeO0
+         mrhA==
+X-Forwarded-Encrypted: i=1; AJvYcCWrjWHw98ha34FArlkWHlsNfhTP0ia7Y6hu3IXRrOqSytv7Txy3wu9cjzmwNI6R+ODZMj1M4E/gccItu9s91/p5EJs9W4oVBDhOThcKc9A=
+X-Gm-Message-State: AOJu0Yxd53dT+jkpuiX4C19BLgC0tXyY2sUEjnmWtpM5MvR/pAi44Jpr
+	5hns1Fsxp8t+hF+Nrf/oT3CtKoMjMw7otNwsNbMNkNlG7WEf+fzudpBcfEZ6mM7lzj+hWv9A34M
+	eFxx0R8poFtgW1vb/IXlRekGQIOXBNmPSeIl/mPs6yC15eXqwvlQaQFsT2ruu5WHj
+X-Received: by 2002:a05:6808:21a3:b0:3bf:e6c5:9b1f with SMTP id be35-20020a05680821a300b003bfe6c59b1fmr11167875oib.43.1707808943956;
+        Mon, 12 Feb 2024 23:22:23 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEEigHFXP+2h7Q/N0HEHy6RpNKMeeDNhg5ntkf8WvHxyDqYobAdFtx48sRQblZ+4wCHqA8X5g==
+X-Received: by 2002:a05:6808:21a3:b0:3bf:e6c5:9b1f with SMTP id be35-20020a05680821a300b003bfe6c59b1fmr11167851oib.43.1707808943512;
+        Mon, 12 Feb 2024 23:22:23 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCXkh3GDANAyn31CsDbSSGINl5Qk0DsLS4jKDouEEYysktm4LhSXTreW0BSz9bBaLGM2PH1TEXw8yWTuEJHZqD8SWq5kdBbCef6l9d6bMeylSPkPKn63WKKPyOi/JjGNr19PTQr8J7H2zkugFZyWkVY0e1BGY/KCCJUvL77FVgM/+q3/NPWcD1QD0c/RLfC4vDM4U8fP9fRmsy2vKTCH/FmNWQM0nH+UUll3hP+w8VHDuVMjETcmcWRK+PNel5D6bOBcDxGlMBIgXxIMZ7FPho0sNHelmYHzJojFGk9QQ/kaget2/zK7mO05b7eRzMMzPprfNBiAS7hOPim2q7uvGVPn1e8xPDzDY/BwyA==
+Received: from localhost.localdomain ([151.29.75.172])
+        by smtp.gmail.com with ESMTPSA id p9-20020ac84609000000b0042c7a76d267sm910557qtn.36.2024.02.12.23.22.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 12 Feb 2024 13:23:07 -0800 (PST)
-Date: Mon, 12 Feb 2024 16:23:04 -0500
-From: "John B. Wyatt IV" <jwyatt@redhat.com>
-To: John Ogness <john.ogness@linutronix.de>
-Cc: Petr Mladek <pmladek@suse.com>, Clark Williams <williams@redhat.com>,
-	jlelli@redhat.com, Derek Barbosa <debarbos@redhat.com>,
-	"John B. Wyatt IV" <sageofredondo@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: NMI Reported with console_blast.sh
-Message-ID: <ZcqMOKtHsZ9qnxNg@thinkpad2021>
-References: <ZcQjxa4UA6hzXHnU@thinkpad2021>
- <87v86yc88b.fsf@jogness.linutronix.de>
- <ZcaQI8l1dcBx2feC@thinkpad2021>
- <87a5o8j9gp.fsf@jogness.linutronix.de>
+        Mon, 12 Feb 2024 23:22:23 -0800 (PST)
+Date: Tue, 13 Feb 2024 08:22:18 +0100
+From: Juri Lelli <juri.lelli@redhat.com>
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+	linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+	Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Lorenzo Pieralisi <lorenzo.pieralisi@linaro.org>,
+	Daniel Lezcano <daniel.lezcano@linaro.org>,
+	Georges Da Costa <georges.da-costa@irit.fr>
+Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
+ Kernel VI edition (OSPM-summit 2024)
+Message-ID: <ZcsYqkkMa-4mk4G6@localhost.localdomain>
+References: <ZbJHfiWnujLz2Pfm@localhost.localdomain>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <87a5o8j9gp.fsf@jogness.linutronix.de>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <ZbJHfiWnujLz2Pfm@localhost.localdomain>
 
-On Sat, Feb 10, 2024 at 10:33:50PM +0106, John Ogness wrote:
-> On 2024-02-09, "John B. Wyatt IV" <jwyatt@redhat.com> wrote:
-> >> Could you provide me your kernel config and boot args?
->=20
-> Thanks for the config. Could you provide me the boot args as well? I am
-> trying to understand why early_printk is showing up in your trace.
+Hi All,
 
-I forgot to include that, my apologies.
+Gentle reminder that the deadline for submitting topics/presentation is
+approaching: 19th of February 2024 (this coming Monday).
 
-BOOT_IMAGE=3D(hd0,gpt2)/vmlinuz-6.7.0-rt6 root=3DUUID=3D6e05c61a-a39c-45f1-=
-acf2-0b0892c0739e ro rootflags=3Dsubvol=3Droot console=3DttyS0,115200n81 sk=
-ew_tick=3D1 tsc=3Dreliable rcupdate.rcu_normal_after_boot=3D1 isolcpus=3Dma=
-naged_irq,domain,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,2=
-3,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,4=
-8,49,50,51,52,53,54,55,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,7=
-4,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,9=
-9,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,1=
-18,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,=
-137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155=
-,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,17=
-4,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,1=
-93,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,=
-212,213,214,215,216,217,218,219,220,221,222,223 intel_pstate=3Ddisable noso=
-ftlockup
+So, please go ahead and add your proposal to the shared doc
 
-I talked about the isolcpus options with Juri. Tuned had the realtime profi=
-le enabled. Juri suggested testing with the thoughput-performance profile.
+https://docs.google.com/spreadsheets/d/13lOYsbNWhQU7pNbyHI97fC7GT0Eu8aMbU9ATvPJfV0A/edit?usp=sharing
 
-Red Hat's conservers are having an issue with the machine I was testing
-on. It may take me a while to get back to you with more test results.
+or reply in private to this email with details.
+
+Don't hesitate to reach out if you need help!
+
+Best,
+Juri
+
+On 25/01/24 11:35, Juri Lelli wrote:
+> Power Management and Scheduling in the Linux Kernel (OSPM-summit) VI
+> edition
+> 
+> May 30-31, 2024
+> Institut de Recherche en Informatique de Toulouse
+> Toulouse, France
+> 
+> ---
+> 
+> .:: FOCUS
+> 
+> OSPM is moving to France!
+> 
+> The VI edition of the Power Management and Scheduling in the Linux
+> Kernel (OSPM) summit aims at fostering discussions on power management
+> and (real-time) scheduling techniques. Summit will be held in Toulouse
+> (France) on May 30-31, 2024.
+> 
+> We welcome anybody interested in having discussions on the broad scope
+> of scheduler techniques for reducing energy consumption while meeting
+> performance and latency requirements, real-time systems, real-time and
+> non-real-time scheduling, tooling, debugging and tracing.
+> 
+> Feel free to take a look at what happened previous years:
+> 
+>  I   edition - https://lwn.net/Articles/721573/
+>  II  edition - https://lwn.net/Articles/754923/
+>  III edition - https://lwn.net/Articles/793281/
+>  IV  edition - https://lwn.net/Articles/820337/ (online)
+>  V   edition - https://lwn.net/Articles/934142/
+>                https://lwn.net/Articles/934459/
+>                https://lwn.net/Articles/935180/
+> 
+> .:: FORMAT
+> 
+> The summit is organized to cover two days of discussions and talks.
+> 
+> The list of topics of interest includes (but it is not limited to):
+> 
+>  * Power management techniques
+>  * Scheduling techniques (real-time and non real-time)
+>  * Energy consumption and CPU capacity aware scheduling
+>  * Real-time virtualization
+>  * Mobile/Server power management real-world use cases (successes and
+>    failures)
+>  * Power management and scheduling tooling (configuration, integration,
+>    testing, etc.)
+>  * Tracing
+>  * Recap/lightning talks
+> 
+> Presentations (50 min) can cover recently developed technologies,
+> ongoing work and new ideas. Please understand that this workshop is not
+> intended for presenting sales and marketing pitches.
+> 
+> .:: ATTENDING
+> 
+> Attending the OSPM-summit is free of charge, but registration to the
+> event is mandatory. The event can allow a maximum of 50 people (so, be
+> sure to register early!).
+> 
+> Registrations open on February 26th, 2024.
+> To register fill in the registration form available at
+> https://forms.gle/SooSmYMChBcn5rmM8
+> 
+> While it is not strictly required to submit a topic/presentation (see
+> below), registrations with a topic/presentation proposal will take
+> precedence.
+> 
+> .:: SUBMIT A TOPIC/PRESENTATION
+> 
+> To submit a topic/presentation add its details to this list:
+> https://docs.google.com/spreadsheets/d/13lOYsbNWhQU7pNbyHI97fC7GT0Eu8aMbU9ATvPJfV0A/edit?usp=sharing
+> 
+> Or, if you prefer, simply reply (only to me, please :) to this email
+> specifying:
+> 
+> - name/surname
+> - affiliation
+> - short bio
+> - email address
+> - title
+> - abstract
+> 
+> Deadline for submitting topics/presentations is 19th of February 2024.
+> Notifications for accepted topics/presentations will be sent out 26th of
+> February 2024.
+> 
+> .:: VENUE
+> 
+> The workshop will take place at IRIT [1], University of Toulouse [2],
+> France.
+> 
+> The workshop venue is accessible [3] from downtown, where you can find
+> most of the hotels/accommodations suggested below, by metro (line B) in
+> 30 minutes [4]. You can reach IRIT by the metro B (approx one every 2
+> minutes in rush hours) or by bus (several lines, between 40 and 60
+> minutes depending on the line and the traffic). Several buses arrive at
+> the metro station of the university. A map of the city center with the
+> venue, transportation and food/drinks places is provided here [5].
+> 
+> It is recommended to pick a hotel close to a “Ligne B” subway station,
+> anywhere between “Jean-Jaures” and “Les Carmes”.
+> 
+> From the station, choose “Ramonville” direction and get off at the
+> station “Université Paul Sabatier” [6]. The station is right inside the
+> university. From there follow the map [7] to reach the IRIT building
+> entrance. 
+> 
+> Toulouse airport, “Aéroport Toulouse-Blagnac (TLS), Blagnac”, has a lot
+> of direct flights from European airports like Paris, Amsterdam, London,
+> Munich among others. There is a shuttle “La Navette” [8], every 20
+> minutes, bringing you to downtown in more or less 30 minutes depending
+> on the traffic. 
+> 
+> A list of hotels on the metro line B (direct to the workshop location):
+> http://www.hotel-oursblanc.com/
+> https://www.athome-ah.com/
+> https://www.discoverasr.com/fr/citadines/france/citadines-wilson-toulouse
+> https://www.pullman-toulouse-centre-ramblas.fr
+> 
+> [1] https://www.irit.fr/
+> [2] https://www.univ-tlse3.fr/
+> [3] https://maps.app.goo.gl/rdcrKx6x8ntm4uij6
+> [4] https://maps.app.goo.gl/Y8UPRvHmbrjCSnvu5
+> [5] https://www.toulouse-visit.com/interactive-map
+> [6] https://metro-toulouse.com/ligne-B-metro-toulouse.php
+> [7] https://goo.gl/maps/ojiAeQoL5Ewgb2gp7
+> [8] https://www.toulouse.aeroport.fr/en/transports/public-transport?tabs4633=tab_4631
+> 
+> .:: ORGANIZERS
+> 
+> Juri Lelli (Red Hat)
+> Daniel Bristot de Oliveira (Red Hat)
+> Daniel Lezcano(Linaro)
+> Georges Da Costa (IRIT)
+> Tommaso Cucinotta (SSSA)
+> Lorenzo Pieralisi (Linaro)
 
