@@ -1,66 +1,65 @@
-Received: from smtp-relay-canonical-1.canonical.com (smtp-relay-canonical-1.canonical.com [185.125.188.121])
+Received: from mail-m92235.xmail.ntesmail.com (mail-m92235.xmail.ntesmail.com [103.126.92.235])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B24A11E520;
-	Fri, 16 Feb 2024 20:13:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.121
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3E0A31DFC5
+	for <linux-rt-users@vger.kernel.org>; Sun, 18 Feb 2024 23:14:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.126.92.235
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708114407; cv=none; b=lSXmZsEgrO/QYMSaeUS6yjhOM7MkK+VFA5yFv9UoeDBxAjPWNy2C5jHrG/PyPflGJXh6dt4XSvURp23aNXJNFkWceLQ01mmoErLiVkv2l1MjezPhdFdY83HNOArVmZSSW7jQ96WHt9BKxQl6cSkT4UgDn0hapgyVH4GhwxfvmSk=
+	t=1708298048; cv=none; b=fj1pXxT5nv0Q7/TqG2swBUwKCA5y1ZBvsA5U7FagnZoVLJIDE6QbF/wm4Gtw6dGRwSlQ/psigjnIbRigDO9zBHsde7AO7TemRl7aDW5ps9/Hn/8JjNOwKHfJoJXUQ21e0VywJtIfwquXyTU3AohmL0094bCvCPob5Qt+OVmlyUE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708114407; c=relaxed/simple;
-	bh=VHh3A/a2nR3iSQNoSou/NkN5vDVvHJHc6cRd27gcQSQ=;
-	h=From:Subject:Date:Message-ID:To; b=BqHi9qy6bX54YG8LDMyoP4yYJxcstIUIJ61z5VAizE41tXgv2I4Ux4x9G9PoRkPPCkzCSKuyxjYMoUkdH+bbbhIAmW74rRmZYcCSErXEdwe1gsOVZBK6f3NRA5dD/gKktu+Omcg/QJfgULR0cHL858fWsUvmhelvIn3tAKYEi48=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=EIsTpwWx; arc=none smtp.client-ip=185.125.188.121
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
+	s=arc-20240116; t=1708298048; c=relaxed/simple;
+	bh=E8ay2kh/f5y4iYqdlYKzQyda0SBGWBNqE+cIG87qYb0=;
+	h=Date:From:To:Subject:Mime-Version:Message-ID:Content-Type; b=OdswYcbppPLu2hAJ36l+IabHT3v4Sld5kNAyVFcS7SzMc7F1Tif51kF30vFD1R4G66XqBQk+pMlkkMAS/mU3vJ3KAOeIA8Qj0NLkv/YshEBfLs9pTSZxgMgFIO/CGh2FjWDsgc6FclyDmXF/qPB734hQayY7tvZdqasXGb0kEqE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=hirain.com; spf=pass smtp.mailfrom=hirain.com; dkim=pass (1024-bit key) header.d=hirain.com header.i=@hirain.com header.b=sEIlJBy0; arc=none smtp.client-ip=103.126.92.235
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=hirain.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=hirain.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="EIsTpwWx"
-Received: from canonical.com (1.general.jsalisbury.us.vpn [10.172.66.188])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-relay-canonical-1.canonical.com (Postfix) with ESMTPSA id 4750C40ED9;
-	Fri, 16 Feb 2024 20:13:16 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1708114396;
-	bh=mNXMXJpB6SYOKdJVIlb1vORS5AD/OoZy5hFTQSrzUiY=;
-	h=From:Subject:Date:Message-ID:To;
-	b=EIsTpwWxel+CCLCm+yIeVX341Km+y8gtnFN4efHT+jV5BHiYMLitx3Z0fDdIXPl+j
-	 sSIXmROv0bzCuvqENZAWYMvHy8fzx5eBtiOPUs6Rn4IBQTYHGDMIO33pfUTIPjLSFn
-	 eBuHm8pdlgsNR9msizzcPvPzN1Z+xzVMEy8FOyAREKfjdfdstzs2SvfixknMBvk/hd
-	 ubY6LuuKkjPn1TITQPznaKC3ZV/BsCCI19K1EeUdPDAH/UofW5aYHQmxHPQhWPicYg
-	 axqqZDwzTXGRIVSIUJKTZnAnpfuHLOxLk3VKCLdqu5SRVcjB9NSjLMxFtIVYGNVam0
-	 ujfwKemAAeIqg==
-From: Joseph Salisbury <joseph.salisbury@canonical.com>
-Subject: [ANNOUNCE] 5.15.148-rt74
-Date: Fri, 16 Feb 2024 19:34:38 -0000
-Message-ID: <170811207811.495171.1435664719831296032@jupiter.home.arpa>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
+	dkim=pass (1024-bit key) header.d=hirain.com header.i=@hirain.com header.b="sEIlJBy0"
+DKIM-Signature: a=rsa-sha256;
+	b=sEIlJBy0bzCldttuWqrvhCQCvViXAsH9vADcn4vpcRhbd8c8+sHv439wsarUUgRBPKBmBptxlSEljaj/gXMIRlahEXk//S4xkqnU++sNlxwTpcZRxDt5oNkQXlYf7D05LEgbH+EvOXvy/hncLhEPjZYOmQdxuYsbdjRs0kzpfC4=;
+	c=relaxed/relaxed; s=default; d=hirain.com; v=1;
+	bh=E8ay2kh/f5y4iYqdlYKzQyda0SBGWBNqE+cIG87qYb0=;
+	h=date:mime-version:subject:message-id:from;
+Received: from pangaoAL (unknown [114.255.110.90])
+	by smtp.qiye.163.com (Hmail) with ESMTPA id F1908460260
+	for <linux-rt-users@vger.kernel.org>; Sun, 18 Feb 2024 19:26:56 +0800 (CST)
+Date: Sun, 18 Feb 2024 19:26:56 +0800
+From: "pan.gao@hirain.com" <pan.gao@hirain.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: linux preempt-rt_ full + interrupt +poll on kernel 5.4.247
+X-Priority: 3
+X-Has-Attach: no
+X-Mailer: Foxmail 7.2.9.156[cn]
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+Mime-Version: 1.0
+Message-ID: <202402181926401806828@hirain.com>
+Content-Type: text/plain;
+	charset="UTF-8"
+Content-Transfer-Encoding: base64
+X-HM-Spam-Status: e1kfGhgUHx5ZQUpXWQgPGg8OCBgUHx5ZQUlOS1dZFg8aDwILHllBWSg2Ly
+	tZV1koWUFPTUtLTU9LS0k3V1ktWUFJV1kPCRoVCBIfWUFZGk0dGFYdHh0ZSRkYHx9DTx9VEwETFh
+	oSFyQUDg9ZV1kYEgtZQVlKSk9VSU5OVUpKS1VCS1lXWRYaDxIVHRRZQVlPS0hVSk1PSUxOVUpLS1
+	VKQktLWQY+
+X-HM-Tid: 0a8dbbf8200303aekunmf1908460260
+X-HM-MType: 1
+X-HM-Sender-Digest: e1kMHhlZQR0aFwgeV1kSHx4VD1lBWUc6OEk6Mio5NTMXTC4UFEoRPB82
+	KgwaCkJVSlVKTEtDSU5OTUpMT0lIVTMWGhIXVQsaFVUcGhQ7ExIJGhIVVRgUFkVZV1kSC1lBWUpK
+	T1VJTk5VSkpLVUJLWVdZCAFZQUpOQ0k3Bg++
 
-Hello RT-list!
+SGVsbG/vvIxkZWFyOgrCoCDCoCDCoEkgaGF2ZXNvbWUgcHJvYmxlbXMgd2hlbiB1c2luZyBsaW51
+eCBwcmVlbXB0LXJ0LWZ1bGwgbW9kZS4gQWZ0ZXIgdGhlIHJlYWwtdGltZSBwYXRjaCwgYWxsIGlu
+dGVycnVwdHMgaGF2ZSBiZWVuIGZvcmNlZCB0byBiZSB0aHJlYWRlZCwgYW5kIHRoZSBzcGluX2xv
+Y2sgdXNlZCBpbiB0aGUga2VybmVsIGhhcyBiZWVuIGNvbnZlcnRlZCB0byBhIG11dGV4LiBJIHdh
+bnQgdXNlIGludGVycnVwdCB3YWtlIHVwKyBQT0xMIG1lY2hhbmlzbSBub3RpZmljYXRpb24gYW5k
+IEkgdHVybiBvZmYgaW50ZXJydXB0IHRocmVhZGluZyBhdCB0aGUgc2FtZSB0aW1lLiBJbiB0aGlz
+IGNhc2UsIEkgaGF2ZSBzb21lIHByb2JsZW1zLiBCZWNhdXNlIHNwaW5fbG9jayBpcyB1c2VkIGlu
+IHdha2VfdXAsIEkgZm91bmQgdGhhdCB3ZSBoYXZlIHByb3ZpZGVkIHN3YWtlX3VwLCBidXQgdGhl
+cmUgaXMgbm8gY29ycmVzcG9uZGluZyBmdW5jdGlvbiBpbnRlcmZhY2UgZm9yIHBvbGwuIEkgd291
+bGQgbGlrZSB0byBrbm93IGlmIHN1Y2ggYW4gaW50ZXJmYWNlIGlzIG5vdCBwcm92aWRlZCBvciBp
+cyB0aGlzIHVzYWdlIG5vdCByZWNvbW1lbmRlZD8gQW5kIHdoeT8KCgotLS0tLS0tLS0tLS0tLQpw
+YW4uZ2FvQGhpcmFpbi5jb20=
 
-I'm pleased to announce the 5.15.148-rt74 stable release.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.15-rt
-  Head SHA1: b24880f53d0b955d6c02a98f6c23c9c6837803fd
-
-Or to build 5.15.148-rt74 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.148.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.148-rt74.patch.xz
-
-
-Enjoy!
-Joseph Salisbury
