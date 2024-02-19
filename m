@@ -1,95 +1,114 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9895E36125
-	for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 13:21:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4A121EA71
+	for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 14:42:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708348876; cv=none; b=uk3oybIwXNjUiDtiV8aYel5Mr8120ACJW6x0kWpGO2e/qgJ0IfGtbTAAI5yPDPfLmHEnuNTU7M/PnUrj1cPJM+uSmOyW7H8fwY8EntyBKAub8nwAsXqoKqso3Uqs074iCgqVLln0WKx9oIwikdHtsO8VmAWWXeI887vGxWSUxLE=
+	t=1708353772; cv=none; b=IB54IKg/fiit/GPfChwII78kByCAhtyGCE7IoudbnSAyeFIn2rl/Ab1TyFhkJlSEfE3Zuq77uuRY+MNu4baC7mI8YdphWedTvlZcclIXhT/Lom2LxNPzMF0UwlM/tl5YQjkp4E3bKqLLJ4pYJLAVhBbTBK9eaJlI3VUXDMGid/E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708348876; c=relaxed/simple;
-	bh=A1FGWysJZxX2wAfnqfI2yyWSE3DqDc8YJSBOoh2yRDE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=HMgZWUpGkY5kFLSQ9qp1yjZOCCub1AyBHBFMOPtRMc0s5A37uKM3dMak0uRKlMbFqTIXIBSgw7PHpwLAHYGa3T+Luo4XJEHjJHZreNdAF3TzVB+QI2n0rCm0SDJT5TwMC1XYJ9Dt91HvvGD35liYaMrcd+7kXwFenCKdy7i1uWc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fvl4Yl8/; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1708353772; c=relaxed/simple;
+	bh=pAQ36Mouu5LBU9w/qPkLQEX9p2kwmTFAJ2rFQbxWzyY=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=M8P/KpOi9MFoUdjDYaittWQR5dV/opeoBVCBJXnf3UCiYQfBdrubCD1tJILDLtJjNN/Ut84aMULOxpSfkyLRRk1w5iEXL8yt8uf98aYhQhAfl+aZSx3i4RIzInTWI0Ng8UIRCWu791QjNmW0J/tMzEfGpTShFCGKJgpVC4sH2lE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=QSE3iKHm; arc=none smtp.client-ip=209.85.208.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fvl4Yl8/"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708348873;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=A1FGWysJZxX2wAfnqfI2yyWSE3DqDc8YJSBOoh2yRDE=;
-	b=fvl4Yl8/7gQN2UsoBkOOub+2kHppv0+OZi7yHbIP4yhYkz5HYpjWk/CsCe8wTxh/m2W4mk
-	pgALFn8N3IPyssaAKmTxO2AdufM+yeM83iJlTmrULu4P/LFHRIsSWh2wybrDkLZdGs1luY
-	C/Ptg5tirTfjSmYNUeQaQlPuVtXHkZw=
-Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
- [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-203-4Xqc17K1MFqfAe6zhmDHhg-1; Mon, 19 Feb 2024 08:21:11 -0500
-X-MC-Unique: 4Xqc17K1MFqfAe6zhmDHhg-1
-Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-a3158fbb375so165371966b.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 05:21:08 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="QSE3iKHm"
+Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-561f0f116ecso13743a12.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 06:42:50 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1708353769; x=1708958569; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=QK6TJ1NiFtkG4ibJWHZitNlZraEYM47hN7HesdXjSmk=;
+        b=QSE3iKHmoGpXseBVKAYWaMMwr41vY9ifkCHKdzm5WGSeedcwHNIL1QSLMtyn6dyUkm
+         SwYqRkY5iJU9X6PQnsQgQloOskR3MkfKDEJkRvWom61X34cVgH65ecqQ4HHUhVHHSteC
+         9b7MU9htDrwUXtF0edX1FZzmwduIJyDE+xA8SuN8A1Cq61wZznvsNJMwzn4f/+g3RqLg
+         KUHZY/hSeuWJjcX6jYzbQC3MLN0tzK9mrwV+wHTGHOxES9J6hOuUV92VIXGv2XRbFx+H
+         7cM5D/TgmqOZH//tsrWNwHSTPIuBRx1xnykvLlKcNnMDZ4KJnkOr3FK9nJ+J/+81ASXH
+         9jCA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708348868; x=1708953668;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=A1FGWysJZxX2wAfnqfI2yyWSE3DqDc8YJSBOoh2yRDE=;
-        b=MdANU2FSz/Gcu0WFEcIRxDsQ/Y+en4MYfItTnuha6S6qh8pEdTWowEiHKNfiSvTYhi
-         mXFK8R399+rruvCfMjZ1LZwY/HTxW+/c/QVWpFIGWlqD8VTBYTegVIgVOLPU5VKkR0Fk
-         IbsVXrvK8g3MFE/ozIA3P1Zg+0OjFLObZ2gQNQbG0h7hO95wsvkhFfAcxzXNBIRYBgb1
-         b8VQggt9WoMT6tsdFGxPkQ1UvDkWOWj/uh0ZwsJZHQQmKmW4wDCy3oKHYQUrb+MNbWSM
-         +Xxw0wZyAxcRqO6oprfhwchrYjPDJ1Ey+YukYgWYEcU6jAIw/H839txWePP1Y4NN5WBU
-         VHUQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUkiJdPRvK6uTinM/uwdX/m+6A+4Tf/hvENgwtc+aHQ1mT9hFqg1OUHOc62xVToWimCQU2y1aW7wliyo8cjKrHTJHzqHIA+gyuVwR6s6R0=
-X-Gm-Message-State: AOJu0YxLL2/mBZ+3gXCSe/IYFj4R7W5P+5Pf3BhL/BWuy44EwIkfBn2r
-	hNtSiPs7WgaPscZcNDuyZVYWy7F4QztZQSvc3Ol1WwazaqyaSGXktzr/RunLKB9F03swqDouW4w
-	Cd23xYWitCERrM6e6PgRunMDwsbWOh0oLRoVJUErgHwJG0yNnT9+om5Lc6DNVQKKS
-X-Received: by 2002:a17:906:1b4e:b0:a3e:665a:52d1 with SMTP id p14-20020a1709061b4e00b00a3e665a52d1mr2477246ejg.0.1708348867953;
-        Mon, 19 Feb 2024 05:21:07 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGEjzIt9fWlwPWCo81hUSvDsjZS1JFyyqKR06M/cIFlcmUsxBDvEJXXupgDbSZ9CPUz5UOJnw==
-X-Received: by 2002:a17:906:1b4e:b0:a3e:665a:52d1 with SMTP id p14-20020a1709061b4e00b00a3e665a52d1mr2477234ejg.0.1708348867654;
-        Mon, 19 Feb 2024 05:21:07 -0800 (PST)
-Received: from [192.168.0.182] (host-79-53-201-232.retail.telecomitalia.it. [79.53.201.232])
-        by smtp.gmail.com with ESMTPSA id i18-20020a1709063c5200b00a3d5d8ff745sm2964478ejg.144.2024.02.19.05.21.06
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 19 Feb 2024 05:21:06 -0800 (PST)
-Message-ID: <7f10669d-fffa-40f1-86e2-db3033957b19@redhat.com>
-Date: Mon, 19 Feb 2024 14:21:05 +0100
+        d=1e100.net; s=20230601; t=1708353769; x=1708958569;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=QK6TJ1NiFtkG4ibJWHZitNlZraEYM47hN7HesdXjSmk=;
+        b=M/PriuRw9MUxYJWf5eb0Hi8p5WaOtu1Hd82zrIas9eVbgMHX34CSSa+71/iWKjMzUe
+         cXJixzCx6ZSOxAPM0im1a8u8uq6VrHhL0K67RAm3V5jeTn7+5yQepr+c7316SIe4pKbX
+         J6rid8dX4UoxQ/ja4ZRVXxVmsBXr02s9X9H0jEDB+whtKt0Oiv3k3lh0Kv6zp2q661vl
+         awc2ma3eMrrhpkcLzuje/OIt7F6VGBy2ZkDwDlnKjbKYJSTROjru/bMNGkD1f7DaZAIm
+         yaoGpiMmsHJuSWOVsJKV6EbIFTOrIax4/Fg4cImpQIyEqWE464YGmwY9OxQOyrMNC+ba
+         pSmg==
+X-Forwarded-Encrypted: i=1; AJvYcCWWvL9c61DEYjP5VVxTeqp64a/VdthV9SagilNtKLSF+Fyu4Kgq13MTUwh7ssaoukvrIN5JazZE/NIZRUdC/ybc2ugjNc3vG1SzajS+TZ0=
+X-Gm-Message-State: AOJu0YyuGcuqgUmw5UkM2o++cfKHMfk3Qnv9bWYXsaHzLyGuKNJvk+bn
+	/20N89s47JTLSIRVI4EJC+jt6+gIB+CyE53b7FmWfRQrNXd/5gf9aobMLWWuwdNSpMrGapMvJAk
+	lFVsr+ATuvWbjdRyaPdUc1zN8ez1ZK/7vJsWQ
+X-Google-Smtp-Source: AGHT+IETr5Fg0KJAZlnaeDsbnQhKIQl70L4uyU1bEvQGzZr716e4ct6UKPj1TKwF25G19fVSf9HT3kKxRf0iELr+aGg=
+X-Received: by 2002:a50:a697:0:b0:563:ff57:b7e8 with SMTP id
+ e23-20020a50a697000000b00563ff57b7e8mr298755edc.1.1708353768955; Mon, 19 Feb
+ 2024 06:42:48 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Alternative to updating has_smi_counter?
-To: Rodrigo Queiro <rodrigoq@google.com>, linux-rt-users@vger.kernel.org
-References: <CAMnS4ZDigjkexNdJT3ZhLcmAMeodTKsPi+b91sSjE5sky7ZfqQ@mail.gmail.com>
-Content-Language: en-US, pt-BR, it-IT
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-In-Reply-To: <CAMnS4ZDigjkexNdJT3ZhLcmAMeodTKsPi+b91sSjE5sky7ZfqQ@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+References: <20240219095729.2339914-1-vschneid@redhat.com> <20240219095729.2339914-2-vschneid@redhat.com>
+In-Reply-To: <20240219095729.2339914-2-vschneid@redhat.com>
+From: Eric Dumazet <edumazet@google.com>
+Date: Mon, 19 Feb 2024 15:42:37 +0100
+Message-ID: <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
+Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
+To: Valentin Schneider <vschneid@redhat.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, mleitner@redhat.com, 
+	David Ahern <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, 
+	Tomas Glozar <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 2/19/24 12:36, Rodrigo Queiro wrote:
-> What do you think about removing the checks on the model number, and
-> assuming that all processors with family == 6 support the Nehalem
-> MSRs, including the SMI counter? Any user running a recent cyclictest
-> on pre-Nehalem hardware could still run without --smi to prevent
-> seeing bogus SMI counts.
+On Mon, Feb 19, 2024 at 10:57=E2=80=AFAM Valentin Schneider <vschneid@redha=
+t.com> wrote:
+>
+> The TCP timewait timer is proving to be problematic for setups where sche=
+duler
+> CPU isolation is achieved at runtime via cpusets (as opposed to staticall=
+y via
+> isolcpus=3Ddomains).
+>
 
-When I added that option the smi was a relatively new thing... nowadays I think
-it is pretty standard... so simplifying it is a good thing.
+...
 
-Nevertheless, the SMI counter is just part of the story. Most
-of the hardware related latency problems goes outside of SMI "domain"
-so... the best thing to do is to run rtla hwnoise (or hwlat) on
-the hardware to detect hardware latencies.
+>  void inet_twsk_deschedule_put(struct inet_timewait_sock *tw)
+>  {
+> +       /* This can race with tcp_time_wait() and dccp_time_wait(), as th=
+e timer
+> +        * is armed /after/ adding it to the hashtables.
+> +        *
+> +        * If this is interleaved between inet_twsk_hashdance() and inet_=
+twsk_put(),
+> +        * then this is a no-op: the timer will still end up armed.
+> +        *
+> +        * Conversely, if this successfully deletes the timer, then we kn=
+ow we
+> +        * have already gone through {tcp,dcpp}_time_wait(), and we can s=
+afely
+> +        * call inet_twsk_kill().
+> +        */
+>         if (del_timer_sync(&tw->tw_timer))
+>                 inet_twsk_kill(tw);
 
--- Daniel
+I really do not think adding a comment will prevent races at netns dismantl=
+e.
 
+We need to make sure the timer is not rearmed, we want to be absolutely
+sure that after inet_twsk_purge() we have no pending timewait sockets,
+otherwise UAF will happen on the netns structures.
+
+I _think_ that you need timer_shutdown_sync() here, instead of del_timer_sy=
+nc()
