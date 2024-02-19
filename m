@@ -1,114 +1,99 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4A121EA71
-	for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 14:42:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DC0244C93
+	for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 17:33:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708353772; cv=none; b=IB54IKg/fiit/GPfChwII78kByCAhtyGCE7IoudbnSAyeFIn2rl/Ab1TyFhkJlSEfE3Zuq77uuRY+MNu4baC7mI8YdphWedTvlZcclIXhT/Lom2LxNPzMF0UwlM/tl5YQjkp4E3bKqLLJ4pYJLAVhBbTBK9eaJlI3VUXDMGid/E=
+	t=1708364001; cv=none; b=GCp807ZB7/3tbLYOATeJDNpp9GoX+txd79819HQzBfN0rCufy2CjQj4ShLDhTF3iCg7QmURMio/5+zdkVxXKdNn8+mRDiNSWs1JkDgZ41/OkgnvdhPokiQArRqNFmVJbVlY5E8qHOm6luppHBIgIx4aJg7TRZb/xNCLPx1cenXw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708353772; c=relaxed/simple;
-	bh=pAQ36Mouu5LBU9w/qPkLQEX9p2kwmTFAJ2rFQbxWzyY=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=M8P/KpOi9MFoUdjDYaittWQR5dV/opeoBVCBJXnf3UCiYQfBdrubCD1tJILDLtJjNN/Ut84aMULOxpSfkyLRRk1w5iEXL8yt8uf98aYhQhAfl+aZSx3i4RIzInTWI0Ng8UIRCWu791QjNmW0J/tMzEfGpTShFCGKJgpVC4sH2lE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=QSE3iKHm; arc=none smtp.client-ip=209.85.208.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1708364001; c=relaxed/simple;
+	bh=6avWnawr2UKbNt3LnY1oNnBulNS03ZSo4bYwpqCzFXk=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=UtLEmlZxRZG47ei8tmGiE5TcdSiVMIB3P8NqcNuve1YCHAU/Rvmxczvhd59BRkxtWTIHE0362cMyLWoC4N643homojR9WDCOG6MvVrhItGDnGOd7UN95ILpBQucfeQa1gvtafkvbRLD2xo+0GC/vRi2aNORUuG4BKIUAly+2Ia8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X33OWUes; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="QSE3iKHm"
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-561f0f116ecso13743a12.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 06:42:50 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1708353769; x=1708958569; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=QK6TJ1NiFtkG4ibJWHZitNlZraEYM47hN7HesdXjSmk=;
-        b=QSE3iKHmoGpXseBVKAYWaMMwr41vY9ifkCHKdzm5WGSeedcwHNIL1QSLMtyn6dyUkm
-         SwYqRkY5iJU9X6PQnsQgQloOskR3MkfKDEJkRvWom61X34cVgH65ecqQ4HHUhVHHSteC
-         9b7MU9htDrwUXtF0edX1FZzmwduIJyDE+xA8SuN8A1Cq61wZznvsNJMwzn4f/+g3RqLg
-         KUHZY/hSeuWJjcX6jYzbQC3MLN0tzK9mrwV+wHTGHOxES9J6hOuUV92VIXGv2XRbFx+H
-         7cM5D/TgmqOZH//tsrWNwHSTPIuBRx1xnykvLlKcNnMDZ4KJnkOr3FK9nJ+J/+81ASXH
-         9jCA==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X33OWUes"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1708363998;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=y70x1lk7CC3AaVnNjq3BizuyfG0wau/9LXBpqiTefe8=;
+	b=X33OWUeszH9ppZs8ZPJBJ5oduvgdA1gNFrAO2lpZi962tcbABg0/OG1ypcqHxD4oKDOYT2
+	cKazzqxQEZiWbDyXLljCOvxhePfHtXu5aJl9XE7I+QILLzkQoDJLHp6C+x9wn4I89Trvzy
+	Fjy0JEv6e0WPvXrfAHdrzChp3uqeR6w=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-318-FE6T6dQzNZaRjRQ2zFZzIQ-1; Mon, 19 Feb 2024 12:33:16 -0500
+X-MC-Unique: FE6T6dQzNZaRjRQ2zFZzIQ-1
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-785d863287cso434360185a.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Feb 2024 09:33:16 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708353769; x=1708958569;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=QK6TJ1NiFtkG4ibJWHZitNlZraEYM47hN7HesdXjSmk=;
-        b=M/PriuRw9MUxYJWf5eb0Hi8p5WaOtu1Hd82zrIas9eVbgMHX34CSSa+71/iWKjMzUe
-         cXJixzCx6ZSOxAPM0im1a8u8uq6VrHhL0K67RAm3V5jeTn7+5yQepr+c7316SIe4pKbX
-         J6rid8dX4UoxQ/ja4ZRVXxVmsBXr02s9X9H0jEDB+whtKt0Oiv3k3lh0Kv6zp2q661vl
-         awc2ma3eMrrhpkcLzuje/OIt7F6VGBy2ZkDwDlnKjbKYJSTROjru/bMNGkD1f7DaZAIm
-         yaoGpiMmsHJuSWOVsJKV6EbIFTOrIax4/Fg4cImpQIyEqWE464YGmwY9OxQOyrMNC+ba
-         pSmg==
-X-Forwarded-Encrypted: i=1; AJvYcCWWvL9c61DEYjP5VVxTeqp64a/VdthV9SagilNtKLSF+Fyu4Kgq13MTUwh7ssaoukvrIN5JazZE/NIZRUdC/ybc2ugjNc3vG1SzajS+TZ0=
-X-Gm-Message-State: AOJu0YyuGcuqgUmw5UkM2o++cfKHMfk3Qnv9bWYXsaHzLyGuKNJvk+bn
-	/20N89s47JTLSIRVI4EJC+jt6+gIB+CyE53b7FmWfRQrNXd/5gf9aobMLWWuwdNSpMrGapMvJAk
-	lFVsr+ATuvWbjdRyaPdUc1zN8ez1ZK/7vJsWQ
-X-Google-Smtp-Source: AGHT+IETr5Fg0KJAZlnaeDsbnQhKIQl70L4uyU1bEvQGzZr716e4ct6UKPj1TKwF25G19fVSf9HT3kKxRf0iELr+aGg=
-X-Received: by 2002:a50:a697:0:b0:563:ff57:b7e8 with SMTP id
- e23-20020a50a697000000b00563ff57b7e8mr298755edc.1.1708353768955; Mon, 19 Feb
- 2024 06:42:48 -0800 (PST)
+        d=1e100.net; s=20230601; t=1708363996; x=1708968796;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=y70x1lk7CC3AaVnNjq3BizuyfG0wau/9LXBpqiTefe8=;
+        b=c1Tj/w4vmjML4UYB+PztGxPJ4hx6eFtx2XwPiITpHgGV2SwEO4w8HyQ/I3flwfYQEq
+         fUpadBYpcRJkf/8HR+He0oSQ3Sq3/UYj0VkUOOf3I01Uvo3dS9+1hYxz8MJEzmfeSbJG
+         +nzmmY2gJNVFCUjoiCMpSiQWul8SJUVCGOsHWWRqRskCLi4hC6arnEPn02nxn4WnRDIm
+         xjgyT6jgWDp/QMb7y6L3GJMcsjubWr84eBGm445ikiHW8hvs+6rvfUhx+aYZ8ODgLXZS
+         9wtJzrpVOYjt5LPkjEStAZa4jyth1V3nsP3EfsDwgREvV02y5esbCR5cimkKDEaaXD5T
+         EXlg==
+X-Forwarded-Encrypted: i=1; AJvYcCW39BMkg7Au2e64bOD1LCRHMAlNU0G5KGjTm8St8Kaow2snyQ+FkcF3fqJqdq3inDu4/LHg5V/42GiTW9oH2YK4J93/GudSn3HaWzFq8Rc=
+X-Gm-Message-State: AOJu0Ywo+TebyxCrQFGeY8OJjMS1TCeoyTOeyOHMrXfrbPC0qm4/Yn+Z
+	wRPzrwCPlyGA6+eBJlJ4SShnM+Z3qwSWJfutLsRbzfeD3xaalIbgtvuIxBGa44zLmf0xON9Nva0
+	4NhZjYb+t3PAYJ9MODLCeGNFkouEjZcjQ78sV5/bjCogwg7t3s8GWrZ2owG2H7jk7
+X-Received: by 2002:ae9:c30a:0:b0:787:6e99:a889 with SMTP id n10-20020ae9c30a000000b007876e99a889mr2048066qkg.37.1708363996012;
+        Mon, 19 Feb 2024 09:33:16 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHFBQjY+bgONGiwJ1rR4f9gvvW0U1G0AhkGdUJGBg6+TbNfHWaPDDjFL9uuKTQRsoigx6HeNA==
+X-Received: by 2002:ae9:c30a:0:b0:787:6e99:a889 with SMTP id n10-20020ae9c30a000000b007876e99a889mr2048046qkg.37.1708363995737;
+        Mon, 19 Feb 2024 09:33:15 -0800 (PST)
+Received: from thinkpad2021 ([71.217.33.204])
+        by smtp.gmail.com with ESMTPSA id i1-20020a05620a404100b00785d8a6d019sm2654149qko.12.2024.02.19.09.33.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 19 Feb 2024 09:33:15 -0800 (PST)
+Date: Mon, 19 Feb 2024 12:33:12 -0500
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: Petr Mladek <pmladek@suse.com>, Clark Williams <williams@redhat.com>,
+	Juri Lelli <jlelli@redhat.com>, Derek Barbosa <debarbos@redhat.com>,
+	Bruno Goncalves <bgoncalv@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Automating console_blast.sh
+Message-ID: <ZdOQ2KzOIgYc8Ber@thinkpad2021>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240219095729.2339914-1-vschneid@redhat.com> <20240219095729.2339914-2-vschneid@redhat.com>
-In-Reply-To: <20240219095729.2339914-2-vschneid@redhat.com>
-From: Eric Dumazet <edumazet@google.com>
-Date: Mon, 19 Feb 2024 15:42:37 +0100
-Message-ID: <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
-Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
-To: Valentin Schneider <vschneid@redhat.com>
-Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, mleitner@redhat.com, 
-	David Ahern <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, 
-	Tomas Glozar <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Thomas Gleixner <tglx@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Mon, Feb 19, 2024 at 10:57=E2=80=AFAM Valentin Schneider <vschneid@redha=
-t.com> wrote:
->
-> The TCP timewait timer is proving to be problematic for setups where sche=
-duler
-> CPU isolation is achieved at runtime via cpusets (as opposed to staticall=
-y via
-> isolcpus=3Ddomains).
->
+Hello John,
 
-...
+I am investigating if we can automate, and, possibly add console_blash.sh
+[1] to our test suite here at Red Hat.
 
->  void inet_twsk_deschedule_put(struct inet_timewait_sock *tw)
->  {
-> +       /* This can race with tcp_time_wait() and dccp_time_wait(), as th=
-e timer
-> +        * is armed /after/ adding it to the hashtables.
-> +        *
-> +        * If this is interleaved between inet_twsk_hashdance() and inet_=
-twsk_put(),
-> +        * then this is a no-op: the timer will still end up armed.
-> +        *
-> +        * Conversely, if this successfully deletes the timer, then we kn=
-ow we
-> +        * have already gone through {tcp,dcpp}_time_wait(), and we can s=
-afely
-> +        * call inet_twsk_kill().
-> +        */
->         if (del_timer_sync(&tw->tw_timer))
->                 inet_twsk_kill(tw);
+At Red Hat we use SSH to manage our test boxes. On an off-list email
+you wrote that 'Only the UART should be used as a console'. I took
+this as no ssh session should be used from the boot up until the crash,
+but I should have confirmed this. Is this correct?
 
-I really do not think adding a comment will prevent races at netns dismantl=
-e.
+The license for our test suite is GPL v3 [2]. May we have your permission to
+license it under that or permissive?
 
-We need to make sure the timer is not rearmed, we want to be absolutely
-sure that after inet_twsk_purge() we have no pending timewait sockets,
-otherwise UAF will happen on the netns structures.
+Adding Bruno @ CKI to CC. 
 
-I _think_ that you need timer_shutdown_sync() here, instead of del_timer_sy=
-nc()
+[1] https://lore.kernel.org/linux-rt-users/ZcQjxa4UA6hzXHnU@thinkpad2021/
+
+[2] https://gitlab.com/redhat/centos-stream/tests/kernel/kernel-tests/-/tree/main/rt-tests
+
+Sincerely
+John Wyatt
+
