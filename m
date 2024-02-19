@@ -1,83 +1,148 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp-fw-52004.amazon.com (smtp-fw-52004.amazon.com [52.119.213.154])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F78A46B9F;
-	Mon, 19 Feb 2024 17:51:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B2A94A3B;
+	Mon, 19 Feb 2024 18:55:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.119.213.154
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708365108; cv=none; b=B3jbMEYyaE4zutu68GkN5J5B2kHRok95xhVanYWOQAF+WhqODpiXJ9BTCHZqXOrZvIWdulfSIe9yNCcRPt2mIxNSEq6AafTUqQzxCFJRNyehxHV7nt3BNjm5hJc84yH5cUWHc0H/UbusWH6g7LTR4wIhMpr99JuUP8S6V2zrXsw=
+	t=1708368956; cv=none; b=ccSooodnUTBkQka5SziYnQxC9NkvLkZIDtYZrQHEp++usyuTkxDsr517h/iXXezb+9EG71zer55q9EbEYL0if4vZT7Tlmxq2gLEfDmsgtILbtTyi5drk6Ty1e4aOgIsTZgni7ibD5P8d42autRBl7n68t17KCIX9R5eGfRwMCJw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708365108; c=relaxed/simple;
-	bh=dYphAmOqh6s/jX7EW/gPNGu1P1vMlwDQLwtH2msUveg=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=Rd83zSbUz0/tOvqH695RwYffMdh0j+nflcsE9qFYPvachimH6pLPOxLVc0U0gX8h5FIYvhzOZotX4RiTa8leRNhCkK3rXk2ZgbSw3PAXhvs1OGNXNW4GapOPK7hPjx4Hk74EwqYBQZURozQY/KtQD6jHBqO1TRlSK+7wJ0SKl7c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=bsTaV1rY; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=wUtETLf8; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1708368956; c=relaxed/simple;
+	bh=N5ZH9wqFWur86cVuVxvi/Pi+hCjhc8MpHYwaMvTmuzI=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=TlfB+uwn2fJCrdX09dk238oNK+cSX7XSzu8XqW/XIuFlz/W9cUUfWqMKPvYdHKQSGKIjV16b0XTEPltlVgw4iZSIPBunc6SzP5Dnm1O1Gb9VxNOclZu8zpNPeG2HsYOey7qho+Wk+ILhCgFpn9bj3OXcTcJqwqlmMFvULHcME5U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.co.jp; dkim=pass (1024-bit key) header.d=amazon.com header.i=@amazon.com header.b=cEJ6+gQ+; arc=none smtp.client-ip=52.119.213.154
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.co.jp
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="bsTaV1rY";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="wUtETLf8"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1708365104;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=dYphAmOqh6s/jX7EW/gPNGu1P1vMlwDQLwtH2msUveg=;
-	b=bsTaV1rYmYdP2h1KXHL2ba9PLm3Efm+FXmThu0i+m6SYG2f1khI/odAmR3xWkaq6LGmiXG
-	h6lkXnG0NKO3BISN6uPVJNq9PNsuGDTDU6ctF1Xy8gbpNuGkZDvg0APWwrFJqTFq/vVE5L
-	nDYfIhmE0k7BxElDbnT48ixtbDVeMfwTgwdJdaCV9Jp+We1v1TKhkGZ09TdHZkMHFvrAJn
-	n/1mk0LbUGa3XWFMs+24P8IkgiA1d8ipuu0Mh107INSbHw2eao9xt235rol2AWLujnQ3r/
-	jMNpe96dZP4C2+8qA3HK3qfIiA40Eopd8ZhRQGAhYC7Va7k5PCKhjCH4nC553Q==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1708365104;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=dYphAmOqh6s/jX7EW/gPNGu1P1vMlwDQLwtH2msUveg=;
-	b=wUtETLf82/pvASroqcT1N9/D1spRI2R8TU02pFm73ty8dVg1dHSolYq1Lenu4KDWXlENWX
-	UUXZsgI1GWVijMBg==
-To: "John B. Wyatt IV" <jwyatt@redhat.com>
-Cc: Petr Mladek <pmladek@suse.com>, Clark Williams <williams@redhat.com>,
- Juri Lelli <jlelli@redhat.com>, Derek Barbosa <debarbos@redhat.com>, Bruno
- Goncalves <bgoncalv@redhat.com>, "John B. Wyatt IV"
- <sageofredondo@gmail.com>, LKML <linux-kernel@vger.kernel.org>,
- linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: Automating console_blast.sh
-In-Reply-To: <ZdOQ2KzOIgYc8Ber@thinkpad2021>
-References: <ZdOQ2KzOIgYc8Ber@thinkpad2021>
-Date: Mon, 19 Feb 2024 18:57:23 +0106
-Message-ID: <87frxo2vhg.fsf@jogness.linutronix.de>
+	dkim=pass (1024-bit key) header.d=amazon.com header.i=@amazon.com header.b="cEJ6+gQ+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazon201209;
+  t=1708368954; x=1739904954;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=AYF3fJ3lQYdHvX4FbenRMpfXYf4i7AfH5JvlmkprmDk=;
+  b=cEJ6+gQ+FZptKUuB/jkouOlvMXJCPXgvQmai2DLmdvPuS3B1IiGyosVx
+   H8CP7gKfLy/dHx60AMT2LU8Uqcz1mbBRXnIWHKjh2Jm/x2CGdLie+MFTq
+   avuIYqbVot+soUFCi6XVb/myZNdPD4XwwzqK1AiSyAf9pcKOblyVXuafo
+   4=;
+X-IronPort-AV: E=Sophos;i="6.06,170,1705363200"; 
+   d="scan'208";a="185811561"
+Received: from iad12-co-svc-p1-lb1-vlan2.amazon.com (HELO smtpout.prod.us-west-2.prod.farcaster.email.amazon.dev) ([10.43.8.2])
+  by smtp-border-fw-52004.iad7.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Feb 2024 18:55:50 +0000
+Received: from EX19MTAUWB001.ant.amazon.com [10.0.38.20:4119]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.63.9:2525] with esmtp (Farcaster)
+ id 9b887880-2511-4018-a341-9f255bfa8211; Mon, 19 Feb 2024 18:55:49 +0000 (UTC)
+X-Farcaster-Flow-ID: 9b887880-2511-4018-a341-9f255bfa8211
+Received: from EX19D004ANA001.ant.amazon.com (10.37.240.138) by
+ EX19MTAUWB001.ant.amazon.com (10.250.64.248) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1118.40; Mon, 19 Feb 2024 18:55:48 +0000
+Received: from 88665a182662.ant.amazon.com (10.94.72.56) by
+ EX19D004ANA001.ant.amazon.com (10.37.240.138) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1118.40; Mon, 19 Feb 2024 18:55:45 +0000
+From: Kuniyuki Iwashima <kuniyu@amazon.com>
+To: <vschneid@redhat.com>
+CC: <bigeasy@linutronix.de>, <davem@davemloft.net>, <dccp@vger.kernel.org>,
+	<dsahern@kernel.org>, <edumazet@google.com>, <juri.lelli@redhat.com>,
+	<kuba@kernel.org>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>, <mleitner@redhat.com>,
+	<netdev@vger.kernel.org>, <pabeni@redhat.com>, <tglozar@redhat.com>,
+	<tglx@linutronix.de>, <kuniyu@amazon.com>
+Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
+Date: Mon, 19 Feb 2024 10:55:37 -0800
+Message-ID: <20240219185537.13666-1-kuniyu@amazon.com>
+X-Mailer: git-send-email 2.30.2
+In-Reply-To: <20240219095729.2339914-2-vschneid@redhat.com>
+References: <20240219095729.2339914-2-vschneid@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Content-Type: text/plain
+X-ClientProxiedBy: EX19D031UWC001.ant.amazon.com (10.13.139.241) To
+ EX19D004ANA001.ant.amazon.com (10.37.240.138)
 
-On 2024-02-19, "John B. Wyatt IV" <jwyatt@redhat.com> wrote:
-> I am investigating if we can automate, and, possibly add
-> console_blash.sh [1] to our test suite here at Red Hat.
+From: Valentin Schneider <vschneid@redhat.com>
+Date: Mon, 19 Feb 2024 10:57:29 +0100
+> The TCP timewait timer is proving to be problematic for setups where scheduler
+> CPU isolation is achieved at runtime via cpusets (as opposed to statically via
+> isolcpus=domains).
+> 
+> What happens there is a CPU goes through tcp_time_wait(), arming the time_wait
+> timer, then gets isolated. TCP_TIMEWAIT_LEN later, the timer fires, causing
+> interference for the now-isolated CPU. This is conceptually similar to the issue
+> described in
+>   e02b93124855 ("workqueue: Unbind kworkers before sending them to exit()")
+> 
+> Keep softirqs disabled, but make the timer un-pinned and arm it *after* the
+> hashdance.
+> 
+> This introduces the following (non-fatal) race:
+> 
+>   CPU0                        CPU1
+>     allocates a tw
+>     insert it in hash table
+> 				finds the TW and removes it
+> 				(timer cancel does nothing)
+>     arms a TW timer, lasting
+> 
+> This partially reverts
+>   ed2e92394589 ("tcp/dccp: fix timewait races in timer handling")
+> and
+>   ec94c2696f0b ("tcp/dccp: avoid one atomic operation for timewait hashdance")
+> 
+> This also reinstores a comment from
+>   ec94c2696f0b ("tcp/dccp: avoid one atomic operation for timewait hashdance")
+> as inet_twsk_hashdance() had a "Step 1" and "Step 3" comment, but the "Step
+> 2" had gone missing.
+> 
+> Link: https://lore.kernel.org/all/ZPhpfMjSiHVjQkTk@localhost.localdomain/
+> Signed-off-by: Valentin Schneider <vschneid@redhat.com>
+> ---
+>  net/dccp/minisocks.c          | 16 +++++++---------
+>  net/ipv4/inet_timewait_sock.c | 20 +++++++++++++++-----
+>  net/ipv4/tcp_minisocks.c      | 16 +++++++---------
+>  3 files changed, 29 insertions(+), 23 deletions(-)
+> 
+> diff --git a/net/dccp/minisocks.c b/net/dccp/minisocks.c
+> index 64d805b27adde..2f0fad4255e36 100644
+> --- a/net/dccp/minisocks.c
+> +++ b/net/dccp/minisocks.c
+> @@ -53,16 +53,14 @@ void dccp_time_wait(struct sock *sk, int state, int timeo)
+>  		if (state == DCCP_TIME_WAIT)
+>  			timeo = DCCP_TIMEWAIT_LEN;
+>  
+> -		/* tw_timer is pinned, so we need to make sure BH are disabled
+> -		 * in following section, otherwise timer handler could run before
+> -		 * we complete the initialization.
+> -		 */
+> -		local_bh_disable();
+> -		inet_twsk_schedule(tw, timeo);
+> -		/* Linkage updates.
+> -		 * Note that access to tw after this point is illegal.
+> -		 */
+> +	       local_bh_disable();
 
-It is called "console_blast.sh". ;-)
+This line seems not correctly indented, same for TCP change.
 
-> At Red Hat we use SSH to manage our test boxes. On an off-list email
-> you wrote that 'Only the UART should be used as a console'. I took
-> this as no ssh session should be used from the boot up until the
-> crash, but I should have confirmed this. Is this correct?
 
-SSH is fine. SSH sessions are not consoles. Consoles are specified with
-the console= or netconsole= boot argument and receive the kernel
-messages automatically from the kernel.
 
-> The license for our test suite is GPL v3 [2]. May we have your
-> permission to license it under that or permissive?
+> +
+> +		// Linkage updates
+>  		inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
+> +		inet_twsk_schedule(tw, timeo);
+> +		// Access to tw after this point is illegal.
 
-Yes, GPL v3 is OK.
+Also please use /**/ style for these comments, same for TCP too.
 
-> [1] https://lore.kernel.org/linux-rt-users/ZcQjxa4UA6hzXHnU@thinkpad2021/
->
-> [2] https://gitlab.com/redhat/centos-stream/tests/kernel/kernel-tests/-/tree/main/rt-tests
 
-John
+> +		inet_twsk_put(tw);
+> +
+>  		local_bh_enable();
+>  	} else {
+>  		/* Sorry, if we're out of memory, just CLOSE this
