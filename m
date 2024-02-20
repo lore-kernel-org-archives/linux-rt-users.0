@@ -1,74 +1,75 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB292151CE5
-	for <linux-rt-users@vger.kernel.org>; Tue, 20 Feb 2024 22:24:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 792CE1534F2
+	for <linux-rt-users@vger.kernel.org>; Tue, 20 Feb 2024 22:26:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708467891; cv=none; b=McVDXSykEm14IO7VskUp83RxOpBfvBKZ6jkS+4wRGTOXcPnWac8J5ZFEktJ11xxTfs+dYhCMUK9crNECl7YOkoMRI+V0hTBtyH589/IBgHPXv0aGf6wdO77JYdg86nmLAjjA/h9lj7rycYSmm69g4Bkafodz5tznhDwN6dLsV0o=
+	t=1708467977; cv=none; b=cspUR5QEBPQPrOQ1CTGQXL3Ozjb3kJG0RNtrd710D26AW1mOH/nvdyL65NLPworXD0ubkaOo9D3EJ386f8kTjwA5p5nV7GGpf7EMf2Eyt3jhP3EBPqA00uz5HKVoVsILLanr6zqcGidHT/Zvz44a3NBHw8JMgXlLZ9EvV2eU0U0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708467891; c=relaxed/simple;
-	bh=g5UH7tdCMPlNrjY5k7QwcIoKNj4+ocCFWLo1As6HTYA=;
+	s=arc-20240116; t=1708467977; c=relaxed/simple;
+	bh=fK9sjV2iYgk6EEpywtKXdHIXojjey3gn/L6ZBE72Rwg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=DWc1Gm6WeHshr4grKrH5n0YS4vXLS9wPf1UJ4KJNBOi56zToD6REVwoy9oiHmTm7jXywgnL415OW6rt9EyF+J92hW9gJCXxzfEFc8X74rQ3RzGOId9cKTvBIXnleBdcJfwChK8gDKc4Lyy6ppEm6uFQVe6MTHZLm1YTNZtRndFQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LlSRq0rk; arc=none smtp.client-ip=170.10.129.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=c2RIwVCbe6jhCarlQv9SbGgZmwmXrgxWGDH/PCBYDVkykwUU9Yi0mUkKj6bjUtiXP7lnI84EZ6mJy2+77f6u1h1jq2YGl1O6o8N1y/7ZoAjdDNDRjnkT52jiQLDHvfQ64XfB4TBwsCYxWSAhOpaxy3xB2vFlfzXBWKqECRZsq2Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hNJWFwMt; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LlSRq0rk"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hNJWFwMt"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708467886;
+	s=mimecast20190719; t=1708467974;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=0NjQBQA/lUjdbHUMGa7rbh+2FLAyaGbRLlsYMTVFpfo=;
-	b=LlSRq0rkVRzaYuqyiOobQ+oOV+pbg16DuSnT4EepKufc9qv6r2Q5Crs9vje2ZCRwxQ2b+l
-	oeXfk8W3yyLBij7iLQOh5dV5lUqjUsaNJ2q0ZNF+Cva5XOnjSOsfaUPci3aS4bkr3lzjLE
-	h+4aFkog2JLJcFduipGTChHYR0tsIOg=
-Received: from mail-ot1-f72.google.com (mail-ot1-f72.google.com
- [209.85.210.72]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=NPHpbIqvGI3GZAeZJOSIdpwg4OWy0KxmA+JMGQUGRJ4=;
+	b=hNJWFwMttVscQjuTYWPXahaEkEL+YzyanBuqGc3spRy2vSEa73B8m0Z/d9paS5UkqN6qIm
+	Uio/NmTYklBk5Ud928tLvvwdPBg1OIY913WqbaFSM+zyvuje5Y8Wa022fyXK2oQmpMPZYP
+	oWOuY7ORxubnr6qa16Ul71Medc2oiQo=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-329-ul7TyaPfPCy__wcYpFGCrg-1; Tue, 20 Feb 2024 17:24:40 -0500
-X-MC-Unique: ul7TyaPfPCy__wcYpFGCrg-1
-Received: by mail-ot1-f72.google.com with SMTP id 46e09a7af769-6e2dc6c07d8so5466262a34.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 Feb 2024 14:24:40 -0800 (PST)
+ us-mta-203-_jX1jAxZO320ru42x2UGpA-1; Tue, 20 Feb 2024 17:26:12 -0500
+X-MC-Unique: _jX1jAxZO320ru42x2UGpA-1
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-78776154916so238525585a.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 Feb 2024 14:26:12 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708467879; x=1709072679;
+        d=1e100.net; s=20230601; t=1708467972; x=1709072772;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=0NjQBQA/lUjdbHUMGa7rbh+2FLAyaGbRLlsYMTVFpfo=;
-        b=EW6F6AZkQMyEUE3C38EUuM00AmtxgeQmFGEcYs8PPb38gRoXKLF4QV6zmIMv9vtAhC
-         EwqCaWQnWJokCvm5buhi0YZzn2aDCwvCh07Wu8yJJAbneLpPqR3CqM8q5vBRQcmXo3gC
-         zdL1vjFTnSh+n/DOTreJBH99X5Be6fEST3MliJ1pL9bCYt+oATNBIBU5/ibz/nBWIuJa
-         0J3+6lsvlaaivRYNPnYZzir+BViHgIvogvFaLQxG+NvrEGGTDBMOFW2PU2RHHaPIHCdM
-         XjG2hWtST1dANlokJGYVGAR/4jKzfo+ykB2nwmVgmmotxZxbc5+nZlVOL4gfn6DuvvY2
-         wVDQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUzDC9/eonmX5Gq2zVH26THxEV+YUNIkcz30a2QY/Jtxk2Px/CANrnkW34gH798S5IOlbpwCGrXIEZhaEBXb3vYZUKuyD3QQQ2m+BDbj9U=
-X-Gm-Message-State: AOJu0YwnET5FK4kefFH76ChXBY+Mj9Xo43oGQNZ3bkHFr4jA8mp1mU3C
-	+0/821qrTWA+3Kof6EgVCtmd/JF0YE5qiVyS/Lyqn/SKGnbR+NskVyoQf/F+dodiUXPAFV8OqEo
-	Kb3lVDFLfHkMbNzM8G0Rc16tCtP22t1NasJR5+Bb43Kx2vrb/o4NjT2dx18ZS5Z/x
-X-Received: by 2002:a9d:6d83:0:b0:6e2:e09b:a68a with SMTP id x3-20020a9d6d83000000b006e2e09ba68amr18311079otp.21.1708467879811;
-        Tue, 20 Feb 2024 14:24:39 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHaeGvlNNYy2/qSVFub612PKKR6oUapbT/TJ9+26EU3vkcvx2qMSi6pHYZKV/zhPQa3oaHgnw==
-X-Received: by 2002:a9d:6d83:0:b0:6e2:e09b:a68a with SMTP id x3-20020a9d6d83000000b006e2e09ba68amr18311066otp.21.1708467879565;
-        Tue, 20 Feb 2024 14:24:39 -0800 (PST)
+        bh=NPHpbIqvGI3GZAeZJOSIdpwg4OWy0KxmA+JMGQUGRJ4=;
+        b=ZHZgRLFOpIiCZjNJhYh1kQVcyvw+AZFd4x1cCwlsq3JTdV/VQa2jU7RA+ef742y6L9
+         FNbNrOna53dgV+GdF55TGXbpFZ4HAN3Jh9mUy4dIXq0JxnDuYYnoYTbO1RP12Sj5jt9s
+         ObbJ8s+hyzvXzsW1j2WU4fL/a7AnxI5LstvUYrco7U5yiPrcsxUfrtcB2K6Lc50N4Xk/
+         cbkGxbOg0Z+V0BfGb6bvfosyz5G61dvfQfK47dPlGbiIT/xMGaaI80irlEUF2fJHhH8E
+         KRFz4XZ21aB6r2ktbNj/etiDK+giczuPF1Z0QNB7ZObEj56w49cPOgpGVt8ubFBGEZH8
+         rjZQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWT7B6bOTugOjnelEi+y+Lvpar0sVoLwQfq/SCcNdwh4W+S37m5faKTheVJnRVUBtCwza14cBLJOuLMP+hYPDkUbwYkfCukY76r8QuSZg0=
+X-Gm-Message-State: AOJu0YwtIKtDDrpcidnW0OvgBHHK7B94zfuGM4z4CACF0B7atKTIU368
+	K1MQ4cUn778ffbzLuyeVKIvr9G2e4Cv4bdH2SbZXlakhxMlfh57Tlf9tvwYM1pFZkO3pcHdYXbw
+	AS4DPcyHR7YUVgfdVEsGkzCKO2nMplJ6x3Ry2KSe/3mTtHcPvjg+b8vYNYowVAKo8
+X-Received: by 2002:a05:620a:13c3:b0:785:c3b7:4e84 with SMTP id g3-20020a05620a13c300b00785c3b74e84mr25773184qkl.35.1708467972248;
+        Tue, 20 Feb 2024 14:26:12 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHDxpqQD+BPPqTlPrne7pDxsr8iJlYVf/WMcfo/C/M1OEfbvY9gUL6WrF/kIV/P1TVnpH561g==
+X-Received: by 2002:a05:620a:13c3:b0:785:c3b7:4e84 with SMTP id g3-20020a05620a13c300b00785c3b74e84mr25773161qkl.35.1708467971966;
+        Tue, 20 Feb 2024 14:26:11 -0800 (PST)
 Received: from thinkpad2021 ([71.217.33.204])
-        by smtp.gmail.com with ESMTPSA id j18-20020ac86652000000b0042c7c1b51absm3823798qtp.77.2024.02.20.14.24.38
+        by smtp.gmail.com with ESMTPSA id j10-20020a05620a000a00b00787702a13c0sm1619411qki.114.2024.02.20.14.26.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 20 Feb 2024 14:24:39 -0800 (PST)
-Date: Tue, 20 Feb 2024 17:24:37 -0500
+        Tue, 20 Feb 2024 14:26:11 -0800 (PST)
+Date: Tue, 20 Feb 2024 17:26:09 -0500
 From: "John B. Wyatt IV" <jwyatt@redhat.com>
 To: John Ogness <john.ogness@linutronix.de>
 Cc: Petr Mladek <pmladek@suse.com>, Clark Williams <williams@redhat.com>,
-	jlelli@redhat.com, Derek Barbosa <debarbos@redhat.com>,
+	Juri Lelli <jlelli@redhat.com>, Derek Barbosa <debarbos@redhat.com>,
+	Bruno Goncalves <bgoncalv@redhat.com>,
 	"John B. Wyatt IV" <sageofredondo@gmail.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: NMI Reported with console_blast.sh
-Message-ID: <ZdUmpblrzX0pcPjz@thinkpad2021>
-References: <ZcQjxa4UA6hzXHnU@thinkpad2021>
- <87v86yc88b.fsf@jogness.linutronix.de>
+Subject: Re: Automating console_blast.sh
+Message-ID: <ZdUnAdrJC4VWRlmv@thinkpad2021>
+References: <ZdOQ2KzOIgYc8Ber@thinkpad2021>
+ <87frxo2vhg.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -77,14 +78,28 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <87v86yc88b.fsf@jogness.linutronix.de>
+In-Reply-To: <87frxo2vhg.fsf@jogness.linutronix.de>
 
-On Fri, Feb 09, 2024 at 10:17:48AM +0106, John Ogness wrote:
-> I am curious why early_printk is here. Are you using KDB or KGDB?
+On Mon, Feb 19, 2024 at 06:57:23PM +0106, John Ogness wrote:
+> 
+> It is called "console_blast.sh". ;-)
+
+:-)
+
+> SSH is fine. SSH sessions are not consoles. Consoles are specified with
+> the console= or netconsole= boot argument and receive the kernel
+> messages automatically from the kernel.
+>
+
+Ack.
+
+> > The license for our test suite is GPL v3 [2]. May we have your
+> > permission to license it under that or permissive?
+> 
+> Yes, GPL v3 is OK.
 > 
 
-Missed answering this in my previous email. I was not using KGDB was
-disabled.
+Thank you.
 
 -- 
 Sincerly,
