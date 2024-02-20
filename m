@@ -1,148 +1,172 @@
-Received: from smtp-fw-52004.amazon.com (smtp-fw-52004.amazon.com [52.119.213.154])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B2A94A3B;
-	Mon, 19 Feb 2024 18:55:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.119.213.154
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D048743ADB
+	for <linux-rt-users@vger.kernel.org>; Tue, 20 Feb 2024 17:38:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708368956; cv=none; b=ccSooodnUTBkQka5SziYnQxC9NkvLkZIDtYZrQHEp++usyuTkxDsr517h/iXXezb+9EG71zer55q9EbEYL0if4vZT7Tlmxq2gLEfDmsgtILbtTyi5drk6Ty1e4aOgIsTZgni7ibD5P8d42autRBl7n68t17KCIX9R5eGfRwMCJw=
+	t=1708450708; cv=none; b=HzE7Rz3PxqYFC9gLXOQPvm+HAgNP3fkFXTwsY8b2hiIToOpMCYaCf98766XFUOoYSAS+IepydTyi5oI8MYEd2SmPt0yW42rn2cqlIUR9W4tlRT4/Ra9RbeMEwMID3rB9KlirnleujXxEtlwyNkPMjJKLjBrrhWGApnTDN1ps9H0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708368956; c=relaxed/simple;
-	bh=N5ZH9wqFWur86cVuVxvi/Pi+hCjhc8MpHYwaMvTmuzI=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=TlfB+uwn2fJCrdX09dk238oNK+cSX7XSzu8XqW/XIuFlz/W9cUUfWqMKPvYdHKQSGKIjV16b0XTEPltlVgw4iZSIPBunc6SzP5Dnm1O1Gb9VxNOclZu8zpNPeG2HsYOey7qho+Wk+ILhCgFpn9bj3OXcTcJqwqlmMFvULHcME5U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.co.jp; dkim=pass (1024-bit key) header.d=amazon.com header.i=@amazon.com header.b=cEJ6+gQ+; arc=none smtp.client-ip=52.119.213.154
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.co.jp
+	s=arc-20240116; t=1708450708; c=relaxed/simple;
+	bh=zUJsJOJwU+9vWXinj1PCgD7j7+9VeRB+NDrCeSHsh1o=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=lpvRSgs7v27bbIO0kPUl5Esxr7uWtgYQxFqxEQ84fHj6TecmS292Rnfl5iYK3Jz0wKTZYowOABV0kOHcz1wCeo3+OjnJJtrsOBJA2so2dC4ZJlYGtfZbxVv/3uOyFQax3GZOmPAWNva5KKzuPFGIzLjOzDTnVNKAT4WOpjr8hK4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fVNAc9JX; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=amazon.com header.i=@amazon.com header.b="cEJ6+gQ+"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazon201209;
-  t=1708368954; x=1739904954;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=AYF3fJ3lQYdHvX4FbenRMpfXYf4i7AfH5JvlmkprmDk=;
-  b=cEJ6+gQ+FZptKUuB/jkouOlvMXJCPXgvQmai2DLmdvPuS3B1IiGyosVx
-   H8CP7gKfLy/dHx60AMT2LU8Uqcz1mbBRXnIWHKjh2Jm/x2CGdLie+MFTq
-   avuIYqbVot+soUFCi6XVb/myZNdPD4XwwzqK1AiSyAf9pcKOblyVXuafo
-   4=;
-X-IronPort-AV: E=Sophos;i="6.06,170,1705363200"; 
-   d="scan'208";a="185811561"
-Received: from iad12-co-svc-p1-lb1-vlan2.amazon.com (HELO smtpout.prod.us-west-2.prod.farcaster.email.amazon.dev) ([10.43.8.2])
-  by smtp-border-fw-52004.iad7.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Feb 2024 18:55:50 +0000
-Received: from EX19MTAUWB001.ant.amazon.com [10.0.38.20:4119]
- by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.63.9:2525] with esmtp (Farcaster)
- id 9b887880-2511-4018-a341-9f255bfa8211; Mon, 19 Feb 2024 18:55:49 +0000 (UTC)
-X-Farcaster-Flow-ID: 9b887880-2511-4018-a341-9f255bfa8211
-Received: from EX19D004ANA001.ant.amazon.com (10.37.240.138) by
- EX19MTAUWB001.ant.amazon.com (10.250.64.248) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1118.40; Mon, 19 Feb 2024 18:55:48 +0000
-Received: from 88665a182662.ant.amazon.com (10.94.72.56) by
- EX19D004ANA001.ant.amazon.com (10.37.240.138) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1118.40; Mon, 19 Feb 2024 18:55:45 +0000
-From: Kuniyuki Iwashima <kuniyu@amazon.com>
-To: <vschneid@redhat.com>
-CC: <bigeasy@linutronix.de>, <davem@davemloft.net>, <dccp@vger.kernel.org>,
-	<dsahern@kernel.org>, <edumazet@google.com>, <juri.lelli@redhat.com>,
-	<kuba@kernel.org>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>, <mleitner@redhat.com>,
-	<netdev@vger.kernel.org>, <pabeni@redhat.com>, <tglozar@redhat.com>,
-	<tglx@linutronix.de>, <kuniyu@amazon.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fVNAc9JX"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1708450705;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Pf6j+i6h2iPgXMeO4/kpzSp22DRqb12CU6kjm37WMmQ=;
+	b=fVNAc9JXjOHOele13Xk2VAcGao4xpaHKSpHgnATUr6w1tzNGjaclWDx0m2tZmw2OgSPQ2p
+	oThmw8lzy4O6Samr3nUL6TOW6nj1/uw6C7JkyTEDDudzcVZwz6DCBbA6DWerVUQxPBcH+/
+	+/RxdraTyWc4T+jtyW1pG+wU7BG2u3U=
+Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
+ [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-395-LRem83DHO4y1x-DdpKftNQ-1; Tue, 20 Feb 2024 12:38:24 -0500
+X-MC-Unique: LRem83DHO4y1x-DdpKftNQ-1
+Received: by mail-qt1-f200.google.com with SMTP id d75a77b69052e-42c70b8e409so118712371cf.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 Feb 2024 09:38:23 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708450702; x=1709055502;
+        h=content-transfer-encoding:mime-version:message-id:date:references
+         :in-reply-to:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Pf6j+i6h2iPgXMeO4/kpzSp22DRqb12CU6kjm37WMmQ=;
+        b=rVt6hLxaFYMzNami9T2q96P+mH9ZStlBLWg0ul+KnkZh/cGMtvvEfIGSvQTrcCn7uF
+         ypJLK8AJek/2Rj+gU3S5V9Ba/IVR2jkhUyscTRnuBIAK7niDRugNtTYQ/4PzlPUJA7Qw
+         8BXtl8ZUPwV//fjBzhjKLsQY9AyClufx1+p0jjJzTU1IlhGuubr3r83ialrWTuPRsEdS
+         QytRTg6OZLsf79UcJiqYzpdb+vfyJyxJYEHD2JQ57W6oBzQT10Fnet8T1gt6D/lnD7cW
+         /3Hl1C7aPmyLB73jYUWK0xu7BQOExIBuBSOp0jphVkdvS3HJ7lJi9YhSCoTvKXS08WkH
+         SIrg==
+X-Forwarded-Encrypted: i=1; AJvYcCWqkXJBOYbiZv7Xu6+lUAFrfwThoOaJhQ8XVPNXYxyTZEu9F/wJIRGXe1Wk5bhNdfHV4Fk7PP7WJz5n5xRmVyvR2TnnnC1oSvD3Qej8ENo=
+X-Gm-Message-State: AOJu0YxpYa2OxMVza9W7ATyUbnfAjipKU7Lc8p7G+Np3K4izPfEYkqrz
+	CWZG/w44Ue0b6V1gQ8yGJlZuVzXW3qzWb4+60ovSw8eYwr2KZnxvgWSo3eKr9iEOJyi7l5zkHzv
+	taUaZS66Gnkb/Xi9aGpsJbnQqli6IPoyfTso3vECzwoY2XET5yv5AuPMuN28DPlJvtElGoc3b
+X-Received: by 2002:ac8:5e4a:0:b0:42d:bf56:89b5 with SMTP id i10-20020ac85e4a000000b0042dbf5689b5mr23713086qtx.2.1708450702687;
+        Tue, 20 Feb 2024 09:38:22 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFeTTqdWsD2ryQ/kvJUPCPUdscvF51pfdUzMyfl8GGrTtsY+R1PNuGVQ+5MrI0u/bBA+53tNA==
+X-Received: by 2002:ac8:5e4a:0:b0:42d:bf56:89b5 with SMTP id i10-20020ac85e4a000000b0042dbf5689b5mr23713056qtx.2.1708450702397;
+        Tue, 20 Feb 2024 09:38:22 -0800 (PST)
+Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
+        by smtp.gmail.com with ESMTPSA id cx17-20020a05620a51d100b00785a64ba095sm3586336qkb.85.2024.02.20.09.38.18
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 20 Feb 2024 09:38:21 -0800 (PST)
+From: Valentin Schneider <vschneid@redhat.com>
+To: Eric Dumazet <edumazet@google.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
+ Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paolo
+ Abeni <pabeni@redhat.com>, mleitner@redhat.com, David Ahern
+ <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar
+ <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
-Date: Mon, 19 Feb 2024 10:55:37 -0800
-Message-ID: <20240219185537.13666-1-kuniyu@amazon.com>
-X-Mailer: git-send-email 2.30.2
-In-Reply-To: <20240219095729.2339914-2-vschneid@redhat.com>
-References: <20240219095729.2339914-2-vschneid@redhat.com>
+In-Reply-To: <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
+References: <20240219095729.2339914-1-vschneid@redhat.com>
+ <20240219095729.2339914-2-vschneid@redhat.com>
+ <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
+Date: Tue, 20 Feb 2024 18:38:17 +0100
+Message-ID: <xhsmho7cbf33q.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: EX19D031UWC001.ant.amazon.com (10.13.139.241) To
- EX19D004ANA001.ant.amazon.com (10.37.240.138)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-From: Valentin Schneider <vschneid@redhat.com>
-Date: Mon, 19 Feb 2024 10:57:29 +0100
-> The TCP timewait timer is proving to be problematic for setups where scheduler
-> CPU isolation is achieved at runtime via cpusets (as opposed to statically via
-> isolcpus=domains).
-> 
-> What happens there is a CPU goes through tcp_time_wait(), arming the time_wait
-> timer, then gets isolated. TCP_TIMEWAIT_LEN later, the timer fires, causing
-> interference for the now-isolated CPU. This is conceptually similar to the issue
-> described in
->   e02b93124855 ("workqueue: Unbind kworkers before sending them to exit()")
-> 
-> Keep softirqs disabled, but make the timer un-pinned and arm it *after* the
-> hashdance.
-> 
-> This introduces the following (non-fatal) race:
-> 
->   CPU0                        CPU1
->     allocates a tw
->     insert it in hash table
-> 				finds the TW and removes it
-> 				(timer cancel does nothing)
->     arms a TW timer, lasting
-> 
-> This partially reverts
->   ed2e92394589 ("tcp/dccp: fix timewait races in timer handling")
-> and
->   ec94c2696f0b ("tcp/dccp: avoid one atomic operation for timewait hashdance")
-> 
-> This also reinstores a comment from
->   ec94c2696f0b ("tcp/dccp: avoid one atomic operation for timewait hashdance")
-> as inet_twsk_hashdance() had a "Step 1" and "Step 3" comment, but the "Step
-> 2" had gone missing.
-> 
-> Link: https://lore.kernel.org/all/ZPhpfMjSiHVjQkTk@localhost.localdomain/
-> Signed-off-by: Valentin Schneider <vschneid@redhat.com>
-> ---
->  net/dccp/minisocks.c          | 16 +++++++---------
->  net/ipv4/inet_timewait_sock.c | 20 +++++++++++++++-----
->  net/ipv4/tcp_minisocks.c      | 16 +++++++---------
->  3 files changed, 29 insertions(+), 23 deletions(-)
-> 
-> diff --git a/net/dccp/minisocks.c b/net/dccp/minisocks.c
-> index 64d805b27adde..2f0fad4255e36 100644
-> --- a/net/dccp/minisocks.c
-> +++ b/net/dccp/minisocks.c
-> @@ -53,16 +53,14 @@ void dccp_time_wait(struct sock *sk, int state, int timeo)
->  		if (state == DCCP_TIME_WAIT)
->  			timeo = DCCP_TIMEWAIT_LEN;
->  
-> -		/* tw_timer is pinned, so we need to make sure BH are disabled
-> -		 * in following section, otherwise timer handler could run before
-> -		 * we complete the initialization.
-> -		 */
-> -		local_bh_disable();
-> -		inet_twsk_schedule(tw, timeo);
-> -		/* Linkage updates.
-> -		 * Note that access to tw after this point is illegal.
-> -		 */
-> +	       local_bh_disable();
+On 19/02/24 15:42, Eric Dumazet wrote:
+> On Mon, Feb 19, 2024 at 10:57=E2=80=AFAM Valentin Schneider <vschneid@red=
+hat.com> wrote:
+>>
+>> The TCP timewait timer is proving to be problematic for setups where sch=
+eduler
+>> CPU isolation is achieved at runtime via cpusets (as opposed to statical=
+ly via
+>> isolcpus=3Ddomains).
+>>
+>
+> ...
+>
+>>  void inet_twsk_deschedule_put(struct inet_timewait_sock *tw)
+>>  {
+>> +       /* This can race with tcp_time_wait() and dccp_time_wait(), as t=
+he timer
+>> +        * is armed /after/ adding it to the hashtables.
+>> +        *
+>> +        * If this is interleaved between inet_twsk_hashdance() and inet=
+_twsk_put(),
+>> +        * then this is a no-op: the timer will still end up armed.
+>> +        *
+>> +        * Conversely, if this successfully deletes the timer, then we k=
+now we
+>> +        * have already gone through {tcp,dcpp}_time_wait(), and we can =
+safely
+>> +        * call inet_twsk_kill().
+>> +        */
+>>         if (del_timer_sync(&tw->tw_timer))
+>>                 inet_twsk_kill(tw);
+>
+> I really do not think adding a comment will prevent races at netns disman=
+tle.
+>
+> We need to make sure the timer is not rearmed, we want to be absolutely
+> sure that after inet_twsk_purge() we have no pending timewait sockets,
+> otherwise UAF will happen on the netns structures.
+>
+> I _think_ that you need timer_shutdown_sync() here, instead of del_timer_=
+sync()
 
-This line seems not correctly indented, same for TCP change.
+Hm so that would indeed prevent a concurrent inet_twsk_schedule() from
+re-arming the timer, but in case the calls are interleaved like so:
 
+                             tcp_time_wait()
+                               inet_twsk_hashdance()
+  inet_twsk_deschedule_put()
+    timer_shutdown_sync()
+                               inet_twsk_schedule()
 
+inet_twsk_hashdance() will have left the refcounts including a count for
+the timer, and we won't arm the timer to clear it via the timer callback
+(via inet_twsk_kill()) - the patch in its current form relies on the timer
+being re-armed for that.
 
-> +
-> +		// Linkage updates
->  		inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
-> +		inet_twsk_schedule(tw, timeo);
-> +		// Access to tw after this point is illegal.
+I don't know if there's a cleaner way to do this, but we could catch that
+in inet_twsk_schedule() and issue the inet_twsk_kill() directly if we can
+tell the timer has been shutdown:
+---
+diff --git a/net/ipv4/inet_timewait_sock.c b/net/ipv4/inet_timewait_sock.c
+index 61a053fbd329c..c272da5046bb4 100644
+--- a/net/ipv4/inet_timewait_sock.c
++++ b/net/ipv4/inet_timewait_sock.c
+@@ -227,7 +227,7 @@ void inet_twsk_deschedule_put(struct inet_timewait_sock=
+ *tw)
+ 	 * have already gone through {tcp,dcpp}_time_wait(), and we can safely
+ 	 * call inet_twsk_kill().
+ 	 */
+-	if (del_timer_sync(&tw->tw_timer))
++	if (timer_shutdown_sync(&tw->tw_timer))
+ 		inet_twsk_kill(tw);
+ 	inet_twsk_put(tw);
+ }
+@@ -267,6 +267,10 @@ void __inet_twsk_schedule(struct inet_timewait_sock *t=
+w, int timeo, bool rearm)
+ 						     LINUX_MIB_TIMEWAITED);
+ 		BUG_ON(mod_timer(&tw->tw_timer, jiffies + timeo));
+ 		refcount_inc(&tw->tw_dr->tw_refcount);
++
++		/* XXX timer got shutdown */
++		if (!tw->tw_timer.function)
++			inet_twsk_kill(tw);
+ 	} else {
+ 		mod_timer_pending(&tw->tw_timer, jiffies + timeo);
+ 	}
 
-Also please use /**/ style for these comments, same for TCP too.
-
-
-> +		inet_twsk_put(tw);
-> +
->  		local_bh_enable();
->  	} else {
->  		/* Sorry, if we're out of memory, just CLOSE this
