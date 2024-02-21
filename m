@@ -1,231 +1,196 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B39B82D99
-	for <linux-rt-users@vger.kernel.org>; Wed, 21 Feb 2024 16:45:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3BA785951;
+	Wed, 21 Feb 2024 19:26:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708533943; cv=none; b=hU1vEvR9ihP3858UMyodU6O+StDL8EZtx9ie1I1qW11QFvcBtR0OzbH2gLrFPLiQUUP4CXJPwolgueQPBW6O4fOwEexF5/GrxMQbdgsM/fOAsJ1zISJ4ZOPVebUF38PM8WCRmHTotWfNTS7ngGic47jDFkLDt77BL9CYlLxmmzM=
+	t=1708543592; cv=none; b=bpJQiAbUz3AXHFh+v+ho8AGZmSlJx5bRsbXe3xoPliDAxQ4KRQKup2ArCMucMohWx2jsac1mxdyACZsnAApZTGcyP0ycaYJInXXSJYShwuPk58JcpofgxeU4qPDm03ctMuDr4Od/+Z72EjI5unFTv2btnGL9bCGnme4pTJGIxqE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708533943; c=relaxed/simple;
-	bh=PiK6GLh5Bbli9ksKDaj+Hoj+StNAExwyesgIoPSxmmY=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=p2M+Fu7YhunNAcQpTANa5VrdXu3q83WETKBYoPJilSsaVDGS3gNBzK/9hvHYyxtZVJVQ0042J954ZYkt2sG4X0LzmTd+7RzLA5c85bRaJtJZN+v+TsBekpzf63+730DmQoCy66UpPZqH/39CuMmzbyLWysHo+fCvroLlMfckmCc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=elKCfJhJ; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1708543592; c=relaxed/simple;
+	bh=91FyS08qWiRDlfMFBy4FOxLFqiOt/aEpMc0x5QwlDEY=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To; b=Mqk8+kPLn4OQLPe2DwyyQ5ZEeMN1lx3CLq//tXasAN8jvXyn+FTt7xTFhGPpn01KmQpGEfeBQRBQy7gf7Fo4SpLkvL1hWfBHnl6Hqaur+MGRGZML93Hb+Ux3JBgcTgl9D75eKUB6/HHdoPxTlmCBC1U2yKNwArhNMDXdJ2sPo+M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=cDnMxz6n; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="elKCfJhJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708533940;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9Aa0856KKiSIs4J8EHY0Puegx6vd1lMlKDsy7EPPIWE=;
-	b=elKCfJhJvtkdvzHSnMhHCm5ZbQ7ETgHv6zFrD0pxg5FRAQL/bfFl/1HltozLVqfX7ctOOx
-	lbbSTlYIuroKfKckfUNAzcZnzIKS/pSPJMImXkZbs6Okctu8qgFgvc+xkIGz0nRss0Gf1E
-	/5vCKsgpMF16Il8N0DkIYZaaZARyGN8=
-Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
- [209.85.128.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-655-zTBAAsAkNNGWIvvSQgMlFg-1; Wed, 21 Feb 2024 11:45:39 -0500
-X-MC-Unique: zTBAAsAkNNGWIvvSQgMlFg-1
-Received: by mail-wm1-f70.google.com with SMTP id 5b1f17b1804b1-40e4478a3afso34011975e9.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 21 Feb 2024 08:45:39 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708533938; x=1709138738;
-        h=content-transfer-encoding:mime-version:message-id:date:references
-         :in-reply-to:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=9Aa0856KKiSIs4J8EHY0Puegx6vd1lMlKDsy7EPPIWE=;
-        b=JHOqMU2KwcP1vJD41RtsQx9ZcZtARfLIKSywPQIH/fT27nkKJRQQ2fackrgBScFBut
-         RMrS8DWi+41E/RuW9JO0HuSJmBzfLsbaH2xfJT60+pgiss2ZLuXFnISzgB+Qyv6TXwpg
-         2tYeG1NuMXywVHpE64oLi7mKfV29rGLvxPduP5/P1cOuwxmI+cYEkDsv6dR2sjWviZNL
-         tR8/8owDbDgZ6q8lTdgfhG2OqDSSitwuwcSOPPYBom+6+rgqP4bC3M0E1ixwHsuq/mAN
-         q1pHuTnnj3U2miMVIOil1ci0Er+w1M6R/hMxggld+ITUDGMSsogQIocAXk6lElP3zpEv
-         4B5Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUzBsP5Znaxls+gJgKFEguida8mO8uS+9+bH+qB4YiUTo9kqdXRUldc6Y4C1itX4lxnmudJKXITx8q2GBvX5e44e+g4hfxm59sUe9oCRF4=
-X-Gm-Message-State: AOJu0YwMzn3t8Dx7iMTNmY8DXsiLksT6Kt3B+EoGP9Pwz8IkvuTcM0sv
-	CSG+UjO8LHH3om0lwrek+wu7ToI+NaNdSWmtShPRFWLI59hb3rWZ4Zw4f1uMmsBzaBbSTvRUM0x
-	posWuUN+K60xZHYlpg0EHtUeiZd3P5xl4q/A4jW8j9g/M9dtse4c5DukO8ql0G6VS
-X-Received: by 2002:a05:600c:444a:b0:411:c8a7:7b09 with SMTP id v10-20020a05600c444a00b00411c8a77b09mr32784wmn.10.1708533938252;
-        Wed, 21 Feb 2024 08:45:38 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGWNC9F/v+b8Zz5OO/sN9jdb2v+iFDyGNJnulQT9iuh/19ax1wa9bZTXvgr4iAAWnO9GFiDvA==
-X-Received: by 2002:a05:600c:444a:b0:411:c8a7:7b09 with SMTP id v10-20020a05600c444a00b00411c8a77b09mr32762wmn.10.1708533937888;
-        Wed, 21 Feb 2024 08:45:37 -0800 (PST)
-Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
-        by smtp.gmail.com with ESMTPSA id ay17-20020a05600c1e1100b004127876647fsm1867978wmb.41.2024.02.21.08.45.36
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Feb 2024 08:45:37 -0800 (PST)
-From: Valentin Schneider <vschneid@redhat.com>
-To: Eric Dumazet <edumazet@google.com>
-Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
- Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paolo
- Abeni <pabeni@redhat.com>, mleitner@redhat.com, David Ahern
- <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar
- <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
-In-Reply-To: <CANn89iJpwUpAROOq7+ttwTMCZu0=XhS4dgwcs44t-gb7-_ejRg@mail.gmail.com>
-References: <20240219095729.2339914-1-vschneid@redhat.com>
- <20240219095729.2339914-2-vschneid@redhat.com>
- <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
- <xhsmho7cbf33q.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
- <CANn89iJpwUpAROOq7+ttwTMCZu0=XhS4dgwcs44t-gb7-_ejRg@mail.gmail.com>
-Date: Wed, 21 Feb 2024 17:45:36 +0100
-Message-ID: <xhsmhjzmxg40f.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="cDnMxz6n"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C4C66C433F1;
+	Wed, 21 Feb 2024 19:26:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1708543592;
+	bh=91FyS08qWiRDlfMFBy4FOxLFqiOt/aEpMc0x5QwlDEY=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:From;
+	b=cDnMxz6n0tEThszwo0X3l9YoIL3uzpPkbjkMTUlHLsHkkICAdlC9hK8kpfEoNu5wB
+	 KHDt2WOSYb0FiEj2dfG93p/X5sOEKvP9636M9qEARAGpOYSoL/8zRSvCsKk5fiAJ84
+	 nmZujen4MnwPIkA1dhgIqxFOkd187aoxtObWjSK1AMRVCW3tYIXITP3QEVuHEg35Sf
+	 BeMWKV9nuo14ef9M8q0gPhNVTRQ/OnAh6xRGAknh97ikmfrv4lsKAL/ftu3DCXagw8
+	 KsMYyGWkI4Gpopi8AwOUmw6Sxv345qPXysMyUVPuQH7447/CYaCCxx26B/fmp9Bp//
+	 u7VtC3TR75v6Q==
+Date: Wed, 21 Feb 2024 16:26:26 -0300
+From: Arnaldo Carvalho de Melo <acme@kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Mike Galbraith <efault@gmx.de>, Peter Zijlstra <peterz@infradead.org>,
+	Marco Elver <elver@google.com>, linux-rt-users@vger.kernel.org,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	Juri Lelli <juri.lelli@redhat.com>,
+	Clark Williams <williams@redhat.com>,
+	Alessandro Carminati <acarmina@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Artem Savkov <asavkov@redhat.com>
+Subject: Re: 'perf test sigtrap' failing on PREEMPT_RT_FULL
+Message-ID: <ZdZOYnIkjqkyfo5P@x1>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <ZZcyzV8logh6BY0I@kernel.org>
+X-Url: http://acmel.wordpress.com
 
-On 20/02/24 18:42, Eric Dumazet wrote:
-> On Tue, Feb 20, 2024 at 6:38=E2=80=AFPM Valentin Schneider <vschneid@redh=
-at.com> wrote:
->> Hm so that would indeed prevent a concurrent inet_twsk_schedule() from
->> re-arming the timer, but in case the calls are interleaved like so:
->>
->>                              tcp_time_wait()
->>                                inet_twsk_hashdance()
->>   inet_twsk_deschedule_put()
->>     timer_shutdown_sync()
->>                                inet_twsk_schedule()
->>
->> inet_twsk_hashdance() will have left the refcounts including a count for
->> the timer, and we won't arm the timer to clear it via the timer callback
->> (via inet_twsk_kill()) - the patch in its current form relies on the tim=
-er
->> being re-armed for that.
->>
->> I don't know if there's a cleaner way to do this, but we could catch that
->> in inet_twsk_schedule() and issue the inet_twsk_kill() directly if we can
->> tell the timer has been shutdown:
->> ---
->> diff --git a/net/ipv4/inet_timewait_sock.c b/net/ipv4/inet_timewait_sock=
-.c
->> index 61a053fbd329c..c272da5046bb4 100644
->> --- a/net/ipv4/inet_timewait_sock.c
->> +++ b/net/ipv4/inet_timewait_sock.c
->> @@ -227,7 +227,7 @@ void inet_twsk_deschedule_put(struct inet_timewait_s=
-ock *tw)
->>          * have already gone through {tcp,dcpp}_time_wait(), and we can =
-safely
->>          * call inet_twsk_kill().
->>          */
->> -       if (del_timer_sync(&tw->tw_timer))
->> +       if (timer_shutdown_sync(&tw->tw_timer))
->>                 inet_twsk_kill(tw);
->>         inet_twsk_put(tw);
->>  }
->> @@ -267,6 +267,10 @@ void __inet_twsk_schedule(struct inet_timewait_sock=
- *tw, int timeo, bool rearm)
->>                                                      LINUX_MIB_TIMEWAITE=
-D);
->>                 BUG_ON(mod_timer(&tw->tw_timer, jiffies + timeo));
->
-> Would not a shutdown timer return a wrong mod_timer() value here ?
->
-> Instead of BUG_ON(), simply release the refcount ?
->
+In Thu, 4 Jan 2024 19:35:57 -0300, Arnaldo Carvalho de Melo wrote:
+> Em Fri, Jul 28, 2023 at 05:07:18PM +0200, Sebastian Andrzej Siewior escreveu:
+> > On 2023-07-26 08:10:45 [+0200], Mike Galbraith wrote:
+> > > > [   52.848925] BUG: scheduling while atomic: perf/6549/0x00000002
 
-Unfortunately a shutdown timer would return the same as a non-shutdown one:
+> > > Had bf9ad37dc8a not been reverted due to insufficient beauty, you could
+> > > trivially make the sigtrap test a happy camper (wart tested in tip-rt).
+ 
+> > Thank you for the pointer Mike.
+ 
+> > I guess we need this preempt_disable_notrace() in perf_pending_task()
+> > due to context accounting in get_recursion_context(). Would a
+> > migrate_disable() be sufficient or could we send the signal outside of
+> > the preempt-disabled block?
 
- * Return:
- * * %0 - The timer was inactive and started or was in shutdown
- *	  state and the operation was discarded
+> I got back to this, need to go again over all the callers of
+> perf_swevent_get_recursion_context(), from the first quick glance there
+> are other places with preempt_disable()/enable(), but doing just the
+> switch to migrate disable/enable on perf_pending_task() makes this
+> specific test to work:
 
-and now that you've pointed this out, I realize it's racy to check the
-state of the timer after the mod_timer():
+> [acme@nine linux]$ git log --oneline -5
+> 086dab66d504 (HEAD -> linux-rt-devel/linux-6.7.y-rt/send_sig_perf.fix, tag: v6.7-rc5-rt5, linux-rt-devel/linux-6.7.y-rt) v6.7-rc5-rt5
+> 29e0d951f39b printk: Update the printk series.
+> 2308ecc8ce88 (tag: v6.7-rc5-rt4) v6.7-rc5-rt4
+> 10d5f3551216 Merge tag 'v6.7-rc5' into linux-6.7.y-rt
+> a39b6ac3781d (tag: v6.7-rc5, linux-rt-devel/master, linux-rt-devel/linux-6.7.y) Linux 6.7-rc5
+> [acme@nine linux]$ git diff
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index c9d123e13b57..a9b9ef60f6b3 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -6801,7 +6801,7 @@ static void perf_pending_task(struct callback_head *head)
+>         * If we 'fail' here, that's OK, it means recursion is already disabled
+>         * and we won't recurse 'further'.
+>         */
+>-       preempt_disable_notrace();
+>+       migrate_disable();
+>        rctx = perf_swevent_get_recursion_context();
 
-  BUG_ON(mod_timer(&tw->tw_timer, jiffies + timeo));
-                                                        inet_twsk_deschedul=
-e_put()
-                                                          timer_shutdown_sy=
-nc()
-                                                          inet_twsk_kill()
-  if (!tw->tw_timer.function)
-    inet_twsk_kill()
+Pardon my ignorance, is it safe to call preempt_count() with preemption
+enabled on PREEMPT_RT, or at least in the context being discussed here?
 
+Because:
 
-I've looked into messing about with the return values of mod_timer() to get
-the info that the timer was shutdown, but the only justification for this
-is that here we rely on the timer_base lock to serialize
-inet_twsk_schedule() vs inet_twsk_deschedule_put().
+	 perf_swevent_get_recursion_context()
+	     get_recursion_context()
+                 interrupt_context_level()
+                     preempt_count()	
 
-AFAICT the alternative is adding local serialization like so, which I'm not
-the biggest fan of but couldn't think of a neater approach:
----
-diff --git a/include/net/inet_timewait_sock.h b/include/net/inet_timewait_s=
-ock.h
-index f28da08a37b4e..39bb0c148d4ee 100644
---- a/include/net/inet_timewait_sock.h
-+++ b/include/net/inet_timewait_sock.h
-@@ -75,6 +75,7 @@ struct inet_timewait_sock {
- 	struct timer_list	tw_timer;
- 	struct inet_bind_bucket	*tw_tb;
- 	struct inet_bind2_bucket	*tw_tb2;
-+	struct spinlock      tw_timer_lock;
- };
- #define tw_tclass tw_tos
-=20
-diff --git a/net/ipv4/inet_timewait_sock.c b/net/ipv4/inet_timewait_sock.c
-index 61a053fbd329c..2471516f9c61d 100644
---- a/net/ipv4/inet_timewait_sock.c
-+++ b/net/ipv4/inet_timewait_sock.c
-@@ -193,6 +193,7 @@ struct inet_timewait_sock *inet_twsk_alloc(const struct=
- sock *sk,
- 		atomic64_set(&tw->tw_cookie, atomic64_read(&sk->sk_cookie));
- 		twsk_net_set(tw, sock_net(sk));
- 		timer_setup(&tw->tw_timer, tw_timer_handler, 0);
-+		spin_lock_init(&tw->tw_timer_lock);
- 		/*
- 		 * Because we use RCU lookups, we should not set tw_refcnt
- 		 * to a non null value before everything is setup for this
-@@ -227,8 +228,11 @@ void inet_twsk_deschedule_put(struct inet_timewait_soc=
-k *tw)
- 	 * have already gone through {tcp,dcpp}_time_wait(), and we can safely
- 	 * call inet_twsk_kill().
- 	 */
--	if (del_timer_sync(&tw->tw_timer))
-+	spin_lock(&tw->tw_timer_lock);
-+	if (timer_shutdown_sync(&tw->tw_timer))
- 		inet_twsk_kill(tw);
-+	spin_unlock(&tw->tw_timer_lock);
-+
- 	inet_twsk_put(tw);
- }
- EXPORT_SYMBOL(inet_twsk_deschedule_put);
-@@ -262,11 +266,25 @@ void __inet_twsk_schedule(struct inet_timewait_sock *=
-tw, int timeo, bool rearm)
-=20
- 	if (!rearm) {
- 		bool kill =3D timeo <=3D 4*HZ;
-+		bool pending;
-=20
- 		__NET_INC_STATS(twsk_net(tw), kill ? LINUX_MIB_TIMEWAITKILLED :
- 						     LINUX_MIB_TIMEWAITED);
-+		spin_lock(&tw->tw_timer_lock);
- 		BUG_ON(mod_timer(&tw->tw_timer, jiffies + timeo));
-+		pending =3D timer_pending(&tw->tw_timer);
- 		refcount_inc(&tw->tw_dr->tw_refcount);
-+
-+		/*
-+		 * If the timer didn't become pending under tw_timer_lock, then
-+		 * it means it has been shutdown by inet_twsk_deschedule_put()
-+		 * prior to this invocation. All that remains is to clean up the
-+		 * timewait.
-+		 */
-+		if (!pending)
-+			inet_twsk_kill(tw);
-+
-+		spin_unlock(&tw->tw_timer_lock);
- 	} else {
- 		mod_timer_pending(&tw->tw_timer, jiffies + timeo);
- 	}
+And:
 
+int perf_swevent_get_recursion_context(void)
+{
+        struct swevent_htable *swhash = this_cpu_ptr(&swevent_htable);
+
+        return get_recursion_context(swhash->recursion);
+}
+
+>         if (event->pending_work) {
+> @@ -6812,7 +6812,7 @@ static void perf_pending_task(struct callback_head *head)
+ 
+>        if (rctx >= 0)
+>                 perf_swevent_put_recursion_context(rctx);
+> -       preempt_enable_notrace();
+> +       migrate_enable();
+ 
+>         put_event(event);
+>  }
+> [acme@nine linux]$ uname -a
+> Linux nine 6.7.0-rc5-rt5.sigtrap-fix-dirty #2 SMP PREEMPT_RT Thu Jan  4 18:11:44 -03 2024 x86_64 x86_64 x86_64 GNU/Linux
+> [acme@nine linux]$ sudo su -
+> [sudo] password for acme: 
+> [root@nine ~]# 
+> [root@nine ~]# perf test sigtrap
+>  68: Sigtrap                                                         : Ok
+> [root@nine ~]# 
+> [root@nine ~]# perf probe -L perf_pending_task
+> <perf_pending_task@/home/acme/git/linux/kernel/events/core.c:0>
+>       0  static void perf_pending_task(struct callback_head *head)
+>          {
+>       2         struct perf_event *event = container_of(head, struct perf_event, pending_task);
+>       3         int rctx;
+       
+>                 /*
+>                  * If we 'fail' here, that's OK, it means recursion is already disabled
+>                  * and we won't recurse 'further'.
+>                  */
+>                 migrate_disable();
+>      10         rctx = perf_swevent_get_recursion_context();
+>         
+>      12         if (event->pending_work) {
+>      13                 event->pending_work = 0;
+>      14                 perf_sigtrap(event);
+>      15                 local_dec(&event->ctx->nr_pending);
+>                 }
+>         
+>      18         if (rctx >= 0)
+>      19                 perf_swevent_put_recursion_context(rctx);
+>      20         migrate_enable();
+     
+>      22         put_event(event);
+>          }
+         
+>          #ifdef CONFIG_GUEST_PERF_EVENTS
+
+> [root@nine ~]# perf probe perf_pending_task
+> Added new event:
+>   probe:perf_pending_task (on perf_pending_task)
+
+> You can now use it in all perf tools, such as:
+
+> 	perf record -e probe:perf_pending_task -aR sleep 1
+
+> [root@nine ~]# perf trace --max-events=1 -e probe:perf_pending_task/max-stack=6/ perf test sigtrap 
+>  68: Sigtrap                                                         : Ok
+>      0.000 :9608/9608 probe:perf_pending_task(__probe_ip: -2064408784)
+>                                        perf_pending_task ([kernel.kallsyms])
+>                                        task_work_run ([kernel.kallsyms])
+>                                        exit_to_user_mode_loop ([kernel.kallsyms])
+>                                        exit_to_user_mode_prepare ([kernel.kallsyms])
+>                                        irqentry_exit_to_user_mode ([kernel.kallsyms])
+>                                        asm_sysvec_irq_work ([kernel.kallsyms])
+> [root@nine ~]#
+
+> [root@nine ~]# head -5 /etc/os-release
+> NAME="Red Hat Enterprise Linux"
+> VERSION="9.2 (Plow)"
+> ID="rhel"
+> ID_LIKE="fedora"
+> VERSION_ID="9.2"
+> [root@nine ~]#
+
+> I did the test without the above patch and the original problem is
+> reproduced.
+ 
+> > This is also used in perf_pending_irq() and on PREEMPT_RT this is
+> > invoked from softirq context which is preemptible.
+
+Humm, and then when going thru perf_pending_irq() we don't hit that
+scheduling on atomic.
+
+- Arnaldo
