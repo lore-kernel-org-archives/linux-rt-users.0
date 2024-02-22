@@ -1,100 +1,64 @@
-Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55E4E39FC7
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 10:16:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 567F160B8B
+	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 12:40:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708596998; cv=none; b=awqMvSB7BnEXoi4P+LjYnsM03NbyUpbtqliJKpVGS2Gu/KKjtFS+1ojheqve8IVchfnf1uAX5YIyiKWI2c1tZlFgPQWkRXl+AuQmpbJ7JouKxQZP+3nJX9hIYsu6T2j2taz3+AWYJUaQFDx9N2JuIiE+byCCF8oGW/E5+SIWJe8=
+	t=1708605621; cv=none; b=a6pirJmIO2ZYeBF5vvp1gurqJ/GguB9I3mkJI5a1B9NQPvw2rA9QGN2Q2Vp4Z4u5BAGnmWaCEeoNxJ9ufCAr6WWVInj1ySBEqiKvQpyfht5YeUdTUmBSH2MN0rznzSSQC3YUcf8eCWMThk+qVk5f/JghrM3rnBSne0bSOMBKjG4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708596998; c=relaxed/simple;
-	bh=FBKMBxrwmVvetT2bMhsSv3y9VTFQT+/3pui8TxBP1mA=;
-	h=From:To:Subject:Date:Message-Id:In-Reply-To:References; b=pQZLfQy9beoz8R5CTzHOib/VCBz01YFuAVx/XhSlI81L+vYvRT172G3HFajhjCjGuZSMPpikt5Ud1V6lGBu4SnR4VIqS8n5oLfnDhW+EnTHhqFkfi7DEaj8DHOmv4UbKjlco2t0XqLbHhV7vNb2EykiL8K0olJfGkirXoqkpd6Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=qualcomm.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=X1VWcxEE; arc=none smtp.client-ip=205.220.168.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qualcomm.com
+	s=arc-20240116; t=1708605621; c=relaxed/simple;
+	bh=TZtFuYd1iqgRksuYe0yCZRGhy5pbEjhH6V9QPfyMHwE=;
+	h=From:To:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=LN0jeCJqLHh3+gMdBB+vhZ9ybyu/uZNSOuDCMzMNTyah+bMcb9zJDRweDhvyU8yX/nVv/5ZEal0O7dAPejCsC15R+aM3quIJjae+WdHCMdrdalSlLmMVZMGVhg2gBFLmyfqb4wuMEfzzgpNEmGHSp0lftf79saLunHI0SJf4ank=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=J9PDv7wg; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=XDuFAn1M; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="X1VWcxEE"
-Received: from pps.filterd (m0279866.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 41M4vTuA032530
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 10:16:36 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
-	from:to:subject:date:message-id:in-reply-to:references; s=
-	qcppdkim1; bh=WANmLYKyGauKKoAx3g3JsRZ4f76A6JkCghrHb2OT0Dk=; b=X1
-	VWcxEEQlzvCEitrLjxMkDEVkS9G8FNOoG/ExDz3VOvqyiXnQTuntHz9GBelf3B/5
-	+0u5tzZlD8fefxRbzJ4IQY7TNbER5htNR8G3b7lIxuNl29yaTJh75FXb5m6JwViU
-	DWo657MjctonsiB7tn+03zDnNU2oSRtM5vtqr64ik5/cHfc6YVSTHT/N/6X73Dmn
-	x78rqYFsN6s0p6KKfWPRvaH5Ejui5sW3F0TINvLOO5uJEsC23U1qdVJVd/vuuKb+
-	pk+B6AxvXvnXg7e6sqAn3rfxyS48YwCi0rtJte+aRhd/ZeHcLzob5EssNKTs32xe
-	cSYLsEhHVsRaYq7cde3g==
-Received: from apblrppmta02.qualcomm.com (blr-bdr-fw-01_GlobalNAT_AllZones-Outside.qualcomm.com [103.229.18.19])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 3wdwmd15gp-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT)
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 10:16:36 +0000 (GMT)
-Received: from pps.filterd (APBLRPPMTA02.qualcomm.com [127.0.0.1])
-	by APBLRPPMTA02.qualcomm.com (8.17.1.5/8.17.1.5) with ESMTP id 41MAGWvF009797
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 10:16:32 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
-	by APBLRPPMTA02.qualcomm.com (PPS) with ESMTP id 3wanvkmfv3-1
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 10:16:32 +0000
-Received: from APBLRPPMTA02.qualcomm.com (APBLRPPMTA02.qualcomm.com [127.0.0.1])
-	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 41MAGWTl009789
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 10:16:32 GMT
-Received: from hu-maiyas-hyd.qualcomm.com (hu-chandna-hyd.qualcomm.com [10.147.242.90])
-	by APBLRPPMTA02.qualcomm.com (PPS) with ESMTP id 41MAGWw4009787;
-	Thu, 22 Feb 2024 10:16:32 +0000
-Received: by hu-maiyas-hyd.qualcomm.com (Postfix, from userid 2303763)
-	id 62A2C529765; Thu, 22 Feb 2024 15:46:31 +0530 (+0530)
-From: Sahil Chandna <quic_chandna@quicinc.com>
-To: linux-rt-users@vger.kernel.org, quic_chandna@quicinc.com,
-        quic_akdwived@quicinc.com
-Subject: [PATCH 1/1] printk: fix NULL ptr dereference in nbcon driver
-Date: Thu, 22 Feb 2024 15:46:26 +0530
-Message-Id: <20240222101626.1142-2-quic_chandna@quicinc.com>
-X-Mailer: git-send-email 2.17.1
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="J9PDv7wg";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="XDuFAn1M"
+From: John Ogness <john.ogness@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1708605617;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TZtFuYd1iqgRksuYe0yCZRGhy5pbEjhH6V9QPfyMHwE=;
+	b=J9PDv7wg800BsP/12a2ohoCk4t+08P4ctMZO1FYgJ0L4mNuMOt7kFllHIIU6DrqXx96TVh
+	wwxrNQiZNJ006JIlBorMyexPl43ToXfLrSuga7GamBdQzkAmb10tE5fxv1dBqq0peB/nd9
+	Y20NVaJ6h51JNnVadDU66bpv9usUYbk2R1EkPkNkqOhyBBGMotU/t3RsnLsilHb85kLqXi
+	XlA39YPzaYi0jdE49FWQN2a+6e8ztZnJVtCryS7QNoyniWzYuGjLDqhTFmpVPiOYkSjZqg
+	xsmYCUGHsrmJYwW2aziM/KMMtFKD5C83cJzEMG/PLsISZYlV3sC5Z7YpFmZ5zQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1708605617;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TZtFuYd1iqgRksuYe0yCZRGhy5pbEjhH6V9QPfyMHwE=;
+	b=XDuFAn1MIF1dL2S1DLtEGdxlrU1WdKZ1KWGVr+owutWy85gpvtIDPZf8LceDvrBf1BheQ5
+	XFHkpYkuDNSiddDg==
+To: Sahil Chandna <quic_chandna@quicinc.com>,
+ linux-rt-users@vger.kernel.org, quic_chandna@quicinc.com,
+ quic_akdwived@quicinc.com
+Subject: Re: [PATCH 0/1] Fix NULL ptr dereference in nbcon driver
 In-Reply-To: <20240222101626.1142-1-quic_chandna@quicinc.com>
 References: <20240222101626.1142-1-quic_chandna@quicinc.com>
-X-QCInternal: smtphost
-X-QCInternal: smtphost
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-GUID: KEPqj3W7t0MPsecnD-VbzPh-jE7mzGeM
-X-Proofpoint-ORIG-GUID: KEPqj3W7t0MPsecnD-VbzPh-jE7mzGeM
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
- definitions=2024-02-22_08,2024-02-22_01,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 lowpriorityscore=0
- impostorscore=0 mlxlogscore=922 suspectscore=0 malwarescore=0 spamscore=0
- bulkscore=0 priorityscore=1501 phishscore=0 mlxscore=0 clxscore=1015
- adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2402120000 definitions=main-2402220081
+Date: Thu, 22 Feb 2024 13:45:53 +0106
+Message-ID: <874je04qqu.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain
 
-Add a check for NULL console in nbcon driver.
+On 2024-02-22, Sahil Chandna <quic_chandna@quicinc.com> wrote:
+> Add a missing check in nbcon driver which is causing NULL pointer
+> dereference bug.
 
-Signed-off-by: Sahil Chandna <quic_chandna@quicinc.com>
----
- printk/nbcon.c | 3 +++
- 1 file changed, 3 insertions(+)
+I believe the correct fix is here:
 
-diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
-index e697a8e..398739d 100644
---- a/kernel/printk/nbcon.c
-+++ b/kernel/printk/nbcon.c
-@@ -1623,6 +1623,9 @@ void nbcon_release(struct uart_port *up)
- 		.prio		= NBCON_PRIO_NORMAL,
- 	};
- 
-+	if (!con)
-+		return;
-+
- 	if (!con->locked_port)
- 		return;
- 
--- 
-2.17.1
+https://lore.kernel.org/lkml/20240123054033.183114-2-junxiao.chang@intel.com/
 
+John
