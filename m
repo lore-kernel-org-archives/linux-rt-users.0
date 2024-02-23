@@ -1,64 +1,76 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 567F160B8B
-	for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2024 12:40:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 7791D5D467;
+	Fri, 23 Feb 2024 09:53:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708605621; cv=none; b=a6pirJmIO2ZYeBF5vvp1gurqJ/GguB9I3mkJI5a1B9NQPvw2rA9QGN2Q2Vp4Z4u5BAGnmWaCEeoNxJ9ufCAr6WWVInj1ySBEqiKvQpyfht5YeUdTUmBSH2MN0rznzSSQC3YUcf8eCWMThk+qVk5f/JghrM3rnBSne0bSOMBKjG4=
+	t=1708681982; cv=none; b=RZEyYhJxdeFtfbCGJNfz5D/SpqTdE73Q/r3/0SOLqOR3KXnmJQwlH6o6s8O6K3ZVhyVLBmrWpZXD5tlRpjpTkdvtgjOjAz8OmQ2uhhS7O8jZADW4/J5HkUGCEvvkf3BkURgcY3MAQa0dl4nKBl+LHz2oXc3aPwMwv59/KBdHubU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708605621; c=relaxed/simple;
-	bh=TZtFuYd1iqgRksuYe0yCZRGhy5pbEjhH6V9QPfyMHwE=;
-	h=From:To:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=LN0jeCJqLHh3+gMdBB+vhZ9ybyu/uZNSOuDCMzMNTyah+bMcb9zJDRweDhvyU8yX/nVv/5ZEal0O7dAPejCsC15R+aM3quIJjae+WdHCMdrdalSlLmMVZMGVhg2gBFLmyfqb4wuMEfzzgpNEmGHSp0lftf79saLunHI0SJf4ank=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=J9PDv7wg; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=XDuFAn1M; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="J9PDv7wg";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="XDuFAn1M"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1708605617;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TZtFuYd1iqgRksuYe0yCZRGhy5pbEjhH6V9QPfyMHwE=;
-	b=J9PDv7wg800BsP/12a2ohoCk4t+08P4ctMZO1FYgJ0L4mNuMOt7kFllHIIU6DrqXx96TVh
-	wwxrNQiZNJ006JIlBorMyexPl43ToXfLrSuga7GamBdQzkAmb10tE5fxv1dBqq0peB/nd9
-	Y20NVaJ6h51JNnVadDU66bpv9usUYbk2R1EkPkNkqOhyBBGMotU/t3RsnLsilHb85kLqXi
-	XlA39YPzaYi0jdE49FWQN2a+6e8ztZnJVtCryS7QNoyniWzYuGjLDqhTFmpVPiOYkSjZqg
-	xsmYCUGHsrmJYwW2aziM/KMMtFKD5C83cJzEMG/PLsISZYlV3sC5Z7YpFmZ5zQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1708605617;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TZtFuYd1iqgRksuYe0yCZRGhy5pbEjhH6V9QPfyMHwE=;
-	b=XDuFAn1MIF1dL2S1DLtEGdxlrU1WdKZ1KWGVr+owutWy85gpvtIDPZf8LceDvrBf1BheQ5
-	XFHkpYkuDNSiddDg==
-To: Sahil Chandna <quic_chandna@quicinc.com>,
- linux-rt-users@vger.kernel.org, quic_chandna@quicinc.com,
- quic_akdwived@quicinc.com
-Subject: Re: [PATCH 0/1] Fix NULL ptr dereference in nbcon driver
-In-Reply-To: <20240222101626.1142-1-quic_chandna@quicinc.com>
-References: <20240222101626.1142-1-quic_chandna@quicinc.com>
-Date: Thu, 22 Feb 2024 13:45:53 +0106
-Message-ID: <874je04qqu.fsf@jogness.linutronix.de>
+	s=arc-20240116; t=1708681982; c=relaxed/simple;
+	bh=4wR5/b9Ppb8PrsM6uEfWu6D5FPvs3K+BXutqUdHWA/0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=uTsnq2J9jPRut0Q8Yn1daJQBlCDJioNxtTbaWQz0Z4OQEnJ+WgMtyfwW9PmNU9jKxEoLXYU1nDCpyAtiGAhrc3i0mLkTHHfPLqhiVfzMz9PZjBbKlwBRQ/7+l+r7HzICkhe4rQruNyIrD7onfLUmPnJUEPN9x9A5Ua3gDgRXQY0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 6504A1650;
+	Fri, 23 Feb 2024 01:53:38 -0800 (PST)
+Received: from [192.168.1.13] (unknown [172.31.20.19])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id B0AE93F766;
+	Fri, 23 Feb 2024 01:52:58 -0800 (PST)
+Message-ID: <1ae5b9e6-9eb4-49a5-8cfc-46359c8d74c3@arm.com>
+Date: Fri, 23 Feb 2024 10:52:57 +0100
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+User-Agent: Mozilla Thunderbird
+Subject: Re: [ANNOUNCE] v6.8-rc4-rt4
+Content-Language: en-US
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+ Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>
+References: <20240214161130.ZT9RSWDc@linutronix.de>
+From: Pierre Gondois <pierre.gondois@arm.com>
+In-Reply-To: <20240214161130.ZT9RSWDc@linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On 2024-02-22, Sahil Chandna <quic_chandna@quicinc.com> wrote:
-> Add a missing check in nbcon driver which is causing NULL pointer
-> dereference bug.
+Hello Sebastian,,
 
-I believe the correct fix is here:
+On 2/14/24 17:11, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+> 
+> I'm pleased to announce the v6.8-rc4-rt4 patch set.
+> 
+> Changes since v6.8-rc4-rt3:
+> 
+>    - The previous releases introduced a compiler warning for i915 driver
+>      in the !i915 case. Reported by the kernel test robot.
+> 
+>    - An update to the printk series by John Ogness:
+> 
+>      - document new nbcon console callbacks:
+>      
+>      - add "threadprintk" boot argument for !PREEMPT_RT users that want a
+>        fully threaded printk.
+>      
+>      - use thread callback (instead of atomic callback) for legacy printing
+>        in task context.
+>      
+>      - sync with recently reviewed printk series.
+> 
+> Known issues
+>       Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
+>       hist" as trigger. It is not yet understood. The report is at
+> 	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
 
-https://lore.kernel.org/lkml/20240123054033.183114-2-junxiao.chang@intel.com/
+I recently tried to reproduce the issue using the same kernel version and platform,
+but even after multiple resets and attempts to re-trigger it didn't show up.
+As it doesn't seem anyone else reported anything similar, would it make sense
+to drop the reference ?
 
-John
+Regards,
+Pierre
