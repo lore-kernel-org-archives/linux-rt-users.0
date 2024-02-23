@@ -1,76 +1,86 @@
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 7791D5D467;
-	Fri, 23 Feb 2024 09:53:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B28227F466;
+	Fri, 23 Feb 2024 13:40:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708681982; cv=none; b=RZEyYhJxdeFtfbCGJNfz5D/SpqTdE73Q/r3/0SOLqOR3KXnmJQwlH6o6s8O6K3ZVhyVLBmrWpZXD5tlRpjpTkdvtgjOjAz8OmQ2uhhS7O8jZADW4/J5HkUGCEvvkf3BkURgcY3MAQa0dl4nKBl+LHz2oXc3aPwMwv59/KBdHubU=
+	t=1708695640; cv=none; b=pM2DFrxY/dbeWyP5NQxMj88pdyqM790jaI2V9JvozzEPbK8wS2BYPC3zK7n0b3G3AAHqyc3BYgBsXBwcz2ZZuaFeJaHFg1AhIgDdnkB1pvBDK7PKU0bwloaLJ5lyPSWdT9J+RWW5tnEeB5U/Hq5opNUst00OiRBBPzuaS3P+fCQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708681982; c=relaxed/simple;
-	bh=4wR5/b9Ppb8PrsM6uEfWu6D5FPvs3K+BXutqUdHWA/0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=uTsnq2J9jPRut0Q8Yn1daJQBlCDJioNxtTbaWQz0Z4OQEnJ+WgMtyfwW9PmNU9jKxEoLXYU1nDCpyAtiGAhrc3i0mLkTHHfPLqhiVfzMz9PZjBbKlwBRQ/7+l+r7HzICkhe4rQruNyIrD7onfLUmPnJUEPN9x9A5Ua3gDgRXQY0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 6504A1650;
-	Fri, 23 Feb 2024 01:53:38 -0800 (PST)
-Received: from [192.168.1.13] (unknown [172.31.20.19])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id B0AE93F766;
-	Fri, 23 Feb 2024 01:52:58 -0800 (PST)
-Message-ID: <1ae5b9e6-9eb4-49a5-8cfc-46359c8d74c3@arm.com>
-Date: Fri, 23 Feb 2024 10:52:57 +0100
+	s=arc-20240116; t=1708695640; c=relaxed/simple;
+	bh=yBT31D6X20oclfWy+682T89wlg7Fs0eeS65vEzjyTVA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=SPV62pZVDodTnnSC1O8E1APfQdE7PgQ0NcMSdrlHlcRx3QmPgCkTB3BuAP2LqWOxGBqBRThpj8b9rEJ6+14sDA/IRm1vbzxHG+nUPS2G3DxR4kN7hLW8dz6GbtudXTRVYqgRwyZ9zzDZx47uSV+WkFR1uuf3fB3Oh123nBv+9EI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=dsDRJvVE; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Wc0aIp5Y; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dsDRJvVE";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Wc0aIp5Y"
+Date: Fri, 23 Feb 2024 14:40:34 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1708695636;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ntvgPN3BhkXn2FHeF6+1NREmqA573BQOrzmqU41B1N8=;
+	b=dsDRJvVEq+87A0/vXprpDtRHzl5x4w2yO9KxWN7JMay9nv+qoskC0jQYgMpakAeolqCbij
+	6Xt48kgj9RiTqcuLD2vKwDwGVtwWHAqoLEQCvCC8SDan/DnU0FQz73qLwJLpaO+5XDVwEL
+	7mv7ad8OnSYGWlPUmdsvTAg5XiWUVm6E4KaNgYkecdKxbF6SssnXzlVVP18jxaHkmwhw8H
+	5Ok7AC4pUkTAhitMHbJs98u3sk7GaioWkLIZ1P/jgtnwmNcZApJBAqlrUCHlmL9HRmgRkx
+	NzW292d3UVJFw1msNDZ7ZyQsTq0t6W8uIeY9ppJBX05/YdGKAcMRH942FQRGLw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1708695636;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ntvgPN3BhkXn2FHeF6+1NREmqA573BQOrzmqU41B1N8=;
+	b=Wc0aIp5YiuvVEKzn8NlN7Socf8FUHnlxremDCpsAkDgzG0NC8lU24T3feFSD3DdlvoWx5j
+	j4zMyeiw8iaXwWBw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Pierre Gondois <pierre.gondois@arm.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] v6.8-rc4-rt4
+Message-ID: <20240223134034.HBeD-gMS@linutronix.de>
+References: <20240214161130.ZT9RSWDc@linutronix.de>
+ <1ae5b9e6-9eb4-49a5-8cfc-46359c8d74c3@arm.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [ANNOUNCE] v6.8-rc4-rt4
-Content-Language: en-US
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
- Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>
-References: <20240214161130.ZT9RSWDc@linutronix.de>
-From: Pierre Gondois <pierre.gondois@arm.com>
-In-Reply-To: <20240214161130.ZT9RSWDc@linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <1ae5b9e6-9eb4-49a5-8cfc-46359c8d74c3@arm.com>
 
-Hello Sebastian,,
+On 2024-02-23 10:52:57 [+0100], Pierre Gondois wrote:
+> Hello Sebastian,,
+Hi Pierre,
 
-On 2/14/24 17:11, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
+> > Known issues
+> >       Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
+> >       hist" as trigger. It is not yet understood. The report is at
+> > 	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
 > 
-> I'm pleased to announce the v6.8-rc4-rt4 patch set.
-> 
-> Changes since v6.8-rc4-rt3:
-> 
->    - The previous releases introduced a compiler warning for i915 driver
->      in the !i915 case. Reported by the kernel test robot.
-> 
->    - An update to the printk series by John Ogness:
-> 
->      - document new nbcon console callbacks:
->      
->      - add "threadprintk" boot argument for !PREEMPT_RT users that want a
->        fully threaded printk.
->      
->      - use thread callback (instead of atomic callback) for legacy printing
->        in task context.
->      
->      - sync with recently reviewed printk series.
-> 
-> Known issues
->       Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
->       hist" as trigger. It is not yet understood. The report is at
-> 	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
+> I recently tried to reproduce the issue using the same kernel version and platform,
+> but even after multiple resets and attempts to re-trigger it didn't show up.
+> As it doesn't seem anyone else reported anything similar, would it make sense
+> to drop the reference ?
 
-I recently tried to reproduce the issue using the same kernel version and platform,
-but even after multiple resets and attempts to re-trigger it didn't show up.
-As it doesn't seem anyone else reported anything similar, would it make sense
-to drop the reference ?
+I've been looking at the thread again and I analysed your report but was
+not able to reproduce it myself nor had I an idea what was really going
+on.
+If you can't reproduce it yourself anymore, same SW & HW, then I guess
+there is no point in keeping it. So I am going it to drop this on the
+next release. Should you, or someone else, manage to trigger it gain we
+can add it again ;)
 
-Regards,
-Pierre
+Thank you for the update.
+
+> Regards,
+> Pierre
+
+Sebastian
