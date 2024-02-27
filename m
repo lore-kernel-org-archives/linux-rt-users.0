@@ -1,86 +1,75 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B28227F466;
-	Fri, 23 Feb 2024 13:40:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AB0C1386A0;
+	Tue, 27 Feb 2024 12:21:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708695640; cv=none; b=pM2DFrxY/dbeWyP5NQxMj88pdyqM790jaI2V9JvozzEPbK8wS2BYPC3zK7n0b3G3AAHqyc3BYgBsXBwcz2ZZuaFeJaHFg1AhIgDdnkB1pvBDK7PKU0bwloaLJ5lyPSWdT9J+RWW5tnEeB5U/Hq5opNUst00OiRBBPzuaS3P+fCQ=
+	t=1709036503; cv=none; b=d9bYnVGom2xdF2bC3IGNJHZcTBf3/jvJFG8eBtyHZ7tMD2WhIBKJYJIwhUJRk/h0T+gD2nJMvLYYuJZqwD0mWjhJBj7PzfJ75KOxP4OXfn/MyMMhpBrSb3NcMSB2ly0Eajtcskox9lTcUKo+BLWQJBSpthenoklNrnK3x53v3KI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708695640; c=relaxed/simple;
-	bh=yBT31D6X20oclfWy+682T89wlg7Fs0eeS65vEzjyTVA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=SPV62pZVDodTnnSC1O8E1APfQdE7PgQ0NcMSdrlHlcRx3QmPgCkTB3BuAP2LqWOxGBqBRThpj8b9rEJ6+14sDA/IRm1vbzxHG+nUPS2G3DxR4kN7hLW8dz6GbtudXTRVYqgRwyZ9zzDZx47uSV+WkFR1uuf3fB3Oh123nBv+9EI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=dsDRJvVE; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Wc0aIp5Y; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1709036503; c=relaxed/simple;
+	bh=ik+Z/voXstuOO72kbjvQlbbmHlI6qZ1wkXyfgafSHfg=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=D0Y+9dJGkGFJi2UEAJFIeHTe2IpIY2Zk8CcSa0PO90Lm2Coic/jzi+iTX/lN2GYjrm3JBgQfTfsOu0ivOUtN/1ZBTJsiT3YNN47Lv4uWxm1MRJLHUfaoDO53qIpHyIbW4lUmMToZbgqUuRYO4y1ilmIOa2e2u928SYLcBe0jfLo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=HZPan/Vw; arc=none smtp.client-ip=49.12.199.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dsDRJvVE";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Wc0aIp5Y"
-Date: Fri, 23 Feb 2024 14:40:34 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1708695636;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ntvgPN3BhkXn2FHeF6+1NREmqA573BQOrzmqU41B1N8=;
-	b=dsDRJvVEq+87A0/vXprpDtRHzl5x4w2yO9KxWN7JMay9nv+qoskC0jQYgMpakAeolqCbij
-	6Xt48kgj9RiTqcuLD2vKwDwGVtwWHAqoLEQCvCC8SDan/DnU0FQz73qLwJLpaO+5XDVwEL
-	7mv7ad8OnSYGWlPUmdsvTAg5XiWUVm6E4KaNgYkecdKxbF6SssnXzlVVP18jxaHkmwhw8H
-	5Ok7AC4pUkTAhitMHbJs98u3sk7GaioWkLIZ1P/jgtnwmNcZApJBAqlrUCHlmL9HRmgRkx
-	NzW292d3UVJFw1msNDZ7ZyQsTq0t6W8uIeY9ppJBX05/YdGKAcMRH942FQRGLw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1708695636;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ntvgPN3BhkXn2FHeF6+1NREmqA573BQOrzmqU41B1N8=;
-	b=Wc0aIp5YiuvVEKzn8NlN7Socf8FUHnlxremDCpsAkDgzG0NC8lU24T3feFSD3DdlvoWx5j
-	j4zMyeiw8iaXwWBw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Pierre Gondois <pierre.gondois@arm.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="HZPan/Vw"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 06291DB0B5;
+	Tue, 27 Feb 2024 13:12:13 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+	t=1709035934; h=from:subject:date:message-id:to:cc:mime-version:
+	 content-transfer-encoding:in-reply-to:references;
+	bh=HlqPVVDAgE1kBRHpHlFn58H7IQi71P0Ptm3D/QaiOsQ=;
+	b=HZPan/VwL2tZs2N/8SB+oIggl4sL6ZaRbGhk7GHj3TWCmqjfVGHpb9ARqpcQ6Er8Wi3/Gl
+	f0gZUwEs+0koPFJ9/4EKUsMeDUPTnR6taKQXl3MMhQTCOo1qNI75j0s23ESbVTkD/2tXIk
+	3VbgnCPl89687wpDw8H/5sdztSgqavqCPYXg/2pU/Ce3lVLabk9hHuHwVVxjPnXhSv9kQ8
+	hfDMi6NmDxsb0yfwMybD6OzvZ6FFB4ZnzUoFeTyfXkfpmMKF1Keg5B59snaERy/5bZRQ6C
+	0x/dRmpFLLHN/OpbngNHic8AEHCJANlOLv/MNnq1War3iBxDiGDg8lQ5hQUJDA==
+From: Daniel Wagner <wagi@monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	 <linux-rt-users@vger.kernel.org>,
+	 <stable-rt@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] v6.8-rc4-rt4
-Message-ID: <20240223134034.HBeD-gMS@linutronix.de>
-References: <20240214161130.ZT9RSWDc@linutronix.de>
- <1ae5b9e6-9eb4-49a5-8cfc-46359c8d74c3@arm.com>
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>
+Cc: Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 1/1] Linux 4.19.307-rt133
+Date: Tue, 27 Feb 2024 13:12:04 +0100
+Message-ID: <20240227121204.30720-2-wagi@monom.org>
+X-Mailer: git-send-email 2.43.2
+In-Reply-To: <20240227121204.30720-1-wagi@monom.org>
+References: <20240227121204.30720-1-wagi@monom.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <1ae5b9e6-9eb4-49a5-8cfc-46359c8d74c3@arm.com>
+Content-Transfer-Encoding: 8bit
+X-Last-TLS-Session-Version: TLSv1.3
 
-On 2024-02-23 10:52:57 [+0100], Pierre Gondois wrote:
-> Hello Sebastian,,
-Hi Pierre,
+v4.19.307-rt133-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> > Known issues
-> >       Pierre Gondois reported crashes on ARM64 together with "rtla timerlat
-> >       hist" as trigger. It is not yet understood. The report is at
-> > 	https://lore.kernel.org/70c08728-3d4f-47a6-8a3e-114e4877d120@arm.com
-> 
-> I recently tried to reproduce the issue using the same kernel version and platform,
-> but even after multiple resets and attempts to re-trigger it didn't show up.
-> As it doesn't seem anyone else reported anything similar, would it make sense
-> to drop the reference ?
+-----------
 
-I've been looking at the thread again and I analysed your report but was
-not able to reproduce it myself nor had I an idea what was really going
-on.
-If you can't reproduce it yourself anymore, same SW & HW, then I guess
-there is no point in keeping it. So I am going it to drop this on the
-next release. Should you, or someone else, manage to trigger it gain we
-can add it again ;)
 
-Thank you for the update.
+Signed-off-by: Daniel Wagner <wagi@monom.org>
+---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> Regards,
-> Pierre
+diff --git a/localversion-rt b/localversion-rt
+index ecff281e807f..c2c7e0fb6685 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt132
++-rt133
+-- 
+2.43.2
 
-Sebastian
