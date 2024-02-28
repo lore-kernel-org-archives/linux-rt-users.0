@@ -1,22 +1,22 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BD0555E44;
-	Tue, 27 Feb 2024 23:17:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A4D0915AF;
+	Wed, 28 Feb 2024 01:56:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709075851; cv=none; b=NvoeqnaZEMx4bRKHQstXy6/F1OashJEjlC6xmZRkEi4foHgJMenxokH+6y8ZmYVxa665Na2YcX+MNLKpmaHxkz90evTllUoYRbf6tHccU2+yvtkeqkWmhsnD3gBCdt+vX85dMJS6na4dthMsXQYql5iIK5FHWigG/RNbBT5GCPY=
+	t=1709085383; cv=none; b=YRC94Bm6m1IqjxzoiReEQeDlZQLj4Pi5+wML3kyxJE8mz0lUbhUs/o8OZGpWJ53YNhDB/AZ+iKLD7oPuDyqLxYZDUz/6VuAAYnk4TBMzdJlhXPsaItki1t6ndA2SoEmw0mcqFAVThrEy0j4Q/AD61KTpo4N+PZKBsCKhFbxXaME=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709075851; c=relaxed/simple;
-	bh=jrgwgayxFH+j/G1PzbshSNnEGnY4kDPWfb/Qv0N1X4E=;
-	h=From:Subject:Date:Message-ID:To; b=tKayiT0l/2IY9CN7HsB8H0I0GyidLRt0iH8JQyrRD05ydvpWvU/Xz0geqCQBFSR3v4NdyAlpU5AttTrDF5cWSxjb5APGA/Q0phX71EPO5bpBWLpgPbREZSIN23ybliXWRctGcUnfUh4Bs+oT9BaEqXo9GfnIDKUvlVnUwq5Q1uI=
+	s=arc-20240116; t=1709085383; c=relaxed/simple;
+	bh=Q1FFzL6F9oq0dVgL1q3/EFay+ET9Y75NPQJ+uIuCDH4=;
+	h=From:Subject:Date:Message-ID:To; b=mqXGFxlKVZ0Yv8ClNDOtt5mak+NrD04j0I2Hhb9y4SxPFBeLJPJoYvti/lSqMgayQPhm3sNWJA2/Y6ty2UELRDaWtN6uC1O5HWGJB+Fi9PPYEOYHbv4v5VAnkAnA09hVVEq5WuSb3A0lcRnvr/JkKVGfp+tUm+RvgPHDupRJMJw=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EB583C433C7;
-	Tue, 27 Feb 2024 23:17:30 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0A271C433C7;
+	Wed, 28 Feb 2024 01:56:22 +0000 (UTC)
 From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.6.18-rt23
-Date: Tue, 27 Feb 2024 23:16:10 -0000
-Message-ID: <170907577025.277403.1497604783256978900@demetrius>
+Subject: [ANNOUNCE] 6.1.79-rt25
+Date: Wed, 28 Feb 2024 01:55:51 -0000
+Message-ID: <170908535103.421358.4623722558350250768@demetrius>
 To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -26,24 +26,23 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 
 Hello RT-list!
 
-I'm pleased to announce the 6.6.18-rt23 stable release.
+I'm pleased to announce the 6.1.79-rt25 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v6.6-rt
-  Head SHA1: fc3c8f4093aa9e32e67a51ba5eebd7338195b746
+  branch: v6.1-rt
+  Head SHA1: 81e82eb9d8977f08af48d28d2e2dd4e91e838209
 
-Or to build 6.6.18-rt23 directly, the following patches should be applied:
+Or to build 6.1.79-rt25 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.18.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.79.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.18-rt23.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.79-rt25.patch.xz
 
 
 Enjoy!
 Clark
-
