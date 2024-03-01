@@ -1,137 +1,101 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FFC26A8C8;
-	Fri,  1 Mar 2024 10:11:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 598161366
+	for <linux-rt-users@vger.kernel.org>; Fri,  1 Mar 2024 16:38:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709287873; cv=none; b=V3iPyoMt0IQF8Xes4K9g2Cjw8R1tAh11ETc2uRZAziAdlrUrUMTLLSElVyQL8tOHEYYCWYE2HPgQ+SHufCxxIiWCWLZLIiYJVugbzwD1V0CuNm4JwrpzSw/7dpFVqjnfcifKhcNIROEMx1okHbnewq1mqJ6BiqpioEG5yo5NkKo=
+	t=1709311083; cv=none; b=HGQLQiV0E7dNZKl92m871VI8qo45T3wNs+XqNz1lSgEoc5oetY1uZDeaE/KvFzWkTOHksaKN48YCmiI1gPiDVWbIdzbAVLwONCYPfNlok2p2qxNxd8KJTzTL246NzgJlk/EuYdtJbAM4EgckHNsC7sz0X1CWkeEquJLZ4snrHFM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709287873; c=relaxed/simple;
-	bh=AaXOghJwgnSSIXfJ/siTh9ndW4bK6IBmBDYRzswNu4M=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=isOfMLawEEXAWk3iC+9rSl0LoI1Sa6fsjUCbzavuY1HFKowEMAzLZ2v2tGuPoD9Wone2kC6ts0gV8PNYTkt/c07h3qAL1crLaiZHi0m8IDnNLz9MHo4vxVGVLB3nAKdwdQ0IOiTY2l5rO8kIZMjRJjvYpKa1gPV05GQgO3AMQ5U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=nYDINAB7; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=3sPFyrr7; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1709311083; c=relaxed/simple;
+	bh=aS1+wesxMC3304+Y6xIr3I7pfuQIDNnZAXBMf1sELWQ=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=XlxBYU1OWGcZOA44inGTxDDjyluSowtDBMIzBMorR8O8itlymu+NT6KPMdtmw4j+6F1HAp0gS1YsxsIxUczx2e4CrHWnQ0loe5q4gmSTFgZ2yyOJSwPd5UDJFApYVDiihO6u8H2SF9jdnU050kRbBuWGMiOZg+6ywAm3ibbbQdU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YImwUKoV; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="nYDINAB7";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="3sPFyrr7"
-Date: Fri, 1 Mar 2024 11:11:05 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1709287866;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YImwUKoV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709311080;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=gzBLZ9FAmi2WGxmvniBOMK66MNrKoPH3TdPVDaji3VE=;
-	b=nYDINAB7uMNsDLHc+SlnLLLNS3/cmjCS7k66Q+p48Gc2GZ+ApqFyItFtkiVv8PvxU3CTbo
-	N3EVg57lXAbFAxk9pt/8t3+okN5hra3ajwYuYy330klW/oNYEKj15HuTZb0oiCdxyJ9CtC
-	OvAfwEsLyz36nFtkPhEKtd2iHeMDiIbCCfzgEAehQ9DfSzYeNVdK+gL5oGbbmczzn7m75D
-	qXg5xe2fowXE0J1ln5ht3o6ofE0rlqeTRk6tV7CtDIFQymt+zwoqxkVaoQIckEBZ+Ooc7w
-	SVzc8aK9dmiL73NwlZ8327TJcSOeGloTIh8yhYqZAaW6fnmBF8QPMFlEYt0gXQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1709287866;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=gzBLZ9FAmi2WGxmvniBOMK66MNrKoPH3TdPVDaji3VE=;
-	b=3sPFyrr7HpwhuIzpLtCrvcGbvfmc+tmYIz3H2/LaytPD/QBVAmmBZz3qkTjQN+BTiehbkY
-	fFXinX88YK6OvxDQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Petr Mladek <pmladek@suse.com>
-Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
-	John Ogness <john.ogness@linutronix.de>,
-	Clark Williams <williams@redhat.com>, jlelli@redhat.com,
-	Derek Barbosa <debarbos@redhat.com>,
-	"John B. Wyatt IV" <sageofredondo@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: NMI Reported with console_blast.sh
-Message-ID: <20240301101105.eUPvRzUv@linutronix.de>
-References: <ZcQjxa4UA6hzXHnU@thinkpad2021>
- <87v86yc88b.fsf@jogness.linutronix.de>
- <ZcaQI8l1dcBx2feC@thinkpad2021>
- <87a5o8j9gp.fsf@jogness.linutronix.de>
- <ZcqMOKtHsZ9qnxNg@thinkpad2021>
- <ZdbZz-v_lug9_t6C@thinkpad2021>
- <ZeBnUCk598gttpds@alley>
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=w5kX5tNV5k9mZgn3zO6nEfb0LWgxJCKy7vnkIWzw2ws=;
+	b=YImwUKoVG3BS8h/mpTr338TaDth5ltIFuTMzeLlgUw58DCZgYxZpbARSumRAlPookxEjjC
+	YctSBmx+uJg/t5et1Vg7Rp9x2/0rJ8+84wvxMayG1Ftay3M6OqbAZjyWgunRCD4XWWrq7C
+	JslgN7Mgmk3ZbxV3AMMjnfOI8CWwd7I=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-689-fdQLSedOMiKO2bl8bYyBpw-1; Fri,
+ 01 Mar 2024 11:37:56 -0500
+X-MC-Unique: fdQLSedOMiKO2bl8bYyBpw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2E3793830094;
+	Fri,  1 Mar 2024 16:37:55 +0000 (UTC)
+Received: from localhost (unknown [10.22.9.150])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5A24D2015B7D;
+	Fri,  1 Mar 2024 16:37:54 +0000 (UTC)
+Date: Fri, 1 Mar 2024 13:37:53 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.210-rt102
+Message-ID: <ZeIEYRctrbzCHDZh@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ZeBnUCk598gttpds@alley>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-On 2024-02-29 12:15:28 [+0100], Petr Mladek wrote:
-> > [ T2481] Call Trace:
-> > [ T2477] Kernel panic - not syncing: sysrq triggered crash
-> > [    C0] NMI backtrace for cpu 0
-> 
-> This message seems to be printed by nmi_cpu_backtrace().
-> 
-> I am surprised. I would expect to see the backtrace printed from panic().
-> It calls dump_stack() directly on the panic-CPU. And this panic() should
-> be called from sysrq_handle_crash(). IMHO, it should be (normal)
-> interrupt context.
-> 
-> Is it different on RT?
+Hello RT-list!
 
-No, it is all okay and the same. panic() was triggered from sysrq which
-is a threaded-IRQ and you don't see this. This triggered an NMI
-backtrace on CPU0 and it shows the NMI stack. After that, the TASK
-stack follows which could show panic() if the backtrace would show
-something. The stack trace for NMI is prefixed with ? so it is a guess
-from something on stack, not an actual unroll.
+I'm pleased to announce the 5.10.210-rt102 stable release.
 
-And this part:
-> >   15:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
-> >   1a:	0f b6 8f c1 00 00 00 	movzbl 0xc1(%rdi),%ecx
-> >   21:	0f b7 57 08          	movzwl 0x8(%rdi),%edx
-> >   25:	d3 e6                	shl    %cl,%esi
-> >   27:	01 f2                	add    %esi,%edx
-> >   29:	ec                   	in     (%dx),%al
-> >   2a:*	0f b6 c0             	movzbl %al,%eax		<-- trapping instruction
-> >   2d:	c3                   	ret
+This release is just an update to the new stable 5.10.210 version and no
+RT-specific changes have been performed.
 
-the error of some kind occurred here at 0x2a. But this instruction is
-innocent, it simply a zeros the upper 24bit of the register eax. So this
-isn't a crash, it is just where the CPUs at the time this was captured.
+You can get this release via the git tree at:
 
-> >  <NMI>
-> >  dump_stack_lvl (lib/dump_stack.c:107) 
-> >  panic (kernel/panic.c:344) 
-> >  nmi_panic (kernel/panic.c:203) 
-> >  watchdog_hardlockup_check (kernel/watchdog.c:180) 
-> >  __perf_event_overflow (kernel/events/core.c:9612 (discriminator 2)) 
-> >  handle_pmi_common (arch/x86/events/intel/core.c:3052 (discriminator 1)) 
-> >  ? set_pte_vaddr_p4d (arch/x86/mm/init_64.c:307 arch/x86/mm/init_64.c:315) 
-> >  ? flush_tlb_one_kernel (./arch/x86/include/asm/paravirt.h:81 arch/x86/mm/tlb.c:1171 arch/x86/mm/tlb.c:1126) 
-> >  ? native_set_fixmap (arch/x86/mm/pgtable.c:679 arch/x86/mm/pgtable.c:688) 
-> >  ? ghes_copy_tofrom_phys (drivers/acpi/apei/ghes.c:330) 
-> >  intel_pmu_handle_irq (./arch/x86/include/asm/msr.h:84 ./arch/x86/include/asm/msr.h:118 arch/x86/events/intel/core.c:2427 arch/x86/events/intel/core.c:3118) 
-> >  perf_event_nmi_handler (arch/x86/events/core.c:1743 arch/x86/events/core.c:1729) 
-> >  ? native_queued_spin_lock_slowpath (./arch/x86/include/asm/vdso/processor.h:13 ./arch/x86/include/asm/vdso/processor.h:18 kernel/locking/qspinlock.c:383) 
-> >  nmi_handle (arch/x86/kernel/nmi.c:150) 
-> >  ? native_queued_spin_lock_slowpath (./arch/x86/include/asm/vdso/processor.h:13 ./arch/x86/include/asm/vdso/processor.h:18 kernel/locking/qspinlock.c:383) 
-> >  default_do_nmi (arch/x86/kernel/nmi.c:351) 
-> >  exc_nmi (arch/x86/kernel/nmi.c:545) 
-> >  end_repeat_nmi (arch/x86/entry/entry_64.S:1394) 
-> 
-> This actually seems to be from perf_event() used by the hardlockup
-> detector. It triggers NMI.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-And the stack is properly unrolled and this the third backtrace. The
-second had <NMI> in it as suggesting this is from NMI but also stack
-traces from tasks due to sysrq-t.
-Now this last backtrace seems fine, and it appears that something tried
-to acquire a raw_spinlock_t, it took too long at which point the
-hardware watchdog triggered and all we got was this backtrace. Sadly we
-don't see the other side to get an idea on which lock it stuck.
+  branch: v5.10-rt
+  Head SHA1: 2e4f63341da86cf080b22925a8f4f8cb746b8e25
 
-> Best Regards,
-> Petr
+Or to build 5.10.210-rt102 directly, the following patches should be applied:
 
-Sebastian
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.210.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.210-rt102.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
