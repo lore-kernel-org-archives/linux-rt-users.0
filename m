@@ -1,48 +1,77 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FC8F15B7;
-	Mon,  4 Mar 2024 02:48:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5027C8F7A;
+	Mon,  4 Mar 2024 07:28:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709520492; cv=none; b=madTLe9UYz1nzK8eCimUwE5uCZQ+gyNEnKUy7s0VA0XiUasViw0ONtk3nxgLGpzHm55IDVxKk2yecguQO0cgEVWtM/WZ9cbQLy6HlAEBefpbuAxsn2f2EMbTMvlSLNOsJPRHszECflebA7L5fsoWliFZeJCnBbzTrSGO+jDLTYw=
+	t=1709537305; cv=none; b=SHkM15DjM90ZhbVCJAGc0dI/Hv24Ds3izvUbklSGHO8ZyaIyw59u11ON5seQvlrZO8AGOrISP+QbwRsaF0ywFhCLVthA9ViF8QraESH0XaUXeHwESWhLyGSZ00iatq5c47VdCLZMWN9jAc6oJXub742SqmXkLZ5qZSq1nxy0CNA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709520492; c=relaxed/simple;
-	bh=yHKLMpFa9IjeXN6PrDwhdENT33ebE6hZk0WttvahAvM=;
-	h=From:Subject:Date:Message-ID:To; b=atZtpSghwCW6K5UfN37sPOnmaNZKzkZKdhdd/rCjPyFdrfrzyJDGC2xVDHCNzLeaDthJxdnjmx7QMKhg2lISntpN8R1wka3XlGrwWEjZALIwpxVU5OR6r3r7Ry1dfqxSYLnJWl7lKqYjR9mZ12lz+p4E2Yqerxq0ZOrAh3wCc5g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id DE232C433C7;
-	Mon,  4 Mar 2024 02:48:11 +0000 (UTC)
-From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.6.20-rt25
-Date: Mon, 04 Mar 2024 02:47:00 -0000
-Message-ID: <170952042031.990094.14742139831553140389@demetrius>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
+	s=arc-20240116; t=1709537305; c=relaxed/simple;
+	bh=kzBLzsrgt4cMz8lq+7FEQRl39sR85fyZ63GyU6Vma44=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=Gvt3Ja6/6gkIXD4Vicn4JZZvR4DMC9F20Xqpo+kTke8QDq1qpMPkIgH9qI4tBan7KTZwrx2FBNTYif7blX0TFP3nfMzvYZpnm7vPsfxnwPvXFQ6FMAopL4HU39TXaQ/rDwLJA40JHwFDfM80Pc4hjBTlsD7grVy5eJwxMNf4J90=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=abuKTDQO; arc=none smtp.client-ip=49.12.199.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="abuKTDQO"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id C675EDAE4A;
+	Mon,  4 Mar 2024 08:28:10 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+	t=1709537293; h=from:subject:date:message-id:to:mime-version:content-type;
+	bh=obt2UjzUlSFkhzsihV8MAs+WcZlC8QBBp7aRz+cg748=;
+	b=abuKTDQO2rjX+2dOAZHo6ypVIhCo4YEDD03WDHp6voy2gi2oUAoCGZPDHiYtCVe6dxopQ3
+	tZw97geiGSBq9KjWEvh6j2XiszTX2T2N/VplUYlYjMAmq8MaU9Kq7kIbHBsTm4FKsO4en/
+	9YOzmErS53t/bpgBac+MudVLW8+MKLwr4VL7bIDS4kjiiOVHnt/O8tdOkPe5rfv86xvadD
+	02NOhcqYFWo6n0eCuWlyGnoduz97rxE6jE6Agbd0PI5F2VuvpCT5FH5QdCeu3aX/cw/3dT
+	ZwbtEgAyRTzKLjtNBQZLwx+hb0GKKpwJ/HnZzXOLK0KvUQXs7T9ew/TJR/KY6w==
+Date: Mon, 4 Mar 2024 08:28:08 +0100
+From: Daniel Wagner <wagi@monom.org>
+To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
+	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
+	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Tom Zanussi <tom.zanussi@linux.intel.com>, Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.19.307-rt133
+Message-ID: <170953721122.2407.5652698542810172517@beryllium.lan>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Last-TLS-Session-Version: TLSv1.3
 
 Hello RT-list!
 
-I'm pleased to announce the 6.6.20-rt25 stable release.
+I'm pleased to announce the 4.19.307-rt133 stable release. This is
+just an update to the stable release 4.19.307. No RT specific changes.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v6.6-rt
-  Head SHA1: a27814b8cd8f89ad68e29d3d6f8f3b61c65aebf5
+  branch: v4.19-rt
+  Head SHA1: 4790d0210f1929d981659cd4e7ecfb34e0a6889c
 
-Or to build 6.6.20-rt25 directly, the following patches should be applied:
+Or to build 4.19.307-rt133 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.20.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.307.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.20-rt25.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.307-rt133.patch.xz
 
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
 Enjoy!
-Clark
+Daniel
