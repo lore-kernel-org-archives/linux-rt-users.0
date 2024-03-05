@@ -1,158 +1,101 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DF3E1C680
-	for <linux-rt-users@vger.kernel.org>; Mon,  4 Mar 2024 21:17:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5730C3FB1B
+	for <linux-rt-users@vger.kernel.org>; Tue,  5 Mar 2024 07:57:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709587024; cv=none; b=e/Cdl7DPr8W3NXoqCr5oz0twEtFPYzc0iQAqdYt6S1DV6ZpAakQ2k68qjspv4oahu91m/97EPBOFWt9nQ2PzV/Mq8rE+hG6nFUZc+GWS1OKrs9rCA1jojm2c0jn1DZcIiUdeRUYb4de/rCTy4xwLPOnx52J6N81G5lDRpzmUmaQ=
+	t=1709625475; cv=none; b=QvCSDp1pl4sXOU7MfT14GxC8trwrfls6b/uAqAJU3uDsegTuZ1PTO/KWMeOL+nI5AQ8kqprJbgXbqR/jqeZg2lNA/vx4kasRn+RNvIfuqh4XQmTGK2ggXNHgEm8T6+ADSf7H1ALh16PvX960euamUaciI47/Hjs93n9r8UM1n7Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709587024; c=relaxed/simple;
-	bh=uX98SFFgziYiy4+wm1EWQTpJfyWR1kUpB6x2QIijUfE=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=LYuoz1gDvDTnGXDNjhE3KCo4s7qs3DJRzmEZhfciDy7qOgkAcI+7N9emUEgEO/TLrP3H99kxGveX4YDdpRdzR6h/EM3koSu4cfiZ28TOXUcKDA1bySHyttUcI04tgYHGNPCDZ/dSMwOqn+jQrfA4zQubmEffKrTTKEPlgaE/Nnw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PJf62+Lk; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1709625475; c=relaxed/simple;
+	bh=rpOzrjdZVmF5ZBI3MeEGxxWCMthl5wo/AQRyinnCScQ=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=O0s9xdcra+XmQTsBeWK3W/cLm5eIam2KcRXXe8omiOP915QUDLg6ZIojR3QIGKC6egM+QZfw3LBZVe7X52wDWT+sII2X3vWhFlJgHp4hHHWPJiTR3+jJais7eYODL4Ym1Ywnv9lvDOoBHdCGSOV/aJoC5BFjlarUmLxPR5vcI4M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=Jp7pLJA6; arc=none smtp.client-ip=205.220.168.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PJf62+Lk"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709587021;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=qkAyzFANXG9Dxa+xAqkZWrxeU8ste9r0xjWjvJxpuX4=;
-	b=PJf62+LkgxGnCKFIN9mw5eROR5hhPvvRELnxNKVotqAaEVzAmBqbF2f4H9SQ1XY1X2GHid
-	Cx03AesyTzhstetSio7Mv6FNfpGCur5jrdYM47QNS1opO/0BHd8XxzwfuCEob/b1ylKEEy
-	ON1CvZMaQcY0Q2v6/IoFzX6f0tbDiBQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-487-LGnLh9XINjaE1GbpB6ovjw-1; Mon, 04 Mar 2024 16:16:58 -0500
-X-MC-Unique: LGnLh9XINjaE1GbpB6ovjw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ED0AD185A789
-	for <linux-rt-users@vger.kernel.org>; Mon,  4 Mar 2024 21:16:57 +0000 (UTC)
-Received: from p1g2.redhat.com (unknown [10.2.16.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 92FD4C0335E;
-	Mon,  4 Mar 2024 21:16:57 +0000 (UTC)
-From: Crystal Wood <crwood@redhat.com>
-To: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>
-Cc: linux-rt-users@vger.kernel.org,
-	Crystal Wood <crwood@redhat.com>
-Subject: [PATCH 3/5] rteval: kcompile: Skip mrproper, and re-extract if clean fails
-Date: Mon,  4 Mar 2024 15:16:53 -0600
-Message-ID: <20240304211655.20174-4-crwood@redhat.com>
-In-Reply-To: <20240304211655.20174-1-crwood@redhat.com>
-References: <20240304211655.20174-1-crwood@redhat.com>
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="Jp7pLJA6"
+Received: from pps.filterd (m0279865.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.17.1.24/8.17.1.24) with ESMTP id 4256SOk3009745;
+	Tue, 5 Mar 2024 07:57:42 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
+	message-id:date:mime-version:subject:to:references:from
+	:in-reply-to:content-type:content-transfer-encoding; s=
+	qcppdkim1; bh=a6/sGxar/1LRVB8TX1zmTrYWFoRzt6s5j5eniJMYBFQ=; b=Jp
+	7pLJA6HD+t6EnFpnJUis5YTzG/aoAmXfRIgpa5K5GefXUH7tw/TUWb0gcuEksFq9
+	N87rSQ3/MpsYi/KhlBzKBVqBxRFzQ+t8hCYWPJM6AB1oeTMi444CN9+yz9f/4R+/
+	icGdRatbFlnoQl6svk8YxaNFCb7DH1RLEw+LCt7G5VagD0WhuNbtaTQJXveyxOsk
+	xVQMBEoN0tkh+r8KRZl0LYA/M/tYf1tHw7cA9oURQfO3A9j5nwL+GogxbDH0iyUT
+	g0MJxPmQ2RUEMavoN3iwcAjkMawPgf1Zdnv43LPMO+B7gx9w/EFy6F+It+GkoOxO
+	bfYiXBYvEu3nPOGU8X3g==
+Received: from nasanppmta03.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 3wnu470fsa-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 05 Mar 2024 07:57:42 +0000 (GMT)
+Received: from nasanex01a.na.qualcomm.com (nasanex01a.na.qualcomm.com [10.52.223.231])
+	by NASANPPMTA03.qualcomm.com (8.17.1.5/8.17.1.5) with ESMTPS id 4257vfKM029022
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 5 Mar 2024 07:57:41 GMT
+Received: from [10.217.241.99] (10.80.80.8) by nasanex01a.na.qualcomm.com
+ (10.52.223.231) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1118.40; Mon, 4 Mar
+ 2024 23:57:39 -0800
+Message-ID: <8fe5266e-b26e-4751-a6bf-0bb694a394d3@quicinc.com>
+Date: Tue, 5 Mar 2024 13:27:26 +0530
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 0/1] Fix NULL ptr dereference in nbcon driver
+To: John Ogness <john.ogness@linutronix.de>, <linux-rt-users@vger.kernel.org>,
+        <quic_akdwived@quicinc.com>, Pavan Kondeti <quic_pkondeti@quicinc.com>
+References: <20240222101626.1142-1-quic_chandna@quicinc.com>
+ <874je04qqu.fsf@jogness.linutronix.de>
+Content-Language: en-US
+From: Sahil Chandna <quic_chandna@quicinc.com>
+In-Reply-To: <874je04qqu.fsf@jogness.linutronix.de>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: nasanex01a.na.qualcomm.com (10.52.223.231) To
+ nasanex01a.na.qualcomm.com (10.52.223.231)
+X-QCInternal: smtphost
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
+X-Proofpoint-ORIG-GUID: g51_eWEoT9zfqSYSkktrzd36ulsqmGDm
+X-Proofpoint-GUID: g51_eWEoT9zfqSYSkktrzd36ulsqmGDm
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
+ definitions=2024-03-05_05,2024-03-04_01,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0
+ priorityscore=1501 impostorscore=0 mlxlogscore=800 malwarescore=0
+ suspectscore=0 lowpriorityscore=0 spamscore=0 mlxscore=0 phishscore=0
+ clxscore=1011 adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2402120000 definitions=main-2403050062
 
-We only ever do out-of-tree builds, so the kernel directory should not be
-getting damaged except by incomplete extraction (which mrproper would
-probably not fix) or external meddling.  So, skip the mrproper and
-instead re-extract if a "make clean" fails.
+On 2/22/2024 6:09 PM, John Ogness wrote:
+> On 2024-02-22, Sahil Chandna <quic_chandna@quicinc.com> wrote:
+>> Add a missing check in nbcon driver which is causing NULL pointer
+>> dereference bug.
+> 
+> I believe the correct fix is here:
+> 
+> https://lore.kernel.org/lkml/20240123054033.183114-2-junxiao.chang@intel.com/
+Thanks John for sharing this fix, i tried applying this patch locally in 
+my workspace and see issue is resolved. However, when i am checking the 
+same fix on patch-6.6.14-rt21.patch.gz on 
+https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.6/older/, I don't 
+see this fix. Even on latest stable version for 6.6. kernel i.e. 
+patch-6.6.20-rt25.patch.gz, this fix is not present.
 
-Also, add -j to cleancmd to further speed things up.  Startup speed may
-not seem all that important given how long rteval is typically run for,
-but this helps make quick tests (e.g. while debugging things, or when
-hunting a latency that shows up very quickly) less painful.
+I see, the fix is available on 6.8 kernel i.e. 
+patch-6.8-rc7-rt6.patch.gz patch but since i am working on 6.6 kernel 
+these patches do not apply cleanly. Since, this issue is first reported 
+on v6.6.10-rt18, so will the fix officially be released on all 6.6 
+kernel sub-versions post 6.6.10-rt18 ?
 
-On my 12-cpu laptop, this patch saves about 15 seconds of startup time.
-
-Signed-off-by: Crystal Wood <crwood@redhat.com>
----
- rteval/modules/loads/kcompile.py | 40 ++++++++++++++------------------
- 1 file changed, 18 insertions(+), 22 deletions(-)
-
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index de1539986723..db1941074157 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -54,7 +54,7 @@ class KBuildJob:
-             self.jobs = self.calc_jobs_per_cpu() * cpus_available
- 
-         self.runcmd = f"make O={self.objdir} -C {self.kdir} -j{self.jobs}"
--        self.cleancmd = f"make O={self.objdir} -C {self.kdir} clean allmodconfig"
-+        self.cleancmd = f"make O={self.objdir} -C {self.kdir} clean allmodconfig -j${self.jobs}"
-         self.cleancmd += f"&& pushd {self.objdir} && {self.kdir}/scripts/config -d CONFIG_MODULE_SIG_SHA1 -e CONFIG_MODULE_SIG_SHA512 && popd && make O={self.objdir} -C {self.kdir} olddefconfig"
-         if self.binder:
-             self.runcmd = self.binder + " " + self.runcmd
-@@ -90,8 +90,8 @@ class KBuildJob:
-     def clean(self, sin=None, sout=None, serr=None):
-         """ Runs command to clean any previous builds and configure kernel """
-         self.log(Log.DEBUG, f"cleaning objdir {self.objdir}")
--        subprocess.call(self.cleancmd, shell=True,
--                        stdin=sin, stdout=sout, stderr=serr)
-+        return subprocess.call(self.cleancmd, shell=True,
-+                               stdin=sin, stdout=sout, stderr=serr)
- 
-     def run(self, sin=None, sout=None, serr=None):
-         """ Use Popen to launch a kcompile job """
-@@ -234,6 +234,10 @@ class Kcompile(CommandLineLoad):
-                 self.logger, self.cpus[n] if self.cpulist else None)
-             self.args.append(str(self.buildjobs[n])+";")
- 
-+    def _repair_tarball(self):
-+        self._log(Log.DEBUG, "Invalid state in kernel build tree, reloading")
-+        self._remove_build_dirs()
-+        self._extract_tarball()
- 
-     def _WorkloadBuild(self):
-         if self._donotrun:
-@@ -246,30 +250,22 @@ class Kcompile(CommandLineLoad):
-         else:
-             out = err = null
- 
--        # clean up any damage from previous runs
--        try:
--            cmd = ["make", "-C", self.mydir, "mrproper"]
--            ret = subprocess.call(cmd, stdin=null, stdout=out, stderr=err)
-+        # clean up object dirs and make sure each has a config file
-+        for n in self.nodes:
-+            ret = self.buildjobs[n].clean(sin=null, sout=out, serr=err)
-             if ret:
--                # if the above make failed, remove and reinstall the source tree
--                self._log(Log.DEBUG, "Invalid state in kernel build tree, reloading")
--                self._remove_build_dirs()
--                self._extract_tarball()
--                ret = subprocess.call(cmd, stdin=null, stdout=out, stderr=err)
--                if ret:
--                    # give up
--                    raise rtevalRuntimeError(self, f"kcompile setup failed: {ret}")
--        except KeyboardInterrupt as m:
--            self._log(Log.DEBUG, "keyboard interrupt, aborting")
--            return
--        self._log(Log.DEBUG, "ready to run")
-+                self._repair_tarball()
-+                ret = self.buildjobs[n].clean(sin=null, sout=out, serr=err)
-+            if ret:
-+                raise rtevalRuntimeError(self, f"kcompile setup failed: {ret}")
-+
-         if self._logging:
-             os.close(out)
-             os.close(err)
--        # clean up object dirs and make sure each has a config file
--        for n in self.nodes:
--            self.buildjobs[n].clean(sin=null, sout=null, serr=null)
-+
-         os.close(null)
-+
-+        self._log(Log.DEBUG, "ready to run")
-         self._setReady()
- 
-     def _WorkloadPrepare(self):
--- 
-2.43.0
+> 
+> John
 
