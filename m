@@ -1,34 +1,46 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FAA6137927;
-	Wed,  6 Mar 2024 16:27:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 347D0136995;
+	Wed,  6 Mar 2024 16:54:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709742430; cv=none; b=UiqHFEWsjS9+U/DSAEBp2MZlhWFKpksXn8VWzEFXPpwaPiOUslY+sebuwYdlL666q6UYebRn3wF3rOuVJmNubAi2Ui8QXfJoa4AVgfS3j5jNl/I87DhukLHp0/CNMPHCsChHEv+Sf5EyPMaijl071W1VY/bomLikeC9cwHzhs6s=
+	t=1709744088; cv=none; b=rfEwqX4WZh6p7zIWbujtTW/kxqrFYiaXAsHVELZN+J5uP2jD7GHYakcEhXrZB7CwyZu9y2pcd5PHBLZtpOxt13m25sl2OZIrREoQ8WADE6uq/taF5k4daM1vlH1VU1rXj16VEaj7u4iGXuWcl3s0yOEh/l4IoVVxaVzajkuAsE8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709742430; c=relaxed/simple;
-	bh=mST0baNuDZQDxdlBh3gFG3t11nxhv4188xlTctM8KAI=;
+	s=arc-20240116; t=1709744088; c=relaxed/simple;
+	bh=SzoK0Fw3umtF2LI2/KfCcWVLApBj6ZybhrvyoFVg85U=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=r4l08d/VMcu+rO5DdqUhcDeAKa54zxY6W0GJfRR0pemUxw/JBcWc0Wf3Z8ii57jj4dkwDktSVO0ZRjc+VgWKOaEprMwgc7Cx0rqU6msdZa+iIJFfzocGPWDHV4Hn+e1hWdxF6Ikwt30YVTfEcphzkSPrm/QYTjgSwVS22NcgQlg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nhZld4lG; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=dyOfHr5ElAT6ZsFeAK7m0xpMIqrbOM5/5ZVZAP0Q/7iRixwIh6zwXdNI/NBaSjwBdmUA/Z01C1bDZPHaSaS5xEAuKaPrQX+WJD2jvCqa3S3G60pP0lq/Td9mRJqiUKIWFVsadcuLiw3H3dPx/pwsJQlPclXz12OjWqx9wzTUWMU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=SRCOD/GS; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=kEIbJrkA; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nhZld4lG"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B0319C43394;
-	Wed,  6 Mar 2024 16:27:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1709742430;
-	bh=mST0baNuDZQDxdlBh3gFG3t11nxhv4188xlTctM8KAI=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=nhZld4lG7GINhc9K+uHkPNx96orLDEa10TFZ8fEVhsgtrQGnohY+sjOGAJeqHRUk0
-	 EunhC94QsqjPcgQJIBoTGD+jl+/oBLty/HOXPxhSDDx0ILhdXmjg3OV4oqSyBifmEg
-	 fx8vh9KvS7IBDFmGCka2nhjMkPRLCctoO2ukJYxMlSqD0OGibw+RXKhWQxdT/CmCPX
-	 dKHXpLknEXw4ezT7k+4mUhxBxC+BbY9q94jfHImJVTIAC76bg+YAPhzQeVuK8VH4el
-	 VjK/aIAMMvuaG0KfflRxexmg7SG8eKGpm0uULUJyAotL8fN0VJ7N/BS9hTPX0DE24s
-	 NoWoYQntpKEkw==
-Date: Wed, 6 Mar 2024 13:27:06 -0300
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="SRCOD/GS";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="kEIbJrkA"
+Date: Wed, 6 Mar 2024 17:54:43 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1709744085;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=SzoK0Fw3umtF2LI2/KfCcWVLApBj6ZybhrvyoFVg85U=;
+	b=SRCOD/GSPjz1VFqxmztRkD9kmTvj+FnLQCGN3dmW8kMCM6rBAk3GzTl24Df+/vNGfTNWIF
+	GIJuTdPYx4x5E5YYDAABtR06jRvShl5HmSMfMzslmf45pe68gsL6daIahK1Yfs2L+q6d+H
+	xHBfc5ubfHsK1Ln7jQrFIL/1vDfP2iu5Gy2G7XhqxwIUaOgygGegosJEHBPhzsbtpWayue
+	wLK0LIhgYKImMC3e3lf4/mxhkXszBPJvm4BH5HOduu/5sOFzm18rSGE2hr78Sw9A7sGjiF
+	FEOfvMXOQz+ReBenspsds+G+pQ8exMFII8gW4fbxdIASzcgJJivCbKluydZr3A==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1709744085;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=SzoK0Fw3umtF2LI2/KfCcWVLApBj6ZybhrvyoFVg85U=;
+	b=kEIbJrkA4wW+QV7jKi44QsxBEyvS69z5PNbN23yP6TIApcmpoYG9VcEAw4poCS+02pemoW
+	N89T/yyh6pNDfxCA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Arnaldo Carvalho de Melo <acme@kernel.org>
 Cc: Mike Galbraith <efault@gmx.de>, Peter Zijlstra <peterz@infradead.org>,
 	Marco Elver <elver@google.com>, linux-rt-users@vger.kernel.org,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
@@ -38,95 +50,30 @@ Cc: Mike Galbraith <efault@gmx.de>, Peter Zijlstra <peterz@infradead.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Artem Savkov <asavkov@redhat.com>
 Subject: Re: 'perf test sigtrap' failing on PREEMPT_RT_FULL
-Message-ID: <ZeiZWjRUmXszp0CN@x1>
+Message-ID: <20240306165443.5AKJ403t@linutronix.de>
 References: <ZdZOYnIkjqkyfo5P@x1>
+ <ZeiZWjRUmXszp0CN@x1>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <ZdZOYnIkjqkyfo5P@x1>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <ZeiZWjRUmXszp0CN@x1>
 
-On Wed, Mar 06, 2024 at 10:06:30AM -0300, Arnaldo Carvalho de Melo wrote:
-> > In Thu, 4 Jan 2024 19:35:57 -0300, Arnaldo Carvalho de Melo wrote:
-> > > +++ b/kernel/events/core.c
-> > > @@ -6801,7 +6801,7 @@ static void perf_pending_task(struct callback_head *head)
-> > >         * If we 'fail' here, that's OK, it means recursion is already disabled
-> > >         * and we won't recurse 'further'.
-> > >         */
-> > >-       preempt_disable_notrace();
-> > >+       migrate_disable();
-> > >        rctx = perf_swevent_get_recursion_context();
->  
-> > Pardon my ignorance, is it safe to call preempt_count() with preemption
-> > enabled on PREEMPT_RT, or at least in the context being discussed here?
->  
-> > Because:
->  
-> > 	 perf_swevent_get_recursion_context()
-> > 	     get_recursion_context()
-> >                  interrupt_context_level()
-> >                      preempt_count()	
->  
-> > And:
->  
-> > int perf_swevent_get_recursion_context(void)
-> > {
-> >         struct swevent_htable *swhash = this_cpu_ptr(&swevent_htable);
-> > 
-> >         return get_recursion_context(swhash->recursion);
-> > }
-> 
-> Seems to be enough because perf_pending_task is a irq_work callback and
+On 2024-03-06 13:27:06 [-0300], Arnaldo Carvalho de Melo wrote:
+> That its what introduces perf_pending_task(), I'm now unsure we can just
+> disable migration, as event_sched_out() seems to require being called
+> under a raw_spin_lock and that disables preemption...
 
-s/irq_work/task_work/ but that also doesn't reentry, I think
+Not sure what the best course of action is here but based on what I
+learned last time you reported this I think we need delayed signals=E2=80=A6
+Let me look into this. We had it and then removed it because we had no
+users of it at some point but probably nobody took perf into account.
 
-> that is guaranteed not to reentry?
-> 
-> Artem's tests with a RHEL kernel seems to indicate that, ditto for my,
-> will test with upstream linux-6.8.y-rt.
-> 
-> But there is a lot more happening in perf_sigtrap and I'm not sure if
-> the irq_work callback gets preempted we would not race with something
-> else.
-> 
-> Marco, Mike, ideas?
+> - Arnaldo
 
-Looking at:
-
-commit ca6c21327c6af02b7eec31ce4b9a740a18c6c13f
-Author: Peter Zijlstra <peterz@infradead.org>
-Date:   Thu Oct 6 15:00:39 2022 +0200
-
-    perf: Fix missing SIGTRAPs
-    
-    Marco reported:
-    
-    Due to the implementation of how SIGTRAP are delivered if
-    perf_event_attr::sigtrap is set, we've noticed 3 issues:
-    
-      1. Missing SIGTRAP due to a race with event_sched_out() (more
-         details below).
-    
-      2. Hardware PMU events being disabled due to returning 1 from
-         perf_event_overflow(). The only way to re-enable the event is
-         for user space to first "properly" disable the event and then
-         re-enable it.
-    
-      3. The inability to automatically disable an event after a
-         specified number of overflows via PERF_EVENT_IOC_REFRESH.
-    
-    The worst of the 3 issues is problem (1), which occurs when a
-    pending_disable is "consumed" by a racing event_sched_out(), observed
-    as follows:
-
--------------------------------------------------------------
-
-That its what introduces perf_pending_task(), I'm now unsure we can just
-disable migration, as event_sched_out() seems to require being called
-under a raw_spin_lock and that disables preemption...
-
-- Arnaldo
+Sebastian
