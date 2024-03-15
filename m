@@ -1,866 +1,1577 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F148B54677;
-	Thu, 14 Mar 2024 12:03:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2845D51C56
+	for <linux-rt-users@vger.kernel.org>; Fri, 15 Mar 2024 19:21:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710417823; cv=none; b=uZxeFLJLS3YOHNDD62PAzcO2ul+Gml3kfKWrFEoVHSrvYnA3ANLBMCpoFLVXW4kYE3LzDTqFe98jb5BMlbZfN28wVQWA5y4j6jeZC1IpCgqf1Tp1oZ+tlPPuMcSkPB2RdQ85S0jMblreAxo25pVd5XHc1HsZ9rRT1K8RbgXPyaA=
+	t=1710530496; cv=none; b=D0KexZ2FTo9XmL4LVBUXTkCvwVxszLoSnBoSfASc2vW0tsRg9LClR+EdP0yoYPtL/EbmmhaKTiq75dLs6ZnJhI2QrkUzTAwvWEJdVACn6AegCfopBAZBCNNDrjGTGMk2DHQfbT9QzbXjDeNBLFEYHiHmm8d03oiSw/USrygSYsU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710417823; c=relaxed/simple;
-	bh=Ya9ClXmprOYCXToCDV/TonbxEk6cIDyym6QwzAq8A2M=;
+	s=arc-20240116; t=1710530496; c=relaxed/simple;
+	bh=gHoQnEHvQiCaNX89bwWLhWxhmd9Dcm6C+Zvs+EQxiCQ=;
 	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=tCaExIDuG0klRR2gqz4ZzVyY0H668mmv6bt764vF5SUXMb+e0xQh68B5ZRgr2V2e1zVKd5bk1aAO2+IJDNKmQkSArxr0cplxy+wz1x43W3JJQS7epQbUJiC0SApbtY+JbRw74jk1wdIUKdDhnMcZ92aiaGH7BSfUX07ufggw3Gc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=nbr07aKq; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=09+5Y9LJ; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	 Content-Disposition; b=H0hme2drZAPVHNzBLHI+ka9vjGJZox8r13PxF3XW5KhjvsBkVWNMI5FBfHNxdFNHjzq0+H7WpAtGhUdCh/mp8qHbFUPYCshTeLDfvB2nk5nvxnVlD36Nme9hsBYOeqX4zW+zF+aytiCzs5swVJ5pWasR1bOs2Y+7mHoIkHBgAO8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X8MkdSJZ; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="nbr07aKq";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="09+5Y9LJ"
-Date: Thu, 14 Mar 2024 13:03:37 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1710417819;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X8MkdSJZ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1710530491;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=ur50fVRaQP7TkIq5KmIsmOdoE7+QG3BQ02aH7AEkF0U=;
-	b=nbr07aKq0tkk2jsGIAGh61+ROw0/Mka0hPge0BKzhIovLRFt8LPBkennMG1Q9nGoyJQQjD
-	Png2j2Wc9Vp0LP6Bt9j84F28Vnr2Ym/GAk6T7Tqs71iAfnWNh+Oqq9pTAAHaBK8gdy3gHw
-	5a60ES5p9QO64pR67K+ZPtlwNJR8IuAtKKSc0xZRLtaXc2xXCWSwhAmzVHBV225brw8wv8
-	922jEltXUyTBvF7aKEqibv+2JJg/99q//cydjmYWau7p+6BqJ+nptR2RHAWdYswa8Haszn
-	c09XWatcI4DXUXlOBnDtzOUWLJfkAOia5uPHxju1Q1An/8g2ck1jIMiPQ108jg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1710417819;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=ur50fVRaQP7TkIq5KmIsmOdoE7+QG3BQ02aH7AEkF0U=;
-	b=09+5Y9LJshEwUO4LjL5hgcAYLLn+Pd/7zQtTK+Le23OHCeEX3m/6YIQFwGs00f3r6P2nIR
-	9JLUGwE5zyXPjcCg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.8-rt8
-Message-ID: <20240314120337.jQwGma2t@linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=kkM7je8ozv1ufmdv28yH9lmlummAlHg5602Z7+uS8A0=;
+	b=X8MkdSJZaA8spwjkucpWLyF9q9RcvJUA3OeVjtC1DMOaoVQ3RV2PMiwI8KO+b9BL9fn2e4
+	PmytGFsv9uGyCiL0dL4VGSfGB/XKBk/QZ6qMmKC2yQ8oNkN025xrSUB7goZ1YICNchZOfC
+	24hTTYyFZj+8ptk4FUP8RMPdkM3eJV0=
+Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
+ [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-179-rmV-lnFYNJit19ePjwD9rQ-1; Fri, 15 Mar 2024 15:21:30 -0400
+X-MC-Unique: rmV-lnFYNJit19ePjwD9rQ-1
+Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-69066d3ceecso44483716d6.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Mar 2024 12:21:30 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1710530485; x=1711135285;
+        h=content-transfer-encoding:content-disposition:mime-version
+         :message-id:subject:cc:to:from:date:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=kkM7je8ozv1ufmdv28yH9lmlummAlHg5602Z7+uS8A0=;
+        b=DEOEY2cCfPjo8r6bvPWA8DY3Kn614J9fumzS8eNc1BaMuqdnDoPd+qUHh75ABY2qIa
+         VTVlfoHuDmZBZwon83Iu37ozVQ1vy6XRYINIy8KCyj+oFeFECoVvRFdBTrOxTmLc5/Ox
+         17n1hLVIGxNf+mNeX2+L+JkwZ7vbyJ1rdVyiXeZXsnPH9jVOnEXZItJ94kow9CgEyhty
+         907LcHvBVA8NaNjuDNO8A64jOK608aL+ewm63WdfXupDv7O0kgKLQZEqPVs9Urp5Q3e1
+         zJO1y1S30Xdg5rWCJuT7QgDRp6gxpLAXi5WMx9lNorUrVvWphKtxTDXDC/eac7TLmWTK
+         f2Qg==
+X-Forwarded-Encrypted: i=1; AJvYcCU2Wyvsah/kDc4etW3pMNTqVaBhnjO/tGxUAO8FzlCxJjkLNpSMpVw+GI4wxYShnBMwmONmO3sx+jkP6ycYH0mRqfuGO1l02Qi10JHfBB4=
+X-Gm-Message-State: AOJu0Yxr908PMn3vNn/BDuX6BnWTQKKMsFf60sF9i5kU6yE44GPO7+Rx
+	ytFZQnks8Fdfl9B29f3oNgrPOAJWyRP+UgK16R59BawLWid/oy/ec0UZ9y8VGVVR26zz6nLjq6H
+	WoiLixoC1HWxqXhOkCMrlvNGWw8OnQBRzWwKd4uKL4smx0jsdm/6E7w8i+ktsCkR+
+X-Received: by 2002:a05:6214:971:b0:691:49d5:471 with SMTP id do17-20020a056214097100b0069149d50471mr5798813qvb.47.1710530483948;
+        Fri, 15 Mar 2024 12:21:23 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IG9BJJq7fLhOJfkz90iy/oaRoGzM/q1+bBtscxhEGF7JiWgXpdF39He/O8IZzR9wywx2ou4FA==
+X-Received: by 2002:a05:6214:971:b0:691:49d5:471 with SMTP id do17-20020a056214097100b0069149d50471mr5798771qvb.47.1710530482997;
+        Fri, 15 Mar 2024 12:21:22 -0700 (PDT)
+Received: from thinkpad2021 ([2607:fb90:ee2a:307:2baf:9d87:8580:8fca])
+        by smtp.gmail.com with ESMTPSA id kj25-20020a056214529900b00690df461ecbsm2312628qvb.10.2024.03.15.12.21.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 15 Mar 2024 12:21:22 -0700 (PDT)
+Date: Fri, 15 Mar 2024 15:21:19 -0400
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: Petr Mladek <pmladek@suse.com>, Clark Williams <williams@redhat.com>,
+	Juri Lelli <jlelli@redhat.com>, Derek Barbosa <debarbos@redhat.com>,
+	Bruno Goncalves <bgoncalv@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: NMIs reported by console_blast.sh with 6.6.20-rt25
+Message-ID: <ZfSfrzak9WS0ZFv7@thinkpad2021>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Dear RT folks!
+Hello John,
 
-I'm pleased to announce the v6.8-rt8 patch set. 
+The real-time team at Red Hat is discussing backporting the rt patchset in =
+6.6
+to RHEL 9/Stream 9. I decided to test v6.6.20-rt25 from stable-rt with
+console_blast.sh. It reported similar NMIs from my testing of 6.7.0-rt6 with
+that high cpu count server over uart 8250; which is expected since the patc=
+hset
+is similar.
 
-Changes since v6.8-rt7:
+One interesting thing is that 6.7.0-rt6 fully preemptive + realtime tuned p=
+rofile
+did not return any NMIs while 6.6 did with that same configuration.
 
-  - Add NAPI threads for backlog processing. The patch series replaces a
-    RT specific workaround in the current RT series and avoids a warning
-    once RPS is enabled. The warning, that is triggered once RPS gets
-    enabled, was reported by Wander Lairson Costa.
+Another aspect I noticed during my testing. I did not set grub to
+start with the realtime profile at boot for this machine. When I did set
+it the second (and latter) NMI did not show for fully preemptive (the
+3rd set at the bottom of this email).=20
 
-  - perf's testsuite 'perf test sigtrap' reported an error. The way
-    perf's SIGTRAP gets reported and how events are sometimes disabled
-    has been reworked. Upstream didn't complain but is still testing.
-    The issue has been reported by Arnaldo Carvalho de Melo.
+Caller info was enabled. No modifications to the source code were made.
 
-Known issues
-    None.
+I have not tested previous versions before 6.7.0-rt6 or 6.6.20-rt25;
+with the exception of accidently testing 6.6.10-rt19. 6.6.10 also
+reported NMIs during this test. If you wish to see these reports please
+let me know.
 
-The delta patch against v6.8-rt7 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/incr/patch-6.8-rt7-rt8.patch.xz
+Also, please let me know if I can help in any other way or if you want anyt=
+hing else
+tested. I will be moving to 6.8 and using BUG_ON(system_state =3D=3D SYSTEM=
+_RUNNING);
+in the scheduler next for my tests to see if the messages do not show.
 
-You can get this release via the git tree at:
+Link to lscpu and previous NMI reports:
+https://lore.kernel.org/linux-rt-users/ZdUmpblrzX0pcPjz@thinkpad2021/T/#mec=
+258264be95dcba23970def7b248af0c6e942b2
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.8-rt8
+-----------------------------
+NMI Backtrace for 6.6.20-rt25 no forced preemption with tuned realtime prof=
+ile
+-----------------------------
 
-The RT patch against v6.8 can be found here:
+[ T2614] Kernel panic - not syncing: sysrq triggered crash=0D
+[   C56] NMI backtrace for cpu 56=0D
+[   C56] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ C56] RIP: 0010:io_serial_out (arch/x86/kernel/early_printk.c:105)=20
+[ C56] Code: 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 0f 1f=
+ 44 00 00 0f b6 8f c1 00 00 00 89 d0 0f b7 57 08 d3 e6 01 f2 ee <c3> cc cc =
+cc cc 0f 1f 40 00 90 90 90 90 90 90 90 90 90 90 90 90 90=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	0f 1f 00             	nopl   (%rax)
+   3:	90                   	nop
+   4:	90                   	nop
+   5:	90                   	nop
+   6:	90                   	nop
+   7:	90                   	nop
+   8:	90                   	nop
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  18:	0f b6 8f c1 00 00 00 	movzbl 0xc1(%rdi),%ecx
+  1f:	89 d0                	mov    %edx,%eax
+  21:	0f b7 57 08          	movzwl 0x8(%rdi),%edx
+  25:	d3 e6                	shl    %cl,%esi
+  27:	01 f2                	add    %esi,%edx
+  29:	ee                   	out    %al,(%dx)
+  2a:*	c3                   	ret		<-- trapping instruction
+  2b:	cc                   	int3
+  2c:	cc                   	int3
+  2d:	cc                   	int3
+  2e:	cc                   	int3
+  2f:	0f 1f 40 00          	nopl   0x0(%rax)
+  33:	90                   	nop
+  34:	90                   	nop
+  35:	90                   	nop
+  36:	90                   	nop
+  37:	90                   	nop
+  38:	90                   	nop
+  39:	90                   	nop
+  3a:	90                   	nop
+  3b:	90                   	nop
+  3c:	90                   	nop
+  3d:	90                   	nop
+  3e:	90                   	nop
+  3f:	90                   	nop
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patch-6.8-rt8.patch.xz
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c3                   	ret
+   1:	cc                   	int3
+   2:	cc                   	int3
+   3:	cc                   	int3
+   4:	cc                   	int3
+   5:	0f 1f 40 00          	nopl   0x0(%rax)
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	90                   	nop
+[   C56] RSP: 0018:ffa0000030a9fb28 EFLAGS: 00000002=0D
+[   C56] RAX: 000000000000005f RBX: ffffffffa6ac68c0 RCX: 0000000000000000=
+=0D
+[   C56] RDX: 00000000000003f8 RSI: 0000000000000000 RDI: ffffffffa6ac68c0=
+=0D
+[   C56] RBP: 000000000000005f R08: 303378302f623178 R09: 302b6d73615f6b72=
+=0D
+[   C56] R10: 615f6b726f665f6d R11: 6f72665f74657220 R12: ffffffffa6ac68c0=
+=0D
+[   C56] R13: ffffffffa69b9434 R14: 0000000000000000 R15: 0000000000000000=
+=0D
+[   C56] FS:  00007f4a81d54740(0000) GS:ff11003fff600000(0000) knlGS:000000=
+0000000000=0D
+[   C56] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033=0D
+[   C56] CR2: 00007f4a81f30650 CR3: 000000011ea24004 CR4: 0000000000771ee0=
+=0D
+[   C56] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000=
+=0D
+[   C56] DR3: 0000000000000000 DR6: 00000000fffe07f0 DR7: 0000000000000400=
+=0D
+[   C56] PKRU: 55555554=0D
+[   C56] Call Trace:=0D
+[   C56]  <NMI>=0D
+[ C56] ? nmi_cpu_backtrace (lib/nmi_backtrace.c:115)=20
+[ C56] ? nmi_cpu_backtrace_handler (arch/x86/kernel/apic/hw_nmi.c:47 (discr=
+iminator 1))=20
+[ C56] ? nmi_handle (arch/x86/kernel/nmi.c:149)=20
+[ C56] ? io_serial_out (arch/x86/kernel/early_printk.c:105)=20
+[ C56] ? default_do_nmi (arch/x86/kernel/nmi.c:347)=20
+[ C56] ? exc_nmi (arch/x86/kernel/nmi.c:538)=20
+[ C56] ? end_repeat_nmi (arch/x86/entry/entry_64.S:1458)=20
+[ C56] ? io_serial_out (arch/x86/kernel/early_printk.c:105)=20
+[ C56] ? io_serial_out (arch/x86/kernel/early_printk.c:105)=20
+[ C56] ? io_serial_out (arch/x86/kernel/early_printk.c:105)=20
+[   C56]  </NMI>=0D
+[   C56]  <TASK>=0D
+[ C56] serial8250_console_putchar (./include/linux/serial_core.h:704 driver=
+s/tty/serial/8250/8250_port.c:3347)=20
+[ C56] ? __pfx_serial8250_console_putchar (drivers/tty/serial/8250/8250_por=
+t.c:3343)=20
+[ C56] uart_console_write (drivers/tty/serial/serial_core.c:2134)=20
+[ C56] serial8250_console_write_atomic (drivers/tty/serial/8250/8250_port.c=
+:3628)=20
+[ C56] nbcon_emit_next_record (kernel/printk/nbcon.c:940)=20
+[ C56] __nbcon_atomic_flush_all (kernel/printk/nbcon.c:1192 (discriminator =
+1) kernel/printk/nbcon.c:1326 (discriminator 1))=20
+[ C56] vprintk_emit (kernel/printk/printk.c:2414)=20
+[ C56] _printk (kernel/printk/printk.c:2474)=20
+[ C56] panic (./arch/x86/include/asm/bitops.h:207 ./arch/x86/include/asm/bi=
+tops.h:239 ./include/asm-generic/bitops/instrumented-non-atomic.h:142 kerne=
+l/panic.c:528 kernel/panic.c:339)=20
+[ C56] ? _printk (kernel/printk/printk.c:2474)=20
+[ C56] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ C56] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ C56] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ C56] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ C56] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1) =
+kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (discri=
+minator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ C56] vfs_write (fs/read_write.c:582)=20
+[ C56] ksys_write (fs/read_write.c:637)=20
+[ C56] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:81=
+)=20
+[ C56] ? do_dup2 (fs/file.c:1142)=20
+[ C56] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/in=
+clude/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561)=
+=20
+[ C56] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[   C56] RIP: 0033:0x7f4a81e5fc94=0D
+[ C56] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00=
+ 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 00 =
+f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
 
-The split quilt queue is available at:
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[   C56] RSP: 002b:00007ffc0e13b318 EFLAGS: 00000202 ORIG_RAX: 000000000000=
+0001=0D
+[   C56] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f4a81e5fc94=
+=0D
+[   C56] RDX: 0000000000000002 RSI: 000055a865695490 RDI: 0000000000000001=
+=0D
+[   C56] RBP: 00007ffc0e13b340 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[   C56] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[   C56] R13: 000055a865695490 R14: 00007f4a81f305c0 R15: 00007f4a81f2df20=
+=0D
+[   C56]  </TASK>=0D
+[   C56] NMI backtrace for cpu 56=0D
+[   C56] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ C56] RIP: 0010:io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] Code: cc 0f 1f 40 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90=
+ 0f 1f 44 00 00 0f b6 8f c1 00 00 00 0f b7 57 08 d3 e6 01 f2 ec <0f> b6 c0 =
+c3 cc cc cc cc 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	cc                   	int3
+   1:	0f 1f 40 00          	nopl   0x0(%rax)
+   5:	90                   	nop
+   6:	90                   	nop
+   7:	90                   	nop
+   8:	90                   	nop
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  1a:	0f b6 8f c1 00 00 00 	movzbl 0xc1(%rdi),%ecx
+  21:	0f b7 57 08          	movzwl 0x8(%rdi),%edx
+  25:	d3 e6                	shl    %cl,%esi
+  27:	01 f2                	add    %esi,%edx
+  29:	ec                   	in     (%dx),%al
+  2a:*	0f b6 c0             	movzbl %al,%eax		<-- trapping instruction
+  2d:	c3                   	ret
+  2e:	cc                   	int3
+  2f:	cc                   	int3
+  30:	cc                   	int3
+  31:	cc                   	int3
+  32:	0f 1f 00             	nopl   (%rax)
+  35:	90                   	nop
+  36:	90                   	nop
+  37:	90                   	nop
+  38:	90                   	nop
+  39:	90                   	nop
+  3a:	90                   	nop
+  3b:	90                   	nop
+  3c:	90                   	nop
+  3d:	90                   	nop
+  3e:	90                   	nop
+  3f:	90                   	nop
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patches-6.8-rt8.tar.xz
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	0f b6 c0             	movzbl %al,%eax
+   3:	c3                   	ret
+   4:	cc                   	int3
+   5:	cc                   	int3
+   6:	cc                   	int3
+   7:	cc                   	int3
+   8:	0f 1f 00             	nopl   (%rax)
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	90                   	nop
+[   C56] RSP: 0018:ffa0000030a9fb00 EFLAGS: 00000002=0D
+[   C56] RAX: ffffffffa45cf400 RBX: 0000000000000000 RCX: 0000000000000000=
+=0D
+[   C56] RDX: 00000000000003fd RSI: 0000000000000005 RDI: ffffffffa6ac68c0=
+=0D
+[   C56] RBP: 0000000000002710 R08: 303578302f643278 R09: 302b6b726f665f6d=
+=0D
+[   C56] R10: 302b6b726f665f6d R11: 6f72665f74657220 R12: 0000000000000020=
+=0D
+[   C56] R13: ffffffffa6ac68c0 R14: 0000000000000000 R15: 0000000000000000=
+=0D
+[   C56] FS:  00007f4a81d54740(0000) GS:ff11003fff600000(0000) knlGS:000000=
+0000000000=0D
+[   C56] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033=0D
+[   C56] CR2: 00007f4a81f30650 CR3: 000000011ea24004 CR4: 0000000000771ee0=
+=0D
+[   C56] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000=
+=0D
+[   C56] DR3: 0000000000000000 DR6: 00000000fffe07f0 DR7: 0000000000000400=
+=0D
+[   C56] PKRU: 55555554=0D
+[   C56] Call Trace:=0D
+[   C56]  <NMI>=0D
+[ C56] ? nmi_cpu_backtrace (lib/nmi_backtrace.c:115)=20
+[ C56] ? nmi_cpu_backtrace_handler (arch/x86/kernel/apic/hw_nmi.c:47 (discr=
+iminator 1))=20
+[ C56] ? nmi_handle (arch/x86/kernel/nmi.c:149)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? default_do_nmi (arch/x86/kernel/nmi.c:347)=20
+[ C56] ? exc_nmi (arch/x86/kernel/nmi.c:538)=20
+[ C56] ? end_repeat_nmi (arch/x86/entry/entry_64.S:1458)=20
+[ C56] ? mem16_serial_out (drivers/tty/serial/8250/8250_port.c:382)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[   C56]  </NMI>=0D
+[   C56]  <TASK>=0D
+[ C56] wait_for_xmitr (drivers/tty/serial/8250/8250.h:117 drivers/tty/seria=
+l/8250/8250.h:139 drivers/tty/serial/8250/8250_port.c:2106 drivers/tty/seri=
+al/8250/8250_port.c:2124)=20
+[ C56] serial8250_console_putchar (./include/linux/serial_core.h:704 driver=
+s/tty/serial/8250/8250_port.c:3347)=20
+[ C56] ? __pfx_serial8250_console_putchar (drivers/tty/serial/8250/8250_por=
+t.c:3343)=20
+[ C56] uart_console_write (drivers/tty/serial/serial_core.c:2134)=20
+[ C56] serial8250_console_write_atomic (drivers/tty/serial/8250/8250_port.c=
+:3628)=20
+[ C56] nbcon_emit_next_record (kernel/printk/nbcon.c:940)=20
+[ C56] __nbcon_atomic_flush_all (kernel/printk/nbcon.c:1192 (discriminator =
+1) kernel/printk/nbcon.c:1326 (discriminator 1))=20
+[ C56] vprintk_emit (kernel/printk/printk.c:2414)=20
+[ C56] _printk (kernel/printk/printk.c:2474)=20
+[ C56] panic (./arch/x86/include/asm/bitops.h:207 ./arch/x86/include/asm/bi=
+tops.h:239 ./include/asm-generic/bitops/instrumented-non-atomic.h:142 kerne=
+l/panic.c:528 kernel/panic.c:339)=20
+[ C56] ? _printk (kernel/printk/printk.c:2474)=20
+[ C56] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ C56] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ C56] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ C56] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ C56] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1) =
+kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (discri=
+minator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ C56] vfs_write (fs/read_write.c:582)=20
+[ C56] ksys_write (fs/read_write.c:637)=20
+[ C56] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:81=
+)=20
+[ C56] ? do_dup2 (fs/file.c:1142)=20
+[ C56] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/in=
+clude/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561)=
+=20
+[ C56] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[   C56] RIP: 0033:0x7f4a81e5fc94=0D
+[ C56] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00=
+ 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 00 =
+f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
 
-Sebastian
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[   C56] RSP: 002b:00007ffc0e13b318 EFLAGS: 00000202 ORIG_RAX: 000000000000=
+0001=0D
+[   C56] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f4a81e5fc94=
+=0D
+[   C56] RDX: 0000000000000002 RSI: 000055a865695490 RDI: 0000000000000001=
+=0D
+[   C56] RBP: 00007ffc0e13b340 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[   C56] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[   C56] R13: 000055a865695490 R14: 00007f4a81f305c0 R15: 00007f4a81f2df20=
+=0D
+[   C56]  </TASK>=0D
+[ T2614] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ T2614] Call Trace:=0D
+[ T2614]  <TASK>=0D
+[ T2614] dump_stack_lvl (lib/dump_stack.c:107)=20
+[ T2614] panic (kernel/panic.c:340)=20
+[ T2614] ? _printk (kernel/printk/printk.c:2474)=20
+[ T2614] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ T2614] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ T2614] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ T2614] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ T2614] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1=
+) kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (disc=
+riminator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ T2614] vfs_write (fs/read_write.c:582)=20
+[ T2614] ksys_write (fs/read_write.c:637)=20
+[ T2614] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:=
+81)=20
+[ T2614] ? do_dup2 (fs/file.c:1142)=20
+[ T2614] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ T2614] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ T2614] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/=
+include/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561=
+)=20
+[ T2614] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[ T2614] RIP: 0033:0x7f4a81e5fc94=0D
+[ T2614] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 =
+00 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 0=
+0 f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
 
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index 557efca75a74c..0a29b856786e7 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -3323,11 +3323,7 @@ struct softnet_data {
- 	int			defer_count;
- 	int			defer_ipi_scheduled;
- 	struct sk_buff		*defer_list;
--#ifndef CONFIG_PREEMPT_RT
- 	call_single_data_t	defer_csd;
--#else
--	struct work_struct	defer_work;
--#endif
- };
- 
- static inline void input_queue_head_incr(struct softnet_data *sd)
-@@ -3369,6 +3365,7 @@ static inline void dev_xmit_recursion_dec(void)
- 	__this_cpu_dec(softnet_data.xmit.recursion);
- }
- 
-+void kick_defer_list_purge(struct softnet_data *sd, unsigned int cpu);
- void __netif_schedule(struct Qdisc *q);
- void netif_schedule_queue(struct netdev_queue *txq);
- 
-diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index d2a15c0c6f8a9..c1c6600541657 100644
---- a/include/linux/perf_event.h
-+++ b/include/linux/perf_event.h
-@@ -781,9 +781,9 @@ struct perf_event {
- 	unsigned int			pending_wakeup;
- 	unsigned int			pending_kill;
- 	unsigned int			pending_disable;
--	unsigned int			pending_sigtrap;
- 	unsigned long			pending_addr;	/* SIGTRAP */
- 	struct irq_work			pending_irq;
-+	struct irq_work			pending_disable_irq;
- 	struct callback_head		pending_task;
- 	unsigned int			pending_work;
- 
-@@ -959,7 +959,7 @@ struct perf_event_context {
- 	struct rcu_head			rcu_head;
- 
- 	/*
--	 * Sum (event->pending_sigtrap + event->pending_work)
-+	 * Sum (event->pending_work + event->pending_work)
- 	 *
- 	 * The SIGTRAP is targeted at ctx->task, as such it won't do changing
- 	 * that until the signal is delivered.
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index f0f0f71213a1d..d5af4d03c2680 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -2283,21 +2283,6 @@ event_sched_out(struct perf_event *event, struct perf_event_context *ctx)
- 		state = PERF_EVENT_STATE_OFF;
- 	}
- 
--	if (event->pending_sigtrap) {
--		bool dec = true;
--
--		event->pending_sigtrap = 0;
--		if (state != PERF_EVENT_STATE_OFF &&
--		    !event->pending_work) {
--			event->pending_work = 1;
--			dec = false;
--			WARN_ON_ONCE(!atomic_long_inc_not_zero(&event->refcount));
--			task_work_add(current, &event->pending_task, TWA_RESUME);
--		}
--		if (dec)
--			local_dec(&event->ctx->nr_pending);
--	}
--
- 	perf_event_set_state(event, state);
- 
- 	if (!is_software_event(event))
-@@ -2464,7 +2449,7 @@ static void __perf_event_disable(struct perf_event *event,
-  * hold the top-level event's child_mutex, so any descendant that
-  * goes to exit will block in perf_event_exit_event().
-  *
-- * When called from perf_pending_irq it's OK because event->ctx
-+ * When called from perf_pending_disable it's OK because event->ctx
-  * is the current context on this CPU and preemption is disabled,
-  * hence we can't get into perf_event_task_sched_out for this context.
-  */
-@@ -2504,7 +2489,7 @@ EXPORT_SYMBOL_GPL(perf_event_disable);
- void perf_event_disable_inatomic(struct perf_event *event)
- {
- 	event->pending_disable = 1;
--	irq_work_queue(&event->pending_irq);
-+	irq_work_queue(&event->pending_disable_irq);
- }
- 
- #define MAX_INTERRUPTS (~0ULL)
-@@ -5190,6 +5175,7 @@ static void perf_addr_filters_splice(struct perf_event *event,
- static void _free_event(struct perf_event *event)
- {
- 	irq_work_sync(&event->pending_irq);
-+	irq_work_sync(&event->pending_disable_irq);
- 
- 	unaccount_event(event);
- 
-@@ -6726,7 +6712,7 @@ static void perf_sigtrap(struct perf_event *event)
- /*
-  * Deliver the pending work in-event-context or follow the context.
-  */
--static void __perf_pending_irq(struct perf_event *event)
-+static void __perf_pending_disable(struct perf_event *event)
- {
- 	int cpu = READ_ONCE(event->oncpu);
- 
-@@ -6741,11 +6727,6 @@ static void __perf_pending_irq(struct perf_event *event)
- 	 * Yay, we hit home and are in the context of the event.
- 	 */
- 	if (cpu == smp_processor_id()) {
--		if (event->pending_sigtrap) {
--			event->pending_sigtrap = 0;
--			perf_sigtrap(event);
--			local_dec(&event->ctx->nr_pending);
--		}
- 		if (event->pending_disable) {
- 			event->pending_disable = 0;
- 			perf_event_disable_local(event);
-@@ -6769,11 +6750,26 @@ static void __perf_pending_irq(struct perf_event *event)
- 	 *				  irq_work_queue(); // FAILS
- 	 *
- 	 *  irq_work_run()
--	 *    perf_pending_irq()
-+	 *    perf_pending_disable()
- 	 *
- 	 * But the event runs on CPU-B and wants disabling there.
- 	 */
--	irq_work_queue_on(&event->pending_irq, cpu);
-+	irq_work_queue_on(&event->pending_disable_irq, cpu);
-+}
-+
-+static void perf_pending_disable(struct irq_work *entry)
-+{
-+	struct perf_event *event = container_of(entry, struct perf_event, pending_disable_irq);
-+	int rctx;
-+
-+	/*
-+	 * If we 'fail' here, that's OK, it means recursion is already disabled
-+	 * and we won't recurse 'further'.
-+	 */
-+	rctx = perf_swevent_get_recursion_context();
-+	__perf_pending_disable(event);
-+	if (rctx >= 0)
-+		perf_swevent_put_recursion_context(rctx);
- }
- 
- static void perf_pending_irq(struct irq_work *entry)
-@@ -6796,8 +6792,6 @@ static void perf_pending_irq(struct irq_work *entry)
- 		perf_event_wakeup(event);
- 	}
- 
--	__perf_pending_irq(event);
--
- 	if (rctx >= 0)
- 		perf_swevent_put_recursion_context(rctx);
- }
-@@ -6805,14 +6799,6 @@ static void perf_pending_irq(struct irq_work *entry)
- static void perf_pending_task(struct callback_head *head)
- {
- 	struct perf_event *event = container_of(head, struct perf_event, pending_task);
--	int rctx;
--
--	/*
--	 * If we 'fail' here, that's OK, it means recursion is already disabled
--	 * and we won't recurse 'further'.
--	 */
--	preempt_disable_notrace();
--	rctx = perf_swevent_get_recursion_context();
- 
- 	if (event->pending_work) {
- 		event->pending_work = 0;
-@@ -6820,10 +6806,6 @@ static void perf_pending_task(struct callback_head *head)
- 		local_dec(&event->ctx->nr_pending);
- 	}
- 
--	if (rctx >= 0)
--		perf_swevent_put_recursion_context(rctx);
--	preempt_enable_notrace();
--
- 	put_event(event);
- }
- 
-@@ -9592,13 +9574,23 @@ static int __perf_event_overflow(struct perf_event *event,
- 
- 		if (regs)
- 			pending_id = hash32_ptr((void *)instruction_pointer(regs)) ?: 1;
--		if (!event->pending_sigtrap) {
--			event->pending_sigtrap = pending_id;
-+		if (!event->pending_work) {
-+			event->pending_work = pending_id;
- 			local_inc(&event->ctx->nr_pending);
-+			WARN_ON_ONCE(!atomic_long_inc_not_zero(&event->refcount));
-+			task_work_add(current, &event->pending_task, TWA_RESUME);
-+			/*
-+			 * The NMI path returns directly to userland. The
-+			 * irq_work is raised as a dummy interrupt to ensure
-+			 * regular return path to user is taken and task_work
-+			 * is processed.
-+			 */
-+			if (in_nmi())
-+				irq_work_queue(&event->pending_disable_irq);
- 		} else if (event->attr.exclude_kernel && valid_sample) {
- 			/*
- 			 * Should not be able to return to user space without
--			 * consuming pending_sigtrap; with exceptions:
-+			 * consuming pending_work; with exceptions:
- 			 *
- 			 *  1. Where !exclude_kernel, events can overflow again
- 			 *     in the kernel without returning to user space.
-@@ -9608,13 +9600,12 @@ static int __perf_event_overflow(struct perf_event *event,
- 			 *     To approximate progress (with false negatives),
- 			 *     check 32-bit hash of the current IP.
- 			 */
--			WARN_ON_ONCE(event->pending_sigtrap != pending_id);
-+			WARN_ON_ONCE(event->pending_work != pending_id);
- 		}
- 
- 		event->pending_addr = 0;
- 		if (valid_sample && (data->sample_flags & PERF_SAMPLE_ADDR))
- 			event->pending_addr = data->addr;
--		irq_work_queue(&event->pending_irq);
- 	}
- 
- 	READ_ONCE(event->overflow_handler)(event, data, regs);
-@@ -11935,6 +11926,7 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
- 
- 	init_waitqueue_head(&event->waitq);
- 	init_irq_work(&event->pending_irq, perf_pending_irq);
-+	event->pending_disable_irq = IRQ_WORK_INIT_HARD(perf_pending_disable);
- 	init_task_work(&event->pending_task, perf_pending_task);
- 
- 	mutex_init(&event->mmap_mutex);
-@@ -13049,6 +13041,13 @@ static void sync_child_event(struct perf_event *child_event)
- 		     &parent_event->child_total_time_running);
- }
- 
-+static bool task_work_cb_match(struct callback_head *cb, void *data)
-+{
-+	struct perf_event *event = container_of(cb, struct perf_event, pending_task);
-+
-+	return event == data;
-+}
-+
- static void
- perf_event_exit_event(struct perf_event *event, struct perf_event_context *ctx)
- {
-@@ -13088,6 +13087,17 @@ perf_event_exit_event(struct perf_event *event, struct perf_event_context *ctx)
- 		 * Kick perf_poll() for is_event_hup();
- 		 */
- 		perf_event_wakeup(parent_event);
-+		/*
-+		 * Cancel pending task_work and update counters if it has not
-+		 * yet been delivered to userland. free_event() expects the
-+		 * reference counter at 1 and keeping the event around until the
-+		 * task return to userland will be a unexpected.
-+		 */
-+		if (event->pending_work &&
-+		    task_work_cancel_match(current, task_work_cb_match, event)) {
-+			put_event(event);
-+			local_dec(&event->ctx->nr_pending);
-+		}
- 		free_event(event);
- 		put_event(parent_event);
- 		return;
-diff --git a/localversion-rt b/localversion-rt
-index 045478966e9f1..700c857efd9ba 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt7
-+-rt8
-diff --git a/net/core/dev.c b/net/core/dev.c
-index df102ed8622c9..9e66559611e73 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -78,6 +78,7 @@
- #include <linux/slab.h>
- #include <linux/sched.h>
- #include <linux/sched/mm.h>
-+#include <linux/smpboot.h>
- #include <linux/mutex.h>
- #include <linux/rwsem.h>
- #include <linux/string.h>
-@@ -216,35 +217,60 @@ static inline struct hlist_head *dev_index_hash(struct net *net, int ifindex)
- 	return &net->dev_index_head[ifindex & (NETDEV_HASHENTRIES - 1)];
- }
- 
--static inline void rps_lock_irqsave(struct softnet_data *sd,
--				    unsigned long *flags)
-+#ifndef CONFIG_PREEMPT_RT
-+
-+static DEFINE_STATIC_KEY_FALSE(use_backlog_threads_key);
-+
-+static int __init setup_backlog_napi_threads(char *arg)
- {
--	if (IS_ENABLED(CONFIG_RPS))
-+	static_branch_enable(&use_backlog_threads_key);
-+	return 0;
-+}
-+early_param("thread_backlog_napi", setup_backlog_napi_threads);
-+
-+static bool use_backlog_threads(void)
-+{
-+	return static_branch_unlikely(&use_backlog_threads_key);
-+}
-+
-+#else
-+
-+static bool use_backlog_threads(void)
-+{
-+	return true;
-+}
-+
-+#endif
-+
-+static inline void backlog_lock_irq_save(struct softnet_data *sd,
-+					 unsigned long *flags)
-+{
-+	if (IS_ENABLED(CONFIG_RPS) || use_backlog_threads())
- 		spin_lock_irqsave(&sd->input_pkt_queue.lock, *flags);
- 	else if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		local_irq_save(*flags);
- }
- 
--static inline void rps_lock_irq_disable(struct softnet_data *sd)
-+static inline void backlog_lock_irq_disable(struct softnet_data *sd)
- {
--	if (IS_ENABLED(CONFIG_RPS))
-+	if (IS_ENABLED(CONFIG_RPS) || use_backlog_threads())
- 		spin_lock_irq(&sd->input_pkt_queue.lock);
- 	else if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		local_irq_disable();
- }
- 
--static inline void rps_unlock_irq_restore(struct softnet_data *sd,
--					  unsigned long *flags)
-+static inline void backlog_unlock_irq_restore(struct softnet_data *sd,
-+					      unsigned long *flags)
- {
--	if (IS_ENABLED(CONFIG_RPS))
-+	if (IS_ENABLED(CONFIG_RPS) || use_backlog_threads())
- 		spin_unlock_irqrestore(&sd->input_pkt_queue.lock, *flags);
- 	else if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		local_irq_restore(*flags);
- }
- 
--static inline void rps_unlock_irq_enable(struct softnet_data *sd)
-+static inline void backlog_unlock_irq_enable(struct softnet_data *sd)
- {
--	if (IS_ENABLED(CONFIG_RPS))
-+	if (IS_ENABLED(CONFIG_RPS) || use_backlog_threads())
- 		spin_unlock_irq(&sd->input_pkt_queue.lock);
- 	else if (!IS_ENABLED(CONFIG_PREEMPT_RT))
- 		local_irq_enable();
-@@ -4420,6 +4446,7 @@ EXPORT_SYMBOL(__dev_direct_xmit);
- /*************************************************************************
-  *			Receiver routines
-  *************************************************************************/
-+static DEFINE_PER_CPU(struct task_struct *, backlog_napi);
- 
- int netdev_max_backlog __read_mostly = 1000;
- EXPORT_SYMBOL(netdev_max_backlog);
-@@ -4452,18 +4479,16 @@ static inline void ____napi_schedule(struct softnet_data *sd,
- 		 */
- 		thread = READ_ONCE(napi->thread);
- 		if (thread) {
--			/* Avoid doing set_bit() if the thread is in
--			 * INTERRUPTIBLE state, cause napi_thread_wait()
--			 * makes sure to proceed with napi polling
--			 * if the thread is explicitly woken from here.
--			 */
--			if (READ_ONCE(thread->__state) != TASK_INTERRUPTIBLE)
--				set_bit(NAPI_STATE_SCHED_THREADED, &napi->state);
-+			if (use_backlog_threads() && thread == raw_cpu_read(backlog_napi))
-+				goto use_local_napi;
-+
-+			set_bit(NAPI_STATE_SCHED_THREADED, &napi->state);
- 			wake_up_process(thread);
- 			return;
- 		}
- 	}
- 
-+use_local_napi:
- 	list_add_tail(&napi->poll_list, &sd->poll_list);
- 	WRITE_ONCE(napi->list_owner, smp_processor_id());
- 	/* If not called from net_rx_action()
-@@ -4684,6 +4709,15 @@ static void rps_trigger_softirq(void *data)
- 
- #endif /* CONFIG_RPS */
- 
-+/* Called from hardirq (IPI) context */
-+static void trigger_rx_softirq(void *data)
-+{
-+	struct softnet_data *sd = data;
-+
-+	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
-+	smp_store_release(&sd->defer_ipi_scheduled, 0);
-+}
-+
- /*
-  * After we queued a packet into sd->input_pkt_queue,
-  * we need to make sure this queue is serviced soon.
-@@ -4700,6 +4734,11 @@ static void napi_schedule_rps(struct softnet_data *sd)
- 
- #ifdef CONFIG_RPS
- 	if (sd != mysd) {
-+		if (use_backlog_threads()) {
-+			__napi_schedule_irqoff(&sd->backlog);
-+			return;
-+		}
-+
- 		sd->rps_ipi_next = mysd->rps_ipi_list;
- 		mysd->rps_ipi_list = sd;
- 
-@@ -4714,6 +4753,23 @@ static void napi_schedule_rps(struct softnet_data *sd)
- 	__napi_schedule_irqoff(&mysd->backlog);
- }
- 
-+void kick_defer_list_purge(struct softnet_data *sd, unsigned int cpu)
-+{
-+	unsigned long flags;
-+
-+	if (use_backlog_threads()) {
-+		backlog_lock_irq_save(sd, &flags);
-+
-+		if (!__test_and_set_bit(NAPI_STATE_SCHED, &sd->backlog.state))
-+			__napi_schedule_irqoff(&sd->backlog);
-+
-+		backlog_unlock_irq_restore(sd, &flags);
-+
-+	} else if (!cmpxchg(&sd->defer_ipi_scheduled, 0, 1)) {
-+		smp_call_function_single_async(cpu, &sd->defer_csd);
-+	}
-+}
-+
- #ifdef CONFIG_NET_FLOW_LIMIT
- int netdev_flow_limit_table_len __read_mostly = (1 << 12);
- #endif
-@@ -4769,7 +4825,7 @@ static int enqueue_to_backlog(struct sk_buff *skb, int cpu,
- 	reason = SKB_DROP_REASON_NOT_SPECIFIED;
- 	sd = &per_cpu(softnet_data, cpu);
- 
--	rps_lock_irqsave(sd, &flags);
-+	backlog_lock_irq_save(sd, &flags);
- 	if (!netif_running(skb->dev))
- 		goto drop;
- 	qlen = skb_queue_len(&sd->input_pkt_queue);
-@@ -4778,7 +4834,7 @@ static int enqueue_to_backlog(struct sk_buff *skb, int cpu,
- enqueue:
- 			__skb_queue_tail(&sd->input_pkt_queue, skb);
- 			input_queue_tail_incr_save(sd, qtail);
--			rps_unlock_irq_restore(sd, &flags);
-+			backlog_unlock_irq_restore(sd, &flags);
- 			return NET_RX_SUCCESS;
- 		}
- 
-@@ -4793,7 +4849,7 @@ static int enqueue_to_backlog(struct sk_buff *skb, int cpu,
- 
- drop:
- 	sd->dropped++;
--	rps_unlock_irq_restore(sd, &flags);
-+	backlog_unlock_irq_restore(sd, &flags);
- 
- 	dev_core_stats_rx_dropped_inc(skb->dev);
- 	kfree_skb_reason(skb, reason);
-@@ -5824,7 +5880,7 @@ static void flush_backlog(struct work_struct *work)
- 	local_bh_disable();
- 	sd = this_cpu_ptr(&softnet_data);
- 
--	rps_lock_irq_disable(sd);
-+	backlog_lock_irq_disable(sd);
- 	skb_queue_walk_safe(&sd->input_pkt_queue, skb, tmp) {
- 		if (skb->dev->reg_state == NETREG_UNREGISTERING) {
- 			__skb_unlink(skb, &sd->input_pkt_queue);
-@@ -5832,7 +5888,7 @@ static void flush_backlog(struct work_struct *work)
- 			input_queue_head_incr(sd);
- 		}
- 	}
--	rps_unlock_irq_enable(sd);
-+	backlog_unlock_irq_enable(sd);
- 
- 	skb_queue_walk_safe(&sd->process_queue, skb, tmp) {
- 		if (skb->dev->reg_state == NETREG_UNREGISTERING) {
-@@ -5850,14 +5906,14 @@ static bool flush_required(int cpu)
- 	struct softnet_data *sd = &per_cpu(softnet_data, cpu);
- 	bool do_flush;
- 
--	rps_lock_irq_disable(sd);
-+	backlog_lock_irq_disable(sd);
- 
- 	/* as insertion into process_queue happens with the rps lock held,
- 	 * process_queue access may race only with dequeue
- 	 */
- 	do_flush = !skb_queue_empty(&sd->input_pkt_queue) ||
- 		   !skb_queue_empty_lockless(&sd->process_queue);
--	rps_unlock_irq_enable(sd);
-+	backlog_unlock_irq_enable(sd);
- 
- 	return do_flush;
- #endif
-@@ -5923,7 +5979,7 @@ static void net_rps_action_and_irq_enable(struct softnet_data *sd)
- #ifdef CONFIG_RPS
- 	struct softnet_data *remsd = sd->rps_ipi_list;
- 
--	if (remsd) {
-+	if (!use_backlog_threads() && remsd) {
- 		sd->rps_ipi_list = NULL;
- 
- 		local_irq_enable();
-@@ -5938,7 +5994,7 @@ static void net_rps_action_and_irq_enable(struct softnet_data *sd)
- static bool sd_has_rps_ipi_waiting(struct softnet_data *sd)
- {
- #ifdef CONFIG_RPS
--	return sd->rps_ipi_list != NULL;
-+	return !use_backlog_threads() && sd->rps_ipi_list;
- #else
- 	return false;
- #endif
-@@ -5972,7 +6028,7 @@ static int process_backlog(struct napi_struct *napi, int quota)
- 
- 		}
- 
--		rps_lock_irq_disable(sd);
-+		backlog_lock_irq_disable(sd);
- 		if (skb_queue_empty(&sd->input_pkt_queue)) {
- 			/*
- 			 * Inline a custom version of __napi_complete().
-@@ -5982,13 +6038,13 @@ static int process_backlog(struct napi_struct *napi, int quota)
- 			 * We can use a plain write instead of clear_bit(),
- 			 * and we dont need an smp_mb() memory barrier.
- 			 */
--			napi->state = 0;
-+			napi->state &= NAPIF_STATE_THREADED;
- 			again = false;
- 		} else {
- 			skb_queue_splice_tail_init(&sd->input_pkt_queue,
- 						   &sd->process_queue);
- 		}
--		rps_unlock_irq_enable(sd);
-+		backlog_unlock_irq_enable(sd);
- 	}
- 
- 	return work;
-@@ -6645,8 +6701,6 @@ static int napi_poll(struct napi_struct *n, struct list_head *repoll)
- 
- static int napi_thread_wait(struct napi_struct *napi)
- {
--	bool woken = false;
--
- 	set_current_state(TASK_INTERRUPTIBLE);
- 
- 	while (!kthread_should_stop()) {
-@@ -6655,15 +6709,13 @@ static int napi_thread_wait(struct napi_struct *napi)
- 		 * Testing SCHED bit is not enough because SCHED bit might be
- 		 * set by some other busy poll thread or by napi_disable().
- 		 */
--		if (test_bit(NAPI_STATE_SCHED_THREADED, &napi->state) || woken) {
-+		if (test_bit(NAPI_STATE_SCHED_THREADED, &napi->state)) {
- 			WARN_ON(!list_empty(&napi->poll_list));
- 			__set_current_state(TASK_RUNNING);
- 			return 0;
- 		}
- 
- 		schedule();
--		/* woken being true indicates this thread owns this napi. */
--		woken = true;
- 		set_current_state(TASK_INTERRUPTIBLE);
- 	}
- 	__set_current_state(TASK_RUNNING);
-@@ -6692,66 +6744,46 @@ static void skb_defer_free_flush(struct softnet_data *sd)
- 	}
- }
- 
--#ifndef CONFIG_PREEMPT_RT
--
--/* Called from hardirq (IPI) context */
--static void trigger_rx_softirq(void *data)
--{
--	struct softnet_data *sd = data;
--
--	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
--	smp_store_release(&sd->defer_ipi_scheduled, 0);
--}
--
--#else
--
--static void trigger_rx_softirq(struct work_struct *defer_work)
-+static void napi_threaded_poll_loop(struct napi_struct *napi)
- {
- 	struct softnet_data *sd;
- 
--	sd = container_of(defer_work, struct softnet_data, defer_work);
--	smp_store_release(&sd->defer_ipi_scheduled, 0);
--	local_bh_disable();
--	skb_defer_free_flush(sd);
--	local_bh_enable();
--}
-+	for (;;) {
-+		bool repoll = false;
-+		void *have;
- 
--#endif
-+		local_bh_disable();
-+		sd = this_cpu_ptr(&softnet_data);
-+		sd->in_napi_threaded_poll = true;
-+
-+		have = netpoll_poll_lock(napi);
-+		__napi_poll(napi, &repoll);
-+		netpoll_poll_unlock(have);
-+
-+		sd->in_napi_threaded_poll = false;
-+		barrier();
-+
-+		if (sd_has_rps_ipi_waiting(sd)) {
-+			local_irq_disable();
-+			net_rps_action_and_irq_enable(sd);
-+		}
-+		skb_defer_free_flush(sd);
-+		local_bh_enable();
-+
-+		if (!repoll)
-+			break;
-+
-+		cond_resched();
-+	}
-+}
- 
- static int napi_threaded_poll(void *data)
- {
- 	struct napi_struct *napi = data;
--	struct softnet_data *sd;
--	void *have;
- 
--	while (!napi_thread_wait(napi)) {
--		for (;;) {
--			bool repoll = false;
-+	while (!napi_thread_wait(napi))
-+		napi_threaded_poll_loop(napi);
- 
--			local_bh_disable();
--			sd = this_cpu_ptr(&softnet_data);
--			sd->in_napi_threaded_poll = true;
--
--			have = netpoll_poll_lock(napi);
--			__napi_poll(napi, &repoll);
--			netpoll_poll_unlock(have);
--
--			sd->in_napi_threaded_poll = false;
--			barrier();
--
--			if (sd_has_rps_ipi_waiting(sd)) {
--				local_irq_disable();
--				net_rps_action_and_irq_enable(sd);
--			}
--			skb_defer_free_flush(sd);
--			local_bh_enable();
--
--			if (!repoll)
--				break;
--
--			cond_resched();
--		}
--	}
- 	return 0;
- }
- 
-@@ -11350,7 +11382,7 @@ static int dev_cpu_dead(unsigned int oldcpu)
- 
- 		list_del_init(&napi->poll_list);
- 		if (napi->poll == process_backlog)
--			napi->state = 0;
-+			napi->state &= NAPIF_STATE_THREADED;
- 		else
- 			____napi_schedule(sd, napi);
- 	}
-@@ -11358,12 +11390,14 @@ static int dev_cpu_dead(unsigned int oldcpu)
- 	raise_softirq_irqoff(NET_TX_SOFTIRQ);
- 	local_irq_enable();
- 
-+	if (!use_backlog_threads()) {
- #ifdef CONFIG_RPS
--	remsd = oldsd->rps_ipi_list;
--	oldsd->rps_ipi_list = NULL;
-+		remsd = oldsd->rps_ipi_list;
-+		oldsd->rps_ipi_list = NULL;
- #endif
--	/* send out pending IPI's on offline CPU */
--	net_rps_send_ipi(remsd);
-+		/* send out pending IPI's on offline CPU */
-+		net_rps_send_ipi(remsd);
-+	}
- 
- 	/* Process offline CPU's input_pkt_queue */
- 	while ((skb = __skb_dequeue(&oldsd->process_queue))) {
-@@ -11682,6 +11716,38 @@ static void __init net_dev_struct_check(void)
-  *
-  */
- 
-+static int backlog_napi_should_run(unsigned int cpu)
-+{
-+	struct softnet_data *sd = per_cpu_ptr(&softnet_data, cpu);
-+	struct napi_struct *napi = &sd->backlog;
-+
-+	return test_bit(NAPI_STATE_SCHED_THREADED, &napi->state);
-+}
-+
-+static void run_backlog_napi(unsigned int cpu)
-+{
-+	struct softnet_data *sd = per_cpu_ptr(&softnet_data, cpu);
-+
-+	napi_threaded_poll_loop(&sd->backlog);
-+}
-+
-+static void backlog_napi_setup(unsigned int cpu)
-+{
-+	struct softnet_data *sd = per_cpu_ptr(&softnet_data, cpu);
-+	struct napi_struct *napi = &sd->backlog;
-+
-+	napi->thread = this_cpu_read(backlog_napi);
-+	set_bit(NAPI_STATE_THREADED, &napi->state);
-+}
-+
-+static struct smp_hotplug_thread backlog_threads = {
-+	.store			= &backlog_napi,
-+	.thread_should_run	= backlog_napi_should_run,
-+	.thread_fn		= run_backlog_napi,
-+	.thread_comm		= "backlog_napi/%u",
-+	.setup			= backlog_napi_setup,
-+};
-+
- /*
-  *       This is called single threaded during boot, so no need
-  *       to take the rtnl semaphore.
-@@ -11728,17 +11794,16 @@ static int __init net_dev_init(void)
- 		INIT_CSD(&sd->csd, rps_trigger_softirq, sd);
- 		sd->cpu = i;
- #endif
--#ifndef CONFIG_PREEMPT_RT
- 		INIT_CSD(&sd->defer_csd, trigger_rx_softirq, sd);
--#else
--		INIT_WORK(&sd->defer_work, trigger_rx_softirq);
--#endif
- 		spin_lock_init(&sd->defer_lock);
- 
- 		init_gro_hash(&sd->backlog);
- 		sd->backlog.poll = process_backlog;
- 		sd->backlog.weight = weight_p;
-+		INIT_LIST_HEAD(&sd->backlog.poll_list);
- 	}
-+	if (use_backlog_threads())
-+		smpboot_register_percpu_thread(&backlog_threads);
- 
- 	dev_boot_phase = 0;
- 
-diff --git a/net/core/skbuff.c b/net/core/skbuff.c
-index 633da914cc499..bd4985ff5717a 100644
---- a/net/core/skbuff.c
-+++ b/net/core/skbuff.c
-@@ -6921,13 +6921,8 @@ nodefer:	__kfree_skb(skb);
- 	/* Make sure to trigger NET_RX_SOFTIRQ on the remote CPU
- 	 * if we are unlucky enough (this seems very unlikely).
- 	 */
--	if (unlikely(kick) && !cmpxchg(&sd->defer_ipi_scheduled, 0, 1)) {
--#ifndef CONFIG_PREEMPT_RT
--		smp_call_function_single_async(cpu, &sd->defer_csd);
--#else
--		schedule_work_on(cpu, &sd->defer_work);
--#endif
--	}
-+	if (unlikely(kick))
-+		kick_defer_list_purge(sd, cpu);
- }
- 
- static void skb_splice_csum_page(struct sk_buff *skb, struct page *page,
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[ T2614] RSP: 002b:00007ffc0e13b318 EFLAGS: 00000202=0D
+[ T2614] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f4a81e5fc94=
+=0D
+[ T2614] RDX: 0000000000000002 RSI: 000055a865695490 RDI: 0000000000000001=
+=0D
+[ T2614] RBP: 00007ffc0e13b340 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[ T2614] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[ T2614] R13: 000055a865695490 R14: 00007f4a81f305c0 R15: 00007f4a81f2df20=
+=0D
+[ T2614]  </TASK>=0D
+[ T2614] Shutting down cpus with NMI=0D
+[ T2614] Kernel Offset: disabled=0D
+[ T2614] ---[ end Kernel panic - not syncing: sysrq triggered crash ]---=0D
+[disconnect]=0D
+=1B]777;notify;Command completed;KRB5CCNAME=3D/dev/null console -M conserve=
+r-02.hosts.prod.psi.bos.redhat.com intel-eaglestream-spr-15.khw3.lab.eng.bo=
+s.redhat.com=1B=1B]777;precmd=1B=1B]0;j@thinkpad2021:~/BTWork/records/2023/=
+12Dec-testprintkupstream/6.6.20-rt25=1B=1B]7;file://thinkpad2021/home/j/BTW=
+ork/records/2023/12Dec-testprintkupstream/6.6.20-rt25=1B=1B[?2004h=1B[38;5;=
+166mj=1B[38;5;228m6.6.20-rt25=1B[38;5;43m=1B[38;5;71m=0D=0D
+>$ =1B(B=1B[mexit=0D
+=1B[?2004l=0D=1B]777;preexec=1Bexit=0D
+
+Script done on 2024-03-08 12:25:38-05:00 [COMMAND_EXIT_CODE=3D"0"]
+
+
+
+
+
+
+
+-----------------------------
+NMI Backtrace for 6.6.20-rt25 no forced preemption with tuned throughput-pe=
+rformance profile
+-----------------------------
+
+
+[ T2546] sysrq: Trigger a crash=0D
+[ T2546] Kernel panic - not syncing: sysrq triggered crash=0D
+[   C56] NMI backtrace for cpu 56=0D
+[   C56] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ C56] RIP: 0010:io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] Code: cc 0f 1f 40 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90=
+ 0f 1f 44 00 00 0f b6 8f c1 00 00 00 0f b7 57 08 d3 e6 01 f2 ec <0f> b6 c0 =
+c3 cc cc cc cc 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	cc                   	int3
+   1:	0f 1f 40 00          	nopl   0x0(%rax)
+   5:	90                   	nop
+   6:	90                   	nop
+   7:	90                   	nop
+   8:	90                   	nop
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  1a:	0f b6 8f c1 00 00 00 	movzbl 0xc1(%rdi),%ecx
+  21:	0f b7 57 08          	movzwl 0x8(%rdi),%edx
+  25:	d3 e6                	shl    %cl,%esi
+  27:	01 f2                	add    %esi,%edx
+  29:	ec                   	in     (%dx),%al
+  2a:*	0f b6 c0             	movzbl %al,%eax		<-- trapping instruction
+  2d:	c3                   	ret
+  2e:	cc                   	int3
+  2f:	cc                   	int3
+  30:	cc                   	int3
+  31:	cc                   	int3
+  32:	0f 1f 00             	nopl   (%rax)
+  35:	90                   	nop
+  36:	90                   	nop
+  37:	90                   	nop
+  38:	90                   	nop
+  39:	90                   	nop
+  3a:	90                   	nop
+  3b:	90                   	nop
+  3c:	90                   	nop
+  3d:	90                   	nop
+  3e:	90                   	nop
+  3f:	90                   	nop
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	0f b6 c0             	movzbl %al,%eax
+   3:	c3                   	ret
+   4:	cc                   	int3
+   5:	cc                   	int3
+   6:	cc                   	int3
+   7:	cc                   	int3
+   8:	0f 1f 00             	nopl   (%rax)
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	90                   	nop
+[   C56] RSP: 0018:ffa00000308e7ae8 EFLAGS: 00000002=0D
+[   C56] RAX: ffffffff8d7cf400 RBX: 0000000000000000 RCX: 0000000000000000=
+=0D
+[   C56] RDX: 00000000000003fd RSI: 0000000000000005 RDI: ffffffff8fcc68c0=
+=0D
+[   C56] RBP: 000000000000270f R08: 6469703e2d727275 R09: 2020202020202020=
+=0D
+[   C56] R10: 00000000632e2020 R11: 00000000632e2020 R12: 0000000000000020=
+=0D
+[   C56] R13: ffffffff8fcc68c0 R14: 0000000000000000 R15: 0000000000000000=
+=0D
+[   C56] FS:  00007f4c17301740(0000) GS:ff11003fff600000(0000) knlGS:000000=
+0000000000=0D
+[   C56] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033=0D
+[   C56] CR2: 00007f4c174dd650 CR3: 000000010994c004 CR4: 0000000000771ee0=
+=0D
+[   C56] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000=
+=0D
+[   C56] DR3: 0000000000000000 DR6: 00000000fffe07f0 DR7: 0000000000000400=
+=0D
+[   C56] PKRU: 55555554=0D
+[   C56] Call Trace:=0D
+[   C56]  <NMI>=0D
+[ C56] ? nmi_cpu_backtrace (lib/nmi_backtrace.c:115)=20
+[ C56] ? nmi_cpu_backtrace_handler (arch/x86/kernel/apic/hw_nmi.c:47 (discr=
+iminator 1))=20
+[ C56] ? nmi_handle (arch/x86/kernel/nmi.c:149)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? default_do_nmi (arch/x86/kernel/nmi.c:347)=20
+[ C56] ? exc_nmi (arch/x86/kernel/nmi.c:538)=20
+[ C56] ? end_repeat_nmi (arch/x86/entry/entry_64.S:1458)=20
+[ C56] ? mem16_serial_out (drivers/tty/serial/8250/8250_port.c:382)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[   C56]  </NMI>=0D
+[   C56]  <TASK>=0D
+[ C56] wait_for_xmitr (drivers/tty/serial/8250/8250.h:117 drivers/tty/seria=
+l/8250/8250.h:139 drivers/tty/serial/8250/8250_port.c:2106 drivers/tty/seri=
+al/8250/8250_port.c:2124)=20
+[ C56] serial8250_console_putchar (./include/linux/serial_core.h:704 driver=
+s/tty/serial/8250/8250_port.c:3347)=20
+[ C56] ? __pfx_serial8250_console_putchar (drivers/tty/serial/8250/8250_por=
+t.c:3343)=20
+[ C56] uart_console_write (drivers/tty/serial/serial_core.c:2134)=20
+[ C56] serial8250_console_write_atomic (drivers/tty/serial/8250/8250_port.c=
+:3628)=20
+[ C56] nbcon_emit_next_record (kernel/printk/nbcon.c:940)=20
+[ C56] __nbcon_atomic_flush_all (kernel/printk/nbcon.c:1192 (discriminator =
+1) kernel/printk/nbcon.c:1326 (discriminator 1))=20
+[ C56] vprintk_emit (kernel/printk/printk.c:2414)=20
+[ C56] _printk (kernel/printk/printk.c:2474)=20
+[ C56] panic (./arch/x86/include/asm/bitops.h:207 ./arch/x86/include/asm/bi=
+tops.h:239 ./include/asm-generic/bitops/instrumented-non-atomic.h:142 kerne=
+l/panic.c:528 kernel/panic.c:339)=20
+[ C56] ? _printk (kernel/printk/printk.c:2474)=20
+[ C56] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ C56] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ C56] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ C56] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ C56] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1) =
+kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (discri=
+minator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ C56] vfs_write (fs/read_write.c:582)=20
+[ C56] ? __do_sys_newfstatat (fs/stat.c:466 (discriminator 1))=20
+[ C56] ksys_write (fs/read_write.c:637)=20
+[ C56] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:81=
+)=20
+[ C56] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? up_read (./arch/x86/include/asm/preempt.h:104 kernel/locking/rwsem=
+=2Ec:1354 kernel/locking/rwsem.c:1622)=20
+[ C56] ? do_user_addr_fault (arch/x86/mm/fault.c:1368)=20
+[ C56] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/in=
+clude/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561)=
+=20
+[ C56] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[   C56] RIP: 0033:0x7f4c1740cc94=0D
+[ C56] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00=
+ 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 00 =
+f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[   C56] RSP: 002b:00007ffe88b9b298 EFLAGS: 00000202 ORIG_RAX: 000000000000=
+0001=0D
+[   C56] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f4c1740cc94=
+=0D
+[   C56] RDX: 0000000000000002 RSI: 00005634f890b490 RDI: 0000000000000001=
+=0D
+[   C56] RBP: 00007ffe88b9b2c0 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[   C56] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[   C56] R13: 00005634f890b490 R14: 00007f4c174dd5c0 R15: 00007f4c174daf20=
+=0D
+[   C56]  </TASK>=0D
+[   C56] NMI backtrace for cpu 56=0D
+[   C56] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ C56] RIP: 0010:io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] Code: cc 0f 1f 40 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90=
+ 0f 1f 44 00 00 0f b6 8f c1 00 00 00 0f b7 57 08 d3 e6 01 f2 ec <0f> b6 c0 =
+c3 cc cc cc cc 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	cc                   	int3
+   1:	0f 1f 40 00          	nopl   0x0(%rax)
+   5:	90                   	nop
+   6:	90                   	nop
+   7:	90                   	nop
+   8:	90                   	nop
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  1a:	0f b6 8f c1 00 00 00 	movzbl 0xc1(%rdi),%ecx
+  21:	0f b7 57 08          	movzwl 0x8(%rdi),%edx
+  25:	d3 e6                	shl    %cl,%esi
+  27:	01 f2                	add    %esi,%edx
+  29:	ec                   	in     (%dx),%al
+  2a:*	0f b6 c0             	movzbl %al,%eax		<-- trapping instruction
+  2d:	c3                   	ret
+  2e:	cc                   	int3
+  2f:	cc                   	int3
+  30:	cc                   	int3
+  31:	cc                   	int3
+  32:	0f 1f 00             	nopl   (%rax)
+  35:	90                   	nop
+  36:	90                   	nop
+  37:	90                   	nop
+  38:	90                   	nop
+  39:	90                   	nop
+  3a:	90                   	nop
+  3b:	90                   	nop
+  3c:	90                   	nop
+  3d:	90                   	nop
+  3e:	90                   	nop
+  3f:	90                   	nop
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	0f b6 c0             	movzbl %al,%eax
+   3:	c3                   	ret
+   4:	cc                   	int3
+   5:	cc                   	int3
+   6:	cc                   	int3
+   7:	cc                   	int3
+   8:	0f 1f 00             	nopl   (%rax)
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	90                   	nop
+[   C56] RSP: 0018:ffa00000308e7ae8 EFLAGS: 00000002=0D
+[   C56] RAX: ffffffff8d7cf400 RBX: 0000000000000000 RCX: 0000000000000000=
+=0D
+[   C56] RDX: 00000000000003fd RSI: 0000000000000005 RDI: ffffffff8fcc68c0=
+=0D
+[   C56] RBP: 000000000000270f R08: 64656c74746f7268 R09: 2020202020202020=
+=0D
+[   C56] R10: 00000000742e2020 R11: 00000000742e2020 R12: 0000000000000020=
+=0D
+[   C56] R13: ffffffff8fcc68c0 R14: 0000000000000000 R15: 0000000000000000=
+=0D
+[   C56] FS:  00007f4c17301740(0000) GS:ff11003fff600000(0000) knlGS:000000=
+0000000000=0D
+[   C56] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033=0D
+[   C56] CR2: 00007f4c174dd650 CR3: 000000010994c004 CR4: 0000000000771ee0=
+=0D
+[   C56] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000=
+=0D
+[   C56] DR3: 0000000000000000 DR6: 00000000fffe07f0 DR7: 0000000000000400=
+=0D
+[   C56] PKRU: 55555554=0D
+[   C56] Call Trace:=0D
+[   C56]  <NMI>=0D
+[ C56] ? nmi_cpu_backtrace (lib/nmi_backtrace.c:115)=20
+[ C56] ? nmi_cpu_backtrace_handler (arch/x86/kernel/apic/hw_nmi.c:47 (discr=
+iminator 1))=20
+[ C56] ? nmi_handle (arch/x86/kernel/nmi.c:149)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? default_do_nmi (arch/x86/kernel/nmi.c:347)=20
+[ C56] ? exc_nmi (arch/x86/kernel/nmi.c:538)=20
+[ C56] ? end_repeat_nmi (arch/x86/entry/entry_64.S:1458)=20
+[ C56] ? mem16_serial_out (drivers/tty/serial/8250/8250_port.c:382)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[ C56] ? io_serial_in (arch/x86/kernel/early_printk.c:100)=20
+[   C56]  </NMI>=0D
+[   C56]  <TASK>=0D
+[ C56] wait_for_xmitr (drivers/tty/serial/8250/8250.h:117 drivers/tty/seria=
+l/8250/8250.h:139 drivers/tty/serial/8250/8250_port.c:2106 drivers/tty/seri=
+al/8250/8250_port.c:2124)=20
+[ C56] serial8250_console_putchar (./include/linux/serial_core.h:704 driver=
+s/tty/serial/8250/8250_port.c:3347)=20
+[ C56] ? __pfx_serial8250_console_putchar (drivers/tty/serial/8250/8250_por=
+t.c:3343)=20
+[ C56] uart_console_write (drivers/tty/serial/serial_core.c:2134)=20
+[ C56] serial8250_console_write_atomic (drivers/tty/serial/8250/8250_port.c=
+:3628)=20
+[ C56] nbcon_emit_next_record (kernel/printk/nbcon.c:940)=20
+[ C56] __nbcon_atomic_flush_all (kernel/printk/nbcon.c:1192 (discriminator =
+1) kernel/printk/nbcon.c:1326 (discriminator 1))=20
+[ C56] vprintk_emit (kernel/printk/printk.c:2414)=20
+[ C56] _printk (kernel/printk/printk.c:2474)=20
+[ C56] panic (./arch/x86/include/asm/bitops.h:207 ./arch/x86/include/asm/bi=
+tops.h:239 ./include/asm-generic/bitops/instrumented-non-atomic.h:142 kerne=
+l/panic.c:528 kernel/panic.c:339)=20
+[ C56] ? _printk (kernel/printk/printk.c:2474)=20
+[ C56] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ C56] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ C56] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ C56] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ C56] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1) =
+kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (discri=
+minator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ C56] vfs_write (fs/read_write.c:582)=20
+[ C56] ? __do_sys_newfstatat (fs/stat.c:466 (discriminator 1))=20
+[ C56] ksys_write (fs/read_write.c:637)=20
+[ C56] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:81=
+)=20
+[ C56] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? up_read (./arch/x86/include/asm/preempt.h:104 kernel/locking/rwsem=
+=2Ec:1354 kernel/locking/rwsem.c:1622)=20
+[ C56] ? do_user_addr_fault (arch/x86/mm/fault.c:1368)=20
+[ C56] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/in=
+clude/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561)=
+=20
+[ C56] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[   C56] RIP: 0033:0x7f4c1740cc94=0D
+[ C56] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00=
+ 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 00 =
+f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[   C56] RSP: 002b:00007ffe88b9b298 EFLAGS: 00000202 ORIG_RAX: 000000000000=
+0001=0D
+[   C56] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f4c1740cc94=
+=0D
+[   C56] RDX: 0000000000000002 RSI: 00005634f890b490 RDI: 0000000000000001=
+=0D
+[   C56] RBP: 00007ffe88b9b2c0 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[   C56] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[   C56] R13: 00005634f890b490 R14: 00007f4c174dd5c0 R15: 00007f4c174daf20=
+=0D
+[   C56]  </TASK>=0D
+[ T2546] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ T2546] Call Trace:=0D
+[ T2546]  <TASK>=0D
+[ T2546] dump_stack_lvl (lib/dump_stack.c:107)=20
+[ T2546] panic (kernel/panic.c:340)=20
+[ T2546] ? _printk (kernel/printk/printk.c:2474)=20
+[ T2546] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ T2546] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ T2546] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ T2546] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ T2546] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1=
+) kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (disc=
+riminator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ T2546] vfs_write (fs/read_write.c:582)=20
+[ T2546] ? __do_sys_newfstatat (fs/stat.c:466 (discriminator 1))=20
+[ T2546] ksys_write (fs/read_write.c:637)=20
+[ T2546] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:=
+81)=20
+[ T2546] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ T2546] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ T2546] ? up_read (./arch/x86/include/asm/preempt.h:104 kernel/locking/rws=
+em.c:1354 kernel/locking/rwsem.c:1622)=20
+[ T2546] ? do_user_addr_fault (arch/x86/mm/fault.c:1368)=20
+[ T2546] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/=
+include/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561=
+)=20
+[ T2546] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[ T2546] RIP: 0033:0x7f4c1740cc94=0D
+[ T2546] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 =
+00 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 0=
+0 f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[ T2546] RSP: 002b:00007ffe88b9b298 EFLAGS: 00000202=0D
+[ T2546] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f4c1740cc94=
+=0D
+[ T2546] RDX: 0000000000000002 RSI: 00005634f890b490 RDI: 0000000000000001=
+=0D
+[ T2546] RBP: 00007ffe88b9b2c0 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[ T2546] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[ T2546] R13: 00005634f890b490 R14: 00007f4c174dd5c0 R15: 00007f4c174daf20=
+=0D
+[ T2546]  </TASK>=0D
+[ T2546] Shutting down cpus with NMI=0D
+[ T2546] Kernel Offset: disabled=0D
+[ T2546] ---[ end Kernel panic - not syncing: sysrq triggered crash ]---=0D
+
+
+
+
+
+-----------------------------
+NMI Backtrace for 6.6.20-rt25 fully preemptive with tuned realtime profile
+-----------------------------
+
+[ T3402] sysrq: Trigger a crash=0D
+[ T3406] =0D
+[ T3402] Kernel panic - not syncing: sysrq triggered crash=0D
+[   C56] NMI backtrace for cpu 56=0D
+[   C56] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ C56] RIP: 0010:delay_halt_tpause (arch/x86/lib/delay.c:118)=20
+[ C56] Code: cc 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 0f=
+ 1f 44 00 00 48 8d 04 37 31 c9 48 89 c2 48 c1 ea 20 66 0f ae f1 <c3> cc cc =
+cc cc 0f 1f 44 00 00 90 90 90 90 90 90 90 90 90 90 90 90=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	cc                   	int3
+   1:	0f 1f 00             	nopl   (%rax)
+   4:	90                   	nop
+   5:	90                   	nop
+   6:	90                   	nop
+   7:	90                   	nop
+   8:	90                   	nop
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  19:	48 8d 04 37          	lea    (%rdi,%rsi,1),%rax
+  1d:	31 c9                	xor    %ecx,%ecx
+  1f:	48 89 c2             	mov    %rax,%rdx
+  22:	48 c1 ea 20          	shr    $0x20,%rdx
+  26:	66 0f ae f1          	tpause %ecx
+  2a:*	c3                   	ret		<-- trapping instruction
+  2b:	cc                   	int3
+  2c:	cc                   	int3
+  2d:	cc                   	int3
+  2e:	cc                   	int3
+  2f:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  34:	90                   	nop
+  35:	90                   	nop
+  36:	90                   	nop
+  37:	90                   	nop
+  38:	90                   	nop
+  39:	90                   	nop
+  3a:	90                   	nop
+  3b:	90                   	nop
+  3c:	90                   	nop
+  3d:	90                   	nop
+  3e:	90                   	nop
+  3f:	90                   	nop
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c3                   	ret
+   1:	cc                   	int3
+   2:	cc                   	int3
+   3:	cc                   	int3
+   4:	cc                   	int3
+   5:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	90                   	nop
+[   C56] RSP: 0018:ffa0000039cfba80 EFLAGS: 00000002=0D
+[   C56] RAX: 00000099a649b2ae RBX: 00000000000006d5 RCX: 0000000000000000=
+=0D
+[   C56] RDX: 0000000000000099 RSI: 00000000000006d5 RDI: 00000099a649abd9=
+=0D
+[   C56] RBP: 00000099a649abd9 R08: 303178302f303178 R09: 302b646165726874=
+=0D
+[   C56] R10: 6461657268746b5f R11: 7866705f5f203f20 R12: 0000000000000020=
+=0D
+[   C56] R13: ffffffff9b8fd320 R14: 0000000000000000 R15: 0000000000000000=
+=0D
+[   C56] FS:  00007f12ca52d740(0000) GS:ff11003fff600000(0000) knlGS:000000=
+0000000000=0D
+[   C56] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033=0D
+[   C56] CR2: 00007f12ca709650 CR3: 000000010fbe6003 CR4: 0000000000771ee0=
+=0D
+[   C56] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000=
+=0D
+[   C56] DR3: 0000000000000000 DR6: 00000000fffe07f0 DR7: 0000000000000400=
+=0D
+[   C56] PKRU: 55555554=0D
+[   C56] Call Trace:=0D
+[   C56]  <NMI>=0D
+[ C56] ? nmi_cpu_backtrace (lib/nmi_backtrace.c:115)=20
+[ C56] ? nmi_cpu_backtrace_handler (arch/x86/kernel/apic/hw_nmi.c:47 (discr=
+iminator 1))=20
+[ C56] ? nmi_handle (arch/x86/kernel/nmi.c:149)=20
+[ C56] ? delay_halt_tpause (arch/x86/lib/delay.c:118)=20
+[ C56] ? default_do_nmi (arch/x86/kernel/nmi.c:347)=20
+[ C56] ? exc_nmi (arch/x86/kernel/nmi.c:538)=20
+[ C56] ? end_repeat_nmi (arch/x86/entry/entry_64.S:1458)=20
+[ C56] ? delay_halt_tpause (arch/x86/lib/delay.c:118)=20
+[ C56] ? delay_halt_tpause (arch/x86/lib/delay.c:118)=20
+[ C56] ? delay_halt_tpause (arch/x86/lib/delay.c:118)=20
+[   C56]  </NMI>=0D
+[   C56]  <TASK>=0D
+[ C56] delay_halt.part.0 (arch/x86/lib/delay.c:163)=20
+[ C56] wait_for_xmitr (./include/linux/nmi.h:147 drivers/tty/serial/8250/82=
+50_port.c:2113 drivers/tty/serial/8250/8250_port.c:2124)=20
+[ C56] serial8250_console_putchar (./include/linux/serial_core.h:704 driver=
+s/tty/serial/8250/8250_port.c:3347)=20
+[ C56] ? __pfx_serial8250_console_putchar (drivers/tty/serial/8250/8250_por=
+t.c:3343)=20
+[ C56] uart_console_write (drivers/tty/serial/serial_core.c:2134)=20
+[ C56] serial8250_console_write_atomic (drivers/tty/serial/8250/8250_port.c=
+:3628)=20
+[ C56] nbcon_emit_next_record (kernel/printk/nbcon.c:940)=20
+[ C56] __nbcon_atomic_flush_all (kernel/printk/nbcon.c:1192 (discriminator =
+1) kernel/printk/nbcon.c:1326 (discriminator 1))=20
+[ C56] vprintk_emit (kernel/printk/printk.c:2414)=20
+[ C56] _printk (kernel/printk/printk.c:2474)=20
+[ C56] panic (./arch/x86/include/asm/bitops.h:207 ./arch/x86/include/asm/bi=
+tops.h:239 ./include/asm-generic/bitops/instrumented-non-atomic.h:142 kerne=
+l/panic.c:528 kernel/panic.c:339)=20
+[ C56] ? _printk (kernel/printk/printk.c:2474)=20
+[ C56] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ C56] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ C56] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ C56] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ C56] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1) =
+kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (discri=
+minator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ C56] vfs_write (fs/read_write.c:582)=20
+[ C56] ksys_write (fs/read_write.c:637)=20
+[ C56] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:81=
+)=20
+[ C56] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/in=
+clude/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561)=
+=20
+[ C56] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[   C56] RIP: 0033:0x7f12ca638c94=0D
+[ C56] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00=
+ 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 00 =
+f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[   C56] RSP: 002b:00007ffce58c2ef8 EFLAGS: 00000202 ORIG_RAX: 000000000000=
+0001=0D
+[   C56] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f12ca638c94=
+=0D
+[   C56] RDX: 0000000000000002 RSI: 000055b5493b8490 RDI: 0000000000000001=
+=0D
+[   C56] RBP: 00007ffce58c2f20 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[   C56] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[   C56] R13: 000055b5493b8490 R14: 00007f12ca7095c0 R15: 00007f12ca706f20=
+=0D
+[   C56]  </TASK>=0D
+[   C56] NMI backtrace for cpu 56=0D
+[   C56] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ C56] RIP: 0010:delay_halt.part.0 (arch/x86/lib/delay.c:169)=20
+[ C56] Code: 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 0f 1f 44 00 00 55=
+ 53 48 89 fb 0f 01 f9 66 90 48 c1 e2 20 48 09 c2 48 89 d5 eb 09 <48> 01 eb =
+48 89 c5 48 29 c3 48 8b 05 15 bd a0 00 48 89 de 48 89 ef=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	90                   	nop
+   1:	90                   	nop
+   2:	90                   	nop
+   3:	90                   	nop
+   4:	90                   	nop
+   5:	90                   	nop
+   6:	90                   	nop
+   7:	90                   	nop
+   8:	90                   	nop
+   9:	90                   	nop
+   a:	90                   	nop
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+  14:	55                   	push   %rbp
+  15:	53                   	push   %rbx
+  16:	48 89 fb             	mov    %rdi,%rbx
+  19:	0f 01 f9             	rdtscp
+  1c:	66 90                	xchg   %ax,%ax
+  1e:	48 c1 e2 20          	shl    $0x20,%rdx
+  22:	48 09 c2             	or     %rax,%rdx
+  25:	48 89 d5             	mov    %rdx,%rbp
+  28:	eb 09                	jmp    0x33
+  2a:*	48 01 eb             	add    %rbp,%rbx		<-- trapping instruction
+  2d:	48 89 c5             	mov    %rax,%rbp
+  30:	48 29 c3             	sub    %rax,%rbx
+  33:	48 8b 05 15 bd a0 00 	mov    0xa0bd15(%rip),%rax        # 0xa0bd4f
+  3a:	48 89 de             	mov    %rbx,%rsi
+  3d:	48 89 ef             	mov    %rbp,%rdi
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 01 eb             	add    %rbp,%rbx
+   3:	48 89 c5             	mov    %rax,%rbp
+   6:	48 29 c3             	sub    %rax,%rbx
+   9:	48 8b 05 15 bd a0 00 	mov    0xa0bd15(%rip),%rax        # 0xa0bd25
+  10:	48 89 de             	mov    %rbx,%rsi
+  13:	48 89 ef             	mov    %rbp,%rdi
+[   C56] RSP: 0018:ffa0000039cfba88 EFLAGS: 00000093=0D
+[   C56] RAX: 000000ec13deb29f RBX: 000000000000076d RCX: 0000000000004038=
+=0D
+[   C56] RDX: 0000000000000050 RSI: 000000000000076d RDI: 000000ec13deb24f=
+=0D
+[   C56] RBP: 000000ec13deb24f R08: 20203138312f7068 R09: 7570632020202020=
+=0D
+[   C56] R10: 38312f7068757063 R11: 2020202020205320 R12: 0000000000000020=
+=0D
+[   C56] R13: ffffffff9b8fd320 R14: 0000000000000000 R15: 0000000000000000=
+=0D
+[   C56] FS:  00007f12ca52d740(0000) GS:ff11003fff600000(0000) knlGS:000000=
+0000000000=0D
+[   C56] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033=0D
+[   C56] CR2: 00007f12ca709650 CR3: 000000010fbe6003 CR4: 0000000000771ee0=
+=0D
+[   C56] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000=
+=0D
+[   C56] DR3: 0000000000000000 DR6: 00000000fffe07f0 DR7: 0000000000000400=
+=0D
+[   C56] PKRU: 55555554=0D
+[   C56] Call Trace:=0D
+[   C56]  <NMI>=0D
+[ C56] ? nmi_cpu_backtrace (lib/nmi_backtrace.c:115)=20
+[ C56] ? nmi_cpu_backtrace_handler (arch/x86/kernel/apic/hw_nmi.c:47 (discr=
+iminator 1))=20
+[ C56] ? nmi_handle (arch/x86/kernel/nmi.c:149)=20
+[ C56] ? delay_halt.part.0 (arch/x86/lib/delay.c:169)=20
+[ C56] ? default_do_nmi (arch/x86/kernel/nmi.c:347)=20
+[ C56] ? exc_nmi (arch/x86/kernel/nmi.c:538)=20
+[ C56] ? end_repeat_nmi (arch/x86/entry/entry_64.S:1458)=20
+[ C56] ? delay_halt.part.0 (arch/x86/lib/delay.c:169)=20
+[ C56] ? delay_halt.part.0 (arch/x86/lib/delay.c:169)=20
+[ C56] ? delay_halt.part.0 (arch/x86/lib/delay.c:169)=20
+[   C56]  </NMI>=0D
+[   C56]  <TASK>=0D
+[ C56] wait_for_xmitr (./include/linux/nmi.h:147 drivers/tty/serial/8250/82=
+50_port.c:2113 drivers/tty/serial/8250/8250_port.c:2124)=20
+[ C56] serial8250_console_putchar (./include/linux/serial_core.h:704 driver=
+s/tty/serial/8250/8250_port.c:3347)=20
+[ C56] ? __pfx_serial8250_console_putchar (drivers/tty/serial/8250/8250_por=
+t.c:3343)=20
+[ C56] uart_console_write (drivers/tty/serial/serial_core.c:2134)=20
+[ C56] serial8250_console_write_atomic (drivers/tty/serial/8250/8250_port.c=
+:3628)=20
+[ C56] nbcon_emit_next_record (kernel/printk/nbcon.c:940)=20
+[ C56] __nbcon_atomic_flush_all (kernel/printk/nbcon.c:1192 (discriminator =
+1) kernel/printk/nbcon.c:1326 (discriminator 1))=20
+[ C56] vprintk_emit (kernel/printk/printk.c:2414)=20
+[ C56] _printk (kernel/printk/printk.c:2474)=20
+[ C56] panic (./arch/x86/include/asm/bitops.h:207 ./arch/x86/include/asm/bi=
+tops.h:239 ./include/asm-generic/bitops/instrumented-non-atomic.h:142 kerne=
+l/panic.c:528 kernel/panic.c:339)=20
+[ C56] ? _printk (kernel/printk/printk.c:2474)=20
+[ C56] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ C56] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ C56] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ C56] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ C56] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1) =
+kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (discri=
+minator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ C56] vfs_write (fs/read_write.c:582)=20
+[ C56] ksys_write (fs/read_write.c:637)=20
+[ C56] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:81=
+)=20
+[ C56] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ C56] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/in=
+clude/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561)=
+=20
+[ C56] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[   C56] RIP: 0033:0x7f12ca638c94=0D
+[ C56] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00=
+ 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 00 =
+f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[   C56] RSP: 002b:00007ffce58c2ef8 EFLAGS: 00000202 ORIG_RAX: 000000000000=
+0001=0D
+[   C56] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f12ca638c94=
+=0D
+[   C56] RDX: 0000000000000002 RSI: 000055b5493b8490 RDI: 0000000000000001=
+=0D
+[   C56] RBP: 00007ffce58c2f20 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[   C56] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[   C56] R13: 000055b5493b8490 R14: 00007f12ca7095c0 R15: 00007f12ca706f20=
+=0D
+[   C56]  </TASK>=0D
+[ T3402] Hardware name: Intel Corporation D50DNP1SBB/D50DNP1SBB, BIOS SE5C7=
+411.86B.9409.D04.2212261349 12/26/2022=0D
+[ T3402] Call Trace:=0D
+[ T3402]  <TASK>=0D
+[ T3402] dump_stack_lvl (lib/dump_stack.c:107)=20
+[ T3402] panic (kernel/panic.c:340)=20
+[ T3402] ? _printk (kernel/printk/printk.c:2474)=20
+[ T3402] sysrq_handle_crash (drivers/tty/sysrq.c:154)=20
+[ T3402] __handle_sysrq (drivers/tty/sysrq.c:601)=20
+[ T3402] write_sysrq_trigger (drivers/tty/sysrq.c:1165)=20
+[ T3402] proc_reg_write (fs/proc/inode.c:340 fs/proc/inode.c:352)=20
+[ T3402] ? preempt_count_add (./include/linux/ftrace.h:974 (discriminator 1=
+) kernel/sched/core.c:5847 (discriminator 1) kernel/sched/core.c:5844 (disc=
+riminator 1) kernel/sched/core.c:5872 (discriminator 1))=20
+[ T3402] vfs_write (fs/read_write.c:582)=20
+[ T3402] ksys_write (fs/read_write.c:637)=20
+[ T3402] do_syscall_64 (arch/x86/entry/common.c:51 arch/x86/entry/common.c:=
+81)=20
+[ T3402] ? syscall_exit_to_user_mode (kernel/entry/common.c:299)=20
+[ T3402] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ T3402] ? do_syscall_64 (arch/x86/entry/common.c:88)=20
+[ T3402] ? exc_page_fault (./arch/x86/include/asm/irqflags.h:37 ./arch/x86/=
+include/asm/irqflags.h:72 arch/x86/mm/fault.c:1513 arch/x86/mm/fault.c:1561=
+)=20
+[ T3402] entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)=20
+[ T3402] RIP: 0033:0x7f12ca638c94=0D
+[ T3402] Code: c7 00 16 00 00 00 b8 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 =
+00 00 f3 0f 1e fa 80 3d d5 76 0d 00 00 74 13 b8 01 00 00 00 0f 05 <48> 3d 0=
+0 f0 ff ff 77 54 c3 0f 1f 00 55 48 89 e5 48 83 ec 20 48 89=0D
+All code
+=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	c7 00 16 00 00 00    	movl   $0x16,(%rax)
+   6:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+   b:	c3                   	ret
+   c:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  13:	00 00 00=20
+  16:	f3 0f 1e fa          	endbr64
+  1a:	80 3d d5 76 0d 00 00 	cmpb   $0x0,0xd76d5(%rip)        # 0xd76f6
+  21:	74 13                	je     0x36
+  23:	b8 01 00 00 00       	mov    $0x1,%eax
+  28:	0f 05                	syscall
+  2a:*	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax		<-- trapping =
+instruction
+  30:	77 54                	ja     0x86
+  32:	c3                   	ret
+  33:	0f 1f 00             	nopl   (%rax)
+  36:	55                   	push   %rbp
+  37:	48 89 e5             	mov    %rsp,%rbp
+  3a:	48 83 ec 20          	sub    $0x20,%rsp
+  3e:	48                   	rex.W
+  3f:	89                   	.byte 0x89
+
+Code starting with the faulting instruction
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+   0:	48 3d 00 f0 ff ff    	cmp    $0xfffffffffffff000,%rax
+   6:	77 54                	ja     0x5c
+   8:	c3                   	ret
+   9:	0f 1f 00             	nopl   (%rax)
+   c:	55                   	push   %rbp
+   d:	48 89 e5             	mov    %rsp,%rbp
+  10:	48 83 ec 20          	sub    $0x20,%rsp
+  14:	48                   	rex.W
+  15:	89                   	.byte 0x89
+[ T3402] RSP: 002b:00007ffce58c2ef8 EFLAGS: 00000202=0D
+[ T3402] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f12ca638c94=
+=0D
+[ T3402] RDX: 0000000000000002 RSI: 000055b5493b8490 RDI: 0000000000000001=
+=0D
+[ T3402] RBP: 00007ffce58c2f20 R08: 0000000000000410 R09: 0000000000000001=
+=0D
+[ T3402] R10: 0000000000000004 R11: 0000000000000202 R12: 0000000000000002=
+=0D
+[ T3402] R13: 000055b5493b8490 R14: 00007f12ca7095c0 R15: 00007f12ca706f20=
+=0D
+[ T3402]  </TASK>=0D
+[ T3402] Kernel Offset: disabled=0D
+[ T3402] ---[ end Kernel panic - not syncing: sysrq triggered crash ]---=0D
+
+--=20
+Sincerly,
+John Wyatt
+Software Engineer, Core Kernel
+
