@@ -1,101 +1,10319 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A36E657B3
-	for <linux-rt-users@vger.kernel.org>; Tue, 19 Mar 2024 14:51:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D3213BB35
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Mar 2024 08:21:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710859866; cv=none; b=m0PW8b3AMKc13JO+GqJ9VBOxme8lypIZcsGDD01fk440twwYjER1CnkFQIs5CQvWA3IKo9fKq6vTeo5sr8r/i4jz3MeMSiR09YK2rQAvrGbUWqjk4NBosvQfFiz39x0HI5N9J3wldu2IjZTFef5Pvx/TJkav+113Z+BPlwYMtHM=
+	t=1710922875; cv=none; b=LrdpL8z1abPgYYPhyAb1n0GiTYy97SGcyOareBs96GrSSKLo3osGmvKaI/QUzNqMdFliI47S7LCuudJgYzRKbSqBq+DIfI/h+dy8zQm+pzkNj396y6E93+1c2MPkGoaPC2Wn5Ptu8bdckfnuweblYcYWuJOafdrR95h++kzdGuU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710859866; c=relaxed/simple;
-	bh=1q2GlRCeVWREA8vsfOJ1kqSPuEXC8eAchMauzeL7W8Q=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=Nlaypq6TMR0Z4UDJzp5moGv332piEIjtYGM+M+0iJhvjyxHImoV7zIML0vNpQPDy++FsMorCAYLpBxA11JVIZd6bdL9oIH69TiJ/Z+LnsluOKdVLeCt/xiy8ry8f/mItXZkiP3CtwMdRx5jSF6yO4ft0KRfysb1PWEFUE5J1HVo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EQEwQzmv; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1710922875; c=relaxed/simple;
+	bh=WyXkv//0I9z1/o/VE8aqBnfLIw32w34XASCDXWtRyAM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=d7gIIjH6gP2ju6qzZG1O6eoxB8np27n75ufDUzpXCBW4utcjVHgrBsNS84zNf8uo4+1Z0BYUCIYYA2B3bKyvFGfWLC91WCTjc4bBhsyHZiGxrxozDZ6XKlsdca8DDx66vyiyJ0amLKuZxuJNluOmpiMl/hZMXRsz78MN9vOqWHI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fPfoz1pj; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EQEwQzmv"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fPfoz1pj"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1710859863;
+	s=mimecast20190719; t=1710922862;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=HtroAqzx3y7s4ngx6ZeX1P9/Uz1LLNN+FAeeDogfPOw=;
-	b=EQEwQzmvhkZboDdc6wEUE0eMxLmAmMVZvpz3jFx8Ep70bMyFgELA6dUB71dvSFXUs40LOp
-	DjyzrU9+oDrJDj7gkiafsZc7r5u1bY8z4DMZ5vd5TDJz2El2brzuhC/bKnbFP1fl+HlXeO
-	8UtE2DzoV0sME6zyFSmO9rEmbvHSrPA=
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=q77RmFTQ00ajCSJvNhn1NIujk+zjipWGyE2UQMCU6kg=;
+	b=fPfoz1pjtD0RFfjEl1kvFy52OpHfDxJwU1FeyN5QaERfPL0kDpUOPsFLgjFIU5NHwSUnNb
+	f/0yxYnvZGjQ7D2cL4o87WyubbRc6R1BAXohGOC7uDuQgkgcXV3mYQh7sA1jsN6lOMqcdm
+	B6mbpXSu5VWTrJb3obsB40PbhkMeCvs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-446-3FsUfxeBNmq98WMyddn_qg-1; Tue, 19 Mar 2024 10:51:00 -0400
-X-MC-Unique: 3FsUfxeBNmq98WMyddn_qg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-135-dhCufIVTNyOdSc8EQwlUXQ-1; Wed, 20 Mar 2024 04:20:58 -0400
+X-MC-Unique: dhCufIVTNyOdSc8EQwlUXQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A24F989C8EA;
-	Tue, 19 Mar 2024 14:50:59 +0000 (UTC)
-Received: from localhost (unknown [10.22.16.86])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F3AAE10E47;
-	Tue, 19 Mar 2024 14:50:58 +0000 (UTC)
-Date: Tue, 19 Mar 2024 11:50:54 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.212-rt104
-Message-ID: <ZfmmTucCNMPUm8EM@uudg.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A6D7E811E81
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Mar 2024 08:20:58 +0000 (UTC)
+Received: from fedora.brq.redhat.com (unknown [10.43.17.49])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D6423C20;
+	Wed, 20 Mar 2024 08:20:57 +0000 (UTC)
+From: tglozar@redhat.com
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH] rteval: Remove XML-RPC server
+Date: Wed, 20 Mar 2024 09:20:49 +0100
+Message-ID: <20240320082049.11977-1-tglozar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
-Hello RT-list!
+From: Tomas Glozar <tglozar@redhat.com>
 
-I'm pleased to announce the 5.10.212-rt104 stable release.
+Remove code for rteval XML-RPC server and client as well as associated
+modules (rtevalMailer). The code was disabled in 2d547eb6 ("rteval:
+Disable options for remote xmlrpc server").
 
-This release is an update to the new stable 5.10.212 version and no RT
-changes have been performed.
+Also remove all references to the functionality in documentation except
+for author credits.
 
-You can get this release via the git tree at:
+Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+---
+ .gitignore                             |    5 -
+ Makefile                               |   15 +-
+ doc/rteval.8                           |    6 -
+ doc/rteval.txt                         |   18 +-
+ rteval-cmd                             |    6 -
+ rteval/__init__.py                     |   25 -
+ rteval/rtevalConfig.py                 |    1 -
+ rteval/rtevalMailer.py                 |   51 --
+ rteval/rtevalXMLRPC.py                 |   97 ---
+ rteval/rtevalclient.py                 |   60 --
+ server/COPYING                         |  339 --------
+ server/INSTALL                         |  302 -------
+ server/Logger.py                       |   19 -
+ server/Makefile.am                     |   38 -
+ server/README.xmlrpc                   |  201 -----
+ server/apache-rteval-wsgi.conf.tpl     |   22 -
+ server/apache-rteval.conf.tpl          |   18 -
+ server/configure.ac                    |  130 ---
+ server/database.py                     |  238 ------
+ server/gen_config.sh                   |   14 -
+ server/parser/Makefile.am              |   30 -
+ server/parser/README.parser            |  204 -----
+ server/parser/argparser.c              |  140 ---
+ server/parser/argparser.h              |   21 -
+ server/parser/configparser.c           |  171 ----
+ server/parser/configparser.h           |   25 -
+ server/parser/eurephia_nullsafe.c      |   54 --
+ server/parser/eurephia_nullsafe.h      |  103 ---
+ server/parser/eurephia_values.c        |  301 -------
+ server/parser/eurephia_values.h        |   48 --
+ server/parser/eurephia_values_struct.h |   38 -
+ server/parser/eurephia_xml.c           |  147 ----
+ server/parser/eurephia_xml.h           |   43 -
+ server/parser/log.c                    |  228 -----
+ server/parser/log.h                    |   43 -
+ server/parser/parsethread.c            |  370 --------
+ server/parser/parsethread.h            |   38 -
+ server/parser/pgsql.c                  | 1093 ------------------------
+ server/parser/pgsql.h                  |   58 --
+ server/parser/rteval-parserd.c         |  533 ------------
+ server/parser/rteval-parserd.init      |  126 ---
+ server/parser/rteval-parserd.sysconfig |   23 -
+ server/parser/sha1.c                   |  615 -------------
+ server/parser/sha1.h                   |   66 --
+ server/parser/statuses.h               |   33 -
+ server/parser/threadinfo.h             |   38 -
+ server/parser/xmlparser.c              |  620 --------------
+ server/parser/xmlparser.h              |   75 --
+ server/parser/xmlparser.xsl            |  607 -------------
+ server/remove_rtevalrun                |   65 --
+ server/rteval-parser.spec              |  133 ---
+ server/rteval_testserver.py            |  107 ---
+ server/rteval_xmlrpc.py                |   71 --
+ server/rteval_xmlrpc.wsgi              |   94 --
+ server/rtevaldb.py                     |   57 --
+ server/sql/delta-1.0_1.1.sql           |   15 -
+ server/sql/delta-1.1_1.2.sql           |    9 -
+ server/sql/delta-1.2_1.3.sql           |    6 -
+ server/sql/delta-1.3_1.4.sql           |    6 -
+ server/sql/delta-1.4_1.5.sql           |   31 -
+ server/sql/rteval-1.0.sql              |  189 ----
+ server/sql/rteval-1.1.sql              |  203 -----
+ server/sql/rteval-1.2.sql              |  207 -----
+ server/sql/rteval-1.3.sql              |  208 -----
+ server/sql/rteval-1.4.sql              |  209 -----
+ server/sql/rteval-1.5.sql              |  235 -----
+ server/testclient.py                   |   37 -
+ server/testclient_sendreportfile       |   36 -
+ server/unittest.py                     |   91 --
+ server/xmlrpc_API1.py                  |  100 ---
+ unit-tests/unittest.py                 |    1 -
+ 71 files changed, 2 insertions(+), 9604 deletions(-)
+ delete mode 100644 rteval/rtevalMailer.py
+ delete mode 100644 rteval/rtevalXMLRPC.py
+ delete mode 100644 rteval/rtevalclient.py
+ delete mode 100644 server/COPYING
+ delete mode 100644 server/INSTALL
+ delete mode 100644 server/Logger.py
+ delete mode 100644 server/Makefile.am
+ delete mode 100644 server/README.xmlrpc
+ delete mode 100644 server/apache-rteval-wsgi.conf.tpl
+ delete mode 100644 server/apache-rteval.conf.tpl
+ delete mode 100644 server/configure.ac
+ delete mode 100644 server/database.py
+ delete mode 100755 server/gen_config.sh
+ delete mode 100644 server/parser/Makefile.am
+ delete mode 100644 server/parser/README.parser
+ delete mode 100644 server/parser/argparser.c
+ delete mode 100644 server/parser/argparser.h
+ delete mode 100644 server/parser/configparser.c
+ delete mode 100644 server/parser/configparser.h
+ delete mode 100644 server/parser/eurephia_nullsafe.c
+ delete mode 100644 server/parser/eurephia_nullsafe.h
+ delete mode 100644 server/parser/eurephia_values.c
+ delete mode 100644 server/parser/eurephia_values.h
+ delete mode 100644 server/parser/eurephia_values_struct.h
+ delete mode 100644 server/parser/eurephia_xml.c
+ delete mode 100644 server/parser/eurephia_xml.h
+ delete mode 100644 server/parser/log.c
+ delete mode 100644 server/parser/log.h
+ delete mode 100644 server/parser/parsethread.c
+ delete mode 100644 server/parser/parsethread.h
+ delete mode 100644 server/parser/pgsql.c
+ delete mode 100644 server/parser/pgsql.h
+ delete mode 100644 server/parser/rteval-parserd.c
+ delete mode 100755 server/parser/rteval-parserd.init
+ delete mode 100644 server/parser/rteval-parserd.sysconfig
+ delete mode 100644 server/parser/sha1.c
+ delete mode 100644 server/parser/sha1.h
+ delete mode 100644 server/parser/statuses.h
+ delete mode 100644 server/parser/threadinfo.h
+ delete mode 100644 server/parser/xmlparser.c
+ delete mode 100644 server/parser/xmlparser.h
+ delete mode 100644 server/parser/xmlparser.xsl
+ delete mode 100755 server/remove_rtevalrun
+ delete mode 100644 server/rteval-parser.spec
+ delete mode 100644 server/rteval_testserver.py
+ delete mode 100644 server/rteval_xmlrpc.py
+ delete mode 100644 server/rteval_xmlrpc.wsgi
+ delete mode 100644 server/rtevaldb.py
+ delete mode 100644 server/sql/delta-1.0_1.1.sql
+ delete mode 100644 server/sql/delta-1.1_1.2.sql
+ delete mode 100644 server/sql/delta-1.2_1.3.sql
+ delete mode 100644 server/sql/delta-1.3_1.4.sql
+ delete mode 100644 server/sql/delta-1.4_1.5.sql
+ delete mode 100644 server/sql/rteval-1.0.sql
+ delete mode 100644 server/sql/rteval-1.1.sql
+ delete mode 100644 server/sql/rteval-1.2.sql
+ delete mode 100644 server/sql/rteval-1.3.sql
+ delete mode 100644 server/sql/rteval-1.4.sql
+ delete mode 100644 server/sql/rteval-1.5.sql
+ delete mode 100644 server/testclient.py
+ delete mode 100755 server/testclient_sendreportfile
+ delete mode 100644 server/unittest.py
+ delete mode 100644 server/xmlrpc_API1.py
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: 6f80a051d66ad3ad791960ddedf516b139da8dd8
-
-Or to build 5.10.212-rt104 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.212.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.212-rt104.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
+diff --git a/.gitignore b/.gitignore
+index 4043947..a6e9401 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -27,9 +27,4 @@ MANIFEST
+ .deps
+ stamp-h1
+ autom4te.cache/
+-server/Makefile
+-server/config.log
+-server/config.status
+-server/parser/Makefile
+-server/parser/config.h
+ rteval-[0-9]*
+diff --git a/Makefile b/Makefile
+index b8bed64..d9a6b9f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -9,10 +9,6 @@ PACKAGE :=	rteval
+ VERSION :=      $(shell $(PYTHON) -c "from rteval import RTEVAL_VERSION; print(RTEVAL_VERSION)")
+ D	:=	10
+ 
+-# XML-RPC related files
+-XMLRPCVER := 1.6
+-XMLRPCDIR := server
+-
+ DESTDIR	:=
+ PREFIX  :=      /usr
+ DATADIR	:=	$(DESTDIR)/$(PREFIX)/share
+@@ -35,11 +31,9 @@ sysreport:
+ 	$(PYTHON) rteval-cmd -D -v --workdir=$(HERE)/run --loaddir=$(HERE)/loadsource --duration=$(D) -i $(HERE)/rteval --sysreport
+ 
+ clean:
+-	[ -f $(XMLRPCDIR)/Makefile ] && make -C $(XMLRPCDIR) clean || echo -n
+-	rm -f *~ rteval/*~ rteval/*.py[co] *.tar.bz2 *.tar.gz doc/*~ server/rteval-xmlrpc-*.tar.gz
++	rm -f *~ rteval/*~ rteval/*.py[co] *.tar.bz2 *.tar.gz doc/*~
+ 
+ realclean: clean
+-	[ -f $(XMLRPCDIR)/Makefile ] && make -C $(XMLRPCDIR) maintainer-clean || echo -n
+ 	rm -rf run
+ 
+ install: install_loads install_rteval
+@@ -67,13 +61,6 @@ rteval-$(VERSION).tar.bz2:
+ 	mv dist/rteval-$(VERSION).tar.bz2 .
+ 	rmdir dist
+ 
+-rteval-xmlrpc-$(XMLRPCVER).tar.gz :
+-	cd $(XMLRPCDIR) ;             \
+-	autoreconf --install ;           \
+-	./configure --prefix=$(PREFIX) ; \
+-	make distcheck
+-	cp $(XMLRPCDIR)/rteval-xmlrpc-$(XMLRPCVER).tar.gz $(HERE)/
+-
+ help:
+ 	@echo ""
+ 	@echo "rteval Makefile targets:"
+diff --git a/doc/rteval.8 b/doc/rteval.8
+index a8129f1..578de37 100644
+--- a/doc/rteval.8
++++ b/doc/rteval.8
+@@ -84,12 +84,6 @@ information on the running system.
+ .B \-D, \-\-debug
+ Turn on debugging prints during run
+ .TP
+-.B \-X HOST, \-\-xmprpc-submit=HOST
+-Have rteval send report data to HOST following the run, using XML-RPC
+-.TP
+-.B \-P, \-\-xmlrpc-no-abort
+-Do not abort if XML-RPC server do not respond to ping  request
+-.TP
+ .B \-Z, \-\-summarize
+ Have rteval summarize an existing report. This will not cause loads or
+ meausurement utilities to be run.
+diff --git a/doc/rteval.txt b/doc/rteval.txt
+index 569168e..95d501b 100644
+--- a/doc/rteval.txt
++++ b/doc/rteval.txt
+@@ -33,8 +33,7 @@ boost the system load.
+ Rteval runs for a specified length of time (typically 12 hours). When
+ an rteval run is completed, a statisical analysis of the results is
+ done, an XML file is generated, containing system state, raw result
+-data and statistical analysis results and optionally the XML is sent
+-by XML-RPC to a database for reporting.
++data and statistical analysis results.
+ 
+ The Load Applications
+ ---------------------
+@@ -228,18 +227,3 @@ A --numa option was added to the cyclictest program to use the libnuma
+ library to bind threads to local memory nodes and allocate memory on
+ the closest memory node, so to minimize the time required to access
+ memory. 
+-
+-Further Development
+--------------------
+-
+-Once we started getting rteval run information it was natural that we
+-would want to store it in a database for further analysis (especially
+-watching for performance regressions). David Sommerseth created a set
+-of tables for a PostgreSQL database and then added an option to rteval
+-to ship the results back to a database server using XML-RPC. This
+-option is currently used internally at Red Hat do ship rteval run data
+-back to our internal DB server. There are no plans to open this data
+-up to the public, but the XML-RPC code is there if someone else wants
+-to use the facility. (No, there are no backdoors in the code that ship
+-run data back to Red Hat; it's Python code, look and see!). 
+-
+diff --git a/rteval-cmd b/rteval-cmd
+index a5e8746..b242aa4 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -122,12 +122,6 @@ def parse_options(cfg, parser, cmdargs):
+     parser.add_argument("-D", '--debug', dest='rteval___debugging',
+                       action='store_true', default=rtevcfg.debugging,
+                       help=f'turn on debug prints (default: {rtevcfg.debugging})')
+-    #parser.add_option("-X", '--xmlrpc-submit', dest='rteval___xmlrpc',
+-    #                  action='store', default=rtevcfg.xmlrpc, metavar='HOST',
+-    #                  help='Hostname to XML-RPC server to submit reports')
+-    #parser.add_option("-P", "--xmlrpc-no-abort", dest="rteval___xmlrpc_noabort",
+-    #                  action='store_true', default=False,
+-    #                  help="Do not abort if XML-RPC server do not respond to ping request");
+     parser.add_argument("-Z", '--summarize', dest='rteval___summarize',
+                       action='store_true', default=False,
+                       help='summarize an already existing XML report')
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index ca018f6..b5db3b3 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -22,10 +22,8 @@ import sysconfig
+ from rteval.modules.loads import LoadModules
+ from rteval.modules.measurement import MeasurementModules, MeasurementProfile
+ from rteval.rtevalReport import rtevalReport
+-from rteval.rtevalXMLRPC import rtevalXMLRPC
+ from rteval.Log import Log
+ from rteval import rtevalConfig
+-from rteval import rtevalMailer
+ from rteval import version
+ 
+ RTEVAL_VERSION = version.RTEVAL_VERSION
+@@ -70,12 +68,6 @@ class RtEval(rtevalReport):
+         from .sysinfo import SystemInfo
+         self._sysinfo = SystemInfo(self.__rtevcfg, logger=self.__logger)
+ 
+-        # prepare a mailer, if that's configured
+-        if self.__cfg.HasSection('smtp'):
+-            self.__mailer = rtevalMailer.rtevalMailer(self.__cfg.GetSection('smtp'))
+-        else:
+-            self.__mailer = None
+-
+         if not os.path.exists(self.__rtevcfg.xslt_report):
+             raise RuntimeError(f"can't find XSL template ({self.__rtevcfg.xslt_report})!")
+ 
+@@ -91,19 +83,6 @@ class RtEval(rtevalReport):
+         rtevalReport.__init__(self, self.__version,
+                               self.__rtevcfg.installdir, self.__rtevcfg.annotate)
+ 
+-        # If --xmlrpc-submit is given, check that we can access the server
+-        if self.__rtevcfg.xmlrpc:
+-            self.__xmlrpc = rtevalXMLRPC(self.__rtevcfg.xmlrpc, self.__logger, self.__mailer)
+-            if not self.__xmlrpc.Ping():
+-                if not self.__rtevcfg.xmlrpc_noabort:
+-                    print(f"ERROR: Could not reach XML-RPC server '{self.__rtevcfg.xmlrpc}'.  Aborting.")
+-                    sys.exit(2)
+-                else:
+-                    print("WARNING: Could not ping the XML-RPC server.  Will continue anyway.")
+-        else:
+-            self.__xmlrpc = None
+-
+-
+     @staticmethod
+     def __show_remaining_time(remaining):
+         secs = int(remaining)
+@@ -271,10 +250,6 @@ class RtEval(rtevalReport):
+         if self.__rtevcfg.sysreport:
+             self._sysinfo.run_sysreport(self.__reportdir)
+ 
+-        # if --xmlrpc-submit | -X was given, send our report to the given host
+-        if self.__xmlrpc:
+-            rtevalres = self.__xmlrpc.SendReport(self.GetXMLreport())
+-
+         if earlystop:
+             rtevalres = 1
+         self._sysinfo.copy_dmesg(self.__reportdir)
+diff --git a/rteval/rtevalConfig.py b/rteval/rtevalConfig.py
+index 030d420..2c0436a 100644
+--- a/rteval/rtevalConfig.py
++++ b/rteval/rtevalConfig.py
+@@ -73,7 +73,6 @@ default_config = {
+         'workdir'    : os.getcwd(),
+         'installdir' : installdir,
+         'srcdir'     : default_config_search(['loadsource']),
+-        'xmlrpc'     : None,
+         'xslt_report': default_config_search(['rteval_text.xsl'], os.path.isfile),
+         'xslt_histogram': default_config_search(['rteval_histogram_raw.xsl'], os.path.isfile),
+         'report_interval': '600',
+diff --git a/rteval/rtevalMailer.py b/rteval/rtevalMailer.py
+deleted file mode 100644
+index ef3b571..0000000
+--- a/rteval/rtevalMailer.py
++++ /dev/null
+@@ -1,51 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   rtevalmailer.py - module for sending e-mails
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import smtplib
+-import email
+-
+-
+-class rtevalMailer(object):
+-    "rteval mailer - sends messages via an SMTP server to designated e-mail addresses"
+-
+-    def __init__(self, cfg):
+-        # this configuration object needs to have the following attributes set:
+-        # * smtp_server
+-        # * from_address
+-        # * to_address
+-        #
+-        errmsg = ""
+-        if 'smtp_server' not in cfg:
+-            errmsg = "\n** Missing smtp_server in config"
+-        if 'from_address' not in cfg:
+-            errmsg += "\n** Missing from_address in config"
+-        if 'to_address' not in cfg:
+-            errmsg += "\n** Missing to_address in config"
+-
+-        if not errmsg == "":
+-            raise LookupError(errmsg)
+-
+-        self.config = cfg
+-
+-
+-    def __prepare_msg(self, subj, body):
+-        msg = email.MIMEText.MIMEText(body)
+-        msg['subject'] = subj;
+-        msg['From'] = "rteval mailer <" + self.config.from_address+">"
+-        msg['To'] = self.config.to_address
+-        return msg
+-
+-
+-    def SendMessage(self, subject, body):
+-        "Sends an e-mail to the configured mail server and recipient"
+-
+-        msg = self.__prepare_msg(subject, body)
+-        srv = smtplib.SMTP()
+-        srv.connect(self.config.smtp_server)
+-        srv.sendmail(self.config.from_address, self.config.to_address, str(msg))
+-        srv.close()
+-
+diff --git a/rteval/rtevalXMLRPC.py b/rteval/rtevalXMLRPC.py
+deleted file mode 100644
+index 6b31653..0000000
+--- a/rteval/rtevalXMLRPC.py
++++ /dev/null
+@@ -1,97 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-# rtevalXMLRPC.py - main rteval XML-RPC class
+-#
+-#   Copyright 2009 - 2013   Clark Williams <williams@redhat.com>
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import socket
+-import time
+-import xmlrpc.client
+-from .rtevalclient import rtevalclient
+-from .Log import Log
+-
+-class rtevalXMLRPC:
+-    def __init__(self, host, logger, mailer=None):
+-        self.__host = host
+-        self.__url = f"http://{self.__host}/rteval/API1/"
+-        self.__logger = logger
+-        self.__mailer = mailer
+-        self.__client = rtevalclient.rtevalclient(self.__url)
+-
+-
+-    def Ping(self):
+-        res = None
+-        self.__logger.log(Log.DEBUG, f"Checking if XML-RPC server '{self.__host}' is reachable")
+-        attempt = 0
+-        ping_success = False
+-        warning_sent = False
+-        while attempt < 6:
+-            try:
+-                res = self.__client.Hello()
+-                attempt = 10
+-                ping_success = True
+-            except xmlrpc.client.ProtocolError:
+-                # Server do not support Hello(), but is reachable
+-                self.__logger.log(Log.INFO, f"Got XML-RPC connection with {self.__host} but it did not support Hello()")
+-                res = None
+-            except socket.error as err:
+-                self.__logger.log(Log.INFO, f"Could not establish XML-RPC contact with {self.__host}\n{str(err)}")
+-
+-                # Do attempts handling
+-                attempt += 1
+-                if attempt > 5:
+-                    break # To avoid sleeping before we abort
+-
+-                if (self.__mailer is not None) and (not warning_sent):
+-                    self.__mailer.SendMessage("[RTEVAL:WARNING] Failed to ping XML-RPC server", f"Server {self.__host} did not respond.")
+-                    warning_sent = True
+-
+-                print(f"Failed pinging XML-RPC server.  Doing another attempt({attempt}) ")
+-                time.sleep(attempt) #*15) # Incremental sleep - sleep attempts*15 seconds
+-                ping_success = False
+-
+-        if res:
+-            self.__logger.log(Log.INFO, f'Verified XML-RPC connection with {res["server"]} (XML-RPC API version: {res["APIversion"]})')
+-            self.__logger.log(Log.DEBUG, f"Recieved greeting: {res['greeting']}")
+-        return ping_success
+-
+-
+-    def SendReport(self, xmlreport):
+-        "Sends the report to a given XML-RPC host.  Returns 0 on success or 2 on submission failure."
+-
+-        attempt = 0
+-        exitcode = 2   # Presume failure
+-        warning_sent = False
+-        while attempt < 6:
+-            try:
+-                print(f"Submitting report to {self.__url}")
+-                rterid = self.__client.SendReport(xmlreport)
+-                print(f"Report registered with submission id {rterid}")
+-                attempt = 10
+-                exitcode = 0 # Success
+-            except socket.error:
+-                attempt += 1
+-                if attempt > 5:
+-                    break # To avoid sleeping before we abort
+-
+-                if (self.__mailer is not None) and (not warning_sent):
+-                    self.__mailer.SendMessage("[RTEVAL:WARNING] Failed to submit report to XML-RPC server", f"Server {self.__host} did not respond.  Not giving up yet.")
+-                    warning_sent = True
+-
+-                print(f"Failed sending report. Making another attempt({attempt}) ")
+-                time.sleep(attempt) #*5*60) # Incremental sleep - sleep attempts*5 minutes
+-
+-            except Exception as err:
+-                raise err
+-
+-
+-        if self.__mailer is not None:
+-            # Send final result messages
+-            if exitcode == 2:
+-                self.__mailer.SendMessage("[RTEVAL:FAILURE] Failed to submit report to XML-RPC server", f"Server {self.__host} did not respond at all after {attempt - 1} attempts.")
+-            elif (exitcode == 0) and warning_sent:
+-                self.__mailer.SendMessage("[RTEVAL:SUCCESS] XML-RPC server available again",
+-                                          f"Succeeded to submit the report to {self.__host}")
+-
+-        return exitcode
+diff --git a/rteval/rtevalclient.py b/rteval/rtevalclient.py
+deleted file mode 100644
+index 8f48129..0000000
+--- a/rteval/rtevalclient.py
++++ /dev/null
+@@ -1,60 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   rtevalclient.py
+-#   XML-RPC client for sending data to a central rteval result server
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import xmlrpc.client
+-import libxml2
+-import io
+-import bz2
+-import base64
+-import platform
+-
+-class rtevalclient:
+-    """
+-    rtevalclient is a library for sending rteval reports to an rteval server via XML-RPC.
+-    """
+-    def __init__(self, url="http://rtserver.farm.hsv.redhat.com/rteval/API1/", hostn = None):
+-        self.srv = xmlrpc.client.ServerProxy(url)
+-        if hostn is None:
+-            self.hostname = platform.node()
+-        else:
+-            self.hostname = hostn
+-
+-    def Hello(self):
+-        return self.srv.Hello(self.hostname)
+-
+-    def DatabaseStatus(self):
+-        return self.srv.DatabaseStatus()
+-
+-    def SendReport(self, xmldoc):
+-        if xmldoc.type != 'document_xml':
+-            raise Exception("Input is not XML document")
+-
+-        fbuf = io.StringIO()
+-        xmlbuf = libxml2.createOutputBuffer(fbuf, 'UTF-8')
+-        doclen = xmldoc.saveFileTo(xmlbuf, 'UTF-8')
+-
+-        compr = bz2.BZ2Compressor(9)
+-        cmpr = compr.compress(fbuf.getvalue())
+-        data = base64.b64encode(cmpr + compr.flush())
+-        ret = self.srv.SendReport(self.hostname, data)
+-        print(f"rtevalclient::SendReport() - Sent {len(data)} bytes (XML document length: {doclen} bytes, compression ratio: {(1-(float(len(data)) / float(doclen)))*100}:.2f)")
+-        return ret
+-
+-    def SendDataAsFile(self, fname, data, decompr = False):
+-        compr = bz2.BZ2Compressor(9)
+-        cmprdata = compr.compress(data)
+-        b64data = base64.b64encode(cmprdata + compr.flush())
+-        return self.srv.StoreRawFile(self.hostname, fname, b64data, decompr)
+-
+-
+-    def SendFile(self, fname, decompr = False):
+-        f = open(fname, "r")
+-        srvname = self.SendDataAsFile(fname, f.read(), decompr)
+-        f.close()
+-        return srvname
+-
+diff --git a/server/COPYING b/server/COPYING
+deleted file mode 100644
+index d159169..0000000
+--- a/server/COPYING
++++ /dev/null
+@@ -1,339 +0,0 @@
+-                    GNU GENERAL PUBLIC LICENSE
+-                       Version 2, June 1991
+-
+- Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+- Everyone is permitted to copy and distribute verbatim copies
+- of this license document, but changing it is not allowed.
+-
+-                            Preamble
+-
+-  The licenses for most software are designed to take away your
+-freedom to share and change it.  By contrast, the GNU General Public
+-License is intended to guarantee your freedom to share and change free
+-software--to make sure the software is free for all its users.  This
+-General Public License applies to most of the Free Software
+-Foundation's software and to any other program whose authors commit to
+-using it.  (Some other Free Software Foundation software is covered by
+-the GNU Lesser General Public License instead.)  You can apply it to
+-your programs, too.
+-
+-  When we speak of free software, we are referring to freedom, not
+-price.  Our General Public Licenses are designed to make sure that you
+-have the freedom to distribute copies of free software (and charge for
+-this service if you wish), that you receive source code or can get it
+-if you want it, that you can change the software or use pieces of it
+-in new free programs; and that you know you can do these things.
+-
+-  To protect your rights, we need to make restrictions that forbid
+-anyone to deny you these rights or to ask you to surrender the rights.
+-These restrictions translate to certain responsibilities for you if you
+-distribute copies of the software, or if you modify it.
+-
+-  For example, if you distribute copies of such a program, whether
+-gratis or for a fee, you must give the recipients all the rights that
+-you have.  You must make sure that they, too, receive or can get the
+-source code.  And you must show them these terms so they know their
+-rights.
+-
+-  We protect your rights with two steps: (1) copyright the software, and
+-(2) offer you this license which gives you legal permission to copy,
+-distribute and/or modify the software.
+-
+-  Also, for each author's protection and ours, we want to make certain
+-that everyone understands that there is no warranty for this free
+-software.  If the software is modified by someone else and passed on, we
+-want its recipients to know that what they have is not the original, so
+-that any problems introduced by others will not reflect on the original
+-authors' reputations.
+-
+-  Finally, any free program is threatened constantly by software
+-patents.  We wish to avoid the danger that redistributors of a free
+-program will individually obtain patent licenses, in effect making the
+-program proprietary.  To prevent this, we have made it clear that any
+-patent must be licensed for everyone's free use or not licensed at all.
+-
+-  The precise terms and conditions for copying, distribution and
+-modification follow.
+-
+-                    GNU GENERAL PUBLIC LICENSE
+-   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+-
+-  0. This License applies to any program or other work which contains
+-a notice placed by the copyright holder saying it may be distributed
+-under the terms of this General Public License.  The "Program", below,
+-refers to any such program or work, and a "work based on the Program"
+-means either the Program or any derivative work under copyright law:
+-that is to say, a work containing the Program or a portion of it,
+-either verbatim or with modifications and/or translated into another
+-language.  (Hereinafter, translation is included without limitation in
+-the term "modification".)  Each licensee is addressed as "you".
+-
+-Activities other than copying, distribution and modification are not
+-covered by this License; they are outside its scope.  The act of
+-running the Program is not restricted, and the output from the Program
+-is covered only if its contents constitute a work based on the
+-Program (independent of having been made by running the Program).
+-Whether that is true depends on what the Program does.
+-
+-  1. You may copy and distribute verbatim copies of the Program's
+-source code as you receive it, in any medium, provided that you
+-conspicuously and appropriately publish on each copy an appropriate
+-copyright notice and disclaimer of warranty; keep intact all the
+-notices that refer to this License and to the absence of any warranty;
+-and give any other recipients of the Program a copy of this License
+-along with the Program.
+-
+-You may charge a fee for the physical act of transferring a copy, and
+-you may at your option offer warranty protection in exchange for a fee.
+-
+-  2. You may modify your copy or copies of the Program or any portion
+-of it, thus forming a work based on the Program, and copy and
+-distribute such modifications or work under the terms of Section 1
+-above, provided that you also meet all of these conditions:
+-
+-    a) You must cause the modified files to carry prominent notices
+-    stating that you changed the files and the date of any change.
+-
+-    b) You must cause any work that you distribute or publish, that in
+-    whole or in part contains or is derived from the Program or any
+-    part thereof, to be licensed as a whole at no charge to all third
+-    parties under the terms of this License.
+-
+-    c) If the modified program normally reads commands interactively
+-    when run, you must cause it, when started running for such
+-    interactive use in the most ordinary way, to print or display an
+-    announcement including an appropriate copyright notice and a
+-    notice that there is no warranty (or else, saying that you provide
+-    a warranty) and that users may redistribute the program under
+-    these conditions, and telling the user how to view a copy of this
+-    License.  (Exception: if the Program itself is interactive but
+-    does not normally print such an announcement, your work based on
+-    the Program is not required to print an announcement.)
+-
+-These requirements apply to the modified work as a whole.  If
+-identifiable sections of that work are not derived from the Program,
+-and can be reasonably considered independent and separate works in
+-themselves, then this License, and its terms, do not apply to those
+-sections when you distribute them as separate works.  But when you
+-distribute the same sections as part of a whole which is a work based
+-on the Program, the distribution of the whole must be on the terms of
+-this License, whose permissions for other licensees extend to the
+-entire whole, and thus to each and every part regardless of who wrote it.
+-
+-Thus, it is not the intent of this section to claim rights or contest
+-your rights to work written entirely by you; rather, the intent is to
+-exercise the right to control the distribution of derivative or
+-collective works based on the Program.
+-
+-In addition, mere aggregation of another work not based on the Program
+-with the Program (or with a work based on the Program) on a volume of
+-a storage or distribution medium does not bring the other work under
+-the scope of this License.
+-
+-  3. You may copy and distribute the Program (or a work based on it,
+-under Section 2) in object code or executable form under the terms of
+-Sections 1 and 2 above provided that you also do one of the following:
+-
+-    a) Accompany it with the complete corresponding machine-readable
+-    source code, which must be distributed under the terms of Sections
+-    1 and 2 above on a medium customarily used for software interchange; or,
+-
+-    b) Accompany it with a written offer, valid for at least three
+-    years, to give any third party, for a charge no more than your
+-    cost of physically performing source distribution, a complete
+-    machine-readable copy of the corresponding source code, to be
+-    distributed under the terms of Sections 1 and 2 above on a medium
+-    customarily used for software interchange; or,
+-
+-    c) Accompany it with the information you received as to the offer
+-    to distribute corresponding source code.  (This alternative is
+-    allowed only for noncommercial distribution and only if you
+-    received the program in object code or executable form with such
+-    an offer, in accord with Subsection b above.)
+-
+-The source code for a work means the preferred form of the work for
+-making modifications to it.  For an executable work, complete source
+-code means all the source code for all modules it contains, plus any
+-associated interface definition files, plus the scripts used to
+-control compilation and installation of the executable.  However, as a
+-special exception, the source code distributed need not include
+-anything that is normally distributed (in either source or binary
+-form) with the major components (compiler, kernel, and so on) of the
+-operating system on which the executable runs, unless that component
+-itself accompanies the executable.
+-
+-If distribution of executable or object code is made by offering
+-access to copy from a designated place, then offering equivalent
+-access to copy the source code from the same place counts as
+-distribution of the source code, even though third parties are not
+-compelled to copy the source along with the object code.
+-
+-  4. You may not copy, modify, sublicense, or distribute the Program
+-except as expressly provided under this License.  Any attempt
+-otherwise to copy, modify, sublicense or distribute the Program is
+-void, and will automatically terminate your rights under this License.
+-However, parties who have received copies, or rights, from you under
+-this License will not have their licenses terminated so long as such
+-parties remain in full compliance.
+-
+-  5. You are not required to accept this License, since you have not
+-signed it.  However, nothing else grants you permission to modify or
+-distribute the Program or its derivative works.  These actions are
+-prohibited by law if you do not accept this License.  Therefore, by
+-modifying or distributing the Program (or any work based on the
+-Program), you indicate your acceptance of this License to do so, and
+-all its terms and conditions for copying, distributing or modifying
+-the Program or works based on it.
+-
+-  6. Each time you redistribute the Program (or any work based on the
+-Program), the recipient automatically receives a license from the
+-original licensor to copy, distribute or modify the Program subject to
+-these terms and conditions.  You may not impose any further
+-restrictions on the recipients' exercise of the rights granted herein.
+-You are not responsible for enforcing compliance by third parties to
+-this License.
+-
+-  7. If, as a consequence of a court judgment or allegation of patent
+-infringement or for any other reason (not limited to patent issues),
+-conditions are imposed on you (whether by court order, agreement or
+-otherwise) that contradict the conditions of this License, they do not
+-excuse you from the conditions of this License.  If you cannot
+-distribute so as to satisfy simultaneously your obligations under this
+-License and any other pertinent obligations, then as a consequence you
+-may not distribute the Program at all.  For example, if a patent
+-license would not permit royalty-free redistribution of the Program by
+-all those who receive copies directly or indirectly through you, then
+-the only way you could satisfy both it and this License would be to
+-refrain entirely from distribution of the Program.
+-
+-If any portion of this section is held invalid or unenforceable under
+-any particular circumstance, the balance of the section is intended to
+-apply and the section as a whole is intended to apply in other
+-circumstances.
+-
+-It is not the purpose of this section to induce you to infringe any
+-patents or other property right claims or to contest validity of any
+-such claims; this section has the sole purpose of protecting the
+-integrity of the free software distribution system, which is
+-implemented by public license practices.  Many people have made
+-generous contributions to the wide range of software distributed
+-through that system in reliance on consistent application of that
+-system; it is up to the author/donor to decide if he or she is willing
+-to distribute software through any other system and a licensee cannot
+-impose that choice.
+-
+-This section is intended to make thoroughly clear what is believed to
+-be a consequence of the rest of this License.
+-
+-  8. If the distribution and/or use of the Program is restricted in
+-certain countries either by patents or by copyrighted interfaces, the
+-original copyright holder who places the Program under this License
+-may add an explicit geographical distribution limitation excluding
+-those countries, so that distribution is permitted only in or among
+-countries not thus excluded.  In such case, this License incorporates
+-the limitation as if written in the body of this License.
+-
+-  9. The Free Software Foundation may publish revised and/or new versions
+-of the General Public License from time to time.  Such new versions will
+-be similar in spirit to the present version, but may differ in detail to
+-address new problems or concerns.
+-
+-Each version is given a distinguishing version number.  If the Program
+-specifies a version number of this License which applies to it and "any
+-later version", you have the option of following the terms and conditions
+-either of that version or of any later version published by the Free
+-Software Foundation.  If the Program does not specify a version number of
+-this License, you may choose any version ever published by the Free Software
+-Foundation.
+-
+-  10. If you wish to incorporate parts of the Program into other free
+-programs whose distribution conditions are different, write to the author
+-to ask for permission.  For software which is copyrighted by the Free
+-Software Foundation, write to the Free Software Foundation; we sometimes
+-make exceptions for this.  Our decision will be guided by the two goals
+-of preserving the free status of all derivatives of our free software and
+-of promoting the sharing and reuse of software generally.
+-
+-                            NO WARRANTY
+-
+-  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+-FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
+-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+-PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+-OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
+-TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
+-PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
+-REPAIR OR CORRECTION.
+-
+-  12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+-REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+-INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
+-OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
+-TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
+-YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
+-PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGES.
+-
+-                     END OF TERMS AND CONDITIONS
+-
+-            How to Apply These Terms to Your New Programs
+-
+-  If you develop a new program, and you want it to be of the greatest
+-possible use to the public, the best way to achieve this is to make it
+-free software which everyone can redistribute and change under these terms.
+-
+-  To do so, attach the following notices to the program.  It is safest
+-to attach them to the start of each source file to most effectively
+-convey the exclusion of warranty; and each file should have at least
+-the "copyright" line and a pointer to where the full notice is found.
+-
+-    <one line to give the program's name and a brief idea of what it does.>
+-    Copyright (C) <year>  <name of author>
+-
+-    This program is free software; you can redistribute it and/or modify
+-    it under the terms of the GNU General Public License as published by
+-    the Free Software Foundation; either version 2 of the License, or
+-    (at your option) any later version.
+-
+-    This program is distributed in the hope that it will be useful,
+-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-    GNU General Public License for more details.
+-
+-    You should have received a copy of the GNU General Public License along
+-    with this program; if not, write to the Free Software Foundation, Inc.,
+-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+-
+-Also add information on how to contact you by electronic and paper mail.
+-
+-If the program is interactive, make it output a short notice like this
+-when it starts in an interactive mode:
+-
+-    Gnomovision version 69, Copyright (C) year name of author
+-    Gnomovision comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+-    This is free software, and you are welcome to redistribute it
+-    under certain conditions; type `show c' for details.
+-
+-The hypothetical commands `show w' and `show c' should show the appropriate
+-parts of the General Public License.  Of course, the commands you use may
+-be called something other than `show w' and `show c'; they could even be
+-mouse-clicks or menu items--whatever suits your program.
+-
+-You should also get your employer (if you work as a programmer) or your
+-school, if any, to sign a "copyright disclaimer" for the program, if
+-necessary.  Here is a sample; alter the names:
+-
+-  Yoyodyne, Inc., hereby disclaims all copyright interest in the program
+-  `Gnomovision' (which makes passes at compilers) written by James Hacker.
+-
+-  <signature of Ty Coon>, 1 April 1989
+-  Ty Coon, President of Vice
+-
+-This General Public License does not permit incorporating your program into
+-proprietary programs.  If your program is a subroutine library, you may
+-consider it more useful to permit linking proprietary applications with the
+-library.  If this is what you want to do, use the GNU Lesser General
+-Public License instead of this License.
+diff --git a/server/INSTALL b/server/INSTALL
+deleted file mode 100644
+index 2550dab..0000000
+--- a/server/INSTALL
++++ /dev/null
+@@ -1,302 +0,0 @@
+-Installation Instructions
+-*************************
+-
+-Copyright (C) 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005,
+-2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+-
+-   This file is free documentation; the Free Software Foundation gives
+-unlimited permission to copy, distribute and modify it.
+-
+-Basic Installation
+-==================
+-
+-   Briefly, the shell commands `./configure; make; make install' should
+-configure, build, and install this package.  The following
+-more-detailed instructions are generic; see the `README' file for
+-instructions specific to this package.
+-
+-   The `configure' shell script attempts to guess correct values for
+-various system-dependent variables used during compilation.  It uses
+-those values to create a `Makefile' in each directory of the package.
+-It may also create one or more `.h' files containing system-dependent
+-definitions.  Finally, it creates a shell script `config.status' that
+-you can run in the future to recreate the current configuration, and a
+-file `config.log' containing compiler output (useful mainly for
+-debugging `configure').
+-
+-   It can also use an optional file (typically called `config.cache'
+-and enabled with `--cache-file=config.cache' or simply `-C') that saves
+-the results of its tests to speed up reconfiguring.  Caching is
+-disabled by default to prevent problems with accidental use of stale
+-cache files.
+-
+-   If you need to do unusual things to compile the package, please try
+-to figure out how `configure' could check whether to do them, and mail
+-diffs or instructions to the address given in the `README' so they can
+-be considered for the next release.  If you are using the cache, and at
+-some point `config.cache' contains results you don't want to keep, you
+-may remove or edit it.
+-
+-   The file `configure.ac' (or `configure.in') is used to create
+-`configure' by a program called `autoconf'.  You need `configure.ac' if
+-you want to change it or regenerate `configure' using a newer version
+-of `autoconf'.
+-
+-The simplest way to compile this package is:
+-
+-  1. `cd' to the directory containing the package's source code and type
+-     `./configure' to configure the package for your system.
+-
+-     Running `configure' might take a while.  While running, it prints
+-     some messages telling which features it is checking for.
+-
+-  2. Type `make' to compile the package.
+-
+-  3. Optionally, type `make check' to run any self-tests that come with
+-     the package.
+-
+-  4. Type `make install' to install the programs and any data files and
+-     documentation.
+-
+-  5. You can remove the program binaries and object files from the
+-     source code directory by typing `make clean'.  To also remove the
+-     files that `configure' created (so you can compile the package for
+-     a different kind of computer), type `make distclean'.  There is
+-     also a `make maintainer-clean' target, but that is intended mainly
+-     for the package's developers.  If you use it, you may have to get
+-     all sorts of other programs in order to regenerate files that came
+-     with the distribution.
+-
+-  6. Often, you can also type `make uninstall' to remove the installed
+-     files again.
+-
+-Compilers and Options
+-=====================
+-
+-   Some systems require unusual options for compilation or linking that
+-the `configure' script does not know about.  Run `./configure --help'
+-for details on some of the pertinent environment variables.
+-
+-   You can give `configure' initial values for configuration parameters
+-by setting variables in the command line or in the environment.  Here
+-is an example:
+-
+-     ./configure CC=c99 CFLAGS=-g LIBS=-lposix
+-
+-   *Note Defining Variables::, for more details.
+-
+-Compiling For Multiple Architectures
+-====================================
+-
+-   You can compile the package for more than one kind of computer at the
+-same time, by placing the object files for each architecture in their
+-own directory.  To do this, you can use GNU `make'.  `cd' to the
+-directory where you want the object files and executables to go and run
+-the `configure' script.  `configure' automatically checks for the
+-source code in the directory that `configure' is in and in `..'.
+-
+-   With a non-GNU `make', it is safer to compile the package for one
+-architecture at a time in the source code directory.  After you have
+-installed the package for one architecture, use `make distclean' before
+-reconfiguring for another architecture.
+-
+-   On MacOS X 10.5 and later systems, you can create libraries and
+-executables that work on multiple system types--known as "fat" or
+-"universal" binaries--by specifying multiple `-arch' options to the
+-compiler but only a single `-arch' option to the preprocessor.  Like
+-this:
+-
+-     ./configure CC="gcc -arch i386 -arch x86_64 -arch ppc -arch ppc64" \
+-                 CXX="g++ -arch i386 -arch x86_64 -arch ppc -arch ppc64" \
+-                 CPP="gcc -E" CXXCPP="g++ -E"
+-
+-   This is not guaranteed to produce working output in all cases, you
+-may have to build one architecture at a time and combine the results
+-using the `lipo' tool if you have problems.
+-
+-Installation Names
+-==================
+-
+-   By default, `make install' installs the package's commands under
+-`/usr/local/bin', include files under `/usr/local/include', etc.  You
+-can specify an installation prefix other than `/usr/local' by giving
+-`configure' the option `--prefix=PREFIX'.
+-
+-   You can specify separate installation prefixes for
+-architecture-specific files and architecture-independent files.  If you
+-pass the option `--exec-prefix=PREFIX' to `configure', the package uses
+-PREFIX as the prefix for installing programs and libraries.
+-Documentation and other data files still use the regular prefix.
+-
+-   In addition, if you use an unusual directory layout you can give
+-options like `--bindir=DIR' to specify different values for particular
+-kinds of files.  Run `configure --help' for a list of the directories
+-you can set and what kinds of files go in them.
+-
+-   If the package supports it, you can cause programs to be installed
+-with an extra prefix or suffix on their names by giving `configure' the
+-option `--program-prefix=PREFIX' or `--program-suffix=SUFFIX'.
+-
+-Optional Features
+-=================
+-
+-   Some packages pay attention to `--enable-FEATURE' options to
+-`configure', where FEATURE indicates an optional part of the package.
+-They may also pay attention to `--with-PACKAGE' options, where PACKAGE
+-is something like `gnu-as' or `x' (for the X Window System).  The
+-`README' should mention any `--enable-' and `--with-' options that the
+-package recognizes.
+-
+-   For packages that use the X Window System, `configure' can usually
+-find the X include and library files automatically, but if it doesn't,
+-you can use the `configure' options `--x-includes=DIR' and
+-`--x-libraries=DIR' to specify their locations.
+-
+-Particular systems
+-==================
+-
+-   On HP-UX, the default C compiler is not ANSI C compatible.  If GNU
+-CC is not installed, it is recommended to use the following options in
+-order to use an ANSI C compiler:
+-
+-     ./configure CC="cc -Ae -D_XOPEN_SOURCE=500"
+-
+-and if that doesn't work, install pre-built binaries of GCC for HP-UX.
+-
+-   On OSF/1 a.k.a. Tru64, some versions of the default C compiler cannot
+-parse its `<wchar.h>' header file.  The option `-nodtk' can be used as
+-a workaround.  If GNU CC is not installed, it is therefore recommended
+-to try
+-
+-     ./configure CC="cc"
+-
+-and if that doesn't work, try
+-
+-     ./configure CC="cc -nodtk"
+-
+-   On Solaris, don't put `/usr/ucb' early in your `PATH'.  This
+-directory contains several dysfunctional programs; working variants of
+-these programs are available in `/usr/bin'.  So, if you need `/usr/ucb'
+-in your `PATH', put it _after_ `/usr/bin'.
+-
+-   On Haiku, software installed for all users goes in `/boot/common',
+-not `/usr/local'.  It is recommended to use the following options:
+-
+-     ./configure --prefix=/boot/common
+-
+-Specifying the System Type
+-==========================
+-
+-   There may be some features `configure' cannot figure out
+-automatically, but needs to determine by the type of machine the package
+-will run on.  Usually, assuming the package is built to be run on the
+-_same_ architectures, `configure' can figure that out, but if it prints
+-a message saying it cannot guess the machine type, give it the
+-`--build=TYPE' option.  TYPE can either be a short name for the system
+-type, such as `sun4', or a canonical name which has the form:
+-
+-     CPU-COMPANY-SYSTEM
+-
+-where SYSTEM can have one of these forms:
+-
+-     OS
+-     KERNEL-OS
+-
+-   See the file `config.sub' for the possible values of each field.  If
+-`config.sub' isn't included in this package, then this package doesn't
+-need to know the machine type.
+-
+-   If you are _building_ compiler tools for cross-compiling, you should
+-use the option `--target=TYPE' to select the type of system they will
+-produce code for.
+-
+-   If you want to _use_ a cross compiler, that generates code for a
+-platform different from the build platform, you should specify the
+-"host" platform (i.e., that on which the generated programs will
+-eventually be run) with `--host=TYPE'.
+-
+-Sharing Defaults
+-================
+-
+-   If you want to set default values for `configure' scripts to share,
+-you can create a site shell script called `config.site' that gives
+-default values for variables like `CC', `cache_file', and `prefix'.
+-`configure' looks for `PREFIX/share/config.site' if it exists, then
+-`PREFIX/etc/config.site' if it exists.  Or, you can set the
+-`CONFIG_SITE' environment variable to the location of the site script.
+-A warning: not all `configure' scripts look for a site script.
+-
+-Defining Variables
+-==================
+-
+-   Variables not defined in a site shell script can be set in the
+-environment passed to `configure'.  However, some packages may run
+-configure again during the build, and the customized values of these
+-variables may be lost.  In order to avoid this problem, you should set
+-them in the `configure' command line, using `VAR=value'.  For example:
+-
+-     ./configure CC=/usr/local2/bin/gcc
+-
+-causes the specified `gcc' to be used as the C compiler (unless it is
+-overridden in the site shell script).
+-
+-Unfortunately, this technique does not work for `CONFIG_SHELL' due to
+-an Autoconf bug.  Until the bug is fixed you can use this workaround:
+-
+-     CONFIG_SHELL=/bin/bash /bin/bash ./configure CONFIG_SHELL=/bin/bash
+-
+-`configure' Invocation
+-======================
+-
+-   `configure' recognizes the following options to control how it
+-operates.
+-
+-`--help'
+-`-h'
+-     Print a summary of all of the options to `configure', and exit.
+-
+-`--help=short'
+-`--help=recursive'
+-     Print a summary of the options unique to this package's
+-     `configure', and exit.  The `short' variant lists options used
+-     only in the top level, while the `recursive' variant lists options
+-     also present in any nested packages.
+-
+-`--version'
+-`-V'
+-     Print the version of Autoconf used to generate the `configure'
+-     script, and exit.
+-
+-`--cache-file=FILE'
+-     Enable the cache: use and save the results of the tests in FILE,
+-     traditionally `config.cache'.  FILE defaults to `/dev/null' to
+-     disable caching.
+-
+-`--config-cache'
+-`-C'
+-     Alias for `--cache-file=config.cache'.
+-
+-`--quiet'
+-`--silent'
+-`-q'
+-     Do not print messages saying which checks are being made.  To
+-     suppress all normal output, redirect it to `/dev/null' (any error
+-     messages will still be shown).
+-
+-`--srcdir=DIR'
+-     Look for the package's source code in directory DIR.  Usually
+-     `configure' can determine that directory automatically.
+-
+-`--prefix=DIR'
+-     Use DIR as the installation prefix.  *Note Installation Names::
+-     for more details, including other options available for fine-tuning
+-     the installation locations.
+-
+-`--no-create'
+-`-n'
+-     Run the configure checks, but stop before creating any output
+-     files.
+-
+-`configure' also accepts some other, not widely useful, options.  Run
+-`configure --help' for more details.
+-
+diff --git a/server/Logger.py b/server/Logger.py
+deleted file mode 100644
+index e10ad25..0000000
+--- a/server/Logger.py
++++ /dev/null
+@@ -1,19 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-import sys
+-from datetime import datetime
+-
+-class Logger():
+-    def __init__(self, logfile, prefix):
+-        self.log = sys.stdout
+-        self.logopen = True
+-        self.prefix = prefix
+-
+-    def Log(self, grp, msg):
+-        if self.logopen == True:
+-            tstmp = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+-            self.log.write("%s [%s::%s]: %s\n" % (tstmp, self.prefix, grp, msg))
+-            self.log.flush()
+-
+-    def LogFD(self):
+-        return self.log.fileno()
+-
+diff --git a/server/Makefile.am b/server/Makefile.am
+deleted file mode 100644
+index fa53684..0000000
+--- a/server/Makefile.am
++++ /dev/null
+@@ -1,38 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#   Makefile.am - autotools configuration file
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-SUBDIRS = parser
+-dist_doc_DATA = parser/README.parser 	\
+-	sql/delta-1.0_1.1.sql 		\
+-	sql/delta-1.1_1.2.sql 		\
+-	sql/delta-1.2_1.3.sql 		\
+-	sql/delta-1.3_1.4.sql 		\
+-	sql/rteval-$(SQLSCHEMAVER).sql
+-
+-apache-rteval.conf:
+-if ENAB_MODPYTHON
+-	[ -n $(XMLRPCROOT) ] && $(srcdir)/gen_config.sh apache-rteval.conf $(XMLRPCROOT)/API1
+-else
+-	[ -n $(XMLRPCROOT) ] && $(srcdir)/gen_config.sh apache-rteval-wsgi.conf $(XMLRPCROOT)/API1
+-endif
+-
+-clean-local:
+-	-rm -f apache-rteval.conf *~
+-
+-dist-hook:
+-	cp $(srcdir)/gen_config.sh $(srcdir)/apache-rteval.conf.tpl $(srcdir)/apache-rteval-wsgi.conf.tpl $(distdir)/
+-	-rm -f $(distdir)/apache-rteval.conf
+-
+-if ENAB_XMLRPC
+-    xmlrpcdir = $(XMLRPCROOT)/API1
+-    BUILT_SOURCES = apache-rteval.conf
+-    dist_doc_DATA += README.xmlrpc apache-rteval.conf
+-    dist_xmlrpc_DATA = xmlrpc_API1.py rtevaldb.py database.py
+-if ENAB_MODPYTHON
+-    dist_xmlrpc_DATA += rteval_xmlrpc.py
+-else
+-    dist_xmlrpc_DATA += rteval_xmlrpc.wsgi
+-endif
+-endif
+diff --git a/server/README.xmlrpc b/server/README.xmlrpc
+deleted file mode 100644
+index 20bade2..0000000
+--- a/server/README.xmlrpc
++++ /dev/null
+@@ -1,201 +0,0 @@
+-**
+-** Setting up a rteval XML-RPC server
+-**
+-
+-The XML-RPC server has the purpose of collecting information from
+-several rteval clients.  All the data in the summary.xml produced by the
+-rteval script is sent over to the XML-RPC server and registered in a
+-submission queue.  The XML-RPC server will then send back a submission
+-ID to the client.
+-
+-A parser daemon needs to run as well.  This daemon is connected to the
+-same database as the XML-RPC service and it will wait for new reports in
+-the submission queue to be parsed.  Look into the README.parser file
+-for more information on setting up the rteval_parserd process.
+-
+-Each parsed report will get a unique system ID which then can be used to
+-track how each system changes behaviour on different kernels.
+-
+-
+-**
+-** Requirements
+-**
+-   - Apache web server
+-   - mod_python-3.3.x OR mod_wsgi-3.2 or newer.
+-   - PostgreSQL v8.3 or later
+-   - rteval 1.12 or later
+-
+-
+-**
+-** Apache preparations
+-**
+-
+-The default path used for the rteval client is
+-
+-    http://{server hostname}/rteval/API1/
+-
+-If you have a HTTP setup which will follow this scheme, you do not
+-need to change any URLs at all.
+-
+-When installing the rteval-xmlrpc-1.4 RPM on a Fedora/RHEL based box,
+-Apache will be automatically configured.  But the Apache web server
+-will need to be restarted when you have setup the database.
+-
+-     # server httpd restart
+-
+-For manual installations, see the instructions under "Building and
+-installing from source" further down in this file.
+-
+-
+-**
+-** Database preparations
+-**
+-
+-** Setting up a new database
+-All reports are saved in a database.  If you have not used the
+-rteval-xmlrpc interface before, you need to create the needed database
+-user and database, execute the following command line:
+-
+-   # psql < /usr/share/doc/rteval-xmlrpc-1.5/rteval-1.4.sql
+-
+-This script will first create a database user called 'rtevxmlrpc' and
+-'rtevparser', assign default password before creating the database called
+-'rteval'.  The database will be populated with the needed tables and the
+-'rtevxmlrpc' and 'rtevparser' users will get the needed privileges to do
+-their job.
+-
+-Remember to also update the pg_hba.conf file in the PostgreSQL data
+-directory.  You need to allow the xmlrpc user access from the web
+-server.
+-
+-pg_hba.conf entry example:
+------------------------------------------------------------------
+-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+-hostssl rteval	    rtevxmlrpc	127.0.0.1/32	      md5
+-hostssl rteval	    rtevparser	127.0.0.1/32	      md5
+------------------------------------------------------------------
+-
+-The XML-RPC database connector will always try to connect via SSL.  To
+-modify the default password, connect to the database with psql and
+-issue this SQL command:
+-
+-   rteval=# ALTER USER rtevxmlrpc WITH ENCRYPTED PASSWORD '<newpassword>';
+-   rteval=# ALTER USER rtevparser WITH ENCRYPTED PASSWORD '<newpassword>';
+-
+-Or you can use the "safe mode" via the psql command:
+-
+-   rteval=# \password rtevxmlrpc
+-   Enter new password:
+-   Enter it again:
+-   rteval=# \password rtevparser
+-   Enter new password:
+-   Enter it again:
+-
+-
+-** Update an already existing database
+-If you already have an rteval database setup, you can run the delta
+-scripts to only do the pure database schema changes.
+-
+-To find out which schema version you using, do the following:
+-
+-   psql rteval -c "SELECT value FROM rteval_info WHERE key='sql_schema_ver'"
+-   value
+-   -------
+-     1.1
+-   (1 row)
+-
+-This indicates that the database is at the schema version 1.1.  If you do not
+-have the rteval_info table, you are for sure on schema version 1.0.
+-
+-* Update from SQL schema version 1.0 to 1.1
+-   psql rteval < /usr/share/doc/rteval-xmlrpc-1.1/delta-1.0_1.1.sql
+-
+-* Update from SQL schema version 1.1 to 1.2
+-   psql rteval < /usr/share/doc/rteval-xmlrpc-1.1/delta-1.1_1.2.sql
+-
+-* Update from SQL schema version 1.2 to 1.3
+-   psql rteval < /usr/share/doc/rteval-xmlrpc-1.1/delta-1.2_1.3.sql
+-
+-* Update from SQL schema version 1.3 to 1.4
+-   psql rteval < /usr/share/doc/rteval-xmlrpc-1.1/delta-1.3_1.4.sql
+-
+-You need to upgrade to the latest SQL schema available, and you must upgrade
+-sequentially through all the version in between your version and the latest.
+-
+-
+-**
+-** Building an installing from source
+-**
+-
+-The rteval-xmlrpc uses autotools to configure and build the
+-rteval-xmlrpc server and parser.
+-
+-   ./configure [--with-xmlrpc-webroot=<full path>]
+-
+-If the --with-xmlrpc-webroot is not provided, the mod_python files
+-needed for the XML-RPC server will not be installed, and only the
+-report parser will be built and installed.
+-
+-The path to the --with-xmlrpc-webroot must be a directory which the
+-Apache web server can access and serve files from (htdocs dir).  On
+-Fedora/RHEL this path should be:
+-
+-     ./configure --with-xmlrpc-webroot=/var/www/html/rteval
+-
+-With this done, you can now do the traditional 'make' and 'make
+-install'.  The default install prefix is /usr/local, unless you
+-changed it with --prefix=<path>.  You will then find the
+-rteval_parserd installed under /usr/local/bin/rteval_parserd and
+-README files, the SQL scripts and an Apache config file will be found
+-under /usr/local/share/doc/rteval-parser-1.5/
+-
+-The Apache configuration file can be copied into the configuration
+-directory Apache uses for its modules.  On RHEL/Fedora based
+-distributions, the apache-rteval.conf can be copied into
+-/etc/httpd/conf.d/
+-
+-For more information about the report parser (rteval-parserd), please
+-have a look at the README.parser file.
+-
+-
+-**
+-**  Configuration
+-**
+-
+-If you are not using any of the default values for
+-the database configuration, you need to create or modify the
+-/etc/rteval.conf file.  The XML-RPC service will read the
+-[xmlrpc_server] section in this file.
+-
+-This is the default values, if the xmlrpc_server section is not found
+-or parameters is not set.
+-
+-     # Paths
+-     datadir:     /var/lib/rteval
+-
+-     # Database parameters
+-     db_server:   localhost
+-     db_port:     5432
+-     database:    rteval
+-     db_username: xmlrpc
+-     db_password: rtevaldb
+-
+-The directory the datadir parameter points at must be writable to the
+-apache process.  Here copies of the received summary.xml files will be
+-saved before the rteval-parserd process parses the reports.
+-
+-
+-**
+-** Testing the setup
+-**
+-
+-For a quick test, dig up a summary.xml file from an earlier rteval run and
+-try sending it to the XML-RPC server by using the testclient_sendreportfile
+-script:
+-
+-     ./testclient_sendreportfile --report=summary.xml \
+-                                 --xmlrpc-submit=localhost
+-
+-See --help for more info on this utility.  Usually the log files of Apache and
+-PostgreSQL provides pretty good information if something goes wrong.
+-
+diff --git a/server/apache-rteval-wsgi.conf.tpl b/server/apache-rteval-wsgi.conf.tpl
+deleted file mode 100644
+index c6cf00f..0000000
+--- a/server/apache-rteval-wsgi.conf.tpl
++++ /dev/null
+@@ -1,22 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-# File: apache-rteval.conf
+-#
+-# Apache config entry to enable the rteval XML-RPC server
+-#
+-#   Copyright 2011 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-WSGISocketPrefix /var/run/wsgi
+-WSGIDaemonProcess rtevalxmlrpc processes=3 threads=15 python-path={_INSTALLDIR_}
+-WSGIScriptAlias /rteval/API1 {_INSTALLDIR_}/rteval_xmlrpc.wsgi
+-
+-<Directory "{_INSTALLDIR_}">
+-    Options Indexes FollowSymLinks
+-    AllowOverride None
+-    Order allow,deny
+-    Allow from all
+-
+-    WSGIProcessGroup rtevalxmlrpc
+-    WSGICallableObject rtevalXMLRPC_handler
+-</Directory>
+-
+diff --git a/server/apache-rteval.conf.tpl b/server/apache-rteval.conf.tpl
+deleted file mode 100644
+index f52754c..0000000
+--- a/server/apache-rteval.conf.tpl
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-# File: apache-rteval.conf
+-#
+-# Apache config entry to enable the rteval XML-RPC server
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-<Directory "{_INSTALLDIR_}">
+-    Options Indexes FollowSymLinks
+-    AllowOverride None
+-    Order allow,deny
+-    Allow from all
+-
+-    SetHandler python-program
+-    PythonHandler rteval_xmlrpc
+-    PythonDebug On
+-</Directory>
+-
+diff --git a/server/configure.ac b/server/configure.ac
+deleted file mode 100644
+index 504efbf..0000000
+--- a/server/configure.ac
++++ /dev/null
+@@ -1,130 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#   configure.ac - autotools configuration file
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-#
+-#
+-#   To create the ./configure script you need to run 'autoreconf --install'
+-#
+-
+-AC_INIT([rteval-xmlrpc], [1.6], [davids@redhat.com])
+-SQLSCHEMAVER=1.5
+-AC_SUBST(SQLSCHEMAVER)
+-
+-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+-AC_PROG_CC
+-
+-AC_ARG_WITH([xmlrpc-webroot],
+-	[AS_HELP_STRING([--with-xmlrpc-webroot],
+-			[Location where to install the XML-RPC mod_python files])],
+-	[XMLRPCROOT="$withval"]
+-)
+-AC_SUBST(XMLRPCROOT)
+-AM_CONDITIONAL([ENAB_XMLRPC], [test ! -z $XMLRPCROOT])
+-
+-AC_ARG_ENABLE([mod-python],
+-        [AS_HELP_STRING([--with-mod-python],
+-                        [Enable the older mod_python support instead of mod_wsgi])],
+-        [MODPYTHON="$enableval"]
+-)
+-AC_SUBST(MODPYTHON)
+-AM_CONDITIONAL([ENAB_MODPYTHON], [test ! -z $MODPYTHON])
+-
+-# Simple macro to abort on missing functions in libraries
+-AC_DEFUN([AX_msgMISSINGFUNC], AC_MSG_ERROR([Could not find function in library.  Aborting]))
+-
+-# Save original CPPFLAGS
+-save_CPPFLAGS="$CPPFLAGS"
+-
+-# Check for libxml2
+-AC_CHECK_PROGS([XML2CFG], [xml2-config], [:])
+-if test "$XML2CFG" = :; then
+-   AC_MSG_ERROR([This package needs xml2-config from libxml2])
+-else
+-   AC_SUBST([LIBXML2_INC], [$(xml2-config --cflags)])
+-   CPPFLAGS="$CPPFLAGS $LIBXML2_INC"
+-fi
+-AC_CHECK_HEADERS([libxml/tree.h])
+-AC_CHECK_HEADERS([libxml/xmlsave.h])
+-AC_CHECK_HEADERS([libxml/xmlstring.h])
+-AC_CHECK_HEADERS([libxml/parser.h])
+-AC_CHECK_LIB([xml2],[xmlInitParser], [], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlCleanupParser], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlStrcmp], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlFreeDoc], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlSaveToBuffer], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlSaveTree], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlSaveClose], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlBufferFree], [DUMMY=], AX_msgMISSINGFUNC)
+-AC_CHECK_LIB([xml2],[xmlParseFile], [DUMMY=], AX_msgMISSINGFUNC)
+-
+-# Check for libxslt
+-AC_CHECK_PROGS([XSLTCFG], [xslt-config], [:])
+-if test "$XSLTCFG" = :; then
+-   AC_MSG_ERROR([This package needs xslt-config from libxslt])
+-else
+-   AC_SUBST([LIBXSLT_INC], [$(xslt-config --cflags)])
+-   CPPFLAGS="$CPPFLAGS $LIBXSLT_INC"
+-   LDFLAGS="$LDFLAGS -lexslt"
+-fi
+-AC_CHECK_HEADERS([libxslt/xsltInternals.h])
+-AC_CHECK_HEADERS([libxslt/transform.h])
+-AC_CHECK_HEADERS([libxslt/xsltutils.h])
+-AC_CHECK_LIB([xslt], [xsltInit], [], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([xslt], [xsltCleanupGlobals], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([xslt], [xsltParseStylesheetFile], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([xslt], [xsltApplyStylesheet], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([xslt], [xsltFreeStylesheet], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([exslt], [exsltRegisterAll], [DUMMY=], AX_msgMISSINGFUNC())
+-
+-# Check for libpq
+-AC_CHECK_PROGS([PGSQLCFG], [pg_config], [:])
+-if test "$PGSQLCFG" = :; then
+-   AC_MSG_ERROR([This package needs pg_config from PostgreSQL])
+-else
+-   AC_SUBST([LIBPQ_INC], [-I$(pg_config --includedir)])
+-   CPPFLAGS="$CPPFLAGS $LIBPQ_INC"
+-fi
+-AC_CHECK_HEADERS([libpq-fe.h])
+-AC_CHECK_LIB([pq], [PQsetdbLogin], [], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQstatus], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQexec], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQreset], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQfinish], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQprepare], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQexecPrepared], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQresultStatus], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQclear], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQconsumeInput], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQnotifies], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pq], [PQntuples], [DUMMY=], AX_msgMISSINGFUNC())
+-
+-# Restore the original CPPFLAGS
+-CPPFLAGS="$save_CPPFLAGS"
+-
+-# Check for POSIX features
+-AC_CHECK_HEADERS([mq.h])
+-AC_CHECK_LIB([rt], [mq_open], [], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([rt], [mq_close], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([rt], [mq_unlink], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([rt], [mq_send], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([rt], [mq_receive], [DUMMY=], AX_msgMISSINGFUNC())
+-
+-AC_CHECK_HEADERS([pthread.h])
+-AC_CHECK_LIB([pthread], [pthread_attr_init], [], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pthread], [pthread_attr_setdetachstate], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pthread], [pthread_attr_destroy], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pthread], [pthread_create], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pthread], [pthread_join], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pthread], [pthread_mutex_lock], [DUMMY=], AX_msgMISSINGFUNC())
+-AC_CHECK_LIB([pthread], [pthread_mutex_unlock], [DUMMY=], AX_msgMISSINGFUNC())
+-
+-# Back to needed autotools stuff
+-AC_CONFIG_SRCDIR([parser/rteval-parserd.c])
+-AC_CONFIG_HEADERS([parser/config.h])
+-AC_CONFIG_FILES([Makefile parser/Makefile])
+-AC_SUBST([AM_CXXFLAGS], [$CFLAGS])
+-AC_SUBST([AM_LDFLAGS], [$LDFLAGS])
+-
+-AC_OUTPUT
+diff --git a/server/database.py b/server/database.py
+deleted file mode 100644
+index 684f5ab..0000000
+--- a/server/database.py
++++ /dev/null
+@@ -1,238 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   database.py
+-#   Library for processing results from XMLSQLparser and
+-#   query a PostgreSQL database based on the input data
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import psycopg2
+-import types
+-
+-class Database(object):
+-    def __init__(self, host=None, port=None, user=None, password=None, database=None,
+-                 noaction=False, debug=False):
+-        self.noaction = noaction
+-        self.debug = debug
+-
+-        dsnd = {}
+-        if host is not None:
+-            dsnd['host'] = host
+-            dsnd['sslmode'] = 'require'
+-        if port is not None:
+-            dsnd['port'] = str(port)
+-            dsnd['sslmode'] = 'require'
+-        if user is not None:
+-            dsnd['user'] = user
+-        if password is not None:
+-            dsnd['password'] = password
+-        if database is not None:
+-            dsnd['dbname'] = database
+-
+-        dsn = " ".join(["%s='%s'" %(k,v) for (k,v) in list(dsnd.items())])
+-        self.conn = not self.noaction and psycopg2.connect(dsn) or None
+-
+-
+-    def INSERT(self, sqlvars):
+-        #
+-        # Validate input data
+-        #
+-        if type(sqlvars) is not dict:
+-            raise AttributeError('Input parameter is not a Python dict')
+-
+-        try:
+-            sqlvars['table']
+-            sqlvars['fields']
+-            sqlvars['records']
+-        except KeyError as err:
+-            raise KeyError("Input dictionary do not contain a required element: %s").with_traceback(str(err))
+-
+-        if type(sqlvars['fields']) is not list:
+-            raise AttributeError("The 'fields' element is not a list of fields")
+-
+-        if type(sqlvars['records']) is not list:
+-            raise AttributeError("The 'records' element is not a list of fields")
+-
+-        if len(sqlvars['records']) == 0:
+-            return True
+-
+-        try:
+-            sqlvars['returning']
+-        except:
+-            sqlvars['returning'] = None
+-
+-        #
+-        # Build SQL template
+-        #
+-        sqlstub = "INSERT INTO %s (%s) VALUES (%s)" % (
+-            sqlvars['table'],
+-            ",".join(sqlvars['fields']),
+-            ",".join(["%%(%s)s" % f for f in sqlvars['fields']])
+-            )
+-
+-        # Get a database cursor
+-        curs = not self.noaction and self.conn.cursor() or None
+-
+-        #
+-        # Loop through all records and insert them into the database
+-        #
+-        results = []
+-        for rec in sqlvars['records']:
+-            if type(rec) is not list:
+-                raise AttributeError("The field values inside the 'records' list must be in a list")
+-
+-            # Create a dictionary, which will be used for the SQL operation
+-            values = {}
+-            for i in range(0, len(sqlvars['fields'])):
+-                values[sqlvars['fields'][i]] = rec[i]
+-
+-            if self.debug:
+-                print("SQL QUERY: ==> %s" % (sqlstub % values))
+-
+-            # Do the INSERT query
+-            if not self.noaction:
+-                curs.execute(sqlstub, values)
+-
+-            # If a return value for the INSERT is defined, catch that one
+-            if not self.noaction and sqlvars['returning']:
+-                # The psycopg2 do not handle INSERT INTO ... RETURNING column queries, so we can only use
+-                # this on tables with oid and do the look up that way
+-                vls = {"table": sqlvars['table'], 'colname': sqlvars['returning'], 'oid': str(curs.lastrowid)}
+-                curs.execute("SELECT %(colname)s FROM %(table)s WHERE oid='%(oid)s'" % vls)
+-                results.append(curs.fetchone()[0])
+-            else:
+-                results.append(True)
+-
+-        if not self.noaction:
+-            curs.close()
+-        return results
+-
+-
+-    def DELETE(self, table, where):
+-        try:
+-            sql = "DELETE FROM %s WHERE %s" % (
+-                table,
+-                " AND ".join(["%s = %%(%s)s" % (k,k) for (k,v) in list(where.items())])
+-                )
+-
+-            if self.debug:
+-                print("SQL QUERY ==> %s" % (sql % where))
+-
+-            if not self.noaction:
+-                curs = self.conn.cursor()
+-                curs.execute(sql, where)
+-                delrows = curs.rowcount
+-                curs.close()
+-                return delrows
+-            else:
+-                return 0
+-        except Exception as err:
+-            raise Exception("** SQL ERROR ** %s\n** SQL ERROR ** Message: %s" % ((sql % where), str(err)))
+-
+-    def SELECT(self, table, fields, joins=None, where=None):
+-        curs = not self.noaction and self.conn.cursor() or None
+-
+-        # Query
+-        try:
+-            sql = "SELECT %s FROM %s %s %s" % (
+-                ",".join(fields),
+-                table,
+-                joins and "%s" % joins or "",
+-                where and "WHERE %s" % " AND ".join(["%s = %%(%s)s" % (k,k) for (k,v) in list(where.items())] or "")
+-                )
+-            if self.debug:
+-                print("SQL QUERY: ==> %s" % (sql % where))
+-            if not self.noaction:
+-                curs.execute(sql, where)
+-            else:
+-                # If no action is setup (mainly for debugging), return empty result set
+-                return {"table": table, "fields": [], "records": []}
+-        except Exception as err:
+-            raise Exception("** SQL ERROR *** %s\n** SQL ERROR ** Message: %s" % (where and (sql % where) or sql, str(err)))
+-
+-        # Extract field names
+-        fields = []
+-        for fn in curs.description:
+-            fields.append(fn[0])
+-
+-        # Extract records
+-        records = []
+-        for dbrec in curs.fetchall():
+-            values = []
+-            for val in dbrec:
+-                values.append(val)
+-            records.append(values)
+-
+-        curs.close()
+-        if self.debug:
+-            print("database::SELECT() result ** Fields: %s\nRecords: %s" % (fields, records))
+-        return {"table": table, "fields": fields, "records": records}
+-
+-    def COMMIT(self):
+-        # Commit the work
+-        if not self.noaction:
+-            self.conn.commit()
+-
+-    def ROLLBACK(self):
+-        # Abort / rollback the current work
+-        if not self.noaction:
+-            self.conn.rollback()
+-
+-
+-    def GetValue(self, dbres, recidx, field):
+-        "Helper function to easy extract a field from a record set"
+-
+-        # Check that input data good
+-        if type(dbres) is not dict:
+-            raise AttributeError('Database result parameter is not a Python dict')
+-
+-        try:
+-            dbres['table']
+-            dbres['fields']
+-            dbres['records']
+-        except KeyError as err:
+-            raise KeyError("Database result parameter do not contain a required element: %s").with_traceback(str(err))
+-
+-        if type(dbres['fields']) is not list:
+-            raise AttributeError("The 'fields' element is not a list of fields")
+-
+-        if type(dbres['records']) is not list:
+-            raise AttributeError("The 'records' element is not a list of fields")
+-
+-        # Return None when we're going out of boundaries
+-        if recidx >= len(dbres['records']):
+-            return None
+-
+-        if type(field) == bytes:
+-            # Find the field index of the field name in the records set
+-            try:
+-                fidx = dbres['fields'].index(field)
+-            except ValueError:
+-                raise Exception("Field '%s' is not found in the database result" % field)
+-        elif type(field) == int:
+-            # If the field value is integer, assume it is the numeric field id
+-            if field >= len(dbres['fields']):
+-                raise Exception("Field id '%i' is too high.  No field available" % field)
+-            fidx = field
+-
+-        # Return the value
+-        return dbres['records'][recidx][fidx]
+-
+-
+-    def NumTuples(self, dbres):
+-        # Check that input data good
+-        if type(dbres) is not dict:
+-            raise AttributeError('Database result parameter is not a Python dict')
+-
+-        try:
+-            dbres['table']
+-            dbres['fields']
+-            dbres['records']
+-        except KeyError as err:
+-            raise KeyError("Database result parameter do not contain a required element: %s").with_traceback(str(err))
+-
+-        if type(dbres['records']) is not list:
+-            raise AttributeError("The 'records' element is not a list of fields")
+-
+-        return len(dbres['records'])
+diff --git a/server/gen_config.sh b/server/gen_config.sh
+deleted file mode 100755
+index 335176f..0000000
+--- a/server/gen_config.sh
++++ /dev/null
+@@ -1,14 +0,0 @@
+-#/bin/sh
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-
+-APACHECONF="$1"
+-INSTALLDIR="$2"
+-
+-echo "Creating Apache config file: apache-rteval.conf"
+-escinstpath="$(echo ${INSTALLDIR} | sed -e 's/\//\\\\\//g')"
+-expr=$(echo "s/{_INSTALLDIR_}/${escinstpath}/")
+-eval "sed -e ${expr} ${APACHECONF}.tpl" > apache-rteval.conf
+-echo "Copy the apache apache-rteval.conf into your Apache configuration"
+-echo "directory and restart your web server"
+-echo
+-
+diff --git a/server/parser/Makefile.am b/server/parser/Makefile.am
+deleted file mode 100644
+index 02b3326..0000000
+--- a/server/parser/Makefile.am
++++ /dev/null
+@@ -1,30 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#   Makefile.am - autotools configuration file
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-# Generic include files, found by ./configure
+-AM_CPPFLAGS = $(LIBXML2_INC) $(LIBXSLT_INC) $(LIBPQ_INC) -std=gnu89
+-
+-# What is required to build rteval_parserd
+-bin_PROGRAMS = rteval-parserd
+-rteval_parserd_SOURCES = argparser.c argparser.h 			 \
+-	configparser.c configparser.h 					 \
+-	eurephia_nullsafe.c eurephia_nullsafe.h eurephia_values_struct.h \
+-	eurephia_values.c eurephia_values.h 				 \
+-	eurephia_xml.c eurephia_xml.h 					 \
+-	log.c log.h  							 \
+-	parsethread.c parsethread.h threadinfo.h			 \
+-	pgsql.c pgsql.h 						 \
+-	sha1.c sha1.h							 \
+-	xmlparser.c xmlparser.h	             				 \
+-	rteval-parserd.c statuses.h
+-
+-# Don't build, only install
+-xsltdir=$(datadir)/rteval
+-dist_xslt_DATA = xmlparser.xsl
+-
+-# Copy init script and config file example to the docs dir
+-initscriptdir=$(docdir)/initscripts
+-dist_initscript_DATA = rteval-parserd.init rteval-parserd.sysconfig
+diff --git a/server/parser/README.parser b/server/parser/README.parser
+deleted file mode 100644
+index 2618552..0000000
+--- a/server/parser/README.parser
++++ /dev/null
+@@ -1,204 +0,0 @@
+-**
+-**  rteval-parsed - the rteval XML report parser
+-**
+-
+-The purpose of the daemon is to off load the web server from the heavy duty
+-work of parsing and processing the rteval XML reports.  The XML-RPC server
+-will receive the reports and put the files in a queue directory on the
+-file system and register the the submission in the database.  This will notify
+-the rteval-parsed that a new report has been received and it will start
+-processing that file independently of the web/XML-RPC server.
+-
+-
+-** Installing the software
+-
+-  !! Please install also the rteval-xmlrpc package and read the !!
+-  !! README.xmlrpc file also for setting up and preparing the   !!
+-  !! database which the rteval-parserd program will be using.   !!
+-  !! This file will also contain information regardingupgrading !!
+-  !! the database.                                              !!
+-
+-When installing this application from a binary package, like RPM
+-files on Fedora/RHEL based boxes, you should have the rteval-parserd
+-in your $PATH.  Otherwise, when installing from sources, the configure
+-script defines the default paths.
+-
+-
+-** Configure rteval-parsed
+-
+-When starting the rteval-parserd via the init.d script (or via the 'service'
+-command on RHEL/Fedora distributions) it will use the values configured in
+-/etc/sysconfig/rteval-parserd.
+-
+-The available parameters are:
+-
+-    - NUM_THREADS
+-      When this is not defined, the default behaviour is to use the number
+-      of available CPU cores.  The init.d script will detect this
+-      automatically.
+-
+-    - LOG
+-      This defines how logging will be done.  See the rteval-parserd
+-      arguments description further down in the document for more
+-      information.
+-
+-    - LOGLEVEL
+-      Defines how verbose the logging will be.  See the rteval-parserd
+-      arguments description further down in the document for more
+-      information.
+-
+-    - CONFIGFILE
+-      The default configuration file rteval-parserd will try to read is
+-      /etc/rteval.conf.  See the next paragraph for more information about
+-      this file.  This argument let you override the default config file.
+-
+-    - PIDFILE
+-      Defines where the init.d script will put the PID file for the
+-      rteval-parserd process.  The default is /var/run/rteval-parserd.pid
+-
+-This daemon uses the same configuration file as the rest of the rteval program
+-suite, /etc/rteval.conf.  It will parse the section named 'xmlrpc_parser'.
+-
+-The default values are:
+-
+-  - xsltpath: /usr/share/rteval
+-    Defines where it can find the xmlparser.xsl XSLT template
+-
+-  - db_server: localhost
+-    Which database server to connect to
+-
+-  - db_port: 5432
+-    Which port to use for the database connection
+-
+-  - database: rteval
+-    Which database to make use of.
+-
+-  - db_username: rtevparser
+-    Which user name to use for the connection
+-
+-  - db_password: rtevaldb_parser
+-    Which password to use for the authentication
+-
+-  - reportdir: /var/lib/rteval/report
+-    Where to save the parsed reports
+-
+-  - threads: 4
+-    Number of worker threads.  This defines how many reports you will
+-    process in parallel.  The recommended number here is the number
+-    of available CPU cores, as having a higher thread number often
+-    punishes the performance.  The default value is 4 when rteval-parserd
+-    is started directly.  When started via the init.d script, the default
+-    is to start one thread per CPU core.
+-
+-  - max_report_size: 2097152
+-    Maximum file size of reports which the parser will process.  The
+-    default value is 2MB.  The value must be given in bytes.  Remember
+-    that this value is per thread, and that XML and XSLT processing can
+-    be quite memory hungry.  If this value is set too high or you have too
+-    many worker threads, your system might become unresponsive for a while
+-    and the parser might be killed by the kernel (OOM).
+-
+-  - measurement_tables: cyclic_statistics, cyclic_histogram, hwlatdetect_summary, hwlatdetect_samples
+-    Declares which measurement results will be parsed and stored in the
+-    database.  These names are referring to table definitions in the
+-    xmlparser.xsl XSLT template.  The definitions in this template tells
+-    rteval-parsed which data to extract from the rteval summary.xml report
+-    and where and how to store it in the database.
+-
+-
+-** rteval-parserd arguments
+-
+-  -d | --daemon                    Run as a daemon
+-  -l | --log        <log dest>     Where to put log data
+-  -L | --log-level  <verbosity>    What to log
+-  -f | --config     <config file>  Which configuration file to use
+-  -t | --threads    <num. threads> How many worker threads to start (def: 4)
+-  -h | --help                      This help screen
+-
+-- Configuration file
+-By default the program will look for /etc/rteval.conf.  This can be
+-overridden by using --config <config file>.
+-
+-- Logging
+-When the program is started as a daemon, it will log to syslog by default.
+-The default log level is 'info'.  When not started as a daemon, all logging
+-will go to stderr by default.
+-
+-The --log argument takes either 'destination' or a file name.  Unknown
+-destinations are treated as filenames.  Valid 'destinations' are:
+-
+-    stderr:             - Log to stderr
+-    stdout:             - Log to stdout
+-    syslog:[facility]   - Log to syslog
+-    <file name>         - Log to given file
+-
+-For syslog the default facility is 'daemon', but can be overridden by using
+-one of the following facility values:
+-    daemon, user and local0 to local7
+-
+-Log verbosity is set by the --log-level.  The valid values here are:
+-
+-    emerg, emergency    - Only log errors which causes the program to stop
+-    alert               - Incidents which needs immediate attention
+-    crit, critical      - Unexpected incidents which is not urgent
+-    err, error          - Parsing errors.  Issues with input data
+-    warn, warning       - Incidents which may influence performance
+-    notice              - Less important warnings
+-    info                - General run information
+-    debug               - Detailed run information, incl. thread operation
+-
+-- Threads
+-By default, the daemon will use five threads.  One for the main threads which
+-processes the submission queue and notifies the working threads.  The four
+-other threads are worker threads, which will process the received reports.
+-
+-Each of the worker threads will have its own connection to the database.  This
+-connection will be connected to the database as long as the daemon is running.
+-It is therefore important that you do not have more worker threads than
+-available database connections.
+-
+-
+-** POSIX Message Queue
+-
+-The daemon makes use of POSIX MQ for distributing work to the worker threads.
+-Each thread lives independently and polls the queue regularly for more work.
+-As the POSIX MQ has a pretty safe mechanism of not duplicating messages in the
+-implementation, no other locking facility is needed.
+-
+-On Linux, the default value for maximum messages in the queue are set to 10.
+-If you receive a lot of reports and the threads do not process the queue
+-quickly enough, it will fill up pretty quickly.  If the queue is filled up,
+-the main thread which populates the message queue will politely go to sleep
+-for one minute before attempting to send new messages.  To avoid this, consider
+-to increase the queue size by modifying /proc/sys/fs/mqueue/msg_max.
+-
+-When the daemon initialises itself, it will read this file to make sure it
+-uses the queue to the maximum, but not beyond that.
+-
+-
+-** PostgreSQL features
+-
+-The daemon depends on the PostgreSQL database.  It is written with an
+-abstraction layer so it should, in theory, be possible to easily adopt it to
+-different database implementation.
+-
+-In the current implementation, it makes use of PostgreSQL's LISTEN, NOTIFY and
+-UNLISTEN features.  A trigger is enabled on the submission queue table, which
+-sends a NOTIFY whenever a record is inserted into the table.  The rteval-parser
+-daemon listens for these notifications, and will immediately poll the table
+-upon such a notification.
+-
+-Whenever a notification is received, it will always parse all unprocessed
+-reports.  In addition it will also only listen for notifications when there
+-are no unprocessed reports.
+-
+-The core PostgreSQL implementation is only done in pgsql.[ch], which provides an
+-abstract API layer for the rest of the parser daemon.
+-
+-
+-** Submission queue status codes
+-
+-In the rteval database's submissionqueue table there is a status field.  The
+-daemon will only consider records with status == 0 for processing.  It do not
+-consider any other fields.  For a better understanding of the different status
+-codes, look into the file statuses.h.
+diff --git a/server/parser/argparser.c b/server/parser/argparser.c
+deleted file mode 100644
+index 70d6961..0000000
+--- a/server/parser/argparser.c
++++ /dev/null
+@@ -1,140 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   argparser.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Thu Oct 22 13:58:46 2009
+- *
+- * @brief  Generic argument parser
+- *
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <getopt.h>
+-#include <eurephia_values.h>
+-#include <eurephia_nullsafe.h>
+-
+-
+-/**
+- * Print a help screen to stdout
+- */
+-void usage() {
+-	printf("rteval-parserd:  Parses new reports recieved via XML-RPC\n"
+-	       "\n"
+-	       "This program will wait for changes to the rteval 'submissionqueue' table.\n"
+-	       "When a new report is registered here, it will send this report to one of\n"
+-	       "the worker threads which will insert the parsed result into the database.\n"
+-	       "\n"
+-	       "** Program arguments:\n"
+-	       "  -d | --daemon                    Run as a daemon\n"
+-	       "  -l | --log        <log dest>     Where to put log data\n"
+-	       "  -L | --log-level  <verbosity>    What to log\n"
+-	       "  -f | --config     <config file>  Which configuration file to use\n"
+-	       "  -t | --threads    <num. threads> How many worker threads to start (def: 4)\n"
+-	       "  -h | --help                      This help screen\n"
+-	       "\n"
+-	       "** Configuration file\n"
+-	       "By default the program will look for /etc/rteval.conf.  This can be\n"
+-	       "overriden by using --config <config file>.\n"
+-	       "\n"
+-	       "** Logging\n"
+-	       "When the program is started as a daemon, it will log to syslog by default.\n"
+-	       "The default log level is 'info'.  When not started as a daemon, all logging\n"
+-	       "will go to stderr by default.\n"
+-	       "\n"
+-	       "The --log argument takes either 'destination' or a file name.  Unknown\n"
+-	       "destinations are treated as filenames.  Valid 'destinations' are:\n"
+-	       "\n"
+-	       "    stderr:             - Log to stderr\n"
+-	       "    stdout:             - Log to stdout\n"
+-	       "    syslog:[facility]   - Log to syslog\n"
+-	       "    <file name>         - Log to given file\n"
+-	       "\n"
+-	       "For syslog the default facility is 'daemon', but can be overriden by using\n"
+-	       "one of the following facility values:\n"
+-	       "    daemon, user and local0 to local7\n"
+-	       "\n"
+-	       "Log verbosity is set by the --log-level.  The valid values here are:\n"
+-	       "\n"
+-	       "    emerg, emergency    - Only log errors which causes the program to stop\n"
+-	       "    alert               - Incidents which needs immediate attention\n"
+-	       "    crit, critical      - Unexpected incidents which is not urgent\n"
+-	       "    err, error          - Parsing errors.  Issues with input data\n"
+-	       "    warn, warning       - Incidents which may influence performance\n"
+-	       "    notice              - Less important warnings\n"
+-	       "    info                - General run information\n"
+-	       "    debug               - Detailed run information, incl. thread operations\n"
+-	       "\n"
+-	       );
+-}
+-
+-
+-/**
+- * Parses program arguments and puts the recognised arguments into an eurephiaVALUES struct.
+- *
+- * @param argc   argument counter
+- * @param argv   argument string table
+- *
+- * @return Returns a pointer to an eurephiaVALUES struct.  On failure, the program halts.
+- */
+-eurephiaVALUES *parse_arguments(int argc, char **argv) {
+-	eurephiaVALUES *args = NULL;
+-	int optidx, c;
+-	static struct option long_opts[] = {
+-		{"log", 1, 0, 'l'},
+-		{"log-level", 1, 0, 'L'},
+-		{"config", 1, 0, 'f'},
+-		{"threads", 1, 0, 't'},
+-		{"daemon", 0, 0, 'd'},
+-		{"help", 0, 0, 'h'},
+-		{0, 0, 0, 0}
+-	};
+-
+-	args = eCreate_value_space(NULL, 21);
+-	eAdd_value(args, "daemon", "0");
+-	eAdd_value(args, "configfile", "/etc/rteval.conf");
+-	eAdd_value(args, "threads", "4");
+-
+-	while( 1 ) {
+-		optidx = 0;
+-		c = getopt_long(argc, argv, "l:L:f:t:dh", long_opts, &optidx);
+-		if( c == -1 ) {
+-			break;
+-		}
+-
+-		switch( c ) {
+-		case 'l':
+-			eUpdate_value(args, "log", optarg, 1);
+-			break;
+-		case 'L':
+-			eUpdate_value(args, "loglevel", optarg, 1);
+-			break;
+-		case 'f':
+-			eUpdate_value(args, "configfile", optarg, 0);
+-			break;
+-		case 't':
+-			eUpdate_value(args, "threads", optarg, 0);
+-			break;
+-		case 'd':
+-			eUpdate_value(args, "daemon", "1", 0);
+-			break;
+-		case 'h':
+-			usage();
+-			exit(0);
+-		}
+-	}
+-
+-	// If logging is not configured, and it is not run as a daemon
+-	// -> log to stderr:
+-	if( (eGet_value(args, "log") == NULL)
+-	    && (atoi_nullsafe(eGet_value(args, "daemon")) == 0) ) {
+-		eAdd_value(args, "log", "stderr:");
+-	}
+-
+-	return args;
+-}
+diff --git a/server/parser/argparser.h b/server/parser/argparser.h
+deleted file mode 100644
+index 5325505..0000000
+--- a/server/parser/argparser.h
++++ /dev/null
+@@ -1,21 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   argparser.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Thu Oct 22 13:58:46 2009
+- *
+- * @brief  Generic argument parser
+- *
+- */
+-
+-#ifndef _RTEVAL_ARGPARSER_h
+-#define _RTEVAL_ARGPARSER_h
+-
+-eurephiaVALUES *parse_arguments(int argc, char **argv);
+-
+-#endif
+diff --git a/server/parser/configparser.c b/server/parser/configparser.c
+deleted file mode 100644
+index 4eaf318..0000000
+--- a/server/parser/configparser.c
++++ /dev/null
+@@ -1,171 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*  configparser.c - Read and parse config files
+- *
+- *  This code is based on the fragments from the eurephia project.
+- *
+- *  GPLv2 Copyright (C) 2009
+- *  David Sommerseth <davids@redhat.com>
+- *
+- */
+-
+-/**
+- * @file   configparser.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   2009-10-01
+- *
+- * @brief  Config file parser
+- *
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <sys/stat.h>
+-#include <assert.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <eurephia_values.h>
+-#include <configparser.h>
+-#include <log.h>
+-
+-/**
+- * Parse one single configuration line into a eurephiaVALUES key/value pair.  It will also ignore
+- * comment lines, and also remove the comments on the line of the configuration line so that only
+- * the key/value information is extracted.
+- *
+- * @param line Input configuration line
+- *
+- * @return eurephiaVALUES pointer containing the parsed result.  On error or if no valid config
+- * line was found, NULL is returned.
+- */
+-static inline eurephiaVALUES *parse_config_line(LogContext *log, const char *line) {
+-        char *cp = NULL, *key = NULL, *val = NULL, *ptr = NULL;;
+-        eurephiaVALUES *ret = NULL;
+-
+-        if( *line == '#' ) {
+-                return NULL;
+-        }
+-
+-        cp = strdup(line);
+-        key = cp;
+-        val = strpbrk(cp, "=:");
+-        if( val == NULL ) {
+-                free_nullsafe(cp);
+-                return NULL;
+-        }
+-        *val = '\0'; val++;
+-
+-        // Discard comments at the end of a line
+-        if( (ptr = strpbrk(val, "#")) != NULL ) {
+-                *ptr = '\0';
+-        }
+-
+-        // Left trim
+-        while( ((*key == 0x20) || (*key == 0x0A) || (*key == 0x0D)) ) {
+-                key++;
+-        }
+-        while( ((*val == 0x20) || (*val == 0x0A) || (*val == 0x0D)) ) {
+-                val++;
+-        }
+-
+-        // Right trim
+-        ptr = key + strlen_nullsafe(key) - 1;
+-        while( ((*ptr == 0x20) || (*ptr == 0x0A) || (*ptr == 0x0D)) && (ptr > key) ) {
+-                ptr--;
+-        }
+-        ptr++;
+-        *ptr = '\0';
+-
+-        ptr = val + strlen_nullsafe(val) - 1;
+-        while( ((*ptr == 0x20) || (*ptr == 0x0A) || (*ptr == 0x0D)) && (ptr > val) ) {
+-                ptr--;
+-        }
+-        ptr++;
+-        *ptr = '\0';
+-
+-        // Put key/value into a eurephiaVALUES struct and return it
+-        ret = eCreate_value_space(log, 20);
+-        ret->key = strdup(key);
+-        ret->val = strdup(val);
+-
+-        free_nullsafe(cp);
+-        return ret;
+-}
+-
+-
+-static inline eurephiaVALUES *default_cfg_values(LogContext *log, eurephiaVALUES *prgargs) {
+-	eurephiaVALUES *cfg = NULL, *ptr = NULL;
+-
+-	cfg = eCreate_value_space(log, 20);
+-	eAdd_value(cfg, "datadir", "/var/lib/rteval");
+-	eAdd_value(cfg, "xsltpath", "/usr/share/rteval");
+-	eAdd_value(cfg, "db_server", "localhost");
+-	eAdd_value(cfg, "db_port", "5432");
+-	eAdd_value(cfg, "database", "rteval");
+-	eAdd_value(cfg, "db_username", "rtevparser");
+-	eAdd_value(cfg, "db_password", "rtevaldb_parser");
+-	eAdd_value(cfg, "reportdir", "/var/lib/rteval/reports");
+-	eAdd_value(cfg, "max_report_size", "2097152"); // 2MB
+-	eAdd_value(cfg, "measurement_tables", "cyclic_statistics, cyclic_histogram, hwlatdetect_summary, hwlatdetect_samples");
+-
+-	// Copy over the arguments to the config, update existing settings
+-	for( ptr = prgargs; ptr; ptr = ptr->next ) {
+-		eUpdate_value(cfg, ptr->key, ptr->val, 1);
+-	}
+-
+-	return cfg;
+-}
+-
+-/**
+- * Parses a section of a config file and puts it into an eurephiaVALUES key/value stack
+- *
+- * @param log     Initialised log context
+- * @param prgargs Parsed command line arguments (see parse_arguments())
+- * @param section Section to read from the config file
+- *
+- * @return Returns a pointer to an eurephiaVALUES stack containing the configuration on success,
+- *         otherwise NULL.
+- */
+-eurephiaVALUES *read_config(LogContext *log, eurephiaVALUES *prgargs, const char *section) {
+-        FILE *fp = NULL;
+-        char  *buf = NULL, *sectmatch = NULL, *cfgname = NULL;
+-	int sectfound = 0;
+-        eurephiaVALUES *cfg = NULL;
+-        struct stat fi;
+-
+-	cfgname = eGet_value(prgargs, "configfile");
+-        if( stat(cfgname, &fi) == -1 ) {
+-		writelog(log, LOG_EMERG, "Could not open the config file: %s", cfgname);
+-                return NULL;
+-        }
+-
+-        if( (fp = fopen(cfgname, "r")) == NULL ) {
+-                writelog(log, LOG_EMERG, "Could not open the config file: %s", cfgname);
+-                return NULL;
+-        }
+-
+-        buf = (char *) malloc_nullsafe(log, fi.st_size+2);
+-	sectmatch = (char *) malloc_nullsafe(log, strlen_nullsafe(section)+4);
+-	sprintf(sectmatch, "[%s]", section);
+-
+-        cfg = default_cfg_values(log, prgargs);
+-	writelog(log, LOG_DEBUG, "Reading config file: %s", cfgname);
+-        while( fgets(buf, fi.st_size, fp) != NULL ) {
+-		if( strncmp(buf, "[", 1) == 0 ) {
+-			sectfound = (!sectfound && (strncmp(buf, sectmatch, strlen(sectmatch)) == 0));
+-			continue;
+-		}
+-
+-		if( sectfound ) {
+-			eurephiaVALUES *prm = parse_config_line(log, buf);
+-			if( prm != NULL ) {
+-				cfg = eUpdate_valuestruct(cfg, prm, 1);
+-			}
+-		}
+-        };
+-        free_nullsafe(buf);
+-	free_nullsafe(sectmatch);
+-        fclose(fp); fp = NULL;
+-
+-        return cfg;
+-}
+diff --git a/server/parser/configparser.h b/server/parser/configparser.h
+deleted file mode 100644
+index 033ae26..0000000
+--- a/server/parser/configparser.h
++++ /dev/null
+@@ -1,25 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*  configparser.h - Read and parse config files
+- *
+- *  This code is based on the fragments from the eurephia project.
+- *
+- *  GPLv2 Copyright (C) 2009
+- *  David Sommerseth <davids@redhat.com>
+- *
+- */
+-
+-/**
+- * @file   configparser.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   2009-10-01
+- *
+- * @brief  Config file parser
+- *
+- */
+-
+-#ifndef _CONFIGPARSER_H
+-#define _CONFIGPARSER_H
+-
+-eurephiaVALUES *read_config(LogContext *log, eurephiaVALUES *prgargs, const char *section);
+-
+-#endif
+diff --git a/server/parser/eurephia_nullsafe.c b/server/parser/eurephia_nullsafe.c
+deleted file mode 100644
+index 5abda69..0000000
+--- a/server/parser/eurephia_nullsafe.c
++++ /dev/null
+@@ -1,54 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/* eurephia_nullsafe.c
+- *
+- *  standard C string functions, which is made NULL safe by checking
+- *  if input value is NULL before performing the action.
+- *
+- *  This version is modified to work outside the eurephia project.
+- *
+- *  GPLv2 only - Copyright (C) 2009
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_nullsafe.c
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2009-09-07
+- *
+- * @brief standard C string functions, which is made NULL safe by checking
+- *        if input value is NULL before performing the action.
+- *
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-
+-#include <log.h>
+-
+-#if __GNUC__ >= 3
+-#define __malloc__ __attribute__((malloc))
+-#else /* If not GCC 3 or newer, disable optimisations */
+-#define __malloc__
+-#endif
+-
+-/**
+- * This replaces the use of malloc() and memset().  This function uses calloc
+- * internally, which results in the memory region being zero'd by the kernel
+- * on memory allocation.
+- *
+- * @param log   Log context
+- * @param sz    size of the memory region being allocated
+- *
+- * @return Returns a void pointer to the memory region on success, otherwise NULL
+- */
+-__malloc__ void *malloc_nullsafe(LogContext *log, size_t sz) {
+-        void *buf = NULL;
+-
+-        buf = calloc(1, sz);    /* Using calloc, also gives a zero'd memory region */
+-        if( !buf ) {
+-		writelog(log, LOG_EMERG, "Could not allocate memory region for %ld bytes", sz);
+-		exit(9);
+-        }
+-        return buf;
+-}
+diff --git a/server/parser/eurephia_nullsafe.h b/server/parser/eurephia_nullsafe.h
+deleted file mode 100644
+index 00e6188..0000000
+--- a/server/parser/eurephia_nullsafe.h
++++ /dev/null
+@@ -1,103 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/* eurephia_nullsafe.h
+- *
+- *  standard C string functions, which is made NULL safe by checking
+- *  if input value is NULL before performing the action.
+- *
+- *  This version is modified to work outside the eurephia project.
+- *
+- *  GPLv2 only - Copyright (C) 2008, 2009
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_nullsafe.h
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2008-08-06
+- *
+- * @brief standard C string functions, which is made NULL safe by checking
+- *        if input value is NULL before performing the action.
+- *
+- */
+-
+-#ifndef   	EUREPHIA_NULLSAFE_H_
+-#define    	EUREPHIA_NULLSAFE_H_
+-
+-#include <log.h>
+-
+-/**
+- * atoi() wrapper.  Converts any string into a integer
+- *
+- * @param str Input string
+- *
+- * @return Returns integer
+- */
+-#define atoi_nullsafe(str) (str != NULL ? atoi(str) : 0)
+-
+-
+-/**
+- * strdup() wrapper.  Duplicates the input string.
+- *
+- * @param str Input string to be duplicated
+- *
+- * @return Returns a pointer to the duplicate (char *) on success, NULL otherwise.
+- * If input was NULL, NULL is returned.
+- */
+-#define strdup_nullsafe(str) (str != NULL ? strdup(str) : NULL)
+-
+-
+-/**
+- * Wrapper macro, which appends a string to a destination string without exceeding the size
+- * of the destination buffer.
+- *
+- * @param dest Pointer to the destination buffer
+- * @param src  Pointer to the value being concatenated to the destination string.
+- * @param size Size of the destination buffer
+- */
+-#define append_str(dest, src, size) strncat(dest, src, (size - strlen_nullsafe(dest)))
+-
+-
+-/**
+- * strlen() wrapper.  Returns the length of a string
+- *
+- * @param str Input string
+- *
+- * @return Returns int with length of string.  If input is NULL, it returns 0.
+- */
+-#define strlen_nullsafe(str) (str != NULL ? strlen(str) : 0)
+-
+-
+-void *malloc_nullsafe(LogContext *, size_t);
+-
+-/**
+- * Null safe free().  It will not attempt to free a pointer which is NULL.
+- *
+- * @param ptr Pointer to the memory region being freed.
+- *
+- */
+-#define free_nullsafe(ptr) if( ptr ) { free(ptr); ptr = NULL; }
+-
+-
+-/**
+- * Function which will return a default string value if no input data was provided.
+- *
+- * @param str     Input string
+- * @param defstr  Default string
+- *
+- * @return Returns the pointer to the input string if the string length > 0.  Otherwise it
+- * will return a pointer to the default string.
+- */
+-#define defaultValue(str, defstr) (strlen_nullsafe(str) == 0 ? defstr : str)
+-
+-
+-/**
+- * Function which will return a default integer value if no input data was provided.
+- *
+- * @param ival   input integer value
+- * @param defval default integer value
+- *
+- * @return Returns the ival value if it is > 0, otherwise defval value is returned.
+- */
+-#define defaultIntValue(ival, defval) (ival == 0 ? defval : ival)
+-#endif 	    /* !EUREPHIA_NULLSAFE_H_ */
+diff --git a/server/parser/eurephia_values.c b/server/parser/eurephia_values.c
+deleted file mode 100644
+index 8f3645a..0000000
+--- a/server/parser/eurephia_values.c
++++ /dev/null
+@@ -1,301 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/* eurephia_values.c  --  Generic interface for processing key->value pairs
+- *
+- * This version is modified to work outside the eurephia project.
+- *
+- *  GPLv2 only - Copyright (C) 2008
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_values.c
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2008-08-06
+- *
+- * @brief  Generic interface for handling key->value pairs
+- *
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <assert.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <eurephia_values_struct.h>
+-
+-
+-
+-/**
+- * Function for freeing up an eurephiaVALUES stack.  This function is normally not called
+- * directly, but usually via the eFree_values(...) macro.
+- *
+- * @param vls  Pointer to a eurephiaVALUES stack to be freed.
+- */
+-void eFree_values_func(eurephiaVALUES *vls) {
+-	eurephiaVALUES *ptr = NULL, *ptr_next = NULL;
+-
+-	ptr = vls;
+-	while( ptr ) {
+-		free_nullsafe(ptr->key);
+-		free_nullsafe(ptr->val);
+-
+-		ptr_next = ptr->next;
+-		free_nullsafe(ptr);
+-		ptr = ptr_next;
+-	}
+-}
+-
+-
+-/**
+- * Retrieve an eurephiaVALUES element for a given value key
+- *
+- * @param vls  Pointer to the eurephiaVALUES stack where to search for the element
+- * @param key  String containing the key name of the value requested.
+- *
+- * @return Returns an eurephiaVALUES element on success, otherwise NULL.
+- */
+-eurephiaVALUES *eGet_valuestruct(eurephiaVALUES *vls, const char *key)
+-{
+-        eurephiaVALUES *ptr = NULL;
+-
+-        if( (vls == NULL) || (key == NULL) ) {
+-                return NULL;
+-        }
+-
+-        ptr = vls;
+-        while( ptr != NULL ) {
+-                if( (ptr->key != NULL) && (strcmp(key, ptr->key) == 0) ) {
+-                        return ptr;
+-                }
+-                ptr = ptr->next;
+-        }
+-        return NULL;
+-}
+-
+-
+-/**
+- * Retrieves the value of a given key from an eurephiaVALUES stack.
+- *
+- * @param vls  Pointer to an eurephiaVALUES stack where to search for the value
+- * @param key  String containing the key name of the value requested
+- *
+- * @return Returns a string (char *) with the requested value if found, otherwise NULL.
+- */
+-char *eGet_value(eurephiaVALUES *vls, const char *key)
+-{
+-        eurephiaVALUES *ptr = NULL;
+-
+-        ptr = eGet_valuestruct(vls, key);
+-        return (ptr != NULL ? ptr->val : NULL);
+-}
+-
+-
+-/**
+- * Creates a new eurephiaVALUES stack
+- *
+- * @param log   Log context
+- * @param evgid  int value, giving the stack an ID number.  Useful when looking through log files later on.
+- *
+- * @return Returns an empty eurephiaVALUES struct on success, otherwise NULL.
+- */
+-eurephiaVALUES *eCreate_value_space(LogContext *log, int evgid)
+-{
+-        eurephiaVALUES *ptr = NULL;
+-
+-        ptr = (eurephiaVALUES *) malloc_nullsafe(log, sizeof(eurephiaVALUES) + 2);
+-	ptr->log = log;
+-        ptr->evgid = evgid;
+-        return ptr;
+-}
+-
+-
+-/**
+- * Adds a new eurephiaVALUES stack to another eurephiaVALUES stack.  If the evgid value differs, it will
+- * be overwritten with the value of the destination stack.
+- *
+- * @param vls    Destination eurephiaVALUES stack
+- * @param newval Source eurephiaVALUES stack
+- */
+-void eAdd_valuestruct(eurephiaVALUES *vls, eurephiaVALUES *newval) {
+-        eurephiaVALUES *ptr = NULL;
+-        int vid = 0;
+-
+-        assert(vls != NULL);
+-
+-        if( (vls->key == NULL) && (vls->val == NULL) && (vls->next == NULL) && (vls->evid == 0)) {
+-                // Update header record if it is empty, by copying newval record.  Free newval afterwards
+-                vls->key  = strdup(newval->key);
+-                vls->val  = strdup(newval->val);
+-                vls->evid = 0;
+-                vls->next = NULL;
+-                eFree_values_func(newval);
+-        } else {
+-                // Add values to the value chain, loop to the end and append it
+-                ptr = vls;
+-                while( ptr->next != NULL ) {
+-                        ptr = ptr->next;
+-                        vid = (vid > ptr->evid ? vid : ptr->evid);
+-                }
+-                newval->evid = vid+1;     // Increase the value counter
+-                newval->evgid = ptr->evgid;
+-                ptr->next = newval;
+-        }
+-}
+-
+-
+-/**
+- * Adds a new key/value pair to an eurephiaVALUES stack
+- *
+- * @param vls  Destination eurephiaVALUES stack
+- * @param key  Key name for the value being stored
+- * @param val  Value to be stored
+- */
+-void eAdd_value(eurephiaVALUES *vls, const char *key, const char *val)
+-{
+-        eurephiaVALUES *ptr = NULL;
+-
+-        assert(vls != NULL);
+-
+-        // Allocate buffer and save values
+-        ptr = eCreate_value_space(vls->log, vls->evid);
+-        if( ptr == NULL ) {
+-		writelog(vls->log, LOG_EMERG, "Failed to add value to the value chain");
+-		exit(9);
+-        }
+-        ptr->key = strdup_nullsafe(key);
+-        ptr->val = strdup_nullsafe(val);
+-        ptr->evgid = vls->evgid;
+-
+-        // Add value struct to the chain
+-        eAdd_valuestruct(vls, ptr);
+-}
+-
+-
+-/**
+- * Updates the value of a key in a values stack
+- *
+- * @param vls      eurephiaVALUES key/value stack to update
+- * @param key      String with key name to update
+- * @param newval   String with the new value
+- * @param addunkn  Add unknown keys.  If set to 1, if the key is not found it will add a new key
+- */
+-void eUpdate_value(eurephiaVALUES *vls, const char *key, const char *newval, const int addunkn) {
+-	eurephiaVALUES *ptr = NULL;
+-
+-	assert( (vls != NULL) && (key != NULL) );
+-
+-	ptr = eGet_valuestruct(vls, key);
+-	if( ptr ) {
+-		free_nullsafe(ptr->val);
+-		ptr->val = strdup_nullsafe(newval);
+-	} else if( addunkn == 1 ) {
+-		eAdd_value(vls, key, newval);
+-	}
+-}
+-
+-
+-/**
+- * Updates a value struct element based on another value struct element contents (key/value)
+- *
+- * @param vls      eurephiaVALUES key/value stack to update
+- * @param newval   eurephiaVALUES element with the new value
+- * @param addunkn  Add unknown keys.  If set to 1, if the key is not found it will add a new key
+- *
+- * @return Returns a pointer to the first element in the chain.  If the element being updated
+- *         was the first element in the old chain, the first element will be a new element with a
+- *         new address.
+- */
+-eurephiaVALUES *eUpdate_valuestruct(eurephiaVALUES *vls, eurephiaVALUES *newval, const int addunkn) {
+-	eurephiaVALUES *ptr = NULL, *prevptr = NULL;
+-
+-	assert( (vls != NULL) && (newval != NULL) && (newval->key != NULL) );
+-
+-	prevptr = vls;
+-	for( ptr = vls; ptr != NULL; ptr = ptr->next ) {
+-                if( (ptr->key != NULL) && (strcmp(newval->key, ptr->key) == 0) ) {
+-			newval->evgid = ptr->evgid;
+-			newval->evid = ptr->evid;
+-			newval->next = ptr->next;
+-			ptr->next = NULL;
+-			if( ptr == vls ) {
+-				// If the element found is the first one, do special treatment
+-				eFree_values_func(ptr);
+-				return newval;
+-			} else {
+-				prevptr->next = newval;
+-				eFree_values_func(ptr);
+-				return vls;
+-			}
+-                }
+-		prevptr = ptr;
+-	}
+-
+-	if( addunkn == 1 ) {
+-		eAdd_valuestruct(vls, newval);
+-	}
+-	return vls;
+-}
+-
+-
+-/**
+- * Removes the key/value pair identified by evgid and evid from the given eurephiaVALUES chain
+- *
+- * @param vls    Pointer to an eurephiaVALUES chain with the data
+- * @param evgid  Group ID of the chain
+- * @param evid   Element ID of the chain element to be removed
+- *
+- * @return Returns a pointer to the chain.  The pointer is only changed if the first element in the
+- *         chain is deleted
+- */
+-eurephiaVALUES *eRemove_value(eurephiaVALUES *vls, unsigned int evgid, unsigned int evid) {
+-        eurephiaVALUES *ptr = NULL, *prev_ptr = NULL;
+-        int found = 0;
+-
+-        // Find the value element
+-        for( ptr = vls; ptr != NULL; ptr = ptr->next ) {
+-                if( (ptr->evgid == evgid) && (ptr->evid == evid) ) {
+-                        found = 1;
+-                        break;
+-                }
+-                prev_ptr = ptr;
+-        }
+-
+-        if( !found ) {
+-                return vls;
+-        }
+-
+-        if( ptr != vls ) {
+-                prev_ptr->next = ptr->next;
+-                ptr->next = NULL;
+-                eFree_values_func(ptr);
+-                return vls;
+-        } else {
+-                prev_ptr = ptr->next;
+-                ptr->next = NULL;
+-                eFree_values_func(ptr);
+-                return prev_ptr;
+-        }
+-}
+-
+-
+-/**
+- * Counts number of elements in an eurephiaVALUES chain.
+- *
+- * @param vls eurephiaVALUES pointer to be counted
+- *
+- * @return Returns number of elements found.
+- */
+-unsigned int eCount(eurephiaVALUES *vls) {
+-	eurephiaVALUES *ptr = NULL;
+-	unsigned int c = 0;
+-
+-	if( vls == NULL ) {
+-		return 0;
+-	}
+-	for(ptr = vls; ptr != NULL; ptr = ptr->next ) {
+-		c++;
+-	}
+-	return c;
+-}
+diff --git a/server/parser/eurephia_values.h b/server/parser/eurephia_values.h
+deleted file mode 100644
+index 0daba4a..0000000
+--- a/server/parser/eurephia_values.h
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/* eurephia_values.h  --  Generic interface for processing key->value pairs
+- *
+- * This version is modified to work outside the eurephia project.
+- *
+- *  GPLv2 only - Copyright (C) 2008
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_values.h
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2008-08-06
+- *
+- * @brief  Generic interface for handling key->value pairs
+- *
+- */
+-
+-#include <eurephia_values_struct.h>
+-
+-#ifndef         EUREPHIA_VALUES_H_
+-#define         EUREPHIA_VALUES_H_
+-
+-
+-eurephiaVALUES *eGet_valuestruct(eurephiaVALUES *vls, const char *key);
+-char *eGet_value(eurephiaVALUES *vls, const char *key);
+-
+-eurephiaVALUES *eCreate_value_space(LogContext *log, int evid);
+-
+-void eAdd_valuestruct(eurephiaVALUES *vls, eurephiaVALUES *newval);
+-void eAdd_value(eurephiaVALUES *vls, const char *key, const char *val);
+-void eUpdate_value(eurephiaVALUES *vls, const char *key, const char *newval, const int addunkn);
+-eurephiaVALUES *eUpdate_valuestruct(eurephiaVALUES *vls, eurephiaVALUES *newval, const int addunkn);
+-eurephiaVALUES *eRemove_value(eurephiaVALUES *vls, unsigned int evgid, unsigned int evid);
+-unsigned int eCount(eurephiaVALUES *vls);
+-
+-/**
+- * Front-end function for eFree_values_func().  Frees eurephiaVALUES pointer chain and
+- * sets the pointer to NULL.
+- *
+- * @param v eurephiaVALUES pointer which is being freed.
+- *
+- */
+-#define eFree_values(v) { eFree_values_func(v); v = NULL; }
+-void eFree_values_func(eurephiaVALUES *vls);
+-
+-#endif      /* !EUREPHIA_VALUES_H_ */
+diff --git a/server/parser/eurephia_values_struct.h b/server/parser/eurephia_values_struct.h
+deleted file mode 100644
+index 6ea530a..0000000
+--- a/server/parser/eurephia_values_struct.h
++++ /dev/null
+@@ -1,38 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/* eurephia_values.h  --  eurephiaVALUES struct typedef
+- *
+- *  GPLv2 only - Copyright (C) 2008
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_values_struct.h
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2008-11-05
+- *
+- * @brief  Definition of the eurephiaVALUES struct
+- *
+- */
+-
+-#ifndef   	EUREPHIA_VALUES_STRUCT_H_
+-# define   	EUREPHIA_VALUES_STRUCT_H_
+-
+-#include <log.h>
+-
+-/**
+- * eurephiaVALUES is a pointer chain with key/value pairs.  If having several
+- * such pointer chains, they can be given different group IDs to separate them,
+- * which is especially useful during debugging.
+- *
+- */
+-typedef struct __eurephiaVALUES {
+-	LogContext *log;        /**< Pointer to an established log context, used for logging */
+-        unsigned int evgid;	/**< Group ID, all elements in the same chain should have the same value */
+-        unsigned int evid;	/**< Unique ID per element in a pointer chain */
+-        char *key;		/**< The key name of a value */
+-        char *val;		/**< The value itself */
+-        struct __eurephiaVALUES *next; /**< Pointer to the next element in the chain. NULL == end of chain */
+-} eurephiaVALUES;
+-
+-#endif 	    /* !EUREPHIA_VALUES_STRUCT_H_ */
+diff --git a/server/parser/eurephia_xml.c b/server/parser/eurephia_xml.c
+deleted file mode 100644
+index 0679956..0000000
+--- a/server/parser/eurephia_xml.c
++++ /dev/null
+@@ -1,147 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/* eurephia_xml.c  --  Generic helper functions for XML parsing
+- *
+- * This version is modified to work outside the eurephia project.
+- *
+- *  GPLv2 only - Copyright (C) 2008, 2009
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_xml.c
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2008-12-15
+- *
+- * @brief  Generic XML parser functions
+- *
+- *
+- */
+-
+-#include <stdarg.h>
+-#include <string.h>
+-#include <assert.h>
+-
+-#include <libxml/tree.h>
+-#include <libxml/xmlsave.h>
+-#include <libxml/xmlstring.h>
+-
+-#include <eurephia_nullsafe.h>
+-
+-
+-/**
+- * Retrieves a given XML node attribute/property
+- *
+- * @param attr xmlAttr pointer from an xmlNode pointer.
+- * @param key  The attribute name to search for
+- *
+- * @return The value of the found attribute.  If not found, NULL is returned.
+- */
+-char *xmlGetAttrValue(xmlAttr *attr, const char *key) {
+-        xmlAttr *aptr;
+-        xmlChar *x_key = NULL;
+-
+-        x_key = xmlCharStrdup(key);
+-        assert( x_key != NULL );
+-
+-        for( aptr = attr; aptr != NULL; aptr = aptr->next ) {
+-                if( xmlStrcmp(aptr->name, x_key) == 0 ) {
+-                        free_nullsafe(x_key);
+-                        return (char *)(aptr->children != NULL ? aptr->children->content : NULL);
+-                }
+-        }
+-        free_nullsafe(x_key);
+-        return NULL;
+-}
+-
+-
+-/**
+- * Loops through a xmlNode chain to look for a given tag.  The search is not recursive.
+- *
+- * @param node xmlNode pointer where to look
+- * @param key  the name of the XML tag to find
+- *
+- * @return xmlNode pointer to the found xmlNode.  NULL is returned if not found.
+- */
+-xmlNode *xmlFindNode(xmlNode *node, const char *key) {
+-        xmlNode *nptr = NULL;
+-        xmlChar *x_key = NULL;
+-
+-        if( (node == NULL) || (node->children == NULL) ) {
+-                return NULL;
+-        }
+-
+-        x_key = xmlCharStrdup(key);
+-        assert( x_key != NULL );
+-
+-        for( nptr = node->children; nptr != NULL; nptr = nptr->next ) {
+-                if( xmlStrcmp(nptr->name, x_key) == 0 ) {
+-                        free_nullsafe(x_key);
+-                        return nptr;
+-                }
+-        }
+-        free_nullsafe(x_key);
+-        return NULL;
+-}
+-
+-
+-/**
+- * Return the text content of a given xmlNode
+- *
+- * @param n xmlNode to extract the value from.
+- *
+- * @return returns a char pointer with the text contents of an xmlNode.
+- */
+-inline char *xmlExtractContent(xmlNode *n) {
+-        return (char *) (((n != NULL) && (n->children != NULL)) ? n->children->content : NULL);
+-}
+-
+-
+-/**
+- * Get the text contents of a given xmlNode
+- *
+- * @param node An xmlNode pointer where to look for the contents
+- * @param key  Name of the tag to retrieve the content of.
+- *
+- * @return Returns a string with the text content, if the node is found.  Otherwise, NULL is returned.
+- */
+-inline char *xmlGetNodeContent(xmlNode *node, const char *key) {
+-        return xmlExtractContent(xmlFindNode(node, key));
+-}
+-
+-
+-/**
+- * Serialises an xmlNode to a string
+- *
+- * @param log   Log context
+- * @param node Input XML node to be serialised
+- *
+- * @return Returns a pointer to a new buffer containing the serialised data.  This buffer must be freed
+- *         after usage
+- */
+-char *xmlNodeToString(LogContext *log, xmlNode *node) {
+-	xmlBuffer *buf = NULL;
+-	xmlSaveCtxt *serctx = NULL;
+-	char *ret = NULL;
+-
+-	if( node == NULL ) {
+-		writelog(log, LOG_ALERT, "xmlNodeToString: Input data is NULL");
+-		return NULL;
+-	}
+-
+-	buf = xmlBufferCreate();
+-	assert( buf != NULL );
+-
+-	serctx = xmlSaveToBuffer(buf, "UTF-8", XML_SAVE_NO_EMPTY|XML_SAVE_NO_DECL);
+-	assert( serctx != NULL );
+-
+-	if( xmlSaveTree(serctx, node) < 0 ) {
+-		writelog(log, LOG_ALERT, "xmlNodeToString: Failed to serialise xmlNode");
+-		return NULL;
+-	}
+-	xmlSaveClose(serctx);
+-
+-	ret = strdup_nullsafe((char *) xmlBufferContent(buf));
+-	xmlBufferFree(buf);
+-	return ret;
+-}
+diff --git a/server/parser/eurephia_xml.h b/server/parser/eurephia_xml.h
+deleted file mode 100644
+index 7bfffe8..0000000
+--- a/server/parser/eurephia_xml.h
++++ /dev/null
+@@ -1,43 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/* eurephia_xml.h  --  Generic helper functions for XML parsing
+- *
+- * This version is modified to work outside the eurephia project.
+- *
+- *  GPLv2 only - Copyright (C) 2008
+- *               David Sommerseth <dazo@users.sourceforge.net>
+- *
+- */
+-
+-/**
+- * @file   eurephia_xml.h
+- * @author David Sommerseth <dazo@users.sourceforge.net>
+- * @date   2008-12-15
+- *
+- * @brief  Generic XML parser functions
+- *
+- */
+-
+-
+-#ifndef   	EUREPHIA_XML_H_
+-#define   	EUREPHIA_XML_H_
+-
+-#include <stdarg.h>
+-
+-#include <libxml/tree.h>
+-
+-/**
+- * Simple iterator macro for iterating xmlNode pointers
+- *
+- * @param start  Pointer to an xmlNode where to start iterating
+- * @param itn    An xmlNode pointer which will be used for the iteration.
+- */
+-#define foreach_xmlnode(start, itn)  for( itn = start; itn != NULL; itn = itn->next )
+-
+-char *xmlGetAttrValue(xmlAttr *properties, const char *key);
+-xmlNode *xmlFindNode(xmlNode *node, const char *key);
+-
+-inline char *xmlExtractContent(xmlNode *n);
+-inline char *xmlGetNodeContent(xmlNode *node, const char *key);
+-char *xmlNodeToString(LogContext *log, xmlNode *node);
+-
+-#endif 	    /* !EUREPHIA_XML_H_ */
+diff --git a/server/parser/log.c b/server/parser/log.c
+deleted file mode 100644
+index 9a21326..0000000
+--- a/server/parser/log.c
++++ /dev/null
+@@ -1,228 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   log.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 21 11:38:51 2009
+- *
+- * @brief  Generic log functions
+- *
+- */
+-
+-#include <stdio.h>
+-#include <string.h>
+-#include <stdlib.h>
+-#include <errno.h>
+-#include <assert.h>
+-#include <stdarg.h>
+-#include <pthread.h>
+-#include <syslog.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <log.h>
+-
+-/**
+- * Maps defined log level strings into syslog
+- * compatible LOG_* integer values
+- */
+-static struct {
+-	const char *priority_str;
+-	const int prio_level;
+-} syslog_prio_map[] = {
+-	{"emerg",     LOG_EMERG},
+-	{"emergency", LOG_EMERG},
+-	{"alert",     LOG_ALERT},
+-	{"crit",      LOG_CRIT},
+-	{"critical",  LOG_CRIT},
+-	{"err",       LOG_ERR},
+-	{"error",     LOG_ERR},
+-	{"warning",   LOG_WARNING},
+-	{"warn",      LOG_WARNING},
+-	{"notice",    LOG_NOTICE},
+-	{"info",      LOG_INFO},
+-	{"debug",     LOG_DEBUG},
+-	{NULL, 0}
+-};
+-
+-
+-/**
+- * Initialises a log context.  It parses the log destination and log level and
+- * prepares a context which can be used by writelog()
+- *
+- * @param logdest  String containing either syslog:[facility], stderr: or stdout:, or a file name.
+- * @param loglvl   Defines the log level.  Can be one of the values defined in syslog_prio_map.
+- *
+- * @return Returns a pointer to a log context on success, otherwise NULL.
+- */
+-LogContext *init_log(const char *logdest, const char *loglvl) {
+-	LogContext *logctx = NULL;
+-	int i;
+-
+-	logctx = (LogContext *) calloc(1, sizeof(LogContext)+2);
+-	assert( logctx != NULL);
+-
+-	logctx->logfp = NULL;
+-
+-	// Get the int value of the log level string
+-	logctx->verbosity = -1;
+-	if( loglvl ) {
+-		for( i = 0; syslog_prio_map[i].priority_str; i++ ) {
+-			if( strcasecmp(loglvl, syslog_prio_map[i].priority_str) == 0 ) {
+-				logctx->verbosity = syslog_prio_map[i].prio_level;
+-				break;
+-			}
+-		}
+-	}
+-
+-	// If log level is not set, set LOG_INFo as default
+-	if( logctx->verbosity == -1 ) {
+-		logctx->verbosity = LOG_INFO;
+-	}
+-
+-	if( logdest == NULL ) {
+-		logctx->logtype = ltSYSLOG;
+-		openlog("rteval-parserd", LOG_PID, LOG_DAEMON);
+-	} else {
+-		if( strncmp(logdest, "syslog:", 7) == 0 ) {
+-			const char *fac = logdest+7;
+-			int facid = LOG_DAEMON;
+-
+-			if( strcasecmp(fac, "local0") == 0 ) {
+-				facid = LOG_LOCAL0;
+-			} else if( strcasecmp(fac, "local1") == 0 ) {
+-				facid = LOG_LOCAL1;
+-			} else if( strcasecmp(fac, "local2") == 0 ) {
+-				facid = LOG_LOCAL2;
+-			} else if( strcasecmp(fac, "local3") == 0 ) {
+-				facid = LOG_LOCAL3;
+-			} else if( strcasecmp(fac, "local4") == 0 ) {
+-				facid = LOG_LOCAL4;
+-			} else if( strcasecmp(fac, "local5") == 0 ) {
+-				facid = LOG_LOCAL5;
+-			} else if( strcasecmp(fac, "local6") == 0 ) {
+-				facid = LOG_LOCAL6;
+-			} else if( strcasecmp(fac, "local7") == 0 ) {
+-				facid = LOG_LOCAL7;
+-			} else if( strcasecmp(fac, "user") == 0 ) {
+-				facid = LOG_USER;
+-			}
+-			logctx->logtype = ltSYSLOG;
+-			openlog("rteval-parserd", LOG_PID, facid);
+-		} else if( strcmp(logdest, "stderr:") == 0 ) {
+-			logctx->logtype = ltCONSOLE;
+-			logctx->logfp = stderr;
+-		} else if( strcmp(logdest, "stdout:") == 0 ) {
+-			logctx->logtype = ltCONSOLE;
+-			logctx->logfp = stdout;
+-		} else {
+-			logctx->logtype = ltFILE;
+-			logctx->logfp = fopen(logdest, "a");
+-			if( logctx->logfp == NULL ) {
+-				fprintf(stderr, "** ERROR **  Failed to open log file %s: %s\n",
+-					logdest, strerror(errno));
+-				free_nullsafe(logctx);
+-				return NULL;
+-			}
+-		}
+-	}
+-
+-	if( logctx->logtype != ltSYSLOG ) {
+-		static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+-		logctx->mtx_log = &mtx;
+-	}
+-	return logctx;
+-}
+-
+-
+-/**
+- * Tears down a log context.  Closes log files and releases memory used by the log context.
+- *
+- * @param lctx  Log context to close
+- */
+-void close_log(LogContext *lctx) {
+-	if( !lctx ) {
+-		return;
+-	}
+-
+-	switch( lctx->logtype ) {
+-	case ltFILE:
+-		fclose(lctx->logfp);
+-		break;
+-
+-	case ltSYSLOG:
+-		closelog();
+-		break;
+-
+-	case ltCONSOLE:
+-		break;
+-	}
+-	free_nullsafe(lctx);
+-}
+-
+-
+-/**
+- * Write data to the log.
+- *
+- * @param lctx    Log context, where the data will be logged
+- * @param loglvl  Log level.  See the priorities for syslog(3) for valid values.
+- * @param fmt     Data to be logged (stdarg)
+- */
+-void writelog(LogContext *lctx, unsigned int loglvl, const char *fmt, ... ) {
+-	if( !lctx || !fmt ) {
+-		return;
+-	}
+-
+-	if( lctx->verbosity >= loglvl ) {
+-		va_list ap;
+-
+-		va_start(ap, fmt);
+-		switch( lctx->logtype ) {
+-		case ltSYSLOG:
+-			vsyslog(loglvl, fmt, ap);
+-			break;
+-
+-		case ltCONSOLE:
+-		case ltFILE:
+-			pthread_mutex_lock(lctx->mtx_log);
+-			switch( loglvl ) {
+-			case LOG_EMERG:
+-				fprintf(lctx->logfp, "**  EMERG  ERROR  ** ");
+-				break;
+-			case LOG_ALERT:
+-				fprintf(lctx->logfp, "**  ALERT  ERROR  ** ");
+-				break;
+-			case LOG_CRIT:
+-				fprintf(lctx->logfp, "** CRITICAL ERROR ** ");
+-				break;
+-			case LOG_ERR:
+-				fprintf(lctx->logfp, "** ERROR ** ");
+-				break;
+-			case LOG_WARNING:
+-				fprintf(lctx->logfp, "*WARNING* ");
+-				break;
+-			case LOG_NOTICE:
+-				fprintf(lctx->logfp, "[NOTICE] ");
+-				break;
+-			case LOG_INFO:
+-				fprintf(lctx->logfp, "[INFO]   ");
+-				break;
+-			case LOG_DEBUG:
+-				fprintf(lctx->logfp, "[DEBUG]  ");
+-				break;
+-			}
+-			vfprintf(lctx->logfp, fmt, ap);
+-			fprintf(lctx->logfp, "\n");
+-			pthread_mutex_unlock(lctx->mtx_log);
+-
+-			if( lctx->logtype == ltFILE ) {
+-				fflush(lctx->logfp);
+-			}
+-			break;
+-		}
+-		va_end(ap);
+-	}
+-}
+diff --git a/server/parser/log.h b/server/parser/log.h
+deleted file mode 100644
+index deeb784..0000000
+--- a/server/parser/log.h
++++ /dev/null
+@@ -1,43 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   log.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 21 11:38:51 2009
+- *
+- * @brief  Generic log functions
+- *
+- */
+-
+-#ifndef _RTEVAL_LOG_H
+-#define _RTEVAL_LOG_H
+-
+-#include <pthread.h>
+-#include <syslog.h>
+-
+-/**
+- * Supported log types
+- */
+-typedef enum { ltSYSLOG, ltFILE, ltCONSOLE } LogType;
+-
+-/**
+- * The log context structure.  Keeps needed information for
+- * a flawless logging experience :-P
+- */
+-typedef struct {
+-	LogType logtype;           /**<  What kind of log "device" will be used */
+-	FILE *logfp;               /**<  Only used if logging to stderr, stdout or a file */
+-	unsigned int verbosity;    /**<  Defines which log level the user wants to log */
+-	pthread_mutex_t *mtx_log;  /**<  Mutex to threads to write to a file based log in parallel */
+-} LogContext;
+-
+-
+-LogContext *init_log(const char *fname, const char *loglvl);
+-void close_log(LogContext *lctx);
+-void writelog(LogContext *lctx, unsigned int loglvl, const char *fmt, ... );
+-
+-#endif
+diff --git a/server/parser/parsethread.c b/server/parser/parsethread.c
+deleted file mode 100644
+index b327e2d..0000000
+--- a/server/parser/parsethread.c
++++ /dev/null
+@@ -1,370 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   parsethread.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Thu Oct 15 11:52:10 2009
+- *
+- * @brief  Contains the "main" function which a parser threads runs
+- *
+- *
+- */
+-
+-#include <stdio.h>
+-#include <string.h>
+-#include <unistd.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <signal.h>
+-#include <pthread.h>
+-#include <libgen.h>
+-#include <errno.h>
+-#include <assert.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <parsethread.h>
+-#include <pgsql.h>
+-#include <log.h>
+-#include <threadinfo.h>
+-#include <statuses.h>
+-
+-
+-/**
+- * Does the same job as 'mkdir -p', but it expects a complete filename as input, and it will
+- * extract the directory path from that filename
+- *
+- * @param fname  Full filename containing the directory the report will reside.
+- *
+- * @return Returns 1 on success, otherwise -1
+- */
+-static int make_report_dir(LogContext *log, const char *fname) {
+-	char *fname_cp = NULL, *dname = NULL, *chkdir = NULL;
+-	char *tok = NULL, *saveptr = NULL;
+-	int ret = 0;
+-	struct stat info;
+-
+-	if( !fname ) {
+-		return 0;
+-	}
+-
+-	fname_cp = strdup(fname);
+-	assert( fname_cp != NULL );
+-	dname = dirname(fname_cp);
+-	chkdir = malloc_nullsafe(log, strlen(dname)+8);
+-
+-	if( dname[0] == '/' ) {
+-		chkdir[0] = '/';
+-	}
+-
+-	// Traverse the directory path, and make sure the directory exists
+-	tok = strtok_r(dname, "/", &saveptr);
+-	while( tok ) {
+-		strcat(chkdir, tok);
+-		strcat(chkdir, "/");
+-
+-		errno = 0;
+-		// Check if directory exists
+-		if( (stat(chkdir, &info) < 0) ) {
+-			switch( errno ) {
+-			case ENOENT: // If the directory do not exist, create it
+-				if( mkdir(chkdir, 0755) < 0 ) {
+-					// If creating dir failed, report error
+-					writelog(log, LOG_ALERT,
+-						 "Could not create directory: %s (%s)",
+-						 chkdir, strerror(errno));
+-					ret = -1;
+-					goto exit;
+-				}
+-				break;
+-			default: // If other failure, report that and exit
+-				writelog(log, LOG_ALERT,
+-					 "Could not access directory: %s (%s)",
+-					 chkdir, strerror(errno));
+-				ret = -1;
+-				goto exit;
+-			}
+-		}
+-		// Goto next path element
+-		tok = strtok_r(NULL, "/", &saveptr);
+-	}
+-	ret = 1;
+- exit:
+-	free_nullsafe(fname_cp);
+-	free_nullsafe(chkdir);
+-
+-	return ret;
+-}
+-
+-
+-/**
+- * Builds up a proper full path of where to save the report.
+- *
+- * @param destdir   Destination directory for all reports
+- * @param fname     Report filename, containing hostname of the reporter
+- * @param rterid    rteval run ID
+- *
+- * @return Returns a pointer to a string with the new full path filename on success, otherwise NULL.
+- */
+-static char *get_destination_path(LogContext *log, const char *destdir,
+-				  parseJob_t *job, const int rterid)
+-{
+-        char *newfname = NULL;
+-        int retlen = 0;
+-
+-        if( !job || rterid < 0 ) {
+-                return NULL;
+-        }
+-
+-        retlen = strlen_nullsafe(job->clientid) + strlen(destdir) + 24;
+-        newfname = malloc_nullsafe(log, retlen+2);
+-
+-        snprintf(newfname, retlen, "%s/%s/report-%i.xml", destdir, job->clientid, rterid);
+-
+-        return newfname;
+-}
+-
+-
+-/**
+- * Checks if the file size of the given file is below the given max size value.
+- *
+- * @param thrdata  Pointer to a threadData_t structure with log context and max_report_size setting
+- * @param fname    Filename of the file to check
+- *
+- * @return Returns 1 if file is within the limit, otherwise 0.  On errors -1 is returned.
+- */
+-inline int check_filesize(threadData_t *thrdata, const char *fname) {
+-	struct stat info;
+-
+-	if( !fname ) {
+-		return 0;
+-	}
+-
+-	errno = 0;
+-	if( (stat(fname, &info) < 0) ) {
+-		writelog(thrdata->dbc->log, LOG_ERR, "Failed to check report file '%s': %s",
+-			 fname, strerror(errno));
+-		return -1;
+-	}
+-
+-	return (info.st_size <= thrdata->max_report_size);
+-}
+-
+-
+-/**
+- * The core parse function.  Parses an XML file and stores it in the database according to
+- * the xmlparser.xsl template.
+- *
+- * @param thrdata  Pointer to a threadData_t structure with database connection, log context, settings, etc
+- * @param job      Pointer to a parseJob_t structure containing the job information
+- *
+- * @return Return values:
+- * @code
+- *          STAT_SUCCESS  : Successfully registered report
+- *          STAT_FTOOBIG  : XML report file is too big
+- *          STAT_XMLFAIL  : Could not parse the XML report file
+- *          STAT_SYSREG   : Failed to register the system into the systems or systems_hostname tables
+- *          STAT_RTERIDREG: Failed to get a new rterid value
+- *          STAT_GENDB    : Failed to start an SQL transaction (BEGIN)
+- *          STAT_RTEVRUNS : Failed to register the rteval run into rtevalruns or rtevalruns_details
+- *          STAT_MEASURE  : Failed to register the measurement data into tables their corresponding tables
+- *          STAT_REPMOVE  : Failed to move the report file
+- * @endcode
+- */
+-inline int parse_report(threadData_t *thrdata, parseJob_t *job)
+-{
+-	int syskey = -1, rterid = -1;
+-	int rc = -1;
+-	xmlDoc *repxml = NULL;
+-	char *destfname;
+-
+-	// Check file size - and reject too big files
+-	if( check_filesize(thrdata, job->filename) == 0 ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] (submid: %i) Report file '%s' is too big, rejected",
+-			 thrdata->id, job->submid, job->filename);
+-		return STAT_FTOOBIG;
+-	}
+-
+-
+-	repxml = xmlParseFile(job->filename);
+-	if( !repxml ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] (submid: %i) Could not parse XML file: %s",
+-			 thrdata->id, job->submid, job->filename);
+-	        return STAT_XMLFAIL;
+-	}
+-
+-	pthread_mutex_lock(thrdata->mtx_sysreg);
+-	syskey = db_register_system(thrdata->dbc, thrdata->xslt, repxml);
+-	if( syskey < 0 ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] Failed to register system (submid: %i, XML file: %s)",
+-			 thrdata->id, job->submid, job->filename);
+-		rc = STAT_SYSREG;
+-		pthread_mutex_unlock(thrdata->mtx_sysreg);
+-		goto exit;
+-
+-	}
+-
+-	rterid = db_get_new_rterid(thrdata->dbc);
+-	if( rterid < 0 ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] Failed to register rteval run (submid: %i, XML file: %s)",
+-			 thrdata->id, job->submid, job->filename);
+-		rc = STAT_RTERIDREG;
+-		pthread_mutex_unlock(thrdata->mtx_sysreg);
+-		goto exit;
+-	}
+-	pthread_mutex_unlock(thrdata->mtx_sysreg);
+-
+-	if( db_begin(thrdata->dbc) < 1 ) {
+-		rc = STAT_GENDB;
+-		goto exit;
+-	}
+-
+-	// Create a new filename of where to save the report
+-	destfname = get_destination_path(thrdata->dbc->log, thrdata->destdir, job, rterid);
+-	if( !destfname ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] Failed to generate local report filename for (submid: %i) %s",
+-			 thrdata->id, job->submid, job->filename);
+-		db_rollback(thrdata->dbc);
+-		rc = STAT_UNKNFAIL;
+-		goto exit;
+-	}
+-
+-	if( db_register_rtevalrun(thrdata->dbc, thrdata->xslt, repxml, job->submid,
+-				  syskey, rterid, destfname) < 0 ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] Failed to register rteval run (submid: %i, XML file: %s)",
+-			 thrdata->id, job->submid, job->filename);
+-		db_rollback(thrdata->dbc);
+-		rc = STAT_RTEVRUNS;
+-		goto exit;
+-	}
+-
+-	if( db_register_measurements(thrdata->dbc, thrdata->xslt, repxml, rterid) != 1 ) {
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] Failed to register measurement data (submid: %i, XML file: %s)",
+-			 thrdata->id, job->submid, job->filename);
+-		db_rollback(thrdata->dbc);
+-		rc = STAT_MEASURE;
+-		goto exit;
+-	}
+-
+-	// When all database registrations are done, move the file to it's right place
+-	if( make_report_dir(thrdata->dbc->log, destfname) < 1 ) { // Make sure report directory exists
+-		db_rollback(thrdata->dbc);
+-		rc = STAT_REPMOVE;
+-		goto exit;
+-	}
+-
+-	if( rename(job->filename, destfname) < 0 ) { // Move the file
+-		writelog(thrdata->dbc->log, LOG_ERR,
+-			 "[Thread %i] (submid: %i) Failed to move report file from %s to %s (%s)",
+-			 thrdata->id, job->submid, job->filename, destfname, strerror(errno));
+-		db_rollback(thrdata->dbc);
+-		rc = STAT_REPMOVE;
+-		goto exit;
+-	}
+-	free_nullsafe(destfname);
+-
+-	rc = STAT_SUCCESS;
+-	db_commit(thrdata->dbc);
+-	writelog(thrdata->dbc->log, LOG_INFO,
+-		 "[Thread %i] Report parsed and stored (submid: %i, rterid: %i)",
+-		 thrdata->id, job->submid, rterid);
+- exit:
+-	xmlFreeDoc(repxml);
+-	return rc;
+-}
+-
+-
+-/**
+- * The parser thread.  This thread lives until a shutdown notification is received.  It pulls
+- * messages on a POSIX MQ based message queue containing submission ID and full path to an XML
+- * report to be parsed.
+- *
+- * @param thrargs Contains database connection, XSLT stylesheet, POSXI MQ descriptor, etc
+- *
+- * @return Returns 0 on successful operation, otherwise 1 on errors.
+- */
+-void *parsethread(void *thrargs) {
+-	threadData_t *args = (threadData_t *) thrargs;
+-	parseJob_t jobinfo;
+-	long exitcode = 0;
+-
+-	writelog(args->dbc->log, LOG_DEBUG, "[Thread %i] Starting", args->id);
+-	pthread_mutex_lock(args->mtx_thrcnt);
+-	(*(args->threadcount)) += 1;
+-	pthread_mutex_unlock(args->mtx_thrcnt);
+-
+-	// Polling loop
+-	while( *(args->shutdown) == 0 ) {
+-		int len = 0;
+-		unsigned int prio = 0;
+-
+-		// Check if the database connection is alive before pulling any messages
+-		if( db_ping(args->dbc) != 1 ) {
+-			writelog(args->dbc->log, LOG_EMERG,
+-				 "[Thread %i] Lost database conneciting: Shutting down thread.",
+-				 args->id);
+-
+-			if( *(args->threadcount) <= 1 ) {
+-				writelog(args->dbc->log, LOG_EMERG,
+-					 "No more worker threads available.  "
+-					 "Signaling for complete shutdown!");
+-				kill(getpid(), SIGUSR1);
+-			}
+-			exitcode = 1;
+-			goto exit;
+-		}
+-
+-		// Retrieve a parse job from the message queue
+-		memset(&jobinfo, 0, sizeof(parseJob_t));
+-		errno = 0;
+-		len = mq_receive(args->msgq, (char *)&jobinfo, sizeof(parseJob_t), &prio);
+-		if( (len < 0) && errno != EAGAIN ) {
+-			writelog(args->dbc->log, LOG_CRIT,
+-				 "Could not receive the message from queue: %s",
+-				 strerror(errno));
+-			pthread_exit((void *) 1);
+-		}
+-
+-		// Ignore whatever message if the shutdown flag is set.
+-		if( *(args->shutdown) != 0 ) {
+-			break;
+-		}
+-
+-		// If we have a message, then process the parse job
+-		if( (errno != EAGAIN) && (len > 0) ) {
+-			int res = 0;
+-
+-			writelog(args->dbc->log, LOG_INFO,
+-				 "[Thread %i] Job recieved, submid: %i - %s",
+-				 args->id, jobinfo.submid, jobinfo.filename);
+-
+-			// Mark the job as "in progress", if successful update, continue parsing it
+-			if( db_update_submissionqueue(args->dbc, jobinfo.submid, STAT_INPROG) ) {
+-				res = parse_report(args, &jobinfo);
+-				// Set the status for the submission
+-				db_update_submissionqueue(args->dbc, jobinfo.submid, res);
+-			} else {
+-				writelog(args->dbc->log, LOG_CRIT,
+-					 "Failed to mark submid %i as STAT_INPROG",
+-					 jobinfo.submid);
+-			}
+-		}
+-	}
+-	writelog(args->dbc->log, LOG_DEBUG, "[Thread %i] Shut down", args->id);
+- exit:
+-	pthread_mutex_lock(args->mtx_thrcnt);
+-	(*(args->threadcount)) -= 1;
+-	pthread_mutex_unlock(args->mtx_thrcnt);
+-
+-	pthread_exit((void *) exitcode);
+-}
+diff --git a/server/parser/parsethread.h b/server/parser/parsethread.h
+deleted file mode 100644
+index 90eb658..0000000
+--- a/server/parser/parsethread.h
++++ /dev/null
+@@ -1,38 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   parsethread.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Thu Oct 15 11:52:10 2009
+- *
+- * @brief  Contains the "main" function which a parser threads runs
+- *
+- */
+-
+-#ifndef _PARSETHREAD_H
+-#define _PARSETHREAD_H
+-
+-/**
+- * jbNONE means no job available,
+- * jbAVAIL indicates that parseJob_t contains a job
+-*/
+-typedef enum { jbNONE, jbAVAIL } jobStatus;
+-
+-/**
+- * This struct is used for sending a parse job to a worker thread via POSIX MQ
+- */
+-typedef struct {
+-        jobStatus status;                  /**< Info about if job information*/
+-        unsigned int submid;               /**< Work info: Numeric ID of the job being parsed */
+-        char clientid[256];                /**< Work info: Should contain senders hostname */
+-        char filename[4096];               /**< Work info: Full filename of the report to be parsed */
+-} parseJob_t;
+-
+-
+-void *parsethread(void *thrargs);
+-
+-#endif
+diff --git a/server/parser/pgsql.c b/server/parser/pgsql.c
+deleted file mode 100644
+index 5492d02..0000000
+--- a/server/parser/pgsql.c
++++ /dev/null
+@@ -1,1093 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   pgsql.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 13 17:44:35 2009
+- *
+- * @brief  Database API for the PostgreSQL database.
+- *
+- *
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <pthread.h>
+-#include <assert.h>
+-#include <errno.h>
+-
+-#include <libpq-fe.h>
+-
+-#include <libxml/parser.h>
+-#include <libxml/xmlsave.h>
+-#include <libxslt/transform.h>
+-#include <libxslt/xsltutils.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <eurephia_xml.h>
+-#include <eurephia_values.h>
+-#include <configparser.h>
+-#include <xmlparser.h>
+-#include <pgsql.h>
+-#include <log.h>
+-#include <statuses.h>
+-
+-/** forward declaration, to be able to setup dbhelper_func pointers */
+-static char * pgsql_BuildArray(LogContext *log, xmlNode *sql_n);
+-
+-/** Helper functions the xmlparser might beed */
+-static dbhelper_func pgsql_helpers = {
+-        .dbh_FormatArray = &(pgsql_BuildArray)
+-};
+-
+-/**
+- * Connect to a database, based on the given configuration
+- *
+- * @param cfg eurephiaVALUES containing the configuration
+- * @param id  Database connection ID.  Used to identify which thread is doing what with the database
+- * @param log Log context, where all logging will go
+- *
+- * @return Returns a database connection context
+- */
+-dbconn *db_connect(eurephiaVALUES *cfg, unsigned int id, LogContext *log) {
+-	dbconn *ret = NULL;
+-        PGresult *dbr = NULL;
+-
+-	ret = (dbconn *) malloc_nullsafe(log, sizeof(dbconn)+2);
+-	ret->id = id;
+-	ret->log = log;
+-
+-	writelog(log, LOG_DEBUG, "[Connection %i] Connecting to database: server=%s:%s, "
+-		 "database=%s, user=%s", ret->id,
+-		 eGet_value(cfg, "db_server"), eGet_value(cfg, "db_port"),
+-		 eGet_value(cfg, "database"), eGet_value(cfg, "db_username"));
+-	ret->db = PQsetdbLogin(eGet_value(cfg, "db_server"),
+-			   eGet_value(cfg, "db_port"),
+-			   NULL, /* pgopt */
+-			   NULL, /* pgtty */
+-			   eGet_value(cfg, "database"),
+-			   eGet_value(cfg, "db_username"),
+-			   eGet_value(cfg, "db_password"));
+-
+-	if( !ret->db ) {
+-		writelog(log, LOG_EMERG,
+-			 "[Connection %i] Could not connect to the database (unknown reason)", ret->id);
+-		free_nullsafe(ret);
+-		return NULL;
+-	}
+-
+-	if( PQstatus(ret->db) != CONNECTION_OK ) {
+-		writelog(log, LOG_EMERG, "[Connection %i] Failed to connect to the database: %s",
+-			 ret->id, PQerrorMessage(ret->db));
+-		free_nullsafe(ret);
+-		return NULL;
+-	}
+-
+-	// Retrieve the SQL schema version
+-	dbr = PQexec(ret->db,
+-		     "SELECT FLOOR(value::NUMERIC(6,3))*100 " // Convert version string to integer
+-		     "       + to_char(substring(value, position('.' in value)+1)::INTEGER, '00')::INTEGER"
+-		     "  FROM rteval_info WHERE key = 'sql_schema_ver'");
+-	if( !dbr || (PQresultStatus(dbr) != PGRES_TUPLES_OK) || (PQntuples(dbr) != 1) ) {
+-		// Query failed, assuming SQL schema version 1.00 (100).
+-		// SQL schema versions before 1.1 (101) do not have the rteval_info table, thus
+-		// a failure is not completely unexpected.
+-		ret->sqlschemaver = 100;
+-	} else {
+-		ret->sqlschemaver = atoi_nullsafe(PQgetvalue(dbr, 0, 0));
+-		if( ret->sqlschemaver < 100 ) {
+-			ret->sqlschemaver = 100;  // The minimal version - version 1.00.
+-		}
+-	}
+-	if( dbr ) {
+-		PQclear(dbr);
+-	}
+-	init_xmlparser(&pgsql_helpers);
+-	return ret;
+-}
+-
+-
+-/**
+- * Pings the database connection to check if it is alive
+- *
+- * @param dbc  Database connection to ping
+- *
+- * @return Returns 1 if the connection is alive, otherwise 0
+- */
+-int db_ping(dbconn *dbc) {
+-	PGresult *res = NULL;
+-
+-	// Send ping
+-	res = PQexec(dbc->db, "");
+-	PQclear(res);
+-
+-	// Check status
+-	if( PQstatus(dbc->db) != CONNECTION_OK ) {
+-		PQreset(dbc->db);
+-		if( PQstatus(dbc->db) != CONNECTION_OK ) {
+-			writelog(dbc->log, LOG_EMERG,
+-				 "[Connection %i] Database error - Lost connection: %s",
+-				 dbc->id, PQerrorMessage(dbc->db));
+-			return 0;
+-		} else {
+-			writelog(dbc->log, LOG_CRIT,
+-				 "[Conncetion %i] Database connection restored", dbc->id);
+-		}
+-	}
+-	return 1;
+-}
+-
+-
+-/**
+- * Disconnect from the database
+- *
+- * @param dbc Pointer to the database handle to be disconnected.
+- */
+-void db_disconnect(dbconn *dbc) {
+-	if( dbc && dbc->db ) {
+-		writelog(dbc->log, LOG_DEBUG, "[Connection %i] Disconnecting from database", dbc->id);
+-		PQfinish(dbc->db);
+-		dbc->db = NULL;
+-		dbc->log = NULL;
+-	}
+-	free_nullsafe(dbc);
+-}
+-
+-
+-/**
+- * This function does INSERT SQL queries based on an XML document (sqldata) which contains
+- * all information about table, fields and records to be inserted.  For security and performance,
+- * this function uses prepared SQL statements.
+- *
+- * This function is PostgreSQL specific.
+- *
+- * @param dbc     Database handler to a PostgreSQL
+- * @param sqldoc  sqldata XML document containing the data to be inserted.
+- *
+- * The sqldata XML document must be formated like this:
+- * @code
+- * <sqldata table="{table name}" [key="{field name}">
+- *    <fields>
+- *       <field fid="{integer}">{field name}</field>
+- *       ...
+- *       ...
+- *       <field fid="{integer_n}">{field name 'n'}</field>
+- *    </fields>
+- *    <records>
+- *       <record>
+- *          <value fid="{integer} [type="{data type}"] [hash="{hash type}">{value for field 'fid'</value>
+- *          ...
+- *          ...
+- *          <value fid="{integer_n}">{value for field 'fid_n'</value>
+- *       </record>
+- *       ...
+- *       ...
+- *       ...
+- *    </records>
+- * </sqldata>
+- * @endcode
+- * The 'sqldata' root tag must contain a 'table' attribute.  This must contain the a name of a table
+- * in the database.  If the 'key' attribute is set, the function will return the that field value for
+- * each INSERT query, using INSERT ... RETURNING {field name}.  The sqldata root tag must then have
+- * two children, 'fields' and 'records'.
+- *
+- * The 'fields' tag need to contain 'field' children tags for each field to insert data for.  Each
+- * field in the fields tag must be assigned a unique integer.
+- *
+- * The 'records' tag need to contain 'record' children tags for each record to be inserted.  Each
+- * record tag needs to have 'value' tags for each field which is found in the 'fields' section.
+- *
+- * The 'value' tags must have a 'fid' attribute.  This is the link between the field name in the
+- * 'fields' section and the value to be inserted.
+- *
+- * The 'type' attribute may be used as well, but the only supported data type supported to this
+- * attribute is 'xmlblob'.  In this case, the contents of the 'value' tag must be more XML tags.
+- * These tags will then be serialised to a string which is inserted into the database.
+- *
+- * The 'hash' attribute of the 'value' tag can be set to 'sha1'.  This will make do a SHA1 hash
+- * calculation of the value and this hash value will be used for the insert.
+- *
+- * @return Returns an eurephiaVALUES list containing information about each record which was inserted.
+- *         If the 'key' attribute is not set in the 'sqldata' tag, the OID value of each record will be
+- *         saved.  If the table do not support OIDs, the value will be '0'.  Otherwise the contents of
+- *         the defined field name will be returned.  If one of the INSERT queries fails, it will abort
+- *         further processing and the function will return NULL.
+- */
+-eurephiaVALUES *pgsql_INSERT(dbconn *dbc, xmlDoc *sqldoc) {
+-	xmlNode *root_n = NULL, *fields_n = NULL, *recs_n = NULL, *ptr_n = NULL, *val_n = NULL;
+-	char **field_ar = NULL, *fields = NULL, **value_ar = NULL, *values = NULL, *table = NULL, 
+-		tmp[20], *sql = NULL, *key = NULL, oid[34];
+-
+-	unsigned int fieldcnt = 0, *field_idx, i = 0, schemaver = 0;
+-	PGresult *dbres = NULL;
+-	eurephiaVALUES *res = NULL;
+-
+-	assert( (dbc != NULL) && (sqldoc != NULL) );
+-
+-	root_n = xmlDocGetRootElement(sqldoc);
+-	if( !root_n || (xmlStrcmp(root_n->name, (xmlChar *) "sqldata") != 0) ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Input XML document is not a valid sqldata document", dbc->id);
+-		return NULL;
+-	}
+-
+-	table = xmlGetAttrValue(root_n->properties, "table");
+-	if( !table ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Input XML document is missing table reference", dbc->id);
+-		return NULL;
+-	}
+-
+-	schemaver = sqldataGetRequiredSchemaVer(dbc->log, root_n);
+-	if( schemaver < 100 ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Failed parsing required SQL schema version", dbc->id);
+-		return NULL;
+-	}
+-	if( schemaver > dbc->sqlschemaver ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Cannot process data for the '%s' table.  "
+-			 "The needed SQL schema version is %i, while the database is using version %i",
+-			 dbc->id, table, schemaver, dbc->sqlschemaver);
+-		return NULL;
+-	}
+-
+-	key = xmlGetAttrValue(root_n->properties, "key");
+-
+-	fields_n = xmlFindNode(root_n, "fields");
+-	recs_n = xmlFindNode(root_n, "records");
+-	if( !fields_n || !recs_n ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Input XML document is missing either <fields/> or <records/>",
+-			 dbc->id);
+-		return NULL;
+-	}
+-
+-	// Count number of fields
+-	foreach_xmlnode(fields_n->children, ptr_n) {
+-		if( ptr_n->type == XML_ELEMENT_NODE ) {
+-			fieldcnt++;
+-		}
+-	}
+-
+-	// Generate lists of all fields and a index mapping table
+-	field_idx = calloc(fieldcnt+1, sizeof(unsigned int));
+-	field_ar = calloc(fieldcnt+1, sizeof(char *));
+-	foreach_xmlnode(fields_n->children, ptr_n) {
+-		if( ptr_n->type != XML_ELEMENT_NODE ) {
+-			continue;
+-		}
+-
+-		field_idx[i] = atoi_nullsafe(xmlGetAttrValue(ptr_n->properties, "fid"));
+-		field_ar[i] = xmlExtractContent(ptr_n);
+-		i++;
+-	}
+-
+-	// Generate strings with field names and value place holders
+-	// for a prepared SQL statement
+-	fields = malloc_nullsafe(dbc->log, 3);
+-	values = malloc_nullsafe(dbc->log, 6*(fieldcnt+1));
+-	strcpy(fields, "(");
+-	strcpy(values, "(");
+-	int len = 3;
+-	for( i = 0; i < fieldcnt; i++ ) {
+-		// Prepare VALUES section
+-		snprintf(tmp, 6, "$%i", i+1);
+-		append_str(values, tmp, (6*fieldcnt));
+-
+-		// Prepare fields section
+-		len += strlen_nullsafe(field_ar[i])+2;
+-		fields = realloc(fields, len);
+-		strcat(fields, field_ar[i]);
+-
+-		if( i < (fieldcnt-1) ) {
+-			strcat(fields, ",");
+-			strcat(values, ",");
+-		}
+-	}
+-	strcat(fields, ")");
+-	strcat(values, ")");
+-
+-	// Build up the SQL query
+-	sql = malloc_nullsafe(dbc->log,
+-			      strlen_nullsafe(fields)
+-			      + strlen_nullsafe(values)
+-			      + strlen_nullsafe(table)
+-			      + strlen_nullsafe(key)
+-			      + 34 /* INSERT INTO  VALUES RETURNING*/
+-			      );
+-	sprintf(sql, "INSERT INTO %s %s VALUES %s", table, fields, values);
+-	if( key ) {
+-		strcat(sql, " RETURNING ");
+-		strcat(sql, key);
+-	}
+-
+-	// Create a prepared SQL query
+-#ifdef DEBUG_SQL
+-	writelog(dbc->log, LOG_DEBUG, "[Connection %i] Preparing SQL statement: %s", dbc->id, sql);
+-#endif
+-	dbres = PQprepare(dbc->db, "", sql, fieldcnt, NULL);
+-	if( PQresultStatus(dbres) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to prepare SQL query: %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		PQclear(dbres);
+-		goto exit;
+-	}
+-	PQclear(dbres);
+-
+-	// Loop through all records and generate SQL statements
+-	res = eCreate_value_space(dbc->log, 1);
+-	memset(&oid, 0, 34);
+-	foreach_xmlnode(recs_n->children, ptr_n) {
+-		if( ptr_n->type != XML_ELEMENT_NODE ) {
+-			continue;
+-		}
+-
+-		// Loop through all value nodes in each record node and get the values for each field
+-		value_ar = calloc(fieldcnt, sizeof(char *));
+-		i = 0;
+-		foreach_xmlnode(ptr_n->children, val_n) {
+-			char *fid_s = NULL;
+-			int fid = -1;
+-
+-			if( i > fieldcnt ) {
+-				break;
+-			}
+-
+-			if( val_n->type != XML_ELEMENT_NODE ) {
+-				continue;
+-			}
+-
+-			fid_s = xmlGetAttrValue(val_n->properties, "fid");
+-			fid = atoi_nullsafe(fid_s);
+-			if( (fid_s == NULL) || (fid < 0) ) {
+-				continue;
+-			}
+-			value_ar[field_idx[i]] = sqldataExtractContent(dbc->log, val_n);
+-			i++;
+-		}
+-
+-		// Insert the record into the database
+-		dbres = PQexecPrepared(dbc->db, "", fieldcnt,
+-				       (const char * const *)value_ar, NULL, NULL, 0);
+-		if( PQresultStatus(dbres) != (key ? PGRES_TUPLES_OK : PGRES_COMMAND_OK) ) {
+-			writelog(dbc->log, LOG_ALERT, "[Connection %i] Failed to do SQL INSERT query: %s",
+-				 dbc->id, PQresultErrorMessage(dbres));
+-			PQclear(dbres);
+-			eFree_values(res);
+-			res = NULL;
+-
+-			// Free up the memory we've used for this record
+-			for( i = 0; i < fieldcnt; i++ ) {
+-				free_nullsafe(value_ar[i]);
+-			}
+-			free_nullsafe(value_ar);
+-			goto exit;
+-		}
+-		if( key ) {
+-			// If the /sqldata/@key attribute was set, fetch the returning ID
+-			eAdd_value(res, key, PQgetvalue(dbres, 0, 0));
+-		} else {
+-			snprintf(oid, 33, "%ld%c", (unsigned long int) PQoidValue(dbres), 0);
+-			eAdd_value(res, "oid", oid);
+-		}
+-		PQclear(dbres);
+-
+-		// Free up the memory we've used for this record
+-		for( i = 0; i < fieldcnt; i++ ) {
+-			free_nullsafe(value_ar[i]);
+-		}
+-		free_nullsafe(value_ar);
+-	}
+-
+- exit:
+-	free_nullsafe(sql);
+-	free_nullsafe(fields);
+-	free_nullsafe(values);
+-	free_nullsafe(field_ar);
+-	free_nullsafe(field_idx);
+-	return res;
+-}
+-
+-/**
+- * @copydoc sqldataValueArray()
+- */
+-static char * pgsql_BuildArray(LogContext *log, xmlNode *sql_n) {
+-	char *ret = NULL, *ptr = NULL;
+-	xmlNode *node = NULL;
+-	size_t retlen = 0;
+-
+-	ret = malloc_nullsafe(log, 2);
+-	if( ret == NULL ) {
+-		writelog(log, LOG_ERR,
+-			 "Failed to allocate memory for a new PostgreSQL array");
+-		return NULL;
+-	}
+-	strncat(ret, "{", 1);
+-
+-	/* Iterate all ./value/value elements and build up a PostgreSQL specific array */
+-	foreach_xmlnode(sql_n->children, node) {
+-		if( (node->type != XML_ELEMENT_NODE)
+-		    || xmlStrcmp(node->name, (xmlChar *) "value") != 0 ) {
+-			// Skip uninteresting nodes
+-			continue;
+-		}
+-		ptr = sqldataValueHash(log, node);
+-		if( ptr ) {
+-			retlen += strlen(ptr) + 4;
+-			ret = realloc(ret, retlen);
+-			if( ret == NULL ) {
+-				writelog(log, LOG_ERR,
+-					 "Failed to allocate memory to expand "
+-					 "array to include '%s'", ptr);
+-				free_nullsafe(ret);
+-				free_nullsafe(ptr);
+-				return NULL;
+-			}
+-			/* Newer PostgreSQL servers expects numbers to be without quotes */
+-			if( isNumber(ptr) == 0 ) {
+-				/* Data is a string */
+-				strncat(ret, "'", 1);
+-				strncat(ret, ptr, strlen(ptr));
+-				strncat(ret, "',", 2);
+-			} else {
+-				/* Data is a number */
+-				strncat(ret, ptr, strlen(ptr));
+-				strncat(ret, ",", 1);
+-			}
+-			free_nullsafe(ptr);
+-		}
+-	}
+-	/* Replace the last comma with a close-array marker */
+-	ret[strlen(ret)-1] = '}';
+-	ret[strlen(ret)] = 0;
+-	return ret;
+-}
+-
+-
+-/**
+- * Start an SQL transaction (SQL BEGIN)
+- *
+- * @param dbc Database handler where to perform the SQL queries
+- *
+- * @return Returns 1 on success, otherwise -1 is returned
+- */
+-int db_begin(dbconn *dbc) {
+-	PGresult *dbres = NULL;
+-
+-	dbres = PQexec(dbc->db, "BEGIN");
+-	if( PQresultStatus(dbres) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to do prepare a transaction (BEGIN): %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		PQclear(dbres);
+-		return -1;
+-	}
+-	PQclear(dbres);
+-	return 1;
+-}
+-
+-
+-/**
+- * Commits an SQL transaction (SQL COMMIT)
+- *
+- * @param dbc Database handler where to perform the SQL queries
+- *
+- * @return Returns 1 on success, otherwise -1 is returned
+- */
+-int db_commit(dbconn *dbc) {
+-	PGresult *dbres = NULL;
+-
+-	dbres = PQexec(dbc->db, "COMMIT");
+-	if( PQresultStatus(dbres) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to do commit a database transaction (COMMIT): %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		PQclear(dbres);
+-		return -1;
+-	}
+-	PQclear(dbres);
+-	return 1;
+-}
+-
+-
+-/**
+- * Aborts an SQL transaction (SQL ROLLBACK/ABORT)
+- *
+- * @param dbc Database handler where to perform the SQL queries
+- *
+- * @return Returns 1 on success, otherwise -1 is returned
+- */
+-int db_rollback(dbconn *dbc) {
+-	PGresult *dbres = NULL;
+-
+-	dbres = PQexec(dbc->db, "ROLLBACK");
+-	if( PQresultStatus(dbres) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_CRIT,
+-			 "[Connection %i] Failed to do abort/rollback a transaction (ROLLBACK): %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		PQclear(dbres);
+-		return -1;
+-	}
+-	PQclear(dbres);
+-	return 1;
+-}
+-
+-
+-/**
+- * This function blocks until a notification is received from the database
+- *
+- * @param dbc        Database connection
+- * @param shutdown   Pointer to the shutdown flag.  Used to avoid reporting false errors.
+- * @param listenfor  Name to be used when calling LISTEN
+- *
+- * @return Returns 1 on successful waiting, otherwise -1
+- */
+-int db_wait_notification(dbconn *dbc, const int *shutdown, const char *listenfor) {
+-	int sock, ret = 0;
+-	PGresult *dbres = NULL;
+-	PGnotify *notify = NULL;
+-	fd_set input_mask;
+-	char *sql = NULL;
+-
+-	sql = malloc_nullsafe(dbc->log, strlen_nullsafe(listenfor) + 12);
+-	assert( sql != NULL );
+-
+-	// Initiate listening
+-	sprintf(sql, "LISTEN %s", listenfor);
+-	dbres = PQexec(dbc->db, sql);
+-	if( PQresultStatus(dbres) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_ALERT, "[Connection %i] SQL %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		free_nullsafe(sql);
+-		PQclear(dbres);
+-		return -1;
+-	}
+-	PQclear(dbres);
+-
+-	// Start listening and waiting
+-	while( ret == 0 ) {
+-		sock = PQsocket(dbc->db);
+-		if (sock < 0) {
+-			// shouldn't happen
+-			ret = -1;
+-			break;
+-		}
+-
+-		// Wait for something to happen on the database socket
+-		FD_ZERO(&input_mask);
+-		FD_SET(sock, &input_mask);
+-		if (select(sock + 1, &input_mask, NULL, NULL, NULL) < 0) {
+-			// If the shutdown flag is set, select() will fail due to a signal.  Only
+-			// report errors if we're not shutting down, or else exit normally with
+-			// successful waiting.
+-			if( *shutdown == 0 ) {
+-				writelog(dbc->log, LOG_CRIT, "[Connection %i] select() failed: %s",
+-					 dbc->id, strerror(errno));
+-				ret = -1;
+-				goto exit;
+-			} else {
+-				ret = 1;
+-			}
+-			break;
+-		}
+-
+-		// Process the event
+-		PQconsumeInput(dbc->db);
+-
+-		// Check if connection still is valid
+-		if( PQstatus(dbc->db) != CONNECTION_OK ) {
+-			PQreset(dbc->db);
+-			if( PQstatus(dbc->db) != CONNECTION_OK ) {
+-				writelog(dbc->log, LOG_EMERG,
+-					 "[Connection %i] Database connection died: %s",
+-					 dbc->id, PQerrorMessage(dbc->db));
+-				ret = -1;
+-				goto exit;
+-			}
+-			writelog(dbc->log, LOG_CRIT,
+-				 "[Connection %i] Database connection restored", dbc->id);
+-		}
+-
+-		while ((notify = PQnotifies(dbc->db)) != NULL) {
+-			// If a notification was received, inform and exit with success.
+-			writelog(dbc->log, LOG_DEBUG,
+-				 "[Connection %i] Received notfication from pid %d",
+-				 dbc->id, notify->be_pid);
+-			PQfreemem(notify);
+-			ret = 1;
+-			break;
+-		}
+-	}
+-
+-	// Stop listening when we exit
+-	sprintf(sql, "UNLISTEN %s", listenfor);
+-	dbres = PQexec(dbc->db, sql);
+-	if( PQresultStatus(dbres) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_ALERT, "[Connection %i] SQL %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		free_nullsafe(sql);
+-		ret = -1;
+-	}
+-	free_nullsafe(sql);
+-	PQclear(dbres);
+-
+- exit:
+-	return ret;
+-}
+-
+-
+-/**
+- * Retrive the first available submitted report
+- *
+- * @param dbc   Database connection
+- * @param mtx   pthread_mutex to avoid parallel access to the submission queue table, to avoid
+- *              the same job being retrieved multiple times.
+- *
+- * @return Returns a pointer to a parseJob_t struct, with the parse job info on success, otherwise NULL
+- */
+-parseJob_t *db_get_submissionqueue_job(dbconn *dbc, pthread_mutex_t *mtx) {
+-	parseJob_t *job = NULL;
+-	PGresult *res = NULL;
+-	char sql[4098];
+-
+-	job = (parseJob_t *) malloc_nullsafe(dbc->log, sizeof(parseJob_t));
+-
+-	// Get the first available submission
+-	memset(&sql, 0, 4098);
+-	snprintf(sql, 4096,
+-		 "SELECT submid, filename, clientid"
+-		 "  FROM submissionqueue"
+-		 " WHERE status = %i"
+-		 " ORDER BY submid"
+-		 " LIMIT 1",
+-		 STAT_NEW);
+-
+-	pthread_mutex_lock(mtx);
+-	res = PQexec(dbc->db, sql);
+-	if( PQresultStatus(res) != PGRES_TUPLES_OK ) {
+-		pthread_mutex_unlock(mtx);
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to query submission queue (SELECT): %s",
+-			 dbc->id, PQresultErrorMessage(res));
+-		PQclear(res);
+-		free_nullsafe(job);
+-		return NULL;
+-	}
+-
+-	if( PQntuples(res) == 1 ) {
+-		job->status = jbAVAIL;
+-		job->submid = atoi_nullsafe(PQgetvalue(res, 0, 0));
+-		snprintf(job->filename, 4095, "%.4094s", PQgetvalue(res, 0, 1));
+-		snprintf(job->clientid,  255, "%.254s", PQgetvalue(res, 0, 2));
+-
+-		// Update the submission queue status
+-		if( db_update_submissionqueue(dbc, job->submid, STAT_ASSIGNED) < 1 ) {
+-			pthread_mutex_unlock(mtx);
+-			writelog(dbc->log, LOG_ALERT, "[Connection %i] Failed to update "
+-				 "submission queue statis to STAT_ASSIGNED", dbc->id);
+-			free_nullsafe(job);
+-			return NULL;
+-		}
+-	} else {
+-		job->status = jbNONE;
+-	}
+-	pthread_mutex_unlock(mtx);
+-	PQclear(res);
+-	return job;
+-}
+-
+-
+-/**
+- * Updates the submission queue table with the new status and the appropriate timestamps
+- *
+- * @param dbc     Database handler to the rteval database
+- * @param submid  Submission ID to update
+- * @param status  The new status
+- *
+- * @return Returns 1 on success, 0 on invalid status ID and -1 on database errors.
+- */
+-int db_update_submissionqueue(dbconn *dbc, unsigned int submid, int status) {
+-	PGresult *res = NULL;
+-	char sql[4098];
+-
+-	memset(&sql, 0, 4098);
+-	switch( status ) {
+-	case STAT_ASSIGNED:
+-	case STAT_RTERIDREG:
+-	case STAT_REPMOVE:
+-	case STAT_XMLFAIL:
+-	case STAT_FTOOBIG:
+-		snprintf(sql, 4096,
+-			 "UPDATE submissionqueue SET status = %i"
+-			 " WHERE submid = %i", status, submid);
+-		break;
+-
+-	case STAT_INPROG:
+-		snprintf(sql, 4096,
+-			 "UPDATE submissionqueue SET status = %i, parsestart = NOW()"
+-			 " WHERE submid = %i", status, submid);
+-		break;
+-
+-	case STAT_SUCCESS:
+-	case STAT_UNKNFAIL:
+-	case STAT_SYSREG:
+-	case STAT_GENDB:
+-	case STAT_RTEVRUNS:
+-	case STAT_MEASURE:
+-		snprintf(sql, 4096,
+-			 "UPDATE submissionqueue SET status = %i, parseend = NOW() WHERE submid = %i",
+-			 status, submid);
+-		break;
+-
+-	default:
+-	case STAT_NEW:
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Invalid status (%i) attempted to set on submid %i",
+-			 dbc->id, status, submid);
+-		return 0;
+-	}
+-
+-	res = PQexec(dbc->db, sql);
+-	if( !res ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Unkown error when updating submid %i to status %i",
+-			 dbc->id, submid, status);
+-		return -1;
+-	} else if( PQresultStatus(res) != PGRES_COMMAND_OK ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to UPDATE submissionqueue (submid: %i, status: %i): %s",
+-			 dbc->id, submid, status, PQresultErrorMessage(res));
+-		PQclear(res);
+-		return -1;
+-	}
+-	PQclear(res);
+-	return 1;
+-}
+-
+-
+-/**
+- * Registers information into the 'systems' and 'systems_hostname' tables, based on the
+- * summary/report XML file from rteval.
+- *
+- * @param dbc        Database handler where to perform the SQL queries
+- * @param xslt       A pointer to a parsed 'xmlparser.xsl' XSLT template
+- * @param summaryxml The XML report from rteval
+- *
+- * @return Returns a value > 0 on success, which is a unique reference to the system of the report.
+- *         If the function detects that this system is already registered, the 'syskey' reference will
+- *         be reused.  On errors, -1 will be returned.
+- */
+-int db_register_system(dbconn *dbc, xsltStylesheet *xslt, xmlDoc *summaryxml) {
+-	PGresult *dbres = NULL;
+-	eurephiaVALUES *dbdata = NULL;
+-	xmlDoc *sysinfo_d = NULL, *hostinfo_d = NULL;
+-	parseParams prms;
+-	char sqlq[4098];
+-	char *sysid = NULL;  // SHA1 value of the system id
+-	char *ipaddr = NULL, *hostname = NULL;
+-	int syskey = -1;
+-
+-	memset(&prms, 0, sizeof(parseParams));
+-	prms.table = "systems";
+-	sysinfo_d = parseToSQLdata(dbc->log, xslt, summaryxml, &prms);
+-	if( !sysinfo_d ) {
+-		writelog(dbc->log, LOG_ERR, "[Connection %i] Could not parse the input XML data", dbc->id);
+-		syskey= -1;
+-		goto exit;
+-	}
+-	sysid = sqldataGetValue(dbc->log, sysinfo_d, "sysid", 0);
+-	if( !sysid ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Could not retrieve the sysid field from the input XML", dbc->id);
+-		syskey= -1;
+-		goto exit;
+-	}
+-
+-	memset(&sqlq, 0, 4098);
+-	snprintf(sqlq, 4096, "SELECT syskey FROM systems WHERE sysid = '%.256s'", sysid);
+-	free_nullsafe(sysid);
+-	dbres = PQexec(dbc->db, sqlq);
+-	if( PQresultStatus(dbres) != PGRES_TUPLES_OK ) {
+-		writelog(dbc->log, LOG_ALERT, "[Connection %i] SQL %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-		writelog(dbc->log, LOG_DEBUG, "[Connection %i] Failing SQL query: %s",
+-			 dbc->id, sqlq);
+-		PQclear(dbres);
+-		syskey= -1;
+-		goto exit;
+-	}
+-
+-	if( PQntuples(dbres) == 0 ) {  // No record found, need to register this system
+-		PQclear(dbres);
+-
+-		dbdata = pgsql_INSERT(dbc, sysinfo_d);
+-		if( !dbdata ) {
+-			syskey= -1;
+-			goto exit;
+-		}
+-		if( (eCount(dbdata) != 1) || !dbdata->val ) { // Only one record should be registered
+-			writelog(dbc->log, LOG_ALERT,
+-				 "[Connection %i] Failed to register the system", dbc->id);
+-			eFree_values(dbdata);
+-			syskey= -1;
+-			goto exit;
+-		}
+-		syskey = atoi_nullsafe(dbdata->val);
+-		hostinfo_d = sqldataGetHostInfo(dbc->log, xslt, summaryxml, syskey, &hostname, &ipaddr);
+-		if( !hostinfo_d ) {
+-			syskey = -1;
+-			goto exit;
+-		}
+-		eFree_values(dbdata);
+-
+-		dbdata = pgsql_INSERT(dbc, hostinfo_d);
+-		syskey = (dbdata ? syskey : -1);
+-		eFree_values(dbdata);
+-
+-	} else if( PQntuples(dbres) == 1 ) { // System found - check if the host IP is known or not
+-		syskey = atoi_nullsafe(PQgetvalue(dbres, 0, 0));
+-		hostinfo_d = sqldataGetHostInfo(dbc->log, xslt, summaryxml, syskey, &hostname, &ipaddr);
+-		if( !hostinfo_d ) {
+-			syskey = -1;
+-			goto exit;
+-		}
+-		PQclear(dbres);
+-
+-		// Check if this hostname and IP address is registered
+-		snprintf(sqlq, 4096,
+-			 "SELECT syskey FROM systems_hostname"
+-			 " WHERE hostname='%.256s'",
+-			 hostname);
+-
+-		if( ipaddr ) {
+-			append_str(sqlq, "AND ipaddr='", 4028);
+-			append_str(sqlq, ipaddr, 4092);
+-			append_str(sqlq, "'", 4096);
+-		} else {
+-			append_str(sqlq, "AND ipaddr IS NULL", 4096);
+-		}
+-
+-		dbres = PQexec(dbc->db, sqlq);
+-		if( PQresultStatus(dbres) != PGRES_TUPLES_OK ) {
+-			writelog(dbc->log, LOG_ALERT, "[Connection %i] SQL %s",
+-				 dbc->id, PQresultErrorMessage(dbres));
+-			writelog(dbc->log, LOG_DEBUG, "[Connection %i] Failing SQL query: %s",
+-				 dbc->id, sqlq);
+-			PQclear(dbres);
+-			syskey= -1;
+-			goto exit;
+-		}
+-
+-		if( PQntuples(dbres) == 0 ) { // Not registered, then register it
+-			dbdata = pgsql_INSERT(dbc, hostinfo_d);
+-			syskey = (dbdata ? syskey : -1);
+-			eFree_values(dbdata);
+-		}
+-		PQclear(dbres);
+-	} else {
+-		// Critical -- system IDs should not be registered more than once
+-		writelog(dbc->log, LOG_CRIT, "[Connection %i] Multiple systems registered (%s)",
+-			 dbc->id, sqlq);
+-		syskey= -1;
+-	}
+-
+- exit:
+-	free_nullsafe(hostname);
+-	free_nullsafe(ipaddr);
+-	if( sysinfo_d ) {
+-		xmlFreeDoc(sysinfo_d);
+-	}
+-	if( hostinfo_d ) {
+-		xmlFreeDoc(hostinfo_d);
+-	}
+-	return syskey;
+-}
+-
+-
+-/**
+- * Retrieves the next available rteval run ID (rterid)
+- *
+- * @param dbc  Database handler where to perform the SQL query
+- *
+- * @return Returns a value > 0 on success, containing the assigned rterid value.  Otherwise -1 is returned.
+- */
+-int db_get_new_rterid(dbconn *dbc) {
+-	PGresult *dbres = NULL;
+-	int rterid = 0;
+-
+-	dbres = PQexec(dbc->db, "SELECT nextval('rtevalruns_rterid_seq')");
+-	if( (PQresultStatus(dbres) != PGRES_TUPLES_OK) || (PQntuples(dbres) != 1) ) {
+-		rterid = -1;
+-	} else {
+-		rterid = atoi_nullsafe(PQgetvalue(dbres, 0, 0));
+-	}
+-
+-	if( rterid < 1 ) {
+-		writelog(dbc->log, LOG_CRIT,
+-			 "[Connection %i] Failed to retrieve a new rterid value", dbc->id);
+-	}
+-	if( rterid < 0 ) {
+-		writelog(dbc->log, LOG_ALERT, "[Connection %i] SQL %s",
+-			 dbc->id, PQresultErrorMessage(dbres));
+-	}
+-	PQclear(dbres);
+-	return rterid;
+-}
+-
+-
+-/**
+- * Registers information into the 'rtevalruns' and 'rtevalruns_details' tables
+- *
+- * @param dbc           Database handler where to perform the SQL queries
+- * @param xslt          A pointer to a parsed 'xmlparser.xsl' XSLT template
+- * @param summaryxml    The XML report from rteval
+- * @param submid        Submission ID, referencing the record in the submissionqueue table.
+- * @param syskey        A positive integer containing the return value from db_register_system()
+- * @param rterid        A positive integer containing the return value from db_get_new_rterid()
+- * @param report_fname  A string containing the filename of the report.
+- *
+- * @return Returns 1 on success, otherwise -1 is returned.
+- */
+-int db_register_rtevalrun(dbconn *dbc, xsltStylesheet *xslt, xmlDoc *summaryxml,
+-			  unsigned int submid, int syskey, int rterid, const char *report_fname)
+-{
+-	int ret = -1;
+-	xmlDoc *rtevalrun_d = NULL, *rtevalrundets_d = NULL;
+-	parseParams prms;
+-	eurephiaVALUES *dbdata = NULL;
+-
+-	// Parse the rtevalruns information
+-	memset(&prms, 0, sizeof(parseParams));
+-	prms.table = "rtevalruns";
+-	prms.syskey = syskey;
+-	prms.rterid = rterid;
+-	prms.submid = submid;
+-	prms.report_filename = report_fname;
+-	rtevalrun_d = parseToSQLdata(dbc->log, xslt, summaryxml, &prms);
+-	if( !rtevalrun_d ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Could not parse the input XML data", dbc->id);
+-		ret = -1;
+-		goto exit;
+-	}
+-
+-	// Register the rteval run information
+-	dbdata = pgsql_INSERT(dbc, rtevalrun_d);
+-	if( !dbdata ) {
+-		ret = -1;
+-		goto exit;
+-	}
+-
+-	if( eCount(dbdata) != 1 ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to register the rteval run", dbc->id);
+-		ret = -1;
+-		eFree_values(dbdata);
+-		goto exit;
+-	}
+-	eFree_values(dbdata);
+-
+-	// Parse the rtevalruns_details information
+-	memset(&prms, 0, sizeof(parseParams));
+-	prms.table = "rtevalruns_details";
+-	prms.rterid = rterid;
+-	rtevalrundets_d = parseToSQLdata(dbc->log, xslt, summaryxml, &prms);
+-	if( !rtevalrundets_d ) {
+-		writelog(dbc->log, LOG_ERR,
+-			 "[Connection %i] Could not parse the input XML data (rtevalruns_details)",
+-			 dbc->id);
+-		ret = -1;
+-		goto exit;
+-	}
+-
+-	// Register the rteval_details information
+-	dbdata = pgsql_INSERT(dbc, rtevalrundets_d);
+-	if( !dbdata ) {
+-		ret = -1;
+-		goto exit;
+-	}
+-
+-	// Check that only one record was inserted
+-	if( eCount(dbdata) != 1 ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] Failed to register the rteval run details", dbc->id);
+-		ret = -1;
+-	}
+-	eFree_values(dbdata);
+-	ret = 1;
+- exit:
+-	if( rtevalrun_d ) {
+-		xmlFreeDoc(rtevalrun_d);
+-	}
+-	if( rtevalrundets_d ) {
+-		xmlFreeDoc(rtevalrundets_d);
+-	}
+-	return ret;
+-}
+-
+-
+-/**
+- * Registers data returned from measurement results into the database.
+- *
+- * @param dbc        Database handler where to perform the SQL queries
+- * @param xslt       A pointer to a parsed 'xmlparser.xsl' XSLT template
+- * @param summaryxml The XML report from rteval
+- * @param rterid     A positive integer referencing the rteval run ID, returned from db_register_rtevalrun()
+- *
+- * @return Returns 1 on success, otherwise -1
+- */
+-int db_register_measurements(dbconn *dbc, xsltStylesheet *xslt, xmlDoc *summaryxml, int rterid) {
+-	int result = -1;
+-	xmlDoc *meas_d = NULL;
+-	parseParams prms;
+-	eurephiaVALUES *dbdata = NULL;
+-	int measrecs = 0;
+-        char *tbl = NULL;
+-	int i;
+-
+-	memset(&prms, 0, sizeof(parseParams));
+-	prms.rterid = rterid;
+-
+-	// Loop through all configured measurement tables and process each table
+-        i = 0;
+-        for_array_str(tbl, i, dbc->measurement_tbls) {
+-                writelog(dbc->log, LOG_DEBUG, "Processing measurement table '%s'", tbl);
+-		prms.table = tbl;
+-		meas_d = parseToSQLdata(dbc->log, xslt, summaryxml, &prms);
+-		if( meas_d && meas_d->children ) {
+-			// Insert SQL data which was found and generated
+-			dbdata = pgsql_INSERT(dbc, meas_d);
+-			if( !dbdata ) {
+-				result = -1;
+-				xmlFreeDoc(meas_d);
+-				goto exit;
+-			}
+-
+-			if (eCount(dbdata) > 0) {
+-				measrecs++;
+-			}
+-			eFree_values(dbdata);
+-		}
+-		if( meas_d ) {
+-			xmlFreeDoc(meas_d);
+-		}
+-	}
+-
+-	// Report error if not enough cyclictest data is registered.
+-	if( measrecs < 1 ) {
+-		writelog(dbc->log, LOG_ALERT,
+-			 "[Connection %i] No cyclictest raw data or histogram data registered", dbc->id);
+-		result = -1;
+-	} else {
+-		result = 1;
+-	}
+- exit:
+-	return result;
+-}
+diff --git a/server/parser/pgsql.h b/server/parser/pgsql.h
+deleted file mode 100644
+index d8be135..0000000
+--- a/server/parser/pgsql.h
++++ /dev/null
+@@ -1,58 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   pgsql.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 13 17:44:35 2009
+- *
+- * @brief  Database API for the PostgreSQL database.
+- *
+- *
+- */
+-
+-#ifndef _RTEVAL_PGSQL_H
+-#define _RTEVAL_PGSQL_H
+-
+-#include <libpq-fe.h>
+-#include <libxml/parser.h>
+-#include <libxslt/transform.h>
+-
+-#include <log.h>
+-#include <eurephia_values.h>
+-#include <parsethread.h>
+-#include <xmlparser.h>
+-
+-/**
+- *  A unified database abstraction layer, providing log support
+- */
+-typedef struct {
+-	unsigned int id;           /**< Unique connection ID, used for debugging */
+-	LogContext *log;           /**< Initialised log context */
+-	PGconn *db;                /**< Database connection handler */
+-	unsigned int sqlschemaver; /**< SQL schema version, retrieved from rteval_info table */
+-	array_str_t *measurement_tbls; /**< Measurement tables to process */
+-} dbconn;
+-
+-/* Generic database function */
+-dbconn *db_connect(eurephiaVALUES *cfg, unsigned int id, LogContext *log);
+-int db_ping(dbconn *dbc);
+-void db_disconnect(dbconn *dbc);
+-int db_begin(dbconn *dbc);
+-int db_commit(dbconn *dbc);
+-int db_rollback(dbconn *dbc);
+-
+-/* rteval specific database functions */
+-int db_wait_notification(dbconn *dbc, const int *shutdown, const char *listenfor);
+-parseJob_t *db_get_submissionqueue_job(dbconn *dbc, pthread_mutex_t *mtx);
+-int db_update_submissionqueue(dbconn *dbc, unsigned int submid, int status);
+-int db_register_system(dbconn *dbc, xsltStylesheet *xslt, xmlDoc *summaryxml);
+-int db_get_new_rterid(dbconn *dbc);
+-int db_register_rtevalrun(dbconn *dbc, xsltStylesheet *xslt, xmlDoc *summaryxml,
+-			  unsigned int submid, int syskey, int rterid, const char *report_fname);
+-int db_register_measurements(dbconn *dbc, xsltStylesheet *xslt, xmlDoc *summaryxml, int rterid);
+-
+-#endif
+diff --git a/server/parser/rteval-parserd.c b/server/parser/rteval-parserd.c
+deleted file mode 100644
+index 7aba85d..0000000
+--- a/server/parser/rteval-parserd.c
++++ /dev/null
+@@ -1,533 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   rteval-parserd.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Thu Oct 15 11:59:27 2009
+- *
+- * @brief  Polls the rteval.submissionqueue table for notifications
+- *         from new inserts and sends the file to a processing thread
+- *
+- *
+- *
+- */
+-
+-#include <stdio.h>
+-#include <string.h>
+-#include <unistd.h>
+-#include <signal.h>
+-#include <pthread.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <errno.h>
+-#include <assert.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <eurephia_values.h>
+-#include <configparser.h>
+-#include <pgsql.h>
+-#include <threadinfo.h>
+-#include <parsethread.h>
+-#include <argparser.h>
+-
+-#define DEFAULT_MSG_MAX 5             /**< Default size of the message queue */
+-#define XMLPARSER_XSL "xmlparser.xsl" /**< rteval report parser XSLT, parses XML into database friendly data*/
+-
+-static int shutdown = 0;              /**<  Variable indicating if the program should shutdown */
+-static LogContext *logctx = NULL;     /**<  Initialsed log context, to be used by sigcatch() */
+-
+-
+-/**
+- * Simple signal catcher.  Used for SIGINT and SIGTERM signals, and will set the global shutdown
+- * shutdown flag.  It's expected that all threads behaves properly and exits as soon as their current
+- * work is completed
+- *
+- * @param sig Recieved signal (not used)
+- */
+-void sigcatch(int sig) {
+-	switch( sig ) {
+-	case SIGINT:
+-	case SIGTERM:
+-		if( shutdown == 0 ) {
+-			shutdown = 1;
+-			writelog(logctx, LOG_INFO, "[SIGNAL] Shutting down");
+-		} else {
+-			writelog(logctx, LOG_INFO, "[SIGNAL] Shutdown in progress ... please be patient ...");
+-		}
+-		break;
+-
+-	case SIGUSR1:
+-		writelog(logctx, LOG_EMERG, "[SIGNAL] Shutdown alarm from a worker thread");
+-		shutdown = 1;
+-		break;
+-
+-	default:
+-		break;
+-	}
+-
+-	// re-enable signals, to avoid brute force exits.
+-	// If brute force is needed, SIGKILL is available.
+-	signal(sig, sigcatch);
+-}
+-
+-
+-/**
+- * Opens and reads /proc/sys/fs/mqueue/msg_max, to get the maximum number of allowed messages
+- * on POSIX MQ queues.  rteval-parserd will use as much of this as possible when needed.
+- *
+- * @return Returns the system msg_max value, or DEFAULT_MSG_MAX on failure to read the setting.
+- */
+-unsigned int get_mqueue_msg_max(LogContext *log) {
+-	FILE *fp = NULL;
+-	char buf[130];
+-	unsigned int msg_max = DEFAULT_MSG_MAX;
+-
+-	fp = fopen("/proc/sys/fs/mqueue/msg_max", "r");
+-	if( !fp ) {
+-		writelog(log, LOG_WARNING,
+-			"Could not open /proc/sys/fs/mqueue/msg_max, defaulting to %i",
+-			msg_max);
+-		writelog(log, LOG_INFO, "%s", strerror(errno));
+-		return msg_max;
+-	}
+-
+-	memset(&buf, 0, 130);
+-	if( fread(&buf, 1, 128, fp) < 1 ) {
+-		writelog(log, LOG_WARNING,
+-			"Could not read /proc/sys/fs/mqueue/msg_max, defaulting to %i",
+-			msg_max);
+-		writelog(log, LOG_INFO, "%s", strerror(errno));
+-	} else {
+-		msg_max = atoi_nullsafe(buf);
+-		if( msg_max < 1 ) {
+-			msg_max = DEFAULT_MSG_MAX;
+-			writelog(log, LOG_WARNING,
+-				"Failed to parse /proc/sys/fs/mqueue/msg_max,"
+-				"defaulting to %i", msg_max);
+-		}
+-	}
+-	fclose(fp);
+-	return msg_max;
+-}
+-
+-
+-/**
+- * Main loop, which polls the submissionqueue table and puts jobs found here into a POSIX MQ queue
+- * which the worker threads will pick up.
+- *
+- * @param dbc           Database connection, where to query the submission queue
+- * @param msgq          file descriptor for the message queue
+- * @param activethreads Pointer to an int value containing active worker threads.  Each thread updates
+- *                      this value directly, and this function should only read it.
+- *
+- * @return Returns 0 on successful run, otherwise > 0 on errors.
+- */
+-int process_submission_queue(dbconn *dbc, mqd_t msgq, int *activethreads) {
+-	pthread_mutex_t mtx_submq = PTHREAD_MUTEX_INITIALIZER;
+-	parseJob_t *job = NULL;
+-	int rc = 0, i, actthr_cp = 0;
+-
+-	while( shutdown == 0 ) {
+-		// Check status if the worker threads
+-		// If we don't have any worker threads, shut down immediately
+-		writelog(dbc->log, LOG_DEBUG, "Active worker threads: %i", *activethreads);
+-		if( *activethreads < 1 ) {
+-			writelog(dbc->log, LOG_EMERG,
+-				 "All worker threads ceased to exist.  Shutting down!");
+-			shutdown = 1;
+-			rc = 1;
+-			goto exit;
+-		}
+-
+-		if( db_ping(dbc) != 1 ) {
+-			writelog(dbc->log, LOG_EMERG, "Lost connection to database.  Shutting down!");
+-			shutdown = 1;
+-			rc = 1;
+-			goto exit;
+-		}
+-
+-		// Fetch an available job
+-		job = db_get_submissionqueue_job(dbc, &mtx_submq);
+-		if( !job ) {
+-			writelog(dbc->log, LOG_EMERG,
+-				 "Failed to get submission queue job.  Shutting down!");
+-			shutdown = 1;
+-			rc = 1;
+-			goto exit;
+-		}
+-		if( job->status == jbNONE ) {
+-			free_nullsafe(job);
+-			if( db_wait_notification(dbc, &shutdown, "rteval_submq") < 1 ) {
+-				writelog(dbc->log, LOG_EMERG,
+-					 "Failed to wait for DB notification.  Shutting down!");
+-				shutdown = 1;
+-				rc = 1;
+-				goto exit;
+-			}
+-			continue;
+-		}
+-
+-		// Send the job to the queue
+-		writelog(dbc->log, LOG_DEBUG, "** New job queued: submid %i, %s", job->submid, job->filename);
+-		do {
+-			int res;
+-
+-			errno = 0;
+-			res = mq_send(msgq, (char *) job, sizeof(parseJob_t), 1);
+-			if( (res < 0) && (errno != EAGAIN) ) {
+-				writelog(dbc->log, LOG_EMERG,
+-					 "Could not send parse job to the queue.  "
+-					 "Shutting down!");
+-				shutdown = 1;
+-				rc = 2;
+-				goto exit;
+-			} else if( errno == EAGAIN ) {
+-				writelog(dbc->log, LOG_WARNING,
+-					"Message queue filled up.  "
+-					"Will not add new messages to queue for the next 60 seconds");
+-				sleep(60);
+-			}
+-		} while( (errno == EAGAIN) );
+-		free_nullsafe(job);
+-	}
+-
+- exit:
+-	// Send empty messages to the threads, to make them have a look at the shutdown flag
+-	job = (parseJob_t *) malloc_nullsafe(dbc->log, sizeof(parseJob_t));
+-	errno = 0;
+-	// Need to make a copy, as *activethreads will change when threads completes shutdown
+-	actthr_cp = *activethreads;
+-	for( i = 0; i < actthr_cp; i++ ) {
+-		do {
+-			int res;
+-
+-			writelog(dbc->log, LOG_DEBUG, "%s shutdown message %i of %i",
+-				 (errno == EAGAIN ? "Resending" : "Sending"), i+1, *activethreads);
+-			errno = 0;
+-			res = mq_send(msgq, (char *) job, sizeof(parseJob_t), 1);
+-			if( (res < 0) && (errno != EAGAIN) ) {
+-				writelog(dbc->log, LOG_EMERG,
+-					 "Could not send shutdown notification to the queue.");
+-				free_nullsafe(job);
+-				return rc;
+-			} else if( errno == EAGAIN ) {
+-				writelog(dbc->log, LOG_WARNING,
+-					"Message queue filled up.  "
+-					"Will not add new messages to queue for the next 10 seconds");
+-				sleep(10);
+-			}
+-		} while( (errno == EAGAIN) );
+-	}
+-	free_nullsafe(job);
+-	return rc;
+-}
+-
+-
+-/**
+- * Prepares the program to be daemonised
+- *
+- * @param log   Initialised log context, where log info of the process is reported
+- *
+- * @return Returns 1 on success, otherwise -1
+- */
+-int daemonise(LogContext *log) {
+-	pid_t pid, sid;
+-	int i = 0;
+-
+-	if( (log->logtype == ltCONSOLE) ) {
+-		writelog(log, LOG_EMERG,
+-			 "Cannot daemonise when logging to a console (stdout: or stderr:)");
+-		return -1;
+-	}
+-
+-	pid = fork();
+-	if (pid < 0) {
+-		writelog(log, LOG_EMERG, "Failed to daemonise the process (fork)");
+-		return -1;
+-	} else if (pid > 0) {
+-		writelog(log, LOG_INFO, "Daemon pid: %ld", pid);
+-		exit(EXIT_SUCCESS);
+-	}
+-
+-	umask(0);
+-
+-	sid = setsid();
+-	if (sid < 0) {
+-		writelog(log, LOG_EMERG, "Failed to daemonise the process (setsid)");
+-		return -1;
+-	}
+-
+-	if ((chdir("/")) < 0) {
+-		writelog(log, LOG_EMERG, "Failed to daemonise the process (fork)");
+-		return -1;
+-	}
+-
+-	// Prepare stdin, stdout and stderr for daemon mode
+-	close(2);
+-	close(1);
+-	close(0);
+-	i = open("/dev/null", O_RDWR); /* open stdin */
+-	dup(i); /* stdout */
+-	dup(i); /* stderr */
+-
+-	writelog(log, LOG_INFO, "Daemonised successfully");
+-	return 1;
+-}
+-
+-
+-/**
+- * rtevald_parser main function.
+- *
+- * @param argc
+- * @param argv
+- *
+- * @return Returns the result of the process_submission_queue() function.
+- */
+-int main(int argc, char **argv) {
+-        eurephiaVALUES *config = NULL, *prgargs = NULL;
+-        char xsltfile[2050], *reportdir = NULL;
+-	xsltStylesheet *xslt = NULL;
+-	dbconn *dbc = NULL;
+-        pthread_t **threads = NULL;
+-        pthread_attr_t **thread_attrs = NULL;
+-	pthread_mutex_t mtx_sysreg = PTHREAD_MUTEX_INITIALIZER;
+-	pthread_mutex_t mtx_thrcnt = PTHREAD_MUTEX_INITIALIZER;
+-	threadData_t **thrdata = NULL;
+-	struct mq_attr msgq_attr;
+-	mqd_t msgq = 0;
+-	int i,rc, mq_init = 0, max_threads = 0, started_threads = 0, activethreads = 0;
+-	unsigned int max_report_size = 0;
+-
+-	// Initialise XML and XSLT libraries
+-	xsltInit();
+-	xmlInitParser();
+-
+-	prgargs = parse_arguments(argc, argv);
+-	if( prgargs == NULL ) {
+-		fprintf(stderr, "** ERROR **  Failed to parse program arguments\n");
+-		rc = 2;
+-		goto exit;
+-	}
+-
+-	// Setup a log context
+-	logctx = init_log(eGet_value(prgargs, "log"), eGet_value(prgargs, "loglevel"));
+-	if( !logctx ) {
+-		fprintf(stderr, "** ERROR **  Could not setup a log context\n");
+-		eFree_values(prgargs);
+-		rc = 2;
+-		goto exit;
+-	}
+-
+-	// Fetch configuration
+-        config = read_config(logctx, prgargs, "xmlrpc_parser");
+-	eFree_values(prgargs); // read_config() copies prgargs into config, we don't need prgargs anymore
+-
+-	// Daemonise process if requested
+-	if( atoi_nullsafe(eGet_value(config, "daemon")) == 1 ) {
+-		if( daemonise(logctx) < 1 ) {
+-			rc = 3;
+-			goto exit;
+-		}
+-	}
+-
+-
+-	// Parse XSLT template
+-	snprintf(xsltfile, 512, "%s/%s", eGet_value(config, "xsltpath"), XMLPARSER_XSL);
+-	writelog(logctx, LOG_DEBUG, "Parsing XSLT file: %s", xsltfile);
+-        xslt = xsltParseStylesheetFile((xmlChar *) xsltfile);
+-	if( !xslt ) {
+-		writelog(logctx, LOG_EMERG, "Could not parse XSLT template: %s", xsltfile);
+-		rc = 2;
+-		goto exit;
+-	}
+-
+-	// Open a POSIX MQ
+-	writelog(logctx, LOG_DEBUG, "Preparing POSIX MQ queue: /rteval_parsequeue");
+-	memset(&msgq, 0, sizeof(mqd_t));
+-	msgq_attr.mq_maxmsg = get_mqueue_msg_max(logctx);
+-	msgq_attr.mq_msgsize = sizeof(parseJob_t);
+-	msgq_attr.mq_flags = O_NONBLOCK;
+-	msgq = mq_open("/rteval_parsequeue", O_RDWR | O_CREAT, 0600, &msgq_attr);
+-	if( msgq < 0 ) {
+-		writelog(logctx, LOG_EMERG,
+-			 "Could not open message queue: %s", strerror(errno));
+-		rc = 2;
+-		goto exit;
+-	}
+-	mq_init = 1;
+-
+-	// Get the number of worker threads
+-	max_threads = atoi_nullsafe(eGet_value(config, "threads"));
+-	if( max_threads == 0 ) {
+-		max_threads = 4;
+-	}
+-
+-	// Get a database connection for the main thread
+-        dbc = db_connect(config, max_threads, logctx);
+-        if( !dbc ) {
+-		rc = 4;
+-		goto exit;
+-        }
+-
+-	// Prepare all threads
+-	threads = calloc(max_threads + 1, sizeof(pthread_t *));
+-	thread_attrs = calloc(max_threads + 1, sizeof(pthread_attr_t *));
+-	thrdata = calloc(max_threads + 1, sizeof(threadData_t *));
+-	assert( (threads != NULL) && (thread_attrs != NULL) && (thrdata != NULL) );
+-
+-	reportdir = eGet_value(config, "reportdir");
+-	writelog(logctx, LOG_INFO, "Starting %i worker threads", max_threads);
+-	max_report_size = defaultIntValue(atoi_nullsafe(eGet_value(config, "max_report_size")), 1024*1024);
+-	for( i = 0; i < max_threads; i++ ) {
+-		// Prepare thread specific data
+-		thrdata[i] = malloc_nullsafe(logctx, sizeof(threadData_t));
+-		if( !thrdata[i] ) {
+-			writelog(logctx, LOG_EMERG,
+-				 "Could not allocate memory for thread data");
+-			rc = 2;
+-			goto exit;
+-		}
+-
+-		// Get a database connection for the thread
+-		thrdata[i]->dbc = db_connect(config, i, logctx);
+-		if( !thrdata[i]->dbc ) {
+-			writelog(logctx, LOG_EMERG,
+-				"Could not connect to the database for thread %i", i);
+-			rc = 2;
+-			shutdown = 1;
+-			goto exit;
+-		}
+-
+-		// Parse the measurement_tables config variable, split it up into an array
+-		thrdata[i]->dbc->measurement_tbls = strSplit(eGet_value(config, "measurement_tables"), ", ");
+-		if( !thrdata[i]->dbc->measurement_tbls ) {
+-			writelog(dbc->log, LOG_CRIT, "Failed to parse measurement_tables configuration");
+-			rc = 2;
+-			shutdown = 1;
+-			goto exit;
+-		}
+-
+-		thrdata[i]->shutdown = &shutdown;
+-		thrdata[i]->threadcount = &activethreads;
+-		thrdata[i]->mtx_thrcnt = &mtx_thrcnt;
+-		thrdata[i]->id = i;
+-		thrdata[i]->msgq = msgq;
+-		thrdata[i]->mtx_sysreg = &mtx_sysreg;
+-		thrdata[i]->xslt = xslt;
+-		thrdata[i]->destdir = reportdir;
+-		thrdata[i]->max_report_size = max_report_size;
+-
+-		thread_attrs[i] = malloc_nullsafe(logctx, sizeof(pthread_attr_t));
+-		if( !thread_attrs[i] ) {
+-			writelog(logctx, LOG_EMERG,
+-				"Could not allocate memory for thread attributes");
+-			rc = 2;
+-			goto exit;
+-		}
+-		pthread_attr_init(thread_attrs[i]);
+-		pthread_attr_setdetachstate(thread_attrs[i], PTHREAD_CREATE_JOINABLE);
+-
+-		threads[i] = malloc_nullsafe(logctx, sizeof(pthread_t));
+-		if( !threads[i] ) {
+-			writelog(logctx, LOG_EMERG,
+-				"Could not allocate memory for pthread_t");
+-			rc = 2;
+-			goto exit;
+-		}
+-	}
+-
+-	// Setup signal catching
+-	signal(SIGINT,  sigcatch);
+-	signal(SIGTERM, sigcatch);
+-	signal(SIGHUP,  SIG_IGN);
+-	signal(SIGUSR1, sigcatch);
+-	signal(SIGUSR2, SIG_IGN);
+-
+-	// Start the threads
+-	for( i = 0; i < max_threads; i++ ) {
+-		int thr_rc = pthread_create(threads[i], thread_attrs[i], parsethread, thrdata[i]);
+-		if( thr_rc < 0 ) {
+-			writelog(logctx, LOG_EMERG,
+-				 "** ERROR **  Failed to start thread %i: %s",
+-				 i, strerror(thr_rc));
+-			rc = 3;
+-			goto exit;
+-		}
+-		started_threads++;
+-	}
+-
+-	// Main routine
+-	//
+-	// checks the submission queue and puts unprocessed records on the POSIX MQ
+-	// to be parsed by one of the threads
+-	//
+-	sleep(3); // Allow at least a few parser threads to settle down first before really starting
+-	writelog(logctx, LOG_DEBUG, "Starting submission queue checker");
+-	rc = process_submission_queue(dbc, msgq, &activethreads);
+-	writelog(logctx, LOG_DEBUG, "Submission queue checker shut down");
+-
+- exit:
+-	// Clean up all threads
+-	for( i = 0; i < max_threads; i++ ) {
+-		// Wait for all threads to exit
+-		if( (i < started_threads) && threads && threads[i] ) {
+-			void *thread_rc;
+-			int j_rc;
+-
+-			if( (j_rc = pthread_join(*threads[i], &thread_rc)) != 0 ) {
+-				writelog(logctx, LOG_CRIT,
+-					 "Failed to join thread %i: %s",
+-					 i, strerror(j_rc));
+-			}
+-			pthread_attr_destroy(thread_attrs[i]);
+-		}
+-		if( threads ) {
+-			free_nullsafe(threads[i]);
+-		}
+-		if( thread_attrs ) {
+-			free_nullsafe(thread_attrs[i]);
+-		}
+-
+-		// Disconnect threads database connection
+-		if( thrdata && thrdata[i] ) {
+-			strFree(thrdata[i]->dbc->measurement_tbls);
+-			db_disconnect(thrdata[i]->dbc);
+-			free_nullsafe(thrdata[i]);
+-		}
+-	}
+-	free_nullsafe(thrdata);
+-	free_nullsafe(threads);
+-	free_nullsafe(thread_attrs);
+-
+-	// Close message queue
+-	if( mq_init == 1 ) {
+-		errno = 0;
+-		if( mq_close(msgq) < 0 ) {
+-			writelog(logctx, LOG_CRIT, "Failed to close message queue: %s",
+-				 strerror(errno));
+-		}
+-		errno = 0;
+-		if( mq_unlink("/rteval_parsequeue") < 0 ) {
+-			writelog(logctx, LOG_ALERT, "Failed to remove the message queue: %s",
+-				 strerror(errno));
+-		}
+-	}
+-
+-	// Disconnect from database, main thread connection
+-	db_disconnect(dbc);
+-
+-	// Free up the rest
+-	eFree_values(config);
+-	xsltFreeStylesheet(xslt);
+-	xmlCleanupParser();
+-	xsltCleanupGlobals();
+-
+-	writelog(logctx, LOG_EMERG, "rteval-parserd is stopped");
+-	close_log(logctx);
+-	return rc;
+-}
+-
+diff --git a/server/parser/rteval-parserd.init b/server/parser/rteval-parserd.init
+deleted file mode 100755
+index a7da9db..0000000
+--- a/server/parser/rteval-parserd.init
++++ /dev/null
+@@ -1,126 +0,0 @@
+-#!/bin/bash
+-#
+-# rteval-parserd  rteval report parser daemon
+-#
+-# Author:      David Sommerseth <davids@redhat.com>
+-#
+-# Copyright 2009 Red Hat, Inc. and/or its affiliates.
+-# Released under the GPL
+-#
+-# chkconfig: - 20 80
+-# description: The rteval-parserd waits for rteval summary reports and parses them on arrival
+-# config: /etc/sysconfig/rteval-parserd
+-#
+-### BEGIN INIT INFO
+-# Provides: rteval-parserd
+-# Required-Start: postgresql
+-# Required-Stop: -
+-# Default-Stop: 0 1 6
+-# Short-Description: start and stop rteval-parserd
+-# Description: The rteval-parserd waits for rteval summary reports and parses them on arrival
+-### END INIT INFO
+-
+-. /etc/rc.d/init.d/functions
+-
+-if [ -f /etc/sysconfig/rteval-parserd ]; then
+-    . /etc/sysconfig/rteval-parserd
+-fi
+-
+-prog=rteval-parserd
+-RETVAL=0
+-
+-if [ -z $PIDFILE ]; then
+-    PIDFILE=/var/run/$prog.pid
+-fi
+-
+-start() {
+-    # Check if we have a pid file, if we do check that it is correct
+-    if [ -f $PIDFILE ]; then
+-	filepid=$(cat $PIDFILE)
+-	chkpid=$(pidof $prog)
+-	if [ $? = 0 ]; then
+-	    if [ "$chkpid" != "$filepid" ] ; then
+-		# We have a pid file which is not correct, fix it
+-		echo $chkpid > $PIDFILE
+-		filepid=$chkpid
+-	    fi
+-	    echo "$prog is already started (pid $filepid)"
+-	    return 0
+-	else
+-	    # No process really exists, clean up!
+-	    rm -f $PIDFILE
+-	fi
+-    fi
+-
+-    # Start a new daemon
+-    args="--daemon"
+-    if [ -z "$NUM_THREADS" ]; then
+-	# If NUM_THREADS is not set, use number of cores found.
+-	NUM_THREADS=$(find /sys/devices/system/cpu/cpu? -maxdepth 0 -type d | wc -l)
+-    fi
+-    args="$args --threads $NUM_THREADS"
+-
+-    if [ ! -z "$LOG" ]; then
+-	args="$args --log $LOG"
+-    fi
+-
+-    if [ ! -z "$LOGLEVEL" ]; then
+-	args="$args --log-level $LOGLEVEL"
+-    fi
+-
+-    if [ ! -z "$CONFIGFILE" ]; then
+-	args="$args --config $CONFIGFILE"
+-    fi
+-    echo -n $"Starting $prog ($NUM_THREADS threads): "
+-    $prog $args
+-    pidof $prog > $PIDFILE
+-    RETVAL=$?
+-    [ $RETVAL = 0 ] && success $"$prog startup" || failure $"$prog startup"
+-    [ $RETVAL = 0 ] && touch /var/lock/subsys/$prog
+-    echo
+-    return $RETVAL
+-}
+-
+-stop() {
+-    echo -n $"Stopping $prog: "
+-    if [ ! -f $PIDFILE ]; then
+-	chkpid=$(pidof $prog)
+-	if [ $? = 0 ]; then
+-	    PID=$chkpid
+-	fi
+-    else
+-	PID=$(cat $PIDFILE)
+-    fi
+-    kill -TERM $PID
+-    RETVAL=$?
+-    [ $RETVAL = 0 ] && success $"$prog shutdown" || failure $"$prog (pid $PID) shutdown"
+-    [ $RETVAL = 0 ] && rm -f /var/lock/subsys/$prog $PIDFILE
+-    echo
+-}
+-
+-case "$1" in
+-  start)
+-	start
+-	;;
+-  stop)
+-	stop
+-	;;
+-  status)
+-        status $prog
+-	;;
+-  restart)
+-	stop
+-	start
+-	;;
+-  reload)
+-	stop
+-	start
+-	;;
+-  condrestart)
+-        ;;
+-  *)
+-	echo $"Usage: $prog {start|stop|restart|reload|status|help}"
+-	RETVAL=3
+-esac
+-
+-exit $RETVAL
+diff --git a/server/parser/rteval-parserd.sysconfig b/server/parser/rteval-parserd.sysconfig
+deleted file mode 100644
+index c57f48c..0000000
+--- a/server/parser/rteval-parserd.sysconfig
++++ /dev/null
+@@ -1,23 +0,0 @@
+-# Configuration parameters for rteval-parserd
+-
+-# *** Number of worker threads
+-# * When this is not set, the default will be one thread per CPU core
+-# NUM_THREADS=2
+-
+-# *** Logging
+-# * Valid values: syslog:[facility] or a file name (full path)
+-# * Valid facility values: daemon, user and local0 to local7
+-# * Default facility will be daemon
+-LOG=syslog:
+-
+-# *** Log level
+-# * Valid values: emerg, alert, crit, error, warn, notice, info, debug
+-LOGLEVEL=notice
+-
+-# *** rteval configuration file
+-# * Default value when not set is /etc/rteval.conf
+-# CONFIGFILE=/etc/rteval.conf
+-
+-# *** PID file
+-# * Full path to where to look for the PID file, defaults to /var/run/rteval-parserd.pid
+-# PIDFILE=/var/run/rteval-parserd.pid
+diff --git a/server/parser/sha1.c b/server/parser/sha1.c
+deleted file mode 100644
+index 3f77aa9..0000000
+--- a/server/parser/sha1.c
++++ /dev/null
+@@ -1,615 +0,0 @@
+-/*-
+- * Copyright (c) 2001-2003 Allan Saddi <allan@saddi.com>
+- * All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY ALLAN SADDI AND HIS CONTRIBUTORS ``AS IS''
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- * ARE DISCLAIMED.  IN NO EVENT SHALL ALLAN SADDI OR HIS CONTRIBUTORS BE
+- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+- * POSSIBILITY OF SUCH DAMAGE.
+- *
+- * $Id: sha1.c 680 2003-07-25 21:57:38Z asaddi $
+- */
+-
+-/*
+- * Define WORDS_BIGENDIAN if compiling on a big-endian architecture.
+- *
+- * Define SHA1_TEST to test the implementation using the NIST's
+- * sample messages. The output should be:
+- *
+- *   a9993e36 4706816a ba3e2571 7850c26c 9cd0d89d
+- *   84983e44 1c3bd26e baae4aa1 f95129e5 e54670f1
+- *   34aa973c d4c4daa4 f61eeb2b dbad2731 6534016f
+- */
+-
+-#include <stdint.h>
+-#include <string.h>
+-
+-#include "sha1.h"
+-
+-#ifndef lint
+-static const char rcsid[] =
+-	"$Id: sha1.c 680 2003-07-25 21:57:38Z asaddi $";
+-#endif /* !lint */
+-
+-#define ROTL(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
+-#define ROTR(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
+-
+-#define F_0_19(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
+-#define F_20_39(x, y, z) ((x) ^ (y) ^ (z))
+-#define F_40_59(x, y, z) (((x) & ((y) | (z))) | ((y) & (z)))
+-#define F_60_79(x, y, z) ((x) ^ (y) ^ (z))
+-
+-#define DO_ROUND(F, K) { \
+-  temp = ROTL(a, 5) + F(b, c, d) + e + *(W++) + K; \
+-  e = d; \
+-  d = c; \
+-  c = ROTL(b, 30); \
+-  b = a; \
+-  a = temp; \
+-}
+-
+-#define K_0_19 0x5a827999L
+-#define K_20_39 0x6ed9eba1L
+-#define K_40_59 0x8f1bbcdcL
+-#define K_60_79 0xca62c1d6L
+-
+-#ifndef RUNTIME_ENDIAN
+-
+-#ifdef WORDS_BIGENDIAN
+-
+-#define BYTESWAP(x) (x)
+-#define BYTESWAP64(x) (x)
+-
+-#else /* WORDS_BIGENDIAN */
+-
+-#define BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00L) | \
+-		     (ROTL((x), 8) & 0x00ff00ffL))
+-#define BYTESWAP64(x) _byteswap64(x)
+-
+-static inline uint64_t _byteswap64(uint64_t x)
+-{
+-  uint32_t a = x >> 32;
+-  uint32_t b = (uint32_t) x;
+-  return ((uint64_t) BYTESWAP(b) << 32) | (uint64_t) BYTESWAP(a);
+-}
+-
+-#endif /* WORDS_BIGENDIAN */
+-
+-#else /* !RUNTIME_ENDIAN */
+-
+-#define BYTESWAP(x) _byteswap(sc->littleEndian, x)
+-#define BYTESWAP64(x) _byteswap64(sc->littleEndian, x)
+-
+-#define _BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00L) | \
+-		      (ROTL((x), 8) & 0x00ff00ffL))
+-#define _BYTESWAP64(x) __byteswap64(x)
+-
+-static inline uint64_t __byteswap64(uint64_t x)
+-{
+-  uint32_t a = x >> 32;
+-  uint32_t b = (uint32_t) x;
+-  return ((uint64_t) _BYTESWAP(b) << 32) | (uint64_t) _BYTESWAP(a);
+-}
+-
+-static inline uint32_t _byteswap(int littleEndian, uint32_t x)
+-{
+-  if (!littleEndian)
+-    return x;
+-  else
+-    return _BYTESWAP(x);
+-}
+-
+-static inline uint64_t _byteswap64(int littleEndian, uint64_t x)
+-{
+-  if (!littleEndian)
+-    return x;
+-  else
+-    return _BYTESWAP64(x);
+-}
+-
+-static inline void setEndian(int *littleEndianp)
+-{
+-  union {
+-    uint32_t w;
+-    uint8_t b[4];
+-  } endian;
+-
+-  endian.w = 1L;
+-  *littleEndianp = endian.b[0] != 0;
+-}
+-
+-#endif /* !RUNTIME_ENDIAN */
+-
+-static const uint8_t padding[64] = {
+-  0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+-};
+-
+-void
+-SHA1Init (SHA1Context *sc)
+-{
+-#ifdef RUNTIME_ENDIAN
+-  setEndian (&sc->littleEndian);
+-#endif /* RUNTIME_ENDIAN */
+-
+-  sc->totalLength = 0LL;
+-  sc->hash[0] = 0x67452301L;
+-  sc->hash[1] = 0xefcdab89L;
+-  sc->hash[2] = 0x98badcfeL;
+-  sc->hash[3] = 0x10325476L;
+-  sc->hash[4] = 0xc3d2e1f0L;
+-  sc->bufferLength = 0L;
+-}
+-
+-static void
+-burnStack (int size)
+-{
+-  char buf[128];
+-
+-  memset (buf, 0, sizeof (buf));
+-  size -= sizeof (buf);
+-  if (size > 0)
+-    burnStack (size);
+-}
+-
+-static void
+-SHA1Guts (SHA1Context *sc, const uint32_t *cbuf)
+-{
+-  uint32_t buf[80];
+-  uint32_t *W, *W3, *W8, *W14, *W16;
+-  uint32_t a, b, c, d, e, temp;
+-  int i;
+-
+-  W = buf;
+-
+-  for (i = 15; i >= 0; i--) {
+-    *(W++) = BYTESWAP(*cbuf);
+-    cbuf++;
+-  }
+-
+-  W16 = &buf[0];
+-  W14 = &buf[2];
+-  W8 = &buf[8];
+-  W3 = &buf[13];
+-
+-  for (i = 63; i >= 0; i--) {
+-    *W = *(W3++) ^ *(W8++) ^ *(W14++) ^ *(W16++);
+-    *W = ROTL(*W, 1);
+-    W++;
+-  }
+-
+-  a = sc->hash[0];
+-  b = sc->hash[1];
+-  c = sc->hash[2];
+-  d = sc->hash[3];
+-  e = sc->hash[4];
+-
+-  W = buf;
+-
+-#ifndef SHA1_UNROLL
+-#define SHA1_UNROLL 20
+-#endif /* !SHA1_UNROLL */
+-
+-#if SHA1_UNROLL == 1
+-  for (i = 19; i >= 0; i--)
+-    DO_ROUND(F_0_19, K_0_19);
+-
+-  for (i = 19; i >= 0; i--)
+-    DO_ROUND(F_20_39, K_20_39);
+-
+-  for (i = 19; i >= 0; i--)
+-    DO_ROUND(F_40_59, K_40_59);
+-
+-  for (i = 19; i >= 0; i--)
+-    DO_ROUND(F_60_79, K_60_79);
+-#elif SHA1_UNROLL == 2
+-  for (i = 9; i >= 0; i--) {
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-  }
+-
+-  for (i = 9; i >= 0; i--) {
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-  }
+-
+-  for (i = 9; i >= 0; i--) {
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-  }
+-
+-  for (i = 9; i >= 0; i--) {
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-  }
+-#elif SHA1_UNROLL == 4
+-  for (i = 4; i >= 0; i--) {
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-  }
+-
+-  for (i = 4; i >= 0; i--) {
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-  }
+-
+-  for (i = 4; i >= 0; i--) {
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-  }
+-
+-  for (i = 4; i >= 0; i--) {
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-  }
+-#elif SHA1_UNROLL == 5
+-  for (i = 3; i >= 0; i--) {
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-  }
+-
+-  for (i = 3; i >= 0; i--) {
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-  }
+-
+-  for (i = 3; i >= 0; i--) {
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-  }
+-
+-  for (i = 3; i >= 0; i--) {
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-  }
+-#elif SHA1_UNROLL == 10
+-  for (i = 1; i >= 0; i--) {
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-    DO_ROUND(F_0_19, K_0_19);
+-  }
+-
+-  for (i = 1; i >= 0; i--) {
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-    DO_ROUND(F_20_39, K_20_39);
+-  }
+-
+-  for (i = 1; i >= 0; i--) {
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-    DO_ROUND(F_40_59, K_40_59);
+-  }
+-
+-  for (i = 1; i >= 0; i--) {
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-    DO_ROUND(F_60_79, K_60_79);
+-  }
+-#elif SHA1_UNROLL == 20
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-  DO_ROUND(F_0_19, K_0_19);
+-
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-  DO_ROUND(F_20_39, K_20_39);
+-
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-  DO_ROUND(F_40_59, K_40_59);
+-
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-  DO_ROUND(F_60_79, K_60_79);
+-#else /* SHA1_UNROLL */
+-#error SHA1_UNROLL must be 1, 2, 4, 5, 10 or 20!
+-#endif
+-
+-  sc->hash[0] += a;
+-  sc->hash[1] += b;
+-  sc->hash[2] += c;
+-  sc->hash[3] += d;
+-  sc->hash[4] += e;
+-}
+-
+-void
+-SHA1Update (SHA1Context *sc, const void *vdata, uint32_t len)
+-{
+-  const uint8_t *data = vdata;
+-  uint32_t bufferBytesLeft;
+-  uint32_t bytesToCopy;
+-  int needBurn = 0;
+-
+-#ifdef SHA1_FAST_COPY
+-  if (sc->bufferLength) {
+-    bufferBytesLeft = 64L - sc->bufferLength;
+-
+-    bytesToCopy = bufferBytesLeft;
+-    if (bytesToCopy > len)
+-      bytesToCopy = len;
+-
+-    memcpy (&sc->buffer.bytes[sc->bufferLength], data, bytesToCopy);
+-
+-    sc->totalLength += bytesToCopy * 8L;
+-
+-    sc->bufferLength += bytesToCopy;
+-    data += bytesToCopy;
+-    len -= bytesToCopy;
+-
+-    if (sc->bufferLength == 64L) {
+-      SHA1Guts (sc, sc->buffer.words);
+-      needBurn = 1;
+-      sc->bufferLength = 0L;
+-    }
+-  }
+-
+-  while (len > 63) {
+-    sc->totalLength += 512L;
+-
+-    SHA1Guts (sc, data);
+-    needBurn = 1;
+-
+-    data += 64L;
+-    len -= 64L;
+-  }
+-
+-  if (len) {
+-    memcpy (&sc->buffer.bytes[sc->bufferLength], data, len);
+-
+-    sc->totalLength += len * 8L;
+-
+-    sc->bufferLength += len;
+-  }
+-#else /* SHA1_FAST_COPY */
+-  while (len) {
+-    bufferBytesLeft = 64L - sc->bufferLength;
+-
+-    bytesToCopy = bufferBytesLeft;
+-    if (bytesToCopy > len)
+-      bytesToCopy = len;
+-
+-    memcpy (&sc->buffer.bytes[sc->bufferLength], data, bytesToCopy);
+-
+-    sc->totalLength += bytesToCopy * 8L;
+-
+-    sc->bufferLength += bytesToCopy;
+-    data += bytesToCopy;
+-    len -= bytesToCopy;
+-
+-    if (sc->bufferLength == 64L) {
+-      SHA1Guts (sc, sc->buffer.words);
+-      needBurn = 1;
+-      sc->bufferLength = 0L;
+-    }
+-  }
+-#endif /* SHA1_FAST_COPY */
+-
+-  if (needBurn)
+-    burnStack (sizeof (uint32_t[86]) + sizeof (uint32_t *[5]) + sizeof (int));
+-}
+-
+-void
+-SHA1Final (SHA1Context *sc, uint8_t hash[SHA1_HASH_SIZE])
+-{
+-  uint32_t bytesToPad;
+-  uint64_t lengthPad;
+-  int i;
+-
+-  bytesToPad = 120L - sc->bufferLength;
+-  if (bytesToPad > 64L)
+-    bytesToPad -= 64L;
+-
+-  lengthPad = BYTESWAP64(sc->totalLength);
+-
+-  SHA1Update (sc, padding, bytesToPad);
+-  SHA1Update (sc, &lengthPad, 8L);
+-
+-  if (hash) {
+-    for (i = 0; i < SHA1_HASH_WORDS; i++) {
+-#ifdef SHA1_FAST_COPY
+-      *((uint32_t *) hash) = BYTESWAP(sc->hash[i]);
+-#else /* SHA1_FAST_COPY */
+-      hash[0] = (uint8_t) (sc->hash[i] >> 24);
+-      hash[1] = (uint8_t) (sc->hash[i] >> 16);
+-      hash[2] = (uint8_t) (sc->hash[i] >> 8);
+-      hash[3] = (uint8_t) sc->hash[i];
+-#endif /* SHA1_FAST_COPY */
+-      hash += 4;
+-    }
+-  }
+-}
+-
+-#ifdef SHA1_TEST
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-
+-int
+-main (int argc, char *argv[])
+-{
+-  SHA1Context foo;
+-  uint8_t hash[SHA1_HASH_SIZE];
+-  char buf[1000];
+-  int i;
+-
+-  SHA1Init (&foo);
+-  SHA1Update (&foo, "abc", 3);
+-  SHA1Final (&foo, hash);
+-
+-  for (i = 0; i < SHA1_HASH_SIZE;) {
+-    printf ("%02x", hash[i++]);
+-    if (!(i % 4))
+-      printf (" ");
+-  }
+-  printf ("\n");
+-
+-  SHA1Init (&foo);
+-  SHA1Update (&foo,
+-		"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+-		56);
+-  SHA1Final (&foo, hash);
+-
+-  for (i = 0; i < SHA1_HASH_SIZE;) {
+-    printf ("%02x", hash[i++]);
+-    if (!(i % 4))
+-      printf (" ");
+-  }
+-  printf ("\n");
+-
+-  SHA1Init (&foo);
+-  memset (buf, 'a', sizeof (buf));
+-  for (i = 0; i < 1000; i++)
+-    SHA1Update (&foo, buf, sizeof (buf));
+-  SHA1Final (&foo, hash);
+-
+-  for (i = 0; i < SHA1_HASH_SIZE;) {
+-    printf ("%02x", hash[i++]);
+-    if (!(i % 4))
+-      printf (" ");
+-  }
+-  printf ("\n");
+-
+-  exit (0);
+-}
+-
+-#endif /* SHA1_TEST */
+diff --git a/server/parser/sha1.h b/server/parser/sha1.h
+deleted file mode 100644
+index 9ce5bd6..0000000
+--- a/server/parser/sha1.h
++++ /dev/null
+@@ -1,66 +0,0 @@
+-/*-
+- * Copyright (c) 2001-2003 Allan Saddi <allan@saddi.com>
+- * All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY ALLAN SADDI AND HIS CONTRIBUTORS ``AS IS''
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- * ARE DISCLAIMED.  IN NO EVENT SHALL ALLAN SADDI OR HIS CONTRIBUTORS BE
+- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+- * POSSIBILITY OF SUCH DAMAGE.
+- *
+- * $Id: sha1.h 347 2003-02-23 22:11:49Z asaddi $
+- */
+-
+-#ifndef _SHA1_H
+-#define _SHA1_H
+-
+-#include <stdint.h>
+-
+-#define SHA1_HASH_SIZE 20
+-
+-/* Hash size in 32-bit words */
+-#define SHA1_HASH_WORDS 5
+-
+-struct _SHA1Context {
+-  uint64_t totalLength;
+-  uint32_t hash[SHA1_HASH_WORDS];
+-  uint32_t bufferLength;
+-  union {
+-    uint32_t words[16];
+-    uint8_t bytes[64];
+-  } buffer;
+-#ifdef RUNTIME_ENDIAN
+-  int littleEndian;
+-#endif /* RUNTIME_ENDIAN */
+-};
+-
+-typedef struct _SHA1Context SHA1Context;
+-
+-#ifdef __cplusplus
+-extern "C" {
+-#endif
+-
+-void SHA1Init (SHA1Context *sc);
+-void SHA1Update (SHA1Context *sc, const void *data, uint32_t len);
+-void SHA1Final (SHA1Context *sc, uint8_t hash[SHA1_HASH_SIZE]);
+-
+-#ifdef __cplusplus
+-}
+-#endif
+-
+-#endif /* _SHA1_H */
+diff --git a/server/parser/statuses.h b/server/parser/statuses.h
+deleted file mode 100644
+index a1beef6..0000000
+--- a/server/parser/statuses.h
++++ /dev/null
+@@ -1,33 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   statuses.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 21 11:17:24 2009
+- *
+- * @brief  Status values used by rteval-parserd
+- *
+- */
+-
+-#ifndef _RTEVAL_STATUS_H
+-#define _RTEVAL_STATUS_H
+-
+-#define STAT_NEW       0         /**< New, unparsed report in the submission queue */
+-#define STAT_ASSIGNED  1         /**< Submission is assigned to a parser */
+-#define STAT_INPROG    2         /**< Parsing has started */
+-#define STAT_SUCCESS   3         /**< Report parsed successfully */
+-#define STAT_UNKNFAIL  4         /**< Unkown failure */
+-#define STAT_XMLFAIL   5         /**< Failed to parse the report XML file */
+-#define STAT_SYSREG    6         /**< System registration failed */
+-#define STAT_RTERIDREG 7         /**< Failed to get a new rterid value for the rteval run */
+-#define STAT_GENDB     8         /**< General database error */
+-#define STAT_RTEVRUNS  9         /**< Registering rteval run information failed */
+-#define STAT_MEASURE   10        /**< Registering measurement results failed */
+-#define STAT_REPMOVE   11        /**< Failed to move the report file */
+-#define STAT_FTOOBIG   12        /**< Report is too big (see config parameter: max_report_size) */
+-
+-#endif
+diff --git a/server/parser/threadinfo.h b/server/parser/threadinfo.h
+deleted file mode 100644
+index 53c4e7d..0000000
+--- a/server/parser/threadinfo.h
++++ /dev/null
+@@ -1,38 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- */
+-
+-/**
+- * @file   threadinfo.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Thu Oct 15 11:47:51 2009
+- *
+- * @brief  Shared info between the main() and parsethread() functions
+- *
+- */
+-
+-#ifndef _THREADINFO_H
+-#define _THREADINFO_H
+-
+-#include <mqueue.h>
+-#include <libxslt/transform.h>
+-
+-/**
+- *  Thread slot information.  Each thread slot is assigned with one threadData_t element.
+- */
+-typedef struct {
+-        int *shutdown;                /**< If set to 1, the thread should shut down */
+-        int *threadcount;             /**< Number of active worker threads */
+-        pthread_mutex_t *mtx_thrcnt;  /**< Mutex lock for updating active worker threads */
+-        mqd_t msgq;                   /**< POSIX MQ descriptor */
+-        pthread_mutex_t *mtx_sysreg;  /**< Mutex locking, to avoid clashes with registering systems */
+-        unsigned int id;              /**< Numeric ID for this thread */
+-        dbconn *dbc;                  /**< Database connection assigned to this thread */
+-        xsltStylesheet *xslt;         /**< XSLT stylesheet assigned to this thread */
+-        const char *destdir;          /**< Directory where to put the parsed reports */
+-        unsigned int max_report_size; /**< Maximum accepted file size of reports (config: max_report_size) */
+-} threadData_t;
+-
+-#endif
+diff --git a/server/parser/xmlparser.c b/server/parser/xmlparser.c
+deleted file mode 100644
+index 1ea7377..0000000
+--- a/server/parser/xmlparser.c
++++ /dev/null
+@@ -1,620 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- * David Sommerseth <davids@redhat.com>
+- *
+- * Parses summary.xml reports from rteval into a standardised XML format
+- * which is useful when putting data into a database.
+- *
+- */
+-
+-/**
+- * @file   xmlparser.c
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 21 10:58:53 2009
+- *
+- * @brief Parses summary.xml reports from rteval into a standardised XML format
+- *        which is useful when putting data into a database.
+- *
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <assert.h>
+-
+-#include <libxml/tree.h>
+-#include <libxslt/xsltInternals.h>
+-#include <libxslt/transform.h>
+-#include <libxslt/xsltutils.h>
+-#include <libexslt/exslt.h>
+-
+-#include <eurephia_nullsafe.h>
+-#include <eurephia_xml.h>
+-#include <xmlparser.h>
+-#include <sha1.h>
+-#include <log.h>
+-
+-static dbhelper_func const * xmlparser_dbhelpers = NULL;
+-
+-/**
+- * Simple strdup() function which encapsulates the string in single quotes,
+- * which is needed for XSLT parameter values
+- *
+- * @param str The string to be strdup'ed and encapsulated
+- *
+- * @return Returns a pointer to the new buffer.
+- */
+-static char *encapsString(const char *str) {
+-        char *ret = NULL;
+-
+-        if( str == NULL ) {
+-                return NULL;
+-        }
+-
+-        ret = (char *) calloc(1, strlen(str)+4);
+-        assert( ret != NULL );
+-
+-        snprintf(ret, strlen(str)+3, "'%s'", str);
+-        return ret;
+-}
+-
+-
+-/**
+- * Converts an integer to string an encapsulates the value in single quotes,
+- * which is needed for XSLT parameter values.
+- *
+- * @param val Integer value to encapsulate
+- *
+- * @return Returns a pointer to a new buffer with the encapsulated integer value.  This
+- *         buffer must be free'd after usage.
+- */
+-static char *encapsInt(const unsigned int val) {
+-        char *buf = NULL;
+-
+-        buf = (char *) calloc(1, 130);
+-        snprintf(buf, 128, "'%i'", val);
+-        return buf;
+-}
+-
+-
+-/**
+- * Simple function to determine if the given string is a number or not
+- *
+- * @param str Pointer to the tring to be checked
+- *
+- * @returns Returns 0 if not a number and a non-null value if it is a number
+- */
+-int isNumber(const char * str)
+-{
+-    char *ptr = NULL;
+-
+-    if (str == NULL || *str == '\0' || isspace(*str))
+-      return 0;
+-
+-    strtod (str, &ptr);
+-    return *ptr == '\0';
+-}
+-
+-
+-/**
+- * Split a string into an array.
+- * Use strGet() to extract the results and strFree() to free the memory
+- * allocated by strSplit()
+- *
+- * @param str Input string
+- * @param sep Separator list (string)
+- *
+- * @returns Returns a pointer to a array_str_t struct on success, otherwise NULL
+- */
+-array_str_t * strSplit(const char * str, const char * sep)
+-{
+-        array_str_t * ret = calloc(1, sizeof(array_str_t));
+-        char * p = NULL, *cp = strdup(str);
+-
+-        if( !ret || !cp ) {
+-                fprintf(stderr, "Memory allocation error in strSplit()\n");
+-                return NULL;
+-        }
+-
+-        p = strtok(cp, sep);
+-        while( p ) {
+-                ret->data = realloc(ret->data, sizeof(char *) * ++(ret->size));
+-                if( !ret->data ) {
+-                        fprintf(stderr, "Memory allocation error in strSplit() while parsing\n");
+-                        free(ret);
+-                        return NULL;
+-                }
+-                ret->data[ret->size-1] = strdup(p);
+-                p = strtok(NULL, sep);
+-        }
+-        free(cp);
+-        return ret;
+-}
+-
+-/**
+- * Retrieve an array memeber
+- *
+- * @param ar Pointer holding the array_str_t data
+- * @param el Element number to retrive
+- *
+- * @returns Returns a pointer to the array member.  This value must never be freed.
+- * On failure NULL is returned.  Only possible failures are out-of-range or a NULL
+- * array input.
+- */
+-inline char * strGet(array_str_t * ar, unsigned int el)
+-{
+-        return (!ar && (el > ar->size) ? NULL : ar->data[el]);
+-}
+-
+-/**
+- * Retrive number of accessible array members
+- *
+- * @param ar Pointer holding the array_str_t data
+- *
+- * @returns Returns the number of elements in the array_str_t struct.
+- *          If a NULL pointer is given, it will return 0.
+- */
+-inline unsigned int strSize(array_str_t * ar)
+-{
+-        return (!ar ? 0 : ar->size);
+-}
+-
+-/**
+- * Frees up the memory held by an array_str_t struct.
+- *
+- * @params ar Pointer holding the array_str_t data to be freed
+- *
+- */
+-void strFree(array_str_t * ar)
+-{
+-        int i = 0;
+-
+-        if( !ar ) {
+-                return;
+-        }
+-
+-        for( i = 0; i < ar->size; i++ ) {
+-                free(ar->data[i]);
+-                ar->data[i] = NULL;
+-        }
+-        free(ar->data); ar->data = NULL;
+-        free(ar);
+-}
+-
+-/**
+- * Initialise the XML parser, setting some global variables
+- */
+-void init_xmlparser(dbhelper_func const * dbhelpers)
+-{
+-	xmlparser_dbhelpers = dbhelpers;
+-
+-        /* Init libxml2 and load all exslt functions */
+-        xmlInitMemory();
+-        exsltRegisterAll();
+-}
+-
+-
+-/**
+- * Parses any XML input document into a sqldata XML format which can be used by pgsql_INSERT().
+- * The transformation must be defined in the input XSLT template.
+- *
+- * @param log       Log context
+- * @param xslt      XSLT template defining the data transformation
+- * @param indata_d  Input XML data to transform to a sqldata XML document
+- * @param params    Parameters to be sent to the XSLT parser
+- *
+- * @return Returns a well formed sqldata XML document on success, otherwise NULL is returned.
+- */
+-xmlDoc *parseToSQLdata(LogContext *log, xsltStylesheet *xslt, xmlDoc *indata_d, parseParams *params) {
+-        xmlDoc *result_d = NULL;
+-        char **xsltparams = NULL;
+-        unsigned int idx = 0, idx_table = 0, idx_submid = 0,
+-		idx_syskey = 0, idx_rterid = 0, idx_repfname = 0;
+-
+-        xsltparams = calloc(10, sizeof(char *));
+-
+-        if( xmlparser_dbhelpers == NULL ) {
+-                writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-                return NULL;
+-        }
+-
+-        if( params->table == NULL ) {
+-                writelog(log, LOG_ERR, "Table is not defined");
+-                return NULL;
+-        }
+-
+-        // Prepare XSLT parameters
+-        xsltparams[idx++] = "table\0";
+-        xsltparams[idx] = (char *) encapsString(params->table);
+-        idx_table = idx++;
+-
+-        if( params->submid > 0) {
+-                xsltparams[idx++] = "submid\0";
+-                xsltparams[idx] = (char *) encapsInt(params->submid);
+-                idx_submid = idx++;
+-        }
+-
+-        if( params->syskey > 0) {
+-                xsltparams[idx++] = "syskey\0";
+-                xsltparams[idx] = (char *) encapsInt(params->syskey);
+-                idx_syskey = idx++;
+-        }
+-
+-        if( params->rterid > 0 ) {
+-                xsltparams[idx++] = "rterid";
+-                xsltparams[idx] = (char *) encapsInt(params->rterid);
+-                idx_rterid = idx++;
+-        }
+-
+-        if( params->report_filename ) {
+-                xsltparams[idx++] = "report_filename";
+-                xsltparams[idx] = (char *) encapsString(params->report_filename);
+-                idx_repfname = idx++;
+-        }
+-        xsltparams[idx] = NULL;
+-
+-        // Apply the XSLT template to the input XML data
+-        result_d = xsltApplyStylesheet(xslt, indata_d, (const char **)xsltparams);
+-        if( result_d == NULL ) {
+-                writelog(log, LOG_CRIT, "Failed applying XSLT template to input XML");
+-        }
+-
+-        // Free memory we allocated via encapsString()/encapsInt()
+-        free(xsltparams[idx_table]);
+-        if( params->submid ) {
+-                free(xsltparams[idx_submid]);
+-        }
+-        if( params->syskey ) {
+-                free(xsltparams[idx_syskey]);
+-        }
+-        if( params->rterid ) {
+-                free(xsltparams[idx_rterid]);
+-        }
+-        if( params->report_filename ) {
+-                free(xsltparams[idx_repfname]);
+-        }
+-
+-        free(xsltparams);
+-        return result_d;
+-}
+-
+-
+-/**
+- * Internal xmlparser function.   Extracts the value from a '//sqldata/records/record/value'
+- * node and hashes the value if the 'hash' attribute is set.  Otherwise the value is extracted
+- * from the node directly.  This function is only used by sqldataExtractContent().
+- *
+- * @param sql_n sqldata values node containing the value to extract.
+- *
+- * @return Returns a pointer to a new buffer containing the value on success, otherwise NULL.
+- *         This memory buffer must be free'd after usage.
+- */
+-char * sqldataValueHash(LogContext *log, xmlNode *sql_n) {
+-	const char *hash = NULL, *isnull = NULL;
+-	SHA1Context shactx;
+-	uint8_t shahash[SHA1_HASH_SIZE];
+-	char *ret = NULL, *ptr = NULL;
+-	int i;
+-
+-	if( !(sql_n && (xmlStrcmp(sql_n->name, (xmlChar *) "value") == 0)
+-              && (xmlStrcmp(sql_n->parent->name, (xmlChar *) "record") == 0)
+-              || (xmlStrcmp(sql_n->parent->name, (xmlChar *) "value") == 0)) ) {
+-                return NULL;
+-	}
+-
+-	isnull = xmlGetAttrValue(sql_n->properties, "isnull");
+-	if( isnull && (strcmp(isnull, "1") == 0) ) {
+-		return NULL;
+-	}
+-
+-	hash = xmlGetAttrValue(sql_n->properties, "hash");
+-	if( !hash ) {
+-		// If no hash attribute is found, just use the raw data
+-		ret = strdup_nullsafe(xmlExtractContent(sql_n));
+-	} else if( strcasecmp(hash, "sha1") == 0 ) {
+-		const char *indata = xmlExtractContent(sql_n);
+-		// SHA1 hashing requested
+-		SHA1Init(&shactx);
+-		SHA1Update(&shactx, indata, strlen_nullsafe(indata));
+-		SHA1Final(&shactx, shahash);
+-
+-		// "Convert" to a readable format
+-		ret = malloc_nullsafe(log, (SHA1_HASH_SIZE * 2) + 3);
+-		ptr = ret;
+-		for( i = 0; i < SHA1_HASH_SIZE; i++ ) {
+-			sprintf(ptr, "%02x", shahash[i]);
+-			ptr += 2;
+-		}
+-	} else {
+-		ret = strdup("<Unsupported hashing algorithm>");
+-	}
+-
+-	return ret;
+-}
+-
+-
+-/**
+- * Extract the content of a //sqldata/records/record/value[@type='array']/value node set
+- * and format it in suitable array format for the database backend.
+- *
+- * @param log    Log context
+- * @param sql_n sqldata values node containing the value to extract and format as an array.
+- *
+- * @return Returns a pointer to a new memory buffer containing the value as a string.
+- *         On errors, NULL is returned.  This memory buffer must be free'd after usage.
+- */
+-static char * sqldataValueArray(LogContext *log, xmlNode *sql_n)
+-{
+-	if( xmlparser_dbhelpers == NULL ) {
+-		writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-		return NULL;
+-	}
+-
+-	return xmlparser_dbhelpers->dbh_FormatArray(log, sql_n);
+-}
+-
+-
+-/**
+- * Extract the content of a '//sqldata/records/record/value' node.  It will consider
+- * both the 'hash' and 'type' attributes of the 'value' tag.
+- *
+- * @param log    Log context
+- * @param sql_n  Pointer to a value node of a sqldata XML document.
+- *
+- * @return Returns a pointer to a new memory buffer containing the value as a string.
+- *         On errors, NULL is returned.  This memory buffer must be free'd after usage.
+- */
+-char *sqldataExtractContent(LogContext *log, xmlNode *sql_n) {
+-	const char *valtype = xmlGetAttrValue(sql_n->properties, "type");
+-
+-        if( xmlparser_dbhelpers == NULL ) {
+-                writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-                return NULL;
+-        }
+-
+-	if( !sql_n || (xmlStrcmp(sql_n->name, (xmlChar *) "value") != 0)
+-	    || (xmlStrcmp(sql_n->parent->name, (xmlChar *) "record") != 0) ) {
+-		    return NULL;
+-	}
+-
+-	if( valtype && (strcmp(valtype, "xmlblob") == 0) ) {
+-		xmlNode *chld_n = sql_n->children;
+-
+-		// Go to next "real" tag, skipping non-element nodes
+-		while( chld_n && chld_n->type != XML_ELEMENT_NODE ){
+-			chld_n = chld_n->next;
+-		}
+-		return xmlNodeToString(log, chld_n);
+-        } else if( valtype && (strcmp(valtype, "array") == 0) ) {
+-                return sqldataValueArray(log, sql_n);
+-	} else {
+-		return sqldataValueHash(log, sql_n);
+-	}
+-}
+-
+-
+-/**
+- * Return the 'fid' value of a given field in an sqldata XML document.
+- *
+- * @param log    Log context
+- * @param sql_n  Pointer to the root xmlNode element of a sqldata XML document
+- * @param fname  String containing the field name to look up
+- *
+- * @return Returns a value >= 0 on success, containing the 'fid' value of the field.  Otherwise
+- *         a value < 0 is returned.  -1 if the field is not found or -2 if there are some problems
+- *         with the XML document.
+- */
+-int sqldataGetFid(LogContext *log, xmlNode *sql_n, const char *fname) {
+-	xmlNode *f_n = NULL;
+-
+-        if( xmlparser_dbhelpers == NULL ) {
+-                writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-                return -2;
+-        }
+-
+-	if( !sql_n || (xmlStrcmp(sql_n->name, (xmlChar *) "sqldata") != 0) ) {
+-		writelog(log, LOG_ERR,
+-			 "sqldataGetFid: Input XML document is not a valid sqldata document");
+-		return -2;
+-	}
+-
+-	f_n = xmlFindNode(sql_n, "fields");
+-	if( !f_n || !f_n->children ) {
+-		writelog(log, LOG_ERR,
+-			 "sqldataGetFid: Input XML document does not contain a fields section");
+-		return -2;
+-	}
+-
+-	foreach_xmlnode(f_n->children, f_n) {
+-		if( (f_n->type != XML_ELEMENT_NODE)
+-		    || xmlStrcmp(f_n->name, (xmlChar *) "field") != 0 ) {
+-			// Skip uninteresting nodes
+-			continue;
+-		}
+-
+-		if( strcmp(xmlExtractContent(f_n), fname) == 0 ) {
+-			char *fid = xmlGetAttrValue(f_n->properties, "fid");
+-			if( !fid ) {
+-				writelog(log, LOG_ERR,
+-					 "sqldataGetFid: Field node is missing 'fid' attribute (field: %s)",
+-					 fname);
+-				return -2;
+-			}
+-			return atoi_nullsafe(fid);
+-		}
+-	}
+-	return -1;
+-}
+-
+-
+-/**
+- * Retrieves the value of a particular field in an sqldata XML document.
+- *
+- * @param log    Log context
+- * @param sqld   pointer to an sqldata XML document.
+- * @param fname  String containing the field name to extract the value of.
+- * @param recid  Integer containing the record ID of the record to extract the value.  This starts
+- *               on 0.
+- *
+- * @return Returns a pointer to a new memory buffer containing the extracted value.  On errors or if
+- *         recid is higher than available records, NULL is returned.
+- */
+-char *sqldataGetValue(LogContext *log, xmlDoc *sqld, const char *fname, int recid ) {
+-	xmlNode *r_n = NULL;
+-	int fid = -3, rc = 0;
+-
+-        if( xmlparser_dbhelpers == NULL ) {
+-                writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-                return NULL;
+-        }
+-
+-	if( recid < 0 ) {
+-		writelog(log, LOG_ERR, "sqldataGetValue: Invalid recid");
+-		return NULL;
+-	}
+-
+-	r_n = xmlDocGetRootElement(sqld);
+-	if( !r_n || (xmlStrcmp(r_n->name, (xmlChar *) "sqldata") != 0) ) {
+-		writelog(log, LOG_ERR,
+-			 "sqldataGetValue: Input XML document is not a valid sqldata document");
+-		return NULL;
+-	}
+-
+-	fid = sqldataGetFid(log, r_n, fname);
+-	if( fid < 0 ) {
+-		return NULL;
+-	}
+-
+-	r_n = xmlFindNode(r_n, "records");
+-	if( !r_n || !r_n->children ) {
+-		writelog(log, LOG_ERR,
+-			 "sqldataGetValue: Input XML document does not contain a records section");
+-		return NULL;
+-	}
+-
+-	foreach_xmlnode(r_n->children, r_n) {
+-		if( (r_n->type != XML_ELEMENT_NODE)
+-		    || xmlStrcmp(r_n->name, (xmlChar *) "record") != 0 ) {
+-			// Skip uninteresting nodes
+-			continue;
+-		}
+-		if( rc == recid ) {
+-			xmlNode *v_n = NULL;
+-			// The rigth record is found, find the field we're looking for
+-			foreach_xmlnode(r_n->children, v_n) {
+-				char *fid_s = NULL;
+-				if( (v_n->type != XML_ELEMENT_NODE)
+-				    || (xmlStrcmp(v_n->name, (xmlChar *) "value") != 0) ) {
+-					// Skip uninteresting nodes
+-					continue;
+-				}
+-				fid_s = xmlGetAttrValue(v_n->properties, "fid");
+-				if( fid_s && (fid == atoi_nullsafe(fid_s)) ) {
+-					return sqldataExtractContent(log, v_n);
+-				}
+-			}
+-		}
+-		rc++;
+-	}
+-	return NULL;
+-}
+-
+-
+-/**
+- * Helper function to parse an sqldata XML document for the systems_hostname table.  In addition
+- * it will also return two strings containing hostname and ipaddress of the host.
+- *
+- * @param log        Log context
+- * @param xslt       Pointer to an xmlparser.xml XSLT template
+- * @param summaryxml rteval XML report document
+- * @param syskey     Integer containing the syskey value corresponding to this host
+- * @param hostname   Return pointer for where the hostname will be saved.
+- * @param ipaddr     Return pointer for where the IP address will be saved.
+- *
+- * @return Returns a sqldata XML document on success.  In this case the hostname and ipaddr will point
+- *         at memory buffers containing hostname and ipaddress.  These values must be free'd after usage.
+- *         On errors the function will return NULL and hostname and ipaddr will not have been touched
+- *         at all.
+- */
+-xmlDoc *sqldataGetHostInfo(LogContext *log, xsltStylesheet *xslt, xmlDoc *summaryxml,
+-			   int syskey, char **hostname, char **ipaddr)
+-{
+-	xmlDoc *hostinfo_d = NULL;
+-	parseParams prms;
+-
+-        if( xmlparser_dbhelpers == NULL ) {
+-                writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-                return NULL;
+-        }
+-
+-	memset(&prms, 0, sizeof(parseParams));
+-	prms.table = "systems_hostname";
+-	prms.syskey = syskey;
+-
+-	hostinfo_d = parseToSQLdata(log, xslt, summaryxml, &prms);
+-	if( !hostinfo_d ) {
+-		writelog(log, LOG_ERR,
+-			 "sqldatGetHostInfo: Could not parse input XML data");
+-		xmlFreeDoc(hostinfo_d);
+-		goto exit;
+-	}
+-
+-	// Grab hostname from input XML
+-	*hostname = sqldataGetValue(log, hostinfo_d, "hostname", 0);
+-	if( !hostname ) {
+-		writelog(log, LOG_ERR,
+-			"sqldatGetHostInfo: Could not retrieve the hostname field from the input XML");
+-		xmlFreeDoc(hostinfo_d);
+-		goto exit;
+-	}
+-
+-	// Grab ipaddr from input XML
+-	*ipaddr = sqldataGetValue(log, hostinfo_d, "ipaddr", 0);
+-	if( !ipaddr ) {
+-		writelog(log, LOG_ERR,
+-			"sqldatGetHostInfo: Could not retrieve the IP address field from the input XML");
+-		free_nullsafe(hostname);
+-		xmlFreeDoc(hostinfo_d);
+-		goto exit;
+-	}
+- exit:
+-	return hostinfo_d;
+-}
+-
+-int sqldataGetRequiredSchemaVer(LogContext *log, xmlNode *sqldata_root)
+-{
+-	char *schver = NULL, *cp = NULL, *ptr = NULL;
+-	int majv = 0, minv = 0;
+-
+-        if( xmlparser_dbhelpers == NULL ) {
+-                writelog(log, LOG_ERR, "Programming error: xmlparser is not initialised");
+-                return -1;
+-        }
+-
+-	if( !sqldata_root || (xmlStrcmp(sqldata_root->name, (xmlChar *) "sqldata") != 0) ) {
+-		writelog(log, LOG_ERR, "sqldataGetRequiredSchemaVer: Invalid document node");
+-		return -1;
+-	}
+-
+-	schver = xmlGetAttrValue(sqldata_root->properties, "schemaver");
+-	if( schver == NULL ) {
+-		return 100;  // If not defined, presume lowest available version.
+-	}
+-	cp = strdup(schver);
+-	assert( cp != NULL );
+-
+-	if( (ptr = strpbrk(cp, ".")) != NULL ) {
+-		*ptr = 0;
+-		ptr++;
+-		majv = atoi_nullsafe(cp);
+-		minv = atoi_nullsafe(ptr);
+-	} else {
+-		majv = atoi_nullsafe(cp);
+-		minv = 0;
+-	}
+-	free_nullsafe(cp);
+-
+-	return (majv * 100) + minv;
+-}
+diff --git a/server/parser/xmlparser.h b/server/parser/xmlparser.h
+deleted file mode 100644
+index 1aa3977..0000000
+--- a/server/parser/xmlparser.h
++++ /dev/null
+@@ -1,75 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-/*
+- * Copyright (C) 2009 Red Hat Inc.
+- *
+- * David Sommerseth <davids@redhat.com>
+- *
+- *
+- */
+-
+-/**
+- * @file   xmlparser.h
+- * @author David Sommerseth <davids@redhat.com>
+- * @date   Wed Oct 7 17:27:39 2009
+- *
+- * @brief Parses summary.xml reports from rteval into a standardised XML format
+- *        which is useful when putting data into a database.
+- *
+- */
+-
+-
+-#ifndef _XMLPARSER_H
+-#define _XMLPARSER_H
+-
+-/**
+- *  Parameters needed by the the xmlparser.xsl XSLT template.
+- */
+-typedef struct {
+-        const char *table;            /**< Which table to parse data for.  Required*/
+-        unsigned int submid;          /**< Submission ID, needed by the 'rtevalruns' table */
+-        unsigned int syskey;          /**< System key (referencing systems.syskey) */
+-        const char *report_filename;  /**< Filename to the saved report (after being parsed) */
+-        unsigned int rterid;          /**< References rtevalruns.rterid */
+-} parseParams;
+-
+-/**
+- * Container for string arrays
+- */
+-typedef struct {
+-        unsigned int size;
+-        char **data;
+-} array_str_t;
+-
+-array_str_t * strSplit(const char * str, const char * sep);
+-inline char * strGet(array_str_t * ar, unsigned int el);
+-inline unsigned int strSize(array_str_t * ar);
+-void strFree(array_str_t * ar);
+-
+-/** Simple for-loop iterator for array_str_t objects
+- *
+- * @param ptr Return pointer (char *) where the element data is returned
+- * @param idx Element index counter, declares where it should start and can be used
+- *            to track the iteration process.  Must be an int variable
+- * @param ar  The array_str_t object to iterate
+- */
+-#define for_array_str(ptr, idx, ar) for( ptr = ar->data[idx]; idx++ < ar->size; \
+-                                         ptr=(idx < ar->size ? ar->data[idx] : NULL) )
+-
+-/**
+- *  Database specific helper functions
+- */
+-typedef struct {
+-        char *(*dbh_FormatArray)(LogContext *log, xmlNode *sql_n); /** Formats data as arrays */
+-} dbhelper_func;
+-
+-void init_xmlparser(dbhelper_func const * dbhelpers);
+-char * sqldataValueHash(LogContext *log, xmlNode *sql_n);
+-xmlDoc *parseToSQLdata(LogContext *log, xsltStylesheet *xslt, xmlDoc *indata_d, parseParams *params);
+-char *sqldataExtractContent(LogContext *log, xmlNode *sql_n);
+-int sqldataGetFid(LogContext *log, xmlNode *sqld, const char *fname);
+-char *sqldataGetValue(LogContext *log, xmlDoc *sqld, const char *fname, int recid);
+-xmlDoc *sqldataGetHostInfo(LogContext *log, xsltStylesheet *xslt, xmlDoc *summaryxml,
+-			   int syskey, char **hostname, char **ipaddr);
+-int sqldataGetRequiredSchemaVer(LogContext *log, xmlNode *sqldata_root);
+-
+-#endif
+diff --git a/server/parser/xmlparser.xsl b/server/parser/xmlparser.xsl
+deleted file mode 100644
+index ddef1cc..0000000
+--- a/server/parser/xmlparser.xsl
++++ /dev/null
+@@ -1,607 +0,0 @@
+-<?xml version="1.0"?>
+-<!-- SPDX-License-Identifier: GPL-2.0-only -->
+-<!--
+-     *
+-     *  GPLv2 - Copyright (C) 2009
+-     *          David Sommerseth <davids@redhat.com>
+-     *
+--->
+-
+-<xsl:stylesheet  version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+-                 xmlns:math="http://exslt.org/math"
+-                 extension-element-prefixes="math">
+-  <xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes"/>
+-
+-  <!-- Used for iterating CPU topology information -->
+-  <xsl:key name="pkgkey" match="cpu" use="@physical_package_id"/>
+-
+-
+-  <!-- Supported tables in reports in rteval v1.37 and older -->
+-  <xsl:template match="/rteval['2.0' > @version]">
+-    <xsl:choose>
+-      <!-- TABLE: systems -->
+-      <xsl:when test="$table = 'systems'">
+-        <xsl:apply-templates select="HardwareInfo" mode="tbl_systems"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: systems_hostname -->
+-      <xsl:when test="$table = 'systems_hostname'">
+-        <xsl:apply-templates select="." mode="tbl_systems_hostname"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: rtevalruns -->
+-      <xsl:when test="$table = 'rtevalruns'">
+-        <xsl:apply-templates select="." mode="tbl_rtevalruns"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: rtevalruns_details -->
+-      <xsl:when test="$table = 'rtevalruns_details'">
+-        <xsl:apply-templates select="." mode="tbl_rtevalruns_details"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: cyclic_statistics -->
+-      <xsl:when test="$table = 'cyclic_statistics'">
+-        <xsl:apply-templates select="cyclictest" mode="tbl_cyclictest_statistics"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: cyclic_histogram -->
+-      <xsl:when test="$table = 'cyclic_histogram'">
+-        <xsl:apply-templates select="cyclictest" mode="tbl_cyclictest_histogram"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: cyclic_rawdata - only used by rteval v1.4 and earlier -->
+-      <xsl:when test="$table = 'cyclic_rawdata'">
+-        <xsl:if test="string(number($rterid)) = 'NaN'">
+-          <xsl:message terminate="yes">
+-            <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-          </xsl:message>
+-        </xsl:if>
+-	<sqldata schemaver="1.0" table="cyclic_rawdata">
+-	  <fields>
+-            <field fid="0">rterid</field>
+-            <field fid="1">cpu_num</field>
+-            <field fid="2">sampleseq</field>
+-            <field fid="3">latency</field>
+-	  </fields>
+-	  <records>
+-            <xsl:for-each select="cyclictest/RawSampleData/Thread/Sample">
+-              <record>
+-		<value fid="0"><xsl:value-of select="$rterid"/></value>
+-		<value fid="1"><xsl:value-of select="../@id"/></value>
+-		<value fid="2"><xsl:value-of select="@seq"/></value>
+-		<value fid="3"><xsl:value-of select="@latency"/></value>
+-              </record>
+-            </xsl:for-each>
+-	  </records>
+-	</sqldata>
+-      </xsl:when>
+-
+-      <!-- Tables only used by rteval v2.0 and newer - just ignore them to avoid parsing warnings -->
+-      <xsl:when test="$table = 'hwlatdetect_summary'">
+-      </xsl:when>
+-      <xsl:when test="$table = 'hwlatdetect_samples'">
+-      </xsl:when>
+-
+-      <xsl:otherwise>
+-        <xsl:message terminate="yes">
+-          <xsl:text>Invalid 'table' parameter value: </xsl:text><xsl:value-of select="$table"/>
+-        </xsl:message>
+-      </xsl:otherwise>
+-    </xsl:choose>
+-  </xsl:template>
+-
+-
+-  <!-- Supported tables in reports from rteval v2.0 and newer -->
+-  <xsl:template match="/rteval[@version >= '2.0']">
+-    <xsl:choose>
+-      <!-- TABLE: systems -->
+-      <xsl:when test="$table = 'systems'">
+-        <xsl:apply-templates select="SystemInfo/DMIinfo/HardwareInfo" mode="tbl_systems"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: systems_hostname -->
+-      <xsl:when test="$table = 'systems_hostname'">
+-        <xsl:apply-templates select="SystemInfo" mode="tbl_systems_hostname"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: rtevalruns -->
+-      <xsl:when test="$table = 'rtevalruns'">
+-        <xsl:apply-templates select="." mode="tbl_rtevalruns"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: rtevalruns_details -->
+-      <xsl:when test="$table = 'rtevalruns_details'">
+-        <xsl:apply-templates select="SystemInfo" mode="tbl_rtevalruns_details"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: cyclic_statistics -->
+-      <xsl:when test="$table = 'cyclic_statistics'">
+-        <xsl:apply-templates select="Measurements/Profile/cyclictest" mode="tbl_cyclictest_statistics"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: cyclic_histogram -->
+-      <xsl:when test="$table = 'cyclic_histogram'">
+-        <xsl:apply-templates select="Measurements/Profile/cyclictest" mode="tbl_cyclictest_histogram"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: hwlatdetect_summary -->
+-      <xsl:when test="$table = 'hwlatdetect_summary'">
+-        <xsl:apply-templates select="Measurements/Profile/hwlatdetect" mode="tbl_hwlatdetect_summary"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: hwlatdetect_samples -->
+-      <xsl:when test="$table = 'hwlatdetect_samples'">
+-        <xsl:apply-templates select="Measurements/Profile/hwlatdetect/samples" mode="tbl_hwlatdetect_samples"/>
+-      </xsl:when>
+-
+-      <!-- TABLE: cyclic_rawdata - only used by rteval v1.4 and earlier -->
+-      <xsl:when test="$table = 'cyclic_rawdata'"> <!-- Just ignore this one - avoids parsing warnings -->
+-      </xsl:when>
+-
+-      <xsl:otherwise>
+-        <xsl:message terminate="yes">
+-          <xsl:text>Invalid 'table' parameter value: </xsl:text><xsl:value-of select="$table"/>
+-        </xsl:message>
+-      </xsl:otherwise>
+-    </xsl:choose>
+-  </xsl:template>
+-
+-
+-
+-
+-
+-  <!-- TABLE: systems - all rteval versions -->
+-  <xsl:template match="/rteval['2.0' > @version]/HardwareInfo|/rteval[@version >= '2.0']/SystemInfo/DMIinfo/HardwareInfo" mode="tbl_systems">
+-    <sqldata schemaver="1.0" table="systems" key="syskey">
+-      <fields>
+-        <field fid="0">sysid</field>
+-        <field fid="1">dmidata</field>
+-      </fields>
+-      <records>
+-        <record>
+-          <value fid="0" hash="sha1">
+-            <xsl:value-of select="concat(@SystemUUID,':',@SerialNo)"/>
+-          </value>
+-          <value fid="1" type="xmlblob">
+-            <xsl:copy-of select="."/>
+-          </value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: systems_hostname - rteval v1.37 or older -->
+-  <xsl:template match="/rteval['2.0' > @version]" mode="tbl_systems_hostname">
+-    <xsl:if test="string(number($syskey)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'syskey' parameter value: </xsl:text><xsl:value-of select="syskey"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <sqldata schemaver="1.0" table="systems_hostname">
+-      <xsl:call-template name="fields_systems_hostname"/>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$syskey"/></value>
+-          <value fid="1"><xsl:value-of select="uname/node"/></value>
+-          <value fid="2"><xsl:value-of select="network_config/interface/IPv4[@defaultgw=1]/@ipaddr"/></value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <!-- TABLE: systems_hostname - rteval v2.0 or newer -->
+-  <xsl:template match="/rteval[@version >= '2.0']/SystemInfo" mode="tbl_systems_hostname">
+-    <xsl:if test="string(number($syskey)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'syskey' parameter value: </xsl:text><xsl:value-of select="syskey"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <sqldata schemaver="1.0" table="systems_hostname">
+-      <xsl:call-template name="fields_systems_hostname"/>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$syskey"/></value>
+-          <value fid="1"><xsl:value-of select="uname/node"/></value>
+-          <value fid="2"><xsl:value-of select="NetworkConfig/interface/IPv4[@defaultgw=1]/@ipaddr"/></value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <xsl:template name="fields_systems_hostname">
+-    <fields>
+-      <field fid="0">syskey</field>
+-      <field fid="1">hostname</field>
+-      <field fid="2">ipaddr</field>
+-    </fields>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: rtevalruns - rteval v1.37 or older -->
+-  <xsl:template match="/rteval['2.0' > @version]" mode="tbl_rtevalruns">
+-    <sqldata schemaver="1.2" table="rtevalruns">
+-      <xsl:call-template name="fields_rtevalruns"/>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$syskey"/></value>
+-          <value fid="1"><xsl:value-of select="uname/kernel"/></value>
+-          <value fid="2"><xsl:choose>
+-            <xsl:when test="uname/kernel/@is_RT = '1'">true</xsl:when>
+-            <xsl:otherwise>false</xsl:otherwise></xsl:choose>
+-          </value>
+-          <value fid="3"><xsl:value-of select="uname/arch"/></value>
+-          <value fid="4"><xsl:value-of select="concat(run_info/date, ' ', run_info/time)"/></value>
+-          <value fid="5">
+-            <xsl:value-of select="(run_info/@days*86400)+(run_info/@hours*3600)
+-                                  +(run_info/@minutes*60)+(run_info/@seconds)"/>
+-          </value>
+-          <value fid="6"><xsl:value-of select="loads/@load_average"/></value>
+-          <value fid="7"><xsl:value-of select="@version"/></value>
+-          <value fid="8"><xsl:value-of select="$report_filename"/></value>
+-          <value fid="9"><xsl:value-of select="$rterid"/></value>
+-          <value fid="10"><xsl:value-of select="$submid"/></value>
+-          <value fid="11"><xsl:value-of select="uname/baseos"/></value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <!-- TABLE: rtevalruns - rteval v2.0 or newer -->
+-  <xsl:template match="/rteval[@version >= '2.0']" mode="tbl_rtevalruns">
+-    <sqldata schemaver="1.2" table="rtevalruns">
+-      <xsl:call-template name="fields_rtevalruns"/>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$syskey"/></value>
+-          <value fid="1"><xsl:value-of select="SystemInfo/uname/kernel"/></value>
+-          <value fid="2"><xsl:choose>
+-            <xsl:when test="SystemInfo/uname/kernel/@is_RT = '1'">true</xsl:when>
+-            <xsl:otherwise>false</xsl:otherwise></xsl:choose>
+-          </value>
+-          <value fid="3"><xsl:value-of select="SystemInfo/uname/arch"/></value>
+-          <value fid="4"><xsl:value-of select="concat(run_info/date, ' ', run_info/time)"/></value>
+-          <value fid="5">
+-            <xsl:value-of select="(run_info/@days*86400)+(run_info/@hours*3600)
+-                                  +(run_info/@minutes*60)+(run_info/@seconds)"/>
+-          </value>
+-          <value fid="6"><xsl:value-of select="loads/@load_average"/></value>
+-          <value fid="7"><xsl:value-of select="@version"/></value>
+-          <value fid="8"><xsl:value-of select="$report_filename"/></value>
+-          <value fid="9"><xsl:value-of select="$rterid"/></value>
+-          <value fid="10"><xsl:value-of select="$submid"/></value>
+-          <value fid="11"><xsl:value-of select="SystemInfo/uname/baseos"/></value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <xsl:template name="fields_rtevalruns">
+-    <xsl:if test="string(number($syskey)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'syskey' parameter value: </xsl:text><xsl:value-of select="syskey"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <xsl:if test="string(number($rterid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <xsl:if test="string(number($submid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'submid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <xsl:if test="$report_filename = ''">
+-      <xsl:message terminate="yes">
+-        <xsl:text>The parameter 'report_filename' parameter cannot be empty</xsl:text>
+-      </xsl:message>
+-    </xsl:if>
+-      <fields>
+-        <field fid="0">syskey</field>
+-        <field fid="1">kernel_ver</field>
+-        <field fid="2">kernel_rt</field>
+-        <field fid="3">arch</field>
+-        <field fid="4">run_start</field>
+-        <field fid="5">run_duration</field>
+-        <field fid="6">load_avg</field>
+-        <field fid="7">version</field>
+-        <field fid="8">report_filename</field>
+-        <field fid="9">rterid</field>
+-        <field fid="10">submid</field>
+-        <field fid="11">distro</field>
+-      </fields>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: rtevalruns_details - rteval v1.37 or older -->
+-  <xsl:template match="/rteval['2.0' > @version]" mode="tbl_rtevalruns_details">
+-    <sqldata schemaver="1.4" table="rtevalruns_details">
+-      <xsl:call-template name="fields_rtevalruns_details"/>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$rterid"/></value>
+-          <value fid="1"><xsl:value-of select="hardware/numa_nodes"/></value>
+-          <value fid="2">
+-            <xsl:choose>
+-              <xsl:when test="hardware/cpu_topology">
+-                <xsl:value-of select="hardware/cpu_topology/@num_cpu_cores"/>
+-              </xsl:when>
+-              <xsl:otherwise>
+-                <xsl:value-of select="hardware/cpu_cores"/>
+-              </xsl:otherwise>
+-            </xsl:choose>
+-          </value>
+-          <value fid="3">
+-            <xsl:value-of select="hardware/cpu_topology/@num_cpu_sockets"/>
+-          </value>
+-          <value fid="4" type="xmlblob">
+-            <rteval_details>
+-              <xsl:copy-of select="clocksource|services|kthreads|network_config|loads|cyclictest/command_line"/>
+-              <hardware>
+-                <xsl:copy-of select="hardware/memory_size|hardware/cpu_topology"/>
+-              </hardware>
+-            </rteval_details>
+-          </value>
+-          <value fid="5"><xsl:value-of select="run_info/annotate"/></value>
+-          <value fid="6" type="array">
+-            <xsl:for-each select="hardware/cpu_topology/cpu[generate-id() = generate-id(key('pkgkey', @physical_package_id)[1])]">
+-              <xsl:call-template name="count_core_spread_v1x">
+-                <xsl:with-param name="pkgid" select="@physical_package_id"/>
+-              </xsl:call-template>
+-            </xsl:for-each>
+-          </value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <!-- TABLE: rtevalruns_details - rteval v2.0 or newer -->
+-  <xsl:template match="/rteval[@version >= '2.0']/SystemInfo" mode="tbl_rtevalruns_details">
+-    <sqldata schemaver="1.4" table="rtevalruns_details">
+-      <xsl:call-template name="fields_rtevalruns_details"/>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$rterid"/></value>
+-          <value fid="1"><xsl:value-of select="Memory/numa_nodes"/></value>
+-          <value fid="2">
+-            <xsl:value-of select="CPUtopology/@num_cpu_cores"/>
+-          </value>
+-          <value fid="3">
+-            <xsl:value-of select="CPUtopology/@num_cpu_sockets"/>
+-          </value>
+-          <value fid="4" type="xmlblob">
+-            <rteval_details format="2">
+-              <xsl:copy-of select="Kernel/ClockSource|Services|Kernel/kthreads|NetworkConfig"/>
+-              <xsl:copy-of select="../loads"/>
+-              <Measurement>
+-                <xsl:for-each select="../Measurements/Profile/*">
+-                  <module>
+-                    <xsl:attribute name="name"><xsl:value-of select="name(.)"/></xsl:attribute>
+-                    <xsl:if test="@command_line">
+-                      <command_line><xsl:value-of select="@command_line"/></command_line>
+-                    </xsl:if>
+-                    <xsl:copy-of select="timestamps"/>
+-                  </module>
+-                </xsl:for-each>
+-              </Measurement>
+-              <hardware>
+-                <xsl:copy-of select="Memory|CPUtopology"/>
+-              </hardware>
+-            </rteval_details>
+-          </value>
+-          <value fid="5"><xsl:value-of select="../run_info/annotate"/></value>
+-          <value fid="6" type="array">
+-            <xsl:for-each select="CPUtopology/cpu[generate-id() = generate-id(key('pkgkey', @physical_package_id)[1])]">
+-              <xsl:call-template name="count_core_spread_v2x">
+-                <xsl:with-param name="pkgid" select="@physical_package_id"/>
+-              </xsl:call-template>
+-            </xsl:for-each>
+-          </value>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <xsl:template name="fields_rtevalruns_details">
+-    <xsl:if test="string(number($rterid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <fields>
+-      <field fid="0">rterid</field>
+-      <field fid="1">numa_nodes</field>
+-      <field fid="2">num_cpu_cores</field>
+-      <field fid="3">num_cpu_sockets</field>
+-      <field fid="4">xmldata</field>
+-      <field fid="5">annotation</field>
+-      <field fid="6">cpu_core_spread</field>
+-    </fields>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: cyclic_statistics - rteval - all version -->
+-  <xsl:template match="/rteval['2.0' > @version]/cyclictest|/rteval[@version >= '2.0']/Measurements/Profile/cyclictest"
+-                mode="tbl_cyclictest_statistics">
+-    <xsl:if test="string(number($rterid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <sqldata schemaver="1.1" table="cyclic_statistics">
+-      <fields>
+-        <field fid="0">rterid</field>
+-        <field fid="1">coreid</field>
+-        <field fid="2">priority</field>
+-        <field fid="3">num_samples</field>
+-        <field fid="4">lat_min</field>
+-        <field fid="5">lat_max</field>
+-        <field fid="6">lat_mean</field>
+-        <field fid="7">mode</field>
+-        <field fid="8">range</field>
+-        <field fid="9">median</field>
+-        <field fid="10">stddev</field>
+-        <field fid="11">mean_abs_dev</field>
+-      </fields>
+-      <records>
+-        <xsl:for-each select="core/statistics[samples > 0]|system/statistics[samples > 0]">
+-          <record>
+-            <value fid="0"><xsl:value-of select="$rterid"/></value>
+-            <value fid="1"><xsl:choose>
+-              <xsl:when test="../@id"><xsl:value-of select="../@id"/></xsl:when>
+-              <xsl:otherwise><xsl:attribute name="isnull">1</xsl:attribute></xsl:otherwise></xsl:choose>
+-            </value>
+-            <value fid="2"><xsl:choose>
+-              <xsl:when test="../@priority"><xsl:value-of select="../@priority"/></xsl:when>
+-              <xsl:otherwise><xsl:attribute name="isnull">1</xsl:attribute></xsl:otherwise></xsl:choose>
+-            </value>
+-            <value fid="3"><xsl:value-of select="samples"/></value>
+-            <value fid="4"><xsl:value-of select="minimum"/></value>
+-            <value fid="5"><xsl:value-of select="maximum"/></value>
+-            <value fid="6"><xsl:value-of select="mean"/></value>
+-            <value fid="7"><xsl:value-of select="mode"/></value>
+-            <value fid="8"><xsl:value-of select="range"/></value>
+-            <value fid="9"><xsl:value-of select="median"/></value>
+-            <value fid="10"><xsl:value-of select="standard_deviation"/></value>
+-            <value fid="11"><xsl:value-of select="mean_absolute_deviation"/></value>
+-          </record>
+-        </xsl:for-each>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: cyclic_histogram - rteval - all version -->
+-  <xsl:template match="/rteval['2.0' > @version]/cyclictest|/rteval[@version >= '2.0']/Measurements/Profile/cyclictest"
+-                mode="tbl_cyclictest_histogram">
+-    <xsl:if test="string(number($rterid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <sqldata schemaver="1.0" table="cyclic_histogram">
+-      <fields>
+-        <field fid="0">rterid</field>
+-        <field fid="1">core</field>
+-        <field fid="2">index</field>
+-        <field fid="3">value</field>
+-      </fields>
+-      <records>
+-        <!-- Do it in this order, so the overall system results are parsed first -->
+-        <xsl:apply-templates select="./system/histogram/bucket" mode="cyclic_histogram_rec_sql"/>
+-        <xsl:apply-templates select="./core/histogram/bucket" mode="cyclic_histogram_rec_sql"/>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <xsl:template match="/rteval['2.0' > @version]/cyclictest/*/histogram/bucket|/rteval[@version >= '2.0']/Measurements/Profile/cyclictest/*/histogram/bucket"
+-		mode="cyclic_histogram_rec_sql">
+-      <record>
+-	<value fid="0"><xsl:value-of select="$rterid"/></value>
+-	<value fid="1"><xsl:value-of select="../../@id"/></value>
+-	<value fid="2"><xsl:value-of select="@index"/></value>
+-	<value fid="3"><xsl:value-of select="@value"/></value>
+-      </record>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: hwlatdetect_summar - only for rteval 2.0 and newer -->
+-  <xsl:template match="/rteval[@version >= '2.0']/Measurements/Profile/hwlatdetect" mode="tbl_hwlatdetect_summary">
+-    <xsl:if test="string(number($rterid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <sqldata schemaver="1.5" table="hwlatdetect_summary">
+-      <fields>
+-        <field fid="0">rterid</field>
+-        <field fid="1">duration</field>
+-        <field fid="2">threshold</field>
+-        <field fid="3">timewindow</field>
+-        <field fid="4">width</field>
+-        <field fid="5">samplecount</field>
+-        <field fid="6">hwlat_min</field>
+-        <field fid="7">hwlat_avg</field>
+-        <field fid="8">hwlat_max</field>
+-      </fields>
+-      <records>
+-        <record>
+-          <value fid="0"><xsl:value-of select="$rterid"/></value>
+-          <value fid="1"><xsl:value-of select="RunParams/@duration"/></value>
+-          <value fid="2"><xsl:value-of select="RunParams/@threshold"/></value>
+-          <value fid="3"><xsl:value-of select="RunParams/@window"/></value>
+-          <value fid="4"><xsl:value-of select="RunParams/@width"/></value>
+-          <value fid="5"><xsl:value-of select="samples/@count"/></value>
+-          <xsl:choose>
+-            <xsl:when test="samples/@count > 0">
+-              <value fid="6"><xsl:value-of select="math:min(samples/sample/@duration)"/></value>
+-              <value fid="7"><xsl:value-of select="sum(samples/sample/@duration) div samples/@count"/></value>
+-              <value fid="8"><xsl:value-of select="math:max(samples/sample/@duration)"/></value>
+-            </xsl:when>
+-            <xsl:otherwise>
+-              <value fid="6">0</value>
+-              <value fid="7">0</value>
+-              <value fid="8">0</value>
+-            </xsl:otherwise>
+-          </xsl:choose>
+-        </record>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-
+-
+-  <!-- TABLE: hwlatdetect_samples - only for rteval 2.0 and newer -->
+-  <xsl:template match="/rteval[@version >='2.0']/Measurements/Profile/hwlatdetect/samples" mode="tbl_hwlatdetect_samples">
+-    <xsl:if test="string(number($rterid)) = 'NaN'">
+-      <xsl:message terminate="yes">
+-        <xsl:text>Invalid 'rterid' parameter value: </xsl:text><xsl:value-of select="$rterid"/>
+-      </xsl:message>
+-    </xsl:if>
+-    <sqldata schemaver="1.5" table="hwlatdetect_samples">
+-      <fields>
+-        <field fid="0">rterid</field>
+-        <field fid="1">timestamp</field>
+-        <field fid="2">latency</field>
+-      </fields>
+-      <records>
+-        <xsl:apply-templates select="sample" mode="hwlatdetect_samples"/>
+-      </records>
+-    </sqldata>
+-  </xsl:template>
+-
+-  <xsl:template match="/rteval[@version >='2.0']/Measurements/Profile/hwlatdetect[@format='1.0']/samples/sample" mode="hwlatdetect_samples">
+-    <record>
+-      <value fid="0"><xsl:value-of select="$rterid"/></value>
+-      <value fid="1"><xsl:value-of select="@timestamp"/></value>
+-      <value fid="2"><xsl:value-of select="@duration"/></value>
+-    </record>
+-  </xsl:template>
+-
+-
+-
+-
+-  <!-- Helper "function" for generating a core per physical socket spread overview - for rteval v1.37 or older -->
+-  <xsl:template name="count_core_spread_v1x">
+-    <xsl:param name="pkgid"/>
+-    <value>
+-      <xsl:value-of select="count(/rteval/hardware/cpu_topology/cpu[@physical_package_id = $pkgid])"/>
+-    </value>
+-  </xsl:template>
+-
+-  <!-- Helper "function" for generating a core per physical socket spread overview - for rteval v2.0 or newer -->
+-  <xsl:template name="count_core_spread_v2x">
+-    <xsl:param name="pkgid"/>
+-    <value>
+-      <xsl:value-of select="count(/rteval/SystemInfo/CPUtopology/cpu[@physical_package_id = $pkgid])"/>
+-    </value>
+-  </xsl:template>
+-
+-</xsl:stylesheet>
+diff --git a/server/remove_rtevalrun b/server/remove_rtevalrun
+deleted file mode 100755
+index 8772b33..0000000
+--- a/server/remove_rtevalrun
++++ /dev/null
+@@ -1,65 +0,0 @@
+-#!/usr/bin/python3 -tt
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   remove_rtevalrun
+-#   A script intended to be run on the database server, which
+-#   removes a given rteval run, based on the 'rterid' value
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import sys
+-import getpass
+-from argparse import ArgumentParser
+-from database import Database
+-
+-def do_delete(dbc, table, rterid):
+-    print "Cleaning up %s ..." % table,
+-    try:
+-        res = dbc.DELETE(table, {"rterid": int(rterid)})
+-        print "%i rows deleted" % res
+-    except Exception, err:
+-        print " ** FAILED **"
+-        print err
+-        dbc.ROLLBACK()
+-        sys.exit(2)
+-
+-
+-if __name__ == '__main__':
+-    parser = ArgumentParser(version="%prog v0.1")
+-
+-    parser.add_argument("-H", "--host", action="store", dest="dbhost", default="localhost",
+-                      help="Database server to connect to (default: %default)",
+-                      metavar="HOST")
+-    parser.add_argument("-p", "--port", action="store", dest="dbport", default="5432",
+-                      help="Database server port to use (default: %default)", metavar="PORT")
+-    parser.add_argument("-U", "--user", action="store", dest="dbuser", default="rtevaladmin",
+-                      help="Database user to connect as (default: %default)", metavar="USERNAME")
+-    parser.add_argument("-d", "--database", action="store", dest="dbname", default="rteval",
+-                      help="Database to use (default: %default)", metavar="DATABASE")
+-    parser.add_argument("-r", "--rterid", action="store", dest="rterid", default=None,
+-                      help="rteval run id to remove from the database", metavar="INTEGER")
+-    opts = parser.parse_args()
+-
+-    if opts.rterid is None:
+-        print "%s:  Missing --rterid value" % sys.argv[0]
+-        sys.exit(1)
+-
+-    dbpwd = getpass.getpass("Database password for '%s': " % opts.dbuser)
+-
+-    try:
+-        dbc = Database(host=opts.dbhost, port=opts.dbport,
+-                       user=opts.dbuser, password=dbpwd, database=opts.dbname)
+-    except Exception, err:
+-        print "Could not connect to the database: %s" % str(err)
+-        sys.exit(2)
+-
+-    # Do the cleanup
+-    do_delete(dbc, "cyclic_rawdata", opts.rterid)
+-    do_delete(dbc, "cyclic_statistics", opts.rterid)
+-    do_delete(dbc, "rtevalruns_details", opts.rterid)
+-    do_delete(dbc, "rtevalruns", opts.rterid)
+-
+-    dbc.COMMIT()
+-else:
+-    raise Exception, "This is a standalone program, not a module to be imported"
+diff --git a/server/rteval-parser.spec b/server/rteval-parser.spec
+deleted file mode 100644
+index 00c75bf..0000000
+--- a/server/rteval-parser.spec
++++ /dev/null
+@@ -1,133 +0,0 @@
+-Name:		rteval-parser
+-Version:	1.6
+-%define sqlschemaver 1.5
+-Release:	1%{?dist}
+-Summary:	Report parser daemon for  rteval XML-RPC
+-%define pkgname rteval-xmlrpc-%{version}
+-
+-Group:		Applications/System
+-License:	GPLv2
+-URL:		http://git.kernel.org/?p=linux/kernel/git/clrkwllms/rteval.git
+-Source0:	%{pkgname}.tar.gz
+-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+-
+-BuildRequires:	postgresql-devel libxml2-devel libxslt-devel
+-Requires:	postgresql httpd mod_wsgi
+-Requires(post): chkconfig
+-Requires(preun): chkconfig
+-Requires(preun): /sbin/service
+-
+-
+-%description
+-The XML parser daemon (rteval-parserd) will parse the received reports
+-and save them in a database for further processing.
+-
+-%package -n rteval-xmlrpc
+-Summary:	XML-RPC server and parser for rteval
+-BuildArch:	noarch
+-
+-
+-%description -n rteval-xmlrpc
+-The XML-RPC server is using Apache and mod_python to receive reports from
+-rteval clients submitting test results via an XML-RPC API.
+-
+-
+-%prep
+-%setup -q -n %{pkgname}
+-
+-
+-%build
+-%configure --with-xmlrpc-webroot=%{_localstatedir}/www/html/rteval --docdir=%{_defaultdocdir}/%{pkgname}
+-make %{?_smp_mflags}
+-
+-
+-%install
+-rm -rf $RPM_BUILD_ROOT
+-make install DESTDIR=$RPM_BUILD_ROOT
+-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/httpd/conf.d
+-cp apache-rteval.conf $RPM_BUILD_ROOT/%{_sysconfdir}/httpd/conf.d/rteval-xmlrpc.conf
+-
+-# Move the init script and config file from docs, to the proper place on RHEL/Fedora
+-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
+-mv $RPM_BUILD_ROOT/%{_defaultdocdir}/%{pkgname}/initscripts/rteval-parserd.init $RPM_BUILD_ROOT/%{_sysconfdir}/init.d/rteval-parserd
+-mv $RPM_BUILD_ROOT/%{_defaultdocdir}/%{pkgname}/initscripts/rteval-parserd.sysconfig $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/rteval-parserd
+-rmdir $RPM_BUILD_ROOT/%{_defaultdocdir}/%{pkgname}/initscripts
+-
+-
+-%post
+-/sbin/chkconfig --add rteval-parserd
+-
+-
+-%preun
+-if [ "$1" = 0 ] ; then
+-   /sbin/service rteval-parserd stop > /dev/null 2>&1
+-   /sbin/chkconfig --del rteval-parserd
+-fi
+-exit 0
+-
+-
+-%clean
+-rm -rf $RPM_BUILD_ROOT
+-
+-
+-%files
+-%defattr(-,root,root,-)
+-%doc COPYING parser/README.parser sql/rteval-%{sqlschemaver}.sql sql/delta-*_*.sql
+-%config(noreplace) %{_sysconfdir}/sysconfig/rteval-parserd
+-%attr(0755,root,root) %{_sysconfdir}/init.d/rteval-parserd
+-%{_bindir}/rteval-parserd
+-%{_datadir}/rteval/xmlparser.xsl
+-
+-
+-%files -n rteval-xmlrpc
+-%defattr(-,root,root,-)
+-%doc COPYING README.xmlrpc
+-%config(noreplace) %{_sysconfdir}/httpd/conf.d/rteval-xmlrpc.conf
+-%{_localstatedir}/www/html/rteval/
+-
+-
+-%changelog
+-* Thu Nov 15 2012 David Sommerseth <davids@redhat.com> - 1.6-1
+-- Make rteval-parserd have no hard coded measurement data table restrictions
+-- Added support for hwlatdetect data
+-
+-* Fri Oct  7 2011 David Sommerseth <dazo@users.sourceforge.net> - 1.5-1
+-- Added support for storing data as arrays in PostgreSQL
+-- Updated SQL schema to store CPU topology/core spread as an array in the database
+-
+-* Fri Feb  4 2011 David Sommerseth <dazo@users.sourceforge.net> - 1.4-1
+-- Added support for mod_wsgi
+-- Updated SQL schema, to add rteval annotations to an explicit database column
+-
+-* Fri Apr  9 2010 David Sommerseth <davids@redhat.com> - 1.3-1
+-- Updated XML-RPC server, added Hello method
+-
+-* Fri Mar 26 2010 David Sommerseth <davids@redhat.com> - 1.2-2
+-- Improved logging
+-
+-* Fri Mar 26 2010 David Sommerseth <davids@redhat.com> - 1.2-1
+-- Cleaned up xmlparser.xsl
+-- Honour 'isnull' attributes in SQL XML
+-- Improved IP address handling on system registration when ipaddr == NULL
+-- Fixed wrong GRANT statement in rteval_info table
+-
+-* Mon Mar 22 2010 David Sommerseth <davids@redhat.com> - 1.1-2
+-- rteval-xmlrpc.spec renamed to rteval-parser.spec
+-- Split XML-RPC noarch related files and the binary part with rteval-parserd
+-- Reorganised the .spec file - rteval-xmlrpc RPM is now a noarch sub-package
+-- Consider the renamed rteval_parserd -> rteval-parserd
+-- Install /etc/init.d/rteval-parserd and /etc/sysconfig/rteval-parserd
+-
+-* Tue Dec  8 2009 David Sommerseth <davids@redhat.com> - 1.1-1
+-- Updated to rteval-xmlrpc v1.1
+-  - Added new database table, rteval_info, containing some information about the
+-    rteval-xmlrpc installation
+-  - Made rteval_parserd aware of which SQL schema version it is working against
+-  - Added 'schemaver' attributes to <sqldata/> tags, defining which SQL schema
+-    version which is needed
+-  - Added mean_absolute_deviation and variance fields from rteval XML reports to
+-    the database
+-
+-* Thu Dec  3 2009 David Sommerseth <davids@redhat.com> - 1.0-1
+-- Inital rteval-xmlrpc.spec file
+-
+diff --git a/server/rteval_testserver.py b/server/rteval_testserver.py
+deleted file mode 100644
+index f141b52..0000000
+--- a/server/rteval_testserver.py
++++ /dev/null
+@@ -1,107 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   rteval_testserver.py
+-#   Local XML-RPC test server.  Can be used to verify XML-RPC behavoiur
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import os
+-import sys
+-import signal
+-from xmlrpc.server import SimpleXMLRPCServer
+-from xmlrpc.server import SimpleXMLRPCRequestHandler
+-import argparse
+-
+-import xmlrpc_API1
+-from Logger import Logger
+-
+-# Default values
+-LISTEN="127.0.0.1"
+-PORT=65432
+-
+-# Restrict to a particular path.
+-class RequestHandler(SimpleXMLRPCRequestHandler):
+-    rpc_paths = ('/rteval/API1/',)
+-
+-
+-class RTevald_config(object):
+-    def __init__(self):
+-        self.config = {'datadir': '/tmp/rteval-xmlrpc-testsrv',
+-                       'db_server': 'localhost',
+-                       'db_port': 5432,
+-                       'database': 'dummy',
+-                       'db_username': None,
+-                       'db_password': None}
+-        self.__update_vars()
+-
+-    def __update_vars(self):
+-        for k in list(self.config.keys()):
+-            self.__dict__[k] = self.config[k]
+-
+-
+-class RTevald():
+-    def __init__(self, options, log):
+-        self.options = options
+-        self.log = log
+-        self.server = None
+-        self.config = RTevald_config()
+-
+-    def __prepare_datadir(self):
+-        startdir = os.getcwd()
+-        for dir in self.config.datadir.split("/"):
+-            if dir is '':
+-                continue
+-            if not os.path.exists(dir):
+-                os.mkdir(dir, 0o700)
+-            os.chdir(dir)
+-        if not os.path.exists('queue'):
+-            os.mkdir('queue', 0o700)
+-        os.chdir(startdir)
+-
+-    def StartServer(self):
+-        # Create server
+-        self.server = SimpleXMLRPCServer((self.options.listen, self.options.port),
+-                                         requestHandler=RequestHandler)
+-        self.server.register_introspection_functions()
+-
+-        # setup a class to handle requests
+-        self.server.register_instance(xmlrpc_API1.XMLRPC_API1(self.config, nodbaction=True, debug=True))
+-
+-        # Run the server's main loop
+-        self.log.Log("StartServer", "Listening on %s:%i" % (self.options.listen, self.options.port))
+-        try:
+-            self.__prepare_datadir()
+-            self.server.serve_forever()
+-        except KeyboardInterrupt:
+-            self.log.Log("StartServer", "Server caught SIGINT")
+-            self.server.shutdown()
+-        finally:
+-            self.log.Log("StartServer", "Server stopped")
+-
+-    def StopServer(self):
+-        self.server.shutdown()
+-
+-
+-logger = None
+-rtevalserver = None
+-
+-#
+-#  M A I N   F U N C T I O N
+-#
+-
+-if __name__ == '__main__':
+-    parser = argparse.ArgumentParser(version="%prog v0.1")
+-
+-    parser.add_argument("-L", "--listen", action="store", dest="listen", default=LISTEN,
+-                      help="Which interface to listen to [default: %default]", metavar="IPADDR")
+-    parser.add_argument("-P", "--port", action="store", type="int", dest="port", default=PORT,
+-                      help="Which port to listen to [default: %default]",  metavar="PORT")
+-    parser.add_argument("-l", "--log", action="store", dest="logfile", default=None,
+-                      help="Where to log requests.", metavar="FILE")
+-
+-    options = parser.parse_args()
+-
+-    logger = Logger(options.logfile, "RTeval")
+-    rtevalserver = RTevald(options, logger)
+-    rtevalserver.StartServer()
+diff --git a/server/rteval_xmlrpc.py b/server/rteval_xmlrpc.py
+deleted file mode 100644
+index b63b7d8..0000000
+--- a/server/rteval_xmlrpc.py
++++ /dev/null
+@@ -1,71 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   rteval_xmlrpc.py
+-#   XML-RPC handler for mod_python which will receive requests
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import types
+-from mod_python import apache
+-from xmlrpc.client import dumps, loads, Fault
+-from xmlrpc_API1 import XMLRPC_API1
+-from rteval.rtevalConfig import rtevalConfig
+-
+-
+-def Dispatch(req, method, args):
+-    # Default configuration
+-    defcfg = {'xmlrpc_server': { 'datadir':     '/var/lib/rteval',
+-                                 'db_server':   'localhost',
+-                                 'db_port':     5432,
+-                                 'database':    'rteval',
+-                                 'db_username': 'rtevxmlrpc',
+-                                 'db_password': 'rtevaldb'
+-                                 }
+-              }
+-
+-    # Fetch configuration
+-    cfg = rtevalConfig(defcfg)
+-    cfg.Load(append=True)
+-
+-    # Prepare an object for executing the query
+-    xmlrpc = XMLRPC_API1(config=cfg.GetSection('xmlrpc_server'))
+-
+-    # Exectute it
+-    result = xmlrpc.Dispatch(method, args)
+-
+-    # Send the result
+-    if type(result) == tuple:
+-        req.write(dumps(result, None, methodresponse=1))
+-    else:
+-        req.write(dumps((result,), None, methodresponse=1))
+-
+-
+-def handler(req):
+-    # Only accept POST requests
+-    if req.method != 'POST':
+-        req.content_type = 'text/plain'
+-        req.send_http_header()
+-        req.write("Not valid XML-RPC POST request")
+-        return apache.OK
+-
+-    # Fetch the request
+-    body = req.read()
+-
+-    # Prepare response
+-    req.content_type = "text/xml"
+-    req.send_http_header()
+-
+-    # Process request
+-    try:
+-        args, method = loads(body)
+-    except:
+-        fault = Fault(0x001, "Invalid XML-RPC error")
+-        req.write(dumps(fault, methodresponse=1))
+-        return apache.OK
+-
+-    # Execute it.  The calling function is
+-    # responsive for responding to the request.
+-    Dispatch(req, method, args)
+-
+-    return apache.OK
+diff --git a/server/rteval_xmlrpc.wsgi b/server/rteval_xmlrpc.wsgi
+deleted file mode 100644
+index 1bf6661..0000000
+--- a/server/rteval_xmlrpc.wsgi
++++ /dev/null
+@@ -1,94 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   rteval_xmlrpc.wsgi
+-#   XML-RPC handler for the rteval server, using mod_wsgi
+-#
+-#   Copyright 2011 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-from wsgiref.simple_server import make_server
+-import types
+-from xmlrpclib import dumps, loads, Fault
+-from xmlrpc_API1 import XMLRPC_API1
+-from rteval.rtevalConfig import rtevalConfig
+-
+-def rtevalXMLRPC_Dispatch(method, args):
+-    # Default configuration
+-    defcfg = {'xmlrpc_server': { 'datadir':     './var/lib/rteval',
+-                                 'db_server':   'localhost',
+-                                 'db_port':     5432,
+-                                 'database':    'rteval',
+-                                 'db_username': 'rtevxmlrpc',
+-                                 'db_password': 'rtevaldb'
+-                                 }
+-              }
+-
+-    # Fetch configuration
+-    cfg = rtevalConfig(defcfg)
+-    cfg.Load(append=True)
+-
+-    # Prepare an object for executing the query
+-    xmlrpc = XMLRPC_API1(config=cfg.GetSection('xmlrpc_server'))
+-
+-    # Exectute it
+-    result = xmlrpc.Dispatch(method, args)
+-
+-    # Send the result
+-    if type(result) == types.TupleType:
+-        return dumps(result, None, methodresponse=1)
+-    else:
+-        return dumps((result,), None, methodresponse=1)
+-
+-
+-def rtevalXMLRPC_handler(environ, start_response):
+-
+-   # the environment variable CONTENT_LENGTH may be empty or missing
+-   try:
+-      request_body_size = int(environ.get('CONTENT_LENGTH', 0))
+-   except (ValueError):
+-      request_body_size = 0
+-
+-   # When the method is POST the query string will be sent
+-   # in the HTTP request body which is passed by the WSGI server
+-   # in the file like wsgi.input environment variable.
+-   try:
+-       if (environ['REQUEST_METHOD'] != 'POST') or (request_body_size < 1):
+-           raise Exception('Error in request')
+-
+-       request_body = environ['wsgi.input'].read(request_body_size)
+-       try:
+-           args, method = loads(request_body)
+-       except:
+-           raise Exception('Invalid XML-RPC request')
+-
+-       # Execute the XML-RPC call
+-       status = '200 OK'
+-       cont_type = 'text/xml'
+-       response = [rtevalXMLRPC_Dispatch(method, args)]
+-   except Exception, ex:
+-       status = '500 Internal server error: %s' % str(ex)
+-       cont_type = 'text/plain'
+-       response = [
+-           '500 Internal server error\n',
+-           'ERROR: %s' % str(ex)
+-           ]
+-       import traceback, sys
+-       traceback.print_exc(file=sys.stderr)
+-
+-   response_headers = [('Content-Type', cont_type),
+-                       ('Content-Length', str(len("".join(response))))]
+-   start_response(status, response_headers)
+-   return response
+-
+-
+-if __name__ == '__main__':
+-    #
+-    # Simple stand-alone XML-RPC server, if started manually
+-    # Not suitable for production environments, but for testing
+-    #
+-    httpd = make_server('localhost', 65432, rtevalXMLRPC_handler)
+-    try:
+-        httpd.serve_forever()
+-    except KeyboardInterrupt:
+-        print "\nShutting down"
+-
+diff --git a/server/rtevaldb.py b/server/rtevaldb.py
+deleted file mode 100644
+index b13c85b..0000000
+--- a/server/rtevaldb.py
++++ /dev/null
+@@ -1,57 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   rtevaldb.py
+-#   Function for registering a rteval summary.xml report into the database
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import os
+-from database import Database
+-
+-def register_submission(config, clientid, filename, debug=False, noaction=False):
+-    "Registers a submission of a rteval report which signalises the rteval_parserd process"
+-
+-    dbc = Database(host=config.db_server, port=config.db_port, database=config.database,
+-                   user=config.db_username, password=config.db_password,
+-                   debug=debug, noaction=noaction)
+-
+-    submvars = {"table": "submissionqueue",
+-                "fields": ["clientid", "filename"],
+-                "records": [[clientid, filename]],
+-                "returning": "submid"
+-                }
+-
+-    res = dbc.INSERT(submvars)
+-    if len(res) != 1:
+-        raise Exception("Could not register the submission")
+-
+-    dbc.COMMIT()
+-    return res[0]
+-
+-def database_status(config, debug=False, noaction=False):
+-    dbc = Database(host=config.db_server, port=config.db_port, database=config.database,
+-                   user=config.db_username, password=config.db_password,
+-                   debug=debug, noaction=noaction)
+-    if not dbc:
+-        return {"status": "No connection to pgsql://%s:%s/%s" % (config.db_server,
+-                                                                 config.db_port,
+-                                                                 config.database)}
+-
+-    res = dbc.SELECT('rtevalruns',
+-                     ["to_char(CURRENT_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS server_time",
+-                      "max(rterid) AS last_rterid",
+-                      "max(submid) AS last_submid"]
+-                     )
+-    if len(res) != 3:
+-        return {"status": "Could not query database pgsql://%s:%s/%s" % (config.db_server,
+-                                                                         config.db_port,
+-                                                                         config.database)}
+-    last_rterid = res['records'][0][1] and res['records'][0][1] or "(None)"
+-    last_submid = res['records'][0][1] and res['records'][0][2] or "(None)"
+-    return {"status": "OK",
+-            "server_time": res['records'][0][0],
+-            "last_rterid": last_rterid,
+-            "last_submid": last_submid
+-            }
+-
+diff --git a/server/sql/delta-1.0_1.1.sql b/server/sql/delta-1.0_1.1.sql
+deleted file mode 100644
+index 9fe230e..0000000
+--- a/server/sql/delta-1.0_1.1.sql
++++ /dev/null
+@@ -1,15 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- SQL delta update from rteval-1.0.sql to rteval-1.1.sql
+-
+-CREATE TABLE rteval_info (
+-       key    varchar(32) NOT NULL,
+-       value  TEXT NOT NULL,
+-       rtiid  SERIAL,
+-       PRIMARY KEY(rtiid)
+-);
+-GRANT SELECT ON rteval_info TO rtevparser;
+-INSERT INTO rteval_info (key, value) VALUES ('sql_schema_ver','1.1');
+-
+-ALTER TABLE cyclic_statistics ADD COLUMN mean_abs_dev REAL;
+-ALTER TABLE cyclic_statistics ADD COLUMN variance REAL;
+-
+diff --git a/server/sql/delta-1.1_1.2.sql b/server/sql/delta-1.1_1.2.sql
+deleted file mode 100644
+index e5d82ab..0000000
+--- a/server/sql/delta-1.1_1.2.sql
++++ /dev/null
+@@ -1,9 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- SQL delta update from rteval-1.1.sql to rteval-1.2.sql
+-
+-UPDATE rteval_info SET value = '1.2' WHERE key = 'sql_schema_ver';
+-
+-ALTER TABLE rtevalruns ADD COLUMN distro VARCHAR(128);
+-ALTER TABLE rtevalruns_details ADD COLUMN num_cpu_cores INTEGER;
+-ALTER TABLE rtevalruns_details ADD COLUMN num_cpu_sockets INTEGER;
+-ALTER TABLE rtevalruns_details ADD COLUMN numa_nodes INTEGER;
+diff --git a/server/sql/delta-1.2_1.3.sql b/server/sql/delta-1.2_1.3.sql
+deleted file mode 100644
+index 1c10bf2..0000000
+--- a/server/sql/delta-1.2_1.3.sql
++++ /dev/null
+@@ -1,6 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- SQL delta update from rteval-1.2.sql to rteval-1.3.sql
+-
+-UPDATE rteval_info SET value = '1.3' WHERE key = 'sql_schema_ver';
+-
+-ALTER TABLE rtevalruns_details ADD COLUMN annotation TEXT;
+diff --git a/server/sql/delta-1.3_1.4.sql b/server/sql/delta-1.3_1.4.sql
+deleted file mode 100644
+index e0c0162..0000000
+--- a/server/sql/delta-1.3_1.4.sql
++++ /dev/null
+@@ -1,6 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- SQL delta update from rteval-1.3.sql to rteval-1.4.sql
+-
+-UPDATE rteval_info SET value = '1.4' WHERE key = 'sql_schema_ver';
+-
+-ALTER TABLE rtevalruns_details ADD COLUMN cpu_core_spread INTEGER[];
+diff --git a/server/sql/delta-1.4_1.5.sql b/server/sql/delta-1.4_1.5.sql
+deleted file mode 100644
+index bd1336e..0000000
+--- a/server/sql/delta-1.4_1.5.sql
++++ /dev/null
+@@ -1,31 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- SQL delta update from rteval-1.4.sql to rteval-1.5.sql
+-
+-UPDATE rteval_info SET value = '1.5' WHERE key = 'sql_schema_ver';
+-
+--- TABLE: hwlatdetect_summary
+--- Tracks hwlatdetect results for a particular hardware
+---
+-   CREATE TABLE hwlatdetect_summary (
+-       rterid         INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-       duration       INTEGER NOT NULL,
+-       threshold      INTEGER NOT NULL,
+-       timewindow     INTEGER NOT NULL,
+-       width          INTEGER NOT NULL,
+-       samplecount    INTEGER NOT NULL,
+-       hwlat_min      REAL NOT NULL,
+-       hwlat_avg      REAL NOT NULL,
+-       hwlat_max      REAL NOT NULL
+-   ) WITHOUT OIDS;
+-   GRANT SELECT, INSERT ON hwlatdetect_summary TO rtevparser;
+-
+--- TABLE: hwlatdetect_samples
+--- Contains the hwlatdetect sample records from a particular run
+---
+-   CREATE TABLE hwlatdetect_samples (
+-       rterid         INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-       timestamp      NUMERIC(20,10) NOT NULL,
+-       latency        REAL NOT NULL
+-   ) WITHOUT OIDS;
+-   GRANT SELECT, INSERT ON hwlatdetect_samples TO rtevparser;
+-
+diff --git a/server/sql/rteval-1.0.sql b/server/sql/rteval-1.0.sql
+deleted file mode 100644
+index 107c90e..0000000
+--- a/server/sql/rteval-1.0.sql
++++ /dev/null
+@@ -1,189 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- Create rteval database users
+---
+-CREATE USER rtevxmlrpc NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb';
+-CREATE USER rtevparser NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb_parser';
+-
+--- Create rteval database
+---
+-CREATE DATABASE rteval ENCODING 'utf-8';
+-
+-\c rteval
+-
+--- Enable plpgsql.  It is expected that this PL/pgSQL is available.
+-CREATE LANGUAGE 'plpgsql';
+-
+--- FUNCTION: trgfnc_submqueue_notify
+--- Trigger function which is called on INSERT queries to the submissionqueue table.
+--- It will send a NOTIFY rteval_submq on INSERTs.
+---
+-    CREATE FUNCTION trgfnc_submqueue_notify() RETURNS TRIGGER
+-    AS $BODY$
+-      DECLARE
+-      BEGIN
+-        NOTIFY rteval_submq;
+-        RETURN NEW;
+-      END
+-    $BODY$ LANGUAGE 'plpgsql';
+-
+-    -- The user(s) which are allowed to do INSERT on the submissionqueue
+-    -- must also be allowed to call this trigger function.
+-    GRANT EXECUTE ON FUNCTION trgfnc_submqueue_notify() TO rtevxmlrpc;
+-
+--- TABLE: submissionqueue
+--- All XML-RPC clients registers their submissions into this table.  Another parser thread
+--- will pickup the records where parsestart IS NULL.
+---
+-    CREATE TABLE submissionqueue (
+-           clientid   varchar(128) NOT NULL,
+-           filename   VARCHAR(1024) NOT NULL,
+-           status     INTEGER DEFAULT '0',
+-           received   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+-           parsestart TIMESTAMP WITH TIME ZONE,
+-           parseend   TIMESTAMP WITH TIME ZONE,
+-           submid     SERIAL,
+-           PRIMARY KEY(submid)
+-    ) WITH OIDS;
+-    CREATE INDEX submissionq_status ON submissionqueue(status);
+-
+-    CREATE TRIGGER trg_submissionqueue AFTER INSERT
+-           ON submissionqueue FOR EACH STATEMENT
+-	   EXECUTE PROCEDURE trgfnc_submqueue_notify();
+-
+-    GRANT SELECT, INSERT ON submissionqueue TO rtevxmlrpc;
+-    GRANT USAGE ON submissionqueue_submid_seq TO rtevxmlrpc;
+-    GRANT SELECT, UPDATE ON submissionqueue TO rtevparser;
+-
+--- TABLE: systems
+--- Overview table over all systems which have sent reports
+--- The dmidata column will keep the complete DMIdata available
+--- for further information about the system.
+---
+-    CREATE TABLE systems (
+-        syskey        SERIAL NOT NULL,
+-        sysid         VARCHAR(64) NOT NULL,
+-        dmidata       xml NOT NULL,
+-        PRIMARY KEY(syskey)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON systems TO rtevparser;
+-    GRANT USAGE ON systems_syskey_seq TO rtevparser;
+-
+--- TABLE: systems_hostname
+--- This table is used to track the hostnames and IP addresses
+--- a registered system have used over time
+---
+-   CREATE TABLE systems_hostname (
+-        syskey        INTEGER REFERENCES systems(syskey) NOT NULL,
+-        hostname      VARCHAR(256) NOT NULL,
+-        ipaddr        cidr      
+-    ) WITH OIDS;
+-    CREATE INDEX systems_hostname_syskey ON systems_hostname(syskey);
+-    CREATE INDEX systems_hostname_hostname ON systems_hostname(hostname);
+-    CREATE INDEX systems_hostname_ipaddr ON systems_hostname(ipaddr);
+-
+-    GRANT SELECT, INSERT ON systems_hostname TO rtevparser;
+-
+-
+--- TABLE: rtevalruns
+--- Overview over all rteval runs, when they were run and how long they ran.
+---
+-    CREATE TABLE rtevalruns (
+-        rterid          SERIAL NOT NULL, -- RTEval Run Id
+-        submid          INTEGER REFERENCES submissionqueue(submid) NOT NULL,
+-        syskey          INTEGER REFERENCES systems(syskey) NOT NULL,
+-        kernel_ver      VARCHAR(32) NOT NULL,
+-        kernel_rt       BOOLEAN NOT NULL,
+-        arch            VARCHAR(12) NOT NULL,
+-        run_start       TIMESTAMP WITH TIME ZONE NOT NULL,
+-        run_duration    INTEGER NOT NULL,
+-        load_avg        REAL NOT NULL,
+-        version         VARCHAR(4), -- Version of rteval
+-        report_filename TEXT,
+-        PRIMARY KEY(rterid)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON rtevalruns TO rtevparser;
+-    GRANT SELECT ON rtevalruns TO rtevxmlrpc;
+-    GRANT USAGE ON rtevalruns_rterid_seq TO rtevparser;
+-
+--- TABLE rtevalruns_details
+--- More specific information on the rteval run.  The data is stored
+--- in XML for flexibility
+---
+--- Tags being saved here includes: /rteval/clocksource, /rteval/hardware,
+--- /rteval/loads and /rteval/cyclictest/command_line
+---
+-    CREATE TABLE rtevalruns_details (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        xmldata       xml NOT NULL,
+-        PRIMARY KEY(rterid)
+-    );
+-    GRANT INSERT ON rtevalruns_details TO rtevparser;
+-
+--- TABLE: cyclic_statistics
+--- This table keeps statistics overview over a particular rteval run
+---
+-    CREATE TABLE cyclic_statistics (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        coreid        INTEGER, -- NULL=system
+-        priority      INTEGER, -- NULL=system
+-        num_samples   BIGINT NOT NULL,
+-        lat_min       REAL NOT NULL,
+-        lat_max       REAL NOT NULL,
+-        lat_mean      REAL NOT NULL,
+-        mode          REAL NOT NULL,
+-        range         REAL NOT NULL,
+-        median        REAL NOT NULL,
+-        stddev        REAL NOT NULL,
+-        cstid         SERIAL NOT NULL, -- unique record ID
+-        PRIMARY KEY(cstid)
+-    ) WITH OIDS;
+-    CREATE INDEX cyclic_statistics_rterid ON cyclic_statistics(rterid);
+-
+-    GRANT INSERT ON cyclic_statistics TO rtevparser;
+-    GRANT USAGE ON cyclic_statistics_cstid_seq TO rtevparser;
+-
+--- TABLE: cyclic_histogram
+--- This table keeps the raw histogram data for each rteval run being
+--- reported.
+---
+-    CREATE TABLE cyclic_histogram (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        core          INTEGER, -- NULL=system
+-        index         INTEGER NOT NULL,
+-        value         BIGINT NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_histogram_rterid ON cyclic_histogram(rterid);
+-
+-    GRANT INSERT ON cyclic_histogram TO rtevparser;
+-
+--- TABLE: cyclic_rawdata
+--- This table keeps the raw data for each rteval run being reported.
+--- Due to that it will be an enormous amount of data, we avoid using
+--- OID on this table.
+---
+-    CREATE TABLE cyclic_rawdata (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        cpu_num       INTEGER NOT NULL,
+-        sampleseq     INTEGER NOT NULL,
+-        latency       REAL NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_rawdata_rterid ON cyclic_rawdata(rterid);
+-
+-    GRANT INSERT ON cyclic_rawdata TO rtevparser;
+-
+--- TABLE: notes
+--- This table is purely to make notes, connected to different 
+--- records in the database
+---
+-    CREATE TABLE notes (
+-        ntid          SERIAL NOT NULL,
+-        reftbl        CHAR NOT NULL,    -- S=systems, R=rtevalruns
+-        refid         INTEGER NOT NULL, -- reference id, to the corresponding table
+-        notes         TEXT NOT NULL,
+-        createdby     VARCHAR(48),
+-        created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-        PRIMARY KEY(ntid)
+-    ) WITH OIDS;
+-    CREATE INDEX notes_refid ON notes(reftbl,refid);
+diff --git a/server/sql/rteval-1.1.sql b/server/sql/rteval-1.1.sql
+deleted file mode 100644
+index 6ec783f..0000000
+--- a/server/sql/rteval-1.1.sql
++++ /dev/null
+@@ -1,203 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- Create rteval database users
+---
+-CREATE USER rtevxmlrpc NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb';
+-CREATE USER rtevparser NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb_parser';
+-
+--- Create rteval database
+---
+-CREATE DATABASE rteval ENCODING 'utf-8';
+-
+-\c rteval
+-
+--- TABLE: rteval_info
+--- Contains information the current rteval XML-RPC and parser installation
+---
+-    CREATE TABLE rteval_info (
+-       key    varchar(32) NOT NULL,
+-       value  TEXT NOT NULL,
+-       rtiid  SERIAL,
+-       PRIMARY KEY(rtiid)
+-    );
+-    GRANT SELECT ON rteval_info TO rtevaldb_parser;
+-    INSERT INTO rteval_info (key, value) VALUES ('sql_schema_ver','1.1');
+-
+--- Enable plpgsql.  It is expected that this PL/pgSQL is available.
+-    CREATE LANGUAGE 'plpgsql';
+-
+--- FUNCTION: trgfnc_submqueue_notify
+--- Trigger function which is called on INSERT queries to the submissionqueue table.
+--- It will send a NOTIFY rteval_submq on INSERTs.
+---
+-    CREATE FUNCTION trgfnc_submqueue_notify() RETURNS TRIGGER
+-    AS $BODY$
+-      DECLARE
+-      BEGIN
+-        NOTIFY rteval_submq;
+-        RETURN NEW;
+-      END
+-    $BODY$ LANGUAGE 'plpgsql';
+-
+-    -- The user(s) which are allowed to do INSERT on the submissionqueue
+-    -- must also be allowed to call this trigger function.
+-    GRANT EXECUTE ON FUNCTION trgfnc_submqueue_notify() TO rtevxmlrpc;
+-
+--- TABLE: submissionqueue
+--- All XML-RPC clients registers their submissions into this table.  Another parser thread
+--- will pickup the records where parsestart IS NULL.
+---
+-    CREATE TABLE submissionqueue (
+-           clientid   varchar(128) NOT NULL,
+-           filename   VARCHAR(1024) NOT NULL,
+-           status     INTEGER DEFAULT '0',
+-           received   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+-           parsestart TIMESTAMP WITH TIME ZONE,
+-           parseend   TIMESTAMP WITH TIME ZONE,
+-           submid     SERIAL,
+-           PRIMARY KEY(submid)
+-    ) WITH OIDS;
+-    CREATE INDEX submissionq_status ON submissionqueue(status);
+-
+-    CREATE TRIGGER trg_submissionqueue AFTER INSERT
+-           ON submissionqueue FOR EACH STATEMENT
+-	   EXECUTE PROCEDURE trgfnc_submqueue_notify();
+-
+-    GRANT SELECT, INSERT ON submissionqueue TO rtevxmlrpc;
+-    GRANT USAGE ON submissionqueue_submid_seq TO rtevxmlrpc;
+-    GRANT SELECT, UPDATE ON submissionqueue TO rtevparser;
+-
+--- TABLE: systems
+--- Overview table over all systems which have sent reports
+--- The dmidata column will keep the complete DMIdata available
+--- for further information about the system.
+---
+-    CREATE TABLE systems (
+-        syskey        SERIAL NOT NULL,
+-        sysid         VARCHAR(64) NOT NULL,
+-        dmidata       xml NOT NULL,
+-        PRIMARY KEY(syskey)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON systems TO rtevparser;
+-    GRANT USAGE ON systems_syskey_seq TO rtevparser;
+-
+--- TABLE: systems_hostname
+--- This table is used to track the hostnames and IP addresses
+--- a registered system have used over time
+---
+-   CREATE TABLE systems_hostname (
+-        syskey        INTEGER REFERENCES systems(syskey) NOT NULL,
+-        hostname      VARCHAR(256) NOT NULL,
+-        ipaddr        cidr
+-    ) WITH OIDS;
+-    CREATE INDEX systems_hostname_syskey ON systems_hostname(syskey);
+-    CREATE INDEX systems_hostname_hostname ON systems_hostname(hostname);
+-    CREATE INDEX systems_hostname_ipaddr ON systems_hostname(ipaddr);
+-
+-    GRANT SELECT, INSERT ON systems_hostname TO rtevparser;
+-
+-
+--- TABLE: rtevalruns
+--- Overview over all rteval runs, when they were run and how long they ran.
+---
+-    CREATE TABLE rtevalruns (
+-        rterid          SERIAL NOT NULL, -- RTEval Run Id
+-        submid          INTEGER REFERENCES submissionqueue(submid) NOT NULL,
+-        syskey          INTEGER REFERENCES systems(syskey) NOT NULL,
+-        kernel_ver      VARCHAR(32) NOT NULL,
+-        kernel_rt       BOOLEAN NOT NULL,
+-        arch            VARCHAR(12) NOT NULL,
+-        run_start       TIMESTAMP WITH TIME ZONE NOT NULL,
+-        run_duration    INTEGER NOT NULL,
+-        load_avg        REAL NOT NULL,
+-        version         VARCHAR(4), -- Version of rteval
+-        report_filename TEXT,
+-        PRIMARY KEY(rterid)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON rtevalruns TO rtevparser;
+-    GRANT SELECT ON rtevalruns TO rtevxmlrpc;
+-    GRANT USAGE ON rtevalruns_rterid_seq TO rtevparser;
+-
+--- TABLE rtevalruns_details
+--- More specific information on the rteval run.  The data is stored
+--- in XML for flexibility
+---
+--- Tags being saved here includes: /rteval/clocksource, /rteval/hardware,
+--- /rteval/loads and /rteval/cyclictest/command_line
+---
+-    CREATE TABLE rtevalruns_details (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        xmldata       xml NOT NULL,
+-        PRIMARY KEY(rterid)
+-    );
+-    GRANT INSERT ON rtevalruns_details TO rtevparser;
+-
+--- TABLE: cyclic_statistics
+--- This table keeps statistics overview over a particular rteval run
+---
+-    CREATE TABLE cyclic_statistics (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        coreid        INTEGER, -- NULL=system
+-        priority      INTEGER, -- NULL=system
+-        num_samples   BIGINT NOT NULL,
+-        lat_min       REAL NOT NULL,
+-        lat_max       REAL NOT NULL,
+-        lat_mean      REAL NOT NULL,
+-        mode          REAL NOT NULL,
+-        range         REAL NOT NULL,
+-        median        REAL NOT NULL,
+-        stddev        REAL NOT NULL,
+-	mean_abs_dev  REAL NOT NULL,
+-	variance      REAL NOT NULL,
+-        cstid         SERIAL NOT NULL, -- unique record ID
+-        PRIMARY KEY(cstid)
+-    ) WITH OIDS;
+-    CREATE INDEX cyclic_statistics_rterid ON cyclic_statistics(rterid);
+-
+-    GRANT INSERT ON cyclic_statistics TO rtevparser;
+-    GRANT USAGE ON cyclic_statistics_cstid_seq TO rtevparser;
+-
+--- TABLE: cyclic_histogram
+--- This table keeps the raw histogram data for each rteval run being
+--- reported.
+---
+-    CREATE TABLE cyclic_histogram (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        core          INTEGER, -- NULL=system
+-        index         INTEGER NOT NULL,
+-        value         BIGINT NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_histogram_rterid ON cyclic_histogram(rterid);
+-
+-    GRANT INSERT ON cyclic_histogram TO rtevparser;
+-
+--- TABLE: cyclic_rawdata
+--- This table keeps the raw data for each rteval run being reported.
+--- Due to that it will be an enormous amount of data, we avoid using
+--- OID on this table.
+---
+-    CREATE TABLE cyclic_rawdata (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        cpu_num       INTEGER NOT NULL,
+-        sampleseq     INTEGER NOT NULL,
+-        latency       REAL NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_rawdata_rterid ON cyclic_rawdata(rterid);
+-
+-    GRANT INSERT ON cyclic_rawdata TO rtevparser;
+-
+--- TABLE: notes
+--- This table is purely to make notes, connected to different
+--- records in the database
+---
+-    CREATE TABLE notes (
+-        ntid          SERIAL NOT NULL,
+-        reftbl        CHAR NOT NULL,    -- S=systems, R=rtevalruns
+-        refid         INTEGER NOT NULL, -- reference id, to the corresponding table
+-        notes         TEXT NOT NULL,
+-        createdby     VARCHAR(48),
+-        created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-        PRIMARY KEY(ntid)
+-    ) WITH OIDS;
+-    CREATE INDEX notes_refid ON notes(reftbl,refid);
+diff --git a/server/sql/rteval-1.2.sql b/server/sql/rteval-1.2.sql
+deleted file mode 100644
+index 4a37eb6..0000000
+--- a/server/sql/rteval-1.2.sql
++++ /dev/null
+@@ -1,207 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- Create rteval database users
+---
+-CREATE USER rtevxmlrpc NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb';
+-CREATE USER rtevparser NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb_parser';
+-
+--- Create rteval database
+---
+-CREATE DATABASE rteval ENCODING 'utf-8';
+-
+-\c rteval
+-
+--- TABLE: rteval_info
+--- Contains information the current rteval XML-RPC and parser installation
+---
+-    CREATE TABLE rteval_info (
+-       key    varchar(32) NOT NULL,
+-       value  TEXT NOT NULL,
+-       rtiid  SERIAL,
+-       PRIMARY KEY(rtiid)
+-    );
+-    GRANT SELECT ON rteval_info TO rtevparser;
+-    INSERT INTO rteval_info (key, value) VALUES ('sql_schema_ver','1.2');
+-
+--- Enable plpgsql.  It is expected that this PL/pgSQL is available.
+-    CREATE LANGUAGE 'plpgsql';
+-
+--- FUNCTION: trgfnc_submqueue_notify
+--- Trigger function which is called on INSERT queries to the submissionqueue table.
+--- It will send a NOTIFY rteval_submq on INSERTs.
+---
+-    CREATE FUNCTION trgfnc_submqueue_notify() RETURNS TRIGGER
+-    AS $BODY$
+-      DECLARE
+-      BEGIN
+-        NOTIFY rteval_submq;
+-        RETURN NEW;
+-      END
+-    $BODY$ LANGUAGE 'plpgsql';
+-
+-    -- The user(s) which are allowed to do INSERT on the submissionqueue
+-    -- must also be allowed to call this trigger function.
+-    GRANT EXECUTE ON FUNCTION trgfnc_submqueue_notify() TO rtevxmlrpc;
+-
+--- TABLE: submissionqueue
+--- All XML-RPC clients registers their submissions into this table.  Another parser thread
+--- will pickup the records where parsestart IS NULL.
+---
+-    CREATE TABLE submissionqueue (
+-           clientid   varchar(128) NOT NULL,
+-           filename   VARCHAR(1024) NOT NULL,
+-           status     INTEGER DEFAULT '0',
+-           received   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+-           parsestart TIMESTAMP WITH TIME ZONE,
+-           parseend   TIMESTAMP WITH TIME ZONE,
+-           submid     SERIAL,
+-           PRIMARY KEY(submid)
+-    ) WITH OIDS;
+-    CREATE INDEX submissionq_status ON submissionqueue(status);
+-
+-    CREATE TRIGGER trg_submissionqueue AFTER INSERT
+-           ON submissionqueue FOR EACH STATEMENT
+-	   EXECUTE PROCEDURE trgfnc_submqueue_notify();
+-
+-    GRANT SELECT, INSERT ON submissionqueue TO rtevxmlrpc;
+-    GRANT USAGE ON submissionqueue_submid_seq TO rtevxmlrpc;
+-    GRANT SELECT, UPDATE ON submissionqueue TO rtevparser;
+-
+--- TABLE: systems
+--- Overview table over all systems which have sent reports
+--- The dmidata column will keep the complete DMIdata available
+--- for further information about the system.
+---
+-    CREATE TABLE systems (
+-        syskey        SERIAL NOT NULL,
+-        sysid         VARCHAR(64) NOT NULL,
+-        dmidata       xml NOT NULL,
+-        PRIMARY KEY(syskey)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON systems TO rtevparser;
+-    GRANT USAGE ON systems_syskey_seq TO rtevparser;
+-
+--- TABLE: systems_hostname
+--- This table is used to track the hostnames and IP addresses
+--- a registered system have used over time
+---
+-   CREATE TABLE systems_hostname (
+-        syskey        INTEGER REFERENCES systems(syskey) NOT NULL,
+-        hostname      VARCHAR(256) NOT NULL,
+-        ipaddr        cidr
+-    ) WITH OIDS;
+-    CREATE INDEX systems_hostname_syskey ON systems_hostname(syskey);
+-    CREATE INDEX systems_hostname_hostname ON systems_hostname(hostname);
+-    CREATE INDEX systems_hostname_ipaddr ON systems_hostname(ipaddr);
+-
+-    GRANT SELECT, INSERT ON systems_hostname TO rtevparser;
+-
+-
+--- TABLE: rtevalruns
+--- Overview over all rteval runs, when they were run and how long they ran.
+---
+-    CREATE TABLE rtevalruns (
+-        rterid          SERIAL NOT NULL, -- RTEval Run Id
+-        submid          INTEGER REFERENCES submissionqueue(submid) NOT NULL,
+-        syskey          INTEGER REFERENCES systems(syskey) NOT NULL,
+-        kernel_ver      VARCHAR(32) NOT NULL,
+-        kernel_rt       BOOLEAN NOT NULL,
+-        arch            VARCHAR(12) NOT NULL,
+-	distro		VARCHAR(64),
+-        run_start       TIMESTAMP WITH TIME ZONE NOT NULL,
+-        run_duration    INTEGER NOT NULL,
+-        load_avg        REAL NOT NULL,
+-        version         VARCHAR(4), -- Version of rteval
+-        report_filename TEXT,
+-        PRIMARY KEY(rterid)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON rtevalruns TO rtevparser;
+-    GRANT SELECT ON rtevalruns TO rtevxmlrpc;
+-    GRANT USAGE ON rtevalruns_rterid_seq TO rtevparser;
+-
+--- TABLE rtevalruns_details
+--- More specific information on the rteval run.  The data is stored
+--- in XML for flexibility
+---
+--- Tags being saved here includes: /rteval/clocksource, /rteval/hardware,
+--- /rteval/loads and /rteval/cyclictest/command_line
+---
+-    CREATE TABLE rtevalruns_details (
+-        rterid          INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        num_cpu_cores   INTEGER,
+-        num_cpu_sockets INTEGER,
+-        numa_nodes      INTEGER,
+-        xmldata         xml NOT NULL,
+-        PRIMARY KEY(rterid)
+-    );
+-    GRANT INSERT ON rtevalruns_details TO rtevparser;
+-
+--- TABLE: cyclic_statistics
+--- This table keeps statistics overview over a particular rteval run
+---
+-    CREATE TABLE cyclic_statistics (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        coreid        INTEGER, -- NULL=system
+-        priority      INTEGER, -- NULL=system
+-        num_samples   BIGINT NOT NULL,
+-        lat_min       REAL NOT NULL,
+-        lat_max       REAL NOT NULL,
+-        lat_mean      REAL NOT NULL,
+-        mode          REAL NOT NULL,
+-        range         REAL NOT NULL,
+-        median        REAL NOT NULL,
+-        stddev        REAL NOT NULL,
+-	mean_abs_dev  REAL NOT NULL,
+-	variance      REAL NOT NULL,
+-        cstid         SERIAL NOT NULL, -- unique record ID
+-        PRIMARY KEY(cstid)
+-    ) WITH OIDS;
+-    CREATE INDEX cyclic_statistics_rterid ON cyclic_statistics(rterid);
+-
+-    GRANT INSERT ON cyclic_statistics TO rtevparser;
+-    GRANT USAGE ON cyclic_statistics_cstid_seq TO rtevparser;
+-
+--- TABLE: cyclic_histogram
+--- This table keeps the raw histogram data for each rteval run being
+--- reported.
+---
+-    CREATE TABLE cyclic_histogram (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        core          INTEGER, -- NULL=system
+-        index         INTEGER NOT NULL,
+-        value         BIGINT NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_histogram_rterid ON cyclic_histogram(rterid);
+-
+-    GRANT INSERT ON cyclic_histogram TO rtevparser;
+-
+--- TABLE: cyclic_rawdata
+--- This table keeps the raw data for each rteval run being reported.
+--- Due to that it will be an enormous amount of data, we avoid using
+--- OID on this table.
+---
+-    CREATE TABLE cyclic_rawdata (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        cpu_num       INTEGER NOT NULL,
+-        sampleseq     INTEGER NOT NULL,
+-        latency       REAL NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_rawdata_rterid ON cyclic_rawdata(rterid);
+-
+-    GRANT INSERT ON cyclic_rawdata TO rtevparser;
+-
+--- TABLE: notes
+--- This table is purely to make notes, connected to different
+--- records in the database
+---
+-    CREATE TABLE notes (
+-        ntid          SERIAL NOT NULL,
+-        reftbl        CHAR NOT NULL,    -- S=systems, R=rtevalruns
+-        refid         INTEGER NOT NULL, -- reference id, to the corresponding table
+-        notes         TEXT NOT NULL,
+-        createdby     VARCHAR(48),
+-        created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-        PRIMARY KEY(ntid)
+-    ) WITH OIDS;
+-    CREATE INDEX notes_refid ON notes(reftbl,refid);
+diff --git a/server/sql/rteval-1.3.sql b/server/sql/rteval-1.3.sql
+deleted file mode 100644
+index ca7837b..0000000
+--- a/server/sql/rteval-1.3.sql
++++ /dev/null
+@@ -1,208 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- Create rteval database users
+---
+-CREATE USER rtevxmlrpc NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb';
+-CREATE USER rtevparser NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb_parser';
+-
+--- Create rteval database
+---
+-CREATE DATABASE rteval ENCODING 'utf-8';
+-
+-\c rteval
+-
+--- TABLE: rteval_info
+--- Contains information the current rteval XML-RPC and parser installation
+---
+-    CREATE TABLE rteval_info (
+-       key    varchar(32) NOT NULL,
+-       value  TEXT NOT NULL,
+-       rtiid  SERIAL,
+-       PRIMARY KEY(rtiid)
+-    );
+-    GRANT SELECT ON rteval_info TO rtevparser;
+-    INSERT INTO rteval_info (key, value) VALUES ('sql_schema_ver','1.3');
+-
+--- Enable plpgsql.  It is expected that this PL/pgSQL is available.
+-    CREATE LANGUAGE 'plpgsql';
+-
+--- FUNCTION: trgfnc_submqueue_notify
+--- Trigger function which is called on INSERT queries to the submissionqueue table.
+--- It will send a NOTIFY rteval_submq on INSERTs.
+---
+-    CREATE FUNCTION trgfnc_submqueue_notify() RETURNS TRIGGER
+-    AS $BODY$
+-      DECLARE
+-      BEGIN
+-        NOTIFY rteval_submq;
+-        RETURN NEW;
+-      END
+-    $BODY$ LANGUAGE 'plpgsql';
+-
+-    -- The user(s) which are allowed to do INSERT on the submissionqueue
+-    -- must also be allowed to call this trigger function.
+-    GRANT EXECUTE ON FUNCTION trgfnc_submqueue_notify() TO rtevxmlrpc;
+-
+--- TABLE: submissionqueue
+--- All XML-RPC clients registers their submissions into this table.  Another parser thread
+--- will pickup the records where parsestart IS NULL.
+---
+-    CREATE TABLE submissionqueue (
+-           clientid   varchar(128) NOT NULL,
+-           filename   VARCHAR(1024) NOT NULL,
+-           status     INTEGER DEFAULT '0',
+-           received   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+-           parsestart TIMESTAMP WITH TIME ZONE,
+-           parseend   TIMESTAMP WITH TIME ZONE,
+-           submid     SERIAL,
+-           PRIMARY KEY(submid)
+-    ) WITH OIDS;
+-    CREATE INDEX submissionq_status ON submissionqueue(status);
+-
+-    CREATE TRIGGER trg_submissionqueue AFTER INSERT
+-           ON submissionqueue FOR EACH STATEMENT
+-	   EXECUTE PROCEDURE trgfnc_submqueue_notify();
+-
+-    GRANT SELECT, INSERT ON submissionqueue TO rtevxmlrpc;
+-    GRANT USAGE ON submissionqueue_submid_seq TO rtevxmlrpc;
+-    GRANT SELECT, UPDATE ON submissionqueue TO rtevparser;
+-
+--- TABLE: systems
+--- Overview table over all systems which have sent reports
+--- The dmidata column will keep the complete DMIdata available
+--- for further information about the system.
+---
+-    CREATE TABLE systems (
+-        syskey        SERIAL NOT NULL,
+-        sysid         VARCHAR(64) NOT NULL,
+-        dmidata       xml NOT NULL,
+-        PRIMARY KEY(syskey)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON systems TO rtevparser;
+-    GRANT USAGE ON systems_syskey_seq TO rtevparser;
+-
+--- TABLE: systems_hostname
+--- This table is used to track the hostnames and IP addresses
+--- a registered system have used over time
+---
+-   CREATE TABLE systems_hostname (
+-        syskey        INTEGER REFERENCES systems(syskey) NOT NULL,
+-        hostname      VARCHAR(256) NOT NULL,
+-        ipaddr        cidr
+-    ) WITH OIDS;
+-    CREATE INDEX systems_hostname_syskey ON systems_hostname(syskey);
+-    CREATE INDEX systems_hostname_hostname ON systems_hostname(hostname);
+-    CREATE INDEX systems_hostname_ipaddr ON systems_hostname(ipaddr);
+-
+-    GRANT SELECT, INSERT ON systems_hostname TO rtevparser;
+-
+-
+--- TABLE: rtevalruns
+--- Overview over all rteval runs, when they were run and how long they ran.
+---
+-    CREATE TABLE rtevalruns (
+-        rterid          SERIAL NOT NULL, -- RTEval Run Id
+-        submid          INTEGER REFERENCES submissionqueue(submid) NOT NULL,
+-        syskey          INTEGER REFERENCES systems(syskey) NOT NULL,
+-        kernel_ver      VARCHAR(32) NOT NULL,
+-        kernel_rt       BOOLEAN NOT NULL,
+-        arch            VARCHAR(12) NOT NULL,
+-	distro		VARCHAR(64),
+-        run_start       TIMESTAMP WITH TIME ZONE NOT NULL,
+-        run_duration    INTEGER NOT NULL,
+-        load_avg        REAL NOT NULL,
+-        version         VARCHAR(4), -- Version of rteval
+-        report_filename TEXT,
+-        PRIMARY KEY(rterid)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON rtevalruns TO rtevparser;
+-    GRANT SELECT ON rtevalruns TO rtevxmlrpc;
+-    GRANT USAGE ON rtevalruns_rterid_seq TO rtevparser;
+-
+--- TABLE rtevalruns_details
+--- More specific information on the rteval run.  The data is stored
+--- in XML for flexibility
+---
+--- Tags being saved here includes: /rteval/clocksource, /rteval/hardware,
+--- /rteval/loads and /rteval/cyclictest/command_line
+---
+-    CREATE TABLE rtevalruns_details (
+-        rterid          INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        annotation      TEXT,
+-        num_cpu_cores   INTEGER,
+-        num_cpu_sockets INTEGER,
+-        numa_nodes      INTEGER,
+-        xmldata         xml NOT NULL,
+-        PRIMARY KEY(rterid)
+-    );
+-    GRANT INSERT ON rtevalruns_details TO rtevparser;
+-
+--- TABLE: cyclic_statistics
+--- This table keeps statistics overview over a particular rteval run
+---
+-    CREATE TABLE cyclic_statistics (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        coreid        INTEGER, -- NULL=system
+-        priority      INTEGER, -- NULL=system
+-        num_samples   BIGINT NOT NULL,
+-        lat_min       REAL NOT NULL,
+-        lat_max       REAL NOT NULL,
+-        lat_mean      REAL NOT NULL,
+-        mode          REAL NOT NULL,
+-        range         REAL NOT NULL,
+-        median        REAL NOT NULL,
+-        stddev        REAL NOT NULL,
+-	mean_abs_dev  REAL NOT NULL,
+-	variance      REAL NOT NULL,
+-        cstid         SERIAL NOT NULL, -- unique record ID
+-        PRIMARY KEY(cstid)
+-    ) WITH OIDS;
+-    CREATE INDEX cyclic_statistics_rterid ON cyclic_statistics(rterid);
+-
+-    GRANT INSERT ON cyclic_statistics TO rtevparser;
+-    GRANT USAGE ON cyclic_statistics_cstid_seq TO rtevparser;
+-
+--- TABLE: cyclic_histogram
+--- This table keeps the raw histogram data for each rteval run being
+--- reported.
+---
+-    CREATE TABLE cyclic_histogram (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        core          INTEGER, -- NULL=system
+-        index         INTEGER NOT NULL,
+-        value         BIGINT NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_histogram_rterid ON cyclic_histogram(rterid);
+-
+-    GRANT INSERT ON cyclic_histogram TO rtevparser;
+-
+--- TABLE: cyclic_rawdata
+--- This table keeps the raw data for each rteval run being reported.
+--- Due to that it will be an enormous amount of data, we avoid using
+--- OID on this table.
+---
+-    CREATE TABLE cyclic_rawdata (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        cpu_num       INTEGER NOT NULL,
+-        sampleseq     INTEGER NOT NULL,
+-        latency       REAL NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_rawdata_rterid ON cyclic_rawdata(rterid);
+-
+-    GRANT INSERT ON cyclic_rawdata TO rtevparser;
+-
+--- TABLE: notes
+--- This table is purely to make notes, connected to different
+--- records in the database
+---
+-    CREATE TABLE notes (
+-        ntid          SERIAL NOT NULL,
+-        reftbl        CHAR NOT NULL,    -- S=systems, R=rtevalruns
+-        refid         INTEGER NOT NULL, -- reference id, to the corresponding table
+-        notes         TEXT NOT NULL,
+-        createdby     VARCHAR(48),
+-        created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-        PRIMARY KEY(ntid)
+-    ) WITH OIDS;
+-    CREATE INDEX notes_refid ON notes(reftbl,refid);
+diff --git a/server/sql/rteval-1.4.sql b/server/sql/rteval-1.4.sql
+deleted file mode 100644
+index 6d3efdd..0000000
+--- a/server/sql/rteval-1.4.sql
++++ /dev/null
+@@ -1,209 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- Create rteval database users
+---
+-CREATE USER rtevxmlrpc NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb';
+-CREATE USER rtevparser NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb_parser';
+-
+--- Create rteval database
+---
+-CREATE DATABASE rteval ENCODING 'utf-8';
+-
+-\c rteval
+-
+--- TABLE: rteval_info
+--- Contains information the current rteval XML-RPC and parser installation
+---
+-    CREATE TABLE rteval_info (
+-       key    varchar(32) NOT NULL,
+-       value  TEXT NOT NULL,
+-       rtiid  SERIAL,
+-       PRIMARY KEY(rtiid)
+-    );
+-    GRANT SELECT ON rteval_info TO rtevparser;
+-    INSERT INTO rteval_info (key, value) VALUES ('sql_schema_ver','1.4');
+-
+--- Enable plpgsql.  It is expected that this PL/pgSQL is available.
+-    CREATE LANGUAGE 'plpgsql';
+-
+--- FUNCTION: trgfnc_submqueue_notify
+--- Trigger function which is called on INSERT queries to the submissionqueue table.
+--- It will send a NOTIFY rteval_submq on INSERTs.
+---
+-    CREATE FUNCTION trgfnc_submqueue_notify() RETURNS TRIGGER
+-    AS $BODY$
+-      DECLARE
+-      BEGIN
+-        NOTIFY rteval_submq;
+-        RETURN NEW;
+-      END
+-    $BODY$ LANGUAGE 'plpgsql';
+-
+-    -- The user(s) which are allowed to do INSERT on the submissionqueue
+-    -- must also be allowed to call this trigger function.
+-    GRANT EXECUTE ON FUNCTION trgfnc_submqueue_notify() TO rtevxmlrpc;
+-
+--- TABLE: submissionqueue
+--- All XML-RPC clients registers their submissions into this table.  Another parser thread
+--- will pickup the records where parsestart IS NULL.
+---
+-    CREATE TABLE submissionqueue (
+-           clientid   varchar(128) NOT NULL,
+-           filename   VARCHAR(1024) NOT NULL,
+-           status     INTEGER DEFAULT '0',
+-           received   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+-           parsestart TIMESTAMP WITH TIME ZONE,
+-           parseend   TIMESTAMP WITH TIME ZONE,
+-           submid     SERIAL,
+-           PRIMARY KEY(submid)
+-    ) WITH OIDS;
+-    CREATE INDEX submissionq_status ON submissionqueue(status);
+-
+-    CREATE TRIGGER trg_submissionqueue AFTER INSERT
+-           ON submissionqueue FOR EACH STATEMENT
+-	   EXECUTE PROCEDURE trgfnc_submqueue_notify();
+-
+-    GRANT SELECT, INSERT ON submissionqueue TO rtevxmlrpc;
+-    GRANT USAGE ON submissionqueue_submid_seq TO rtevxmlrpc;
+-    GRANT SELECT, UPDATE ON submissionqueue TO rtevparser;
+-
+--- TABLE: systems
+--- Overview table over all systems which have sent reports
+--- The dmidata column will keep the complete DMIdata available
+--- for further information about the system.
+---
+-    CREATE TABLE systems (
+-        syskey        SERIAL NOT NULL,
+-        sysid         VARCHAR(64) NOT NULL,
+-        dmidata       xml NOT NULL,
+-        PRIMARY KEY(syskey)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON systems TO rtevparser;
+-    GRANT USAGE ON systems_syskey_seq TO rtevparser;
+-
+--- TABLE: systems_hostname
+--- This table is used to track the hostnames and IP addresses
+--- a registered system have used over time
+---
+-   CREATE TABLE systems_hostname (
+-        syskey        INTEGER REFERENCES systems(syskey) NOT NULL,
+-        hostname      VARCHAR(256) NOT NULL,
+-        ipaddr        cidr
+-    ) WITH OIDS;
+-    CREATE INDEX systems_hostname_syskey ON systems_hostname(syskey);
+-    CREATE INDEX systems_hostname_hostname ON systems_hostname(hostname);
+-    CREATE INDEX systems_hostname_ipaddr ON systems_hostname(ipaddr);
+-
+-    GRANT SELECT, INSERT ON systems_hostname TO rtevparser;
+-
+-
+--- TABLE: rtevalruns
+--- Overview over all rteval runs, when they were run and how long they ran.
+---
+-    CREATE TABLE rtevalruns (
+-        rterid          SERIAL NOT NULL, -- RTEval Run Id
+-        submid          INTEGER REFERENCES submissionqueue(submid) NOT NULL,
+-        syskey          INTEGER REFERENCES systems(syskey) NOT NULL,
+-        kernel_ver      VARCHAR(32) NOT NULL,
+-        kernel_rt       BOOLEAN NOT NULL,
+-        arch            VARCHAR(12) NOT NULL,
+-	distro		VARCHAR(64),
+-        run_start       TIMESTAMP WITH TIME ZONE NOT NULL,
+-        run_duration    INTEGER NOT NULL,
+-        load_avg        REAL NOT NULL,
+-        version         VARCHAR(4), -- Version of rteval
+-        report_filename TEXT,
+-        PRIMARY KEY(rterid)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON rtevalruns TO rtevparser;
+-    GRANT SELECT ON rtevalruns TO rtevxmlrpc;
+-    GRANT USAGE ON rtevalruns_rterid_seq TO rtevparser;
+-
+--- TABLE rtevalruns_details
+--- More specific information on the rteval run.  The data is stored
+--- in XML for flexibility
+---
+--- Tags being saved here includes: /rteval/clocksource, /rteval/hardware,
+--- /rteval/loads and /rteval/cyclictest/command_line
+---
+-    CREATE TABLE rtevalruns_details (
+-        rterid          INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        annotation      TEXT,
+-        num_cpu_cores   INTEGER,
+-        num_cpu_sockets INTEGER,
+-        cpu_core_spread INTEGER[],
+-        numa_nodes      INTEGER,
+-        xmldata         xml NOT NULL,
+-        PRIMARY KEY(rterid)
+-    );
+-    GRANT INSERT ON rtevalruns_details TO rtevparser;
+-
+--- TABLE: cyclic_statistics
+--- This table keeps statistics overview over a particular rteval run
+---
+-    CREATE TABLE cyclic_statistics (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        coreid        INTEGER, -- NULL=system
+-        priority      INTEGER, -- NULL=system
+-        num_samples   BIGINT NOT NULL,
+-        lat_min       REAL NOT NULL,
+-        lat_max       REAL NOT NULL,
+-        lat_mean      REAL NOT NULL,
+-        mode          REAL NOT NULL,
+-        range         REAL NOT NULL,
+-        median        REAL NOT NULL,
+-        stddev        REAL NOT NULL,
+-	mean_abs_dev  REAL NOT NULL,
+-	variance      REAL NOT NULL,
+-        cstid         SERIAL NOT NULL, -- unique record ID
+-        PRIMARY KEY(cstid)
+-    ) WITH OIDS;
+-    CREATE INDEX cyclic_statistics_rterid ON cyclic_statistics(rterid);
+-
+-    GRANT INSERT ON cyclic_statistics TO rtevparser;
+-    GRANT USAGE ON cyclic_statistics_cstid_seq TO rtevparser;
+-
+--- TABLE: cyclic_histogram
+--- This table keeps the raw histogram data for each rteval run being
+--- reported.
+---
+-    CREATE TABLE cyclic_histogram (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        core          INTEGER, -- NULL=system
+-        index         INTEGER NOT NULL,
+-        value         BIGINT NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_histogram_rterid ON cyclic_histogram(rterid);
+-
+-    GRANT INSERT ON cyclic_histogram TO rtevparser;
+-
+--- TABLE: cyclic_rawdata
+--- This table keeps the raw data for each rteval run being reported.
+--- Due to that it will be an enormous amount of data, we avoid using
+--- OID on this table.
+---
+-    CREATE TABLE cyclic_rawdata (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        cpu_num       INTEGER NOT NULL,
+-        sampleseq     INTEGER NOT NULL,
+-        latency       REAL NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_rawdata_rterid ON cyclic_rawdata(rterid);
+-
+-    GRANT INSERT ON cyclic_rawdata TO rtevparser;
+-
+--- TABLE: notes
+--- This table is purely to make notes, connected to different
+--- records in the database
+---
+-    CREATE TABLE notes (
+-        ntid          SERIAL NOT NULL,
+-        reftbl        CHAR NOT NULL,    -- S=systems, R=rtevalruns
+-        refid         INTEGER NOT NULL, -- reference id, to the corresponding table
+-        notes         TEXT NOT NULL,
+-        createdby     VARCHAR(48),
+-        created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-        PRIMARY KEY(ntid)
+-    ) WITH OIDS;
+-    CREATE INDEX notes_refid ON notes(reftbl,refid);
+diff --git a/server/sql/rteval-1.5.sql b/server/sql/rteval-1.5.sql
+deleted file mode 100644
+index 68e0fcc..0000000
+--- a/server/sql/rteval-1.5.sql
++++ /dev/null
+@@ -1,235 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+--- Create rteval database users
+---
+-CREATE USER rtevxmlrpc NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb';
+-CREATE USER rtevparser NOSUPERUSER ENCRYPTED PASSWORD 'rtevaldb_parser';
+-
+--- Create rteval database
+---
+-CREATE DATABASE rteval ENCODING 'utf-8';
+-
+-\c rteval
+-
+--- TABLE: rteval_info
+--- Contains information the current rteval XML-RPC and parser installation
+---
+-    CREATE TABLE rteval_info (
+-       key    varchar(32) NOT NULL,
+-       value  TEXT NOT NULL,
+-       rtiid  SERIAL,
+-       PRIMARY KEY(rtiid)
+-    );
+-    GRANT SELECT ON rteval_info TO rtevparser;
+-    INSERT INTO rteval_info (key, value) VALUES ('sql_schema_ver','1.5');
+-
+--- Enable plpgsql.  It is expected that this PL/pgSQL is available.
+-    CREATE LANGUAGE 'plpgsql';
+-
+--- FUNCTION: trgfnc_submqueue_notify
+--- Trigger function which is called on INSERT queries to the submissionqueue table.
+--- It will send a NOTIFY rteval_submq on INSERTs.
+---
+-    CREATE FUNCTION trgfnc_submqueue_notify() RETURNS TRIGGER
+-    AS $BODY$
+-      DECLARE
+-      BEGIN
+-        NOTIFY rteval_submq;
+-        RETURN NEW;
+-      END
+-    $BODY$ LANGUAGE 'plpgsql';
+-
+-    -- The user(s) which are allowed to do INSERT on the submissionqueue
+-    -- must also be allowed to call this trigger function.
+-    GRANT EXECUTE ON FUNCTION trgfnc_submqueue_notify() TO rtevxmlrpc;
+-
+--- TABLE: submissionqueue
+--- All XML-RPC clients registers their submissions into this table.  Another parser thread
+--- will pickup the records where parsestart IS NULL.
+---
+-    CREATE TABLE submissionqueue (
+-           clientid   varchar(128) NOT NULL,
+-           filename   VARCHAR(1024) NOT NULL,
+-           status     INTEGER DEFAULT '0',
+-           received   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+-           parsestart TIMESTAMP WITH TIME ZONE,
+-           parseend   TIMESTAMP WITH TIME ZONE,
+-           submid     SERIAL,
+-           PRIMARY KEY(submid)
+-    ) WITH OIDS;
+-    CREATE INDEX submissionq_status ON submissionqueue(status);
+-
+-    CREATE TRIGGER trg_submissionqueue AFTER INSERT
+-           ON submissionqueue FOR EACH STATEMENT
+-	   EXECUTE PROCEDURE trgfnc_submqueue_notify();
+-
+-    GRANT SELECT, INSERT ON submissionqueue TO rtevxmlrpc;
+-    GRANT USAGE ON submissionqueue_submid_seq TO rtevxmlrpc;
+-    GRANT SELECT, UPDATE ON submissionqueue TO rtevparser;
+-
+--- TABLE: systems
+--- Overview table over all systems which have sent reports
+--- The dmidata column will keep the complete DMIdata available
+--- for further information about the system.
+---
+-    CREATE TABLE systems (
+-        syskey        SERIAL NOT NULL,
+-        sysid         VARCHAR(64) NOT NULL,
+-        dmidata       xml NOT NULL,
+-        PRIMARY KEY(syskey)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON systems TO rtevparser;
+-    GRANT USAGE ON systems_syskey_seq TO rtevparser;
+-
+--- TABLE: systems_hostname
+--- This table is used to track the hostnames and IP addresses
+--- a registered system have used over time
+---
+-   CREATE TABLE systems_hostname (
+-        syskey        INTEGER REFERENCES systems(syskey) NOT NULL,
+-        hostname      VARCHAR(256) NOT NULL,
+-        ipaddr        cidr
+-    ) WITH OIDS;
+-    CREATE INDEX systems_hostname_syskey ON systems_hostname(syskey);
+-    CREATE INDEX systems_hostname_hostname ON systems_hostname(hostname);
+-    CREATE INDEX systems_hostname_ipaddr ON systems_hostname(ipaddr);
+-
+-    GRANT SELECT, INSERT ON systems_hostname TO rtevparser;
+-
+-
+--- TABLE: rtevalruns
+--- Overview over all rteval runs, when they were run and how long they ran.
+---
+-    CREATE TABLE rtevalruns (
+-        rterid          SERIAL NOT NULL, -- RTEval Run Id
+-        submid          INTEGER REFERENCES submissionqueue(submid) NOT NULL,
+-        syskey          INTEGER REFERENCES systems(syskey) NOT NULL,
+-        kernel_ver      VARCHAR(32) NOT NULL,
+-        kernel_rt       BOOLEAN NOT NULL,
+-        arch            VARCHAR(12) NOT NULL,
+-	distro		VARCHAR(64),
+-        run_start       TIMESTAMP WITH TIME ZONE NOT NULL,
+-        run_duration    INTEGER NOT NULL,
+-        load_avg        REAL NOT NULL,
+-        version         VARCHAR(4), -- Version of rteval
+-        report_filename TEXT,
+-        PRIMARY KEY(rterid)
+-    ) WITH OIDS;
+-
+-    GRANT SELECT,INSERT ON rtevalruns TO rtevparser;
+-    GRANT SELECT ON rtevalruns TO rtevxmlrpc;
+-    GRANT USAGE ON rtevalruns_rterid_seq TO rtevparser;
+-
+--- TABLE rtevalruns_details
+--- More specific information on the rteval run.  The data is stored
+--- in XML for flexibility
+---
+--- Tags being saved here includes: /rteval/clocksource, /rteval/hardware,
+--- /rteval/loads and /rteval/cyclictest/command_line
+---
+-    CREATE TABLE rtevalruns_details (
+-        rterid          INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        annotation      TEXT,
+-        num_cpu_cores   INTEGER,
+-        num_cpu_sockets INTEGER,
+-        cpu_core_spread INTEGER[],
+-        numa_nodes      INTEGER,
+-        xmldata         xml NOT NULL,
+-        PRIMARY KEY(rterid)
+-    );
+-    GRANT INSERT ON rtevalruns_details TO rtevparser;
+-
+--- TABLE: cyclic_statistics
+--- This table keeps statistics overview over a particular rteval run
+---
+-    CREATE TABLE cyclic_statistics (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        coreid        INTEGER, -- NULL=system
+-        priority      INTEGER, -- NULL=system
+-        num_samples   BIGINT NOT NULL,
+-        lat_min       REAL NOT NULL,
+-        lat_max       REAL NOT NULL,
+-        lat_mean      REAL NOT NULL,
+-        mode          REAL NOT NULL,
+-        range         REAL NOT NULL,
+-        median        REAL NOT NULL,
+-        stddev        REAL NOT NULL,
+-	mean_abs_dev  REAL NOT NULL,
+-	variance      REAL NOT NULL,
+-        cstid         SERIAL NOT NULL, -- unique record ID
+-        PRIMARY KEY(cstid)
+-    ) WITH OIDS;
+-    CREATE INDEX cyclic_statistics_rterid ON cyclic_statistics(rterid);
+-
+-    GRANT INSERT ON cyclic_statistics TO rtevparser;
+-    GRANT USAGE ON cyclic_statistics_cstid_seq TO rtevparser;
+-
+--- TABLE: cyclic_histogram
+--- This table keeps the raw histogram data for each rteval run being
+--- reported.
+---
+-    CREATE TABLE cyclic_histogram (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        core          INTEGER, -- NULL=system
+-        index         INTEGER NOT NULL,
+-        value         BIGINT NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_histogram_rterid ON cyclic_histogram(rterid);
+-
+-    GRANT INSERT ON cyclic_histogram TO rtevparser;
+-
+--- TABLE: cyclic_rawdata
+--- This table keeps the raw data for each rteval run being reported.
+--- Due to that it will be an enormous amount of data, we avoid using
+--- OID on this table.
+---
+-    CREATE TABLE cyclic_rawdata (
+-        rterid        INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-        cpu_num       INTEGER NOT NULL,
+-        sampleseq     INTEGER NOT NULL,
+-        latency       REAL NOT NULL
+-    ) WITHOUT OIDS;
+-    CREATE INDEX cyclic_rawdata_rterid ON cyclic_rawdata(rterid);
+-
+-    GRANT INSERT ON cyclic_rawdata TO rtevparser;
+-
+--- TABLE: hwlatdetect_summary
+--- Tracks hwlatdetect results for a particular hardware
+---
+-   CREATE TABLE hwlatdetect_summary (
+-       rterid         INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-       duration       INTEGER NOT NULL,
+-       threshold      INTEGER NOT NULL,
+-       timewindow     INTEGER NOT NULL,
+-       width          INTEGER NOT NULL,
+-       samplecount    INTEGER NOT NULL,
+-       hwlat_min      REAL NOT NULL,
+-       hwlat_avg      REAL NOT NULL,
+-       hwlat_max      REAL NOT NULL
+-   ) WITHOUT OIDS;
+-   GRANT SELECT, INSERT ON hwlatdetect_summary TO rtevparser;
+-
+--- TABLE: hwlatdetect_samples
+--- Contains the hwlatdetect sample records from a particular run
+---
+-   CREATE TABLE hwlatdetect_samples (
+-       rterid         INTEGER REFERENCES rtevalruns(rterid) NOT NULL,
+-       timestamp      NUMERIC(20,10) NOT NULL,
+-       latency        REAL NOT NULL
+-   ) WITHOUT OIDS;
+-   GRANT SELECT, INSERT ON hwlatdetect_samples TO rtevparser;
+-
+--- TABLE: notes
+--- This table is purely to make notes, connected to different
+--- records in the database
+---
+-    CREATE TABLE notes (
+-        ntid          SERIAL NOT NULL,
+-        reftbl        CHAR NOT NULL,    -- S=systems, R=rtevalruns
+-        refid         INTEGER NOT NULL, -- reference id, to the corresponding table
+-        notes         TEXT NOT NULL,
+-        createdby     VARCHAR(48),
+-        created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-        PRIMARY KEY(ntid)
+-    ) WITH OIDS;
+-    CREATE INDEX notes_refid ON notes(reftbl,refid);
+diff --git a/server/testclient.py b/server/testclient.py
+deleted file mode 100644
+index dc9745b..0000000
+--- a/server/testclient.py
++++ /dev/null
+@@ -1,37 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   testclient.py
+-#   XML-RPC test client for testing the supported XML-RPC API 
+-#   in the rteval server.
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import sys
+-import libxml2
+-import io
+-
+-sys.path.append('../rteval')
+-import rtevalclient
+-
+-print("** Creating doc")
+-d = libxml2.newDoc("1.0")
+-n = libxml2.newNode('TestNode1')
+-d.setRootElement(n)
+-n2 = n.newTextChild(None, 'TestNode2','Just a little test')
+-n2.newProp('test','true')
+-
+-for i in range(1,5):
+-    n2 = n.newTextChild(None, 'TestNode3', 'Test line %i' %i)
+-
+-print("** Doc to be sent")
+-d.saveFormatFileEnc('-','UTF-8', 1)
+-
+-
+-print("** Testing API")
+-client = rtevalclient.rtevalclient("http://localhost:65432/rteval/API1/")
+-
+-print("** 1: Hello(): %s" % str(client.Hello()))
+-status = client.SendReport(d)
+-print("** 2: SendReport(xmlDoc): %s" % str(status))
+-
+diff --git a/server/testclient_sendreportfile b/server/testclient_sendreportfile
+deleted file mode 100755
+index 5d3ed74..0000000
+--- a/server/testclient_sendreportfile
++++ /dev/null
+@@ -1,36 +0,0 @@
+-#!/usr/bin/python3 -tt
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   testclient_sendfile.py
+-#   XML-RPC test client which just sends an XML file to the given rteval server
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import sys
+-import libxml2
+-from argparse import ArgumentParser
+-
+-sys.path.append('../rteval')
+-import rtevalclient
+-
+-if __name__ == '__main__':
+-    parser = ArgumentParser(version="%prog v0.1")
+-
+-    parser.add_argument("-r", "--report", action="store", dest="report", default="summary.xml",
+-                      help="Which XML report to send to the XML-RPC server  (default: %default)",
+-                      metavar="FILE")
+-    parser.add_argument("-X", "--xmlrpc-submit", dest="xmlrpchost", default="localhost:65432",
+-                      help="Hostname to the XML-RPC server to send the data (default: %default)",
+-                      metavar="HOST[:PORT]")
+-
+-    opts = parser.parse_args()
+-
+-    d = libxml2.parseFile(opts.report)
+-
+-    client = rtevalclient.rtevalclient("http://%s/rteval/API1/" % opts.xmlrpchost)
+-
+-    status = client.SendReport(d)
+-    print "SendReport(xmlDoc): %s" % status
+-else:
+-    raise Exception, "This is a standalone program, not a module to be imported"
+diff --git a/server/unittest.py b/server/unittest.py
+deleted file mode 100644
+index 73cee9d..0000000
+--- a/server/unittest.py
++++ /dev/null
+@@ -1,91 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-import sys, threading, time, signal, libxml2
+-import argparse
+-from rteval_testserver import RTevald
+-from Logger import Logger
+-
+-sys.path.insert(0,'..')
+-sys.path.insert(0,'../rteval')
+-sys.path.insert(0,'rteval')
+-import rtevalclient
+-
+-class ServerThread(threading.Thread):
+-    def __init__(self, port):
+-        threading.Thread.__init__(self)
+-        self.port = port
+-        self.log = Logger('unit-test-server.log','rteval-xmlrpc-testsrv')
+-
+-        parser = argparse.ArgumentParser()
+-        parser.add_argument("-L", "--listen", action="store", dest="listen", default="127.0.0.1",
+-                          help="Which interface to listen to [default: %default]", metavar="IPADDR")
+-        parser.add_argument("-P", "--port", action="store", type="int", dest="port", default=self.port,
+-                          help="Which port to listen to [default: %default]",  metavar="PORT")
+-
+-        (options, args) = parser.parse_args()
+-
+-        self.child = RTevald(options, self.log)
+-
+-    def run(self):
+-        self.child.StartServer()
+-
+-    def stop(self):
+-        self.child.StopServer()
+-
+-    def sigcatch(self, signum, frame):
+-        print("Shutting down")
+-        self.stop()
+-
+-
+-class ClientTest(object):
+-    def __init__(self, port):
+-        self.client = rtevalclient.rtevalclient("http://localhost:%s/rteval/API1/" % port)
+-
+-    def __prepare_data(self):
+-        d = libxml2.newDoc("1.0")
+-        n = libxml2.newNode('TestNode1')
+-        d.setRootElement(n)
+-        n2 = n.newTextChild(None, 'TestNode2','Just a little test')
+-        n2.newProp('test','true')
+-        for i in range(1,5):
+-            n2 = n.newTextChild(None, 'TestNode3', 'Test line %i' %i)
+-        self.testdoc = d
+-
+-    def RunTest(self):
+-        try:
+-            print("** Creating XML test document")
+-            self.__prepare_data()
+-            self.testdoc.saveFormatFileEnc('-','UTF-8', 1)
+-
+-            print("** Client test [1]: Hello(): %s" % str(self.client.Hello()))
+-            status = self.client.SendReport(self.testdoc)
+-            print("** Client test [2]; SendReport(xmlDoc): %s" % str(status))
+-        except Exception as e:
+-            raise Exception("XML-RPC client test failed: %s" % str(e))
+-
+-
+-def unit_test(rootdir):
+-    ret = 1
+-    try:
+-        # Prepare server and client objects
+-        srvthread = ServerThread('65432')
+-        clienttest = ClientTest('65432')
+-        signal.signal(signal.SIGINT, srvthread.sigcatch)
+-
+-        # Start a local XML-RPC test server
+-        srvthread.start()
+-        print("** Waiting 2 seconds for server to settle")
+-        time.sleep(2)
+-
+-        # Start the client test
+-        print("** Starting client tests")
+-        clienttest.RunTest()
+-        ret = 0
+-    except Exception as e:
+-        print("** EXCEPTION: %s" % str(e))
+-    finally:
+-        # Stop the local XML-RPC test server
+-        srvthread.stop()
+-    return ret
+-
+-if __name__ == "__main__":
+-    sys.exit(unit_test('..'))
+diff --git a/server/xmlrpc_API1.py b/server/xmlrpc_API1.py
+deleted file mode 100644
+index e2ad4ec..0000000
+--- a/server/xmlrpc_API1.py
++++ /dev/null
+@@ -1,100 +0,0 @@
+-# SPDX-License-Identifier: GPL-2.0-or-later
+-#
+-#   xmlrpc_API1.py
+-#   XML-RPC functions supported by the API1 version for the rteval server
+-#
+-#   Copyright 2009 - 2013   David Sommerseth <davids@redhat.com>
+-#
+-
+-import os
+-import bz2
+-import base64
+-import libxml2
+-import string
+-import platform
+-import rtevaldb
+-
+-
+-class XMLRPC_API1():
+-    def __init__(self, config=None, debug=False, nodbaction=False):
+-        # Some defaults
+-        self.apiversion = 1
+-        self.fnametrans = string.maketrans("/\\.", "::_") # replace path delimiters in filenames
+-        self.debug = debug
+-        self.nodbaction = nodbaction
+-        self.config = config
+-
+-
+-    def __mkdatadir(self, dirpath):
+-        startdir = os.getcwd()
+-        if dirpath[0] == '/':
+-            os.chdir('/')
+-        for dir in dirpath.split("/"):
+-            if dir is '':
+-                continue
+-            if not os.path.exists(dir):
+-                os.mkdir(dir, 0o700)
+-            os.chdir(dir)
+-        os.chdir(startdir)
+-
+-
+-    def __getfilename(self, dir, fname, ext, comp):
+-        idx = 0
+-        if comp:
+-            filename = "%s/%s/%s%s.bz2" % (self.config.datadir, dir, fname.translate(self.fnametrans), ext)
+-        else:
+-            filename = "%s/%s/%s%s" % (self.config.datadir, dir, fname.translate(self.fnametrans), ext)
+-
+-        while 1:
+-            if not os.path.exists(filename):
+-                return filename
+-            idx += 1
+-            if comp:
+-                filename = "%s/%s/%s-{%i}.bz2" % (self.config.datadir, dir,
+-                                                  fname.translate(self.fnametrans), idx)
+-            else:
+-                filename = "%s/%s/%s-{%i}" % (self.config.datadir, dir,
+-                                              fname.translate(self.fnametrans), idx)
+-
+-
+-    def Dispatch(self, method, params):
+-        # Call the method requested
+-        # FIXME: Improve checking for valid methods
+-        func = getattr(self, method)
+-        return func(*params)
+-
+-
+-    def _dispatch(self, method, params):
+-        "Wrapper method for Dispatch(), used by xmlrpclib in a local test server. Only used for testing."
+-        return self.Dispatch(method, params)
+-
+-
+-    def SendReport(self, clientid, xmlbzb64):
+-        decompr = bz2.BZ2Decompressor()
+-        xmldoc = libxml2.parseDoc(decompr.decompress(base64.b64decode(xmlbzb64)))
+-
+-        # Save a copy of the report on the file system
+-        # Make sure we have a directory to write files into
+-        self.__mkdatadir(os.path.join(self.config.datadir, 'queue'))
+-        fname = self.__getfilename('queue/', ('%s' % clientid), '.xml', False)
+-        xmldoc.saveFormatFileEnc(fname,'UTF-8',1)
+-        if self.debug:
+-            print("Copy of report: %s" % fname)
+-
+-        # Register the submission and put it in a parse queue
+-        rterid = rtevaldb.register_submission(self.config, clientid, fname,
+-                                                        debug=self.debug, noaction=self.nodbaction)
+-        if self.nodbaction:
+-            rterid = 999999999 # Fake ID when no database registration is done
+-
+-        return rterid
+-
+-
+-    def Hello(self, clientid):
+-        return {"greeting": "Hello %s" % clientid,
+-                "server": platform.node(),
+-                "APIversion": self.apiversion}
+-
+-
+-    def DatabaseStatus(self):
+-        return rtevaldb.database_status(self.config)
+diff --git a/unit-tests/unittest.py b/unit-tests/unittest.py
+index a60af16..00811d7 100644
+--- a/unit-tests/unittest.py
++++ b/unit-tests/unittest.py
+@@ -113,7 +113,6 @@ if __name__ == '__main__':
+             ('rteval/sysinfo','dmi'),
+             ('rteval','rtevalConfig'),
+             ('rteval','xmlout'),
+-            ('server','unittest')
+             ))
+     # Run all tests
+     tests.RunTests()
+-- 
+2.44.0
 
