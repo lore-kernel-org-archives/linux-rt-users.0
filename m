@@ -1,63 +1,113 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 553E469DE4;
-	Wed, 20 Mar 2024 17:55:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55E8E6A8A6;
+	Wed, 20 Mar 2024 18:42:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710957356; cv=none; b=ZDkaZDoXxe7LcUfm+Xu7KJk2H43jWzJtNIstlsmb01UJYY3MyzZmdMcg7AqpenjH9kbqoku+3t4HF0h+Gc+HTgw9RcOHAXqLRrur7OMQB/GiZJOdLWNUm/gdqaimzcG5ZqiO6ixaACvOlPLoKQhgQ0QLRCOaqPJkM2J74j49Bww=
+	t=1710960155; cv=none; b=WWd/4Rg4oi89Or+lESFybS64+iCgNPeI8Axd320s8+4AbVxqNHqi0sSgADl7zT4KDstQvOXT1ag26JjKMsgIZGUDoNsR/7OGLgfJ+Z5EBbqpFNLTeRhe4A3uoaG4Ikun8CZbRDIl7nH2dbB0IF7LHGAb62KsLZLeLhFurYrzx9M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710957356; c=relaxed/simple;
-	bh=yvxdZcmVH4E1WLSo9+lpEe8WBNOQkbGm6Jg3v9hHgZ0=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=DPgT/kjpNJ1daMz+NDoZAO7bTVlnVZNPKmQEsZbUKaRmlaFdq25NQet5+p29sm+Wks8GC0y12ZOe2PY9eJfu2SnpBzQqTim3eL4JRoyawRKrRGxPbnEDB/YWljyCScD6042OqP9tqRuvlrVQekqlOKpniBSfItUEaNwlDab/K78=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9B179C433C7;
-	Wed, 20 Mar 2024 17:55:54 +0000 (UTC)
-Date: Wed, 20 Mar 2024 13:58:19 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux Trace Kernel
- <linux-trace-kernel@vger.kernel.org>, Masami Hiramatsu
- <mhiramat@kernel.org>, Daniel Bristot de Oliveira <bristot@redhat.com>,
- Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner
- <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Will Deacon
- <will@kernel.org>, Waiman Long <longman@redhat.com>, Boqun Feng
- <boqun.feng@gmail.com>, linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [RFC][PATCH] tracing: Introduce restart_critical_timings()
-Message-ID: <20240320135819.4a25c50f@gandalf.local.home>
-In-Reply-To: <0015569b-15dc-4ccd-b322-67c3665c585e@efficios.com>
-References: <20240320122012.2c1f461f@gandalf.local.home>
-	<0015569b-15dc-4ccd-b322-67c3665c585e@efficios.com>
-X-Mailer: Claws Mail 3.19.1 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+	s=arc-20240116; t=1710960155; c=relaxed/simple;
+	bh=mSf36M6+ozi+UXP0kZAkJzy6JWKv6y+KNFAS3NVr9Ac=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=TZcAwxoT7gfewGmLPMFHnUBjZ5McaTYu+OXdwmi7ac92Ug7Sq6tHUM0tNORTt+LpfFsfh55BKyxMtsedH8mmpry+0VHchT1lVqeDTxH8NJTjfKbMJX+fVHXwZWd2xFci3cWu+0FEiDlyeR1uH9ZDJr75cORZZQ1Jp1A6V54Kd3I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=Wsrfpeoy; arc=none smtp.client-ip=167.114.26.122
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="Wsrfpeoy"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+	s=smtpout1; t=1710959731;
+	bh=mSf36M6+ozi+UXP0kZAkJzy6JWKv6y+KNFAS3NVr9Ac=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=WsrfpeoyxWE2YmTBNvU2aOHGgVke3371rbcgM0PKWWtn6uurUbyyxpcwJRwFuJNcj
+	 IG1TnFE8lpsubpUh/p1Q7qO1JvoWAcDHEa/3oThNNdG9OHn41efq05pcRD289m33w9
+	 vscBeHvYsWJ8ZOXbEMwi72qmAAgusZYKrYukLeDnaSTJtLOpt+f2ZtDCTNX8zNEw8t
+	 3ZwB1OaWs2XMN9Lc7X/ohwP8WVwD4IN/158A/fRqaeOKMFBQi7OzUFm/VqtHwMWkOO
+	 MqxkGIoxvDTU3r1egQoAJej/C7+wT7z7Cds9wtgojdx7FyDq8eviXM8K2RPBDB4/qc
+	 Adwz7YeiF+faw==
+Received: from [172.16.0.134] (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
+	by smtpout.efficios.com (Postfix) with ESMTPSA id 4V0HMl5D2Yzkh9;
+	Wed, 20 Mar 2024 14:35:31 -0400 (EDT)
+Message-ID: <07272f98-859b-4a10-9096-9cba763af429@efficios.com>
+Date: Wed, 20 Mar 2024 14:35:52 -0400
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC][PATCH] tracing: Introduce restart_critical_timings()
+Content-Language: en-US
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+ Linux Trace Kernel <linux-trace-kernel@vger.kernel.org>,
+ Masami Hiramatsu <mhiramat@kernel.org>,
+ Daniel Bristot de Oliveira <bristot@redhat.com>,
+ Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Ingo Molnar <mingo@kernel.org>, Will Deacon <will@kernel.org>,
+ Waiman Long <longman@redhat.com>, Boqun Feng <boqun.feng@gmail.com>,
+ linux-rt-users <linux-rt-users@vger.kernel.org>
+References: <20240320122012.2c1f461f@gandalf.local.home>
+ <0015569b-15dc-4ccd-b322-67c3665c585e@efficios.com>
+ <20240320135819.4a25c50f@gandalf.local.home>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+In-Reply-To: <20240320135819.4a25c50f@gandalf.local.home>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On Wed, 20 Mar 2024 13:15:39 -0400
-Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
-
-> > I would like to introduce restart_critical_timings() and place it in
-> > locations that have this behavior.  
+On 2024-03-20 13:58, Steven Rostedt wrote:
+> On Wed, 20 Mar 2024 13:15:39 -0400
+> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
 > 
-> Is there any way you could move this to need_resched() rather than
-> sprinkle those everywhere ?
+>>> I would like to introduce restart_critical_timings() and place it in
+>>> locations that have this behavior.
+>>
+>> Is there any way you could move this to need_resched() rather than
+>> sprinkle those everywhere ?
+> 
+> Because need_resched() itself does not mean it's going to schedule
+> immediately. I looked at a few locations that need_resched() is called.
+> Most are in idle code where the critical timings are already handled.
+> 
+> I'm not sure I'd add it for places like mm/memory.c or drivers/md/bcache/btree.c.
+> 
+> A lot of places look to use it more for PREEMPT_NONE situations as a open
+> coded cond_resched().
+> 
+> The main reason this one is particularly an issue, is that it spins as long
+> as the owner is still running. Which may be some time, as here it was 7ms.
 
-Because need_resched() itself does not mean it's going to schedule
-immediately. I looked at a few locations that need_resched() is called.
-Most are in idle code where the critical timings are already handled.
+What I think we should be discussing here is how calling need_resched()
+should interact with the latency tracked by critical timings.
 
-I'm not sure I'd add it for places like mm/memory.c or drivers/md/bcache/btree.c.
+AFAIU, when code explicitly calls need_resched() in a loop, there are
+two cases:
 
-A lot of places look to use it more for PREEMPT_NONE situations as a open
-coded cond_resched().
+- need_resched() returns false: This means the loop can continue without
+   causing long latency on the system. Technically we could restart the
+   critical timings at this point.
 
-The main reason this one is particularly an issue, is that it spins as long
-as the owner is still running. Which may be some time, as here it was 7ms.
+- need_resched() returns true: This means the loop should exit quickly
+   and call the scheduler. I would not reset the critical timings there,
+   as whatever code is executed between need_resched() returning true
+   and calling the scheduler is adding to latency.
 
--- Steve
+Having stop/start critical timings around idle loops seems to just be
+an optimization over that.
+
+As for mm and driver/md code, what is wrong with doing a critical
+timings reset when need_resched() returns false ? It would prevent
+a whole class of false-positives rather than playing whack-a-mole with
+those that pop up.
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+https://www.efficios.com
+
