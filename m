@@ -1,101 +1,221 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0555916A1F5
-	for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2024 12:50:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 792B83DAC0E
+	for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2024 15:15:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711371009; cv=none; b=HBNtzhsV8zr7ismiltmu38/BdFBkzH8SrTGbNXxjvfX3JKKGgX9IxDjtkZ6+NjSzZmy/hf46Hnj+Lq8Heohhz8grFxda1NO4funG34IU/y4JZ9Qxcw2KyAZ5qFF2LYZbvdhMW0OLGpLeqfcmrb+VklgU5dImM2w0ApZDuVyp5g0=
+	t=1711379733; cv=none; b=iTOP3eVUiMvYNFsR6bOwsLICsK1ngPrq5eERhJdDQ7ZiyK4Mcku7k28Gwgv/PPMfB5YVNbtB4COQpCy+2JAOa6mPmN6dAdDSrcYmULuw5sAuUmL7dmeydmr2gm/qnIkgWMUIZQ5Z8yKurmYkaRgXGsg4HhNOcvpFu/2KS6NIM8I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711371009; c=relaxed/simple;
-	bh=vAHtlz7EdInjfZGeFUSgT85zxEWB2RvrCTuxA66VMhI=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=TgBxp8YCl/HBtk6/sV5c32CWrRz1ZDayqJR1EUhemn80+ZSOgfPz6kN7QcmOAk2ItyxLDE1NcsaGLSb2bBIH76+KP4++X1/IXZF6OYr+YlMlY5SVXsgGveHdHOQwTSbQuDq3iqjwAZEOlXenChR5iLQA2XfV/Odnqu5fKvZYCmo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jNycyUXg; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1711379733; c=relaxed/simple;
+	bh=kPlMSaMqo39hTPJCm+rG6l2qBNgpVeSsC7Q20ufapqs=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=QLLl4MQW944jEhrzRiaIUdqQafP14n12jDqjMAnaTiKvobMBCOLODfhKGQQPuwF85v+Te+DFUozqNmu/47Htph9NmFHi8ZQ1tcC3r3r2K50hwICknqoyAyC5isCG8yqMGyVeyb9GXkJaUuIETxCfSV23ezpsaZvlYDtfA5cIQbE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=A1U1RgMy; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jNycyUXg"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A1U1RgMy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711371007;
+	s=mimecast20190719; t=1711379730;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=FQeTg2MSrh+5DBiDfsa1lDw6CBQxljCXYQRwjVGNh/g=;
-	b=jNycyUXgRRUKPx5LUdRpQz2iYW/u4vT6Fx8ZwpAVYllUsq7LdNHpso+/mzXcp1aPWGIA/w
-	WMo8qY0VDZYQazctyX25cznf7MZsqFuicnp1AcT1wiNsMFbtqK7Fi7hlt84MKyRYR5z3jG
-	SoxMhId4gEutkKqYP7+4Ny1lvXm0IQM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=k81rqq4hzeq4pWvLawuIvbOKMKqt9JCn+dSEFmJ+o2Q=;
+	b=A1U1RgMylqiE4tMU7/VgKDAfS6U48jUyixkq9fWaoqjJE7+fHP3G4ICShR9Eag1s/Ak/+f
+	ZpN49AHQig9it3i4pb6NKkobgVKiWSPP8Pd+JN0FF+ycIMSSZyCrMULjLLgBLBsoG5Zjia
+	yoo3n/2igAh0JCyUeN2D4/wpch2TJRc=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-275-5I4bICssOvSChRNKzHocTA-1; Mon, 25 Mar 2024 08:50:03 -0400
-X-MC-Unique: 5I4bICssOvSChRNKzHocTA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 019EC8F1F15;
-	Mon, 25 Mar 2024 12:50:02 +0000 (UTC)
-Received: from localhost (unknown [10.22.8.120])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2D3F81074E;
-	Mon, 25 Mar 2024 12:50:02 +0000 (UTC)
-Date: Mon, 25 Mar 2024 09:49:57 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.213-rt105
-Message-ID: <ZgFy9au0Gvkzr6gZ@uudg.org>
+ us-mta-225-CBowFdSoOcyaja0qJUo5mg-1; Mon, 25 Mar 2024 11:15:28 -0400
+X-MC-Unique: CBowFdSoOcyaja0qJUo5mg-1
+Received: by mail-wr1-f71.google.com with SMTP id ffacd0b85a97d-341c449d7beso286573f8f.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2024 08:15:28 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1711379727; x=1711984527;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=k81rqq4hzeq4pWvLawuIvbOKMKqt9JCn+dSEFmJ+o2Q=;
+        b=OzSQvfTJvU292LDZQ1AMrIB4zULdf8LxUjByJYCefiCTRWY4jg4XKFTwGaH2Qkqdi4
+         0EEy3Rx3pC6JGLk7UJxNXhQUGUoSQRAWX0BuI8tWlosgqUNwkgy7vQ7JDizHrvNfq9/E
+         DkElCpGdefwCnWURhBnwCwJjtoWXXjflQKIwZT14SoIynhVAqvlNkjf0WVWbTr6/CDsx
+         hEjESi0LBev9SyK3tSvWBbub+ENN1AyVsknxgYOs2dNr79YAGNHcxt7rnOJqYgcmgoSu
+         F1dD2DBkeRnlIbnmuWYNaTUh/YG3SS3vcFo18PGU4VcMa729XRf7ojgzaly5qFhwXyZZ
+         ldNg==
+X-Forwarded-Encrypted: i=1; AJvYcCUixMElp65DhYqLt+youk2BL84Kh7ArGgYH67yCqLpVALdCz7RwtiQrGqJlXG8KCSQf04f7xmPkIMZzYO1scQ6S3JPrlw+D3HjSsuhI9e8=
+X-Gm-Message-State: AOJu0YwxkdCvDjSMOdwRGPFzTRO9z67NPpPbbvDMVMMz+Xarr1QNWIZ8
+	R9XbDQW27qAF2jbm/w4Bjh7/b7tFoi5pbrz9p6geD/4Y+nA61PQD35r1gJqBqDvlTLo1p1u8kNU
+	k2pW9kQju4iS4ePq+7/nzwRNPTlFv4TX9Djt27GjM+LaT3816ijVCxyJvXa1upCFy
+X-Received: by 2002:a5d:6147:0:b0:33e:cf2f:b0 with SMTP id y7-20020a5d6147000000b0033ecf2f00b0mr4916001wrt.3.1711379727668;
+        Mon, 25 Mar 2024 08:15:27 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGrc5zYv8VaDd+lWJa2+ZgmiNoBLCeQqToQYtu3I9B/QwbhTDXB0KOTKHOwhAIon9Sw1JN/Fg==
+X-Received: by 2002:a5d:6147:0:b0:33e:cf2f:b0 with SMTP id y7-20020a5d6147000000b0033ecf2f00b0mr4915976wrt.3.1711379727276;
+        Mon, 25 Mar 2024 08:15:27 -0700 (PDT)
+Received: from gerbillo.redhat.com (146-241-229-40.dyn.eolo.it. [146.241.229.40])
+        by smtp.gmail.com with ESMTPSA id df4-20020a5d5b84000000b0033e7b433498sm9747308wrb.111.2024.03.25.08.15.25
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 25 Mar 2024 08:15:26 -0700 (PDT)
+Message-ID: <e06f2c8537347a861dc27d100155cb721f7cf079.camel@redhat.com>
+Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
+From: Paolo Abeni <pabeni@redhat.com>
+To: Valentin Schneider <vschneid@redhat.com>, Eric Dumazet
+ <edumazet@google.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org,  linux-rt-users@vger.kernel.org, "David S.
+ Miller" <davem@davemloft.net>,  Jakub Kicinski <kuba@kernel.org>,
+ mleitner@redhat.com, David Ahern <dsahern@kernel.org>, Juri Lelli
+ <juri.lelli@redhat.com>, Tomas Glozar <tglozar@redhat.com>, Sebastian
+ Andrzej Siewior <bigeasy@linutronix.de>, Thomas Gleixner
+ <tglx@linutronix.de>
+Date: Mon, 25 Mar 2024 16:15:25 +0100
+In-Reply-To: <xhsmh1q82c7bt.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+References: <20240219095729.2339914-1-vschneid@redhat.com>
+	 <20240219095729.2339914-2-vschneid@redhat.com>
+	 <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
+	 <xhsmho7cbf33q.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+	 <CANn89iJpwUpAROOq7+ttwTMCZu0=XhS4dgwcs44t-gb7-_ejRg@mail.gmail.com>
+	 <xhsmhjzmxg40f.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+	 <47a0e30caff2a49d152aed521ef5e512fd11ae99.camel@redhat.com>
+	 <xhsmh1q82c7bt.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+Autocrypt: addr=pabeni@redhat.com; prefer-encrypt=mutual; keydata=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
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.50.4 (3.50.4-1.fc39) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-Hello RT-list!
+On Fri, 2024-03-22 at 21:58 +0100, Valentin Schneider wrote:
+> On 21/03/24 20:03, Paolo Abeni wrote:
+> > Something alike the following (completely untested!!!):
+> >=20
+> > WDYT?
+>=20
+> Thanks for the suggestion! I've been preempted by other things and haven'=
+t
+> had time to think more about this, so I really appreciate it :)
+>=20
+> > ---
+> > diff --git a/include/net/inet_timewait_sock.h b/include/net/inet_timewa=
+it_sock.h
+> > index f28da08a37b4..d696d10dc8ae 100644
+> > --- a/include/net/inet_timewait_sock.h
+> > +++ b/include/net/inet_timewait_sock.h
+> > @@ -93,8 +93,10 @@ struct inet_timewait_sock *inet_twsk_alloc(const str=
+uct sock *sk,
+> >  					   struct inet_timewait_death_row *dr,
+> >  					   const int state);
+> > =20
+> > -void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *s=
+k,
+> > -			 struct inet_hashinfo *hashinfo);
+> > +void inet_twsk_hashdance_schedule(struct inet_timewait_sock *tw,
+> > +				  struct sock *sk,
+> > +				  struct inet_hashinfo *hashinfo,
+> > +				  int timeo);
+> > =20
+> >  void __inet_twsk_schedule(struct inet_timewait_sock *tw, int timeo,
+> >  			  bool rearm);
+> > diff --git a/net/dccp/minisocks.c b/net/dccp/minisocks.c
+> > index 64d805b27add..8e108a89d8e4 100644
+> > --- a/net/dccp/minisocks.c
+> > +++ b/net/dccp/minisocks.c
+> > @@ -58,11 +58,10 @@ void dccp_time_wait(struct sock *sk, int state, int=
+ timeo)
+> >  		 * we complete the initialization.
+> >  		 */
+> >  		local_bh_disable();
+> > -		inet_twsk_schedule(tw, timeo);
+> >  		/* Linkage updates.
+> >  		 * Note that access to tw after this point is illegal.
+> >  		 */
+> > -		inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
+> > +		inet_twsk_hashdance_schedule(tw, sk, &dccp_hashinfo, timeo);
+> >  		local_bh_enable();
+> >  	} else {
+> >  		/* Sorry, if we're out of memory, just CLOSE this
+> > diff --git a/net/ipv4/inet_timewait_sock.c b/net/ipv4/inet_timewait_soc=
+k.c
+> > index e8de45d34d56..dd314b06c0cd 100644
+> > --- a/net/ipv4/inet_timewait_sock.c
+> > +++ b/net/ipv4/inet_timewait_sock.c
+> > @@ -97,8 +97,10 @@ static void inet_twsk_add_node_rcu(struct inet_timew=
+ait_sock *tw,
+> >   * Essentially we whip up a timewait bucket, copy the relevant info in=
+to it
+> >   * from the SK, and mess with hash chains and list linkage.
+> >   */
+> > -void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *s=
+k,
+> > -			   struct inet_hashinfo *hashinfo)
+> > +void inet_twsk_hashdance_schedule(struct inet_timewait_sock *tw,
+> > +				  struct sock *sk,
+> > +				  struct inet_hashinfo *hashinfo,
+> > +				  int timeo)
+> >  {
+> >  	const struct inet_sock *inet =3D inet_sk(sk);
+> >  	const struct inet_connection_sock *icsk =3D inet_csk(sk);
+> > @@ -135,6 +137,8 @@ void inet_twsk_hashdance(struct inet_timewait_sock =
+*tw, struct sock *sk,
+> >  	if (__sk_nulls_del_node_init_rcu(sk))
+> >  		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
+> > =20
+> > +	inet_twsk_schedule(tw, timeo);
+> > +
+> >  	spin_unlock(lock);
+> >=20
+>=20
+> That arms the timer before the refcounts are set up in the tail end of
+> the hashdance, which is what we have upstream ATM.
+>=20
+> Unfortunately this relies on the timer being TIMER_PINNED and having
+> softirqs disabled: the timer can only be enqueued on the local CPU, and i=
+t
+> can't fire until softirqs are enabled, so refcounts can safely be updated
+> after it is armed because it can't fire.
+>=20
+> For dynamic CPU isolation we want to make this timer not-pinned, so that =
+it
+> can be scheduled on housekeeping CPUs. However that means the
+> local_bh_disable() won't prevent the timer from firing, and that means th=
+e
+> refcounts need to be written to before it is armed.
 
-I'm pleased to announce the 5.10.213-rt105 stable release.
+Ouch, right you are, I underlooked that.
 
-This release is an update to the new stable 5.10.213 version and no extra
-changes have been performed.
 
-You can get this release via the git tree at:
+> Using the ehash lock is clever though, and the first thing inet_twsk_kill=
+()
+> does is grabbing it... Maybe something like the below? It (should) preven=
+t
+> this interleaving race:
+>=20
+>                              tcp_time_wait()
+>                                inet_twsk_hashdance()
+>   inet_twsk_deschedule_put()
+>     del_timer_sync()
+>                                inet_twsk_schedule()
+>=20
+> whether it is sane is another thing :-)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+[...]
 
-  branch: v5.10-rt
-  Head SHA1: 200d9bf140d7c6c9fde6f7d1ab6d8d973fd47910
+That looks safe to me but, compared to the current code, will need an
+additional WMB in tcp_time_wait() and will take the hash lock
+unconditionally in inet_twsk_deschedule_put(). The latter should not be
+fast-path, I'm unsure if the whole thing be acceptable from performance
+perspective??? Eric WDYT?
 
-Or to build 5.10.213-rt105 directly, the following patches should be applied:
+Thanks,
 
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.213.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.213-rt105.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
+Paolo
 
