@@ -1,379 +1,101 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCEE97F7ED
-	for <linux-rt-users@vger.kernel.org>; Fri, 22 Mar 2024 20:58:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0555916A1F5
+	for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2024 12:50:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711141105; cv=none; b=eSVuGhhs93sbrKQ25oNgGfM8phL816majITwXRX9HD5P64LHi4xxNOQjhQoPD0TpDFYfaVURf/1WlDvosojxAljZvtXYJDtCQ6J/thZ4p2ZyOVjmyrmpgXrDXc56Kh5NYGPXdERpbfYy8onF5wkjlLxN4/KbS2ch2IVQ/j0e6Qk=
+	t=1711371009; cv=none; b=HBNtzhsV8zr7ismiltmu38/BdFBkzH8SrTGbNXxjvfX3JKKGgX9IxDjtkZ6+NjSzZmy/hf46Hnj+Lq8Heohhz8grFxda1NO4funG34IU/y4JZ9Qxcw2KyAZ5qFF2LYZbvdhMW0OLGpLeqfcmrb+VklgU5dImM2w0ApZDuVyp5g0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711141105; c=relaxed/simple;
-	bh=oRijrCqkfvuJbaioVMlF9qQNlL9D7RaKBKPjPirF8R0=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=QHKJEX/Tu4u2eC6SjbtLJDpR0EMZMXBxG1DxGCuy+8QkFv0Mige84VDhEWNvIFYYMuJBwMrTgT/Vxt7JL9KYweE0h/Gm0bBLgEBc+QOi4HUolxglTyXmBBcJqwzq1+QX/GffbTRLVpvB+Vgn/cjY8cq/dLfUGKrKqU/3FHEhLio=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IQcvxP3+; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1711371009; c=relaxed/simple;
+	bh=vAHtlz7EdInjfZGeFUSgT85zxEWB2RvrCTuxA66VMhI=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=TgBxp8YCl/HBtk6/sV5c32CWrRz1ZDayqJR1EUhemn80+ZSOgfPz6kN7QcmOAk2ItyxLDE1NcsaGLSb2bBIH76+KP4++X1/IXZF6OYr+YlMlY5SVXsgGveHdHOQwTSbQuDq3iqjwAZEOlXenChR5iLQA2XfV/Odnqu5fKvZYCmo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jNycyUXg; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IQcvxP3+"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jNycyUXg"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711141101;
+	s=mimecast20190719; t=1711371007;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ueWoGIECvU3muzYVe58YZeiZCfKfcFXEZXrDyAApJrE=;
-	b=IQcvxP3+d7TfnmYPiitx/h4DziJf9vICTp6loJ5PaKF6QUxVDrzsF7FbtiWT/0lSxgD6Yg
-	2DmodpWmJ0NxPn/OnPek8H3edY6gFmkvcLktv+QqNvqSz0fk/BB6jrGVDULcEWrGJBGkEI
-	FRK6Czhit/HdGwL9WRSbTiibUTmZy9I=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=FQeTg2MSrh+5DBiDfsa1lDw6CBQxljCXYQRwjVGNh/g=;
+	b=jNycyUXgRRUKPx5LUdRpQz2iYW/u4vT6Fx8ZwpAVYllUsq7LdNHpso+/mzXcp1aPWGIA/w
+	WMo8qY0VDZYQazctyX25cznf7MZsqFuicnp1AcT1wiNsMFbtqK7Fi7hlt84MKyRYR5z3jG
+	SoxMhId4gEutkKqYP7+4Ny1lvXm0IQM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-189-wSw06g1fMDaKYOkt9coB-Q-1; Fri, 22 Mar 2024 16:58:20 -0400
-X-MC-Unique: wSw06g1fMDaKYOkt9coB-Q-1
-Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-68fa064556eso19898816d6.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 Mar 2024 13:58:20 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711141100; x=1711745900;
-        h=mime-version:message-id:date:references:in-reply-to:subject:cc:to
-         :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ueWoGIECvU3muzYVe58YZeiZCfKfcFXEZXrDyAApJrE=;
-        b=h4gGm5WF5GFFrhJt9eZUMKdgy0txOv46BTkxyeMQCOq5S4U8YMYWWW2EWv1xYlnGRn
-         S1S1EDJNMh+C03u2dptBK9vpqN6t0jhq5nCyJ7vwKpbAyIeSWdEwMZ41VGO3js6XEu8y
-         hRm80fKiPlcrZ42/lWUioAXZvjh+RzJljbe5VuidVNZNy6FAdKtVhd39LfDdq9hCOcnO
-         Ptvx0Cd+BeePwtN2IZvQ41Cgu7I86py9vDHNPVqvThcGaK2jdehZWlPm7KWIqpE6SM+j
-         bteuwTwaxoWsPNhf9a2lFLNxupeIb8sXy+3Q+LwAUrehaPczG7MfQYxzzqI3CIkxHzr/
-         pYUg==
-X-Forwarded-Encrypted: i=1; AJvYcCUZkCr3D6YyF3oVVi8XFbEwwwRdqMoJ3K2BJwA0Hj6tYhaFoQjavc1XvU3024m/Z0dTRXmeUQa751vQM6GVZpkJBfP8ltOAz3bdYFY/X9Q=
-X-Gm-Message-State: AOJu0YyH5QN6nocIzFJxEw5aTgfb89BBAv8s5El8SUj1lN9LbfNHYadH
-	ptcyOldhakXq48u4nNDE7jN1keZrmXn/IL+Set30YjDa+4ZN5yIqNP2d3OfVNkVT3wnKEaVECyX
-	V7Oz/tvHjZHk0D6yXE+K2rfpr9y/PCIU1kjtMMD/jHpRhuYtw3B8kawfStSVVqhHa
-X-Received: by 2002:a05:6214:2425:b0:696:706c:ed4c with SMTP id gy5-20020a056214242500b00696706ced4cmr624765qvb.44.1711141099867;
-        Fri, 22 Mar 2024 13:58:19 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFIc7MPCSOxFAGygw4UTL+OZC1CHViTfCZING4P6wzWNzvYnub16EIR/2COXuCM1mn83Kmoew==
-X-Received: by 2002:a05:6214:2425:b0:696:706c:ed4c with SMTP id gy5-20020a056214242500b00696706ced4cmr624752qvb.44.1711141099470;
-        Fri, 22 Mar 2024 13:58:19 -0700 (PDT)
-Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
-        by smtp.gmail.com with ESMTPSA id kk11-20020a056214508b00b00690df461ecbsm1440758qvb.10.2024.03.22.13.58.15
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 22 Mar 2024 13:58:18 -0700 (PDT)
-From: Valentin Schneider <vschneid@redhat.com>
-To: Paolo Abeni <pabeni@redhat.com>, Eric Dumazet <edumazet@google.com>
-Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
- Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>,
- mleitner@redhat.com, David Ahern <dsahern@kernel.org>, Juri Lelli
- <juri.lelli@redhat.com>, Tomas Glozar <tglozar@redhat.com>, Sebastian
- Andrzej Siewior <bigeasy@linutronix.de>, Thomas Gleixner
- <tglx@linutronix.de>
-Subject: Re: [PATCH v3 1/1] tcp/dcpp: Un-pin tw_timer
-In-Reply-To: <47a0e30caff2a49d152aed521ef5e512fd11ae99.camel@redhat.com>
-References: <20240219095729.2339914-1-vschneid@redhat.com>
- <20240219095729.2339914-2-vschneid@redhat.com>
- <CANn89i+3-zgAkWukFavu1wgf1XG+K9U4BhJWw7H+QKwsfYL4WA@mail.gmail.com>
- <xhsmho7cbf33q.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
- <CANn89iJpwUpAROOq7+ttwTMCZu0=XhS4dgwcs44t-gb7-_ejRg@mail.gmail.com>
- <xhsmhjzmxg40f.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
- <47a0e30caff2a49d152aed521ef5e512fd11ae99.camel@redhat.com>
-Date: Fri, 22 Mar 2024 21:58:14 +0100
-Message-ID: <xhsmh1q82c7bt.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+ us-mta-275-5I4bICssOvSChRNKzHocTA-1; Mon, 25 Mar 2024 08:50:03 -0400
+X-MC-Unique: 5I4bICssOvSChRNKzHocTA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 019EC8F1F15;
+	Mon, 25 Mar 2024 12:50:02 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2D3F81074E;
+	Mon, 25 Mar 2024 12:50:02 +0000 (UTC)
+Date: Mon, 25 Mar 2024 09:49:57 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.213-rt105
+Message-ID: <ZgFy9au0Gvkzr6gZ@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-On 21/03/24 20:03, Paolo Abeni wrote:
-> On Wed, 2024-02-21 at 17:45 +0100, Valentin Schneider wrote:
->> @@ -262,11 +266,25 @@ void __inet_twsk_schedule(struct inet_timewait_sock *tw, int timeo, bool rearm)
->>  
->>  	if (!rearm) {
->>  		bool kill = timeo <= 4*HZ;
->> +		bool pending;
->>  
->>  		__NET_INC_STATS(twsk_net(tw), kill ? LINUX_MIB_TIMEWAITKILLED :
->>  						     LINUX_MIB_TIMEWAITED);
->> +		spin_lock(&tw->tw_timer_lock);
->>  		BUG_ON(mod_timer(&tw->tw_timer, jiffies + timeo));
->> +		pending = timer_pending(&tw->tw_timer);
->>  		refcount_inc(&tw->tw_dr->tw_refcount);
->> +
->> +		/*
->> +		 * If the timer didn't become pending under tw_timer_lock, then
->> +		 * it means it has been shutdown by inet_twsk_deschedule_put()
->> +		 * prior to this invocation. All that remains is to clean up the
->> +		 * timewait.
->> +		 */
->> +		if (!pending)
->> +			inet_twsk_kill(tw);
->> +
->> +		spin_unlock(&tw->tw_timer_lock);
->>  	} else {
->>  		mod_timer_pending(&tw->tw_timer, jiffies + timeo);
->>  	}
->
-> I understand that adding another lock here is a no-go.
->
-> I'm wondering if we could move the inet_twsk_schedule() under the ehash
-> lock, to avoid the need for acquiring the additional tw reference and
-> thus avoid the ref leak when inet_twsk_deschedule_put() clashes with
-> tcp_time_wait().
->
-> Something alike the following (completely untested!!!):
->
-> WDYT?
+Hello RT-list!
 
-Thanks for the suggestion! I've been preempted by other things and haven't
-had time to think more about this, so I really appreciate it :)
+I'm pleased to announce the 5.10.213-rt105 stable release.
 
-> ---
-> diff --git a/include/net/inet_timewait_sock.h b/include/net/inet_timewait_sock.h
-> index f28da08a37b4..d696d10dc8ae 100644
-> --- a/include/net/inet_timewait_sock.h
-> +++ b/include/net/inet_timewait_sock.h
-> @@ -93,8 +93,10 @@ struct inet_timewait_sock *inet_twsk_alloc(const struct sock *sk,
->  					   struct inet_timewait_death_row *dr,
->  					   const int state);
->  
-> -void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
-> -			 struct inet_hashinfo *hashinfo);
-> +void inet_twsk_hashdance_schedule(struct inet_timewait_sock *tw,
-> +				  struct sock *sk,
-> +				  struct inet_hashinfo *hashinfo,
-> +				  int timeo);
->  
->  void __inet_twsk_schedule(struct inet_timewait_sock *tw, int timeo,
->  			  bool rearm);
-> diff --git a/net/dccp/minisocks.c b/net/dccp/minisocks.c
-> index 64d805b27add..8e108a89d8e4 100644
-> --- a/net/dccp/minisocks.c
-> +++ b/net/dccp/minisocks.c
-> @@ -58,11 +58,10 @@ void dccp_time_wait(struct sock *sk, int state, int timeo)
->  		 * we complete the initialization.
->  		 */
->  		local_bh_disable();
-> -		inet_twsk_schedule(tw, timeo);
->  		/* Linkage updates.
->  		 * Note that access to tw after this point is illegal.
->  		 */
-> -		inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
-> +		inet_twsk_hashdance_schedule(tw, sk, &dccp_hashinfo, timeo);
->  		local_bh_enable();
->  	} else {
->  		/* Sorry, if we're out of memory, just CLOSE this
-> diff --git a/net/ipv4/inet_timewait_sock.c b/net/ipv4/inet_timewait_sock.c
-> index e8de45d34d56..dd314b06c0cd 100644
-> --- a/net/ipv4/inet_timewait_sock.c
-> +++ b/net/ipv4/inet_timewait_sock.c
-> @@ -97,8 +97,10 @@ static void inet_twsk_add_node_rcu(struct inet_timewait_sock *tw,
->   * Essentially we whip up a timewait bucket, copy the relevant info into it
->   * from the SK, and mess with hash chains and list linkage.
->   */
-> -void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
-> -			   struct inet_hashinfo *hashinfo)
-> +void inet_twsk_hashdance_schedule(struct inet_timewait_sock *tw,
-> +				  struct sock *sk,
-> +				  struct inet_hashinfo *hashinfo,
-> +				  int timeo)
->  {
->  	const struct inet_sock *inet = inet_sk(sk);
->  	const struct inet_connection_sock *icsk = inet_csk(sk);
-> @@ -135,6 +137,8 @@ void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
->  	if (__sk_nulls_del_node_init_rcu(sk))
->  		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
->  
-> +	inet_twsk_schedule(tw, timeo);
-> +
->  	spin_unlock(lock);
->
+This release is an update to the new stable 5.10.213 version and no extra
+changes have been performed.
 
-That arms the timer before the refcounts are set up in the tail end of
-the hashdance, which is what we have upstream ATM.
+You can get this release via the git tree at:
 
-Unfortunately this relies on the timer being TIMER_PINNED and having
-softirqs disabled: the timer can only be enqueued on the local CPU, and it
-can't fire until softirqs are enabled, so refcounts can safely be updated
-after it is armed because it can't fire.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-For dynamic CPU isolation we want to make this timer not-pinned, so that it
-can be scheduled on housekeeping CPUs. However that means the
-local_bh_disable() won't prevent the timer from firing, and that means the
-refcounts need to be written to before it is armed.
+  branch: v5.10-rt
+  Head SHA1: 200d9bf140d7c6c9fde6f7d1ab6d8d973fd47910
 
-As a worst-case example, under PREEMPT_RT local_bh_disable() and
-spin_lock() keep the context preemptible, so we could have:
+Or to build 5.10.213-rt105 directly, the following patches should be applied:
 
-inet_twsk_hashdance_schedule()            tw_timer_handler()
-  inet_twsk_schedule()
-  <this context gets preempted for a while>
-                                            inet_twsk_kill()
-  refcount_set()                                           
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.213.xz
 
-Using the ehash lock is clever though, and the first thing inet_twsk_kill()
-does is grabbing it... Maybe something like the below? It (should) prevent
-this interleaving race:
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.213-rt105.patch.xz
 
-                             tcp_time_wait()
-                               inet_twsk_hashdance()
-  inet_twsk_deschedule_put()
-    del_timer_sync()
-                               inet_twsk_schedule()
+Signing key fingerprint:
 
-whether it is sane is another thing :-)
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
 
----
-diff --git a/include/net/inet_timewait_sock.h b/include/net/inet_timewait_sock.h
-index f28da08a37b4e..d696d10dc8aec 100644
---- a/include/net/inet_timewait_sock.h
-+++ b/include/net/inet_timewait_sock.h
-@@ -93,8 +93,10 @@ struct inet_timewait_sock *inet_twsk_alloc(const struct sock *sk,
- 					   struct inet_timewait_death_row *dr,
- 					   const int state);
- 
--void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
--			 struct inet_hashinfo *hashinfo);
-+void inet_twsk_hashdance_schedule(struct inet_timewait_sock *tw,
-+				  struct sock *sk,
-+				  struct inet_hashinfo *hashinfo,
-+				  int timeo);
- 
- void __inet_twsk_schedule(struct inet_timewait_sock *tw, int timeo,
- 			  bool rearm);
-diff --git a/net/dccp/minisocks.c b/net/dccp/minisocks.c
-index 64d805b27adde..8e108a89d8e4b 100644
---- a/net/dccp/minisocks.c
-+++ b/net/dccp/minisocks.c
-@@ -58,11 +58,10 @@ void dccp_time_wait(struct sock *sk, int state, int timeo)
- 		 * we complete the initialization.
- 		 */
- 		local_bh_disable();
--		inet_twsk_schedule(tw, timeo);
- 		/* Linkage updates.
- 		 * Note that access to tw after this point is illegal.
- 		 */
--		inet_twsk_hashdance(tw, sk, &dccp_hashinfo);
-+		inet_twsk_hashdance_schedule(tw, sk, &dccp_hashinfo, timeo);
- 		local_bh_enable();
- 	} else {
- 		/* Sorry, if we're out of memory, just CLOSE this
-diff --git a/net/ipv4/inet_timewait_sock.c b/net/ipv4/inet_timewait_sock.c
-index 5befa4de5b241..879747600e7b5 100644
---- a/net/ipv4/inet_timewait_sock.c
-+++ b/net/ipv4/inet_timewait_sock.c
-@@ -44,14 +44,14 @@ void inet_twsk_bind_unhash(struct inet_timewait_sock *tw,
- 	__sock_put((struct sock *)tw);
- }
- 
--/* Must be called with locally disabled BHs. */
--static void inet_twsk_kill(struct inet_timewait_sock *tw)
-+static void __inet_twsk_kill(struct inet_timewait_sock *tw, spinlock_t *lock)
-+__releases(lock)
- {
- 	struct inet_hashinfo *hashinfo = tw->tw_dr->hashinfo;
--	spinlock_t *lock = inet_ehash_lockp(hashinfo, tw->tw_hash);
- 	struct inet_bind_hashbucket *bhead, *bhead2;
- 
--	spin_lock(lock);
-+	lockdep_assert_held(lock);
-+
- 	sk_nulls_del_node_init_rcu((struct sock *)tw);
- 	spin_unlock(lock);
- 
-@@ -71,6 +71,16 @@ static void inet_twsk_kill(struct inet_timewait_sock *tw)
- 	inet_twsk_put(tw);
- }
- 
-+/* Must be called with locally disabled BHs. */
-+static void inet_twsk_kill(struct inet_timewait_sock *tw)
-+{
-+	struct inet_hashinfo *hashinfo = tw->tw_dr->hashinfo;
-+	spinlock_t *lock = inet_ehash_lockp(hashinfo, tw->tw_hash);
-+
-+	spin_lock(lock);
-+	__inet_twsk_kill(tw, lock);
-+}
-+
- void inet_twsk_free(struct inet_timewait_sock *tw)
- {
- 	struct module *owner = tw->tw_prot->owner;
-@@ -97,8 +107,10 @@ static void inet_twsk_add_node_rcu(struct inet_timewait_sock *tw,
-  * Essentially we whip up a timewait bucket, copy the relevant info into it
-  * from the SK, and mess with hash chains and list linkage.
-  */
--void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
--			   struct inet_hashinfo *hashinfo)
-+void inet_twsk_hashdance_schedule(struct inet_timewait_sock *tw,
-+				  struct sock *sk,
-+				  struct inet_hashinfo *hashinfo,
-+				  int timeo)
- {
- 	const struct inet_sock *inet = inet_sk(sk);
- 	const struct inet_connection_sock *icsk = inet_csk(sk);
-@@ -135,20 +147,22 @@ void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
- 	if (__sk_nulls_del_node_init_rcu(sk))
- 		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
- 
--	spin_unlock(lock);
- 
- 	/* tw_refcnt is set to 3 because we have :
- 	 * - one reference for bhash chain.
- 	 * - one reference for ehash chain.
- 	 * - one reference for timer.
--	 * We can use atomic_set() because prior spin_lock()/spin_unlock()
--	 * committed into memory all tw fields.
--	 * Also note that after this point, we lost our implicit reference
--	 * so we are not allowed to use tw anymore.
-+	 * XXX: write blurb about ensure storeing happen before the refcount is udpated
- 	 */
-+	smp_wmb();
- 	refcount_set(&tw->tw_refcnt, 3);
-+
-+	inet_twsk_schedule(tw, timeo);
-+
-+	spin_unlock(lock);
-+
- }
--EXPORT_SYMBOL_GPL(inet_twsk_hashdance);
-+EXPORT_SYMBOL_GPL(inet_twsk_hashdance_schedule);
- 
- static void tw_timer_handler(struct timer_list *t)
- {
-@@ -217,8 +231,16 @@ EXPORT_SYMBOL_GPL(inet_twsk_alloc);
-  */
- void inet_twsk_deschedule_put(struct inet_timewait_sock *tw)
- {
--	if (del_timer_sync(&tw->tw_timer))
--		inet_twsk_kill(tw);
-+	struct inet_hashinfo *hashinfo = tw->tw_dr->hashinfo;
-+	spinlock_t *lock = inet_ehash_lockp(hashinfo, tw->tw_hash);
-+
-+	spin_lock(lock);
-+	if (timer_shutdown_sync(&tw->tw_timer)) {
-+		/* releases @lock */
-+		__inet_twsk_kill(tw, lock);
-+	} else {
-+		spin_unlock(lock);
-+	}
- 	inet_twsk_put(tw);
- }
- EXPORT_SYMBOL(inet_twsk_deschedule_put);
-diff --git a/net/ipv4/tcp_minisocks.c b/net/ipv4/tcp_minisocks.c
-index 9e85f2a0bddd4..6621a395fd8e5 100644
---- a/net/ipv4/tcp_minisocks.c
-+++ b/net/ipv4/tcp_minisocks.c
-@@ -343,11 +343,10 @@ void tcp_time_wait(struct sock *sk, int state, int timeo)
- 		 * we complete the initialization.
- 		 */
- 		local_bh_disable();
--		inet_twsk_schedule(tw, timeo);
- 		/* Linkage updates.
- 		 * Note that access to tw after this point is illegal.
- 		 */
--		inet_twsk_hashdance(tw, sk, net->ipv4.tcp_death_row.hashinfo);
-+		inet_twsk_hashdance_schedule(tw, sk, net->ipv4.tcp_death_row.hashinfo, timeo);
- 		local_bh_enable();
- 	} else {
- 		/* Sorry, if we're out of memory, just CLOSE this
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
 
