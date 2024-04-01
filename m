@@ -1,22 +1,40 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFF7713AD18;
-	Thu, 28 Mar 2024 21:09:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E124A56B89;
+	Mon,  1 Apr 2024 23:25:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711660140; cv=none; b=pLjgTcxIxtcz9ETUvCxPMhmYNCoDBep+/FgJoNxcOBtxcMJwepyNF5i/YK772bLidY0+kaJM+QLy0DIMK4xsTdzayCS74JaB6tx3XRZAmLkQkT6fSPdQD8hlqiRh4YcbMn38GkEM3If0aNkZQfokhvYHeEjsTCm0OtbtpHSuk0U=
+	t=1712013955; cv=none; b=UWUke6odxpbtc89Dc42w7pk7sbrlyOxdSouL3nNSRRu3KiJ7i9laV7iz5WeX1xJQKs8js/lir/Hq+gQayXJqsq6DPxycjemDO0LT+5mojRh4F9NramiA1cZR7O8jIEcpaOEM85+5+EuiqyFtLpfVSmFyejhtDEcZo6DuKq48yhc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711660140; c=relaxed/simple;
-	bh=52261gAZIeWIOI8uQ0q9VIbpFohHJgL7wuuVXjbzEd0=;
-	h=From:Subject:Date:Message-ID:To; b=rZqfSod4SQNchOdMuQZo8fZw+deUahelGxQtCSFqoKlqYOyvDu5uQaQXXLHyC/m7rXLGhkggsO4FWbEhxGscBJEAmsZHxbrCEruRFKrGmBiXNLrBH1O2dzQWyZAH6SriDI6DW5gLBuLZM38RuDVUvAmCrjOcNz9vTl9YUmz4Rys=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1E08DC433F1;
-	Thu, 28 Mar 2024 21:09:00 +0000 (UTC)
-From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.1.83-rt28
-Date: Thu, 28 Mar 2024 21:08:27 -0000
-Message-ID: <171166010706.1375217.11208818212116841475@demetrius>
+	s=arc-20240116; t=1712013955; c=relaxed/simple;
+	bh=6OmxJ/xi1QoJKbExnA/ZS2JoIjfcwBbOXlEN0cIRvmc=;
+	h=From:Subject:Date:Message-ID:To; b=gQZ32GlwzdNZ7PURpR6dnlAGTPnkG1B/KX6fsYHtXd98BH7p4PMQ2p9g6L2Ihavkk5Dmaog8Ytwd4+ZhOBJYyfPxjm1mjEAmT1HIPfKElB4a8wW+wbHz0e2swtKotb0+H7nnkW5aW6ub77xhxZpkc6SQtI8gZ1Qehj9US6MKXq0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=fXYeJ9pj; arc=none smtp.client-ip=185.125.188.120
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="fXYeJ9pj"
+Received: from canonical.com (1.general.jsalisbury.us.vpn [10.172.66.188])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id D20E83FE50;
+	Mon,  1 Apr 2024 23:25:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+	s=20210705; t=1712013945;
+	bh=jG50dJ3zJpG9G2aF82/d1laDoH8jlfQ8avhPUxYUoHk=;
+	h=From:Subject:Date:Message-ID:To;
+	b=fXYeJ9pjgWWRZg6hy4RJgFQy3T9/tLWxmqKITP09ExJcHTbT08UeLZy3VkfP3dL+u
+	 uqB8Pb495YcQqTQRQjxUYtgJeVPrVgWpd7ftbPDEVFORR2FdxWjwsQjKJ/x2JcuYkZ
+	 VPBhcOOYmAClKL4ErcFANx5eAhHu30SRjmHRAl8vsegxE95gQ48ugqn2wK3jzdnrY6
+	 FszgNOsgkgX0rY8sooiIWZucLybuK6h+QLzKkrZ9wb95U9Yi1gN4VKZ2fm/ME7O3sA
+	 dMompmfaQfVuKbcN8a1eOOF0jNgshjXwOD/PazQ1TclsPua1WDBFtvmmt51mn5aWkp
+	 yNqDIQZ7jUfsw==
+From: Joseph Salisbury <joseph.salisbury@canonical.com>
+Subject: [ANNOUNCE] 5.15.153-rt75
+Date: Mon, 01 Apr 2024 19:36:14 -0000
+Message-ID: <171200017428.328934.7030647013892748846@jupiter.home.arpa>
 To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -26,24 +44,23 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 
 Hello RT-list!
 
-I'm pleased to announce the 6.1.83-rt28 stable release.
+I'm pleased to announce the 5.15.153-rt75 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v6.1-rt
-  Head SHA1: c88639fef1f2a6e8da6d4c5b6a9b07a3bd0a6cc7
+  branch: v5.15-rt
+  Head SHA1: 07c40bd88823dc5320a6d32b8473cb8c85a91cd9
 
-Or to build 6.1.83-rt28 directly, the following patches should be applied:
+Or to build 5.15.153-rt75 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.83.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.153.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.83-rt28.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.153-rt75.patch.xz
 
 
 Enjoy!
-Clark
-
+Joseph Salisbury
