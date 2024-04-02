@@ -1,117 +1,98 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 905B8657B5;
-	Tue,  2 Apr 2024 10:34:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB68860B96
+	for <linux-rt-users@vger.kernel.org>; Tue,  2 Apr 2024 11:19:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712054063; cv=none; b=m2hvFWAELyyWeLqWv4TuU4CKNI0lNclI+EM3N7JQ+KatEPKKZl9tyMes1G43K4EJRffTQxLZ6emY0d82BbqjWCIwJpF5oYzy95WOKKh1mFatafontaAsSUaiSQXkRwkA1tOP8aBXFfGhynnlbpfOhJngSSaI+rj5ObPRRGsD0d8=
+	t=1712056757; cv=none; b=V11R2D+hGnqR52eVRANVatCLQvIJ8bNE9YxG3mRRqaodZRUEFM0Fx6XIs7KlHobQM+HtpTIfousLaSdEcihuI/2MsXfaB13MscY7D+PnF5zVL4uFGAbQLQdcIP/V5R8v8+0BsaaYocLjjE1Vr1AfjeZbut+hpstS0OeK3EmiCjA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712054063; c=relaxed/simple;
-	bh=Q4MlAhRm+AkBxTUeVkfth/yvDYTiPwojE4biBVagZF4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=KjImjdoG4AuCJgfJusTzNBCCWhnKx/h43/HJK401KHH1kTkywfT4ThjHE0mDNETU3mCkmcek7GxGuiphFU6foUo1W6T6FRWB0/tZ1grsXZQj++uHD3nzxePyYqMP0SNe8ZPnGf5KZnCbFHyqwRaW0VtVDvoc7tyouBSwNE1Wjlo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=P+wvg4Xr; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=DU0xq7e6; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1712056757; c=relaxed/simple;
+	bh=cIZsdenaIdZIcmBV52A4bS+D/4i8Hc/CVDNeqBIWAco=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=oQBjztiY/swQJvSB0bX6l8hK5vpHck+OfXxJ/LP/95Qpxo0/p2bEhflIDkTu/OhNUSwLAljgagJTH6vu8pkf4Y0g4D4GDvHQZsKPHZ4GGFcvfKbe9OufEs2pbpAW4k1sDqQcivFWgNg8S+dfyQPhzdlRScMBzoT12Ob1bN//kvI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=cpUj/VZi; arc=none smtp.client-ip=188.40.30.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="P+wvg4Xr";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="DU0xq7e6"
-Date: Tue, 2 Apr 2024 12:34:14 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1712054056;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=STfe/Rz3uPOTuqu4DrUcO9QjfwomKLwaXdLP6m2yfFc=;
-	b=P+wvg4XrkSa8qrUqLFplrxzRc04v5G0AvSoJPkYGlnle/rjdCGNtOirGpbAtrYWaEZXYxt
-	4MJNjH23Yd4yTmtC6fiUTr4j0YItovd5T8MM6bnEgHMaQd3WCYoVcqZJt98XClr1A2bQe2
-	86VQaBn4BpbWfcBmBxUvBtS0TWVcPjz5xNjJ68Yg7zn5kErEW5RBvG/JnPBoNim7zKkTLj
-	78kAn6brpoybVRsNrDCx9Yjbb2U7LYCZj13nQI4+NPCiAshU7C4wpu64BBEUVwNmIsEIhu
-	MbcWc1vc4KSf48ABCVdipi6cgNLlfjGLDXIDQQNwJeOtHVrG4JrSXM0zo9pt4Q==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1712054056;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=STfe/Rz3uPOTuqu4DrUcO9QjfwomKLwaXdLP6m2yfFc=;
-	b=DU0xq7e60IJtZQNOzYay7B8VjNffiXJvrNL+NVaf3TXBUWY82qsg3vKThsIZFpW6m3IDhW
-	k+pyEg7w0w0dUpDQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: "John B. Wyatt IV" <jwyatt@redhat.com>
-Cc: John Ogness <john.ogness@linutronix.de>, Petr Mladek <pmladek@suse.com>,
-	Clark Williams <williams@redhat.com>,
-	Juri Lelli <jlelli@redhat.com>, Derek Barbosa <debarbos@redhat.com>,
-	Bruno Goncalves <bgoncalv@redhat.com>,
-	"John B. Wyatt IV" <sageofredondo@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: NMIs reported by console_blast.sh with 6.6.20-rt25
-Message-ID: <20240402103414.KkkX5RuV@linutronix.de>
-References: <ZfSfrzak9WS0ZFv7@thinkpad2021>
- <20240322122921.U3WRsO4X@linutronix.de>
- <ZgSvVCDja6yFCC0Y@thinkpad2021>
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="cpUj/VZi"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
+	s=default2211; h=Content-Type:MIME-Version:Message-ID:Date:References:
+	In-Reply-To:Subject:Cc:To:From:Sender:Reply-To:Content-Transfer-Encoding:
+	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+	Resent-To:Resent-Cc:Resent-Message-ID;
+	bh=cIZsdenaIdZIcmBV52A4bS+D/4i8Hc/CVDNeqBIWAco=; b=cpUj/VZinzaLWc0Y9hyIdPr9ZM
+	EJW9P3ihTNBdKwRXvJmjGaYySKP1p475YX5//+Jb9j0KQOZTPSPuU8PJavOsaLZYyOEAE4ScP66Ya
+	WfgeFeizUiSuvaYpxUgiofH+T/u0EBZv+56Fw0J/ACehd8xAq4UJe0nblII5YZaKM/C8p6JUFM6Wp
+	7SDhAwFKI02hunax90nOhjDUMkDjyDh9pPuR/i1xZCQ2ABs1rQuSY+rd4ZLTmCSs8agpjFNrmMmN5
+	znbxxldXG15BAcrXdBGH3CKrpdnejWDBRynblvkWoGFI/Wydy48aRHS5BCi/Pb8/38+Nd9Bw6ZJZZ
+	R56kduiQ==;
+Received: from sslproxy03.your-server.de ([88.198.220.132])
+	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.94.2)
+	(envelope-from <esben@geanix.com>)
+	id 1rrcAZ-0000sQ-Ty; Tue, 02 Apr 2024 13:19:11 +0200
+Received: from [185.17.218.86] (helo=localhost)
+	by sslproxy03.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <esben@geanix.com>)
+	id 1rrcAY-0003Np-3A;
+	Tue, 02 Apr 2024 13:19:11 +0200
+From: Esben Haabendal <esben@geanix.com>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: Petr Mladek <pmladek@suse.com>,  Steven Rostedt <rostedt@goodmis.org>,
+  Sergey Senozhatsky <senozhatsky@chromium.org>,
+  linux-rt-users@vger.kernel.org,  Martin =?utf-8?Q?Hundeb=C3=B8ll?=
+ <martin@geanix.com>
+Subject: Re: [PATCH 1/2] printk: export pr_flush()
+In-Reply-To: <874jckqcxu.fsf@jogness.linutronix.de> (John Ogness's message of
+	"Tue, 02 Apr 2024 12:31:01 +0206")
+References: <d65ca57567e245aa99a944cefc195f2bc6974384.1712051763.git.esben@geanix.com>
+	<874jckqcxu.fsf@jogness.linutronix.de>
+Date: Tue, 02 Apr 2024 13:19:09 +0200
+Message-ID: <87jzlgf1w2.fsf@geanix.com>
+User-Agent: Gnus/5.13 (Gnus v5.13)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <ZgSvVCDja6yFCC0Y@thinkpad2021>
+Content-Type: text/plain
+X-Authenticated-Sender: esben@geanix.com
+X-Virus-Scanned: Clear (ClamAV 0.103.10/27233/Tue Apr  2 10:26:21 2024)
 
-On 2024-03-27 19:44:20 [-0400], John B. Wyatt IV wrote:
-> > where is this output from? The `ret' opcode usually does not cause a
-> > trap. My guess is that the machine has been interrupted by an external
-> > user at this position.
->=20
-> Just before the sysrq that crashes the system.
+John Ogness <john.ogness@linutronix.de> writes:
 
-so this is intentional.
+> On 2024-04-02, Esben Haabendal <esben@geanix.com> wrote:
+>> Outside prinkt users might wan't assure whatever printed has reached
+>> its destination before continuing. E.g. during the shutdown-procedure,
+>> where printk-buffers aren't emptied before the system goes down.
+>
+> This is a reposting of:
+>
+> https://lore.kernel.org/lkml/20231030092432.3434623-1-martin@geanix.com
+>
+> As I wrote in that thread:
+>
+> printk() tries to print directly from the calling context. Are you
+> experiencing problems where you do not see the restarting message?
 
-=E2=80=A6
-> > Side note: This is using early_printk, correct?
->=20
-> I believe so, but it might be preempted? This is the part it stopped in.
->=20
-> static void io_serial_out(unsigned long addr, int offset, int value)
-> {
-> 	outb(value, addr + offset);
-> }
+Yes, that is exactly what we are seing.
 
-The function is invoked in NMU context so it can't be preempted.
+> (If your answer is "yes", please explain the scenario and provide
+> information about the console driver you are using.)
 
-> > According to this, someone issued a `crash' via sysrq. Why?
-> >=20
->=20
-> This is part of the console_blast.sh script that John Ogness sent me.
->=20
-> Please see below:
-=E2=80=A6
+It is an i.MX8MP system, and console is attached to ttymxc1
+(drivers/tty/serial/imx.c).
 
-Okay. Then everything works as it should=E2=80=A6
+Booting up, and simply executing "reboot" command. Without these two
+patches, the "reboot: Restarting system" message is not written to
+ttymxc1 console. With the patches, it is.
 
-> > > NMI Backtrace for 6.6.20-rt25 no forced preemption with tuned through=
-put-performance profile
-> > > -----------------------------
-> >=20
-> > This and the following backtrace shows the same picture: The CPU is
-> > crashing due to proc/sysrq request and does CPU-backtraces via NMI and
-> > polls in early_printk, waiting for the UART to become idle (probably).
-> >=20
-> > I don't see an issue here so far.
->=20
-> Luis Goncalves discussed it with me after reading your response. Thank
-> you for your help. The NMI was needed to flush the buffers upon the
-> system crashing itself. Does this part about NMI watchdog need to be
-> documented?
+> I assume you have tried the latest RT development version.
 
-Not sure about that one. There is an _a_ _lot_ to be printed from NMI
-and the NMI watchdog might trigger if nothing is triggering the
-NMI-watchdog during the print job. Also, the crash was requested.
+I have reproduced the problem with v6.6.23-rt28. I haven't upgraded to
+6.7 or 6.8 yet. Do you need me to retest with 6.8?
 
-Sebastian
+/Esben
