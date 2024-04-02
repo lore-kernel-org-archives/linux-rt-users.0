@@ -1,70 +1,69 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 816242B9D8
-	for <linux-rt-users@vger.kernel.org>; Tue,  2 Apr 2024 20:40:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44EEF12BF20
+	for <linux-rt-users@vger.kernel.org>; Tue,  2 Apr 2024 20:52:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712090410; cv=none; b=f4WjrpgIYYYXAm0mIFA21vPPEgwFweLrq+7eLcH58vDACSLr0Qt+LGo9wOP2WuLQUSfX6zyQWXTBx2/ImAqf2uM5ER1+/ULZNLikSUKwpgIn5xGUHg7uLB1MT5Wh7F7p8k8cB6bnJ02e2O5eoPtFyRKnXe6dn2wJnwgcHLutblU=
+	t=1712091165; cv=none; b=OcpXSdEKQDG7TT3UbKh2La4itynoXxgx8Qiw4w61UsWNJsrQWzmn3RLDqAHjtLyUy1pDSwbt6clMFXcYzh5dAKuRlHJZA70EJz715fUx91ZuFfNCTv0MmQZMuNoz8cGRyJACsSj4PijvRI61+Urx2TACZONmy9Y6loBtsBvMfuY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712090410; c=relaxed/simple;
-	bh=d3PQI1nGjYR2wxpceb71VKk6aoSFhnRn54QOfdJajw8=;
+	s=arc-20240116; t=1712091165; c=relaxed/simple;
+	bh=o3wZl1K/56Kr5TqlodZWLZghY1ufqt7eloxN04ssVlk=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=GHOvdxNIA91Pv0hgiXLIINDPj6jXouqVBV1q+ScePCuwDj0rA0JEbLJMk75pvaUBHUevf7+zFqaDeq2gHYsGLirGxAD1PChK6JTmNEzJfZAV7LSClcFNM3KYYrFsc9LU+sGwK/4yvObQymCc50x5vwOmAkdpllmN9dD4cznkgng=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZWlI4VDj; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=TraDmbt58R/dMkKBZXIjd1o0PnQ0uWZyoXYjL++iW78OhRwfjsDzQ6xfn3kU4fxfcPQku1lrnzF2QM6k0XMfFZSDO2aurB8GITvkkqKvFENwQXySbHdfF+dPq9OLTOyGXOdR6dCTF6ROS60pxwzH9GCaj9cx5xQ5N9Gwrff+Whk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Sp36+V26; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZWlI4VDj"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Sp36+V26"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712090407;
+	s=mimecast20190719; t=1712091163;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=DsgO2gqGRq2OmbkYbX4mo/EkDNI9DMlX/n+pXx23DiQ=;
-	b=ZWlI4VDjSF+Tb66y+PbXb0OvxwiolXLUZm+IJlMwVcdu77OtTO9TmiI0EXgCcXZuPrkn+3
-	K6688OFCEJmwsZd12wItBuok+K1fjE//ZqHfpHm2hpO9vb8OsLsrTnN+5XvFJq1sp8GAtn
-	o486REadG43WE8Gx1Q3WMYhArR+D+Ww=
-Received: from mail-vk1-f200.google.com (mail-vk1-f200.google.com
- [209.85.221.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=lHNZF2mCDjU43wYeS/UJKNYKho3n0zpN6CGvkogOsrs=;
+	b=Sp36+V26CjNkhCk0Py6ePpgxdEx1Nm23JVu71eM7j2chgo/Pvyuz9+w0VTgHsyfy55f3nn
+	hOiM8upO+1uzbesewHrPERs5g65lyf7D+oRbVux2r6ggr5oSswaHQsrIn+bIXWVLxxEO0S
+	QNOAc8fHVinhnfVkQsNgH8E6ODzLHas=
+Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
+ [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-392-6e8EwxfLMPurVVpmSqQxLg-1; Tue, 02 Apr 2024 16:40:06 -0400
-X-MC-Unique: 6e8EwxfLMPurVVpmSqQxLg-1
-Received: by mail-vk1-f200.google.com with SMTP id 71dfb90a1353d-4da8259e984so124733e0c.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 02 Apr 2024 13:40:06 -0700 (PDT)
+ us-mta-503-V9WfxNLzP_S6W2us3q4TAg-1; Tue, 02 Apr 2024 16:52:42 -0400
+X-MC-Unique: V9WfxNLzP_S6W2us3q4TAg-1
+Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-6968a5b3557so59186196d6.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 02 Apr 2024 13:52:41 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712090406; x=1712695206;
+        d=1e100.net; s=20230601; t=1712091161; x=1712695961;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=DsgO2gqGRq2OmbkYbX4mo/EkDNI9DMlX/n+pXx23DiQ=;
-        b=q9u2ghSVjg4wjZCh7dRb3SkeZWG/i4BcbydZ99XPNKC7BrzwkPyRN6sNQa+LMZzH8L
-         ++7GG4O9Ex6tzEZf07K/BsfaPuTk9pr4o/OoHyvYokBpHGegBdUuMcBrro0GF3zzqBud
-         TL2P49tLtVlMWf4InROjbvJqa1WZhigDu7xnmnHrNEgNWRyhXCh8NQU2Olfo36mPb28u
-         Bzr3hE9lyOA4AWW+0TrbK8PIYC3f0H8CEDp9EgsphipgJnZ74q4fm8G/IkU502ZQYtsG
-         wflOR5bB+Gy/ToiRyvg8GmQJNoRRpr7kOC/7+ebg7NGj6U68TUiOzVypxSgYUrPKov7N
-         qH7A==
-X-Forwarded-Encrypted: i=1; AJvYcCUKh7ysWZ4X6gtZnJ60+B7whmSZYg8dZoXAZyJeGhLxz3Ea2l7GVsgbbsi+UMALWO39nVdFyuQ2s9TvrPrBNW5lmTnTko3AFt3HrBFcVHs=
-X-Gm-Message-State: AOJu0Yx0ka4lw3uG/+6jg+rg5DiWDR2iCTZNmqD2Fq9rVkxZSELcQ64I
-	DsLgr4A0ecEjaEs/lBZkBmbPc9fnucUQITmEWbPRElcIiEkijwUHiOqKV/bg+7HafcEPuyLDR7T
-	yt4nJmSE0UnfKASeMd5MalnCkleu9TG1mHLRMZgPAonrTQKMskC5Rh7nmLqVHinwn
-X-Received: by 2002:a05:6122:3bc9:b0:4d8:7a5e:392f with SMTP id ft9-20020a0561223bc900b004d87a5e392fmr10251474vkb.12.1712090405758;
-        Tue, 02 Apr 2024 13:40:05 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFh3YhuRRrKnioSOe726GE84/8fZ6XcK7cg3cw/jRON+q13GRtyoJfHIuQ8gp54y+evvvgFjA==
-X-Received: by 2002:a05:6122:3bc9:b0:4d8:7a5e:392f with SMTP id ft9-20020a0561223bc900b004d87a5e392fmr10251470vkb.12.1712090405513;
-        Tue, 02 Apr 2024 13:40:05 -0700 (PDT)
+        bh=lHNZF2mCDjU43wYeS/UJKNYKho3n0zpN6CGvkogOsrs=;
+        b=qNUocujppcMr3uDlvOL+s/3qGs+FroTdmGc3f/cyxYvruYuwyteWy2yaUis0x1TMq9
+         5qo4xKAThmvuthspqp8gF3gvKKDY+A1Z7wMfZ0Llc8CLZo8jxBaS8JB5UFIPALLsZGNj
+         7CvDBfhuat+8ofWsNnLwIHQr5cdXf+pyQ3OSy2CMN50RZbUQxL6GsRg3jqaCNJw1jhn3
+         QhaDDvDDl6PYehYssxsZExqyq8hPutnd/tyWScMyl0mQyKe3mMYK8c4fM58RS9Etd68g
+         5uZ+f3fKez1METoecusQDwgeeyKfOKSLtPXindFx3jEzIPWio6o31xw9aZxniY6Gb435
+         lDiw==
+X-Forwarded-Encrypted: i=1; AJvYcCUQf4Nvik7SmnxGhQmuu8emsPxEmqp3B+Ps1iS97VfuXslf2F5jt0Q8fJ0ahU+nF0sKV7iH1dgtP+eYFg3VATIbY1uHsT2BeEn9GrWm8fE=
+X-Gm-Message-State: AOJu0YwKo6fngX2ixUeBR9cmaqlrUf9XXYAdMM8VA/L4vop79cYKeLvm
+	TrcFkg3iT0P4RymdYTWVaf05ByECDzUpoysD9UWSatcdris5pGShsR1x9NL+Bbf1CEB1NbiUsNW
+	k6TZ5RvfKOAqKEpyGTv/AJCa1+nr8VTXSzeq7XQk8Eghirmi+YovYdATMqykM34Wi
+X-Received: by 2002:a05:6214:2b47:b0:696:9cef:4d51 with SMTP id jy7-20020a0562142b4700b006969cef4d51mr372205qvb.33.1712091161461;
+        Tue, 02 Apr 2024 13:52:41 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEEIcacRezKiAmSgyfTChLLL7MT5db7aVS1ekHcXcXDZ+JzDBfPVsgY2UtTqdmOH713SV5W1Q==
+X-Received: by 2002:a05:6214:2b47:b0:696:9cef:4d51 with SMTP id jy7-20020a0562142b4700b006969cef4d51mr372192qvb.33.1712091161022;
+        Tue, 02 Apr 2024 13:52:41 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-08-184-147-142-166.dsl.bell.ca. [184.147.142.166])
-        by smtp.gmail.com with ESMTPSA id gv5-20020a056214262500b00696b1050be8sm5823591qvb.133.2024.04.02.13.40.03
+        by smtp.gmail.com with ESMTPSA id lx15-20020a0562145f0f00b00696b176ddd1sm5805969qvb.3.2024.04.02.13.52.40
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 02 Apr 2024 13:40:04 -0700 (PDT)
-Date: Tue, 2 Apr 2024 16:39:58 -0400 (EDT)
+        Tue, 02 Apr 2024 13:52:40 -0700 (PDT)
+Date: Tue, 2 Apr 2024 16:52:39 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
 To: Crystal Wood <crwood@redhat.com>
 cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 4/5] rteval: Break out of main loop faster on
- interrupt/stoptime
-In-Reply-To: <20240304211655.20174-5-crwood@redhat.com>
-Message-ID: <8f2a4613-e273-3328-acfd-8a46729ffd75@redhat.com>
-References: <20240304211655.20174-1-crwood@redhat.com> <20240304211655.20174-5-crwood@redhat.com>
+Subject: Re: [PATCH 5/5] rteval: Remove 30 second "settling" period
+In-Reply-To: <20240304211655.20174-6-crwood@redhat.com>
+Message-ID: <1b890661-fba5-5e71-05d5-d9a55a43a5d5@redhat.com>
+References: <20240304211655.20174-1-crwood@redhat.com> <20240304211655.20174-6-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -77,56 +76,45 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Mon, 4 Mar 2024, Crystal Wood wrote:
 
-> Waiting up to a full minute for rteval to stop on ctrl-c can be
-> frustrating.  Likewise, if a very short run is requested
-> (e.g. for testing rteval itself) rounding it up to a minute is
-> not polite.
+> Waiting for 30 seconds for loads to "settle down" adds unneccesary delay
+> to very short runs, besides being a giant hack.  Load modules already
+> have the opportunity to do setup beforehand.
+> 
+> Even if there are a few seconds before the loads get to their expected
+> "heaviness", that shouldn't meaningfully affect the output except for:
+>  - very short runs where you either
+>    - don't care about the latency because you're debugging rteval itself, or
+>    - are debugging a latency that reliably shows quickly, in which case
+>      consistent behavior is enough
+>  - latency spikes that only show up during load startup activity, in
+>    which case measuring it is a good thing
+>  - minimum latency values, which are not really the point of rteval.
+> 
+> ...and the 30 second delay is *especially* useless if loads are disabled.
+> Currently there's no official way to do that (as far as I can find), but
+> it can be done by disabling all but stressng in the conf file, and not
+> supplying stressng options on the command line.
 > 
 > Signed-off-by: Crystal Wood <crwood@redhat.com>
 > ---
->  rteval/__init__.py | 11 +++++------
->  1 file changed, 5 insertions(+), 6 deletions(-)
+>  rteval/__init__.py | 2 --
+>  1 file changed, 2 deletions(-)
 > 
 > diff --git a/rteval/__init__.py b/rteval/__init__.py
-> index 5d43615af5bb..72e3412a860e 100644
+> index 72e3412a860e..2c1dc1a7a22c 100644
 > --- a/rteval/__init__.py
 > +++ b/rteval/__init__.py
-> @@ -32,12 +32,11 @@ RTEVAL_VERSION = version.RTEVAL_VERSION
+> @@ -194,8 +194,6 @@ class RtEval(rtevalReport):
+>                  nthreads = threading.active_count()
+>              else:
+>                  nthreads = None
+> -            self.__logger.log(Log.INFO, "Waiting 30 seconds to let load modules settle down")
+> -            time.sleep(30)
+>              measure_profile.Unleash()
+>              measure_start = datetime.now()
 >  
->  earlystop = False
->  
-> -stopsig_received = False
-> +stopsig = threading.Event()
->  def sig_handler(signum, frame):
->      """ Handle SIGINT (CTRL + C) or SIGTERM (Termination signal) """
->      if signum in (signal.SIGINT, signal.SIGTERM):
-> -        global stopsig_received
-> -        stopsig_received = True
-> +        stopsig.set()
->          print("*** stop signal received - stopping rteval run ***")
->      else:
->          raise RuntimeError(f"SIGNAL received! ({signum})")
-> @@ -208,8 +207,8 @@ class RtEval(rtevalReport):
->              currtime = time.time()
->              rpttime = currtime + report_interval
->              load_avg_checked = 5
-> -            while (currtime <= stoptime) and not stopsig_received:
-> -                time.sleep(60.0)
-> +            while (currtime <= stoptime) and not stopsig.is_set():
-> +                stopsig.wait(min(stoptime - currtime, 60.0))
->                  if not measure_profile.isAlive():
->                      stoptime = currtime
->                      earlystop = True
-> @@ -238,7 +237,7 @@ class RtEval(rtevalReport):
->              signal.signal(signal.SIGTERM, signal.SIG_DFL)
->  
->          except RuntimeError as err:
-> -            if not stopsig_received:
-> +            if not stopsig.is_set():
->                  raise RuntimeError(f"appeared during measurement: {err}")
->  
->          finally:
 > -- 
 
+kludge begone!
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
