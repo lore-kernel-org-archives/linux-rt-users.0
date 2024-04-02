@@ -1,76 +1,117 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 335EC5822A
-	for <linux-rt-users@vger.kernel.org>; Tue,  2 Apr 2024 10:25:05 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 905B8657B5;
+	Tue,  2 Apr 2024 10:34:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712053507; cv=none; b=Bwur/BwP6z8q4Ws2K/BoK5YY8ypZeBxXsNut5vb5tSunkPYW14oDXss0ozq5416BUIMpWqdZyVPQK1L9lzbCcM1YzxsfVUec0rt2NxePbBl4VSKYS/1xFRiQLwPvielARjKB+yMsrbFgkHWO07su6DubJlupKbCrVLmoaK7ovqU=
+	t=1712054063; cv=none; b=m2hvFWAELyyWeLqWv4TuU4CKNI0lNclI+EM3N7JQ+KatEPKKZl9tyMes1G43K4EJRffTQxLZ6emY0d82BbqjWCIwJpF5oYzy95WOKKh1mFatafontaAsSUaiSQXkRwkA1tOP8aBXFfGhynnlbpfOhJngSSaI+rj5ObPRRGsD0d8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712053507; c=relaxed/simple;
-	bh=TtIpJ2AIa7VlZ3JOs/8m+tY3NM9WNp0OE0c7DybqTY0=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=WGnm2tFb6RPXBLscZUkuPlKejpKSKsn+XukhxNx05YuMPOHKoYu0yrQy3AbhXcjWAN7NJ7rB6qLpRRqIhSc16OOPz7mmQYzPiQcC6d59TxntmUvfkCQBY0mZ2CBqlVcG/cT9e1RE59rvueM2XlpG13dqCMaSZzDzMdJKfx/XvPs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=4TcGoAK3; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=sA4CKIqo; arc=none smtp.client-ip=193.142.43.55
+	s=arc-20240116; t=1712054063; c=relaxed/simple;
+	bh=Q4MlAhRm+AkBxTUeVkfth/yvDYTiPwojE4biBVagZF4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=KjImjdoG4AuCJgfJusTzNBCCWhnKx/h43/HJK401KHH1kTkywfT4ThjHE0mDNETU3mCkmcek7GxGuiphFU6foUo1W6T6FRWB0/tZ1grsXZQj++uHD3nzxePyYqMP0SNe8ZPnGf5KZnCbFHyqwRaW0VtVDvoc7tyouBSwNE1Wjlo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=P+wvg4Xr; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=DU0xq7e6; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="4TcGoAK3";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="sA4CKIqo"
-From: John Ogness <john.ogness@linutronix.de>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="P+wvg4Xr";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="DU0xq7e6"
+Date: Tue, 2 Apr 2024 12:34:14 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1712053503;
+	s=2020; t=1712054056;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=TtIpJ2AIa7VlZ3JOs/8m+tY3NM9WNp0OE0c7DybqTY0=;
-	b=4TcGoAK3Co7EeT3XK1CgoArA0OljD3cjnATVnc37kBi8BZqrqNSSTpSZBtw4jt+93XL4JB
-	vbirI/hjg1gcFa7DWsOc6faUMioja4iIXWecTTtQOdgs7awSH+hfZt2KrWuQTBu9RiiLy0
-	IsmZ/jnbSMK2KaxKOwlZA/Ushfaq7prQxHTNsQV0I5zJtybyjSaI0Gyrpf2kSnDwklNmLf
-	u9RyHdIZ4aoM2sc52TgvgXVEKrcYD2Mj0dliE2RcbkFa/Mm5uzkOaseTTerra/Gxlx84tM
-	vFKTGauR/05VSkDp5MabsMnktF77UhCbrCXXTy9Wb7pCTDCqTkNKVKvdCltawg==
+	bh=STfe/Rz3uPOTuqu4DrUcO9QjfwomKLwaXdLP6m2yfFc=;
+	b=P+wvg4XrkSa8qrUqLFplrxzRc04v5G0AvSoJPkYGlnle/rjdCGNtOirGpbAtrYWaEZXYxt
+	4MJNjH23Yd4yTmtC6fiUTr4j0YItovd5T8MM6bnEgHMaQd3WCYoVcqZJt98XClr1A2bQe2
+	86VQaBn4BpbWfcBmBxUvBtS0TWVcPjz5xNjJ68Yg7zn5kErEW5RBvG/JnPBoNim7zKkTLj
+	78kAn6brpoybVRsNrDCx9Yjbb2U7LYCZj13nQI4+NPCiAshU7C4wpu64BBEUVwNmIsEIhu
+	MbcWc1vc4KSf48ABCVdipi6cgNLlfjGLDXIDQQNwJeOtHVrG4JrSXM0zo9pt4Q==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1712053503;
+	s=2020e; t=1712054056;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=TtIpJ2AIa7VlZ3JOs/8m+tY3NM9WNp0OE0c7DybqTY0=;
-	b=sA4CKIqoEy3QBrDa43QIsZDKfOn68KLw/9BPxZ+jy4pW46aHow4W71Hm7+LCEdwMtMuFXX
-	dRK/58vQiFlYg7Dg==
-To: Esben Haabendal <esben@geanix.com>, Petr Mladek <pmladek@suse.com>,
- Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky
- <senozhatsky@chromium.org>, linux-rt-users@vger.kernel.org
-Cc: Martin =?utf-8?Q?Hundeb=C3=B8ll?= <martin@geanix.com>
-Subject: Re: [PATCH 1/2] printk: export pr_flush()
-In-Reply-To: <d65ca57567e245aa99a944cefc195f2bc6974384.1712051763.git.esben@geanix.com>
-References: <d65ca57567e245aa99a944cefc195f2bc6974384.1712051763.git.esben@geanix.com>
-Date: Tue, 02 Apr 2024 12:31:01 +0206
-Message-ID: <874jckqcxu.fsf@jogness.linutronix.de>
+	bh=STfe/Rz3uPOTuqu4DrUcO9QjfwomKLwaXdLP6m2yfFc=;
+	b=DU0xq7e60IJtZQNOzYay7B8VjNffiXJvrNL+NVaf3TXBUWY82qsg3vKThsIZFpW6m3IDhW
+	k+pyEg7w0w0dUpDQ==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: "John B. Wyatt IV" <jwyatt@redhat.com>
+Cc: John Ogness <john.ogness@linutronix.de>, Petr Mladek <pmladek@suse.com>,
+	Clark Williams <williams@redhat.com>,
+	Juri Lelli <jlelli@redhat.com>, Derek Barbosa <debarbos@redhat.com>,
+	Bruno Goncalves <bgoncalv@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: NMIs reported by console_blast.sh with 6.6.20-rt25
+Message-ID: <20240402103414.KkkX5RuV@linutronix.de>
+References: <ZfSfrzak9WS0ZFv7@thinkpad2021>
+ <20240322122921.U3WRsO4X@linutronix.de>
+ <ZgSvVCDja6yFCC0Y@thinkpad2021>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <ZgSvVCDja6yFCC0Y@thinkpad2021>
 
-On 2024-04-02, Esben Haabendal <esben@geanix.com> wrote:
-> Outside prinkt users might wan't assure whatever printed has reached
-> its destination before continuing. E.g. during the shutdown-procedure,
-> where printk-buffers aren't emptied before the system goes down.
+On 2024-03-27 19:44:20 [-0400], John B. Wyatt IV wrote:
+> > where is this output from? The `ret' opcode usually does not cause a
+> > trap. My guess is that the machine has been interrupted by an external
+> > user at this position.
+>=20
+> Just before the sysrq that crashes the system.
 
-This is a reposting of:
+so this is intentional.
 
-https://lore.kernel.org/lkml/20231030092432.3434623-1-martin@geanix.com
+=E2=80=A6
+> > Side note: This is using early_printk, correct?
+>=20
+> I believe so, but it might be preempted? This is the part it stopped in.
+>=20
+> static void io_serial_out(unsigned long addr, int offset, int value)
+> {
+> 	outb(value, addr + offset);
+> }
 
-As I wrote in that thread:
+The function is invoked in NMU context so it can't be preempted.
 
-printk() tries to print directly from the calling context. Are you
-experiencing problems where you do not see the restarting message?
+> > According to this, someone issued a `crash' via sysrq. Why?
+> >=20
+>=20
+> This is part of the console_blast.sh script that John Ogness sent me.
+>=20
+> Please see below:
+=E2=80=A6
 
-(If your answer is "yes", please explain the scenario and provide
-information about the console driver you are using.)
+Okay. Then everything works as it should=E2=80=A6
 
-I assume you have tried the latest RT development version.
+> > > NMI Backtrace for 6.6.20-rt25 no forced preemption with tuned through=
+put-performance profile
+> > > -----------------------------
+> >=20
+> > This and the following backtrace shows the same picture: The CPU is
+> > crashing due to proc/sysrq request and does CPU-backtraces via NMI and
+> > polls in early_printk, waiting for the UART to become idle (probably).
+> >=20
+> > I don't see an issue here so far.
+>=20
+> Luis Goncalves discussed it with me after reading your response. Thank
+> you for your help. The NMI was needed to flush the buffers upon the
+> system crashing itself. Does this part about NMI watchdog need to be
+> documented?
 
-John Ogness
+Not sure about that one. There is an _a_ _lot_ to be printed from NMI
+and the NMI watchdog might trigger if nothing is triggering the
+NMI-watchdog during the print job. Also, the crash was requested.
+
+Sebastian
