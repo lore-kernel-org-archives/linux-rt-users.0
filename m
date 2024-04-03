@@ -1,275 +1,258 @@
-Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 429CD14A4CE
-	for <linux-rt-users@vger.kernel.org>; Wed,  3 Apr 2024 15:22:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 177F5149DF5;
+	Wed,  3 Apr 2024 15:38:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712157777; cv=none; b=EKEj1hihCVtJIzy8fkaZIhIgMYLunlOP8TQoe2m3IYSw2dKdtJ76/I80EaRIJAoWZdgcgCe8HPbkBdlgs/u/GJ4r2hWxKvrQ69y4mgY8sseXMsJOgag0LAlNuR5NvaQZgfy2pHn1uIXIHk2NHlWORFXADEfnba9dayeG/zK1kHk=
+	t=1712158690; cv=none; b=l4ojS7lGR5tOdwkTO+Z2Y1IWU48PMGmgIAyniubJ9Ny/VmFA7mXqtBexPfMrrdtFLcFi6xS+vn/4a4NmLGJ6gtqpRDYWbILH9BuUz3UKG0wq7U3YuTou8btcE+/OJMNcublGiFNvEjaTEDA7KpH8dygkJKShf69bR+9dCk9Vdh8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712157777; c=relaxed/simple;
-	bh=E/YW0lYQkq32hi/6tLdxY4zD3i4BzL3bLXi2HNlkB3g=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=WXmWElc6QouWKkNl8397qgv0tLAbSCjPXtm8e09gkEcm+mrb8Myt3UFVBbkHuURvnFjBUfgDxH9XpY5p8FjVzUfFEHzUCgSbDRpnvODOSWyRE3Tnf29ijsiweLhQJ5/T8esHJ+s5Mxf08TflL2L+qg/HFLMBO7mqcNJCgVM2akY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=CCFUxh7m; arc=none smtp.client-ip=188.40.30.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1712158690; c=relaxed/simple;
+	bh=7ozh/crUcFOFSFxYpDbzQG+1k9UMq89IgLckyB+RD0E=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=m4X7a/yp6mJll7hdGeZM9DDfovyioirNBqkPjrPMdMbJFleZFkjBg7BDkdJdu/WCxyYWkmMIHzbUIR35o5EARq0XWUSko+BvG8fwOQIzYrBWIEsOm3jl73pxqH+rwHPADIhE4SqK0mf5XYH2v1bFLfMeBziYOg2fTD8/1fdUJAY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=LmL6YUBz; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=i8hrMjnw; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="CCFUxh7m"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
-	s=default2211; h=Content-Transfer-Encoding:MIME-Version:References:
-	In-Reply-To:Message-ID:Date:Subject:To:From:Sender:Reply-To:Cc:Content-Type:
-	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
-	Resent-To:Resent-Cc:Resent-Message-ID;
-	bh=+mOrOqvyV/OGQLcHRueApbE5Rwa5KJKgYDdT2tk0Q+Q=; b=CCFUxh7mvEdEokBiSevV7gB+KI
-	ruQGzlTN3C8470qEO9mvX9lYUhWGfxqAwXvjqGF2YPkskdSDQl2ykqSXACx9ZjejNPynOKqIByC1q
-	vIugl6aRfsXMvjSHvzxWo3T4NDKXzAWDeORF+vE6WXrYVnVx6oUoEE6K8rLFtBkeL9TwiIw2sxQEU
-	3XWe217VS0h2ZcFWOg0xhAv20LDexVVvh4rwvoK4wS8fxokUCO0LonePYgWhCpbzCfqiqoZlbJtWL
-	4vr6H527qSMoWZDfiWXL+4I7TiiOnJ692FzqR2zzwG5R2KkBuKxsRdUE47sjqzm3i6J5G5BhoKiJr
-	8XLfh0zA==;
-Received: from sslproxy05.your-server.de ([78.46.172.2])
-	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.94.2)
-	(envelope-from <esben@geanix.com>)
-	id 1rs2Rw-000Hwq-2F; Wed, 03 Apr 2024 17:22:52 +0200
-Received: from [185.17.218.86] (helo=localhost)
-	by sslproxy05.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <esben@geanix.com>)
-	id 1rs2Rv-004jvH-2i;
-	Wed, 03 Apr 2024 17:22:51 +0200
-From: Esben Haabendal <esben@geanix.com>
-To: linux-rt-users@vger.kernel.org,
-	John Ogness <john.ogness@linutronix.de>
-Subject: [RFC PATCH 2/2] serial: imx: Switch to nbcon console
-Date: Wed,  3 Apr 2024 17:22:53 +0200
-Message-ID: <47b4667db579019c292ece5563d74f897c62f046.1712156846.git.esben@geanix.com>
-X-Mailer: git-send-email 2.44.0
-In-Reply-To: <cover.1712156846.git.esben@geanix.com>
-References: <cover.1712156846.git.esben@geanix.com>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="LmL6YUBz";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="i8hrMjnw"
+Date: Wed, 3 Apr 2024 17:38:06 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1712158687;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=vhmQs1D7TtZLS8seK0nHN0vIuPyBIrdPbVti7p503Sk=;
+	b=LmL6YUBzOz1LAlOQTn1JUHosjCoANzUsgFt8p6Lmcndztvd1DGia2PUJZYJuU1JTNw+7Qe
+	eXCC2NyFHsJjsjDzw3NgRGh+C9JKfKWTyyKt57QXV6oDQIygg0URPHHXqu9PmTPyJ9gJJV
+	EtcqAL5yuRSASA/DmnsArrxVESsYijICzuUICF7SYZJyXKYmvHtxfOmiX8IINUxJSsH200
+	enS8ZG5ycyOSB8f3Fuw4MiOWAiOYOHGu5UAO9l69PVHZgPg/htVOpVRgbDHVOKKVZRtLjS
+	f9J4XsGoerBChgqu5oBEqvazOUimSXmKSg+u3xih6Zo3cFCu8n9XvPfvEwQ8sw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1712158687;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=vhmQs1D7TtZLS8seK0nHN0vIuPyBIrdPbVti7p503Sk=;
+	b=i8hrMjnwLzjNIDsudR8epcKw0c+m2q6E4iLJbzAl1YzGfLGujsk46ph1fGaztzpSjF/55M
+	bJvOT6Jw8/qpAyBg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.8.2-rt11
+Message-ID: <20240403153806.0WFY9XS2@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Authenticated-Sender: esben@geanix.com
-X-Virus-Scanned: Clear (ClamAV 0.103.10/27234/Wed Apr  3 10:25:27 2024)
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Implements the necessary callbacks to switch the imx console driver to
-perform as an nbcon console.
+Dear RT folks!
 
-Add implementations for the nbcon consoles (write_atomic, write_thread,
-driver_enter, driver_exit) and add CON_NBCON to the initial flags.
+I'm pleased to announce the v6.8.2-rt11 patch set. 
 
-The legacy code is kept in order to easily switch back to legacy mode
-by defining CONFIG_SERIAL_IMX_LEGACY_CONSOLE.
+Changes since v6.8.2-rt10:
 
-Signed-off-by: Esben Haabendal <esben@geanix.com>
----
- drivers/tty/serial/imx.c | 154 ++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 153 insertions(+), 1 deletion(-)
+  - Update of the printk series by John Ogness:
 
-diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
-index 16661827277e..7030fa2bcaea 100644
---- a/drivers/tty/serial/imx.c
-+++ b/drivers/tty/serial/imx.c
-@@ -230,6 +230,8 @@ struct imx_port {
- 	unsigned int            saved_reg[10];
- 	bool			context_saved;
+    - fix usage of port lock before initialization.
+    
+    - adjust pr_flush() compiler barrier to ensure proper local variable
+      usage.
+
+Known issues
+    None.
+
+The delta patch against v6.8.2-rt10 is appended below and can be found here:
  
-+	bool			console_newline_needed;
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/incr/patch-6.8.2-rt10-rt11.patch.xz
+
+You can get this release via the git tree at:
+
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.8.2-rt11
+
+The RT patch against v6.8.2 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patch-6.8.2-rt11.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.8/older/patches-6.8.2-rt11.tar.xz
+
+Sebastian
+
+diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
+index 2652b4d5c944d..0c13ea6a3afaa 100644
+--- a/drivers/tty/serial/serial_core.c
++++ b/drivers/tty/serial/serial_core.c
+@@ -3145,6 +3145,13 @@ static int serial_core_add_one_port(struct uart_driver *drv, struct uart_port *u
+ 	state->uart_port = uport;
+ 	uport->state = state;
+ 
++	/*
++	 * If this port is in use as a console then the spinlock is already
++	 * initialised.
++	 */
++	if (!uart_console_registered(uport))
++		uart_port_spin_lock_init(uport);
 +
- 	enum imx_tx_state	tx_state;
- 	struct hrtimer		trigger_start_tx;
- 	struct hrtimer		trigger_stop_tx;
-@@ -1985,8 +1987,14 @@ static void imx_uart_console_putchar(struct uart_port *port, unsigned char ch)
- 		barrier();
+ 	state->pm_state = UART_PM_STATE_UNDEFINED;
+ 	uart_port_set_cons(uport, drv->cons);
+ 	uport->minor = drv->tty_driver->minor_start + uport->line;
+@@ -3155,13 +3162,6 @@ static int serial_core_add_one_port(struct uart_driver *drv, struct uart_port *u
+ 		goto out;
+ 	}
  
- 	imx_uart_writel(sport, ch, URTX0);
-+
-+	if (ch == '\n')
-+		sport->console_newline_needed = false;
-+	else
-+		sport->console_newline_needed = true;
- }
+-	/*
+-	 * If this port is in use as a console then the spinlock is already
+-	 * initialised.
+-	 */
+-	if (!uart_console_registered(uport))
+-		uart_port_spin_lock_init(uport);
+-
+ 	if (uport->cons && uport->dev)
+ 		of_console_check(uport->dev->of_node, uport->cons->name, uport->line);
  
-+#ifdef CONFIG_SERIAL_IMX_LEGACY_CONSOLE
+diff --git a/include/linux/console.h b/include/linux/console.h
+index 0b6c122918174..1eb2d1e58b1c7 100644
+--- a/include/linux/console.h
++++ b/include/linux/console.h
+@@ -424,9 +424,8 @@ struct console {
+ 	 * migrate_disable().
+ 	 *
+ 	 * The flags argument is provided as a convenience to the driver. It
+-	 * will be passed again to device_unlock() when printing is completed
+-	 * (for example, if spin_lock_irqsave() was used). It can be ignored
+-	 * if the driver does not need it.
++	 * will be passed again to device_unlock(). It can be ignored if the
++	 * driver does not need it.
+ 	 */
+ 	void (*device_lock)(struct console *con, unsigned long *flags);
+ 
+diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
+index 92d59c85d43a3..932b888aa4c30 100644
+--- a/kernel/printk/nbcon.c
++++ b/kernel/printk/nbcon.c
+@@ -1392,7 +1392,7 @@ static void __nbcon_atomic_flush_pending(u64 stop_seq, bool allow_unsafe_takeove
+ 			 * lock for uart consoles). Therefore IRQs must be
+ 			 * disabled to avoid being interrupted and then
+ 			 * calling into a driver that will deadlock trying
+-			 * acquire console ownership.
++			 * to acquire console ownership.
+ 			 */
+ 			local_irq_save(irq_flags);
+ 
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index 2be1157e8169c..8ee6c60b47c4b 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -476,7 +476,7 @@ static DEFINE_MUTEX(syslog_lock);
+ 
  /*
-  * Interrupts are disabled on entering
+  * Specifies if a legacy console is registered. If legacy consoles are
+- * present, it is necessary to perform the console_lock/console_unlock dance
++ * present, it is necessary to perform the console lock/unlock dance
+  * whenever console flushing should occur.
   */
-@@ -2034,6 +2042,140 @@ imx_uart_console_write(struct console *co, const char *s, unsigned int count)
- 	if (locked)
- 		uart_port_unlock_irqrestore(&sport->port, flags);
+ bool have_legacy_console;
+@@ -2354,8 +2354,10 @@ void printk_legacy_allow_panic_sync(void)
+ {
+ 	legacy_allow_panic_sync = true;
+ 
+-	if (printing_via_unlock && !in_nmi() && console_trylock())
+-		console_unlock();
++	if (printing_via_unlock && !in_nmi()) {
++		if (console_trylock())
++			console_unlock();
++	}
  }
-+#else
-+static void imx_uart_console_driver_enter(struct console *co, unsigned long *flags)
-+{
-+	struct uart_port *up = &imx_uart_ports[co->index]->port;
-+
-+	return __uart_port_lock_irqsave(up, flags);
-+}
-+
-+static void imx_uart_console_driver_exit(struct console *co, unsigned long flags)
-+{
-+	struct uart_port *up = &imx_uart_ports[co->index]->port;
-+
-+	return __uart_port_unlock_irqrestore(up, flags);
-+}
-+
-+static bool imx_uart_console_write_atomic(struct console *co,
-+					  struct nbcon_write_context *wctxt)
-+{
-+	struct imx_port *sport = imx_uart_ports[co->index];
-+	struct uart_port *port = &sport->port;
-+	struct imx_port_ucrs old_ucr;
-+	unsigned int ucr1, usr2;
-+
-+	if (!nbcon_enter_unsafe(wctxt))
-+		return false;
-+
-+	/*
-+	 *	First, save UCR1/2/3 and then disable interrupts
-+	 */
-+	imx_uart_ucrs_save(sport, &old_ucr);
-+	ucr1 = old_ucr.ucr1;
-+
-+	if (imx_uart_is_imx1(sport))
-+		ucr1 |= IMX1_UCR1_UARTCLKEN;
-+	ucr1 |= UCR1_UARTEN;
-+	ucr1 &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN);
-+
-+	imx_uart_writel(sport, ucr1, UCR1);
-+
-+	imx_uart_writel(sport, old_ucr.ucr2 | UCR2_TXEN, UCR2);
-+
-+	if (sport->console_newline_needed)
-+		uart_console_write(port, "\n", 1, imx_uart_console_putchar);
-+	uart_console_write(port, wctxt->outbuf, wctxt->len,
-+			   imx_uart_console_putchar);
-+
-+	/*
-+	 *	Finally, wait for transmitter to become empty
-+	 *	and restore UCR1/2/3
-+	 */
-+	read_poll_timeout_atomic(imx_uart_readl, usr2, usr2 & USR2_TXDC,
-+				 1, 10000, false, sport, USR2);
-+	imx_uart_ucrs_restore(sport, &old_ucr);
-+
-+	/* Success if no handover/takeover. */
-+	return nbcon_exit_unsafe(wctxt);
-+}
-+
-+static bool imx_uart_console_write_thread(struct console *co,
-+					  struct nbcon_write_context *wctxt)
-+{
-+	struct imx_port *sport = imx_uart_ports[co->index];
-+	struct uart_port *port = &sport->port;
-+	struct imx_port_ucrs old_ucr;
-+	unsigned int ucr1, usr2;
-+	bool done = false;
-+
-+	if (!nbcon_enter_unsafe(wctxt))
-+		return false;
-+
-+	/*
-+	 *	First, save UCR1/2/3 and then disable interrupts
-+	 */
-+	imx_uart_ucrs_save(sport, &old_ucr);
-+	ucr1 = old_ucr.ucr1;
-+
-+	if (imx_uart_is_imx1(sport))
-+		ucr1 |= IMX1_UCR1_UARTCLKEN;
-+	ucr1 |= UCR1_UARTEN;
-+	ucr1 &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN);
-+
-+	imx_uart_writel(sport, ucr1, UCR1);
-+
-+	imx_uart_writel(sport, old_ucr.ucr2 | UCR2_TXEN, UCR2);
-+
-+	if (nbcon_exit_unsafe(wctxt)) {
-+		int len = READ_ONCE(wctxt->len);
-+		int i;
+ 
+ asmlinkage int vprintk_emit(int facility, int level,
+@@ -2413,10 +2415,9 @@ asmlinkage int vprintk_emit(int facility, int level,
+ 		 * - During shutdown, since the printing threads may not get
+ 		 *   a chance to print the final messages.
+ 		 *
+-		 * Note that if boot consoles are registered, the
+-		 * console_lock/console_unlock dance must be relied upon
+-		 * instead because nbcon consoles cannot print simultaneously
+-		 * with boot consoles.
++		 * Note that if boot consoles are registered, the console
++		 * lock/unlock dance must be relied upon instead because nbcon
++		 * consoles cannot print simultaneously with boot consoles.
+ 		 */
+ 		if (is_panic_context ||
+ 		    !printk_threads_enabled ||
+@@ -4174,7 +4175,6 @@ static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progre
+ 	u64 last_diff = 0;
+ 	u64 printk_seq;
+ 	short flags;
+-	bool locked;
+ 	int cookie;
+ 	u64 diff;
+ 	u64 seq;
+@@ -4196,11 +4196,18 @@ static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progre
+ 	for (;;) {
+ 		unsigned long begin_jiffies;
+ 		unsigned long slept_jiffies;
++		bool use_console_lock = printing_via_unlock;
 +
 +		/*
-+		 * Write out the message. Toggle unsafe for each byte in order
-+		 * to give another (higher priority) context the opportunity
-+		 * for a friendly takeover. If such a takeover occurs, this
-+		 * context must reacquire ownership in order to perform final
-+		 * actions (such as re-enabling the interrupts).
-+		 *
-+		 * IMPORTANT: wctxt->outbuf and wctxt->len are no longer valid
-+		 *	      after a reacquire so writing the message must be
-+		 *	      aborted.
++		 * Ensure the compiler does not optimize @use_console_lock to
++		 * be @printing_via_unlock since the latter can change at any
++		 * time.
 +		 */
-+		for (i = 0; i < len; i++) {
-+			if (!nbcon_enter_unsafe(wctxt)) {
-+				nbcon_reacquire(wctxt);
-+				break;
-+			}
-+
-+			uart_console_write(port, wctxt->outbuf + i, 1,
-+					   imx_uart_console_putchar);
-+
-+			if (!nbcon_exit_unsafe(wctxt)) {
-+				nbcon_reacquire(wctxt);
-+				break;
-+			}
-+		}
-+		done = (i == len);
-+	} else {
-+		nbcon_reacquire(wctxt);
-+	}
-+
-+	while (!nbcon_enter_unsafe(wctxt))
-+		nbcon_reacquire(wctxt);
-+
-+	/*
-+	 *	Finally, wait for transmitter to become empty
-+	 *	and restore UCR1/2/3
-+	 */
-+	read_poll_timeout(imx_uart_readl, usr2, usr2 & USR2_TXDC,
-+			  1, 10000, false, sport, USR2);
-+	imx_uart_ucrs_restore(sport, &old_ucr);
-+
-+	/* Success if no handover/takeover and message fully printed. */
-+	return (nbcon_exit_unsafe(wctxt) && done);
-+}
-+#endif /* CONFIG_SERIAL_IMX_LEGACY_CONSOLE */
++		barrier();
  
- /*
-  * If the port was already initialised (eg, by a boot loader),
-@@ -2124,6 +2266,8 @@ imx_uart_console_setup(struct console *co, char *options)
- 	if (retval)
- 		goto error_console;
+-		locked = false;
+ 		diff = 0;
  
-+	sport->console_newline_needed = false;
-+
- 	if (options)
- 		uart_parse_options(options, &baud, &parity, &bits, &flow);
- 	else
-@@ -2160,11 +2304,19 @@ imx_uart_console_exit(struct console *co)
- static struct uart_driver imx_uart_uart_driver;
- static struct console imx_uart_console = {
- 	.name		= DEV_NAME,
-+#ifdef CONFIG_SERIAL_IMX_LEGACY_CONSOLE
- 	.write		= imx_uart_console_write,
-+	.flags		= CON_PRINTBUFFER,
-+#else
-+	.write_atomic	= imx_uart_console_write_atomic,
-+	.write_thread	= imx_uart_console_write_thread,
-+	.driver_enter	= imx_uart_console_driver_enter,
-+	.driver_exit	= imx_uart_console_driver_exit,
-+	.flags		= CON_PRINTBUFFER | CON_NBCON,
-+#endif
- 	.device		= uart_console_device,
- 	.setup		= imx_uart_console_setup,
- 	.exit		= imx_uart_console_exit,
--	.flags		= CON_PRINTBUFFER,
- 	.index		= -1,
- 	.data		= &imx_uart_uart_driver,
- };
--- 
-2.44.0
-
+-		if (printing_via_unlock) {
++		if (use_console_lock) {
+ 			/*
+ 			 * Hold the console_lock to guarantee safe access to
+ 			 * console->seq. Releasing console_lock flushes more
+@@ -4208,16 +4215,8 @@ static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progre
+ 			 * usable consoles.
+ 			 */
+ 			console_lock();
+-			locked = true;
+ 		}
+ 
+-		/*
+-		 * Ensure the compiler does not optimize @locked to be
+-		 * @printing_via_unlock since the latter can change at any
+-		 * time.
+-		 */
+-		barrier();
+-
+ 		cookie = console_srcu_read_lock();
+ 		for_each_console_srcu(c) {
+ 			if (con && con != c)
+@@ -4238,7 +4237,7 @@ static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progre
+ 			if (flags & CON_NBCON) {
+ 				printk_seq = nbcon_seq_read(c);
+ 			} else {
+-				WARN_ON_ONCE(!locked);
++				WARN_ON_ONCE(!use_console_lock);
+ 				printk_seq = c->seq;
+ 			}
+ 
+@@ -4250,7 +4249,7 @@ static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progre
+ 		if (diff != last_diff && reset_on_progress)
+ 			remaining_jiffies = timeout_jiffies;
+ 
+-		if (locked)
++		if (use_console_lock)
+ 			console_unlock();
+ 
+ 		/* Note: @diff is 0 if there are no usable consoles. */
+diff --git a/localversion-rt b/localversion-rt
+index d79dde624aaac..05c35cb580779 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt10
++-rt11
