@@ -1,76 +1,145 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from metis.whiteo.stw.pengutronix.de (metis.whiteo.stw.pengutronix.de [185.203.201.7])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47A6F86ADB;
-	Thu,  4 Apr 2024 15:43:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEEF91CA8B
+	for <linux-rt-users@vger.kernel.org>; Thu,  4 Apr 2024 16:39:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.203.201.7
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712245436; cv=none; b=V0A0uENWL/L31yLhaJN7JqeJdBCZN2sXGQR/9VJc5LH0ctrA9ANxFgjPwfsAB4JS96Sg4xr3f7nLmG3vhWiCXxbFNxp+jlaSL6C8TdVaDmGBcI4Vh/sClmVtQhukzWeKg7MzE60J0dzh5UmuCcicFqtVL1H5D3sNqU3UjSeJS+g=
+	t=1712248779; cv=none; b=SO8xug1WKApqguAuHEvWHWs7hq9mqUIN+swurzxtCYy5UarksKZi/Talt4xv8Tnan3r7ALmI9IPfm0gDErrNlZGEF7QMF8382wis5bxSABT1q7KAlbkSiKKlf999spuMKrl+4z7s+oMX2djFCFXWyOxDVYg7YxE5zrZyBucT7Sc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712245436; c=relaxed/simple;
-	bh=Ts3qGSlroqc0rCsJJ0xFCnRTgL2rVaTIMzZY2xTp8kI=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=KImuyEL77iiUP/O1w6akN005OknxmCcMvoMSHtCxj+CUVeMl+kq8yhVACPI2GLdjMgaY28bmbdPaMqyd7efepwBsxR6RQSOfg3Xu1NX+ICT2sMTUGpLhoXS8Volwrv2WT3zKkS5bV+97IEmH32zImQ70rnMoLjwSZ/cdCpuU5Ro=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=OSyq/Srk; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=5lA2dLfP; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="OSyq/Srk";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="5lA2dLfP"
-Date: Thu, 4 Apr 2024 17:43:51 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1712245433;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=foU1M3It3GalBGF0iZ+MjM8nUxBRueNGz8SQVeFfg4w=;
-	b=OSyq/Srka1J+2O+DtvaOBM9byofUx29yY13ZssobA4RTB59AoEKjHJ2HX6dmmA1hOwJG/u
-	j/Xgc47UWBmvZvAyND7pA+3ZEm0/T+Xomv5j7jg/qXHjymcGDPaOXduDoWHXEBjfpSsSxY
-	pY4LD2m/a/fs1Y1ng+ERwc2LaLmVzHw0yvmKMBw9t9t5KdKmdvP6wrZ3LAVLgw/NZeFeeL
-	jd9AFCGt9GQOiO7kV/bsmyGQ/xRE7c4o/MAFt0YWoAjLnj/0+tawOzy0WfMaeCtFeEwHUc
-	70URlFSlvhwE53yHaMRLn2RDVpOXRKvkEihGHstcD+NfZQ6lR9Hz+qv2jhrDKg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1712245433;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=foU1M3It3GalBGF0iZ+MjM8nUxBRueNGz8SQVeFfg4w=;
-	b=5lA2dLfPQJoD7e9mCAgbFPdwfQJDdyHoefPZy9xlvqVqawv75CGjf3Aa8MiU24LEXi8T9v
-	GFZzrVD5MAZsQ2Dg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.9-rc2-rt1
-Message-ID: <20240404154351.0uUUy1fB@linutronix.de>
+	s=arc-20240116; t=1712248779; c=relaxed/simple;
+	bh=XAVmowGJGqaELh+ZVECqG1KQt0ObuRfOFJsY96LlWkw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=t5tg3q1pCmdmFiQIhzYhvGBYIVFhyIl1ftjZNYKFQWkxdDs5O/jH9xDTG0iFoxtGwqhwpRFHVnw5HbMD2goG0Z6XvcbVB5tsZ5VMZGIe48TjiCqkBuF8cFVvt2XFESuaTjpj92A4Gww4bSgQ0IAfUPqIZA1EleQE0fxmYN2d/yY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=pengutronix.de; spf=pass smtp.mailfrom=pengutronix.de; arc=none smtp.client-ip=185.203.201.7
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=pengutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=pengutronix.de
+Received: from drehscheibe.grey.stw.pengutronix.de ([2a0a:edc0:0:c01:1d::a2])
+	by metis.whiteo.stw.pengutronix.de with esmtps (TLS1.3:ECDHE_RSA_AES_256_GCM_SHA384:256)
+	(Exim 4.92)
+	(envelope-from <mkl@pengutronix.de>)
+	id 1rsQ7h-0003Hq-Ar; Thu, 04 Apr 2024 18:39:33 +0200
+Received: from [2a0a:edc0:0:b01:1d::7b] (helo=bjornoya.blackshift.org)
+	by drehscheibe.grey.stw.pengutronix.de with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.94.2)
+	(envelope-from <mkl@pengutronix.de>)
+	id 1rsQ7g-00APWW-Rq; Thu, 04 Apr 2024 18:39:32 +0200
+Received: from pengutronix.de (unknown [172.20.34.65])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(Client did not present a certificate)
+	(Authenticated sender: mkl-all@blackshift.org)
+	by smtp.blackshift.org (Postfix) with ESMTPSA id 84B592B212A;
+	Thu,  4 Apr 2024 16:39:32 +0000 (UTC)
+Date: Thu, 4 Apr 2024 18:39:31 +0200
+From: Marc Kleine-Budde <mkl@pengutronix.de>
+To: Esben Haabendal <esben@geanix.com>
+Cc: linux-rt-users@vger.kernel.org, 
+	John Ogness <john.ogness@linutronix.de>
+Subject: Re: [RFC PATCH 1/2] serial: imx: Avoid busy polling for transmitter
+ to become empty
+Message-ID: <20240404-sandbank-kindred-18c183b0ea45-mkl@pengutronix.de>
+References: <cover.1712156846.git.esben@geanix.com>
+ <9895c8f9553523d158f47a9718bd24f22dbe0455.1712156846.git.esben@geanix.com>
+ <20240404-wobbling-cyclic-90880ac17562-mkl@pengutronix.de>
+ <87bk6pl77o.fsf@geanix.com>
+ <20240404-preseason-varied-75427e223409-mkl@pengutronix.de>
+ <877chdl4wh.fsf@geanix.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="o45kag5ovtharge7"
+Content-Disposition: inline
+In-Reply-To: <877chdl4wh.fsf@geanix.com>
+X-SA-Exim-Connect-IP: 2a0a:edc0:0:c01:1d::a2
+X-SA-Exim-Mail-From: mkl@pengutronix.de
+X-SA-Exim-Scanned: No (on metis.whiteo.stw.pengutronix.de); SAEximRunCond expanded to false
+X-PTX-Original-Recipient: linux-rt-users@vger.kernel.org
+
+
+--o45kag5ovtharge7
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Dear RT folks!
+On 04.04.2024 13:54:22, Esben Haabendal wrote:
+> >> In fsl_lpuart.c and uartlite.c a warning message is printed if/when th=
+is
+> >> timeout occurs. I am fine with doing that here as well...
 
-I'm pleased to announce the v6.9-rc2-rt1 patch set. 
+You mean the read_poll_timeout() in fsl_lpuart.c in
+lpuart_global_reset()? This looks like a totally different codepath to
+me.
 
-Changes since v6.8.2-rt11:
+https://elixir.bootlin.com/linux/v6.8/source/drivers/tty/serial/fsl_lpuart.=
+c#L2793
 
-  - Update to v6.9-rc2.
+In the write callback the fsl_lpuart.c does a readb(); cpu_relax();
+while loop.
 
-Known issues
-    None.
+https://elixir.bootlin.com/linux/v6.8/source/drivers/tty/serial/fsl_lpuart.=
+c#L629
+https://elixir.bootlin.com/linux/v6.8/source/drivers/tty/serial/fsl_lpuart.=
+c#L636
 
-You can get this release via the git tree at:
+The other driver is ma35d1_serial.c and uses a timeout of 10ms and
+ignored the return value :/
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.9-rc2-rt1
+> >> On a related note. I am unsure if 10 ms is a good choice for timeout. I
+> >> picked it because it seems like a common value used in many/most
+> >> drivers. But at least some drivers use something like 1 s, which to me
+> >> sounds more sane given that we cannot do any meaningful error handling
+> >> on timeout.
+> >
+> > Not having any experience with console drivers, I think the time to
+> > empty the FIFO depends on the size of the TX FIFO and the speed of the
+> > UART.
+> >
+> > With some numbers (FIFO size and UART speed) pulled out of thin air (and
+> > neglecting start/stop/parity bits):
+> >
+> >     32 bytes * 8 bit/byte / 9600 bit/s =3D 26.7ms
+>=20
+> I assume that typical console usage will have messages much larger than
+> 32 bytes. But on the other hand, most use cases will be 115200 bit/s.
 
-The RT patch against v6.9-rc2 can be found here:
+I think it's about the length of the TX FIFO, not the full console
+message. And yes, while 115200 bps is typical, the corner cases should
+work too.
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/older/patch-6.9-rc2-rt1.patch.xz
+> But in general, I would be more comofortable with a 1 second timeout. It
+> should be more than large enough to handle all realistic cases. But
+> will avoid spinning forever if uart for some reason does never clear the
+> TXD bit.
 
-The split quilt queue is available at:
+makes sense
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/older/patches-6.9-rc2-rt1.tar.xz
+regards,
+Marc
 
-Sebastian
+--=20
+Pengutronix e.K.                 | Marc Kleine-Budde          |
+Embedded Linux                   | https://www.pengutronix.de |
+Vertretung N=C3=BCrnberg              | Phone: +49-5121-206917-129 |
+Amtsgericht Hildesheim, HRA 2686 | Fax:   +49-5121-206917-9   |
+
+--o45kag5ovtharge7
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCgAdFiEEUEC6huC2BN0pvD5fKDiiPnotvG8FAmYO18EACgkQKDiiPnot
+vG+CcAf9GWneyczW/twTr+0uVE7BfcXU0Y43/fDOZkk0IYTv6z/+4MPQrTtoxpnY
+AT4fAn8jHuVmgViyjt/VEUXYmsS11hPVjeqrvWyF6jDm6j4UMhPWCLBp/CBYPEfO
+PI8nXh5ifF2cPO+uLZgRu2tOUVvfY7fPTZIr6NhSOIzhshXoBm/LrgLAFH56yhUf
+kQ7tPNZipj23hbybn/hfLUXtaASBSz3AyR5nqcecRChxIO7VTZaLE1XIjf4WP7gP
+lF79Cm0/2mBtRsqI130npDL8X9HIbNjW9Iysstq0fh94IZmIZI5WGA/kbqAncmrF
+VjEfLE8YUwQ+IcbNFlOcMJUWKOGLTw==
+=cNcS
+-----END PGP SIGNATURE-----
+
+--o45kag5ovtharge7--
