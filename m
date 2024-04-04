@@ -1,122 +1,100 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C029C60ED0
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Apr 2024 08:16:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4DA080C16
+	for <linux-rt-users@vger.kernel.org>; Thu,  4 Apr 2024 11:04:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712218598; cv=none; b=GJoiLtRUyMaMtEN1/pBYAosQuwn2kKblv7ev+3pv4PLV/sjt3TSWYiXUGbtVhH5ZXMhLegJ0PleWZakBuMOtA/vyjV4qRJFPUKcsDViw7VI+GADvkEXa6mz1pNxNqGJSQplpOxJsBeUpva7YfWf6kpf5uhXENUEwBwCr+mIVr5k=
+	t=1712228679; cv=none; b=pZJW0MUFvJ49vb+WJJ2GZ4C8G0bL36Yt1cZ1ikAgX2oWCj6DNwsHrIZCZOjRoW2D8PhXXBQ+D+uUzRWq4DOvDiSX8oh2D555VR7w0i96Wo9UjevrIVI3AqrK0eNG3p3wkC+33tpKFy1CZaLmetC2LHpd/jHei+2zj/w9Anv/UOM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712218598; c=relaxed/simple;
-	bh=lRBdPeBYerhGFWoTtpXT274qmcriQ/kZMXmugmzc2EQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=lcpg2exeltKWvhMJfzWuVzeKwxLaarAm3WIy8XLtOr57kXJ6fN/ObhiLYjWU0v4QGOkqaNLNbu73nsOU6WPHHWncmZzN8kpFUkEJby+KCgebM6XkOxbSPoqqWqrj2ER9GKziPy4c66rgl15uty+mLr6TnipdfvCV2rhDpEnRXoU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YpDr67r8; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1712228679; c=relaxed/simple;
+	bh=oIIf0vikWPrRRdkh04loeQilB8kvWLR/p7Owygrcnyg=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=UwSQ/M1TnzOqXlyQmC40zlUd+LRFJc9rWJC+qDg+9bjBs+sfkt+23HCC1yBN1hluD/juCLkX0CkuVtD+QBLGFcx+Ki8j8ZtMdX5epLNCBxOaOl4UAGPgpSQkvVW/599sq7NV7ECHZco33Qokxy6HlwpFowuGrMGrpR8qHnekHYY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=s0wZ/ctj; arc=none smtp.client-ip=188.40.30.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YpDr67r8"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712218595;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=6dyR9e0yp91RsSvxgdpUWwdA/OjsiOSJJzyg3iHDZ9c=;
-	b=YpDr67r830l4qRB6/SczFbr1waSlBwIrX0xm/9tb3mws0zYN/FOhmcX/DUZAD5ySE89vE0
-	PyZFHgawRROVs47RDyrxiHZvVUvi5b51iQ9RLsq9SP13n1U9qOW+GEAq718RhBWHx8lOWq
-	rpl1pzsnOBK7GmasMPpgtzE1RVc5hAo=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-613-9ziYvlt_PAWPmiE7Tz9HlQ-1; Thu,
- 04 Apr 2024 04:16:33 -0400
-X-MC-Unique: 9ziYvlt_PAWPmiE7Tz9HlQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D16253C02718
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Apr 2024 08:16:32 +0000 (UTC)
-Received: from fedora.brq.redhat.com (unknown [10.43.17.49])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 42C88C017A0;
-	Thu,  4 Apr 2024 08:16:32 +0000 (UTC)
-From: tglozar@redhat.com
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH v2] rteval: Add relative cpulists for loads
-Date: Thu,  4 Apr 2024 10:14:38 +0200
-Message-ID: <20240404081438.252394-1-tglozar@redhat.com>
+	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="s0wZ/ctj"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
+	s=default2211; h=Content-Type:MIME-Version:Message-ID:Date:References:
+	In-Reply-To:Subject:Cc:To:From:Sender:Reply-To:Content-Transfer-Encoding:
+	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+	Resent-To:Resent-Cc:Resent-Message-ID;
+	bh=oIIf0vikWPrRRdkh04loeQilB8kvWLR/p7Owygrcnyg=; b=s0wZ/ctjO1gvPhnCMLVzLs8lUp
+	tg7TtkjqyvwtambMoHpXLcj28KlYB8VkRkMkE680akgkantQZcnxtitgjGF/aKfYzxpibVMmV78Bg
+	ImzYBoSKLPqMBzl0yH8EV04UNxE2JfYRsB2NYd8Ne7Rsp5ACgDGL69y0gT2kzGrNpuDV50vQQjigZ
+	m2fHvUfU+wXH1IBmqTDIYfxAMiG4B0TfrWydxBp/ImpRevvUxliQhPTwTHm3QHezwvSWAvtrp46hS
+	8aNj9cKgFOm/wPCAXE4Jv2rjX8K9B0QJXfltIDCSfmWUHx7g03Of4YAoozg3Gh1kOsd63shoN/dNy
+	2AxRYnfA==;
+Received: from sslproxy01.your-server.de ([78.46.139.224])
+	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.94.2)
+	(envelope-from <esben@geanix.com>)
+	id 1rsKtQ-000Cg7-AI; Thu, 04 Apr 2024 13:04:28 +0200
+Received: from [185.17.218.86] (helo=localhost)
+	by sslproxy01.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <esben@geanix.com>)
+	id 1rsKtQ-000OGS-2T;
+	Thu, 04 Apr 2024 13:04:28 +0200
+From: Esben Haabendal <esben@geanix.com>
+To: Marc Kleine-Budde <mkl@pengutronix.de>
+Cc: linux-rt-users@vger.kernel.org,  John Ogness <john.ogness@linutronix.de>
+Subject: Re: [RFC PATCH 1/2] serial: imx: Avoid busy polling for transmitter
+ to become empty
+In-Reply-To: <20240404-wobbling-cyclic-90880ac17562-mkl@pengutronix.de> (Marc
+	Kleine-Budde's message of "Thu, 4 Apr 2024 10:15:17 +0200")
+References: <cover.1712156846.git.esben@geanix.com>
+	<9895c8f9553523d158f47a9718bd24f22dbe0455.1712156846.git.esben@geanix.com>
+	<20240404-wobbling-cyclic-90880ac17562-mkl@pengutronix.de>
+Date: Thu, 04 Apr 2024 13:04:27 +0200
+Message-ID: <87bk6pl77o.fsf@geanix.com>
+User-Agent: Gnus/5.13 (Gnus v5.13)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+Content-Type: text/plain
+X-Authenticated-Sender: esben@geanix.com
+X-Virus-Scanned: Clear (ClamAV 0.103.10/27235/Thu Apr  4 10:24:59 2024)
 
-From: Tomas Glozar <tglozar@redhat.com>
+Marc Kleine-Budde <mkl@pengutronix.de> writes:
 
-Relative cpulists were added for measurements in 64ce7848 ("rteval: Add
-relative cpulists for measurements"). It was observed since that this
-feature would also be useful for load cpulists, for example when the
-measurements are performed externally and rteval is only used to run
-loads.
+> On 03.04.2024 17:22:52, Esben Haabendal wrote:
+>> Busy polling with readl() is a rather harsh way to wait for a potentially
+>> long time.
+>
+> This read_poll_timeout_atomic() is compiled to an
+> imx_uart_readl()/udelay()/cpu_relax() loop. Does the introduction of
+> udelay() bring any advantages?
 
-Add support for relative cpulists also for loads. This works the same
-way as for measurements using parse_cpulist_from_config, only difference
-is there is no --loads-run-on-isolcpus option. That is, --loads-cpulist
-now also takes lists with addition (+) and removal (-) of CPUs against
-the default list, e.g. +0,1,-7,8.
+Good point. Probably not. I can set sleep_us 0 to go back to a tight
+loop.
 
-Signed-off-by: Tomas Glozar <tglozar@redhat.com>
----
- rteval-cmd | 17 ++++++++++-------
- 1 file changed, 10 insertions(+), 7 deletions(-)
+>> While there, introduce a 10 ms timeout on this waiting, similar to what
+>> many other serial drivers do.
+>
+> But you don't handle the return value...
 
-diff --git a/rteval-cmd b/rteval-cmd
-index a5e8746..2ef6cf4 100755
---- a/rteval-cmd
-+++ b/rteval-cmd
-@@ -339,29 +339,32 @@ if __name__ == '__main__':
- 
-         ldcfg = config.GetSection('loads')
-         msrcfg = config.GetSection('measurement')
-+        # Remember if cpulists were explicitly set by the user before running
-+        # parse_cpulist_from_config, which generates default value for them
-         msrcfg_cpulist_present = msrcfg.cpulist != ""
--        # Parse measurement cpulist using parse_cpulist_from_config to account for run-on-isolcpus
--        # and relative cpusets
-+        ldcfg_cpulist_present = ldcfg.cpulist != ""
-+        # Parse cpulists using parse_cpulist_from_config to account for
-+        # run-on-isolcpus and relative cpusets
-         cpulist = parse_cpulist_from_config(msrcfg.cpulist, msrcfg.run_on_isolcpus)
-         if msrcfg_cpulist_present and not cpulist_utils.is_relative(msrcfg.cpulist) and msrcfg.run_on_isolcpus:
-             logger.log(Log.WARN, "ignoring --measurement-run-on-isolcpus, since cpulist is specified")
-         msrcfg.cpulist = collapse_cpulist(cpulist)
--        if ldcfg.cpulist:
--            ldcfg.cpulist = remove_offline(ldcfg.cpulist)
-+        cpulist = parse_cpulist_from_config(ldcfg.cpulist)
-+        ldcfg.cpulist = collapse_cpulist(cpulist)
-         # if we only specified one set of cpus (loads or measurement)
-         # default the other to the inverse of the specified list
--        if not ldcfg.cpulist and msrcfg_cpulist_present:
-+        if not ldcfg_cpulist_present and msrcfg_cpulist_present:
-             tmplist = expand_cpulist(msrcfg.cpulist)
-             tmplist = SysTopology().invert_cpulist(tmplist)
-             tmplist = cpulist_utils.online_cpulist(tmplist)
-             ldcfg.cpulist = collapse_cpulist(tmplist)
--        if not msrcfg_cpulist_present and ldcfg.cpulist:
-+        if not msrcfg_cpulist_present and ldcfg_cpulist_present:
-             tmplist = expand_cpulist(ldcfg.cpulist)
-             tmplist = SysTopology().invert_cpulist(tmplist)
-             tmplist = cpulist_utils.online_cpulist(tmplist)
-             msrcfg.cpulist = collapse_cpulist(tmplist)
- 
--        if ldcfg.cpulist:
-+        if ldcfg_cpulist_present:
-             logger.log(Log.DEBUG, f"loads cpulist: {ldcfg.cpulist}")
-         # if --onlyload is specified msrcfg.cpulist is unused
-         if msrcfg_cpulist_present and not rtevcfg.onlyload:
--- 
-2.44.0
+True. But this is similar to all the different wait_for_xmitr()
+functions, which does basically the same. They are all void, so the
+timeout is handled in same happy-go-lucky style.
 
+I think the best we could do would be to show an error message. But
+maybe that is not the most sane thing to do to report a problem with
+writing error messages. I don't know, but maybe that is why most the
+other serial drivers are handling it like this.
+
+In fsl_lpuart.c and uartlite.c a warning message is printed if/when this
+timeout occurs. I am fine with doing that here as well...
+
+On a related note. I am unsure if 10 ms is a good choice for timeout. I
+picked it because it seems like a common value used in many/most
+drivers. But at least some drivers use something like 1 s, which to me
+sounds more sane given that we cannot do any meaningful error handling
+on timeout.
+
+/Esben
