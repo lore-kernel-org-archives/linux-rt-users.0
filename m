@@ -1,136 +1,76 @@
-Received: from www530.your-server.de (www530.your-server.de [188.40.30.78])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D6E6B59B7F
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Apr 2024 11:54:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=188.40.30.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47A6F86ADB;
+	Thu,  4 Apr 2024 15:43:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712231667; cv=none; b=Al3+IGO9njiQ45LeWuHXQWlMA2LYdVYUVSjsiNBuwWUCnHUycS9QOCAcJzsAu7x1uoDOJ7KZbMLSLB8ejPQCSOOiOyNF3EVAblQi7BEHiL1A2vdA3+tQTqCFdLBv7q3FvUYAKxtO4bMa+smxsqEFfXFgPKN57+Dk2XuxK+iUBTE=
+	t=1712245436; cv=none; b=V0A0uENWL/L31yLhaJN7JqeJdBCZN2sXGQR/9VJc5LH0ctrA9ANxFgjPwfsAB4JS96Sg4xr3f7nLmG3vhWiCXxbFNxp+jlaSL6C8TdVaDmGBcI4Vh/sClmVtQhukzWeKg7MzE60J0dzh5UmuCcicFqtVL1H5D3sNqU3UjSeJS+g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712231667; c=relaxed/simple;
-	bh=JSy9pBHL8tOwduv09FD5GfZoBypXkX8ebWt8NNZYdCQ=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=US7cOUYW+juLPFshJ63PHyb++ujSehkHY0S0wiNlRvXiY1zkDENjPBiZyHv69gHGezKTBRDAnLy0Fqiuaw3qc7iR5MbMbGfdeA4kSuyE8gTXOs9ipUdgFQ8uzdGd4GDcLg6lbsxmknkHpwiqRdZJWoNnMFoCkTRaFx2+vFq6T2A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com; spf=pass smtp.mailfrom=geanix.com; dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b=mwQ2e6IC; arc=none smtp.client-ip=188.40.30.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=geanix.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=geanix.com
+	s=arc-20240116; t=1712245436; c=relaxed/simple;
+	bh=Ts3qGSlroqc0rCsJJ0xFCnRTgL2rVaTIMzZY2xTp8kI=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=KImuyEL77iiUP/O1w6akN005OknxmCcMvoMSHtCxj+CUVeMl+kq8yhVACPI2GLdjMgaY28bmbdPaMqyd7efepwBsxR6RQSOfg3Xu1NX+ICT2sMTUGpLhoXS8Volwrv2WT3zKkS5bV+97IEmH32zImQ70rnMoLjwSZ/cdCpuU5Ro=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=OSyq/Srk; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=5lA2dLfP; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=geanix.com header.i=@geanix.com header.b="mwQ2e6IC"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=geanix.com;
-	s=default2211; h=Content-Type:MIME-Version:Message-ID:Date:References:
-	In-Reply-To:Subject:Cc:To:From:Sender:Reply-To:Content-Transfer-Encoding:
-	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
-	Resent-To:Resent-Cc:Resent-Message-ID;
-	bh=0Kz1W7UvAteslxVz7P706XUl5mVRWhCWrOTNK8RjOPc=; b=mwQ2e6ICgU/OTWTP81BvJUCQWj
-	ieq3InH47n6loQ7rdyqwll6bBJki0CLWOqTIYPj3NDDnT1ZtP5OK2QV16seWwCrc1p6rnksEqYg5p
-	DPs1s0jFE/mU2Dr0aM/Nm0fScNz0wcFkevX+TJ8LuVa5NEqy+dwK6o0NToQoHPIfFP8ooBB7wkvjj
-	rVCJ6UmmTB3NmGh/j0yfQg3g1q+Q1XAR4fiyqWK2qjx+wZQOydPiwi9A6VOVH4FdR9+20Qq8VUnUJ
-	nbmRn0Iq7DlaN2Z3lH7G9VnW2DcrhHhAY7On+AVhxEENXAWPME4qk+X2V8016lN+IzpjOd0HUzOxI
-	xMIgBIEQ==;
-Received: from sslproxy01.your-server.de ([78.46.139.224])
-	by www530.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.94.2)
-	(envelope-from <esben@geanix.com>)
-	id 1rsLfi-000Ljr-QY; Thu, 04 Apr 2024 13:54:22 +0200
-Received: from [185.17.218.86] (helo=localhost)
-	by sslproxy01.your-server.de with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <esben@geanix.com>)
-	id 1rsLfj-000BjQ-0y;
-	Thu, 04 Apr 2024 13:54:22 +0200
-From: Esben Haabendal <esben@geanix.com>
-To: Marc Kleine-Budde <mkl@pengutronix.de>
-Cc: linux-rt-users@vger.kernel.org,  John Ogness <john.ogness@linutronix.de>
-Subject: Re: [RFC PATCH 1/2] serial: imx: Avoid busy polling for transmitter
- to become empty
-In-Reply-To: <20240404-preseason-varied-75427e223409-mkl@pengutronix.de> (Marc
-	Kleine-Budde's message of "Thu, 4 Apr 2024 13:33:53 +0200")
-References: <cover.1712156846.git.esben@geanix.com>
-	<9895c8f9553523d158f47a9718bd24f22dbe0455.1712156846.git.esben@geanix.com>
-	<20240404-wobbling-cyclic-90880ac17562-mkl@pengutronix.de>
-	<87bk6pl77o.fsf@geanix.com>
-	<20240404-preseason-varied-75427e223409-mkl@pengutronix.de>
-Date: Thu, 04 Apr 2024 13:54:22 +0200
-Message-ID: <877chdl4wh.fsf@geanix.com>
-User-Agent: Gnus/5.13 (Gnus v5.13)
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="OSyq/Srk";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="5lA2dLfP"
+Date: Thu, 4 Apr 2024 17:43:51 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1712245433;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=foU1M3It3GalBGF0iZ+MjM8nUxBRueNGz8SQVeFfg4w=;
+	b=OSyq/Srka1J+2O+DtvaOBM9byofUx29yY13ZssobA4RTB59AoEKjHJ2HX6dmmA1hOwJG/u
+	j/Xgc47UWBmvZvAyND7pA+3ZEm0/T+Xomv5j7jg/qXHjymcGDPaOXduDoWHXEBjfpSsSxY
+	pY4LD2m/a/fs1Y1ng+ERwc2LaLmVzHw0yvmKMBw9t9t5KdKmdvP6wrZ3LAVLgw/NZeFeeL
+	jd9AFCGt9GQOiO7kV/bsmyGQ/xRE7c4o/MAFt0YWoAjLnj/0+tawOzy0WfMaeCtFeEwHUc
+	70URlFSlvhwE53yHaMRLn2RDVpOXRKvkEihGHstcD+NfZQ6lR9Hz+qv2jhrDKg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1712245433;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=foU1M3It3GalBGF0iZ+MjM8nUxBRueNGz8SQVeFfg4w=;
+	b=5lA2dLfPQJoD7e9mCAgbFPdwfQJDdyHoefPZy9xlvqVqawv75CGjf3Aa8MiU24LEXi8T9v
+	GFZzrVD5MAZsQ2Dg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.9-rc2-rt1
+Message-ID: <20240404154351.0uUUy1fB@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Authenticated-Sender: esben@geanix.com
-X-Virus-Scanned: Clear (ClamAV 0.103.10/27235/Thu Apr  4 10:24:59 2024)
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Marc Kleine-Budde <mkl@pengutronix.de> writes:
+Dear RT folks!
 
-> On 04.04.2024 13:04:27, Esben Haabendal wrote:
->> Marc Kleine-Budde <mkl@pengutronix.de> writes:
->> 
->> > On 03.04.2024 17:22:52, Esben Haabendal wrote:
->> >> Busy polling with readl() is a rather harsh way to wait for a potentially
->> >> long time.
->> >
->> > This read_poll_timeout_atomic() is compiled to an
->> > imx_uart_readl()/udelay()/cpu_relax() loop. Does the introduction of
->> > udelay() bring any advantages?
->> 
->> Good point. Probably not. I can set sleep_us 0 to go back to a tight
->> loop.
->
-> Sounds good
+I'm pleased to announce the v6.9-rc2-rt1 patch set. 
 
-I will do that for v2 then.
+Changes since v6.8.2-rt11:
 
->> >> While there, introduce a 10 ms timeout on this waiting, similar to what
->> >> many other serial drivers do.
->> >
->> > But you don't handle the return value...
->> 
->> True. But this is similar to all the different wait_for_xmitr()
->> functions, which does basically the same. They are all void, so the
->> timeout is handled in same happy-go-lucky style.
->
-> IMHO the patch description should mention that the driver now ignores
-> the state of the transmitter after the timeout.
+  - Update to v6.9-rc2.
 
-Ok. Will do.
+Known issues
+    None.
 
->> I think the best we could do would be to show an error message. But
->> maybe that is not the most sane thing to do to report a problem with
->> writing error messages. I don't know, but maybe that is why most the
->> other serial drivers are handling it like this.
->
-> Writing an error message within the console driver could lead to a
-> positive feedback loop :)
+You can get this release via the git tree at:
 
-Yes, probably best to just silently ignore it.
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.9-rc2-rt1
 
->> In fsl_lpuart.c and uartlite.c a warning message is printed if/when this
->> timeout occurs. I am fine with doing that here as well...
->> 
->> On a related note. I am unsure if 10 ms is a good choice for timeout. I
->> picked it because it seems like a common value used in many/most
->> drivers. But at least some drivers use something like 1 s, which to me
->> sounds more sane given that we cannot do any meaningful error handling
->> on timeout.
->
-> Not having any experience with console drivers, I think the time to
-> empty the FIFO depends on the size of the TX FIFO and the speed of the
-> UART.
->
-> With some numbers (FIFO size and UART speed) pulled out of thin air (and
-> neglecting start/stop/parity bits):
->
->     32 bytes * 8 bit/byte / 9600 bit/s = 26.7ms
+The RT patch against v6.9-rc2 can be found here:
 
-I assume that typical console usage will have messages much larger than
-32 bytes. But on the other hand, most use cases will be 115200 bit/s.
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/older/patch-6.9-rc2-rt1.patch.xz
 
-But in general, I would be more comofortable with a 1 second timeout. It
-should be more than large enough to handle all realistic cases. But
-will avoid spinning forever if uart for some reason does never clear the
-TXD bit.
+The split quilt queue is available at:
 
-/Esben
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/older/patches-6.9-rc2-rt1.tar.xz
+
+Sebastian
