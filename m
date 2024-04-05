@@ -1,68 +1,70 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DFA4171E41
-	for <linux-rt-users@vger.kernel.org>; Fri,  5 Apr 2024 21:16:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99420174ED2
+	for <linux-rt-users@vger.kernel.org>; Fri,  5 Apr 2024 21:22:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712351787; cv=none; b=UJw7iwcKBOMpJb33oS44kX0yWw4wx+or0BkA5urTdAaQJfVsIcX7XJoDHmif7IE5Ue1GfvDf/SJh7SZbY80cOt321qOr4nT22qkHTmhwdBALCs2+R8ivvVF1vGnWaagnWOCKevl9xZaomrQDiPB921gXhRfxKKRUFNnUHKBYdRs=
+	t=1712352157; cv=none; b=V0IsgYOJ6/K+E7fNUVkdHypfQP8/G6y47wd9oRR96aVRrvJLwhiHCSzyaDYXR0rNIl9YPydmX0tg6ZW/v6+W+ZEkLxFafkseQ7gieogf/cYDGdWvMKMmScM0pfTgj50k8PcjYKli54frQbb8VzG2LgrdMShdtJXdmLzZmWN9F94=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712351787; c=relaxed/simple;
-	bh=GSsAUan1a8gEUXvKq/rDPvysLfsRTNNtGeTMTjGuC5Q=;
+	s=arc-20240116; t=1712352157; c=relaxed/simple;
+	bh=oTmqp/FgWdzN2qaEVQYUTkOu9+kg7eLD0lUCr1wSHcE=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=hBTpMb2Jw55bWvAr+G07fBM2R865ulcLKtGan7FrponaKRoe2IwXtWhok8JVLE/G6TWWioRIdcKXcyZ4W0k7CdmeYu9sDM4cNK8+7dmIrmCVvsqwA23QheP3W1n3D+be9dqlssZcvFQEl2QULblxplMyfV6h6kPm0oCJqgKUSDU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hEwDxvvO; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=jBqZkXOpJuqklkwR1fKjmuzcLQisr73aOBRNf/FJkk+JjpPeU+OOLCW0D54xtiDpLOHMrtdl1+KTnSx59EZN0q9mqcw/QvVtPLey4Ksfq3SkAJ/0xrMYhRjufvKAgqBTwXTDwiYqDEkVVInsPFq0Qyg4LMGNw7lJGUBcAJQdlL4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JtpH+SX9; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hEwDxvvO"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JtpH+SX9"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712351784;
+	s=mimecast20190719; t=1712352154;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=QqFbFjtcQbnUVBFjrIukJgmt1fiJzImZU6jd9vKcT0U=;
-	b=hEwDxvvOpj39P6k5OJrUleA3WZ2/uUvDiBjW5Sf2+kgS1xqqxLEuC6XAuF5zVUBvGp6jKY
-	lglGNiB44T0RwlfZ+ow49QlkRF+LuRYnMl3e+HKemo40Ywi1cTqXsIPRmGPVYSRFcezgRD
-	rCQp6ZovEF9AdqJcQpVlMaVK+vVTHBA=
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=/U6nzb9Z/1dELb7qNDPvzXcd+dZi0wmk99jQhBOv3E8=;
+	b=JtpH+SX9iS8O/k6qSmRousCGB6SRfuE2s95Go86Ws6NWhVEyI92bR4d0ZzqHsFQ4ZOBlor
+	zc4vqefzbz7MBHRa+S0YkN1yJPue+LnYxU8d+aVwhLofODUyMc0uOOoSOxc9AbZXhvB9fI
+	Q8tyQFr9gEoQhQk6Kg5pdvP6ZuvJ0Ps=
+Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com
+ [209.85.167.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-490-AZnsGLc0P0ubqFp4av8QDg-1; Fri, 05 Apr 2024 17:16:22 -0400
-X-MC-Unique: AZnsGLc0P0ubqFp4av8QDg-1
-Received: by mail-qt1-f197.google.com with SMTP id d75a77b69052e-430a74cc3d5so23443741cf.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2024 14:16:22 -0700 (PDT)
+ us-mta-404-WlGk_vuYNpayAEO4dIe0jw-1; Fri, 05 Apr 2024 17:22:33 -0400
+X-MC-Unique: WlGk_vuYNpayAEO4dIe0jw-1
+Received: by mail-oi1-f198.google.com with SMTP id 5614622812f47-3c5df537123so339413b6e.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2024 14:22:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712351782; x=1712956582;
+        d=1e100.net; s=20230601; t=1712352152; x=1712956952;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=QqFbFjtcQbnUVBFjrIukJgmt1fiJzImZU6jd9vKcT0U=;
-        b=PL2Y/npkfQIdgTjbLoOtU/GYmE7oV5egLqoMa2xC1mhwtsLxcmQdMECoo02fepPR3A
-         lhW1XvsFzSLSC0qyouUuJ3YwdbbSb3Pm15bnukKHGj2iabjXOia835lJgERlf3utOSjO
-         Y4elix/qBQyKIdOuH0kf/M1/GhLcAe6MYs8py6buuld69OV8HXh9k1nNlhE8zkmOYXBl
-         laJr2qH8jyAcKAuPS3NiBXzu9njSYi2M2AN4aF1DYXD9iiH+z0TWgGGjHhjPif9gfNLa
-         EgsJi67pNdn7G4g6m6X+u5fp9ku+pB6j6B/ZnOynKEfjFdKUAP8OKArV/4UPFMdz94ob
-         Pb1g==
-X-Gm-Message-State: AOJu0YyiAcPSCcqg/Z7K43EfDCrBVvKsZRGY2GgBznR6ebYn/tVj7HP7
-	z8VFWT4yposXbOTKTh7NKh7ooyZZ6VvobgpIK74UQxXOlZUQWbrphS7iMG0mO+aueepeIVVCB4F
-	rF2kWA1qIeLzE3oWAxOWTtV6udz5UNCW18EDyCFfVyNw3jMB4IqGkJpAYlo51W3BMkiptGNcT
-X-Received: by 2002:a05:622a:1210:b0:434:3333:77e3 with SMTP id y16-20020a05622a121000b00434333377e3mr3252318qtx.29.1712351782130;
-        Fri, 05 Apr 2024 14:16:22 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IESvhreqjtm/ssP4t7VG+ttXk6fmCVn6anIgDR4FoOM4YYiqqBYoQchK5hW3OisMkPS1FXprQ==
-X-Received: by 2002:a05:622a:1210:b0:434:3333:77e3 with SMTP id y16-20020a05622a121000b00434333377e3mr3252303qtx.29.1712351781845;
-        Fri, 05 Apr 2024 14:16:21 -0700 (PDT)
+        bh=/U6nzb9Z/1dELb7qNDPvzXcd+dZi0wmk99jQhBOv3E8=;
+        b=p2oQHEXs07IATD3v1i85S7PAyAJaIj5YgvK95V15f7Q2/J05JepHKVWkMZQHqxW7sn
+         8dH1O1oF/cL2cR6p/UAgWTy/2kxBT+ZDA/fgMxd1cSlRlriufWcdjcpjYSXoypAmbfss
+         LYYR1VQKmmmU/3wb75jKisZ2jE2KJKkrX77rKOEqLF1jPm5sDBYeSaMMi82SAIENWdvI
+         ft52B8ESXSUuWFofET4N0J//6i9F7tns6PAxeoxQ5wcybaL7DbK7VCoeddHHcDhCcy6+
+         MS2O+VzyTHdqofaqJjtt32qK5Hky815MQphLkrghctL2SXb2ndHevSmzzM22b/mBeLnA
+         0oRg==
+X-Forwarded-Encrypted: i=1; AJvYcCVtSgluargm4euUWhJNIAUDpodtfb0LLyJRqaHz7Lkx3APWpWOcxiW3rT9wfOV0KaaEDABFZhJBP+a0OAchpcmYQI+ZI0S1V214974H4kU=
+X-Gm-Message-State: AOJu0YzNkGxuQmmdXKzsTqihe6brYCM5KJQRzl2CjlCFvtsiZGaDvhQZ
+	VLNwmtDW+zG8Dx0Gm/JZFocGpWg6O1+TRxt428FOW6yuJrtqievDeMqOhnGpZHuMA9UihfsR/85
+	m9PiH5mzG7iM4rAMtpphr+/lC5a8wCYcTt/qwdJ/jobWDtCcuSetA68WTpqZqFIfT
+X-Received: by 2002:a05:6808:209f:b0:3c3:f6d6:1c1f with SMTP id s31-20020a056808209f00b003c3f6d61c1fmr3484112oiw.3.1712352152362;
+        Fri, 05 Apr 2024 14:22:32 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGL+cRUQ0QsewcBCpGtxOQ8u2ZWT39W9N0FlWkgaXzOrWEk3sTDvnhPs6wL+8i5c98q43mubQ==
+X-Received: by 2002:a05:6808:209f:b0:3c3:f6d6:1c1f with SMTP id s31-20020a056808209f00b003c3f6d61c1fmr3484099oiw.3.1712352152118;
+        Fri, 05 Apr 2024 14:22:32 -0700 (PDT)
 Received: from fionn ([184.147.142.166])
-        by smtp.gmail.com with ESMTPSA id h14-20020ac8744e000000b004314e13afa2sm1101557qtr.29.2024.04.05.14.16.21
+        by smtp.gmail.com with ESMTPSA id cp4-20020a05622a420400b0043167d8c57dsm1110122qtb.56.2024.04.05.14.22.31
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 05 Apr 2024 14:16:21 -0700 (PDT)
-Date: Fri, 5 Apr 2024 17:16:12 -0400 (EDT)
+        Fri, 05 Apr 2024 14:22:31 -0700 (PDT)
+Date: Fri, 5 Apr 2024 17:22:22 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
-To: Tomas Glozar <tglozar@redhat.com>
-cc: linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2] rteval: Add relative cpulists for loads
-In-Reply-To: <20240404081438.252394-1-tglozar@redhat.com>
-Message-ID: <6a46a773-1436-ae0c-be25-bbec72020966@redhat.com>
-References: <20240404081438.252394-1-tglozar@redhat.com>
+To: Nam Cao <namcao@linutronix.de>
+cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] rt-tests: hackbench: drop incorrect and unnecessary
+ usage of optind
+In-Reply-To: <20240402174659.202695-1-namcao@linutronix.de>
+Message-ID: <727bda74-8540-1463-9afc-14f3f881fc74@redhat.com>
+References: <20240402174659.202695-1-namcao@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -73,72 +75,82 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Thu, 4 Apr 2024, tglozar@redhat.com wrote:
+On Tue, 2 Apr 2024, Nam Cao wrote:
 
-> From: Tomas Glozar <tglozar@redhat.com>
+> Variable "optind" is used as the last argument of getopt_long(). This
+> means it "is set to the index of the long option relative to longopts"
+> (from man page). NULL check is then performed on argv[optind], which is
+> not valid, because in this case, optind is not an index to argv[].
 > 
-> Relative cpulists were added for measurements in 64ce7848 ("rteval: Add
-> relative cpulists for measurements"). It was observed since that this
-> feature would also be useful for load cpulists, for example when the
-> measurements are performed externally and rteval is only used to run
-> loads.
+> There is another "optind" which is a global variable, which actually
+> holds the index to argv[]. This is likely the actual intention here. By
+> locally define another "optind", the "real optind" is shadowed in this
+> scope.
 > 
-> Add support for relative cpulists also for loads. This works the same
-> way as for measurements using parse_cpulist_from_config, only difference
-> is there is no --loads-run-on-isolcpus option. That is, --loads-cpulist
-> now also takes lists with addition (+) and removal (-) of CPUs against
-> the default list, e.g. +0,1,-7,8.
+> Furthermore, the original optind "is the index of the next element to
+> be processed in argv" (from man page), not the index to the current
+> element. So doing NULL-check on argv[optind] with the "original optind"
+> is also not valid.
 > 
-> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+> There is no reason to do this NULL-check, since argv[optind] is not even
+> read. Only optarg is read, which is never a NULL pointer in this case.
+> 
+> Delete this incorrect and unnecessary "optind".
+> 
+> Signed-off-by: Nam Cao <namcao@linutronix.de>
 > ---
->  rteval-cmd | 17 ++++++++++-------
->  1 file changed, 10 insertions(+), 7 deletions(-)
+>  src/hackbench/hackbench.c | 10 ++++------
+>  1 file changed, 4 insertions(+), 6 deletions(-)
 > 
-> diff --git a/rteval-cmd b/rteval-cmd
-> index a5e8746..2ef6cf4 100755
-> --- a/rteval-cmd
-> +++ b/rteval-cmd
-> @@ -339,29 +339,32 @@ if __name__ == '__main__':
+> diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+> index 4430db0..d4924b3 100644
+> --- a/src/hackbench/hackbench.c
+> +++ b/src/hackbench/hackbench.c
+> @@ -405,8 +405,6 @@ static unsigned int group(childinfo_t *child,
+>  static void process_options(int argc, char *argv[])
+>  {
+>  	for(;;) {
+> -		int optind = 0;
+> -
+>  		static struct option longopts[] = {
+>  			{"fds",		required_argument,	NULL, 'f'},
+>  			{"fifo",	no_argument,		NULL, 'F'},
+> @@ -422,13 +420,13 @@ static void process_options(int argc, char *argv[])
+>  		};
 >  
->          ldcfg = config.GetSection('loads')
->          msrcfg = config.GetSection('measurement')
-> +        # Remember if cpulists were explicitly set by the user before running
-> +        # parse_cpulist_from_config, which generates default value for them
->          msrcfg_cpulist_present = msrcfg.cpulist != ""
-> -        # Parse measurement cpulist using parse_cpulist_from_config to account for run-on-isolcpus
-> -        # and relative cpusets
-> +        ldcfg_cpulist_present = ldcfg.cpulist != ""
-> +        # Parse cpulists using parse_cpulist_from_config to account for
-> +        # run-on-isolcpus and relative cpusets
->          cpulist = parse_cpulist_from_config(msrcfg.cpulist, msrcfg.run_on_isolcpus)
->          if msrcfg_cpulist_present and not cpulist_utils.is_relative(msrcfg.cpulist) and msrcfg.run_on_isolcpus:
->              logger.log(Log.WARN, "ignoring --measurement-run-on-isolcpus, since cpulist is specified")
->          msrcfg.cpulist = collapse_cpulist(cpulist)
-> -        if ldcfg.cpulist:
-> -            ldcfg.cpulist = remove_offline(ldcfg.cpulist)
-> +        cpulist = parse_cpulist_from_config(ldcfg.cpulist)
-> +        ldcfg.cpulist = collapse_cpulist(cpulist)
->          # if we only specified one set of cpus (loads or measurement)
->          # default the other to the inverse of the specified list
-> -        if not ldcfg.cpulist and msrcfg_cpulist_present:
-> +        if not ldcfg_cpulist_present and msrcfg_cpulist_present:
->              tmplist = expand_cpulist(msrcfg.cpulist)
->              tmplist = SysTopology().invert_cpulist(tmplist)
->              tmplist = cpulist_utils.online_cpulist(tmplist)
->              ldcfg.cpulist = collapse_cpulist(tmplist)
-> -        if not msrcfg_cpulist_present and ldcfg.cpulist:
-> +        if not msrcfg_cpulist_present and ldcfg_cpulist_present:
->              tmplist = expand_cpulist(ldcfg.cpulist)
->              tmplist = SysTopology().invert_cpulist(tmplist)
->              tmplist = cpulist_utils.online_cpulist(tmplist)
->              msrcfg.cpulist = collapse_cpulist(tmplist)
->  
-> -        if ldcfg.cpulist:
-> +        if ldcfg_cpulist_present:
->              logger.log(Log.DEBUG, f"loads cpulist: {ldcfg.cpulist}")
->          # if --onlyload is specified msrcfg.cpulist is unused
->          if msrcfg_cpulist_present and not rtevcfg.onlyload:
+>  		int c = getopt_long(argc, argv, "f:Fg:hl:pis:TP",
+> -				    longopts, &optind);
+> +				    longopts, NULL);
+>  		if (c == -1) {
+>  			break;
+>  		}
+>  		switch (c) {
+>  		case 'f':
+> -			if (!(argv[optind] && (num_fds = atoi(optarg)) > 0)) {
+> +			if ((num_fds = atoi(optarg)) <= 0) {
+>  				fprintf(stderr, "%s: --fds|-f requires an integer > 0\n", argv[0]);
+>  				print_usage_exit(1);
+>  			}
+> @@ -437,7 +435,7 @@ static void process_options(int argc, char *argv[])
+>  			fifo = 1;
+>  			break;
+>  		case 'g':
+> -			if (!(argv[optind] && (num_groups = atoi(optarg)) > 0)) {
+> +			if ((num_groups = atoi(optarg)) <= 0) {
+>  				fprintf(stderr, "%s: --groups|-g requires an integer > 0\n", argv[0]);
+>  				print_usage_exit(1);
+>  			}
+> @@ -446,7 +444,7 @@ static void process_options(int argc, char *argv[])
+>  			print_usage_exit(0);
+>  			break;
+>  		case 'l':
+> -			if (!(argv[optind] && (loops = atoi(optarg)) > 0)) {
+> +			if ((loops = atoi(optarg)) <= 0) {
+>  				fprintf(stderr, "%s: --loops|-l requires an integer > 0\n", argv[0]);
+>  				print_usage_exit(1);
+>  			}
 > -- 
+
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 
