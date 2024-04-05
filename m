@@ -1,71 +1,71 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C1B8B174EDB
-	for <linux-rt-users@vger.kernel.org>; Fri,  5 Apr 2024 21:25:05 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74A7E175542
+	for <linux-rt-users@vger.kernel.org>; Fri,  5 Apr 2024 21:28:16 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712352307; cv=none; b=H3QGN5NP09ml/X6vo6SAsZhqkWKKeoGHeNfYPhbpvKcROf9rTTMR1jEEUTqchCaga4qZdc5+7b7N8xut9rrBHCVqEUnops7U2Og6SfCUWgCQFc699XqsubDAZqFSDdq7A24PjWMPKm/GDhvqNiAPbcKFxCfKibRlf10BBQ52ctg=
+	t=1712352498; cv=none; b=iIHMwAgKeYCoVBGE1Whl+DP4ni+yhEL0AXueN7t0hDwXHyQX6n0aj35zFjzOk2y4Pta81jDGR8z+vbnsQvCIrF9fAeQFidZ9+8nfpZ5nmiUoWhld6o7Jjo/gpSGBf2QfmHr2NSQuPVFiZZyOUxBKR4UqYm1eNzArVB+PSCAe0rw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712352307; c=relaxed/simple;
-	bh=mJu8ljWZ7+4pVmYDYlwXfRqGOnk4Pi98L1Wj61EuKMg=;
+	s=arc-20240116; t=1712352498; c=relaxed/simple;
+	bh=eW6l4gpx122hsbycoOosma5R37OwbwNkxdcBo/OImFc=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=K3YwPmzS5XSuNtgRkeJ/NWuZ6BBBeKXTQoceoMBFkZ0oJivE6hJ7czqfHr0AG+Bby1MYRuwj22uieSNlOV/vK8NilouN2RKbiBFEfPug7qcvlXVHDpl1Sghw+w4+Xoje6nbGX39dXvPTj06EzuzEG3Lc8m1IZzwZcePFRm0Qjs8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HUMjRBJc; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=MoZHnpqe8bMDDivqFirBUpyUlg9zuz0q2gMYkrhxo4CHJvG4Shrye6jkv0Fup7Z2C+iKu2m/eiTi+3C5oUr1JUEcCud5hunxfNH9p5K3EEX5D9A3WEXtq758K2YRKJaWIybX9pKb1a1NyBSnI9BqPikvNQrUf61LoLFdxSiBuN8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cPwATY6Y; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HUMjRBJc"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cPwATY6Y"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712352304;
+	s=mimecast20190719; t=1712352495;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=JUH7ocG8ptj9RLJIgdvI4d+u5ga4zsy57pq38Snt+5s=;
-	b=HUMjRBJcBysXHUn6NQxd0FkGAu9lfd1iTUU9Ztd75TRN8ccAN/Y4luUsTrnZzqKlvZfxke
-	d0l8yALPC1mDGkdgDoBWYFlisOs6Bk1qoe26XlVXReU+FK11gL63KGtSQEoztUPAqpUuiu
-	a2LPnC4l2gngF8BNLtuOuBesOYbFbH0=
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
- [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Ped0tO4s3gqUib10B8TivwnrKGGhaCKEW/b/IUyi7FE=;
+	b=cPwATY6Y+Fnxi5s8dkVredRbduUNUSl876Aq00INr1Jcso4y0qJqPhWIaFiKTOYuola9pq
+	5ZRSCNhckzWO5sn7eFNJG0r/JZTOvhiKT5YFMm5OTThBpGwnKpGl5nFHGrDJFq0NqEQxWm
+	YmqDLDI0C3ChBGt3j4+IC3zK9PWkxmc=
+Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
+ [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-269-DDs6380xOZ2n50PNA-Hfyg-1; Fri, 05 Apr 2024 17:25:03 -0400
-X-MC-Unique: DDs6380xOZ2n50PNA-Hfyg-1
-Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-69945e66d32so7400206d6.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2024 14:25:03 -0700 (PDT)
+ us-mta-375-oHLO3u1jPiSn47CKh0cjDA-1; Fri, 05 Apr 2024 17:28:14 -0400
+X-MC-Unique: oHLO3u1jPiSn47CKh0cjDA-1
+Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-699481d14ffso5368426d6.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2024 14:28:14 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712352303; x=1712957103;
+        d=1e100.net; s=20230601; t=1712352494; x=1712957294;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=JUH7ocG8ptj9RLJIgdvI4d+u5ga4zsy57pq38Snt+5s=;
-        b=EDFPZWyVo3axVVg1mssN8bGgAtWmeu2/keDhXs+18HHU+bhoM3HrmAXT3b3AG1dJo3
-         NSzMT7FZuMo/1Eq7u0v19pobSCQcEfG2TOMqVNaEA0dEfjpquoe3jKi9BOyS6Fmy9P/m
-         eoy6a0zTkvAdEMlhmZT99COfW2NC/S2O2PeoHAWbKu9pPmD3F9neLJ4vsH//451QAAvX
-         icD9fx13x/D/1Ft+GuwZqRNkpQaP5qD+xkjtbI54KYwdhx7jlOfXdQ0g3EWqJ3LRwkpr
-         zt0QsdsTBNsgon4UAhUNNU0k5gw5uu7J9Mjhl7GzlRLql5Jhawf3xqJonuM8SS3LZYRN
-         sJWA==
-X-Forwarded-Encrypted: i=1; AJvYcCUIte3Rzt7HaKkh5JJGAkGHw7DKYJ2kildNt93Nz3jufM2ZcKtJeo55XuuM8gj3xWlW57497ZRborwZsZJuj6l7Upr46vm+zTO36X9smJ0=
-X-Gm-Message-State: AOJu0Ywz576OTmlam04DWaoxEEnpwkkyITMKyWm7+9L3iuesKa3bto+Z
-	qr6SV16+HBPBfes9fachRgu4pHFGPpj4fuhhMqNQ8zp1SbaZ211fLl5PY1cuUUJ6mXYn+Rj2I6v
-	KXJmcr+6bw2owD4mQ4XjvlyfXEidLNnqW/YnsYLaXAp9SyF99AxL40IYDEAc8H9vp
-X-Received: by 2002:ad4:5d63:0:b0:699:f0d:98a0 with SMTP id fn3-20020ad45d63000000b006990f0d98a0mr3412344qvb.31.1712352302849;
-        Fri, 05 Apr 2024 14:25:02 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IH8WqgxYUnaq2lvBnio/jDL7DJL47Zck9DutHY+1/W+0FtpszUg+3VQohi3Bj1wBTLC4qvFag==
-X-Received: by 2002:ad4:5d63:0:b0:699:f0d:98a0 with SMTP id fn3-20020ad45d63000000b006990f0d98a0mr3412333qvb.31.1712352302589;
-        Fri, 05 Apr 2024 14:25:02 -0700 (PDT)
+        bh=Ped0tO4s3gqUib10B8TivwnrKGGhaCKEW/b/IUyi7FE=;
+        b=gLoeWgBLQxOw4gz6x3buOEtte1aRvqc2wTKR2+1IUg27q6QPPEazvqOtzxGqKWfZCq
+         okgaWdlN+vybauJjr5oxbGSNwgmdVWfiV7nVHQ8Le7I91UCGzlrHQ1LG4F7NETT0i6CE
+         vRvuDrTkyLt7e1MGbs/SlMzG8X96itHckGZSd5DZHmcJAAD/sP4gkav05xylPPl9mgAt
+         wQi6k7sO6yJ+2zLTi8penTH+7EN0cDz+4omTHGMpS6p9Hs1YdgmsPDFppJ/MyrB224XG
+         iRQPnmTloNEm89JPMaf6H3yge4/XnN0AQZ/tQNAtSJP7ZcPaQS9M6SAiZG8YuDyYC0er
+         VObQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVOF3iXrkVVcR5ewtr1D4HY7I0o7t6iy/u4SNqTi+ah0kSdpBCgeK1tTPXGnJqEkmQkpRSsCE7xVkv09mwIS5xgjd8dNQtrrjRbH/t9W+I=
+X-Gm-Message-State: AOJu0YzYoFGd7k4cZUqVnFELZlq1LYNjhOlKVu5ykMhH8XsZFf4xNGFl
+	TYSGBPsIFqYFmvfoLDYKbjrDTefFOaL4myvL+ZoVIMo3A87Nd4sstn+GMjvTpWm+zX17QCQRy3X
+	iS839HTco0KaEGfDbBGdI/no81xkih/nQu7N+AjwAtQ4WWtTzKrxF41TmrCSsiNZe
+X-Received: by 2002:a05:6214:20ee:b0:698:d692:9bc7 with SMTP id 14-20020a05621420ee00b00698d6929bc7mr2610347qvk.13.1712352493851;
+        Fri, 05 Apr 2024 14:28:13 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGDAEutNuZ120WjxXH7jd+PQX3Nr6Z596AEsGcZdNaa5Jl03eR5RKNVkkaHZUZfviLpewnVKQ==
+X-Received: by 2002:a05:6214:20ee:b0:698:d692:9bc7 with SMTP id 14-20020a05621420ee00b00698d6929bc7mr2610338qvk.13.1712352493566;
+        Fri, 05 Apr 2024 14:28:13 -0700 (PDT)
 Received: from fionn ([184.147.142.166])
-        by smtp.gmail.com with ESMTPSA id l15-20020a0ce08f000000b006986c3f3d21sm929938qvk.116.2024.04.05.14.25.02
+        by smtp.gmail.com with ESMTPSA id y18-20020ad457d2000000b0069903c37a36sm924344qvx.100.2024.04.05.14.28.12
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 05 Apr 2024 14:25:02 -0700 (PDT)
-Date: Fri, 5 Apr 2024 17:24:53 -0400 (EDT)
+        Fri, 05 Apr 2024 14:28:13 -0700 (PDT)
+Date: Fri, 5 Apr 2024 17:28:04 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-cc: Nam Cao <namcao@linutronix.de>, Clark Williams <williams@redhat.com>, 
-    linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-tests: hackbench: drop incorrect and unnecessary
- usage of optind
-In-Reply-To: <20240405085227.1GoglMTY@linutronix.de>
-Message-ID: <41c7ad34-bf2f-3034-b679-5f8eb4acfd8a@redhat.com>
-References: <20240402174659.202695-1-namcao@linutronix.de> <20240405085227.1GoglMTY@linutronix.de>
+To: Rodrigo Queiro <rodrigoq@google.com>
+cc: Clark Williams <williams@redhat.com>, 
+    Daniel Bristot de Oliveira <bristot@redhat.com>, 
+    rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH] Support --smi on newer processors
+In-Reply-To: <20240312105329.3876232-1-rodrigoq@google.com>
+Message-ID: <67c7071b-7304-a600-1bd7-b0033dec2e55@redhat.com>
+References: <20240312105329.3876232-1-rodrigoq@google.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -76,37 +76,132 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Fri, 5 Apr 2024, Sebastian Andrzej Siewior wrote:
+On Tue, 12 Mar 2024, Rodrigo Queiro wrote:
 
-> On 2024-04-02 19:46:59 [+0200], Nam Cao wrote:
-> > Variable "optind" is used as the last argument of getopt_long(). This
-> > means it "is set to the index of the long option relative to longopts"
-> > (from man page). NULL check is then performed on argv[optind], which is
-> > not valid, because in this case, optind is not an index to argv[].
-> > 
-> > There is another "optind" which is a global variable, which actually
-> > holds the index to argv[]. This is likely the actual intention here. By
-> > locally define another "optind", the "real optind" is shadowed in this
-> > scope.
-> > 
-> > Furthermore, the original optind "is the index of the next element to
-> > be processed in argv" (from man page), not the index to the current
-> > element. So doing NULL-check on argv[optind] with the "original optind"
-> > is also not valid.
-> > 
-> > There is no reason to do this NULL-check, since argv[optind] is not even
-> > read. Only optarg is read, which is never a NULL pointer in this case.
-> > 
-> > Delete this incorrect and unnecessary "optind".
-> > 
-> > Signed-off-by: Nam Cao <namcao@linutronix.de>
+> This avoids the need to update cyclictest.c for every new CPU family, at
+> the cost of generating bogus SMI numbers on pre-2008 CPUs. Based on the
+> comment from Daniel Bristot de Oliviera:
 > 
-> Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > When I added that option the smi was a relatively new thing...
+> > nowadays I think it is pretty standard...
+> > so simplifying it is a good thing.
+> ---
+>  src/cyclictest/cyclictest.c | 91 ++++---------------------------------
+>  1 file changed, 8 insertions(+), 83 deletions(-)
 > 
-> Sebastian
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 33fac3b..8a96339 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -404,7 +404,14 @@ static int get_smi_counter(int fd, unsigned long *counter)
+>  
+>  #include <cpuid.h>
+>  
+> -/* Based on turbostat's check */
+> +/* Guess if the CPU has an SMI counter in the model-specific registers (MSR).
+> + *
+> + * This is true for Intel x86 CPUs after Nehalem (2008). However, it's not
+> + * possible to detect the feature directly, (or at least, turbostat.c doesn't
+> + * know how to do it either) so we assume it's true for all x86 CPUs.
+> + * Previously, this function had an explicit allowlist, which required updates
+> + * every time a new CPU generation was released.
+> + */
+>  static int has_smi_counter(void)
+>  {
+>  	unsigned int ebx, ecx, edx, max_level;
+> @@ -428,88 +435,6 @@ static int has_smi_counter(void)
+>  	if (!(edx & (1 << 5)))
+>  		return 0;
+>  
+> -	model = (((fms >> 16) & 0xf) << 4) + ((fms >> 4) & 0xf);
+> -
+> -	/* Based on intel_model_duplicates */
+> -	switch (model) {
+> -	case 0x1A:      /* INTEL_FAM6_NEHALEM_EP */
+> -	case 0x1E:      /* INTEL_FAM6_NEHALEM */
+> -	case 0x1F:      /* Core i7 and i5 Processor - Nehalem */
+> -	case 0x25:      /* INTEL_FAM6_WESTMERE */
+> -	case 0x2C:      /* INTEL_FAM6_WESTMERE_EP */
+> -		model = 0x1E;      /* INTEL_FAM6_NEHALEM */
+> -		break;
+> -	case 0x2E:      /* INTEL_FAM6_NEHALEM_EX */
+> -	case 0x2F:      /* INTEL_FAM6_WESTMERE_EX */
+> -		model = 0x2E;      /* INTEL_FAM6_NEHALEM_EX */
+> -		break;
+> -	case 0x85:      /* INTEL_FAM6_XEON_PHI_KNM */
+> -		model = 0x57;      /* INTEL_FAM6_XEON_PHI_KNL */
+> -		break;
+> -	case 0x4F:      /* INTEL_FAM6_BROADWELL_X */
+> -	case 0x56:      /* INTEL_FAM6_BROADWELL_D */
+> -		model = 0x4F;      /* INTEL_FAM6_BROADWELL_X */
+> -		break;
+> -	case 0x4E:      /* INTEL_FAM6_SKYLAKE_L */
+> -	case 0x5E:      /* INTEL_FAM6_SKYLAKE */
+> -	case 0x8E:      /* INTEL_FAM6_KABYLAKE_L */
+> -	case 0x9E:      /* INTEL_FAM6_KABYLAKE */
+> -	case 0xA6:      /* INTEL_FAM6_COMETLAKE_L */
+> -	case 0xA5:      /* INTEL_FAM6_COMETLAKE */
+> -		model = 0x4E;      /* INTEL_FAM6_SKYLAKE_L */
+> -		break;
+> -	case 0x7E:      /* INTEL_FAM6_ICELAKE_L */
+> -	case 0x9D:      /* INTEL_FAM6_ICELAKE_NNPI */
+> -	case 0x8C:      /* INTEL_FAM6_TIGERLAKE_L */
+> -	case 0x8D:      /* INTEL_FAM6_TIGERLAKE */
+> -	case 0xA7:      /* INTEL_FAM6_ROCKETLAKE */
+> -	case 0x8A:      /* INTEL_FAM6_LAKEFIELD */
+> -	case 0x97:      /* INTEL_FAM6_ALDERLAKE */
+> -	case 0x9A:      /* INTEL_FAM6_ALDERLAKE_L */
+> -		model = 0x66;      /* INTEL_FAM6_CANNONLAKE_L */
+> -		break;
+> -	case 0x9C:      /* INTEL_FAM6_ATOM_TREMONT_L */
+> -		model = 0x96;      /* INTEL_FAM6_ATOM_TREMONT */
+> -		break;
+> -	case 0x6C:      /* INTEL_FAM6_ICELAKE_D */
+> -	case 0x8F:      /* INTEL_FAM6_SAPPHIRERAPIDS_X */
+> -		model = 0x6A;      /* INTEL_FAM6_ICELAKE_X */
+> -		break;
+> -	}
+> -
+> -	/* Based on probe_nhm_msrs */
+> -	switch (model) {
+> -	case 0x1E:      /* INTEL_FAM6_NEHALEM */
+> -	case 0x2E:      /* INTEL_FAM6_NEHALEM_EX */
+> -	case 0x2A:      /* INTEL_FAM6_SANDYBRIDGE */
+> -	case 0x2D:      /* INTEL_FAM6_SANDYBRIDGE_X */
+> -	case 0x3A:      /* INTEL_FAM6_IVYBRIDGE */
+> -	case 0x3E:      /* INTEL_FAM6_IVYBRIDGE_X */
+> -	case 0x3C:      /* INTEL_FAM6_HASWELL */
+> -	case 0x46:      /* INTEL_FAM6_HASWELL_G */
+> -	case 0x3F:      /* INTEL_FAM6_HASWELL_X */
+> -	case 0x45:      /* INTEL_FAM6_HASWELL_L */
+> -	case 0x3D:      /* INTEL_FAM6_BROADWELL */
+> -	case 0x47:      /* INTEL_FAM6_BROADWELL_G */
+> -	case 0x4F:      /* INTEL_FAM6_BROADWELL_X */
+> -	case 0x4E:      /* INTEL_FAM6_SKYLAKE_L */
+> -	case 0x66:      /* INTEL_FAM6_CANNONLAKE_L */
+> -	case 0x55:      /* INTEL_FAM6_SKYLAKE_X */
+> -	case 0x6A:      /* INTEL_FAM6_ICELAKE_X */
+> -	case 0x37:      /* INTEL_FAM6_ATOM_SILVERMONT */
+> -	case 0x4D:      /* INTEL_FAM6_ATOM_SILVERMONT_D */
+> -	case 0x4C:      /* INTEL_FAM6_ATOM_AIRMONT */
+> -	case 0x57:      /* INTEL_FAM6_XEON_PHI_KNL */
+> -	case 0x5C:      /* INTEL_FAM6_ATOM_GOLDMONT */
+> -	case 0x7A:      /* INTEL_FAM6_ATOM_GOLDMONT_PLUS */
+> -	case 0x5F:      /* INTEL_FAM6_ATOM_GOLDMONT_D */
+> -	case 0x96:      /* INTEL_FAM6_ATOM_TREMONT */
+> -	case 0x86:      /* INTEL_FAM6_ATOM_TREMONT_D */
+> -		break;
+> -	default:
+> -		return 0;
+> -	}
+> -
+>  	return 1;
+>  }
+>  #else
+> -- 
+> 2.44.0.rc0.258.g7320e95886-goog
 > 
 > 
-
-Added your Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-to the patch, thanks
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
