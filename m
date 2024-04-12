@@ -1,91 +1,154 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yb1-f181.google.com (mail-yb1-f181.google.com [209.85.219.181])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A004E56B73
-	for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2024 12:20:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0472954F87
+	for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2024 18:51:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712924421; cv=none; b=R7RPL7oq7HyS4y915+7j75RKl98SVJTzXWCap2VqzYCZ9GWeT/myQP7J9Jxc9iBT8plEhgExfWgY1QOcwAG/8BG1jw0/kGE9WkAQrRdE7ng3Ch1/A35igdRuTqK+LFPSo6JTXTxReihg+GkxxgdGv/QNSCBVI29+QwRll8GKJ0E=
+	t=1712947893; cv=none; b=uQthdakXMOamwV2/dNRrfdEMvpP2SUX2qSGunTMzniltRiXpXnojQEQv+mNF5OCPSkvyCxoLJiwReYcp4rHjy5PVMFCPYUSU28UxIDjxNK6jLZmXHlxA/QUA3QZrFZb/0hjaTmyiFxwuxcZMx0eq6BMmQqudlcNRcsJD21dOxbQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712924421; c=relaxed/simple;
-	bh=WFmjjSrbeFjEmhLlBiWpRUSOMUY8KYm186SmcYNgeYs=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=FKBuZucUCrNFS6UabsP4BB0RuwvFQzid+4eQp/El6R0HsXxNeMWiMVSwerh8cKjUMkhUF03uQNMsQfVlfWUkOpWEKciO8sbbTFF1fb+2V7PnNQ6Q9dOFq9omJcjfHU4jQWZJD5Xeprh/3y75Lv2OBtR+k9Oq5OhPpXvNoenM5J8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KnwvDbSy; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1712947893; c=relaxed/simple;
+	bh=zRf08E/euspiAsmAPxvlABO5dKqo06j0IfcivLx6Ttk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=n1RuZkkG7uCWvsQmIivluWLL15FPYYpBhRF1DoBe0E7GaymW9R14OAm105sNI9TIyWOv+ZJHz/7jdpAP7LmX7GkYimzNA+xy/jBqA7Xbn+9twXwmQlsxA8SYLNT4rUBvGXhcyhoEhZ0u3JR1nIUQ5nTUAP40TBmHlAi35+oHxsI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j146JWSO; arc=none smtp.client-ip=209.85.219.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KnwvDbSy"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712924419;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WFmjjSrbeFjEmhLlBiWpRUSOMUY8KYm186SmcYNgeYs=;
-	b=KnwvDbSyCCN6150R11tW8lCAVfxfezflU7itrHTMDV5xWelNbu8HMC3S46Ghml7Gv8MufI
-	4BZRa7PHAwLWDl/4hYO/KMrxB4ShUbO4u46y50Ein/DhWyW0i+jCYrBGYJ+cSLBoPtahdM
-	S/t345Gp+H3+KbL+qXqvZqm1O/dCyh8=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-287-9dudrlbaNHCHdDeE7mzl0A-1; Fri, 12 Apr 2024 08:20:18 -0400
-X-MC-Unique: 9dudrlbaNHCHdDeE7mzl0A-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-78d678a5a1aso79780685a.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2024 05:20:18 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j146JWSO"
+Received: by mail-yb1-f181.google.com with SMTP id 3f1490d57ef6-dcc73148611so1411583276.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2024 11:51:31 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1712947890; x=1713552690; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=5Ne34t1ABkSiXU3G+sKa7u4BaZfKvUiRaV+hzM5X+GY=;
+        b=j146JWSOh9OanqjklVDKE5WvXlHRQrs2eCaOOngEmXiKAdIZv9LjKNrz0Zmfrb/iUi
+         Tr6yBONLw1XY5RRFrItkdaRHHy2kgDsrZDj/qwynIZutBWp+4ZZc+prKW+OkCzb3DFiE
+         i24bT8ZU9J2zwmFSTe9rUYd5/HppR7EN6QyXCET8xn23hIZyUxZJhsFWo98YeFQgWGeg
+         Ekh/9wP6N7UyzNIOoPjBraraCRXzz6HeoBFneHPajp3KosDIEKpaaCJLNFpGI7GKTwNj
+         MKidUClaKL4nwszkzh4RxQVKQ8Den6ax0OYcsl1zZgcpZQmMPBELWe/no5uLEZt9I0uY
+         Bd1Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712924418; x=1713529218;
-        h=mime-version:message-id:date:references:in-reply-to:subject:cc:to
-         :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=WFmjjSrbeFjEmhLlBiWpRUSOMUY8KYm186SmcYNgeYs=;
-        b=fc2AjLl0oatNLX1BDvn6RfqAhWsZEcjnVpJ8A3rdbT5QA0ew2ZIZJJw0/MNx+yia4j
-         yR+Gx5N6mK325Yivj6OMDL2xjDgCH2DN4WizFPJnDB/zBV32SvThPTRUVqJgx4lbNT4k
-         uy3cKz1ipEslItnxHEtQ2QEHqFff/Li8GPb6+LHCdkSLUvmyOaB5KZGwggd56eHsgWOt
-         ObhQfrXT06OcMOPxMONaOqn96gUwMCKmqza5eh7XPdlQIuAP4wAptsESXm4jFmi+9BBd
-         uvwRe9TQ/smRoqx5rdIqPbWfalEAB5MwNyeiF9uhPoe9cgVXXIHZ66QI4hxWgfrOm/QO
-         gGXg==
-X-Forwarded-Encrypted: i=1; AJvYcCXyFmDzBTniY2DzvUe4ByHVn9gvOX8Hhwp6tB4gxwfH84BpKt5g2a2Gy4W3WBy5VhUkpM2KjG1/UQiLxFsHz46+UUBMiUpKnaaSE+kR4lo=
-X-Gm-Message-State: AOJu0Yx2PFvzw5Jyu8Q3XRYMc5OQ5+2Q+D8ulGlWaepej+fy2Q1PFL4R
-	/zeN8O2zWG4yt5/An0UnU8cyhqIwA9hMyiys0IOXkOvP3+er/39NJRze0LucNJhRkYLSp9ru9YJ
-	GilyetMCBOul1a+SF1y+btqlUT+n0zY9OXqb04qefXi+iFfRfki7OP/1O/QgccPJ+
-X-Received: by 2002:a05:620a:394d:b0:78e:cc24:f3fe with SMTP id qs13-20020a05620a394d00b0078ecc24f3femr1810324qkn.2.1712924418005;
-        Fri, 12 Apr 2024 05:20:18 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEl1RGrNpjG++v4K183eeVV70SCzpHYcpeio2nSYQsNbwwZxjYJTxzbIAebB5VpqAVwSeJLGQ==
-X-Received: by 2002:a05:620a:394d:b0:78e:cc24:f3fe with SMTP id qs13-20020a05620a394d00b0078ecc24f3femr1810306qkn.2.1712924417731;
-        Fri, 12 Apr 2024 05:20:17 -0700 (PDT)
-Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
-        by smtp.gmail.com with ESMTPSA id m29-20020a05620a215d00b0078d65a42db6sm2319340qkm.95.2024.04.12.05.20.14
+        d=1e100.net; s=20230601; t=1712947890; x=1713552690;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=5Ne34t1ABkSiXU3G+sKa7u4BaZfKvUiRaV+hzM5X+GY=;
+        b=KJp8sxLVvn3Qq9GkTkPyk4faGGAIE50mNiRtnFGTUiHpBjtS62WDksmFBujI1aERA4
+         STvHJq7r1DjdFpZ2Pd9mpCqZnn3yx7GA3ypCH8Wu1AGzZRnW073FVO5cf2WP/9zNm96Q
+         e+XtVfpbj6rKopJOO6UPE0gnm9/tqiF2rtdOHjn0d0tPsce+zXsuH2v1DS1FoSCVEx0f
+         YflfknCTPwgPuGv8y9NJ7+EnSGwOxZMVZX9tfUOCm7fY0QUNQ1e3jNypiR7HihR8GAwk
+         3GuBem7YHQ+Ehw09yvbsEZQ9P1MT3Rkv4MP+ofGOmjWzJ4Z3Ikoa/4iJHPBMBR58rQcO
+         g4CQ==
+X-Gm-Message-State: AOJu0YyOknp5EPcjVWhPrsHmjn36AeEwjgz9aThcZpRBoxmv05R6dqwr
+	VyYRq0UpNXa058d6LHusKcOORenWq00x2kA6JvgJBo0bcqA1YuxBeaCVPw==
+X-Google-Smtp-Source: AGHT+IGj7qQcKoqIKcxN/8HWP+NrumRD+fC4KPqdEs2pcI/Tk4GCnNKWtzcNC6xEHeLf6nJIr1A8pA==
+X-Received: by 2002:a25:dc06:0:b0:de0:f811:be41 with SMTP id y6-20020a25dc06000000b00de0f811be41mr3564579ybe.14.1712947890391;
+        Fri, 12 Apr 2024 11:51:30 -0700 (PDT)
+Received: from fionn.redhat.com ([74.12.5.183])
+        by smtp.gmail.com with ESMTPSA id dj12-20020a056214090c00b0069b3bfdea09sm2628750qvb.60.2024.04.12.11.51.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 12 Apr 2024 05:20:16 -0700 (PDT)
-From: Valentin Schneider <vschneid@redhat.com>
-To: Jakub Kicinski <kuba@kernel.org>
-Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
- Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, Paolo
- Abeni <pabeni@redhat.com>, mleitner@redhat.com, David Ahern
- <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar
- <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v4 1/1] tcp/dcpp: Un-pin tw_timer
-In-Reply-To: <20240411100536.224fa1e7@kernel.org>
-References: <20240411120535.2494067-1-vschneid@redhat.com>
- <20240411120535.2494067-2-vschneid@redhat.com>
- <20240411100536.224fa1e7@kernel.org>
-Date: Fri, 12 Apr 2024 14:20:12 +0200
-Message-ID: <xhsmhy19i93ib.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+        Fri, 12 Apr 2024 11:51:29 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	Kate Carcia Poulin <kcarcia@redhat.com>,
+	Juri Lelli <juri.lelli@redhat.com>,
+	Daniel Bristot de Oliveria <bristot@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rteval: Cyclictest.py: Make standalone file work again
+Date: Fri, 12 Apr 2024 14:50:51 -0400
+Message-ID: <20240412185052.87056-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 
-On 11/04/24 10:05, Jakub Kicinski wrote:
->
-> Some new crashes started appearing this morning on our testing branch,
-> quick look at the splats makes me suspect this change:
->
+Make standalone Cyclictest.py work again for testing purposes
+- remove unused parse_cpulist_from_config
+- Instead of "import as", use "from" and the requested functionality
+- Obtain the default buckets from the ModuleParameters to use if a
+  number is not otherwise provided
+- set the cpulist to "" if not otherwise provided
+- add a few docstrings to functions
+- obtain a default cpulist from online_cpus for the standalone test
 
-Thanks for the testing! Seems like my own testing wasn't thorough enough,
-let me have a look at this...
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/modules/measurement/cyclictest.py | 19 ++++++++-----------
+ 1 file changed, 8 insertions(+), 11 deletions(-)
+
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index 722422589d62..671426e13c4d 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -16,10 +16,8 @@ import math
+ import libxml2
+ from rteval.Log import Log
+ from rteval.modules import rtevalModulePrototype
+-from rteval.systopology import cpuinfo, parse_cpulist_from_config
+-import rteval.cpulist_utils as cpulist_utils
+-
+-expand_cpulist = cpulist_utils.expand_cpulist
++from rteval.systopology import cpuinfo, SysTopology
++from rteval.cpulist_utils import expand_cpulist, collapse_cpulist
+ 
+ class RunData:
+     '''class to keep instance data from a cyclictest run'''
+@@ -190,10 +188,11 @@ class Cyclictest(rtevalModulePrototype):
+         # Create a RunData object per CPU core
+         self.__numanodes = int(self.__cfg.setdefault('numanodes', 0))
+         self.__priority = int(self.__cfg.setdefault('priority', 95))
+-        self.__buckets = int(self.__cfg.setdefault('buckets', 2000))
++        default_buckets = ModuleParameters()["buckets"]["default"]
++        self.__buckets = int(self.__cfg.setdefault('buckets', default_buckets))
+         self.__numcores = 0
+         self.__cyclicdata = {}
+-        self.__cpulist = self.__cfg.cpulist
++        self.__cpulist = self.__cfg.setdefault('cpulist', "")
+         self.__cpus = [str(c) for c in expand_cpulist(self.__cpulist)]
+         self.__numcores = len(self.__cpus)
+ 
+@@ -393,14 +392,13 @@ class Cyclictest(rtevalModulePrototype):
+         return rep_n
+ 
+ 
+-
+ def ModuleInfo():
+     return {"parallel": True,
+             "loads": True}
+ 
+ 
+-
+ def ModuleParameters():
++    """ default parameters """
+     return {"interval": {"descr": "Base interval of the threads in microseconds",
+                          "default": 100,
+                          "metavar": "INTV_US"},
+@@ -421,6 +419,7 @@ def ModuleParameters():
+ 
+ 
+ def create(params, logger):
++    """ Instantiate a Cyclictest measurement module object """
+     return Cyclictest(params, logger)
+ 
+ 
+@@ -438,9 +437,7 @@ if __name__ == '__main__':
+     cfg.AppendConfig('cyclictest', prms)
+ 
+     cfg_ct = cfg.GetSection('cyclictest')
+-    cfg_ct.reportdir = "."
+-    cfg_ct.buckets = 200
+-    # cfg_ct.breaktrace = 30
++    cfg_ct.cpulist = collapse_cpulist(SysTopology().online_cpus())
+ 
+     runtime = 10
+ 
+-- 
+2.44.0
 
