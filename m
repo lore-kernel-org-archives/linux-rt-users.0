@@ -1,130 +1,94 @@
-Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A79884596F
-	for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2024 23:02:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1FC541F16B;
+	Mon, 15 Apr 2024 07:56:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712962975; cv=none; b=K/lTs7T8ZCzL40gk8Yt24N2btXoS6/cVeoUfmJwzuld7Y4PplldQVlyzjVhzr9yYkaJnzWui2y6JIYrWchBm/vQ8AaxaRMCx2Imt8mrDkG1KNmisIm619FITgPRudW0sJgppcv+JmRjeUzXGl8Pj45U7xjK7zv1va6yPceYPrgU=
+	t=1713167794; cv=none; b=mU54FDnP+J2Q6QzKA+wztiWOlPyR88ZcecG9OzQDnjPcKPQIrA4VV2qq6hkbYsZtveYvTYFEO9vQTytEzb8sX+Rpi14l9pUHD7hieH8ydZTZy1RS5SZiJIyQXAwo6ny81nTMmOpbd5+3IasJdZGE6BDmuh2C/CmyROkJAl+vR/g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712962975; c=relaxed/simple;
-	bh=zIlQaHbXRW2y9zzL7YE4NlkUsuQvAJTVjuWcmdiD6Ac=;
-	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=ULyJwQPuvguOqjkuolO3pfFX3OdWlvK4vQAj63ApdpFUlON1LVj6trJcNA/ZTGKVulRDkjde/JofbkLJkxzboHJOuL1KaboFDkTQzveSKJ5Lv+Xc47scy8S1G7UGaIfh0XwgKC7KzPh1roCv6PSXzR/PFt+RbQlEX4EMots3hw4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=k2fvAju5; arc=none smtp.client-ip=209.85.210.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713167794; c=relaxed/simple;
+	bh=S324kEgCuhI/VRe9Fz0tirH7HrFyKJZFebNrYDHytn8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=gXUw1Xe3KXSQbUv0vGrFxKinliPM6dJRTNS1ckoSRYTLTzW5kBikxcxOUwu5hSfQJl9zd3shznMqjOOTxof7MnRxNe6Zp8pskrFMQU83Gs+SQdVYqi9oa9h4Z6bw1Oqhf7gNgNNlswB/UhgJAu1AoK9cA7MGn1iHuZhy+KZHahE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ucw.cz; spf=pass smtp.mailfrom=ucw.cz; dkim=pass (1024-bit key) header.d=ucw.cz header.i=@ucw.cz header.b=KnZxMYqs; arc=none smtp.client-ip=46.255.230.98
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ucw.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ucw.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="k2fvAju5"
-Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-6ea22016864so852983a34.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2024 16:02:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712962973; x=1713567773; darn=vger.kernel.org;
-        h=content-transfer-encoding:autocrypt:subject:from:to
-         :content-language:user-agent:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=c4632qNzEKYNnUp/oCDdomXlBDoSenCcjxL1PENNrcw=;
-        b=k2fvAju5IuWgVVIXK4cHJX0DKcB9lHDmdOALTP5lYJJYvkhH0lWSBZIG3cA2ucTY1p
-         UbvRL58frj730Lj3ZhfUECqJdkPTDgYiqM5UQBuUUU3UvAZPHce7tH2f/+P4QuJU2Yvd
-         f7/jG5t6wphinsHiz0YcYwA5EbfbSrL5gJdRiT5wNhEzNGVEqTgQFNcCurt0NyReEKT4
-         YibKGas+v9vG4FeEhSt/wGOAnaFjDYdQ7oXdzeYYXC6aqwwpBLMP/O8c9cSrVTaZQ6TC
-         Ys6ILz+RRfl1JjLeogBLHLmS2N+8tERlnJpfts4nwoadoq9N6VxvINAB8N58YXz1IOff
-         ZgNg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712962973; x=1713567773;
-        h=content-transfer-encoding:autocrypt:subject:from:to
-         :content-language:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=c4632qNzEKYNnUp/oCDdomXlBDoSenCcjxL1PENNrcw=;
-        b=bz+5SJbYsxcuXZfUNHS7cJ/AZ7Bq2P1M5MZ3BONQjhXI4gpw+PSjIfGIElc0KwfJEP
-         lfFjQoA4fihYitdbKo6FUa/QqayA6fWMdZewFuSfTv2r23oHgzdXwVw+GBoIXcaKiAI3
-         RB867ei9j5aWiNikqqxrwNBVdzH37bRkBomSvcJsS9aCYTR9dCbW/D7SvnoqFsHVewUp
-         We+rePR6+X2uFDwjCx+jUH4IQCLBNrOgWdN6xs9lcuH4qfElBpJVgY8g+t1Keue9l2SR
-         xHsl4QNgktwhfofq3Pu07KholIiB0iGSGOKE8vCHAHdBbOv3GPAYQEtXX+NuPUfxC7qN
-         HhOw==
-X-Gm-Message-State: AOJu0YxTK0gZDA0+tBKXaWyD2wWP3wtAJcwVkHVgi0aHOPG3ciWC9mX+
-	A5MX3K6pIlqhtS3YCoUDJhiyfJarKtgsea11rFgaOtaKXsCU9y4NwAicuQ==
-X-Google-Smtp-Source: AGHT+IElIPmQ9lPZbCOgChvAjky6il9QMtYmUCfIafiMJgsiH4GMQDmHA2fJnzOubevMJqY033THJw==
-X-Received: by 2002:a05:6830:1613:b0:6ea:1ed8:573f with SMTP id g19-20020a056830161300b006ea1ed8573fmr4544113otr.1.1712962973579;
-        Fri, 12 Apr 2024 16:02:53 -0700 (PDT)
-Received: from [192.168.1.88] ([189.141.16.57])
-        by smtp.gmail.com with ESMTPSA id i24-20020a056830011800b006ea349e8a22sm861437otp.6.2024.04.12.16.02.53
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 12 Apr 2024 16:02:53 -0700 (PDT)
-Message-ID: <27cfdcdc-f0d0-42ae-9b53-937828a4fd7d@gmail.com>
-Date: Fri, 12 Apr 2024 17:00:39 -0600
+	dkim=pass (1024-bit key) header.d=ucw.cz header.i=@ucw.cz header.b="KnZxMYqs"
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+	id B648D1C007F; Mon, 15 Apr 2024 09:56:27 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ucw.cz; s=gen1;
+	t=1713167787;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=WjfMW+NA/CnSQotoTVzRdyimGwWSKCreZbaAXRI+G10=;
+	b=KnZxMYqsLqcB75iP5P6dBUnN189g6ARNATtxXQYnU0MC6S1l81LkMNYw73a3dAkv0SK0B+
+	SxdW537XZbJslbH2KvqCFxH0ItKMEA4EEeA8TofmcZioW+RDU+h7nM/LCDFrO7vstLSdXi
+	pBwR/U2uRCkc7cIxCTu/VGlFqIqrYZ0=
+Date: Mon, 15 Apr 2024 09:56:27 +0200
+From: Pavel Machek <pavel@ucw.cz>
+To: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>
+Subject: Re: [ANNOUNCE] 5.10.213-rt105
+Message-ID: <ZhzdqyqZrjhXs7ZJ@duo.ucw.cz>
+References: <ZgFy9au0Gvkzr6gZ@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Content-Language: en-US
-To: RT <linux-rt-users@vger.kernel.org>
-From: Miguel Miranda <mmikernel@gmail.com>
-Subject: Seeking input on beginner-level bugs related to preempt_RT
-Autocrypt: addr=mmikernel@gmail.com; keydata=
- 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
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="ioEvBMbk+BU4Wpfr"
+Content-Disposition: inline
+In-Reply-To: <ZgFy9au0Gvkzr6gZ@uudg.org>
 
-Hello everyone,
 
-I am currently looking for beginner-level bugs related to preempt_RT for 
-the Linux kernel Bug Fixing Spring Unpaid 2024. Although I am not an 
-expert in RT, I have been trying to identify some bugs and our mentors 
-have suggested using ring testers such as syzkaller and test frameworks 
-like kernelselftests to find and reproduce these bugs on our own.
+--ioEvBMbk+BU4Wpfr
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I have a few questions and would appreciate any input you may have. 
-Firstly, is there a specific CI ring or channel that lists KTODOs, or a 
-preferred platform where bugs related to PREEMPT_RT are reported? 
-Secondly, I have been following the LKML and have seen some 
-console_blast.sh results, but I am not sure where to find this 
-console_blast. Lastly, I have come across some recent discussions about 
-printk() related work, but I'm unsure if there is a list to avoid rework.
+Hi!
 
-Thank you for your time.
+> I'm pleased to announce the 5.10.213-rt105 stable release.
+>=20
+> This release is an update to the new stable 5.10.213 version and no extra
+> changes have been performed.
 
+Thanks for release.
+
+I see v5.10.214-rt106-rc1 is out there and now v5.10.215-rt107-rc1,
+but I don't see v5.10.214-rt106 (which would be useful to me).
+
+Is it a mistake or should I plan for v5.10.215-rt107?
+
+Thanks and best regards,
+								Pavel
+--=20
+People of Russia, stop Putin before his war on Ukraine escalates.
+
+--ioEvBMbk+BU4Wpfr
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZhzdqwAKCRAw5/Bqldv6
+8s16AKCCORSigOjFdUBW/JSDdMs6H2UTtgCfYavhz8dojqsBLVcXSYxU0kR4X+I=
+=MGB3
+-----END PGP SIGNATURE-----
+
+--ioEvBMbk+BU4Wpfr--
