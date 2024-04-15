@@ -1,125 +1,123 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4AACF59B7E
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 10:28:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99B565DF1C
+	for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 11:35:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713176913; cv=none; b=gZEkvHsCzJr6k37viM7WR/Gx0HsjDN9JAWjnkTtZDMj4b84lG6aUZsubzDQzygRubFC7n/rWRsXWExYqSdDmL2SXibAHFVjIqJUWpLWVRJnZ2vKsgREJ90XwZWNyn8gaPCGYV4ZSl1achxhHxw2wx+ZLezlOufjzXpWgFkk0DmM=
+	t=1713180903; cv=none; b=bTDQa8OoRSR8TBGV0IhpJ4IFtLEGKBQ2C7t3KDU3RF6l7gcjyJDO4H8xkBFuYed0N+cox6VSj51CwF8wxNmllfmUIXOpsRIq2tBCn1vCvu6Sd/tywiYy2oB4hYkpqpB7NP0lIZRxIegaPQpnjm8mksMTQ+4Dk4jpn5VU1/HaImY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713176913; c=relaxed/simple;
-	bh=kqj818GxnNbxKvgMfHqSvbEhsxn5sNWv9WOxPnmpmjI=;
-	h=From:To:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=UtmjWOJ/FDcxFEu86x7jsdNVVh29xVD5vOgG7gsAJtbHEdX8wlRwCBQGuNTrpDXZtssrrmU7ksAEamcd6rQtYChd3It9noSNHEMnU2hkQwKvYZNB7t2aiAyuFh1CEqiZOXdw7MT3DDo4FF1Me0+8waFAFO2Y8n0BOr/j4+rinpU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=BCbDl84o; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=+WaLiAL/; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1713180903; c=relaxed/simple;
+	bh=oxHCtuxwyM7cOnha78fodnI8/2nPA9V0tYQAbM8xax8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ChjomqYl/UmTmSYTxz+hQbAJ4CTa73SUz8doi9c7VmyUGC1bJHfYjnKSrd0rBOnNu/r/xE6SFAHekyA5CkAC963q+pVwAfFH50s972dupDUKmlhP2ZpilSlI+SUdlnP6eg1KoxOtC/0wdoJsU2kb7Qxm3Fwn0/iGJj8uEvgajvc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=diDvEDDe; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="BCbDl84o";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="+WaLiAL/"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1713176906;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="diDvEDDe"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713180900;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=uauNNRHKgc+9v1c7y330VqpgzdF2i0+OOltuvK2bBRM=;
-	b=BCbDl84oVrl4o+E6OKJ3SVRmT0qxmISABjNKYKoGudRxkyUs9A9cjO5Ug6gK5PNefW2wlF
-	cWBxCTQtbj4pF6OA8eGZeEHL5/WyIl2Qz83U46OBqB53OXB7YFJ6z5h/z15f4iZqAKKtfp
-	nw2ALFAK+Ykt1E5d7WF3Cn/WfqYAha4Kio4EsvrnZK85X7hVaUzCbaqg3fYcXQFlyLBTOq
-	cUs0m7eDv4J8Yjujxak0P/rsTfgbon2PP54jWcdhEwmoZOljDQvQaQXalEiVm1PrqxvEpg
-	OJN4nAgFzplWXiIeHc8WydPN8EfllbMOUE+FALhk+ePHcKFIvqpfqMqyVtfK2w==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1713176906;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=uauNNRHKgc+9v1c7y330VqpgzdF2i0+OOltuvK2bBRM=;
-	b=+WaLiAL/3Z2o+DiFkgPzz/2mRFLzFWOOugJTHvodZuLPfVWO4C2O01XFMBPh/vE9D7JJiy
-	i0epNmHWiIlFO8Dw==
-To: Esben Haabendal <esben@geanix.com>, linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH v2 2/2] serial: imx: Switch to nbcon console
-In-Reply-To: <2bc0b5d3f99184d8ddbf860666513f9fa7760af8.1712303358.git.esben@geanix.com>
-References: <cover.1712303358.git.esben@geanix.com>
- <2bc0b5d3f99184d8ddbf860666513f9fa7760af8.1712303358.git.esben@geanix.com>
-Date: Mon, 15 Apr 2024 12:34:24 +0206
-Message-ID: <87edb6gbsn.fsf@jogness.linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=u36oSuZ9892J7+6mnaPBiCYYNXIpRi7HFPb44PW/B8k=;
+	b=diDvEDDebmdI+1SW9jJvAQBpOSduQV6+/RZBf7TaVYhIeNgNrW1EIwcnTyVLMU2kriQ+Yh
+	WNmyf4UIIvpJ5aP7l8MjdWEGbeqNmMU15I0Y4oH2BkyZSfoSjjZcZhgJvUMv/b1DYbzFoY
+	ro7XYadjh71Pvc0GgVO7y2kSV4Cs89c=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-235-tgvuqcLcPsGQ3JJWJejAAw-1; Mon, 15 Apr 2024 07:34:57 -0400
+X-MC-Unique: tgvuqcLcPsGQ3JJWJejAAw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E87D8059E0;
+	Mon, 15 Apr 2024 11:34:56 +0000 (UTC)
+Received: from vschneid-thinkpadt14sgen2i.remote.csb (unknown [10.39.193.251])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C45C1C0666D;
+	Mon, 15 Apr 2024 11:34:53 +0000 (UTC)
+From: Valentin Schneider <vschneid@redhat.com>
+To: dccp@vger.kernel.org,
+	netdev@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+Cc: "David S. Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Paolo Abeni <pabeni@redhat.com>,
+	mleitner@redhat.com,
+	David Ahern <dsahern@kernel.org>,
+	Juri Lelli <juri.lelli@redhat.com>,
+	Tomas Glozar <tglozar@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH v5 0/2] tcp/dcpp: Un-pin tw_timer
+Date: Mon, 15 Apr 2024 13:34:34 +0200
+Message-ID: <20240415113436.3261042-1-vschneid@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 
-Hi Esben,
+Hi,
 
-You are correct that there is considerable copy/paste from the 8250
-driver. Hopefully having another nbcon driver will help us find a way to
-cleanly consolidate that logic. Thanks for your work on this.
+This is v5 of the series where the tw_timer is un-pinned to get rid of
+interferences in isolated CPUs setups.
 
-Comments from me below...
+The first patch is a new one stemming from Jakub's bug reported. It's there
+mainly to make the reviewing a bit easier, but as it changes behaviour it should
+be squashed with the second one.
 
-On 2024-04-05, Esben Haabendal <esben@geanix.com> wrote:
-> diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
-> index f7e4f38f08f3..2a49880c2651 100644
-> --- a/drivers/tty/serial/imx.c
-> +++ b/drivers/tty/serial/imx.c
-> +static bool imx_uart_console_write_atomic(struct console *co,
-> +					  struct nbcon_write_context *wctxt)
-> +{
-> +	struct imx_port *sport = imx_uart_ports[co->index];
-> +	struct uart_port *port = &sport->port;
-> +	struct imx_port_ucrs old_ucr;
-> +	unsigned int ucr1, usr2;
-> +
-> +	if (!nbcon_enter_unsafe(wctxt))
-> +		return false;
-> +
-> +	/*
-> +	 *	First, save UCR1/2/3 and then disable interrupts
-> +	 */
-> +	imx_uart_ucrs_save(sport, &old_ucr);
-> +	ucr1 = old_ucr.ucr1;
-> +
-> +	if (imx_uart_is_imx1(sport))
-> +		ucr1 |= IMX1_UCR1_UARTCLKEN;
-> +	ucr1 |= UCR1_UARTEN;
-> +	ucr1 &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN);
-> +
-> +	imx_uart_writel(sport, ucr1, UCR1);
-> +
-> +	imx_uart_writel(sport, old_ucr.ucr2 | UCR2_TXEN, UCR2);
-> +
-> +	if (sport->console_newline_needed)
-> +		uart_console_write(port, "\n", 1, imx_uart_console_putchar);
-> +	uart_console_write(port, wctxt->outbuf, wctxt->len,
-> +			   imx_uart_console_putchar);
-> +
-> +	/*
-> +	 *	Finally, wait for transmitter to become empty
-> +	 *	and restore UCR1/2/3
-> +	 */
-> +	read_poll_timeout_atomic(imx_uart_readl, usr2, usr2 & USR2_TXDC,
-> +				 0, 1000000, false, sport, USR2);
-> +	imx_uart_ucrs_restore(sport, &old_ucr);
-> +
-> +	/* Success if no handover/takeover. */
-> +	return nbcon_exit_unsafe(wctxt);
-> +}
+Revisions
+=========
 
-In your imx_uart_console_write_atomic() I see lots of register usage:
+v4 -> v5
+++++++++
 
-ucr1, ucr2, ucr3, usr2, uts
+o Rebased against latest Linus' tree
+o Converted tw_timer into a delayed work following Jakub's bug report on v4
+  http://lore.kernel.org/r/20240411100536.224fa1e7@kernel.org
 
-It is critical that _all_ usage of these registers throughout the driver
-is protected, preferably protected by the port lock. Please go through
-and verify that. If imx_uart_console_write_thread() is using even more
-registers, you will need to check those as well.
+v3 -> v4
+++++++++
 
-For the 8250 I went through all uses and found several problems [0]. The
-imx driver may have similar issues.
+o Rebased against latest Linus' tree
+o Added ehash lock usage to serialize scheduling vs descheduling of the tw_timer
+  (Paolo)
 
-John Ogness
+v2 -> v3
+++++++++
 
-[0] https://lore.kernel.org/lkml/20230525093159.223817-1-john.ogness@linutronix.de
+o Dropped bh_disable patch
+o Rebased against latest Linus' tree
+
+RFCv1 -> v2
+++++++++
+
+o Added comment in inet_twsk_deschedule_put() to highlight the race
+o Added bh_disable patch
+
+Valentin Schneider (2):
+  SQUASH: tcp/dcpp: Convert timewait timer into a delayed_work
+  tcp/dcpp: Un-pin tw_timer
+
+ include/net/inet_timewait_sock.h              |  8 +-
+ net/dccp/minisocks.c                          |  9 +--
+ net/ipv4/inet_diag.c                          |  2 +-
+ net/ipv4/inet_timewait_sock.c                 | 73 +++++++++++++------
+ net/ipv4/tcp_ipv4.c                           |  2 +-
+ net/ipv4/tcp_minisocks.c                      |  9 +--
+ net/ipv6/tcp_ipv6.c                           |  2 +-
+ .../selftests/bpf/progs/bpf_iter_tcp4.c       |  2 +-
+ .../selftests/bpf/progs/bpf_iter_tcp6.c       |  2 +-
+ 9 files changed, 69 insertions(+), 40 deletions(-)
+
+--
+2.43.0
+
