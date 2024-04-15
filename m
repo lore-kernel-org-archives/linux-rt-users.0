@@ -1,140 +1,104 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E257B679E2
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 12:25:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A0F3436A6
+	for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 12:35:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713183951; cv=none; b=axGt1tJIcaG7MscJQLMM4P2972s5paQ33M4oMwIwd7CpgDs6PTiT5GYwalimZGd3X007Qf+YMCNocYhEaz6JG+20K81X0A1SDuf9mdl64AKKrIu66IDx+t8m/bF2wYx2++HW066Z8pCelTUHX7SsTU09voYf5Wk4IZdhTo3f+2w=
+	t=1713184541; cv=none; b=o7ruRZkiEmYmm6T67bKZSZp3Z0wdcg1EUi7SIwu5RnAI7Cl7U8XlnWKNUK75kir5coiX48Z/3r//e7f5vpi7IqS3r6GGJitVCPw65Zqjv4UswxMngavlKgYCd6ENyjL+mhKnP0AOx1cR/phiY31gVtS4n2V0hrpAkSxwoOHWf8w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713183951; c=relaxed/simple;
-	bh=L1V0jRuSiUbCxImGX5gLQ66xX5kwC8N2gF7cCPTzXv8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=bxmsHUzzTV9cW9ZNEQJT17eqNuvsxJab4/1qrFsebWQU/NkrL5aYswmGm9EyEjNaR39+HX6KC+274S6HULzQMQFlNllmCbcdbGOH5OVtYSE0T48G/qkMHqyD8VHoQ4cB1YxBuVfIwTU3d5nQIgdLIn4G7ZGLgJrUF1rv3MU6wxY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JIgPiwOR; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713184541; c=relaxed/simple;
+	bh=x/KPjovEA/yFJrg8jHFyhdNqIvozS9PyYfSqcYTlzrM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=NcKsC1e23eYropvRoDVyTE6vVUYgtMuyhvNPB9+ilZXVZ8v6hdnHlmYGvIR+cSO+8n+Jyeo02vo80La6Zo7+ujJTNIL4ApaMY+nwbR3/u0d0ny0Y860w4VE9cgJ1q7Gdg+AKTaHnXWvgEIQsRCRs6Yod7Ix2VssY7vvIgeBtucY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=UO73SpD7; arc=none smtp.client-ip=209.85.208.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JIgPiwOR"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713183948;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=xi1nc+JsCBSl9tDY1rQ0F/hUsrd+06AFpIRijMer3uU=;
-	b=JIgPiwORdszwCyhBKYJe5FQs9kpIS8CbIzhee1QzgNbwHZ5l9GUTqbxVFyM09P9tMgUxyL
-	Fad1HzYh4s56tGBwk4WBBm56AWsnucZaUyBS/uTvwGCf/dWQQlmbWr2kMpHepOxB0ZhRUN
-	3yGuVsXgoIWChFJTrJ1qR3EBPQD6epk=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-75-eTFHdXHtPr6tar0TtmvQyQ-1; Mon,
- 15 Apr 2024 08:25:45 -0400
-X-MC-Unique: eTFHdXHtPr6tar0TtmvQyQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DB933C02764;
-	Mon, 15 Apr 2024 12:25:44 +0000 (UTC)
-Received: from localhost (unknown [10.22.8.61])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 882BB2026D06;
-	Mon, 15 Apr 2024 12:25:43 +0000 (UTC)
-Date: Mon, 15 Apr 2024 09:25:42 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: Pavel Machek <pavel@ucw.cz>
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>
-Subject: Re: [ANNOUNCE] 5.10.213-rt105
-Message-ID: <Zh0cxp0i-jO7Lisp@uudg.org>
-References: <ZgFy9au0Gvkzr6gZ@uudg.org>
- <ZhzdqyqZrjhXs7ZJ@duo.ucw.cz>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="UO73SpD7"
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-56e5174ffc2so13356a12.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 05:35:40 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1713184539; x=1713789339; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=F+m99dMu6nu74LL7/6GwhDV83h2jmoItj/TqWmxDl74=;
+        b=UO73SpD7YDto9Vp6vM3kDZVTM+5rLOVOooKGcZ3TcGWaXtVZk6LQL+niZ3qtts1XHn
+         3Ul7rm0x8M0Yi/XCy44L7VWqUGpwZZWwXRPoKMwhEJo9Q+kuxHIpfe7owUU8PLNklqNx
+         Nd9F6fP2E43FTb32OmkZD2U/GdvDNYdrrnu2s7AZPhAuovniDkm09L3lHtl3hbcK/jIK
+         jymlEl69ZqWzJw/10uUx5M1xELHg0KNPHykyR5geSTEgIdgU/WkCsD6lCSJ50FQS/fGV
+         oI4M/iwvsAIpDKVZ1SBLiuBZc6p91vRjMLgEtHb9vsgOz2KFU5Q0Lg2hSr2ovjig3cg5
+         qisQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713184539; x=1713789339;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=F+m99dMu6nu74LL7/6GwhDV83h2jmoItj/TqWmxDl74=;
+        b=r+saT/forjBTraGwP52EYCMLHAd87YyXu7TDR0CyGqs+V3lbf4gB2WHydU5/LpmoQ1
+         t53LiKEP2rLT5dEB8yDdA4IWb9AIpYnQwYN1u6hNR1geDjLwjCxuPl8Ri8j3WdjmmckQ
+         h/Rxcf1gQEZ3zPr2GzXXEUWrjszGkTkfqis1Hq+96DIMSg3nkTuVsFpDOsbDoHdZDc6L
+         tJBgCYq3jceLpXARgfjzpkhy1biHE8kbLr7iQ9+W/DxvQF7Mm3K+1B6HhE4rWpYBAtTF
+         cqv2GcEB+taNVIPfH8ID4iMyeHnLq1+S2RjgkSKAzEcp6ijl095FfWvwNqkdcYaxQpSp
+         lEkg==
+X-Forwarded-Encrypted: i=1; AJvYcCV3nF0vPLVKum+fDoyZyUha+4AOvN4YPvaJLSTIBO+Y2p/vhCGgtnG465by5UH1rfvn1y72CzLqm2G7GYrnbEWidoZlGnYaX/+UjPywJQY=
+X-Gm-Message-State: AOJu0YwtqVBfhyZO2qvGFQIbNv+BwjTltKsnWgjuSlAsfJNkDsO1G/La
+	UvUaItvi7G2HjGY7i6VDOiGewe1H/b4Tquo+/obhfeY4L1uBpMHGLh0dOfI90rHxAxdA4IlEThz
+	5dv8sna34BgE1a52Rtq9HBuoMvaUNYkcwJEfv
+X-Google-Smtp-Source: AGHT+IE6S+TSxd4EsWXWZTzuCgnCVcAcnlwRSRLZS14INH+865qtauJF0v2rUCxEdSvXouYC0WJtvlbdfgOCf1eBCrY=
+X-Received: by 2002:a05:6402:5253:b0:570:2ec6:56b5 with SMTP id
+ t19-20020a056402525300b005702ec656b5mr100509edd.4.1713184538481; Mon, 15 Apr
+ 2024 05:35:38 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="gOSc9cJjPjL7deDu"
-Content-Disposition: inline
-In-Reply-To: <ZhzdqyqZrjhXs7ZJ@duo.ucw.cz>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
-
-
---gOSc9cJjPjL7deDu
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+References: <20240415113436.3261042-1-vschneid@redhat.com>
+In-Reply-To: <20240415113436.3261042-1-vschneid@redhat.com>
+From: Eric Dumazet <edumazet@google.com>
+Date: Mon, 15 Apr 2024 14:35:24 +0200
+Message-ID: <CANn89iJYX8e_3Or9a5Q55NuQ8ZAHfYL+p_SpM0yz91sdj4HqtQ@mail.gmail.com>
+Subject: Re: [PATCH v5 0/2] tcp/dcpp: Un-pin tw_timer
+To: Valentin Schneider <vschneid@redhat.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, mleitner@redhat.com, 
+	David Ahern <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, 
+	Tomas Glozar <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Apr 15, 2024 at 09:56:27AM +0200, Pavel Machek wrote:
-> Hi!
->=20
-> > I'm pleased to announce the 5.10.213-rt105 stable release.
-> >=20
-> > This release is an update to the new stable 5.10.213 version and no ext=
-ra
-> > changes have been performed.
->=20
-> Thanks for release.
->=20
-> I see v5.10.214-rt106-rc1 is out there and now v5.10.215-rt107-rc1,
-> but I don't see v5.10.214-rt106 (which would be useful to me).
+On Mon, Apr 15, 2024 at 1:34=E2=80=AFPM Valentin Schneider <vschneid@redhat=
+.com> wrote:
+>
+> Hi,
+>
+> This is v5 of the series where the tw_timer is un-pinned to get rid of
+> interferences in isolated CPUs setups.
+>
+> The first patch is a new one stemming from Jakub's bug reported. It's the=
+re
+> mainly to make the reviewing a bit easier, but as it changes behaviour it=
+ should
+> be squashed with the second one.
+>
+> Revisions
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D
+>
+> v4 -> v5
+> ++++++++
+>
+> o Rebased against latest Linus' tree
+> o Converted tw_timer into a delayed work following Jakub's bug report on =
+v4
+>   http://lore.kernel.org/r/20240411100536.224fa1e7@kernel.org
 
-Hi Pavel!
+What was the issue again ?
 
-I submitted v5.10.214-rt106-rc1 to kernelci around 2 weeks ago and there
-were more build problems than usual, though I didn't observe problems in my
-local tests. So I decided to run a few more local tests before releasing th=
-is
-kernel. Based on the current results I will probably release
-v5.10.214-rt106 in the next few hours.
-
-As for v5.10.215-rt107, there were a few printk changes that I decided to
-submit to kernelci as soon as possible, given the HW diversity available
-there.
-
-Best regards,
-Luis
-=20
-> Is it a mistake or should I plan for v5.10.215-rt107?
->=20
-> Thanks and best regards,
-> 								Pavel
-> --=20
-> People of Russia, stop Putin before his war on Ukraine escalates.
-
-
----end quoted text---
-
---gOSc9cJjPjL7deDu
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEk1QGSZlyjTHUZNFA85SkI/jmfCYFAmYdHMYACgkQ85SkI/jm
-fCYbow//ceRSONcoqY3ExwTMNRxulYIWVkeP9I1Z9k0EdgXCsNqC+hlN9gGYmAkt
-6g4QT7vLTdtr84CEsJQ8+hrOl72TlllC4mAgxwOpIUIxh0KQqu9E8VW6qyMbzv9f
-Oq0s/6rt7jRSwDIxEKnIZJWF4E9NtvVzERtmX3I3UC+scZIrHSe/4Ui+dnR++XOh
-kmiUTR3hQGofhKO674WJXf304yDoZe5J9h1NzFdw1tmKG6lY8Gx1tys7vLaBlA5Q
-czmW2gS+S5o6/UjAqajNP5cwXxnFZIhLTwJ0yNEiPYauF5i7b2AEv3WdWjPERCWJ
-ceMUMOOmR3jwTaBEL10TxeOCLSSAXj10cg8AiFyYJIvSFnYIJPW9Mg2k4VBdyUyV
-r6xz9gfjUntfAfwuLyAK2vBtgK9u+RqQVgkedmagmJZ8kXA0EKz4feB1DSMMBS6d
-4LahZlFLHNmFWSOlN1Yw51pc9qn8mz20dEG6eRzgS9uWZawPXY2Otmy4XMVr5YgN
-4pZaLT0imyINFoO1Z3MiAgbk8J4rt5viosugL0Jr0zlaFVJcypOzX1Ni86wce6l9
-+uztTNlJgFsm5RyKgL/FRLbHpNqE+UmADALiI4v/0TG3ZYKaCeRx9BLVXGfpDPJA
-WfejCcs2ZfYIYu22w81PoQocAUpPrS1OexE1mCiOd+f0iQzue/o=
-=2fPT
------END PGP SIGNATURE-----
-
---gOSc9cJjPjL7deDu--
-
+Please explain precisely why it was fundamentally tied to the use of
+timers (and this was not possible to fix the issue without
+adding work queues and more dependencies to TCP stack)
