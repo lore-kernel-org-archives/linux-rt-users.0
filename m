@@ -1,147 +1,148 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B86588004D
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 14:33:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A926A12FF65
+	for <linux-rt-users@vger.kernel.org>; Tue, 16 Apr 2024 15:02:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713191635; cv=none; b=qreaK+u7EfV5k3AAgkCRTEQp+y/JOmmD0zNQv70WdEgFb1wbLvqmz4En5UVEKaFr7SvZoVzsKmTECT3J0hAApalFhU8thEyv4GECI8tdZj4RlOrKOHFgmA9m84PZM7Vun7+lqAeQVGUGtFcs5bpzz+nGdBx2tCt3+3gGwtpcvig=
+	t=1713279725; cv=none; b=DvqMN4wvSpMEze5NY/5/yhtt0TLO9fetYTan0OEgFxgZ/yGAXs9E47SRAmLBloMh8RT2wdJxwihoqNBUVe7sj/UJFV+gJuYU9X3pG0LGJHbBTQFZqy0g6hP+Dh8LswY6L+5HgP6Bm6RpDSCSnqpfSZPF12Zs9FYUY3BwvzHd+uw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713191635; c=relaxed/simple;
-	bh=pZatBN48J9TWETE5SB7D46qgelWlOsIMx+cbhmR3oRg=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=k2SDbddg9CjMRlBpWMb0dWuX82wvFLiNZdZXt/ZjziSrLNEEflhdNApFgYI3hKXyCI2CkvCGOLYJQGAUZY5X8IsCgW7Ge6vigWuKzxkaXb6n+TrNlyd9CSEiAMUCgX2YYueeiI61cZJUeYkinFlIltqhjexlkAYxGluCxw7Y2zU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d37gOSaH; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713279725; c=relaxed/simple;
+	bh=KzPBgUp0P0mzFYv0Ir0TjqCpDIR8nY9XU9BVPOGWlTM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=PU8SUPUyZCPXpUsT5ATf2a8B09w4ExoQwUwZqu7sFs0HnUqSOSg1dqUfRp+JSFGj/z0A28gvaxxzVXXqOOSLu5Vgso5ilTDKjTS/1RNeeIay+vTYn5ovc+nOJw36ehkwkCKOe3yRT8Wx6PMr1c/F+o1OnjP+CoYrqZFWOjiSALk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=smFG36IS; arc=none smtp.client-ip=209.85.208.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d37gOSaH"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713191632;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=vVrDx/bbmS5+gjreM3QEYo2TK7GLIM4cDsvY9MJ08SA=;
-	b=d37gOSaHSMeAk4jwrc/PFOcAR1fI5iUd8JelipWirFUSDaO5J+URbPLAlqPCpfN8c/UVzs
-	JA01mFOm4AOna0xcFmbdvjQBKRedD+5nNpy4tOw2NDRQItcFaClisSyc3lfAelbXnz8bhQ
-	cf8XyMPQ7XlQn6I73UYa/WXaUuvKLDI=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-557-5ca9bLxzOEGOCOrzGFYnwA-1; Mon, 15 Apr 2024 10:33:49 -0400
-X-MC-Unique: 5ca9bLxzOEGOCOrzGFYnwA-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-78eee261477so49920285a.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2024 07:33:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="smFG36IS"
+Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-56e5174ffc2so13213a12.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Apr 2024 08:02:03 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1713279722; x=1713884522; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=gHskwCYN5DKZz6xNkCSk6vwOGj+enkiLUxIjxw7VbDk=;
+        b=smFG36ISpYvULGzRZ9hx+vl8nZePAShiTo6DWXvKRwZ2mmzCAiZBGqaVc3OiJdELYb
+         KXiiWLQ7OBB94+ft6NEnilEjTULFijn8dWhzj+QHMiOd66opiOo67xM0Y5mfXJWzmiay
+         ULv5bQd8pZvQH28cFJ9Qcqf9DWKTOottl44XSLyqD0O0c8L0YoUH8I4EVhP5soclyCDV
+         Ao+wNnVn9cRmyWFeginDm6bu5VL+D7NiIU1MrMtk2P02Ib5Tq2jwqnQG09PrcI+lCQfi
+         ej2QwRMkuDYZwSKMJ/zvjzMyh37MvXERbzpGoVWeORqPvfJaKqf6v6SZXrMp0shiWr4M
+         CZKA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713191629; x=1713796429;
-        h=content-transfer-encoding:mime-version:message-id:date:references
-         :in-reply-to:subject:cc:to:from:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1713279722; x=1713884522;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=vVrDx/bbmS5+gjreM3QEYo2TK7GLIM4cDsvY9MJ08SA=;
-        b=iZkfTAgdtcbwq2gmzeg7Kbp1mnymktu2UJjac3oyGtzYAZnNWR/Xm/AYD6S7PSZGFp
-         P4F2HzSpneNmDZSJ3USFmqtdT8LmrX2OOUUCyqaBL08aGODuB5wxsLo4p79qyd3ZIio2
-         gXduZ+lYcc8oRZn7B+W/WW8COT1479JLv/8vj+fDuJ6DmseICzUygfFt0l+OHmQT2aUx
-         Wdplb7r9vWR1oY+ZCZXvNuQh/sFOpihncKJbC6Xbs2tiY5T/m4KH5JTKz/P9YG/4uv5X
-         GLvW+Wv0XMGBqzXzUBrM55pQEjVKBF0PwpVYuWZzm6ZwHVuBfjOUALaL1LAsBFWI6snK
-         /Ttw==
-X-Forwarded-Encrypted: i=1; AJvYcCVj9C0yu2Wy/zcw9iikzuLxxp6cI/HpoZkTcBuAzG92/aEQU4RPU6VrvUiExCCoGADwdA72UH2+686tPHINFDhc/KLh3ZY/y5J45bNNPwE=
-X-Gm-Message-State: AOJu0YzoIrcmW92OLV6l/RZhZDwOcnaVz1hSK/h2m1oW7jQndXSCUtop
-	4IluruwNPN+LcaxCCFI6Oh4TVJ3tKIuf/0TzbRl4oE9mxnrRor1LqA7gGqYlGbgyJlc80nLJTv3
-	EXU3ONZdfa/+/M0R3GXK+JuZcjfyXZ6MowG+Uu06+7YzPX0683VC2pODLD9usPmo3
-X-Received: by 2002:a05:620a:3954:b0:78e:ddf7:6fe0 with SMTP id qs20-20020a05620a395400b0078eddf76fe0mr6573747qkn.12.1713191628925;
-        Mon, 15 Apr 2024 07:33:48 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEVrJdf1YrlbIDodHP7H3KT78ZybQZ1V4+ryioGJKTmmhKZaifv9jT+Tuqcjbx63KCbMDtb7g==
-X-Received: by 2002:a05:620a:3954:b0:78e:ddf7:6fe0 with SMTP id qs20-20020a05620a395400b0078eddf76fe0mr6573724qkn.12.1713191628647;
-        Mon, 15 Apr 2024 07:33:48 -0700 (PDT)
-Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
-        by smtp.gmail.com with ESMTPSA id vq17-20020a05620a559100b0078ebb93d940sm6418319qkn.20.2024.04.15.07.33.46
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Apr 2024 07:33:48 -0700 (PDT)
-From: Valentin Schneider <vschneid@redhat.com>
-To: Eric Dumazet <edumazet@google.com>
-Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
- Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paolo
- Abeni <pabeni@redhat.com>, mleitner@redhat.com, David Ahern
- <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar
- <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v5 0/2] tcp/dcpp: Un-pin tw_timer
-In-Reply-To: <CANn89iJYX8e_3Or9a5Q55NuQ8ZAHfYL+p_SpM0yz91sdj4HqtQ@mail.gmail.com>
-References: <20240415113436.3261042-1-vschneid@redhat.com>
- <CANn89iJYX8e_3Or9a5Q55NuQ8ZAHfYL+p_SpM0yz91sdj4HqtQ@mail.gmail.com>
-Date: Mon, 15 Apr 2024 16:33:44 +0200
-Message-ID: <xhsmhmspu8zlj.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+        bh=gHskwCYN5DKZz6xNkCSk6vwOGj+enkiLUxIjxw7VbDk=;
+        b=F+hzHHY+r3/f6RdN7DOgOtXNK+0S7TbWkS7GqZSK4aWeipJ2rnAX/oRHAH6qNFCBGs
+         VY/o9sifLn/OeEXDivpbYrGnri/m8KEHLz0w5xlyvgybhFTWVcJC0MXb0KTphZoRkT0w
+         ul8ULeuKcvrV1uxnQi8udLjbpO7wYbNulPIv2a/k4LuBq5KgQ+KbqxDd67Fk+3ZDrs7c
+         EOhfi3sB31sgsZ3OkKpYeKK7vn+NOfcLEiSLVyFB5dJg9L6I2xrCedUCJDPdk1f/7btP
+         8Y1PX+/xk4NRqXc4zESTvbxPlFp6Y4J4WfZyE/4fekpmyTlrwr97wb9YkM8jPhsNJWGL
+         9TuQ==
+X-Forwarded-Encrypted: i=1; AJvYcCW0G7+LgPjxyvyXyzV93cEzuRjx88INGwjljQ2k4jcgd+dW+WtZ+d8zIUsp92VGYg+VA8Mkv5T0oCGkZKKfjEEYI5yaeQzw3bE62b/m7X8=
+X-Gm-Message-State: AOJu0Yy77sjLFCLfNeSZhZQQQoXxMwd7SR4Nu1X9lbj+tlZGaqnUJzmg
+	yob7AqkKSCVTZgbPu/Jz7yjNzSfnlp7E/FpDbdWV91khsPmalj3BoAw+/WQ8eB0OAJx6d95OZvF
+	EFZ1BHsvg9UTPUlv4q8/Aq5bG905gx4Uhq8vI
+X-Google-Smtp-Source: AGHT+IG/IR4Gfj6sCIte145RGpLTj2bIn7khSBBTuC+r6b41aTYZEviPPSGHZIPosYUl1KtPMPIMSOew7ujE3ihCOxk=
+X-Received: by 2002:aa7:ccd5:0:b0:570:2ec6:56b5 with SMTP id
+ y21-20020aa7ccd5000000b005702ec656b5mr209810edt.4.1713279721667; Tue, 16 Apr
+ 2024 08:02:01 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+References: <20240415113436.3261042-1-vschneid@redhat.com> <CANn89iJYX8e_3Or9a5Q55NuQ8ZAHfYL+p_SpM0yz91sdj4HqtQ@mail.gmail.com>
+ <xhsmhmspu8zlj.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+In-Reply-To: <xhsmhmspu8zlj.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+From: Eric Dumazet <edumazet@google.com>
+Date: Tue, 16 Apr 2024 17:01:47 +0200
+Message-ID: <CANn89iJRev5Kn_jEgimDfyHosmiyYeaz2gHRGS2tcFC-yMbGaQ@mail.gmail.com>
+Subject: Re: [PATCH v5 0/2] tcp/dcpp: Un-pin tw_timer
+To: Valentin Schneider <vschneid@redhat.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-rt-users@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, mleitner@redhat.com, 
+	David Ahern <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, 
+	Tomas Glozar <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On 15/04/24 14:35, Eric Dumazet wrote:
-> On Mon, Apr 15, 2024 at 1:34=E2=80=AFPM Valentin Schneider <vschneid@redh=
-at.com> wrote:
->>
->> Hi,
->>
->> This is v5 of the series where the tw_timer is un-pinned to get rid of
->> interferences in isolated CPUs setups.
->>
->> The first patch is a new one stemming from Jakub's bug reported. It's th=
-ere
->> mainly to make the reviewing a bit easier, but as it changes behaviour i=
-t should
->> be squashed with the second one.
->>
->> Revisions
->> =3D=3D=3D=3D=3D=3D=3D=3D=3D
->>
->> v4 -> v5
->> ++++++++
->>
->> o Rebased against latest Linus' tree
->> o Converted tw_timer into a delayed work following Jakub's bug report on=
- v4
->>   http://lore.kernel.org/r/20240411100536.224fa1e7@kernel.org
+On Mon, Apr 15, 2024 at 4:33=E2=80=AFPM Valentin Schneider <vschneid@redhat=
+.com> wrote:
 >
-> What was the issue again ?
+> On 15/04/24 14:35, Eric Dumazet wrote:
+> > On Mon, Apr 15, 2024 at 1:34=E2=80=AFPM Valentin Schneider <vschneid@re=
+dhat.com> wrote:
+> >>
+> >> Hi,
+> >>
+> >> This is v5 of the series where the tw_timer is un-pinned to get rid of
+> >> interferences in isolated CPUs setups.
+> >>
+> >> The first patch is a new one stemming from Jakub's bug reported. It's =
+there
+> >> mainly to make the reviewing a bit easier, but as it changes behaviour=
+ it should
+> >> be squashed with the second one.
+> >>
+> >> Revisions
+> >> =3D=3D=3D=3D=3D=3D=3D=3D=3D
+> >>
+> >> v4 -> v5
+> >> ++++++++
+> >>
+> >> o Rebased against latest Linus' tree
+> >> o Converted tw_timer into a delayed work following Jakub's bug report =
+on v4
+> >>   http://lore.kernel.org/r/20240411100536.224fa1e7@kernel.org
+> >
+> > What was the issue again ?
+> >
+> > Please explain precisely why it was fundamentally tied to the use of
+> > timers (and this was not possible to fix the issue without
+> > adding work queues and more dependencies to TCP stack)
 >
-> Please explain precisely why it was fundamentally tied to the use of
-> timers (and this was not possible to fix the issue without
-> adding work queues and more dependencies to TCP stack)
+> In v4 I added the use of the ehash lock to serialize arming the timewait
+> timer vs destroying it (inet_twsk_schedule() vs inet_twsk_deschedule_put(=
+)).
+>
+> Unfortunately, holding a lock both in a timer callback and in the context
+> in which it is destroyed is invalid. AIUI the issue is as follows:
+>
+>   CPUx                        CPUy
+>   spin_lock(foo);
+>                               <timer fires>
+>                               call_timer_fn()
+>                                 spin_lock(foo) // blocks
+>   timer_shutdown_sync()
+>     __timer_delete_sync()
+>       __try_to_del_timer_sync() // looped as long as timer is running
+>                        <deadlock>
+>
+> In our case, we had in v4:
+>
+>   inet_twsk_deschedule_put()
+>     spin_lock(ehash_lock);
+>                                           tw_timer_handler()
+>                                             inet_twsk_kill()
+>                                               spin_lock(ehash_lock);
+>                                               __inet_twsk_kill();
+>     timer_shutdown_sync(&tw->tw_timer);
+>
+> The fix here is to move the timer deletion to a non-timer
+> context. Workqueues fit the bill, and as the tw_timer_handler() would jus=
+t queue
+> a work item, I converted it to a delayed_work.
 
-In v4 I added the use of the ehash lock to serialize arming the timewait
-timer vs destroying it (inet_twsk_schedule() vs inet_twsk_deschedule_put()).
+I do not like this delayed work approach.
 
-Unfortunately, holding a lock both in a timer callback and in the context
-in which it is destroyed is invalid. AIUI the issue is as follows:
+Adding more dependencies to the TCP stack is not very nice from a
+maintainer point of view.
 
-  CPUx                        CPUy
-  spin_lock(foo);
-                              <timer fires>
-                              call_timer_fn()
-                                spin_lock(foo) // blocks
-  timer_shutdown_sync()
-    __timer_delete_sync()
-      __try_to_del_timer_sync() // looped as long as timer is running
-                       <deadlock>
-
-In our case, we had in v4:
-
-  inet_twsk_deschedule_put()
-    spin_lock(ehash_lock);
-                                          tw_timer_handler()
-                                            inet_twsk_kill()
-                                              spin_lock(ehash_lock);
-                                              __inet_twsk_kill();
-    timer_shutdown_sync(&tw->tw_timer);
-
-The fix here is to move the timer deletion to a non-timer
-context. Workqueues fit the bill, and as the tw_timer_handler() would just =
-queue
-a work item, I converted it to a delayed_work.
-
+Why couldn't you call timer_shutdown_sync() before grabbing the lock ?
