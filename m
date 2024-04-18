@@ -1,68 +1,60 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 116E713C9B2
-	for <linux-rt-users@vger.kernel.org>; Wed, 17 Apr 2024 17:42:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06DF816F8F7
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Apr 2024 20:16:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713375732; cv=none; b=GHCmr6ftBgwc7ifVCJkJ/D6emQNr+48JKgHC45J6OysZMOtwRaGeuq2DxWX4+P2/OiBtiB5VjEYlSLv7omioIQhVeG0TwUGItJdFhhESs82a+jSXOqxNlUwU7kUaKYvZcIyYq3h9LUH8Tvx68VAZAnm5gID/VKwnAKVvOoEtaGE=
+	t=1713471376; cv=none; b=q5QWG+qTswe+l1L9tSD/bag1DnGqYmVPQCe4E4oW5QUzk9cDGfW5crKECyIN8TGxR+0ti6jh7o1DtTm8vo+S7KfHQP1OigIgoMj7E+Z2GtHiGuuCTrw5HJAgtX0ItoeFw52AUxwYAp/y16edMczWjiSTLlo+tKD/4LOI4bPKUBQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713375732; c=relaxed/simple;
-	bh=BE1ZWTtOKfkeyvL6DrPKLRx+o75ySdhROgvGPUTwEsc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ER4XkLXkTUmnKSeEoAwojUOJrrrhkgr8/tNPYqO85jJGgM9FzWBb5nI1/JoRKxp9YvNzgen03X46PW1QshGjmizz7dmyUQ0nA73+gKElUjM004Rv2luXreAHhzMk2sGOkO0Kb6IwwH9ne7upRFZGUxKNoODB9tx12u3r80R7LvU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TMdQI4Q9; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1713471376; c=relaxed/simple;
+	bh=dx2yvgtH5yzxZfh42ugwTqymuzBLhNmK7ll7YG1RdO0=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=KholLk8helfPuQFzHIF4QtaopbVfELdX+xDufgReZR6LMWoTcEHtb0y8I9IjMc+8FtoUhEOWCSTbL2mVL9dcA+I2XbgOEwj4R7mi/z20N13Az/n3YJ6BoWmQhqFsCKiBtqlhbJW9fW64yR/vRbaiMZtLNsKEdTQTeSlSYLHEoVQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AeaKFxT3; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TMdQI4Q9"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AeaKFxT3"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713375729;
+	s=mimecast20190719; t=1713471374;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ciJVdbf5KW00md9ONk3n+c12FOmnIbDPcUPKUFPEOxY=;
-	b=TMdQI4Q9iPCn/FAfKAlWBei4x6YNdHn4hd3rR1XDsFznnP8RdPu80hsEVozwqF3CRLDSlQ
-	u35S2ZxphyTI7uZJIRHM/ambzYC+Fd8m6giOj2IHAem5+ay/OEDsetazbhAu3FmMNhwShR
-	fJtd5/yZsFzgoAzg7+S2bH6nKdtUKX0=
-Received: from mail-oo1-f69.google.com (mail-oo1-f69.google.com
- [209.85.161.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-213-7U1WCUyDNy2kQLtBuS1XHQ-1; Wed, 17 Apr 2024 13:42:07 -0400
-X-MC-Unique: 7U1WCUyDNy2kQLtBuS1XHQ-1
-Received: by mail-oo1-f69.google.com with SMTP id 006d021491bc7-5aa18a128c6so6344eaf.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 17 Apr 2024 10:42:07 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713375726; x=1713980526;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ciJVdbf5KW00md9ONk3n+c12FOmnIbDPcUPKUFPEOxY=;
-        b=Y1kKt0MJeIbWgW7eyRfMOxwH+/NDIa9eovKdAP5/QlTI8dQ33aKVN71pQVJTNbonst
-         9Zxev042fTMNFFGzX8nvY+KaDy34wSX/8OnR3F/PIgvMLNOZ2fu7D8T1UMeyCio+MRC7
-         rz6QGj7Et2OB4wayJ/yREgWt0qWbpxALccWokJ8tokXefHDwepF0bvz0XDft3UfWN2GU
-         BGvdpSXlHWCJpPJTI8grRfYvUzzxE3u7Exh0D4GBRJ4NsR6NxzBpE9I/LodLyqOMhNl5
-         XTZEvmF+42jAYAtPZuyHwQ5GBl4g++zXGtWqGUypZ/t4CUyNktvIAbdfZ1n5+lNnmiFJ
-         gusg==
-X-Gm-Message-State: AOJu0YzWE94U8clabNcWiWzYZUv59qPf1L+MuupP7DZFU0xOfehA2YxB
-	1s+ylwzEsuiU28craK0nF8VBu5qzYyF3k1O/o7vV7CmJWN3PhQVc9YR97ZCNLswrAWSJ3VyMoCk
-	rX0ZdzWYGm//XrE0aO6Y/l5R2/oiPCUW8to09k++HdAu0ZOJmLq7voE026zHAKQqCfY8kQQRM
-X-Received: by 2002:a05:6358:2697:b0:186:27ce:63aa with SMTP id d23-20020a056358269700b0018627ce63aamr17842474rwc.24.1713375726005;
-        Wed, 17 Apr 2024 10:42:06 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHuyO7oP9iE0WcZzKTsqSr80Y0NYtYJXV5311ex0gjHuPGc6m++dCd1YTNmA8f4gfr0QP3LlQ==
-X-Received: by 2002:a05:6358:2697:b0:186:27ce:63aa with SMTP id d23-20020a056358269700b0018627ce63aamr17842442rwc.24.1713375725383;
-        Wed, 17 Apr 2024 10:42:05 -0700 (PDT)
-Received: from thinkpad2021 ([71.217.37.202])
-        by smtp.gmail.com with ESMTPSA id h20-20020a0cab14000000b0069b58b97ed2sm7005143qvb.28.2024.04.17.10.42.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 17 Apr 2024 10:42:05 -0700 (PDT)
-Date: Wed, 17 Apr 2024 13:42:03 -0400
-From: "John B. Wyatt IV" <jwyatt@redhat.com>
-To: Miguel Miranda <mmikernel@gmail.com>
-Cc: RT <linux-rt-users@vger.kernel.org>
-Subject: Re: Seeking input on beginner-level bugs related to preempt_RT
-Message-ID: <ZiAJ60Ugb-1MaTkQ@thinkpad2021>
-References: <27cfdcdc-f0d0-42ae-9b53-937828a4fd7d@gmail.com>
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=RbnlUddStSZoE4ERVOKsgwX95yDpQSDI8hJv+RT7aiA=;
+	b=AeaKFxT3cNQ19RqAPEhzdmtOgshJ3vISLJ/E5eUwtBZFKCULvi5lGy3u5Yx8hRy5KmgEs2
+	RopoWYKPqrBYmsc11/sbq8fO+4K7AlHcnYodWVRV3WE0jFYReAhlidpEXACRnAIDawU0dj
+	EJZYQlx8HQ7sKMLCd1YU74zCgvi27t8=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-511-Jklv0C5YPRe8QU95TSFegA-1; Thu,
+ 18 Apr 2024 16:16:10 -0400
+X-MC-Unique: Jklv0C5YPRe8QU95TSFegA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E278629AA387;
+	Thu, 18 Apr 2024 20:16:09 +0000 (UTC)
+Received: from localhost (unknown [10.22.10.25])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D383940829C7;
+	Thu, 18 Apr 2024 20:16:08 +0000 (UTC)
+Date: Thu, 18 Apr 2024 17:16:07 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.214-rt106
+Message-ID: <ZiF_h-W4jgLiRag5@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -71,92 +63,39 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <27cfdcdc-f0d0-42ae-9b53-937828a4fd7d@gmail.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On Fri, Apr 12, 2024 at 05:00:39PM -0600, Miguel Miranda wrote:
-> Hello everyone,
-> 
+Hello RT-list!
 
-Welcome.
+I'm pleased to announce the 5.10.214-rt106 stable release.
 
-> I am currently looking for beginner-level bugs related to preempt_RT for the
-> Linux kernel Bug Fixing Spring Unpaid 2024.
+This release is simply an update to the new stable 5.10.214 version and no
+RT-specific changes have been performed.
 
-What is your experience level? Have you built and run an rt kernel
-before? (Selected Fully Preemptive in kconfig?)
+You can get this release via the git tree at:
 
-> Although I am not an expert in
-> RT, I have been trying to identify some bugs and our mentors have suggested
-> using ring testers such as syzkaller and test frameworks like
-> kernelselftests to find and reproduce these bugs on our own.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-A lot of the bugs we encounter are around locking. RT changes
-the way locks are handled in the kernel. That is one avenue I would
-encourage you to study.
+  branch: v5.10-rt
+  Head SHA1: 3d208061796d4addeb543c78e0a4ec769b6ce6b2
 
-Not sure if anyone has actually used syzkaller on the preempt-rt
-patchset. Never used it before, but I would be interested in it's
-results.
+Or to build 5.10.214-rt106 directly, the following patches should be applied:
 
-You can read about kselftests here:
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-https://elixir.bootlin.com/linux/latest/source/Documentation/dev-tools/kselftest.rst
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.214.xz
 
-> 
-> I have a few questions and would appreciate any input you may have. Firstly,
-> is there a specific CI ring or channel that lists KTODOs, or a preferred
-> platform where bugs related to PREEMPT_RT are reported? Secondly, I have
-> been following the LKML and have seen some console_blast.sh results, but I
-> am not sure where to find this console_blast. Lastly, I have come across
-> some recent discussions about printk() related work, but I'm unsure if there
-> is a list to avoid rework.
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.214-rt106.patch.xz
 
-John Ogness sent me that script and I posted in another email on this
-list. I forget which one.
+Signing key fingerprint:
 
-John specifically asked for a very large core machine to do the testing
-on with a uart 8250 interface. That might be difficult for you to
-procure but I have included it below. Please make sure to use the
-correct line endings or Bash will not like it. :)
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
 
-#!/bin/sh
-set -e
+All keys used for the above files and repositories can be found on the
+following git repository:
 
-# This script is intended to be started with no arguments.
-#
-# It then calls itself to create a pinned process for each CPU. Those
-# child processes will run in infinite loops of show-task-states via
-# /proc/sysrq-trigger. This generates lots of contention on the console.
-#
-# Finally, it waits 10 seconds before crashing the system.
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
 
-if [ $# -eq 0 ]; then
-	cpus=$(($(nproc) - 1))
-	for i in $(seq 0 $cpus); do
-		$0 $i &
-	done
-
-	sleep 15
-	echo c > /proc/sysrq-trigger
-	exit 0
-fi
-
-# Setup the CPU mask for the provided CPU number. The real taskset(1)
-# could simply use -c, but the busybox(1) variant does not support this.
-mask=$(printf "0x%x\n" $((1 << $1)))
-taskset -p $mask $$
-
-# Wait a moment before beginning blast.
-sleep 2
-
-while true; do
-	echo t > /proc/sysrq-trigger
-done
-
-
--- 
-Sincerely,
-John Wyatt
-Software Engineer, Core Kernel
-Red Hat
+Enjoy!
+Luis
 
