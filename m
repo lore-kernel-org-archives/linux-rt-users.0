@@ -1,89 +1,171 @@
-Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81EF913248F;
-	Fri, 19 Apr 2024 15:18:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF75910A24
+	for <linux-rt-users@vger.kernel.org>; Mon, 22 Apr 2024 14:31:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713539895; cv=none; b=kVaTA3BicGgJYBb/UDKjWKn0KDLvDCThO7Av/6VG0NKwt4Wxe13D1lajIPFd/LhOlHp7fOJ/Hg5UOdYpYXoDsaXuFxI3nPqO9DNuoKtxL7ozil+VPa0Q4sC/LxzWg9ViHKs7J7LuNyDhXYYza2HE6fODUFu5L7kshLLP0OwNtw8=
+	t=1713796310; cv=none; b=sRxeII+qENaKrtc3d8yFemB5uTuJ+OodB/6NJxcOoUqQ6Wmvw/t3XaS4BtJo9XI/Ewn0mYKrJkkj3k4anpc7GL1oI8kajE6l+jasnvdOsiDLbboqR/IGmF+iP3CovPIX96hvcisL9rQ1e3FlQfCX1KQ3kchwif0vjUEqXpqoCGM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713539895; c=relaxed/simple;
-	bh=v06x2WSznbdbSphBXwDn6u5OwE4X/omoi3S7OzDA8r4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=CZqIMdGlSyeqMY3l+TcXIefotFEFpUWCmxWFW4c5Z/9TKKaAY8z3m0akc1Jmf4iFYsKNg7IMr0+emnQ5W/0iJ82kicyJzB+WNJsTYTcZRVboryHLtQ1T0U0cMh+xV13J609hsX6y+vmsbYPWrVeuSTK96Wc6jOjwBohqBrUz+Mo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de; spf=fail smtp.mailfrom=denx.de; arc=none smtp.client-ip=46.255.230.98
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=denx.de
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-	id 445DC1C0080; Fri, 19 Apr 2024 17:18:11 +0200 (CEST)
-Date: Fri, 19 Apr 2024 17:18:10 +0200
-From: Pavel Machek <pavel@denx.de>
-To: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Cc: Pavel Machek <pavel@denx.de>, LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>,
-	Jeff Brady <jeffreyjbrady@gmail.com>
-Subject: Re: [ANNOUNCE] 5.10.214-rt106
-Message-ID: <ZiKLMkOZhU6f7YXd@duo.ucw.cz>
-References: <ZiF_h-W4jgLiRag5@uudg.org>
- <ZiI4Hq5yfrOUdbHk@duo.ucw.cz>
- <ZiJJeiAjLAk3YMZz@uudg.org>
+	s=arc-20240116; t=1713796310; c=relaxed/simple;
+	bh=pzmC56HFWs/QTkhB91JQ7NJkOCAI0HM6A928WLI6WQg=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=kxiqsvmL2FuNn7qCzXmbo69NykDfsaEE7GQJkv6Ukv7LdL5xl1Jiz0erODGp5DGgWRJFeQztvMfCubX8jT+2Hta6RDqz9wI9/6RByjbSFKr9pSKm/zjNBCBywj+qLx4K/ZUFv5VdHzhmlRBySfdwSBmxJG9OW72/DzgYHDoEfZw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZyMdN45R; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZyMdN45R"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713796307;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=mhkGPPHbdmj1oVdDbXBZ1Ge+SsAT/eWQ0YBbLSXrT28=;
+	b=ZyMdN45RT/soQ3fyy306vD6u0T4CNZrSXSFu8kbzC3ejl+i8B8gmMcBdzCqHe+g5VSFidj
+	1RJezsB2f1xC7PGxjLjms9LwyaLm7v+UR+PJNtqY1A7gFN7Emj5KNdGoDDZ/WJA1xx55XB
+	VxAtJmDFMDIOeqCkaxm+PfymGnBEv0U=
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-29-X4uGd47NNNiAyjxUvDDbNA-1; Mon, 22 Apr 2024 10:31:46 -0400
+X-MC-Unique: X4uGd47NNNiAyjxUvDDbNA-1
+Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-69937a7ea21so62560736d6.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Apr 2024 07:31:46 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713796306; x=1714401106;
+        h=content-transfer-encoding:mime-version:message-id:date:references
+         :in-reply-to:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=mhkGPPHbdmj1oVdDbXBZ1Ge+SsAT/eWQ0YBbLSXrT28=;
+        b=afVm/pi8eqIJ3Y+3BbtsfYrky4IDszvmDvdWC/TIOfAUoLvXmi74aGk6JY6PDCUc1s
+         vmVBv08Q1hOomFA3TtEl1yWbTukXgq6TWnIVBnd9nRKT72JDq7A+SuyjnACeesw1u63H
+         a7xFMk8whWs+nQh4a5Eq1GWPZvnkVSSUuA6NlBhuibzJGHAWmUF1y1IUbYdxtQWdTmxv
+         UOhdqDY6bhHx4U7NVBI6QiUB1gZ3YofRM2Aas2KAC54iq48RDmH1My0LLcotKTwvYPsB
+         ArAdT4dQUW7lpl1a33I+FodY0QI1QphyAZ6+nyH315FuBJ19DMWQOtdzletHaAUHlGsn
+         dymw==
+X-Forwarded-Encrypted: i=1; AJvYcCXahSo2Zc8QEbONtZzzkOOmm7NM2ZKiYIkTbio+XEfCMEa50hpaWDmihtyD98zwhm45OvXXt6PydEA1vxn8dN9hNAvZhXpTEfAybTJPXPM=
+X-Gm-Message-State: AOJu0YxbWM+5xf8gftYGE4mX2IQM7NkJV1CEidfZbF+z+rpsCfIDopgo
+	F4PtPGAc3ob1dpyza67ouFAxF/Rwr2wQ/rWbwRzthKYsZSTM884mZk8Ihi10jnLe5O+Tclp/9D9
+	nsfI64e0ko7ti6OYa2b4HEbvoZ490TUoIf3OTvvUn9aiSEW9N+YCBc2bvO5yxcRrF
+X-Received: by 2002:ad4:424f:0:b0:69b:1a43:27f5 with SMTP id l15-20020ad4424f000000b0069b1a4327f5mr10265938qvq.35.1713796305990;
+        Mon, 22 Apr 2024 07:31:45 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFgAG0VNYTVd95FVX0FTRiJkrXveidEN6CjszexmNNUFWwDrDgOvzjbXwvC9ZePvx8e1ZiGoQ==
+X-Received: by 2002:ad4:424f:0:b0:69b:1a43:27f5 with SMTP id l15-20020ad4424f000000b0069b1a4327f5mr10265921qvq.35.1713796305582;
+        Mon, 22 Apr 2024 07:31:45 -0700 (PDT)
+Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
+        by smtp.gmail.com with ESMTPSA id g12-20020a0cf08c000000b006913aa64629sm4260487qvk.22.2024.04.22.07.31.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 22 Apr 2024 07:31:45 -0700 (PDT)
+From: Valentin Schneider <vschneid@redhat.com>
+To: Eric Dumazet <edumazet@google.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
+ Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paolo
+ Abeni <pabeni@redhat.com>, mleitner@redhat.com, David Ahern
+ <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar
+ <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v5 0/2] tcp/dcpp: Un-pin tw_timer
+In-Reply-To: <CANn89iJRev5Kn_jEgimDfyHosmiyYeaz2gHRGS2tcFC-yMbGaQ@mail.gmail.com>
+References: <20240415113436.3261042-1-vschneid@redhat.com>
+ <CANn89iJYX8e_3Or9a5Q55NuQ8ZAHfYL+p_SpM0yz91sdj4HqtQ@mail.gmail.com>
+ <xhsmhmspu8zlj.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+ <CANn89iJRev5Kn_jEgimDfyHosmiyYeaz2gHRGS2tcFC-yMbGaQ@mail.gmail.com>
+Date: Mon, 22 Apr 2024 16:31:41 +0200
+Message-ID: <xhsmhbk618o4y.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="4VRVcZfQOWi2/2BF"
-Content-Disposition: inline
-In-Reply-To: <ZiJJeiAjLAk3YMZz@uudg.org>
-
-
---4VRVcZfQOWi2/2BF
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
 
-> The tag is there in the repository:
->=20
->     https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.gi=
-t/commit/?h=3Dv5.10.214-rt106-rebase
->=20
-> When I released 5.10.215-rt107 (and its -rebase counterpart), 5.10.214-rt=
-106-rebase
-> was no longer pointing to a commit inside that  branch, probably why your=
- git
-> update didn't get the tag. You could try a
->=20
->     git fetch --tags <rt-stable-remote-name>
+Apologies for the delayed reply, I was away for most of last week;
 
-Aha, thanks for the pointer and sorry for the noise.
+On 16/04/24 17:01, Eric Dumazet wrote:
+> On Mon, Apr 15, 2024 at 4:33=E2=80=AFPM Valentin Schneider <vschneid@redh=
+at.com> wrote:
+>>
+>> On 15/04/24 14:35, Eric Dumazet wrote:
+>> > On Mon, Apr 15, 2024 at 1:34=E2=80=AFPM Valentin Schneider <vschneid@r=
+edhat.com> wrote:
+>> >> v4 -> v5
+>> >> ++++++++
+>> >>
+>> >> o Rebased against latest Linus' tree
+>> >> o Converted tw_timer into a delayed work following Jakub's bug report=
+ on v4
+>> >>   http://lore.kernel.org/r/20240411100536.224fa1e7@kernel.org
+>> >
+>> > What was the issue again ?
+>> >
+>> > Please explain precisely why it was fundamentally tied to the use of
+>> > timers (and this was not possible to fix the issue without
+>> > adding work queues and more dependencies to TCP stack)
+>>
+>> In v4 I added the use of the ehash lock to serialize arming the timewait
+>> timer vs destroying it (inet_twsk_schedule() vs inet_twsk_deschedule_put=
+()).
+>>
+>> Unfortunately, holding a lock both in a timer callback and in the context
+>> in which it is destroyed is invalid. AIUI the issue is as follows:
+>>
+>>   CPUx                        CPUy
+>>   spin_lock(foo);
+>>                               <timer fires>
+>>                               call_timer_fn()
+>>                                 spin_lock(foo) // blocks
+>>   timer_shutdown_sync()
+>>     __timer_delete_sync()
+>>       __try_to_del_timer_sync() // looped as long as timer is running
+>>                        <deadlock>
+>>
+>> In our case, we had in v4:
+>>
+>>   inet_twsk_deschedule_put()
+>>     spin_lock(ehash_lock);
+>>                                           tw_timer_handler()
+>>                                             inet_twsk_kill()
+>>                                               spin_lock(ehash_lock);
+>>                                               __inet_twsk_kill();
+>>     timer_shutdown_sync(&tw->tw_timer);
+>>
+>> The fix here is to move the timer deletion to a non-timer
+>> context. Workqueues fit the bill, and as the tw_timer_handler() would ju=
+st queue
+>> a work item, I converted it to a delayed_work.
+>
+> I do not like this delayed work approach.
+>
+> Adding more dependencies to the TCP stack is not very nice from a
+> maintainer point of view.
+>
+> Why couldn't you call timer_shutdown_sync() before grabbing the lock ?
 
-Best regards,
-								Pavel
---=20
-DENX Software Engineering GmbH,        Managing Director: Erika Unter
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+We need the timer_shutdown_sync() and mod_timer() of tw->tw_timer to be
+serialized in some way. If they aren't, we have the following race:
 
---4VRVcZfQOWi2/2BF
-Content-Type: application/pgp-signature; name="signature.asc"
+                             tcp_time_wait()
+                               inet_twsk_hashdance()
+  inet_twsk_deschedule_put()
+    // Returns 0 because not pending, but prevents future arming
+    timer_shutdown_sync()
+                               inet_twsk_schedule()
+                                 // Returns 0 as if timer had been succesfu=
+lly armed
+                                 mod_timer()
 
------BEGIN PGP SIGNATURE-----
+This means inet_twsk_deschedule_put() doesn't end up calling
+inet_twsk_kill() (because the timer wasn't pending when it got shutdown),
+but inet_twsk_schedule() doesn't arm it either despite the hashdance()
+having updated the refcounts.
 
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZiKLMgAKCRAw5/Bqldv6
-8tbCAKDAvtniYIhg1C/iRVDr6CX7JIEqzACdFYmLVlEV11QqPIXb0nD4IDwZ+b0=
-=uV+I
------END PGP SIGNATURE-----
+If we leave the deschedule as a del_timer_sync(), the timer ends up armed
+in inet_twsk_schedule(), but that means waiting for the timer to fire to
+clean up the resources despite having called inet_twsk_deschedule_put().
 
---4VRVcZfQOWi2/2BF--
