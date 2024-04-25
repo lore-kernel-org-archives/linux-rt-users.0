@@ -1,56 +1,56 @@
-Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com [209.85.219.46])
+Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com [209.85.222.175])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2681714E2F6
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 18:07:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9252814D2B4
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 18:07:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714068464; cv=none; b=nTGKAF66lc+6bDGOG0o5CeKYVGYVBjyoNGAgqLFEEWZcDfT3+gBKM8By7uMI5RwlO913DE9jHRwOj6eGRKfBfoPgOFguDoxtHHVLr38CCHQkibLLR+pOvsCYPphSRFuOXAlE9HsVsmWxIOyTlH9vlEY1qmmOh+jJq/mcH1TkiU4=
+	t=1714068466; cv=none; b=b5QNANtcKFkkl2BubCk2ZX6KRx4qvnr5auWHm6aY9UvYeYd7OOhxe/5yvxxnPqPNZVV0VjQTfJ/UGsfrTIf/fbnNBI1pUGYzLc4Ba5QX292/tzsJUvRjgzNXxFx1Z6D+1/pMqrhn3v9zeQBsPT/MPH7jUtawhhCoqt/6qO6Erz8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714068464; c=relaxed/simple;
-	bh=CM4B9+qAcVnI1XV7OjqRTibeaaRJbsi3N9KI0NnrpgY=;
+	s=arc-20240116; t=1714068466; c=relaxed/simple;
+	bh=ZK1BvbMXtAbw08OTZ3c6MQtLfcAl+2AhRHB5JHKLO3I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=eaz0eYwCIbi9PkAslDAyLTf596RcPtD17Ok/FWdkt645h1NrZBILEf6YcBm9j8Q5YMnx4nAba0qEnB2ZoGtKB7UneEj2T2jkTPIkkJAUIVgfC5YorHD0LZEd3rd45ULY63Sx1iFVFiIGvBwkXMw6NjnkGcjpnEaD9LbpnpgX6Hs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lu32wi54; arc=none smtp.client-ip=209.85.219.46
+	 MIME-Version; b=fLpaZzHkJLINWtnyBl42AEK3naFlckTYxntvLgI80VHrRk6VGke4F9Zo7JBph+TFq1DW4dv0tYtxvbNIz6QXqG93J6gA4zn3cWvaMxmllk+C6aHtKA9AQYl7U/CjD1NqWgsWiaUwymCyKYsVZoRuIBMAUxkFl09Q9mu76tq+eBs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lWbZLyUJ; arc=none smtp.client-ip=209.85.222.175
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lu32wi54"
-Received: by mail-qv1-f46.google.com with SMTP id 6a1803df08f44-69b40061bbeso7595346d6.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 11:07:42 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lWbZLyUJ"
+Received: by mail-qk1-f175.google.com with SMTP id af79cd13be357-78f043eaee9so73356285a.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 11:07:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714068462; x=1714673262; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1714068463; x=1714673263; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=viEwlfKmx8SecYACMb9XiSoxhLtdQcPbWOh7hUeOi4w=;
-        b=lu32wi54RtYm3cp3wkFrSPomXJikDg0YipR4+zqgDVor2SWH7U74pcTAaOXKDLS9NW
-         EQSge164N87klix/mmKORAI3h5U/sn0hDqz5jXJgu+gMW0gSz/S0GBUewxP/F1xI3x63
-         ZWDLw2ISooWJj8xk1hlyJCzAMAUiZqzddznRBcoJUpV1qhDdP0Ruoz+NicmpKBbOUTpR
-         46ZmZezxXsDg8NPD68ctaLCRTnO+J241zu8CJ+79kxvKsxbpWJF8FIbWZhWpmtEXNB/8
-         hGk//6cX4ld7GoBJoPewF8CzXdE38b37nIFnLEsxm11asLcTf5EjA81WK8iHZO3Mthh4
-         fc5A==
+        bh=ves3/vHu99sdJKzcDwdHqkLZxl0bM02aSC8+OmKsR54=;
+        b=lWbZLyUJrTlX9mU26aTA3jNc03maErYkUr/s9hM2N2YMdVG/g4gL3RdSoZwIH23RpY
+         6VrlXYwCjYojqaDZl4dsyUEpFbDiodApHvn6bQE03vfbV9Px0mKyULWDX5TadXPOon6l
+         2gNq/FghGoBwQ5Hmbldxbdc2GuOePSzTZqRE0iws6a2+lq02ui6IcbxCwGypS3lcOJlD
+         /G23e8w6Y9ob02krg5ME9MJB79qXBDF9HE08ylXHmyh4/I82hZjSaZMxqoFjFn/E4ZNU
+         vZHtNP4euDpxHQTXCISbEuKyAk3SE7FLHxVPbeK+q66ncFJoozwtl5klKHdoO7x5gDNR
+         qbnQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714068462; x=1714673262;
+        d=1e100.net; s=20230601; t=1714068463; x=1714673263;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=viEwlfKmx8SecYACMb9XiSoxhLtdQcPbWOh7hUeOi4w=;
-        b=Dg9RlSYARiMGumQy3+GOmjMeS6SlTTomT6HmHuoenxk+T4gRB2CQLHFrMlUmL915Cp
-         zIvaYnkfXGX3cVP0bURj8Hw1yqvpvJkb1gFEe7lFh/vCCTOu5bgAwXxX75faut7wdM7g
-         vuByGmhy1xPxBBuryHeV5XxiP9zqvaN0cZh+2ahY4wgvKbBh2v/R9YrlbTOj6D9wS3OK
-         GLjXdt7tWrpbSwlyVVRSD3yMxiJMHELsZ+r2RDnwESd+wo+MVFbFl6bPFt41kWuLOmml
-         g7EjKLEnk6x5FXUk6oqGds1/fssdQmhhQa0+MFeWzYgrFboLVNqBeKZLJ2rCQVlwpW5z
-         7cpA==
-X-Gm-Message-State: AOJu0YzhrVGtpRT0hMfrjj4wPWDBfxOk9y2vqgHck81QTAnDAe3EnZIw
-	iCciiWiBnqVVxKZMRjrik0Yj9YP08MUi86+d4YQ4rrJh0ZHbYzk/5xtEIQ==
-X-Google-Smtp-Source: AGHT+IH8ZuvJtK/ST8iLs6BiJhDlge3TZYGjy2jegPNRMOMldgeDhXyK39TXmEL0WYwZbfudZQDsCw==
-X-Received: by 2002:a05:6214:29e9:b0:69b:5ecd:7c9a with SMTP id jv9-20020a05621429e900b0069b5ecd7c9amr595685qvb.51.1714068461503;
-        Thu, 25 Apr 2024 11:07:41 -0700 (PDT)
+        bh=ves3/vHu99sdJKzcDwdHqkLZxl0bM02aSC8+OmKsR54=;
+        b=LiaZJW8CqYgE/QnAq0T3xMS7TzzzkFfXBlTo3ZICf6GlIqasPnoUJj8dO8vUqIv1bZ
+         YLTjSVSHN7Z6vHFFjXb7tO7BtT4ZJ3TQOez1EKgG3B20EpqVVx8xtKO9c8/zV4I2jzJs
+         PjG0wGx2JCcX2a2ZD446MdXVEnwsDOUbcO3e4OKebR0cXkd8mWazgcwhjhMUttJIwd8D
+         GfskRZHsZVUmmNayZpKGPE8zhWiJ6v62TCqGTZPcdWnQFu+fLH6MQVvPpenjG9glRz7t
+         DcTitmAuD8QrVx0BycpCWD6T9NoJUtTEDUEf8A3+hiKmWKyCPRDJoENeK7xZNCjp7RP5
+         40YQ==
+X-Gm-Message-State: AOJu0Yyj8lo+LrqNkbUDOhhFO3qcT06gjScv50EE39Oeqr3C929Tl6pw
+	hld678X6eszxDqG3YUnZ1qu3OBB7VI9Ce0YY4by1UbFMdsZ9UpldolFE7g==
+X-Google-Smtp-Source: AGHT+IEki/7LhAcVxecJvENe1v8gsZ38deXowPc6YWY3Y+2X7ieZdUymemlR9crouugOtBZUlzLouQ==
+X-Received: by 2002:ad4:5ca7:0:b0:6a0:48f1:6148 with SMTP id q7-20020ad45ca7000000b006a048f16148mr583679qvh.27.1714068462768;
+        Thu, 25 Apr 2024 11:07:42 -0700 (PDT)
 Received: from fionn.redhat.com ([74.12.5.183])
-        by smtp.gmail.com with ESMTPSA id n5-20020a0cdc85000000b0069b7c8ced6asm2103931qvk.12.2024.04.25.11.07.40
+        by smtp.gmail.com with ESMTPSA id n5-20020a0cdc85000000b0069b7c8ced6asm2103931qvk.12.2024.04.25.11.07.41
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 25 Apr 2024 11:07:40 -0700 (PDT)
+        Thu, 25 Apr 2024 11:07:42 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
@@ -59,9 +59,9 @@ Cc: Clark Williams <williams@redhat.com>,
 	Juri Lelli <juri.lelli@redhat.com>,
 	Kate Carcia Poulin <kcarcia@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/4] rteval: cyclictest.py: Remove unused method sample
-Date: Thu, 25 Apr 2024 14:07:21 -0400
-Message-ID: <20240425180723.66499-2-jkacur@redhat.com>
+Subject: [PATCH 3/4] rteval: cyclictest.py: Fix the median calculation
+Date: Thu, 25 Apr 2024 14:07:22 -0400
+Message-ID: <20240425180723.66499-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240425180723.66499-1-jkacur@redhat.com>
 References: <20240425180723.66499-1-jkacur@redhat.com>
@@ -73,30 +73,58 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Remove the unused method sample() in class RunData
+Fix the calculation of the median in rteval for cyclictest
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/modules/measurement/cyclictest.py | 6 ------
- 1 file changed, 6 deletions(-)
+ rteval/modules/measurement/cyclictest.py | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
 
 diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index 48b86a03cbfc..1ba8b8b2323c 100644
+index 1ba8b8b2323c..cef73abd1b4b 100644
 --- a/rteval/modules/measurement/cyclictest.py
 +++ b/rteval/modules/measurement/cyclictest.py
-@@ -61,12 +61,6 @@ class RunData:
-         if value < self.__min:
-             self.__min = value
+@@ -80,26 +80,34 @@ class RunData:
+             return
  
--    def sample(self, value):
--        self.__samples[value] += self.__samples.setdefault(value, 0) + 1
--        self.update_max(value)
--        self.update_min(value)
--        self.__numsamples += 1
--
-     def bucket(self, index, value):
-         self.__samples[index] = self.__samples.setdefault(index, 0) + value
-         if value:
+         self._log(Log.INFO, f"reducing {self.__id}")
+-        total = 0
++        total = 0 # total number of samples
++        total_us = 0
+         keys = list(self.__samples.keys())
+         keys.sort()
+ 
+-        mid = self.__numsamples / 2
++        # if numsamples is odd, then + 1 gives us the actual mid
++        # if numsamples is even, we avg mid and mid + 1, so we actually
++        # want to know mid + 1 since we will combine it with mid and
++        # the lastkey if the last key is at the end of a previous bucket
++        mid = int(self.__numsamples / 2) + 1
+ 
+         # mean, mode, and median
+         occurances = 0
+         lastkey = -1
+         for i in keys:
+-            if mid > total and mid <= (total + self.__samples[i]):
+-                if self.__numsamples & 1 and mid == total+1:
++            if mid > total and mid <= total + self.__samples[i]:
++                # Test if numsamples is even and if mid+1 is the next bucket
++                if self.__numsamples & 1 != 0 and mid == total+1:
+                     self.__median = (lastkey + i) / 2
+                 else:
+                     self.__median = i
+-            total += (i * self.__samples[i])
++            lastkey = i
++            total += self.__samples[i]
++            total_us += (i * self.__samples[i])
+             if self.__samples[i] > occurances:
+                 occurances = self.__samples[i]
+                 self.__mode = i
+-        self.__mean = float(total) / float(self.__numsamples)
++        self.__mean = float(total_us) / float(self.__numsamples)
+ 
+         # range
+         for i in keys:
 -- 
 2.44.0
 
