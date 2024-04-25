@@ -1,54 +1,56 @@
-Received: from mail-qt1-f181.google.com (mail-qt1-f181.google.com [209.85.160.181])
+Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com [209.85.219.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E309414D2B4
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 18:07:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2681714E2F6
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 18:07:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714068463; cv=none; b=kObz/oBjkmDva8fBLf2P+zlCZRgo1r7+biZb9TUgSCuU6raG7AAwnh6Ih6/XHJw/KZAvRirsMj5idxlj3a3IgjmLvWnZIuWSdOjF5xe3fMVGgK78jlMkLd0tdANG3/9LHRFNFy3hGUOhfBJmvex9jh/4z2bFB4VvAb5sXGWLOas=
+	t=1714068464; cv=none; b=nTGKAF66lc+6bDGOG0o5CeKYVGYVBjyoNGAgqLFEEWZcDfT3+gBKM8By7uMI5RwlO913DE9jHRwOj6eGRKfBfoPgOFguDoxtHHVLr38CCHQkibLLR+pOvsCYPphSRFuOXAlE9HsVsmWxIOyTlH9vlEY1qmmOh+jJq/mcH1TkiU4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714068463; c=relaxed/simple;
-	bh=6o7uNvE/GsvvpLIv9enSeqPYWrV5ztrOqmWNZwljm0k=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=LxFXo0YCsqumLkHrPYSmVcu6gF0w0GdQ1iFi7C7hkYNQW5W+qyr09QcKoBQGox6UJdvEABFABeUJRjZ9Kw3lAdHl/41zxDM4Dgtg+9MwDLqRaUJCt4CJHMRSpB8SRJ9abBqZngp75AMlzY2uSMQpiHNM4+0La/q92uIZ7CAV0tU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=he2d2DVp; arc=none smtp.client-ip=209.85.160.181
+	s=arc-20240116; t=1714068464; c=relaxed/simple;
+	bh=CM4B9+qAcVnI1XV7OjqRTibeaaRJbsi3N9KI0NnrpgY=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=eaz0eYwCIbi9PkAslDAyLTf596RcPtD17Ok/FWdkt645h1NrZBILEf6YcBm9j8Q5YMnx4nAba0qEnB2ZoGtKB7UneEj2T2jkTPIkkJAUIVgfC5YorHD0LZEd3rd45ULY63Sx1iFVFiIGvBwkXMw6NjnkGcjpnEaD9LbpnpgX6Hs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lu32wi54; arc=none smtp.client-ip=209.85.219.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="he2d2DVp"
-Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-434b7ab085fso18930961cf.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 11:07:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lu32wi54"
+Received: by mail-qv1-f46.google.com with SMTP id 6a1803df08f44-69b40061bbeso7595346d6.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Apr 2024 11:07:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714068460; x=1714673260; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=Cvc9pR/9UY/A3SmU6Sf3xBAu6VfUjGLnkxGXVX/XFE8=;
-        b=he2d2DVpesaGXqeICwpXiSEexUM5QoKk4G7mgLnivQH3F0yFdn3f8/FQMYsBsEpETC
-         SXknOxVXMIj3Ob8+fwhIyo4nTtfO/5yOBTRtEYTAmEHU99HNwlY96W5kJlrg6CdcXPVY
-         V+QraFwJc1Z5Qz82L1Bql6zergF60g5mOGVAR53+UiGvpKFnVUrAaDF18E/jwi7LjdaD
-         kU9NIap5qvy/YGgCXhs+/wMfzxCp8qnhOy/L6AXBmc0MEd7xgujCqZTbNo2r5zOCCC51
-         0RZVAXNO61bJafTBdIC2FvgPSHLvSJaRVO+gBJg8/a57vNjSGs2O5vn2/0eyvkym2kQ5
-         c63Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714068460; x=1714673260;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1714068462; x=1714673262; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Cvc9pR/9UY/A3SmU6Sf3xBAu6VfUjGLnkxGXVX/XFE8=;
-        b=RWm5RaeSpUdgnQk+JdAJTcMJiujrBVeD9w/aQEIVZ9PfLA5AHpevLqCd7CrbOgC3PB
-         GEx9sfu0cHVn6bH7o00CGfLgbRsLIAzK3I2XNOrB3xZQZfq5kZbgNW+jY9BDadTtU+5n
-         ToHe3YuZeoqCY5s/yZrNnot2XvYleqnW/JCgD2ihmMx8tJjH4amJM9jIV8vCfAFKnjq2
-         xDPQruidDv/RLQSrwnDkZdNITS2v54OBS6C2ZaM68DxIAq/nnuBM4jxmN+R4vckOWQF9
-         KxwDfXFEAxnXIFa2QxrtUgKoDptSbD1qoLjaJMhSMeaRYQrxhLeevKvpYLqiOaX+oOAX
-         Tg4g==
-X-Gm-Message-State: AOJu0Yw1ubpn8aUEJSsq3HOaoRTybUCCgDQdF8Hk95jhcKXK7E5v7VR8
-	aS1Q7eUFDtzSyp+1r+RzIH332d6HjTHf0I1mjIJKXStuuAy8LZ5+6Bk0HQ==
-X-Google-Smtp-Source: AGHT+IFjipjM9a+9AZkU+bw5fjyTH8HVQM7mc4U4PsPylP9Ccr7rnm6VnrTEW3XJAcGnVJW/rtj2ZA==
-X-Received: by 2002:a05:6214:c8b:b0:69b:60b6:7c5d with SMTP id r11-20020a0562140c8b00b0069b60b67c5dmr5161513qvr.18.1714068460056;
-        Thu, 25 Apr 2024 11:07:40 -0700 (PDT)
+        bh=viEwlfKmx8SecYACMb9XiSoxhLtdQcPbWOh7hUeOi4w=;
+        b=lu32wi54RtYm3cp3wkFrSPomXJikDg0YipR4+zqgDVor2SWH7U74pcTAaOXKDLS9NW
+         EQSge164N87klix/mmKORAI3h5U/sn0hDqz5jXJgu+gMW0gSz/S0GBUewxP/F1xI3x63
+         ZWDLw2ISooWJj8xk1hlyJCzAMAUiZqzddznRBcoJUpV1qhDdP0Ruoz+NicmpKBbOUTpR
+         46ZmZezxXsDg8NPD68ctaLCRTnO+J241zu8CJ+79kxvKsxbpWJF8FIbWZhWpmtEXNB/8
+         hGk//6cX4ld7GoBJoPewF8CzXdE38b37nIFnLEsxm11asLcTf5EjA81WK8iHZO3Mthh4
+         fc5A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714068462; x=1714673262;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=viEwlfKmx8SecYACMb9XiSoxhLtdQcPbWOh7hUeOi4w=;
+        b=Dg9RlSYARiMGumQy3+GOmjMeS6SlTTomT6HmHuoenxk+T4gRB2CQLHFrMlUmL915Cp
+         zIvaYnkfXGX3cVP0bURj8Hw1yqvpvJkb1gFEe7lFh/vCCTOu5bgAwXxX75faut7wdM7g
+         vuByGmhy1xPxBBuryHeV5XxiP9zqvaN0cZh+2ahY4wgvKbBh2v/R9YrlbTOj6D9wS3OK
+         GLjXdt7tWrpbSwlyVVRSD3yMxiJMHELsZ+r2RDnwESd+wo+MVFbFl6bPFt41kWuLOmml
+         g7EjKLEnk6x5FXUk6oqGds1/fssdQmhhQa0+MFeWzYgrFboLVNqBeKZLJ2rCQVlwpW5z
+         7cpA==
+X-Gm-Message-State: AOJu0YzhrVGtpRT0hMfrjj4wPWDBfxOk9y2vqgHck81QTAnDAe3EnZIw
+	iCciiWiBnqVVxKZMRjrik0Yj9YP08MUi86+d4YQ4rrJh0ZHbYzk/5xtEIQ==
+X-Google-Smtp-Source: AGHT+IH8ZuvJtK/ST8iLs6BiJhDlge3TZYGjy2jegPNRMOMldgeDhXyK39TXmEL0WYwZbfudZQDsCw==
+X-Received: by 2002:a05:6214:29e9:b0:69b:5ecd:7c9a with SMTP id jv9-20020a05621429e900b0069b5ecd7c9amr595685qvb.51.1714068461503;
+        Thu, 25 Apr 2024 11:07:41 -0700 (PDT)
 Received: from fionn.redhat.com ([74.12.5.183])
-        by smtp.gmail.com with ESMTPSA id n5-20020a0cdc85000000b0069b7c8ced6asm2103931qvk.12.2024.04.25.11.07.38
+        by smtp.gmail.com with ESMTPSA id n5-20020a0cdc85000000b0069b7c8ced6asm2103931qvk.12.2024.04.25.11.07.40
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 25 Apr 2024 11:07:39 -0700 (PDT)
+        Thu, 25 Apr 2024 11:07:40 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
@@ -57,10 +59,12 @@ Cc: Clark Williams <williams@redhat.com>,
 	Juri Lelli <juri.lelli@redhat.com>,
 	Kate Carcia Poulin <kcarcia@redhat.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/4] rteval: cyclictest.py: Fix the description in the xml report
-Date: Thu, 25 Apr 2024 14:07:20 -0400
-Message-ID: <20240425180723.66499-1-jkacur@redhat.com>
+Subject: [PATCH 2/4] rteval: cyclictest.py: Remove unused method sample
+Date: Thu, 25 Apr 2024 14:07:21 -0400
+Message-ID: <20240425180723.66499-2-jkacur@redhat.com>
 X-Mailer: git-send-email 2.44.0
+In-Reply-To: <20240425180723.66499-1-jkacur@redhat.com>
+References: <20240425180723.66499-1-jkacur@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -69,42 +73,30 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-If the __type is 'system' we should add the description to the xml
-The output should be something like this
-
-<system description="(12 cores) Intel(R) Core(TM) i7-9850H CPU @ 2.60GHz">
-
-Before this fix it was
-
-<system description="">
+Remove the unused method sample() in class RunData
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/modules/measurement/cyclictest.py | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ rteval/modules/measurement/cyclictest.py | 6 ------
+ 1 file changed, 6 deletions(-)
 
 diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index 671426e13c4d..48b86a03cbfc 100644
+index 48b86a03cbfc..1ba8b8b2323c 100644
 --- a/rteval/modules/measurement/cyclictest.py
 +++ b/rteval/modules/measurement/cyclictest.py
-@@ -25,7 +25,7 @@ class RunData:
-         self.__id = coreid
-         self.__type = datatype
-         self.__priority = int(priority)
--        self.__description = ''
-+        self.description = ''
-         # histogram of data
-         self.__samples = {}
-         self.__numsamples = 0
-@@ -130,7 +130,7 @@ class RunData:
-     def MakeReport(self):
-         rep_n = libxml2.newNode(self.__type)
-         if self.__type == 'system':
--            rep_n.newProp('description', self.__description)
-+            rep_n.newProp('description', self.description)
-         else:
-             rep_n.newProp('id', str(self.__id))
-             rep_n.newProp('priority', str(self.__priority))
+@@ -61,12 +61,6 @@ class RunData:
+         if value < self.__min:
+             self.__min = value
+ 
+-    def sample(self, value):
+-        self.__samples[value] += self.__samples.setdefault(value, 0) + 1
+-        self.update_max(value)
+-        self.update_min(value)
+-        self.__numsamples += 1
+-
+     def bucket(self, index, value):
+         self.__samples[index] = self.__samples.setdefault(index, 0) + value
+         if value:
 -- 
 2.44.0
 
