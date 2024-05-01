@@ -1,87 +1,85 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B65DD12C801;
-	Tue, 30 Apr 2024 11:03:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C28A6161B6A
+	for <linux-rt-users@vger.kernel.org>; Wed,  1 May 2024 20:09:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714475032; cv=none; b=aCzouv0dkQL/88QE3XnI3igvj8G/tn6o5HE7zQNsXbcA0Mc4tEzbuRwcHO+ikJq+8j7mtiZDXMvDdku9zr94cpeVA0msLGy+Svo6RoFEdORPqKL+eqQ4ftoSc8EKArYF+LYvYRXFtfwUEeB0mlWLIW+Jjos/AH66khbPjie+OIM=
+	t=1714594169; cv=none; b=JM887/kEk1HYT/XrvmKkapSQNwvl4/b4mpyx1j1ZbvgaPic0gff792jcpRzmZ8KvoZmsfDDfso6nOggH0tolJFHlMpf+mPEQlj/0MxZv+cmFPqW4o7BQYDlxiHXcSHuvmnaozTCU4/3O1Y67VAmXc90oS/GgT+8g8FU1cs0JzFY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714475032; c=relaxed/simple;
-	bh=DqHdpi1aL/50FmrfmlZosNAnr4l+wD0VFnhwqqeynaU=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=SqX/UIri2LjoQM9gY5N15uFpbU1jkow/XtFoW7wrHZEOXGzmghrPER4Z9pkNG9ydqeOGYdq+FIapZwLW03sElPv19ZCbyV960ZdOxNYJCx+RxVLF3dlh4PmE21gIaD0csvCbuiFcsb6ySD5JAXYD8kSjiRlWQa4ypSalKiyUGdA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=J+xCdbZz; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=SEwnfAh3; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1714594169; c=relaxed/simple;
+	bh=ikOXhhtO+bTXRZRJt63xokyp1K5yW8BtVXEiXg2UTnA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=gW/9ObGvglRl/fSRAfiP4SGNskrzHEM6zZs7ruItvuKTBtjYkdBBIil2iQIIqxr5zs9SQUyEeVW6+7SiEqOidBG+8gU9EHR82cLXdoYV9AMQMQR5uyTcPeyOkDMkhasn3m3bl3lrWqfq62dP2dGAP7pGuEeYg2I2u30t/Dp6w/4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X9igiH8/; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="J+xCdbZz";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="SEwnfAh3"
-Date: Tue, 30 Apr 2024 13:03:47 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1714475028;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X9igiH8/"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1714594166;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=IB0/69YgucCahmdfwDBYOWTe42KL67RfXfDYWFAOOTk=;
-	b=J+xCdbZz8YM0JOnCu37dSgIMXXPxO7LoEtfdCTI5nYm2AnWHpTWutSciM4mffqQH6J6odZ
-	/+PXUy1aktPEy0HSNcxjmrP/9BK+dNvqokM4BhqR/YtlIRuz6hkwKQl/PZp8/acNhYHEOY
-	TA0RI+iXIkQ6i8w7CYeV26RI2qEZcaBMzcuhgVlzl6C1LgMi8vzJo2isThRNgbXAd3w/VH
-	xResD7DzlhcC+cdctKs63xhlyr055fYyguW8O9wg14ZF6Ygnqn04XKft4BsJsXkilI6VS+
-	fMZisMCj4BrYa2y1iQRJo1Dc8sO4g+OYJdeRokqCWie8Yi9GUxqJ3dYlNoNftQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1714475028;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=IB0/69YgucCahmdfwDBYOWTe42KL67RfXfDYWFAOOTk=;
-	b=SEwnfAh3woJsgt7atj1PLFMNKy/I71kEewwQhdB7aeM+d++PGWUu3zFGeRVVqI9nER1OVJ
-	YBJr2E8ZLKEsbXCA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.9-rc6-rt3
-Message-ID: <20240430110347.LCK9LAJr@linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Uj3x8ZIfxJMh7WB+Gwd9mLSX87wdfvRA1C2+JQJrrRU=;
+	b=X9igiH8/KWSkU4FCTueHT2zZ/a4544NpUtJIHfjSX2AWsEnk2jwSuo1H1XA+AADWsZOMxW
+	t+1SSFCdYZdJyqoBUX+UpbDffCTeVFq/Oh4vxUk2DI5ce/nZ1JPgV3AVBDuYlvPP4U7jmt
+	Qozxt3H6hLKjtln+KfnXfvWgzxPfnaQ=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-304-bGklirjnPSmMwl7P4tSJhQ-1; Wed, 01 May 2024 16:09:23 -0400
+X-MC-Unique: bGklirjnPSmMwl7P4tSJhQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DDA858948A2
+	for <linux-rt-users@vger.kernel.org>; Wed,  1 May 2024 20:09:22 +0000 (UTC)
+Received: from p1g2.redhat.com (unknown [10.2.16.177])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8EC806958;
+	Wed,  1 May 2024 20:09:22 +0000 (UTC)
+From: Crystal Wood <crwood@redhat.com>
+To: John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	Crystal Wood <crwood@redhat.com>
+Subject: [PATCH] rteval: cyclictest.py: reduce: Fix exception with missing samples
+Date: Wed,  1 May 2024 15:09:22 -0500
+Message-ID: <20240501200922.226347-1-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
-Dear RT folks!
+If cyclictest omits a line of zeroes rather than printing it,
+__samples[high] will not exist (rather than be zero).  Handle this
+in preparation for cyclictest doing this.
 
-I'm pleased to announce the v6.9-rc6-rt3 patch set. 
+Note that get() seems more suitable than setdefault(), but the latter
+is used in order to match the code in timerlat.py.
 
-Changes since v6.9-rc6-rt2:
+Signed-off-by: Crystal Wood <crwood@redhat.com>
+---
+ rteval/modules/measurement/cyclictest.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-  - The tracepoints in i915 were enabled after some of them were moved
-    into a different header file. This has been noticed while posting
-    the series for review and now the tracepoints are disabled again.
-    The problem is that some of them acquire sleeping locks within the
-    tracepoint which is invoked with disabled preemption.
-
-  - The selftest with the cxgb4 networking driver raised a warnings.
-    Reported by John B. Wyatt IV.
-
-Known issues
-    None.
-
-The delta patch against v6.9-rc6-rt2 is appended below and can be found here:
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index cef73abd1b4b..925065367eaf 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -115,7 +115,7 @@ class RunData:
+                 low = i
+                 break
+         high = keys[-1]
+-        while high and self.__samples[high] == 0:
++        while high and self.__samples.setdefault(high, 0) == 0:
+             high -= 1
+         self.__range = high - low
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/incr/patch-6.9-rc6-rt2-rt3.patch.xz
+-- 
+2.44.0
 
-You can get this release via the git tree at:
-
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.9-rc6-rt3
-
-The RT patch against v6.9-rc6 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/older/patch-6.9-rc6-rt3.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.9/older/patches-6.9-rc6-rt3.tar.xz
-
-Sebastian
