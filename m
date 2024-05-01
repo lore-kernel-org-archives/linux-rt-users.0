@@ -1,172 +1,108 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B252929405
-	for <linux-rt-users@vger.kernel.org>; Wed,  1 May 2024 20:49:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DDA5E1649CF
+	for <linux-rt-users@vger.kernel.org>; Wed,  1 May 2024 20:52:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714596592; cv=none; b=jIIUcXbSxRPGcQIIY0xKNi1/pQqkKarN0rDH9xhFw6UHiwTzFb/6utwkQWdOotMdlPxb8bBWn8/NGcxi/QMg4yFKVNe/o/cp5Z4InmTLFT1JfJvVjLtqBgoKMOWjscni3t1swVhnjOv2Q/WtZrBFHJ6WFqncSK4xkdB9cVSBugE=
+	t=1714596725; cv=none; b=NUhfnZxNnxmz24C9QcfK/QKkjRq9Ctip33UOTINNtIJhUJVvFCgqZXxFr2jacBTABaN6Ieq3EZ5T421t9EYXT2kNmCsPR37AgaMRxuFXyi4hFBa4M9h6WDbDtspYKt2vFGC38U9fWH5GCT1xl9G7WkhYbgspUuJOmTC5GMwQkP4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714596592; c=relaxed/simple;
-	bh=7jAmxpIwZ5GEqwQ1ydFOholmYBmXgIfOCzwGpUi4psc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Y6W1Nd/36k8fkYJv+MVsLorA5akrnoGf0RjZTKIrE9Jyp8NRPw77Hu7rG0w3/9LwxEYlZpqaTai7BP+MKSr+TKAuiHpL5hneHdiffWBCmXx6TJslCTLLEwsU7bWdgF8AENwn69x0Nk75ikTLXET+LA0B0FcLCkIwY/jCi8tgGSM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Z5mCVc/1; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1714596725; c=relaxed/simple;
+	bh=/6RY9vJtdOCNe1qq/nf6SJ7XAuqgD3orMvGP0nQWd2c=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=uXaLZUzFNFwIL7B7R7RJoahybdqMOsCEKaj7OLd3a5iTjgjrhz1geUjhYxxuWNuGb9TNWF9/KiBEpzDOJs7/ubqNMX5vNO0oVIuu/G8Gl0yRFAKkNDEKUjP3CUJzmF8EnAUva1FCuVZjAZkTYvkXmkgzfWBE7wItOCxXh7zPJIY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d4lM5RMA; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Z5mCVc/1"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d4lM5RMA"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1714596588;
+	s=mimecast20190719; t=1714596722;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=7y97pYch9nNZSga3lad+izWFM3IBDTWC4whaTt35aBg=;
-	b=Z5mCVc/1Ihd/WaT+frwQwLsC5JrFGlrlw1zXuuEOB21gBFrywyKNNDptHnH1vmWadpFDs4
-	21FoGCRxyXkAqxe3Cha5bmiZeP0zRE0JGTPE2McJ2u9V+s/+mDHrODFKsypdgxnq11s1Qo
-	b9STl6c8ANiW0fr2QIDsajvL0ZPk7nk=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=zp6vewNfKTBK2CtJrmMsZrXTqT0cqYg60sHYh2lx5RA=;
+	b=d4lM5RMAeeq1qHIUC3rgyTfUGlMOuNebksdYYiNTEWdOhdrtHFgsyYUZdTAI+/MgAOfNbf
+	yIAPv+R5I9FrbooQnM/k7AoU7kQa7thnTGZUqon6upNoR2332r62mJPLEU9PUKB9/63Zqr
+	4JdNEDo8OiVMORnI9LJgONzpX48mBbA=
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-219-4VReh1WUOH28E5ZWjvNNfw-1; Wed, 01 May 2024 16:49:45 -0400
-X-MC-Unique: 4VReh1WUOH28E5ZWjvNNfw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C91B480591B
-	for <linux-rt-users@vger.kernel.org>; Wed,  1 May 2024 20:49:44 +0000 (UTC)
-Received: from p1g2.redhat.com (unknown [10.2.16.177])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7D05F40C6CC1;
-	Wed,  1 May 2024 20:49:44 +0000 (UTC)
-From: Crystal Wood <crwood@redhat.com>
-To: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>
-Cc: linux-rt-users@vger.kernel.org,
-	Crystal Wood <crwood@redhat.com>
-Subject: [PATCH] rt-tests: cyclics: Omit empty histogram buckets
-Date: Wed,  1 May 2024 15:49:44 -0500
-Message-ID: <20240501204944.228386-1-crwood@redhat.com>
+ us-mta-583-MeMZeV7IN3OwAlj8qcW7cQ-1; Wed, 01 May 2024 16:52:01 -0400
+X-MC-Unique: MeMZeV7IN3OwAlj8qcW7cQ-1
+Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-6a0bad9e756so42979576d6.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 May 2024 13:52:01 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714596721; x=1715201521;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=zp6vewNfKTBK2CtJrmMsZrXTqT0cqYg60sHYh2lx5RA=;
+        b=aTbDg1a0ga8vTs2ATkiVGNg7XCCWleJSVfy8dilQ/L2WRl8rko9ip/+YJ93bKlSWz5
+         nSqg5FdCGJSSAmAnRXHMpsCJZZbueRFRMJZybX2WhowapAfZIYQQLUGOt6hwfKhIugW5
+         IkiMaXAIdiC2W4IdM5EnoZiZChjwM++CF8uaxP70mmLE9GAigPXFY1J1tKDjGRHq+RRE
+         jkqiCjtKGSZ2D0xXnIVZCVyTVUhnNxr6dUZHumPjK04Kby04R6tpetWYAM7AUkcn43JP
+         rEJ8rOESyec7kYct56Dw8UJ6ZiN4uYGHeInWfIbyIm9Y168X5lHcBfEyhtHjHhb8Q2Ib
+         Ez9A==
+X-Forwarded-Encrypted: i=1; AJvYcCWCtJmRshCrxDUOf8vbbCcyhJnmKGZj40Q/oZBNegOdpe2GzIu6PvFGlI7u6CfeTRJeONdTE89qkoyMs28k4hG2a4yuVBoOJGieif/DSFM=
+X-Gm-Message-State: AOJu0Yz/NkGoTapvjV40b0bEHWQ+16R9Ga2c1R3FJH4ncxnKW45pDDr5
+	qT1SIJl0C835ePvUWfm0iGSUKUM6mUS9sdqpNxo3aAdH1SIble4o/IFYoInIML/k2GnwiMrRkR0
+	+y1/ilOf1ctz2vY9uYTobhk5jh4I8X9y2yQM1qAYzrAhfq3F/qV2fOQZAa3GfslXN
+X-Received: by 2002:a05:6214:483:b0:69b:7b36:30fe with SMTP id pt3-20020a056214048300b0069b7b3630femr4364853qvb.38.1714596720914;
+        Wed, 01 May 2024 13:52:00 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEcnNZI2sRX4AIgEa8j2O3GCOcQiEu+AUYII3ByjWIFuj6OXFo8k8dyPb2LwToyGTUtyUOtgA==
+X-Received: by 2002:a05:6214:483:b0:69b:7b36:30fe with SMTP id pt3-20020a056214048300b0069b7b3630femr4364829qvb.38.1714596720539;
+        Wed, 01 May 2024 13:52:00 -0700 (PDT)
+Received: from fionn ([74.12.5.183])
+        by smtp.gmail.com with ESMTPSA id z7-20020a0ce607000000b0069b4f48003bsm216569qvm.100.2024.05.01.13.52.00
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 01 May 2024 13:52:00 -0700 (PDT)
+Date: Wed, 1 May 2024 16:51:51 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Crystal Wood <crwood@redhat.com>
+cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] rteval: cyclictest.py: reduce: Fix exception with missing
+ samples
+In-Reply-To: <20240501200922.226347-1-crwood@redhat.com>
+Message-ID: <07093174-4e3d-844f-6cef-00cf8c3a2a96@redhat.com>
+References: <20240501200922.226347-1-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+Content-Type: text/plain; charset=US-ASCII
 
-This makes the output more palatable for human readers, at the expense
-of requiring other consumers of the data to be able to handle the missing
-lines.
 
-Signed-off-by: Crystal Wood <crwood@redhat.com>
----
-Don't apply until the below patch has been merged in rteval:
-https://lore.kernel.org/linux-rt-users/20240501200922.226347-1-crwood@redhat.com/
----
- src/cyclictest/cyclictest.c         |  6 +++---
- src/include/histogram.h             |  4 ++--
- src/lib/histogram.c                 | 15 ++++++++++++---
- src/sched_deadline/cyclicdeadline.c |  7 +++----
- 4 files changed, 20 insertions(+), 12 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 8a963392e639..c5c33898c63c 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1340,13 +1340,13 @@ static void print_hist(struct thread_param *par[], int nthreads)
- 	fprintf(fd, "# Histogram\n");
- 	for (i = 0; i < histogram; i++) {
- 		unsigned long flags = 0;
-+		char buf[64];
- 
--		fprintf(fd, "%06d ", i);
-+		snprintf(buf, sizeof(buf), "%06d ", i);
- 
- 		if (histofall)
- 			flags |= HSET_PRINT_SUM;
--		hset_print_bucket(&hset, fd, i, flags);
--		fprintf(fd, "\n");
-+		hset_print_bucket(&hset, fd, buf, i, flags);
- 	}
- 	fprintf(fd, "# Min Latencies:");
- 	for (j = 0; j < nthreads; j++)
-diff --git a/src/include/histogram.h b/src/include/histogram.h
-index c7aba68ffb99..31fe2a08eda0 100644
---- a/src/include/histogram.h
-+++ b/src/include/histogram.h
-@@ -36,7 +36,7 @@ int hist_sample(struct histogram *h, uint64_t sample);
- int hset_init(struct histoset *hs, unsigned long histos, unsigned long bucket_width,
- 	      unsigned long num_buckets, unsigned long overflow);
- void hset_destroy(struct histoset *hs);
--void hset_print_bucket(struct histoset *hs, FILE *f, unsigned long bucket,
--		       unsigned long flags);
-+void hset_print_bucket(struct histoset *hs, FILE *f, const char *pre,
-+		       unsigned long bucket, unsigned long flags);
- void hist_print_json(struct histogram *h, FILE *f);
- void hist_print_oflows(struct histogram *h, FILE *f);
-diff --git a/src/lib/histogram.c b/src/lib/histogram.c
-index 35a9d604da86..c21fc49c0a6c 100644
---- a/src/lib/histogram.c
-+++ b/src/lib/histogram.c
-@@ -114,8 +114,8 @@ void hset_destroy(struct histoset *hs)
- 	hs->histos = NULL;
- }
- 
--void hset_print_bucket(struct histoset *hs, FILE *f, unsigned long bucket,
--		       unsigned long flags)
-+void hset_print_bucket(struct histoset *hs, FILE *f, const char *pre,
-+		       unsigned long bucket, unsigned long flags)
- {
- 	unsigned long long sum = 0;
- 	unsigned long i;
-@@ -123,10 +123,17 @@ void hset_print_bucket(struct histoset *hs, FILE *f, unsigned long bucket,
- 	if (bucket >= hs->num_buckets)
- 		return;
- 
-+	for (i = 0; i < hs->num_histos; i++)
-+		sum += hs->histos[i].buckets[bucket];
-+
-+	if (sum == 0)
-+		return;
-+	if (pre)
-+		fprintf(f, "%s", pre);
-+
- 	for (i = 0; i < hs->num_histos; i++) {
- 		unsigned long val = hs->histos[i].buckets[bucket];
- 
--		sum += val;
- 		if (i != 0)
- 			fprintf(f, "\t");
- 		fprintf(f, "%06lu", val);
-@@ -134,6 +141,8 @@ void hset_print_bucket(struct histoset *hs, FILE *f, unsigned long bucket,
- 
- 	if (flags & HSET_PRINT_SUM)
- 		fprintf(f, "\t%06llu", sum);
-+
-+	fprintf(f, "\n");
- }
- 
- void hist_print_json(struct histogram *h, FILE *f)
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 7525ad136d2c..631d57ee885e 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -731,11 +731,10 @@ static void print_hist(FILE *fp, struct sched_data *sd, int nthreads)
- 	fprintf(fp, "# Histogram\n");
- 	for (i = 0; i < histogram; i++) {
- 		unsigned long flags = 0;
-+		char buf[64];
- 
--		fprintf(fp, "%06d ", i);
--
--		hset_print_bucket(&hset, fp, i, flags);
--		fprintf(fp, "\n");
-+		snprintf(buf, sizeof(buf), "%06d ", i);
-+		hset_print_bucket(&hset, fp, buf, i, flags);
- 	}
- 	fprintf(fp, "# Min Latencies:");
- 	for (i = 0; i < nthreads; i++)
--- 
-2.44.0
+On Wed, 1 May 2024, Crystal Wood wrote:
+
+> If cyclictest omits a line of zeroes rather than printing it,
+> __samples[high] will not exist (rather than be zero).  Handle this
+> in preparation for cyclictest doing this.
+> 
+> Note that get() seems more suitable than setdefault(), but the latter
+> is used in order to match the code in timerlat.py.
+> 
+> Signed-off-by: Crystal Wood <crwood@redhat.com>
+> ---
+>  rteval/modules/measurement/cyclictest.py | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+> index cef73abd1b4b..925065367eaf 100644
+> --- a/rteval/modules/measurement/cyclictest.py
+> +++ b/rteval/modules/measurement/cyclictest.py
+> @@ -115,7 +115,7 @@ class RunData:
+>                  low = i
+>                  break
+>          high = keys[-1]
+> -        while high and self.__samples[high] == 0:
+> +        while high and self.__samples.setdefault(high, 0) == 0:
+>              high -= 1
+>          self.__range = high - low
+>  
+> -- 
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
