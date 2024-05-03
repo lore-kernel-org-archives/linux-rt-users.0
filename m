@@ -1,109 +1,121 @@
-Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9CBDD1D543
-	for <linux-rt-users@vger.kernel.org>; Fri,  3 May 2024 20:37:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63AC584A40
+	for <linux-rt-users@vger.kernel.org>; Fri,  3 May 2024 21:24:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714768675; cv=none; b=ndU/eUQ41L9CwhpyuIvIwWAVQzqOo/nbr/t0jgTR3BtxCMIGuqPIQqLUW9gNutnev8/hA1WxC/D//kluJxGPeQNDlQif9h5Dsjke2vBxp1451Uq4x7P9CmrbGjnyifKO9ATfRanOmJztDtNu5BI39fBHCwN3C/x8LOV7DwhvJig=
+	t=1714771489; cv=none; b=NxQG6acb8oQQuKdXRuuzByljuoUt3qQ+3IccYsIrkGab7GYGeZKlGqfB99oYND7R5T3o5qEbBoxaev6xm/MG+QmlTfPv/1m7Bo35ploqAVLtG5cimHmBxUug3WUlkK6SqLFwDxnHf1cdNjNVZjUj3+om43tt1Fb/8Vv7HZNsARg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714768675; c=relaxed/simple;
-	bh=Qyy9hDeLH8S38e55HDEMpVxPj3DiD7Je9hfb52BB3hI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GTGGTxQcoaS72pSPYj1EpGj/Eu1ZuJxSHeg493NPytniSRJPJh3CujSvI/gd7dXyUNw3nn7d/fbtByNE5M6lay+YgKRsF/d1W3ECzpHa2l2+qkVwSIhEYUSHOwCJIM7CDu8MHJSq5WDYhn+jSOYA4Lq00gb9lb1bsvlvsmy0kdc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IuASoRqW; arc=none smtp.client-ip=209.85.222.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1714771489; c=relaxed/simple;
+	bh=+ooVK/AumgxK/5446WmCtFMmxrP/Zl1qnwgHQdxyRHA=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=sTAgIq5p33p6e/FJ7MpIhi1wEQto06xP94PL6Tq0oME7O8oG5k34AYRfB8Q6CoTul1ECnE9hXQWnSP2YI0lXbDbk3TPvkiQgqTpEi4xsB2Lf0cwN6hPOcbeyqsxVVNXYz+gmeNjhiOLWYDkJM4E5sM0qYYG4ZvWjfthBfRbtHTg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=S/ltFB5k; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IuASoRqW"
-Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-78f05341128so2513085a.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 03 May 2024 13:37:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714768672; x=1715373472; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=lq5CAwC6hlV/squlospfV2+GYZrsjgv3/I1V7jYuHko=;
-        b=IuASoRqWlNsSmy2a3IIf0z9TKILPN/5ceK2R6USN2kuii2+WED+vRdAgVeRW3rLvf4
-         cqfGhAz6eYC5riOWlZsuGG7oRsj0qbev7nqLcbguOzpkOAbcOksEB/BGs8FW8cQy14XZ
-         nzgCCkOOX0baOMfQvglnSUhPVZiVwzpW+GEMe+ZbnsZ0TouCsRjZAOk4z/kLt98IUOg4
-         wM/OYnMgI6Ghs2g55mcH9UrVtSe6Mxl0M8tvVhPwnsghu4khxnk4T/uxbWlI0NJ15l0N
-         ++tgERzEmCpdL5W8I/CIZoubhdUsxc0LY2+qfA5+nJpa2XZr4KT56tIx48N/CN9zMsEp
-         4NCg==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="S/ltFB5k"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1714771485;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=M1/T5A+JsNL4c/hegk7O854x264+NXh9sMpQ9LpNoIs=;
+	b=S/ltFB5kzQ4H1eZZxy17hQfpwXp7MYpVTKjFM+9HI3bHYo8sPQp6bRbuTw2T2XHR3P86WU
+	bCQpUThhLZkwAWt0GP+UYbtc6S7TdVR9ySAhhwggxd9XXmUuyZfp35ZU/xzbHPip11OLh5
+	hJewMsEUD/mq4j8uBBiqSrOeZvumbcI=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-316-rWwcPhUEMXmCBEFEfXc3Ew-1; Fri, 03 May 2024 17:24:43 -0400
+X-MC-Unique: rWwcPhUEMXmCBEFEfXc3Ew-1
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-790ef197695so9713985a.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 03 May 2024 14:24:43 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714768672; x=1715373472;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lq5CAwC6hlV/squlospfV2+GYZrsjgv3/I1V7jYuHko=;
-        b=t5fvQkNTwhGoYwxxw0QMckiHqhxlB/DJJj1xZxvYE1/CfypuuCaoqz9MS4HtoICI4w
-         at0IF/vs28hUY4b2sDxttailqbRg4p0Nz4G8ZpAXd1n7EzxUTJbpXXi/M8jHDvh1yrWy
-         ET261nAlzFIbxl8Ls5GrtQBY2LHT2X8YMQS6B0+ncvbfaaqJ6I31p43zlYlJAmQKMD+y
-         nGQ/csHlPE++nAfSZFiL9omj0iwBAqcGL7asr9f0jScMEUaOwQOP0N0+FgzoXAOEQ2c7
-         2Hf4Elug+/h865/eeoew+DafDXfmZQdZXE1vN2a007e0ZMwkmJN8U0WFg68z6mnhBoOv
-         KwGQ==
-X-Gm-Message-State: AOJu0YzmOYT+suz7QC3hIMAfc0TJCt80qADus6OjKRkPaOa8GPltDziv
-	jr5q62jorYmfG4lHyO1aV8WyNZ0AjjFTVbuKpsUtrJ8gkbQGssqVr6G4OA==
-X-Google-Smtp-Source: AGHT+IEA9Nhli3DAvbmIwdyxhxkccEqGYR4wZHnWvNXPl6QBpkK89Fpubmtz17amW0sxbEDyaklUVQ==
-X-Received: by 2002:a05:6214:29ea:b0:6a0:c924:10a with SMTP id jv10-20020a05621429ea00b006a0c924010amr4090329qvb.38.1714768672077;
-        Fri, 03 May 2024 13:37:52 -0700 (PDT)
-Received: from localhost.localdomain ([74.12.5.183])
-        by smtp.gmail.com with ESMTPSA id j14-20020a056214032e00b006a0fbb7e6acsm1474938qvu.107.2024.05.03.13.37.51
+        d=1e100.net; s=20230601; t=1714771483; x=1715376283;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=M1/T5A+JsNL4c/hegk7O854x264+NXh9sMpQ9LpNoIs=;
+        b=XQBXZQA9+3bYz/miTjTpCi3RzaHAHFUs0DjqihQ54ksUPBSom2tkQ1HBq1muD4BGi4
+         N2AsTd4XPd+wofOyx6PbbylgqK1sJdZMRfxjEbgehbBa4z2XkXD/NxjXL/egRKemGdtH
+         40GiN/EDsU2t5dw/pKCx28IkKjxWvv4ky5rVWIWZPEMdi7ZMyBS9BerCJer3bULRK7x8
+         HBssD+1+9UNY5Ducb/FLCL8/conO9SBdec9GrqIH9/CRNokEFBu7wq/rTHGTKBepAZ2p
+         uA9/zQouuh27r6luLIcQF0IfD+DaABi/Kmt85npU2zJjsILTOaHmkjZZIIm1or/px4q2
+         HP6A==
+X-Forwarded-Encrypted: i=1; AJvYcCU4vjfTWJ2muuD4p5bRcjHl3FyuQmm8L4qWr5gj45t80se5euE7L5o+R/jPJuIvmS4vWydLgZ5oyULdLsLQxlu/89qnBK1qaHqdjCulIW0=
+X-Gm-Message-State: AOJu0YxHDsGeLMGg4pZdZ/MjAM18mm6CIMgWM//A8wsPghxwHw1aXvUr
+	QjuF53QQ/if856gIs0IXTLQBh6ceScVAawgZ8pcZkYtkP1TOwlPE5MJ8nHhE8AhAqhol22xT8Fv
+	yfGe8u5oU2hieesZ3qXEu2qbFSdcdjKj4IHiiT+Jw8ZZWUPlcEG+ui6/eqPykLvhZ
+X-Received: by 2002:a05:620a:1923:b0:78d:6e6f:9004 with SMTP id bj35-20020a05620a192300b0078d6e6f9004mr5091705qkb.59.1714771483250;
+        Fri, 03 May 2024 14:24:43 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IExbKqUF8bLn2f60xIdGXmbb9uYy6No99Out8pmSclIKmCDp+f3MwBZ+GobQV3g0/ZoSXu1vA==
+X-Received: by 2002:a05:620a:1923:b0:78d:6e6f:9004 with SMTP id bj35-20020a05620a192300b0078d6e6f9004mr5091682qkb.59.1714771482793;
+        Fri, 03 May 2024 14:24:42 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-16-74-12-5-183.dsl.bell.ca. [74.12.5.183])
+        by smtp.gmail.com with ESMTPSA id x14-20020a05620a098e00b0078d3b9139edsm1551010qkx.97.2024.05.03.14.24.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 03 May 2024 13:37:51 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
+        Fri, 03 May 2024 14:24:42 -0700 (PDT)
+Date: Fri, 3 May 2024 17:24:41 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rteval: stress-ng: Use inherited method to set exclusive module
-Date: Fri,  3 May 2024 16:37:12 -0400
-Message-ID: <20240503203712.67724-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.44.0
+To: Crystal Wood <crwood@redhat.com>
+cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH] rt-tests: cyclics: Omit empty histogram buckets
+In-Reply-To: <da44edf2d10659ccfea2b8a646f8431cd3dcd168.camel@redhat.com>
+Message-ID: <9ed003b3-66dc-fd4a-b6b2-531ba49657da@redhat.com>
+References: <20240501204944.228386-1-crwood@redhat.com> <974cd5d9-f027-5e51-e6ba-fd50e4759d4b@redhat.com> <da44edf2d10659ccfea2b8a646f8431cd3dcd168.camel@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/mixed; boundary="-1463771134-1147017012-1714771482=:68633"
 
-Add the method set_exclusive() in the rtevalModuleProtype and use it in
-stress-ng instead of setting the variable directly
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval/modules/__init__.py       | 5 +++++
- rteval/modules/loads/stressng.py | 2 +-
- 2 files changed, 6 insertions(+), 1 deletion(-)
+---1463771134-1147017012-1714771482=:68633
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
-index cdb0e56f0c63..4330a839db6f 100644
---- a/rteval/modules/__init__.py
-+++ b/rteval/modules/__init__.py
-@@ -62,6 +62,11 @@ class rtevalModulePrototype(threading.Thread):
-         return self._exclusive
- 
- 
-+    def set_exclusive(self):
-+        """ Sets This module to run alone """
-+        self._exclusive = True
-+
-+
-     def set_donotrun(self):
-         """ set a module's donotrun field to True """
-         self._donotrun = True
-diff --git a/rteval/modules/loads/stressng.py b/rteval/modules/loads/stressng.py
-index cbcf6b74c1c2..4f6abfb5eabd 100644
---- a/rteval/modules/loads/stressng.py
-+++ b/rteval/modules/loads/stressng.py
-@@ -31,7 +31,7 @@ class Stressng(CommandLineLoad):
-         else:
-             self._donotrun = True
-         # When this module runs, other load modules should not
--        self._exclusive = True
-+        self.set_exclusive()
- 
-     def _WorkloadSetup(self):
-         " Since there is nothing to build, we don't need to do anything here "
--- 
-2.44.0
+
+
+On Thu, 2 May 2024, Crystal Wood wrote:
+
+> On Thu, 2024-05-02 at 15:13 -0400, John Kacur wrote:
+> > 
+> > 
+> > On Wed, 1 May 2024, Crystal Wood wrote:
+> > 
+> > > This makes the output more palatable for human readers, at the expense
+> > > of requiring other consumers of the data to be able to handle the
+> > > missing
+> > > lines.
+> > > 
+> > > Signed-off-by: Crystal Wood <crwood@redhat.com>
+> > > ---
+> > > Don't apply until the below patch has been merged in rteval:
+> > > https://lore.kernel.org/linux-rt-users/20240501200922.226347-1-crwood@redhat.com/
+> > > ---
+> > >  src/cyclictest/cyclictest.c         |  6 +++---
+> > >  src/include/histogram.h             |  4 ++--
+> > >  src/lib/histogram.c                 | 15 ++++++++++++---
+> > >  src/sched_deadline/cyclicdeadline.c |  7 +++----
+> > >  4 files changed, 20 insertions(+), 12 deletions(-)
+> > > 
+> > >  
+> > Fixed title to say: rt-tests: cyclictest: Omit empty histogram buckets
+> > Signed-off-by: John Kacur <jkacur@redhat.com>
+> > 
+> 
+> How is that a fix?  I said "cyclics" because it's both cyclictest and
+> cyclicdeadline.
+> 
+> -Crystal
+
+That's kind of funny. You ARE making up words there, I jut assumed it was 
+a typo. I've already pushed it upstream though, so we will have to let it 
+be.
+---1463771134-1147017012-1714771482=:68633--
 
