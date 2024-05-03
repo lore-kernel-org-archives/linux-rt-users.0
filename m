@@ -1,98 +1,79 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88465158845
-	for <linux-rt-users@vger.kernel.org>; Thu,  2 May 2024 20:11:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA1C6146D4B;
+	Fri,  3 May 2024 09:13:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714680695; cv=none; b=L7aadeT4OYIP1++X3lljjpimQyNUfgMB2x/ypsEro0XA/iUsfvzkSQ9hneX0VmPnRxJ5K5oZrH/g5Ke3IC7tR9Tuo7nOl0toJpT93eoXRmkJQZC9VQa0h5QjGEW8vgbdwQ2M1SQH0A3HtK41TQkXW784mc0LpuLCmBjP+qyV09c=
+	t=1714727621; cv=none; b=sVdRoV+YQaY5QhuiBwyawOSeB74hVe3+pxySKf6v4ejzGBatqAQv1b5kKb6gEudFovmQ4PoC5yzOPp8lfOJyew6Y6NCLXHRLzBsPNQE89reCDBB4UBSYQOLGKLtdnooBX/jlxnAIkoCRZUOfxdx9OCIQhyHPLvZYB8vb8q5ZcMY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714680695; c=relaxed/simple;
-	bh=/HWHsqk6OZqXxsMYfb8FX926r9T+cXpUwXfgNSgxArg=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=MUv7kNL9E5q4TrF5r0DWXpnm0RcsOAVjot2Va5qGyLF1eDB+cdRocSloQPyIIGEtqpTwjAyOZeAMO6Y7lvfszRJL7XxPnHhvTcYP2ei6/r0orI+Fn95VKIUXloSd4wFxNRh+qNUKZQbmKJY4LZJhzs8YtZt32DKnTFKXaMnCGYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iUZbJeAF; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iUZbJeAF"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1714680692;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=T3bdLVyjptrKtAq5/d2flla6cDs9/BxRZratrcglyw4=;
-	b=iUZbJeAFKeHQCAkAbimF/pxjqInGfcyz1Q62MWkT+EgdcvXAtQWaM45PTjTdOqu98GjGdJ
-	NHMIHGZI07Q1utQ8bX5EM7NHwBTmagI7nCRLeJjZ9/Z5oJCrngfTW4SWIkhrSryXgEMRee
-	1qiBz7RVKeBUHGDwyB7iso1CKpmrQnw=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-444--uqLnDLlNMuvspGy8wf-FA-1; Thu,
- 02 May 2024 16:11:31 -0400
-X-MC-Unique: -uqLnDLlNMuvspGy8wf-FA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B2A4A29AA2C9
-	for <linux-rt-users@vger.kernel.org>; Thu,  2 May 2024 20:11:30 +0000 (UTC)
-Received: from [10.2.16.177] (unknown [10.2.16.177])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7342E492BC6;
-	Thu,  2 May 2024 20:11:30 +0000 (UTC)
-Message-ID: <da44edf2d10659ccfea2b8a646f8431cd3dcd168.camel@redhat.com>
-Subject: Re: [PATCH] rt-tests: cyclics: Omit empty histogram buckets
-From: Crystal Wood <crwood@redhat.com>
-To: John Kacur <jkacur@redhat.com>
-Cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
-Date: Thu, 02 May 2024 15:11:30 -0500
-In-Reply-To: <974cd5d9-f027-5e51-e6ba-fd50e4759d4b@redhat.com>
-References: <20240501204944.228386-1-crwood@redhat.com>
-	 <974cd5d9-f027-5e51-e6ba-fd50e4759d4b@redhat.com>
-Organization: Red Hat
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.48.4 (3.48.4-1.fc38) 
+	s=arc-20240116; t=1714727621; c=relaxed/simple;
+	bh=5kmcDvndxpWJvK1j+kbwiA6maVn0FHPqXzkdAWGp8dg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=sWvYW05mU5mZs5fEjHIp6R9XiNUw5c+8iztcT9SW9G9sxr18RddCHkGoI9CAY+FdyvhHgCsqOGzOBuoK+QB8/LPzWN5XM2ZXeNRuOZ/7mSCJ3H0/x5n0SqrO6qVj4kkBQlCFTtPzbmSiOlUAye6YPGO3+VVfFC9GULQ0H6bwgwY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de; spf=fail smtp.mailfrom=denx.de; arc=none smtp.client-ip=46.255.230.98
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=denx.de
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+	id C07031C0093; Fri,  3 May 2024 11:03:55 +0200 (CEST)
+Date: Fri, 3 May 2024 11:03:55 +0200
+From: Pavel Machek <pavel@denx.de>
+To: Daniel Wagner <wagi@monom.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>
+Subject: 4.19-rt in May? Re: [ANNOUNCE] 4.19.269-rt119
+Message-ID: <ZjSoeyEnkJPY7ST3@duo.ucw.cz>
+References: <167144069993.3503.13484547425689613996@beryllium.lan>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="kK4r9iCG4K6XU96T"
+Content-Disposition: inline
+In-Reply-To: <167144069993.3503.13484547425689613996@beryllium.lan>
 
-On Thu, 2024-05-02 at 15:13 -0400, John Kacur wrote:
->=20
->=20
-> On Wed, 1 May 2024, Crystal Wood wrote:
->=20
-> > This makes the output more palatable for human readers, at the expense
-> > of requiring other consumers of the data to be able to handle the
-> > missing
-> > lines.
-> >=20
-> > Signed-off-by: Crystal Wood <crwood@redhat.com>
-> > ---
-> > Don't apply until the below patch has been merged in rteval:
-> > https://lore.kernel.org/linux-rt-users/20240501200922.226347-1-crwood@r=
-edhat.com/
-> > ---
-> > =C2=A0src/cyclictest/cyclictest.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 6 +++---
-> > =C2=A0src/include/histogram.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 4 ++--
-> > =C2=A0src/lib/histogram.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 15 ++++++++++++---
-> > =C2=A0src/sched_deadline/cyclicdeadline.c |=C2=A0 7 +++----
-> > =C2=A04 files changed, 20 insertions(+), 12 deletions(-)
-> >=20
-> > =20
-> Fixed title to say: rt-tests: cyclictest: Omit empty histogram buckets
-> Signed-off-by: John Kacur <jkacur@redhat.com>
->=20
 
-How is that a fix?  I said "cyclics" because it's both cyclictest and
-cyclicdeadline.
+--kK4r9iCG4K6XU96T
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
--Crystal
+Hi!
 
+I'd like to do 4.19-cip-rt release "soon". Is there chance to get
+updated -rt tree? Last I see is:
+
+
+commit 4790d0210f1929d981659cd4e7ecfb34e0a6889c (tag: v4.19.307-rt133-rc1, =
+tag: v4.19.307-rt133, rt/v4.19-rt)
+Author: Daniel Wagner <wagi@monom.org>
+Date:   Tue Feb 27 13:10:41 2024 +0100
+
+    Linux 4.19.307-rt133
+
+Best regards,
+								Pavel
+--=20
+DENX Software Engineering GmbH,        Managing Director: Erika Unter
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+
+--kK4r9iCG4K6XU96T
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZjSoewAKCRAw5/Bqldv6
+8siIAKC5tweAMGwlBuQs+Z56ORnUuQ2C0ACghD4KFUP8cfvm6MJ12TtTz9Lf0m0=
+=RA2y
+-----END PGP SIGNATURE-----
+
+--kK4r9iCG4K6XU96T--
