@@ -1,121 +1,90 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63AC584A40
-	for <linux-rt-users@vger.kernel.org>; Fri,  3 May 2024 21:24:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 110D01339A2;
+	Mon,  6 May 2024 10:46:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714771489; cv=none; b=NxQG6acb8oQQuKdXRuuzByljuoUt3qQ+3IccYsIrkGab7GYGeZKlGqfB99oYND7R5T3o5qEbBoxaev6xm/MG+QmlTfPv/1m7Bo35ploqAVLtG5cimHmBxUug3WUlkK6SqLFwDxnHf1cdNjNVZjUj3+om43tt1Fb/8Vv7HZNsARg=
+	t=1714992381; cv=none; b=GEj1KjYCcx08/cA2OJj6bJq3fCnxJQnSV3ttghjryj+qs1FywXBG2YE4GT+L2WBQ4G0Nb+KT7WeFPlz2QI5wgmEeq1EhSt0aRnBVAdTSOjxE4n47DvBaL+6w8hhhlcYDWpf6jhiSbC+76UFfiE/f5e8aFRc8l8aL9W06BVgLEbQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714771489; c=relaxed/simple;
-	bh=+ooVK/AumgxK/5446WmCtFMmxrP/Zl1qnwgHQdxyRHA=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=sTAgIq5p33p6e/FJ7MpIhi1wEQto06xP94PL6Tq0oME7O8oG5k34AYRfB8Q6CoTul1ECnE9hXQWnSP2YI0lXbDbk3TPvkiQgqTpEi4xsB2Lf0cwN6hPOcbeyqsxVVNXYz+gmeNjhiOLWYDkJM4E5sM0qYYG4ZvWjfthBfRbtHTg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=S/ltFB5k; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1714992381; c=relaxed/simple;
+	bh=mz0kzg8O3jZsXVFnQtikJvb2VJBdAi8sDLH3GdT6nfU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=SmdRJBg6G/d+ryERHFAxxdtxU1UdezgqmGPUoyeDEKE1jtzvO2PxjfTgaP3eZHqPHc2J25L+Mvg2NAnoDPSVFAhuj8y0kMjlP3vZpwDHUXpvfIlz111Zabindg/2SrPGeYVjw+VLB5/9l1G/AnTuhqKrhirOGnejEOLBNSux548=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=vboeW9Yt; arc=none smtp.client-ip=49.12.199.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="S/ltFB5k"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1714771485;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=M1/T5A+JsNL4c/hegk7O854x264+NXh9sMpQ9LpNoIs=;
-	b=S/ltFB5kzQ4H1eZZxy17hQfpwXp7MYpVTKjFM+9HI3bHYo8sPQp6bRbuTw2T2XHR3P86WU
-	bCQpUThhLZkwAWt0GP+UYbtc6S7TdVR9ySAhhwggxd9XXmUuyZfp35ZU/xzbHPip11OLh5
-	hJewMsEUD/mq4j8uBBiqSrOeZvumbcI=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-316-rWwcPhUEMXmCBEFEfXc3Ew-1; Fri, 03 May 2024 17:24:43 -0400
-X-MC-Unique: rWwcPhUEMXmCBEFEfXc3Ew-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-790ef197695so9713985a.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 03 May 2024 14:24:43 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714771483; x=1715376283;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=M1/T5A+JsNL4c/hegk7O854x264+NXh9sMpQ9LpNoIs=;
-        b=XQBXZQA9+3bYz/miTjTpCi3RzaHAHFUs0DjqihQ54ksUPBSom2tkQ1HBq1muD4BGi4
-         N2AsTd4XPd+wofOyx6PbbylgqK1sJdZMRfxjEbgehbBa4z2XkXD/NxjXL/egRKemGdtH
-         40GiN/EDsU2t5dw/pKCx28IkKjxWvv4ky5rVWIWZPEMdi7ZMyBS9BerCJer3bULRK7x8
-         HBssD+1+9UNY5Ducb/FLCL8/conO9SBdec9GrqIH9/CRNokEFBu7wq/rTHGTKBepAZ2p
-         uA9/zQouuh27r6luLIcQF0IfD+DaABi/Kmt85npU2zJjsILTOaHmkjZZIIm1or/px4q2
-         HP6A==
-X-Forwarded-Encrypted: i=1; AJvYcCU4vjfTWJ2muuD4p5bRcjHl3FyuQmm8L4qWr5gj45t80se5euE7L5o+R/jPJuIvmS4vWydLgZ5oyULdLsLQxlu/89qnBK1qaHqdjCulIW0=
-X-Gm-Message-State: AOJu0YxHDsGeLMGg4pZdZ/MjAM18mm6CIMgWM//A8wsPghxwHw1aXvUr
-	QjuF53QQ/if856gIs0IXTLQBh6ceScVAawgZ8pcZkYtkP1TOwlPE5MJ8nHhE8AhAqhol22xT8Fv
-	yfGe8u5oU2hieesZ3qXEu2qbFSdcdjKj4IHiiT+Jw8ZZWUPlcEG+ui6/eqPykLvhZ
-X-Received: by 2002:a05:620a:1923:b0:78d:6e6f:9004 with SMTP id bj35-20020a05620a192300b0078d6e6f9004mr5091705qkb.59.1714771483250;
-        Fri, 03 May 2024 14:24:43 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IExbKqUF8bLn2f60xIdGXmbb9uYy6No99Out8pmSclIKmCDp+f3MwBZ+GobQV3g0/ZoSXu1vA==
-X-Received: by 2002:a05:620a:1923:b0:78d:6e6f:9004 with SMTP id bj35-20020a05620a192300b0078d6e6f9004mr5091682qkb.59.1714771482793;
-        Fri, 03 May 2024 14:24:42 -0700 (PDT)
-Received: from fionn (bras-base-rdwyon0600w-grc-16-74-12-5-183.dsl.bell.ca. [74.12.5.183])
-        by smtp.gmail.com with ESMTPSA id x14-20020a05620a098e00b0078d3b9139edsm1551010qkx.97.2024.05.03.14.24.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 03 May 2024 14:24:42 -0700 (PDT)
-Date: Fri, 3 May 2024 17:24:41 -0400 (EDT)
-From: John Kacur <jkacur@redhat.com>
-To: Crystal Wood <crwood@redhat.com>
-cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH] rt-tests: cyclics: Omit empty histogram buckets
-In-Reply-To: <da44edf2d10659ccfea2b8a646f8431cd3dcd168.camel@redhat.com>
-Message-ID: <9ed003b3-66dc-fd4a-b6b2-531ba49657da@redhat.com>
-References: <20240501204944.228386-1-crwood@redhat.com> <974cd5d9-f027-5e51-e6ba-fd50e4759d4b@redhat.com> <da44edf2d10659ccfea2b8a646f8431cd3dcd168.camel@redhat.com>
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="vboeW9Yt"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id D8C11DB383;
+	Mon,  6 May 2024 12:46:06 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+	t=1714992370; h=from:subject:date:message-id:to:cc:mime-version:
+	 content-transfer-encoding; bh=WLmZE8ctAqg4BLW43nqO/J8E5dbdvfrS+1ubOiE/c7g=;
+	b=vboeW9Yt32IssbmdbAA61Tn192GVCp245G9T+89DUZUd9gBqthnPYFY+qrdCcIfABqSaRj
+	WqpveiR2tj9rwzTgCTk3sVF049mnIUbwstxk9OclywQ4l0o7OYIkW34FUvBV/KqQDHsgwb
+	PwgLuJQaqt4FBJXqG/CoRUtUC5/qAH1Sls8Xt30UN76+DYbxxiegqjFNGDzPLiegQCJRXD
+	UYCtAKqrdaOzQiaP7ivIcm4rW//GwwK9rRsGEkN46F9R43WAt9cj/KmNY4jAOfuZm/aGlF
+	rAmFUdQM4igP/aVIqUooNrEdQ3ovMPO/t1W5Alu9oO1H2YRWzoDPg7lhtx72jQ==
+From: Daniel Wagner <wagi@monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	 <linux-rt-users@vger.kernel.org>,
+	 <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>
+Cc: Daniel Wagner <wagi@monom.org>
+Subject: [PATCH RT 0/1] Linux v4.19.312-rt134-rc2
+Date: Mon,  6 May 2024 12:46:01 +0200
+Message-ID: <20240506104602.16972-1-wagi@monom.org>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463771134-1147017012-1714771482=:68633"
+Content-Transfer-Encoding: 8bit
+X-Last-TLS-Session-Version: TLSv1.3
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Dear RT Folks,
 
----1463771134-1147017012-1714771482=:68633
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+This is the RT stable review cycle of patch 4.19.312-rt134-rc2.
+
+Please scream at me if I messed something up. Please test the patches
+too.
+
+The -rc release is also available on kernel.org
+
+  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+on the v4.19-rt-next branch.
+
+If all goes well, this patch will be converted to the next main
+release on 2024-05-13.
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
+
+Changes from v4.19.307-rt133:
 
 
+Daniel Wagner (1):
+  Linux 4.19.312-rt134
 
-On Thu, 2 May 2024, Crystal Wood wrote:
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> On Thu, 2024-05-02 at 15:13 -0400, John Kacur wrote:
-> > 
-> > 
-> > On Wed, 1 May 2024, Crystal Wood wrote:
-> > 
-> > > This makes the output more palatable for human readers, at the expense
-> > > of requiring other consumers of the data to be able to handle the
-> > > missing
-> > > lines.
-> > > 
-> > > Signed-off-by: Crystal Wood <crwood@redhat.com>
-> > > ---
-> > > Don't apply until the below patch has been merged in rteval:
-> > > https://lore.kernel.org/linux-rt-users/20240501200922.226347-1-crwood@redhat.com/
-> > > ---
-> > >  src/cyclictest/cyclictest.c         |  6 +++---
-> > >  src/include/histogram.h             |  4 ++--
-> > >  src/lib/histogram.c                 | 15 ++++++++++++---
-> > >  src/sched_deadline/cyclicdeadline.c |  7 +++----
-> > >  4 files changed, 20 insertions(+), 12 deletions(-)
-> > > 
-> > >  
-> > Fixed title to say: rt-tests: cyclictest: Omit empty histogram buckets
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > 
-> 
-> How is that a fix?  I said "cyclics" because it's both cyclictest and
-> cyclicdeadline.
-> 
-> -Crystal
-
-That's kind of funny. You ARE making up words there, I jut assumed it was 
-a typo. I've already pushed it upstream though, so we will have to let it 
-be.
----1463771134-1147017012-1714771482=:68633--
+-- 
+2.44.0
 
