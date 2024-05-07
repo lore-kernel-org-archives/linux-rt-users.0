@@ -1,32 +1,30 @@
 Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B67E316132A;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B679716130B;
 	Tue,  7 May 2024 15:16:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715095021; cv=none; b=Q9yqlzPPVeQVetaVBHlKReU9Hxfm5ukm9oc1NSEFWhvBGsBjKDBFE4h0iE2z1vxuOrgSTPwiAEOrb1hiXbUrZUHzm9ms87+ESk5QpkJAI8wvV+1kbd93bAotSEMsaBf9TnKE/85GVs++4/TuJFOv2BiQT6VPTkmfWB0qGkl9Ndw=
+	t=1715095021; cv=none; b=HpCTUPAm6F6oY1vGgw0fK/pp2zHNGnRVWvAiITPFNGElm7SpIzPz41l0QBoj86u/BA3irGKKFnmIJ/9xvmgSv3CPMJmLKKt7ZqkYY4fZoV8x8/2RtvHXYvtW4P4dVzHNPFxG4hoB2WjYIpR+Dns9EQQHE+eEUIPD1tRgweCylJw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1715095021; c=relaxed/simple;
-	bh=pj+rRRnJ//cpd1dCxUwjzWTtiuE4tkK8iURQhRZdoUs=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Y9AGxmjvcSR3OdnEBRzWKdrPr3Rfhch4RFyHixbAb3NlyZCM6rfDFQJB1XG/v/pSAvMbaAQCkqwVuq38vK0J2OAbiLB8lGu+uUcO6jBVrRwpeD+N6WJ1+YTnXTuPTXaMLo+tt851yYkvsKnrM3VHqhxW3sqf5z+FZqfr1zHRsB8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=UlqmJ5p4; arc=none smtp.client-ip=49.12.199.46
+	bh=axc7D83xZY+M9GOKDBmlE8Uiep7sZqUy57pi6Y9OdkE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Hs/4b8DgW6P6JVDfr2L7XyGmNpqElacjifdvzAXiGBwQDWZhVc84PoM6V76H0WZHIIodOQx6hspW37nbjfspj7vKHDc6TXLjhOLpLR+S4Ua4OdbdpsTMTnYFieTgRg80j6BwhpKssJoK6bVr1BRprwMGmBESsrhkxMD66N2i15A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=aaxPIIRQ; arc=none smtp.client-ip=49.12.199.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="UlqmJ5p4"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 25FF4DB443;
-	Tue,  7 May 2024 17:16:56 +0200 (CEST)
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="aaxPIIRQ"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 8ABFFDB3DF;
+	Tue,  7 May 2024 17:16:51 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1715095016; h=from:subject:date:message-id:to:cc:mime-version:
-	 content-transfer-encoding:in-reply-to:references;
-	bh=YOMGMkH+XITc7boKTbyMryoJEokCnAKEzkDlct7BX7Q=;
-	b=UlqmJ5p4lQ8qQs0wrajQ9w4pQi3Egvn9KMw7BTl9bGmngLglr5UR4WPz3gv5FdTDwPU99Q
-	oiaWxhWLzZ1RJ27/aoJx+sTTR/hz6zhQPkIVRA0wLsBZXGSTrgAM4+uzblbLd4M2GWZpO9
-	869v1uQL0jNd+/wTrCdQHSlPjcqeIxFjFpVhItS7AGEY5rAfzFxqYdQelznCr2j9isxkIH
-	aUkGgqjjPhGwdQxGk1wxwQZzco04OyV15uOLwpPuHG+XCLEFlA9w9Hm2d/tIjAhOrQVXE+
-	9yFC9j9uG9mxtmPRWZ4rtBVr8NBvdlDfwntKPKtdZwF0OJIRpxSiPBXjkkL0/A==
+	t=1715095015; h=from:subject:date:message-id:to:cc:mime-version:
+	 content-transfer-encoding; bh=/K1BszgO4HhkgM/dGOUg1JDl9BqIsMT795T5xI0/ZkM=;
+	b=aaxPIIRQrHAOC0VvTO7yBcFF8tYODtzuCFEsReE0Gt/YgHnr4jXgaJRElN3KBzgFdQoCya
+	8uXE34Tc/7bSH5Jqt6UaNrgxJVxvr9e3Y5w8BZfCS1UQZkNKoioNP5Wy4Rxd9KbxwyNtTT
+	G6u0uEFpV/in+GOW9FKYrWwHqJaZYucojbCxO5XYzZ2CJL1XuPpOHeNrd1OpAp/EBLrAqm
+	y0IJ32US18HGrDvB8VojTvhC1LjEGpLe4z49WPDQfGH9Zgf0VrBs5ZJBqJ/WsFDB3OFx7x
+	PkjICB7JY9aI+tu/ipUEUPZ1gS4Y4f2hzCsa27xU8zry2vNrSQ52QM8NtiqnPA==
 From: Daniel Wagner <wagi@monom.org>
 To: LKML <linux-kernel@vger.kernel.org>,
 	 <linux-rt-users@vger.kernel.org>,
@@ -37,12 +35,10 @@ To: LKML <linux-kernel@vger.kernel.org>,
 	Tom Zanussi <tom.zanussi@linux.intel.com>,
 	Clark Williams <williams@redhat.com>
 Cc: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 1/1] Linux 4.19.312-rt134
-Date: Tue,  7 May 2024 17:16:48 +0200
-Message-ID: <20240507151648.17883-2-wagi@monom.org>
+Subject: [PATCH RT 0/1] Linux v4.19.312-rt134-rc3
+Date: Tue,  7 May 2024 17:16:47 +0200
+Message-ID: <20240507151648.17883-1-wagi@monom.org>
 X-Mailer: git-send-email 2.44.0
-In-Reply-To: <20240507151648.17883-1-wagi@monom.org>
-References: <20240507151648.17883-1-wagi@monom.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -52,24 +48,43 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Last-TLS-Session-Version: TLSv1.3
 
-v4.19.312-rt134-rc3 stable review patch.
-If anyone has any objections, please let me know.
+Dear RT Folks,
 
------------
+This is the RT stable review cycle of patch 4.19.312-rt134-rc3.
+
+Please scream at me if I messed something up. Please test the patches
+too.
+
+The -rc release is also available on kernel.org
+
+  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+on the v4.19-rt-next branch.
+
+If all goes well, this patch will be converted to the next main
+release on 2024-05-14.
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
+
+Changes from v4.19.307-rt133:
 
 
-Signed-off-by: Daniel Wagner <wagi@monom.org>
----
+Daniel Wagner (1):
+  Linux 4.19.312-rt134
+
  localversion-rt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index c2c7e0fb6685..6067da4c8c99 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt133
-+-rt134
 -- 
 2.44.0
 
