@@ -1,90 +1,93 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B679716130B;
-	Tue,  7 May 2024 15:16:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A50AB2030A
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 May 2024 18:16:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715095021; cv=none; b=HpCTUPAm6F6oY1vGgw0fK/pp2zHNGnRVWvAiITPFNGElm7SpIzPz41l0QBoj86u/BA3irGKKFnmIJ/9xvmgSv3CPMJmLKKt7ZqkYY4fZoV8x8/2RtvHXYvtW4P4dVzHNPFxG4hoB2WjYIpR+Dns9EQQHE+eEUIPD1tRgweCylJw=
+	t=1715365002; cv=none; b=BYDtijUvSXhroyUaJ103TrXMw3Dzf464Nu9Rk9rhivDJ1Yv62beEaY0EEPtwbXni8kj1z20ZcCMzAcYYuioFkOVWZvFz9Tmml+uCIho5XYi2Fwtqw/B3kqyrNX/oAQ5oJT93PdE5Nszj2whOVx1PUyTlJ2sIxH4NWXOx/i5upNg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715095021; c=relaxed/simple;
-	bh=axc7D83xZY+M9GOKDBmlE8Uiep7sZqUy57pi6Y9OdkE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Hs/4b8DgW6P6JVDfr2L7XyGmNpqElacjifdvzAXiGBwQDWZhVc84PoM6V76H0WZHIIodOQx6hspW37nbjfspj7vKHDc6TXLjhOLpLR+S4Ua4OdbdpsTMTnYFieTgRg80j6BwhpKssJoK6bVr1BRprwMGmBESsrhkxMD66N2i15A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=aaxPIIRQ; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	s=arc-20240116; t=1715365002; c=relaxed/simple;
+	bh=Q5MhOeWzkKDVHI9xQ3mo+PeGPEJxI20edmH+SVw6WvM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=CLrwGtG4FApBM6bYi7N6vBBYFbYps/eIuoWGtK0NIl1O8HDhx+8I7zKW7zR4WhA71ByqNQe4k3GpMA0RbPmUhsWoIOhzGx/hFRD+AQtY1SXq4Lh2fsMhmqX3TijCcVDIyyxp63NozH4V6hUEfTiuyFiqdJuJKGD84vl73zeEiHg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=h0ryX71e; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="aaxPIIRQ"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 8ABFFDB3DF;
-	Tue,  7 May 2024 17:16:51 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1715095015; h=from:subject:date:message-id:to:cc:mime-version:
-	 content-transfer-encoding; bh=/K1BszgO4HhkgM/dGOUg1JDl9BqIsMT795T5xI0/ZkM=;
-	b=aaxPIIRQrHAOC0VvTO7yBcFF8tYODtzuCFEsReE0Gt/YgHnr4jXgaJRElN3KBzgFdQoCya
-	8uXE34Tc/7bSH5Jqt6UaNrgxJVxvr9e3Y5w8BZfCS1UQZkNKoioNP5Wy4Rxd9KbxwyNtTT
-	G6u0uEFpV/in+GOW9FKYrWwHqJaZYucojbCxO5XYzZ2CJL1XuPpOHeNrd1OpAp/EBLrAqm
-	y0IJ32US18HGrDvB8VojTvhC1LjEGpLe4z49WPDQfGH9Zgf0VrBs5ZJBqJ/WsFDB3OFx7x
-	PkjICB7JY9aI+tu/ipUEUPZ1gS4Y4f2hzCsa27xU8zry2vNrSQ52QM8NtiqnPA==
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	 <linux-rt-users@vger.kernel.org>,
-	 <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>
-Cc: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 0/1] Linux v4.19.312-rt134-rc3
-Date: Tue,  7 May 2024 17:16:47 +0200
-Message-ID: <20240507151648.17883-1-wagi@monom.org>
-X-Mailer: git-send-email 2.44.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h0ryX71e"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715364999;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iZAj8p2ZBBdchUgkHruzN7zSlWFG0wuGu3gOCA7sEg4=;
+	b=h0ryX71eGs1/4uWyu5AE7jINQs4NvBv2LhQIiB8skwK4GnuRWnIkhip2WKzTUbDnpF3twU
+	gTkCPasGS4CLKgXY2bLy2W5yFwU7xtmDNlvZ08L1BEVMNRFdvB0OCw6iMUW4eSrwLwVJxi
+	WbXyzrllo2X5WYPIcEHeXMPvlaV0sxo=
+Received: from mail-oi1-f200.google.com (mail-oi1-f200.google.com
+ [209.85.167.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-596-1DtmN12jPGy0nNgsWsa-0A-1; Fri, 10 May 2024 14:11:38 -0400
+X-MC-Unique: 1DtmN12jPGy0nNgsWsa-0A-1
+Received: by mail-oi1-f200.google.com with SMTP id 5614622812f47-3c99c4e8e7fso594800b6e.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 May 2024 11:11:38 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1715364697; x=1715969497;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=iZAj8p2ZBBdchUgkHruzN7zSlWFG0wuGu3gOCA7sEg4=;
+        b=GZEkESF3UIul5dDhBrgTeCRUyjLzcHPsdAxDXhCMJtkf9EGp0Hsw+wvgoslhdW4s34
+         US1wHInaPAnYeJg1iFKZRlfeXgxAsdYwa3Nm+Xo3HHHzsWxIBBKkCezPN04Axfh5E+25
+         pPEfueVN+mcPEvXytLlVT+sTJ29iGtBE4EUv5Vw0vlvf9X2plxS+LVear9STMGOyTb7/
+         qMDrtKL62CPJUcTNyVLWZmNL1klccopuWKc5vHg5SX8rDrF97VqICZVWbZkVlPMrb1IH
+         Y8MhLbEkADb5Q755HBQ0TSSbSx4nr+Sz8tBVkfD0tKAMIvOUjUd6k+ABu7BfRIUW04Ht
+         0IrA==
+X-Forwarded-Encrypted: i=1; AJvYcCWaLlfh6ay/ZfonVW5AxzWcGWyM4y14/klj6q2m7JlGGG59Im38h0nHv05oyc0FyvpLqMWWNoFhMH1H+uV1YolMWerBPb19CEZyymRRsX4=
+X-Gm-Message-State: AOJu0Yz8cxvRj6F02XJeVhF4AiIVbs6RWc3067NyF/hDaklSOjVDbyd6
+	KDm/IvEK0kP6UOLa3twtCgWQUXJE23xavbliZrX2hKtiqymaHJO/S1DTWss0QYJX81eNRkLg1TR
+	SvQDWFIZTjPu3jOtq1m46Sm8mOM3fla5muA95fj7j6mRzOMaQ2/laYfzliAddUJP3
+X-Received: by 2002:aca:2806:0:b0:3c9:6db0:bb86 with SMTP id 5614622812f47-3c997067d5fmr4017869b6e.28.1715364697584;
+        Fri, 10 May 2024 11:11:37 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHKbPdG7xXrJvkXOHTiaKXszT9+rvpH4qg2EXL4pH8xR0FiBibejsqd2RX2rebLwBs+rr6XIA==
+X-Received: by 2002:aca:2806:0:b0:3c9:6db0:bb86 with SMTP id 5614622812f47-3c997067d5fmr4017817b6e.28.1715364696328;
+        Fri, 10 May 2024 11:11:36 -0700 (PDT)
+Received: from hatbackup ([71.217.38.228])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6a15f1d73c8sm19389176d6.118.2024.05.10.11.11.35
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 10 May 2024 11:11:35 -0700 (PDT)
+Date: Fri, 10 May 2024 14:11:34 -0400
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v6.9-rc6-rt3
+Message-ID: <Zj5jVqzDMXGZtp7y@hatbackup>
+References: <20240430110347.LCK9LAJr@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240430110347.LCK9LAJr@linutronix.de>
 
-Dear RT Folks,
+On Tue, Apr 30, 2024 at 01:03:47PM +0200, Sebastian Andrzej Siewior wrote:
+> 
+>   - The selftest with the cxgb4 networking driver raised a warnings.
+>     Reported by John B. Wyatt IV.
 
-This is the RT stable review cycle of patch 4.19.312-rt134-rc3.
+Thank you for your work on the patch Sebastian.
 
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release is also available on kernel.org
-
-  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-on the v4.19-rt-next branch.
-
-If all goes well, this patch will be converted to the next main
-release on 2024-05-14.
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.307-rt133:
-
-
-Daniel Wagner (1):
-  Linux 4.19.312-rt134
-
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+QE said it fully resolved the issue in RHEL9.
 
 -- 
-2.44.0
+Sincerely,
+John Wyatt
+Software Engineer, Core Kernel
+Red Hat
 
