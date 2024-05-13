@@ -1,101 +1,75 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0825A13BAFB
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 May 2024 21:49:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E72FA1FA1;
+	Mon, 13 May 2024 06:59:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715377766; cv=none; b=qNrPjBTL8nkDnarjmFcEJ7AAU8MpSSlQfkcgoDqVLz8LtDsaGOPzvSinT2I7WyiamiwFvkx5YW9kGdQm4voZsa0gZzmFTKnQ1b2meGUe2KpQkoCFiCNsOGeWha882Tw+sx0EGPxK+MYcaNkPS6rzXHPRpTCQ7HL4Lk3k7jGHPRs=
+	t=1715583581; cv=none; b=CspvTilzKHNuYkSjvjZA76i1V823wbR3/oWfibrm9Q2fn70rGTdEax0u5zNSFxnoQHMV5PjGJd8Zhni5mUhzZBze59vMZ5gLYUb8NLdcYpoVpL70JYs5mMj3CD1hh0TR33cZQyuNUj844aVDZgytXnoXFelYZxnDufuNAhafKFY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715377766; c=relaxed/simple;
-	bh=+nNK4hww+ycl2EEjZu+DB3rnPniLjPproECnJoapLfQ=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=Swqy0urepfAfdSeaRVRUVNrMIwSmGmP9sIF9vF6YyfewDNSvGFiEvqvUZJ27anoWn+kfVam+oXjJgsrs14Z2ypQXZZSdJyoHfy8iAAykeh7H6tegvbk8S/r0Of0zYova2mHBO2gj/Nf5IktcAqXw9ORzTsG2gyH6/W7UeAjAlxY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cqCBkacY; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1715583581; c=relaxed/simple;
+	bh=kseFBkUq5HsQcsQRV4TQm0JvyI9MHQ0rc7z4CMsWJLU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=S3c3mupM5ePc40fT85xf1tdWAX8CwtFWzA6aDbxGnoJtxCHe+B6mkFnyIQbPDiC7ziNVSzC/N6yRF//00eE+wP0pVQeeIuTQ/m8HxCDgvXyugEUm+FwEFdeRN9Pg1kvmmznEFFBPCZOIp8H2ljVE0KSLiic+d0ClTL67h0ygpJE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=3Ch+3oct; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=qxrkdrWl; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cqCBkacY"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715377764;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="3Ch+3oct";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="qxrkdrWl"
+Date: Mon, 13 May 2024 08:59:35 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1715583572;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=Oowk90sqfml4YNrnonG1SBezdP9RE70uhV4ktZariMQ=;
-	b=cqCBkacYXj//3oYUHx0kcKMjyZz6Cm20NBlwTTJz/oFImqlZnFmLas2bUjYeAeJ5F+6ISy
-	ve3jxguyJ0eJdvZIuLpbEU7dDnXD4a+XK29e+OanUJA1B46rGDvqFnbBx4LO6enn5JE111
-	VOk0vAspMI2vmXH8VtgKdzsaq5T4Rqk=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-344-mxGkenmZNwWvFjHZ5uqEkw-1; Fri, 10 May 2024 17:49:20 -0400
-X-MC-Unique: mxGkenmZNwWvFjHZ5uqEkw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2B3C9185A780;
-	Fri, 10 May 2024 21:49:20 +0000 (UTC)
-Received: from localhost (unknown [10.22.33.191])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3D2F6D96339;
-	Fri, 10 May 2024 21:49:19 +0000 (UTC)
-Date: Fri, 10 May 2024 18:49:18 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=DhEc54QbGm/fvwnp/0OAbrqp5larSb4wu8ND20bpcJc=;
+	b=3Ch+3octq58Yyf5dPcbC+rYHY1eXSp7/EovlusHMpzICaRQLsgtCjLcP5hmzYOtRJVEqhP
+	uCPSc5CMv1hmcawKCRLyaap2sHr4p9mFgDnkTwxyxA8/HK/6Pnfh47uDgP8sB+f/f697L4
+	n56T/R0PKBz96pYfwfDD/0S/yfaJwl7XCCXXH/4m7t/fLmGpF+kVweKZuLvhocwiXnniUK
+	VwKbW9Y4ohN10rZZQ5D75BXsufD7mZd2u2+Gh6aHizeDCiVy9xQf2XYcdbzCuXOhZAD4g+
+	MGbAPBlzHAiIurk0xxpbhunmbCbbjf4xi3WRsZZh0muYm2PH3L8IkF+8Kvk57g==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1715583572;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=DhEc54QbGm/fvwnp/0OAbrqp5larSb4wu8ND20bpcJc=;
+	b=qxrkdrWlwSSq77lbsnfZIgZyt8svns82B3ONk9L4dOhWF6Iph2tpFJMEjo9PBwBaEt9URI
+	w0FYZPou7jDByNCw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Daniel Wagner <wagi@monom.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
 	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.216-rt108
-Message-ID: <Zj6WXvAhngh5-Iyv@uudg.org>
+	Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH RT 0/1] Linux v4.19.312-rt134-rc3
+Message-ID: <20240513065935.hT5MCimc@linutronix.de>
+References: <20240507151648.17883-1-wagi@monom.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+In-Reply-To: <20240507151648.17883-1-wagi@monom.org>
 
-Hello RT-list!
+On 2024-05-07 17:16:47 [+0200], Daniel Wagner wrote:
+> Dear RT Folks,
+> 
+> This is the RT stable review cycle of patch 4.19.312-rt134-rc3.
+> 
+> Please scream at me if I messed something up. Please test the patches
+> too.
+>
+> The -rc release is also available on kernel.org
 
-I'm pleased to announce the 5.10.216-rt108 stable release.
+I do have to complain a bit. The whole diff contains only a diff against
+localversion while the content of interest not here. But but I guess it
+is what we talked about so... but for everyone else it looks like
+version increment.
 
-This release is just an update to the new stable 5.10.216 version,
-without any RT specific changes.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: f0ba9d06ef6b1edce9a62b662415d70e000efdd8
-
-Or to build 5.10.216-rt108 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.216.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.216-rt108.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
-
+Sebastian
