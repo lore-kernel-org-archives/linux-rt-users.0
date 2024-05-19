@@ -1,208 +1,150 @@
-Received: from out-179.mta1.migadu.com (out-179.mta1.migadu.com [95.215.58.179])
+Received: from out-181.mta1.migadu.com (out-181.mta1.migadu.com [95.215.58.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 464B6524A5
-	for <linux-rt-users@vger.kernel.org>; Fri, 17 May 2024 13:08:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F2E873163
+	for <linux-rt-users@vger.kernel.org>; Sun, 19 May 2024 22:28:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715951331; cv=none; b=E15Qaf5bvbXuV6HC4AM2R3qBGFuPAO38uEE/iAoywDsHwX0psiJuk/f7ueogIl+DPfUILqib7vumrPZxwQ/cbv7VY+peZSdQSQ2xX0bm2WfVYBdeco+fQNXkL1f13bSQDtOCeuPXge/9zGNxjGAsJakqLyHb1EHEcmCNd5/v78k=
+	t=1716157741; cv=none; b=PeNyPqxDsmJZRmIPFpPkfuCkaRn8Tc1L1lKz8uUNzLLzaeZjAUkhIe5inwbIbwvHHQEPESjiQe3aIu61FHtNqfTceRMLo+I7ZSNxEZD3odhtKfe5qGk95LrsvR9nGQ8DKr1UXKRkugVr1AO68MPDh93B2vVNlY/Jfzofl2kCBbA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715951331; c=relaxed/simple;
-	bh=K1gK51QMy0neq+U19OxctzsgW3WsPr+8n8VATXVi3SU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=gRa4/UUCNCkBiBmRCzjHO9h6x+CptFY29J5FWq8LKz1lBHf4vPlAGGcpGX6cR9a5YEKHxBbpIbNYzHwq1+c8oukW4oSujvvssUeXN2arwgGMMjEtSUC1VcobgKgGmk8caVSXJiBYSGZaVUFYUCL75htjF96K1LNd5Y6o+ySX2as=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org; spf=pass smtp.mailfrom=cknow.org; dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b=avc709Cl; arc=none smtp.client-ip=95.215.58.179
+	s=arc-20240116; t=1716157741; c=relaxed/simple;
+	bh=lTfLym4W4Ayf1mnU8fJ8gnQ1nII4kxA5BCjktuXBz+A=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=okv2ikO4rEBobgN7H/jN68p1+liknTzmMzNrHRAy9R0z6VIT7a/70xEZYKhpgxASHTVZvhd5bJV9L/QarUzkOho1FT3hhlgHZuxuFWZl5OUAmnTCikfkIixuKsZhlpWDm/jCyWKTdgjFQCeh12m0kag/Yw47ElWfJbzksUPCXN4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org; spf=pass smtp.mailfrom=cknow.org; dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b=XzvGZyhh; arc=none smtp.client-ip=95.215.58.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cknow.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b="avc709Cl"
+	dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b="XzvGZyhh"
 X-Envelope-To: linux-rt-users@vger.kernel.org
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cknow.org; s=key1;
-	t=1715951326;
+	t=1716157735;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=K1gK51QMy0neq+U19OxctzsgW3WsPr+8n8VATXVi3SU=;
-	b=avc709ClOcMXVLkNzwVQo38IZbGyLpzj774UN38wTkx55yPucFsGvZZbPh6B0xz+6FWclf
-	yVoTsMrgW9OXvgBQyfvMwRSTgoZugYcky+DUO92ss6mZsVLHxR6M7sqZcjED++W0P6dTRn
-	vgzSX35X5gYydiWnR0a+xiZfG5MuZkKXKmsU9y9bA10Dj+s6iHjebH3u5xR4+/0VMIQc37
-	Ss4P1wGunCOAWiGNHFgzv5kh815xFl6M/8zHXtYd90oagpLq/GTGJMMYYtOJIJ2Pz6gL9Z
-	kYVNVUFybNyFVWX+BLBwPZn+prv0EiYz80hGbHtoKvoxPfjFWDzRy5KvzlgnGg==
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=DWfHTJMo3tauTNkkGSoccqUIZEHQ8fMJM6+GOmwkYT8=;
+	b=XzvGZyhhrJBA5MA9VYpQiUqR/6aKfQRep28nRlYTxlDF6gnhbn+i12brzUSJrLFK7jJZBS
+	sm6NsvT9xb+iitKxBNkc4gJj4zoQqQ9ttiaxc+qwpmGekf+jahmOo32TFU//kXXjPmtUAS
+	HZg6T4oG9tNqcSgGry1Cdm4BY1SIB2Ku8gMnevNnok15sHSgv2YdZlIdOIMjqga1GN5Kkw
+	z9e4nOJ0QkTcNZ2y+FqLzQMmaquQMNMUzvlehUM6b3gxWohrbQL/CmtNeO2B09vQDufUW7
+	AbVthqdbFOcn4WNwTj2aS5J/Bd6sSs2t/+hOAPPqhsmZpf9YQPseeODPIU/s8w==
 X-Envelope-To: didi.debian@cknow.org
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 From: Diederik de Haas <didi.debian@cknow.org>
 To: linux-rt-users@vger.kernel.org
 Cc: didi.debian@cknow.org
-Subject: Build failure with 6.9-rt5 on arm64;
+Subject: Re: Build failure with 6.9-rt5 on arm64;
  works on amd64 and 6.9-rc6 on arm64
-Date: Fri, 17 May 2024 15:08:36 +0200
-Message-ID: <131999629.KQPSlr0Zke@bagend>
+Date: Mon, 20 May 2024 00:28:43 +0200
+Message-ID: <5880304.cvb1nHMhLa@bagend>
 Organization: Connecting Knowledge
+In-Reply-To: <131999629.KQPSlr0Zke@bagend>
+References: <131999629.KQPSlr0Zke@bagend>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart2328511.yISQciCIdK";
+Content-Type: multipart/signed; boundary="nextPart2545507.DIRTduETlc";
  micalg="pgp-sha256"; protocol="application/pgp-signature"
 X-Migadu-Flow: FLOW_OUT
 
---nextPart2328511.yISQciCIdK
-Content-Transfer-Encoding: base64
+--nextPart2545507.DIRTduETlc
+Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain; charset="UTF-8"; protected-headers="v1"
 From: Diederik de Haas <didi.debian@cknow.org>
 To: linux-rt-users@vger.kernel.org
 Cc: didi.debian@cknow.org
-Date: Fri, 17 May 2024 15:08:36 +0200
-Message-ID: <131999629.KQPSlr0Zke@bagend>
+Date: Mon, 20 May 2024 00:28:43 +0200
+Message-ID: <5880304.cvb1nHMhLa@bagend>
 Organization: Connecting Knowledge
+In-Reply-To: <131999629.KQPSlr0Zke@bagend>
+References: <131999629.KQPSlr0Zke@bagend>
 MIME-Version: 1.0
 
-SGksCgpJIHByZXZpb3VzbHkgc3VjY2Vzc2Z1bGx5IGJ1aWxkIGEgNi45LXJjNiBrZXJuZWwgd2l0
-aCB0aGUgUlQgcGF0Y2ggc2V0LgpCdXQgd2hlbiBJIHVwZGF0ZWQgdG8gNi45KC4wKSArIDYuOS1y
-dDUsIEknbSBnZXR0aW5nIGNvbnNpc3RlbnRseSB0aGUKYmVsb3cgYnVpbGQgZmFpbHVyZS4KT2Rk
-bHkgZW5vdWdoLCBJIGRvbid0IGdldCBpdCBvbiBhbWQ2NCwgb25seSBvbiBhcm02NC4KClNtYWxs
-IGV4Y2VwdCBmcm9tIHRoZSBidWlsZCBsb2c6CmBgYAojIENDICAgICAgbGliL3JoYXNodGFibGUu
-bwogICBhYXJjaDY0LWxpbnV4LWdudS1nY2MtMTMgLVdwLC1NTUQsbGliLy5yaGFzaHRhYmxlLm8u
-ZCAtbm9zdGRpbmMgLUkvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFt
-L2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvYXJjaC9hcm02NC9pbmNsdWRlIC1JLi9hcmNo
-L2FybTY0L2luY2x1ZGUvZ2VuZXJhdGVkIC1JL2hvbWUvZGllZGVyaWsvZGV2L2RlYmlhbi9zYWxz
-YS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2luY2x1ZGUgLUkuL2lu
-Y2x1ZGUgLUkvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4
-L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvYXJjaC9hcm02NC9pbmNsdWRlL3VhcGkgLUkuL2FyY2gv
-YXJtNjQvaW5jbHVkZS9nZW5lcmF0ZWQvdWFwaSAtSS9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4v
-c2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9pbmNsdWRlL3Vh
-cGkgLUkuL2luY2x1ZGUvZ2VuZXJhdGVkL3VhcGkgLWluY2x1ZGUgL2hvbWUvZGllZGVyaWsvZGV2
-L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2lu
-Y2x1ZGUvbGludXgvY29tcGlsZXItdmVyc2lvbi5oIC1pbmNsdWRlIC9ob21lL2RpZWRlcmlrL2Rl
-di9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9p
-bmNsdWRlL2xpbnV4L2tjb25maWcuaCAtaW5jbHVkZSAvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFu
-L3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvaW5jbHVkZS9s
-aW51eC9jb21waWxlcl90eXBlcy5oIC1EX19LRVJORUxfXyAtbWxpdHRsZS1lbmRpYW4gLURDQ19V
-U0lOR19QQVRDSEFCTEVfRlVOQ1RJT05fRU5UUlkgLURLQVNBTl9TSEFET1dfU0NBTEVfU0hJRlQ9
-IC1mbWFjcm8tcHJlZml4LW1hcD0vaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5l
-bC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvPSAtc3RkPWdudTExIC1mc2hvcnQt
-d2NoYXIgLWZ1bnNpZ25lZC1jaGFyIC1mbm8tY29tbW9uIC1mbm8tUElFIC1mbm8tc3RyaWN0LWFs
-aWFzaW5nIC1tZ2VuZXJhbC1yZWdzLW9ubHkgLURDT05GSUdfQ0NfSEFTX0tfQ09OU1RSQUlOVD0x
-IC1Xbm8tcHNhYmkgLW1hYmk9bHA2NCAtZm5vLWFzeW5jaHJvbm91cy11bndpbmQtdGFibGVzIC1m
-bm8tdW53aW5kLXRhYmxlcyAtbWJyYW5jaC1wcm90ZWN0aW9uPXBhYy1yZXQgLVdhLC1tYXJjaD1h
-cm12OC41LWEgLURBUk02NF9BU01fQVJDSD0nImFybXY4LjUtYSInIC1ES0FTQU5fU0hBRE9XX1ND
-QUxFX1NISUZUPSAtZm5vLWRlbGV0ZS1udWxsLXBvaW50ZXItY2hlY2tzIC1PMiAtZm5vLWFsbG93
-LXN0b3JlLWRhdGEtcmFjZXMgLWZzdGFjay1wcm90ZWN0b3Itc3Ryb25nIC1mbm8tb21pdC1mcmFt
-ZS1wb2ludGVyIC1mbm8tb3B0aW1pemUtc2libGluZy1jYWxscyAtZnRyaXZpYWwtYXV0by12YXIt
-aW5pdD16ZXJvIC1mbm8tc3RhY2stY2xhc2gtcHJvdGVjdGlvbiAtZmFsaWduLWZ1bmN0aW9ucz04
-IC1mc3RyaWN0LWZsZXgtYXJyYXlzPTMgLWZuby1zdHJpY3Qtb3ZlcmZsb3cgLWZuby1zdGFjay1j
-aGVjayAtZmNvbnNlcnZlLXN0YWNrIC1XYWxsIC1XdW5kZWYgLVdlcnJvcj1pbXBsaWNpdC1mdW5j
-dGlvbi1kZWNsYXJhdGlvbiAtV2Vycm9yPWltcGxpY2l0LWludCAtV2Vycm9yPXJldHVybi10eXBl
-IC1XZXJyb3I9c3RyaWN0LXByb3RvdHlwZXMgLVduby1mb3JtYXQtc2VjdXJpdHkgLVduby10cmln
-cmFwaHMgLVduby1mcmFtZS1hZGRyZXNzIC1Xbm8tYWRkcmVzcy1vZi1wYWNrZWQtbWVtYmVyIC1X
-bWlzc2luZy1kZWNsYXJhdGlvbnMgLVdtaXNzaW5nLXByb3RvdHlwZXMgLVdmcmFtZS1sYXJnZXIt
-dGhhbj0yMDQ4IC1Xbm8tbWFpbiAtV25vLXVudXNlZC1idXQtc2V0LXZhcmlhYmxlIC1Xbm8tdW51
-c2VkLWNvbnN0LXZhcmlhYmxlIC1Xbm8tZGFuZ2xpbmctcG9pbnRlciAtV3ZsYSAtV25vLXBvaW50
-ZXItc2lnbiAtV2Nhc3QtZnVuY3Rpb24tdHlwZSAtV25vLXN0cmluZ29wLW92ZXJmbG93IC1Xbm8t
-YXJyYXktYm91bmRzIC1Xbm8tYWxsb2Mtc2l6ZS1sYXJnZXItdGhhbiAtV2ltcGxpY2l0LWZhbGx0
-aHJvdWdoPTUgLVdlcnJvcj1kYXRlLXRpbWUgLVdlcnJvcj1pbmNvbXBhdGlibGUtcG9pbnRlci10
-eXBlcyAtV2Vycm9yPWRlc2lnbmF0ZWQtaW5pdCAtV2VudW0tY29udmVyc2lvbiAtV25vLXVudXNl
-ZC1idXQtc2V0LXZhcmlhYmxlIC1Xbm8tdW51c2VkLWNvbnN0LXZhcmlhYmxlIC1Xbm8tcmVzdHJp
-Y3QgLVduby1wYWNrZWQtbm90LWFsaWduZWQgLVduby1mb3JtYXQtb3ZlcmZsb3cgLVduby1mb3Jt
-YXQtdHJ1bmNhdGlvbiAtV25vLXN0cmluZ29wLXRydW5jYXRpb24gLVduby1vdmVycmlkZS1pbml0
-IC1Xbm8tbWlzc2luZy1maWVsZC1pbml0aWFsaXplcnMgLVduby10eXBlLWxpbWl0cyAtV25vLXNo
-aWZ0LW5lZ2F0aXZlLXZhbHVlIC1Xbm8tbWF5YmUtdW5pbml0aWFsaXplZCAtV25vLXNpZ24tY29t
-cGFyZSAtZyAtZmRlYnVnLXByZWZpeC1tYXA9L2hvbWUvZGllZGVyaWsvZGV2L2RlYmlhbi9zYWxz
-YS9rZXJuZWwtdGVhbS9saW51eC89IC1tc3RhY2stcHJvdGVjdG9yLWd1YXJkPXN5c3JlZyAtbXN0
-YWNrLXByb3RlY3Rvci1ndWFyZC1yZWc9c3BfZWwwIC1tc3RhY2stcHJvdGVjdG9yLWd1YXJkLW9m
-ZnNldD0xNDY0IC1JIC9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0v
-bGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9saWIgLUkgLi9saWIgICAgLURLQlVJTERfTU9E
-RklMRT0nImxpYi9yaGFzaHRhYmxlIicgLURLQlVJTERfQkFTRU5BTUU9JyJyaGFzaHRhYmxlIicg
-LURLQlVJTERfTU9ETkFNRT0nInJoYXNodGFibGUiJyAtRF9fS0JVSUxEX01PRE5BTUU9a21vZF9y
-aGFzaHRhYmxlIC1jIC1vIGxpYi9yaGFzaHRhYmxlLm8gL2hvbWUvZGllZGVyaWsvZGV2L2RlYmlh
-bi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2xpYi9yaGFz
-aHRhYmxlLmMgIApJbiBmaWxlIGluY2x1ZGVkIGZyb20gL2hvbWUvZGllZGVyaWsvZGV2L2RlYmlh
-bi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2luY2x1ZGUv
-bGludXgvcndzZW0uaDoxNSwKICAgICAgICAgICAgICAgICBmcm9tIC9ob21lL2RpZWRlcmlrL2Rl
-di9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9p
-bmNsdWRlL2xpbnV4L25vdGlmaWVyLmg6MTUsCiAgICAgICAgICAgICAgICAgZnJvbSAvaG9tZS9k
-aWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9z
-b3VyY2VfcnQvaW5jbHVkZS9saW51eC9jbGsuaDoxNCwKICAgICAgICAgICAgICAgICBmcm9tIC9o
-b21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1
-aWxkL3NvdXJjZV9ydC9kcml2ZXJzL3BpbmN0cmwvcmVuZXNhcy9waW5jdHJsLXJ6ZzJsLmM6MTA6
-Ci9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFu
-L2J1aWxkL3NvdXJjZV9ydC9kcml2ZXJzL3BpbmN0cmwvcmVuZXNhcy9waW5jdHJsLXJ6ZzJsLmM6
-IEluIGZ1bmN0aW9uIOKAmHJ6ZzJsX2dwaW9faXJxX3Jlc3RvcmXigJk6Ci9ob21lL2RpZWRlcmlr
-L2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9y
-dC9kcml2ZXJzL3BpbmN0cmwvcmVuZXNhcy9waW5jdHJsLXJ6ZzJsLmM6MjA3Mjo1MjogZXJyb3I6
-IOKAmHNwaW5sb2NrX3TigJkge2FrYSDigJhzdHJ1Y3Qgc3BpbmxvY2vigJl9IGhhcyBubyBtZW1i
-ZXIgbmFtZWQg4oCYcmxvY2vigJk7IGRpZCB5b3UgbWVhbiDigJhsb2Nr4oCZPwogMjA3MiB8ICAg
-ICAgICAgICAgICAgICByYXdfc3Bpbl9sb2NrX2lycXNhdmUoJnBjdHJsLT5sb2NrLnJsb2NrLCBm
-bGFncyk7CiAgICAgIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgXn5+fn4KL2hvbWUvZGllZGVyaWsvZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVh
-bS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2luY2x1ZGUvbGludXgvc3BpbmxvY2suaDoy
-NDQ6NDg6IG5vdGU6IGluIGRlZmluaXRpb24gb2YgbWFjcm8g4oCYcmF3X3NwaW5fbG9ja19pcnFz
-YXZl4oCZCiAgMjQ0IHwgICAgICAgICAgICAgICAgIGZsYWdzID0gX3Jhd19zcGluX2xvY2tfaXJx
-c2F2ZShsb2NrKTsgICBcCiAgICAgIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICBefn5+Ci9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVs
-LXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9kcml2ZXJzL3BpbmN0cmwvcmVuZXNh
-cy9waW5jdHJsLXJ6ZzJsLmM6MjA3Njo1NzogZXJyb3I6IOKAmHNwaW5sb2NrX3TigJkge2FrYSDi
-gJhzdHJ1Y3Qgc3BpbmxvY2vigJl9IGhhcyBubyBtZW1iZXIgbmFtZWQg4oCYcmxvY2vigJk7IGRp
-ZCB5b3UgbWVhbiDigJhsb2Nr4oCZPwogMjA3NiB8ICAgICAgICAgICAgICAgICByYXdfc3Bpbl91
-bmxvY2tfaXJxcmVzdG9yZSgmcGN0cmwtPmxvY2sucmxvY2ssIGZsYWdzKTsKICAgICAgfCAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIF5+fn5+
-Ci9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFu
-L2J1aWxkL3NvdXJjZV9ydC9pbmNsdWRlL2xpbnV4L3NwaW5sb2NrLmg6MjgyOjQ1OiBub3RlOiBp
-biBkZWZpbml0aW9uIG9mIG1hY3JvIOKAmHJhd19zcGluX3VubG9ja19pcnFyZXN0b3Jl4oCZCiAg
-MjgyIHwgICAgICAgICAgICAgICAgIF9yYXdfc3Bpbl91bmxvY2tfaXJxcmVzdG9yZShsb2NrLCBm
-bGFncyk7ICAgICAgIFwKICAgICAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgIF5+fn4KbWFrZVs4XTogKioqIFsvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3Nh
-bHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvc2NyaXB0cy9NYWtl
-ZmlsZS5idWlsZDoyNDk6IGRyaXZlcnMvcGluY3RybC9yZW5lc2FzL3BpbmN0cmwtcnpnMmwub10g
-RXJyb3IgMQptYWtlWzddOiAqKiogWy9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2Vy
-bmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9zY3JpcHRzL01ha2VmaWxlLmJ1
-aWxkOjQ5MDogZHJpdmVycy9waW5jdHJsL3JlbmVzYXNdIEVycm9yIDIKbWFrZVs2XTogKioqIFsv
-aG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9i
-dWlsZC9zb3VyY2VfcnQvc2NyaXB0cy9NYWtlZmlsZS5idWlsZDo0OTA6IGRyaXZlcnMvcGluY3Ry
-bF0gRXJyb3IgMgptYWtlWzVdOiAqKiogWy9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Ev
-a2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9ydC9zY3JpcHRzL01ha2VmaWxl
-LmJ1aWxkOjQ5MDogZHJpdmVyc10gRXJyb3IgMgovdXNyL2Jpbi9tYWtlIC1mIC9ob21lL2RpZWRl
-cmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJj
-ZV9ydC9zY3JpcHRzL01ha2VmaWxlLmJ1aWxkIG9iaj1zb3VuZC9wY2kvZW11MTBrMSBcCm5lZWQt
-YnVpbHRpbj0gXApuZWVkLW1vZG9yZGVyPTEgXAoKbWFrZVs1XTogKioqIFdhaXRpbmcgZm9yIHVu
-ZmluaXNoZWQgam9icy4uLi4KLi4uCm1ha2VbNF06ICoqKiBbL2hvbWUvZGllZGVyaWsvZGV2L2Rl
-Ymlhbi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L01ha2Vm
-aWxlOjE5NDQ6IC5dIEVycm9yIDIKbWFrZVszXTogKioqIFsvaG9tZS9kaWVkZXJpay9kZXYvZGVi
-aWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvTWFrZWZp
-bGU6MjUyOiBfX3N1Yi1tYWtlXSBFcnJvciAyCm1ha2VbM106IExlYXZpbmcgZGlyZWN0b3J5ICcv
-aG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9i
-dWlsZC9idWlsZF9hcm02NF9ydF9hcm02NCcKbWFrZVsyXTogKioqIFtkZWJpYW4vcnVsZXMucmVh
-bDoxNjQ6IGRlYmlhbi9zdGFtcHMvYnVpbGRfYXJtNjRfcnRfYXJtNjRdIEVycm9yIDIKbWFrZVsy
-XTogTGVhdmluZyBkaXJlY3RvcnkgJy9ob21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2Vy
-bmVsLXRlYW0vbGludXgnCm1ha2VbMV06ICoqKiBbZGViaWFuL3J1bGVzLmdlbjoxMTEwOiBidWls
-ZC1hcmNoX2FybTY0X3J0X2FybTY0X2ltYWdlXSBFcnJvciAyCm1ha2VbMV06IExlYXZpbmcgZGly
-ZWN0b3J5ICcvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4
-JwptYWtlOiAqKiogW2RlYmlhbi9ydWxlczo0MzogYnVpbGQtYXJjaF0gRXJyb3IgMgpgYGAKCmh0
-dHBzOi8vc2Fsc2EuZGViaWFuLm9yZy9kaWVkZXJpay9saW51eC8tL3RyZWUvdXBkYXRlLXRvLTYu
-OSBpcyB0aGUgc291cmNlIG9mCnRoaXMgYnVpbGQgKGZhaWx1cmUpLgoKSXQgY291bGQgYmUgYSBQ
-RUJLQUMgaXNzdWUsIGJ1dCBJIGNvbnNpc3RlbnRseSBnZXQgdGhpcyBleGFjdCBlcnJvciBhbmQg
-SQpjYW4ndCB0aGluayBvZiBhIHJlYXNvbiB3aHkgYW55IG9mIG15IGNoYW5nZXMgY291bGQgcmVz
-dWx0IGluIGEgc3VjY2Vzc2Z1bAo2LjktcmM2IGJ1aWxkLCBidXQgYSBmYWlsdXJlIGluIDYuOSgu
-MCksIHNvIEkgc3VzcGVjdCBpdCdzIGR1ZSB0byBhbiB1cHN0cmVhbQpjaGFuZ2UuCgpIYXZlbid0
-IHRyaWVkIDYuOS1yYzcgKHlldD8pIGFzIG15IGFybTY0IGJ1aWxkcyB0YWtlIDI0K2gsIGJ1dCB3
-aWxsIGRvIGlmCmluZGljYXRlZCB0aGF0IGl0IHdvdWxkIHByb3ZpZGUgaW1wb3J0YW50IGV4dHJh
-IGRhdGEuCgpDaGVlcnMsCiAgRGllZGVyaWs=
+On Friday, 17 May 2024 15:08:36 CEST Diederik de Haas wrote:
+> In file included from
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+in
+> clude/linux/rwsem.h:15, from
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+in
+> clude/linux/notifier.h:15, from
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+in
+> clude/linux/clk.h:14, from
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+dr
+> ivers/pinctrl/renesas/pinctrl-rzg2l.c:10:
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+dr
+> ivers/pinctrl/renesas/pinctrl-rzg2l.c: In function =E2=80=98rzg2l_gpio_ir=
+q_restore=E2=80=99:
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+dr
+> ivers/pinctrl/renesas/pinctrl-rzg2l.c:2072:52: error: =E2=80=98spinlock_t=
+=E2=80=99 {aka
+> =E2=80=98struct spinlock=E2=80=99} has no member named =E2=80=98rlock=E2=
+=80=99; did you mean =E2=80=98lock=E2=80=99? 2072 |
+>                 raw_spin_lock_irqsave(&pctrl->lock.rlock, flags);
+>       |                                                    ^~~~~
+>=20
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+inc
+> lude/linux/spinlock.h:244:48: note: in definition of macro
+> =E2=80=98raw_spin_lock_irqsave=E2=80=99 244 |                 flags =3D
+> _raw_spin_lock_irqsave(lock);   \
+>=20
+>       |                                                ^~~~
+>=20
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+dri
+> vers/pinctrl/renesas/pinctrl-rzg2l.c:2076:57: error: =E2=80=98spinlock_t=
+=E2=80=99 {aka
+> =E2=80=98struct spinlock=E2=80=99} has no member named =E2=80=98rlock=E2=
+=80=99; did you mean =E2=80=98lock=E2=80=99? 2076 |
+>                 raw_spin_unlock_irqrestore(&pctrl->lock.rlock, flags);
+>       |                                                         ^~~~~
+>=20
+> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
+inc
+> lude/linux/spinlock.h:282:45: note: in definition of macro
+> =E2=80=98raw_spin_unlock_irqrestore=E2=80=99 282 |               =20
+> _raw_spin_unlock_irqrestore(lock, flags);       \
+>       |                                             ^~~~
+>=20
+> make[8]: ***
+> [/home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt=
+/s
+> cripts/Makefile.build:249: drivers/pinctrl/renesas/pinctrl-rzg2l.o] Error=
+ 1
 
+https://salsa.debian.org/kernel-team/linux/-/merge_requests/1081#note_492742
+pointed me to the following 2 commits which got added in 6.9-rc7:
 
---nextPart2328511.yISQciCIdK
+https://git.kernel.org/linus/aa43c15a790cf083a6e6a7c531cffd27a5e1fd4f
+https://git.kernel.org/linus/02cd2d3be1c31a3fd328ee83e576340d34bc57d9
+
+I'm inclined to think those are very relevant, but I don't know enough
+about this material to be sure.
+
+Cheers,
+  Diederik
+--nextPart2545507.DIRTduETlc
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: This is a digitally signed message part.
 Content-Transfer-Encoding: 7Bit
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYIAB0WIQT1sUPBYsyGmi4usy/XblvOeH7bbgUCZkdW1AAKCRDXblvOeH7b
-bvoTAP0YZHrY6EA/L7x8mGCOaKCiXch0wD/ipKvNIxDkc24d0wD/dpiMmj5iWzh3
-CsJYGEg4sf1XUf6/MAdxTj/BkN4Zkws=
-=Fv3Y
+iHUEABYIAB0WIQT1sUPBYsyGmi4usy/XblvOeH7bbgUCZkp9GwAKCRDXblvOeH7b
+bmPrAP9B7bGJvx06H1EbB0GQeUmtdsWh+CBA2L5uRaXX7JBmWQD+LRUx8sGW9Nmu
+7o69Hn9TEplRAyv9MdLdJO83c1HW5w4=
+=qb+f
 -----END PGP SIGNATURE-----
 
---nextPart2328511.yISQciCIdK--
+--nextPart2545507.DIRTduETlc--
 
 
 
