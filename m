@@ -1,150 +1,132 @@
-Received: from out-181.mta1.migadu.com (out-181.mta1.migadu.com [95.215.58.181])
+Received: from mout.gmx.net (mout.gmx.net [212.227.15.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F2E873163
-	for <linux-rt-users@vger.kernel.org>; Sun, 19 May 2024 22:28:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94BCC7492
+	for <linux-rt-users@vger.kernel.org>; Mon, 20 May 2024 05:48:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.15.19
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716157741; cv=none; b=PeNyPqxDsmJZRmIPFpPkfuCkaRn8Tc1L1lKz8uUNzLLzaeZjAUkhIe5inwbIbwvHHQEPESjiQe3aIu61FHtNqfTceRMLo+I7ZSNxEZD3odhtKfe5qGk95LrsvR9nGQ8DKr1UXKRkugVr1AO68MPDh93B2vVNlY/Jfzofl2kCBbA=
+	t=1716184130; cv=none; b=PSOBwneulHV8YPZZq6nWNzmb+ua9H28Xg21F0mPnxncm1jAZljsw5dp7c6oXNbzW7dvxmMQCQCchdYeO4Upbnu+/F44Rz3ATxyZWfTSj6x7gpVoO9MRLUR8zVccZxhxre0pgoonwlOMnBcFpe7TwTI9PMZO2OUJ1UxhLnKkOm3A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716157741; c=relaxed/simple;
-	bh=lTfLym4W4Ayf1mnU8fJ8gnQ1nII4kxA5BCjktuXBz+A=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=okv2ikO4rEBobgN7H/jN68p1+liknTzmMzNrHRAy9R0z6VIT7a/70xEZYKhpgxASHTVZvhd5bJV9L/QarUzkOho1FT3hhlgHZuxuFWZl5OUAmnTCikfkIixuKsZhlpWDm/jCyWKTdgjFQCeh12m0kag/Yw47ElWfJbzksUPCXN4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org; spf=pass smtp.mailfrom=cknow.org; dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b=XzvGZyhh; arc=none smtp.client-ip=95.215.58.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cknow.org
+	s=arc-20240116; t=1716184130; c=relaxed/simple;
+	bh=+TM0qXhVxsNmnF2u0JNOafxMXh8VDiHSsD760BNQP54=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=A9kltYvpAzP6V3f8lS476cwi6JZiuuHBwGH1xxgT6mzLSXte1553eL9iEjSrGKMK5Dlj14wiZxUSsAKK0yn//eQTWTgSbbvjFUF9whq+DeY+S1t9icRfkBO5ok5M5/aR6KuhXqi0KPDIBNxSNJE3rWITJdUWEMdrDy9isgCffBQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.de; spf=pass smtp.mailfrom=gmx.de; dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b=Sm+XHXm3; arc=none smtp.client-ip=212.227.15.19
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b="XzvGZyhh"
-X-Envelope-To: linux-rt-users@vger.kernel.org
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cknow.org; s=key1;
-	t=1716157735;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=DWfHTJMo3tauTNkkGSoccqUIZEHQ8fMJM6+GOmwkYT8=;
-	b=XzvGZyhhrJBA5MA9VYpQiUqR/6aKfQRep28nRlYTxlDF6gnhbn+i12brzUSJrLFK7jJZBS
-	sm6NsvT9xb+iitKxBNkc4gJj4zoQqQ9ttiaxc+qwpmGekf+jahmOo32TFU//kXXjPmtUAS
-	HZg6T4oG9tNqcSgGry1Cdm4BY1SIB2Ku8gMnevNnok15sHSgv2YdZlIdOIMjqga1GN5Kkw
-	z9e4nOJ0QkTcNZ2y+FqLzQMmaquQMNMUzvlehUM6b3gxWohrbQL/CmtNeO2B09vQDufUW7
-	AbVthqdbFOcn4WNwTj2aS5J/Bd6sSs2t/+hOAPPqhsmZpf9YQPseeODPIU/s8w==
-X-Envelope-To: didi.debian@cknow.org
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Diederik de Haas <didi.debian@cknow.org>
-To: linux-rt-users@vger.kernel.org
-Cc: didi.debian@cknow.org
-Subject: Re: Build failure with 6.9-rt5 on arm64;
- works on amd64 and 6.9-rc6 on arm64
-Date: Mon, 20 May 2024 00:28:43 +0200
-Message-ID: <5880304.cvb1nHMhLa@bagend>
-Organization: Connecting Knowledge
-In-Reply-To: <131999629.KQPSlr0Zke@bagend>
-References: <131999629.KQPSlr0Zke@bagend>
+	dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b="Sm+XHXm3"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.de;
+	s=s31663417; t=1716184119; x=1716788919; i=efault@gmx.de;
+	bh=+TM0qXhVxsNmnF2u0JNOafxMXh8VDiHSsD760BNQP54=;
+	h=X-UI-Sender-Class:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:
+	 References:Content-Type:MIME-Version:Content-Transfer-Encoding:cc:
+	 content-transfer-encoding:content-type:date:from:message-id:
+	 mime-version:reply-to:subject:to;
+	b=Sm+XHXm3SJqdX4/TADjeLHBDG6kiOG4BsdIyE/IWptQyl90KPUVQ0geaZjf77Cg8
+	 a6RjHtQXwY+jg1vmV+ZJNPyoNoRnV11RE93C+QnPcuPoPcMeaN1qjcDVKjw4K192A
+	 bqFhzfQUcWK++iLjkcY1OjeCRK8y0Id0r+QyV35vZHrr0Q/bz5h6WbEV+PJuCp3Vb
+	 SWabRYT/SJQAMtmMh2hXwReLjLlq6X1kHsXDN27GLHEfSIhdIJExcKbo66LRIVCND
+	 D5X4FaAj5F7nqFXhHf/krA+PcuaXpVi/rOHHydwxYuj2R0MpfVLccdgIPV//bJvCX
+	 8Ti2gZ/zzugZGlwQdg==
+X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
+Received: from homer.fritz.box ([212.114.172.112]) by mail.gmx.net (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1Mi2Jn-1smgcB3Qsj-00e1f8; Mon, 20
+ May 2024 07:48:38 +0200
+Message-ID: <628e1893ff8751a5d91a1c3c73ab048f41c42a11.camel@gmx.de>
+Subject: Re: Build failure with 6.9-rt5 on arm64; works on amd64 and 6.9-rc6
+ on arm64
+From: Mike Galbraith <efault@gmx.de>
+To: Diederik de Haas <didi.debian@cknow.org>, linux-rt-users@vger.kernel.org
+Cc: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>, Geert Uytterhoeven
+	 <geert+renesas@glider.be>
+Date: Mon, 20 May 2024 07:48:37 +0200
+In-Reply-To: <5880304.cvb1nHMhLa@bagend>
+References: <131999629.KQPSlr0Zke@bagend> <5880304.cvb1nHMhLa@bagend>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.42.4 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart2545507.DIRTduETlc";
- micalg="pgp-sha256"; protocol="application/pgp-signature"
-X-Migadu-Flow: FLOW_OUT
+Content-Transfer-Encoding: base64
+X-Provags-ID: V03:K1:nrzGqUnpBU22GMB9noLqKoNYYTmaWGAiRD0xbr6srJUct2F7t+e
+ VqdUtEE9/IXFnhSPLHaa2i9Ox15neWaEuPuAnwH8SsIAqV7YixEw3sx3q6awQOjJEN9UnZ1
+ NOW2+Iq0EMRcSxW0Gle4xNTC/w2h7ULFp6Cekq92SMsA4K0eV+Gbf+KRlRL9gKyqmp4cBRG
+ bQofckcUVSOuqXx7g60qQ==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:1x9VCm5sHIk=;2A5WANhy6XG0oeSHizAu/fYaMDK
+ x9rU5vxtjrBHJ72GDmK1X2u7skchPXpWX2ddyWk2y90LZIsMIprmDAv6ZL67I8TKe8UGOkhCw
+ Vcjr6NONSwXm3C2scuckN37AJiA4Z4L00ufPPCwf4fInTloL/gWBdTcSDWH/oblYLxiZCKIrd
+ rj9qyF30KJiiA9/UCL5qr1fVPwf85USdM0zDfB/6wQceTA8R3E6mvwz3MQE8ndueAJVLXZucD
+ Kbzr7xZoc68Da0lNTDZe/wlLnymDIU75tVKyLadOE2/UVg1nL3+DbSGIkidzsiftCwlMGJmdQ
+ vJUNkdjZLCk2mkduCmVqg5hmzE6YOZD6Ss0JItyWVun4BFSZ2pnkdyfJJ8OggQqK++bToJtQo
+ Qms1dCZ2xi2Ak30+9xbQhdXVMKaErm0bE5O4iYSKsjUX0Jukv0wea55pDu/NRREjtAKfdulKA
+ ysRTdd1amiCU3OqdDereOsy9Xf4IXRcC3rDaD3LWAq+1uA378E61kmfm+ubZkdff/dpeZ5GaL
+ RWBhW7J6A4vCjzxehN1T4owq8jIVmAbZEFoQP0JxeVAIfj+QhLMc2KtEd73rdDBhg8azmuXGl
+ 9PHVTKE8Db9jZliGGWIQ7KC8rCjaVTTcGj7H4ziy3+2JDnxUEe8CfiOw5jPrSTBxUPD+AgiCu
+ coSFMqgZrQMWElCmmqDNm2aDu9n7hiUQL8p/OnDwoToKugy4ftno92hQp5mPZhz/IEdEX3RTY
+ HMvvr825Me+ej+oTHzp08+dCabt7JAl64BwsVc0d2olp4FActyE6kte04NnyXOiKTI6RwAU+C
+ mH0DX+6AqwCO+EDQhuRvRGclJynDmeTtq4AFWmuZIOJ3k=
 
---nextPart2545507.DIRTduETlc
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset="UTF-8"; protected-headers="v1"
-From: Diederik de Haas <didi.debian@cknow.org>
-To: linux-rt-users@vger.kernel.org
-Cc: didi.debian@cknow.org
-Date: Mon, 20 May 2024 00:28:43 +0200
-Message-ID: <5880304.cvb1nHMhLa@bagend>
-Organization: Connecting Knowledge
-In-Reply-To: <131999629.KQPSlr0Zke@bagend>
-References: <131999629.KQPSlr0Zke@bagend>
-MIME-Version: 1.0
-
-On Friday, 17 May 2024 15:08:36 CEST Diederik de Haas wrote:
-> In file included from
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-in
-> clude/linux/rwsem.h:15, from
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-in
-> clude/linux/notifier.h:15, from
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-in
-> clude/linux/clk.h:14, from
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-dr
-> ivers/pinctrl/renesas/pinctrl-rzg2l.c:10:
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-dr
-> ivers/pinctrl/renesas/pinctrl-rzg2l.c: In function =E2=80=98rzg2l_gpio_ir=
-q_restore=E2=80=99:
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-dr
-> ivers/pinctrl/renesas/pinctrl-rzg2l.c:2072:52: error: =E2=80=98spinlock_t=
-=E2=80=99 {aka
-> =E2=80=98struct spinlock=E2=80=99} has no member named =E2=80=98rlock=E2=
-=80=99; did you mean =E2=80=98lock=E2=80=99? 2072 |
->                 raw_spin_lock_irqsave(&pctrl->lock.rlock, flags);
->       |                                                    ^~~~~
->=20
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-inc
-> lude/linux/spinlock.h:244:48: note: in definition of macro
-> =E2=80=98raw_spin_lock_irqsave=E2=80=99 244 |                 flags =3D
-> _raw_spin_lock_irqsave(lock);   \
->=20
->       |                                                ^~~~
->=20
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-dri
-> vers/pinctrl/renesas/pinctrl-rzg2l.c:2076:57: error: =E2=80=98spinlock_t=
-=E2=80=99 {aka
-> =E2=80=98struct spinlock=E2=80=99} has no member named =E2=80=98rlock=E2=
-=80=99; did you mean =E2=80=98lock=E2=80=99? 2076 |
->                 raw_spin_unlock_irqrestore(&pctrl->lock.rlock, flags);
->       |                                                         ^~~~~
->=20
-> /home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt/=
-inc
-> lude/linux/spinlock.h:282:45: note: in definition of macro
-> =E2=80=98raw_spin_unlock_irqrestore=E2=80=99 282 |               =20
-> _raw_spin_unlock_irqrestore(lock, flags);       \
->       |                                             ^~~~
->=20
-> make[8]: ***
-> [/home/diederik/dev/debian/salsa/kernel-team/linux/debian/build/source_rt=
-/s
-> cripts/Makefile.build:249: drivers/pinctrl/renesas/pinctrl-rzg2l.o] Error=
- 1
-
-https://salsa.debian.org/kernel-team/linux/-/merge_requests/1081#note_492742
-pointed me to the following 2 commits which got added in 6.9-rc7:
-
-https://git.kernel.org/linus/aa43c15a790cf083a6e6a7c531cffd27a5e1fd4f
-https://git.kernel.org/linus/02cd2d3be1c31a3fd328ee83e576340d34bc57d9
-
-I'm inclined to think those are very relevant, but I don't know enough
-about this material to be sure.
-
-Cheers,
-  Diederik
---nextPart2545507.DIRTduETlc
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part.
-Content-Transfer-Encoding: 7Bit
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQT1sUPBYsyGmi4usy/XblvOeH7bbgUCZkp9GwAKCRDXblvOeH7b
-bmPrAP9B7bGJvx06H1EbB0GQeUmtdsWh+CBA2L5uRaXX7JBmWQD+LRUx8sGW9Nmu
-7o69Hn9TEplRAyv9MdLdJO83c1HW5w4=
-=qb+f
------END PGP SIGNATURE-----
-
---nextPart2545507.DIRTduETlc--
-
-
-
+T24gTW9uLCAyMDI0LTA1LTIwIGF0IDAwOjI4ICswMjAwLCBEaWVkZXJpayBkZSBIYWFzIHdyb3Rl
+Og0KPiBPbiBGcmlkYXksIDE3IE1heSAyMDI0IDE1OjA4OjM2IENFU1QgRGllZGVyaWsgZGUgSGFh
+cyB3cm90ZToNCj4gPiBJbiBmaWxlIGluY2x1ZGVkIGZyb20NCj4gPiAvaG9tZS9kaWVkZXJpay9k
+ZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQv
+aW4NCj4gPiBjbHVkZS9saW51eC9yd3NlbS5oOjE1LCBmcm9tDQo+ID4gL2hvbWUvZGllZGVyaWsv
+ZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0
+L2luDQo+ID4gY2x1ZGUvbGludXgvbm90aWZpZXIuaDoxNSwgZnJvbQ0KPiA+IC9ob21lL2RpZWRl
+cmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJj
+ZV9ydC9pbg0KPiA+IGNsdWRlL2xpbnV4L2Nsay5oOjE0LCBmcm9tDQo+ID4gL2hvbWUvZGllZGVy
+aWsvZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNl
+X3J0L2RyDQo+ID4gaXZlcnMvcGluY3RybC9yZW5lc2FzL3BpbmN0cmwtcnpnMmwuYzoxMDoNCj4g
+PiAvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlh
+bi9idWlsZC9zb3VyY2VfcnQvZHINCj4gPiBpdmVycy9waW5jdHJsL3JlbmVzYXMvcGluY3RybC1y
+emcybC5jOiBJbiBmdW5jdGlvbiDigJhyemcybF9ncGlvX2lycV9yZXN0b3Jl4oCZOg0KPiA+IC9o
+b21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1
+aWxkL3NvdXJjZV9ydC9kcg0KPiA+IGl2ZXJzL3BpbmN0cmwvcmVuZXNhcy9waW5jdHJsLXJ6ZzJs
+LmM6MjA3Mjo1MjogZXJyb3I6IOKAmHNwaW5sb2NrX3TigJkge2FrYQ0KPiA+IOKAmHN0cnVjdCBz
+cGlubG9ja+KAmX0gaGFzIG5vIG1lbWJlciBuYW1lZCDigJhybG9ja+KAmTsgZGlkIHlvdSBtZWFu
+IOKAmGxvY2vigJk/IDIwNzIgfA0KPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBy
+YXdfc3Bpbl9sb2NrX2lycXNhdmUoJnBjdHJsLT5sb2NrLnJsb2NrLCBmbGFncyk7DQo+ID4gwqDC
+oMKgwqDCoCB8wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIF5+
+fn5+DQo+ID4gDQo+ID4gL2hvbWUvZGllZGVyaWsvZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVh
+bS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2luYw0KPiA+IGx1ZGUvbGludXgvc3Bpbmxv
+Y2suaDoyNDQ6NDg6IG5vdGU6IGluIGRlZmluaXRpb24gb2YgbWFjcm8NCj4gPiDigJhyYXdfc3Bp
+bl9sb2NrX2lycXNhdmXigJkgMjQ0IHzCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBm
+bGFncyA9DQo+ID4gX3Jhd19zcGluX2xvY2tfaXJxc2F2ZShsb2NrKTvCoMKgIFwNCj4gPiANCj4g
+PiDCoMKgwqDCoMKgIHzCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIF5+fn4N
+Cj4gPiANCj4gPiAvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xp
+bnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvZHJpDQo+ID4gdmVycy9waW5jdHJsL3JlbmVzYXMv
+cGluY3RybC1yemcybC5jOjIwNzY6NTc6IGVycm9yOiDigJhzcGlubG9ja1904oCZIHtha2ENCj4g
+PiDigJhzdHJ1Y3Qgc3BpbmxvY2vigJl9IGhhcyBubyBtZW1iZXIgbmFtZWQg4oCYcmxvY2vigJk7
+IGRpZCB5b3UgbWVhbiDigJhsb2Nr4oCZPyAyMDc2IHwNCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqAgcmF3X3NwaW5fdW5sb2NrX2lycXJlc3RvcmUoJnBjdHJsLT5sb2NrLnJsb2Nr
+LCBmbGFncyk7DQo+ID4gwqDCoMKgwqDCoCB8wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBefn5+fg0KPiA+IA0KPiA+IC9ob21lL2RpZWRlcmlr
+L2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9y
+dC9pbmMNCj4gPiBsdWRlL2xpbnV4L3NwaW5sb2NrLmg6MjgyOjQ1OiBub3RlOiBpbiBkZWZpbml0
+aW9uIG9mIG1hY3JvDQo+ID4g4oCYcmF3X3NwaW5fdW5sb2NrX2lycXJlc3RvcmXigJkgMjgyIHzC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgDQo+ID4gX3Jhd19zcGluX3VubG9ja19pcnFy
+ZXN0b3JlKGxvY2ssIGZsYWdzKTvCoMKgwqDCoMKgwqAgXA0KPiA+IMKgwqDCoMKgwqAgfMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgXn5+fg0KPiA+IA0KPiA+IG1ha2VbOF06ICoqKg0K
+PiA+IFsvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2Rl
+Ymlhbi9idWlsZC9zb3VyY2VfcnQvcw0KPiA+IGNyaXB0cy9NYWtlZmlsZS5idWlsZDoyNDk6IGRy
+aXZlcnMvcGluY3RybC9yZW5lc2FzL3BpbmN0cmwtcnpnMmwub10gRXJyb3IgMQ0KPiANCj4gaHR0
+cHM6Ly9zYWxzYS5kZWJpYW4ub3JnL2tlcm5lbC10ZWFtL2xpbnV4Ly0vbWVyZ2VfcmVxdWVzdHMv
+MTA4MSNub3RlXzQ5Mjc0Mg0KPiBwb2ludGVkIG1lIHRvIHRoZSBmb2xsb3dpbmcgMiBjb21taXRz
+IHdoaWNoIGdvdCBhZGRlZCBpbiA2LjktcmM3Og0KPiANCj4gaHR0cHM6Ly9naXQua2VybmVsLm9y
+Zy9saW51cy9hYTQzYzE1YTc5MGNmMDgzYTZlNmE3YzUzMWNmZmQyN2E1ZTFmZDRmDQo+IGh0dHBz
+Oi8vZ2l0Lmtlcm5lbC5vcmcvbGludXMvMDJjZDJkM2JlMWMzMWEzZmQzMjhlZTgzZTU3NjM0MGQz
+NGJjNTdkOQ0KPiANCj4gSSdtIGluY2xpbmVkIHRvIHRoaW5rIHRob3NlIGFyZSB2ZXJ5IHJlbGV2
+YW50LCBidXQgSSBkb24ndCBrbm93IGVub3VnaA0KPiBhYm91dCB0aGlzIG1hdGVyaWFsIHRvIGJl
+IHN1cmUuDQoNClllYWgsIHRoZXkncmUgcmVsZXZhbnQvYnJva2VuLiBwY3RybC0+bG9jayBpcyBh
+IHNwaW5sb2NrX3QsIHdoaWNoIG1hcHMNCnRvIGFuIHJ0bXV0ZXggZm9yIFJUIGFuZCBhIHJhd19z
+cGlubG9jayBmb3IgIVJUIHNwZWNpZmljYWxseSB0byBhbGxvdw0Kc2VhbWxlc3MgdW5kZXJseWlu
+ZyBsb2NrIHR5cGUgc3Vic3RpdHV0aW9uIHZpYSAuY29uZmlnLg0KDQoJLU1pa2UNCg==
