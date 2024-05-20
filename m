@@ -1,132 +1,112 @@
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.19])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com [209.85.167.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94BCC7492
-	for <linux-rt-users@vger.kernel.org>; Mon, 20 May 2024 05:48:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.15.19
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFD6DD2FF
+	for <linux-rt-users@vger.kernel.org>; Mon, 20 May 2024 07:20:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716184130; cv=none; b=PSOBwneulHV8YPZZq6nWNzmb+ua9H28Xg21F0mPnxncm1jAZljsw5dp7c6oXNbzW7dvxmMQCQCchdYeO4Upbnu+/F44Rz3ATxyZWfTSj6x7gpVoO9MRLUR8zVccZxhxre0pgoonwlOMnBcFpe7TwTI9PMZO2OUJ1UxhLnKkOm3A=
+	t=1716189649; cv=none; b=VurERBrxz4dsN55Bdb3fZnJlLpLcnKUzzrATIpVqWP+3B0oISX0tyn9cMMIULgk6QsxPb3HpHz83wy/Bv9wxCK4Wl/OW7BsS7ED6MRxxoB14AhS8ZNR0qIRZLlc4iA4te4rnDQ18PSCRSUD+17gPzr0z76rCJtqH9gOkTEK39pg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716184130; c=relaxed/simple;
-	bh=+TM0qXhVxsNmnF2u0JNOafxMXh8VDiHSsD760BNQP54=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=A9kltYvpAzP6V3f8lS476cwi6JZiuuHBwGH1xxgT6mzLSXte1553eL9iEjSrGKMK5Dlj14wiZxUSsAKK0yn//eQTWTgSbbvjFUF9whq+DeY+S1t9icRfkBO5ok5M5/aR6KuhXqi0KPDIBNxSNJE3rWITJdUWEMdrDy9isgCffBQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.de; spf=pass smtp.mailfrom=gmx.de; dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b=Sm+XHXm3; arc=none smtp.client-ip=212.227.15.19
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.de
+	s=arc-20240116; t=1716189649; c=relaxed/simple;
+	bh=gqIAUbUBH0zrLm1kxTzRh/nI+40++QuEy6cZC2eVlCs=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=Mv1b952jfpiXzHD8yKwlYsz5K9FMo/pLdGguCfIqJjf5jKN4amXzXKcQIx+w5plJVBHESBLNn34Oy/56HhLwpA9IcgnkXPBQQ7DcAgb2GWDkfJ8W1r9duEoHvq2thtECosRTuopvPWA/bSp/ix8podNYQtRbM20kUnrQOXrstfk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=tuxon.dev; spf=pass smtp.mailfrom=tuxon.dev; dkim=pass (2048-bit key) header.d=tuxon.dev header.i=@tuxon.dev header.b=VWy2YJrD; arc=none smtp.client-ip=209.85.167.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=tuxon.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=tuxon.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.de header.i=efault@gmx.de header.b="Sm+XHXm3"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.de;
-	s=s31663417; t=1716184119; x=1716788919; i=efault@gmx.de;
-	bh=+TM0qXhVxsNmnF2u0JNOafxMXh8VDiHSsD760BNQP54=;
-	h=X-UI-Sender-Class:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:
-	 References:Content-Type:MIME-Version:Content-Transfer-Encoding:cc:
-	 content-transfer-encoding:content-type:date:from:message-id:
-	 mime-version:reply-to:subject:to;
-	b=Sm+XHXm3SJqdX4/TADjeLHBDG6kiOG4BsdIyE/IWptQyl90KPUVQ0geaZjf77Cg8
-	 a6RjHtQXwY+jg1vmV+ZJNPyoNoRnV11RE93C+QnPcuPoPcMeaN1qjcDVKjw4K192A
-	 bqFhzfQUcWK++iLjkcY1OjeCRK8y0Id0r+QyV35vZHrr0Q/bz5h6WbEV+PJuCp3Vb
-	 SWabRYT/SJQAMtmMh2hXwReLjLlq6X1kHsXDN27GLHEfSIhdIJExcKbo66LRIVCND
-	 D5X4FaAj5F7nqFXhHf/krA+PcuaXpVi/rOHHydwxYuj2R0MpfVLccdgIPV//bJvCX
-	 8Ti2gZ/zzugZGlwQdg==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from homer.fritz.box ([212.114.172.112]) by mail.gmx.net (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1Mi2Jn-1smgcB3Qsj-00e1f8; Mon, 20
- May 2024 07:48:38 +0200
-Message-ID: <628e1893ff8751a5d91a1c3c73ab048f41c42a11.camel@gmx.de>
-Subject: Re: Build failure with 6.9-rt5 on arm64; works on amd64 and 6.9-rc6
- on arm64
-From: Mike Galbraith <efault@gmx.de>
-To: Diederik de Haas <didi.debian@cknow.org>, linux-rt-users@vger.kernel.org
-Cc: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>, Geert Uytterhoeven
-	 <geert+renesas@glider.be>
-Date: Mon, 20 May 2024 07:48:37 +0200
-In-Reply-To: <5880304.cvb1nHMhLa@bagend>
-References: <131999629.KQPSlr0Zke@bagend> <5880304.cvb1nHMhLa@bagend>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+	dkim=pass (2048-bit key) header.d=tuxon.dev header.i=@tuxon.dev header.b="VWy2YJrD"
+Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-52192578b95so4561203e87.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 May 2024 00:20:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=tuxon.dev; s=google; t=1716189644; x=1716794444; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=NZBUhRNFLDmCI2ChcjlpR99DNWg+Cc8ceERhi6tF0ro=;
+        b=VWy2YJrDkuo5GTVgOdg3Di5KaEVvjlYbz2ISbYzR7L1lfW5h/AHaNR9xwse942g3t2
+         JRDGY8pHIeC+pOkmqHyJKsP1LlsDJacUrZzENQ/hIVQp19xFYZYnelUWkfRPefrG077k
+         FU0uc0LwopogE9cT1f2MgXqG3vGqiVjJrwR9ZHQVbMTxPSsuqCy8/FgF3TvqkkioeVMm
+         H31gFXNPKPL72foU0fP1OTDvlx1aCoUzUXgwwC5jjajdCVBs7x7Di4st0o2kFUHClGWR
+         +tiITXY1fyOXz3PgjJf9XuH6U4Ra1KuOzbuY7/QmVHgXVcjt+1RqwrnmcEKSHlo1j9Lm
+         yqLQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716189644; x=1716794444;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=NZBUhRNFLDmCI2ChcjlpR99DNWg+Cc8ceERhi6tF0ro=;
+        b=F1hyL18WQ8+l991nJfQVLezAaUCZmjri1NzAjBypoJ4Cy9ucmyK5H0T1FLI3Aa5ThR
+         WiZIqVN3WJEwBWS/LlZ0Fp/13htNgWYYahjOgp02z1EFCgbl2HDmmp6/hfBFESRMRHDE
+         snzYVGmW+n5Zaryza0zyDORUWW4yls7mO24GmwRwu9BBFcjSzfTuExJEib9NZAkoXhHi
+         mUlcqaCmnepMHP8AS7ompLlcn19PGyH3iMhc6/M3AoIzDT+T2k4m34y13J263u2oqIck
+         tkQiDUmoYJG5aOnGN7sLwxMKfK8iDRX/4v87lQZaAgfTsAQZoiAhWHGnVPM0HRB6lCVD
+         3aoQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUCtWAV7h8b7CfgvfqqjUR3ZeSaSTXmE04y2h1hP0U/Ay/AjIA79kGD1C1W91/c0+P3R8Ujo+lkzv2bnB0SGdBetsB+rVna7ruwaaSOyAQ=
+X-Gm-Message-State: AOJu0YzSWk/IZNas5NTu8ZECdxb69iY5dM27OHNrh0OHd+10S7pDrK8c
+	TQly73D5WpcYa672JhpuhWFGfS+ojFBuTV9IihTf2WTkwwl3rNbEJYAM2FZggRM=
+X-Google-Smtp-Source: AGHT+IGTMldOTJK/Mk84R/2R/3qaWKsKo9JQiM+f1Bi56FP9zReRBJfFHH+CDVcKkrFNNmSxx9oDag==
+X-Received: by 2002:a05:6512:3091:b0:51e:f1a6:ac39 with SMTP id 2adb3069b0e04-5220fa71b46mr23227383e87.12.1716189643948;
+        Mon, 20 May 2024 00:20:43 -0700 (PDT)
+Received: from claudiu-X670E-Pro-RS.. ([82.78.167.22])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-41fccfe1277sm398943205e9.42.2024.05.20.00.20.42
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 20 May 2024 00:20:43 -0700 (PDT)
+From: Claudiu <claudiu.beznea@tuxon.dev>
+X-Google-Original-From: Claudiu <claudiu.beznea.uj@bp.renesas.com>
+To: geert+renesas@glider.be,
+	linus.walleij@linaro.org,
+	didi.debian@cknow.org,
+	efault@gmx.de
+Cc: linux-renesas-soc@vger.kernel.org,
+	linux-gpio@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	claudiu.beznea@tuxon.dev,
+	linux-rt-users@vger.kernel.org,
+	Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+Subject: [PATCH] pinctrl: renesas: rzg2l: use spin_{lock,unlock}_irq{save,restore}
+Date: Mon, 20 May 2024 10:20:33 +0300
+Message-Id: <20240520072033.228049-1-claudiu.beznea.uj@bp.renesas.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-X-Provags-ID: V03:K1:nrzGqUnpBU22GMB9noLqKoNYYTmaWGAiRD0xbr6srJUct2F7t+e
- VqdUtEE9/IXFnhSPLHaa2i9Ox15neWaEuPuAnwH8SsIAqV7YixEw3sx3q6awQOjJEN9UnZ1
- NOW2+Iq0EMRcSxW0Gle4xNTC/w2h7ULFp6Cekq92SMsA4K0eV+Gbf+KRlRL9gKyqmp4cBRG
- bQofckcUVSOuqXx7g60qQ==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:1x9VCm5sHIk=;2A5WANhy6XG0oeSHizAu/fYaMDK
- x9rU5vxtjrBHJ72GDmK1X2u7skchPXpWX2ddyWk2y90LZIsMIprmDAv6ZL67I8TKe8UGOkhCw
- Vcjr6NONSwXm3C2scuckN37AJiA4Z4L00ufPPCwf4fInTloL/gWBdTcSDWH/oblYLxiZCKIrd
- rj9qyF30KJiiA9/UCL5qr1fVPwf85USdM0zDfB/6wQceTA8R3E6mvwz3MQE8ndueAJVLXZucD
- Kbzr7xZoc68Da0lNTDZe/wlLnymDIU75tVKyLadOE2/UVg1nL3+DbSGIkidzsiftCwlMGJmdQ
- vJUNkdjZLCk2mkduCmVqg5hmzE6YOZD6Ss0JItyWVun4BFSZ2pnkdyfJJ8OggQqK++bToJtQo
- Qms1dCZ2xi2Ak30+9xbQhdXVMKaErm0bE5O4iYSKsjUX0Jukv0wea55pDu/NRREjtAKfdulKA
- ysRTdd1amiCU3OqdDereOsy9Xf4IXRcC3rDaD3LWAq+1uA378E61kmfm+ubZkdff/dpeZ5GaL
- RWBhW7J6A4vCjzxehN1T4owq8jIVmAbZEFoQP0JxeVAIfj+QhLMc2KtEd73rdDBhg8azmuXGl
- 9PHVTKE8Db9jZliGGWIQ7KC8rCjaVTTcGj7H4ziy3+2JDnxUEe8CfiOw5jPrSTBxUPD+AgiCu
- coSFMqgZrQMWElCmmqDNm2aDu9n7hiUQL8p/OnDwoToKugy4ftno92hQp5mPZhz/IEdEX3RTY
- HMvvr825Me+ej+oTHzp08+dCabt7JAl64BwsVc0d2olp4FActyE6kte04NnyXOiKTI6RwAU+C
- mH0DX+6AqwCO+EDQhuRvRGclJynDmeTtq4AFWmuZIOJ3k=
+Content-Transfer-Encoding: 8bit
 
-T24gTW9uLCAyMDI0LTA1LTIwIGF0IDAwOjI4ICswMjAwLCBEaWVkZXJpayBkZSBIYWFzIHdyb3Rl
-Og0KPiBPbiBGcmlkYXksIDE3IE1heSAyMDI0IDE1OjA4OjM2IENFU1QgRGllZGVyaWsgZGUgSGFh
-cyB3cm90ZToNCj4gPiBJbiBmaWxlIGluY2x1ZGVkIGZyb20NCj4gPiAvaG9tZS9kaWVkZXJpay9k
-ZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQv
-aW4NCj4gPiBjbHVkZS9saW51eC9yd3NlbS5oOjE1LCBmcm9tDQo+ID4gL2hvbWUvZGllZGVyaWsv
-ZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0
-L2luDQo+ID4gY2x1ZGUvbGludXgvbm90aWZpZXIuaDoxNSwgZnJvbQ0KPiA+IC9ob21lL2RpZWRl
-cmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJj
-ZV9ydC9pbg0KPiA+IGNsdWRlL2xpbnV4L2Nsay5oOjE0LCBmcm9tDQo+ID4gL2hvbWUvZGllZGVy
-aWsvZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVhbS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNl
-X3J0L2RyDQo+ID4gaXZlcnMvcGluY3RybC9yZW5lc2FzL3BpbmN0cmwtcnpnMmwuYzoxMDoNCj4g
-PiAvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2RlYmlh
-bi9idWlsZC9zb3VyY2VfcnQvZHINCj4gPiBpdmVycy9waW5jdHJsL3JlbmVzYXMvcGluY3RybC1y
-emcybC5jOiBJbiBmdW5jdGlvbiDigJhyemcybF9ncGlvX2lycV9yZXN0b3Jl4oCZOg0KPiA+IC9o
-b21lL2RpZWRlcmlrL2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1
-aWxkL3NvdXJjZV9ydC9kcg0KPiA+IGl2ZXJzL3BpbmN0cmwvcmVuZXNhcy9waW5jdHJsLXJ6ZzJs
-LmM6MjA3Mjo1MjogZXJyb3I6IOKAmHNwaW5sb2NrX3TigJkge2FrYQ0KPiA+IOKAmHN0cnVjdCBz
-cGlubG9ja+KAmX0gaGFzIG5vIG1lbWJlciBuYW1lZCDigJhybG9ja+KAmTsgZGlkIHlvdSBtZWFu
-IOKAmGxvY2vigJk/IDIwNzIgfA0KPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBy
-YXdfc3Bpbl9sb2NrX2lycXNhdmUoJnBjdHJsLT5sb2NrLnJsb2NrLCBmbGFncyk7DQo+ID4gwqDC
-oMKgwqDCoCB8wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIF5+
-fn5+DQo+ID4gDQo+ID4gL2hvbWUvZGllZGVyaWsvZGV2L2RlYmlhbi9zYWxzYS9rZXJuZWwtdGVh
-bS9saW51eC9kZWJpYW4vYnVpbGQvc291cmNlX3J0L2luYw0KPiA+IGx1ZGUvbGludXgvc3Bpbmxv
-Y2suaDoyNDQ6NDg6IG5vdGU6IGluIGRlZmluaXRpb24gb2YgbWFjcm8NCj4gPiDigJhyYXdfc3Bp
-bl9sb2NrX2lycXNhdmXigJkgMjQ0IHzCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBm
-bGFncyA9DQo+ID4gX3Jhd19zcGluX2xvY2tfaXJxc2F2ZShsb2NrKTvCoMKgIFwNCj4gPiANCj4g
-PiDCoMKgwqDCoMKgIHzCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIF5+fn4N
-Cj4gPiANCj4gPiAvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xp
-bnV4L2RlYmlhbi9idWlsZC9zb3VyY2VfcnQvZHJpDQo+ID4gdmVycy9waW5jdHJsL3JlbmVzYXMv
-cGluY3RybC1yemcybC5jOjIwNzY6NTc6IGVycm9yOiDigJhzcGlubG9ja1904oCZIHtha2ENCj4g
-PiDigJhzdHJ1Y3Qgc3BpbmxvY2vigJl9IGhhcyBubyBtZW1iZXIgbmFtZWQg4oCYcmxvY2vigJk7
-IGRpZCB5b3UgbWVhbiDigJhsb2Nr4oCZPyAyMDc2IHwNCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqAgcmF3X3NwaW5fdW5sb2NrX2lycXJlc3RvcmUoJnBjdHJsLT5sb2NrLnJsb2Nr
-LCBmbGFncyk7DQo+ID4gwqDCoMKgwqDCoCB8wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBefn5+fg0KPiA+IA0KPiA+IC9ob21lL2RpZWRlcmlr
-L2Rldi9kZWJpYW4vc2Fsc2Eva2VybmVsLXRlYW0vbGludXgvZGViaWFuL2J1aWxkL3NvdXJjZV9y
-dC9pbmMNCj4gPiBsdWRlL2xpbnV4L3NwaW5sb2NrLmg6MjgyOjQ1OiBub3RlOiBpbiBkZWZpbml0
-aW9uIG9mIG1hY3JvDQo+ID4g4oCYcmF3X3NwaW5fdW5sb2NrX2lycXJlc3RvcmXigJkgMjgyIHzC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgDQo+ID4gX3Jhd19zcGluX3VubG9ja19pcnFy
-ZXN0b3JlKGxvY2ssIGZsYWdzKTvCoMKgwqDCoMKgwqAgXA0KPiA+IMKgwqDCoMKgwqAgfMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgXn5+fg0KPiA+IA0KPiA+IG1ha2VbOF06ICoqKg0K
-PiA+IFsvaG9tZS9kaWVkZXJpay9kZXYvZGViaWFuL3NhbHNhL2tlcm5lbC10ZWFtL2xpbnV4L2Rl
-Ymlhbi9idWlsZC9zb3VyY2VfcnQvcw0KPiA+IGNyaXB0cy9NYWtlZmlsZS5idWlsZDoyNDk6IGRy
-aXZlcnMvcGluY3RybC9yZW5lc2FzL3BpbmN0cmwtcnpnMmwub10gRXJyb3IgMQ0KPiANCj4gaHR0
-cHM6Ly9zYWxzYS5kZWJpYW4ub3JnL2tlcm5lbC10ZWFtL2xpbnV4Ly0vbWVyZ2VfcmVxdWVzdHMv
-MTA4MSNub3RlXzQ5Mjc0Mg0KPiBwb2ludGVkIG1lIHRvIHRoZSBmb2xsb3dpbmcgMiBjb21taXRz
-IHdoaWNoIGdvdCBhZGRlZCBpbiA2LjktcmM3Og0KPiANCj4gaHR0cHM6Ly9naXQua2VybmVsLm9y
-Zy9saW51cy9hYTQzYzE1YTc5MGNmMDgzYTZlNmE3YzUzMWNmZmQyN2E1ZTFmZDRmDQo+IGh0dHBz
-Oi8vZ2l0Lmtlcm5lbC5vcmcvbGludXMvMDJjZDJkM2JlMWMzMWEzZmQzMjhlZTgzZTU3NjM0MGQz
-NGJjNTdkOQ0KPiANCj4gSSdtIGluY2xpbmVkIHRvIHRoaW5rIHRob3NlIGFyZSB2ZXJ5IHJlbGV2
-YW50LCBidXQgSSBkb24ndCBrbm93IGVub3VnaA0KPiBhYm91dCB0aGlzIG1hdGVyaWFsIHRvIGJl
-IHN1cmUuDQoNClllYWgsIHRoZXkncmUgcmVsZXZhbnQvYnJva2VuLiBwY3RybC0+bG9jayBpcyBh
-IHNwaW5sb2NrX3QsIHdoaWNoIG1hcHMNCnRvIGFuIHJ0bXV0ZXggZm9yIFJUIGFuZCBhIHJhd19z
-cGlubG9jayBmb3IgIVJUIHNwZWNpZmljYWxseSB0byBhbGxvdw0Kc2VhbWxlc3MgdW5kZXJseWlu
-ZyBsb2NrIHR5cGUgc3Vic3RpdHV0aW9uIHZpYSAuY29uZmlnLg0KDQoJLU1pa2UNCg==
+From: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+
+On PREEMPT_RT kernels the spinlock_t maps to an rtmutex. Using
+raw_spin_lock_irqsave()/raw_spin_unlock_irqrestore() on
+&pctrl->lock.rlock breaks the PREEMPT_RT builds. To fix this use
+spin_lock_irqsave()/spin_unlock_irqrestore() on &pctrl->lock.
+
+Fixes: e1fd1f9f457b ("pinctrl: renesas: rzg2l: Configure the interrupt type on resume")
+Reported-by: Diederik de Haas <didi.debian@cknow.org>
+Closes: https://lore.kernel.org/all/131999629.KQPSlr0Zke@bagend
+Signed-off-by: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+---
+ drivers/pinctrl/renesas/pinctrl-rzg2l.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/pinctrl/renesas/pinctrl-rzg2l.c b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
+index 20425afc6b33..78f947a8e26e 100644
+--- a/drivers/pinctrl/renesas/pinctrl-rzg2l.c
++++ b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
+@@ -2069,11 +2069,11 @@ static void rzg2l_gpio_irq_restore(struct rzg2l_pinctrl *pctrl)
+ 		 * This has to be atomically executed to protect against a concurrent
+ 		 * interrupt.
+ 		 */
+-		raw_spin_lock_irqsave(&pctrl->lock.rlock, flags);
++		spin_lock_irqsave(&pctrl->lock, flags);
+ 		ret = rzg2l_gpio_irq_set_type(data, irqd_get_trigger_type(data));
+ 		if (!ret && !irqd_irq_disabled(data))
+ 			rzg2l_gpio_irq_enable(data);
+-		raw_spin_unlock_irqrestore(&pctrl->lock.rlock, flags);
++		spin_unlock_irqrestore(&pctrl->lock, flags);
+ 
+ 		if (ret)
+ 			dev_crit(pctrl->dev, "Failed to set IRQ type for virq=%u\n", virq);
+-- 
+2.39.2
+
