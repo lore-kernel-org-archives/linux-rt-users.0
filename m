@@ -1,96 +1,150 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F17EB138493;
-	Mon, 20 May 2024 20:25:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DA4654278
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 09:03:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716236719; cv=none; b=dVD2BfGcuqVX/s1bROJ8F4nXb2hmuzdjWd/ZFeEv+n1RG+17QgKFw5+cZNd8bZHHVJ14A9O3X5kOLgK2q4Vkbm8E+9tyC70mk8yxUrphMFbkiNHQ3R/AR4Vap3d1jjGo28suNJvXlhhSZka5+SmpS6beL0QFRDrDeW99DvkmzaA=
+	t=1716282225; cv=none; b=IRX3glvAD5v0nBk1J2vU+o/YX1jZ6DWlcsrWl3Lc8Qcn2strH8yj7JUJbfWv6WN/csGSpf8Dn36SP/VJuA0RQW4WZ5u47yMGkkjeM5qwDDQpcmYMdKHb7snXznYS+8WWVSwyJswcJlfSwk+f8Sy2tfRqZqMzd5qkZ+T3mwVPF/I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716236719; c=relaxed/simple;
-	bh=YWuHbthd0gLxLRAKME12JVYB8XhoGfFLh8UaRj4ZA5A=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:Content-Type; b=YT55SMSGPSuIxiJcPZQll0PXDjQa9xZluRtaqXLmSLJAwt8wwWUcVUXuj5tVGerTne98zdhfbwCSe70s+OlZHGFW/Gk5bltnWIG+NLVqtenTkGVdEs9SA3oI2bROo2n1lATBQhuoT11U54npU29FtFPLpCiZ0eMquEv4g7sNVoM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UDG3ockg; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1716282225; c=relaxed/simple;
+	bh=WwubyTck14hSYWNd+EZHq+sIN0JioSBlvg43BrUZZ3Q=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=WqS7t9Oo6p12OutE2boYWJk/aTia3Rb1sCVTn+WM3bSiYnbGohSda2WYPWC+R1P9ZwDOXCcbeVdm3DZVlNiB4mdoallic7vtRtelaAXPhs3gacYhpyfzDxgrHzy9v3Fj3VQP0qXDaMOIqSxGu4OuCmUp9gYXTJg5CtdtbqjmDWs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N/AnxtBw; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UDG3ockg"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0A390C2BD10;
-	Mon, 20 May 2024 20:25:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1716236718;
-	bh=YWuHbthd0gLxLRAKME12JVYB8XhoGfFLh8UaRj4ZA5A=;
-	h=Date:From:Subject:To:Cc:From;
-	b=UDG3ockg4g2ME/lkrL8ASupa9NPVk2RO9Ns1ckkTalgdP4y9MBDXdlNEH4kY6FYvr
-	 NRzV1O0Lt6qfJmRA+EOLy16AaiOf7nkvPvkHdKhTmTu9HFfyKoCLF7Z/OjFcGg9VYV
-	 6YebW/gsiUn4VxrJB/JmHE7/R45C5fPPqknMJYks8h9SFZCRqj8RjSCB0GShEoV2Xi
-	 MOBgCw8C2BPYOwq3iU7OUmBtzeWhIWOgweJDF8mJwGf5gnVjU50CirvbgR+XMZAyBY
-	 FaoV38+09MdsNFnvo2PmXZ+io+5TIeqXdb9W9oxF+9GSt2IJVhOsJhnFhwW79Mkjmc
-	 EzSXJ6WfBSjtQ==
-Message-ID: <59680f48-df89-431a-98b9-b1cafd3ad353@kernel.org>
-Date: Mon, 20 May 2024 22:25:00 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N/AnxtBw"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716282223;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Bh7W8N7Kjlu+sUoloK6kktcE+ERzsp6+vlPGr92bmBc=;
+	b=N/AnxtBwSe9NXPfQNlj6KsmMMdCg6LsLqyO067buGSNQcn99rJfHGWpou+VLtocsUPC3kt
+	j0JXklvf8dCWaphmDQlRRYSWSEObsNMl9b7PF2AczI0tqgdOKULXKanVqSQbftnpFbGm50
+	VMXdElzCNiQ8jJYn2z1N30wr/jL0+sM=
+Received: from mail-ed1-f72.google.com (mail-ed1-f72.google.com
+ [209.85.208.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-660-diR8CPi_N2KfJZ5wN5BEiQ-1; Tue, 21 May 2024 05:03:41 -0400
+X-MC-Unique: diR8CPi_N2KfJZ5wN5BEiQ-1
+Received: by mail-ed1-f72.google.com with SMTP id 4fb4d7f45d1cf-574f411ac2cso4065479a12.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 02:03:41 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716282220; x=1716887020;
+        h=content-transfer-encoding:mime-version:message-id:date:references
+         :in-reply-to:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Bh7W8N7Kjlu+sUoloK6kktcE+ERzsp6+vlPGr92bmBc=;
+        b=dIjqFGxE8Qn6PObRZ4YH8eaj+tfHt+mLDDYE2sfY0A6xyKjLvZ2Ee5WXccH0/kiYdQ
+         knyoDpq0QrThWrUGfTxxxxlK8S22BFVIb0f9anhFcwGgA8NOZt12GcMsIv5GYCdcgKfS
+         JNVdfGjtBS1Vpu7vxktiqN9gJMjIckoRZZNDioATvy4a8qs5u+VXC7Wgfg2dzl00Poye
+         8LCj+LKs5hfgN6w66BhezGEgPw5OoTQ9MJYUvRG8qpLnQWJDFNeW/IYyyz6mVUdGi6oa
+         KMfe61AnDsuxbTaYu2vU/1tmbG4nm80ISfH3Ed8M89I6JK+TDBGddd1ogevmpDLQjkpK
+         /23Q==
+X-Forwarded-Encrypted: i=1; AJvYcCVqSaKfTNhZW8bgsr2vhcvEkc4f/5mMvsC5vcmnPSqtEOImQd/xblRm3/j7BBrev9EQPtgjsHujOkUV/ouUgAYlxMvjEvWnqUYqpnxNPIU=
+X-Gm-Message-State: AOJu0YxtnzfU0VjV+hG/TdSHBvFy/YRU6yImHyHJpIDhdxRiCSWpu7RS
+	pYCcQEVkIs0EKzgqs7N2TOEc9gY5M/lqLwRVAVxXlpli+S9Ac3cibZzrRz8FOcncolgjEs0Kmqy
+	qXDiGVE4ay9wMsGqsvxnEpKm+41ZNe2mGXtMehAxCeL+pqYWndwVyuXLh/VJz1eJ8
+X-Received: by 2002:a17:906:97c8:b0:a5a:a2b6:ba8b with SMTP id a640c23a62f3a-a5aa2b6bf6fmr1116718866b.0.1716282220789;
+        Tue, 21 May 2024 02:03:40 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGxqKRsunIxFaw1bjjhsPptQS1sOpnXosxR5QnsbZTH38nqbmmFGPIDoOXWZ5Q5DFr5QtCfCg==
+X-Received: by 2002:a17:906:97c8:b0:a5a:a2b6:ba8b with SMTP id a640c23a62f3a-a5aa2b6bf6fmr1116716766b.0.1716282220404;
+        Tue, 21 May 2024 02:03:40 -0700 (PDT)
+Received: from vschneid-thinkpadt14sgen2i.remote.csb (213-44-141-166.abo.bbox.fr. [213.44.141.166])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a5a51eea36dsm1334475466b.58.2024.05.21.02.03.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 21 May 2024 02:03:39 -0700 (PDT)
+From: Valentin Schneider <vschneid@redhat.com>
+To: Eric Dumazet <edumazet@google.com>
+Cc: dccp@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, "David S.
+ Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paolo
+ Abeni <pabeni@redhat.com>, mleitner@redhat.com, David Ahern
+ <dsahern@kernel.org>, Juri Lelli <juri.lelli@redhat.com>, Tomas Glozar
+ <tglozar@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v5 0/2] tcp/dcpp: Un-pin tw_timer
+In-Reply-To: <xhsmhbk618o4y.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+References: <20240415113436.3261042-1-vschneid@redhat.com>
+ <CANn89iJYX8e_3Or9a5Q55NuQ8ZAHfYL+p_SpM0yz91sdj4HqtQ@mail.gmail.com>
+ <xhsmhmspu8zlj.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+ <CANn89iJRev5Kn_jEgimDfyHosmiyYeaz2gHRGS2tcFC-yMbGaQ@mail.gmail.com>
+ <xhsmhbk618o4y.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
+Date: Tue, 21 May 2024 11:03:38 +0200
+Message-ID: <xhsmho78z7d05.mognet@vschneid-thinkpadt14sgen2i.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Content-Language: en-US, pt-BR, it-IT
-From: Daniel Bristot de Oliveira <bristot@kernel.org>
-Subject: [CFP] Scheduling Micro-conference at Linux Plumbers 2024
-To: LKML <linux-kernel@vger.kernel.org>,
- linux-rt-users <linux-rt-users@vger.kernel.org>, linux-pm@vger.kernel.org
-Cc: Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>,
- Steven Rostedt <rostedt@goodmis.org>, Mel Gorman <mgorman@suse.de>,
- Juri Lelli <juri.lelli@redhat.com>,
- Vincent Guittot <vincent.guittot@linaro.org>,
- Valentin Schneider <vschneid@redhat.com>, Ben Segall <bsegall@google.com>,
- Dietmar Eggemann <dietmar.eggemann@arm.com>,
- Frederic Weisbecker <frederic@kernel.org>,
- "Rafael J. Wysocki" <rafael@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-The scheduler is at the core of Linux performance. With different
-topologies and workloads, giving the user the best experience possible
-is challenging, from low latency to high throughput and from small
-power-constrained devices to HPC.
 
-The following accomplishments have been made as a result of last
-year’s micro-conference:
+Hi,
 
-  - Progress on proxy execution
-        https://lore.kernel.org/lkml/20240224001153.2584030-1-jstultz@google.com/
-  - Progress on system pressure
-        https://lore.kernel.org/lkml/170073688055.398.12687414937207369825.tip-bot2@tip-bot2/
-        https://lore.kernel.org/lkml/20240220145947.1107937-1-vincent.guittot@linaro.org/
-  - Progress in the DL server
-  - The EEVDF scheduler and improvements in latency
-  - Progress on adding tracepoints for IPI
+On 22/04/24 16:31, Valentin Schneider wrote:
+> Apologies for the delayed reply, I was away for most of last week;
+>
+> On 16/04/24 17:01, Eric Dumazet wrote:
+>> On Mon, Apr 15, 2024 at 4:33=E2=80=AFPM Valentin Schneider <vschneid@red=
+hat.com> wrote:
+>>>
+>>> On 15/04/24 14:35, Eric Dumazet wrote:
+>>> > On Mon, Apr 15, 2024 at 1:34=E2=80=AFPM Valentin Schneider <vschneid@=
+redhat.com> wrote:
+>>> >> v4 -> v5
+>>> >> ++++++++
+>>> >>
+>>> >> o Rebased against latest Linus' tree
+>>> >> o Converted tw_timer into a delayed work following Jakub's bug repor=
+t on v4
+>>> >>   http://lore.kernel.org/r/20240411100536.224fa1e7@kernel.org
+>>> >
+>>> > What was the issue again ?
+>>> >
+>>> > Please explain precisely why it was fundamentally tied to the use of
+>>> > timers (and this was not possible to fix the issue without
+>>> > adding work queues and more dependencies to TCP stack)
+>>>
+>>> In v4 I added the use of the ehash lock to serialize arming the timewait
+>>> timer vs destroying it (inet_twsk_schedule() vs inet_twsk_deschedule_pu=
+t()).
+>>>
+>>> Unfortunately, holding a lock both in a timer callback and in the conte=
+xt
+>>> in which it is destroyed is invalid. AIUI the issue is as follows:
+>>>
+>>>   CPUx                        CPUy
+>>>   spin_lock(foo);
+>>>                               <timer fires>
+>>>                               call_timer_fn()
+>>>                                 spin_lock(foo) // blocks
+>>>   timer_shutdown_sync()
+>>>     __timer_delete_sync()
+>>>       __try_to_del_timer_sync() // looped as long as timer is running
+>>>                        <deadlock>
+>>>
+>>> In our case, we had in v4:
+>>>
+>>>   inet_twsk_deschedule_put()
+>>>     spin_lock(ehash_lock);
+>>>                                           tw_timer_handler()
+>>>                                             inet_twsk_kill()
+>>>                                               spin_lock(ehash_lock);
+>>>                                               __inet_twsk_kill();
+>>>     timer_shutdown_sync(&tw->tw_timer);
+>>>
+>>> The fix here is to move the timer deletion to a non-timer
+>>> context. Workqueues fit the bill, and as the tw_timer_handler() would j=
+ust queue
+>>> a work item, I converted it to a delayed_work.
 
-Ideas of topics to be discussed include (but are not limited to):
+Does this explanation make sense? This is the reasoning that drove me to
+involve workqueues. I'm open to suggestions on alternative approaches.
 
- - Improve responsiveness for CFS tasks
- - The improvements on the EEVDF scheduler proposal
- - Impact of new topology on CFS, including hybrid or heterogeneous system
- - Taking into account task profile with IPCC or uclamp
- - Locking improvements – e.g., proxy execution
- - Improvements on SCHED_DEADLINE
- - Tooling for debugging scheduling
-
-*We will consider the submissions until July 12th, AoE.*
-
-It is fine if you have a new topic missing from the list. People are
-encouraged to submit any topic related to real-time and scheduling.
-The goal is to discuss open problems, preferably with patch set
-submissions already in discussion on LKML. The presentations are
-concise, and the central portion of the time should be given to
-the debate – thus, the importance of having an open and relevant
-problem with people in the community engaged in the solution.
-
-This email has a list of people in Bcc, based on a list of
-commit authors in sched/locking/power/time. It is far from being
-complete. So, please forward this message to the people on
-your team working on scheduling-related topics.
-
--- Daniel, on behalf of the organizers: Vincent Guittot, Juri Lelli,
-Steven Rostedt and myself.
