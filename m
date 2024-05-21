@@ -1,131 +1,115 @@
-Received: from out-182.mta0.migadu.com (out-182.mta0.migadu.com [91.218.175.182])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5145143C46
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 15:08:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A209E3FB8B
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 20:29:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716304101; cv=none; b=HWgEe/uPhYZo+M6Vn3GRZkkzvPAOx8MGjy5n6frgdhajKVnLKVJSOPAfjv7OXRmq3zrMjaTfGeI22LrHux3Vauz9F6Gcr/vn03BtrVbyHgf42v00E8nD6wZkG/qgApMzFgtn+408lADaThxAmVNe1m4Cm9IIrbqoJEkK0KE/Mxo=
+	t=1716323387; cv=none; b=JA4H3ck3Dt74wbfVYrCP/xLHoWBRD0RmCPbIMGbKHKsgZRMFFtBWTcl+9FW6k07EGW0UV05auP0gNjOTw0fGBGuibs58H1IMbuwCmWmVw/eNUTTupZC7GrGZsA8ExHrIxXshHZznp4g+acabrMXf224/BSpQnPkdBjNz5+sxmAg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716304101; c=relaxed/simple;
-	bh=XbwB6Y1ncfxvFcAluUNDlB2Uk3g7I/vYkgRiL0JeCwE=;
+	s=arc-20240116; t=1716323387; c=relaxed/simple;
+	bh=R/DRH90I1hd5lYawsSkWZBhO/skpjwxVbLW8gOmjhJw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=FZH8RH3QstWZIiZuxAjeiF9HXjSnZQU3ZtowoWd9ug00O2RCwVatpG05f1PmdSMuPJQPjvYv7BlaDLcMJ1hQRXpjdN7AVwv8GAImkJlPTT0ylGNoTJ7eAg6QFbGzFXieEHRKE87B6BcEeSjjXT0gYLwWfze+E8CRq+J52mDltRE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org; spf=pass smtp.mailfrom=cknow.org; dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b=xH3OScQO; arc=none smtp.client-ip=91.218.175.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cknow.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cknow.org
+	 MIME-Version; b=Ll/eiqgMrSVd9fVUzk59/YFq2CNndLqpXqVuarvDuOMplF3fEPlFGJNsS5UiVAbdaLZEvqQhqzxQoNN+zxp/oPEGQ6Rlw/kooDjJTafpCzKl7XdT23cvEJtRESpYugyJkOBcrYnoFtlw9wqfwsBU1WTS93u/orRtro/FqOcKEhI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MqALjI1G; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=cknow.org header.i=@cknow.org header.b="xH3OScQO"
-X-Envelope-To: geert+renesas@glider.be
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cknow.org; s=key1;
-	t=1716304095;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MqALjI1G"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716323384;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=7huwlz6e+OJTDpkqE9pk3NgcFlZcNZLJZwH9Yh0gUb0=;
-	b=xH3OScQOnERJ0m65qBvqlVgCWgjvFXfSPRX1tZVYhS73pVeKCe043+2s8cYuhBQIA7AVXM
-	2LKEXv8lS07ur8cWPXYtgXNjqyaur6UFfvPjPKKWwbAQ2lFORVO2oKe1/DKRnF89Ny7C2g
-	DLoFNBCOI7PbEko0S1Be85GtbqruXPfFLaBQD3IIyBBmHjw3UcLRlv6QxuB6xqbOUDWBam
-	bZg0NakLT9kpXwbJis/GG9hoeewT9LW5FHXnPthD98tDo3FNbY5P4cidd8qLoFX+8uuzIf
-	Gf2L2auEfCSxijy2eXPKmXTp/UeHYzEMtTryLrqmHSBcaRES5m6URWYoe+j9Ag==
-X-Envelope-To: linus.walleij@linaro.org
-X-Envelope-To: efault@gmx.de
-X-Envelope-To: claudiu.beznea@tuxon.dev
-X-Envelope-To: linux-renesas-soc@vger.kernel.org
-X-Envelope-To: linux-gpio@vger.kernel.org
-X-Envelope-To: linux-kernel@vger.kernel.org
-X-Envelope-To: claudiu.beznea@tuxon.dev
-X-Envelope-To: linux-rt-users@vger.kernel.org
-X-Envelope-To: claudiu.beznea.uj@bp.renesas.com
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Diederik de Haas <didi.debian@cknow.org>
-To: geert+renesas@glider.be, linus.walleij@linaro.org, efault@gmx.de,
- Claudiu <claudiu.beznea@tuxon.dev>
-Cc: linux-renesas-soc@vger.kernel.org, linux-gpio@vger.kernel.org,
- linux-kernel@vger.kernel.org, claudiu.beznea@tuxon.dev,
- linux-rt-users@vger.kernel.org,
- Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
-Subject:
- Re: [PATCH] pinctrl: renesas: rzg2l: use spin_{lock,unlock}_irq{save,restore}
-Date: Tue, 21 May 2024 17:08:04 +0200
-Message-ID: <1909974.d4bNfQZPDi@bagend>
-Organization: Connecting Knowledge
-In-Reply-To: <20240520072033.228049-1-claudiu.beznea.uj@bp.renesas.com>
-References: <20240520072033.228049-1-claudiu.beznea.uj@bp.renesas.com>
+	bh=3lx73nn8F4Ho6ef6K7a7LKG8q6qKvppeV1KsmLrXCbM=;
+	b=MqALjI1GISaFysdeKMgJtgwn0EMLltWt/GMZ8V0u53ZNh+jKerfN/XKu93mFYwFfM4F55S
+	MZWqd/JSxlYEjVHUKqUu5mWqBzd/Q2iMlPu10hQVxi3w0WRmPSePuToUduMCLa/ahVf7af
+	6yPzC3UQ37qRcF5VhVP6VgZdNly+jfs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-564-Wqb6uKN0NeqSJ2G1K8cS9w-1; Tue, 21 May 2024 16:29:42 -0400
+X-MC-Unique: Wqb6uKN0NeqSJ2G1K8cS9w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 70F52800994
+	for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 20:29:42 +0000 (UTC)
+Received: from ashelat-na.remote.csb (unknown [10.22.34.174])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 498141C0654B;
+	Tue, 21 May 2024 20:29:42 +0000 (UTC)
+From: Anubhav Shelat <ashelat@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	kcarcia@redhat.com,
+	Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH 2/2] rt-tests: hackbench: properly recognize when integer arguments are negative
+Date: Tue, 21 May 2024 16:29:40 -0400
+Message-ID: <20240521202940.242048-2-ashelat@redhat.com>
+In-Reply-To: <20240521202940.242048-1-ashelat@redhat.com>
+References: <20240521202940.242048-1-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart5820949.HBZXY12uQI";
- micalg="pgp-sha256"; protocol="application/pgp-signature"
-X-Migadu-Flow: FLOW_OUT
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 
---nextPart5820949.HBZXY12uQI
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"; protected-headers="v1"
-From: Diederik de Haas <didi.debian@cknow.org>
-Date: Tue, 21 May 2024 17:08:04 +0200
-Message-ID: <1909974.d4bNfQZPDi@bagend>
-Organization: Connecting Knowledge
-References: <20240520072033.228049-1-claudiu.beznea.uj@bp.renesas.com>
-MIME-Version: 1.0
+Previously hackbench would allow options to accept negative arguments, which would result in undefined behavior. Now process_options() properly catches when arguments are negative.
 
-On Monday, 20 May 2024 09:20:33 CEST Claudiu wrote:
-> From: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
-> 
-> On PREEMPT_RT kernels the spinlock_t maps to an rtmutex. Using
-> raw_spin_lock_irqsave()/raw_spin_unlock_irqrestore() on
-> &pctrl->lock.rlock breaks the PREEMPT_RT builds. To fix this use
-> spin_lock_irqsave()/spin_unlock_irqrestore() on &pctrl->lock.
-> 
-> Fixes: e1fd1f9f457b ("pinctrl: renesas: rzg2l: Configure the interrupt type
-> on resume") Reported-by: Diederik de Haas <didi.debian@cknow.org>
-> Closes: https://lore.kernel.org/all/131999629.KQPSlr0Zke@bagend
-> Signed-off-by: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
-> ---
->  drivers/pinctrl/renesas/pinctrl-rzg2l.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/pinctrl/renesas/pinctrl-rzg2l.c
-> b/drivers/pinctrl/renesas/pinctrl-rzg2l.c index 20425afc6b33..78f947a8e26e
-> 100644
-> --- a/drivers/pinctrl/renesas/pinctrl-rzg2l.c
-> +++ b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
-> @@ -2069,11 +2069,11 @@ static void rzg2l_gpio_irq_restore(struct
-> rzg2l_pinctrl *pctrl) * This has to be atomically executed to protect
-> against a concurrent * interrupt.
->  		 */
-> -		raw_spin_lock_irqsave(&pctrl->lock.rlock, flags);
-> +		spin_lock_irqsave(&pctrl->lock, flags);
->  		ret = rzg2l_gpio_irq_set_type(data, 
-irqd_get_trigger_type(data));
->  		if (!ret && !irqd_irq_disabled(data))
->  			rzg2l_gpio_irq_enable(data);
-> -		raw_spin_unlock_irqrestore(&pctrl->lock.rlock, flags);
-> +		spin_unlock_irqrestore(&pctrl->lock, flags);
-> 
->  		if (ret)
->  			dev_crit(pctrl->dev, "Failed to set IRQ type 
-for virq=%u\n", virq);
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+---
+ src/hackbench/hackbench.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-Now the build succeeds on both amd64 and arm64.
-Thanks!
---nextPart5820949.HBZXY12uQI
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part.
-Content-Transfer-Encoding: 7Bit
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQT1sUPBYsyGmi4usy/XblvOeH7bbgUCZky41AAKCRDXblvOeH7b
-bv6EAP0YuCZoGdztw1jivJ1yX2r7Z1UJqSpTOJGtwl10KZCmmAD8D6BkuzDB3RCH
-yIhCrbJaTvdW+PJeKOqh6hG2Mb85nw0=
-=x0p+
------END PGP SIGNATURE-----
-
---nextPart5820949.HBZXY12uQI--
-
-
+diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+index fec8357bef81..55be325a38df 100644
+--- a/src/hackbench/hackbench.c
++++ b/src/hackbench/hackbench.c
+@@ -426,7 +426,8 @@ static void process_options(int argc, char *argv[])
+ 		}
+ 		switch (c) {
+ 		case 'f':
+-			if ((num_fds = atoi(optarg)) <= 0) {
++			num_fds = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --fds|-f requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+@@ -435,7 +436,8 @@ static void process_options(int argc, char *argv[])
+ 			fifo = 1;
+ 			break;
+ 		case 'g':
+-			if ((num_groups = atoi(optarg)) <= 0) {
++			num_groups = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --groups|-g requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+@@ -444,7 +446,8 @@ static void process_options(int argc, char *argv[])
+ 			print_usage_exit(0);
+ 			break;
+ 		case 'l':
+-			if ((loops = atoi(optarg)) <= 0) {
++			loops = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --loops|-l requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+@@ -456,7 +459,8 @@ static void process_options(int argc, char *argv[])
+ 			use_inet = 1;
+ 			break;
+ 		case 's':
+-			if ((datasize = atoi(optarg)) <= 0) {
++			datasize = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --datasize|-s requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+-- 
+2.45.0
 
