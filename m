@@ -1,102 +1,98 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 496627EF1F;
-	Wed, 22 May 2024 12:17:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D7F81DA24;
+	Wed, 22 May 2024 14:25:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716380255; cv=none; b=ItcMM+A7X5FVMGKN9vWyWH+FNo3hJ4w1jzPu6dodsrjfRYbMB5A0BnpIw5SXtJxHpIsKrM4cy9xp480HWfVSmBLEjFnncmobNs+etac65BkNNs1xcsw+Cc2MrNgQ5j+j95GmxOSLDt0CnTcKfz0EmrA1lfR0hEu86U60sMTROBo=
+	t=1716387954; cv=none; b=mkpIlnEf/CjA6F+wn6dBGztVhF2IKLJnhPiVGxQgKbUFoSg/zSaBKG07Dcnr0U6G0oy/vJGhGfYWrpc877oIgt+TMzqhHs8G2dj0QlhBrXdtG0egLet2bzTB5FlvtLNfAN4yE3xZHJNUEObp67sJ80uXed+RCUThXvmuLFOTSDw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716380255; c=relaxed/simple;
-	bh=5XqgxJ4s4obLjU3RH1Hcac8iajNl61h552vrzAtJlLo=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=clKrt7HQIBH2i3PopCYzQJ6Pe7tcEyfuL9nYc/2VXtZVe026asFBmdsktu/u7pWtdGhVJBX2Y6d9N9enM10FeR/H2sZyW9HVVZ+prNcMB0MIYwbVX9Tr6Qua9Ic162/VFe35M7QHmfa/SM5mtXrZv/vY4lRCXmbyIaNhkwh7vC4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=ckFXKomN; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	s=arc-20240116; t=1716387954; c=relaxed/simple;
+	bh=jW8l9hHiJfGGnwrZq/+yvYmUIsnVBUNJ+WL3xazSb8I=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:Content-Type; b=VBMjMQUwudo8OTn5YyKo0cUbHrtmYUuJg2Y6Qu9zsO1FUtC0MmEMjs4NVXFYwd3OUMHNjllOaFH6p1kD3VH46HwLHUIK+jQ0wX2lDANnIobwC9HatYmsDLovGjCzPgI1psUsezC+ireB6hR7rQp9qCpy/gVYQ/yixkpOrOCxbKc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=rxo+GXxi; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="ckFXKomN"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id A5A25DB440;
-	Wed, 22 May 2024 14:10:01 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1716379804; h=from:subject:date:message-id:to:mime-version:content-type;
-	bh=I99HSrXGOWc4gQITzBBfFSgceACHwqV/lEW4REQuRGY=;
-	b=ckFXKomNanJ1UCvpfwEMFId+iGHzd3jWn1EiT8VWS8ErrBJLBOBnMq2O6g3A0yAgL3mSxc
-	lDdA4TAA/gLtsAOeJjexCpLDx15Mprp+fPqyRHXQj4Xa1pFmxcdCyVJLSvZd3b8e+A89MM
-	K0GDI3rbQQjaX/apuTg66Zs3xYpmV82tOjvU7AD4Xvr6XDJ0K12BaEF7rxaPGTxJR8/Co+
-	RhTUDtqg+HxYKk8bjZG+lgQgUx6fXGjhZxKgSiOe7+GSr1HHczuS37jrknjs2E/a+K4KwS
-	mFqZpEnTUXli9BQAlTv1ayyaMC0FsVdexV7NHXkNfDEveW/ZvT4Ql/u3T8PEfw==
-Date: Wed, 22 May 2024 14:09:55 +0200
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
-	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Tom Zanussi <tom.zanussi@linux.intel.com>, Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.19.312-rt134
-Message-ID: <171637952997.5572.1871863446768796282@beryllium.lan>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="rxo+GXxi"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 09F58C2BBFC;
+	Wed, 22 May 2024 14:25:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1716387953;
+	bh=jW8l9hHiJfGGnwrZq/+yvYmUIsnVBUNJ+WL3xazSb8I=;
+	h=Date:From:Subject:To:Cc:From;
+	b=rxo+GXxi/7Z50pJoStIUwH8drHeIwAA6jg1C6JdGxq0F+s/DfCJft90TLLJcZBITU
+	 HYFWKkcLFEVY4H0SfusNEjKhniDXytJgZUhUNANOHauaKdly1Edats9hVtszNtTO/s
+	 akdAMK5jniXWXvo8M/eH0bcFN6fnlRCNk/+W+WVsMTiogSWy47YUtOQe7AfX//5JOJ
+	 hm9tN3VYDUGfTxfMz0oOn2sKEwT18FDZi+EKu8ksyV1XxtCIRvJ5XHyMje42sDfgFH
+	 lIXA2IWA9aiXS7PwP/dkve8jUEGZGqfgJlsbR4a/lZgNMy62zt7LGr6tWwoy4FV0S4
+	 /Rg8loZWDi4kw==
+Message-ID: <d637037f-7485-45da-a3b2-f2ac17e2eb12@kernel.org>
+Date: Wed, 22 May 2024 16:25:35 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Last-TLS-Session-Version: TLSv1.3
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US, pt-BR, it-IT
+From: Daniel Bristot de Oliveira <bristot@kernel.org>
+Subject: [CPF] Real-time Micro-conference at LPC
+To: LKML <linux-kernel@vger.kernel.org>,
+ linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Frederic Weisbecker <frederic@kernel.org>,
+ Steven Rostedt <rostedt@goodmis.org>, Juri Lelli <juri.lelli@redhat.com>,
+ anna-maria@linutronix.de, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hello RT-list!
+The real-time community around Linux has been responsible for
+important changes in the kernel over the last few decades.
+Preemptive mode, high-resolution timers, threaded IRQs,
+sleeping locks, tracing, deadline scheduling and formal
+tracing analysis are integral parts of the kernel rooted
+in real-time efforts, mainly from the PREEMPT_RT patch set.
+The real-time and low-latency properties of Linux has
+enabled a series of modern use cases, like low-latency
+network communication with NFV and the use of Linux in
+safety-critical systems.
 
-I'm pleased to announce the 4.19.312-rt134 stable release.
+This MC is the space for the community to discuss the advances of
+Linux in real-time and low latency features. For example
+(but not limited to):
 
-This updates the rt-stable branch to the upstream stable v4.19.312
-release. This took a bit longer because there were some more complex
-merge conflict . Stable backported one of the preempt-rt preparation
-patches which v4.19-rt already shipped. Sebastian helped out to get this
-merge correct, thanks a lot!
+ - Bits left for the PREEMPT_RT merge
+ - Advances in the fully preemptive mode
+ - CPU isolation (mainly about how to make it dynamic)
+ - Tools for PREEMPT_RT and low latency analysis
+ - Tools for detecting non-optimal usages of the PREEMPT_RT
+ - Improvement on locks non-protected for priority inversion
+ - General improvements for locking
+ - General improvements for scheduling
+ - Other RT operating systems that run in parallel
+   with Linux and the integration with Linux (e.g., Xenomai).
+ - Real-time virtualization
 
-Cheers,
-Daniel
+Examples of topics that the community discussed over the
+last years that made progress in the RT MC:
 
-You can get this release via the git tree at:
+ - timerlat/osnoise tracers and RTLA
+ - DL server for starvation avoidance
+ - Proxy execution (still under discussion)
+ - Tracing improvements - for example, to trace IPIs
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+It is important to notice that it is not _only_ about PREEMPT_RT,
+but anything related to real-time and low latency. For instance,
+CPU isolation, real-time scheduling, timers, other OSs that
+run in parallel... and so on.
 
-  branch: v4.19-rt
-  Head SHA1: 1c3b7281e2711af8488ce40c9202ad19f3eeb557
+Join us to discuss the future of real-time and low-latency Linux.
 
-Or to build 4.19.312-rt134 directly, the following patches should be applied:
+This email has a list of people in Bcc, based on a list of
+commit authors in sched/locking/power/time. It is far from being
+complete. So, please forward this message to the people on
+your team working on scheduling-related topics.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+-- Daniel on behalf the organization: Sebastian Andrzej Siewior, Frederic
+Weisbecker, Steven Rostedt, Juri Lelli and myself.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.312.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.312-rt134.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.307-rt133:
----
-
-Daniel Wagner (1):
-      Linux 4.19.312-rt134
----
-localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
----
-diff --git a/localversion-rt b/localversion-rt
-index c2c7e0fb6685..6067da4c8c99 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt133
-+-rt134
