@@ -1,98 +1,124 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D7F81DA24;
-	Wed, 22 May 2024 14:25:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F5C81B5A4
+	for <linux-rt-users@vger.kernel.org>; Wed, 22 May 2024 14:44:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716387954; cv=none; b=mkpIlnEf/CjA6F+wn6dBGztVhF2IKLJnhPiVGxQgKbUFoSg/zSaBKG07Dcnr0U6G0oy/vJGhGfYWrpc877oIgt+TMzqhHs8G2dj0QlhBrXdtG0egLet2bzTB5FlvtLNfAN4yE3xZHJNUEObp67sJ80uXed+RCUThXvmuLFOTSDw=
+	t=1716389044; cv=none; b=taVPsVnlu59As42nEpe64lKqAh6YPAoFDRJ6ukjbOyRvXacQkbPsRcNsXwrHiMKn2zZbfq2B/asrm9J49XYF9IXoW//S/FVw0OEQeDFM+wd+TAOJpGCfEC4brHjQwQRh/+ZIST5hyYTYMU1DTRpWDsm2V4OMWbNNo6rpfq1KqeU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716387954; c=relaxed/simple;
-	bh=jW8l9hHiJfGGnwrZq/+yvYmUIsnVBUNJ+WL3xazSb8I=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:Content-Type; b=VBMjMQUwudo8OTn5YyKo0cUbHrtmYUuJg2Y6Qu9zsO1FUtC0MmEMjs4NVXFYwd3OUMHNjllOaFH6p1kD3VH46HwLHUIK+jQ0wX2lDANnIobwC9HatYmsDLovGjCzPgI1psUsezC+ireB6hR7rQp9qCpy/gVYQ/yixkpOrOCxbKc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=rxo+GXxi; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1716389044; c=relaxed/simple;
+	bh=6sSrfvk1/kcujqgfkoKJSdZgUf8CHGNQOzgm4oY/1IU=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=LdGmtJKJ27NxTnKJqbhNiMUHm7Ba5LX5pts/Jx7topM2U0WklUNfRTMYAqjZIIuHyPAD/TVjehobb0/oma0PHbhqiXph67BpSgNKKR88pNGwWrWTn6tVcIpYCG/MPRIMgEsuuYaHrB9HAXnsI9cyx60SadGOIJ5/3c6Pkzd8NWk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F8hcdnQi; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="rxo+GXxi"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 09F58C2BBFC;
-	Wed, 22 May 2024 14:25:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1716387953;
-	bh=jW8l9hHiJfGGnwrZq/+yvYmUIsnVBUNJ+WL3xazSb8I=;
-	h=Date:From:Subject:To:Cc:From;
-	b=rxo+GXxi/7Z50pJoStIUwH8drHeIwAA6jg1C6JdGxq0F+s/DfCJft90TLLJcZBITU
-	 HYFWKkcLFEVY4H0SfusNEjKhniDXytJgZUhUNANOHauaKdly1Edats9hVtszNtTO/s
-	 akdAMK5jniXWXvo8M/eH0bcFN6fnlRCNk/+W+WVsMTiogSWy47YUtOQe7AfX//5JOJ
-	 hm9tN3VYDUGfTxfMz0oOn2sKEwT18FDZi+EKu8ksyV1XxtCIRvJ5XHyMje42sDfgFH
-	 lIXA2IWA9aiXS7PwP/dkve8jUEGZGqfgJlsbR4a/lZgNMy62zt7LGr6tWwoy4FV0S4
-	 /Rg8loZWDi4kw==
-Message-ID: <d637037f-7485-45da-a3b2-f2ac17e2eb12@kernel.org>
-Date: Wed, 22 May 2024 16:25:35 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F8hcdnQi"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716389042;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=NJxVfKh2AXC2Bv5e89l36UOtB1vPZi794jHyNuLbDmE=;
+	b=F8hcdnQi+3sU5Ztf8aV6WhWVreeWNRXmCKC285n3Hc8mIQeFEAeR89XJu+U1/TlhKhI4sp
+	KjCabRhRbxw+9ima5UTtnPQ12uonSnfKRTgMsFB0URPKuhVgzn0C9aSuSXMBZHqZX1IAEv
+	IkR4yBOIkO6u4yTimq98dVz83ciMEhs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-250-bnJX9IhePvG-QpetoiMwrw-1; Wed, 22 May 2024 10:43:59 -0400
+X-MC-Unique: bnJX9IhePvG-QpetoiMwrw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2CE348008A4
+	for <linux-rt-users@vger.kernel.org>; Wed, 22 May 2024 14:43:59 +0000 (UTC)
+Received: from ashelat-na.remote.csb (unknown [10.22.10.122])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ECBB940C6CB4;
+	Wed, 22 May 2024 14:43:58 +0000 (UTC)
+From: Anubhav Shelat <ashelat@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	kcarcia@redhat.com,
+	Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH v2 2/2] rt-tests: hackbench: properly recognize when integer arguments are negative
+Date: Wed, 22 May 2024 10:43:47 -0400
+Message-ID: <20240522144347.13281-2-ashelat@redhat.com>
+In-Reply-To: <20240522144347.13281-1-ashelat@redhat.com>
+References: <20240522144347.13281-1-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Content-Language: en-US, pt-BR, it-IT
-From: Daniel Bristot de Oliveira <bristot@kernel.org>
-Subject: [CPF] Real-time Micro-conference at LPC
-To: LKML <linux-kernel@vger.kernel.org>,
- linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Frederic Weisbecker <frederic@kernel.org>,
- Steven Rostedt <rostedt@goodmis.org>, Juri Lelli <juri.lelli@redhat.com>,
- anna-maria@linutronix.de, Thomas Gleixner <tglx@linutronix.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-The real-time community around Linux has been responsible for
-important changes in the kernel over the last few decades.
-Preemptive mode, high-resolution timers, threaded IRQs,
-sleeping locks, tracing, deadline scheduling and formal
-tracing analysis are integral parts of the kernel rooted
-in real-time efforts, mainly from the PREEMPT_RT patch set.
-The real-time and low-latency properties of Linux has
-enabled a series of modern use cases, like low-latency
-network communication with NFV and the use of Linux in
-safety-critical systems.
+hackbench is supposed to catch when the user passes
+negative arguments to options -f, -g, -l, and -s.
 
-This MC is the space for the community to discuss the advances of
-Linux in real-time and low latency features. For example
-(but not limited to):
+Previously hackbench would allow options to accept
+negative arguments, resulting in undefined behavior.
 
- - Bits left for the PREEMPT_RT merge
- - Advances in the fully preemptive mode
- - CPU isolation (mainly about how to make it dynamic)
- - Tools for PREEMPT_RT and low latency analysis
- - Tools for detecting non-optimal usages of the PREEMPT_RT
- - Improvement on locks non-protected for priority inversion
- - General improvements for locking
- - General improvements for scheduling
- - Other RT operating systems that run in parallel
-   with Linux and the integration with Linux (e.g., Xenomai).
- - Real-time virtualization
+Now process_options() assigns variables outside of
+the if considiton where they are used. hackbench will
+output a usage message if the user inputs a negative
+argument.
 
-Examples of topics that the community discussed over the
-last years that made progress in the RT MC:
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+---
+ src/hackbench/hackbench.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
- - timerlat/osnoise tracers and RTLA
- - DL server for starvation avoidance
- - Proxy execution (still under discussion)
- - Tracing improvements - for example, to trace IPIs
-
-It is important to notice that it is not _only_ about PREEMPT_RT,
-but anything related to real-time and low latency. For instance,
-CPU isolation, real-time scheduling, timers, other OSs that
-run in parallel... and so on.
-
-Join us to discuss the future of real-time and low-latency Linux.
-
-This email has a list of people in Bcc, based on a list of
-commit authors in sched/locking/power/time. It is far from being
-complete. So, please forward this message to the people on
-your team working on scheduling-related topics.
-
--- Daniel on behalf the organization: Sebastian Andrzej Siewior, Frederic
-Weisbecker, Steven Rostedt, Juri Lelli and myself.
+diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+index fec8357bef81..55be325a38df 100644
+--- a/src/hackbench/hackbench.c
++++ b/src/hackbench/hackbench.c
+@@ -426,7 +426,8 @@ static void process_options(int argc, char *argv[])
+ 		}
+ 		switch (c) {
+ 		case 'f':
+-			if ((num_fds = atoi(optarg)) <= 0) {
++			num_fds = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --fds|-f requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+@@ -435,7 +436,8 @@ static void process_options(int argc, char *argv[])
+ 			fifo = 1;
+ 			break;
+ 		case 'g':
+-			if ((num_groups = atoi(optarg)) <= 0) {
++			num_groups = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --groups|-g requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+@@ -444,7 +446,8 @@ static void process_options(int argc, char *argv[])
+ 			print_usage_exit(0);
+ 			break;
+ 		case 'l':
+-			if ((loops = atoi(optarg)) <= 0) {
++			loops = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --loops|-l requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+@@ -456,7 +459,8 @@ static void process_options(int argc, char *argv[])
+ 			use_inet = 1;
+ 			break;
+ 		case 's':
+-			if ((datasize = atoi(optarg)) <= 0) {
++			datasize = atoi(optarg);
++			if (atoi(optarg) <= 0) {
+ 				fprintf(stderr, "%s: --datasize|-s requires an integer > 0\n", argv[0]);
+ 				print_usage_exit(1);
+ 			}
+-- 
+2.45.0
 
