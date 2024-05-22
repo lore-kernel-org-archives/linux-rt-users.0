@@ -1,103 +1,102 @@
-Received: from mail-yb1-f170.google.com (mail-yb1-f170.google.com [209.85.219.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E88680628;
-	Wed, 22 May 2024 09:28:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 496627EF1F;
+	Wed, 22 May 2024 12:17:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716370092; cv=none; b=ukm99g9AhoH0O2N26/51YF1R0nLOhv4MnEo9/pzpIcUU3f2mn3TMirHfz4dDlhiCbQE5e/j72j8a/qLjXa5L5A7RNHLLJ7C+bPQ/JUTDGh9GeTKkANDkdXks4IUQpIDM+fGZ13d+PdoUb3r2TqCvAzvzNPSaXSnKTDyBYpVL/b0=
+	t=1716380255; cv=none; b=ItcMM+A7X5FVMGKN9vWyWH+FNo3hJ4w1jzPu6dodsrjfRYbMB5A0BnpIw5SXtJxHpIsKrM4cy9xp480HWfVSmBLEjFnncmobNs+etac65BkNNs1xcsw+Cc2MrNgQ5j+j95GmxOSLDt0CnTcKfz0EmrA1lfR0hEu86U60sMTROBo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716370092; c=relaxed/simple;
-	bh=1FO/sgLl6FDv5gfjdaHH8VjZE5pw6mczMQNGvmUXG44=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=G8ZjOWUG37teZDzwAPnS2HpjUm8k3noQ+sLZKmTO8gTiYaaV1wC2GgkqO8YQ5eKPXCg/YqVLQLyUiunaQkv6ac7yB1wmjz1//eiV/REALgV0MfIMr3OkYYuNrQ6OCh+Jq5XfL16ukz6VK6lx/1w1XQDzWxeaDVb4By9/WqK7gLw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.219.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-yb1-f170.google.com with SMTP id 3f1490d57ef6-de607ab52f4so4677116276.2;
-        Wed, 22 May 2024 02:28:10 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716370089; x=1716974889;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=HY0tgCg39/NnBEpMS6GQXLZcisZtDxsqIOp1WN1FAW0=;
-        b=RG9yvR8DdBHD27DszdYZMP53pUQoUdlYV5rZ2F8fC+f/WOCA9haB0AOSdlBulNQt0/
-         VMMKQecdOTuS1ZZXMPiDRNQcPqbgJruQdBO9zDcEtvIc93l3mPnCdepc+3ipuLdNI1CV
-         g4alkXVhSYiBfShO5dcNwd1Iej1H+CHGFqv2bv3Vh/qbXLrM/YkWe90sqSbP2xG02oAc
-         beMS/htF0TLcb9uqNdRVrEPGZZ5CcB6lq4gSsHTxkPDKcAtfadZMjLs/wWH0HAvZo4rf
-         tBzHkU9IaF9nXmJs4/pJxsy1UouYUnE6cSSd4Z1nuOG1mQz96KwrscUTpeVLbgPMmTZI
-         5jJg==
-X-Forwarded-Encrypted: i=1; AJvYcCV0KgPltlnxJgRYycjZ9o+thJy2k0EZpeYAAZQEt3e9SDwm2Poy49K6D/zo4qJn2QmtENu/zn39fdOxC4dNgQBAcTvuTxWxZZ7FPfeqZ0msPmYaPr3SV96fQeSGnNGz+KadvFRezNTTNDHpEUoIxv0RTNbMuVNG0m8qtKEiBDlYzDcERNGoG2LJCIkm5unPmARJxPHv9OviEVZrY8J8FNjJB2qDELGY1cc/2gs=
-X-Gm-Message-State: AOJu0Yx5/qLLAoiRuYQYDCt2OD9qHpU5XCKWedSfB47PnLX0vXpCMbt4
-	H3GlQAlBW7BKzH0NCr6BzEfcNfU0uErGu7Oje4Tanx65Q0n5z2X1df19c45t
-X-Google-Smtp-Source: AGHT+IF8nVVTZJI3hiakbOkeAIZ1KK0TQPe1mmNUE2XYnNGuSMEsveooOrMRCuJlw3caYZCj4o0z/g==
-X-Received: by 2002:a25:ae56:0:b0:df4:dd95:cc87 with SMTP id 3f1490d57ef6-df4e3ddd045mr1023363276.10.1716370089026;
-        Wed, 22 May 2024 02:28:09 -0700 (PDT)
-Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com. [209.85.128.169])
-        by smtp.gmail.com with ESMTPSA id 3f1490d57ef6-debd3b90a1dsm5912372276.24.2024.05.22.02.28.08
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 22 May 2024 02:28:08 -0700 (PDT)
-Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-622f5a0badcso51487407b3.2;
-        Wed, 22 May 2024 02:28:08 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCV+I4UNQmQxgwYvqXBDK6MnlZWdu4pFEL7CzQqjaVAzvN0uumrSj88GaYKX/3nRkyiXdWBN5VPzV3o+3HVCkB0CGNGfbmdwryw/dcvYFp1r2qf2WBBTLKQ/V+3Mz27ujTVnopiP7uoSfNXt6eEtm/KEHZ7J8cVgSfWk1SJSj6rK5i6IFiTcW6CpTeLhlXUie9qNBqg3R9CXJXuznpeb21ocy3KI+yMNVDNxuPo=
-X-Received: by 2002:a81:490e:0:b0:61a:b54d:5925 with SMTP id
- 00721157ae682-627e4865888mr14394627b3.38.1716370087335; Wed, 22 May 2024
- 02:28:07 -0700 (PDT)
+	s=arc-20240116; t=1716380255; c=relaxed/simple;
+	bh=5XqgxJ4s4obLjU3RH1Hcac8iajNl61h552vrzAtJlLo=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=clKrt7HQIBH2i3PopCYzQJ6Pe7tcEyfuL9nYc/2VXtZVe026asFBmdsktu/u7pWtdGhVJBX2Y6d9N9enM10FeR/H2sZyW9HVVZ+prNcMB0MIYwbVX9Tr6Qua9Ic162/VFe35M7QHmfa/SM5mtXrZv/vY4lRCXmbyIaNhkwh7vC4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=ckFXKomN; arc=none smtp.client-ip=49.12.199.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="ckFXKomN"
+Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id A5A25DB440;
+	Wed, 22 May 2024 14:10:01 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
+	t=1716379804; h=from:subject:date:message-id:to:mime-version:content-type;
+	bh=I99HSrXGOWc4gQITzBBfFSgceACHwqV/lEW4REQuRGY=;
+	b=ckFXKomNanJ1UCvpfwEMFId+iGHzd3jWn1EiT8VWS8ErrBJLBOBnMq2O6g3A0yAgL3mSxc
+	lDdA4TAA/gLtsAOeJjexCpLDx15Mprp+fPqyRHXQj4Xa1pFmxcdCyVJLSvZd3b8e+A89MM
+	K0GDI3rbQQjaX/apuTg66Zs3xYpmV82tOjvU7AD4Xvr6XDJ0K12BaEF7rxaPGTxJR8/Co+
+	RhTUDtqg+HxYKk8bjZG+lgQgUx6fXGjhZxKgSiOe7+GSr1HHczuS37jrknjs2E/a+K4KwS
+	mFqZpEnTUXli9BQAlTv1ayyaMC0FsVdexV7NHXkNfDEveW/ZvT4Ql/u3T8PEfw==
+Date: Wed, 22 May 2024 14:09:55 +0200
+From: Daniel Wagner <wagi@monom.org>
+To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
+	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
+	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+	Tom Zanussi <tom.zanussi@linux.intel.com>, Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.19.312-rt134
+Message-ID: <171637952997.5572.1871863446768796282@beryllium.lan>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240522055421.2842689-1-claudiu.beznea.uj@bp.renesas.com>
-In-Reply-To: <20240522055421.2842689-1-claudiu.beznea.uj@bp.renesas.com>
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Date: Wed, 22 May 2024 11:27:55 +0200
-X-Gmail-Original-Message-ID: <CAMuHMdVN3O2O4VYmyXKAsUp=19-1=J8BU2NJ3PLaCYdgV98VyQ@mail.gmail.com>
-Message-ID: <CAMuHMdVN3O2O4VYmyXKAsUp=19-1=J8BU2NJ3PLaCYdgV98VyQ@mail.gmail.com>
-Subject: Re: [PATCH v2] pinctrl: renesas: rzg2l: Use spin_{lock,unlock}_irq{save,restore}
-To: Claudiu <claudiu.beznea@tuxon.dev>
-Cc: linus.walleij@linaro.org, didi.debian@cknow.org, efault@gmx.de, 
-	linux-renesas-soc@vger.kernel.org, linux-gpio@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, 
-	Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Last-TLS-Session-Version: TLSv1.3
 
-On Wed, May 22, 2024 at 7:54=E2=80=AFAM Claudiu <claudiu.beznea@tuxon.dev> =
-wrote:
-> From: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
->
-> On PREEMPT_RT kernels the spinlock_t maps to an rtmutex. Using
-> raw_spin_lock_irqsave()/raw_spin_unlock_irqrestore() on
-> &pctrl->lock.rlock breaks the PREEMPT_RT builds. To fix this use
-> spin_lock_irqsave()/spin_unlock_irqrestore() on &pctrl->lock.
->
-> Fixes: 02cd2d3be1c3 ("pinctrl: renesas: rzg2l: Configure the interrupt ty=
-pe on resume")
-> Reported-by: Diederik de Haas <didi.debian@cknow.org>
-> Closes: https://lore.kernel.org/all/131999629.KQPSlr0Zke@bagend
-> Signed-off-by: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
-> ---
->
-> Changes in v2:
-> - use proper commit id in "Fixes" section
-> - s/use/Use in patch title
+Hello RT-list!
 
-Reviewed-by: Geert Uytterhoeven <geert+renesas@glider.be>
-i.e. will queue in renesas-pinctrl-fixes for v6.10.
+I'm pleased to announce the 4.19.312-rt134 stable release.
 
-Gr{oetje,eeting}s,
+This updates the rt-stable branch to the upstream stable v4.19.312
+release. This took a bit longer because there were some more complex
+merge conflict . Stable backported one of the preempt-rt preparation
+patches which v4.19-rt already shipped. Sebastian helped out to get this
+merge correct, thanks a lot!
 
-                        Geert
+Cheers,
+Daniel
 
---=20
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k=
-.org
+You can get this release via the git tree at:
 
-In personal conversations with technical people, I call myself a hacker. Bu=
-t
-when I'm talking to journalists I just say "programmer" or something like t=
-hat.
-                                -- Linus Torvalds
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.19-rt
+  Head SHA1: 1c3b7281e2711af8488ce40c9202ad19f3eeb557
+
+Or to build 4.19.312-rt134 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.312.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.312-rt134.patch.xz
+
+Signing key fingerprint:
+
+  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Daniel
+
+Changes from v4.19.307-rt133:
+---
+
+Daniel Wagner (1):
+      Linux 4.19.312-rt134
+---
+localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+---
+diff --git a/localversion-rt b/localversion-rt
+index c2c7e0fb6685..6067da4c8c99 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt133
++-rt134
