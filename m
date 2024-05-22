@@ -1,51 +1,71 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCB29763F1
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 20:29:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5FC0476EEA
+	for <linux-rt-users@vger.kernel.org>; Wed, 22 May 2024 05:54:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716323388; cv=none; b=M3htDm1ScvGWD1DK57/9umkVBIsy8HDeIEekdSc1DXCfN/HJhNz+1KwC0eYzmvzgtHZwYBWO/7PYdIiXeL78421/Q7znwzr8TqVL7tW8GsCRGkY9IYqSNK3/lwGnLl3aySas/BBaPCHXXC6yzBkN1U44J0b+ScT73H5ryOx96LY=
+	t=1716357294; cv=none; b=ch+YIsOoW4sHdPY4XH4PNNltlTp2lCdT3TaUFxX6HbL+QNSG9ycenpbO8E4o7Ku9PleEPLIJ3Q+fkY41AF/j7RR/rJ1kIzLAlo+8Z8IoCrWVQ/LjTdFD78gI+WeyvpfBRjFsybVdrZUL3tnR57g7iReFO1IDFC+on3Zxe5vuVbo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716323388; c=relaxed/simple;
-	bh=MWOa1kZScgXLLeFGFuG1H8/9ETe+RNGYDGm/EguhhFg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GRIuEvMNIGBVx3E5AsmuR1ZAalq6AQg+bh4NpsUvWd+LphNpCylDQL109QHQl/ibTsBotAtkazcvTkUA5wm82j9FHVeicneVYkN1kamH7ZF5C8lQuGXN5t3hYvO4WIRIbSORwc/JV4bK806PZp7Fsa5PyaQerTgoUeLhFnYhw9Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=T9sYQ3df; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1716357294; c=relaxed/simple;
+	bh=7EZzhmNV67X8aCMBM+0ECzyFQGItKr3UmrDu29BtlxA=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=gs5M3kviR5exiXjynv0u9oEVncEzW7yQmsQXyArjtTLidOTzEAhVsGD5smsdhIVshAPV2oHky3RrPV4th33YCOu6kr+teufX/wSWPQfYWmxzomI7+WNMnmXLjEigdJW4MBmoCeOAVFTJwG0rwm09HZR+TYobhdqkRyU1+5doavM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=tuxon.dev; spf=pass smtp.mailfrom=tuxon.dev; dkim=pass (2048-bit key) header.d=tuxon.dev header.i=@tuxon.dev header.b=YHETBpWS; arc=none smtp.client-ip=209.85.128.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=tuxon.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=tuxon.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="T9sYQ3df"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716323384;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=OO0oLkLC31sza4Up0r7aw5L4nUiacfbbfNPFVtsQU1k=;
-	b=T9sYQ3dfd/EIefJTlhgP52z3PZuF5wvGeqlmcKzRh38v95bcnrSWxtOpYxL8tGmfmiAIP/
-	f2zU70d+HpUk75zvXF7HQ456mh+NwQX4/YC0hzS+t4rH4GgDOgWLH551jkzhBXuw8CniHd
-	I3FDK+bFHGRfJ4GeXu9i2ge6d7dQHYU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-379-mPw06JJkN0WjnFqOemXtpw-1; Tue, 21 May 2024 16:29:43 -0400
-X-MC-Unique: mPw06JJkN0WjnFqOemXtpw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 42460101A525
-	for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 20:29:42 +0000 (UTC)
-Received: from ashelat-na.remote.csb (unknown [10.22.34.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 178F11C09480;
-	Tue, 21 May 2024 20:29:42 +0000 (UTC)
-From: Anubhav Shelat <ashelat@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com,
-	kcarcia@redhat.com,
-	Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH 1/2] rt-tests: hackbench: removed extra use of optind
-Date: Tue, 21 May 2024 16:29:39 -0400
-Message-ID: <20240521202940.242048-1-ashelat@redhat.com>
+	dkim=pass (2048-bit key) header.d=tuxon.dev header.i=@tuxon.dev header.b="YHETBpWS"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4202ca70318so36421275e9.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 22:54:51 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=tuxon.dev; s=google; t=1716357289; x=1716962089; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=Z5Ef9nBQSYhDomv1/1h6E+yKGEz7b/E/OzEO4/4KPwI=;
+        b=YHETBpWS7/gxQbw6ZtDpDUGixy90tEwVHeJne2FoBStxH08BNtqKHDAPgHFlA6COtn
+         ejpnJdJUABMyUJubUW0I3y03Eom4itRAXDzV42alNrLH2VDuwQtJhV2RxdbZN/OQLsQI
+         ZpeTKHRgq3whnTLjEKe52yFqcPba/nRQ574IdMtsYD0w2KBecD6ZlE7+9aVH8t+VbNPk
+         Pjw8TgXyvUa+XElMsmNR0d67NxbyLK39j3+UohineizaIkY7tcFAOK4oXiB5MwEhORdB
+         1FfIUB2IoXdXozeOvj3ekTmixAv3/vX2IszGwfYp3EJKluDMQ1nNk0LM+fP1iUd/MieE
+         TNoA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716357289; x=1716962089;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=Z5Ef9nBQSYhDomv1/1h6E+yKGEz7b/E/OzEO4/4KPwI=;
+        b=JNJe2niGq4wG4UYHGGDSpJLws12vkYMcHnDyowLl9ezbKQCCb7w5c7cW8IHSzZAeN4
+         WXyeY/jjOhA8NxZcnQEf6iI4UVS/daCBn/zsrJ0JRoBc4A1MlxjkOZEvGiABez/aek/p
+         osi4sr0mh9Ftb5av68yEr3cN5Og92H46tebsidBc3t2dqrJKOIfqwZIOYIl4AQ++mzrH
+         DnHNhd6EF6/eBMDiP5y24ffj4BjW0imx5SVTCw2DL5Mk+n2w6R8be4J/2qfiN+KPPyGm
+         k3MA6eafttuyHJR5Vs9ze2OR55V2paVGZeEu8UX36zlmAFfVanHaSpoqH0CzIbGKl7Gz
+         PJrg==
+X-Forwarded-Encrypted: i=1; AJvYcCU1YPcR+RAieZ0AqJt31I2mI0W/5WEjJmv/JjuU26aK4Am9j2EaoEK1ueYtii1b4OgP3cF5bpN36k82ajY5svnwHY8+Lkrb2VDcdlkqR4Q=
+X-Gm-Message-State: AOJu0YwkEgeTod1DPoWgXGmfIhR4t+AINrKx8l0OPAbvSNd50n+HJnI1
+	Lrty6ftdBbMle+lmZs5V/rksXDhGngHfC4hHDJBBjQWInEk6dehOmr2jup10Kmw=
+X-Google-Smtp-Source: AGHT+IE1oVCwdvNgx4NOCy9IfBYjOPPqLJm+kp/C3JyYqhQINpS7WEkTXmfiinPack4CkKVQR5SYeQ==
+X-Received: by 2002:a05:600c:1c95:b0:41f:e87b:45c2 with SMTP id 5b1f17b1804b1-420fd225b5amr8749115e9.0.1716357289538;
+        Tue, 21 May 2024 22:54:49 -0700 (PDT)
+Received: from claudiu-X670E-Pro-RS.. ([82.78.167.161])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-41fccce9431sm475726705e9.28.2024.05.21.22.54.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 21 May 2024 22:54:49 -0700 (PDT)
+From: Claudiu <claudiu.beznea@tuxon.dev>
+X-Google-Original-From: Claudiu <claudiu.beznea.uj@bp.renesas.com>
+To: geert+renesas@glider.be,
+	linus.walleij@linaro.org,
+	didi.debian@cknow.org,
+	efault@gmx.de
+Cc: linux-renesas-soc@vger.kernel.org,
+	linux-gpio@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	claudiu.beznea@tuxon.dev,
+	linux-rt-users@vger.kernel.org,
+	Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+Subject: [PATCH v2] pinctrl: renesas: rzg2l: Use spin_{lock,unlock}_irq{save,restore}
+Date: Wed, 22 May 2024 08:54:21 +0300
+Message-Id: <20240522055421.2842689-1-claudiu.beznea.uj@bp.renesas.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -53,28 +73,45 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 
-Commit 778a02b7c519 forgot to drop a use of optind when processing option 's' which was fixed in this commit.
+From: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
 
-Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+On PREEMPT_RT kernels the spinlock_t maps to an rtmutex. Using
+raw_spin_lock_irqsave()/raw_spin_unlock_irqrestore() on
+&pctrl->lock.rlock breaks the PREEMPT_RT builds. To fix this use
+spin_lock_irqsave()/spin_unlock_irqrestore() on &pctrl->lock.
+
+Fixes: 02cd2d3be1c3 ("pinctrl: renesas: rzg2l: Configure the interrupt type on resume")
+Reported-by: Diederik de Haas <didi.debian@cknow.org>
+Closes: https://lore.kernel.org/all/131999629.KQPSlr0Zke@bagend
+Signed-off-by: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
 ---
- src/hackbench/hackbench.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
-index d4924b3cc129..fec8357bef81 100644
---- a/src/hackbench/hackbench.c
-+++ b/src/hackbench/hackbench.c
-@@ -456,7 +456,7 @@ static void process_options(int argc, char *argv[])
- 			use_inet = 1;
- 			break;
- 		case 's':
--			if (!(argv[optind] && (datasize = atoi(optarg)) > 0)) {
-+			if ((datasize = atoi(optarg)) <= 0) {
- 				fprintf(stderr, "%s: --datasize|-s requires an integer > 0\n", argv[0]);
- 				print_usage_exit(1);
- 			}
+Changes in v2:
+- use proper commit id in "Fixes" section
+- s/use/Use in patch title
+
+ drivers/pinctrl/renesas/pinctrl-rzg2l.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/pinctrl/renesas/pinctrl-rzg2l.c b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
+index 20425afc6b33..78f947a8e26e 100644
+--- a/drivers/pinctrl/renesas/pinctrl-rzg2l.c
++++ b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
+@@ -2069,11 +2069,11 @@ static void rzg2l_gpio_irq_restore(struct rzg2l_pinctrl *pctrl)
+ 		 * This has to be atomically executed to protect against a concurrent
+ 		 * interrupt.
+ 		 */
+-		raw_spin_lock_irqsave(&pctrl->lock.rlock, flags);
++		spin_lock_irqsave(&pctrl->lock, flags);
+ 		ret = rzg2l_gpio_irq_set_type(data, irqd_get_trigger_type(data));
+ 		if (!ret && !irqd_irq_disabled(data))
+ 			rzg2l_gpio_irq_enable(data);
+-		raw_spin_unlock_irqrestore(&pctrl->lock.rlock, flags);
++		spin_unlock_irqrestore(&pctrl->lock, flags);
+ 
+ 		if (ret)
+ 			dev_crit(pctrl->dev, "Failed to set IRQ type for virq=%u\n", virq);
 -- 
-2.45.0
+2.39.2
 
