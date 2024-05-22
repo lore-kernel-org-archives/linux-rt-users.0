@@ -1,117 +1,103 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from mail-yb1-f170.google.com (mail-yb1-f170.google.com [209.85.219.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5FC0476EEA
-	for <linux-rt-users@vger.kernel.org>; Wed, 22 May 2024 05:54:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E88680628;
+	Wed, 22 May 2024 09:28:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716357294; cv=none; b=ch+YIsOoW4sHdPY4XH4PNNltlTp2lCdT3TaUFxX6HbL+QNSG9ycenpbO8E4o7Ku9PleEPLIJ3Q+fkY41AF/j7RR/rJ1kIzLAlo+8Z8IoCrWVQ/LjTdFD78gI+WeyvpfBRjFsybVdrZUL3tnR57g7iReFO1IDFC+on3Zxe5vuVbo=
+	t=1716370092; cv=none; b=ukm99g9AhoH0O2N26/51YF1R0nLOhv4MnEo9/pzpIcUU3f2mn3TMirHfz4dDlhiCbQE5e/j72j8a/qLjXa5L5A7RNHLLJ7C+bPQ/JUTDGh9GeTKkANDkdXks4IUQpIDM+fGZ13d+PdoUb3r2TqCvAzvzNPSaXSnKTDyBYpVL/b0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716357294; c=relaxed/simple;
-	bh=7EZzhmNV67X8aCMBM+0ECzyFQGItKr3UmrDu29BtlxA=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=gs5M3kviR5exiXjynv0u9oEVncEzW7yQmsQXyArjtTLidOTzEAhVsGD5smsdhIVshAPV2oHky3RrPV4th33YCOu6kr+teufX/wSWPQfYWmxzomI7+WNMnmXLjEigdJW4MBmoCeOAVFTJwG0rwm09HZR+TYobhdqkRyU1+5doavM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=tuxon.dev; spf=pass smtp.mailfrom=tuxon.dev; dkim=pass (2048-bit key) header.d=tuxon.dev header.i=@tuxon.dev header.b=YHETBpWS; arc=none smtp.client-ip=209.85.128.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=tuxon.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=tuxon.dev
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=tuxon.dev header.i=@tuxon.dev header.b="YHETBpWS"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4202ca70318so36421275e9.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 21 May 2024 22:54:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=tuxon.dev; s=google; t=1716357289; x=1716962089; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=Z5Ef9nBQSYhDomv1/1h6E+yKGEz7b/E/OzEO4/4KPwI=;
-        b=YHETBpWS7/gxQbw6ZtDpDUGixy90tEwVHeJne2FoBStxH08BNtqKHDAPgHFlA6COtn
-         ejpnJdJUABMyUJubUW0I3y03Eom4itRAXDzV42alNrLH2VDuwQtJhV2RxdbZN/OQLsQI
-         ZpeTKHRgq3whnTLjEKe52yFqcPba/nRQ574IdMtsYD0w2KBecD6ZlE7+9aVH8t+VbNPk
-         Pjw8TgXyvUa+XElMsmNR0d67NxbyLK39j3+UohineizaIkY7tcFAOK4oXiB5MwEhORdB
-         1FfIUB2IoXdXozeOvj3ekTmixAv3/vX2IszGwfYp3EJKluDMQ1nNk0LM+fP1iUd/MieE
-         TNoA==
+	s=arc-20240116; t=1716370092; c=relaxed/simple;
+	bh=1FO/sgLl6FDv5gfjdaHH8VjZE5pw6mczMQNGvmUXG44=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=G8ZjOWUG37teZDzwAPnS2HpjUm8k3noQ+sLZKmTO8gTiYaaV1wC2GgkqO8YQ5eKPXCg/YqVLQLyUiunaQkv6ac7yB1wmjz1//eiV/REALgV0MfIMr3OkYYuNrQ6OCh+Jq5XfL16ukz6VK6lx/1w1XQDzWxeaDVb4By9/WqK7gLw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.219.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-yb1-f170.google.com with SMTP id 3f1490d57ef6-de607ab52f4so4677116276.2;
+        Wed, 22 May 2024 02:28:10 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716357289; x=1716962089;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=Z5Ef9nBQSYhDomv1/1h6E+yKGEz7b/E/OzEO4/4KPwI=;
-        b=JNJe2niGq4wG4UYHGGDSpJLws12vkYMcHnDyowLl9ezbKQCCb7w5c7cW8IHSzZAeN4
-         WXyeY/jjOhA8NxZcnQEf6iI4UVS/daCBn/zsrJ0JRoBc4A1MlxjkOZEvGiABez/aek/p
-         osi4sr0mh9Ftb5av68yEr3cN5Og92H46tebsidBc3t2dqrJKOIfqwZIOYIl4AQ++mzrH
-         DnHNhd6EF6/eBMDiP5y24ffj4BjW0imx5SVTCw2DL5Mk+n2w6R8be4J/2qfiN+KPPyGm
-         k3MA6eafttuyHJR5Vs9ze2OR55V2paVGZeEu8UX36zlmAFfVanHaSpoqH0CzIbGKl7Gz
-         PJrg==
-X-Forwarded-Encrypted: i=1; AJvYcCU1YPcR+RAieZ0AqJt31I2mI0W/5WEjJmv/JjuU26aK4Am9j2EaoEK1ueYtii1b4OgP3cF5bpN36k82ajY5svnwHY8+Lkrb2VDcdlkqR4Q=
-X-Gm-Message-State: AOJu0YwkEgeTod1DPoWgXGmfIhR4t+AINrKx8l0OPAbvSNd50n+HJnI1
-	Lrty6ftdBbMle+lmZs5V/rksXDhGngHfC4hHDJBBjQWInEk6dehOmr2jup10Kmw=
-X-Google-Smtp-Source: AGHT+IE1oVCwdvNgx4NOCy9IfBYjOPPqLJm+kp/C3JyYqhQINpS7WEkTXmfiinPack4CkKVQR5SYeQ==
-X-Received: by 2002:a05:600c:1c95:b0:41f:e87b:45c2 with SMTP id 5b1f17b1804b1-420fd225b5amr8749115e9.0.1716357289538;
-        Tue, 21 May 2024 22:54:49 -0700 (PDT)
-Received: from claudiu-X670E-Pro-RS.. ([82.78.167.161])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-41fccce9431sm475726705e9.28.2024.05.21.22.54.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 21 May 2024 22:54:49 -0700 (PDT)
-From: Claudiu <claudiu.beznea@tuxon.dev>
-X-Google-Original-From: Claudiu <claudiu.beznea.uj@bp.renesas.com>
-To: geert+renesas@glider.be,
-	linus.walleij@linaro.org,
-	didi.debian@cknow.org,
-	efault@gmx.de
-Cc: linux-renesas-soc@vger.kernel.org,
-	linux-gpio@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	claudiu.beznea@tuxon.dev,
-	linux-rt-users@vger.kernel.org,
-	Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
-Subject: [PATCH v2] pinctrl: renesas: rzg2l: Use spin_{lock,unlock}_irq{save,restore}
-Date: Wed, 22 May 2024 08:54:21 +0300
-Message-Id: <20240522055421.2842689-1-claudiu.beznea.uj@bp.renesas.com>
-X-Mailer: git-send-email 2.39.2
+        d=1e100.net; s=20230601; t=1716370089; x=1716974889;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=HY0tgCg39/NnBEpMS6GQXLZcisZtDxsqIOp1WN1FAW0=;
+        b=RG9yvR8DdBHD27DszdYZMP53pUQoUdlYV5rZ2F8fC+f/WOCA9haB0AOSdlBulNQt0/
+         VMMKQecdOTuS1ZZXMPiDRNQcPqbgJruQdBO9zDcEtvIc93l3mPnCdepc+3ipuLdNI1CV
+         g4alkXVhSYiBfShO5dcNwd1Iej1H+CHGFqv2bv3Vh/qbXLrM/YkWe90sqSbP2xG02oAc
+         beMS/htF0TLcb9uqNdRVrEPGZZ5CcB6lq4gSsHTxkPDKcAtfadZMjLs/wWH0HAvZo4rf
+         tBzHkU9IaF9nXmJs4/pJxsy1UouYUnE6cSSd4Z1nuOG1mQz96KwrscUTpeVLbgPMmTZI
+         5jJg==
+X-Forwarded-Encrypted: i=1; AJvYcCV0KgPltlnxJgRYycjZ9o+thJy2k0EZpeYAAZQEt3e9SDwm2Poy49K6D/zo4qJn2QmtENu/zn39fdOxC4dNgQBAcTvuTxWxZZ7FPfeqZ0msPmYaPr3SV96fQeSGnNGz+KadvFRezNTTNDHpEUoIxv0RTNbMuVNG0m8qtKEiBDlYzDcERNGoG2LJCIkm5unPmARJxPHv9OviEVZrY8J8FNjJB2qDELGY1cc/2gs=
+X-Gm-Message-State: AOJu0Yx5/qLLAoiRuYQYDCt2OD9qHpU5XCKWedSfB47PnLX0vXpCMbt4
+	H3GlQAlBW7BKzH0NCr6BzEfcNfU0uErGu7Oje4Tanx65Q0n5z2X1df19c45t
+X-Google-Smtp-Source: AGHT+IF8nVVTZJI3hiakbOkeAIZ1KK0TQPe1mmNUE2XYnNGuSMEsveooOrMRCuJlw3caYZCj4o0z/g==
+X-Received: by 2002:a25:ae56:0:b0:df4:dd95:cc87 with SMTP id 3f1490d57ef6-df4e3ddd045mr1023363276.10.1716370089026;
+        Wed, 22 May 2024 02:28:09 -0700 (PDT)
+Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com. [209.85.128.169])
+        by smtp.gmail.com with ESMTPSA id 3f1490d57ef6-debd3b90a1dsm5912372276.24.2024.05.22.02.28.08
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 22 May 2024 02:28:08 -0700 (PDT)
+Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-622f5a0badcso51487407b3.2;
+        Wed, 22 May 2024 02:28:08 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AJvYcCV+I4UNQmQxgwYvqXBDK6MnlZWdu4pFEL7CzQqjaVAzvN0uumrSj88GaYKX/3nRkyiXdWBN5VPzV3o+3HVCkB0CGNGfbmdwryw/dcvYFp1r2qf2WBBTLKQ/V+3Mz27ujTVnopiP7uoSfNXt6eEtm/KEHZ7J8cVgSfWk1SJSj6rK5i6IFiTcW6CpTeLhlXUie9qNBqg3R9CXJXuznpeb21ocy3KI+yMNVDNxuPo=
+X-Received: by 2002:a81:490e:0:b0:61a:b54d:5925 with SMTP id
+ 00721157ae682-627e4865888mr14394627b3.38.1716370087335; Wed, 22 May 2024
+ 02:28:07 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240522055421.2842689-1-claudiu.beznea.uj@bp.renesas.com>
+In-Reply-To: <20240522055421.2842689-1-claudiu.beznea.uj@bp.renesas.com>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Date: Wed, 22 May 2024 11:27:55 +0200
+X-Gmail-Original-Message-ID: <CAMuHMdVN3O2O4VYmyXKAsUp=19-1=J8BU2NJ3PLaCYdgV98VyQ@mail.gmail.com>
+Message-ID: <CAMuHMdVN3O2O4VYmyXKAsUp=19-1=J8BU2NJ3PLaCYdgV98VyQ@mail.gmail.com>
+Subject: Re: [PATCH v2] pinctrl: renesas: rzg2l: Use spin_{lock,unlock}_irq{save,restore}
+To: Claudiu <claudiu.beznea@tuxon.dev>
+Cc: linus.walleij@linaro.org, didi.debian@cknow.org, efault@gmx.de, 
+	linux-renesas-soc@vger.kernel.org, linux-gpio@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, 
+	Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+On Wed, May 22, 2024 at 7:54=E2=80=AFAM Claudiu <claudiu.beznea@tuxon.dev> =
+wrote:
+> From: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+>
+> On PREEMPT_RT kernels the spinlock_t maps to an rtmutex. Using
+> raw_spin_lock_irqsave()/raw_spin_unlock_irqrestore() on
+> &pctrl->lock.rlock breaks the PREEMPT_RT builds. To fix this use
+> spin_lock_irqsave()/spin_unlock_irqrestore() on &pctrl->lock.
+>
+> Fixes: 02cd2d3be1c3 ("pinctrl: renesas: rzg2l: Configure the interrupt ty=
+pe on resume")
+> Reported-by: Diederik de Haas <didi.debian@cknow.org>
+> Closes: https://lore.kernel.org/all/131999629.KQPSlr0Zke@bagend
+> Signed-off-by: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
+> ---
+>
+> Changes in v2:
+> - use proper commit id in "Fixes" section
+> - s/use/Use in patch title
 
-On PREEMPT_RT kernels the spinlock_t maps to an rtmutex. Using
-raw_spin_lock_irqsave()/raw_spin_unlock_irqrestore() on
-&pctrl->lock.rlock breaks the PREEMPT_RT builds. To fix this use
-spin_lock_irqsave()/spin_unlock_irqrestore() on &pctrl->lock.
+Reviewed-by: Geert Uytterhoeven <geert+renesas@glider.be>
+i.e. will queue in renesas-pinctrl-fixes for v6.10.
 
-Fixes: 02cd2d3be1c3 ("pinctrl: renesas: rzg2l: Configure the interrupt type on resume")
-Reported-by: Diederik de Haas <didi.debian@cknow.org>
-Closes: https://lore.kernel.org/all/131999629.KQPSlr0Zke@bagend
-Signed-off-by: Claudiu Beznea <claudiu.beznea.uj@bp.renesas.com>
----
+Gr{oetje,eeting}s,
 
-Changes in v2:
-- use proper commit id in "Fixes" section
-- s/use/Use in patch title
+                        Geert
 
- drivers/pinctrl/renesas/pinctrl-rzg2l.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+--=20
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k=
+.org
 
-diff --git a/drivers/pinctrl/renesas/pinctrl-rzg2l.c b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
-index 20425afc6b33..78f947a8e26e 100644
---- a/drivers/pinctrl/renesas/pinctrl-rzg2l.c
-+++ b/drivers/pinctrl/renesas/pinctrl-rzg2l.c
-@@ -2069,11 +2069,11 @@ static void rzg2l_gpio_irq_restore(struct rzg2l_pinctrl *pctrl)
- 		 * This has to be atomically executed to protect against a concurrent
- 		 * interrupt.
- 		 */
--		raw_spin_lock_irqsave(&pctrl->lock.rlock, flags);
-+		spin_lock_irqsave(&pctrl->lock, flags);
- 		ret = rzg2l_gpio_irq_set_type(data, irqd_get_trigger_type(data));
- 		if (!ret && !irqd_irq_disabled(data))
- 			rzg2l_gpio_irq_enable(data);
--		raw_spin_unlock_irqrestore(&pctrl->lock.rlock, flags);
-+		spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 		if (ret)
- 			dev_crit(pctrl->dev, "Failed to set IRQ type for virq=%u\n", virq);
--- 
-2.39.2
-
+In personal conversations with technical people, I call myself a hacker. Bu=
+t
+when I'm talking to journalists I just say "programmer" or something like t=
+hat.
+                                -- Linus Torvalds
