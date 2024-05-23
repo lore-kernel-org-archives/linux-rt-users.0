@@ -1,80 +1,86 @@
-Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
+Received: from mxhk.zte.com.cn (mxhk.zte.com.cn [63.216.63.40])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C62813CFA2;
-	Thu, 23 May 2024 09:27:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D31C71401F;
+	Thu, 23 May 2024 15:54:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=63.216.63.40
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716456430; cv=none; b=bSkQo3qGuHicrzQlkrVlZEbav5ge8eBKAoh+5RaSwuTCLTooy7yFfFahIeLFFTgXMPzDNJ0pWu6ERPjKYNAN9bhaMYNHvhNTLS2Un8ibOr8xBnbBaj1erAk6QPRKI6WyiuFBNOr/rcDmYBfouNEc36Mp9c7nmqHHKmWV5UfCBt0=
+	t=1716479654; cv=none; b=MOS9yabakVyQMV6mqcC/RHWmYjm1JRnQ/fzu587G5nQJdcYbsTAyAd8DHkVWbS1ern+Oo+jYES2SFp4jt97Uv13t0b9lccoiXIzGkoiOqxZL0nU4VE4IRa3yt16ArgqJvIqsX2x+u/Ae2czA1xB7PA5hR5pXwGGlEYueAPyKTN8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716456430; c=relaxed/simple;
-	bh=Jk2s0XLPuHA3YyAidzLdf7ogEZoebdsJWq5du8Mqp2U=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HyojxfqlLpbRV7/QHdsNlgIzGMmbVqvlCpwmrYqDVmxHYMdA5PePCA7eueh7GJh6Sw+8beo8umU61rLRrXoYy+Y8CcJEjngUW1UxcpqsH+QV2irIftY9RMU5AhBDGSsfUBzSCdP41TtKWej1HF+DC+D7Z1DFu7Kxq0kcxpeOWek=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de; spf=fail smtp.mailfrom=denx.de; arc=none smtp.client-ip=46.255.230.98
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=denx.de
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-	id 0FBB71C0081; Thu, 23 May 2024 11:26:59 +0200 (CEST)
-Date: Thu, 23 May 2024 11:26:58 +0200
-From: Pavel Machek <pavel@denx.de>
-To: Daniel Wagner <wagi@monom.org>
-Cc: Pavel Machek <pavel@denx.de>, LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>
-Subject: Re: 4.19-rt in May? Re: [ANNOUNCE] 4.19.269-rt119
-Message-ID: <Zk8L4jU3n7pAVR6+@duo.ucw.cz>
-References: <167144069993.3503.13484547425689613996@beryllium.lan>
- <ZjSoeyEnkJPY7ST3@duo.ucw.cz>
- <ahybli5jks4jfco7kiuotvukseqvg4vxxnlw522vs22cn5w7ok@qm5nmcskbh3j>
+	s=arc-20240116; t=1716479654; c=relaxed/simple;
+	bh=Y9betDNBqCFVsZJxrcEUDGZqwDErzrwnHGGuVKgsbko=;
+	h=Date:Message-ID:Mime-Version:From:To:Cc:Subject:Content-Type; b=dzrVz3425e5VZrUwReuH9fZx4h7MC9wQdiaebY0ATqhQ7xTFZQ4+ald8qeCsmLkr00TlNjNoRxhRHve+u2FWTJgIpTB2meVI8Qq0SomSnVp/Ak6XHgMRP6adCucorEVkZCvp4242PKyGWODAhr/x57Zk21wZcHSLPF/Rf1c6vVU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zte.com.cn; spf=pass smtp.mailfrom=zte.com.cn; arc=none smtp.client-ip=63.216.63.40
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zte.com.cn
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=zte.com.cn
+Received: from mse-fl2.zte.com.cn (unknown [10.5.228.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mxhk.zte.com.cn (FangMail) with ESMTPS id 4VlXlq38Lcz8XrRB;
+	Thu, 23 May 2024 23:53:59 +0800 (CST)
+Received: from xaxapp01.zte.com.cn ([10.88.99.176])
+	by mse-fl2.zte.com.cn with SMTP id 44NFrvFY075406;
+	Thu, 23 May 2024 23:53:57 +0800 (+08)
+	(envelope-from xu.xin16@zte.com.cn)
+Received: from mapi (xaxapp01[null])
+	by mapi (Zmail) with MAPI id mid32;
+	Thu, 23 May 2024 23:54:01 +0800 (CST)
+Date: Thu, 23 May 2024 23:54:01 +0800 (CST)
+X-Zmail-TransId: 2af9664f6699fffffffff57-3b67f
+X-Mailer: Zmail v1.0
+Message-ID: <20240523235401355RFqSAGtIPwMKV39mUulN1@zte.com.cn>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="FlkwNOZsC275/c1z"
-Content-Disposition: inline
-In-Reply-To: <ahybli5jks4jfco7kiuotvukseqvg4vxxnlw522vs22cn5w7ok@qm5nmcskbh3j>
+Mime-Version: 1.0
+From: <xu.xin16@zte.com.cn>
+To: <bigeasy@linutronix.de>, <john.ogness@linutronix.de>,
+        <rostedt@goodmis.org>
+Cc: <zhang.yunkai@zte.com.cn>, <yang.yang29@zte.com.cn>,
+        <liu.chun2@zte.com.cn>, <si.hao@zte.com.cn>,
+        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+        <rostedt@goodmis.org>
+Subject: =?UTF-8?B?wqBbUEFUQ0jCoCA1LjE1LXJ0XSBwcmludGs6IGlnbm9yZSB0aGF0IGNvbnNvbGUgcHJlZW1wdGVkIGJ5IGlycS9zb2Z0aXJxLg==?=
+Content-Type: text/plain;
+	charset="UTF-8"
+X-MAIL:mse-fl2.zte.com.cn 44NFrvFY075406
+X-Fangmail-Anti-Spam-Filtered: true
+X-Fangmail-MID-QID: 664F6697.000/4VlXlq38Lcz8XrRB
 
+From: xu xin <xu.xin16@zte.com.cn>
 
---FlkwNOZsC275/c1z
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+When we're in the unpreemptible context on the same cpu with which the
+thread of console locates on, we should ignore this console for
+pr_flush, because it's a vain and always lead to timeout  until the console
+thread get cpu resource.
 
-Hi!
+Fixes: e65be5f4dc3ed("printk: Update John Ogness' printk series")
+Signed-off-by: xu xin <xu.xin16@zte.com.cn>
+Cc: Zhang Yunkai <zhang.yunkai@zte.com.cn>
+---
+ kernel/printk/printk.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-> > I'd like to do 4.19-cip-rt release "soon". Is there chance to get
-> > updated -rt tree? Last I see is:
->=20
-> Sorry, got interrupted and didn't finish the last release. I've to fixup
-> the rebase branch before the next release. I'll see what I can do next we=
-ek.
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index 7f27cfee283e..faab85dd4439 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -3735,6 +3735,14 @@ bool pr_flush(int timeout_ms, bool reset_on_progress)
+ 		diff = 0;
 
-Thank you, I see the release in -git now, and am preparing -cip-rt
-based on that.
-
-Best regards,
-								Pavel
---=20
-DENX Software Engineering GmbH,        Managing Director: Erika Unter
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
-
---FlkwNOZsC275/c1z
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZk8L4gAKCRAw5/Bqldv6
-8qZUAJ9VeyLA/MN6mbx7NylV6MV12/A0sQCfbra0XK3PQecor5Qi4JMDPqLidGs=
-=dlV3
------END PGP SIGNATURE-----
-
---FlkwNOZsC275/c1z--
+ 		for_each_console(con) {
++			/*
++			 * When we're in the unpreemptible context on the same cpu
++			 * with which the thread of console locates on, we should
++			 * ignore this console, because it's a vain.
++			 */
++			if (!preemptible() && con->thread &&
++					task_cpu(con->thread) == smp_processor_id())
++				continue;
+ 			if (!(con->flags & CON_ENABLED))
+ 				continue;
+ 			printk_seq = read_console_seq(con);
+-- 
+2.15.2
