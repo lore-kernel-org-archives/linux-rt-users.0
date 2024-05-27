@@ -1,71 +1,48 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A630FEEC5;
-	Sun, 26 May 2024 17:51:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CB9F20E6;
+	Mon, 27 May 2024 01:53:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716745886; cv=none; b=Zspg1qRARd5mDQxh1YfBdY7xKP8BzaqZAmHbJLsZKp2L6mPp1aZEbPqppdmshszEhSyBSifhZ/WfyHs2RLJdn5i/ltTUa+VDKvqSN0CDguCnl+Oh7XDlZ0jCPCN3Pvbc9O6JPNvCnj3TbCR80IT87EXZly/CQiUHca3qXwKb4wM=
+	t=1716774840; cv=none; b=QYnA95XHODJloXPG9tDxGoh40r8SMtQBePOwSen9tTwAUWr0CQb0G1iagLvXDffkreTJpiyhzl8LstnTj7KlYibJ0g0YWDYBuGDTo+khhThSokat7L3Z+l+tFEca/+Rwg7+Z0TAhy46yuNFQHsqeVW5V4UHdRB18CEZwF8/r1Cg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716745886; c=relaxed/simple;
-	bh=fSmJATrahFNhZTbXeAPx7NpqgqqfQgR8k7RfvhRLMw4=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=PquHuj2pHzaRIfhAbC8EjMGwo0VAmqSi/Zm7+H+XRwI2iVnSwAPAmZcES7AGJlrj6vlhHdIxF2R/2Kd0JjNrJ5CcGqfZgMHl8kfV6pYtbjFytEXsW04Jps3aXMw+taOh4oMFN5nHuQ72twAfr9D+lo1bMfg6OHWaB06FLsCD6nc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=4RFxme2+; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=GmWeaa2m; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="4RFxme2+";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="GmWeaa2m"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1716745882;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=W3r4vIslQHp+LF+Z5/5dj9t9dmVGSNrujiV846kaqNQ=;
-	b=4RFxme2+BaLd+zvrZkqGVLGCJrK0b7cBBVCyH3npxqn7vJQ8tSJ3yv+56DiyzhN14ydffe
-	l+AgPDJaXgHru1kT7zmxzEggvP1ZC7a2pw5UxaMZParV5QBCPTrpuZ391Tg5CHCtx2r90O
-	7pMaoWFqAqrp/3kXK6o3Z505I72dy3/j5jwcQSfBTsNo624DGZS2xjy3EXQOReWa8XXQ0Q
-	SlRIBb70dN/GvlleOSrKLbOVisOIrZL4sdlJ0CHFVO2YYB+wRauReRXhLCRtZ6b4WnOVnq
-	qxXduwyT1Do5fApx4NtrmrEB1Orj635FDVAfaZKOjA936CQOnmg/fkR+R1vPfg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1716745882;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=W3r4vIslQHp+LF+Z5/5dj9t9dmVGSNrujiV846kaqNQ=;
-	b=GmWeaa2mRBegpptHMoZkyEQyzVGQry9rEpEuEpp76NYPn+JQqzuGF+gYJT7aP9//5Lrx1Q
-	lIMMNtZKfoFn1oDA==
-To: xu.xin16@zte.com.cn, bigeasy@linutronix.de, rostedt@goodmis.org
-Cc: zhang.yunkai@zte.com.cn, yang.yang29@zte.com.cn, liu.chun2@zte.com.cn,
- si.hao@zte.com.cn, linux-kernel@vger.kernel.org,
- linux-rt-users@vger.kernel.org, rostedt@goodmis.org
-Subject: Re: =?utf-8?B?wqBbUEFUQ0jCoA==?= 5.15-rt] printk: ignore that
- console preempted by
- irq/softirq.
-In-Reply-To: <20240523235401355RFqSAGtIPwMKV39mUulN1@zte.com.cn>
-References: <20240523235401355RFqSAGtIPwMKV39mUulN1@zte.com.cn>
-Date: Sun, 26 May 2024 19:56:57 +0206
-Message-ID: <87r0doo41q.fsf@jogness.linutronix.de>
+	s=arc-20240116; t=1716774840; c=relaxed/simple;
+	bh=w4Fxjphjg6/f8VqauEuXWS9Nx5dhQEnG76nQpnNYzY4=;
+	h=From:Subject:Date:Message-ID:To; b=eNJbe84WynpfNgHCCpCkXY3qPi7zeDGby/F4+YHi+ZXqWs21yyqe2S8EOhttBbd+BCRAYTH/zdVsqRY4WMyGt39ibHmMYaw35VdhiS0yHVjP3imEbBoYna+YDIXfaEdWTWCxjs45BK/YUbXI8VFYOX9T0LMpFPXzgvmp1Hmw0Ko=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B098EC2BD10;
+	Mon, 27 May 2024 01:53:59 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.32-rt32
+Date: Mon, 27 May 2024 01:53:27 -0000
+Message-ID: <171677480759.1435201.3570631631973283738@demetrius.lan>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain
 
-On 2024-05-23, <xu.xin16@zte.com.cn> wrote:
-> From: xu xin <xu.xin16@zte.com.cn>
->
-> When we're in the unpreemptible context on the same cpu with which the
-> thread of console locates on, we should ignore this console for
-> pr_flush, because it's a vain and always lead to timeout  until the console
-> thread get cpu resource.
->
-> Fixes: e65be5f4dc3ed("printk: Update John Ogness' printk series")
-> Signed-off-by: xu xin <xu.xin16@zte.com.cn>
-> Cc: Zhang Yunkai <zhang.yunkai@zte.com.cn>
+Hello RT-list!
 
-Reviewed-by: John Ogness <john.ogness@linutronix.de>
+I'm pleased to announce the 6.6.32-rt32 stable release.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v6.6-rt
+  Head SHA1: 1548b5dc35b53731b3df3f35c628646cc4454bd7
+
+Or to build 6.6.32-rt32 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.32.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.32-rt32.patch.xz
+
+
+Enjoy!
+Clark
