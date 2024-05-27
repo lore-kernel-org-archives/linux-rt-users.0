@@ -1,57 +1,57 @@
-Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
+Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09236161909
-	for <linux-rt-users@vger.kernel.org>; Mon, 27 May 2024 14:26:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D7C816191E
+	for <linux-rt-users@vger.kernel.org>; Mon, 27 May 2024 14:26:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716819973; cv=none; b=O2GhWsh8E7/Xcu9SgrUg+VZV1q1aSXIFCSI164w3N/7MBv5iyyWDA07vIiwXlGfqRw7nGRA/MS1rW0IAJGz9z/1siQdW+fttdD8dkLYAEQR91v+fV9tK/TQ9OZxp+LauoFpCTOFe2aF/XszyIJ9UAsRZrOD+e2oWOc6IW+7hzBc=
+	t=1716819974; cv=none; b=MtS4pyi8mIE1bDSgX0US9fSnfHpEoAnKQtVcOodlgPlkNgXVnN9+Y9/KdpbuVnCd6Fy0Q9puQlPAIf5JdMGPLsiuR9/fHE5PCruPfu/a083efJ0HOHaeghD0Qy1hEI8rXXpDMqR6piOmtk01Y976mwi9kuT3hWUXCKUcqsh3K9c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716819973; c=relaxed/simple;
-	bh=XKLaI74qjA22QeAsWI8Ln1246wnUj1/8uIXA+l/FzQk=;
+	s=arc-20240116; t=1716819974; c=relaxed/simple;
+	bh=YcCK16hCcedyEDxCm8Q4x8DZte4hLECUoktYNDUh8Ig=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=L9YYqtN4+LEEozRYb/vfK7VY6SuD6pgEb2BGdotlMUzfAkiO2aEdxcL6Fyw1K+8+GHDu7TiGtoIBy4OqWTIX3zligWlqDf8yyW7fqshfp7xmtQzHKttJR1J7oa6Q7MQ/7uP39FdfkshYp8AP8sjdzXNYYmKQD7ybvJcgJNO2Pkk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=MB+Qa57g; arc=none smtp.client-ip=209.85.167.51
+	 MIME-Version; b=dDkC+wAClRWmrPAkxapk3s9tpvVWsEZCo/nQVaNc6Dk6vFhEHhtdkDgQvWtTcmEipBCg11gHg8+Nhh8sF638nX7HS+SJD0HoSImmGK40/SPsqBMqqclIv6GJQ50lK0GBaJs+A8IGYxV3FdYjmj1rYDUoby7+ogYGyIhpXJHCceE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=Ywo3EySX; arc=none smtp.client-ip=209.85.167.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="MB+Qa57g"
-Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-5238fe0cfc9so5093778e87.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 May 2024 07:26:11 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="Ywo3EySX"
+Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-529646df247so3282581e87.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 27 May 2024 07:26:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1716819970; x=1717424770; darn=vger.kernel.org;
+        d=linaro.org; s=google; t=1716819971; x=1717424771; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=PZoaMc6WifhZ+fBwKL5gwIEFdMUp0oaX6j5v8OfXh20=;
-        b=MB+Qa57g/N7vGhiTnBqeOdPr2vrn3NUueqPQQ1Cj2S9JeTDVEVYKown+p3pkV1/rnz
-         2fdKR7s0KH8PLV6H7cqPf/nbWkIBZM4RAAEb8ujyrliHHUxgFs36RiT7aCnqeKIfGoIL
-         V1HY731aMyAVRbVhkXsr/6dXHuWynzkwFmUTXL+ug3jsUqPampMfQfxYLbzDVxJdrpbb
-         gTUTLo0o4x9Ne+RxMEeEKxbTsC2Wod91QWafaMdpzINvF1BpSlgNzNaV215B2i+dzhJK
-         lDoLTcmsZ2YF57TJAyaamMFaD8Uc0NUU9vq+bPBqAruMedGXVwU22A3ZxhvfPC5OciKB
-         Nw9Q==
+        bh=5Ajlq1staYQWjI54ZRvjbkTZMy5GI2GeZyK3MIpoEkc=;
+        b=Ywo3EySXtnPb3AlIxCagFsDBfd9qXwHIEmFczq4ALhGvX6HgW+Wjmi+dgHqOcj2AFw
+         WEYmpY9UesrETHK6BrDf0Lc5/p70EcyQq46s1DHpM5CZC8ncbm0GHFVjOTXkQR+bKDGq
+         Zg7+fIxixtQyANaJMdeQsjqPhGD9eG+iUsm8I6QnQ97WJrpiGYF0tyUq49soXThZbRpL
+         VAumhoQmuhc7yTEZjX8cwpLv05lYtWFHcYKM+rX7k5Rp++jLcQ8gcwUPPUQaV6lAZzLw
+         ljYkIlp/KBoJpEt0rO5vW0bDre4POVDvHQZQAB1m2rgvn18YWfrWlSYTd67xpXd0UOeu
+         TZpA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716819970; x=1717424770;
+        d=1e100.net; s=20230601; t=1716819971; x=1717424771;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=PZoaMc6WifhZ+fBwKL5gwIEFdMUp0oaX6j5v8OfXh20=;
-        b=mbGF5SNQLLDcIhxhZW7ph15r5ta3IYEri7O8eTxHaHUaPPx8mKcaii59osI41czwz7
-         hRqP/k6ygYpZWuSI26hJ0otBXwzM+yJHDxP+OGt3Tx5wEwWQ5jr6MJEpqxMMeY2zWoav
-         FzvFn0SSpqgEfdg/tH9GYTQScJuoSrZ4ScCyCkCzTN41Maq36zNdmv0SECzYf8Ej+KzZ
-         nhoQ7H95f65R/appC+e0/y4d65PW1Odqad/y1S5TbB3VY4W116hnEXT0c6XCvm7/feZ2
-         QByBA/usUPX7jEzmnTqPadAWXSCpI3T8tfVBx9tcg72jWVh4FTC1bZTvIfjTUvghFvCc
-         ws1w==
-X-Forwarded-Encrypted: i=1; AJvYcCVckW9Vd4pJmFuYjJ5P7TwD6+G+xCxYigXHn9+dFOp23iQy/E5A/lqmWmP35kh8bSvBFjZhPokMFzLNXOBAUiynKjrsfvpETCByMrhhtBM=
-X-Gm-Message-State: AOJu0YwA2R7spJUDz5JlIBEL6zQSuVPQvyP1BA1BfxGBc68Icqm02sPr
-	Vs11XS0oZkqLWOSsd+S9IHixtfX6drC3a4fdj5jdggodW4Ve2R+FvaYBrziY2xI=
-X-Google-Smtp-Source: AGHT+IE/McdjIB2db+Ta75EpAOuo80HDc4szOTHxbQY1a3UNLxB5stFeNpM3m1xKFPzyrfs8FAVxmA==
-X-Received: by 2002:a19:5e10:0:b0:51f:c38b:149c with SMTP id 2adb3069b0e04-527ef3ff4d1mr4004099e87.10.1716819970021;
-        Mon, 27 May 2024 07:26:10 -0700 (PDT)
+        bh=5Ajlq1staYQWjI54ZRvjbkTZMy5GI2GeZyK3MIpoEkc=;
+        b=uo3RCXz6ytHKH0MHhP7CEcJ6+P4zi1GIaxgThgDKCGdW/5NV/DLDW1mlUpgzHKlK4I
+         5qZcntU54d/8TmZmRmo8iijYhjzMTuI6ztMfVEA6nV69Y5s61gqa3fsARQLCW3ZMpItW
+         mB7glWb/WLsqeEqjztFgNSnD/Ij/+qpBwWg2GKvC+cROE2UZoaTAPCeDMxsUYSI2d384
+         +u32RKPcg6PEFEWZmJ+uzbwO2lm0/05RKA0OZeQXmkgK2P0EH6tmCLwrvigW+A8U8goK
+         UP74b/u5T4tyuzoPJPd/cOEpwUl3T/S1pXfu+zq3vpSByZRo0dsESdOlLU6a73pZ1S7W
+         p6Kw==
+X-Forwarded-Encrypted: i=1; AJvYcCWqsqPOvH8f3Qyd3eFGB3V4/5DOtpd1cqyTiL2gFMXRvsIxT+0FFThuK3Hugfy+/KvQ51zFJmFeyzVW4vmQtT8ItPx8D6594JQAcKQYp30=
+X-Gm-Message-State: AOJu0YzgYX4fcSsOOXC2sww1HTruIso23pm0XJG9BX9ZQO+2pNtng30+
+	59t/7yUQI6pWaGVOZo7K86wgXSK2r7UD1aP2WT8oy0J6QpTICoTtWGJSlW5VU18=
+X-Google-Smtp-Source: AGHT+IHWRypJfff5qBHtAk5lsZ8/wFX/161EBjl7n9TAWLIPrFWtZ+0qN16FQcGUnCCHIR2OZDLIJQ==
+X-Received: by 2002:ac2:5a09:0:b0:51f:5853:14e3 with SMTP id 2adb3069b0e04-529647d8360mr5535854e87.25.1716819971096;
+        Mon, 27 May 2024 07:26:11 -0700 (PDT)
 Received: from uffe-tuxpro14.. (h-178-174-189-39.A498.priv.bahnhof.se. [178.174.189.39])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-529711fa7f3sm562002e87.258.2024.05.27.07.26.08
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-529711fa7f3sm562002e87.258.2024.05.27.07.26.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 27 May 2024 07:26:09 -0700 (PDT)
+        Mon, 27 May 2024 07:26:10 -0700 (PDT)
 From: Ulf Hansson <ulf.hansson@linaro.org>
 To: "Rafael J . Wysocki" <rafael@kernel.org>,
 	Sudeep Holla <sudeep.holla@arm.com>,
@@ -66,9 +66,9 @@ Cc: Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
 	linux-rt-users@vger.kernel.org,
 	linux-arm-kernel@lists.infradead.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH v2 1/7] pmdomain: core: Enable s2idle for CPU PM domains on PREEMPT_RT
-Date: Mon, 27 May 2024 16:25:51 +0200
-Message-Id: <20240527142557.321610-2-ulf.hansson@linaro.org>
+Subject: [PATCH v2 2/7] pmdomain: core: Don't hold the genpd-lock when calling dev_pm_domain_set()
+Date: Mon, 27 May 2024 16:25:52 +0200
+Message-Id: <20240527142557.321610-3-ulf.hansson@linaro.org>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240527142557.321610-1-ulf.hansson@linaro.org>
 References: <20240527142557.321610-1-ulf.hansson@linaro.org>
@@ -80,113 +80,58 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-To allow a genpd provider for a CPU PM domain to enter a domain-idle-state
-during s2idle on a PREEMPT_RT based configuration, we can't use the regular
-spinlock, as they are turned into sleepable locks on PREEMPT_RT.
+There is no need to hold the genpd-lock, while assigning the
+dev->pm_domain. In fact, it becomes a problem on a PREEMPT_RT based
+configuration as the genpd-lock may be a raw spinlock, while the lock
+acquired through the call to dev_pm_domain_set() is a regular spinlock.
 
-To address this problem, let's convert into using the raw spinlock, but
-only for genpd providers that have the GENPD_FLAG_CPU_DOMAIN bit set. In
-this way, the lock can still be acquired/released in atomic context, which
-is needed in the idle-path for PREEMPT_RT.
-
-Do note that the genpd power-on/off notifiers may also be fired during
-s2idle, but these are already prepared for PREEMPT_RT as they are based on
-the raw notifiers. However, consumers of them may need to adopt accordingly
-to work properly on PREEMPT_RT.
+To fix the problem, let's simply move the calls to dev_pm_domain_set()
+outside the genpd-lock.
 
 Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
 ---
-
 Changes in v2:
 	- None.
 
 ---
- drivers/pmdomain/core.c   | 47 ++++++++++++++++++++++++++++++++++++++-
- include/linux/pm_domain.h |  5 ++++-
- 2 files changed, 50 insertions(+), 2 deletions(-)
+ drivers/pmdomain/core.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
-index 623d15b68707..072e6bdb6ee6 100644
+index 072e6bdb6ee6..454fccc38df1 100644
 --- a/drivers/pmdomain/core.c
 +++ b/drivers/pmdomain/core.c
-@@ -117,6 +117,48 @@ static const struct genpd_lock_ops genpd_spin_ops = {
- 	.unlock = genpd_unlock_spin,
- };
+@@ -1736,7 +1736,6 @@ static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
+ 	genpd_lock(genpd);
  
-+static void genpd_lock_raw_spin(struct generic_pm_domain *genpd)
-+	__acquires(&genpd->raw_slock)
-+{
-+	unsigned long flags;
-+
-+	raw_spin_lock_irqsave(&genpd->raw_slock, flags);
-+	genpd->raw_lock_flags = flags;
-+}
-+
-+static void genpd_lock_nested_raw_spin(struct generic_pm_domain *genpd,
-+					int depth)
-+	__acquires(&genpd->raw_slock)
-+{
-+	unsigned long flags;
-+
-+	raw_spin_lock_irqsave_nested(&genpd->raw_slock, flags, depth);
-+	genpd->raw_lock_flags = flags;
-+}
-+
-+static int genpd_lock_interruptible_raw_spin(struct generic_pm_domain *genpd)
-+	__acquires(&genpd->raw_slock)
-+{
-+	unsigned long flags;
-+
-+	raw_spin_lock_irqsave(&genpd->raw_slock, flags);
-+	genpd->raw_lock_flags = flags;
-+	return 0;
-+}
-+
-+static void genpd_unlock_raw_spin(struct generic_pm_domain *genpd)
-+	__releases(&genpd->raw_slock)
-+{
-+	raw_spin_unlock_irqrestore(&genpd->raw_slock, genpd->raw_lock_flags);
-+}
-+
-+static const struct genpd_lock_ops genpd_raw_spin_ops = {
-+	.lock = genpd_lock_raw_spin,
-+	.lock_nested = genpd_lock_nested_raw_spin,
-+	.lock_interruptible = genpd_lock_interruptible_raw_spin,
-+	.unlock = genpd_unlock_raw_spin,
-+};
-+
- #define genpd_lock(p)			p->lock_ops->lock(p)
- #define genpd_lock_nested(p, d)		p->lock_ops->lock_nested(p, d)
- #define genpd_lock_interruptible(p)	p->lock_ops->lock_interruptible(p)
-@@ -2079,7 +2121,10 @@ static void genpd_free_data(struct generic_pm_domain *genpd)
+ 	genpd_set_cpumask(genpd, gpd_data->cpu);
+-	dev_pm_domain_set(dev, &genpd->domain);
  
- static void genpd_lock_init(struct generic_pm_domain *genpd)
- {
--	if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
-+	if (genpd->flags & GENPD_FLAG_CPU_DOMAIN) {
-+		raw_spin_lock_init(&genpd->raw_slock);
-+		genpd->lock_ops = &genpd_raw_spin_ops;
-+	} else if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
- 		spin_lock_init(&genpd->slock);
- 		genpd->lock_ops = &genpd_spin_ops;
- 	} else {
-diff --git a/include/linux/pm_domain.h b/include/linux/pm_domain.h
-index f24546a3d3db..0d7fc47de3bc 100644
---- a/include/linux/pm_domain.h
-+++ b/include/linux/pm_domain.h
-@@ -194,8 +194,11 @@ struct generic_pm_domain {
- 			spinlock_t slock;
- 			unsigned long lock_flags;
- 		};
-+		struct {
-+			raw_spinlock_t raw_slock;
-+			unsigned long raw_lock_flags;
-+		};
- 	};
--
- };
+ 	genpd->device_count++;
+ 	if (gd)
+@@ -1745,6 +1744,7 @@ static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
+ 	list_add_tail(&gpd_data->base.list_node, &genpd->dev_list);
  
- static inline struct generic_pm_domain *pd_to_genpd(struct dev_pm_domain *pd)
+ 	genpd_unlock(genpd);
++	dev_pm_domain_set(dev, &genpd->domain);
+  out:
+ 	if (ret)
+ 		genpd_free_dev_data(dev, gpd_data);
+@@ -1801,12 +1801,13 @@ static int genpd_remove_device(struct generic_pm_domain *genpd,
+ 		genpd->gd->max_off_time_changed = true;
+ 
+ 	genpd_clear_cpumask(genpd, gpd_data->cpu);
+-	dev_pm_domain_set(dev, NULL);
+ 
+ 	list_del_init(&pdd->list_node);
+ 
+ 	genpd_unlock(genpd);
+ 
++	dev_pm_domain_set(dev, NULL);
++
+ 	if (genpd->detach_dev)
+ 		genpd->detach_dev(genpd, dev);
+ 
 -- 
 2.34.1
 
