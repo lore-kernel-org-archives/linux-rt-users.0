@@ -1,22 +1,22 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CB9F20E6;
-	Mon, 27 May 2024 01:53:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 082C110E4;
+	Mon, 27 May 2024 02:18:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716774840; cv=none; b=QYnA95XHODJloXPG9tDxGoh40r8SMtQBePOwSen9tTwAUWr0CQb0G1iagLvXDffkreTJpiyhzl8LstnTj7KlYibJ0g0YWDYBuGDTo+khhThSokat7L3Z+l+tFEca/+Rwg7+Z0TAhy46yuNFQHsqeVW5V4UHdRB18CEZwF8/r1Cg=
+	t=1716776329; cv=none; b=lKqKeUhNtWazJj40BkyYU4aKBB/irX8kD3IzfCnorQZHSB04gmUC8CEt4Hg4J7a9O2VlrNu08EJ6AISP7W1Faj6yAsIjCsClXNluOJ1yRKUMV/2F5S4O4UstYM8CZQ6AaMCsFIi3gPoeSyZtgOKNUV2v02FaV+6lTbsmCTwsHL0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716774840; c=relaxed/simple;
-	bh=w4Fxjphjg6/f8VqauEuXWS9Nx5dhQEnG76nQpnNYzY4=;
-	h=From:Subject:Date:Message-ID:To; b=eNJbe84WynpfNgHCCpCkXY3qPi7zeDGby/F4+YHi+ZXqWs21yyqe2S8EOhttBbd+BCRAYTH/zdVsqRY4WMyGt39ibHmMYaw35VdhiS0yHVjP3imEbBoYna+YDIXfaEdWTWCxjs45BK/YUbXI8VFYOX9T0LMpFPXzgvmp1Hmw0Ko=
+	s=arc-20240116; t=1716776329; c=relaxed/simple;
+	bh=h714SLTwEMfeoYfSobqGSbvbn0dh46Ou/drFzdzYbXU=;
+	h=From:Subject:Date:Message-ID:To; b=EsppsZUCCFxHKKCwK2JwUYusp4v9Yhg8L4BnWjFP+Ye0Tzz3mHnT/4ncZ961sBN6+vQfVMPp7mNOc0sGU9WYnPicEB4vy4qpoHH98BI4XOLMEdapA7cB0Iag0/POc8Mc+qjROmUNn2Wd9+QH0W0dTgA3WKIK7nd0CB18jPQdrrs=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B098EC2BD10;
-	Mon, 27 May 2024 01:53:59 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5B4FEC2BD10;
+	Mon, 27 May 2024 02:18:48 +0000 (UTC)
 From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.6.32-rt32
-Date: Mon, 27 May 2024 01:53:27 -0000
-Message-ID: <171677480759.1435201.3570631631973283738@demetrius.lan>
+Subject: [ANNOUNCE] 6.1.92-rt32
+Date: Mon, 27 May 2024 02:18:16 -0000
+Message-ID: <171677629682.1563516.14642351149648872540@demetrius.lan>
 To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -26,22 +26,22 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 
 Hello RT-list!
 
-I'm pleased to announce the 6.6.32-rt32 stable release.
+I'm pleased to announce the 6.1.92-rt32 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v6.6-rt
-  Head SHA1: 1548b5dc35b53731b3df3f35c628646cc4454bd7
+  branch: v6.1-rt
+  Head SHA1: b5e9492f0754bee991234b10ace058b275a2d8b4
 
-Or to build 6.6.32-rt32 directly, the following patches should be applied:
+Or to build 6.1.92-rt32 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.32.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.92.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.32-rt32.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.92-rt32.patch.xz
 
 
 Enjoy!
