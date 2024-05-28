@@ -1,112 +1,205 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 310A0F9D6;
-	Tue, 28 May 2024 15:29:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C35431A60;
+	Tue, 28 May 2024 19:56:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716910178; cv=none; b=HjktMQjI/Ol+8yLcLgDNALhoLftbcPxGMXtPyOFa31VNbJjY2AJPLQLrhTa/t3kOZZfJT7QSuUBZn8mkLMs+iDRwCmXvgy7f8l6jU+4Jz91g1Psds5dBqZGeheLJrvGTGN5vbPT0zsKnipjRQvIzH3K6kV1B+9pwqOgld5YbtTI=
+	t=1716926186; cv=none; b=VdnHZmCeluCKdgQ/l2DcLE1kVMW4sOLQPouK+wv1808HDoqPHSZ6maVmZb5E2Y7UfNhjXpj0FOHQDqwlXtswe/Fv1ZmkAhf3D130evyUs4DgzF6N6PxYGPVNOx2PpD4l0SM3tONqS3uTkQTX3q9zW4TyTgiO/qlTJTVER+lA8NA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716910178; c=relaxed/simple;
-	bh=jzJP3Fky911b4ocDJ+GsZFP6sKcE5qUte5Ird8Aqs/c=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=CLYi6m6Re+KwX84o+bXiTJ3lTlp3m8p+sA3akSYGY7IpQRLbTMAAWwW5ioKGR7WCnKjDRKa/49jsXEtySvBHizfZ6Fp8SRUUtSFolig3bEIrfo4d7h+SVMXlLifi0Ca5C53LDf7wUv1xUwiUzHYRzeCY4DX8191lKkyuU3QO9XY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=uQUyxnjF; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=TDb2w276; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1716926186; c=relaxed/simple;
+	bh=8epW/QFJvHhVzhIz2U+4mF0PmxPK/CRJXwLf/jmU9L4=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=UNjQwsL3XdCG9XNUSLzmCdI9RfcXA/fXZUEm+eqrXpqXAg9eYqTYmfzFWIjO446FVjAZx8WKXrqhNCiQNpV25HlvadZncpZAByW0i1X6c7MQQLiPKDMML+j1nzJ+u5SFhqHPzugBZJwv3yMK2lm+XM8asXoTFBUnq/iU++f6Pqs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=bde+UQcB; arc=none smtp.client-ip=205.220.180.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="uQUyxnjF";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="TDb2w276"
-Date: Tue, 28 May 2024 17:29:33 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1716910175;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=jzJP3Fky911b4ocDJ+GsZFP6sKcE5qUte5Ird8Aqs/c=;
-	b=uQUyxnjFCNLiC9Nmmmpwg0CdlFlgRSl7Xe2SlFEc1Eg2R0W3I9cg2/ovi37RbpyD1OXTOo
-	+sqlCUOBHib1wnRvJt7hNoOWlteMOpJWu+xZJUOHeDOsmnWfoYsMuBDhocQ4a8Am0gfq8u
-	X2Vp4CQb4raPvF4uG7WGalZOz8+SjzT/VY/kLA6pyHFigtzcwoysojAXBv/N/zxoNL5Nuo
-	08WAEsIeX9MO6caBCYfoYIGh5ZnpmMi5OXaD3iQuK10V0jeM3rOw/tWS+y5M5QHHVFNfFR
-	imDUSdsA6p8GKKe7m74CL1cmIj/w2ua56sve4g6hhQpZQUOW7TBwb7gt9J79MA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1716910175;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=jzJP3Fky911b4ocDJ+GsZFP6sKcE5qUte5Ird8Aqs/c=;
-	b=TDb2w276k5wtugCN3y9ZjixxCEkl6mN0W41sdzaCqEEOdbuLCIdD1tc0JJOqNRSrUkpaQ9
-	r6zIh5Rowuvau3DA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: xu xin <xu.xin.sc@gmail.com>
-Cc: xu.xin16@zte.com.cn, john.ogness@linutronix.de,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	liu.chun2@zte.com.cn, rostedt@goodmis.org, si.hao@zte.com.cn,
-	yang.yang29@zte.com.cn, zhang.yunkai@zte.com.cn
-Subject: Re: [PATCH  5.10-rt] printk: ignore that console preempted by
- irq/softirq
-Message-ID: <20240528152933.ns7uyFSD@linutronix.de>
-References: <20240523235537910_yxfGMbTcSOmMkcfuK2d8@zte.com.cn>
- <20240528064003.776618-1-xu.xin16@zte.com.cn>
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="bde+UQcB"
+Received: from pps.filterd (m0279870.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 44SBgJO4024256;
+	Tue, 28 May 2024 19:56:01 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	ss6qpj70lx4SSpC0e8leTpGEkEBXzU/46li19BBg28g=; b=bde+UQcBuGKkl4fn
+	HpFDu6uOJIohYY/zhogjojymsxVzn7wWvkqH7FHrUYEPj+Fon1luIEOVbo4C24BO
+	0QN11Zs+fzskjb+5k3d6xAWtjVD99N+wHXRHqvWxTgKY1kLke/Pyz0vOaLrL+ygk
+	yxu9imsr7yi7PFObTBf/S/k/uG04pPuzbgJiBaM3F+oXib+AKrA/IqyNdn2jqHdC
+	rXvQZWlTTTD1C71KfaL9OCWv1oyUkcP3C9PYMPGQzFZmaE/ERGJSB9tjDzJD2JRb
+	jVYxCCWg/50zeg3mNM453Ze0x8T0FxeUpK8TY38H48K6sYOpL6+WRhlEOKrn+oBf
+	joaPtw==
+Received: from nasanppmta03.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 3ybadx75qs-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 28 May 2024 19:56:01 +0000 (GMT)
+Received: from nasanex01b.na.qualcomm.com (nasanex01b.na.qualcomm.com [10.46.141.250])
+	by NASANPPMTA03.qualcomm.com (8.17.1.5/8.17.1.5) with ESMTPS id 44SJtxFG021884
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 28 May 2024 19:55:59 GMT
+Received: from [10.110.83.142] (10.80.80.8) by nasanex01b.na.qualcomm.com
+ (10.46.141.250) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Tue, 28 May
+ 2024 12:55:59 -0700
+Message-ID: <52dce8d3-acfa-4f2c-92d0-c25aa59d6526@quicinc.com>
+Date: Tue, 28 May 2024 12:55:58 -0700
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20240528064003.776618-1-xu.xin16@zte.com.cn>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 1/7] pmdomain: core: Enable s2idle for CPU PM domains
+ on PREEMPT_RT
+To: Ulf Hansson <ulf.hansson@linaro.org>,
+        "Rafael J . Wysocki"
+	<rafael@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, <linux-pm@vger.kernel.org>
+CC: Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Nikunj Kela
+	<nkela@quicinc.com>,
+        Prasad Sodagudi <psodagud@quicinc.com>,
+        Maulik Shah
+	<quic_mkshah@quicinc.com>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
+        <linux-rt-users@vger.kernel.org>,
+        <linux-arm-kernel@lists.infradead.org>, <linux-kernel@vger.kernel.org>
+References: <20240527142557.321610-1-ulf.hansson@linaro.org>
+ <20240527142557.321610-2-ulf.hansson@linaro.org>
+Content-Language: en-US
+From: Nikunj Kela <quic_nkela@quicinc.com>
+In-Reply-To: <20240527142557.321610-2-ulf.hansson@linaro.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
+ nasanex01b.na.qualcomm.com (10.46.141.250)
+X-QCInternal: smtphost
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
+X-Proofpoint-ORIG-GUID: cyEDIH1xDygla6iRX7ooHFmnl_q1DzTC
+X-Proofpoint-GUID: cyEDIH1xDygla6iRX7ooHFmnl_q1DzTC
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.650,FMLib:17.12.28.16
+ definitions=2024-05-28_14,2024-05-28_01,2024-05-17_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 clxscore=1011 phishscore=0
+ impostorscore=0 bulkscore=0 mlxlogscore=999 malwarescore=0
+ priorityscore=1501 mlxscore=0 suspectscore=0 spamscore=0
+ lowpriorityscore=0 adultscore=0 classifier=spam adjust=0 reason=mlx
+ scancount=1 engine=8.19.0-2405170001 definitions=main-2405280149
 
-On 2024-05-28 06:40:03 [+0000], xu xin wrote:
-> > This does not apply.
-> > There is `may_sleep' set earlier.
-> >=20
-> > There is no console_lock() around for each=E2=80=A6
-> >=20
->=20
-> Sorry, I don't get it.
->=20
-> To clarify it again, this patch aims to solve the useless waiting of pr_f=
-lush
-> when the console is preempted by the current irq/softirq. This has nothin=
-g to
-> do with might_sleep().
 
-There is a `may_sleep` variable set earlier. Couldn't that be re-used?
+On 5/27/2024 7:25 AM, Ulf Hansson wrote:
+> To allow a genpd provider for a CPU PM domain to enter a domain-idle-state
+> during s2idle on a PREEMPT_RT based configuration, we can't use the regular
+> spinlock, as they are turned into sleepable locks on PREEMPT_RT.
+>
+> To address this problem, let's convert into using the raw spinlock, but
+> only for genpd providers that have the GENPD_FLAG_CPU_DOMAIN bit set. In
+> this way, the lock can still be acquired/released in atomic context, which
+> is needed in the idle-path for PREEMPT_RT.
+>
+> Do note that the genpd power-on/off notifiers may also be fired during
+> s2idle, but these are already prepared for PREEMPT_RT as they are based on
+> the raw notifiers. However, consumers of them may need to adopt accordingly
+> to work properly on PREEMPT_RT.
+>
+> Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
+> ---
+>
+> Changes in v2:
+> 	- None.
+>
+> ---
+>  drivers/pmdomain/core.c   | 47 ++++++++++++++++++++++++++++++++++++++-
+>  include/linux/pm_domain.h |  5 ++++-
+>  2 files changed, 50 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
+> index 623d15b68707..072e6bdb6ee6 100644
+> --- a/drivers/pmdomain/core.c
+> +++ b/drivers/pmdomain/core.c
+> @@ -117,6 +117,48 @@ static const struct genpd_lock_ops genpd_spin_ops = {
+>  	.unlock = genpd_unlock_spin,
+>  };
+>  
+> +static void genpd_lock_raw_spin(struct generic_pm_domain *genpd)
+> +	__acquires(&genpd->raw_slock)
+> +{
+> +	unsigned long flags;
+> +
+> +	raw_spin_lock_irqsave(&genpd->raw_slock, flags);
+> +	genpd->raw_lock_flags = flags;
+> +}
+> +
+> +static void genpd_lock_nested_raw_spin(struct generic_pm_domain *genpd,
+> +					int depth)
+> +	__acquires(&genpd->raw_slock)
+> +{
+> +	unsigned long flags;
+> +
+> +	raw_spin_lock_irqsave_nested(&genpd->raw_slock, flags, depth);
+> +	genpd->raw_lock_flags = flags;
+> +}
+> +
+> +static int genpd_lock_interruptible_raw_spin(struct generic_pm_domain *genpd)
+> +	__acquires(&genpd->raw_slock)
+> +{
+> +	unsigned long flags;
+> +
+> +	raw_spin_lock_irqsave(&genpd->raw_slock, flags);
+> +	genpd->raw_lock_flags = flags;
+> +	return 0;
+> +}
+> +
+> +static void genpd_unlock_raw_spin(struct generic_pm_domain *genpd)
+> +	__releases(&genpd->raw_slock)
+> +{
+> +	raw_spin_unlock_irqrestore(&genpd->raw_slock, genpd->raw_lock_flags);
+> +}
+> +
+> +static const struct genpd_lock_ops genpd_raw_spin_ops = {
+> +	.lock = genpd_lock_raw_spin,
+> +	.lock_nested = genpd_lock_nested_raw_spin,
+> +	.lock_interruptible = genpd_lock_interruptible_raw_spin,
+> +	.unlock = genpd_unlock_raw_spin,
+> +};
+> +
+>  #define genpd_lock(p)			p->lock_ops->lock(p)
+>  #define genpd_lock_nested(p, d)		p->lock_ops->lock_nested(p, d)
+>  #define genpd_lock_interruptible(p)	p->lock_ops->lock_interruptible(p)
+> @@ -2079,7 +2121,10 @@ static void genpd_free_data(struct generic_pm_domain *genpd)
+>  
+>  static void genpd_lock_init(struct generic_pm_domain *genpd)
+>  {
+> -	if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
+> +	if (genpd->flags & GENPD_FLAG_CPU_DOMAIN) {
+> +		raw_spin_lock_init(&genpd->raw_slock);
+> +		genpd->lock_ops = &genpd_raw_spin_ops;
+> +	} else if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
 
-> > The other question is which kernel started enforcing might_sleep() for
-> > pr_flush(). This should be applied to all kernel or none so we don't
-> > have random behaviour across kernels (5.4 yes, 5.10 no, 5.15 yes).
-> >
->=20
-> Sorry, my understanding is that pr_flush didn't start enforcing might_sle=
-ep().
-> This patch can apply to 5.10 and 5.15 where the problem exist.
+Hi Ulf, though you are targeting only CPU domains for now, I wonder if
+FLAG_IRQ_SAFE will be a better choice?  The description of the flag says
+it is safe for atomic context which won't be the case for PREEMPT_RT? 
 
-Starting with v6.1-RT there is a might_sleep() at the beginning of
-pr_flush(). This means that atomic context can not be used anymore.
-Therefore is patch needs only to be applied to 5.10 and 5.15 as you
-said. I just didn't see the information the following kernels (>=3D6.1)
-already had that might_sleep() check and the previous (<5.4) lack
-pr_flush().
 
-> > This is a delay of max 1 sec during bug() and panic(). Not sure how
-> > "critical" this is=E2=80=A6
->=20
-> In some industrial control scenarios, bugs and warnings containning a
-> pr_flush delay of 1 sec is very critical to the upper services.
->=20
-> Especiall for watchdog timeout(< 2s), just WARN can easily lead to system=
- reset,
-> which is unacceptible.
-
-Now this would be important piece of information for the changelog in
-terms of _why_ we do this.
-You don't have an atomic console, do you? Because if this BUG/ WARNING is
-printed via the atomic console then it could also raise your 1sec limit.
-
-Sebastian
+>  		spin_lock_init(&genpd->slock);
+>  		genpd->lock_ops = &genpd_spin_ops;
+>  	} else {
+> diff --git a/include/linux/pm_domain.h b/include/linux/pm_domain.h
+> index f24546a3d3db..0d7fc47de3bc 100644
+> --- a/include/linux/pm_domain.h
+> +++ b/include/linux/pm_domain.h
+> @@ -194,8 +194,11 @@ struct generic_pm_domain {
+>  			spinlock_t slock;
+>  			unsigned long lock_flags;
+>  		};
+> +		struct {
+> +			raw_spinlock_t raw_slock;
+> +			unsigned long raw_lock_flags;
+> +		};
+>  	};
+> -
+>  };
+>  
+>  static inline struct generic_pm_domain *pd_to_genpd(struct dev_pm_domain *pd)
