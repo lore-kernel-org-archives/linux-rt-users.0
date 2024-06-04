@@ -1,74 +1,211 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 28C33250EC;
-	Mon,  3 Jun 2024 20:11:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDD05149DEE;
+	Tue,  4 Jun 2024 17:22:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717445499; cv=none; b=As9fuPxQmTjC3Ftjp7iuBycH5CwLTmjiNUDCSHbTyyYf7r83VIzUaSjv+egU+YdPcrEiIBEOH+AbBTfRbkXjsVXyS+DcLj4hbq/urd6RaWwtNvs0htRaNpOAG+Oa6VPLbdW1Wqe94aNBeS9faDM3QxxvLyX65IGUeOECyXzmBsk=
+	t=1717521775; cv=none; b=ubBDZKrAWNn5bG+15jGLLYMhBLMHD0d+B4zgKaCevPTuW8HVmdFhICve0W1OyOb83JIXtBL2rx8BZ+A/IJ3ImJsZWqX+mnsFH0Rcep/uG+Ulz2iH0FrQeECcRpy93m2MDNTib0Q4ZjypzmpBY2sYBxQ7o8q6DOP2+c3XJO+X2F0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717445499; c=relaxed/simple;
-	bh=efflADIZNzlpkBRyaW0qm7/xMHMy65QZOntk/PkZAjY=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=d052PIO+1QhlrCoTxeNB3C5LsCJJkBXMn5Z+xSgpDnS2mQKptCUyXy5Kt/JJpbdzLY0OlsXDur84I3V11mxMApAfI6ru+htG1coEAmbf36huYcj6F3KE1XnZitCtC6FThkigUBsnGO13aTlBB0vSA6Tswp0+87MsPDC9tpXyidg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=DAVKUKIC; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=s7Acn0nK; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1717521775; c=relaxed/simple;
+	bh=zCveD+V/5CJhFImS3OseggrWBf/lanov4KwrIfZjiIo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=F6g9XK+3WHttb4uUI2f4Q1jcX1bBQ36funVf94cWBPBv9KMnOI+9R0u3bLj7/fSxPesfQm5PMIma7eyvz6WPxSWGe2k+FNzrQkzDofUb4rbcxTIaeeLqmvwaQNKzfe9R2uN5Sh0vlCPrVir/HIv+bvB+zZpQIIr58W2g8XM1R24=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=gT3JSPbP; arc=none smtp.client-ip=205.220.180.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="DAVKUKIC";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="s7Acn0nK"
-From: John Ogness <john.ogness@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1717445496;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=c8up0JG8Gg3x/DXNroh2NRpUxBKgV5IGxeM9N8TyMWU=;
-	b=DAVKUKICNCB4UcTIeiQnqakm2LCAf9ePtoa94AdT3//OrxNn8qxPjNbSL72PoM3HfCbtZF
-	7zeyWIrJjd4da6tRah35MY7DAPLqeIH2+a7MY5QOGz2a8XlUpkoGBX9Zhtote++SSAoHT/
-	bJWdGc+lt1e+esHjVuZLHGtewHthqmgrejjuMtYF0lGoe+uhaZt0vDwEcfb1vIAJSa678u
-	fa0wtiquHf0Rl4+CHTfw5YnpxrkV/v5o8JY7gIRSpXojILQabbJlvdLN0lzUzm6JzNordE
-	8L8mXKX8PSQKHR013ZttDBslcq1hUFGN5duaHOLWb184ryk7FLOLyPhV+BC+aQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1717445496;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=c8up0JG8Gg3x/DXNroh2NRpUxBKgV5IGxeM9N8TyMWU=;
-	b=s7Acn0nKWp6E4PWzCfjQGhNvK+2UM0p192q2greVLp82dkmFFp37LnX7NZf79ZL+5dCL0i
-	mCw14kUE2cL5OaAg==
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, xu xin
- <xu.xin.sc@gmail.com>
-Cc: xu.xin16@zte.com.cn, linux-kernel@vger.kernel.org,
- linux-rt-users@vger.kernel.org, liu.chun2@zte.com.cn, rostedt@goodmis.org,
- si.hao@zte.com.cn, yang.yang29@zte.com.cn, zhang.yunkai@zte.com.cn
-Subject: Re: [PATCH  5.10-rt] printk: ignore that console preempted by
- irq/softirq
-In-Reply-To: <20240528152933.ns7uyFSD@linutronix.de>
-References: <20240523235537910_yxfGMbTcSOmMkcfuK2d8@zte.com.cn>
- <20240528064003.776618-1-xu.xin16@zte.com.cn>
- <20240528152933.ns7uyFSD@linutronix.de>
-Date: Mon, 03 Jun 2024 22:17:35 +0206
-Message-ID: <87cyoxeqh4.fsf@jogness.linutronix.de>
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="gT3JSPbP"
+Received: from pps.filterd (m0279871.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 454Ec7bR026865;
+	Tue, 4 Jun 2024 17:22:41 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	T0XpzUE1bycJ6FuBRBz21Lfn3G8nnLpa7vH+/HBtluU=; b=gT3JSPbPWs5noi8j
+	LCTe42Rrl6HRvYQ78Jz+el6lY8CqW53F83CSLQgq7rF92nYsiTdsOLw7Nj8AYX2t
+	nhofffEXZmkpQzQuMdhwH+/wvKlnPbOQ4suiW8qx56jxMBADoNQ4KTADDQbxtL1f
+	oT9wfBA7wr0JObEUApYSKi4zSyzs6mW9SMOmEde3p5LpTTSq3tvcCrQLO3O2JhPW
+	bA1l/80CzCDg6I+6hswU5lv9d1Cdn5Ornj8r4UK+mQxNU2EjSUIz0Rrik+QMzWgt
+	lBw/GUpuYMeskncdyKC9u/4P8zeX3tY12fhYch6binpyPv+BWmYxIK/ftCGlb5YD
+	6QzjGQ==
+Received: from nasanppmta02.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 3yj4v2gem7-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 04 Jun 2024 17:22:41 +0000 (GMT)
+Received: from nasanex01b.na.qualcomm.com (nasanex01b.na.qualcomm.com [10.46.141.250])
+	by NASANPPMTA02.qualcomm.com (8.17.1.5/8.17.1.5) with ESMTPS id 454HMedA030916
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 4 Jun 2024 17:22:40 GMT
+Received: from [10.110.104.132] (10.80.80.8) by nasanex01b.na.qualcomm.com
+ (10.46.141.250) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Tue, 4 Jun 2024
+ 10:22:39 -0700
+Message-ID: <fa2174fe-a298-4c43-a3e5-0d35000c82b4@quicinc.com>
+Date: Tue, 4 Jun 2024 10:22:39 -0700
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 1/7] pmdomain: core: Enable s2idle for CPU PM domains
+ on PREEMPT_RT
+To: Ulf Hansson <ulf.hansson@linaro.org>
+CC: "Rafael J . Wysocki" <rafael@kernel.org>,
+        Sudeep Holla
+	<sudeep.holla@arm.com>, <linux-pm@vger.kernel.org>,
+        Lorenzo Pieralisi
+	<Lorenzo.Pieralisi@arm.com>,
+        Nikunj Kela <nkela@quicinc.com>,
+        Prasad Sodagudi
+	<psodagud@quicinc.com>,
+        Maulik Shah <quic_mkshah@quicinc.com>,
+        Daniel Lezcano
+	<daniel.lezcano@linaro.org>,
+        Krzysztof Kozlowski
+	<krzysztof.kozlowski@linaro.org>,
+        <linux-rt-users@vger.kernel.org>,
+        <linux-arm-kernel@lists.infradead.org>, <linux-kernel@vger.kernel.org>
+References: <20240527142557.321610-1-ulf.hansson@linaro.org>
+ <20240527142557.321610-2-ulf.hansson@linaro.org>
+ <52dce8d3-acfa-4f2c-92d0-c25aa59d6526@quicinc.com>
+ <CAPDyKFq0V9ke30zYAGzS1aU0yq49DdfDkfYzxkLBZuaVGsyGDA@mail.gmail.com>
+ <24570028-42cf-43b1-95f2-b6f48233bef9@quicinc.com>
+ <CAPDyKFoOxa1tmzxY4jrbPET5RKF6s-OAfYV=eZY9sPrJMR6jaQ@mail.gmail.com>
+Content-Language: en-US
+From: Nikunj Kela <quic_nkela@quicinc.com>
+In-Reply-To: <CAPDyKFoOxa1tmzxY4jrbPET5RKF6s-OAfYV=eZY9sPrJMR6jaQ@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
+ nasanex01b.na.qualcomm.com (10.46.141.250)
+X-QCInternal: smtphost
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
+X-Proofpoint-ORIG-GUID: rwaEp1JBFiAHYJixnb3pGI2MmDFwQA1P
+X-Proofpoint-GUID: rwaEp1JBFiAHYJixnb3pGI2MmDFwQA1P
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
+ definitions=2024-06-04_09,2024-06-04_01,2024-05-17_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 impostorscore=0 phishscore=0
+ spamscore=0 mlxscore=0 malwarescore=0 clxscore=1015 priorityscore=1501
+ lowpriorityscore=0 bulkscore=0 adultscore=0 suspectscore=0 mlxlogscore=999
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2405170001
+ definitions=main-2406040139
 
-On 2024-05-28, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> There is a `may_sleep` variable set earlier. Couldn't that be re-used?
 
-Since the printing thread cannot preempt the softirq context and since
-the printing threads are not started before @system_state is
-SYSTEM_RUNNING, using @may_sleep is OK.
+On 6/3/2024 6:58 AM, Ulf Hansson wrote:
+> On Thu, 30 May 2024 at 16:23, Nikunj Kela <quic_nkela@quicinc.com> wrote:
+>>
+>> On 5/30/2024 1:15 AM, Ulf Hansson wrote:
+>>> On Tue, 28 May 2024 at 21:56, Nikunj Kela <quic_nkela@quicinc.com> wrote:
+>>>> On 5/27/2024 7:25 AM, Ulf Hansson wrote:
+>>>>> To allow a genpd provider for a CPU PM domain to enter a domain-idle-state
+>>>>> during s2idle on a PREEMPT_RT based configuration, we can't use the regular
+>>>>> spinlock, as they are turned into sleepable locks on PREEMPT_RT.
+>>>>>
+>>>>> To address this problem, let's convert into using the raw spinlock, but
+>>>>> only for genpd providers that have the GENPD_FLAG_CPU_DOMAIN bit set. In
+>>>>> this way, the lock can still be acquired/released in atomic context, which
+>>>>> is needed in the idle-path for PREEMPT_RT.
+>>>>>
+>>>>> Do note that the genpd power-on/off notifiers may also be fired during
+>>>>> s2idle, but these are already prepared for PREEMPT_RT as they are based on
+>>>>> the raw notifiers. However, consumers of them may need to adopt accordingly
+>>>>> to work properly on PREEMPT_RT.
+>>>>>
+>>>>> Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
+>>>>> ---
+>>>>>
+>>>>> Changes in v2:
+>>>>>       - None.
+>>>>>
+>>>>> ---
+>>>>>  drivers/pmdomain/core.c   | 47 ++++++++++++++++++++++++++++++++++++++-
+>>>>>  include/linux/pm_domain.h |  5 ++++-
+>>>>>  2 files changed, 50 insertions(+), 2 deletions(-)
+>>>>>
+>>>>> diff --git a/drivers/pmdomain/core.c b/drivers/pmdomain/core.c
+>>>>> index 623d15b68707..072e6bdb6ee6 100644
+>>>>> --- a/drivers/pmdomain/core.c
+>>>>> +++ b/drivers/pmdomain/core.c
+>>>>> @@ -117,6 +117,48 @@ static const struct genpd_lock_ops genpd_spin_ops = {
+>>>>>       .unlock = genpd_unlock_spin,
+>>>>>  };
+>>>>>
+>>>>> +static void genpd_lock_raw_spin(struct generic_pm_domain *genpd)
+>>>>> +     __acquires(&genpd->raw_slock)
+>>>>> +{
+>>>>> +     unsigned long flags;
+>>>>> +
+>>>>> +     raw_spin_lock_irqsave(&genpd->raw_slock, flags);
+>>>>> +     genpd->raw_lock_flags = flags;
+>>>>> +}
+>>>>> +
+>>>>> +static void genpd_lock_nested_raw_spin(struct generic_pm_domain *genpd,
+>>>>> +                                     int depth)
+>>>>> +     __acquires(&genpd->raw_slock)
+>>>>> +{
+>>>>> +     unsigned long flags;
+>>>>> +
+>>>>> +     raw_spin_lock_irqsave_nested(&genpd->raw_slock, flags, depth);
+>>>>> +     genpd->raw_lock_flags = flags;
+>>>>> +}
+>>>>> +
+>>>>> +static int genpd_lock_interruptible_raw_spin(struct generic_pm_domain *genpd)
+>>>>> +     __acquires(&genpd->raw_slock)
+>>>>> +{
+>>>>> +     unsigned long flags;
+>>>>> +
+>>>>> +     raw_spin_lock_irqsave(&genpd->raw_slock, flags);
+>>>>> +     genpd->raw_lock_flags = flags;
+>>>>> +     return 0;
+>>>>> +}
+>>>>> +
+>>>>> +static void genpd_unlock_raw_spin(struct generic_pm_domain *genpd)
+>>>>> +     __releases(&genpd->raw_slock)
+>>>>> +{
+>>>>> +     raw_spin_unlock_irqrestore(&genpd->raw_slock, genpd->raw_lock_flags);
+>>>>> +}
+>>>>> +
+>>>>> +static const struct genpd_lock_ops genpd_raw_spin_ops = {
+>>>>> +     .lock = genpd_lock_raw_spin,
+>>>>> +     .lock_nested = genpd_lock_nested_raw_spin,
+>>>>> +     .lock_interruptible = genpd_lock_interruptible_raw_spin,
+>>>>> +     .unlock = genpd_unlock_raw_spin,
+>>>>> +};
+>>>>> +
+>>>>>  #define genpd_lock(p)                        p->lock_ops->lock(p)
+>>>>>  #define genpd_lock_nested(p, d)              p->lock_ops->lock_nested(p, d)
+>>>>>  #define genpd_lock_interruptible(p)  p->lock_ops->lock_interruptible(p)
+>>>>> @@ -2079,7 +2121,10 @@ static void genpd_free_data(struct generic_pm_domain *genpd)
+>>>>>
+>>>>>  static void genpd_lock_init(struct generic_pm_domain *genpd)
+>>>>>  {
+>>>>> -     if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
+>>>>> +     if (genpd->flags & GENPD_FLAG_CPU_DOMAIN) {
+>>>>> +             raw_spin_lock_init(&genpd->raw_slock);
+>>>>> +             genpd->lock_ops = &genpd_raw_spin_ops;
+>>>>> +     } else if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
+>>>> Hi Ulf, though you are targeting only CPU domains for now, I wonder if
+>>>> FLAG_IRQ_SAFE will be a better choice?  The description of the flag says
+>>>> it is safe for atomic context which won't be the case for PREEMPT_RT?
+>>> You have a point!
+>>>
+>>> However, we also need to limit the use of raw spinlocks, from
+>>> PREEMPT_RT point of view. In other words, just because a genpd
+>>> provider is capable of executing its callbacks in atomic context,
+>>> doesn't always mean that it should use raw spinlocks too.
+>> Got it! Thanks. Maybe in future, if there is a need, a new GENPD FLAG
+>> for RT, something like GENPD_FLAG_IRQ_SAFE_RT, can be added to address this.
+> Yes, I agree, something along those lines would make sense.
+>
+> BTW, did you manage to get some time to test the series on your end?
 
-if (!may_sleep &&
-    con->thread &&
-    task_cpu(con->thread) == smp_processor_id()) {
-	continue;
-}
+I haven't been able spend time testing it but I have requested Maulik to
+test it and update you. Thanks
 
-John Ogness
+
+> Kind regards
+> Uffe
