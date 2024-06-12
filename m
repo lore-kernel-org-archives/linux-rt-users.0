@@ -1,51 +1,55 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F5857E8;
-	Wed, 12 Jun 2024 14:32:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1856D7E8;
+	Wed, 12 Jun 2024 14:33:38 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718202748; cv=none; b=TUtqzBstgjNC0pHYv32EFf8CXezdp0R5x3VsLeYlI085ffVFnFWmbViKK/mnEQVCefYMU9RUcXAFNU7kEv9sZKuDqxtT6B152KzRRfyBY6hVZaEdQstv1NJOp9TBijIUFpOZpbc7+TBq5amJDTXF21JeLfBw5Jb0YFQCBRekFPQ=
+	t=1718202820; cv=none; b=dNN/XKphEWQG2GBNJ73WIxB7iC8coK9RdFgPi6/mMCQyZsPbxT1Ah3hfEVE5ius58Ni5v6deI5usaTPLZEWypW6UoqNBJ9V7vO3BYCZY3Q51SRrWUR6IeFZYDYgtLjMCZ8AhjzeZjaGv3/Jw6eVQlA76mAY78Y703Ir7ywKFLAc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718202748; c=relaxed/simple;
-	bh=IGFPyiNwGq3mhr4vqQwRuRvHq1bQnoFrBvx+tebpgqs=;
+	s=arc-20240116; t=1718202820; c=relaxed/simple;
+	bh=lM0105xhUEJAZ0rF089XCyWZwmPEVyWloqojg7qhDH4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=CLPKn5ttxDVgZPuUXXewZYaMg6R6M02WUU7GJ0Uchc/7WBuCjIzY+gAnrvbOrK79586ZSexyBGkBwB/7KTnM39x/69+SLpxQsk9c1+mcqdlGdOzdYso41Mp6gdUSURRyBgbrtlI/rdMEYYwFaXlHuyB0IxQGFYjSZcBRn526B8A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=T+1EDUhD; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=P9P+tl//; arc=none smtp.client-ip=193.142.43.55
+	 Content-Type:Content-Disposition:In-Reply-To; b=JURq5uFpLKQO2EaHRpJtKUJx35SZmtXk23BG8/uAMez3riPmlgkOpM998mEAjoQLKDzaS0E0PQIiinDu9zBf3EhgcLGZhM3uJGMEcY5aiMh6WaQKUczWRwuOpfC1cHrwnBq8gqOY5P1ze4oIOUSQ+AKP0mKXUgZxwlRh9kP1Kac=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=mYxakUdv; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=QYdjqIRq; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="T+1EDUhD";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="P9P+tl//"
-Date: Wed, 12 Jun 2024 16:32:23 +0200
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="mYxakUdv";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QYdjqIRq"
+Date: Wed, 12 Jun 2024 16:33:35 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1718202745;
+	s=2020; t=1718202816;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=IGFPyiNwGq3mhr4vqQwRuRvHq1bQnoFrBvx+tebpgqs=;
-	b=T+1EDUhDquGg0/BJGmX0zYImw5+vc4h3D5N0dKVbekaJiQwX68w6pIO7WfsXx0prqKqw0N
-	YoR6O5Jy40gzvkCBTvISyQCHNFZ9MdeGd2NkVw925EwT3u0T0+H/5cXIwVFz2ZTacC8ckK
-	U3hv+RBAX1i6Lm/vz/pPXksJdh6i/+/EEHrV7GyN/sUvAvQDUTEUmEispBVZ1KEQULc1VC
-	wSgcT5+uCeZBLk8mlYfM8oEYUtiv1Ag9s3AEMJMvFJaSAzoAsNoNHIwsRppx8gHLngrfhr
-	5ff0D1PhyrfZGQD+JXaZfjjl4d5h6+I5kFiPP0R2p2zKfl1yk7jB3wM9jF/Feg==
+	bh=DWd8QKQQ8IGdDR33Y2JGlmwXUNokIoZ++i3blHSZ1fs=;
+	b=mYxakUdvyNrBCqpcRSjdX1A8dEKzpapsGp3U6FKoYvAGrwBpN+4UexO/2QaeQRzC73tLRA
+	vG0FxyFHW00KmxcJGhzsqzxy/VpbM3KDhLjwbbmJJFaVfbPnndjbZR7hI6O9XCOLG1SwP4
+	IALeemhBLWFhLKEquxK2oduCDGWDpYeWS6OgnJ+W4EyR1tpt4gepJWaFKweJG8SrF59o/M
+	6Yuk9X0a2diAvkpE1dVEqxTnE+wcobDFz/JG5Bz01Fgj8A7x8NS6S0zvm4j87zlvtuV1Jy
+	kV3DunhoAuHi2XGPeetgoBpf9ZjsqusWkitzTpJsdNC43G5TBT0TOA+OsnvooQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1718202745;
+	s=2020e; t=1718202816;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=IGFPyiNwGq3mhr4vqQwRuRvHq1bQnoFrBvx+tebpgqs=;
-	b=P9P+tl//YHYJB1idyKOCW2ZOGoIMfh6LPhm18Tketlfsy9xoPLhlsm9MG2w3KbFJAo1o9E
-	xloo/+u0KJoC7bBw==
+	bh=DWd8QKQQ8IGdDR33Y2JGlmwXUNokIoZ++i3blHSZ1fs=;
+	b=QYdjqIRq7U4BsCtlGvexKdRXtTSLhXFFuvIqQ+K/laOQrtllh+WdF7M5Cs5wpn7tmFQRpk
+	vjlakbtYzjLxM+Dg==
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Dmitry Dolgov <9erthalion6@gmail.com>
-Cc: bpf@vger.kernel.org, linux-rt-users@vger.kernel.org, ast@kernel.org,
-	daniel@iogearbox.net, andrii@kernel.org
-Subject: Re: bpf_ringbuf_reserve deadlock on rt kernels
-Message-ID: <20240612143223.BO0LMFEZ@linutronix.de>
-References: <jxkyec5jd54r3cmel4e3pep4ebo3pd4xgedwtb7gj65fntf4s7@om5r3mowjknb>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: xu xin <xu.xin.sc@gmail.com>, xu.xin16@zte.com.cn,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	liu.chun2@zte.com.cn, rostedt@goodmis.org, si.hao@zte.com.cn,
+	yang.yang29@zte.com.cn, zhang.yunkai@zte.com.cn
+Subject: Re: [PATCH  5.10-rt] printk: ignore that console preempted by
+ irq/softirq
+Message-ID: <20240612143335.1smVOgke@linutronix.de>
+References: <20240523235537910_yxfGMbTcSOmMkcfuK2d8@zte.com.cn>
+ <20240528064003.776618-1-xu.xin16@zte.com.cn>
+ <20240528152933.ns7uyFSD@linutronix.de>
+ <87cyoxeqh4.fsf@jogness.linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -54,26 +58,24 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <jxkyec5jd54r3cmel4e3pep4ebo3pd4xgedwtb7gj65fntf4s7@om5r3mowjknb>
+In-Reply-To: <87cyoxeqh4.fsf@jogness.linutronix.de>
 
-On 2024-06-10 17:17:35 [+0200], Dmitry Dolgov wrote:
-> Hi,
-Hi,
+On 2024-06-03 22:17:35 [+0206], John Ogness wrote:
+> On 2024-05-28, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> > There is a `may_sleep` variable set earlier. Couldn't that be re-used?
+> 
+> Since the printing thread cannot preempt the softirq context and since
+> the printing threads are not started before @system_state is
+> SYSTEM_RUNNING, using @may_sleep is OK.
 
-=E2=80=A6
-> The BPF program in question is attached to sched_switch. The issue seems
-> to be similar to a couple of syzkaller reports [1], [2], although the
-> latter one is about nested progs, which seems to be not the case here.
-> Talking about nested progs, applying a similar approach as in [3]
-> reworked for bpf_ringbuf, elliminates the issue.
->=20
-> Do I miss anything, is it a known issue? Any ideas how to address that?
+will there be a repost?
 
-I haven't attached bpf program to trace-events so this new to me. But if
-you BPF attach programs to trace-events then there might be more things
-that can go wrong=E2=80=A6
-Let me add this to the bpf-list-to-look-at.
-Do you get more splats with CONFIG_DEBUG_ATOMIC_SLEEP=3Dy?
+> if (!may_sleep &&
+>     con->thread &&
+>     task_cpu(con->thread) == smp_processor_id()) {
+> 	continue;
+> }
+> 
+> John Ogness
 
 Sebastian
