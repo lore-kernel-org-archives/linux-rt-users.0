@@ -1,51 +1,53 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8E7A4AEF0
-	for <linux-rt-users@vger.kernel.org>; Tue, 18 Jun 2024 15:20:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 249066BFB0
+	for <linux-rt-users@vger.kernel.org>; Tue, 18 Jun 2024 17:37:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718724037; cv=none; b=HjiT+vYA0mbEVEQkPVg2hLRgB0+weaCYAu9ME60Kg4YpWIyfqPw/UXMhPD4ngOB92NSdzbBn2YVi9nBDNIHVAk+PQOaM8ObXccwtEWSd7omX6p+ouCpbCStkwSWc8e41iDgjzvKj12QCwnigO6McTLHc/OreXWzZ4i4DB7tYhHM=
+	t=1718732277; cv=none; b=fTt9Yb4cIzJLV2b0Zww6/cvCOReViADPg9oCj8X5GwUU9fTvK370NaWosQxP/zsv6IWCgYM5YaaFTccaVaWz+22cb7suKWFn0KlHmSz9k1M0Ml83vgjhX6ldEsxmITZOPitrunOJWWl5Rug2VaxhtBxWEE/qtXLrM4QMcwcKErM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718724037; c=relaxed/simple;
-	bh=xhLedh+eY02xBRTelaPALtgnwq8Lx1ZgSXU0KydMxDQ=;
-	h=Date:From:To:Cc:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=QYj1M4mBGvR9B52AaoXmC8cSaRfDbgwrfdutBd0qTRVWMP0IXJnLshV2l8HqNr3yCITJaI4Jh1MiViJ3FgshAQk5B2wfiDyLyI3BLudgBm3GF5KWxDRclFhES9F6Oya0/oYA/Hq7HtV1kihD7qkdm5U3tTN8ONgplB9kZOj+Zwg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VaPyHWjw; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1718732277; c=relaxed/simple;
+	bh=xTOlixnOjCXBRUTnU3x6iTX7lhvk0rmAcejVRJ/KGE8=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=MI9RFcqqnJYiae6LKqzR4OzpDaVHTlhdh6Bis73UFfM+EREbZTPWHMcVmexflDgrJK2Fcqms3AGXF3jEbjOLT+Twqb5x+s2SVu8faJSK93NyJ5YurEsXwTWdYqqHekPgFPm0j+4chi1+LxOwxlppmP3JGdyLALUTzm59vEacbmE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X4umBgyP; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VaPyHWjw"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X4umBgyP"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1718724032;
-	h=from:from:reply-to:subject:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=PWfKhRT9wBc9Sgy1cfhWQTRyy8HsAtNW9YUizrbTpKQ=;
-	b=VaPyHWjwn/Q1pL1+Fbpzfyu7TVJcNF7cbe4DFM0zkJl9kYzgXDHksOaZWBqXWxc/OYAwlY
-	zpfyvvx/d8Kap/XND7bdORXJzmpVQ8JwlYi+sjWhAfvdRBHQjrM5GxWSiuj0cjgw3pNT71
-	1wEo7YIv+0TB4HGGNDpovZzOe+ylMiU=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	s=mimecast20190719; t=1718732273;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=mgYcOe2C5KVnL45iO9/OIJYGaLtsqSULC2wkwzh/GbQ=;
+	b=X4umBgyPsfT04nWrm2i5GlIY13vT8hZNQ9sm6j5kfqzD/Sd7aZCeGxX2+e3xXltSsJhMbz
+	pB/Vkoz1rO/om73Jqp0gG4DY3Bk/lWnrcsZ/CC9r/SpZLWePqlVrrEdv789olyhHY3Ta0H
+	yLc3R57gFet7JbYYgJmhszf+kish0mE=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-42-GMqxKqUwPqGu71YZkvjo7A-1; Tue,
- 18 Jun 2024 11:20:29 -0400
-X-MC-Unique: GMqxKqUwPqGu71YZkvjo7A-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-599-1B6QQANmMuaP7PMGP_CnMA-1; Tue,
+ 18 Jun 2024 13:37:49 -0400
+X-MC-Unique: 1B6QQANmMuaP7PMGP_CnMA-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0D2F0195609D;
-	Tue, 18 Jun 2024 15:20:28 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4DAE019560BB;
+	Tue, 18 Jun 2024 17:37:48 +0000 (UTC)
 Received: from debarbos-thinkpadt14sgen2i.remote.csb (unknown [10.22.8.160])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F40053000229;
-	Tue, 18 Jun 2024 15:20:25 +0000 (UTC)
-Date: Tue, 18 Jun 2024 11:20:23 -0400
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ED5751956048;
+	Tue, 18 Jun 2024 17:37:44 +0000 (UTC)
+Date: Tue, 18 Jun 2024 13:37:42 -0400
 From: Derek Barbosa <debarbos@redhat.com>
 To: pmladek@suse.com, rostedt@goodmis.org, john.ogness@linutronix.de,
 	senozhatsky@chromium.org, linux-rt-users@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Cc: williams@redhat.com, jlelli@redhat.com, ahalaney@redhat.com
-Message-ID: <ZnGlt4uQRP_4nWu4@debarbos-thinkpadt14sgen2i.remote.csb>
+Cc: williams@redhat.com, jlelli@redhat.com, ahalaney@redhat.com,
+	lgoncalv@redhat.com, jwyatt@redhat.com, aubaker@redhat.com
+Subject: [BUG] printk/nbcon.c: watchdog BUG: softlockup - CPU#x stuck for 78s
+Message-ID: <ZnHF5j1DUDjN1kkq@debarbos-thinkpadt14sgen2i.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -54,14 +56,11 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-
-lgoncalv@redhat.com, jwyatt@redhat.com, aubaker@redhat.com
-Bcc: 
-Subject: watchdog BUG: soft lockup - CPU#x stuck for 78s
-Reply-To: 
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
 Hi,
+
+Apologies for the resend. My email client borked the headers...
 
 The realtime team at Red Hat has recently backported the latest printk changes
 present in 6.6-rt stable (HEAD at 20fd4439f644 printk: nbcon: move locked_port flag to
@@ -97,10 +96,10 @@ a thread looping with nbcon_reacquire.
 
 I suspect that some logic within nbcon_context_try_acquire may be a good place
 to start. My understanding of the code becomes a bit fuzzy here, so apologies
-in advance for any erroneous statements. As I see it, there may be something 
+in advance for any erroneous statements. As I see it, there may be something
 happening during migration (or under heavy load) in which nbcon_reacquire() is in
 a non-migratable or non-preemtible state as it is attempting to regain access to
-a lost/taken console. It could very well be a situation in which context 
+a lost/taken console. It could very well be a situation in which context
 was forcefully taken from the printing thread.
 
 Alternatively, Andrew Halaney <ahalaney@redhat.com> suspects that it is the loop within
@@ -130,20 +129,20 @@ index bb9689f94d30..d716b72bf2f8 100644
 @@ -1086,7 +1087,10 @@ static int nbcon_kthread_func(void *__console)
      if (ret)
          goto wait_for_event;
- 
+
 +    trace_printk("Starting do while(backlog) loop \n");
 +    unsigned long int loop = 0;
      do {
 +        trace_printk("On loop %lu\n", ++loop);
          backlog = false;
- 
+
          cookie = console_srcu_read_lock();
 @@ -1121,6 +1125,7 @@ static int nbcon_kthread_func(void *__console)
          console_srcu_read_unlock(cookie);
- 
+
      } while (backlog);
 +    trace_printk("End of while(backlog) loop, looped %lu times \n", loop);
- 
+
      goto wait_for_event;
 ```
 
@@ -173,7 +172,7 @@ any holdups.
 As a sidenote, we are seeing the softlockup with !CONFIG_PREEMPT_RT
 
 Some questions arise from this, as we've never encountered this in our testing
-with John Ogness' console_blast (kudos to <jwyatt@redhat.com>) and other printk torture 
+with John Ogness' console_blast (kudos to <jwyatt@redhat.com>) and other printk torture
 tests that have been compiled [here](https://gitlab.com/debarbos/printktorture).
 
 We are curious to understand why is it that the printing thread is chosen by the
@@ -188,8 +187,8 @@ interactions are at fault here.
 How to reproduce:
 
 Provision an x86 machine with a large amount of logical cores with a kernel that
-contains the latest printk code, such as linux-rt-devel 6.10 rc3-rt5 
-(for reference, we are able to consistently reproduce this on machines with 
+contains the latest printk code, such as linux-rt-devel 6.10 rc3-rt5
+(for reference, we are able to consistently reproduce this on machines with
 nproc == 128).
 
 Additionally, use LTP pty03 && 06. from ltp/testcase/kernel/pty{03,06}
