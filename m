@@ -1,85 +1,67 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp205-pc.aruba.it (smtp205-pc.aruba.it [62.149.157.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B3D51411E1;
-	Thu, 13 Jun 2024 10:41:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48B2A77104
+	for <linux-rt-users@vger.kernel.org>; Tue, 18 Jun 2024 10:17:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=62.149.157.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718275263; cv=none; b=RjKgozY6Zh+wxX5Vj1KLUJhANoTunlcVyHds86BOXjDRG1NHuEXvU2sOJVcM38rY2Hyn0tTWYcVw9Wwgl5GoyhKR1URuNCOYfe5RY/nbV3nhBuystRw8Rqe7/6CPxI8SQwncTm/jmMzuOtske6cGK/H5jlQ1UuUwHHKJdlo4e6E=
+	t=1718705863; cv=none; b=RB0PHuLFY6IxndFQXXHH76GXriBP7SU6QQtLVIe6l4L0Y1tZBExTdIOGYYwbCbONxItJ90TTlPwbNbHQyIgeKiVTnmXcfR8hd+SLu8j0FlI/x93OICVKjBW4sOCxXSGmXOYJrOA/cNLzw9ZMtArE/ZeXFMWtcviUVXwdI18qrxE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718275263; c=relaxed/simple;
-	bh=nRxuS8TQSwLi+pwiDue0EWkS34/sJTRfL66Ra+mtZ3k=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=tLNHOD5LD/sdiSZNuB1B88gEiivJFNjgfMt9dxXrnlK7YNGavnJhBigbsJ8BTfqf6Cc39dJfyVRuekg7J0GOz+CH3EkylhaMJ6/sgv3FtdxhTyWdudBUj/jjKAbSumH1K3lYlrG2CM8F/UELzcRs5MGBNt/UIWMu9hnBdpJoR3M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ENpHPoxb; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=CHWdpCl7; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1718705863; c=relaxed/simple;
+	bh=XspEqLfVuQSI7ignUrwKmCQh3hRatjlVo/N0zeZiZVw=;
+	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=bBNbCxN5yYv7+vPCUksMXOZVvCG7SWlUeZBR5S3OW2AardcWwG68szuS+eHrX3aXdpSHpCOBHzBe5cKWgYlcHbOeWSMV3f3iKe6kK3xJxqy+urUOQgAVxByyc6K/1cBmSEybyaImO7Sf44pMwzqzb3KFOC8B0VfplNrvbbjDTJQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=leaff.it; spf=none smtp.mailfrom=leaff.it; dkim=pass (2048-bit key) header.d=leaff.it header.i=@leaff.it header.b=fTvUR+VT; arc=none smtp.client-ip=62.149.157.205
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=leaff.it
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=leaff.it
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ENpHPoxb";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="CHWdpCl7"
-Date: Thu, 13 Jun 2024 12:40:58 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1718275259;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=nRxuS8TQSwLi+pwiDue0EWkS34/sJTRfL66Ra+mtZ3k=;
-	b=ENpHPoxbN1UZUqdF3eyDwVK269zlN7y3xFpx450E2yfjFIMdm7PGdHcBDi30rW0kcy5KG2
-	CGY8eS9hYvWXmbIsmmuxDh9EgG1/oywuyImuNbChFEMxPXN2CjyR8aBBUsyPOP0DQr7dzS
-	5VaFWxwU9BDo1FOnlWw/tP35d+v5iv0CVNYONwQTmkqdTQjybL3v1W6LOwLxGisKaJWq3G
-	VpQ3SeIpEDpiGHj4j4UW2lREocdA5cgsde8WknfU9hd0Z7STdnDrSDo03gvRKZmHAya4yO
-	zYAxMWMQz+n9TdvSkbo09HWUiOPoecchnnrO06p50vRHzamjqHuNbu5KBwp0IA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1718275259;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=nRxuS8TQSwLi+pwiDue0EWkS34/sJTRfL66Ra+mtZ3k=;
-	b=CHWdpCl7Vii8/hob5dcs4TO62C780cJ0pRWuG04RUnX6JJ0WyuVghr/wgKBZlXupWFefKA
-	93+Fz/dNaZHKOFAw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Dmitry Dolgov <9erthalion6@gmail.com>
-Cc: bpf@vger.kernel.org, linux-rt-users@vger.kernel.org, ast@kernel.org,
-	daniel@iogearbox.net, andrii@kernel.org
-Subject: Re: bpf_ringbuf_reserve deadlock on rt kernels
-Message-ID: <20240613104058.bwDKdWSV@linutronix.de>
-References: <jxkyec5jd54r3cmel4e3pep4ebo3pd4xgedwtb7gj65fntf4s7@om5r3mowjknb>
- <20240612143223.BO0LMFEZ@linutronix.de>
- <mt2yblzo4ezlx4vjfmw3pul3cqgd27oddbaq2coqjkcp342cni@ob4gkaxfz7mg>
+	dkim=pass (2048-bit key) header.d=leaff.it header.i=@leaff.it header.b="fTvUR+VT"
+Received: from [192.168.99.128] ([45.82.133.163])
+	by Aruba BMail Outgoing Smtp  with ESMTPSA
+	id JVrBsd9FnVYqaJVrCs7t2P; Tue, 18 Jun 2024 12:14:30 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=leaff.it; s=a1;
+	t=1718705670; bh=XspEqLfVuQSI7ignUrwKmCQh3hRatjlVo/N0zeZiZVw=;
+	h=Date:MIME-Version:To:From:Subject:Content-Type;
+	b=fTvUR+VTjN6WK/W+wpz/1aqzHTaTgsKHcR3w0x+T+j6wI7n9mOknoecmDcmag670X
+	 s89hZypNtoG2Ll9WGgMKLyYna0bViXJ58t4f5TSRQZLmkQ0QbOjE5RkA/c9V6Jal+K
+	 EjSLRKk83eAb15KO3+zhG/zcAF0/25RhBkxlbVdPaxX0bGNdfVTeEgTWiKWvosfiKQ
+	 cY8kNSsOCf2pQSNJMBuu2UgbuDFX4MQ24SRIqV1z16mv2oZBauKoLBupHsoQjw6XHV
+	 r6OsqXeHn7Xsj5HWiGZbP6IswR8PQvrYEaj4AAdbqDmpjM9m/Bvx9baYDCsSRiHYQ+
+	 KU7cWP5rw2+bw==
+Message-ID: <e0fda694-ed7e-4f88-980b-f8a955ede802@leaff.it>
+Date: Tue, 18 Jun 2024 12:14:29 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <mt2yblzo4ezlx4vjfmw3pul3cqgd27oddbaq2coqjkcp342cni@ob4gkaxfz7mg>
+User-Agent: Mozilla Thunderbird
+To: linux-rt-users@vger.kernel.org
+From: Riccardo Laiolo <laiolo@leaff.it>
+Content-Language: en-US, it-IT
+Subject: Kernel instability using Marvell mv88e6xxx DSA
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-CMAE-Envelope: MS4xfKI591Xx5Hgi3c0JJALTjzlOJSsKmT7pxGdT2Zkg5DMbfJtpi9UcTvAWrMfCNcdc7h54MBDWeiexI8Ykgn6Sl0Z85Jnmp65EUA0eBPsefNoP/pLNauFO
+ xBZ7L27QuY/plYZDUJjL2p9Pa5DLRxU4h0lV+8ZzzRbe5eGCGMqtGgEka9K1Joa/CvOMvVXUMp+30E8boj9lTU2cuEhsBzwQNGc=
 
-On 2024-06-13 12:23:46 [+0200], Dmitry Dolgov wrote:
-> > On Wed, Jun 12, 2024 at 04:32:23PM GMT, Sebastian Andrzej Siewior wrote:
-> >
-> > > The BPF program in question is attached to sched_switch. The issue se=
-ems
-> > > to be similar to a couple of syzkaller reports [1], [2], although the
-> > > latter one is about nested progs, which seems to be not the case here.
-> > > Talking about nested progs, applying a similar approach as in [3]
-> > > reworked for bpf_ringbuf, elliminates the issue.
-> > >
-> > > Do I miss anything, is it a known issue? Any ideas how to address tha=
-t?
-> >
-> > I haven't attached bpf program to trace-events so this new to me. But if
-> > you BPF attach programs to trace-events then there might be more things
-> > that can go wrong=E2=80=A6
->=20
-> Things related to RT kernels, or something else?
+Hi all,
 
-Related to RT kernel. The trace-event is invoked with disabled
-preemption. This means locking is limit to raw_spinlock_t and no memory
-allocation are allowed. Otherwise the splat below will appear.
+I'm working on a custom board with an NXP iMX8MP cpu (linux 6.1.55-rt16 
+from NXP's yocto repository).
 
-Sebastian
+The hardware is similar to the NXP evk. The main difference is the dsa 
+switch (marvell MV88E6390).
+
+If I enable the marvell's DT node the system becomes unstable. I have 
+random kernel panics.
+
+The error trace is not helpful, it looks like a stack overflow or a 
+stack corruption. Sometimes it's a NULL (or random unallocated address) 
+pointer dereference, but sometimes the error is different, I've seen an 
+error about killing the idle task a couple of times. What seems constant 
+is that the error occurs during the scheduler context switch after an 
+hard interrupt.
+
+How can I troubleshoot this kind of issues?
+
