@@ -1,77 +1,86 @@
-Received: from 189.cn (ptr.189.cn [183.61.185.101])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 6CBA117F3;
-	Thu, 27 Jun 2024 02:26:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=183.61.185.101
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAF5D20323;
+	Thu, 27 Jun 2024 06:53:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719455192; cv=none; b=IERswjCnwbjd/CrD4dn7/BenDc/dtcS088Ge9Q2A+aNxvq1Mcngah8aAN2d0g8Nq3MRmZhxNj2Ym/cr//cl2qnwP0ZMlJCzakEJ0Sa2FEl9+SSY/1Dsh3X7YizZl6XfOr99XUvqjTnzKL68CZTIgJF4RtsCdCnGp+zXwd928SUk=
+	t=1719471194; cv=none; b=WhCVybUsPi1zYLXKkKK2WkrjOVS3bFrIjJKpC3XEHaJc32KI4hrd5cZwgZ6O2uiIYSIC0MvSYd9u+2eu3RpqV9VTn5FNXmj/WrgjJPNA4wQDG++/mGV0kz2bwswQ//ZCGXw8hz92+EFV+5+IPnDgNDa5bKaP0Ge807MTV6Jmpgc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719455192; c=relaxed/simple;
-	bh=8jnK82A2kkbzrMUTeIppDDnkugBY5xMAxwQcUq2I2jQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=o/SwVsZfk1Gq9HJN1X/0iXV/IoCvduLD2VpyA/CR2y1EY8A9gIyZ8GkeNXNs/OPdRI0UsjLLHceEE2JyTdJ4jqATNgSUqTr3G42MgSJHRpKC8XzgqETPcc4nOKoSnBB09EOvSQflSFUHpwfu9UvZHJYnXnxt69b2OKgp5dz3y1c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=189.cn; spf=pass smtp.mailfrom=189.cn; arc=none smtp.client-ip=183.61.185.101
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=189.cn
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=189.cn
-HMM_SOURCE_IP:10.64.8.31:45610.565408704
-HMM_ATTACHE_NUM:0000
-HMM_SOURCE_TYPE:SMTP
-Received: from clientip-39.156.73.12 (unknown [10.64.8.31])
-	by 189.cn (HERMES) with SMTP id EC3C41001F0;
-	Thu, 27 Jun 2024 10:26:20 +0800 (CST)
-Received: from  ([39.156.73.12])
-	by gateway-153622-dep-9dc64869d-f88ns with ESMTP id 623abdc51ecb4758ba9ace4e73bd628a for rostedt@goodmis.org;
-	Thu, 27 Jun 2024 10:26:21 CST
-X-Transaction-ID: 623abdc51ecb4758ba9ace4e73bd628a
-X-Real-From: chensong_2000@189.cn
-X-Receive-IP: 39.156.73.12
-X-MEDUSA-Status: 0
-Sender: chensong_2000@189.cn
-Message-ID: <9fdbd9b0-d7d1-472a-98af-4fc927ce6e02@189.cn>
-Date: Thu, 27 Jun 2024 10:26:19 +0800
+	s=arc-20240116; t=1719471194; c=relaxed/simple;
+	bh=/7Mxx0jd2xM4StJXo+7I3Dwl3lT3bz1Lts1n3VSaGEM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=gTijKr0dDnBxDFBnEZ5YdPwNHygE2OuOEGQ3xo8+zd9BclKLPsLsnJb0GWL+BBbE/D8ZMxCDCeMSM6RtY0RFvpMsGiUGfqDgXXKyuxaIjYz5u8iwK7H8euuJlOXKIverfiiHs4SHdjcX45O7YtdjJWTPjmB0JhFB7LvCe4lIObI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=RwUJhGHw; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=SAoLI2ou; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="RwUJhGHw";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="SAoLI2ou"
+Date: Thu, 27 Jun 2024 08:53:09 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1719471191;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+0Tkyg1+ybCmBf89qscsR5FClPspd4mnvaMAACYGJKc=;
+	b=RwUJhGHwRO5l63b/1JGHetCHTawfpNXcaJWFSXbIS1yA4gL6n1vteXz5k5m+MBQL+dpoeT
+	oWEpQ7HgMm4fKkgESrQKZ/hmbnv0iHk7FdG4E2PiVPi1CDX4PSHSVStQ49c0oa2w5oWS67
+	ylN1mTVcnH6l1JIN4fphV+92DGGHep9JcsS6jgd6B+MfgEV6zfz6bh93i1xTLvPYHvT0t2
+	c0VdnzsOjszLR8/XzzXZFLXpz3cxl/sQNVo4BYcnGG3UrGkBb/8buHipI4NJTwmiRn8K2N
+	pejPkDynC691zWW9ITMDt4XzVG70nKKxk8rIc8+HS5K9dro5G/s4tynK71+Mrg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1719471191;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+0Tkyg1+ybCmBf89qscsR5FClPspd4mnvaMAACYGJKc=;
+	b=SAoLI2outADmF0P7Gy4qtP48qrsbdCBfHV04iRzxqxGNhAOCl0ZtJZ5JgCKSzbU7hX9/S+
+	3DFaG711XhLFWJAA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Sam Kappen <skappen@mvista.com>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	tom.zanussi@linux.intel.com, zanussi@kernel.org, sam.gsk@gmail.com
+Subject: Re: [PATCH RT v4.19] tcp: md5: Add a serialization in tcp MD5 hash
+ functions.
+Message-ID: <20240627065309.e_MPmlKm@linutronix.de>
+References: <1718966972-17507-1-git-send-email-skappen@mvista.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: a question about how to debug this case in ftrace
-To: Steven Rostedt <rostedt@goodmis.org>,
- John Ogness <john.ogness@linutronix.de>, Andrew Halaney <ahalaney@redhat.com>
-Cc: Derek Barbosa <debarbos@redhat.com>, pmladek@suse.com,
- senozhatsky@chromium.org, linux-rt-users@vger.kernel.org,
- linux-kernel@vger.kernel.org, williams@redhat.com, jlelli@redhat.com
-References: <ZnGlt4uQRP_4nWu4@debarbos-thinkpadt14sgen2i.remote.csb>
- <6802e81c-1926-4195-812a-1a5fe13bcdde@189.cn>
- <xiune2bsqgin5ksk33q5bkihuz5qrv5casjofdyopes55zfcpc@uvvnlwxb4wcp>
- <4d198032-d4e1-4a84-8f56-1b31157e9323@189.cn>
- <e6b0ba9e-e8f6-4c42-9f63-e3b67d7edbf0@189.cn>
- <8734p0jhdc.fsf@jogness.linutronix.de>
- <7252f93a-ef60-49f8-ae93-73d269cc62f8@189.cn>
- <20240626105046.7ad9299e@rorschach.local.home>
-Content-Language: en-US
-From: Song Chen <chensong_2000@189.cn>
-In-Reply-To: <20240626105046.7ad9299e@rorschach.local.home>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <1718966972-17507-1-git-send-email-skappen@mvista.com>
 
-It works, many thanks.
+On 2024-06-21 12:49:32 [+0200], Sam Kappen wrote:
+=E2=80=A6
+> --- a/net/ipv4/tcp_ipv4.c
+> +++ b/net/ipv4/tcp_ipv4.c
+> @@ -93,6 +93,7 @@ static int tcp_v4_md5_hash_hdr(char *md5_hash, const st=
+ruct tcp_md5sig_key *key,
+>  			       __be32 daddr, __be32 saddr, const struct tcphdr *th);
+>  #endif
+> =20
+> +static DEFINE_LOCAL_IRQ_LOCK(tcp_md5_lock);
+>  struct inet_hashinfo tcp_hashinfo;
+>  EXPORT_SYMBOL(tcp_hashinfo);
+> =20
+> @@ -1224,6 +1225,7 @@ static int tcp_v4_md5_hash_hdr(char *md5_hash, cons=
+t struct tcp_md5sig_key *key,
+>  	struct tcp_md5sig_pool *hp;
+>  	struct ahash_request *req;
+> =20
+> +	local_lock(tcp_md5_lock);
+>  	hp =3D tcp_get_md5sig_pool();
 
-BR
+Instead of this, could you please move the lock to within
+tcp_get_md5sig_pool()/ tcp_put_md5sig_pool()? That way it will also fix
+ipv6 in the same way.
 
-Song
-
-在 2024/6/26 22:50, Steven Rostedt 写道:
-> On Wed, 26 Jun 2024 16:26:05 +0800
-> Song Chen <chensong_2000@189.cn> wrote:
-> 
->> not really, sounds like it meets my expectation of merging logs either
->> way, "printk:console ftrace event" in cmdline? I searched it in code or
->> google, no luck.
-> 
-> Try adding:
-> 
->    trace_event=console
-> 
-> -- Steve
-> 
+Sebastian
