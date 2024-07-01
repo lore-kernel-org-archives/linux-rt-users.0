@@ -1,90 +1,55 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2984F16C844;
-	Mon,  1 Jul 2024 18:43:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 839D518635;
+	Mon,  1 Jul 2024 20:38:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719859397; cv=none; b=d7gCwolm/cJ1XmsFYjpSrjBmZ9CuJ5K/RFWwwtw1sBTaXLgezoQ0u4cwvlx4Rvpw6fBA/6APrn4rBOBaQBq2PEOpK1c9PvazervVyVWpMFMFpScuBy4a//FQRRWT2ryMZ8vlXJAw+CfMmqL5+k76tb+WdibhvOvTzx6ZBzcWRzQ=
+	t=1719866289; cv=none; b=r+jtJiQNxIpuxoCPWvwzjmOIr1Ol7w1RqNhl+0f5uN/yrqHkjFidpnCkaViwZOqWFAtOe2j8Ayh4CQFR1jhMWqs1RVv/nQLjXvNv7LEZQegokyLEmtyfwQz5CDzVJlgGuzv7m/Q76Tuub8/iQGYTo6unecWndSgGG51ODABF9RU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719859397; c=relaxed/simple;
-	bh=uq8cv4P8tTN128BUGe/MtMj9i96KXMbQOCFYWpYrgIA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=MNtdx2hnzdeG8Hu7zDpL/RdZube1I/DpEAN8oGozFs9yv/9nEcnAKWZlRk+sIrM78eMOrVKDaAwB9h0+AVzAwRQK34PXMM7pGBC7UvXisVxKeFbDZU7f2EUwL4aU44HGmIoxX1rGTbEQztIcnyIFTG/+L2XowtZAO6bB9IogKiQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=Kvkh3HTM; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="Kvkh3HTM"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id D109ADACCB;
-	Mon,  1 Jul 2024 20:35:19 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1719858923; h=from:subject:date:message-id:to:cc:mime-version:
-	 content-transfer-encoding; bh=ZcwORZ3OTWfDspy3wgPTEJMK4905Zu2w2DL3goIe2ZM=;
-	b=Kvkh3HTMT98ERvVxnbnVNVdX/ykuwUctcodjOga/dIWwJbvUj9EPR7faxsef5OQh+96WM5
-	KXAhIwYdHsS2DOvDEggXLDAvdDC9Tpv2dsW66LOpA/t8xVWkQSFK7NvqD2N6VaYiNhj0sj
-	DhmFDnpIgA8rc25kh6sK08Z6nk76ntl9OhkRnPZoVRDzG2iHWlD8HvCfGXfFGR5lhih/Zy
-	/GcNG2ySp7z3rMQTb3l2044BqxOh/eRIoLAj97Oi0NH5/dXKEXJ/JRRrUTMPLdp1qyTHRP
-	Mak8qRXJQBJmTOHkgXmvC9iO+e0zgvKr1AzpvubNkhXmBkCuDPTWOlLabOFUCA==
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	 <linux-rt-users@vger.kernel.org>,
-	 <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>
-Cc: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 0/1] Linux v4.19.316-rt136-rc1
-Date: Mon,  1 Jul 2024 20:35:17 +0200
-Message-ID: <20240701183518.26751-1-wagi@monom.org>
-X-Mailer: git-send-email 2.45.2
+	s=arc-20240116; t=1719866289; c=relaxed/simple;
+	bh=GtzHsfmxTwlD8fkBydhACIzOTugc3g87sx9jSrQdjYI=;
+	h=From:Subject:Date:Message-ID:To; b=odW4UlG5BBdfdMQyGNmQU3ig4ojPmwF1ipLflq+Qi3bsYQGOBQTLF7zagTNMZaTWVUt/fQJITqXjHOjciyeXssna593BtCVs2CZJjyslw3vf8y845/RQDkjiVaLnWZl3Afn4fWHC0VgV5MTxzJPobGJvHydnguhUePJJXFfgEs0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E123CC116B1;
+	Mon,  1 Jul 2024 20:38:08 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.36-rt35
+Date: Mon, 01 Jul 2024 20:33:56 -0000
+Message-ID: <171986603692.1363512.2827523700380457269@demetrius.lan>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@canonical.com>,Derek Barbosa <debarbos@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
 
-Dear RT Folks,
+Hello RT-list!
 
-This is the RT stable review cycle of patch 4.19.316-rt136-rc1.
+I'm pleased to announce the 6.6.36-rt35 stable release.
 
-Please scream at me if I messed something up. Please test the patches
-too.
+This release is the merge of the v6.6.36 stable tree and the addition of one commit:
 
-The -rc release is also available on kernel.org
+     2cd745fc0bec prinkt/nbcon: Add a scheduling point to nbcon_kthread_func().
 
-  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+The commit addresses a live-lock in the printk/nbcon code when running a kernel from
+a tree with the RT code applied but compiled without PREEMPT_RT. 
 
-on the v4.19-rt-next branch.
+You can get this release via the git tree at:
 
-If all goes well, this patch will be converted to the next main
-release on 2024-07-08.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Signing key fingerprint:
+  branch: v6.6-rt
+  Head SHA1: de1f6214d67ede05aa223fcb7e6e48474bee628b
 
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
+Or to build 6.6.36-rt35 directly, the following patches should be applied:
 
-All keys used for the above files and repositories can be found on the
-following git repository:
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
 
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.36.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.36-rt35.patch.xz
+
 
 Enjoy!
-Daniel
-
-Changes from v4.19.315-rt135:
-
-
-Daniel Wagner (1):
-  Linux 4.19.316-rt136
-
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
--- 
-2.45.2
-
+Clark
