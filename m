@@ -1,52 +1,52 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A04241420DF
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:02:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1494317C9E
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:45:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720461780; cv=none; b=EqRAw/E7wA+tunl9UiOeseEKeI6PyJ/Fae/ZLmHOOUtBqgcSkZCVqpd8F3nlHzGnoT7RYmy6GPcNgq/y4lKdFhNEPMta1F0V2XX5JlCyFkqKLftKc44xcejFgcHexsvGQRJsB+JK91TzEYPMkB3Iwo5JQway2F0X0JBrE8ZDRNE=
+	t=1720464355; cv=none; b=Yqv/4N2At/u7JYIULUea5zAn//kJ07zhX72h8Ahew8imH7SnBUFoG8hq7j9JMgcuCjELAL7e6PwZO+4dQNfld+PGvYRKbAgn+NibriOx66Ax4R5FHAQzm+oeURNGOkFLEaVPfyerpAL9qLN92HaVeAb2nkLb4HUZHTBKyulPHtg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720461780; c=relaxed/simple;
-	bh=K5G/1i2hK+IQsNGd2Hf8eSOOoZR3yV3cAO4qoenm47Y=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DCbPhazBBF4Am1LNTx8qL8lB7vupX5dG8v9npSBHv42NYqUw8vMQS6tGroeL0d5jGW3OygQQ2/j1C1MqzuZsYtFO7xFWujxRJ9pnM7kjdAERbYCbH4Qben/XgmhR4Td2Y0x4DqVvGQQATY4W0iebj8iB6kyp1e6mMvlDExohcCg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=K0w1jvOB; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1720464355; c=relaxed/simple;
+	bh=USkGh0IYiSx53OJ0IQFkAmhJvLHM+HX156br5ahMy58=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=MSlY2WCGkhBmPJ0E87b44hA5vFF6yoxSzTFuenYtc4uK3dScnzdGMEQXZpzbnJqJpa2MGw9Xl7eIq1m3NYB73zpbgDGteJd9KHvJtYmix2cDc8/rRrnwtJyKRwpr3n/JwvcPY+MrMq0lplNZ3YaT5yajVHnReDzc9plJx8GruMo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MPJgQ8Ot; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="K0w1jvOB"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MPJgQ8Ot"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1720461777;
+	s=mimecast20190719; t=1720464353;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=VTmO0MA4mEvM4OovHvnt/ZYfUxDYd6macRmTQrfoElc=;
-	b=K0w1jvOB1mEMBmfckvszf9GQvutY9qhZ//1d6EFiJs5yLg7KuQZnqnvYdL7bHVFlO9jZmb
-	bB72kARO1AcuZGw51x7K0HfdfjVVnLk4uxK9YZzmN7MA/Qjk5mPJc5fsYoqarirg8qaPia
-	/6bVA2Nc/J37ii9goWXr30iyw1ybqzc=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	bh=jAdj5nmA1lio4A/LUX1Zr1jwvJt0VIYtUlQS2bnIjGQ=;
+	b=MPJgQ8OtX+rTT/zz41D29OdcTwcsTsmtRbPVKUuasY2WWNIa7M7aAEh0Qg1SBy+6ZjoojS
+	tWoHlAIq5ooShaYkKccTk849z4yGEu+o0ZJqdqCh3iSSWbKFdFEO0XQwwApRloX2EbxbVq
+	qTtvyHFMzqYmrA/csTiLpw7sEX27aUo=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-460-J0mIEe9bN9yizd0uVdRVAA-1; Mon,
- 08 Jul 2024 14:02:56 -0400
-X-MC-Unique: J0mIEe9bN9yizd0uVdRVAA-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-528-C21uZJn5MHuG_PUH9wI8Xw-1; Mon,
+ 08 Jul 2024 14:45:51 -0400
+X-MC-Unique: C21uZJn5MHuG_PUH9wI8Xw-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8BD0719560B3
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:02:55 +0000 (UTC)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C75B3195608F
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:45:50 +0000 (UTC)
 Received: from ashelat-na.remote.csb (unknown [10.22.18.54])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 292971955F3B;
-	Mon,  8 Jul 2024 18:02:53 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 562B01955F40;
+	Mon,  8 Jul 2024 18:45:49 +0000 (UTC)
 From: Anubhav Shelat <ashelat@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: jkacur@redhat.com,
 	kcarcia@redhat.com,
 	Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH] Add functionality to set the cstate of specified CPUs  when running tuna
-Date: Mon,  8 Jul 2024 14:02:50 -0400
-Message-ID: <20240708180250.187805-1-ashelat@redhat.com>
+Subject: [PATCH v2] tuna: Add functionality to set the cstate of specified CPUs  when running tuna
+Date: Mon,  8 Jul 2024 14:45:40 -0400
+Message-ID: <20240708184540.207579-1-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -54,7 +54,7 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
 We would like to be able to set the cstate of CPUs while running tuna.
 
@@ -68,13 +68,13 @@ performance.
 
 Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 ---
- tuna-cmd.py      | 18 +++++++++--
+ tuna-cmd.py      | 17 +++++++++--
  tuna/cpupower.py | 79 ++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 94 insertions(+), 3 deletions(-)
+ 2 files changed, 93 insertions(+), 3 deletions(-)
  create mode 100644 tuna/cpupower.py
 
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index f37e286bffdb..2c1fbdc43a22 100755
+index f37e286bffdb..683cf848b9a4 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
 @@ -21,7 +21,7 @@ from functools import reduce
@@ -107,16 +107,15 @@ index f37e286bffdb..2c1fbdc43a22 100755
  
      subparser = parser.add_subparsers(dest='command')
  
-@@ -649,7 +654,7 @@ def main():
+@@ -649,7 +654,6 @@ def main():
      parser = gen_parser()
      # Set all necessary defaults for gui subparser if no arguments provided
      args = parser.parse_args() if len(sys.argv) > 1 else parser.parse_args(['gui'])
 -
-+    print(args)
      if args.debug:
          my_logger = setup_logging("my_logger")
          my_logger.addHandler(add_handler("DEBUG", tofile=False))
-@@ -667,6 +672,10 @@ def main():
+@@ -667,6 +671,10 @@ def main():
              print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
              print("Log levels may be specified numerically (0-4)\n")
  
@@ -127,7 +126,7 @@ index f37e286bffdb..2c1fbdc43a22 100755
      if 'irq_list' in vars(args):
          ps = procfs.pidstats()
          if tuna.has_threaded_irqs(ps):
-@@ -760,6 +769,9 @@ def main():
+@@ -760,6 +768,9 @@ def main():
          except KeyboardInterrupt:
              pass
  
