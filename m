@@ -1,52 +1,52 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1494317C9E
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:45:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 072481EB44
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 19:35:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720464355; cv=none; b=Yqv/4N2At/u7JYIULUea5zAn//kJ07zhX72h8Ahew8imH7SnBUFoG8hq7j9JMgcuCjELAL7e6PwZO+4dQNfld+PGvYRKbAgn+NibriOx66Ax4R5FHAQzm+oeURNGOkFLEaVPfyerpAL9qLN92HaVeAb2nkLb4HUZHTBKyulPHtg=
+	t=1720467355; cv=none; b=hF4cfZtXyybjqDBBEx7sDIHyH5Nmj+P3p/+sHJdpuLJQc2K7anvkrC4A1fy8140AGH5ll8d5yqusfjnIGdK99b6wF4uccgM7tBdWfoz/Cm+GkUnAXDqpWnhSsIT5iAG7MBdkKJWiJ83RUphsSbjJPsdW1vHwCfo93vAQfIJ02bI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720464355; c=relaxed/simple;
-	bh=USkGh0IYiSx53OJ0IQFkAmhJvLHM+HX156br5ahMy58=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=MSlY2WCGkhBmPJ0E87b44hA5vFF6yoxSzTFuenYtc4uK3dScnzdGMEQXZpzbnJqJpa2MGw9Xl7eIq1m3NYB73zpbgDGteJd9KHvJtYmix2cDc8/rRrnwtJyKRwpr3n/JwvcPY+MrMq0lplNZ3YaT5yajVHnReDzc9plJx8GruMo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MPJgQ8Ot; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1720467355; c=relaxed/simple;
+	bh=knMnHCcEQxSFdsRynDBPVZbV1SW80/WTP4DxVrDXKKM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=oocEEQg3Z5TRZqBwpRj3HkWMzsBdKaCMpRrUHaFcuCx/I1QAuPUYX8bz5ADV8vbQyTNyAnlnnpg3CkcTkb9pIIO/dhbCKW0/gCc16dD9Id6QSVWB3RX+v2sH1F4k4kn9d2bwokVaOfvT8og8uylzHaFHOWaRz36KLj24m+J63R8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WuvsJLut; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MPJgQ8Ot"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WuvsJLut"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1720464353;
+	s=mimecast20190719; t=1720467353;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=jAdj5nmA1lio4A/LUX1Zr1jwvJt0VIYtUlQS2bnIjGQ=;
-	b=MPJgQ8OtX+rTT/zz41D29OdcTwcsTsmtRbPVKUuasY2WWNIa7M7aAEh0Qg1SBy+6ZjoojS
-	tWoHlAIq5ooShaYkKccTk849z4yGEu+o0ZJqdqCh3iSSWbKFdFEO0XQwwApRloX2EbxbVq
-	qTtvyHFMzqYmrA/csTiLpw7sEX27aUo=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+	bh=kThKn4FlQY+Q8qHTWv7FPO+CNgWH/vfvEqx823n0RSg=;
+	b=WuvsJLutWe+lhI9vyztQM9Usto5H/YjLqYiFm4fsgqvZ0GDr4bnAVjrlBjrWglqOV1G4oc
+	hKRyGhYecC18rmJB6xr4fYML94niY2k0g6pFZh6ySGOsI6CljwaMtjWd6wbdJDdFQ/5Adj
+	IanRiVd+Us33fy2mtiX7n0XpaEeFOxo=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-528-C21uZJn5MHuG_PUH9wI8Xw-1; Mon,
- 08 Jul 2024 14:45:51 -0400
-X-MC-Unique: C21uZJn5MHuG_PUH9wI8Xw-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-605-KlfvwBpfN6KAAMthb2xcag-1; Mon,
+ 08 Jul 2024 15:35:51 -0400
+X-MC-Unique: KlfvwBpfN6KAAMthb2xcag-1
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C75B3195608F
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:45:50 +0000 (UTC)
-Received: from ashelat-na.remote.csb (unknown [10.22.18.54])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 562B01955F40;
-	Mon,  8 Jul 2024 18:45:49 +0000 (UTC)
-From: Anubhav Shelat <ashelat@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com,
-	kcarcia@redhat.com,
-	Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH v2] tuna: Add functionality to set the cstate of specified CPUs  when running tuna
-Date: Mon,  8 Jul 2024 14:45:40 -0400
-Message-ID: <20240708184540.207579-1-ashelat@redhat.com>
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ADC7919560BF
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 19:35:50 +0000 (UTC)
+Received: from p1g2.redhat.com (unknown [10.2.16.137])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 315281955E70;
+	Mon,  8 Jul 2024 19:35:48 +0000 (UTC)
+From: Crystal Wood <crwood@redhat.com>
+To: John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	Crystal Wood <crwood@redhat.com>
+Subject: [PATCH] rteval: Add --noload option
+Date: Mon,  8 Jul 2024 14:35:48 -0500
+Message-ID: <20240708193548.220577-1-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -56,171 +56,154 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-We would like to be able to set the cstate of CPUs while running tuna.
+This option allows measurement to be done without any loads.
 
-This patch adds the file cpupower.py and options to tuna-cmd.py.
-This allows the user to execute the cpupower command from tuna,
-allowing the user to set the cstate on a given list or cpus.
-Once tuna exits, the original cstate configuration will be restored.
-
-This will let the user to test balancing power consumption and
-performance.
-
-Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+Signed-off-by: Crystal Wood <crwood@redhat.com>
 ---
- tuna-cmd.py      | 17 +++++++++--
- tuna/cpupower.py | 79 ++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 93 insertions(+), 3 deletions(-)
- create mode 100644 tuna/cpupower.py
+This patch is on top of the "rteval: Remove measurement profiles and
+make latency mods exclusive" patchset I previously sent.
 
-diff --git a/tuna-cmd.py b/tuna-cmd.py
-index f37e286bffdb..683cf848b9a4 100755
---- a/tuna-cmd.py
-+++ b/tuna-cmd.py
-@@ -21,7 +21,7 @@ from functools import reduce
- import tuna.new_eth as ethtool
- import tuna.tuna_sched as tuna_sched
- import procfs
--from tuna import tuna, sysfs
-+from tuna import tuna, sysfs, cpupower
- import logging
- import time
- import shutil
-@@ -116,7 +116,10 @@ def gen_parser():
-             "disable_perf": dict(action='store_true', help="Explicitly disable usage of perf in GUI for process view"),
-             "refresh": dict(default=2500, metavar='MSEC', type=int, help="Refresh the GUI every MSEC milliseconds"),
-             "priority": dict(default=(None, None), metavar="POLICY:RTPRIO", type=tuna.get_policy_and_rtprio, help="Set thread scheduler tunables: POLICY and RTPRIO"),
--            "background": dict(action='store_true', help="Run command as background task")
-+            "background": dict(action='store_true', help="Run command as background task"),
-+            "cstate": dict(dest='cstate', metavar='CSTATE', help='Set cpus in IDLE-LIST to a specific cstate'),
-+            "idle_list": dict(dest="idle_list", metavar='IDLE-LIST',
-+                              help='CPU list to set idle states on (default: all cpus).')
-          }
+ rteval-cmd             |  9 +++++++
+ rteval/__init__.py     | 54 ++++++++++++++++++++++--------------------
+ rteval/rtevalReport.py |  3 ++-
+ 3 files changed, 39 insertions(+), 27 deletions(-)
+
+diff --git a/rteval-cmd b/rteval-cmd
+index 5cb6d7a44523..36b167a034e5 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -146,6 +146,9 @@ def parse_options(cfg, parser, cmdargs):
+     parser.add_argument("-S", "--source-download", nargs="*", dest="rteval___srcdownload",
+                         type=str, default=None, metavar="KERNEL_VERSION",
+                         help='download a source kernel from kernel.org and exit')
++    parser.add_argument("--noload", dest="rteval___noload",
++                        action="store_true", default=False,
++                        help="only run the measurements (don't run loads)")
  
-     parser = HelpMessageParser(description="tuna - Application Tuning Program")
-@@ -125,6 +128,8 @@ def gen_parser():
-     parser.add_argument('-v', '--version', **MODS['version'])
-     parser.add_argument('-L', '--logging', **MODS['logging'])
-     parser.add_argument('-D', '--debug', **MODS['debug'])
-+    parser.add_argument('-i', '--cstate', **MODS['cstate'])
-+    parser.add_argument('-l', '--idle-list', **MODS['idle_list'])
  
-     subparser = parser.add_subparsers(dest='command')
+     if not cmdargs:
+@@ -273,6 +276,12 @@ if __name__ == '__main__':
+         measuremods.SetupModuleOptions(parser)
+         cmd_args = parse_options(config, parser, sys.argv[1:])
  
-@@ -649,7 +654,6 @@ def main():
-     parser = gen_parser()
-     # Set all necessary defaults for gui subparser if no arguments provided
-     args = parser.parse_args() if len(sys.argv) > 1 else parser.parse_args(['gui'])
++        if rtevcfg.noload:
++            if rtevcfg.onlyload:
++                # Make up your mind!
++                raise RuntimeError('The --noload and --onlyload options are incompatible.')
++            loadmods = None
++
+         # download kernel tarball
+         if rtevcfg.srcdownload:
+             logger.log(Log.DEBUG, f"Kernel Version to download = {rtevcfg.srcdownload}")
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index 226d14f80f48..4d3e0c23e5ab 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -46,9 +46,6 @@ class RtEval(rtevalReport):
+         if not isinstance(config, rtevalConfig.rtevalConfig):
+             raise TypeError("config variable is not an rtevalConfig object")
+ 
+-        if not isinstance(loadmods, LoadModules):
+-            raise TypeError("loadmods variable is not a LoadModules object")
 -
-     if args.debug:
-         my_logger = setup_logging("my_logger")
-         my_logger.addHandler(add_handler("DEBUG", tofile=False))
-@@ -667,6 +671,10 @@ def main():
-             print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
-             print("Log levels may be specified numerically (0-4)\n")
+         if not isinstance(measuremods, MeasurementModules):
+             raise TypeError("measuremods variable is not a MeasurementModules object")
  
-+    if args.cstate:
-+        cpupower_controller = cpupower.Cpupower(args.idle_list, args.cstate)
-+        cpupower_controller.enable_idle_state()
-+
-     if 'irq_list' in vars(args):
-         ps = procfs.pidstats()
-         if tuna.has_threaded_irqs(ps):
-@@ -760,6 +768,9 @@ def main():
-         except KeyboardInterrupt:
-             pass
+@@ -111,20 +108,21 @@ class RtEval(rtevalReport):
+         except Exception as err:
+             raise RuntimeError(f"Cannot create report directory (NFS with rootsquash on?) [{err}]]")
  
-+    if cpupower_controller:
-+        cpupower_controller.restore_cstate()
++        params = {'workdir':self.__rtevcfg.workdir,
++                  'reportdir':self.__reportdir and self.__reportdir or "",
++                  'builddir':builddir,
++                  'srcdir':self.__rtevcfg.srcdir,
++                  'verbose': self.__rtevcfg.verbose,
++                  'debugging': self.__rtevcfg.debugging,
++                  'numcores':self._sysinfo.cpu_getCores(True),
++                  'logging':self.__rtevcfg.logging,
++                  'memsize':self._sysinfo.mem_get_size(),
++                  'numanodes':self._sysinfo.mem_get_numa_nodes(),
++                  'duration': float(self.__rtevcfg.duration),
++                  }
 +
+         if self._loadmods:
+             self.__logger.log(Log.INFO, "Preparing load modules")
+-            params = {'workdir':self.__rtevcfg.workdir,
+-                      'reportdir':self.__reportdir and self.__reportdir or "",
+-                      'builddir':builddir,
+-                      'srcdir':self.__rtevcfg.srcdir,
+-                      'verbose': self.__rtevcfg.verbose,
+-                      'debugging': self.__rtevcfg.debugging,
+-                      'numcores':self._sysinfo.cpu_getCores(True),
+-                      'logging':self.__rtevcfg.logging,
+-                      'memsize':self._sysinfo.mem_get_size(),
+-                      'numanodes':self._sysinfo.mem_get_numa_nodes(),
+-                      'duration': float(self.__rtevcfg.duration),
+-                      }
+             self._loadmods.Setup(params)
  
- if __name__ == '__main__':
-     main()
-diff --git a/tuna/cpupower.py b/tuna/cpupower.py
-new file mode 100644
-index 000000000000..abbbe0448a8a
---- /dev/null
-+++ b/tuna/cpupower.py
-@@ -0,0 +1,79 @@
-+#! /user/bin/python3
-+
-+import subprocess
-+import argparse
-+import os
-+import multiprocessing
-+import time 
-+
-+
-+class Cpupower:
-+    def __init__(self, cpulist, cstate):
-+        self.cpulist = cpulist
-+        self.cstate = cstate
-+        self.nstates = len(os.listdir('/sys/devices/system/cpu/cpu0/cpuidle/'))    # number of cstates
-+        self.cpu_count = multiprocessing.cpu_count()
-+        self.cstate_cfg = []
-+
-+
-+    def enable_idle_state(self):
-+        ''' Enable a specific cstate, while disabling all other cstates, and save the current cstate configuration '''
-+        self.cstate_cfg = self.get_cstate_cfg()
-+
-+        # enable cstate and disable the rest
-+        if (self.cpulist):
-+            subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
-+            for cs in range(self.nstates):
-+                if str(cs) != self.cstate:
-+                    subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
-+        else:
-+            subprocess.run(['sudo', 'cpupower', 'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
-+            for cs in range(self.nstates):
-+                if str(cs) != self.cstate:
-+                    subprocess.run(['sudo', 'cpupower', 'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
-+        
-+        if self.cpulist: print(f'Idlestate {self.cstate} enabled on CPUs {self.cpulist}')
-+        else: print(f'Idlestate {self.cstate} enabled on all CPUs')
-+
-+
-+    def get_cstate_cfg(self):
-+        ''' Store the current cstate config '''
-+        # cstate [m] configuration on cpu [n] can be found in '/sys/devices/system/cpu/cpu*/cpuidle/state*/disable'
-+        cfg = []
-+        for cpu in range(self.cpu_count):
-+            cfg.append([])
-+            for cs in range(self.nstates):
-+                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'r')
-+                d = f.read(1)
-+                cfg[cpu].append(d)   # cstate_cfg[n][m] stores the m-th idle state on the n-th cpu
-+
-+        return cfg
-+
-+
-+    def restore_cstate(self):
-+        for cpu in range(self.cpu_count):
-+            for cs in range(self.nstates):
-+                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'w')
-+                f.write(self.cstate_cfg[cpu][cs])
-+                f.close()
-+        print('Idle state configuration restored')
-+
-+
-+if __name__ == '__main__':
-+    parser = argparse.ArgumentParser()
-+    parser.add_argument('-c', '--cpu-list', required=False, default=None, 
-+                        help='List of cpus to perform cpupower-idle-set operation on.')
-+    parser.add_argument('-s', '--cstate', default='',
-+                        help='Specify cstate to enable/disable')
-+    
-+    args = parser.parse_args()
-+    print(args)
-+    cpulist = args.cpu_list
-+    cstate = args.cstate
-+    cpupower = Cpupower(cpulist, cstate)
-+
-+    cpupower.enable_idle_state()
-+    time.sleep(10)
-+    cpupower.restore_cstate()
-+
-+
+         self.__logger.log(Log.INFO, "Preparing measurement modules")
+@@ -144,15 +142,18 @@ class RtEval(rtevalReport):
+ 
+             print(f"rteval run on {os.uname()[2]} started at {time.asctime()}")
+             onlinecpus = self._sysinfo.cpu_getCores(True)
+-            cpulist = self._loadmods._cfg.GetSection("loads").cpulist
+-            if cpulist:
+-                print(f"started {self._loadmods.ModulesLoaded()} loads on cores {cpulist}", end=' ')
+-            else:
+-                print(f"started {self._loadmods.ModulesLoaded()} loads on {onlinecpus} cores", end=' ')
+-            if self._sysinfo.mem_get_numa_nodes() > 1:
+-                print(f" with {self._sysinfo.mem_get_numa_nodes()} numa nodes")
+-            else:
+-                print("")
++            if self._loadmods:
++                cpulist = self._loadmods._cfg.GetSection("loads").cpulist
++                if cpulist:
++                    print(f"started {self._loadmods.ModulesLoaded()} loads on cores {cpulist}",
++                          end=' ')
++                else:
++                    print(f"started {self._loadmods.ModulesLoaded()} loads on {onlinecpus} cores",
++                          end=' ')
++                if self._sysinfo.mem_get_numa_nodes() > 1:
++                    print(f" with {self._sysinfo.mem_get_numa_nodes()} numa nodes")
++                else:
++                    print("")
+             cpulist = self._measuremods._cfg.GetSection("measurement").cpulist
+             if cpulist:
+                 print(f"started measurement threads on cores {cpulist}")
+@@ -192,7 +193,7 @@ class RtEval(rtevalReport):
+                     if threading.active_count() < nthreads:
+                         raise RuntimeError("load thread died!")
+ 
+-                if not load_avg_checked:
++                if self._loadmods and not load_avg_checked:
+                     self._loadmods.SaveLoadAvg()
+                     load_avg_checked = 5
+                 else:
+@@ -202,7 +203,8 @@ class RtEval(rtevalReport):
+                     left_to_run = stoptime - currtime
+                     self.__show_remaining_time(left_to_run)
+                     rpttime = currtime + report_interval
+-                    print(f"load average: {self._loadmods.GetLoadAvg():.2f}")
++                    if self._loadmods:
++                        print(f"load average: {self._loadmods.GetLoadAvg():.2f}")
+                 currtime = time.time()
+ 
+             self.__logger.log(Log.DEBUG, "out of measurement loop")
+diff --git a/rteval/rtevalReport.py b/rteval/rtevalReport.py
+index 57d99f520f50..7379a7904f3f 100644
+--- a/rteval/rtevalReport.py
++++ b/rteval/rtevalReport.py
+@@ -57,7 +57,8 @@ class rtevalReport:
+         self.__xmlreport.AppendXMLnodes(self._sysinfo.MakeReport())
+ 
+         # Add load info
+-        self.__xmlreport.AppendXMLnodes(self._loadmods.MakeReport())
++        if self._loadmods:
++            self.__xmlreport.AppendXMLnodes(self._loadmods.MakeReport())
+ 
+         # Add measurement data
+         self.__xmlreport.AppendXMLnodes(self._measuremods.MakeReport())
 -- 
-2.45.2
+2.45.1
 
