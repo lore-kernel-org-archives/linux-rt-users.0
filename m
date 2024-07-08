@@ -1,116 +1,227 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBA40137923
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 13:59:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A04241420DF
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:02:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720447168; cv=none; b=DFzyxMRXN7fNvh0ECbdT4h6ybrIuqXYImQ/E6EdpbUQLQ1iU05y/OWI7ksxwc5uT5TbQVafZBTUF3uzPRWM2uJzzQdmKRA6WPUwh6yukdvcs4Js00M8HURN//gjXerDJPRZBAYOPnRo151gD3X2TqGcI2LpRIowNS/7AqrN5Xbc=
+	t=1720461780; cv=none; b=EqRAw/E7wA+tunl9UiOeseEKeI6PyJ/Fae/ZLmHOOUtBqgcSkZCVqpd8F3nlHzGnoT7RYmy6GPcNgq/y4lKdFhNEPMta1F0V2XX5JlCyFkqKLftKc44xcejFgcHexsvGQRJsB+JK91TzEYPMkB3Iwo5JQway2F0X0JBrE8ZDRNE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720447168; c=relaxed/simple;
-	bh=yi7JrulTN0Mbojt/7Njkznq3vcn6UXspr/8evVclDcc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HS07IFbZ3O+PAiFBgPa0BlAvlHjfofTnjAVaINwpA6o87DJxpJw6asL0sT7VfXKkECh6FMw7ZxD7gvxiHBs/MHjKJTMIEgQGFkd5/1m906LEb5KreX5p9Bkm7ebic3+Cy9nBKDwHTRsUWSmRWSgeuu8ZilLvdBZMikafWhChxk4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=a6NLMNc4; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=GYEM1loJ; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1720461780; c=relaxed/simple;
+	bh=K5G/1i2hK+IQsNGd2Hf8eSOOoZR3yV3cAO4qoenm47Y=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DCbPhazBBF4Am1LNTx8qL8lB7vupX5dG8v9npSBHv42NYqUw8vMQS6tGroeL0d5jGW3OygQQ2/j1C1MqzuZsYtFO7xFWujxRJ9pnM7kjdAERbYCbH4Qben/XgmhR4Td2Y0x4DqVvGQQATY4W0iebj8iB6kyp1e6mMvlDExohcCg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=K0w1jvOB; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="a6NLMNc4";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="GYEM1loJ"
-Date: Mon, 8 Jul 2024 15:59:24 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1720447165;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="K0w1jvOB"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1720461777;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g0p0oY4+IRpHa68HyuomDL7Nc3c2doREH/MU6nP007g=;
-	b=a6NLMNc43tDMgznS4oVcwvaIHbwsCJh85JMZhE+8usprfLeLukAkKm2l1/fYPjUcVWFJRZ
-	r0SyrPakjrqWLqnMAQIt0J6XWATA176RdnjXjo8PcWy0T5QjLwUa782AGNr9iQKPoFK8Jy
-	ECDyqqfhiKLWqjIrIP/4CrFF8x/l2K38LfTkw07/2ClAAYP2vnHxW5dWzfpWFTQLszZm7B
-	nRFl8wZDLyyOv0KF2QsZa+xvmwVHLkDwSJITzDqdWin6qlFKIM/6tYleKeDzl219efaV6R
-	wnmdWsfmM8nzyyiim0C0x45hopHmwXsAPGOrjyFTvcJUGYiDCQsR4q89NsfwSw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1720447165;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g0p0oY4+IRpHa68HyuomDL7Nc3c2doREH/MU6nP007g=;
-	b=GYEM1loJ9xSiWcJKcQiIcr0gF7t87K4D10nbVLNoneFzJpqVV8U1k8UAH3q4xsPsz2ITdP
-	IQCLjYS3jZ+/FuBw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: miaon <miaon@neusoft.com>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: Unable to handle kernel NULL pointer dereference at virtual
- address 00000034
-Message-ID: <20240708135924.X6_1i-lw@linutronix.de>
-References: <000201dab6f2$b0a25360$11e6fa20$@neusoft.com>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=VTmO0MA4mEvM4OovHvnt/ZYfUxDYd6macRmTQrfoElc=;
+	b=K0w1jvOB1mEMBmfckvszf9GQvutY9qhZ//1d6EFiJs5yLg7KuQZnqnvYdL7bHVFlO9jZmb
+	bB72kARO1AcuZGw51x7K0HfdfjVVnLk4uxK9YZzmN7MA/Qjk5mPJc5fsYoqarirg8qaPia
+	/6bVA2Nc/J37ii9goWXr30iyw1ybqzc=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-460-J0mIEe9bN9yizd0uVdRVAA-1; Mon,
+ 08 Jul 2024 14:02:56 -0400
+X-MC-Unique: J0mIEe9bN9yizd0uVdRVAA-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8BD0719560B3
+	for <linux-rt-users@vger.kernel.org>; Mon,  8 Jul 2024 18:02:55 +0000 (UTC)
+Received: from ashelat-na.remote.csb (unknown [10.22.18.54])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 292971955F3B;
+	Mon,  8 Jul 2024 18:02:53 +0000 (UTC)
+From: Anubhav Shelat <ashelat@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	kcarcia@redhat.com,
+	Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH] Add functionality to set the cstate of specified CPUs  when running tuna
+Date: Mon,  8 Jul 2024 14:02:50 -0400
+Message-ID: <20240708180250.187805-1-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <000201dab6f2$b0a25360$11e6fa20$@neusoft.com>
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-On 2024-06-05 10:47:16 [+0800], miaon wrote:
-> Hello linux-rt,
-Hi,
+We would like to be able to set the cstate of CPUs while running tuna.
 
-> This has a null pointer bug.
-=E2=80=A6
->=20
-> Can you help confirm the reason?
-> Thanks!
+This patch adds the file cpupower.py and options to tuna-cmd.py.
+This allows the user to execute the cpupower command from tuna,
+allowing the user to set the cstate on a given list or cpus.
+Once tuna exits, the original cstate configuration will be restored.
 
-no, but we could start with
+This will let the user to test balancing power consumption and
+performance.
 
-|[    1.884903] BUG: sleeping function called from invalid context at kerne=
-l/locking/rtmutex.c:974
-|[    1.884907] in_atomic(): 1, irqs_disabled(): 128, pid: 1, name: swapper=
-/0
-|[    1.884911] 6 locks held by swapper/0/1:
-|[    1.884914]  #0:  (&dev->mutex){....}, at: [<        (ptrval)>] __drive=
-r_attach+0x64/0x118
-|[    1.884940]  #1:  (&dev->mutex){....}, at: [<        (ptrval)>] __drive=
-r_attach+0x70/0x118
-|[    1.884955]  #2:  (&desc->request_mutex){+.+.}, at: [<        (ptrval)>=
-] __setup_irq+0xdc/0x7f8
-|[    1.884974]  #3:  (&irq_desc_lock_class){....}, at: [<        (ptrval)>=
-] __setup_irq+0x100/0x7f8
-|[    1.884988]  #4:  (rcu_read_lock){....}, at: [<        (ptrval)>] rt_sp=
-in_lock+0x0/0xf0
-|[    1.885005]  #5:  (&picinfo->lock){....}, at: [<        (ptrval)>] tcc_=
-pic_set_polarity+0x8c/0x158
-|[    1.885023] irq event stamp: 288040
-|[    1.885028] hardirqs last  enabled at (288039): [<        (ptrval)>] _r=
-aw_spin_unlock_irqrestore+0x5c/0x98
-|[    1.885033] hardirqs last disabled at (288040): [<        (ptrval)>] _r=
-aw_spin_lock_irqsave+0x24/0xb0
-|[    1.885040] softirqs last  enabled at (0): [<        (ptrval)>] copy_pr=
-ocess.isra.9.part.10+0x430/0x1978
-|[    1.885044] softirqs last disabled at (0): [<          (null)>]        =
-   (null)
-|[    1.885046] Preemption disabled at:
-|[    1.885052] [<        (ptrval)>] __setup_irq+0x100/0x7f8
-|[    1.885061] CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.14.202-tcc #1
-|[    1.885064] Hardware name: Telechips TCC8031 Evaluation Board (DT)
-|[    1.885067] Call trace:
-|[    1.885073]  dump_backtrace+0x0/0x1d8
-|[    1.885078]  show_stack+0x14/0x20
-|[    1.885084]  dump_stack+0xb8/0xf0
-|[    1.885089]  ___might_sleep+0x178/0x210
-|[    1.885093]  rt_spin_lock+0xa4/0xf0
-|[    1.885098]  tcc_pic_set_polarity+0x8c/0x158
-|[    1.885103]  tcc_irq_set_polarity+0x20/0x30
-|[    1.885112]  gic_set_type+0x84/0x98
-|[    1.885117]  __irq_set_trigger+0x5c/0x1e0
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+---
+ tuna-cmd.py      | 18 +++++++++--
+ tuna/cpupower.py | 79 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 94 insertions(+), 3 deletions(-)
+ create mode 100644 tuna/cpupower.py
 
-this is out-of-tree. The lock used in tcc_pic_set_polarity() should be
-raw_spinlock_t. This makes the warning go away.
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index f37e286bffdb..2c1fbdc43a22 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -21,7 +21,7 @@ from functools import reduce
+ import tuna.new_eth as ethtool
+ import tuna.tuna_sched as tuna_sched
+ import procfs
+-from tuna import tuna, sysfs
++from tuna import tuna, sysfs, cpupower
+ import logging
+ import time
+ import shutil
+@@ -116,7 +116,10 @@ def gen_parser():
+             "disable_perf": dict(action='store_true', help="Explicitly disable usage of perf in GUI for process view"),
+             "refresh": dict(default=2500, metavar='MSEC', type=int, help="Refresh the GUI every MSEC milliseconds"),
+             "priority": dict(default=(None, None), metavar="POLICY:RTPRIO", type=tuna.get_policy_and_rtprio, help="Set thread scheduler tunables: POLICY and RTPRIO"),
+-            "background": dict(action='store_true', help="Run command as background task")
++            "background": dict(action='store_true', help="Run command as background task"),
++            "cstate": dict(dest='cstate', metavar='CSTATE', help='Set cpus in IDLE-LIST to a specific cstate'),
++            "idle_list": dict(dest="idle_list", metavar='IDLE-LIST',
++                              help='CPU list to set idle states on (default: all cpus).')
+          }
+ 
+     parser = HelpMessageParser(description="tuna - Application Tuning Program")
+@@ -125,6 +128,8 @@ def gen_parser():
+     parser.add_argument('-v', '--version', **MODS['version'])
+     parser.add_argument('-L', '--logging', **MODS['logging'])
+     parser.add_argument('-D', '--debug', **MODS['debug'])
++    parser.add_argument('-i', '--cstate', **MODS['cstate'])
++    parser.add_argument('-l', '--idle-list', **MODS['idle_list'])
+ 
+     subparser = parser.add_subparsers(dest='command')
+ 
+@@ -649,7 +654,7 @@ def main():
+     parser = gen_parser()
+     # Set all necessary defaults for gui subparser if no arguments provided
+     args = parser.parse_args() if len(sys.argv) > 1 else parser.parse_args(['gui'])
+-
++    print(args)
+     if args.debug:
+         my_logger = setup_logging("my_logger")
+         my_logger.addHandler(add_handler("DEBUG", tofile=False))
+@@ -667,6 +672,10 @@ def main():
+             print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
+             print("Log levels may be specified numerically (0-4)\n")
+ 
++    if args.cstate:
++        cpupower_controller = cpupower.Cpupower(args.idle_list, args.cstate)
++        cpupower_controller.enable_idle_state()
++
+     if 'irq_list' in vars(args):
+         ps = procfs.pidstats()
+         if tuna.has_threaded_irqs(ps):
+@@ -760,6 +769,9 @@ def main():
+         except KeyboardInterrupt:
+             pass
+ 
++    if cpupower_controller:
++        cpupower_controller.restore_cstate()
++
+ 
+ if __name__ == '__main__':
+     main()
+diff --git a/tuna/cpupower.py b/tuna/cpupower.py
+new file mode 100644
+index 000000000000..abbbe0448a8a
+--- /dev/null
++++ b/tuna/cpupower.py
+@@ -0,0 +1,79 @@
++#! /user/bin/python3
++
++import subprocess
++import argparse
++import os
++import multiprocessing
++import time 
++
++
++class Cpupower:
++    def __init__(self, cpulist, cstate):
++        self.cpulist = cpulist
++        self.cstate = cstate
++        self.nstates = len(os.listdir('/sys/devices/system/cpu/cpu0/cpuidle/'))    # number of cstates
++        self.cpu_count = multiprocessing.cpu_count()
++        self.cstate_cfg = []
++
++
++    def enable_idle_state(self):
++        ''' Enable a specific cstate, while disabling all other cstates, and save the current cstate configuration '''
++        self.cstate_cfg = self.get_cstate_cfg()
++
++        # enable cstate and disable the rest
++        if (self.cpulist):
++            subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        else:
++            subprocess.run(['sudo', 'cpupower', 'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', 'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        
++        if self.cpulist: print(f'Idlestate {self.cstate} enabled on CPUs {self.cpulist}')
++        else: print(f'Idlestate {self.cstate} enabled on all CPUs')
++
++
++    def get_cstate_cfg(self):
++        ''' Store the current cstate config '''
++        # cstate [m] configuration on cpu [n] can be found in '/sys/devices/system/cpu/cpu*/cpuidle/state*/disable'
++        cfg = []
++        for cpu in range(self.cpu_count):
++            cfg.append([])
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'r')
++                d = f.read(1)
++                cfg[cpu].append(d)   # cstate_cfg[n][m] stores the m-th idle state on the n-th cpu
++
++        return cfg
++
++
++    def restore_cstate(self):
++        for cpu in range(self.cpu_count):
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'w')
++                f.write(self.cstate_cfg[cpu][cs])
++                f.close()
++        print('Idle state configuration restored')
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser()
++    parser.add_argument('-c', '--cpu-list', required=False, default=None, 
++                        help='List of cpus to perform cpupower-idle-set operation on.')
++    parser.add_argument('-s', '--cstate', default='',
++                        help='Specify cstate to enable/disable')
++    
++    args = parser.parse_args()
++    print(args)
++    cpulist = args.cpu_list
++    cstate = args.cstate
++    cpupower = Cpupower(cpulist, cstate)
++
++    cpupower.enable_idle_state()
++    time.sleep(10)
++    cpupower.restore_cstate()
++
++
+-- 
+2.45.2
 
-Sebastian
