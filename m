@@ -1,48 +1,52 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D6C215217D;
-	Tue,  9 Jul 2024 08:26:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F33C8132112
+	for <linux-rt-users@vger.kernel.org>; Tue,  9 Jul 2024 14:25:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720513568; cv=none; b=stR+o4Xn+WF4jcFH1k2qB2eW+E1X4jemBwC1/M7qjoHAH6uGaSq5drjOT8rEzT89vX1XTPqTj9w3UW/bRZeaMP71DLHCiRnMYqCKtGSWgrL9+Ic9gthHjAw97UEdTtsYT9j+50AWm3oXBgKIpHK6a2tA6ItaDF1aB0X9uvAo6aQ=
+	t=1720535152; cv=none; b=AWojcHvH81xwlOYjimtO/FpMWj260c7wunO9fprZv2CagsjaJTUkfraM77SorrXSFbkczoi4DzxHQp/COLL+dSQxnXuGkCS/iqZ1WzmvCC4TTu4qG/49hjlT9GI79y1P9SU0cUKJQkGWZ/tFHni1md4cAOlZ+Q5ByGfsa/8MrGs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720513568; c=relaxed/simple;
-	bh=/Kcbq38F3t2lGyUAbSOrk4SsT5WKlUG23fqe0qwPa/M=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=EYCc3qLJE2pOuyOLN0hvyuc9BiD4sQgjiUeDqW9BD1I+/+eyydfjluvf0OLdDBbmNDSU+K3aDKziirKFMbS7OJ6PhQmPogDfDu7hkg8Na9Dm3il0GZHZXjV50U592i6tDgHDNCPRqElup9VVuMJTURh+msnxVds3aj5DAI3w27M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=0ZRmm3vF; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	s=arc-20240116; t=1720535152; c=relaxed/simple;
+	bh=6vi0Ur6tR8bc5cmi699zxM28UI+xDw0va501MYo3AHE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YKjmAtufaMI4gmb1BPhOIpsepEAGnvGySqxHiKuS8P2Rnlg9lXKR4FMutFiJ47qZa1lVJkwNqpGo/P+g82zJb7WsfUBTMD/PHVp/vOvTTGbkrPjhkBsgeRIcOH/W4tBbckRAJHKFxDg5w7dV9HqqsHywExZ5ygiNLXNwdNsF0yE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QvBKTQQj; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="0ZRmm3vF"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id 282ACDAD0C;
-	Tue,  9 Jul 2024 10:26:02 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1720513562; h=from:subject:date:message-id:to:cc:mime-version:
-	 content-transfer-encoding:in-reply-to:references;
-	bh=7NSbd3FG1+desO+r0VWZurfe63tFQccOAYvzD3pYTNM=;
-	b=0ZRmm3vFk2VUvd2eWBKAS5BpHs8PsWwx3B+JL3BQPXbg22kdoC+40Rl/5mkxalhz1EZAAA
-	l4fQf9/qKdKFPvfIYUCB/X5i4mYfhwG65iC5e3Q+B88Gi5MDBQYQStmuwJXqNS7Z4lBcDh
-	FihaglNGI9fD9axDq7JSAEV1nLAc5CHVBTUILVZC7XFESyHwkBGsV8/owT+Ewsv1HYTDdf
-	Rt8i9Upv+k+ORZ/tSLIvshwN/00Xlmbn705SZ4Ak9D/SP3rhq2WSnk0+rgpRw/AaXL8gjJ
-	7eToZ5hEdgxuTOXFHl96w2BLUBOVn2D0IFPsG9b5w7hyjKNK6rtDeWXXLMMKrw==
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	 <linux-rt-users@vger.kernel.org>,
-	 <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>
-Cc: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 1/1] Linux 4.19.317-rt137
-Date: Tue,  9 Jul 2024 10:25:58 +0200
-Message-ID: <20240709082558.11012-2-wagi@monom.org>
-X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20240709082558.11012-1-wagi@monom.org>
-References: <20240709082558.11012-1-wagi@monom.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QvBKTQQj"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1720535149;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=zmWqRuWV0AR95gdivaJPZelCQgtlvKrKxjNZCN5pVmY=;
+	b=QvBKTQQjATom6v3C8sWL4pW15byU5KTWrnAJ8CN7wPFnw8Nb3jfa4KAkDXIFWpDrbD0/Se
+	CAqqMEcL3UJC6FnNZOJXvxcvH5/y/XacLiB/hQY5XjrzW7ZIQIOkRFGMRQPq1AWo5i4EnJ
+	s74qZ2NiT8VY0xUVj0zhiXPbEGSp7qA=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-596-NiIXkyrZNNef9PHGze5odA-1; Tue,
+ 09 Jul 2024 10:25:48 -0400
+X-MC-Unique: NiIXkyrZNNef9PHGze5odA-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 969FE1955F3B
+	for <linux-rt-users@vger.kernel.org>; Tue,  9 Jul 2024 14:25:47 +0000 (UTC)
+Received: from ashelat-na.remote.csb (unknown [10.22.9.164])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 5EA971955E70;
+	Tue,  9 Jul 2024 14:25:46 +0000 (UTC)
+From: Anubhav Shelat <ashelat@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	kcarcia@redhat.com,
+	Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH] rteval: fixed manpage to include stress-ng header
+Date: Tue,  9 Jul 2024 10:25:16 -0400
+Message-ID: <20240709142515.354997-2-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -50,26 +54,28 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Last-TLS-Session-Version: TLSv1.3
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-v4.19.317-rt137-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Previously stress-ng options were listed with cyclictest options.
+Now they have their own section.
 
------------
-
-
-Signed-off-by: Daniel Wagner <wagi@monom.org>
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ doc/rteval.8 | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/localversion-rt b/localversion-rt
-index f824f53c19ea..41b444e910ef 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt136
-+-rt137
+diff --git a/doc/rteval.8 b/doc/rteval.8
+index 264bf5207716..b818cbe79762 100644
+--- a/doc/rteval.8
++++ b/doc/rteval.8
+@@ -138,6 +138,7 @@ Send a break trace command if latency exceeds the given number of microseconds.
+ .TP
+ .B \-\-cyclictest-threshold=USEC
+ Exit rteval if latency exceeds the given number of microseconds.
++.SH STRESS-NG OPTIONS
+ .TP
+ .B \-\-stressng-option=OPTION
+ Pass in command line options for the stress-ng package.
 -- 
 2.45.2
 
