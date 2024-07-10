@@ -1,126 +1,220 @@
-Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com [209.85.167.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92BBE18FDD5;
-	Wed, 10 Jul 2024 11:22:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 917B01974FA
+	for <linux-rt-users@vger.kernel.org>; Wed, 10 Jul 2024 19:14:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720610577; cv=none; b=sKiPWGZRi4luD6T02a7SEtkh/MR0dSDwVF+aXRHr/WDk1cQy1/fec9X/awYau4bk8jeFHvKAd8Z/Sz30SekZP7dn6lQ7E4R1M7jeyTlNisGR4q8eouoLfZ+K5IVF7BLYMx5vC25RuewfXqQgnzDLwSsQUixXcHdLgYyvz0KOKto=
+	t=1720638878; cv=none; b=BhNZnjaeidcAEpPgS+KsBQHuPIpxOdku0+QBN1yrp1pFu1NlEHRA7XxxeTyS5qhUiYSJqHh85J7K2up/ZptPirJWsehfz2s+6w94mbVkCu5jFh1xlmtoZIijZpXi+izSoUwOlaTsuD8yT6yHpb1S+1sXSMwm3aQXIo+RW+JnEMA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720610577; c=relaxed/simple;
-	bh=MCcfZbWSzhPegG/ACs7RYwMZqkPgZbAAu1wOaSgm1BQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=iitYdxBPTR0Vlq1INZmM4GnskY1eA4MT4PKltyIvVXw55jQIf6sHLuAGUxNiyLgkEWyegByG8c8fDqDwYmrlb+qHCJ71PJ0End/OWGst3YWkWRrWojwODPRrYNnR7Nlv1JzP47Y1usW2nDnBrxO85vbnf0dmYp9sbNFHrtgYlA8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lyP6mHgI; arc=none smtp.client-ip=209.85.167.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1720638878; c=relaxed/simple;
+	bh=ZCo31V163GtswZ6dpFe7g87wfiVLuAKgKXUsSZyGu3E=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=IS577zI9dTeeuAbN3oz7KOMeevkX5HXQqJ7+XfZHhK9bKlxWGP8tbPE+vauHobjyGaIoEa8hzxnc3ATqtGXo64XoCxA/8D3EEQvmoMoiB6ShLoTsWC+8hr00GwC86V2Khk1QPjzqO+nd5xBnOiUm83qAXqtUKbQLDdAO00Sa9lM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hpWldCXF; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lyP6mHgI"
-Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-52e9f863c46so6756043e87.1;
-        Wed, 10 Jul 2024 04:22:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1720610574; x=1721215374; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=7CZIM3swadjLi9UygmpfkohZo/v8gw4/IRQgklum/Gg=;
-        b=lyP6mHgIaex4AHv3WjMjgGcfRSlnC7zW/xVMNsePRVUnOBA6hlcC/aNwZcd2yI0GIV
-         oBDTuaM1lK6VkcjKWyEh66N7tAiLXdK/zuhR5jSNgxb3YaTAvJ7loqUSIzfzwJexzRss
-         uEyq/bcXZrdGpw8hMKoDjS46dKZ78cTvCqxsSDF4w4+w7C8ac58fBPFtrm50tJVvJhCW
-         FTp9+X5bwDJiJf8wHwMecLKJo09Ni59wqBUrRv68L+uBHVe/4Rj0W8OrGMuqAlvZDYMp
-         q8rZZRI0zb4v5CLgEPkUvc2q4bPfqJcbg884lXkG/wT7B6CIkA70S7LRVAyryCDVSDN6
-         ywVg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720610574; x=1721215374;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=7CZIM3swadjLi9UygmpfkohZo/v8gw4/IRQgklum/Gg=;
-        b=ID95zAgx5SxvtfaoLgFG0pRDmFDZHm6lqY6HjMf87D7gEDtwU5UK/N1ksoswH4XgRC
-         HaP3Vx8/PdtnFd6KLxE/1Zw9J5EbrA+70UxOQI5CJhYVV5inMqjIKoojfhJWk87E4nNM
-         KPaqUhJ3QgH+9s472ncIe+yVKYliY6C2Qi6PsDc1vH5B7JTTWjqojlBRR4R8snGfiiun
-         jGGxXc1mzbCSiw8BYomhBk/K/xhqLsEhogIbv4EIBWK1IOIcsyb1GmVHr8N3VIsNCRqZ
-         0L/R9M94rrPbrAs4gMfB4K1gOOz1DpDUNed5YvOzMr4et3eu9pE7mXSt+oX52KBKQbMc
-         QLjA==
-X-Forwarded-Encrypted: i=1; AJvYcCW8V13d+k03oL5+DHCLDny6D3NX/E6Q6A3mTHFP/2gE7Hevbe9/Rzg+uzSVandSUUWLEdRUfPUt/ptWfzgUAdmuoMhOj0qQKVywIhnMWlvrj8FRk3uK+R8oAH6ZZYjyTaAgo/axe3bPRUPYh3V/mpS7e3MtovMwbMtppBM1WNsWios=
-X-Gm-Message-State: AOJu0YyJ8ztvUhFTZNDSBUDJnLnM0+P68Zp+qzM0CZr8T4Mp03J3e4A5
-	dhhn+Nt0LS2ccHp9uj3zlwWPEh+2Yck/VHgjsRqvTDEa4DAN7HT5cYc7Ud50S+5qqxX4bM+uTTC
-	npf7m8K697MHYYjlwdUas8lqy1AI=
-X-Google-Smtp-Source: AGHT+IErIIy4dBfKAXYPr/lGgJbvC3B/Y3aNUY2b5lfsmwPl4sL/cK6+FAenoDW3cHp8s1dQmoaP4aYGnRhTYyWuWYc=
-X-Received: by 2002:a19:f703:0:b0:52e:9407:ddcd with SMTP id
- 2adb3069b0e04-52eb9994b6dmr3216226e87.18.1720610573384; Wed, 10 Jul 2024
- 04:22:53 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hpWldCXF"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1720638875;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=GenyUG4WGoJzFPh+kl1VoQjdVWr8O2znE33SIbBnDPM=;
+	b=hpWldCXFvlw4fg+2+2+ep6ElqLu78UWa/eXHptSX/JxPIz954x5XElkhak+/hm3e2+iAGQ
+	TBqMKBYw7pY38I3Ta1UzP5TtSlN+FeuGxHE2MkC9Vjt0q4pIrQfsUiEeXU3HVHMUOXqfyY
+	oKMwn7KXkKhPI9JvzbDy8Y1Om7pDb+o=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-594-_-MIJb8qMX-zpZgXs5t_zg-1; Wed,
+ 10 Jul 2024 15:14:34 -0400
+X-MC-Unique: _-MIJb8qMX-zpZgXs5t_zg-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 413BC19560B3
+	for <linux-rt-users@vger.kernel.org>; Wed, 10 Jul 2024 19:14:33 +0000 (UTC)
+Received: from ashelat-na.remote.csb (unknown [10.22.64.33])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 322941956046;
+	Wed, 10 Jul 2024 19:14:32 +0000 (UTC)
+From: Anubhav Shelat <ashelat@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	kcarcia@redhat.com,
+	Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH v3] tuna: Add functionality to set the cstate of specified CPUs  when running tuna
+Date: Wed, 10 Jul 2024 15:14:25 -0400
+Message-ID: <20240710191424.15972-2-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CAJNi4rOGZpG6qK4ctO7yFY-s_uOax49TYNzdMx_GDXATepY4hQ@mail.gmail.com>
-In-Reply-To: <CAJNi4rOGZpG6qK4ctO7yFY-s_uOax49TYNzdMx_GDXATepY4hQ@mail.gmail.com>
-From: Neeraj upadhyay <neeraj.iitr10@gmail.com>
-Date: Wed, 10 Jul 2024 16:52:41 +0530
-Message-ID: <CAFwiDX8MWS8WRkvkt=DgEnn6ZxRZWtiyHuc0hHuSzXoGK+Lpig@mail.gmail.com>
-Subject: Re: 'rcu_preempt detected stalls on CPUs/tasks...' issue of
- cyclictest on rt-linux
-To: richard clark <richard.xnu.clark@gmail.com>
-Cc: paulmck@kernel.org, josh@joshtriplett.org, 
-	Lai Jiangshan <jiangshanlai@gmail.com>, mathieu.desnoyers@efficios.com, 
-	Steven Rostedt <rostedt@goodmis.org>, Mark Rutland <mark.rutland@arm.com>, 
-	Linus Torvalds <torvalds@linux-foundation.org>, rcu@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
-	linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Hello Richard,
+We would like to be able to set the cstate of CPUs while running tuna.
 
-On Wed, Jul 10, 2024 at 1:56=E2=80=AFPM richard clark
-<richard.xnu.clark@gmail.com> wrote:
->
-> Hi,
-> I am running a Ubuntu 20.04.5 LTS on Nvidia Jetson AGX Orin platform
-> with 12-cores as a guestOS, the kernel version is - 6.1.83-rt28.
-> Kernel cmdline is:
-> 'root=3D/dev/mmcblk0p1 rw rootwait rootfstype=3Dext4 mminit_loglevel=3D4
-> console=3DttyTCU0,115200 console=3Dtty0 firmware_class.path=3D/etc/firmwa=
-re
-> fbcon=3Dmap:0 net.ifnames=3D0'
->
-> The cyclictest command 'cyclictest -Smp99 -H 3000
-> --histfile=3Dorin_idle_hyp_4h.hist -D 4h' will hang randomly during the
-> test, then the minicom console will show below messages:
-> ...
->
-> [97619.450889] [CPU11-E] rcu: INFO: rcu_preempt detected stalls on CPUs/t=
-asks:
-> [97619.450894] [CPU11-E] rcu:   1-...!: (0 ticks this GP)
-> idle=3Ddc88/0/0x0 softirq=3D0/0 fqs=3D2 (false positive?)
-> [97619.450914] [ CPU1-E] NMI backtrace for cpu 1
-> [97619.451912] [CPU11-E] rcu: rcu_preempt kthread timer wakeup didn't
-> happen for 5251 jiffies! g6029253 f0x0 RCU_GP_WAIT_FQS(5)
-> ->state=3D0x402
-> [97619.451916] [CPU11-E] rcu:   Possible timer handling issue on cpu=3D1
-> timer-softirq=3D342864
+This patch adds the file cpupower.py and cstate subcommand to tuna-cmd.py.
+cpupower.py provides the infrastructure to interface with the cpupower
+command, and the cstate subcommand in tuna-cmd.py lets the user specify
+the cstate to be set and the cpu list to set it on.
 
-This log indicates that jiffies timers are not getting handled on CPU1, due=
- to
-which GP kthread was not woken up. Can you check irq, softirq and timer tra=
-ces
-on CPU1, to see if the softirqs/timers are getting served on this CPU?
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+---
+ tuna-cmd.py      | 14 +++++++--
+ tuna/cpupower.py | 79 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 90 insertions(+), 3 deletions(-)
+ create mode 100644 tuna/cpupower.py
 
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index f37e286bffdb..c6ef8bae09a3 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -21,7 +21,7 @@ from functools import reduce
+ import tuna.new_eth as ethtool
+ import tuna.tuna_sched as tuna_sched
+ import procfs
+-from tuna import tuna, sysfs
++from tuna import tuna, sysfs, cpupower
+ import logging
+ import time
+ import shutil
+@@ -116,7 +116,8 @@ def gen_parser():
+             "disable_perf": dict(action='store_true', help="Explicitly disable usage of perf in GUI for process view"),
+             "refresh": dict(default=2500, metavar='MSEC', type=int, help="Refresh the GUI every MSEC milliseconds"),
+             "priority": dict(default=(None, None), metavar="POLICY:RTPRIO", type=tuna.get_policy_and_rtprio, help="Set thread scheduler tunables: POLICY and RTPRIO"),
+-            "background": dict(action='store_true', help="Run command as background task")
++            "background": dict(action='store_true', help="Run command as background task"),
++            "cstate": dict(dest='cstate', metavar='CSTATE', help='Set cpus in IDLE-LIST to a specific cstate'),
+          }
+ 
+     parser = HelpMessageParser(description="tuna - Application Tuning Program")
+@@ -147,6 +148,7 @@ def gen_parser():
+     show_threads = subparser.add_parser('show_threads', description='Show thread list', help='Show thread list')
+     show_irqs = subparser.add_parser('show_irqs', description='Show IRQ list', help='Show IRQ list')
+     show_configs = subparser.add_parser('show_configs', description='List preloaded profiles', help='List preloaded profiles')
++    cstate = subparser.add_parser('cstate', description='Set a cstate on a given CPU list.', help='Set a cstate on a given CPU list.')
+ 
+     what_is = subparser.add_parser('what_is', description='Provides help about selected entities', help='Provides help about selected entities')
+     gui = subparser.add_parser('gui', description="Start the GUI", help="Start the GUI")
+@@ -219,6 +221,9 @@ def gen_parser():
+     show_irqs_group.add_argument('-S', '--sockets', **MODS['sockets'])
+     show_irqs.add_argument('-q', '--irqs', **MODS['irqs'])
+ 
++    cstate.add_argument('-c', '--cpus', **MODS['cpus'])
++    cstate.add_argument('-i', '--cstate', **MODS['cstate'])
++
+     what_is.add_argument('thread_list', **POS['thread_list'])
+ 
+     gui.add_argument('-d', '--disable_perf', **MODS['disable_perf'])
+@@ -649,7 +654,6 @@ def main():
+     parser = gen_parser()
+     # Set all necessary defaults for gui subparser if no arguments provided
+     args = parser.parse_args() if len(sys.argv) > 1 else parser.parse_args(['gui'])
+-
+     if args.debug:
+         my_logger = setup_logging("my_logger")
+         my_logger.addHandler(add_handler("DEBUG", tofile=False))
+@@ -667,6 +671,10 @@ def main():
+             print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
+             print("Log levels may be specified numerically (0-4)\n")
+ 
++    if args.cstate:
++        cpupower_controller = cpupower.Cpupower(str(args.cpu_list).strip('[]').replace(' ', ''), args.cstate)
++        cpupower_controller.enable_idle_state()
++
+     if 'irq_list' in vars(args):
+         ps = procfs.pidstats()
+         if tuna.has_threaded_irqs(ps):
+diff --git a/tuna/cpupower.py b/tuna/cpupower.py
+new file mode 100644
+index 000000000000..abbbe0448a8a
+--- /dev/null
++++ b/tuna/cpupower.py
+@@ -0,0 +1,79 @@
++#! /user/bin/python3
++
++import subprocess
++import argparse
++import os
++import multiprocessing
++import time 
++
++
++class Cpupower:
++    def __init__(self, cpulist, cstate):
++        self.cpulist = cpulist
++        self.cstate = cstate
++        self.nstates = len(os.listdir('/sys/devices/system/cpu/cpu0/cpuidle/'))    # number of cstates
++        self.cpu_count = multiprocessing.cpu_count()
++        self.cstate_cfg = []
++
++
++    def enable_idle_state(self):
++        ''' Enable a specific cstate, while disabling all other cstates, and save the current cstate configuration '''
++        self.cstate_cfg = self.get_cstate_cfg()
++
++        # enable cstate and disable the rest
++        if (self.cpulist):
++            subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        else:
++            subprocess.run(['sudo', 'cpupower', 'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', 'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        
++        if self.cpulist: print(f'Idlestate {self.cstate} enabled on CPUs {self.cpulist}')
++        else: print(f'Idlestate {self.cstate} enabled on all CPUs')
++
++
++    def get_cstate_cfg(self):
++        ''' Store the current cstate config '''
++        # cstate [m] configuration on cpu [n] can be found in '/sys/devices/system/cpu/cpu*/cpuidle/state*/disable'
++        cfg = []
++        for cpu in range(self.cpu_count):
++            cfg.append([])
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'r')
++                d = f.read(1)
++                cfg[cpu].append(d)   # cstate_cfg[n][m] stores the m-th idle state on the n-th cpu
++
++        return cfg
++
++
++    def restore_cstate(self):
++        for cpu in range(self.cpu_count):
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'w')
++                f.write(self.cstate_cfg[cpu][cs])
++                f.close()
++        print('Idle state configuration restored')
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser()
++    parser.add_argument('-c', '--cpu-list', required=False, default=None, 
++                        help='List of cpus to perform cpupower-idle-set operation on.')
++    parser.add_argument('-s', '--cstate', default='',
++                        help='Specify cstate to enable/disable')
++    
++    args = parser.parse_args()
++    print(args)
++    cpulist = args.cpu_list
++    cstate = args.cstate
++    cpupower = Cpupower(cpulist, cstate)
++
++    cpupower.enable_idle_state()
++    time.sleep(10)
++    cpupower.restore_cstate()
++
++
+-- 
+2.45.2
 
-- Neeraj
-
-> [97619.451918] [CPU11-E] rcu: rcu_preempt kthread starved for 5252
-> jiffies! g6029253 f0x0 RCU_GP_WAIT_FQS(5) ->state=3D0x402 ->cpu=3D1
-> [97619.451921] [CPU11-E] rcu:   Unless rcu_preempt kthread gets
-> sufficient CPU time, OOM is now expected behavior.
-> [97619.451923] [CPU11-E] rcu: RCU grace-period kthread stack dump:
-> [97619.451966] [CPU11-E] rcu: Stack dump where RCU GP kthread last ran:
-> ...
-> This issue doesn't show if run the Ubuntu 20.04.5 LTS with the same
-> kernel natively on the Orin board.
->
-> Any comments about this or what can I do to triage this issue?
->
