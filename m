@@ -1,96 +1,217 @@
-Received: from mail.nearlyone.de (mail.nearlyone.de [49.12.199.46])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07AA317741;
-	Fri, 12 Jul 2024 08:06:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.199.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 871B154670
+	for <linux-rt-users@vger.kernel.org>; Mon, 15 Jul 2024 18:19:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720771575; cv=none; b=o7oVMKajQpd1mI8dhcAoZGJUfiaLDLCbZWdPRFp/UAppd2/4Jy8SfGjrg8Yp8xMHvbs8Kz7dQYksVQWsxbr8hbDwwUGD2L6aEyh+Yz8XMBUVkxtCyH+4YXuGwg8iu+cqqbp6p0854UAHpGBlSErIcH/ZYl1l6SxnRGDP5JkntkM=
+	t=1721067560; cv=none; b=U0icw1k961Qo9XirCF31R/i+kK+kK8oA9MxuNkjVWGayem+QgAAGS/08im6fAmjQSvmGjptVPCqKJ/R2vYDF91wzmlosHB+OO27i5XIaYVvvruZnoX6FAh01PZ8hKlKXXt7QSz5Iz6ZQZ1QFLebmJvmaZUaWT5La6F4V+cDv9Wg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720771575; c=relaxed/simple;
-	bh=7KQJ/rSORgjYXReXBIPA5wk8qlvF92namALIkf9OGVg=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=VNX0z6vBQdDi7jtiUmveLcCyTW3CbxpdXofSSg6Xmf8qYQcG0E+Gl9Zw1u7Q09vA6HuDFYx3RQ8jNv3qA2bUWdoSTbApHGJO7Z9rzsuQ66GYmZ6gMlehy9eMYWi1brniwIodNDnbC0OZJJDf8pemfwfEi76pEFMhKVNYGUcnGwE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org; spf=pass smtp.mailfrom=monom.org; dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b=K31cVLW5; arc=none smtp.client-ip=49.12.199.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=monom.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=monom.org
+	s=arc-20240116; t=1721067560; c=relaxed/simple;
+	bh=xjgDr9qIR8iQjGDtO9RabCCdZ+LsmpQcQV1LTBUAohc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=EcyZtXe4iH3eiHBqaHJRKJVaat88TzkgEgXqS9ZPz2t2P3AsdPPsPRK3enzxjw3pr/OVPfBkkfggTq8KIhLejjnCuRnxiGiIhMC6kEyCy7tGuFNf4S7kMTehyV2srhmxdM1xQxABYU/XmEwQ5JnuUUvJzwSabZVKranxu0NArqY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Q94kTQMA; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=monom.org header.i=@monom.org header.b="K31cVLW5"
-Received: from [127.0.0.1] (localhost [127.0.0.1]) by localhost (Mailerdaemon) with ESMTPSA id E7D99DACD3;
-	Fri, 12 Jul 2024 10:06:00 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=monom.org; s=dkim;
-	t=1720771563; h=from:subject:date:message-id:to:mime-version:content-type;
-	bh=TvF5r8A7Vug3T/T54B+epLrboJRNbq0U5RG0fUJgFGs=;
-	b=K31cVLW5lEAt46WtS1G6zNBb0CLvm2GhWiw78YLGKfoFYTOi7tnp6Ep1nZYyCjeVCmSaQV
-	I0Z7l2+9Cn5EJrARjhRG9LDV1b2yHX5lzxAb17YXiRdr0AE8Oq/pHJw5hwHukCuYEkDmCc
-	rw4s54XLVUC/J4rdlYSznFHv8sEh+ZbneWqC+VRGWEG2X0DwCl9OrbNjccQhJ02FjxPDub
-	P135uSExWJXyweVWvIaV+ghdB8a1d02ZVdFv2KJtYCQ9n3LPRpE/OoAh4CwEkQe1zXr2E7
-	hanDEoe3yh9MlnZY7CUKbECViWi/2Iy8ZpkJ6ORaQeoFa61w3YLOadiwea/6tg==
-Date: Fri, 12 Jul 2024 10:06:00 +0200
-From: Daniel Wagner <wagi@monom.org>
-To: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, 
-	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
-	Tom Zanussi <tom.zanussi@linux.intel.com>, Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 4.19.317-rt137
-Message-ID: <172077140772.5488.7194965584849299600@beryllium.lan>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q94kTQMA"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1721067557;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=ZhLShELRHH8hC106lENh9F9FDB7kQnfv77qJHx72Zzs=;
+	b=Q94kTQMAGWz7ywWss9s+IrLPH6WPbHwnvXMWydAkFzGVYKf1fhUTwY+wy/ejnRhUl0we2x
+	JUL+0pSeNi/9/8cLlW2621Zq6r2fICM3IwyRcfivPeGzV6xTzPOTs4F5CBwnkwDLCvS+HY
+	136nJq+H8yRPPAFFTXSXLoLB8bNDQds=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-110-nFX7dztYM8u9NNlcOhAXEw-1; Mon,
+ 15 Jul 2024 14:19:13 -0400
+X-MC-Unique: nFX7dztYM8u9NNlcOhAXEw-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 02AE71955F41
+	for <linux-rt-users@vger.kernel.org>; Mon, 15 Jul 2024 18:19:13 +0000 (UTC)
+Received: from ashelat-na.remote.csb (unknown [10.22.64.144])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 64F471955D42;
+	Mon, 15 Jul 2024 18:19:11 +0000 (UTC)
+From: Anubhav Shelat <ashelat@redhat.com>
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	kcarcia@redhat.com,
+	Anubhav Shelat <ashelat@redhat.com>
+Subject: [PATCH 1/2] rteval: Added functionality to allow user to set the cstate of specified cpus when running rteval
+Date: Mon, 15 Jul 2024 14:15:24 -0400
+Message-ID: <20240715181524.188573-2-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Last-TLS-Session-Version: TLSv1.3
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-Hello RT-list!
+We would like to be able to set the cstates of CPUs while running
+rteval.
 
-I'm pleased to announce the 4.19.317-rt137 stable release.
+This patch adds the file cpupower.py and options '--idle-set' and '--cpulist'
+within rteval to use cpupower.
 
-This just updates this series to the latest stable upstream
-release. No RT specific changes.
+cpupower.py provides the infrastructure to interface with the cpupower
+command, and the options in rteval-cmd let the user specify the cstate to be set
+and the CPUs to set it on.
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.19-rt
-  Head SHA1: cd63b6227c26a73d4626bdab9811f685f0e3fd7c
-
-Or to build 4.19.317-rt137 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.317.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.317-rt137.patch.xz
-
-Signing key fingerprint:
-
-  5BF6 7BC5 0826 72CA BB45  ACAE 587C 5ECA 5D0A 306C
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Daniel
-
-Changes from v4.19.316-rt136:
+Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 ---
+ rteval-cmd         | 16 ++++++++-
+ rteval/cpupower.py | 85 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 100 insertions(+), 1 deletion(-)
+ create mode 100644 rteval/cpupower.py
 
-Daniel Wagner (1):
-      Linux 4.19.317-rt137
----
-localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
----
-diff --git a/localversion-rt b/localversion-rt
-index f824f53c19ea..41b444e910ef 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt136
-+-rt137
+diff --git a/rteval-cmd b/rteval-cmd
+index 5cb6d7a44523..d9bf16838b6d 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -29,6 +29,7 @@ from rteval.Log import Log
+ from rteval import RtEval, rtevalConfig
+ from rteval.modules.loads import LoadModules
+ from rteval.modules.measurement import MeasurementModules
++from rteval import cpupower
+ from rteval.version import RTEVAL_VERSION
+ from rteval.systopology import SysTopology, parse_cpulist_from_config
+ from rteval.modules.loads.kcompile import ModuleParameters
+@@ -146,7 +147,11 @@ def parse_options(cfg, parser, cmdargs):
+     parser.add_argument("-S", "--source-download", nargs="*", dest="rteval___srcdownload",
+                         type=str, default=None, metavar="KERNEL_VERSION",
+                         help='download a source kernel from kernel.org and exit')
+-
++    parser.add_argument("-c", "--cpulist", dest="rteval___cpulist", metavar="CPULIST",
++                        default=str([i for i in range(os.cpu_count())]).strip('[]'),
++                        help='specify list of cpus whose idle state to modify')
++    parser.add_argument('--idle-set', dest='rteval___cstate', metavar='CSTATE',
++                        default=None, help='cstate to enable for this rteval run')
+ 
+     if not cmdargs:
+         cmdargs = ["--help"]
+@@ -394,6 +399,11 @@ if __name__ == '__main__':
+         if not os.path.isdir(rtevcfg.workdir):
+             raise RuntimeError(f"work directory {rtevcfg.workdir} does not exist")
+ 
++        # if idle-set has been specified, enable idlestate in rtecfg.cpulist
++        cpupower_controller = None
++        if rtevcfg.cstate:
++            cpupower_controller = cpupower.Cpupower(rtevcfg.cpulist, rtevcfg.cstate)
++            cpupower_controller.enable_idle_state()
+ 
+         rteval = RtEval(config, loadmods, measuremods, logger)
+         rteval.Prepare(rtevcfg.onlyload)
+@@ -413,6 +423,10 @@ if __name__ == '__main__':
+             ec = rteval.Measure()
+             logger.log(Log.DEBUG, f"exiting with exit code: {ec}")
+ 
++        # reset idlestate
++        if rtevcfg.cstate:
++            cpupower_controller.restore_cstate()
++
+         sys.exit(ec)
+     except KeyboardInterrupt:
+         sys.exit(0)
+diff --git a/rteval/cpupower.py b/rteval/cpupower.py
+new file mode 100644
+index 000000000000..da869420eb6f
+--- /dev/null
++++ b/rteval/cpupower.py
+@@ -0,0 +1,85 @@
++#! /user/bin/python3
++
++import subprocess
++import argparse
++import os
++import multiprocessing
++import time 
++
++
++class Cpupower:
++    def __init__(self, cpulist, cstate):
++        self.cpulist = cpulist
++        self.cstate = cstate
++        self.nstates = len(os.listdir('/sys/devices/system/cpu/cpu0/cpuidle/'))    # number of cstates
++        self.cpu_count = multiprocessing.cpu_count()
++        self.cstate_cfg = []
++
++
++    def enable_idle_state(self):
++        ''' Enable a specific cstate, while disabling all other cstates, and save the current cstate configuration '''
++        self.cstate_cfg = self.get_cstate_cfg()
++
++        # enable cstate and disable the rest
++        if (self.cpulist):
++            subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        else:
++            subprocess.run(['sudo', 'cpupower', 'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', 'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        
++        if self.cpulist: print(f'Idlestate {self.cstate} enabled on CPUs {self.cpulist}')
++        else: print(f'Idlestate {self.cstate} enabled on all CPUs')
++
++
++    def get_cstate_cfg(self):
++        ''' Store the current cstate config '''
++        # cstate [m] configuration on cpu [n] can be found in '/sys/devices/system/cpu/cpu*/cpuidle/state*/disable'
++        cfg = []
++        for cpu in range(self.cpu_count):
++            cfg.append([])
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'r')
++                d = f.read(1)
++                cfg[cpu].append(d)   # cstate_cfg[n][m] stores the m-th idle state on the n-th cpu
++
++        return cfg
++
++
++    def restore_cstate(self):
++        for cpu in range(self.cpu_count):
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'w')
++                f.write(self.cstate_cfg[cpu][cs])
++                f.close()
++        print('Idle state configuration restored')
++
++    def get_idle_info():
++        subprocess.call(['cpupower', 'idle-info'])
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser()
++    parser.add_argument('-c', '--cpu-list', required=False, default=None, 
++                        help='List of cpus to perform cpupower-idle-set operation on.')
++    parser.add_argument('-s', '--cstate', default='',
++                        help='Specify cstate to enable/disable')
++    parser.add_argument('--info', default=False, action='store_true', help='Get idle state information')
++    
++    args = parser.parse_args()
++    print(args)
++    cpulist = args.cpu_list
++    cstate = args.cstate
++    if (cstate):
++        cpupower = Cpupower(cpulist, cstate)
++        cpupower.enable_idle_state()
++        time.sleep(10)
++        cpupower.restore_cstate()
++    elif (args.info):
++        Cpupower.get_idle_info()
++
++
+-- 
+2.45.2
+
