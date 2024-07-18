@@ -1,32 +1,69 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BA6381ADA
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Jul 2024 19:24:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C16E76C61
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Jul 2024 19:32:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721330691; cv=none; b=B2QRlgDeTwsWhNh8DL0Q48BNBT/0ct+fBeHCY3BnQ4oPihBWySIPS8n3qTnFWytWAq89Lt/XVIIwPiDryIcWt3JSoVnPpHwGR/fDUm+iaNfPqiJwW8+j5jO+7zuu0TWwGUtrIBTvrw4lGv0N44NEPUX1as+pad9v0VEp/inLRHQ=
+	t=1721331170; cv=none; b=RCyN5fptC5ZHHzxaUUq98CW+RKymAcbyoOAZFO2yHvTcVsPIfHkMR/ouXTskMdlip/mqT+p/54UbFvO5c0TXbOPFBvwtpErJdjqEwo+G57mYzqG6By+kIUA38mPnvi4OyY7oRrXPntvCKJMpMR20fS8rGosioi81cYDy5ZWi9+k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721330691; c=relaxed/simple;
-	bh=00mp7z5nxsPjLKa37ZxZlfledgtKHG0MSNfZlCFKI4k=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=F1Xzsd4HHjrSwwZeeZScVlcFv7RVE47m+joQ3ezLBV4QW6QY5AFxUSv6xaOCYGmsxVw7Y+Ik7RoxwwV8/ghT5LzVNQmcSPz9V0inFBvt5B4+31ZYQieCESPWz2CMKUJHsYQry0YtSedRVBpl4xJfQYC8BKziQZZSuZGYQ9W7Ong=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1AC76C116B1;
-	Thu, 18 Jul 2024 19:24:48 +0000 (UTC)
-Date: Thu, 18 Jul 2024 15:24:47 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Andrew Halaney <ahalaney@redhat.com>
-Cc: pmladek@suse.com, john.ogness@linutronix.de, senozhatsky@chromium.org,
- debarbos@redhat.com, williams@redhat.com, jlelli@redhat.com,
- linux-rt-users@vger.kernel.org
-Subject: Re: [BUG] printk/nbcon can use RCU illegally prior to CPU online
-Message-ID: <20240718152447.42244f98@rorschach.local.home>
-In-Reply-To: <436jncgrfxwcizjw5gxw3yar5ybo62zdctout6sti6gamwtnlw@gqrmo5ine6d2>
-References: <5x4nejpojrtny37k7l6loewqwuaituq77zc3tkkojvawcuvmml@thwg65fdb3vn>
-	<20240718115704.0cd768bc@rorschach.local.home>
-	<436jncgrfxwcizjw5gxw3yar5ybo62zdctout6sti6gamwtnlw@gqrmo5ine6d2>
-X-Mailer: Claws Mail 3.17.8 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+	s=arc-20240116; t=1721331170; c=relaxed/simple;
+	bh=ds1Ug1qyd+5qIANQOjzD6HsawRKuYHr9SnAwXh+zIRc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=iEBwCTjqgYizJtV8vN+klwq99rlCMOsM1VvQvEgr1XPNHYDqqeqbkyDJjCUHNt+4tEvMdSXLVMib7RhdWuc0MLkH+863TuxDxiJY+7cyCb/bx3T8xDfGbp+pl6EfR5XApmWwiRmhIR0ulAGiKk7KZJ2R+LPGZVgtkjTa7I9E/78=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZTjW5ehw; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZTjW5ehw"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1721331167;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=s0Nc3ekc8rRWHiITi1paz5PDorluAg0+MpkhMTv70q8=;
+	b=ZTjW5ehwkvmwVR+eV52BxqdEVXnzYyDk1sIyswnoxmLN2hdFzpGTha9WCQ3SAcq++qpDQW
+	MzNFEF/bX2kvOwzaJRH5LiWTuTXeEMV6c29DMH+L/c35FW5lxHuiWPtNpMDbuCqih5KkBi
+	nqKrNE1vNZ1rpD11OCDlqfy1zujAVYc=
+Received: from mail-yw1-f199.google.com (mail-yw1-f199.google.com
+ [209.85.128.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-355-WjkkeF4UP06V5moqM2B4xQ-1; Thu, 18 Jul 2024 15:32:45 -0400
+X-MC-Unique: WjkkeF4UP06V5moqM2B4xQ-1
+Received: by mail-yw1-f199.google.com with SMTP id 00721157ae682-664b7a67ad4so30146007b3.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Jul 2024 12:32:45 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1721331165; x=1721935965;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=s0Nc3ekc8rRWHiITi1paz5PDorluAg0+MpkhMTv70q8=;
+        b=F+XK8kTAkSPto3OGXBXLPIwxJ7uWBdKoA9cVmZgr38dzIhCocGvYKgwvve8f8jqPnX
+         nKwGmJYIH/dDyVgnX/GkjrCAyYkc1E8NJierhAMC6iRkgdCczy24l0vb0sXCGwPThQcF
+         JPRYceLChpmQbpxN6TEj+BIFE8WXnYs5a0tWQA0gLrnCTNtkdLrtWngvF40u1qXTLk9P
+         chk2vTyTL7ocHsp27RADFvQmESFbJlcPVjAQ/fvezoW47lgnkgDN/QfWbCm/aF0QwePC
+         XyhVZhews9f4Yo/V82uEMWvebmxX/bx9qTt4tnuH7D2Cd/rCx++6Sp/7Yz3XEa1QycP1
+         fZIg==
+X-Forwarded-Encrypted: i=1; AJvYcCWuyk/4V9p4XT2SLFTD1U2BYr+p5PcNRurEl8evS1sqLPZY6jNHoPQNjsgUNhwv1UzQH9bFffb+C62kPmQ/5f/BtcHEusG4z16MPjh/75w=
+X-Gm-Message-State: AOJu0YzVZeFK4SDeH3mFaOuOIuqNQ2LwT7TVZmY8HEUMoP+lzlETCwXJ
+	fWMp5RKMpciwqwmRNDxqze6OVR7u7MC5smONVIGpau+3RcAeq9fmd0ooTbDSYr/a4ERvscQMPFd
+	uT3bZm1moe0u3HXyGJyVzAa3436QC2s1dWOqYxd4iT03IyFkBUO1/9BNkzZMv64KpY+Bfhx4C
+X-Received: by 2002:a05:690c:dce:b0:64a:3e36:7fd1 with SMTP id 00721157ae682-66601ccbfb0mr55200317b3.10.1721331165058;
+        Thu, 18 Jul 2024 12:32:45 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHYQ7+BQF1L3EAconKqvzSfWvYe/ZcBMPBKx/shT7HgxnxiUSxf5w7DMvZdV2HVeKxwDJZ+/Q==
+X-Received: by 2002:a05:690c:dce:b0:64a:3e36:7fd1 with SMTP id 00721157ae682-66601ccbfb0mr55199997b3.10.1721331164688;
+        Thu, 18 Jul 2024 12:32:44 -0700 (PDT)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-44f969aae98sm5699941cf.6.2024.07.18.12.32.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 18 Jul 2024 12:32:44 -0700 (PDT)
+Date: Thu, 18 Jul 2024 15:32:43 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Crystal Wood <crwood@redhat.com>
+cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 1/4] rteval: measurement: Remove ModuleInfo()
+In-Reply-To: <20240621022417.2086751-2-crwood@redhat.com>
+Message-ID: <acf0b9ad-1e07-5392-bd93-f41933889d72@redhat.com>
+References: <20240621022417.2086751-1-crwood@redhat.com> <20240621022417.2086751-2-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -34,60 +71,330 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-On Thu, 18 Jul 2024 13:13:02 -0500
-Andrew Halaney <ahalaney@redhat.com> wrote:
 
 
-> I'll be honest, I only considered this from a printk() point of view so
-> far and pretty much ignored the original splat (as someone else is
-> looking at that). Here's the original splat from a centos kernel, I have
-> yet to look into it other than "we took an exception prior to RCU coming
-> online for this CPU" and me naively thinking that printk() should work
-> everywhere. I'll post the splat here for now before considering it more,
-> but it sounds like my expectation is wrong and that if something goes
-> awry and needs to printk prior to the CPU coming online, then this RCU
-> warning is sort of expected?:
 
-Note, printk() is most definitely not safe in all contexts. It can
-cause issues if done in NMI, or even called while holding an scheduler
-rq lock. And now we are trying to make sure all tracing/printk is done
-while RCU is watching.
+On Thu, 20 Jun 2024, Crystal Wood wrote:
 
+> All of the measurement modules have identical settings, and the use cases
+> for deviating seem questionable.  While we do have a desire to keep
+> cyclictest and timerlat from running together, turning off run_parallel
+> would prevent sysstat from running at the same time.  And if there's a
+> desire to run without loads, that seems like it belongs in the realm of
+> user configuration, rather than anything inherent to a given measurement
+> module.
 > 
->     [ 13.643007] smp: Bringing up secondary CPUs ...
->     [ 13.644422] smpboot: x86: Booting SMP configuration:
->     [ 13.644431] .... node #0, CPUs: #1 #2 #3 #4 #5 #6 #7 #8 #9 #10 #11 #12 #13 #14 #15 #16 #17 #18 #19 #20 #21 #22 #23 #24 #25 #26 #27 #28 #29 #30 #31 #32 #33 #34
->     [ 13.680691] Callback from call_rcu_tasks_rude() invoked.
->     [ 13.684308] #35 #36 #37 #38 #39 #40 #41 #42 #43 #44 #45 #46 #47 #48 #49 #50 #51 #52 #53 #54 #55
->     [ 13.720218] .... node #1, CPUs: #56 #57 #58 #59 #60 #61 #62 #63 #64 #65 #66 #67 #68 #69 #70 #71 #72 #73 #74 #75 #76 #77 #78 #79 #80 #81 #82 #83 #84 #85 #86 #87 #88 #89 #90 #91 #92 #93 #94 #95 #96 #97 #98 #99
->     [ 13.783247] Callback from call_rcu_tasks() invoked.
->     [ 13.785941] #100 #101 #102 #103 #104 #105 #106 #107 #108 #109 #110 #111
->     [ 5.061942] x2apic lock mismatch between BSP and AP.
-
->     [ 5.061942] =============================
->     [ 5.061942] WARNING: suspicious RCU usage
->     [ 5.061942] 5.14.0-467.el9.x86_64+debug #1 Not tainted
->     [ 5.061942] -----------------------------
->     [ 5.061942] kernel/printk/nbcon.c:1118 suspicious rcu_dereference_check() usage!
-
-You said this was a centos kernel. Well that explains why the above
-says 5.14 and has a reference to kernel/printk/nbcon.c, which doesn't
-exist in 5.14.
-
-Looks like a bad backport.
-
--- Steve
-
-
->     [ 5.061942]
->     other info that might help us debug this:
+> Any future module flags can be implemented similarly to what is done
+> in load modules (e.g. set_exclusive).
 > 
->     [ 5.061942]
->     RCU used illegally from offline CPU!
->     rcu_scheduler_active = 1, debug_locks = 1
->     [ 5.061942] 2 locks held by swapper/1/0:
->     [ 5.061942] #0: ffffffff8b721a10 (console_srcu)
->     {....}-{0:0}, at: console_srcu_read_lock+0x44/0x60
->     [ 5.061942] #1: ffffffff8b735080 (rcu_read_lock){....}
+> Places that checked with_loads now check whether a LoadModules container
+> is present at all, which can be wired up to a command line option in the
+> future.
+> 
+> Signed-off-by: Crystal Wood <crwood@redhat.com>
+> ---
+>  rteval/__init__.py                       | 39 ++++++-------
+>  rteval/modules/__init__.py               | 13 +----
+>  rteval/modules/measurement/__init__.py   | 73 ++----------------------
+>  rteval/modules/measurement/cyclictest.py |  5 --
+>  rteval/modules/measurement/sysstat.py    |  7 ---
+>  rteval/modules/measurement/timerlat.py   |  5 --
+>  6 files changed, 26 insertions(+), 116 deletions(-)
+> 
+> diff --git a/rteval/__init__.py b/rteval/__init__.py
+> index 1a61148ef327..4a6883e28e5b 100644
+> --- a/rteval/__init__.py
+> +++ b/rteval/__init__.py
+> @@ -111,20 +111,21 @@ class RtEval(rtevalReport):
+>          except Exception as err:
+>              raise RuntimeError(f"Cannot create report directory (NFS with rootsquash on?) [{err}]]")
+>  
+> -        self.__logger.log(Log.INFO, "Preparing load modules")
+> -        params = {'workdir':self.__rtevcfg.workdir,
+> -                  'reportdir':self.__reportdir and self.__reportdir or "",
+> -                  'builddir':builddir,
+> -                  'srcdir':self.__rtevcfg.srcdir,
+> -                  'verbose': self.__rtevcfg.verbose,
+> -                  'debugging': self.__rtevcfg.debugging,
+> -                  'numcores':self._sysinfo.cpu_getCores(True),
+> -                  'logging':self.__rtevcfg.logging,
+> -                  'memsize':self._sysinfo.mem_get_size(),
+> -                  'numanodes':self._sysinfo.mem_get_numa_nodes(),
+> -                  'duration': float(self.__rtevcfg.duration),
+> -                  }
+> -        self._loadmods.Setup(params)
+> +        if self._loadmods:
+> +            self.__logger.log(Log.INFO, "Preparing load modules")
+> +            params = {'workdir':self.__rtevcfg.workdir,
+> +                      'reportdir':self.__reportdir and self.__reportdir or "",
+> +                      'builddir':builddir,
+> +                      'srcdir':self.__rtevcfg.srcdir,
+> +                      'verbose': self.__rtevcfg.verbose,
+> +                      'debugging': self.__rtevcfg.debugging,
+> +                      'numcores':self._sysinfo.cpu_getCores(True),
+> +                      'logging':self.__rtevcfg.logging,
+> +                      'memsize':self._sysinfo.mem_get_size(),
+> +                      'numanodes':self._sysinfo.mem_get_numa_nodes(),
+> +                      'duration': float(self.__rtevcfg.duration),
+> +                      }
+> +            self._loadmods.Setup(params)
+>  
+>          self.__logger.log(Log.INFO, "Preparing measurement modules")
+>          self._measuremods.Setup(params)
+> @@ -136,13 +137,11 @@ class RtEval(rtevalReport):
+>              raise Exception("measure_profile is not an MeasurementProfile object")
+>  
+>          measure_start = None
+> -        (with_loads, run_parallel) = measure_profile.GetProfile()
+> -        self.__logger.log(Log.INFO, f"Using measurement profile [loads: {with_loads}  parallel: {run_parallel}]")
+>          try:
+>              nthreads = 0
+>  
+>              # start the loads
+> -            if with_loads:
+> +            if self._loadmods:
+>                  self._loadmods.Start()
+>  
+>              print(f"rteval run on {os.uname()[2]} started at {time.asctime()}")
+> @@ -168,7 +167,7 @@ class RtEval(rtevalReport):
+>  
+>              # Unleash the loads and measurement threads
+>              report_interval = int(self.__rtevcfg.report_interval)
+> -            if with_loads:
+> +            if self._loadmods:
+>                  self._loadmods.Unleash()
+>                  nthreads = threading.active_count()
+>              else:
+> @@ -192,7 +191,7 @@ class RtEval(rtevalReport):
+>                      self.__logger.log(Log.WARN,
+>                                        "Measurement threads did not use the full time slot. Doing a controlled stop.")
+>  
+> -                if with_loads:
+> +                if nthreads:
+>                      if threading.active_count() < nthreads:
+>                          raise RuntimeError("load thread died!")
+>  
+> @@ -222,7 +221,7 @@ class RtEval(rtevalReport):
+>              measure_profile.Stop()
+>  
+>              # stop the loads
+> -            if with_loads:
+> +            if self._loadmods:
+>                  self._loadmods.Stop()
+>  
+>          print(f"stopping run at {time.asctime()}")
+> diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+> index 4330a839db6f..0c0ce7202f77 100644
+> --- a/rteval/modules/__init__.py
+> +++ b/rteval/modules/__init__.py
+> @@ -269,14 +269,6 @@ reference from the first import"""
+>              return mod
+>  
+>  
+> -    def ModuleInfo(self, modname, modroot=None):
+> -        """Imports a module and calls the modules' ModuleInfo() function and returns
+> -the information provided by the module"""
+> -
+> -        mod = self.LoadModule(modname, modroot)
+> -        return mod.ModuleInfo()
+> -
+> -
+>      def SetupModuleOptions(self, parser, config):
+>          """Sets up a separate argparse ArgumentGroup per module with its supported parameters"""
+>  
+> @@ -495,9 +487,8 @@ class RtEvalModules:
+>  
+>  
+>      def Unleash(self):
+> -        """Unleashes all the loaded modules workloads"""
+> +        """Unleashes all the loaded modules"""
+>  
+> -        # turn loose the loads
+>          nthreads = 0
+>          self._logger.log(Log.INFO, f"Sending start event to all {self._module_type} modules")
+>          for (modname, mod) in self.__modules:
+> @@ -508,7 +499,7 @@ class RtEvalModules:
+>          return nthreads
+>  
+>  
+> -    def _isAlive(self):
+> +    def isAlive(self):
+>          """Returns True if all modules are running"""
+>  
+>          for (modname, mod) in self.__modules:
+> diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
+> index 43c0fda30ce1..7b1d84ef554d 100644
+> --- a/rteval/modules/measurement/__init__.py
+> +++ b/rteval/modules/measurement/__init__.py
+> @@ -11,24 +11,13 @@ import rteval.cpulist_utils as cpulist_utils
+>  class MeasurementProfile(RtEvalModules):
+>      """Keeps and controls all the measurement modules with the same measurement profile"""
+>  
+> -    def __init__(self, config, with_load, run_parallel, modules_root, logger):
+> -        self.__with_load = with_load
+> -        self.__run_parallel = run_parallel
+> -
+> -        # Only used when running modules serialised
+> -        self.__run_serialised_mods = None
+> -
+> +    def __init__(self, config, modules_root, logger):
+>          self._module_type = "measurement"
+>          self._module_config = "measurement"
+>          self._report_tag = "Profile"
+>          RtEvalModules.__init__(self, config, modules_root, logger)
+>  
+>  
+> -    def GetProfile(self):
+> -        "Returns the profile characteristic as (with_load, run_parallel)"
+> -        return (self.__with_load, self.__run_parallel)
+> -
+> -
+>      def ImportModule(self, module):
+>          "Imports an exported module from a ModuleContainer() class"
+>          return self._ImportModule(module)
+> @@ -41,54 +30,6 @@ class MeasurementProfile(RtEvalModules):
+>          self._RegisterModuleObject(modname, modobj)
+>  
+>  
+> -    def Unleash(self):
+> -        """Unleashes all the measurement modules"""
+> -
+> -        if self.__run_parallel:
+> -            # Use the inherrited method if running
+> -            # measurements in parallel
+> -            return RtEvalModules.Unleash(self)
+> -
+> -        # Get a list of all registered modules,
+> -        # and start the first one
+> -        self.__serialised_mods = self.GetModulesList()
+> -        mod = self.GetNamedModuleObject(self.__serialised_mods[0])
+> -        mod.setStart()
+> -        return 1
+> -
+> -
+> -    def MakeReport(self):
+> -        "Generates an XML report for all run measurement modules in this profile"
+> -        rep_n = RtEvalModules.MakeReport(self)
+> -        rep_n.newProp("loads", self.__with_load and "1" or "0")
+> -        rep_n.newProp("parallel", self.__run_parallel and "1" or "0")
+> -        return rep_n
+> -
+> -
+> -    def isAlive(self):
+> -        """Returns True if all modules which are supposed to run runs"""
+> -
+> -        if self.__run_parallel:
+> -            return self._isAlive()
+> -
+> -        if self.__serialised_mods:
+> -            # If running serialised, first check if measurement is still running,
+> -            # if so - return True.
+> -            mod = self.GetNamedModuleObject(self.__serialised_mods[0])
+> -            if mod.WorkloadAlive():
+> -                return True
+> -
+> -            # If not, go to next on the list and kick it off
+> -            self.__serialised_mods.remove(self.__serialised_mods[0])
+> -            if self.__serialised_mods:
+> -                mod = self.GetNamedModuleObject(self.__serialised_mods[0])
+> -                mod.setStart()
+> -                return True
+> -
+> -        # If we've been through everything, nothing is running
+> -        return False
+> -
+> -
+>  class MeasurementModules:
+>      """Class which takes care of all measurement modules and groups them into
+>  measurement profiles, based on their characteristics"""
+> @@ -116,13 +57,11 @@ measurement profiles, based on their characteristics"""
+>                  self.__container.LoadModule(m[0])
+>  
+>  
+> -    def GetProfile(self, with_load, run_parallel):
+> +    def GetProfile(self):
+>          "Returns the appropriate MeasurementProfile object, based on the profile type"
+>  
+>          for p in self.__measureprofiles:
+> -            mp = p.GetProfile()
+> -            if mp == (with_load, run_parallel):
+> -                return p
+> +            return p
+>          return None
+>  
+>  
+> @@ -154,15 +93,13 @@ measurement profiles, based on their characteristics"""
+>  
+>          for (modname, modtype) in modcfg:
+>              if isinstance(modtype, str) and modtype.lower() == 'module':  # Only 'module' will be supported (ds)
+> -                # Extract the measurement modules info
+> -                modinfo = self.__container.ModuleInfo(modname)
+> +                self.__container.LoadModule(modname)
+>  
+>                  # Get the correct measurement profile container for this module
+> -                mp = self.GetProfile(modinfo["loads"], modinfo["parallel"])
+> +                mp = self.GetProfile()
+>                  if mp is None:
+>                      # If not found, create a new measurement profile
+>                      mp = MeasurementProfile(self.__cfg,
+> -                                            modinfo["loads"], modinfo["parallel"],
+>                                              self.__modules_root, self.__logger)
+>                      self.__measureprofiles.append(mp)
+>  
+> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+> index 3301e1b45e11..3a34c1b988d6 100644
+> --- a/rteval/modules/measurement/cyclictest.py
+> +++ b/rteval/modules/measurement/cyclictest.py
+> @@ -394,11 +394,6 @@ class Cyclictest(rtevalModulePrototype):
+>          return rep_n
+>  
+>  
+> -def ModuleInfo():
+> -    return {"parallel": True,
+> -            "loads": True}
+> -
+> -
+>  def ModuleParameters():
+>      """ default parameters """
+>      return {"interval": {"descr": "Base interval of the threads in microseconds",
+> diff --git a/rteval/modules/measurement/sysstat.py b/rteval/modules/measurement/sysstat.py
+> index d4646c1646f4..a0efd8953659 100644
+> --- a/rteval/modules/measurement/sysstat.py
+> +++ b/rteval/modules/measurement/sysstat.py
+> @@ -93,13 +93,6 @@ class sysstat(rtevalModulePrototype):
+>  
+>  
+>  
+> -def ModuleInfo():
+> -    # sysstat features - run in parallel with outher measurement modules with loads
+> -    return {"parallel": True,
+> -            "loads": True}
+> -
+> -
+> -
+>  def ModuleParameters():
+>      return {}  # No arguments available
+>  
+> diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
+> index e8345fab1ad7..19dd30732936 100644
+> --- a/rteval/modules/measurement/timerlat.py
+> +++ b/rteval/modules/measurement/timerlat.py
+> @@ -329,11 +329,6 @@ class Timerlat(rtevalModulePrototype):
+>          return rep_n
+>  
+>  
+> -def ModuleInfo():
+> -    """ Required measurement module information """
+> -    return {"parallel": True,
+> -            "loads": True}
+> -
+>  def ModuleParameters():
+>      """ default parameters """
+>      return {"priority": {"descr": "Run rtla timerlat with this priority",
+> -- 
+> 2.45.1
+> 
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+
