@@ -1,307 +1,115 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f181.google.com (mail-pl1-f181.google.com [209.85.214.181])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E8F31CAAF
-	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 07:37:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFF87158A26
+	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 14:06:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721806677; cv=none; b=kNy5orQNWmcYRq/5bxrvhL1rq6//otRPW4uX/T3fvQGXyx7npKwccT5fGL7GG6kzdNZA1fQRR2Rddn4VcOTuaeBP0DKOCrHCSeM4VnLFseHgNVAWtuSexaMOEgfRdwDJ/hrfqn2v1YkeK2XgIeb9bYFiySkb2HVJouNucQ11Oyo=
+	t=1721830013; cv=none; b=URN7phkAfMnPrOBO2mmTCel4o4fLVwyltZW+GHvQBWX/hsZMHZOUe7SrTvxnu5MALMCsA4Kk5R5Kzr/HYqm5H7UPP3JHtk3o6w259+qoLmyUHIqlxQ77X0HxJZt+vndOIuXHa4hiNh/bkyWAZEVYI7EDJeAwIwZ87EoEZnov0XA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721806677; c=relaxed/simple;
-	bh=wO83+BMLcOl7utq0+Q1HAgoh/2V6OJxNa4wWPXhVNQo=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=QDkFBKj+u5QBdlE88IZWjdRXcKxZe9eNQtIbkkz7L2YW85PRSkFFpMLzq2kdvnLPX4cRrbfTcAZnk6q1StpEAgK7osWAbvtjVh/jHp951yjeh6XyK/5ptJpEt+Ktk9Gfze2wGLDPlJ97FMwsEb7mc77KKBBqkByr02BTKaMP1TU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=diWwS+L7; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1721830013; c=relaxed/simple;
+	bh=UtZo+Mp5ePUV65mmk+S+8UOESU/Ss93dL1lZkIYUsfg=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=BOKrOAW2RGvSj1GGwsG/tV80p9HHGdozUYiqIqqyBgXU4cQfEvDYO7UfTTXdarZdzVPrry5/k6OJtXlk052kg0xqlspWXwlGLwpOuMcUiVwmIIJ0wMT7sUYTxcqJGKFZlEeuL2d4u1Iz6wqfhz8HhrdG1K/Q3Au/ChlS1NQL40U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com; spf=fail smtp.mailfrom=sidebranch.com; dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b=lUWbFYfD; arc=none smtp.client-ip=209.85.214.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=sidebranch.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="diWwS+L7"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721806673;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=y/RV3yzRBJQRzALmCzWAnMKHwcni4UATe4jEeisJgik=;
-	b=diWwS+L7iBvMc4jertfN48NBE5gEFpOVMx9AKONjT8DmzZ3PTdw/IV15++cADl34HmY9ha
-	4iUZKNdtLebR7nK+aCHqp8ESBn7GSfyLibDNkIJjLK5kqUdo8oj8bxkAY6YKwiBmONev30
-	l0AVPcv5rb7xQ5gawm1DTxFhpB685hs=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-347-Ma5tHodANr6iVElaf6jIgQ-1; Wed,
- 24 Jul 2024 03:37:51 -0400
-X-MC-Unique: Ma5tHodANr6iVElaf6jIgQ-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C1C471955D4F
-	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 07:37:50 +0000 (UTC)
-Received: from fedora.redhat.com (unknown [10.45.224.175])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 11D373000192;
-	Wed, 24 Jul 2024 07:37:48 +0000 (UTC)
-From: tglozar@redhat.com
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com,
-	Tomas Glozar <tglozar@redhat.com>
-Subject: [PATCH v2] rteval: Add module for tuned state
-Date: Wed, 24 Jul 2024 09:37:42 +0200
-Message-ID: <20240724073742.58006-1-tglozar@redhat.com>
+	dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b="lUWbFYfD"
+Received: by mail-pl1-f181.google.com with SMTP id d9443c01a7336-1fc5239faebso14397405ad.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 07:06:47 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sidebranch-com.20230601.gappssmtp.com; s=20230601; t=1721830006; x=1722434806; darn=vger.kernel.org;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=faIUB0IUc4P0RRYXIbbTWtLyw9izOYCtfVSEyL4w4Uo=;
+        b=lUWbFYfDZrVZ0/zyGgb3m2hN2MMT9BaW5rUNEsAl0d3zSaSRtq95SmUmroRmhpBR+9
+         jwCkOqWYXa4Q2fjbzwo4eHtN6NOg5zjUVmRORE86D6CHWR0ju9Mn6W6diNWfUEethd5D
+         idxsyk71HuZPRjJ7802a8Mv+joNdxVCPJ/UfOQxUHmvz+M13IS6iEnPlyifPLmzunN6l
+         mHb5a/8CBPM4gboYzfRAqCioevpOzW872cysH4XjRvJBpMbkNdKQJg0Oh25aqTnCGUwl
+         +esEC4lOfvLx1JZgan+Q7nJ4uoKbT++/dUtOn9L9hTaIonBvdnFu86xVynqqk9bs8mnT
+         DOwQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1721830006; x=1722434806;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=faIUB0IUc4P0RRYXIbbTWtLyw9izOYCtfVSEyL4w4Uo=;
+        b=uihYTrsEcjrYTtbaaeo3QqpoZPqpVTDe7R/4wxmz0ZtE4QqfkaRbgavqHab48opUff
+         Oyl0hcKgJMeK2PhCEtSD+uIq39Q0JYRlAluI3KP/5UN0FuWgpucq85CzVpBhrOHvII1j
+         pDn5C7Zw2/JCXnG/6S/Yg31Zs+ds7Qf85lghl3NpcDNfV+IeSHaLjBnNLUd4Ars7INzl
+         /MViPyJ+jg7e2Bz5KR/kBXA99Sruk8UNAOlCmYBg4qu4sekGu5XYuzVacFWSpumDIT+K
+         Qm/0l034moihhAV2LjrvXUVCJF17dnvbPh3AxBoXlWTnw0AA8SwS9SpW8H9qLR0TEkyM
+         ktpQ==
+X-Gm-Message-State: AOJu0Yyldj68Xumf6o2VkYH/0rfq+x5Jd8dJNCu34RO79etLnfMbkwVz
+	Kf94Gtb8qD6tC9bEPweVPixzYsU6jZ/bPx4n8md8FrzssOtGZUtzyx7c4bPa3rgJl9cML/z1QDt
+	9psNiLP3hiRKACRlrV4Z+bx2wu51X3BancZ61ySVZj/yr8iP+9TQ=
+X-Google-Smtp-Source: AGHT+IFOfGpzDBanSer68PzEiiYIJs1mFH8sAHB326gmBDwR1ZjLSLVopQj1verQXqTg+neaPExnLO4iVr6A5oBdy7Y=
+X-Received: by 2002:a17:90b:4d8e:b0:2c9:9b65:af4d with SMTP id
+ 98e67ed59e1d1-2cdae338319mr3153349a91.7.1721830005921; Wed, 24 Jul 2024
+ 07:06:45 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+From: Leon Woestenberg <leon@sidebranch.com>
+Date: Wed, 24 Jul 2024 16:06:34 +0200
+Message-ID: <CAMjhiJiqfz67Aba8KAKTHjO7TjGADvM2S0qDVrGfF+XkT5DeAw@mail.gmail.com>
+Subject: rcuc/ thread on isolated CPU
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 
-From: Tomas Glozar <tglozar@redhat.com>
+Hello all,
 
-Add a sysinfo module for collecting the tuned state. Three properties
-are collected:
-- whether tuned is present
-- what the active tuned profile is
-- whether tuned profile verification passes
+I am seeing an rcuc "osnoise" on an isolated CPU (#4) that should have
+(per-cpu) rcuc offloaded to, and polled by, other CPUs.
 
-In case of a failed verification, the tuned log is also collected.
+Note this is with vmlinuz-6.9.10-rt5.
 
-Signed-off-by: Tomas Glozar <tglozar@redhat.com>
----
- rteval/sysinfo/__init__.py |   5 +-
- rteval/sysinfo/tuned.py    | 191 +++++++++++++++++++++++++++++++++++++
- 2 files changed, 195 insertions(+), 1 deletion(-)
- create mode 100644 rteval/sysinfo/tuned.py
+I did not expect "rcuc/4" to actually run on CPU #4.
 
-diff --git a/rteval/sysinfo/__init__.py b/rteval/sysinfo/__init__.py
-index 09af52e..4b7b03c 100644
---- a/rteval/sysinfo/__init__.py
-+++ b/rteval/sysinfo/__init__.py
-@@ -15,10 +15,11 @@ from rteval.sysinfo.memory import MemoryInfo
- from rteval.sysinfo.osinfo import OSInfo
- from rteval.sysinfo.newnet import NetworkInfo
- from rteval.sysinfo.cmdline import cmdlineInfo
-+from rteval.sysinfo.tuned import TunedInfo
- from rteval.sysinfo import dmi
- 
- class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
--                 MemoryInfo, OSInfo, NetworkInfo, cmdlineInfo):
-+                 MemoryInfo, OSInfo, NetworkInfo, cmdlineInfo, TunedInfo):
-     def __init__(self, config, logger=None):
-         self.__logger = logger
-         KernelInfo.__init__(self, logger=logger)
-@@ -28,6 +29,7 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
-         OSInfo.__init__(self, logger=logger)
-         cmdlineInfo.__init__(self, logger=logger)
-         NetworkInfo.__init__(self, logger=logger)
-+        TunedInfo.__init__(self, logger=logger)
- 
-         # Parse initial DMI decoding errors
-         self.ProcessWarnings()
-@@ -49,6 +51,7 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
-         report_n.addChild(MemoryInfo.MakeReport(self))
-         report_n.addChild(dmi.DMIinfo.MakeReport(self))
-         report_n.addChild(cmdlineInfo.MakeReport(self))
-+        report_n.addChild(TunedInfo.MakeReport(self))
- 
-         return report_n
- 
-diff --git a/rteval/sysinfo/tuned.py b/rteval/sysinfo/tuned.py
-new file mode 100644
-index 0000000..063fcbf
---- /dev/null
-+++ b/rteval/sysinfo/tuned.py
-@@ -0,0 +1,191 @@
-+# -*- coding: utf-8 -*-
-+# SPDX-License-Identifier: GPL-2.0-or-later
-+#
-+#   Copyright 2024          Tomas Glozar <tglozar@redhat.com>
-+#
-+"""tuned sysinfo module"""
-+import shutil
-+import subprocess
-+import sys
-+import libxml2
-+from rteval.Log import Log
-+
-+TUNED_ADM = "tuned-adm"
-+TUNED_LOG_PATH = "/var/log/tuned/tuned.log"
-+TUNED_VERIFY_START_LINE = "INFO     tuned.daemon.daemon: verifying " \
-+                          "profile(s): realtime"
-+
-+
-+def tuned_present():
-+    """
-+    Checks if tuned is present on the system
-+    :return: True if tuned is present, False otherwise
-+    """
-+    return shutil.which(TUNED_ADM) is not None
-+
-+
-+def tuned_active_profile():
-+    """
-+    Gets tuned active profile.
-+    :return: Tuned profile (as a string) or "unknown"
-+    """
-+    try:
-+        result = subprocess.check_output([TUNED_ADM, "active"])
-+    except (OSError, subprocess.CalledProcessError):
-+        return "unknown"
-+    result = result.decode("utf-8")
-+    split_result = result.split(": ")
-+    if len(split_result) < 2:
-+        return "unknown"
-+    return split_result[1].strip()
-+
-+
-+def tuned_verify():
-+    """
-+    Verifies if tuned profile is applied properly
-+    :return: "success", "failure" or "unknown"
-+    """
-+    try:
-+        result = subprocess.run([TUNED_ADM, "verify"],
-+                                stdout=subprocess.PIPE, check=False).stdout
-+    except (OSError, subprocess.CalledProcessError):
-+        return "unknown"
-+    result = result.decode("utf-8")
-+    if result.startswith("Verification succeeded"):
-+        return "success"
-+    if result.startswith("Verification failed"):
-+        return "failure"
-+    return "unknown"
-+
-+
-+def tuned_get_log():
-+    """
-+    Read entries related to last profile verification from tuned log
-+    :return: List of strings containing the entires, or None if no
-+    verification is found in the log
-+    """
-+    try:
-+        with open(TUNED_LOG_PATH, "r", encoding="utf-8") as file:
-+            lines = file.readlines()
-+            # Find start of last verification
-+            start = None
-+            for i in reversed(range(len(lines))):
-+                if TUNED_VERIFY_START_LINE in lines[i]:
-+                    start = i
-+                    break
-+            if start is None:
-+                return None
-+            return lines[start:]
-+    except OSError:
-+        return None
-+
-+
-+class TunedInfo:
-+    """
-+    Gather information about tuned and make an XML report.
-+    Collected information:
-+    - whether tuned is present
-+    - which tuned profile is active
-+    - whether the tuned profile is applied correctly
-+    - if not applied correctly, collect relevant info from log
-+    """
-+    def __init__(self, logger=None):
-+        self.__logger = logger
-+
-+    def __log(self, logtype, msg):
-+        if self.__logger:
-+            self.__logger.log(logtype, msg)
-+
-+    def tuned_state_get(self):
-+        """
-+        Gets the state of tuned on the machine
-+        :return: A dictionary describing the tuned state
-+        """
-+        result = {
-+            "present": tuned_present()
-+        }
-+        if not result["present"]:
-+            self.__log(Log.DEBUG, "tuned-adm not found; skipping tuned "
-+                                  "sysinfo collection")
-+            return result
-+        result["active_profile"] = tuned_active_profile()
-+        if result["active_profile"] == "unknown":
-+            self.__log(Log.DEBUG, "could not retrieve tuned active profile")
-+            return result
-+        result["verified"] = tuned_verify()
-+        if result["verified"] == "unknown":
-+            self.__log(Log.DEBUG, "could not verify tuned state")
-+        if result["verified"] == "failure":
-+            # Include log to see cause to failure
-+            result["verification_log"] = tuned_get_log()
-+
-+        return result
-+
-+    def MakeReport(self):
-+        """
-+        Create XML report
-+        :return: libxml2 node containing the report
-+        """
-+        tuned = self.tuned_state_get()
-+
-+        rep_n = libxml2.newNode("Tuned")
-+        rep_n.newProp("present", str(int(tuned["present"])))
-+        for key, value in tuned.items():
-+            if key == "present":
-+                continue
-+            child = libxml2.newNode(key)
-+            if key == "verification_log":
-+                if value is None:
-+                    self.__log(Log.WARN, "could not get verification log")
-+                    continue
-+                for line in value:
-+                    # <date> <time> <log-level>    <message>
-+                    line = line.split(" ", 3)
-+                    if len(line) != 4:
-+                        continue
-+                    line_child = libxml2.newNode("entry")
-+                    line_child.newProp("date", line[0])
-+                    line_child.newProp("time", line[1])
-+                    line_child.newProp("level", line[2])
-+                    line_child.setContent(line[3].strip())
-+                    child.addChild(line_child)
-+            else:
-+                child.setContent(value)
-+            rep_n.addChild(child)
-+
-+        return rep_n
-+
-+
-+def unit_test(rootdir):
-+    try:
-+        # Helper function tests
-+        result = tuned_present()
-+        print("tuned present:", result)
-+        assert isinstance(result, bool), "__tuned_present() should return bool"
-+        result = tuned_active_profile()
-+        print("tuned active profile:", result)
-+        assert isinstance(result, str), "__tuned_active_profile() should " \
-+                                        "return string"
-+        result = tuned_verify()
-+        print("tuned verification state:", result)
-+        assert isinstance(result, str), "__tuned_verify() should return string"
-+        result = tuned_get_log()
-+        assert isinstance(result, list) or result is None, \
-+            "__tuned_get_log() should return list or None"
-+
-+        # Class tests
-+        tuned = TunedInfo()
-+        result = tuned.tuned_state_get()
-+        print(result)
-+        assert isinstance(result, dict), "TunedInfo.tuned_state_get() " \
-+                                         "should return dict"
-+        tuned.MakeReport()
-+
-+        return 0
-+    except Exception as err:
-+        print(f"** EXCEPTION: {str(err)}")
-+        return 1
-+
-+
-+if __name__ == '__main__':
-+    sys.exit(unit_test(None))
--- 
-2.45.1
+Then I found the email thread "Wakes of the rcuc/ thread on isolated
+CPUs." and also tried with rcutree.nohz_full_patience_delay=1000.
 
+What could be the misconfiguration or issue?
+
+[    0.011004] Kernel command line: [    0.000000] Command line:
+BOOT_IMAGE=/boot/vmlinuz-6.9.10-rt5 <...>
+isolcpus=domain,managed_irq,2-7,10-15 nohz_full=2-7,10-15
+rcu_nocbs=2-7,10-15 rcu_nocb_poll
+rcutree.nohz_full_patience_delay=1000 <...>
+[    0.033362] rcu: Offload RCU callbacks from CPUs: 2-7,10-15.
+[    0.033362] rcu: Poll for callbacks from no-CBs CPUs.
+
+sudo LD_LIBRARY_PATH=/usr/local/lib64 /usr/local/usr/bin/rtla osnoise
+top -a 20 -c 4 -e osnoise; cat osnoise_trace.txt
+cat osnoise_trace.txt
+# tracer: osnoise
+#
+#                                _-------=> irqs-off
+#                               / _------=> need-resched
+#                              | / _-----=> need-resched-lazy
+#                              || / _----=> hardirq/softirq
+#                              ||| / _---=> preempt-depth
+#                              |||| / _--=> preempt-lazy-depth
+#                              ||||| / _-=> migrate-disable
+#                              |||||| /
+               MAX
+#                              ||||| /
+            SINGLE      Interference counters:
+#                              |||||||               RUNTIME
+NOISE  %% OF CPU  NOISE    +-----------------------------+
+#           TASK-PID      CPU# |||||||   TIMESTAMP    IN US       IN
+US  AVAILABLE  IN US     HW    NMI    IRQ   SIRQ THREAD
+#              | |         |   |||||||      |           |
+|    |            |      |      |      |      |      |
+       osnoise/4-1553    [004] dNh11   181.384695: irq_noise:
+local_timer:236 start 181.384689739 duration 4120 ns
+          rcuc/4-64      [004] d..3.   181.384707: thread_noise:
+rcuc/4:64 start 181.384702999 duration 3180 ns
+       osnoise/4-1553    [004] ....1   181.384708: sample_threshold:
+start 181.384686979 duration 20360 ns interference 2
+
+Regards,
+
+Leon.
