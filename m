@@ -1,40 +1,54 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFDE815884F
-	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 14:39:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B060216EB72
+	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 14:46:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721831965; cv=none; b=J5BYyaYOohlDAGXWQI8X7t7QTzuZgRYT5YMAe0ykw4HMSLitwfXz6tXsK5h8g3QQfbyEpLic9IEpMA28ovqz8WuES6I2a8rK23BCsX9eUMunKGHnRj0vEmIdZLeU5wT3Q4UdDLn5Dr9j/qbQo8nV56UoEqRGA/bvt0BkzZzG66o=
+	t=1721832383; cv=none; b=M3K7UDuJjJljNp4lME/MiIDqxItYLeUbcACF+zCrIxVGo9HvVR9AMj1Y1UWrYwjqM+1AErlRhGMjpP3Z6qkk+ezaEc//l3ZZpQTkSwRY5FC9pDnr5yJTx8K/1z/neH0psV+jY67EMnl7sr2U25zQ1gjaPiRHglUi1/sDPVb/u8Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721831965; c=relaxed/simple;
-	bh=UAA/akqHWehByaLkIYHTJMcfgwzgZ+Ik9t6FtcXZDlU=;
+	s=arc-20240116; t=1721832383; c=relaxed/simple;
+	bh=XEW45NsvTTHHceJrJrCZudwLFFUxvY5a/Qj+wSKbZzE=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=a2F2y8QpsJkctY9QVdyFyt7VJIcJWtKOElAZ+1xArbhRvbfx+MpJE1ILYzPx6E2v1aRRq0okh/DXnsPycRLkO3kYWhcRJ9YXn1cpaZw8FATlVhEexLL7QI8g4CQxHZJ2e8l/MOq5G4cvXxi/OVFtDF4dBRZRqF1YuW856Wg6iEA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Y9G4uAXc; arc=none smtp.client-ip=10.30.226.201
+	 To:Cc:Content-Type; b=okJWfILCOqKXXBH0FHBvJmDDhmF4wvdCrGr3m4teyy4H3XOKFlXHyyQcPJBt3PYyoBGbjMKUUuaByrKHZ5upDhVMKUMwZVtuowuKAnWxLpSBDjqlGUXVZqzYV1UZ5pRSGgTyDXR4ssbellcJxM2KKbl/Ap/P5iYp/V648KwmeKA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com; spf=fail smtp.mailfrom=sidebranch.com; dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b=qwvT+d0l; arc=none smtp.client-ip=209.85.216.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=sidebranch.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Y9G4uAXc"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BE339C32782
-	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 14:39:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1721831964;
-	bh=UAA/akqHWehByaLkIYHTJMcfgwzgZ+Ik9t6FtcXZDlU=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=Y9G4uAXchNHdU1ZsnQ8NTexzufWIRnzFo5b96JJAobtMQNT8VlF8IsKDESPQ9Nutx
-	 OULUIQP6El4QKOe930xzQACyNTYGjrWKmpOPBSAmKp+bZ3sbmQ9cliftyykZuPeAzf
-	 iG/7xz/c92h5aj15QryQo58BgOsAwWD6vZriFgEuWAy10IkuoTMkyqz8u8pUVXVuMu
-	 UdRoHLSXseBewAo+Sl5Wtgv9S85vWNmia9sTjVAwL3OaiNPnn9EyQxASHErbRASYrO
-	 t7IFgQH4P/ZzmqKndqSV8Y0Qh4VH7PVbZLdk27Gikz4W7jsMgrf0KkoynbCVx6InF5
-	 5meZpfOLuIVwA==
-Received: by mail-pf1-f181.google.com with SMTP id d2e1a72fcca58-70d19c525b5so2639701b3a.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 07:39:24 -0700 (PDT)
-X-Gm-Message-State: AOJu0YwGkacZMz5JoZOKJ3loqCdNiEAipxuTNckj5EKWYsX+zpp6+her
-	wOPDamTwzffR4+Lw1LB3XamiNeq36brKXlFGg+BQF4hezM1gdoySo60H6v7Rkk6cjx5CVIqzp3e
-	8DH40uamSxL8hrAlFFdgXkDQDHho=
-X-Google-Smtp-Source: AGHT+IHMCG9ZsxCSbiWNnR9ndu0mc7aOMRdzQ3eVXhvSiCGKEOFzkPbkkLASDyowAaZttUq8rVEruiybbdwix9V/GX0=
-X-Received: by 2002:a05:6a20:7494:b0:1c0:e925:f3ea with SMTP id
- adf61e73a8af0-1c472833a50mr92709637.16.1721831964281; Wed, 24 Jul 2024
- 07:39:24 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b="qwvT+d0l"
+Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-2cb53da06a9so739434a91.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 07:46:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sidebranch-com.20230601.gappssmtp.com; s=20230601; t=1721832380; x=1722437180; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=XEW45NsvTTHHceJrJrCZudwLFFUxvY5a/Qj+wSKbZzE=;
+        b=qwvT+d0lpOtq0NB4s/uDw5JLl4pnLlk5szU8GYuqMT3xq9r8hX5vFcJ6XTP5B3C0uk
+         eQ6/WWb3xn2xOpIKyRaAbml5f+ezxeiDU6Qn66wRqgpc3AvQ7nE/w2QN8CnPeswzcnkF
+         El/QWt6pIWSJYCd61laLtPZQJ8isu8SWVoTRzU4m0i87QRdaDABeExDOb8vBLcGzt5t9
+         eKUycCLTJz3qPagKiFtpdktvaTWyVGARJ+DcMY5Zk2EcF71cNhE0wX/R1mxYQk9eSoym
+         hwSWBl4t9mAKSNzEyTsUgY9vPR7EBkyGvWjLkT7111l7QVGP74nsNETGb0NIqqF9yxrd
+         DPcw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1721832380; x=1722437180;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=XEW45NsvTTHHceJrJrCZudwLFFUxvY5a/Qj+wSKbZzE=;
+        b=tDPzk71C8fGIlcODgJExlyoKIcTh4nstgaX+cHQIXkYL73VQAaKDDDdNj2AiJHUz8e
+         4YqZWJh24thOgkuZqYax3p03yMRNlmCvPZGyEzVqSJ+WZ/3mX/Z8DeGtpLiAfPnc1+pR
+         EVKLBkSMsxwineSMt7hoK+bDSgaRT1aVv4CNDz46L609w24C1TarGy5NjH7h6j+xbgyg
+         lPHEUfv5rvm3weWuDHXPAkZQHYD+6eddlhMvIkgcbE3aKthpJ+FtuANN2X3iZjkspnkK
+         NForR86HTEcBSYXbPrr28AkMJIx/anLlYG5/HFwtA6S5wL+s/2/tUHOJR/RRbaQikAH1
+         /RlA==
+X-Gm-Message-State: AOJu0YxbGXmAfHg0nJQvOfC63KVfU4ruJcK6/bZ56HIPg51CFMLb/X7k
+	5y/S3l0+Fdg7XZ0JUk0iS3ralIfzenSfIWN6WPfu89uTCvPLWOw9KHgIhDCU/Hwi43cNlgWVncO
+	d+WKBNmpybptxn/vwlTC+KeHb81gpB+Q5xMa6fA==
+X-Google-Smtp-Source: AGHT+IGqOkfdWI+23bkR0Wr2b6kIrdNnXPE1xuC4ZOJeq0TjFKJgFEBA4iWF/WL5JhfnPq01EUFjzvHxSbZYxUCsRuI=
+X-Received: by 2002:a17:90a:108:b0:2c3:2f5a:17d4 with SMTP id
+ 98e67ed59e1d1-2cdb9397b29mr3545151a91.4.1721832379942; Wed, 24 Jul 2024
+ 07:46:19 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -44,39 +58,27 @@ MIME-Version: 1.0
 References: <CAMjhiJiqfz67Aba8KAKTHjO7TjGADvM2S0qDVrGfF+XkT5DeAw@mail.gmail.com>
  <CAFTL4hws_4D2-ez+TkGZU5ZWUys=yqmAjxiQa52K6zXwe6nqMA@mail.gmail.com>
 In-Reply-To: <CAFTL4hws_4D2-ez+TkGZU5ZWUys=yqmAjxiQa52K6zXwe6nqMA@mail.gmail.com>
-From: Frederic Weisbecker <frederic@kernel.org>
-Date: Wed, 24 Jul 2024 16:39:12 +0200
-X-Gmail-Original-Message-ID: <CAFTL4hz-oMQaksJFXee=iJq1oJ=tfGAprcxW7cVC_Zff7Dks7g@mail.gmail.com>
-Message-ID: <CAFTL4hz-oMQaksJFXee=iJq1oJ=tfGAprcxW7cVC_Zff7Dks7g@mail.gmail.com>
+From: Leon Woestenberg <leon@sidebranch.com>
+Date: Wed, 24 Jul 2024 16:46:08 +0200
+Message-ID: <CAMjhiJhZQvr1qEdUm3T2v=JDETO4iWjjo5Lfc=XQgkm4yPwXtg@mail.gmail.com>
 Subject: Re: rcuc/ thread on isolated CPU
-To: Leon Woestenberg <leon@sidebranch.com>
+To: Frederic Weisbecker <frederic@kernel.org>
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-Le mer. 24 juil. 2024 =C3=A0 16:35, Frederic Weisbecker
-<frederic@kernel.org> a =C3=A9crit :
->
-> Hi Leon,
+Hi Frederic,
+
+On Wed, Jul 24, 2024 at 4:35=E2=80=AFPM Frederic Weisbecker <frederic@kerne=
+l.org> wrote:
 >
 > Le mer. 24 juil. 2024 =C3=A0 16:06, Leon Woestenberg <leon@sidebranch.com=
 > a =C3=A9crit :
-> >
-> > Hello all,
-> >
-> > I am seeing an rcuc "osnoise" on an isolated CPU (#4) that should have
-> > (per-cpu) rcuc offloaded to, and polled by, other CPUs.
-> >
-> > Note this is with vmlinuz-6.9.10-rt5.
-> >
-> > I did not expect "rcuc/4" to actually run on CPU #4.
-> >
-> > Then I found the email thread "Wakes of the rcuc/ thread on isolated
 > > CPUs." and also tried with rcutree.nohz_full_patience_delay=3D1000.
+> Are you sure you have the proper patch applied? It is not yet upstream:
 >
-> Are you sure you have the proper patch applied? It is not yet
-> upstream:
->
-> https://lore.kernel.org/lkml/20240604222355.2370768-6-paulmck@kernel.org/
+Thanks, no, I did not even have this patch installed.
+I wasn't reading well, I didn't understand that the option was
+actually implemented by the discussed patch.
 
-Ok it is upstream actually :-) But you may need the latest tree from Linus.
+Thanks, Leon.
