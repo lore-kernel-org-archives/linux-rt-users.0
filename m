@@ -1,56 +1,52 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D763617588
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:15:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 727A819922A
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:25:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721924133; cv=none; b=gfEdJ8tEse2V0V1nUCaWmBHZuz2oNs7/uvhUV42WBz9BiRC71kVw3HZ5j7/UzNizOt69bZCLdekrL0ak1KpQRWlR4hUFZgtspXZBCaMnD167pVHTPJMQGVWna2tihsBOEoVYaA/ZRLsVlVwkkQdRvylu7TnTZD2NWpwmoctIrXg=
+	t=1721924750; cv=none; b=DZvOsaMlMcUq7Cdf5OlgZ1pASH7XzmeX3yJvONkN6gXpe34cSv+SXjYR/986ewBR2woZqKpfUMPephcxvzBz7p41VBdqfe+3/0XbeAxheV9jFswf3E+uc6d5MOv7Yp3aGHFQ33O6zUsQEMO3zAVtInj8WwucwV1eN4itRKGPMMs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721924133; c=relaxed/simple;
-	bh=FqbMg3jrEOC0vibPNNAf4SR0DXcQYPq0GbtJENkBztk=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=X0y1+viYH/rCyb5+MAyj0BRYjM7jElxiTy5IvcDIo7TY4YhsYEe6mYob8DJQeqhE/9UJKeWxfWdgFLvQ3dA/ZIBGsfKLz6V3U9F0V/BREk8HcBCWv00V5LY8P1EpR7D/tXg0urOcxHkwJOLSbz3wp9Yqoo2l/7SaT7/HrF515ns=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fJgM8Eo7; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1721924750; c=relaxed/simple;
+	bh=u24GWc4pMH3UUsCaWITqjTcg9s0RbUBrkU+YG7ko9do=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=koh3rH8A0Lxuyyl+lYOhXOuhyDbE5PwPh7gsRA5hrTRWCBTL10uHqvc97oq8E7LF9xrcJIgCfXiFai7p2IKfUckQnUmaJ3vLEsgo2e37Z7+tuHshMrAOmftFvq6Z/hG9a/ZxhdbinIEVb5L/Ye+m39oJSI/Ir5xtJTMM0fULPaA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NqMWWAvJ; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fJgM8Eo7"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NqMWWAvJ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721924130;
+	s=mimecast20190719; t=1721924747;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=BWjJHRsgAiKSPGqFB1WmYYRMMJz4kuMq97PTFgBcxkk=;
-	b=fJgM8Eo7T2qwdh4bGgc17caYd5FCKdLZrAbzLLleXHHifbOzpwWhYv6tYEwlapOdLW7Xmr
-	6oezVdEFDjM4PR/73Nr4w6TdWq9lFz8Db7Jt8Dqp+6zZRFFmt2tUw9gZV1Zsl/N8k8YGc1
-	slurgJepffVaJSsbaUDfODm1fjoysAo=
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=0pbSDJlagUHe2pISgBi7dIdIwsRpW0GCnsh8Heiut44=;
+	b=NqMWWAvJ7wqMK+txzxdbi+cfy5HeAJTEkNSMwy7qEl8rOPSrsZhU86jYcUh6t1PsR24dmV
+	Mh6CKFiXMKgYUBJ6lkViwgF0ESwf/lL4IA77Zjswg05LhrnEYgWljAfznc2UlNVOUmt15t
+	M6WBfpu9fp/4jGl9X2tGvBnWMpDDIq0=
 Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-171-HnzcKfogNIWcfpjYeE4FWQ-1; Thu,
- 25 Jul 2024 12:15:24 -0400
-X-MC-Unique: HnzcKfogNIWcfpjYeE4FWQ-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-100-LsKRVuEaMQ6YD7o_TvQ74w-1; Thu,
+ 25 Jul 2024 12:25:46 -0400
+X-MC-Unique: LsKRVuEaMQ6YD7o_TvQ74w-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E7BEC1955D4C
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:15:23 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5A73A1955BF2
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:25:45 +0000 (UTC)
 Received: from ashelat-na.remote.csb (unknown [10.22.64.15])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A65ED3000194;
-	Thu, 25 Jul 2024 16:15:22 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 20A901955D44;
+	Thu, 25 Jul 2024 16:25:43 +0000 (UTC)
 From: Anubhav Shelat <ashelat@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: jkacur@redhat.com,
 	kcarcia@redhat.com,
 	Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH v5 2/2] rteval: run cyclictest using '--default-system' when setting idle states
-Date: Thu, 25 Jul 2024 12:15:14 -0400
-Message-ID: <20240725161514.1885152-2-ashelat@redhat.com>
-In-Reply-To: <20240725161514.1885152-1-ashelat@redhat.com>
-References: <20240725161514.1885152-1-ashelat@redhat.com>
+Subject: [PATCH v4 1/3] tuna: Add functionality to set the cstate of specified CPUs  when running tuna
+Date: Thu, 25 Jul 2024 12:25:30 -0400
+Message-ID: <20240725162532.1890461-1-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -58,53 +54,168 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-When running cyclictest in rteval, cyclictest automatically disables
-idle states. This means whenever the user sets the idle state of a cpu
-list using '--idle-set' it is overridden by cyclictest.
+We would like to be able to set the cstate of CPUs while running tuna.
 
-To fix this, the variable 'usingCpupower' is appended to the parameter
-dictionary that's passed to the Cyclictest measurement object which executes
-cyclictest in rteval.
-
-If '--idle-set' is specified when running rteval,
-'usingCpupower' is set to true and the '--default-system' option is
-appended to the cyclictest command, which will prevent cyclictest from
-disabling cstates.
+This patch adds the file cpupower.py and cstate subcommand to tuna-cmd.py.
+cpupower.py provides the infrastructure to interface with the cpupower
+command, and the cstate subcommand in tuna-cmd.py lets the user specify
+the cstate to be set and the cpu list to set it on.
 
 Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 ---
- rteval/__init__.py                       | 1 +
- rteval/modules/measurement/cyclictest.py | 3 +++
- 2 files changed, 4 insertions(+)
+ tuna-cmd.py      | 14 +++++++--
+ tuna/cpupower.py | 80 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 91 insertions(+), 3 deletions(-)
+ create mode 100644 tuna/cpupower.py
 
-diff --git a/rteval/__init__.py b/rteval/__init__.py
-index 4d3e0c23e5ab..8ded374d287e 100644
---- a/rteval/__init__.py
-+++ b/rteval/__init__.py
-@@ -119,6 +119,7 @@ class RtEval(rtevalReport):
-                   'memsize':self._sysinfo.mem_get_size(),
-                   'numanodes':self._sysinfo.mem_get_numa_nodes(),
-                   'duration': float(self.__rtevcfg.duration),
-+                  'usingCpupower': self.__rtevcfg.usingCpupower
-                   }
+diff --git a/tuna-cmd.py b/tuna-cmd.py
+index f37e286bffdb..c6ef8bae09a3 100755
+--- a/tuna-cmd.py
++++ b/tuna-cmd.py
+@@ -21,7 +21,7 @@ from functools import reduce
+ import tuna.new_eth as ethtool
+ import tuna.tuna_sched as tuna_sched
+ import procfs
+-from tuna import tuna, sysfs
++from tuna import tuna, sysfs, cpupower
+ import logging
+ import time
+ import shutil
+@@ -116,7 +116,8 @@ def gen_parser():
+             "disable_perf": dict(action='store_true', help="Explicitly disable usage of perf in GUI for process view"),
+             "refresh": dict(default=2500, metavar='MSEC', type=int, help="Refresh the GUI every MSEC milliseconds"),
+             "priority": dict(default=(None, None), metavar="POLICY:RTPRIO", type=tuna.get_policy_and_rtprio, help="Set thread scheduler tunables: POLICY and RTPRIO"),
+-            "background": dict(action='store_true', help="Run command as background task")
++            "background": dict(action='store_true', help="Run command as background task"),
++            "cstate": dict(dest='cstate', metavar='CSTATE', help='Set cpus in IDLE-LIST to a specific cstate'),
+          }
  
-         if self._loadmods:
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index a9f5b0c4fba7..fffc8fe27681 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -251,6 +251,9 @@ class Cyclictest(rtevalModulePrototype):
-         self.__cmd.append(f'-t{self.__numcores}')
-         self.__cmd.append(f'-a{self.__cpulist}')
+     parser = HelpMessageParser(description="tuna - Application Tuning Program")
+@@ -147,6 +148,7 @@ def gen_parser():
+     show_threads = subparser.add_parser('show_threads', description='Show thread list', help='Show thread list')
+     show_irqs = subparser.add_parser('show_irqs', description='Show IRQ list', help='Show IRQ list')
+     show_configs = subparser.add_parser('show_configs', description='List preloaded profiles', help='List preloaded profiles')
++    cstate = subparser.add_parser('cstate', description='Set a cstate on a given CPU list.', help='Set a cstate on a given CPU list.')
  
-+        if (self.__cfg.usingCpupower):
-+            self.__cmd.append('--default-system')
+     what_is = subparser.add_parser('what_is', description='Provides help about selected entities', help='Provides help about selected entities')
+     gui = subparser.add_parser('gui', description="Start the GUI", help="Start the GUI")
+@@ -219,6 +221,9 @@ def gen_parser():
+     show_irqs_group.add_argument('-S', '--sockets', **MODS['sockets'])
+     show_irqs.add_argument('-q', '--irqs', **MODS['irqs'])
+ 
++    cstate.add_argument('-c', '--cpus', **MODS['cpus'])
++    cstate.add_argument('-i', '--cstate', **MODS['cstate'])
 +
-         if 'threads' in self.__cfg and self.__cfg.threads:
-             self.__cmd.append(f"-t{int(self.__cfg.threads)}")
+     what_is.add_argument('thread_list', **POS['thread_list'])
  
+     gui.add_argument('-d', '--disable_perf', **MODS['disable_perf'])
+@@ -649,7 +654,6 @@ def main():
+     parser = gen_parser()
+     # Set all necessary defaults for gui subparser if no arguments provided
+     args = parser.parse_args() if len(sys.argv) > 1 else parser.parse_args(['gui'])
+-
+     if args.debug:
+         my_logger = setup_logging("my_logger")
+         my_logger.addHandler(add_handler("DEBUG", tofile=False))
+@@ -667,6 +671,10 @@ def main():
+             print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
+             print("Log levels may be specified numerically (0-4)\n")
+ 
++    if args.cstate:
++        cpupower_controller = cpupower.Cpupower(str(args.cpu_list).strip('[]').replace(' ', ''), args.cstate)
++        cpupower_controller.enable_idle_state()
++
+     if 'irq_list' in vars(args):
+         ps = procfs.pidstats()
+         if tuna.has_threaded_irqs(ps):
+diff --git a/tuna/cpupower.py b/tuna/cpupower.py
+new file mode 100644
+index 000000000000..1a7f324c9fb9
+--- /dev/null
++++ b/tuna/cpupower.py
+@@ -0,0 +1,80 @@
++#! /user/bin/python3
++# SPDX-License-Identifier: GPL-2.0-only
++
++import subprocess
++import argparse
++import os
++import multiprocessing
++import time
++
++
++class Cpupower:
++    def __init__(self, cpulist, cstate):
++        self.cpulist = cpulist
++        self.cstate = cstate
++        self.nstates = len(os.listdir('/sys/devices/system/cpu/cpu0/cpuidle/'))    # number of cstates
++        self.cpu_count = multiprocessing.cpu_count()
++        self.cstate_cfg = []
++
++
++    def enable_idle_state(self):
++        ''' Enable a specific cstate, while disabling all other cstates, and save the current cstate configuration '''
++        self.cstate_cfg = self.get_cstate_cfg()
++
++        # enable cstate and disable the rest
++        if (self.cpulist):
++            subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', '-c', self.cpulist,'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++        else:
++            subprocess.run(['sudo', 'cpupower', 'idle-set', '-e', str(self.cstate)], stdout=open(os.devnull, 'wb'))
++            for cs in range(self.nstates):
++                if str(cs) != self.cstate:
++                    subprocess.run(['sudo', 'cpupower', 'idle-set', '-d', str(cs)], stdout=open(os.devnull, 'wb'))
++
++        if self.cpulist: print(f'Idlestate {self.cstate} enabled on CPUs {self.cpulist}')
++        else: print(f'Idlestate {self.cstate} enabled on all CPUs')
++
++
++    def get_cstate_cfg(self):
++        ''' Store the current cstate config '''
++        # cstate [m] configuration on cpu [n] can be found in '/sys/devices/system/cpu/cpu*/cpuidle/state*/disable'
++        cfg = []
++        for cpu in range(self.cpu_count):
++            cfg.append([])
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'r')
++                d = f.read(1)
++                cfg[cpu].append(d)   # cstate_cfg[n][m] stores the m-th idle state on the n-th cpu
++
++        return cfg
++
++
++    def restore_cstate(self):
++        for cpu in range(self.cpu_count):
++            for cs in range(self.nstates):
++                f = open('/sys/devices/system/cpu/cpu'+str(cpu)+'/cpuidle/state'+str(cs)+'/disable', 'w')
++                f.write(self.cstate_cfg[cpu][cs])
++                f.close()
++        print('Idle state configuration restored')
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser()
++    parser.add_argument('-c', '--cpu-list', required=False, default=None,
++                        help='List of cpus to perform cpupower-idle-set operation on.')
++    parser.add_argument('-s', '--cstate', default='',
++                        help='Specify cstate to enable/disable')
++
++    args = parser.parse_args()
++    print(args)
++    cpulist = args.cpu_list
++    cstate = args.cstate
++    cpupower = Cpupower(cpulist, cstate)
++
++    cpupower.enable_idle_state()
++    time.sleep(10)
++    cpupower.restore_cstate()
++
++
 -- 
 2.45.2
 
