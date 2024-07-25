@@ -1,112 +1,147 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6EA516A95F
-	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 19:12:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB36E187866;
+	Thu, 25 Jul 2024 10:33:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721848366; cv=none; b=CG2xFQIbV/HCq4PaGwx67aYMy6HgwPZ5WrxumiMhfAQtoVTpSONZZOTELmNM83dTQyqSAhfv0u7tywEC4Es9Lgg4b2wsSesxSwc/o144bON/zGS120FrVScRS683xw6HEXPbIcchVJ+R99m6gBj7/QWzdOLO2M4fyO6JrXwND4w=
+	t=1721903585; cv=none; b=MCjAY5AV8xPBwtJ3dp8eREF/M9TQ7ZsL9jmTHOMr52y2OtMg3idejINNrmYaETcBSK7mISwyjt6mx7Po63abXvJqpZXP2VfF/rzC4XCBIvbB6wX6S/zR6xnXIJlTci4/CIXhPlUHHrRejqlb2ceCCMjYYZEce2oDQBOzSASRFWE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721848366; c=relaxed/simple;
-	bh=tuV262BfJ2LtQ1niOvqh1GwzFByzjlpnDH13rMauQ1E=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=M4sC4dIWKi0awcgi3qQpS5FdMKQYN2WyxNCWya1mjWFZLDskMXjwfTFE17GvFMMJSBsukA4Km1GuKCH9aGzbZJpDQNfWOhVwXwLspiyCcvUCf0hLTIGwKzOdagKlHRCuKB2zIPCfKuYYcghyqGuMTBlXbTkmcyU8rGX2VYdalyY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Hy94wjPd; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1721903585; c=relaxed/simple;
+	bh=q2R6qmejY7wV1ZJErertHQrkFkbltq5MaLaLlTFbgaA=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=bwMaD4wqEGFJwQSvOZVzd40aEZf/PbYwZsJjlVpGSrPVFK2j/BlFJSUfwBH+O4xyDtMkXzBSg+/4s3RoqrFjIJtBcPq7fBy8fNHr3GgsHxGWVLAVQ52xeH5izBMFPEznT041+/I2RsmfBDzQIy2sH6mYmYl3mfABmIhD8MVVfr8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=i6QCIw8K; arc=none smtp.client-ip=205.220.180.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Hy94wjPd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721848363;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=UEFlL+6b4fJS4xNiCPaaktj7FVbtY9jiBqkrg3P8fhg=;
-	b=Hy94wjPdTZl9qBKIzhwG7OtExyeKpOx4ObXz+aVXbqkOgMRXlPnyj0uRJ7Doq+NOWB1P6f
-	EAk98Eqs7w7X5gsiYzVzDQukAK/g6sqcq7zaq5Y39QjLNOfHZXQ71d7VtwThx4x4p/0UbW
-	anpNISGuXZg/S/QMKHGXwrp1MjsgWNY=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-259-Zg9r5ZgSNJ2qrXVI1fc26g-1; Wed,
- 24 Jul 2024 15:12:42 -0400
-X-MC-Unique: Zg9r5ZgSNJ2qrXVI1fc26g-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 456361955D42
-	for <linux-rt-users@vger.kernel.org>; Wed, 24 Jul 2024 19:12:41 +0000 (UTC)
-Received: from ashelat-na.remote.csb (unknown [10.22.33.33])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id EC22B3000194;
-	Wed, 24 Jul 2024 19:12:39 +0000 (UTC)
-From: Anubhav Shelat <ashelat@redhat.com>
-To: linux-rt-users@vger.kernel.org
-Cc: jkacur@redhat.com,
-	kcarcia@redhat.com,
-	Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH v4] rteval: run cyclictest using '--default-system' when setting idle states
-Date: Wed, 24 Jul 2024 15:12:25 -0400
-Message-ID: <20240724191225.1722773-2-ashelat@redhat.com>
-In-Reply-To: <20240724191225.1722773-1-ashelat@redhat.com>
-References: <20240724191225.1722773-1-ashelat@redhat.com>
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="i6QCIw8K"
+Received: from pps.filterd (m0279870.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 46P0WoOL004323;
+	Thu, 25 Jul 2024 10:32:54 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	+NJkvVtrWzA8I3lBftm4GOVxGmthl5QFf23tJV31+GE=; b=i6QCIw8K44lbkhEU
+	g2pM0tqBDRj4Ig/8B3Z3r5XTCqoO+5My8qJaqfOk42Vc6xPmg+WiFe2zDpau3BHE
+	aHX2HmwrWAflN4C0Sl1Pcc+dcfU8HrBXN1LdYyfwl3s7Jm6TcXWeKJd6P33L/sSw
+	pnF+iUzHWsyQ6KyQw2gYthQuZJwNEtZTDertR4wNdEFV5s39t4l8w20YcWGI4FsM
+	K7oobPJQDp2NsCHtsBJvSAU9oTGL89liY7ubLznA3x8GjBqH3yC3g81pVLDqWaaL
+	/bw6BxYccFj3RgTRj4/jRwv/JKJHnwDaOUvD7kimHNYWQgIVt4qhZhRzOXRh2StR
+	17Ih3g==
+Received: from nalasppmta05.qualcomm.com (Global_NAT1.qualcomm.com [129.46.96.20])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 40g5auvw2f-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 25 Jul 2024 10:32:54 +0000 (GMT)
+Received: from nalasex01c.na.qualcomm.com (nalasex01c.na.qualcomm.com [10.47.97.35])
+	by NALASPPMTA05.qualcomm.com (8.17.1.19/8.17.1.19) with ESMTPS id 46PAWqEO022665
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 25 Jul 2024 10:32:53 GMT
+Received: from [10.218.28.253] (10.80.80.8) by nalasex01c.na.qualcomm.com
+ (10.47.97.35) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Thu, 25 Jul
+ 2024 03:32:48 -0700
+Message-ID: <a577f1d1-ceba-4d46-b874-38aa40cc8354@quicinc.com>
+Date: Thu, 25 Jul 2024 16:02:36 +0530
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 0/7] pmdomain/cpuidle-psci: Support s2idle/s2ram on
+ PREEMPT_RT
+Content-Language: en-US
+To: Ulf Hansson <ulf.hansson@linaro.org>,
+        "Rafael J . Wysocki"
+	<rafael@kernel.org>,
+        Sudeep Holla <sudeep.holla@arm.com>, <linux-pm@vger.kernel.org>
+CC: Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Nikunj Kela
+	<nkela@quicinc.com>,
+        Prasad Sodagudi <psodagud@quicinc.com>,
+        Maulik Shah
+	<quic_mkshah@quicinc.com>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
+        <linux-rt-users@vger.kernel.org>,
+        <linux-arm-kernel@lists.infradead.org>, <linux-kernel@vger.kernel.org>
+References: <20240527142557.321610-1-ulf.hansson@linaro.org>
+From: Raghavendra Kakarla <quic_rkakarla@quicinc.com>
+In-Reply-To: <20240527142557.321610-1-ulf.hansson@linaro.org>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
+ nalasex01c.na.qualcomm.com (10.47.97.35)
+X-QCInternal: smtphost
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
+X-Proofpoint-ORIG-GUID: lu8PEDbsZsbZ0qNEfjGSyLX9uJyP-aMW
+X-Proofpoint-GUID: lu8PEDbsZsbZ0qNEfjGSyLX9uJyP-aMW
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
+ definitions=2024-07-25_10,2024-07-25_02,2024-05-17_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
+ impostorscore=0 bulkscore=0 malwarescore=0 suspectscore=0 mlxscore=0
+ clxscore=1011 phishscore=0 spamscore=0 adultscore=0 mlxlogscore=821
+ lowpriorityscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2407110000 definitions=main-2407250071
 
-When running cyclictest in rteval, cyclictest automatically disables
-idle states. This means whenever the user sets the idle state of a cpu
-list using '--idle-set' it is overridden by cyclictest.
 
-To fix this, the variable 'usingCpupower' is appended to the parameter
-dictionary that's passed to the Cyclictest measurement object which executes
-cyclictest in rteval.
 
-If '--idle-set' is specified when running rteval,
-'usingCpupower' is set to true and the '--default-system' option is
-appended to the cyclictest command, which will prevent cyclictest from
-disabling cstates.
+On 5/27/2024 7:55 PM, Ulf Hansson wrote:
+> Updates in v2:
+> 	- Rebased and fixed a small issue in genpd, see patch3.
+> 	- Re-tested on v6.9-rt5 (PREEMPT_RT enabled)
+> 	- Re-tested on v6.10-rc1 (for regressions, PREEMPT_RT disabled)
+> 
+> The hierarchical PM domain topology and the corresponding domain-idle-states
+> are currently disabled on a PREEMPT_RT based configuration. The main reason is
+> because spinlocks are turned into sleepable locks on PREEMPT_RT, which means
+> genpd and runtime PM can't be use in the atomic idle-path when
+> selecting/entering an idle-state.
+> 
+> For s2idle/s2ram this is an unnecessary limitation that this series intends to
+> address. Note that, the support for cpuhotplug is left to future improvements.
+> More information about this are available in the commit messages.
+> 
+> I have tested this on a Dragonboard 410c.
+This series is tested on qcm6490 with PREEMPT_RT enabled. For the series,
 
-Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
----
- rteval/__init__.py                       | 3 ++-
- rteval/modules/measurement/cyclictest.py | 3 +++
- 2 files changed, 5 insertions(+), 1 deletion(-)
+Tested-by: Raghavendra Kakarla <quic_rkakarla@quicinc.com>  # qcm6490 
+with PREEMPT_RT enabled
 
-diff --git a/rteval/__init__.py b/rteval/__init__.py
-index 226d14f80f48..b042102f4553 100644
---- a/rteval/__init__.py
-+++ b/rteval/__init__.py
-@@ -124,7 +124,8 @@ class RtEval(rtevalReport):
-                       'memsize':self._sysinfo.mem_get_size(),
-                       'numanodes':self._sysinfo.mem_get_numa_nodes(),
-                       'duration': float(self.__rtevcfg.duration),
--                      }
-+                      'usingCpupower': self.__rtevcfg.usingCpupower
-+                  }
-             self._loadmods.Setup(params)
- 
-         self.__logger.log(Log.INFO, "Preparing measurement modules")
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index a9f5b0c4fba7..fffc8fe27681 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -251,6 +251,9 @@ class Cyclictest(rtevalModulePrototype):
-         self.__cmd.append(f'-t{self.__numcores}')
-         self.__cmd.append(f'-a{self.__cpulist}')
- 
-+        if (self.__cfg.usingCpupower):
-+            self.__cmd.append('--default-system')
-+
-         if 'threads' in self.__cfg and self.__cfg.threads:
-             self.__cmd.append(f"-t{int(self.__cfg.threads)}")
- 
--- 
-2.45.2
+Tested APSS suspend and then SoC power collapse through s2idle and s2ram 
+paths.
+APSS and soc power collapse stats are incremented.
+/sys/kernel/debug/pm_genpd/power-domain-cluster/idle_states
+/sys/kernel/debug/qcom_stats/cxsd
 
+Without this series, they are not incremented.
+
+Thanks,
+Raghavendra K.
+> 
+> Kind regards
+> Ulf Hansson
+> 
+> 
+> Ulf Hansson (7):
+>    pmdomain: core: Enable s2idle for CPU PM domains on PREEMPT_RT
+>    pmdomain: core: Don't hold the genpd-lock when calling
+>      dev_pm_domain_set()
+>    pmdomain: core: Use dev_name() instead of kobject_get_path() in
+>      debugfs
+>    cpuidle: psci-domain: Enable system-wide suspend on PREEMPT_RT
+>    cpuidle: psci: Drop redundant assignment of CPUIDLE_FLAG_RCU_IDLE
+>    cpuidle: psci: Enable the hierarchical topology for s2ram on
+>      PREEMPT_RT
+>    cpuidle: psci: Enable the hierarchical topology for s2idle on
+>      PREEMPT_RT
+> 
+>   drivers/cpuidle/cpuidle-psci-domain.c | 10 ++--
+>   drivers/cpuidle/cpuidle-psci.c        | 26 ++++++----
+>   drivers/pmdomain/core.c               | 75 +++++++++++++++++++--------
+>   include/linux/pm_domain.h             |  5 +-
+>   4 files changed, 80 insertions(+), 36 deletions(-)
+> 
