@@ -1,54 +1,54 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3AAFD19D890
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:25:50 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6F5D19922A
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:25:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721924752; cv=none; b=LQpZja8j/finl0XgB+bmx45HkPPpG7EGNcoXC9lKw81YExmYOJh/jFO+wFUhah37EzonwdA2ogai8BXPkbg/jm5YI6AFKova0DLW1YIfbVO5thFsKG3squ4jg2aoi+U5eTj3wOtygWxWSfSIqOgmYr0it18PwBURy1IbX1DG7WI=
+	t=1721924753; cv=none; b=UfFeFqili5Gg4bJui9FXwIh3++9mkG0l04DX+D4HRO9pNbkLV2g0OfZ0coHQWvxnJ4L9Sef2jRGAjyS8NYcSnLLQrbBUHOcBoWkwMOJKG2vxlaNutjugtPU4+4BDBZUUjd1kO9AQv9+73sRHj8CpFwhgd2O/lKtHrj+WmIQPYOY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721924752; c=relaxed/simple;
-	bh=B4xgtQlcRKYnr8/ocu9U8XMk4RpQ2oxFuCB/PxMNVgM=;
+	s=arc-20240116; t=1721924753; c=relaxed/simple;
+	bh=aSKpRK29OH+m3teLQYxKxqVByv3GyEch8N7yP9jdMy0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=IjFfGsK87QCMHYzBp6hpPopX9nRwxKg9zRgHrCOjHiv9xh4KIClVaPo8ZLX3pu4tCDNj7upZ3hQAQ2ZcA0Oz33hkrJF1e7JKJsRqbdUqjSdgLpeSfOwV3ApIc/7fmAdJ+1BfXEiTHRNcq+D+O6nJmuqGbOkznkzB/HwLck8sCGI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FtgAHkM2; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=h6PIAHDe1+7hgAYi7aHf+NK9xL8U+W1+NO4uYcV038UJAEXMcdCX7vZeedwXOVJHt0CU1JxlP0tDaPVgNA/c2QFu6FinqV5k3ceCOVQemuhtQFm97P6Ba4pFKK34Pvsv9HkamaXDqEhiJ0w1mAd8UW9XNVajzAeI5aYd4bbOOOY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fd8KQDoC; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FtgAHkM2"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fd8KQDoC"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721924749;
+	s=mimecast20190719; t=1721924750;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=dUuNQMfLZguj2UmunTIREvsEdozp0VZwJCr6oj8hI+A=;
-	b=FtgAHkM2d0fjEzgKcu7ZBdZaq1glGhpl4aSiz1U4wdC30biRJPpB4sioKjjni4bfiyqzBj
-	aksjOWjliDzaYlFNc6j+WGxe5h+/tBACTU7CmL/cvjH93GV3GwDSOqc1snatVFEPQ0Naxt
-	YB7kGIpn+GnmhK6+IKxIrNDqxf8DN6g=
+	bh=2dX5FbFnmEcxf1PTIlUFnFvlnUO3PaRDA5x5RsgtuhM=;
+	b=fd8KQDoCJku2zioIy0BEjUKNTMIuAqEyga5yFN6tkl2U7JW887oEB9IJczSSZEy3bS1MJc
+	72xO+Ldy8M3UI2p1w13FdskWan5s5mK024ym5/7Kq5/FJCrWp+MWcixFiag8GWGP1nIiRp
+	8jn1aE9vQ/EG0sqbsOdqGbdUrqP8aWs=
 Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-172-OidgoSY7O-yl4DfJk6LPKA-1; Thu,
- 25 Jul 2024 12:25:48 -0400
-X-MC-Unique: OidgoSY7O-yl4DfJk6LPKA-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-330-fwL4ckcTPSq_rhmeiz2Wng-1; Thu,
+ 25 Jul 2024 12:25:49 -0400
+X-MC-Unique: fwL4ckcTPSq_rhmeiz2Wng-1
 Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F0958195609E
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:25:46 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B20E01955F4A
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 16:25:48 +0000 (UTC)
 Received: from ashelat-na.remote.csb (unknown [10.22.64.15])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 9259B195605A;
-	Thu, 25 Jul 2024 16:25:45 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 509D5195605A;
+	Thu, 25 Jul 2024 16:25:47 +0000 (UTC)
 From: Anubhav Shelat <ashelat@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Cc: jkacur@redhat.com,
 	kcarcia@redhat.com,
 	Anubhav Shelat <ashelat@redhat.com>
-Subject: [PATCH v4] tuna: add options to get idle state info
-Date: Thu, 25 Jul 2024 12:25:31 -0400
-Message-ID: <20240725162532.1890461-2-ashelat@redhat.com>
+Subject: [PATCH v4 3/3] tuna: require -i option for cstate
+Date: Thu, 25 Jul 2024 12:25:32 -0400
+Message-ID: <20240725162532.1890461-3-ashelat@redhat.com>
 In-Reply-To: <20240725162532.1890461-1-ashelat@redhat.com>
 References: <20240725162532.1890461-1-ashelat@redhat.com>
 Precedence: bulk
@@ -60,92 +60,27 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-Added a function in cpupower.py to get idle state info by executing
-cpupower, and added an option in tuna to run that function from the
-cstate subcommand.
+Previously, user could run cstate subcommand without specifying cstate.
+Now the option to specify a cstate is required.
 
 Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 ---
- tuna-cmd.py      | 12 +++++++++---
- tuna/cpupower.py | 18 ++++++++++++------
- 2 files changed, 21 insertions(+), 9 deletions(-)
+ tuna-cmd.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/tuna-cmd.py b/tuna-cmd.py
-index c6ef8bae09a3..b6f94182241f 100755
+index b6f94182241f..5a7e795e3bea 100755
 --- a/tuna-cmd.py
 +++ b/tuna-cmd.py
-@@ -118,6 +118,8 @@ def gen_parser():
-             "priority": dict(default=(None, None), metavar="POLICY:RTPRIO", type=tuna.get_policy_and_rtprio, help="Set thread scheduler tunables: POLICY and RTPRIO"),
-             "background": dict(action='store_true', help="Run command as background task"),
-             "cstate": dict(dest='cstate', metavar='CSTATE', help='Set cpus in IDLE-LIST to a specific cstate'),
-+            "info": dict(dest='info', default=False, action='store_true',
-+                          help='Display information about available CPU idle states.'),
-          }
- 
-     parser = HelpMessageParser(description="tuna - Application Tuning Program")
-@@ -223,6 +225,7 @@ def gen_parser():
+@@ -224,7 +224,7 @@ def gen_parser():
+     show_irqs.add_argument('-q', '--irqs', **MODS['irqs'])
  
      cstate.add_argument('-c', '--cpus', **MODS['cpus'])
-     cstate.add_argument('-i', '--cstate', **MODS['cstate'])
-+    cstate.add_argument('--info', **MODS['info'])
+-    cstate.add_argument('-i', '--cstate', **MODS['cstate'])
++    cstate.add_argument('-i', '--cstate', **MODS['cstate'], required=True)
+     cstate.add_argument('--info', **MODS['info'])
  
      what_is.add_argument('thread_list', **POS['thread_list'])
- 
-@@ -671,9 +674,12 @@ def main():
-             print("Valid log levels: NOTSET, DEBUG, INFO, WARNING, ERROR")
-             print("Log levels may be specified numerically (0-4)\n")
- 
--    if args.cstate:
--        cpupower_controller = cpupower.Cpupower(str(args.cpu_list).strip('[]').replace(' ', ''), args.cstate)
--        cpupower_controller.enable_idle_state()
-+    if args.command == 'cstate':
-+        if args.info:
-+            cpupower.Cpupower.get_idle_info()
-+        elif args.cstate:
-+            cpupower_controller = cpupower.Cpupower(str(args.cpu_list).strip('[]').replace(' ', ''), args.cstate)
-+            cpupower_controller.enable_idle_state()
- 
-     if 'irq_list' in vars(args):
-         ps = procfs.pidstats()
-diff --git a/tuna/cpupower.py b/tuna/cpupower.py
-index ecb82536d404..0aa9243b7838 100644
---- a/tuna/cpupower.py
-+++ b/tuna/cpupower.py
-@@ -59,6 +59,9 @@ class Cpupower:
-                 f.close()
-         print('Idle state configuration restored')
- 
-+    def get_idle_info():
-+        subprocess.call(['cpupower', 'idle-info'])
-+
- 
- if __name__ == '__main__':
-     parser = argparse.ArgumentParser()
-@@ -66,15 +69,18 @@ if __name__ == '__main__':
-                         help='List of cpus to perform cpupower-idle-set operation on.')
-     parser.add_argument('-s', '--cstate', default='',
-                         help='Specify cstate to enable/disable')
--
-+    parser.add_argument('--info', default=False, action='store_true', help='Get idle state information')
-+
-     args = parser.parse_args()
-     print(args)
-     cpulist = args.cpu_list
-     cstate = args.cstate
--    cpupower = Cpupower(cpulist, cstate)
--
--    cpupower.enable_idle_state()
--    time.sleep(10)
--    cpupower.restore_cstate()
-+    if (cstate):
-+        cpupower = Cpupower(cpulist, cstate)
-+        cpupower.enable_idle_state()
-+        time.sleep(10)
-+        cpupower.restore_cstate()
-+    elif (args.info):
-+        Cpupower.get_idle_info()
- 
- 
 -- 
 2.45.2
 
