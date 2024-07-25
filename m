@@ -1,147 +1,100 @@
-Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB36E187866;
-	Thu, 25 Jul 2024 10:33:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D433B18028
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 15:53:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721903585; cv=none; b=MCjAY5AV8xPBwtJ3dp8eREF/M9TQ7ZsL9jmTHOMr52y2OtMg3idejINNrmYaETcBSK7mISwyjt6mx7Po63abXvJqpZXP2VfF/rzC4XCBIvbB6wX6S/zR6xnXIJlTci4/CIXhPlUHHrRejqlb2ceCCMjYYZEce2oDQBOzSASRFWE=
+	t=1721922809; cv=none; b=TgzkImu9ykvTbuahb/lccss5zQ8VNxT3IwYNze7ILnKVTCg3kuPL3s1kHk46Eni/5mWwusdiI0zG/XclTUKowRbjDe006n3Iiq5CTMy3b+9s9RyuD3BYGoI+FJfaj656aaNkK63pgSGLKW5fE+CuiSsN95WmawCaoXXIBg+3I7U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721903585; c=relaxed/simple;
-	bh=q2R6qmejY7wV1ZJErertHQrkFkbltq5MaLaLlTFbgaA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
-	 In-Reply-To:Content-Type; b=bwMaD4wqEGFJwQSvOZVzd40aEZf/PbYwZsJjlVpGSrPVFK2j/BlFJSUfwBH+O4xyDtMkXzBSg+/4s3RoqrFjIJtBcPq7fBy8fNHr3GgsHxGWVLAVQ52xeH5izBMFPEznT041+/I2RsmfBDzQIy2sH6mYmYl3mfABmIhD8MVVfr8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=i6QCIw8K; arc=none smtp.client-ip=205.220.180.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
+	s=arc-20240116; t=1721922809; c=relaxed/simple;
+	bh=Nx9sWdkIxXalQE7qja09XBzf3yyorQdyf3d72meN7/w=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=mXDm5oYYG6wHv1I4WboMD0ni6DIhZBTuAysSTCRQP9h1alScmEfi31s6ZtGxb/8jNZ7ZENozZFF23U4SoKx82WL5Ip8nTHd6/G70h6dwkHLjYw7FMUYjV+XeOiHiJ4xWEHNsuS9duUKATvIZzbE+P3WfPWPR6Pnm4jmCWdK8mWY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Na/Ms29F; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="i6QCIw8K"
-Received: from pps.filterd (m0279870.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 46P0WoOL004323;
-	Thu, 25 Jul 2024 10:32:54 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
-	cc:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	+NJkvVtrWzA8I3lBftm4GOVxGmthl5QFf23tJV31+GE=; b=i6QCIw8K44lbkhEU
-	g2pM0tqBDRj4Ig/8B3Z3r5XTCqoO+5My8qJaqfOk42Vc6xPmg+WiFe2zDpau3BHE
-	aHX2HmwrWAflN4C0Sl1Pcc+dcfU8HrBXN1LdYyfwl3s7Jm6TcXWeKJd6P33L/sSw
-	pnF+iUzHWsyQ6KyQw2gYthQuZJwNEtZTDertR4wNdEFV5s39t4l8w20YcWGI4FsM
-	K7oobPJQDp2NsCHtsBJvSAU9oTGL89liY7ubLznA3x8GjBqH3yC3g81pVLDqWaaL
-	/bw6BxYccFj3RgTRj4/jRwv/JKJHnwDaOUvD7kimHNYWQgIVt4qhZhRzOXRh2StR
-	17Ih3g==
-Received: from nalasppmta05.qualcomm.com (Global_NAT1.qualcomm.com [129.46.96.20])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 40g5auvw2f-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Thu, 25 Jul 2024 10:32:54 +0000 (GMT)
-Received: from nalasex01c.na.qualcomm.com (nalasex01c.na.qualcomm.com [10.47.97.35])
-	by NALASPPMTA05.qualcomm.com (8.17.1.19/8.17.1.19) with ESMTPS id 46PAWqEO022665
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Thu, 25 Jul 2024 10:32:53 GMT
-Received: from [10.218.28.253] (10.80.80.8) by nalasex01c.na.qualcomm.com
- (10.47.97.35) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Thu, 25 Jul
- 2024 03:32:48 -0700
-Message-ID: <a577f1d1-ceba-4d46-b874-38aa40cc8354@quicinc.com>
-Date: Thu, 25 Jul 2024 16:02:36 +0530
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Na/Ms29F"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1721922806;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=GZePGBsWLEyCYA3BSPKvWpZbPMBx+DuyxesqUW7khPk=;
+	b=Na/Ms29FrllK3LoFu8rRTRzeuuAatylRRTavicFVdut8X4vcz/hMe28cXJ/W9nzLsxSMyV
+	wlrSubBCbJ+SChVFSQ+vkd8LyJHtHVwQfQzB2WqH1pXN4i2wjd4Dvhx338mt1zQmM36m1y
+	oyMEM4QXYRs32QPcDJPLVvZ/+tdqqYA=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-463-_XwIAbR6MFmZrFbjguufZA-1; Thu, 25 Jul 2024 11:53:25 -0400
+X-MC-Unique: _XwIAbR6MFmZrFbjguufZA-1
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7a1d8c45a90so89063785a.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Jul 2024 08:53:25 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1721922804; x=1722527604;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=GZePGBsWLEyCYA3BSPKvWpZbPMBx+DuyxesqUW7khPk=;
+        b=h9sAMX6S5lQYgSJVEOPQrHUHjIbfERC6BrxWGbn30kFUedQZ0nyhgfQjvRAD75eDxb
+         esFFSBiCf1Gl6qyybyduQ9MXXnSEdUHJc8PbOlq2zfCyHeNJNel1qAgDsmVewLdTuBWJ
+         O2Np9wIbbCoBHdqAER/zbYu3HRlzZH7iucMaGaJozYY+3g0gabRNgh0nnBzi0ChRENfw
+         0bZG5YpuYD7ro8s6HDCi6Kz1b9AzaR0pCJooVbcB87KtZAKzqAElFyLjmpLiQPEz3qzS
+         tkC2R2bLPs12iU1epvsCAsn/lLHX7YYbMVV1am+ypg6DCyFPqnfBJepOZpyWPTItxk0u
+         zA+Q==
+X-Gm-Message-State: AOJu0Yzlsoz3kcwIWO7+ZLGzKunkN6zu1+I8IKEadrvQaSoBaIhRe7dJ
+	d3JAsqaUIoYXBtm4K8cGGwwpv7xHb6nhAAXpzopRHVdmJgcF5nZdXF5TkEm/JrOPN48s1Wf+JhQ
+	AwH7KTUPYhfyKAn2t5m/tVxfq8zdLpKZJJMtglR9F4GmEDdTaCzKpDjO6uwtu5g+A
+X-Received: by 2002:a05:620a:269b:b0:7a1:c426:d875 with SMTP id af79cd13be357-7a1d7e9b44emr308870885a.39.1721922804618;
+        Thu, 25 Jul 2024 08:53:24 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEMv88q5HfiJKpJCtS8qmLIufMdqiHMS0JTXS5CKxULX7Z9qbOpL7tybH0iAFnHUBdeSkDdtQ==
+X-Received: by 2002:a05:620a:269b:b0:7a1:c426:d875 with SMTP id af79cd13be357-7a1d7e9b44emr308868785a.39.1721922804283;
+        Thu, 25 Jul 2024 08:53:24 -0700 (PDT)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7a1d7435582sm96695985a.85.2024.07.25.08.53.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 25 Jul 2024 08:53:23 -0700 (PDT)
+Date: Thu, 25 Jul 2024 11:53:22 -0400 (EDT)
+From: John Kacur <jkacur@redhat.com>
+To: Anubhav Shelat <ashelat@redhat.com>
+cc: linux-rt-users <linux-rt-users@vger.kernel.org>, kcarcia@redhat.com
+Subject: Re: [PATCH v4] rteval: Added functionality to allow user to set the
+ cstate of specified cpus when running rteval
+In-Reply-To: <20240724191225.1722773-1-ashelat@redhat.com>
+Message-ID: <2b23c4e1-9798-bc29-ff1a-4293777d4ae7@redhat.com>
+References: <20240724191225.1722773-1-ashelat@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 0/7] pmdomain/cpuidle-psci: Support s2idle/s2ram on
- PREEMPT_RT
-Content-Language: en-US
-To: Ulf Hansson <ulf.hansson@linaro.org>,
-        "Rafael J . Wysocki"
-	<rafael@kernel.org>,
-        Sudeep Holla <sudeep.holla@arm.com>, <linux-pm@vger.kernel.org>
-CC: Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
-        Nikunj Kela
-	<nkela@quicinc.com>,
-        Prasad Sodagudi <psodagud@quicinc.com>,
-        Maulik Shah
-	<quic_mkshah@quicinc.com>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>,
-        Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>,
-        <linux-rt-users@vger.kernel.org>,
-        <linux-arm-kernel@lists.infradead.org>, <linux-kernel@vger.kernel.org>
-References: <20240527142557.321610-1-ulf.hansson@linaro.org>
-From: Raghavendra Kakarla <quic_rkakarla@quicinc.com>
-In-Reply-To: <20240527142557.321610-1-ulf.hansson@linaro.org>
-Content-Type: text/plain; charset="UTF-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
- nalasex01c.na.qualcomm.com (10.47.97.35)
-X-QCInternal: smtphost
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-ORIG-GUID: lu8PEDbsZsbZ0qNEfjGSyLX9uJyP-aMW
-X-Proofpoint-GUID: lu8PEDbsZsbZ0qNEfjGSyLX9uJyP-aMW
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
- definitions=2024-07-25_10,2024-07-25_02,2024-05-17_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
- impostorscore=0 bulkscore=0 malwarescore=0 suspectscore=0 mlxscore=0
- clxscore=1011 phishscore=0 spamscore=0 adultscore=0 mlxlogscore=821
- lowpriorityscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2407110000 definitions=main-2407250071
+Content-Type: text/plain; charset=US-ASCII
 
 
 
-On 5/27/2024 7:55 PM, Ulf Hansson wrote:
-> Updates in v2:
-> 	- Rebased and fixed a small issue in genpd, see patch3.
-> 	- Re-tested on v6.9-rt5 (PREEMPT_RT enabled)
-> 	- Re-tested on v6.10-rc1 (for regressions, PREEMPT_RT disabled)
-> 
-> The hierarchical PM domain topology and the corresponding domain-idle-states
-> are currently disabled on a PREEMPT_RT based configuration. The main reason is
-> because spinlocks are turned into sleepable locks on PREEMPT_RT, which means
-> genpd and runtime PM can't be use in the atomic idle-path when
-> selecting/entering an idle-state.
-> 
-> For s2idle/s2ram this is an unnecessary limitation that this series intends to
-> address. Note that, the support for cpuhotplug is left to future improvements.
-> More information about this are available in the commit messages.
-> 
-> I have tested this on a Dragonboard 410c.
-This series is tested on qcm6490 with PREEMPT_RT enabled. For the series,
+On Wed, 24 Jul 2024, Anubhav Shelat wrote:
 
-Tested-by: Raghavendra Kakarla <quic_rkakarla@quicinc.com>  # qcm6490 
-with PREEMPT_RT enabled
+> We would like to be able to set the idle states of CPUs while running
+> rteval.
+> 
+> This patch adds the file cpupower.py and option '--idle-set' within
+> rteval to use cpupower. The set idle state is applied to the cpulist
+> given by '--measurement-cpulist'.
+> 
+> cpupower.py provides the infrastructure to interface and execute the cpupower
+> command, and the options in rteval-cmd let the user specify the idle state
+> to be set and the CPUs to set it on.
+> 
+> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
 
-Tested APSS suspend and then SoC power collapse through s2idle and s2ram 
-paths.
-APSS and soc power collapse stats are incremented.
-/sys/kernel/debug/pm_genpd/power-domain-cluster/idle_states
-/sys/kernel/debug/qcom_stats/cxsd
+Hi Anubhav
 
-Without this series, they are not incremented.
+Your patches are not applying, are you sure that you updated your local 
+git repo to the latest before generating your patches?
 
-Thanks,
-Raghavendra K.
-> 
-> Kind regards
-> Ulf Hansson
-> 
-> 
-> Ulf Hansson (7):
->    pmdomain: core: Enable s2idle for CPU PM domains on PREEMPT_RT
->    pmdomain: core: Don't hold the genpd-lock when calling
->      dev_pm_domain_set()
->    pmdomain: core: Use dev_name() instead of kobject_get_path() in
->      debugfs
->    cpuidle: psci-domain: Enable system-wide suspend on PREEMPT_RT
->    cpuidle: psci: Drop redundant assignment of CPUIDLE_FLAG_RCU_IDLE
->    cpuidle: psci: Enable the hierarchical topology for s2ram on
->      PREEMPT_RT
->    cpuidle: psci: Enable the hierarchical topology for s2idle on
->      PREEMPT_RT
-> 
->   drivers/cpuidle/cpuidle-psci-domain.c | 10 ++--
->   drivers/cpuidle/cpuidle-psci.c        | 26 ++++++----
->   drivers/pmdomain/core.c               | 75 +++++++++++++++++++--------
->   include/linux/pm_domain.h             |  5 +-
->   4 files changed, 80 insertions(+), 36 deletions(-)
-> 
+Thanks
+
+John Kacur
+
