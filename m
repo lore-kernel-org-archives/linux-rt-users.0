@@ -1,140 +1,141 @@
-Received: from mail-lj1-f178.google.com (mail-lj1-f178.google.com [209.85.208.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB46F1369B1;
-	Fri, 26 Jul 2024 08:19:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6559B33997
+	for <linux-rt-users@vger.kernel.org>; Fri, 26 Jul 2024 18:32:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721981943; cv=none; b=NxVMyn6iQDBQopTJZdg24ha0sEPnYPrWTXzc8bUPalBYrIWkDOiZgI2KxAFSEPjohwdEvd1UVjB187Gp8/dYf5bK4Jds0loHW55IQyuF9Hx3M43MJPkhybTArDaXZStuAnm2RFjp4UA4WooH25ND27iLJI0tG6zStrPx64SjDBc=
+	t=1722018765; cv=none; b=V+VGDf8VA7k88BAIZGnwTAwUj2S6FfboJ3pDA9cIK4FZTey+5FCTeiZXbmDs3zqHFMRLTOPewuEOJhVnwc989SgqJ4AF+e/46g9V9FjhBpBhTicV5FB+tcfSmc4n295S3BeR565N0e7t2aj0ElZM/FScznlQhEhSwoeGg/wP0Bw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721981943; c=relaxed/simple;
-	bh=xkcA/AaqQxHyJp7OqaGV5sZmOXYqq7K9BkZGSTCRj24=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=GyBBTcpAYGI71Kj5rACZepV4nwJm8ZMKUKn3n9uBLfog8fRgCBT85WHKBqUlx/lcTHwVE8eRWWu5O9kjwqF26bk9fl/qs0sVBCu/4rnzMMmqrrKSOfCcARhU00Wt1j2jHExV6k+LCKzsl+uBlKj0A7amBjtFG0xk+omUvW5g0SA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BpraErCO; arc=none smtp.client-ip=209.85.208.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1722018765; c=relaxed/simple;
+	bh=W0ld7PRW8cneA9AiDXPkGrH9YQMwP7bdN65o1W4lJaA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=jVsIaDwcL+fhE7d9gI+M/y2o41jRmk79FmkhObz7H83/FcULuwKCCMz+/jHFnqpiEp4mSC/Z2i7OxAC/d5PlJtMlPv91JVVBjDYpu55ZNsQhCDNFKX4ji/88SSyUjMQ/bUlHYtSzvDZOffJrRxIaT35b5JHM+QjeUwbrUFXJuic=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=B5ffEppk; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BpraErCO"
-Received: by mail-lj1-f178.google.com with SMTP id 38308e7fff4ca-2f025b94e07so12081341fa.0;
-        Fri, 26 Jul 2024 01:19:01 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1721981940; x=1722586740; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=i9EmuhFIr5qoMsRdTnH/lwQP/q2v/2JVaAPDZXbbmYY=;
-        b=BpraErCOrqBJiU/sHsC/DS8eDimpPPgS3w0f8lrcugbAe5RwenMC7Y60wl0/4gc/6a
-         20SmAnsV5aPsr8Q1l4FwZCcAXfNKgMk4d3ozOPy1E+wv6Ypf1pqh5dfz6+KpbxBdIul9
-         fD97tcaIoCa3VbbZVwc9LmJTq07j84Ybatc62Ls8IL6PzaJpkfm/DbYmffP7mH4xYJjB
-         RJ8O2qS3F9BPtYDrDxKQok0vlWKdqFkXa5QGV6L/PbPhqW80glxhugKd1UCi7CUEP7bN
-         d8LoCt9MbLOCxh+s2IflqCgh7IIIEojhTGljqMhVH5Xx1dTw38vOR1zmtP+U6xueRhdh
-         UxcA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721981940; x=1722586740;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=i9EmuhFIr5qoMsRdTnH/lwQP/q2v/2JVaAPDZXbbmYY=;
-        b=TC2WLaxZs2oHJilJBktVO3eHN25ycVeA1bLbrI+rqN4nYRhKiVjpSf/OYL0r+g7lNE
-         EHGztUlHUjFfg2ro5281TLOEU7XoJRcDMFcNHdHVAro0m3BH7lBqRwmCQjuyB8DL6Qql
-         a2Lme/3kKbPxJTM14pLBz+HuSzrQEmamIb8Focz1ZYG9qmOWOJNJ7q4b6jDkCUJK2xwp
-         gX5r3mlp5E9qIADtGsEfHAcVKX5KfrJF2IOQhIlsDnsWQAq/6yruhiT4BbdE9n8badgY
-         9VMzQhqH935HdoPbCw6IgaiuPDSvGgXxvzIcsWPd4sQXYdLe5q3nb126DQYqo/CJl0PB
-         bnHQ==
-X-Forwarded-Encrypted: i=1; AJvYcCV81VNThQUAw0VFVCbc4bt/A8HRoJgX+EZRDFk4BM6wtOxDi08KtemBY4HnYGvboc9r77KbLqLhgyZDdiPunwIsIj1vaPI660PP3YESDSpSt+xVDOaG/DKEFJGxQ6RozKfnFht828syund2Ncha+ObozK2MQ9oNZ+wuxlYHhF2ctHQ=
-X-Gm-Message-State: AOJu0YzIrhw/tPTNH7AdJo45hYn0JShC+E7kC25qgYQ3OxSIPVzEKrEc
-	movoPz8m1HuGe9T/9DlSQoSuNM7eeiyI8DL1HP8PqMDrLPB59K0EMkMMpYDVRkPy+LmTQ2eK4sZ
-	Crncog/80+XEn/sa8tujWzkzvBQhy+w==
-X-Google-Smtp-Source: AGHT+IFz9WnQIt5rV3uOgeKouGjePJ53vpFsRJqwiRauTibBrdSjNs5gnSnA5jfaZ9fv+rrgeRq6FU1nNrKGKqVZxzk=
-X-Received: by 2002:a05:6512:1248:b0:52c:df83:ad52 with SMTP id
- 2adb3069b0e04-52fd60412f3mr3672354e87.36.1721981939724; Fri, 26 Jul 2024
- 01:18:59 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="B5ffEppk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1722018762;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=fGyiIBKUn3JKcKaWDY9U5KEnvhAnrBTffK9DQp7T7EM=;
+	b=B5ffEppkSGhkAs1utzWOd2BNe0QqQgzpQiVM5q1Oy6YXPSKIJ75gZt2kjtdCJ08JrEe/3y
+	iDlv+OTVcrQNjcq0L5NMngLS6TOF9LUgSPpkC+0kfm++gWGb7/6EfHB7itGs6t/Ha5BBjo
+	bICEKTcXrRhgKKGaMhpnN46jMHaXKiw=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-562-z3xtzXu2N0uwc58AwZbvZQ-1; Fri,
+ 26 Jul 2024 14:32:40 -0400
+X-MC-Unique: z3xtzXu2N0uwc58AwZbvZQ-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0FCD119560BA
+	for <linux-rt-users@vger.kernel.org>; Fri, 26 Jul 2024 18:32:40 +0000 (UTC)
+Received: from p1g2.redhat.com (unknown [10.2.16.49])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id BA2841955D45;
+	Fri, 26 Jul 2024 18:32:38 +0000 (UTC)
+From: Crystal Wood <crwood@redhat.com>
+To: John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	Crystal Wood <crwood@redhat.com>
+Subject: [PATCH] rteval: measurement: Change latency flag to latency_test
+Date: Fri, 26 Jul 2024 13:32:37 -0500
+Message-ID: <20240726183237.44769-1-crwood@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CAJNi4rOGZpG6qK4ctO7yFY-s_uOax49TYNzdMx_GDXATepY4hQ@mail.gmail.com>
- <CAFwiDX8MWS8WRkvkt=DgEnn6ZxRZWtiyHuc0hHuSzXoGK+Lpig@mail.gmail.com> <CAJNi4rPjsW5ra=MpX918PjZZN+fAsmd0jzGUWYy6nwuEtz4uPg@mail.gmail.com>
-In-Reply-To: <CAJNi4rPjsW5ra=MpX918PjZZN+fAsmd0jzGUWYy6nwuEtz4uPg@mail.gmail.com>
-From: Neeraj upadhyay <neeraj.iitr10@gmail.com>
-Date: Fri, 26 Jul 2024 13:48:48 +0530
-Message-ID: <CAFwiDX_p6Uvcy0uQb0T7pRc2hy-iNZTHyyggzT4qBojLftbKzg@mail.gmail.com>
-Subject: Re: 'rcu_preempt detected stalls on CPUs/tasks...' issue of
- cyclictest on rt-linux
-To: richard clark <richard.xnu.clark@gmail.com>
-Cc: paulmck@kernel.org, josh@joshtriplett.org, 
-	Lai Jiangshan <jiangshanlai@gmail.com>, mathieu.desnoyers@efficios.com, 
-	Steven Rostedt <rostedt@goodmis.org>, Mark Rutland <mark.rutland@arm.com>, 
-	Linus Torvalds <torvalds@linux-foundation.org>, rcu@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
-	linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-Hi,
+As requested by John, change the name of the latency flag to avoid
+looking like it holds an actual latency value.
 
-On Fri, Jul 26, 2024 at 12:46=E2=80=AFPM richard clark
-<richard.xnu.clark@gmail.com> wrote:
->
-> Hi=EF=BC=8C
->
-> On Wed, Jul 10, 2024 at 7:22=E2=80=AFPM Neeraj upadhyay <neeraj.iitr10@gm=
-ail.com> wrote:
-> >
-> > Hello Richard,
-> >
-> > On Wed, Jul 10, 2024 at 1:56=E2=80=AFPM richard clark
-> > <richard.xnu.clark@gmail.com> wrote:
-> > >
-> > > Hi,
-> > > I am running a Ubuntu 20.04.5 LTS on Nvidia Jetson AGX Orin platform
-> > > with 12-cores as a guestOS, the kernel version is - 6.1.83-rt28.
-> > > Kernel cmdline is:
-> > > 'root=3D/dev/mmcblk0p1 rw rootwait rootfstype=3Dext4 mminit_loglevel=
-=3D4
-> > > console=3DttyTCU0,115200 console=3Dtty0 firmware_class.path=3D/etc/fi=
-rmware
-> > > fbcon=3Dmap:0 net.ifnames=3D0'
-> > >
-> > > The cyclictest command 'cyclictest -Smp99 -H 3000
-> > > --histfile=3Dorin_idle_hyp_4h.hist -D 4h' will hang randomly during t=
-he
-> > > test, then the minicom console will show below messages:
-> > > ...
-> > >
-> > > [97619.450889] [CPU11-E] rcu: INFO: rcu_preempt detected stalls on CP=
-Us/tasks:
-> > > [97619.450894] [CPU11-E] rcu:   1-...!: (0 ticks this GP)
-> > > idle=3Ddc88/0/0x0 softirq=3D0/0 fqs=3D2 (false positive?)
-> > > [97619.450914] [ CPU1-E] NMI backtrace for cpu 1
-> > > [97619.451912] [CPU11-E] rcu: rcu_preempt kthread timer wakeup didn't
-> > > happen for 5251 jiffies! g6029253 f0x0 RCU_GP_WAIT_FQS(5)
-> > > ->state=3D0x402
-> > > [97619.451916] [CPU11-E] rcu:   Possible timer handling issue on cpu=
-=3D1
-> > > timer-softirq=3D342864
-> >
-> > This log indicates that jiffies timers are not getting handled on CPU1,=
- due to
-> > which GP kthread was not woken up. Can you check irq, softirq and timer=
- traces
-> > on CPU1, to see if the softirqs/timers are getting served on this CPU?
-> >
-> Please ignore this issue. As narrow down this is an issue from
-> homemade hypervisor which unmasks the vtimer ctrl.IMASK bit by
-> accident, so the vcpu can't get further vtimer interrupt, thus the
-> issue happens...
-> Thanks
->
+Signed-off-by: Crystal Wood <crwood@redhat.com>
+---
+ rteval/modules/__init__.py               | 14 +++++++-------
+ rteval/modules/measurement/cyclictest.py |  2 +-
+ rteval/modules/measurement/timerlat.py   |  2 +-
+ 3 files changed, 9 insertions(+), 9 deletions(-)
 
-Great! Thanks for providing details on the root cause!
+diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+index 2a4eafae71c7..d7792108d5b8 100644
+--- a/rteval/modules/__init__.py
++++ b/rteval/modules/__init__.py
+@@ -40,7 +40,7 @@ class rtevalModulePrototype(threading.Thread):
+                          "finished": threading.Event()}
+         self._donotrun = False
+         self._exclusive = False
+-        self._latency = False
++        self._latency_test = False
+         self.__timestamps = {}
+         self.__sleeptime = 2.0
+ 
+@@ -68,9 +68,9 @@ class rtevalModulePrototype(threading.Thread):
+         self._exclusive = True
+ 
+ 
+-    def set_latency(self):
++    def set_latency_test(self):
+         """ Sets the module as an exclusive latency measurer """
+-        self._latency = True
++        self._latency_test = True
+ 
+ 
+     def set_donotrun(self):
+@@ -418,14 +418,14 @@ class RtEvalModules:
+ 
+         self._logger.log(Log.INFO, f"Preparing {self._module_type} modules")
+         exclusive = 0
+-        latency = False
++        latency_test = False
+         for (modname, mod) in self.__modules:
+             if mod.is_exclusive() and mod.WorkloadWillRun():
+                 exclusive += 1
+-            if mod._latency:
+-                if latency:
++            if mod._latency_test:
++                if latency_test:
+                     raise RuntimeError("More than one exclusive latency test")
+-                latency = True
++                latency_test = True
+         for (modname, mod) in self.__modules:
+             if exclusive >= 1:
+                 if exclusive != 1:
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index a9f5b0c4fba7..d919058e927f 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -216,7 +216,7 @@ class Cyclictest(rtevalModulePrototype):
+         self.__started = False
+         self.__cyclicoutput = None
+         self.__breaktraceval = None
+-        self.set_latency()
++        self.set_latency_test()
+ 
+ 
+     @staticmethod
+diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
+index e4b80c33552e..92bc07051aa1 100644
+--- a/rteval/modules/measurement/timerlat.py
++++ b/rteval/modules/measurement/timerlat.py
+@@ -216,7 +216,7 @@ class Timerlat(rtevalModulePrototype):
+                                                   logfnc=self._log)
+         self.__timerlatdata['system'].description = (f"({self.__numcores} cores) ") + info['0']['model name']
+         self._log(Log.DEBUG, f"system using {self.__numcores} cpu cores")
+-        self.set_latency()
++        self.set_latency_test()
+ 
+ 
+     def _WorkloadSetup(self):
+-- 
+2.45.2
 
-
-- Neeraj
-
-> >
-> > - Neeraj
-> >
