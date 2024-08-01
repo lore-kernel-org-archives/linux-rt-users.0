@@ -1,143 +1,102 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F70BEEB3;
-	Thu,  1 Aug 2024 09:40:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D480013C914
+	for <linux-rt-users@vger.kernel.org>; Thu,  1 Aug 2024 17:04:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722505245; cv=none; b=oca33kRwUZ2ycoeaTmsKmssQXVOs0qU/0PLzUuqKF/xJXbOcUlcfx7zU6oorzqQAfa91M4zTdZbdzabQoF0o8qnNL0niw7bhiULuI3z59E+ppJJZW/gBVhkm4H1Ta80urV7LM5G04UUfAnVWLjAu1m7JclssmOWRvp3OObTm2zc=
+	t=1722531850; cv=none; b=MnWe5OZerhKPE2rboE0Rr7tdGZ4w/PfxdU/SRF4KMomRutP5lihJRou3ccx1K1f2QH9lGrlP0kvmTCnN9082gEhPlyxzFe/jGlsMlvy7Q7L/9ZmmevmgMzfX/rjQRmC7krAQQMhg8kci3oNVeDKtDtvOyuFeMZcAQhTYxI4AnjY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722505245; c=relaxed/simple;
-	bh=slx9GME8fpCyBB5+RUUSCj5M9YwkH+vofD8BNrGzCSU=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=makT2u0+E6mB408uJfMKmNzV4NbXqDzM994zYa6o3K9QMAaDUkWjMnjQJ7aHrbiR3ZeK9UgpqrahQ1nls8Q7TwQPIirshNgK24wUl94tD49aBqaKrsjdpCJ9NngKZpfe1pWbblKs09hueukH08M0lFs7hgigGhc4r6cJYBBAo4c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=lSJuRtXi; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=U8dHQ5R3; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1722531850; c=relaxed/simple;
+	bh=MLmprcZyVDLDR7X34VpLPzVJs3GttAZM4v7jyvirOiU=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=gCOIsAhiWKUX9BoKHOvw4Pn5mWdT74jrpanUtq20DJtVaqFh66vA56QVIoy2o4ULjqIXK1zjLL9BTy3rcJ6U0JE08/FjPUoKcDNhc6UzwXIgMJxX384RI6RhB+WOMyBBd1rbnj9TsKUD+IQ9wUo2xjr74su4uH3xDUU/QAfPtRs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FGQFD6PH; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="lSJuRtXi";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="U8dHQ5R3"
-Date: Thu, 1 Aug 2024 11:40:40 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1722505241;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FGQFD6PH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1722531847;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=rPX5ai+QQ/sOOeKlbiKU69vZ/qTP4RNjkrEJ+PcP1r0=;
-	b=lSJuRtXiqPMeWYsBjkepjA+Y2Rv9KnSF6Ieqi3GqtLo1xwTQVSkrtCRuhi5s0aQ0YKjpOp
-	HuHsI+6P2H1cz0eQkEQk7iObalvV2PraKH+pvSnD5Ty2EWeBbekfQ35V4ITBGcAA2to2kc
-	ZZ2WCooC8Lm86JJuPoJfkS80aMPU/YgzhO0QZDFMYu9bbRg5y815NrObyPacEFMZts9RAA
-	skvHm/hOWusr5wmjlCOhxcRaUoRi7IAL7FPT2PxxKBsUp//HlWVRJibg+ohuiutHOznys9
-	0sI3UPs9uloFhyDpQBLM/3//vHmxpzWvQ6ogUu9wN908oDN4ONzF264uUyX+kA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1722505241;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=rPX5ai+QQ/sOOeKlbiKU69vZ/qTP4RNjkrEJ+PcP1r0=;
-	b=U8dHQ5R3wv7AiywICf5jqN9yKvIfadIuCs4s85sI/VdONsTg5TQwwArCgWEKXvFsFbgQff
-	F+n/tEGek92lmgDQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.10.2-rt13
-Message-ID: <20240801094040.pdwf9TLs@linutronix.de>
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=BVu+TyGnqswgeJMSXlcBDfSQmVXi12Uf1VERdb2hIew=;
+	b=FGQFD6PHHOp5nAaP/IM2H79/N4W5bOX6JtHBOa5v0tHbOoIclB6tosmQJ05NsJpK965vVE
+	FY9ox33Xel9bjR2F0LCFKDF6aXCwVK3NPNy58mAlkm3mz/MVIetk2RIQ44F3eilWqGdAvH
+	sk/v7hpfbL5TklYtNz2O6JfaPz7tNsY=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-635-iAqqGs6HMZ2yBwFccAKtIQ-1; Thu,
+ 01 Aug 2024 13:04:04 -0400
+X-MC-Unique: iAqqGs6HMZ2yBwFccAKtIQ-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EB51019560A2;
+	Thu,  1 Aug 2024 17:04:01 +0000 (UTC)
+Received: from localhost (unknown [10.22.34.81])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 1377719560AE;
+	Thu,  1 Aug 2024 17:03:59 +0000 (UTC)
+Date: Thu, 1 Aug 2024 14:03:58 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.222-rt114
+Message-ID: <Zqu__oYh42j4dY0M@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Dear RT folks!
+Hello RT-list!
 
-I'm pleased to announce the v6.10.2-rt13 patch set. 
+I'm pleased to announce the 5.10.222-rt114 stable release.
 
-Changes since v6.10.2-rt12:
-
-  - Guenter Roeck reported that tinyconfig builds broke. Patch by Linus
-    Torvalds.
-
-  - syzbot reported crashes with the tun driver. Patch by Jeongjun Park. 
-
-Known issues
-    None.
-
-The delta patch against v6.10.2-rt12 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.10/incr/patch-6.10.2-rt12-rt13.patch.xz
+This release is just an update to the new stable 5.10.222 version and
+no RT specific changes have been made.
 
 You can get this release via the git tree at:
 
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.10.2-rt13
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The RT patch against v6.10.2 can be found here:
+  branch: v5.10-rt
+  Head SHA1: 22b07fa4133af0ef5ed5661e0534afabf9abc535
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.10/older/patch-6.10.2-rt13.patch.xz
+Or to build 5.10.222-rt114 directly, the following patches should be applied:
 
-The split quilt queue is available at:
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.10/older/patches-6.10.2-rt13.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.222.xz
 
-Sebastian
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.222-rt114.patch.xz
 
-diff --git a/kernel/task_work.c b/kernel/task_work.c
-index 05fb41fe09f5d..8f9c30e732a0a 100644
---- a/kernel/task_work.c
-+++ b/kernel/task_work.c
-@@ -7,12 +7,14 @@
- 
- static struct callback_head work_exited; /* all we need is ->next == NULL */
- 
-+#ifdef CONFIG_IRQ_WORK
- static void task_work_set_notify_irq(struct irq_work *entry)
- {
- 	test_and_set_tsk_thread_flag(current, TIF_NOTIFY_RESUME);
- }
- static DEFINE_PER_CPU(struct irq_work, irq_work_NMI_resume) =
- 	IRQ_WORK_INIT_HARD(task_work_set_notify_irq);
-+#endif
- 
- /**
-  * task_work_add - ask the @task to execute @work->func()
-@@ -58,6 +60,8 @@ int task_work_add(struct task_struct *task, struct callback_head *work,
- 	if (notify == TWA_NMI_CURRENT) {
- 		if (WARN_ON_ONCE(task != current))
- 			return -EINVAL;
-+		if (!IS_ENABLED(CONFIG_IRQ_WORK))
-+			return -EINVAL;
- 	} else {
- 		/* record the work call stack in order to print it in KASAN reports */
- 		kasan_record_aux_stack(work);
-@@ -82,9 +86,11 @@ int task_work_add(struct task_struct *task, struct callback_head *work,
- 	case TWA_SIGNAL_NO_IPI:
- 		__set_notify_signal(task);
- 		break;
-+#ifdef CONFIG_IRQ_WORK
- 	case TWA_NMI_CURRENT:
- 		irq_work_queue(this_cpu_ptr(&irq_work_NMI_resume));
- 		break;
-+#endif
- 	default:
- 		WARN_ON_ONCE(1);
- 		break;
-diff --git a/localversion-rt b/localversion-rt
-index 6e44e540b927b..9f7d0bdbffb18 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt12
-+-rt13
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 78184fe9e3882..cf00b2f662d54 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -5150,6 +5150,7 @@ int do_xdp_generic(struct bpf_prog *xdp_prog, struct sk_buff **pskb)
- 			bpf_net_ctx_clear(bpf_net_ctx);
- 			return XDP_DROP;
- 		}
-+		bpf_net_ctx_clear(bpf_net_ctx);
- 	}
- 	return XDP_PASS;
- out_redir:
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
