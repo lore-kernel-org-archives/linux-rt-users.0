@@ -1,69 +1,68 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FDE21AE052
-	for <linux-rt-users@vger.kernel.org>; Fri,  2 Aug 2024 18:01:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 613D21547C3
+	for <linux-rt-users@vger.kernel.org>; Fri,  2 Aug 2024 18:56:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722621678; cv=none; b=uI5pj+V5Lxz/b5pLFdD2+q2pYDS6Jn5B1DJescxF8xf3daNCtrKJne4QA1yVu4ShR/ipz0oglIOhj4Ix3iIBckSv6/iIWMNb3YBLQUvWuwdlpPTHnivpA6iku6kxOXuojBqkVc2eb0u39qeX+S/j3OJWHX1geIQDYmp7BX/Jb9k=
+	t=1722625015; cv=none; b=Q8QFmoY6M++KtHKTUTa4ZVmhhuV4a34jps0OfOLUmWPZwam/F16X5Y1Qb4JOPgJCKjJoxzNYgPLLIvclj84qmY7L00/hV7ssh78inls3tkC7Ehha9c8ErdNPMfk4g/V8fH3vj2Q0GBd0xDWA+fTPysyBuYr0u58D+q1vQov1CqU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722621678; c=relaxed/simple;
-	bh=49DHT/nLZYb/VlXj5Sm9NNjmfSaHb8dthK22ye1IIC8=;
+	s=arc-20240116; t=1722625015; c=relaxed/simple;
+	bh=VbbMzBb+5nS4yuM7sNeTRIR/ZOf+jm31J4nlTsPW8Ac=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=pAw8RuM9hjzhqu5ICzoQNarR9hFw9fmx1xu9TuWdliOB89xT78SsonRt0ine7+32tYzOT6Hvkubhz1bARdQmc64f0xzEwys3hGb15gTGzJm1wwer8n+v1q4znBMwrHn4gPjW8xeyDy1DsAj7fG216txvxPF+JeQ2DKSrANaLJR4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AK1U80Yj; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=cw7YkUpOwV8xu7v9inpeA9obs+nlJTfMJ4udh9jRPjnpOBZpkv1Fj7yilcfSr/oAfvk07LQExSt8n13wAKj5ebytIQ2QyKFubPkaZjreXiGVK/YvigLyiVG/D4Fu0q2Llwao30HjiTttHKut2sFtZ9+K4cKzPGW+Fa9rlHUMfTo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZfvjJi3t; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AK1U80Yj"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZfvjJi3t"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1722621676;
+	s=mimecast20190719; t=1722625012;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=sGRK9AxkPNPh5eGXgR/t0AiMhySYlgVSnWi5VhYX6h4=;
-	b=AK1U80Yj0y3HnpS2mo56R7IAHoGj/C1zld1JXizeV4/2zAU1bFH32wXIJWmHIkl0yUlQgL
-	LbjzjSNuizcJywnxUJgfwV87LNp9vnCd//5KsaFc+Sz73SvVr6oXIFwUGIXw9FIQHJyFuf
-	UwW5aNPZRsYjnRN2RfAIHoRN9m91D2c=
-Received: from mail-ot1-f71.google.com (mail-ot1-f71.google.com
- [209.85.210.71]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=ndvzmdhEH2shp9kaybTClT6hCU3FG4rwVmPgVxS9sds=;
+	b=ZfvjJi3t6yEXpzBnWkScaxAlfBiJo7HLu5xOZ6GqwEvKE4YfVlmM4QR7FyCczl+yI+yze2
+	DZFrr9xalMmACqCriDx0b8C3efOWP4LbkUJrZ/bHGm94BwZfgDHa1X66EDFHHZaUXx/6e6
+	9aBzbVf/zmeqpfWSWsfpTFamseetUBo=
+Received: from mail-oo1-f71.google.com (mail-oo1-f71.google.com
+ [209.85.161.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-164-nnYHYs-EOV-ljKn69P-8UQ-1; Fri, 02 Aug 2024 14:01:13 -0400
-X-MC-Unique: nnYHYs-EOV-ljKn69P-8UQ-1
-Received: by mail-ot1-f71.google.com with SMTP id 46e09a7af769-70934735336so6788564a34.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 Aug 2024 11:01:13 -0700 (PDT)
+ us-mta-644-h3XEVzTAPcy1YNTn0EywVw-1; Fri, 02 Aug 2024 14:56:51 -0400
+X-MC-Unique: h3XEVzTAPcy1YNTn0EywVw-1
+Received: by mail-oo1-f71.google.com with SMTP id 006d021491bc7-5d5ffdc9ed9so5150511eaf.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 Aug 2024 11:56:50 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1722621673; x=1723226473;
+        d=1e100.net; s=20230601; t=1722625010; x=1723229810;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=sGRK9AxkPNPh5eGXgR/t0AiMhySYlgVSnWi5VhYX6h4=;
-        b=YV9U7A8Y8j3B4P9pxWn+PeK/aY4f86Dqa8lvTha66piQmxb7JFqmBEhMAJkDAUNnBj
-         bQ1l6fEZx5izfxu0JJTKUABr/MAOWSVoi2Z69wrnrqlVsLgsoLXpp71ZtihVnfr3xvYJ
-         JV/VRK99gyjXyr8BB6Cfs1kqZM5PRvpHUKbpKciHhjwf1VmTEqt4bhsB9tbEGx89KdN7
-         bTnX/8fovWRNBu1eOGqTxcjSmMkSiW7K8U1Gy3NtGwfXZ02HUlByFWIZdbPTXg7R08+d
-         kqC75OTK2JxGSND0+7COzBccT4RKPex6BP5vRqwlkffBWtpNrJu2vGmaFXydOhbqZevX
-         ETfQ==
-X-Gm-Message-State: AOJu0YzMWq/3/6JD1M2qRHg5Fg0XyJyTunJSUWwDEGnLO+PfyU2tVW0o
-	ncdSucMxEh7trYMH3axorznOS7U/LBaQyo4eWTBtyKM6XxG5M8tGczMOjsNjsiOyCJbaJWL2J8X
-	rkIi0zvZjgl1SbUFfxOGCgKMA8mZhusajOSUycl2BO69QdmcuFXpf6CGhafxyjYBu
-X-Received: by 2002:a05:6830:631a:b0:709:4d7a:3438 with SMTP id 46e09a7af769-709b32081c5mr5757339a34.11.1722621672801;
-        Fri, 02 Aug 2024 11:01:12 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFHac6RcMIfMT/Kyg0SJCWZsZYiI61w0NN9yB8Bwa9m0qDBrHXByJUVGTm3BOEVW5iBpaqgbw==
-X-Received: by 2002:a05:6830:631a:b0:709:4d7a:3438 with SMTP id 46e09a7af769-709b32081c5mr5757315a34.11.1722621672453;
-        Fri, 02 Aug 2024 11:01:12 -0700 (PDT)
+        bh=ndvzmdhEH2shp9kaybTClT6hCU3FG4rwVmPgVxS9sds=;
+        b=CVlOT+TdnE/enLmGhqFc95CFRe/+ekwxYptWI65Ny3wExcX1fJh3E0sMMZ+2E1FgjW
+         bKdQtH6+KcIf8f2cl9wsR/RT2RJpk8kDSvptO5tr+11EL26wYTyAaR3EsT6vT5UyaABs
+         pifHYUTvSq1BxzSoqd2WNkgQJnUJYYrp8bI3q18AxYsrzh5Xi0Ht+aaeK/f6xFxAa/wu
+         Xg95EHr2+oKthsxThWNWnLhPZS04bWLSq2DZyMSexCB9u0oqu5iu4dWqEg8DP/bdnLRm
+         k2bG4nLGwz1CpkcZyl6iqhY4R8vWcKeC5HPc2blKFzB4Tv1sjByQgI2dWIfhUhR1C1Tk
+         RXLQ==
+X-Gm-Message-State: AOJu0YyFEeuufKXK6077MWd+E7lIDNkhPyxy1yrWc6fIKY2Jg7lwmeO5
+	8s7hDXf3MKNx7vaaRCnk5yqOTyI96omV02lVXiyDZxoo+mzX8f6vhVFGPbOybmD0mztm2+OVwkW
+	FX7O8HCcv606lSeu08lnM2jeKx0cWkb7xR237nbHIKi4sjqh9tQSB4bhaBQzuWV8qYVR0rYIm
+X-Received: by 2002:a05:6358:c117:b0:1ad:d2a:75ea with SMTP id e5c5f4694b2df-1af3bad7725mr372047755d.14.1722625009630;
+        Fri, 02 Aug 2024 11:56:49 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IG4Hjv/H8uwNg4P0i71dwDg1h9cqXQHpyWIwDpi0pDw+LjfoKvDNZhPNubdj6/9K4n7PCaVwQ==
+X-Received: by 2002:a05:6358:c117:b0:1ad:d2a:75ea with SMTP id e5c5f4694b2df-1af3bad7725mr372046255d.14.1722625009196;
+        Fri, 02 Aug 2024 11:56:49 -0700 (PDT)
 Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bb9c79b875sm9142376d6.49.2024.08.02.11.01.11
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bb9c76aceasm9534836d6.6.2024.08.02.11.56.48
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 02 Aug 2024 11:01:12 -0700 (PDT)
-Date: Fri, 2 Aug 2024 14:01:11 -0400 (EDT)
+        Fri, 02 Aug 2024 11:56:48 -0700 (PDT)
+Date: Fri, 2 Aug 2024 14:56:47 -0400 (EDT)
 From: John Kacur <jkacur@redhat.com>
-To: Anubhav Shelat <ashelat@redhat.com>
-cc: linux-rt-users@vger.kernel.org, kcarcia@redhat.com
-Subject: Re: [PATCH v6 2/2] rteval: run cyclictest using '--default-system'
- when setting idle states
-In-Reply-To: <20240802154636.1240064-2-ashelat@redhat.com>
-Message-ID: <23ececbc-f5e6-a7d5-e9e0-f035bff4390e@redhat.com>
-References: <20240802154636.1240064-1-ashelat@redhat.com> <20240802154636.1240064-2-ashelat@redhat.com>
+To: Tomas Glozar <tglozar@redhat.com>
+cc: linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v2] rteval: Add module for tuned state
+In-Reply-To: <20240724073742.58006-1-tglozar@redhat.com>
+Message-ID: <9162269f-911c-e8df-c746-e641001de8e0@redhat.com>
+References: <20240724073742.58006-1-tglozar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -74,73 +73,260 @@ Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Fri, 2 Aug 2024, Anubhav Shelat wrote:
+On Wed, 24 Jul 2024, tglozar@redhat.com wrote:
 
-> When running cyclictest in rteval, cyclictest automatically disables
-> idle states. This means whenever the user sets the idle state of a cpu
-> list using '--idle-set' it is overridden by cyclictest.
+> From: Tomas Glozar <tglozar@redhat.com>
 > 
-> To fix this, the variable 'usingCpupower' is appended to the parameter
-> dictionary that's passed to the Cyclictest measurement object which executes
-> cyclictest in rteval.
+> Add a sysinfo module for collecting the tuned state. Three properties
+> are collected:
+> - whether tuned is present
+> - what the active tuned profile is
+> - whether tuned profile verification passes
 > 
-> If '--idle-set' is specified when running rteval,
-> 'usingCpupower' is set to true and the '--default-system' option is
-> appended to the cyclictest command, which will prevent cyclictest from
-> disabling cstates.
+> In case of a failed verification, the tuned log is also collected.
 > 
-> Signed-off-by: Anubhav Shelat <ashelat@redhat.com>
+> Signed-off-by: Tomas Glozar <tglozar@redhat.com>
 > ---
->  rteval-cmd                               | 4 ++++
->  rteval/__init__.py                       | 1 +
->  rteval/modules/measurement/cyclictest.py | 3 +++
->  3 files changed, 8 insertions(+)
+>  rteval/sysinfo/__init__.py |   5 +-
+>  rteval/sysinfo/tuned.py    | 191 +++++++++++++++++++++++++++++++++++++
+>  2 files changed, 195 insertions(+), 1 deletion(-)
+>  create mode 100644 rteval/sysinfo/tuned.py
 > 
-> diff --git a/rteval-cmd b/rteval-cmd
-> index 6e7d8f5d99cb..542d08fc67f0 100755
-> --- a/rteval-cmd
-> +++ b/rteval-cmd
-> @@ -266,6 +266,10 @@ if __name__ == '__main__':
->                  | (rtevcfg.debugging and Log.DEBUG)
->          logger.SetLogVerbosity(loglev)
+> diff --git a/rteval/sysinfo/__init__.py b/rteval/sysinfo/__init__.py
+> index 09af52e..4b7b03c 100644
+> --- a/rteval/sysinfo/__init__.py
+> +++ b/rteval/sysinfo/__init__.py
+> @@ -15,10 +15,11 @@ from rteval.sysinfo.memory import MemoryInfo
+>  from rteval.sysinfo.osinfo import OSInfo
+>  from rteval.sysinfo.newnet import NetworkInfo
+>  from rteval.sysinfo.cmdline import cmdlineInfo
+> +from rteval.sysinfo.tuned import TunedInfo
+>  from rteval.sysinfo import dmi
 >  
-> +        # check if cpupower is being used
-> +        if sys.argv.count('--idle-set') > 0:
-> +            rtevcfg.update({'usingCpupower': True})
+>  class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+> -                 MemoryInfo, OSInfo, NetworkInfo, cmdlineInfo):
+> +                 MemoryInfo, OSInfo, NetworkInfo, cmdlineInfo, TunedInfo):
+>      def __init__(self, config, logger=None):
+>          self.__logger = logger
+>          KernelInfo.__init__(self, logger=logger)
+> @@ -28,6 +29,7 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+>          OSInfo.__init__(self, logger=logger)
+>          cmdlineInfo.__init__(self, logger=logger)
+>          NetworkInfo.__init__(self, logger=logger)
+> +        TunedInfo.__init__(self, logger=logger)
+>  
+>          # Parse initial DMI decoding errors
+>          self.ProcessWarnings()
+> @@ -49,6 +51,7 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+>          report_n.addChild(MemoryInfo.MakeReport(self))
+>          report_n.addChild(dmi.DMIinfo.MakeReport(self))
+>          report_n.addChild(cmdlineInfo.MakeReport(self))
+> +        report_n.addChild(TunedInfo.MakeReport(self))
+>  
+>          return report_n
+>  
+> diff --git a/rteval/sysinfo/tuned.py b/rteval/sysinfo/tuned.py
+> new file mode 100644
+> index 0000000..063fcbf
+> --- /dev/null
+> +++ b/rteval/sysinfo/tuned.py
+> @@ -0,0 +1,191 @@
+> +# -*- coding: utf-8 -*-
+> +# SPDX-License-Identifier: GPL-2.0-or-later
+> +#
+> +#   Copyright 2024          Tomas Glozar <tglozar@redhat.com>
+> +#
+> +"""tuned sysinfo module"""
+> +import shutil
+> +import subprocess
+> +import sys
+> +import libxml2
+> +from rteval.Log import Log
 > +
->          # Load modules
->          loadmods = LoadModules(config, logger=logger)
->          measuremods = MeasurementModules(config, logger=logger)
-> diff --git a/rteval/__init__.py b/rteval/__init__.py
-> index 4d3e0c23e5ab..8ded374d287e 100644
-> --- a/rteval/__init__.py
-> +++ b/rteval/__init__.py
-> @@ -119,6 +119,7 @@ class RtEval(rtevalReport):
->                    'memsize':self._sysinfo.mem_get_size(),
->                    'numanodes':self._sysinfo.mem_get_numa_nodes(),
->                    'duration': float(self.__rtevcfg.duration),
-> +                  'usingCpupower': self.__rtevcfg.usingCpupower
->                    }
->  
->          if self._loadmods:
-> diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-> index d919058e927f..2e8f6f1870ed 100644
-> --- a/rteval/modules/measurement/cyclictest.py
-> +++ b/rteval/modules/measurement/cyclictest.py
-> @@ -251,6 +251,9 @@ class Cyclictest(rtevalModulePrototype):
->          self.__cmd.append(f'-t{self.__numcores}')
->          self.__cmd.append(f'-a{self.__cpulist}')
->  
-> +        if (self.__cfg.usingCpupower):
-> +            self.__cmd.append('--default-system')
+> +TUNED_ADM = "tuned-adm"
+> +TUNED_LOG_PATH = "/var/log/tuned/tuned.log"
+> +TUNED_VERIFY_START_LINE = "INFO     tuned.daemon.daemon: verifying " \
+> +                          "profile(s): realtime"
 > +
->          if 'threads' in self.__cfg and self.__cfg.threads:
->              self.__cmd.append(f"-t{int(self.__cfg.threads)}")
->  
+> +
+> +def tuned_present():
+> +    """
+> +    Checks if tuned is present on the system
+> +    :return: True if tuned is present, False otherwise
+> +    """
+> +    return shutil.which(TUNED_ADM) is not None
+> +
+> +
+> +def tuned_active_profile():
+> +    """
+> +    Gets tuned active profile.
+> +    :return: Tuned profile (as a string) or "unknown"
+> +    """
+> +    try:
+> +        result = subprocess.check_output([TUNED_ADM, "active"])
+> +    except (OSError, subprocess.CalledProcessError):
+> +        return "unknown"
+> +    result = result.decode("utf-8")
+> +    split_result = result.split(": ")
+> +    if len(split_result) < 2:
+> +        return "unknown"
+> +    return split_result[1].strip()
+> +
+> +
+> +def tuned_verify():
+> +    """
+> +    Verifies if tuned profile is applied properly
+> +    :return: "success", "failure" or "unknown"
+> +    """
+> +    try:
+> +        result = subprocess.run([TUNED_ADM, "verify"],
+> +                                stdout=subprocess.PIPE, check=False).stdout
+> +    except (OSError, subprocess.CalledProcessError):
+> +        return "unknown"
+> +    result = result.decode("utf-8")
+> +    if result.startswith("Verification succeeded"):
+> +        return "success"
+> +    if result.startswith("Verification failed"):
+> +        return "failure"
+> +    return "unknown"
+> +
+> +
+> +def tuned_get_log():
+> +    """
+> +    Read entries related to last profile verification from tuned log
+> +    :return: List of strings containing the entires, or None if no
+> +    verification is found in the log
+> +    """
+> +    try:
+> +        with open(TUNED_LOG_PATH, "r", encoding="utf-8") as file:
+> +            lines = file.readlines()
+> +            # Find start of last verification
+> +            start = None
+> +            for i in reversed(range(len(lines))):
+> +                if TUNED_VERIFY_START_LINE in lines[i]:
+> +                    start = i
+> +                    break
+> +            if start is None:
+> +                return None
+> +            return lines[start:]
+> +    except OSError:
+> +        return None
+> +
+> +
+> +class TunedInfo:
+> +    """
+> +    Gather information about tuned and make an XML report.
+> +    Collected information:
+> +    - whether tuned is present
+> +    - which tuned profile is active
+> +    - whether the tuned profile is applied correctly
+> +    - if not applied correctly, collect relevant info from log
+> +    """
+> +    def __init__(self, logger=None):
+> +        self.__logger = logger
+> +
+> +    def __log(self, logtype, msg):
+> +        if self.__logger:
+> +            self.__logger.log(logtype, msg)
+> +
+> +    def tuned_state_get(self):
+> +        """
+> +        Gets the state of tuned on the machine
+> +        :return: A dictionary describing the tuned state
+> +        """
+> +        result = {
+> +            "present": tuned_present()
+> +        }
+> +        if not result["present"]:
+> +            self.__log(Log.DEBUG, "tuned-adm not found; skipping tuned "
+> +                                  "sysinfo collection")
+> +            return result
+> +        result["active_profile"] = tuned_active_profile()
+> +        if result["active_profile"] == "unknown":
+> +            self.__log(Log.DEBUG, "could not retrieve tuned active profile")
+> +            return result
+> +        result["verified"] = tuned_verify()
+> +        if result["verified"] == "unknown":
+> +            self.__log(Log.DEBUG, "could not verify tuned state")
+> +        if result["verified"] == "failure":
+> +            # Include log to see cause to failure
+> +            result["verification_log"] = tuned_get_log()
+> +
+> +        return result
+> +
+> +    def MakeReport(self):
+> +        """
+> +        Create XML report
+> +        :return: libxml2 node containing the report
+> +        """
+> +        tuned = self.tuned_state_get()
+> +
+> +        rep_n = libxml2.newNode("Tuned")
+> +        rep_n.newProp("present", str(int(tuned["present"])))
+> +        for key, value in tuned.items():
+> +            if key == "present":
+> +                continue
+> +            child = libxml2.newNode(key)
+> +            if key == "verification_log":
+> +                if value is None:
+> +                    self.__log(Log.WARN, "could not get verification log")
+> +                    continue
+> +                for line in value:
+> +                    # <date> <time> <log-level>    <message>
+> +                    line = line.split(" ", 3)
+> +                    if len(line) != 4:
+> +                        continue
+> +                    line_child = libxml2.newNode("entry")
+> +                    line_child.newProp("date", line[0])
+> +                    line_child.newProp("time", line[1])
+> +                    line_child.newProp("level", line[2])
+> +                    line_child.setContent(line[3].strip())
+> +                    child.addChild(line_child)
+> +            else:
+> +                child.setContent(value)
+> +            rep_n.addChild(child)
+> +
+> +        return rep_n
+> +
+> +
+> +def unit_test(rootdir):
+> +    try:
+> +        # Helper function tests
+> +        result = tuned_present()
+> +        print("tuned present:", result)
+> +        assert isinstance(result, bool), "__tuned_present() should return bool"
+> +        result = tuned_active_profile()
+> +        print("tuned active profile:", result)
+> +        assert isinstance(result, str), "__tuned_active_profile() should " \
+> +                                        "return string"
+> +        result = tuned_verify()
+> +        print("tuned verification state:", result)
+> +        assert isinstance(result, str), "__tuned_verify() should return string"
+> +        result = tuned_get_log()
+> +        assert isinstance(result, list) or result is None, \
+> +            "__tuned_get_log() should return list or None"
+> +
+> +        # Class tests
+> +        tuned = TunedInfo()
+> +        result = tuned.tuned_state_get()
+> +        print(result)
+> +        assert isinstance(result, dict), "TunedInfo.tuned_state_get() " \
+> +                                         "should return dict"
+> +        tuned.MakeReport()
+> +
+> +        return 0
+> +    except Exception as err:
+> +        print(f"** EXCEPTION: {str(err)}")
+> +        return 1
+> +
+> +
+> +if __name__ == '__main__':
+> +    sys.exit(unit_test(None))
 > -- 
-> 2.45.2
-> 
-> 
-> 
+
+Thanks!
 Signed-off-by: John Kacur <jkacur@redhat.com>
+
+Note: awaiting a follow-up patch to include the information in the final 
+report as we discussed offline
 
