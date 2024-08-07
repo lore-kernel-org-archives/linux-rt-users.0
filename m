@@ -1,48 +1,99 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 02DD45B1FB;
-	Tue,  6 Aug 2024 18:38:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15B102AF07
+	for <linux-rt-users@vger.kernel.org>; Wed,  7 Aug 2024 06:34:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722969498; cv=none; b=uhwzZHK+P8ylGrsIJQdykPtdXm2/sXq668CaMARBQA3fJAzryiyLLLwuDxTWtcwirEhWchZm3suvTyqIcIw08XetrVYTTCvuuJkGCocoL5l25JtxESRtzxB2E0khsaKfy7MVZBUVFrFGgzNNyx8GMr71nu0f9UNHEUuNuoiSfBc=
+	t=1723012446; cv=none; b=cq1Kzwk/EsjpPpudS7QLqrAQsJaHQ6bJ9xt5AqGwGK6Is6kiwo6+a905Lj0Vqr4aa+GZ71e+9sJzWS3hy/T2lyWZzSv2LdnV0QKlV9eZTQmX1tXVnT2GSLOrKWAwn8f4jhix9Io+6zCSnKVrrKrGMfkShb0+RB3SYPmElkZRBow=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722969498; c=relaxed/simple;
-	bh=8tS/iLnzKfvv9OSEBeEtPAOeGOIDM0EkGRPFbnSFRzk=;
-	h=From:Subject:Date:Message-ID:To; b=Ly5k0LC2CndQMxmFWjY+vzkCXXQNOiVQfi+GnDAlPkPIQQALQb32YwkW/6UTzvZPCr9JoGTS9Oe5caJvMuKte+nGYGK6m9kW5yrpFzkBG6jDL8T1kk54sUqpeITdWnvA23oa4WY8hknDE96nrNjaUEJgHPqkTsQlcBfmfFMJDJQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4AF8EC32786;
-	Tue,  6 Aug 2024 18:38:17 +0000 (UTC)
-From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.6.44-rt39
-Date: Tue, 06 Aug 2024 18:37:39 -0000
-Message-ID: <172296945975.166091.16681546740404966491@demetrius.lan>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>
+	s=arc-20240116; t=1723012446; c=relaxed/simple;
+	bh=rCldAQ/eZr6lV0grryv09Nu5e2AbiyCNQrQt5ax5z20=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=XDzcEsNYBwn5UUE95xgQ8yhQnsHR6BXFV555NKx0QaTtSlVOeyTHINQPYXlxkq+J+CEg+c47Tyk+OA20TFnKC1+k6HRsd/bLv501ZT/oSIwKDgPAQN0vOB3vH9RuEWcPo9sKCEB5Lekn772q+1q2WVVGIibOZ3nwwrOkIrpWCYE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EPLgG9kF; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EPLgG9kF"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723012443;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=NnjTjWVGx6dNqd918NOZQVjq1vUpYIqTGb5oSGCiuGQ=;
+	b=EPLgG9kFeUwfbVSEwPK8AUGiaBWHlFmoOKRo21tSqi7P+uK3T+k/WExflNlnVwjWSwRpUA
+	r339wCyyVYC+JyuOdV6Ni8gvnTpBu80GGtNmpM+H7qBTUKZe15XBuHrCz9L74LEE9ylbL9
+	j4dqnH/nvz51sfjQIivVf6vp/xS7bqU=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-591-Fq3tMdT0PKiXuxQcnEqoaw-1; Wed,
+ 07 Aug 2024 02:34:02 -0400
+X-MC-Unique: Fq3tMdT0PKiXuxQcnEqoaw-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B4D6D1955D5A
+	for <linux-rt-users@vger.kernel.org>; Wed,  7 Aug 2024 06:34:01 +0000 (UTC)
+Received: from fedora.redhat.com (unknown [10.45.224.78])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id EB9001955BFC;
+	Wed,  7 Aug 2024 06:33:59 +0000 (UTC)
+From: tglozar@redhat.com
+To: linux-rt-users@vger.kernel.org
+Cc: jkacur@redhat.com,
+	Tomas Glozar <tglozar@redhat.com>
+Subject: [PATCH] rteval: Add tuned state to rteval text report
+Date: Wed,  7 Aug 2024 08:33:33 +0200
+Message-ID: <20240807063333.258868-1-tglozar@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-Hello RT-list!
+From: Tomas Glozar <tglozar@redhat.com>
 
-I'm pleased to announce the 6.6.44-rt39 stable release.
+Add a section "Tuned state" to the text report generated by rteval. Show
+tuned active state if tuned is present, otherwise, show a message that
+tuned is not present. If the active state is known, show also the
+verification result.
 
-You can get this release via the git tree at:
+Signed-off-by: Tomas Glozar <tglozar@redhat.com>
+---
+ rteval/rteval_text.xsl | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index 96846aa..70f3e0f 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -143,6 +143,22 @@
+       </xsl:when>
+       <xsl:otherwise>(unknown)</xsl:otherwise>
+     </xsl:choose>
++    <xsl:text>&#10;</xsl:text>
++
++    <xsl:text>   Tuned state:  </xsl:text>
++    <xsl:choose>
++      <xsl:when test="SystemInfo/Tuned/@present='1'">
++        <xsl:value-of select="SystemInfo/Tuned/active_profile"/>
++        <xsl:text> profile</xsl:text>
++          <xsl:if test="SystemInfo/Tuned/active_profile != 'unknown'">
++            <xsl:text>, verification: </xsl:text>
++            <xsl:value-of select="SystemInfo/Tuned/verified"/>
++          </xsl:if>
++        </xsl:when>
++        <xsl:otherwise>
++          <xsl:text>not present</xsl:text>
++        </xsl:otherwise>
++    </xsl:choose>
+     <xsl:text>&#10;&#10;</xsl:text>
+    
+     <xsl:text>   System load:&#10;</xsl:text>
+-- 
+2.45.2
 
-  branch: v6.6-rt
-  Head SHA1: ec8e0b665eccdbdd7def2e58aa176b72c8ba240f
-
-Or to build 6.6.44-rt39 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.44.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.44-rt39.patch.xz
-
-
-Enjoy!
-Clark
