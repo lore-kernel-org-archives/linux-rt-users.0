@@ -1,102 +1,81 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EEB7413A25F
-	for <linux-rt-users@vger.kernel.org>; Wed,  7 Aug 2024 18:29:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 859D51CD25
+	for <linux-rt-users@vger.kernel.org>; Thu,  8 Aug 2024 07:31:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723055385; cv=none; b=ad04hyH87oNgExY7lt1zBqNvMQ0z0NWpSDmo+FK+SM0P0Xrht3Tpd44n4uwR8LhUbnxTSEV9FxExSu8Iolyvg+A2CjGYFxJ05ovv+pN7YXF2k4/mgBmbCHExj7CfORXAcUjXqaci32E5gHL/C01mkpBS33yDUyd7/kRo9/OHYeg=
+	t=1723102310; cv=none; b=OPQxCrRyPMjFBXRj2cwSPjqbkmgjMEf2eTtc9IFHk8gycgDDAsMHZ4RnnceLZjFe5oUUZPgpC/VIcdKQGBadWe9kgc8gobQDjrTEK5QvfFEnjWWV0+xqBOrM9/IqSKFJ+0PZY4urHGY72k1Mwjqo3FYmRGvh7mnsbdAATcgXKH0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723055385; c=relaxed/simple;
-	bh=x0Gh5dUsX+OKIN85uHpwP2suPY7Lk0xxfxy9XFiU05A=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=Ck2MkZp9gqFW1BAG8epHZWzMl2Z2e94FN2iRGyrsU3XbjeV3zyzF9aOCq4vOvwetCYuCyAZWUq08vLlapxWUXOz/fMwoXVrEWE1za+FGj/kZEPETcvRQuoG5moQXyoqFe2gmY6HZISO8WoKO8NeiC9pqtmb3u10vwO8mN85C5wM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E9jxx2UX; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1723102310; c=relaxed/simple;
+	bh=1WeKBCVOZmrmpUl+I1u3M+H3eQq5rPgGqmqEKXmCTQU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=hAtFlQGtKOfdKGoU9umv4etxe8x72EgLLjlO9lZ4LynvNOi5fm1zaUopEnbiZJtyzPfdzJXVA4G03KMpQh9QEokn/2ch86G9MYKNhzRvya3dQcXc0JIh28el/x7uS7slAEiyhDBGPuBRd5d+Y7HcX4U6TBC2HkvOdNYBIQTjVIg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=hFTxwFsD; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=aKVBOitv; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E9jxx2UX"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1723055383;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="hFTxwFsD";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="aKVBOitv"
+Date: Thu, 8 Aug 2024 09:31:44 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1723102306;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=iuEaMCr3ZjxEalj9opHIoSUEzllr1XxNMoFfZ/TmzCw=;
-	b=E9jxx2UXeEvK+iDULcwHCwnnjthjb3UMtseNEbOn1pPgVghiBE3al3Yls8gPRI6Oyqc6g8
-	bQFhZX7LKth5gg306MocMcHBL+MdhkDYweGQI3YMHcjnF7/hTQvGKJ1M3lTWznKy4aesrO
-	BiZrRWOfo+GPaTmlk4qcKdYg1Vt/87c=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-398-QkwZ5qnCORuhPJNyCio-rg-1; Wed,
- 07 Aug 2024 14:29:39 -0400
-X-MC-Unique: QkwZ5qnCORuhPJNyCio-rg-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D77B51955F0D;
-	Wed,  7 Aug 2024 18:29:36 +0000 (UTC)
-Received: from localhost (unknown [10.22.32.137])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 75B9A19560A3;
-	Wed,  7 Aug 2024 18:29:35 +0000 (UTC)
-Date: Wed, 7 Aug 2024 15:29:34 -0300
-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	stable-rt <stable-rt@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@suse.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
-	Jeff Brady <jeffreyjbrady@gmail.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-Subject: [ANNOUNCE] 5.10.223-rt115
-Message-ID: <ZrO9DhtFiajWqT5w@uudg.org>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=P7/9D2uLH+nvBJMcso2NLMrRux4DLLwDF0gn+iwaOSc=;
+	b=hFTxwFsDjYhnaiPVEJtpcUjfcixXPv0dy517TFoIRSk7K9NuICFnfkWRLIfy0B+Dg5z0a7
+	TUMaz7leTPIJkp3HDRd4PuLbVaz1Ia3ezHeSuIOaWoD8wcmxf5uQYEVrAxvbADWnfB8mza
+	5Lh7O6Ewx0IInhIWsPMjZjnNsrem14TEEHcOtIJJ7gIfwluWSU2s7cMSOVmH13+NEkl362
+	EUxWcuU+xcXCxAVfngggG2Ef0H0IlSzb/BwzrRjW/4GUeDhD35wlxSHqfPLjm1thf5WJUQ
+	H034Zdzpz7C8YS+gdPoA71VdgsijTXdkTya4S7ctDGatZwVh8miinUWM4QVyeg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1723102306;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=P7/9D2uLH+nvBJMcso2NLMrRux4DLLwDF0gn+iwaOSc=;
+	b=aKVBOitvUu9vOiRs/xvP/qgvoHVWGTZAMa973Jxj5nuuvdnukY59Lk6Vi6itW7ya9F6VRo
+	Ik1DqoBtTccsX7Bg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Du Dengke <pinganddu90@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+Subject: Re: cyclictest: lttng debug the reason why switch graphic window
+ case cyclictest become high
+Message-ID: <20240808073144.KbHsG-Xi@linutronix.de>
+References: <CAKHP1dvNRstrd_JQK9J+83UPmv7GNRfODx9L_nmOO-JawKXvyw@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+In-Reply-To: <CAKHP1dvNRstrd_JQK9J+83UPmv7GNRfODx9L_nmOO-JawKXvyw@mail.gmail.com>
 
-Hello RT-list!
+On 2024-07-18 14:38:05 [+0800], Du Dengke wrote:
+> Hi all
+Hi,
 
-I'm pleased to announce the 5.10.223-rt115 stable release.
+> The two compare show :  when switch graphic windows case
+> sched_waking  209 to 922
+> sched_wakeup 332 to 989
+> rcu_utilization  205 to 2151
+> sched_switch  279 to 1374
+> increasing high.
+> 
+> Is my thinking right? If I am right, the cyclictest runing on core 3 ,
+> which isolate form irq, userspace application, why above function
+> affected?
 
-This release is just an update to the new stable 5.10.223
-version and no RT specific changes have been made.
+I wouldn't expect that sched_waking/wakeup increased on the isolated
+CPU3 unless something else was scheduled there.
+The latency might have increased simply due to the shared cached, yes I
+assume the cache is somehow shared on your system. Also you may get
+better results if you lower interval from current "-i 1000" to 500, 250.
 
-You can get this release via the git tree at:
+> Thanks
+> dengke
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.10-rt
-  Head SHA1: 8f0c430ef27fe8f996d85ae3ddfc71f643fd5a8a
-
-Or to build 5.10.223-rt115 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.223.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.223-rt115.patch.xz
-
-Signing key fingerprint:
-
-  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
-
-All keys used for the above files and repositories can be found on the
-following git repository:
-
-   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
-
-Enjoy!
-Luis
-
+Sebastian
