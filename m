@@ -1,96 +1,130 @@
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90FC819DF8D
-	for <linux-rt-users@vger.kernel.org>; Tue, 13 Aug 2024 14:34:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B353D1FA5
+	for <linux-rt-users@vger.kernel.org>; Fri, 16 Aug 2024 00:41:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723559701; cv=none; b=OcyjE7uxOpMiCQyTe98/fTRoLjDIwYDmsuqZLEi4+jF/1zxbstXSJqqswsJcQKdxd6X1+zzryFUcwyYBROriDLwk4P8lkHCiL4Qxbb9c21JIbU3oVWHuOCW59jdFr9RCWscQo5OzZPzO04CBy5Z3okt9AU72BBSY0EWhE30EPYk=
+	t=1723768874; cv=none; b=BEMrL4wAODa0Jht0aXsFdg8wFwOqtkd09a01LvC8Ov1jmu3U8h8ebwsKFHwmaWnFlhaR4hNBY4wnp4AOTOyetWdoyPWbspYBZacuJwQNMG5+kTDckdaIu2sWKqKgWaqguDPIHaGwNuXIQAYwh4VwheBjLddriiBSLjPthhV0MT0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723559701; c=relaxed/simple;
-	bh=FivyjLTHSlB7kiroK4zgEbXBwsCyP2HZ7Y0vqsgeAXY=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=X8HhxKN/RyDJ7c7GrKgLI4IUK8JB1be9A/18T1WjW6Ve/sctM6y5X7JoAo0e0CrKO65/UywHdMsGwCNTFoZJs2amq0g6XgGeTWXrcYt+IkEYyc9teIgBvV5YfGVQgX7+9BgkVbORzTmCPkWT4i2bAKHNoWW9D/hapgc7DXD8/AU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com; spf=fail smtp.mailfrom=sidebranch.com; dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b=fhWTMmr4; arc=none smtp.client-ip=209.85.216.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=sidebranch.com
+	s=arc-20240116; t=1723768874; c=relaxed/simple;
+	bh=Nwp0IY+YulJgG/xhjgBvDy9CxQVPztBLK39wd2uTlDs=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=aSq6/EpwpSulZyA6OU2n7mZgA1Q+zC1QaL/grW5NafWAYlcvBstsF6+CD+ELltnIxvlEhfnxzCO3rwrryCD0Jl0CbmmX5xePegjmg9djzjS2JOJLmPNlb5SbAmkXettzvHxn/zdfrP1Gyr939acOSv9dbZHHUx0Qu3GLt6oBRkU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BTM0gF5G; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b="fhWTMmr4"
-Received: by mail-pj1-f54.google.com with SMTP id 98e67ed59e1d1-2d1e3381cb1so3092252a91.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 13 Aug 2024 07:34:57 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=sidebranch-com.20230601.gappssmtp.com; s=20230601; t=1723559697; x=1724164497; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=FivyjLTHSlB7kiroK4zgEbXBwsCyP2HZ7Y0vqsgeAXY=;
-        b=fhWTMmr4sSH0i0gge5FB3BCL450N242Dq1bGBvj8TQJQ1tZJ38FFXpyZARiz/Lvyjo
-         BITHWpTJMN9x6Xq1S57YYE84JR7479eJvtoYuOOD5sEvA5wR2HDERq7dbNiF2t0xn8iy
-         LHKIgtf7UrhkN+yTktdhxVlPFhFl7KYpn2VUsI/z2dd9SAjZ7cMWdC0l9DTvCPCV3yJQ
-         yyFqqWgwjjCWDG5KHN9QAhhkUrM31z2Bc/ri95H37+JznabVPLLxESBMrC6oCBLKm3D6
-         WrZpOYUs4Swibs191yQsknNgblx6djXN9gnplt1W10kNQ3d87yjVrKwf8g7QrXwKE8+j
-         Rf0A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723559697; x=1724164497;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=FivyjLTHSlB7kiroK4zgEbXBwsCyP2HZ7Y0vqsgeAXY=;
-        b=ScJ8SgDzJUCOVKFAGwjEakKKjN53LMpwnGpO748bOHaTpCxJV9yntXfp8unHSZ8CVL
-         n3SVCMW/+3uyKOfecWxJnR3HGLpI92Wo58QIci//tFvRiYYL50wS/ZdH2uoxKPJ8AZgl
-         5+xLPzc6sO+67eswygisVv1OEWQVvCukmdB8Lr0xQ6/G4evV3YEwrxrLlcbPKMf0RxbV
-         44rl0u8uw7R+9CvsuHjVVR1ZESxf/XF3Vq06G26fqZ/ym3xcNHcKctSifVV8ndaAmkOW
-         ESDW5lW/VHmEHU3Wg6jUr9FUFa99yuXdTEsfatS1qJbvHsGo8QkhkAjKzc7FUqEIaQ2f
-         9opA==
-X-Gm-Message-State: AOJu0Yx0O3nPNZRplMdhDLokpkyQ0hgidtbd/xvCd0XqfnWMxJ5XkJfS
-	6AG703D7WJ8bpJ9+aa0f0WAWEN7YAazKFYo9HHk0XY6lgpb2B2zgn+Zs5lDTy3kDa3Eb2ojdb0e
-	f0drog1QH+D55cT/0sowomt6Hlp6d1XOPsTgzAJZT/7fLe9Mix1w=
-X-Google-Smtp-Source: AGHT+IFSrKEwo3HjgisydHL75CTK4lS8BsCy9ntQGpcEbxV+hO/LXJioHOqKkFqzDQYDoM2f+pP047TiQWPnbhTy31k=
-X-Received: by 2002:a17:90a:2f61:b0:2c9:6d30:81ee with SMTP id
- 98e67ed59e1d1-2d3924d6d9dmr4395484a91.8.1723559696605; Tue, 13 Aug 2024
- 07:34:56 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BTM0gF5G"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723768871;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=vRjt0LxdwBprGD6cGDXYK8NHp/OzYaejcIxCi4AIQiE=;
+	b=BTM0gF5GFo1AUFfFnUIcHl22qbLiHMGict9SH8jCn0AWuCxkUT5CB4sEZqpk1VSqlw6Qks
+	mrhkP2xsrALG+wCBONgCR39GwLdYqtbbuK4rhk2YmNPtBAu216ar7V/0Olzn4iwwL7yz6u
+	9YupN52U9fmCXAednFPHZt1OstedzQM=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-192-dCAtnkc-MfOcpOzounfbvA-1; Thu,
+ 15 Aug 2024 20:41:08 -0400
+X-MC-Unique: dCAtnkc-MfOcpOzounfbvA-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 66A7619560B4;
+	Fri, 16 Aug 2024 00:41:06 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.106])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 4A22A19560AA;
+	Fri, 16 Aug 2024 00:41:05 +0000 (UTC)
+Date: Thu, 15 Aug 2024 21:41:03 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>
+Subject: [PATCH v5.10-rt] rt: dma: fix build issue in at_hdmac
+Message-ID: <Zr6gH7SNsAD0LHWV@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CAMjhiJiqfz67Aba8KAKTHjO7TjGADvM2S0qDVrGfF+XkT5DeAw@mail.gmail.com>
- <CAFTL4hws_4D2-ez+TkGZU5ZWUys=yqmAjxiQa52K6zXwe6nqMA@mail.gmail.com>
- <CAMjhiJhZQvr1qEdUm3T2v=JDETO4iWjjo5Lfc=XQgkm4yPwXtg@mail.gmail.com> <CAMjhiJhzwBKGYGKEdsiZjaiPDPE5mz=hazV2dS-THcUKHsDSUA@mail.gmail.com>
-In-Reply-To: <CAMjhiJhzwBKGYGKEdsiZjaiPDPE5mz=hazV2dS-THcUKHsDSUA@mail.gmail.com>
-From: Leon Woestenberg <leon@sidebranch.com>
-Date: Tue, 13 Aug 2024 16:34:44 +0200
-Message-ID: <CAMjhiJg579K25DAahfqcpMjbtVqk2uie80-wevnX09CpbcxC0w@mail.gmail.com>
-Subject: Re: rcuc/ thread on isolated CPU
-To: Frederic Weisbecker <frederic@kernel.org>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Hi all,
+The functions atc_advance_work() and atc_issue_pending() both have a
+similar statement
 
-On Wed, Jul 24, 2024 at 5:30=E2=80=AFPM Leon Woestenberg <leon@sidebranch.c=
-om> wrote:
-> On Wed, Jul 24, 2024 at 4:46=E2=80=AFPM Leon Woestenberg <leon@sidebranch=
-.com> wrote:
-> > On Wed, Jul 24, 2024 at 4:35=E2=80=AFPM Frederic Weisbecker <frederic@k=
-ernel.org> wrote:
-> > >
-> > > Le mer. 24 juil. 2024 =C3=A0 16:06, Leon Woestenberg <leon@sidebranch=
-.com> a =C3=A9crit :
-> > > > CPUs." and also tried with rcutree.nohz_full_patience_delay=3D1000.
-> > > Are you sure you have the proper patch applied? It is not yet upstrea=
-m:
-> > >
-> With the patch installed and adding kernel command option
-> rcutree.nocb_patience_delay=3D1000 I can still get rcuc to run on the
-> isolated #4.
->
+    return spin_unlock_irqrestore(&atchan->lock, flags);
 
-Is this issue a specific regression, i.e. is there a kernel version
-that does not show the behaviour that this patch tries to resolve?
+That results in the following errors during the build:
 
-Regards,
+    drivers/dma/at_hdmac.c: In function ‘atc_advance_work’:
+    ./include/linux/spinlock_rt.h:115:9: error: expected expression before ‘do’
+      115 |         do {                                            \
+          |         ^~
+    drivers/dma/at_hdmac.c:487:24: note: in expansion of macro ‘spin_unlock_irqrestore’
+      487 |                 return spin_unlock_irqrestore(&atchan->lock, flags);
+          |                        ^~~~~~~~~~~~~~~~~~~~~~
+    ./include/linux/spinlock_rt.h:115:9: error: ‘return’ with a value, in function returning void [-Werror=return-type]
+      115 |         do {                                            \
+          |         ^~
+    drivers/dma/at_hdmac.c:487:24: note: in expansion of macro ‘spin_unlock_irqrestore’
+      487 |                 return spin_unlock_irqrestore(&atchan->lock, flags);
+          |                        ^~~~~~~~~~~~~~~~~~~~~~
 
-Leon.
+Fix this by splitting the spin_unlock_irqrestore() call and the return
+statement in both functions.
+
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+---
+ drivers/dma/at_hdmac.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+Many thanks to Daniel Wagner who spotted and reported this build issue!
+
+diff --git a/drivers/dma/at_hdmac.c b/drivers/dma/at_hdmac.c
+index 6a4f9697b574..bdbd85adeea9 100644
+--- a/drivers/dma/at_hdmac.c
++++ b/drivers/dma/at_hdmac.c
+@@ -483,8 +483,10 @@ static void atc_advance_work(struct at_dma_chan *atchan)
+ 	dev_vdbg(chan2dev(&atchan->chan_common), "advance_work\n");
+ 
+ 	spin_lock_irqsave(&atchan->lock, flags);
+-	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->active_list))
+-		return spin_unlock_irqrestore(&atchan->lock, flags);
++	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->active_list)) {
++		spin_unlock_irqrestore(&atchan->lock, flags);
++		return;
++	}
+ 
+ 	desc = atc_first_active(atchan);
+ 	/* Remove the transfer node from the active list. */
+@@ -1477,8 +1479,10 @@ static void atc_issue_pending(struct dma_chan *chan)
+ 	dev_vdbg(chan2dev(chan), "issue_pending\n");
+ 
+ 	spin_lock_irqsave(&atchan->lock, flags);
+-	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->queue))
+-		return spin_unlock_irqrestore(&atchan->lock, flags);
++	if (atc_chan_is_enabled(atchan) || list_empty(&atchan->queue)) {
++		spin_unlock_irqrestore(&atchan->lock, flags);
++		return;
++	}
+ 
+ 	desc = atc_first_queued(atchan);
+ 	list_move_tail(&desc->desc_node, &atchan->active_list);
+-- 
+2.46.0
+
