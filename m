@@ -1,56 +1,56 @@
-Received: from mail-yb1-f174.google.com (mail-yb1-f174.google.com [209.85.219.174])
+Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9CFEC14A61A
-	for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 19:42:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19E391534EC
+	for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 19:42:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724010155; cv=none; b=MmV29SGubOOaIFVAk4PLk6tQBi1LjKpy/m6vOqTY3RZG19WmFC+6GVcaRekELijqsKtUrqBSW32U2QAvjbnrdovXA9mim0/hGU5MIJ27jEbAEbBYNcGN1GEnkHdzUmNtCOxc4buGJ0xCXqnyNthhTCTOSLcqihYB15HQd7SbcF8=
+	t=1724010155; cv=none; b=IRqzpO+CegKCluQ9qKXp8tS7ST6gzWusXF7Vju/9itmVXOE1hoyi+yYBwaioNzD5JDK5e57g8FzMT93JSMN3O4l5yBLoVE9efHGi/uFRjNequiHjPPFdBc+G1TCzcsolH2LRdZMKNAKBnV9IuRhQcnrXU+h7WuCzSvH6L3kVd+g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1724010155; c=relaxed/simple;
-	bh=+ttm6tIO3g+/9PoaSHQDzq0EfYe9FL+8zgcHG5c931Q=;
+	bh=/5HTi0IU2p9WPa9lf3YupEiwPpHU9Ey+LEef4+9TCyg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=nUTfWOsmTrirzn2c/MmWhIcTCGD502P/KIhjqwpt9wdbkLBMd1QWvlburzlBSqZEOD7gatCjXnmaHr1jKbKFYADsW6iIdvCgVWicb5Ji76zQN/Nz7PIs7wcRKvkuS//6pgsQGZvYwG02c1EiPCO3An8+VDtjr6NEGmRa2a7jUvo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KRhlGvky; arc=none smtp.client-ip=209.85.219.174
+	 MIME-Version; b=RMRbe9iXsgE0A8lHdX2mGqWtynvFlGZ+VyeDy/oOxYs+qkNx/EDO4swjhANUslo8zrxBVxEY8qRQ8/O5OtmGsbj1FRmLeBvD0lagJiVIuEWvV5klLnGKCV77D1t5HoEdO/MiQYVq1Ij6pcoY29buOvWIkixF2z2ZEoVaNfi0mRU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HtEX7jbI; arc=none smtp.client-ip=209.85.219.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KRhlGvky"
-Received: by mail-yb1-f174.google.com with SMTP id 3f1490d57ef6-e0e6cbec8caso3603518276.1
-        for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 12:42:32 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HtEX7jbI"
+Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-6bf9ddfc2dcso1238246d6.1
+        for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 12:42:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724010151; x=1724614951; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1724010152; x=1724614952; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=9wJKDnXFAkvyB+aFUXCK3mdSQRdx7/6Aa4O5IBcLKD0=;
-        b=KRhlGvkyqREzHxbxc0BCM8xoaFCKdO3NVfSnrFMvFnvRwuUQ+GiBd24HvKumDlXkFN
-         AybZsrH/IgeiOvnj8dLKIcGZMN105itsD90surLZEUxmV+KOyO3Bsirl984WNfKsWf0R
-         mEZqe8mOb9bTFQXbLj+Vndd+KJGxN6n9D7VoJ80dRPXehckam+oKiyPTu5aITq7KLDGd
-         iFJSS886nLJAkQNnWH7a+CJWf8qEDz+DNZEM92G5cGEgaDa0adcPvfjhc6LBkxHBZQ5m
-         GaIKMIn1qlq/NSn2IeyEiXj5+s+w/mg/r00OK/us05+30G7DqJqP88b+vV6QQi2OQnMX
-         +Vww==
+        bh=j1TfhiQ3mpQYYWNHgYmvCxEnprmzEPO8HyCKXM3Kj2U=;
+        b=HtEX7jbIh0S+nS8VwX0JE97PWsaHzAVqXImCTXeOWsJRCRv4A3aaJWZWcaJ82x4Pvh
+         MLM9Hwlv2WIJ8CcNZ0RRF9I31DK7PDeSbWLR1CFHpLMpvv37Cb/B8A89+6Jx/MLCKOQi
+         b+AWIr4NEOsfCqgQYrHdRDY9r4cQCBV4QrdpGG5krPcO3Pt2kZ9kSFxfP9VtPeXi7Bfb
+         Tm5d4yj3CcaKHpuTKx4vHYe22H5JGOhe8X5sdciMS/LXHFmUSTZvKjgOh7z/WBjvlkPa
+         7N7LnKtx3r3WhLONt3tM8kXD97ZAEIYYQKdKatC9hPAvDtz1IZd8Ya4NebeBFRYkRRCM
+         ggDA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724010151; x=1724614951;
+        d=1e100.net; s=20230601; t=1724010152; x=1724614952;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=9wJKDnXFAkvyB+aFUXCK3mdSQRdx7/6Aa4O5IBcLKD0=;
-        b=lkYHgpg1sXMhJ2oiCly2as9t0UxNSwRlpq9vwIAmY3Z/luFVo9i2bHVnU1TcdkAFSm
-         pnbGm5WSEN15rCk/1Kbs/TVT2xRu88veQijf04rHl8eb7Lu+yyA65cpWKsFwCGjwOjUz
-         7zfc3wYcrckJjMYX08xm/qsjs+22e1/hzbhScxh1kYDnWWeaF6yexaTHJkj5wM6pxuTv
-         H4uxEVBCAat0yRWYpUNaMpoIomvAl3cGr+RZ/taQS1M6VcJnqtj+MWbo+yJmGBVcEsFW
-         1yqzKzptEeKy4fRTYqtBKMXz6vJHllpFUxpJiE5tcKn6VltZqn8GgY/4sl4sAV7GsRBi
-         MRIw==
-X-Gm-Message-State: AOJu0YyHWn869HRqiEEGuzI4cNR4UAo3r4Y6fqixHmx0HgI7qis2a8+S
-	bKxgsx1Y+u8PSYHUBw1U6gN+tXCsovAuTAuZ3otBDHteYiz+FAUTlMuchw==
-X-Google-Smtp-Source: AGHT+IHAx+df29v/4E7DKx3PykQOXGMiUvuFnIlxXqU+nCGPtQXp8KktXNzjECjeXu+ESGSvpOFAOw==
-X-Received: by 2002:a05:6902:2587:b0:e11:7d05:562b with SMTP id 3f1490d57ef6-e1180e6c6a3mr8157382276.3.1724010150879;
-        Sun, 18 Aug 2024 12:42:30 -0700 (PDT)
+        bh=j1TfhiQ3mpQYYWNHgYmvCxEnprmzEPO8HyCKXM3Kj2U=;
+        b=BrlhlDW47f36VFV0uAPJleUelu+af10IYwiyuync3q6nYtsTRxVlrw6K4YWVysILyT
+         NzoBDfcSR9GAGKr9oobS+2jM8yJfLgfZ+kqfRWqsUJGjjJq25paNHdodA+FVIGiXnQXX
+         MNALc3pqVtUQUwlBhcRt3VMs8QgTJbMV7PowNwivyEXV85sb1L+gi7i0CwYjia3S2zkZ
+         ba0gwLn7KFvwKOldm5ZIw7lan4CLKKjGUIonT218KKN1HxeuJLWeaxK8FiKkb9AiypAs
+         tIa6DyNm5vrCoDHh307x6ZJxWEk+zGBUTBjcmRra9hj9NU4GpUo41U9gaOPLIG2Xr3N5
+         wswA==
+X-Gm-Message-State: AOJu0YyPdrEdH/MkYw0/hsS1va1crveJ3yqjDXe4FCcUO284sVXxy0vG
+	VJgzONnvkzUN5vQyxaKj9k0SDMQPKN9gR7uUfNwsp9Du1XXJRggeGmpbnQ==
+X-Google-Smtp-Source: AGHT+IF4SkdxFi6xnltDQwz1pSKywF1Cvo0omGRiGIn5dCcC9V/zhaYtO8J3ZKaUt0yTdglsXxhayQ==
+X-Received: by 2002:a05:6214:3b89:b0:6b5:61:53a9 with SMTP id 6a1803df08f44-6bf7cdedd3bmr82573956d6.28.1724010152197;
+        Sun, 18 Aug 2024 12:42:32 -0700 (PDT)
 Received: from localhost.localdomain ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bf6fec5f4fsm36909566d6.84.2024.08.18.12.42.29
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bf6fec5f4fsm36909566d6.84.2024.08.18.12.42.31
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 18 Aug 2024 12:42:30 -0700 (PDT)
+        Sun, 18 Aug 2024 12:42:31 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
@@ -60,9 +60,9 @@ Cc: Clark Williams <williams@redhat.com>,
 	Chris White <chwhite@redhat.com>,
 	Anubhav Shelat <sanubhav1000@gmail.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/3] rteval: restore all load module options
-Date: Sun, 18 Aug 2024 15:42:14 -0400
-Message-ID: <20240818194216.299176-2-jkacur@redhat.com>
+Subject: [PATCH 2/3] rteval: Upgrade load kernel to linux-6.10.5
+Date: Sun, 18 Aug 2024 15:42:15 -0400
+Message-ID: <20240818194216.299176-3-jkacur@redhat.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240818194216.299176-1-jkacur@redhat.com>
 References: <20240818194216.299176-1-jkacur@redhat.com>
@@ -74,101 +74,78 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Commit 56c7cf63942d  rteval: Allow arguments specific to module group
-
-intended to allow group options to the overall measurement modules without
-applying to the load modules. It inadvertently disabled options for most
-load modules such as hackbench and kcompile.
-
-This patch reworks the overall group mechanism a little bit to restore
-these menus.
+The older kernel fails to compile on newer tool chains, so upgrade
+the kernel that kcompile compiles as a load to linux-6.10.5
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- rteval/modules/__init__.py             | 22 +++++++++++++++++-----
- rteval/modules/measurement/__init__.py | 12 +-----------
- 2 files changed, 18 insertions(+), 16 deletions(-)
+ Dockerfile                       | 2 +-
+ Makefile                         | 2 +-
+ rteval/modules/loads/kcompile.py | 4 ++--
+ rteval/rteval.conf               | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
-index acd6330788e2..eb29db86ce7a 100644
---- a/rteval/modules/__init__.py
-+++ b/rteval/modules/__init__.py
-@@ -280,10 +280,24 @@ reference from the first import"""
+diff --git a/Dockerfile b/Dockerfile
+index 45f6434777d4..f3ee516b57d5 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,7 +1,7 @@
+ # Use CentOS Stream 9 as base image
+ FROM centos:stream9
  
-         grparser = parser.add_argument_group(f"Group Options for {self.__modtype} modules")
-         grparser.add_argument(f'--{self.__modtype}-cpulist',
--                            dest=f'{self.__modtype}___cpulist', action='store', default="",
-+                            dest=f'{self.__modtype}___cpulist', action='store',
-+                            default="",
-                             help=f'CPU list where {self.__modtype} modules will run',
-                             metavar='CPULIST')
- 
-+        # Set up options for measurement modules only
-+        if self.__modtype == 'measurement':
-+            grparser.add_argument(f'--{self.__modtype}-run-on-isolcpus',
-+                                  dest = f'{self.__modtype}___run_on_isolcpus',
-+                                  action = "store_true",
-+                                  default = config.GetSection("measurement").setdefault("run-on-isolcpus", "false").lower() == "true",
-+                                  help = "Include isolated CPUs in default cpulist")
-+            grparser.add_argument('--idle-set',
-+                                  dest='measurement___idlestate',
-+                                  metavar='IDLESTATE',
-+                                  default=None,
-+                                  help='Idle state depth to set on cpus running measurement modules')
-+
-         for (modname, mod) in list(self.__modsloaded.items()):
-             opts = mod.ModuleParameters()
-             if len(opts) == 0:
-@@ -296,7 +310,7 @@ reference from the first import"""
-                 # Ignore if a section is not found
-                 cfg = None
- 
--            modgrparser = parser.add_argument_group(f"Options for the {shortmod} module")
-+            grparser = parser.add_argument_group(f"Options for the {shortmod} module")
-             for (o, s) in list(opts.items()):
-                 descr = 'descr' in s and s['descr'] or ""
-                 metavar = 'metavar' in s and s['metavar'] or None
-@@ -311,7 +325,7 @@ reference from the first import"""
-                     default = 'default' in s and s['default'] or None
+-ARG KERNEL_VERSION=linux-6.6.1.tar.xz
++ARG KERNEL_VERSION=linux-6.10.5.tar.xz
  
  
--                modgrparser.add_argument(f'--{shortmod}-{o}',
-+                grparser.add_argument(f'--{shortmod}-{o}',
-                                          dest=f"{shortmod}___{o}",
-                                          action='store',
-                                          help='%s%s' % (descr,
-@@ -319,8 +333,6 @@ reference from the first import"""
-                                          default=default,
-                                          metavar=metavar)
+ # Copy current directory to /opt/rteval/
+diff --git a/Makefile b/Makefile
+index d9a6b9f116ac..e1a2bbba0373 100644
+--- a/Makefile
++++ b/Makefile
+@@ -14,7 +14,7 @@ PREFIX  :=      /usr
+ DATADIR	:=	$(DESTDIR)/$(PREFIX)/share
+ LOADDIR	:=	loadsource
  
--            return grparser
--
+-KLOAD	:=	$(LOADDIR)/linux-6.6.1.tar.xz
++KLOAD	:=	$(LOADDIR)/linux-6.10.5.tar.xz
+ BLOAD	:=	$(LOADDIR)/dbench-4.0.tar.gz
+ LOADS	:=	$(KLOAD) $(BLOAD)
  
-     def InstantiateModule(self, modname, modcfg, modroot=None):
-         """Imports a module and instantiates an object from the modules create() function.
-diff --git a/rteval/modules/measurement/__init__.py b/rteval/modules/measurement/__init__.py
-index 9314d1cb6bbc..44708ce0b035 100644
---- a/rteval/modules/measurement/__init__.py
-+++ b/rteval/modules/measurement/__init__.py
-@@ -29,17 +29,7 @@ class MeasurementModules(RtEvalModules):
+diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
+index f7a9c0084805..80106812af0a 100644
+--- a/rteval/modules/loads/kcompile.py
++++ b/rteval/modules/loads/kcompile.py
+@@ -21,7 +21,7 @@ expand_cpulist = cpulist_utils.expand_cpulist
+ compress_cpulist = cpulist_utils.compress_cpulist
+ nonisolated_cpulist = cpulist_utils.nonisolated_cpulist
  
-     def SetupModuleOptions(self, parser):
-         "Sets up all the measurement modules' parameters for the option parser"
--        grparser = super().SetupModuleOptions(parser)
--
--        # Set up options specific for measurement module group
--        grparser.add_argument("--measurement-run-on-isolcpus",
--                              dest="measurement___run_on_isolcpus",
--                              action="store_true",
--                              default=self._cfg.GetSection("measurement").setdefault("run-on-isolcpus", "false").lower()
--                                      == "true",
--                              help="Include isolated CPUs in default cpulist")
--        grparser.add_argument('--idle-set', dest='measurement___idlestate', metavar='IDLESTATE',
--                        default=None, help='Idle state depth to set on cpus running measurement modules')
-+        super().SetupModuleOptions(parser)
+-DEFAULT_KERNEL_PREFIX = "linux-6.6"
++DEFAULT_KERNEL_PREFIX = "linux-6.10.5"
  
+ class KBuildJob:
+     '''Class to manage a build job bound to a particular node'''
+@@ -334,7 +334,7 @@ class Kcompile(CommandLineLoad):
  
-     def Setup(self, modparams):
+ def ModuleParameters():
+     return {"source":   {"descr": "Source tar ball",
+-                         "default": "linux-6.6.1.tar.xz",
++                         "default": "linux-6.10.5.tar.xz",
+                          "metavar": "TARBALL"},
+             "jobspercore": {"descr": "Number of working threads per core",
+                             "default": 2,
+diff --git a/rteval/rteval.conf b/rteval/rteval.conf
+index a4aad33e264f..0611c031c2a0 100644
+--- a/rteval/rteval.conf
++++ b/rteval/rteval.conf
+@@ -18,7 +18,7 @@ dbench:    external
+ stressng: module
+ 
+ [kcompile]
+-source: linux-6.6.1.xz
++source: linux-6.10.5.xz
+ jobspercore: 2
+ 
+ [hackbench]
 -- 
 2.46.0
 
