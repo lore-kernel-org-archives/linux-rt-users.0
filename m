@@ -1,56 +1,56 @@
-Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
+Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com [209.85.219.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19E391534EC
-	for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 19:42:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDE16136E0E
+	for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 19:42:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724010155; cv=none; b=IRqzpO+CegKCluQ9qKXp8tS7ST6gzWusXF7Vju/9itmVXOE1hoyi+yYBwaioNzD5JDK5e57g8FzMT93JSMN3O4l5yBLoVE9efHGi/uFRjNequiHjPPFdBc+G1TCzcsolH2LRdZMKNAKBnV9IuRhQcnrXU+h7WuCzSvH6L3kVd+g=
+	t=1724010156; cv=none; b=IXSPKsdEA9UkFUddUrQuJdiscyj1ep/l4pQdABX36dDom6FU6y0KwZml2czmpn6/rQtAbUV/Kptx8xkecG9TOwYEJ5SNTq8B+K+k/rtfsy+AI5pRx9nyJKcY3pLvgN/rlxrystxHIEvSnhax6377VFFpg4F2k7AxaPYcKnyLvXM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724010155; c=relaxed/simple;
-	bh=/5HTi0IU2p9WPa9lf3YupEiwPpHU9Ey+LEef4+9TCyg=;
+	s=arc-20240116; t=1724010156; c=relaxed/simple;
+	bh=BqOyHHKiDqN0HU9OM9lYaQsiFeeZJOTuxAV54F8ixM0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=RMRbe9iXsgE0A8lHdX2mGqWtynvFlGZ+VyeDy/oOxYs+qkNx/EDO4swjhANUslo8zrxBVxEY8qRQ8/O5OtmGsbj1FRmLeBvD0lagJiVIuEWvV5klLnGKCV77D1t5HoEdO/MiQYVq1Ij6pcoY29buOvWIkixF2z2ZEoVaNfi0mRU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HtEX7jbI; arc=none smtp.client-ip=209.85.219.53
+	 MIME-Version; b=CNPYrwOUc6G9HTHWZADj8XdEkXkI4qkoa78IdNmS/ySQLgFkRun5HvVhjSXjFGrx/qoUba68ISMoww3PBkNxdikO4a501cZIYa8yisY/eySERIacpXtn73oTjljzaleqeQ2QM8S0ONyrN7lS1DczO7HXG2zwrpJewlLj4715joA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WCAzonmQ; arc=none smtp.client-ip=209.85.219.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HtEX7jbI"
-Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-6bf9ddfc2dcso1238246d6.1
-        for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 12:42:33 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WCAzonmQ"
+Received: by mail-qv1-f45.google.com with SMTP id 6a1803df08f44-6bf99fee82aso3311306d6.2
+        for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 12:42:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724010152; x=1724614952; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1724010153; x=1724614953; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=j1TfhiQ3mpQYYWNHgYmvCxEnprmzEPO8HyCKXM3Kj2U=;
-        b=HtEX7jbIh0S+nS8VwX0JE97PWsaHzAVqXImCTXeOWsJRCRv4A3aaJWZWcaJ82x4Pvh
-         MLM9Hwlv2WIJ8CcNZ0RRF9I31DK7PDeSbWLR1CFHpLMpvv37Cb/B8A89+6Jx/MLCKOQi
-         b+AWIr4NEOsfCqgQYrHdRDY9r4cQCBV4QrdpGG5krPcO3Pt2kZ9kSFxfP9VtPeXi7Bfb
-         Tm5d4yj3CcaKHpuTKx4vHYe22H5JGOhe8X5sdciMS/LXHFmUSTZvKjgOh7z/WBjvlkPa
-         7N7LnKtx3r3WhLONt3tM8kXD97ZAEIYYQKdKatC9hPAvDtz1IZd8Ya4NebeBFRYkRRCM
-         ggDA==
+        bh=l+O+eAFl8v1echfvzcQU6H06Krm3NvFueaMXh+RD1Fg=;
+        b=WCAzonmQjfcBsIjKjn1UQmKlvglFuZhJ4s89FPUYsfKvbNnmZwDfFuHCmDCW7nB5fp
+         0oceygRp3y21qIGNRh3hUpRdQj1kpi4hLVwcfSyoMENkcWgF8aWHfAb2uspICD2/+zZx
+         5kVMvla0ahvkx57VHd00mHGclsBWCyPs3Ytd05VKOUTMGk/mle1EGddn4YE/zAvfHYyx
+         r9+Xlb9isS0CQ96/W7yfcLhcw/jJkY8ah1b/7c+XOB7AXklf04C9+V/zwz5VOsW+Mu2Z
+         kCVmwXTOfDnXF9In/OuJLprf6WW5bwZw090dzs+ituOZKcGULtkjLt7F34DzLrnEjMdy
+         7kWw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724010152; x=1724614952;
+        d=1e100.net; s=20230601; t=1724010153; x=1724614953;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=j1TfhiQ3mpQYYWNHgYmvCxEnprmzEPO8HyCKXM3Kj2U=;
-        b=BrlhlDW47f36VFV0uAPJleUelu+af10IYwiyuync3q6nYtsTRxVlrw6K4YWVysILyT
-         NzoBDfcSR9GAGKr9oobS+2jM8yJfLgfZ+kqfRWqsUJGjjJq25paNHdodA+FVIGiXnQXX
-         MNALc3pqVtUQUwlBhcRt3VMs8QgTJbMV7PowNwivyEXV85sb1L+gi7i0CwYjia3S2zkZ
-         ba0gwLn7KFvwKOldm5ZIw7lan4CLKKjGUIonT218KKN1HxeuJLWeaxK8FiKkb9AiypAs
-         tIa6DyNm5vrCoDHh307x6ZJxWEk+zGBUTBjcmRra9hj9NU4GpUo41U9gaOPLIG2Xr3N5
-         wswA==
-X-Gm-Message-State: AOJu0YyPdrEdH/MkYw0/hsS1va1crveJ3yqjDXe4FCcUO284sVXxy0vG
-	VJgzONnvkzUN5vQyxaKj9k0SDMQPKN9gR7uUfNwsp9Du1XXJRggeGmpbnQ==
-X-Google-Smtp-Source: AGHT+IF4SkdxFi6xnltDQwz1pSKywF1Cvo0omGRiGIn5dCcC9V/zhaYtO8J3ZKaUt0yTdglsXxhayQ==
-X-Received: by 2002:a05:6214:3b89:b0:6b5:61:53a9 with SMTP id 6a1803df08f44-6bf7cdedd3bmr82573956d6.28.1724010152197;
-        Sun, 18 Aug 2024 12:42:32 -0700 (PDT)
+        bh=l+O+eAFl8v1echfvzcQU6H06Krm3NvFueaMXh+RD1Fg=;
+        b=QABRJboMuFeFLcX+h55A5anw3fRcEoJihtvjt5ykmcjSBLUYKKf+JYKQBC1GLFBZwr
+         d7OrnN/6P0IaaknH21F0GqYU2SkJrH9dY0xBdnvZRcFasv3jtQ9ZNpM87YmP4FBTulM5
+         reF73eRRT427kX0awpA3hUHQrLnKnPi5H9qnBIcQH3fEMTYG7NoX0pCCbTb0By6y7ctR
+         6B4mzw1GkNNLxiRC2k9qpcQFyXHxtMT9SBZIs+mwB77ruzaaXnNgct+pl7dQl5vobSKM
+         e2GIMY/GLDqKpSksOS3O8qwbCI/8yqq7beuxrprfwkK6W2X87Xac8YchdsW81/lqoFxq
+         KFgg==
+X-Gm-Message-State: AOJu0YwSbbYLQ2E/fF8GKVwS7DJvoA+HPK3r5obUptLkc6XYqrmd+kV0
+	wQEw43LewHvDAKdy0LX42adLwZpBTENTvPtsJq8lCFWvzLyjKlTMnfRQRw==
+X-Google-Smtp-Source: AGHT+IHt1OeMQS3Zlb/2CkaYE4P5ewbfjmtGDdbLOZK49jzHyjY5lEeXxwwSr+umSrvVd3DL/8a9Qg==
+X-Received: by 2002:a05:6214:5342:b0:6bf:888d:a10a with SMTP id 6a1803df08f44-6bf888da38emr65882056d6.10.1724010153325;
+        Sun, 18 Aug 2024 12:42:33 -0700 (PDT)
 Received: from localhost.localdomain ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bf6fec5f4fsm36909566d6.84.2024.08.18.12.42.31
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bf6fec5f4fsm36909566d6.84.2024.08.18.12.42.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 18 Aug 2024 12:42:31 -0700 (PDT)
+        Sun, 18 Aug 2024 12:42:32 -0700 (PDT)
 Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
 To: RT <linux-rt-users@vger.kernel.org>
@@ -60,9 +60,9 @@ Cc: Clark Williams <williams@redhat.com>,
 	Chris White <chwhite@redhat.com>,
 	Anubhav Shelat <sanubhav1000@gmail.com>,
 	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/3] rteval: Upgrade load kernel to linux-6.10.5
-Date: Sun, 18 Aug 2024 15:42:15 -0400
-Message-ID: <20240818194216.299176-3-jkacur@redhat.com>
+Subject: [PATCH 3/3] rteval: Fix parsing in kcompile of the kernel to compile
+Date: Sun, 18 Aug 2024 15:42:16 -0400
+Message-ID: <20240818194216.299176-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240818194216.299176-1-jkacur@redhat.com>
 References: <20240818194216.299176-1-jkacur@redhat.com>
@@ -74,78 +74,100 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The older kernel fails to compile on newer tool chains, so upgrade
-the kernel that kcompile compiles as a load to linux-6.10.5
+This patch does two things.
+1. It allows you to create your own customer kernel with a dash -rteval
+   in the name, eg, linux-6.10.5-rteval
+2. It fixes parsing of the kernel name so that if the user requests
+   linux-6.10.5 it doesn't use linux-6.10.6-rteval instead
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- Dockerfile                       | 2 +-
- Makefile                         | 2 +-
- rteval/modules/loads/kcompile.py | 4 ++--
- rteval/rteval.conf               | 2 +-
- 4 files changed, 5 insertions(+), 5 deletions(-)
+ rteval/modules/loads/kcompile.py | 30 +++++++++++++++++++-----------
+ 1 file changed, 19 insertions(+), 11 deletions(-)
 
-diff --git a/Dockerfile b/Dockerfile
-index 45f6434777d4..f3ee516b57d5 100644
---- a/Dockerfile
-+++ b/Dockerfile
-@@ -1,7 +1,7 @@
- # Use CentOS Stream 9 as base image
- FROM centos:stream9
- 
--ARG KERNEL_VERSION=linux-6.6.1.tar.xz
-+ARG KERNEL_VERSION=linux-6.10.5.tar.xz
- 
- 
- # Copy current directory to /opt/rteval/
-diff --git a/Makefile b/Makefile
-index d9a6b9f116ac..e1a2bbba0373 100644
---- a/Makefile
-+++ b/Makefile
-@@ -14,7 +14,7 @@ PREFIX  :=      /usr
- DATADIR	:=	$(DESTDIR)/$(PREFIX)/share
- LOADDIR	:=	loadsource
- 
--KLOAD	:=	$(LOADDIR)/linux-6.6.1.tar.xz
-+KLOAD	:=	$(LOADDIR)/linux-6.10.5.tar.xz
- BLOAD	:=	$(LOADDIR)/dbench-4.0.tar.gz
- LOADS	:=	$(KLOAD) $(BLOAD)
- 
 diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index f7a9c0084805..80106812af0a 100644
+index 80106812af0a..58c542201a1b 100644
 --- a/rteval/modules/loads/kcompile.py
 +++ b/rteval/modules/loads/kcompile.py
-@@ -21,7 +21,7 @@ expand_cpulist = cpulist_utils.expand_cpulist
- compress_cpulist = cpulist_utils.compress_cpulist
- nonisolated_cpulist = cpulist_utils.nonisolated_cpulist
+@@ -122,6 +122,8 @@ class Kcompile(CommandLineLoad):
+         self.cpulist = config.cpulist
+         CommandLineLoad.__init__(self, "kcompile", config, logger)
+         self.logger = logger
++        self._kernel_prefix = ""
++        self._log(Log.DEBUG, f'self._cfg.source = {self._cfg.source}')
  
--DEFAULT_KERNEL_PREFIX = "linux-6.6"
-+DEFAULT_KERNEL_PREFIX = "linux-6.10.5"
+     def _extract_tarball(self):
+         if self.source is None:
+@@ -152,22 +154,29 @@ class Kcompile(CommandLineLoad):
+                 f"error removing builddir ({self.builddir}) (ret={ret})")
  
- class KBuildJob:
-     '''Class to manage a build job bound to a particular node'''
-@@ -334,7 +334,7 @@ class Kcompile(CommandLineLoad):
+     def _find_tarball(self):
+-       # If the user specifies the full kernel name, check if available
+-        tarfile = os.path.join(self.srcdir, self._cfg.source)
+-        if os.path.exists(tarfile):
+-            return tarfile
++        """ Find the tarball and self._kernel_prefix """
  
- def ModuleParameters():
-     return {"source":   {"descr": "Source tar ball",
--                         "default": "linux-6.6.1.tar.xz",
-+                         "default": "linux-6.10.5.tar.xz",
-                          "metavar": "TARBALL"},
-             "jobspercore": {"descr": "Number of working threads per core",
-                             "default": 2,
-diff --git a/rteval/rteval.conf b/rteval/rteval.conf
-index a4aad33e264f..0611c031c2a0 100644
---- a/rteval/rteval.conf
-+++ b/rteval/rteval.conf
-@@ -18,7 +18,7 @@ dbench:    external
- stressng: module
+         if 'rc' in self._cfg.source:
+-            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\-[a-z]*\d{1,2}", self._cfg.source).group(0)
++            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\-rc\d{1,2}", self._cfg.source).group(0)
++        elif 'rteval' in self._cfg.source:
++            tarfile_prefix = re.search(r"(\d{1,2}\.\d{1,3}\.\d{1,3}\-rteval)|(\d{1,2}\.\d{1,3}\-rteval)", self._cfg.source).group(0)
+         else:
+             tarfile_prefix = re.search(r"(\d{1,2}\.\d{1,3}\.\d{1,3})|(\d{1,2}\.\d{1,3})", self._cfg.source).group(0)
  
- [kcompile]
--source: linux-6.6.1.xz
-+source: linux-6.10.5.xz
- jobspercore: 2
++        # Save the kernel prefix
++        self._kernel_prefix = "linux-" + tarfile_prefix
++
++        # If the user specifies the full kernel name, check if available
++        tarfile = os.path.join(self.srcdir, self._cfg.source)
++        if os.path.exists(tarfile):
++            return tarfile
++
+         # either a tar.xz or tar.gz might exist. Check for both.
+         xz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.xz" )
+         gz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.gz" )
+         if os.path.exists(xz_file):
+             return xz_file
+-        elif os.path.exists(gz_file):
++        if os.path.exists(gz_file):
+             return gz_file
+         raise rtevalRuntimeError(self, f"tarfile {tarfile} does not exist!")
  
- [hackbench]
+@@ -178,21 +187,20 @@ class Kcompile(CommandLineLoad):
+         # find our source tarball
+         if self._cfg.source:
+             self.source = self._find_tarball()
+-            kernel_prefix = re.search(r"(linux-\d{1,2}\.\d{1,3}\.\d{1,3})|(linux-\d{1,2}\.\d{1,3})", self.source).group(0)
+         else:
+             tarfiles = glob.glob(os.path.join(self.srcdir, f"{DEFAULT_KERNEL_PREFIX}*"))
+             if tarfiles:
+                 self.source = tarfiles[0]
+             else:
+                 raise rtevalRuntimeError(self, f" no kernel tarballs found in {self.srcdir}")
+-            kernel_prefix = DEFAULT_KERNEL_PREFIX
+-        self._log(Log.DEBUG, f"kernel_prefix = {kernel_prefix}")
++            self._kernel_prefix = DEFAULT_KERNEL_PREFIX
++        self._log(Log.DEBUG, f"self._kernel_prefix = {self._kernel_prefix}")
+ 
+         # check for existing directory
+         kdir = None
+         names = os.listdir(self.builddir)
+         for d in names:
+-            if d.startswith(kernel_prefix):
++            if d == self._kernel_prefix:
+                 kdir = d
+                 break
+         if kdir is None:
+@@ -200,7 +208,7 @@ class Kcompile(CommandLineLoad):
+             names = os.listdir(self.builddir)
+             for d in names:
+                 self._log(Log.DEBUG, f"checking {d}")
+-                if d.startswith(kernel_prefix):
++                if d == self._kernel_prefix:
+                     kdir = d
+                     break
+         if kdir is None:
 -- 
 2.46.0
 
