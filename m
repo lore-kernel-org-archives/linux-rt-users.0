@@ -1,173 +1,154 @@
-Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com [209.85.219.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDE16136E0E
-	for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 19:42:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF8D01553B3
+	for <linux-rt-users@vger.kernel.org>; Mon, 19 Aug 2024 20:40:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724010156; cv=none; b=IXSPKsdEA9UkFUddUrQuJdiscyj1ep/l4pQdABX36dDom6FU6y0KwZml2czmpn6/rQtAbUV/Kptx8xkecG9TOwYEJ5SNTq8B+K+k/rtfsy+AI5pRx9nyJKcY3pLvgN/rlxrystxHIEvSnhax6377VFFpg4F2k7AxaPYcKnyLvXM=
+	t=1724100058; cv=none; b=TM0hU+I2f3ESTj13QFIUUdLDhbHi9Ty/94a69tpMxG1ldqEQZIbwSsO0xXVTeRx5l8u5WqXPYPv4WQ6CjcPiXSLdb9rWa5Jxo3A62F+CJ1wFFsYXbWGxzXNy5XGG4KXKsYVOh1Dgv5rCTA26E1TU3doSFvQgPbpLJJbrnUL+kk4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724010156; c=relaxed/simple;
-	bh=BqOyHHKiDqN0HU9OM9lYaQsiFeeZJOTuxAV54F8ixM0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=CNPYrwOUc6G9HTHWZADj8XdEkXkI4qkoa78IdNmS/ySQLgFkRun5HvVhjSXjFGrx/qoUba68ISMoww3PBkNxdikO4a501cZIYa8yisY/eySERIacpXtn73oTjljzaleqeQ2QM8S0ONyrN7lS1DczO7HXG2zwrpJewlLj4715joA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WCAzonmQ; arc=none smtp.client-ip=209.85.219.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1724100058; c=relaxed/simple;
+	bh=WD42yRD6/yfV2+FmhV9Uutvxl7UVhqzrykmsd9xB0VU=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=pp4ichdYxB8zjQqMwGmDzL5WFc9uhXYYvN7zyL5bATN7j4Gy5Y9YuKXvzBpITfhDznzowa+hTS+r1FV1t7kNL7QZd9uhI2KNZzJyFmLQS6Qfbwtp+cw4Hg4AMpz4aAeMsPLm2sDR92a5UZ40CD5D4Xz3xwG7XAo3VHQTz1PnRuw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NuMfXKAm; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WCAzonmQ"
-Received: by mail-qv1-f45.google.com with SMTP id 6a1803df08f44-6bf99fee82aso3311306d6.2
-        for <linux-rt-users@vger.kernel.org>; Sun, 18 Aug 2024 12:42:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724010153; x=1724614953; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=l+O+eAFl8v1echfvzcQU6H06Krm3NvFueaMXh+RD1Fg=;
-        b=WCAzonmQjfcBsIjKjn1UQmKlvglFuZhJ4s89FPUYsfKvbNnmZwDfFuHCmDCW7nB5fp
-         0oceygRp3y21qIGNRh3hUpRdQj1kpi4hLVwcfSyoMENkcWgF8aWHfAb2uspICD2/+zZx
-         5kVMvla0ahvkx57VHd00mHGclsBWCyPs3Ytd05VKOUTMGk/mle1EGddn4YE/zAvfHYyx
-         r9+Xlb9isS0CQ96/W7yfcLhcw/jJkY8ah1b/7c+XOB7AXklf04C9+V/zwz5VOsW+Mu2Z
-         kCVmwXTOfDnXF9In/OuJLprf6WW5bwZw090dzs+ituOZKcGULtkjLt7F34DzLrnEjMdy
-         7kWw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724010153; x=1724614953;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=l+O+eAFl8v1echfvzcQU6H06Krm3NvFueaMXh+RD1Fg=;
-        b=QABRJboMuFeFLcX+h55A5anw3fRcEoJihtvjt5ykmcjSBLUYKKf+JYKQBC1GLFBZwr
-         d7OrnN/6P0IaaknH21F0GqYU2SkJrH9dY0xBdnvZRcFasv3jtQ9ZNpM87YmP4FBTulM5
-         reF73eRRT427kX0awpA3hUHQrLnKnPi5H9qnBIcQH3fEMTYG7NoX0pCCbTb0By6y7ctR
-         6B4mzw1GkNNLxiRC2k9qpcQFyXHxtMT9SBZIs+mwB77ruzaaXnNgct+pl7dQl5vobSKM
-         e2GIMY/GLDqKpSksOS3O8qwbCI/8yqq7beuxrprfwkK6W2X87Xac8YchdsW81/lqoFxq
-         KFgg==
-X-Gm-Message-State: AOJu0YwSbbYLQ2E/fF8GKVwS7DJvoA+HPK3r5obUptLkc6XYqrmd+kV0
-	wQEw43LewHvDAKdy0LX42adLwZpBTENTvPtsJq8lCFWvzLyjKlTMnfRQRw==
-X-Google-Smtp-Source: AGHT+IHt1OeMQS3Zlb/2CkaYE4P5ewbfjmtGDdbLOZK49jzHyjY5lEeXxwwSr+umSrvVd3DL/8a9Qg==
-X-Received: by 2002:a05:6214:5342:b0:6bf:888d:a10a with SMTP id 6a1803df08f44-6bf888da38emr65882056d6.10.1724010153325;
-        Sun, 18 Aug 2024 12:42:33 -0700 (PDT)
-Received: from localhost.localdomain ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6bf6fec5f4fsm36909566d6.84.2024.08.18.12.42.32
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 18 Aug 2024 12:42:32 -0700 (PDT)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	Tomas Glozar <tglozar@redhat.com>,
-	Crystal Wood <crwood@redhat.com>,
-	Chris White <chwhite@redhat.com>,
-	Anubhav Shelat <sanubhav1000@gmail.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH 3/3] rteval: Fix parsing in kcompile of the kernel to compile
-Date: Sun, 18 Aug 2024 15:42:16 -0400
-Message-ID: <20240818194216.299176-4-jkacur@redhat.com>
-X-Mailer: git-send-email 2.46.0
-In-Reply-To: <20240818194216.299176-1-jkacur@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NuMfXKAm"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1724100055;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=WD42yRD6/yfV2+FmhV9Uutvxl7UVhqzrykmsd9xB0VU=;
+	b=NuMfXKAmaaBJx7kNpW5l1Or2ZkXT/x/N3wMQ4VvnelviW/E1nuBjM2FpTXwS/pQ9jBCGiR
+	Cam0gkB32+UvLEbAKFsf37nlXEmbNPQ1+jQrYAwpV4hvb//MLWVrXpXaTok4YHrGYAq5CE
+	lzxdSNnd/xjdGFoGWdooNKxnSLn/PfA=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-418-NLRb5QGUM7mRLZClgRQ6gQ-1; Mon,
+ 19 Aug 2024 16:40:52 -0400
+X-MC-Unique: NLRb5QGUM7mRLZClgRQ6gQ-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3547B1955D4C;
+	Mon, 19 Aug 2024 20:40:51 +0000 (UTC)
+Received: from [10.2.16.120] (unknown [10.2.16.120])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 8E12B19373D7;
+	Mon, 19 Aug 2024 20:40:49 +0000 (UTC)
+Message-ID: <81d7939730423517d16c770fc299f26c5cd729b6.camel@redhat.com>
+Subject: Re: [PATCH 1/3] rteval: restore all load module options
+From: Crystal Wood <crwood@redhat.com>
+To: John Kacur <jkacur@redhat.com>, RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>, Tomas Glozar <tglozar@redhat.com>,
+  Chris White <chwhite@redhat.com>, Anubhav Shelat <sanubhav1000@gmail.com>
+Date: Mon, 19 Aug 2024 15:40:48 -0500
+In-Reply-To: <20240818194216.299176-2-jkacur@redhat.com>
 References: <20240818194216.299176-1-jkacur@redhat.com>
+	 <20240818194216.299176-2-jkacur@redhat.com>
+Organization: Red Hat
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
+User-Agent: Evolution 3.52.4 (3.52.4-1.fc40) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-This patch does two things.
-1. It allows you to create your own customer kernel with a dash -rteval
-   in the name, eg, linux-6.10.5-rteval
-2. It fixes parsing of the kernel name so that if the user requests
-   linux-6.10.5 it doesn't use linux-6.10.6-rteval instead
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval/modules/loads/kcompile.py | 30 +++++++++++++++++++-----------
- 1 file changed, 19 insertions(+), 11 deletions(-)
-
-diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
-index 80106812af0a..58c542201a1b 100644
---- a/rteval/modules/loads/kcompile.py
-+++ b/rteval/modules/loads/kcompile.py
-@@ -122,6 +122,8 @@ class Kcompile(CommandLineLoad):
-         self.cpulist = config.cpulist
-         CommandLineLoad.__init__(self, "kcompile", config, logger)
-         self.logger = logger
-+        self._kernel_prefix = ""
-+        self._log(Log.DEBUG, f'self._cfg.source = {self._cfg.source}')
- 
-     def _extract_tarball(self):
-         if self.source is None:
-@@ -152,22 +154,29 @@ class Kcompile(CommandLineLoad):
-                 f"error removing builddir ({self.builddir}) (ret={ret})")
- 
-     def _find_tarball(self):
--       # If the user specifies the full kernel name, check if available
--        tarfile = os.path.join(self.srcdir, self._cfg.source)
--        if os.path.exists(tarfile):
--            return tarfile
-+        """ Find the tarball and self._kernel_prefix """
- 
-         if 'rc' in self._cfg.source:
--            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\-[a-z]*\d{1,2}", self._cfg.source).group(0)
-+            tarfile_prefix = re.search(r"\d{1,2}\.\d{1,3}\-rc\d{1,2}", self._cfg.source).group(0)
-+        elif 'rteval' in self._cfg.source:
-+            tarfile_prefix = re.search(r"(\d{1,2}\.\d{1,3}\.\d{1,3}\-rteval)|(\d{1,2}\.\d{1,3}\-rteval)", self._cfg.source).group(0)
-         else:
-             tarfile_prefix = re.search(r"(\d{1,2}\.\d{1,3}\.\d{1,3})|(\d{1,2}\.\d{1,3})", self._cfg.source).group(0)
- 
-+        # Save the kernel prefix
-+        self._kernel_prefix = "linux-" + tarfile_prefix
-+
-+        # If the user specifies the full kernel name, check if available
-+        tarfile = os.path.join(self.srcdir, self._cfg.source)
-+        if os.path.exists(tarfile):
-+            return tarfile
-+
-         # either a tar.xz or tar.gz might exist. Check for both.
-         xz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.xz" )
-         gz_file = os.path.join(self.srcdir,"linux-" + tarfile_prefix + ".tar.gz" )
-         if os.path.exists(xz_file):
-             return xz_file
--        elif os.path.exists(gz_file):
-+        if os.path.exists(gz_file):
-             return gz_file
-         raise rtevalRuntimeError(self, f"tarfile {tarfile} does not exist!")
- 
-@@ -178,21 +187,20 @@ class Kcompile(CommandLineLoad):
-         # find our source tarball
-         if self._cfg.source:
-             self.source = self._find_tarball()
--            kernel_prefix = re.search(r"(linux-\d{1,2}\.\d{1,3}\.\d{1,3})|(linux-\d{1,2}\.\d{1,3})", self.source).group(0)
-         else:
-             tarfiles = glob.glob(os.path.join(self.srcdir, f"{DEFAULT_KERNEL_PREFIX}*"))
-             if tarfiles:
-                 self.source = tarfiles[0]
-             else:
-                 raise rtevalRuntimeError(self, f" no kernel tarballs found in {self.srcdir}")
--            kernel_prefix = DEFAULT_KERNEL_PREFIX
--        self._log(Log.DEBUG, f"kernel_prefix = {kernel_prefix}")
-+            self._kernel_prefix = DEFAULT_KERNEL_PREFIX
-+        self._log(Log.DEBUG, f"self._kernel_prefix = {self._kernel_prefix}")
- 
-         # check for existing directory
-         kdir = None
-         names = os.listdir(self.builddir)
-         for d in names:
--            if d.startswith(kernel_prefix):
-+            if d == self._kernel_prefix:
-                 kdir = d
-                 break
-         if kdir is None:
-@@ -200,7 +208,7 @@ class Kcompile(CommandLineLoad):
-             names = os.listdir(self.builddir)
-             for d in names:
-                 self._log(Log.DEBUG, f"checking {d}")
--                if d.startswith(kernel_prefix):
-+                if d == self._kernel_prefix:
-                     kdir = d
-                     break
-         if kdir is None:
--- 
-2.46.0
+T24gU3VuLCAyMDI0LTA4LTE4IGF0IDE1OjQyIC0wNDAwLCBKb2huIEthY3VyIHdyb3RlOgo+IENv
+bW1pdCA1NmM3Y2Y2Mzk0MmTCoCBydGV2YWw6IEFsbG93IGFyZ3VtZW50cyBzcGVjaWZpYyB0byBt
+b2R1bGUgZ3JvdXAKPiAKPiBpbnRlbmRlZCB0byBhbGxvdyBncm91cCBvcHRpb25zIHRvIHRoZSBv
+dmVyYWxsIG1lYXN1cmVtZW50IG1vZHVsZXMgd2l0aG91dAo+IGFwcGx5aW5nIHRvIHRoZSBsb2Fk
+IG1vZHVsZXMuIEl0IGluYWR2ZXJ0ZW50bHkgZGlzYWJsZWQgb3B0aW9ucyBmb3IgbW9zdAo+IGxv
+YWQgbW9kdWxlcyBzdWNoIGFzIGhhY2tiZW5jaCBhbmQga2NvbXBpbGUuCgpIb3cgZGlkIHRoYXQg
+aGFwcGVuIGFuZCBob3cgZG9lcyB0aGlzIGZpeCBpdD8KKG5vdCBzYXlpbmcgaXQgZG9lc24ndCwg
+anVzdCB0aGF0IGNsYXJpZnlpbmcgdGhhdCB3b3VsZCBoZWxwIHdpdGggcmV2aWV3aW5nCmFuZCBu
+b3QgaW50cm9kdWNpbmcgc29tZXRoaW5nIHNpbWlsYXIgaW4gdGhlIGZ1dHVyZSkKCj4gCj4gVGhp
+cyBwYXRjaCByZXdvcmtzIHRoZSBvdmVyYWxsIGdyb3VwIG1lY2hhbmlzbSBhIGxpdHRsZSBiaXQg
+dG8gcmVzdG9yZQo+IHRoZXNlIG1lbnVzLgoKTWVudXM/Cgo+ICvCoMKgwqDCoMKgwqDCoCAjIFNl
+dCB1cCBvcHRpb25zIGZvciBtZWFzdXJlbWVudCBtb2R1bGVzIG9ubHkKPiArwqDCoMKgwqDCoMKg
+wqAgaWYgc2VsZi5fX21vZHR5cGUgPT0gJ21lYXN1cmVtZW50JzoKPiArwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoCBncnBhcnNlci5hZGRfYXJndW1lbnQoZictLXtzZWxmLl9fbW9kdHlwZX0tcnVuLW9u
+LWlzb2xjcHVzJywKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGRlc3QgPQo+IGYne3NlbGYuX19tb2R0eXBlfV9fX3J1
+bl9vbl9pc29sY3B1cycsCj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBhY3Rpb24gPSAic3RvcmVfdHJ1ZSIsCj4gK8Kg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoCBkZWZhdWx0ID0KPiBjb25maWcuR2V0U2VjdGlvbigibWVhc3VyZW1lbnQiKS5zZXRk
+ZWZhdWx0KCJydW4tb24taXNvbGNwdXMiLAo+ICJmYWxzZSIpLmxvd2VyKCkgPT0gInRydWUiLAo+
+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqAgaGVscCA9ICJJbmNsdWRlIGlzb2xhdGVkIENQVXMgaW4KPiBkZWZhdWx0IGNw
+dWxpc3QiKQoKWW91IGFscmVhZHkga25vdyBpdCdzIG1lYXN1cmVtZW50IGluIHRoaXMgc2VjdGlv
+biwgc28gd2h5IHtzZWxmLl9fbW9kdHlwZX0/CgpXaHkgZG9lcyB0aGlzIG5lZWQgdG8gYmUgaGVy
+ZSByYXRoZXIgdGhhbiBpbiBydGV2YWwvbW9kdWxlcy9tZWFzdXJlbWVudC5weT8KCj4gwqDCoMKg
+wqDCoMKgwqDCoCBmb3IgKG1vZG5hbWUsIG1vZCkgaW4gbGlzdChzZWxmLl9fbW9kc2xvYWRlZC5p
+dGVtcygpKToKPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgb3B0cyA9IG1vZC5Nb2R1bGVQYXJh
+bWV0ZXJzKCkKPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgaWYgbGVuKG9wdHMpID09IDA6Cj4g
+QEAgLTI5Niw3ICszMTAsNyBAQCByZWZlcmVuY2UgZnJvbSB0aGUgZmlyc3QgaW1wb3J0IiIiCj4g
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgIyBJZ25vcmUgaWYgYSBzZWN0aW9uIGlz
+IG5vdCBmb3VuZAo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGNmZyA9IE5vbmUK
+PiDCoAo+IC3CoMKgwqDCoMKgwqDCoMKgwqDCoMKgIG1vZGdycGFyc2VyID0gcGFyc2VyLmFkZF9h
+cmd1bWVudF9ncm91cChmIk9wdGlvbnMgZm9yIHRoZQo+IHtzaG9ydG1vZH0gbW9kdWxlIikKPiAr
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBncnBhcnNlciA9IHBhcnNlci5hZGRfYXJndW1lbnRfZ3Jv
+dXAoZiJPcHRpb25zIGZvciB0aGUKPiB7c2hvcnRtb2R9IG1vZHVsZSIpCj4gwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgIGZvciAobywgcykgaW4gbGlzdChvcHRzLml0ZW1zKCkpOgo+IMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGRlc2NyID0gJ2Rlc2NyJyBpbiBzIGFuZCBzWydkZXNj
+ciddIG9yICIiCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWV0YXZhciA9ICdt
+ZXRhdmFyJyBpbiBzIGFuZCBzWydtZXRhdmFyJ10gb3IgTm9uZQo+IEBAIC0zMTEsNyArMzI1LDcg
+QEAgcmVmZXJlbmNlIGZyb20gdGhlIGZpcnN0IGltcG9ydCIiIgo+IMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgZGVmYXVsdCA9ICdkZWZhdWx0JyBpbiBzIGFuZCBzWydk
+ZWZhdWx0J10gb3IgTm9uZQo+IMKgCj4gwqAKPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgIG1vZGdycGFyc2VyLmFkZF9hcmd1bWVudChmJy0te3Nob3J0bW9kfS17b30nLAo+ICvCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgZ3JwYXJzZXIuYWRkX2FyZ3VtZW50KGYnLS17c2hv
+cnRtb2R9LXtvfScsCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBkZXN0PWYie3Nob3J0bW9k
+fV9fX3tvfSIsCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBhY3Rpb249J3N0b3JlJywKPiDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGhlbHA9JyVzJXMnICUgKGRlc2NyLAo+IEBAIC0zMTks
+OCArMzMzLDYgQEAgcmVmZXJlbmNlIGZyb20gdGhlIGZpcnN0IGltcG9ydCIiIgo+IMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqAgZGVmYXVsdD1kZWZhdWx0LAo+IMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgbWV0YXZhcj1tZXRhdmFyKQoKV291bGRuJ3QgIm1vZHBhcnNlciIgYmUgbW9yZSBhY2N1
+cmF0ZSwgc2luY2UgdGhpcyBpc24ndCBmb3IgdGhlIGVudGlyZQpncm91cD8KCk9yIHdlIGNvdWxk
+IHJldXNlIHRoZSBtZWNoYW5pc20gZm9yIGJvdGggZ3JvdXAgYW5kIG1vZHVsZSBsZXZlbCAobWF5
+YmUKcy9Nb2R1bGVQYXJhbWV0ZXJzL1BhcmFtZXRlcnMvKSBpZiBpdCdzIG5vdCBpbnRyb2R1Y2lu
+ZyBtb3JlIGNvbXBsZXhpdHkgdGhhbgppdCBlbGltaW5hdGVzLgoKPiBkaWZmIC0tZ2l0IGEvcnRl
+dmFsL21vZHVsZXMvbWVhc3VyZW1lbnQvX19pbml0X18ucHkKPiBiL3J0ZXZhbC9tb2R1bGVzL21l
+YXN1cmVtZW50L19faW5pdF9fLnB5Cj4gaW5kZXggOTMxNGQxY2I2YmJjLi40NDcwOGNlMGIwMzUg
+MTAwNjQ0Cj4gLS0tIGEvcnRldmFsL21vZHVsZXMvbWVhc3VyZW1lbnQvX19pbml0X18ucHkKPiAr
+KysgYi9ydGV2YWwvbW9kdWxlcy9tZWFzdXJlbWVudC9fX2luaXRfXy5weQo+IEBAIC0yOSwxNyAr
+MjksNyBAQCBjbGFzcyBNZWFzdXJlbWVudE1vZHVsZXMoUnRFdmFsTW9kdWxlcyk6Cj4gwqAKPiDC
+oMKgwqDCoCBkZWYgU2V0dXBNb2R1bGVPcHRpb25zKHNlbGYsIHBhcnNlcik6Cj4gwqDCoMKgwqDC
+oMKgwqDCoCAiU2V0cyB1cCBhbGwgdGhlIG1lYXN1cmVtZW50IG1vZHVsZXMnIHBhcmFtZXRlcnMg
+Zm9yIHRoZSBvcHRpb24KPiBwYXJzZXIiCj4gLcKgwqDCoMKgwqDCoMKgIGdycGFyc2VyID0gc3Vw
+ZXIoKS5TZXR1cE1vZHVsZU9wdGlvbnMocGFyc2VyKQo+IC0KPiAtwqDCoMKgwqDCoMKgwqAgIyBT
+ZXQgdXAgb3B0aW9ucyBzcGVjaWZpYyBmb3IgbWVhc3VyZW1lbnQgbW9kdWxlIGdyb3VwCj4gLcKg
+wqDCoMKgwqDCoMKgIGdycGFyc2VyLmFkZF9hcmd1bWVudCgiLS1tZWFzdXJlbWVudC1ydW4tb24t
+aXNvbGNwdXMiLAo+IC3CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgIGRlc3Q9Im1lYXN1cmVtZW50X19fcnVuX29uX2lzb2xjcHVzIiwKPiAt
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oCBhY3Rpb249InN0b3JlX3RydWUiLAo+IC3CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgCj4gZGVmYXVsdD1zZWxmLl9jZmcuR2V0U2VjdGlv
+bigibWVhc3VyZW1lbnQiKS5zZXRkZWZhdWx0KCJydW4tb24taXNvbGNwdXMiLAo+ICJmYWxzZSIp
+Lmxvd2VyKCkKPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgPT0gInRydWUiLAo+IC3CoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGhlbHA9IkluY2x1
+ZGUgaXNvbGF0ZWQgQ1BVcyBpbiBkZWZhdWx0Cj4gY3B1bGlzdCIpCj4gLcKgwqDCoMKgwqDCoMKg
+IGdycGFyc2VyLmFkZF9hcmd1bWVudCgnLS1pZGxlLXNldCcsCj4gZGVzdD0nbWVhc3VyZW1lbnRf
+X19pZGxlc3RhdGUnLCBtZXRhdmFyPSdJRExFU1RBVEUnLAo+IC3CoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGRlZmF1bHQ9Tm9uZSwgaGVscD0nSWRsZSBzdGF0
+ZSBkZXB0aCB0byBzZXQgb24KPiBjcHVzIHJ1bm5pbmcgbWVhc3VyZW1lbnQgbW9kdWxlcycpCj4g
+K8KgwqDCoMKgwqDCoMKgIHN1cGVyKCkuU2V0dXBNb2R1bGVPcHRpb25zKHBhcnNlcikKCldoeSBp
+cyB0aGlzIG1ldGhvZCBzdGlsbCBoZXJlIGlmIGFsbCBpdCBkb2VzIGlzIGNhbGwgc3VwZXI/Cgot
+Q3J5c3RhbAoK
 
