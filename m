@@ -1,109 +1,133 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yb1-f173.google.com (mail-yb1-f173.google.com [209.85.219.173])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90DC115E96
-	for <linux-rt-users@vger.kernel.org>; Mon, 19 Aug 2024 20:54:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77A9818C008;
+	Tue, 20 Aug 2024 08:55:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724100864; cv=none; b=l6or2DuwfHc8Xdk6lYqecUJKD5LtpR86o4RLgfuAn/LZfhNCmD9Yamei3pwO3OynzacDHiTjIZUHgLZszPxQ33uqzu5/N7zAfRoKzb70KUQ1aAtHqfgeb1PmtOOXSmr+MRoShvjCnpqtxTv+4dXRb33pwqNxG+Vsz1Lx0nHrdbA=
+	t=1724144150; cv=none; b=DV+rEf+9Z/H2veGjcXwQkpOh6XEP5Nbn8llp995bsOBOeCM5r2WvrNkXMG5ozCxhl1UsaF9d2C0atkI/0zeoZHpdJ5WSeV1b2wYeCcdwx3izR0hK+MdPQz3hH1wdNP1jWNCIGPubw97iPirw/Tn0rxhRIzURAGr7kq36AAui70M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724100864; c=relaxed/simple;
-	bh=HvQYe8PQg/kEBQXzh1PYAwfORpg6uyJRL1lZt73cn5w=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=FTL/78cifghYp/xt/8GcBv/+Ki+wLsdwM5KTyf3A4EuiHoelM4edM+GnTD4vAsoKDajjvAeBYZWf1ipMe9/HRYRiDKYQPCMMJ07Wt78io2sqG/mtvwhce/R98nD4zPPxLCk0WiL2y78zAAugwDh+E8MOaVqXgIpDTMkB4mEGD94=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=inUxFZrr; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="inUxFZrr"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1724100861;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=HvQYe8PQg/kEBQXzh1PYAwfORpg6uyJRL1lZt73cn5w=;
-	b=inUxFZrrxHzjlkvCS38iKlv5Gyf9Vs5TWSVoqzN/2PK6Gns8fqLgx1kFdVF4N7cfnqxFOD
-	cAx1kd/fz9EyuUktAUf3/ZA+9NPVtkRP0CMu+Tk0tyO6C7K13B0A+qKYVRXsaKYW6YKk4K
-	mrnvOUsslliurzHqqYANiFCAMkc/dqo=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-639-3AEkAtnmO26M22sk_VnOpA-1; Mon,
- 19 Aug 2024 16:54:18 -0400
-X-MC-Unique: 3AEkAtnmO26M22sk_VnOpA-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2E3271955F2F;
-	Mon, 19 Aug 2024 20:54:17 +0000 (UTC)
-Received: from [10.2.16.120] (unknown [10.2.16.120])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 9CB8F19560A3;
-	Mon, 19 Aug 2024 20:54:15 +0000 (UTC)
-Message-ID: <76d0ddcfd69e44c30d9cd73b3d10a63971d987f2.camel@redhat.com>
-Subject: Re: [PATCH 3/3] rteval: Fix parsing in kcompile of the kernel to
- compile
-From: Crystal Wood <crwood@redhat.com>
-To: John Kacur <jkacur@redhat.com>, RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>, Tomas Glozar <tglozar@redhat.com>,
-  Chris White <chwhite@redhat.com>, Anubhav Shelat <sanubhav1000@gmail.com>
-Date: Mon, 19 Aug 2024 15:54:14 -0500
-In-Reply-To: <20240818194216.299176-4-jkacur@redhat.com>
-References: <20240818194216.299176-1-jkacur@redhat.com>
-	 <20240818194216.299176-4-jkacur@redhat.com>
-Organization: Red Hat
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
-User-Agent: Evolution 3.52.4 (3.52.4-1.fc40) 
+	s=arc-20240116; t=1724144150; c=relaxed/simple;
+	bh=gDH1pqLw3GiMaUrtMiCBK1HOFWaAfQXDmmSKhPrz08M=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=oNqZxPI8UnMnV3d3Du/rCKhhzYx2NzfwBn6hMhoWjZX9N8tlbBVee4FtZ3QDPFFN+m3p+7pvhG11JQhwurJNhlo4zc1UYSNPYfUcgaxUnXuveVnu2mcApTC7A639xiVb/jG0+AyIaVjLUOOMzpinojIpveteDXjulnvtqCcv5hg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.219.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-yb1-f173.google.com with SMTP id 3f1490d57ef6-e162df8bab4so1885736276.0;
+        Tue, 20 Aug 2024 01:55:47 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1724144146; x=1724748946;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=739gK9PCxp/9rrLNn1FcjCtYFSGZ1gQJc34AHkkD9ls=;
+        b=kYCRPPGAX2A6p/MfZgs0UgXBXXCLoDBVk/KUOxLj1fZtxUH3Jv84GfllYulhyqhZOO
+         twiYMMgovGhbbg6HiPWl/4sO1RmS0te+TSZMOiFqEyL2BirvQ1rLzrm5Hbb27uV1j6+F
+         6DwyALQLh68nQk77ZhuuYuYr/WiSaTG9hCP/xLh1DMr0qjku6rTV0Ewm+QWgS+JZ5j4v
+         fWXglREYDntBkAtWuLPS/8gxYG3E9jSRC5yRu+rZzhupQkqNVHMNPuHQGQ7cc0l3nI0B
+         TWobHxR0qu/2FjZ+v/JL5Zkfw0fkNuxJvMadpAWDAreKsCOXLQKd47pgWkS8anLo+Sy6
+         dzug==
+X-Forwarded-Encrypted: i=1; AJvYcCUQ4BPOjS9wxmFq3pyfQxTBaU53/DU9nwZYmUEOf3FmbnjFLlR+BK8oOVIR6Gm9JX+TPlDfT58iedozpfl5nyCBlOmwc0RhSbgYujQBUzcl4tfrZNFCnwLSUUdhUU5vQYmqXgbJIOuxKKYfoAwc/NQsh+Pafxt1Mk6xjQG4lmf6m34vnLTTiA==
+X-Gm-Message-State: AOJu0YzA7g8Wo6fuHhIGNSaoYE0BLbpHOViz3dxU1QVmJKd/X0RoSS5Y
+	G/ro/5X8CghDQGmvAtTRCo/Y1lScfuM+Sg+xfZDq5Q3kHZMcm3scblJ2coeFIP0=
+X-Google-Smtp-Source: AGHT+IG3CgtVSGrEail5jDUg0CfL0JwM8NoZfrcbLjj+KFe8j/+TzcmOXnaPcyVc3BZKGujRyTUzXA==
+X-Received: by 2002:a05:6902:158b:b0:e03:5bca:aee6 with SMTP id 3f1490d57ef6-e1180fa9f2cmr14871442276.54.1724144145816;
+        Tue, 20 Aug 2024 01:55:45 -0700 (PDT)
+Received: from mail-yw1-f174.google.com (mail-yw1-f174.google.com. [209.85.128.174])
+        by smtp.gmail.com with ESMTPSA id 3f1490d57ef6-e117203314csm2510071276.57.2024.08.20.01.55.45
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 20 Aug 2024 01:55:45 -0700 (PDT)
+Received: by mail-yw1-f174.google.com with SMTP id 00721157ae682-6b59a67ba12so25506727b3.1;
+        Tue, 20 Aug 2024 01:55:45 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AJvYcCUGxCHqMTqyH6md07IE1iMSgraVGJeFsoCfxNIkpl8ZZCndNqGLOAU6ncrrD5DdPk/3PXpe0rfkfhLMEy5TQi8C+wkEa6tm+ddFKvtTylW7yDjJYlr4t9WEnbx0mNOPrTRm6Dr8dOm5RLQ/PZ4y/1THc398h11qRBMz8gI2Lek1783b+BLKSg==
+X-Received: by 2002:a05:690c:6ac3:b0:6ac:ce34:9726 with SMTP id
+ 00721157ae682-6b1b8ce89demr171065287b3.18.1724144145160; Tue, 20 Aug 2024
+ 01:55:45 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+References: <20240527142557.321610-1-ulf.hansson@linaro.org> <20240527142557.321610-4-ulf.hansson@linaro.org>
+In-Reply-To: <20240527142557.321610-4-ulf.hansson@linaro.org>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Date: Tue, 20 Aug 2024 10:55:32 +0200
+X-Gmail-Original-Message-ID: <CAMuHMdUoZBJewA6nQZLhnbebZuoZo85UCCfwuOv8or_N_e-0qg@mail.gmail.com>
+Message-ID: <CAMuHMdUoZBJewA6nQZLhnbebZuoZo85UCCfwuOv8or_N_e-0qg@mail.gmail.com>
+Subject: Re: [PATCH v2 3/7] pmdomain: core: Use dev_name() instead of
+ kobject_get_path() in debugfs
+To: Ulf Hansson <ulf.hansson@linaro.org>
+Cc: "Rafael J . Wysocki" <rafael@kernel.org>, Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org, 
+	Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Nikunj Kela <nkela@quicinc.com>, 
+	Prasad Sodagudi <psodagud@quicinc.com>, Maulik Shah <quic_mkshah@quicinc.com>, 
+	Daniel Lezcano <daniel.lezcano@linaro.org>, 
+	Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>, linux-rt-users@vger.kernel.org, 
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-T24gU3VuLCAyMDI0LTA4LTE4IGF0IDE1OjQyIC0wNDAwLCBKb2huIEthY3VyIHdyb3RlOgo+IFRo
-aXMgcGF0Y2ggZG9lcyB0d28gdGhpbmdzLgo+IDEuIEl0IGFsbG93cyB5b3UgdG8gY3JlYXRlIHlv
-dXIgb3duIGN1c3RvbWVyIGtlcm5lbCB3aXRoIGEgZGFzaCAtcnRldmFsCj4gwqDCoCBpbiB0aGUg
-bmFtZSwgZWcsIGxpbnV4LTYuMTAuNS1ydGV2YWwKCnMvY3VzdG9tZXIvY3VzdG9tLwoKCj4gwqAK
-PiDCoMKgwqDCoCBkZWYgX2ZpbmRfdGFyYmFsbChzZWxmKToKPiAtwqDCoMKgwqDCoMKgICMgSWYg
-dGhlIHVzZXIgc3BlY2lmaWVzIHRoZSBmdWxsIGtlcm5lbCBuYW1lLCBjaGVjayBpZiBhdmFpbGFi
-bGUKPiAtwqDCoMKgwqDCoMKgwqAgdGFyZmlsZSA9IG9zLnBhdGguam9pbihzZWxmLnNyY2Rpciwg
-c2VsZi5fY2ZnLnNvdXJjZSkKPiAtwqDCoMKgwqDCoMKgwqAgaWYgb3MucGF0aC5leGlzdHModGFy
-ZmlsZSk6Cj4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgcmV0dXJuIHRhcmZpbGUKPiArwqDCoMKg
-wqDCoMKgwqAgIiIiIEZpbmQgdGhlIHRhcmJhbGwgYW5kIHNlbGYuX2tlcm5lbF9wcmVmaXggIiIi
-Cj4gwqAKPiDCoMKgwqDCoMKgwqDCoMKgIGlmICdyYycgaW4gc2VsZi5fY2ZnLnNvdXJjZToKPiAt
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB0YXJmaWxlX3ByZWZpeCA9IHJlLnNlYXJjaChyIlxkezEs
-Mn1cLlxkezEsM31cLVthLQo+IHpdKlxkezEsMn0iLCBzZWxmLl9jZmcuc291cmNlKS5ncm91cCgw
-KQo+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHRhcmZpbGVfcHJlZml4ID0gcmUuc2VhcmNoKHIi
-XGR7MSwyfVwuXGR7MSwzfVwtcmNcZHsxLDJ9IiwKPiBzZWxmLl9jZmcuc291cmNlKS5ncm91cCgw
-KQo+ICvCoMKgwqDCoMKgwqDCoCBlbGlmICdydGV2YWwnIGluIHNlbGYuX2NmZy5zb3VyY2U6Cj4g
-K8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgdGFyZmlsZV9wcmVmaXggPSByZS5zZWFyY2gociIoXGR7
-MSwyfVwuXGR7MSwzfVwuXGR7MSwzfVwtCj4gcnRldmFsKXwoXGR7MSwyfVwuXGR7MSwzfVwtcnRl
-dmFsKSIsIHNlbGYuX2NmZy5zb3VyY2UpLmdyb3VwKDApCj4gwqDCoMKgwqDCoMKgwqDCoCBlbHNl
-Ogo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB0YXJmaWxlX3ByZWZpeCA9Cj4gcmUuc2VhcmNo
-KHIiKFxkezEsMn1cLlxkezEsM31cLlxkezEsM30pfChcZHsxLDJ9XC5cZHsxLDN9KSIsCj4gc2Vs
-Zi5fY2ZnLnNvdXJjZSkuZ3JvdXAoMCkKPiDCoAo+ICvCoMKgwqDCoMKgwqDCoCAjIFNhdmUgdGhl
-IGtlcm5lbCBwcmVmaXgKPiArwqDCoMKgwqDCoMKgwqAgc2VsZi5fa2VybmVsX3ByZWZpeCA9ICJs
-aW51eC0iICsgdGFyZmlsZV9wcmVmaXgKPiArCj4gK8KgwqDCoMKgwqDCoMKgICMgSWYgdGhlIHVz
-ZXIgc3BlY2lmaWVzIHRoZSBmdWxsIGtlcm5lbCBuYW1lLCBjaGVjayBpZiBhdmFpbGFibGUKPiAr
-wqDCoMKgwqDCoMKgwqAgdGFyZmlsZSA9IG9zLnBhdGguam9pbihzZWxmLnNyY2Rpciwgc2VsZi5f
-Y2ZnLnNvdXJjZSkKPiArwqDCoMKgwqDCoMKgwqAgaWYgb3MucGF0aC5leGlzdHModGFyZmlsZSk6
-Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgcmV0dXJuIHRhcmZpbGUKPiArCj4gwqDCoMKgwqDC
-oMKgwqDCoCAjIGVpdGhlciBhIHRhci54eiBvciB0YXIuZ3ogbWlnaHQgZXhpc3QuIENoZWNrIGZv
-ciBib3RoLgo+IMKgwqDCoMKgwqDCoMKgwqAgeHpfZmlsZSA9IG9zLnBhdGguam9pbihzZWxmLnNy
-Y2RpciwibGludXgtIiArIHRhcmZpbGVfcHJlZml4ICsKPiAiLnRhci54eiIgKQo+IMKgwqDCoMKg
-wqDCoMKgwqAgZ3pfZmlsZSA9IG9zLnBhdGguam9pbihzZWxmLnNyY2RpciwibGludXgtIiArIHRh
-cmZpbGVfcHJlZml4ICsKPiAiLnRhci5neiIgKQo+IMKgwqDCoMKgwqDCoMKgwqAgaWYgb3MucGF0
-aC5leGlzdHMoeHpfZmlsZSk6Cj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHJldHVybiB4el9m
-aWxlCj4gLcKgwqDCoMKgwqDCoMKgIGVsaWYgb3MucGF0aC5leGlzdHMoZ3pfZmlsZSk6Cj4gK8Kg
-wqDCoMKgwqDCoMKgIGlmIG9zLnBhdGguZXhpc3RzKGd6X2ZpbGUpOgo+IMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoCByZXR1cm4gZ3pfZmlsZQo+IMKgwqDCoMKgwqDCoMKgwqAgcmFpc2UgcnRldmFs
-UnVudGltZUVycm9yKHNlbGYsIGYidGFyZmlsZSB7dGFyZmlsZX0gZG9lcyBub3QKPiBleGlzdCEi
-KQoKV2h5IGRvIHdlIGhhdmUgYW55IG9mIHRoaXMgaW5zdGVhZCBvZiBqdXN0IGhhdmluZyB0aGUg
-dXNlciBwb2ludCBhdCB0aGUKc3BlY2lmaWMgZmlsZSAod2hpY2ggSSBhc3N1bWUgaXMgbWFpbmx5
-IG9mIGludGVyZXN0IGZvciB3b3JraW5nIGFyb3VuZApwcm9ibGVtcyBidWlsZGluZyB0aGUgZGVm
-YXVsdCBvbmUpPwoKLUNyeXN0YWwKCg==
+Hi Ulf,
 
+On Mon, May 27, 2024 at 4:27=E2=80=AFPM Ulf Hansson <ulf.hansson@linaro.org=
+> wrote:
+> Using kobject_get_path() means a dynamic memory allocation gets done, whi=
+ch
+> doesn't work on a PREEMPT_RT based configuration while holding genpd's ra=
+w
+> spinlock.
+>
+> To fix the problem, let's convert into using the simpler dev_name(). This
+> means the information about the path doesn't get presented in debugfs, bu=
+t
+> hopefully this shouldn't be an issue.
+>
+> Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
+> ---
+> Changes in v2:
+>         - New patch.
+
+Thanks for your patch, which is now commit 9094e53ff5c86ebe ("pmdomain:
+core: Use dev_name() instead of kobject_get_path() in debugfs")
+in pmdomain/next.
+
+> --- a/drivers/pmdomain/core.c
+> +++ b/drivers/pmdomain/core.c
+> @@ -3215,16 +3214,9 @@ static int genpd_summary_one(struct seq_file *s,
+>         }
+>
+>         list_for_each_entry(pm_data, &genpd->dev_list, list_node) {
+> -               kobj_path =3D kobject_get_path(&pm_data->dev->kobj,
+> -                               genpd_is_irq_safe(genpd) ?
+> -                               GFP_ATOMIC : GFP_KERNEL);
+> -               if (kobj_path =3D=3D NULL)
+> -                       continue;
+> -
+> -               seq_printf(s, "\n    %-50s  ", kobj_path);
+> +               seq_printf(s, "\n    %-50s  ", dev_name(pm_data->dev));
+
+While some of the old names didn't even fit in 50 characters, the new
+names need much less space, so perhaps this is a good opportunity to
+decrease the table width?
+
+>                 rtpm_status_str(s, pm_data->dev);
+>                 perf_status_str(s, pm_data->dev);
+> -               kfree(kobj_path);
+>         }
+>
+>         seq_puts(s, "\n");
+
+Gr{oetje,eeting}s,
+
+                        Geert
+
+--=20
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k=
+.org
+
+In personal conversations with technical people, I call myself a hacker. Bu=
+t
+when I'm talking to journalists I just say "programmer" or something like t=
+hat.
+                                -- Linus Torvalds
