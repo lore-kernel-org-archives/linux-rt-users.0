@@ -1,135 +1,33 @@
-Received: from mail-yb1-f178.google.com (mail-yb1-f178.google.com [209.85.219.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BE0318A933
-	for <linux-rt-users@vger.kernel.org>; Tue, 20 Aug 2024 08:58:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.178
+Received: from sdfgruop.com (sdfgruop.com [185.239.236.61])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 3ACF616DC15
+	for <linux-rt-users@vger.kernel.org>; Wed, 21 Aug 2024 18:57:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.239.236.61
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724144304; cv=none; b=UvVYkkb5jEynXriSIOgjDrKc/WF0h9RFEeMeVhoozTLqYV2YDOYNEUYst50xyU1aj0vtX2wMUlV69DTkiGcEC7+Np2d5qMb+3Q9Gq0OJ+uX+pRVy8T8HLnk46HSdFajHhuEG1OrooBVslfWigGKtTf8M+5pLPi7vWVOg5+jUt98=
+	t=1724266645; cv=none; b=L74qAnjERfm/c3fmzOJNQ4LppSyqXv0zBAog32Qd6y0ZkmVFFU+XB4jz1w8ZRVmuCR+pMkByR2F9FwIMuUYy4P1aPMAZoPGfz+6kujVJ7IdMMGekFyh4hb/gVo7p2yqB11A3HKOw/t2Wsje9HhpzMhy2d/m8bf6pzpsUWjiVhVY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724144304; c=relaxed/simple;
-	bh=6Tkdd3Meo0GfjfzZFGqvsGzY6sKlazdEJzewsarTR48=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=hn6XHa4EVhV38V9XQs8RaRYuABYpdDzt6eKzxfaUl+5hTCl0nSLL1fQeiaPm7muS4a+9XSgIXdmkw0e28JElUIZPTAxHRYUfg4dy3GcG2bTXjqs6Beb0CPs9s/MyjyjN0vv9olrlNyHtujhTgZSQnQKEx1e5Hog1voC4zSHyr84=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=DkmFRCPH; arc=none smtp.client-ip=209.85.219.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	s=arc-20240116; t=1724266645; c=relaxed/simple;
+	bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=je1ESzs9mejaZTZjIAL5B1oPQQ4p912JgVcBLyz7HUPAzw0ZeIbImHfaeKGRq2kei8wtey+oNppPnSPLHJ9boUsAGumqVzFVW6fBkij7ZFUTXtKt4zPCxNPqQ5ItrlHsKR/cZRJ+I9kOQ01SKrAFltdlO6egtcA8Rgv6cpZ+Oyk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sdfgruop.com; spf=none smtp.mailfrom=sdfgruop.com; dkim=pass (1024-bit key) header.d=sdfgruop.com header.i=@sdfgruop.com header.b=UVe9rhVc; arc=none smtp.client-ip=185.239.236.61
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sdfgruop.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=sdfgruop.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="DkmFRCPH"
-Received: by mail-yb1-f178.google.com with SMTP id 3f1490d57ef6-e165ab430e7so171042276.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 Aug 2024 01:58:21 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1724144300; x=1724749100; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=+sQqK35BG9rk0fC+Ql+lqOsPE+09qa68+cU1cYBJ8yM=;
-        b=DkmFRCPHLsmVdkoH7tq0TC9lO/8M8j/j5d3r3ONUssbsJv/w6h5+LjhQaoHWcMV0cQ
-         Qv2X5DiyQdlLEott4YID5C3gCLo3J5m4HwTgjcEWP2TLajnfBRUFr8u4kCJrFc9rVm3U
-         9LtyAnZkGr4iwvYQzwgMx1XeepI9QZKe3XsRDqInNHjgew8Mt2dxinkyAWqaE53myXnj
-         mXksu/Ivxz0otyubOsGz41cT3el3cu5OdMPZKcH+1TCPWhXuG+1ka6pJ40ONLQKgF9fZ
-         vLLdsEk3GLYmMgF2OS+gQgGzVW1OtCrYvIv52kC8x+aFiiny6dFTI9IBfB9yVoSqKVcO
-         201g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724144300; x=1724749100;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=+sQqK35BG9rk0fC+Ql+lqOsPE+09qa68+cU1cYBJ8yM=;
-        b=lLUjWyXPdbFiy3kvChXrqGwrQV7IEd4FWhvEvEpzVzm/smywf2grMwypIW+ft8iH0b
-         vDB4aydHJzLwfIEPGRwr8y+kkqV1OxFqzR3O5sAyOwt/9xGVotEKes2WJ59I2mOEpg+D
-         81O9DSBotrgGmhpVRA7ODT40leZ3ITC8xAYeGqU5AAzvGBF2voR+ybXBz0ukx1F1V3o+
-         RyvSPifMOWy5mpJqEyjmqC8SqMD8iCHXNJBEll2KnkQG4oG3u4MCxqqJQXMW3N7UarxV
-         tycgirMCDZl780F3g8EXGTncawezqLmUIy42/0+70kVKaknaMGIV2mzcvc08k8M3e0lu
-         Co+A==
-X-Forwarded-Encrypted: i=1; AJvYcCX5cD+LdQDPpKfD5uzjg3imJHanXkDTWLDrPZWZaoTd3GAFdNj/PzPs4Fxb2H2ybw0gdCHGOAOcYiPX6Y7DUCF8Dcizk/Ae5J26Q0M5rHA=
-X-Gm-Message-State: AOJu0Yyh4g10QYsY9OOYscxoeIliksNdLmcSbYaN4iQkfkaH7MVB5boA
-	4cCo1sB8FzIDSrFEec3xhCBAm+ao5xYFGgmh3GXnz2wcJ6/fuXZxzGGfiYUFQaNAHHH1oBvADID
-	ErlDyCqA9XrQHZ+TbXoJsbNjFu4fDN04GH/KeoQ==
-X-Google-Smtp-Source: AGHT+IG5+/Ak9xzdfmnxlBpDT2OA99O+vdwecgCE7zdsQMevjk6KXLK9MPRyqnfgtvL2CxSxwLtXI6vlsm1cEDCFaNM=
-X-Received: by 2002:a05:6902:240a:b0:e0e:cef6:5265 with SMTP id
- 3f1490d57ef6-e1181046903mr14227508276.41.1724144300450; Tue, 20 Aug 2024
- 01:58:20 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=sdfgruop.com header.i=@sdfgruop.com header.b="UVe9rhVc"
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed;
+	d=sdfgruop.com; s=default; h=From:To:Subject:MIME-Version; bh=2j
+	mj7l5rSw0yVb/vlWAYkK/YBwk=; b=UVe9rhVcPfg78f0Qe95qHj5YX+H66EvwD4
+	Ib7BhLtXFK8VlopY/4sBNra1NBX66noJYaS8HYX51bHFVsY//4O9X6AJlAhLQ4KQ
+	G86H3j8XcOo0UPgUjiHBidC8nfHlzps8EebcZv9Tyg8m4c3QOYvpRlqvnCuct4ia
+	6PAtJ5InE=
+From: Mail Server <mseyani@sdfgruop.com>
+To: linux-rt-users@vger.kernel.org
+Subject: Email Security upgrading process 
+Date: 21 Aug 2024 20:57:23 +0200
+Message-ID: <20240821205722.4809ED334E14E9BF@sdfgruop.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240527142557.321610-1-ulf.hansson@linaro.org>
- <20240527142557.321610-4-ulf.hansson@linaro.org> <CAMuHMdUoZBJewA6nQZLhnbebZuoZo85UCCfwuOv8or_N_e-0qg@mail.gmail.com>
-In-Reply-To: <CAMuHMdUoZBJewA6nQZLhnbebZuoZo85UCCfwuOv8or_N_e-0qg@mail.gmail.com>
-From: Ulf Hansson <ulf.hansson@linaro.org>
-Date: Tue, 20 Aug 2024 10:57:43 +0200
-Message-ID: <CAPDyKFqcpxUJWL7FoRSXLXVhS5B9PjcTY5ryG8HAY_E1Btgwag@mail.gmail.com>
-Subject: Re: [PATCH v2 3/7] pmdomain: core: Use dev_name() instead of
- kobject_get_path() in debugfs
-To: Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: "Rafael J . Wysocki" <rafael@kernel.org>, Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org, 
-	Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Nikunj Kela <nkela@quicinc.com>, 
-	Prasad Sodagudi <psodagud@quicinc.com>, Maulik Shah <quic_mkshah@quicinc.com>, 
-	Daniel Lezcano <daniel.lezcano@linaro.org>, 
-	Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>, linux-rt-users@vger.kernel.org, 
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Tue, 20 Aug 2024 at 10:55, Geert Uytterhoeven <geert@linux-m68k.org> wro=
-te:
->
-> Hi Ulf,
->
-> On Mon, May 27, 2024 at 4:27=E2=80=AFPM Ulf Hansson <ulf.hansson@linaro.o=
-rg> wrote:
-> > Using kobject_get_path() means a dynamic memory allocation gets done, w=
-hich
-> > doesn't work on a PREEMPT_RT based configuration while holding genpd's =
-raw
-> > spinlock.
-> >
-> > To fix the problem, let's convert into using the simpler dev_name(). Th=
-is
-> > means the information about the path doesn't get presented in debugfs, =
-but
-> > hopefully this shouldn't be an issue.
-> >
-> > Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
-> > ---
-> > Changes in v2:
-> >         - New patch.
->
-> Thanks for your patch, which is now commit 9094e53ff5c86ebe ("pmdomain:
-> core: Use dev_name() instead of kobject_get_path() in debugfs")
-> in pmdomain/next.
->
-> > --- a/drivers/pmdomain/core.c
-> > +++ b/drivers/pmdomain/core.c
-> > @@ -3215,16 +3214,9 @@ static int genpd_summary_one(struct seq_file *s,
-> >         }
-> >
-> >         list_for_each_entry(pm_data, &genpd->dev_list, list_node) {
-> > -               kobj_path =3D kobject_get_path(&pm_data->dev->kobj,
-> > -                               genpd_is_irq_safe(genpd) ?
-> > -                               GFP_ATOMIC : GFP_KERNEL);
-> > -               if (kobj_path =3D=3D NULL)
-> > -                       continue;
-> > -
-> > -               seq_printf(s, "\n    %-50s  ", kobj_path);
-> > +               seq_printf(s, "\n    %-50s  ", dev_name(pm_data->dev));
->
-> While some of the old names didn't even fit in 50 characters, the new
-> names need much less space, so perhaps this is a good opportunity to
-> decrease the table width?
-
-Sure, it seems reasonable! Do you want to send a patch?
-
->
-> >                 rtpm_status_str(s, pm_data->dev);
-> >                 perf_status_str(s, pm_data->dev);
-> > -               kfree(kobj_path);
-> >         }
-> >
-> >         seq_puts(s, "\n");
-
-Kind regards
-Uffe
