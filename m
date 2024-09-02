@@ -1,49 +1,49 @@
-Received: from mail-yb1-f174.google.com (mail-yb1-f174.google.com [209.85.219.174])
+Received: from mail-yw1-f177.google.com (mail-yw1-f177.google.com [209.85.128.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AFB5EEC3;
-	Fri, 30 Aug 2024 15:50:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 669E31A263E;
+	Mon,  2 Sep 2024 14:43:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725033055; cv=none; b=nFfAuKUyajVQ0YLX0QuyV+zb+PbAewrghTdLeOHyj5j48S2Qn9qBmtQHtdZBoc4bYWNxROMKs0IU0CEJz9HpJUQz7qqrYbV0MudHkBK6QgS9+wIioBBaP1HEjupSBhwk+6r9tlosmjLeKlp3wRSNg/0Esy9lJMPG0dAiQZOImqA=
+	t=1725288197; cv=none; b=MlIzI3pIHVe14nEwrw7RmhmeUj4CNLIy2wMF7tz+xRDHnW+1G8tkIurRZdUW1uXC76jJGuwk3bMaAd727wadJAomO30VaEYdPehXAD0jIWXqmbHicecY/kNNrwHzfTD9poHPAgDKrxkCWMQIBt4hgEfUUbGedMKxEUlzMwh3PVE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725033055; c=relaxed/simple;
-	bh=pR1h+Ynwrb+FY5Cr0unLWbeM38nnOcTAB2TbBnhRC7c=;
+	s=arc-20240116; t=1725288197; c=relaxed/simple;
+	bh=1QsvRZPsbUtInZWprJeCMReKLKwUDzy1CVFK+e51Ehw=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=cW76fqOAMTPbStfean5cY1WrBtvGxuW45uwLRhdFyxkUYVu4Ja0aPLJElxUfHZp/eFu/2Y7BROBuhcy6IVgCiHXWGOFeP3iSmeZpfmUb8HeKt62KPT1i65XSbLSxmNCa9R4nxC5Y/bji+mrk09RP3KNwI68KKpN6c4L6GxGiB1g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.219.174
+	 To:Cc:Content-Type; b=daa63iTcVywbdTxzFeyiDrlyMnIpd3pJLz99uNXbzzSGYav7IcWVTTro6Cp+PnaweOjVhnPipBioWIpWn8Zno4iNKMGq7oLVu7OjvrVcd22bdJHHQJt9ecYmqBo61+eXMd8SD7DAU9FJ8BwiU84FdbKsNjjwBqnbAM+xOeXRabQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-yb1-f174.google.com with SMTP id 3f1490d57ef6-e1651f48c31so2125608276.0;
-        Fri, 30 Aug 2024 08:50:52 -0700 (PDT)
+Received: by mail-yw1-f177.google.com with SMTP id 00721157ae682-690aabe2600so35055387b3.0;
+        Mon, 02 Sep 2024 07:43:15 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725033051; x=1725637851;
+        d=1e100.net; s=20230601; t=1725288193; x=1725892993;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=w9rRrd8by4zG0DRHaV4H43h1ldObXNHsdDSkPr6H2YA=;
-        b=ESn5HrzEWcJUDCox0b4qWxQswZoF15G5dxsmvdw+QISABJOqRSAAknLB+AvzEqlBKY
-         6c8VXXuBJlDRd4YIplYAF9s9Q9oFJ6dl+Yqs/03WSAMzR7yqZ42mU+f24apyYdsYfatQ
-         DbgOGL1XJN5yTipdxHt4gbboyLMTVe7NIfH/xEgDw6hvBZMh53P+CKm6Psf0gjXDggVS
-         0wqofHB59/0nXZSJYv0U5Hnyn67sVIqb5rzXzKf+1qTB8mxU0SYhpsMVCRFrCBiJw+ba
-         41FIXhSsGT+FsOtK/8macqDtaiDtpeKFTquV+ox4L7rCoaYe244eKp0SN6SLzezVj2c5
-         k+1g==
-X-Forwarded-Encrypted: i=1; AJvYcCU3Ib5eStm8+FtAG+lpXHVULtCyYG4Z8Fi9tHbHEOg1yW6DtzBa9R51N9qXI8ZPNkyum9x6Ro7YSdK0LlI=@vger.kernel.org, AJvYcCVEpYLEHCrU7OxgAjF1GMArDF2fFURcqOWR+89C86S7my6Uph1II2XZl0EXMxsRumcqt/K6vBTHb7c=@vger.kernel.org, AJvYcCVbBr9JkfUYTimWY4dsZ3VneezVN+KYdU1O4e1D2OifdiwH/EoQSy39Wf1Y61+97eJcMqOpQk3ibBMtDXHW7K8=@vger.kernel.org, AJvYcCWcaDhFBlKmtMt4TuK+xbNbEHFVi+9FFah5nRV6ixzSXxJ6Aqd+NSdo1iCW7adJWXMENHi1tGQVFEPH9A==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwxHbw5Kizd9xp4yZdjJB3w1rWVLdvhHyzyIqwZw+OPwybtP3uo
-	6MGCpSPPjp51V35zsGdnwEH5cZTMnmp8Ujc9dzxfx0zEuxXYim2ayHY3Sz4m
-X-Google-Smtp-Source: AGHT+IEnxjbb625z35jyuOSWamT1+BtdB5PhaZWPpvsFbBwq1T+CkcZ71k711hjYpmUhmlcbs6Dxig==
-X-Received: by 2002:a05:6902:200e:b0:e11:44b9:6bb7 with SMTP id 3f1490d57ef6-e1a7a02da19mr3059439276.24.1725033051571;
-        Fri, 30 Aug 2024 08:50:51 -0700 (PDT)
-Received: from mail-yw1-f180.google.com (mail-yw1-f180.google.com. [209.85.128.180])
-        by smtp.gmail.com with ESMTPSA id 3f1490d57ef6-e1a6266e430sm649103276.15.2024.08.30.08.50.51
+        bh=dv4mKq/aci7xE5SWjH3tcrLRVVBdtWwRIP4tHhTb83s=;
+        b=MSoxpQMDtByPWiXRIfllVn1MbOKnCl6AbPYap9UuqGgZ+kX9vUBq2JFPnaALtlKvJq
+         WcHLdLqN97e5/yDZtxd5etCUQdYz6dbleUpQw8B6RcwwGGqtI6dx+aTalxJRNO4m8A2S
+         JWp/aIXdIrpvZyiVLlDkdPeUCKyWp89+hnWZI2Y2apD0Y0toYEb69dS9XRgJB38BOk62
+         E4gdPH1PFVIHJsYt10/RwrCQ3bGXPcF7atQN/GlPvpqG3rld7DZDF7gcExrsf5FDU5vQ
+         j6+9hi8ny0xXiDhE0ib3vs6GWRnnkalNMBAP9IOQ4cZKhoiaD9EQag3V4SpqIbvkfj9u
+         Z4yg==
+X-Forwarded-Encrypted: i=1; AJvYcCUvs6F1l8X/Q7xmokoY4W5dniE8ARrDpnbbjmktlKi4ISrkOWNwKQxvcmjOkZJb4ZN0aLNkrRZFKF0d6ZQ=@vger.kernel.org, AJvYcCV/vIEiwKGayFxga6WHS/hBcIHvLLWB15KFQBJdN+gAIIloA4OhYas7GjTCUZzPvhKONOhcUHSs8/251k6Rjhs=@vger.kernel.org, AJvYcCXCIHAJ92s7VXZko/crhnax2tLS8hSthuOKtAqY9ZfgEL1oMtx1fXaZKDndvcTkWVEDAhpg6G6zaF8=@vger.kernel.org, AJvYcCXuJAdCezQYvBWI4Jm2QrvR6Mv719wPLA9NAtt8IXlUkgFFFDVwcxBsqCL241YyLUK4+Hi1/c6NcAN36g==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyDvatIyThrxGGnxB99rTK4Wb3N+n3TZuWQPqxltFbNwieckpPA
+	dYmhobYjT/7aXLQV6r9G8xg7HcC0enrYR5YXMz2jOH7BMpNKLX1VKNTpaoCK
+X-Google-Smtp-Source: AGHT+IHE7KMq2vuwYqHIzsubXSUphR2zdCVZm0cwpCl19BOSXbZ7mfcj6+OkqFaQlK6/BdPWmlBK8w==
+X-Received: by 2002:a05:690c:428c:b0:63b:df6e:3f6d with SMTP id 00721157ae682-6d411193e4fmr96372977b3.37.1725288193139;
+        Mon, 02 Sep 2024 07:43:13 -0700 (PDT)
+Received: from mail-yb1-f179.google.com (mail-yb1-f179.google.com. [209.85.219.179])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-6d2d3abf883sm16086877b3.13.2024.09.02.07.43.10
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 30 Aug 2024 08:50:51 -0700 (PDT)
-Received: by mail-yw1-f180.google.com with SMTP id 00721157ae682-6b4412fac76so17361807b3.1;
-        Fri, 30 Aug 2024 08:50:51 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCVGcnsBBNH64Z0GA1St1YkOfIbiVZTh4VgcQTM+btaeOft/HtxuM2RQeGXh4K59auRS3ENPjodt7HkIPA==@vger.kernel.org, AJvYcCVwhjMRSev5t3F6DJ0XWdcdghI6QDyAMnMlEZlWaFsCRsLXhjwg51MRBSZAvqz+U5w2paxUqlgLSM2adOc=@vger.kernel.org, AJvYcCX4iQYwjiQR+GYOtC/vVcD9uxKexMwgdbDRAJsrDOgjVUi+trbDBy1VezbqM+kb5WZIuKWFbFwl0MWMFRGDG/s=@vger.kernel.org, AJvYcCXUm/WFFIdv27iaO9lhGDnW/AzvkecGJqLNBDhehbc66Ok0MtniRtJrN5LwyRNshjEly++A/lisyBY=@vger.kernel.org
-X-Received: by 2002:a05:690c:4e0c:b0:672:8ad4:9461 with SMTP id
- 00721157ae682-6d41000902bmr23176987b3.41.1725033050177; Fri, 30 Aug 2024
- 08:50:50 -0700 (PDT)
+        Mon, 02 Sep 2024 07:43:11 -0700 (PDT)
+Received: by mail-yb1-f179.google.com with SMTP id 3f1490d57ef6-e1a7d43a226so2779063276.3;
+        Mon, 02 Sep 2024 07:43:10 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AJvYcCU3se31yG47oOPqxlhR/ucK8Y+UUt0V1jfH1Wwrdp5WnILffyg4EkCkhbzaBX5S5S+kfITwY0HewEN2bQ==@vger.kernel.org, AJvYcCUcK6JchS0/g7TIOiz0zhGRCan8qEF3d4pKrcPJsicUlgj870Z5scfqnuRwvFpmO+f/4PCrHH5eZkAYVYU=@vger.kernel.org, AJvYcCWMEQ/++mtJpyR848Axg1T2b2GfvqLgiqyWYIXTH6KCXBXorOIhJtinEG5DTxk1BvETIicJBbt1mdY=@vger.kernel.org, AJvYcCWVyPniYFu9tKsgz6gTZInxpJZRnHqaoLe4KEnvjbqG25bNpfGYZIsPI+P4QvuJIykg8Fjlqtfsu+f9nIIKkzE=@vger.kernel.org
+X-Received: by 2002:a05:690c:64c8:b0:6d5:1b7:ab81 with SMTP id
+ 00721157ae682-6d501b7af55mr99049107b3.22.1725288190742; Mon, 02 Sep 2024
+ 07:43:10 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -52,12 +52,12 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 References: <20240527142557.321610-1-ulf.hansson@linaro.org>
  <20240527142557.321610-4-ulf.hansson@linaro.org> <CAMuHMdUoZBJewA6nQZLhnbebZuoZo85UCCfwuOv8or_N_e-0qg@mail.gmail.com>
- <CAPDyKFqcpxUJWL7FoRSXLXVhS5B9PjcTY5ryG8HAY_E1Btgwag@mail.gmail.com>
-In-Reply-To: <CAPDyKFqcpxUJWL7FoRSXLXVhS5B9PjcTY5ryG8HAY_E1Btgwag@mail.gmail.com>
+ <CAPDyKFqcpxUJWL7FoRSXLXVhS5B9PjcTY5ryG8HAY_E1Btgwag@mail.gmail.com> <CAMuHMdWB2zjF1jajkQzFpt2=4oj25myG1CJ5i6450gkUVX19+g@mail.gmail.com>
+In-Reply-To: <CAMuHMdWB2zjF1jajkQzFpt2=4oj25myG1CJ5i6450gkUVX19+g@mail.gmail.com>
 From: Geert Uytterhoeven <geert@linux-m68k.org>
-Date: Fri, 30 Aug 2024 17:50:37 +0200
-X-Gmail-Original-Message-ID: <CAMuHMdWB2zjF1jajkQzFpt2=4oj25myG1CJ5i6450gkUVX19+g@mail.gmail.com>
-Message-ID: <CAMuHMdWB2zjF1jajkQzFpt2=4oj25myG1CJ5i6450gkUVX19+g@mail.gmail.com>
+Date: Mon, 2 Sep 2024 16:42:58 +0200
+X-Gmail-Original-Message-ID: <CAMuHMdXM2qHGzcLDfZQNC1Zqj_vh72S9+rV6-xuM+p=w7-oHyQ@mail.gmail.com>
+Message-ID: <CAMuHMdXM2qHGzcLDfZQNC1Zqj_vh72S9+rV6-xuM+p=w7-oHyQ@mail.gmail.com>
 Subject: Re: [PATCH v2 3/7] pmdomain: core: Use dev_name() instead of
  kobject_get_path() in debugfs
 To: Ulf Hansson <ulf.hansson@linaro.org>
@@ -73,64 +73,85 @@ Content-Transfer-Encoding: quoted-printable
 
 Hi Ulf,
 
-On Tue, Aug 20, 2024 at 10:58=E2=80=AFAM Ulf Hansson <ulf.hansson@linaro.or=
-g> wrote:
-> On Tue, 20 Aug 2024 at 10:55, Geert Uytterhoeven <geert@linux-m68k.org> w=
-rote:
-> > On Mon, May 27, 2024 at 4:27=E2=80=AFPM Ulf Hansson <ulf.hansson@linaro=
-.org> wrote:
-> > > Using kobject_get_path() means a dynamic memory allocation gets done,=
- which
-> > > doesn't work on a PREEMPT_RT based configuration while holding genpd'=
-s raw
-> > > spinlock.
+On Fri, Aug 30, 2024 at 5:50=E2=80=AFPM Geert Uytterhoeven <geert@linux-m68=
+k.org> wrote:
+> On Tue, Aug 20, 2024 at 10:58=E2=80=AFAM Ulf Hansson <ulf.hansson@linaro.=
+org> wrote:
+> > On Tue, 20 Aug 2024 at 10:55, Geert Uytterhoeven <geert@linux-m68k.org>=
+ wrote:
+> > > On Mon, May 27, 2024 at 4:27=E2=80=AFPM Ulf Hansson <ulf.hansson@lina=
+ro.org> wrote:
+> > > > Using kobject_get_path() means a dynamic memory allocation gets don=
+e, which
+> > > > doesn't work on a PREEMPT_RT based configuration while holding genp=
+d's raw
+> > > > spinlock.
+> > > >
+> > > > To fix the problem, let's convert into using the simpler dev_name()=
+. This
+> > > > means the information about the path doesn't get presented in debug=
+fs, but
+> > > > hopefully this shouldn't be an issue.
+> > > >
+> > > > Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
+> > > > ---
+> > > > Changes in v2:
+> > > >         - New patch.
 > > >
-> > > To fix the problem, let's convert into using the simpler dev_name(). =
-This
-> > > means the information about the path doesn't get presented in debugfs=
-, but
-> > > hopefully this shouldn't be an issue.
+> > > Thanks for your patch, which is now commit 9094e53ff5c86ebe ("pmdomai=
+n:
+> > > core: Use dev_name() instead of kobject_get_path() in debugfs")
+> > > in pmdomain/next.
 > > >
-> > > Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
-> > > ---
-> > > Changes in v2:
-> > >         - New patch.
-> >
-> > Thanks for your patch, which is now commit 9094e53ff5c86ebe ("pmdomain:
-> > core: Use dev_name() instead of kobject_get_path() in debugfs")
-> > in pmdomain/next.
-> >
-> > > --- a/drivers/pmdomain/core.c
-> > > +++ b/drivers/pmdomain/core.c
-> > > @@ -3215,16 +3214,9 @@ static int genpd_summary_one(struct seq_file *=
-s,
-> > >         }
+> > > > --- a/drivers/pmdomain/core.c
+> > > > +++ b/drivers/pmdomain/core.c
+> > > > @@ -3215,16 +3214,9 @@ static int genpd_summary_one(struct seq_file=
+ *s,
+> > > >         }
+> > > >
+> > > >         list_for_each_entry(pm_data, &genpd->dev_list, list_node) {
+> > > > -               kobj_path =3D kobject_get_path(&pm_data->dev->kobj,
+> > > > -                               genpd_is_irq_safe(genpd) ?
+> > > > -                               GFP_ATOMIC : GFP_KERNEL);
+> > > > -               if (kobj_path =3D=3D NULL)
+> > > > -                       continue;
+> > > > -
+> > > > -               seq_printf(s, "\n    %-50s  ", kobj_path);
+> > > > +               seq_printf(s, "\n    %-50s  ", dev_name(pm_data->de=
+v));
 > > >
-> > >         list_for_each_entry(pm_data, &genpd->dev_list, list_node) {
-> > > -               kobj_path =3D kobject_get_path(&pm_data->dev->kobj,
-> > > -                               genpd_is_irq_safe(genpd) ?
-> > > -                               GFP_ATOMIC : GFP_KERNEL);
-> > > -               if (kobj_path =3D=3D NULL)
-> > > -                       continue;
-> > > -
-> > > -               seq_printf(s, "\n    %-50s  ", kobj_path);
-> > > +               seq_printf(s, "\n    %-50s  ", dev_name(pm_data->dev)=
-);
+> > > While some of the old names didn't even fit in 50 characters, the new
+> > > names need much less space, so perhaps this is a good opportunity to
+> > > decrease the table width?
 > >
-> > While some of the old names didn't even fit in 50 characters, the new
-> > names need much less space, so perhaps this is a good opportunity to
-> > decrease the table width?
+> > Sure, it seems reasonable! Do you want to send a patch?
 >
-> Sure, it seems reasonable! Do you want to send a patch?
+> I started looking into it.  Then I noticed that on some systems
+> (e.g. TI am335x) the device names may have a longer format than
+> the typical <unit-address>.<nodename>. So I wanted to verify on
+> BeagleBone Black, but recent kernels crash during early boot.
+> Apparently that platform was broken between v6.8 and v6.9-rc1.
+> And during bisection, I encountered 3 different failure modes...
+>
+> To be continued...
 
-I started looking into it.  Then I noticed that on some systems
-(e.g. TI am335x) the device names may have a longer format than
-the typical <unit-address>.<nodename>. So I wanted to verify on
-BeagleBone Black, but recent kernels crash during early boot.
-Apparently that platform was broken between v6.8 and v6.9-rc1.
-And during bisection, I encountered 3 different failure modes...
+The longest generic node names documented in the Devicetree
+Specification are "air-pollution-sensor" and "interrupt-controller"
+(both counting 20 characters), so a typical device name needs 8
+(32-bit unit address) + 1 (dot) + 20 =3D 29 characters.
+However, I assume some devices lie outside the 32-bit address space,
+and thus need more space?
 
-To be continued...
+With the BeagleBone Black boot issue fixed:
+"/devices/platform/ocp/5600fe00.target-module"
+resp. "/devices/platform/ocp/44c00000.interconnect/44c00000.interconnect:se=
+gment@200000/44e3e074.target-module"
+are now shortened to "5600fe00.target-module" resp. "44e3e074.target-module=
+".
+However, "/devices/platform/ocp/48000000.interconnect/48000000.interconnect=
+:segment@200000/48000000.interconnect:segment@200000:target-module@0"
+is shortened to "48000000.interconnect:segment@200000:target-module@0",
+which is still longer than the old column width...
 
 Gr{oetje,eeting}s,
 
