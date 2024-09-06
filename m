@@ -1,177 +1,102 @@
-Received: from mail-yb1-f171.google.com (mail-yb1-f171.google.com [209.85.219.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55B8045003
-	for <linux-rt-users@vger.kernel.org>; Tue,  3 Sep 2024 10:13:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9428F1D31B9
+	for <linux-rt-users@vger.kernel.org>; Fri,  6 Sep 2024 16:11:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725358438; cv=none; b=rAc5k9UuHCVKVzRFh33ejHC0UAuO20I03/T5gVLstG5PveyVFwVjoY1j1BXki8NkE7csub5vghiPlILIfBeexhJ4FMLZxoTcNaAc0zZhWkIQ8pSPHu8ZUxgvv6DRZFi8MxK9OhKbD0j5eRr0DBoZMIlZtvWiO0VtxrcWEeIsnEc=
+	t=1725639081; cv=none; b=KN8PAVZ/BhpQtxQJWNdj4YsC2kCB/IogFLAybjOQSQUa2Rt2nmGMizeEG2rjAaPYOASwHyeDfYmMTC578f4Ttm/j3VlDibsmjjv3LF+NxJG51r3Mpig1C2k0B+r7l4tBSg+25y9NvSVf5ghinQHm+Hrn8QN4v83y+XL0rROIqv4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725358438; c=relaxed/simple;
-	bh=7NVt0WI8WonQFSQD2fP3AW5DISeaYMFJR8bC6SEE49o=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=VMhbUZhJek3seFflyyVb0IEQCJ3iF504z4F+vIViq4MuMUAErC+RPvF6eOjNkPgmVSmx35ESr0DrW0XUR4STUh7OhH4nKgLxQGWIa32CR/rzriwwYg9iFQRn5pmC5vkyloYK9gC1YZkNIl/H6Y/UYDt1ctZ70eF7hiEdrtEJoZA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=M+2mwKQI; arc=none smtp.client-ip=209.85.219.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	s=arc-20240116; t=1725639081; c=relaxed/simple;
+	bh=oykpAfwcT94UMpePiEz6LwFCZ3iGfocljObZ/xyUUFM=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=fO6nLAgVzvrWx4KoRTDvcGgI16nMDtUjt5f/cpvQ2b9M6iTU5cMASkV6flvhFt4A6i3sRHDhjzSbNhEFZ1hzKm+qeapoQFKiPTeaGCZQClT3YeAHLb79D4nKvMdyO56AuyKyrnjYNJdaGULOm3ZTw32gCQ57hQzLDZYfASdoZRk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JmeB1LZL; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="M+2mwKQI"
-Received: by mail-yb1-f171.google.com with SMTP id 3f1490d57ef6-e1ce8a675f7so1453662276.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 Sep 2024 03:13:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1725358435; x=1725963235; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=KTyRAP6ldYm/RIrG1GDBeY32AFoUsfEcUDOM5nLfoPM=;
-        b=M+2mwKQIaXRLptTXV2JJfosYmBdAxJ9+PVfb6fiI2ubcvm0djFRzzzBAZC8ar2GNgj
-         wkLGGyAxNIWTukb2MeFjUru68iDMdqifQFQzJPLExnDV413EGmBrHmKnTlZw0UNud5Rw
-         tulSKFk4H5SYBaNmLnXML4qw3dbmWRbq3Xw+Bhoy2ZPyfujQ2Eg+TiD12t3iYuUy5wp0
-         JELtzKHiXjnaw8BEvtANmhHu3pPDmZu8IlxiT52UsgamwSptap7dXnQlhK1skIuvfZuh
-         X4nxarDipONLNOdzPr9qJInhh3nwBT9a8W8QydWYLHUyeX+S/7M1ypgLDnA5kg9B3btR
-         BvuQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725358435; x=1725963235;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=KTyRAP6ldYm/RIrG1GDBeY32AFoUsfEcUDOM5nLfoPM=;
-        b=gO4DaWwrD20SpU+7B4Mtn09UsT2tCc9RveRxwiNkj2QACgM18e6zR4TOOi7uo28ACv
-         De1RNYXB2xLXy5pt99LoECwM2xJnDsvrTkzLvQJOHYUGImtlzMHbCvOulKpwuqtSdvfD
-         lrddaPY53jbzvWeykXlzNclKTvyfzAFnB5svVCr/zfVX+3g8KZIdh1ca3EZGhWXz5Wb+
-         t8s2lecnlUUsVMhU3x1Kad7++/DQkqQ2+EaGba5UUgbtcuP3kUm8DXTmKHapE8yg+8/f
-         4tMvS8+udz2ld8TsgXAmuJhY25G+4ZruQQbzIBioDdHcoaeWi53RwpcPO35B0kt5y3Oe
-         wvBA==
-X-Forwarded-Encrypted: i=1; AJvYcCXLNZWq4NShvZl1DMIJRUXl4JR9Qy3w6Z0q7x9gEqb5IyW2+Q2bbZN3JBE23oWXq09C0UfOoy1GBFndUl27zQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy7FR6Kbi+sfx8/Wi/rv1a9IXuLSXr3y60vPVj6jwC3pEtf3a0e
-	3x6HuS4V1BCnz8g9dvST32mi5YYbs1grNP7ignsOHrf1cHOeF1cHYAETeaFDneyeOT2Z1TwILtN
-	P26E1gwa/b7k2SH6D/RO8QZl46djoE49V/6+F+Q==
-X-Google-Smtp-Source: AGHT+IGmBgAMdjyJQyb7ftI6XxxA+1QlmiUelprGDLPAvCd56X4ObgoWFCUQwy4jbPJIBtOUmXURC4/vS8qRlSXuSmY=
-X-Received: by 2002:a05:6902:1021:b0:e1a:7033:73a3 with SMTP id
- 3f1490d57ef6-e1a79ffa19emr15943149276.27.1725358435204; Tue, 03 Sep 2024
- 03:13:55 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JmeB1LZL"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1725639078;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=Ed1iMS2yIj8ipO/lLIK7Zkfp1eGpMGD3p1/JyN6nqnM=;
+	b=JmeB1LZLD5A8C4uSQiUAr0nn49ob2NTglI0etOJKo5lA7h2zkrGKAr+LY5MlQSC5H+NnwP
+	6xNjPLruxe0UW0evG6RpYWQh4Ocy5t1ijtkPt+onE01e+LR1FPekzApQVQsPNTlwcMhVHR
+	6l8djbcxRs/S6uEB8KB5zPMuCD+v2Bs=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-297-1sln7If_PUqoA8CRoEAdAg-1; Fri,
+ 06 Sep 2024 12:11:15 -0400
+X-MC-Unique: 1sln7If_PUqoA8CRoEAdAg-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 611A719560B0;
+	Fri,  6 Sep 2024 16:11:12 +0000 (UTC)
+Received: from localhost (unknown [10.22.8.96])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id E47EE3000238;
+	Fri,  6 Sep 2024 16:11:10 +0000 (UTC)
+Date: Fri, 6 Sep 2024 13:11:09 -0300
+From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt <stable-rt@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@suse.com>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Mark Gross <markgross@kernel.org>, Pavel Machek <pavel@denx.de>,
+	Jeff Brady <jeffreyjbrady@gmail.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+Subject: [ANNOUNCE] 5.10.224-rt116
+Message-ID: <ZtspnYW_sBaMvb31@uudg.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240527142557.321610-1-ulf.hansson@linaro.org>
- <20240527142557.321610-4-ulf.hansson@linaro.org> <CAMuHMdUoZBJewA6nQZLhnbebZuoZo85UCCfwuOv8or_N_e-0qg@mail.gmail.com>
- <CAPDyKFqcpxUJWL7FoRSXLXVhS5B9PjcTY5ryG8HAY_E1Btgwag@mail.gmail.com>
- <CAMuHMdWB2zjF1jajkQzFpt2=4oj25myG1CJ5i6450gkUVX19+g@mail.gmail.com> <CAMuHMdXM2qHGzcLDfZQNC1Zqj_vh72S9+rV6-xuM+p=w7-oHyQ@mail.gmail.com>
-In-Reply-To: <CAMuHMdXM2qHGzcLDfZQNC1Zqj_vh72S9+rV6-xuM+p=w7-oHyQ@mail.gmail.com>
-From: Ulf Hansson <ulf.hansson@linaro.org>
-Date: Tue, 3 Sep 2024 12:13:19 +0200
-Message-ID: <CAPDyKFo=GP+uBhGDkYWsLTf+XBmyZpmuu123SGMGeeyOge5x4w@mail.gmail.com>
-Subject: Re: [PATCH v2 3/7] pmdomain: core: Use dev_name() instead of
- kobject_get_path() in debugfs
-To: Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: "Rafael J . Wysocki" <rafael@kernel.org>, Sudeep Holla <sudeep.holla@arm.com>, linux-pm@vger.kernel.org, 
-	Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Nikunj Kela <nkela@quicinc.com>, 
-	Prasad Sodagudi <psodagud@quicinc.com>, Maulik Shah <quic_mkshah@quicinc.com>, 
-	Daniel Lezcano <daniel.lezcano@linaro.org>, 
-	Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>, linux-rt-users@vger.kernel.org, 
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, 
-	"open list:TI ETHERNET SWITCH DRIVER (CPSW)" <linux-omap@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-On Mon, 2 Sept 2024 at 16:43, Geert Uytterhoeven <geert@linux-m68k.org> wro=
-te:
->
-> Hi Ulf,
->
-> On Fri, Aug 30, 2024 at 5:50=E2=80=AFPM Geert Uytterhoeven <geert@linux-m=
-68k.org> wrote:
-> > On Tue, Aug 20, 2024 at 10:58=E2=80=AFAM Ulf Hansson <ulf.hansson@linar=
-o.org> wrote:
-> > > On Tue, 20 Aug 2024 at 10:55, Geert Uytterhoeven <geert@linux-m68k.or=
-g> wrote:
-> > > > On Mon, May 27, 2024 at 4:27=E2=80=AFPM Ulf Hansson <ulf.hansson@li=
-naro.org> wrote:
-> > > > > Using kobject_get_path() means a dynamic memory allocation gets d=
-one, which
-> > > > > doesn't work on a PREEMPT_RT based configuration while holding ge=
-npd's raw
-> > > > > spinlock.
-> > > > >
-> > > > > To fix the problem, let's convert into using the simpler dev_name=
-(). This
-> > > > > means the information about the path doesn't get presented in deb=
-ugfs, but
-> > > > > hopefully this shouldn't be an issue.
-> > > > >
-> > > > > Signed-off-by: Ulf Hansson <ulf.hansson@linaro.org>
-> > > > > ---
-> > > > > Changes in v2:
-> > > > >         - New patch.
-> > > >
-> > > > Thanks for your patch, which is now commit 9094e53ff5c86ebe ("pmdom=
-ain:
-> > > > core: Use dev_name() instead of kobject_get_path() in debugfs")
-> > > > in pmdomain/next.
-> > > >
-> > > > > --- a/drivers/pmdomain/core.c
-> > > > > +++ b/drivers/pmdomain/core.c
-> > > > > @@ -3215,16 +3214,9 @@ static int genpd_summary_one(struct seq_fi=
-le *s,
-> > > > >         }
-> > > > >
-> > > > >         list_for_each_entry(pm_data, &genpd->dev_list, list_node)=
- {
-> > > > > -               kobj_path =3D kobject_get_path(&pm_data->dev->kob=
-j,
-> > > > > -                               genpd_is_irq_safe(genpd) ?
-> > > > > -                               GFP_ATOMIC : GFP_KERNEL);
-> > > > > -               if (kobj_path =3D=3D NULL)
-> > > > > -                       continue;
-> > > > > -
-> > > > > -               seq_printf(s, "\n    %-50s  ", kobj_path);
-> > > > > +               seq_printf(s, "\n    %-50s  ", dev_name(pm_data->=
-dev));
-> > > >
-> > > > While some of the old names didn't even fit in 50 characters, the n=
-ew
-> > > > names need much less space, so perhaps this is a good opportunity t=
-o
-> > > > decrease the table width?
-> > >
-> > > Sure, it seems reasonable! Do you want to send a patch?
-> >
-> > I started looking into it.  Then I noticed that on some systems
-> > (e.g. TI am335x) the device names may have a longer format than
-> > the typical <unit-address>.<nodename>. So I wanted to verify on
-> > BeagleBone Black, but recent kernels crash during early boot.
-> > Apparently that platform was broken between v6.8 and v6.9-rc1.
-> > And during bisection, I encountered 3 different failure modes...
-> >
-> > To be continued...
->
-> The longest generic node names documented in the Devicetree
-> Specification are "air-pollution-sensor" and "interrupt-controller"
-> (both counting 20 characters), so a typical device name needs 8
-> (32-bit unit address) + 1 (dot) + 20 =3D 29 characters.
-> However, I assume some devices lie outside the 32-bit address space,
-> and thus need more space?
->
-> With the BeagleBone Black boot issue fixed:
-> "/devices/platform/ocp/5600fe00.target-module"
-> resp. "/devices/platform/ocp/44c00000.interconnect/44c00000.interconnect:=
-segment@200000/44e3e074.target-module"
-> are now shortened to "5600fe00.target-module" resp. "44e3e074.target-modu=
-le".
-> However, "/devices/platform/ocp/48000000.interconnect/48000000.interconne=
-ct:segment@200000/48000000.interconnect:segment@200000:target-module@0"
-> is shortened to "48000000.interconnect:segment@200000:target-module@0",
-> which is still longer than the old column width...
+Hello RT-list!
 
-Should we really care about those silly long names? And are those
-really a problem from genpd debugfs point of view?
+I'm pleased to announce the 5.10.224-rt116 stable release.
 
-That said, I don't have a suggestion for a new value of the table
-width, but I am certainly open to adjusting it to whatever you
-propose.
+This release is just an update to the new stable 5.10.224 version and
+no RT-specific changes have been made.
 
-Kind regards
-Uffe
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.10-rt
+  Head SHA1: 05045e6fd0d63692cc45e269a67cda8cd8f14b09
+
+Or to build 5.10.224-rt116 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.10.224.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/5.10/older/patch-5.10.224-rt116.patch.xz
+
+Signing key fingerprint:
+
+  9354 0649 9972 8D31 D464  D140 F394 A423 F8E6 7C26
+
+All keys used for the above files and repositories can be found on the
+following git repository:
+
+   git://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git
+
+Enjoy!
+Luis
+
