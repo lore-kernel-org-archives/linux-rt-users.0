@@ -1,150 +1,88 @@
-Received: from master.debian.org (master.debian.org [82.195.75.110])
+Received: from gofer.mess.org (gofer.mess.org [88.97.38.141])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE849190664;
-	Thu, 19 Sep 2024 08:24:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=82.195.75.110
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 470341392;
+	Sat, 21 Sep 2024 19:17:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=88.97.38.141
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726734284; cv=none; b=UrlPUAVCnmBQhf1Sh4ijMQs6ADZJ2t5D52amUcc5C9WcFCB8Asv/bIZ7JfnBXAlE3pTKiRJlZzhZFj6IQyfNGJcE3OtMPQUTWW8+ScblaUHTk1DfBLxEXUVlgDGNFtwXTWrFWNwuZ8t71ESgIPojXDTws8jQkvWeilUAuv/QxN4=
+	t=1726946256; cv=none; b=e9xVYPqAAp8G7SDGPOzWqjC1IbJI19ck3POFQAd0fu9ixUjaOWuaDqcyuJz+Eup26rUsnjJs8yICmBWWtuQIFTs/njtohsK7vxH/3UgRR3ffnAVSEM+Ol1epR2BoB5YXc4Ab4dr8+N1/G4xtuSkojWfYISZXzSVSOlFop1w4Dco=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726734284; c=relaxed/simple;
-	bh=AufR2rC810Q4YjbnIq0502kZyRC7aU9Fu0Tte+Po0X8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=TT2Z8bIB0+D1v+v3sdSSX63WKJdRv23vCDc5yGp5nUslzz1YzZcV63TrWibAe69mO6XQ5CBMZj1ipAbIKVlS+XeV7+TCZMa/j61l5fhb6vrYdBvEysVHO2LaAUFUQqZQMpPUqm08lfyFD+T0cwPJ5E/cnDwAPaEXE71VJEZkLPs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=debian.org; spf=none smtp.mailfrom=master.debian.org; dkim=pass (2048-bit key) header.d=debian.org header.i=@debian.org header.b=sD8ua67e; arc=none smtp.client-ip=82.195.75.110
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=debian.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=master.debian.org
+	s=arc-20240116; t=1726946256; c=relaxed/simple;
+	bh=cgRQbwJVNpvi+0gMyBwLXOX4Nb7zmR8PfJXPOhfQyYU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=prSV9UdV+JFmeXVGyLq5rEjTLJsOP73nHxwCZwOCxRRAgB3r8t+f5tow7c0QadxcGiMB0ltbedqav8L5Z7L3jSuYveZgFjYrPVVffA/QEPCUmBfkvopWwkqZll1SZ1LBLd5gqDtSjuh6eZAMLJuiZrI66mKzecij9mW/DTTro2w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mess.org; spf=pass smtp.mailfrom=mess.org; dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b=m6QnIqdS; dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b=S3cCOpOT; arc=none smtp.client-ip=88.97.38.141
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mess.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mess.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=debian.org header.i=@debian.org header.b="sD8ua67e"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=debian.org;
-	s=smtpauto.master; h=Content-Transfer-Encoding:Content-Type:MIME-Version:
-	Message-ID:Date:Subject:Cc:To:From:Reply-To:Content-ID:Content-Description:
-	In-Reply-To:References; bh=sxmYL+nS7Az6jrXUJv7A/FowDRA+Yf3UwSxFM9lo31A=; b=sD
-	8ua67eq5C4H2MnppB9UIj5vy1zi6Yc4PGZfJJQCNNEz88wxCsth8I5NGtrlLAhlRDf/hbpENblKsQ
-	J0ZBjVrVTCG8/I9Fsw4O/fc5UxbfEIgubM2DqvnRE0QJ6DEGx9YhwQakRO0bT2VQrFYaj5cRDBD2t
-	FAyjOk91Jnz98aoCHKN37cHhjBDowxLPzM9EBBC3gS+J95AVSfWqJfnu7l/tBUvqtk8XIZ1Oj2i6T
-	8VebJ3mR3lmkqlS2qTzaURHJdvzcsXmKTfqfLyY86RG4JayzhaclREkI8UKdZfK1fOXQRQjx/gUti
-	ujoEUwUcGnu4CevZaPy7f6PDCSWBtyeg==;
-Received: from ukleinek by master.debian.org with local (Exim 4.94.2)
-	(envelope-from <ukleinek@master.debian.org>)
-	id 1srCGW-000MYs-JV; Thu, 19 Sep 2024 08:11:52 +0000
-From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?= <ukleinek@debian.org>
-To: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>,
-	Len Brown <lenb@kernel.org>,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Viresh Kumar <viresh.kumar@linaro.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@redhat.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-pm@vger.kernel.org,
-	x86@kernel.org,
-	"H. Peter Anvin" <hpa@zytor.com>,
+	dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b="m6QnIqdS";
+	dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b="S3cCOpOT"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=mess.org; s=2020;
+	t=1726945656; bh=cgRQbwJVNpvi+0gMyBwLXOX4Nb7zmR8PfJXPOhfQyYU=;
+	h=From:To:Cc:Subject:Date:From;
+	b=m6QnIqdSsw2JbFTBwE+R+1mrxhMOD5BfretrH/js4VDcsiactSb6lIGPDBuOUMTiX
+	 0q/ddrLPJs5uhSopFwQpbyFLkvWFmrXD7Uk72ryVLaQAHtLcvSa765awBQnZLX6siM
+	 sxy/9YBYHfNngoI97AqNZvgVqqgQg1jL4iJ4hPjQ5dhAru5P45BWhjDtEIk7qqN5fq
+	 pIoRPjPz3R4L2DkISVBQZjbrAtxXWUjQW5sr/cG5GLoz3ujdsww8T3AeJDwGFGRveu
+	 Z3JZZqlOL3AC+/UdvYuDjdjNRJfAt+P8GlpUJzkfIsRuPh3kKCvpGdyqELEraZxeq4
+	 wBlgbg0w4y5hg==
+Received: by gofer.mess.org (Postfix, from userid 501)
+	id 6ACFB1003BE; Sat, 21 Sep 2024 20:07:36 +0100 (BST)
+X-Spam-Level: 
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=mess.org; s=2020;
+	t=1726945655; bh=cgRQbwJVNpvi+0gMyBwLXOX4Nb7zmR8PfJXPOhfQyYU=;
+	h=From:To:Cc:Subject:Date:From;
+	b=S3cCOpOTDPHpIl9Ly0cGT/4qAKgmxyeFY2tQEB7tYjGlJ7yky3FVNyIS17uSSLWVe
+	 tsTn+YVTV4QuDafVdjh6mti4dlLVBp9lNk5x+wbh41b+YQz74UcPk5jLO/jwz0iqr8
+	 zKnhSmQ+KTNK/YyGiXuuAxQlXtCKmODVtFNV+VJjJ8vfVTZeooSv2r3Kvdu0rRNW7I
+	 P7cgE1KzVuc9d3YrLGzYKiYTq5eNWebFYjR2KY1BqEBvNwT9tTUiZSiDR0bD8TCwoy
+	 oDcpkFh8vgdxvTMCdQ8+YcjYq7edDQyE0Q1FNOL2MO9ppGiPebvy0p0oJqq5Wcqcx7
+	 rhyceWyCC7JPQ==
+Received: from localhost.localdomain (bigcore.local [IPv6:2a02:8011:d000:212:bc3c:1b4a:a6fa:362f])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by gofer.mess.org (Postfix) with ESMTPSA id A72DB1003B9;
+	Sat, 21 Sep 2024 20:07:35 +0100 (BST)
+From: Sean Young <sean@mess.org>
+To: linux-media@vger.kernel.org,
 	linux-rt-users@vger.kernel.org,
-	xiao sheng wen <atzlinux@sina.com>
-Subject: [PATCH] cpufreq: intel_pstate: Make hwp_notify_lock a raw spinlock
-Date: Thu, 19 Sep 2024 10:11:21 +0200
-Message-ID: <20240919081121.10784-2-ukleinek@debian.org>
-X-Mailer: git-send-email 2.45.2
+	Mauro Carvalho Chehab <mchehab@kernel.org>
+Cc: linux-kernel@vger.kernel.org
+Subject: [PATCH] media: gpio-ir-tx: Driver does not behave with PREEMPT_RT
+Date: Sat, 21 Sep 2024 20:07:20 +0100
+Message-ID: <20240921190721.6082-1-sean@mess.org>
+X-Mailer: git-send-email 2.46.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-X-Developer-Signature: v=1; a=openpgp-sha256; l=3401; i=ukleinek@debian.org; h=from:subject; bh=AufR2rC810Q4YjbnIq0502kZyRC7aU9Fu0Tte+Po0X8=; b=owEBbQGS/pANAwAKAY+A+1h9Ev5OAcsmYgBm69yp8uS182CL8KAYt+yDqMzeLt/dhwoj+m2O9 bazfmXoTsyJATMEAAEKAB0WIQQ/gaxpOnoeWYmt/tOPgPtYfRL+TgUCZuvcqQAKCRCPgPtYfRL+ TqW0CACJwbFamuKiP+ypB3yZbzct/y5pE5qttG5mi/bDPi51UU/NlBWR51cofnPFX9lWJFBjccn JvjQkeHvT8A31EpsZ0K13h7ZCQywqRf2BAiy/olKI4D2Wflp7NuLh3gS0mZBgEKfwU9SErA1mEu sUOlYybUXenbgLpbQRC83S5jlwagUxAHc+AybmdP28DEfsH367xDI6LUX4UAB3ELoMWqzXy7FMr lfHqOcDZFBMiBymY3I3b4AEaNzgL5TezPMTI+HEq+f+RAZtmRg/93pfQwFlKmGWGUDvyMGLWMtr EibPvWgHL+dbJkRfDGorurzfTBaB+nWN91r/QrQW88eim2mB
-X-Developer-Key: i=ukleinek@debian.org; a=openpgp; fpr=0D2511F322BFAB1C1580266BE2DCDD9132669BD6
 Content-Transfer-Encoding: 8bit
 
-notify_hwp_interrupt() is called via sysvec_thermal() ->
-smp_thermal_vector() -> intel_thermal_interrupt() in hard irq context.
-For this reason it must not use a simple spin_lock that sleeps with
-PREEMPT_RT enabled. So convert it to a raw spinlock.
+This driver bit-bangs a signal with interrupts disabled. The signal can
+last for up to half a second (IR_MAX_DURATION).
 
-Reported-by: xiao sheng wen <atzlinux@sina.com>
-Link: https://bugs.debian.org/1076483
-Signed-off-by: Uwe Kleine-König <ukleinek@debian.org>
+A much better way of transmitting IR is using the pwm-ir-tx driver,
+which does not disable interrupts.
+
+Signed-off-by: Sean Young <sean@mess.org>
 ---
-Hello,
+ drivers/media/rc/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
 
-this is deep in x86 land where I have *very* little experience and
-knowledge. Is sysvec_thermal() (defined in arch/x86/kernel/irq.c) really
-running in hard irq context? The stacktrace in the Debian bug report
-suggests that.
-
-So please double check my reasoning before applying this patch.
-
-Thanks
-Uwe
-
- drivers/cpufreq/intel_pstate.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
-
-diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index aaea9a39eced..b0018f371ea3 100644
---- a/drivers/cpufreq/intel_pstate.c
-+++ b/drivers/cpufreq/intel_pstate.c
-@@ -1845,7 +1845,7 @@ static void intel_pstate_notify_work(struct work_struct *work)
- 	wrmsrl_on_cpu(cpudata->cpu, MSR_HWP_STATUS, 0);
- }
- 
--static DEFINE_SPINLOCK(hwp_notify_lock);
-+static DEFINE_RAW_SPINLOCK(hwp_notify_lock);
- static cpumask_t hwp_intr_enable_mask;
- 
- #define HWP_GUARANTEED_PERF_CHANGE_STATUS      BIT(0)
-@@ -1868,7 +1868,7 @@ void notify_hwp_interrupt(void)
- 	if (!(value & status_mask))
- 		return;
- 
--	spin_lock_irqsave(&hwp_notify_lock, flags);
-+	raw_spin_lock_irqsave(&hwp_notify_lock, flags);
- 
- 	if (!cpumask_test_cpu(this_cpu, &hwp_intr_enable_mask))
- 		goto ack_intr;
-@@ -1876,13 +1876,13 @@ void notify_hwp_interrupt(void)
- 	schedule_delayed_work(&all_cpu_data[this_cpu]->hwp_notify_work,
- 			      msecs_to_jiffies(10));
- 
--	spin_unlock_irqrestore(&hwp_notify_lock, flags);
-+	raw_spin_unlock_irqrestore(&hwp_notify_lock, flags);
- 
- 	return;
- 
- ack_intr:
- 	wrmsrl_safe(MSR_HWP_STATUS, 0);
--	spin_unlock_irqrestore(&hwp_notify_lock, flags);
-+	raw_spin_unlock_irqrestore(&hwp_notify_lock, flags);
- }
- 
- static void intel_pstate_disable_hwp_interrupt(struct cpudata *cpudata)
-@@ -1895,9 +1895,9 @@ static void intel_pstate_disable_hwp_interrupt(struct cpudata *cpudata)
- 	/* wrmsrl_on_cpu has to be outside spinlock as this can result in IPC */
- 	wrmsrl_on_cpu(cpudata->cpu, MSR_HWP_INTERRUPT, 0x00);
- 
--	spin_lock_irq(&hwp_notify_lock);
-+	raw_spin_lock_irq(&hwp_notify_lock);
- 	cancel_work = cpumask_test_and_clear_cpu(cpudata->cpu, &hwp_intr_enable_mask);
--	spin_unlock_irq(&hwp_notify_lock);
-+	raw_spin_unlock_irq(&hwp_notify_lock);
- 
- 	if (cancel_work)
- 		cancel_delayed_work_sync(&cpudata->hwp_notify_work);
-@@ -1912,10 +1912,10 @@ static void intel_pstate_enable_hwp_interrupt(struct cpudata *cpudata)
- 	if (boot_cpu_has(X86_FEATURE_HWP_NOTIFY)) {
- 		u64 interrupt_mask = HWP_GUARANTEED_PERF_CHANGE_REQ;
- 
--		spin_lock_irq(&hwp_notify_lock);
-+		raw_spin_lock_irq(&hwp_notify_lock);
- 		INIT_DELAYED_WORK(&cpudata->hwp_notify_work, intel_pstate_notify_work);
- 		cpumask_set_cpu(cpudata->cpu, &hwp_intr_enable_mask);
--		spin_unlock_irq(&hwp_notify_lock);
-+		raw_spin_unlock_irq(&hwp_notify_lock);
- 
- 		if (cpu_feature_enabled(X86_FEATURE_HWP_HIGHEST_PERF_CHANGE))
- 			interrupt_mask |= HWP_HIGHEST_PERF_CHANGE_REQ;
-
-base-commit: 3621a2c9142bd490af0666c0c02d52d60ce0d2a5
+diff --git a/drivers/media/rc/Kconfig b/drivers/media/rc/Kconfig
+index 74d69ce22a33e..0a8aeafdb7e07 100644
+--- a/drivers/media/rc/Kconfig
++++ b/drivers/media/rc/Kconfig
+@@ -184,6 +184,7 @@ config IR_GPIO_TX
+ 	tristate "GPIO IR Bit Banging Transmitter"
+ 	depends on LIRC
+ 	depends on (OF && GPIOLIB) || COMPILE_TEST
++	depends on !PREEMPT_RT
+ 	help
+ 	   Say Y if you want to a GPIO based IR transmitter. This is a
+ 	   bit banging driver.
 -- 
-2.45.2
+2.46.1
 
