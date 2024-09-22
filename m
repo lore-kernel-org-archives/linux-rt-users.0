@@ -1,88 +1,48 @@
-Received: from gofer.mess.org (gofer.mess.org [88.97.38.141])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 470341392;
-	Sat, 21 Sep 2024 19:17:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=88.97.38.141
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77BFF524C;
+	Sun, 22 Sep 2024 19:36:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726946256; cv=none; b=e9xVYPqAAp8G7SDGPOzWqjC1IbJI19ck3POFQAd0fu9ixUjaOWuaDqcyuJz+Eup26rUsnjJs8yICmBWWtuQIFTs/njtohsK7vxH/3UgRR3ffnAVSEM+Ol1epR2BoB5YXc4Ab4dr8+N1/G4xtuSkojWfYISZXzSVSOlFop1w4Dco=
+	t=1727033761; cv=none; b=pjC14yyGvq41pAUUD99B0O2Na6ebyZVdOvMNQTLnD9r6nG2I8M5OXWrkaUVVrcM8ke+IA9j/c8IqpO9ZURqfIczA/v0azMSSB+qhCcXpx0ahay1p03N3wbUY9RnlPxCWReml1Ve6/aNIQW6fgwFJbNzH0AZPmB1ufQw+ZWLw0R8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726946256; c=relaxed/simple;
-	bh=cgRQbwJVNpvi+0gMyBwLXOX4Nb7zmR8PfJXPOhfQyYU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=prSV9UdV+JFmeXVGyLq5rEjTLJsOP73nHxwCZwOCxRRAgB3r8t+f5tow7c0QadxcGiMB0ltbedqav8L5Z7L3jSuYveZgFjYrPVVffA/QEPCUmBfkvopWwkqZll1SZ1LBLd5gqDtSjuh6eZAMLJuiZrI66mKzecij9mW/DTTro2w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mess.org; spf=pass smtp.mailfrom=mess.org; dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b=m6QnIqdS; dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b=S3cCOpOT; arc=none smtp.client-ip=88.97.38.141
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mess.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mess.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b="m6QnIqdS";
-	dkim=pass (2048-bit key) header.d=mess.org header.i=@mess.org header.b="S3cCOpOT"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=mess.org; s=2020;
-	t=1726945656; bh=cgRQbwJVNpvi+0gMyBwLXOX4Nb7zmR8PfJXPOhfQyYU=;
-	h=From:To:Cc:Subject:Date:From;
-	b=m6QnIqdSsw2JbFTBwE+R+1mrxhMOD5BfretrH/js4VDcsiactSb6lIGPDBuOUMTiX
-	 0q/ddrLPJs5uhSopFwQpbyFLkvWFmrXD7Uk72ryVLaQAHtLcvSa765awBQnZLX6siM
-	 sxy/9YBYHfNngoI97AqNZvgVqqgQg1jL4iJ4hPjQ5dhAru5P45BWhjDtEIk7qqN5fq
-	 pIoRPjPz3R4L2DkISVBQZjbrAtxXWUjQW5sr/cG5GLoz3ujdsww8T3AeJDwGFGRveu
-	 Z3JZZqlOL3AC+/UdvYuDjdjNRJfAt+P8GlpUJzkfIsRuPh3kKCvpGdyqELEraZxeq4
-	 wBlgbg0w4y5hg==
-Received: by gofer.mess.org (Postfix, from userid 501)
-	id 6ACFB1003BE; Sat, 21 Sep 2024 20:07:36 +0100 (BST)
-X-Spam-Level: 
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=mess.org; s=2020;
-	t=1726945655; bh=cgRQbwJVNpvi+0gMyBwLXOX4Nb7zmR8PfJXPOhfQyYU=;
-	h=From:To:Cc:Subject:Date:From;
-	b=S3cCOpOTDPHpIl9Ly0cGT/4qAKgmxyeFY2tQEB7tYjGlJ7yky3FVNyIS17uSSLWVe
-	 tsTn+YVTV4QuDafVdjh6mti4dlLVBp9lNk5x+wbh41b+YQz74UcPk5jLO/jwz0iqr8
-	 zKnhSmQ+KTNK/YyGiXuuAxQlXtCKmODVtFNV+VJjJ8vfVTZeooSv2r3Kvdu0rRNW7I
-	 P7cgE1KzVuc9d3YrLGzYKiYTq5eNWebFYjR2KY1BqEBvNwT9tTUiZSiDR0bD8TCwoy
-	 oDcpkFh8vgdxvTMCdQ8+YcjYq7edDQyE0Q1FNOL2MO9ppGiPebvy0p0oJqq5Wcqcx7
-	 rhyceWyCC7JPQ==
-Received: from localhost.localdomain (bigcore.local [IPv6:2a02:8011:d000:212:bc3c:1b4a:a6fa:362f])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by gofer.mess.org (Postfix) with ESMTPSA id A72DB1003B9;
-	Sat, 21 Sep 2024 20:07:35 +0100 (BST)
-From: Sean Young <sean@mess.org>
-To: linux-media@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Mauro Carvalho Chehab <mchehab@kernel.org>
-Cc: linux-kernel@vger.kernel.org
-Subject: [PATCH] media: gpio-ir-tx: Driver does not behave with PREEMPT_RT
-Date: Sat, 21 Sep 2024 20:07:20 +0100
-Message-ID: <20240921190721.6082-1-sean@mess.org>
-X-Mailer: git-send-email 2.46.1
+	s=arc-20240116; t=1727033761; c=relaxed/simple;
+	bh=QmcWLdrMmDkAjKQMeKe37sxMPXXa0nGl3lGzDcX6i/U=;
+	h=From:Subject:Date:Message-ID:To; b=C0PCEIUWnSGCJSDtF87PHCFfAf/BWL/O6TmOVvzqAA5+2jiyVap20wlXvCddShbnKWPNnCGVKrYkQl/E1oBsXzsfh+geMIYJIgQbkaOwIS1mARUAXKfby/xZXRW3BRaCJr6+C+F5ofW1b2837AwP1zCd+lrSzapODDN+JPnjgL0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2E5EDC4CEC3;
+	Sun, 22 Sep 2024 19:36:01 +0000 (UTC)
+From: Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 6.6.52-rt43
+Date: Sun, 22 Sep 2024 19:35:25 -0000
+Message-ID: <172703372530.2576862.6341667937000998147@demetrius.lan>
+To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-This driver bit-bangs a signal with interrupts disabled. The signal can
-last for up to half a second (IR_MAX_DURATION).
+Hello RT-list!
 
-A much better way of transmitting IR is using the pwm-ir-tx driver,
-which does not disable interrupts.
+I'm pleased to announce the 6.6.52-rt43 stable release.
 
-Signed-off-by: Sean Young <sean@mess.org>
----
- drivers/media/rc/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+You can get this release via the git tree at:
 
-diff --git a/drivers/media/rc/Kconfig b/drivers/media/rc/Kconfig
-index 74d69ce22a33e..0a8aeafdb7e07 100644
---- a/drivers/media/rc/Kconfig
-+++ b/drivers/media/rc/Kconfig
-@@ -184,6 +184,7 @@ config IR_GPIO_TX
- 	tristate "GPIO IR Bit Banging Transmitter"
- 	depends on LIRC
- 	depends on (OF && GPIOLIB) || COMPILE_TEST
-+	depends on !PREEMPT_RT
- 	help
- 	   Say Y if you want to a GPIO based IR transmitter. This is a
- 	   bit banging driver.
--- 
-2.46.1
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
+  branch: v6.6-rt
+  Head SHA1: afe962c4098bf23ce16b31c01a0307e3e61e59d3
+
+Or to build 6.6.52-rt43 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.52.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.52-rt43.patch.xz
+
+
+Enjoy!
+Clark
