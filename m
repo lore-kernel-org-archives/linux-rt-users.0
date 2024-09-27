@@ -1,243 +1,183 @@
-Received: from smtp134-31.sina.com.cn (smtp134-31.sina.com.cn [180.149.134.31])
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFF9C1BD00C
-	for <linux-rt-users@vger.kernel.org>; Fri, 27 Sep 2024 09:45:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.149.134.31
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F0F9189F5C;
+	Fri, 27 Sep 2024 10:47:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727430343; cv=none; b=Uo8vJ1IWKeG9WdmBsXUtku+4yqAUonFAMP1Huj80jf9JIJ2bQX7r1JERxQXQhpPu92QMrBmWaW+Pms+bTevmjiTrw/AGdAgnIhH6HIQYB9F71eSD8sqd5v0l0oyekuuQCmS1bABTZ7+Jm+GbYxfxGahE3IDy7oEbV1IZiEw7LV0=
+	t=1727434032; cv=none; b=ryDK7X8J62Myj6FcYBuYGAgR1GxD/N0p1qNqJflSe9pNqEYfFx+QvlftGHbq9XBxtnaQtxLnF1kHQV/2oYz3YqdrbfK4j7aZoC/Pq1bluSNGR5IPX5+szdToRBN20i8fXs/VF4vrJH13ZV6mm5OSG5zohJxFJvwD5omOXo3TBmk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727430343; c=relaxed/simple;
-	bh=I8bCVMlV3brOJEBTGi5L2/kIUe+mwCR45N4EtpQMZE8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=je4IVNGuK0GZeRypXgrCiwdmwZ3F7T0dV/oq0GMoSibOmsB5fJTl+Seve/ARa8+RGBpK6ReO2iRy98DuJWLhgbjieDxkSyqFaXg69l2NdTxtsp+B+Mk7JPBlMlmKLBElp3lvjW0ARIiQOtyqYgiQbYMAEpvXDyXcvW9AFBnjJTw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sina.com; spf=pass smtp.mailfrom=sina.com; arc=none smtp.client-ip=180.149.134.31
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sina.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sina.com
-X-SMAIL-HELO: [192.168.118.185]
-Received: from unknown (HELO [192.168.118.185])([14.154.100.184])
-	by sina.com (10.185.250.21) with ESMTP
-	id 66F67E2400004A4F; Fri, 27 Sep 2024 17:43:04 +0800 (CST)
-X-Sender: atzlinux@sina.com
-X-Auth-ID: atzlinux@sina.com
-Authentication-Results: sina.com;
-	 spf=none smtp.mailfrom=atzlinux@sina.com;
-	 dkim=none header.i=none;
-	 dmarc=none action=none header.from=atzlinux@sina.com
-X-SMAIL-MID: 5723553408470
-X-SMAIL-UIID: 74300B69F7FA46F38A641FC2711743F9-20240927-174304-1
-Message-ID: <a0f1dfc5-0f7c-4c55-a38c-f89abca3f77d@sina.com>
-Date: Fri, 27 Sep 2024 17:43:00 +0800
+	s=arc-20240116; t=1727434032; c=relaxed/simple;
+	bh=z/Og3zFUzWWKjPZOxY77b/dnBGdDbGV6vklMbrYLvSM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=E/Q7zvTdlTn8HGo3XyULyrbZ4CnM16oFvy6MsDuNRWAtiwVkhh55Oq4a+Bo9NCLquEhxQQ5wq5VYGRPR6ojjRhBSioetYUKnKHe6yosqEvnJUaY5JakMIrFI60eF/PY/+Z/w5bWM8YTrQYADvXRXBQXBVTNbTyj03JjPmuxhFyk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=b0jGm7U+; arc=none smtp.client-ip=192.198.163.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="b0jGm7U+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1727434030; x=1758970030;
+  h=message-id:subject:from:to:cc:date:in-reply-to:
+   references:content-transfer-encoding:mime-version;
+  bh=z/Og3zFUzWWKjPZOxY77b/dnBGdDbGV6vklMbrYLvSM=;
+  b=b0jGm7U+3/JCFl5mmMfDDuBhorMJr/Cl4DaiT0FXWhWRJawu2f1E5eHQ
+   QK/kdk2WhhO1VL2XDKAMLD7N2I7B08WDkV/+rZLJIY/SXtjMjuTgaVxyx
+   5/W5pHMRC3IgitjPYMZsukpv366qo0Ey1POqfVBOjF9BgbF+tlqmvQndr
+   TnCZWBZHo/tV/TLuev93QUiMoKpjwvC6vlAABuKetI5P1ei3x8/cCLdYe
+   eAK8imamqax4kcwSEawIngE6XVQgfEWTGdBDfZpLRmkCTVNT0bg1JbSZw
+   UZbpLK5YK2lvUo/NGUBvygZNzH/znV2g4mPfe0gtu/Jly++jykvEhTwmd
+   A==;
+X-CSE-ConnectionGUID: LW7aZbBQTkeFQ23DaFLbUQ==
+X-CSE-MsgGUID: SLFT92/7TCSm+l114NVTdg==
+X-IronPort-AV: E=McAfee;i="6700,10204,11207"; a="30462986"
+X-IronPort-AV: E=Sophos;i="6.11,158,1725346800"; 
+   d="scan'208";a="30462986"
+Received: from orviesa009.jf.intel.com ([10.64.159.149])
+  by fmvoesa106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Sep 2024 03:47:09 -0700
+X-CSE-ConnectionGUID: GPGM5ph8TmGolM20K1h0+w==
+X-CSE-MsgGUID: nA67MDqQSky0f3RY0Yg2kw==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.11,158,1725346800"; 
+   d="scan'208";a="72581168"
+Received: from spandruv-desk1.amr.corp.intel.com ([10.125.111.243])
+  by orviesa009-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Sep 2024 03:47:09 -0700
+Message-ID: <229b9ff9ef6cf201b4e56d6ccb03c028c2d8f51f.camel@linux.intel.com>
+Subject: Re: [PATCH] cpufreq: intel_pstate: Make hwp_notify_lock a raw
+ spinlock
+From: srinivas pandruvada <srinivas.pandruvada@linux.intel.com>
+To: Uwe =?ISO-8859-1?Q?Kleine-K=F6nig?= <ukleinek@debian.org>, Len Brown
+ <lenb@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Viresh Kumar
+ <viresh.kumar@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo
+ Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, Dave Hansen
+ <dave.hansen@linux.intel.com>
+Cc: linux-pm@vger.kernel.org, x86@kernel.org, "H. Peter Anvin"
+ <hpa@zytor.com>,  linux-rt-users@vger.kernel.org, xiao sheng wen
+ <atzlinux@sina.com>
+Date: Fri, 27 Sep 2024 03:47:08 -0700
+In-Reply-To: <20240919081121.10784-2-ukleinek@debian.org>
+References: <20240919081121.10784-2-ukleinek@debian.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.4 (3.52.4-1.fc40) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] cpufreq: intel_pstate: Make hwp_notify_lock a raw
- spinlock
-To: =?UTF-8?Q?Uwe_Kleine-K=C3=B6nig?= <ukleinek@debian.org>,
- Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>,
- Len Brown <lenb@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>,
- Viresh Kumar <viresh.kumar@linaro.org>, Thomas Gleixner
- <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
- Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>,
- 1076483@bugs.debian.org
-Cc: linux-pm@vger.kernel.org, x86@kernel.org, "H. Peter Anvin"
- <hpa@zytor.com>, linux-rt-users@vger.kernel.org
-References: <20240919081121.10784-2-ukleinek@debian.org>
- <26829a6d-671c-45a4-bef4-4172f4f11615@sina.com>
- <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
-Content-Language: en-US
-From: =?UTF-8?B?eGlhbyBzaGVuZyB3ZW4o6IKW55ub5paHKQ==?= <atzlinux@sina.com>
-Organization: https://www.atzlinux.com
-In-Reply-To: <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="------------SIlBK5ixpsOYOPmeD1oJPZOt"
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---------------SIlBK5ixpsOYOPmeD1oJPZOt
-Content-Type: multipart/mixed; boundary="------------tuEgGnBGmx9Ye0T7ZWjpPxrH";
- protected-headers="v1"
-From: =?UTF-8?B?eGlhbyBzaGVuZyB3ZW4o6IKW55ub5paHKQ==?= <atzlinux@sina.com>
-To: =?UTF-8?Q?Uwe_Kleine-K=C3=B6nig?= <ukleinek@debian.org>,
- Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>,
- Len Brown <lenb@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>,
- Viresh Kumar <viresh.kumar@linaro.org>, Thomas Gleixner
- <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
- Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>,
- 1076483@bugs.debian.org
-Cc: linux-pm@vger.kernel.org, x86@kernel.org, "H. Peter Anvin"
- <hpa@zytor.com>, linux-rt-users@vger.kernel.org
-Message-ID: <a0f1dfc5-0f7c-4c55-a38c-f89abca3f77d@sina.com>
-Subject: Re: [PATCH] cpufreq: intel_pstate: Make hwp_notify_lock a raw
- spinlock
-References: <20240919081121.10784-2-ukleinek@debian.org>
- <26829a6d-671c-45a4-bef4-4172f4f11615@sina.com>
- <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
-In-Reply-To: <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
+On Thu, 2024-09-19 at 10:11 +0200, Uwe Kleine-K=C3=B6nig wrote:
+> notify_hwp_interrupt() is called via sysvec_thermal() ->
+> smp_thermal_vector() -> intel_thermal_interrupt() in hard irq
+> context.
+> For this reason it must not use a simple spin_lock that sleeps with
+> PREEMPT_RT enabled. So convert it to a raw spinlock.
+>=20
+> Reported-by: xiao sheng wen <atzlinux@sina.com>
+> Link: https://bugs.debian.org/1076483
+> Signed-off-by: Uwe Kleine-K=C3=B6nig <ukleinek@debian.org>
 
---------------tuEgGnBGmx9Ye0T7ZWjpPxrH
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: base64
+Missing Tested-by?
 
-SGVsbG8sDQoNCuWcqCAyMDI0LzkvMjYgMTU6NDgsIFV3ZSBLbGVpbmUtS8O2bmlnIOWGmemB
-kzoNCj4gSGVsbG8sDQo+IA0KPiBPbiA5LzIzLzI0IDAzOjUzLCB4aWFvIHNoZW5nIHdlbijo
-gpbnm5vmlocpIHdyb3RlOg0KPj4gSSBhcHBseSB0aGlzIHBhdGNoIG9uIERlYmlhbiBrZXJu
-ZWwgNi4xMS0xfmV4cDEgKDIwMjQtMDktMTkpIHNvdXJjZSBjb2RlLg0KPj4NCj4+IHVuYW1l
-IC1hDQo+PiBMaW51eCBhdHpsaW51eC1jZSA2LjExLXJ0LWFtZDY0ICMxIFNNUCBQUkVFTVBU
-X1JUIGF0emxpbnV4IDYuMTEtMX5leHAxIA0KPj4gKDIwMjQtMDktMTkpIHg4Nl82NCBHTlUv
-TGludXgNCj4+DQo+PiBJIGdldCB0aGUgZm9sbG93aW5nIGVycm9ycyBpbiBkbWVzZzoNCj4+
-DQo+PiBbwqDCoMKgIDcuMjczNjkwXSB1Y3NpX2FjcGkgVVNCQzAwMDowMDogcG9zc2libGUg
-VUNTSSBkcml2ZXIgYnVnIDINCj4+IFvCoMKgwqAgNy40NTE4MjJdIHVjc2lfYWNwaSBVU0JD
-MDAwOjAwOiBlcnJvciAtRUlOVkFMOiBQUE0gaW5pdCBmYWlsZWQNCj4+IFvCoMKgwqAgNy41
-Mzc3NDldIC0tLS0tLS0tLS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0tLS0tLQ0KPj4gW8KgwqDC
-oCA3LjUzNzc1M10gV0FSTklORzogQ1BVOiAxMiBQSUQ6IDk2IGF0IGtlcm5lbC93b3JrcXVl
-dWUuYzoyMjU5IA0KPj4gZGVsYXllZF93b3JrX3RpbWVyX2ZuKzB4NjMvMHg5MA0KPj4gW8Kg
-wqDCoCA3LjUzNzc2M10gTW9kdWxlcyBsaW5rZWQgaW46IHJmY29tbSBjbWFjIGFsZ2lmX2hh
-c2ggDQo+PiBhbGdpZl9za2NpcGhlciBhZl9hbGcgc25kX3NlcV9kdW1teSBzbmRfaHJ0aW1l
-ciBzbmRfc2VxIHNuZF9zZXFfZGV2aWNlIA0KPj4gYm5lcCBidHVzYiB1dmN2aWRlbyBidHJ0
-bCBidGludGVsIHZpZGVvYnVmMl92bWFsbG9jIGJ0YmNtIHV2YyBidG10ayANCj4+IHZpZGVv
-YnVmMl9tZW1vcHMgdmlkZW9idWYyX3Y0bDIgYmx1ZXRvb3RoIHZpZGVvZGV2IHZpZGVvYnVm
-Ml9jb21tb24gbWMgDQo+PiBzbmRfc29jX3NrbF9oZGFfZHNwIHNuZF9zb2NfaGRhY19oZG1p
-IHNuZF9zb2ZfcHJvYmVzIA0KPj4gc25kX3NvY19pbnRlbF9oZGFfZHNwX2NvbW1vbiBiaW5m
-bXRfbWlzYyBubHNfYXNjaWkgbmxzX2NwNDM3IHZmYXQgZmF0IA0KPj4gc25kX2hkYV9jb2Rl
-Y19oZG1pIHNuZF9oZGFfY29kZWNfcmVhbHRlayBzbmRfaGRhX2NvZGVjX2dlbmVyaWMgDQo+
-PiBzbmRfaGRhX3Njb2RlY19jb21wb25lbnQgc25kX3NvY19kbWljIHNuZF9zb2ZfcGNpX2lu
-dGVsX3RnbCANCj4+IHNuZF9zb2ZfcGNpX2ludGVsX2NubCBzbmRfc29mX2ludGVsX2hkYV9n
-ZW5lcmljIHNvdW5kd2lyZV9pbnRlbCANCj4+IHNvdW5kd2lyZV9nZW5lcmljX2FsbG9jYXRp
-b24gc291bmR3aXJlX2NhZGVuY2UgDQo+PiBzbmRfc29mX2ludGVsX2hkYV9jb21tb24gc25k
-X3NvZl9pbnRlbF9oZGFfbWxpbmsgc25kX3NvZl9pbnRlbF9oZGEgDQo+PiBzbmRfc29mX3Bj
-aSBzbmRfc29mX3h0ZW5zYV9kc3Agc25kX3NvZiBpd2xtdm0gc25kX3NvZl91dGlscyANCj4+
-IGludGVsX3VuY29yZV9mcmVxdWVuY3kgc25kX3NvY19oZGFjX2hkYSBpbnRlbF91bmNvcmVf
-ZnJlcXVlbmN5X2NvbW1vbiANCj4+IHNuZF9zb2NfYWNwaV9pbnRlbF9tYXRjaCB4ODZfcGtn
-X3RlbXBfdGhlcm1hbCBpbnRlbF9wb3dlcmNsYW1wIA0KPj4gc25kX3NvY19hY3BpIHNvdW5k
-d2lyZV9idXMgY29yZXRlbXAga3ZtX2ludGVsIHNuZF9jdGxfbGVkIG1hYzgwMjExIA0KPj4g
-c25kX3NvY19hdnMga3ZtIHNuZF9zb2NfaGRhX2NvZGVjIHNuZF9oZGFfZXh0X2NvcmUgc25k
-X3NvY19jb3JlIGxpYmFyYzQNCj4+IFvCoMKgwqAgNy41Mzc4MTFdwqAgY3JjdDEwZGlmX3Bj
-bG11bCBzbmRfY29tcHJlc3Mgc25kX3BjbV9kbWFlbmdpbmUgDQo+PiBnaGFzaF9jbG11bG5p
-X2ludGVsIHNoYTUxMl9zc3NlMyBzbmRfaGRhX2ludGVsIHNoYTI1Nl9zc3NlMyBzaGExX3Nz
-c2UzIA0KPj4gaXdsd2lmaSBzbmRfaW50ZWxfZHNwY2ZnIHNuZF9pbnRlbF9zZHdfYWNwaSBz
-bmRfaGRhX2NvZGVjIGFlc25pX2ludGVsIA0KPj4gZ2YxMjhtdWwgc25kX2hkYV9jb3JlIGNy
-eXB0b19zaW1kIGNyeXB0ZCByYXBsIG1laV9oZGNwIG1laV9weHAgbWVpX3dkdCANCj4+IHNu
-ZF9od2RlcCBpbnRlbF9yYXBsX21zciBwcm9jZXNzb3JfdGhlcm1hbF9kZXZpY2VfcGNpIGlu
-dGVsX2NzdGF0ZSANCj4+IGNmZzgwMjExIHByb2Nlc3Nvcl90aGVybWFsX2RldmljZSBwcm9j
-ZXNzb3JfdGhlcm1hbF93dF9oaW50IA0KPj4gaW50ZWxfdW5jb3JlIHNuZF9wY20gdGhpbmtw
-YWRfYWNwaSB0aGlua19sbWkgaVRDT193ZHQgDQo+PiBwcm9jZXNzb3JfdGhlcm1hbF9yZmlt
-IG1laV9tZSBmaXJtd2FyZV9hdHRyaWJ1dGVzX2NsYXNzIGludGVsX3BtY19ieHQgDQo+PiBw
-cm9jZXNzb3JfdGhlcm1hbF9yYXBsIHNuZF90aW1lciB1Y3NpX2FjcGkgbWVpIGlUQ09fdmVu
-ZG9yX3N1cHBvcnQgDQo+PiBpbnRlbF9yYXBsX2NvbW1vbiBudnJhbSB0eXBlY191Y3NpIHdt
-aV9ibW9mIHdhdGNoZG9nIHBsYXRmb3JtX3Byb2ZpbGUgDQo+PiBwcm9jZXNzb3JfdGhlcm1h
-bF93dF9yZXEgcGNzcGtyIHByb2Nlc3Nvcl90aGVybWFsX3Bvd2VyX2Zsb29yIHNuZCANCj4+
-IGlnZW42X2VkYWMgcHJvY2Vzc29yX3RoZXJtYWxfbWJveCB0eXBlYyByb2xlcyBzb3VuZGNv
-cmUgcmZraWxsIGFjIA0KPj4gaW50MzQwM190aGVybWFsIGpveWRldiBpbnQzNDB4X3RoZXJt
-YWxfem9uZSBpbnRlbF9wbWNfY29yZSANCj4+IGludDM0MDBfdGhlcm1hbCBpbnRlbF92c2Vj
-IGludGVsX2hpZCBwbXRfdGVsZW1ldHJ5IGFjcGlfdGhlcm1hbF9yZWwgDQo+PiBzcGFyc2Vf
-a2V5bWFwIGFjcGlfdGFkIHBtdF9jbGFzcyBhY3BpX3BhZCBldmRldiBzZXJpb19yYXcgZG1f
-bW9kIGxvb3AgDQo+PiBjb25maWdmcyBlZmlfcHN0b3JlIGVmaXZhcmZzIGlwX3RhYmxlcw0K
-Pj4gW8KgwqDCoCA3LjUzNzg2MV3CoCB4X3RhYmxlcyBhdXRvZnM0IGV4dDQgY3JjMTYgbWJj
-YWNoZSBqYmQyIA0KPj4gY3JjMzJjX2dlbmVyaWMgaTkxNSBkcm1fYnVkZHkgaTJjX2FsZ29f
-Yml0IGRybV9kaXNwbGF5X2hlbHBlciBjZWMgDQo+PiBoaWRfbXVsdGl0b3VjaCByY19jb3Jl
-IGhpZF9nZW5lcmljIHhoY2lfcGNpIHhoY2lfaGNkIHR0bSBpMmNfaGlkX2FjcGkgDQo+PiBp
-MmNfaGlkIHVzYmNvcmUgZHJtX2ttc19oZWxwZXIgaGlkIGludGVsX2xwc3NfcGNpIHZpZGVv
-IG52bWUgDQo+PiBpbnRlbF9scHNzIGNyYzMyX3BjbG11bCBpMmNfaTgwMSB0aHVuZGVyYm9s
-dCBwc21vdXNlIGRybSBudm1lX2NvcmUgDQo+PiBlMTAwMGUgY3JjMzJjX2ludGVsIGlkbWE2
-NCB1c2JfY29tbW9uIGkyY19zbWJ1cyBmYW4gYnV0dG9uIGJhdHRlcnkgd21pDQo+PiBbwqDC
-oMKgIDcuNTM3ODg3XSBDUFU6IDEyIFVJRDogMCBQSUQ6IDk2IENvbW06IGt0aW1lcnMvMTIg
-Tm90IHRhaW50ZWQgDQo+PiA2LjExLSBydC1hbWQ2NCAjMcKgIGF0emxpbnV4IDYuMTEtMX5l
-eHAxDQo+PiBbwqDCoMKgIDcuNTM3ODkxXSBIYXJkd2FyZSBuYW1lOiBMRU5PVk8gMjFIRDAw
-NzhDRC8yMUhEMDA3OENELCBCSU9TIA0KPj4gTjNRRVQ0N1cgKDEuNDcgKSAwNy8xOC8yMDI0
-DQo+PiBbwqDCoMKgIDcuNTM3ODkzXSBSSVA6IDAwMTA6ZGVsYXllZF93b3JrX3RpbWVyX2Zu
-KzB4NjMvMHg5MA0KPj4gW8KgwqDCoCA3LjUzNzg5OF0gQ29kZTogNjUgNDggOGIgM2QgM2Yg
-YWQgYjQgNzcgNjUgOGIgMDUgNDAgYWQgYjQgNzcgOGIgDQo+PiA5NyAwMCAwZCAwMCAwMCAy
-NSAwMCAwMCBmZiAwMCA4MSBlMiAwMCAwMSAwMCAwMCAwOSBkMCA3NSAwNiBmNiA0NyAyYyAN
-Cj4+IDIwIDc1IDBiIDwwZj4gMGIgNWIgNWQgNDEgNWMgYzMgY2MgY2MgY2MgY2MgZTggZmQg
-NzYgMDAgMDAgNDggODUgYzAgNzQgDQo+PiBlYiA0OA0KPj4gW8KgwqDCoCA3LjUzNzkwMF0g
-UlNQOiAwMDE4OmZmZmZiYjkwMDA0NmJjOTggRUZMQUdTOiAwMDAxMDAwNg0KPj4gW8KgwqDC
-oCA3LjUzNzkwM10gUkFYOiAwMDAwMDAwMDAwMDAwMTAwIFJCWDogZmZmZjlhNjE4MjA1MzAw
-MCBSQ1g6IA0KPj4gZmZmZjlhNjRjZjdhMzVjMA0KPj4gW8KgwqDCoCA3LjUzNzkwNF0gUkRY
-OiAwMDAwMDAwMDAwMDAwMTAwIFJTSTogZmZmZmZmZmY4ODRlYWI4MCBSREk6IA0KPj4gZmZm
-ZjlhNjE4MTEzMDAwMA0KPj4gW8KgwqDCoCA3LjUzNzkwNl0gUkJQOiAwMDAwMDAwMDAwMDAy
-MDAwIFIwODogZmZmZjlhNjRjZjdhMzYxMCBSMDk6IA0KPj4gZmZmZjlhNjRjZjdhMzY1OA0K
-Pj4gW8KgwqDCoCA3LjUzNzkwN10gUjEwOiAwMDAwMDAwMDAwMDAwMDAyIFIxMTogMDAwMDAw
-MDAwMDAwMDAwMSBSMTI6IA0KPj4gZmZmZjlhNjE4M2JmYTkwMA0KPj4gW8KgwqDCoCA3LjUz
-NzkwOF0gUjEzOiBkZWFkMDAwMDAwMDAwMTIyIFIxNDogZmZmZmZmZmY4ODRlYWI4MCBSMTU6
-IA0KPj4gZmZmZjlhNjE4M2JmYTkyMA0KPj4gW8KgwqDCoCA3LjUzNzkxMF0gRlM6wqAgMDAw
-MDAwMDAwMDAwMDAwMCgwMDAwKSBHUzpmZmZmOWE2NGNmNjAwMDAwKDAwMDApIA0KPj4ga25s
-R1M6MDAwMDAwMDAwMDAwMDAwMA0KPj4gW8KgwqDCoCA3LjUzNzkxMl0gQ1M6wqAgMDAxMCBE
-UzogMDAwMCBFUzogMDAwMCBDUjA6IDAwMDAwMDAwODAwNTAwMzMNCj4+IFvCoMKgwqAgNy41
-Mzc5MTNdIENSMjogMDAwMDU2MWM5NGVkNDAwMCBDUjM6IDAwMDAwMDA0MWQ2MmMwMDAgQ1I0
-OiANCj4+IDAwMDAwMDAwMDBmNTBlZjANCj4+IFvCoMKgwqAgNy41Mzc5MTVdIFBLUlU6IDU1
-NTU1NTU0DQo+PiBbwqDCoMKgIDcuNTM3OTE2XSBDYWxsIFRyYWNlOg0KPj4gW8KgwqDCoCA3
-LjUzNzkxOF3CoCA8VEFTSz4NCj4+IFvCoMKgwqAgNy41Mzc5MTldwqAgPyBkZWxheWVkX3dv
-cmtfdGltZXJfZm4rMHg2My8weDkwDQo+PiBbwqDCoMKgIDcuNTM3OTIzXcKgID8gX193YXJu
-LmNvbGQrMHg5My8weGVkDQo+PiBbwqDCoMKgIDcuNTM3OTI2XcKgID8gZGVsYXllZF93b3Jr
-X3RpbWVyX2ZuKzB4NjMvMHg5MA0KPj4gW8KgwqDCoCA3LjUzNzkzM13CoCA/IHJlcG9ydF9i
-dWcrMHhmZi8weDE0MA0KPj4gW8KgwqDCoCA3LjUzNzkzN13CoCA/IGhhbmRsZV9idWcrMHgz
-Yy8weDgwDQo+PiBbwqDCoMKgIDcuNTM3OTQyXcKgID8gZXhjX2ludmFsaWRfb3ArMHgxNy8w
-eDcwDQo+PiBbwqDCoMKgIDcuNTM3OTQ1XcKgID8gYXNtX2V4Y19pbnZhbGlkX29wKzB4MWEv
-MHgyMA0KPj4gW8KgwqDCoCA3LjUzNzk0N13CoCA/IF9fcGZ4X2RlbGF5ZWRfd29ya190aW1l
-cl9mbisweDEwLzB4MTANCj4+IFvCoMKgwqAgNy41Mzc5NTFdwqAgPyBfX3BmeF9kZWxheWVk
-X3dvcmtfdGltZXJfZm4rMHgxMC8weDEwDQo+PiBbwqDCoMKgIDcuNTM3OTU1XcKgID8gZGVs
-YXllZF93b3JrX3RpbWVyX2ZuKzB4NjMvMHg5MA0KPj4gW8KgwqDCoCA3LjUzNzk1OF3CoCA/
-IF9fcGZ4X2RlbGF5ZWRfd29ya190aW1lcl9mbisweDEwLzB4MTANCj4+IFvCoMKgwqAgNy41
-Mzc5NjFdwqAgY2FsbF90aW1lcl9mbisweDI3LzB4MTIwDQo+PiBbwqDCoMKgIDcuNTM3OTY1
-XcKgIF9fcnVuX3RpbWVycysweDE4ZC8weDMwMA0KPj4gW8KgwqDCoCA3LjUzNzk2OV3CoCB0
-aW1lcl9leHBpcmVfcmVtb3RlKzB4NTEvMHg4MA0KPj4gW8KgwqDCoCA3LjUzNzk3M13CoCB0
-bWlncl9oYW5kbGVfcmVtb3RlKzB4M2NjLzB4NDcwDQo+PiBbwqDCoMKgIDcuNTM3OTc5XcKg
-IGhhbmRsZV9zb2Z0aXJxcy5pc3JhLjArMHhiNS8weDIzMA0KPj4gW8KgwqDCoCA3LjUzNzk4
-Ml3CoCA/IF9fcGZ4X3NtcGJvb3RfdGhyZWFkX2ZuKzB4MTAvMHgxMA0KPj4gW8KgwqDCoCA3
-LjUzNzk4Nl3CoCBydW5fdGltZXJzZCsweDNlLzB4ODANCj4+IFvCoMKgwqAgNy41Mzc5ODhd
-wqAgc21wYm9vdF90aHJlYWRfZm4rMHhkYS8weDFkMA0KPj4gW8KgwqDCoCA3LjUzNzk5Ml3C
-oCBrdGhyZWFkKzB4Y2YvMHgxMDANCj4+IFvCoMKgwqAgNy41Mzc5OTVdwqAgPyBfX3BmeF9r
-dGhyZWFkKzB4MTAvMHgxMA0KPj4gW8KgwqDCoCA3LjUzNzk5N13CoCByZXRfZnJvbV9mb3Jr
-KzB4MzEvMHg1MA0KPj4gW8KgwqDCoCA3LjUzODAwMF3CoCA/IF9fcGZ4X2t0aHJlYWQrMHgx
-MC8weDEwDQo+PiBbwqDCoMKgIDcuNTM4MDAxXcKgIHJldF9mcm9tX2ZvcmtfYXNtKzB4MWEv
-MHgzMA0KPj4gW8KgwqDCoCA3LjUzODAwNl3CoCA8L1RBU0s+DQo+PiBbwqDCoMKgIDcuNTM4
-MDA3XSAtLS1bIGVuZCB0cmFjZSAwMDAwMDAwMDAwMDAwMDAwIF0tLS0NCj4+DQo+PiBUaGUg
-d2hvbGUgZG1lc2cgaXM6DQo+PiBodHRwczovL2xpbnV4LWhhcmR3YXJlLm9yZy8/cHJvYmU9
-MjgwNTdmOWVkMiZsb2c9ZG1lc2cNCj4gDQo+IE9uIGEgZmlyc3QgZ2xhbmNlIHRoaXMgbG9v
-a3MgbGlrZSBhbiB1bnJlbGF0ZWQgaXNzdWUgdG8gbWUuIENvdWxkIHlvdSANCj4gdGVzdCB3
-aXRoIENPTkZJR19YODZfSU5URUxfUFNUQVRFPW4/IChJZiBkb2Vzbid0IG1hdHRlciBpZiB5
-b3UgZG8gdGhpcyANCj4gd2l0aCBteSBwYXRjaCBhcHBsaWVkIG9yIG5vdCwgd2l0aG91dCBD
-T05GSUdfWDg2X0lOVEVMX1BTVEFURSB0aGUgZHJpdmVyIA0KPiBpc24ndCBidWlsZC4pDQo+
-IA0KPiBCZXN0IHJlZ2FyZHMNCj4gVXdlDQpZZXMsIHRoaXMgV0FSTklORyBpcyB1bnJlbGF0
-ZWQgaXNzdWUgdG8geW91ciBwYXRjaC5JdCBjb21lIGZyb20ga2VybmVsIA0KW2t0aW1lcnNd
-LCBzbyBJIGRvbid0IG5lZWQgZG8gdGVzdCB3aXRoIENPTkZJR19YODZfSU5URUxfUFNUQVRF
-PW4uDQoNCkkgYXBwbHkgeW91ciBwYXRjaCBvbiBEZWJpYW4ga2VybmVsIDYuMTAuMTEtMSAo
-MjAyNC0wOS0yMikgc291cmNlIGNvZGUuDQoNCnVuYW1lIC1hDQpMaW51eCBhdHpsaW51eC1j
-ZSA2LjEwLjExLXJ0LWFtZDY0ICMxIFNNUCBQUkVFTVBUX1JUIGF0emxpbnV4IDYuMTAuMTEt
-MSANCigyMDI0LTA5LTIyKSB4ODZfNjQgR05VL0xpbnV4DQoNClRoZXJlIGlzIG5vdCBhbnkg
-ZXJyb3JzIGluIGRtZXNnIG5vdywgd29yayBwZXJmZWN0IQ0KSU1ITywgdGhpcyBwYXRjaCBm
-aXggdGhpcyBidWcgaW4ga2VybmVsIDYuMTAuMTEtMS4NCg0KDQpUaGFua3MhDQoNCi0tIA0K
-6IKW55ub5paHIHhpYW8gc2hlbmcgd2VuDQpEZWJpYW4gUUEgcGFnZTogDQpodHRwczovL3Fh
-LmRlYmlhbi5vcmcvZGV2ZWxvcGVyLnBocD9sb2dpbj1hdHpsaW51eCU0MHNpbmEuY29tDQpE
-ZWJpYW4gc2Fsc2E6IGh0dHBzOi8vc2Fsc2EuZGViaWFuLm9yZy9hdHpsaW51eC1ndWVzdA0K
-R251UEcgUHVibGljIEtleTogMHgwMDE4NjYwMjMzOTI0MENCDQo=
+    Acked-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 
---------------tuEgGnBGmx9Ye0T7ZWjpPxrH--
+> ---
+> Hello,
+>=20
+> this is deep in x86 land where I have *very* little experience and
+> knowledge. Is sysvec_thermal() (defined in arch/x86/kernel/irq.c)
+> really
+> running in hard irq context? The stacktrace in the Debian bug report
+> suggests that.
+>=20
+> So please double check my reasoning before applying this patch.
+>=20
+This is thermal LVT and runs in hard IRQ context.=20
 
---------------SIlBK5ixpsOYOPmeD1oJPZOt
-Content-Type: application/pgp-signature; name="OpenPGP_signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="OpenPGP_signature.asc"
+> Thanks
+> Uwe
+>=20
+> =C2=A0drivers/cpufreq/intel_pstate.c | 16 ++++++++--------
+> =C2=A01 file changed, 8 insertions(+), 8 deletions(-)
+>=20
+> diff --git a/drivers/cpufreq/intel_pstate.c
+> b/drivers/cpufreq/intel_pstate.c
+> index aaea9a39eced..b0018f371ea3 100644
+> --- a/drivers/cpufreq/intel_pstate.c
+> +++ b/drivers/cpufreq/intel_pstate.c
+> @@ -1845,7 +1845,7 @@ static void intel_pstate_notify_work(struct
+> work_struct *work)
+> =C2=A0	wrmsrl_on_cpu(cpudata->cpu, MSR_HWP_STATUS, 0);
+> =C2=A0}
+> =C2=A0
+> -static DEFINE_SPINLOCK(hwp_notify_lock);
+> +static DEFINE_RAW_SPINLOCK(hwp_notify_lock);
+> =C2=A0static cpumask_t hwp_intr_enable_mask;
+> =C2=A0
+> =C2=A0#define HWP_GUARANTEED_PERF_CHANGE_STATUS=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 BIT(0)
+> @@ -1868,7 +1868,7 @@ void notify_hwp_interrupt(void)
+> =C2=A0	if (!(value & status_mask))
+> =C2=A0		return;
+> =C2=A0
+> -	spin_lock_irqsave(&hwp_notify_lock, flags);
+> +	raw_spin_lock_irqsave(&hwp_notify_lock, flags);
+> =C2=A0
+> =C2=A0	if (!cpumask_test_cpu(this_cpu, &hwp_intr_enable_mask))
+> =C2=A0		goto ack_intr;
+> @@ -1876,13 +1876,13 @@ void notify_hwp_interrupt(void)
+> =C2=A0	schedule_delayed_work(&all_cpu_data[this_cpu]-
+> >hwp_notify_work,
+> =C2=A0			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 msecs_to_jiffies(10));
+> =C2=A0
+> -	spin_unlock_irqrestore(&hwp_notify_lock, flags);
+> +	raw_spin_unlock_irqrestore(&hwp_notify_lock, flags);
+> =C2=A0
+> =C2=A0	return;
+> =C2=A0
+> =C2=A0ack_intr:
+> =C2=A0	wrmsrl_safe(MSR_HWP_STATUS, 0);
+> -	spin_unlock_irqrestore(&hwp_notify_lock, flags);
+> +	raw_spin_unlock_irqrestore(&hwp_notify_lock, flags);
+> =C2=A0}
+> =C2=A0
+> =C2=A0static void intel_pstate_disable_hwp_interrupt(struct cpudata
+> *cpudata)
+> @@ -1895,9 +1895,9 @@ static void
+> intel_pstate_disable_hwp_interrupt(struct cpudata *cpudata)
+> =C2=A0	/* wrmsrl_on_cpu has to be outside spinlock as this can
+> result in IPC */
+> =C2=A0	wrmsrl_on_cpu(cpudata->cpu, MSR_HWP_INTERRUPT, 0x00);
+> =C2=A0
+> -	spin_lock_irq(&hwp_notify_lock);
+> +	raw_spin_lock_irq(&hwp_notify_lock);
+> =C2=A0	cancel_work =3D cpumask_test_and_clear_cpu(cpudata->cpu,
+> &hwp_intr_enable_mask);
+> -	spin_unlock_irq(&hwp_notify_lock);
+> +	raw_spin_unlock_irq(&hwp_notify_lock);
+> =C2=A0
+> =C2=A0	if (cancel_work)
+> =C2=A0		cancel_delayed_work_sync(&cpudata->hwp_notify_work);
+> @@ -1912,10 +1912,10 @@ static void
+> intel_pstate_enable_hwp_interrupt(struct cpudata *cpudata)
+> =C2=A0	if (boot_cpu_has(X86_FEATURE_HWP_NOTIFY)) {
+> =C2=A0		u64 interrupt_mask =3D HWP_GUARANTEED_PERF_CHANGE_REQ;
+> =C2=A0
+> -		spin_lock_irq(&hwp_notify_lock);
+> +		raw_spin_lock_irq(&hwp_notify_lock);
+> =C2=A0		INIT_DELAYED_WORK(&cpudata->hwp_notify_work,
+> intel_pstate_notify_work);
+> =C2=A0		cpumask_set_cpu(cpudata->cpu,
+> &hwp_intr_enable_mask);
+> -		spin_unlock_irq(&hwp_notify_lock);
+> +		raw_spin_unlock_irq(&hwp_notify_lock);
+> =C2=A0
+> =C2=A0		if
+> (cpu_feature_enabled(X86_FEATURE_HWP_HIGHEST_PERF_CHANGE))
+> =C2=A0			interrupt_mask |=3D
+> HWP_HIGHEST_PERF_CHANGE_REQ;
+>=20
+> base-commit: 3621a2c9142bd490af0666c0c02d52d60ce0d2a5
 
------BEGIN PGP SIGNATURE-----
-
-wsF5BAABCAAjFiEEvGv7H5NUQYeSuhtTJ2Egg8PSprAFAmb2fiQFAwAAAAAACgkQJ2Egg8PSprC+
-nRAAj+0mCJ8o/1547zkVr/TY7jIOEmms8MOAnEMWXnJjlBv5iuGCHWlwIOycUc9HQtjLkGeyVNhU
-KLWnLY3Es9sONlf4xGn1sW/W3kVsk/NW1HcXxIH4mjVKLGDb9dRzYjYjxIEnKQQygtDkqYNCt6Ga
-GM+Qb05lJVz8MZwFI+QFQxOPhaj7fNHtY8USCAJHQZm1IR6mCeFQ7yw0IY8P2hfWaiDCpRV6dAGl
-HR5VNYqdJtg+Mg0aheWRwuD62xYmGSRLIkeJmk2yV+Xy21+kfTJh6TDxX34Hx5sIlipvhUclLBQ/
-oeeBXDp+7SkcCCd5AFcqPraf9RMPivfhlz/IPvDFti9ipAknT/opH/dfuvhiIG2Pg35R4qrQiJ/O
-6GfS1R9hSq49lhRnI3eG8T8lCmwjvv8fhbR1LcJMIl6Ec7XjEIgaY00nIsqyahR/m4lieAdF3x5/
-O9bmQupVWTAgCOhV4whqZMpydP5NhzcRXWabBBo33Qo1lFbSwj1I2EIL0rEwkeJsHVsz4wh0Ck2m
-efmzM8Ex/Xth+W6jrVtlD1AFutHhkR+05mToR1uy8NSyYHYavk2HuqOueAP1ZJXNwWkjaPfHIOg6
-/b6doEAGS9zirsX8OPrtpRB6eLbY7Zmn95rFje3uAP3aBbnGOfrDXO0NhgD2M83kauJPrKqChq1l
-AV0=
-=RXsX
------END PGP SIGNATURE-----
-
---------------SIlBK5ixpsOYOPmeD1oJPZOt--
