@@ -1,217 +1,243 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp134-31.sina.com.cn (smtp134-31.sina.com.cn [180.149.134.31])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63E161A42AD
-	for <linux-rt-users@vger.kernel.org>; Thu, 26 Sep 2024 08:49:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFF9C1BD00C
+	for <linux-rt-users@vger.kernel.org>; Fri, 27 Sep 2024 09:45:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.149.134.31
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727340591; cv=none; b=T6UD77fLvveItek8QLFhdhmFQOlKF59Uw74hAM8zsGuDi49t3pkbkAWDJCnsbZe6v40lqKA/CPcF2XAMLCLGL2C2tmPiyByc0OVcs2QfxHdaF9HC1ESJErjF3vQKDa91TfKj6dEXX5ViHjU0nMJswHJIkGpwlQH92RUlTMukYnk=
+	t=1727430343; cv=none; b=Uo8vJ1IWKeG9WdmBsXUtku+4yqAUonFAMP1Huj80jf9JIJ2bQX7r1JERxQXQhpPu92QMrBmWaW+Pms+bTevmjiTrw/AGdAgnIhH6HIQYB9F71eSD8sqd5v0l0oyekuuQCmS1bABTZ7+Jm+GbYxfxGahE3IDy7oEbV1IZiEw7LV0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727340591; c=relaxed/simple;
-	bh=9jhmH5KgcOboD5TXgR86mtAZI4JAd8CtMQnY376iGfw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Hrt4LUci+Iqv2HXDLTxuvZ8xC74BRIeG4GxgYC4hBOTOjUROO8SdzTIBb8+HnxkWZ5ghphlQ0Wau4n+lQWIKaKk0S/PVTyFHHLeUukhB96CJULmAqj597kzf47OLOELr6k1k1RqTw5gnLVtOEveFmBkDeEPI/X1AUSF36/p0ZFY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=S811mk1U; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="S811mk1U"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727340588;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=T3ErmlGlLT2ELVM2x5M704t3p9s7JigVj3WOjsQPzJU=;
-	b=S811mk1UcmSpoCEGOSZQHeMuqsm6QwuuuVCc7n2ldGzmb97QL45Siw7+WoEW7e1l36OtvF
-	XgOliuz5F9lyBByc1RGVKG/7eyrCAGi5u/gawYz1y0am9CglBGZBvjn/MwqLl9402u2fOf
-	zFR3qdoYk6dzCt6+GvcSHIVE8/jnbjg=
-Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
- [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-507-Ds8lX66ON2GhQlzXSxrDzA-1; Thu, 26 Sep 2024 04:49:46 -0400
-X-MC-Unique: Ds8lX66ON2GhQlzXSxrDzA-1
-Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-a93bac20fccso24123866b.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Sep 2024 01:49:46 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727340585; x=1727945385;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=T3ErmlGlLT2ELVM2x5M704t3p9s7JigVj3WOjsQPzJU=;
-        b=eKP48t/9G3iYxwMvS1gIKXfRx9DWyRVIBeLnVTPfi1YM7kxkTmDHj4KhtbDw5i1NdI
-         I7IpQVQo+dhf15kVlv74GORzkeaNH3dr5WodJ0OoWy1I0r97X0fD6r/oPVhOYx8OiQVC
-         iMnEJj+KVXlKmgdc7hc3NtyJmMDZC63eAgPQsWBT2CHQAKVs8OMyI0bfXq18RhwTZmE8
-         ybA5tPVVUlL1afo6Trgnq3dPukD4buKVywhKXyImrnJQn4ECt4ozHqAIeDqd4cMVUX5W
-         TTh7MzD1RB58zAJabbnPokSPRG5Kjx6Fvc4CHRbuSQT//16XpaqlWmQd2HHhvmO6fvtf
-         VCuA==
-X-Forwarded-Encrypted: i=1; AJvYcCXbdAzuvieIMV296Vi9OpNgWBPLOaGjO74FmjseLmROubXbv9X1Rs4cIbRpJGog6u2z9PxfS6VTMJ5oZFt6Rw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwofhkgSjgULkpXaFB1AAdTcOuOunjH3QWgqRTain+67rnifmhz
-	quAPd6mbEGO01onI8Ki63pfD6ND6ELS2u73/qHTNjychZHwZBZf9P295Cbf1qZOBKyw0kVnSHlH
-	avl+mq2K6oLCD/6nsEmZimDpVFue8/qNAPGNckqEZkZBU2fXhVa+nY5rhfAwmxvfJyEyY7NIlYg
-	MckxJRdEQxcrKbwrur5XVB/nauvarvEWL8sFLPl/M=
-X-Received: by 2002:a17:907:9488:b0:a75:7a8:d70c with SMTP id a640c23a62f3a-a93b15a7b94mr275581566b.4.1727340585559;
-        Thu, 26 Sep 2024 01:49:45 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEz6awPElpN5NjRI+aNtdcjAEtdxWk3wGh3HZy7W0Kvcof+PXcXpr8mUmozGnJ26j9bhgVwLNMOn+rG3E62waw=
-X-Received: by 2002:a17:907:9488:b0:a75:7a8:d70c with SMTP id
- a640c23a62f3a-a93b15a7b94mr275578166b.4.1727340585074; Thu, 26 Sep 2024
- 01:49:45 -0700 (PDT)
+	s=arc-20240116; t=1727430343; c=relaxed/simple;
+	bh=I8bCVMlV3brOJEBTGi5L2/kIUe+mwCR45N4EtpQMZE8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=je4IVNGuK0GZeRypXgrCiwdmwZ3F7T0dV/oq0GMoSibOmsB5fJTl+Seve/ARa8+RGBpK6ReO2iRy98DuJWLhgbjieDxkSyqFaXg69l2NdTxtsp+B+Mk7JPBlMlmKLBElp3lvjW0ARIiQOtyqYgiQbYMAEpvXDyXcvW9AFBnjJTw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sina.com; spf=pass smtp.mailfrom=sina.com; arc=none smtp.client-ip=180.149.134.31
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sina.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sina.com
+X-SMAIL-HELO: [192.168.118.185]
+Received: from unknown (HELO [192.168.118.185])([14.154.100.184])
+	by sina.com (10.185.250.21) with ESMTP
+	id 66F67E2400004A4F; Fri, 27 Sep 2024 17:43:04 +0800 (CST)
+X-Sender: atzlinux@sina.com
+X-Auth-ID: atzlinux@sina.com
+Authentication-Results: sina.com;
+	 spf=none smtp.mailfrom=atzlinux@sina.com;
+	 dkim=none header.i=none;
+	 dmarc=none action=none header.from=atzlinux@sina.com
+X-SMAIL-MID: 5723553408470
+X-SMAIL-UIID: 74300B69F7FA46F38A641FC2711743F9-20240927-174304-1
+Message-ID: <a0f1dfc5-0f7c-4c55-a38c-f89abca3f77d@sina.com>
+Date: Fri, 27 Sep 2024 17:43:00 +0800
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240818194216.299176-1-jkacur@redhat.com> <20240818194216.299176-2-jkacur@redhat.com>
- <81d7939730423517d16c770fc299f26c5cd729b6.camel@redhat.com>
-In-Reply-To: <81d7939730423517d16c770fc299f26c5cd729b6.camel@redhat.com>
-From: Tomas Glozar <tglozar@redhat.com>
-Date: Thu, 26 Sep 2024 10:49:34 +0200
-Message-ID: <CAP4=nvR6JS_W5cXo3gp-QzVSwCDL=dP58FEG3gbvxbP0LGckMA@mail.gmail.com>
-Subject: Re: [PATCH 1/3] rteval: restore all load module options
-To: Crystal Wood <crwood@redhat.com>
-Cc: John Kacur <jkacur@redhat.com>, RT <linux-rt-users@vger.kernel.org>, 
-	Clark Williams <williams@redhat.com>, Chris White <chwhite@redhat.com>, 
-	Anubhav Shelat <sanubhav1000@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] cpufreq: intel_pstate: Make hwp_notify_lock a raw
+ spinlock
+To: =?UTF-8?Q?Uwe_Kleine-K=C3=B6nig?= <ukleinek@debian.org>,
+ Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>,
+ Len Brown <lenb@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>,
+ Viresh Kumar <viresh.kumar@linaro.org>, Thomas Gleixner
+ <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>,
+ 1076483@bugs.debian.org
+Cc: linux-pm@vger.kernel.org, x86@kernel.org, "H. Peter Anvin"
+ <hpa@zytor.com>, linux-rt-users@vger.kernel.org
+References: <20240919081121.10784-2-ukleinek@debian.org>
+ <26829a6d-671c-45a4-bef4-4172f4f11615@sina.com>
+ <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
+Content-Language: en-US
+From: =?UTF-8?B?eGlhbyBzaGVuZyB3ZW4o6IKW55ub5paHKQ==?= <atzlinux@sina.com>
+Organization: https://www.atzlinux.com
+In-Reply-To: <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="------------SIlBK5ixpsOYOPmeD1oJPZOt"
 
-po 19. 8. 2024 v 22:40 odes=C3=ADlatel Crystal Wood <crwood@redhat.com> nap=
-sal:
->
-> On Sun, 2024-08-18 at 15:42 -0400, John Kacur wrote:
-> > Commit 56c7cf63942d  rteval: Allow arguments specific to module group
-> >
-> > intended to allow group options to the overall measurement modules with=
-out
-> > applying to the load modules. It inadvertently disabled options for mos=
-t
-> > load modules such as hackbench and kcompile.
->
-> How did that happen and how does this fix it?
-> (not saying it doesn't, just that clarifying that would help with reviewi=
-ng
-> and not introducing something similar in the future)
->
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--------------SIlBK5ixpsOYOPmeD1oJPZOt
+Content-Type: multipart/mixed; boundary="------------tuEgGnBGmx9Ye0T7ZWjpPxrH";
+ protected-headers="v1"
+From: =?UTF-8?B?eGlhbyBzaGVuZyB3ZW4o6IKW55ub5paHKQ==?= <atzlinux@sina.com>
+To: =?UTF-8?Q?Uwe_Kleine-K=C3=B6nig?= <ukleinek@debian.org>,
+ Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>,
+ Len Brown <lenb@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>,
+ Viresh Kumar <viresh.kumar@linaro.org>, Thomas Gleixner
+ <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>,
+ 1076483@bugs.debian.org
+Cc: linux-pm@vger.kernel.org, x86@kernel.org, "H. Peter Anvin"
+ <hpa@zytor.com>, linux-rt-users@vger.kernel.org
+Message-ID: <a0f1dfc5-0f7c-4c55-a38c-f89abca3f77d@sina.com>
+Subject: Re: [PATCH] cpufreq: intel_pstate: Make hwp_notify_lock a raw
+ spinlock
+References: <20240919081121.10784-2-ukleinek@debian.org>
+ <26829a6d-671c-45a4-bef4-4172f4f11615@sina.com>
+ <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
+In-Reply-To: <10a1def7-1abc-4455-b73b-c324a9e0c0dd@debian.org>
 
-The bug in commit 56c7cf63942d is that the "return grparser" command
-is indented one tab more than intended (no pun intended), putting it
-inside the for loop iterating over list(opts.items()). This leads to
-only the first module's arguments to be applied in the case of both
-measurements and loads, since the return exists from the loop before
-the rest can be processed.
+--------------tuEgGnBGmx9Ye0T7ZWjpPxrH
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: base64
 
-> >
-> > This patch reworks the overall group mechanism a little bit to restore
-> > these menus.
->
-> Menus?
->
+SGVsbG8sDQoNCuWcqCAyMDI0LzkvMjYgMTU6NDgsIFV3ZSBLbGVpbmUtS8O2bmlnIOWGmemB
+kzoNCj4gSGVsbG8sDQo+IA0KPiBPbiA5LzIzLzI0IDAzOjUzLCB4aWFvIHNoZW5nIHdlbijo
+gpbnm5vmlocpIHdyb3RlOg0KPj4gSSBhcHBseSB0aGlzIHBhdGNoIG9uIERlYmlhbiBrZXJu
+ZWwgNi4xMS0xfmV4cDEgKDIwMjQtMDktMTkpIHNvdXJjZSBjb2RlLg0KPj4NCj4+IHVuYW1l
+IC1hDQo+PiBMaW51eCBhdHpsaW51eC1jZSA2LjExLXJ0LWFtZDY0ICMxIFNNUCBQUkVFTVBU
+X1JUIGF0emxpbnV4IDYuMTEtMX5leHAxIA0KPj4gKDIwMjQtMDktMTkpIHg4Nl82NCBHTlUv
+TGludXgNCj4+DQo+PiBJIGdldCB0aGUgZm9sbG93aW5nIGVycm9ycyBpbiBkbWVzZzoNCj4+
+DQo+PiBbwqDCoMKgIDcuMjczNjkwXSB1Y3NpX2FjcGkgVVNCQzAwMDowMDogcG9zc2libGUg
+VUNTSSBkcml2ZXIgYnVnIDINCj4+IFvCoMKgwqAgNy40NTE4MjJdIHVjc2lfYWNwaSBVU0JD
+MDAwOjAwOiBlcnJvciAtRUlOVkFMOiBQUE0gaW5pdCBmYWlsZWQNCj4+IFvCoMKgwqAgNy41
+Mzc3NDldIC0tLS0tLS0tLS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0tLS0tLQ0KPj4gW8KgwqDC
+oCA3LjUzNzc1M10gV0FSTklORzogQ1BVOiAxMiBQSUQ6IDk2IGF0IGtlcm5lbC93b3JrcXVl
+dWUuYzoyMjU5IA0KPj4gZGVsYXllZF93b3JrX3RpbWVyX2ZuKzB4NjMvMHg5MA0KPj4gW8Kg
+wqDCoCA3LjUzNzc2M10gTW9kdWxlcyBsaW5rZWQgaW46IHJmY29tbSBjbWFjIGFsZ2lmX2hh
+c2ggDQo+PiBhbGdpZl9za2NpcGhlciBhZl9hbGcgc25kX3NlcV9kdW1teSBzbmRfaHJ0aW1l
+ciBzbmRfc2VxIHNuZF9zZXFfZGV2aWNlIA0KPj4gYm5lcCBidHVzYiB1dmN2aWRlbyBidHJ0
+bCBidGludGVsIHZpZGVvYnVmMl92bWFsbG9jIGJ0YmNtIHV2YyBidG10ayANCj4+IHZpZGVv
+YnVmMl9tZW1vcHMgdmlkZW9idWYyX3Y0bDIgYmx1ZXRvb3RoIHZpZGVvZGV2IHZpZGVvYnVm
+Ml9jb21tb24gbWMgDQo+PiBzbmRfc29jX3NrbF9oZGFfZHNwIHNuZF9zb2NfaGRhY19oZG1p
+IHNuZF9zb2ZfcHJvYmVzIA0KPj4gc25kX3NvY19pbnRlbF9oZGFfZHNwX2NvbW1vbiBiaW5m
+bXRfbWlzYyBubHNfYXNjaWkgbmxzX2NwNDM3IHZmYXQgZmF0IA0KPj4gc25kX2hkYV9jb2Rl
+Y19oZG1pIHNuZF9oZGFfY29kZWNfcmVhbHRlayBzbmRfaGRhX2NvZGVjX2dlbmVyaWMgDQo+
+PiBzbmRfaGRhX3Njb2RlY19jb21wb25lbnQgc25kX3NvY19kbWljIHNuZF9zb2ZfcGNpX2lu
+dGVsX3RnbCANCj4+IHNuZF9zb2ZfcGNpX2ludGVsX2NubCBzbmRfc29mX2ludGVsX2hkYV9n
+ZW5lcmljIHNvdW5kd2lyZV9pbnRlbCANCj4+IHNvdW5kd2lyZV9nZW5lcmljX2FsbG9jYXRp
+b24gc291bmR3aXJlX2NhZGVuY2UgDQo+PiBzbmRfc29mX2ludGVsX2hkYV9jb21tb24gc25k
+X3NvZl9pbnRlbF9oZGFfbWxpbmsgc25kX3NvZl9pbnRlbF9oZGEgDQo+PiBzbmRfc29mX3Bj
+aSBzbmRfc29mX3h0ZW5zYV9kc3Agc25kX3NvZiBpd2xtdm0gc25kX3NvZl91dGlscyANCj4+
+IGludGVsX3VuY29yZV9mcmVxdWVuY3kgc25kX3NvY19oZGFjX2hkYSBpbnRlbF91bmNvcmVf
+ZnJlcXVlbmN5X2NvbW1vbiANCj4+IHNuZF9zb2NfYWNwaV9pbnRlbF9tYXRjaCB4ODZfcGtn
+X3RlbXBfdGhlcm1hbCBpbnRlbF9wb3dlcmNsYW1wIA0KPj4gc25kX3NvY19hY3BpIHNvdW5k
+d2lyZV9idXMgY29yZXRlbXAga3ZtX2ludGVsIHNuZF9jdGxfbGVkIG1hYzgwMjExIA0KPj4g
+c25kX3NvY19hdnMga3ZtIHNuZF9zb2NfaGRhX2NvZGVjIHNuZF9oZGFfZXh0X2NvcmUgc25k
+X3NvY19jb3JlIGxpYmFyYzQNCj4+IFvCoMKgwqAgNy41Mzc4MTFdwqAgY3JjdDEwZGlmX3Bj
+bG11bCBzbmRfY29tcHJlc3Mgc25kX3BjbV9kbWFlbmdpbmUgDQo+PiBnaGFzaF9jbG11bG5p
+X2ludGVsIHNoYTUxMl9zc3NlMyBzbmRfaGRhX2ludGVsIHNoYTI1Nl9zc3NlMyBzaGExX3Nz
+c2UzIA0KPj4gaXdsd2lmaSBzbmRfaW50ZWxfZHNwY2ZnIHNuZF9pbnRlbF9zZHdfYWNwaSBz
+bmRfaGRhX2NvZGVjIGFlc25pX2ludGVsIA0KPj4gZ2YxMjhtdWwgc25kX2hkYV9jb3JlIGNy
+eXB0b19zaW1kIGNyeXB0ZCByYXBsIG1laV9oZGNwIG1laV9weHAgbWVpX3dkdCANCj4+IHNu
+ZF9od2RlcCBpbnRlbF9yYXBsX21zciBwcm9jZXNzb3JfdGhlcm1hbF9kZXZpY2VfcGNpIGlu
+dGVsX2NzdGF0ZSANCj4+IGNmZzgwMjExIHByb2Nlc3Nvcl90aGVybWFsX2RldmljZSBwcm9j
+ZXNzb3JfdGhlcm1hbF93dF9oaW50IA0KPj4gaW50ZWxfdW5jb3JlIHNuZF9wY20gdGhpbmtw
+YWRfYWNwaSB0aGlua19sbWkgaVRDT193ZHQgDQo+PiBwcm9jZXNzb3JfdGhlcm1hbF9yZmlt
+IG1laV9tZSBmaXJtd2FyZV9hdHRyaWJ1dGVzX2NsYXNzIGludGVsX3BtY19ieHQgDQo+PiBw
+cm9jZXNzb3JfdGhlcm1hbF9yYXBsIHNuZF90aW1lciB1Y3NpX2FjcGkgbWVpIGlUQ09fdmVu
+ZG9yX3N1cHBvcnQgDQo+PiBpbnRlbF9yYXBsX2NvbW1vbiBudnJhbSB0eXBlY191Y3NpIHdt
+aV9ibW9mIHdhdGNoZG9nIHBsYXRmb3JtX3Byb2ZpbGUgDQo+PiBwcm9jZXNzb3JfdGhlcm1h
+bF93dF9yZXEgcGNzcGtyIHByb2Nlc3Nvcl90aGVybWFsX3Bvd2VyX2Zsb29yIHNuZCANCj4+
+IGlnZW42X2VkYWMgcHJvY2Vzc29yX3RoZXJtYWxfbWJveCB0eXBlYyByb2xlcyBzb3VuZGNv
+cmUgcmZraWxsIGFjIA0KPj4gaW50MzQwM190aGVybWFsIGpveWRldiBpbnQzNDB4X3RoZXJt
+YWxfem9uZSBpbnRlbF9wbWNfY29yZSANCj4+IGludDM0MDBfdGhlcm1hbCBpbnRlbF92c2Vj
+IGludGVsX2hpZCBwbXRfdGVsZW1ldHJ5IGFjcGlfdGhlcm1hbF9yZWwgDQo+PiBzcGFyc2Vf
+a2V5bWFwIGFjcGlfdGFkIHBtdF9jbGFzcyBhY3BpX3BhZCBldmRldiBzZXJpb19yYXcgZG1f
+bW9kIGxvb3AgDQo+PiBjb25maWdmcyBlZmlfcHN0b3JlIGVmaXZhcmZzIGlwX3RhYmxlcw0K
+Pj4gW8KgwqDCoCA3LjUzNzg2MV3CoCB4X3RhYmxlcyBhdXRvZnM0IGV4dDQgY3JjMTYgbWJj
+YWNoZSBqYmQyIA0KPj4gY3JjMzJjX2dlbmVyaWMgaTkxNSBkcm1fYnVkZHkgaTJjX2FsZ29f
+Yml0IGRybV9kaXNwbGF5X2hlbHBlciBjZWMgDQo+PiBoaWRfbXVsdGl0b3VjaCByY19jb3Jl
+IGhpZF9nZW5lcmljIHhoY2lfcGNpIHhoY2lfaGNkIHR0bSBpMmNfaGlkX2FjcGkgDQo+PiBp
+MmNfaGlkIHVzYmNvcmUgZHJtX2ttc19oZWxwZXIgaGlkIGludGVsX2xwc3NfcGNpIHZpZGVv
+IG52bWUgDQo+PiBpbnRlbF9scHNzIGNyYzMyX3BjbG11bCBpMmNfaTgwMSB0aHVuZGVyYm9s
+dCBwc21vdXNlIGRybSBudm1lX2NvcmUgDQo+PiBlMTAwMGUgY3JjMzJjX2ludGVsIGlkbWE2
+NCB1c2JfY29tbW9uIGkyY19zbWJ1cyBmYW4gYnV0dG9uIGJhdHRlcnkgd21pDQo+PiBbwqDC
+oMKgIDcuNTM3ODg3XSBDUFU6IDEyIFVJRDogMCBQSUQ6IDk2IENvbW06IGt0aW1lcnMvMTIg
+Tm90IHRhaW50ZWQgDQo+PiA2LjExLSBydC1hbWQ2NCAjMcKgIGF0emxpbnV4IDYuMTEtMX5l
+eHAxDQo+PiBbwqDCoMKgIDcuNTM3ODkxXSBIYXJkd2FyZSBuYW1lOiBMRU5PVk8gMjFIRDAw
+NzhDRC8yMUhEMDA3OENELCBCSU9TIA0KPj4gTjNRRVQ0N1cgKDEuNDcgKSAwNy8xOC8yMDI0
+DQo+PiBbwqDCoMKgIDcuNTM3ODkzXSBSSVA6IDAwMTA6ZGVsYXllZF93b3JrX3RpbWVyX2Zu
+KzB4NjMvMHg5MA0KPj4gW8KgwqDCoCA3LjUzNzg5OF0gQ29kZTogNjUgNDggOGIgM2QgM2Yg
+YWQgYjQgNzcgNjUgOGIgMDUgNDAgYWQgYjQgNzcgOGIgDQo+PiA5NyAwMCAwZCAwMCAwMCAy
+NSAwMCAwMCBmZiAwMCA4MSBlMiAwMCAwMSAwMCAwMCAwOSBkMCA3NSAwNiBmNiA0NyAyYyAN
+Cj4+IDIwIDc1IDBiIDwwZj4gMGIgNWIgNWQgNDEgNWMgYzMgY2MgY2MgY2MgY2MgZTggZmQg
+NzYgMDAgMDAgNDggODUgYzAgNzQgDQo+PiBlYiA0OA0KPj4gW8KgwqDCoCA3LjUzNzkwMF0g
+UlNQOiAwMDE4OmZmZmZiYjkwMDA0NmJjOTggRUZMQUdTOiAwMDAxMDAwNg0KPj4gW8KgwqDC
+oCA3LjUzNzkwM10gUkFYOiAwMDAwMDAwMDAwMDAwMTAwIFJCWDogZmZmZjlhNjE4MjA1MzAw
+MCBSQ1g6IA0KPj4gZmZmZjlhNjRjZjdhMzVjMA0KPj4gW8KgwqDCoCA3LjUzNzkwNF0gUkRY
+OiAwMDAwMDAwMDAwMDAwMTAwIFJTSTogZmZmZmZmZmY4ODRlYWI4MCBSREk6IA0KPj4gZmZm
+ZjlhNjE4MTEzMDAwMA0KPj4gW8KgwqDCoCA3LjUzNzkwNl0gUkJQOiAwMDAwMDAwMDAwMDAy
+MDAwIFIwODogZmZmZjlhNjRjZjdhMzYxMCBSMDk6IA0KPj4gZmZmZjlhNjRjZjdhMzY1OA0K
+Pj4gW8KgwqDCoCA3LjUzNzkwN10gUjEwOiAwMDAwMDAwMDAwMDAwMDAyIFIxMTogMDAwMDAw
+MDAwMDAwMDAwMSBSMTI6IA0KPj4gZmZmZjlhNjE4M2JmYTkwMA0KPj4gW8KgwqDCoCA3LjUz
+NzkwOF0gUjEzOiBkZWFkMDAwMDAwMDAwMTIyIFIxNDogZmZmZmZmZmY4ODRlYWI4MCBSMTU6
+IA0KPj4gZmZmZjlhNjE4M2JmYTkyMA0KPj4gW8KgwqDCoCA3LjUzNzkxMF0gRlM6wqAgMDAw
+MDAwMDAwMDAwMDAwMCgwMDAwKSBHUzpmZmZmOWE2NGNmNjAwMDAwKDAwMDApIA0KPj4ga25s
+R1M6MDAwMDAwMDAwMDAwMDAwMA0KPj4gW8KgwqDCoCA3LjUzNzkxMl0gQ1M6wqAgMDAxMCBE
+UzogMDAwMCBFUzogMDAwMCBDUjA6IDAwMDAwMDAwODAwNTAwMzMNCj4+IFvCoMKgwqAgNy41
+Mzc5MTNdIENSMjogMDAwMDU2MWM5NGVkNDAwMCBDUjM6IDAwMDAwMDA0MWQ2MmMwMDAgQ1I0
+OiANCj4+IDAwMDAwMDAwMDBmNTBlZjANCj4+IFvCoMKgwqAgNy41Mzc5MTVdIFBLUlU6IDU1
+NTU1NTU0DQo+PiBbwqDCoMKgIDcuNTM3OTE2XSBDYWxsIFRyYWNlOg0KPj4gW8KgwqDCoCA3
+LjUzNzkxOF3CoCA8VEFTSz4NCj4+IFvCoMKgwqAgNy41Mzc5MTldwqAgPyBkZWxheWVkX3dv
+cmtfdGltZXJfZm4rMHg2My8weDkwDQo+PiBbwqDCoMKgIDcuNTM3OTIzXcKgID8gX193YXJu
+LmNvbGQrMHg5My8weGVkDQo+PiBbwqDCoMKgIDcuNTM3OTI2XcKgID8gZGVsYXllZF93b3Jr
+X3RpbWVyX2ZuKzB4NjMvMHg5MA0KPj4gW8KgwqDCoCA3LjUzNzkzM13CoCA/IHJlcG9ydF9i
+dWcrMHhmZi8weDE0MA0KPj4gW8KgwqDCoCA3LjUzNzkzN13CoCA/IGhhbmRsZV9idWcrMHgz
+Yy8weDgwDQo+PiBbwqDCoMKgIDcuNTM3OTQyXcKgID8gZXhjX2ludmFsaWRfb3ArMHgxNy8w
+eDcwDQo+PiBbwqDCoMKgIDcuNTM3OTQ1XcKgID8gYXNtX2V4Y19pbnZhbGlkX29wKzB4MWEv
+MHgyMA0KPj4gW8KgwqDCoCA3LjUzNzk0N13CoCA/IF9fcGZ4X2RlbGF5ZWRfd29ya190aW1l
+cl9mbisweDEwLzB4MTANCj4+IFvCoMKgwqAgNy41Mzc5NTFdwqAgPyBfX3BmeF9kZWxheWVk
+X3dvcmtfdGltZXJfZm4rMHgxMC8weDEwDQo+PiBbwqDCoMKgIDcuNTM3OTU1XcKgID8gZGVs
+YXllZF93b3JrX3RpbWVyX2ZuKzB4NjMvMHg5MA0KPj4gW8KgwqDCoCA3LjUzNzk1OF3CoCA/
+IF9fcGZ4X2RlbGF5ZWRfd29ya190aW1lcl9mbisweDEwLzB4MTANCj4+IFvCoMKgwqAgNy41
+Mzc5NjFdwqAgY2FsbF90aW1lcl9mbisweDI3LzB4MTIwDQo+PiBbwqDCoMKgIDcuNTM3OTY1
+XcKgIF9fcnVuX3RpbWVycysweDE4ZC8weDMwMA0KPj4gW8KgwqDCoCA3LjUzNzk2OV3CoCB0
+aW1lcl9leHBpcmVfcmVtb3RlKzB4NTEvMHg4MA0KPj4gW8KgwqDCoCA3LjUzNzk3M13CoCB0
+bWlncl9oYW5kbGVfcmVtb3RlKzB4M2NjLzB4NDcwDQo+PiBbwqDCoMKgIDcuNTM3OTc5XcKg
+IGhhbmRsZV9zb2Z0aXJxcy5pc3JhLjArMHhiNS8weDIzMA0KPj4gW8KgwqDCoCA3LjUzNzk4
+Ml3CoCA/IF9fcGZ4X3NtcGJvb3RfdGhyZWFkX2ZuKzB4MTAvMHgxMA0KPj4gW8KgwqDCoCA3
+LjUzNzk4Nl3CoCBydW5fdGltZXJzZCsweDNlLzB4ODANCj4+IFvCoMKgwqAgNy41Mzc5ODhd
+wqAgc21wYm9vdF90aHJlYWRfZm4rMHhkYS8weDFkMA0KPj4gW8KgwqDCoCA3LjUzNzk5Ml3C
+oCBrdGhyZWFkKzB4Y2YvMHgxMDANCj4+IFvCoMKgwqAgNy41Mzc5OTVdwqAgPyBfX3BmeF9r
+dGhyZWFkKzB4MTAvMHgxMA0KPj4gW8KgwqDCoCA3LjUzNzk5N13CoCByZXRfZnJvbV9mb3Jr
+KzB4MzEvMHg1MA0KPj4gW8KgwqDCoCA3LjUzODAwMF3CoCA/IF9fcGZ4X2t0aHJlYWQrMHgx
+MC8weDEwDQo+PiBbwqDCoMKgIDcuNTM4MDAxXcKgIHJldF9mcm9tX2ZvcmtfYXNtKzB4MWEv
+MHgzMA0KPj4gW8KgwqDCoCA3LjUzODAwNl3CoCA8L1RBU0s+DQo+PiBbwqDCoMKgIDcuNTM4
+MDA3XSAtLS1bIGVuZCB0cmFjZSAwMDAwMDAwMDAwMDAwMDAwIF0tLS0NCj4+DQo+PiBUaGUg
+d2hvbGUgZG1lc2cgaXM6DQo+PiBodHRwczovL2xpbnV4LWhhcmR3YXJlLm9yZy8/cHJvYmU9
+MjgwNTdmOWVkMiZsb2c9ZG1lc2cNCj4gDQo+IE9uIGEgZmlyc3QgZ2xhbmNlIHRoaXMgbG9v
+a3MgbGlrZSBhbiB1bnJlbGF0ZWQgaXNzdWUgdG8gbWUuIENvdWxkIHlvdSANCj4gdGVzdCB3
+aXRoIENPTkZJR19YODZfSU5URUxfUFNUQVRFPW4/IChJZiBkb2Vzbid0IG1hdHRlciBpZiB5
+b3UgZG8gdGhpcyANCj4gd2l0aCBteSBwYXRjaCBhcHBsaWVkIG9yIG5vdCwgd2l0aG91dCBD
+T05GSUdfWDg2X0lOVEVMX1BTVEFURSB0aGUgZHJpdmVyIA0KPiBpc24ndCBidWlsZC4pDQo+
+IA0KPiBCZXN0IHJlZ2FyZHMNCj4gVXdlDQpZZXMsIHRoaXMgV0FSTklORyBpcyB1bnJlbGF0
+ZWQgaXNzdWUgdG8geW91ciBwYXRjaC5JdCBjb21lIGZyb20ga2VybmVsIA0KW2t0aW1lcnNd
+LCBzbyBJIGRvbid0IG5lZWQgZG8gdGVzdCB3aXRoIENPTkZJR19YODZfSU5URUxfUFNUQVRF
+PW4uDQoNCkkgYXBwbHkgeW91ciBwYXRjaCBvbiBEZWJpYW4ga2VybmVsIDYuMTAuMTEtMSAo
+MjAyNC0wOS0yMikgc291cmNlIGNvZGUuDQoNCnVuYW1lIC1hDQpMaW51eCBhdHpsaW51eC1j
+ZSA2LjEwLjExLXJ0LWFtZDY0ICMxIFNNUCBQUkVFTVBUX1JUIGF0emxpbnV4IDYuMTAuMTEt
+MSANCigyMDI0LTA5LTIyKSB4ODZfNjQgR05VL0xpbnV4DQoNClRoZXJlIGlzIG5vdCBhbnkg
+ZXJyb3JzIGluIGRtZXNnIG5vdywgd29yayBwZXJmZWN0IQ0KSU1ITywgdGhpcyBwYXRjaCBm
+aXggdGhpcyBidWcgaW4ga2VybmVsIDYuMTAuMTEtMS4NCg0KDQpUaGFua3MhDQoNCi0tIA0K
+6IKW55ub5paHIHhpYW8gc2hlbmcgd2VuDQpEZWJpYW4gUUEgcGFnZTogDQpodHRwczovL3Fh
+LmRlYmlhbi5vcmcvZGV2ZWxvcGVyLnBocD9sb2dpbj1hdHpsaW51eCU0MHNpbmEuY29tDQpE
+ZWJpYW4gc2Fsc2E6IGh0dHBzOi8vc2Fsc2EuZGViaWFuLm9yZy9hdHpsaW51eC1ndWVzdA0K
+R251UEcgUHVibGljIEtleTogMHgwMDE4NjYwMjMzOTI0MENCDQo=
 
-The module command-line options, as defined by ModuleParameters()
-module-level functions e.g. in rteval/modules/loads/hackbench.py.
+--------------tuEgGnBGmx9Ye0T7ZWjpPxrH--
 
-> > +        # Set up options for measurement modules only
-> > +        if self.__modtype =3D=3D 'measurement':
-> > +            grparser.add_argument(f'--{self.__modtype}-run-on-isolcpus=
-',
-> > +                                  dest =3D
-> > f'{self.__modtype}___run_on_isolcpus',
-> > +                                  action =3D "store_true",
-> > +                                  default =3D
-> > config.GetSection("measurement").setdefault("run-on-isolcpus",
-> > "false").lower() =3D=3D "true",
-> > +                                  help =3D "Include isolated CPUs in
-> > default cpulist")
->
-> You already know it's measurement in this section, so why {self.__modtype=
-}?
->
-> Why does this need to be here rather than in rteval/modules/measurement.p=
-y?
->
-> >          for (modname, mod) in list(self.__modsloaded.items()):
-> >              opts =3D mod.ModuleParameters()
-> >              if len(opts) =3D=3D 0:
-> > @@ -296,7 +310,7 @@ reference from the first import"""
-> >                  # Ignore if a section is not found
-> >                  cfg =3D None
-> >
-> > -            modgrparser =3D parser.add_argument_group(f"Options for th=
-e
-> > {shortmod} module")
-> > +            grparser =3D parser.add_argument_group(f"Options for the
-> > {shortmod} module")
-> >              for (o, s) in list(opts.items()):
-> >                  descr =3D 'descr' in s and s['descr'] or ""
-> >                  metavar =3D 'metavar' in s and s['metavar'] or None
-> > @@ -311,7 +325,7 @@ reference from the first import"""
-> >                      default =3D 'default' in s and s['default'] or Non=
-e
-> >
-> >
-> > -                modgrparser.add_argument(f'--{shortmod}-{o}',
-> > +                grparser.add_argument(f'--{shortmod}-{o}',
-> >                                           dest=3Df"{shortmod}___{o}",
-> >                                           action=3D'store',
-> >                                           help=3D'%s%s' % (descr,
-> > @@ -319,8 +333,6 @@ reference from the first import"""
-> >                                           default=3Ddefault,
-> >                                           metavar=3Dmetavar)
->
-> Wouldn't "modparser" be more accurate, since this isn't for the entire
-> group?
->
-> Or we could reuse the mechanism for both group and module level (maybe
-> s/ModuleParameters/Parameters/) if it's not introducing more complexity t=
-han
-> it eliminates.
->
-> > diff --git a/rteval/modules/measurement/__init__.py
-> > b/rteval/modules/measurement/__init__.py
-> > index 9314d1cb6bbc..44708ce0b035 100644
-> > --- a/rteval/modules/measurement/__init__.py
-> > +++ b/rteval/modules/measurement/__init__.py
-> > @@ -29,17 +29,7 @@ class MeasurementModules(RtEvalModules):
-> >
-> >      def SetupModuleOptions(self, parser):
-> >          "Sets up all the measurement modules' parameters for the optio=
-n
-> > parser"
-> > -        grparser =3D super().SetupModuleOptions(parser)
-> > -
-> > -        # Set up options specific for measurement module group
-> > -        grparser.add_argument("--measurement-run-on-isolcpus",
-> > -                              dest=3D"measurement___run_on_isolcpus",
-> > -                              action=3D"store_true",
-> > -
-> > default=3Dself._cfg.GetSection("measurement").setdefault("run-on-isolcp=
-us",
-> > "false").lower()
-> > -                                      =3D=3D "true",
-> > -                              help=3D"Include isolated CPUs in default
-> > cpulist")
-> > -        grparser.add_argument('--idle-set',
-> > dest=3D'measurement___idlestate', metavar=3D'IDLESTATE',
-> > -                        default=3DNone, help=3D'Idle state depth to se=
-t on
-> > cpus running measurement modules')
-> > +        super().SetupModuleOptions(parser)
->
-> Why is this method still here if all it does is call super?
->
-> -Crystal
->
+--------------SIlBK5ixpsOYOPmeD1oJPZOt
+Content-Type: application/pgp-signature; name="OpenPGP_signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="OpenPGP_signature.asc"
 
-The super() call is there to get the parent class. It should rather be
-RtEvalModules.SetupModuleOptions(self, parser) so that the parent
-constructor does not get called again redundantly.
+-----BEGIN PGP SIGNATURE-----
 
-I suggest reverting this commit and going back to my original
-implementation, which does not have the issues you are pointing out
-here (measurement options outside of measurement modules and
-overriding the grparser variable). We will discuss this offline and
-give an update soon.
+wsF5BAABCAAjFiEEvGv7H5NUQYeSuhtTJ2Egg8PSprAFAmb2fiQFAwAAAAAACgkQJ2Egg8PSprC+
+nRAAj+0mCJ8o/1547zkVr/TY7jIOEmms8MOAnEMWXnJjlBv5iuGCHWlwIOycUc9HQtjLkGeyVNhU
+KLWnLY3Es9sONlf4xGn1sW/W3kVsk/NW1HcXxIH4mjVKLGDb9dRzYjYjxIEnKQQygtDkqYNCt6Ga
+GM+Qb05lJVz8MZwFI+QFQxOPhaj7fNHtY8USCAJHQZm1IR6mCeFQ7yw0IY8P2hfWaiDCpRV6dAGl
+HR5VNYqdJtg+Mg0aheWRwuD62xYmGSRLIkeJmk2yV+Xy21+kfTJh6TDxX34Hx5sIlipvhUclLBQ/
+oeeBXDp+7SkcCCd5AFcqPraf9RMPivfhlz/IPvDFti9ipAknT/opH/dfuvhiIG2Pg35R4qrQiJ/O
+6GfS1R9hSq49lhRnI3eG8T8lCmwjvv8fhbR1LcJMIl6Ec7XjEIgaY00nIsqyahR/m4lieAdF3x5/
+O9bmQupVWTAgCOhV4whqZMpydP5NhzcRXWabBBo33Qo1lFbSwj1I2EIL0rEwkeJsHVsz4wh0Ck2m
+efmzM8Ex/Xth+W6jrVtlD1AFutHhkR+05mToR1uy8NSyYHYavk2HuqOueAP1ZJXNwWkjaPfHIOg6
+/b6doEAGS9zirsX8OPrtpRB6eLbY7Zmn95rFje3uAP3aBbnGOfrDXO0NhgD2M83kauJPrKqChq1l
+AV0=
+=RXsX
+-----END PGP SIGNATURE-----
 
-Tomas
-
+--------------SIlBK5ixpsOYOPmeD1oJPZOt--
