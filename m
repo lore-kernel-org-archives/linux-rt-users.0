@@ -1,67 +1,75 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B96A1D1F6D;
-	Wed,  2 Oct 2024 18:13:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79AB6132106
+	for <linux-rt-users@vger.kernel.org>; Fri,  4 Oct 2024 07:15:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727892819; cv=none; b=SNj/n0trOA4tzqkeKJufH6yDWs38/kxSrB1Km7cys/7M11UfOqqTAEij5HVH9TvZ6c4G0oCD8eh82k01FwhdNrmnn+QKxce2GRdwEwmlz8nYsP7j1iWdbkrzan/qQE7Lx23wFFTndPj3C2gGCSAFXHtp2PA8s4RhY8/pLtJmcE8=
+	t=1728026103; cv=none; b=rnvyrOzk3gB+KW2yOYULNmvmYysxsSBf9DmJdsjrvWKVF95iMY2TnB2eANGsH/Ipo12bMCHlsFaQD3I//KN8gXLHc1tnLqCLa06w5qfQ2TWafjwiMU5aBAAB79AmpG11FILNTlJTmHUZRBAtwytlPZGdLubtQhI0HA4xXVezrKE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727892819; c=relaxed/simple;
-	bh=9WXAlYDtGOD91RcJVkNwOMg/7yNh7h8n3wWt5jnpalM=;
-	h=From:Subject:Date:Message-ID:To; b=U9vflI4cQ6FaLhudj4aqvcboQr17NkbuQ0uChwg//Q8vModdlCFfoJVDu7DPbNPgFS/6cZ3pDrC4mTV/9EUuro11BYjnANzSpNvg/9PqxQeZNPmNo2peKNefZrSGEie09R3KsfiIT05b37OZyHTcQ9Lygm+rG3ZgFSrHaU8Qlp0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C10C4C4CEC2;
-	Wed,  2 Oct 2024 18:13:38 +0000 (UTC)
-From: Joseph Salisbury <joseph.salisbury@oracle.com>
-Subject: [ANNOUNCE] 5.15.167-rt79
-Date: Wed, 02 Oct 2024 18:04:00 -0000
-Message-ID: <172789224014.2619596.4504014412810368464@jupiter>
-To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <josephtsalisbury@gmail.com>,Joseph Salisbury <joseph.salisbury@oracle.com>
+	s=arc-20240116; t=1728026103; c=relaxed/simple;
+	bh=e+u/99bUR550PmlRK6RBeRAn5NUY9SmfATjGbW9ZK0M=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=V/C9N9Um699Wub0ddFs8NliBq6fIY4YN5uM8NToxBfN1XUd3vjLnCbV7UnKey+1ULFsH+oIi/PkXJDDDs/9MprmzxJNVqpqyuE777NC7pT9RgNMoIDfc535d9T8l7lp77tJ+q7s/AwyPF1mNN01UvVOKawy5RSlggcDez5InW4U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=1pN6a5AI; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ajCELKuX; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="1pN6a5AI";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ajCELKuX"
+Date: Fri, 4 Oct 2024 09:14:51 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1728026092;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=e+u/99bUR550PmlRK6RBeRAn5NUY9SmfATjGbW9ZK0M=;
+	b=1pN6a5AIFzGmHyVRHkRKygCallhkY42Pbkm3Qtq5qsyDk/yGa99fWN0Cdc2CwT1XSbUS+p
+	eR7KWdd14blmy69YZLdQ16CzECmMbCrfH8ARmBRWcl2IMR2GL/ZHcio4/Htr+e92YMb6od
+	LTbiiz9VxwdTdEXN4xtBlog+bHESUNga1yv1VXuGzK6EVGjF53glAqJiGXn4vUTzHcAmPq
+	lXfzuv7jN5P25UiVK4JPx5DCi1Cph3iynRwA5tzCjDDVKxpp2trdjeIQhjemfmHKaXB4u8
+	G/uPpMuSKU0HcaBK3iCW39BZQWorXESjOnZg51DAlxaGxYle5dnvaEwmCLf54w==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1728026092;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=e+u/99bUR550PmlRK6RBeRAn5NUY9SmfATjGbW9ZK0M=;
+	b=ajCELKuX36w2QSrsDoCDVEZsTRYXhPVJy7VpowLS1BRavbVwziFIB77LDlvisew55N9bY6
+	hErBl1/jMA2WOlBw==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Mohammad Pivezhandi <pivezhandi@wayne.edu>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: Re: Problem with using CPUSET along with preempt-rt patch on jetpack
+ 4.6 linux kernel
+Message-ID: <20241004071451.-lAqS4qJ@linutronix.de>
+References: <PH0PR11MB5830EAFF75D55F0CF20B035EDE6B2@PH0PR11MB5830.namprd11.prod.outlook.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <PH0PR11MB5830EAFF75D55F0CF20B035EDE6B2@PH0PR11MB5830.namprd11.prod.outlook.com>
 
-Hello RT-list!
+On 2024-09-27 14:56:51 [+0000], Mohammad Pivezhandi wrote:
+> Hello,
+Hi,
 
-I'm pleased to announce the 5.15.167-rt79 stable release.
+> I am working with jetson tx2 and got issues with cpu isolation through
+> cpuset when I apply preempt-rt patch. I use jetson linux 32.7.5 from
+> jetpack 4.6.5 and after applying the preempt-rt patch it disables the
+> cpuset for assigning core to the tasks. Without preempt rt the core
+> isolation works perfectly, and I am wondering if there is any fixation
+> to my problem. Thanks for your help in advance.
 
-You can get this release via the git tree at:
+By cpuset you I guess you mean cgroup with cpuset support. What do you
+mean that it does not work? I don't remember that something has been
+here.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> Best,
+> Mohammad
 
-  branch: v5.15-rt
-  Head SHA1: 48b8624ddf7fdda5869adfeb11d11559511c171f
-
-Or to build 5.15.167-rt79 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.15.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v5.x/patch-5.15.167.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/5.15/patch-5.15.167-rt79.patch.xz
-
-
-Enjoy!
-Joseph Salisbury
-
-Changes from v5.15.163-rt78:
----
-
-Joseph Salisbury (1):
-      Linux 5.15.167-rt79
----
-localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
----
-diff --git a/localversion-rt b/localversion-rt
-index 30758e0b2242..cf94a551bf32 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt78
-+-rt79
+Sebastian
