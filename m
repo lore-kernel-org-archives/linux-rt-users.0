@@ -1,75 +1,85 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from 20.mo583.mail-out.ovh.net (20.mo583.mail-out.ovh.net [91.121.55.239])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79AB6132106
-	for <linux-rt-users@vger.kernel.org>; Fri,  4 Oct 2024 07:15:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 823721C878E
+	for <linux-rt-users@vger.kernel.org>; Mon,  7 Oct 2024 10:49:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.121.55.239
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728026103; cv=none; b=rnvyrOzk3gB+KW2yOYULNmvmYysxsSBf9DmJdsjrvWKVF95iMY2TnB2eANGsH/Ipo12bMCHlsFaQD3I//KN8gXLHc1tnLqCLa06w5qfQ2TWafjwiMU5aBAAB79AmpG11FILNTlJTmHUZRBAtwytlPZGdLubtQhI0HA4xXVezrKE=
+	t=1728298171; cv=none; b=juZv3WQQPN5QUoeFil+5pcavfggikIBUoW3u/720dNvVcqGcAVzapNhTl0d2PveT3+49KUDITpH/43/SQ9TvmFWMDUM6nxwf0m1pYNtZ11CzCAjgJNAtNuXTPEqrGVDYD+PzLXtoniJ72/LzOetAMcgRHYMvMjZG3Ewyiy1EoVQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728026103; c=relaxed/simple;
-	bh=e+u/99bUR550PmlRK6RBeRAn5NUY9SmfATjGbW9ZK0M=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=V/C9N9Um699Wub0ddFs8NliBq6fIY4YN5uM8NToxBfN1XUd3vjLnCbV7UnKey+1ULFsH+oIi/PkXJDDDs/9MprmzxJNVqpqyuE777NC7pT9RgNMoIDfc535d9T8l7lp77tJ+q7s/AwyPF1mNN01UvVOKawy5RSlggcDez5InW4U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=1pN6a5AI; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ajCELKuX; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1728298171; c=relaxed/simple;
+	bh=JynbA6WbipiME6NxE4m7CRHqnl7xZhqTHlCLWW58pO8=;
+	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=owG7S7hLJcoR/NAx5BuxwieCMXyb668NDQITaCMF1fRAS489GZxDO/W8wqYTC/wnnmYv3jU8w3qC7XPgdGHKN52Yz3HzXjYsKHAEQDRerD2oOmDFRbmiZqhl1qh5wyrT2Nn/hYy2EcGs2fS8o+Yo4WnqbMxQyzny5KwkcducWrA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr; spf=pass smtp.mailfrom=chaudron-nautique.fr; dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b=XgK9tOZA; arc=none smtp.client-ip=91.121.55.239
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chaudron-nautique.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="1pN6a5AI";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ajCELKuX"
-Date: Fri, 4 Oct 2024 09:14:51 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1728026092;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=e+u/99bUR550PmlRK6RBeRAn5NUY9SmfATjGbW9ZK0M=;
-	b=1pN6a5AIFzGmHyVRHkRKygCallhkY42Pbkm3Qtq5qsyDk/yGa99fWN0Cdc2CwT1XSbUS+p
-	eR7KWdd14blmy69YZLdQ16CzECmMbCrfH8ARmBRWcl2IMR2GL/ZHcio4/Htr+e92YMb6od
-	LTbiiz9VxwdTdEXN4xtBlog+bHESUNga1yv1VXuGzK6EVGjF53glAqJiGXn4vUTzHcAmPq
-	lXfzuv7jN5P25UiVK4JPx5DCi1Cph3iynRwA5tzCjDDVKxpp2trdjeIQhjemfmHKaXB4u8
-	G/uPpMuSKU0HcaBK3iCW39BZQWorXESjOnZg51DAlxaGxYle5dnvaEwmCLf54w==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1728026092;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=e+u/99bUR550PmlRK6RBeRAn5NUY9SmfATjGbW9ZK0M=;
-	b=ajCELKuX36w2QSrsDoCDVEZsTRYXhPVJy7VpowLS1BRavbVwziFIB77LDlvisew55N9bY6
-	hErBl1/jMA2WOlBw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Mohammad Pivezhandi <pivezhandi@wayne.edu>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: Re: Problem with using CPUSET along with preempt-rt patch on jetpack
- 4.6 linux kernel
-Message-ID: <20241004071451.-lAqS4qJ@linutronix.de>
-References: <PH0PR11MB5830EAFF75D55F0CF20B035EDE6B2@PH0PR11MB5830.namprd11.prod.outlook.com>
+	dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b="XgK9tOZA"
+Received: from director7.ghost.mail-out.ovh.net (unknown [10.109.139.201])
+	by mo583.mail-out.ovh.net (Postfix) with ESMTP id 4XMbM221ynz1VbN
+	for <linux-rt-users@vger.kernel.org>; Mon,  7 Oct 2024 10:42:22 +0000 (UTC)
+Received: from ghost-submission-55b549bf7b-hcrth (unknown [10.110.101.176])
+	by director7.ghost.mail-out.ovh.net (Postfix) with ESMTPS id 10EE01FEC4
+	for <linux-rt-users@vger.kernel.org>; Mon,  7 Oct 2024 10:42:21 +0000 (UTC)
+Received: from chaudron-nautique.fr ([37.59.142.101])
+	by ghost-submission-55b549bf7b-hcrth with ESMTPSA
+	id d9bmMw27A2diUAQAjGl8Ew
+	(envelope-from <vanvan@chaudron-nautique.fr>)
+	for <linux-rt-users@vger.kernel.org>; Mon, 07 Oct 2024 10:42:21 +0000
+Authentication-Results:garm.ovh; auth=pass (GARM-101G004ee07d8b7-69e2-4d82-ae15-db95e3d67149,
+                    176FFB521F46F6134C0E377701CBA16F67FAFFF7) smtp.auth=vanvan@chaudron-nautique.fr
+X-OVh-ClientIp:82.64.108.188
+Message-ID: <f2da9d69-09a6-4086-953b-a24f355f0033@chaudron-nautique.fr>
+Date: Mon, 7 Oct 2024 12:42:04 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <PH0PR11MB5830EAFF75D55F0CF20B035EDE6B2@PH0PR11MB5830.namprd11.prod.outlook.com>
+User-Agent: Mozilla Thunderbird
+To: linux-rt-users@vger.kernel.org
+Content-Language: en-US
+From: Le Chaudron Nautique <vanvan@chaudron-nautique.fr>
+Subject: kernel module and priority or affinity
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Ovh-Tracer-Id: 13478710737356704668
+X-VR-SPAMSTATE: OK
+X-VR-SPAMSCORE: 0
+X-VR-SPAMCAUSE: gggruggvucftvghtrhhoucdtuddrgeeftddrvddvledgfeduucetufdoteggodetrfdotffvucfrrhhofhhilhgvmecuqfggjfdpvefjgfevmfevgfenuceurghilhhouhhtmecuhedttdenucenucfjughrpefkffggfgfvhffutgfgsehtjeertddtvdejnecuhfhrohhmpefnvgcuvehhrghuughrohhnucfprghuthhiqhhuvgcuoehvrghnvhgrnhestghhrghuughrohhnqdhnrghuthhiqhhuvgdrfhhrqeenucggtffrrghtthgvrhhnpeelkeetiedvjefgtddtvdffvdeiieejgeeludduvdffhefhkeetleejhfejgeeiveenucfkphepuddvjedrtddrtddruddpkedvrdeigedruddtkedrudekkedpfeejrdehledrudegvddruddtudenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepihhnvghtpeduvdejrddtrddtrddupdhmrghilhhfrhhomhepvhgrnhhvrghnsegthhgruhgurhhonhdqnhgruhhtihhquhgvrdhfrhdpnhgspghrtghpthhtohepuddprhgtphhtthhopehlihhnuhigqdhrthdquhhsvghrshesvhhgvghrrdhkvghrnhgvlhdrohhrghdpoffvtefjohhsthepmhhoheekfedpmhhouggvpehsmhhtphhouhht
+DKIM-Signature: a=rsa-sha256; bh=w1QaNfNp7Qy+ZGXCPuRjQEoOziQy+lnvPNRrMoZrpEE=;
+ c=relaxed/relaxed; d=chaudron-nautique.fr; h=From;
+ s=ovhmo4169961-selector1; t=1728297742; v=1;
+ b=XgK9tOZAl/qNzsfF9ROOKAZH95nogemKH6kTPWUYnys9me3lrnDpKfvnoxuAFgh/rcO2DpK4
+ 9fD2Z8iS4BZIulB1CUGEP3aUCDYW6X+iQgXL7+DIQVK8o3yOzHlkQhaDIwf3HULPQyDQ+JW8srR
+ dfgCY+9MR2y0wTYwAlJelOXLRBR4YQbGZjuja9VSWesyLxjXZx2ghE+viaTY0RntnofL8zFOM6g
+ 3cTGujb7QvbiSyF5uJBf/dah0boGinjIZtdEl0l8sB0H7euA02g27HlGlqyrPkII9wJXSn8e5Hk
+ oy2g3hV9K00nMjno9NDPz0eggWzBekE5kw6b/iGzORmAg==
 
-On 2024-09-27 14:56:51 [+0000], Mohammad Pivezhandi wrote:
-> Hello,
-Hi,
+Hello,
 
-> I am working with jetson tx2 and got issues with cpu isolation through
-> cpuset when I apply preempt-rt patch. I use jetson linux 32.7.5 from
-> jetpack 4.6.5 and after applying the preempt-rt patch it disables the
-> cpuset for assigning core to the tasks. Without preempt rt the core
-> isolation works perfectly, and I am wondering if there is any fixation
-> to my problem. Thanks for your help in advance.
+after a lot of reading, I believe I'm still missing something concerning 
+"priority" level (or is it my understanding of the kernel ?).
 
-By cpuset you I guess you mean cgroup with cpuset support. What do you
-mean that it does not work? I don't remember that something has been
-here.
+I would like to set up the reading of an encoder (via GPIO) and the 
+triggering of an output with RT to be able to define the max speed. 
+Every thing else can be non-RT
 
-> Best,
-> Mohammad
+If it write a kernel module (I used the site of embetronix for that) to 
+manage the GPIO interrupts and output, what is the "priority" of this 
+module (since interrupts are priority 50 I assume ? I believe we can't 
+change this value)
 
-Sebastian
+If I use cpu isolation / interruts cpu affinity, is that equivalent to 
+dedicate a cpu to this module ? Or will it still sometimes be "busy" 
+with other cpus ?
+
+If I am not mistaken, it is not possible to manage affinity between 
+kernel module and cpu, it is only for the treads or interrupt by masking ?
+
+Thanks for your help.
+
+Mathieu
+
+-- 
