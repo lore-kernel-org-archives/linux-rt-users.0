@@ -1,53 +1,62 @@
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C39F6206962;
-	Tue,  8 Oct 2024 17:39:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1345420ADC9;
+	Tue,  8 Oct 2024 18:09:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728409149; cv=none; b=PwMuvt5dVXSSknXmNbYGesg3D+cFc0eeATUFKJR5w25Oxmsp2en157kwUC6lRyUWD2+t+ge7Gh2Bf1OIUtt1mF8V+nadYeq56UeBB7xRe3xHlFcBn3b7T2ii0VQkJln3/NaMLCsKKO9xJs3zgHo8CkmakvrSTspijZLZpWtc31s=
+	t=1728410956; cv=none; b=VJGBeYWyQg0A1PJrsBLYYMPvmO5O5b+r+RB9hdib7vfgTTLmrtuo4CZAW3oWK803/ISC/WLdcPbbuoRJQI2pEMUavZPRHBTYG3LtFSVmmnhNqscA5RoBxQZ6VKoLM/tnuwO2zYVRpF2J5M3iyk2HWI3DALEwMm7EJIO3q8gX8ho=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728409149; c=relaxed/simple;
-	bh=LeNmQrCvMNToDiO8+U1mr3Y/hn1bq2qDwFPHijzQuOA=;
+	s=arc-20240116; t=1728410956; c=relaxed/simple;
+	bh=EhH9DC1i9cz8xPTOhL6YRHnQ8m9vWEkv8IP9TCDsvd4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=hRpv7H0garhs1exO+4+tOGRXHlEqokOY2AV2TLnVXzhIuIG00jVL0NZYAE2l8babRI2TRJxw4Ly4+wROLRzVH3eMCc652kcuasdi99KT25amkhqQReuSmA25A3xtTPuoH/1gvvPj1SvjTF01Jx4XjCSOzpB5veU5yCzi6icBAF8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=DHDV2LrI; arc=none smtp.client-ip=90.155.50.34
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	 Content-Type:Content-Disposition:In-Reply-To; b=BdRiEEFyGmVB6fb2kbUTvWdYUan16HEEdIeAy/GftgHV9msohiesifNrXE3cH1T1EZGt0kjM3QIouMwfImFSa2zjIXwVZZmoDidBysmZdNRWPcc5zcaoNBrSinnA62FAeumbx/6loHYzdRYQPpEACbJqHphpxC1iZYG0SNVL0PQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=N9BYbyXe; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=+hdnyHbL; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="DHDV2LrI"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Transfer-Encoding:
-	Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
-	Sender:Reply-To:Content-ID:Content-Description;
-	bh=LeNmQrCvMNToDiO8+U1mr3Y/hn1bq2qDwFPHijzQuOA=; b=DHDV2LrIIQAjuxu4quq9XxH46o
-	+a5Kg93/BhPUz3F9q7f8t50MkOgIP1DTLW3DU6OFzSyGK8Q0dVmpvfhOKPErC45Q9Eo58KKDuOxHh
-	di55iWcvYcx0HACbiD/NL/amMGbyIgMO3yST6fmC4eCVv/URiVSR5+/6ODRq2BBFNv6j1r4NLAT0l
-	3ommyHCh4yW4qVxGnmgDfIEacshrGs6n4HyYtxIQn3Js1ifFrCy1cSPDGA2H6di1GO0udaxbr+h/d
-	H205lD65Imt6q8G0/p6mlGikpjWoWqKGcCXucMavT7cqGgKLaD5BDzUROzq4Jg603CML2WdiqW4U/
-	edq7GUiw==;
-Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-	by casper.infradead.org with esmtpsa (Exim 4.98 #2 (Red Hat Linux))
-	id 1syEAm-00000002qRG-0gZ3;
-	Tue, 08 Oct 2024 17:39:01 +0000
-Received: by noisy.programming.kicks-ass.net (Postfix, from userid 1000)
-	id 93E47300599; Tue,  8 Oct 2024 19:38:59 +0200 (CEST)
-Date: Tue, 8 Oct 2024 19:38:59 +0200
-From: Peter Zijlstra <peterz@infradead.org>
-To: Juri Lelli <juri.lelli@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
-	Darren Hart <dvhart@infradead.org>,
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="N9BYbyXe";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="+hdnyHbL"
+Date: Tue, 8 Oct 2024 20:09:11 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1728410953;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=EhH9DC1i9cz8xPTOhL6YRHnQ8m9vWEkv8IP9TCDsvd4=;
+	b=N9BYbyXefgSWIiYEf4qVWdZdWtXAJhYa1z+rB+MCCmciWnWubgbb2eWBA5ADkntCnrXOoX
+	1daNwreD5wcHm81KGdTZ6dZuzpEPLmk+Upz3iG6yIR4paxwef/fDWeT07/uvitPS9dGC8n
+	cH2jJzNv+x/GDrCK6gTdWDDGOdFR8oxXUdtJ5894MJLdjidQICgsNM/F84BjzqWU6ahg0S
+	prTl6JqC4bu1swbIBySmCriNfzgct7l6PKAcJRakGUM3HCijzsXWEqONAdOjYU7KU43yFW
+	JQyks7NPpb0s+L9pK274St/6+0XpuN77yNSzS0xdZz/zn13tOKoLqMYTelpBIQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1728410953;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=EhH9DC1i9cz8xPTOhL6YRHnQ8m9vWEkv8IP9TCDsvd4=;
+	b=+hdnyHbLxnOG4ef70EQs8c9ALb31wcaY2hQDzwCHGOVTIwRjk+JjCnkY7Sc0oDBbnD7g0x
+	GhmLP+zO1ojKDhBg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: =?utf-8?B?QW5kcsOp?= Almeida <andrealmeid@igalia.com>
+Cc: Juri Lelli <juri.lelli@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@redhat.com>, Darren Hart <dvhart@infradead.org>,
 	Davidlohr Bueso <dave@stgolabs.net>,
-	=?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>,
 	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Valentin Schneider <vschneid@redhat.com>,
-	Waiman Long <longman@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	Waiman Long <longman@redhat.com>
 Subject: Re: Futex hash_bucket lock can break isolation and cause priority
  inversion on RT
-Message-ID: <20241008173859.GE17263@noisy.programming.kicks-ass.net>
+Message-ID: <20241008180911.JiqZxSLg@linutronix.de>
 References: <ZwVOMgBMxrw7BU9A@jlelli-thinkpadt14gen4.remote.csb>
+ <98b3dcb0-8b64-45a5-9531-16aeb010c052@igalia.com>
+ <20241008155129.z7ZZVzW3@linutronix.de>
+ <46c259c2-5503-4a63-94ae-96660e5ce0eb@igalia.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -56,17 +65,17 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <ZwVOMgBMxrw7BU9A@jlelli-thinkpadt14gen4.remote.csb>
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <46c259c2-5503-4a63-94ae-96660e5ce0eb@igalia.com>
 
-On Tue, Oct 08, 2024 at 04:22:26PM +0100, Juri Lelli wrote:
-> Does this report make any sense? If it does, has this issue ever been
-> reported and possibly discussed? I guess it’s kind of a corner case, but
-> I wonder if anybody has suggestions already on how to possibly try to
-> tackle it from a kernel perspective.
+On 2024-10-08 12:59:24 [-0300], Andr=C3=A9 Almeida wrote:
+>=20
+> So if every process has it owns hb-lock, every process has their own buck=
+et?
+> It would act just like a linked list then?
 
-Any shared lock can cause such havoc. Futex hash buckets is just one of
-a number of very popular ones that's relatively easy to hit.
+If you have one hb-lock, yes. But you could have 4 or 8 slots. A slot
+has 64 bytes due to alignment. As-is the 8 slots would occupy 512 bytes
+of memory.
 
-I do have some futex-numa patches still pending, but they won't
-magically sure this either. Userspace needs help at the very least.
+Sebastian
