@@ -1,81 +1,149 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1345420ADC9;
-	Tue,  8 Oct 2024 18:09:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F7611E04A9
+	for <linux-rt-users@vger.kernel.org>; Tue,  8 Oct 2024 18:30:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728410956; cv=none; b=VJGBeYWyQg0A1PJrsBLYYMPvmO5O5b+r+RB9hdib7vfgTTLmrtuo4CZAW3oWK803/ISC/WLdcPbbuoRJQI2pEMUavZPRHBTYG3LtFSVmmnhNqscA5RoBxQZ6VKoLM/tnuwO2zYVRpF2J5M3iyk2HWI3DALEwMm7EJIO3q8gX8ho=
+	t=1728412244; cv=none; b=VjPx6zY137m48N87NiylG64XPeRxaxGKSJmCd+HY+G3VIJAaCVA6Pr7kxrmEKL0ue0jMuTZeEnhq80wG/Ub+ARDt3apUBTQkKTIVZnwvhCjJhw32Kx1GBVPqnGbsc2wMUvkkd0/Wq9GEes6iQyycYV3mnIZ+59jM1ZzB0E1JAp0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728410956; c=relaxed/simple;
-	bh=EhH9DC1i9cz8xPTOhL6YRHnQ8m9vWEkv8IP9TCDsvd4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=BdRiEEFyGmVB6fb2kbUTvWdYUan16HEEdIeAy/GftgHV9msohiesifNrXE3cH1T1EZGt0kjM3QIouMwfImFSa2zjIXwVZZmoDidBysmZdNRWPcc5zcaoNBrSinnA62FAeumbx/6loHYzdRYQPpEACbJqHphpxC1iZYG0SNVL0PQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=N9BYbyXe; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=+hdnyHbL; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1728412244; c=relaxed/simple;
+	bh=8xVOOFmtX2KBE6+tSZWykv1ITqfiNjiSwFJedUJnfE4=;
+	h=From:Message-ID:Date:MIME-Version:Subject:To:Cc:References:
+	 In-Reply-To:Content-Type; b=FW8oRgWm7HIykD5qVtHBpWRijOSW6b1OKkIYFbE9BTIQVDyFlDgfrpkE6LTD+la3pI+ZevNpIJ1fb/pSctYeDInQKYj7MLipIq0Ui+3P0bs2V5aMfGkVT1/m2UtFtC9VYuP97T2AQKMRXExdpR5MAKoedi0+4FSEVPeGUTC61hg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SKjc315m; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="N9BYbyXe";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="+hdnyHbL"
-Date: Tue, 8 Oct 2024 20:09:11 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1728410953;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SKjc315m"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1728412241;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=EhH9DC1i9cz8xPTOhL6YRHnQ8m9vWEkv8IP9TCDsvd4=;
-	b=N9BYbyXefgSWIiYEf4qVWdZdWtXAJhYa1z+rB+MCCmciWnWubgbb2eWBA5ADkntCnrXOoX
-	1daNwreD5wcHm81KGdTZ6dZuzpEPLmk+Upz3iG6yIR4paxwef/fDWeT07/uvitPS9dGC8n
-	cH2jJzNv+x/GDrCK6gTdWDDGOdFR8oxXUdtJ5894MJLdjidQICgsNM/F84BjzqWU6ahg0S
-	prTl6JqC4bu1swbIBySmCriNfzgct7l6PKAcJRakGUM3HCijzsXWEqONAdOjYU7KU43yFW
-	JQyks7NPpb0s+L9pK274St/6+0XpuN77yNSzS0xdZz/zn13tOKoLqMYTelpBIQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1728410953;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=EhH9DC1i9cz8xPTOhL6YRHnQ8m9vWEkv8IP9TCDsvd4=;
-	b=+hdnyHbLxnOG4ef70EQs8c9ALb31wcaY2hQDzwCHGOVTIwRjk+JjCnkY7Sc0oDBbnD7g0x
-	GhmLP+zO1ojKDhBg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: =?utf-8?B?QW5kcsOp?= Almeida <andrealmeid@igalia.com>
-Cc: Juri Lelli <juri.lelli@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@redhat.com>, Darren Hart <dvhart@infradead.org>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Waiman Long <longman@redhat.com>
-Subject: Re: Futex hash_bucket lock can break isolation and cause priority
- inversion on RT
-Message-ID: <20241008180911.JiqZxSLg@linutronix.de>
-References: <ZwVOMgBMxrw7BU9A@jlelli-thinkpadt14gen4.remote.csb>
- <98b3dcb0-8b64-45a5-9531-16aeb010c052@igalia.com>
- <20241008155129.z7ZZVzW3@linutronix.de>
- <46c259c2-5503-4a63-94ae-96660e5ce0eb@igalia.com>
+	bh=TCRUHecqN6EI9CDv0C/hIdbNPmg6aMFGTBf8PbU5EdE=;
+	b=SKjc315mZeOMK+UQAu1zw+YvLYqClSXJRjECysR8gVjl0Md40WKP2IuQ19ZrEuKXjQ/uDi
+	Mm6yxKXk8kGEdLc/jdkDV/2T9JEmBsFqMyDs/X0xtGqDN06cW1P/fHZ/dQt3uiGNzHPvCd
+	ngny6wzU0lXeMUh8BmPlvIs6WtTYM2k=
+Received: from mail-io1-f72.google.com (mail-io1-f72.google.com
+ [209.85.166.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-443-uSfxy-74Ot-bOy-GJyxw_w-1; Tue, 08 Oct 2024 14:30:35 -0400
+X-MC-Unique: uSfxy-74Ot-bOy-GJyxw_w-1
+Received: by mail-io1-f72.google.com with SMTP id ca18e2360f4ac-82cf261659bso927949239f.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 08 Oct 2024 11:30:35 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1728412235; x=1729017035;
+        h=content-transfer-encoding:in-reply-to:content-language:references
+         :cc:to:subject:user-agent:mime-version:date:message-id:from
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=TCRUHecqN6EI9CDv0C/hIdbNPmg6aMFGTBf8PbU5EdE=;
+        b=geCrYmVnhqp1OuHkoV+DnhOenFYKB/+3hiHI4PqkIcPWQ7pnysumPwWqOSNtVcl9XH
+         t2vrMqeaVSogyTWJRiiBjebTCMIY5cIWv/5L9zH8BjNX7EULfEis+BnHBiTH9kK2idN4
+         VuDYxislAnCwmR1HSUTjLOV8dD1nPQzcp6kr1ovB+VjiFPebkpNugrX0b1cUa4m24eyt
+         OF3u3pRzaiGC30JmiC1sEG45OzuQG3UiB0NK9ljFfcEiq/6bsBXLEwkvtRJpdV6Hafnb
+         3JyuxuzkVxLce3iio5XCOT2eB6rqbG7xMX5GCwJdYzoq8bhZ86NjcHTTGpsHUQrOt8gV
+         VTJQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWFJSGOM0vCag+30dU8g1Dj/poy1CL+NbjOFVifupqYpzOsPiNBr6Z4YImTtczJzylF44UvJ5klRy2APpfqxw==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yxd1YPeWR4EI2SsgxtmOLKSzbauxWQjIusBT1gvsW1H1DtEZ3Nm
+	Tvbl/sU7TaRbgg/kaF3cIOY6upHplRXNkwSts84f13wW0N4LOyyETodZbXJzpWqXhFthQZPGDCt
+	1kqS5bSksYz1Zl++JueZMRfb24KtOudIPXYiQ7H9ZcjkFu+VTtGuyDKtFZDu0H0G5
+X-Received: by 2002:a05:6602:3fd5:b0:82d:1cf:5e0c with SMTP id ca18e2360f4ac-834f7c76aa6mr1602013739f.4.1728412234614;
+        Tue, 08 Oct 2024 11:30:34 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IE7vIzLdA5SSJ+PQ7j/AcyK8r+TeJ+6FFgGNNDO6VKrzzs+95vneGag5aA9xoBUIfmHI5Uj+A==
+X-Received: by 2002:a05:6602:3fd5:b0:82d:1cf:5e0c with SMTP id ca18e2360f4ac-834f7c76aa6mr1602010939f.4.1728412234215;
+        Tue, 08 Oct 2024 11:30:34 -0700 (PDT)
+Received: from ?IPV6:2601:188:ca00:a00:f844:fad5:7984:7bd7? ([2601:188:ca00:a00:f844:fad5:7984:7bd7])
+        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4db6eb358b0sm1747211173.29.2024.10.08.11.30.32
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 08 Oct 2024 11:30:33 -0700 (PDT)
+From: Waiman Long <llong@redhat.com>
+X-Google-Original-From: Waiman Long <longman@redhat.com>
+Message-ID: <b77b8a52-7b53-46c5-bece-621345fdd4ba@redhat.com>
+Date: Tue, 8 Oct 2024 14:30:31 -0400
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <46c259c2-5503-4a63-94ae-96660e5ce0eb@igalia.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: Futex hash_bucket lock can break isolation and cause priority
+ inversion on RT
+To: Juri Lelli <juri.lelli@redhat.com>, Thomas Gleixner <tglx@linutronix.de>,
+ Ingo Molnar <mingo@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Darren Hart
+ <dvhart@infradead.org>, Davidlohr Bueso <dave@stgolabs.net>,
+ =?UTF-8?Q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>,
+ LKML <linux-kernel@vger.kernel.org>,
+ linux-rt-users <linux-rt-users@vger.kernel.org>,
+ Valentin Schneider <vschneid@redhat.com>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+References: <ZwVOMgBMxrw7BU9A@jlelli-thinkpadt14gen4.remote.csb>
+Content-Language: en-US
+In-Reply-To: <ZwVOMgBMxrw7BU9A@jlelli-thinkpadt14gen4.remote.csb>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On 2024-10-08 12:59:24 [-0300], Andr=C3=A9 Almeida wrote:
->=20
-> So if every process has it owns hb-lock, every process has their own buck=
-et?
-> It would act just like a linked list then?
+On 10/8/24 11:22 AM, Juri Lelli wrote:
+> Hello,
+>
+> A report concerning latency sensitive applications using futexes on a
+> PREEMPT_RT kernel brought me to (try to!) refresh my understanding of
+> how futexes are implemented. The following is an attempt to make sense
+> of what I am seeing from traces, validate that it indeed might make
+> sense and possibly collect ideas on how to address the issue at hand.
+>
+> Simplifying what is actually a quite complicated setup composed of
+> non-realtime (i.e., background load mostly related to a containers
+> orchestrator) and realtime tasks, we can consider the following
+> situation:
+>
+>   - Multiprocessor system running a PREEMPT_RT kernel
+>   - Housekeeping CPUs (usually 2) running background tasks + “isolated”
+>     CPUs running latency sensitive tasks (possibly need to run also
+>     non-realtime activities at times)
+>   - CPUs are isolated dynamically by using nohz_full/rcu_nocbs options
+>     and affinity, no static scheduler isolation is used (i.e., no
+>     isolcpus=domain)
+>   - Threaded IRQs, RCU related kthreads, timers, etc. are configured with
+>     the highest priorities on the system (FIFO)
+>   - Latency sensitive application threads run at FIFO priority below the
+>     set of tasks from the former point
+>   - Latency sensitive application uses futexes, but they protect data
+>     only shared among tasks running on the isolated set of CPUs
+>   - Tasks running on housekeeping CPUs also use futexes
+>   - Futexes belonging to the above two sets of non interacting tasks are
+>     distinct
+>
+> Under these conditions the actual issue presents itself when:
+>
+>   - A background task on a housekeeping CPUs enters sys_futex syscall and
+>     locks a hb->lock (PI enabled mutex on RT)
+>   - That background task gets preempted by a higher priority task (e.g.
+>     NIC irq thread)
+>   - A low latency application task on an isolated CPU also enters
+>     sys_futex, hash collision towards the background task hb, tries to
+>     grab hb->lock and, even if it boosts the background task, it still
+>     needs to wait for the higher priority task (NIC irq) to finish
+>     executing on the housekeeping CPU and eventually misses its deadline
+>
+> Now, of course by making the latency sensitive application tasks use a
+> higher priority than anything on housekeeping CPUs we could avoid the
+> issue, but the fact that an implicit in-kernel link between otherwise
+> unrelated tasks might cause priority inversion is probably not ideal?
+> Thus this email.
+>
+> Does this report make any sense? If it does, has this issue ever been
+> reported and possibly discussed? I guess it’s kind of a corner case, but
+> I wonder if anybody has suggestions already on how to possibly try to
+> tackle it from a kernel perspective.
 
-If you have one hb-lock, yes. But you could have 4 or 8 slots. A slot
-has 64 bytes due to alignment. As-is the 8 slots would occupy 512 bytes
-of memory.
+Just a question. Is the low latency application using PI futex or the 
+normal wait-wake futex? We could use separate set of hash buckets for 
+these distinct futex types.
 
-Sebastian
+Cheers,
+Longman
+
