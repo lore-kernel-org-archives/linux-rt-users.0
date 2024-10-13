@@ -1,106 +1,138 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from 6.mo575.mail-out.ovh.net (6.mo575.mail-out.ovh.net [46.105.63.100])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2BC2F20C493
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Oct 2024 08:36:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92BB117557
+	for <linux-rt-users@vger.kernel.org>; Sun, 13 Oct 2024 11:33:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.105.63.100
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728635790; cv=none; b=Rh8unc/Q8fFAhU1VozB/LqxetTjPHnEHJupbFTqOWOXTbMwR3aAv37OW+D+loSC6Lo/j/JR0GavLH6PoEh4Ca6pfGWOrRy5fQ4jHXF6zykYsau1Me6WtGt7z41SPph7K/ubJCAwy9YtLFBTdGm5EgLAUmi1Wr+e0GoAFMluH7LQ=
+	t=1728819240; cv=none; b=c+B0sout0Lq8Al3DSlFKeeFNqSvexBxS45uq3NwaiefR+HyMdtJ2APNhroFunCAO0FCjkHL7iYRLGFOJX//VR/XROopnDtMFZ4TnU5TFUKMWxBQ9kasERIaq22doHSnNwdJunEm2G/OiJhyKLhLaSYs04VGlEDHrywcxV6SnW5I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728635790; c=relaxed/simple;
-	bh=QRu7kZtDNOwdk2A02wovT8LvZTlCMTPeTp8BtUiu/94=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ed2yTZUIGT9by44dpC0L1H15fKIBrSI/rMR72pyBhGdKEnlTZ0v8bOppnM8QBGtzDXU7DYqsIzQmw08bfDvGqYiihJGD8uHqIgHEWop3JEiR38lL3nx3mE0Z86XQFS5HHz88u2fYj3Y1oS0+S+tYKQ2wxTbpXaqYfRUlNiMW634=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=QG6oPd0S; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Kz4aWFBK; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1728819240; c=relaxed/simple;
+	bh=JEYtVZNgqEwOisqM7ZPk3VAg9kyYVJji+bvx/DJHXRY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=cdjtEXaMwKTppMckD572B+LGYVe8KH/hVuPjGULzggHFInUEEqSIJwanzSKzgV2v1pyr8Wb0SxBAVj1iRtxWnOunlL8sRO6qgfn2ao11Ahtp/DIdHJKyF6V7Vw/P1iHs0rWmYSZnWIAH0puNStN643rTAl9hpoh1tWTaBN9TT2o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr; spf=pass smtp.mailfrom=chaudron-nautique.fr; dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b=MwPi9B5e; arc=none smtp.client-ip=46.105.63.100
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chaudron-nautique.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QG6oPd0S";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Kz4aWFBK"
-Date: Fri, 11 Oct 2024 10:36:25 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1728635786;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MtHHDYd6/TNFN8/DU8d4x6Bz28yLMAspywQJZz7Yvlg=;
-	b=QG6oPd0S8MYPQzx23DlUbn8bY3FO+qMY1gMd2c5lhfqXZZJxvH/1kiIEPzt2RY3U36Ydog
-	d6kIUSZ6P94QKKsDCTpItEHeC5oqEMcbYa53BWzX2XoVtMaCZdc3yLkKji6BNpos3J6oF9
-	5ePvxWJq2O0Mj4m1hyqrMYMNc6HsVai0XcSN39uDrPlDxyD3AJRDHWuCbxUMMX++iwu6WG
-	mJ8P2sCpyjsw9bq+8Xo4dh2fyg9dlPgTWIxmDfEUWadlHT4GRZ0Q1lYSg6sGZFBGPY4e/g
-	1XRDrkNLE2ZXFmcq/T70fC4p/fEr8snMrt+jFNlEUgkZQwfbxRiKJU+VK511xA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1728635786;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MtHHDYd6/TNFN8/DU8d4x6Bz28yLMAspywQJZz7Yvlg=;
-	b=Kz4aWFBK/ffk7Wuhe9FqoTPKIiKJplyxOj+y06ltNTOfUAnDRgYLR05Ko+Y87qJahdoE2T
-	G59chETKlBio5sCA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Le Chaudron Nautique <vanvan@chaudron-nautique.fr>
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: kernel module and priority or affinity
-Message-ID: <20241011083625.rUt3iLHL@linutronix.de>
-References: <f2da9d69-09a6-4086-953b-a24f355f0033@chaudron-nautique.fr>
+	dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b="MwPi9B5e"
+Received: from director5.ghost.mail-out.ovh.net (unknown [10.109.176.128])
+	by mo575.mail-out.ovh.net (Postfix) with ESMTP id 4XRGSW5ndJz1gFv
+	for <linux-rt-users@vger.kernel.org>; Sun, 13 Oct 2024 10:14:51 +0000 (UTC)
+Received: from ghost-submission-55b549bf7b-rzxql (unknown [10.108.42.20])
+	by director5.ghost.mail-out.ovh.net (Postfix) with ESMTPS id 6753C1FE0A;
+	Sun, 13 Oct 2024 10:14:51 +0000 (UTC)
+Received: from chaudron-nautique.fr ([37.59.142.101])
+	by ghost-submission-55b549bf7b-rzxql with ESMTPSA
+	id 0hfwAZudC2eudwMAPwvCcQ
+	(envelope-from <vanvan@chaudron-nautique.fr>); Sun, 13 Oct 2024 10:14:51 +0000
+Authentication-Results:garm.ovh; auth=pass (GARM-101G004bb476012-543b-44b6-85d4-4ea7730aa722,
+                    F63C65DFB3ED813617D7D987839DAEECD6EF4C60) smtp.auth=vanvan@chaudron-nautique.fr
+X-OVh-ClientIp:82.64.108.188
+Message-ID: <315b21ba-e53f-4f3d-9739-25547821feba@chaudron-nautique.fr>
+Date: Sun, 13 Oct 2024 12:14:30 +0200
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <f2da9d69-09a6-4086-953b-a24f355f0033@chaudron-nautique.fr>
+User-Agent: Mozilla Thunderbird
+Subject: Re: kernel module and priority or affinity
+To: Alison Chaiken <achaiken@aurora.tech>
+Cc: linux-rt-users@vger.kernel.org
+References: <f2da9d69-09a6-4086-953b-a24f355f0033@chaudron-nautique.fr>
+ <CAFzL-7vvEjkyyD4NfJWqeqxmsgq05ZMh2Bx6cPqitEsM3WpkCg@mail.gmail.com>
+Content-Language: en-US
+From: Le Chaudron Nautique <vanvan@chaudron-nautique.fr>
+In-Reply-To: <CAFzL-7vvEjkyyD4NfJWqeqxmsgq05ZMh2Bx6cPqitEsM3WpkCg@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Ovh-Tracer-Id: 11356670888132463516
+X-VR-SPAMSTATE: OK
+X-VR-SPAMSCORE: -100
+X-VR-SPAMCAUSE: gggruggvucftvghtrhhoucdtuddrgeeftddrvdegfedgvdeiucetufdoteggodetrfdotffvucfrrhhofhhilhgvmecuqfggjfdpvefjgfevmfevgfenuceurghilhhouhhtmecuhedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmnecujfgurhepkfffgggfuffvvehfhfgjtgfgsehtkeertddtvdejnecuhfhrohhmpefnvgcuvehhrghuughrohhnucfprghuthhiqhhuvgcuoehvrghnvhgrnhestghhrghuughrohhnqdhnrghuthhiqhhuvgdrfhhrqeenucggtffrrghtthgvrhhnpeefjefgvefffefgiedttedttdeggedugffggfejhfeiveeiledtieetfeefudeivdenucffohhmrghinheplhhinhhugihfohhunhgurghtihhonhdrohhrghenucfkphepuddvjedrtddrtddruddpkedvrdeigedruddtkedrudekkedpfeejrdehledrudegvddruddtudenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepihhnvghtpeduvdejrddtrddtrddupdhmrghilhhfrhhomhepvhgrnhhvrghnsegthhgruhgurhhonhdqnhgruhhtihhquhgvrdhfrhdpnhgspghrtghpthhtohepuddprhgtphhtthhopehlihhnuhigqdhrthdquhhsvghrshesvhhgvghrrdhkvghrnhgvlhdrohhrghdpoffvtefjohhsthepmhhoheejhedpmhhouggvpehsmhhtphhouhht
+DKIM-Signature: a=rsa-sha256; bh=Vj2ruk35OxrDtIJUkJQYjNbKaSbXxtY9bENVWLty9X4=;
+ c=relaxed/relaxed; d=chaudron-nautique.fr; h=From;
+ s=ovhmo4169961-selector1; t=1728814492; v=1;
+ b=MwPi9B5e5XKdJ5DLAJwGgAD6UYSHQ5oM6MoZlASj1Z8IUKAJXKpIxfNgIDNwXdMsAnDPYrNz
+ Ijzm+u5cN8jpZtjnKqHdl2Qn5eDWiYMPzVSNDWUCOwM6cfI9SI1kvdTICQBtZTTNWxPUKjHY2rW
+ hy0csOuGnGdeHD9yYL4/heX0Aj+E3vJOk6QbJzzonRUSYcVsn93NI44wGMiLy5zQfarRQNPB84W
+ 1wXTwpEKeE6T1edXcnQ85PVsmDaUU2nBOhPBoNh+RtObVQLeTP3MZ2GD1NwRyjq+2A0Z/jQA2A1
+ 945jJKJTJcl4ihkQpLXJLyH54wO5jKasIFOaZ75Wra3GQ==
 
-On 2024-10-07 12:42:04 [+0200], Le Chaudron Nautique wrote:
-> Hello,
-Hi,
+Thanks a lot.
 
-> after a lot of reading, I believe I'm still missing something concerning
-> "priority" level (or is it my understanding of the kernel ?).
+I think the chrt command is the one I was missing.
 
-See Scheduling policies in sched(7)
-	https://manpages.debian.org/bookworm/manpages/sched.7.en.html#Scheduling_p=
-olicies
+I will try to set this up on a raspberry Pi 4b, with the current 6.12 
+kernel, and maybe later move it to a more robust device if necessary.
 
-=E2=80=A6
-> If it write a kernel module (I used the site of embetronix for that) to
-> manage the GPIO interrupts and output, what is the "priority" of this mod=
-ule
-> (since interrupts are priority 50 I assume ? I believe we can't change th=
-is
-> value)
+The major difficulty I have in my understanding, is sometimes the limit 
+between userspace and kernel :
 
-As Alison wrote, ps is the tool to check. You can change it with chrt.
+I would believe pthread is for userspace and kthread for kernel ? And 
+the management of pthread would be done by sched fonctions, that of 
+kthread with chrt ?
 
-> If I use cpu isolation / interruts cpu affinity, is that equivalent to
-> dedicate a cpu to this module ? Or will it still sometimes be "busy" with
-> other cpus ?
+And kthreads are seen as "tasks" with ps where pthread won't be seen, 
+only the main process ?
 
-taskset can be used to change the CPU affinity of a task.
-	https://manpages.debian.org/bookworm/manpages-dev/sched_setaffinity.2.en.h=
-tml
 
-The isolated CPU is not part of the default CPU affinity mask of a task
-so you have to set it explicitly. If no task has set affinity to this
-CPU, the CPU remains idle.
+As for the interrupts priorities, the top-half will be 50, but I would 
+still be able to use a different priority for the bottom half if I use 
+threaded irqs ?
 
-You can use something like kernelshark/ trace-cmd to figure out what is
-running on a certain CPU.
 
-> If I am not mistaken, it is not possible to manage affinity between kernel
-> module and cpu, it is only for the treads or interrupt by masking ?
+I don't think I will even need to manage priorities in the first system 
+since with only one encoder, the isolation and affinity should be plenty 
+enough, but I'd like to start in the correct direction if I want to try 
+more complex later.
 
-The affinity can not be set for a module. The affinity can be set for
-tasks/ treads and interrupts. The latter would be
-	https://docs.kernel.org/core-api/irq/irq-affinity.html
+Thanks for your help.
 
-> Thanks for your help.
->=20
-> Mathieu
+Mathieu
 
-Sebastian
+Le 09/10/2024 à 21:10, Alison Chaiken a écrit :
+> Le Chaudron Nautique <vanvan@chaudron-nautique.fr> wrote:
+>> after a lot of reading, I believe I'm still missing something concerning
+>> "priority" level (or is it my understanding of the kernel ?).
+> Welcome to the PREEMPT_RT community.   The best resource for getting started is
+> the RT wiki: https://wiki.linuxfoundation.org/realtime/start   When
+> you post to ask questions, it's a good idea to mention which kernel
+> version and which architecture you're using.
+>
+>> I would like to set up the reading of an encoder (via GPIO) and the
+>> triggering of an output with RT to be able to define the max speed.
+>> Every thing else can be non-RT
+>>
+>> If it write a kernel module (I used the site of embetronix for that) to
+>> manage the GPIO interrupts and output, what is the "priority" of this
+>> module (since interrupts are priority 50 I assume ? I believe we can't
+>> change this value)
+> Interrupt threads are by default assigned the SCHED_FIFO priority 50
+> by the kernel.  The thread(s) created by  the module will run as
+> SCHED_OTHER unless you set SCHED_FIFO from userspace with "man 1
+> chrt."   The priority can be manipulated with either "man 1 taskset"
+> or good old "nice."   View the threads with, for example,
+>
+>       $ ps -elFy | grep "\["
+>
+>> If I use cpu isolation / interruts cpu affinity, is that equivalent to
+>> dedicate a cpu to this module ? Or will it still sometimes be "busy"
+>> with other cpus ?
+>>
+>> If I am not mistaken, it is not possible to manage affinity between
+>> kernel module and cpu, it is only for the treads or interrupt by masking ?
+> There are many complex and subtle approaches that you can try, but
+> odds are good since your use case sounds simple that some combination
+> of chrt and taskset will solve your problem.  If not, read the RT wiki
+> carefully about other possibilities.
+>
+>> Thanks for your help.
+>>
+>> Mathieu
+> Good luck,
+> Alison Chaiken
+> Aurora Innovation
+-- 
