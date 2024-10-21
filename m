@@ -1,105 +1,140 @@
-Received: from 8.mo550.mail-out.ovh.net (8.mo550.mail-out.ovh.net [178.33.110.239])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7794DBA33
-	for <linux-rt-users@vger.kernel.org>; Sun, 20 Oct 2024 16:56:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.33.110.239
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1996A1CBEA3
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Oct 2024 15:55:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729443372; cv=none; b=HQb9fWk0rKVlnBdQ4r4dLnJpj9VY6bT2BfKdJAbs74tRu8pI/yf4dvTxQluV09VAykQCv+zybhnz/tg8om3NbgP4jNW3KiXbddOFfqpQBUI8kd9u8NGDC335zCqMY/KV2urb3fiJIShYgMesN5T6XMwzb8imuABN8rYDC4B0SD0=
+	t=1729526117; cv=none; b=IjaXfuAEVKUzB02ZmBzILs1H9d/AcRNCP//4GpF4zgNSzhndB38esnUnz1Ep9ejeUAcuDHGOBMrhaBGCnMWnUgviEuM7dGrjrHWb72b6mrrypW/vdnP8XKIANjmv2hzkbgUnZhluGPcV2gW2J76fGPp732JLGlJEPObeupGUmj4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729443372; c=relaxed/simple;
-	bh=X4G+mtQesOYHl4MWxkRRM7oBJ0OvpSB/pBlND+cr7RQ=;
-	h=Message-ID:Date:MIME-Version:Subject:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Bt2Y0JQmgBk5PDsTlKUiuRjtZq73Xb9VHLdjTWKA9/BLn5xRmJ6+3TFKFtDWTM8/US7GTzIDw9oJ9twRAZGhYLQ8PW/ri/WuPmA5Ds/dqDWg2WaqDj/mKuhzzr5CtOBfnshwXBl03nF825g3gUXodwyB9q0Uz2UvyybUo0L3oFs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr; spf=pass smtp.mailfrom=chaudron-nautique.fr; dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b=ajsD3grm; arc=none smtp.client-ip=178.33.110.239
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=chaudron-nautique.fr
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chaudron-nautique.fr
+	s=arc-20240116; t=1729526117; c=relaxed/simple;
+	bh=/wrYUy+5jrtZ10Yu6P+jXF0ksCAMWSl49dW57HXtPNw=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=el6nBVTA1liE25y99iTd/ihDjV/VUSvfJcojtyoZCCjs6+EhtlsloVyQo9f+fn7THPVUnlC4vsDeYiGtjWtOTjSPqyZBhjNjIRShpn8Bljp/ahuWHvol7OEry1+j5LwBASsp+6GJ6CETs2RrJHcoVJYfFoAIUkA7CHjf/dKFxss=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TW7iDag9; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=chaudron-nautique.fr header.i=@chaudron-nautique.fr header.b="ajsD3grm"
-Received: from director7.ghost.mail-out.ovh.net (unknown [10.109.148.164])
-	by mo550.mail-out.ovh.net (Postfix) with ESMTP id 4XWkgZ6Vyxz1SSZ
-	for <linux-rt-users@vger.kernel.org>; Sun, 20 Oct 2024 16:39:54 +0000 (UTC)
-Received: from ghost-submission-5b5ff79f4f-gkdtr (unknown [10.111.174.161])
-	by director7.ghost.mail-out.ovh.net (Postfix) with ESMTPS id A52CB1FE8F
-	for <linux-rt-users@vger.kernel.org>; Sun, 20 Oct 2024 16:39:54 +0000 (UTC)
-Received: from chaudron-nautique.fr ([37.59.142.110])
-	by ghost-submission-5b5ff79f4f-gkdtr with ESMTPSA
-	id acvTFVoyFWeHXAAAWtkRCQ
-	(envelope-from <vanvan@chaudron-nautique.fr>)
-	for <linux-rt-users@vger.kernel.org>; Sun, 20 Oct 2024 16:39:54 +0000
-Authentication-Results:garm.ovh; auth=pass (GARM-110S00447933fe2-28dc-437d-b8cf-7a00149b5943,
-                    028229169B7038227A33080F0C6F0BF3E95D058E) smtp.auth=vanvan@chaudron-nautique.fr
-X-OVh-ClientIp:82.64.108.188
-Message-ID: <a6575573-0057-4e16-83dc-13fc2c4e3f68@chaudron-nautique.fr>
-Date: Sun, 20 Oct 2024 18:39:31 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TW7iDag9"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1729526112;
+	h=from:from:reply-to:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type; bh=MzX2pAP8l11WaiTojp6NlZVXnb5J5ojW0YAjpZvhBOc=;
+	b=TW7iDag9+mlUj1jcFx/r4gOxfYIFbavYzxtq98y5DGmdwhY2VMvYT1zUj5FsPS0czeO3dG
+	lUft2zt35EdJrLO8+8oNpK8zAGUZRrW4RmDxVFF0RJKht04zd7orPQjJ8O8+pAc8tkWsQ5
+	eOtB9/70lNkjnxtIXXVa9DlkC8mkOZI=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-167-JhJbFo8jOLehDpWeme62IA-1; Mon,
+ 21 Oct 2024 11:55:11 -0400
+X-MC-Unique: JhJbFo8jOLehDpWeme62IA-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5D09E1955D45
+	for <linux-rt-users@vger.kernel.org>; Mon, 21 Oct 2024 15:55:09 +0000 (UTC)
+Received: from debarbos-thinkpadt14sgen2i.remote.csb (unknown [10.22.88.25])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8E8BC19560A2;
+	Mon, 21 Oct 2024 15:55:08 +0000 (UTC)
+Date: Mon, 21 Oct 2024 11:55:05 -0400
+From: Derek Barbosa <debarbos@redhat.com>
+To: williams@redhat.com
+Cc: linux-rt-users@vger.kernel.org
+Subject: [PATCH] v6.6-rt-stable: printk/nbcon: Fix Illegal RCU Usage
+Message-ID: <ZxZ5WXV6umbL9XG9@debarbos-thinkpadt14sgen2i.remote.csb>
+Reply-To: debarbos@redhat.com
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: kernel module and priority or affinity
-Cc: linux-rt-users@vger.kernel.org
-References: <f2da9d69-09a6-4086-953b-a24f355f0033@chaudron-nautique.fr>
- <CAFzL-7vvEjkyyD4NfJWqeqxmsgq05ZMh2Bx6cPqitEsM3WpkCg@mail.gmail.com>
- <315b21ba-e53f-4f3d-9739-25547821feba@chaudron-nautique.fr>
- <06da12f70419f50ec31d3a04b9d570198f829e2b.camel@redhat.com>
-Content-Language: en-US
-From: Le Chaudron Nautique <vanvan@chaudron-nautique.fr>
-In-Reply-To: <06da12f70419f50ec31d3a04b9d570198f829e2b.camel@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Ovh-Tracer-Id: 3628212451495103388
-X-VR-SPAMSTATE: OK
-X-VR-SPAMSCORE: 30
-X-VR-SPAMCAUSE: gggruggvucftvghtrhhoucdtuddrgeeftddrvdehjedguddtvdcutefuodetggdotefrodftvfcurfhrohhfihhlvgemucfqggfjpdevjffgvefmvefgnecuuegrihhlohhuthemucehtddtnecumhhishhsihhnghcuvffquchfihgvlhguucdlfedtmdenucfjughrpefkffggfgfuvehfhfgjtgfgsehtkeertddtvdejnecuhfhrohhmpefnvgcuvehhrghuughrohhnucfprghuthhiqhhuvgcuoehvrghnvhgrnhestghhrghuughrohhnqdhnrghuthhiqhhuvgdrfhhrqeenucggtffrrghtthgvrhhnpedvieevtdelueeihfeuheevhfejfeeitddtfffgudeuueetheeigfefvdegueeiieenucfkphepuddvjedrtddrtddruddpkedvrdeigedruddtkedrudekkedpfeejrdehledrudegvddruddutdenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepihhnvghtpeduvdejrddtrddtrddupdhmrghilhhfrhhomhepvhgrnhhvrghnsegthhgruhgurhhonhdqnhgruhhtihhquhgvrdhfrhdpnhgspghrtghpthhtohepuddprhgtphhtthhopehlihhnuhigqdhrthdquhhsvghrshesvhhgvghrrdhkvghrnhgvlhdrohhrghdpoffvtefjohhsthepmhhoheehtddpmhhouggvpehsmhhtphhouhht
-DKIM-Signature: a=rsa-sha256; bh=A09JX5rn02KE9TVQew5kwbgaWU6fnt17Bp9XgfvWU14=;
- c=relaxed/relaxed; d=chaudron-nautique.fr; h=From;
- s=ovhmo4169961-selector1; t=1729442395; v=1;
- b=ajsD3grmt63oftrUiT5UNUxbzvwPcONRJPENBa+QiLLq9CcddAQTaBr88rd7NJw5GE262bxx
- 4651C61l2EGeS2Xo8nzVvYtpAX6yHzLC9OFyb8CV7nv2JBTzZhC5HsddLximHToQoiU3kXIi/5y
- 2AkmJnhSL5K8ar3/h41QWv1nUU/EAmXwtW5afFohgPpQL5YKOwNQTOYLmfnT/YWnViJxL8dN3lG
- bQRM39FvG1U+h1g2EJrQb0w73Fo1fKfv+FaJvyLJ06vuBW1lJI6bBnDHUH2Drv40SQZQ2+c4dvu
- QK4tXBcHhCQ59j+2SqWkqTA0TB1W1VoCAm6+TSa2Dxo8w==
+Content-Type: multipart/mixed; boundary="ifVe99c99bFA5nYW"
+Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
 
-Le 18/10/2024 à 03:28, Crystal Wood a écrit :
-> On Sun, 2024-10-13 at 12:14 +0200, Le Chaudron Nautique wrote:
->> Thanks a lot.
->>
->> I think the chrt command is the one I was missing.
->>
->> I will try to set this up on a raspberry Pi 4b, with the current 6.12
->> kernel, and maybe later move it to a more robust device if necessary.
->>
->> The major difficulty I have in my understanding, is sometimes the limit
->> between userspace and kernel :
->>
->> I would believe pthread is for userspace and kthread for kernel ? And
->> the management of pthread would be done by sched fonctions, that of
->> kthread with chrt ?
-> chrt is just a command-line tool that calls the sched functions.  The
-> type of thread doesn't matter.
->   
->> And kthreads are seen as "tasks" with ps where pthread won't be seen,
->> only the main process ?
-> Only because there's no kernel "process" to group them under.  You can
-> see all threads in ps with the H option.
->
->> As for the interrupts priorities, the top-half will be 50, but I would
->> still be able to use a different priority for the bottom half if I use
->> threaded irqs ?
-> Bottom halves aren't individual threads, so you can't set that kind of
-> priority.  The bottom half should typically run in the IRQ thread that
-> raised it, though it could also run in ksoftirqd.  If you're writing
-> this driver, it's better to avoid bottom halves entirely, and use other
-> mechanisms such as workqueues or kthreads to defer work.
->
-> -Crystal
->
->
-Thanks, it's a bit more clear now. You're right, in my case I won't even 
-need bottom half.
+--ifVe99c99bFA5nYW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
+Hi!
+
+On !PREEMPT_RT systems, printk-ing on a CPU that is coming online can produce a
+nasty illegal RCU usage splat [0].
+
+To fix this, use the correct RCU API in rcuwait_has_sleeper(), as seen in
+Torvalds' tree at 76f258bf3f2aa.
+
+I have appended a patch with a more detailed commit message.
+
+Thanks,
+
+Derek
+[0] https://lore.kernel.org/linux-rt-users/5x4nejpojrtny37k7l6loewqwuaituq77zc3tkkojvawcuvmml@thwg65fdb3vn/
+
+--ifVe99c99bFA5nYW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment;
+	filename="0001-PATCH-printk-nbcon-Fix-illegal-RCU-usage-on-thread-w.patch"
+
+From 1188b21c357dcb750a6851d7e5fd2d1f70ca9690 Mon Sep 17 00:00:00 2001
+From: Derek Barbosa <debarbos@redhat.com>
+Date: Mon, 21 Oct 2024 11:30:30 -0400
+Subject: [PATCH 1/1] [PATCH] printk: nbcon: Fix illegal RCU usage on thread
+ wakeup
+
+In debug kernels, printk'ing during the SMP startup of a secondary CPU
+results in a splat [0] on boot that details illegal RCU usage from
+offline CPUs.
+
+This patch aligns rcuwait_has_sleeper() with what currently exists in
+Torvalds' tree, at commit 76f258bf3f2aa, and will avoid the
+aforementioned splat.
+
+Furthermore, this patch makes it so that we avoid the use of hacky
+rcu_derefrencing through the waiter's task struct,and instead leverages
+the correct RCU API with the rcuwait_active() function.
+
+[0] https://lore.kernel.org/linux-rt-users/5x4nejpojrtny37k7l6loewqwuaituq77zc3tkkojvawcuvmml@thwg65fdb3vn/
+
+Signed-off-by: Derek Barbosa <debarbos@redhat.com>
+---
+ kernel/printk/nbcon.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/kernel/printk/nbcon.c b/kernel/printk/nbcon.c
+index b941039ee7d2..579f71fffff4 100644
+--- a/kernel/printk/nbcon.c
++++ b/kernel/printk/nbcon.c
+@@ -1101,9 +1101,6 @@ static void nbcon_irq_work(struct irq_work *irq_work)
+ 
+ static inline bool rcuwait_has_sleeper(struct rcuwait *w)
+ {
+-	bool has_sleeper;
+-
+-	rcu_read_lock();
+ 	/*
+ 	 * Guarantee any new records can be seen by tasks preparing to wait
+ 	 * before this context checks if the rcuwait is empty.
+@@ -1116,10 +1113,7 @@ static inline bool rcuwait_has_sleeper(struct rcuwait *w)
+ 	 * This pairs with nbcon_kthread_func:A.
+ 	 */
+ 	smp_mb(); /* LMM(rcuwait_has_sleeper:A) */
+-	has_sleeper = !!rcu_dereference(w->task);
+-	rcu_read_unlock();
+-
+-	return has_sleeper;
++	return rcuwait_active(w);
+ }
+ 
+ /**
 -- 
+2.46.0
+
+
+--ifVe99c99bFA5nYW--
+
