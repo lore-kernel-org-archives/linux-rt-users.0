@@ -1,72 +1,63 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com [209.85.160.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1ED591F80B9
-	for <linux-rt-users@vger.kernel.org>; Thu, 24 Oct 2024 16:26:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85B281FE0E7
+	for <linux-rt-users@vger.kernel.org>; Thu, 24 Oct 2024 18:08:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729787214; cv=none; b=ORqQvaeo20fbFWoK8fk+tgIkDz/tLXMMJ9wO0b1EX1QG477fh+bwQGOW9eOZM18v+UiM8+QvtKczi8Px7HI5tS9mpaZSk5IvmM1yxcdtRwSRdP+bEW/nhc0NWz1eSTczTEunQvGZzCu3oKxB66StPFFB7otjRmbNB/x2ot9wTxc=
+	t=1729793321; cv=none; b=i7lJGrPjQo9MCiclDc5L5Hfs4OJr7uhc7/MVOuHl58iDN4O7ic1pSjCzGAgqNRiiGV6Lg5jdzV1RN7kQCrrTJau+N2IV0e4LIRLHWTOJCN6etH3P8uXRrCPS3Xe8AItEKJOtP5BdTpIq3ZcV3tUBeBWGFDRdjxI1wWa/Kh4hXuU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729787214; c=relaxed/simple;
-	bh=Y8SzieWLcPol7nGkZ8uosTyOFuxZ9D+lZk216VEizXQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=eu8kfGSkgRkhvRqMz/NjuuPozJUCIc/cVcr8+u6rwDHYwqLTq7ARXBo+zZ+0/HweyFFJA6aeZLnOBnOYWqI07hOOy0MhjXqmHsp2w890BRmMJtpQGiItzrnFM59DtjrAVsbkSmOJl0pDDw4DWj4vhjt45RGDxvagET0+v6mp0AY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HC+dUP8J; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1729793321; c=relaxed/simple;
+	bh=KjjalHJTTSkj/E9JY06RccfpVPVUrsNRcaMYrHn4wpE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HVOkLOk69xFHrJKlCOUPkJKCC9Wm2D7JSP2IJ5/M+2soKN5Vx9bUcDygmD0m4HrtZ8F7VQH+Kml+gVOU6dNjHEpZrlqB/T10cxD/Vlk/jmIYBkODbpgO7gAtw1HyCjrnDwPPOTVh2au/Ny64NTKfqeBtfK3/WYN4EZKN8LbF9yI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TrRvBMh4; arc=none smtp.client-ip=209.85.160.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HC+dUP8J"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1729787211;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=/HckdK46781C1fVkL4dcqEDbIGW513V8OIdqoTdi0M8=;
-	b=HC+dUP8JaydZsyIzXrtAvFa4OR/Zw9doN7fjTwA83ssyTrceQzqGx3aCG9A7mgA/st2YY0
-	fz6hotHCeZ5RfevwZII2lAzIFGOJqzRuK6/zqnX6PhGw3vD0OEs7y1jlE2NciHgAf9yfNN
-	XQ0TYVQ02Or7UdsiFM8iI12vCgqKi0Q=
-Received: from mail-ot1-f72.google.com (mail-ot1-f72.google.com
- [209.85.210.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-448-TqcGpxZkPRy5JC0db966Cg-1; Thu, 24 Oct 2024 12:26:49 -0400
-X-MC-Unique: TqcGpxZkPRy5JC0db966Cg-1
-Received: by mail-ot1-f72.google.com with SMTP id 46e09a7af769-7180a4bf542so1120947a34.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 24 Oct 2024 09:26:49 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729787206; x=1730392006;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TrRvBMh4"
+Received: by mail-qt1-f177.google.com with SMTP id d75a77b69052e-460a23ad00eso20555811cf.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 24 Oct 2024 11:08:39 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1729793317; x=1730398117; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=/HckdK46781C1fVkL4dcqEDbIGW513V8OIdqoTdi0M8=;
-        b=cD1uM78ZWJTGbK+UCmrkl92eVogd36GyLQ+V5UtjJFEc3w1cCyfuifmtId8QiODzSs
-         Cm8lfZFGgOZZOOyDztk8fFZIAI3pepW9XsgKoTDjdTSEvv3SYwBYJDU2oXSowbdLyj8T
-         fWlriocwicNwDFQ/qPqVnbVqFWlGurxSsfo9TxIozUJ2HkRErye62yxZzGRgMs1oX2Db
-         0Dag+pe1uowRfgRTx/IKQ24JVbUQDaqmGf7qumO8H6D+sblSlGV5lS7GPtAv/Uq1OUqs
-         uP479Sx49F/LVBtmnyv9aFwwN1JRLZf2QmvVFht9FDKoDer7CqRNb3ksBmkshk4t6TNi
-         bFkA==
-X-Forwarded-Encrypted: i=1; AJvYcCU5DeH5wyKNI3ifWW3M3tWSZGohiHrewFbJEHBiDZuhdvzspphCBDLkY8W7mWpCN+eMsvxkuGqdThIq1MF1bw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyykO9lFi/HypezD+TY6RFgqJEhEhI7LzwX1m4/I7vNUtFjQu2H
-	ULqD5kXU3naJv4RmilV0ezGb6zH63EyXGCvsGnWJLosPPXFtxb/upU/1obbyIIEbQRbNxPsbZIj
-	Lxq+Vam39EcvTJxlV8ux9T0i05GfQp+1HevTYyHakspMrho9QNof9UQ7BdkMTSNS2
-X-Received: by 2002:a05:6358:60c6:b0:1c3:6e1d:c435 with SMTP id e5c5f4694b2df-1c3d80ad085mr429568855d.1.1729787206294;
-        Thu, 24 Oct 2024 09:26:46 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEzWjtW8b858ciuh8Wq7RskpfgM3fvL/CxILlZJBLE7jsgYxeur2gG+awUuI6H5vLJJQCIAhQ==
-X-Received: by 2002:a05:6358:60c6:b0:1c3:6e1d:c435 with SMTP id e5c5f4694b2df-1c3d80ad085mr429565955d.1.1729787205968;
-        Thu, 24 Oct 2024 09:26:45 -0700 (PDT)
-Received: from rhfedora.redhat.com ([71.217.60.247])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6ce008fe312sm51919786d6.49.2024.10.24.09.26.45
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=/zx2ovMB0SQIThMRzoVOdiaiVNdGuTQyue3h+6eSPaU=;
+        b=TrRvBMh4FfIA8CAb9XvfXrNRoOEoYKBiO+HkszTpW059jo1OvaGl3+ehdbaiIlKNeO
+         HPTBzmZXapUA4G8U7da56Zr9uI2ouFz0WYsumUWTDq/1CO1PRv1Oc79JoLbtKZC3d+R/
+         K5pDWlX8NkZ2IqOjc6GiUk2OcIbPwh+S+ARtldqOvMym7pAy17GtFD9OgZudjp4R/Soj
+         urnhzq1WzQ0S42hiIbkHFA43pY+rU92hPGykCaQBfIGzG54yaDiPWkE/7xB0NNcisUjp
+         H93RKZ6rgsXkRnBQsNaDtkuNcZPrbTYCEbee4HGEeYDeCar5f6mblAvzTBjE6Vvz0+fA
+         aiuw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1729793317; x=1730398117;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=/zx2ovMB0SQIThMRzoVOdiaiVNdGuTQyue3h+6eSPaU=;
+        b=BVnEp/UX2cO3g5vrQrP7Tne+L2oSj95IWMXVpgJA/E8XEhj/cJWC79vhf+wSBqvWda
+         otvMCYKDGmno0ZqyfztjHxALfcv/NY4K7pK04PwTV9VqsjHh7AbYMnxxYjqMM7GHt+hw
+         iMlqJFrt1GaWxWJ1Ea5+tqCvut2XhG9TLK67sbVwj/MDqH5IlfVqReNKyPtKhwkZMcfV
+         32nUMzPzLhErCALgkGdjCa0X3wLPMQWp6uIaGxMcc8KlegYSfFtjVdMa4BJ0SSVbpJ0f
+         ZNQWmnKSzGOKLPqDN+qqgxxqSnmbkP2V/7xNGFuIQXdTCB71tQfwsr3C4SeFCrNbDj25
+         ybAg==
+X-Gm-Message-State: AOJu0YwEomEQE3Z6uC52+Mgeee1iJi0JUFjGtAJzSvoKrvtV7uc/yQlI
+	S0zWsNEjKz9t0jVkPqxjTN+NuJRnoqB/Bo7ZA33D4rftSMM5bQoVi9RhpQ==
+X-Google-Smtp-Source: AGHT+IEmRqOG8TQMwC3vX898XX8eWqHSWW7NtfKGm18Ztpe9ZytqkrzNuSiRXa1VdK/EwwCktPrJpQ==
+X-Received: by 2002:ac8:7f55:0:b0:461:1593:9234 with SMTP id d75a77b69052e-46125251ce9mr46963921cf.1.1729793317148;
+        Thu, 24 Oct 2024 11:08:37 -0700 (PDT)
+Received: from fionn.home ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-460d3dab83fsm54121801cf.88.2024.10.24.11.08.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 24 Oct 2024 09:26:45 -0700 (PDT)
-From: "John B. Wyatt IV" <jwyatt@redhat.com>
-To: "Clark Williams" <williams@redhat.com>,
-	"John Kacur" <jkacur@redhat.com>
-Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	kernel-rts-sst <kernel-rts-sst@redhat.com>,
-	"John B. Wyatt IV" <sageofredondo@gmail.com>
-Subject: [PATCH] pi_stress: Add memory barrier to resolve crash
-Date: Thu, 24 Oct 2024 12:26:14 -0400
-Message-ID: <20241024162620.349934-1-jwyatt@redhat.com>
-X-Mailer: git-send-email 2.47.0
+        Thu, 24 Oct 2024 11:08:36 -0700 (PDT)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rteval: Change constant name to uppercase
+Date: Thu, 24 Oct 2024 14:08:12 -0400
+Message-ID: <20241024180813.48368-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.46.2
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -75,82 +66,81 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This patch is also an error report seen on RHEL 9 and Fedora 40.
-pi_stress crashes if you run this near full cores with one core
-(2 threads) free for housekeeping. The crash usually happens at
-around 2 hours of pi_stress running. This issue was reproduced
-on a RHEL server with 2 sockets of 10 cores/20 threads (total 40
-threads) and a Fedora server with 2 sockets of 56 cores/112
-threads (total 226 threads).
+Change constant name earlystop to EARLYSTOP
+add "from err" when re-raising RuntimeError
 
-The pthread_barrier_wait should guarantee that only one
-thread at a time interacts with the variables below that
-if block.
-
-GCC -O2 optimization rearranges the two increments above the wait
-function calls. This causes a race issue found by Helgrind.
-You can prove this by commenting out the memory barrier
-and compiling with `-O0`. The crash does not happen with -O0.
-Thank you to Valentin Schneider <vschneid@redhat.com> for
-suggesting about -O2.
-
-Add a memory barrier to force GCC to increment the variables
-below the pthread calls. The memory barrier prevented any crashes
-for several 24 hours tests. This function depends on C11.
-
-Reported-by: Valgrind's Helgrind tool
-
-Signed-off-by: "John B. Wyatt IV" <jwyatt@redhat.com>
-Signed-off-by: "John B. Wyatt IV" <sageofredondo@gmail.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/pi_tests/pi_stress.c | 22 +++++++++++++++++++++-
- 1 file changed, 21 insertions(+), 1 deletion(-)
+ rteval/__init__.py | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index 371e906..37023a1 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -44,6 +44,7 @@
- #include <stdint.h>
- #include <inttypes.h>
- #include <limits.h>
-+#include <stdatomic.h>
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index 8ded374d287e..7c13e84e03bf 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -28,7 +28,7 @@ from rteval import version
  
- #include "rt-sched.h"
- #include "rt-utils.h"
-@@ -952,12 +953,31 @@ void *high_priority(void *arg)
- 			    ("high_priority[%d]: pthread_barrier_wait(finish): %x", p->id, status);
- 			return NULL;
- 		}
-+
-+
-+		/**
-+		 * The pthread_barrier_wait should guarantee that only one
-+		 * thread at a time interacts with the variables below that
-+		 * if block.
-+		 *
-+		 * GCC -O2 rearranges the two increments above the wait
-+		 * function calls causing a race issue if you run this
-+		 * near full cores with one core (2 threads) free for
-+		 * housekeeping. This causes a crash at around 2 hour of
-+		 * running. You can prove this by commenting out the barrier
-+		 * and compiling with `-O0`. The crash does not show with
-+		 * -O0.
-+		 *
-+		 * Add a memory barrier to force GCC to increment the variables
-+		 * below the pthread calls. This funcion depends on C11.
-+		 **/
-+		atomic_thread_fence(memory_order_seq_cst);
-+
- 		/* update the group stats */
- 		p->total++;
+ RTEVAL_VERSION = version.RTEVAL_VERSION
  
- 		/* update the watchdog counter */
- 		p->watchdog++;
--
- 	}
- 	set_shutdown_flag();
+-earlystop = False
++EARLYSTOP = False
  
+ stopsig = threading.Event()
+ def sig_handler(signum, frame):
+@@ -106,7 +106,7 @@ class RtEval(rtevalReport):
+             if not onlyload or self.__rtevcfg.logging:
+                 self.__reportdir = self._make_report_dir(self.__rtevcfg.workdir, "summary.xml")
+         except Exception as err:
+-            raise RuntimeError(f"Cannot create report directory (NFS with rootsquash on?) [{err}]]")
++            raise RuntimeError(f"Cannot create report directory (NFS with rootsquash on?) [{err}]]") from err
+ 
+         params = {'workdir':self.__rtevcfg.workdir,
+                   'reportdir':self.__reportdir and self.__reportdir or "",
+@@ -131,7 +131,7 @@ class RtEval(rtevalReport):
+ 
+ 
+     def __RunMeasurement(self):
+-        global earlystop
++        global EARLYSTOP
+ 
+         measure_start = None
+         try:
+@@ -186,7 +186,7 @@ class RtEval(rtevalReport):
+                 stopsig.wait(min(stoptime - currtime, 60.0))
+                 if not self._measuremods.isAlive():
+                     stoptime = currtime
+-                    earlystop = True
++                    EARLYSTOP = True
+                     self.__logger.log(Log.WARN,
+                                       "Measurement threads did not use the full time slot. Doing a controlled stop.")
+ 
+@@ -214,7 +214,7 @@ class RtEval(rtevalReport):
+ 
+         except RuntimeError as err:
+             if not stopsig.is_set():
+-                raise RuntimeError(f"appeared during measurement: {err}")
++                raise RuntimeError(f"appeared during measurement: {err}") from err
+ 
+         finally:
+             # stop measurement threads
+@@ -234,7 +234,7 @@ class RtEval(rtevalReport):
+ 
+     def Measure(self):
+         """ Run the full measurement suite with reports """
+-        global earlystop
++        global EARLYSTOP
+         rtevalres = 0
+         measure_start = self.__RunMeasurement()
+ 
+@@ -242,7 +242,7 @@ class RtEval(rtevalReport):
+         if self.__rtevcfg.sysreport:
+             self._sysinfo.run_sysreport(self.__reportdir)
+ 
+-        if earlystop:
++        if EARLYSTOP:
+             rtevalres = 1
+         self._sysinfo.copy_dmesg(self.__reportdir)
+         self._tar_results()
 -- 
-2.47.0
+2.46.2
 
