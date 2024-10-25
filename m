@@ -1,334 +1,131 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DCD01C4A11;
-	Fri, 25 Oct 2024 10:10:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B3B520C324
+	for <linux-rt-users@vger.kernel.org>; Fri, 25 Oct 2024 19:02:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729851018; cv=none; b=Q/DqjPIy8AIL8pHSU8ITLG9c8T8Ql5rdR7ai+iSfriqRG1Lz4tjzOLkFPEtbsNm0f181gLffv+DLI9PG+cA37HZ7ErvYa+bWNt/m8u1Fk5T49i+8X2+3cB/LTsTF2NuN6gbok2dXXfNRqyny4ysZ32J742b3eoi9CAlCyJsLxIY=
+	t=1729882940; cv=none; b=BB+hXCKtzo2FyBveHcUjgwqij29sg+50e58yA2/jIro4fC0YLSlYRtVomwFULniqBL9cl8rt2XR4Oh8RJnov9lGzqVJYiXm6WLXx7U2hb5zlFVorxjGyFEpr0FaiOW1CzHIzyO40noKCbvkktpQ3S3B/zQAuvbOkmfGyAK2KglE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729851018; c=relaxed/simple;
-	bh=zlfs+ZZk5vXPdLiiTq+TCpORCFa82NvX3YMz7liO9IY=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=tGKEfVVFWFt8Fi5kGV/YwUWD1WwCIngbGksXVVpy944xo90+ReSL+kW74ufbuPrn4s5D1I1OTSbud4/x5fj6Q0KevA12z35omObV0/bVTv/IBiqP/I8rDhm0wKmJBAd4DzB9/f/kgg69iWlTRe2/85wqQhCKA7hISuynZ9ajVDU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ciYQO0De; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=dDGAEUBW; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1729882940; c=relaxed/simple;
+	bh=CB86kaYbLj2R7GhN7nwitq3GQdNXE7u8Y/qkF9Gugu0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mIy80zAxXPJU7LPVaxMrlrBFCQEGSLJT8i1/mGUfPXoMWsn926Y+HyIBk9jwj3aiEXkjMYhGh0LVxkvvXwu8ikj/b0EbtUgmC90QbLzWy1wCfIQfannMfgzhoD/YFUCcqtoMLLK8sNNDl0Mwlz0+vgFncZDCKLi07gNYdU6Jt0k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MIbv4VqE; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ciYQO0De";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dDGAEUBW"
-Date: Fri, 25 Oct 2024 12:10:11 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1729851013;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MIbv4VqE"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1729882937;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=DBqdUHyYF1H23UokcRjiCaNoCcBrGrr+YiZ2cu0o2J0=;
-	b=ciYQO0DeqXfhV06AaUOg1mtsptkOC4RfGjMtgLyEoIAS2y5pmUyuGGoo4Po8rJWiUPUUkL
-	JqooLN0tIjtgwRqxeO/rDqCP4/diR/wmcNgIWEjeN27lBUlYR8XBak3aKpmPoHdh3O0AAO
-	r8BezumwxoeEkRFjRC1CRglXBQTy4GxT0bFTYRO3X+Nfaom12+wLm8jhpCCguOhxARIwtF
-	+6RTivbxNpb4bwoqGafjulAHWVeZD01QK2Bz/3uA7inwI1UPhoIdD3WHTPaWSZ4yQW1uye
-	m1O8Su5Luzd6ORkbDoKQvO17WSKEpxCBEQ1LfsPLuNC8Ekc74Zmna/iF/S0RgA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1729851013;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=DBqdUHyYF1H23UokcRjiCaNoCcBrGrr+YiZ2cu0o2J0=;
-	b=dDGAEUBWu8kDSUQqQLqJM9kDrIjuqWM4AMoioWKVvvBxriRQfKIyNAk8Z5Z+078Qq/rHf9
-	ulbpiE0hM+i76PBQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v6.12-rc4-rt6
-Message-ID: <20241025101011.NrYoNbkE@linutronix.de>
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=vGO3wXYinHgxKkQUgJBE+nXI2pjidZp9cUEzx+9MF+M=;
+	b=MIbv4VqE+/H7ouP+i8l/4NXYC3vxowzCojea8eVaMxgSXF/IcYnG5GEdT8SXJdDNNBNiqF
+	KkJ7fRv2oVEItOOkktVmd6iimZVGCQ2HpB6S7XfjRFUemQRSkuPZA7L32d+0jj68650qgI
+	6/ACgRYXzOUzfLs+DX+YvMVIz8iJnUM=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-311-4qiwh_GNO1qHRLjmfj5JLA-1; Fri, 25 Oct 2024 15:02:15 -0400
+X-MC-Unique: 4qiwh_GNO1qHRLjmfj5JLA-1
+Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-7a7fa073718so331026585a.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 25 Oct 2024 12:02:15 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1729882935; x=1730487735;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=vGO3wXYinHgxKkQUgJBE+nXI2pjidZp9cUEzx+9MF+M=;
+        b=u502xtdXDPAzs7ZX3D+yEHwMYuoeBd/+dvMZrdn8KEIrfBsKDq+J6QiH/M1sB5sqkk
+         CVUryEUbxETZE4Z9N7AK+isf3dunYzd3dilfVJ68PPrb8XPeIXKl2aqio0WYppJlzmRF
+         pJr3vfo3o8KPSRS5lGef+RcoZNhU6Dmm/nS5BYuyBB5ToIwy6qn/Qqu/4Sv5+IhC6m2l
+         /9JVeNBjacXeecNNLPiU0rX5e3lu0Q667wEaoE/Y5EpOVlK/z3fes2Cvg/N0I75aufb7
+         C45/X5o4s4wErqglTHtPJHAoFIOjoiyz5Pjn6whdHC9ZsuzDBc03qwkq1jXoGgIIzmxm
+         Pgrw==
+X-Forwarded-Encrypted: i=1; AJvYcCWVSlQQLozvnI7tSiRcXQ8o6WVtq8GpLIRZpU4VAz/4f8pU62EHO1vuLbMSvHOsRtNbhYheBoIgfWcjzaihow==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyTgyjkCkW6JsseJN6hNuphmyQcrdL8iCibyMHyhVZeFQLzPMoi
+	w3qx5G7a54ayYQ9gNeIIgyyKlcGi0zDRxQ8PLroa5wL4gn9gl0ukpgpyD+w9Rmv3N/ogsCA+Sgi
+	0kozNxm1nGid0izULTBAYwt56Ccdk9rtske4RL49VDDJI7kyjevstTVrLD9rKfkAo
+X-Received: by 2002:a05:6214:498c:b0:6cd:f6de:8ad2 with SMTP id 6a1803df08f44-6d18585e41amr6953556d6.45.1729882935064;
+        Fri, 25 Oct 2024 12:02:15 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGDiCBqzSySleUXhSa+nFQsZy+DucGvhQn8zSfeKi6JItSL3VAtKvzTyFEsgx/SR16lN3db6g==
+X-Received: by 2002:a05:6214:498c:b0:6cd:f6de:8ad2 with SMTP id 6a1803df08f44-6d18585e41amr6953216d6.45.1729882934749;
+        Fri, 25 Oct 2024 12:02:14 -0700 (PDT)
+Received: from rhfedora.redhat.com ([71.217.60.247])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6d17991c8cesm8217346d6.69.2024.10.25.12.02.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 25 Oct 2024 12:02:14 -0700 (PDT)
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: "Clark Williams" <williams@redhat.com>,
+	"John Kacur" <jkacur@redhat.com>
+Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
+	linux-rt-users@vger.kernel.org,
+	kernel-rts-sst <kernel-rts-sst@redhat.com>,
+	"John B. Wyatt IV" <sageofredondo@gmail.com>
+Subject: [PATCH] tuna: Fix string syntax warnings with raw strings
+Date: Fri, 25 Oct 2024 15:01:44 -0400
+Message-ID: <20241025190146.149123-1-jwyatt@redhat.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-Dear RT folks!
+tuna save <filename> allows you to save your kthreads tunables to
+a file to be used by rtctl. There were several backslashes that produce
+an error that pylint and Python (at least 3.12) gives a `SyntaxWarning:
+invalid escape sequence`.
 
-I'm pleased to announce the v6.12-rc4-rt6 patch set. 
+Convert the strings written to the file with raw strings to resolve the
+warnings.
 
-Changes since v6.12-rc4-rt5:
+Tested by comparing the diffs of the files outputted by save.
 
-  - Updated the lazy preempt series
-    - Added a bit of documentation for the new flags in tracing and
-      corrected the IS_ENABLED checks. Reported by Shrikanth Hegde.
+Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
+Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
+---
+ tuna/tuna.py | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-    - Added a check to not record the LAZY bit in tracing if the LAZY
-      model is not supported by the architecture. Reported by Ankur
-      Arora.
+diff --git a/tuna/tuna.py b/tuna/tuna.py
+index bd678e2..2dbc6cb 100755
+--- a/tuna/tuna.py
++++ b/tuna/tuna.py
+@@ -669,7 +669,8 @@ def generate_rtgroups(filename, kthreads, nr_cpus):
+ # The regex is matched against process names as printed by "ps -eo cmd".
+ 
+ ''' % filename)
+-    f.write("kthreads:*:1:*:\[.*\]$\n\n")
++    f.write(r"kthreads:*:1:*:\[.*\]$")
++    f.write("\n\n")
+ 
+     per_cpu_kthreads = []
+     names = list(kthreads.keys())
+@@ -688,7 +689,7 @@ def generate_rtgroups(filename, kthreads, nr_cpus):
+             elif common[:8] == "softirq-":
+                 common = "(sirq|softirq)" + common[7:]
+                 name = "s" + name[4:]
+-            regex = common + "\/.*"
++            regex = common + r"\/.*"
+         except:
+             idx = 0
+             regex = name
+@@ -701,9 +702,10 @@ def generate_rtgroups(filename, kthreads, nr_cpus):
+         else:
+             mask = ",".join([hex(a) for a in \
+                      procfs.hexbitmask(kt.affinity, nr_cpus)])
+-        f.write("%s:%c:%d:%s:\[%s\]$\n" % (name, \
++        f.write(r"%s:%c:%d:%s:\[%s\]$" % (name, \
+                            tuna_sched.sched_str(kt.policy)[6].lower(), \
+                             kt.rtprio, mask, regex))
++        f.write("\n")
+     f.close()
+ 
+ 
+-- 
+2.47.0
 
-    - Keeping the TRACE_FLAG_NEED_RESCHED where it was as this is ABI
-      and might confuse userland. Reported by Steven Rostedt.
-
-  - Updated the ktimersd patch based on upstream's review.
-
-Known issues
-    None.
-
-The delta patch against v6.12-rc4-rt5 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.12/incr/patch-6.12-rc4-rt5-rt6.patch.xz
-
-You can get this release via the git tree at:
-
-    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.12-rc4-rt6
-
-The RT patch against v6.12-rc4 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12-rc4-rt6.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patches-6.12-rc4-rt6.tar.xz
-
-Sebastian
-
-diff --git a/Documentation/trace/ftrace.rst b/Documentation/trace/ftrace.rst
-index 4073ca48af4ad..16892b844108c 100644
---- a/Documentation/trace/ftrace.rst
-+++ b/Documentation/trace/ftrace.rst
-@@ -1031,14 +1031,15 @@ explains which is which.
-   CPU#: The CPU which the process was running on.
- 
-   irqs-off: 'd' interrupts are disabled. '.' otherwise.
--	.. caution:: If the architecture does not support a way to
--		read the irq flags variable, an 'X' will always
--		be printed here.
- 
-   need-resched:
-+	- 'B' all, TIF_NEED_RESCHED, PREEMPT_NEED_RESCHED and TIF_RESCHED_LAZY is set,
- 	- 'N' both TIF_NEED_RESCHED and PREEMPT_NEED_RESCHED is set,
- 	- 'n' only TIF_NEED_RESCHED is set,
- 	- 'p' only PREEMPT_NEED_RESCHED is set,
-+	- 'L' borg PREEMPT_NEED_RESCHED and TIF_RESCHED_LAZY is set,
-+	- 'b' borg TIF_NEED_RESCHED and TIF_RESCHED_LAZY is set,
-+	- 'l' only TIF_RESCHED_LAZY is set
- 	- '.' otherwise.
- 
-   hardirq/softirq:
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index 4a4f367cd6864..9637af78087f3 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -616,14 +616,27 @@ extern void __raise_softirq_irqoff(unsigned int nr);
- extern void raise_softirq_irqoff(unsigned int nr);
- extern void raise_softirq(unsigned int nr);
- 
-+/*
-+ * Handle timers in a dedicated thread at a low SCHED_FIFO priority instead in
-+ * ksoftirqd as to be prefred over SCHED_NORMAL tasks.
-+ */
- #ifdef CONFIG_PREEMPT_RT
- DECLARE_PER_CPU(struct task_struct *, timersd);
- DECLARE_PER_CPU(unsigned long, pending_timer_softirq);
- 
--extern void raise_timer_softirq(void);
--extern void raise_hrtimer_softirq(void);
-+void raise_ktimers_thread(unsigned int nr);
- 
--static inline unsigned int local_pending_timers(void)
-+static inline void raise_timer_softirq(void)
-+{
-+	raise_ktimers_thread(TIMER_SOFTIRQ);
-+}
-+
-+static inline void raise_hrtimer_softirq(void)
-+{
-+	raise_ktimers_thread(HRTIMER_SOFTIRQ);
-+}
-+
-+static inline unsigned int local_timers_pending(void)
- {
- 	return __this_cpu_read(pending_timer_softirq);
- }
-@@ -631,15 +644,17 @@ static inline unsigned int local_pending_timers(void)
- #else
- static inline void raise_timer_softirq(void)
- {
--	raise_softirq(TIMER_SOFTIRQ);
-+	lockdep_assert_in_irq();
-+	__raise_softirq_irqoff(TIMER_SOFTIRQ);
- }
- 
- static inline void raise_hrtimer_softirq(void)
- {
--	raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+	lockdep_assert_in_irq();
-+	__raise_softirq_irqoff(HRTIMER_SOFTIRQ);
- }
- 
--static inline unsigned int local_pending_timers(void)
-+static inline unsigned int local_timers_pending(void)
- {
- 	return local_softirq_pending();
- }
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index 4cae6f2581379..0b9144b08e1f7 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -184,8 +184,8 @@ unsigned int tracing_gen_ctx_irq_test(unsigned int irqs_status);
- 
- enum trace_flag_type {
- 	TRACE_FLAG_IRQS_OFF		= 0x01,
--	TRACE_FLAG_NEED_RESCHED		= 0x02,
--	TRACE_FLAG_NEED_RESCHED_LAZY	= 0x04,
-+	TRACE_FLAG_NEED_RESCHED_LAZY	= 0x02,
-+	TRACE_FLAG_NEED_RESCHED		= 0x04,
- 	TRACE_FLAG_HARDIRQ		= 0x08,
- 	TRACE_FLAG_SOFTIRQ		= 0x10,
- 	TRACE_FLAG_PREEMPT_RESCHED	= 0x20,
-@@ -193,7 +193,6 @@ enum trace_flag_type {
- 	TRACE_FLAG_BH_OFF		= 0x80,
- };
- 
--#ifdef CONFIG_TRACE_IRQFLAGS_SUPPORT
- static inline unsigned int tracing_gen_ctx_flags(unsigned long irqflags)
- {
- 	unsigned int irq_status = irqs_disabled_flags(irqflags) ?
-@@ -207,17 +206,6 @@ static inline unsigned int tracing_gen_ctx(void)
- 	local_save_flags(irqflags);
- 	return tracing_gen_ctx_flags(irqflags);
- }
--#else
--
--static inline unsigned int tracing_gen_ctx_flags(unsigned long irqflags)
--{
--	return tracing_gen_ctx_irq_test(0);
--}
--static inline unsigned int tracing_gen_ctx(void)
--{
--	return tracing_gen_ctx_irq_test(0);
--}
--#endif
- 
- static inline unsigned int tracing_gen_ctx_dec(void)
- {
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 46972fe661f81..e66d883ed0b9b 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1125,11 +1125,11 @@ static __always_inline bool dynamic_preempt_promote(void)
- #else
- static __always_inline bool dynamic_preempt_lazy(void)
- {
--	return IS_ENABLED(PREEMPT_LAZY) | IS_ENABLED(PREEMPT_LAZIEST);
-+	return IS_ENABLED(CONFIG_PREEMPT_LAZY) | IS_ENABLED(CONFIG_PREEMPT_LAZIEST);
- }
- static __always_inline bool dynamic_preempt_promote(void)
- {
--	return IS_ENABLED(PREEMPT_LAZY);
-+	return IS_ENABLED(CONFIG_PREEMPT_LAZY);
- }
- #endif
- 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 2d847405e5a7f..b452206cf93b2 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -654,7 +654,7 @@ static inline void __irq_exit_rcu(void)
- 	if (!in_interrupt() && local_softirq_pending())
- 		invoke_softirq();
- 
--	if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_pending_timers() &&
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT) && local_timers_pending() &&
- 	    !(in_nmi() | in_hardirq()))
- 		wake_timersd();
- 
-@@ -996,12 +996,20 @@ static struct smp_hotplug_thread softirq_threads = {
- #ifdef CONFIG_PREEMPT_RT
- static void timersd_setup(unsigned int cpu)
- {
-+	/* Above SCHED_NORMAL to handle timers before regular tasks. */
- 	sched_set_fifo_low(current);
- }
- 
- static int timersd_should_run(unsigned int cpu)
- {
--	return local_pending_timers();
-+	return local_timers_pending();
-+}
-+
-+void raise_ktimers_thread(unsigned int nr)
-+{
-+	lockdep_assert_in_irq();
-+	trace_softirq_raise(nr);
-+	__this_cpu_or(pending_timer_softirq, 1 << nr);
- }
- 
- static void run_timersd(unsigned int cpu)
-@@ -1010,7 +1018,7 @@ static void run_timersd(unsigned int cpu)
- 
- 	ksoftirqd_run_begin();
- 
--	timer_si = local_pending_timers();
-+	timer_si = local_timers_pending();
- 	__this_cpu_write(pending_timer_softirq, 0);
- 	or_softirq_pending(timer_si);
- 
-@@ -1019,27 +1027,6 @@ static void run_timersd(unsigned int cpu)
- 	ksoftirqd_run_end();
- }
- 
--static void raise_ktimers_thread(unsigned int nr)
--{
--	trace_softirq_raise(nr);
--	__this_cpu_or(pending_timer_softirq, 1 << nr);
--}
--
--void raise_hrtimer_softirq(void)
--{
--	raise_ktimers_thread(HRTIMER_SOFTIRQ);
--}
--
--void raise_timer_softirq(void)
--{
--	unsigned long flags;
--
--	local_irq_save(flags);
--	raise_ktimers_thread(TIMER_SOFTIRQ);
--	wake_timersd();
--	local_irq_restore(flags);
--}
--
- static struct smp_hotplug_thread timer_threads = {
- 	.store			= &timersd,
- 	.setup			= timersd_setup,
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index a7c0b2156de3f..e0c47259e91a7 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -865,7 +865,7 @@ static void tick_nohz_restart(struct tick_sched *ts, ktime_t now)
- 
- static inline bool local_timer_softirq_pending(void)
- {
--	return local_pending_timers() & BIT(TIMER_SOFTIRQ);
-+	return local_timers_pending() & BIT(TIMER_SOFTIRQ);
- }
- 
- /*
-diff --git a/kernel/trace/trace_output.c b/kernel/trace/trace_output.c
-index 23ca2155306b1..77b7f9d244240 100644
---- a/kernel/trace/trace_output.c
-+++ b/kernel/trace/trace_output.c
-@@ -460,7 +460,6 @@ int trace_print_lat_fmt(struct trace_seq *s, struct trace_entry *entry)
- 		(entry->flags & TRACE_FLAG_IRQS_OFF && bh_off) ? 'D' :
- 		(entry->flags & TRACE_FLAG_IRQS_OFF) ? 'd' :
- 		bh_off ? 'b' :
--		!IS_ENABLED(CONFIG_TRACE_IRQFLAGS_SUPPORT) ? 'X' :
- 		'.';
- 
- 	switch (entry->flags & (TRACE_FLAG_NEED_RESCHED | TRACE_FLAG_NEED_RESCHED_LAZY |
-diff --git a/localversion-rt b/localversion-rt
-index 0efe7ba1930e1..8fc605d806670 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt5
-+-rt6
