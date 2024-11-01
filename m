@@ -1,71 +1,69 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A0861E22F7;
-	Fri,  1 Nov 2024 20:20:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.165.32
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E440D168DA
+	for <linux-rt-users@vger.kernel.org>; Fri,  1 Nov 2024 20:54:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730492418; cv=none; b=ABKCB76uWnwsMU1/wnOBZmCCsMfMxcj7HQaNQ+Jr7pwlE2RXAfLr0Py1NMxb/sI7mKO/AZSQsuNoVSmWg2luY5gBkzLIfhI4iNEvghJPtTMXY21YSg4pKK1lCxy8HLBCWRsPydRv2KnU10Lo1vVTF2RJn2VmhAJDelOu60UZZhA=
+	t=1730494494; cv=none; b=hm5vNmgNeML7Q74pASZ3hegZOPGWCKnKM07XQq1zw7mRfPGCTHaTNR/G/o8OUZB3ebqXQW1JMgGh/54rg9b3f1Jy2tCypaS2D4X3lq6fe5da8bKF3HxDtzjah5f/VzzPENarOWGJPktKAaG3YrGZ/Z/QkuQ20xk3N0b6VfW5EzU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730492418; c=relaxed/simple;
-	bh=AFUpe+H1mNJVfXWSJkjNwzFzjwdPZYCjS/sobTIgr54=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=h0qgPymdWCstkuB9S4Ba0yrTIrvWRtj/eptJEST4qyd+0uO2pkzF2wenDfxR9bPVOq+DHWzSDdJruVfcFwn+ccNwzefkk8jOs5Wpdks7ySiiNyF6hPkiRbGcTinjBiF3Th+cvGZoUOYO/Ayv5NkyHU3i0BAFL0LcNdC3Q68Viqo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=WYunDx6f; arc=none smtp.client-ip=205.220.165.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	s=arc-20240116; t=1730494494; c=relaxed/simple;
+	bh=gMrDuFYD5nH38ne9sQjwzsUipXZ0SrGESOn56lX+FVg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=O5AJcaStVMZSp5i8jK2ZMKrCpwi5IjV19jfkwnzDc+5kgVHLAoI9wmPGfjKYEwHiHukWV+hUJLkDQIstqY6LS9aguCfNlQMzmafKcgEgjResOejgLRYqqGtzDjRDvFVAuNzJyXLXK1mr6HPgKc3e4b+1qBrP2Z37oSODHW8XXGU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Gv5nvJUb; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="WYunDx6f"
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4A1GC6S2004424;
-	Fri, 1 Nov 2024 20:19:32 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:date:from:in-reply-to:message-id
-	:mime-version:references:subject:to; s=corp-2023-11-20; bh=sQoNs
-	2Tk7nSHAs0mifMTS7TrsAwKY4GV3yCpcdi0yN8=; b=WYunDx6fsGmzLtpHuq1EZ
-	r0T4Q7AFKu23OHTLBvo1YmqCSjC619w0mViJiUxZei6zb2vb8tGBkdrM7+gaVxAn
-	wHm4uq+BaLaKPvBpihMo/rg56H3lWW7vfjQkw9b2yyhVw12Z19UAFtBPx4thumPR
-	2KMog28rzo959OIyhsW9x7dI3/BBNULr4iACHVbKolCvE8RfqzQMC+L18BdG+ZaI
-	Q0X1n8470DZcQ4Hei2zfIHMSPnJaJpy8gm+FVZ8a19fiNKG6u7c+ePgNCn0qcjw4
-	GSdlBCIOPS+SKgP0p/09XP1c4Jx3d1NdDLaIiWPclU5tFJWUNwBjcXBigwIruxPx
-	Q==
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 42grc9529d-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 01 Nov 2024 20:19:32 +0000 (GMT)
-Received: from pps.filterd (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 4A1I1KHJ035029;
-	Fri, 1 Nov 2024 20:19:30 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 42hndbxf41-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 01 Nov 2024 20:19:30 +0000
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 4A1KJOG3009855;
-	Fri, 1 Nov 2024 20:19:30 GMT
-Received: from jupiter.nl.oracle.com (dhcp-10-175-4-20.vpn.oracle.com [10.175.4.20])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id 42hndbxeys-2;
-	Fri, 01 Nov 2024 20:19:27 +0000
-From: Joseph Salisbury <joseph.salisbury@oracle.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>, Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@suse.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
-        Joseph Salisbury <josephtsalisbury@gmail.com>,
-        Joseph Salisbury <joseph.salisbury@oracle.com>
-Cc: Eric Dumazet <edumazet@google.com>,
-        Pablo Neira Ayuso <pablo@netfilter.org>
-Subject: [PATCH RT 1/2] netfilter: nft_counter: Use u64_stats_t for statistic.
-Date: Fri,  1 Nov 2024 16:19:16 -0400
-Message-ID: <20241101201917.2010908-2-joseph.salisbury@oracle.com>
-X-Mailer: git-send-email 2.43.5
-In-Reply-To: <20241101201917.2010908-1-joseph.salisbury@oracle.com>
-References: <20241101201917.2010908-1-joseph.salisbury@oracle.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Gv5nvJUb"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1730494491;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=QpOqAFSrDgeR9+SnwYhxCs6Owpw4W5q4uZGJjW7DusM=;
+	b=Gv5nvJUbrDID5ZZ9e3L92TqjNG/OijqcaG9UYbNo8otJod2Ky4Gcp5E+zL5OFpjOY8BEvS
+	Lw3cUiwnzPq0iciCvB49I/BWGE6pOHkPCQWpmaYLf+5hvqKInPdSTUGhhsGmA99smAEfCI
+	6gteAji+mEkfTurpOdRMmr4UH18qBrc=
+Received: from mail-ot1-f69.google.com (mail-ot1-f69.google.com
+ [209.85.210.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-524-42pa2d_xOFe1XumwsZOxgw-1; Fri, 01 Nov 2024 16:54:50 -0400
+X-MC-Unique: 42pa2d_xOFe1XumwsZOxgw-1
+Received: by mail-ot1-f69.google.com with SMTP id 46e09a7af769-7180a4bf542so2540220a34.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 01 Nov 2024 13:54:50 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1730494489; x=1731099289;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=QpOqAFSrDgeR9+SnwYhxCs6Owpw4W5q4uZGJjW7DusM=;
+        b=j3OacCsMwnt/sBx4poVA177txvSUggR/ALIRWIwfr49nt6ZYhYi5RXdtvRYhwuBauE
+         +hSlMEsZEAw3ylWDkW3O19ekTbrRi3bUD4oaPVbls8qhl90f3wrL40swDIbGlFabNuh/
+         V8o/z0RNtUnTrqfK3I9Q52VAl7GY7HEy7v8m0853i+Y1elrXEr/Af+MKOUpCxUfK3drn
+         ohWb2wfJhePii8/ySsYGqa1u9tBrIeb9+0s1f9WIlMn4El71KJsDZ3KyyelG5cuoob22
+         xcbOqFUhtEexiRf6ZatUjQvSz12eGAyAlpxbhD9QCG/jkrkfu2NugqFoBohE+r7pMttw
+         C5aQ==
+X-Gm-Message-State: AOJu0Yw0bZVyK3wCv+KFSKHp66do8mVB60AGcDb6z6tB0ZATRHB8TsGP
+	ZybgsffmR9ycRLvpuJ3e9jaAqENRN5+jY8Cm1FMTk9CeHEF7iWm3yr0WZc9kTpENmIw1L2iitgn
+	L/vzuH1WsFc5r/RAPKNWLOWGLalZqedsztwUUgQckIZQjkt6FhjOpx+vj7eeRaeV9
+X-Received: by 2002:a05:6830:6015:b0:717:fe2d:a4e4 with SMTP id 46e09a7af769-7189b4f40e0mr8091299a34.19.1730494489599;
+        Fri, 01 Nov 2024 13:54:49 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGCsJqK07FNZEuXspWjgdsC+MXikRtFGcawRcpiNTtqSyi0fCOTHCn3jf7JxERP1nbH1IPiRg==
+X-Received: by 2002:a05:6830:6015:b0:717:fe2d:a4e4 with SMTP id 46e09a7af769-7189b4f40e0mr8091287a34.19.1730494489281;
+        Fri, 01 Nov 2024 13:54:49 -0700 (PDT)
+Received: from crwood-thinkpadp16vgen1.minnmso.csb ([50.145.183.242])
+        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7189cc6a0dfsm879613a34.24.2024.11.01.13.54.48
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 01 Nov 2024 13:54:49 -0700 (PDT)
+From: Crystal Wood <crwood@redhat.com>
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>,
+	Crystal Wood <crwood@redhat.com>
+Subject: [PATCH] rteval: Print useful exception info and exit on missing measurement tool
+Date: Fri,  1 Nov 2024 15:54:46 -0500
+Message-ID: <20241101205446.41310-1-crwood@redhat.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -73,264 +71,180 @@ List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.62.30
- definitions=2024-11-01_14,2024-11-01_01,2024-09-30_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0 malwarescore=0 spamscore=0
- phishscore=0 mlxscore=0 bulkscore=0 suspectscore=0 mlxlogscore=999
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2409260000
- definitions=main-2411010145
-X-Proofpoint-GUID: DweYJZjPfEGXHcnc5itnBmWEP6E2Lwr9
-X-Proofpoint-ORIG-GUID: DweYJZjPfEGXHcnc5itnBmWEP6E2Lwr9
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Currently, if cyclictest or rtla (whichever rteval is configured to use)
+is missing, the error output only says "measurement threads did not use
+the full time slot" and then rteval hangs.
 
-v5.15.167-rt80-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Avoid catching these exceptions so that they will be printed out,
+pointing to the actual problem.  Also set up a thread exception hook to
+do a prompt and (relatively) graceful exit if a thread has any uncaught
+exception (this requires python >= 3.8).
 
------------
-
-
-The nft_counter uses two s64 counters for statistics. Those two are
-protected by a seqcount to ensure that the 64bit variable is always
-properly seen during updates even on 32bit architectures where the store
-is performed by two writes. A side effect is that the two counter (bytes
-and packet) are written and read together in the same window.
-
-This can be replaced with u64_stats_t. write_seqcount_begin()/ end() is
-replaced with u64_stats_update_begin()/ end() and behaves the same way
-as with seqcount_t on 32bit architectures. Additionally there is a
-preempt_disable on PREEMPT_RT to ensure that a reader does not preempt a
-writer.
-On 64bit architectures the macros are removed and the reads happen
-without any retries. This also means that the reader can observe one
-counter (bytes) from before the update and the other counter (packets)
-but that is okay since there is no requirement to have both counter from
-the same update window.
-
-Convert the statistic to u64_stats_t. There is one optimisation:
-nft_counter_do_init() and nft_counter_clone() allocate a new per-CPU
-counter and assign a value to it. During this assignment preemption is
-disabled which is not needed because the counter is not yet exposed to
-the system so there can not be another writer or reader. Therefore
-disabling preemption is omitted and raw_cpu_ptr() is used to obtain a
-pointer to a counter for the assignment.
-
-Cc: Eric Dumazet <edumazet@google.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
-(cherry picked from commit 4a1d3acd6ea86075e77fcc1188c3fc372833ba73)
-[jsalisbury: changed seqcount_init to u64_stats_init in nft_counter_module_init()]
-Signed-off-by: Joseph Salisbury <joseph.salisbury@oracle.com>
+Signed-off-by: Crystal Wood <crwood@redhat.com>
 ---
- net/netfilter/nft_counter.c | 91 +++++++++++++++++++------------------
- 1 file changed, 47 insertions(+), 44 deletions(-)
+ README                                   |  2 +-
+ rteval/__init__.py                       | 12 ++++++++++++
+ rteval/modules/__init__.py               | 14 +++++++++++---
+ rteval/modules/measurement/cyclictest.py | 14 +++++---------
+ rteval/modules/measurement/timerlat.py   | 13 +++++--------
+ 5 files changed, 34 insertions(+), 21 deletions(-)
 
-diff --git a/net/netfilter/nft_counter.c b/net/netfilter/nft_counter.c
-index 30b24d002c3d..e387b6610aaf 100644
---- a/net/netfilter/nft_counter.c
-+++ b/net/netfilter/nft_counter.c
-@@ -8,7 +8,7 @@
- #include <linux/kernel.h>
- #include <linux/init.h>
- #include <linux/module.h>
--#include <linux/seqlock.h>
-+#include <linux/u64_stats_sync.h>
- #include <linux/netlink.h>
- #include <linux/netfilter.h>
- #include <linux/netfilter/nf_tables.h>
-@@ -16,6 +16,11 @@
- #include <net/netfilter/nf_tables_offload.h>
+diff --git a/README b/README
+index b352d7f..19704b4 100644
+--- a/README
++++ b/README
+@@ -16,7 +16,7 @@ The rteval source may be pulled from it's git tree on kernel.org:
  
- struct nft_counter {
-+	u64_stats_t	bytes;
-+	u64_stats_t	packets;
-+};
+ Rteval requires the following packages to run:
+ 
+-Python >= 3.0
++Python >= 3.8
+     http://www.python.org/download/
+ 
+ python-lxml
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index 7c13e84..6097ddf 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -19,6 +19,7 @@ import threading
+ import time
+ from datetime import datetime
+ import sysconfig
++from traceback import format_exception
+ from rteval.modules.loads import LoadModules
+ from rteval.modules.measurement import MeasurementModules
+ from rteval.rtevalReport import rtevalReport
+@@ -29,6 +30,7 @@ from rteval import version
+ RTEVAL_VERSION = version.RTEVAL_VERSION
+ 
+ EARLYSTOP = False
++threaderr = False
+ 
+ stopsig = threading.Event()
+ def sig_handler(signum, frame):
+@@ -39,9 +41,17 @@ def sig_handler(signum, frame):
+     else:
+         raise RuntimeError(f"SIGNAL received! ({signum})")
+ 
++def except_hook(args):
++    global threaderr
 +
-+struct nft_counter_tot {
- 	s64		bytes;
- 	s64		packets;
- };
-@@ -24,25 +29,24 @@ struct nft_counter_percpu_priv {
- 	struct nft_counter __percpu *counter;
- };
++    threading.__excepthook__(args)
++    threaderr = True
++    stopsig.set()
++
+ class RtEval(rtevalReport):
+     def __init__(self, config, loadmods, measuremods, logger):
+         self.__version = RTEVAL_VERSION
++        threading.excepthook = except_hook
  
--static DEFINE_PER_CPU(seqcount_t, nft_counter_seq);
-+static DEFINE_PER_CPU(struct u64_stats_sync, nft_counter_sync);
+         if not isinstance(config, rtevalConfig.rtevalConfig):
+             raise TypeError("config variable is not an rtevalConfig object")
+@@ -237,6 +247,8 @@ class RtEval(rtevalReport):
+         global EARLYSTOP
+         rtevalres = 0
+         measure_start = self.__RunMeasurement()
++        if threaderr:
++            return 1
  
- static inline void nft_counter_do_eval(struct nft_counter_percpu_priv *priv,
- 				       struct nft_regs *regs,
- 				       const struct nft_pktinfo *pkt)
- {
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
+         self._report(measure_start, self.__rtevcfg.xslt_report)
+         if self.__rtevcfg.sysreport:
+diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+index eb29db8..9827651 100644
+--- a/rteval/modules/__init__.py
++++ b/rteval/modules/__init__.py
+@@ -124,8 +124,8 @@ class rtevalModulePrototype(threading.Thread):
  
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
+     def WaitForCompletion(self, wtime=None):
+         """ Blocks until the module has completed its workload """
+-        if not self.shouldStart():
+-            # If it hasn't been started yet, nothing to wait for
++        if self.hadRuntimeError() or not self.shouldStart():
++            # If it failed or hasn't been started yet, nothing to wait for
+             return None
+         return self.__events["finished"].wait(wtime)
  
--	write_seqcount_begin(myseq);
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->bytes, pkt->skb->len);
-+	u64_stats_inc(&this_cpu->packets);
-+	u64_stats_update_end(nft_sync);
+@@ -175,7 +175,7 @@ class rtevalModulePrototype(threading.Thread):
+         return self._donotrun is False
  
--	this_cpu->bytes += pkt->skb->len;
--	this_cpu->packets++;
+ 
+-    def run(self):
++    def __run(self):
+         "Workload thread runner - takes care of keeping the workload running as long as needed"
+         if self.shouldStop():
+             return
+@@ -215,6 +215,12 @@ class rtevalModulePrototype(threading.Thread):
+ 
+         self._WorkloadCleanup()
+ 
++    def run(self):
++        try:
++            self.__run()
++        except Exception as e:
++            self._setRuntimeError()
++            raise e
+ 
+     def MakeReport(self):
+         """ required module method, needs to return an libxml2.xmlNode object
+@@ -532,6 +538,8 @@ class RtEvalModules:
+         rep_n = libxml2.newNode(self._report_tag)
+ 
+         for (modname, mod) in self.__modules:
++            if mod.hadRuntimeError():
++                continue
+             self._logger.log(Log.DEBUG, f"Getting report from {modname}")
+             modrep_n = mod.MakeReport()
+             if modrep_n is not None:
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index 2e8f6f1..3d25c20 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -285,15 +285,11 @@ class Cyclictest(rtevalModulePrototype):
+                 fp.flush()
+ 
+         self.__cyclicoutput.seek(0)
+-        try:
+-            self.__cyclicprocess = subprocess.Popen(self.__cmd,
+-                                                    stdout=self.__cyclicoutput,
+-                                                    stderr=self.__nullfp,
+-                                                    stdin=self.__nullfp)
+-            self.__started = True
+-        except OSError:
+-            self.__started = False
 -
--	write_seqcount_end(myseq);
- 	local_bh_enable();
- }
++        self.__cyclicprocess = subprocess.Popen(self.__cmd,
++                                                stdout=self.__cyclicoutput,
++                                                stderr=self.__nullfp,
++                                                stdin=self.__nullfp)
++        self.__started = True
  
-@@ -65,17 +69,16 @@ static int nft_counter_do_init(const struct nlattr * const tb[],
- 	if (cpu_stats == NULL)
- 		return -ENOMEM;
+     def WorkloadAlive(self):
+         if self.__started:
+diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
+index 92bc070..df42777 100644
+--- a/rteval/modules/measurement/timerlat.py
++++ b/rteval/modules/measurement/timerlat.py
+@@ -252,14 +252,11 @@ class Timerlat(rtevalModulePrototype):
  
--	preempt_disable();
--	this_cpu = this_cpu_ptr(cpu_stats);
-+	this_cpu = raw_cpu_ptr(cpu_stats);
- 	if (tb[NFTA_COUNTER_PACKETS]) {
--	        this_cpu->packets =
--			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS]));
-+		u64_stats_set(&this_cpu->packets,
-+			      be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_PACKETS])));
- 	}
- 	if (tb[NFTA_COUNTER_BYTES]) {
--		this_cpu->bytes =
--			be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES]));
-+		u64_stats_set(&this_cpu->bytes,
-+			      be64_to_cpu(nla_get_be64(tb[NFTA_COUNTER_BYTES])));
- 	}
--	preempt_enable();
-+
- 	priv->counter = cpu_stats;
- 	return 0;
- }
-@@ -103,40 +106,41 @@ static void nft_counter_obj_destroy(const struct nft_ctx *ctx,
- }
+         self.__timerlat_out.seek(0)
+         self.__timerlat_err.seek(0)
+-        try:
+-            self.__timerlat_process = subprocess.Popen(self.__cmd,
+-                                                       stdout=self.__timerlat_out,
+-                                                       stderr=self.__timerlat_err,
+-                                                       stdin=None)
+-            self.__started = True
+-        except OSError:
+-            self.__started = False
++        self.__timerlat_process = subprocess.Popen(self.__cmd,
++                                                   stdout=self.__timerlat_out,
++                                                   stderr=self.__timerlat_err,
++                                                   stdin=None)
++        self.__started = True
  
- static void nft_counter_reset(struct nft_counter_percpu_priv *priv,
--			      struct nft_counter *total)
-+			      struct nft_counter_tot *total)
- {
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
- 
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
-+
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->packets, -total->packets);
-+	u64_stats_add(&this_cpu->bytes, -total->bytes);
-+	u64_stats_update_end(nft_sync);
- 
--	write_seqcount_begin(myseq);
--	this_cpu->packets -= total->packets;
--	this_cpu->bytes -= total->bytes;
--	write_seqcount_end(myseq);
- 	local_bh_enable();
- }
- 
- static void nft_counter_fetch(struct nft_counter_percpu_priv *priv,
--			      struct nft_counter *total)
-+			      struct nft_counter_tot *total)
- {
- 	struct nft_counter *this_cpu;
--	const seqcount_t *myseq;
- 	u64 bytes, packets;
- 	unsigned int seq;
- 	int cpu;
- 
- 	memset(total, 0, sizeof(*total));
- 	for_each_possible_cpu(cpu) {
--		myseq = per_cpu_ptr(&nft_counter_seq, cpu);
-+		struct u64_stats_sync *nft_sync = per_cpu_ptr(&nft_counter_sync, cpu);
-+
- 		this_cpu = per_cpu_ptr(priv->counter, cpu);
- 		do {
--			seq	= read_seqcount_begin(myseq);
--			bytes	= this_cpu->bytes;
--			packets	= this_cpu->packets;
--		} while (read_seqcount_retry(myseq, seq));
-+			seq	= u64_stats_fetch_begin(nft_sync);
-+			bytes	= u64_stats_read(&this_cpu->bytes);
-+			packets	= u64_stats_read(&this_cpu->packets);
-+		} while (u64_stats_fetch_retry(nft_sync, seq));
- 
- 		total->bytes	+= bytes;
- 		total->packets	+= packets;
-@@ -147,7 +151,7 @@ static int nft_counter_do_dump(struct sk_buff *skb,
- 			       struct nft_counter_percpu_priv *priv,
- 			       bool reset)
- {
--	struct nft_counter total;
-+	struct nft_counter_tot total;
- 
- 	nft_counter_fetch(priv, &total);
- 
-@@ -236,7 +240,7 @@ static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src, g
- 	struct nft_counter_percpu_priv *priv_clone = nft_expr_priv(dst);
- 	struct nft_counter __percpu *cpu_stats;
- 	struct nft_counter *this_cpu;
--	struct nft_counter total;
-+	struct nft_counter_tot total;
- 
- 	nft_counter_fetch(priv, &total);
- 
-@@ -244,11 +248,9 @@ static int nft_counter_clone(struct nft_expr *dst, const struct nft_expr *src, g
- 	if (cpu_stats == NULL)
- 		return -ENOMEM;
- 
--	preempt_disable();
--	this_cpu = this_cpu_ptr(cpu_stats);
--	this_cpu->packets = total.packets;
--	this_cpu->bytes = total.bytes;
--	preempt_enable();
-+	this_cpu = raw_cpu_ptr(cpu_stats);
-+	u64_stats_set(&this_cpu->packets, total.packets);
-+	u64_stats_set(&this_cpu->bytes, total.bytes);
- 
- 	priv_clone->counter = cpu_stats;
- 	return 0;
-@@ -266,17 +268,17 @@ static void nft_counter_offload_stats(struct nft_expr *expr,
- 				      const struct flow_stats *stats)
- {
- 	struct nft_counter_percpu_priv *priv = nft_expr_priv(expr);
-+	struct u64_stats_sync *nft_sync;
- 	struct nft_counter *this_cpu;
--	seqcount_t *myseq;
- 
- 	local_bh_disable();
- 	this_cpu = this_cpu_ptr(priv->counter);
--	myseq = this_cpu_ptr(&nft_counter_seq);
-+	nft_sync = this_cpu_ptr(&nft_counter_sync);
- 
--	write_seqcount_begin(myseq);
--	this_cpu->packets += stats->pkts;
--	this_cpu->bytes += stats->bytes;
--	write_seqcount_end(myseq);
-+	u64_stats_update_begin(nft_sync);
-+	u64_stats_add(&this_cpu->packets, stats->pkts);
-+	u64_stats_add(&this_cpu->bytes, stats->bytes);
-+	u64_stats_update_end(nft_sync);
- 	local_bh_enable();
- }
- 
-@@ -308,7 +310,8 @@ static int __init nft_counter_module_init(void)
- 	int cpu, err;
- 
- 	for_each_possible_cpu(cpu)
--		seqcount_init(per_cpu_ptr(&nft_counter_seq, cpu));
-+		u64_stats_init(per_cpu_ptr(&nft_counter_sync, cpu));
-+
- 
- 	err = nft_register_obj(&nft_counter_obj_type);
- 	if (err < 0)
+     def WorkloadAlive(self):
+         if self.__started:
 -- 
-2.43.5
+2.47.0
 
