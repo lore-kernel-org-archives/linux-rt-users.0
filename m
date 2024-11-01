@@ -1,123 +1,107 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 190011BBBE0
-	for <linux-rt-users@vger.kernel.org>; Thu, 31 Oct 2024 21:36:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A60671C7287;
+	Fri,  1 Nov 2024 20:20:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.165.32
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730410576; cv=none; b=C4xbA5mUNuSbbf6Ya7rT3xNYKGp5Fe8kJMHvX0IacuiZKgChGdXe/x2OauBncNcR6+pO+mQvfyJGKLjY6wYEjTEaZ6kVNVhFVFvGfEzBOXIkniA8uybZB52/3Tu8aGBdVDuyTQiC4wSOjv8hsjbZkb8NYXaFcdPCmciTvqNPpXo=
+	t=1730492406; cv=none; b=QKZ0wCIzFGfZhhztTGO6OFRBgcS89y8ZuvWwgjxGa1JsL+e8SCgITW92QGp02NMIj/a4Urdbnnu6GH8BGenoD8dkA7n55i8wvGymir9fl6kp+FXQLCFFLFGJ0AlOKdErkFKlC28k51kbBLsvT2SgZ1Vw3rUIvARCoXgl6cRalUk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730410576; c=relaxed/simple;
-	bh=0PXr3c2hWLw+PmHYaIys/jIIPF5n3MAD14XIefAvYTc=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=mYNlLkP99Yz9Y2qwmvajB7yFM1dnGsNXXxcVXKMdZ+a2QGYjabDbsHbrEZSLevKfeZqNJqx3B9bVZJJ1UVyrA7YLSAa+MKUjrCSmS7D82a2RDXnO4Q5LZqLA6r9mCpOdc1ubc5yQQ7vtaDi8bB0PJaN54kWEqUHDCRXACnjM6gk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UzvIZz4K; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1730492406; c=relaxed/simple;
+	bh=woheSRu8QXlgXJPPuLCeAL/JOsNwEL1apTHiQ9sMSCM=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Yfzi4HQ9d3tMwvh3Y0+8/0flBEJpxCXBsHLkFzjj4YHcl2TqfWv6f7lHNQuLsXp1Px4/TuBUNaamMnCtpbymEvZ2FybTPWjgWQX965xkVMq8mZ3JsF8KlupJlM5APIAj43+cJirq9sdreGg/G7d3OVXDrj6oGuzm+WYBvvP53+c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=o2pGWQcu; arc=none smtp.client-ip=205.220.165.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UzvIZz4K"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1730410569;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=c3Z37ryhmj7caqbEBAa8WqSnBGXSgsugKOAWWAJhbIg=;
-	b=UzvIZz4Kq/kH0Mxhcekg1QUqTdkh45qTNslbXS+1y0CXoZlrYs3w2tuUwHuENMtKWdmXTO
-	MjRyArdfmi7tRAYMSLBYmkbSvmYT8U4+W1CGdYcnVmwEfmaluJHa4caAhbu3MJXX9CbVWD
-	7Z6q3BAq+dX5ID8hS/Bx0t5nFVjtsr8=
-Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
- [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-386-ORQ7Qt_VNeOadqfEC-0Wtw-1; Thu, 31 Oct 2024 17:36:07 -0400
-X-MC-Unique: ORQ7Qt_VNeOadqfEC-0Wtw-1
-Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-6cbd2cb2f78so33324826d6.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 31 Oct 2024 14:36:07 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1730410567; x=1731015367;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=c3Z37ryhmj7caqbEBAa8WqSnBGXSgsugKOAWWAJhbIg=;
-        b=jhYYYoHgKz2HTPHpfV1eUzE6mcpaHKuzKdFH42bgRLqwIL6mlgGFHC+1IX4Nd1A4Sg
-         o4HUZvFmOQRqic0QSIIw9k6FrTte7vZYH9n1WpK10RyrmWAvrqH/oAMVAW189DXopPRA
-         1CKyHN34/uJ65mK0OKh5/XUYECLjPIEZkcxaZUmBwWfiklmvafs1PnHpFoKo30TAxRpw
-         im+H0s1Hz5fc26ON9GDSEJixZtqNkeW4UWRee9xwxtgPUZwxiedd9dsBHwxKhraB1Uw6
-         rcqJQR5c9XuLGoVHGdSoZJYMp51ZicsXAi6l9gU2cWcr1J8pGYDtMBAWKEyB1+NhKBx/
-         6E9Q==
-X-Gm-Message-State: AOJu0YzFji5aa76N58pv5U/xpQQqCguhLiQU9kwhOZFFO7cHQzYZznyq
-	cG9O/wnDeSFy9kG91Ci4NWOeoVSbszNRyFOuVOo+s860/IAy67tblD5nilCTOOkaSnXf/OZESDf
-	kkgGfh/o9nDz48TY99g43/5U8QYiHjPMWBvFncTQmPqZZEI4P5tcGOlJFfCHWosQE
-X-Received: by 2002:a05:6214:acb:b0:6cb:6468:7eb9 with SMTP id 6a1803df08f44-6d35b964338mr28189506d6.21.1730410567000;
-        Thu, 31 Oct 2024 14:36:07 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFbV/gwnAsvxMedPJt+dgJg08szbyNVwZgbQrttjPF3fGpgyCjY3FSXG+qmPelmLnIM5ScB0g==
-X-Received: by 2002:a05:6214:acb:b0:6cb:6468:7eb9 with SMTP id 6a1803df08f44-6d35b964338mr28189166d6.21.1730410566612;
-        Thu, 31 Oct 2024 14:36:06 -0700 (PDT)
-Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6d353fe9d8asm12064256d6.66.2024.10.31.14.36.05
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 31 Oct 2024 14:36:06 -0700 (PDT)
-Date: Thu, 31 Oct 2024 17:36:05 -0400 (EDT)
-From: John Kacur <jkacur@redhat.com>
-To: Eder Zulian <ezulian@redhat.com>
-cc: linux-rt-users@vger.kernel.org, williams@redhat.com
-Subject: Re: [PATCH] cyclictest: Fix help text for '-a' option
-In-Reply-To: <20241014215946.1833576-1-ezulian@redhat.com>
-Message-ID: <0a5284a6-40b8-2260-d060-2aef7c653fd1@redhat.com>
-References: <20241014215946.1833576-1-ezulian@redhat.com>
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="o2pGWQcu"
+Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4A1GBZbB010864;
+	Fri, 1 Nov 2024 20:19:38 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:date:from:in-reply-to:message-id
+	:mime-version:references:subject:to; s=corp-2023-11-20; bh=zRc29
+	yAjjjcb6HjRKWOOU9rolmrIUBUoChVdf6ixpXQ=; b=o2pGWQcuWesqDpC1bmQca
+	KvO3Nb2+34A/kY9Gje9lpDl4vsq6ZVES7beUX6kxK+XBr4Hgs+P11grswYwVthPA
+	zJKxAQYB8RG0PrcSmAkaOG+cmAfXARWvN1LwF0QTFCrivv+Cpa20GyXTHDsG6Xp+
+	SShHrNUW/EItZHUYcyYKhS6CEfAXNKr6fYB3LfbWxZC2BG6oOfAzKjVgJU+YhbQy
+	DlaSVoGRNdbDYTmZKZ8dJWxUvnfLsyH1pOtX/GZDjk0UxgMYdbeQHFU5ci89GP+Q
+	Ssv/BMM00hXms4w+M3R/gxgCKt84w/S9aUIPuxxl7Yv89vD5BHR+15PSpRNm3MA5
+	A==
+Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 42grysd3jr-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 01 Nov 2024 20:19:38 +0000 (GMT)
+Received: from pps.filterd (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 4A1I5AI9034737;
+	Fri, 1 Nov 2024 20:19:36 GMT
+Received: from pps.reinject (localhost [127.0.0.1])
+	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 42hndbxf60-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 01 Nov 2024 20:19:36 +0000
+Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 4A1KJOG5009855;
+	Fri, 1 Nov 2024 20:19:36 GMT
+Received: from jupiter.nl.oracle.com (dhcp-10-175-4-20.vpn.oracle.com [10.175.4.20])
+	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id 42hndbxeys-3;
+	Fri, 01 Nov 2024 20:19:33 +0000
+From: Joseph Salisbury <joseph.salisbury@oracle.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>, Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>, Pavel Machek <pavel@denx.de>,
+        Joseph Salisbury <josephtsalisbury@gmail.com>,
+        Joseph Salisbury <joseph.salisbury@oracle.com>
+Cc: Joseph Salisbury <jsalisbury@kernel.org>
+Subject: [PATCH RT 2/2] Linux 5.15.167-rt80
+Date: Fri,  1 Nov 2024 16:19:17 -0400
+Message-ID: <20241101201917.2010908-3-joseph.salisbury@oracle.com>
+X-Mailer: git-send-email 2.43.5
+In-Reply-To: <20241101201917.2010908-1-joseph.salisbury@oracle.com>
+References: <20241101201917.2010908-1-joseph.salisbury@oracle.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.62.30
+ definitions=2024-11-01_14,2024-11-01_01,2024-09-30_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0 malwarescore=0 spamscore=0
+ phishscore=0 mlxscore=0 bulkscore=0 suspectscore=0 mlxlogscore=999
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2409260000
+ definitions=main-2411010145
+X-Proofpoint-ORIG-GUID: qTYK_htRc4v64ULESdJU_7RmlJXIisWf
+X-Proofpoint-GUID: qTYK_htRc4v64ULESdJU_7RmlJXIisWf
+
+From: Joseph Salisbury <jsalisbury@kernel.org>
+
+v5.15.167-rt80-rc1 stable review patch.
+If anyone has any objections, please let me know.
+
+-----------
 
 
+Signed-off-by: Joseph Salisbury <jsalisbury@kernel.org>
+---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On Mon, 14 Oct 2024, Eder Zulian wrote:
-
-> Fix the help text for '-a' or '--affinity' option.
-> 
-> Tested with the following command (output editted to indicate thread
-> ranking, i.e., Thread 0 is the 1st thread, Thread 1 is the 2nd thread,
-> and so on):
-> 
-> 	# cyclictest -t -a3-5,0 -t 5 -D1 -v
-> 	[...]
-> 	Thread 0 using cpu 0.	<-- 1st thread
-> 	Thread 0 Interval: 1500
-> 	Thread 1 using cpu 3.	<-- 2nd thread
-> 	Thread 1 Interval: 2000
-> 	Thread 2 using cpu 4.	<-- 3rd thread
-> 	Thread 2 Interval: 2500
-> 	Thread 3 using cpu 5.	<-- 4th thread
-> 	Thread 3 Interval: 3000
-> 	Thread 4 using cpu 0.	<-- 5th thread
-> 	Thread 4 Interval: 3500
-> 	[...]
-> 
-> Signed-off-by: Eder Zulian <ezulian@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 6 +++---
->  1 file changed, 3 insertions(+), 3 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index c5c3389..f3ab836 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -769,9 +769,9 @@ static void display_help(int error)
->  	       "-a [CPUSET] --affinity     Run thread #N on processor #N, if possible, or if CPUSET\n"
->  	       "                           given, pin threads to that set of processors in round-\n"
->  	       "                           robin order.  E.g. -a 2 pins all threads to CPU 2,\n"
-> -	       "                           but -a 3-5,0 -t 5 will run the first and fifth\n"
-> -	       "                           threads on CPU (0),thread #2 on CPU 3, thread #3\n"
-> -	       "                           on CPU 4, and thread #5 on CPU 5.\n"
-> +	       "                           but -a 3-5,0 -t 5 will run the first and fifth threads\n"
-> +	       "                           on CPU 0, the second thread on CPU 3, the third thread\n"
-> +	       "                           on CPU 4, and the fourth thread on CPU 5.\n"
->  	       "-A USEC  --aligned=USEC    align thread wakeups to a specific offset\n"
->  	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
->  	       "-c CLOCK --clock=CLOCK     select clock\n"
-> -- 
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
+diff --git a/localversion-rt b/localversion-rt
+index cf94a551bf32..5ba2c2091cf9 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt79
++-rt80
+-- 
+2.43.5
 
