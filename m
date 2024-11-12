@@ -1,101 +1,116 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64F69200121
-	for <linux-rt-users@vger.kernel.org>; Tue, 12 Nov 2024 14:53:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80397200CBB
+	for <linux-rt-users@vger.kernel.org>; Tue, 12 Nov 2024 15:34:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731423195; cv=none; b=rxQ738ic4mteCb4CCPdR8PjfUKMmG8NpLTJGw+2bUsXwSxG319mUaD0EffSmINlCnPfOybQtpe23QGujQmS8eGLPuon67iumFJyR7CX9bmgerBappTLTV4YtHMWYLZdbrY96Yv81Aq1wG2gzJ4ABYMz8BydF4M6zOykh9gL440k=
+	t=1731425646; cv=none; b=ONUnA4OG9BD/xdcZ/pMiA+wPqRRXZk/gtKCHjb+hgI+uTD4BfXphwF4kyNYM2NvtOpwkkS1OFd1TUds4tFR4Y4R8q4Ijn6fotFLbltQqBrgW32aj0h+uVL8oKzHOnQYK/YYnS2Jbr/S4aeE/x2PpyJZQPkTg/2PXp/w6xR0cOJA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731423195; c=relaxed/simple;
-	bh=d74c37Wnve7bz7atyaNmCT0872rFO7xwSkJCrx7lop0=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Q0G5U/jiyFE7NUPizN4K+NGBp5KmXibzISn8V4Iey6Y6ctwLhIxlGxSoKlcA2/LZMxf6oi7H6rdfZ5wXUCbGSpLSyJO6VJofBLe7cirkidVAoUVJ7nBJy0sd7DlspZEvdU1X+LZSsW9KJAtAFrsSn2te5Xdfo5A4AIBOFiyv3IA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cmNnac4E; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1731425646; c=relaxed/simple;
+	bh=OhSG+F4EQ8KtCdYAL5RCcD2M8w+wlVYZcH2tdBooQas=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Q9wyFazqMqahqKOs2OqFB8Ez4HJpwhiIBJcPhTE+n5sdgavTi/QrZCIwIsdn+m96B388oWt9LxkVER5S8sYPzfdzdPWyvoIY7aRuZwGkusVDga2h7pb4SvJgDCtTtP6V4LV+ogagY4167Jkdo8rVp3bM32IhkORWkwaQRCOOPmE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DI9nQwON; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cmNnac4E"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DI9nQwON"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1731423193;
+	s=mimecast20190719; t=1731425643;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=CWsK4McBSswFpriD7K7dvE5I2YapnbjAeHEc8fjaLlw=;
-	b=cmNnac4E6q0diz4URKV0U6g/IoLWRz1o5USwlQ7QQqonLH2NmaDrvYjeyzO6Vh9IaHYEHM
-	aj9jAvfAEaVFwG/gO00Iv6SbGmqqINgLwwGQQ+QAhFYBgeim3b2D6xUuyt1uXgpxmiYHYV
-	MASPoQsJnSMBp1LX01ja8plJIYHaEAw=
-Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
- [209.85.208.198]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=7feorkQCLsdBf/memdBYWYmuI+q/Ulr6qYx+wClK16Q=;
+	b=DI9nQwONJ6uxqySwcy//Y72Gmm3jZpBgmQQoWiwpmPoi795s2nWkaqQE2h2LhcXCLCcCe7
+	/bHl/WbGxeYCmwvo3fr6VUb6zZQe5zhLbeom+D8jwc+Hua2onSjXHtOJhUck6b0/7A/WBO
+	4R5ybdEuRNU+H1AnmP9+MfMzCm7C4ys=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-427-8gnYZN4JPcKOxgm7ToVEvw-1; Tue, 12 Nov 2024 09:53:12 -0500
-X-MC-Unique: 8gnYZN4JPcKOxgm7ToVEvw-1
-X-Mimecast-MFC-AGG-ID: 8gnYZN4JPcKOxgm7ToVEvw
-Received: by mail-lj1-f198.google.com with SMTP id 38308e7fff4ca-2fb5cdaba8aso41681941fa.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 12 Nov 2024 06:53:11 -0800 (PST)
+ us-mta-551-i3KFtvQaPhOZqKm3v5AyAw-1; Tue, 12 Nov 2024 10:34:01 -0500
+X-MC-Unique: i3KFtvQaPhOZqKm3v5AyAw-1
+X-Mimecast-MFC-AGG-ID: i3KFtvQaPhOZqKm3v5AyAw
+Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-46089122a64so84350091cf.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 12 Nov 2024 07:34:01 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731423190; x=1732027990;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=CWsK4McBSswFpriD7K7dvE5I2YapnbjAeHEc8fjaLlw=;
-        b=NWLdQUr56GtpAvFsEVkLUXwnRZ6w5ZM9C/P3kkCU2Xqbjc3eKE9DQX0A4ejmTtnv2J
-         FlquS/ASZIxfW1zk/0/anlG3gMqT1jdDWtBLs/0AyqSa/+yJkrZgeKfezvrY54nYXTGP
-         0m/CmATGn30Qq7gTahn4ASS5ZTr85XP29k/0Dxzumi6vCI37/ujzme3YP9mIGtDg7WlE
-         dZQEZhKb4CZLAWYgfvpGqVeOVjxUQD+r/P2dAe06+GmEMMfWGAGxhFg2F/PAp1kmCZLg
-         CClS8XaRxlZmF/Jq3hVQnymGhFJkqfyq2GLrqfD7zRgDymabye8rMuzlYovlxzAiGsd5
-         MLMA==
-X-Gm-Message-State: AOJu0YztkgkYupETm4/e7NCmXNBbooPT1kdqEwucD686sQIzSwFdkDlQ
-	JIo/6HTF1wPnf3f+OxRi9FN4Z8i4mosPx26N/NYisJeWc2oq+BBeTzYsOk4X+/xAMjKjhomeCDA
-	Bd4y99jboX5tK2EukdHKovOK0pMYM1nPovAdSpySQx8MyGhpeexHS1FDRjkUQQBz3eabRoKF4OH
-	Y4lLguogeoys8D/8RZV4KhFlDWQULZBcBT6nlDyKg=
-X-Received: by 2002:a2e:a995:0:b0:2fb:5206:1675 with SMTP id 38308e7fff4ca-2ff2028a9a5mr118814501fa.27.1731423190407;
-        Tue, 12 Nov 2024 06:53:10 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IG2dW1B56nxcqIUJnIYRR9T/Qcp2CJ116/2uoeqaGeefx0x/Zm7jB/6CDqv3wU0R83ORQ3TFf+2E8F4vYWTenU=
-X-Received: by 2002:a2e:a995:0:b0:2fb:5206:1675 with SMTP id
- 38308e7fff4ca-2ff2028a9a5mr118814231fa.27.1731423190065; Tue, 12 Nov 2024
- 06:53:10 -0800 (PST)
+        d=1e100.net; s=20230601; t=1731425640; x=1732030440;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=7feorkQCLsdBf/memdBYWYmuI+q/Ulr6qYx+wClK16Q=;
+        b=u1dHQVOOom/ByCRF4i2RBqSHQHtrGCR2DTuuk7h+9KvoafF0BUw9GUNtLxBFz3wR1u
+         PSJjCl3twXbV80nVP8aHWWBGhEupJT6zesEKxzF3xPzdYvXjwqo/NXCDKE7/pX3COyIH
+         Z4UMX2y67zGRO2TndLsbmK3XZJEVpQCeUKRjtKbhyqC4HD4m4vQsoZWiiXdA8i6sD9/L
+         9nOpw51tKeVONxulc1rYJKX6reNmr7pcwjOENCYjdCUQtmcjoXvLTvJP9hMRcU6rFT+X
+         3SGJn7ayg5HyZod5e/qJiLzKQTChrHV3mZKI53xLE4E4/m+ZIA3t7YgLXHq9rA+To0CE
+         QfdA==
+X-Gm-Message-State: AOJu0YxA9WQOif+YssEjYekkoTffGDavufRsIFswHht41g3OkYe0AVQn
+	zKL0vobUITGbLmguRK5YIy3ICj1xDtzvX+dRkWrLH2cC0zUiLEG03YmGA+m+vZ4zKh9GvM7BcLj
+	unbAStEXGyr7RiMOd8gMKAkGHbxpEaUlu6OuxiS11F4jUcm+pKGtfd2hgcFZK7Cy3
+X-Received: by 2002:a05:622a:1a82:b0:461:18f2:ae6d with SMTP id d75a77b69052e-4634022f525mr37248971cf.24.1731425640677;
+        Tue, 12 Nov 2024 07:34:00 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGvaQ7Hqy6kJgIjXzc93dl3R/Z+U+gcm/gK4QgyF3wyYP8KYRXoKY3FMUKthnPoCSTV65JJIQ==
+X-Received: by 2002:a05:622a:1a82:b0:461:18f2:ae6d with SMTP id d75a77b69052e-4634022f525mr37248701cf.24.1731425640335;
+        Tue, 12 Nov 2024 07:34:00 -0800 (PST)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-462ff41de0asm75971621cf.33.2024.11.12.07.33.59
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 Nov 2024 07:34:00 -0800 (PST)
+Date: Tue, 12 Nov 2024 10:33:59 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Tomas Glozar <tglozar@redhat.com>
+cc: linux-rt-users <linux-rt-users@vger.kernel.org>, 
+    Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH 1/2] rt-tests: Detect libcpupower presence
+In-Reply-To: <CAP4=nvQQsPwrx37u_mHxZ1qcLfrO0qt7GJ61mpcqLOWDghRMjQ@mail.gmail.com>
+Message-ID: <e392f9c8-a7c9-f4fa-522f-376006a5f1fb@redhat.com>
+References: <20241107152049.822810-1-tglozar@redhat.com> <3030d57a-8d22-66c9-72ba-2b7d17e415d0@redhat.com> <CAP4=nvQQsPwrx37u_mHxZ1qcLfrO0qt7GJ61mpcqLOWDghRMjQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20241107152049.822810-1-tglozar@redhat.com> <3030d57a-8d22-66c9-72ba-2b7d17e415d0@redhat.com>
-In-Reply-To: <3030d57a-8d22-66c9-72ba-2b7d17e415d0@redhat.com>
-From: Tomas Glozar <tglozar@redhat.com>
-Date: Tue, 12 Nov 2024 15:52:59 +0100
-Message-ID: <CAP4=nvQQsPwrx37u_mHxZ1qcLfrO0qt7GJ61mpcqLOWDghRMjQ@mail.gmail.com>
-Subject: Re: [PATCH 1/2] rt-tests: Detect libcpupower presence
-To: John Kacur <jkacur@redhat.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>, Clark Williams <williams@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="-1463748606-1786160657-1731425639=:10623"
 
-=C3=BAt 12. 11. 2024 v 15:49 odes=C3=ADlatel John Kacur <jkacur@redhat.com>=
- napsal:
->
-> This seems overly complicated, how about just doing
->
-> ldconfig -p | grep -q libcpupower
->
-> if it returns 0, the lib is there, if it returns 1, it's not there.
->
-> This is the mechanism that perf uses, you can see in
-> tools/perf/Makefile.config
->
->         ifneq ($(shell ldconfig -p | grep libasan >/dev/null 2>&1; echo $=
-$?), 0)
->           $(error No libasan found, please install libasan)
->         endif
->
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Is that really enough? We also need to check for the presence of the
-header, taking CPPFLAGS into account, and also account for any
-addition LDFLAGS. I think this is the simplest solution to ensure that
-libcpupower is present for both header and library and working with
-the current configuration of the compiler.
+---1463748606-1786160657-1731425639=:10623
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-Tomas
+
+
+On Tue, 12 Nov 2024, Tomas Glozar wrote:
+
+> út 12. 11. 2024 v 15:49 odesílatel John Kacur <jkacur@redhat.com> napsal:
+> >
+> > This seems overly complicated, how about just doing
+> >
+> > ldconfig -p | grep -q libcpupower
+> >
+> > if it returns 0, the lib is there, if it returns 1, it's not there.
+> >
+> > This is the mechanism that perf uses, you can see in
+> > tools/perf/Makefile.config
+> >
+> >         ifneq ($(shell ldconfig -p | grep libasan >/dev/null 2>&1; echo $$?), 0)
+> >           $(error No libasan found, please install libasan)
+> >         endif
+> >
+> 
+> Is that really enough? We also need to check for the presence of the
+> header, taking CPPFLAGS into account, and also account for any
+> addition LDFLAGS. I think this is the simplest solution to ensure that
+> libcpupower is present for both header and library and working with
+> the current configuration of the compiler.
+> 
+> Tomas
+
+
+Ah right, thanks for pointing that out.
+
+John
+---1463748606-1786160657-1731425639=:10623--
 
