@@ -1,79 +1,95 @@
-Received: from mail-ua1-f65.google.com (mail-ua1-f65.google.com [209.85.222.65])
+Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com [209.85.222.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15A8E7C0BE
-	for <linux-rt-users@vger.kernel.org>; Thu, 14 Nov 2024 09:40:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.65
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 225C52905
+	for <linux-rt-users@vger.kernel.org>; Thu, 14 Nov 2024 20:52:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731577234; cv=none; b=LOplgdXWkcOBA9EWxtk1FuCeWcSu6PlmvppOuEgGcpTPO8LSgF8MHghMQ1+5A1SXLUsC5HNul88rrcbqt5r0wFqxet91rEJn+6AvnujQUpCZwGbP9opEeVQdZ7bjEHXVJthQhTy2d4mZAwvdTlG4T0vTKJWgv8/LXWKvDlo9ZbY=
+	t=1731617562; cv=none; b=Mkjek4QVHun2gw0QIUL+m6MD7fk9IvcjbhBvVIUOnx1unZ8SDBey+7W0VeXYJ3RWbED+jPLqGiELMEeVAcPZGOhuzhiY7dA9W9y31w62FAsI/ZHsMVISZRiWPzaedIaMsKy5HFj7UQ1G2RNGWmOycLG3bLDsaXC3pqEJ1iLjfqI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731577234; c=relaxed/simple;
-	bh=Pv7ifVKGEAUcqyK/sEws8ewj9tACMA1STwbMCopYUe0=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=MDEYivIlXjrF/1p3EtLf16EFcQiSq1VzIGLVZq5aHE+h7GDpRxp/UU9+oowhEITPdFpdKmfsjkSgl8veCEsPRX34pDVGjxRFIx3uJXAdkLuEG2UKLa2vOxrrNuqopTb3QkGXilcTvI1l63KB9yZAg1PGz0Yfj3LgZ6JQpH3ajw8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Em4Y/Zsx; arc=none smtp.client-ip=209.85.222.65
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	s=arc-20240116; t=1731617562; c=relaxed/simple;
+	bh=4sLfr0+Rwlo3q2oLjB6OjzO6AVmDrP4izn/d43KGLmE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=SbnlXzLyYyuqnuNqcUu9EG/RebP/vn29atLmkEd1ZWAeqBW1XJGEwmkUU/bSmUovJKXDjaTDrgtP4CWbnarF3Xx2+8ixkJYCCJot05y9sAKNMMprKGnAjTNNhY2WghHsgxXF8elHQAQeLcjJ5lgJMnwz0ztpE5h660JNrOB/aBY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kbFvMBsG; arc=none smtp.client-ip=209.85.222.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Em4Y/Zsx"
-Received: by mail-ua1-f65.google.com with SMTP id a1e0cc1a2514c-85054107836so205563241.3
-        for <linux-rt-users@vger.kernel.org>; Thu, 14 Nov 2024 01:40:32 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kbFvMBsG"
+Received: by mail-qk1-f182.google.com with SMTP id af79cd13be357-7b14df8f821so76826685a.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Nov 2024 12:52:40 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1731577232; x=1732182032; darn=vger.kernel.org;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=Pv7ifVKGEAUcqyK/sEws8ewj9tACMA1STwbMCopYUe0=;
-        b=Em4Y/ZsxTj9UqobOD5A1AP9KUM7S8UoyD6GaBzmZN0xDI2a+DWHurotU38wapGXn2E
-         Edk8W6tEMvNwoVft/h2iCFkY+wX9NSLiwefwbPaSI82KbIrVHnSXpXRvdiLPitgeI8yK
-         8yAbObj1KU6ZquYVMJy6fFe5CIcs0fIrffUCOyDlBw6ztXsvz6/zuDbSalIc27QvG6S2
-         9sEjftamqbRi0WQD3BmEJfvsLVoWuUlA4eA4k6jLbBaJerPsnAkHTCfun+mj1WhInZk1
-         X3XkTP8uYyfABGEClcOmkmaP+98Qw4OChqzB8IEa3BVppihlcZLHzVL3BaMq2B9sazAd
-         z5vw==
+        d=gmail.com; s=20230601; t=1731617560; x=1732222360; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=h3lCtt/1/WaFEWAIBh8S8Y7w9VmqO+taYcJYaE6Ue+s=;
+        b=kbFvMBsGZ33YbKai1ztcjFLzFPqf79gEauaQGGIRLnN5Yu6b4BFw6z79OotcGjFxX3
+         E8yA82KuGFpKJebWqmcMG17H/kCvBvZNuyRcJnnzzHFl7A7rPj9hmw/vhwzXv+xNvqBb
+         7981CuCxul+95eO+MqEjDJUkXLdx7Xdfpf0nqi3DgoOlmg6f73HzSlhpFzAHe5ZzQ+9x
+         w5vIyZKkbsCyhH5Zll7+blp3PLVPUB3PehOW01CRgLJAEoSea9FxgF3zygvNCIEsj+Rp
+         Jnx0+01V2wWmAm64Z5qPQ3GfJZUzzntSsIBNPRBza6IvDKLRJS271nV9FuaixR2Gcslr
+         oGTA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731577232; x=1732182032;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=Pv7ifVKGEAUcqyK/sEws8ewj9tACMA1STwbMCopYUe0=;
-        b=oxyG5bsvfc+P+7BgMp/FcZUZZ9d2vaLl5tGlazvrk0qN5dDNWtDoHc17txECjpKmub
-         hVCw+DN0ByiYRTX2UI7D1iO8o2ZLDg/qyRGD99EDmYhH018u1blcj8mAwjC/SkZkabHI
-         2ojxg87PwXbWSGA3NwoaK9TCxy4mkjZZd84Qucwo+cfCBYi2jWSzXEJfOW1IuVMxe2KY
-         raxQynPbXylIJJ2rAiMG6nSjYWNNqazVaTiubENQIbYQJRoe6s7300Vv+dph6yvsHakF
-         SAsLDU4jqOlj48yDFZeixw6f4uzQcYjMwKX+laT2/i5uLDJzJ12L4Oy29BwBSe/MbObL
-         Ekxg==
-X-Gm-Message-State: AOJu0Yz+190tj/RranOqFfND0H1sJNm2d39kdXbWjilecGdNWS6DzdrJ
-	C9SKezoMYdd441xHSVWlU8txhcRyCWHhn/OgnI4VbkeMkF4K6AJnEgo+7hPHRbJANkOYuxBVhH5
-	dCUnPSVnbuUnd1Zj/zFd0hMJ+8+3JdhIlfWmrWl0aCcvGbQ==
-X-Google-Smtp-Source: AGHT+IE3qNOilwqDW/l+4VQ/KO78nwZhq9Xy5WcWevED5diJSBst5GVyLMUr0hraMZ2m5ZwToL/V2jh5lRP63mfvU24=
-X-Received: by 2002:a05:6102:374c:b0:4a9:635a:b0ec with SMTP id
- ada2fe7eead31-4ad581efe1emr1482306137.0.1731577231773; Thu, 14 Nov 2024
- 01:40:31 -0800 (PST)
+        d=1e100.net; s=20230601; t=1731617560; x=1732222360;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=h3lCtt/1/WaFEWAIBh8S8Y7w9VmqO+taYcJYaE6Ue+s=;
+        b=jQW7FXei1yRRwcPi3iLlUTXk6uQrqSL15woNZWAjcoYewxY22nov0wZL+t4b2s1tWs
+         fpin8DQixiRB9lOfKiGezAGD6zu6jAjVsPKU/torkYgCH+FIq5yYrmP+QEl+01iJ2yqm
+         K4IKNmrWZgh6GedmV72CPB3PoRYlv8/11KL9M13YOoTZzpI43ZWRPfvP4xVOfJtRlhmM
+         NP91lX09AOfy7SDLBnNfyKHlcMUAsW/njM3UuFy5YzTx5k76t8qmYbEI7w1IZ2W1cNgo
+         tT5QTcOdnnvQVdFVMdAJf/ur3Yz1nHm/MORvyaHx9ekYdXhShRF6ac0OUBC4m4o0NFgp
+         bY4A==
+X-Gm-Message-State: AOJu0YwLrmBCv1RFJepeETePjV/sVnCMBMZu2gdeEzlxIWzYCClbr6t2
+	x7nyeJNCF0GEIuOiJujMVgvDVJicaMkMt/cZIiXVouMSm0fspmBvOX44KA==
+X-Google-Smtp-Source: AGHT+IGYNxOaxIXSRAog/mCgY1AJQqx1SOhaJqsW5kGNn4XXsCaJffoPYBAuEF479m8OBY6uJfN9Yg==
+X-Received: by 2002:a05:620a:3ac5:b0:7b1:184f:caba with SMTP id af79cd13be357-7b362362b67mr34373785a.40.1731617559611;
+        Thu, 14 Nov 2024 12:52:39 -0800 (PST)
+Received: from fionn.redhat.com ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7b35ca51c6csm88203385a.101.2024.11.14.12.52.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 14 Nov 2024 12:52:39 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>
+Cc: Crystal Wood <crwood@redhat.com>,
+	Tomas Glozar <tglozar@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rteval: preface idle-set IDLESTATE with --measurement
+Date: Thu, 14 Nov 2024 15:52:30 -0500
+Message-ID: <20241114205231.252497-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-From: Prajwal Gowda <prajwalgowdahm.1@gmail.com>
-Date: Thu, 14 Nov 2024 15:10:20 +0530
-Message-ID: <CAOJh2-kFD7fd6km5PEBDXdYNwwWZXi2n8MKkz-Y6TEn643-Q1w@mail.gmail.com>
-Subject: Information regarding rt-kernel patch
-To: linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hi @linux-rt-users@vger.kernel.org
+Setting the idle state belongs to the Group Options for measurement
+modules and thus should be prefaced with --measurement just like the
+other options in that group. This change fixes that.
 
-I would like to know when a new patch for rt-kernel v5.4.y will be available.
-As I could see last patch release for rt-kernel was in June for
-v5.4.278 after that there are no new patch releases available for
-v5.4.y.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/modules/__init__.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Further I would also like to know about the future of rt-kernel patch
-release for 5.4.y.
+diff --git a/rteval/modules/__init__.py b/rteval/modules/__init__.py
+index 98276514de95..d60877783670 100644
+--- a/rteval/modules/__init__.py
++++ b/rteval/modules/__init__.py
+@@ -298,7 +298,7 @@ reference from the first import"""
+                                   action = "store_true",
+                                   default = config.GetSection("measurement").setdefault("run-on-isolcpus", "false").lower() == "true",
+                                   help = "Include isolated CPUs in default cpulist")
+-            grparser.add_argument('--idle-set',
++            grparser.add_argument(f'--{self.__modtype}-idle-set',
+                                   dest='measurement___idlestate',
+                                   metavar='IDLESTATE',
+                                   default=None,
+-- 
+2.47.0
 
-
-
-
-Thanks,
-Prajwal Gowda H M
-SiemensEDA Pvt Ltd
-Bangalore,INDIA.
-M:+91-8892612268.
