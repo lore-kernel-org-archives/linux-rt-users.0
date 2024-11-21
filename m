@@ -1,74 +1,75 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D5702200A3
-	for <linux-rt-users@vger.kernel.org>; Thu, 21 Nov 2024 18:48:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7263515B13B
+	for <linux-rt-users@vger.kernel.org>; Thu, 21 Nov 2024 18:49:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732214904; cv=none; b=o+jdg11Fom/X4mJxBfY7YP52u46HNCt5tLNPsw4Id6hzC5g7sPUlH96ggzzknAgxh/TGqZcweZZynvImO/Yv46Y0Pb5kHZO/2ZyT1pYipQ3K2Kt5JYitb1VvA00hLHx8hBgMLybRTXzgDpKVZdEWuzKxacll5S3aSKx78zlz6fM=
+	t=1732214960; cv=none; b=qGTuxbUPCulQ8ZKWLwM6uuszBv6vXAVLl0uhPKpS36hG29C3KYgVqHoC5QqFth74akHDCl5wfNtoH5iIzN+dZcg/gE9E35EevLw3cyMc2A3KEMi1nuWLODEBIKLlQfGjD6QFrfl0l35ro21HuWmczcbScEskIdW9uo0sZ4WEghw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732214904; c=relaxed/simple;
-	bh=/L00euctbkZfFOvM1Xl9ABTUeWZwa5CcVnw97Eu+ORA=;
+	s=arc-20240116; t=1732214960; c=relaxed/simple;
+	bh=mkClHzIvVInIKbLTiCEse3o9w9LtpMbT9OIPWOcKzpA=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Vjl63OIfBpHGYegRUjS4Sa9a6/MNVkojBUKP+Aa/OsjzGVJhApnZZAW3Ar0T/dB29UqpsUeFpkDEbIXyo00huSTd+KwPKojjaH8enISrUlSgyPqOT77+AtfNqtjLlpoEmaIIJwY0JdjHg3EYuPKJxLEgOwyDLhj43bAlM1a74oM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gsIQjP0/; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=eLhTA8a+5w+zZCGgFA1rYqctnJzuHfTeHugj6D2X/rP1h3zUhtbIoJqlMnEx5KNwWWPAGFTuJf/BSvoKV7V6Yh8YdSfUdsU9RPT/mFglhSB6g1aLjHaNENRC81sahKvDE5/zlp2M4robgGXr0snG7mhfpcaaeI6DPrms8DQv28U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iOW2WRed; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gsIQjP0/"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iOW2WRed"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1732214901;
+	s=mimecast20190719; t=1732214957;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=aXDN/fbH3APx1MouiRb7pShY2EBcOVNLFLKojWkyBwU=;
-	b=gsIQjP0/k8bFBqlN6orU4z4iwhVDx/3o/ZseLNZgErRYwTSvoACY6x2h1yQE3lo1pQYF3C
-	tLamnm4Fa1z3lNbOqZNX99N0AANoobilTs6jEaCHQ0u1FSAdOxSZPPUtcYjln5eM/Dyo3D
-	b5+tCDtIAHs7oUPkfweknPEon8BRly4=
-Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
- [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=UIqhp/hniPgDjhr82za5XUitLe3uQKcxyPo5QnVuBjw=;
+	b=iOW2WRed/9XY/b6Xylgwj2lNtbwGN+8gUaD+PUygMLk1F3waLdEZsUURe0CMYbv/T0/nUD
+	s0s4yJUo4M+ik2fvuVtdbXo+1SR3DpEQGq2BeqJ+4htRUkc3CexQ4Fn3Xfnlg0g/YwtJ2X
+	BOZ8O011cs6Xndk1rgDgIwP3hncRLLY=
+Received: from mail-yw1-f197.google.com (mail-yw1-f197.google.com
+ [209.85.128.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-93-Ezk75Y-4Oeuxoph-bsIPjQ-1; Thu, 21 Nov 2024 13:48:20 -0500
-X-MC-Unique: Ezk75Y-4Oeuxoph-bsIPjQ-1
-X-Mimecast-MFC-AGG-ID: Ezk75Y-4Oeuxoph-bsIPjQ
-Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-460a85907b7so15594481cf.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Nov 2024 10:48:20 -0800 (PST)
+ us-mta-296-kDNmIrLtP-y9rYYiue_7iA-1; Thu, 21 Nov 2024 13:49:16 -0500
+X-MC-Unique: kDNmIrLtP-y9rYYiue_7iA-1
+X-Mimecast-MFC-AGG-ID: kDNmIrLtP-y9rYYiue_7iA
+Received: by mail-yw1-f197.google.com with SMTP id 00721157ae682-6ee7856bcf2so21086297b3.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Nov 2024 10:49:16 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732214900; x=1732819700;
+        d=1e100.net; s=20230601; t=1732214956; x=1732819756;
         h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=aXDN/fbH3APx1MouiRb7pShY2EBcOVNLFLKojWkyBwU=;
-        b=tyER6QjDzngXqE1yUEOceRvWiROp2DnqJwYYov9gKXlmjCDJA4UBNNF5mX92Vj1DV3
-         xMV4ZPBQvkcYqbjEhiA2Vsa77VgniLj+Yq026JrJZhCgwDM/LHijT0BFC5fyC1FFXamc
-         tqKSZuvLExdK7tRa2x1hQDOznLd2Yg32NvCfRvnaoDyEuNuI11lWAW6Sn4wmwZIUX5D9
-         R9iOCJ0VuGV9H+IQYfLrX0PEOWC3EkkfZqFlenqgoV+WqaTYuOqJC38eCL0YmJbEuBMv
-         1URchtm7WKYh4v6MdNL06ui2r1UsR0y+b0A8fcfIRJMcwx8dLseIIq/P33mSzhdPss66
-         VNNw==
-X-Gm-Message-State: AOJu0YyAIWueLUV0gbvvifwFeYQoJZ/ZmS0jGyCHj3iMzntL81+KVVqb
-	xdq0/X4uKBRbEy0x8nRlbenN/GAJJ9H4ixtspHmPHkhd/vOprxpa9CUVdj7QHZTsB+SGrPzW+fv
-	1rGrrXv3Ns/M0duPotn2paxGwgGUaUByB6XMXUDwzOIbJqeZ23vi1E1JvDfV72Ut1
-X-Gm-Gg: ASbGncu+tNB0Mvjyi2ZDDjGHU2ihAq7xGMYiPzozWR0fgPZnfYiwo4OyapOI12qmqkR
-	iQ9Lm6TQeu9uJ2oqgGhoGzMrylax0BkLwvsucRbGks7WccFhE19ste+BNK2aRIJgPsx2GNVgpYO
-	cwhInDNMpqGRF2GvB47liXWThX33somFsy/ws1m3J31Oreerqnk49W/vDF343R2UlE8sUFj9sfV
-	D4dt7YJjqAhnkHVNUxhFQHbsIo8cFe7ZwJoNCZt
-X-Received: by 2002:a05:622a:558e:b0:463:788e:790a with SMTP id d75a77b69052e-4653d57a226mr960131cf.13.1732214899753;
-        Thu, 21 Nov 2024 10:48:19 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEvTXCAwd2VCh5qe0ojUrj9GXcV3bgiVu/pQv+NsROY1RkkNcT0wOdgT44SWVyLv8l/0QIp4Q==
-X-Received: by 2002:a05:622a:558e:b0:463:788e:790a with SMTP id d75a77b69052e-4653d57a226mr959801cf.13.1732214899320;
-        Thu, 21 Nov 2024 10:48:19 -0800 (PST)
+        bh=UIqhp/hniPgDjhr82za5XUitLe3uQKcxyPo5QnVuBjw=;
+        b=fH9x6q1h3PHS4kFden/oeMaYEA3uT+aviAX6DQEpokmRfjZlO4VUFFnLpNzDrlQlKh
+         JCNhrxVf6u4LT8iycDCxeVO6X3DwSsM0vd/07HGJFmHLoAv9QK9iC+KZNfnymoGH9htB
+         aJCmil9LIv0L9R3bYeEsIInaTAAFgCHMA/zt9SebOo+z+swMznyGOwHmcM/Wf4EkppRO
+         HEwWK22ew+1ZinomxN/aa+BncXRWRcEI13ZrKb+ywqcs4NbM6XEURRKfvcDULgd24ivL
+         5uPtXIEkYtZy2E1OgBkoxp/sDC2Z9K+rkCuYjiOhS7jdlr9m3XDoeS7EjaI/V9L9c/bT
+         vrAA==
+X-Gm-Message-State: AOJu0Yw9c6MYbfVK8eg5kzL3JXZ1EbQ/1pfAkVtAJJMwVdq8P7jc1J6T
+	cCDnCi1buHHasGKgFh1RZC02W/eFqbrQa4eVcK1BpFtgvGjttKD9Ivz7WkBg+IfBQZidGHGdAsU
+	u+BQSCx1mtC18u/2o+dXe39fTfokaovPYvzxYF9zD1DWNZCsszI8H4Z7zl32lIkex
+X-Gm-Gg: ASbGncvCEVlAh/FZihJbaEGSHkey8NkxYLhh6TFGG3v8JrLxt7oSXmq3DOpJB77M+rq
+	tw3YksGTbK7M7b2+lc9lsBeshfpVoC6O532HfUzGMW5S1eTB8K9fSDCzQKpJPxww2lS0A98U2LH
+	yGNW7sEcSJNcjMGQg5ZfmmyIEVLrodYBW4TYGC4wJo/f/PpmAjrfAjY2nKQql9uInm3fw0cvIPD
+	V/W/Gv/EI9YJAXwweolRrq758mDAR/tYFkJqnrc
+X-Received: by 2002:a05:690c:7084:b0:6ee:3f37:919c with SMTP id 00721157ae682-6eee08d3f6dmr3638927b3.14.1732214955823;
+        Thu, 21 Nov 2024 10:49:15 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IG0fdRxPIqWSVZEev8iuulAiKasPLYvsxRDvZ/MeYERu7crH69dPS9Ly2mUtI4rOYHeWu0nmg==
+X-Received: by 2002:a05:690c:7084:b0:6ee:3f37:919c with SMTP id 00721157ae682-6eee08d3f6dmr3638737b3.14.1732214955593;
+        Thu, 21 Nov 2024 10:49:15 -0800 (PST)
 Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4653c3d997dsm1938941cf.17.2024.11.21.10.48.18
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6d451a831edsm544546d6.10.2024.11.21.10.49.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 21 Nov 2024 10:48:18 -0800 (PST)
-Date: Thu, 21 Nov 2024 13:48:17 -0500 (EST)
+        Thu, 21 Nov 2024 10:49:14 -0800 (PST)
+Date: Thu, 21 Nov 2024 13:49:13 -0500 (EST)
 From: John Kacur <jkacur@redhat.com>
 To: Tan En De <ende.tan@starfivetech.com>
 cc: linux-rt-users@vger.kernel.org, mtosatti@redhat.com, williams@redhat.com, 
     leyfoon.tan@starfivetech.com
-Subject: Re: [1/1] rt-tests: queuelat: Fix wraparound in __clock_gettime()
-In-Reply-To: <20241111014911.11571-1-ende.tan@starfivetech.com>
-Message-ID: <60841c27-f589-07ac-4e00-ce9a15d59836@redhat.com>
-References: <20241111014911.11571-1-ende.tan@starfivetech.com>
+Subject: Re: [1/1] rt-tests: determine_maximum_mpps.sh: Get frequency from
+ timebase-frequency if cpuinfo fails
+In-Reply-To: <20241111014953.11604-1-ende.tan@starfivetech.com>
+Message-ID: <ef7eb9ef-4c54-0422-ec3b-e09e43f0e02f@redhat.com>
+References: <20241111014953.11604-1-ende.tan@starfivetech.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -83,29 +84,35 @@ On Mon, 11 Nov 2024, ende.tan@starfivetech.com wrote:
 
 > From: Tan En De <ende.tan@starfivetech.com>
 > 
-> Include tv_sec in addition to tv_nsec in __clock_gettime(). If the value
-> of variable 'a' wraps around, it may cause 'delta' to be negative, while
-> 'delta' is defined with u64 type.
+> If cpu MHz is not listed in /proc/cpuinfo (as in RISC-V Linux), get the
+> frequency from /sys/firmware/devicetree/base/cpus/timebase-frequency.
 > 
 > Signed-off-by: Tan En De <ende.tan@starfivetech.com>
 > ---
->  src/queuelat/queuelat.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+>  src/queuelat/determine_maximum_mpps.sh | 10 +++++++++-
+>  1 file changed, 9 insertions(+), 1 deletion(-)
 > 
-> diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
-> index c549cd8..c057389 100644
-> --- a/src/queuelat/queuelat.c
-> +++ b/src/queuelat/queuelat.c
-> @@ -292,7 +292,8 @@ static inline unsigned long long __clock_gettime(void)
->  	if (ret < 0)
->  		return 0;
+> diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
+> index 733b6b2..adfd809 100755
+> --- a/src/queuelat/determine_maximum_mpps.sh
+> +++ b/src/queuelat/determine_maximum_mpps.sh
+> @@ -42,7 +42,15 @@ usage()
 >  
-> -	return now.tv_nsec;
-> +	// Combine seconds and nanoseconds into a single value in nanoseconds
-> +	return (unsigned long long)now.tv_sec * 1000000000ULL + now.tv_nsec;
+>  get_cpuinfo_mhz()
+>  {
+> -	grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1
+> +	# Try to determine MHz from /proc/cpuinfo
+> +	FREQ_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
+> +
+> +	# Try to determine MHz from /sys/firmware/devicetree/base/cpus/timebase-frequency
+> +	if [ -z $FREQ_MHZ ]; then
+> +		FREQ_MHZ=$(($((16#$(hexdump -e '1/1 "%02X"' /sys/firmware/devicetree/base/cpus/timebase-frequency)))/1000000))
+> +	fi
+> +
+> +	echo "$FREQ_MHZ"
 >  }
 >  
->  #define gettick(val) do { (val) = __clock_gettime(); } while (0)
+>  # Check that the scheduling policy hasn't already been set
 > -- 
 > 2.34.1
 > 
