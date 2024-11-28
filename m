@@ -1,126 +1,150 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f170.google.com (mail-qt1-f170.google.com [209.85.160.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 39FB418FDD0
-	for <linux-rt-users@vger.kernel.org>; Wed, 27 Nov 2024 15:51:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F10D9463;
+	Thu, 28 Nov 2024 21:51:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732722686; cv=none; b=uKIkDo0WaCT2WS8b+xpiw6MyYBikXIKC5TzlQQXZlWZ3MIaQnv9l9lP8G8WHW7YX1++/cftEJNUly+Yrm+Ydjxrn7d79i5tNgDeMekyvpCjNp2/JXF8Cb2ezOMATe0Nh/MRDaPTWacaSYw/yQoYKa1a0Mx2Pf91wlR/B5cHEERA=
+	t=1732830673; cv=none; b=uYAIcZF/CMtdjQOv53M4GPjn/jYazAxWvmIpUPE5g/wLmEMx+y5VuwMtyCYojglXS5ZjdCj6depjphxa8AK+3CkHdH6VRxhciPij93I2rrkI5ajVMI7c5XHpjkFV8N1yBtUadvW3WMp2JtOM6HGvpAELWRrBcgq73v77bsgaWEI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732722686; c=relaxed/simple;
-	bh=pyX8a54TKCqbfSZi+GyToKNjnZ/BSIKIKr5uqNjV5cM=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=D3IotMmYUp3B+O0ynq7gKQ21I7241totC+hhQeRsXZJ6GtezFaBVF/PFIZ2NzgjeNwXEeib+KaK7BvbDVrEAQwtntRsUfaNoNiJnoXDxSSUK/5NCoiAbO36iwZZKlWoRtp2SvapMLbfceX0tREHar98dw67bV0Ys5U5rZ7Dy8Ck=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=O2d1yv2d; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1732830673; c=relaxed/simple;
+	bh=YQhwy3k6zFY7PS+Hb3mt3RsGwW4p9dQ1NWB5H6WET80=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=OpfSoza8U05K9BnFGc8nD2Ce18U7gyqkSwXgNpW5JCa6EuBT1mJqm/QLo/Rnu2F1OTMdQ6iuwvkg3O7E3/K7wTOtM0mui+ytJLybIi8cY4+i/WuD3Qhar6c4VaLxXgXkrHQgG1RXScKF/pLItu4og2q4N/q40ErHn4iottm9FnQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hAACs7yi; arc=none smtp.client-ip=209.85.160.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="O2d1yv2d"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1732722683;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5rEwSBnLdldYZWCgEKKH9wvsYuhFoCO3zfsU62VAyPs=;
-	b=O2d1yv2dOeyegXXjsd2S1UUlQoModcF7i1GtilMFjwClB0mWis+EvudEzw2DHDTf13tBP3
-	TuZlXGsfUZBvdPzHJo0bRjrXE6JAAxIvzmxxzS5pU3X9w22ij4jDO5xeAxKAt6Uqo2DpdE
-	U+OiqgmyCsmwgsLLKF7keBGB4CRvE3U=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-54-xibyhSxAMxKew6I-6Nsz0Q-1; Wed, 27 Nov 2024 10:51:21 -0500
-X-MC-Unique: xibyhSxAMxKew6I-6Nsz0Q-1
-X-Mimecast-MFC-AGG-ID: xibyhSxAMxKew6I-6Nsz0Q
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-7b67a8cd4d2so139906785a.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 Nov 2024 07:51:21 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hAACs7yi"
+Received: by mail-qt1-f170.google.com with SMTP id d75a77b69052e-46679337c24so8922611cf.3;
+        Thu, 28 Nov 2024 13:51:11 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1732830670; x=1733435470; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=B/0P/kkOOn0Emox8f2ASqKm3nT6bT0ghGONfV88YlVA=;
+        b=hAACs7yiK5L1d+otwmJyavWVSd7E1nk4ZyKQXZGZANP/OhJRpnIrfO8MBT4qTXAhXa
+         tjqlOhQOxMTC88QvblU5njNjPK6h/WdO40BKZ/ltjCl6d6lPDs6DskSlZwzX/OuiQ0XL
+         Bl4WIz6CVWSCqMGdrnedyWhAN4uq4Ef5j2UE5e7cFpiu5/+WQfqLhE2GeOYarrSF2IaM
+         PpZAUYrfRH6dlFq2VJvlB1IC4JvEN5a6K2K5poBHwou0NNygcuBsXwS1S4+M20yz10S1
+         B1Ipnp879IViJ0T2a3USWB22fu1XX1Ok2ro+Xl0et6uqd+Pq18yTbk8PswJxSKTnP2Kf
+         bP2A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732722681; x=1733327481;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=5rEwSBnLdldYZWCgEKKH9wvsYuhFoCO3zfsU62VAyPs=;
-        b=cqsF+sUhoF2wpbFz5QC9CSVlBku+pB+Bepm3+NJ1uW9j25jfCUeZIpVSPCGZMa3t5y
-         p7PNFpDwg/htE8atACOFRxO7wcSvxwgh0yo0ZMAai55ssKFm3m8CWYvZDlb53RuqOJxP
-         2+kRxkbTgGer10oxHorPFHj7wNAA16UiV8aA71AIYGH2aiUE080ndExOw00r2M4usG5h
-         K1dMe2qzd0zds2N3ltiNEOSuKHzRfymFMxMAxjBmrQ1G7NbC1DMvwlh8YE4asz2Fgsac
-         QsCm5mjGGP9SRo5JU44sbgfGmVKofMh60tQWqwWO4TQzjMv4EljmVb+RVQQtc6KiOctZ
-         6ePA==
-X-Forwarded-Encrypted: i=1; AJvYcCVVtiKfXlLE9y3APSYVSR1yTm2ecyI/Ez4bGXBbQxAyWyVQv1i6YoOwVC4wR4Lf5ob4UrGb6vXxccG9QlQ9gg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwmBzbkfJghwiQ5j4OED8wfeuLCgZPhY/72oCv3xfWPTiI+RyL2
-	9xQyjo+Z5ZftFnDB9ChnDECn0HPPpP+BegDz7LU/Bz5vZ+i77GNBMvQj20myXN0azoB1JbSkIw6
-	r+QRiBULMBrgcN4haMQ0zYZmkI2AQS/IfjwAneHWLFjImXoagVfRkxI9K2kX/T6xS
-X-Gm-Gg: ASbGncvHyMthxWELY+EgRA6WQgG+2ZvkgmeIP/ZOhZZicvXOGO3T1TnWAyP6RvATfKM
-	eEDcCGmwbH25uGUtGDFMbkBXDzCndZrWTOTpE9IkxDPwDH1HOpmtnPhip4Mbp4ux74fmBmaOkWq
-	9LOVZyoiIK1HsSU5VoSIAsJh6UjUClLK1j9rHD/BR3aQiz+Mx6x8Ou8ho04I4XXpMdPcYEmW+Aw
-	AKieZueOn4SygdAicXA/1CDCFxF5Bcv7rxzjgfW
-X-Received: by 2002:a05:620a:2447:b0:7b6:66f7:c2e1 with SMTP id af79cd13be357-7b67c25d8b0mr457236885a.13.1732722681339;
-        Wed, 27 Nov 2024 07:51:21 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHJK8rRk3Swd2MOlon10zVpXLnyPWODcuiTIPyTklTPiQ6DdhCM4Z/R2UICiV8mWVLLQjO2EA==
-X-Received: by 2002:a05:620a:2447:b0:7b6:66f7:c2e1 with SMTP id af79cd13be357-7b67c25d8b0mr457234485a.13.1732722681050;
-        Wed, 27 Nov 2024 07:51:21 -0800 (PST)
-Received: from fionn ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7b67d22aa15sm68253385a.119.2024.11.27.07.51.20
+        d=1e100.net; s=20230601; t=1732830670; x=1733435470;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=B/0P/kkOOn0Emox8f2ASqKm3nT6bT0ghGONfV88YlVA=;
+        b=PbwrPEweaWw/pywHOjH54b97LERxy/a7/UmeCGeV8aFQD/5rnJFIB+9KLU/AeBV2fU
+         V9SRj+HMAc8I6IDHFdFDwbPf7aA9hV4a5syGYRDygiMxG5lT749A+d2f4uNarhJgQ4x1
+         xSYyHn7Kx9CQNnB1cAYSRzKi6aRxtHeZyDeEfCQn2VToJlKytBb7gTcV/av/g0G/qpwb
+         Hr5npk4TMQzi4N7nlHOTWvDjIKo1mB4Rfmj3V8nsXOvs+hwzlg8xNX0GQW3GyCnNj19t
+         oC8Y/pEv6oEVkVcUaiIyuaRg3Cm0pGBjZT0ioVejNdyPwk3T92PnnQuSkZldswFWDImS
+         3V8A==
+X-Gm-Message-State: AOJu0YxFe11KT6x5f1z3tLELtGtEtv7RpYzUkSNkCDak1lImYcXd+QR3
+	nqkb0G1PTo64aNSBl7jvY/IACHZxESmE9K7q6qTUbFwmicZpKYBYH8itr0rb
+X-Gm-Gg: ASbGncsNia1SMeBn15D0aNqa6WK+b3MAJtk36F2ateeQ0HXYm7wyblKyB9SUVHuJ1MW
+	odnUs7JLkvl6OESagQnMJqxUjipnKjpmHqgCeShMXosYO+096KjiJN4PYdeW0gUYjskVhuH3YOr
+	lHv41ouCPBUZBqnZSeQWLdX8coad1dMUIKAHfZbrZZbYIYQOFIUx4nmfHa3cm2wyoTQKKlpHnuu
+	8V7TKWUEAHBrm/r48xrgiUIvqmEiVVzQSO0qy21sG7ARh0=
+X-Google-Smtp-Source: AGHT+IHyUdObtxfjeGYjZO8kCr2GNZZXz83fSwks2FQsdK+NE9qPtvpw5zrKY8j9ruSeyyBLqGRTUw==
+X-Received: by 2002:a05:622a:341:b0:460:a82a:39a8 with SMTP id d75a77b69052e-466b35166c9mr134763141cf.13.1732830669693;
+        Thu, 28 Nov 2024 13:51:09 -0800 (PST)
+Received: from fionn.home ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-466c407cfdcsm10229741cf.45.2024.11.28.13.51.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 27 Nov 2024 07:51:20 -0800 (PST)
-Date: Wed, 27 Nov 2024 10:51:19 -0500 (EST)
+        Thu, 28 Nov 2024 13:51:08 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
 From: John Kacur <jkacur@redhat.com>
-To: Tomas Glozar <tglozar@redhat.com>
-cc: Crystal Wood <crwood@redhat.com>, linux-rt-users@vger.kernel.org, 
-    williams@redhat.com
-Subject: Re: [PATCH v2 2/3] rt-tests: cyclictest: Support idle state disabling
- via libcpupower
-In-Reply-To: <CAP4=nvTZ5nLrP6O7rSU+c269M-=OFTX=3zNSp6TDDxzg2Fq2fg@mail.gmail.com>
-Message-ID: <18b58bd4-7884-3a81-08bf-ee5143ec88f3@redhat.com>
-References: <20241113114509.1058593-1-tglozar@redhat.com> <20241113114509.1058593-3-tglozar@redhat.com> <c0bf98ab-ac45-eb0f-e239-47e235465ab0@redhat.com> <0da561414289c7b929da1513962756bb8630e32f.camel@redhat.com>
- <CAP4=nvTZ5nLrP6O7rSU+c269M-=OFTX=3zNSp6TDDxzg2Fq2fg@mail.gmail.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Tomas Glozar <tglozar@redhat.com>,
+	Tan En De <ende.tan@starfivetech.com>,
+	"John B . Wyatt IV" <jwyatt@redhat.com>,
+	Anubhav Shelat <sanubhav1000@gmail.com>,
+	Eder Zulian <ezulian@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] rt-tests-2.8
+Date: Thu, 28 Nov 2024 16:50:59 -0500
+Message-ID: <20241128215059.40116-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463748606-583833000-1732722680=:13450"
+Content-Transfer-Encoding: 8bit
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+We are pleased to announce rt-tests-2.8
 
----1463748606-583833000-1732722680=:13450
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+To fetch:
 
+Clone one of the following
+git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
 
+Branch: main
+Tag: v2.8
 
-On Wed, 27 Nov 2024, Tomas Glozar wrote:
+Tarballs are available here:
+https://kernel.org/pub/linux/utils/rt-tests
 
-> st 27. 11. 2024 v 1:09 odesílatel Crystal Wood <crwood@redhat.com> napsal:
-> >
-> > This could be said about the laptop and power_management checks too...
-> > I'd go with verbose info prints rather than warnings for all three, if
-> > anything.
-> >
-> 
-> I agree. I believe my code is consistent with what we already have.
-> When you do cyclictest --default-system, you also get a warning about
-> not setting cpu_dma_latency, despite it being what you have explicitly
-> requested. My patch just does the same thing for --deepest-idle-state.
-> 
-> I suggest deferring this to a future patch that would remove the
-> warnings and another one to refactor the code.
+Older version tarballs are available here:
+https://kernel.org/pub/linux/utils/rt-tests/older
 
+Thank to everyone who contributed.
+patches, bug-reports are always welcome.
 
-> 
-> > I'm not sure how cluttering up main() with more logic would help, but
-> > turning set_latency_target() into something like
-> > setup_power()/cleanup_power() sounds good.
-> >
-> > -Crystal
-> >
-> 
-> Yeah, main() is already long enough, I'd prefer to avoid cluttering it up more.
-> 
-> Tomas
+John Kacur
 
-Alright, you convinced me.
+Anubhav Shelat (2):
+  rt-tests: hackbench: removed extra use of optind
+  rt-tests: hackbench: properly recognize when integer arguments are
+    negative
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----1463748606-583833000-1732722680=:13450--
+Eder Zulian (1):
+  cyclictest: Fix help text for '-a' option
+
+John B. Wyatt IV (2):
+  rt-tests: pi_stress: Move unlock into if block with matching lock
+  rt-tests: Add console_commands.json to gitignore
+
+John Kacur (3):
+  rt-tests: cyclictest: Reformat help for 80 char screen
+  rt-tests: pi_stress: Refactor pi_stress creating a header file
+  rt-tests: Change to version v2.8
+
+Tan En De (2):
+  rt-tests: queuelat: Fix wraparound in __clock_gettime()
+  rt-tests: determine_maximum_mpps.sh: Get frequency from
+    timebase-frequency if cpuinfo fails
+
+Tomas Glozar (3):
+  rt-tests: Detect libcpupower presence
+  rt-tests: cyclictest: Support idle state disabling via libcpupower
+  rt-tests: cyclictest: Add --deepest-idle-state to manpage
+
+ .gitignore                             |   1 +
+ Makefile                               |  17 +-
+ feature/Makefile                       |  12 +
+ feature/test-feature.mak               |   5 +
+ feature/test-libcpupower.c             |   8 +
+ src/cyclictest/cyclictest.8            |   3 +
+ src/cyclictest/cyclictest.c            | 219 +++++++++++++++++-
+ src/hackbench/hackbench.c              |  12 +-
+ src/include/pi_stress.h                | 133 +++++++++++
+ src/pi_tests/pi_stress.c               | 298 ++++++++-----------------
+ src/queuelat/determine_maximum_mpps.sh |  10 +-
+ src/queuelat/queuelat.c                |   3 +-
+ 12 files changed, 501 insertions(+), 220 deletions(-)
+ create mode 100644 feature/Makefile
+ create mode 100644 feature/test-feature.mak
+ create mode 100644 feature/test-libcpupower.c
+ create mode 100644 src/include/pi_stress.h
+
+-- 
+2.47.0
 
