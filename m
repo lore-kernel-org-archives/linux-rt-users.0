@@ -1,313 +1,234 @@
-Received: from sender4-pp-f112.zoho.com (sender4-pp-f112.zoho.com [136.143.188.112])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92B1712B93;
-	Sat, 30 Nov 2024 10:16:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.112
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732961790; cv=pass; b=rpzJYF6RRYb69lo9ObCIfz5wWVvejQyNrLHhVWAJd1ZW4S+6z6R/iMsldtsYpQfesY+g2NmWqDSByrpiiIYf5x3YhkIDzfaQI9cnjRWDQKjbRnLVAWVGKVDjiW0pwh8w7ODWea1Jckyix7yuO7IpPezU5adbqft5V5sUt8IJDNk=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732961790; c=relaxed/simple;
-	bh=7sbs/p8Pz/OHFacId2voIkBn7Y7ddx73PHjXXLD5N1I=;
-	h=Message-ID:Date:MIME-Version:Cc:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=oWPXMqW+QooHtAM3wkmYPRqMujeR0I3RiA+r5NxXRa0y1BqWYgaBh9jA40wTM82Ny6s41Cf9t80gIwlT2q5XYYxEj1jUyh/sUmelL45fcq7rAIkzVhkNfESPD/gdDLr9P5IpWTrlxHooymQ40n/uw76IVEPzxq7YgZweP6yyQt0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=collabora.com; spf=pass smtp.mailfrom=collabora.com; dkim=pass (1024-bit key) header.d=collabora.com header.i=Usama.Anjum@collabora.com header.b=C44Jafx+; arc=pass smtp.client-ip=136.143.188.112
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=collabora.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=collabora.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4F331FBCB7
+	for <linux-rt-users@vger.kernel.org>; Mon,  2 Dec 2024 09:55:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1733133324; cv=none; b=tKuGEn+BJH1iXW8ZXlGfTa1HgdE7KRcyVogaiZcY3eGSLrzNixfnDR0ph9ejSi6U42g3OOXx5qrMxcbgnKVP2j3wZzJUiPJgIh4qc/9XSkDaeMf1807K5P5/9kzdsjY91nj+Q7KDQR+oM7IOHfFauicrRz00V/WwT/Ez68YXvzQ=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1733133324; c=relaxed/simple;
+	bh=giKLGGK03twsti8r6koMTfcd/cXGRA56MS0yGykpzlM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=n8JXjJuqdpsZVNcl2XyYDE35TJC+atfsVxCGfmXtBKa6bCO1Hh2kpLH5LVUoA21fVfO4paGZvRmgB0Y+DGiR4iV9TXVchcuyMlnTXc9woZCKKQkqSRqBTAaP6+uo4pz2AtiknDaIQNeOkd6mItzn/JL0lAjIKmvOnX5JVJLa2fs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bcHgQhy4; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=collabora.com header.i=Usama.Anjum@collabora.com header.b="C44Jafx+"
-ARC-Seal: i=1; a=rsa-sha256; t=1732961784; cv=none; 
-	d=zohomail.com; s=zohoarc; 
-	b=YS0+MLEVkvwO5QuWf8EZ8L7kIjpr15rAgGoV3WOJKVd0DzFDM/ukY3+jERcsXM7Xq9UslLPWMrWD57hpoC8f9g7TiyHIyLL0GN644Ju4kHDcmiFPtZ2SqdSzqzXckH4m3WyJCJ+4UpcLXCcR1FsAhXVnJzw5/9h/z8DaNx7rvns=
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1732961784; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=ePiELv7O15kU1sBettE+Li1B8u2wIQ+pHE03ejNfpMU=; 
-	b=cIgoG4nabxvK0FMz2i0RS8S5BGA9UuciHsMADwibQbXSdEADihLDgXZI/jlstT7Jr/8eh4RoQeDqdPAQMHJjJhJanfWNyxrAJp6H8iFAh10aogl0j43oYWTED+EsVaXydSwI5TTGE+wBVDvJuGS4p7RwF1W4Vj7MHdAi4qW0SEA=
-ARC-Authentication-Results: i=1; mx.zohomail.com;
-	dkim=pass  header.i=collabora.com;
-	spf=pass  smtp.mailfrom=Usama.Anjum@collabora.com;
-	dmarc=pass header.from=<Usama.Anjum@collabora.com>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1732961784;
-	s=zohomail; d=collabora.com; i=Usama.Anjum@collabora.com;
-	h=Message-ID:Date:Date:MIME-Version:Cc:Cc:Subject:Subject:To:To:References:From:From:In-Reply-To:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=ePiELv7O15kU1sBettE+Li1B8u2wIQ+pHE03ejNfpMU=;
-	b=C44Jafx+ll3KaLXjut1wtRYN6rxb4T6HGax3TYyZf0g3aXZwpfFpQeXlcyo8BPay
-	BB+sDGruY1HfzTprPQV1PhPXRiGuSDIEimwor61eG9VUn3tFz8N+Sll+bk76XHHrPjJ
-	ZGbc+bWaSS+j4+SuOQJpwikaYOEbPH9fcsobQhgw=
-Received: by mx.zohomail.com with SMTPS id 1732961783457975.6191002667166;
-	Sat, 30 Nov 2024 02:16:23 -0800 (PST)
-Message-ID: <e7f0b8ba-a4d5-42d0-a113-7fc77bb9548c@collabora.com>
-Date: Sat, 30 Nov 2024 15:16:26 +0500
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bcHgQhy4"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733133322;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=09MvrDFOXfmr7yZyk+mt+cZonVT5Z8HMfNE6DtwKO3c=;
+	b=bcHgQhy4kM+tYLLK6+zEvLkK5DT0JIW0pbZ3AVd/6HTeu6bScttzHqdWq3qnNgiGcTWtpE
+	vLpJdJgEQ2Bp4Z+0ZXkhsiQoDopsSz0p1WwlYOcihaKFKJ/V40xCza/dlVehqGlX8yA5o9
+	u1LMvpCxungmnK+xIuDPmgdhX19qzZY=
+Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
+ [209.85.128.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-349-rWxPhgfsOpO_FK280-Iusg-1; Mon, 02 Dec 2024 04:55:20 -0500
+X-MC-Unique: rWxPhgfsOpO_FK280-Iusg-1
+X-Mimecast-MFC-AGG-ID: rWxPhgfsOpO_FK280-Iusg
+Received: by mail-wm1-f70.google.com with SMTP id 5b1f17b1804b1-434a04437cdso29875065e9.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 02 Dec 2024 01:55:20 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1733133319; x=1733738119;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=09MvrDFOXfmr7yZyk+mt+cZonVT5Z8HMfNE6DtwKO3c=;
+        b=AEtmTsHndEnj0XaCZKrXYnrVJ8lGRIxeIRpj8RPk0Y1TXJVXppYbLqmLDmguafXLi8
+         O0mNd07p6E/h8iEFIr9F9cXQl/WHQLvh/ZDmMFmmy5Rz2Nx1Tzhm009HyupIzYhGacOF
+         t58R73tKEVyG5jrGFnmq7TBsnZxlRCXrYSnfJqR/FL2VDhb/kXiotzoyl3hSUei89RZm
+         vFWQ3vhH7BqWCfA2O1gRr4rq6+l2654Vjv7vlZI7R6B17SPBJE4JUqi5IYfZFSvNSDtR
+         Y+hCQ+WdK2eXOb4N6WKsx4PoRf5sZB2SDKRI6imgc2bS0h3k2/O+79ISPy6TrtF2In2O
+         wavw==
+X-Forwarded-Encrypted: i=1; AJvYcCXHl12mZFaNn/a8sFpfdO/XTorqMwmRjPKFRAZ/iWGt+5aNB96HLNmu9KnaeZy643/CHKFytCoP2nxxb2fHYw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwNXw7l2vMdEpQIB2Sjuyjx1QaOdeMJpWvHkYjc1uQS0VM9vHxp
+	bYNiATQ/frfScYGF+KNs5JWj5vNKtdr6VNeWmCm9uIk7qqas7r3z4yYUPEnHlBeycKLrLBa4qV/
+	3pkdEr0b+z/Tz5I/f/ip1RYMVBKw2xHIYfMXf3UKlRZcf2k/Sk/b61whHs1bh7THD
+X-Gm-Gg: ASbGncuMj5Tb1lddjvseCqeHRc43fVVG8DI5IgGPIQjwF+6ApPBA9grbk2foRwDMFqQ
+	u7lkcRDZWAtXSqMTZKHyriTPEIU5K26IJer8gY2v03tffRTg35TQMROnktkPYqgnp6tO41BpfLy
+	AMsBR5grkzjAdKSJPaVOl88Ig4228aGyoKmbvDiiHKMdSj70rOgW+0z4F5aE4qxltMuGoJB2jdJ
+	1B6+Vkpuy7mvip+y0KWWU8BPZWlZA/zye56MmjsccB9Zy04X2zyqjJprJK7Oq+uhrMCBwt/40Pw
+	DIE=
+X-Received: by 2002:a05:600c:1c09:b0:431:44fe:fd9f with SMTP id 5b1f17b1804b1-434a9de8cc2mr172537485e9.23.1733133319111;
+        Mon, 02 Dec 2024 01:55:19 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFdrZW7CnHqIPba+h3rdUQEPKdX49BX6A51BtPfyAqpRIpHzFbEJP1x+SVenKFW+la85OBsJA==
+X-Received: by 2002:a05:600c:1c09:b0:431:44fe:fd9f with SMTP id 5b1f17b1804b1-434a9de8cc2mr172537265e9.23.1733133318732;
+        Mon, 02 Dec 2024 01:55:18 -0800 (PST)
+Received: from jlelli-thinkpadt14gen4.remote.csb ([151.29.75.19])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-434b0dbf95fsm144865155e9.15.2024.12.02.01.55.17
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 02 Dec 2024 01:55:17 -0800 (PST)
+Date: Mon, 2 Dec 2024 10:55:16 +0100
+From: Juri Lelli <juri.lelli@redhat.com>
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+	linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+	Frauke =?iso-8859-1?Q?J=E4ger?= <frauke@linutronix.de>,
+	Lorenzo Pieralisi <lorenzo.pieralisi@linaro.org>
+Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
+ Kernel VII edition (OSPM-summit 2025)
+Message-ID: <Z02EBA_0SwWPhTAi@jlelli-thinkpadt14gen4.remote.csb>
+References: <ZytlAkTiuZApK23Y@jlelli-thinkpadt14gen4.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Cc: Usama.Anjum@collabora.com, Jeny Sadadia <jeny.sadadia@collabora.com>,
- Shreeya Patel <shreeya.patel@collabora.com>,
- Helen Mae Koike Fornazier <helen.koike@collabora.com>
-Subject: Re: KernelCI report for stable-rt: v5.10-rt-next@v5.10.229-rt122-rc1
-To: kernelci-results-staging@groups.io, stable-rt
- <stable-rt@vger.kernel.org>, Daniel Wagner <wagi@monom.org>,
- RT <linux-rt-users@vger.kernel.org>
-References: <673c953a.050a0220.2a2b4e.3468@mx.google.com>
-Content-Language: en-US
-From: Muhammad Usama Anjum <Usama.Anjum@collabora.com>
-In-Reply-To: <673c953a.050a0220.2a2b4e.3468@mx.google.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-X-ZohoMailClient: External
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <ZytlAkTiuZApK23Y@jlelli-thinkpadt14gen4.remote.csb>
 
-On 11/19/24 6:40 PM, staging.kernelci.org bot wrote:
-> OVERVIEW
->=20
->         Builds: 10 passed, 0 failed
->=20
->     Boot tests: 75 passed, 30 failed
->=20
->       RT tests: 1218 passed, 6 failed
-The rt-migrate fails intermittently. Please have a look at it.
+Hello Everybody,
 
->=20
->     CI systems: maestro
->=20
-> REVISION
->=20
->     Commit
->         name: v5.10.229-rt122-rc1
->         hash: 27cbaf327469f5cf5bf5287cc902158ad88f4c25
->     Checked out from
->         https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable=
--rt.git <https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-=
-rt.git> v5.10-rt-next
->=20
->=20
-> BUILDS
->=20
->     No build failures found
->=20
-> BOOT TESTS
->=20
->     Failures
->=20
->       arm:(multi_v7_defconfig)
->       -beaglebone-black
->       -odroid-xu3
->       -imx6dl-udoo
->       -imx6q-udoo
->       Test details:
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf13e9420421370e6ee72 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf13e9420421370e6ee72>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf13b9420421370e6ee69 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf13b9420421370e6ee69>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf1ed9420421370e6f3b2 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf1ed9420421370e6f3b2>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf13f9420421370e6ee75 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf13f9420421370e6ee75>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf1409420421370e6ee78 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf1409420421370e6ee78>
->=20
->       CI system: maestro
->=20
->       arm64:(defconfig)
->       -rk3399-rock-pi-4b
->       -sun50i-h5-libretech-all-h3-cc
->       -meson-gxl-s905x-libretech-cc
->       Test details:
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf1cf9420421370e6f2f4 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf1cf9420421370e6f2f4>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf2e39420421370e6f997 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf2e39420421370e6f997>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf1d59420421370e6f349 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf1d59420421370e6f349>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf2499420421370e6f6d3 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf2499420421370e6f6d3>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf1d39420421370e6f303 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf1d39420421370e6f303>
->=20
->       CI system: maestro
->=20
->       i386:(defconfig)
->       -hp-14-db0003na-grunt
->       -acer-chromebox-cxi4-puff
->       -dell-latitude-5300-8145U-arcada
->       -acer-cb317-1h-c3z6-dedede
->       -lenovo-TPad-C13-Yoga-zork
->       -acer-cp514-2h-1160g7-volteer
->       -dell-latitude-5400-8665U-sarien
->       -asus-CM1400CXA-dalboz
->       -acer-cp514-2h-1130g7-volteer
->       -hp-x360-14a-cb0001xx-zork
->       -acer-cbv514-1h-34uz-brya
->       -asus-C436FA-Flip-hatch
->       -dell-latitude-5400-4305U-sarien
->       -hp-14b-na0052xx-zork
->       -hp-x360-12b-ca0010nr-n4020-octopus
->       -acer-R721T-grunt
->       -acer-cp514-3wh-r0qs-guybrush
->       -hp-11A-G6-EE-grunt
->       Test details:
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c09420421370e70356 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c09420421370e70356>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c39420421370e7036b <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c39420421370e7036b>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c59420421370e70381 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c59420421370e70381>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c29420421370e70365 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c29420421370e70365>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c19420421370e70362 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c19420421370e70362>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c39420421370e70371 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c39420421370e70371>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c59420421370e70387 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c59420421370e70387>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4bf9420421370e70350 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4bf9420421370e70350>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c39420421370e7036e <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c39420421370e7036e>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c19420421370e7035f <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c19420421370e7035f>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c29420421370e70368 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c29420421370e70368>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c49420421370e7037b <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c49420421370e7037b>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c59420421370e70384 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c59420421370e70384>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c19420421370e7035c <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c19420421370e7035c>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c69420421370e7038d <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c69420421370e7038d>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4be9420421370e70343 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4be9420421370e70343>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf53d9420421370e70725 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf53d9420421370e70725>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf9039420421370e73650 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf9039420421370e73650>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf4c09420421370e70359 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf4c09420421370e70359>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf7eb9420421370e71c9b <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf7eb9420421370e71c9b>
->=20
->       CI system: maestro
->=20
-> RT TESTS
->=20
->     Failures
->=20
->       rt-tests.rt-migrate-test:
->       arm64:(defconfig)
->       -meson-g12b-a311d-khadas-vim3
->       -rk3399-rock-pi-4b
->       Test details:
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf2379420421370e6f65b <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf2379420421370e6f65b>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf3079420421370e6fa3d <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf3079420421370e6fa3d>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf2399420421370e6f661 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf2399420421370e6f661>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf6889420421370e71054 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf6889420421370e71054>
->=20
->       CI system: maestro
->=20
->       rt-tests.rt-migrate-test.rt-migrate-test:
->       arm64:(defconfig)
->       -meson-g12b-a311d-khadas-vim3
->       -rk3399-rock-pi-4b
->       Test details:
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf3079420421370e6fa3e <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf3079420421370e6fa3e>
->       - https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaest=
-ro:673bf6889420421370e71055 <https://kcidb.kernelci.org/d/test/test?orgId=
-=3D1&var-id=3Dmaestro:673bf6889420421370e71055>
->=20
->       CI system: maestro
->=20
-> See complete and up-to-date report at:
->=20
->     https://kcidb.kernelci.org/d/revision/revision?orgId=3D1&var-git_co=
-mmit_hash=3D27cbaf327469f5cf5bf5287cc902158ad88f4c25&var-patchset_hash=3D=
- <https://kcidb.kernelci.org/d/revision/revision?orgId=3D1&var-git_commit=
-_hash=3D27cbaf327469f5cf5bf5287cc902158ad88f4c25&var-patchset_hash=3D>
->=20
->=20
-> Tested-by: kernelci.org bot <bot@kernelci.org>
->=20
-> Thanks,
-> KernelCI team
->=20
-> _._,_._,_
-> -----------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------------------------------------=
--------------------------------------------
-> Groups.io Links:
->=20
-> You receive all messages sent to this group.
->=20
-> View/Reply Online (#74694) <https://groups.io/g/kernelci-results-stagin=
-g/message/74694> | Reply to Group <mailto:kernelci-results-staging@groups=
-=2Eio?subject=3DRe:%20KernelCI%20report%20for%20stable-rt%3A%20v5.10-rt-n=
-ext%40v5.10.229-rt122-rc1> | Reply to Sender <mailto:bot@kernelci.org?sub=
-ject=3DPrivate:%20Re:%20KernelCI%20report%20for%20stable-rt%3A%20v5.10-rt=
--next%40v5.10.229-rt122-rc1> | Mute This Topic <https://groups.io/mt/1096=
-64171/6630336> | New Topic <https://groups.io/g/kernelci-results-staging/=
-post>
-> Your Subscription <https://groups.io/g/kernelci-results-staging/editsub=
-/6630336> | Contact Group Owner <mailto:kernelci-results-staging+owner@gr=
-oups.io> | Unsubscribe <https://groups.io/g/kernelci-results-staging/leav=
-e/13729535/6630336/1522968245/xyzzy> [usama.anjum@collabora.com]
->=20
-> _._,_._,_
+Quick reminder that deadline for topics submission is approaching
+(December 9, 2024 - next Monday).
 
+Please use the form to submit your topic(s) or reply to me privately
+with topic's details.
 
---=20
-BR,
-Muhammad Usama Anjum
+https://forms.gle/Vbvpxsh8pqBffx8b6
+
+Don't wait until last minute or Santa will add you to the naughty list!
+
+Best,
+Juri
+
+On 06/11/24 13:45, Juri Lelli wrote:
+> Power Management and Scheduling in the Linux Kernel (OSPM-summit) VII edition
+> 
+> March 18-20, 2025
+> Alte Fabrik
+> Uhldingen-Mühlhofen, Germany
+> 
+> ---
+> 
+> .:: FOCUS
+> 
+> OSPM is moving to Germany!
+> 
+> The VII edition of the Power Management and Scheduling in the Linux
+> Kernel (OSPM) summit aims at fostering discussions on power management
+> and (real-time) scheduling techniques. Summit will be held in Uhldingen
+> (Germany) on March 18-20, 2025.
+> 
+> We welcome anybody interested in having discussions on the broad scope
+> of scheduler techniques for reducing energy consumption while meeting
+> performance and latency requirements, real-time systems, real-time and
+> non-real-time scheduling, tooling, debugging and tracing.
+> 
+> Feel free to take a look at what happened previous years:
+> 
+>  I   edition - https://lwn.net/Articles/721573/
+>  II  edition - https://lwn.net/Articles/754923/
+>  III edition - https://lwn.net/Articles/793281/
+>  IV  edition - https://lwn.net/Articles/820337/ (online)
+>  V   edition - https://lwn.net/Articles/934142/
+>                https://lwn.net/Articles/934459/
+>                https://lwn.net/Articles/935180/
+>  VI  edition - https://lwn.net/Articles/981371/
+> 
+> .:: FORMAT
+> 
+> The summit is organized to cover three days of discussions and talks.
+> 
+> The list of topics of interest includes (but it is not limited to):
+> 
+>  * Power management techniques
+>  * Scheduling techniques (real-time and non real-time)
+>  * Energy consumption and CPU capacity aware scheduling
+>  * Real-time virtualization
+>  * Mobile/Server power management real-world use cases (successes and
+>    failures)
+>  * Power management and scheduling tooling (configuration, integration,
+>    testing, etc.)
+>  * Tracing
+>  * Recap/lightning talks
+> 
+> Presentations (50 min) can cover recently developed technologies,
+> ongoing work and new ideas. Please understand that this workshop is not
+> intended for presenting sales and marketing pitches.
+> 
+> .:: SUBMIT A TOPIC/PRESENTATION
+> 
+> To submit a topic/presentation use the form available at
+> https://forms.gle/Vbvpxsh8pqBffx8b6.
+> 
+> Or, if you prefer, simply reply (only to me, please :) to this email
+> specifying:
+> 
+> - name/surname
+> - affiliation
+> - short bio
+> - email address
+> - title
+> - abstract
+> 
+> Deadline for submitting topics/presentations is December 9, 2024.
+> Notifications for accepted topics/presentations will be sent out
+> December 16, 2024.
+> 
+> .:: ATTENDING
+> 
+> Attending the OSPM-summit is free of charge, but registration to the
+> event is mandatory. The event can allow a maximum of 50 people (so, be
+> sure to register early!).
+> 
+> Registrations open on December 16, 2024.
+> To register fill in the registration form available at
+> https://forms.gle/Yvk7aS79pvNR6hbv8.
+> 
+> While it is not strictly required to submit a topic/presentation,
+> registrations with a topic/presentation proposal will take precedence.
+> 
+> .:: VENUE
+> 
+> The conference will take place at Alte Fabrik [1], Daisendorfer Str. 4,
+> 88689 Uhldingen-Mühlhofen, Germany
+> 
+> The conference venue is located in a 2 minute walking distance [2] to
+> the Hotel Sternen [3] that has been pre-reserved for the participants.
+> Since it is a very rural area, we recommend booking this hotel as it is
+> close to the conference room. The price ranges per night incl. breakfast
+> between 85€ (Standard Single Room) up to 149€ (Junior Suite). There is
+> an availability of 37 rooms in the hotel. Another 13 rooms are
+> pre-reserved in the Hotel Kreuz which is also a 5min walking distance to
+> the conference location [4]. Cost is 75€ inkl. breakfast. Please choose
+> your hotel (and room) and arrange booking yourself. We recommend arrival
+> on March 17 and departure on March 21 due to the length of the trip.
+> 
+> Please use the code ‘LINUTRONIX’ when booking your hotel room. 
+> Deadline for hotel booking in Hotel Sternen is February 28, 2025.
+> Deadline for hotel booking in Hotel Kreuz is January 17, 2025.  
+> After these dates, cancellations are not free of charge anymore.
+> 
+> You can reach Uhldingen-Mühlhofen best from Zürich Airport [5] or
+> Friedrichshafen Airport [6]. From both airports there are train and/or
+> bus connections to Uhldingen-Mühlhofen which you can check here [7]. The
+> rides are quite long, so another possibility is to organize yourself in
+> groups and share a taxi/shuttle [8].
+> 
+> [1] https://www.fabrik-muehlhofen.de/
+> [2] https://maps.app.goo.gl/S6cnTgx1KJAGRkMr7
+> [3] https://www.steAlte Fabrik Mühlhofenrnen-muehlhofen.de/
+> [4] https://www.bodensee-hotel-kreuz.de/
+> [5] https://www.flughafen-zuerich.ch/de/passagiere/praktisches/parking-und-transport/zug-tram-und-bus
+> [6] https://www.bodensee-airport.eu/passagiere-besucher/anreise-parken-uebernachten/
+> [7] https://www.bahn.de/
+> [8] https://airporttaxi24.ch/?gad_source=1&gclid=EAIaIQobChMIo_y9l56iiQMVfp6DBx16NxPtEAAYAiAAEgJOO_D_BwE
+> 
+> .:: ORGANIZERS
+> 
+> Juri Lelli (Red Hat)
+> Frauke Jäger (Linutronix)
+> Tommaso Cucinotta (SSSA)
+> Lorenzo Pieralisi (Linaro)
+
