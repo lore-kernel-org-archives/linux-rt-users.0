@@ -1,133 +1,119 @@
-Received: from CHN02-SH0-obe.outbound.protection.partner.outlook.cn (mail-sh0chn02on2098.outbound.protection.partner.outlook.cn [139.219.146.98])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C231520C473;
-	Wed,  4 Dec 2024 16:55:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=139.219.146.98
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733331358; cv=fail; b=iB1J/NrxufKu/WAmrIi2Q8Dp5WR8fxes6soS+MwxdRaA3uXYR/rp7cBdaV1h3egKOi1kh33PJzMeeLAp0a6NLLoecsMrub9L9NRY0aMCtdrdUsYDd3vjI2+IPvoYTzrTvdjccNPFrgiRUGj9qT/QMShaJBMElORd/Evx1zQQbr4=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733331358; c=relaxed/simple;
-	bh=tzoy7DA7Qm7+rBVziaPFCXqYjVxqv2OCCW1jqQA6HHQ=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=ZyYpTtU12R4k8JEN3Eu33jh4mb2R4FYf/MSqnmg+rZ+zOh3pxQCr3Zfwy2Gfxxki6bvfwhwNYk8ledoD1CRcx0vAUXZ8PZy0NZSB8BNeTKos52D2IzzZYC4e710kD0WdZg2GYW5WU1pJFKrtEcclNM2qW3gZ7L+mevU2/exxpA8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com; spf=pass smtp.mailfrom=starfivetech.com; arc=fail smtp.client-ip=139.219.146.98
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=starfivetech.com
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=kT6fyCBHOeq7A08VTO6pik2isv0LoW6uVQ2lQDBVPGkxjvPG6dssY3tDXkoiDYxrNb+OXjW1rnyH3Q6rfKR0PnUVtyQvgxyk2Pajd3nzbwOglPNQP4/zk/3pGaJB9DsHu2rwMrhIw3DXmeZfkLlfuvrxJTBj0Yc3W597VQfWYRdbVoQYi84GKRbBOS7PDl9vltcSOCg1gxHglNIrQO8Rovy9wRzgYM3ZGxm9Oz0oGDsm6UAFlhAAs4dBhEuC3sP6hoiCeofW/SXTog7PXeTge0keMO8/NhVaFG89Idy91nqEE9SXm14vSD/5eTjFove6yw6y8mE7iKdHKn4mMBBq6g==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=tzoy7DA7Qm7+rBVziaPFCXqYjVxqv2OCCW1jqQA6HHQ=;
- b=RajgZ4yGO9vAgz6YOd3WQ5tatty5g0GsD9sytEtJTgAWKvw5cY305NSn82Rr27aznJaBJTyNAyFgnEafgRvkPQ50/bHnnlHtuU7AMtuBTRjpeY8p+HAC4DE+ffEe4Nyso1F82jTTZAeRiT5QzhqFLdOeTLDJp9jS5+SW32ys15Dua5Sx/IDzOBc8LmPOD7GRDZLGaZnHzMrmLT7I0zx/xzl0tVckH0PWKf6mZyY1OkjgzTr2XqrqAks8SbqbnbW5XY5xDOoLkA6BxvuZiY3Nf7vbz3N9OYgn8vHVm9u4eGZDbi2AIFW7W2aRwyHIDoHMCSyb0EKPbV9GcEdggy5K+Q==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=starfivetech.com; dmarc=pass action=none
- header.from=starfivetech.com; dkim=pass header.d=starfivetech.com; arc=none
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::7) by NTZPR01MB1017.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:a::8) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8207.14; Wed, 4 Dec
- 2024 15:24:38 +0000
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5]) by NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5%3]) with mapi id 15.20.8207.010; Wed, 4 Dec 2024
- 15:24:38 +0000
-From: EnDe Tan <ende.tan@starfivetech.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-CC: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"tglx@linutronix.de" <tglx@linutronix.de>, "rostedt@goodmis.org"
-	<rostedt@goodmis.org>, "linux-rt-users@vger.kernel.org"
-	<linux-rt-users@vger.kernel.org>, Leyfoon Tan <leyfoon.tan@starfivetech.com>,
-	"endeneer@gmail.com" <endeneer@gmail.com>
-Subject: RE: [RT,1/1] tty/serial/sifive: Make the locking RT aware
-Thread-Topic: [RT,1/1] tty/serial/sifive: Make the locking RT aware
-Thread-Index: AQHbRWeYAYEA3AjpL0OogbeXF1KKX7LUU4eAgAHg3nA=
-Date: Wed, 4 Dec 2024 15:24:38 +0000
-Message-ID:
- <NTZPR01MB10187B77E803325E8C88F383F837A@NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn>
-References: <20241203094009.67697-1-ende.tan@starfivetech.com>
- <20241203103611._nfkyEXJ@linutronix.de>
-In-Reply-To: <20241203103611._nfkyEXJ@linutronix.de>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=starfivetech.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: NTZPR01MB1018:EE_|NTZPR01MB1017:EE_
-x-ms-office365-filtering-correlation-id: 1315109c-7cd8-4f08-0f7c-08dd1477c435
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam:
- BCL:0;ARA:13230040|1800799024|41320700013|366016|10070799003|38070700018;
-x-microsoft-antispam-message-info:
- la01WSyQxaVB4UDyUpgML4S5SOAzDwaDcld76kX4347frwOmuBkiVg47Mcm8Fj250BXIoLatQKh8XDrVjFN+dUNlRHjfh8ulnaIZAZXMYn5piUyzKA0XxDhbhHu6PRkFrvS7KuzW0AYvd4OQlTCIivBgv16lIAjiTFYLeSARg3w6KJmLGbb52Z93bJkUg0mzwp6yj8Q5/M5Z/3FItpYrLXPstND8EGkZ/X1XGycmIv/HyAxTQdtNY5/ubHBgTBDNwZLO1FLhwjaIogsG83l3J+5JW7Yt6IAMp9JVF25TKtZus9vF3ZUL2qBYtLRoOLR3ql7e/Gpb8BzGDL5Wc+4V7zh99FL0cl8zTGluE61ff9HRSe8Rj17M6beVjftPNKpCPYFUZsZisQKiyCVqZ1qvsVyp1CX1vTV+cdiG1U1VQlyeIlfC9zO3kX/+xjup9lCJKZbafXZ8xFMHdKdcUS0Yzvf36JEXPHfWaegTW6B+0pqhXhduQEkf53moc5I9jJDTNM0/eH7rM/2yI1F0a35hbx59oOK+XHBSIUv4/NLHET+NmEXYZQCOixkH1xppjitDnA8Ctd9elzGL6sxyum3jn/N0CeSH7Il3n6Puc2Sop+JmTwdabHF+5APO6pgYL4nf
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(41320700013)(366016)(10070799003)(38070700018);DIR:OUT;SFP:1102;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?K0VxcC9RRC9ZL0NsYy9Pa3FxUGozcmt0VUxQQlRyVTBYdFlxV3o5Y05WOFRC?=
- =?utf-8?B?TVNRaUFYMFpGVVVpc2xSRitHR1VPcnZjOEwyb3JqUTZjNmF5K1A1Wml0Q2RX?=
- =?utf-8?B?L3liZkIyc2ZxM3YrTGFybmh0aFIza3haSXRNQkFVMlhLVktPZDZOTERHUWFM?=
- =?utf-8?B?NjFDY2JhSFNZNEY4VVk3ZE1lWnN5SlIyNGJqeFEzWmpmSkRMQk9WWDNNcFBw?=
- =?utf-8?B?NjhtbGQ4UTl2bmc4ZDRRTzIzclRMUTV5T3JmVTRJa2FZRHRXTjNTQ3JSbnA2?=
- =?utf-8?B?SzFsV3QwbDF6R0lBN3JJSHh2VTVGQkkrR3pEbUk0bVAzd2JCRnNEVjh4cjFC?=
- =?utf-8?B?Z1Y2WUp3cFpXbHFSNENvajA4dlR1a3JWRHFMQWZlak1SaldybkJTbHhBa1pU?=
- =?utf-8?B?WkxzZUE0ZHFLOHdQcEh3a0F6bm1mb0cxQ1VraHFXeEx3bHdIcHFPNHBUVEFx?=
- =?utf-8?B?aWtPY0szOUdmak53VStlTThsTXIyaVk5QnNFZFNFT1BKOGVyRGVJTkhWZ3JV?=
- =?utf-8?B?azJMNTZiSm9NZTFacy9LN3VjSnhPaDNpM0NWaG82Yng2NmV5blpjQXdETDlU?=
- =?utf-8?B?MmdqUlhNRzdYWUd0L29BcjNZTE1LL0lpVkFGN3pHQ0pPVFM3eGcxNml2VDlm?=
- =?utf-8?B?OHlmajJzTEZUbVFDaEZtbUJYbDF4WTdxSDFHTjYyOWo3cnl6RmJwb3RvSHVh?=
- =?utf-8?B?K1daZTg4Y3JDUnlQSGNTRjhpd2g0cVFCSnRDT3Rrdi81ZXlZM2pWZWRNSnJv?=
- =?utf-8?B?SnkxWFBrcmxkdXdaR0FSdktXS3F0eFcvK3JPSkpyVjJKTFhJbDNINjIyUDdH?=
- =?utf-8?B?aGFzcytnNXJlWkU1OVBjbERyNHNEWkYrQkNUcnRYVHdPbUNwUFZ3K0QrZVpJ?=
- =?utf-8?B?MUJXenVSQ0ZrVXFjTzRZL0E3ajZ0SUNYSjRreWtVS1R0NjNLYmttSHgwRGtZ?=
- =?utf-8?B?Ry9FRkgwREFxaUgxcklNdlBDb2ZEQit6WG1WemFOcW5GWWRCWFJadElER1BJ?=
- =?utf-8?B?RFBhWmpadmNmVW1nR3cxMXRwcEV5Mm1CZzNPVVZEK2YrQ2pTYWZTTVhtYVBK?=
- =?utf-8?B?R25lQXdMcnNqQW9Cb2h6OWExVW1VcVFTMUJQempSbHdnemQzSGFheFFpTHhB?=
- =?utf-8?B?bm11VXJYOVc1cXhUdzhtcVZVWnYyU0IrL0drS3M2bkl2RXYxNGJ2THBXNHBj?=
- =?utf-8?B?TWQ0ck1pQ0RzQVcrdWRaKytCSWRxMkFqMHFhMU1jNEFkaHUzV296ZERsbjhL?=
- =?utf-8?B?eWpMeWRER09xcnZHaGM4aFduSXoxcG43N3lJUEoyZGJKTE44RUZ1ZXYrdDl5?=
- =?utf-8?B?RHhmRTZMM0pWM3lqNnZTTjg4QjdJUXdCZExxTDNzZ1UvYXlmNXk4ejBlUngv?=
- =?utf-8?B?U25SWEpjZ092ejlNZkwxeWxEdVBQUWxuOGluOURtSUxXMzNvcnNvdFIxTDFB?=
- =?utf-8?B?UXBvY0RwMVlvc3lWcHBnNlUrcTZXck9FeVVsV1kwQk50WStleUZUVDBJazRi?=
- =?utf-8?B?am03TkZCYWV2dnVoL1dpbVVhUXVCV0JsZWM1TUNWOTEwaUpOMS9wdHlQYnN2?=
- =?utf-8?B?UnlPV3dTbmdkS3ozczgxM2NucFNlSXAyd0J5RTFadlVUNGFIL3VBTzA5U25t?=
- =?utf-8?B?T2Njd3oxOVlxbVBwdVJ5WFJvalk0M0h3cUxxV2RzMnhpRjVPcTlORTd4aDkv?=
- =?utf-8?B?TkRmWDRDaVFUcmFRYXh5dWZTNDhEcVVZWWxkNThzWnorelZoRHlVMW9FVkM4?=
- =?utf-8?B?RUtaNExyUUpXMlZKS2RyUXdBMGZWeVFMeSt1SkNGdGdWbHE1aG5FZGRFeHZq?=
- =?utf-8?B?akd1d01KT0RvTVA5d2RTTUJPbXdPbFdHTTJleUZBNi9kT29oTW1ONlo3MGFD?=
- =?utf-8?B?V0lmdzlwYXVOdW92OXlaNDQwUXlLbk5RWm5BK3VKT3FTRW5TRGxrNnFTWlJ0?=
- =?utf-8?B?ZGZQQkFNbUpNVDdTTkluYnh6eEc4dXd4dUJxaWpMQlI1ZHdzL3VJeVZ3VXJ2?=
- =?utf-8?B?cmJPRTFaZW5hT0luOXB1a2lQZ3dML0xZYzh6c3gyNnpzTERaa3NYbk5EVHRY?=
- =?utf-8?B?OWlxTklHRDNjcWFPVUFFelFRa1ZuTVlpTnM0NTNBNHlKQTYyckozMkIxZHBh?=
- =?utf-8?B?Y1ZMQjROM3czY2dhUDVNcEl0STRFLzFTVGdNK3dKV21wazR0Y1FHdVJvUEph?=
- =?utf-8?Q?0vCamk2p8UQRFq8BjYHQuyu8rBudracEcSC+GCk9Vgk5?=
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C89D01C3C1B
+	for <linux-rt-users@vger.kernel.org>; Wed,  4 Dec 2024 19:17:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1733339876; cv=none; b=XI1/PfkAjYGy1zusmW3OY5+mieE11nf+QYo86+c12VtQ5EirL1eiafi95megF+5n+EwRN/o8gwjcJi48hSk5knYUf65G57Y3mBswBbNimoc5ljCMTyCvzAAtbvyVPxlZyUOCAX52nWls05nh+bgE0lpagL3mgAA+ekmsoLUP0XE=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1733339876; c=relaxed/simple;
+	bh=6FlSC5o80v+06vfT3sc6JlQbMfXoTz3PewHNj5mlhbk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ptFhviFw4NIj+FhnJjTxiRharnHz6zEN/idxMvjTv2BHONyaDW01BQfPVsUAZF7oU1U4J3fUHNueIcDiswW/5a/qJtK5kHrxKIq8+EsR59l3I9AJR4kK1Tb+lnK4icxdQMqR5frxmKHDDGC34ilgFDSoHWKaz1bohLxjo/sL80s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WnI1lWFy; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WnI1lWFy"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733339873;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=2YgSaNuqeDNEaUGH3J0EUQjBkPFBabMrVMBikRrJ6dk=;
+	b=WnI1lWFy2U8Hd896BoyX/ALrF1Im8e2zIOxr9OSsbpNWNR4e1gR26AffmW4fyxQmU0xhIU
+	+0XwW422cQlfJRidegi8FJHJLcBhQ4sojjbsKPlItJRj/ge02fa8WkBegk7OUGqXd84Df2
+	g+OkQkhuGqTS6AJ3mLoBkmtxfVYBjxk=
+Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
+ [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-66-x2dzezSBMe-ByBNJxTE3uQ-1; Wed, 04 Dec 2024 14:17:52 -0500
+X-MC-Unique: x2dzezSBMe-ByBNJxTE3uQ-1
+X-Mimecast-MFC-AGG-ID: x2dzezSBMe-ByBNJxTE3uQ
+Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-466cf3f017eso1152401cf.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 04 Dec 2024 11:17:52 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1733339872; x=1733944672;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=2YgSaNuqeDNEaUGH3J0EUQjBkPFBabMrVMBikRrJ6dk=;
+        b=Yd0dIgirl8sLSKNw8DwYECIcoRzzd/PHQuM1lBczZ+OGSxKwRKqJfUAAtBHATpHGNt
+         3SJfWZbY0QqMbcsqUEBEn5WwLQQ/6DNu2IHS4kvHWoDBCT4d+kmX2O2gS8g/CJu/5VUe
+         3PWSgQthIC5PE3fEyfIJngQ9taAVnzj+mA0cO+5yfryjivW5Ntj7KrqHYNxhLFjUvt69
+         o1I5vOykYV6GgNRxLJGuMlkjZC58rxnnanUF5M/T6NgPTd9Q4jvR8FEeAlOz5zQUdSMC
+         2q6gYWgBflfKl64tknm8GboDxmL2dmZyguOvlc/HYlHcptXJ87wQ3tU90xpBmH8GZq52
+         6yrA==
+X-Forwarded-Encrypted: i=1; AJvYcCW+96VkUC/W2VT6miREM0TaSgy3c8OVpOntHKTLj8wk0RTAZuqUFTE5BzUa61Mq+5u0fZWlPs2zvVs3bUddqw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxLriYPZkzl8fwGLmIh794OLkN6sSBL1r2d3dhkkSUY4m4HKxCr
+	bFYP13lRa7Ups6d1xXpO+jjgNHFoIA39rH1+R8f/irteXO4YF6xSm40qs4CSNDJfdZ06YFSXges
+	HwGioGcw/5fIRtc9ytpKjxosaEMJb+I10nEqpG7ODZutz/cy8EdJtgObGoBvYexZ5
+X-Gm-Gg: ASbGncvE605X5dxyBA9hJxIRkq7PygePiCF2JAL3M+bw6YndOz7BH20VaKOf3e6/OTL
+	8Ec/HtC531dz8rPakqXZy40BvGcxLMuV+981+18OU0YWie7nqXJ+mZq4TYSTjzMiZOolK6TD0BU
+	EkCCpsKr0sSMyR3EQV+KzaW13Cr14CwSZJlklkCfzeals2khDf/UXnsctqPdgquncb3Fu6t5Wdh
+	+CiuRiY7HJNKljcsdxkWc2rIAORqn2XSVxrNpRRjmbsbPRYJQ==
+X-Received: by 2002:ac8:580e:0:b0:461:4002:4d1c with SMTP id d75a77b69052e-46717ce5bc7mr101635001cf.50.1733339871783;
+        Wed, 04 Dec 2024 11:17:51 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGE5NqJ1YN5OcpNYW6rq0FeBpHIGDmxuWp/ZQ0Maz9vRByusR7dBZx/KxlaonCSIpSpLsqwRQ==
+X-Received: by 2002:ac8:580e:0:b0:461:4002:4d1c with SMTP id d75a77b69052e-46717ce5bc7mr101634541cf.50.1733339871445;
+        Wed, 04 Dec 2024 11:17:51 -0800 (PST)
+Received: from thinkpad2024.. ([66.187.232.65])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-466c4054955sm76733651cf.1.2024.12.04.11.17.50
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 04 Dec 2024 11:17:50 -0800 (PST)
+From: "John B. Wyatt IV" <jwyatt@redhat.com>
+To: "Clark Williams" <williams@redhat.com>,
+	"John Kacur" <jkacur@redhat.com>
+Cc: "John B. Wyatt IV" <jwyatt@redhat.com>,
+	linux-rt-users@vger.kernel.org,
+	kernel-rts-sst <kernel-rts-sst@redhat.com>
+Subject: [PATCH] tuna: Fix help.py syntax warnings
+Date: Wed,  4 Dec 2024 14:17:40 -0500
+Message-ID: <20241204191742.16338-1-jwyatt@redhat.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: starfivetech.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
-X-MS-Exchange-CrossTenant-Network-Message-Id: 1315109c-7cd8-4f08-0f7c-08dd1477c435
-X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Dec 2024 15:24:38.1549
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 06fe3fa3-1221-43d3-861b-5a4ee687a85c
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: GtYsHpR5p6LcUjal3wgPthNHlSz4g0/5Biun8Xq98DnoaKQEw4xOfxIw9NPwstJBb/JrXshyFNnkJQJpWn6dbCJBYqEPhMkV8fP8ushJpN8=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: NTZPR01MB1017
+Content-Transfer-Encoding: 8bit
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBZb3UgbmVlZCB0byBzdGF0ZSB3aGljaCBr
-ZXJuZWwgdGhpcyBuZWVkcyB0byBiZSBhcHBsaWVkIHRvLg0KPiBUaGUgY2hhbmdlIHlvdSBsb29r
-aW5nIGZvciBpcw0KPiAJMzJjNjk0ZWMzZWZjMiAoInNlcmlhbDogc2lmaXZlOiBVc2UgdWFydF9w
-cmVwYXJlX3N5c3JxX2NoYXIoKSB0bw0KPiBoYW5kbGUgc3lzcnEuIikNCg0KVGhhbmtzIGZvciBw
-b2ludGluZyB0aGlzIG91dCwgSSBvdmVybG9va2VkIHRoZSBjb21taXQgaW4gdGhlIG1haW5saW5l
-IGtlcm5lbC4NCkJUVywgdGhlIGNvbW1pdCBpcyBub3QgaW4gdjYuNi42My1ydDQ2LXJlYmFzZS4g
-DQo=
+Fix two syntax warnings with what looks like should have been a new line
+like the other help entries.
+
+I am struggling to reproduce the scenario that caused them despite it
+was after running ./tuna-cli.py. The warnings do not appear most of the
+time.
+
+Regardless, these are an issue that can be trivally fixed so sending
+a patch.
+---
+ tuna/help.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tuna/help.py b/tuna/help.py
+index fa47ae8..c913a16 100644
+--- a/tuna/help.py
++++ b/tuna/help.py
+@@ -44,7 +44,7 @@ PROC_SYS_HELP = {
+ 	'net.core.rmem_default':N_('The default setting of the socket receive buffer in bytes.'),
+ 	'net.core.rmem_max':N_('The maximum receive socket buffer size in bytes.'),
+ 	'net.core.rps_sock_flow_entries':N_('This controls the maximum number of sockets/flows that the kernel can steer towards any specified CPU. This is a system-wide, shared limit.'),
+-	'net.core.somaxconn':N_('Limit of socket listen() backlog, known in userspace as SOMAXCONN. See also tcp_max_syn_backlog for additional tuning for TCP sockets.\Default: 128.'),
++	'net.core.somaxconn':N_('Limit of socket listen() backlog, known in userspace as SOMAXCONN. See also tcp_max_syn_backlog for additional tuning for TCP sockets.\nDefault: 128.'),
+ 	'net.core.warnings':N_('This controls console messages from the networking stack that can occur because of problems on the network like duplicate address or bad checksums. Normally, this should be enabled, but if the problem persists the messages can be disabled.'),
+ 	'net.core.wmem_default':N_('The default setting (in bytes) of the socket send buffer.'),
+ 	'net.core.wmem_max':N_('The maximum send socket buffer size in bytes.'),
+@@ -118,7 +118,7 @@ PROC_SYS_HELP = {
+ 	'net.ipv4.tcp_reordering':N_('Maximal reordering of packets in a TCP stream.\nDefault: 3'),
+ 	'net.ipv4.tcp_retrans_collapse':N_('Bug-to-bug compatibility with some broken printers. On retransmit try to send bigger packets to work around bugs in certain TCP stacks.'),
+ 	'net.ipv4.tcp_retries1':N_('This value influences the time, after which TCP decides, that something is wrong due to unacknowledged RTO retransmissions, and reports this suspicion to the network layer.\nRFC 1122 recommends at least 3 retransmissions, which is the default.\nDefault: 3'),
+-	'net.ipv4.tcp_retries2':N_('This value influences the timeout of an alive TCP connection, when RTO retransmissions remain unacknowledged. Given a value of N, a hypothetical TCP connection following exponential backoff with an initial RTO of TCP_RTO_MIN would retransmit N times before killing the connection at the (N+1)th RTO. The default value of 15 yields a hypothetical timeout of 924.6 seconds and is a lower bound for the effective timeout. TCP will effectively time out at the first RTO which exceeds the hypothetical timeout. RFC 1122 recommends at least 100 seconds for the timeout,	which corresponds to a value of at least 8.\Default: 8'),
++	'net.ipv4.tcp_retries2':N_('This value influences the timeout of an alive TCP connection, when RTO retransmissions remain unacknowledged. Given a value of N, a hypothetical TCP connection following exponential backoff with an initial RTO of TCP_RTO_MIN would retransmit N times before killing the connection at the (N+1)th RTO. The default value of 15 yields a hypothetical timeout of 924.6 seconds and is a lower bound for the effective timeout. TCP will effectively time out at the first RTO which exceeds the hypothetical timeout. RFC 1122 recommends at least 100 seconds for the timeout,	which corresponds to a value of at least 8.\nDefault: 8'),
+ 	'net.ipv4.tcp_rfc1337':N_('If set, the TCP stack behaves conforming to RFC1337. If unset, we are not conforming to RFC, but prevent TCP TIME_WAIT assassination.\nDefault: 0'),
+ 	'net.ipv4.tcp_rmem':N_('Vector of 3 values: min, default, max\n - min: Minimal size of receive buffer used by TCP sockets. It is guaranteed to each TCP socket, even under moderate memory pressure.\nDefault: 8K\n - default: initial size of receive buffer used by TCP sockets. This value overrides net.core.rmem_default used by other protocols. Default: 87380 bytes. This value results in window of 65535 with default setting of tcp_adv_win_scale and tcp_app_win:0 and a bit less for default tcp_app_win. See below about these variables. - max: maximal size of receive buffer allowed for automatically selected receiver buffers for TCP socket. This value does not override net.core.rmem_max.  Calling setsockopt() with SO_RCVBUF disables automatic tuning of that socket\'s receive buffer size, in which case this value is ignored.\nDefault: between 87380B and 4MB, depending on RAM size.'),
+ 	'net.ipv4.tcp_sack':N_('Enable select acknowledgments (SACKS).'),
+-- 
+2.47.0
+
