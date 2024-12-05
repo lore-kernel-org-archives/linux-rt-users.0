@@ -1,79 +1,76 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4743A1AB517;
-	Thu,  5 Dec 2024 08:06:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB2F0207671;
+	Thu,  5 Dec 2024 11:28:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.255.230.98
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733385983; cv=none; b=GD+dxH6JJ/z8joLVqjLOm0HG53pq6hIsqP6r+v4CZ2oAN1eKCGD81SbSwEahf1NKpgIU8xOIcyvJEaziBCHaZPkf/8O+bmEGMFs9l2SSyNJbSckqVjznvDA1vyOTg4bsD5hiM7TzaXvrC+R+9bqjI7WA8QMWh1EpKIbiEuv3/qs=
+	t=1733398121; cv=none; b=pwRmZab9tptwyfzIZxDGqUoqhai88yQsw9OPb17pQ8HeRLrxrHbG13nf31VFt+FP1tgVJZfpdneUzFEj2lKCGcDGnuEriEk9eyPDDVxIOcUhd1dUOtEyIbZ7NYG18VOuIV6sIeDEgBpGLcWij16jef8CQcM75c0XOSKGrUv2pZI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733385983; c=relaxed/simple;
-	bh=r0wP7qtB8URx3RVoQGA+/3/H1v+F966PLwqFXxAdweI=;
+	s=arc-20240116; t=1733398121; c=relaxed/simple;
+	bh=HFn7iATAqCVpJC0l5cIdf6N7vw9PX93mh3A7G0DoPA0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eVdoIc/ZVDsJkOqJPlbyJWMAYTUKqiVwSEYsdDOcrWonNmoh2QfK+hpHV/t6mhgn0xsYwcxghUI1oOR4qOcHmXBRuL9+M0LVgEY4bidrNfR1zDqLg7f29r/lEpBymW/jHfk5sh2Yc6lIzPTEnwhPqDs8s5YOd6NqHLDur6ypwu0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Dfjx5Yrh; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=OJednpoY; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Dfjx5Yrh";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="OJednpoY"
-Date: Thu, 5 Dec 2024 09:06:14 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1733385976;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=oCazH0VmB7UgSvWMFArA5ZBz50oQvuUH5JGqjVT/xlw=;
-	b=Dfjx5Yrhj0FQw8F2cpM/tc3DIBWT07KJAIoLh6Bz60KFMKxyzQfhIXk2d3ddxW7GSxrxHE
-	M1lfvMdhdoWUAEYhArAktKFyZWpuKnjPllaFFGjFx3hAHk+WMdg5cvY3ZFIL4KbKmiVhce
-	ac4trUVlfcF+mQ7GWDgF1abEVMx/STaCW7Utem10KLbztwDPc+bXQNqNxe9F1RsCO/aZjf
-	CobL/B6w3O9ElV6OVsxopfaMK0GkHX/O6VvJa+aCzKFbWfuXsfCw+G9aBf4NdnN+3DIr4J
-	tkHkq2DSO8m+CSQEaMG4IQi81AtkReEJ1PTOEauUuZMVQf/+dxzBCpzsdB0lzw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1733385976;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=oCazH0VmB7UgSvWMFArA5ZBz50oQvuUH5JGqjVT/xlw=;
-	b=OJednpoYD+PY3Mm79DnYxXOzXutEU7mn+KK00m23KJfYun0FRpst1muLITnvTVIVz3ploz
-	QEBhlQOrbVky9XAw==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: EnDe Tan <ende.tan@starfivetech.com>, stable-rt@vger.kernel.org,
+	 Content-Type:Content-Disposition:In-Reply-To; b=cwi5RHjHl+CfulNNZCjw/n6FOgEFcgzRd+ATK7b/qe6Tb7JxilhsKl9I1GGkdXkRTXLHO0tmBzG6nGuUoDe8USwPAZke2EdM3LV07CnliFUlMTPGtr5LT4inaGppMnXDvmlqy1lOoWYOkDsG8OlYPeSMUo/IGnw39FrS92ZAIbI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de; spf=fail smtp.mailfrom=denx.de; arc=none smtp.client-ip=46.255.230.98
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=denx.de
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=denx.de
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+	id C8F071C00A0; Thu,  5 Dec 2024 12:28:37 +0100 (CET)
+Date: Thu, 5 Dec 2024 12:28:37 +0100
+From: Pavel Machek <pavel@denx.de>
+To: Daniel Wagner <wagi@monom.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	stable-rt@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Tom Zanussi <tom.zanussi@linux.intel.com>,
 	Clark Williams <williams@redhat.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"tglx@linutronix.de" <tglx@linutronix.de>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Leyfoon Tan <leyfoon.tan@starfivetech.com>,
-	"endeneer@gmail.com" <endeneer@gmail.com>
-Subject: Re: RE: [RT,1/1] tty/serial/sifive: Make the locking RT aware
-Message-ID: <20241205080614.y_512eFh@linutronix.de>
-References: <20241203094009.67697-1-ende.tan@starfivetech.com>
- <20241203103611._nfkyEXJ@linutronix.de>
- <NTZPR01MB10187B77E803325E8C88F383F837A@NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn>
+Subject: Re: [PATCH RT 0/1] Linux v4.19.324-rt139-rc1
+Message-ID: <Z1GOZVPb3Gzz30zh@duo.ucw.cz>
+References: <20241124190222.112239-1-wagi@monom.org>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="gus0nIABdJ4LkyaY"
 Content-Disposition: inline
-In-Reply-To: <NTZPR01MB10187B77E803325E8C88F383F837A@NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn>
+In-Reply-To: <20241124190222.112239-1-wagi@monom.org>
 
-On 2024-12-04 15:24:38 [+0000], EnDe Tan wrote:
-> > -----Original Message-----
-> > You need to state which kernel this needs to be applied to.
-> > The change you looking for is
-> > 	32c694ec3efc2 ("serial: sifive: Use uart_prepare_sysrq_char() to
-> > handle sysrq.")
-> 
-> Thanks for pointing this out, I overlooked the commit in the mainline kernel.
-> BTW, the commit is not in v6.6.63-rt46-rebase. 
 
-Indeed. Clark, could you please backport
-	32c694ec3efc2 serial: sifive: Use uart_prepare_sysrq_char() to handle sysrq.
+--gus0nIABdJ4LkyaY
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-for v6.6-RT?
+Hi!
 
-Sebastian
+> This is the RT stable review cycle of patch 4.19.324-rt139-rc1.
+>=20
+> Please scream at me if I messed something up. Please test the patches
+> too.
+
+4.19.324-rt139 would be very useful for our -cip-rt release, can we
+hope to get it soon? :-).
+
+We can also help, if required.
+
+Best regards,
+								Pavel
+--=20
+DENX Software Engineering GmbH,        Managing Director: Erika Unter
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+
+--gus0nIABdJ4LkyaY
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCZ1GOZQAKCRAw5/Bqldv6
+8uAEAJ9ICGjrx3Io6PHMscGb3JZGVBpaXwCcDGXyvQUpZnurblH0ND8Wte40U4I=
+=bMIj
+-----END PGP SIGNATURE-----
+
+--gus0nIABdJ4LkyaY--
