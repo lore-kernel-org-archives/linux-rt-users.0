@@ -1,92 +1,79 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 410D984A3E
-	for <linux-rt-users@vger.kernel.org>; Fri,  6 Dec 2024 15:32:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EC71154BEA;
+	Fri,  6 Dec 2024 15:47:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733499153; cv=none; b=lvHSH6O+LbBZs25cuUyIS4YxlVGybrwPCv+dPwY4suHfjCcEVsDXaYuGgc15yr9VOwX98pivBY8KTynHeAsksUe3C5hYyj+clCg3OONI1QK6jjhr239Cf7TTBOQmzSoh6YRPxkFfrLO+nMvz2CyjPsFuZriuJsksu3LZ9J1PnRA=
+	t=1733500026; cv=none; b=IKD7H3ZrJ//tiEg5aqupNwxJ0movJW5KbW+tjIXaq74dk6ZqAyGXehmunKDpQOS7ZlYblBYxJBFTXqsLrZECWbY3e4VBrL3cgmTWKQqhOQTfoDKCPugBip4B/vj+lDVN3dZIGISfLJqo2pAEJ9SEp6XSoHgPn3dB/amMjJ1lI34=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733499153; c=relaxed/simple;
-	bh=6h4HEU7KY7Zcf4YpYKw/zb/k0S6NQm8FxPp11irddw0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=P5KAlZgIQmeFVUwFJ8VJAtRSmeiUGQZ+Q1zcUm/o2LzXoE/XaZMhp5sFhJIr+vdjxabmiMvj+ryjqS47h7SW3+VXRbv16Wdsb8/sX7X90vGZ/Q3p6KAvyBbzef87r10QguTiA5dufoM+mN7MN3Q1jukjtc7ryHYE9yaAUx00awI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GXV5Jnki; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1733500026; c=relaxed/simple;
+	bh=K/maEQLHx5xJFz29GlNJRloqFZ+HzL1xkfIvERWefDM=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=Vu02VwXFu9Sgp9v7M01PTilL6OJxuW7Vzk9rgZxsa7CqmQ9TUQ4kB+PyByKDg737+4neY/o7CaBJb+SZSB6ibWaenRCWe0twM8E+/kzLaVAdH3CE8u7MSnh1WadiV4dyAkBjjORPYTHQebtWDDTVfd+cx21204mb3aCu6yzeewM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=wuaubhIh; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=OEVuwUz9; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GXV5Jnki"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8DDB2C4CED1;
-	Fri,  6 Dec 2024 15:32:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1733499152;
-	bh=6h4HEU7KY7Zcf4YpYKw/zb/k0S6NQm8FxPp11irddw0=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-	b=GXV5Jnki+YfCYSccV+nmPZ/XHdAKKexMusH+KMDRX899Eg5zNa4qFAAdllPeVfEn3
-	 5QpC50h50REY3PC51Pn+MUwXC2Hxw23FpzQZS1Y7nPLrPvt9yDLySqKLNoCIiPbGBR
-	 2oz2G4DK+IHbwKmtobcmBlUiDVKesNM9esAaPtFa7FngvlncmTj40l+wt+XVFko2Yo
-	 H+fK4cWKBJennScCKQP6K8oyIT/ILU4X+wa1XwpF4B4DMX4WpOQ4K6fZTvAbVGa7H2
-	 9w+j0nR7UOLjLsAb8oe6VtT96iq5+3VlbCaEX92AVAUVg3Orvztbw8Aw0/sdydSDIm
-	 JHspju8nUbFgw==
-Message-ID: <97f8415f78e0bd6e3ce7d45bc378561a4f88767a.camel@kernel.org>
-Subject: Re: Information regarding rt-kernel patch
-From: Tom Zanussi <zanussi@kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Prajwal Gowda
-	 <prajwalgowdahm.1@gmail.com>
-Cc: linux-rt-users@vger.kernel.org
-Date: Fri, 06 Dec 2024 09:32:31 -0600
-In-Reply-To: <20241206115542.1PNgwiHm@linutronix.de>
-References: 
-	<CAOJh2-kFD7fd6km5PEBDXdYNwwWZXi2n8MKkz-Y6TEn643-Q1w@mail.gmail.com>
-	 <20241206115542.1PNgwiHm@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.3-0ubuntu1 
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="wuaubhIh";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="OEVuwUz9"
+Date: Fri, 6 Dec 2024 16:47:01 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1733500023;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=RjgjuBm5GBllIQyYDLxe9sOmMipkSxhqRQM9Pvgx/K8=;
+	b=wuaubhIhMeA+NzQl8LwfPTnFWy6AJ2UkWcAu0Rd4B2G0UCi9xQ0IU9/d1OhVx3DW3HZvpq
+	c2wWkBGBsdosiEMG8xygI8Buto/nmEhdffbhnpPrCj1KN9dHIAt4Bwh4m1RB6Je9tOFnpG
+	2pdW8D2q7NkshGrh3DNgr8xwlqFa5cKr4ZpcCXhzSlRgFRP42EnnID5BsnTgpX61IDFh8I
+	I8IBu3ydaLrHT0ZfiJUSR2SSVooEnHV9TyS7Pc7L74SYPwjaIeL/YKfAmv/8NIAOY5xnNa
+	NO8bimqb8+kG/5hSgqkklUE55qX/J9CDK/2QOYOplXQN1tG4I0EGEWzZ3FOoiQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1733500023;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=RjgjuBm5GBllIQyYDLxe9sOmMipkSxhqRQM9Pvgx/K8=;
+	b=OEVuwUz9lvhHQyG3Jk0cIqZgKA4Z4d+HLScGamF+4Quf5QTOybLSlAvoilk9i4EPeGvcZQ
+	Sf5qFHAxEv+7XBCg==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v6.13-rc1-rt1
+Message-ID: <20241206154701.8XBv1qNE@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-On Fri, 2024-12-06 at 12:55 +0100, Sebastian Andrzej Siewior wrote:
-> On 2024-11-14 15:10:20 [+0530], Prajwal Gowda wrote:
-> > Hi @linux-rt-users@vger.kernel.org
-> >=20
-> > I would like to know when a new patch for rt-kernel v5.4.y will be
-> > available.
-> > As I could see last patch release for rt-kernel was in June for
-> > v5.4.278 after that there are no new patch releases available for
-> > v5.4.y.
->=20
-> We are currently at v5.4.285-rt93
->=20
+Dear RT folks!
 
-Right, I did the latest 5.4 release a couple weeks ago:
+I'm pleased to announce the v6.13-rc1-rt1 patch set. 
 
-https://lore.kernel.org/lkml/1f9ef532e9d0a5bbabfb8461c9528418b65e4c78.camel=
-@kernel.org/
+Changes since v6.12-rc4-rt6
 
+  - Update to 6.13-rc1
 
-> > Further I would also like to know about the future of rt-kernel
-> > patch
-> > release for 5.4.y.
->=20
-> Tom is currently looking after it. I don't know if we shuffle things
-> by
-> the end of the year.
+  - Down to 24 patches (including three new). The v6.12-rc4-rt6 release
+    had 42.
 
-The currently supported versions and the support timelines are here:
+Known issues
+    None.
 
-https://wiki.linuxfoundation.org/realtime/preempt_rt_versions
+You can get this release via the git tree at:
 
-So, according to that, 5.4 will be supported until the end of 2025,
-which I plan to do.
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v6.13-rc1-rt1
 
-I do plan on doing another release by the end of the year..
+The RT patch against v6.13-rc1 can be found here:
 
-hth,
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.13/older/patch-6.13-rc1-rt1.patch.xz
 
-Tom
+The split quilt queue is available at:
 
->=20
-> Sebastian
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.13/older/patches-6.13-rc1-rt1.tar.xz
 
+Sebastian
