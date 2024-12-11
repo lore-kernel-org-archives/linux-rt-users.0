@@ -1,192 +1,146 @@
-Received: from CHN02-SH0-obe.outbound.protection.partner.outlook.cn (mail-sh0chn02on2093.outbound.protection.partner.outlook.cn [139.219.146.93])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BBF811C3F27
-	for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 18:45:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=139.219.146.93
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733942737; cv=fail; b=YP8gsODCTzt4R75mcBDuu0RUNe9DzFWIBE5cJ4wgaeLbhMK8cjKZ5ikjZWQDYqCGGD7XpTZvuK37KuUIrWsaj/5OOCfqQWgqSysJgKRHd2BwS7cCApXmFrZd5MGbc6MFUSwoaTkVz3+inXNrDT0dGbhFfW5zRyFsyVuQs2VyQVg=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733942737; c=relaxed/simple;
-	bh=4+hefnrWfuQQBJ3V3s9sdQJiwdS8a6Ug5wGBBC/dZAA=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=cK54P3O+JspkOo/P7vAHSBkkl9yc9l0bEXvYsOZSwo96Nl8kzw8LjF9ykMB+f505OSlN4UCKBk3jBogN0/RIGu1KBbwmChBjlA69O7+HvVg/zvogFMG2KYO7jhYpZsWnsNrPbjyhoyEJ/N3F6ptWOOKI1fOaXpGZupSihEdmYI4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com; spf=pass smtp.mailfrom=starfivetech.com; arc=fail smtp.client-ip=139.219.146.93
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=starfivetech.com
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=ItBAOLCWOpHgoRgR//SarB86/0DctGwWfZFLtOzd62DPgsvtDuwsVDD2IUucuEVt9hXQiXDWoZsIl1en2Bm+gPdJ/iMRC6s0KmG7faiiwbUawy8ciHAT23Mnr8wCpQaji1RI82diDT9p1OBKJNA9p4XbaPXCDRPZ7Loq9vdL71LM8VBO4FzJ5kypL5x1phVRjuVHFGUq74m/BI7Q+b9svxtCJ/P22t3QRL761BUWUnFoC/20j0NJdIdv6zrCoXTytTNabBH2jnhdV6u5Ntgx/kSNNf7dOSVNfIWmngiqnTRNgrUfT6Uo+4SfbkSTAvFT5L0rHv7jwOwJgWLWsba9kg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=XH0wwODkaqaa4Ng0KakKvrNfKjSgOetFzI5C20T52x0=;
- b=ShR4WrOnbL7FHGsp4O5BGGPCUZfZdn0McGCknKCZPKQqWDSreRqmpXH3HQ/grp42nMhW4o9d55MdXWddeA2VwYtX/0c7EamIeXKzT9xWjuBj6ZXLGHV+i4tknkd+GLXF5MuJYWSZKTIlTvTXxpF0Hcop1f+Ab780vY0a5iQTLj4QlzLYKUJUt+JfWzL/o3G2yybdlZB/8B1QxpR1vjnfQ4KmIYvLk2pln7vmqIHYDtmGcixU3XscFHpqzwVKIGr/UK+m4DgWvVsTDCyTtO9O2i1Qj6HiXYR/E5QIzn+nK/mvZsoBsJkmFRq2vk6rV1d7LqMsj+sPOFpsTGHGYy7DXg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=starfivetech.com; dmarc=pass action=none
- header.from=starfivetech.com; dkim=pass header.d=starfivetech.com; arc=none
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=starfivetech.com;
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::7) by NTZPR01MB1049.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:a::14) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8230.6; Wed, 11 Dec
- 2024 17:12:56 +0000
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5]) by NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5%5]) with mapi id 15.20.8230.000; Wed, 11 Dec 2024
- 17:12:56 +0000
-From: ende.tan@starfivetech.com
-To: linux-rt-users@vger.kernel.org,
-	mtosatti@redhat.com
-Cc: williams@redhat.com,
-	jkacur@redhat.com,
-	leyfoon.tan@starfivetech.com,
-	endeneer@gmail.com,
-	Tan En De <ende.tan@starfivetech.com>
-Subject: [1/1] rt-tests: determine_maximum_mpps.sh: Introduce '-F' option to specify CPU frequency
-Date: Thu, 12 Dec 2024 01:11:58 +0800
-Message-Id: <20241211171158.1344674-1-ende.tan@starfivetech.com>
-X-Mailer: git-send-email 2.34.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: ZQ0PR01CA0007.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c550:5::21) To NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::7)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B32461F9406
+	for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 19:01:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1733943700; cv=none; b=ac6V067eKAvnmA1asJLcgmX8cuSDYL1qWzngpY9ISVPHAdt1U7NeNn+uf3Q2cduYaLizBxYoZyzy6AnxrFYGAJ+E0i3Cnet2SAOd5PqqphxYBuQdCX4GoIU1+Z3niQ6+wiFgYlLAGObO0cs7q+5bQvUytBBlse8tPYyhrIYNECw=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1733943700; c=relaxed/simple;
+	bh=s9x9oNXgmRe1ic9hn5eROBSKgyJmcW0p6Fh/++U4DOs=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=BlgcIFBWEwXSNy3jncotx5noXYq0kFqpOsy/Nkxh4ejtmu8EP5SWrsIncWY1oxdTnj+Jgk6mFSFR0lMFmbPKCITJAJN6RX0Rp+/N5c4FEV6gUFURuUQe6avtF7yTxcHCxQw7lSsqE2NoMnTAfOM9T7Xt4yURkUfux2ijbYcqfOk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Li+ZZvj5; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Li+ZZvj5"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733943697;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TSFWWB1Nyo5hCb6p0HOvNqEwrDz2uEDBEpQAgDfK+ck=;
+	b=Li+ZZvj5Za1e+tKkWSW1NUmmGkCXc2AmydDSCSv+KFIhsOmQ5EwOax7AlEns4j+luJLTYM
+	lOjNv+JW5Nm94Ey85RdB9yFD7WznShzTTwHp19NZywAOtwwQZ3yjbbL6fZ7hKwZOgBrFu6
+	Z7gQ+WaJUCrsjrgjdA6rFZtMiWxV5EY=
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-167-R7BIUVa1PL2Y8u0ZFQHV5A-1; Wed, 11 Dec 2024 14:01:35 -0500
+X-MC-Unique: R7BIUVa1PL2Y8u0ZFQHV5A-1
+X-Mimecast-MFC-AGG-ID: R7BIUVa1PL2Y8u0ZFQHV5A
+Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-6d92efa9ff4so28551136d6.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 11:01:34 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1733943694; x=1734548494;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=TSFWWB1Nyo5hCb6p0HOvNqEwrDz2uEDBEpQAgDfK+ck=;
+        b=gEp27imnOba5jR56owz+Yr/FM1t5JYk/1TICb5GD0lIFv7m/BDpn3IAsOoXkAgYzfT
+         icS+xGNfqWvrPOLh6UNCwi5fA53vc7tm86DA3vfajf0WCTvPrCSWJd4q29PcE91ya2+0
+         YWbi1r/KOgwj4XkvAhg8L/pPpMQelv3q7DSLx8wEqMDItwg2AkpQCdl92aJAFDsI2Rju
+         yWj5Mb0kT2kbECPnylFCthBmAShwrtxf7KVtXP0TdXEfrA2WU7i4ffQx60Obf4KEGd5H
+         qYL+vBW2KXbicmmOULyClfnD27k0UK+5XiqglFQCNzZ/JVyxsmCyg23iN//c0Cc9aMJG
+         zlcg==
+X-Forwarded-Encrypted: i=1; AJvYcCVtFZrcatGaLzjg2SFqDCm5Zbg7Ruk9JHH7o5KSQk0gIzqdedpjwNBrIJdFPsQrehIqhIFq5HTKYpCCVLmDOA==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwIb6DDtwz1pdwPJfeYiicSJ3BGxjcZrkueLXWrcGoWM0Q5LItn
+	5/Ppcs2OEuDCgrHQy8PMR4HbZ7dxMEDHmUFaBzpnjT9Xu1cpbPccOjqzpSUe8hLaaqF6x0zeATQ
+	WkNboEWAkSTFOpRUtBC8Ah4w30rS8N70VC2SyDACbDiuNLLzpea3iMrq07ACJy6fnb4XJ5ln2
+X-Gm-Gg: ASbGncu1TIlHcalUYV52ITWEAvtx5b/4T4/sCuANQKWtSiDdFXJ2n5SShUAPSEXZiQl
+	mKUau6Ua0QGSW6tctvMde28611GvfI9VmLZnnyHkh+YY8EWlNyKBLn3QBoauhpovzKZYy+ZEWgX
+	7XUCI5mglaIcLSJO7H3A6rM7zbScv5plPxfwmmKgTU+t3Qrl3kC9YJlMGsmsLU1+Ka6uVoZuHFf
+	cTbXHp9n7FwAI0Re3gU4ieg4OkaeI8eINKMFTfFUkFY
+X-Received: by 2002:a05:6214:501a:b0:6d8:96a6:ec22 with SMTP id 6a1803df08f44-6dae3928105mr6839646d6.23.1733943694336;
+        Wed, 11 Dec 2024 11:01:34 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFCz+sInGe00jEeCfqQYbA8S/YUYqwg28VsMBzo/3M6EAhgmODmRjRQREXKpX0LmeBy4I3KnA==
+X-Received: by 2002:a05:6214:501a:b0:6d8:96a6:ec22 with SMTP id 6a1803df08f44-6dae3928105mr6839366d6.23.1733943694053;
+        Wed, 11 Dec 2024 11:01:34 -0800 (PST)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6d8da6966desm73033666d6.41.2024.12.11.11.01.33
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 11 Dec 2024 11:01:33 -0800 (PST)
+Date: Wed, 11 Dec 2024 14:01:32 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: "John B. Wyatt IV" <jwyatt@redhat.com>
+cc: Clark Williams <williams@redhat.com>, linux-rt-users@vger.kernel.org, 
+    kernel-rts-sst <kernel-rts-sst@redhat.com>, 
+    "John B. Wyatt IV" <sageofredondo@gmail.com>
+Subject: Re: [PATCH v2] tuna: Fix help.py syntax warnings
+In-Reply-To: <20241204203201.8145-1-jwyatt@redhat.com>
+Message-ID: <66e0ea75-d388-ae24-cc2c-f9016c85836f@redhat.com>
+References: <20241204203201.8145-1-jwyatt@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: NTZPR01MB1018:EE_|NTZPR01MB1049:EE_
-X-MS-Office365-Filtering-Correlation-Id: 16e0a922-1dde-486d-7005-08dd1a070e2e
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|41320700013|1800799024|52116014|366016|38350700014;
-X-Microsoft-Antispam-Message-Info:
-	UnMuMK2JCnnRQviwCUbWjIDHW7jqBuQ6hDXfdhtMVbgsm7yxTVrUSZZ7GUCL/cd6QFww2NX91jBUKG50wMSnm3SPqD6zw0cUMCbFM+O15dJFWyl/fuxvwM/g1XwVnTJ3veOpBs47skpRE42Nbr3iOOG6H7L1KTe6spVcWLEydFDiGZa5vWucaO5U5RO4Nk82d96GhPIZtrbN1iNWm17OP/50Uob3+sPyQ5Yni4YbitZ+S/SIBGr5s8VFu+yDdsD4S9J7i7+0mW82EI9tONM0iud7r4Kl+GuBUOx7OOxrHZu+5SZih7J8vihkUoDhG/ni5Pq/pE9XboArbpoapm2oaPihilZMLJQ3QUbKh6EoQUVvzd/Q6lcGaw4tIKj4rU0J/gxoDreI3RycAoHMzULyaP18i/K6Stj9V5b15LadM4ys4YzNIB4f4MIKa51XKfHPp4yZ8eFjyPJ4lnzN9XSUOKtRixfT4RxpCkSoCszuPKZ+mUtQOh5JTjCITMOPQu/89l0vKDVMD+YjYQ0jaHt58lGgp/OyJuoD6U8HtvL8Qg9a8ikPmqSgyDhLGEbiRAaHB5V7nkwM/n6uvv5J1VsKObm4972CIQqLcAfT/WwarI8gi/MmA5L8ae0ucXLZWXJn
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn;PTR:;CAT:NONE;SFS:(13230040)(41320700013)(1800799024)(52116014)(366016)(38350700014);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?V10vh/r77tTv2Y4dxZlh/Hft5YNglL+uv+dtAkE360zsClI7Q97fL8JRAq2n?=
- =?us-ascii?Q?7FbEKF+wG8Zq7Lc9NtFzw+Nb6zgNPQ6vr3CF8/tYL33PBYaQn7Tc5K+1cLXU?=
- =?us-ascii?Q?uPLX/RTpNN/tp8oq63uZp7+yir+p6mZxI8ElC2vIHjHq7zEUUS4d0eoVOMpf?=
- =?us-ascii?Q?YV1IhiDhxvuLQzRs1Z8Lzpg6W9NYSU3GaSz5qrN43Ax2CX81KJ/KgzuEHn8Y?=
- =?us-ascii?Q?l3wWCkaKsKKaWOOlrrOBGCCtpEnPZ0UhBa3TZ4bm0ZMKAd1RAegojS58PBxf?=
- =?us-ascii?Q?npaj+nP4czTSQwI7ZbwiK0uUC0jfZCUY7B3bEiluLhqoM1n4jYt46pjhZigt?=
- =?us-ascii?Q?9vhpqfzJPVDwTVIkTHmxV03je0NyKMPuYR8XX7iPZ3sMIm+DzUUUVvl9YQOW?=
- =?us-ascii?Q?ar0DJiXIqUxDz8WlTmsigvxuvShoN/3rIFY0/2Izkfozmy+fcPhT6NFNt/nF?=
- =?us-ascii?Q?bmr9kbl8mbzovfjum8feRGa+LTfhaZYDh8VunsMe3VjShsSyAjDAGih68MNm?=
- =?us-ascii?Q?9rtc4L9K7ZPTj3SqolKkIsY/yCCHZ2qWt46WcrtDLC/t9t1BmWqbUm53E+rc?=
- =?us-ascii?Q?Hz97g5rptyVMDfcyFaoz1hdF6OmEDDRX/QZiUzFgjLuzgiG6OoLR8dTdW37E?=
- =?us-ascii?Q?q9YQGjd4MUjb8waQnWtF7j2mq5/V7UG0Rg9F5wLNTn1Pe5mxZNxUDPIyBsJO?=
- =?us-ascii?Q?ztMECF2i91PoirOjH5b1YTOGjLvYlK6V9gS6U9tyiT3c4EbtTjp2QhPAPxsh?=
- =?us-ascii?Q?BybCM26TM1RhAUg/kwKkiptlF51veWoEJZaQwoqVlvjiwqYuVlX8z7fah283?=
- =?us-ascii?Q?U/KiSXrcJJLKnctchZpUf6oidCw/w1mbJhDYzp7T8fxLOTwK9QA5sd0t5Yfc?=
- =?us-ascii?Q?w1bZAV4ec9ZbwO0/fBxKsRlNniXzunLDu7Jr1EKLYjqQVZNewN5Z8td5abRX?=
- =?us-ascii?Q?NypDk1HxYy4hajZuJlBoejNLSJr7tbk7GH/diSOURYetwL4JHERy82zkY9iG?=
- =?us-ascii?Q?+qVOOe2jo0BPNhPjsqEUJWwezG7Slmroo/WRROWzADd3EStl5IVblhin5rCe?=
- =?us-ascii?Q?h8mdSlJH1X67v5Ad1JO2qvMH03fizrimc/1K03OYMyow0S6F5mtWfYtegzoM?=
- =?us-ascii?Q?mulWajN+aeASz9R4WGuv4sMkmqpQ9tA7d/OOpoy/5GtjSXzHBJM7kRQgVEW0?=
- =?us-ascii?Q?l6yvmadjTRgJ7D5FQywHj7tXIpQOfYFkblGE6TrGz612fVztR5I9olGtgzDj?=
- =?us-ascii?Q?CdW4joKQqoe0psfugKE6hFpS7VkNKrlIHM7Cq6vPDKv4Xk9eNea+Zr/MXcSs?=
- =?us-ascii?Q?nBvaBhM9UzPxyf3VLYFxV34iRq1J1hjmgOBHB4WnvMLGSbMGO5CNSsu5tqfT?=
- =?us-ascii?Q?as9NNQKeRXK1eu8wg3tRWaZw/aMLGpLePkhAYsQt1ELQw1NnjkHKy6vZWcRv?=
- =?us-ascii?Q?Y14Vqa0Z6GrjXaa84lpo4MH0l+SqDTFyTxf/nayGfc2kTcTSleEoMDv7E2Xc?=
- =?us-ascii?Q?yBSLNG2De9QXyCgFXJTNIZZAXrRxxoVlYflYn3ydauHp7McXMoETUgIPPwUN?=
- =?us-ascii?Q?UPSlSY5L67GNahW1EEw9gCo8WENet/Fp9qnjIE59s7Oh8nsvTw+KNLUftRVQ?=
- =?us-ascii?Q?4g=3D=3D?=
-X-OriginatorOrg: starfivetech.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 16e0a922-1dde-486d-7005-08dd1a070e2e
-X-MS-Exchange-CrossTenant-AuthSource: NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Dec 2024 17:12:56.2978
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 06fe3fa3-1221-43d3-861b-5a4ee687a85c
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: l6xpVv0HYQlZxobRW1LctVRQ7xdl5oXQY5fav4ganuhZPjV6qok3w2feRviILXqyDjgUYWoFVBrs4b6OJBWxYAz80PRCvAxzWhIFIKktJvQ=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: NTZPR01MB1049
+Content-Type: text/plain; charset=US-ASCII
 
-From: Tan En De <ende.tan@starfivetech.com>
 
-For platform that doesn't show cpu MHz in /proc/cpuinfo, introduce '-F'
-option for user to specify the CPU frequency in MHz.
 
-This corrects previous commit that mistakenly used timer frequency
-(timebase-frequency) instead of CPU frequency.
+On Wed, 4 Dec 2024, John B. Wyatt IV wrote:
 
-Fixes: fab7d9057887 ("rt-tests: determine_maximum_mpps.sh: Get frequency from timebase-frequency if cpuinfo fails")
-Signed-off-by: Tan En De <ende.tan@starfivetech.com>
+> Fix two syntax warnings with what looks like should have been a new line
+> like the other help entries.
+> 
+> I am struggling to reproduce the scenario that caused them despite it
+> was after running ./tuna-cmd.py. The warnings do not appear most of the
+> time.
+> 
+> Regardless, these are an issue that can be trivally fixed so sending
+> a patch.
+> 
+> Signed-off-by: John B. Wyatt IV <jwyatt@redhat.com>
+> Signed-off-by: John B. Wyatt IV <sageofredondo@gmail.com>
+-edited commit message
+Signed-off-by: John Kacur
 ---
- src/queuelat/determine_maximum_mpps.8  |  3 +++
- src/queuelat/determine_maximum_mpps.sh | 17 +++++++++--------
- 2 files changed, 12 insertions(+), 8 deletions(-)
+Please don't include what should be a discussion in your patch,
+just tell us what problem you are fixing, and how if it isn't obvious
 
-diff --git a/src/queuelat/determine_maximum_mpps.8 b/src/queuelat/determine_maximum_mpps.8
-index ba2cc2a..bcd3078 100644
---- a/src/queuelat/determine_maximum_mpps.8
-+++ b/src/queuelat/determine_maximum_mpps.8
-@@ -56,6 +56,9 @@ default priority = 1. Valid numbers are from 1 to 99
- .TP
- .B \-h
- help
-+.TP
-+.B \-F cpu_mhz
-+CPU frequency in MHz. This is required for platform that does not show cpu MHz in /proc/cpuinfo.
- .LP
- .SH AUTHOR
- determine_maximum_mpps was written by
-diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
-index adfd809..6a90ca0 100755
---- a/src/queuelat/determine_maximum_mpps.sh
-+++ b/src/queuelat/determine_maximum_mpps.sh
-@@ -37,20 +37,20 @@ usage()
- 	echo "-h"
- 	echo "	help"
- 	echo "	print this help message and exit"
-+	echo "-F cpu_mhz"
-+	echo "	CPU frequency in MHz. This is required for platform that does not show cpu MHz in /proc/cpuinfo"
- 	exit
- }
- 
- get_cpuinfo_mhz()
- {
--	# Try to determine MHz from /proc/cpuinfo
--	FREQ_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
--
--	# Try to determine MHz from /sys/firmware/devicetree/base/cpus/timebase-frequency
--	if [ -z $FREQ_MHZ ]; then
--		FREQ_MHZ=$(($((16#$(hexdump -e '1/1 "%02X"' /sys/firmware/devicetree/base/cpus/timebase-frequency)))/1000000))
-+	# If user does not specify -F CPU_MHZ
-+	if [ -z $CPU_MHZ ]; then
-+		# Try to determine MHz from /proc/cpuinfo
-+		CPU_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
- 	fi
- 
--	echo "$FREQ_MHZ"
-+	echo "$CPU_MHZ"
- }
- 
- # Check that the scheduling policy hasn't already been set
-@@ -64,7 +64,7 @@ check_sched()
- }
- 
- # Process command line options
--while getopts ":a:frp:m:n:h" opt; do
-+while getopts ":a:frp:m:n:hF:" opt; do
- 	case ${opt} in
- 		a ) CPULIST="${OPTARG}" ;;
- 		m ) MAXLAT="${OPTARG}" ;;
-@@ -73,6 +73,7 @@ while getopts ":a:frp:m:n:h" opt; do
- 		r ) check_sched; SCHED="-r" ;;
- 		p ) PRIO="${OPTARG}" ;;
- 		h ) usage ;;
-+		F ) CPU_MHZ="${OPTARG}" ;;
- 		* ) echo "no such option"; usage ;;
- 	esac
- done
--- 
-2.34.1
+Thank you
+
+John
+
+
+
+> ---
+> 
+> Changes in v2:
+> 	- Add my signoff.
+> 	- Small correction: ./tuna-cmd.py
+> ---
+>  tuna/help.py | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/tuna/help.py b/tuna/help.py
+> index fa47ae8..c913a16 100644
+> --- a/tuna/help.py
+> +++ b/tuna/help.py
+> @@ -44,7 +44,7 @@ PROC_SYS_HELP = {
+>  	'net.core.rmem_default':N_('The default setting of the socket receive buffer in bytes.'),
+>  	'net.core.rmem_max':N_('The maximum receive socket buffer size in bytes.'),
+>  	'net.core.rps_sock_flow_entries':N_('This controls the maximum number of sockets/flows that the kernel can steer towards any specified CPU. This is a system-wide, shared limit.'),
+> -	'net.core.somaxconn':N_('Limit of socket listen() backlog, known in userspace as SOMAXCONN. See also tcp_max_syn_backlog for additional tuning for TCP sockets.\Default: 128.'),
+> +	'net.core.somaxconn':N_('Limit of socket listen() backlog, known in userspace as SOMAXCONN. See also tcp_max_syn_backlog for additional tuning for TCP sockets.\nDefault: 128.'),
+>  	'net.core.warnings':N_('This controls console messages from the networking stack that can occur because of problems on the network like duplicate address or bad checksums. Normally, this should be enabled, but if the problem persists the messages can be disabled.'),
+>  	'net.core.wmem_default':N_('The default setting (in bytes) of the socket send buffer.'),
+>  	'net.core.wmem_max':N_('The maximum send socket buffer size in bytes.'),
+> @@ -118,7 +118,7 @@ PROC_SYS_HELP = {
+>  	'net.ipv4.tcp_reordering':N_('Maximal reordering of packets in a TCP stream.\nDefault: 3'),
+>  	'net.ipv4.tcp_retrans_collapse':N_('Bug-to-bug compatibility with some broken printers. On retransmit try to send bigger packets to work around bugs in certain TCP stacks.'),
+>  	'net.ipv4.tcp_retries1':N_('This value influences the time, after which TCP decides, that something is wrong due to unacknowledged RTO retransmissions, and reports this suspicion to the network layer.\nRFC 1122 recommends at least 3 retransmissions, which is the default.\nDefault: 3'),
+> -	'net.ipv4.tcp_retries2':N_('This value influences the timeout of an alive TCP connection, when RTO retransmissions remain unacknowledged. Given a value of N, a hypothetical TCP connection following exponential backoff with an initial RTO of TCP_RTO_MIN would retransmit N times before killing the connection at the (N+1)th RTO. The default value of 15 yields a hypothetical timeout of 924.6 seconds and is a lower bound for the effective timeout. TCP will effectively time out at the first RTO which exceeds the hypothetical timeout. RFC 1122 recommends at least 100 seconds for the timeout,	which corresponds to a value of at least 8.\Default: 8'),
+> +	'net.ipv4.tcp_retries2':N_('This value influences the timeout of an alive TCP connection, when RTO retransmissions remain unacknowledged. Given a value of N, a hypothetical TCP connection following exponential backoff with an initial RTO of TCP_RTO_MIN would retransmit N times before killing the connection at the (N+1)th RTO. The default value of 15 yields a hypothetical timeout of 924.6 seconds and is a lower bound for the effective timeout. TCP will effectively time out at the first RTO which exceeds the hypothetical timeout. RFC 1122 recommends at least 100 seconds for the timeout,	which corresponds to a value of at least 8.\nDefault: 8'),
+>  	'net.ipv4.tcp_rfc1337':N_('If set, the TCP stack behaves conforming to RFC1337. If unset, we are not conforming to RFC, but prevent TCP TIME_WAIT assassination.\nDefault: 0'),
+>  	'net.ipv4.tcp_rmem':N_('Vector of 3 values: min, default, max\n - min: Minimal size of receive buffer used by TCP sockets. It is guaranteed to each TCP socket, even under moderate memory pressure.\nDefault: 8K\n - default: initial size of receive buffer used by TCP sockets. This value overrides net.core.rmem_default used by other protocols. Default: 87380 bytes. This value results in window of 65535 with default setting of tcp_adv_win_scale and tcp_app_win:0 and a bit less for default tcp_app_win. See below about these variables. - max: maximal size of receive buffer allowed for automatically selected receiver buffers for TCP socket. This value does not override net.core.rmem_max.  Calling setsockopt() with SO_RCVBUF disables automatic tuning of that socket\'s receive buffer size, in which case this value is ignored.\nDefault: between 87380B and 4MB, depending on RAM size.'),
+>  	'net.ipv4.tcp_sack':N_('Enable select acknowledgments (SACKS).'),
+> -- 
+> 2.47.0
+> 
+> 
+> 
 
