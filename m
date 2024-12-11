@@ -1,220 +1,173 @@
-Received: from CHN02-BJS-obe.outbound.protection.partner.outlook.cn (mail-bjschn02on2126.outbound.protection.partner.outlook.cn [139.219.17.126])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 155862210F0
-	for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 19:12:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=139.219.17.126
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733944331; cv=fail; b=CEq0kI5AfLlXaCXfFUPolom8WmcBFzEQRoRmKwzRk2rXzt8+9NBIZVvZ1t1q+exw6ESmL8qvO8hgqgwG3zod2hjUxURGhnpjzJHj5KejPJm9SnLoIxXRgh4De75YOLcOspz4jylzisEsTifSnyTCz/IvB8eTh445L9xttZGnzJ8=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733944331; c=relaxed/simple;
-	bh=3E0N1iU+gg1IONFSLaCZ9cxR1PLW+ncgj0Y0fP1/iHw=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=iPrC8H6ue2bclyyn858w+yamt9M9yWVN63BuCtgGJVpa7WGCz8b0FHmhkY599Ry4KdV+D9Fr+eQ3Sba7wNar9vU81AsyZUBvwwK8V8DV069/M+nKie0PT7o/FDQZrk0X3hihZx0bUVXHteJC39oNIcpZ6jCuOYjgfyz7+i/qcDk=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com; spf=pass smtp.mailfrom=starfivetech.com; arc=fail smtp.client-ip=139.219.17.126
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=starfivetech.com
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=P9jDNZFjAxhOtiShtuyhgVqsAL29P4GEWiTnCppyZuEYXRntokzfHT0QdDLEDchaRh0lGDktcJOI/FKuYSeMpjViu3AkTSy+5t79V+8/bp454JCKAmnPatLgA9BUldWD2BxtgCIWQkBwlA/oVCnsqnhLjo52vc7rFJcFs2assptAT+zHDWQFe+dNwYSlND6mUbeoM5ZLkw5VKc8pU3YuXpQrBHqA5r3bwRLtQP5rbE7KWHO+lglH068lyqSwzOHlVTgjFmh5zKYxeO0UVMc37MFl7aiJEWgBsxMnhj4AKeJ9Uo4o/LNmgjuVrNGtGH2Kvp7dffkWjyHVmqPuHg1KVg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=L73yJhyC2WEivOXqXmWDAouUwkZUPWgID2wPdnf2788=;
- b=XaBttsdAs7xufYQj7nKMa1IuWaQfwhj/cvQzFE36lVI5nHZYh/KASkJh6YVNWOYjobEfuVO7GxANF21Ju66UrYGbkVMtbvSUVMtAHfHnM4LGq+e+1bO6x+M25KFBwFcFI02vO6inBNO02Ge5XAkD+BY+xlXhRhc8mlvplWE1M0H0x49bH8HOV3qXZV3YBo/vylMjSKk8b+sjM8vo12v6t4hLocDWhGehlUnYe9Li8ZIbguyHMzEciPm+sUJq52O1vUPMt8/73JfHispS+ZugrBEVV8xyUP9NIEN7zvWQa0VIKfs5bkhpwRRAxqMszJkW0nDXuYsDkn5PnakV4ZWusg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=starfivetech.com; dmarc=pass action=none
- header.from=starfivetech.com; dkim=pass header.d=starfivetech.com; arc=none
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=starfivetech.com;
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::7) by NTZPR01MB0985.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:a::10) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8114.36; Wed, 11 Dec
- 2024 17:39:09 +0000
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5]) by NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5%5]) with mapi id 15.20.8230.000; Wed, 11 Dec 2024
- 17:39:09 +0000
-From: ende.tan@starfivetech.com
-To: linux-rt-users@vger.kernel.org,
-	mtosatti@redhat.com
-Cc: williams@redhat.com,
-	jkacur@redhat.com,
-	leyfoon.tan@starfivetech.com,
-	endeneer@gmail.com,
-	Tan En De <ende.tan@starfivetech.com>
-Subject: [1/1] rt-tests: oslat: Add riscv support
-Date: Thu, 12 Dec 2024 01:38:32 +0800
-Message-Id: <20241211173832.1517196-1-ende.tan@starfivetech.com>
-X-Mailer: git-send-email 2.34.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: NT0PR01CA0031.CHNPR01.prod.partner.outlook.cn (10.2.8.14)
- To NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn (10.2.8.231)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1585E2594A3
+	for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 19:25:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1733945114; cv=none; b=bZtLEG6D1GMV/pftDgl+z74jqM6nNzJ4M0RLNJfMaZuhoK9B+1wEk1FYTE4NjwsYdcdCSigTUpCU9au5DYIvXP3zgyDGtgijXVaH7hASOZAZ2VCq8hItTLW/wtU5lqHisTO95uO1JXJW4xNYgjVtFfMpQ9cKPgvj43x//QON1Ps=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1733945114; c=relaxed/simple;
+	bh=q5r5RZQVNspF38wqD5kv+Ru1c2DcB2DtKYfvQBU9+eo=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=SpqO2C16FXW48eKMNBfkO63mC1GtuDCnQyZCYHl72YydPDay2b6KJQQL0Pzo8Q2+ghwzN/au1l+TzT21KwslIYV0/r0GFUQ5h7pR5boeiDyX9qbW6a1/Cufa/am65YDe7Gu1bREQx6xrMIbXhxdndz3lx5GZGOg7KlsJDle1NJ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dSUHmIHD; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dSUHmIHD"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733945110;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=uccH8jdppBGMsuOdg+HwCK+z/bgAAWJehY1Oi3sMaqM=;
+	b=dSUHmIHDb6Fglfy43cSuSSe1q71a/LX6qNboyZcQQamW1E1a3Ps9EE75dMcUocrIXnqiO4
+	fRk9SIR0rjtUx1El9BfY6RaUmooQlF0nVavA7hvkH9JDAyNQgFIrabp3l39c61BEjcqBnC
+	o1TJaocwxrcSvF1Y/KEqj7s15xcXKvU=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-538-SQifD8ixPC6rCCYWI5GUBw-1; Wed, 11 Dec 2024 14:25:09 -0500
+X-MC-Unique: SQifD8ixPC6rCCYWI5GUBw-1
+X-Mimecast-MFC-AGG-ID: SQifD8ixPC6rCCYWI5GUBw
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7b6d2ae6bc0so661237885a.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 11:25:09 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1733945109; x=1734549909;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=uccH8jdppBGMsuOdg+HwCK+z/bgAAWJehY1Oi3sMaqM=;
+        b=lwGuzBnA3qV9UA9/V8tW3FsKfpSOPNUg/gwabI0ZCHdQ6PcwF/niMnv6aJyYON9cVT
+         FuZAhlKrCkIld95Rq+pTVZXbYsH6DdtCU+9koSH8yHlSU2gXMxkiRLw/1QjaC6Fz3hAZ
+         eIH0BPTqruTrrBU0p76CTIftUcN9OBmslQMDph0QxBwW0zilS3i/WtrcP6P7S2UCsO6K
+         ZjwY7LEgQnoe8haX2R/kgGhw77hisWvqHpzyA0yvJ0qfqp0uq9khaj6YpD7Xod87gIhw
+         y0Cq4XKc2xKjsr/80KCG4bxA5bLmkyf1Z73bIFlLmnYm4HsMA6GBc5JEVjDlULKakf0u
+         oxpw==
+X-Gm-Message-State: AOJu0Yw1VFL8gU8jNCDepr7CKSZxl6A1u/Vx+m6Ecs4RsP4WRyE0jP3G
+	QdyrtbHM6WgsAPbC2hdFdUlshAwR/X9ScarOa9Nr4y2Cz+ZRgkZTjKqhP5K0WdtxFrdFPnzjxvS
+	Wn1y2rVFnOioRX5fqqXTxvhiJPISbUzz8Pld/Wh3r5J+G2cROE4IGzXO6GpvNhTrO
+X-Gm-Gg: ASbGnctexf4STt2gv3fwcdtg45YQa/tgENLgpn3lKWlOJ2RGH6veQ1a0Q465O3Acwx9
+	lKmQ3A0cGS23/MAS12DyW7OTLbvYWYdN3kilpKhdN8+i5qd4SNSyLvMUmZ/Yp3rOMyJ3yB22UGy
+	UQqP01nL1WoC7FGKZQ3ZJK05Y75+yBpUyrFvJQqbFIQQzEfMnIZlREuAH9ZZfXtA3ahmOKPRdha
+	5Wla4p9jFvGgTXSR/p6XRtz3yCF5aoa9On7qNcxLOFX
+X-Received: by 2002:a05:620a:4454:b0:7b6:d97a:2608 with SMTP id af79cd13be357-7b6f2543fe5mr86388285a.17.1733945109161;
+        Wed, 11 Dec 2024 11:25:09 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEyB3sd1m1Fh1JT/rqSPqib+9lw9rek+OaQkgB+zujvQMhMhxBc2hbe8CjJrKzkMIksrdk9vQ==
+X-Received: by 2002:a05:620a:4454:b0:7b6:d97a:2608 with SMTP id af79cd13be357-7b6f2543fe5mr86385685a.17.1733945108852;
+        Wed, 11 Dec 2024 11:25:08 -0800 (PST)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7b6d990baf2sm274733385a.113.2024.12.11.11.25.07
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 11 Dec 2024 11:25:08 -0800 (PST)
+Date: Wed, 11 Dec 2024 14:25:07 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Tan En De <ende.tan@starfivetech.com>
+cc: linux-rt-users@vger.kernel.org, mtosatti@redhat.com, williams@redhat.com, 
+    leyfoon.tan@starfivetech.com, endeneer@gmail.com
+Subject: Re: [1/1] rt-tests: determine_maximum_mpps.sh: Introduce '-F' option
+ to specify CPU frequency
+In-Reply-To: <20241211171158.1344674-1-ende.tan@starfivetech.com>
+Message-ID: <dd8872e6-2278-b77b-7b98-2c69fbc7270e@redhat.com>
+References: <20241211171158.1344674-1-ende.tan@starfivetech.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: NTZPR01MB1018:EE_|NTZPR01MB0985:EE_
-X-MS-Office365-Filtering-Correlation-Id: e5aefcfc-4638-4888-13bb-08dd1a0ab7d3
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|366016|1800799024|52116014|41320700013|38350700014;
-X-Microsoft-Antispam-Message-Info:
-	zNj29FPDdRrtTx9aHxtu5I/l5a/hSeBLIxmtuTd6tXGNZ01e8DZT6VOqAtOu9MuTaaEFqeh6qhQ+W91jTBk7FrphHyPJA2hpT/VBdH+RgJB9qihK2nU1LudCbVNDy2A1JP9M5NMyrYgQWLTSCXHrum+tSC4tc/Qt/kJl7J+g3Fm5VcLtU0HTPnJ2zibkHpJ5J6LxQBzxC9kO64abPslwoRC/raK6OqgYuRqoA5zexwRYwuaiBVgNfOzov1R6BIMyoiacnh+LVuBchVD85UEzY/RaoKpmBc9Y2i1tWMx08YTAF63EVVLoKBby1X9Q2g8foO6aWL/dt0Zd6WxlNptPM4/jKktHieT2CF+JKKuxi4RseudEUNmCFANRfJI/t7nDI004uh48C/Z0iX2bxAAOs7V/YfNeNwm4nFbvdTWCgGCHL0OTSKXTyeppzOHlMnkZZlElfULjrJAgsCvKCT2EExC9OcfrkSEwhqQp8JwBdrW9ia/WzyeECnw5+zXYiJEqs7aPozhZAx4EUSMjnxnaF0r1G8AsC+Fih/uzp811FzGLTigOpPxMEW/qm4NVD21ZAWw4d3Prrv9YNE6RD5eC+ddvGoCkFegfGMN45CUU7DCI3PwE1qed0kn2mMZJZ1YS
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(52116014)(41320700013)(38350700014);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?oUaYc9G66VxTRNX+x1n01ZZ2twKht/6nhP+ylGYLpVUour9ZP+khuSTsX63M?=
- =?us-ascii?Q?t0Exhz+7NVaipMs2XNrFa8bRzUkClQRJSXNEdxg5uV5+QuhCxwSfJ5tGphvx?=
- =?us-ascii?Q?4zbzLqnAmXoowIulU/jgTaQvTvptF1i0ex7mKYve0/+x0mWCnfgQxNfW6d29?=
- =?us-ascii?Q?FWEvVfgKwwG8IZwNOD2IqkcCSIbURWXPfNsW7tgORsmV2+sWJ+Mjim6v2N9d?=
- =?us-ascii?Q?qsJmawMXIB5ybCiul4QAdJ1WX81bpBKqwhjiffiDYqtqiZxd9UausmVSa0vK?=
- =?us-ascii?Q?su+FbOzWf+f4nnH2hiSmwLdFUGdMdLPEcJXMWmO5fWoIHjsLXeYcWQGiaqAH?=
- =?us-ascii?Q?MWTss8UM9LStora0F2f+eRgXaEQySWz7yaiIxb7vwjgztQeJmU4biW2gkrlA?=
- =?us-ascii?Q?BLxEa+3JtqNShmZ6A8SqRQq2OYJAoeIOsDT1DbIovylbpphA9HRJ1rUutl8t?=
- =?us-ascii?Q?84B92zOiJLpy2ENvf56/djDWCIuVGyg4zHCHmFxuJYcn75NWF16h2Gddl5xL?=
- =?us-ascii?Q?1FeTa+t/zTM2nnWjGwTZrEGQ34we1MNbImvkmt0dVq8U1zIoAxeiEqvDPnIE?=
- =?us-ascii?Q?B+JgoYl/PD041SA0TPFO/BBRumIf/ManedyE9MEg9BP7BG/JbiCeH1P7Z7LG?=
- =?us-ascii?Q?ExAqxTQKMap3k/D7G90XtpRlABRza31sgse+ZvFlbX3tP+aErzzmMdLHybgv?=
- =?us-ascii?Q?4+a6dDP1ZZeigSEdF4ZnwQBWxZbmsZ9auQV1fZzy/KX197v09l9EllQK03IH?=
- =?us-ascii?Q?6+3bonh8iIj9A+OA4h6/CLbrQdgyGlJ2+PdAk7whzVInbXWoOBjROqG2WlKU?=
- =?us-ascii?Q?HCHvRLaNg0ddQChYoYTDNC94OmNG8k1jiu9Jhxqm5nfOVCQT4zH7YdRyiF5b?=
- =?us-ascii?Q?OsfNCVrU4Rmeq8/J1q1qgXouIuwiokttBC7Wug6T1vhgmxReYC3UY9zYZrF7?=
- =?us-ascii?Q?RCzb6VOkvwpNiR4JvNjp9Yr4Bo0xydAlNC5qocly2TWOeyfXsdHVWw+aqzmL?=
- =?us-ascii?Q?GLT+z3UOhHDOBInAYAsuDJaZocJz75VQpeh4WxC9cR8vtEfFxuthipa7BtsV?=
- =?us-ascii?Q?b30X/ngZByUFrwU3iEXUIkO7TtH/aqp4UYSRhEBaILQyjDbi+LIW/YOr4n/Y?=
- =?us-ascii?Q?zYewdqEDZxrH+3I+f9Ch+1TjVY9pxVtPWI64W6iP//8omJs+98Ozm1KPel02?=
- =?us-ascii?Q?mC2BvKKfr9oT75nt9w0/DppEqV8tVsoie3Ovj3CkvaF6LIjY2mk8Oi7MgJbU?=
- =?us-ascii?Q?qZN09kOoEgteDXyEriVOgxFnd0w2kTTpFXduDf5BIYXbL3yantpF+zWnpdTw?=
- =?us-ascii?Q?UpDSIYobO3WrRkd8PJEVcxWcibArT4cF+Zz3266bWN3UZHBerF2amplSKYlL?=
- =?us-ascii?Q?DHD8Spc6yVmvJ3hdkI9dxTTeHSkaTAnrdPYTIVii4zg+ngvHbs6aP46h30I+?=
- =?us-ascii?Q?sf8DII/fE4IJdOPxGtgYuH4DwPRg0Z9fVR1oLJShCpH/FL0puT854YZ994hk?=
- =?us-ascii?Q?ocXPBp45MXRpAKzzHZpwdb+METEQTYCvi1gDWGDLluHQTZFmEW4UspGN3fzl?=
- =?us-ascii?Q?G5LeDhMn28K/zynaa1M4QftIPh5i4G0E2JHJn/lFdVBzgkmU0XHq0q24gHk2?=
- =?us-ascii?Q?/g=3D=3D?=
-X-OriginatorOrg: starfivetech.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: e5aefcfc-4638-4888-13bb-08dd1a0ab7d3
-X-MS-Exchange-CrossTenant-AuthSource: NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Dec 2024 17:39:09.4657
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 06fe3fa3-1221-43d3-861b-5a4ee687a85c
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 4R+EfyWSUsjtSi0Y/8WHMRcbhKdSHwm8b4E+cptvqEVHV6SoV/E1uEeS3cEe6Hoobt0EC7lyUVGAiskc7KLClYwaZtFuU7qXzGZWp847TU8=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: NTZPR01MB0985
+Content-Type: text/plain; charset=US-ASCII
 
-From: Tan En De <ende.tan@starfivetech.com>
 
-This commit is to support running oslat on riscv.
-Ported frc() to use rdcycle instruction to get CPU cycles.
 
-NOTE: Run this before running oslat on riscv.
-echo 2 > /proc/sys/kernel/perf_user_access
+On Thu, 12 Dec 2024, ende.tan@starfivetech.com wrote:
 
-See https://docs.kernel.org/admin-guide/sysctl/kernel.html#riscv
+> From: Tan En De <ende.tan@starfivetech.com>
+> 
+> For platform that doesn't show cpu MHz in /proc/cpuinfo, introduce '-F'
+> option for user to specify the CPU frequency in MHz.
+>
 
-Signed-off-by: Tan En De <ende.tan@starfivetech.com>
----
- src/oslat/oslat.c | 53 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 53 insertions(+)
+Are there other places to get this information, for example
+/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq
 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index 0863297..460f102 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -43,6 +43,11 @@
  
- #include <linux/unistd.h>
- 
-+#ifdef __riscv
-+#include <linux/perf_event.h>
-+#include <sys/ioctl.h>
-+#endif
-+
- #include "rt-utils.h"
- #include "rt-numa.h"
- #include "rt-error.h"
-@@ -101,6 +106,24 @@ static inline void frc(uint64_t *pval)
- 	__asm__ __volatile__("isb" : : : "memory");
- 
- }
-+#elif defined(__riscv)
-+#define relax()          __asm__ __volatile__("nop")
-+
-+static long perf_event_open(struct perf_event_attr *attr, pid_t pid, int cpu,
-+		int group_fd, unsigned long flags)
-+{
-+	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
-+}
-+
-+/*
-+ * NOTE: Due to the use of rdcycle instruction, before running oslat,
-+ * Please run this command first:
-+ * echo 2 > /proc/sys/kernel/perf_user_access
-+ */
-+static inline void frc(uint64_t *pval)
-+{
-+	asm volatile("rdcycle %0" : "=r" (*pval));
-+}
- # else
- #  define relax()          do { } while (0)
- #  define frc(x)
-@@ -176,6 +199,11 @@ struct thread {
- 
- 	/* These variables are calculated after the test */
- 	double               average;
-+
-+#ifdef __riscv
-+	/* File descriptor for cycles perf event */
-+	int		     fd_cycles;
-+#endif
- };
- 
- struct global {
-@@ -299,6 +327,26 @@ static unsigned int measure_counter_mhz(void)
- 
- static void thread_init(struct thread *t)
- {
-+#ifdef __riscv
-+	struct perf_event_attr pe_cycles;
-+	int fd_cycles;
-+
-+	memset(&pe_cycles, 0, sizeof(pe_cycles));
-+	pe_cycles.type = PERF_TYPE_HARDWARE;
-+	pe_cycles.size = sizeof(pe_cycles);
-+	pe_cycles.config = PERF_COUNT_HW_CPU_CYCLES;
-+	pe_cycles.disabled = 1;
-+
-+	fd_cycles = perf_event_open(&pe_cycles, 0, -1, -1, 0);
-+	if (fd_cycles == -1) {
-+		fprintf(stderr, "Error opening leader %#llx\n", pe_cycles.config);
-+		exit(EXIT_FAILURE);
-+	}
-+	t->fd_cycles = fd_cycles;
-+
-+	ioctl(fd_cycles, PERF_EVENT_IOC_ENABLE, 0);
-+#endif
-+
- 	t->counter_mhz = measure_counter_mhz();
- 	t->maxlat = 0;
- 	t->overflow_sum = 0;
-@@ -449,6 +497,11 @@ static void *thread_main(void *arg)
- 	while (g.n_threads_finished != g.n_threads)
- 		relax();
- 
-+#ifdef __riscv
-+	ioctl(t->fd_cycles, PERF_EVENT_IOC_DISABLE, 0);
-+	close(t->fd_cycles);
-+#endif
-+
- 	return NULL;
- }
- 
--- 
-2.34.1
+> This corrects previous commit that mistakenly used timer frequency
+> (timebase-frequency) instead of CPU frequency.
+> 
+> Fixes: fab7d9057887 ("rt-tests: determine_maximum_mpps.sh: Get frequency from timebase-frequency if cpuinfo fails")
+> Signed-off-by: Tan En De <ende.tan@starfivetech.com>
+> ---
+>  src/queuelat/determine_maximum_mpps.8  |  3 +++
+>  src/queuelat/determine_maximum_mpps.sh | 17 +++++++++--------
+>  2 files changed, 12 insertions(+), 8 deletions(-)
+> 
+> diff --git a/src/queuelat/determine_maximum_mpps.8 b/src/queuelat/determine_maximum_mpps.8
+> index ba2cc2a..bcd3078 100644
+> --- a/src/queuelat/determine_maximum_mpps.8
+> +++ b/src/queuelat/determine_maximum_mpps.8
+> @@ -56,6 +56,9 @@ default priority = 1. Valid numbers are from 1 to 99
+>  .TP
+>  .B \-h
+>  help
+> +.TP
+> +.B \-F cpu_mhz
+> +CPU frequency in MHz. This is required for platform that does not show cpu MHz in /proc/cpuinfo.
+>  .LP
+>  .SH AUTHOR
+>  determine_maximum_mpps was written by
+> diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
+> index adfd809..6a90ca0 100755
+> --- a/src/queuelat/determine_maximum_mpps.sh
+> +++ b/src/queuelat/determine_maximum_mpps.sh
+> @@ -37,20 +37,20 @@ usage()
+>  	echo "-h"
+>  	echo "	help"
+>  	echo "	print this help message and exit"
+> +	echo "-F cpu_mhz"
+> +	echo "	CPU frequency in MHz. This is required for platform that does not show cpu MHz in /proc/cpuinfo"
+>  	exit
+>  }
+>  
+>  get_cpuinfo_mhz()
+>  {
+> -	# Try to determine MHz from /proc/cpuinfo
+> -	FREQ_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
+> -
+> -	# Try to determine MHz from /sys/firmware/devicetree/base/cpus/timebase-frequency
+> -	if [ -z $FREQ_MHZ ]; then
+> -		FREQ_MHZ=$(($((16#$(hexdump -e '1/1 "%02X"' /sys/firmware/devicetree/base/cpus/timebase-frequency)))/1000000))
+> +	# If user does not specify -F CPU_MHZ
+> +	if [ -z $CPU_MHZ ]; then
+> +		# Try to determine MHz from /proc/cpuinfo
+> +		CPU_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
+>  	fi
+>  
+> -	echo "$FREQ_MHZ"
+> +	echo "$CPU_MHZ"
+>  }
+>  
+>  # Check that the scheduling policy hasn't already been set
+> @@ -64,7 +64,7 @@ check_sched()
+>  }
+>  
+>  # Process command line options
+> -while getopts ":a:frp:m:n:h" opt; do
+> +while getopts ":a:frp:m:n:hF:" opt; do
+>  	case ${opt} in
+>  		a ) CPULIST="${OPTARG}" ;;
+>  		m ) MAXLAT="${OPTARG}" ;;
+> @@ -73,6 +73,7 @@ while getopts ":a:frp:m:n:h" opt; do
+>  		r ) check_sched; SCHED="-r" ;;
+>  		p ) PRIO="${OPTARG}" ;;
+>  		h ) usage ;;
+> +		F ) CPU_MHZ="${OPTARG}" ;;
+>  		* ) echo "no such option"; usage ;;
+>  	esac
+>  done
+> -- 
+> 2.34.1
+> 
+> 
+> 
 
