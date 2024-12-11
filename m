@@ -1,192 +1,192 @@
-Received: from mx0b-000e8d01.pphosted.com (mx0b-000e8d01.pphosted.com [148.163.143.141])
+Received: from CHN02-SH0-obe.outbound.protection.partner.outlook.cn (mail-sh0chn02on2093.outbound.protection.partner.outlook.cn [139.219.146.93])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7910C139
-	for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 00:31:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=148.163.143.141
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BBF811C3F27
+	for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2024 18:45:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=139.219.146.93
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733877103; cv=fail; b=ZZNi1orDvsBlNfBkuGHLLfCZuy6Hwx4wtBmfAggV+X8LwDa2yV0Cqhx3jMmfqpVzq9RPIPl1C7G7cawuwVYoV05fAqJWLJ4ZB2JkxITz/16He/2telU/3dW0KaQyBqhrxf+VcmBCYEkcQMP5H7jHKqWbgXQ1yxskYpv9FqVPsA4=
+	t=1733942737; cv=fail; b=YP8gsODCTzt4R75mcBDuu0RUNe9DzFWIBE5cJ4wgaeLbhMK8cjKZ5ikjZWQDYqCGGD7XpTZvuK37KuUIrWsaj/5OOCfqQWgqSysJgKRHd2BwS7cCApXmFrZd5MGbc6MFUSwoaTkVz3+inXNrDT0dGbhFfW5zRyFsyVuQs2VyQVg=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733877103; c=relaxed/simple;
-	bh=oWWtljAn0v5dgx3eCdtziyCP/1jKlTSHH8z5YNp7Irw=;
-	h=From:To:Subject:Date:Message-ID:Content-Type:MIME-Version; b=PEI+eaifEgLlpXMBOCwSq+sY1zlI1wLPCN/JwwqPzAnGuyWwr8QKSjSjyKvZfU0qr9R5i/31OtJyyoMXblgoOQyesvsXYMTr6s1KhQMkwpTTWw8wYQF5Hc4dwC1EYFNyFnEU59S+RceMZCQAY7yZVWD+l3cZSBi79BDSz2na6w8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=selinc.com; spf=pass smtp.mailfrom=selinc.com; dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b=e3BVKBuQ; dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b=vdvwCdSK; arc=fail smtp.client-ip=148.163.143.141
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=selinc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=selinc.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b="e3BVKBuQ";
-	dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b="vdvwCdSK"
-Received: from pps.filterd (m0136175.ppops.net [127.0.0.1])
-	by mx0b-000e8d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4BANSkiX005451
-	for <linux-rt-users@vger.kernel.org>; Tue, 10 Dec 2024 16:15:35 -0800
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=selinc.com; h=
-	content-transfer-encoding:content-type:date:from:message-id
-	:mime-version:subject:to; s=sel1; bh=fcsdMCEo4uH5Q8dX5DW6aqW69lb
-	2aVStjmm3iqnLRA0=; b=e3BVKBuQgFZFnFkXNVsLR0JTkFTHoSUq8QyD7LELJqc
-	R2OwvO8mY2yZJ/wx9vMmp6LSwnFaq3qZOjDEnBaQGqMpmJC/Fgu/D8rPcTeG00gH
-	wRRpwqvp6xsgvG7tnffo5zSN4IT6JYTF9YrG5TCak20h1uqCk0OP+zIUvAMlp/qE
-	FmYBN1Rm+qcVhHtAg5xeqG8U7dL/kPDCzM44wm2RY3nMb+aDlx4yPRb3ofCDxUZ+
-	gpPUy1yaWKnIWhVOP9rrJZDI91tvH7TYNlMbCWklL0JMk04nKeGkNONqGPqR46Y9
-	TTDZwwa4sAGStwjwD9u69AxYi/J3oIWSUKMhfeTjkaA==
-Received: from nam10-bn7-obe.outbound.protection.outlook.com (mail-bn7nam10lp2046.outbound.protection.outlook.com [104.47.70.46])
-	by mx0b-000e8d01.pphosted.com (PPS) with ESMTPS id 43exn8r1x5-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK)
-	for <linux-rt-users@vger.kernel.org>; Tue, 10 Dec 2024 16:15:35 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=g6KnnU+PPOp8XZmHhfsBPflcXlqYlGMTJXkf8R9U4tFXc9uIHZ6l5VUj1fBszUeDvljwTwGMy6J0+U/tX6VJqABxP/qzYUaARneIIiJk3jSuf+Nc5Y+Dl4DwHe2Q0VGYjv1GyaSm1BH3YPRfwMLv6lrHcy3A6oVbGN31fHYC9xBa9sLDRSvlOH9i2g9TyXHZYfzDDDSjZF4t8nIUZkr9ElXZinoAITVfHu3AKvMGShfTtC5s3WzPDcLVfzQtTY4a3126ygJQdiWS3xir7GCJT9v3/RbPYNYuBqt0FF+66Az8fHrNumdr+HdFXFrmizTu6ZopgeRSx3QwyAbgWGbq4A==
+	s=arc-20240116; t=1733942737; c=relaxed/simple;
+	bh=4+hefnrWfuQQBJ3V3s9sdQJiwdS8a6Ug5wGBBC/dZAA=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=cK54P3O+JspkOo/P7vAHSBkkl9yc9l0bEXvYsOZSwo96Nl8kzw8LjF9ykMB+f505OSlN4UCKBk3jBogN0/RIGu1KBbwmChBjlA69O7+HvVg/zvogFMG2KYO7jhYpZsWnsNrPbjyhoyEJ/N3F6ptWOOKI1fOaXpGZupSihEdmYI4=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com; spf=pass smtp.mailfrom=starfivetech.com; arc=fail smtp.client-ip=139.219.146.93
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=starfivetech.com
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=ItBAOLCWOpHgoRgR//SarB86/0DctGwWfZFLtOzd62DPgsvtDuwsVDD2IUucuEVt9hXQiXDWoZsIl1en2Bm+gPdJ/iMRC6s0KmG7faiiwbUawy8ciHAT23Mnr8wCpQaji1RI82diDT9p1OBKJNA9p4XbaPXCDRPZ7Loq9vdL71LM8VBO4FzJ5kypL5x1phVRjuVHFGUq74m/BI7Q+b9svxtCJ/P22t3QRL761BUWUnFoC/20j0NJdIdv6zrCoXTytTNabBH2jnhdV6u5Ntgx/kSNNf7dOSVNfIWmngiqnTRNgrUfT6Uo+4SfbkSTAvFT5L0rHv7jwOwJgWLWsba9kg==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
+ s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=fcsdMCEo4uH5Q8dX5DW6aqW69lb2aVStjmm3iqnLRA0=;
- b=ZE+WCZ26pwZD1ef4k1dFTjtJnnJem6YTddiD8x/2hpE00Cf9/NZum3SsZE/e7rK4iz/zSUtX68ajC5g1QWJiXBPWi2UmES5rLoXAKCsKmKczB+jKaWO63qFE9b14fsjkU/fpXSjE5UndgVeOhCpmPoP7irazdEBqARz9E5XeVh7s1TjVPfZyeo5J4gFa4y91LdTMyj41yhf083NS12q2JXLMlhnmcncg6nYhCUmkHm+FICVTtsE4Hm/Db0lLCxPikZeEDE4ZLnimiu96kOP0T99HbjuWEAY+R3fc8HuDjQnWMOgbklhjXK39zWDz88RjfwJBApwuZIXw7sO/tp2ejw==
+ bh=XH0wwODkaqaa4Ng0KakKvrNfKjSgOetFzI5C20T52x0=;
+ b=ShR4WrOnbL7FHGsp4O5BGGPCUZfZdn0McGCknKCZPKQqWDSreRqmpXH3HQ/grp42nMhW4o9d55MdXWddeA2VwYtX/0c7EamIeXKzT9xWjuBj6ZXLGHV+i4tknkd+GLXF5MuJYWSZKTIlTvTXxpF0Hcop1f+Ab780vY0a5iQTLj4QlzLYKUJUt+JfWzL/o3G2yybdlZB/8B1QxpR1vjnfQ4KmIYvLk2pln7vmqIHYDtmGcixU3XscFHpqzwVKIGr/UK+m4DgWvVsTDCyTtO9O2i1Qj6HiXYR/E5QIzn+nK/mvZsoBsJkmFRq2vk6rV1d7LqMsj+sPOFpsTGHGYy7DXg==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=selinc.com; dmarc=pass action=none header.from=selinc.com;
- dkim=pass header.d=selinc.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=selinc.com;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=fcsdMCEo4uH5Q8dX5DW6aqW69lb2aVStjmm3iqnLRA0=;
- b=vdvwCdSKKKPTATzngrrLDg17g7qp6WxdSJ+xYeVR9555RYRstNFf4FAGpcUmegdVjqzV/VG5sorMc7hfAGrpjEDMH2D1/zHJM3DFvV6wDQAh9pGwfvydDo43yz40/KSssxpOI5Mgl1WjDzHKsmS2d+MiK7ImCdNLp4iyPanHgTZ9/pA0uaf0+GLIlSadDOz7+6mMOJOIQe9NYkKtgl5wGwd411Ig0qM6ugmzWflZtjWoCeZCQ7Dnfqv/NvF0Q5pIr8MvtOKWez0Xs3LLCVFy00UxfGBMdOU85c/By4y4I9/YCwCklLwv9QIciSA9GUtMu4HNKMCePPtsiYq39XBvGg==
-Received: from PH0PR22MB3809.namprd22.prod.outlook.com (2603:10b6:510:297::9)
- by SA1PR22MB5679.namprd22.prod.outlook.com (2603:10b6:806:3e1::9) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8251.15; Wed, 11 Dec
- 2024 00:15:31 +0000
-Received: from PH0PR22MB3809.namprd22.prod.outlook.com
- ([fe80::dc78:5b2b:2e12:8731]) by PH0PR22MB3809.namprd22.prod.outlook.com
- ([fe80::dc78:5b2b:2e12:8731%4]) with mapi id 15.20.8230.010; Wed, 11 Dec 2024
- 00:15:31 +0000
-From: Robert Joslyn <Robert_Joslyn@selinc.com>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: PowerPC Hangs on 6.6-rc6-rt10 and Later
-Thread-Topic: PowerPC Hangs on 6.6-rc6-rt10 and Later
-Thread-Index: AQHbS1lGKtM6hQHTcEaSmXL+IAuzWg==
-Date: Wed, 11 Dec 2024 00:15:31 +0000
-Message-ID:
- <PH0PR22MB380974792AE8C9254DD8BA1AE53D2@PH0PR22MB3809.namprd22.prod.outlook.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-msip_labels:
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: PH0PR22MB3809:EE_|SA1PR22MB5679:EE_
-x-ms-office365-filtering-correlation-id: bb0e304c-29ea-4468-d85c-08dd1978ec7e
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;ARA:13230040|1800799024|366016|376014|38070700018;
-x-microsoft-antispam-message-info:
- =?iso-8859-1?Q?DhC3UWoc2U24I+gfuxUUr5jG0NBpaiWpFZDT5q/+4mxYOFtjK34AFNq++T?=
- =?iso-8859-1?Q?Ac82+kBwe+KmUiGSHnpuR+SA1VoZaI/4HV4CrUD5D4pecDNo3dAC1/i+Hg?=
- =?iso-8859-1?Q?LQSI7YhM1aBwtEz03SuHEfucB8KrL99ikHY7bhai6SywVruJJDPFGa/wpo?=
- =?iso-8859-1?Q?wiywsen+A4tZJXx7joZYThNIY6P9CJMQRPcWziJ17yRGzgJl0tHa7kMjlk?=
- =?iso-8859-1?Q?nLBUsWHGrdgEEfAgGId82SYVmC3vButV8K0jYBe1fV3N/kzmCH5IOYCchC?=
- =?iso-8859-1?Q?h2bsSoUvWUqqedfPEU9WbBCZuTFi0SshX7vOypKSUv4+VTgu4AnhtSzDuA?=
- =?iso-8859-1?Q?rNlE/ECfnsqKtNpJpW+Epj1P2EwEbUXgParpcaM2+iP5EOkBYhTvjrELbY?=
- =?iso-8859-1?Q?0Nzzssg0HjlreEhzm2qqI5CUHcJcBrKTuUaphFu20Qy1SR/GvItkxRy0xP?=
- =?iso-8859-1?Q?SL1Y7LmcxNJyFSZL6B0bHCGYFlHHZfoVOaH9OBw4xiRzcp/S7bXtmBgZ1t?=
- =?iso-8859-1?Q?TPGGam4H7SnP1TnsK08+vsF1fe7vKb9Jmuxuhic7H7YWklK5PkTSHarYzk?=
- =?iso-8859-1?Q?hrrhLFokjd/wrpEilurtDubRtiBYdjR19YwHvoj8GLJSzvA1clibZL0mjK?=
- =?iso-8859-1?Q?/D9JvtH3O+4kvT6NOa51dlVKNRUGKbpsUJRgv4GJyn3DjXH8mESS/HeA6I?=
- =?iso-8859-1?Q?GDRn8oqvO8vqmTPmJEcS/yeDxAB07AgYXhxdzfxqmB/P4n8fAZPMbTPd5A?=
- =?iso-8859-1?Q?Pi8cVEGKkVjIy2WNo5tpT9GxbFDzvLjskJ27Xrh2N17t1RJH/Ib2hNIBQv?=
- =?iso-8859-1?Q?s9Ddxz7++OTEwE+L16sRiJydkTxbKz6IcjHj6cz47jR0lp0LBV22XQriUb?=
- =?iso-8859-1?Q?bUmqZJaXVIAEsY03zFhBYR0SQPTw/5Dh4B5TCrEPubC3ujrUJgCkEJng+R?=
- =?iso-8859-1?Q?56zg+nGjZL30JOgULEsrKGPtdwRc0Tjv+37kuODw377UC/V/FZ/BP7eQnH?=
- =?iso-8859-1?Q?An9cizC6oCpvNRdmWyHgg+IYBXo3BDEuirdcZr7Ak89lb6BCzgM1f1Wjeu?=
- =?iso-8859-1?Q?AIAwd4vNKQBM41yXjk7zzUjhEE1yFSPOi9t8cEzDY90hiW3dUwMWOtwDkI?=
- =?iso-8859-1?Q?UsDMvYYhntZEpfaxjPiQ0x1HJM16+CTeUvIzDUy2HhM6p30Q6C0yPaDZt8?=
- =?iso-8859-1?Q?CP40tZkIDsPf/KdM0tXDB2iFzg5kZrxTo4cmTujBrCLt8zLjHJJBUMSROs?=
- =?iso-8859-1?Q?8hvnZsuyKgodFDD+5a8JSP0hFEl3ewP2hYW7X+IT5D2Py6pF6ls4NR1ImC?=
- =?iso-8859-1?Q?8Hhq3ogB4CbeuZcjHEe68l8sgW8EhM77HPoTxSvR4UQ1bK3T2dd1YKN/S4?=
- =?iso-8859-1?Q?Ynr64VRu7aKN2DCscbW1zNLtDQ7nh3Sc7YCLj1qwmq5wEZqd1Wgdd7+xhy?=
- =?iso-8859-1?Q?8Wg+TwgMnHDGlGg9JiMx/08bY/E8eRJ31cFGhg=3D=3D?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH0PR22MB3809.namprd22.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(366016)(376014)(38070700018);DIR:OUT;SFP:1102;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?iso-8859-1?Q?a5p5vZZj6sqN0ZWvHY49gjyCXkvMMS7rKehEiqLVlyIy68Gke6vVVFGe1z?=
- =?iso-8859-1?Q?LLQTQx6ztvtBgfbkCak8fvkTupwiWPwCydLnHDIK7UNky9RqNM5q2Os0qB?=
- =?iso-8859-1?Q?AXy5dgR2qt6tmGDuL0Bz33tCK9wGXpqN8oZfQWK7zb5CEBAkqa+rEfPhZD?=
- =?iso-8859-1?Q?Ftdmy3Aa1I/Eq4aq4K/FaxMm8u/p7KHgCX/3hDJIqkaksC8o6l5K5Rg97W?=
- =?iso-8859-1?Q?JV5bxaRzubyvry4xL+LkqFsJ1qmMdF9AJgengPddGenBIwpV026qMOvsf8?=
- =?iso-8859-1?Q?q+NDDK/FxqeBdETBjOjthMMNf6wI4Ibs7KJNhOQUzpcGxijoz5uJNuZF9r?=
- =?iso-8859-1?Q?oqkH1Q1zlqUONdDotb4Zhcn7THJNiiydZcc4jAhjzW5OPT1MrnX2TWx5cD?=
- =?iso-8859-1?Q?3i7N2kUipifuZadME0ZVzYo7b+zU9/9esfzAsDgHkWdmAk3nzeC0ZINI4V?=
- =?iso-8859-1?Q?qiIKD2ZyMWj3vuRWkWtW4twnVJEgq8tO4WDCz+z6dBuEkKyKU1KGAzb/0L?=
- =?iso-8859-1?Q?GVcnsWJ4sKX/oUzdMVvcryfKnVxyso2Z8A78hW7m4KTyEfoBHv1ejK76ys?=
- =?iso-8859-1?Q?kZsFT95bACUd85AL2OVcwV5Hd5yPgeXHGkrpc1TyqWICIVwj6Y2TqIJ7O3?=
- =?iso-8859-1?Q?P4IZ4cxJVK9RNehF2RE9b6TYW7sXGHWgOkRxR8Lg4bINL19mhJVxmlqlvU?=
- =?iso-8859-1?Q?seFr+mBJY/lociSjP3YSZLP0FEpvvPZgSLmWnmmK54KF/M1U1AG230kM/I?=
- =?iso-8859-1?Q?CFqUbR9W3LLgYnFaVSgHleGCMxRM2rkDFvd/1Td/8pFTs19ynLaSEvVart?=
- =?iso-8859-1?Q?zkDE/kLgI2P0YRjC6F/Ly2UnuA6Ya+PAcYNWKZ+hDvsl5MpxrhTZKkQE08?=
- =?iso-8859-1?Q?i2Ul72vBRnPYrWGcUKaLP3shNUk3o2usko6Yudr2cY/Xfi6jPfatopQfyA?=
- =?iso-8859-1?Q?/ecjS3KcZybKveZSijKN7HBBbjSQZ62Hd5Jqwdr9WhS3w0m4kOLOE0tWUE?=
- =?iso-8859-1?Q?yQ9Q9DoWByEPt8s4o87u/13eozFXzgsU9iHbO2bm0NMUk7H7KiBbOSsIGI?=
- =?iso-8859-1?Q?ya4gX3IK1YIcm/ytbgWMmopMnxRuQBHwD+UXYzG7NCnR6pDkphti4exkSX?=
- =?iso-8859-1?Q?wqfjBdcQUfiTYUFt7k4ouOJnwAxyRNHaLh/ZqzxgHab9IW6fkJHys1MoFg?=
- =?iso-8859-1?Q?sHrlfXvssLjO6w5NF6Q6qmIUtz/wwKm35hsSlDxUWACjmgQyMm59u+C0BB?=
- =?iso-8859-1?Q?jzNb+WLhTYnU0eP667265SQAM3W1XEpcRoZAZ3IKk9dPBa1dNyADp96sxr?=
- =?iso-8859-1?Q?FN/bo8e0dSV4lgYynofO0cVBhT1fcteeXnAwqUTN7hSIqlvxnwPnQubTyS?=
- =?iso-8859-1?Q?td6yn4V0hgLTftUqFr5mta9aqzJY3atWFsdkDMNnS0wkD/60LViJpJxtXC?=
- =?iso-8859-1?Q?NrNmbc6m3Z1p/l+36sbBkIVk6Mlp5oTmnmS1gQCEzw0WYjKbmDndEgxWW0?=
- =?iso-8859-1?Q?ROanD0A0Mo0Pi5FdLNdnLiXwxwmOB/8+5ANwCTfFMLioD/31YempKqRG7Z?=
- =?iso-8859-1?Q?S8/u7q79eBaeDhsfbvGFa4Cyc2+G0d6Xmlfxor5jqQ59bnplfaiMkcbiPE?=
- =?iso-8859-1?Q?03w+maSpg6sxjVdnIGewboO6hvuh/PQOvD?=
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+ smtp.mailfrom=starfivetech.com; dmarc=pass action=none
+ header.from=starfivetech.com; dkim=pass header.d=starfivetech.com; arc=none
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=starfivetech.com;
+Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
+ (2406:e500:c510:b::7) by NTZPR01MB1049.CHNPR01.prod.partner.outlook.cn
+ (2406:e500:c510:a::14) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8230.6; Wed, 11 Dec
+ 2024 17:12:56 +0000
+Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
+ ([fe80::e1c4:5bb3:adc:97f5]) by NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
+ ([fe80::e1c4:5bb3:adc:97f5%5]) with mapi id 15.20.8230.000; Wed, 11 Dec 2024
+ 17:12:56 +0000
+From: ende.tan@starfivetech.com
+To: linux-rt-users@vger.kernel.org,
+	mtosatti@redhat.com
+Cc: williams@redhat.com,
+	jkacur@redhat.com,
+	leyfoon.tan@starfivetech.com,
+	endeneer@gmail.com,
+	Tan En De <ende.tan@starfivetech.com>
+Subject: [1/1] rt-tests: determine_maximum_mpps.sh: Introduce '-F' option to specify CPU frequency
+Date: Thu, 12 Dec 2024 01:11:58 +0800
+Message-Id: <20241211171158.1344674-1-ende.tan@starfivetech.com>
+X-Mailer: git-send-email 2.34.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: ZQ0PR01CA0007.CHNPR01.prod.partner.outlook.cn
+ (2406:e500:c550:5::21) To NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
+ (2406:e500:c510:b::7)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: selinc.com
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: NTZPR01MB1018:EE_|NTZPR01MB1049:EE_
+X-MS-Office365-Filtering-Correlation-Id: 16e0a922-1dde-486d-7005-08dd1a070e2e
+X-MS-Exchange-SenderADCheck: 1
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|41320700013|1800799024|52116014|366016|38350700014;
+X-Microsoft-Antispam-Message-Info:
+	UnMuMK2JCnnRQviwCUbWjIDHW7jqBuQ6hDXfdhtMVbgsm7yxTVrUSZZ7GUCL/cd6QFww2NX91jBUKG50wMSnm3SPqD6zw0cUMCbFM+O15dJFWyl/fuxvwM/g1XwVnTJ3veOpBs47skpRE42Nbr3iOOG6H7L1KTe6spVcWLEydFDiGZa5vWucaO5U5RO4Nk82d96GhPIZtrbN1iNWm17OP/50Uob3+sPyQ5Yni4YbitZ+S/SIBGr5s8VFu+yDdsD4S9J7i7+0mW82EI9tONM0iud7r4Kl+GuBUOx7OOxrHZu+5SZih7J8vihkUoDhG/ni5Pq/pE9XboArbpoapm2oaPihilZMLJQ3QUbKh6EoQUVvzd/Q6lcGaw4tIKj4rU0J/gxoDreI3RycAoHMzULyaP18i/K6Stj9V5b15LadM4ys4YzNIB4f4MIKa51XKfHPp4yZ8eFjyPJ4lnzN9XSUOKtRixfT4RxpCkSoCszuPKZ+mUtQOh5JTjCITMOPQu/89l0vKDVMD+YjYQ0jaHt58lGgp/OyJuoD6U8HtvL8Qg9a8ikPmqSgyDhLGEbiRAaHB5V7nkwM/n6uvv5J1VsKObm4972CIQqLcAfT/WwarI8gi/MmA5L8ae0ucXLZWXJn
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn;PTR:;CAT:NONE;SFS:(13230040)(41320700013)(1800799024)(52116014)(366016)(38350700014);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?V10vh/r77tTv2Y4dxZlh/Hft5YNglL+uv+dtAkE360zsClI7Q97fL8JRAq2n?=
+ =?us-ascii?Q?7FbEKF+wG8Zq7Lc9NtFzw+Nb6zgNPQ6vr3CF8/tYL33PBYaQn7Tc5K+1cLXU?=
+ =?us-ascii?Q?uPLX/RTpNN/tp8oq63uZp7+yir+p6mZxI8ElC2vIHjHq7zEUUS4d0eoVOMpf?=
+ =?us-ascii?Q?YV1IhiDhxvuLQzRs1Z8Lzpg6W9NYSU3GaSz5qrN43Ax2CX81KJ/KgzuEHn8Y?=
+ =?us-ascii?Q?l3wWCkaKsKKaWOOlrrOBGCCtpEnPZ0UhBa3TZ4bm0ZMKAd1RAegojS58PBxf?=
+ =?us-ascii?Q?npaj+nP4czTSQwI7ZbwiK0uUC0jfZCUY7B3bEiluLhqoM1n4jYt46pjhZigt?=
+ =?us-ascii?Q?9vhpqfzJPVDwTVIkTHmxV03je0NyKMPuYR8XX7iPZ3sMIm+DzUUUVvl9YQOW?=
+ =?us-ascii?Q?ar0DJiXIqUxDz8WlTmsigvxuvShoN/3rIFY0/2Izkfozmy+fcPhT6NFNt/nF?=
+ =?us-ascii?Q?bmr9kbl8mbzovfjum8feRGa+LTfhaZYDh8VunsMe3VjShsSyAjDAGih68MNm?=
+ =?us-ascii?Q?9rtc4L9K7ZPTj3SqolKkIsY/yCCHZ2qWt46WcrtDLC/t9t1BmWqbUm53E+rc?=
+ =?us-ascii?Q?Hz97g5rptyVMDfcyFaoz1hdF6OmEDDRX/QZiUzFgjLuzgiG6OoLR8dTdW37E?=
+ =?us-ascii?Q?q9YQGjd4MUjb8waQnWtF7j2mq5/V7UG0Rg9F5wLNTn1Pe5mxZNxUDPIyBsJO?=
+ =?us-ascii?Q?ztMECF2i91PoirOjH5b1YTOGjLvYlK6V9gS6U9tyiT3c4EbtTjp2QhPAPxsh?=
+ =?us-ascii?Q?BybCM26TM1RhAUg/kwKkiptlF51veWoEJZaQwoqVlvjiwqYuVlX8z7fah283?=
+ =?us-ascii?Q?U/KiSXrcJJLKnctchZpUf6oidCw/w1mbJhDYzp7T8fxLOTwK9QA5sd0t5Yfc?=
+ =?us-ascii?Q?w1bZAV4ec9ZbwO0/fBxKsRlNniXzunLDu7Jr1EKLYjqQVZNewN5Z8td5abRX?=
+ =?us-ascii?Q?NypDk1HxYy4hajZuJlBoejNLSJr7tbk7GH/diSOURYetwL4JHERy82zkY9iG?=
+ =?us-ascii?Q?+qVOOe2jo0BPNhPjsqEUJWwezG7Slmroo/WRROWzADd3EStl5IVblhin5rCe?=
+ =?us-ascii?Q?h8mdSlJH1X67v5Ad1JO2qvMH03fizrimc/1K03OYMyow0S6F5mtWfYtegzoM?=
+ =?us-ascii?Q?mulWajN+aeASz9R4WGuv4sMkmqpQ9tA7d/OOpoy/5GtjSXzHBJM7kRQgVEW0?=
+ =?us-ascii?Q?l6yvmadjTRgJ7D5FQywHj7tXIpQOfYFkblGE6TrGz612fVztR5I9olGtgzDj?=
+ =?us-ascii?Q?CdW4joKQqoe0psfugKE6hFpS7VkNKrlIHM7Cq6vPDKv4Xk9eNea+Zr/MXcSs?=
+ =?us-ascii?Q?nBvaBhM9UzPxyf3VLYFxV34iRq1J1hjmgOBHB4WnvMLGSbMGO5CNSsu5tqfT?=
+ =?us-ascii?Q?as9NNQKeRXK1eu8wg3tRWaZw/aMLGpLePkhAYsQt1ELQw1NnjkHKy6vZWcRv?=
+ =?us-ascii?Q?Y14Vqa0Z6GrjXaa84lpo4MH0l+SqDTFyTxf/nayGfc2kTcTSleEoMDv7E2Xc?=
+ =?us-ascii?Q?yBSLNG2De9QXyCgFXJTNIZZAXrRxxoVlYflYn3ydauHp7McXMoETUgIPPwUN?=
+ =?us-ascii?Q?UPSlSY5L67GNahW1EEw9gCo8WENet/Fp9qnjIE59s7Oh8nsvTw+KNLUftRVQ?=
+ =?us-ascii?Q?4g=3D=3D?=
+X-OriginatorOrg: starfivetech.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 16e0a922-1dde-486d-7005-08dd1a070e2e
+X-MS-Exchange-CrossTenant-AuthSource: NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR22MB3809.namprd22.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: bb0e304c-29ea-4468-d85c-08dd1978ec7e
-X-MS-Exchange-CrossTenant-originalarrivaltime: 11 Dec 2024 00:15:31.0510
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Dec 2024 17:12:56.2978
  (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 12381f30-10fe-4e2c-aa3a-5e03ebeb59ec
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: Jg3e+8qVNb3knaTVNqwLjzFZFIfvCVTj3G4zZdhdCjHbFTv1YqPAx3L+FmN90yAvsH/F6pu0qOireuHICpql6fNrHns4ni5ubjbOlMVuMuU=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA1PR22MB5679
-X-Proofpoint-GUID: K3tParuO_0pkvoLj0tgHMdJM45RP_urb
-X-Proofpoint-ORIG-GUID: K3tParuO_0pkvoLj0tgHMdJM45RP_urb
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 spamscore=0 clxscore=1011
- impostorscore=0 phishscore=0 priorityscore=1501 adultscore=0
- suspectscore=0 bulkscore=0 malwarescore=0 mlxscore=0 lowpriorityscore=0
- mlxlogscore=624 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2411120000 definitions=main-2412100174
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 06fe3fa3-1221-43d3-861b-5a4ee687a85c
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: l6xpVv0HYQlZxobRW1LctVRQ7xdl5oXQY5fav4ganuhZPjV6qok3w2feRviILXqyDjgUYWoFVBrs4b6OJBWxYAz80PRCvAxzWhIFIKktJvQ=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: NTZPR01MB1049
 
-I have two PowerPC platforms that I'm upgrading to a 6.6 kernel, and both h=
-ang on boot right before my initramfs. I bisected the hang to this commit: =
-https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/commi=
-t/?h=3Dv6.6-rc6-rt10&id=3Db33022a48c797082dead4034e84f0adfbc5b1983=0A=
-=0A=
-That commit is somewhat large, but I've narrowed it down to this part of th=
-e commit:=0A=
-=0A=
-diff --git a/arch/powerpc/kernel/interrupt.c b/arch/powerpc/kernel/interrup=
-t.c=0A=
-index 9f144588b33643..c4f6d3c69ba9d3 100644=0A=
---- a/arch/powerpc/kernel/interrupt.c=0A=
-+++ b/arch/powerpc/kernel/interrupt.c=0A=
-@@ -395,15 +395,11 @@ notrace unsigned long interrupt_exit_kernel_prepare(s=
-truct pt_regs *regs)=0A=
- 		/* Returning to a kernel context with local irqs enabled. */=0A=
- 		WARN_ON_ONCE(!(regs->msr & MSR_EE));=0A=
- again:=0A=
--		if (IS_ENABLED(CONFIG_PREEMPTION)) {=0A=
-+		if (IS_ENABLED(CONFIG_PREEMPT)) {=0A=
-...=0A=
-=0A=
-Reverting this particular line fixes the hang. The change doesn't look quit=
-e right to me, since CONFIG_PREEMPT doesn't seem related to the other chang=
-es happening in that commit, but maybe there is something I don't see. Does=
- this change make sense? I'm happy to send a patch reverting this particula=
-r line.=0A=
-=0A=
-Thanks,=0A=
-Robert=
+From: Tan En De <ende.tan@starfivetech.com>
+
+For platform that doesn't show cpu MHz in /proc/cpuinfo, introduce '-F'
+option for user to specify the CPU frequency in MHz.
+
+This corrects previous commit that mistakenly used timer frequency
+(timebase-frequency) instead of CPU frequency.
+
+Fixes: fab7d9057887 ("rt-tests: determine_maximum_mpps.sh: Get frequency from timebase-frequency if cpuinfo fails")
+Signed-off-by: Tan En De <ende.tan@starfivetech.com>
+---
+ src/queuelat/determine_maximum_mpps.8  |  3 +++
+ src/queuelat/determine_maximum_mpps.sh | 17 +++++++++--------
+ 2 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/src/queuelat/determine_maximum_mpps.8 b/src/queuelat/determine_maximum_mpps.8
+index ba2cc2a..bcd3078 100644
+--- a/src/queuelat/determine_maximum_mpps.8
++++ b/src/queuelat/determine_maximum_mpps.8
+@@ -56,6 +56,9 @@ default priority = 1. Valid numbers are from 1 to 99
+ .TP
+ .B \-h
+ help
++.TP
++.B \-F cpu_mhz
++CPU frequency in MHz. This is required for platform that does not show cpu MHz in /proc/cpuinfo.
+ .LP
+ .SH AUTHOR
+ determine_maximum_mpps was written by
+diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
+index adfd809..6a90ca0 100755
+--- a/src/queuelat/determine_maximum_mpps.sh
++++ b/src/queuelat/determine_maximum_mpps.sh
+@@ -37,20 +37,20 @@ usage()
+ 	echo "-h"
+ 	echo "	help"
+ 	echo "	print this help message and exit"
++	echo "-F cpu_mhz"
++	echo "	CPU frequency in MHz. This is required for platform that does not show cpu MHz in /proc/cpuinfo"
+ 	exit
+ }
+ 
+ get_cpuinfo_mhz()
+ {
+-	# Try to determine MHz from /proc/cpuinfo
+-	FREQ_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
+-
+-	# Try to determine MHz from /sys/firmware/devicetree/base/cpus/timebase-frequency
+-	if [ -z $FREQ_MHZ ]; then
+-		FREQ_MHZ=$(($((16#$(hexdump -e '1/1 "%02X"' /sys/firmware/devicetree/base/cpus/timebase-frequency)))/1000000))
++	# If user does not specify -F CPU_MHZ
++	if [ -z $CPU_MHZ ]; then
++		# Try to determine MHz from /proc/cpuinfo
++		CPU_MHZ=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
+ 	fi
+ 
+-	echo "$FREQ_MHZ"
++	echo "$CPU_MHZ"
+ }
+ 
+ # Check that the scheduling policy hasn't already been set
+@@ -64,7 +64,7 @@ check_sched()
+ }
+ 
+ # Process command line options
+-while getopts ":a:frp:m:n:h" opt; do
++while getopts ":a:frp:m:n:hF:" opt; do
+ 	case ${opt} in
+ 		a ) CPULIST="${OPTARG}" ;;
+ 		m ) MAXLAT="${OPTARG}" ;;
+@@ -73,6 +73,7 @@ while getopts ":a:frp:m:n:h" opt; do
+ 		r ) check_sched; SCHED="-r" ;;
+ 		p ) PRIO="${OPTARG}" ;;
+ 		h ) usage ;;
++		F ) CPU_MHZ="${OPTARG}" ;;
+ 		* ) echo "no such option"; usage ;;
+ 	esac
+ done
+-- 
+2.34.1
+
