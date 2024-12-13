@@ -1,148 +1,104 @@
-Received: from CHN02-BJS-obe.outbound.protection.partner.outlook.cn (mail-bjschn02on2130.outbound.protection.partner.outlook.cn [139.219.17.130])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FE587E1
-	for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 03:32:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=139.219.17.130
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734060780; cv=fail; b=drf/8K8Z5pXzMYZshRsFJUHWbnEAijot3ROvEu9hZ2qd2FRictzZcGZ+lhQJ6ACS59yoLOHJnKg7HJZovIgN29qQZ2peycD+tsAg/MPKExSzYjp+lwHMFcRZ1R/iW53g7u+mKja7W5xFMCCzLOBfm1aAci6Sha71pdfDt2SD+oU=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734060780; c=relaxed/simple;
-	bh=hHdxVKcR8mh023h70CNCw0m6kLl0CmofAyVBk+glPYE=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=i/G1AQZQP8P+9zO0eVosCV6tbzrA1z1kZjVS2NX/6f7+uFLak/y0P0XjxUpm3FZyggZO7EqgFbHhISkloR8i6wKVKYg284D2x7xp67Sn75EDJ8jFNkfCAE03cYRFRM//zT5gqEw5B/7Rf0X9qPy7pMb3vJMr2ZmIPPrdoR69N+0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com; spf=pass smtp.mailfrom=starfivetech.com; arc=fail smtp.client-ip=139.219.17.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=starfivetech.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=starfivetech.com
-Received: from NTZPR01MB1114.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::8) by ZQ0PR01MB1112.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c550:c::14) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8251.17; Fri, 13 Dec
- 2024 03:33:19 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=nTzxD2eAgqm+hhZ38eQM7BdDe/qgboATEaesdqpaYOYz0HLBmjqw9OEKJIjwpZbydijDQbHHPH5TLb8BLDBp6w1h4/9KxUwQ1CCWxqcg3nNTmYcCqEvIwDn2kPsQYKB2oCGtJ6LwR+ET9UkRKz3TqUfKvjyj7JAyik7qxw5tptE3TxwBE/p+u+4xqq+AdqVg5Bdx4uSpe4v4KmRkVJNzmo6SUhGWERrd2jiGux3rUdobtJylmYo0nlG7L3ZMB3j7mOmZ1hxm3kgWdqrNt7jd5i4Qm3hnuD9d/2OBacyGcHJwo5QRjZVhkA8gkmhAYRX9HZRQFi7n7DHHQa0eX3Sd8A==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=vOgoEzYtfLq8dzh4I2ZP+hrE2sXjAiRFQr1yTiYjJ9U=;
- b=OiL3IkmAlEBKw4bK+PT8mM6aT+EnpNcTbZvgGKzZ5tRFEmYDCBROL3hHMM00/Kr+p41te7oaV1Fzy+JYh+kWjfPda2wiCZyXesM8IUVoNu43dWAtUFOYpBF6BoeRKc1TLy1gsgKRT9lWBDWopTpMDcOYjXjynNUgyXzj8xvXkjigtlBGs0PkMA5AriRPVmlm6IMgN/o/dap93thKHEXOAEqU9SHzo+OBOAgP7FRaUhxTGDLboo7bCREqzH+dy3VwUN1UjraT28/O0J7OoCDRbSTL+OZLo4vu3IOLz0UYi6ll4uPbeMug2QmMP8RoaEbHJnDh5or7dCZPtJOellxWyA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=starfivetech.com; dmarc=pass action=none
- header.from=starfivetech.com; dkim=pass header.d=starfivetech.com; arc=none
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=starfivetech.com;
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::7) by NTZPR01MB1114.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::8) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8251.16; Thu, 12 Dec
- 2024 16:25:37 +0000
-Received: from NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5]) by NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- ([fe80::e1c4:5bb3:adc:97f5%6]) with mapi id 15.20.8251.015; Thu, 12 Dec 2024
- 16:25:37 +0000
-From: ende.tan@starfivetech.com
-To: linux-rt-users@vger.kernel.org,
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DDF915383B
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 06:35:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1734071747; cv=none; b=cJU6bgRRSHDi2Pw0SmaLZTiSYwRwy2qVcvxt3sxEzmYKXBlOlpfL7s+5iul+HXATJIuH2IFhpPShBNrlmKR4489kn2I29P4lBkH19WVq5VFaNwORRjimLWjCj11KNCPnzeLUNIozH2O69UkDtBfx3Px9vUGW7l9fyuI+eXd8mwA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1734071747; c=relaxed/simple;
+	bh=X3TETxu1itTdopLYdvSEyhM9wKoVHojthtRdxes6I5M=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=bFbSojKjTNc3Yq7qmnqOPI7k/fXanyk/dxAfsChEOvea2dsDtIkbOLPv/SEx1H9zCNC7JJyg2SeU0ZVaisQfAz9unic/SsxJ0/M3z0SMKMS7rbQ8AykM3meaaW8pOF71cEWTl7AcSnIShD691Fumy75IrNHpzEl3/Ieus5Z+c10=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KjAnCsFS; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KjAnCsFS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1734071744;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=BZm9qM1V937BchILtZLOe9uTfMfj2tw7tDc13Yus8Ms=;
+	b=KjAnCsFSZo3QigAm2IsyYd2TvYWTZTOf8YLDd89aCTgt+Q0sATEaI14+ke8zkYtkC/0fdS
+	ZJEFDPK8DC5vBakds4iH5/n1RZK0NsAjeqvz5l8Bi9+zYmrmDVXDqI6j6MMsMrAKyNyf5r
+	lP62cNkBB8T8RaU7iZz4J76xsCDytQI=
+Received: from mail-io1-f71.google.com (mail-io1-f71.google.com
+ [209.85.166.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-136-U_-pBDShO3q6tvfNJCashg-1; Fri, 13 Dec 2024 01:35:42 -0500
+X-MC-Unique: U_-pBDShO3q6tvfNJCashg-1
+X-Mimecast-MFC-AGG-ID: U_-pBDShO3q6tvfNJCashg
+Received: by mail-io1-f71.google.com with SMTP id ca18e2360f4ac-844e9b92401so57698039f.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 12 Dec 2024 22:35:42 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1734071742; x=1734676542;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=BZm9qM1V937BchILtZLOe9uTfMfj2tw7tDc13Yus8Ms=;
+        b=W9nfBJS2oyCcQSbtDYp5giSqVVunrqusAtzHWN+A5VtJG3K+zuLdBHwQaeN5ojctrt
+         6fpueB8UQ3E4oI0LbP1Hs1ot+HHOhD1nkZ6dVeWLyHlCJT/cqsv/0AuCpQyB2PooG3IS
+         1+xLYofmMS3sudRJ/dYuNXr4b5jKNbvAORGaBsh+T/F/cqYEGFmdn1hlqgZYo/Z+/TV5
+         PU7yei97WaYyay4BLm67kXEqCQBFb3NAFHsGZYrNUkLqIAYJDKIceaw4P66ZzA713iF2
+         +Dg+bzevS+W8ElTvKgp9JazfvIZhQwYng6XRnqB1U2g44wXT75SyrO84zsg65OvoS3L0
+         gdxw==
+X-Forwarded-Encrypted: i=1; AJvYcCVhGPEYyFD9I/yKvURdtF/pWYaFWCAIGqzjidKlaD7j3xHyvyrpsmuOhOTQVlR3cs6ZCpoiLCg+VhVh+WyWtA==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yx5pzxfDzIxaL6+18B+vwrYDAAJNuEU2hf82WtJmqFjxOQdwjTT
+	RQjOoX/b6DjbTPubGDVKqk14X4aKdJD9U5roemQ4D/bNVPasz9bDQr1Icr7aaVkToJwH4qcgSK4
+	+bZMAKa/hBZMBUhR4cC5obMWGvK2Av5xptQxk9r4VeUfaSj84cO8Zn0t4zXciC+rI
+X-Gm-Gg: ASbGncsFmX4kCmJ2wDf5g70leneohXE0n+Uqq+Ihkj2rUbit7zvy6Lrfhy4cgByU0dB
+	lWOcewK92GE4PthsESpcld0fzE0Xbk3Puq/YE/H5N5/VnnuP6JpM2dLYvAgsbztg/Ut2EtKDlJ3
+	ekimNJVrHywvK3wQWdKA3I87o5/cOJdYMmDePh2RMRDfcTTNeR1DXWvEZqkJ8XBB6P9jLZTncqo
+	2FHP4lzVJPgsmamP0+2cK5xhbGVgCBWayJwYx43RLEWIOpvInTmnoCVU+yKslHj89boghdk7/7/
+	Q/490rS56AA0
+X-Received: by 2002:a05:6e02:1948:b0:3a7:8c3f:edce with SMTP id e9e14a558f8ab-3aff4619adamr17823115ab.3.1734071742154;
+        Thu, 12 Dec 2024 22:35:42 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGsT7yQAYq6GdLOx/o7W3JZm+5Gb9hQIX/AoGljrHmXd4Gu+dG2c3Y4gZIflKAtVA0iMq0dMw==
+X-Received: by 2002:a05:6e02:1948:b0:3a7:8c3f:edce with SMTP id e9e14a558f8ab-3aff4619adamr17822955ab.3.1734071741887;
+        Thu, 12 Dec 2024 22:35:41 -0800 (PST)
+Received: from crwood-thinkpadp16vgen1.minnmso.csb ([2601:447:c680:2b50:ee6f:85c2:7e3e:ee98])
+        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4e2df658c4csm1110332173.145.2024.12.12.22.35.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 12 Dec 2024 22:35:41 -0800 (PST)
+Message-ID: <afa631a73622f8b0d49dbe4608764b353841f472.camel@redhat.com>
+Subject: Re: [1/1] rt-tests: cyclictest: Suppress unused parameter warnings
+From: Crystal Wood <crwood@redhat.com>
+To: ende.tan@starfivetech.com, linux-rt-users@vger.kernel.org, 
 	mtosatti@redhat.com
-Cc: williams@redhat.com,
-	jkacur@redhat.com,
-	leyfoon.tan@starfivetech.com,
-	endeneer@gmail.com,
-	Tan En De <ende.tan@starfivetech.com>
-Subject: [1/1] rt-tests: cyclictest: Suppress unused parameter warnings
-Date: Fri, 13 Dec 2024 00:24:53 +0800
-Message-Id: <20241212162453.2618945-1-ende.tan@starfivetech.com>
-X-Mailer: git-send-email 2.34.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: NT0PR01CA0019.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:c::22) To NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
- (2406:e500:c510:b::7)
+Cc: williams@redhat.com, jkacur@redhat.com, leyfoon.tan@starfivetech.com, 
+	endeneer@gmail.com
+Date: Fri, 13 Dec 2024 00:35:40 -0600
+In-Reply-To: <20241212162453.2618945-1-ende.tan@starfivetech.com>
+References: <20241212162453.2618945-1-ende.tan@starfivetech.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.4 (3.52.4-2.fc40) 
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic:
-	NTZPR01MB1018:EE_|NTZPR01MB1114:EE_|ZQ0PR01MB1112:EE_
-X-MS-Office365-Filtering-Correlation-Id: 1ddab952-65aa-4172-d1b8-08dd1ac99cba
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam:
- BCL:0;ARA:13230040|1800799024|41320700013|366016|52116014|38350700014;
-X-Microsoft-Antispam-Message-Info:
- Mfn96nkyhfaHmqLPbqL4VawHJGNRbWRTpI4czILAhMmIWtX8+fr0PpGFh6qbZaCVLzx+wv14AScJLSEWTjTDF6Kcd890NhjCeSKcXh8YaJCJZBN2vHkiOtVQQ2Mvq8dh4qXup2XEE29YBb71WSCPPPBnUqZAAS7WQ3fd3uB7TCVZUjJgMDBGd477B4T6K/YcHIn/OVx8Q4nYznQCiCcKpSkYvKu2rrrtWPNoA/lGarZi6odmJimYc1C7st0r0DubY8Cjoh7y5kYfZIdrzhbu5X2GREC6z2KZSvbxyN5G0kkiW03jozxcWhSoDPjCgn8Ix6uwMCdcGOzW9IvKKmv/SfyGjv4FII/OvsagVTAL7WoXr+fBS1gEgypSzYgjL818xJ4+0dUZcjPF205ipPdH8ZPafR/Mmeh3pu1B22GaKcXgo72phzHGlotf2LT9pwxaw9qCTootFWRN8Lr9t9mmTikgZPZBQ4l80c6Iu3IFxyPj37easWv0XGMB85KFZAKqFdWI64wrgE0IGrbHtmHcPzsrmDM63p8zCjJ7l9X1A47Tl0Yvk/GtF3OLDamWdE+O/1k2r+y6UV++Gi4eQZtfMaqqa6O5KtPjEzVk3Pf/ZVQByOLQkGMiQP1UsWPKzcFZ
-X-Forefront-Antispam-Report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(41320700013)(366016)(52116014)(38350700014);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
- =?us-ascii?Q?TaJK1rk6h1+MivMObwdNIJWqiNW5apC33Tm+vJXaXxGINOeZcGms+MooqnVA?=
- =?us-ascii?Q?m5UDS18jv4yTKGY7Jty02cgY4H7nHjybO1NDUrUQceXXNjRCqaMyLfWvJlWV?=
- =?us-ascii?Q?sy28NTbk01TN448qzEI7U/LB6TefkLPKZLJS99lG5eTQC5ufmF2IQOPllE2S?=
- =?us-ascii?Q?D4Gm97eNKt/sH1Lbj7Ap2NocrBbR1ytuS39Ly0ots2k4F5vWyjNL2ruJCNcv?=
- =?us-ascii?Q?1CrQ1ubhRkuplrf6V3cSPFpvMOO4h+u+3GOYvqglQrOqO76fk/xtR/mofYTb?=
- =?us-ascii?Q?AHSIvpw0PWb/2xTVA4kD1XHw38gKwvvUFxQa+D2wCdy8HVAjRe2Meg2GOqmU?=
- =?us-ascii?Q?Vbw3UEKE1YutazEvThWq2mQXUAHfete/Xym7SfK6jtrM8e9Z6ziJZopICJ8d?=
- =?us-ascii?Q?NJx9q0gKwxHtV8Hb74F4gg2GD5+90LYNY2I4MITTNiALbZNkVZdpWFCHUlSG?=
- =?us-ascii?Q?B+5dbkYgmb94eUJcRg060qTAnCYHEziOMjiNbXcDANC5W9yMdtazrdmp7Yfr?=
- =?us-ascii?Q?VctzsIJ5Z6hxf0u8yLDPHBpkoOAni1Dp0XYpKUEj0n3RPPGc7aKTqg8FSHe7?=
- =?us-ascii?Q?beK3Q5ezagDL5xQCc1ogO1DQA1BdYtniIH1H+/Izuu9MrMFt38BecX8QY2y4?=
- =?us-ascii?Q?O7eU3reJzmlr2pQsdK/W/6WsBbM9a2g3nDUthgmbcywfP8NygkxyPpsmWdkZ?=
- =?us-ascii?Q?fpF20wwn10zC6nsgLmO8px2R0695tRTbK0cNblkK8r5/ciJ55rweWpnT0JkV?=
- =?us-ascii?Q?YEAnQyD3UYtEqiw1JLRXaeNLSWNKWfULyXqW1izB1Ifx7rqh0ALhVrStCxxM?=
- =?us-ascii?Q?RcdzknOVXanAUam8zzVC3bZGFaTfjJOvMyC/3IS7Mcj+BZI0BTlYwhyHf99j?=
- =?us-ascii?Q?Fitnfhr0kfbT/W7JglevHx+3jnbOvtsHOlDPFpkX9HNPyPO29eV8vKOJlhyZ?=
- =?us-ascii?Q?Puuph9e1TfVPhgNskKbM6WTFjquw4iOGstgbpFIR0pg3KbNEVkGDakDarOGM?=
- =?us-ascii?Q?FlOAnTxj8zBZ5CtEdMMBzluiZ4czcPR+gTa7W85oq0NJCJPhtnB4/0Q5Ctki?=
- =?us-ascii?Q?WjoUUDVTfQhZ4uzqppjcVOzdYOKvpYSI64Gd1P51ZRyUWDg4d4GzerthXvV0?=
- =?us-ascii?Q?qo4K7o+D/4xFQODR4LUxHZAv5Ynb5syq5KstgZ3hXZaf6Q1XU9c6avEaRQal?=
- =?us-ascii?Q?23z5lmrB306FEff27FhpWPgyZj42dRaRuH8ZMK57G2hXdiXJVu2DTkUbIO4F?=
- =?us-ascii?Q?XAj01IU/z+yaeiPScWa65/CZGGLLMqVNSk4Xz3aJqbH9XLAlD5H1iNTFvxjI?=
- =?us-ascii?Q?qKp0kC7HFGsadPttYfqcXj7FUpxYze1mDRxKn1BWcVora8TJKKJ9E00K3VPk?=
- =?us-ascii?Q?QrInk/VgCiHf6cq1KpiA0cbW729iCPwxI/kgQMvtiCHzGvkgeo1oaTlix7zY?=
- =?us-ascii?Q?CrL/kdpDYrtNvJaWFrpCAk6xtBR9IkXcqnKg6nsb1IVasaEuQPmZ/S3/yxei?=
- =?us-ascii?Q?7fYFIXPz8BoW8lHlCM7EdBKSz1997nrXA/LW0drFeOe5X6dZ4RlmBlJkPXZh?=
- =?us-ascii?Q?vmWWcPBKgssS0JbTyK2ddACM7flu09vh2Ui8STJqYhM/PdQuyUcxxAPuz8Kx?=
- =?us-ascii?Q?7w=3D=3D?=
-X-MS-Exchange-CrossTenant-Network-Message-Id: 1ddab952-65aa-4172-d1b8-08dd1ac99cba
-X-MS-Exchange-CrossTenant-AuthSource: NTZPR01MB1018.CHNPR01.prod.partner.outlook.cn
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 12 Dec 2024 16:25:37.7643
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 06fe3fa3-1221-43d3-861b-5a4ee687a85c
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: k+UfTDt3Dx21+EPnZst0QMEiZSiPB0heqph8rI+q6dXtr95waKhThAcV77KZ5M7OVsoCrZjpAhARqz1THx8NhchtH6c3ZoFdSI52VhknLqw=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: NTZPR01MB1114
-X-OriginatorOrg: starfivetech.com
 
-From: Tan En De <ende.tan@starfivetech.com>
+On Fri, 2024-12-13 at 00:24 +0800, ende.tan@starfivetech.com wrote:
+> From: Tan En De <ende.tan@starfivetech.com>
+>=20
+> Mark unused parameters with `__attribute__((unused))`.
+>=20
+> Signed-off-by: Tan En De <ende.tan@starfivetech.com>
+> ---
+>  src/cyclictest/cyclictest.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 
-Mark unused parameters with `__attribute__((unused))`.
+Can we just turn off this warning?  Unused parameters are entirely
+normal in functions used as callbacks as well as with ifdefs, and it
+seems like a low value warning to begin with (there's a reason it's not
+in -Wall).
 
-Signed-off-by: Tan En De <ende.tan@starfivetech.com>
----
- src/cyclictest/cyclictest.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index b1f8420..f2db5e4 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -603,12 +603,12 @@ static int has_smi_counter(void)
- 	return 1;
- }
- #else
--static int open_msr_file(int cpu)
-+static int open_msr_file(int cpu __attribute__((unused)))
- {
- 	return -1;
- }
- 
--static int get_smi_counter(int fd, unsigned long *counter)
-+static int get_smi_counter(int fd __attribute__((unused)), unsigned long *counter __attribute__((unused)))
- {
- 	return 1;
- }
--- 
-2.34.1
+-Crystal
 
