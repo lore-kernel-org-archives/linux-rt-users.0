@@ -1,104 +1,158 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com [209.85.160.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DDF915383B
-	for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 06:35:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B22E518F2FB
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 20:18:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734071747; cv=none; b=cJU6bgRRSHDi2Pw0SmaLZTiSYwRwy2qVcvxt3sxEzmYKXBlOlpfL7s+5iul+HXATJIuH2IFhpPShBNrlmKR4489kn2I29P4lBkH19WVq5VFaNwORRjimLWjCj11KNCPnzeLUNIozH2O69UkDtBfx3Px9vUGW7l9fyuI+eXd8mwA=
+	t=1734121099; cv=none; b=LZiCQnwXwkTrvP0facJYAAgGWXhLlOKO/ACOIMY5SSJHPKaGfaA4J8FSxAQndxxB0kkVBZx5VMZ/EmRUb++CHSxnqHXjfXhJWWxV1sG13e0zX1fWEx5bTagDbzZgz50gwu+RkeAt0iR0xejdoMVJtVQiTn99V0jLoc2BYbRWDzA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734071747; c=relaxed/simple;
-	bh=X3TETxu1itTdopLYdvSEyhM9wKoVHojthtRdxes6I5M=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=bFbSojKjTNc3Yq7qmnqOPI7k/fXanyk/dxAfsChEOvea2dsDtIkbOLPv/SEx1H9zCNC7JJyg2SeU0ZVaisQfAz9unic/SsxJ0/M3z0SMKMS7rbQ8AykM3meaaW8pOF71cEWTl7AcSnIShD691Fumy75IrNHpzEl3/Ieus5Z+c10=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KjAnCsFS; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1734121099; c=relaxed/simple;
+	bh=EMa1SJfHocn2Wo6sVtkap0P3s3ftqdXD71JBGaO4xm8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=IO/CrbYTX7mQaVC44yriW2zOlD+tZbD0TgAr0iUo17Md3TJeEmQT5GDq24rM85PB76HY58EP63/d28nGwNnaRRWd78hM4Ic0heu0QOafQQVevYU+SENneWgPX3PrpTiCILMOt/zRjrFfVTqcSciqygrwItWXw96MMwHkbRRihx4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jvZbcvx1; arc=none smtp.client-ip=209.85.160.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KjAnCsFS"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1734071744;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=BZm9qM1V937BchILtZLOe9uTfMfj2tw7tDc13Yus8Ms=;
-	b=KjAnCsFSZo3QigAm2IsyYd2TvYWTZTOf8YLDd89aCTgt+Q0sATEaI14+ke8zkYtkC/0fdS
-	ZJEFDPK8DC5vBakds4iH5/n1RZK0NsAjeqvz5l8Bi9+zYmrmDVXDqI6j6MMsMrAKyNyf5r
-	lP62cNkBB8T8RaU7iZz4J76xsCDytQI=
-Received: from mail-io1-f71.google.com (mail-io1-f71.google.com
- [209.85.166.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-136-U_-pBDShO3q6tvfNJCashg-1; Fri, 13 Dec 2024 01:35:42 -0500
-X-MC-Unique: U_-pBDShO3q6tvfNJCashg-1
-X-Mimecast-MFC-AGG-ID: U_-pBDShO3q6tvfNJCashg
-Received: by mail-io1-f71.google.com with SMTP id ca18e2360f4ac-844e9b92401so57698039f.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 12 Dec 2024 22:35:42 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jvZbcvx1"
+Received: by mail-qt1-f169.google.com with SMTP id d75a77b69052e-467a3f1e667so8252951cf.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 12:18:17 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1734121096; x=1734725896; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
+        bh=jS+QUs95T6y9ilZMfaELdLAaEmTkJHYCoX2ClhjKuyM=;
+        b=jvZbcvx1O7vB7ebrhEs5TrHaB2fEXb6MS2yhoeQ4n8vZMiUHRd/j1DFIdSzOTJkrMM
+         m2fjDqDt0FsNYdsSvEneaJo3TshmPWDd3VjdDo706XYBsn38rb6uKERb+2ipwfhDqFRn
+         AIvAC/HYumpAXx2hS3SxLwMJKlY4Q4CaVF5NMlHplPNyGWkzr1gUcuoUqJqeh0+spVsK
+         m0esv/Dh3dmMiU5Eh+23TsI8sMdau909w/aqeWisWRQIPkKwR8kbVSpPIH54/jB3gTiU
+         JZKgOVSmkdlZ/OUvt7GCp+UGy9djgfdX9X9dbd6ERTl//8y5ZVj+VZvWRLHnCOKKCcpZ
+         KcAA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734071742; x=1734676542;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=BZm9qM1V937BchILtZLOe9uTfMfj2tw7tDc13Yus8Ms=;
-        b=W9nfBJS2oyCcQSbtDYp5giSqVVunrqusAtzHWN+A5VtJG3K+zuLdBHwQaeN5ojctrt
-         6fpueB8UQ3E4oI0LbP1Hs1ot+HHOhD1nkZ6dVeWLyHlCJT/cqsv/0AuCpQyB2PooG3IS
-         1+xLYofmMS3sudRJ/dYuNXr4b5jKNbvAORGaBsh+T/F/cqYEGFmdn1hlqgZYo/Z+/TV5
-         PU7yei97WaYyay4BLm67kXEqCQBFb3NAFHsGZYrNUkLqIAYJDKIceaw4P66ZzA713iF2
-         +Dg+bzevS+W8ElTvKgp9JazfvIZhQwYng6XRnqB1U2g44wXT75SyrO84zsg65OvoS3L0
-         gdxw==
-X-Forwarded-Encrypted: i=1; AJvYcCVhGPEYyFD9I/yKvURdtF/pWYaFWCAIGqzjidKlaD7j3xHyvyrpsmuOhOTQVlR3cs6ZCpoiLCg+VhVh+WyWtA==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yx5pzxfDzIxaL6+18B+vwrYDAAJNuEU2hf82WtJmqFjxOQdwjTT
-	RQjOoX/b6DjbTPubGDVKqk14X4aKdJD9U5roemQ4D/bNVPasz9bDQr1Icr7aaVkToJwH4qcgSK4
-	+bZMAKa/hBZMBUhR4cC5obMWGvK2Av5xptQxk9r4VeUfaSj84cO8Zn0t4zXciC+rI
-X-Gm-Gg: ASbGncsFmX4kCmJ2wDf5g70leneohXE0n+Uqq+Ihkj2rUbit7zvy6Lrfhy4cgByU0dB
-	lWOcewK92GE4PthsESpcld0fzE0Xbk3Puq/YE/H5N5/VnnuP6JpM2dLYvAgsbztg/Ut2EtKDlJ3
-	ekimNJVrHywvK3wQWdKA3I87o5/cOJdYMmDePh2RMRDfcTTNeR1DXWvEZqkJ8XBB6P9jLZTncqo
-	2FHP4lzVJPgsmamP0+2cK5xhbGVgCBWayJwYx43RLEWIOpvInTmnoCVU+yKslHj89boghdk7/7/
-	Q/490rS56AA0
-X-Received: by 2002:a05:6e02:1948:b0:3a7:8c3f:edce with SMTP id e9e14a558f8ab-3aff4619adamr17823115ab.3.1734071742154;
-        Thu, 12 Dec 2024 22:35:42 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGsT7yQAYq6GdLOx/o7W3JZm+5Gb9hQIX/AoGljrHmXd4Gu+dG2c3Y4gZIflKAtVA0iMq0dMw==
-X-Received: by 2002:a05:6e02:1948:b0:3a7:8c3f:edce with SMTP id e9e14a558f8ab-3aff4619adamr17822955ab.3.1734071741887;
-        Thu, 12 Dec 2024 22:35:41 -0800 (PST)
-Received: from crwood-thinkpadp16vgen1.minnmso.csb ([2601:447:c680:2b50:ee6f:85c2:7e3e:ee98])
-        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4e2df658c4csm1110332173.145.2024.12.12.22.35.41
+        d=1e100.net; s=20230601; t=1734121096; x=1734725896;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=jS+QUs95T6y9ilZMfaELdLAaEmTkJHYCoX2ClhjKuyM=;
+        b=kjMrDe2hdhbYRp5U+dzwP26ew61zkw6QregPVFbRB9oilR6sP8pkz1keEMtC/Z7qJK
+         uBeB250zND//cNATmTiqKWf5KaqRFpl2fHKfM36LNUUsh3gb1uoa1yk0iP0W++p2jZSP
+         egVxALA2wHBK/stoaFwT9dkvOrEpas8CBdWLQHyJ0OpHgVwS5x1xPcS+/tG5Rhkra/4L
+         wZYKhvMO8N7nq0jyTbMf1I+DcM5IgkHRV4KGm+I2knTIaw/GtAyfo78lBw5+TbnmhFOq
+         s7L0VIC+8iOLpAfkl1+U37eji0CrUH45aSdBw2Mu03v6low6Q3HFZX53BMRgdhTy5ASC
+         mmBg==
+X-Gm-Message-State: AOJu0YxFEgVtvJIXlUvebXvcyynOQE1+9bm7YqpiZZbdpS1dallfop47
+	4aqRmS56HCf4qTyiL5zWUlmAQAW9FZbur2Z9ESs3L+Ow85ASt5ROHBkTLA==
+X-Gm-Gg: ASbGncvxt4ooobPpnSYdRzQuX4NfPbOaFIdSvxtdijiEF1DIEiEgF0PhFzrzi5wwQe3
+	opfVJphSNoIawdT7DdfUCGSGe2ayArGRZPGWadoMnUkXm6p/0lxRkETPMkDZR27E3763M68Ojj7
+	ZzHjgMftH2b7BixjVoFs+sEtyGvYkUci0OmGICY7cZ18DY/P/2WD3ch8TmhoPugTD/65m7VPjLE
+	HXM07Sl8RC5qS3JaBBWIKzsp0ZK5z0uCfw0FI6uL4n1MFam+FaB0yp/KdRoLw==
+X-Google-Smtp-Source: AGHT+IHUJQ5TYFurYWf+lEQ2QDwYceZNUZ5wDinjflSZtgsLVKRzx77HN6SQ/qC7ASCyBgAt13yhIg==
+X-Received: by 2002:a05:6214:2684:b0:6d8:b401:44a6 with SMTP id 6a1803df08f44-6dc96853460mr60054456d6.43.1734121095744;
+        Fri, 13 Dec 2024 12:18:15 -0800 (PST)
+Received: from fionn.redhat.com ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6dccd363165sm715456d6.78.2024.12.13.12.18.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 12 Dec 2024 22:35:41 -0800 (PST)
-Message-ID: <afa631a73622f8b0d49dbe4608764b353841f472.camel@redhat.com>
-Subject: Re: [1/1] rt-tests: cyclictest: Suppress unused parameter warnings
-From: Crystal Wood <crwood@redhat.com>
-To: ende.tan@starfivetech.com, linux-rt-users@vger.kernel.org, 
-	mtosatti@redhat.com
-Cc: williams@redhat.com, jkacur@redhat.com, leyfoon.tan@starfivetech.com, 
-	endeneer@gmail.com
-Date: Fri, 13 Dec 2024 00:35:40 -0600
-In-Reply-To: <20241212162453.2618945-1-ende.tan@starfivetech.com>
-References: <20241212162453.2618945-1-ende.tan@starfivetech.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.4 (3.52.4-2.fc40) 
+        Fri, 13 Dec 2024 12:18:15 -0800 (PST)
+Sender: John Kacur <jkacur@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rteval: Fix missing statistics for system with timerlat
+Date: Fri, 13 Dec 2024 15:17:59 -0500
+Message-ID: <20241213201759.190139-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.47.1
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-On Fri, 2024-12-13 at 00:24 +0800, ende.tan@starfivetech.com wrote:
-> From: Tan En De <ende.tan@starfivetech.com>
->=20
-> Mark unused parameters with `__attribute__((unused))`.
->=20
-> Signed-off-by: Tan En De <ende.tan@starfivetech.com>
-> ---
->  src/cyclictest/cyclictest.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+Fix missing statistics for the system with timerlat by fixing the test
+in rteval_test.xsl for stoptrace_invoked
 
-Can we just turn off this warning?  Unused parameters are entirely
-normal in functions used as callbacks as well as with ifdefs, and it
-seems like a low value warning to begin with (there's a reason it's not
-in -Wall).
+In addition
+- Add --no-summary to the rtla command line
+- Parse out "ALL:" for good measure although this should be surpressed
+  with the --no-summary command line option.
+- timerlat reports stop tracing when receiving a SIGINT, so also check
+  whether the maximum value is greater than the --timerlat-stoptrace value
 
+Tested the following scenarios.
+- timerlat-stoptrace USEC is NOT used
+- timerlat-stoptrace USEC is used AND the max value recorded is greater
+  than the value to trigger stop tracing
+- timerlat-stoptrace USEC is used AND the max value recorded is not
+  greater than the value to trigger stop tracing
 
--Crystal
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ rteval/modules/measurement/timerlat.py | 14 +++++++++++---
+ rteval/rteval_text.xsl                 |  2 +-
+ 2 files changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
+index 3fcdb5ff2819..5bfc495217ea 100644
+--- a/rteval/modules/measurement/timerlat.py
++++ b/rteval/modules/measurement/timerlat.py
+@@ -230,6 +230,7 @@ class Timerlat(rtevalModulePrototype):
+         self.__cmd = ['rtla', 'timerlat', 'hist', self.__interval, '-P', f'f:{int(self.__priority)}', '-u']
+         self.__cmd.append(f'-c{self.__cpulist}')
+         self.__cmd.append(f'-E{self.__buckets}')
++        self.__cmd.append('--no-summary')
+ 
+         if self.__cfg.stoptrace:
+             self.__cmd.append(f"-T{int(self.__cfg.stoptrace)}")
+@@ -392,6 +393,10 @@ class Timerlat(rtevalModulePrototype):
+                 self.__stoptrace = True
+                 self.__posttrace += line
+                 continue
++            elif line.startswith('ALL:'):
++                # We should only see 'ALL:' without timerlat --no-summary
++                # print(line)
++                continue
+             else:
+                 #print(line)
+                 pass
+@@ -424,17 +429,20 @@ class Timerlat(rtevalModulePrototype):
+         for n in list(self.__timerlatdata.keys()):
+             self.__timerlatdata[n].reduce()
+ 
+-        self.__timerlat_out.close()
+-
+         self._setFinished()
+         self.__started = False
+ 
++        self.__timerlat_err.close()
++        self.__timerlat_out.close()
++
+     def MakeReport(self):
+         rep_n = libxml2.newNode('timerlat')
+         rep_n.newProp('command_line', ' '.join(self.__cmd))
+ 
++        max_val = self.__timerlatdata['system'].max
++
+         stoptrace_invoked_n = libxml2.newNode('stoptrace_invoked')
+-        if self.stcpu != -1:
++        if self.stcpu != -1 and max_val > int(self.__cfg.stoptrace):
+             stoptrace_invoked_n.newProp("invoked", "true")
+         else:
+             stoptrace_invoked_n.newProp("invoked", "")
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index 70f3e0fd4b1c..146302744f58 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -342,7 +342,7 @@
+     </xsl:if>
+ 
+     <!-- If stoptrace_invoked is true, no Statistics are available -->
+-    <xsl:if test="stoptrace_invoked != true">
++    <xsl:if test="stoptrace_invoked != 'true'">
+     <xsl:text>          Statistics: &#10;</xsl:text>
+     <xsl:apply-templates select="system/statistics"/>
+     </xsl:if>
+-- 
+2.47.1
 
