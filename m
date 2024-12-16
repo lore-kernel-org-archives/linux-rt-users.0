@@ -1,158 +1,110 @@
-Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com [209.85.160.169])
+Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com [209.85.221.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B22E518F2FB
-	for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 20:18:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E11B84A5E
+	for <linux-rt-users@vger.kernel.org>; Mon, 16 Dec 2024 15:52:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734121099; cv=none; b=LZiCQnwXwkTrvP0facJYAAgGWXhLlOKO/ACOIMY5SSJHPKaGfaA4J8FSxAQndxxB0kkVBZx5VMZ/EmRUb++CHSxnqHXjfXhJWWxV1sG13e0zX1fWEx5bTagDbzZgz50gwu+RkeAt0iR0xejdoMVJtVQiTn99V0jLoc2BYbRWDzA=
+	t=1734364378; cv=none; b=jGVCs9EiW59rNayU2L5UnOqNXEnMC0aors9NhBGCvin0Y4AsIgp9W0yOeOBgQgWaZnskFkKfq1O5tCXjrYcssa9Pd/+AZ+G3gfv0zJXojo/PTL//fp1xQBCoQtmGbiGq2KZ3xzUIz8voKyM6WFyf/pW5eYsSKhAKNQCXv/7TN8s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734121099; c=relaxed/simple;
-	bh=EMa1SJfHocn2Wo6sVtkap0P3s3ftqdXD71JBGaO4xm8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=IO/CrbYTX7mQaVC44yriW2zOlD+tZbD0TgAr0iUo17Md3TJeEmQT5GDq24rM85PB76HY58EP63/d28nGwNnaRRWd78hM4Ic0heu0QOafQQVevYU+SENneWgPX3PrpTiCILMOt/zRjrFfVTqcSciqygrwItWXw96MMwHkbRRihx4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jvZbcvx1; arc=none smtp.client-ip=209.85.160.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1734364378; c=relaxed/simple;
+	bh=oGAvYTUda6zsqAhxih/iNc51wzbk5dR2ZYfn9oKE79U=;
+	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=IveJzAmuM4QuJ8lN08Rwacx7N22yo9d7JnFiVDfqQkeFXADELbJuYOWa8wnCmJ9Pv/+Al9EJTiWcbUymnbx3Ct/JpcrTMV2Yg7UmsuhqjYr8UpogFJgXiaVpSuUrRQvLwzy5cNvlkbu6r2tdN6iJtlXeVDqJxfuKzkd/Ybrjoo0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=W+yEyA33; arc=none smtp.client-ip=209.85.221.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jvZbcvx1"
-Received: by mail-qt1-f169.google.com with SMTP id d75a77b69052e-467a3f1e667so8252951cf.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2024 12:18:17 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="W+yEyA33"
+Received: by mail-wr1-f43.google.com with SMTP id ffacd0b85a97d-385d851e7c3so196748f8f.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Dec 2024 07:52:56 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1734121096; x=1734725896; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=jS+QUs95T6y9ilZMfaELdLAaEmTkJHYCoX2ClhjKuyM=;
-        b=jvZbcvx1O7vB7ebrhEs5TrHaB2fEXb6MS2yhoeQ4n8vZMiUHRd/j1DFIdSzOTJkrMM
-         m2fjDqDt0FsNYdsSvEneaJo3TshmPWDd3VjdDo706XYBsn38rb6uKERb+2ipwfhDqFRn
-         AIvAC/HYumpAXx2hS3SxLwMJKlY4Q4CaVF5NMlHplPNyGWkzr1gUcuoUqJqeh0+spVsK
-         m0esv/Dh3dmMiU5Eh+23TsI8sMdau909w/aqeWisWRQIPkKwR8kbVSpPIH54/jB3gTiU
-         JZKgOVSmkdlZ/OUvt7GCp+UGy9djgfdX9X9dbd6ERTl//8y5ZVj+VZvWRLHnCOKKCcpZ
-         KcAA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734121096; x=1734725896;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+        d=suse.com; s=google; t=1734364375; x=1734969175; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:subject:cc:to:from:date:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=jS+QUs95T6y9ilZMfaELdLAaEmTkJHYCoX2ClhjKuyM=;
-        b=kjMrDe2hdhbYRp5U+dzwP26ew61zkw6QregPVFbRB9oilR6sP8pkz1keEMtC/Z7qJK
-         uBeB250zND//cNATmTiqKWf5KaqRFpl2fHKfM36LNUUsh3gb1uoa1yk0iP0W++p2jZSP
-         egVxALA2wHBK/stoaFwT9dkvOrEpas8CBdWLQHyJ0OpHgVwS5x1xPcS+/tG5Rhkra/4L
-         wZYKhvMO8N7nq0jyTbMf1I+DcM5IgkHRV4KGm+I2knTIaw/GtAyfo78lBw5+TbnmhFOq
-         s7L0VIC+8iOLpAfkl1+U37eji0CrUH45aSdBw2Mu03v6low6Q3HFZX53BMRgdhTy5ASC
-         mmBg==
-X-Gm-Message-State: AOJu0YxFEgVtvJIXlUvebXvcyynOQE1+9bm7YqpiZZbdpS1dallfop47
-	4aqRmS56HCf4qTyiL5zWUlmAQAW9FZbur2Z9ESs3L+Ow85ASt5ROHBkTLA==
-X-Gm-Gg: ASbGncvxt4ooobPpnSYdRzQuX4NfPbOaFIdSvxtdijiEF1DIEiEgF0PhFzrzi5wwQe3
-	opfVJphSNoIawdT7DdfUCGSGe2ayArGRZPGWadoMnUkXm6p/0lxRkETPMkDZR27E3763M68Ojj7
-	ZzHjgMftH2b7BixjVoFs+sEtyGvYkUci0OmGICY7cZ18DY/P/2WD3ch8TmhoPugTD/65m7VPjLE
-	HXM07Sl8RC5qS3JaBBWIKzsp0ZK5z0uCfw0FI6uL4n1MFam+FaB0yp/KdRoLw==
-X-Google-Smtp-Source: AGHT+IHUJQ5TYFurYWf+lEQ2QDwYceZNUZ5wDinjflSZtgsLVKRzx77HN6SQ/qC7ASCyBgAt13yhIg==
-X-Received: by 2002:a05:6214:2684:b0:6d8:b401:44a6 with SMTP id 6a1803df08f44-6dc96853460mr60054456d6.43.1734121095744;
-        Fri, 13 Dec 2024 12:18:15 -0800 (PST)
-Received: from fionn.redhat.com ([142.189.102.234])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6dccd363165sm715456d6.78.2024.12.13.12.18.14
+        bh=38FKdhz1VvDhc/ssvKRblfgMS+wpHTOD89YDjFr970E=;
+        b=W+yEyA33HKEXGeiMVqnAbUYCpP8PihKlnWR3IwNH3cNh8A2X0gK9n8ROrVfpdt8H5u
+         xOdls8umhW1SDnY6Qu8vJdLaoiO4xCNZ/j+BhRqRafPPwLWHzx3xvalCYP3sHT3Q3G8E
+         VJDlRPPfbb4bbRObbGcfpyOKG41YjkRr9T9ohOuitd/SL5+qsHqqVrra70hztxzknuLy
+         pfshaEHlQZOOv0MDZ9e3OfI8sfHIlxD0VPLK6PkfzWJO8HyAJJuh7HYIO1BiKih7zEkB
+         RFRovPtg9P/YjxA55QWZ67oOUgxGM/uF3e2WyoQclZHEVtndT6/BbyuWK9hl8CUNHZe2
+         RqaA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1734364375; x=1734969175;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:subject:cc:to:from:date:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=38FKdhz1VvDhc/ssvKRblfgMS+wpHTOD89YDjFr970E=;
+        b=gQRCAEj0N4Ph6GJ8P+OVN7MgaeSaTUr/ziRRJkYtcJCIEkGlbWBn8yqjXsR4zF/SH+
+         UIIIsPqCrCQ1sovbMI4Ulz+BluZILUGky4jSh0fBzl1+Qh1oKdDupKtD23Ck/1Cmd9pA
+         f9r7dwBfPWnftffZ+2D4S0yW8VUrhz5vMYDh4gDChbd6PHUq66XAdrlGSgkR5balnVM2
+         6InT4zILhKDNauUlMHYB81IQwVpXTQvpEOvgXkGIa725vyxbr9AN9dSnlfWrYx10LdjP
+         2tHDPSMCaiRoBFH/qDwkSSIOhgEsC5lX3Qzw29n+DvfHjXTc0ofCw8jXNtRkWIID6VbH
+         nBUQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWcCbN7ohlC9jHVGufUhYnv6wL5CMys8xqfMFshXfsULa2bBo7YlYjdhi50KhtDnPQ9G+YxVwgYpGujlvFA6Q==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyovvxxpsywRXCKQFdNkx2aXDNLIq9RBLKEpL8x3jaF/iYLaJOo
+	16D9fN8LsGOAUEZoYaqJX9PnBmaqlfTYRzIROpacYHC+nCdzRZUANSfH1DC4McE=
+X-Gm-Gg: ASbGncvDixC2c9ORTXcBt6lnvGhXQdgZPvISdHw9aQ9cDswMisRxBoJkQBFjtjXGnqj
+	wxee4+dnUsNXhXYaYZ6DCl4SuaFqf67yxu0eEnnzAMaSwTlBwqPhsnttu7ihapBIcjHM9Q1hlIV
+	lekc6QVgxdvk6UIdk+4pSmkAcSeMeXFMAiyEbYyb1g6moZT0apeIgB/F/7BO9djMCimf2tyNssW
+	j71kdbklMJMOu5qyklI+9sdui3EfkijK9vVXHBNhLGIxZhPGaOGMuqrCzPm1T//1X5ixUj6IX/f
+	T6/RfVPkyStobNpHphyioCDRjHHSJXjoWOeax0mVWABu5wYRDCvEVe9t3n2wzw==
+X-Google-Smtp-Source: AGHT+IERJiZgYVHCfr1v98k+3qwUb/e+s8BAL/XMJ5t/zmC887eRAbHa3krDvJnb+Btr6fWCPTHiqw==
+X-Received: by 2002:a05:6000:4b04:b0:385:f0c9:4b73 with SMTP id ffacd0b85a97d-3886c72110bmr4641130f8f.0.1734364374759;
+        Mon, 16 Dec 2024 07:52:54 -0800 (PST)
+Received: from mordecai.tesarici.cz (dynamic-2a00-1028-83b8-1e7a-3010-3bd6-8521-caf1.ipv6.o2.cz. [2a00:1028:83b8:1e7a:3010:3bd6:8521:caf1])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-388c804d573sm8397658f8f.64.2024.12.16.07.52.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Dec 2024 12:18:15 -0800 (PST)
-Sender: John Kacur <jkacur@gmail.com>
-From: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rteval: Fix missing statistics for system with timerlat
-Date: Fri, 13 Dec 2024 15:17:59 -0500
-Message-ID: <20241213201759.190139-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.47.1
+        Mon, 16 Dec 2024 07:52:54 -0800 (PST)
+Date: Mon, 16 Dec 2024 16:52:48 +0100
+From: Petr Tesarik <ptesarik@suse.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-rt-devel@lists.linux.dev,
+ LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org, Steven
+ Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v6.13-rc1-rt1
+Message-ID: <20241216165248.5cae6311@mordecai.tesarici.cz>
+In-Reply-To: <20241206154701.8XBv1qNE@linutronix.de>
+References: <20241206154701.8XBv1qNE@linutronix.de>
+X-Mailer: Claws Mail 4.3.0 (GTK 3.24.43; x86_64-suse-linux-gnu)
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-Fix missing statistics for the system with timerlat by fixing the test
-in rteval_test.xsl for stoptrace_invoked
+Hi Sebastian,
 
-In addition
-- Add --no-summary to the rtla command line
-- Parse out "ALL:" for good measure although this should be surpressed
-  with the --no-summary command line option.
-- timerlat reports stop tracing when receiving a SIGINT, so also check
-  whether the maximum value is greater than the --timerlat-stoptrace value
+On Fri, 6 Dec 2024 16:47:01 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-Tested the following scenarios.
-- timerlat-stoptrace USEC is NOT used
-- timerlat-stoptrace USEC is used AND the max value recorded is greater
-  than the value to trigger stop tracing
-- timerlat-stoptrace USEC is used AND the max value recorded is not
-  greater than the value to trigger stop tracing
+> Dear RT folks!
+> 
+> I'm pleased to announce the v6.13-rc1-rt1 patch set. 
+> 
+> Changes since v6.12-rc4-rt6
+> 
+>   - Update to 6.13-rc1
+> 
+>   - Down to 24 patches (including three new). The v6.12-rc4-rt6 release
+>     had 42.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- rteval/modules/measurement/timerlat.py | 14 +++++++++++---
- rteval/rteval_text.xsl                 |  2 +-
- 2 files changed, 12 insertions(+), 4 deletions(-)
+Great job!
 
-diff --git a/rteval/modules/measurement/timerlat.py b/rteval/modules/measurement/timerlat.py
-index 3fcdb5ff2819..5bfc495217ea 100644
---- a/rteval/modules/measurement/timerlat.py
-+++ b/rteval/modules/measurement/timerlat.py
-@@ -230,6 +230,7 @@ class Timerlat(rtevalModulePrototype):
-         self.__cmd = ['rtla', 'timerlat', 'hist', self.__interval, '-P', f'f:{int(self.__priority)}', '-u']
-         self.__cmd.append(f'-c{self.__cpulist}')
-         self.__cmd.append(f'-E{self.__buckets}')
-+        self.__cmd.append('--no-summary')
- 
-         if self.__cfg.stoptrace:
-             self.__cmd.append(f"-T{int(self.__cfg.stoptrace)}")
-@@ -392,6 +393,10 @@ class Timerlat(rtevalModulePrototype):
-                 self.__stoptrace = True
-                 self.__posttrace += line
-                 continue
-+            elif line.startswith('ALL:'):
-+                # We should only see 'ALL:' without timerlat --no-summary
-+                # print(line)
-+                continue
-             else:
-                 #print(line)
-                 pass
-@@ -424,17 +429,20 @@ class Timerlat(rtevalModulePrototype):
-         for n in list(self.__timerlatdata.keys()):
-             self.__timerlatdata[n].reduce()
- 
--        self.__timerlat_out.close()
--
-         self._setFinished()
-         self.__started = False
- 
-+        self.__timerlat_err.close()
-+        self.__timerlat_out.close()
-+
-     def MakeReport(self):
-         rep_n = libxml2.newNode('timerlat')
-         rep_n.newProp('command_line', ' '.join(self.__cmd))
- 
-+        max_val = self.__timerlatdata['system'].max
-+
-         stoptrace_invoked_n = libxml2.newNode('stoptrace_invoked')
--        if self.stcpu != -1:
-+        if self.stcpu != -1 and max_val > int(self.__cfg.stoptrace):
-             stoptrace_invoked_n.newProp("invoked", "true")
-         else:
-             stoptrace_invoked_n.newProp("invoked", "")
-diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
-index 70f3e0fd4b1c..146302744f58 100644
---- a/rteval/rteval_text.xsl
-+++ b/rteval/rteval_text.xsl
-@@ -342,7 +342,7 @@
-     </xsl:if>
- 
-     <!-- If stoptrace_invoked is true, no Statistics are available -->
--    <xsl:if test="stoptrace_invoked != true">
-+    <xsl:if test="stoptrace_invoked != 'true'">
-     <xsl:text>          Statistics: &#10;</xsl:text>
-     <xsl:apply-templates select="system/statistics"/>
-     </xsl:if>
--- 
-2.47.1
+However, I found 26 patches in v6.13-rc1-rt1-patches:
 
+petr@mordecai:~/src/linux>  git ls-tree v6.13-rc1-rt1-patches:patches | grep '\.patch$' | wc -l
+26
+
+It turns out, that these two patch files are orphaned (not listed in
+series):
+- netfilter-nft_counter-Use-u64_stats_t-for-statistic.patch
+- riscv-add-PREEMPT_AUTO-support.patch
+
+What is the reason to keep them around? Is it even intentional?
+
+Petr T
