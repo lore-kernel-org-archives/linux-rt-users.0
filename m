@@ -1,22 +1,22 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 428291F4715;
-	Tue, 17 Dec 2024 14:09:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C6E71F9436;
+	Tue, 17 Dec 2024 19:40:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734444581; cv=none; b=DB6bz6TV7nCWDImCljRE9vFYhsd6NWerOHez7XVcXXSqMb85XRsbsw0V2YE2AW9oSG1gOambPhSm/Dq9gFXAYcCD+2fWCETDszbSw7pH/wOUakxQMHa7s0vmtGrCr4yhS5XqNXAz27r7JUfhZRoiratguhIjJpW76RRVRuHAbWI=
+	t=1734464422; cv=none; b=i6ovHTaW7fZ0bFmiaVwQUvFREM54bI14EcBw0Y6iUfWARLj3QJLzzUTXyT5oe2fofbEoW33hF1aCGdhflK7yuiwa6G/hJEbtYDVMi9RqxPtISvO3eDNpm4cD9Grwzzu8hoQT0NUlw0Ov6yNBtntHP+4x6FQDATKvy047hOvLPG0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734444581; c=relaxed/simple;
-	bh=rDonAVGGWW6PFKwxtszDRWhSj8mUk4mnoimvKQa925s=;
-	h=From:Subject:Date:Message-ID:To; b=ZRnKgDmvgy76lHfND94RD7k7vmYYkG1lv3UUvS4TwccVZJT/G1bEdYfQSoCGcvB4WZQYFQWYeTjnif4EYSrVsDjq2Wm3ivdp0bLkH0zOOwrUn+Ua31/ye+0T1yroqBYXNb71Ym4np/RAMS+M8KgCjKIuuriN8OAMLmF2yKuLDFk=
+	s=arc-20240116; t=1734464422; c=relaxed/simple;
+	bh=AgDdEJVeQhBJeFgwBSd6qqxfPMc80/SqrpV/Sr6YzmQ=;
+	h=From:Subject:Date:Message-ID:To; b=tfzuPnlkKXrhcR3mZl5MjVN7CWnQ/u2lkhMF2+QVUPd00+4Lg1hwR2N3bFVTNVekhHUCLA0JpUkcOWo6ifWi4V51pSyZFvW4qjm+QUh8orExIpkKK5wMz4XpemMSeO2q2J4P+P/J3lw6wS3dZ/C5aMax44QRctcHYZ0fqhrl/9U=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9C821C4CED3;
-	Tue, 17 Dec 2024 14:09:40 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BF62FC4CED7;
+	Tue, 17 Dec 2024 19:40:21 +0000 (UTC)
 From: Clark Williams <williams@redhat.com>
-Subject: [ANNOUNCE] 6.6.65-rt47
-Date: Tue, 17 Dec 2024 14:07:11 -0000
-Message-ID: <173444443147.646964.7670137323699042231@demetrius>
+Subject: [ANNOUNCE] 6.1.120-rt46
+Date: Tue, 17 Dec 2024 19:37:47 -0000
+Message-ID: <173446426761.810839.10241405280484476684@demetrius>
 To: LKML <linux-kernel@vger.kernel.org>,linux-rt-users <linux-rt-users@vger.kernel.org>,Steven Rostedt <rostedt@goodmis.org>,Thomas Gleixner <tglx@linutronix.de>,Carsten Emde <C.Emde@osadl.org>,John Kacur <jkacur@redhat.com>,Sebastian Andrzej Siewior <bigeasy@linutronix.de>,Daniel Wagner <daniel.wagner@suse.com>,Tom Zanussi <tom.zanussi@linux.intel.com>,Clark Williams <williams@redhat.com>,Pavel Machek <pavel@denx.de>,Joseph Salisbury <joseph.salisbury@oracle.com>,Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
@@ -26,28 +26,40 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 
 Hello RT-list!
 
-I'm pleased to announce the 6.6.65-rt47 stable release.
-
-Note that this was originally going to be a v6.6.66 based release, but that
-stable update has a number of merge conflicts specifically that collide
-with PREEMPT_RT changes, so I decided I needed to give that a bit more thought.
-Hopefully I'll work throught those conflicts next week.
+I'm pleased to announce the 6.1.120-rt46 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v6.6-rt
-  Head SHA1: 01b5936cdde41052fc80f5c8cb65f5b2dfaa2f0f
+  branch: v6.1-rt
+  Head SHA1: 061eae4897c2fee62fed3f946864107faf3292b7
 
-Or to build 6.6.65-rt47 directly, the following patches should be applied:
+Or to build 6.1.120-rt46 directly, the following patches should be applied:
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.6.65.xz
+  https://www.kernel.org/pub/linux/kernel/v6.x/patch-6.1.120.xz
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/6.6/patch-6.6.65-rt47.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.120-rt46.patch.xz
 
 
 Enjoy!
 Clark
+
+Changes from v6.1.119-rt45:
+---
+
+Clark Williams (1):
+      Linux 6.1.120-rt46
+---
+localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+---
+diff --git a/localversion-rt b/localversion-rt
+index 38c40b21a885..272158183778 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt45
++-rt46
