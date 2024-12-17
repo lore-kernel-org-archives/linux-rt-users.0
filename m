@@ -1,52 +1,81 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E59F942AAB
-	for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2024 08:50:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E22A91E6311
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2024 11:23:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734425442; cv=none; b=LMmYCRhVdmgDKTSWxuyH4d3NXbUx0lfOd0j8MB6w8tXg/N8xII2ArfWOfLHGn5WsK4pz8pP/cwc1qkYW6wND7B5KszWPbZAeQAB4zAk48hBjN9RNfp95ZCU6qR6cg4Cgs8J1QmXwhN9f8g18ZZUjw2BOYrdSOOCDP95KQjUGMxo=
+	t=1734434601; cv=none; b=CAJZ33IjPMJmV4IxTaMgys+DisoZH1AbO2MnoLDxW/uX1uny/94MgRYoHAtRgIHtpqA3hwFynn6FyzGnId52RQh79d9yD+yssI0o0AnTOxVOhbyvi0ThG4kjIUq1LLf2mRQbRK8GnlgSMxuRlkGGhWoDR/Fx1n+9iw85k+cJDIo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734425442; c=relaxed/simple;
-	bh=QuaSrJV7c/VMGNw8yhUNA7qbqfXHWaTPvdqlWMWSdJM=;
+	s=arc-20240116; t=1734434601; c=relaxed/simple;
+	bh=RmSIt/3Ns4FBCqw8NFpzWMRkTFrQMhrc2MyPlmAiKwc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Qh+XrB2nd2/SXBZwn9sXZJW7/C4aYBzsjwP9Bfqzga6DMgj0FzZAgPSOE/qXvtyez+kInQOLSyBm51IhURSJ18Cw0FITDNM6Yqydlko+N+CrUQqEi1SlspDosEGtxySuuWse86ThitfJPIyCKzVxJb8DOmWTMvJtjq20Zyz3kfg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=BdJzbatK; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=88CPMBTm; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	 Content-Type:Content-Disposition:In-Reply-To; b=d4bWtVgl5ek3Y7kKiz6ze7wfnbsGSCXgFaJt/IfJwVWZ0vdaqHIvz57YGRljy/p4TPQwtpnKz9JVXDNnLyvKmbA/YA+ivI0yzhrrYSr3FHs8USivLq7r0S47NmjaVXKnKgU7gjaKp9CMcZXEYByzEvLT8W3GYJVtGK6plDiWJcU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QrgmId60; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="BdJzbatK";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="88CPMBTm"
-Date: Tue, 17 Dec 2024 09:50:31 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1734425432;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QrgmId60"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1734434598;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=PVbFtGa+oz544YtTIdlW/emfzXs4T7WCrxR+60fQ0RU=;
-	b=BdJzbatKiR3nsO2VhfZbs2TMO/RabEz89AYHBEbux/aicjwY9FebkqjUZz5j1CbVXQQBnZ
-	YMZdHMu08K+X+dBG1F+vUGbrcGuPygiWEchC2pv36TqZBbtjbnPdk7f6F5/61uqsPC7oQy
-	I+ZbtwFVDQRamKJ1v+Ti7DYw9vr/gii1jB75EkHmHTi+B3s+IB716ZRCj6Hyl4a6MADz93
-	zQDtX1lJISE5e2onZNdpEcViMUklurD4qrNshhPhIzR3sWHOcbIF9CvVBWheN7picDJMUV
-	QdkZy2mmzxZQcxnYLa5r0b9drfumU34RPnfe1qHlntLfjnc0tO1dwXXWN5hPlQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1734425432;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=PVbFtGa+oz544YtTIdlW/emfzXs4T7WCrxR+60fQ0RU=;
-	b=88CPMBTmOS9NvtIoNQjLOuguj6yEoePhW52QkB7jUvUaIbSyG7Ho69jvXQNJZi65joyJzQ
-	Jo5BMfCIGtM8h/AQ==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Petr Tesarik <ptesarik@suse.com>
-Cc: Mark Rutland <mark.rutland@arm.com>, linux-rt-users@vger.kernel.org
-Subject: Re: Lazy preemption on arm64
-Message-ID: <20241217085031.Wh45Bd2r@linutronix.de>
-References: <20241216190451.1c61977c@mordecai.tesarici.cz>
- <Z2B5y3HiLuRHPfdv@J2N7QTR9R3.cambridge.arm.com>
- <20241217073151.5aa2352a@mordecai.tesarici.cz>
+	bh=rxFk4ZzElKHondedZg8yku+jbtm7e4uZWvmWgn/Up8c=;
+	b=QrgmId6031O5nKva+9Rq1OfMvrOLt8UC0ofwNm59rul05TGQK+fAXckEdyAyXmQAt+v3am
+	WZrGNS60yfzvgx8LjN9G4A/HQ0rq51Krw3bfwZtBWpg5rBQ4BQwaLRJwP6AHTnVu3D/7gy
+	El8+ZisfCh555vb0nK99sMPbQq+7sfQ=
+Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
+ [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-179-TOSNaxcBNI21Ltzu-0s0eQ-1; Tue, 17 Dec 2024 06:23:17 -0500
+X-MC-Unique: TOSNaxcBNI21Ltzu-0s0eQ-1
+X-Mimecast-MFC-AGG-ID: TOSNaxcBNI21Ltzu-0s0eQ
+Received: by mail-qt1-f200.google.com with SMTP id d75a77b69052e-467975eabdaso95402061cf.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2024 03:23:17 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1734434597; x=1735039397;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=rxFk4ZzElKHondedZg8yku+jbtm7e4uZWvmWgn/Up8c=;
+        b=JoZscqRMwse0tKtHDRZ051nELzrqE3VcwJ12MHd1aovyGDKfHNK0McrjA2K1zWrZqe
+         ZNFLHh5lWwscFPt3HDpFbDwFg8fJpp8PiFqkPc6/o4Lf+Aj2A/FpolZ3IlfBOjw9oNSy
+         3NU+kTv1Q1THOOAvcT/HIKDZneHja5dBCni7VPFooUWqzT+psnWqcP/EFhsunrr82sNU
+         QJ+Qfmend2zCOcMfIeJqaZ4XWOK5ajKaJxaBrQzzr8bkBsQ+hvwVolZ6SmJ96/pqc9p4
+         xcK8/7GVea/XDvV8wjkbn3nAFkOmNJwajSTqI+TjDfJK/ZaoB2d81tWItpxAcQchRpz3
+         T15Q==
+X-Forwarded-Encrypted: i=1; AJvYcCX4VpyMhCcEyKLtsegnDaNuw5Z1keEu8/lzZCzMj6TG3cNgxV4d7QQuP7JRgKr6yXJMUn+pmJiKZS+LLv1IQQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yw0lioGZKhD8RT3ca3qmoBap/6QBf7vU/hZ4xWJWv9G3VhTeeL9
+	NPJ1ZS0WuR8fLF/0KNjawNNuHn7x7bGORRQqa1E+jxE0AnxzTehxfJp44L0dtEOLQx0/LO25ONt
+	iWwLT/oydvsVF+402tjSBxIfuugdQjzdzlicQ9bC7nL6YCVDSuBeklh/aBsbB5OZ5
+X-Gm-Gg: ASbGncu0sRxWdjJey2N5E+E3mTy6O1O2JcHbaCVaHExKEhpAntesGtVj+c//v3iJ2Xl
+	Bf+iUjgzx9BIEWSHZ2Kmmb2SJ1vMnHj5dpZV43StI1+pwuRhqiZPIV8VsWJTq+Fh4Kgux91me3C
+	Ho0TnmMsqqdYHlXgGjzN3bOLRq7SRmv6L7SZqTZ2ksNDf8n1bEuOSZjbm05TiGLEIXIGk04eaou
+	KlQP6o8giHO6EzYgNiNlTJ36/tDXi0aijsUpNi0HoPnEgQd7wt7eDNl/a3F89fEa2iQNinwVKDO
+	XmJa4KJaR6DY450ufpomEMqsrrT8TSHTDTwEDex8E3g=
+X-Received: by 2002:ac8:7c49:0:b0:467:603d:1cd5 with SMTP id d75a77b69052e-468f8dd49eamr46825231cf.26.1734434597069;
+        Tue, 17 Dec 2024 03:23:17 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEDlnfHsZwL618rCmU7oi6Y1uHEhl66Xxg1NEAZrBlzi7MfB/k934xEyHJarN/SUCDyDssw+A==
+X-Received: by 2002:ac8:7c49:0:b0:467:603d:1cd5 with SMTP id d75a77b69052e-468f8dd49eamr46824991cf.26.1734434596710;
+        Tue, 17 Dec 2024 03:23:16 -0800 (PST)
+Received: from jlelli-thinkpadt14gen4.remote.csb (host-80-40-237-196.as13285.net. [80.40.237.196])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-467b2c72fa9sm37976241cf.12.2024.12.17.03.23.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 17 Dec 2024 03:23:15 -0800 (PST)
+Date: Tue, 17 Dec 2024 11:23:11 +0000
+From: Juri Lelli <juri.lelli@redhat.com>
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+	linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+	Frauke =?iso-8859-1?Q?J=E4ger?= <frauke@linutronix.de>,
+	Lorenzo Pieralisi <lorenzo.pieralisi@linaro.org>
+Subject: Registration open for OSPM-summit 2025
+Message-ID: <Z2FfH3JK7yMt20Td@jlelli-thinkpadt14gen4.remote.csb>
+References: <ZytlAkTiuZApK23Y@jlelli-thinkpadt14gen4.remote.csb>
+ <Z02EBA_0SwWPhTAi@jlelli-thinkpadt14gen4.remote.csb>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
@@ -55,56 +84,167 @@ List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20241217073151.5aa2352a@mordecai.tesarici.cz>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <Z02EBA_0SwWPhTAi@jlelli-thinkpadt14gen4.remote.csb>
 
-On 2024-12-17 07:31:51 [+0100], Petr Tesarik wrote:
-> V Mon, 16 Dec 2024 19:04:43 +0000
-> Mark Rutland <mark.rutland@arm.com> naps=C3=A1no:
->=20
-> > On Mon, Dec 16, 2024 at 07:04:51PM +0100, Petr Tesarik wrote:
-> > > Hi all,
-> > >=20
-> > > what is the plan for implementing PREEMPT_LAZY on arm64?
-> > >=20
-> > > There used to be RT patch series which enabled lazy preemption on
-> > > arm64, but this architecture was "sacrificed" in v6.6-rc6-rt10, as
-> > > collateral damage of switching to PREEMPT_AUTO.
-> > >=20
-> > > IIUC lazy preemption is currently implemented only for architectures
-> > > with CONFIG_GENERIC_ENTRY, but there is no inherent dependency on it.
-> > > So, is the plan to convert arm64 to GENERIC_ENTRY (and then get
-> > > PREEMPT_LAZY for free), or is somebody working on CONFIG_PREEMPT_LAZY
-> > > for arm64 without that conversion? =20
-> >=20
-> > I don't think there's an agreed upon plan either way.
-> >=20
-> > Jinjie Ruan has been looking to move arm64 over to GENERIC_ENTRY:
-> >=20
-> >   https://lore.kernel.org/all/20241206101744.4161990-1-ruanjinjie@huawe=
-i.com/
-> >=20
-> > AFAICT, the only bits that we get "for free" from GENERIC_ENTRY would be
-> > the logic in raw_irqentry_exit_cond_resched() and
-> > exit_to_user_mode_loop(), and all we'd need to enable this on arm64
-> > as-is would be as below.
->=20
-> @bigeasy: Would it be OK for you to add the below patch to the next
-> 6.13 RT patches?
+Hello,
 
-This bits below are actually the same ones I made last week. I stopped
-there because it was late and I didn't find GENERIC_ENTRY nor a
-TIF_NEED_RESCHED check in arm64 so I paused. Where is this?
+Last reminder for this edition, promise.
 
-Other than that I would be happy to take it then hoping arm64 does the
-same.
+Registration is now open!
 
-> Mark tagged it with "HACK", but to me it actually looks just as good as
-> the good old (pre-PREEMPT_AUTO) arm64 patch. ;-)
+Please use the following form to register
 
-The old lazy-preempt had also tweaks in should_resched() and
-__preempt_count_dec_and_test(). So it is slightly different.
+https://forms.gle/Yvk7aS79pvNR6hbv8
 
-> Petr T
+Please share the word and see you soon!
 
-Sebastian
+Best,
+Juri
+
+On 02/12/24 10:55, Juri Lelli wrote:
+> Hello Everybody,
+> 
+> Quick reminder that deadline for topics submission is approaching
+> (December 9, 2024 - next Monday).
+> 
+> Please use the form to submit your topic(s) or reply to me privately
+> with topic's details.
+> 
+> https://forms.gle/Vbvpxsh8pqBffx8b6
+> 
+> Don't wait until last minute or Santa will add you to the naughty list!
+> 
+> Best,
+> Juri
+> 
+> On 06/11/24 13:45, Juri Lelli wrote:
+> > Power Management and Scheduling in the Linux Kernel (OSPM-summit) VII edition
+> > 
+> > March 18-20, 2025
+> > Alte Fabrik
+> > Uhldingen-Mühlhofen, Germany
+> > 
+> > ---
+> > 
+> > .:: FOCUS
+> > 
+> > OSPM is moving to Germany!
+> > 
+> > The VII edition of the Power Management and Scheduling in the Linux
+> > Kernel (OSPM) summit aims at fostering discussions on power management
+> > and (real-time) scheduling techniques. Summit will be held in Uhldingen
+> > (Germany) on March 18-20, 2025.
+> > 
+> > We welcome anybody interested in having discussions on the broad scope
+> > of scheduler techniques for reducing energy consumption while meeting
+> > performance and latency requirements, real-time systems, real-time and
+> > non-real-time scheduling, tooling, debugging and tracing.
+> > 
+> > Feel free to take a look at what happened previous years:
+> > 
+> >  I   edition - https://lwn.net/Articles/721573/
+> >  II  edition - https://lwn.net/Articles/754923/
+> >  III edition - https://lwn.net/Articles/793281/
+> >  IV  edition - https://lwn.net/Articles/820337/ (online)
+> >  V   edition - https://lwn.net/Articles/934142/
+> >                https://lwn.net/Articles/934459/
+> >                https://lwn.net/Articles/935180/
+> >  VI  edition - https://lwn.net/Articles/981371/
+> > 
+> > .:: FORMAT
+> > 
+> > The summit is organized to cover three days of discussions and talks.
+> > 
+> > The list of topics of interest includes (but it is not limited to):
+> > 
+> >  * Power management techniques
+> >  * Scheduling techniques (real-time and non real-time)
+> >  * Energy consumption and CPU capacity aware scheduling
+> >  * Real-time virtualization
+> >  * Mobile/Server power management real-world use cases (successes and
+> >    failures)
+> >  * Power management and scheduling tooling (configuration, integration,
+> >    testing, etc.)
+> >  * Tracing
+> >  * Recap/lightning talks
+> > 
+> > Presentations (50 min) can cover recently developed technologies,
+> > ongoing work and new ideas. Please understand that this workshop is not
+> > intended for presenting sales and marketing pitches.
+> > 
+> > .:: SUBMIT A TOPIC/PRESENTATION
+> > 
+> > To submit a topic/presentation use the form available at
+> > https://forms.gle/Vbvpxsh8pqBffx8b6.
+> > 
+> > Or, if you prefer, simply reply (only to me, please :) to this email
+> > specifying:
+> > 
+> > - name/surname
+> > - affiliation
+> > - short bio
+> > - email address
+> > - title
+> > - abstract
+> > 
+> > Deadline for submitting topics/presentations is December 9, 2024.
+> > Notifications for accepted topics/presentations will be sent out
+> > December 16, 2024.
+> > 
+> > .:: ATTENDING
+> > 
+> > Attending the OSPM-summit is free of charge, but registration to the
+> > event is mandatory. The event can allow a maximum of 50 people (so, be
+> > sure to register early!).
+> > 
+> > Registrations open on December 16, 2024.
+> > To register fill in the registration form available at
+> > https://forms.gle/Yvk7aS79pvNR6hbv8.
+> > 
+> > While it is not strictly required to submit a topic/presentation,
+> > registrations with a topic/presentation proposal will take precedence.
+> > 
+> > .:: VENUE
+> > 
+> > The conference will take place at Alte Fabrik [1], Daisendorfer Str. 4,
+> > 88689 Uhldingen-Mühlhofen, Germany
+> > 
+> > The conference venue is located in a 2 minute walking distance [2] to
+> > the Hotel Sternen [3] that has been pre-reserved for the participants.
+> > Since it is a very rural area, we recommend booking this hotel as it is
+> > close to the conference room. The price ranges per night incl. breakfast
+> > between 85€ (Standard Single Room) up to 149€ (Junior Suite). There is
+> > an availability of 37 rooms in the hotel. Another 13 rooms are
+> > pre-reserved in the Hotel Kreuz which is also a 5min walking distance to
+> > the conference location [4]. Cost is 75€ inkl. breakfast. Please choose
+> > your hotel (and room) and arrange booking yourself. We recommend arrival
+> > on March 17 and departure on March 21 due to the length of the trip.
+> > 
+> > Please use the code ‘LINUTRONIX’ when booking your hotel room. 
+> > Deadline for hotel booking in Hotel Sternen is February 28, 2025.
+> > Deadline for hotel booking in Hotel Kreuz is January 17, 2025.  
+> > After these dates, cancellations are not free of charge anymore.
+> > 
+> > You can reach Uhldingen-Mühlhofen best from Zürich Airport [5] or
+> > Friedrichshafen Airport [6]. From both airports there are train and/or
+> > bus connections to Uhldingen-Mühlhofen which you can check here [7]. The
+> > rides are quite long, so another possibility is to organize yourself in
+> > groups and share a taxi/shuttle [8].
+> > 
+> > [1] https://www.fabrik-muehlhofen.de/
+> > [2] https://maps.app.goo.gl/S6cnTgx1KJAGRkMr7
+> > [3] https://www.steAlte Fabrik Mühlhofenrnen-muehlhofen.de/
+> > [4] https://www.bodensee-hotel-kreuz.de/
+> > [5] https://www.flughafen-zuerich.ch/de/passagiere/praktisches/parking-und-transport/zug-tram-und-bus
+> > [6] https://www.bodensee-airport.eu/passagiere-besucher/anreise-parken-uebernachten/
+> > [7] https://www.bahn.de/
+> > [8] https://airporttaxi24.ch/?gad_source=1&gclid=EAIaIQobChMIo_y9l56iiQMVfp6DBx16NxPtEAAYAiAAEgJOO_D_BwE
+> > 
+> > .:: ORGANIZERS
+> > 
+> > Juri Lelli (Red Hat)
+> > Frauke Jäger (Linutronix)
+> > Tommaso Cucinotta (SSSA)
+> > Lorenzo Pieralisi (Linaro)
+
