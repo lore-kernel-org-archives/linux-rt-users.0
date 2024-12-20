@@ -1,103 +1,105 @@
-Received: from mout.gmx.net (mout.gmx.net [212.227.17.22])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F8841CAAC
-	for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2024 15:57:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.22
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 138D610F1
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2024 18:02:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734710252; cv=none; b=hrL1nb+eOQ/Smd1tkFWBQD6UbAqybU11YJn1q+FRLvKpVo4Qtyvypk3nO7UoRrfbnsVi2ieMjYcMrhwVhxmagbG5mQVK9imSK0JO4MI5IcMyeg4do7dbQ8xiE8x61A4ciAPdM+e8R/lz134T4/QH/yUt9M9q03bkMwmBu979MmQ=
+	t=1734717726; cv=none; b=Ws7BT2kwDU8KQLQdtU3ofdGO8LZSTSk9/y8YJ2txVTPIZcnO4tzHaqlk/TciToycCiTspp143mxyPQ+A26UuYWVOEVX6kSvpOYGX/hordSfMs4NlOOKcouwuaDR+S+JQ/2sJCwLDL111a+t6yGqtYAZmlbTGVU7wSVIkLe8Jzhc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734710252; c=relaxed/simple;
-	bh=43t1bqnXETdo3ldL7mm2GkeHyOC01D7GL30uSY6+n98=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=KZzOVyEdbmkrE6oqyiBrLnfJqBICr1k2liJOe+jI7qMEKqF8Bu2Mr5SPSA6kYOHzAt3VZEP+Y0OEO3P7enZg8dAivohXAOpdEs/FkYP1pvqidZMNg1BRDNrzFdc47Oszx1uJHaLRx/dsVD+f2R96NcqBnXkKULk2+8WCkKU6dkA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net; spf=pass smtp.mailfrom=gmx.net; dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b=XuNMdOGB; arc=none smtp.client-ip=212.227.17.22
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.net
+	s=arc-20240116; t=1734717726; c=relaxed/simple;
+	bh=u/plw9jG/h4LmhxM03WSAH7FU9LQUEa4D1BEe8+VPLM=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=D4YyUUrIIBklIMBnuMQPAz+I1TZRhpJpI3zxnmJzNLjx1yz9NO2A51bhihRXp2SIX5fwzfkoQqz6SfuIOI6qQCQSIAc2oVuK+2pXhTy4MJwjcN4tksIkzyaeB7PDYbHpccHCbHEMHq9OYWX5nnd9I8jsP3Hura+Cc0JLqJ0x1kQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RW9wAB/0; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b="XuNMdOGB"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.net;
-	s=s31663417; t=1734710247; x=1735315047; i=mista.tapas@gmx.net;
-	bh=43t1bqnXETdo3ldL7mm2GkeHyOC01D7GL30uSY6+n98=;
-	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:Subject:To:
-	 References:From:In-Reply-To:Content-Type:
-	 Content-Transfer-Encoding:cc:content-transfer-encoding:
-	 content-type:date:from:message-id:mime-version:reply-to:subject:
-	 to;
-	b=XuNMdOGBS4U8dPy/d299yYN8BRwNFHdkIqXZGoNejgmg0xmxGISuBrwc4bJEYIoc
-	 Tm3/ruB/2hQRS/sVWaMHqIKHlDJ8hnCr/89gu0E/D62B719Dd/tPKbLXPNQDGyUDL
-	 LfNwiz2BJDePBWneRSjedCmcQgHwUU1AdlTTS0ITMQSgkgcMnbbna5wg4tkYxkJlM
-	 vAjT4eSzglR2fRXi0tfrqx0Orv+ppBRZ0VVyg0IMS381Xo9FxhZwahADTDrFxhBhd
-	 vlIR8ECuY7ss5L9naFIXArYHv2jCfMRGoNLzWpKh6vtqzF+fkyY1uNOpsHzO+6f4m
-	 yXYeUqlzQ3LCWH0fbA==
-X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
-Received: from [192.168.178.136] ([92.39.22.117]) by mail.gmx.net (mrgmx104
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MOA3F-1tDS1e0wpN-00Nedv; Fri, 20
- Dec 2024 16:57:27 +0100
-Message-ID: <cb569b76-e0ac-4063-9956-ab6307594d86@gmx.net>
-Date: Fri, 20 Dec 2024 16:57:27 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RW9wAB/0"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1734717724;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=kphGd+7xc4ZEj3FQHbo9auhdo1CN6NoVSseGZ3hTQN4=;
+	b=RW9wAB/0lcPiReUXsb6Ujfr/B3q6QjqXMrc4hXq5aq53NdBTPc0kEfivpxl8qDejrlRhoz
+	m0OeqWUiAnZ//Dqs9S68a5wwlGuIa8TDkhti6nx8x+gdmXCgV0AH8Fd0zbzX2AugDOlqOY
+	gpla0FdqMoN7dQ1RcFMZStUC0TXgK3Q=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-241-HYFoCnH7OqqYwl_HJwp2oQ-1; Fri, 20 Dec 2024 13:02:02 -0500
+X-MC-Unique: HYFoCnH7OqqYwl_HJwp2oQ-1
+X-Mimecast-MFC-AGG-ID: HYFoCnH7OqqYwl_HJwp2oQ
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-7b6f2515eb3so181140585a.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2024 10:02:02 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1734717722; x=1735322522;
+        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
+         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=kphGd+7xc4ZEj3FQHbo9auhdo1CN6NoVSseGZ3hTQN4=;
+        b=CTUHdIT/TgNf5EiceWgzmLU8XeMyDqWbWZn0UAtMRVM5VTtA/UJnvGnJUNuOXC5/UG
+         KnxOKaJsmcBJnnDx8Cut+VGd9edec4c1qvUB50emQLL+cHmyp9uVBjrNbD9lVQpRWVhM
+         dC8YEzvZ5N+vKvv1L/v4wApIiZAjHKOfh4F6skI1DPzcD48DIkq+LkaL/9I9XkPSXpKk
+         xkFK7sHmPR4aJsy5IXb26DEFdeFcCQi/ieR1uTZ2YqEN6UsKaiI7FCn/+/PKpNGJa5kj
+         CP2mADG5g8bBm72q8ukmb6Wg0GLme21ZrapnnCV1dTC5L5L0gPd8Nx1wQhrMrpFXGs58
+         kM4g==
+X-Forwarded-Encrypted: i=1; AJvYcCWJ/ZLgEKSv++pPIYrc3L1aVHTPylSNohfk07HAmqEaQWGG6g0u4k1voQguDONgk68epEi6LE9Zo1JypV3xpw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwrW+tO6T8/5GCqsegpERwW5a3yN42eMdoyKWCLiEw9EI4Z52IK
+	XzdgzM1YlUbhwjfSTXxQbFr6seSJhDsoixt266mSnVbrYwCLAal0ILIme9Sb93ocyc8HURfTLK8
+	T72/w61hRx1mWnhF/fxySqMLZJmKVPA3FlF0eaWisDCAoRe7paFutH+2XpGbdTOs3
+X-Gm-Gg: ASbGncsx223cKyE3JeCry3OtlHUr5S7hWTs9GiqMM8LToq4jWxV1oDRAgw0VHJE2ygE
+	G4Iu3HymazZ3uRZ060Lgj/dqytmUZhQQRH/rpjXG4jCr2L5I0GfdnA9iSWWMnH3lupeUL/nSf3j
+	v2XoU5Y4tDu/LmCBpuO0klnsvrsfz6NuwU/wYI1Vc7VpVcqSdUzVWOaTlwS+T63BjTC7LQHoHFU
+	XVlKQUkfpPfqXO8MuzQIHkRqPFe5La2Pf5YbKNyssQe67A=
+X-Received: by 2002:a05:620a:4721:b0:7b6:d273:9b44 with SMTP id af79cd13be357-7b9ba72dfd0mr607732085a.18.1734717722102;
+        Fri, 20 Dec 2024 10:02:02 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHOXwLowbCOMes5UmUpCMo6Q2XSxEAayuCxmpUK/kj+lAbp/HPO2P5xjM/774kq5FSvYUfK6w==
+X-Received: by 2002:a05:620a:4721:b0:7b6:d273:9b44 with SMTP id af79cd13be357-7b9ba72dfd0mr607725185a.18.1734717721558;
+        Fri, 20 Dec 2024 10:02:01 -0800 (PST)
+Received: from fionn ([142.189.102.234])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7b9ac2bc8d6sm156796485a.2.2024.12.20.10.02.00
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 20 Dec 2024 10:02:01 -0800 (PST)
+Date: Fri, 20 Dec 2024 13:02:00 -0500 (EST)
+From: John Kacur <jkacur@redhat.com>
+To: Crystal Wood <crwood@redhat.com>
+cc: ende.tan@starfivetech.com, linux-rt-users@vger.kernel.org, 
+    mtosatti@redhat.com, williams@redhat.com, leyfoon.tan@starfivetech.com, 
+    endeneer@gmail.com
+Subject: Re: [1/1] rt-tests: cyclictest: Suppress unused parameter warnings
+In-Reply-To: <afa631a73622f8b0d49dbe4608764b353841f472.camel@redhat.com>
+Message-ID: <ca9f9d61-a81d-9343-7872-f1110ef7b247@redhat.com>
+References: <20241212162453.2618945-1-ende.tan@starfivetech.com> <afa631a73622f8b0d49dbe4608764b353841f472.camel@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
-To: John Ogness <john.ogness@linutronix.de>, linux-rt-users@vger.kernel.org
-References: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net>
- <84bjx6h2kd.fsf@jogness.linutronix.de>
-From: Florian Paul Schmidt <mista.tapas@gmx.net>
-In-Reply-To: <84bjx6h2kd.fsf@jogness.linutronix.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:iTs5YgUqHamNMSAJtNKrWVWaNVwUq0V6EQQQ1VMdNdgTnrNlOPH
- gPQ0xO3U1lmhM5+xDsFPIjFLtJ4VCHm8Uq06x/cwUHLDiTy+cVK5xJAj6os6mHJDgJ/p+fY
- xo7I2hMnhWY+ikl/kgOt/zCVhLNqQ/iSMSa4NHM0+jGiGwqBILCXLUhU21o8792WzpGN+S2
- 3PzWOpZzVJ/iwEXQkK65w==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:NtksWbEf7q4=;4g4yM1QvjdW+yGyNhAcKyor67MJ
- UncjSHgf6so65e8vgxyRe80eMzYS6JdRGuf65A4iRGlGa3lDpwOqF4qy95tj5Ha92efGaohp5
- 5iKNzME9AFtkTLKPdeom2/hdNXrpBjviTfuQLQDC/UmZ2nb3wNIJ8JjBs5ffkz+TmSffGFEbs
- jvtilHYhEVOU3k1Ku0lT+6Zb0QD4/rEw0ebHBguYZHLmEBGd6l8QQwgdxW5WL70By5M7WpcZ/
- yA+/JPXaPmOS82BBtT6tS0mBnnIXYyhTIfmiD+b9YjWmjmim5JiXHCbqq5ynQn0lO9ybee9r2
- 96o+flUx3n1EjgNdMvLXOeu0OYUXRyDCQBvl3i/n93zko5kUh03Ktxk1xf5TwamRHT1ambOb3
- HOcdFQoUG1GeoP7cX+EuFLC2FCqvrq6IizAQNifUp3T8U8MQOT2zYeZUnjN2aD39ks0wsxbCB
- DTQuS2IYrqSPJM3STEC7SenEkVOdXujHisgH9owLm+nn57mBBQxLQlttYfI5gq8QIv2YgefBe
- P7yfxEyMuZ8I6gECsr9iFAeyeg83skxCuj8hnXIZmoupgl7aMR+c+hWDJa0n2PRSLEdEYRhVb
- nC2S+ITIvaadQ938uMzDliOicLeIAa9O6z9lXEDmTWXqU6jmBEXwpyAr/mFw+JrjlR3z07FWe
- AXn+g/tqIBvi8QQGjS26pCHQpK5RwaYQgj94siQ3NIwvlKgwZvfgNnLpSM0GlKNs6Oozbzikr
- sSFmhSP6yR78edaHjmZuOcS+/3gbzPFVFz6QULd5papYWUO+NsLQijqLEkTFJXSU5IJUFXGc3
- i8JYHYyHZvZ/ydumE8RR9ovaU3FJ2+JCXPCidp481QJs/GsTs8ztlyLqsvcuMSh+0x0aSbmYp
- kygp913zWPa2Oriqjo2GvuTxCoo9nmKqMXiPI5EZfqKLUXI0FZBKKLHp9k8xGO0H+cLv8k4yq
- UaCaoPARC9yrGOBAVeZLUCeOAgm5pK0r8iq2Shnq9JocXEXk+XXwfx5p8ZoxhZV+AUJ3qRQwU
- fp6W0+TNMvqrvymPuedSJqqGyIxE9d7Qk/4eSXMLBsY/XXFGabhTmnS1wnt2DvgT+d/pnS3un
- ortciHXNv+Vj3vTgXumFjiAAqgRlCh
+Content-Type: text/plain; charset=US-ASCII
 
-Hi John! Sorry, forgot to hit "reply all". So here it goes again :)
-With a little clarification as well..
 
-On 20/12/2024 15:05, John Ogness wrote:
-> There are various kernel configurations that affect latency. But I am
-> curious... Why do you think a maximum latency of 80us on an $80 board is
-> large?
 
-Simply because 80 us are an "eternity" =F0=9F=98=89 That's like 192000 cyc=
-les at
-2.4Ghz. And also because other slow systems (like that Celeron j4125
-board I have) behave much better even at similar clock speeds (EDIT:
-IIRC). I don't think the price point has anything to do with it really.
+On Fri, 13 Dec 2024, Crystal Wood wrote:
 
-EDIT: Don't get me wrong though. 80 us are OK for my use case (audio
-processing) - I just wonder if it might be even better.
+> On Fri, 2024-12-13 at 00:24 +0800, ende.tan@starfivetech.com wrote:
+> > From: Tan En De <ende.tan@starfivetech.com>
+> > 
+> > Mark unused parameters with `__attribute__((unused))`.
+> > 
+> > Signed-off-by: Tan En De <ende.tan@starfivetech.com>
+> > ---
+> >  src/cyclictest/cyclictest.c | 4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> Can we just turn off this warning?  Unused parameters are entirely
+> normal in functions used as callbacks as well as with ifdefs, and it
+> seems like a low value warning to begin with (there's a reason it's not
+> in -Wall).
 
-> What maximum latencies are you expecting? And why do you think it
-> is not "under control"?
+I believe it IS in -Wall
+https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 
-I would _wish_ for latencies in the low tens of microseconds =F0=9F=99=82 =
-I do
-not expect anything.
-
-Kind regards,
-FPS
+John
 
