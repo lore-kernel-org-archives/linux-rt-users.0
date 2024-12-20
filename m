@@ -1,583 +1,245 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout.gmx.net (mout.gmx.net [212.227.17.20])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6ED141FC0EC
-	for <linux-rt-users@vger.kernel.org>; Wed, 18 Dec 2024 19:51:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76B361A8405
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2024 13:18:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.20
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734551488; cv=none; b=qT+R2oDhS/Ec8G7HRP89cx3mRRfGQ5jUtN8UhYFFNFUAVHoSJ09/4ow9g3nJKTeAkcqLkr9i9YB8og/2KNVDMqXeECaUx2YqXl3qrePgVgvzvMsL8FWsCTTT1rrjOjjju+EQsby86ad6+PI1FI1z7o+YlFGAhDO2NHqmvygSmpE=
+	t=1734700728; cv=none; b=NVraJBX2wqJYnYPhAY0l66uDKQ6QY7T0WrO2TkkS2Fhsn8PzMvl68gBYZxoozwp/xelJG5Y0JJ9qDfj3NsOTlR2OQB6Amgb/GL9PZoAr/g98kw+09ZK8OCj8Q/PHFYbjbKn7B7qaHN8DiGbQ9FkoIGVVpC56lPGHEuJaELBrkTw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734551488; c=relaxed/simple;
-	bh=1S3j1gZ2Vbyz5LjnkqseGNaACfmGlCvqGP07mh7TAJo=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=KkESdVUsY3lafPREs+gEk8GqRLhveBm3q4zvkamg5WQ2X9pumkjIH6LfQKfd21vXeXMv+MkODncDqKiFa1dAUorlxIzUuMtoTFwmiCSfVGCrLasQwk/zkZrrqT9qDDw417aGHQL6FUYn2oVLeOoAKhEgxHkg887bDMi0ZAiun4k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=aurora.tech; spf=pass smtp.mailfrom=aurora.tech; dkim=pass (2048-bit key) header.d=aurora.tech header.i=@aurora.tech header.b=kP3DFghj; arc=none smtp.client-ip=209.85.208.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=aurora.tech
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=aurora.tech
+	s=arc-20240116; t=1734700728; c=relaxed/simple;
+	bh=WrVPaEfjMAxFxZPhpXRY1qR9NZv2nKJyvb1CF+LjeOY=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Content-Type; b=UGjBPBjkV33zpzjgvJnp/cHxEfwzl7oUYlFxVS3YYWyLpF6qPebO0K1dXP9UR1dZleCO/cU792WwO+LYa2iBde2vTz6Axv4uJkxjOCSzlKWUkvnWtUjdcu7ZRMdlGzR9AwbNE+gpWBn0XCvVZ/b9wL4ymRb8QF0EuQqAA67w4G4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net; spf=pass smtp.mailfrom=gmx.net; dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b=rfMWZnG8; arc=none smtp.client-ip=212.227.17.20
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gmx.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmx.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=aurora.tech header.i=@aurora.tech header.b="kP3DFghj"
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-5d3d14336f0so12272496a12.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Dec 2024 11:51:26 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=aurora.tech; s=google; t=1734551485; x=1735156285; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=bpZESv4JKMme6J/T91rZtJT9JEh56k3z1VpoEjb8c34=;
-        b=kP3DFghj19FYwNMjgaWmUfWb7Xs5f5Ct9UXMMfw8yHrPEB/7rpOXQ1cFBa+FMxf13n
-         tbqSuXGbUfhfYSL6hVey1qbTsHAljH6J0ZCAkFaquFemlgrQuWiE4Z0Gh8Oso9WfJCoX
-         jPAsVMCj8sFhbYqDMakHah8peWMgZTk5B+qpmmJfH0JEOe1PLpRkuWQo9yBdqwbFDIg6
-         5sJL96JMfs22YSsewvb6khhBv/Fd7Npwn3jdNxzzQe9ObfzPTvoa+Xi0x8WDEGVQfBEK
-         4PnSbdx64JQdIi2xBsJdy5RnQDaW4HeFfUIgOBBMOWvoSdJuUIW5gkxMpaEt/joJGP/C
-         KNHA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734551485; x=1735156285;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=bpZESv4JKMme6J/T91rZtJT9JEh56k3z1VpoEjb8c34=;
-        b=xIKX/2kkZIvYvMkrnC9SZCgZGRAE/l0sfeUKmSzetnAbUXGmKtq8jmX2ukbf9BOsCK
-         vBiegpjDFxfoTyydEbyad3JWjJDAd4rrIq8F6pHuoeMok6Uy5D8kldBJxejL7LPzgdqv
-         ZsrwqwF8QML0aKMW+zDi9dE26cLVO2jF+w7h/uRQyE6JB4IuudLiRRfP+C48GFKEXX5J
-         HSXtIsHZtka/Fb/8rERgiO//nnHSQW+uSFTmUD2EAtoswjWrQYB0XfE6JUYxkf6Em6Q2
-         qDyhpsb8RRztKWA4zMx4s0cLd9zqmUvNAsOhlqYFWdFcaBf5T1m/gDZ/rxrExNa2xwpR
-         gxcw==
-X-Forwarded-Encrypted: i=1; AJvYcCUDypN+tkW5Cf0OPCnCmEU9ZTUHNGsGjP0IDMKK1OgLI+NBKR2S4IGjOI3ALwdcmxzy3lsTi35LVvEw8ALn3g==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzpFf/gk1JcYAlIZXj4UPxtFkGpPThTMP1CtYkQ4dAP0KS86S4h
-	2LQfedHw3m3E8irhwOBwKNCOB9HS2bS+5A0GOud/T0k0KiHPHFWGvWvKWXQQgyYTWK9PhB7Mf6E
-	2A+ffzF1GA00bivqThBvAS5J1FeVQWXvKV+90Lg==
-X-Gm-Gg: ASbGncutl5ntrN/BlJ6lpEl7b6cDuPgmiKk6ck4QQxsfAqJ9h6fJhWyE3BZqtaJtvGH
-	h6NzgkLLWZrdaMzVsyEHXoOW9oO7xfkNwH64iNFQ=
-X-Google-Smtp-Source: AGHT+IE7BZxA6fASy3vJVWUgLL4RdazsW6DIJasx12SRwrK/c0EiC24c3Lvp5lMdUjhkUhWaB/HMZpf6tjOPd0H0OvU=
-X-Received: by 2002:a05:6402:3491:b0:5d0:81f3:18bc with SMTP id
- 4fb4d7f45d1cf-5d8025b105dmr386673a12.1.1734551484653; Wed, 18 Dec 2024
- 11:51:24 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmx.net header.i=mista.tapas@gmx.net header.b="rfMWZnG8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmx.net;
+	s=s31663417; t=1734700723; x=1735305523; i=mista.tapas@gmx.net;
+	bh=XBeGXjGfnKLulIA6UlfHaOwul5CvhSmNzRo1r6Prh7M=;
+	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:From:Subject:To:
+	 Content-Type:Content-Transfer-Encoding:cc:
+	 content-transfer-encoding:content-type:date:from:message-id:
+	 mime-version:reply-to:subject:to;
+	b=rfMWZnG8yo/3kpCqXdx04W9VL3AjUduATPyB7zz7Yv1abVRtOF999/axaPD82JaM
+	 +c7hnjPN/qyNx8u9hPIOqksKsmf4Uvsy8nSVeJK21kD/k+MfCwqFKgZY6Xh3h2aU0
+	 j03tnNKPttZVZYByjAiVbtNAjJadQW7GoS8pAImkwAphU8dv4vX7RErdB0nrp1OK8
+	 qEgJxiR5WfdGkzUvMhNNPaMSai3VD2A9Q2I5sDw6cJuLK3K2lPJZi1DVn4fDCWl0F
+	 QGjV5sf5HYvIkrCzVhsJVz0X9Q0ykWy8pDchm1XfRCeX0LctLvr+FKiWwy4KaIrdP
+	 lql9fwhIq3MgEfg1jw==
+X-UI-Sender-Class: 724b4f7f-cbec-4199-ad4e-598c01a50d3a
+Received: from [192.168.178.136] ([92.39.22.117]) by mail.gmx.net (mrgmx105
+ [212.227.17.168]) with ESMTPSA (Nemesis) id 1MYvcG-1t2XfH2Obg-00WG0P for
+ <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2024 14:18:43 +0100
+Message-ID: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net>
+Date: Fri, 20 Dec 2024 14:18:43 +0100
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <6743da2b.050a0220.118402.0d9a@mx.google.com> <6fa5d605-8a9a-4875-b15e-b236bd74a15c@collabora.com>
- <0222c0ae-ce85-4a33-9d22-df4579ee543a@monom.org> <8a6bc8e2-1e18-4af4-8bb7-d6251c5cabb6@shentel.net>
-In-Reply-To: <8a6bc8e2-1e18-4af4-8bb7-d6251c5cabb6@shentel.net>
-From: Alison Chaiken <achaiken@aurora.tech>
-Date: Wed, 18 Dec 2024 11:51:13 -0800
-Message-ID: <CAFzL-7v6d3mYYVmvXMPVRZv0xuzW3=yuj8VH1Aqh203ibLa3Yg@mail.gmail.com>
-Subject: Re: KernelCI report for stable-rt: v4.19-rt-next@v4.19.324-rt139-rc1
-To: gene heskett <gheskett@shentel.net>
-Cc: Daniel Wagner <wagi@monom.org>, Muhammad Usama Anjum <Usama.Anjum@collabora.com>, 
-	RT <linux-rt-users@vger.kernel.org>, stable-rt <stable-rt@vger.kernel.org>, 
-	Jeny Sadadia <jeny.sadadia@collabora.com>, Shreeya Patel <shreeya.patel@collabora.com>, 
-	Helen Mae Koike Fornazier <helen.koike@collabora.com>, kernelci-results-staging@groups.io, 
-	Pavel Machek <pavel@denx.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+From: Florian Paul Schmidt <mista.tapas@gmx.net>
+Subject: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
+To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Provags-ID: V03:K1:GukUAO0U+xSD21CK6EpmawcvC6+Z1GNh93tDxA/Ylv/TETT4CDn
+ F8uV4CJhn8cQPVfJMH8aXG6f/BgtVXrjHIZ9Wf6IY914kd+/agdp3K/5ZMzVzaN0cvqEPbv
+ TWE6zNGaBkvJ2cYW2jLdccUvsHRGMnu9HCRZh+Ulx6fCP1hGLZUgfl4aPSrAWxYLxcB+2Qh
+ 6OtTnqrQ4860rH6IX/dGQ==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:IOacqw99Skg=;AjFHoarOp2mwBsdAB6s600qRhCz
+ +FdwRXIVF40fRZ9TBPr48XURZUyYWA0u7PnRV/jt0N+5EClJw+kSpAc3j0iR2baohGsM3X0lz
+ AxrCHX2Iz4lQn9cii0ee8eIPGfQ+wk+ne5T6+AnoGYe/xPacbwqvPTWjPwiO7yEZSctne4dwJ
+ lB0LkVU9hlimPc6y1sOEwBYarR/QAdyhDTUyu+9bnilGtI83g2swzfKwkbYeLEWb0z2o7vIyE
+ ANmYAKvmpTPw9fRARIE7wjc4SYqfW7VQkiB5Uc5t9a7CuvSr3vKhgIX9tm8SUyyOKLhxfb6hw
+ ux5tHDur+ThQbqaM+oNhuEC1QrryeH2CQqA6ldv+rg7tQ+23tZKzPq/ZczBbAMhPt01cNaWrB
+ wI/3VFHiD4gcr19lxlonA5hSxIdhEULU17Zx0n1KKH+Pm/y8rk87QhcpgSCoOaID5wpnyWhLy
+ 9ViFw2MYXWUnAysrInIw/R7VMTc9PEBGfEARG25oOWOjcCgjeIKfUAQl6FekzFmhnLXt0y2AP
+ hOTUWVf5JiPUV4csk+j/x2xMfFnonX1h0czL5uOYWzcQ1parT9NmGSykGUDBB0pGfmtRczynB
+ B8U6FStC9eJJ1V+vnp/BzmfIzS5MRozO04gZAqZKCR01CKhcGJmq7bs5yqZnPVIoNP+EkAN/h
+ KjID8HKmaxOi1aJsM54+T63tnWo/nA5WNQ+u4xwfp9Ots3Wz+c7WXJmdnMSCsthUfdBeuSgB8
+ TdW6BCWbHrg/yNEhotxH8ZP4Z2yonYcTeTkQQaAnf4KpEQFvm6tZzL70PL9HwnSwP0QLKez3C
+ wbG+bvF2Ymi+fC2gg2mhkuLFA7uuAk/uAoUzyqy0C/Mn8xcC9hSg7QqurGhsx3u5YVnT4vY6z
+ 5flnoaM/RS9fWB12tc7s0Zvp/27Lb1s1eNBNntLPPYCwUwiXu6tUCcAt49LuqcO+x4wb5c+Nz
+ 47mxuY3C9jvdN8hcm1Wpidqnkbeo0y0pupoxsETVEYdPaD09nIbNmVsI4gvGX2Do5pjzBwPrx
+ iranRklNEP/sHUhc3v2OqPrqQdhA6kuYq74Yyj9yHCBnYTFcgzmiJC67ei0Khj8Czdd7JgjM9
+ nJDcG1s0ajvl+VplmgHraufikIb3R0
 
-On Wed, Dec 18, 2024 at 10:47=E2=80=AFAM gene heskett <gheskett@shentel.net=
-> wrote:
->
->
-> On 12/18/24 12:28, Daniel Wagner wrote:
-> > Hi,
-> >
-> > On 11/30/24 11:15 AM, Muhammad Usama Anjum wrote:
-> >> On 11/25/24 7:00 AM, staging.kernelci.org bot wrote:
-> >>> OVERVIEW
-> >>>
-> >>>          Builds: 17 passed, 1 failed
-> >>>
-> >>>      Boot tests: 298 passed, 49 failed
-> >>>
-> >>>        RT tests: 768 passed, 2 failed
-> >> The rt-migrate fails intermittently. Please have a look at it.
-> >
-> > Argh, I missed this email. Got drowned in my inbox. v4.19-rt has
-> > reached EOL. IIRC, the CIP folks might want to look into it.
-> It may have been EOL'd but its potential replacement, a 6.1.54-rt15 is
-> much much worse for latency.
+Hi!
 
-Here's a wild guess.   Could it be that ktimersoftd was enabled in
-4.19, and then its replacement ktimers is not enabled in 6.1?
+I'm playing around with a Raspberry Pi 5 and a PREEMPT_RT kernel (raspberry
+pi 6.13.y branch) and wonder about the latencies I see. First I tried
+cyclictest and saw latencies in the upper 50s up to 80s or so under a
+kernel compile load.
 
--- Alison Chaiken
-Aurora Innovation
+So I compiled the kernel with timerlat and osnoise tracers and ran a bit of
 
-> >
-> > Thanks a lot for the feedback! Highly appreciated!
-> > Daniel
-> >
-> >>
-> >>>
-> >>>      CI systems: maestro
-> >>>
-> >>> REVISION
-> >>>
-> >>>      Commit
-> >>>          name: v4.19.324-rt139-rc1
-> >>>          hash: b33e0cf394c4dfb11c91395dd25ccfc2a9fd2789
-> >>>      Checked out from
-> >>> https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.gi=
-t
-> >>> <https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.g=
-it>
-> >>> v4.19-rt-next
-> >>>
-> >>>
-> >>> BUILDS
-> >>>
-> >>>      Failures
-> >>>        -riscv (defconfig)
-> >>>        Build detail:
-> >>> https://kcidb.kernelci.org/d/build/build?orgId=3D1&var-id=3Dmaestro:6=
-7437f69923416c0c9942fd4
-> >>> <https://kcidb.kernelci.org/d/build/build?orgId=3D1&var-id=3Dmaestro:=
-67437f69923416c0c9942fd4>
-> >>>
-> >>>        Build error: make: *** No rule to make target 'Image'. Stop.
-> >>>        CI system: maestro
-> >>>
-> >>>
-> >>> BOOT TESTS
-> >>>
-> >>>      Failures
-> >>>
-> >>>        arm:(multi_v7_defconfig)
-> >>>        -beaglebone-black
-> >>>        Test details:
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-382ae923416c0c99438c1
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4382ae923416c0c99438c1>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38317923416c0c994394a
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438317923416c0c994394a>
-> >>>
-> >>>
-> >>>        CI system: maestro
-> >>>
-> >>>        arm64:(defconfig)
-> >>>        -meson-gxl-s905x-libretech-cc
-> >>>        Test details:
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38251923416c0c994367b
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438251923416c0c994367b>
-> >>>
-> >>>
-> >>>        CI system: maestro
-> >>>
-> >>>        i386:(defconfig)
-> >>>        -acer-chromebox-cxi4-puff
-> >>>        -acer-cp514-2h-1130g7-volteer
-> >>>        -asus-C433TA-AJ0005-rammus
-> >>>        -hp-x360-14a-cb0001xx-zork
-> >>>        -asus-CM1400CXA-dalboz
-> >>>        -asus-C523NA-A20057-coral
-> >>>        -acer-cp514-2h-1160g7-volteer
-> >>>        -acer-cp514-3wh-r0qs-guybrush
-> >>>        -dell-latitude-5300-8145U-arcada
-> >>>        -lenovo-TPad-C13-Yoga-zork
-> >>>        -dell-latitude-3445-7520c-skyrim
-> >>>        -hp-14-db0003na-grunt
-> >>>        -acer-R721T-grunt
-> >>>        -acer-cbv514-1h-34uz-brya
-> >>>        -dell-latitude-5400-4305U-sarien
-> >>>        -dell-latitude-5400-8665U-sarien
-> >>>        -hp-x360-14-G1-sona
-> >>>        -acer-cb317-1h-c3z6-dedede
-> >>>        -asus-C436FA-Flip-hatch
-> >>>        -hp-x360-12b-ca0010nr-n4020-octopus
-> >>>        -hp-11A-G6-EE-grunt
-> >>>        -hp-14b-na0052xx-zork
-> >>>        Test details:
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c3923416c0c9943351
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c3923416c0c9943351>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c4923416c0c9943354
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c4923416c0c9943354>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c5923416c0c994335a
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c5923416c0c994335a>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c2923416c0c9943345
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c2923416c0c9943345>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c0923416c0c9943336
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c0923416c0c9943336>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c5923416c0c9943370
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c5923416c0c9943370>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c4923416c0c9943357
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c4923416c0c9943357>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c0923416c0c9943329
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c0923416c0c9943329>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c6923416c0c9943373
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c6923416c0c9943373>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c2923416c0c9943348
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c2923416c0c9943348>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c1923416c0c9943339
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c1923416c0c9943339>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c1923416c0c994333c
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c1923416c0c994333c>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381bf923416c0c994331e
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381bf923416c0c994331e>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c3923416c0c994334e
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c3923416c0c994334e>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c6923416c0c9943376
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c6923416c0c9943376>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c7923416c0c9943381
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c7923416c0c9943381>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c7923416c0c9943384
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c7923416c0c9943384>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c3923416c0c994334b
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c3923416c0c994334b>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c5923416c0c9943365
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c5923416c0c9943365>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c7923416c0c9943387
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c7923416c0c9943387>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c1923416c0c994333f
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c1923416c0c994333f>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381c2923416c0c9943342
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381c2923416c0c9943342>
-> >>>
-> >>>
-> >>>        CI system: maestro
-> >>>
-> >>>        x86_64:(x86_64_defconfig,
-> >>> cros://chromeos-4.19/x86_64/chromeos-intel-pineview.flavour.config)
-> >>>        -asus-C436FA-Flip-hatch
-> >>>        -acer-chromebox-cxi4-puff
-> >>>        -acer-cbv514-1h-34uz-brya
-> >>>        -acer-cp514-2h-1160g7-volteer
-> >>>        -acer-cp514-2h-1130g7-volteer
-> >>>        -acer-cb317-1h-c3z6-dedede
-> >>>        Test details:
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38170923416c0c9943086
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438170923416c0c9943086>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3816e923416c0c994307a
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43816e923416c0c994307a>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3816e923416c0c9943077
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43816e923416c0c9943077>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3816f923416c0c9943080
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43816f923416c0c9943080>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38168923416c0c994303e
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438168923416c0c994303e>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38167923416c0c9943038
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438167923416c0c9943038>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38167923416c0c994303b
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438167923416c0c994303b>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3816e923416c0c9943074
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43816e923416c0c9943074>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38167923416c0c9943035
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438167923416c0c9943035>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38168923416c0c9943044
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438168923416c0c9943044>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38166923416c0c9943032
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438166923416c0c9943032>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3816f923416c0c994307d
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43816f923416c0c994307d>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38205923416c0c9943503
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438205923416c0c9943503>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3820b923416c0c9943530
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43820b923416c0c9943530>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38205923416c0c9943506
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438205923416c0c9943506>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38206923416c0c9943509
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438206923416c0c9943509>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3820b923416c0c994352d
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43820b923416c0c994352d>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3820a923416c0c994352a
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43820a923416c0c994352a>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38205923416c0c9943500
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438205923416c0c9943500>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3820a923416c0c9943527
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43820a923416c0c9943527>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38204923416c0c99434fd
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438204923416c0c99434fd>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38209923416c0c9943524
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438209923416c0c9943524>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38207923416c0c994350f
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438207923416c0c994350f>
-> >>>
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-3820c923416c0c9943536
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-43820c923416c0c9943536>
-> >>>
-> >>>
-> >>>        CI system: maestro
-> >>>
-> >>> RT TESTS
-> >>>
-> >>>      Failures
-> >>>
-> >>>        rt-tests.rt-migrate-test:
-> >>>        x86_64:(defconfig)
-> >>>        -hp-14b-na0052xx-zork
-> >>>        Test details:
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-381ad923416c0c9943289
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-4381ad923416c0c9943289>
-> >>>
-> >>>
-> >>>        CI system: maestro
-> >>>
-> >>>        rt-tests.rt-migrate-test.rt-migrate-test:
-> >>>        x86_64:(defconfig)
-> >>>        -hp-14b-na0052xx-zork
-> >>>        Test details:
-> >>>        -
-> >>> https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:674=
-38599923416c0c9943d3a
-> >>> <https://kcidb.kernelci.org/d/test/test?orgId=3D1&var-id=3Dmaestro:67=
-438599923416c0c9943d3a>
-> >>>
-> >>>
-> >>>        CI system: maestro
-> >>>
-> >>> See complete and up-to-date report at:
-> >>>
-> >>> https://kcidb.kernelci.org/d/revision/revision?orgId=3D1&var-git_comm=
-it_hash=3Db33e0cf394c4dfb11c91395dd25ccfc2a9fd2789&var-patchset_hash=3D
-> >>> <https://kcidb.kernelci.org/d/revision/revision?orgId=3D1&var-git_com=
-mit_hash=3Db33e0cf394c4dfb11c91395dd25ccfc2a9fd2789&var-patchset_hash=3D>
-> >>>
-> >>>
-> >>>
-> >>> Tested-by: kernelci.org bot <bot@kernelci.org>
-> >>>
-> >>> Thanks,
-> >>> KernelCI team
-> >>>
-> >>> _._,_._,_
-> >>> ---------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------------------------------------------------------------=
----------------------
-> >>>
-> >>> Groups.io Links:
-> >>>
-> >>> You receive all messages sent to this group.
-> >>>
-> >>> View/Reply Online (#74789)
-> >>> <https://groups.io/g/kernelci-results-staging/message/74789> | Reply
-> >>> to Group
-> >>> <mailto:kernelci-results-staging@groups.io?subject=3DRe:%20KernelCI%2=
-0report%20for%20stable-rt%3A%20v4.19-rt-next%40v4.19.324-rt139-rc1>
-> >>> | Reply to Sender
-> >>> <mailto:bot@kernelci.org?subject=3DPrivate:%20Re:%20KernelCI%20report=
-%20for%20stable-rt%3A%20v4.19-rt-next%40v4.19.324-rt139-rc1>
-> >>> | Mute This Topic <https://groups.io/mt/109764951/6630336> | New
-> >>> Topic <https://groups.io/g/kernelci-results-staging/post>
-> >>> Your Subscription
-> >>> <https://groups.io/g/kernelci-results-staging/editsub/6630336> |
-> >>> Contact Group Owner
-> >>> <mailto:kernelci-results-staging+owner@groups.io> | Unsubscribe
-> >>> <https://groups.io/g/kernelci-results-staging/leave/13729535/6630336/=
-1522968245/xyzzy>
-> >>> [usama.anjum@collabora.com]
-> >>>
-> >>> _._,_._,_
-> >>
-> >>
-> >
-> Cheers, Gene Heskett, CET.
-> --
-> "There are four boxes to be used in defense of liberty:
->   soap, ballot, jury, and ammo. Please use in that order."
-> -Ed Howdershelt (Author, 1940)
-> If we desire respect for the law, we must first make the law respectable.
->   - Louis D. Brandeis
->
+rtla timerlat top -a 60 --dma-latency 0
+
+and I get traces like the following:
+
+
+                                      Timer Latency
+   0 00:00:22   |          IRQ Timer Latency (us)        |         Thread Timer Latency (us)
+CPU COUNT      |      cur       min       avg       max |      cur       min       avg       max
+   0 #21138     |        4         0         0        14 |       17         3         4        48
+   1 #21138     |        6         0         0        21 |       41         3         4        50
+   2 #21138     |       11         0         0        11 |       61         3         4        61
+   3 #21138     |        5         0         0        10 |       40         3         4        57
+rtla timerlat hit stop tracing
+## CPU 2 hit stop tracing, analyzing it ##
+   IRQ handler delay:                                         1.36 us (2.22 %)
+   IRQ latency:                                              11.60 us
+   Timerlat IRQ duration:                                    21.26 us (34.63 %)
+   Blocking thread:                                          19.46 us (31.70 %)
+                              cc1:265581                     19.46 us
+     Blocking thread stack trace
+                 -> timerlat_irq
+                 -> __hrtimer_run_queues
+                 -> hrtimer_interrupt
+                 -> arch_timer_handler_phys
+                 -> handle_percpu_devid_irq
+                 -> generic_handle_domain_irq
+                 -> gic_handle_irq
+                 -> call_on_irq_stack
+                 -> do_interrupt_handler
+                 -> el0_interrupt
+                 -> __el0_irq_handler_common
+                 -> el0t_64_irq_handler
+                 -> el0t_64_irq
+------------------------------------------------------------------------
+   Thread latency:                                           61.40 us (100%)
+
+Max timerlat IRQ latency from idle: 4.74 us in cpu 2
+   Saving trace to timerlat_trace.txt
+
+And the surprising thing was that there was nothing out of the ordinary (at
+least to my non-expert eyes): No spin locks or similar. Just a syscall (these
+are implemented via IRQ EL0, right?) which then goes straight to the timer
+handling. I might be completely off here though, as I am not an expert at
+all in these things.
+
+When I contrast this to an unloaded system and a threshold like 10 us it seems
+that there is actually "something" in the trace.
+
+                                      Timer Latency
+   0 00:00:04   |          IRQ Timer Latency (us)        |         Thread Timer Latency (us)
+CPU COUNT      |      cur       min       avg       max |      cur       min       avg       max
+   0 #4004      |        0         0         0         1 |        3         3         3         6
+   1 #4004      |        1         0         0         1 |       10         3         3        10
+   2 #4003      |        0         0         0         0 |        3         3         3         7
+   3 #4003      |        0         0         0         1 |        3         3         3         7
+rtla timerlat hit stop tracing
+## CPU 1 hit stop tracing, analyzing it ##
+   IRQ handler delay:                                         0.00 us (0.00 %)
+   IRQ latency:                                               1.40 us
+   Timerlat IRQ duration:                                     4.67 us (45.67 %)
+   Blocking thread:                                           3.17 us (30.98 %)
+                             htop:262562                      3.17 us
+     Blocking thread stack trace
+                 -> timerlat_irq
+                 -> __hrtimer_run_queues
+                 -> hrtimer_interrupt
+                 -> arch_timer_handler_phys
+                 -> handle_percpu_devid_irq
+                 -> generic_handle_domain_irq
+                 -> gic_handle_irq
+                 -> call_on_irq_stack
+                 -> do_interrupt_handler
+                 -> el1_interrupt
+                 -> el1h_64_irq_handler
+                 -> el1h_64_irq
+                 -> tracer_preempt_on
+                 -> preempt_count_sub
+                 -> migrate_enable
+                 -> kmem_cache_free
+                 -> __fput
+                 -> __fput_sync
+                 -> __arm64_sys_close
+                 -> invoke_syscall
+                 -> el0_svc_common.constprop.0
+                 -> do_el0_svc
+                 -> el0_svc
+                 -> el0t_64_sync_handler
+                 -> el0t_64_sync
+------------------------------------------------------------------------
+   Thread latency:                                           10.22 us (100%)
+
+Max timerlat IRQ latency from idle: 1.43 us in cpu 1
+   Saving trace to timerlat_trace.txt
+
+In this case it's htop invoking some syscall. So I really wonder how to
+interpret things like the first trace above where "nothing" is happening
+and still there are large-ish latencie.
+
+At some point in time I wondered what kind of loads did trigger the
+longest latencies and I played with "stress -m 6" a little and I was
+surprised to see the latencies even go higher than 100. Here is an
+example trace
+
+                                      Timer Latency
+   0 00:00:16   |          IRQ Timer Latency (us)        |         Thread Timer Latency (us)
+CPU COUNT      |      cur       min       avg       max |      cur       min       avg       max
+   0 #15654     |        1         0         2        31 |        6         3        15        75
+   1 #15654     |        2         0         3        42 |       13         3        17        91
+   2 #15654     |        2         0         2        38 |       17         3        16        87
+   3 #15654     |        5         0         3        26 |      111         3        16       111
+rtla timerlat hit stop tracing
+## CPU 3 hit stop tracing, analyzing it ##
+   IRQ handler delay:                                         0.00 us (0.00 %)
+   IRQ latency:                                               5.16 us
+   Timerlat IRQ duration:                                    47.41 us (42.53 %)
+   Blocking thread:                                          50.50 us (45.30 %)
+                           stress:278226                     50.50 us
+     Blocking thread stack trace
+                 -> timerlat_irq
+                 -> __hrtimer_run_queues
+                 -> hrtimer_interrupt
+                 -> arch_timer_handler_phys
+                 -> handle_percpu_devid_irq
+                 -> generic_handle_domain_irq
+                 -> gic_handle_irq
+                 -> call_on_irq_stack
+                 -> do_interrupt_handler
+                 -> el1_interrupt
+                 -> el1h_64_irq_handler
+                 -> el1h_64_irq
+                 -> folios_put_refs
+                 -> free_pages_and_swap_cache
+                 -> __tlb_batch_free_encoded_pages
+                 -> tlb_flush_mmu
+                 -> unmap_page_range
+                 -> unmap_vmas
+                 -> vms_clear_ptes
+                 -> vms_complete_munmap_vmas
+                 -> do_vmi_align_munmap
+                 -> do_vmi_munmap
+                 -> __vm_munmap
+                 -> __arm64_sys_munmap
+                 -> invoke_syscall
+                 -> el0_svc_common.constprop.0
+                 -> do_el0_svc
+                 -> el0_svc
+                 -> el0t_64_sync_handler
+                 -> el0t_64_sync
+------------------------------------------------------------------------
+   Thread latency:                                          111.47 us (100%)
+
+Max timerlat IRQ latency from idle: 1.98 us in cpu 3
+   Saving trace to timerlat_trace.txt
+
+
+OK, here at least something related to virtual memory is happening.
+I still wonder though: How come the latencies are so large? Is the
+raspberry pi platform just not suited to reach lower latencies? Is
+everything working as expected? Are maybe the raspberry pi
+patches responsible for latency sources which are invisible in the
+traces? I there any hope for getting these latencies a little more
+under control?
+
+Kind regards,
+FPS
