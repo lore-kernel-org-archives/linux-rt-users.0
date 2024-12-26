@@ -1,135 +1,176 @@
-Received: from mail-pg1-f182.google.com (mail-pg1-f182.google.com [209.85.215.182])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-000e8d01.pphosted.com (mx0a-000e8d01.pphosted.com [148.163.147.191])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9280A748A
-	for <linux-rt-users@vger.kernel.org>; Sun, 22 Dec 2024 10:32:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.182
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734863559; cv=none; b=iieVbRhS+XFXngF+a9vCuB/WFD7UYPD7EteclLoEw7gp+ecj1nGU+fcsA9qR1d8EwVQF/YNBMoPOLG1nXIY8EqyfRciwvxAXJGAthFT4lLkygNjupx2VOL3wM0THygRPlum8y90WSBYrcVZTFSmmOH48lU6AORWU33eC1tRABjU=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734863559; c=relaxed/simple;
-	bh=N7h0qltN0J6L19Ns6uFBQg+GeJcnXi515eQrYo8+F7A=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=QleS4qyFdVXJ9MrQWtzzeIVRPZYv0tIS2XB7us6Xb/g18darw/xieafzygzc4SGSCe2mP9sAbV3bYm8aMmuUMnzvKwuW9METmmwcusylrllWtKEw/B2Ols6w4eRVN7+Ee2FZ+cQKMUspMZSCSO8NJvSHbb08tSAEh8g1acdlS8g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com; spf=fail smtp.mailfrom=sidebranch.com; dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b=uRBGfTyl; arc=none smtp.client-ip=209.85.215.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sidebranch.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=sidebranch.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE3C11EEF9;
+	Thu, 26 Dec 2024 19:31:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=148.163.147.191
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1735241504; cv=fail; b=c2HlcTNWngL+1JAHZIT++uossL50193trN2yHW5+A+RhEtp3I0rCedU49Tde4key4XwtK/CmLeUGCnMgtNfsL4UpsGHBJhZFWPdab6Jeh9wx5WyBIUq3jZ1C61YPMxAA8zgy+BsgrsItNDRn6k6D26IwDsqmuUitbY0tJvXT4zo=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1735241504; c=relaxed/simple;
+	bh=llxxqd7B7MvDfUDr/kLNUs0XXtuzqWARI+Lgv2KorHQ=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=QwIcO1L/Zz664xtt0Emecm0yXbZBj1074V+P96D11S9/FfaZKLEvOqmZkKuBflu+RGZ3cdEoXDwLMyclffp4eXjsJQ2sS/ordR35JJ++g/VFrH/gxz4Wnq35I9dZdaxpbhuoSlH/h8fcgtXhyt5qZ9saMnYQxIEHbqzdqt7oniw=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=selinc.com; spf=pass smtp.mailfrom=selinc.com; dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b=pEW28YQQ; dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b=Gr/Pdt+O; arc=fail smtp.client-ip=148.163.147.191
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=selinc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=selinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=sidebranch-com.20230601.gappssmtp.com header.i=@sidebranch-com.20230601.gappssmtp.com header.b="uRBGfTyl"
-Received: by mail-pg1-f182.google.com with SMTP id 41be03b00d2f7-7fd5248d663so2428905a12.0
-        for <linux-rt-users@vger.kernel.org>; Sun, 22 Dec 2024 02:32:34 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=sidebranch-com.20230601.gappssmtp.com; s=20230601; t=1734863553; x=1735468353; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=N7h0qltN0J6L19Ns6uFBQg+GeJcnXi515eQrYo8+F7A=;
-        b=uRBGfTylDZscoiAy7yjZiJKNIrgveM8OJGNeO56lSDiwnsX39Ib3KOO65C0rpZ3717
-         gSLzqN/3+FTgT8HRtmV59pMK4IKFHlkb6jUuVJR2ZaV1wBLfTMynHS2vr62PzPtrT9B7
-         JTyr5/qprx9MIpN+OHWhcYT3IlVZaq/aYzKnKo0KWtV/9Axl81K35XQvIFRwt/PlGw6a
-         4Q4/z9+vST2b2avbfQ7uHEel8ZWXMsetdb7UzxXZIidmtxoMdYpz/JU+gD9ARbhVlXN+
-         O7B655TOwU/5PfvmwUeQ7ucWZQ+0PvbILK6MetnNaYoXdRhUBz47e5653HU5iPf6Orwm
-         eU/Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734863553; x=1735468353;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=N7h0qltN0J6L19Ns6uFBQg+GeJcnXi515eQrYo8+F7A=;
-        b=sPcSli0rtZOz4ykfjyhodO9KXewlek7xPHVsEylWEFe4D3/MAzB0OxfhBafeDRJtCG
-         fAsexGDdjdZIAIh2zaKmCcoUwtKm8HWeu3EKdhnCvuL37aEwC8FO58JaDzSqft6ppOHR
-         HOyWAs8asvgpkPY+xoqBtKg5jUgYDv0UqrIA516KwWQQAxSbhLoc9ipLIYJWwGb1rSgR
-         spmf2iKiXl5iyRoh9+JQwxCInW8HjRoTT/CWTDrcoAuTui/wSJIJ5GWUq9Ab0OA/dHfs
-         VXsR9LN3+Ut6sMRohSAzPYJ9dvt4r23IVluXsSH4SUCVwHZe7QwPxYbbj5sAAf0ZrMYu
-         /xlA==
-X-Forwarded-Encrypted: i=1; AJvYcCWpLbCHriBCEELSH163JdIn1x7yKSfDHL2TRPkXf25aFDEiUyPeTSJ+qCLEN0xv18pzVjTDrQMfSdNc8oVzCQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0Ywpoal95tIA9MJbWLYodVOJ6NEdsTX0wsRanLvXB2jlLmhhIgoM
-	qVD+/j+FdQMCRRCmzEqL/uo0Fc/ZQJH9R9b5jZIR/r6S9943Str/+FEioo3MPzK7QJtdFE1buJN
-	37bZEpYhVojx9Q6YPEjliLk8UHuDVqss1UXLn7S4zH7VaUkyJfEBQng==
-X-Gm-Gg: ASbGncvfyT5S/rut17yiuw1LaivW7MU/auwKDoSqcjEnPuWWxsI5D3pL0s3mXO4Uc5A
-	JJsDA0ILtdNf99hNLzUdFjys7vRWmBKnwRJmWyKH3NK50DSIoAarqUz0A2jhMXWMxNIA=
-X-Google-Smtp-Source: AGHT+IE0ws03XcLmCV9qf28XZG7BvUeuvvWtocpbUWsfOy52SOxve1gWmA+YDTjD9Jcwj+a4hBGYhZm3icPILyH3pbg=
-X-Received: by 2002:a17:90a:d646:b0:2ee:ab29:1a63 with SMTP id
- 98e67ed59e1d1-2f452dfccb7mr12215745a91.3.1734863553617; Sun, 22 Dec 2024
- 02:32:33 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b="pEW28YQQ";
+	dkim=pass (2048-bit key) header.d=selinc.com header.i=@selinc.com header.b="Gr/Pdt+O"
+Received: from pps.filterd (m0136169.ppops.net [127.0.0.1])
+	by mx0b-000e8d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4BQIQPC0010936;
+	Thu, 26 Dec 2024 11:13:33 -0800
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=selinc.com; h=cc
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=sel1; bh=2ofvxikVs8zP7YauVO7a7Ww19vZ
+	JxGcbLnazC28dRKo=; b=pEW28YQQpEZYaNGQL/9kCcDWVvLq5NnZmbL1PBb+MAe
+	gL8Rrc/Mzs6GOVlV1OW/BLu4dJnWgS1yB0zyQnmmV1FsIDEIIJUWZcQYIFEXMyaQ
+	W3mjvpo0fnSQzky8ekV8UmvYt/bV34pxlLxCBuJMUoNB4C7ZpQD5+ijY79F3uYJt
+	gWai3n+0uAJibIBdEy4nH/MbX0+8xl9VQ9MdANb3JjFRK8XYZYZK8WbuA9nBRPFy
+	KYqgVKW7NwWh9PdcoN4KIdgmqaeZnUqhO4s90ZIMZle22nrLS+xSrpmUgpwz8qlO
+	hqClFhs4R0WtgDPdV6BUdqNgqixjt9oWJWGxGIbYA9w==
+Received: from nam10-mw2-obe.outbound.protection.outlook.com (mail-mw2nam10lp2044.outbound.protection.outlook.com [104.47.55.44])
+	by mx0b-000e8d01.pphosted.com (PPS) with ESMTPS id 43sa3703ue-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 26 Dec 2024 11:13:33 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=VPXV/hXjMgJl0cv1I8cYwCozPuhiWCeIlo+bJNFKKCX5keyvUl77vV1xd4s+ZqZAwITjGO4VkqGa74gZqDpIyMTzopz31YShMzdHMj1BP01NrL0995roLcqeSGnFlS3UH4Zcxv5bWFcORqMhz23zWA/Jzflk5uYXJsoJSP/zoWEVLMmx0GCAPcL51akZTLFSJKQHXJcQk25TznPMYzyn5ZLNKwie4U4uJ7OGs9sdRPgvsBsDaPowkvqNTJbJiK9U/eC9w4krDZd/s9jWaoqvRyK2+eAqXmmnZctTkv0/Gobj0eGCD4FcNnolWTuxQMtbkb6VHuXmKt0o35UyIbINaw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=2ofvxikVs8zP7YauVO7a7Ww19vZJxGcbLnazC28dRKo=;
+ b=vV42Lxvy35h6aDhymnzYgoL4vMEiY54NV4g6+DutrQT/4g9dY1DFAKtSnHSIRRNESiXCEfMWrvATpK06EtIQQzG/tp0MUXXhcvXo2lkASR4zgQ4Ln9L0bjyUJ7T+VosJhDqaRlaz8+TCBxSRDcz2qLmcWTHOCpdxJxvvGFgb1f0zvZlGkiH19wXRP4ya5+Of54jRlBWvogOO9HECZ6i8Fg9Ob+BVjJHXBfI0kdBdtEvk4TGKZ0JCXjL70k6ob6p1zvc4jhTxLyWKiXMSh6iUXY8X4O3DmK5RxkVugH50vD3BRZUSttxm7mAAhQhYDXdvEiIBzzrKh/DHZhGB3VKndw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
+ 74.117.212.83) smtp.rcpttodomain=vger.kernel.org smtp.mailfrom=selinc.com;
+ dmarc=pass (p=reject sp=reject pct=100) action=none header.from=selinc.com;
+ dkim=none (message not signed); arc=none (0)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=selinc.com;
+ s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=2ofvxikVs8zP7YauVO7a7Ww19vZJxGcbLnazC28dRKo=;
+ b=Gr/Pdt+Ol7BrMNO656xJiZa3AOkHtOtVq8IAA892jPpdEJRQgUfOj842wpRMeX9BpUploXaBtbQjPmpB+X5I5U4jHV0PqMwul/3OfpHXc+pk7K1dlYpILR1ZskI6nBf+vYswh7ZN7vbKoXyFN4EFOUUBGFnOHCdjI8yGCtf7Dyb+eBulhrTKMoKNdBla37qMNLrDslX9Q078c8wz2nyMM3HxIrzLvmoAUBjgb8zUNRXBHdpxX2nbM/y2UG2vykMde4sQTJWYpujjnqQmjbFDOsyl1cDe3/zyU0uAW6k9bxPIkKFcgY9sp/uE4TPwTb33mBZcQ8BLi+mam/JAefm8ig==
+Received: from SN7PR04CA0057.namprd04.prod.outlook.com (2603:10b6:806:120::32)
+ by SA1PR22MB5654.namprd22.prod.outlook.com (2603:10b6:806:3e1::13) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8293.14; Thu, 26 Dec
+ 2024 19:13:25 +0000
+Received: from SN1PEPF00026369.namprd02.prod.outlook.com
+ (2603:10b6:806:120:cafe::1a) by SN7PR04CA0057.outlook.office365.com
+ (2603:10b6:806:120::32) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.20.8293.15 via Frontend Transport; Thu,
+ 26 Dec 2024 19:13:25 +0000
+X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 74.117.212.83)
+ smtp.mailfrom=selinc.com; dkim=none (message not signed)
+ header.d=none;dmarc=pass action=none header.from=selinc.com;
+Received-SPF: Pass (protection.outlook.com: domain of selinc.com designates
+ 74.117.212.83 as permitted sender) receiver=protection.outlook.com;
+ client-ip=74.117.212.83; helo=email.selinc.com; pr=C
+Received: from email.selinc.com (74.117.212.83) by
+ SN1PEPF00026369.mail.protection.outlook.com (10.167.241.134) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.8293.12 via Frontend Transport; Thu, 26 Dec 2024 19:13:24 +0000
+Received: from robejoslpc2.ad.selinc.com (10.100.90.200) by
+ wpul-exchange1.ad.selinc.com (10.53.14.24) with Microsoft SMTP Server id
+ 15.2.1544.13; Thu, 26 Dec 2024 11:13:24 -0800
+From: Robert Joslyn <robert_joslyn@selinc.com>
+To: <linux-kernel@vger.kernel.org>
+CC: <linux-rt-users@vger.kernel.org>, <bigeasy@linutronix.de>,
+        <tglx@linutronix.de>, <rostedt@goodmis.org>,
+        Robert Joslyn
+	<robert_joslyn@selinc.com>
+Subject: [PATCH] powerpc: Allow scheduling of IRQ with PREEMPT_RT
+Date: Thu, 26 Dec 2024 11:12:38 -0800
+Message-ID: <20241226191238.2559880-1-robert_joslyn@selinc.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: linux-rt-users@vger.kernel.org
 List-Id: <linux-rt-users.vger.kernel.org>
 List-Subscribe: <mailto:linux-rt-users+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-rt-users+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <d445e582-4e49-4135-9d94-f52d72ec5df6@gmx.net> <84bjx6h2kd.fsf@jogness.linutronix.de>
- <cb569b76-e0ac-4063-9956-ab6307594d86@gmx.net>
-In-Reply-To: <cb569b76-e0ac-4063-9956-ab6307594d86@gmx.net>
-From: Leon Woestenberg <leon@sidebranch.com>
-Date: Sun, 22 Dec 2024 11:32:21 +0100
-Message-ID: <CAMjhiJjpnP4Nr5YmgntPd43gndBXnh_DOjW_davDVG2fu0F4sQ@mail.gmail.com>
-Subject: Re: Raspberry Pi 5 and PREEMPT_RT (6.13.0-rc3)
-To: Florian Paul Schmidt <mista.tapas@gmx.net>
-Cc: John Ogness <john.ogness@linutronix.de>, linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-EOPAttributedMessage: 0
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SN1PEPF00026369:EE_|SA1PR22MB5654:EE_
+X-MS-Office365-Filtering-Correlation-Id: f440c57e-a247-4f86-c007-08dd25e15efb
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|82310400026|36860700013|376014|1800799024;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?0ZWggLmiOu/RlPyL2jLvSNXtnM8dXoyBYFY4GRBKgAtYgJvwPHymWowmJLqW?=
+ =?us-ascii?Q?2fBP0E9K8XDKqwLBS+FCHvtBguE8BgSirDbdxb/R/zNWu7RaR8tMjVkemti2?=
+ =?us-ascii?Q?rJd1sdfd45ccI4NY3SJgBD5g3Kfnjd+4KpmHSyJvF3CGhcGXG+o9AA9nSK7P?=
+ =?us-ascii?Q?A/dF1uVKXBPhXZHxDnuiaF8NN/UZ+6C8ZwUSeJqyPx4YVUMJJ8uYdXImDDsz?=
+ =?us-ascii?Q?664szJ3xSW+XkMiT0sQhA3zGdaLxRquFUWdqe0wnOlPT7W3IvgJsArYAqB/k?=
+ =?us-ascii?Q?VooTuNPfyJsXoNcN4Cg1OKBNibcF6y5gJ5dTirvVYCsM6h8DvKYMLCNO0jo8?=
+ =?us-ascii?Q?aKfSxsMijLkM4eiA8PA4Spp5dsNHduK4VtJxzdD/dMiiw7oqDa0FOQZbPbcE?=
+ =?us-ascii?Q?QZ8wgBi60LOpVSaGgt93djFdA7Xh3sO38YBqLH4/M9a+Gk+5SQweY/GTruEf?=
+ =?us-ascii?Q?LmBiYCzLDEdlrqgYh1N4yD/jlfGJafuvmV0NHGsBuF/jUPe2yF7onjwVgqI5?=
+ =?us-ascii?Q?E4GTwyJZnxsNUxASCJ8ta7vUhgS3GLUdIjKRRYCX0xYuprBVbYzh7oH+kerN?=
+ =?us-ascii?Q?9krj6B36gJGJQEhBurRoDP5DXMXiP4I1823EzoEKE7FNxF6CSlIX0VBirBly?=
+ =?us-ascii?Q?jR6qJUsCAWiJ+4ztRJP9EAf1r2crN6UJjNTaaDiDIOBrrYfle0t0xjV/IXds?=
+ =?us-ascii?Q?duMQ/2ldXVh8MIZspGXH0zMqwzHmW+NWW8x4HAoM198opbTaf8faW86SrJN4?=
+ =?us-ascii?Q?5Z9+7v4lw5jYKSxBExp+vX8XWU+0vEB8yvJpwKA9ZOXn2lIiKJA3jwI45oTk?=
+ =?us-ascii?Q?fPzYo9r+kH+xsKEX88G900IVyBx2DDInGC1c9nzh8QEEv8VmZNhzltxQ0j4B?=
+ =?us-ascii?Q?79xHOvLAD53WRTDhQCtXCMp8FGG7stMGzZ1GStK2vKohRsrc993orAXOPUNv?=
+ =?us-ascii?Q?5DtA7p4auUkaLN/LCZnkO+jjWZD4moMmnqTfPDEahm5MFnMX7rUL0+5dFGyO?=
+ =?us-ascii?Q?w0Al2++s/tLMdgghNpIG7IenOGU/fNhxlPFBSsXqr+X/TBpKjaVPjxpn8n7w?=
+ =?us-ascii?Q?Q7NlxVPRDEKfa9yoaUvwMiSA8nR6mJ6XswqnTNZxbojh5dKZDKkNQLRUfut9?=
+ =?us-ascii?Q?eUTUpMzAsVi8RhWEEUlBlVOqteKxoir11aqVqJLYUIAs1NAF6poSXmhik4Er?=
+ =?us-ascii?Q?WygGOk9srADk05+yvXYKm5nKZ5vjG+koTlNQ3W+kiDx6xvC3eRwxEXGp6UBU?=
+ =?us-ascii?Q?naVyR97M8z52TKdYTkPSPXRgMSSrqI6D9OwOe7DpvZ+bK2tiN+AUyHpJCgow?=
+ =?us-ascii?Q?QzXEX7wDEEWCnl2hC6wZ9J6Dhps87tHrdvg5e2wr/+QsawAqHkxg4exrKC2p?=
+ =?us-ascii?Q?BHnXUWBfYnEFmXQ11BYsLGFuuXtwvkV828BymCYxeQM7g0++z4kpBoKZlTDX?=
+ =?us-ascii?Q?oIClpyqk/g2Ai8eTqCMwLSZ6V530QselrcdvvkSJUz5Wl/PBmH/KQA=3D=3D?=
+X-Forefront-Antispam-Report:
+	CIP:74.117.212.83;CTRY:US;LANG:en;SCL:1;SRV:;IPV:CAL;SFV:NSPM;H:email.selinc.com;PTR:wpul-exchange1.selinc.com;CAT:NONE;SFS:(13230040)(82310400026)(36860700013)(376014)(1800799024);DIR:OUT;SFP:1102;
+X-OriginatorOrg: selinc.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 26 Dec 2024 19:13:24.6654
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: f440c57e-a247-4f86-c007-08dd25e15efb
+X-MS-Exchange-CrossTenant-Id: 12381f30-10fe-4e2c-aa3a-5e03ebeb59ec
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=12381f30-10fe-4e2c-aa3a-5e03ebeb59ec;Ip=[74.117.212.83];Helo=[email.selinc.com]
+X-MS-Exchange-CrossTenant-AuthSource:
+	SN1PEPF00026369.namprd02.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA1PR22MB5654
+X-Proofpoint-GUID: xGrujx23pEjmoVgA7Rt-XO0DnIucSH6n
+X-Proofpoint-ORIG-GUID: xGrujx23pEjmoVgA7Rt-XO0DnIucSH6n
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 impostorscore=0 clxscore=1011
+ bulkscore=0 malwarescore=0 mlxscore=0 lowpriorityscore=0 adultscore=0
+ phishscore=0 priorityscore=1501 suspectscore=0 spamscore=0 mlxlogscore=425
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2411120000
+ definitions=main-2412260171
 
-Hello,
+This branch is needed to allow preemptible IRQs to be scheduled,
+otherwise the kernel hangs during boot on my e300 based platforms.
+This branch is needed for both CONFIG_PREEMPT and CONFIG_PREEMPT_RT,
+so broaden the check to CONFIG_PREEMPTION, which is selected by both.
 
-First of all, you can loo-kup long-term latency plot for PREEMPT_RT on
-different systems. I doubt Raspberry Pi 5 differs from Celeron/Atom,
-in my experience and from looking at the plots:, but YMMD.
+This was previously set to CONFIG_PREEMPTION, but was reverted as part
+of removing LAZY_PREEMPT support.
 
-https://www.osadl.org/Latency-plot-of-system-in-rack-2-slot.qa-latencyplot-=
-r2s7.0.html?shadow=3D0
-https://www.osadl.org/Long-term-latency-plot-of-system-in-rack.qa-3d-latenc=
-yplot-rds3.0.html?shadow=3D0
+Fixes: b33022a48c79
+Signed-off-by: Robert Joslyn <robert_joslyn@selinc.com>
+---
+ arch/powerpc/kernel/interrupt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-You could consider using isolated CPU cores, which should give you
-much lower latencies, if you have full control over the application
-logic.
+diff --git a/arch/powerpc/kernel/interrupt.c b/arch/powerpc/kernel/interrupt.c
+index af62ec974b97..970039af8e92 100644
+--- a/arch/powerpc/kernel/interrupt.c
++++ b/arch/powerpc/kernel/interrupt.c
+@@ -396,7 +396,7 @@ notrace unsigned long interrupt_exit_kernel_prepare(struct pt_regs *regs)
+ 		/* Returning to a kernel context with local irqs enabled. */
+ 		WARN_ON_ONCE(!(regs->msr & MSR_EE));
+ again:
+-		if (IS_ENABLED(CONFIG_PREEMPT)) {
++		if (IS_ENABLED(CONFIG_PREEMPTION)) {
+ 			/* Return to preemptible kernel context */
+ 			if (unlikely(read_thread_flags() & _TIF_NEED_RESCHED)) {
+ 				if (preempt_count() == 0)
+-- 
+2.45.2
 
-Regards,
-
-Leon.
-
---=20
-Leon Woestenberg
-leon@sidebranch.com
-T: +31 40 711 42 76
-M: +31 6 472 30 372
-
-Sidebranch Embedded Systems
-Eindhoven, The Netherlands
-http://www.sidebranch.com
-
-
-
-On Fri, Dec 20, 2024 at 4:58=E2=80=AFPM Florian Paul Schmidt
-<mista.tapas@gmx.net> wrote:
->
-> Hi John! Sorry, forgot to hit "reply all". So here it goes again :)
-> With a little clarification as well..
->
-> On 20/12/2024 15:05, John Ogness wrote:
-> > There are various kernel configurations that affect latency. But I am
-> > curious... Why do you think a maximum latency of 80us on an $80 board i=
-s
-> > large?
->
-> Simply because 80 us are an "eternity" =F0=9F=98=89 That's like 192000 cy=
-cles at
-> 2.4Ghz. And also because other slow systems (like that Celeron j4125
-> board I have) behave much better even at similar clock speeds (EDIT:
-> IIRC). I don't think the price point has anything to do with it really.
->
-> EDIT: Don't get me wrong though. 80 us are OK for my use case (audio
-> processing) - I just wonder if it might be even better.
->
-> > What maximum latencies are you expecting? And why do you think it
-> > is not "under control"?
->
-> I would _wish_ for latencies in the low tens of microseconds =F0=9F=99=82=
- I do
-> not expect anything.
->
-> Kind regards,
-> FPS
->
->
